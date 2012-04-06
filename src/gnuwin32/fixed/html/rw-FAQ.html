@@ -12,7 +12,7 @@
 <body>
 <h1 align="center">R for Windows FAQ</h1>
 
-<h2>Version for <tt>rw1040</tt></h2>
+<h2>Version for <tt>rw1041</tt></h2>
 
 <address>B. D. Ripley</address>
 
@@ -54,8 +54,8 @@ print from R?</a></li>
 BATCH</code>?</a></li>
 
 <li><a href=
-"#Can%20I%20use%20rw1040%20with%20ESS%20and%20emacs%3f">2.8 Can I
-use rw1040 with ESS and emacs?</a></li>
+"#Can%20I%20use%20rw1041%20with%20ESS%20and%20emacs%3f">2.8 Can I
+use rw1041 with ESS and emacs?</a></li>
 
 <li><a href=
 "#What%20are%20HOME%20and%20working%20directories%3f">2.9 What are
@@ -84,9 +84,9 @@ The internet download functions fail.</a></li>
 3.1 Can I install packages (libraries) in this version?</a></li>
 
 <li><a href=
-"#I%20don't%20have%20permission%20to%20write%20to%20the%20rw1040%5clibrary%20directory">
+"#I%20don't%20have%20permission%20to%20write%20to%20the%20rw1041%5clibrary%20directory">
 3.2 I don't have permission to write to the
-<code>rw1040\library</code> directory.</a></li>
+<code>rw1041\library</code> directory.</a></li>
 
 <li><a href=
 "#The%20packages%20I%20installed%20do%20not%20appear%20in%20the%20HTML%20help%20system">
@@ -224,7 +224,7 @@ specific to that version. The main R FAQ can be found at</p>
 
 <p>The information here applies only to recent versions of R for
 Windows, (<code>1.4.0</code> or later); the current version is
-often called something like <code>rw1040</code> (although not
+often called something like <code>rw1041</code> (although not
 officially).</p>
 
 <hr>
@@ -254,13 +254,13 @@ and the remaining <code>miniR-?.bin</code> on a floppy each.</p>
 least the files</p>
 
 <pre>
-      rw1040b.zip
-      rw1040h.zip (text help) or rw1040ch.zip (Compiled HTML help)
+      rw1041b.zip
+      rw1041h.zip (text help) or rw1041ch.zip (Compiled HTML help)
 </pre>
 
-<p>and you may want <code>rw1040w.zip</code> (the HTML format help
-files), <code>rw1040l.zip</code> (the LaTeX format help files, used
-for offline printing), or <code>rw1040d?.zip</code> (the draft
+<p>and you may want <code>rw1041w.zip</code> (the HTML format help
+files), <code>rw1041l.zip</code> (the LaTeX format help files, used
+for offline printing), or <code>rw1041d?.zip</code> (the draft
 manuals, in PDF). <a name=
 "How%20do%20I%20install%20R%20for%20Windows%3f"></a></p>
 
@@ -284,12 +284,12 @@ group for R).</p>
 <p>For a manual installation, choose a location and unzip the zip
 files (with a tool that preserves long file names and the directory
 structure: we recommend the INFO-ZIP project's <code>unzip</code>).
-All the files will unpack into a directory <code>rw1040</code>.</p>
+All the files will unpack into a directory <code>rw1041</code>.</p>
 
 <p>Choose a working directory for R. Unless you used
 <code>SetupR.exe</code> or <code>miniR.exe</code> (which did this
 for you by default), make a shortcut to
-<code>rw1040\bin\Rgui.exe</code> on your desktop or somewhere on
+<code>rw1041\bin\Rgui.exe</code> on your desktop or somewhere on
 the Start menu file tree. Right-click the shortcut, select
 Properties... and change the `Start in' field to your working
 directory.</p>
@@ -333,7 +333,7 @@ information about memory usage. The limit can be raised by calling
 
 <p>We have found that starting R with too large a value of
 <code>--max-mem-size</code> may fail: the limit seemed to be about
-1.7Mb on Windows 2000 Professional.</p>
+1.7Gb on Windows 2000 Professional.</p>
 
 <p>R can be compiled to use a different memory manager which might
 be better at using large amounts of memory, but is substantially
@@ -381,7 +381,7 @@ have LaTeX installed you can print help files by
 <h2>2.7 Can I use <code>R BATCH</code>?</h2>
 
 <p>Yes, if you have Perl and the files for making source packages
-(from <code>SetupR.exe</code> or <code>rw1040sp.zip</code>)
+(from <code>SetupR.exe</code> or <code>rw1041sp.zip</code>)
 installed. The Windows analogue is <code>Rcmd BATCH</code>: use
 <code>Rcmd BATCH --help</code> for full details.</p>
 
@@ -393,10 +393,10 @@ line)</p>
 path_to_R\bin\Rterm.exe --no-restore --no-save &lt; %1 &gt; %1.out
 </pre>
 
-<a name="Can%20I%20use%20rw1040%20with%20ESS%20and%20emacs%3f"></a>
+<a name="Can%20I%20use%20rw1041%20with%20ESS%20and%20emacs%3f"></a>
 
 
-<h2>2.8 Can I use rw1040 with ESS and emacs?</h2>
+<h2>2.8 Can I use rw1041 with ESS and emacs?</h2>
 
 <p>Yes. The latest versions of ESS (e.g. 5.1.19) come with support
 for this version of R, and there is support for interrupting the R
@@ -435,7 +435,7 @@ If all of these fail, the current working directory is used.</p>
 
 <p>How did you specify it? Backslashes have to be doubled in R
 character strings, so for example one needs
-<code>"d:\\rw1040\\library\\xgobi\\scripts\\xgobi.bat"</code>. Make
+<code>"d:\\rw1041\\library\\xgobi\\scripts\\xgobi.bat"</code>. Make
 life easier for yourself by using forward slashes as path
 separators: they do work under Windows.</p>
 
@@ -475,7 +475,7 @@ have solved have been traced to faulty versions of
 <code>msvcrt.dll</code>. Try extracting the one to be found in the
 self-extracting archive <a href=
 "ftp://ftp.microsoft.com/softlib/mslfiles/msvcrt.exe">ftp://ftp.microsoft.com/softlib/mslfiles/msvcrt.exe</a>
-and put it in the <code>rw1040\bin</code> directory. Removing
+and put it in the <code>rw1041\bin</code> directory. Removing
 <code>msvcrt.dll</code> from that directory reverts to the standard
 behaviour.</p>
 
@@ -528,12 +528,12 @@ point-and-click interface to package installation.</p>
 "http://cran.r-project.org/bin/windows/contrib/ReadMe">http://cran.r-project.org/bin/windows/contrib/ReadMe</a>.</p>
 
 <p>If there is not a pre-compiled version or that is not up-to-date
-or you prefer compiling from source, get <code>rw1040sp.zip</code>
+or you prefer compiling from source, get <code>rw1041sp.zip</code>
 from the distribution (see <a href=
 "#Where%20can%20I%20find%20the%20latest%20version%3f">Where can I
 find the latest version?</a>; you may already have installed this
 from <code>SetupR.exe</code>) and unpack it in the parent of
-<code>rw1040</code>. Then read the file
+<code>rw1041</code>. Then read the file
 <code>readme.packages</code>. You will need to collect and install
 several tools to use this: you can download them via the portal at
 <a href=
@@ -545,11 +545,11 @@ pkgname</code>: see the <em>`Writing R Extensions'</em> manual.</p>
 
 <p>Note that most of the last paragraph will only work if both the
 path to R and the path to the package are space-free. <a name=
-"I%20don't%20have%20permission%20to%20write%20to%20the%20rw1040%5clibrary%20directory">
+"I%20don't%20have%20permission%20to%20write%20to%20the%20rw1041%5clibrary%20directory">
 </a></p>
 
 <h2>3.2 I don't have permission to write to the
-<code>rw1040\library</code> directory.</h2>
+<code>rw1041\library</code> directory.</h2>
 
 <p>You can install packages anywhere and use the environment
 variable <code>R_LIBS</code> to point to the library
@@ -598,7 +598,7 @@ environment. <a name=
 system.</h2>
 
 <p>The HTML search only works for packages installed in
-<code>rw1040\library</code>.</p>
+<code>rw1041\library</code>.</p>
 
 <p>To update the HTML indices after you have installed a
 pre-compiled package, run at the R prompt.</p>
@@ -608,7 +608,9 @@ pre-compiled package, run at the R prompt.</p>
 </pre>
 
 <p>This is done automatically when installing from the Packages
-menu or by <code>install.packages()</code>. <a name=
+menu or by <code>install.packages()</code>, and when
+<code>help.start</code> is run, provided you have write permission
+in <code>rw1041\library</code>. <a name=
 "My%20functions%20are%20not%20found%20by%20the%20HTML%20help%20search%20system.">
 </a></p>
 
@@ -619,7 +621,7 @@ system.</h2>
 you installed.</p>
 
 <ul>
-<li>the package is installed in <code>rw1040\library</code>.</li>
+<li>the package is installed in <code>rw1041\library</code>.</li>
 
 <li>the package contains a <code>CONTENTS</code> file in its
 top-level directory.</li>
@@ -893,12 +895,12 @@ arrow&gt; keys to scroll horizontally.</p>
 
 <h2>7.1 How can I compile R from source?</h2>
 
-<p>Get the R sources. Suppose you want to compile R-1.4.0. Start in
+<p>Get the R sources. Suppose you want to compile R-1.4.1. Start in
 a directory whose path does not contain spaces, and run</p>
 
 <pre>
-tar zxvf R-1.4.0.tgz
-cd R-1.4.0
+tar zxvf R-1.4.1.tgz
+cd R-1.4.1
 cd src\gnuwin32
 </pre>
 
@@ -947,7 +949,7 @@ name="How%20do%20I%20include%20compiled%20C%20code%3f"></a></p>
 <p>We strongly encourage you to do this <em>via</em> building an R
 package: see the <em>`Writing R Extensions'</em> manual. In any
 event you should install the parts of the R system for building R
-packages (in <code>SetupR.exe</code> or <code>rw1040sp.zip</code>),
+packages (in <code>SetupR.exe</code> or <code>rw1041sp.zip</code>),
 and get and install the tools (including Perl) and compilers
 mentioned in the file <code>readme.packages</code> contained
 therein. Then you can use</p>
@@ -991,7 +993,7 @@ make DEBUG=T pkg-mypkg
 <p>Then you can debug by</p>
 
 <pre>
-gdb /path/to/rw1040/bin/Rgui.exe
+gdb /path/to/rw1041/bin/Rgui.exe
 </pre>
 
 <p>However, note</p>
@@ -999,8 +1001,8 @@ gdb /path/to/rw1040/bin/Rgui.exe
 <ul>
 <li>gdb will only be able to find the source code if we run in the
 location where the source was compiled
-(<code>rw1040/src/gnuwin32</code> for the main system,
-<code>rw1040/src/library/mypkg/src</code> for a package), unless
+(<code>rw1041/src/gnuwin32</code> for the main system,
+<code>rw1041/src/library/mypkg/src</code> for a package), unless
 told otherwise by the <code>directory</code> command. It is most
 convenient to set a list of code locations via
 <code>directory</code> commands in the file <code>.gdbinit</code>
@@ -1122,7 +1124,7 @@ console, call <code>R_FlushConsole()</code> and then
 <code>R_ProcessEvents()</code>.</p>
 
 <hr width="100%">
-<address>Last edited 2001 December 7 by Professor B. D. Ripley
+<address>Last edited 2002 January 17 by Professor B. D. Ripley
 <code><a href=
 "mailto:ripley@stats.ox.ac.uk">ripley@stats.ox.ac.uk</a></code></address>
 </body>
