@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka
  *			      and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@
 
 #define __SYSTEM__
 #include "devUI.h"		/* includes Startup.h */
+#include <R_ext/GetX11Image.h>  /* for *GetX11Image declarations */
 #undef __SYSTEM__
 
 #include "Runix.h"
@@ -84,7 +85,6 @@ int R_ChooseFile(int new, char *buf, int len)
 void (*ptr_gnome_start)(int ac, char **av, Rstart Rp);
 
 void R_setStartTime(void); /* in sys-unix.c */
-void R_load_X11_shlib(void); /* in dynload.c */
 void R_load_gnome_shlib(void); /* in dynload.c */
 
 int Rf_initialize_R(int ac, char **av);
@@ -104,7 +104,7 @@ int main(int ac, char **av)
 int Rf_initialize_R(int ac, char **av)
 {
     int i, ioff = 1, j, value, ierr;
-    Rboolean useX11 = TRUE, usegnome = FALSE;
+    Rboolean useX11 = TRUE, usegnome = FALSE, useTk = FALSE;
     Rboolean useaqua = FALSE;
     char *p, msg[1024], **avv;
     structRstart rstart;
@@ -166,6 +166,8 @@ int Rf_initialize_R(int ac, char **av)
 		useaqua = TRUE;
 	    else if(!strcmp(p, "X11") || !strcmp(p, "x11"))
 		useX11 = TRUE;
+	    else if(!strcmp(p, "Tk") || !strcmp(p, "tk"))
+		useTk = TRUE;
 	    else {
 #ifdef HAVE_X11
 		sprintf(msg, "WARNING: unknown gui `%s', using X11\n", p);
@@ -185,19 +187,15 @@ int Rf_initialize_R(int ac, char **av)
 
     ptr_GnomeDeviceDriver = stub_GnomeDeviceDriver;
     ptr_GTKDeviceDriver = stub_GTKDeviceDriver;
-    ptr_X11DeviceDriver = stub_X11DeviceDriver;
-    ptr_dataentry = stub_dataentry;
-    ptr_R_GetX11Image = stub_R_GetX11Image;
+    ptr_R_GetX11Image = R_GetX11Image;
 #ifdef HAVE_X11
     if(useX11) {
 	if(!usegnome) {
-	    R_load_X11_shlib();
 	    R_GUIType="X11";
 	} else {
 #ifndef HAVE_GNOME
 	    R_Suicide("GNOME GUI is not available in this version");
 #endif
-	    R_load_X11_shlib();
 	    R_load_gnome_shlib();
 	    R_GUIType="GNOME";
 	    ptr_gnome_start(ac, av, Rp);
@@ -210,6 +208,11 @@ int Rf_initialize_R(int ac, char **av)
     if(useaqua) {
 	    R_load_aqua_shlib();
 	    R_GUIType="AQUA";
+    }
+#endif
+#ifdef HAVE_TCLTK
+    if(useTk) {
+	    R_GUIType="Tk";
     }
 #endif
     R_common_command_line(&ac, av, Rp);
@@ -242,7 +245,7 @@ int Rf_initialize_R(int ac, char **av)
     } else { 
 #endif
     R_Outputfile = stdout;
-    R_Consolefile = stdout;
+    R_Consolefile = stderr;
 #ifdef HAVE_AQUA
     }
 #endif 

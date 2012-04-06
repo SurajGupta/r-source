@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2002 the R Development Core Group.
+ *  Copyright (C) 1999-2003 the R Development Core Group.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -122,6 +122,7 @@
 #define BINDING_IS_LOCKED(b) ((b)->sxpinfo.gp & BINDING_LOCK_MASK)
 #define SET_ACTIVE_BINDING_BIT(b) ((b)->sxpinfo.gp |= ACTIVE_BINDING_MASK)
 #define LOCK_BINDING(b) ((b)->sxpinfo.gp |= BINDING_LOCK_MASK)
+#define UNLOCK_BINDING(b) ((b)->sxpinfo.gp &= (~BINDING_LOCK_MASK))
 
 #define BINDING_VALUE(b) ((IS_ACTIVE_BINDING(b) ? getActiveValue(CAR(b)) : CAR(b)))
 
@@ -618,8 +619,8 @@ void InitGlobalEnv()
     R_PreserveObject(R_BaseNamespaceName);
     R_NamespaceRegistry = R_NewHashedEnv(R_NilValue);
     R_PreserveObject(R_NamespaceRegistry);
+    defineVar(install("base"), R_BaseNamespace, R_NamespaceRegistry);
     /**** need to properly initialize the base name space */
-    /**** need to enter base namespace in registry */
 #endif
 }
 
@@ -864,6 +865,11 @@ SEXP R_GetVarLocValue(R_varloc_t vl)
 SEXP R_GetVarLocSymbol(R_varloc_t vl)
 {
     return TAG((SEXP) vl);
+}
+
+int R_GetVarLocMISSING(R_varloc_t vl)
+{
+    return MISSING((SEXP) vl);
 }
 
 void R_SetVarLocValue(R_varloc_t vl, SEXP value)
@@ -1228,6 +1234,8 @@ SEXP findFun(SEXP symbol, SEXP rho)
     }
     if (SYMVALUE(symbol) == R_UnboundValue)
 	error("couldn't find function \"%s\"", CHAR(PRINTNAME(symbol)));
+    if (TYPEOF(SYMBOL_BINDING_VALUE(symbol)) == PROMSXP)
+	return eval(SYMBOL_BINDING_VALUE(symbol), rho);
     return SYMBOL_BINDING_VALUE(symbol);
 }
 
@@ -1386,7 +1394,15 @@ void setVar(SEXP symbol, SEXP value, SEXP rho)
     SEXP vl;
     while (rho != R_NilValue) {
 	R_DirtyImage = 1;
+#ifdef EXPERIMENTAL_NAMESPACES
+        if (rho == R_BaseNamespace && SYMVALUE(symbol) == R_UnboundValue)
+	    /* do not assign into base unless variable binding exists */
+	    vl = R_NilValue;
+	else
+	    vl = setVarInFrame(rho, symbol, value);
+#else
 	vl = setVarInFrame(rho, symbol, value);
+#endif
 	if (vl != R_NilValue) {
 	    return;
 	}
@@ -2375,6 +2391,26 @@ void R_LockBinding(SEXP sym, SEXP env)
     }
 }
 
+static void R_unLockBinding(SEXP sym, SEXP env)
+{
+    if (TYPEOF(sym) != SYMSXP)
+	error("not a symbol");
+    if (env != R_NilValue && TYPEOF(env) != ENVSXP)
+	error("not an environment");
+#ifdef EXPERIMENTAL_NAMESPACES
+    if (env == R_NilValue || env == R_BaseNamespace)
+#else
+    if (env == R_NilValue)
+#endif
+	UNLOCK_BINDING(sym);
+    else {
+	SEXP binding = findVarLocInFrame(env, sym, NULL);
+	if (binding == R_NilValue)
+	    error("no binding for \"%s\"", CHAR(PRINTNAME(sym)));
+	UNLOCK_BINDING(binding);
+    }
+}
+
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env)
 {
     if (TYPEOF(sym) != SYMSXP)
@@ -2485,7 +2521,16 @@ SEXP do_lockBnd(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     sym = CAR(args);
     env = CADR(args);
-    R_LockBinding(sym, env);
+    switch(PRIMVAL(op)) {
+    case 0:
+	R_LockBinding(sym, env);
+	break;
+    case 1:
+	R_unLockBinding(sym, env);
+	break;
+    default:
+	errorcall(call, "unknown op");
+    }
     return R_NilValue;
 }
 
@@ -2606,27 +2651,45 @@ Rboolean R_IsNamespaceEnv(SEXP rho)
     if (rho == R_BaseNamespace)
 	return TRUE;
     else if (TYPEOF(rho) == ENVSXP) {
-	SEXP name = findVarInFrame3(rho, install(".__NAMESPACE__."), TRUE);
-	if (name != R_UnboundValue &&
-	    TYPEOF(name) == STRSXP && LENGTH(name) > 0)
-	    return TRUE;
-	else
-	    return FALSE;
+	SEXP info = findVarInFrame3(rho, install(".__NAMESPACE__."), TRUE);
+	if (info != R_UnboundValue && TYPEOF(info) == ENVSXP) {
+	    SEXP spec = findVarInFrame3(info, install("spec"), TRUE);
+	    if (spec != R_UnboundValue &&
+		TYPEOF(spec) == STRSXP && LENGTH(spec) > 0)
+		return TRUE;
+	    else
+		return FALSE;
+	}
+	else return FALSE;
     }
     else return FALSE;
 }
   
-SEXP R_NamespaceEnvName(SEXP rho)
+SEXP do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
+    return R_IsNamespaceEnv(CAR(args)) ? mkTrue() : mkFalse();
+}
+
+SEXP R_NamespaceEnvSpec(SEXP rho)
+{
+    /* The name space spec is a character vector that specifies the
+       name space.  The first element is the name space name.  The
+       second element, if present, is the name space version.  Further
+       elements may be added later. */
     if (rho == R_BaseNamespace)
 	return R_BaseNamespaceName;
     else if (TYPEOF(rho) == ENVSXP) {
-	SEXP name = findVarInFrame3(rho, install(".__NAMESPACE__."), TRUE);
-	if (name != R_UnboundValue &&
-	    TYPEOF(name) == STRSXP && LENGTH(name) > 0)
-	    return name;
-	else
-	    return R_NilValue;
+	SEXP info = findVarInFrame3(rho, install(".__NAMESPACE__."), TRUE);
+	if (info != R_UnboundValue && TYPEOF(info) == ENVSXP) {
+	    SEXP spec = findVarInFrame3(info, install("spec"), TRUE);
+	    if (spec != R_UnboundValue &&
+		TYPEOF(spec) == STRSXP && LENGTH(spec) > 0)
+		return spec;
+	    else
+		return R_NilValue;
+	}
+	else return R_NilValue;
     }
     else return R_NilValue;
 }
@@ -2637,7 +2700,7 @@ SEXP R_FindNamespace(SEXP info)
     PROTECT(info);
     fun = install("getNamespace");
     if (findVar(fun, R_GlobalEnv) == R_UnboundValue) { /* not a perfect test */
-	warning("namespaces not abailable; using .GlobalEnv");
+	warning("namespaces not available; using .GlobalEnv");
 	UNPROTECT(1);
 	return R_GlobalEnv;
     }
@@ -2652,11 +2715,13 @@ SEXP R_FindNamespace(SEXP info)
 static SEXP checkNSname(SEXP call, SEXP name)
 {
     switch (TYPEOF(name)) {
-    case STRSXP:
-	if (LENGTH(name) == 1)
-	    name = install(CHAR(STRING_ELT(name, 0)));
-	/* fall through */
     case SYMSXP: break;
+    case STRSXP:
+	if (LENGTH(name) >= 1) {
+	    name = install(CHAR(STRING_ELT(name, 0)));
+	    break;
+	}
+	/* else fall through */
     default: errorcall(call, "bad name space name");
     }
     return name;
@@ -2706,5 +2771,68 @@ SEXP do_getNSRegistry(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     return R_NamespaceRegistry;
+}
+
+SEXP do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    /* This function copies values of variables from one environment
+       to another environment, possibly with different names.
+       Promises are not forced and active bindings are preserved. */
+    SEXP impenv, impnames, expenv, expnames;
+    SEXP impsym, expsym, binding, env, val;
+    int i, n;
+
+    checkArity(op, args);
+
+    impenv = CAR(args); args = CDR(args);
+    impnames = CAR(args); args = CDR(args);
+    expenv = CAR(args); args = CDR(args);
+    expnames = CAR(args); args = CDR(args);
+
+    if (TYPEOF(impenv) != ENVSXP && impenv != R_NilValue)
+	errorcall(call, "bad import environment argument");
+    if (TYPEOF(expenv) != ENVSXP && expenv != R_NilValue)
+	errorcall(call, "bad export environment argument");
+    if (TYPEOF(impnames) != STRSXP || TYPEOF(expnames) != STRSXP)
+	errorcall(call, "bad names argument");
+    if (LENGTH(impnames) != LENGTH(expnames))
+	errorcall(call, "length of import and export names must match");
+
+    n = LENGTH(impnames);
+    for (i = 0; i < n; i++) {
+	impsym = install(CHAR(STRING_ELT(impnames, i)));
+	expsym = install(CHAR(STRING_ELT(expnames, i)));
+
+	/* find the binding--may be a CONS cell or a symbol */
+	for (env = expenv, binding = R_NilValue;
+	     env != R_NilValue && binding == R_NilValue;
+	     env = ENCLOS(env))
+	    if (env == R_BaseNamespace) {
+		if (SYMVALUE(expsym) != R_UnboundValue)
+		    binding = expsym;
+	    }
+	    else
+		binding = findVarLocInFrame(env, expsym, NULL);
+	if (binding == R_NilValue)
+	    binding = expsym;
+
+	/* get value of the binding; do not force promises */
+	if (TYPEOF(binding) == SYMSXP) {
+	    if (SYMVALUE(expsym) == R_UnboundValue)
+		errorcall(call, "exported symbol '%s' has no value",
+			  CHAR(PRINTNAME(expsym)));
+	    val = SYMVALUE(expsym);
+	}
+	else val = CAR(binding);
+
+	/* import the binding */
+	if (IS_ACTIVE_BINDING(binding))
+	    R_MakeActiveBinding(impsym, val, impenv);
+	else if (impenv == R_BaseNamespace || impenv == R_NilValue)
+	    gsetVar(impsym, val, impenv);
+	else 
+	    defineVar(impsym, val, impenv);
+    }
+    return R_NilValue;
 }
 #endif

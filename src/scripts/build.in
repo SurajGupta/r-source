@@ -1,6 +1,6 @@
 #! @PERL@
 #-*- perl -*-
-# Copyright (C) 2000-2002 R Development Core Team
+# Copyright (C) 2000-2003 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ use Text::Wrap;
 ## don't buffer output
 $| = 1;
 
-my $revision = ' $Revision: 1.44 $ ';
+my $revision = ' $Revision: 1.57 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -53,22 +53,21 @@ R::Vars::error("R_HOME", "R_CMD");
 
 my $WINDOWS = ($R::Vars::OSTYPE eq "windows");
 
-my @excludepatterns = R::Utils::get_exclude_patterns();
+my @exclude_patterns = R::Utils::get_exclude_patterns();
 
-my $vignette_exts_re = "[rRsS](nw|tex)";
-
-my @knownoptions = ("help|h", "version|v", "binary", "no-docs",
-		    "use-zip", "use-zip-help", "use-zip-data",
-		    "force", "no-vignettes");
+my @known_options = ("help|h", "version|v", "binary", "no-docs",
+		     "use-zip", "use-zip-help", "use-zip-data",
+		     "force", "no-vignettes");
 
 if($WINDOWS) {
     die "Please set TMPDIR to a valid temporary directory\n"
 	unless (-e ${R::Vars::TMPDIR});
-    @knownoptions = ("help|h", "version|v", "binary", "docs:s",
-		    "use-zip", "use-zip-help", "use-zip-data", "force");
+    @known_options = ("help|h", "version|v", "binary", "docs:s", "auto-zip",
+		      "use-zip", "use-zip-help", "use-zip-data", 
+		      "force", "no-vignettes");
 }
 
-GetOptions (@knownoptions) or usage();
+GetOptions(@known_options) or usage();
 
 R_version("R add-on package builder", $version) if $opt_version;
 usage() if $opt_help;
@@ -84,6 +83,7 @@ $INSTALL_opts .= " --use-zip-data" if $opt_use_zip_data;
 $INSTALL_opts .= " --use-zip-help" if $opt_use_zip_help;
 if($WINDOWS) {
     $INSTALL_opts .= " --docs=$opt_docs" if $opt_docs;
+    $INSTALL_opts .= " --auto-zip" if $opt_auto_zip;
 } else {
     $INSTALL_opts .= " --no-docs" if $opt_no_docs;
 }
@@ -138,11 +138,12 @@ foreach my $pkg (@ARGV) {
 	if($WINDOWS) {
 	    my $filename = "${pkgname}_" . $description->{"Version"};
 	    $log->message("building '$filename.zip'");
+	    system("rm -f $startdir/$filename.zip");
 	    system("zip -r9X $startdir/$filename.zip $pkgs");
 	    chdir($startdir);
 	} else {
 	    ## <FIXME>
-	    ## As R CMD INSTALL recursively copies all of `inst', we at
+	    ## As R CMD INSTALL recursively copies all of 'inst', we at
 	    ## least need to make sure that CVS subdirs are excluded.
 	    ## It is not clear whether more patterns should be excluded,
 	    ## and we also need to fix this under Windows.
@@ -198,23 +199,34 @@ foreach my $pkg (@ARGV) {
 	open(EXCLUDE, "> $exclude")
 	  or die "Cannot write to '$exclude'\n";
 	binmode EXCLUDE if $WINDOWS;
+	## <NOTE>
+	## For bundles, the .Rbuildignore mechanism is not consistent
+	## between build and check: the latter always works on a per
+	## package basis.  Maybe fix this once we know whether we want
+	## to keep bundles ...
 	if(-f "$pkg/.Rbuildignore") {
 	    open(RBUILDIGNORE, "$pkg/.Rbuildignore");
 	    while(<RBUILDIGNORE>) {
 		chop;
-		push(@excludepatterns, $_) if $_;
+		push(@exclude_patterns, $_) if $_;
 	    }
 	    close(RBUILDIGNORE);
 	}
+	## </NOTE>
 	sub findExcludeFiles {
 	    print EXCLUDE "$File::Find::name\n" if(-d $_ && /^check$/);
 	    print EXCLUDE "$File::Find::name\n" if(-d $_ && /^chm$/);
 	    print EXCLUDE "$File::Find::name\n" if(-d $_ && /[Oo]ld$/);
 	    print EXCLUDE "$File::Find::name\n" if /^GNUMakefile$/;
 	    print EXCLUDE "$File::Find::name\n" if /^CVS$/;
+	    if($WINDOWS) {
+		## exclude stray dependency files
+		print EXCLUDE "$File::Find::name\n" if /\.d$/;
+		print EXCLUDE "$File::Find::name\n" if /^Makedeps$/;
+	    }
 	    my $filename = $File::Find::name;
 	    $filename =~ s/^[^\/]*\///;
-	    foreach my $p (@excludepatterns) {
+	    foreach my $p (@exclude_patterns) {
 		if($WINDOWS) {
 		    ## Argh: Windows is case-honoring but not
 		    ## case-insensitive ...
@@ -248,15 +260,7 @@ foreach my $pkg (@ARGV) {
 }
 
 
-sub deleteJunkFiles {
-    unlink($_) if /^(\.RData|\.Rhistory)$/;
-    if(/^DESCRIPTION$/) {
-	unlink($_) if (-f "DESCRIPTION.in");
-    }
-}
-
-#**********************************************************
-
+
 sub prepare_pkg {
 
     my ($pkg, $in_bundle, $description, $log) = @_;
@@ -269,6 +273,8 @@ sub prepare_pkg {
 	chdir("src");
 	$log->message("cleaning src");
 	if($WINDOWS) {
+	    ## a Windows Makefile.win might use $(RHOME)/src/gnuwin32/MkRules
+	    $ENV{RHOME} = $ENV{R_HOME};
 	    if(-r "Makefile.win") {
 		system("${R::Vars::MAKE} -f Makefile.win clean");
 	    } else {
@@ -294,24 +300,44 @@ sub prepare_pkg {
 	system("./cleanup");
     }
 
-    updateRdIndex("INDEX", "man", 0, $log);
-    updateRdIndex("data/00Index", "man", 1, $log) if(-d "data");
+    &updateRdIndex("INDEX", "man", 0, $log);
+    &updateRdIndex(&file_path("data", "00Index"), "man", 1, $log)
+	if((-d "data") && &list_files_with_type("data", "data"));
 
-    if(!$opt_no_vignettes && (-d "inst/doc")) {
-	if(list_files_with_exts("inst/doc", $vignette_exts_re)) {
+    if((-d &file_path("inst", "doc"))
+       && &list_files_with_type(&file_path("inst", "doc"),
+				"vignette")) {
+	if(!$opt_no_vignettes) {
 	    $log->creating("vignettes");
 	    my $Rcmd = "library(tools); buildVignettes(dir='.')\n";
 	    my @out = R_runR($Rcmd, "--vanilla --no-save --quiet");
-	    $log->result("done");
-	    updateVignetteIndex("inst/doc/00Index.dcf", "inst/doc", $log);
+	    my @err = grep(/^Error/, @out);
+	    if($#err >= 0) {
+		@out = grep(!/^\>/, @out);
+		$log->error();
+		$log->print(join("\n", @out) . "\n");
+		exit(1);
+	    }
+	    else {
+		$log->result("OK");
+	    }
 	}
+	&updateVignetteIndex(&file_path("inst", "doc", "00Index.dcf"),
+			     &file_path("inst", "doc"),
+			     $log);
     }
 
     1;
 }
 
-#**********************************************************
+sub deleteJunkFiles {
+    unlink($_) if /^(\.RData|\.Rhistory)$/;
+    if(/^DESCRIPTION$/) {
+	unlink($_) if (-f "DESCRIPTION.in");
+    }
+}
 
+
 sub updateIndex {
     my ($oldindex, $newindex, $log) = @_;
     
@@ -348,16 +374,18 @@ sub updateIndex {
 
 sub updateRdIndex {
     my ($oldindex, $Rdfiles, $dataset, $log) = @_;
-    
-    my $newindex = ".Rbuildindex.$$";
-    my $dataopt = "-d" if $dataset;
 
-    ## <NOTE>
-    ## Rdindex really is a Perl script, so we could work around this
-    ## call to R_system().
-    R_system("${R::Vars::R_CMD} Rdindex $dataopt ${Rdfiles} "
-	     . "> ${newindex}");
-    ## </NOTE>
+    my $newindex = ".Rbuildindex.$$";
+
+    my $Rcmd = "library(tools)\n";
+    $Rcmd .= "Rdindex(\"${Rdfiles}\", \"${newindex}\"";
+    $Rcmd .= ", type = \"data\"" if($dataset);
+    $Rcmd .= ")";
+
+    ## <FIXME>
+    ## What if this fails?
+    R_runR($Rcmd, "--vanilla --quiet");
+    ## </FIXME>
 
     updateIndex($oldindex, $newindex, $log);
     1;
@@ -380,27 +408,31 @@ sub buildVignetteIndex {
     my $delimcurly = new Text::DelimMatch("\\{", "\\}");
     $delimcurly->escape("\\");
     my @entries = ();
-    my @Snwfiles = &list_files_with_exts("$dir", $vignette_exts_re);
+    my @vignette_files = &list_files_with_type($dir, "vignette");
 
-    foreach my $file (@Snwfiles) {
-	open(SNWFILE, "< $file")
-	    or die("Error: cannot open '$file' for reading");
-	my @text = <SNWFILE>;
-	@text = split(/\n\s*\%+\s*\\VignetteIndexEntry\{/,
-		      "\n" . join("\n", @text));
-	if($#text >= 1) {
-	    $delimcurly->match("\{" . $text[1]);
-	    $file =~ s/\.$vignette_exts_re$//;
-	    push(@entries,
-		 "$file.pdf: " . substr($delimcurly->matched, 1, -1));
+    foreach my $file (@vignette_files) {
+        open(FILE, "< $file")
+            or die("Error: cannot open '$file' for reading");
+        my @text = <FILE>;
+        @text = split(/\n\s*\%+\s*\\VignetteIndexEntry\{/,
+                      "\n" . join("\n", @text));
+	$file =~ s/\.[[:alpha:]]+$//;
+	$file = basename($file);
+        if($#text >= 1) {
+            $delimcurly->match("\{" . $text[1]);
+            push(@entries,
+                 "$file.pdf: " . substr($delimcurly->matched, 1, -1));
+        }
+	else {
+	    push(@entries, "$file.pdf:");
 	}
-	close(SNWFILE);
+        close(FILE);
     }
 
     open(NEWINDEX, "> $newindex")
-	or die("Error: cannot open '$newindex' for writing");
+        or die("Error: cannot open '$newindex' for writing");
     foreach my $entry (@entries) {
-	print NEWINDEX wrap("", "    ", $entry), "\n";
+        print NEWINDEX wrap("", "    ", $entry), "\n";
     }
     close(NEWINDEX);
 
@@ -408,8 +440,7 @@ sub buildVignetteIndex {
 
 }
 
-#**********************************************************
-
+
 sub usage {
     print STDERR <<END;
 Usage: R CMD $name [options] pkgdirs
@@ -429,6 +460,8 @@ END
     if($WINDOWS) {
 	print STDERR "  --docs=TYPE           " .
 	    "type(s) of documentation to build and install\n";
+	print STDERR "  --auto-zip            " .
+	    "select zipping of data and help based on size\n";
     } else {
 	print STDERR "  --no-docs             " .
 	    "do not build and install documentation\n";

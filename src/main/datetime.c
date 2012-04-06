@@ -231,6 +231,7 @@ static double guess_offset (struct tm *tm)
     if(olddst < 0) {
 	offset1 = (double) mktime(tm) - mktime00(tm);
 	olddst = (offset1 < offset) ? 1:0;
+	if(olddst) offset = offset1;
     }
     tm->tm_year = oldyear;
     tm->tm_isdst = olddst;
@@ -366,7 +367,7 @@ static int set_tz(char *tz, char *oldtz)
 #else
     char *p = NULL;
     int settz = 0;
-    char buff[20];
+    static char buff[200];
 
     strcpy(oldtz, "");
     p = getenv("TZ");
@@ -395,7 +396,7 @@ static void reset_tz(char *tz)
 #else
     if(strlen(tz)) {
 #ifdef HAVE_PUTENV
-        char buff[20];
+        static char buff[200];
 	strcpy(buff, "TZ="); strcat(buff, tz);
 	putenv(buff);
 #else

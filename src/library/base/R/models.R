@@ -45,7 +45,8 @@ print.formula <- function(x, ...) {
 
 "[.formula" <- function(x,i) {
     ans <- NextMethod("[")
-    if(as.character(ans[[1]]) == "~"){
+    ## as.character gives a vector.
+    if(as.character(ans[[1]])[1] == "~"){
 	class(ans) <- "formula"
         environment(ans)<-environment(x)
     }
@@ -62,15 +63,29 @@ terms.default <- function(x, ...) {
 
 terms.terms <- function(x, ...) x
 print.terms <- function(x, ...) print.default(unclass(x))
+
+### do this `by hand' as previous approach was vulnerable to re-ordering.
 delete.response <- function (termobj)
 {
-    f <- formula(termobj)
-    if (length(f) == 3) f[[2]] <- NULL
-    tt <- terms(f, specials = names(attr(termobj, "specials")))
-    attr(tt, "intercept") <- attr(termobj, "intercept")
-    if (length(formula(termobj)) == 3)
-        attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
-    tt
+    a <- attributes(termobj)
+    y <- a$response
+    if(!is.null(y) && y) {
+        termobj[[2]] <- NULL
+        a$response <- 0
+        a$variables <- a$variables[-(1+y)]
+        a$predvars <- a$predvars[-(1+y)]
+        if(length(a$factors))
+            a$factors <- a$factors[-y, , drop = FALSE]
+        if(length(a$offset))
+            a$offset <- ifelse(a$offset > y, a$offset-1, a$offset)
+        if(length(a$specials))
+            for(i in 1:length(a$specials)) {
+                b <- a$specials[[i]]
+                a$specials[[i]] <- ifelse(b > y, b-1, b)
+            }
+        attributes(termobj) <- a
+    }
+    termobj
 }
 
 reformulate <- function (termlabels, response=NULL)
@@ -99,8 +114,24 @@ drop.terms <- function(termobj, dropx=NULL, keep.response = FALSE)
     }
 }
 
+
+"[.terms" <-function (termobj, i) {
+        resp <- if (attr(termobj, "response")) 
+                termobj[[2]]
+        else NULL
+        newformula <- attr(termobj, "term.labels")[i]
+        if (length(newformula) == 0) 
+                newformula <- 1
+        newformula <- reformulate(newformula, resp)
+        environment(newformula)<-environment(termobj)
+        terms(newformula, specials = names(attr(termobj, "specials")))
+
+}
+
+
 terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
-			  neg.out = TRUE, keep.order = FALSE, ...)
+			  neg.out = TRUE, keep.order = FALSE,
+                          simplify = FALSE, ...)
 {
     fixFormulaObject <- function(object) {
 	tmp <- attr(terms(object), "term.labels")
@@ -108,33 +139,20 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
 	lhs <- if(length(form) == 2) NULL else paste(deparse(form[[2]]),collapse="")
 	rhs <- if(length(tmp)) paste(tmp, collapse = " + ") else "1"
 	if(!attr(terms(object), "intercept")) rhs <- paste(rhs, "- 1")
-	ff <- formula(paste(lhs, "~", rhs))
-        environment(ff) <- environment(form)
-        ff
+	formula(paste(lhs, "~", rhs))
     }
+
     if (!is.null(data) && !is.environment(data) && !is.data.frame(data))
 	data <- as.data.frame(data)
-    new.specials <- unique(c(specials, "offset"))
-    tmp <- .Internal(terms.formula(x, new.specials, abb, data, keep.order))
-    ## need to fix up . in formulae in R
-    terms <- fixFormulaObject(tmp)
-    attributes(terms) <- attributes(tmp)
-    environment(terms) <- environment(x)
-    offsets <- attr(terms, "specials")$offset
-    if (!is.null(offsets)) {
-	names <- dimnames(attr(terms, "factors"))[[1]][offsets]
-	offsets <- match(names, dimnames(attr(terms, "factors"))[[2]])
-	offsets <- offsets[!is.na(offsets)]
-	if (length(offsets) > 0) {
-	    attr(terms, "factors") <- attr(terms, "factors")[, -offsets, drop = FALSE]
-	    attr(terms, "term.labels") <- attr(terms, "term.labels")[-offsets]
-	    attr(terms, "order") <- attr(terms, "order")[-offsets]
-	    attr(terms, "offset") <- attr(terms, "specials")$offset
-	}
+    terms <- .Internal(terms.formula(x, specials, data, keep.order))
+    if (simplify) {
+        a <- attributes(terms)
+        terms <- fixFormulaObject(terms)
+        attributes(terms) <- a
     }
-    attr(terms, "specials")$offset <- NULL
-    if( !inherits(terms, "formula") )
-        class(terms) <- c(class(terms), "formula")
+    environment(terms) <- environment(x)
+    if(!inherits(terms, "formula"))
+        class(terms) <- c(oldClass(terms), "formula")
     terms
 }
 
@@ -322,6 +340,7 @@ model.matrix.default <- function(object, data = environment(object),
     attr(ans, "contrasts") <- cons
     ans
 }
+
 model.response <- function (data, type = "any")
 {
     if (attr(attr(data, "terms"), "response")) {

@@ -1,6 +1,6 @@
 # Subroutines for building R documentation
 
-# Copyright (C) 1997-2000 R Development Core Team
+# Copyright (C) 1997-2002 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@ package R::Rdlists;
 
 require  Exporter;
 @ISA     = qw(Exporter);
-@EXPORT  = qw(buildinit read_titles read_htmlindex read_anindex build_htmlpkglist build_index fileolder foldorder);
+@EXPORT  = qw(buildinit read_titles read_htmlindex read_htmlpkgindex read_anindex build_htmlpkglist build_index fileolder foldorder);
 
 use Cwd;
 use File::Basename;
 use R::Utils;
 use R::Vars;
+use R::Dcf;
 
 if($main::opt_dosnames) { $HTML = ".htm"; } else { $HTML = ".html"; }
 
@@ -119,17 +120,17 @@ sub read_titles {
     foreach $pkg (@libs) {
 	if(-d file_path($lib, $pkg)){
 	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
-		if(-r file_path($lib, $pkg, "TITLE")){
-		    open rtitle, "<" . file_path($lib, $pkg, "TITLE");
-		    $_ = <rtitle>;
-		    /^(\S*)\s*(.*)/;
-		    my $pkgname = $1;
-		    $tit{$pkgname} = $2;
-		    while(<rtitle>){
-			/\s*(.*)/;
-			$tit{$pkgname} = $tit{$pkgname} . "\n" .$1;
+		if(-r file_path($lib, $pkg, "DESCRIPTION")){
+		    my $rdcf = R::Dcf->new(file_path($lib, $pkg, "DESCRIPTION"));
+		    my $pkgname = $pkg;
+		    if($rdcf->{"Package"}) {
+			 $pkgname = $rdcf->{"Package"};
 		    }
-		    close rtitle;
+		    if($rdcf->{"Title"}) {
+			$tit{$pkgname} = $rdcf->{"Title"};
+		    } else {
+			$tit{$pkgname} = "-- Title is missing --";
+		    }
 		}
 	    }
 	}
@@ -171,6 +172,24 @@ sub read_htmlindex {
     %htmlindex;
 }
 
+sub read_htmlpkgindex {
+
+    my $lib = $_[0];
+    my $pkg = $_[1];
+
+    my %htmlindex;
+
+    if(-r file_path($lib, $pkg, "help", "AnIndex")){
+	open ranindex, "<".file_path($lib, $pkg, "help", "AnIndex");
+	while(<ranindex>){
+	    /^([^\t]*)\s*\t(.*)/;
+	    $htmlindex{$1} = file_path($pkg, "html", $2.$HTML);
+	}
+	close ranindex;
+    }
+    %htmlindex;
+}
+
 sub read_anindex {
 
     my $lib = $_[0];
@@ -200,7 +219,7 @@ sub read_anindex {
 
 
 
-### Build $R_HOME/doc/html/packages.html from the $pkg/TITLE files
+### Build $R_HOME/doc/html/packages.html from the $pkg/DESCRIPTION files
 
 sub build_htmlpkglist {
 
@@ -219,16 +238,17 @@ sub build_htmlpkglist {
 				 "", "",
 				 "", "", "./R.css");
 
-    print htmlfile "<table align=\"center\" summary=\"R Package list\">\n";
+    print htmlfile "<p><h3>Packages in the standard library</h3>\n", 
+    "<p>\n<table width=\"100%\">\n";
 
     foreach $key (sort(keys %htmltitles)) {
 	print htmlfile "<tr align=\"left\" valign=\"top\">\n";
-	print htmlfile "<td><a href=\"../../library/$key/html/00Index$HTML\">";
+	print htmlfile "<td width=\"25%\"><a href=\"../../library/$key/html/00Index$HTML\">";
 	print htmlfile encodealias($key), "</a></td><td>";
 	print htmlfile $htmltitles{$key}, "</td></tr>\n";
     }
 
-    print htmlfile "</table>\n";
+    print htmlfile "</table>\n\n";
     print htmlfile "</body></html>\n";
 
     close htmlfile;
@@ -265,11 +285,14 @@ sub build_index { # lib, dest
         mkdir("$dest", $dir_mod) or die "Could not create directory $dest: $!\n";
     }
 
-    open title, "<../TITLE";
-    my $title = <title>;
-    close title;
-    chomp $title;
-    $title =~ s/^\S*\s*(.*)/$1/;
+    my $title = "";
+    if(-r "../DESCRIPTION") {
+	my $rdcf = R::Dcf->new("../DESCRIPTION");
+	if($rdcf->{"Title"}) {
+	    $title = $rdcf->{"Title"};
+	    chomp $title;
+	}
+    }
 
     my $tdir = file_path($dest, "help");
     if(! -d $tdir) {
@@ -491,8 +514,8 @@ sub html_pagehead
 	    if $up;
 
     $retval .= "<a href=\"$next\"><img src=\"$top/right.jpg\"\n" .
-    "alt=\"[$nextext]\" width=\"30\" height=\"30\" border=\"0\"></a>\n"
-	if $next;
+	"alt=\"[$nextext]\" width=\"30\" height=\"30\" border=\"0\"></a>\n"
+	if $next;  # always so in current usage
 
     $retval .= "</div>\n\n";
 

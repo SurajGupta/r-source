@@ -26,17 +26,15 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 HHWDIR=C:/Program Files/HTML Help Workshop
 
 # Where does Tcl/Tk live? Spaces allowed.
-TCL_HOME = C:/packages/Tcl
-TCL_VERSION = 83
+TCL_HOME = $(RHOME)/Tcl
+TCL_VERSION = 84
 
 ## ====== configuration macros for building installers ===========
 
-# location where Inno Setup 3.x or 2.0.x was installed
+# location where Inno Setup 3.x was installed
 ISDIR=C:/packages/Inno3
-# Inno Setup major version number
-IS_VERSION=3
 
-## =================== cross-compiler settings  =================
+## =================== cross-compilation settings  =================
 
 ifeq ($(strip $(BUILD)),CROSS)
 # Next two might be i386-mingw32msvc- or i586- depending on the cross-compiler.
@@ -44,6 +42,8 @@ BINPREF=mingw32-
 # Set this to where the mingw32 include files are. It must be accurate.
 HEADER=/users/ripley/R/cross-tools/mingw32/include
 endif
+# path (possibly full path) to same version of R on the host system
+R_EXE=R
 
 ## =============== end of user-customizable parts  ===================
 
@@ -58,6 +58,8 @@ MINGW32CFLAG=
 MINGW32LDFLAG=
 FLIBS=-lg2c
 AWK=gawk
+## only safe for gcc >= 3.1
+DEPARG=-MM
 endif
 
 ifeq ($(strip $(BUILD)),CROSS)
@@ -65,6 +67,8 @@ MINGW32CFLAG=-isystem $(HEADER)
 MINGW32LDFLAG=
 FLIBS=-lg2c
 AWK=awk
+## BDR's build of cross-compiler is 2.95.3
+DEPARG=-M
 endif
 
 PERL=perl
@@ -92,19 +96,19 @@ RESCOMP=$(BINPREF)windres
 
 .c.d:
 	@echo "making $@ from $<"
-	@$(CC) -M $(CFLAGS) $($*-CFLAGS) $< -o $@
+	@$(CC) $(DEPARG) $(CFLAGS) $($*-CFLAGS) $< -o $@
 
 .cc.d:
 	@echo "making $@ from $<"
-	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
+	@$(CXX) $(DEPARG) $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
 
 .cpp.d:
 	@echo "making $@ from $<"
-	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
+	@$(CXX) $(DEPARG) $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
 
 .C.d:
 	@echo "making $@ from $<"
-	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
+	@$(CXX) $(DEPARG) $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) $($*-CFLAGS) -c $< -o $@
@@ -125,21 +129,21 @@ RESCOMP=$(BINPREF)windres
 	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
 
 %.dll:
-	@$(ECHO) ------- Building $@ from $^ --------
-	$(ECHO) LIBRARY $* > $*.def
-	$(ECHO) EXPORTS >> $*.def
-	$(NM) $^ > Defs
-	$(SED) -n '/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p' Defs >> $*.def
-	$(RM) Defs
+#	@$(ECHO) ------- Building $@ from $^ --------
+	@$(ECHO) LIBRARY $* > $*.def
+	@$(ECHO) EXPORTS >> $*.def
+	@$(NM) $^ > Defs
+	@$(SED) -n '/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p' Defs >> $*.def
+	@$(RM) Defs
 	$(DLL) --shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
-	$(RM) $*.def
+	@$(RM) $*.def
 
 lib%.a: %.def
 	@$(ECHO) -------- Building $@ from $^ --------
 	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.dll --def $*.def --output-lib lib$*.a
 
 %.a:
-	@$(ECHO) -------- Building $@ from $^ --------
+#	@$(ECHO) -------- Building $@ from $^ --------
 	$(AR) cr $@ $^
 	$(RANLIB) $@
 

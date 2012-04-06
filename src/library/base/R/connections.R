@@ -26,13 +26,11 @@ open <- function(con, ...)
 
 open.connection <- function(con, open = "r", blocking = TRUE, ...)
 {
-    if(!inherits(con, "connection")) stop("argument is not a connection")
     invisible(.Internal(open(con, open, blocking)))
 }
 
 isOpen <- function(con, rw = "")
 {
-    if(!inherits(con, "connection")) stop("argument is not a connection")
     rw <- pmatch(rw, c("read", "write"), 0)
     .Internal(isOpen(con, rw))
 }
@@ -47,10 +45,12 @@ close <- function(con, ...)
     UseMethod("close")
 
 close.connection <- function (con, type = "rw", ...)
-{
-    if(!inherits(con, "connection")) stop("argument is not a connection")
     invisible(.Internal(close(con, type)))
-}
+
+flush <- function(con) UseMethod("flush")
+
+flush.connection <- function (con)
+    invisible(.Internal(flush(con)))
 
 file <- function(description = "", open = "", blocking = TRUE,
                  encoding = getOption("encoding"))
@@ -208,3 +208,6 @@ writeChar <- function(object, con, nchars = nchar(object), eos = "")
     }
     invisible(.Internal(writeChar(object, con, as.integer(nchars), eos)))
 }
+
+gzcon <- function(con, level = 6, allowNonCompressed = TRUE)
+    .Internal(gzcon(con, level, allowNonCompressed))

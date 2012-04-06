@@ -5,10 +5,10 @@ all: profiles fixh fixhtml fixbin fixetc fixshare
 profiles: ../../../library/base/R/Rprofile
 
 ../../../library/base/R/Rprofile:  ../../library/profile/Common.R \
-../../library/profile/Rprofile.gnw
+../../library/profile/Rprofile.windows
 	@$(ECHO) -------- Building $@ from $^--------
 	mkdir -p ../../../library/base/R
-	$(CAT)  $^ > $@
+	@$(CAT)  $^ > $@
 
 
 SED0='/^\#/d'
@@ -18,14 +18,8 @@ SED2='s/C_FUNCTION(\(.*\))/void * \1();/'
 SED3='s/F77_SUBROUTINE(\(.*\))/	{ "\1_",	\1_},/'
 SED4='s/C_FUNCTION(\(.*\))/{ "\1",	\1 },/'
 
-../FFDecl.h: ../../appl/ROUTINES
-	$(SED) -e $(SED0) -e $(SED01) -e $(SED1) -e $(SED2) $< > $@
-../FFTab.h: ../../appl/ROUTINES
-	$(SED) -e $(SED0) -e $(SED01) -e $(SED3) -e $(SED4) $< > $@
-
-
 version: ../../include/Rversion.h
-fixh: version h/config.h ../FFDecl.h ../FFTab.h \
+fixh: version h/config.h \
   ../../include/Rconfig.h  ../../include/Rmath.h
 	@$(CP) -p ./h/config.h ./h/psignal.h ../../include
 	@$(ECHO) done > fixh
@@ -40,10 +34,8 @@ fixh: version h/config.h ../FFDecl.h ../FFTab.h \
 	sh ../../../tools/GV > $@
 	$(RM) ../../../tools/GV
 
-# some headers have log1p, but end user's set may not have.
-# so assume not.
-../../include/Rmath.h: ../../include/Rmath.h.in
-	$(SED) -e /@RMATH_HAVE_LOG1P@/d  -e /@RMATH_HAVE_EXPM1@/d $< > $@
+../../include/Rmath.h: ../../include/Rmath.h0.in
+	$(SED) -e 's/@RMATH_HAVE_LOG1P@/# define HAVE_LOG1P 1/'  -e /@RMATH_HAVE_EXPM1@/d $< > $@
 
 ../../../bin/massage-Examples: ../../../share/perl/massage-Examples.pl
 	$(SED) -e 's/"contr.poly")/"contr.poly"), pager="console"/' $< > $@
@@ -64,7 +56,7 @@ fixh: version h/config.h ../FFDecl.h ../FFTab.h \
 	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ -e "s/R CMD/Rcmd/" $< > $@
 
 ../../../bin/Rdiff.sh: ../../scripts/Rdiff
-	$(SED) -e 1d $< > $@
+	$(SED) -e 1d -e 's/\$${EGREP}/grep -E/' $< > $@
 
 ../../../bin/Rprof: ../../scripts/Rprof.in
 	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
@@ -97,7 +89,7 @@ clean:
 	$(RM) *~ */*~ fixhtml fixh fixbin fixetc fixshare
 
 distclean: clean
-	$(RM) -f ../FFDecl.h ../FFTab.h ../../../tools/GV
+	$(RM) -f ../../../tools/GV
 
 ../../../doc/html/search/SearchEngine.html:../../../doc/KEYWORDS.db
 	(cd ../../../doc; \

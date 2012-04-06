@@ -3,6 +3,9 @@
 \alias{glm.fit}
 \alias{glm.fit.null}
 \alias{weights.glm}
+\alias{print.glm}
+\alias{print.glm.null}
+
 \title{Fitting Generalized Linear Models}
 \description{
   \code{glm} is used to fit generalized linear models, specified by
@@ -11,17 +14,17 @@
 }
 \usage{
 glm(formula, family = gaussian, data, weights = NULL, subset = NULL,
-    na.action, start = NULL, offset = NULL,
-    control = glm.control(\dots), model = TRUE, method = "glm.fit",
-    x = FALSE, y = TRUE, contrasts = NULL, \dots)
+    na.action, start = NULL, etastart = NULL, mustart = NULL,
+    offset = NULL, control = glm.control(\dots), model = TRUE,
+    method = "glm.fit", x = FALSE, y = TRUE, contrasts = NULL, \dots)
 
 glm.fit(x, y, weights = rep(1, nrow(x)),
-        start = NULL, etastart  =  NULL, mustart = NULL,
+        start = NULL, etastart = NULL, mustart = NULL,
         offset = rep(0, nrow(x)),
         family = gaussian(), control = glm.control(),
         intercept = TRUE)
 glm.fit.null(x, y, weights = rep(1, nrow(x)),
-        start = NULL, etastart  =  NULL, mustart = NULL,
+        start = NULL, etastart = NULL, mustart = NULL,
         offset = rep(0, nrow(x)),
         family = gaussian(), control = glm.control(),
         intercept = FALSE)
@@ -118,8 +121,8 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   is specified, the first in the list will be used.
 }
 \value{
-  \code{glm} returns an object of class \code{glm}
-  which inherits from the class \code{lm}. See later in this section.
+  \code{glm} returns an object of class inheriting from \code{"glm"}
+  which inherits from the class \code{"lm"}. See later in this section.
 
   The function \code{\link{summary}} (i.e., \code{\link{summary.glm}}) can
   be used to obtain or print a summary of the results and the function
@@ -176,6 +179,9 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   \item{xlevels}{(where relevant) a record of the levels of the factors
     used in fitting.}
 
+  Fits from null models have class \code{"glm.null"} inheriting from
+  \code{"glm"}.
+  
   In addition, non-null fits will have components \code{qr}, \code{R}
   and \code{effects} relating to the final weighted linear fit.
 
@@ -212,8 +218,8 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   \emph{An Introduction to Generalized Linear Models.}
   London: Chapman and Hall.
 
-  Venables, W. N. and Ripley, B. D. (1999)
-  \emph{Modern Applied Statistics with S-PLUS.}
+  Venables, W. N. and Ripley, B. D. (2002)
+  \emph{Modern Applied Statistics with S.}
   New York: Springer.
 }
 
@@ -227,7 +233,7 @@ glm.D93 <- glm(counts ~ outcome + treatment, family=poisson())
 anova(glm.D93)
 summary(glm.D93)
 
-## an example with offsets from Venables & Ripley (1999, pp.217-8)
+## an example with offsets from Venables & Ripley (2002, p.189)
 \testonly{"anorexia" <-
 structure(list(Treat = structure(c(2, 2, 2, 2, 2, 2, 2, 2, 2,
 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
@@ -273,18 +279,6 @@ clotting <- data.frame(
     lot2 = c(69,35,26,21,18,16,13,12,12))
 summary(glm(lot1 ~ log(u), data=clotting, family=Gamma))
 summary(glm(lot2 ~ log(u), data=clotting, family=Gamma))
-
-\testonly{
-## these are the same -- example from Jim Lindsey
-y <- rnorm(20)
-y1 <- y[-1]; y2 <- y[-20]
-summary(g1 <- glm(y1 - y2 ~ 1))
-summary(g2 <- glm(y1 ~ offset(y2)))
-Eq <- function(x,y) all.equal(x,y, tol = 1e-12)
-stopifnot(Eq(coef(g1), coef(g2)),
-          Eq(deviance(g1), deviance(g2)),
-          Eq(resid(g1), resid(g2)))
-}
 }
 \keyword{models}
 \keyword{regression}

@@ -1,7 +1,8 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2001   The R Development Core Team.
+ *  Copyright (C) 1998-2001   The R Development Core Team
+ *  Copyright (C) 2002--2003  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,9 +14,10 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  A copy of the GNU General Public License is available via WWW at
+ *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
+ *  writing to the Free Software Foundation, Inc., 59 Temple Place,
+ *  Suite 330, Boston, MA  02111-1307  USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,6 +29,7 @@
 #include "Graphics.h"
 #include "Rdevices.h"		/* for InitGraphics */
 #include "IOStuff.h"
+#include "Fileio.h"
 #include "Parse.h"
 #include "Startup.h"
 
@@ -54,6 +57,7 @@ void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean
 
 static int ParseBrowser(SEXP, SEXP);
 
+extern void InitDynload();
 
 
 	/* Read-Eval-Print Loop [ =: REPL = repl ] with input from a file */
@@ -119,10 +123,10 @@ char *R_PromptString(int browselevel, int type)
 }
 
 /*
-  This is a reorganization of the REPL (Read-Eval-Print Loop) to separate 
-  the loop from the actions of the body. The motivation is to make the iteration 
-  code (Rf_ReplIteration) available as a separately callable routine 
-  to avoid cutting and pasting it when one wants a single iteration 
+  This is a reorganization of the REPL (Read-Eval-Print Loop) to separate
+  the loop from the actions of the body. The motivation is to make the iteration
+  code (Rf_ReplIteration) available as a separately callable routine
+  to avoid cutting and pasting it when one wants a single iteration
   of the loop. This is needed as we allow different implementations
   of event loops. Currently (summer 2002), we have a package in
   preparation that uses Rf_ReplIteration within either the
@@ -138,9 +142,9 @@ char *R_PromptString(int browselevel, int type)
 
 
 /**
-  (local) Structure for maintaining and exchanging the state between 
+  (local) Structure for maintaining and exchanging the state between
   Rf_ReplConsole and its worker routine Rf_ReplIteration which is the
-  implementation of the body of the REPL. 
+  implementation of the body of the REPL.
 
   In the future, we may need to make this accessible to packages
   and so put it into one of the public R header files.
@@ -156,14 +160,14 @@ typedef struct {
 
 /**
   This is the body of the REPL.
-  It attempts to parse the first line or expression of its input, 
+  It attempts to parse the first line or expression of its input,
   and optionally request input from the user if none is available.
-  If the input can be parsed correctly, 
-     i) the resulting expression is evaluated, 
-    ii) the result assigned to .Last.Value, 
+  If the input can be parsed correctly,
+     i) the resulting expression is evaluated,
+    ii) the result assigned to .Last.Value,
    iii) top-level task handlers are invoked.
 
- If the input cannot be parsed, i.e. there is a syntax error, 
+ If the input cannot be parsed, i.e. there is a syntax error,
  it is incomplete, or we encounter an end-of-file, then we
  change the prompt accordingly.
 
@@ -213,7 +217,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 	    return(1);
 
     case PARSE_OK:
- 
+
  	    R_IoBufferReadReset(&R_ConsoleIob);
 	    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status);
 	    if (browselevel) {
@@ -392,17 +396,12 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
 void setup_Rmainloop(void)
 {
     volatile int doneit;
-    volatile SEXP baseEnv; 
+    volatile SEXP baseEnv;
     SEXP cmd;
     FILE *fp;
+    char *p = getenv("R_NO_UNDERLINE");
 
     InitConnections(); /* needed to get any output at all */
-
-    /* Print a platform and version dependent */
-    /* greeting and a pointer to the copyleft. */
-
-    if(!R_Quiet)
-	PrintGreeting();
 
     /* Initialize the interpreter's */
     /* internal structures. */
@@ -433,14 +432,14 @@ void setup_Rmainloop(void)
     InitMemory();
     InitNames();
     InitGlobalEnv();
-    InitFunctionHashing();
+    InitDynload();
     InitOptions();
     InitEd();
     InitArithmetic();
     InitColors();
     InitGraphics();
     R_Is_Running = 1;
-    
+
     /* gc_inhibit_torture = 0; */
 
     /* Initialize the global context for error handling. */
@@ -451,6 +450,7 @@ void setup_Rmainloop(void)
     R_Toplevel.callflag = CTXT_TOPLEVEL;
     R_Toplevel.cstacktop = 0;
     R_Toplevel.promargs = R_NilValue;
+    R_Toplevel.callfun = R_NilValue;
     R_Toplevel.call = R_NilValue;
     R_Toplevel.cloenv = R_NilValue;
     R_Toplevel.sysparent = R_NilValue;
@@ -461,13 +461,14 @@ void setup_Rmainloop(void)
     R_Warnings = R_NilValue;
 
 #ifdef EXPERIMENTAL_NAMESPACES
-    if (getenv("R_NO_BASE_NAMESPACE") != NULL)
-	baseEnv = R_NilValue;
-    else
-	baseEnv = R_BaseNamespace;
+    baseEnv = R_BaseNamespace;
 #else
     baseEnv = R_NilValue;
 #endif
+
+    /* Temporary flag to disable _ for a session */
+    if(p && strlen(p)) R_no_underline = TRUE;
+
     /* Set up some global variables */
     Init_R_Variables(baseEnv);
 
@@ -500,6 +501,22 @@ void setup_Rmainloop(void)
     */
 
     R_LoadProfile(R_OpenSysInitFile(), baseEnv);
+
+
+    if (strcmp(R_GUIType, "Tk") == 0) {
+	char buf[256];
+
+	sprintf(buf, "%s/library/tcltk/exec/Tk-frontend.R", R_Home);
+	R_LoadProfile(R_fopen(buf, "r"), R_GlobalEnv);
+    }
+
+
+    /* Print a platform and version dependent */
+    /* greeting and a pointer to the copyleft. */
+
+    if(!R_Quiet)
+	PrintGreeting();
+
     R_LoadProfile(R_OpenSiteFile(), baseEnv);
     R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
 
@@ -543,6 +560,25 @@ void setup_Rmainloop(void)
 	}
 	UNPROTECT(1);
     }
+    /* Try to invoke the .First.sys function, which loads the default packages.
+       If there is an error we continue. */
+
+    doneit = 0;
+    SETJMP(R_Toplevel.cjmpbuf);
+    R_GlobalContext = R_ToplevelContext = &R_Toplevel;
+    signal(SIGINT, onintr);
+    if (!doneit) {
+	doneit = 1;
+	PROTECT(cmd = install(".First.sys"));
+	R_CurrentExpr = findVar(cmd, baseEnv);
+	if (R_CurrentExpr != R_UnboundValue &&
+	    TYPEOF(R_CurrentExpr) == CLOSXP) {
+	        PROTECT(R_CurrentExpr = lang1(cmd));
+	        R_CurrentExpr = eval(R_CurrentExpr, R_GlobalEnv);
+	        UNPROTECT(1);
+	}
+	UNPROTECT(1);
+    }
     /* gc_inhibit_torture = 0; */
 }
 
@@ -554,7 +590,7 @@ void end_Rmainloop(void)
     R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
-static void onpipe()
+static void onpipe(int dummy)
 {
 #ifndef __MRC__
     /* do nothing */
@@ -586,7 +622,7 @@ void mainloop(void)
     run_Rmainloop();
     /* NO! Don't do that! It ends up in a longjmp for which the
        setjmp is inside run_Rmainloop! -pd
-    end_Rmainloop(); 
+    end_Rmainloop();
     */
 }
 
@@ -691,12 +727,12 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* acts as a target for error returns. */
 
     begincontext(&returncontext, CTXT_BROWSER, call, rho,
-		 R_NilValue, R_NilValue);
+		 R_NilValue, R_NilValue, R_NilValue);
     returncontext.cend = browser_cend;
     returncontext.cenddata = &savebrowselevel;
     if (!SETJMP(returncontext.cjmpbuf)) {
 	begincontext(&thiscontext, CTXT_RESTART, R_NilValue, rho,
-		     R_NilValue, R_NilValue);
+		     R_NilValue, R_NilValue, R_NilValue);
 	if (SETJMP(thiscontext.cjmpbuf)) {
 	    SET_RESTART_BIT_ON(thiscontext.callflag);
 	    R_ReturnedValue = R_NilValue;
@@ -801,7 +837,7 @@ Rf_addTaskCallback(R_ToplevelCallback cb, void *data, void (*finalizer)(void *),
     int which;
     R_ToplevelCallbackEl *el;
     el = (R_ToplevelCallbackEl *) malloc(sizeof(R_ToplevelCallbackEl));
-    if(!el) 
+    if(!el)
 	error("cannot allocate space for toplevel callback element.");
 
     el->data = data;
@@ -870,7 +906,7 @@ Rf_removeTaskCallbackByName(const char *name)
 }
 
 /**
-  Remove the top-level task handler/callback identified by 
+  Remove the top-level task handler/callback identified by
   its position in the list of callbacks.
  */
 Rboolean
@@ -913,8 +949,8 @@ Rf_removeTaskCallbackByIndex(int id)
 
 
 /**
-  R-level entry point to remove an entry from the 
-  list of top-level callbacks. `which' should be an 
+  R-level entry point to remove an entry from the
+  list of top-level callbacks. `which' should be an
   integer and give us the 0-based index of the element
   to be removed from the list.
 
@@ -926,7 +962,7 @@ R_removeTaskCallback(SEXP which)
    int id;
    Rboolean val;
    SEXP status;
- 
+
    if(TYPEOF(which) == STRSXP) {
        val = Rf_removeTaskCallbackByName(CHAR(STRING_ELT(which, 0)));
    } else {
@@ -965,8 +1001,8 @@ R_getTaskCallbackNames()
 }
 
 /**
-  Invokes each of the different handlers giving the 
-  top-level expression that was just evaluated, 
+  Invokes each of the different handlers giving the
+  top-level expression that was just evaluated,
   the resulting value from the evaluation, and
   whether the task succeeded. The last may be useful
   if a handler is also called as part of the error handling.
@@ -1051,7 +1087,7 @@ R_taskCallbackRoutine(SEXP expr, SEXP value, Rboolean succeeded,
 	PROTECT(val);
 	if(TYPEOF(val) != LGLSXP) {
               /* It would be nice to identify the function. */
-	    warning("top-level task callback did not return a logical value"); 
+	    warning("top-level task callback did not return a logical value");
 	}
 	again = asLogical(val);
 	UNPROTECT(1);
@@ -1080,7 +1116,7 @@ R_addTaskCallback(SEXP f, SEXP data, SEXP useData, SEXP name)
 	tmpName = CHAR(STRING_ELT(name, 0));
 
     PROTECT(index = allocVector(INTSXP, 1));
-    el = Rf_addTaskCallback(R_taskCallbackRoutine,  internalData, 
+    el = Rf_addTaskCallback(R_taskCallbackRoutine,  internalData,
                              (void (*)(void*)) R_ReleaseObject, tmpName, INTEGER(index));
 
     if(length(name) == 0) {

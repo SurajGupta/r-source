@@ -4,13 +4,13 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
          prompt.echo = getOption("prompt"),
          max.deparse.length = 150, chdir = FALSE)
 {
-##-     if(!(is.character(file) && file.exists(file)))
-##- 	stop(paste('"',file,'" is not an existing file', sep=""))
     eval.with.vis <-
 	function (expr, envir = parent.frame(),
 		  enclos = if (is.list(envir) || is.pairlist(envir))
 		  parent.frame())
 	.Internal(eval.with.vis(expr, envir, enclos))
+    sQuote <- function(s) paste("'", s, "'", sep = "")
+
     envir <- if (local)
 	parent.frame()
     else .GlobalEnv
@@ -18,12 +18,13 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	if (!is.logical(echo))
 	    stop("echo must be logical")
 	if (!echo && verbose) {
-	    warning("verbose is TRUE, echo not; ... coercing `echo <- TRUE'")
+	    warning(paste("verbose is TRUE, echo not; ... coercing",
+                          sQuote("echo <- TRUE")))
 	    echo <- TRUE
 	}
     }
     if (verbose) {
-	cat("`envir' chosen:")
+	cat(sQuote("envir"), "chosen:")
 	print(envir)
     }
     Ne <- length(exprs <- parse(n = -1, file = file))
@@ -36,11 +37,11 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	on.exit(setwd(owd))
 	setwd(path)
     }
-    #-- ass1 :	the  `<-' symbol/name
+    #-- ass1 :	the  '<-' symbol/name
     ass1 <- expression(y <- x)[[1]][[1]]
     if (echo) {
-	## Reg.exps for string delimiter/ NO-string-del / odd-number-of-str.del
-	## needed, when truncating below
+	## Reg.exps for string delimiter/ NO-string-del /
+        ## odd-number-of-str.del needed, when truncating below
 	sd <- "\""
 	nos <- "[^\"]*"
 	oddsd <- paste("^", nos, sd, "(", nos, sd, nos, sd, ")*",
@@ -83,7 +84,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	if (print.eval && yy$visible)
 	    print(yy$value)
 	if (verbose)
-	    cat(" .. after `", deparse(ei), "'\n", sep = "")
+	    cat(" .. after ", sQuote(deparse(ei)), "\n", sep = "")
     }
     invisible(yy)
 }
@@ -92,8 +93,8 @@ sys.source <-
 function(file, envir = NULL, chdir = FALSE,
          keep.source = getOption("keep.source.pkgs"))
 {
-    sQuote <- function(s) paste("`", s, "'", sep = "")
-    
+    sQuote <- function(s) paste("'", s, "'", sep = "")
+
     if(!(is.character(file) && file.exists(file)))
 	stop(paste(sQuote(file), "is not an existing file"))
     oop <- options(keep.source = as.logical(keep.source))
@@ -117,12 +118,13 @@ function(topic, device = getOption("device"),
          package = .packages(), lib.loc = NULL,
          character.only = FALSE, verbose = getOption("verbose"))
 {
-    sQuote <- function(s) paste("`", s, "'", sep = "")
+    sQuote <- function(s) paste("'", s, "'", sep = "")
 
     paths <- .find.package(package, lib.loc, verbose = verbose)
 
     ## Find the directories with a 'demo' subdirectory.
-    nodemo <- !file.exists(file.path(paths, "demo"))
+    nodemo <- !(file.exists(file.path(paths, "demo"))
+                & file.info(file.path(paths, "demo"))$isdir)
     if(any(nodemo)) {
         if(!missing(package) && (length(package) > 0)) {
             ## Warn about given packages which do not have a 'demo'
@@ -151,22 +153,43 @@ function(topic, device = getOption("device"),
         db <- matrix(character(0), nr = 0, nc = 4)
         noindex <- character(0)
         for(path in paths) {
-            INDEX <- file.path(path, "demo", "00Index")
-            if(file.exists(INDEX)) {
-                entries <- read.00Index(INDEX)
-                if(NROW(entries) > 0) {
-                    db <- rbind(db,
-                                cbind(basename(path),
-                                      dirname(path),
-                                      entries))
-                }
+            entries <- NULL
+            ## <NOTE>
+            ## Check for new-style 'Meta/demo.rds' (and intermediate
+            ## 'demo/00Index.rds' and 'demo/00Index.dcf'), then for
+            ## '00Index'.
+            ## </NOTE>
+            if(file.exists(INDEX <-
+                           file.path(path, "Meta", "demo.rds"))) {
+                entries <- .readRDS(INDEX)
             }
+            ## <FIXME>
+            ## Remove this once 1.7.0 is out.
+            ## (The 1.7 development versions for some time used indices
+            ## serialized as 'demo/00Index.rds' and 'demo/00Index.dcf'.)
+            else if(file.exists(INDEX <-
+                           file.path(path, "demo", "00Index.rds"))) {
+                entries <- .readRDS(INDEX)
+            }
+            else if(file.exists(INDEX <-
+                           file.path(path, "demo", "00Index.dcf"))) {
+                entries <- read.dcf(INDEX)
+                entries <- cbind(colnames(entries), c(entries))
+            }
+            ## </FIXME>
+            else if(file.exists(INDEX <-
+                                file.path(path, "demo", "00Index")))
+                entries <- read.00Index(INDEX)
             else {
-                ## no index: check whether subdir 'demo' contains files.
+                ## No index: check whether subdir 'demo' contains files.
                 if(length(list.files(file.path(path, "demo"))) > 0)
                     noindex <- c(noindex, basename(path))
             }
-
+            if(NROW(entries) > 0) {
+                db <- rbind(db,
+                            cbind(basename(path), dirname(path),
+                                  entries))
+            }
         }
         colnames(db) <- c("Package", "LibPath", "Item", "Title")
 
@@ -206,16 +229,15 @@ function(topic, device = getOption("device"),
     if(!character.only)
         topic <- as.character(substitute(topic))
     available <- character(0)
+    paths <- file.path(paths, "demo")
     for(p in paths) {
-        if(file.exists(p <- file.path(p, "demo"))) {
-            files <- list.files(p)
-            ## Files with extension `R' or `r'
-            files <- files[sub(".*\\.", "", files) %in% c("R", "r")]
-            ## Files with base names matching topic
-            files <- files[grep(topic, files)]
-            if(length(files) > 0)
-                available <- c(available, file.path(p, files))
-        }
+        files <- list.files(p)
+        ## Files with extension 'R' or 'r'
+        files <- files[sub(".*\\.", "", files) %in% c("R", "r")]
+        ## Files with base names matching topic
+        files <- files[grep(topic, files)]
+        if(length(files) > 0)
+            available <- c(available, file.path(p, files))
     }
     if(length(available) == 0)
         stop(paste("No demo found for topic", sQuote(topic)))
@@ -239,11 +261,11 @@ function(topic, device = getOption("device"),
 }
 
 example <-
-function(topic, package = .packages(), lib.loc = NULL,
+function(topic, package = .packages(), lib.loc = NULL, local = FALSE,
          echo = TRUE, verbose = getOption("verbose"),
          prompt.echo = paste(abbreviate(topic, 6), "> ", sep = ""))
 {
-    sQuote <- function(s) paste("`", s, "'", sep = "")
+    sQuote <- function(s) paste("'", s, "'", sep = "")
 
     topic <- substitute(topic)
     if(!is.character(topic))
@@ -271,6 +293,6 @@ function(topic, package = .packages(), lib.loc = NULL,
     }
     if(pkg != "base")
 	library(pkg, lib = lib, character.only = TRUE)
-    source(zfile, echo = echo, prompt.echo = prompt.echo, verbose =
-	   verbose, max.deparse.length = 250)
+    source(zfile, local, echo = echo, prompt.echo = prompt.echo,
+           verbose = verbose, max.deparse.length = 250)
 }

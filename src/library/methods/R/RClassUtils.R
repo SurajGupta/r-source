@@ -37,8 +37,10 @@ makePrototypeFromClassDef <-
   ## then its prototype is used.
   ##
   ## If all three of the above fail, the prototype is `NULL'.
-  function(properties, prototype, extends)
+  function(properties, ClassDef, extends)
 {
+    prototype <- ClassDef@prototype
+    className <- ClassDef@className
     if(length(properties) == 0 && !is.null(prototype))
             return(prototype)
     ## try for a single superclass that is not virtual
@@ -65,7 +67,9 @@ makePrototypeFromClassDef <-
                 pThis <- prototype
                 attributes(pThis) <- NULL
                 if(!identical(pOther, pThis) && !identical(pThis, list()))
-                    warning("classes \"", what, "\" and \"", fromClass,
+                    warning("In constructing the data part of the prototype for class \"",
+                            className,
+                            "\", superclasses \"", what, "\" and \"", fromClass,
                             "\" have different prototypes; using the one from \"",
                             fromClass, "\"")
             }
@@ -76,28 +80,58 @@ makePrototypeFromClassDef <-
     if(is.null(prototype))
         prototype <- defaultPrototype()
     pnames <- names(attributes(prototype))
-    pslots <- if(isClass(class(prototype))) names(getSlots(getClass(class(prototype)))) else
-        NULL
+    ## watch out for a prototype of this class.  Not supposed to happen, but will
+    ## at least for the basic class "ts", and can lead to inf. recursion
+    if(identical(class(prototype), className))
+        pslots <- names(attributes(unclass(prototype)))
+    else if(isClass(class(prototype)))
+        pslots <- names(getSlots(getClass(class(prototype))))
+    else
+        pslots <- NULL
     snames <- names(properties)
     if(!is.na(match(".Data", snames))) {
         dataPartClass <- elNamed(properties, ".Data")
         ## check the data part
         if(!(isVirtualClass(dataPartClass) || is(prototype, dataPartClass)))
-            stop(paste("Prototype has class \"",
+            stop("In constructing the prototype for class \"", className, "\": ",
+                 "Prototype has class \"",
                        .class1(prototype), "\", but the data part specifies class \"",
-                       dataPartClass,"\"", sep=""))
-        snames <- snames[-match(".Data", snames)]
+                       dataPartClass,"\"",)
+        iData <- -match(".Data", snames)
+        snames <- snames[iData]
+        properties <- properties[iData]
     }
     for(j in seq(along = snames)) {
         name <- el(snames, j)
         i <- match(name, pnames)
-        if(is.na(i))
-            slot(prototype, name, check=FALSE) <- tryNew(el(properties, j))
+        if(is.na(i)) {
+            ## if the class of the j-th element of properties is defined and non-virtual,
+            ## generate an object from it
+            ## to use as the corresponding prototype element.  Else, leave NULL
+            newi <- tryNew(el(properties, j))
+            if(!is.null(newi))
+                slot(prototype, name, check = FALSE) <- newi
+        }
     }
     extra <- pnames[is.na(match(pnames, snames)) & !is.na(match(pnames, pslots))]
     if(length(extra)>0)
-        warning(paste("Slots in prototype and not in class:",
-                      paste(extra, collapse=", ")))
+        warning("In constructing the prototype for class \"", className, "\", ",
+                "Slots in prototype and not in class:",
+                      paste(extra, collapse=", "))
+    ## now check the elements of the prototype against the class definition
+    slotDefs <- getSlots(ClassDef); slotNames <- names(slotDefs)
+    pnames <- names(attributes(prototype))
+    pnames <- pnames[!is.na(match(pnames, slotNames))]
+    check <- rep(FALSE, length(pnames))
+    for(what in pnames) {
+        pwhat <- slot(prototype, what)
+        if(!is.null(pwhat) && !is(pwhat, slotDefs[[what]]))
+            check[match(what, pnames)] <- TRUE
+    }
+    if(any(check))
+        stop("In making the prototype for class \"", className,
+             "\" elements of the prototype failed to match the corresponding slot class: ",
+             paste(pnames[check], "(\"", slotDefs[match(pnames[check], slotNames)], "\")", collapse = ", "))
     prototype
 }
 
@@ -179,7 +213,7 @@ completeClassDefinition <-
                 }
             }
         }
-        prototype <- makePrototypeFromClassDef(properties, getPrototype(ClassDef), immediate)
+        prototype <- makePrototypeFromClassDef(properties, ClassDef, immediate)
         virtual <- getVirtual(ClassDef)
         validity <- getValidity(ClassDef)
         access <- getAccess(ClassDef)
@@ -220,14 +254,14 @@ completeClassDefinition <-
     ClassDef@subclasses <- completeSubclasses(ClassDef)
     assignClassDef(Class, ClassDef, 0)
     if(any(!is.na(match(names(ClassDef@subclasses), names(ClassDef@contains))))
-       && options()$warn > 0  ## NEEDED:  a better way to turn on strict testing
+       && getOption("warn") > 0 ## NEEDED:  a better way to turn on strict testing
        ) {
         bad <- names(ClassDef@subclasses)[!is.na(match(names(ClassDef@subclasses), names(ClassDef@contains)))]
         warning("Potential cycle in class inheritance: \"",Class,
                 "\" has duplicates in superclasses and subclasses (",
                 paste(bad, collapse = ", "), ")")
     }
-    on.exit() # clear the removal of the class definition 
+    on.exit() # clear the removal of the class definition
     ClassDef
 }
 
@@ -267,14 +301,14 @@ getValidity <-
   ## the name of the class)
   function(ClassDef)
     ClassDef@validity
- 
+
 
 getAccess <-
    ## extract the class's Access method (or NULL) from the class representation (only, not from
   ## the name of the class)
   function(ClassDef)
     ClassDef@access
- 
+
 
 getAllSuperClasses <-
   ## Get the names of all the classes that this class definition extends.
@@ -351,7 +385,7 @@ setExtendsMetaData <-
       elNamed(obj, getClassName(ClassDef2)) <- value
       assign(what, obj, where)
   }
-      
+
 setSubclassMetaData <-
   ## save the metadata defining this sublcass relation
   function(ClassDef1, ClassDef2, where) {
@@ -432,6 +466,10 @@ getClassPackage <-
 assignClassDef <-
   ## assign the definition of the class to the specially named object
   function(Class, def, where = .GlobalEnv) {
+      if(!is(def,"classRepresentation"))
+          stop("Trying to assign an object of class \"", class(def),
+               "\" as the definition of class \"", Class,
+               "\": must supply a \"classRepresentation\" object.")
     if(identical(where, 0))
       assignToClassMetaData(classMetaName(Class), def)
     else assign(classMetaName(Class), def, where)
@@ -545,14 +583,16 @@ reconcilePropertiesAndPrototype <-
       StandardPrototype <- defaultPrototype()
       slots <-  validSlotNames(allNames(properties))
       dataPartClass <- elNamed(properties, ".Data")
-      if(!is.null(dataPartClass) && is.null(.validDataPartClass(dataPartClass)))
-          stop("\"", dataPartClass, "\" is not a valid data part class (must be a basic class or a virtual class combining basic classes)")
+      if(!is.null(dataPartClass) && is.null(.validDataPartClass(dataPartClass, name)))
+          stop("In defining class \"", name, "\", the supplied data part class, \"",
+               dataPartClass,
+               "\" is not valid (must be a basic class or a virtual class combining basic classes)")
       if((!is.null(dataPartClass) || length(superClasses) > 0)
          && is.na(match("VIRTUAL", superClasses))) {
           ## Look for a data part in the super classes, either an inherited
           ## .Data slot, or a basic class.  Uses the first possibility, warns of conflicts
           for(cl in superClasses) {
-              thisDataPart <-  .validDataPartClass(cl)
+              thisDataPart <-  .validDataPartClass(cl, name)
               if(!is.null(thisDataPart)) {
                   if(is.null(dataPartClass)) {
                       if(!is.na(match(thisDataPart, c("NULL", "environment"))))
@@ -652,7 +692,7 @@ reconcilePropertiesAndPrototype <-
           pnames <- prototype@slots
           prototype <- prototype@object
       }
-      else 
+      else
           pnames <- allNames(attributes(prototype))
       ## now set the slots not yet in the prototype object.
       ## An important detail is that these are
@@ -722,12 +762,12 @@ showClass <-
           .class1(getPrototype(ClassDef)), "\"\n", sep="")
     ext <- getExtends(ClassDef)
     if(length(ext)>0) {
-      cat("\nExtends:\n")
+      cat("\nExtends: ")
       showExtends(ext)
     }
     ext <- getSubclasses(ClassDef)
     if(length(ext)>0) {
-      cat("\nKnown Subclasses:\n")
+      cat("\nKnown Subclasses: ")
       showExtends(ext)
     }
   }
@@ -761,7 +801,13 @@ showExtends <-
       }
       if(identical(printTo, FALSE))
           list(what = what, how = how)
-      else cat(file = printTo, paste("Class \"", what, "\", ", how, ".\n", sep=""), sep="")
+      else if(all(nchar(how)==0)|| all(how == "directly")) {
+          what <- paste('"', what, '"', sep="")
+          if(length(what)>1)
+              what <- c(paste(what[-length(what)], ",", sep=""), what[[length(what)]])
+          cat(file = printTo, what, fill=TRUE)
+      }
+      else cat(file = printTo, "\n", paste("Class \"", what, "\", ", how, "\n", sep=""), sep="")
   }
 
 
@@ -858,7 +904,7 @@ completeSubclasses <-
         }
         value
     }
-                    
+
 
 
 .completeExtBreadth <-  function(ClassDef, slotName, soFar = getClassName(ClassDef), level = 1)
@@ -935,7 +981,8 @@ subclassesMetaName <-
 methodsPackageMetaName <-
   ## a name mangling device to simulate the meta-data in S4
   function(prefix, name)
-  paste(".", prefix, name, sep="__")
+  ## paste(".", prefix, name, sep="__") # too slow
+    .Call("R_methodsPackageMetaName", prefix, name, PACKAGE = "methods")
 
 
 
@@ -985,23 +1032,21 @@ validSlotNames <- function(names) {
         stop("\"class\" is a reserved slot name and cannot be redefined")
 }
 
+### utility function called from primitive code for "@"
 getDataPart <- function(object) {
     temp <- getSlots(class(object))
-    slots <- names(temp)
-    iData <- match(".Data", slots)
-    if(is.na(iData))
-        stop(paste("class \"", class(object),
-                   "\" does not have a data part (a .Data slot) defined",
-                   sep=""))
-    dataClass <- temp[[iData]]
-    slots <- slots[-iData]
-    for(what in slots)
-        attr(object, what) <- NULL
-    ## data part classes must either be a basic class or a virtual class
-    ## with no slots (which is then supposed to be extended by basic classes)
-    ## setting the class to NULL in the S4 interpretation makes the object belong
-    ## to the appropriate basic class.
-    class(object) <- NULL
+    slots <- c("class", names(temp))
+    attrVals <- attributes(object)
+    attrs <- names(attrVals)
+    if(identical(slots, attrs)) # basic vector as .Data
+        attributes(object) <- NULL
+    else {
+        attrs <- attrs[is.na(match(attrs, slots))]
+        attributes(object) <- attrVals[attrs]
+        ## matrix, array, or ts are currently (R 1.7) the only other possible .Data's
+        if(!is.na(match("tsp", attrs))) # set the class (S3-style) to "ts"
+            class(object) <- "ts"
+    }
     object
 }
 
@@ -1015,7 +1060,7 @@ setDataPart <- function(object, value) {
     .mergeAttrs(value, object)
 }
 
-.validDataPartClass <- function(cl) {
+.validDataPartClass <- function(cl, inClass) {
     ClassDef <- getClass(cl, TRUE)
     value <- elNamed(ClassDef@slots, ".Data")
     if(is.null(value)) {
@@ -1023,11 +1068,20 @@ setDataPart <- function(object, value) {
             value <- "vector"
         else if((extends(cl, "vector") || !is.na(match(cl, .BasicClasses))))
             value <- cl
+        else if(extends(cl, "oldClass") && isVirtualClass(cl)) {
+            ## a registered S3 class: at the moment only "ts" works
+            if(identical(cl, "ts"))
+                value <- cl
+            else
+                warning("Old-style (``S3'') class \"", cl,
+                        "\" supplied as a superclass of \"", inClass,
+                        "\", but no automatic conversion will be peformed for S3 classes")
+        }
         else {
             if(identical(ClassDef@virtual, TRUE) &&
                length(getProperties(ClassDef)) == 0 &&
                length(ClassDef@subclasses) > 0 &&
-               all(!is.na(match(names(ClassDef@subclasses), .BasicClasses))))
+               all(!is.na(match(names(ClassDef@subclasses), .BasicClasses)))) #looks S3-ish
                 value <- cl
         }
     }
@@ -1067,11 +1121,11 @@ setDataPart <- function(object, value) {
         ## argument.
         f <- toExt@coerce
         fR <- toExt@replace
-        ## if both are simple extensions, so is the composition
-        if(byExt@simple && toExt@simple) {
             toExpr <- body(f)
             fBy <- byExt@coerce
             byExpr <- body(fBy)
+        ## if both are simple extensions, so is the composition
+        if(byExt@simple && toExt@simple) {
             expr <- (if(byExt@dataPart)
                      substitute({from <- from@.Data; EXPR},
                                 list(EXPR = toExpr))
@@ -1086,38 +1140,28 @@ setDataPart <- function(object, value) {
                      )
             body(f, envir = environment(f)) <- expr
         }
-        else if(byExt@simple) {
-            body(f, envir = environment(f)) <-
-                substitute( as(if(strict) as(from, BY) else from, TO, strict=strict),
-                           list(BY = by, TO = to))
-        }
-        else if(toExt@simple) {
-            ## in this case, coercing to `by' and testing for `by' are
-            ## sufficient, since the further step to the target is a simple extension.
-            body(f, envir = environment(f)) <-
-                substitute({ from <- as(from, BY, strict = strict);
-                             if(strict) as(from, TO) else from},
-                           list(BY = by, TO = to))
-            toExt@test <- byExt@test
-        }
-        else {
-            ## we could improve the efficiency by checking for special cases
-            ## (e.g., simple test's).  But a composite of two non-simple extensions
-            ## seems pretty weird.  So we'll wait for examples to show up.
-            body(f, envir = environment(f)) <-
-                substitute(as(as(from, BY), TO),
-                           list(BY = by, TO = to))
-            ff <- byExt@test
-            body(ff, envir = environment(ff)) <-
-                substitute((is(object, BY) && is(as(object, BY), TO)),
-                          list(BY = by, TO = to)) 
-            toExt@test <- ff
-        }
+        else   if(!identical(byExpr, quote(from)))
+                body(f, envir = environment(f)) <-
+                    substitute( {from <- as(from, BY, strict = strict); TO},
+                               list(BY = by, TO = toExpr))
         toExt@coerce <- f
+        f <- toExt@test
+        toExpr <- body(f)
+        byExpr <- body(byExt@test)
+        ## process the test code
+        if(!identical(byExpr, TRUE)) {
+            if(!identical(toExpr, TRUE))
+                body(f, envir = environment(f)) <- substitute((BY) && (TO),
+                              list(BY = byExpr, TO = toExpr))
+            else
+                body(f, envir = environment(f)) <- byExpr
+        }
+        toExt@test <- f
         f <- byExt@replace
-        expr <- body(f)
-        expr <- .insertExpr(expr,
-                            substitute(value <- as(value, TO), list(TO=to)))
+        byExpr <- body(f)
+        ## Is there a danger of infinite loop below?
+        expr <- substitute({.value <- as(from, BY); as(.value, TO) <- value; value <- .value; BYEXPR},
+                           list(BY=by, TO = to, BYEXPR = byExpr))
         body(f, envir = environment(f)) <- expr
         toExt@replace <- f
         moreExts[[i]] <- toExt
@@ -1125,24 +1169,51 @@ setDataPart <- function(object, value) {
     moreExts
 }
 
-## construct the expression that copies slots into the new object
+## construct the expression that implements the computations for coercing
+## an object to one of its superclasses
 ## The fromSlots argument is provided for calls from makeClassRepresentation
 ## and completeClassDefinition,
 ## when the fromClass is in the process of being defined, so slotNames() would fail
 .simpleCoerceExpr <- function(fromClass, toClass, fromSlots = slotNames(fromClass)) {
     toSlots <-  slotNames(toClass)
-    sameSlots <- (length(toSlots) == 0
-                  || (length(fromSlots) == length(toSlots) &&
-                      !any(is.na(match(fromSlots, toSlots)))))
+    sameSlots <- (length(fromSlots) == length(toSlots) &&
+                      !any(is.na(match(fromSlots, toSlots))))
     if(sameSlots)
-        substitute({class(from) <- CLASS; from},
+        expr <- substitute({class(from) <- CLASS; from},
                    list(CLASS = toClass))
-    else
-        substitute({
+    else {
+        if(length(toSlots)==0) {
+            ## either a basic class or something with the same representation
+            if(is.na(match(toClass, .BasicClasses)))
+                expr <- substitute({ attributes(from) <- NULL; class(from) <- CLASS; from},
+                                   list(CLASS=toClass))
+            else if(isVirtualClass(toClass))
+                expr <- quote(from)
+            else {
+                ## a basic class; a vector type, matrix, array, or ts
+                switch(toClass,
+                       matrix = , array = {
+                           expr <- quote({.dm <- dim(from); .dn <- dimnames(from)
+                                    attributes(from) <- NULL; dim(from) <- .dm
+                                    dimnames(from) <- .dn; from})
+                       },
+                       ts = {
+                           expr <- quote({.tsp <- tsp(from); attributes(from) <- NULL
+                                          tsp(from) <- .tsp; class(from) <- "ts"; from})
+                       },
+                       expr <- quote({attributes(from) <- NULL; from})
+                       )
+            }
+        }
+        else {
+            expr <- substitute({
             value <- new(CLASS)
             for(what in TOSLOTS)
                 slot(value, what) <- slot(from, what)
             value }, list(CLASS=toClass, TOSLOTS = toSlots))
+        }
+    }
+    expr
 }
 
 ## the boot version of newClassRepresentation (does no checking on slots to avoid
@@ -1160,14 +1231,14 @@ newClassRepresentation <- function(...) {
 ## create a temporary definition of a class, but one that is distinguishable
 ## (by its class) from the real thing.  See comleteClassDefinition
 .tempClassDef <- function(...) {
-    value <- list()
+    value <- new("classRepresentation")
     slots <- list(...)
     slotNames <- names(slots)
     for(i in seq(along = slotNames))
         slot(value, slotNames[[i]], FALSE) <- slots[[i]]
     value
 }
-    
+
 ## the real version of newClassRepresentation, assigned in .First.lib
 .newClassRepresentation <- function(...)
     new("classRepresentation", ...)
@@ -1195,7 +1266,7 @@ newClassRepresentation <- function(...) {
     }
     superClasses <- names(classDef@contains)
     for(what in superClasses) {
-        if(isClass(what)) 
+        if(isClass(what))
             removeSubclassMetaData(getClassDef(what), classDef)
     }
     TRUE
@@ -1244,7 +1315,7 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
                     paste(newArgs, collapse = ", "), ")")
     }
     def
-}    
+}
 
 .makeValidityMethod <- function(Class, validity) {
     if(is.null(validity)) {
@@ -1272,4 +1343,10 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
     for(i in seq(along = slots))
         slot(ClassDef, slotNames[[i]]) <- slots[[i]]
     ClassDef
+}
+
+### fix the annoying habit of R giving function definitions the local environment by default
+.gblEnv <- function(f) {
+    environment(f) <- .GlobalEnv
+    f
 }

@@ -6,7 +6,7 @@
   Transfer text between a character vector and the Windows clipboard.
 }
 \usage{
-getClipboard()
+readClipboard()
 writeClipboard{str}
 }
 \arguments{
@@ -19,4 +19,4 @@ writeClipboard{str}
 \seealso{
   \code{\link{file}} which can be used to set up a connection to a clipboard.
 }
-\keyword{utility}
+\keyword{utilities}

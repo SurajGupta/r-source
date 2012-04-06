@@ -4,8 +4,8 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2003
-@set FAQ-VERSION 1.6-24, 2003-01-08
-@set REL-VERSION 1.6.2
+@set FAQ-VERSION 1.7-3, 2004-04-16
+@set REL-VERSION 1.7.0
 @set FAQ-ISBN 3-901167-51-X
 @documentlanguage en
 @documentencoding ISO-8859-1
@@ -337,7 +337,7 @@ $ make
 @end smallexample
 
 If these commands execute successfully, the R binary and a shell script
-font-end called @file{R} are created and copied to the @file{bin}
+front-end called @file{R} are created and copied to the @file{bin}
 directory.  You can copy the script to a place where users can invoke
 it, for example to @file{/usr/local/bin}.  In addition, plain text help
 pages as well as @HTML{} and La@TeX{} versions of the documentation are
@@ -432,18 +432,18 @@ available by @email{deleeuw@@stat.ucla.edu, Jan de Leeuw} in the
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2002-11-05:
+@c Linux binaries as of 2003-01-15:
 @c
-@c debian   woody i386  1.6.1  Dirk Eddelbuettel <edd@debian.org>
-@c          sarge i386  1.6.1  Dirk Eddelbuettel <edd@debian.org>
-@c mandrake 8.*   i386  1.6.1  Michele Alzetta <mikalzet@libero.it>
-@c          9.0   i386  1.6.1  Michele Alzetta <mikalzet@libero.it>
+@c debian   woody i386  1.6.2  Dirk Eddelbuettel <edd@debian.org>
+@c          sarge i386  1.6.2  Dirk Eddelbuettel <edd@debian.org>
+@c mandrake 8.*   i386  1.6.2  Michele Alzetta <mikalzet@libero.it>
+@c          9.0   i386  1.6.2  Michele Alzetta <mikalzet@libero.it>
 @c redhat   7.x   alpha 1.6.0  Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c                i386  1.6.0  Martyn Plummer <plummer@iarc.fr>
-@c          8.x   i386  1.6.1  Martyn Plummer <plummer@iarc.fr>
-@c suse     7.3   i386  1.6.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c          8.0   i386  1.6.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c          8.1   i386  1.6.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c                i386  1.6.2  Martyn Plummer <plummer@iarc.fr>
+@c          8.x   i386  1.6.2  Martyn Plummer <plummer@iarc.fr>
+@c suse     7.3   i386  1.6.2  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c          8.0   i386  1.6.2  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c          8.1   i386  1.6.2  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 
 The @file{bin/linux} directory of a @acronym{CRAN} site contains Debian
 stable/testing packages for the i386 platform (now part of the Debian
@@ -468,8 +468,9 @@ programs @command{apt-get}, @command{apt-cache}, and @command{dselect}
 (using the apt access method) will automatically detect and install
 updates of the R packages.
 
-The @file{bin/osf} directory of a @acronym{CRAN} site contains RPMs by
-Albrecht Gebhardt for alpha systems running Alpha Unix (OSF/Tru64).
+@c The @file{bin/osf} directory of a @acronym{CRAN} site contains RPMs
+@c by Albrecht Gebhardt for alpha systems running Alpha Unix
+@c (OSF/Tru64).
 
 @c There are also `tar' distributions for NEXTSTEP on the i386 and m68k
 @c platforms in @file{bin/nextstep/i386} and @file{bin/nextstep/m68k},
@@ -1353,6 +1354,9 @@ In R, the string @code{"NA"} is not treated as a missing value in a
 character variable.  Use @code{as.character(NA)} to create a missing
 character value.
 
+@item
+R disallows repeated formal arguments in function calls.
+
 @end itemize
 
 There are also differences which are not intentional, and result from
@@ -1494,6 +1498,9 @@ Constrained Correspondence Analysis.
 A common database interface (DBI) class and method definitions.  All
 classes in this package are virtual and need to be extended by the
 various DBMS implementations.
+@item Davies
+Functions for the Davies quantile function and the Generalized Lambda
+distribution.
 @item Devore5
 Data sets and sample analyses from ``Probability and Statistics for
 Engineering and the Sciences (5th ed)'' by Jay L. Devore, 2000, Duxbury.
@@ -1502,6 +1509,11 @@ Estimation of missing values in a matrix by a @math{k}-th nearest
 neighboors algorithm.
 @item GLMMGibbs
 Generalised Linear Mixed Models by Gibbs sampling.
+@item GRASS
+An interface between the GRASS geographical information system and R,
+based on starting R from within the GRASS environment and chosen
+LOCATION_NAME and MAPSET.  Wrapper and helper functions are provided for
+a range of R functions to match the interface metadata structures.
 @item GenKern
 Functions for generating and manipulating generalised binned kernel
 density estimates.
@@ -1521,6 +1533,9 @@ the book ``Kernel Smoothing'' by M. P. Wand and M. C. Jones, 1995.
 Functions and datasets from the main package of Venables and Ripley,
 ``Modern Applied Statistics with S''.  Contained in the @file{VR}
 bundle.  @emph{Recommended}.
+@item MCMCpack
+Markov chain Monte Carlo (MCMC) package: functions for posterior
+simulation for a number of statistical models.
 @item MPV
 Data sets from the book ``Introduction to Linear Regression Analysis''
 by D. C. Montgomery, E. A. Peck, and C. G. Vining, 2001, John Wiley and
@@ -1588,6 +1603,9 @@ and Bruno Torresani, 1998, Academic Press.
 Data sets and sample linear mixed effects analyses corresponding to the
 examples in ``SAS System for Mixed Models'' by R. C. Littell,
 G. A. Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
+@item SenSrivastava
+Collection of datasets from ``Regression Analysis, Theory, Methods and
+Applications'' by A. Sen and M. Srivastava, 1990, Springer-Verlag.
 @item SparseM
 Basic linear algebra for sparse matrices.
 @item StatDataML
@@ -1617,6 +1635,8 @@ Analysis of growth curve experiments.
 Linear or cubic spline interpolation for irregularly gridded data.
 @item amap
 Another Multidimensional Analysis Package.
+@item anm
+Analog model for statistical/empirical downscaling.
 @item ape
 Analyses of Phylogenetics and Evolution, providing functions for reading
 and plotting phylogenetic trees in parenthetic format (standard Newick
@@ -1665,6 +1685,8 @@ A package for working with chronological objects (times and dates).
 @item class
 Functions for classification (@math{k}-nearest neighbor and LVQ).
 Contained in the @file{VR} bundle.  @emph{Recommended}.
+@item clim.pact
+Climate analysis and downscaling for monthly and daily data.
 @item cluster
 Functions for cluster analysis.  @emph{Recommended}.
 @item cmprsk
@@ -1697,23 +1719,26 @@ learned and compared from data.
 @item deldir
 Calculates the  Delaunay triangulation and the Dirichlet or Voronoi
 tesselation (with respect to the entire plane) of a planar point set.
-@item dichromat
-Color schemes for dichromats: collapse red-green distinctions to
-simulate the effects of colour-blindness.
 @item diamonds
 Functions for illustrating aperture-4 diamond partitions in the plane,
 or on the surface of an octahedron or icosahedron, for use as analysis
 or sampling grids.
+@item dichromat
+Color schemes for dichromats: collapse red-green distinctions to
+simulate the effects of colour-blindness.
+@item dispmod
+Functions for modelling dispersion in GLMs.
 @item dr
 Functions, methods, and datasets for fitting dimension reduction
 regression, including pHd and inverse regression methods SIR and SAVE.
 @item dse
 Dynamic System Estimation, a multivariate time series package.  Contains
-@strong{dse1} (DSE kernel plus ARMA and state space models),
-@strong{dse2} (DSE extensions), @strong{syskern} (functions for writing
-code that is operating system and R/S independent), and @strong{tframe}
-(functions for writing code that is independent of the representation of
-time).
+@strong{dse1} (the base system, including multivariate ARMA and state
+space models), @strong{dse2} (extensions for evaluating estimation
+techniques, forecasting, and for evaluating forecasting model),
+@strong{tframe} (functions for writing code that is independent of the
+representation of time). and @strong{setRNG} (a mechanism for generating
+the same random numbers in S and R).
 @item e1071
 Miscellaneous functions used at the Department of Statistics at TU Wien
 (E1071), including moments, short-time Fourier transforms, Independent
@@ -1756,6 +1781,12 @@ Statistics, 1989).
 Create and maintain delayed-data packages (DDP's).
 @item gafit
 Genetic algorithm for curve fitting.
+@item gbm
+Generalized Boosted Regression Models: implements extensions to Freund
+and Schapire's AdaBoost algorithm and J. Friedman's gradient boosting
+machine.  Includes regression methods for least squares, absolute loss,
+logistic, Poisson, Cox proportional hazards partial likelihood, and
+AdaBoost exponential loss.
 @item gee
 An implementation of the Liang/Zeger generalized estimating equation
 approach to GLMs for dependent data.
@@ -1779,6 +1810,9 @@ Basic functions for the generalised (Tukey) lambda distribution.
 @item gllm
 Routines for log-linear models of incomplete contingency tables,
 including some latent class models via EM and Fisher scoring approaches.
+@item glmmML
+A Maximum Likelihood approach to generalized linear models with random
+intercept.
 @item gpclib
 General polygon clipping routines for R based on Alan Murta's C
 library.
@@ -1792,6 +1826,11 @@ capabilities, plus some support for interaction.  @emph{Recommended}.
 @item gss
 A comprehensive package for structural multivariate function estimation
 using smoothing splines.
+@item gstat
+multivariable geostatistical modelling, prediction and simulation.
+Includes code for variogram modelling; simple, ordinary and universal
+point or block (co)kriging, sequential Gaussian or indicator
+(co)simulation, and map plotting functions.
 @item gtkDevice
 GTK graphics device driver that may be used independently of the R-GNOME
 interface and can be used to create R devices as embedded components in
@@ -1801,6 +1840,12 @@ Score tests for association of traits with haplotypes when linkage phase
 is ambiguous.
 @item hdf5
 Interface to the @acronym{NCSA} HDF5 library.
+@item hier.part
+Hierarchical Partitioning: variance partition of a multivariate data
+set.
+@item hwde
+Models and tests for departure from Hardy-Weinberg equilibrium and
+independence between loci.
 @item ifs
 Iterated Function Systems distribution function estimator.
 @item ineq
@@ -1837,6 +1882,8 @@ A set of methods for longitudinal data objects.
 A collection of tests on the assumptions of linear regression models
 from the book ``The linear regression model under test'' by W. Kraemer
 and H. Sonnberger, 1986, Physica.
+@item locfit
+Local Regression, likelihood and density estimation.
 @item logspline
 Logspline density estimation.
 @item lokern
@@ -1868,6 +1915,9 @@ multiple smoothing parameter selection by GCV or UBRE.
 @emph{Recommended}.
 @item mimR
 An R interface to MIM for graphical modeling in R.
+@item mix
+Estimation/multiple imputation programs for mixed categorical and
+continuous data.
 @item mlbench
 A collection of artificial and real-world machine learning benchmark
 problems, including the Boston housing data.
@@ -1883,6 +1933,9 @@ misclassification rates.
 Hazard function estimation in survival analysis.
 @item multcomp
 Multiple comparison procedures for the one-way layout.
+@item multidim
+Multidimensional descriptive statistics: factorial methods and
+classification.
 @item multiv
 Functions for hierarchical clustering, partitioning, bond energy
 algorithm, Sammon mapping, PCA and correspondence analysis.
@@ -1903,6 +1956,9 @@ networks''), and for multinomial log-linear models.  Contained in the
 @file{VR} bundle.  @emph{Recommended}.
 @item norm
 Analysis of multivariate normal datasets with missing values.
+@item normalp
+A collection of utilities for normal of order @math{p} distributions
+(General Error Distributions).
 @item normix
 One-dimensional normal mixture models classes, for, e.g., density
 estimation or clustering algorithms research and teaching; providing the
@@ -1936,9 +1992,11 @@ Converts S trees to @HTML{}/Perl files for interactive tree traversal.
 @item pixmap
 Functions for import, export, plotting and other manipulations of
 bitmapped images.
+@item pls.pcr
+Multivariate regression by PLS and PCR.
 @c <COMMENT>
 @c Outdated on CRAN along with 1.5.0 release as we do not have an active
-@c maintainer to fix outstanding QA problems.
+@c maintainer to fix outstanding quality problems.
 @c @item polymars
 @c Polychotomous regression based on Multivariate Adaptive Regression
 @c Splines.
@@ -1973,6 +2031,9 @@ Functions to facilitate inference on the relative importance of
 predictors in a linear or generalized linear model.
 @item rgenoud
 R version of GENetic Optimization Using Derivatives.
+@item rimage
+Functions for image processing, including Sobel filter, rank filters,
+fft, histogram equalization, and reading @acronym{JPEG} files.
 @item rmeta
 Functions for simple fixed and random effects meta-analysis for
 two-sample comparison of binary outcomes.
@@ -1992,6 +2053,8 @@ observed and unobserved variables) by the method of maximum likelihood
 using the RAM approach.
 @item serialize
 Simple interfce for serializing to connections.
+@item session
+Functions for interacting with, saving and restoring R sessions.
 @item sgeostat
 An object-oriented framework for geostatistical modeling.
 @item sm
@@ -2013,6 +2076,9 @@ visualization.
 @c @item snns
 @c An R interface to the Stuttgart Neural Networks Simulator (SNNS).
 @c </COMMENT>
+@item snow
+Simple Network of Workstations: support for simple parallel computing in
+R.
 @item sound
 A sound interface for R: Basic functions for dealing with @file{.wav}
 files and sound samples.
@@ -2058,12 +2124,18 @@ Spatial and space-time point pattern analysis functions.
 @c @item stataread
 @c Read and write Stata v5 and v6 @file{.dta} files.
 @c </COMMENT>
+@item statmod
+Miscellaneous biostatistical modelling functions.
 @item strucchange
 Various tests on structural change in linear regression models.
 @item subselect
 A collection of functions which assess the quality of variable subsets
 as surrogates for a full data set, and search for subsets which are
 optimal under various criteria.
+@item survey
+Summary statistics, generalized linear models, and general maximum
+likelihood estimation for stratified, cluster-sampled, unequally
+weighted survey samples.
 @c @item survival4
 @c Functions for survival analysis, version 4 (requires
 @c @strong{splines}).
@@ -2119,11 +2191,6 @@ currently contains
 @table @strong
 @item Dopt
 Finding D-optimal experimental designs.
-@item GRASS
-Interface between the GRASS geographical information system and R, based
-on starting R from within the GRASS environment and chosen LOCATION and
-MAPSET.  Wrapper and helper functions are provided for a range of R
-functions to match the interface metadata structures.
 @c <NOTE>
 @c Moved to Devel for 1.6 as it fails R CMD check.
 @item PHYLOGR
@@ -2172,14 +2239,6 @@ Ensembles of tree classifiers.
 @c A suite of functions to compute power and sample size for tests of the
 @c general linear hypothesis.
 @c </COMMENT>
-@c <NOTE>
-@c Moved to Devel for 1.6 as it fails R CMD check.
-@item locfit
-Local Regression, likelihood and density estimation.
-@c </NOTE>
-@item multidim
-Code for correspondence analysis and other multidimensional descriptive
-statistics.
 @item pls
 Univariate Partial Least Squares Regression.
 @c <COMMENT>

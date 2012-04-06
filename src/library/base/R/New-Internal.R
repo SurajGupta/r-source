@@ -2,11 +2,16 @@
 
 geterrmessage <- function() .Internal(geterrmessage())
 
-try <- function(expr, first = TRUE)
+try <- function(expr, silent = FALSE, first = TRUE)
 {
     restart <- function(on = TRUE).Internal(restart(on))
     restart(first)
     if(is.logical(first) && first) {
+        if(silent) {
+            op <- options("show.error.messages")
+            on.exit(options(op))
+            options(show.error.messages = FALSE)
+        }
         first <- FALSE
         expr
     } else
@@ -44,9 +49,6 @@ D <- function(expr, name) .Internal(D(expr, name))
 
 # Machine <- function().Internal(Machine())
 R.Version <- function().Internal(Version())
-colors <- function().Internal(colors())
-colours <- colors
-col2rgb <- function(col).Internal(col2rgb(col))
 commandArgs <- function() .Internal(commandArgs())
 
 args <- function(name).Internal(args(name))
@@ -90,8 +92,6 @@ gc <- function(verbose = getOption("verbose"))
 }
 gcinfo <- function(verbose).Internal(gcinfo(verbose))
 gctorture <- function(on=TRUE)invisible(.Internal(gctorture(on)))
-gray <- function(level).Internal(gray(level))
-grey <- gray
 
 is.unsorted <- function(x, na.rm = FALSE) {
     if(is.null(x)) return(FALSE)
@@ -119,10 +119,11 @@ rank <- function(x, na.last = TRUE) {
     nas <- is.na(x)
     y <- .Internal(rank(x[!nas]))
     if(!is.na(na.last) && any(nas)) {
+        x <- numeric(length(x))
         if(na.last) {
             ## NOTE that the internal code gets NAs reversed
             x[!nas] <- y
-            x[nas] <- seq(from = length(y) + 1, to = length(x))
+            x[nas] <- (length(y) + 1:1):length(x)
         }
         else {
             len <- sum(nas)
@@ -165,3 +166,6 @@ capabilities <- function(what = NULL)
     i <- pmatch(what, nm)
     if(is.na(i)) logical(0) else z[i]
 }
+
+## base has no S4 generics
+.noGenerics <- TRUE

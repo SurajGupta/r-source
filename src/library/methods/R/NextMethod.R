@@ -13,54 +13,86 @@
     for(signature in excluded) {
         if(!is(signature, "signature"))
             stop("expected a list of signature objects, got \"", class(signature), "\"")
-        mlist <- insertMethod(mlist, signature, names(signature), NULL, FALSE)
+        if(length(signature)>0)
+            mlist <- insertMethod(mlist, signature, names(signature), NULL, FALSE)
     }
-    ## and now redo method selection 
-    value <- selectMethod(f, envir, optional, TRUE, mlist)
+    ## and now redo method selection.  Note the use of
+    ## method@target, not the actual environment to force a consistent
+    ## nextMethod in the methods list object for the generic.  (Inconsistent
+    ## results are possible with next methods)
+    value <- selectMethod(f, method@target, optional, TRUE, mlist)
     value
 }
 
 callNextMethod <- function(...) {
-    envir <- parent.frame()
-    if(exists(".nextMethod", envir = envir, inherits = FALSE))
-        method <- get(".nextMethod", envir = envir)
-    else {
+    method <- nextMethod <- mcall <- NULL
+    dotNextMethod <- as.name(".nextMethod")
+    basics <- names(.BasicFunsList) # global list of primitives allowed as generics.
+    ## Because of the .local mechanism used to allow variable argument lists
+    ## in methods (see rematchDefinition) may have to look back 2 frames
+    for(i in 1:2) {
+        maybeMethod <- sys.function(-i)
+        if(!is(maybeMethod, "MethodDefinition"))
+            next
+        envir <- parent.frame(i)
         ## set up the nextMethod object, load it
         ## into the calling environment, and maybe cache it
+        mcall <- sys.call(-i)
         if(exists(".Method", envir = envir, inherits = FALSE)) {
+            ## call to standardGeneric(f)
             method <- get(".Method", envir = envir, inherits = FALSE)
+            if(exists(".nextMethod", envir = envir, inherits = FALSE))
+                nextMethod <- get(".nextMethod", envir = envir)
             f <- get(".Generic", envir = envir)
-            cache <- TRUE
+            break
         }
-        else { ## not in an ordinary method: must be in another NextMethod call
-            env2 <- parent.frame(2)
-            if(exists(".nextMethod", envir = env2, inherits = FALSE)) {
-               method <- get(".nextMethod", envir = env2, inherits = FALSE)
-               f <- get(".Generic", envir = env2)
-               cache <- FALSE
-           }
-            else
-                stop("call to NextMethod doesn't appear to be in a method or NextMethod context")
+        else if(identical(mcall[[1]], dotNextMethod)) {
+            ## a call from another callNextMethod()
+            env2 <- parent.frame(i+1)
+            nextMethod <- get(".nextMethod", env2)
+            f <- get(".Generic", envir = env2)
+            break
         }
-        if(is(method, "MethodDefinition")) {
-            newMethod <- findNextMethod(method, f, getMethods(f), envir=envir)
-            ## cache the method with the nextMethod included,
-            ## so later calls will load this information.  But can't do this
-            ## if this call was from a next method, because dispatch may be
-            ## different
-            if(cache)
-                cacheMethod(f, method@target, newMethod)
-            nextMethod <- newMethod@nextMethod
+        else {
+            ### may be a method call for a primitive 
+            f <- as.character(mcall[[1]])
+            if(!is.na(match(f, basics))) {
+                method <- maybeMethod
+                envir <- if(i > 1) parent.frame(i-1) else sys.frame(sys.nframe())
+                break
+            }
+        }
+    }
+    if(is(method, "MethodDefinition")) {
+        if(is.null(nextMethod)) {
+            if(!is(method, "MethodWithNext")) {
+                method <- addNextMethod(method, f, getMethods(f), envir=envir)
+                ## cache the method with the nextMethod included,
+                ## so later calls will load this information.
+                cacheMethod(f, method@target, method)
+            }
+            nextMethod <- method@nextMethod
             assign(".nextMethod", nextMethod, envir = envir)
         }
-        else
-            stop("Can't use NextMethod:  the method isn't a MethodDefinition object")
     }
+    else if(is.null(method)) {
+        if(is.null(nextMethod))
+            stop("call to NextMethod doesn't appear to be in a method or callNextMethod context")
+        ## else, callNextMethod() from another callNextMethod
+        method <- nextMethod
+        if(!is(method, "MethodWithNext"))
+            method <- addNextMethod(method, f, getMethods(f), envir=envir)
+        nextMethod <- method@nextMethod
+        ## store the nextmethod in the previous nextmethod's 
+        assign(".nextMethod", nextMethod, envir = envir)
+        assign(".nextMethod", method, envir = env2)
+    }
+    else 
+        stop("Bad object found as method (class \"", class(method), "\")")
     if(nargs()>0)
         eval(substitute(.nextMethod(...)), envir)
     else {
-        call <- match.call(if(is.primitive(method)) get(".Method", envir = envir)
-                   else method, sys.call(-1), expand.dots = FALSE)
+        call <- match.call(method, mcall, expand.dots = FALSE)
         .Call("R_nextMethodCall",
               call,
               envir, PACKAGE="methods")

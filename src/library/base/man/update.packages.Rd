@@ -16,7 +16,8 @@
 update.packages(lib.loc = NULL, CRAN = getOption("CRAN"),
                 contriburl = contrib.url(CRAN),
                 method, instlib = NULL,
-                ask=TRUE, available=NULL, destdir=NULL)
+                ask=TRUE, available=NULL, destdir=NULL,
+		installWithVers=FALSE)
 
 installed.packages(lib.loc = NULL, priority = NULL)
 CRAN.packages(CRAN = getOption("CRAN"), method = "auto",
@@ -30,7 +31,8 @@ download.packages(pkgs, destdir, available = NULL,
                   contriburl = contrib.url(CRAN), method = "auto")
 install.packages(pkgs, lib, CRAN = getOption("CRAN"),
                  contriburl = contrib.url(CRAN),
-                 method, available = NULL, destdir = NULL)
+                 method, available = NULL, destdir = NULL,
+		 installWithVers = FALSE)
 }
 \arguments{
   \item{lib.loc}{character vector describing the location of R
@@ -55,6 +57,8 @@ install.packages(pkgs, lib, CRAN = getOption("CRAN"),
     install the packages.}
   \item{ask}{logical indicating to ask before packages are actually downloaded
     and installed.}
+  \item{installWithVers}{If TRUE, will invoke the install the package such
+    that it can be referenced by package version}
 }
 \details{
   \code{installed.packages} scans the \file{DESCRIPTION} files of each
@@ -70,7 +74,7 @@ install.packages(pkgs, lib, CRAN = getOption("CRAN"),
 
   \code{download.packages} takes a list of package names and a
   destination directory, downloads the newest versions of the package
-  sources and saves the in \code{destdir}.  If the list of available
+  sources and saves them in \code{destdir}.  If the list of available
   packages is not given as argument, it is also directly obtained from
   CRAN.  If CRAN is local, i.e., the URL starts with \code{"file:"},
   then the packages are not downloaded but used directly.

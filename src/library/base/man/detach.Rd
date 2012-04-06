@@ -1,7 +1,7 @@
 \name{detach}
 \title{Detach Objects from the Search Path}
 \usage{
-detach(name, pos = 2)
+detach(name, pos = 2, version)
 }
 \alias{detach}
 \arguments{
@@ -15,6 +15,9 @@ detach(name, pos = 2)
     detach.  When \code{name} is \code{\link{numeric}}, \code{pos = name}
     is used.
   }
+    \item{version}{A character string denoting a version number of the 
+     package to be loaded.  If no version is given, a suitable default
+     is chosen.}
 }
 \description{
   Detach a database, i.e., remove it from the \code{\link{search}()} path
@@ -44,7 +47,8 @@ library(eda)
 pkg <- "package:eda"
 detach(pos = match(pkg, search()))
 
-library(mva)
+## careful: do not do this unless `lqs' is not already loaded.
+library(lqs)
 detach(2)# `pos' used for `name'
 }
 \keyword{data}

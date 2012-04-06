@@ -34,7 +34,8 @@ hist.default(x, breaks = "Sturges", freq = NULL, probability = !freq,
   \item{probability}{an \emph{alias} for \code{!freq}, for S compatibility.}
   \item{include.lowest}{logical; if \code{TRUE},
     an `x[i]' equal to the `breaks' value will be included in the first
-    (or last, for \code{right = FALSE}) bar.}
+    (or last, for \code{right = FALSE}) bar.  This will be ignored (with
+    a warning) unless \code{breaks} is a vector.}
   \item{right}{logical; if \code{TRUE}, the histograms cells are
     right-closed (left open) intervals.}
   \item{density}{the density of shading lines, in lines per inch.
@@ -77,6 +78,9 @@ hist.default(x, breaks = "Sturges", freq = NULL, probability = !freq,
   and \code{include.lowest} really has the meaning of
   ``\emph{include highest}''.
 
+  A numerical tolerance of \eqn{10^{-7}}{1e-7} times the range of the
+  breaks is applied when counting entries on the edges of bins. 
+
   The default for \code{breaks} is \code{"Sturges"}: see
   \code{\link{nclass.Sturges}}.  Other names for which algorithms
   are supplied are \code{"Scott"} and \code{"FD"} /
@@ -106,11 +110,15 @@ hist.default(x, breaks = "Sturges", freq = NULL, probability = !freq,
   The resulting value does \emph{not} depend on the values of
   the arguments \code{freq} (or \code{probability})
   or \code{plot}.  This is intentionally different from S.
+
+  Prior to \R 1.7.0, the element \code{breaks} of the result was
+  adjusted for numerical tolerances.  The nominal values are now
+  returned even though tolerances are still used when counting.
 }
 
 \references{
-  Venables, W. N. and Ripley. B. D. (1999)
-  \emph{Modern Applied Statistics with S-PLUS}.  Springer.
+  Venables, W. N. and Ripley. B. D. (2002)
+  \emph{Modern Applied Statistics with S}.  Springer.
 }
 
 \seealso{

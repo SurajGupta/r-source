@@ -6,6 +6,10 @@
 \arguments{
   \item{x}{an \R object.}
 }
+\details{
+  \code{is.function} is generic: you can write methods to handle
+  of specific classes of objects, see \link{InternalMethods}.
+}
 \value{\code{TRUE} if \code{x} is a function, and \code{FALSE}
   otherwise.}
 }

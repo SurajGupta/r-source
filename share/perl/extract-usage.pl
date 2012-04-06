@@ -1,6 +1,6 @@
 #-*- perl -*-
 
-## Copyright (C) 2000-2002 R Development Core Team
+## Copyright (C) 2000-2003 R Development Core Team
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ use R::Rdtools;
 use R::Utils;
 use R::Vars;
 
-my $revision = ' $Revision: 1.9 $ ';
+my $revision = ' $Revision: 1.11 $ ';
 my $version;
 my $name;
 
@@ -75,19 +75,37 @@ while (<INFILE>) {
     chomp;
     open(RDFILE, "< $_")
 	or die "Error: cannot open '$_' for reading\n";
+    my @chunks = split(/\\eof/, &Rdpp($_, $opt_OS));
+    ## <FIXME>
+    my $is_new_style_Rd_list = (scalar(@chunks) > 1);
     ## <NOTE>
-    ## This is really dangerous ...
-    my @chunks = split(/\\name/, &Rdpp($_, $opt_OS));
+    ## If we found '\eof', we have a new-style list of Rd files.
+    ## If not, we could still have an old-style one obtained by simply
+    ## concatenating all Rd files.  In this case, we split on \name, and
+    ## keep our fingers crossed ...
+    ## Note that this is really dangerous, and defensive programming
+    ## would (at least) put things back into one text chunk if \name was
+    ## found only once ...
+    if($is_new_style_Rd_list) {
+	pop(@chunks);		# last element must be 'empty' ...
+    }
+    else {
+	@chunks = split(/\\name/, $chunks[0]);
+    }
     ## </NOTE>
     foreach my $text (@chunks) {
-	next if($text !~ /^\s*{\s*([^}]*[^}\s])\s*}.*/);
+	## If not a new-style Rd list, we split on \name (see above),
+	## and hence put this back in front as get_usages() needs it.
+	$text = "\\name" . $text unless($is_new_style_Rd_list);
+
+	## Determine the \name of the documentation object.  Note:
+	## contrary to Rd::info() or Rdtools::get_section(), this goes
+	## for non-empty matches right away.
+	next if($text !~ /\\name\s*{\s*([^}]*[^}\s])\s*}.*/);
+
 	print OUTFILE "# usages in documentation object $1\n";
 	print OUTFILE "# arglist: ", join(" ", get_arglist($text)), "\n"
 	  unless ($opt_mode eq "codoc");
-
-	## Put \name back in front as get_usages() needs it.  Could also
-	## pass on the name we just determined ...
-	$text = "\\name" . $text;
 
 	{
 	    local $/;		# unset for get_usages()

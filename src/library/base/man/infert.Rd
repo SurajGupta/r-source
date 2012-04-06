@@ -1,11 +1,12 @@
 \name{infert}
-\title{Infertility after Spontaneous and Induced Abortion}
-\usage{data(infert)}
+\docType{data}
 \alias{infert}
+\title{Infertility after Spontaneous and Induced Abortion}
 \description{
   This is a matched case-control study dating from before the
   availability of conditional logistic regression.
 }
+\usage{data(infert)}
 \format{
   \tabular{rll}{
     1.  \tab Education  \tab 0 = 0-5  years \cr
@@ -42,11 +43,9 @@ summary(model2 <- glm(case ~ age+parity+education+spontaneous+induced,
 ## Really should be analysed by conditional logistic regression
 ## which is in the survival package
 if(require(survival)){
-  oT <- T; oF <- F; T <- TRUE; F <- FALSE # survival fails otherwise
   model3 <- clogit(case~spontaneous+induced+strata(stratum),data=infert)
   summary(model3)
   detach()# survival (conflicts)
-  T <- oT; F <- oF
 }
 }
 \keyword{datasets}

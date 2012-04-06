@@ -121,7 +121,9 @@ Step by step instructions
    a) type "Make -f Makefile.mac >build" and execute it in the MPW Shell.
    b) the run "build" from the MPW Shell. This will take some time
       because of building of help files, packages and modules dll code.
-
+4) after that you can run R but you still need to launch the Apple Script
+   called install_pack that you will find inside R_HOME:script. Double click
+   on it and run it if it won't run by itself. 
 
   
 The tools Folder:
@@ -166,6 +168,9 @@ On the MPW Shell submit the following two lines:
 
 Make -f MakeRecmd.mac > build
 build
+
+The launch the Apple script file install_recmd from the
+R_HOME:script directory to finish the installation
 
 The file MakeBio.mac is a makefiles that can be
 used to build the Biocondutor bundle of packages
@@ -238,7 +243,7 @@ or just
 
 
 
-Sep 7th, 2002		Stefano M. Iacus
+Maar 30th, 2003		Stefano M. Iacus
 						(stefano.iacus@unimi.it)
 
 

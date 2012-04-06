@@ -14,3 +14,4 @@ SEXP R_externalptr_prototype_object()
     return R_MakeExternalPtr((void *)R_dummy_extern_place, R_NilValue, 
 			     R_NilValue);
 }
+

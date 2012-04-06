@@ -25,7 +25,8 @@
 
 #include "internal.h"
 
-static char strbuf[256];
+#define BUFSIZE _MAX_PATH
+static char strbuf[BUFSIZE];
 
 static char *filter[] = {
 	"All Files (*.*)",	"*.*",
@@ -132,8 +133,15 @@ void askchangedir()
     GetCurrentDirectory(MAX_PATH, cod);
 }
 
-
 char *askfilename(char *title, char *default_name)
+{
+	if (*askfilenames(title, default_name, 0, userfilter?userfilter:filter[0], 0,
+				          strbuf, BUFSIZE)) return strbuf;
+	else return NULL;
+}
+
+char *askfilenames(char *title, char *default_name, int multi,
+			       char *filters, int filterindex, char *strbuf, int bufsize)
 {
 	int i;
 	OPENFILENAME ofn;
@@ -148,17 +156,18 @@ char *askfilename(char *title, char *default_name)
 	ofn.hwndOwner       = current_window ?
 				current_window->handle : 0;
 	ofn.hInstance       = 0;
-        ofn.lpstrFilter     = userfilter?userfilter:filter[0];
+    ofn.lpstrFilter     = filters;
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nMaxCustFilter  = 0;
-	ofn.nFilterIndex    = 0;
+	ofn.nFilterIndex    = filterindex;
 	ofn.lpstrFile       = strbuf;
-	ofn.nMaxFile        = _MAX_PATH;
+	ofn.nMaxFile        = bufsize;
 	ofn.lpstrFileTitle  = NULL;
 	ofn.nMaxFileTitle   = _MAX_FNAME + _MAX_EXT;
         ofn.lpstrInitialDir = cod;
 	ofn.lpstrTitle      = title;
-	ofn.Flags           = OFN_CREATEPROMPT | OFN_HIDEREADONLY;
+	ofn.Flags           = OFN_CREATEPROMPT | OFN_HIDEREADONLY | OFN_EXPLORER;
+	if (multi) ofn.Flags |= OFN_ALLOWMULTISELECT;
 	ofn.nFileOffset     = 0;
 	ofn.nFileExtension  = 0;
 	ofn.lpstrDefExt     = "*";
@@ -169,7 +178,9 @@ char *askfilename(char *title, char *default_name)
 	if (GetOpenFileName(&ofn) == 0) {
 		GetCurrentDirectory(MAX_PATH,cod);
 		SetCurrentDirectory(cwd);
-		return NULL;
+		strbuf[0] = 0;
+		strbuf[1] = 0;
+		return strbuf;
 	} else {
 		GetCurrentDirectory(MAX_PATH,cod);
 		SetCurrentDirectory(cwd);
@@ -177,6 +188,15 @@ char *askfilename(char *title, char *default_name)
 			if (peekevent()) doevent();
 		return strbuf;
 	}
+}
+
+int countFilenames(char *list)
+{
+	char *temp;
+	int count;
+	count = 0;
+	for (temp = list; *temp; temp += strlen(temp)+1) count++;
+	return count;
 }
 
 char *askfilesave(char *title, char *default_name)
@@ -203,7 +223,7 @@ char *askfilesavewithdir(char *title, char *default_name, char *dir)
 	ofn.nMaxCustFilter  = 0;
 	ofn.nFilterIndex    = 0;
 	ofn.lpstrFile       = strbuf;
-	ofn.nMaxFile        = _MAX_PATH;
+	ofn.nMaxFile        = BUFSIZE;
 	ofn.lpstrFileTitle  = NULL;
 	ofn.nMaxFileTitle   = _MAX_FNAME + _MAX_EXT;
 	if(dir && strlen(dir) > 0)
@@ -246,7 +266,7 @@ char *askfilesavewithdir(char *title, char *default_name, char *dir)
 		int 	hit;
 		char *	result;
 		label	question;
-		field	text;
+		field	text, pass;
 		button	yes, no, cancel;
 	} dialog_data;
 
@@ -306,7 +326,7 @@ static void browse_button(control c)
     window w = parentwindow(c);
     dialog_data *d = data(w);
     char strbuf[MAX_PATH];
-    
+    strcpy(strbuf, gettext(d->text));
     selectfolder(strbuf);
     if(strlen(strbuf)) settext(d->text, strbuf);
 }
@@ -317,7 +337,7 @@ static void browse_button(control c)
     dialog_data *d = data(w);
 
     OPENFILENAME ofn;
-    char strbuf[256]="anything", *p;
+    char strbuf[_MAX_PATH]="anything", *p;
 
     ofn.lStructSize     = sizeof(OPENFILENAME);
     ofn.hwndOwner       = 0;
@@ -509,3 +529,57 @@ char *askpassword(char *question, char *default_str)
 	return get_dialog_string(win);
 }
 
+char *askUserPass(char *title)
+{
+    static window win = NULL;
+    dialog_data *d;
+    window prev = current_window;
+
+    if (! win) {
+	int tw, bw, h, middle;
+
+	tw = strwidth(SystemFont, CANCEL_STRING) * 8;
+	h = getheight(SystemFont);
+	if (tw < 150) tw = 150;
+	win = newwindow(title, rect(0, 0, tw+30, h*9+12),
+			Titlebar | Centered | Modal);
+        setbackground(win, dialog_bg());
+	add_data(win);
+	d = data(win);
+	d->question = newlabel("User", rect(10, h, tw+4, h*2+2), AlignLeft);
+	bw = strwidth(SystemFont, "Password");
+	d->text = newfield("", rect(20+bw, h, tw-6-bw, h*3/2));
+	newlabel("Password", rect(10, h*4, tw+4, h*2+2), AlignLeft);
+	d->pass = newpassword("", rect(20+bw, h*4, tw-6-bw, h*3/2));
+	middle = (tw+30)/2;
+	bw = strwidth(SystemFont, CANCEL_STRING) * 3/2;
+
+	d->yes = newbutton(OKAY_STRING,
+			rect(middle-bw-10, h*7, bw, h+10), hit_button);
+	setvalue(d->yes, YES);
+
+	d->cancel = newbutton(CANCEL_STRING,
+			rect(middle+10, h*7, bw, h+10), hit_button);
+	setvalue(d->cancel, CANCEL);
+
+	setkeydown(win, hit_key);
+    } else {
+	d = data(win);
+	settext(d->text, "");
+	settext(d->pass, "");
+    }
+    handle_message_dialog(win);
+    current_window = prev;
+    {
+	char *user, *pass;
+	static char buf[1000];
+	if (d->hit < YES) /* cancelled */ return "";
+	if (d->text) user = new_string(gettext(d->text));
+	else return "";
+	if (d->pass) pass = new_string(gettext(d->pass));
+	else return "";
+	sprintf(buf, "%s:%s", user, pass);
+	return buf;
+    }
+    return ""; /* -Wall */
+}

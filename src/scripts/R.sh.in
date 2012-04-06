@@ -51,6 +51,7 @@ Options:
   --slave               Make R run as quietly as possible
   --verbose             Print more information about progress
   -d, --debugger=NAME   Run R through debugger NAME
+  --debugger-args=ARGS  Pass ARGS as arguments to the debugger
   -g, --gui=TYPE	Use TYPE as GUI; possible values are 'X11'
 			(default), 'none' and 'gnome'
 
@@ -67,7 +68,6 @@ Commands:
   Rdconv		Convert Rd format to various other formats
   Rd2dvi		Convert Rd format to DVI/PDF
   Rd2txt		Convert Rd format to pretty text
-  Rdindex		Extract index information from Rd files
   Sd2Rd			Convert S documentation to Rd format
   config                Obtain configuration information about R
 
@@ -90,6 +90,7 @@ see http://www.gnu.org/copyleft/gpl.html."
 ### Argument loop
 args=
 debugger=
+debugger_args=
 while test -n "${1}"; do
   case ${1} in
     RHOME|--print-home)
@@ -100,7 +101,7 @@ while test -n "${1}"; do
       shift;
       exec sh "${R_HOME}/bin/Rcmd" "${@}" ;;
     --gnome)
-      echo "option '${1}' is defunct, use '--gui=gnome'"
+      echo "ERROR: option '${1}' is defunct, use '--gui=gnome'"
       exit 1
       ;;
     -d|--debugger)
@@ -113,6 +114,8 @@ while test -n "${1}"; do
       ;;
     --debugger=*)
       debugger=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
+    --debugger-args=*)
+      debugger_args=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     -h|--help)
       echo "${usage}"; exit 0 ;;
     --version)
@@ -125,7 +128,7 @@ done
 
 ## R_HOME may have moved, so check
 ## (or you get "GUI X11 is not supported")
-if test -x ${R_HOME}; then
+if test -x "${R_HOME}"; then
   :
 else
   echo "R_HOME ('${R_HOME}') not found"
@@ -135,22 +138,42 @@ fi
 ## Create a per-session dir
 R_SESSION_TMPDIR=${TMPDIR-/tmp}/Rtmp$$
 export R_SESSION_TMPDIR
-if test -n ${R_SESSION_TMPDIR}; then
-  rm -rf ${R_SESSION_TMPDIR}
+if test -n "${R_SESSION_TMPDIR}"; then
+  rm -rf "${R_SESSION_TMPDIR}"
 fi
-mkdir ${R_SESSION_TMPDIR}
+mkdir "${R_SESSION_TMPDIR}"
 
 ## Startup
-R_binary="R.bin"
+R_binary="${R_HOME}/bin/R.bin"
 if test -z "${debugger}"; then
-  exec ${R_HOME}/bin/${R_binary} @R_BATCHSAVE@ ${args}
+  exec ${R_binary} @R_BATCHSAVE@ ${args}
 else
-  if test -n "${args}"; then
+  ## Ideally, we would like the debugger to start R with additional
+  ## ('inferior') arguments, but not all debuggers can do this.  We know
+  ## about valgrind and some versions of GDB , and deal with these.
+  ## Otherwise, to be on the safe side, we disregard non-debugger
+  ## command line args.
+  args_ok=no
+  case "`${debugger} --version 2>/dev/null`" in
+    "GNU gdb"*)
+      if ${debugger} --help 2>/dev/null | \
+          grep ' *--args' >/dev/null; then
+	args_ok=yes
+	debugger_args="${debugger_args} --args"
+      fi
+      ;;
+    valgrind*)
+      args_ok=yes
+      ;;
+  esac
+  if test -n "${args}" && test "${args_ok}" = no; then
     echo "*** Further command line arguments ('${args}') disregarded"
     echo "*** (maybe use 'run ${args}' from *inside* ${debugger})"
     echo ""
+    exec ${debugger} ${debugger_args} ${R_binary}
+  else
+    exec ${debugger} ${debugger_args} ${R_binary} ${args}
   fi
-  exec ${debugger} ${R_HOME}/bin/${R_binary}
 fi
 
 ### Local Variables: ***

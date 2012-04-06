@@ -26,8 +26,9 @@ PKGS = $(R_PKGS_BASE)
 ## PERL5LIB/PERLLIB are set appropriately (or do this ourselves).
 ## See e.g. @file{src/gnuwin32/help/Makefile}.
 R_CMD_BUILD_HELP = $(top_builddir)/bin/R CMD perl $(top_srcdir)/share/perl/build-help.pl
-R_CMD_RD2CONTENTS = $(top_builddir)/bin/R CMD perl $(top_srcdir)/share/perl/Rd2contents.pl --os=unix
 ## </NOTE>
+
+R_EXE = $(top_builddir)/bin/R --vanilla
 
 all: Makefile R
 
@@ -67,8 +68,10 @@ DOCS:
 	fi
 	@for pkg in $(R_PKGS_BASE); do \
 	  $(R_CMD_BUILD_HELP) $${OPTS} $(srcdir)/$${pkg}; \
-	  $(R_CMD_RD2CONTENTS) $(srcdir)/$${pkg} \
-	    > $(top_builddir)/library/$${pkg}/CONTENTS; \
+	  (echo "library(tools)"; \
+	    echo ".installPackageIndices(\"$(srcdir)/$${pkg}\","; \
+	    echo " \"$(top_builddir)/library/$${pkg}\")") | \
+	      $(R_EXE) > /dev/null; \
 	done; \
 	cat $(top_builddir)/library/*/CONTENTS \
 	  > $(top_builddir)/doc/html/search/index.txt

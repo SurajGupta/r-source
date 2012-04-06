@@ -6,9 +6,10 @@
   Use data editor on data frame or matrix contents.
 }
 \usage{
+# for a data frame
 \method{edit}{data.frame}(name, factor.mode = c("character", "numeric"),
-                edit.row.names = any(row.names(name) != 1:nrow(name)),
-                \dots)
+     edit.row.names = any(row.names(name) != 1:nrow(name)), \dots)
+# for a matrix
 \method{edit}{matrix}(name, edit.row.names = any(rownames(name) != 1:nrow(name))), \dots)
 }
 \arguments{
@@ -20,8 +21,8 @@
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
-  At present, this only works on simple data frames containing numeric or
-  character vectors and factors. Factors are represented in the
+  At present, this only works on simple data frames containing numeric, 
+  logical or character vectors and factors. Factors are represented in the
   spreadsheet as either numeric vectors (which is more suitable for data
   entry) or character vectors (better for browsing). After editing,
   vectors are padded with \code{NA} to have the same length and
@@ -34,7 +35,8 @@
   It is possible to use the data-editor's facilities to select the mode
   of columns to swap between numerical and factor columns in a data
   frame.  Changing any column in a numerical matrix to character will
-  cause the result to be coerced to a character matrix.
+  cause the result to be coerced to a character matrix.  Changing 
+  the mode of logical columns is not supported.
 }
 \value{
   The edited data frame.

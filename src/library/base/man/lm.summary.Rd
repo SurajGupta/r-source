@@ -6,10 +6,10 @@
 \alias{print.summary.lm.null}
 \title{Summarizing Linear Model Fits}
 \usage{
-\method{summary}{lm}(object, correlation = FALSE, \dots)
+\method{summary}{lm}(object, correlation = FALSE, symbolic.cor = FALSE, \dots)
 
 \method{print}{summary.lm}(x, digits = max(3, getOption("digits") - 3),
-      symbolic.cor = p > 4,
+      symbolic.cor = x$symbolic.cor,
       signif.stars = getOption("show.signif.stars"), \dots)
 }
 \arguments{
@@ -21,7 +21,7 @@
     the estimated parameters is returned and printed.}
   \item{digits}{the number of significant digits to use when printing.}
   \item{symbolic.cor}{logical. If \code{TRUE}, print the correlations in
-    a symbolic form (see \code{\link{symnum}} rather than as numbers.}
+    a symbolic form (see \code{\link{symnum}}) rather than as numbers.}
   \item{signif.stars}{logical. If \code{TRUE}, ``significance stars''
     are printed for each coefficient.}
   \item{\dots}{further arguments passed to or from other methods.}
@@ -30,9 +30,13 @@
 \code{summary} method for class \code{"lm"}.
 }
 \details{
-\code{print.summary.lm} tries to be smart about formatting the
-coefficients, standard errors, etc. and additionally gives
-``significance stars'' if \code{signif.stars} is \code{TRUE}.
+  \code{print.summary.lm} tries to be smart about formatting the
+  coefficients, standard errors, etc. and additionally gives
+  ``significance stars'' if \code{signif.stars} is \code{TRUE}.
+
+  Correlations are printed to two decimal places (or symbolically): to
+  see the actual correlations print \code{summary(object)$correlation}
+  directly.
 }
 \value{
   The function \code{summary.lm} computes and returns a list of summary
@@ -66,6 +70,8 @@ coefficients, standard errors, etc. and additionally gives
     covariances of the \eqn{\hat\beta_j}{coef[j]}, \eqn{j=1, \dots, p}.}
   \item{correlation}{the correlation matrix corresponding to the above
     \code{cov.unscaled}, if \code{correlation = TRUE} is specified.}
+  \item{symbolic.cor}{(only if \code{correlation} is true.)  The value
+    of the argument \code{symbolic.cor}.}
 }
 \seealso{
   The model fitting function \code{\link{lm}}, \code{\link{summary}}.

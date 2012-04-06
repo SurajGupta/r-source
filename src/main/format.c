@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2002   The R Development Core Team.
+ *  Copyright (C) 1997-2003   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  *
  *  See ./paste.c for do_paste() , do_format() and  do_formatinfo()
  *  See ./printutils.c for general remarks on Printing and the Encode.. utils.
- *  See ./print.c  for do_printdefault, do_printmatrix, etc.
+ *  See ./print.c  for do_printdefault, do_prmatrix, etc.
  *
  * Exports
  *	formatString
@@ -188,7 +188,16 @@ static void scientific(double *x, int *sgn, int *kpower, int *nsig, double eps)
 	    else
 		alpha = r * tbl[-kp + 1];
 	}
-	else alpha = r / pow(10.0, (double)kp);
+	/* on IEEE 1e-308 is not representable except by gradual underflow.
+	   shifting by 30 allows for any potential denormalized numbers x,
+	   and makes the reasonable assumption that R_dec_min_exponent+30
+	   is in range.
+	 */
+	else if (kp <= R_dec_min_exponent) {
+	    alpha = (r * 1e+30)/pow(10.0, (double)(kp+30));
+	} 
+	else 
+	    alpha = r / pow(10.0, (double)kp);
 
 	/* make sure that alpha is in [1,10) AFTER rounding */
 

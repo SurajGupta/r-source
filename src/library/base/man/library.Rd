@@ -11,6 +11,7 @@
 \alias{.packages}
 \alias{.path.package}
 \alias{.libPaths}
+\alias{.noGenerics}
 \alias{print.libraryIQR}
 \alias{print.packageInfo}
 \description{
@@ -27,9 +28,10 @@
 library(package, help, lib.loc = NULL, character.only = FALSE,
         logical.return = FALSE, warn.conflicts = TRUE,
         keep.source = getOption("keep.source.pkgs"),
-        verbose = getOption("verbose"))
+        verbose = getOption("verbose"), version)
 require(package, quietly = FALSE, warn.conflicts = TRUE,
-        keep.source = getOption("keep.source.pkgs"))
+        keep.source = getOption("keep.source.pkgs"),
+        character.only=FALSE, version)
 
 .First.lib(libname, pkgname)
 .Last.lib(libpath)
@@ -51,6 +53,9 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
     of \code{NULL} corresponds to all libraries currently known.}
   \item{character.only}{a logical indicating whether \code{package} or
     \code{help} can be assumed to be character strings.}
+  \item{version}{A character string denoting a version number of the 
+     package to be loaded.  If no version is given, a suitable default
+     is chosen.}
   \item{logical.return}{logical.  If it is \code{TRUE},  \code{FALSE} or
       \code{TRUE} is returned to indicate success.}
   \item{warn.conflicts}{logical.  If \code{TRUE}, warnings are
@@ -81,7 +86,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{library(package)} and \code{require(package)} both load the
   package with name \code{package}.  \code{require} is designed for use
   inside other functions; it returns \code{FALSE} and gives a warning
-  (rather than an error as \code{library()}) if the package does not exist.
+  (rather than an error as \code{library()} does) if the package does not exist.
   Both functions check and update the list of currently loaded packages
   and do not reload code that is already loaded.
 
@@ -158,22 +163,38 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   with argument \code{new}, the library search path is set to
   \code{unique(new, .Library)} and this is returned.  If given no
   argument, a character vector with the currently known library trees is
-  returned.  The library search path is initialized at startup from the
-  environment variable \code{R_LIBS} (which should be a
+  returned.
+
 #ifdef unix
+  The library search path is initialized at startup from the
+  environment variable \code{R_LIBS} (which should be a
   colon-separated
-#endif
-#ifdef windows
-  semicolon-separated
-#endif
   list of directories at which \R library trees are rooted) by calling
   \code{.libPaths} with the directories specified in \code{R_LIBS}.
+#endif
+#ifdef windows  
+  The library search path is initialized at startup from the
+  environment variable \code{R_LIBS} (which should be a
+  semicolon-separated
+  list of directories at which \R library trees are rooted) by calling
+  \code{.libPaths} with the directories specified in \code{R_LIBS}.
+#endif
 }
 \value{
   \code{library} returns the list of loaded (or available) packages
   (or \code{TRUE} if \code{logical.return} is \code{TRUE}).
   \code{require} returns a logical indicating whether the required
   package is available.
+}
+\section{Formal methods}{
+  \code{library} takes some further actions when package \code{methods}
+  is attached (as it is by default).  Packages may define formal generic
+  functions as well as re-defining functions in other packages (notably
+  \code{base}) to be generic, and this information is cached whenever
+  such a package is loaded after \code{methods} and re-defined functions
+  are excluded from the list of conflicts.  This may take appreciable
+  time and can be prevented by defining an object \code{.noGenerics}
+  (with any value) in the package.
 }
 \note{
   \code{library} and \code{require} can only load an \emph{installed}
@@ -183,7 +204,11 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   re-installed.
 
   Under Unix-alikes, the code checks that the package was installed
-  under a similar operating system as given by \code{.Platform$canonical.name}.
+  under a similar operating system as given by
+  \code{.Platform$canonical.name}, provided it contains compiled code.
+  Packages which do not contain compiled code can be shared between
+  Unix-alikes, but not to other OSes because of potential problems with
+  line endings and OS-specific help files.
 }
 \author{R core;  Guido Masarotto for the \code{all.available=TRUE}
   part of \code{.packages}.}
@@ -208,6 +233,9 @@ detach("package:eda")
 # if the package name is in a character vector, use
 pkg <- "eda"
 library(pkg, character.only = TRUE)
+detach(pos = match(paste("package", pkg, sep=":"), search()))
+
+require(pkg, character.only = TRUE)
 detach(pos = match(paste("package", pkg, sep=":"), search()))
 
 .path.package()

@@ -4,7 +4,7 @@ END-INFO-DIR-ENTRY
 
    R FAQ
 Frequently Asked Questions on R
-Version 1.6-24, 2003-01-08
+Version 1.7-3, 2004-04-16
 ISBN 3-901167-51-X
 Kurt Hornik
 
@@ -238,7 +238,7 @@ hppa-hp-hpux, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-   The current released version is 1.6.2.  Based on this
+   The current released version is 1.7.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, working towards the next patch (`r-patched') and minor or
 eventually major (`r-devel') releases of R, respectively.  Version
@@ -293,8 +293,8 @@ thus created, and issue the following commands (at the shell prompt):
      $ make
 
    If these commands execute successfully, the R binary and a shell script
-font-end called `R' are created and copied to the `bin' directory.  You can
-copy the script to a place where users can invoke it, for example to
+front-end called `R' are created and copied to the `bin' directory.  You
+can copy the script to a place where users can invoke it, for example to
 `/usr/local/bin'.  In addition, plain text help pages as well as HTML and
 LaTeX versions of the documentation are built.
 
@@ -388,9 +388,6 @@ CRAN mirror instead of the master) to the file `/etc/apt/sources.list'.
 Once you have added that line the programs `apt-get', `apt-cache', and
 `dselect' (using the apt access method) will automatically detect and
 install updates of the R packages.
-
-   The `bin/osf' directory of a CRAN site contains RPMs by Albrecht
-Gebhardt for alpha systems running Alpha Unix (OSF/Tru64).
 
    No other binary distributions have thus far been made publically
 available.
@@ -1058,6 +1055,8 @@ the same time being as compatible as possible with S.
      character variable.  Use `as.character(NA)' to create a missing
      character value.
 
+   * R disallows repeated formal arguments in function calls.
+
 
    There are also differences which are not intentional, and result from
 missing or incorrect code in R.  The developers would appreciate hearing
@@ -1199,6 +1198,10 @@ distributions of R.)
      classes in this package are virtual and need to be extended by the
      various DBMS implementations.
 
+*Davies*
+     Functions for the Davies quantile function and the Generalized Lambda
+     distribution.
+
 *Devore5*
      Data sets and sample analyses from "Probability and Statistics for
      Engineering and the Sciences (5th ed)" by Jay L. Devore, 2000, Duxbury.
@@ -1209,6 +1212,12 @@ distributions of R.)
 
 *GLMMGibbs*
      Generalised Linear Mixed Models by Gibbs sampling.
+
+*GRASS*
+     An interface between the GRASS geographical information system and R,
+     based on starting R from within the GRASS environment and chosen
+     LOCATION_NAME and MAPSET.  Wrapper and helper functions are provided
+     for a range of R functions to match the interface metadata structures.
 
 *GenKern*
      Functions for generating and manipulating generalised binned kernel
@@ -1234,6 +1243,10 @@ distributions of R.)
      Functions and datasets from the main package of Venables and Ripley,
      "Modern Applied Statistics with S".  Contained in the `VR' bundle.
      _Recommended_.
+
+*MCMCpack*
+     Markov chain Monte Carlo (MCMC) package: functions for posterior
+     simulation for a number of statistical models.
 
 *MPV*
      Data sets from the book "Introduction to Linear Regression Analysis"
@@ -1317,6 +1330,10 @@ distributions of R.)
      examples in "SAS System for Mixed Models" by R. C. Littell, G. A.
      Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
 
+*SenSrivastava*
+     Collection of datasets from "Regression Analysis, Theory, Methods and
+     Applications" by A. Sen and M. Srivastava, 1990, Springer-Verlag.
+
 *SparseM*
      Basic linear algebra for sparse matrices.
 
@@ -1356,6 +1373,9 @@ distributions of R.)
 
 *amap*
      Another Multidimensional Analysis Package.
+
+*anm*
+     Analog model for statistical/empirical downscaling.
 
 *ape*
      Analyses of Phylogenetics and Evolution, providing functions for
@@ -1419,6 +1439,9 @@ distributions of R.)
      Functions for classification (k-nearest neighbor and LVQ).  Contained
      in the `VR' bundle.  _Recommended_.
 
+*clim.pact*
+     Climate analysis and downscaling for monthly and daily data.
+
 *cluster*
      Functions for cluster analysis.  _Recommended_.
 
@@ -1461,14 +1484,17 @@ distributions of R.)
      Calculates the  Delaunay triangulation and the Dirichlet or Voronoi
      tesselation (with respect to the entire plane) of a planar point set.
 
-*dichromat*
-     Color schemes for dichromats: collapse red-green distinctions to
-     simulate the effects of colour-blindness.
-
 *diamonds*
      Functions for illustrating aperture-4 diamond partitions in the plane,
      or on the surface of an octahedron or icosahedron, for use as analysis
      or sampling grids.
+
+*dichromat*
+     Color schemes for dichromats: collapse red-green distinctions to
+     simulate the effects of colour-blindness.
+
+*dispmod*
+     Functions for modelling dispersion in GLMs.
 
 *dr*
      Functions, methods, and datasets for fitting dimension reduction
@@ -1476,10 +1502,12 @@ distributions of R.)
 
 *dse*
      Dynamic System Estimation, a multivariate time series package.
-     Contains *dse1* (DSE kernel plus ARMA and state space models), *dse2*
-     (DSE extensions), *syskern* (functions for writing code that is
-     operating system and R/S independent), and *tframe* (functions for
-     writing code that is independent of the representation of time).
+     Contains *dse1* (the base system, including multivariate ARMA and state
+     space models), *dse2* (extensions for evaluating estimation
+     techniques, forecasting, and for evaluating forecasting model),
+     *tframe* (functions for writing code that is independent of the
+     representation of time). and *setRNG* (a mechanism for generating the
+     same random numbers in S and R).
 
 *e1071*
      Miscellaneous functions used at the Department of Statistics at TU Wien
@@ -1535,6 +1563,13 @@ distributions of R.)
 *gafit*
      Genetic algorithm for curve fitting.
 
+*gbm*
+     Generalized Boosted Regression Models: implements extensions to Freund
+     and Schapire's AdaBoost algorithm and J. Friedman's gradient boosting
+     machine.  Includes regression methods for least squares, absolute loss,
+     logistic, Poisson, Cox proportional hazards partial likelihood, and
+     AdaBoost exponential loss.
+
 *gee*
      An implementation of the Liang/Zeger generalized estimating equation
      approach to GLMs for dependent data.
@@ -1566,6 +1601,10 @@ distributions of R.)
      including some latent class models via EM and Fisher scoring
      approaches.
 
+*glmmML*
+     A Maximum Likelihood approach to generalized linear models with random
+     intercept.
+
 *gpclib*
      General polygon clipping routines for R based on Alan Murta's C
      library.
@@ -1584,6 +1623,12 @@ distributions of R.)
      A comprehensive package for structural multivariate function estimation
      using smoothing splines.
 
+*gstat*
+     multivariable geostatistical modelling, prediction and simulation.
+     Includes code for variogram modelling; simple, ordinary and universal
+     point or block (co)kriging, sequential Gaussian or indicator
+     (co)simulation, and map plotting functions.
+
 *gtkDevice*
      GTK graphics device driver that may be used independently of the
      R-GNOME interface and can be used to create R devices as embedded
@@ -1595,6 +1640,14 @@ distributions of R.)
 
 *hdf5*
      Interface to the NCSA HDF5 library.
+
+*hier.part*
+     Hierarchical Partitioning: variance partition of a multivariate data
+     set.
+
+*hwde*
+     Models and tests for departure from Hardy-Weinberg equilibrium and
+     independence between loci.
 
 *ifs*
      Iterated Function Systems distribution function estimator.
@@ -1639,6 +1692,9 @@ distributions of R.)
      from the book "The linear regression model under test" by W. Kraemer
      and H. Sonnberger, 1986, Physica.
 
+*locfit*
+     Local Regression, likelihood and density estimation.
+
 *logspline*
      Logspline density estimation.
 
@@ -1680,6 +1736,10 @@ distributions of R.)
 *mimR*
      An R interface to MIM for graphical modeling in R.
 
+*mix*
+     Estimation/multiple imputation programs for mixed categorical and
+     continuous data.
+
 *mlbench*
      A collection of artificial and real-world machine learning benchmark
      problems, including the Boston housing data.
@@ -1699,6 +1759,10 @@ distributions of R.)
 
 *multcomp*
      Multiple comparison procedures for the one-way layout.
+
+*multidim*
+     Multidimensional descriptive statistics: factorial methods and
+     classification.
 
 *multiv*
      Functions for hierarchical clustering, partitioning, bond energy
@@ -1727,6 +1791,10 @@ distributions of R.)
 
 *norm*
      Analysis of multivariate normal datasets with missing values.
+
+*normalp*
+     A collection of utilities for normal of order p distributions (General
+     Error Distributions).
 
 *normix*
      One-dimensional normal mixture models classes, for, e.g., density
@@ -1772,6 +1840,9 @@ distributions of R.)
      Functions for import, export, plotting and other manipulations of
      bitmapped images.
 
+*pls.pcr*
+     Multivariate regression by PLS and PCR.
+
 *polspline*
      Routines for the polynomial spline fitting routines hazard regression,
      hazard estimation with flexible tails, logspline, lspec, polyclass, and
@@ -1810,6 +1881,10 @@ distributions of R.)
 *rgenoud*
      R version of GENetic Optimization Using Derivatives.
 
+*rimage*
+     Functions for image processing, including Sobel filter, rank filters,
+     fft, histogram equalization, and reading JPEG files.
+
 *rmeta*
      Functions for simple fixed and random effects meta-analysis for
      two-sample comparison of binary outcomes.
@@ -1836,6 +1911,9 @@ distributions of R.)
 *serialize*
      Simple interfce for serializing to connections.
 
+*session*
+     Functions for interacting with, saving and restoring R sessions.
+
 *sgeostat*
      An object-oriented framework for geostatistical modeling.
 
@@ -1856,6 +1934,10 @@ distributions of R.)
      graph-level indices, structural distance and covariance methods,
      structural equivalence detection, p* modeling, and network
      visualization.
+
+*snow*
+     Simple Network of Workstations: support for simple parallel computing
+     in R.
 
 *sound*
      A sound interface for R: Basic functions for dealing with `.wav' files
@@ -1883,6 +1965,9 @@ distributions of R.)
 *splancs*
      Spatial and space-time point pattern analysis functions.
 
+*statmod*
+     Miscellaneous biostatistical modelling functions.
+
 *strucchange*
      Various tests on structural change in linear regression models.
 
@@ -1890,6 +1975,11 @@ distributions of R.)
      A collection of functions which assess the quality of variable subsets
      as surrogates for a full data set, and search for subsets which are
      optimal under various criteria.
+
+*survey*
+     Summary statistics, generalized linear models, and general maximum
+     likelihood estimation for stratified, cluster-sampled, unequally
+     weighted survey samples.
 
 *survival*
      Functions for survival analysis, including penalised likelihood.
@@ -1955,12 +2045,6 @@ these a try, of course.  This area of CRAN currently contains
 *Dopt*
      Finding D-optimal experimental designs.
 
-*GRASS*
-     Interface between the GRASS geographical information system and R,
-     based on starting R from within the GRASS environment and chosen
-     LOCATION and MAPSET.  Wrapper and helper functions are provided for a
-     range of R functions to match the interface metadata structures.
-
 *PHYLOGR*
      Manipulation and analysis of phylogenetically simulated data sets (as
      obtained from PDSIMUL in package PDAP) and phylogenetically-based
@@ -1975,13 +2059,6 @@ these a try, of course.  This area of CRAN currently contains
 
 *ensemble*
      Ensembles of tree classifiers.
-
-*locfit*
-     Local Regression, likelihood and density estimation.
-
-*multidim*
-     Code for correspondence analysis and other multidimensional descriptive
-     statistics.
 
 *pls*
      Univariate Partial Least Squares Regression.

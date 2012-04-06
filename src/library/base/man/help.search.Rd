@@ -57,11 +57,14 @@ help.search(pattern, fields = c("alias", "title"),
     \code{max.distance} in the documentation for \code{\link{agrep}}.}
 }
 \details{
-  Upon installation of a package, the Perl script \file{Rd2contents.pl}
-  creates a \file{CONTENTS} data base which contains the information on
-  name, aliases, title and keywords (as well as the URL of the HTML
-  version of the help file) in Debian Control Format.  This is the data
-  base searched by \code{help.search()}.
+  Upon installation of a package, a contents data base which contains
+  the information on name, aliases, title and keywords is computed from
+  the Rd files in the package and serialized as \file{Rd.rds} in the
+  \file{Meta} subdirectory of the top-level package installation
+  directory (or, prior to \R 1.7, as \file{CONTENTS} in Debian Control
+  Format with aliases and keywords collapsed to character strings in
+  the top-level package installation directory).  This is the data base
+  searched by \code{help.search()}.
 
   The arguments \code{apropos} and \code{whatis} play a role similar to
   the Unix commands with the same names.
@@ -99,9 +102,10 @@ help.search(apropos = "print")  # The same
 help.search(keyword = "hplot")  # All help pages documenting high-level
                                 # plots.
 
-## Help pages with documented topics starting with `try'.
+## Help pages with documented topics starting with 'try'.
 help.search("\\\\btry", fields = "alias")
-## Do not use `^' or `$' when matching aliases or keywords.
+## Do not use '^' or '$' when matching aliases or keywords
+## (unless all packages were installed using R 1.7 or newer).
 }
 }
 \keyword{documentation}

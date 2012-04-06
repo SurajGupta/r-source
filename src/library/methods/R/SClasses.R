@@ -34,7 +34,9 @@ setClass <-
     ## confirm the validity of the class definition (it may be incomplete)
     msg <- trySilent(completeClassDefinition(Class, classDef))
     if(is(msg, "try-error")) {
-        removeClass(Class, where=where)
+        ## clean up message first
+        msg <- gsub("Error[^:]*:","", msg)
+        msg <- gsub("[\n\t]", "", msg)
         warning("Cannot complete class definition for \"", Class, "\" (",
                    msg, ") -- may conflict with previous definitions")
     }
@@ -246,7 +248,7 @@ removeClass <-
         fullDef <- trySilent(getClass(Class))
         if(is(fullDef, "try-error")) {
             warning("unable to get definition of \"", Class, "\" (",
-                    fullDef, "): subclass links will not be removed")
+                    fullDef, "): subclass links may not be removed")
             fullDef <- NULL
         }
     }
@@ -438,14 +440,17 @@ initialize <- function(.Object, ...) {
             for(i in rev(seq(along = supers))) {
                 obj <- el(supers, i)
                 Classi <- .class1(obj)
+                ## test some cases that let information be copied into the
+                ## object, ordered from more to less:  all the slots in the
+                ## first two cases, some in the 3rd, just the data part in 4th
                 if(identical(Classi, Class))
                     .Object <- obj
                 else if(extends(Classi, Class))
                     .Object <- as(obj, Class, strict=FALSE)
-                else if(extends(Classi, dataPart))
-                    .Object@.Data <- obj
                 else if(extends(Class, Classi))
                     as(.Object, Classi) <- obj
+                else if(extends(Classi, dataPart))
+                    .Object@.Data <- obj
                 else {
                     ## is there a class to which we can coerce obj
                     ## that is then among the superclasses of Class?
@@ -499,4 +504,15 @@ findClass <- function(Class) {
     for(i in seq(along=where))
         ok[i] <- exists(what, where[i], inherits = FALSE)
     where[ok]
+}
+
+isSealedClass <- function(Class) {
+    if(is.character(Class)) {
+        if(isClass(Class))
+            Class <- getClass(Class, FALSE)
+    }
+    if(!is(Class, "classRepresentation"))
+        FALSE
+    else
+        Class@sealed
 }

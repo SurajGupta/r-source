@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file extra.c
- *  Copyright (C) 1998--2002  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "graphapp/ga.h"
 #include "rui.h"
 
-char * R_tmpnam(const char * prefix)
+char * R_tmpnam(const char * prefix, const char * tempdir)
 {
     char tm[MAX_PATH], tmp1[MAX_PATH], *res;
     unsigned int n, done = 0;
@@ -43,7 +43,7 @@ char * R_tmpnam(const char * prefix)
     HANDLE h;
 
     if(!prefix) prefix = "";	/* NULL */
-    strcpy(tmp1, R_TempDir);
+    strcpy(tmp1, tempdir);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
         sprintf(tm, "%s\\%s%d", tmp1, prefix, rand());
@@ -937,7 +937,7 @@ void InitTempDir()
 
 void CleanTempDir()
 {
-    R_unlink(R_TempDir, 1);
+    if(R_TempDir) R_unlink(R_TempDir, 1);
 }
 
 SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1000,6 +1000,78 @@ SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     PROTECT(ans = allocVector(LGLSXP, 1));
     LOGICAL(ans)[0] = success;
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, def, caption, filters;
+    char *temp, *cfilters, list[65520];
+    char path[MAX_PATH], filename[MAX_PATH];
+    int multi, filterindex, i, count, lfilters, pathlen;
+    checkArity(op, args);
+    def = CAR(args);
+    caption = CADR(args);
+    multi = asLogical(CADDR(args));
+    filters = CADDDR(args);
+    filterindex = asInteger(CAD4R(args));
+    if(length(def) != 1 )
+		errorcall(call, "default must be a character string");
+	strcpy(path, CHAR(STRING_ELT(def, 0)));
+	temp = strchr(path,'/');
+	while (temp) {
+		*temp = '\\';
+		temp = strchr(temp,'/');
+	}
+    if(length(caption) != 1 )
+		errorcall(call, "caption must be a character string");
+	if(multi == NA_LOGICAL)
+		errorcall(call, "multi must be a logical value");
+	if(filterindex == NA_INTEGER)
+		errorcall(call, "filterindex must be an integer value");
+    lfilters = 1+length(filters);
+    for (i=0; i<length(filters); i++) lfilters += strlen(CHAR(STRING_ELT(filters,i)));
+    cfilters = R_alloc(lfilters, sizeof(char));
+    temp = cfilters;
+    for (i=0; i<length(filters)/2; i++) {
+		strcpy(temp,CHAR(STRING_ELT(filters,i)));
+		temp += strlen(temp)+1;
+		strcpy(temp,CHAR(STRING_ELT(filters,i+length(filters)/2)));
+		temp += strlen(temp)+1;
+	}
+	*temp = 0;
+
+    askfilenames(CHAR(STRING_ELT(caption, 0)), path,
+    			 multi, cfilters, filterindex,
+                 list, 65500);  /* list declared larger to protect against overwrites */
+    Rwin_fpset();
+    count = countFilenames(list);
+
+    if (count < 2) PROTECT(ans = allocVector(STRSXP, count));
+    else PROTECT(ans = allocVector(STRSXP, count-1));
+
+    switch (count) {
+	case 0: break;
+	case 1: SET_STRING_ELT(ans, 0, mkChar(list));
+			break;
+	default:
+		strncpy(path,list,sizeof(path));
+		pathlen = strlen(path);
+		if (path[pathlen-1] == '\\') path[--pathlen] = '\0';
+    	temp = list;
+    	for (i = 0; i < count-1; i++) {
+			temp += strlen(temp) + 1;
+			if (strchr(temp,':') || *temp == '\\' || *temp == '/')
+				SET_STRING_ELT(ans, i, mkChar(temp));
+			else {
+				strncpy(filename,path,sizeof(filename));
+				filename[pathlen] = '\\';
+				strncpy(filename+pathlen+1,temp,sizeof(filename)-pathlen-1);
+				SET_STRING_ELT(ans, i, mkChar(filename));
+			}
+		}
+    }
     UNPROTECT(1);
     return ans;
 }

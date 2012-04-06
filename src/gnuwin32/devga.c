@@ -341,7 +341,7 @@ static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 		       fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
 					GE_INCHES, gdd),
 		       (double)0, ((gadesc*) dd->deviceSpecific)->basefontsize,
-		       0, 1, 0, ""))
+		       0, 1, 0, "", "R Graphics Output"))
 	/* horizontal=F, onefile=F, pagecentre=T, print.it=F */
 	PrivateCopyDevice(dd, ndd, "postscript");
 }
@@ -395,7 +395,8 @@ static void SaveAsPDF(NewDevDesc *dd, char *fn)
 					GE_INCHES, gdd),
 			fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
 					 GE_INCHES, gdd),
-			((gadesc*) dd->deviceSpecific)->basefontsize, 1))
+			((gadesc*) dd->deviceSpecific)->basefontsize, 
+			1, "R Graphics Output"))
 	PrivateCopyDevice(dd, ndd, "PDF");
 }
 
@@ -805,8 +806,8 @@ extern SEXP savedSnapshot;
 
 /* NB: this puts .SavedPlots in package:base */
 #define GROWTH 4
-#define GETDL SEXP vDL=findVar(install(".SavedPlots"), R_NilValue)
-#define SETDL gsetVar(install(".SavedPlots"), vDL, R_NilValue)
+#define GETDL SEXP vDL=findVar(install(".SavedPlots"), R_GlobalEnv)
+#define SETDL defineVar(install(".SavedPlots"), vDL, R_GlobalEnv)
 /* altered in 1.4.0, as incompatible format */
 #define PLOTHISTORYMAGIC 31416
 #define pMAGIC      (INTEGER(VECTOR_ELT(vDL, 0))[0])
@@ -992,7 +993,7 @@ static void menuprev(control m)
 
 static void menuclear(control m)
 {
-    gsetVar(install(".SavedPlots"), R_NilValue, R_NilValue);
+    defineVar(install(".SavedPlots"), R_NilValue, R_GlobalEnv);
 }
 
 static void menugvar(control m)
@@ -1024,7 +1025,7 @@ static void menusvar(control m)
     v = askstring("Name of variable to save to", "");
     if (!v)
 	return;
-    setVar(install(v), vDL, R_GlobalEnv);
+    defineVar(install(v), vDL, R_GlobalEnv);
 }
 #endif
 

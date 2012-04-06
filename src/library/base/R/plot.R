@@ -88,12 +88,19 @@ xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
     return(list(x=as.real(x), y=as.real(y), xlab=xlab, ylab=ylab))
 }
 
-plot <- function(x, ...) {
-    if(is.null(attr(x, "class")) && is.function(x)) {
-	if("ylab" %in% names(list(...)))
-	    plot.function(x, ...)
+plot <- function (x, y, ...)
+{
+    if (is.null(attr(x, "class")) && is.function(x)) {
+	nms <- names(list(...))
+	## need to pass `y' to plot.function() when positionally matched
+	if(missing(y)) # set to defaults {could use formals(plot.default)}:
+	    y <- { if (!"from" %in% nms) 0 else
+		   if (!"to"   %in% nms) 1 else
+		   if (!"xlim" %in% nms) NULL }
+	if ("ylab" %in% nms)
+	    plot.function(x,  y, ...)
 	else
-	    plot.function(x, ylab=paste(deparse(substitute(x)),"(x)"), ...)
+	    plot.function(x, y, ylab=paste(deparse(substitute(x)),"(x)"), ...)
     }
     else UseMethod("plot")
 }
@@ -169,18 +176,22 @@ plot.table <-
     if(rnk == 0)
 	stop("invalid table `x'")
     if(rnk == 1) {
-        dn <- dimnames(x)
-        nx <- dn[[1]]
-        if(is.null(xlab)) xlab <- names(dn)
-        if(is.null(xlab)) xlab <- ""
-        if(is.null(ylab)) ylab <- xnam
-        ow <- options(warn = -1)
-        is.num <- !any(is.na(xx <- as.numeric(nx))); options(ow)
-        x0 <- if(is.num) xx else seq(x)
+	dn <- dimnames(x)
+	nx <- dn[[1]]
+	if(is.null(xlab)) xlab <- names(dn)
+	if(is.null(xlab)) xlab <- ""
+	if(is.null(ylab)) ylab <- xnam
+	ow <- options(warn = -1)
+	is.num <- !any(is.na(xx <- as.numeric(nx))); options(ow)
+	x0 <- if(is.num) xx else seq(x)
 	plot(x0, unclass(x), type = type,
-             ylim = ylim, xlab = xlab, ylab = ylab, frame.plot = frame.plot,
-             lwd = lwd, ..., xaxt = "n")
-        axis(1, at = x0, labels = nx)
+	     ylim = ylim, xlab = xlab, ylab = ylab, frame.plot = frame.plot,
+	     lwd = lwd, ..., xaxt = "n")
+	xaxt <-
+	    if(length(as <- list(...))) {
+		if(!is.null(as$axes) && !as$axes) "n" else as$xaxt
+	    }## else NULL
+	axis(1, at = x0, labels = nx, xaxt = xaxt)
     } else
 	mosaicplot(x, xlab = xlab, ylab = ylab, ...)
 }

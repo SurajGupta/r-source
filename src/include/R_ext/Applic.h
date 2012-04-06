@@ -27,6 +27,7 @@
 
 #include <R_ext/Boolean.h>
 #include <R_ext/RS.h>		/* F77_... */
+#include <R_ext/BLAS.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -98,9 +99,9 @@ void lowess(double *x, double *y, int *n,
 	    double *ys, double *rw, double *res);
 
 /* machar.c */
-void machar(int *ibeta, int *it, int *irnd, int *ngrd, int *machep, int *negep,
-	int *iexp, int *minexp, int *maxexp, double *eps,
-	double *epsneg, double *xmin, double *xmax);
+void machar(int *ibeta, int *it, int *irnd, int *ngrd, int *machep,
+	    int *negep, int *iexp, int *minexp, int *maxexp,
+	    double *eps, double *epsneg, double *xmin, double *xmax);
 
 /* massdist.c */
 void massdist(double *x, int *nx, double *xlow, double *xhigh,
@@ -110,10 +111,15 @@ void R_max_col(double *matrix, int *nr, int *nc, int *maxes);
 
 /* pretty.c */
 double R_pretty0(double *lo, double *up, int *ndiv, int min_n,
-	       double shrink_sml, double high_u_fact[],
-	       int eps_correction, int return_bounds);
+		 double shrink_sml, double high_u_fact[],
+		 int eps_correction, int return_bounds);
 void R_pretty(double *lo, double *up, int *ndiv, int *min_n,
-	    double *shrink_sml, double *high_u_fact, int *eps_correction);
+	      double *shrink_sml, double *high_u_fact,
+	      int *eps_correction);
+
+/* rcont.c */
+void rcont2(int *nrow, int *ncol, int *nrowt, int *ncolt, int *ntotal,
+	    double *fact, int *jwork, int *matrix);
 
 /* rowsum.c */
 void R_rowsum(int *dim, double *na_x, double *x, double *group);
@@ -134,15 +140,12 @@ void periodic_spline(int n, double *x, double *y,
 /* stem.c */
 Rboolean stemleaf(double *x, int *n, double *scale, int *width, double *atom);
 
-/* ...............*/
-
 /* strsignif.c */
 void str_signif(char *x, int *n, char **type, int *width, int *digits,
 		char **format, char **flag, char **result);
 
 /* tabulate.c */
 void R_tabulate(int *x, int *n, int *nbin, int *ans);
-
 
 /* uncmin.c : */
 
@@ -175,93 +178,6 @@ void optif0(int nr, int n, double *x, fcn_p fcn, void *state,
 typedef double (*D_fp)();
 typedef /* Subroutine */ int (*S_fp)();
 
-/* ../../appl/blas.f ---> see also ./Linpack.h */
-extern double
-F77_NAME(dasum)(int *, double *, int *);
-extern void
-F77_NAME(daxpy)(int *, double *, double *, int *, double *, int *);
-extern void
-F77_NAME(dcopy)(int *, double *, int *, double *, int *);
-extern double
-F77_NAME(ddot)(int *, double *, int *, double *, int *);
-extern void
-F77_NAME(dgbmv)(char *, int *, int *, int *, int *, double *, double *,
-		int *, double *, int *, double *, double *, int *);
-extern void
-F77_NAME(dgemm)(char *, char *, int *, int *, int *, double *, double *, int *,
-	double *, int *, double *, double *, int *);
-extern void
-F77_NAME(dgemv)(char *, int *, int *, double *, double *, int *, double *,
-		int *, double *, double *, int *);
-extern void
-F77_NAME(dger)(int *, int *, double *, double *, int *, double *, int *,
-	       double *, int *);
-extern double
-F77_NAME(dnrm2)(int *, double *, int *incx);
-extern void
-F77_NAME(drot)(int *, double *, int *, double *, int *, double *, double *);
-extern void
-F77_NAME(drotg)(double *, double *, double *, double *);
-extern void
-F77_NAME(drotm)(int *, double *, int *, double *, int *, double *);
-extern void
-F77_NAME(drotmg)(double *dd1, double *dd2, double * dx1, double *, double *);
-extern void
-F77_NAME(dsbmv)(char *, int *, int *, double *, double *, int *, double *,
-		int *, double *, double *, int *);
-extern void
-F77_NAME(dscal)(int *, double *, double *, int *);
-extern void
-F77_NAME(dspmv)(char *, int *, double *, double *, double *, int *, double *,
-		double *, int *);
-extern void
-F77_NAME(dspr)(char *, int *, double *, double *, int *, double *);
-extern void
-F77_NAME(dspr2)(char *, int *, double *, double *, int *, double *, int *,
-		double *);
-extern void
-F77_NAME(dswap)(int *, double *, int *, double *, int *);
-extern void
-F77_NAME(dsymm)(char *, char *, int *, int *, double *, double *, int *,
-		double *, int *, double *, double *, int *);
-extern void
-F77_NAME(dsymv)(char *, int *, double *, double *, int *, double *, int *,
-		double *, double *, int *);
-extern void
-F77_NAME(dsyr)(char *, int *, double *, double *, int *, double *, int *);
-extern void
-F77_NAME(dsyr2)(char *, int *, double *, double *, int *, double *,
-		int *, double *, int *);
-extern void
-F77_NAME(dsyr2k)(char *, char *, int *, int *, double *, double *, int *,
-		 double *, int *, double *, double *, int *);
-extern void
-F77_NAME(dsyrk)(char *, char *, int *, int *, double *, double *, int *,
-		double *, double *, int *);
-extern void
-F77_NAME(dtbmv)(char *, char *, char *, int *, int *, double *, int *,
-		double *, int *);
-extern void
-F77_NAME(dtbsv)(char *, char *, char *, int *, int *, double *, int *,
-		double *, int *);
-extern void
-F77_NAME(dtpmv)(char *, char *, char *, int *, double *, double *, int *);
-extern void
-F77_NAME(dtpsv)(char *, char *, char *, int *, double *, double *, int *);
-extern void
-F77_NAME(dtrmm)(char *, char *, char *, char *, int *, int *, double *,
-		double *, int *, double *, int *);
-extern void
-F77_NAME(dtrmv)(char *, char *, char *, int *, double *, int *, double *,
-		int *);
-extern void
-F77_NAME(dtrsm)(char *, char *, char *, char *, int *, int *, double *,
-		double *, int *, double *, int *);
-extern void
-F77_NAME(dtrsv)(char *, char *, char *, int *, double *, int *, double *,
-		int *);
-extern int
-F77_NAME(idamax)(int *, double *, int *);
 extern int
 F77_NAME(lsame)(char *, char *);
 

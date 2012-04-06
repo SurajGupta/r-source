@@ -7,16 +7,17 @@
 \alias{predict.princomp}
 \title{Principal Components Analysis}
 \usage{
-\method{princomp}{formula}(x, data = NULL, subset, na.action, ...)
+\method{princomp}{formula}(formula, data = NULL, subset, na.action, ...)
 \method{princomp}{default}(x, cor = FALSE, scores = TRUE, covmat = NULL,
          subset = rep(TRUE, nrow(as.matrix(x))), ...)
 }
 \arguments{
-  \item{x}{a formula or matrix (or data frame) which provides the data for the
-    principal components analysis.}
+  \item{formula}{a formula with no response variable.}
   \item{data}{an optional data frame containing the variables in the
-    formula \code{x}. By default the variables are taken from
-    \code{environment(x)}.}
+    formula \code{formula}. By default the variables are taken from
+    \code{environment(formula)}.}
+  \item{x}{a matrix or data frame which provides the data for the
+    principal components analysis.}
   \item{subset}{an optional vector used to select rows (observations) of the
     data matrix \code{x}.}
   \item{na.action}{a function which indicates what should happen
@@ -75,13 +76,23 @@
 
   If \code{x} is a formula then the standard NA-handling is applied to
   the scores (if requested): see \code{\link{napredict}}.
+
+  \code{princomp} only handles so-called Q-mode PCA, that is feature
+  extraction of variables. If a data matrix is supplied (possibly via a
+  formula) it is required that there are at least as many units as
+  variables.  For R-mode PCA use \code{\link{prcomp}}.
+}
+\note{
+  The signs of the columns of the loadings and scores are arbitrary, and
+  so may differ between different programs for PCA, and even between
+  different builds of \R.
 }
 \references{
   Mardia, K. V., J. T. Kent and J. M. Bibby (1979).
   \emph{Multivariate Analysis}, London: Academic Press.
 
-  Venables, W. N. and B. D. Ripley (1997, 9).
-  \emph{Modern Applied Statistics with S-PLUS}, Springer-Verlag.
+  Venables, W. N. and B. D. Ripley (2002).
+  \emph{Modern Applied Statistics with S}, Springer-Verlag.
 }
 \seealso{
   \code{\link{summary.princomp}}, \code{\link{screeplot}},

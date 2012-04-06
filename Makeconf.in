@@ -8,7 +8,6 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 AWK = @AWK@
 BITMAP_LIBS = @BITMAP_LIBS@
-BLAS = @BLAS@
 BLAS_LIBS = @BLAS_LIBS@
 BUILDDIR_IS_SRCDIR = @BUILDDIR_IS_SRCDIR@
 CC = @CC@
@@ -18,6 +17,7 @@ CPPFLAGS = @CPPFLAGS@
 DEFS = @DEFS@
 DISTDIR_TAR_EXCLUDE = --exclude=CVS --exclude=Makefile --exclude="*.o" --exclude="*$(SHLIB_EXT)"
 DVIPS = @DVIPS@
+DYLIB_EXT = @DYLIB_EXT@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -43,7 +43,6 @@ LIBGLADE_CFLAGS = @LIBGLADE_CFLAGS@
 LIBGLADE_LIBS = @LIBGLADE_LIBS@
 LIBR = @LIBR@
 LIBR_EXT = @LIBR_EXT@
-LIBR_LDFLAGS = @LIBR_LDFLAGS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
@@ -57,10 +56,12 @@ MAKEINDEX = @MAKEINDEX@
 MKINSTALLDIRS = $(top_srcdir)/tools/mkinstalldirs
 PERL = @PERL@
 R_GUIS = @R_GUIS@
+R_OSTYPE = @R_OSTYPE@
 R_PKGS_BASE = base ctest eda lqs methods modreg mva nls splines stepfun tcltk tools ts
 R_PKGS_RECOMMENDED = survival boot cluster foreign grid lattice KernSmooth mgcv nlme rpart VR
 R_PKGS_RECOMMENDED_EXPANDED = survival boot cluster foreign grid lattice KernSmooth mgcv nlme rpart MASS nnet spatial class
 R_PKGS = $(R_PKGS_BASE) @USE_RECOMMENDED_PACKAGES_TRUE@ $(R_PKGS_RECOMMENDED)
+R_PLATFORM = @R_PLATFORM@
 R_XTRA_CFLAGS = @R_XTRA_CFLAGS@
 R_XTRA_CPPFLAGS = @R_XTRA_CPPFLAGS@ -I. -I$(top_builddir)/src/include -I$(top_srcdir)/src/include
 R_XTRA_FFLAGS = @R_XTRA_FFLAGS@
@@ -91,8 +92,8 @@ ALL_FFLAGS_LO = $(R_XTRA_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAGS)
 .SUFFIXES:
 .SUFFIXES: .c .f .d .lo .o
 
-@cc_rules_frag@
-@f77_rules_frag@
+@r_cc_rules_frag@
+@r_f77_rules_frag@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@

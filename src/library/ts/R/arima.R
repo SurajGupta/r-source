@@ -81,6 +81,9 @@ arima <- function(x, order = c(0, 0, 0),
     method <- match.arg(method)
 
     x <- as.ts(x)
+    if(!is.numeric(x))
+        stop("`x' must be numeric")
+    storage.mode(x) <- "double"  # a precaution
     dim(x) <- NULL
     n <- length(x)
 
@@ -122,6 +125,7 @@ arima <- function(x, order = c(0, 0, 0),
         if (NROW(xreg) != n) stop("lengths of x and xreg do not match")
         ncxreg <- NCOL(xreg)
         xreg <- as.matrix(xreg)
+        storage.mode(xreg) <- "double"
     }
     class(xreg) <- NULL
     if (ncxreg > 0 && is.null(colnames(xreg)))
@@ -413,3 +417,13 @@ makeARIMA <- function(phi, theta, Delta, kappa = 1e6)
     return(phi, theta, Delta, Z, a, P, T, V, h, Pn)
 }
 
+coef.Arima <- function (object, ...) object$coef
+
+vcov.Arima <- function (object, ...) object$var.coef
+
+logLik.Arima <- function (object, ...) {
+    res <- if(is.na(object$aic)) NA
+    else structure(object$loglik, df=sum(object$mask)  + 1)
+    class(res) <- "logLik"
+    res
+}

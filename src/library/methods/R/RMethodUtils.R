@@ -184,19 +184,21 @@ getAllMethods <-
   ## this is the slot where inherited methods are stored.
   function(f, fdef = getGeneric(f, TRUE), libs = search()) {
       if(is(fdef, "genericFunction"))
-         deflt <- finalDefaultMethod(fdef@default)
+          deflt <- finalDefaultMethod(fdef@default)
       else if(is.primitive(fdef)) {
           deflt <- fdef
           fdef <- getGeneric(f, TRUE)
       }
       else
-        return(NULL) # or error?
+          stop("Invalid \"fdef\" argument supplied to getAllMethods; expected either a genericFunction object or a primitive function, got an object of class \"",
+               class(fdef), "\"")
       primCase <- is.primitive(deflt)
-    groups <- getGroup(fdef, TRUE)
+      groups <- getGroup(fdef, TRUE)
     ## when this function is called from methodsListDispatch (via C code),
     ## a skeleton version is assigned to prevent recursive loops:  remove this
     ## in case of errros in getAllMethods
-    on.exit(resetGeneric(f, fdef))
+    on.exit({message("An error occurred in collecting methods for function \"",
+                     f,"\", perhaps from a C-level dispatch"); resetGeneric(f, fdef)})
     ## initialize with a check for basic functions (primitives)
       ## For all others, the initial value of methods will be NULL
     methods <- elNamed(.BasicFunsList, f)
@@ -324,7 +326,7 @@ conformMethod <-
     signature
 }
 
-rematchDefinition <- function(definition, generic, mnames, fnames) {
+rematchDefinition <- function(definition, generic, mnames, fnames, signature) {
     added <- is.na(match(mnames, fnames))
     if(!any(added))
         return(definition)
@@ -357,6 +359,9 @@ rematchDefinition <- function(definition, generic, mnames, fnames) {
         names(newCall) <- newCallNames
     }
     newCall <- as.call(newCall)
+    ## promote the definition to a method (so it can contain callNextMethod, etc,
+    ## when it's assigned as .local
+    definition <- asMethodDefinition(definition, signature)
     newBody <- substitute({.local <- DEF; NEWCALL},
                           list(DEF = definition, NEWCALL = newCall))
     body(generic, envir = environment(definition)) <- newBody
@@ -405,11 +410,12 @@ getGeneric <-
               }
           }
       }
-    }
+  }
     if(is.function(value))
-      value
+        value
     else if(mustFind)
-      stop(paste("No generic function defined for \"",f,"\"", sep=""))
+        ## the C code will have thrown an error if f is not a single string
+        stop(paste("No generic function defined for \"",f,"\"", sep=""))
     else
       NULL
   }
@@ -474,13 +480,22 @@ assignMethodsMetaData <-
 
 mlistMetaName <-
   ## name mangling to simulate metadata for a methods definition.
-  function(name = "") {
+  function(name = "", package = "") {
       if(is(name, "genericFunction"))
           methodsPackageMetaName("M", paste(name@generic, name@package, sep=":"))
       else if(missing(name))
           methodsPackageMetaName("M","")
-      else if(is.character(name))
-          Recall(getGeneric(name))
+      else if(is.character(name)) {
+          if(nchar(package))
+             methodsPackageMetaName("M", paste(name, package, sep=":"))
+          else {
+              fdef <- getGeneric(name)
+              if(is(fdef, "genericFunction"))
+                  methodsPackageMetaName("M", paste(fdef@generic, fdef@package, sep=":"))
+              else
+                  stop("The methods object name for \"", name, "\" must include the name of the package that contains the generic function, but there is no generic function of this name")
+          }
+      }
       else
           stop(paste("No way to associate a generic function with an object of class \"",
                      class(name), "\"", sep=""))
@@ -846,4 +861,60 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
     }
     mlist@methods <- methods
     mlist
+}
+
+.signatureString <- function(fdef, signature) {
+    snames <- names(signature)
+    if(is.null(snames)) {
+        if(is(fdef, "genericFunction")) {
+            snames <- fdef@signature
+            signature <- matchSignature(signature, fdef)
+            if(length(snames)>length(signature))
+                length(snames) <- length(signature)
+        }
+        else # shouldn't happen,...
+            return(paste(signature, collapse=", "))
+    }
+    else
+        signature <- as.character(signature)
+    paste(paste(snames, "=\"", signature, "\"", sep=""), collapse = ", ")
+}
+
+.ChangeFormals <- function(def, defForArgs, msg = "<unidentified context>") {
+    if(!is(def, "function"))
+        stop("Trying to change the formal arguments in ", msg,", in an object of class \"",
+             class(def), "\"; expected a function definition")
+    if(!is(defForArgs, "function"))
+        stop("Trying to change the formal arguments in ", msg,
+             ", but getting the new formals from an object of class \"",
+             class(def), "\"; expected a function definition")
+    old <- formalArgs(def)
+    new <- formalArgs(defForArgs)
+    if(length(old) < length(new))
+        stop("Trying to change the formal arguments in ", msg,
+             ", but the number of existing arguments is less than the number of new arguments: (",
+             paste("\"", old, "\"", sep ="", collapse=", "),  ") vs (",
+             paste("\"", new, "\"", sep ="", collapse=", "), ")")
+    if(length(old) > length(new))
+        warning("Trying to change the formal arguments in ", msg,
+             ", but the number of existing arguments is greater than the number of new arguments (the extra arguments won't be used): (",
+             paste("\"", old, "\"", sep ="", collapse=", "),  ") vs (",
+             paste("\"", new, "\"", sep ="", collapse=", "), ")")
+    if(identical(old, new)) # including the case of 0 length
+        return(def)
+    dlist <- as.list(def)
+    slist <- lapply(c(old, new), as.name)
+    names(slist) <- c(new, old)
+    vlist <- dlist
+    for(i in seq(along = vlist))
+        vlist[[i]] <- do.call("substitute", list(vlist[[i]], slist))
+    dnames <- names(dlist)
+    whereNames <- match(old, dnames)
+    if(any(is.na(whereNames)))
+        stop("In changing formal argumentsin ", msg,
+             ", some of the old names are not in fact arguments: ",
+             paste("\"", old[is.na(match(old, names(dlist)))], "\"", sep ="", collapse=", "))
+    dnames[whereNames] <- new
+    names(vlist) <- dnames
+    as.function(vlist, envir = environment(def))
 }

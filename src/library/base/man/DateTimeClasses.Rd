@@ -43,18 +43,17 @@
   representing calendar dates and times (to the nearest second). 
 }
 \usage{
-print.POSIXct(x, ...)
-print.POSIXlt(x, ...)
+\method{print}{POSIXct}(x, ...)
 
-summary.POSIXct(object, digits = 15, ...)
-summary.POSIXlt(object, digits = 15, ...)
+\method{summary}{POSIXct}(object, digits = 15, ...)
 
 time + number
 time - number
 time1 lop time2
 }
 \arguments{
-  \item{x, object}{An object to be printed or summarized.}
+  \item{x, object}{An object to be printed or summarized from one of the
+    date-time classes.}
   \item{digits}{Number of significant digits for the computations:
     should be high enough to represent the least important time unit
     exactly.}
@@ -156,15 +155,6 @@ Sys.time() - 3600             # an hour ago
 
 as.POSIXlt(Sys.time(), "GMT") # the current time in GMT
 format(.leap.seconds)         # all 22 leapseconds in your timezone
-
-%% `advanced' examples:
-\testonly{
-str(.leap.seconds)
-
-## Wouldn't we want a  diff.POSIXt()  method ?
-(dls <- .leap.seconds[-1] - .leap.seconds[-22])
-table(dls)
-}
 }
 \keyword{utilities}
 \keyword{chron}

@@ -53,10 +53,13 @@ Conj(x)
 
   In addition, the elementary trigonometric, logarithmic and exponential
   functions are available for complex values.
+
+  \code{is.complex} is generic: you can write methods to handle
+  of specific classes of objects, see \link{InternalMethods}.
 }
 \examples{
-( z <- 0i ^ (-3:3) )
-stopifnot(Re(z) == 0 ^ (-3:3))
+0i ^ (-3:3)
+
 matrix(1i^ (-6:5), nr=4)#- all columns are the same
 0 ^ 1i # a complex NaN
 
@@ -65,8 +68,6 @@ z <- complex(real = rnorm(100), imag = rnorm(100))
 ## or also (less efficiently):
 z2 <- 1:2 + 1i*(8:9)
 
-all(Mod ( 1 -  sin(z) / ( (exp(1i*z)-exp(-1i*z))/(2*1i) ))
-    < 100*.Machine$double.eps)
 ## The Arg(.) is an angle:
 zz <- (rep(1:4,len=9) + 1i*(9:1))/10
 zz.shift <- complex(modulus = Mod(zz), argument= Arg(zz) + pi)

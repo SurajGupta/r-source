@@ -29,7 +29,7 @@ sink.number(type = c("output", "message"))
 
   Normal \R output is diverted by the default \code{type = "output"}.
   Only prompts and warning/error messages continue to appear on the terminal.
-  These too can diverted by \code{type = "message"} (see below).
+  The latter can diverted by \code{type = "message"} (see below).
 
   \code{sink()} or \code{sink(file=NULL)} ends the last diversion (of
   the specified type).  As from \R version 1.3.0 there is a stack of
@@ -59,6 +59,7 @@ sink.number(type = c("output", "message"))
   Do not sink the messages stream unless you understand the source code
   implementing it and hence the pitfalls.
 }
+\seealso{\code{\link{capture.output}}}
 \examples{
 sink("sink-examp.txt")
 i <- 1:10

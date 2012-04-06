@@ -33,6 +33,10 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define if you have the Aqua headers and libraries, and want the Aqua GUI to
+   be built. */
+/* #undef HAVE_AQUA */
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 /* #undef HAVE_ARPA_INET_H */
 
@@ -44,9 +48,6 @@
 
 /* Define if you have BSD networking headers and libraries. */
 /* #undef HAVE_BSD_NETWORKING */
-
-/* Define if you have the bzip2 headers and libraries. */
-#define HAVE_BZLIB 1
 
 /* Define to 1 if you have the `chdir' function. */
 #define HAVE_CHDIR 1
@@ -147,8 +148,8 @@
    problem with getting the prototype of strptime(). */
 /* #undef HAVE_GLIBC2 */
 
-/* Define if the GNOME headers and libraries are available, and want the GNOME
-   GUI to be built. */
+/* Define if you have the GNOME headers and libraries, and want the GNOME GUI
+   to be built. */
 /* #undef HAVE_GNOME */
 
 /* Define to 1 if you have the <grp.h> header file. */
@@ -178,6 +179,9 @@
 /* Define if you have the JPEG headers and libraries. */
 #define HAVE_JPEG 1
 
+/* Define if external LAPACK is available. */
+/* #undef HAVE_LAPACK */
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 /* #undef HAVE_LIBDL */
 
@@ -203,9 +207,7 @@
 #define HAVE_LOCALE_H 1
 
 /* Define to 1 if you have the `log1p' function. */
-#if __MINGW32_MAJOR_VERSION >= 2
 #define HAVE_LOG1P 1
-#endif
 
 /* Define to 1 if you have the `matherr' function. */
 /* #undef HAVE_MATHERR */
@@ -233,7 +235,7 @@
 #define HAVE_PCRE 1
 
 /* Define to 1 if you have the <pcre.h> header file. */
-#define HAVE_PCRE_H 1
+/* #undef HAVE_PCRE_H */
 
 /* Define to 1 if you have the <pcre/pcre.h> header file. */
 /* #undef HAVE_PCRE_PCRE_H */
@@ -297,7 +299,7 @@
 #define HAVE_STRDUP 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-/* #undef HAVE_STRINGS_H */
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
@@ -307,6 +309,9 @@
 
 /* Define to 1 if you have the `strptime' function. */
 /* #undef HAVE_STRPTIME */
+
+/* Define to 1 if you have the `symlink' function. */
+/* #undef HAVE_SYMLINK */
 
 /* Define to 1 if you have the `system' function. */
 #define HAVE_SYSTEM 1
@@ -320,7 +325,7 @@
 /* #undef HAVE_SYS_NDIR_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-/* #undef HAVE_SYS_PARAM_H */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 /* #undef HAVE_SYS_SELECT_H */
@@ -351,7 +356,7 @@
 #define HAVE_TCLTK 1
 
 /* Define to 1 if you have the `times' function. */
-/* #undef HAVE_TIMES */
+#define HAVE_TIMES 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
@@ -406,13 +411,13 @@
 #define PACKAGE_NAME "R"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "R 1.6.0"
+#define PACKAGE_STRING "R 1.7.0"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "r"
+#define PACKAGE_TARNAME "R"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.6.0"
+#define PACKAGE_VERSION "1.7.0"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -452,7 +457,7 @@
 #define SIZEOF_LONG_LONG 8
 
 /* Type for socket lengths: socklen_t, sock_t, int? */
-#define SOCKLEN_T size_t
+#define SOCKLEN_T int
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -486,7 +491,7 @@
 /* #undef Unix */
 
 /* Version number of package */
-#define VERSION "1.6.0"
+#define VERSION "1.7.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -512,13 +517,5 @@
 /* #undef size_t */
 
 
-#ifdef Win32
-# define snprintf _snprintf
-# define vsnprintf _vsnprintf
-# define isnan(a) _isnan(a)
-# define finite(a) _finite(a)
-/* 27/03/2000 win32-api needs this for ANSI compliance */
-# define NONAMELESSUNION
-#endif /* Win32 */
 
 #endif /* not _CONFIG_H */

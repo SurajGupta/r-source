@@ -15,6 +15,8 @@ SEXP setVarInFrame(SEXP, SEXP, SEXP);
 #define streql(s, t)	(!strcmp((s), (t)))
 void R_PreserveObject(SEXP);
 
+SEXP Rf_append(SEXP, SEXP);
+
 /* environment cell access */
 typedef struct R_varloc_st *R_varloc_t;
 R_varloc_t R_findVarLocInFrame(SEXP, SEXP);
@@ -71,6 +73,10 @@ SEXP R_quick_method_check(SEXP object, SEXP fsym, SEXP fdef);
 static SEXP R_target, R_defined, R_nextMethod;
 static SEXP R_dot_target, R_dot_defined, R_dot_nextMethod;
 static SEXP R_loadMethod_name, R_dot_Method;
+
+static char *check_single_string(SEXP, Rboolean, char *);
+static char *check_symbol_or_string(SEXP obj, Rboolean nonEmpty, char *what);
+static char *class_string(SEXP obj);
 
 static void init_loadMethod() {
     R_target = install("target");
@@ -237,8 +243,8 @@ static SEXP R_find_method(SEXP mlist, char *class, SEXP fname)
     SEXP value, methods;
     methods = R_do_slot(mlist, s_allMethods);
     if(methods == R_NilValue) {
-	error("No \"allMethods\" slot found in \"mlist\" object for %s!",
-	      CHAR_STAR(fname));
+	error("No \"allMethods\" slot found in object  of class \"%s\" used as methods list for function \"%s\"",
+	      class_string(mlist), CHAR_STAR(fname));
 	return(R_NilValue); /* -Wall */
     }
     value = R_element_named(methods, class);
@@ -289,6 +295,8 @@ static SEXP R_S_getAllMethods(SEXP fname, SEXP fdef)
     SETCAR(e, fname);
     e = CDR(e);
     SETCAR(e, fdef);
+    /* We don't do checking here:  the calls from do_dispatch check
+     * argument types. */
     val = eval(call, R_GlobalEnv);
     UNPROTECT(1);
     return(val);
@@ -298,7 +306,7 @@ static SEXP R_S_getAllMethods(SEXP fname, SEXP fdef)
 static SEXP R_S_MethodsListSelect(SEXP fname, SEXP ev, SEXP mlist,
 				  SEXP f_env)
 {
-    SEXP e, val; int n;
+    SEXP e, val; int n, check_err;
     n = isNull(f_env) ? 4 : 5;
     PROTECT(e = allocVector(LANGSXP, n));
     SETCAR(e, s_MethodsListSelect);
@@ -312,7 +320,11 @@ static SEXP R_S_MethodsListSelect(SEXP fname, SEXP ev, SEXP mlist,
 	    val = CDR(val);
 	    SETCAR(val, f_env);
     }
-    val = eval(e, R_GlobalEnv);
+    val = R_tryEval(e, R_GlobalEnv, &check_err);
+    if(check_err)
+	error("S language method selection got an error when called from internal dispatch for function \"%s\"",
+	      check_symbol_or_string(fname, TRUE,
+				  "Function name for method selection called internally"));
     UNPROTECT(1);
     return val;
 }
@@ -408,6 +420,8 @@ static SEXP get_generic(SEXP symbol)
 SEXP R_getGeneric(SEXP name, SEXP mustFind)
 {
     SEXP value;
+    if(isSymbol(name)) {}
+    else check_single_string(name, TRUE, "The argument \"f\" to getGeneric");
     value = get_generic(name);
     if(value == R_UnboundValue) {
 	if(LOGICAL_VALUE(mustFind))
@@ -511,23 +525,27 @@ SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef)
     if(!initialized)
 	R_initMethodDispatch();
     fsym = fname;
-    if(!isSymbol(fsym))
-	fsym = install(CHAR(asChar(fsym)));
+    /* TODO:  the code for do_standardGeneric does a test of fsym,
+     * with a less informative error message.  Should combine them.*/
+    if(!isSymbol(fsym)) {
+	char *fname = check_single_string(fsym, TRUE, "The function name in the call to standardGeneric");
+	fsym = install(fname);
+    }
     switch(TYPEOF(fdef)) {
     case CLOSXP:
         f_env = CLOENV(fdef);
-	mlist = findVar(s_dot_Methods, f_env);
+	PROTECT(mlist = findVar(s_dot_Methods, f_env)); nprotect++;
 	if(mlist == R_UnboundValue)
             mlist = R_NilValue;
 	prim_case = FALSE;
 	break;
     case SPECIALSXP: case BUILTINSXP:
         f_env = R_NilValue;
-	mlist = R_primitive_methods(fdef);
+	PROTECT(mlist = R_primitive_methods(fdef)); nprotect++;
 	prim_case = TRUE;
 	break;
-    default: error("Invalid type for generic function \"%s\": \"%s\"",
-		   CHAR_STAR(fsym), type2str(TYPEOF(fdef)));
+    default: error("Invalid  generic function object for method selection for function \"%s\": expected a function or a primitive, got an object of class \"%s\"",
+		   CHAR_STAR(fsym), class_string(fdef));
     }
     switch(TYPEOF(mlist)) {
     case LANGSXP:
@@ -600,8 +618,17 @@ SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef)
 	f = R_loadMethod(f, fname, ev);
     switch(TYPEOF(f)) {
     case CLOSXP:
+#undef IGNORE_LEXICAL_SCOPE
+#ifdef IGNORE_LEXICAL_SCOPE
       PROTECT(val = BODY(f)); nprotect++;
 	val =  eval(val, ev);
+#else
+	{
+	    SEXP R_execMethod(SEXP, SEXP);
+	    PROTECT(f); nprotect++; /* is this needed?? */
+	    val = R_execMethod(f, ev);
+	}
+#endif
 	break;
     case SPECIALSXP: case BUILTINSXP:
 	/* primitives  can't be methods; they arise only as the
@@ -612,12 +639,13 @@ SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef)
       break;
     case LANGSXP:
 	if(mlist == R_NilValue) {
+	    primitive_type t;
 	    /* a recursive call: use the skeleton default call */
 	    call = f;
 	    f = CAR(f);
-	    prim_case = primitive_case(fsym, f);
-	    if(prim_case)
-		call = nonstandard_primitive(prim_case, call, f, ev);
+	    t = primitive_case(fsym, f);
+	    if(t != STANDARD)
+		call = nonstandard_primitive(t, call, f, ev);
 	    else
 		/* the skeleton is almost surely a call to the same primitive, 
 		   but we don't need to assume that. */
@@ -656,13 +684,11 @@ static Rboolean is_missing_arg(SEXP symbol, SEXP ev)
 
 SEXP R_missingArg(SEXP symbol, SEXP ev) {
     if(!isSymbol(symbol))
-	error("invalid `symbol' argument: expected a name, got a \"%s\"",
-	     CHAR_STAR((isObject(symbol) ? R_data_class(symbol, 1) :
-	      type2str(TYPEOF(symbol)))));
+	error("invalid symbol in checking for missing argument in method dispatch: expected a name, got an object of class \"%s\"",
+	     class_string(symbol));
     if(!isEnvironment(ev))
-	error("invalid `envir' argument: expected an environment, got a \"%s\"",
-	     CHAR_STAR((isObject(ev) ? R_data_class(ev, 1) :
-	      type2str(TYPEOF(ev)))));
+	error("invalid environment in checking for missing argument, \"%s\", in methods dispatch: got an object of class \"%s\"",
+	     CHAR(PRINTNAME(symbol)), class_string(ev));
     if(is_missing_arg(symbol, ev))
 	return R_TRUE;
     else
@@ -684,7 +710,8 @@ static SEXP do_dispatch(SEXP fname, SEXP ev, SEXP mlist, int firstTry,
     int nprotect = 0;
     PROTECT(arg_slot = R_do_slot(mlist, s_argument)); nprotect++;
     if(arg_slot == R_NilValue) {
-	error("methods list had no \"argument\" slot");
+	error("Object of class \"%s\" used as methods list for function \"%s\" ( no \"argument\" slot)",
+	      class_string(mlist), CHAR_STAR(fname));
 	return(R_NilValue); /* -Wall */
     }
     if(TYPEOF(arg_slot) == SYMSXP)
@@ -694,9 +721,11 @@ static SEXP do_dispatch(SEXP fname, SEXP ev, SEXP mlist, int firstTry,
 	   "name" */
 	arg_sym = install(CHAR(asChar(arg_slot)));
     if(arg_sym == R_DotsSymbol || DDVAL(arg_sym) > 0)
-	error("... and related variables can't be used for methods dispatch");
+	error("(in selecting a method for function \"%s\") \"...\" and related variables can't be used for methods dispatch",
+	      CHAR_STAR(fname));
     if(TYPEOF(ev) != ENVSXP) {
-	error("The environment argument for dispatch must be an R environment");
+	error("(in selecting a method for function \"%s\") The environment argument for dispatch must be an R environment; got an object of class \"%s\"",
+	    CHAR_STAR(fname), class_string(ev));
 	return(R_NilValue); /* -Wall */
     }
     /* find the symbol in the frame, but don't use eval, yet, because
@@ -706,16 +735,22 @@ static SEXP do_dispatch(SEXP fname, SEXP ev, SEXP mlist, int firstTry,
 	    class = "missing";
 	else {
 	    /*  get its class */
-	    SEXP arg, class_obj;
-	    PROTECT(arg = eval(arg_sym, ev)); nprotect++;
+	    SEXP arg, class_obj; int check_err;
+	    PROTECT(arg = R_tryEval(arg_sym, ev, &check_err)); nprotect++;
+	    if(check_err)
+		error("Unable to find the argument \"%s\" in selecting a method for function \"%s\"",
+		      CHAR(PRINTNAME(arg_sym)),CHAR_STAR(fname)); 
 	    PROTECT(class_obj = R_data_class(arg, TRUE)); nprotect++;
 	    class = CHAR_STAR(class_obj);
 	}
     }
     else {
 	/* the arg contains the class as a string */
-	SEXP arg;
-	PROTECT(arg = eval(arg_sym, ev)); nprotect++;
+	SEXP arg; int check_err;
+	PROTECT(arg = R_tryEval(arg_sym, ev, &check_err)); nprotect++;
+	if(check_err)
+	    error("Unable to find the argument \"%s\" in selecting a method for function \"%s\"",
+		  CHAR(PRINTNAME(arg_sym)),CHAR_STAR(fname)); 
 	class = CHAR_STAR(arg);
     }
     method = R_find_method(mlist, class, fname);
@@ -753,12 +788,25 @@ SEXP R_M_setPrimitiveMethods(SEXP fname, SEXP op, SEXP code_vec,
 SEXP R_nextMethodCall(SEXP matched_call, SEXP ev) {
     SEXP e, val, args, this_sym, op;
     int nprotect = 0, i, nargs = length(matched_call)-1, error_flag;
-    Rboolean prim_case;
-    PROTECT(e = duplicate(matched_call)); nprotect++;
+    Rboolean prim_case, dotsDone;
     /* for primitive .nextMethod's, suppress further dispatch to avoid
      * going into an infinite loop of method calls
     */
-    op = findVar(R_dot_nextMethod, ev);
+    op = findVarInFrame3(ev, R_dot_nextMethod, TRUE);
+    if(op == R_UnboundValue)
+	error("Internal error in callNextMethod: \".nextMethod\" was not assigned in the frame of the method call");
+    /* If "..." is an argument, need to pass it down to next method;
+     * match.call() doesn't seem (always?) to include this, so we
+     * check below and add it if needed. */
+    dotsDone = (findVarInFrame3(ev, R_DotsSymbol, TRUE) == R_UnboundValue);
+    {PROTECT(e = duplicate(matched_call)); nprotect++;}
+    if(!dotsDone) {
+	SEXP ee = e, dots;
+	PROTECT(dots = allocVector(LANGSXP, 1)); nprotect++;
+	SETCAR(dots, R_DotsSymbol);
+	for(ee = e; CDR(ee) != R_NilValue; ee = CDR(ee));
+	SETCDR(ee, dots);
+    }
     prim_case = isPrimitive(op);
     if(prim_case) {
 	/* retain call to primitive function, suppress method
@@ -770,13 +818,17 @@ SEXP R_nextMethodCall(SEXP matched_call, SEXP ev) {
 	SETCAR(e, R_dot_nextMethod); /* call .nextMethod instead */
     args = CDR(e);
     /* e is a copy of a match.call, with expand.dots=FALSE.  Turn each
-    <TAG>=value into <TAG> = <TAG>, except  ... = value goes into
-    ... (no arg name of course for ...) */
+    <TAG>=value into <TAG> = <TAG>, except  ... = goes into ... (if it
+    appears) and there may be a "..." included */
     for(i=0; i<nargs; i++) {
 	this_sym = TAG(args);
-	if(this_sym == R_DotsSymbol)
-		SET_TAG(args, R_NilValue);
-	SETCAR(args, this_sym);
+	if(this_sym == R_DotsSymbol) {
+	    /* don't copy this; will have been appended */
+	    if(dotsDone)
+		error("In processing callNextMethod, found a \"...\" in the matched call, but no corresponding ... argument ");
+	}
+	else
+	    SETCAR(args, this_sym);
 	args = CDR(args);
     }
     if(prim_case) {
@@ -832,4 +884,50 @@ static SEXP R_loadMethod(SEXP def, SEXP fname, SEXP ev) {
 	return val;
     }
     else return def;
+}
+
+static char *check_single_string(SEXP obj, Rboolean nonEmpty, char *what) {
+    char *string = "<unset>"; /* -Wall */
+    if(isString(obj)) {
+	if(length(obj) != 1)
+	    error("%s must be a single string (got a character vector of length %d)",
+		  what, length(obj));
+	string = CHAR(asChar(obj));
+	if(nonEmpty && (! string || !string[0]))
+	    error("%s must be a non-empty string; got an empty string", what);
+    }
+    else {
+	error("%s must be a single string (got an object of class \"%s\")",
+	      what, class_string(obj));
+    }
+    return string;
+}
+
+static char *check_symbol_or_string(SEXP obj, Rboolean nonEmpty, char *what) {
+    if(isSymbol(obj))
+	return CHAR(PRINTNAME(obj));
+    else
+	return check_single_string(obj, nonEmpty, what);
+}
+
+static char *class_string(SEXP obj) {
+    return CHAR(asChar(R_data_class(obj, 1)));
+}
+
+/* internal version of paste(".", prefix, name, sep="__"), 
+   for speed so few checks */
+SEXP R_methodsPackageMetaName(SEXP prefix, SEXP name)
+{
+    SEXP ans;
+    char str[201], *prefixString, *nameString;
+
+    prefixString = check_single_string(prefix, TRUE,
+				       "The internal prefix (e.g., \"C\") for a meta-data object");
+    nameString = check_single_string(name, FALSE,
+				     "The name of the object (e.g,. a class or generic function) to find in the meta-data");
+    snprintf(str, 200, ".__%s__%s", prefixString, nameString);
+    PROTECT(ans = allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, mkChar(str));
+    UNPROTECT(1);
+    return ans;
 }

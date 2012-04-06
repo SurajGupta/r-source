@@ -1,3 +1,98 @@
+r-base (1.6.2.cvs.20030413-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-04-13 of R 1.7.0
+  * debian/control: Section set to gnome for r-gnome
+  * debian/r-recommended.preinst: rm doc dir (Closes: #188995)
+ 
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 14 Apr 2003 20:35:32 -0500
+
+r-base (1.6.2.cvs.20030409-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-04-09 of R 1.7.0
+  * debian/rules: Hack result of dh_shlibdeps with Perl to remove the
+    double atlas2 entry caused by the virtual depends on blas and lapack
+  * debian/rules: Small improvement to R_LIBS patch to conform with
+    standard of respecting prior settings, if any, of the variable
+  * debian/control: Upgraded Standards-Version to 3.5.9
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  9 Apr 2003 23:09:00 -0500
+
+r-base (1.6.2.cvs.20030405-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-04-05 of R 1.7.0
+  * debian/rules: Configure with --with-blas, not --with-blas=blas
+  * debian/r-base-core.prerm: s/treu/true/
+  * debian/rules: Link $R_HOME/doc into /usr/share/doc/r-base-core, rather
+    than its subdirectories doc and manual as e.g. manual link could be
+    dangling if r-doc-pdf is not installed (Closes: #187573)
+
+ -- Douglas Bates <bates@stat.wisc.edu>  Sat,  5 Apr 2003 08:35:37 -0600
+
+r-base (1.6.2.cvs.20030403-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-04-03 of R 1.7.0
+  * debian/rules: Add R_LIBS setting to /etc/R/Renviron such that 
+    user-installed packages will be in /usr/local/lib/R/site-library,
+    Debian packages will install into /usr/lib/R/site-library and
+    the r-base-core and r-recommended packages will use the standard
+    /usr/lib/R/library directory
+  * debian/r-base-core.dirs: Add /usr/lib/R/site-library
+  * debian/r-base-core.postinst: Add failsafe creation of directory
+    /usr/local/lib/R/site-library as per Policy section 10.1.2
+  * debian/r-base-core.prerm: Add failsafe creation of directory
+    /usr/local/lib/R/site-library as per Policy section 10.1.2
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu,  3 Apr 2003 10:16:06 -0600
+
+r-base (1.6.2.cvs.20030331-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-03-30 of R 1.7.0
+  * debian/control: Added lapack-dev to Depends for r-base-dev
+  * debian/rules: Removed rrecommended tests
+   
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 31 Mar 2003 09:01:22 -0600
+
+r-base (1.6.2.cvs.20030330-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-03-30 of R 1.7.0
+  * Upstream sources fix the problem reported in #186857 (Closes: #186857)
+
+ -- Douglas Bates <bates@stat.wisc.edu>  Sun, 30 Mar 2003 16:08:48 -0600
+
+r-base (1.6.2.cvs.20030326-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-03-26 of R 1.7.0
+  * debian/rules: Configure with --with-lapack
+  * debian/control: Build-Depends on lapack-dev
+  * debian/rules: Explicitly use gcc/g77/g++-3.2 for builds on testing
+  * debian/r-gnome.menu: The Needs: entry was corrected to "x11"
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 26 Mar 2003 09:19:07 -0600
+
+r-base (1.6.2-2) unstable; urgency=low
+
+  * Rebuilding on Debian unstable with gcc/g++/g77 as the new default
+  * debian/control: Depends g77 (>= 3.2.2), g++ (>= 3.2.2) for r-base{,-dev}
+  * debian/rules: Adjusted accordingly by defaulting to gcc, g++, g77
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat, 18 Jan 2003 20:21:21 -0600
+
+r-base (1.6.2-1) unstable; urgency=low
+
+  * New upstream version 1.6.2 released today
+  * debian/r-base-core.lintian: Added exceptions for 
+    image-file-in-usr-lib usr/lib/R/doc/html/{left,logo,logosm,right,up}.jpg
+  * debian/rules: Substitute Perl path to /usr/bin/perl for 
+    usr/lib/R/bin/{Rdconv,Rdindex,Rprof,Sd2Rd,build,check}
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 10 Jan 2003 20:30:26 -0600
+
+r-base (1.6.1.cvs.20030103-1) unstable; urgency=low
+
+  * Upgraded to release candidate dated 2003-01-03 of R 1.6.2
+
+ -- Douglas Bates <bates@stat.wisc.edu>  Fri,  3 Jan 2003 09:42:18 -0600
+
 r-base (1.6.1.cvs.20021230-1) unstable; urgency=low
 
   * Upgraded to release candidate dated 2002-12-30 of R 1.6.2

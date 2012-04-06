@@ -14,9 +14,13 @@ setGeneric <-
              useAsDefault = existsFunction(name, generic = FALSE),
              genericFunction = NULL)
 {
-    if(nargs() == 1 && isGeneric(name)) {
-        message("Function \"", name, "\" is already a generic; no change")
-        return(name)
+    if(isGeneric(name)) {
+        others <- character()
+        for(old in seq(along=search()))
+            if(exists(name,  old, inherits=FALSE) && is(get(name, old, inherits=FALSE), "genericFunction"))
+                others <- c(others, getPackageName(old))
+        warning("Function  \"", name, "\" is already a generic function (package: ",
+                paste(others, collapse = ", "), ")")
     }
     if(exists(name, "package:base") &&
          typeof(get(name, "package:base")) != "closure") {
@@ -43,6 +47,9 @@ setGeneric <-
             package <- functionPackageName(name)[[1]]
     }
     else {
+        if(is.primitive(def) || !is(def, "function"))
+            stop("If the `def' argument is supplied, it must be a function that calls standardGeneric(\"",
+                 name, "\") to dispatch methods.")
         fdef <- def
         if(is.null(genericFunction) && .NonstandardGenericTest(body(fdef), name, stdGenericBody))
             genericFunction <- new("nonstandardGenericFunction")
@@ -83,18 +90,22 @@ isGeneric <-
   function(f, where = -1, fdef = NULL, getName = FALSE)
 {
     ## the fdef argument is not found in S4 but should be ;-)
-    if(is.null(fdef))
-          fdef <- getFunction(f, where=where, mustFind = FALSE)
+    if(is.null(fdef)) {
+        if(identical(where, -1)) {
+            where <- findFunction(f)
+            if(length(where) == 0)
+                return(FALSE)
+            where <- where[1]
+        }
+        fdef <- getFunction(f, where=where, mustFind = FALSE)
+    }
     if(is.null(fdef))
       return(FALSE)
     ## check primitives. These are never stored as explicit generic functions.
     ## The definition of isGeneric for them is that methods metadata exists,
     ## either on this database or anywhere (where == -1)
-    if(!identical(typeof(fdef), "closure")) {
-      if(is.null(getMethodsMetaData(f, where)))
-        return(FALSE)
-      else fdef <- getGeneric(f)
-    }
+    if(!identical(typeof(fdef), "closure"))
+      return(exists(mlistMetaName(f, "base"))) # all primitives are on package base
     if(!is(fdef, "genericFunction"))
         return(FALSE)
     gen <- fdef@generic
@@ -193,7 +204,7 @@ cacheMethod <-
     assign(".Methods", methods, envir = ev)
     methods
   }
-  
+
 
 setMethod <-
 ## Define a method for the specified combination of generic function and signature.
@@ -201,9 +212,9 @@ setMethod <-
   ##
   ## Note that assigning methods anywhere but the global environment (`where==1') will
   ## not have a permanent effect beyond the current R session.
-  function(f, signature = character(), definition, where = 1, valueClass = NULL)
+  function(f, signature = character(), definition, where = 1, valueClass = NULL,
+           sealed = FALSE)
 {
-    whereString <- if(is.environment(where)) deparse(where) else where
     ## Methods are stored in metadata in database where.  A generic function will be
     ## assigned if there is no current generic, and the function is NOT a primitive.
     ## Primitives are dispatched from the main C code, and an explicit generic NEVER
@@ -220,11 +231,17 @@ setMethod <-
       fdef <- deflt
     if(is.null(fdef))
       stop(paste("No existing definition for function \"",f,"\"", sep=""))
+    if(isSealedMethod(f, signature, fdef))
+        stop("The method for function \"", f, "\" and signature ", .signatureString(fdef, signature),
+           " is sealed and cannot be re-defined")
     if(!hasMethods) {
-      message("Creating a new generic function for \"", f, "\" in package ",
+        if(identical(where, 1) || identical(where, .GlobalEnv))
+            message("Creating a new generic function for \"", f, "\"")
+        else
+            message("Creating a new generic function for \"", f, "\" in package ",
                     getPackageName(where))
-      setGeneric(f, where = where)
-      fdef <- getGeneric(f)
+        setGeneric(f, where = where)
+        fdef <- getGeneric(f)
     }
     signature <- matchSignature(signature, fdef)
     allMethods <- .getOrMakeMethodsList(f, where, fdef)
@@ -240,7 +257,7 @@ setMethod <-
                        signature <- fullSig
                    }
                    ## extra classes in method => use "..." to rematch
-                   definition <- rematchDefinition(definition, fdef, mnames, fnames)
+                   definition <- rematchDefinition(definition, fdef, mnames, fnames, signature)
                }
            },
            builtin = , special = {
@@ -250,10 +267,13 @@ setMethod <-
              if(!identical(definition, deflt))
                 stop("Primitive functions cannot be methods; they must be enclosed in a regular function")
            },
-           "NULL" = {}, # Will remove the method, if any, currently in this signature
+           "NULL" = {
+            
+           }, # Will remove the method, if any, currently in this signature
            stop("Invalid method definition: not a function"))
-    allMethods <- insertMethod(allMethods, signature, fnames[1:length(signature)],
-                               asMethodDefinition(definition, signature))
+    margs  <- (fdef@signature)[1:length(signature)]
+    allMethods <- insertMethod(allMethods, signature, margs,
+                               asMethodDefinition(definition, signature, sealed))
     ## assign the methods (also updates the session info)
     assignMethodsMetaData(f, allMethods, fdef, where, deflt)
     f
@@ -294,26 +314,45 @@ getMethod <-
   function(f, signature = character(), where = -1, optional = FALSE)
 {
     mlist <- getMethods(f, where)
-    if(length(signature) == 0)
-        mlist <- finalDefaultMethod(mlist)
-    else while(is(mlist, "MethodsList")) {
+    fdef <- getGeneric(f, !optional)
+    if(!is(fdef, "genericFunction")) # must be the optional case, else an error in getGeneric
+        return(NULL)
+    i <- 1
+    argNames <- fdef@signature
+    signature <- matchSignature(signature, fdef)
+    Classes <- signature # a copy just for possible error message
+    while(length(signature) > 0 && is(mlist, "MethodsList")) {
+        if(!identical(argNames[[i]], as.character(mlist@argument)))
+            stop("Apparent inconsistency in the methods for function \"", f,
+                 "\"; argument \"", argNames[[i]],
+                 "\" in the signature corresponds to \"", as.character(mlist@argument),
+                 "\" in the methods list object.")
         Class <- signature[[1]]
-        if(Class == "")
-            Class <- "ANY"
+        signature <- signature[-1]
         methods <- slot(mlist, "methods")
         mlist <- elNamed(methods, Class)# may be function, MethodsList or NULL
-        signature <- signature[-1]
-        if(length(signature) == 0)
-            break
+        i <- i + 1
     }
-    if(is(mlist, "function") && length(signature) == 0)
-        ## the only successful outcome
-        mlist
-    else if(optional)
+    if(length(signature) == 0) {
+        ## process the implicit remaining "ANY" elements
+        if(is(mlist, "MethodsList"))
+            mlist <- finalDefaultMethod(mlist)
+        if(is(mlist, "function"))       
+            return(mlist) # the only successful outcome
+    }
+    if(optional)
         mlist                           ## may be NULL or a MethodsList object
-    else
-        stop(paste("No method defined for function \"", f,
-                   "\" for this signature ", sep = ""))
+    else {
+        if(length(Classes) > 0) {
+            length(argNames) <- length(Classes)
+            Classes <- paste(argNames," = \"", unlist(Classes),
+                             "\"", sep = "", collapse = ", ")
+        }
+        else
+            Classes <- "\"ANY\""
+        stop("No method defined for function \"", f,
+             "\" and signature ", Classes)
+    }
 }
 
 dumpMethod <-
@@ -481,6 +520,11 @@ showMethods <-
         con <- file(tmp, "w")
     }
     else con <- printTo
+    if(is(f, "function"))
+        f <- as.character(substitute(f))
+    if(!is(f, "character"))
+        stop("Argument \"f\" should be the name(s) of generic functions (got object of class\"",
+             class(f), "\")")
     if(length(f)==0) {
         if(missing(where)) {
             f <- getGenerics()
@@ -541,7 +585,7 @@ removeMethodsObject <-
       rm(list = what, pos = db)
   return(TRUE)
 }
-    
+
 
 removeMethods <-
   ## removes all the methods defined for this generic function.  Returns `TRUE' if
@@ -615,7 +659,7 @@ setGroupGeneric <-
             ## a special R-only mechanism to turn on method dispatch
             ## for the members of groups of primitives
             members <- def@groupMembers
-            if(length(members)>0) 
+            if(length(members)>0)
                 for(what in members)
                     if(is.character(what) && is.primitive(getFunction(what, mustFind=FALSE)))
                         setGeneric(what)
@@ -655,7 +699,12 @@ isGroup <-
 callGeneric <- function(...)
 {
     frame <- sys.parent()
-    fdef <- sys.function(frame)
+
+    # the two lines below this comment do what the previous version of
+    # did in the expression fdef <- sys.function(frame)
+    fname <- sys.call(frame)[[1]]
+    fdef <- get(as.character(fname), env = parent.frame())
+
     if(is.primitive(fdef)) {
         if(nargs() == 0)
             stop("callGeneric with a primitive needs explict arguments (no formal args defined)")
@@ -688,3 +737,26 @@ callGeneric <- function(...)
 
 initMethodDispatch <- function()
     .C("R_initMethodDispatch", PACKAGE = "methods")# C-level initialization
+
+isSealedMethod <- function(f, signature, fdef = getGeneric(f, FALSE)) {
+    fNonGen <- getFunction(f, FALSE, FALSE)
+    if(!is.primitive(fNonGen)) {
+        mdef <- getMethod(f, signature, optional = TRUE)
+        return(is(mdef, "SealedMethodDefinition"))
+    }
+    ## else, a primitive
+    if(is(fdef, "genericFunction"))
+        signature <- matchSignature(signature, fdef)
+    if(length(signature)==0)
+        TRUE # default method for primitive
+    else {
+        sealed <- !is.na(match(signature[[1]], .BasicClasses))
+        if(sealed && 
+           (!is.na(match("Ops", c(f, getGroup(f, TRUE))))
+            || !is.na(match(f, c("%*%", "crossprod")))))
+            ## Ops methods are only sealed if both args are basic classes
+            sealed <- sealed && (length(signature) > 1) &&
+                      !is.na(match(signature[[2]], .BasicClasses))
+        sealed
+    }
+}

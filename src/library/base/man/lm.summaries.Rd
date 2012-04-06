@@ -1,18 +1,14 @@
 \name{lm.summaries}
-\alias{coefficients.lm}
 \alias{family.lm}
 \alias{formula.lm}
-\alias{fitted.values.lm}
 \alias{residuals.lm}
 \alias{weights}
 \alias{weights.lm}
 \alias{weights.default}
 \title{Accessing Linear Model Fits}
 \usage{
-\method{coefficients}{lm}(object, \dots) ; \method}{lm}{coef(object, \dots)
 \method{family}{lm}(object, \dots)
 \method{formula}{lm}(x, \dots)
-\method{fitted.values}{lm}(object, \dots)
 \method{residuals}{lm}(object,
           type=c("working","response", "deviance","pearson", "partial"), \dots)
 weights(object, \dots)
@@ -21,23 +17,32 @@ weights(object, \dots)
   \item{object, x}{an object of class \code{lm}, usually, a result of a
     call to \code{\link{lm}}.}
   \item{\dots}{further arguments passed to or from other methods.}
+  \item{type}{the type of residuals which should be returned.}
 }
 \description{
-All these functions are \code{\link{methods}} for class \code{"lm"}  objects.
+  All these functions are \code{\link{methods}} for class \code{"lm"}  objects.
 }
 \details{
-The generic accessor functions \code{coefficients}, \code{effects},
-\code{fitted.values} and \code{residuals} can be used to extract
-various useful features of the value returned by \code{lm}.
+  The generic accessor functions \code{coef}, \code{effects},
+  \code{fitted} and \code{residuals} can be used to extract
+  various useful features of the value returned by \code{lm}.
+
+  The working and response residuals are ``observed - fitted''.  The
+  deviance and pearson residuals are weighted residuals, scaled by the
+  square root of the weights used in fitting.  The partial residuals
+  are a matrix with each column formed by omitting a term from the
+  model.  In all these, zero weight cases are never omitted (as opposed
+  to the standardized \code{\link{rstudent}} and \code{}similarobservations
+
 }
 \seealso{
   The model fitting function \code{\link{lm}}, \code{\link{anova.lm}}.
 
-  \code{\link{coefficients}}, \code{\link{deviance}},
+  \code{\link{coef}}, \code{\link{deviance}},
   \code{\link{df.residual}},
-  \code{\link{effects}}, \code{\link{fitted.values}},
+  \code{\link{effects}}, \code{\link{fitted}},
   \code{\link{glm}} for \bold{generalized} linear models,
-  \code{\link{lm.influence}} for regression diagnostics,
+  \code{\link{influence}} (etc on that page) for regression diagnostics,
   \code{\link{weighted.residuals}},
   \code{\link{residuals}}, \code{\link{residuals.glm}},
   \code{\link{summary.lm}}.

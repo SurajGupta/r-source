@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2002   The R Development Core Team.
+ *  Copyright (C) 2000-2003   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ struct Rconn {
     char* class;
     char* description;
     char mode[5];
-    Rboolean text, isopen, incomplete, canread, canwrite, canseek, blocking;
+    Rboolean text, isopen, incomplete, canread, canwrite, canseek, blocking, 
+	isGzcon;
     Rboolean (*open)(struct Rconn *);
     void (*close)(struct Rconn *); /* routine closing after auto open */
     void (*destroy)(struct Rconn *); /* when closing connection */
@@ -69,12 +70,12 @@ typedef struct textconn {
     char save; /* pushback */
 } *Rtextconn;
 
-#define LAST_LINE_LEN 8096
 typedef struct outtextconn {
     int len;  /* number of lines */
     SEXP namesymbol;
     SEXP data;
-    char lastline[LAST_LINE_LEN];
+    char *lastline;
+    int lastlinelength; /* buffer size */
 } *Routtextconn;
 
 typedef enum {HTTPsh, FTPsh} UrlScheme;
@@ -100,6 +101,27 @@ typedef struct bzfileconn {
     FILE *fp;
     void *bfp;
 } *Rbzfileconn;
+
+#ifdef Win32
+typedef struct clpconn {
+    char *buff;
+    int pos, len, last;
+} *Rclpconn;
+#endif
+
+#ifdef _ZLIB_H
+typedef struct gzconn {
+    Rconnection con;
+    int cp; /* compression level */
+    z_stream s;
+    int z_err, z_eof;
+    uLong crc;
+    Byte *inbuf, *outbuf;
+    int nsaved;
+    char saved[2];
+    Rboolean allow;
+} *Rgzconn;
+#endif
 
 int Rconn_fgetc(Rconnection con);
 int Rconn_ungetc(int c, Rconnection con);

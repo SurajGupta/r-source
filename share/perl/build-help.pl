@@ -1,6 +1,6 @@
 #-*- mode: perl; perl-indent-level: 4; cperl-indent-level: 4 -*-
 
-# Copyright (C) 1997-2001 R Development Core Team
+# Copyright (C) 1997-2003 R Development Core Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ use R::Rdconv;
 use R::Rdlists;
 use R::Utils;
 
-my $revision = ' $Revision: 1.9 $ ';
+my $revision = ' $Revision: 1.12 $ ';
 my $version;
 my $name;
 
@@ -84,7 +84,17 @@ if(!$opt_html && !$opt_txt && !$opt_latex && !$opt_example){
 }
 
 ($pkg, $lib, @mandir) = buildinit();
-$dest = file_path($lib, $pkg);
+
+
+## !!! Attempting to create the ability to have packages stored in a 
+## !!! location other than lib/pkg.  There are obviously better ways
+## !!! of doing this, but trying to do it in a manner which will not
+## !!! interfere with other things calling this besides INSTALL. JG
+$dest = $ARGV[2];
+if (!$dest) {
+    $dest = file_path($lib, $pkg);
+}
+
 print STDERR "Destination dest = '$dest'\n" if $opt_debug;
 
 build_index($lib, $dest, "");
@@ -121,6 +131,11 @@ if($opt_html){
 	    $basehtmlindex{$topic} = $htmlindex{$topic};
 	}
 	%htmlindex = %basehtmlindex;
+    }
+    # make sure that references are resolved first to this package
+    my %thishtmlindex = read_htmlpkgindex($lib, $pkg);
+    foreach $topic (keys %thishtmlindex) {
+	$htmlindex{$topic} = $thishtmlindex{$topic};
     }
 }
 
@@ -170,6 +185,7 @@ foreach $manfile (@mandir) {
 	    my $targetfile = $filenm{$manfilebase};
 	    $destfile = file_path($dest, "R-ex", $targetfile.".R");
 	    if(fileolder($destfile, $manage)) {
+		if(-f $destfile) {unlink $destfile;}
 		Rdconv($manfile, "example", "", "$destfile");
 		if(-f $destfile) {$exampleflag = "example";}
 	    }

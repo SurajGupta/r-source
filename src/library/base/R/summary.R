@@ -8,7 +8,13 @@ summary.default <-
     else if(is.matrix(object))
 	return(summary.matrix(object, digits = digits, ...))
 
-    value <- if(is.logical(object)) c(Mode = "logical", table(object))
+    value <- if(is.logical(object))# scalar or array!
+	c(Mode = "logical",
+          {tb <- table(object, exclude=NULL)# incl. NA s
+           if(!is.null(n <- dimnames(tb)[[1]]) && any(iN <- is.na(n)))
+               dimnames(tb)[[1]][iN] <- "NA's"
+           tb
+           })
     else if(is.numeric(object)) {
 	nas <- is.na(object)
 	object <- object[!nas]
@@ -26,7 +32,7 @@ summary.default <-
 	for(i in 1:n) {
 	    ii <- object[[i]]
 	    ll[i] <- length(ii)
-	    cls <- class(ii)
+	    cls <- oldClass(ii)
 	    sumry[i, 2] <- if(length(cls)>0) cls[1] else "-none-"
 	    sumry[i, 3] <- mode(ii)
 	}
@@ -65,16 +71,35 @@ summary.data.frame <-
     nv <- length(object)
     nm <- names(object)
     lw <- numeric(nv)
-    nr <- max(unlist(lapply(z, length)))
+    nr <- max(unlist(lapply(z, NROW)))
     for(i in 1:nv) {
-	sms <- z[[i]]
-	lbs <- format(names(sms))
-	sms <- paste(lbs, ":", format(sms, digits = digits), "  ", sep = "")
-	lw[i] <- nchar(lbs[1])
-	length(sms) <- nr
-	z[[i]] <- sms
+        sms <- z[[i]]
+        if(is.matrix(sms)) {
+            ## need to produce a single column, so collapse matrix
+            ## across rows
+            cn <- paste(nm[i], gsub("^ +", "", colnames(sms)), sep=".")
+            tmp <- format(sms)
+            if(nrow(sms) < nr)
+                tmp <- rbind(tmp, matrix("", nr - nrow(sms), ncol(sms)))
+            sms <- apply(tmp, 1, function(x) paste(x, collapse="  "))
+            ## produce a suitable colname: undoing padding
+            wid <- sapply(tmp[1,], nchar)
+            blanks <- paste(character(max(wid)), collapse = " ")
+            pad0 <- floor((wid-nchar(cn))/2); pad1 <- wid - nchar(cn) - pad0
+            cn <- paste(substring(blanks, 1, pad0), cn,
+                        substring(blanks, 1, pad1), sep = "")
+            nm[i] <- paste(cn, collapse="  ")
+            z[[i]] <- sms
+        } else {
+            lbs <- format(names(sms))
+            sms <- paste(lbs, ":", format(sms, digits = digits), "  ",
+                         sep = "")
+            lw[i] <- nchar(lbs[1])
+            length(sms) <- nr
+            z[[i]] <- sms
+        }
     }
-    z <- unlist(z, use.names=FALSE)
+    z <- unlist(z, use.names=TRUE)
     dim(z) <- c(nr, nv)
     blanks <- paste(character(max(lw) + 2), collapse = " ")
     pad <- floor(lw-nchar(nm)/2)

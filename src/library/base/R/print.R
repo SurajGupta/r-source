@@ -1,38 +1,41 @@
-print <- function(x, ...)UseMethod("print")
+print <- function(x, ...) UseMethod("print")
 
 ##- Need '...' such that it can be called as  NextMethod("print", ...):
-print.default <-
-    function(x,digits=NULL,quote=TRUE,na.print=NULL,print.gap=NULL,right=FALSE,
-             ...)
-    .Internal(print.default(x,digits,quote,na.print,print.gap,right))
+print.default <- function(x, digits = NULL, quote = TRUE, na.print = NULL,
+                          print.gap = NULL, right = FALSE, ...)
+{
+    noOpt <- missing(digits) && missing(quote) && missing(na.print) &&
+      missing(print.gap) && missing(right) && length(list(...)) == 0
+    .Internal(print.default(x, digits, quote, na.print, print.gap, right,
+                            noOpt))
+}
 
-print.atomic <- function(x,quote=TRUE,...) print.default(x,quote=quote)
 
-print.matrix <- function (x, rowlab = dn[[1]], collab = dn[[2]],
-			  quote = TRUE, right = FALSE,
-			  na.print=NULL, print.gap=NULL, ...) {
+print.atomic <- function(x, quote = TRUE, ...) print.default(x, quote=quote)
+
+print.matrix <- print.default  ## back-compatibility
+
+prmatrix <-
+    function (x, rowlab = dn[[1]], collab = dn[[2]],
+              quote = TRUE, right = FALSE,
+              na.print = NULL, ...)
+{
     x <- as.matrix(x)
     dn <- dimnames(x)
-    if(!is.null(print.gap)) .NotYetUsed("print.gap", error = FALSE)
-    ## and `na.print' could be done in .Internal(.) as well:
-    if(!is.null(na.print) && any(ina <- is.na(x)))
-	x[ina] <- na.print
-    .Internal(print.matrix(x, rowlab, collab, quote, right))
+    .Internal(prmatrix(x, rowlab, collab, quote, right, na.print))
 }
-prmatrix <- print.matrix
-
-## print.tabular is now deprecated !
 
 noquote <- function(obj) {
     ## constructor for a useful "minor" class
     if(!inherits(obj,"noquote")) class(obj) <- c(attr(obj, "class"),"noquote")
     obj
 }
+
 as.matrix.noquote <- function(x) noquote(NextMethod("as.matrix", x))
 
 "[.noquote" <- function (x, ...) {
     attr <- attributes(x)
-    r <- unclass(x)[...]
+    r <- unclass(x)[...] ## shouldn't this be NextMethod?
     attributes(r) <- c(attributes(r),
 		       attr[is.na(match(names(attr),
                                         c("dim","dimnames","names")))])
@@ -177,22 +180,4 @@ print.anova <- function(x, digits = max(getOption("digits") - 2, 3),
     invisible(x)
 }
 
-print.data.frame <- function (x, ..., digits = NULL,
-                              quote = FALSE, right = TRUE)
-{
-    if (length(x) == 0) {
-        cat("NULL data frame with", length(row.names(x)), "rows\n")
-    }
-    else if (length(row.names(x)) == 0) {
-        print.default(names(x), quote = FALSE)
-        cat("<0 rows> (or 0-length row.names)\n")
-    }
-    else {
-         if (!is.null(digits)) {
-             op <- options(digits = digits)
-             on.exit(options(op))
-         }
-         print.matrix(format(x), ..., quote = quote, right = right)
-     }
-    invisible(x)
-}
+## print.data.frame here was a duplicate of that in dataframe.R

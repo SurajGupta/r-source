@@ -1,17 +1,4 @@
 \name{qr}
-\title{The QR Decomposition of a Matrix}
-\usage{
-qr(x, tol=1e-07)
-qr.coef(qr, y)
-qr.qy(qr, y)
-qr.qty(qr, y)
-qr.resid(qr, y)
-qr.fitted(qr, y, k = qr$rank)
-qr.solve(a, b, tol = 1e-7)
-
-is.qr(x)
-as.qr(x)
-}
 \alias{qr}
 \alias{qr.coef}
 \alias{qr.qy}
@@ -21,19 +8,37 @@ as.qr(x)
 \alias{qr.solve}
 \alias{is.qr}
 \alias{as.qr}
+\alias{solve.qr}
+\title{The QR Decomposition of a Matrix}
+\usage{
+qr(x, tol = 1e-07 , LAPACK = TRUE)
+qr.coef(qr, y)
+qr.qy(qr, y)
+qr.qty(qr, y)
+qr.resid(qr, y)
+qr.fitted(qr, y, k = qr$rank)
+qr.solve(a, b, tol = 1e-7)
+\method{solve}{qr}(a, b, \dots)
+
+is.qr(x)
+as.qr(x)
+}
 \arguments{
   \item{x}{a matrix whose QR decomposition is to be computed.}
   \item{tol}{the tolerance for detecting linear dependencies in the
-    columns of \code{x}.}
+    columns of \code{x}. Only used in \code{LINPACK} is true.}
   \item{qr}{a QR decomposition of the type computed by \code{qr}.}
   \item{y, b}{a vector or matrix of right-hand sides of equations.}
-  \item{a}{A matrix or QR decomposition.}
+  \item{a}{A QR decomposition or (\code{qr.solve} only) a rectangular matrix.}
   \item{k}{effective rank.}
+  \item{LAPACK}{logical. For real \code{x}, if true use LAPACK
+    otherwise use LINPACK.}
+  \item{\dots}{further arguments passed to or from other methods}
 }
 \description{
   \code{qr} computes the QR decomposition of a matrix.  It provides an
-  interface to the techniques used in the LINPACK routine DQRDC
-  or (for complex matrices) the LAPACK routine ZGEQP3.
+  interface to the techniques used in the LINPACK routine DQRDC 
+  or the LAPACK routines DGEQP3 and (for complex matrices) ZGEQP3.
 }
 \details{
   The QR decomposition plays an important role in many
@@ -51,7 +56,13 @@ as.qr(x)
   All the above functions keep \code{dimnames} (and \code{names}) of
   \code{x} and \code{y} if there are.
 
-  \code{qr.solve} solves systems of equations via the QR decomposition.
+  \code{solve.qr} is the method for \code{solve} for \code{qr} objects.
+  \code{qr.solve} solves systems of equations via the QR decomposition:
+  if \code{a} is a QR decomposition it is the same as \code{solve.qr},
+  but if \code{a} is a rectangular matrix the QR decomposition is
+  computed first.  Either will handle over- and under-determined
+  systems, providing a minimal-length solution or a least-squares fit
+  if appropriate.
 
   \code{is.qr} returns \code{TRUE} if \code{x} is a \code{\link{list}}
   with components named \code{qr}, \code{rank} and \code{qraux} and
@@ -63,25 +74,29 @@ as.qr(x)
 \value{
   The QR decomposition of the matrix as computed by LINPACK or LAPACK.
   The components in the returned value correspond directly
-  to the values returned by DQRDC/ZGEQP3.
+  to the values returned by DQRDC/DGEQP3/ZGEQP3.
   \item{qr}{a matrix with the same dimensions as \code{x}.
     The upper triangle contains the \eqn{\bold{R}} of the decomposition
     and the lower triangle contains information on the \eqn{\bold{Q}} of
-    the decomposition (stored in compact form).}
+    the decomposition (stored in compact form).  Note that the storage
+    used by DQRDC and DGEQP3 differs.}
   \item{qraux}{a vector of length \code{ncol(x)} which contains
     additional information on \eqn{\bold{Q}}.}
   \item{rank}{the rank of \code{x} as computed by the decomposition:
     always full rank in the complex case.}
   \item{pivot}{information on the pivoting strategy used during
     the decomposition.}
+
+  Non-complex QR objects computed by LAPACK have the attribute
+  \code{"useLAPACK"} with value \code{TRUE}.
 }
 \note{
   To compute the determinant of a matrix (do you \emph{really} need it?),
   the QR decomposition is much more efficient than using Eigen values
   (\code{\link{eigen}}).  See \code{\link{det}}.
 
-  The complex case uses column pivoting and does not attempt to detect
-  rank-deficient matrices.
+  Using LAPACK (including in the complex case) uses column pivoting and
+  does not attempt to detect rank-deficient matrices.
 }
 \references{
   Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
@@ -112,17 +127,6 @@ x <- qr.solve(h9, y, tol = 1e-10) # or equivalently :
 x <- qr.coef(qrh9, y) #-- is == but much better than
                       #-- solve(h9) \%*\% y
 h9 \%*\% x              # = y
-
-\testonly{## tests of complex case
-set.seed(1)
-A <- matrix(rnorm(25), 5, 5, dimnames=list(1:5, letters[1:5]))
-qr.solve(A, 1:5)
-A[] <- as.complex(A)
-qr.coef(qr(A), 1:5)
-qr.solve(A, 1:5)}
-\testonly{## check for rank-deficient cases
-X <- cbind(1:3, 1:3, 1)
-stopifnot(all.equal(qr.X(qr(X)), X))}
 }
 \keyword{algebra}
 \keyword{array}

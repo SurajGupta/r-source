@@ -3,6 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
+ *  Copyright (C) 2003        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -110,7 +111,6 @@ FUNTAB R_FunTab[] =
 {"[<-",		do_subassign,	0,	0,	3,	{PP_SUBASS,  PREC_LEFT,	  1}},
 {"[[<-",	do_subassign2,	1,	100,	3,	{PP_SUBASS,  PREC_LEFT,	  1}},
 {"$<-",		do_subassign3,	1,	0,	3,	{PP_SUBASS,  PREC_LEFT,	  1}},
-{"@<-",		do_AT_assign,	0,	0,	3,	{PP_SUBASS,  PREC_LEFT,	  1}},
 {"switch",	do_switch,	0,	10,	-1,	{PP_FUNCALL, PREC_FN,	  0}},
 {"browser",	do_browser,	0,	100,	0,	{PP_FUNCALL, PREC_FN,	  0}},
 {"debug",	do_debug,	0,	101,	1,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -174,10 +174,10 @@ FUNTAB R_FunTab[] =
 {"cbind",	do_bind,	1,	10,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rbind",	do_bind,	2,	10,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"drop",	do_drop,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"class",	do_class,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"class<-",	do_classgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT, 1}},
-{"dataClass",	R_do_data_class,0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"objWithClass",R_do_set_class,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"oldClass",	do_class,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"oldClass<-",	do_classgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT, 1}},
+{"class",	R_do_data_class,0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"class<-",	R_do_set_class,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"unclass",	do_unclass,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"names",	do_names,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"names<-",	do_namesgets,	0,	11,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
@@ -212,10 +212,10 @@ FUNTAB R_FunTab[] =
 
 
 /* Mathematical Functions */
-{"round",	do_round,	10001,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"round",	do_Math2,	10001,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"atan",	do_atan,	10002,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"log",		do_log,		10003,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"signif",	do_signif,	10004,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"log",		do_log,		10003,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"signif",	do_Math2,	10004,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"abs",		do_abs,		6,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* KH(1999/09/12)-> complex: {"abs", do_math1, 0, 1, 1, {PP_FUNCALL, PREC_FN,	0}}, */
@@ -396,6 +396,7 @@ FUNTAB R_FunTab[] =
 {"rlnorm",	do_random2,	5,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"rlogis",	do_random2,	6,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"rnbinom",	do_random2,	7,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"rnchisq",	do_random2,	12,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"rnorm",	do_random2,	8,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"runif",	do_random2,	9,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"rweibull",	do_random2,	10,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -403,6 +404,7 @@ FUNTAB R_FunTab[] =
 
 {"rhyper",	do_random3,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 
+{"rmultinom",	do_rmultinom,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"sample",	do_sample,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"RNGkind",	do_RNGkind,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -534,6 +536,7 @@ FUNTAB R_FunTab[] =
 {"select.list",	do_selectlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"readClipboard",do_readClipboard,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"chooseFiles", do_chooseFiles, 0,  11, 5,  {PP_FUNCALL, PREC_FN,   0}},
 #endif
 #ifdef Macintosh
 {"unlink",	do_unlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -558,17 +561,19 @@ FUNTAB R_FunTab[] =
 {"saveToConn",	do_saveToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"load",	do_load,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"loadFromConn",do_loadFromConn,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"serializeToConn",	do_serializeToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"unserializeFromConn",	do_unserializeFromConn,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"deparse",	do_deparse,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"dput",	do_dput,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"dump",	do_dump,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"dump",	do_dump,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"substitute",	do_substitute,	0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"quote",	do_quote,	0,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"quit",	do_quit,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"interactive",	do_interactive,	0,	0,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"readline",	do_readln,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"menu",	do_menu,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"print.default",do_printdefault,0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"print.matrix",do_printmatrix, 0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"print.default",do_printdefault,0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
+{"prmatrix", 	do_prmatrix, 	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"invisible",	do_invisible,	0,	101,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gc",		do_gc,		0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gcinfo",	do_gcinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -656,12 +661,13 @@ FUNTAB R_FunTab[] =
 {"file.remove",	do_fileremove,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.rename",	do_filerename,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.append",	do_fileappend,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"list.files",	do_listfiles,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"file.symlink",do_filesymlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"list.files",	do_listfiles,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.exists", do_fileexists,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.choose", do_filechoose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.info",	do_fileinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.access",	do_fileaccess,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"tempfile",	do_tempfile,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"tempfile",	do_tempfile,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempdir",	do_tempdir,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"R.home",	do_Rhome,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"date",	do_date,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -679,6 +685,7 @@ FUNTAB R_FunTab[] =
 {"setlocale",	do_setlocale,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"localeconv",	do_localeconv,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"path.expand",	do_pathexpand,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"getpid",	do_sysgetpid,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Complex Valued Functions */
 {"fft",		do_fft,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -688,12 +695,12 @@ FUNTAB R_FunTab[] =
 
 /* Device Drivers */
 
-{"PS",		do_PS,		0,	111,   15,	{PP_FUNCALL, PREC_FN,	0}},
+{"PS",		do_PS,		0,	111,   16,	{PP_FUNCALL, PREC_FN,	0}},
 {"PicTeX",	do_PicTeX,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"XFig",	do_XFig,	0,	111,   11,	{PP_FUNCALL, PREC_FN,	0}},
-{"PDF",		do_PDF,		0,	111,    9,	{PP_FUNCALL, PREC_FN,	0}},
+{"PDF",		do_PDF,		0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,	10,	{PP_FUNCALL, PREC_FN,	0}},
+{"devga",	do_devga,	0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #ifdef Unix
 {"X11",		do_X11,		0,	111,	8,	{PP_FUNCALL, PREC_FN,	0}},
@@ -776,7 +783,7 @@ FUNTAB R_FunTab[] =
 {"zeroin",	do_zeroin,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"optim",	do_optim,	0,	11,	7,	{PP_FUNCALL, PREC_FN,	0}},
 {"optimhess",	do_optimhess,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"terms.formula",do_termsform,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"terms.formula",do_termsform,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"update.formula",do_updateform,0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"model.frame",	do_modelframe,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"model.matrix",do_modelmatrix,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -810,6 +817,7 @@ FUNTAB R_FunTab[] =
 {"isIncomplete",do_isincomplete,0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"isSeekable", 	do_isseekable,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"close", 	do_close,	0,      11,     2,      {PP_FUNCALL, PREC_FN,	0}},
+{"flush", 	do_flush,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"file", 	do_url,		1,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"url", 	do_url,		0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"pipe", 	do_pipe,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
@@ -827,6 +835,7 @@ FUNTAB R_FunTab[] =
 {"summary.connection",do_sumconnection,0,11,    1,      {PP_FUNCALL, PREC_FN,	0}},
 {"download", 	do_download,	0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
 {"nsl", 	do_nsl,		0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
+{"gzcon", 	do_gzcon,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 
 
 {"readDCF", 	do_readDCF,	0,      11,     2,      {PP_FUNCALL, PREC_FN,	0}},
@@ -843,16 +852,19 @@ FUNTAB R_FunTab[] =
 #endif
 #ifdef FANCY_BINDINGS
 {"lockBinding", do_lockBnd,		0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
+{"unlockBinding", do_lockBnd,		1, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"bindingIsLocked", do_bndIsLocked,	0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"makeActiveBinding", do_mkActiveBnd,	0, 11,	3,      {PP_FUNCALL, PREC_FN,	0}},
 {"bindingIsActive", do_bndIsActive,	0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"mkUnbound",	do_mkUnbound,		0, 11,	1,      {PP_FUNCALL, PREC_FN,	0}},
 #endif
 #ifdef EXPERIMENTAL_NAMESPACES
+{"isNamespaceEnv",do_isNSEnv,		0, 11,	1,      {PP_FUNCALL, PREC_FN,	0}},
 {"registerNamespace",do_regNS,		0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"unregisterNamespace",do_unregNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getRegisteredNamespace",do_getRegNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getNamespaceRegistry",do_getNSRegistry, 0, 11, 0,     {PP_FUNCALL, PREC_FN,	0}},
+{"importIntoEnv",do_importIntoEnv, 0, 11, 4,     {PP_FUNCALL, PREC_FN,	0}},
 #endif
 
 {NULL,		NULL,		0,	0,	0,	{0,	PREC_FN,	0}},

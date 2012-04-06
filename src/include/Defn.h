@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2002  The R Development Core Team.
+ *  Copyright (C) 1998--2003  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -320,6 +320,7 @@ typedef struct RCNTXT {
     int cstacktop;		/* Top of the pointer protection stack */
     int evaldepth;	        /* evaluation depth at inception */
     SEXP promargs;		/* Promises supplied to closure */
+    SEXP callfun;		/* The closure called */
     SEXP sysparent;		/* environment the closure was called from */
     SEXP call;			/* The call that effected this context*/
     SEXP cloenv;		/* The environment */
@@ -522,6 +523,12 @@ SEXP R_primitive_methods(SEXP op);
 SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 
+/* temporary switch to control underline-as-assigment */
+extern Rboolean R_no_underline		INI_as(FALSE);
+
+/* smallest decimal exponent, needed in format.c, set in Init_R_Machine */
+extern int R_dec_min_exponent		INI_as(-308);
+
 #ifdef __MAIN__
 # undef extern
 # undef LibExtern
@@ -531,7 +538,6 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 
 /*--- FUNCTIONS ------------------------------------------------------ */
 
-#ifndef R_NO_REMAP
 # define begincontext		Rf_begincontext
 # define checkArity		Rf_checkArity
 # define CheckFormals		Rf_CheckFormals
@@ -617,7 +623,6 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 # define yyparse		Rf_yyparse
 # define yyprompt		Rf_yyprompt
 # define yywrap			Rf_yywrap
-#endif /* not R_NO_REMAP */
 
 /* Platform Dependent Gui Hooks */
 
@@ -644,11 +649,13 @@ typedef struct R_varloc_st *R_varloc_t;
 R_varloc_t R_findVarLocInFrame(SEXP, SEXP);
 SEXP R_GetVarLocValue(R_varloc_t);
 SEXP R_GetVarLocSymbol(R_varloc_t);
+int R_GetVarLocMISSING(R_varloc_t);
 void R_SetVarLocValue(R_varloc_t, SEXP);
 
 /* Other Internally Used Functions */
 
-void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP);
+SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
+void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
 void checkArity(SEXP, SEXP);
 void CheckFormals(SEXP);
 void CleanEd(void);
@@ -668,7 +675,7 @@ SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 void FrameClassFix(SEXP);
 int framedepth(RCNTXT*);
 SEXP frameSubscript(int, SEXP, SEXP);
-int get1index(SEXP, SEXP, int, Rboolean);
+int get1index(SEXP, SEXP, int, Rboolean, int);
 SEXP getVar(SEXP, SEXP);
 SEXP getVarInFrame(SEXP, SEXP);
 int hashpjw(char*);
@@ -690,6 +697,7 @@ void Init_R_Variables(SEXP);
 void InitTempDir(void);
 void initStack(void);
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
+Rboolean isMethodsDispatchOn(void);
 int isValidName(char *);
 void jump_to_toplevel(void);
 SEXP levelsgets(SEXP, SEXP);
@@ -711,7 +719,7 @@ SEXP NewEnvironment(SEXP, SEXP, SEXP);
 void onintr();
 void onsigusr1();
 void onsigusr2();
-int OneIndex(SEXP, SEXP, int, int, SEXP*);
+int OneIndex(SEXP, SEXP, int, int, SEXP*, int);
 SEXP parse(FILE*, int);
 void PrintGreeting(void);
 void PrintVersion(char *);

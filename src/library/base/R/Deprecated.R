@@ -12,29 +12,14 @@
 ## consider keeping one (commented) entry here, for easier additions
 
 ## <entry>
-## Deprecated in 1.6.0
-machine <- function()
-{
-    .Deprecated(".Platform$OS.type")
-    .Internal(machine())
+## Deprecated in 1.7.0
+## from methods, should be deprecated.
+printNoClass <-
+    function(x, digits = NULL,quote = TRUE, na.print = NULL, print.gap = NULL,
+             right = FALSE, ...) {
+        .Deprecated("print.default")
+        .Internal(print.default(x, digits, quote, na.print, print.gap,
+                                right, FALSE))
 }
-
-Machine <- function()
-{
-    .Deprecated(".Machine")
-    get(".Machine", "package:base")
-}
-
-Platform <- function()
-{
-    .Deprecated(".Platform")
-    get(".Platform", "package:base")
-}
-
-restart<-function (on = TRUE){
-    .Deprecated("try")
-    .Internal(restart(on))
-}
-
 ## </entry>
 

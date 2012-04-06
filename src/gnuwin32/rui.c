@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1998--2001  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,8 +59,8 @@ static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
     msavehistory, mpaste, mcopy, mcopypaste, mlazy, mconfig,
     mls, mrm, msearch, mhelp, mmanintro, mmanref, mmandata,
-    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ, 
-    mpkgl, mpkgi, mpkgil, mpkgu, mde;
+    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ,
+    mpkgl, mpkgi, mpkgil, mpkgb, mpkgu, mpkgbu, mde;
 static int lmanintro, lmanref, lmandata, lmanlang, lmanext;
 static menu m, mman;
 static char cmd[1024];
@@ -91,7 +91,7 @@ static void menusource(control m)
     setuserfilter("R files (*.R)\0*.R\0S files (*.q)\0*.q\0All files (*.*)\0*.*\0\0");
     fn = askfilename("Select file to source", "");
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
 	sprintf(cmd, "source(\"%s\")", fn);
@@ -101,16 +101,8 @@ static void menusource(control m)
 
 static void menudisplay(control m)
 {
-    char *fn;
-
-    setuserfilter("All files (*.*)\0*.*\0\0");
-    fn = askfilename("Select file to show", "");
-    Rwin_fpset();
-    show(RConsole);
-    if (fn) {
-	fixslash(fn);
-	internal_ShowFile(fn, fn);
-    }
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole,"local({fn<-choose.files(filters=Filters[c('R','txt','All'),],index=4)\nfile.show(fn,header=fn,title='')})");
 }
 
 static void menuloadimage(control m)
@@ -121,7 +113,7 @@ static void menuloadimage(control m)
     setuserfilter("R images (*.RData)\0*.RData\0R images - old extension (*.rda)\0*.rda\0All files (*.*)\0*.*\0\0");
     fn = askfilename("Select image to load", "");
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
 	sprintf(cmd, "load(\"%s\")", fn);
@@ -137,7 +129,7 @@ static void menusaveimage(control m)
     setuserfilter("R images (*.RData)\0*.RData\0All files (*.*)\0*.*\0\0");
     fn = askfilesave("Save image in", ".RData");
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
 	sprintf(cmd, "save.image(\"%s\")", fn);
@@ -152,7 +144,7 @@ static void menuloadhistory(control m)
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilename("Load history from", R_HistoryFile);
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
 	gl_loadhistory(fn);
@@ -166,7 +158,7 @@ static void menusavehistory(control m)
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilesave("Save history in", R_HistoryFile);
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
 	gl_savehistory(fn);
@@ -177,19 +169,19 @@ static void menuchangedir(control m)
 {
     askchangedir();
     Rwin_fpset();
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menuprint(control m)
 {
     consoleprint(RConsole);
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menusavefile(control m)
 {
     consolesavefile(RConsole, 0);
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menuexit(control m)
@@ -200,7 +192,7 @@ static void menuexit(control m)
 static void menuselectall(control m)
 {
     consoleselectall(RConsole);
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menucopy(control m)
@@ -209,7 +201,7 @@ static void menucopy(control m)
 	consolecopy(RConsole);
     else
 	askok("No selection");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menupaste(control m)
@@ -218,7 +210,7 @@ static void menupaste(control m)
 	consolepaste(RConsole);
     else
 	askok("No text available");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menucopypaste(control m)
@@ -228,7 +220,7 @@ static void menucopypaste(control m)
 	consolepaste(RConsole);
     } else
 	askok("No selection");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menuclear(control m)
@@ -253,24 +245,24 @@ static void menude(control m)
 	    askok(cmd);
 	}
     }
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menuconfig(control m)
 {
     Rgui_configure();
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menulazy(control m)
 {
     consoletogglelazy(RConsole);
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menukill(control m)
 {
-    show(RConsole);
+/*    show(RConsole); */
     UserBreak = TRUE;
 }
 
@@ -278,7 +270,7 @@ static void menuls(control m)
 {
     if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole,"ls()");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menurm(control m)
@@ -286,59 +278,64 @@ static void menurm(control m)
     if (!ConsoleAcceptCmd) return;
     if (askyesno("Are you sure?") == YES)
 	consolecmd(RConsole, "rm(list=ls(all=TRUE))");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menusearch(control m)
 {
     if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole, "search()");
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menupkgload(control m)
 {
     if (!ConsoleAcceptCmd) return;
-    consolecmd(RConsole, 
-	       "{pkg <- select.list(sort(.packages(all.available = TRUE)))\nif(nchar(pkg)) library(pkg, character.only=TRUE)}");
-    show(RConsole);
+    consolecmd(RConsole,
+	       "local({pkg <- select.list(sort(.packages(all.available = TRUE)))\nif(nchar(pkg)) library(pkg, character.only=TRUE)})");
+/*    show(RConsole); */
 }
 
 static void menupkgupdate(control m)
 {
     if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole, "update.packages()");
-    show(RConsole);
+/*    show(RConsole); */
+}
+
+static void menupkgupdatebioc(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, 
+	       "update.packages(CRAN=getOption(\"BIOC\"))");
+/*    show(RConsole); */
+}
+
+
+static void menupkginstallbioc(control m) {
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole,
+	       "local({a<- CRAN.packages(CRAN=getOption(\"BIOC\"))\ninstall.packages(select.list(a[,1],,TRUE), .libPaths()[1], available=a, CRAN=getOption(\"BIOC\"))})");
 }
 
 static void menupkginstallcran(control m)
 {
     if (!ConsoleAcceptCmd) return;
-    consolecmd(RConsole, 
-	       "{a <- CRAN.packages()\ninstall.packages(select.list(a[,1],,TRUE), .libPaths()[1], available=a)}");
-    show(RConsole);
+    consolecmd(RConsole,
+	       "local({a <- CRAN.packages()\ninstall.packages(select.list(a[,1],,TRUE), .libPaths()[1], available=a)})");
+/*    show(RConsole); */
 }
 
 static void menupkginstalllocal(control m)
 {
-    char *fn;
-
     if (!ConsoleAcceptCmd) return;
-    setuserfilter("zip files (*.zip)\0*.zip\0\0All files (*.*)\0*.*\0\0");
-    fn = askfilename("Select zip file to install", "");
-    Rwin_fpset();
-    show(RConsole);
-    if (fn) {
-	fixslash(fn);
-	sprintf(cmd, "install.packages(\"%s\", .libPaths()[1], CRAN = NULL)", fn);
-	consolecmd(RConsole, cmd);
-    }
+    consolecmd(RConsole,"install.packages(choose.files('',filters=Filters[c('zip','All'),]), .libPaths()[1], CRAN = NULL)");
 }
 
 static void menuconsolehelp(control m)
 {
     consolehelp();
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 static void menuhelp(control m)
@@ -348,7 +345,7 @@ static void menuhelp(control m)
 
     if (!ConsoleAcceptCmd) return;
     s = askstring("Help on", olds);
-    show(RConsole);
+/*    show(RConsole); */
     if (s) {
 	sprintf(cmd, "help(\"%s\")", s);
 	if (strlen(s) > 256) s[255] = '\0';
@@ -389,7 +386,7 @@ static void menuapropos(control m)
 
     if (!ConsoleAcceptCmd) return;
     s = askstring("Apropos", olds);
-    show(RConsole);
+/*    show(RConsole); */
     if (s) {
 	sprintf(cmd, "apropos(\"%s\")", s);
 	if (strlen(s) > 256) s[255] = '\0';
@@ -425,7 +422,7 @@ static void menuabout(control m)
 	    "              Copyright ", R_YEAR,
 	    "    The R Development Core Team");
     askok(s);
-    show(RConsole);
+/*    show(RConsole); */
 }
 
 /* some menu commands can be issued only if R is waiting for input */
@@ -435,7 +432,7 @@ static void menuact(control m)
 
     /* dispaly needs pager set */
     if (R_is_running) enable(mdisplay); else disable(mdisplay);
-    
+
     if (ConsoleAcceptCmd) {
 	enable(msource);
 	enable(mload);
@@ -447,8 +444,10 @@ static void menuact(control m)
 	enable(mapropos);
 	enable(mpkgl);
 	enable(mpkgi);
+	enable(mpkgb);
 	enable(mpkgil);
 	enable(mpkgu);
+	enable(mpkgbu);
 	enable(mde);
     } else {
 	disable(msource);
@@ -461,11 +460,13 @@ static void menuact(control m)
 	disable(mapropos);
 	disable(mpkgl);
 	disable(mpkgi);
+	disable(mpkgb);
 	disable(mpkgil);
 	disable(mpkgu);
+	disable(mpkgbu);
 	disable(mde);
     }
-    
+
     if (consolecancopy(RConsole)) {
 	enable(mcopy);
 	enable(mcopypaste);
@@ -602,28 +603,28 @@ void readconsolecfg()
 	    }
 #endif
 	    if (!strcmp(opt[0], "background")) {
-		if (!strcmpi(opt[1], "Windows")) 
+		if (!strcmpi(opt[1], "Windows"))
 		    consolebg = myGetSysColor(COLOR_WINDOW);
 		else consolebg = nametorgb(opt[1]);
 		if (consolebg != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "normaltext")) {
-		if (!strcmpi(opt[1], "Windows")) 
+		if (!strcmpi(opt[1], "Windows"))
 		    consolefg = myGetSysColor(COLOR_WINDOWTEXT);
 		else consolefg = nametorgb(opt[1]);
 		if (consolefg != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "usertext")) {
-		if (!strcmpi(opt[1], "Windows")) 
+		if (!strcmpi(opt[1], "Windows"))
 		    consoleuser = myGetSysColor(COLOR_ACTIVECAPTION);
 		else consoleuser = nametorgb(opt[1]);
 		if (consoleuser != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "highlight")) {
-		if (!strcmpi(opt[1], "Windows")) 
+		if (!strcmpi(opt[1], "Windows"))
 		    highlight = myGetSysColor(COLOR_ACTIVECAPTION);
 		else highlight = nametorgb(opt[1]);
 		if (highlight != Transparent)
@@ -748,7 +749,7 @@ int setupui()
           MCHECK(bt = newtoolbutton(open_image, r, menusource));
           MCHECK(addtooltip(bt, "Source R code"));
           r.x += (btsize + 1) ;
-          
+
           MCHECK(bt = newtoolbutton(open1_image, r, menuloadimage));
           MCHECK(addtooltip(bt, "Load image"));
           r.x += (btsize + 1) ;
@@ -795,7 +796,7 @@ int setupui()
     MCHECK(RMenuBar = newmenubar(menuact));
     MCHECK(newmenu("File"));
     MCHECK(msource = newmenuitem("Source R code...", 0, menusource));
-    MCHECK(mdisplay = newmenuitem("Display file...", 0, menudisplay));
+    MCHECK(mdisplay = newmenuitem("Display file(s)...", 0, menudisplay));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mload = newmenuitem("Load Workspace...", 0, menuloadimage));
     MCHECK(msave = newmenuitem("Save Workspace...", 0, menusaveimage));
@@ -833,13 +834,18 @@ int setupui()
     MCHECK(newmenu("Packages"));
     MCHECK(mpkgl = newmenuitem("Load package...", 0, menupkgload));
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mpkgi = newmenuitem("Install package from CRAN...", 0, 
-			       menupkginstallcran));
-    MCHECK(mpkgil = newmenuitem("Install package from local zip file...", 0, 
-				menupkginstalllocal));
+    MCHECK(mpkgi = newmenuitem("Install package(s) from CRAN...", 0,
+			       menupkginstallcran));		       
+    MCHECK(mpkgil = newmenuitem("Install package(s) from local zip files...",
+				0, menupkginstalllocal));
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mpkgu = newmenuitem("Update packages from CRAN", 0, 
+    MCHECK(mpkgu = newmenuitem("Update packages from CRAN", 0,
 			       menupkgupdate));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mpkgi = newmenuitem("Install package(s) from Bioconductor...",
+			       0, menupkginstallbioc));	
+    MCHECK(mpkgbu = newmenuitem("Update packages from Bioconductor",
+				0, menupkgupdatebioc));
 #ifdef USE_MDI
     newmdimenu();
 #endif
@@ -851,8 +857,8 @@ int setupui()
     MCHECK(mrwFAQ = newmenuitem("FAQ on R for &Windows", 0, menurwFAQ));
     if (!check_doc_file("doc\\html\\rw-faq.html")) disable(mrwFAQ);
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mhelp = newmenuitem("R language (standard)...", 0, menuhelp));
-    MCHECK(mhelpstart = newmenuitem("R language (&html)", 0, menuhelpstart));
+    MCHECK(mhelp = newmenuitem("R functions (text)...", 0, menuhelp));
+    MCHECK(mhelpstart = newmenuitem("Html help", 0, menuhelpstart));
     if (!check_doc_file("doc\\html\\rwin.html")) disable(mhelpstart);
     MCHECK(mman = newsubmenu(m, "Manuals"));
     MCHECK(mmanintro = newmenuitem("An &Introduction to R", 0, menumainman));
@@ -901,8 +907,8 @@ int DialogSelectFile(char *buf, int len)
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilename("Select file", "");
     Rwin_fpset();
-    if (!CharacterMode)
-	show(RConsole);
+/*    if (!CharacterMode)
+  	show(RConsole); */
     if (fn)
 	strncpy(buf, fn, len);
     else
@@ -938,7 +944,7 @@ int winaddmenu(char * name, char *errmsg)
 {
     int i;
     char *p, *submenu = name, start[50];
-    
+
     if (nmenus > 9) {
 	strcpy(errmsg, "Only 10 menus are allowed");
 	return 2;
@@ -967,7 +973,7 @@ int winaddmenu(char * name, char *errmsg)
 	usermenus[nmenus] = m;
 	strcpy(usermenunames[nmenus], name);
 	nmenus++;
-	show(RConsole);
+/*	show(RConsole); */
 	return 0;
     } else {
 	strcpy(errmsg, "failed to allocate menu");
@@ -997,7 +1003,7 @@ int winaddmenuitem(char * item, char * menu, char * action, char *errmsg)
 	strcpy(errmsg, "menu does not exist");
 	return 3;
     }
-    
+
     strcpy(mitem, menu); strcat(mitem, "/"); strcat(mitem, item);
 
     for (i = 0; i < nitems; i++) {
@@ -1042,7 +1048,7 @@ int winaddmenuitem(char * item, char * menu, char * action, char *errmsg)
 	    return 1;
 	}
     }
-    show(RConsole);
+/*    show(RConsole); */
     return 0;
 }
 
@@ -1063,7 +1069,7 @@ int windelmenu(char * menu, char *errmsg)
 	usermenus[j] = usermenus[j+1];
 	strcpy(usermenunames[j], usermenunames[j+1]);
     }
-    show(RConsole);
+/*    show(RConsole); */
     return 0;
 }
 
@@ -1087,6 +1093,6 @@ int windelmenuitem(char * item, char * menu, char *errmsg)
     delobj(umitems[i]->m);
     strcpy(umitems[i]->name, "invalid");
     free(umitems[i]->action);
-    show(RConsole);
+/*    show(RConsole); */
     return 0;
 }

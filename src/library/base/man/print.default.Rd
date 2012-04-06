@@ -1,12 +1,22 @@
 \name{print.default}
+\alias{print.default}
+\alias{print.atomic}
+\alias{print.matrix}
+\description{
+  \code{print.default} is the \emph{default} method of the generic
+  \code{\link{print}} function which prints its argument.
+  \code{print.matrix} is currently identical, but was not prior to
+  \code{1.7.0}.
+
+  \code{print.atomic} is almost the same and exists purely for
+  compatibility reasons.
+}
 \title{Default Printing}
 \usage{
 print.default(x, digits = NULL, quote = TRUE, na.print = NULL,
               print.gap = NULL, right = FALSE, \dots)
 print.atomic(x, quote = TRUE, \dots)
 }
-\alias{print.default}
-\alias{print.atomic}
 \arguments{
   \item{x}{the object to be printed.}
   \item{digits}{a non-null value for \code{digits} specifies the minimum
@@ -21,16 +31,14 @@ print.atomic(x, quote = TRUE, \dots)
     in printed matrices and arrays, or \code{NULL} meaning 1.}
   \item{right}{logical, indicating whether or not strings should be
     right-aligned. The default is left-alignment.}
-  \item{\dots}{(further arguments, currently disregarded)}
-}
-\description{
-  \code{print.default} is the \emph{default} method of the generic
-  \code{\link{print}} function which prints its argument.
-
-  \code{print.atomic} is almost the same and exists purely for
-  compatibility reasons.
+  \item{\dots}{further arguments to be passed to or from other
+    methods. They are ignored in these functions.}
 }
 \details{
+  \code{print.atomic} differs from \code{print.default} only in its
+  argument sequence.  Prior to \R 1.7.0, \code{print.matrix} did not
+  print attributes and did not have a \code{digits} argument.
+  
   The default for printing \code{NA}s is to print \code{NA} (without
   quotes) unless this is a character \code{NA} \emph{and} \code{quote =
     FALSE}, when \code{<NA>} is printed.
@@ -39,6 +47,14 @@ print.atomic(x, quote = TRUE, \dots)
   means that \code{digits} specifies the minimum number of significant
   digits to be used, and that at least one entry will be printed with
   that minimum number.
+
+  As from \R 1.7.0 attributes are printed respecting their class(es),
+  using the values of \code{digits} to \code{print.default}, but using the
+  default values (for the methods called) of the other arguments.
+
+  When the \code{methods} package is attached, \code{print} will call
+  \code{\link[methods]{show}} for methods with formal classes if called
+  with no optional arguments.
 }
 \seealso{The generic \code{\link{print}}, \code{\link{options}}.
   The \code{"\link{noquote}"} class and print method.

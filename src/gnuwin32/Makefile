@@ -1,5 +1,4 @@
 include MkRules
-include RWVERSION
 
 ## This is done so Rpwd.exe gets built first under a native build,
 ## but it is not used in Makefile under a cross-build.
@@ -26,6 +25,8 @@ RHOME = $(shell perl pwd.pl ../..)
 PKGD = $(shell perl pwd.pl $(PKGDIR))
 endif
 
+RPREFIX = $(shell perl fixed/rwver.pl ../../VERSION)
+
 RLIB = $(RHOME)/library
 PKGDIR = $(RHOME)/src/library
 
@@ -40,9 +41,13 @@ else
  DLLFLAGS=-s
 endif
 
+ifneq ($(strip $(BUILD)),CROSS)
+## needed for gcc-3.2.2 but not earlier: may need to adjust
+R-DLLFLAGS = -mwindows -Wl,--allow-multiple-definition
+else
 R-DLLFLAGS = -mwindows
-R-DLLLIBS =-L. $(FLIBS) -lcomctl32 -lversion
-FLIBS+=-lRblas
+endif
+R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion
 SOURCES = $(filter-out malloc.c blas00.c,$(wildcard *.c *.f))
 OBJS = $(SOURCES:.c=.o)
 MAINLIBS = libmain.a libappl.a libmath.a
@@ -63,11 +68,11 @@ endif
 
 
 # separate as Tcl/Tk headers are needed.
-tcl: 
+tcl:
 	@$(MAKE) --no-print-directory pkg-tcltk
 
 CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H -DR_DLL_BUILD
-FFLAGS = $(OPTFLAGS)
+FFLAGS = $(FOPTFLAGS)
 
 Rpwd.exe: front-ends/Rpwd.exe
 	$(CP) $< $@
@@ -77,18 +82,27 @@ front-ends/Rpwd.exe:
 
 ## watch out: R.dll and Rblas.dll depend on each other.
 rbuild: fixfiles rlibs makeMakedeps libRblas.a ../../bin/R.dll libR.a \
-	 ../../bin/Rblas.dll CHTML front-ends COPYRIGHTS rmodules
+	 ../../bin/Rblas.dll CHTML front-ends COPYRIGHTS rmodules Rcode
 
-rpackage: fixed/fixdesc ../../library/R.css
+## used to build skeletal versions of packages, enough to run
+## package tools to install them properly
+INITPACKAGES = base tools
+Rcode: fixed/fixdesc
+	@$(ECHO) "  making bootstrap versions of packages ..."
+	@for pkg in $(INITPACKAGES); do \
+	  if ! test -f $(RHOME)/library/$${pkg}/DESCRIPTION ; then \
+	  $(ECHO) "  --" $$pkg; \
+	  $(MAKE) --no-print-directory -C $(PKGDIR)/$${pkg} PKG=$${pkg} \
+	    RHOME=$(RHOME) -f $(RHOME)/src/gnuwin32/MakePkg Rcode; \
+	  fi; \
+	done
+	@$(ECHO) "  ... done"
+
+
+rpackage: ../../library/R.css
 	@$(MAKE) --no-print-directory $(PKGS)
 
-rinstaller:
-	$(MAKE) --no-print-directory -C installer
-	@$(MAKE) --no-print-directory -C installer clean
-
 rlibs:
-# need pcre.h built before main is built
-	$(MAKE) --no-print-directory -C ../extra/pcre -f Makefile.win
 	$(MAKE) --no-print-directory -C ../appl  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../main  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
@@ -97,8 +111,8 @@ rlibs:
 	$(MAKE) --no-print-directory -C ../extra/xdr -f Makefile.win
 
 rmodules: libRm.a
-	$(MAKE) --no-print-directory -C ../modules OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' \
-	  -f Makefile.win
+	$(MAKE) --no-print-directory -C ../modules \
+	  OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
 
 COPYRIGHTS: $(RHOME)/COPYRIGHTS COPYRIGHTS.win
 	cat $^ > $@
@@ -118,7 +132,7 @@ R.dll: R.a $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 Rdll: makeMakedeps ../../bin/R.dll
 
 ../../bin/R.dll: fixfiles rlibs R.dll
-	$(MKDIR) -p ../../bin
+	@$(MKDIR) -p ../../bin
 	$(CP) R.dll ../../bin/
 
 front-ends: libR.a
@@ -199,12 +213,14 @@ ifeq ($(strip $(USE_ATLAS)),YES)
 blas00.o: blas00.c
 	$(CC) -O2  -c $< -o $@
 else
-../../bin/Rblas.dll: blas.o cmplxblas.o dllversion.o
+../../bin/Rblas.dll: blas.o cmplxblas.o zgemm.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
 	$(DLL) -shared $(DLLFLAGS) -o $@ Rblas.def $^ -L. -lR
 
 blas.o: ../appl/blas.f
 	$(F77) $(FFLAGS) -c $< -o $@
+zgemm.o: ../appl/zgemm.f
+	$(F77) $(FOPTFLAGS) -c $< -o $@
 cmplxblas.o: ../modules/lapack/cmplxblas.f
 	$(F77) $(FOPTFLAGS) -c $< -o $@
 endif
@@ -246,6 +262,10 @@ rpart-ZIPDATA = zip
 survival-HELP = ziponly
 survival-ZIPDATA = zip
 
+# need special-case handling for bundle, as --auto-zip is not enabled
+dse1-HELP = ziponly
+dse2-HELP = ziponly
+
 bundle-%:
 	@$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
 
@@ -257,8 +277,8 @@ pkg-%:
 	  $(MAKE) --no-print-directory $($*-ZIPDATA)data-$* ; \
 	fi
 ifeq ($(strip $(HELP)),YES)
+	@$(ECHO) "  installing help"
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) $($*-HELP)help-$*
-	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) contents-$*
 ifeq ($(strip $(WINHELP)),CHM)
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) chm-$*
 endif
@@ -266,6 +286,9 @@ ifeq ($(strip $(WINHELP)),BOTH)
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) winhlp-$* # also makes chm
 endif
 endif
+	@$(MAKE) --no-print-directory BUILD=$(BUILD) \
+	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB)  \
+	  -f $(RHOME)/src/gnuwin32/MakePkg md5sums
 
 pkgclean-%:
 	$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
@@ -273,7 +296,7 @@ pkgclean-%:
 
 pkgcheck-%:
 	@$(ECHO) -------- Testing package $* --------
-	-@mkdir -p $(PKGDIR)/$*/check
+	-@$(MKDIR) -p $(PKGDIR)/$*/check
 	@$(MAKE) --no-print-directory -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
 	@if test -d $(PKGDIR)/$*/tests ; then \
@@ -288,7 +311,7 @@ ziponly-%:
 	$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziponlyhelp-$*
 
 zipdata-%:
-	@echo "  zipping data"
+	@$(ECHO) "  zipping data"
 	@(cd $(RLIB)/$*/data; \
 	  if test -f Rdata.zip ; then \
 	    unzip -qou Rdata; \
@@ -298,7 +321,7 @@ zipdata-%:
 	  zip -rmq9X Rdata * -x filelist 00Index)
 
 data-%:
-	@echo "  not zipping data"
+	@$(ECHO) "  not zipping data"
 
 
 #                          ===== cleaning ======
@@ -315,7 +338,7 @@ clean: cleanwin $(PKGCLEAN)
 	done
 
 distclean veryclean: clean clean-recommended
-	$(RM) -r ../../bin ../../library ../../modules
+	$(RM) -r ../../bin ../../lib ../../library ../../modules
 	$(RM) ../include/config.h ../include/psignal.h \
 	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h
 	$(RM) ../library/*/src/*.o ../library/*/src/*.a
@@ -336,6 +359,9 @@ distclean veryclean: clean clean-recommended
 	@for pkg in $(ALLPACKAGES); do \
 	  $(RM) ../library/$${pkg}/DESCRIPTION; \
 	done
+	$(RM) rw-FAQ fixed/html/rw-FAQ.html
+	$(RM) -r cran/index.html cran/ReadMe cran/README* cran/*.exe cran/md5sum.txt \
+	  cran/mini
 	$(RM) Rpwd.exe # do this last of all
 
 cleanwin:
@@ -356,20 +382,24 @@ cleanwin:
 #                          ===== testing ======
 
 # tests
-check test: test-Specific pkgtests
+check test: pkgtests test-Basic
 
-test-Specific:
-	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f $(RHOME)/tests/Makefile.win clean
-	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f $(RHOME)/tests/Makefile.win RHOME=$(RHOME)
+test-Basic:
+	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win clean
+	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win
 
 
 PKGS-CHK = $(foreach i, $(PACKAGES), pkgcheck-$i)
 pkgtests: $(PKGS-CHK)
 
-fullcheck: check check-recommended
+check-devel: check
+	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win $@
+
+check-all fullcheck: check-devel check-recommended
 
 REC_PKGS-CHK = $(foreach i, $(REC_PKGS), pkgcheck-$i)
 check-recommended: $(REC_PKGS-CHK)
+
 
 #                          ===== documentation ======
 
@@ -390,126 +420,6 @@ docfiles:
 bitmapdll:
 	$(MAKE) -C bitmap
 
-distribution: bindist packagedist docsdist
-
-bindist: tcl bitmapdll docfiles
-	$(RM) -r $(RPREFIX)
-	$(MKDIR) $(RPREFIX)
-	$(CP) -pr ../../bin ../../modules ../../afm $(RPREFIX)
-	$(MKDIR) $(RPREFIX)/library
-	$(CP) -pr $(LIBFILES) $(RPREFIX)/library
-# morley.tab is needed for R-intro Appendix A
-	$(CP) -p ../library/base/data/morley.tab $(RPREFIX)/library/base/data
-	$(RM) $(RPREFIX)/*/Makefile.in
-	(cd $(RPREFIX)/bin; $(RM) Rcmd.exe INSTALL REMOVE SHLIB build check \
-	   massage-Examples Rd2dvi.sh Rd2txt Rdconv Rdiff.sh Rdindex \
-           Sd2Rd Rprof)
-	$(MKDIR) $(RPREFIX)/etc
-	$(CP) -p ../../etc/Rprofile $(RPREFIX)/etc/Rprofile
-	$(CP) -p ../../etc/Rconsole $(RPREFIX)/etc/Rconsole
-	$(CP) -p ../../etc/Rdevga $(RPREFIX)/etc/Rdevga
-	$(CP) -p ../../etc/rgb.txt $(RPREFIX)/etc/rgb.txt
-	$(MKDIR) -p $(RPREFIX)/doc/manual  $(RPREFIX)/share/texmf
-	$(CP) -pr ../../doc/html $(RPREFIX)/doc
-	$(CP) -p ../../doc/manual/*.html $(RPREFIX)/doc/manual
-	$(CP) -pr ../../share/texmf $(RPREFIX)/share
-	$(CP) -p ../../AUTHORS ../../COPYING COPYRIGHTS ../../FAQ ../../NEWS \
-		../../README ../../RESOURCES ../../THANKS ../../Y2K $(RPREFIX)
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g readme > $(RPREFIX)/README.$(RPREFIX)
-	$(CP) -p rw-faq $(RPREFIX)/rw-FAQ
-	$(CP) -p CHANGES README.Rterm $(RPREFIX)
-	find $(RPREFIX) -name CVS -prune -exec rm -rf \{\} \;
-# convert docs and batch files to CRLF: might already be on Windows, though.
-ifeq ($(strip $(BUILD)),CROSS)
-	zip -l dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
-	unzip -ao dosfiles.zip
-else
-	zip dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
-	unzip -o dosfiles.zip
-endif
-	$(RM) dosfiles.zip
-	$(RM) $(RPREFIX)b.zip $(RPREFIX)m.zip $(RPREFIX)h.zip \
-	   $(RPREFIX)w.zip $(RPREFIX)l.zip $(RPREFIX)ch.zip
-	$(RM) anindex.zip
-	zip -mrX anindex.zip $(RPREFIX)/library/*/help/AnIndex
-	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help
-	unzip anindex.zip
-	$(RM) anindex.zip
-	$(RM) $(RPREFIX)/doc/manual/R-FAQ.html
-	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html \
-          $(RPREFIX)/doc/manual/*.html \
-	  $(RPREFIX)/library/*/html $(RPREFIX)/library/R.css
-	-zip -rm9X $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml \
-	  $(RPREFIX)/bin/Rchtml.dll
-#	$(RM) $(RPREFIX)/library/*/winhlp/*.GID
-#	-zip -rm9X $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
-	zip -rm9X $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/share/texmf
-	$(RM) -r $(RPREFIX)/doc
-	mkdir -p  $(RPREFIX)/doc/html
-	$(CP) -p ../../doc/html/faq.html ../../doc/html/rw-FAQ.html \
-	  $(RPREFIX)/doc/html
-	zip -rm9X $(RPREFIX)m.zip $(RPREFIX)/library/*/man
-	zip -r9X $(RPREFIX)b.zip $(RPREFIX)
-	$(RM) -rf $(RPREFIX)
-
-
-#taken from ../include/Makefile.in
-SRC_HEADERS = R.h S.h Rdefines.h Rdevices.h Rgraphics.h Rinternals.h Rmath.h
-OBJ_HEADERS = Rconfig.h Rversion.h
-GW32_HEADERS =
-
-packagedist:
-	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
-	$(MKDIR) -p $(RPREFIX) $(RPREFIX)/bin $(RPREFIX)/etc \
-	  $(RPREFIX)/doc $(RPREFIX)/doc/html $(RPREFIX)/share \
-	  $(RPREFIX)/src/include $(RPREFIX)/src/library \
-	  $(RPREFIX)/src/gnuwin32/fixed
-	$(CP) ../../doc/html/logo.jpg $(RPREFIX)/doc/html
-	$(CP) ../../doc/KEYWORDS* $(RPREFIX)/doc
-	$(CP) -p exported-vars R.exp Rblas.def MkRules MakePkg MakeDll \
-	  Rpwd.exe pwd.pl makeDllRes.pl install-save.sh $(RPREFIX)/src/gnuwin32
-	$(SED) -e s/@RVER@/$(RVER)/g Makefile.packages > $(RPREFIX)/src/gnuwin32/Makefile
-	$(CP) fixed/dobundle.pl $(RPREFIX)/src/gnuwin32/fixed
-	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
-	$(RM) $(RPREFIX)/src/gnuwin32/help/*.c \
-	  $(RPREFIX)/src/gnuwin32/help/MkChmDll
-	$(MAKE) --no-print-directory -C $(RPREFIX)/src/gnuwin32/help clean
-	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS) $(GW32_HEADERS), \
-	  ../include/$i) $(RPREFIX)/src/include
-	$(CP) -pr ../include/R_ext $(RPREFIX)/src/include
-	$(SED) -e 3,5d readme.packages > $(RPREFIX)/readme.packages
-	$(CP) ../../COPYING.LIB $(RPREFIX)
-	$(CP) -r ../../share/make ../../share/perl ../../share/texmf \
-	   $(RPREFIX)/share
-	$(CP) ../../bin/INSTALL ../../bin/REMOVE ../../bin/SHLIB \
-	  ../../bin/build ../../bin/check ../../bin/massage-Examples \
-	  ../../bin/Rd2dvi.sh ../../bin/Rd2txt ../../bin/Rdconv \
-	  ../../bin/Rdindex ../../bin/Rdiff.sh \
-	  ../../bin/Sd2Rd ../../bin/Rprof ../../bin/Rcmd.exe \
-          $(RPREFIX)/bin
-	$(CP) ../../share/make/wintests.mk $(RPREFIX)/share/make
-	$(CP) -pr ../../share/R $(RPREFIX)/share
-	$(CP) -p graphapp/graphapp.h graphapp/ga.h $(RPREFIX)/src/include
-	$(MAKE) --no-print-directory PKGDIR=. pkgclean-windlgs
-	$(CP) -pr windlgs $(RPREFIX)/src/library
-	find $(RPREFIX) -name CVS -prune -exec rm -rf \{\} \;
-	zip -r9X $(RPREFIX)sp.zip $(RPREFIX)
-	$(RM) -r $(RPREFIX)
-
-docsdist: docs
-	$(RM) -r $(RPREFIX)
-	$(RM) -f $(RPREFIX)d1.zip $(RPREFIX)d2.zip
-	$(MKDIR) $(RPREFIX) $(RPREFIX)/doc $(RPREFIX)/doc/manual
-	$(CP) -pr $(RHOME)/doc/manual/*.pdf $(RPREFIX)/doc/manual
-	zip -rm9X $(RPREFIX)d2.zip $(RPREFIX)/doc/manual/refman.pdf
-	zip -rm9X $(RPREFIX)d1.zip $(RPREFIX)/doc/manual \
-	  -x $(RPREFIX)/doc/manual/R-FAQ.pdf
-	$(RM) -r $(RPREFIX)
-
-install:
-	cp *.zip /pub/bdr/RWin/Rpre
-
 CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER)/Recommended
 
 rsync-recommended:
@@ -520,27 +430,56 @@ rsync-recommended:
 	(cd ../library/Recommended; for i in ${RECOMMENDED} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
 
 ../library/%/DESCRIPTION: ../library/Recommended/%.tgz
-	@echo "---- $*"
+	@$(ECHO) "---- $*"
 	(cd ../library; rm -rf $*; tar zxf Recommended/$*.tgz; touch $@)
 
 unpack-recommended:
-	@echo "--- Unpacking recommended packages"
+	@$(ECHO) "--- Unpacking recommended packages"
 	@for i in ${RECOMMENDED} ; do $(MAKE) -s --no-print-directory ../library/$$i/DESCRIPTION ; done
 
 clean-recommended:
 	@for i in ${RECOMMENDED} ; do $(RM) -r ../library/$${i} ; done
 
 recommended: unpack-recommended
-	@echo "--- Making recommended packages"
+	@$(ECHO) "--- Making recommended packages"
 	@$(MAKE) --no-print-directory bundle-VR
 	@for p in $(REC_NONBUNDLES); do \
 	  $(MAKE) --no-print-directory pkg-$$p; \
 	done
 
-dist-recommended:
-	@for p in $(REC_PKGS); do \
-	(cd ../..; zip -r9X src/gnuwin32/Recommended.zip library/$$p) ; \
-	done
+rinstaller:
+	$(MAKE) -C installer
+	$(MAKE) -C installer clean
+
+crandir:
+	$(MKDIR) -p cran/mini
+	$(CP) installer/rw*.exe CHANGES cran
+	(cd cran;\
+	 $(ECHO) 'cat(md5sum("$(RPREFIX).exe"),"*$(RPREFIX).exe")' \
+         | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
+	$(CP) installer/mini*.* cran/mini
+	(cd cran/mini;\
+	 $(ECHO) 'fn <- dir(pattern="mini*"); cat(paste(md5sum(fn)," *",fn,sep=""),sep="\n")' \
+	 | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g readme > cran/README.$(RPREFIX)
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g cran/index.in > cran/index.html
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g cran/ReadMe.in > cran/ReadMe
+
+distribution:
+	$(MAKE) Rpwd.exe
+	$(MAKE) rbuild
+	$(MAKE) rpackage
+	$(MAKE) rdocs
+	$(MAKE) bitmapdll
+	$(MAKE) tcl
+	$(MAKE) recommended
+	$(MAKE) docs
+	$(MAKE) rinstaller
+	$(MAKE) crandir
+
 
 ## ============= End of maintainer targets ========================
 

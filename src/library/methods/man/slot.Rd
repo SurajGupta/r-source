@@ -9,7 +9,6 @@
   in an object.
 }
 \usage{
-
 object@name
 object@name <- value
 
@@ -22,7 +21,7 @@ slotNames(x)
   \item{object}{ An object from a formally defined class.}
   \item{name}{ The character-string name of the slot. The name must be a
     valid slot name:  see Details below.}
-  \item{value} { A new value for the named slot.  The value must be
+  \item{value}{ A new value for the named slot.  The value must be
     valid for this slot in this object's class.}
   \item{x}{Either the name of a class or an object from that class.
     Print \code{\link{getClass}(class)} to see the full description of
@@ -52,19 +51,27 @@ slotNames(x)
   error.
 }
 \references{
-  Chambers, J. M. (1998)
-  \emph{Programming with Data}, Springer.
-  
-  The web page \url{http://www.omegahat.org/RSMethods/index.html}
-  is the primary documentation.
-}
-\author{
-  John Chambers
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
+
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
 \seealso{
-  \code{\link{@}}, \code{\link{Classes}}, \code{\link{Methods}},
-  \code{\link{getClass}} }
-
+  \code{\link{@}},
+  \code{\link{Classes}},
+  \code{\link{Methods}},
+  \code{\link{getClass}}
+}
 \examples{
 \dontrun{
 slot(myTrack, "x")

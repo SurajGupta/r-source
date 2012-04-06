@@ -1,8 +1,11 @@
 showDefault <-
   function(object, oldMethods = TRUE)
 {
+    printNoClass <- function(x)
+        .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, FALSE))
+
     cl <- .class1(object)
-    if(isClass(cl) && is.na(match(cl, .BasicClasses))) {
+    if(isClass(cl) && is.na(match(cl, .BasicClasses)) && !extends(cl, "oldClass")) {
         cat("An object of class \"", cl, "\"\n", sep="")
         slots <- slotNames(cl)
         if(!is.na(match(".Data", slots))) {
@@ -20,16 +23,25 @@ showDefault <-
             cat("\n")
         }
     }
-    else {
-        printFun <- printNoClass
-        # Try to honor old-style methods for basic classes & undefined classes.
-        if(oldMethods) {
-            oldMethod <- paste("print", cl, sep=".")
-            if(existsFunction(oldMethod))
-                printFun <- getFunction(oldMethod, generic = FALSE)
+    else if(isClass(cl) && extends(cl, "oldClass") && length(slotNames(cl)) > 0) {
+        ## print the old-style object
+        cat("An object of class \"", cl, "\"\n", sep="")
+        for( cl2 in rev(extends(cl)))
+            if(!identical(cl2, "oldClass") && extends(cl2, "oldClass")) {
+                print(as(object, cl2), useS4 = FALSE) # see comment NBB below
+                break
+            }
+        for(what in slotNames(cl)) {
+            cat("Slot \"",what, "\":\n", sep="")
+            print(slot(object, what))
+            cat("\n")
         }
-        printFun(object)
-     }
+    }
+    else
+        ## NBB:  This relies on the delicate fact (as of version 1.7 at least)
+        ## that print will NOT recursively call show if it gets more than one argument!
+        print(object, useS4 = FALSE)
+
 }
 
 ## temporary definition of show, to become the default method
@@ -37,19 +49,9 @@ showDefault <-
 show <- function(object)
     showDefault(object, FALSE)
 
-
-printNoClass <- get("print.default", "package:base")
-
-print.default <- function(x, ...) {
-    cl <- attr(x, "class") # pick off old-style objects
-    if(length(cl) == 1 && isClass(cl) && length(list(...)) == 0)
-        show(x)
-    else
-        printNoClass(x, ...)
-}
-
 .InitShowMethods <- function(envir) {
-    setGeneric("show", where = envir)
+    if(!isGeneric("show"))
+        setGeneric("show", where = envir)
     setMethod("show", "MethodDefinition",
               function(object) {
                   cat("Method Definition (Class \"", class(object), "\"):\n\n", sep = "")

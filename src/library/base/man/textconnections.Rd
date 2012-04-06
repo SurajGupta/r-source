@@ -44,13 +44,22 @@ textConnection(object, open = "r")
   A connection object of class \code{"textConnection"} which inherits
   from class \code{"connection"}.
 }
-\note{
-  Output text connections truncate lines longer than 8095 characters.
-}
 
+\note{
+  As output text connections keep the character vector up to date
+  line-by-line, they are relatively expensive to use, and it is often
+  better to use an anonymous \code{\link{file}()} connection to collect
+  output.
+
+  On platforms where \code{vsnprintf} does not return the needed length
+  of output (e.g. Windows) there is a 100,000 character limit on the
+  length of line for output connections: longer lines will be truncated
+  with a warning.
+}
+ 
 \seealso{
   \code{\link{connections}}, \code{\link{showConnections}},
-  \code{\link{pushBack}}
+  \code{\link{pushBack}}, \code{\link{capture.output}}.
 }
 
 \examples{

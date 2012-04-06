@@ -81,8 +81,10 @@ Sweave <- function(file, driver=RweaveLatex(),
                 chunk <- c(chunk, line)
         }
     }
-    if(mode=="doc") driver$writedoc(drobj, chunk)
-    else drobj <- driver$runcode(drobj, chunk, chunkopts)
+    if(!is.null(chunk)){
+        if(mode=="doc") driver$writedoc(drobj, chunk)
+        else drobj <- driver$runcode(drobj, chunk, chunkopts)
+    }
 
     on.exit()
     driver$finish(drobj)
@@ -99,9 +101,9 @@ SweaveSyntaxNoweb <-
          extension = "\\.[rsRS]?nw$",
          syntaxname = "\\\\SweaveSyntax{([^}]*)}",
          trans = list(
-             doc = "^@",
-             code = "<<\\1>>",
-             coderef = "^<<\\1>>",
+             doc = "@",
+             code = "<<\\1>>=",
+             coderef = "<<\\1>>",
              docopt = "\\\\SweaveOpts{\\1}",
              docexpr = "\\\\Sexpr{\\1}",
              extension = ".Snw",
@@ -316,7 +318,8 @@ RweaveLatexRuncode <- function(object, chunk, options)
     SweaveHooks(options, run=TRUE)
     chunkexps <- parse(text=chunk)
     openSinput <- FALSE
-
+    openSchunk <- FALSE
+    
     if(length(chunkexps)==0)
         return(object)
 
@@ -328,6 +331,11 @@ RweaveLatexRuncode <- function(object, chunk, options)
             cat("\nRnw> ", paste(dce, collapse="\n+  "),"\n")
         if(options$echo){
             if(!openSinput){
+                if(!openSchunk){
+                    cat("\\begin{Schunk}\n",
+                        file=chunkout, append=TRUE)
+                    openSchunk <- TRUE
+                }
                 cat("\\begin{Sinput}",
                     file=chunkout, append=TRUE)
                 openSinput <- TRUE
@@ -350,13 +358,18 @@ RweaveLatexRuncode <- function(object, chunk, options)
         close(tmpcon)
         ## delete empty output
         if(length(output)==1 & output[1]=="") output <- NULL
-
+        
         if(inherits(err, "try-error")) stop(err)
 
         if(object$debug)
             cat(paste(output, collapse="\n"))
 
         if(length(output)>0 & (options$results!="hide")){
+            if(!openSchunk){
+                cat("\\begin{Schunk}\n",
+                    file=chunkout, append=TRUE)
+                openSchunk <- TRUE
+            }
             if(openSinput){
                 cat("\n\\end{Sinput}\n", file=chunkout, append=TRUE)
                 openSinput <- FALSE
@@ -381,6 +394,10 @@ RweaveLatexRuncode <- function(object, chunk, options)
 
     if(openSinput){
         cat("\n\\end{Sinput}\n", file=chunkout, append=TRUE)
+    }
+
+    if(openSchunk){
+        cat("\\end{Schunk}\n", file=chunkout, append=TRUE)
     }
 
     if(is.null(options$label) & options$split)

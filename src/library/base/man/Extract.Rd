@@ -18,7 +18,6 @@
 \alias{[.ts}
 \alias{[<-.factor}
 \alias{[.noquote}
-\alias{[<-.noquote}
 \alias{.subset}
 \alias{.subset2}
 \description{
@@ -51,11 +50,15 @@ x$name
   of the assignment.
 
   These operators are generic. You can write methods to handle subsetting
-  of specific classes of data.
+  of specific classes of objects, see \link{InternalMethods}.
 
-  The \code{[[} operator requires all relevant subscripts be supplied.
+  The \code{[[} operator requires all relevant subscripts to be supplied.
   With the \code{[} operator a comma separated blank indicates that all
   entries in that dimension are selected.
+
+  Indexing by factors is allowed and is equivalent to indexing by the
+  numeric codes (see \code{\link{factor}}) and not by the character
+  values which are printed (for which use \code{[as.character(i)]}).
 
   When \code{[.data.frame} is used for subsetting rows of a
   \code{\link{data.frame}}, it returns a dataframe with unique
@@ -66,6 +69,11 @@ x$name
   When operating on a list, the \code{[[} operator gives the specified
   element of the list while the \code{[} operator returns a list with
   the specified element(s) in it.
+
+  As from \R 1.7.0 \code{[[} can be applied recursively to lists, so
+  that if the single index \code{i} is a vector of length \code{p},
+  \code{alist[[i]]} is equivalent to \code{alist[[i1]]\dots[[ip]]}
+  providing all but the final indexing results in a list.
 
   The operators \code{$} and \code{$<-} do not evaluate their second
   argument.  It is translated to a string and that string is used to
@@ -101,6 +109,14 @@ swiss[ c(1, 1:2), ]   # duplicate row, unique row names
 ## non-integer indices are truncated:
 (i <- 3.999999999) # "4" is printed
 (1:5)[i]  # 3
+
+## recursive indexing into lists
+z <- list( a=list( b=9, c='hello'), d=1:5)
+unlist(z)
+z[[c(1, 2)]]
+z[[c(1, 2, 1)]]  # both "hello"
+z[[c("a", "b")]] <- "new"
+unlist(z)
 }
 \keyword{array}
 \keyword{list}

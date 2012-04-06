@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999--2002  The R Development Core Team
+ *  Copyright (C) 1999--2003  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
  *
  *  See ./format.c  for the  format_FOO_  functions which provide
  *	~~~~~~~~~~  the	 length, width, etc.. that are used here.
- *  See ./print.c  for do_printdefault, do_printmatrix, etc.
+ *  See ./print.c  for do_printdefault, do_prmatrix, etc.
  *
  *
  * Here, the following UTILITIES are provided:
@@ -244,6 +244,7 @@ int Rstrlen(char *s, int quote)
 #ifdef ESCquote
 	    case '\'':
 #endif
+		 len += 2; break;
 #ifdef ESC_BARE_QUOTE
 	    case '\"': len += 2; break;
 #else
@@ -465,7 +466,12 @@ void REvprintf(const char *format, va_list arg)
 	}
     }
     if(R_Consolefile) {
-	vfprintf(R_Consolefile, format, arg);
+	/* try to interleave stdout and stderr carefully */
+	if(R_Outputfile && (R_Outputfile != R_Consolefile)) {
+	    fflush(R_Outputfile);
+	    vfprintf(R_Consolefile, format, arg);
+	    fflush(R_Consolefile);
+	} else vfprintf(R_Consolefile, format, arg);
     } else {
 	char buf[BUFSIZE];
 	int slen;

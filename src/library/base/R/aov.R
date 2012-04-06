@@ -19,7 +19,7 @@ aov <- function(formula, data = NULL, projections = FALSE, qr = TRUE,
         fit <- eval(lmcall, parent.frame())
         if(projections) fit$projections <- proj(fit)
         class(fit) <- if(inherits(fit, "mlm"))
-            c("maov", "aov", class(fit)) else c("aov", class(fit))
+            c("maov", "aov", oldClass(fit)) else c("aov", oldClass(fit))
         fit$call <- Call
         return(fit)
     } else {
@@ -107,7 +107,7 @@ aov <- function(formula, data = NULL, projections = FALSE, qr = TRUE,
                              df.residual = NROW(y))
             }
             if(projections) fiti$projections <- proj(fiti)
-            class(fiti) <- c(if(maov) "maov", "aov", class(er.fit))
+            class(fiti) <- c(if(maov) "maov", "aov", oldClass(er.fit))
             result[[i]] <- fiti
         }
         class(result) <- c("aovlist", "listof")
@@ -170,13 +170,12 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
                 if(is.null(rn)) rn <- paste("resp", 1:length(ss))
             } else rn <- "Sum of Squares"
             dimnames(tmp) <- list(c(rn, "Deg. of Freedom"), "Residuals")
-            print.matrix(tmp, quote = FALSE, right = TRUE)
+            print(tmp, quote = FALSE, right = TRUE)
             cat("\n")
             cat("Residual standard error:", sapply(sqrt(ss/rdf), format), "\n")
         } else
-        print.matrix(matrix(0, 2, 1, dimnames=
-                            list(c("Sum of Squares", "Deg. of Freedom"),
-                                 "<empty>")))
+        print(matrix(0, 2, 1, dimnames=
+                     list(c("Sum of Squares", "Deg. of Freedom"), "<empty>")))
     } else {
         if(rdf > 0) {
             nterms <- nterms + 1
@@ -191,7 +190,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
             if(is.null(rn)) rn <- paste("resp", seq(ncol(effects)))
         } else rn <- "Sum of Squares"
         dimnames(tmp) <- list(c(rn, "Deg. of Freedom"), nmeffect)
-        print.matrix(tmp, quote = FALSE, right = TRUE)
+        print(tmp, quote = FALSE, right = TRUE)
         rank <- x$rank
         int <- attr(x$terms, "intercept")
         nobs <- NROW(x$residuals) - !(is.null(int) || int == 0)
@@ -352,9 +351,9 @@ summary.aov <- function(object, intercept = FALSE, split,
     ans
 }
 
-print.summary.aov <- function(x, digits = max(3, getOption("digits") - 3),
-                              symbolic.cor = p > 4,
-                              signif.stars= getOption("show.signif.stars"),	...)
+print.summary.aov <-
+    function(x, digits = max(3, getOption("digits") - 3), symbolic.cor = FALSE,
+             signif.stars= getOption("show.signif.stars"),	...)
 {
     if (length(x) == 1)  print(x[[1]], ...)
     else NextMethod()
@@ -421,7 +420,7 @@ alias.lm <- function(object, complete = TRUE, partial = FALSE,
                 X <- R[p1, p1]
                 Y <-  R[p1, -p1, drop = FALSE]
                 beta12 <- as.matrix(qr.coef(qr(X), Y))
-                dimnames(beta12) <- list(dn[p1], dn[ -p1])
+                # dimnames(beta12) <- list(dn[p1], dn[ -p1])
                 CompPatt(t(beta12))
             }
     }

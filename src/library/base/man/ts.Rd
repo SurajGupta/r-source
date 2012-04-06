@@ -49,6 +49,8 @@ is.ts(x)
   attributes) which represent data which has been sampled at equispaced
   points in time.  In the matrix case, each column of the matrix
   \code{data} is assumed to contain a single (univariate) time series.
+  Time series must have an least one observation, and although they need
+  not be no numeric there is very limited support for non-numeric series.
 
   Class \code{"ts"} has a number of methods.  In particular arithmetic
   will attempt to align time axes, and subsetting to extract subsets of
@@ -67,6 +69,10 @@ is.ts(x)
 
   \code{as.ts} will use the \code{\link{tsp}} attribute of the object if
   it has one to set the start and end times and frequency.
+
+  \code{is.ts} tests if an object is a time series. It is generic: you
+  can write methods to handle of specific classes of objects,
+  see \link{InternalMethods}.
 }
 \seealso{
   \code{\link{tsp}},
@@ -93,14 +99,6 @@ class(z)
 plot(z)
 plot(z, plot.type="single", lty=1:3)
 
-# Ensure working arithmetic for `ts' objects :
-stopifnot(z == z)
-stopifnot(z-z == 0)
-
-\testonly{
- ts(1:5, start=2, end=4) # truncate
- ts(1:5, start=3, end=17)# repeat
-}
 ## A phase plot:
 data(nhtemp)
 plot(nhtemp, c(nhtemp[-1], NA), cex = .8, col="blue",

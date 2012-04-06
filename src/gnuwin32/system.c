@@ -528,7 +528,12 @@ void R_ShowMessage(char *s)
 static void char_message(char *s)
 {
     if (!s) return;
-    R_WriteConsole(s, strlen(s));
+    if (R_Consolefile) {
+	/* flush out standard output in case it uses R_Consolefile */
+	if (R_Outputfile) fflush(R_Outputfile);
+	fprintf(R_Consolefile, "%s\n", s);
+	fflush(R_Consolefile);
+    } else R_WriteConsole(s, strlen(s));
 }
 
 static int char_yesnocancel(char *s)
@@ -586,10 +591,13 @@ void R_SetWin32(Rstart Rp)
     pR_ShowMessage = Rp->message;
     R_yesnocancel = Rp->yesnocancel;
     my_R_Busy = Rp->busy;
-    /* Process .Renviron or ~/.Renviron, if it exists. 
+    /* Process R_HOME/etc/Renviron.site, then
+       .Renviron or ~/.Renviron, if it exists. 
        Only used here in embedded versions */
-    if(!Rp->NoRenviron)
+    if(!Rp->NoRenviron) {
+	process_site_Renviron();
 	process_user_Renviron();
+    }
     _controlfp(_MCW_EM, _MCW_EM);
     _controlfp(_PC_64, _MCW_PC);
 }
@@ -635,6 +643,9 @@ int cmdlineoptions(int ac, char **av)
     MEMORYSTATUS ms;
     Rboolean usedRdata = FALSE;
 
+    /* ensure R_Home gets set early: we are in rgui or rterm here */
+    R_Home = getRHOME();
+    
 #ifdef _R_HAVE_TIMING_
     R_setStartTime();
 #endif
@@ -665,7 +676,7 @@ int cmdlineoptions(int ac, char **av)
     Rp->CallBack = R_DoNothing;
     InThreadReadConsole = NULL;
     if (CharacterMode == RTerm) {
-	if (isatty(0)) {
+	if (isatty(0) && isatty(1)) {
 	    Rp->R_Interactive = TRUE;
 	    Rp->ReadConsole = ThreadedReadConsole;
             InThreadReadConsole = CharReadConsole;
@@ -673,7 +684,7 @@ int cmdlineoptions(int ac, char **av)
 	    Rp->R_Interactive = FALSE;
 	    Rp->ReadConsole = FileReadConsole;
 	}
-	R_Consolefile = stdout; /* used for errors */
+	R_Consolefile = stderr; /* used for errors */
 	R_Outputfile = stdout;  /* used for sink-able output */
         Rp->WriteConsole = TermWriteConsole;
 	Rp->message = char_message;
@@ -696,6 +707,7 @@ int cmdlineoptions(int ac, char **av)
      * precedence:  command-line, .Renviron, inherited
      */
     if(!Rp->NoRenviron) {
+	process_site_Renviron();
 	process_user_Renviron();
 	Rp->NoRenviron = TRUE;
     }
@@ -775,7 +787,7 @@ int cmdlineoptions(int ac, char **av)
 	    }
 	}
     }
-    Rp->rhome = getRHOME();
+    Rp->rhome = R_Home;
 
     R_tcldo = tcl_do_none;
 /*

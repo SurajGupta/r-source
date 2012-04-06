@@ -4,6 +4,140 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+rw1070
+======
+
+This version of R needs more memory and is slower to start up, because
+it loads more packages by default.  This is only likely to be a
+concern on machines with 16Mb of memory or less than 300MHz
+processors.  For such machines append R_DEFAULT_PACKAGES=ctest to the
+command line in the shortcut used to run R, when the memory usage will
+be about equal to that of rw1062.
+
+There is a new option to use file("clipboard") to read from or write
+to the clipboard.  As most input/output functions in R use file(),
+this makes it possible to read data from or write data to the
+clipboard in many ways, including direct use of read/writeClipboard().
+
+When using download.file() with the internal method and a proxy, the
+user/password combination can be set to prompt the user with a
+username/password dialog box, and this will be presented on proxy
+authentication failure.
+
+New function choose.files() for interactive multiple file selection. 
+
+The output from formatC() uses e+/-0n not e+/-00n for compatibility with
+other platforms and with format().
+
+A site-wide environment file R_HOME/etc/Renviron.site (or as set by
+the `R_ENVIRON' environment variable) is now implemented on Windows.
+
+The variable .SavedPlots in which plots are stored has been moved from
+package:base to the user's workspace.
+
+The warnings about changing the floating point control word are now
+optional, selected by options(warn.FPU = TRUE).
+
+The main thread is suspended briefly after Rprof() is called.  This
+ensures that the timing thread gets started: on some builds and on
+single-CPU machines this was not happening in 1.6.x (although it
+did in 1.5.x, so it must be a compiler/runtime version issue).
+
+Installation changes
+--------------------
+
+The installers have new options under `Additional tasks' which allow
+the creation of Windows Registry entries to be de-selected by the user.
+
+Rcmd.exe and Rprof have been moved to the main distribution (although
+to use them you will need perl installed).
+
+Tcl/Tk 8.4.1 is bundled in rw1070.exe.  You can still use your own
+installation of Tcl/Tk: see the rw-FAQ.
+
+The Makefiles that build the installers have been reorganized--see
+the Maintainers.notes file for details, and INSTALL for new build
+instructions.
+
+HTML help changes
+-----------------
+
+The format of packages.html has changed, with packages listed by
+library tree (as happens on Unix) when there is more than one tree.
+
+The Java-based search index now covers all packages in all current
+library trees.
+
+When using help.start() with more than one library tree, an attempt is
+made to correct the URLs in non-standard libraries which point to the
+R_HOME/doc directory or to the base package.  Once this is done a
+stamp `fixedHTMLlinks' is placed in the package directory, and
+correction will only be done again if the R installation directory
+is changed.
+
+RGui changes
+------------
+
+The `Display file' menu item is now `Display file(s)' and allows
+multiple file selection.
+
+`Install packages from local zip files' from the `Packages' menu can
+now install several files at once (by selecting multiple files in the
+file selector).
+
+Removed some calls to reset the size of the console, so it will 
+stay maximized throughout window operations.
+
+The internal pager will page down with space or CTRL-F and page up
+with minus or CTRL-B (key sequences which are widely used in Unix
+pagers).  CTRL-A selects all the text.
+
+The Change Directory dialog now starts in the current directory, not
+always at the desktop.
+
+RTerm changes
+-------------
+
+Rterm is now only regarded as interactive if both stdin and stdout are
+a terminal: this overcomes a problem with getline.
+
+System error messages (those which would appear in a dialog box in
+Rgui) are written on stderr rather than stdout, as are R warnings and
+error mesages.  If you want to capture errors as well as normal output, use
+something like
+
+	...\rterm --vanilla <foo.in >foo.out 2>&1
+
+Installing packages
+-------------------
+
+Binary packages are retrieved from the bin/windows/contrib/1.7
+directory on CRAN, so each new version will have its own set of
+compatible packages.  The zip file names now include the version
+number, as in mda_0.2-16.zip.
+
+Files in the top-level directory of a source package are no longer
+installed automatically: files to be installed must be put in an `inst'
+sub-directory (as has long been recommended).  (The `demo' and `exec'
+directories are also installed, as before.)
+
+The BLAS library Rblas.dll is no longer automatically linked against
+when building a package: as on Unix PKG_LIBS=$(BLAS_LIBS) is required
+in Makevars(.win).
+
+MD5 checksums are created on installation from sources (see
+?checkMD5sums in package tools), and checked on installation by
+install.packages().  If you see mismatches, this may be because files
+are left over from an earlier install of the package: try deleting the
+whole package directory and re-installing.
+
+There is a new command-line flag --auto-zip to Rcmd INSTALL which
+selects whether to zip up the data and/or help directories depending
+on their size.  This is mainly for use with Rcmd INSTALL --build to
+install and zip-up packages.
+
+
+
 rw1062
 ======
 
@@ -32,6 +166,7 @@ the active graphics device.
 Fixed a crash that occurred when an attempt was made to view a file in
 the pager but the file could not be opened (e.g. because another 
 application had it opened with exclusive access).
+
 
 
 rw1061
@@ -167,7 +302,7 @@ different but generally more accurate results.
 rw1041
 ======
 
-Updating HTML indices, e.g. in help.start(), is done within a 
+Updating HTML indices, e.g. in help.start(), is done within a
 try() construct.
 
 help.start() has a new argument `update'.
@@ -346,12 +481,13 @@ but can be made from the sources.  It is no longer tested.
 
 Make targets such as test-Reg have been moved to directory rw1030\tests.
 
+[ DO NOT DO THIS: see ?download.file or rw1040 above:
 The default internet module modules\internet.dll is built using basic
 WinSock calls.  There is an alternative modules\internet2.dll which uses
 WinInet calls (and so needs Internet Explorer installed) which can be
 used as a replacement.  (Remove modules\internet.dll and then
-rename modules\internet2.dll to modules\internet.dll.)
- 
+rename modules\internet2.dll to modules\internet.dll.)]
+
 
 
 rw1023
@@ -480,7 +616,7 @@ need to be re-compiled for 1.2.0 on all platforms, and any that used
 malloc directly need to be recompiled on this one.)
 
 
-This release has a number of changes to bring its behaviour closer to that 
+This release has a number of changes to bring its behaviour closer to that
 of Unix versions of R.
 
 -   The default font for graphics on windows(), win.printer() and
@@ -508,7 +644,7 @@ of Unix versions of R.
     environment, although this is not usually supported by Windows,
     and setting individual LC_* such as LC_COLLATE will also work.)
 
--   It is possible to make DVI and HTML versions of the manuals: 
+-   It is possible to make DVI and HTML versions of the manuals:
     see file INSTALL in the source distribution.
 
 -   New utility Rcmd.exe to emulate R CMD : see below.
@@ -651,7 +787,7 @@ The range of allowed text sizes in a windows/win.print device has been
 increased, so smaller values of cex will work.  (The smallest allowed
 text size is 2pt not 8pt.)
 
-Interactive use of Rterm.exe on Windows 2000 systems is now possible 
+Interactive use of Rterm.exe on Windows 2000 systems is now possible
 (including under ESS).
 
 Better rendering of wide (lwd > 1) and dashed (lty != "solid") lines
@@ -690,7 +826,7 @@ Characters using the AltGr key now work in interactive use of Rterm.
 
 Ctrl+V now works as described in a pager (pasting to the console).
 
-Other versions of Tcl/Tk may be used by setting TCL_VERSION in 
+Other versions of Tcl/Tk may be used by setting TCL_VERSION in
 MkRules (but only 8.31 and 8.32 have been tested).
 
 A file Makevars.win in the src directory of a package will be used in
@@ -724,7 +860,7 @@ There is a new item on the File menu in Rgui to save the commands
 history at that point in a session, and a new function savehistory()
 (only applicable in Rgui and Rterm).
 
-Colours in Rconsole can be specified as "Windows" and will be taken 
+Colours in Rconsole can be specified as "Windows" and will be taken
 from the current Windows colour scheme. (The preferences editor will
 save the actual colour, though.)
 

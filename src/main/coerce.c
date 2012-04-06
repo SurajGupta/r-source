@@ -1825,73 +1825,114 @@ SEXP do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
     return(CAR(args));
 }
 
+typedef struct {
+    char *s;
+    SEXPTYPE sexp;
+    Rboolean canChange;
+} classType;
+
+static classType classTable[] = {
+    { "logical",	LGLSXP,	   TRUE },
+    { "integer",	INTSXP,	   TRUE },
+    { "double",		REALSXP,   TRUE },
+    { "complex",	CPLXSXP,   TRUE },
+    { "character",	STRSXP,	   TRUE },
+    { "expression",	EXPRSXP,   TRUE },
+    { "list",		VECSXP,	   TRUE },
+    { "environment",    ENVSXP,    FALSE },
+    { "char",		CHARSXP,   TRUE },
+    { "externalptr",	EXTPTRSXP,  FALSE },
+    { "weakref",	WEAKREFSXP, FALSE },
+    { "name",		SYMSXP,	   FALSE },
+
+    { (char *)0,	(SEXPTYPE)-1, FALSE}
+};
+
+static int class2type(char *s) 
+{
+    /* return the type if the class string is one of the basic types, else -1.
+       Note that this is NOT str2type:  only certain types are defined to be basic
+       classes; e.g., "language" is a type but many classes correspond to objects of
+       this type.
+    */
+    int i; char *si;
+    for(i=0; ; i++) {
+	si = classTable[i].s;
+	if(!si)
+	    return -1;
+	if(!strcmp(s, si))
+	    return i;
+    }
+    return -1;
+}
+
 /* set the class to value, and return the modified object.  This is
    NOT a primitive assignment operator , because there is no code in R
    that changes type in place. See the definition of "class<-" in the methods
    package for the use of this code. */
 SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 {
-  int nProtect = 0;
-  if(isNull(value)) {
-    setAttrib(obj, R_ClassSymbol, value);
-    return obj;
-  }
-  if(TYPEOF(value) != STRSXP) {
-    PROTECT(value = coerceVector(duplicate(value), STRSXP));
-    nProtect++;
-  }
-  if(length(value) > 1)
-    setAttrib(obj, R_ClassSymbol, value);
-  else if(length(value) == 0) {
-    UNPROTECT(nProtect); nProtect = 0;
-    error("Invalid replacement object to be a class string");
-  }
-  else {
-    char *valueString, *classString;
-    SEXP cur_class; SEXPTYPE valueType;
-    valueString = CHAR(asChar(value));
-    PROTECT(cur_class = R_data_class(obj, FALSE)); nProtect++;
-    classString = CHAR(asChar(cur_class));
-     /* If equal to cur. class; leave alone.  This is important in
-	preserving several implicit basic classes. However, it will
-	not always switch from one such to another.  Examples include
-	assigning one syntactic class as a way of converting from
-	another.  Not a good idea, of course, but it should probably
-	be intercepted with an error message.*/
-    if(!strcmp(valueString, classString)) {}
-    /* at this point, the better semantics is to look up the class
-       definition in the metadata table; i.e., the equivalent of
-       if(isClass(valueString)) and set the class directly if so.
-       Until the code for isClass is moved to main, we can't.  The
-       effect is to prevent redefining the basic classes below. */
-    else if(!strcmp("numeric", valueString)) {
-      setAttrib(obj, R_ClassSymbol, R_NilValue);
-      switch(TYPEOF(obj)) {
-      case INTSXP: case REALSXP: break;
-      default: PROTECT(obj = coerceVector(obj, REALSXP));
+    int nProtect = 0;
+    if(isNull(value)) {
+	setAttrib(obj, R_ClassSymbol, value);
+	return obj;
+    }
+    if(TYPEOF(value) != STRSXP) {
+	PROTECT(value = coerceVector(duplicate(value), STRSXP));
 	nProtect++;
-      }
+    }
+    if(length(value) > 1)
+	setAttrib(obj, R_ClassSymbol, value);
+    else if(length(value) == 0) {
+	UNPROTECT(nProtect); nProtect = 0;
+	error("Invalid replacement object to be a class string");
     }
     else {
-      if(!strcmp("function", valueString))
-	valueType = CLOSXP;
-      else
-	valueType = str2type(valueString);
-      if(valueType != -1) {
-	setAttrib(obj, R_ClassSymbol, R_NilValue);
-	PROTECT(obj = ascommon(call, obj, valueType));
-	nProtect++;
-      }
-      else if(!strcmp("array", valueString) &&
-	      length(getAttrib(obj, R_DimSymbol)) >0) {}
-      else if(!strcmp("matrix", valueString) &&
-	      length(getAttrib(obj, R_DimSymbol)) == 2) {}
-      else { /* set the class but don't do the coercion; that's
-		supposed to be done by an as() method */
-	setAttrib(obj, R_ClassSymbol, value);
-      }
+	char *valueString, *classString; int whichType;
+	SEXP cur_class; SEXPTYPE valueType;
+	valueString = CHAR(asChar(value));
+	whichType = class2type(valueString);
+	valueType = (whichType == -1) ? -1 : classTable[whichType].sexp;
+	PROTECT(cur_class = R_data_class(obj, FALSE)); nProtect++;
+	classString = CHAR(asChar(cur_class));
+	/*  assigning type as a class deletes an explicit class attribute. */
+	if(valueType != -1) {
+	    setAttrib(obj, R_ClassSymbol, R_NilValue);
+	    if(classTable[whichType].canChange) {
+		PROTECT(obj = ascommon(call, obj, valueType));
+		nProtect++;
+	    }
+	    else if(valueType != TYPEOF(obj))
+		error("\"%s\" can only be set as the class if the object has this type; found \"%s\"",
+		      valueString, type2str(TYPEOF(obj)));
+	    /* else, leave alone */
+	}
+	else if(!strcmp("numeric", valueString)) {
+	    setAttrib(obj, R_ClassSymbol, R_NilValue);
+	    switch(TYPEOF(obj)) {
+	    case INTSXP: case REALSXP: break;
+	    default: PROTECT(obj = coerceVector(obj, REALSXP));
+		nProtect++;
+	    }
+	}
+	/* the next 2 special cases mirror the special code in
+	 * R_data_class */
+	else if(!strcmp("matrix", valueString)) {
+	    if(length(getAttrib(obj, R_DimSymbol)) != 2)
+	        error("Invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)",
+		 length(getAttrib(obj, R_DimSymbol)));
+	    setAttrib(obj, R_ClassSymbol, R_NilValue);
+	}
+	else if(!strcmp("array", valueString)) {
+	    if(length(getAttrib(obj, R_DimSymbol))<= 0)
+	        error("Can't set class to \"array\" unless the dimension attribute has length > 0");
+	    setAttrib(obj, R_ClassSymbol, R_NilValue);
+	}
+	else { /* set the class but don't do the coercion; that's
+		  supposed to be done by an as() method */
+	    setAttrib(obj, R_ClassSymbol, value);
+	}
     }
-  }
-  UNPROTECT(nProtect);
-  return obj;
+    UNPROTECT(nProtect);
+    return obj;
 }

@@ -71,7 +71,7 @@
  *
  *	void begincontext(RCNTXT *cptr, int flags,
  *			  SEXP syscall, SEXP env, SEXP
- *			  sysp, SEXP promargs)
+ *			  sysp, SEXP promargs, SEXP callfun)
  *
  *  which sets up the context pointed to by cptr in the appropriate way.
  *  When the context goes "out-of-scope" a call to
@@ -183,7 +183,8 @@ static void jumpfun(RCNTXT * cptr, int mask, SEXP val)
 /* begincontext - begin an execution context */
 
 void begincontext(RCNTXT * cptr, int flags,
-		  SEXP syscall, SEXP env, SEXP sysp, SEXP promargs)
+		  SEXP syscall, SEXP env, SEXP sysp,
+		  SEXP promargs, SEXP callfun)
 {
     cptr->nextcontext = R_GlobalContext;
     cptr->cstacktop = R_PPStackTop;
@@ -195,6 +196,7 @@ void begincontext(RCNTXT * cptr, int flags,
     cptr->conexit = R_NilValue;
     cptr->cend = NULL;
     cptr->promargs = promargs;
+    cptr->callfun = callfun;
     cptr->vmax = vmaxget();
     R_GlobalContext = cptr;
 }
@@ -355,7 +357,6 @@ SEXP R_syscall(int n, RCNTXT *cptr)
 
 SEXP R_sysfunction(int n, RCNTXT *cptr)
 {
-    SEXP s, t;
     if (n > 0)
 	n = framedepth(cptr) - n;
     else
@@ -364,31 +365,15 @@ SEXP R_sysfunction(int n, RCNTXT *cptr)
 	errorcall(R_GlobalContext->call, "illegal frame number");
     while (cptr->nextcontext != NULL) {
 	if (cptr->callflag & CTXT_FUNCTION ) {
-	    if (n == 0) {
-		s = CAR(cptr->call);
-		if (isSymbol(s))
-		    t = findVar1(s, cptr->sysparent, FUNSXP, 1);
-		else if( isLanguage(s) )
-		    t = eval(s, cptr->sysparent);
-		else if( isFunction(s) )
-		    t = s;
-		else
-		    t = R_NilValue;
-		while (TYPEOF(t) == PROMSXP) 
-		    t = eval(s, cptr->sysparent); 
-		return t;
-	    }
+	    if (n == 0)
+		return duplicate(cptr->callfun);  /***** do we need to DUP? */
 	    else
 		n--;
 	}
 	cptr = cptr->nextcontext;
     }
-    if (n == 0 && cptr->nextcontext == NULL){
-	s = findVar(CAR(cptr->call), cptr->sysparent);
-	while (TYPEOF(s) == PROMSXP) 
-	    s = eval(s, cptr->sysparent); 
-	return s;
-    }
+    if (n == 0 && cptr->nextcontext == NULL)
+	return duplicate(cptr->callfun);  /***** do we need to DUP? */
     errorcall(R_GlobalContext->call, "not that many enclosing functions");
     return R_NilValue;	/* just for -Wall */
 }
@@ -551,7 +536,7 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
     saveToplevelContext = R_ToplevelContext;
 
     begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, R_GlobalEnv,
-		 R_NilValue, R_NilValue);
+		 R_NilValue, R_NilValue, R_GlobalEnv);
     if (SETJMP(thiscontext.cjmpbuf))
 	result = FALSE;
     else {

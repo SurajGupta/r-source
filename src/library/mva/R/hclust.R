@@ -159,12 +159,13 @@ as.hclust.default <- function(x, ...) {
 as.hclust.twins <- function(x, ...)
 {
     r <- list(merge = x$merge,
-              height = sort(x$height),
-              order = x$order,
-              call = match.call(),
-              method = NA,
-              dist.method = attr(x$diss, "Metric"),
-              labels = rownames(x$data))
+	      height = sort(x$height),
+	      order = x$order,
+	      labels = if(!is.null(lb <- x$order.lab)) {
+                  lb[sort.list(x$order)] } else rownames(x$data),# may be NULL
+	      call = if(!is.null(cl <- x$call)) cl else match.call(),
+	      method = if(!is.null(mt <- x$method)) mt else NA,
+	      dist.method = attr(x$diss, "Metric"))
     class(r) <- "hclust"
     r
 }
@@ -202,4 +203,3 @@ cophenetic <- function(x) {
     }
     return(as.dist(rmat))
 }
-

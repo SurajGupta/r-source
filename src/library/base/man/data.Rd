@@ -32,22 +32,24 @@ data(\dots, list = character(0), package = .packages(),
   Currently, four formats of data files are supported:
 
   \enumerate{
-    \item files ending \file{.RData} or \file{.rda} are
-    \code{\link{load}()}ed.
-
     \item files ending \file{.R} or \file{.r} are
     \code{\link{source}()}d in, with the \R working directory changed
     temporarily to the directory containing the respective file.
 
-    \item files ending \file{.tab} or \file{.txt} are read using
+    \item files ending \file{.RData} or \file{.rda} are
+    \code{\link{load}()}ed.
+
+    \item files ending \file{.tab}, \file{.txt} or \file{.TXT} are read using
     \code{\link{read.table}(\dots, header = TRUE)}, and hence result in
     a data frame.
 
-    \item files ending \file{.csv} are read using
+    \item files ending \file{.csv} or \file{.CSV} are read using
     \code{\link{read.table}(\dots, header = TRUE, sep = ";")},
     and also result in a data frame.
   }
-
+  If more than one matching file name is found, the first on this list
+  is used.
+  
   The data sets to be loaded can be specified as a sequence of names or
   character strings, or as the character vector \code{list}, or as both.
 

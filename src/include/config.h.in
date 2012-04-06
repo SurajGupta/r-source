@@ -51,9 +51,6 @@
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
 
-/* Define if you have the bzip2 headers and libraries. */
-#undef HAVE_BZLIB
-
 /* Define to 1 if you have the `chdir' function. */
 #undef HAVE_CHDIR
 
@@ -184,6 +181,9 @@
 /* Define if you have the JPEG headers and libraries. */
 #undef HAVE_JPEG
 
+/* Define if external LAPACK is available. */
+#undef HAVE_LAPACK
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
@@ -311,6 +311,9 @@
 
 /* Define to 1 if you have the `strptime' function. */
 #undef HAVE_STRPTIME
+
+/* Define to 1 if you have the `symlink' function. */
+#undef HAVE_SYMLINK
 
 /* Define to 1 if you have the `system' function. */
 #undef HAVE_SYSTEM
@@ -515,14 +518,5 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
-
-#ifdef Win32
-# define snprintf  _snprintf
-# define vsnprintf  _vsnprintf
-# define isnan(a) _isnan(a)
-# define finite(a) _finite(a)
-/* 2000-03-27 win32-api needs this for ANSI compliance */
-# define NONAMELESSUNION
-#endif /* Win32 */
 
 #endif /* not _CONFIG_H */

@@ -23,7 +23,8 @@ autoloader(name, package,...)
   \code{file} was loaded but it does not occupy memory.
 }
 \value{
-This function is invoked for its side-effect.
+This function is invoked for its side-effect. It has not return value as
+of \R 1.7.0.
 }
 \seealso{
 \code{\link{delay}}, \code{\link{library}}
@@ -32,7 +33,7 @@ This function is invoked for its side-effect.
 autoload("line","eda")
 search()
 ls("Autoloads")
-all(ls("Autoloads") == ls(envir = .AutoloadEnv))
+
 data(cars)
 plot(cars)
 z<-line(cars)

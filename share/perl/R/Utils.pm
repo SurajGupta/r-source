@@ -8,9 +8,9 @@ use Text::Wrap;
 use Text::Tabs;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(R_getenv R_version file_path env_path
-	     list_files list_files_with_exts
-	     R_tempfile R_system R_runR
+@EXPORT = qw(R_getenv R_version R_tempfile R_system R_runR
+	     file_path env_path list_files
+	     list_files_with_exts list_files_with_type make_file_exts
 	     formatDL);
 
 #**********************************************************
@@ -42,7 +42,6 @@ END
     exit 0;
 }
 
-
 sub text2latex {
 
     s/\\/\\textbackslash{}/g;
@@ -64,20 +63,17 @@ sub text2html {
 sub file_path {
     my @args = @_;
     my $filesep = "/";
-    my $outpath ="";
     my $v;
 
     if($R::Vars::OSTYPE eq "mac") {
-     foreach $v (@args) {
-      $v =~ s/:\z//;
-     }
-     $filesep = ":";
+	foreach $v (@args) {
+	    $v =~ s/:\z//;
+	}
+	$filesep = ":";
     }
 
     join($filesep, @args);
 }
-
-
 
 sub env_path {
     my @args = @_;
@@ -85,7 +81,6 @@ sub env_path {
     $envsep = ";" if($R::Vars::OSTYPE eq "windows");
     join($envsep, @args);
 }
-
 
 sub list_files {
     my $dir = $_[0];
@@ -95,7 +90,7 @@ sub list_files {
     closedir(DIR);
     my @paths;
     foreach my $file (@files) {
-	push @paths, &file_path($dir, $file);
+	push(@paths, &file_path($dir, $file));
     }
     @paths;
 }
@@ -113,21 +108,53 @@ sub list_files_with_exts {
     }
     closedir(DIR);
     ## We typically want the paths to the files, see also the R variant
-    ## .listFilesWithExts() used in some of the QA tools.
+    ## .listFilesWithExts() used in some of the QC tools.
     my @paths;
     foreach my $file (@files) {
-	push @paths, &file_path($dir, $file);
+	push(@paths, &file_path($dir, $file));
     }
     @paths;
+}
+
+sub list_files_with_type {
+    my ($dir, $type, $OS) = @_;
+    $OS = $R::Vars::OSTYPE unless $OS;
+    my $exts = &make_file_exts($type);
+    my @files = &list_files_with_exts($dir, $exts);
+    if(($type eq "code") || ($type eq "docs")) {
+	$dir = &file_path($dir, $OS);
+	push(@files, &list_files_with_exts($dir, $exts)) if(-d $dir);
+    }
+    @files;
+}
+
+sub make_file_exts {
+    my ($type) = @_;
+    my %file_exts =
+	("code", "[RrSsq]",
+	 "data", "(R|r|RData|rdata|rda|TXT|txt|tab|csv|CSV)",
+	 "demo", "[Rr]",
+	 "docs", "[Rr]d",
+	 "vignette", "[RrSs](nw|tex)");
+    my $exts = $file_exts{$type};
+    die "Error: unknown type '$type'" unless defined($exts);
+    $exts;
 }
 
 sub get_exclude_patterns {
     ## Return list of file patterns excluded by R CMD build and check.
     ## Kept here so that we ensure that the lists are in sync, but not
     ## exported.
-    my @exclude_patterns = ("^.Rbuildignore\$",
+    my @exclude_patterns = ("^.Rbuildignore\$", "^.DS_Store\$",
 			    "\~\$", "\\.swp\$", "\\.bak\$",
-			    "^.*/\\.#[^/]*\$", "^.*/#[^/]*#\$");
+			    "^.*/\\.#[^/]*\$", "^.*/#[^/]*#\$",
+			    "^TITLE\$");
+    ## <FIXME>
+    ## Add
+    ##   "^data/00Index\$"
+    ##   "^inst/doc/00Index.dcf\$"
+    ## once 1.7 is out ...
+    ## </FIXME>
     @exclude_patterns;
 }
 
@@ -177,7 +204,7 @@ sub R_runR
     open RIN, "> $Rin" or die "Error: cannot write to '$Rin'\n";
     print RIN "$cmd\n";
     close RIN;
-    R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout}");
+    R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1");
     my @out;
     open ROUT, "< $Rout";
     while(<ROUT>) {chomp; push(@out, $_);}

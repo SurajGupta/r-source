@@ -13,7 +13,9 @@ RLIB = $(RHOME)/library
 PKGDIR = $(RHOME)/src/library
 PKGD = $(shell ./Rpwd.exe $(PKGDIR))# must be absolute path
 
-FLIBS+=-lRblas
+#FLIBS+=-lRblas
+
+all: libR.a libRblas.a
 
 libR.a:  R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def R.exp --output-lib libR.a
@@ -42,19 +44,23 @@ rpart-ZIPDATA = zip
 survival-HELP = ziponly
 survival-ZIPDATA = zip
 
+# need special-case handling for bundle, as --auto-zip is not enabled
+dse1-HELP = ziponly
+dse2-HELP = ziponly
+
 bundle-%:
 	@$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
 
 pkg-%:
-	@$(MAKE) --no-print-directory DLLNM=$($*-DLLNM)  FLIBS="$(FLIBS)" \
+	@$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) FLIBS="$(FLIBS)" \
 	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) RVER=$(RVER) \
 	  -f $(RHOME)/src/gnuwin32/MakePkg
 	@if test -d $(RLIB)/$*/data ; then \
 	  $(MAKE) --no-print-directory $($*-ZIPDATA)data-$* ; \
 	fi
 ifeq ($(strip $(HELP)),YES)
+	@$(ECHO) "  installing help"
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) $($*-HELP)help-$*
-	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) contents-$*
 ifeq ($(strip $(WINHELP)),CHM)
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) chm-$*
 endif
@@ -62,6 +68,9 @@ ifeq ($(strip $(WINHELP)),BOTH)
 	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) winhlp-$* # also makes chm
 endif
 endif
+	@$(MAKE) --no-print-directory BUILD=$(BUILD) \
+	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB)  \
+	  -f $(RHOME)/src/gnuwin32/MakePkg md5sums
 
 pkgclean-%:
 	$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) \
@@ -69,7 +78,7 @@ pkgclean-%:
 
 pkgcheck-%:
 	@$(ECHO) -------- Testing package $* --------
-	-@mkdir -p $(PKGDIR)/$*/check
+	-@$(MKDIR) -p $(PKGDIR)/$*/check
 	@$(MAKE) --no-print-directory -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
 	@if test -d $(PKGDIR)/$*/tests ; then \
@@ -84,7 +93,7 @@ ziponly-%:
 	$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziponlyhelp-$*
 
 zipdata-%:
-	@echo "  zipping data"
+	@$(ECHO) "  zipping data"
 	@(cd $(RLIB)/$*/data; \
 	  if test -f Rdata.zip ; then \
 	    unzip -qou Rdata; \
@@ -94,4 +103,4 @@ zipdata-%:
 	  zip -rmq9X Rdata * -x filelist 00Index)
 
 data-%:
-	@echo "  not zipping data"
+	@$(ECHO) "  not zipping data"

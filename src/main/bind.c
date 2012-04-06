@@ -495,7 +495,7 @@ static void NewExtractNames(SEXP v, SEXP base, SEXP tag, int recurse,
 }
 
 /* Code to extract the optional arguments to c().  We do it this */
-/* way, rather than having an interpreted font-end do the job, */
+/* way, rather than having an interpreted front-end do the job, */
 /* because we want to avoid duplication at the top level. */
 /* FIXME : is there another possibility? */
 
@@ -841,6 +841,8 @@ SEXP FetchMethod(char *generic, char *classname, SEXP env)
 	error("class name too long in %s", generic);
     sprintf(buf, "%s.%s", generic, classname);
     method = findVar(install(buf), env);
+    if (TYPEOF(method)==PROMSXP)
+	method = eval(method, env);
     if (TYPEOF(method) != CLOSXP)
 	method = R_NilValue;
     return method;
@@ -883,7 +885,7 @@ SEXP do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     class = R_NilValue;
     method = R_NilValue;
     for (a = args; a != R_NilValue; a = CDR(a)) {
-	obj = eval(CAR(a), env);
+	PROTECT(obj = eval(CAR(a), env));
 	if (isObject(obj)) {
 	    int i;
 	    classlist = getAttrib(obj, R_ClassSymbol);
@@ -910,6 +912,7 @@ SEXP do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
 		}
 	    }
 	}
+	UNPROTECT(1);
     }
     if (method != R_NilValue) {
 	PROTECT(method);
@@ -993,6 +996,13 @@ static void SetColNames(SEXP dimnames, SEXP x)
 	SETCADR(dimnames, x);
 }
 
+/*
+ * Apparently i % 0 could occur here (PR#2541).  But it should not,
+ * as zero-length vectors are ignored and
+ * zero-length matrices must have zero columns,
+ * unless the result has zero rows, hence is of length zero and no
+ * copying will be done.
+ */
 static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
 {
     int i, j, k, idx, n;
@@ -1014,11 +1024,13 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
 
     /* check if we are in the zero-row case */
 
-    for (t = args; t != R_NilValue; t = CDR(t))
-	if(length(PRVALUE(CAR(t))) > 0) {
+    for (t = args; t != R_NilValue; t = CDR(t)) {
+	u = PRVALUE(CAR(t));
+	if((isMatrix(u) ? nrows(u) : length(u)) > 0) {
 	    lenmin = 1;
 	    break;
 	}
+    }
 
     /* check conformability of matrix arguments */
 
@@ -1083,7 +1095,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     if (mode == STRSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, STRSXP);
 		k = LENGTH(u);
 		idx = (!isMatrix(u)) ? rows : k;
@@ -1095,7 +1107,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     else if (mode == CPLXSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, CPLXSXP);
 		k = LENGTH(u);
 		idx = (!isMatrix(u)) ? rows : k;
@@ -1107,7 +1119,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     else {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		k = LENGTH(u);
 		idx = (!isMatrix(u)) ? rows : k;
 		if (TYPEOF(u) <= INTSXP) {
@@ -1207,11 +1219,14 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
 
     /* check if we are in the zero-cols case */
 
-    for (t = args; t != R_NilValue; t = CDR(t))
-	if(length(PRVALUE(CAR(t))) > 0) {
+    for (t = args; t != R_NilValue; t = CDR(t)) {
+	u = PRVALUE(CAR(t));
+	if((isMatrix(u) ? ncols(u) : length(u)) > 0) {
 	    lenmin = 1;
 	    break;
 	}
+    }
+
     /* check conformability of matrix arguments */
 
     n = 0;
@@ -1280,12 +1295,10 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     if (mode == STRSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, STRSXP);
 		k = LENGTH(u);
-		mrows = (isMatrix(u)) ? nrows(u) : 1;
-		if (k == 0)
-		    mrows = 0;
+		mrows = (isMatrix(u)) ? nrows(u) : (k > 0);
 		for (i = 0; i < mrows; i++)
 		    for (j = 0; j < cols; j++)
 		      SET_STRING_ELT(result, i + n + (j * rows),
@@ -1297,10 +1310,10 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     else if (mode == CPLXSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, CPLXSXP);
 		k = LENGTH(u);
-		mrows = (isMatrix(u)) ? nrows(u) : 1;
+		mrows = (isMatrix(u)) ? nrows(u) : (k > 0);
 		for (i = 0; i < mrows; i++)
 		    for (j = 0; j < cols; j++)
 			COMPLEX(result)[i + n + (j * rows)]
@@ -1312,15 +1325,9 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho)
     else {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (length(u) >= lenmin) {
+	    if (isMatrix(u) || length(u) >= lenmin) {
 		k = LENGTH(u);
-		/* mrows = (isMatrix(u)) ? nrows(u) : 1; */
-		if (isMatrix(u)) {
-		    mrows=nrows(u);
-		}
-		else {
-		    if (length(u)==0) mrows=0; else mrows=1;
-		}
+		mrows = (isMatrix(u)) ? nrows(u) : (k > 0);
 		if (TYPEOF(u) <= INTSXP) {
 		    if (mode <= INTSXP) {
 			for (i = 0; i < mrows; i++)

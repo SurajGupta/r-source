@@ -8,23 +8,20 @@ source, currently consisting of
 
 Douglas Bates		<bates@stat.wisc.edu>
 John Chambers		<jmc@research.bell-labs.com>
-Peter Dalgaard		<p.dalgaard@kubism.ku.dk>
+Peter Dalgaard		<p.dalgaard@biostat.ku.dk>
 Robert Gentleman	<rgentlem@jimmy.dfci.harvard.edu>
 Kurt Hornik		<Kurt.Hornik@ci.tuwien.ac.at>
 Stefano Iacus		<stefano.iacus@unimi.it>
 Ross Ihaka		<ihaka@stat.auckland.ac.nz>
-Friedrich Leisch	<Friedrich.Leisch@ci.tuwien.ac.at>
+Friedrich Leisch	<Friedrich.Leisch@univie.ac.at>
 Thomas Lumley		<tlumley@u.washington.edu>
 Martin Maechler		<maechler@stat.math.ethz.ch>
 Guido Masarotto		<guido@hal.stat.unipd.it>
+Duncan Murdoch		<murdoch@stats.uwo.ca>
 Paul Murrell		<paul@stat.auckland.ac.nz>
+Martyn Plummer          <plummer@iarc.fr>
 Brian Ripley		<ripley@stats.ox.ac.uk>
 Duncan Temple Lang	<duncan@research.bell-labs.com>
 Luke Tierney		<luke@stat.umn.edu>
 
 plus Heiner Schwarte <h.schwarte@bluewin.ch> up to October 1999.
-
-For the GNOME gui and the Windows port,
-Martyn Plummer		<plummer@iarc.fr>
-Duncan Murdoch		<murdoch@stats.uwo.ca>
-have had write access since early 2002.

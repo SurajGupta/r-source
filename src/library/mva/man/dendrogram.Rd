@@ -2,15 +2,15 @@
 \title{General Tree Structures}
 \alias{dendrogram}% the class
 \alias{as.dendrogram}
-\alias{as.dendrogram.hclust}
+%\alias{as.dendrogram.hclust}
 \alias{cut.dendrogram}
 \alias{[[.dendrogram}
 \alias{print.dendrogram}
 \alias{str.dendrogram}
 \alias{plot.dendrogram}
-\alias{plotNode}
-\alias{plotNodeLimit}
-\alias{isLeaf}
+%\alias{plotNode}
+%\alias{plotNodeLimit}
+%\alias{isLeaf}
 \description{
   Class \code{"dendrogram"} provides general functions for handling
   tree-like structures.  It is intended as a replacement for similar
@@ -23,19 +23,24 @@
 }
 \usage{
 as.dendrogram(object, \dots)
-as.dendrogram.hclust(object, \dots)
 \method{plot}{dendrogram}(x, type=c("rectangle", "triangle"),
          center=FALSE, edge.root= !is.null(attr(x,"edgetext")),
          nodePar = NULL, edgePar = list(), xlab="", ylab="",
          horiz = FALSE, \dots)
 \method{cut}{dendrogram}(x, h, \dots)
-%\method{str}{dendrogram}(x, \dots)% codoc warning; MM: hate to document
-% all arguments : user should rather look at ?str
 \method{print}{dendrogram}(x, digits, \dots)
+\method{str}{dendrogram}(x, \dots)% codoc warning; MM: hate to document
+% all arguments: user should rather look at ?str
+% Also: `object' has different meaning here
+}
+\synopsis{
+str.dendrogram(object, max.level = 0, vec.len = 4, digits.d= 3, nchar.max= 128,
+    give.attr = TRUE, give.length = TRUE, wid = getOption("width"),
+    nest.lev = 0, indent.str = "", \dots)
 }
 \arguments{
-  \item{object}{any \R object that can be made into a class
-    \code{"dendrogram"} one.}
+  \item{object}{any \R object that can be made into one of class
+    \code{"dendrogram"}.}
   \item{x}{object of class \code{"dendrogram"}.}
   \item{type}{type of plot.}
   \item{center}{logical; if \code{TRUE}, nodes are plotted centered with
@@ -85,7 +90,8 @@ as.dendrogram.hclust(object, \dots)
       attributes for \code{\link{segments}} plotting of the edge leading
       to the node, see the \code{edgePar} argument above.}
     \item{\code{leaf}}{logical, if \code{TRUE}, the node is a leaf of
-      the tree.}
+      the tree.  This will often be a \code{\link{character}} which can
+      be used for plotting instead of the \code{text} attribute.}
   }
 
   \code{cut.dendrogram()} returns a list with components \code{$upper}
@@ -101,7 +107,7 @@ as.dendrogram.hclust(object, \dots)
   \code{"dendrogram"} using method \code{as.dendrogram}.
 
   \code{isLeaf()}, \code{plotNode()} and \code{plotNodeLimit()} are helper
-  functions. 
+  functions.
 }
 \note{
   When using \code{type = "triangle"}, \code{center = TRUE} often looks
@@ -133,4 +139,5 @@ plot(dend2$lower[[2]], nodePar=list(col=1),# non empty list
 par(op)
 }
 \keyword{multivariate}
+\keyword{tree}% FIXME: want as.dendrogram.tree() etc!
 \keyword{hplot}% only for plot.()

@@ -22,7 +22,7 @@ Real.primitives <-
 	 "return", "function", "quote",
 	 "on.exit" ## on.exit(expression, add=F) has two arguments in S-plus !
 	 ),
-	 language = c("$", "$<-", "@", "@<-", "<-", "=", "<<-", "[", "[<-", "[[", "[[<-"),
+	 language = c("$", "$<-", "@", "<-", "=", "<<-", "[", "[<-", "[[", "[[<-"),
 	 arith = c("%%", "%*%", "%/%","*", "+", "-", "/", "^"),
 	 logic = c("!",	 "&", "&&",  "|", "||",
 	 "<", "<=", "==", ">", ">=", "!="),
@@ -66,7 +66,6 @@ Real.primitives <-
 	 c("environment<-",
 	   "length",	"length<-",
 	   "class",	"class<-",
-	   "dataClass", "objWithClass",
 	   "attr", # again
 	   "attr<-",
 	   "attributes",	"attributes<-",

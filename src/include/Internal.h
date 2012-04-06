@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,7 @@ SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
 
 #if Win32
 SEXP do_bringtotop(SEXP, SEXP, SEXP, SEXP);
+SEXP do_chooseFiles(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devga(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dllversion(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
@@ -196,11 +197,13 @@ SEXP do_fileinfo(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileremove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filerename(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileshow(SEXP, SEXP, SEXP, SEXP);
+SEXP do_filesymlink(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filledcontour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_first_max(SEXP, SEXP, SEXP, SEXP);
 SEXP do_first_min(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fft(SEXP, SEXP, SEXP, SEXP);
 SEXP do_flatContour(SEXP, SEXP, SEXP, SEXP);
+SEXP do_flush(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fmin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_for(SEXP, SEXP, SEXP, SEXP);
 SEXP do_format(SEXP, SEXP, SEXP, SEXP);
@@ -259,7 +262,6 @@ SEXP do_logic(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
 SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
-/* SEXP do_Machine(SEXP, SEXP, SEXP, SEXP);*/
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
@@ -267,6 +269,7 @@ SEXP do_makevector(SEXP, SEXP, SEXP, SEXP);
 SEXP do_match(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matchcall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matprod(SEXP, SEXP, SEXP, SEXP);
+SEXP do_Math2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matrix(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memlimits(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memoryprofile(SEXP, SEXP, SEXP, SEXP);
@@ -304,7 +307,6 @@ SEXP do_pause(SEXP, SEXP, SEXP, SEXP);
 SEXP do_persp(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pgrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pgsub(SEXP, SEXP, SEXP, SEXP);
-/* SEXP do_Platform(SEXP, SEXP, SEXP, SEXP);*/
 SEXP do_plot_new(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_window(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_xy(SEXP, SEXP, SEXP, SEXP);
@@ -316,7 +318,7 @@ SEXP do_pregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdefault(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdf(SEXP, SEXP, SEXP, SEXP);
-SEXP do_printmatrix(SEXP, SEXP, SEXP, SEXP);
+SEXP do_prmatrix(SEXP, SEXP, SEXP, SEXP);
 SEXP do_proctime(SEXP, SEXP, SEXP, SEXP);
 SEXP do_putenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_psort(SEXP, SEXP, SEXP, SEXP);
@@ -348,9 +350,9 @@ SEXP do_restoreb(SEXP, SEXP, SEXP, SEXP);
 SEXP do_return(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rgb(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Rhome(SEXP, SEXP, SEXP, SEXP);
+SEXP do_rmultinom(SEXP, SEXP, SEXP, SEXP);
 SEXP do_RNGkind(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Rprof(SEXP, SEXP, SEXP, SEXP);
-SEXP do_round(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rownames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rowscols(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sample(SEXP, SEXP, SEXP, SEXP);
@@ -360,13 +362,13 @@ SEXP do_savehistory(SEXP, SEXP, SEXP, SEXP);
 SEXP do_scan(SEXP, SEXP, SEXP, SEXP);
 SEXP do_search(SEXP, SEXP, SEXP, SEXP);
 SEXP do_segments(SEXP, SEXP, SEXP, SEXP);
+SEXP do_serializeToConn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setlocale(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setseed(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq(SEXP, SEXP, SEXP, SEXP);
 SEXP do_set(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shade(SEXP, SEXP, SEXP, SEXP);
-SEXP do_signif(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strheight(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strwidth(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sink(SEXP, SEXP, SEXP, SEXP);
@@ -405,6 +407,7 @@ SEXP do_switch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_symbol(SEXP, SEXP, SEXP, SEXP);
 SEXP do_symbols(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sys(SEXP, SEXP, SEXP, SEXP);
+SEXP do_sysgetpid(SEXP, SEXP, SEXP, SEXP);
 SEXP do_system(SEXP, SEXP, SEXP, SEXP);
 SEXP do_systime(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tempdir(SEXP, SEXP, SEXP, SEXP);
@@ -421,6 +424,7 @@ SEXP do_typecvt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typeof(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unclass(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unlist(SEXP, SEXP, SEXP, SEXP);
+SEXP do_unserializeFromConn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_updateform(SEXP, SEXP, SEXP, SEXP);
 SEXP do_usemethod(SEXP, SEXP, SEXP, SEXP);
 SEXP do_version(SEXP, SEXP, SEXP, SEXP);
@@ -469,6 +473,7 @@ SEXP do_sumconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_download(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockconn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_nsl(SEXP, SEXP, SEXP, SEXP);
+SEXP do_gzcon(SEXP, SEXP, SEXP, SEXP);
 
 #ifdef ENVIRONMENT_LOCKING
 SEXP do_lockEnv(SEXP, SEXP, SEXP, SEXP);
@@ -482,8 +487,10 @@ SEXP do_bndIsActive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkUnbound(SEXP, SEXP, SEXP, SEXP);
 #endif
 #ifdef EXPERIMENTAL_NAMESPACES
+SEXP do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_unregNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_getRegNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_getNSRegistry(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 #endif

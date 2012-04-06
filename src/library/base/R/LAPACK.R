@@ -4,9 +4,6 @@ La.eigen <- function (x, symmetric, only.values = FALSE,
     if(!is.numeric(x) && !is.complex(x))
 	stop("argument to La.eigen must be numeric or complex")
     method <- match.arg(method)
-    if(is.complex(x) && method == "dsyevr") {
-        method <- "dsyev"
-    }
     x <- as.matrix(x)
     if (nrow(x) != ncol(x)) stop("non-square matrix in La.eigen")
     if (nrow(x) == 0) stop("0 x 0 matrix in La.eigen")
@@ -117,7 +114,9 @@ La.svd <- function(x, nu = min(n, p), nv = min(n, p),
     res[c("d", if(nu) "u", if(nv) "vt")]
 }
 
-La.chol <- function(x) .Call("La_chol", x, PACKAGE = "base")
+La.chol <- function(x) .Call("La_chol", as.matrix(x), PACKAGE = "base")
 
-La.chol2inv <- function(x, size=ncol(x))
-    .Call("La_chol2inv", as.matrix(x), size, PACKAGE = "base")
+La.chol2inv <- function(x, size = ncol(x)) {
+    x <- as.matrix(x) # do it this way so ncol(x) is defined
+    .Call("La_chol2inv", x, size, PACKAGE = "base")
+}

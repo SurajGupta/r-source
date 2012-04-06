@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-2   The R Development Core Team.
+ *  Copyright (C) 2001-3   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,9 +46,11 @@
 #define EALREADY                WSAEALREADY
 #define _WINSOCKAPI_
 extern void R_ProcessEvents(void);
+extern void R_FlushConsole(void);
 #endif
 
 #include <R_ext/R-ftp-http.h>
+#include <R_ext/PrtUtil.h>
 
 #ifdef HAVE_STRINGS_H
    /* may be needed to define bzero in FD_ZERO (eg AIX) */
@@ -165,6 +167,7 @@ typedef struct RxmlNanoHTTPCtxt {
     int inlen;		/* len of the input buffer */
     int last;		/* return code for last operation */
     int returnValue;	/* the protocol return value */
+    char *statusMsg;    /* the protocol status message */
     char *contentType;	/* the MIME type for the input */
     int contentLength;	/* the reported length */
     char *location;	/* the new URL in case of redirect */
@@ -174,6 +177,7 @@ typedef struct RxmlNanoHTTPCtxt {
 static int initialized = 0;
 static char *proxy = NULL;	 /* the proxy name if any */
 static int proxyPort;	/* the proxy port if any */
+static char *proxyUser; /* the proxy user:pwd if any */
 static unsigned int timeout = 60;/* the select() timeout in seconds */
 
 /**
@@ -194,6 +198,10 @@ static int socket_errno(void)
  * Initialize the HTTP protocol layer.
  * Currently it just checks for proxy informations
  */
+
+#ifdef Win32
+# include "graphapp/graphapp.h"
+#endif
 
 static void
 RxmlNanoHTTPInit(void)
@@ -219,12 +227,21 @@ RxmlNanoHTTPInit(void)
 	env = getenv("http_proxy");
 	if (env != NULL) {
 	    RxmlNanoHTTPScanProxy(env);
-	    goto done;
+	    goto chkuser;
 	}
 	env = getenv("HTTP_PROXY");
 	if (env != NULL) {
 	    RxmlNanoHTTPScanProxy(env);
-	    goto done;
+	    goto chkuser;
+	}
+    chkuser:
+	if((env = getenv("http_proxy_user")) != NULL) {   
+	    if (proxyUser != NULL) {xmlFree(proxyUser); proxyUser = NULL;}
+#ifdef Win32
+	    if (strcmp(env, "ask") == 0) 
+		env = askUserPass("Proxy Authentication");
+#endif
+	    proxyUser = xmlMemStrdup(env);
 	}
     }
  done:
@@ -240,8 +257,8 @@ RxmlNanoHTTPInit(void)
 void
 RxmlNanoHTTPCleanup(void)
 {
-    if (proxy != NULL)
-	xmlFree(proxy);
+    if (proxy != NULL) xmlFree(proxy);
+    if (proxyUser != NULL) xmlFree(proxyUser);
 #ifdef _WINSOCKAPI_
     if (initialized)
 	WSACleanup();
@@ -386,6 +403,13 @@ RxmlNanoHTTPScanProxy(const char *URL)
     }
     if (*cur == 0) return;
 
+    if(strchr(cur, '@')) {
+	strcpy(buf, cur);
+	*(strchr(buf, '@')) = '\0';
+	if(proxyUser) xmlFree(proxyUser);
+	proxyUser = xmlMemStrdup(buf);
+	cur += strlen(buf) + 1;
+    }
     buf[indx] = 0;
     while (1) {
         if (cur[0] == ':') {
@@ -433,6 +457,7 @@ RxmlNanoHTTPNewCtxt(const char *URL)
     memset(ret, 0, sizeof(RxmlNanoHTTPCtxt));
     ret->port = 80;
     ret->returnValue = 0;
+    ret->statusMsg = NULL;
     ret->contentLength = -1;
     ret->fd = -1;
 
@@ -714,6 +739,9 @@ RxmlNanoHTTPScanAnswer(RxmlNanoHTTPCtxtPtr ctxt, const char *line)
 	}
 	if ((*cur != 0) && (*cur != ' ') && (*cur != '\t')) return;
 	ctxt->returnValue = ret;
+	if ((*cur == ' ') || (*cur == '\t')) cur++;
+	if(ctxt->statusMsg) xmlFree(ctxt->statusMsg);
+	ctxt->statusMsg = xmlMemStrdup(cur);
     } else if (!xmlStrncasecmp(BAD_CAST line, BAD_CAST"Content-Type:", 13)) {
         cur += 13;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
@@ -958,11 +986,13 @@ RxmlNanoHTTPConnectHost(const char *host, int port)
 	    break; /* for */
 
 	s = RxmlNanoHTTPConnectAttempt(addr);
-	if (s != -1)
+	if (s != -1) {
+	    RxmlMessage(1, "connected to '%s' on port %d.", host, port);
 	    return(s);
+	}
     }
 
-    RxmlMessage(2, "unable to connect to '%s'.", host);
+    RxmlMessage(2, "unable to connect to '%s' on port %d.", host, port);
     return(-1);
 }
 
@@ -1018,6 +1048,37 @@ RxmlNanoHTTPRead(void *ctx, void *dest, int len)
     return(len);
 }
 
+static void base64_encode(char *proxyUser, char *out)
+{
+    /* Conversion table.  */
+    static char tbl[64] = {
+	'A','B','C','D','E','F','G','H',
+	'I','J','K','L','M','N','O','P',
+	'Q','R','S','T','U','V','W','X',
+	'Y','Z','a','b','c','d','e','f',
+	'g','h','i','j','k','l','m','n',
+	'o','p','q','r','s','t','u','v',
+	'w','x','y','z','0','1','2','3',
+	'4','5','6','7','8','9','+','/'
+    };
+    char *s = proxyUser;
+    int i, length;
+    unsigned char *p = (unsigned char *)out;
+
+    length = strlen(s);
+    for (i = 0; i < length; i += 3) {
+	*p++ = tbl[s[i] >> 2];
+	*p++ = tbl[((s[i] & 3) << 4) + (s[i+1] >> 4)];
+	*p++ = tbl[((s[i+1] & 0xf) << 2) + (s[i+2] >> 6)];
+	*p++ = tbl[s[i+2] & 0x3f];
+    }
+    /* Pad the result if necessary...  */
+    if (i == length + 1) *(p - 1) = '=';
+    else if (i == length + 2) *(p - 1) = *(p - 2) = '=';
+    /* ...and zero-terminate it.  */
+    *p = '\0';
+}
+
 /**
  * RxmlNanoHTTPClose:
  * @ctx:  the HTTP context
@@ -1060,7 +1121,11 @@ RxmlNanoHTTPMethod(const char *URL, const char *method, const char *input,
     int blen, ilen, ret;
     int head;
     int nbRedirects = 0;
+#ifdef Win32
+    int nAuthenticate = 0;
+#endif
     char *redirURL = NULL;
+    char buf[1000];
 
     if (URL == NULL) return(NULL);
     if (method == NULL) method = "GET";
@@ -1110,6 +1175,10 @@ RxmlNanoHTTPMethod(const char *URL, const char *method, const char *input,
 	blen += strlen(headers);
     if (contentType && *contentType)
 	blen += strlen(*contentType) + 16;
+    if (proxy && proxyUser) {
+	base64_encode(proxyUser,  buf);
+	blen +=strlen(buf) + 50;
+    }
     blen += strlen(method) + strlen(ctxt->path) + 23;
     bp = xmlMalloc(blen);
     if (proxy) {
@@ -1127,6 +1196,10 @@ RxmlNanoHTTPMethod(const char *URL, const char *method, const char *input,
     p += strlen(p);
     if(!cacheOK) {
 	sprintf(p, "Pragma: no-cache\r\n");
+	p += strlen(p);
+    }
+    if(proxy && proxyUser) {
+	sprintf(p, "Proxy-Authorization: Basic %s\r\n", buf);
 	p += strlen(p);
     }
     if (contentType != NULL && *contentType) {
@@ -1162,6 +1235,24 @@ RxmlNanoHTTPMethod(const char *URL, const char *method, const char *input,
 	RxmlMessage(0, "<- %s\n", p);
         xmlFree(p);
     }
+
+#ifdef Win32
+    /* Prompt for username/password again if status was proxy
+       authentication failure */
+    if(proxy && !nAuthenticate && ctxt->returnValue == 407) {
+	char *env;
+	REprintf("%s\n%s\n", "Proxy authentication failed:",
+		"\tplease re-enter the credentials or hit Cancel");
+	R_FlushConsole(); R_ProcessEvents();
+	env = askUserPass("Proxy Authentication");
+	if(strlen(env)) {
+	    if (proxyUser != NULL) {xmlFree(proxyUser); proxyUser = NULL;}
+	    proxyUser = xmlMemStrdup(env);
+	    nAuthenticate++;
+	    goto retry;
+	}
+    }
+#endif
 
     if ((ctxt->location != NULL) && (ctxt->returnValue >= 300) &&
         (ctxt->returnValue < 400)) {
@@ -1212,6 +1303,13 @@ RxmlNanoHTTPReturnCode(void *ctx)
     if (ctxt == NULL) return(-1);
 
     return(ctxt->returnValue);
+}
+
+char *
+RxmlNanoHTTPStatusMsg(void *ctx)
+{
+    RxmlNanoHTTPCtxtPtr ctxt = (RxmlNanoHTTPCtxtPtr) ctx;
+    return(ctxt->statusMsg);
 }
 
 int

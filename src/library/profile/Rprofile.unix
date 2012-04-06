@@ -6,16 +6,17 @@ options(papersize = as.vector(Sys.getenv("R_PAPERSIZE")))
 options(printcmd = as.vector(Sys.getenv("R_PRINTCMD")))
 options(latexcmd = as.vector(Sys.getenv("R_LATEXCMD")))
 options(dvipscmd = as.vector(Sys.getenv("R_DVIPSCMD")))
-options(browser = as.vector(Sys.getenv("R_BROWSER")))
 options(unzip = as.vector(Sys.getenv("R_UNZIPCMD")))
+options(browser = as.vector(Sys.getenv("R_BROWSER")))
 options(editor = as.vector(Sys.getenv("EDITOR")))
+options(pager = file.path(R.home(), "bin", "pager"))
+options(pdfviewer = as.vector(Sys.getenv("R_PDFVIEWER")))
 if(interactive() && Sys.getenv("DISPLAY") != "") {
-    options(device = switch(.Platform$GUI,
+    options(device = switch(.Platform$GUI, "Tk" = "X11",
             "X11" = "X11", "GNOME" = "gtk", "postscript"))
 } else options(device = "postscript")
 ## this must be set for x11 to be used, even non-interactively
 options(X11colortype = "true")
-options(pager = file.path(R.home(), "bin", "pager"))
 options(mailer = "mailx")
 
 MacRoman <- as.integer(c(0:126, 32, 196, 197, 199, 201, 209, 214, 220,
@@ -25,7 +26,7 @@ MacRoman <- as.integer(c(0:126, 32, 196, 197, 199, 201, 209, 214, 220,
 32, 32, 165, 181, 32, 32, 32, 32, 32, 170, 186, 32, 230, 248, 191, 161,
 172, 32, 32, 32, 32, 171, 187, 32, 32, 192, 195, 213, 32, 32, 32, 32,
 32, 32, 96, 39, 247, 32, 255, 32, 32, 32, 32, 32, 32, 32, 32, 183, 32,
-32, 32, 194, 202, 193, 203, 200, 32, 32, 32, 32, 211, 212, 32, 210,
+32, 32, 194, 202, 193, 203, 200, 205, 206, 207, 204, 211, 212, 32, 210,
 218, 219, 217, 144, 147, 148, 149, 150, 151, 154, 155, 157, 158, 159))
 
 ISOLatin1 <- 0:255

@@ -44,7 +44,7 @@
  *
  *  1. The dlopen interface is available.
  *
- *  In this case all symbol location is done using the dlopen routines.
+ *  In this case all symbol location in packages is done using the dlopen routines.
  *  We maintain a list of currently loaded shared libraries in an array
  *  called "LoadedDLL" with the number of currenly loaded libraries
  *  being "CountDLL".  To locate a symbol, we probe the loaded libraries
@@ -62,12 +62,21 @@
  *  libraries are found first.
  *
  *
- *  2. The dlopen interface is not available.
+ *  Accessing native routines in base (the R executable).
  *
- *  In this case we use the table "CFunTabEntry" to locate functions
- *  in the executable.	We do this by straight linear search through
- *  the table.	Note that the content of the table is created at
- *  system build time from the list in ../appl/ROUTINES.
+ *  In this case, we use the registration mechanism and the DllInfo array 
+ *  in ../main/Rdynload.c to locate functions in the executable. We do this
+ *  by straight linear search through the table.
+ *  Note that the base routines registered are listed in 
+ *               ../main/registration.c
+ *  and are registered during the initialization of the R engine.
+ *  (This replaces the previous mechanism that built a table from ../appl/ROUTINES
+ *  using Perl/sed).
+ *
+ *
+ *  If speed is ever an issue in the lookup of registered symbols, we can 
+ *  store the registered routines in a hashtable or binary tree as they
+ *  are being registered.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -136,10 +145,30 @@ static int CountDLL = 0;
 
 static DllInfo LoadedDLL[MAX_NUM_DLLS];
 
+int addDLL(char *dpath, char *name, HINSTANCE handle);
+
 
 OSDynSymbol Rf_osDynSymbol;
 OSDynSymbol *R_osDynSymbol = &Rf_osDynSymbol;
 
+void R_init_base(DllInfo *); /* In Registration.c */
+static DL_FUNC R_dlsym(DllInfo *dll, char const *name, R_RegisteredNativeSymbol *symbol);
+
+void
+InitDynload()
+{
+   DllInfo *dll;
+   int which = addDLL(strdup("base"), "base", NULL);
+   dll = &LoadedDLL[which];
+   R_init_base(dll);
+   InitFunctionHashing();
+}
+
+DllInfo *
+getBaseDllInfo()
+{
+    return(&LoadedDLL[0]);
+}
 
 Rboolean R_useDynamicSymbols(DllInfo *info, Rboolean value)
 {
@@ -168,7 +197,7 @@ void R_addExternalRoutine(DllInfo *info,
  with the path name `path'. This ensures uniqueness rather than having the 
  undesirable situation of two libraries with the same name but in different
  directories.
- This is available so that itcan be called from arbitrary C routines
+ This is available so that it can be called from arbitrary C routines
  that need to call R_registerRoutines(). The initialization routine
  R_init_<library name> is passed the DllInfo reference as an argument.
  Other routines must explicitly request it using this routine.
@@ -364,6 +393,21 @@ Rf_freeDllInfo(DllInfo *info)
 }
 
 
+static Rboolean
+R_callDLLUnload(DllInfo *dllInfo)
+{
+    char buf[1024];
+    DL_FUNC f;
+    R_RegisteredNativeSymbol sym;
+
+    sprintf(buf, "R_unload_%s", dllInfo->name);
+    f = R_dlsym(dllInfo, buf, &sym);
+    if(f) 
+       f(dllInfo);
+
+    return(TRUE);
+}
+
 	/* Remove the specified DLL from the current DLL list */
 	/* Returns 1 if the DLL was found and removed from */
 	/* the list and returns 0 otherwise. */
@@ -384,6 +428,7 @@ static int DeleteDLL(char *path)
     if(R_osDynSymbol->deleteCachedSymbols)
         R_osDynSymbol->deleteCachedSymbols(&LoadedDLL[loc]);
 #endif
+    R_callDLLUnload(&LoadedDLL[loc]);
     R_osDynSymbol->closeLibrary(LoadedDLL[loc].handle);
     Rf_freeDllInfo(LoadedDLL+loc);
     for(i = loc + 1 ; i < CountDLL ; i++) {
@@ -436,8 +481,6 @@ static char DLLerror[DLLerrBUFSIZE] = "";
 	/* or if dlopen fails for some reason. */
 
 
-static DL_FUNC R_dlsym(DllInfo *dll, char const *name, R_RegisteredNativeSymbol *symbol);
-
 static int AddDLL(char *path, int asLocal, int now)
 {
     HINSTANCE handle;
@@ -486,7 +529,7 @@ static int AddDLL(char *path, int asLocal, int now)
 
 DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
 {
-    char *dpath,  DLLname[PATH_MAX], *p, *name;
+    char *dpath,  DLLname[PATH_MAX], *p;
     DllInfo *info;
 
     info = &LoadedDLL[CountDLL];
@@ -524,15 +567,25 @@ DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
     if(p > DLLname && strcmp(p, SHLIB_EXT) == 0) *p = '\0';
 #endif
     
-    name = malloc(strlen(DLLname)+1);
+    addDLL(dpath, DLLname, handle);
+
+    return(info);
+}
+
+int
+addDLL(char *dpath, char *DLLname, HINSTANCE handle)
+{
+    int ans = CountDLL;
+    char *name = malloc(strlen(DLLname)+1);
     if(name == NULL) {
 	strcpy(DLLerror, "Couldn't allocate space for 'name'");
-	R_osDynSymbol->closeLibrary(handle);
+	if(handle)
+	   R_osDynSymbol->closeLibrary(handle);
 	free(dpath);
 	return 0;
     }
-    strcpy(name, DLLname);
 
+    strcpy(name, DLLname);
     LoadedDLL[CountDLL].path = dpath;
     LoadedDLL[CountDLL].name = name;
     LoadedDLL[CountDLL].handle = handle;
@@ -543,9 +596,9 @@ DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
     LoadedDLL[CountDLL].CSymbols = NULL;
     LoadedDLL[CountDLL].CallSymbols = NULL;
     LoadedDLL[CountDLL].FortranSymbols = NULL;
-    CountDLL++;
+    CountDLL++;    
 
-    return(info);
+    return(ans);
 }
 
 
@@ -691,6 +744,14 @@ static DL_FUNC R_dlsym(DllInfo *info, char const *name,
 #else
     sprintf(buf, "_%s", name);
 #endif
+
+#ifdef HAVE_F77_UNDERSCORE
+    if(symbol && symbol->type == R_FORTRAN_SYM) {
+	buf[strlen(buf)+1] = '\0';
+	buf[strlen(buf)] = '_';
+    }
+#endif
+
     return (DL_FUNC) R_osDynSymbol->dlsym(info, buf);
 }
 
@@ -750,9 +811,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 	}
 	if(doit > 1) return (DL_FUNC) NULL;  /* Only look in the first-matching DLL */
     }
-    if(all || !strcmp(pkg, "base")) { 
-	return(R_osDynSymbol->getBaseSymbol(name));
-    }
+
     return (DL_FUNC) NULL;
 }
 
@@ -813,11 +872,17 @@ int moduleCdynload(char *module, int local, int now)
     char dllpath[PATH_MAX], *p = getenv("R_HOME");
 #else
     char dllpath[PATH_MAX], *p = R_Home;
-#endif    
+#endif
+    int res;
+
     if(!p) return 0;
     sprintf(dllpath, "%s%smodules%s%s%s", p, FILESEP, FILESEP, 
 	    module, SHLIB_EXT);
-    return AddDLL(dllpath, local, now);
+    res = AddDLL(dllpath, local, now);
+    if(!res)
+	warning("unable to load shared library \"%s\":\n  %s",
+		dllpath, DLLerror);
+    return res;
 }
 
 /**

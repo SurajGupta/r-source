@@ -28,6 +28,7 @@
              sealed = TRUE, where = envir)
     setClass("MethodWithNext",
              representation("MethodDefinition", nextMethod = "PossibleMethod", excluded = "list"), sealed = TRUE, where = envir)
+    setClass("SealedMethodDefinition", contains = "MethodDefinition")
     setClass("genericFunction",
              representation("function", generic = "character", package = "character",
                             group = "list", valueClass = "character",
@@ -52,7 +53,7 @@
 
 ## some intiializations that need to be done late
 .InitMethodDefinitions <- function(envir) {
-    assign("asMethodDefinition",  function(def, signature = list()) {
+    assign("asMethodDefinition",  function(def, signature = list(), sealed = FALSE) {
         ## primitives can't take slots, but they are only legal as default methods
         ## and the code will just have to accomodate them in that role, w/o the
         ## MethodDefinition information.
@@ -67,6 +68,8 @@
             value <- def
         else
             value <- new("MethodDefinition", def)
+        if(sealed)
+            value <- new("SealedMethodDefinition", value)
         ## this is really new("signature",  def, signature)
         ## but bootstrapping problems force us to make
         ## the initialize method explicit here
@@ -80,23 +83,24 @@
               function(method, fname, envir) {
                   assign(".target", method@target, envir = envir)
                   assign(".defined", method@defined, envir = envir)
+                  assign(".Method", method, envir = envir)
                   method
               }, where = envir)
     setMethod("loadMethod", "MethodWithNext",
               function(method, fname, envir) {
-                  callNextMethod()
+                  callNextMethod(method, fname, envir)
                   assign(".nextMethod", method@nextMethod, envir = envir)
                   method
               }, where = envir)
-    setGeneric("findNextMethod", function(method, f = "<unknown>", mlist, optional = FALSE, envir)
-               standardGeneric("findNextMethod"), where = envir)
-    setMethod("findNextMethod", "MethodDefinition",
+    setGeneric("addNextMethod", function(method, f = "<unknown>", mlist, optional = FALSE, envir)
+               standardGeneric("addNextMethod"), where = envir)
+    setMethod("addNextMethod", "MethodDefinition",
               function(method, f, mlist, optional, envir) {
                   value <- .findNextMethod(method, f, mlist, optional, list(method@defined), envir)
                   new("MethodWithNext", method, nextMethod = value,
                       excluded = list(method@defined))
               }, where = envir)
-    setMethod("findNextMethod", "MethodWithNext",
+    setMethod("addNextMethod", "MethodWithNext",
               function(method, f, mlist, optional, envir) {
                   excluded <- c(method@excluded, list(method@defined))
                   value <- .findNextMethod(method, f, mlist, optional, excluded, envir)
@@ -134,6 +138,14 @@
                       assign(what, elNamed(args, what), envir = value)
                   value
               }, where = envir)
+    ## make sure body(m) <- .... leaves a method as a method
+    setGeneric("body<-")
+    setMethod("body<-", "MethodDefinition", function (f, value, envir) {
+        ff <- as(f, "function")
+        body(ff, envir = envir) <- value
+        f@.Data <- ff
+        f
+    })
 ### Uncomment next line if we want special initialize methods for basic classes
 ###    .InitBasicClassMethods(where)
 }

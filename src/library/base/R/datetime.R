@@ -121,7 +121,7 @@ print.POSIXlt <- function(x, ...)
 summary.POSIXct <- function(object, digits=15, ...)
 {
     x <- summary.default(unclass(object), digits=digits, ...)
-    class(x) <- class(object)
+    class(x) <- oldClass(object)
     x
 }
 
@@ -189,7 +189,7 @@ Summary.POSIXct <- function (x, ...)
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
     if (!ok) stop(paste(.Generic, "not defined for POSIXct objects"))
     val <- NextMethod(.Generic)
-    class(val) <- class(x)
+    class(val) <- oldClass(x)
     val
 }
 
@@ -205,7 +205,7 @@ Summary.POSIXlt <- function (x, ...)
 "[.POSIXct" <-
 function(x, ..., drop = TRUE)
 {
-    cl <- class(x)
+    cl <- oldClass(x)
     class(x) <- NULL
     val <- NextMethod("[")
     class(val) <- cl
@@ -215,7 +215,7 @@ function(x, ..., drop = TRUE)
 "[[.POSIXct" <-
 function(x, ..., drop = TRUE)
 {
-    cl <- class(x)
+    cl <- oldClass(x)
     class(x) <- NULL
     val <- NextMethod("[[")
     class(val) <- cl
@@ -226,7 +226,7 @@ function(x, ..., drop = TRUE)
 function(x, ..., value) {
     if(!as.logical(length(value))) return(x)
     value <- as.POSIXct(value)
-    cl <- class(x)
+    cl <- oldClass(x)
     class(x) <- class(value) <- NULL
     x <- NextMethod(.Generic)
     class(x) <- cl
@@ -236,7 +236,7 @@ function(x, ..., value) {
 as.character.POSIXt <- function(x, ...) format(x, ...)
 
 str.POSIXt <- function(object, ...) {
-    cl <- class(object)
+    cl <- oldClass(object)
     cat("`", cl[min(2, length(cl))],"', format:", sep = "")
     str(format(object), ...)
 }
@@ -355,13 +355,16 @@ difftime <-
     time1 <- as.POSIXct(time1, tz = tz)
     time2 <- as.POSIXct(time2, tz = tz)
     z <- unclass(time1) - unclass(time2)
-    zz <- min(abs(z),na.rm=TRUE)
     units <- match.arg(units)
     if(units == "auto") {
-        if(is.na(zz) || zz < 60) units <- "secs"
-        else if(zz < 3600) units <- "mins"
-        else if(zz < 86400) units <- "hours"
-        else units <- "days"
+        if(all(is.na(z))) units <- "secs"
+        else {
+            zz <- min(abs(z),na.rm=TRUE)
+            if(is.na(zz) || zz < 60) units <- "secs"
+            else if(zz < 3600) units <- "mins"
+            else if(zz < 86400) units <- "hours"
+            else units <- "days"
+        }
     }
     switch(units,
            "secs" = structure(z, units="secs", class="difftime"),
@@ -370,6 +373,14 @@ difftime <-
            "days" = structure(z/86400, units="days", class="difftime"),
            "weeks" = structure(z/(7*86400), units="weeks", class="difftime")
            )
+}
+
+## "difftime" constructor
+## Martin Maechler, Date: 16 Sep 2002
+as.difftime <- function(tim, format="%X")
+{
+    difftime(strptime(tim, format=format),
+             strptime("0:0:0", format="%X"))
 }
 
 print.difftime <- function(x, digits = getOption("digits"), ...)
@@ -389,6 +400,81 @@ round.difftime <- function (x, digits = 0)
 {
    units <- attr(x, "units")
    structure(NextMethod(), units=units, class="difftime")
+}
+
+"[.difftime" <- function(x, ..., drop = TRUE)
+{
+    cl <- oldClass(x)
+    class(x) <- NULL
+    val <- NextMethod("[")
+    class(val) <- cl
+    attr(val, "units") <- attr(x, "units")
+    val
+}
+
+Ops.difftime <- function(e1, e2)
+{
+    coerceTimeUnit <- function(x)
+    {
+        switch(attr(x,"units"),
+               secs = x, mins = 60*x, hours = 60*60*x,
+               days = 60*60*24*x, weeks = 60*60*24*7*x)
+    }
+    if (nargs() == 1)
+        stop(paste("unary", .Generic, "not defined for difftime objects"))
+    boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
+                      "!=" = , "<=" = , ">=" = TRUE, FALSE)
+    if (boolean) {
+        ## assume user knows what he/she is doing if not both difftime
+        if(inherits(e1, "difftime") && inherits(e2, "difftime")) {
+            e1 <- coerceTimeUnit(e1)
+            e2 <- coerceTimeUnit(e2)
+        }
+        NextMethod(.Generic)
+    } else if(.Generic == "+" || .Generic == "-") {
+        if(!inherits(e1, "difftime") || !inherits(e2, "difftime"))
+            stop("both arguments of ", .Generic, " must be difftime objects")
+        u1 <- attr(e1, "units")
+        if(attr(e2, "units") == u1) {
+            structure(NextMethod(.Generic), units=u1, class="difftime")
+        } else {
+            e1 <- coerceTimeUnit(e1)
+            e2 <- coerceTimeUnit(e2)
+            structure(NextMethod(.Generic), units="secs", class="difftime")
+        }
+    } else {
+        ## `*' is covered by a specific method
+        stop(paste(.Generic, "not defined for difftime objects"))
+    }
+}
+
+"*.difftime" <- function (e1, e2)
+{
+    ## need one scalar, one difftime.
+    if(inherits(e1, "difftime") && inherits(e2, "difftime"))
+        stop("both arguments of * cannot be difftime objects")
+    if(inherits(e2, "difftime")) {tmp <- e1; e1 <- e2; e2 <- tmp}
+    structure(e2 * unclass(e1), units = attr(e1, "units"),
+              class = "difftime")
+}
+
+Math.difftime <- function (x, ...)
+{
+    stop(paste(.Generic, "not defined for difftime objects"))
+}
+
+Summary.difftime <- function (x, ...)
+{
+    coerceTimeUnit <- function(x)
+    {
+        switch(attr(x,"units"),
+               secs = x, mins = 60*x, hours = 60*60*x,
+               days = 60*60*24*x, weeks = 60*60*24*7*x)
+    }
+    ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
+    if (!ok) stop(paste(.Generic, "not defined for difftime objects"))
+    args <- lapply(list(x, ...), coerceTimeUnit)
+    structure(do.call(.Generic, args), units="secs", class="difftime")
 }
 
 ## for back-compatibility only: POSIXt versions are used as from 1.3.0
@@ -468,7 +554,8 @@ seq.POSIXt <-
     if (length(by) != 1) stop("`by' must be of length 1")
     valid <- 0
     if (inherits(by, "difftime")) {
-        by <- unclass(by)
+        by <- switch(attr(by,"units"), secs = 1, mins = 60, hours = 3600,
+                     days = 86400, weeks = 7*86400) * unclass(by)
     } else if(is.character(by)) {
         by2 <- strsplit(by, " ")[[1]]
         if(length(by2) > 2 || length(by2) < 1)
@@ -612,6 +699,8 @@ trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
 
 round.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
 {
+    # this gets the default from the generic, as that has two args.
+    if(is.numeric(units) && units == 0.0) units <-"secs"
     units <- match.arg(units)
     x <- as.POSIXct(x)
     x <- x + switch(units,
@@ -632,7 +721,7 @@ round.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
 {
     if(!as.logical(length(value))) return(x)
     value <- as.POSIXlt(value)
-    cl <- class(x)
+    cl <- oldClass(x)
     class(x) <- class(value) <- NULL
     for(n in names(x)) x[[n]][i] <- value[[n]]
     class(x) <- cl

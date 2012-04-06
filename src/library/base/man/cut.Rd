@@ -18,8 +18,8 @@ cut.default(x, breaks, labels = NULL,
   \item{include.lowest}{logical, indicating if an `x[i]' equal to the
     lowest (or highest, for \code{right = FALSE}) `breaks' value should be
     included.}
-  \item{right}{logical, indicating if the intervals should closed on the
-    right (and open on the left) or vice versa.}
+  \item{right}{logical, indicating if the intervals should be closed on
+    the right (and open on the left) or vice versa.}
   \item{dig.lab}{integer which is used when labels are not given. It
     determines the number of digits used in formatting the break numbers.}
   \item{\dots}{further arguments passed to or from other methods.}
@@ -55,8 +55,8 @@ cut.default(x, breaks, labels = NULL,
 \examples{
 Z <- rnorm(10000)
 table(cut(Z, br = -6:6))
-system.time(print(sum(table(cut(Z, br = -6:6, labels=FALSE)))))
-system.time(print(sum(   hist  (Z, br = -6:6, plot=FALSE)$counts)))
+sum(table(cut(Z, br = -6:6, labels=FALSE)))
+sum(   hist  (Z, br = -6:6, plot=FALSE)$counts)
 
 cut(rep(1,5),4)#-- dummy
 tx0 <- c(9, 4, 6, 5, 3, 10, 5, 3, 5)

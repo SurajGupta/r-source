@@ -29,9 +29,7 @@
 #define devNumber		Rf_devNumber
 #define DevNull			Rf_DevNull
 #define inhibitDisplayList	Rf_inhibitDisplayList
-#ifndef Macintosh
 #define InitGraphics		Rf_InitGraphics
-#endif
 #define GetDevice		Rf_GetDevice
 #define KillAllDevices		Rf_KillAllDevices
 #define KillDevice		Rf_KillDevice
@@ -57,7 +55,7 @@ PicTeXDeviceDriver(DevDesc*, char*, char*, char*, double, double, Rboolean);
 Rboolean 
 PSDeviceDriver(DevDesc*, char*, char*, char*, char**,
 	       char*, char*, char*, double, double, Rboolean, double, 
-	       Rboolean, Rboolean, Rboolean, char*);
+	       Rboolean, Rboolean, Rboolean, char*, char*);
 Rboolean 
 XFigDeviceDriver(DevDesc*, char*, char*, char*,
 		 char*, char*, double, double, 
@@ -65,7 +63,7 @@ XFigDeviceDriver(DevDesc*, char*, char*, char*,
 Rboolean
 PDFDeviceDriver(DevDesc* dd, char *, char *, char *, 
 		char *, char *, double, double, double,
-		int);
+		int, char*);
 
 
 

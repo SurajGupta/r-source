@@ -19,7 +19,7 @@ download.file(url, destfile, method, quiet = FALSE, mode="w",
     download methods \code{"internal"}, \code{"wget"} and \code{"lynx"}
     are available.  The default is to choose the first of these which
     will be \code{"internal"}. The method can also be set through the
-    option \code{"download.file.method"}: see \code{\link{options}()}.} 
+    option \code{"download.file.method"}: see \code{\link{options}()}.}
 
   \item{quiet}{If \code{TRUE}, suppress status messages (if any).}
 
@@ -95,7 +95,21 @@ download.file(url, destfile, method, quiet = FALSE, mode="w",
   \code{"ftp_proxy"} use the form \code{"ftp://proxy.dom.com:3128/"}
   where the default port is \code{21}.  These environment variables
   must be set before the download code is first used: they cannot be
-  altered later by calling \code{Sys.putenv}.  
+  altered later by calling \code{Sys.putenv}.
+
+  Usernames and passwords can be set for HTTP proxy transfers via
+  environment variable \code{"http_proxy_user"} in the form \code{user:passwd}.
+  Alternatively, \code{"http_proxy"} can be of the form
+  \code{"http://user:pass@proxy.dom.com:8080/"} for compatibility with
+  \code{wget}. Only the HTTP/1.0 basic authentication scheme is
+  supported.
+#ifdef windows
+  Under Windows, if \code{"http_proxy_user"} is set to \code{"ask"} then
+  a dialog box will come up for the user to enter the username and
+  password.  \bold{NB:} you will be given only one opportunity to enter this,
+  but if proxy authentication is required and fails there will be one
+  further prompt per download.
+#endif
 }
 \seealso{
   \code{\link{options}} to set the \code{timeout} and

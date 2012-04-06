@@ -45,6 +45,8 @@ if(-d $ARGV[0]) {
 
 ### * Header
 print <<_EOF_;
+### * <HEADER>
+###
 attach(NULL, name = "CheckExEnv")
 assign(".CheckExEnv", as.environment(2), pos = length(search())) # base
 ## This plot.new() patch has no effect yet for persp();
@@ -70,8 +72,10 @@ _EOF_
 if(!defined($ENV{'R_CHECK_WITH_T_N_F_AS_NULL'})
    || $ENV{'R_CHECK_WITH_T_N_F_AS_NULL'} ne "") {
     print <<_EOF_;
-	   assign("T", NULL, pos = 1);
-	   assign("F", NULL, pos = 1);
+	   assign("T", delay(stop("T used instead of TRUE")),
+		  pos = .CheckExEnv)
+	   assign("F", delay(stop("F used instead of FALSE")),
+		  pos = .CheckExEnv)
 _EOF_
 }
 print <<_EOF_;
@@ -85,9 +89,9 @@ options(contrasts = c(unordered = "contr.treatment", ordered = "contr.poly"))
 _EOF_
 
 if($PKG eq "tcltk") {
-    print "require('tcltk') || q()\n";
+    print "require('tcltk') || q()\n\n";
 } elsif($PKG ne "base") {
-    print "library('$PKG')\n";
+    print "library('$PKG')\n\n";
 }
 
 ### * Loop over all R files, and edit a few of them ...
@@ -97,19 +101,22 @@ foreach my $file (@Rfiles) {
     my $have_contrasts = 0;
     my $nm;
 
+    $nm = basename $file, (".R");
+    $nm =~ s/[^- .a-zA-Z0-9]/./g;
+
     open(FILE, "< $file") or die "file $file cannot be opened";
     while (<FILE>) {
-	$have_examples = 1 if /_ Examples _/o;
+	$have_examples = 1
+	    if ((/_ Examples _/o) || (/### \*+ Examples/));
 	$have_par = 1 if (/[^a-zA-Z0-9.]par\(/o || /^par\(/o);
 	$have_contrasts = 1 if /options\(contrasts/o;
     }
     close(FILE);
     if ($have_examples) {
-	$nm = basename $file, (".R");
-	$nm =~ s/[^- .a-zA-Z0-9]/./g;
-	print "cleanEx(); ..nameEx <- \"$nm\"\n";
+	print "cleanEx(); ..nameEx <- \"$nm\"\n\n";
     }
 
+    print "### * $nm\n\n";
     open(FILE, "< $file") or die "file $file cannot be opened";
     while (<FILE>) { print $_; }
     close(FILE);
@@ -120,13 +127,22 @@ foreach my $file (@Rfiles) {
     }
     if($have_contrasts) {
 	## if contrasts were set, now reset them:
-	print "options(contrasts = c(unordered = \"contr.treatment\", ordered = \"contr.poly\"))\n";
+	print "options(contrasts = c(unordered = \"contr.treatment\"," .
+	    "ordered = \"contr.poly\"))\n";
     }
 
 }
 
 ### * Footer
 print <<_EOF_;
+### * <FOOTER>
+###
 cat("Time elapsed: ", proc.time() - get("ptime", env = .CheckExEnv),"\\n")
-dev.off(); quit('no')
+dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\\\(> \\\\)?### [*]+" ***
+### End: ***
+quit('no')
 _EOF_

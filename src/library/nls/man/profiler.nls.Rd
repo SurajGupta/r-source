@@ -1,4 +1,4 @@
-% $Id: profiler.nls.Rd,v 1.7.8.1 2003/01/08 13:55:09 ripley Exp $
+% $Id: profiler.nls.Rd,v 1.8 2003/01/08 15:00:48 ripley Exp $
 \name{profiler.nls}
 \alias{profiler.nls}
 \title{ Constructor for Profiler Objects from nls Objects}

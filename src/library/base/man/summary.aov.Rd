@@ -40,7 +40,7 @@
   \code{\link{TukeyHSD}}
 }
 \examples{
-## From Venables and Ripley (1997) p.210.
+## From Venables and Ripley (2002) p.165.
 N <- c(0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,1,1,0,0)
 P <- c(1,1,0,0,0,1,0,1,1,1,0,0,0,1,0,1,1,0,0,1,0,1,1,0)
 K <- c(1,0,0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,0,1,1,1,0,1,0)
@@ -67,11 +67,10 @@ summary(CC.aov, split = list(N = list(L = 1, Q = 2), P = list(L = 1, Q = 2)))
 
 # Split only the interaction
 summary(CC.aov, split = list("N:P" = list(L.L = 1, Q = 2:4)))
-\testonly{
+
 # split on just one var
 summary(CC.aov, split = list(P = list(lin = 1, quad = 2)))
 summary(CC.aov, split = list(P = list(lin = 1, quad = 2)),
         expand.split=FALSE)}
-}
 \keyword{models}
 \keyword{regression}

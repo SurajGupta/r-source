@@ -78,7 +78,7 @@ that version.  The main R FAQ can be found at
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@code{1.4.0} or later); the current version is often called something like
+(@code{1.7.0} or later); the current version is often called something like
 @code{@value{VERSION}} (although not officially).
 
 
@@ -90,6 +90,7 @@ The information here applies only to recent versions of R for Windows,
 @menu
 * Where can I find the latest version?::  
 * How do I install R for Windows?::  
+* Can I customize the installation?::  
 * How do I run it?::            
 * How do I UNinstall R?::       
 * What's the best way to upgrade?::  
@@ -102,8 +103,9 @@ The information here applies only to recent versions of R for Windows,
 * How do I set environment variables?::  
 * R can't find my file::        
 * Does R use the Registry?::    
-* Entering certain characters crashes Rgui.::  
+* Does R support automation?::  
 * The internet download functions fail.::  
+* Entering certain characters crashes Rgui.::  
 * Other strange crashes.::      
 @end menu
 
@@ -116,23 +118,25 @@ for a list), navigate to the @code{bin/windows/base}
 directory and collect the files you need.  There are two versions of
 the distribution.
 
-1) @code{@RWVER@.exe} is about 19Mb and gives a complete installation.
+1) @code{@RWVER@.exe} is about 21Mb.  This contains all the components
+and allows as complete as installation as you choose.
 
 2) Directory @code{miniR} contains @code{miniR.exe} and eight files
 @code{miniR-?.bin}.  You can put @code{miniR.exe} and @code{miniR-1.bin}
 on one floppy and the remaining @code{miniR-?.bin} on a floppy each.
 This is a small installation, containing the text and compiled HTML
 versions of the help files and the @emph{An Introduction to R} and
-@emph{Data Import/Export} manuals in PDF.
+@emph{Data Import/Export} manuals in PDF.  There is no support for
+@code{tcltk} in this version.
 
 
 
-@node How do I install R for Windows?, How do I run it?, Where can I find the latest version?, Installation and Usage
+@node How do I install R for Windows?, Can I customize the installation?, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
 
-First, you need Windows 95/98/ME/NT4/2000/XP: Windows 3.11+win32s will
-not work.  Your file system must allow long file names (as is likely
-except perhaps for some network-mounted systems).
+You need Windows 95/98/ME/NT4/2000/XP: Windows 3.11+win32s will not
+work.  Your file system must allow long file names (as is likely except
+perhaps for some network-mounted systems).
 
 If you want to build packages from sources, we recommend that you choose
 an installation path not containing spaces.  (Using a path with spaces
@@ -149,11 +153,52 @@ the Start menu file tree.  Right-click the shortcut, select
 Properties... and change the `Start in' field to your working directory.
 
 You may also want to add command-line arguments at the end of the Target
-field, for example @code{--sdi --max-mem-size=40M}.  You can also set
+field, for example @code{--sdi --max-mem-size=200M}.  You can also set
 environment variables at the end of the Target field, for example
 @code{R_LIBS=p:/myRlib}.
 
-@node How do I run it?, How do I UNinstall R?, How do I install R for Windows?, Installation and Usage
+@node Can I customize the installation?, How do I run it?, How do I install R for Windows?, Installation and Usage
+@section Can I customize the installation?
+
+The normal way to customize the installation is by selecting components
+from the wizards shown.  However, sysadmins might like to install R from
+scripts, and the following command-line flags are available for use with
+either installer.
+
+@table @samp
+@item /SILENT
+only show the installation progress window and error messages.
+@item /VERYSILENT
+only show error messages.
+@item /DIR="x:\dirname"
+set the default installation directory
+@item /GROUP="folder name"
+set the default Start-menu group name
+@item /COMPONENTS="comma separated list of component names"
+set the initial list of components.  This is only useful with
+@code{@RWVER@.exe}, which has components @code{main}, @code{chtml},
+@code{html}, @code{latex}, @code{manuals}, @code{devel} and @code{tcl}.
+@end table
+
+@noindent
+It is also possible to save the settings used to a file and later
+reload those settings using
+
+@table @samp
+@item /SAVEINF="filename"
+save the settings to the specified file.  Don't forget to use quotes if
+the filename contains spaces.
+@item /LOADINF="filename"
+instructs the installer to load the settings from the specified file
+after having checked the command line.
+@end table
+
+A successful installation has exit code 0: unsuccessful ones may give 1,
+2, 3, 4 or 5.  See the help for Inno Setup 3
+(@uref{http://jrsoftware.org/isinfo.php}) for details.
+
+
+@node How do I run it?, How do I UNinstall R?, Can I customize the installation?, Installation and Usage
 @section How do I run it?
 
 Just double-click on the shortcut you prepared at installation.
@@ -179,8 +224,8 @@ the top-level installation directory.  (As from version 1.6.2 there will
 be a separate uninstall item in the R group for each installed version
 of R.)
 
-Uninstalling R only removes files from the initial installation, not for
-example packages you have installed.
+Uninstalling R only removes files from the initial installation, not
+(for example) packages you have installed.
 
 If all else fails, you can just delete the whole directory in which R
 was installed.
@@ -192,10 +237,11 @@ was installed.
 That's a matter of taste.  For most people the best thing to do is to
 uninstall R (see the previous Q), install the new version, copy any
 installed packages to the library folder in the new installation, run
-@code{update.packages()} (from the menu, if you prefer) and then delete
-anything left of the old installation.  Different versions of R are
-quite deliberately installed in parallel folders so you can keep old
-versions around if you prefer.
+@code{update.packages()} in the new R (`Update packages from CRAN' from
+the Packages menu, if you prefer) and then delete anything left of the
+old installation.  Different versions of R are quite deliberately
+installed in parallel folders so you can keep old versions around if you
+wish.
 
 
 @node There seems to be a limit on the memory it uses!, How can I keep workspaces for different projects in different directories?, What's the best way to upgrade?, Installation and Usage
@@ -261,16 +307,19 @@ LaTeX installed you can print help files by @code{help(fn_name, offline=TRUE)}.
 @node Can I use R BATCH?, Can I use @RWVER@ with ESS and (X)emacs?, How do I print from R?, Installation and Usage
 @section Can I use @code{R BATCH}?
 
-Yes, if you have Perl and the files for making source packages (from
-@code{@RWVER@.exe}) installed.  The Windows analogue is @code{Rcmd
-BATCH}: use @code{Rcmd BATCH --help} for full details.
+Yes, if you have Perl installed (and in your path).  The Windows
+analogue is @code{Rcmd BATCH}: use @code{Rcmd BATCH --help} for full
+details.
 
 Otherwise you can set up a batch file using @code{Rterm.exe}.  A sample
 batch file might contain (as one line)
 
 @example
-path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out
+path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out 2>&1
 @end example
+@noindent
+The purpose of @code{2>&1} is to redirect warnings and errors to the
+same file as normal output.
 
 
 @node Can I use @RWVER@ with ESS and (X)emacs?, What are HOME and working directories?, Can I use R BATCH?, Installation and Usage
@@ -324,6 +373,12 @@ or your home directory, for example containing the line
 R_LIBS=p:/myRlib
 @end example
 
+If you have permission to do so, you can also create an environment file
+@file{etc\Renviron.site} and set environmental variables in that file in
+the same way.  This is useful for variables which should be set for all
+users and all usages of this R installation.  (Their values can be
+overridden in a @file{.Renviron} or on the command line.)
+
 See @code{?Startup} for more details of environment files.
 
 @item
@@ -359,30 +414,75 @@ short name (something like @code{PROGRA~1}; you can get it as the
 Windows, and from @code{dir /X} in a @code{Command Prompt} window on 2000/XP).
 
 
-@node Does R use the Registry?, Entering certain characters crashes Rgui., R can't find my file, Installation and Usage
+@node Does R use the Registry?, Does R support automation?, R can't find my file, Installation and Usage
 @section Does R use the Registry?
 
 Not itself.
 
 The installers set some entries to allow uninstallation.  In addition
-they set a Registry key @code{LOCAL_MACHINE\Software\R-core\R} giving
-the version and install path.  Again, this is not used by R itself, but
-it will be used by the DCOM interface
-(@uref{http://cran.r-project.org/other-software.html}).  Finally, a file
-association for extension @code{.RData} is set in the Registry.
+(by default, but this can be de-selected) they set a Registry key
+@code{LOCAL_MACHINE\Software\R-core\R} giving the version and install
+path.  Again, this is not used by R itself, but it will be used by the
+DCOM interface (@uref{http://cran.r-project.org/other-software.html}).
+Finally, a file association for extension @code{.RData} is set in the
+Registry.
 
 You can add the Registry entries by running @code{RSetReg.exe} in the
 @code{bin} folder, and remove them by running this with argument
 @code{/U}.  Note that the settings are all per machine and not per user,
 and that this neither sets up nor removes the file associations.
 
-@node Entering certain characters crashes Rgui., The internet download functions fail., Does R use the Registry?, Installation and Usage
+
+@node Does R support automation?, The internet download functions fail., Does R use the Registry?, Installation and Usage
+@section Does R support automation (OLE, COM)?
+
+Directly, no.  There is a (D)COM server written by Thomas Baier
+available on CRAN (@uref{http://cran.r-project.org/other-software.html})
+which works with @code{Rproxy.dll} (in the R distribution) and
+@code{R.dll} to support transfer of data to and from R and remote
+execution of R commands, as well as embedding of an R graphics window.
+
+An R-Excel interface making use of the DCOM server is available from the
+same area of CRAN.
+
+
+@node The internet download functions fail., Entering certain characters crashes Rgui., Does R support automation?, Installation and Usage
+@section The internet download functions fail.
+
+for example @code{update.packages} and the menu items on the Packages menu.
+
+We have had several reports of this, although they do work for us on
+@emph{all} of our machines.  There are two known possible fixes.
+
+(a) Use the alternative @code{internet2.dll} by starting R with the flag
+@code{--internet2} (@pxref{How do I install R for Windows?}) which uses
+the Internet Explorer internals (and so needs Internet Explorer 4 or
+later installed).  Note that this does not work with proxies that need
+authentication.
+
+(b) A proxy needs to be set up: see @code{?download.file}.  Here are two
+versions of an example (a real one, but from a machine that is only
+available locally) of a command-line in a short cut:
+
+@smallexample
+/R/rw1070/bin/RGui.exe http_proxy=http://user:pass@@gannet:80/
+
+/R/rw1070/bin/RGui.exe http_proxy=http://gannet/ http_proxy_user=ask
+@end smallexample
+
+@noindent
+The second version will prompt the user for the proxy username and
+password when HTTP downloads are first used.
+
+
+@node Entering certain characters crashes Rgui., Other strange crashes., The internet download functions fail., Installation and Usage
 @section Entering certain characters crashes Rgui.
 
-This used to happen occasionally, and all the occurrences we have
-solved have been traced to faulty versions of @samp{msvcrt.dll}.  
-We have installed a workaround as from @code{rw1051} that seems to
-avoid this.
+This used to happen occasionally, and all the occurrences we have solved
+have been traced to faulty versions of @samp{msvcrt.dll}.  We have
+installed a workaround as from @code{rw1051} that seems to avoid this.
+A few other people have discovered this was caused by keyboard macro
+programs, for example `Macro Magic'.
 
 If it still happens, try extracting the one to be found in the
 self-extracting archive
@@ -397,36 +497,23 @@ the date-time functions.  However, you are probably better off
 re-installing Windows.
 
 
-@node The internet download functions fail., Other strange crashes., Entering certain characters crashes Rgui., Installation and Usage
-@section The internet download functions fail.
 
-for example @code{update.packages} and the menu items on the Packages menu.
-
-We have had several reports of this, although they do work for us on
-@emph{all} of our machines.  There are two known possible fixes.
-
-(a) Use the alternative @code{internet2.dll} by starting R with the flag
-@code{--internet2} (@pxref{How do I install R for Windows?}) which uses
-the Internet Explorer internals (and so needs Internet Explorer 4 or
-later installed).
-
-(b) A proxy needs to be set up: see @code{?download.file}.
-
-@node Other strange crashes.,  , The internet download functions fail., Installation and Usage
+@node Other strange crashes.,  , Entering certain characters crashes Rgui., Installation and Usage
 @section Other strange crashes.
 
-Some users have found that @code{Rgui.exe} fails to start, exiting with a ``Floating-
-point invalid operation'' or other low level error.  This error may also happen in
-the middle of a session.  In some cases where we have tracked this down, it
-was due to bugs in the video driver on the system in question:  it makes
-changes to the floating point control word which are incompatible with R.
-(Good practice would restore the control word to the state it was in when
-the driver code was called.) For example, one user reported that the virtual
-screen manager JSP2 caused this crash.
+Some users have found that @code{Rgui.exe} fails to start, exiting with
+a ``Floating- point invalid operation'' or other low level error.  This
+error may also happen in the middle of a session.  In some cases where
+we have tracked this down, it was due to bugs in the video driver on the
+system in question: it makes changes to the floating point control word
+which are incompatible with R.  (Good practice would restore the control
+word to the state it was in when the driver code was called.) For
+example, one user reported that the virtual screen manager JSP2 caused
+this crash.
 
-These errors are essentially impossible for us to fix or work around.  The only 
-solution we know of is for the user to replace the buggy driver that is
-causing the error.
+These errors are essentially impossible for us to fix or work around.
+The only solution we know of is for the user to replace the buggy driver
+that is causing the error.
 
 
 
@@ -458,7 +545,10 @@ kind enough to provide a pre-compiled version for Windows as a
 You can install pre-compiled packages either from CRAN or from a local
 @code{.zip} file by using @code{install.packages}: see its help page.
 There are menu items on the @code{Packages} menu to provide a
-point-and-click interface to package installation.
+point-and-click interface to package installation.  As from R 1.7.0 the
+packages for each minor (1.x) version will be stored in a separate area,
+so for R 1.7.0 the files are in @code{bin/windows/contrib/1.7}.  You can
+try those compiled for earlier versions, at your own risk.
 
 Note that the pre-compiled versions on CRAN are unsupported: see
 @uref{http://cran.r-project.org/bin/windows/contrib/ReadMe}.
@@ -474,9 +564,9 @@ running all the examples on its help pages and in its test suite, if
 any) use @code{Rcmd check pkgname}: see the @emph{`Writing R
 Extensions'} manual.
 
-Note that this is rather so tricky; please do ensure that you have
-followed the instructions @strong{exactly}.  At least 90% of the
-questions asked are because people have not done so.
+Note that this is rather tricky; please do ensure that you have followed
+the instructions @strong{exactly}.  At least 90% of the questions asked
+are because people have not done so.
 
 
 @node I don't have permission to write to the @RWVER@\library directory, The packages I installed do not appear in the HTML help system, Can I install packages (libraries) in this version?, Packages
@@ -502,9 +592,6 @@ library(MASS, lib.loc="p:/myRlib")
 @node The packages I installed do not appear in the HTML help system, My functions are not found by the HTML help search system., I don't have permission to write to the @RWVER@\library directory, Packages
 @section The packages I installed do not appear in the HTML help system.
 
-The HTML search only works for packages installed in
-@file{@RWVER@\library}.
-
 To update the HTML indices after you have installed a pre-compiled
 package, run at the R prompt.
 
@@ -514,7 +601,10 @@ package, run at the R prompt.
 
 This is done automatically when installing from the Packages menu or
 by @code{install.packages()}, and when @code{help.start} is run,
-provided you have write permission in @file{@RWVER@\library}.
+provided you have write permission in @file{@RWVER@}.
+
+Prior to R 1.7.0 the HTML indices and search databases only covered
+packages installed in @file{@RWVER@\library}.
 
 
 @node My functions are not found by the HTML help search system., Loading a package fails., The packages I installed do not appear in the HTML help system, Packages
@@ -529,13 +619,15 @@ The following conditions need to hold for functions in a package you installed.
 installing the package.
 @end itemize
 @noindent
-If those all hold true, this works for us.
+If those all hold true, this works for us.  As from R 1.7.0 the search
+should find topics in packages in other library trees.
 
 If the help search system does not work @emph{at all}, this probably
 indicates that Java support is either not installed or not enabled in
 your browser.  Recent versions of browsers have made Java support
 optional: for example it is optional in Netscape 6/7 and in Opera, and
-may not be installed for IE6 on Windows XP.
+may not be installed for IE6 on Windows XP.  You also need JavaScript
+enabled,
 
 @node Loading a package fails., Package TclTk does not work., My functions are not found by the HTML help search system., Packages
 @section Loading a package fails.
@@ -559,28 +651,46 @@ line or version tab, the package was compiled too long ago.
 
 For package @code{tcltk} to work (try @code{demo(tkdensity)} or
 @code{demo(tkttest)} after @code{library(tcltk)}) you need to have Tcl
-installed.  Download ActiveTcl 8.3.x from
-@uref{http://aspn.activestate.com/ASPN/Downloads/ActiveTcl/} and install
-it.  (Most of the installers that ActiveTcl uses will put the @file{bin}
-directory containing the Tcl and Tk DLLs in your path, but you should
-check.  From R, run @code{Sys.getenv("PATH")} to do so.)  Note that you
-do need 8.3.x and not 8.4.0: follow the links to 8.4.0 and you will find
-8.3.x available there.  (If you build R from the sources yourself you
-can configure it to use 8.4.0.)
+installed.  This is an optional part of the installation by
+@code{@value{VERSION}.exe}, although it is selected by default.
+If the message is
+@smallexample
+Tcl/Tk support files were not installed
+@end smallexample
+the optional files were not installed, and you need to go back to the
+installer and install them.  (Note: package @code{tcltk} is not part of
+the @code{miniR} installer.)
 
-You then need to set the environment variable @code{TCL_LIBRARY}
-(@pxref{How do I set environment variables?}), to something like
-@code{c:/Program Files/Tcl/lib/tcl8.3}.  (The startup code for the
-package will warn you if this is unset.  NB: do not quote the path, even
-if as here it contains spaces. If you forget, you can set the variable
-inside R by something like
-@smallexample
-    Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
-@end smallexample
-.)  Similarly, you can set the path if needed by something like
-@smallexample
-    Sys.putenv(PATH=paste(Sys.getenv("PATH"), "c:/Tcl/bin", sep = ";"))
-@end smallexample
+Alternatively, if you have the environment variable @code{MY_TCLTK} set
+to a non-empty value, it is assumed that you want to use a different
+Tcl/Tk 8.4.x installation, and that this is set up correctly (with the
+DLLs in your path and @code{TCL_LIBRARY} set).  In that case you do not
+need the Tcl/Tk support files installed (but they can be).  Note that
+you do need 8.4.x and not 8.3.x as from R 1.7.0.  (If you build R from
+the sources yourself you can configure it to use 8.3.x.)
+
+
+@c Download ActiveTcl 8.4.x from
+@c @uref{http://aspn.activestate.com/ASPN/Downloads/ActiveTcl/} and install
+@c it.  (Most of the installers that ActiveTcl uses will put the @file{bin}
+@c directory containing the Tcl and Tk DLLs in your path, but you should
+@c check.  From R, run @code{Sys.getenv("PATH")} to do so.)  Note that you
+@c do need 8.4.x and not 8.3.x as from R 1.7.0.  (If you build R from the
+@c sources yourself you can configure it to use 8.3.x.)
+
+@c You then need to set the environment variable @code{TCL_LIBRARY}
+@c (@pxref{How do I set environment variables?}), to something like
+@c @code{c:/Program Files/Tcl/lib/tcl8.4}.  (The startup code for the
+@c package will warn you if this is unset.  NB: do not quote the path, even
+@c if as here it contains spaces. If you forget, you can set the variable
+@c inside R by something like
+@c @smallexample
+@c     Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.4")
+@c @end smallexample
+@c .)  Similarly, you can set the path if needed by something like
+@c @smallexample
+@c     Sys.putenv(PATH=paste(Sys.getenv("PATH"), "c:/Tcl/bin", sep = ";"))
+@c @end smallexample
 
 
 
@@ -589,7 +699,8 @@ inside R by something like
 
 They may well not work between packages installed in different
 libraries.  This is solved under Unix using symbolic links which Windows
-does not implement.
+does not implement.  As from R 1.7.0 links from other library trees to
+the base package will work.
 
 @node update.packages() fails,  , Hyperlinks in Compiled HTML do not work., Packages
 @section @code{update.packages()} fails
@@ -629,8 +740,7 @@ Console' will give details.  For @code{Rterm.exe} see file
 @item Using @code{help.start()} does not automatically send help
 requests to the browser: use @code{options(htmlhelp=TRUE)} to turn this on.
 
-@item The HTML help system can only access packages installed in the standard
-library.
+@item The HTML help system has limitations in supporting cross-library links.
 
 @item Paths to files (e.g. in @code{source()}) can be specified with
 either "/" or "\\".
@@ -711,7 +821,7 @@ act on it).
 @menu
 * My workspace gets saved in a strange place.  How do I stop this?::  
 * How do I store my workspace in a different place?::  
-* Can I load workspaces saved under Unix/GNU-Linux?::  
+* Can I load workspaces saved under Unix/GNU-Linux or MacOS?::  
 @end menu
 
 
@@ -721,7 +831,7 @@ act on it).
 Have you changed the working directory?: see Q5.2.
 
 
-@node How do I store my workspace in a different place?, Can I load workspaces saved under Unix/GNU-Linux?, My workspace gets saved in a strange place.  How do I stop this?, Workspaces
+@node How do I store my workspace in a different place?, Can I load workspaces saved under Unix/GNU-Linux or MacOS?, My workspace gets saved in a strange place.  How do I stop this?, Workspaces
 @section How do I store my workspace in a different place?
 
 Use the `File | Change Dir...' menu item to select a new working
@@ -733,8 +843,8 @@ From the command line you can change the working directory by the
 function @code{setwd}: see its help page.
 
 
-@node Can I load workspaces saved under Unix/GNU-Linux?,  , How do I store my workspace in a different place?, Workspaces
-@section Can I load workspaces saved under Unix/GNU-Linux?
+@node Can I load workspaces saved under Unix/GNU-Linux or MacOS?,  , How do I store my workspace in a different place?, Workspaces
+@section Can I load workspaces saved under Unix/GNU-Linux or MacOS?
 
 Yes.  All ports of R use the same format for workspaces, so they are
 interchangeable (for the same 1.x.? version of R, at least).
@@ -800,7 +910,8 @@ the buffer and so update the console.
 
 They only @strong{seem} to be truncated: that $ at the end indicates you
 can scroll the window to see the rest of the line.  Use the horizontal
-scrollbar or the @key{CTRL + left/right arrow} keys to scroll horizontally.
+scrollbar or the @key{CTRL + left/right arrow} keys to scroll
+horizontally. (The @key{left/right arrow} keys work in the pager too.)
 
 
 
@@ -1049,14 +1160,14 @@ If you want output to be updated on the console, call
 @html
 <p><hr WIDTH="100%">
 <address>
-Last edited 2002 December 24 by Professor B. D. Ripley
+Last edited 2003 February 11 by Professor B. D. Ripley
 <code><a href="mailto:ripley@@stats.ox.ac.uk">ripley@@stats.ox.ac.uk</a></code>
 </address>
 @end html
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2002 December 24 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2003 February 11 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

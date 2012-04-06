@@ -1,6 +1,757 @@
 				Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
+	*	       1.7 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 1.7.0
+
+
+USER-VISIBLE CHANGES
+
+    o	solve(), chol(), eigen() and svd() now use LAPACK routines
+	unless a new back-compatibility option is turned on.  The
+	signs and normalization of eigen/singular vectors may change
+	from earlier versions.
+
+    o	The `methods', `modreg', `mva', `nls' and `ts' packages
+	are now attached by default at startup (in addition to `ctest').
+	The option "defaultPackages" has been added which contains the
+	initial list of packages.  See ?Startup and ?options for details.
+	Note that .First() is no longer used by R itself.
+
+	class() now always (not just when `methods' is attached) gives
+	a non-null class, and UseMethod() always dispatches on the
+	class that class() returns.  This means that methods like
+	foo.matrix and foo.integer will be used.  Functions oldClass()
+	and oldClass<-() get and set the "class" attribute as R
+	without `methods' used to.
+
+    o	The default random number generators have been changed to
+	`Mersenne-Twister' and `Inversion'.  A new RNGversion()
+	function allows you to restore the generators of an earlier R
+	version if reproducibility is required.
+
+    o	Namespaces can now be defined for packages other than `base':
+	see `Writing R Extensions'.  This hides some internal objects
+	and changes the search path from objects in a namespace.  All
+	the base packages (except methods and tcltk) have namespaces,
+	as well as the recommended packages `KernSmooth', `MASS',
+	`boot', `class', `nnet', `rpart' and `spatial'.
+
+    o	Formulae are not longer automatically simplified when terms()
+	is called, so the formulae in results may still be in the
+	original form rather than the equivalent simplified form
+	(which may have reordered the terms): the results are now
+	much closer to those of S.
+
+    o	The tables for plotmath, Hershey and Japanese have been moved
+	from the help pages (example(plotmath) etc) to demo(plotmath) etc.
+
+    o	Errors and warnings are sent to stderr not stdout on
+	command-line versions of R (Unix and Windows).
+
+    o	The R_X11 module is no longer loaded until it is needed, so
+	do test that x11() works in a new Unix-alike R installation.
+
+
+NEW FEATURES
+
+    o	if() and while() give a warning if called with a vector condition.
+
+    o	Installed packages under Unix without compiled code are no
+	longer stamped with the platform and can be copied to other
+	Unix-alike platforms (but not to other OSes because of
+	potential problems with line endings and OS-specific help files).
+
+    o	The internal random number generators will now never return
+	values of 0 or 1 for runif.  This might affect simulation
+	output in extremely rare cases.	 Note that this is not
+	guaranteed for user-supplied random-number generators, nor
+	when the standalone Rmath library is used.
+
+    o	When assigning names to a vector, a value that is too short is
+	padded by character NAs. (Wishlist part of PR#2358)
+
+    o	It is now recommended to use the 'SystemRequirements:' field in
+	the DESCRIPTION file for specifying dependencies external to the
+	R system.
+
+    o	Output text connections no longer have a line-length limit.
+
+    o	On platforms where vsnprintf does not return the needed buffer
+	size the output line-length limit for fifo(), gzfile() and
+	bzfile() has been raised from 10k to 100k chars.
+
+    o	The Math group generic does not check the number of arguments
+	supplied before dispatch: it used to if the default method had
+	one argument but not if it had two.  This allows trunc.POSIXt()
+	to be called via the group generic trunc().
+
+    o	Logical matrix replacement indexing of data frames is now
+	implemented (interpreted as if the lhs was a matrix).
+
+    o	Recursive indexing of lists is allowed, so x[[c(4,2)]] is
+	shorthand for x[[4]][[2]] etc.	(Wishlist PR#1588)
+
+    o	Most of the time series functions now check explicitly for a
+	numeric time series, rather than fail at a later stage.
+
+    o	The postscript output makes use of relative moves, and so is
+	somewhat more compact.
+
+    o	%*% and crossprod() for complex arguments make use of BLAS
+	routines and so may be much faster on some platforms.
+
+    o	arima() has coef(), logLik() (and hence AIC) and vcov() methods.
+
+    o	New function as.difftime() for time-interval data.
+
+    o	basename() and dirname() are now vectorized.
+
+    o	biplot.default() {mva} allows `xlab' and `ylab' parameters to
+	be set (without partially matching to `xlabs' and `ylabs').
+	(Thanks to Uwe Ligges.)
+
+    o	New function capture.output() to send printed output from an expression
+	to a connection or a text string.
+
+    o	ccf() (pckage ts) now coerces its x and y arguments to class "ts".
+
+    o	chol() and chol2inv() now use LAPACK routines by default.
+
+    o	as.dist(.) is now idempotent, i.e., works for "dist" objects.
+
+    o	Generic function confint() and `lm' method (formerly in
+	package MASS, which has `glm' and `nls' methods).
+
+    o	New function constrOptim() for optimisation under linear inequality
+	constraints.
+
+    o	Add `difftime' subscript method and methods for the group
+	generics. (Thereby fixing PR#2345)
+
+    o	download.file() can now use HTTP proxies which require `basic'
+	username/password authentication.
+
+    o	dump() has a new argument `envir'.  The search for named
+	objects now starts by default in the environment from which
+	dump() is called.
+
+    o	The edit.matrix() and edit.data.frame() editors can now handle
+	logical data.
+
+    o	New argument `local' for example() (suggested by Andy Liaw).
+
+    o	New function file.symlink() to create symbolic file links
+	where supported by the OS.
+
+    o	New generic function flush() with a method to flush connections.
+
+    o	New function force() to force evaluation of a formal argument.
+
+    o	New functions getFromNamespace(), fixInNamespace() and
+	getS3method() to facilitate developing code in packages with
+	namespaces.
+
+    o	glm() now accepts `etastart' and `mustart' as alternative ways
+	to express starting values.
+
+    o	New function gzcon() which wraps a connection and provides
+	(de)compression compatible with gzip.
+
+	load() now uses gzcon(), so can read compressed saves from
+	suitable connections.
+
+    o	help.search() can now reliably match individual aliases and
+	keywords, provided that all packages searched were installed
+	using R 1.7.0 or newer.
+
+    o	hist.default() now returns the nominal break points, not those
+	adjusted for numerical tolerances.
+
+	To guard against unthinking use, `include.lowest' in
+	hist.default() is now ignored, with a warning, unless `breaks'
+	is a vector.  (It either generated an error or had no effect,
+	depending how prettification of the range operated.)
+
+    o	New generic functions influence(), hatvalues() and dfbeta()
+	with lm and glm methods; the previously normal functions rstudent(),
+	rstandard(), cooks.distance() and dfbetas() became generic.
+	These have changed behavior for glm objects -- all originating from
+	John Fox' car package.
+
+    o	interaction.plot() has several new arguments, and the legend
+	is not clipped anymore by default.  It internally uses axis(1,*)
+	instead of mtext().
+	This also addresses "bugs" PR#820, PR#1305, PR#1899.
+
+    o	New isoreg() function and class for isotonic regression
+	(`modreg' package).
+
+    o	La.chol() and La.chol2inv() now give interpretable error
+	messages rather than LAPACK error codes.
+
+    o	legend() has a new `plot' argument.  Setting it `FALSE' gives
+	size information without plotting (suggested by U.Ligges).
+
+    o	library() was changed so that when the methods package is
+	attached it no longer complains about formal generic functions
+	not specific to the library.
+
+    o	list.files()/dir() have a new argument `recursive'.
+
+    o	lm.influence() has a new `do.coef' argument allowing *not* to
+	compute casewise changed coefficients.	This makes plot.lm() much
+	quicker for large data sets.
+
+    o	load() now returns invisibly a character vector of the names
+	of the objects which were restored.
+
+    o	New convenience function loadURL() to allow loading data files
+	from URLs (requested by Frank Harrell).
+
+    o	New function mapply(), a multivariate lapply().
+
+    o	New function md5sum() in package tools to calculate MD5
+	checksums on files (e.g. on parts of the R installation).
+
+    o	medpolish() {package eda} now has an `na.rm' argument (PR#2298).
+
+    o	methods() now looks for registered methods in namespaces, and
+	knows about many objects that look like methods but are not.
+
+    o	mosaicplot() has a new default for `main', and supports the
+	`las' argument (contributed by Uwe Ligges and Wolfram Fischer).
+
+    o	An attempt to open() an already open connection will be detected
+	and ignored with a warning.  This avoids improperly closing
+	some types of connections if they are opened repeatedly.
+
+    o	optim(method = "SANN") can now cover combinatorial optimization
+	by supplying a move function as the `gr' argument (contributed
+	by Adrian Trapletti).
+
+    o	PDF files produced by pdf() have more extensive information
+	fields, including the version of R that produced them.
+
+    o	On Unix(-alike) systems the default PDF viewer is now determined
+	during configuration, and available as the 'pdfviewer' option.
+
+    o	pie(...) has always accepted graphical pars but only passed
+	them on to title().  Now pie(, cex=1.5) works.
+
+    o	plot.dendrogram (`mva' package) now draws leaf labels if present
+	by default.
+
+    o	New plot.design() function as in S.
+
+    o	The postscript() and PDF() drivers now allow the title to be set.
+
+    o	New function power.anova.test(), contributed by Claus Ekstrøm.
+
+    o	power.t.test() now behaves correctly for negative delta in the
+	two-tailed case.
+
+    o	power.t.test() and power.prop.test() now have a `strict'
+	argument that includes rejections in the "wrong tail" in the
+	power calculation. (Based in part on code suggested by Ulrich
+	Halekoh.)
+
+    o	prcomp() is now fast for n x m inputs with m >> n.
+
+    o	princomp() no longer allows the use of more variables than
+	units: use prcomp() instead.
+
+    o	princomp.formula() now has principal argument `formula', so
+	update() can be used.
+
+    o	Printing an object with attributes now dispatches on the
+	class(es) of the attributes. See ?print.default for the fine
+	print. (PR#2506)
+
+    o	print.matrix() and prmatrix() are now separate functions.
+	prmatrix() is the old S-compatible function, and
+	print.matrix() is a proper print method, currently identical
+	to print.default().  prmatrix() and the old print.matrix()
+	did not print attributes of a matrix, but the new print.matrix()
+	does.
+
+    o	print.summary.{lm,glm} now default to symbolic.cor = FALSE, but
+	symbolic.cor can be passed to the print methods from the
+	summary methods.  print.summary.{lm,glm} print correlations to
+	2 decimal places, and the symbolic printout avoids abbreviating
+	labels.
+
+    o	If a prompt() method is called with 'filename' as 'NA', a
+	list-style representation of the documentation shell generated
+	is returned.  New function promptData() for documenting objects
+	as data sets.
+
+    o	qqnorm() and qqline() have an optional logical argument
+	`datax' to transpose the plot (S-PLUS compatibility).
+
+    o	qr() now has the option to use LAPACK routines, and the
+	results can be used by the helper routines qr.coef(), qr.qy()
+	and qr.qty().  The LAPACK-using versions may be much faster
+	for large matrices (using an optimized BLAS) but are less
+	flexible.
+
+    o	QR objects now have class "qr", and solve.qr() is now just the
+	method for solve() for the class.
+
+    o	New function r2dtable() for generating random samples of two-way
+	tables with given marginals using Patefield's algorithm.
+
+    o	rchisq() now has a non-centrality parameter `ncp', and there's a
+	C API for rnchisq().
+
+    o	New generic function reorder() with a dendrogram method;
+	new order.dendrogram() and heatmap().
+
+    o	require() has a new argument, character.only,
+	  -- to make it align with library.
+
+    o	New functions rmultinom() and dmultinom(), the first one with
+	a C API.
+
+    o	New function runmed() for fast runnning medians (`modreg' package).
+
+    o	New function slice.index() for identifying indexes with respect
+	to slices of an array.
+
+    o	solve.default(a) now gives the dimnames one would expect.
+
+    o	stepfun() has a new `right' argument for right-continuous step
+	function construction.
+
+    o	str() now shows ordered factors different from unordered ones.
+	It also differentiates "NA" and as.character(NA), also for factor
+	levels.
+
+    o	symnum() has a new logical argument `abbr.colnames'.
+
+    o	summary(<logical>) now mentions NA's as suggested by
+	Göran Broström.
+
+    o	summaryRprof() now prints times with a precision appropriate
+	to the sampling interval, rather than always to 2dp.
+
+    o	New function Sys.getpid() to get the process ID of the R session.
+
+    o	table() now allows exclude= with factor arguments (requested by
+	Michael Friendly).
+
+    o	The tempfile() function now takes an optional second argument
+	giving the directory name.
+
+    o	The ordering of terms for terms.formula(keep.order=FALSE) is
+	now defined on the help page and used consistently, so that
+	repeated calls will not alter the ordering (which is why
+	delete.response() was failing: see the bug fixes).  The
+	formula is not simplified unless the new argument `simplify'
+	is true.
+
+    o	added "[" method for terms objects.
+
+    o	New argument `silent' to try().
+
+    o	ts() now allows arbitrary values for y in start/end = c(x, y):
+	it always allowed y < 1 but objected to y > frequency.
+
+    o	unique.default() now works for POSIXct objects, and hence so
+	does factor().
+
+
+    o	Package tcltk now allows return values from the R side to the
+	Tcl side in callbacks and the R_eval command. If the return
+	value from the R function or expression is of class "tclObj"
+	then it will be returned to Tcl.
+
+    o	A new HIGHLY EXPERIMENTAL graphical user interface using the tcltk
+	package is provided. Currently, little more than a proof of concept.
+	It can be started by calling "R -g Tk" (this may change in later
+	versions) or by evaluating tkStartGUI(). Only Unix-like systems
+	for now. It is not too stable at this point; in particular, signal
+	handling is not working properly.
+
+
+    o	Changes to support name spaces:
+
+	- Placing base in a name space can no longer be disabled by
+	  defining the environment variable R_NO_BASE_NAMESPACE.
+
+	- New function topenv() to determine the nearest top level
+	  environment (usually .GlobalEnv or a name space environment).
+
+	- Added name space support for packages that do not use methods.
+
+    o	Formal classes and methods can be `sealed', by using the
+	corresponding argument to setClass or setMethod.  New
+	functions isSealedClass() and isSealedMethod() test sealing.
+
+    o	packages can now be loaded with version numbers. This allows
+	for multiple versions of files to be installed (and potentially
+	loaded). Some serious testing will be going on, but it should
+	have no effect unless specifically asked for.
+
+
+INSTALLATION CHANGES
+
+    o	TITLE files in packages are no longer used, the Title field
+	in the DESCRIPTION file being preferred.  TITLE files will be
+	ignored in both installed packages and source packages.
+
+    o	When searching for a Fortran 77 compiler, configure by default
+	now also looks for Fujitsu's frt and Compaq's fort, but no
+	longer for cf77 and cft77.
+
+    o	Configure checks that mixed C/Fortran code can be run before
+	checking compatibility on ints and doubles: the latter test
+	was sometimes failing because the Fortran libraries were not
+	found.
+
+    o	PCRE and bzip2 are built from versions in the R sources if the
+	appropriate library is not found.
+
+    o	New configure option --with-lapack to allow high-performance
+	LAPACK libraries to be used: a generic LAPACK library will be
+	used if found.	This option is not the default.
+
+    o	New configure options --with-libpng, --with-jpeglib, --with-zlib,
+	--with-bzlib and --with-pcre, principally to allow these
+	libraries to be avoided if they are unsuitable.
+
+    o	If the precious variable R_BROWSER is set at configure time
+	it overrides the automatic selection of the default browser.
+	It should be set to the full path unless the browser appears
+	at different locations on different client machines.
+
+    o	Perl requirements are down again to 5.004 or newer.
+
+    o	Autoconf 2.57 or later is required to build the configure
+	script.
+
+    o	Configure provides a more comprehensive summary of its results.
+
+    o	Index generation now happens when installing source packages
+	using R code in package tools.	An existing 'INDEX' file is used
+	as is; otherwise, it is automatically generated from the \name
+	and \title entries in the Rd files.  Data, demo and vignette
+	indices are computed from all available files of the respective
+	kind, and the corresponding index information (in the Rd files,
+	the 'demo/00Index' file, and the \VignetteIndexEntry{} entries,
+	respectively).	These index files, as well as the package Rd
+	contents data base, are serialized as R objects in the 'Meta'
+	subdirectory of the top-level package directory, allowing for
+	faster and more reliable index-based computations (e.g., in
+	help.search()).
+
+    o	The Rd contents data base is now computed when installing source
+	packages using R code in package tools.	 The information is
+	represented as a data frame without collapsing the aliases and
+	keywords, and serialized as an R object.  (The 'CONTENTS' file
+	in Debian Control Format is still written, as it is used by the
+	HTML search engine.)
+
+    o	A NAMESPACE file in root directory of a source package is copied
+	to the root of the package installation directory.  Attempting to
+	install a package with a NAMESPACE file using --save signals an
+	error; this is a temporary measure.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The assignment operator `_' will be removed in the next
+	release and users are now warned on every usage: you may even see
+	multiple warnings for each usage.
+
+	If environment variable R_NO_UNDERLINE is set to anything of
+	positive length then use of `_' becomes a syntax error.
+
+    o	machine(), Machine() and Platform() are defunct.
+
+    o	restart() is defunct.  Use try(), as has long been recommended.
+
+    o	The deprecated arguments `pkg' and `lib' of system.file() have
+	been removed.
+
+    o	printNoClass() {methods} is deprecated (and moved to base,
+	since it was a copy of a base function).
+
+    o	Primitives dataClass() and objWithClass() have been replaced
+	by class() and class<-(); they were internal support functions
+	for use by package methods.
+
+    o	The use of SIGUSR2 to quit a running R process under Unix is
+	deprecated, the signal may need to be reclaimed for other
+	purposes.
+
+
+UTILITIES
+
+    o	R CMD check more compactly displays the tests of DESCRIPTION
+	meta-information.  It now reports demos and vignettes without
+	available index information.  Unless installation tests are
+	skipped, checking is aborted if the package dependencies cannot
+	be resolved at run time.  Rd files are now also explicitly
+	checked for empty \name and \title entries.  The examples are
+	always run with T and F redefined to give an error if used
+	instead of TRUE and FALSE.
+
+    o	The Perl code to build help now removes an existing example
+	file if there are no examples in the current help file.
+
+    o	R CMD Rdindex is now deprecated in favor of function Rdindex()
+	in package tools.
+
+    o	Sweave() now encloses the Sinput and Soutput environments of
+	each chunk in an Schunk environment. This allows to fix some
+	vertical spacing problems when using the latex class slides.
+
+
+C-LEVEL FACILITIES
+
+    o	A full double-precision LAPACK shared library is made
+	available as -lRlapack.	 To use this include
+	$(LAPACK_LIBS) $(BLAS_LIBS) in PKG_LIBS.
+
+    o	Header file R_ext/Lapack.h added.  C declarations of BLAS
+	routines moved to R_ext/BLAS.h and included in R_ext/Applic.h
+	and R_ext/Linpack.h for backward compatibility.
+
+    o	R will automatically call initialization and unload routines, if
+	present, in shared libraries/DLLs during dyn.load() and
+	dyn.unload() calls. The routines are named R_init_<dll name>
+	and R_unload_<dll name>, respectively.	See the Writing R
+	Extensions Manual for more information.
+
+    o	Routines exported directly from the R executable for use with
+	.C(), .Call(), .Fortran() and .External() are now accessed via
+	the registration mechanism (optionally) used by packages.  The
+	ROUTINES file (in src/appl/) and associated scripts to
+	generate FFTab.h and FFDecl.h are no longer used.
+
+    o	Entry point Rf_append is no longer in the installed headers
+	(but is still available).  It is apparently unused.
+
+    o	Many conflicts between other headers and R's can be avoided by
+	defining STRICT_R_HEADERS and/or R_NO_REMAP -- see `Writing R
+	Extensions' for details.
+
+    o	New entry point R_GetX11Image and formerly undocumented
+	ptr_R_GetX11Image are in new header R_ext/GetX11Image.	These
+	are used by package tkrplot.
+
+
+BUG FIXES
+
+    o	Sys.sleep() on Unix was having trouble with waits of less than 0.5s
+
+    o	The fix to PR#2396 broke read.table() on files with CR line
+	endings. (PR#2469)   Separate problem with this on Carbon MacOS
+	build fixed as well.
+
+    o	Converting Sweave files to noweb syntax using SweaveSyntConv()
+	was broken.
+
+    o	Printing numbers near the minimum could get the number of
+	significant figures wrong due to underflow: for example 4e-308
+	might print as 4.00000e-308.  (Seen on some Windows builds,
+	and also on numbers around 1e-317 on Linux.)
+
+    o	wilcox.test() could give integer overflow warnings on very long
+	vectors.  Also added tests for numeric inputs, as per the help
+	page.  (PR#2453)
+
+    o	Printing unquoted character vectors containing escape
+	characters was computing the wrong length and hence
+	misaligning names.  This was due to a bug in Rstrlen which
+	might have had other effects.
+
+    o	if(logical(0)) and while(logical(0)) now report zero length,
+	not `missing value where logical is needed'.
+
+    o	The gaussian() and inverse.gaussian() families were documented
+	to allow only one link, which has not been true in R for at
+	least four years.
+
+    o	prmatrix() forced conversion to character if `na.print' was
+	used, and that conversion neither respected `digits' nor
+	`quote'.
+
+    o	Rprof() might give misleading results for too small values of
+	`interval' and in practice the default 20ms was about as small
+	as is advisable on Linux.  Now the interval is forced to be at
+	least one clock tick.
+
+    o	summary.data.frame() was not giving interpretable results when
+	the data frame contained a data frame as a column. (PR#1891)
+
+    o	delete.response() might re-order the rhs terms so prediction
+	might fail or even give incorrect results. (PR#2206)
+
+    o	StructTS() now accepts numeric time series of integer storage mode.
+
+    o	all(), any() now handle NAs as documented.
+
+    o	Subsetting arrays to a result with 0 dimension(s) failed if
+	the array had dimnames. (PR#2507)
+
+    o	If the call to data.frame() included 0-row arguments, it tried
+	to replicate them to the maximum number of rows, and failed if
+	this was 1 or more.
+
+    o	replicate() now understands data frames to which na.omit() has
+	been applied.
+
+    o	is.ts() was too liberal: a time series must have at least one point.
+
+    o	methods() was sorting by package, not by name.
+
+    o	symbols(thermometers=) was often giving a spurious warning about
+	the range.
+
+    o	tcltk was using deprecated internals of the Tcl library when
+	accessing error messages.  Not likely to be a user-visible
+	change.
+
+    o	The automatic search for BLAS libs now tries Sun's libsunperf
+	the way the latest versions require. (PR#2530)
+
+    o	str(array(1)) now does show the array.
+	str(Surv(...)) now works again.
+
+    o	step(), add1.default() and drop1.default() now work somewhat
+	better if called from a function.
+
+    o	page() was searching from the wrong environment, and so
+	searching base before the workspace.
+
+    o	crossprod(Z) for complex Z was returning nonsense.
+
+    o	La.chol2inv() gave incorrect results unless the matrix was square.
+
+    o	When the POSIXt date functions were required to guess DST,
+	they sometimes guessed correctly that DST was in force but
+	converted a POSIXlt time as if standard time was given.
+
+    o	c/rbind were not handling zero col/row matrices correctly.
+	(PR#2541 was one symptom.)
+
+    o	approx() and approxfun() now work with 1 knot if
+	method = "constant".  stepfun(), ecdf() and plot.stepfun() do so
+	as well.
+
+    o	AIC.lm/default was failing if multiple objects and k were
+	specified.  (PR#2518)
+
+    o	removeMethods{methods} was broken. (PR#2519)
+
+    o	summary.glm() had two `aic' components in the returned object.
+
+    o	autoload() was returning the value of its last command, a
+	promise, even though it was documented to have no value.
+	As a result some packages (e.g. nlme) were loading packages
+	they meant to autoload.
+
+    o	Fixes to methods and classes:
+	   - show() is consistent with using setOldClass for S3 classes.
+	   - several problems with the coerce and replace methods
+	     generated by setIs have been fixed.
+	   - more thorough tests & informative messages for invalid
+	     `def' arguments to setGeneric
+	   - setGeneric will now create the generic function even when
+	     a generic of the same name already exists (it does issue
+	     a warning).
+
+    o	unz() connections could no longer be opened. (PR#2579)
+
+    o	unique(ordered factor) returned an unordered factor. (PR#2591)
+
+    o	x[] <- value coerced x to the mode of value if and only if x
+	had length 0!  (Should only happen if x is null: PR#2590)
+
+    o	lm() mislabelled the cols of the qr decomposition. (cause of PR#2586)
+
+    o	data() looks for file extensions in an order prescribed in the
+	help file: previously whether foo.R or foo.csv was used was
+	locale-dependent.
+
+    o	sys.function() now returns the actual function being evaluated in
+	the specified frame rather than one inferred from the call.
+
+    o	match.call() now uses the definition of the actual function being
+	evaluated rather than one inferred from the call.
+
+    o	abbreviate(*, dot = TRUE) now only adds a "." where abbreviations
+	did happen.
+
+    o	Changing timezones in the POSIXt functions was not working on
+	some Linux systems, and this has been corrected.
+
+    o	ks.test() in package ctest had numerical problems in the lower
+	tail of the asymptotic distribution (PR#2571).
+
+    o	Sweave() now handles empty chunks at the end of files correctly.
+
+    o	[<-() lost the object bit if coercion was involved.
+
+    o	package::object wasn't being deparsed properly.
+
+    o	seq.POSIXt() with `by' an object of class "difftime" ignored
+	the units.
+
+    o	rank(c("B", NA)) no longer returns character.
+
+    o	reference to by() added in ?tapply
+
+    o	?lm describes what happens with matrix response
+
+    o	The X11 device has improved event handling. In particular it
+	used to often miss the last of a series of resize events.
+
+    o	lm.influence() and related functions now work again for the
+	multivariate case and when there are zero weights.
+
+    o	format( <character> ) now always keeps names and dimnames.
+
+    o	table(factor(c(2,NA), exclude=NULL)) prints better now.
+
+    o	predict(foo, type = "terms") and hence
+	residuals(foo, type = "partial") now work for lm and glm objects
+	with weights zero.  Further, model.matrix() is now only called once.
+
+    o	R CMD config now works correctly when called from a Makefile
+	using GNU make.
+
+    o	The data.frame method for rbind() was
+	- converting character columns to factors,
+	- converting ordered factor columns to unordered factors,
+	- failing to append correctly a factor to a character column
+	  and vice versa.
+
+    o	as.hclust.twins() now does provide proper `labels', `method' and
+	`call' components.
+
+    o	cycle() sometimes failed on a time series which started at a cycle
+	other than 1.
+
+    o	read.dcf() read incorrectly files which did not end in a new line.
+
+    o   read.socket() dropped certain non-alphanumeric characters. (PR#2639)
+
+    o   termplot() handles missing data better (PR#2687, 
+         <Mark.Bravington@csiro.au>)
+
+    o	Corrected MacRoman encoding for Icircumflex etc.
+
+
+
+	**************************************************
+	*						 *
 	*	       1.6 SERIES NEWS			 *
 	*						 *
 	**************************************************
@@ -69,6 +820,12 @@ BUG FIXES
 
     o	c() was converting NA names to "NA": now proper NA strings are
 	used wherever possible. (PR#2358)
+
+    o	Checks in the C code prevent possible memory faults when
+	standardGeneric is called invalidly.
+
+    o	Macros NEW_OBJECT (aka NEW) and MAKE_CLASS added; required by
+	the .Call interface to generate arbitrary objects.
 
     o	A typo was causing segfaults when using data.entry under SuSE.
 
@@ -1295,7 +2052,7 @@ UTILITIES
 
     o	R CMD check, build and INSTALL produce outline-type output.
 
-    o	QA functions in package 'tools' now return the results of their
+    o	QC functions in package 'tools' now return the results of their
 	computations as objects with suitable print() methods.	By
 	default, output	is only produced if a problem was found.
 
@@ -2142,7 +2899,7 @@ DOCUMENTATION CHANGES
 UTILITIES
 
     o	New package `tools' for package development and administration
-	tools, containing the QA tools checkFF(), codoc() and undoc()
+	tools, containing the QC tools checkFF(), codoc() and undoc()
 	previously in package base, as well as the following new ones:
 
 	-  checkAssignFuns() for checking whether the final argument of
@@ -4074,7 +4831,6 @@ BUG FIXES
     o	Coercing lists to functions failed if argument list was empty.
 	(PR#743). Also coercing functions to lists was wrong when the
 	body was a single constant.
-
 
 
 	**************************************************

@@ -29,12 +29,12 @@ is.na.data.frame <- function (x)
 
 is.data.frame <- function(x) inherits(x, "data.frame")
 
-I <- function(x) { structure(x, class = unique(c("AsIs", class(x)))) }
+I <- function(x) { structure(x, class = unique(c("AsIs", oldClass(x)))) }
 
 print.AsIs <- function (x, ...)
 {
-    cl <- class(x)
-    class(x) <- cl[cl != "AsIs"]
+    cl <- oldClass(x)
+    oldClass(x) <- cl[cl != "AsIs"]
     NextMethod("print")
     invisible(x)
 }
@@ -77,11 +77,10 @@ dimnames.data.frame <- function(x) list(attr(x,"row.names"), names(x))
 as.data.frame <- function(x, row.names = NULL, optional = FALSE) {
     if(is.null(x))			# can't assign class to NULL
 	return(as.data.frame(list()))
-    if(is.null(attr(x, "class"))) class(x) <- data.class(x)
     UseMethod("as.data.frame", x, row.names, optional)
 }
 as.data.frame.default <- function(x, row.names = NULL, optional = FALSE)
-    stop(paste("can't coerce", data.class(x), "into a data.frame"))
+    stop(paste("can't coerce", class(x), "into a data.frame"))
 
 
 ###  Here are methods ensuring that the arguments to "data.frame"
@@ -89,7 +88,7 @@ as.data.frame.default <- function(x, row.names = NULL, optional = FALSE)
 
 as.data.frame.data.frame <- function(x, row.names = NULL, optional = FALSE)
 {
-    cl <- class(x)
+    cl <- oldClass(x)
     i <- match("data.frame", cl)
     if(i > 1)
 	class(x) <- cl[ - (1:(i-1))]
@@ -203,10 +202,12 @@ as.data.frame.model.matrix <- function(x, row.names = NULL, optional = FALSE)
     value
 }
 
+## will always have a class here
 "[.AsIs" <- function(x, i, ...) structure(NextMethod("["), class = class(x))
 
 as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE)
 {
+    ## why not remove class and NextMethod here?
     if(length(dim(x))==2)
 	as.data.frame.model.matrix(x, row.names, optional)
     else
@@ -284,7 +285,7 @@ data.frame <-
     nr <- max(nrows)
     for(i in (1:n)[nrows < nr]) {
 	xi <- vlist[[i]]
-	if(length(xi)==1 && nr%%nrows[i]==0) {
+	if(length(xi)==1 && nrows[i] > 0 && nr%%nrows[i]==0) {
             xi1 <- xi[[1]]
             if(is.vector(xi1) || is.factor(xi1)) {
                 vlist[[i]] <- list(rep(xi1, length=nr))
@@ -292,7 +293,7 @@ data.frame <-
             }
             if(is.character(xi1) && class(xi1) == "AsIs") {
                 ## simple char vectors only
-                cl <- class(xi1) # `methods' adds a class
+                cl <- class(xi1) # `methods' adds a class -- Eh?
                 vlist[[i]] <- list(structure(rep(xi1, length=nr), class=cl))
                 next
             }
@@ -349,14 +350,14 @@ data.frame <-
 	y <- NextMethod("[")
 	if(any(is.na(names(y))))
 	    stop("undefined columns selected")
-	return(structure(y, class = class(x), row.names = row.names(x)))
+	return(structure(y, class = oldClass(x), row.names = row.names(x)))
     }
 
     ## preserve the attributes for later use ...
 
     rows <- attr(x, "row.names")
     cols <- names(x)
-    cl <- class(x)
+    cl <- oldClass(x) # doesn't really matter unless called directly
     class(x) <- attr(x, "row.names") <- NULL
 
     ## handle the column only subsetting ...
@@ -446,6 +447,27 @@ data.frame <-
         } else {
             ## case df[ind]
             ## really ambiguous, but follow common use as if list
+            ## except for a full-sized logical matrix
+            if(is.logical(i) && is.matrix(i) && all(dim(i) == dim(x))) {
+                nreplace <- sum(i, na.rm=T)
+                nv <- nrow(x)
+                if(length(value) != 1 && length(value) != nreplace)
+                    stop("rhs is the wrong length for indexing by a logical matrix")
+                if(length(value) == 1) value <- rep(value, length = nreplace)
+                n <- 0
+                for(v in seq(len = dim(i)[2])) {
+                    thisvar <- i[, v, drop = TRUE]
+                    nv <- sum(thisvar, na.rm=T)
+                    if(nv) {
+                        if(is.matrix(x[[v]]))
+                            x[[v]][thisvar, ] <- value[n+(1:nv)]
+                        else
+                            x[[v]][thisvar] <- value[n+(1:nv)]
+                    }
+                    n <- n+nv
+                }
+                return(x)
+            }
             if(is.matrix(i))
                 stop("matrix subscripts not allowed in replacement")
             j <- i
@@ -457,7 +479,7 @@ data.frame <-
     else {
 	stop("Need 0, 1, or 2 subscripts")
     }
-    cl <- class(x)
+    cl <- oldClass(x)
     ## delete class: Version 3 idiom
     ## to avoid any special methods for [[, etc
     class(x) <- NULL
@@ -577,7 +599,7 @@ data.frame <-
 
 "[[<-.data.frame"<- function(x, i, j, value)
 {
-    cl <- class(x)
+    cl <- oldClass(x)
     ## delete class: Version 3 idiom
     ## to avoid any special methods for [[, etc
     class(x) <- NULL
@@ -669,7 +691,7 @@ xpdrows.data.frame <- function(x, old.rows, new.rows)
     for (i in 1:nc) {
 	y <- x[[i]]
 	dy <- dim(y)
-	cy <- class(y)
+	cy <- oldClass(y)
 	class(y) <- NULL
 	if (length(dy) == 2) {
 	    dny <- dimnames(y)
@@ -745,7 +767,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
         if(is.matrix(xi)) allargs[[i]] <- xi <- as.data.frame(xi)
 	if(inherits(xi, "data.frame")) {
 	    if(is.null(cl))
-		cl <- class(xi)
+		cl <- oldClass(xi)
 	    ri <- row.names(xi)
 	    ni <- length(ri)
 	    if(is.null(clabs))
@@ -763,19 +785,28 @@ rbind.data.frame <- function(..., deparse.level = 1)
 		nvar <- length(value)
 		all.levs <- vector("list", nvar)
 		has.dim <- logical(nvar)
+                facCol <- logical(nvar)
+                ordCol <- logical(nvar)
 		for(j in 1:nvar) {
 		    xj <- value[[j]]
-		    if( !is.null(levels(xj)) )
+		    if( !is.null(levels(xj)) ) {
 			all.levs[[j]] <- levels(xj)
+                        facCol[j] <- TRUE # turn categories into factors
+                    } else facCol[j] <- is.factor(xj)
+                    ordCol[j] <- is.ordered(xj)
 		    has.dim[j] <- length(dim(xj)) == 2
 		}
 	    }
 	    else for(j in 1:nvar)
-		if(length(lij <- levels(xi[[j]])) > 0) {
-		    if(is.null(pi) || is.na(jj <- pi[[j]]))
-			jj <- j
-		    all.levs[[jj]] <- unique(c(all.levs[[jj]], lij))
-		}
+                if(facCol[j]) {
+                    xij <- xi[[j]]
+                    if(is.null(pi) || is.na(jj <- pi[[j]])) jj <- j
+                    if(length(lij <- levels(xij)) > 0) {
+                        all.levs[[jj]] <- unique(c(all.levs[[jj]], lij))
+                        ordCol[j] <- ordCol[j] & is.ordered(xij)
+                    } else if(is.character(xij))
+                        all.levs[[jj]] <- unique(c(all.levs[[jj]], xij))
+                }
 	}
 	else if(is.list(xi)) {
 	    ni <- range(sapply(xi, length))
@@ -814,7 +845,8 @@ rbind.data.frame <- function(..., deparse.level = 1)
     names(value) <- clabs
     for(j in 1:nvar)
 	if(length(lij <- all.levs[[j]]) > 0)
-	    value[[j]] <- factor(as.vector(value[[j]]), lij)
+            value[[j]] <-
+                factor(as.vector(value[[j]]), lij, ordered = ordCol[j])
     if(any(has.dim)) {
 	rmax <- max(unlist(rows))
 	for(i in (1:nvar)[has.dim])
@@ -839,17 +871,19 @@ rbind.data.frame <- function(..., deparse.level = 1)
 	    pi <- pseq
 	for(j in 1:nvar) {
 	    jj <- pi[j]
+            xij <- xi[[j]]
 	    if(has.dim[jj])
-		value[[jj]][ri,	 ] <- xi[[j]]
-	    else value[[jj]][ri] <- xi[[j]]
+		value[[jj]][ri,	 ] <- xij
+            ## coerce factors to vectors, in case lhs is character or
+            ## level set has changed
+	    else value[[jj]][ri] <- if(is.factor(xij)) as.vector(xij) else xij
 	}
     }
-    for(j in 1:nvar) {
-	xj <- value[[j]]
-	if(!has.dim[j] && !inherits(xj, "AsIs") &&
-		is.character(xj))
-	    value[[j]] <- factor(xj)
-    }
+#     for(j in 1:nvar) {
+# 	xj <- value[[j]]
+# 	if(!has.dim[j] && !inherits(xj, "AsIs") && is.character(xj))
+# 	    value[[j]] <- factor(xj)
+#     }
     rlabs <- unlist(rlabs)
     while(any(xj <- duplicated(rlabs)))
 	rlabs[xj] <- paste(rlabs[xj], 1:sum(xj), sep = "")
@@ -879,14 +913,9 @@ print.data.frame <-
 	print.default(names(x), quote = FALSE)
 	cat("<0 rows> (or 0-length row.names)\n")
     } else {
-	if(!is.null(digits)) {
-	    ## if 'x' has factors & numeric, as.matrix(x) will apply format(.)
-	    ## to the numbers -- set options(.) for the following print(.):
-	    op <- options(digits = digits)
-	    on.exit(options(op))
-	}
 	## avoiding picking up e.g. format.AsIs
-	print.matrix(format.data.frame(x), ..., quote = quote, right = right)
+	print(as.matrix(format.data.frame(x, digits=digits)), ...,
+              quote = quote, right = right)
     }
     invisible(x)
 }
@@ -962,7 +991,7 @@ Math.data.frame <- function (x, ...)
 	sapply(x, is.complex)
     if (all(mode.ok)) {
 	r <- lapply(x, var.f)
-	class(r) <- class(x)
+	class(r) <- oldClass(x)
 	row.names(r) <- row.names(x)
 	return(r)
     }

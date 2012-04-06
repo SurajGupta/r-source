@@ -4,7 +4,7 @@ str <- function(object, ...) UseMethod("str")
 str.data.frame <- function(object, ...)
 {
     ## Method to 'str' for  'data.frame' objects
-    ## $Id: str.R,v 1.23 2002/07/04 14:16:50 maechler Exp $
+    ## $Id: str.R,v 1.28 2003/04/01 16:11:05 maechler Exp $
     if(! is.data.frame(object)) {
 	warning("str.data.frame(.) called with non-data.frame. Coercing one.")
 	object <- data.frame(object)
@@ -12,12 +12,12 @@ str.data.frame <- function(object, ...)
 
     ## Show further classes // Assume that they do NOT have an own Method --
     ## not quite perfect ! (.Class = 'remaining classes', starting with current)
-    cl <- class(object); cl <- cl[cl != "data.frame"]  #- not THIS class
+    cl <- oldClass(object); cl <- cl[cl != "data.frame"]  #- not THIS class
     if(0 < length(cl)) cat("Classes", cl, " and ")
 
     cat("`data.frame':	", nrow(object), " obs. of  ",
 	(p <- length(object)), " variable", if(p != 1)"s", if(p > 0)":",
-        "\n",sep="")
+	"\n",sep="")
 
     ## calling next method, usually  str.default:
     if(length(l <- list(...)) && any("give.length" == names(l)))
@@ -27,30 +27,29 @@ str.data.frame <- function(object, ...)
 
 str.default <-
     function(object, max.level = 0, vec.len = 4, digits.d = 3,
-             nchar.max = 128, give.attr = TRUE, give.length = TRUE,
-             wid = getOption("width"), nest.lev = 0,
-             indent.str = paste(rep(" ", max(0, nest.lev + 1)), collapse = ".."),
-             ...)
+	     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
+	     wid = getOption("width"), nest.lev = 0,
+	     indent.str = paste(rep(" ", max(0, nest.lev + 1)), collapse = ".."),
+	     ...)
 {
     ## Purpose: Display STRucture of any R - object (in a compact form).
-    ## ------------------------------------------------------------------------
-    ## Arguments: --- see HELP file --
-    ##	max.level: Maximal level of nesting to be reported (0: as many as nec.)
-    ##
+    ## --- see HELP file --
     ## ------------------------------------------------------------------------
     ## Author: Martin Maechler <maechler@stat.math.ethz.ch>	1990--1997
     ## ------ Please send Bug-reports, -fixes and improvements !
     ## ------------------------------------------------------------------------
-    ## $Id: str.R,v 1.23 2002/07/04 14:16:50 maechler Exp $
 
     oo <- options(digits = digits.d); on.exit(options(oo))
     le <- length(object)
+    P0 <- function(...) paste(..., sep="")
+    pasteCh <- function(x)
+	sapply(x, function(a) if(is.na(a)) "NA" else P0('"',a,'"'),
+	       USE.NAMES = FALSE)
     ## le.str: not used for arrays:
     le.str <-
 	if(is.na(le)) " __no length(.)__ "
 	else if(give.length) {
-	    if(le > 0) paste("[1:", paste(le), "]", sep = "")
-	    else "(0)"
+	    if(le > 0) P0("[1:", paste(le), "]") else "(0)"
 	} else ""
     v.len <- vec.len # modify v.len, not vec.len!
     ## NON interesting attributes:
@@ -67,36 +66,36 @@ str.default <-
 	cat(" NULL\n")
     else if(is.list(object)) {
 	i.pl <- is.pairlist(object)
-        is.d.f <- is.data.frame(object)
-        if(is.d.f) std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
+	is.d.f <- is.data.frame(object)
+	if(is.d.f) std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
 	if(le == 0) {
-            if(!is.d.f) cat(" ", if(i.pl)"pair", "list()\n",sep="")
-        } else {
-            if(has.class && any(sapply(paste("str", cl, sep="."),
+	    if(!is.d.f) cat(" ", if(i.pl)"pair", "list()\n",sep="")
+	} else {
+	    if(has.class && any(sapply(paste("str", cl, sep="."),
 					#use sys.function(.) ..
-                                        function(ob)exists(ob, mode= "function",
-                                                           inherits= TRUE)))) {
-                ## str.default is a 'NextMethod' : omit the 'List of ..'
-                std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
-            } else {
-                cat(if(i.pl) "Dotted pair list" else "List",
-                    " of ", le, "\n", sep="")
-            }
-            if (max.level==0 || nest.lev < max.level) {
-                nam.ob <-
-                    if(is.null(nam.ob <- names(object))) rep("", le)
-                    else { max.ncnam <- max(nchar(nam.ob))
-                           format.char(nam.ob, width = max.ncnam, flag = '-')
-                       }
-                for(i in 1:le) {
-                    cat(indent.str,"$ ", nam.ob[i], ":", sep="")
-                    str(object[[i]], nest.lev = nest.lev + 1,
-                        indent.str= paste(indent.str,".."), nchar.max=nchar.max,
-                        max.level=max.level, vec.len=vec.len, digits.d=digits.d,
-                        give.attr= give.attr, give.length= give.length, wid=wid)
-                }
-            }
-        }
+					function(ob)exists(ob, mode= "function",
+							   inherits= TRUE)))) {
+		## str.default is a 'NextMethod' : omit the 'List of ..'
+		std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
+	    } else {
+		cat(if(i.pl) "Dotted pair list" else "List",
+		    " of ", le, "\n", sep="")
+	    }
+	    if (max.level==0 || nest.lev < max.level) {
+		nam.ob <-
+		    if(is.null(nam.ob <- names(object))) rep("", le)
+		    else { max.ncnam <- max(nchar(nam.ob))
+			   format.char(nam.ob, width = max.ncnam, flag = '-')
+		       }
+		for(i in 1:le) {
+		    cat(indent.str,"$ ", nam.ob[i], ":", sep="")
+		    str(object[[i]], nest.lev = nest.lev + 1,
+			indent.str= paste(indent.str,".."), nchar.max=nchar.max,
+			max.level=max.level, vec.len=vec.len, digits.d=digits.d,
+			give.attr= give.attr, give.length= give.length, wid=wid)
+		}
+	    }
+	}
     } else { #- not function, not list
 	if(is.vector(object)
 	   || (is.array(object) && is.atomic(object))
@@ -113,17 +112,18 @@ str.default <-
 		else if(mod == "comp") mod <- "cplx" #- else: keep 'logi'
 		if(is.array(object)) {
 		    di <- dim(object)
-		    di <- paste(ifelse(di>1, "1:",""), di,
-				ifelse(di>0, "" ," "), sep = "")
-		    le.str <- paste(c("[", paste(di[-length(di)], ", ", sep=""),
+		    di <- P0(ifelse(di>1, "1:",""), di,
+			     ifelse(di>0, "" ," "))
+		    le.str <- paste(c("[", P0(di[-length(di)], ", "),
 				      di[length(di)], "]"), collapse = "")
 		    std.attr <- "dim" #- "names"
 		} else if(!is.null(names(object))) {
 		    mod <- paste("Named", mod)
 		    std.attr <- std.attr[std.attr != "names"]
 		}
-		str1 <- if(le == 1) paste(NULL, mod)
-		else	   paste(" ", mod, if(le>0)" ", le.str, sep = "")
+		str1 <-
+		    if(le == 1 && !is.array(object)) paste(NULL, mod)
+		    else P0(" ", mod, if(le>0)" ", le.str)
 	    } else { ##-- not atomic, but vector: #
 		mod <- typeof(object)#-- typeof(.) is more precise than mode!
 		str1 <- switch(mod,
@@ -151,15 +151,14 @@ str.default <-
 	    if(length(pars)>=4) pars <- pars[-3]
 	    pars <- paste(abbreviate(names(pars),min=2), pars,
 			  sep= "=", collapse=", ")
-	    str1 <- paste(ts.kind, " Time-Series ", le.str, " ", pars, ":",
-			  sep = "")
+	    str1 <- P0(ts.kind, " Time-Series ", le.str, " ", pars, ":")
 	    v.len <- switch(t.cl,rts=.8, cts=.6, its=.9) * v.len
 	    class(object) <- if(any(!b.ts)) cl[!b.ts]
 	    std.attr <- c(std.attr, "tspar")
 	} else if(is.ts(object)) {
 	    tsp.a <- tsp(object)
-	    str1 <- paste(" Time-Series ", le.str, " from ", format(tsp.a[1]),
-			  " to ", format(tsp.a[2]), ":", sep = "")
+	    str1 <- P0(" Time-Series ", le.str, " from ", format(tsp.a[1]),
+		       " to ", format(tsp.a[2]), ":")
 	    std.attr <- c("tsp","class") #- "names"
 	} else if (is.factor(object)) {
 	    nl <- length(lev.att <- levels(object))
@@ -167,6 +166,7 @@ str.default <-
 		warning("`object' doesn't have legal levels()!")
 		nl <- 0
 	    }
+	    ord <- is.ordered(object)
 	    object <- unclass(object)
 	    if(nl) {
 		lenl <- cumsum(3 + nchar(lev.att))# level space
@@ -174,19 +174,22 @@ str.default <-
 		    nl else which(lenl > 13)[1]
 		if((d <- lenl[ml] - if(ml>1)18 else 14) >= 3)# truncate last
 		    lev.att[ml] <-
-			paste(substring(lev.att[ml],1, nchar(lev.att[ml])-d),
-			      "..", sep="")
+			P0(substring(lev.att[ml],1, nchar(lev.att[ml])-d), "..")
 	    }
 	    else # nl == 0
 		ml <- length(lev.att <- "")
 
-	    str1 <- paste(" Factor w/ ", nl, " level",if(nl != 1) "s",
-			  if(nl)' "', paste(lev.att[1:ml], collapse ='","'),
-			  if(nl)'"', if(ml < nl)",..", ":", sep="")
+	    lsep <- if(ord) "<" else ","
+	    str1 <- P0(if(ord)" Ord.f" else " F",
+		       "actor w/ ", nl, " level",if(nl != 1) "s",
+		       if(nl) " ",
+		       if(nl) P0(pasteCh(lev.att[1:ml]), collapse = lsep),
+		       if(ml < nl) P0(lsep,".."), ":")
+
 	    std.attr <- c("levels","class")
 	} else if(has.class) {
-            cat("Class", if(length(cl) > 1) "es",
-                " '", paste(cl, collapse = "', '"), "' ", sep="")
+	    cat("Class", if(length(cl) > 1) "es",
+		" '", paste(cl, collapse = "', '"), "' ", sep="")
 	    ## If there's a str.<method>, it should have been called before!
 	    str(unclass(object),
 		max.level = max.level, vec.len = vec.len, digits.d = digits.d,
@@ -229,20 +232,22 @@ str.default <-
 	    } else {
 		give.mode <- TRUE
 	    }
-	    if(give.mode) str1 <- paste(str1, ', mode "', mod,'":', sep = "")
+	    if(give.mode) str1 <- P0(str1, ', mode "', mod,'":')
 
 	} else if(is.logical(object)) {
 	    v.len <- 3 * v.len
 	    format.fun <- format
 	} else if(is.numeric(object)) {
 	    iv.len <- round(2.5 * v.len)
-	    if(!is.integer(object)){
+	    if(iSurv <- inherits(object, "Surv"))
+		std.attr <- c(std.attr, "class")
+	    int.surv <- iSurv || is.integer(object)
+	    if(!int.surv) {
 		ob <- if(le > iv.len) object[seq(len=iv.len)] else object
 		ao <- abs(ob <- ob[!is.na(ob)])
 	    }
-	    if(is.integer(object) || mod == "Surv" ||
-	       (all(ao > 1e-10 | ao==0) && all(ao < 1e10| ao==0) &&
-		all(ob == signif(ob, digits.d)))) {
+	    if(int.surv || (all(ao > 1e-10 | ao==0) && all(ao < 1e10| ao==0) &&
+			    all(ob == signif(ob, digits.d)))) {
 		v.len <- iv.len
 		format.fun <- function(x)x
 	    } else {
@@ -254,9 +259,10 @@ str.default <-
 	    format.fun <- format
 	}
 
+	## Not sure, this is ever triggered:
+	if(is.na(le)) { warning("'str.default': 'le' is NA !!"); le <- 0}
+
 	if(char.like) {
-	    bracket <- if (le>0) '"' else ""
-	    format.fun <- function(x)x
 	    v.len <-
 		if(missing(vec.len))
 		    max(1,sum(cumsum(3 + if(le>0) nchar(object) else 0) <
@@ -267,24 +273,23 @@ str.default <-
 	    if(ile >= 1) { # have LONG char ?!
 		nc <- nchar(object[1:ile])
 		if(any((ii <- nc > nchar.max)))
-		    object[ii] <- paste(substr(object[ii], 1, nchar.max),
-					"| __truncated__", sep="")
+		    object[ii] <- P0(substr(object[ii], 1, nchar.max),
+				     "| __truncated__")
 	    }
-	} else {
-	    bracket <- ""
+	    formObj <- function(x) P0(pasteCh(x), collapse=" ")
+	}
+	else {
 	    if(!exists("format.fun", inherits=TRUE)) #-- define one --
 		format.fun <-
 		    if(mod == 'num' || mod == 'cplx') format else as.character
+	    ## v.len <- max(1,round(v.len))
+	    ile <- min(v.len, le)
+	    formObj <- function(x) paste(format.fun(x), collapse = " ")
 	}
-	if(is.na(le)) { warning("'str.default': 'le' is NA !!"); le <- 0}
 
-	## v.len <- max(1,round(v.len))
-	ile <- min(v.len, le)
-	cat(str1, " ", bracket,
-	    paste(format.fun(if(ile >= 1) object[1:ile] else
-			     if(v.len > 0) object),
-		  collapse = paste(bracket, " ", bracket, sep="")),
-	    bracket, if(le > v.len) " ...", "\n", sep="")
+	cat(str1, " ", formObj(if(ile >= 1) object[1:ile] else
+			       if(v.len > 0) object),
+	    if(le > v.len) " ...", "\n", sep="")
 
     } ## else (not function nor list)----------------------------------------
 
@@ -292,7 +297,7 @@ str.default <-
 	nam <- names(a)
 	for (i in seq(len=length(a)))
 	    if (all(nam[i] != std.attr)) {# only `non-standard' attributes:
-		cat(indent.str,paste('- attr(*, "',nam[i],'")=',sep=''),sep="")
+		cat(indent.str, P0('- attr(*, "',nam[i],'")='),sep="")
 		str(a[[i]],
 		    indent.str= paste(indent.str,".."), nest.lev= nest.lev+1,
 		    max.level = max.level, digits.d = digits.d,
@@ -306,7 +311,7 @@ str.default <-
 
 ## An extended `ls()' using str() :
 ls.str <- function(pos = 1, pattern, ..., envir = as.environment(pos),
-                   mode = "any", max.level = 1, give.attr = FALSE)
+		   mode = "any", max.level = 1, give.attr = FALSE)
 {
     n <- length(nms <- ls(..., envir = envir, pattern = pattern))
     r <- character(n)
@@ -315,7 +320,7 @@ ls.str <- function(pos = 1, pattern, ..., envir = as.environment(pos),
 	    cat(nam, ": ")
 	    r[i] <- nam
 	    str(get(nam, envir = envir, mode = mode),
-                max.level = max.level, give.attr = give.attr)
+		max.level = max.level, give.attr = give.attr)
 	}
     invisible(r)
 }

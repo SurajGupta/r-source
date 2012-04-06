@@ -18,41 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*  Dynamic Loading Support
- *
- *  This module provides support for run-time loading of shared libraries
- *  access to symbols within such libraries via .C and .Fortran.  This is
- *  done under Unix with dlopen, dlclose and dlsym (the exception is
- *  hpux, where we use compatibility code provided by Luke Tierney.
- *  There are two cases:
- *
- *
- *  1. The dlopen interface is available.
- *
- *  In this case all symbol location is done using the dlopen routines.
- *  We maintain a list of currently loaded shared libraries in an array
- *  called "LoadedDLL" with the number of currenly loaded libraries
- *  being "CountDLL".  To locate a symbol, we probe the loaded libraries
- *  in order until the symbol is located.  If we do not find a symbol
- *  in the loaded libraries, we search the executable itself.  This
- *  search is not very efficient, but this probably pales into
- *  insignificance when compared with the inefficiencies in the R
- *  interpreter.
- *
- *  Loading and unloading of shared libraries is done via the routines
- *  AddDLL and DeleteDLL.  These routines maintain the list of currently
- *  loaded libraries.  When a library is added, any existing reference
- *  to that library are deleted and then the library is inserted at the
- *  start of the search list.  This way, symbols in more recently loaded
- *  libraries are found first.
- *
- *
- *  2. The dlopen interface is not available.
- *
- *  In this case we use the table "CFunTabEntry" to locate functions
- *  in the executable.	We do this by straight linear search through
- *  the table.	Note that the content of the table is created at
- *  system build time from the list in ../appl/ROUTINES.
+/*  Dynamic Loading Support: See ../main/Rdynload.c and ../include/Rdynpriv.h
  */
 
 #ifdef HAVE_CONFIG_H
@@ -68,19 +34,6 @@
 
 #include <R_ext/Rdynload.h>
 #include <Rdynpriv.h>
-
-#include "FFDecl.h"
-
-/* This provides a table of built-in C and Fortran functions.
-   We include this table, even when we have dlopen and friends.
-   This is so that the functions are actually loaded at link time. */
-
-static CFunTabEntry CFunTab[] =
-{
-#include "FFTab.h"
-    {NULL, NULL}
-};
-
 
 
         /* Inserts the specified DLL at the head of the DLL list */
@@ -98,8 +51,6 @@ static HINSTANCE R_loadLibrary(const char *path, int asLocal, int now);
 static DL_FUNC getRoutine(DllInfo *info, char const *name);
 static void R_deleteCachedSymbols(DllInfo *dll);
 
-static DL_FUNC getBaseSymbol(const char *name);
-
 static void R_getDLLError(char *buf, int len);
 static void GetFullDLLPath(SEXP call, char *buf, char *path);
 
@@ -114,12 +65,9 @@ void InitFunctionHashing()
     R_osDynSymbol->dlsym = getRoutine;
     R_osDynSymbol->closeLibrary = closeLibrary;
     R_osDynSymbol->getError = R_getDLLError;
-    R_osDynSymbol->getBaseSymbol = getBaseSymbol;
 
     R_osDynSymbol->deleteCachedSymbols = R_deleteCachedSymbols;
     R_osDynSymbol->lookupCachedSymbol = Rf_lookupCachedSymbol;
-
-    R_osDynSymbol->CFunTab = CFunTab;
 
     R_osDynSymbol->fixPath = fixPath;
     R_osDynSymbol->getFullDLLPath = GetFullDLLPath;
@@ -143,13 +91,15 @@ HINSTANCE R_loadLibrary(const char *path, int asLocal, int now)
     HINSTANCE tdlh;
     unsigned int dllcw, rcw;
 
-    rcw = _controlfp(0,0) & ~_MCW_IC;  /* Infinity control is ignored by the FPU */
+    rcw = _controlfp(0,0) & ~_MCW_IC;  /* Infinity control is ignored */
     _clearfp();
     tdlh = LoadLibrary(path);
     dllcw = _controlfp(0,0) & ~_MCW_IC;
     if (dllcw != rcw) {
-		warning("DLL attempted to change FPU control word from %x to %x",rcw,dllcw);
 		_controlfp(rcw, _MCW_EM | _MCW_IC | _MCW_RC | _MCW_PC);
+		if (LOGICAL(GetOption(install("warn.FPU"), R_NilValue))[0])
+			warning("DLL attempted to change FPU control word from %x to %x",
+					rcw,dllcw);
 	}
     return(tdlh);
 }
@@ -178,48 +128,6 @@ static void R_getDLLError(char *buf, int len)
     strcpy(buf, "LoadLibrary failure:  ");
     strcat(buf, lpMsgBuf);
     LocalFree(lpMsgBuf);
-}
-
-
-static DL_FUNC getBaseSymbol(const char *name)
-{
-    static int NumStatic = 0;
-    int   mid, high, low, cmp;
-    if (!NumStatic) {
-        int i,j;
-	char *tname;
-	DL_FUNC tfunc;
-
-	NumStatic = (sizeof(CFunTab) / sizeof(CFunTabEntry)) - 1;
-	for (i = 0; i < NumStatic; i++)
-	    for (j = i + 1; j < NumStatic; j++) {
-		if (strcmp(CFunTab[j].name, CFunTab[i].name) < 0) {
-		    tname = CFunTab[i].name;
-		    tfunc = CFunTab[i].func;
-		    CFunTab[i].name = CFunTab[j].name;
-		    CFunTab[i].func = CFunTab[j].func;
-		    CFunTab[j].name = tname;
-		    CFunTab[j].func = tfunc;
-		}
-	    }
-    }
-    low = 0;
-    mid = 0;
-    high = NumStatic - 1;
-    while (low <= high) {
-	mid = (low + high) / 2;
-	cmp = strcmp(name, CFunTab[mid].name);
-	if (cmp < 0)
-	    high = mid - 1;
-	else if (cmp > 0)
-	    low = mid + 1;
-	else
-	    break;
-    }
-    if (high < low)
-	return (DL_FUNC) NULL;
-    else
-	return CFunTab[mid].func;
 }
 
 static void GetFullDLLPath(SEXP call, char *buf, char *path)

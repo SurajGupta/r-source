@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-3   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,12 +39,11 @@ R_NativePrimitiveArgType pkstwo_t[3] = {INTSXP, REALSXP, REALSXP};
 R_NativePrimitiveArgType prho_t[5] = {INTSXP, INTSXP, REALSXP, INTSXP, LGLSXP};
 R_NativePrimitiveArgType psmirnov2x_t[3] = {REALSXP, INTSXP, INTSXP};
 
-/* Not used yet until we sort out the as.single(). */
 R_NativePrimitiveArgType swilk_t[9] = {LGLSXP, SINGLESXP, INTSXP, INTSXP, INTSXP,
 				       SINGLESXP, REALSXP, REALSXP, INTSXP};
 
 
-static const R_CMethodDef cmethods[]  = {
+static const R_CMethodDef cMethods[]  = {
   {"chisqsim", (DL_FUNC) &chisqsim, 11, chisqsim_t},  
   {"d2x2xk", (DL_FUNC) &d2x2xk, 5, d2_t},
   {"dansari", (DL_FUNC) &dansari, 4, dansari_t},
@@ -62,5 +61,5 @@ static const R_CMethodDef cmethods[]  = {
 
 void R_init_ctest(DllInfo *dll)
 {
-    R_registerRoutines(dll, cmethods, NULL, NULL, NULL);
+    R_registerRoutines(dll, cMethods, NULL, NULL, NULL);
 }

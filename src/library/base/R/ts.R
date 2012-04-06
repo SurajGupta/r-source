@@ -34,11 +34,12 @@ ts <- function(data = NA, start = 1, end = numeric(0), frequency = 1,
 	frequency <- round(frequency)
 
     if(length(start) > 1) {
-	if(start[2] > frequency) stop("invalid start")
+## strange: this never checked for < 1!  commented for 1.7.0
+##	if(start[2] > frequency) stop("invalid start")
 	start <- start[1] + (start[2] - 1)/frequency
     }
     if(length(end) > 1) {
-	if(end[2] > frequency) stop("invalid end")
+##	if(end[2] > frequency) stop("invalid end")
 	end <- end[1] + (end[2] - 1)/frequency
     }
     if(missing(end))
@@ -69,7 +70,7 @@ tsp <- function(x) attr(x, "tsp")
 
 "tsp<-" <- function(x, value)
 {
-    cl <- class(x)
+    cl <- oldClass(x)
     attr(x, "tsp") <- value # does error-checking internally
     if (inherits(x, "ts") && is.null(value))
         class(x) <- if(!identical(cl,"ts")) cl["ts" != cl]
@@ -85,7 +86,7 @@ hasTsp <- function(x)
     x
 }
 
-is.ts <- function (x) inherits(x, "ts")
+is.ts <- function (x) inherits(x, "ts") && length(x)
 
 as.ts <- function (x)
 {
@@ -312,7 +313,7 @@ time.ts <- function (x, ...) as.ts(time.default(x, ...))
 cycle.default <- function(x, ...)
 {
     p <- tsp(hasTsp(x))
-    m <- floor((p[1] %% 1) * p[3])
+    m <- round((p[1] %% 1) * p[3])
     x <- (1:NROW(x) + m - 1) %% p[3] + 1
     tsp(x) <- p
     x
@@ -657,7 +658,7 @@ window.ts <- function (x, ...) as.ts(window.default(x, ...))
 }
 
 t.ts <- function(x) {
-    cl <- class(x)
+    cl <- oldClass(x)
     other <- !(cl %in% c("ts","mts"))
     class(x) <- if(any(other)) cl[other]
     attr(x, "tsp") <- NULL

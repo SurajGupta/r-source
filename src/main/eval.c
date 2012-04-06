@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996	Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2002	The R Development Core Team.
+ *  Copyright (C) 1998--2003	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -198,6 +198,10 @@ static void R_EndProfiling()
     R_Profiling = 0;
 }
 
+#if !defined(Win32) && defined(_R_HAVE_TIMING_)
+double R_getClockIncrement(void);
+#endif
+
 static void R_InitProfiling(char * filename, int append, double dinterval)
 {
 #ifndef Win32
@@ -206,8 +210,17 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
     int wait;
     HANDLE Proc = GetCurrentProcess();
 #endif
-    int interval = 1e6 * dinterval+0.5;
-
+    int interval;
+    
+    /* according to man setitimer, it waits until the next clock
+       tick, usually 10ms, so avoid too small intervals here */
+#if !defined(Win32) && defined(_R_HAVE_TIMING_)
+    double clock_incr = R_getClockIncrement();
+    int nclock = floor(dinterval/clock_incr + 0.5);
+    interval = 1e6 * ((nclock > 1)?nclock:1) * clock_incr + 0.5;
+#else
+    interval = 1e6 * dinterval + 0.5;
+#endif
     if(R_ProfileOutfile != NULL) R_EndProfiling();
     R_ProfileOutfile = fopen(filename, append ? "a" : "w");
     if (R_ProfileOutfile == NULL)
@@ -222,6 +235,7 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
     if(!(ProfileEvent = CreateEvent(NULL, FALSE, FALSE, NULL)) ||
        (_beginthread(ProfileThread, 0, &wait) == -1))
 	R_Suicide("unable to create profiling thread");
+    Sleep(wait/2); /* suspend this thread to ensure that the other one starts */
 #else /* not Win32 */
     signal(SIGPROF, doprof);
 
@@ -416,7 +430,7 @@ SEXP eval(SEXP e, SEXP rho)
 		PROTECT(tmp = evalList(CDR(e), rho));
 		R_Visible = 1 - PRIMPRINT(op);
 		begincontext(&cntxt, CTXT_BUILTIN, e,
-			     R_NilValue, R_NilValue, R_NilValue);
+			     R_NilValue, R_NilValue, R_NilValue, R_NilValue);
 		tmp = PRIMFUN(op) (e, op, tmp, rho);
 		endcontext(&cntxt);
 		UNPROTECT(1);
@@ -471,7 +485,7 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 
     /*  Set up a context with the call in it so error has access to it */
 
-    begincontext(&cntxt, CTXT_RETURN, call, savedrho, rho, arglist);
+    begincontext(&cntxt, CTXT_RETURN, call, savedrho, rho, arglist, op);
 
     /*  Build a list which matches the actual (unevaluated) arguments
 	to the formal paramters.  Build a new environment which
@@ -529,9 +543,9 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 
     if( R_GlobalContext->callflag == CTXT_GENERIC )
 	begincontext(&cntxt, CTXT_RETURN, call,
-		     newrho, R_GlobalContext->sysparent, arglist);
+		     newrho, R_GlobalContext->sysparent, arglist, op);
     else
-	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist);
+	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist, op);
 
     /* The default return value is NULL.  FIXME: Is this really needed
        or do we always get a sensible value returned?  */
@@ -605,6 +619,167 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
     return (tmp);
 }
 
+/* **** FIXME: This code is factored out of applyClosure.  If we keep
+   **** it we should change applyClosure to run through this routine
+   **** to avoid code drift. */
+static SEXP R_execClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho,
+			  SEXP newrho)
+{
+    SEXP body, tmp;
+    RCNTXT cntxt;
+
+    body = BODY(op);
+
+    begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist, op);
+
+    /* The default return value is NULL.  FIXME: Is this really needed
+       or do we always get a sensible value returned?  */
+
+    tmp = R_NilValue;
+
+    /* Debugging */
+
+    SET_DEBUG(newrho, DEBUG(op));
+    if (DEBUG(op)) {
+	Rprintf("debugging in: ");
+	PrintValueRec(call,rho);
+	/* Find out if the body is function with only one statement. */
+	if (isSymbol(CAR(body)))
+	    tmp = findFun(CAR(body), rho);
+	else
+	    tmp = eval(CAR(body), rho);
+	if((TYPEOF(tmp) == BUILTINSXP || TYPEOF(tmp) == SPECIALSXP)
+	   && !strcmp( PRIMNAME(tmp), "for")
+	   && !strcmp( PRIMNAME(tmp), "{")
+	   && !strcmp( PRIMNAME(tmp), "repeat")
+	   && !strcmp( PRIMNAME(tmp), "while")
+	   )
+	    goto regdb;
+	Rprintf("debug: ");
+	PrintValue(body);
+	do_browser(call,op,arglist,newrho);
+    }
+
+ regdb:
+
+    /*  It isn't completely clear that this is the right place to do
+	this, but maybe (if the matchArgs above reverses the
+	arguments) it might just be perfect.  */
+
+#ifdef  HASHING
+#define HASHTABLEGROWTHRATE  1.2
+    {
+	SEXP R_NewHashTable(int, double);
+	SEXP R_HashFrame(SEXP);
+	int nargs = length(arglist);
+	HASHTAB(newrho) = R_NewHashTable(nargs, HASHTABLEGROWTHRATE);
+	newrho = R_HashFrame(newrho);
+    }
+#endif
+#undef  HASHING
+
+    /*  Set a longjmp target which will catch any explicit returns
+	from the function body.  */
+
+    if ((SETJMP(cntxt.cjmpbuf))) {
+	if (R_ReturnedValue == R_RestartToken) {
+	    cntxt.callflag = CTXT_RETURN;  /* turn restart off */
+	    R_ReturnedValue = R_NilValue;  /* remove restart token */
+	    PROTECT(tmp = eval(body, newrho));
+	}
+	else
+	    PROTECT(tmp = R_ReturnedValue);
+    }
+    else {
+	PROTECT(tmp = eval(body, newrho));
+    }
+
+    endcontext(&cntxt);
+
+    if (DEBUG(op)) {
+	Rprintf("exiting from: ");
+	PrintValueRec(call, rho);
+    }
+    UNPROTECT(1);
+    return (tmp);
+}
+
+/* **** FIXME: Temporary code to execute S4 methods in a way that
+   **** preserves lexical scope. */
+
+static SEXP R_dot_Generic = NULL;
+static SEXP R_dot_Method = NULL;
+static SEXP R_dot_Methods = NULL;
+static SEXP R_dot_defined = NULL;
+static SEXP R_dot_target = NULL;
+
+SEXP R_execMethod(SEXP op, SEXP rho)
+{
+    SEXP call, arglist, callerenv, newrho, next, val;
+    RCNTXT *cptr;
+
+    if (R_dot_Generic == NULL) {
+	R_dot_Generic = install(".Generic");
+	R_dot_Method = install(".Method");
+	R_dot_Methods = install(".Methods");
+	R_dot_defined = install(".defined");
+	R_dot_target = install(".target");
+    }
+
+    /* create a new environment frame enclosed by the lexical
+       environment of the method */
+    PROTECT(newrho = Rf_NewEnvironment(R_NilValue, R_NilValue, CLOENV(op)));
+
+    /* copy the bindings for the formal environment from the top frame
+       of the internal environment of the generic call to the new
+       frame.  need to make sure missingness information is preserved
+       and the environments for any default expression promises are
+       set to the new environment.  should move this to envir.c where
+       it can be done more efficiently. */
+    for (next = FORMALS(op); next != R_NilValue; next = CDR(next)) {
+	SEXP symbol =  TAG(next);
+	R_varloc_t loc = R_findVarLocInFrame(rho,symbol);
+	int missing = R_GetVarLocMISSING(loc);
+	val = R_GetVarLocValue(loc);
+	SET_FRAME(newrho, CONS(val, FRAME(rho)));
+	SET_TAG(FRAME(newrho), symbol);
+	if (missing) {
+	    SET_MISSING(FRAME(newrho), missing);
+	    if (TYPEOF(val) == PROMSXP && PRENV(val) == rho)
+		SET_PRENV(val, newrho);
+	}
+    }
+
+    /* copy the bindings of the spacial dispatch variables in the top
+       frame of the generic call to the new frame */
+    defineVar(R_dot_defined, findVarInFrame(rho, R_dot_defined), newrho);
+    defineVar(R_dot_Method, findVarInFrame(rho, R_dot_Method), newrho);
+    defineVar(R_dot_target, findVarInFrame(rho, R_dot_target), newrho);
+
+    /* copy the bindings for .Generic and .Methods.  We know (I think)
+       that they are in the second frame, so we could use that. */
+    defineVar(R_dot_Generic, findVar(R_dot_Generic, rho), newrho);
+    defineVar(R_dot_Methods, findVar(R_dot_Methods, rho), newrho);
+
+    /* Find the calling context.  Should be R_GlobalContext unless
+       profiling has inserted a CTXT_BUILTIN frame. */
+    cptr = R_GlobalContext;
+    if (cptr->callflag & CTXT_BUILTIN)
+	cptr = cptr->nextcontext;
+
+    /* The calling environment should either be the environment of the
+       generic, rho, or the environment of the caller of the generic,
+       the current sysparent. */
+    callerenv = cptr->sysparent; /* or rho? */
+
+    /* get the rest of the stuff we need from the current context,
+       execute the method, and return the result */
+    call = cptr->call;
+    arglist = cptr->promargs;
+    val = R_execClosure(call, op, arglist, callerenv, newrho);
+    UNPROTECT(1);
+    return val;
+}
 
 static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 {
@@ -676,10 +851,13 @@ static SEXP assignCall(SEXP op, SEXP symbol, SEXP fun,
 static Rboolean asLogicalNoNA(SEXP s, SEXP call)
 {
     Rboolean cond = asLogical(s);
+    if (length(s) > 1)
+	warningcall(call, "the condition has length > 1 and only the first element will be used");
     if (cond == NA_LOGICAL) {
-	char *msg = isLogical(s) ?
-	    "missing value where logical needed" :
-	    "argument is not interpretable as logical";
+	char *msg = length(s) ? (isLogical(s) ?
+				 "missing value where TRUE/FALSE needed" :
+				 "argument is not interpretable as logical") :
+	    "argument is of length zero";
 	errorcall(call, msg);
     }
     return cond;
@@ -743,7 +921,8 @@ SEXP do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     bgn = BodyHasBraces(body);
 
     PROTECT_WITH_INDEX(ans, &api);
-    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue);
+    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue,
+		 R_NilValue);
     switch (SETJMP(cntxt.cjmpbuf)) {
     case CTXT_BREAK: goto for_break;
     case CTXT_NEXT: goto for_next;
@@ -815,7 +994,8 @@ SEXP do_while(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     t = R_NilValue;
     PROTECT_WITH_INDEX(t, &tpi);
-    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue);
+    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue,
+		 R_NilValue);
     if (SETJMP(cntxt.cjmpbuf) != CTXT_BREAK) {
 	while (asLogicalNoNA(eval(CAR(args), rho), call)) {
 	    DO_LOOP_DEBUG(call, op, args, rho, bgn);
@@ -846,7 +1026,8 @@ SEXP do_repeat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     t = R_NilValue;
     PROTECT_WITH_INDEX(t, &tpi);
-    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue);
+    begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_NilValue, R_NilValue,
+		 R_NilValue);
     if (SETJMP(cntxt.cjmpbuf) != CTXT_BREAK) {
 	for (;;) {
 	    DO_LOOP_DEBUG(call, op, args, rho, bgn);
@@ -1367,7 +1548,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if(isLanguage(expr) || isSymbol(expr)) {
 	PROTECT(expr);
-	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args);
+	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args, op);
 	if (!SETJMP(cntxt.cjmpbuf))
 	    expr = eval(expr, env);
 	endcontext(&cntxt);
@@ -1378,7 +1559,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(expr);
 	n = LENGTH(expr);
 	tmp = R_NilValue;
-	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args);
+	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args, op);
 	if (!SETJMP(cntxt.cjmpbuf))
 	    for(i=0 ; i<n ; i++)
 		tmp = eval(VECTOR_ELT(expr, i), env);
@@ -1542,7 +1723,7 @@ int DispatchOrEval(SEXP call, SEXP op, char *generic, SEXP args, SEXP rho,
 	    SEXP pargs;
 	    PROTECT(pargs = promiseArgs(args, rho)); nprotect++;
 	    SET_PRVALUE(CAR(pargs), x);
-	    begincontext(&cntxt, CTXT_RETURN, call, rho, rho, pargs);
+	    begincontext(&cntxt, CTXT_RETURN, call, rho, rho, pargs, op);
 #ifdef EXPERIMENTAL_NAMESPACES
 	    if(usemethod(generic, x, call, pargs, rho, rho, R_NilValue, ans))
 #else
@@ -1586,7 +1767,7 @@ int DispatchOrEval(SEXP call, SEXP op, char *generic, SEXP args, SEXP rho,
 	if (pt == NULL || strcmp(pt,".default")) {
 	    /* PROTECT(args = promiseArgs(args, rho)); */
 	    SET_PRVALUE(CAR(args), x);
-	    begincontext(&cntxt, CTXT_RETURN, call, rho, rho, args);
+	    begincontext(&cntxt, CTXT_RETURN, call, rho, rho, args, op);
 #ifdef EXPERIMENTAL_NAMESPACES
 	    if(usemethod(generic, x, call, args, rho, rho, R_NilValue, ans)) {
 #else
@@ -1635,6 +1816,8 @@ static void findmethod(SEXP class, char *group, char *generic,
 	sprintf(buf, "%s.%s", group, CHAR(STRING_ELT(class, whichclass)));
 	*meth = install(buf);
 	*sxp = findVar(*meth, rho);
+	if (TYPEOF(*sxp)==PROMSXP)
+	    *sxp = eval(*sxp, rho);
 	if (isFunction(*sxp)) {
 	    *gr = mkString(group);
 	    break;
