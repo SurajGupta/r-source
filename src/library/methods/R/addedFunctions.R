@@ -1,7 +1,7 @@
 
 functionBody <- get("body", mode = "function")
 
-.ff <- function(f, value, envir = environment(f)) f
+.ff <- function(fun, envir = environment(fun), value) fun
 
 body(.ff, envir = .GlobalEnv) <- body(get("body<-"))
 
@@ -21,30 +21,28 @@ allNames <-
 }
 
 getFunction <-  function(name, generic = TRUE, mustFind = TRUE,
-           where = -1)
+           where = topenv(parent.frame()))
       ## find the object as a function.
 {
-    isGenericFunction <- function(obj) exists(".Generic", envir = environment(obj), inherits=FALSE)
     found <- FALSE
-    if(identical(where, -1))
-      where <- 1:length(search())
-    else if(is.environment(where)) where <- list(where)
-    ## unfortunately, if `where' turns out to be an environment, the for
-    ## loop will generate an error.
-    for(i in where)
-        if(exists(name, i, inherits = FALSE)) {
-            f <- get(name, i)
-            if(is.function(f) && (generic || !isGenericFunction(f))) {
-                found <- TRUE
-                break
-            }
+    where <- as.environment(where)
+    f <- NULL
+    ## parent.env sequence of a namespace ends in the base package namespace,
+    ## of a non-namespace ends in NULL (equiv. to base environment) [sigh]
+    lastEnv <- if(isNamespace(where)) function(where) isBaseNamespace(where) else
+    function(where) is.null(where)
+    repeat {
+        if(exists(name, envir = where, mode = "function", inherits = FALSE)) {
+            f <- get(name, envir = where)
+            found <- generic || !is(f, "genericFunction")
         }
-    if(found)
-        f
-    else if(mustFind)
-        stop(paste("no function \"", name, "\" as requested", sep=""))
-    else
-        NULL
+        if(found || lastEnv(where))
+            break
+        where <- parent.env(where)
+    }
+    if(!found && mustFind)
+        stop("no ", if(generic) "" else "non-generic ", "function \"", name, "\" found")
+    f
 }
 
 el <-
@@ -86,48 +84,29 @@ formalArgs <-
   function(def)
     names(formals(def))
 
-existsFunction <-
-  ## Is there a function of this name. If `generic==FALSE', generic functions are not counted.
-  function(f, generic=TRUE, where)
-{
-  if(missing(where))
-    return(length(findFunction(f, generic)) > 0)
-  if(is.environment(where) || length(where == 1)) {
-        if(!exists(f, where, inherits = FALSE))
-          return(FALSE)
-        obj <- get(f, where)
-        return(is.function(obj) &&
-               (generic || !isGeneric(f, fdef = obj)))
-    }
-  ## the case of multiple databases supplied.  Unusual, but supported.
-    for(wherei in where) {
-        if(!exists(f, where, inherits=FALSE))
-            next
-        obj <- get(f, wherei)
-        if(is.function(obj) &&
-           generic || is.primitive(obj)
-           || !isGeneric(f, wherei, obj))
-          return(TRUE)
-    }
-    return(FALSE)
-}
 
 findFunction <-
-  ## return all the indices of the search list on which a function
+  ## return a list of all the places where a function
   ## definition for `name' exists.  If `generic' is FALSE, ignore generic
   ## functions.
-  function(f, generic = TRUE)
+  function(f, generic = TRUE, where = topenv(parent.frame()))
 {
-    allWhere <- integer()
-    for(i in seq(along=search()))
-      if(exists(f, i, inherits = FALSE)) {
-        fdef <-get(f, i)
-        if(generic || is.primitive(fdef)
-           || !isGeneric(f, i, fdef))
-          allWhere <- c(allWhere, i)
-      }
-    allWhere
+    allWhere <- .findAll(f, where)
+    ok <- rep(FALSE, length(allWhere))
+    for(i in seq(along = ok)) {
+        wherei <- allWhere[[i]]
+        if(exists(f, wherei, inherits = FALSE)) {
+            fdef <-get(f, wherei)
+            if(generic || is.primitive(fdef)
+               || !isGeneric(f, wherei, fdef))
+                ok[[i]] <- TRUE
+        }
+    }
+    allWhere[ok]
   }
+
+existsFunction <- function(f, generic=TRUE, where = topenv(parent.frame()))
+    length(findFunction(f, generic, where))>0
 
 Quote <- get("quote" , mode = "function")
 

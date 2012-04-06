@@ -2,7 +2,7 @@
 \docType{class}
 \alias{SClassExtension-class}
 \title{Class to Represent Inheritance (Extension) Relations }
-\description{  An object from this class represents a single ``is''
+\description{  An object from this class represents a single \dQuote{is}
   relationship; lists of these objects are used to represent all the
   extensions (superclasses) and subclasses for a given class.  The
   object contains information about how the relation is defined and
@@ -13,7 +13,8 @@
 }
 \section{Slots}{
   \describe{
-    \item{\code{superClass}:}{The name of the class being extended. }
+    \item{\code{subClass,superClass}:}{The classes being extended:
+    corresponding to the \code{from}, and \code{to} arguments to \code{\link{setIs}}. }
     \item{\code{package}:}{The package to which that class belongs. }
     \item{\code{coerce}:}{A function to carry out the as() computation
     implied by the relation.  Note that these functions should

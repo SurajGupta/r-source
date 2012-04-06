@@ -20,8 +20,7 @@
 ### MA 02111-1307, USA
 
 TukeyHSD <-
-    function(x, which = seq(along = tabs), ordered = FALSE,
-             conf.level = 0.95, ...)
+    function(x, which, ordered = FALSE, conf.level = 0.95, ...)
     UseMethod("TukeyHSD")
 
 TukeyHSD.aov <-
@@ -40,7 +39,7 @@ TukeyHSD.aov <-
         nms <- names(tabs[[nm]])
         n <- nn[[nm]]
         ## expand n to the correct length if necessary
-        if (length(n) < length(means)) n <- rep(n, length(means))
+        if (length(n) < length(means)) n <- rep.int(n, length(means))
         if (as.logical(ordered)) {
             ord <- order(means)
             means <- means[ord]
@@ -71,7 +70,7 @@ print.TukeyHSD <- function(x, ...)
         "% family-wise confidence level\n", sep="")
     if (attr(x, "ordered"))
         cat("    factor levels have been ordered\n")
-    cat("\nFit: ", deparse(attr(x, "orig.call", 500)), "\n\n", sep="")
+    cat("\nFit: ", deparse(attr(x, "orig.call"), 500), "\n\n", sep="")
     attr(x, "orig.call") <- attr(x, "conf.level") <- attr(x, "ordered") <- NULL
     print.default(unclass(x), ...)
 }
@@ -81,7 +80,7 @@ plot.TukeyHSD <- function (x, ...)
     for (i in seq(along = x)) {
         xi <- x[[i]]
         yvals <- nrow(xi):1
-        plot(c(xi[, "lwr"], xi[, "upr"]), rep(yvals, 2), type = "n",
+        plot(c(xi[, "lwr"], xi[, "upr"]), rep.int(yvals, 2), type = "n",
              axes = FALSE, xlab = "", ylab = "", ...)
         axis(1, ...)
         axis(2, at = nrow(xi):1, labels = dimnames(xi)[[1]],
@@ -89,8 +88,8 @@ plot.TukeyHSD <- function (x, ...)
         abline(h = yvals, lty = 1, lwd = 0, col = "lightgray")
         abline(v = 0, lty = 2, lwd = 0, ...)
         segments(xi[, "lwr"], yvals, xi[, "upr"], yvals, ...)
-        segments(as.vector(xi), rep(yvals - 0.1, 3), as.vector(xi),
-                 rep(yvals + 0.1, 3), ...)
+        segments(as.vector(xi), rep.int(yvals - 0.1, 3), as.vector(xi),
+                 rep.int(yvals + 0.1, 3), ...)
         title(main = paste(format(100 * attr(x, "conf.level"),
               2), "% family-wise confidence level\n", sep = ""),
               xlab = paste("Differences in mean levels of", names(x)[i]))

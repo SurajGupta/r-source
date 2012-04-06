@@ -65,17 +65,24 @@ FILE *R_OpenLibraryFile(char *file)
     char buf[256];
     FILE *fp;
 
-    sprintf(buf, "%s/library/base/R/%s", R_Home, file);
+    snprintf(buf, 256, "%s/library/base/R/%s", R_Home, file);
     fp = R_fopen(buf, "r");
     return fp;
 }
 
+char *R_LibraryFileName(char *file, char *buf, size_t bsize)
+{
+    if (snprintf(buf, bsize, "%s/library/base/R/%s", R_Home, file) < 0)
+	error("R_LibraryFileName: buffer too small");
+    return buf;
+}     
+     
 FILE *R_OpenSysInitFile(void)
 {
     char buf[256];
     FILE *fp;
 
-    sprintf(buf, "%s/library/base/R/Rprofile", R_Home);
+    snprintf(buf, 256, "%s/library/base/R/Rprofile", R_Home);
     fp = R_fopen(buf, "r");
     return fp;
 }
@@ -91,10 +98,10 @@ FILE *R_OpenSiteFile(void)
 	    return fp;
 	if ((fp = R_fopen(getenv("RPROFILE"), "r")))
 	    return fp;
-	sprintf(buf, "%s/etc/Rprofile.site", R_Home);
+	snprintf(buf, 256, "%s/etc/Rprofile.site", R_Home);
 	if ((fp = R_fopen(buf, "r")))
 	    return fp;
-	sprintf(buf, "%s/etc/Rprofile", R_Home);
+	snprintf(buf, 256, "%s/etc/Rprofile", R_Home);
 	if ((fp = R_fopen(buf, "r")))
 	    return fp;
     }
@@ -141,10 +148,24 @@ Rboolean R_FileExists(char *path)
     struct stat sb;
     return stat(R_ExpandFileName(path), &sb) == 0;
 }
+
+double R_FileMtime(char *path)
+{
+    struct stat sb;
+    if (stat(R_ExpandFileName(path), &sb) != 0)
+	error("cannot determine file modification time of %s", path);
+    return sb.st_mtime;
+}
 #else
 Rboolean R_FileExists(char *path)
 {
     error("file existence is not available on this system");
+}
+
+double R_FileMtime(char *path)
+{
+    error("file modification time is not available on this system");
+    return 0.0; /* not reached */
 }
 #endif
 
@@ -179,6 +200,7 @@ char *R_HomeDir()
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
+/* The __APPLE__ code below is for OS X */
 #ifdef Win32
 # include <windows.h>
 #elif defined(__APPLE__)
@@ -431,14 +453,20 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
     int ierr;
     R_size_t value;
     char *p, **av = argv, msg[1024];
+    Rboolean processing = TRUE;
 
     R_RestoreHistory = 1;
     while(--ac) {
-	if(**++av == '-') {
+	if(processing && **++av == '-') {
 	    if (!strcmp(*av, "--version")) {
 		PrintVersion(msg);
 		R_ShowMessage(msg);
 		exit(0);
+	    }
+	    else if(!strcmp(*av, "--args")) {
+		/* copy this through for further processing */
+		argv[newac++] = *av;
+		processing = FALSE;
 	    }
 #if 0
 	    else if(!strcmp(*av, "--print-nsize")) {
@@ -512,7 +540,8 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		     !strcmp(*av, "-V") ||
 		     !strcmp(*av, "-n") ||
 		     !strcmp(*av, "-v")) {
-		sprintf(msg, "WARNING: option %s no longer supported\n", *av);
+		snprintf(msg, 1024, 
+			 "WARNING: option %s no longer supported\n", *av);
 		R_ShowMessage(msg);
 	    }
             /* mop up --max/min/-n/vsize */
@@ -522,15 +551,17 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		}
 		else p = &(*av)[12];
 		if (p == NULL) {
-		    sprintf(msg, "WARNING: no value given for %s\n", *av);
+		    snprintf(msg, 1024,
+			     "WARNING: no value given for %s\n", *av);
 		    R_ShowMessage(msg);
 		    break;
 		}
 		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0)
-			sprintf(msg, "WARNING: %s value is invalid: ignored\n",
-				*av);
+			snprintf(msg, 1024, 
+				 "WARNING: %s value is invalid: ignored\n",
+				 *av);
 		    else
 			sprintf(msg, "WARNING: %s=%ld`%c': too large and ignored\n",
 				*av, value,
@@ -589,7 +620,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		} else
 		    Rp->nsize = value;
 	    }
-	    else {
+	    else { /* unknown -option */
 		argv[newac++] = *av;
 	    }
 	}
@@ -680,10 +711,11 @@ static int process_Renviron(char *filename)
     int errs = 0;
 
     if (!filename || !(fp = fopen(filename, "r"))) return 0;
-    sprintf(msg, "\n   File %s contains invalid line(s)", filename);
+    snprintf(msg, MSG_SIZE+50, 
+	     "\n   File %s contains invalid line(s)", filename);
 
     while(fgets(sm, BUF_SIZE, fp)) {
-	sm[BUF_SIZE] = '\0';
+        sm[BUF_SIZE-1] = '\0';
 	s = rmspace(sm);
 	if(strlen(s) == 0 || s[0] == '#') continue;
 	if(!(p = strchr(s, '='))) {
@@ -736,7 +768,7 @@ void process_site_Renviron ()
 	R_ShowMessage("path to Renviron.site is too long: skipping");
 	return;
     }
-    sprintf(buf, "%s/etc/Renviron.site", R_Home);
+    snprintf(buf, PATH_MAX, "%s/etc/Renviron.site", R_Home);
     process_Renviron(buf);
 }
 
@@ -756,7 +788,7 @@ void process_user_Renviron()
 	s = getenv("R_USER");
 	if(!s) s = getenv("HOME");
 	if(!s) return;
-	sprintf(buf, "%s/.Renviron", s);
+	snprintf(buf, 1024, "%s/.Renviron", s);
 	s = buf;
     }
 #endif
@@ -803,4 +835,38 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     UNPROTECT(1);
     return (ans);
+}
+
+#ifdef HAVE_POPEN
+FILE *R_popen(char *command, char *type)
+{
+    FILE *fp;
+#ifdef __APPLE_CC__
+    /* Luke recommends this to fix PR#1140 */
+    sigset_t ss;
+    sigaddset(&ss, SIGPROF);
+    sigprocmask(SIG_BLOCK, &ss,  NULL);
+    fp = popen(command, type);
+    sigprocmask(SIG_UNBLOCK, &ss, NULL);
+#else
+    fp = popen(command, type);
+#endif
+    return fp;
+}
+#endif /* HAVE_POPEN */
+
+int R_system(char *command)
+{
+    int val;
+#ifdef __APPLE_CC__
+    /* Luke recommends this to fix PR#1140 */
+    sigset_t ss;
+    sigaddset(&ss, SIGPROF);
+    sigprocmask(SIG_BLOCK, &ss,  NULL);
+    val = system(command);
+    sigprocmask(SIG_UNBLOCK, &ss, NULL);
+#else
+    val = system(command);
+#endif
+    return val;
 }

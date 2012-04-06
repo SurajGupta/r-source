@@ -57,7 +57,8 @@ bug.report(subject = "", ccaddress = Sys.getenv("USER"),
 \section{When is there a bug?}{
   If \R executes an illegal instruction, or dies with an operating
   system error message that indicates a problem in the program (as
-  opposed to something like ``disk full''), then it is certainly a bug.
+  opposed to something like \dQuote{disk full}), then it is certainly a
+  bug.
 
   Taking forever to complete a command can be a bug, but you must make
   certain that it was really \R's fault.  Some commands simply take a
@@ -98,9 +99,9 @@ bug.report(subject = "", ccaddress = Sys.getenv("USER"),
   to report it in a way which is useful.  What is most useful is an
   exact description of what commands you type, from when you start \R
   until the problem happens.  Always include the version of \R, machine,
-  and operating system that you are using; type `version' in \R to print
-  this. To help us keep track of which bugs have been fixed and which
-  are still open please send a separate report for each bug.
+  and operating system that you are using; type \kbd{version} in \R to
+  print this.  To help us keep track of which bugs have been fixed and
+  which are still open please send a separate report for each bug.
 
   The most important principle in reporting a bug is to report FACTS,
   not hypotheses or categorizations.  It is always easier to report the
@@ -134,17 +135,20 @@ bug.report(subject = "", ccaddress = Sys.getenv("USER"),
   wonderful.  You should still report the facts as well as any
   explanations or solutions.
 
-  Invoking \R with the \code{--vanilla} option may help in isolating a
+  Invoking \R with the \option{--vanilla} option may help in isolating a
   bug.  This ensures that the site profile and saved data files are not
   read.
 
-  On some systems a bug report can be generated using the
+  A bug report can be generated using the
   \code{bug.report()} function.  This automatically includes the version
   information and sends the bug to the correct address.  Alternatively
   the bug report can be emailed to \email{r-bugs@r-project.org} or
   submitted to the Web page at \url{http://bugs.r-project.org}.
+
+  Bug reports on \strong{contributed packages} should perhaps be sent to the
+  package maintainer rather than to r-bugs.
 }
 \seealso{R FAQ} 
-\author{This help page is adapted from the Emacs manual}
+\author{This help page is adapted from the Emacs manual and the R FAQ}
 \keyword{utilities}
 \keyword{error}

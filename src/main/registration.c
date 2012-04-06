@@ -69,66 +69,67 @@
    Rdll.lib or libR.so or the equivalent on that platform.
 */
 
-R_NativePrimitiveArgType R_approx_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType bakslv_t[] = {REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType R_approx_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType bakslv_t[] = {REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType bincode_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
-R_NativePrimitiveArgType bincount_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType bincode_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType bincount_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType R_chull_t[] = {INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType R_chull_t[] = {INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType R_cumsum_t[] = {REALSXP, INTSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType R_cumsum_t[] = {REALSXP, INTSXP, REALSXP, REALSXP};
 
-R_NativePrimitiveArgType find_interv_vec_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, LGLSXP, INTSXP};
+static R_NativePrimitiveArgType find_interv_vec_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, LGLSXP, INTSXP};
 
-R_NativePrimitiveArgType loglin_t[] = {INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, 
+static R_NativePrimitiveArgType loglin_t[] = {INTSXP, INTSXP, INTSXP, INTSXP, INTSXP, 
                                      REALSXP, REALSXP, INTSXP, INTSXP, REALSXP,
                                      INTSXP, REALSXP, REALSXP, INTSXP, REALSXP, 
 				     INTSXP, INTSXP};
 
-R_NativePrimitiveArgType lowess_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, 
+static R_NativePrimitiveArgType lowess_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, 
 				       INTSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 
 
-R_NativePrimitiveArgType massdist_t[] = {REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP};
+static R_NativePrimitiveArgType massdist_t[] = {REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP};
 
-R_NativePrimitiveArgType R_max_col_t[] = {REALSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType R_max_col_t[] = {REALSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType R_pretty_t[] = {REALSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, INTSXP};
-R_NativePrimitiveArgType R_rowsum_t[] = {INTSXP, REALSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType R_pretty_t[] = {REALSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, INTSXP};
+static R_NativePrimitiveArgType R_rowsum_t[] = {INTSXP, REALSXP, REALSXP, REALSXP};
 
-R_NativePrimitiveArgType spline_coef_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType spline_eval_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType spline_coef_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType spline_eval_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 
-R_NativePrimitiveArgType stemleaf_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, REALSXP};
+static R_NativePrimitiveArgType stemleaf_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, REALSXP};
 
 /* Note the ANYSXP in the first place.
    Doesn't quite work.  Needs investigation.
    See the odd first argument in the routine's definition.
+
+static R_NativePrimitiveArgType str_signif_t[] = {ANYSXP, INTSXP, STRSXP, INTSXP, INTSXP, STRSXP, STRSXP, STRSXP};
 */
-R_NativePrimitiveArgType str_signif_t[] = {ANYSXP, INTSXP, STRSXP, INTSXP, INTSXP, STRSXP, STRSXP, STRSXP};
 
-R_NativePrimitiveArgType R_tabulate_t[] = {INTSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType R_tabulate_t[] = {INTSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType Rsockconnect_t[] = {INTSXP, STRSXP};
-R_NativePrimitiveArgType Rsockopen_t[] = {INTSXP};
-R_NativePrimitiveArgType Rsocklisten_t[] = {INTSXP, STRSXP, INTSXP};
-R_NativePrimitiveArgType Rsockclose_t[] = {INTSXP};
-R_NativePrimitiveArgType Rsockread_t[] = {INTSXP, STRSXP, INTSXP};
-R_NativePrimitiveArgType Rsockwrite_t[] = {INTSXP, STRSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType Rsockconnect_t[] = {INTSXP, STRSXP};
+static R_NativePrimitiveArgType Rsockopen_t[] = {INTSXP};
+static R_NativePrimitiveArgType Rsocklisten_t[] = {INTSXP, STRSXP, INTSXP};
+static R_NativePrimitiveArgType Rsockclose_t[] = {INTSXP};
+static R_NativePrimitiveArgType Rsockread_t[] = {INTSXP, STRSXP, INTSXP};
+static R_NativePrimitiveArgType Rsockwrite_t[] = {INTSXP, STRSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType band_ucv_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType band_bcv_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType band_phi4_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType band_phi6_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
-R_NativePrimitiveArgType band_den_bin_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, INTSXP};
+static R_NativePrimitiveArgType band_ucv_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType band_bcv_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType band_phi4_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType band_phi6_bin_t[] = {INTSXP, INTSXP, REALSXP, INTSXP, REALSXP, REALSXP};
+static R_NativePrimitiveArgType band_den_bin_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, INTSXP};
 
 
 #ifdef PROBLEMS
-R_NativePrimitiveArgType fft_factor_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP};
+static R_NativePrimitiveArgType fft_factor_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, INTSXP, INTSXP};
 
-R_NativePrimitiveArgType fft_work_t[] = {REALSXP, REALSXP, };
-R_NativePrimitiveArgType fdhess_t[] = {};
+static R_NativePrimitiveArgType fft_work_t[] = {REALSXP, REALSXP, };
+static R_NativePrimitiveArgType fdhess_t[] = {};
 #endif
 
 #define CDEF(name)  {#name, (DL_FUNC) &name, sizeof(name ## _t)/sizeof(name ## _t[0]), name ##_t}
@@ -204,6 +205,7 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(La_dgeqp3, 1),
     CALLDEF(qr_coef_real, 2),
     CALLDEF(qr_qy_real, 3),
+    CALLDEF(det_ge_real, 2),
 
     /* In ../main/unique.c to use hashing. */
     CALLDEF(Rrowsum_matrix, 4),
@@ -228,8 +230,25 @@ static R_CallMethodDef callMethods [] = {
     /* Methods related routines. */
     CALLDEF(R_isMethodsDispatchOn, 1),
     CALLDEF(R_traceOnOff, 1),
+
+    /* compression and serialization routines */
     CALLDEF(R_compress1, 1),
     CALLDEF(R_decompress1, 1),
+    CALLDEF(R_serializeb, 3),
+    CALLDEF(R_serialize, 4),
+    CALLDEF(R_unserialize, 2),
+
+    /* lazy loading support */
+    CALLDEF(R_getVarsFromFrame, 3),
+    CALLDEF(R_lazyLoadDBinsertValue, 5),
+    CALLDEF(R_lazyLoadDBfetch, 4),
+
+#ifdef BYTECODE
+    CALLDEF(R_getbcprofcounts, 0),
+    CALLDEF(R_startbcprof, 0),
+    CALLDEF(R_stopbcprof, 0),
+#endif
+
     {NULL, NULL, 0}
 };
 
@@ -244,7 +263,7 @@ static R_ExternalMethodDef externalMethods [] = {
 
 
 #define FDEF(name)  {#name, (DL_FUNC) &F77_SYMBOL(name), -1, NULL}
-R_FortranMethodDef fortranMethods[] = {
+static R_FortranMethodDef fortranMethods[] = {
     /* Linpack */
     FDEF(ch2inv),
     FDEF(chol),
@@ -280,6 +299,7 @@ R_FortranMethodDef fortranMethods[] = {
 void
 R_init_base(DllInfo *dll)
 {
+    R_useDynamicSymbols(dll, FALSE);
     R_registerRoutines(dll, cMethods, callMethods,
 		       fortranMethods, externalMethods);
 }

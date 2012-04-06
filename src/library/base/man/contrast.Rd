@@ -9,7 +9,7 @@
 }
 \usage{
 contr.helmert(n, contrasts = TRUE)
-contr.poly(n, contrasts = TRUE)
+contr.poly(n, scores = 1:n, contrasts = TRUE)
 contr.sum(n, contrasts = TRUE)
 contr.treatment(n, base = 1, contrasts = TRUE)
 }
@@ -17,6 +17,8 @@ contr.treatment(n, base = 1, contrasts = TRUE)
   \item{n}{a vector of levels for a factor, or the number of levels.}
   \item{contrasts}{a logical indicating whether contrasts should be
     computed.}
+  \item{scores}{the set of values over which orthogonal polynomials are
+    to be computed.}
   \item{base}{an integer specifying which group is considered the
     baseline group. Ignored if \code{contrasts} is \code{FALSE}.}
 }
@@ -31,13 +33,13 @@ contr.treatment(n, base = 1, contrasts = TRUE)
   \code{cont.helmert} returns Helmert contrasts, which contrast the
   second level with the first, the third with the average of the first
   two, and so on.  \code{contr.poly} returns contrasts based on
-  orthogonal polynomials. \code{contr.sum} uses ``sum to zero
-  contrasts''.
+  orthogonal polynomials. \code{contr.sum} uses \dQuote{sum to zero
+  contrasts}.
 
   \code{contr.treatment} contrasts each level with the baseline level
   (specified by \code{base}): the baseline level is omitted.  Note that
-  this does not produce ``contrasts'' as defined in the standard theory
-  for linear models as they are not orthogonal to the constant.
+  this does not produce \dQuote{contrasts} as defined in the standard
+  theory for linear models as they are not orthogonal to the constant.
 }
 \value{
   A matrix with \code{n} rows and \code{k} columns, with \code{k=n-1} if

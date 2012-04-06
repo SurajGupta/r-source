@@ -27,7 +27,7 @@ showDefault <-
         ## print the old-style object
         cat("An object of class \"", cl, "\"\n", sep="")
         for( cl2 in rev(extends(cl)))
-            if(!identical(cl2, "oldClass") && extends(cl2, "oldClass")) {
+            if(!.identC(cl2, "oldClass") && extends(cl2, "oldClass")) {
                 print(as(object, cl2), useS4 = FALSE) # see comment NBB below
                 break
             }
@@ -50,7 +50,7 @@ show <- function(object)
     showDefault(object, FALSE)
 
 .InitShowMethods <- function(envir) {
-    if(!isGeneric("show"))
+    if(!isGeneric("show", envir))
         setGeneric("show", where = envir)
     setMethod("show", "MethodDefinition",
               function(object) {
@@ -85,4 +85,12 @@ show <- function(object)
                       paste(object@signature, collapse=", "), "\n\n")
               },
               where = envir)
+    setMethod("show", "classRepresentation",
+              function(object){
+                  if(!.identC(class(object), "classRepresentation"))
+                      cat("Extended class definition (", dQuote(class(object)),
+                          ")\n")
+                  print.classRepresentation(object)
+              },
+               where = envir)
 }

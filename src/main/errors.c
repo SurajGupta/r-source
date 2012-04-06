@@ -22,6 +22,11 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_AQUA
+extern void R_ProcessEvents(void);
+#endif
+
+
 #include <Defn.h>
 /* -> Errormsg.h */
 #include <Startup.h> /* rather cleanup ..*/
@@ -35,22 +40,21 @@
    two lines */
 #define LONGCALL 30
 
-/* This is now non-static so that other applications that link or load libR.so
-   can override it by defining their own version and hence by-pass the longjmp
-   back into the standard R event loop.
- */
-void jump_now();
-
 /*
 Different values of inError are used to indicate different places
 in the error handling.
 */
 static int inError = 0;
 static int inWarning = 0;
+static int inPrintWarnings = 0;
+
+static void try_jump_to_restart(void);
+static void jump_to_top_ex(Rboolean, Rboolean, Rboolean, Rboolean, Rboolean);
+static void signalInterrupt(void);
 
 /* Interface / Calling Hierarchy :
 
-  R__stop()   -> do_error ->   errorcall --> jump_to_toplevel --> jump_now
+  R__stop()   -> do_error ->   errorcall --> jump_to_top_ex
 			 /
 		    error
 
@@ -64,10 +68,39 @@ static int inWarning = 0;
 */
 
 
+void R_CheckUserInterrupt(void)
+{
+    /* This is the point where GUI systems need to do enough event
+       processing to determine whether there is a user interrupt event
+       pending.  Need to be careful not to do too much event
+       processing though: if event handlers written in R are allowed
+       to run at this point then we end up with concurrent R
+       evaluations and that can cause problems until we have proper
+       concurrency support. LT */
+#if  ( defined(HAVE_AQUA) || defined(Win32) ) 
+    R_ProcessEvents();
+#else
+    if (R_interrupts_pending)
+	onintr();
+#endif /* Win32 */
+}
+
 void onintr()
 {
+    if (R_interrupts_suspended) {
+	R_interrupts_pending = 1;
+	return;
+    }
+    else R_interrupts_pending = 0;
+
+    signalInterrupt();
+
     REprintf("\n");
-    jump_to_toplevel();
+    /* Attempt to run user error option, save a traceback, show
+       warnings, and reset console; also stop at restart (try/browser)
+       frames.  Not clear this is what we really want, but this
+       preserves current behavior */
+    jump_to_top_ex(TRUE, TRUE, TRUE, TRUE, FALSE);
 }
 
 /* SIGUSR1: save and quit
@@ -76,31 +109,25 @@ void onintr()
 
 void onsigusr1()
 {
-    RCNTXT *c;
-
+    if (R_interrupts_suspended) {
+	/**** ought to save signal and handle after suspend */
+	REprintf("interrupts suspended; signal ignored");
+	return;
+    }
+	
     inError = 1;
 
-    if( R_CollectWarnings ) {
-	inError = 2;
-	REprintf("In addition: ");
+    if( R_CollectWarnings )
 	PrintWarnings();
-	inError = 1;
-    }
-
 
     R_ResetConsole();
     R_FlushConsole();
     R_ClearerrConsole();
     R_ParseError = 0;
 
-    /* Bail out if there is a CTXT_RESTART on the stack--do we really
+    /* Bail out if there is a browser/try on the stack--do we really
        want this? */
-    for (c = R_GlobalContext; c; c = c->nextcontext) {
-	if (IS_RESTART_BIT_SET(c->callflag)) {
-	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
-	}
-    }
+    try_jump_to_restart();
 
     /* Run all onexit/cend code on the stack (without stopping at
        intervening CTXT_TOPLEVEL's.  Since intervening CTXT_TOPLEVEL's
@@ -117,13 +144,14 @@ void onsigusr2()
 {
     inError = 1;
 
-    if( R_CollectWarnings ) {
-	inError = 2;
-	REprintf("In addition: ");
-	PrintWarnings();
-	inError = 1;
+    if (R_interrupts_suspended) {
+	/**** ought to save signal and handle after suspend */
+	REprintf("interrupts suspended; signal ignored");
+	return;
     }
-
+	
+    if( R_CollectWarnings )
+	PrintWarnings();
 
     R_ResetConsole();
     R_FlushConsole();
@@ -165,22 +193,30 @@ void warning(const char *format, ...)
 /* temporary hook to allow experimenting with alternate warning mechanisms */
 static void (*R_WarningHook)(SEXP, char *) = NULL;
 
-void warningcall(SEXP call, const char *format, ...)
+#ifdef NEW_CONDITION_HANDLING
+/* declarations for internal condition handling */
+
+static void vsignalError(SEXP call, const char *format, va_list ap);
+static void vsignalWarning(SEXP call, const char *format, va_list ap);
+static void invokeRestart(SEXP, SEXP);
+#endif
+
+static void reset_inWarning(void *data)
+{
+    inWarning = 0;
+}
+
+static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 {
     int w;
     SEXP names, s;
     char *dcall, buf[BUFSIZE];
     RCNTXT *cptr;
+    RCNTXT cntxt;
 
-    if (R_WarningHook != NULL) {
-	va_list(ap);
-	va_start(ap, format);
-	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
-	va_end(ap);
-	R_WarningHook(call, buf);
+    if (inWarning)
 	return;
-    }
-
+    
     s = GetOption(install("warning.expression"), R_NilValue);
     if( s!= R_NilValue ) {
 	if( !isLanguage(s) &&  ! isExpression(s) )
@@ -200,18 +236,20 @@ void warningcall(SEXP call, const char *format, ...)
     if(w < 0 || inWarning || inError)  {/* ignore if w<0 or already in here*/
 	return;
     }
+
+    /* set up a context which will restore inWarning if there is an exit */
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &reset_inWarning;
+
     inWarning = 1;
 
     if(w >= 2) { /* make it an error */
-	va_list(ap);
-	va_start(ap, format);
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
-	va_end(ap);
 	inWarning = 0; /* PR#1570 */
 	errorcall(call, "(converted from warning) %s", buf);
     }
     else if(w == 1) {	/* print as they happen */
-	va_list(ap);
 	if( call != R_NilValue ) {
 	    dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	    REprintf("Warning in %s : ", dcall);
@@ -219,34 +257,90 @@ void warningcall(SEXP call, const char *format, ...)
 	}
 	else
 	    REprintf("Warning: ");
-	va_start(ap, format);
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
-	va_end(ap);
 	REprintf("%s\n", buf);
     }
     else if(w == 0) {	/* collect them */
-	va_list(ap);
-	va_start(ap, format);
 	if(!R_CollectWarnings)
 	    setupwarnings();
 	if( R_CollectWarnings > 49 )
 	    return;
 	SET_VECTOR_ELT(R_Warnings, R_CollectWarnings, call);
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
-	va_end(ap);
 	names = CAR(ATTRIB(R_Warnings));
 	SET_STRING_ELT(names, R_CollectWarnings++, mkChar(buf));
     }
     /* else:  w <= -1 */
+    endcontext(&cntxt);
     inWarning = 0;
+}
+
+static void warningcall_dflt(SEXP call, const char *format,...)
+{
+    va_list(ap);
+
+    va_start(ap, format);
+    vwarningcall_dflt(call, format, ap);
+    va_end(ap);
+}
+
+void warningcall(SEXP call, const char *format, ...)
+{
+    va_list(ap);
+#ifdef NEW_CONDITION_HANDLING
+    va_start(ap, format);
+    vsignalWarning(call, format, ap);
+    va_end(ap);
+#else
+    if (R_WarningHook != NULL) {
+	char buf[BUFSIZE];
+	va_start(ap, format);
+	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
+	va_end(ap);
+	R_WarningHook(call, buf);
+	return;
+    }
+
+    va_start(ap, format);
+    vwarningcall_dflt(call, format, ap);
+    va_end(ap);
+#endif
+}
+
+static void cleanup_PrintWarnings(void *data)
+{
+    if (R_CollectWarnings) {
+	R_CollectWarnings = 0;
+	R_Warnings = R_NilValue;
+	REprintf("Lost warning messages\n");
+    }
+    inPrintWarnings = 0;
 }
 
 void PrintWarnings(void)
 {
     int i;
     SEXP names, s, t;
+    RCNTXT cntxt;
 
-    inWarning = 1;
+    if (R_CollectWarnings == 0)
+	return;
+    else if (inPrintWarnings) {
+	if (R_CollectWarnings) {
+	    R_CollectWarnings = 0;
+	    R_Warnings = R_NilValue;
+	    REprintf("Lost warning messages\n");
+	}
+	return;
+    }
+
+    /* set up a context which will restore inPrintWarnings if there is
+       an exit */
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &cleanup_PrintWarnings;
+
+    inPrintWarnings = 1;
     if( R_CollectWarnings == 1 ) {
 	REprintf("Warning message: \n");
 	names = CAR(ATTRIB(R_Warnings));
@@ -285,7 +379,10 @@ void PrintWarnings(void)
     setAttrib(s, R_NamesSymbol, t);
     defineVar(install("last.warning"), s, R_GlobalEnv);
     UNPROTECT(2);
-    inWarning = 0;
+
+    endcontext(&cntxt);
+
+    inPrintWarnings = 0;
     R_CollectWarnings = 0;
     R_Warnings = R_NilValue;
     return;
@@ -296,35 +393,43 @@ static char errbuf[BUFSIZE];
 /* temporary hook to allow experimenting with alternate error mechanisms */
 static void (*R_ErrorHook)(SEXP, char *) = NULL;
 
-void errorcall(SEXP call, const char *format,...)
+static void restore_inError(void *data)
 {
+    int *poldval = data;
+    inError = *poldval;
+}
+
+static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
+{
+    RCNTXT cntxt;
     char *p, *dcall;
-
-    va_list(ap);
-
-    if (R_ErrorHook != NULL) {
-	char buf[BUFSIZE];
-	void (*hook)(SEXP, char *) = R_ErrorHook;
-	R_ErrorHook = NULL; /* to avoid recursion */
-	va_start(ap, format);
-	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
-	va_end(ap);
-	hook(call, buf);
-    }
+    int oldInError;
 
     if (inError) {
+	/* fail-safe handler for recursive errors */
 	if(inError == 3) {
 	     /* Can REprintf generate an error? If so we should guard for it */
 	    REprintf("Error during wrapup: ");
 	    /* this does NOT try to print the call since that could
                cause a cascade of error calls */
-	    va_start(ap, format);
 	    Rvsnprintf(errbuf, sizeof(errbuf), format, ap);
-	    va_end(ap);
 	    REprintf("%s\n", errbuf);
 	}
-	jump_now();
+	if (R_Warnings != R_NilValue) {
+	    R_CollectWarnings = 0;
+	    R_Warnings = R_NilValue;
+	    REprintf("Lost warning messages\n");
+	}
+	jump_to_top_ex(FALSE, FALSE, FALSE, FALSE, FALSE);
     }
+
+    /* set up a context to restore inError value on exit */
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &restore_inError;
+    cntxt.cenddata = &oldInError;
+    oldInError = inError;
+    inError = 1;
 
     if(call != R_NilValue) {
 	char *head = "Error in ";
@@ -332,7 +437,6 @@ void errorcall(SEXP call, const char *format,...)
 	char *tail = "\n\t";/* <- TAB */
 	int len = strlen(head) + strlen(mid) + strlen(tail);
 
-	inError = 1;
 	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	if (strlen(dcall) + len < BUFSIZE) {
 	    sprintf(errbuf, "%s%s%s", head, dcall, mid);
@@ -345,13 +449,55 @@ void errorcall(SEXP call, const char *format,...)
 	sprintf(errbuf, "Error: ");
 
     p = errbuf + strlen(errbuf);
-    va_start(ap, format);
     Rvsnprintf(p, min(BUFSIZE, R_WarnLength) - strlen(errbuf), format, ap);
-    va_end(ap);
     p = errbuf + strlen(errbuf) - 1;
     if(*p != '\n') strcat(errbuf, "\n");
     if (R_ShowErrorMessages) REprintf("%s", errbuf);
-    jump_to_toplevel();
+
+    if( R_ShowErrorMessages && R_CollectWarnings ) {
+	REprintf("In addition: ");
+	PrintWarnings();
+    }
+
+    jump_to_top_ex(TRUE, TRUE, TRUE, TRUE, FALSE);
+
+    /* not reached */
+    endcontext(&cntxt);
+    inError = oldInError;
+}
+
+static void errorcall_dflt(SEXP call, const char *format,...)
+{
+    va_list(ap);
+
+    va_start(ap, format);
+    verrorcall_dflt(call, format, ap);
+    va_end(ap);
+}
+
+void errorcall(SEXP call, const char *format,...)
+{
+    va_list(ap);
+
+#ifdef NEW_CONDITION_HANDLING
+    va_start(ap, format);
+    vsignalError(call, format, ap);
+    va_end(ap);
+#endif
+
+    if (R_ErrorHook != NULL) {
+	char buf[BUFSIZE];
+	void (*hook)(SEXP, char *) = R_ErrorHook;
+	R_ErrorHook = NULL; /* to avoid recursion */
+	va_start(ap, format);
+	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
+	va_end(ap);
+	hook(call, buf);
+    }
+
+    va_start(ap, format);
+    verrorcall_dflt(call, format, ap);
+    va_end(ap);
 }
 
 SEXP do_geterrmessage(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -378,166 +524,174 @@ void error(const char *format, ...)
 	      R_GlobalContext->call : R_NilValue, "%s", buf);
 }
 
+static void try_jump_to_restart(void)
+{
+#ifdef NEW_CONDITION_HANDLING
+    SEXP list;
+
+    for (list = R_RestartStack; list != R_NilValue; list = CDR(list)) {
+	SEXP restart = CAR(list);
+	if (TYPEOF(restart) == VECSXP && LENGTH(restart) > 1) {
+	    SEXP name = VECTOR_ELT(restart, 0);
+	    if (TYPEOF(name) == STRSXP && LENGTH(name) == 1) {
+		char *cname = CHAR(STRING_ELT(name, 0));
+		if (! strcmp(cname, "browser") ||
+		    ! strcmp(cname, "tryRestart") ||
+		    ! strcmp(cname, "abort")) /**** move abort eventually? */
+		    invokeRestart(restart, R_NilValue);
+	    }
+	}
+    }
+#else
+    RCNTXT *c;
+
+    for (c = R_GlobalContext; c; c = c->nextcontext) {
+	if (IS_RESTART_BIT_SET(c->callflag)) {
+	    inError=0;
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
+	}
+	if (c->callflag == CTXT_TOPLEVEL)
+	    break;
+    }
+#endif
+}
+
 /* Unwind the call stack in an orderly fashion */
 /* calling the code installed by on.exit along the way */
 /* and finally longjmping to the innermost TOPLEVEL context */
 
-void jump_to_toplevel()
+static void jump_to_top_ex(Rboolean traceback,
+			   Rboolean tryUserHandler,
+			   Rboolean processWarnings,
+			   Rboolean resetConsole,
+			   Rboolean ignoreRestartContexts)
 {
-    RCNTXT *c;
-    SEXP s, t;
-    int haveHandler;
-    int nback = 0;
+    RCNTXT cntxt;
+    SEXP s;
+    int haveHandler, oldInError;
 
-    inError = 1;
+    /* set up a context to restore inError value on exit */
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &restore_inError;
+    cntxt.cenddata = &oldInError;
 
-    if( R_ShowErrorMessages && R_CollectWarnings ) {
-	inError = 2;
-	REprintf("In addition: ");
-	PrintWarnings();
-	inError = 1;
-    }
+    oldInError = inError;
 
-    /*now see if options("error") is set */
-    s = GetOption(install("error"), R_NilValue);
-    haveHandler = ( s != R_NilValue );
-    if (haveHandler) {
-	if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
-	    REprintf("invalid option \"error\"\n");
-	else {
-	    inError = 3;
-	    if (isLanguage(s))
-		eval(s, R_GlobalEnv);
-	    else /* expression */
-	    {
-		int i, n = LENGTH(s);
-		for (i = 0 ; i < n ; i++)
-		    eval(VECTOR_ELT(s, i), R_GlobalEnv);
-	    }
+    haveHandler = FALSE;
+
+    if (tryUserHandler && inError < 3) {
+	if (! inError)
 	    inError = 1;
+
+	/*now see if options("error") is set */
+	s = GetOption(install("error"), R_NilValue);
+	haveHandler = ( s != R_NilValue );
+	if (haveHandler) {
+	    if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
+		REprintf("invalid option \"error\"\n");
+	    else {
+		inError = 3;
+		if (isLanguage(s))
+		    eval(s, R_GlobalEnv);
+		else /* expression */
+		    {
+			int i, n = LENGTH(s);
+			for (i = 0 ; i < n ; i++)
+			    eval(VECTOR_ELT(s, i), R_GlobalEnv);
+		    }
+		inError = oldInError;
+	    }
 	}
+	inError = oldInError;
     }
+
+    /* print warnings if there are any left to be printed */
+    if( processWarnings && R_CollectWarnings )
+	PrintWarnings();
 
     /* reset some stuff--not sure (all) this belongs here */
-    R_ResetConsole();
-    R_FlushConsole();
-    R_ClearerrConsole();
-    R_ParseError = 0;
-
-    /* find the jump target; do the jump if target is a CTXT_RESTART */
-    for (c = R_GlobalContext; c; c = c->nextcontext) {
-	if (c->callflag & CTXT_FUNCTION )
-	    nback++;
-	if (IS_RESTART_BIT_SET(c->callflag)) {
-	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
-	}
-	if (c->callflag == CTXT_TOPLEVEL)
-	    break;
+    if (resetConsole) {
+	R_ResetConsole();
+	R_FlushConsole();
+	R_ClearerrConsole();
+	R_ParseError = 0;
     }
 
-    /* run onexit/cend code for all contexts down to but not including
-       the jump target */
-    R_run_onexits(c);
+    /* WARNING: If oldInError > 0 ABSOLUTELY NO ALLOCATION can be
+       triggered after this point except whatever happens in
+       R_run_onexits.  The error could be an out of memory error and
+       any allocation could result in an infinite-loop condition. All
+       you can do is reset things and exit.  */
 
-    if ( !R_Interactive && !haveHandler && inError ) {
+    /* jump to a browser/try if one is on the stack */
+    if (! ignoreRestartContexts)
+	try_jump_to_restart();
+
+    /* at this point, i.e. if we have not exited in
+       try_jump_to_restart, we are heading for R_ToplevelContext */
+
+    /* Run onexit/cend code for all contexts down to but not including
+       the jump target.  This may cause recursive calls to
+       jump_to_top_ex, but the possible number of such recursive
+       calls is limited since each exit function is removed before it
+       is executed.  In addition, all but the first should have
+       inError > 0.  This is not a great design because we could run
+       out of other resources that are on the stack (like C stack for
+       example).  The right thing to do is arrange to execute exit
+       code *after* the LONGJMP, but that requires a more extensive
+       redesign of the non-local transfer of control mechanism.
+       LT. */
+    R_run_onexits(R_ToplevelContext);
+
+    if ( !R_Interactive && !haveHandler ) {
 	REprintf("Execution halted\n");
 	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
     }
 
-    PROTECT(s = allocList(nback));
-    t = s;
-    for (c = R_GlobalContext ;
-	 c != NULL && c->callflag != CTXT_TOPLEVEL;
-	 c = c->nextcontext)
-	if (c->callflag & CTXT_FUNCTION ) {
-	    SETCAR(t, deparse1(c->call, 0));
-	    t = CDR(t);
-	}
-    setVar(install(".Traceback"), s, R_GlobalEnv);
-    UNPROTECT(1);
-    jump_now();
-}
-
-/*
-   Absolutely no allocation can be triggered in jump_now except
-   whatever happens in R_run_onexits.  The error could be an out of
-   memory error and any allocation could result in an infinite-loop
-   condition. All you can do is reset things and exit.  */
-void jump_now()
-{
-    RCNTXT *c;
-
-    /* find the jump target; do the jump if target is a CTXT_RESTART */
-    for (c = R_GlobalContext; c; c = c->nextcontext) {
-	if (IS_RESTART_BIT_SET(c->callflag)) {
-	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
-	}
-	if (c->callflag == CTXT_TOPLEVEL)
-	    break;
+    if (traceback) {
+	PROTECT(s = R_GetTraceback(0));
+	setVar(install(".Traceback"), s, R_GlobalEnv);
+	UNPROTECT(1);
     }
-    /* at this point we should have c == R_TopLevelContext */
-
-    /* Run onexit/cend code for all contexts down to but not including
-       the jump target.  Ordinarily this will already have been done,
-       but it may not have been completed in a recursive error
-       situation.  This may cause recursive calls to jump_now, but the
-       possible number of such recursive calls is limited since each
-       exit function is removed before it its executed.  This is not a
-       great design because we could run out of other resources that
-       are on the stack (like C stack for example).  The right thing
-       to do is arrange execute exit *after* the LONGJMP, but that
-       requires a more extensive redesign of the non-local transfer of
-       control mechanism.  LT. */
-    R_run_onexits(R_ToplevelContext);
-
-    if( inError == 2 )
-	REprintf("Lost warning messages\n");
-    inError=0;
-    inWarning=0;
-    R_Warnings = R_NilValue;
-    R_CollectWarnings = 0;
 
     R_GlobalContext = R_ToplevelContext;
     R_restore_globals(R_GlobalContext);
 
     LONGJMP(R_ToplevelContext->cjmpbuf, 0);
+
+    /* not reached */
+    endcontext(&cntxt);
+    inError = oldInError;
 }
 
-
-#ifdef OLD_Macintosh
-
-#include <signal.h>
-#include <errno.h>
-
-void isintrpt()
+void jump_to_toplevel()
 {
-    register EvQElPtr q;
-
-    for (q = (EvQElPtr) GetEvQHdr()->qHead; q; q = (EvQElPtr) q->qLink)
-	if (q->evtQWhat == keyDown && (char) q->evtQMessage == '.')
-	    if (q->evtQModifiers & cmdKey) {
-		FlushEvents(keyDownMask, 0);
-		raise(SIGINT);
-				/* errno = EINTR; */
-		return;
-	    }
+    /* no traceback, no user error option; for now, warnings are
+       printed here and console is reset -- eventually these should be
+       done after arriving at the jump target.  Now ignores
+       try/browser frames--it really is a jump to toplevel */
+    jump_to_top_ex(FALSE, FALSE, TRUE, TRUE, TRUE);
 }
-#endif
 
+static SEXP findCall(void)
+{
+    RCNTXT *cptr;
+    for (cptr = R_GlobalContext->nextcontext;
+	 cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	 cptr = cptr->nextcontext)
+	if (cptr->callflag & CTXT_FUNCTION)
+	    return cptr->call;
+    return R_NilValue;
+}
+    
 SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 /* error(.) : really doesn't return anything; but all do_foo() must be SEXP */
-    RCNTXT *cptr;
     SEXP c_call;
 
-    if(asLogical(CAR(args))) {/* find context -> "Error in ..:" */
-	cptr = R_GlobalContext->nextcontext;
-	while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->nextcontext != NULL)
-	    cptr = cptr->nextcontext;
-	c_call = cptr->call;
-    }
+    if(asLogical(CAR(args))) /* find context -> "Error in ..:" */
+	c_call = findCall();
     else
 	c_call = R_NilValue;
 
@@ -556,16 +710,11 @@ SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    RCNTXT *cptr;
     SEXP c_call;
 
-    if(asLogical(CAR(args))) {/* find context -> "... in: ..:" */
-	cptr = R_GlobalContext->nextcontext;
-	while ( !(cptr->callflag & CTXT_FUNCTION) && 
-		cptr->nextcontext != NULL)
-	    cptr = cptr->nextcontext;
-	c_call = cptr->call;
-    } else
+    if(asLogical(CAR(args))) /* find context -> "... in: ..:" */
+	c_call = findCall();
+    else
 	c_call = R_NilValue;
 
     args = CDR(args);
@@ -578,6 +727,9 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else
 	warningcall(c_call, "");
+
+    /* need to set R_Visible since it may have been changed by a callback */
+    R_Visible = 0;
     return CAR(args);
 }
 
@@ -667,7 +819,6 @@ void WarningMessage(SEXP call, R_WARNING which_warn, ...)
 
 void R_ReturnOrRestart(SEXP val, SEXP env, Rboolean restart);
 void R_PrintDeferredWarnings(void);
-SEXP R_GetTraceback(int);
 void R_SetErrmessage(char *s);
 void R_SetErrorHook(void (*hook)(SEXP, char *));
 void R_SetWarningHook(void (*hook)(SEXP, char *));
@@ -737,7 +888,6 @@ void R_PrintDeferredWarnings(void)
     }
 }    
 
-/* doesn't stop at TOPLEVEL--should once browser is changed to use RESTART */
 SEXP R_GetTraceback(int skip)
 {
     int nback = 0, ns;
@@ -771,3 +921,408 @@ SEXP R_GetTraceback(int skip)
     return s;
 }
 
+#ifdef NEW_CONDITION_HANDLING
+static SEXP mkHandlerEntry(SEXP class, SEXP parentenv, SEXP handler, SEXP rho,
+			   SEXP result, int calling)
+{
+    SEXP entry = allocVector(VECSXP, 5);
+    SET_VECTOR_ELT(entry, 0, class);
+    SET_VECTOR_ELT(entry, 1, parentenv);
+    SET_VECTOR_ELT(entry, 2, handler);
+    SET_VECTOR_ELT(entry, 3, rho);
+    SET_VECTOR_ELT(entry, 4, result);
+    SETLEVELS(entry, calling);
+    return entry;
+}
+
+/**** rename these??*/
+#define IS_CALLING_ENTRY(e) LEVELS(e)
+#define ENTRY_CLASS(e) VECTOR_ELT(e, 0)
+#define ENTRY_CALLING_ENVIR(e) VECTOR_ELT(e, 1)
+#define ENTRY_HANDLER(e) VECTOR_ELT(e, 2)
+#define ENTRY_TARGET_ENVIR(e) VECTOR_ELT(e, 3)
+#define ENTRY_RETURN_RESULT(e) VECTOR_ELT(e, 4)
+
+#define RESULT_SIZE 3
+
+SEXP do_addCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP classes, handlers, parentenv, target, oldstack, newstack, result;
+    int calling, i, n;
+    PROTECT_INDEX osi;
+
+    checkArity(op, args);
+
+    classes = CAR(args); args = CDR(args);
+    handlers = CAR(args); args = CDR(args);
+    parentenv = CAR(args); args = CDR(args);
+    target = CAR(args); args = CDR(args);
+    calling = asLogical(CAR(args));
+
+    if (classes == R_NilValue || handlers == R_NilValue)
+	return R_HandlerStack;
+
+    if (TYPEOF(classes) != STRSXP || TYPEOF(handlers) != VECSXP ||
+	LENGTH(classes) != LENGTH(handlers))
+	error("bad handler data");
+
+    n = LENGTH(handlers);
+    oldstack = R_HandlerStack;
+
+    PROTECT(result = allocVector(VECSXP, RESULT_SIZE));
+    PROTECT_WITH_INDEX(newstack = oldstack, &osi);
+
+    for (i = n - 1; i >= 0; i--) {
+	SEXP class = STRING_ELT(classes, i);
+	SEXP handler = VECTOR_ELT(handlers, i);
+	SEXP entry = mkHandlerEntry(class, parentenv, handler, target, result,
+				    calling);
+	REPROTECT(newstack = CONS(entry, newstack), osi);
+    }
+
+    R_HandlerStack = newstack;
+    UNPROTECT(2);
+
+    return oldstack;
+}
+
+SEXP do_resetCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    R_HandlerStack = CAR(args);
+    return R_NilValue;
+}
+
+static SEXP findSimpleErrorHandler()
+{
+    SEXP list;
+    for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
+	SEXP entry = CAR(list);
+	if (! strcmp(CHAR(ENTRY_CLASS(entry)), "simpleError") ||
+	    ! strcmp(CHAR(ENTRY_CLASS(entry)), "error") ||
+	    ! strcmp(CHAR(ENTRY_CLASS(entry)), "condition"))
+	    return list;
+    }
+    return R_NilValue;
+}
+
+static void vsignalWarning(SEXP call, const char *format, va_list ap)
+{
+    char buf[BUFSIZE];
+    SEXP hooksym, quotesym, hcall, qcall;
+
+    hooksym = install(".signalSimpleWarning");
+    quotesym = install("quote");
+    if (SYMVALUE(hooksym) != R_UnboundValue &&
+	SYMVALUE(quotesym) != R_UnboundValue) {
+	PROTECT(qcall = LCONS(quotesym, LCONS(call, R_NilValue)));
+	PROTECT(hcall = LCONS(qcall, R_NilValue));
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	hcall = LCONS(ScalarString(mkChar(buf)), hcall);
+	PROTECT(hcall = LCONS(hooksym, hcall));
+	eval(hcall, R_GlobalEnv);
+	UNPROTECT(3);
+    }
+    else vwarningcall_dflt(call, format, ap);
+}
+
+static void gotoExitingHandler(SEXP cond, SEXP call, SEXP entry)
+{
+    SEXP rho = ENTRY_TARGET_ENVIR(entry);
+    SEXP result = ENTRY_RETURN_RESULT(entry);
+    SET_VECTOR_ELT(result, 0, cond);
+    SET_VECTOR_ELT(result, 1, call);
+    SET_VECTOR_ELT(result, 2, ENTRY_HANDLER(entry));
+    findcontext(CTXT_FUNCTION, rho, result);
+}
+
+static void vsignalError(SEXP call, const char *format, va_list ap)
+{
+    SEXP list, oldstack;
+
+    PROTECT(oldstack = R_HandlerStack);
+    while ((list = findSimpleErrorHandler()) != R_NilValue) {
+	char *buf = errbuf;
+	SEXP entry = CAR(list);
+	R_HandlerStack = CDR(list);
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	buf[BUFSIZE - 1] = 0;
+	if (IS_CALLING_ENTRY(entry)) {
+	    if (ENTRY_HANDLER(entry) == R_RestartToken) {
+		UNPROTECT(1);
+		return; /* go to default error handling; do not reset stack */
+	    }
+	    else {
+		SEXP hooksym, quotesym, hcall, qcall;
+		hooksym = install(".handleSimpleError");
+		quotesym = install("quote");
+		PROTECT(qcall = LCONS(quotesym, LCONS(call, R_NilValue)));
+		PROTECT(hcall = LCONS(qcall, R_NilValue));
+		hcall = LCONS(ScalarString(mkChar(buf)), hcall);
+		hcall = LCONS(ENTRY_HANDLER(entry), hcall);
+		PROTECT(hcall = LCONS(hooksym, hcall));
+		eval(hcall, R_GlobalEnv);
+		UNPROTECT(3);
+	    }
+	}
+	else gotoExitingHandler(R_NilValue, call, entry);
+    }
+    R_HandlerStack = oldstack;
+    UNPROTECT(1);
+}
+
+static SEXP findConditionHandler(SEXP cond)
+{
+    int i;
+    SEXP list;
+    SEXP classes = getAttrib(cond, R_ClassSymbol);
+
+    if (TYPEOF(classes) != STRSXP)
+	return R_NilValue;
+    
+    /**** need some changes here to allow conditions to be S4 classes */
+    for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
+	SEXP entry = CAR(list);
+	for (i = 0; i < LENGTH(classes); i++)
+	    if (! strcmp(CHAR(ENTRY_CLASS(entry)),
+			 CHAR(STRING_ELT(classes, i))))
+		return list;
+    }
+    return R_NilValue;
+}
+
+SEXP do_signalCondition(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP list, cond, msg, ecall, oldstack;
+
+    checkArity(op, args);
+
+    cond = CAR(args);
+    msg = CADR(args);
+    ecall = CADDR(args);
+
+    PROTECT(oldstack = R_HandlerStack);
+    while ((list = findConditionHandler(cond)) != R_NilValue) {
+	SEXP entry = CAR(list);
+	R_HandlerStack = CDR(list);
+	if (IS_CALLING_ENTRY(entry)) {
+	    SEXP h = ENTRY_HANDLER(entry);
+	    if (h == R_RestartToken) {
+		char *msgstr = NULL;
+		if (TYPEOF(msg) == STRSXP && LENGTH(msg) > 0)
+		    msgstr = CHAR(STRING_ELT(msg, 0));
+		else error("error message not a strring");
+		errorcall_dflt(ecall, "%s", msgstr);
+	    }
+	    else {
+		SEXP hcall = LCONS(h, LCONS(cond, R_NilValue));
+		PROTECT(hcall);
+		eval(hcall, R_GlobalEnv);
+		UNPROTECT(1);
+	    }
+	}
+	else gotoExitingHandler(cond, ecall, entry);
+    }
+    R_HandlerStack = oldstack;
+    UNPROTECT(1);
+    return R_NilValue;
+}
+
+static SEXP findInterruptHandler()
+{
+    SEXP list;
+    for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
+	SEXP entry = CAR(list);
+	if (! strcmp(CHAR(ENTRY_CLASS(entry)), "interrupt") ||
+	    ! strcmp(CHAR(ENTRY_CLASS(entry)), "condition"))
+	    return list;
+    }
+    return R_NilValue;
+}
+
+static SEXP getInterruptCondition()
+{
+    /**** FIXME: should probably pre-allocate this */
+    SEXP cond, class;
+    PROTECT(cond = allocVector(VECSXP, 0));
+    PROTECT(class = allocVector(STRSXP, 2));
+    SET_STRING_ELT(class, 0, mkChar("interrupt"));
+    SET_STRING_ELT(class, 1, mkChar("condition"));
+    R_set_class(cond, class, R_NilValue);
+    UNPROTECT(2);
+    return cond;
+}
+
+static void signalInterrupt(void)
+{
+    SEXP list, cond, oldstack;
+
+    PROTECT(oldstack = R_HandlerStack);
+    while ((list = findInterruptHandler()) != R_NilValue) {
+	SEXP entry = CAR(list);
+	R_HandlerStack = CDR(list);
+	PROTECT(cond = getInterruptCondition());
+	if (IS_CALLING_ENTRY(entry)) {
+	    SEXP h = ENTRY_HANDLER(entry);
+	    SEXP hcall = LCONS(h, LCONS(cond, R_NilValue));
+	    PROTECT(hcall);
+	    eval(hcall, R_GlobalEnv);
+	    UNPROTECT(1);
+	}
+	else gotoExitingHandler(cond, R_NilValue, entry);
+	UNPROTECT(1);
+    }
+    R_HandlerStack = oldstack;
+    UNPROTECT(1);
+}
+
+void R_InsertRestartHandlers(RCNTXT *cptr, Rboolean browser)
+{
+    SEXP class, rho, entry, name;
+
+    if ((cptr->handlerstack != R_HandlerStack ||
+	 cptr->handlerstack != R_HandlerStack)) {
+	if (IS_RESTART_BIT_SET(cptr->callflag))
+	    return;
+	else
+	    error("handler or restart stack mismatch in old restart");
+    }
+
+    /**** need more here to keep recursive errors in browser? */
+    rho = cptr->cloenv;
+    PROTECT(class = mkChar("error"));
+    entry = mkHandlerEntry(class, rho, R_RestartToken, rho, R_NilValue, TRUE);
+    R_HandlerStack = CONS(entry, R_HandlerStack);
+    UNPROTECT(1);
+    PROTECT(name = ScalarString(mkChar(browser ? "browser" : "tryRestart")));
+    entry = allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(entry, 0, name);
+    SET_VECTOR_ELT(entry, 1, R_MakeExternalPtr(cptr, R_NilValue, R_NilValue));
+    setAttrib(entry, R_ClassSymbol, ScalarString(mkChar("restart")));
+    R_RestartStack = CONS(entry, R_RestartStack);
+    UNPROTECT(1);
+}
+
+SEXP do_dfltWarn(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    char *msg;
+    SEXP ecall;
+
+    checkArity(op, args);
+
+    if (TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
+	error("bad error message");
+    msg = CHAR(STRING_ELT(CAR(args), 0));
+    ecall = CADR(args);
+
+    warningcall_dflt(ecall, "%s", msg);
+    return R_NilValue;
+}
+
+SEXP do_dfltStop(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    char *msg;
+    SEXP ecall;
+
+    checkArity(op, args);
+
+    if (TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
+	error("bad error message");
+    msg = CHAR(STRING_ELT(CAR(args), 0));
+    ecall = CADR(args);
+
+    errorcall_dflt(ecall, "%s", msg);
+    return R_NilValue; /* not reached */
+}
+
+
+/*
+ * Restart Handling
+ */
+
+SEXP do_getRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    int i;
+    SEXP list;
+    checkArity(op, args);
+    i = asInteger(CAR(args));
+    for (list = R_RestartStack;
+	 list != R_NilValue && i > 1;
+	 list = CDR(list), i--);
+    if (list != R_NilValue)
+	return CAR(list);
+    else if (i == 1) {
+	/**** need to pre-allocate */
+	SEXP name, entry;
+	PROTECT(name = ScalarString(mkChar("abort")));
+	entry = allocVector(VECSXP, 2);
+	SET_VECTOR_ELT(entry, 0, name);
+	SET_VECTOR_ELT(entry, 1, R_NilValue);
+	setAttrib(entry, R_ClassSymbol, ScalarString(mkChar("restart")));
+	UNPROTECT(1);
+	return entry;
+    }
+    else return R_NilValue;
+}
+
+/* very minimal error checking --just enough to avoid a segfault */
+#define CHECK_RESTART(r) do { \
+    SEXP __r__ = (r); \
+    if (TYPEOF(__r__) != VECSXP || LENGTH(__r__) < 2) \
+	error("bad restart"); \
+} while (0)
+
+SEXP do_addRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    CHECK_RESTART(CAR(args));
+    R_RestartStack = CONS(CAR(args), R_RestartStack);
+    return R_NilValue;
+}
+
+#define RESTART_EXIT(r) VECTOR_ELT(r, 1)
+
+static void invokeRestart(SEXP r, SEXP arglist)
+{
+    SEXP exit = RESTART_EXIT(r);
+
+    if (exit == R_NilValue) {
+	R_RestartStack = R_NilValue;
+	jump_to_toplevel();
+    }
+    else {
+	for (; R_RestartStack != R_NilValue;
+	     R_RestartStack = CDR(R_RestartStack))
+	    if (exit == RESTART_EXIT(CAR(R_RestartStack))) {
+		R_RestartStack = CDR(R_RestartStack);
+		if (TYPEOF(exit) == EXTPTRSXP) {
+		    RCNTXT *c = R_ExternalPtrAddr(exit);
+		    R_JumpToContext(c, CTXT_RESTART, R_RestartToken);
+		}
+		else findcontext(CTXT_FUNCTION, exit, arglist);
+	    }
+	error("restart not on stack");
+    }
+}
+
+SEXP do_invokeRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    CHECK_RESTART(CAR(args));
+    invokeRestart(CAR(args), CADR(args));
+    return R_NilValue; /* not reached */
+}
+#endif
+
+SEXP do_addTryHandlers(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    if (R_GlobalContext == R_ToplevelContext ||
+	! R_GlobalContext->callflag & CTXT_FUNCTION)
+	errorcall(call, "not in a try context");
+    SET_RESTART_BIT_ON(R_GlobalContext->callflag);
+#ifdef NEW_CONDITION_HANDLING
+    R_InsertRestartHandlers(R_GlobalContext, FALSE);
+#endif
+    return R_NilValue;
+}

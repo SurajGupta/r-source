@@ -2,20 +2,25 @@
 \title{Encode in a Common Format}
 \usage{
 format(x, \dots)
-format.AsIs(x, width = 12, \dots)
-format.data.frame(x, \dots, justify = "none")
-format.default(x, trim = FALSE, digits = getOption("digits"),
-               nsmall = 0, justify = c("left", "right", "none"),
-               big.mark = "",   big.interval = 3,
-             small.mark = "", small.interval = 5,
-           decimal.mark = ".", \dots)
-format.factor(x, \dots)
+
+\method{format}{AsIs}(x, width = 12, \dots)
+
+\method{format}{data.frame}(x, \dots, justify = "none")
+
+\method{format}{default}(x, trim = FALSE, digits = NULL,
+       nsmall = 0, justify = c("left", "right", "none"),
+       big.mark = "",   big.interval = 3,
+     small.mark = "", small.interval = 5,
+   decimal.mark = ".", \dots)
+
+\method{format}{factor}(x, \dots)
+
 format.pval(pv, digits = max(1, getOption("digits") - 2),
             eps = .Machine$double.eps, na.form = "NA")
 
 prettyNum(x, big.mark = "",   big.interval = 3,
            small.mark = "", small.interval = 5,
-         decimal.mark = ".", ...)
+         decimal.mark = ".", \dots)
 }
 \alias{format}
 \alias{format.AsIs}
@@ -33,7 +38,8 @@ prettyNum(x, big.mark = "",   big.interval = 3,
   \item{trim}{logical; if \code{TRUE}, leading blanks are trimmed off the
     strings.}
   \item{digits}{how many significant digits are to be used for
-    \code{\link{numeric} x}. This is a suggestion: enough decimal
+    \code{\link{numeric} x}.  The default, \code{NULL}, uses
+    \code{\link{options}()$digits}.  This is a suggestion: enough decimal
     places will be used so that the smallest (in magnitude) number has
     this many significant digits.}
   \item{nsmall}{number of digits which will always appear to the right of
@@ -73,8 +79,8 @@ prettyNum(x, big.mark = "",   big.interval = 3,
   \code{format.pval} is mainly an auxiliary function for
   \code{\link{print.summary.lm}} etc., and does separate formatting for
   fixed, floating point and very small values; those less than
-  \code{eps} are formatted as \code{"< [eps]"} (where ``[eps]'' stands
-  for \code{format(eps, digits)}.
+  \code{eps} are formatted as \code{"< [eps]"} (where \dQuote{[eps]}
+  stands for \code{format(eps, digits)}.
 
   The function \code{\link{formatC}} provides a rather more flexible
   formatting facility for numbers, but does \emph{not} provide a common
@@ -105,7 +111,8 @@ prettyNum(x, big.mark = "",   big.interval = 3,
 
 \seealso{
   \code{\link{format.info}} indicates how something would be formatted;
-  \code{\link{formatC}}, \code{\link{paste}}, \code{\link{as.character}}.
+  \code{\link{formatC}}, \code{\link{paste}}, \code{\link{as.character}},
+  \code{\link{sprintf}}.
 }
 \examples{
 format(1:10)

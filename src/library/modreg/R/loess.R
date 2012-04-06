@@ -12,7 +12,7 @@ function(formula, data=NULL, weights, subset, na.action, model = FALSE,
     mf <- match.call(expand.dots=FALSE)
     mf$model <- mf$span <- mf$enp.target <- mf$degree <-
 	mf$parametric <- mf$drop.square <- mf$normalize <- mf$family <-
-	    mf$control <- mf$... <- NULL
+	    mf$method <- mf$control <- mf$... <- NULL
     mf[[1]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
     if (match.arg(method) == "model.frame") return(mf)
@@ -251,7 +251,6 @@ predLoess <-
     newx <- newx/rep(divisor, rep(M, D))
     x <- x/rep(divisor, rep(N, D))
     sum.drop.sqr <- sum(drop.square)
-    sum.parametric <- sum(parametric)
     nonparametric <- sum(!parametric)
     order.parametric <- order(parametric)
     x <- x[, order.parametric, drop=FALSE]
@@ -427,7 +426,7 @@ loess.smooth <-
     control <- loess.control(...)
     ##	x <- matrix(x, ncol = 1)
     ##	n <- length(y)
-    robust <- w <- rep(1, length(y))
+    w <- rep(1, length(y))
     family <- match.arg(family)
     iterations <- if(family == "gaussian") 1 else control$iterations
     fit <- simpleLoess(y, x, w, span, degree, FALSE, FALSE,

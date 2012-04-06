@@ -5,12 +5,12 @@
   This is a method of the generic \code{plot} function for
   (contingency) \code{\link{table}} objects.  Whereas for two- and more
   dimensional tables, a \code{\link{mosaicplot}} is drawn,
-  one-dimensional ones are plotted ``bar like''.
+  one-dimensional ones are plotted \dQuote{bar like}.
 }
 \usage{
 %% Improvement ideas: see code definition, currently in ../R/plot.R
 \method{plot}{table}(x, type = "h", ylim = c(0, max(x)), lwd = 2,
-    xlab = NULL, ylab = NULL, frame.plot = is.num, \dots)
+      xlab = NULL, ylab = NULL, frame.plot = is.num, \dots)
 }
 \arguments{
   \item{x}{a \code{\link{table}} (like) object.}

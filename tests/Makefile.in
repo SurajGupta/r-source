@@ -49,7 +49,7 @@ test-src-segfault = no-segfault.R
 test-src-reg-1 = reg-tests-1.R reg-tests-2.R reg-IO.R reg-IO2.R reg-plot.R
 test-src-reg-auto =
 test-src-reg = $(test-src-reg-1) $(test-src-reg-auto)
-
+test-src-reg3 = reg-tests-3.R
 
 DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-strict-1) $(test-src-strict-1:.R=.Rout.save) \
@@ -61,8 +61,9 @@ DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-nafns) \
 	$(test-src-postscript) ps-tests.Rout.save \
 	$(test-src-random) p-r-random-tests.Rout.save \
-	$(test-src-reg) reg-IO.Rout.save reg-IO2.Rout.save \
-	  reg-plot.Rout.save reg-plot.ps.save reg-tests-2.Rout.save \
+	$(test-src-reg) $(test-src-reg3) \
+	  reg-IO.Rout.save reg-IO2.Rout.save reg-plot.Rout.save \
+	  reg-plot.ps.save reg-tests-2.Rout.save reg-tests-3.Rout.save \
 	$(test-src-ts) \
 	gct-foot.R \
 	nanbug.rda
@@ -84,6 +85,7 @@ test-out-nafns = $(test-src-nafns:.R=.Rout)
 test-out-postscript = $(test-src-postscript:.R=.Rout)
 test-out-random = $(test-src-random:.R=.Rout)
 test-out-reg = $(test-src-reg:.R=.Rout)
+test-out-reg3 = $(test-src-reg3:.R=.Rout)
 test-out-segfault = $(test-src-segfault:.R=.Rout)
 test-out-ts = $(test-src-ts:.R=.Rout)
 
@@ -91,7 +93,7 @@ test-out-ts = $(test-src-ts:.R=.Rout)
 test-out = $(test-src:.R=.Rout) $(test-out-demo) $(test-out-gct) \
 	$(test-out-internet) $(test-out-lapack) $(test-out-nafns) \
 	$(test-out-random) $(test-out-postscript) $(test-out-reg) \
-	$(test-out-segfault) $(test-out-ts) $(test-out-isas)
+	$(test-out-reg3) $(test-out-segfault) $(test-out-ts) $(test-out-isas)
 
 .SUFFIXES:
 .SUFFIXES: .R .Rin .Rout .Rout-gct
@@ -102,7 +104,7 @@ all-devel-tests = IsAs Lapack Nafns Postscript Random Demo Segfault \
 
 all check: Makefile test-all-basics
 check-devel: check test-all-devel
-check-all: check-devel test-Examples-Recommended
+check-all: check-devel test-Packages-Recommended
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -202,7 +204,7 @@ test-Specific:
 
 test-Packages:
 	@for p in $(R_PKGS_BASE); do \
-	  echo "* checking package '$${p}'"; \
+	  echo "checking package '$${p}'"; \
 	  R_CHECK_FF_CALLS=yes $(top_builddir)/bin/R CMD check \
 	    $(top_srcdir)/src/library/$${p} || echo; \
 	done
@@ -244,7 +246,8 @@ test-Random:
 
 test-Reg:
 	@echo "running regression tests"
-	@$(MAKE) $(test-out-reg) RVAL_IF_DIFF=0
+	@$(MAKE) $(test-out-reg) RVAL_IF_DIFF=1
+	@$(MAKE) $(test-out-reg3) RVAL_IF_DIFF=0
 
 test-Segfault:
 	@echo "running tests to possibly trigger segfaults"
@@ -263,14 +266,13 @@ test-Ts:
 	@echo "running tests of package ts functions"
 	@$(MAKE) $(test-out-ts) RVAL_IF_DIFF=0
 
-test-DocArgs:
-	@echo "checking whether arguments from usage are documented"
+test-DocFiles:
+	@echo "checking Rd usage sections"
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-                echo "checkDocArgs(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "checkDocFiles(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo; \
@@ -281,13 +283,12 @@ test-DocArgs:
 	  fi; \
 	done
 test-DocStyle:
-	@echo "checking usages for method documentation style"
+	@echo "checking S3 method documentation style"
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-	        echo "checkDocStyle(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "checkDocStyle(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo; \
@@ -302,9 +303,8 @@ test-FF:
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-	        echo "checkFF(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "checkFF(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo "$${out}"; \
@@ -312,14 +312,13 @@ test-FF:
 	    echo "$(ECHO_T) OK"; \
 	  fi; \
 	done
-test-Methods:
-	@echo "checking generic/method consistency"
+test-S3methods:
+	@echo "checking for S3 generic/method consistency"
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-	        echo "checkMethods(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "checkS3methods(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo; \
@@ -330,13 +329,12 @@ test-Methods:
 	  fi; \
 	done
 test-codoc:
-	@echo "checking code/documentation mismatches"
+	@echo "checking for code/documentation mismatches in functions"
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-	        echo "codoc(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "codoc(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo; \
@@ -347,19 +345,34 @@ test-codoc:
 	  fi; \
 	done
 test-undoc:
-	@echo "checking undocumented objects"
+	@echo "checking for missing documentation entries"
 	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
-	  out=`(echo "library(tools)"; \
-	        echo "undoc(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d'`; \
+	  out=`echo "undoc(package = \"$${p}\")" | \
+	       R_DEFAULT_PACKAGES=tools $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "$(ECHO_T) WARNING"; \
 	    echo "$${out}"; \
 	  else \
 	    echo "$(ECHO_T) OK"; \
 	  fi; \
+	done
+
+test-Packages-Recommended:
+	@test -d Packages || mkdir Packages
+	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
+	  gzip -dc "$(top_srcdir)/src/library/Recommended/$${p}.tgz" | \
+	    (cd Packages && $(TAR) xf -) ; \
+	  if grep "^Contains:" "Packages/$${p}/DESCRIPTION" >/dev/null; \
+	  then \
+	    echo "checking bundle '$${p}'"; \
+	  else \
+	    echo "checking package '$${p}'"; \
+	  fi; \
+	  R_LIBS= R_CHECK_FF_CALLS=yes \
+	    $(top_builddir)/bin/R CMD check --no-perms --install=skip \
+	    --library="$(top_builddir)/library" Packages/$${p} || echo; \
 	done
 
 mostlyclean: clean
@@ -375,7 +388,7 @@ distclean: clean
 	  (cd $${d} && $(MAKE) $@); \
 	done
 	-@rm -f Makefile $(test-out) $(test-src-auto) .RData
-	-@rm -rf *.Rcheck
+	-@rm -rf *.Rcheck Packages
 maintainer-clean: distclean
 
 R install install-strip uninstall TAGS info dvi:

@@ -2,10 +2,8 @@
 \alias{Startup}
 \alias{Rprofile}
 \alias{.Rprofile}
-#ifndef mac
 \alias{Rprofile.site}
 \alias{Renviron.site}
-#endif
 \alias{.Renviron}
 \alias{.First}
 \alias{.First.sys}
@@ -18,51 +16,39 @@
 \description{
   In \R, the startup mechanism is as follows.
 
-#ifndef mac
-  Unless \code{--no-environ} was given on the command line,
-  \R searches for user and site
-  files to process for setting environment variables.  The name of the
-  site file is the one pointed to by the environment variable
-  \code{R\_ENVIRON}; if this is unset or empty,
+  Unless \option{--no-environ} was given on the command line, \R
+  searches for user and site files to process for setting environment
+  variables.  The name of the site file is the one pointed to by the
+  environment variable \env{R\_ENVIRON}; if this is unset or empty,
   \file{\$R\_HOME/etc/Renviron.site} is used (if it exists, which it
-  does not in a ``factory-fresh'' installation).
-  The user files searched for are \file{.Renviron} in the
-  current or in the user's home directory (in that order).
+  does not in a \dQuote{factory-fresh} installation).
+  The user files searched for are \file{.Renviron} in the current or in
+  the user's home directory (in that order).
   See \bold{Details} for how the files are read.
 
   Then \R searches for the site-wide startup profile unless the command
-  line option \code{--no-site-file} was given.  The name of this file is
-  taken from the value of the \code{R\_PROFILE} environment variable.
+  line option \option{--no-site-file} was given.  The name of this file
+  is taken from the value of the \env{R\_PROFILE} environment variable.
   If this variable is unset, the default is
   \file{\$R\_HOME/etc/Rprofile.site}, which is used if it exists
-  (which it does not in a ``factory-fresh'' installation).
-  This code is loaded into package \code{base}.  Users need to be
+  (which it does not in a \dQuote{factory-fresh} installation).
+  This code is loaded into package \pkg{base}.  Users need to be
   careful not to unintentionally overwrite objects in base, and it
   is normally advisable to use \code{\link{local}} if code needs to be
   executed: see the examples.
 
-  Then, unless \code{--no-init-file} was given, \R searches for a file
+  Then, unless \option{--no-init-file} was given, \R searches for a file
   called \file{.Rprofile} in the current directory or in the user's
   home directory (in that order) and sources it into the user
   workspace.
-#endif
-#ifdef mac
-  Unless \code{--no-environ} was given, \R reads the file
-  \file{.Renviron} in the \file{etc} subdirectory of the \R application
-  folder.  See \bold{Details} for how the file is read.
-
-  Then, unless \code{--no-init-file} was given, \R looks for a file
-  called \file{.Rprofile} in the \file{etc} subdirectory of \R
-  application folder and sources it into the user workspace.
-#endif
 
   It then loads a saved image of the user workspace from \file{.RData}
-  if there is one (unless \code{--no-restore-data} was specified, or
-  \code{--no-restore}, on the command line).
+  if there is one (unless \option{--no-restore-data} was specified, or
+  \option{--no-restore}, on the command line).
 
   Next, if a function \code{.First} is found on the search path,
   it is executed as \code{.First()}.
-  Finally, function \code{.First.sys()} in the base package is run.
+  Finally, function \code{.First.sys()} in the \pkg{base} package is run.
   This calls \code{\link{require}} to attach the default packages
   specified by \code{\link{options}("defaultPackages")}.
 
@@ -74,15 +60,17 @@
   file.  For example, \code{options(defaultPackages = character())} will
   attach no extra packages on startup.  Alternatively, set
   \code{R_DEFAULT_PACKAGES=NULL} as an environment variable before
-  running \R.
+  running \R.  Using \code{options(defaultPackages = "")} or
+  \code{R_DEFAULT_PACKAGES=""} enforces the R \emph{system} default.
 
   The commands history is read from the file specified by the
-  environment variable \code{R_HISTFILE} (default \file{.Rhistory})
-  unless \code{--no-restore-history} was specified (or
-  \code{--no-restore}).
+  environment variable \env{R\_HISTFILE} (default \file{.Rhistory})
+  unless \option{--no-restore-history} was specified (or
+  \option{--no-restore}).
 
-  The command-line flag \code{--vanilla} implies \code{--no-site-file},
-  \code{--no-init-file}, \code{--no-restore} and \code{--no-environ}.
+  The command-line flag \option{--vanilla} implies
+  \option{--no-site-file}, \option{--no-init-file},
+  \option{--no-restore} and \option{--no-environ}.
 }
 \details{
   Note that there are two sorts of files used in startup:
@@ -116,7 +104,7 @@
 \section{Historical notes}{
   Prior to \R version 1.4.0, the environment files searched were
   \file{.Renviron} in the current directory, the file pointed to by
-  \code{R_ENVIRON} if set, and \file{.Renviron} in the user's home
+  \env{R\_ENVIRON} if set, and \file{.Renviron} in the user's home
   directory.
 
   Prior to \R version 1.2.1, \file{.Rprofile} was sourced after
@@ -131,6 +119,8 @@
 }
 \seealso{
   \code{\link{.Last}} for final actions before termination.
+
+  For profiling code, see \code{\link{Rprof}}.
 }
 \examples{
 \dontrun{

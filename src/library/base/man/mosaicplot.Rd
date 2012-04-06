@@ -5,12 +5,15 @@
 \title{Mosaic Plots}
 \description{Plots a mosaic on the current graphics device.}
 \usage{
+mosaicplot(x, \dots)
+
 \method{mosaicplot}{default}(x, main = deparse(substitute(x)), 
                    sub = NULL, xlab = NULL, ylab = NULL,
                    sort = NULL, off = NULL, dir = NULL,
                    color = FALSE, shade = FALSE, margin = NULL,
                    cex.axis = 0.66, las = par("las"),
                    type = c("pearson", "deviance", "FT"), \dots)
+
 \method{mosaicplot}{formula}(formula, data = NULL, \dots,
           main = deparse(substitute(data)), subset)
 }
@@ -137,7 +140,7 @@ mosaicplot(HairEyeColor, shade = TRUE, margin = list(c(1,2), 3))
 ## Model of joint independence of sex from hair and eye color.  Males
 ## are underrepresented among people with brown hair and eyes, and are
 ## overrepresented among people with brown hair and blue eyes, but not
-## ``significantly''.
+## "significantly".
 
 ## Formula interface for raw data: visualize crosstabulation of numbers
 ## of gears and carburettors in Motor Trend car data.

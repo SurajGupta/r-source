@@ -7,7 +7,7 @@ outer <- function (X, Y, FUN = "*", ...)
         dim(robj) <- c(dX, dY)
     } else {
         FUN <- match.fun(FUN)
-        Y <- rep(Y, rep(length(X), length(Y)))
+        Y <- rep.int(Y, rep.int(length(X), length(Y)))
         X <- rep(X, length.out = length(Y))
         robj <- array(FUN(X, Y, ...), c(dX, dY))
     }
@@ -19,4 +19,5 @@ outer <- function (X, Y, FUN = "*", ...)
     robj
 }
 
-"%o%" <- outer
+## Binary operator, hence don't simply do "%o%" <- outer.
+"%o%" <- function(X, Y) outer(X, Y)

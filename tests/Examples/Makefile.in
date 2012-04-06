@@ -18,7 +18,7 @@ R = $(top_builddir)/bin/R --vanilla
 EX_IN_BASE = $(R_PKGS_BASE:=-Ex.R)
 EX_OUT_BASE = $(EX_IN_BASE:.R=.Rout)
 
-EX_IN_RECOMMENDED = $(R_PKGS_RECOMMENDED_EXPANDED:=-Ex.R)
+EX_IN_RECOMMENDED = $(R_PKGS_RECOMMENDED:=-Ex.R)
 EX_OUT_RECOMMENDED = $(EX_IN_RECOMMENDED:.R=.Rout)
 
 RDIFF = $(top_builddir)/bin/R CMD Rdiff
@@ -109,7 +109,7 @@ $(EX_IN_BASE): FORCE
 	  f=$${TMPDIR-/tmp}/R$$$$; \
 	  $(PERL) $(top_srcdir)/share/perl/massage-Examples.pl $${pkg} \
 	    $(top_builddir)/library/$${pkg}/R-ex > $${f}; \
-	  $(top_srcdir)/tools/move-if-change $${f} $@; \
+	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} $@; \
 	  touch $@; \
 	fi)
 
@@ -133,7 +133,7 @@ $(EX_IN_RECOMMENDED): FORCE
 	  f=$${TMPDIR-/tmp}/R$$$$; \
 	  $(PERL) $(top_srcdir)/share/perl/massage-Examples.pl $${pkg} \
 	    $(top_builddir)/library/$${pkg}/R-ex > $${f}; \
-	  $(top_srcdir)/tools/move-if-change $${f} $@; \
+	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} $@; \
 	  touch $@; \
 	fi)
 FORCE:

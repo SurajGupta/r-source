@@ -8,7 +8,9 @@
 }
 \usage{
 lines(x, \dots)
-lines.default(x, y=NULL, type="l", col=par("col"), lty=par("lty"), \dots)
+
+\method{lines}{default}(x, y = NULL, type = "l", col = par("col"),
+      lty = par("lty"), \dots)
 }
 \arguments{
   \item{x, y}{coordinate vectors of points to join.}
@@ -39,7 +41,7 @@ lines.default(x, y=NULL, type="l", col=par("col"), lty=par("lty"), \dots)
 \seealso{
   \code{\link{points}},
   \code{\link{plot}},
-  and the underlying ``primitive'' \code{\link{plot.xy}}.
+  and the underlying \dQuote{primitive} \code{\link{plot.xy}}.
 
   \code{\link{par}} for how to specify colors.
 }

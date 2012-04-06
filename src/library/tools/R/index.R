@@ -21,32 +21,18 @@ function(dataDir, contents)
     ## We could also have an interface like
     ##   .buildDataIndex(dir, contents = NULL)
     ## where @code{dir} is the path to a package's root source dir and
-    ## contents is Rdcontents(.listFilesWithType(file.path(dir, "man"),
+    ## contents is Rdcontents(listFilesWithType(file.path(dir, "man"),
     ## "docs")).
     ## </NOTE>
 
-    if(!.fileTest("-d", dataDir))
+    if(!fileTest("-d", dataDir))
         stop(paste("directory", sQuote(dataDir), "does not exist"))
-    dataFiles <- .listFilesWithType(dataDir, "data")
-    dataTopics <- unique(basename(.filePathSansExt(dataFiles)))
+    dataFiles <- listFilesWithType(dataDir, "data")
+    dataTopics <- unique(basename(filePathSansExt(dataFiles)))
     if(!length(dataTopics)) return(matrix("", 0, 2))
     dataIndex <- cbind(dataTopics, "")
-    ## <FIXME>
-    ## Remove this for 1.8.
-    ## Compatibility code for transition from old-style to new-style
-    ## indexing.  If we have @file{data/00Index}, use it when computing
-    ## the data index, but let the Rd entries override the index ones.
-    if(.fileTest("-f", INDEX <- file.path(dataDir, "00Index"))) {
-        dataEntries <- try(read.00Index(INDEX))
-        if(inherits(dataEntries, "try-error"))
-            warning(paste("cannot read index information in file",
-                          sQuote(INDEX)))
-        idx <- match(dataTopics, dataEntries[ , 1], 0)
-        dataIndex[which(idx != 0), 2] <- dataEntries[idx, 2]
-    }
-    ## </FIXME>
-    ## NROW(contents) might be 0
-    if (NROW(contents)) {
+    ## Note that NROW(contents) might be 0.
+    if(NROW(contents)) {
         aliasIndices <-
             rep(1 : NROW(contents), sapply(contents$Aliases, length))
         idx <- match(dataTopics, unlist(contents$Aliases), 0)
@@ -74,13 +60,13 @@ function(demoDir)
     ## docs are in sync.
     ## </NOTE>
 
-    if(!.fileTest("-d", demoDir))
+    if(!fileTest("-d", demoDir))
         stop(paste("directory", sQuote(demoDir), "does not exist"))
-    demoFiles <- .listFilesWithType(demoDir, "demo")
-    demoTopics <- unique(basename(.filePathSansExt(demoFiles)))
+    demoFiles <- listFilesWithType(demoDir, "demo")
+    demoTopics <- unique(basename(filePathSansExt(demoFiles)))
     if(!length(demoTopics)) return(matrix("", 0, 2))
     demoIndex <- cbind(demoTopics, "")
-    if(.fileTest("-f", INDEX <- file.path(demoDir, "00Index"))) {
+    if(fileTest("-f", INDEX <- file.path(demoDir, "00Index"))) {
         demoEntries <- try(read.00Index(INDEX))
         if(inherits(demoEntries, "try-error"))
             warning(paste("cannot read index information in file",
@@ -97,7 +83,7 @@ function(demoDir)
 .checkDemoIndex <-
 function(demoDir)
 {
-    if(!.fileTest("-d", demoDir))
+    if(!fileTest("-d", demoDir))
         stop(paste("directory", sQuote(demoDir), "does not exist"))
     infoFromBuild <- .buildDemoIndex(demoDir)
     infoFromIndex <- try(read.00Index(file.path(demoDir, "00Index")))
@@ -130,6 +116,86 @@ function(x, ...)
     }
     invisible(x)
 }
+
+### * .buildHsearchIndex
+
+.buildHsearchIndex <-
+function(contents, packageName, libDir)
+{
+    ## Build an index of the Rd contents in 'contents', of a package
+    ## named 'packageName' (to be) installed in 'libDir', in a form
+    ## useful for help.search().
+
+    dbAliases <- dbConcepts <- dbKeywords <- matrix(character(), nc = 3)
+    
+    if((nr <- NROW(contents)) > 0) {
+        ## IDs are used for indexing the Rd objects in the help.search
+        ## db.
+        IDs <- seq(length = nr)
+        if(!is.data.frame(contents)) {
+            colnames(contents) <-
+                c("Name", "Aliases", "Title", "Keywords")
+            base <- contents[, c("Name", "Title"), drop = FALSE]
+            ## If the contents db is not a data frame, then it has the
+            ## aliases collapsed.  Split again as we need the first
+            ## alias as the help topic to indicate for matching Rd
+            ## objects. 
+            aliases <- strsplit(contents[, "Aliases"], " +")
+            ## Don't do this for keywords though, as these might be
+            ## non-standard (and hence contain white space ...).
+        }
+        else {
+            base <-
+                as.matrix(contents[, c("Name", "Title")])
+            aliases <- contents[, "Aliases"]
+        }
+        keywords <- contents[, "Keywords"]
+        ## We create 3 character matrices (cannot use data frames for
+        ## efficiency reasons): 'dbBase' holds all character string
+        ## data, and 'dbAliases' and 'dbKeywords' hold character vector
+        ## data in a 3-column character matrix format with entry, ID of
+        ## the Rd object the entry comes from, and the package the
+        ## object comes from.  The latter is useful when subscripting
+        ## the help.search db according to package. 
+        dbBase <- cbind(packageName, libDir, IDs, base,
+                        topic = sapply(aliases, "[", 1))
+        ## If there are no aliases at all, cbind() below would give
+        ## matrix(packageName, nc = 1).  (Of course, Rd objects without
+        ## aliases are useless ...)
+        if(length(tmp <- unlist(aliases)) > 0)
+            dbAliases <-
+                cbind(tmp, rep.int(IDs, sapply(aliases, length)),
+                      packageName)
+        ## And similarly if there are no keywords at all.
+        if(length(tmp <- unlist(keywords)) > 0)
+            dbKeywords <-
+                cbind(tmp, rep.int(IDs, sapply(keywords, length)),
+                      packageName)
+        ## Finally, concepts are a feature added in R 1.8 ...
+        if("Concepts" %in% colnames(contents)) {
+            concepts <- contents[, "Concepts"]
+            if(length(tmp <- unlist(concepts)) > 0)
+                dbConcepts <-
+                    cbind(tmp, rep.int(IDs, sapply(concepts, length)),
+                          packageName)
+        }
+    }
+    else {
+        dbBase <- matrix(character(), nc = 6)
+    }
+        
+    colnames(dbBase) <-
+        c("Package", "LibPath", "ID", "name", "title", "topic")
+    colnames(dbAliases) <-
+        c("Aliases", "ID", "Package")
+    colnames(dbKeywords) <-
+        c("Keywords", "ID", "Package")
+    colnames(dbConcepts) <-
+        c("Concepts", "ID", "Package")
+
+    list(dbBase, dbAliases, dbKeywords, dbConcepts)
+}
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

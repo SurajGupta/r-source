@@ -1,13 +1,26 @@
 \name{rep}
 \alias{rep}
+\alias{rep.default}
 \alias{rep.int}
+\alias{rep.POSIXct}
+\alias{rep.POSIXlt}
 \title{Replicate Elements of Vectors and Lists}
+\description{
+  \code{rep} replicates the values in \code{x}. It is a generic
+  function, and the default method is described here.
+
+  \code{rep.int} is a faster simplified version for the commonest case.
+}
 \usage{
-rep(x, times, length.out, each)
+rep(x, times, \dots)
+
+\method{rep}{default}(x, times, length.out, each, \dots)
+
 rep.int(x, times)
 }
 \arguments{
-  \item{x}{a vector (of any mode including a list) or a pairlist.}
+  \item{x}{a vector (of any mode including a list) or a pairlist or a
+    \code{POSIXct} or \code{POSIXlt} object.}
   \item{times}{non-negative integer.  A vector giving the number of
     times to repeat each element if of length \code{length(x)}, or to
     repeat the whole vector if of length 1.}
@@ -15,11 +28,7 @@ rep.int(x, times)
     output vector.}
   \item{each}{optional integer. Each element of \code{x} is
     repeated \code{each} times.}
-}
-\description{
-  \code{rep} replicates the values in \code{x}
-  according to the values given in \code{times}
-  and \code{length.out}.
+  \item{\dots}{further arguments to be passed to or from other methods.}
 }
 
 \details{
@@ -40,6 +49,9 @@ rep.int(x, times)
 
   Non-integer values of \code{times} will be truncated towards zero.
   If \code{times} is a computed quantity it is prudent to add a small fuzz.
+}
+\value{
+  A vector of the same class as \code{x}.
 }
 \note{
   If the original vector has names, these are also replicated and so
@@ -73,5 +85,11 @@ rep(1, 40*(1-.8)+1e-7) # better
 ## replicate a list
 fred <- list(happy = 1:10, name = "squash")
 rep(fred, 5)
+
+# date-time objects
+x <- .leap.seconds[1:3]
+rep(x, 2)
+rep(as.POSIXlt(x), rep(2, 3))
 }
 \keyword{manip}
+\keyword{chron}

@@ -6,8 +6,8 @@
 \title{Combine R Objects by Rows or Columns}
 \description{
   Take a sequence of vector, matrix or data frames arguments and combine
-  by \emph{c}olumns or \emph{r}ows, respectively.  There may be methods
-  for other \R classes.
+  by \emph{c}olumns or \emph{r}ows, respectively.  These are generic
+  functions with methods for other \R classes.
 }
 \usage{
 cbind(\dots, deparse.level = 1)
@@ -24,7 +24,8 @@ rbind(\dots, deparse.level = 1)
   a data frame and the rest are vectors or matrices.  There can be other
   methods; in particular, there is one for time series objects.
 
-  The data frame method takes the classes of the columns from the first
+  The \code{rbind} data frame method takes the classes of the columns
+  from the first
   data frame.  Factors are have their levels expanded as necessary (in
   the order of the levels of the levelsets of the factors encountered)
   and the result is an ordered factor if and only if all the components
@@ -43,9 +44,10 @@ rbind(\dots, deparse.level = 1)
   (rows) of the matrix arguments.  Any vectors have their values
   recycled or subsetted to achieve this length.
 
-  For \code{cbind} (\code{rbind}), vectors of zero length are ignored
-  unless the result would have zero rows (columns), for S compatibility.
-  (Zero-extent matrices do not occur in S and are not ignored in \R.)
+  For \code{cbind} (\code{rbind}), vectors of zero length (including
+  \code{NULL}) are ignored unless the result would have zero rows
+  (columns),  for S compatibility.
+  (Zero-extent matrices do not occur in S3 and are not ignored in \R.)
 }
 \value{
   A matrix or data frame combining the \code{\dots} arguments
@@ -78,7 +80,10 @@ rbind(\dots, deparse.level = 1)
      drop through to the default code.
    }
    If you want to combine other objects with data frames, it may be
-   necessary to coerce them to data frames first.
+   necessary to coerce them to data frames first.  (Note that this
+   algorithm can result in calling the data frame method if the
+   arguments are all either data frames or vectors, and this will result in
+   the coercion of character vectors to factors.)
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -91,7 +96,7 @@ rbind(\dots, deparse.level = 1)
   frame.
 }
 \examples{
-cbind(1, 1:7) # the `1' (= shorter vector) is recycled
+cbind(1, 1:7) # the '1' (= shorter vector) is recycled
 cbind(1:7, diag(3))# vector is subset -> warning
 
 cbind(0, rbind(1, 1:3))

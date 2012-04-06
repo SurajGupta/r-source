@@ -5,12 +5,13 @@
 \usage{
 curve(expr, from, to, n = 101, add = FALSE, type = "l",
       ylab = NULL, log = NULL, xlim = NULL, \dots)
+
 \method{plot}{function}(x, from = 0, to = 1, xlim = NULL, \dots)
 }
 \arguments{
   \item{expr}{an expression written as a function of \code{x}, or
-    alternatively a function which will be plotted.}
-  \item{x}{a `vectorizing' numeric \R function.}
+    alternatively the name of a function which will be plotted.}
+  \item{x}{a \sQuote{vectorizing} numeric \R function.}
   \item{from,to}{the range over which the function will be plotted.}
   \item{n}{integer; the number of x values at which to evaluate.}
   \item{add}{logical; if \code{TRUE} add to already existing plot.}
@@ -38,7 +39,7 @@ curve(expr, from, to, n = 101, add = FALSE, type = "l",
   This used to be a quick hack which now seems to serve a useful purpose,
   but can give bad results for functions which are not smooth.
 
-  For ``expensive'' \code{expr}essions, you should use smarter tools.
+  For \dQuote{expensive} \code{expr}essions, you should use smarter tools.
 }
 \seealso{
   \code{\link{splinefun}} for spline interpolation, \code{\link{lines}}.

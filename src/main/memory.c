@@ -382,6 +382,7 @@ static R_size_t R_NodesInUse = 0;
   case LANGSXP: \
   case DOTSXP: \
   case SYMSXP: \
+  case BCODESXP: \
     dc__action__(TAG(__n__), dc__extra__); \
     dc__action__(CAR(__n__), dc__extra__); \
     dc__action__(CDR(__n__), dc__extra__); \
@@ -1169,6 +1170,11 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_GlobalEnv);	           /* Global environment */
     FORWARD_NODE(R_Warnings);	           /* Warnings, if any */
 
+#ifdef NEW_CONDITION_HANDLING
+    FORWARD_NODE(R_HandlerStack);          /* Condition handler stack */
+    FORWARD_NODE(R_RestartStack);          /* Available restarts stack */
+#endif
+
     for (i = 0; i < HSIZE; i++)	           /* Symbol table */
 	FORWARD_NODE(R_SymbolTable[i]);
 
@@ -1194,6 +1200,10 @@ static void RunGenCollect(R_size_t size_needed)
         FORWARD_NODE(ctxt->sysparent);     /* calling environment */
 	FORWARD_NODE(ctxt->call);          /* the call */
 	FORWARD_NODE(ctxt->cloenv);        /* the closure environment */
+#ifdef NEW_CONDITION_HANDLING
+	FORWARD_NODE(ctxt->handlerstack);  /* the condition handler stack */
+	FORWARD_NODE(ctxt->restartstack);  /* the available restarts stack */
+#endif
     }
 
     FORWARD_NODE(framenames); 		   /* used for interprocedure
@@ -1205,6 +1215,14 @@ static void RunGenCollect(R_size_t size_needed)
 	FORWARD_NODE(R_PPStack[i]);
 
     FORWARD_NODE(R_VStack);		   /* R_alloc stack */
+
+#ifdef BYTECODE
+    {
+	SEXP *sp;
+	for (sp = R_BCNodeStackBase; sp < R_BCNodeStackTop; sp++)
+	    FORWARD_NODE(*sp);
+    }
+#endif
 
     /* main processing loop */
     PROCESS_NODES();
@@ -1430,7 +1448,28 @@ void InitMemory()
     TAG(R_NilValue) = R_NilValue;
     ATTRIB(R_NilValue) = R_NilValue;
 
+#ifdef BYTECODE
+    R_BCNodeStackBase = (SEXP *) malloc(R_BCNODESTACKSIZE * sizeof(SEXP));
+    if (R_BCNodeStackBase == NULL)
+	R_Suicide("couldn't allocate node stack");
+# ifdef BC_INT_STACK
+    R_BCIntStackBase =
+      (IStackval *) malloc(R_BCINTSTACKSIZE * sizeof(IStackval));
+    if (R_BCIntStackBase == NULL)
+	R_Suicide("couldn't allocate integer stack");
+# endif
+    R_BCNodeStackTop = R_BCNodeStackBase;
+    R_BCNodeStackEnd = R_BCNodeStackBase + R_BCNODESTACKSIZE;
+# ifdef BC_INT_STACK
+    R_BCIntStackTop = R_BCIntStackBase;
+    R_BCIntStackEnd = R_BCIntStackBase + R_BCINTSTACKSIZE;
+# endif
+#endif
     R_weak_refs = R_NilValue;
+
+#ifdef NEW_CONDITION_HANDLING
+    R_HandlerStack = R_RestartStack = R_NilValue;
+#endif
 }
 
 /* Since memory allocated from the heap is non-moving, R_alloc just
@@ -1611,7 +1650,7 @@ SEXP mkPROMISE(SEXP expr, SEXP rho)
     GET_FREE_NODE(s);
     s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
     TYPEOF(s) = PROMSXP;
-    PREXPR(s) = expr;
+    PRCODE(s) = expr;
     PRENV(s) = rho;
     PRVALUE(s) = R_UnboundValue;
     PRSEEN(s) = 0;
@@ -1807,10 +1846,15 @@ double R_getClockIncrement(void);
 void R_getProcTime(double *data);
 
 static double gctimes[5], gcstarttimes[5];
+static Rboolean gctime_enabled = FALSE;
 
 SEXP do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
+    if (args == R_NilValue)
+	gctime_enabled = TRUE;
+    else
+	gctime_enabled = asLogical(CAR(args));
     ans = allocVector(REALSXP, 5);
     REAL(ans)[0] = gctimes[0];
     REAL(ans)[1] = gctimes[1];
@@ -1830,23 +1874,26 @@ SEXP do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
 static void gc_start_timing(void)
 {
 #ifdef _R_HAVE_TIMING_
-    R_getProcTime(gcstarttimes);
+    if (gctime_enabled)
+	R_getProcTime(gcstarttimes);
 #endif /* _R_HAVE_TIMING_ */
 }
 
 static void gc_end_timing(void)
 {
 #ifdef _R_HAVE_TIMING_
-    double times[5], delta;
-    R_getProcTime(times);
-    delta = R_getClockIncrement();
+    if (gctime_enabled) {
+	double times[5], delta;
+	R_getProcTime(times);
+	delta = R_getClockIncrement();
 
-    /* add delta to compensate for timer resolution */
-    gctimes[0] += times[0] - gcstarttimes[0] + delta;
-    gctimes[1] += times[1] - gcstarttimes[1] + delta;
-    gctimes[2] += times[2] - gcstarttimes[2] + delta;
-    gctimes[3] += times[3] - gcstarttimes[3];
-    gctimes[4] += times[4] - gcstarttimes[4];
+	/* add delta to compensate for timer resolution */
+	gctimes[0] += times[0] - gcstarttimes[0] + delta;
+	gctimes[1] += times[1] - gcstarttimes[1] + delta;
+	gctimes[2] += times[2] - gcstarttimes[2] + delta;
+	gctimes[3] += times[3] - gcstarttimes[3];
+	gctimes[4] += times[4] - gcstarttimes[4];
+    }
 #endif /* _R_HAVE_TIMING_ */
 }
 
@@ -1942,6 +1989,9 @@ SEXP do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(nms, ANYSXP, mkChar("ANYSXP"));
     SET_STRING_ELT(nms, VECSXP, mkChar("VECSXP"));
     SET_STRING_ELT(nms, EXPRSXP, mkChar("EXPRSXP"));
+#ifdef BYTECODE
+    SET_STRING_ELT(nms, BCODESXP, mkChar("BCODESXP"));
+#endif
     SET_STRING_ELT(nms, EXTPTRSXP, mkChar("EXTPTRSXP"));
     SET_STRING_ELT(nms, WEAKREFSXP, mkChar("WEAKREFSXP"));
     setAttrib(ans, R_NamesSymbol, nms);
@@ -2066,8 +2116,7 @@ void R_chk_free(void *ptr)
 /* This code keeps a list of objects which are not assigned to variables
    but which are required to persist across garbage collections.  The
    objects are registered with R_PreserveObject and deregistered with
-   R_UnpreserveObject.  This is experimental code, it would not be wise
-   to rely on it at this point - ihaka */
+   R_ReleaseObject. */
 
 void R_PreserveObject(SEXP object)
 {
@@ -2315,12 +2364,11 @@ void (SET_HASHTAB)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); HASHTAB(x) = v; }
 void (SET_ENVFLAGS)(SEXP x, int v) { SET_ENVFLAGS(x, v); }
 
 /* Promise Accessors */
-SEXP (PREXPR)(SEXP x) { return PREXPR(x); }
+SEXP (PRCODE)(SEXP x) { return PRCODE(x); }
 SEXP (PRENV)(SEXP x) { return PRENV(x); }
 SEXP (PRVALUE)(SEXP x) { return PRVALUE(x); }
 int (PRSEEN)(SEXP x) { return PRSEEN(x); }
 
-void (SET_PREXPR)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); PREXPR(x) = v; }
 void (SET_PRENV)(SEXP x, SEXP v){ CHECK_OLD_TO_NEW(x, v); PRENV(x) = v; }
 void (SET_PRVALUE)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); PRVALUE(x) = v; }
 void (SET_PRSEEN)(SEXP x, int v) { SET_PRSEEN(x, v); }

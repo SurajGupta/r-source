@@ -3,13 +3,24 @@
 %
 \alias{TclInterface}
 \alias{.Tcl}
+\alias{.Tcl.objv}
 \alias{.Tcl.callback}
 \alias{.Tcl.args}
+\alias{.Tcl.args.objv}
 \alias{$.tclvar}
 \alias{$<-.tclvar}
 \alias{tclvar}
 \alias{tclVar}
 \alias{as.character.tclVar}
+\alias{tclArray}
+\alias{[[.tclArray}
+\alias{[[<-.tclArray}
+\alias{$.tclArray}
+\alias{$<-.tclArray}
+\alias{names.tclArray}
+\alias{length.tclArray}
+\alias{names<-.tclArray}
+\alias{length<-.tclArray}
 \alias{tclvalue}
 \alias{tclvalue<-}
 \alias{tclvalue.default}
@@ -17,7 +28,6 @@
 \alias{tclvalue.tclVar}
 \alias{tclvalue<-.tclVar}
 \alias{tclvalue.tclObj}
-\alias{tclvalue<-.tclObj}
 \alias{as.character.tclObj}
 \alias{as.integer.tclObj}
 \alias{as.double.tclObj}
@@ -46,7 +56,9 @@
 }
 \usage{
 .Tcl(...)
+.Tcl.objv(objv)
 .Tcl.args(...)
+.Tcl.args.objv(...)
 .Tcl.callback(...)
 .Tk.ID(win)
 .Tk.newwin(ID)
@@ -57,28 +69,48 @@
 tkdestroy(win)
 is.tkwin(x)
 
-tclVar(init="")
-as.character(x) # x of class "tclVar" or "tclObj"
-
-tclvalue(x) # x of class "tclVar" or "tclObj"
+tclvalue(x)
 tclvalue(x) <- value
 
-tclObj(x)  # x of class "tclVar"
-tclObj(x) <- value
+tclVar(init="")
+\method{as.character}{tclVar}(x)
+\method{tclvalue}{tclVar}(x)
+\method{tclvalue}{tclVar}(x) <- value
 
-as.tclObj(x)
+tclArray()
+\method{[[}{tclArray}(x,...)
+\method{[[}{tclArray}(x,...) <- value
+\method{$}{tclArray}(x, i)
+\method{$}{tclArray}(x, i) <- value
+\method{names}{tclArray}
+\method{length}{tclArray}
+
+tclObj(x)
+tclObj(x) <- value
+\method{tclObj}{tclVar}(x)
+\method{tclObj}{tclVar}(x) <- value
+
+as.tclObj(x, drop=FALSE)
 is.tclObj(x)
 
-as.integer(x)   # x of class "tclObj"
-as.double(x)    # x of class "tclObj"
+\method{as.character}{tclObj}(x)
+\method{as.integer}{tclObj}(x, ...)
+\method{as.double}{tclObj}(x, ...)
+\method{tclvalue}{tclObj}(x)
+
+\method{tclvalue}{default}(x)
+\method{tclvalue}{default}(x) <- value
 
 
 addTclPath(path = ".")
 tclRequire(package, warn = TRUE)
 }
 \arguments{
+  \item{objv}{a named vector of Tcl objects}
   \item{win}{a window structure}
   \item{x}{an object}
+  \item{drop}{logical. Indicates whether a single-element vector should
+    be made into a simple Tcl object or a list of length one}
   \item{value}{For \code{tclvalue} assignments, a character string. For
     \code{tclObj} assignments, an object of class \code{tclObj}}
   \item{ID}{a window ID}
@@ -94,7 +126,9 @@ tclRequire(package, warn = TRUE)
   internally by the commands that create and manipulate Tk widgets and
   Tcl objects.  At the lowest level \code{.Tcl} sends a command as a text
   string to the Tcl interpreter and returns the result as an object of
-  class \code{tclObj} (see below).
+  class \code{tclObj} (see below). A newer variant \code{.Tcl.objv}
+  accepts arguments in the form of a named list of \code{tclObj}
+  objects. 
 
   \code{.Tcl.args} converts an R argument list of \code{tag=value} pairs
   to the Tcl \code{-option value} style, thus
@@ -107,6 +141,11 @@ tclRequire(package, warn = TRUE)
   result of \code{.Tcl.callback}. Tags are converted to option flags
   simply by prepending a \code{-}
 
+  \code{.Tcl.args.objv} serves a similar purpose as \code{.Tcl.args} but
+  produces a list of \code{tclObj} objects suitable for passing to
+  \code{.Tcl.objv}. The names of the list are converted to Tcl option
+  style internally by \code{.Tcl.objv}. 
+  
   Callbacks can be either \emph{atomic callbacks} handled by
   \code{.Tcl.callback} or expressions. An expression is treated as a
   list of atomic callbacks, with the following exceptions: if an
@@ -159,18 +198,43 @@ tclRequire(package, warn = TRUE)
   \code{tclVar}  are  uniquely named and automatically unset by the 
   garbage collector when the representing object is no longer in use. 
 
-  It is possible to access Tcl's `dual-ported' objects directly, thus
-  avoiding parsing and deparsing of their string representation. This
-  works by using objects of class \code{tclObj}. The string
+  \code{tclArray} creates a new Tcl array and initalizes it to the empty
+  array. An R object of class \code{tclArray} and inheriting from class
+  \code{tclVar} is created to represent it. You can access elements of
+  the Tcl array using indexing with \code{[[} or \code{$}, which also
+  allow replacement forms. Notice that Tcl arrays are associative by
+  nature and hence unordered; indexing with a numeric index \code{i}
+  refers to the element with the \emph{name}
+  \code{as.character(i)}. Multiple indices are pasted together separated
+  by commas to form a single name. You can query the
+  length and the set of names in an array using methods for
+  \code{length} and \code{names}, respectively; these cannot
+  meaningfully be set so assignment forms exist only to print an error
+  message. 
+
+  It is possible to access Tcl's \sQuote{dual-ported} objects directly,
+  thus avoiding parsing and deparsing of their string representation.
+  This works by using objects of class \code{tclObj}.  The string
   representation of such objects can be extracted (but not set) using
   \code{tclvalue} and conversion to vectors of mode \code{"character"},
   \code{"double"}, or \code{"integer"}. Conversely, such vectors can be
-  converted using \code{as.tclObj}. The object behind a \code{tclVar} object
+  converted using \code{as.tclObj}. There is an ambiguity as to what
+  should happen for length one vectors, controlled by the \code{drop}
+  argument; there are cases where the distiction matters to Tcl,
+  although mostly it treats them equivalently. Notice that
+  \code{tclvalue} and \code{as.character} differ on an object whose
+  string representation has embedded spaces, the former is sometimes to
+  be preferred, in particular when applied to the result of
+  \code{tkread}, \code{tkgetOpenFile}, and similar functions. 
+
+  The object behind a \code{tclVar} object
   is extracted using \code{tclObj(x)} which also allows an assignment
   form, in which the right hand side of the assignment is automatically
   converted using \code{as.tclObj}. There is a print method for
   \code{tclObj} objects; it prints \code{<Tcl>} followed by the string
-  representation of the object.
+  representation of the object. Notice that \code{as.character} on a
+  \code{tclVar} object is the \emph{name} of the corresponding Tcl
+  variable and not the value. 
   
   Tcl packages can be loaded with \code{tclRequire}; it may be necessary
   to add the directory where they are found to the Tcl search path with
@@ -196,7 +260,7 @@ tclRequire(package, warn = TRUE)
 ## These cannot be run by example() but should be OK when pasted
 ## into an interactive R session with the tcltk package loaded
 .Tcl("format \"\%s\\n\" \"Hello, World!\"")
-f <- function()"HI!"
+f <- function()cat("HI!\n")
 .Tcl.callback(f)
 .Tcl.args(text="Push!", command=f) # NB: Different address
 

@@ -4,7 +4,7 @@
 \alias{getOption}
 \title{Options Settings}
 \description{
-  Allow the user to set and examine a variety of global ``options''
+  Allow the user to set and examine a variety of global \dQuote{options}
   which affect the way in which \R computes and displays its results.
 }
 \usage{
@@ -17,7 +17,7 @@ getOption(x)
 \arguments{
   \item{\dots}{any options can be defined, using \code{name = value}.
 
-    However, only the ones below are used in ``base \R''.
+    However, only the ones below are used in \dQuote{base \R}.
 
     Further, \code{options('name') == options()['name']}, see the example.
   }
@@ -31,7 +31,7 @@ getOption(x)
   \code{options("width")} which is a \emph{list} of length one.
 
   \code{.Options} also always contains the \code{options()} list, for
-  S compatibility.  You must use it ``read only'' however.
+  S compatibility.  You must use it \dQuote{read only} however.
 }
 \value{
   For \code{options}, a list (in any case) with the previous values of
@@ -41,7 +41,7 @@ getOption(x)
   \describe{
     \item{\code{prompt}:}{a string, used for \R's prompt; should usually
       end in a blank (\code{" "}).}
-    
+
     \item{\code{continue}:}{a string setting the prompt used for lines
       which continue over one line.}
 
@@ -75,8 +75,13 @@ getOption(x)
       \code{\link{help.start}()} on UNIX, or a non-default browser on
       Windows.}
 
+#ifdef unix
+    \item{\code{pdfviewer}:}{default PDF viewer.  Set from the
+      environment variable \env{R\_PDFVIEWER}.}
+#endif
+
     \item{\code{mailer}:}{default mailer used by
-      \code{\link{bug.report}()}. can be \code{"none"}.}
+      \code{\link{bug.report}()}.  Can be \code{"none"}.}
 
     \item{\code{contrasts}:}{the default \code{\link{contrasts}} used in
       model fitting such as with \code{\link{aov}} or \code{\link{lm}}.
@@ -86,17 +91,17 @@ getOption(x)
 
     \item{\code{defaultPackages}:}{the packages that are attached by
       default when \R starts up.  Initially set from value of the
-      environment variables \code{R_DefaultPackages}, or if that is
-      unset to \code{c("methods", "ctest")}.  (Set
-      \code{R_DEFAULT_PACKAGES} to \code{NULL} or a comma-separated list
+      environment variables \env{R\_DefaultPackages}, or if that is unset
+      %%  default is set in ../../profile/Common.R :
+      to \code{c("ts", "nls", "modreg", "mva", "ctest", "methods")}.  (Set
+      \env{R\_DEFAULT\_PACKAGES} to \code{NULL} or a comma-separated list
       of package names.)  A call to \code{options} should be in your
       \file{.Rprofile} file to ensure that the change takes effect
       before the base package is initialized (see \code{\link{Startup}}).}
 
     \item{\code{expressions}:}{sets a limit on the number of nested
-      expressions that will be evaluated.  This is especially important
-      on the Macintosh since stack overflow is likely if this is set too
-      high.  Valid values are 25\dots100000 with default 500.}
+      expressions that will be evaluated.
+      Valid values are 25\dots100000 with default 500.}
 
     \item{\code{keep.source}:}{When \code{TRUE}, the source code for
       functions (newly defined or loaded) is stored in their
@@ -109,7 +114,7 @@ getOption(x)
     \item{\code{keep.source.pkgs}:}{As for \code{keep.source}, for
       functions in packages loaded by \code{\link{library}} or
       \code{\link{require}}.  Defaults to \code{FALSE} unless the
-      environment variable \code{R_KEEP_PKG_SOURCE} is set to
+      environment variable \env{R\_KEEP\_PKG\_SOURCE} is set to
       \code{yes}.}
 
     \item{\code{na.action}:}{the name of a function for treating missing
@@ -117,11 +122,11 @@ getOption(x)
 
     \item{\code{papersize}:}{the default paper format used by
       \code{\link{postscript}};  set by environment variable
-      \code{R_PAPERSIZE} when \R is started and defaulting to
+      \env{R\_PAPERSIZE} when \R is started and defaulting to
       \code{"a4"} if that is unset or invalid.}
 
     \item{\code{printcmd}:}{the command used by \code{\link{postscript}}
-      for printing; set by environment variable \code{R_PRINTCMD} when
+      for printing; set by environment variable \env{R\_PRINTCMD} when
       \R is started.  This should be a command that expects either input
       to be piped to \file{stdin} or to be given a single filename
       argument.
@@ -164,7 +169,7 @@ getOption(x)
       \code{\link{warnings}}.  If \code{warn} is one, warnings are
       printed as they occur.  If \code{warn} is two or larger all
       warnings are turned into errors.}
-    
+
     \item{\code{warning.length}:}{sets the truncation limit for error
       and warning messages.  A non-negative integer, with allowed values
       100--8192, default 1000.}
@@ -178,20 +183,20 @@ getOption(x)
 	\item{\code{warn.FPU}:}{logical, by default undefined.  If true,
 	  a \link{warning} is produced whenever \link{dyn.load} repairs the
 	  control word damaged by a buggy DLL.}
-#endif	  
+#endif
 
     \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
-      true, a \link{warning} is produced whenever a ``generalized
-      vector'' (atomic or \code{\link{list}}) is extended, by something
+      true, a \link{warning} is produced whenever a \dQuote{generalized
+      vector} (atomic or \code{\link{list}}) is extended, by something
       like \code{x <- 1:3; x[5] <- 6}.}
 
     \item{\code{echo}:}{logical.  Only used in non-interactive mode,
       when it controls whether input is echoed.  Command-line option
-      \code{--slave} sets this initially to \code{FALSE}.}
+      \option{--slave} sets this initially to \code{FALSE}.}
 
     \item{\code{verbose}:}{logical.  Should \R report extra information
       on progress?  Set to \code{TRUE} by the command-line option
-      \code{--verbose}.}
+      \option{--verbose}.}
 
     \item{\code{device}:}{a character string giving the default device
       for that session.  This defaults to the normal screen device
@@ -205,7 +210,7 @@ getOption(x)
 #endif
 
     \item{\code{CRAN}:}{The URL of the preferred CRAN node for use by
-      \code{\link{update.packages}}.  Defaults to 
+      \code{\link{update.packages}}.  Defaults to
       \url{http://cran.r-project.org}.}
 
     \item{\code{download.file.method}:}{Method to be used for
@@ -216,7 +221,7 @@ getOption(x)
 
     \item{\code{unzip}:}{the command used for unzipping help files.
 #ifdef unix
-      Defaults to the value of \code{R\_UNZIPCMD}, which is set in
+      Defaults to the value of \env{R\_UNZIPCMD}, which is set in
       \file{etc/Renviron} if an \code{unzip} command was found during
       configuration.}
 #endif
@@ -224,11 +229,7 @@ getOption(x)
       Defaults to \code{"internal"} when the internal unzip code is
       used.}
 #endif
-#ifdef mac
-      Defaults to \code{"internal"} when the internal unzip code is
-      used.}
-#endif
-    
+
     \item{\code{de.cellwidth}:}{integer: the cell widths (number of
       characters) to be used in the data editor \code{\link{dataentry}}.
       If this is unset, 0, negative or \code{NA}, variable cell widths
@@ -245,6 +246,16 @@ getOption(x)
     \item{\code{internet.info}:}{The minimum level of information to be
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
+
+    \item{\code{scipen}:}{integer.  A penalty to be applied
+      when deciding to print numeric values in fixed or exponential
+      notation.  Positive values bias towards fixed and negative towards
+      scientific notation: fixed notation will be preferred unless it is
+      more than \code{scipen} digits wider.}
+
+    \item{\code{locatorBell}:}{logical.  Should selection in \code{locator}
+      and \code{identify} be confirmed by a bell.  Default \code{TRUE}.
+      Honoured at least on \code{X11} and \code{windows} devices.}
   }
 
   The default settings of some of these options are
@@ -264,7 +275,8 @@ getOption(x)
     \code{warn} \tab \code{0}\tab
     \code{warning.length} \tab \code{1000}\cr
     \code{echo} \tab \code{TRUE} \tab
-    \code{verbose} \tab \code{FALSE}
+    \code{verbose} \tab \code{FALSE} \cr
+    \code{scipen} \tab \code{0} \tab \code{locatorBell} \tab \code{TRUE}
   }
   Others are set from environment variables or are platform-dependent.
 }
@@ -290,6 +302,10 @@ old.o
 
 options(check.bounds = TRUE)
 x <- NULL; x[4] <- "yes" # gives a warning
+
+options(digits=5)
+print(1e5)
+options(scipen=3); print(1e5)
 
 options(op)     # reset (all) initial options
 options('digits')

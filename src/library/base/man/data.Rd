@@ -7,10 +7,11 @@
 }
 \usage{
 data(\dots, list = character(0), package = .packages(),
-     lib.loc = NULL, verbose = getOption("verbose"))
+     lib.loc = NULL, verbose = getOption("verbose"),
+     envir = .GlobalEnv)
 }
 \arguments{
-  \item{\dots}{a sequence of names or character strings.}
+  \item{\dots}{a sequence of names or literal character strings.}
   \item{list}{a character vector.}
   \item{package}{a name or character vector giving the packages to look
     into for data sets.  By default, all packages in the search path are
@@ -22,6 +23,7 @@ data(\dots, list = character(0), package = .packages(),
     packages are searched before the libraries.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
+  \item{envir}{the \link{environment} where the data should be loaded.}
 }
 \value{
   a character vector of all data sets specified, or information about
@@ -39,9 +41,9 @@ data(\dots, list = character(0), package = .packages(),
     \item files ending \file{.RData} or \file{.rda} are
     \code{\link{load}()}ed.
 
-    \item files ending \file{.tab}, \file{.txt} or \file{.TXT} are read using
-    \code{\link{read.table}(\dots, header = TRUE)}, and hence result in
-    a data frame.
+    \item files ending \file{.tab}, \file{.txt} or \file{.TXT} are read
+    using \code{\link{read.table}(\dots, header = TRUE)}, and hence
+    result in a data frame.
 
     \item files ending \file{.csv} or \file{.CSV} are read using
     \code{\link{read.table}(\dots, header = TRUE, sep = ";")},
@@ -53,16 +55,26 @@ data(\dots, list = character(0), package = .packages(),
   The data sets to be loaded can be specified as a sequence of names or
   character strings, or as the character vector \code{list}, or as both.
 
-  If no data sets are specified, \code{data} lists the available data
-  sets.  It looks for a file \file{00Index} in a \file{data} directory
-  of each specified package, and uses these files to prepare a listing.
-  If there is a \file{data} area but no index a warning is given: such
-  packages are incomplete.  The information about available data sets is
-  returned in an object of class \code{"packageIQR"}.  The structure of
-  this class is experimental.  In earlier versions of R, an empty
-  character vector was returned along with listing available data sets.
+  For each given data set, the first two types (\file{.R} or \file{.r},
+  and \file{.RData} or \file{.rda} files) can create several variables
+  in the load environment, which might all be named differently from the
+  data set.  The second two (\file{.tab}, \file{.txt}, or \file{.TXT},
+  and \file{.csv} or \file{.CSV} files) will always result in the
+  creation of a single variable with the same name as the data set. 
 
-  If \code{lib.loc} is not specified,  the datasets are searched for
+  If no data sets are specified, \code{data} lists the available data
+  sets.  It looks for a new-style data index in the \file{Meta} or, if
+  this is not found, an old-style \file{00Index} file in the \file{data}
+  directory of each specified package, and uses these files to prepare a
+  listing.  If there is a \file{data} area but no index, available data
+  files for loading are computed and included in the listing, and a
+  warning is given: such packages are incomplete.  The information about
+  available data sets is returned in an object of class
+  \code{"packageIQR"}.  The structure of this class is experimental.  In
+  earlier versions of R, an empty character vector was returned along
+  with listing available data sets.
+
+  If \code{lib.loc} is not specified, the data sets are searched for
   amongst those packages already loaded, followed by the \file{data}
   directory (if any) of the current working directory and then packages
   in the specified libraries.  If \code{lib.loc} \emph{is} specified,
@@ -82,21 +94,21 @@ data(\dots, list = character(0), package = .packages(),
   One can take advantage of the search order and the fact that a
   \file{.R} file will change directory.  If raw data are stored in
   \file{mydata.txt} then one can set up \file{mydata.R} to read
-  \file{mydata.txt} and pre-process it, e.g. using \code{transform}.
+  \file{mydata.txt} and pre-process it, e.g., using \code{transform}.
   For instance one can convert numeric vectors to factors with the
   appropriate labels.  Thus, the \file{.R} file can effectively contain
   a metadata specification for the plaintext formats.
 }
 \seealso{
   \code{\link{help}} for obtaining documentation on data sets,
-  \code{\link{save}} for \emph{creating} the first (\file{.rda}) kind of
-  data, typically the most efficient one.
+  \code{\link{save}} for \emph{creating} the second (\file{.rda}) kind
+  of data, typically the most efficient one.
 }
 \examples{
 data()                      # list all available data sets
 data(package = base)        # list the data sets in the base package
-data(USArrests, "VADeaths") # load the data sets `USArrests' and `VADeaths'
-help(USArrests)             # give information on data set `USArrests'
+data(USArrests, "VADeaths") # load the data sets 'USArrests' and 'VADeaths'
+help(USArrests)             # give information on data set 'USArrests'
 }
 \keyword{documentation}
 \keyword{datasets}

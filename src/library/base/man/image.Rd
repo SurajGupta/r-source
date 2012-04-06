@@ -4,7 +4,8 @@
 \title{Display a Color Image}
 \usage{
 image(x, \dots)
-image.default(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
+
+\method{image}{default}(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
       add = FALSE, xaxs = "i", yaxs = "i", xlab, ylab,
       breaks, oldstyle = FALSE, \dots)
 }
@@ -32,11 +33,11 @@ image.default(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
     functions.}
   \item{add}{logical; if \code{TRUE}, add to current plot (and disregard
     the following arguments).  This is rarely useful because
-    \code{image} ``paints'' over existing graphics.}
+    \code{image} \dQuote{paints} over existing graphics.}
   \item{xaxs, yaxs}{style of x and y axis.  The default \code{"i"} is
     appropriate for images.  See \code{\link{par}}.}
   \item{xlab, ylab}{each a character string giving the labels for the x and
-    y axis.  Default to the `call names' of \code{x} or \code{y}, or to
+    y axis.  Default to the \sQuote{call names} of \code{x} or \code{y}, or to
     \code{""} if these where unspecified.}
   \item{breaks}{a set of breakpoints for the colours: must give one more
     breakpoint than colour.}
@@ -51,7 +52,7 @@ image.default(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
 \description{
   Creates a grid of colored or gray-scale rectangles with colors
   corresponding to the values in \code{z}.  This can be used to display
-  three-dimensional or spatial data aka ``images''.
+  three-dimensional or spatial data aka \dQuote{images}.
   This is a generic function.
 
   The functions \code{\link{heat.colors}}, \code{\link{terrain.colors}}

@@ -6,10 +6,13 @@
 \title{Compute Summary Statistics of Data Subsets}
 \usage{
 aggregate(x, \dots)
-aggregate.default(x, \dots)
-aggregate.data.frame(x, by, FUN, \dots)
-aggregate.ts(x, nfrequency = 1, FUN = sum, ndeltat = 1,
-             ts.eps = getOption("ts.eps"), \dots)
+
+\method{aggregate}{default}(x, \dots)
+
+\method{aggregate}{data.frame}(x, by, FUN, \dots)
+
+\method{aggregate}{ts}(x, nfrequency = 1, FUN = sum, ndeltat = 1,
+          ts.eps = getOption("ts.eps"), \dots)
 }
 \description{
   Splits the data into subsets, computes summary statistics for each,
@@ -76,7 +79,7 @@ aggregate.ts(x, nfrequency = 1, FUN = sum, ndeltat = 1,
 \examples{
 data(state)
 
-## Compute the averages for the variables in `state.x77', grouped
+## Compute the averages for the variables in 'state.x77', grouped
 ## according to the region (Northeast, South, North Central, West) that
 ## each state belongs to.
 aggregate(state.x77, list(Region = state.region), mean)
@@ -87,7 +90,7 @@ aggregate(state.x77,
           list(Region = state.region,
                Cold = state.x77[,"Frost"] > 130),
           mean)
-## (Note that no state in `South' is THAT cold.)
+## (Note that no state in 'South' is THAT cold.)
 
 data(presidents)
 ## Compute the average annual approval ratings for American presidents.

@@ -10,7 +10,7 @@
 }
 \synopsis{
 hist.POSIXt(x, breaks, ..., xlab = deparse(substitute(x)),
-            axes = TRUE, plot = TRUE, freq = FALSE,
+            plot = TRUE, freq = FALSE,
             start.on.monday = TRUE, format)
 }
 \arguments{
@@ -22,13 +22,15 @@ hist.POSIXt(x, breaks, ..., xlab = deparse(substitute(x)),
     \code{"hours"}, \code{"days"}, \code{"weeks"}, \code{"months"}
     or \code{"years"}.
  }
-  \item{\dots}{graphical parameters.}
+  \item{\dots}{graphical parameters, or arguments to
+    \code{\link{hist.default}} such as \code{include.lowest},
+      \code{right} and \code{labels}.}
   \item{plot}{logical.  If \code{TRUE} (default), a histogram is
     plotted, otherwise a list of breaks and counts is returned.}
   \item{freq}{logical; if \code{TRUE}, the
     histogram graphic is a representation of frequencies, i.e,
     the \code{counts} component of the result; if \code{FALSE},
-    \emph{relative} frequencies (``probabilities'') are plotted.}
+    \emph{relative} frequencies (\dQuote{probabilities}) are plotted.}
   \item{start.on.monday}{logical. If \code{breaks = "weeks"}, should the
     week start on Mondays or Sundays?}
   \item{format}{for the x-axis labels. See \code{\link{strptime}}.}

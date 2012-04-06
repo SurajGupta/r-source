@@ -42,6 +42,10 @@ rwilcox(nn, m, n)
   \code{m * n}, and its mean and variance are \code{m * n / 2} and
   \code{m * n * (m + n + 1) / 12}, respectively.
 }
+\note{
+  S-PLUS uses a different (but equivalent) definition of the Wilcoxon
+  statistic.
+}
 \author{Kurt Hornik \email{hornik@ci.tuwien.ac.at}}
 \seealso{\code{\link{dsignrank}} etc, for the \emph{one-sample} Wilcoxon
     rank statistic.}
@@ -61,7 +65,7 @@ layout(1)# set back
 N <- 200
 hist(U <- rwilcox(N, m=4,n=6), breaks=0:25 - 1/2, border="red", col="pink",
      sub = paste("N =",N))
-mtext("N * f(x),  f() = true ``density''", side=3, col="blue")
+mtext("N * f(x),  f() = true \"density\"", side=3, col="blue")
  lines(x, N*fx, type='h', col='blue', lwd=2)
 points(x, N*fx, cex=2)
 

@@ -143,13 +143,9 @@ insertMethod <-
         elNamed(methods, Class) <-
             Recall(current, signature[-1], args[-1], def, cacheOnly)
     }
-    if(cacheOnly)
-        mlist@allMethods <- methods
-    else {
-        mlist@methods <- methods
-        ## and clear the cache, inheritance may have changed
-        mlist@allMethods <- list()
-    }
+    mlist@allMethods <- methods
+    if(!cacheOnly)
+        mlist@methods <-  methods
     mlist
 }
 
@@ -178,21 +174,20 @@ MethodsListSelect <-
 {
     if(!resetAllowed) # ensure we restore the real methods for this function
         resetMlist <- .getMethodsForDispatch(f, fdef)
-    if(is.null(mlist))
-        mlist <- .getMethodsForDispatch(f, fdef)
+    ## look for call from C dispatch code during another call to MethodsListSelect
+    if(is.null(f)) {} # Recall, not from C
+    else {
+        fMethods <- .getMethodsForDispatch(f, fdef)
+        if(is.null(mlist) || (evalArgs && is.function(fMethods)))
+            mlist <- fMethods
+    }
     resetNeeded <- .setIfBase(f, fdef, mlist) # quickly protect against recursion -- see Methods.R
     if(resetNeeded) {
         on.exit(.setMethodsForDispatch(f, fdef, mlist))
     }
-    if(is.null(mlist)) {
-        ## collect all the methods metadata visible on 1st call to generic
-        ## Cannot happen except for genericFunction objects, for which
-        ## getAllMethods will assign mlist in the environment of fdef
-        mlist <- getAllMethods(f, fdef)
-    }
     if(!is(mlist, "MethodsList")) {
         if(is.function(mlist)) # call to f, inside MethodsListSelect
-            return(mlist)
+            {on.exit(); return(mlist)}
         if(is.null(f)) # recursive recall of MethodsListSelect
             stop("Invalid method sublist")
         else if(!is.null(mlist)) # NULL => 1st call to genericFunction
@@ -202,7 +197,7 @@ MethodsListSelect <-
     if(!is.logical(useInherited))
         stop("useInherited must be TRUE, FALSE, or a named logical vector of those values; got an object of class \"",
              class(useInherited), "\"")
-    if(identical(mlist, getMethodsForDispatch(f, fdef))) {
+    if(identical(mlist, .getMethodsForDispatch(f, fdef))) {
         resetNeeded <- TRUE
         ## On the initial call:
         ## turn off any further method dispatch on this function, to avoid recursive
@@ -225,7 +220,7 @@ MethodsListSelect <-
         }
     }
     else
-        thisClass <- get(as.character(argName), envir = env)
+        thisClass <- get(as.character(argName), envir = env, inherits = FALSE)
     if(identical(useInherited, TRUE) || identical(useInherited, FALSE))
         thisInherit <- nextUseInherited <- useInherited
     else {
@@ -248,6 +243,8 @@ MethodsListSelect <-
         if(is(selection, "function"))
             value <- mlist ## no change
         else {
+            ## recursive call with NULL function name, to allow search to fail &
+            ## to suppress any reset actions. 
             method <- Recall(NULL, env, selection, finalDefault = finalDefault,
                    evalArgs = evalArgs, useInherited = nextUseInherited, fdef = fdef,
                              )
@@ -285,7 +282,7 @@ MethodsListSelect <-
            && !is.null(f) && !is.null(finalDefault)) {
             ## only use the final default method after exhausting all
             ## other possibilities, at all levels.
-            method <- insertMethodInEmptyList(selection, finalDefault)
+            method <- finalDefault
             fromClass <- "ANY"
         }
         if(is.null(method) || is(method, "EmptyMethodsList"))
@@ -347,13 +344,10 @@ finalDefaultMethod <-
   ## turned off.)
   function(mlist, fname = "NULL")
 {
-    if(is.null(mlist)) ## return the function, or NULL
-        getFunction(fname, mustFind = FALSE)
-    else {
-        while(is(mlist, "MethodsList"))
-            mlist <- elNamed(slot(mlist, "methods"), "ANY")
-        mlist
-    }
+    value <- NULL
+    while(is(mlist, "MethodsList"))
+            mlist <- value <- elNamed(slot(mlist, "methods"), "ANY")
+    value
 }
 
 
@@ -371,7 +365,7 @@ inheritedSubMethodLists <-
   defaultMethod <- elNamed(methods, "ANY")## maybe NULL
   classes <- names(methods)
   value <- list()
-  if(identical(thisClass, "missing")) {
+  if(.identC(thisClass, "missing")) {
         ## no superclasses for "missing"
   }
   else {
@@ -417,12 +411,9 @@ inheritedSubMethodLists <-
 matchSignature <-
   ## Match the signature object (a partially or completely named subset of the
   ## arguments of `fun', and return a vector of all the classes in the order specified
-  ## by `names'.  The classes not specified by `signature' will be `"ANY"' in the
-  ## value.
-  ##
-  ## The formal arguments of `fun' must agree with `names' (usually the formal arguments
-  ## of the generic function) as well, and `matchSignature' checks this.
-  function(signature, fun)
+  ## by the signature slot of the generic.  The classes not specified by `signature
+  ##' will be `"ANY"' in the value.
+  function(signature, fun, where)
 {
     if(!is(fun, "genericFunction"))
         stop("Trying to match a method signature to an object (of class \"",
@@ -434,18 +425,20 @@ matchSignature <-
     if(length(signature) == 0)
         return(character())
     sigClasses <- as.character(signature)
-    unknown <- !sapply(sigClasses, function(x)isClass(x))
+    if(!missing(where)) {
+        unknown <- !sapply(sigClasses, function(x, where)isClass(x, where=where), where = where)
+        if(any(unknown)) {
+            unknown <- unique(sigClasses[unknown])
+            warning("In the method signature for function \"", fun@generic,
+                    "\", class ", paste("\"", unknown, "\"", sep="", collapse = ", "), " has no current definition")
+        }
+    }
     signature <- as.list(signature)
     if(length(sigClasses) != length(signature))
         stop("Object to use as a method signature for function \"", fun@generic,
              "\" doesn't look like a legitimate signature (a vector of single class names): there were ",
              length(sigClasses), " class names, but ", length(signature),
              " elements in the signature object.")
-    if(any(unknown)) {
-        unknown <- unique(sigClasses[unknown])
-        warning("In the method signature for function \"", fun@generic,
-                "\", class ", paste("\"", unknown, "\"", sep="", collapse = ", "), " has no current definition")
-    }
     if(is.null(names(signature))) {
         which <- seq(length = length(signature))
     }
@@ -548,62 +541,82 @@ function(mlist, includeDefs = TRUE, inherited = TRUE, classes = NULL, useArgName
 }
 
 promptMethods <-
-  ## generate information in the style of `prompt' for the methods of the generic
-  ## named `f'.
-  ##
-  ## `filename' can be a logical or the name of a file to print to.  If `file' is `FALSE',
-  ## the methods skeleton is returned, to be included in other printing (typically,
-  ## the output from `prompt'.
-  function(f, filename = TRUE, methods) {
-      paste0 <- function(...)paste(..., sep="")
-      packageString = ""
-      if(missing(methods)) {
-          where <- find(mlistMetaName(f))
-          if(length(where) == 0)
-              stop("No methods found for generic \"", f, "\"")
-          where <- where[1]
-          methods <- getMethods(f, where)
-          if(where != 1)
-              packageString <- paste("in package", getPackageName(where))
-      }
-      object <- linearizeMlist(methods, FALSE)
-      methods <- object@methods; n <- length(methods)
-      args <- object@arguments
-      signatures <- object@classes
-      labels <- character(n)
-      aliases <- character(n)
-      fullName <- topicName("methods", f)
-      for(i in seq(length = n)) {
-          sigi <- paste("\"", signatures[[i]], "\"", sep ="")
-          labels[[i]] <- paste(args[[i]], sigi, collapse = ", ", sep = " = ")
-          aliases[[i]] <- paste0("\\alias{", topicName("method", c(f, signatures[[i]])),
-                                "}")
-      }
-      text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
-      text <- c("\\section{Methods}{\\describe{", text, "}}")
-      aliasText <- c(paste0("\\alias{", fullName, "}"), aliases)
-      endText <- c("\\keyword{methods}", "\\keyword{ ~~ other possible keyword(s)}")
-      if(identical(filename, FALSE))
-          return(c(aliasText, text))
-      beginText <-  c(paste0("\\name{", fullName, "}"), paste0("\\docType{methods}"),
-                paste("\\title{ ~~ Methods for Function", f, packageString, "~~}"))
-      if(identical(filename, TRUE))
-          filename <- paste0(fullName, ".Rd")
-      text <-c(beginText, aliasText, text, endText)
-      cat(text, file = filename, sep="\n")
-      filename
-  }
+function(f, filename = NULL, methods)
+{
+    ## Generate information in the style of 'prompt' for the methods of
+    ## the generic named 'f'.
+    ##
+    ## 'filename' can be a logical or NA or the name of a file to print
+    ## to.  If it 'FALSE', the methods skeleton is returned, to be
+    ## included in other printing (typically, the output from 'prompt').
+  
+    paste0 <- function(...) paste(..., sep = "")
+    packageString <- ""
 
+    if(missing(methods)) {
+        where <- find(mlistMetaName(f))
+        if(length(where) == 0)
+            stop(paste("No methods found for generic", sQuote(f)))
+        where <- where[1]
+        methods <- getMethods(f, where)
+        if(where != 1)
+            packageString <-
+                paste0("in Package `", getPackageName(where), "'")
+        ## (We want the '`' for LaTeX, as we currently cannot have
+        ## \sQuote{} inside a \title.)
+    }
+    
+    object <- linearizeMlist(methods, FALSE)
+    methods <- object@methods; n <- length(methods)
+    args <- object@arguments
+    signatures <- object@classes
+    labels <- character(n)
+    aliases <- character(n)
+    fullName <- topicName("methods", f)
+    for(i in seq(length = n)) {
+        sigi <- paste("\"", signatures[[i]], "\"", sep ="")
+        labels[[i]] <-
+            paste(args[[i]], sigi, collapse = ", ", sep = " = ")
+        aliases[[i]] <-
+            paste0("\\alias{", topicName("method", c(f, signatures[[i]])),
+                   "}")
+    }
+    text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
+    text <- c("\\section{Methods}{\\describe{", text, "}}")
+    aliasText <- c(paste0("\\alias{", fullName, "}"), aliases)
+    if(identical(filename, FALSE))
+        return(c(aliasText, text))
+
+    if(is.null(filename) || identical(filename, TRUE))
+        filename <- paste0(fullName, ".Rd")
+
+    Rdtxt <-
+        list(name = paste0("\\name{", fullName, "}"),
+             type = "\\docType{methods}",
+             aliases = aliasText,
+             title = paste("\\title{ ~~ Methods for Function", f,
+             packageString, "~~}"),
+             "section{Methods}" = text,
+             keywords = c("\\keyword{methods}",
+             "\\keyword{ ~~ other possible keyword(s)}"))
+
+    if(is.na(filename)) return(Rdtxt)
+    
+    cat(unlist(Rdtxt), file = filename, sep = "\n")
+    invisible(filename)
+}
 
 linearizeMlist <-
-    ## Undo the recursive nature of the methods list, making a list of function
-    ## defintions, with the names of the list being the corresponding signatures
-    ## (designed for printing; for looping over the methods, use `listFromMlist' instead).
+    ## Undo the recursive nature of the methods list, making a list of
+    ## function defintions, with the names of the list being the
+    ## corresponding signatures (designed for printing; for looping over
+    ## the methods, use `listFromMlist' instead).
     ##
-    ## The function calls itself recursively.  `prev' is the previously selected class names
+    ## The function calls itself recursively.  `prev' is the previously
+    ## selected class names.
     ##
-    ## If argument `classes' is provided, only signatures containing one of these classes
-    ## will be included.
+    ## If argument `classes' is provided, only signatures containing one
+    ## of these classes will be included.
     function(mlist, inherited = TRUE) {
         methods <- mlist@methods
         allMethods <- mlist@allMethods

@@ -66,7 +66,6 @@ The current version of this document is @value{VERSION}.
 * Obtaining R::                 
 * Installing R under Unix::     
 * Installing R under Windows::  
-* Installing R on Classic MacOS::  
 * Add-on packages::             
 * Essential and useful other programs::  
 * Configuration on Unix::       
@@ -396,7 +395,7 @@ To ensure that the installed tree is usable by the right group of users,
 set @code{umask} appropriately (perhaps to @samp{022}) before unpacking
 the sources and throughout the build process.
 
-@node Installing R under Windows, Installing R on Classic MacOS, Installing R under Unix, Top
+@node Installing R under Windows, Add-on packages, Installing R under Unix, Top
 @chapter Installing R under Windows
 @cindex Installing under Windows
 
@@ -449,23 +448,7 @@ disc).
 For further details, including how to make the documentation and how to
 cross-compile, see @file{src/gnuwin32/INSTALL}.
 
-@node Installing R on Classic MacOS, Add-on packages, Installing R under Windows, Top
-@chapter Installing R on Classic MacOS
-@cindex Installing under MacOS
-
-The @file{bin/macos} directory of a @acronym{CRAN} site contains
-@command{bin-hex}ed (@file{hqx}) and @command{stuffit} (@file{sit})
-archives for a base distribution and a large number of add-on packages
-to run under MacOS 8.6 to MacOS 9.1 or MacOS X natively.  Just extract
-one of these archives in a suitable folder using standard utilities like
-Aladdin Stuffit Expander (tm).
-
-@cindex MacOS X
-There is also a port to MacOS X which is considered to be a Unix variant
-in this document.  You can find it in the @file{bin/macosx} directory at
-of a @acronym{CRAN} site.
-
-@node Add-on packages, Essential and useful other programs, Installing R on Classic MacOS, Top
+@node Add-on packages, Essential and useful other programs, Installing R under Windows, Top
 @chapter Add-on packages
 @cindex Packages
 
@@ -475,8 +458,7 @@ of a @acronym{CRAN} site.
 * Removing packages::           
 @end menu
 
-This chapter applies to Unix-like and Windows versions of @R{}, but not
-to the Classic MacOS port.
+This chapter applies to Unix-like and Windows versions of @R{}.
 
 It is helpful to use the correct terminology.  A @emph{package} is
 loaded from a @emph{library} by the function @code{library()}.  Thus a
@@ -631,9 +613,7 @@ FORTRAN}).  Some add-on packages also need a C++ compiler.
 
 You will need Perl version 5.004 or later, available via
 @uref{http://www.perl.com/CPAN/}, to build any of the on-line
-documentation.  (The @command{Rdindex} utility requires version 5.005 or
-later, but has been deprecated in favor of the function @code{Rdindex()}
-in package @pkg{tools} as of @R{} version 1.7.0.)
+documentation.
 
 You will not be able to build the info files unless you have
 @command{makeinfo} version 4 or later installed.
@@ -708,13 +688,14 @@ configuration option @option{--with-blas} and not to use an external
 BLAS library by @option{--without-blas}.
 
 For systems with multiple processors it is in principle possible to use
-a multi-threaded version of ATLAS.  This is currently not supported.
-The problem is that @code{SIGINT} signals will not be handled properly
-when sent during a multi-threaded ATLAS computation, and this may result
-in a segmentation fault.  Changes in the R internals are needed to
-support the use of threaded libraries; this will hopefully be addressed
-in a future release.  If despite this warning you still want to use a
-multi-threaded ATLAS you can do so by specifying
+a multi-threaded version of ATLAS.  Prior to @R{} 1.8.0 this was not
+supported since @code{SIGINT} signals sent to the process and handled by
+the wrong thread could result in segfaults.  Changes in @code{SIGINT}
+handling introduced in @R{} 1.8.0 should make it safe to use a
+multi-threaded ATLAS.  A remaining issue is that @R{} profiling, which
+uses the @code{SIGPROF} signal, may cause problems.  You may want to
+disable profiling if you use a multi-threaded version of ATLAS.  You can
+use a multi-threaded ATLAS by specifying
 @smallexample
 --with-blas="-lptf77blas -lpthread -latlas"
 @end smallexample

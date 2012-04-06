@@ -44,7 +44,6 @@ hclust <- function(d, method="complete", members=NULL)
         (if (length(d) < len) stop else warning
          )("dissimilarities of improper length")
 
-    labels <- attr(d, "Labels")
     if(is.null(members))
         members <- rep(1, n)
     else if(length(members) != n)
@@ -96,7 +95,7 @@ plot.hclust <-
 	stop("invalid dendrogram")
     n <- nrow(merge)
     height <- as.double(x$height)
-    order <- as.double(order(x$order))
+    ord <- as.double(order(x$order))
 
     labels <-
 	if(missing(labels) || is.null(labels)) {
@@ -112,8 +111,8 @@ plot.hclust <-
 	}
 
     plot.new()
-    .Internal(dend.window(n, merge, height, order, hang, labels, ...))
-    .Internal(dend       (n, merge, height, order, hang, labels, ...))
+    .Internal(dend.window(n, merge, height, ord, hang, labels, ...))
+    .Internal(dend       (n, merge, height, ord, hang, labels, ...))
     if(axes)
         axis(2, at=pretty(range(height)))
     if (frame.plot)
@@ -135,11 +134,12 @@ plclust <- function(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
                     axes = TRUE, frame.plot = FALSE, ann = TRUE,
                     main = "", sub = NULL, xlab = NULL, ylab = "Height")
 {
-    if(!missing(unit) && unit)		.NotYetUsed("unit", error = FALSE)
     if(!missing(level) && level)	.NotYetUsed("level", error = FALSE)
     if(!missing(hmin) && hmin != 0)	.NotYetUsed("hmin",  error = FALSE)
     if(!missing(square) && !square)	.NotYetUsed("square",error = FALSE)
     if(!missing(plot.) && !plot.)	.NotYetUsed("plot.", error = TRUE)
+    if(!missing(hmin)) tree$height <- pmax(tree$height, hmin)
+    if(unit) tree$height <- rank(tree$height)
     plot.hclust(x = tree, labels = labels, hang = hang,
                 axes = axes, frame.plot = frame.plot, ann = ann,
                 main = main, sub = sub, xlab = xlab, ylab = ylab)
@@ -152,8 +152,8 @@ as.hclust.default <- function(x, ...) {
     if(inherits(x, "hclust")) x
     else
 	stop("argument `x' cannot be coerced to class `hclust'.",
-             if(!is.null(class(x)))
-             "\n Consider providing an as.hclust.",class(x)[1],"() method")
+             if(!is.null(oldClass(x)))
+             "\n Consider providing an as.hclust.",oldClass(x)[1],"() method")
 }
 
 as.hclust.twins <- function(x, ...)

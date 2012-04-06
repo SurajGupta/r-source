@@ -10,7 +10,7 @@
 \usage{
 makeClassRepresentation(name, slots=list(), superClasses=character(),
                         prototype=NULL, package, validity, access,
-                        version, sealed, virtual=NA)
+                        version, sealed, virtual=NA, where)
 }
 \arguments{
   \item{name}{character string name for the class}
@@ -30,16 +30,20 @@ makeClassRepresentation(name, slots=list(), superClasses=character(),
     generated, but not used.}
   \item{sealed}{Is the class sealed? See \code{\link{setClass}}.}
   \item{virtual}{Is this known to be a virtual class?}
+
+  \item{where}{The environment from which to look for class
+      definitions needed (e.g., for slots or superclasses). See the
+      discussion of this argument under \link{GenericFunctions}.}
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
+  The R package \pkg{methods} implements, with a few exceptions, the
   programming interface for classes and methods in the book
   \emph{Programming with Data} (John M. Chambers, Springer, 1998), in
   particular sections 1.6, 2.7, 2.8, and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the
-  reference, the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
   discussion of details and ongoing development, see the web page

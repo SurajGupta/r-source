@@ -83,7 +83,7 @@ typedef unsigned int SEXPTYPE;
 #define STRSXP	    16	  /* string vectors */
 #define DOTSXP	    17	  /* dot-dot-dot object */
 #define ANYSXP	    18	  /* make "any" args work.
-			     Used in specifying types for symbol 
+			     Used in specifying types for symbol
 			     registration to mean anything is okay  */
 #define VECSXP	    19	  /* generic vectors */
 #define EXPRSXP	    20	  /* expressions vectors */
@@ -277,13 +277,8 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define CAD4R(e)	CAR(CDR(CDR(CDR(CDR(e)))))
 #define CONS(a, b)	cons((a), (b))		/* data lists */
 #define LCONS(a, b)	lcons((a), (b))		/* language lists */
-#define NEW_BINDING_FLAGS
-#ifdef NEW_BINDING_FLAGS
 #define MISSING_MASK	15 /* reserve 4 bits--only 2 uses now */
 #define MISSING(x)	((x)->sxpinfo.gp & MISSING_MASK)/* for closure calls */
-#else
-#define MISSING(x)	((x)->sxpinfo.gp)	/* for closure calls */
-#endif
 #ifndef USE_WRITE_BARRIER
 #define SETCAR(x,v)	(CAR(x)=(v))
 #define SETCADR(x,v)	(CADR(x)=(v))
@@ -292,16 +287,12 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define SETCAD4R(x,v)	(CAD4R(x)=(v))
 #define SETCDR(x,y)	do {SEXP X=(x), Y=(y); if(X != R_NilValue) CDR(X)=Y; else error("bad value");} while (0)
 #endif
-#ifdef NEW_BINDING_FLAGS
 #define SET_MISSING(x,v) do { \
   SEXP __x__ = (x); \
   int __v__ = (v); \
   int __other_flags__ = __x__->sxpinfo.gp & ~MISSING_MASK; \
   __x__->sxpinfo.gp = __other_flags__ | __v__; \
 } while (0)
-#else
-#define SET_MISSING(x,v)	(((x)->sxpinfo.gp)=(v))
-#endif
 
 /* Closure Access Macros */
 #define FORMALS(x)	((x)->u.closxp.formals)
@@ -320,25 +311,16 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define PRINTNAME(x)	((x)->u.symsxp.pname)
 #define SYMVALUE(x)	((x)->u.symsxp.value)
 #define INTERNAL(x)	((x)->u.symsxp.internal)
-#define NEW_SYMBOL_FLAGS
-#ifdef NEW_SYMBOL_FLAGS
 #define DDVAL_MASK	1
 #define DDVAL(x)	((x)->sxpinfo.gp & DDVAL_MASK) /* for ..1, ..2 etc */
-#else
-#define DDVAL(x)	((x)->sxpinfo.gp) /* for ..1, ..2 etc */
-#endif
 #ifndef USE_WRITE_BARRIER
 #define SET_PRINTNAME(x,v)	(((x)->u.symsxp.pname)=(v))
 #define SET_SYMVALUE(x,v)	(((x)->u.symsxp.value)=(v))
 #define SET_INTERNAL(x,v)	(((x)->u.symsxp.internal)=(v))
 #endif
-#ifdef NEW_SYMBOL_FLAGS
 #define SET_DDVAL_BIT(x) (((x)->sxpinfo.gp) |= DDVAL_MASK)
 #define UNSET_DDVAL_BIT(x) (((x)->sxpinfo.gp) &= ~DDVAL_MASK)
 #define SET_DDVAL(x,v) ((v) ? SET_DDVAL_BIT(x) : UNSET_DDVAL_BIT(x)) /* for ..1, ..2 etc */
-#else
-#define SET_DDVAL(x,v)	(((x)->sxpinfo.gp)=(v)) /* for ..1, ..2 etc */
-#endif
 
 /* Environment Access Macros */
 #define FRAME(x)	((x)->u.envsxp.frame)
@@ -363,6 +345,16 @@ typedef struct SEXPREC *SEXP;
 #define EXTPTR_PROT(x)	CDR(x)
 #define EXTPTR_TAG(x)	TAG(x)
 
+#ifdef BYTECODE
+/* Bytecode access macros */
+#define BCODE_CODE(x)	CAR(x)
+#define BCODE_CONSTS(x) CDR(x)
+#define BCODE_EXPR(x)	TAG(x)
+#define isByteCode(x)	(TYPEOF(x)==BCODESXP)
+#else
+#define isByteCode(x)	FALSE
+#endif
+
 /* Pointer Protection and Unprotection */
 #define PROTECT(s)	protect(s)
 #define UNPROTECT(n)	unprotect(n)
@@ -378,11 +370,9 @@ typedef int PROTECT_INDEX;
 
 /* Evaluation Environment */
 LibExtern SEXP	R_GlobalEnv;	    /* The "global" environment */
-#define EXPERIMENTAL_NAMESPACES
-#ifdef EXPERIMENTAL_NAMESPACES
+
 LibExtern SEXP	R_BaseNamespace;    /* The (fake) name space for base */
 LibExtern SEXP	R_NamespaceRegistry;/* Registry for registerd name spaces */
-#endif
 
 /* Special Values */
 LibExtern SEXP	R_NilValue;	    /* The nil object */
@@ -424,6 +414,7 @@ LibExtern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 
 /* Type Coercions of all kinds */
 
+SEXP Rf_ascommon(SEXP, SEXP, SEXPTYPE);
 SEXP Rf_coerceVector(SEXP, SEXPTYPE);
 SEXP Rf_coerceList(SEXP, SEXPTYPE);
 void Rf_CoercionWarning(int);/* warning code */
@@ -693,11 +684,10 @@ void (SET_HASHTAB)(SEXP x, SEXP v);
 void (SET_ENVFLAGS)(SEXP x, int v);
 
 /* Promise Access Macros */
-SEXP (PREXPR)(SEXP x);
+SEXP (PRCODE)(SEXP x);
 SEXP (PRENV)(SEXP x);
 SEXP (PRVALUE)(SEXP x);
 int (PRSEEN)(SEXP x);
-void (SET_PREXPR)(SEXP x, SEXP v);
 void (SET_PRENV)(SEXP x, SEXP v);
 void (SET_PRVALUE)(SEXP x, SEXP v);
 void (SET_PRSEEN)(SEXP x, int v);
@@ -732,6 +722,19 @@ SEXP R_WeakRefKey(SEXP w);
 SEXP R_WeakRefValue(SEXP w);
 void R_RunWeakRefFinalizer(SEXP w);
 
+#ifdef BYTECODE
+SEXP R_PromiseExpr(SEXP);
+SEXP R_ClosureExpr(SEXP);
+void R_initialize_bcode(void);
+SEXP R_bcEncode(SEXP);
+SEXP R_bcDecode(SEXP);
+#define PREXPR(e) R_PromiseExpr(e)
+#define BODY_EXPR(e) R_ClosureExpr(e)
+#else
+#define PREXPR(e) PRCODE(e)
+#define BODY_EXPR(e) BODY(e)
+#endif
+
 /* Protected evaluation */
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data);
 
@@ -740,29 +743,19 @@ void R_RestoreHashCount(SEXP rho);
 Rboolean R_IsPackageEnv(SEXP rho);
 SEXP R_PackageEnvName(SEXP rho);
 SEXP R_FindPackageEnv(SEXP info);
-#ifdef EXPERIMENTAL_NAMESPACES
 Rboolean R_IsNamespaceEnv(SEXP rho);
 SEXP R_NamespaceEnvSpec(SEXP rho);
 SEXP R_FindNamespace(SEXP info);
-#endif
-#define ENVIRONMENT_LOCKING
-#define FANCY_BINDINGS
-#ifdef ENVIRONMENT_LOCKING
 void R_LockEnvironment(SEXP env, Rboolean bindings);
 Rboolean R_EnvironmentIsLocked(SEXP env);
-#endif
-#ifdef FANCY_BINDINGS
 void R_LockBinding(SEXP sym, SEXP env);
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env);
 Rboolean R_BindingIsActive(SEXP sym, SEXP env);
 Rboolean R_HasFancyBindings(SEXP rho);
-#endif
 
 /* Experimental Changes in Dispatching */
-#ifdef EXPERIMENTAL_NAMESPACES
 void R_SetUseNamespaceDispatch(Rboolean val);
-#endif
 
 /* Save/Load Interface */
 #define R_XDR_DOUBLE_SIZE 8
@@ -848,6 +841,21 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 SEXP R_do_MAKE_CLASS(char *what);
 SEXP R_do_new_object(SEXP class_def);
 
+/* preserve objects across GCs */
+void R_PreserveObject(SEXP);
+void R_ReleaseObject(SEXP);
+
+/* Shutdown actions */
+void R_dot_Last(void);		/* in main.c */
+void R_RunExitFinalizers(void);	/* in memory.c */
+
+/* Recpalcments for popen and system */
+#ifdef HAVE_POPEN
+FILE *R_popen(char *, char *);
+#endif
+int R_system(char *);
+
+
 #ifndef R_NO_REMAP
 #define allocArray		Rf_allocArray
 #define allocList		Rf_allocList
@@ -858,6 +866,7 @@ SEXP R_do_new_object(SEXP class_def);
 #define applyClosure		Rf_applyClosure
 #define arraySubscript		Rf_arraySubscript
 #define asChar			Rf_asChar
+#define ascommon		Rf_ascommon
 #define asComplex		Rf_asComplex
 #define asInteger		Rf_asInteger
 #define asLogical		Rf_asLogical

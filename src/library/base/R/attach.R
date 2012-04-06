@@ -33,20 +33,28 @@ detach <- function(name, pos=2, version)
 	    stop("invalid name")
     }
     env <- as.environment(pos)
-    if(exists(".Last.lib", where = pos, inherits=FALSE)) {
-        .Last.lib <- get(".Last.lib", pos = pos, inherits=FALSE)
-        if(is.function(.Last.lib)) {
-            libpath <- attr(env, "path")
-            if(!is.null(libpath)) try(.Last.lib(libpath))
-        }
+    packageName <- search()[[pos]]
+    if(exists(".Last.lib", mode = "function", where = pos, inherits=FALSE)) {
+        .Last.lib <- get(".Last.lib",  mode = "function", pos = pos,
+                         inherits=FALSE)
+        libpath <- attr(env, "path")
+        if(!is.null(libpath)) try(.Last.lib(libpath))
+    }
+    .Internal(detach(pos))
+    ## check for detaching a  package required by another package (not by .GlobalEnv
+    ## because detach() can't currently fix up the .required there)
+    for(pkgs in search()[-1]) {
+        if(!isNamespace(as.environment(pkgs)) &&
+           exists(".required", pkgs, inherits = FALSE) &&
+           packageName %in% paste("package:", get(".required", pkgs, inherits = FALSE),sep=""))
+            warning(packageName, " is required by ", pkgs, " (still attached)")
     }
     if(.isMethodsDispatchOn()) {
-        if(pos != match("package:methods", search()))
+        if("package:methods" %in% search())
             cacheMetaData(env, FALSE)
         else
             .isMethodsDispatchOn(FALSE)
     }
-    .Internal(detach(pos))
 }
 
 ls <- objects <-
@@ -66,8 +74,8 @@ ls <- objects <-
     }
     all.names <- .Internal(ls(envir, all.names))
     if (!missing(pattern)) {
-        if ((ll <- length(grep("\\[", pattern))) > 0 && ll !=
-            (lr <- length(grep("\\]", pattern)))) {
+        if ((ll <- length(grep("[", pattern, fixed=TRUE))) > 0 &&
+            ll != length(grep("]", pattern, fixed=TRUE))) {
             if (pattern == "[") {
                 pattern <- "\\["
                 warning("replaced regular expression pattern `[' by `\\\\['")

@@ -7,12 +7,13 @@ X11(\dots)
 #ifdef windows
 windows(\dots)
 #endif
-#ifdef mac
-macintosh(\dots)
+%% FIXME:
+#ifdef aqua
+quartz(\dots)
 #endif
 postscript(\dots)
 pdf(\dots)
-pictex(\dots)  
+pictex(\dots)
 #ifdef unix
 png(\dots)
 jpeg(\dots)
@@ -48,16 +49,13 @@ dev.interactive()
     \item \code{\link{jpeg}} JPEG bitmap device
     \item \code{\link{bmp}} BMP bitmap device
 #endif
-#ifdef mac
-    \item \code{\link{macintosh}} The graphics driver for the Macintosh
-#endif
     \item \code{\link{xfig}} Device for XFIG graphics file format
     \item \code{\link{bitmap}} bitmap pseudo-device via
     \code{GhostScript} (if available).
   }
 #ifdef unix
   The following devices will be available if \R was compiled to use them
-  and started with the appropriate \code{--gui} argument:
+  and started with the appropriate \option{--gui} argument:
   \itemize{
     \item \code{\link{X11}} The graphics driver for the X11 Window
     system
@@ -65,6 +63,13 @@ dev.interactive()
     \item \code{\link{jpeg}} JPEG bitmap device
     \item \code{\link{GTK}}, \code{\link{GNOME}} Graphics drivers for
     the GNOME GUI.
+%% <FIXME>  quartz() also with corresponding --gui aqua ?
+#ifdef aqua
+%%     ^^^^ not yet available
+    \item \code{\link{quartz}} The graphics driver for the Mac OSX
+    native aqua system.
+#endif
+%% </FIXME>
   }
   None of these are available under \code{\link[base:BATCH]{R CMD BATCH}}.
 #endif
@@ -91,10 +96,11 @@ dev.interactive()
 
   \code{\link{capabilities}} to see if \code{\link{X11}}, \code{\link{jpeg}}
   and \code{\link{png}} are available.
+%% FIXME: aqua / quartz ?
 #endif
 }
 \examples{\dontrun{
-## open the default screen device on this platform if no device is 
+## open the default screen device on this platform if no device is
 ## open
 if(dev.cur() == 1) get(getOption("device"))()
 }}

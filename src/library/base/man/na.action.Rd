@@ -2,7 +2,7 @@
 \title{NA Action}
 \usage{
 na.action(object, \dots)
-na.action.default(object, \dots)
+%na.action.default(object, \dots)
 }
 \alias{na.action}
 \alias{na.action.default}
@@ -15,7 +15,7 @@ na.action.default(object, \dots)
   default method.
 }
 \value{
-  The ``NA action'' which should be applied to \code{object} whenever
+  The \dQuote{NA action} which should be applied to \code{object} whenever
   \code{\link{NA}}s are not desired.
 }
 \references{

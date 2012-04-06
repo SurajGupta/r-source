@@ -6,6 +6,7 @@
 \alias{cut.dendrogram}
 \alias{[[.dendrogram}
 \alias{print.dendrogram}
+\alias{rev.dendrogram}
 \alias{str.dendrogram}
 \alias{plot.dendrogram}
 %\alias{plotNode}
@@ -23,19 +24,20 @@
 }
 \usage{
 as.dendrogram(object, \dots)
-\method{plot}{dendrogram}(x, type=c("rectangle", "triangle"),
-         center=FALSE, edge.root= !is.null(attr(x,"edgetext")),
-         nodePar = NULL, edgePar = list(), xlab="", ylab="",
-         horiz = FALSE, \dots)
+
+\method{plot}{dendrogram}(x, type = c("rectangle", "triangle"),
+         center = FALSE, edge.root = !is.null(attr(x,"edgetext")),
+         nodePar = NULL, edgePar = list(), xlab = "", ylab = "",
+         horiz = FALSE, frame.plot = FALSE, \dots)
+
 \method{cut}{dendrogram}(x, h, \dots)
+
 \method{print}{dendrogram}(x, digits, \dots)
-\method{str}{dendrogram}(x, \dots)% codoc warning; MM: hate to document
-% all arguments: user should rather look at ?str
-% Also: `object' has different meaning here
-}
-\synopsis{
-str.dendrogram(object, max.level = 0, vec.len = 4, digits.d= 3, nchar.max= 128,
-    give.attr = TRUE, give.length = TRUE, wid = getOption("width"),
+
+\method{rev}{dendrogram}(x)
+
+\method{str}{dendrogram}(object, max.level = 0, digits.d = 3,
+    give.attr = FALSE, wid = getOption("width"),
     nest.lev = 0, indent.str = "", \dots)
 }
 \arguments{
@@ -58,11 +60,17 @@ str.dendrogram(object, max.level = 0, vec.len = 4, digits.d= 3, nchar.max= 128,
     named \code{col}, \code{lty} and/or \code{lwd}.}
   \item{horiz}{logical indicating if the dendrogram should be draw
     \emph{horizontally} or not.}
+  \item{frame.plot}{logical indicating if a box around the plot should
+    be drawn, see \code{\link{plot.default}}.}
   \item{h}{height at which the tree is cut.}
   \item{\dots, xlab, ylab}{graphical parameters, or arguments for
     other methods.}
   \item{digits}{integer specifiying the precision for printing, see
     \code{\link{print.default}}.}
+  \item{max.level, digits.d, give.attr, wid, nest.lev, indent.str}{%
+    arguments to \code{str}, see \code{\link{str.default}()}.  Note that
+    the default `give.attr = FALSE' still shows \code{height} and
+    \code{members} attributes for each node.}
 }
 \details{
   Warning: This documentation is preliminary.
@@ -80,7 +88,7 @@ str.dendrogram(object, max.level = 0, vec.len = 4, digits.d= 3, nchar.max= 128,
     \item{\code{midpoint}}{numeric horizontal distance of the node from
       the left border of the branch.  This is needed at least for
     \code{plot(*, center=FALSE)}.}
-    \item{\code{text}}{character; the label of the node}
+    \item{\code{label}}{character; the label of the node}
     \item{\code{edgetext}}{character; the label for the edge leading to
       the node}
     \item{\code{nodePar}}{a named list of length one vectors specifying
@@ -90,8 +98,8 @@ str.dendrogram(object, max.level = 0, vec.len = 4, digits.d= 3, nchar.max= 128,
       attributes for \code{\link{segments}} plotting of the edge leading
       to the node, see the \code{edgePar} argument above.}
     \item{\code{leaf}}{logical, if \code{TRUE}, the node is a leaf of
-      the tree.  This will often be a \code{\link{character}} which can
-      be used for plotting instead of the \code{text} attribute.}
+      the tree.}%  This will often be a \code{\link{character}} which can
+    %      be used for plotting instead of the \code{text} attribute.}
   }
 
   \code{cut.dendrogram()} returns a list with components \code{$upper}

@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2002 R Core Team
+### Copyright (C) 1998-2003 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -63,11 +63,6 @@ R_PLATFORM="${host}"
 AC_SUBST(R_PLATFORM)
 
 case "${host_os}" in
-  macos*)
-    AC_DEFINE(Macintosh, 1,
-              [Define according to your operating system type.])
-    R_OSTYPE="mac"
-    ;;
   cygwin*|mingw*|windows*|winnt)
     AC_DEFINE(Win32, 1,
               [Define according to your operating system type.])
@@ -316,6 +311,11 @@ AC_ARG_VAR([SHLIB_LD],
             files from a C or Fortran compiler only])
 AC_ARG_VAR([SHLIB_LDFLAGS],
            [special flags used by SHLIB_LD])
+AC_ARG_VAR([DYLIB_LD],
+           [command for linking dynamic libraries which contain object
+            files from a C or Fortran compiler only])
+AC_ARG_VAR([DYLIB_LDFLAGS],
+           [special flags used for make a dynamic library])
 AC_ARG_VAR([CXXPICFLAGS],
            [special flags for compiling C++ code to be turned into a
             shared library])
@@ -439,7 +439,19 @@ AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(ncurses, main, [],
              AC_CHECK_LIB(termcap, main, [],
                           AC_CHECK_LIB(termlib, main)))
-AC_CHECK_LIB(dl, dlopen)
+case "${host_os}" in
+  darwin*)
+    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, true)
+    ## SI says we want '-lcc_dynamic' on Darwin, although currently
+    ## http://developer.apple.com /documentation/MacOSX/ has nothing
+    ## official.
+    AC_CHECK_LIB(cc_dynamic, main)
+    ;;
+  *)
+    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
+    AC_CHECK_LIB(dl, dlopen)
+    ;;
+esac
 
 ## Readline.
 if test "${use_readline}" = yes; then
@@ -651,6 +663,11 @@ case "${host_os}" in
     fi
     ## </NOTE>
     ;;
+  openbsd*)
+    if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`"; then
+      AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
+    fi
+    ;;
   osf*)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ;;  
@@ -683,6 +700,8 @@ AC_SUBST(R_XTRA_LIBS)
 ## SHLIB_LD, SHLIB_LDFLAGS
 ##   command and flags for creating DLLs (which contain object files
 ##   from a C or Fortran compiler).
+## DYLIB_LD, DYLIB_LDFLAGS
+##   ditto for dynamic libraries (where different.)
 ## SHLIB_CXXLD, SHLIB_CXXLDFLAGS
 ##   command and flags for creating DLLs which contain object files from
 ##   a C++ compiler.  According to Autoconf, the C++ compiler/linker
@@ -809,6 +828,10 @@ case "${host_os}" in
 	shlib_ldflags="-bundle -flat_namespace -undefined suppress" ;;
     esac
     shlib_cxxldflags="${shlib_ldflags}"
+    if test "${ac_cv_lib_cc_dynamic_main}" = yes; then
+      ## Could also try grepping LIBS for '-lcc_dynamic' ...
+      SHLIB_LIBADD="-lcc_dynamic"
+    fi
     ;;
   freebsd*)
     ## Only sure for FreeBSD 3 and above.
@@ -873,6 +896,12 @@ case "${host_os}" in
       shlib_ldflags="-shared"
     else
       shlib_ldflags="-Bshareable"
+    fi
+    ;;
+  openbsd*)
+    if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`"; then
+      main_ldflags="${wl}-export-dynamic"
+      shlib_ldflags="-shared -fPIC"
     fi
     ;;
   osf*)
@@ -996,28 +1025,40 @@ fi
 ##
 ## Also need flags to build the Rlapack shared library on some platforms.
 DYLIB_EXT="${SHLIB_EXT}"
-LIBR_LDFLAGS="${SHLIB_LDFLAGS}"
-RLAPACK_LDFLAGS="${SHLIB_LDFLAGS}"
+dylib_ldflags="${SHLIB_LDFLAGS}"
+LIBR_LDFLAGS=""
+RLAPACK_LDFLAGS=""
 case "${host_os}" in
   aix*)
     ## Pure guesswork so far
-    RLAPACK_LDFLAGS="${SHLIB_LDFLAGS} ${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
+    RLAPACK_LDFLAGS="${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
     LAPACK_LDFLAGS="${wl}-bI:\$(R_HOME)/etc/Rlapack.exp"
     ;;
   darwin*)
     DYLIB_EXT=".dylib"
+    dylib_ldflags="-dynamiclib"
     ## <NOTE>
     ## Earlier versions had '-flat_namespace -undefined suppress' in
     ## LIBR_LDFLAGS ... not clear whether needed or in fact wanted.
+    ##
+    ## When running AQUA this has to be a fixed place, not under /usr/local
+    ## <FIXME>
+    ## I'm using want_aqua instead of use_aqua as the latter is not yet
+    ## at this point. S.I.
+    ## </FIXME>
     ## </NOTE>
-    LIBR_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libR.dylib"
+    if test "x${want_aqua}" = xyes; then
+      LIBR_LDFLAGS="-dynamiclib -install_name /Applications/StartR.app/RAqua.app/Contents/Frameworks/libR.dylib"
+    else
+      LIBR_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libR.dylib"
+    fi
     ## <FIXME>
     ## We need '-framework Carbon' because currently the Quartz device
     ## driver gets linked to the main binary and hence also the R dylib.
     ## Change once the driver is modularized.
     R_SH_VAR_ADD(LIBR_LDFLAGS, [-framework Carbon])
     ## </FIXME>
-    RLAPACK_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libRlapack.dylib"
+    RLAPACK_LDFLAGS="-install_name \$(Rexeclibdir)/libRlapack.dylib"
     ;;
   hpux*)
     ## Needs to avoid embedding a relative path ../../../bin.
@@ -1029,12 +1070,30 @@ case "${host_os}" in
       LAPACK_LDFLAGS="+s"
     fi
     ;;
+  openbsd*)
+    PACKAGE_VERSION_MAJOR=`echo "${PACKAGE_VERSION}" | \
+      sed -e "s/\.//" -e "s/\..*$//"`
+    PACKAGE_VERSION_MINOR=`echo "${PACKAGE_VERSION}" | \
+      sed -e "s/.*\.\([[^.]][[^.]]*$\)/\1/"`
+    DYLIB_EXT=".so.${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}"
+    ;;
 esac
+
+if test -z "${DYLIB_LD}"; then
+  DYLIB_LD="${SHLIB_LD}"
+  R_SH_VAR_ADD(DYLIB_LDFLAGS, [${dylib_ldflags}])
+else
+  if test -z "${DYLIB_LDFLAGS}"; then
+    DYLIB_LDFLAGS="${dylib_ldflags}"
+  fi
+fi
 
 AC_SUBST(MAIN_LD)
 AC_SUBST(MAIN_LDFLAGS)
 AC_SUBST(CPICFLAGS)
 AC_SUBST(CXXPICFLAGS)
+AC_SUBST(DYLIB_LD)
+AC_SUBST(DYLIB_LDFLAGS)
 AC_SUBST(FPICFLAGS)
 AC_SUBST(SHLIB_CXXLD)
 AC_SUBST(SHLIB_CXXLDFLAGS)
@@ -1095,6 +1154,7 @@ R_FUNC___SETFPUCW
 R_FUNC_CALLOC
 R_FUNC_FINITE
 R_FUNC_LOG
+R_FUNC_LOG1P
 R_FUNC_STRPTIME
 
 ## BLAS.
@@ -1140,6 +1200,8 @@ R_AQUA
 if test "${use_aqua}" = yes; then
   R_SH_VAR_ADD(R_GUIS, [aqua]);
 fi
+AM_CONDITIONAL(BUILD_AQUA, [test "x${use_aqua}" = xyes])
+AC_SUBST(use_aqua)
 
 ## Tcl/Tk.
 R_TCLTK
@@ -1291,12 +1353,17 @@ AC_CONFIG_FILES(
   src/library/eda/DESCRIPTION
   src/library/eda/Makefile
   src/library/eda/src/Makefile
+  src/library/grid/DESCRIPTION
+  src/library/grid/Makefile
+  src/library/grid/src/Makefile
   src/library/lqs/DESCRIPTION
   src/library/lqs/Makefile
   src/library/lqs/src/Makefile
   src/library/methods/DESCRIPTION
   src/library/methods/Makefile
   src/library/methods/src/Makefile
+  src/library/mle/DESCRIPTION
+  src/library/mle/Makefile
   src/library/modreg/DESCRIPTION
   src/library/modreg/Makefile
   src/library/modreg/src/Makefile
@@ -1325,6 +1392,7 @@ AC_CONFIG_FILES(
   src/modules/Makefile
   src/modules/X11/Makefile
   src/modules/aqua/Makefile
+  src/modules/aqua/AquaInstall
   src/modules/gnome/Makefile
   src/modules/internet/Makefile
   src/modules/lapack/Makefile
@@ -1337,7 +1405,6 @@ AC_CONFIG_FILES(
   src/scripts/REMOVE
   src/scripts/R.sh
   src/scripts/Rdconv
-  src/scripts/Rdindex
   src/scripts/Rprof
   src/scripts/SHLIB
   src/scripts/Sd2Rd

@@ -1,7 +1,7 @@
 #! @PERL@
 #-*- perl -*-
 
-# Copyright (C) 2000-2002 R Development Core Team
+# Copyright (C) 2000-2003 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ use Text::Wrap;
 ## don't buffer output
 $| = 1;
 
-my $revision = ' $Revision: 1.133.2.1 $ ';
+my $revision = ' $Revision: 1.153 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -62,7 +62,8 @@ R::Vars::error("R_HOME", "R_CMD", "R_EXE");
 my @known_options = ("help|h", "version|v", "outdir|o:s", "library|l:s",
 		    "no-clean", "no-examples", "no-tests", "no-latex",
 		    "use-gct" => \$opt_use_gct, "no-codoc", "no-perms",
-		    "no-install", "no-vignettes");
+		    "install=s" => \$opt_install, "no-install",
+		     "no-vignettes");
 GetOptions(@known_options) or usage();
 
 R_version("R add-on package checker", $version) if $opt_version;
@@ -76,6 +77,15 @@ $opt_codoc = 0 if $opt_no_codoc;
 $opt_perms = 0 if $opt_no_perms;
 $opt_install = 0 if $opt_no_install;
 $opt_vignettes = 0 if $opt_no_vignettes;
+
+if($opt_install eq "fake") {
+    ## If we fake installation, then we cannot *run* any code.
+    $opt_examples = $opt_tests = $opt_vignettes = 0;
+}
+$opt_install = 0 if($opt_install eq "no");
+
+## Use system default unless explicitly specified otherwise.
+$ENV{"R_DEFAULT_PACKAGES"} = "";
 
 my $startdir = cwd();
 $opt_outdir = $startdir unless $opt_outdir;
@@ -118,17 +128,31 @@ if($opt_latex) {
     chdir($startdir);
     $log->close();
 }
-## get the valid keywords for later ...
+
+## Get the valid keywords for later.
 my %standard_keywords = ();
 open(KEYWORDS,
      "< " . &file_path(${R::Vars::R_HOME}, "doc", "KEYWORDS.db"))
-  or die "Error: cannot open 'KEYWORDS.db'";
+  or die "Error: cannot open 'doc/KEYWORDS.db'";
 while(<KEYWORDS>) {
     if(/^.*\|([^:]*):.*/) {
 	$standard_keywords{$1} = 1;
     }
 }
 close(KEYWORDS);
+
+## Get the names of base and recommended packages for later.
+my @R_pkgs_base = ();
+my @R_pkgs_recommended = ();
+open(MAKEVARS,
+     "< " . &file_path(${R::Vars::R_HOME}, "share", "make", "vars.mk"))
+  or die "Error: cannot open 'share/make/vars.mk'";
+while(<MAKEVARS>) {
+    @R_pkgs_base =
+	split(/ +/, $2) if(/^(R_PKGS_BASE *=)(.*)/);
+    @R_pkgs_recommended =
+	split(/ +/, $2) if(/^(R_PKGS_RECOMMENDED *=)(.*)/);
+}
 
 ## <FIXME>
 ## We now always redefine T/F when running the examples, but warn about
@@ -142,6 +166,7 @@ if(defined($ENV{'R_CHECK_WITH_T_N_F_AS_NULL'})
     $log->close();
 }
 $ENV{'R_CHECK_WITH_T_N_F_AS_NULL'} = "yes";
+## </FIXME>
 
 ## This is the main loop over all packages to be checked.
 ($#ARGV >= 0) or die "Error: no packages were specified";
@@ -219,15 +244,28 @@ foreach my $pkg (@ARGV) {
 	    exit(1);
 	}
 	if($opt_install) {
-	    print("\n");
-	    my $cmd = "${R::Vars::R_CMD} INSTALL -l $library $pkgdir";
-	    if(R_system($cmd)) {
-		$log->error();
-		$log->print("Installation failed.\n");
-		exit(1);
+	    if($opt_install ne "skip") {
+		## Option '--no-install' turns off installation and the
+		## tests which require the package to be installed.  When 
+		## testing recommended packages bundled with R we can
+		## skip installation, and do so if '--install=skip' was
+		## given. 
+		print("\n");
+		my $cmd = "${R::Vars::R_CMD} INSTALL -l ${library}";
+		$cmd .= " --fake" if($opt_install eq "fake");
+		$cmd .= " ${pkgdir}";
+		if(R_system($cmd)) {
+		    $log->error();
+		    $log->print("Installation failed.\n");
+		    exit(1);
+		}
+		print("\n");
 	    }
-	    print("\n");
+	    else {
+		$log->message("skipping installation test");
+	    }
 	}
+	
     }
 
     my $is_bundle = 0;
@@ -291,61 +329,134 @@ sub check_pkg {
 
     chdir($pkgdir);
 
+    ## Build list of exclude patterns.
+
+    my @exclude_patterns = R::Utils::get_exclude_patterns();
+    ## <FIXME>
+    ## This is not right for bundles where the build ignore pattern
+    ## file is in the top-level bundle dir.  We could fix this by
+    ## using '../.Rbuildignore' instead, but then e.g.
+    ##   find(\&find_wrong_perms_A, ".");
+    ##   find(\&find_wrong_perms_B, ".");
+    ## are wrong because the exclude patterns are relative to '..'.
+    if(-f "./.Rbuildignore") {
+	open(RBUILDIGNORE, "./.Rbuildignore");
+	while(<RBUILDIGNORE>) {
+	    chop;
+	    push(@exclude_patterns, $_) if $_;
+	}
+	close(RBUILDIGNORE);
+    }
+    ## </FIXME>
+
+    ## Check for portable file names.
+
+    ## Ensure that the names of the files in the package are valid for
+    ## at least the supported OS types.  Under Unix, we definitely
+    ## cannot have '/'; under Windows, the control characters as well as
+    ##   " * : < > ? \ |
+    ## (i.e., ASCII characters 1 to 31 and 34, 36, 58, 60, 62, 63, 92,
+    ## and 124) are or can be invalid.  (In addition, one cannot have
+    ## one-character file names consisting of just ' ', '.', or '~'.)
+    ## Based on information by Uwe Ligges, Duncan Murdoch, and Brian
+    ## Ripley.
+
+    ## Furthermore, Uwe Ligges says that Windows still does not allow
+    ## the following DOS device names (by themselves or with possible
+    ## extensions):
+    ##
+    ## Name    Function
+    ## ----    --------
+    ## CON     Keyboard and display
+    ## PRN     System list device, usually a parallel port
+    ## AUX     Auxiliary device, usually a serial port
+    ## CLOCK$  System real-time clock
+    ## NUL     Bit-bucket device
+    ## COM1    First serial communications port
+    ## COM2    Second serial communications port
+    ## COM3    Third serial communications port
+    ## COM4    Fourth serial communications port
+    ## LPT1    First parallel printer port
+    ## LPT2    Second parallel printer port
+    ## LPT3    Third parallel printer port
+
+    $log->checking("for portable file names");
+    my @bad_files = ();
+    sub find_wrong_names {
+	my $file_path = $File::Find::name;
+	$file_path =~ s/^[^\/]*\///;
+	foreach my $p (@exclude_patterns) {
+	    if($WINDOWS) {
+		## Argh: Windows is case-honoring but not
+		## case-insensitive ...
+		return 0 if($file_path =~ /$p/i);
+	    }
+	    else {
+		return 0 if($file_path =~ /$p/);
+	    }
+	}
+	my $file_name = basename($file_path);
+	if(grep(/[[:cntrl:]\"\*\/\:\<\>\?\\\|]/, $file_name)) {
+	    push(@bad_files, $file_path);
+	}
+	else {
+	    $file_name =~ tr/A-Z/a-z/;
+	    $file_name =~ s/\..*//;
+	    push(@bad_files, $file_path)
+	      if(grep(/^(con|prn|aux|clock\$|nul|lpt[1-3]|com[1-4])$/,
+		     $file_name));
+	}
+    }
+    find(\&find_wrong_names, ".");
+    if($#bad_files >= 0) {
+	$log->error();
+	$log->print("Found the following files with " .
+		    "non-portable file names:\n");
+	$log->print("  " . join("\n  ", @bad_files) . "\n");
+	$log->print(wrap("", "",
+			 ("These are not valid file names",
+			  "on all R platforms.\n",
+			  "Please rename the files and try again.\n",
+			  "See section 'Package structure'",
+			  "in manual 'Writing R Extensions'.\n")));
+	exit(1);
+    }
+
+    $log->result("OK");
+
     ## Check for sufficient file permissions (Unix only).
 
     ## This is a bit controversial, and hence there is a command line
-    ## option '--no-perms' to turn this off.  In fact, the code below
-    ## does a bit too much.
-    ## What would really be needed is the following:
-    ## * All dirs or files must be at least 555 or 444, respectively.
-    ## * Everything that gets installed must be writeable.  This
-    ##   includes
-    ##     DESCRIPTION COPYING INDEX NAMESPACE
-    ##     data/* demo/* exec/* inst/*.
-    ## * All directories used for building 'objects' must be at least
-    ##   755.  This includes '.' and src.
-    ## Given time, the above could be implemented.
+    ## option '--no-perms' to turn this off.
+    ##
+    ## This used to be much more 'aggressive', requiring that dirs and
+    ## files have mode >= 00755 and 00644, respectively (with an error
+    ## if not), and that files know to be 'text' have mode 00644 (with a
+    ## warning if not).  We now only require that dirs and files have
+    ## mode >= 00700 and 00400, respectively, and try to fix
+    ## insufficient permission in the INSTALL code (Unix only).
+    ##
+    ## In addition, we check whether files 'configure' and 'cleanup'
+    ## exists in the top-level directory but are not executable, which
+    ## is most likely not what was intended.
 
     if($opt_perms && ($R::Vars::OSTYPE eq "unix")) {
 	$log->checking("for sufficient/correct file permissions");
 	my @bad_files = ();
-	my @excludepatterns = R::Utils::get_exclude_patterns();
-	## <FIXME>
-	## This is not right for bundles where the build ignore pattern
-	## file is in the top-level bundle dir.  We could fix this by
-	## using '../.Rbuildignore' instead, but then
-	##   find(\&find_wrong_perms_A, ".");
-	##   find(\&find_wrong_perms_B, ".");
-	## are wrong because the exclude patterns are relative to '..'.
-	if(-f "./.Rbuildignore") {
-	    open(RBUILDIGNORE, "./.Rbuildignore");
-	    while(<RBUILDIGNORE>) {
-		chop;
-		push(@exclude_patterns, $_) if $_;
-	    }
-	    close(RBUILDIGNORE);
-	}
-	## </FIXME>
 
-	## Phase A.  Directories at least 755, files at least 644.
+	## Phase A.  Directories at least 700, files at least 400.
 	sub find_wrong_perms_A {
 	    my $filename = $File::Find::name;
 	    $filename =~ s/^[^\/]*\///;
 	    foreach my $p (@exclude_patterns) {
-		if($WINDOWS) {
- 		    ## Argh: Windows is case-honoring but not
-		    ## case-insensitive ...
-		    return 0 if($filename =~ /$p/i);
-		}
-		else {
-		    return 0 if($filename =~ /$p/);
-		}
+		## Unix only, so no special casing for Windows.
+		return 0 if($filename =~ /$p/);
 	    }
-	    if(-d $_ && (((stat $_)[2] & 00755) < oct("755"))) {
-		push(@bad_files, $File::Find::name);
+	    if(-d $_ && (((stat $_)[2] & 00700) < oct("700"))) {
+		push(@bad_files, $filename);
 	    }
-	    if(-f $_ && (((stat $_)[2] & 00644) < oct("644"))) {
-		push(@bad_files, $File::Find::name);
+	    if(-f $_ && (((stat $_)[2] & 00400) < oct("400"))) {
+		push(@bad_files, $filename);
 	    }
 	}
         find(\&find_wrong_perms_A, ".");
@@ -355,47 +466,40 @@ sub check_pkg {
 			"insufficient permissions:\n");
 	    $log->print("  " . join("\n  ", @bad_files) . "\n");
 	    $log->print(wrap("", "",
-			     ("Permissions should be at least 755",
-			      "for directories and 644 for files.\n")));
-	    $log->print("Please fix permissions and try again.\n");
+			     ("Permissions should be at least 700",
+			      "for directories and 400 for files.\n",
+			      "Please fix permissions",
+			      "and try again.\n")));
 	    exit(1);
 	}
 
-	## Phase B.  Text files (as determined by their extensions)
-	## should really be mode 644.
+	## Phase B.  Top-level scripts 'configure' and 'cleanup' should
+	## really be mode at least 500, or they will not be necessarily
+	## be used (or should we rather change *that*?)
 	@bad_files = ();
-	my @textfile_patterns =
-	  ("\\.[RSdqr]\$",	# R source code
-	   "\\.[Rr]d\$",	# Rd files
-	   "\\.([Ccfh]|cc|cpp)\$",
-				# C/C++/FORTRAN sources and headers
-	   "^(DESCRIPTION|COPYING|INDEX|NAMESPACE|README)\$");
-	sub find_wrong_perms_B {
-	    my $filename = $File::Find::name;
-	    $filename =~ s/^[^\/]*\///;
+	foreach my $filename ("configure", "cleanup") {
+	    ## This is a bit silly ...
+	    my $ignore = 0;
 	    foreach my $p (@exclude_patterns) {
-		return 0 if($filename =~ /$p/);
-	    }
-	    if(-f $_ && (((stat $_)[2] & 00777) != oct("644"))) {
-		foreach my $p (@textfile_patterns) {
-		    if($filename =~ /$p/) {
-			push(@bad_files, $File::Find::name);
-			last;
-		    }
+		if($filename =~ /$p/) {
+		    $ignore = 1;
+		    last;
 		}
 	    }
+	    if(!$ignore
+	       && (-f $filename)
+	       && (((stat $filename)[2] & 00500) < oct("500"))) {
+		push(@bad_files, $filename);
+	    }
 	}
-	find(\&find_wrong_perms_B, ".");
 	if($#bad_files >= 0) {
 	    $log->warning();
-	    $log->print("Found the following text files with " .
-			"incorrect permissions:\n");
+	    $log->print(wrap("", "",
+			     "The following files should most likely",
+			     "be executable (for the owner):\n"));
 	    $log->print("  " . join("\n  ", @bad_files) . "\n");
 	    $log->print(wrap("", "",
-			     ("Permissions for text files",
-			      "(including R, Rd, and C/C++/FORTRAN",
-			      "sources) should be exactly 644.\n")));
-	    $log->print("Please fix permissions.\n");
+			     "Please fix permissions.\n"));
 	}
 	else {
 	    $log->result("OK");
@@ -467,7 +571,8 @@ sub check_pkg {
 	exit(1);
     }
 
-    if($description->{"Maintainer"} !~ /^[^<>]*<[^<>]+> *$/) {
+    if(($description->{"Maintainer"} !~ /^[^<>]*<[^<>]+> *$/) &&
+       ($description->{"Maintainer"} !~ /ORPHANED/)) {
 	$log->error();
 	$log->print("Malformed Maintainer field.\n");
 	$log->print(wrap("", "", @msg_DESCRIPTION));
@@ -475,7 +580,7 @@ sub check_pkg {
     }
 
     ## Optional entries in DESCRIPTION:
-    ##   Depends.
+    ##   Depends, Namespace, Priority.
     ## These must be correct if present.
 
     if($description->{"Depends"}) {
@@ -524,6 +629,39 @@ sub check_pkg {
 	    $log->print(wrap("", "", @bad_dep_error));
 	    $log->print(wrap("", "", @msg_DESCRIPTION));
 	    exit(1);
+	}
+    }
+
+    if($description->{"Namespace"}) {
+	if($description->{"Namespace"} ne $description->{"Package"}) {
+	    $log->error();
+	    $log->print("Namespace and Package fields differ.\n");
+	    $log->print(wrap("", "", @msg_DESCRIPTION));
+	    exit(1);
+	}
+    }
+
+    if($description->{"Priority"}) {
+	if($description->{"Priority"} =~ /^(base|recommended)/i) {
+	    ## Simplify matters by treating high priority packages
+	    ## together.
+	    my $found = 0;
+	    foreach my $p (@R_pkgs_base, @R_pkgs_recommended) {
+		if($description->{"Package"} eq $p) {
+		    $found = 1;
+		    break;
+		}
+	    }
+	    if(!$found) {
+		$log->error();
+		$log->print("Invalid Priority field.\n");
+		$log->print(wrap("", "",
+				 ("Packages with priorities 'base' or",
+				  "'recommended' must already be known",
+				  "to R.\n")));
+		$log->print(wrap("", "", @msg_DESCRIPTION));
+		exit(1);
+	    }
 	}
     }
 
@@ -587,9 +725,9 @@ sub check_pkg {
 	}
 	else {
 	    my $dir = "demo";
-	    my $cmd = "library(tools)\n";
-	    $cmd .= ".checkDemoIndex(\"$dir\")\n";
-	    my @out = R_runR($cmd, "${R_opts} --quiet");
+	    my $cmd = ".checkDemoIndex(\"$dir\")\n";
+	    my @out = R_runR($cmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=tools");
 	    @out = grep(!/^\>/, @out);
 	    if($#out >= 0) {
 		$log->warning() unless($any);
@@ -602,9 +740,9 @@ sub check_pkg {
        && &list_files_with_type(&file_path("inst", "doc"),
 				"vignette")) {
 	my $dir = &file_path("inst", "doc");
-	my $cmd = "library(tools)\n";
-	$cmd .= ".checkVignetteIndex(\"$dir\")\n";
-	my @out = R_runR($cmd, "${R_opts} --quiet");
+	my $cmd = ".checkVignetteIndex(\"$dir\")\n";
+	my @out = R_runR($cmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=tools");
 	@out = grep(!/^\>/, @out);
 	if($#out >= 0) {
 	    $log->warning() unless($any);
@@ -746,8 +884,8 @@ sub check_pkg {
 	    $log->print("library.dynam() used with extension '.$ext'.\n");
 	    $log->print(wrap("", "",
 			     ("The system-specific extension for",
-			      "shared libraries should not be added.\n")));
-	    $log->print("See ?library.dynam\n");
+			      "shared libraries should not be added.\n",
+			      "See ?library.dynam\n")));
 	    exit(1);
 	}
     }
@@ -756,17 +894,18 @@ sub check_pkg {
     ## generic.
 
     if(-d "R") {
-	$log->checking("generic/method consistency");
+	$log->checking("S3 generic/method consistency");
 
-	my $Rcmd = "library(tools)\n";
+	my $Rcmd;
 	if($opt_install) {
-	    $Rcmd .= "checkMethods(package = \"${pkgname}\")\n";
+	    $Rcmd .= "checkS3methods(package = \"${pkgname}\")\n";
 	}
         else {
-	    $Rcmd .= "checkMethods(dir = \"${pkgdir}\")\n";
+	    $Rcmd .= "checkS3methods(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=tools");
 	@out = grep(!/^\>/, @out);
 	if($#out >= 0) {
 	    $log->warning();
@@ -777,25 +916,26 @@ sub check_pkg {
 	}
     }
 
-    ## Check whether assignment functions have their final argument
+    ## Check whether replacement functions have their final argument
     ## named 'value'.
 
     if(-d "R") {
-	$log->checking("for assignment functions with final arg not " .
+	$log->checking("for replacement functions with final arg not " .
 		       "named 'value'");
-	my $Rcmd = "library(tools)\n";
+	my $Rcmd;
 	if($opt_install) {
-	    $Rcmd .= "checkAssignFuns(package = \"${pkgname}\")\n";
+	    $Rcmd .= "checkReplaceFuns(package = \"${pkgname}\")\n";
 	}
 	else {
-	    $Rcmd .= "checkAssignFuns(dir = \"${pkgdir}\")\n";
+	    $Rcmd .= "checkReplaceFuns(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=tools");
         @out = grep(!/^\>/, @out);
 	if($#out >= 0) {
 	    ## <NOTE>
-	    ## We really want to stop if we find offending assignment
+	    ## We really want to stop if we find offending replacement
 	    ## functions.  But we cannot use error() because output may
 	    ## contain warnings ...
 	    $log->warning();
@@ -812,7 +952,7 @@ sub check_pkg {
     if((-d "R") && $ENV{'R_CHECK_FF_CALLS'}) {
 	$log->checking("foreign function calls");
 
-	my $Rcmd = "library(tools)\n";
+	my $Rcmd;
 	if($opt_install) {
 	    $Rcmd .= "checkFF(package = \"${pkgname}\")\n";
 	}
@@ -820,7 +960,8 @@ sub check_pkg {
 	    $Rcmd .= "checkFF(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=tools");
 	@out = grep(!/^\>/, @out);
 	if($#out >= 0) {
 	    $log->warning();
@@ -833,25 +974,16 @@ sub check_pkg {
 
     ## Check R documentation files.
 
+    my @msg_writing_Rd
+      = ("See chapter 'Writing R documentation files'",
+	 "in manual 'Writing R Extensions'.\n");
+
+
     if(-d "man") {
 	$log->checking("Rd files");
 
 	my @Rd_files =
 	  &list_files_with_type("man", "docs", $R::Vars::OSTYPE);
-
-	## Rd files with illegal file names?
-
-	my @bad_files = grep(/</, @Rd_files);
-	if($#bad_files >= 0) {
-	    $log->error();
-	    $log->print("Cannot handle Rd file names containing '<'.\n" .
-			"These are not legal file names on all R " .
-			"platforms.\n" .
-			"Please rename the following files and " .
-			"try again:\n");
-	    $log->print("  " . join("\n  ", @bad_files) . "\n");
-	    exit(1);
-	}
 
 	@Rd_files = sort(@Rd_files);
 
@@ -921,6 +1053,10 @@ sub check_pkg {
 	    ## (Not entirely safe ...)
 	    $text =~ /\\name\{\s*([^\}]+)\s*\}/s;
 	    push(@bad_names, $file) if($1 =~ /^\s*$/);
+	    ## Using LaTeX special characters (# $ % & ~ _ ^ \ { })
+	    ## causes the creation of PDF bookmarks to fail.
+	    push(@bad_names, $file)
+	      if($1 =~ /(\#|\$|\%|\&|\~|\_|\^|\\|\{|\})/);
 	    $text =~ /\\title\{\s*([^\}]+)\s*\}/s;
 	    push(@bad_titles, $file) if($1 =~ /^\s*$/);
 
@@ -951,9 +1087,6 @@ sub check_pkg {
 	}
 
 	my $any = 0;
-	my @msg_writing_Rd
-	  = ("See chapter 'Writing R documentation'",
-	     "in manual 'Writing R Extensions'.\n");
 
 	if($#bad_braces >= 0) {
 	    $log->error();
@@ -968,7 +1101,8 @@ sub check_pkg {
 
 	if($#bad_names >= 0) {
 	    $log->error();
-	    $log->print("Rd files with missing or empty '\\name':\n");
+	    $log->print("Rd files with missing or empty ".
+			"or invalid '\\name':\n");
 	    $log->print("  " . join("\n  ", @bad_names) . "\n");
 	    $log->print(wrap("", "", @msg_writing_Rd));
 	    exit(1);
@@ -1037,12 +1171,12 @@ sub check_pkg {
 	$log->result("OK") unless $any;
     }
 
-    ## Check for undocumented objects.
+    ## Check for missing documentation entries.
 
     if(((-d "R") || (-d "data")) && (-d "man")) {
-	$log->checking("for undocumented objects");
+	$log->checking("for missing documentation entries");
 
-	my $Rcmd = "library(tools)\n";
+	my $Rcmd;
 	if($opt_install) {
 	    $Rcmd .= "undoc(package = \"${pkgname}\")\n";
 	}
@@ -1050,13 +1184,22 @@ sub check_pkg {
 	    $Rcmd .= "undoc(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+                         "R_DEFAULT_PACKAGES=tools");
 	my @err = grep(/^Error/, @out);
 	@out = grep(!/^\>/, @out);
 	if($#err < 0) {
 	    if($#out >= 0) {
 		$log->warning();
                 $log->print(join("\n", @out) . "\n");
+		my $details;
+		$details = "(including S4 classes and methods)"
+		  if(grep(/^Undocumented S4/, @out));
+		$log->print(wrap("", "",
+				 ("All user-level objects in a package",
+				  $details,
+				  "should have documentation entries.\n")));
+		$log->print(wrap("", "", @msg_writing_Rd));
 	    }
 	    else {
 		$log->result("OK");
@@ -1071,48 +1214,83 @@ sub check_pkg {
 
     ## Check for code/documentation mismatches.
 
-    if($opt_codoc && (-d "R") && (-d "man")) {
+    if($opt_codoc && (-d "man")) {
 	$log->checking("for code/documentation mismatches");
+	my $any = 0;
 
-	my $Rcmd = "library(tools)\n";
+	## Check for code/documentation mismatches in functions.
+	if(-d "R") {
+	    my $Rcmd;
+	    if($opt_install) {
+		$Rcmd .= "codoc(package = \"${pkgname}\")\n";
+	    }
+	    else {
+		$Rcmd .= "codoc(dir = \"${pkgdir}\")\n";
+	    }
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=tools");
+
+	    ## <FIXME>
+	    ## With the current heuristics codoc() may throw an error
+	    ## even though the documentation is valid.  Change this when
+	    ## we know what must be valid R code, similar to the above
+	    ## for undoc().
+	    @out = grep(!/^\>/, @out);
+	    if($#out >= 0) {
+		$any++;
+		$log->warning();
+		$log->print(join("\n", @out) . "\n");
+	    }
+	    ## </FIXME>
+	}
+
+	## Check for code/documentation mismatches in data sets.
 	if($opt_install) {
-	    $Rcmd .= "codoc(package = \"${pkgname}\")\n";
+	    my $Rcmd = "codocData(package = \"${pkgname}\")\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=tools");
+	    @out = grep(!/^\>/, @out);
+	    if($#out >= 0) {
+		$log->warning() unless($any);
+		$any++;
+		$log->print(join("\n", @out) . "\n");
+	    }
 	}
-	else {
-	    $Rcmd .= "codoc(dir = \"${pkgdir}\")\n";
-	}
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
 
-	## <FIXME>
-	## With the current heuristics codoc() may throw an error even
-	## though the documentation is valid.  Change this when we know
-	## what must be valid R code, similar to the above for undoc().
-	@out = grep(!/^\>/, @out);
-	if($#out >= 0) {
-	    $log->warning();
-	    $log->print(join("\n", @out) . "\n");
+	## Check for code/documentation mismatches in S4 classes.
+	if($opt_install && (-d "R")) {
+	    my $Rcmd = "codocClasses(package = \"${pkgname}\")\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=tools");
+	    @out = grep(!/^\>/, @out);
+	    if($#out >= 0) {
+		$log->warning() unless($any);
+		$any++;
+		$log->print(join("\n", @out) . "\n");
+	    }
 	}
-	else {
-	    $log->result("OK");
-	}
-	## </FIXME>
+
+	$log->result("OK") unless($any);
+
     }
 
-    ## Check whether all arguments shown in \usage are documented in
-    ## \arguments.
+    ## Check Rd files, for consistency of \usage with \arguments (are
+    ## all arguments shown in \usage documented in \arguments?) and
+    ## aliases (do all functions shown in \usage have an alias?)
 
     if(-d "man") {
-	$log->checking("for undocumented arguments in \\usage");
+	$log->checking("Rd \\usage sections");
 
-	my $Rcmd = "library(tools)\n";
+	my $Rcmd;
 	if($opt_install) {
-	    $Rcmd .= "checkDocArgs(package = \"${pkgname}\")\n";
+	    $Rcmd .= "checkDocFiles(package = \"${pkgname}\")\n";
 	}
 	else {
-	    $Rcmd .= "checkDocArgs(dir = \"${pkgdir}\")\n";
+	    $Rcmd .= "checkDocFiles(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=tools");
 	@out = grep(!/^\>/, @out);
 	if($#out >= 0) {
 	    $log->warning();
@@ -1220,7 +1398,7 @@ sub check_pkg {
 	}
 	if(R_system($cmd)) {
 	    $log->error();
-	    $log->print("Running examples failed.\n");
+	    $log->print("Running examples in ${pkgname}-Ex.R failed.\n");
 	    exit(1);
 	}
 	$log->result("OK");
@@ -1289,6 +1467,8 @@ sub check_pkg {
         $log->result("OK");
     }
 
+    ## Check package vignettes.
+
     chdir($pkgoutdir);
 
     if((-d &file_path($pkgdir, "inst", "doc"))
@@ -1319,6 +1499,9 @@ sub check_pkg {
 
 	## Can we run the code in the vignettes?
 	if($opt_vignettes) {
+	    ## <FIXME>
+	    ## Should checking the vignettes assume the system default
+	    ## packages, or just base?
 	    my $Rcmd = "library(tools)\n";
 	    if($opt_install) {
 		$Rcmd .= "checkVignettes(package=\"${pkgname}\", " .
@@ -1328,9 +1511,10 @@ sub check_pkg {
 	    else {
 		$Rcmd .= "checkVignettes(dir = \"${pkgdir}\")\n";
 	    }
-
 	    my @out = R_runR($Rcmd, "${R_opts} --quiet");
-	    @out = grep(!/^\>/, @out);
+	    ## </FIXME>
+	    ## Vignette could redefine the prompt, e.g. to 'R>' ...
+	    @out = grep(!/^[[:alnum:]]*\>/, @out);
 	    if($#out >= 0) {
 		$log->warning() unless($any);
 		$any++;
@@ -1344,10 +1528,22 @@ sub check_pkg {
     ## Run LaTeX on the manual.
 
     if($opt_latex) {
-	if(-d &file_path($library, $pkgname, "latex")) {
+        my $latex_dir = &file_path($library, $pkgname, "latex");
+	if(-d $latex_dir) {
 	    $ENV{'TEXINPUTS'} =
 	      env_path(&file_path($R::Vars::R_HOME, "share", "texmf"),
 		       $ENV{'TEXINPUTS'});
+            my $was_zipped = 0;
+            # latex files might have been zipped
+            if(-f &file_path($library, $pkgname, "latex", "Rhelp.zip")) {
+                $was_zipped = 1;
+                my $cmd = "cd $latex_dir; unzip -qo Rhelp.zip";
+                if(R_system($cmd)) {
+		    $log->error();
+		    $log->print("Unzipping latex files failed.\n");
+		    exit(1);
+                }
+            }
 	    $log->creating("${pkgname}-manual.tex");
 	    open(MANUAL, "> ${pkgname}-manual.tex")
 	      or die("Error: cannot open file '${pkgname}-manual.tex'" .
@@ -1368,6 +1564,13 @@ sub check_pkg {
 	    }
 	    print MANUAL "\\end\{document\}\n";
 	    close(MANUAL);
+            if($was_zipped) {
+                if(R_system("rm -f $latex_dir/*.tex")) {
+		    $log->error();
+		    $log->print("Removing unzipped latex files failed.\n");
+		    exit(1);
+                }
+            }
 	    $log->result("OK");
 	    if($HAVE_LATEX) {
 		$log->checking("${pkgname}-manual.tex");
@@ -1380,8 +1583,7 @@ sub check_pkg {
                 ## this in case of problems.  But does this really help?
 		my $cmd = "${R::Vars::LATEX}";
 		$cmd .= " '\\nonstopmode{}\\input{${pkgname}-manual.tex}'";
-		$cmd .= " >/dev/null";
-		$cmd .= " 2>&1" if($R::Vars::OSTYPE eq "unix");
+		$cmd .= " >/dev/null 2>&1";
 		## </NOTE>
 		if(R_system($cmd)) {
 		    $log->error();
@@ -1395,9 +1597,8 @@ sub check_pkg {
 	else {
 	    if($HAVE_LATEX) {
 		$log->checking("DVI version of manual");
-		my $cmd = "${R::Vars::R_CMD} Rd2dvi --batch " .
-		  "--no-preview -o ${pkgname}-manual.dvi >/dev/null 2>&1";
-		$cmd .= " 2>&1" if($R::Vars::OSTYPE eq "unix");
+		my $cmd = "${R::Vars::R_CMD} Rd2dvi --batch --no-preview";
+		$cmd .= " -o ${pkgname}-manual.dvi >/dev/null 2>&1";
 		$cmd .= " $pkgdir";
 		if(R_system($cmd)) {
 		    $log->error();

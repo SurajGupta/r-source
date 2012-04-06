@@ -41,6 +41,20 @@ Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
 ..R 1.7.1 incorporates the two suggestions of the 2nd followup:
 ..  r = sqrt(-2 * log (a)) and ...(log1p(-a) + log (qq))...
 ..
+* PR# 3979 *
+Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Mon, 25 Aug 2003 08:32:36 -0600 (MDT)
+* PR# 3982 *
+Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Mon, 25 Aug 2003 15:38:10 -0600 (MDT)
+..Part of 3979
+* PR# 3984 *
+Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Mon, 25 Aug 2003 16:12:01 -0600 (MDT)
+..Part of 3979
 
 Directory:  Add-ons
 
@@ -68,10 +82,6 @@ Subject: problem with qq( )
 From: Jarno.Tuimala@Helsinki.Fi
 Date: Tue, 2 Jul 2002 10:37:10 +0200 (MET DST)
 ..A report on lattice
-* PR# 1741 *
-Subject: groupedData constructor from a function
-From: dieter.menne@menne-biomed.de
-Date: Thu, 4 Jul 2002 15:59:59 +0200 (MET DST)
 * PR# 1972 *
 Subject: lattice install
 From: robert.king@newcastle.edu.au
@@ -86,10 +96,6 @@ Date: Mon, 2 Sep 2002 09:27:36 +0200 (MET DST)
 Subject: xlim in plot.survfit() [with a discussion on "..."]
 From: jerome@hivnet.ubc.ca
 Date: Wed, 16 Oct 2002 18:46:11 +0200 (MET DST)
-* PR# 2320 *
-Subject: Segmentation fault using "survival" package
-From: jerome@hivnet.ubc.ca
-Date: Sat, 23 Nov 2002 00:51:50 +0100 (MET)
 * PR# 2322 *
 Subject: simplex
 From: george@lecompte.org
@@ -99,10 +105,6 @@ Date: Sat, 23 Nov 2002 17:30:37 +0100 (MET)
 Subject: avas: segmentation fault on empty args
 From: vograno@arbitrade.com
 Date: Fri, 6 Dec 2002 19:41:48 +0100 (MET)
-* PR# 2363 *
-Subject: nlme() and parameters "model", "fixed" and "random"
-From: jerome@hivnet.ubc.ca
-Date: Wed, 11 Dec 2002 22:29:47 +0100 (MET)
 * PR# 2369 *
 Subject: convergence problem with nlme()
 From: jerome@hivnet.ubc.ca
@@ -111,10 +113,6 @@ Date: Thu, 12 Dec 2002 23:43:14 +0100 (MET)
 Subject: quantreg package - predict method for rq objects
 From: John Maindonald <u9801539@leonard.anu.edu.au>
 Date: Sat, 14 Dec 2002 20:46:34 +1100 (EST)
-* PR# 2384 *
-Subject: degrees of freedom in nlme()
-From: jerome@hivnet.ubc.ca
-Date: Fri, 20 Dec 2002 01:40:06 +0100 (MET)
 * PR# 2386 *
 Subject: ace and avas in acepack
 From: Frank E Harrell Jr <fharrell@virginia.edu>
@@ -150,19 +148,10 @@ Date: Tue, 6 May 2003 15:36:23 -0700
 Subject: Re: frailty models in survreg() -- survival package
 From: Thomas Lumley <tlumley@u.washington.edu>
 Date: Tue, 6 May 2003 15:58:37 -0700 (PDT)
-* PR# 2985 *
-Subject: update.lme trouble
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 12 May 2003 17:59:41 +0200
 * PR# 2986 *
 Subject: plot.ranef.lme
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 12 May 2003 18:19:28 +0200
-* PR# 3188 *
-Subject: get.hist.quote not connecting to yahoo
-From: alexg@trwim.com
-Date: Wed, 4 Jun 2003 13:51:46 +0200 (MET DST)
-..That's not a bug, but there is one in get.hist.quote ...
 * PR# 3197 *
 Subject: split.AffyBatch
 From: johannes.freudenberg@imise.uni-leipzig.de
@@ -171,15 +160,50 @@ Date: Thu, 5 Jun 2003 16:05:00 +0200 (MET DST)
 * PR# 3198 *
 From: "Johannes Freudenberg" <johannes.freudenberg@imise.uni-leipzig.de>
 ..part of 3197
-* PR# 3219 *
-Subject: tkfilefind error
-From: rbaer@kcom.edu
-Date: Tue, 10 Jun 2003 16:39:24 +0200 (MET DST)
-..known problem with Tcl/Tk 8.4.x
+* PR# 3415 *
+Subject: Installing RSPerl
+From: nisai@lagrange.tampabaywater.org
+Date: Sun, 6 Jul 2003 21:28:21 +0200 (MET DST)
+* PR# 3639 *
+Subject: Genetics package: Heterozygosity and PIC incorrect
+From: gerard.tromp@sanger.med.wayne.edu
+Date: Mon, 4 Aug 2003 00:02:58 +0200 (MET DST)
+* PR# 3642 *
+Subject: R package {genetics} function summary.genotype -- H and PIC return incorrect values.
+From: "Gerard Tromp" <gerard.tromp@sanger.med.wayne.edu>
+Date: Sun, 3 Aug 2003 22:45:06 -0400
+* PR# 3648 *
+Subject: hclust() and agnes() method="average" divergence
+From: "Grum, Mikkel [IPGRI-SSA-Nairobi]" <m.grum@cgiar.org>
+Date: Sun, 03 Aug 2003 23:41:39 -0700
+* PR# 3652 *
+Subject: Re: [Rd] R package {genetics} function summary.genotype -- H and
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Mon, 04 Aug 2003 10:12:14 +0200
+* PR# 4266 *
+Subject: RODBC access to MS-Excel
+From: michael.hecht@geocities.com
+Date: Tue, 23 Sep 2003 09:39:40 +0200 (MET DST)
+* PR# 4384 *
+Subject: wrong results in dist.binary (library ade4)
+From: c.duering@threads.de
+Date: Wed, 1 Oct 2003 22:48:23 +0200 (MET DST)
+* PR# 4403 *
+Subject: misprint  in Leaps $size
+From: paulluo@cs.cmu.edu
+Date: Fri, 3 Oct 2003 22:17:24 +0200 (MET DST)
 
 Directory:  Analyses
 
-none
+* PR# 3325 *
+Subject: optim with constraints 
+From: aa@tango.stat.unipd.it (Adelchi Azzalini)
+Date: Mon, 23 Jun 2003 17:51:19 +0200 (CEST)
+..deep inside the L-BFGS-B code, but looks a badly scaled problem.
+* PR# 3666 *
+Subject: wilcox.test, CI
+From: d.a.wooff@durham.ac.uk
+Date: Wed, 6 Aug 2003 11:31:37 +0200 (MET DST)
 
 Directory:  Documentation
 
@@ -195,11 +219,6 @@ Date: Tue, 03 Jul 2001 15:50:06 -0500
 Subject: bug(?) in R FAQ - Should I run R from within Emacs?
 From: Tim.Harrold@csiro.au
 Date: Thu, 11 Jul 2002 18:21:42 +1000
-* PR# 2794 *
-Subject: prop.test  confidence intervals
-From: rbaer@kcom.edu
-Date: Fri, 18 Apr 2003 19:01:03 +0200 (MET DST)
-..prop.test should say how it computes confidence intervals.
 
 Directory:  Graphics
 
@@ -264,6 +283,8 @@ Date: Sun, 20 May 2001 10:35:16 +1000
 Subject:  las=1 with log axis 
 From: Peter Dalgaard BSA <pd@pubhealth.ku.dk>
 Date: Wed, 27 Jun 2001 11:54:06 +0200
+..Paul in reply 1: I'm leaving this bug active until these other issues are
+..resolved
 * PR# 1045 *
 Subject: Palette changes on redraw
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
@@ -277,18 +298,10 @@ Date: Fri, 26 Oct 2001 15:23:45 -0400
 Subject: x-axis label in persp()
 From: Rolf Turner <rolf@maths.uwa.edu.au>
 Date: Wed, 7 Nov 2001 18:07:22 +0800 (WST)
-* PR# 1207 *
-Subject: boxplot labels incorrect when horizontal = TRUE
-From: Rashid Nassar <rnassar@duke.edu>
-Date: Sun, 9 Dec 2001 21:46:32 -0500 (EST)
 * PR# 1235 *
 Subject: Axes labelling with logarithmic scales
 From: tobias.hoevekamp@ilw.agrl.ethz.ch
 Date: Thu, 3 Jan 2002 15:29:02 +0100 (MET)
-* PR# 1300 *
-Subject: FW: layout and piechart diameter problem
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-Date: Thu, 7 Feb 2002 11:05:15 -0500 
 * PR# 1395 *
 Subject: mgp parameter in par()
 From: mh.smith@niwa.cri.nz
@@ -322,22 +335,10 @@ Date: Thu, 26 Sep 2002 19:37:40 +0200 (MET DST)
 Subject: Wandering usr values in par(no.readonly=TRUW)
 From: Jari Oksanen <jarioksa@sun3.oulu.fi>
 Date: Tue, 12 Nov 2002 13:50:44 +0200
-* PR# 2578 *
-Subject: "trace" argument in legend()
-From: jerome@hivnet.ubc.ca
-Date: Mon, 24 Feb 2003 18:53:29 +0100 (MET)
-* PR# 2628 *
-Subject: cex.axis in boxplot
-From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
-Date: Wed, 12 Mar 2003 17:27:34 +0100 (CET)
 * PR# 2630 *
 Subject: plot() with type="s" and lty=2
 From: jerome@hivnet.ubc.ca
 Date: Wed, 12 Mar 2003 23:35:59 +0100 (MET)
-* PR# 3099 *
-Subject: surprising behaviour of "bgroup": sets all in greek letters
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Sun, 25 May 2003 18:33:49 +0200
 
 Directory:  In-Out
 
@@ -400,6 +401,19 @@ Date: Mon, 21 Apr 2003 13:16:16 -0600 (MDT)
 Subject: Problem with R CMD INSTALL and package versions
 From: rpeng@stat.ucla.edu
 Date: Wed, 30 Apr 2003 08:23:12 +0200 (MET DST)
+* PR# 3282 *
+Subject: 1.7.1 make check fails
+From: "Richard A. O'Keefe" <ok@cs.otago.ac.nz>
+Date: Wed, 18 Jun 2003 17:31:21 +1200 (NZST)
+..problem with tcltk--await further information
+* PR# 3485 *
+Subject: Undefined subroutine &R::Rdconv::fill
+From: michael.t.klinglesmith@intel.com
+Date: Tue, 15 Jul 2003 18:56:23 +0200 (MET DST)
+* PR# 4314 *
+Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
+From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
+Date: Fri, 26 Sep 2003 20:28:51 +0200
 
 Directory:  Language
 
@@ -443,6 +457,11 @@ Date: Fri, 4 Jan 2002 13:34:34 GMT
 Subject: lib.fixup, .GlobalEnv, and R1.5.0
 From: mark.bravington@csiro.au
 Date: Wed, 15 May 2002 08:30:50 +0200 (MET DST)
+* PR# 4051 *
+Subject: completeSubclasses() methods bug
+From: colin@colinsmith.org
+Date: Tue, 2 Sep 2003 22:15:26 +0200 (MET DST)
+..methods package
 
 Directory:  Low-level
 
@@ -472,42 +491,14 @@ Date: Mon, 4 Nov 2002 10:18:48 +0100
 
 Directory:  Macintosh
 
-* PR# 1819 *
-Subject: Date arithmetic fails
-From: RML27@cornell.edu
-Date: Sun, 21 Jul 2002 20:26:12 +0200 (MET DST)
-..In fact, as.POSIXct is off by 66 years. See
-..   http://developer.apple.com/qa/ops/ops23.html
-..This is semifixed, but timezones still don't work
 * PR# 1991 *
 Subject: Mac Save As... bug
 From: Tim Cole <tjc1@cam.ac.uk>
 Date: Sun, 8 Sep 2002 13:47:00 +0100
-* PR# 2276 *
-Subject: Mac specific - quartz leads to crash
-From: h95mr@mun.ca
-Date: Fri, 8 Nov 2002 16:28:50 +0100 (MET)
-* PR# 2550 *
-Subject: eigen() error: R Version 1.6.1 on Mac OS X
-From: "Daniel E. Weeks" <dweeks@watson.hgen.pitt.edu>
-Date: Fri, 14 Feb 2003 15:36:15 -0500
-* PR# 2725 *
-Subject: Default broswer for OS X
-From: james@freelancepropaganda.com
-Date: Fri, 4 Apr 2003 06:04:48 +0200 (MET DST)
 * PR# 2813 *
 Subject: Search Engine
 From: leroy@ucsd.edu
 Date: Tue, 22 Apr 2003 06:21:19 +0200 (MET DST)
-* PR# 2875 *
-Subject: configure succeeds without dlfcn.h, but fails to compile (OS X)
-From: buerkla@uwec.edu
-Date: Tue, 29 Apr 2003 20:24:12 +0200 (MET DST)
-* PR# 2876 *
-Subject: Re: [Rd]  configure succeeds without dlfcn.h, but fails to compile
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Tue, 29 Apr 2003 13:02:25 -0700 (PDT)
-..follow up to 2875
 
 Directory:  Misc
 
@@ -539,6 +530,10 @@ Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
 From: Kurt Hornik <hornik@ci.tuwien.ac.at>
 Date: Mon, 17 Mar 2003 21:32:55 +0100
 ..part of 2644
+* PR# 3646 *
+Subject: as.POSIXct Bug when used with POSIXlt arg and tz= arg
+From: Gabor Grothendieck <ggrothendieck@volcanomail.com>
+Date: Sun, 3 Aug 2003 20:08:59 -0700 (PDT)
 
 Directory:  Models
 
@@ -557,6 +552,11 @@ Date: Thu, 1 Aug 2002 19:01:59 +0200 (MET DST)
 ..  d$calls <- d$fitted + d$res[i]
 ..  coef(update(fit, data=d))
 ..}
+* PR# 3671 *
+Subject: model.frame() call from inside a function
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Date: Wed, 6 Aug 2003 15:41:16 -0700
+..is this a bug?
 
 Directory:  Startup
 
@@ -580,11 +580,6 @@ From: Dirk Eddelbuettel <edd@debian.org>
 Date: Thu, 20 Sep 2001 23:54:19 -0500
 ..This platform turned out to have badly broken FPU behaviour. Given up, at 
 ..least for now .
-* PR# 1140 *
-Subject: Possible bug, Rprof() and scan(pipe())
-From: Don MacQueen <macq@llnl.gov>
-Date: Tue, 23 Oct 2001 13:50:26 -0700
-..MacOS X: Doesn't happen on Solaris or Linux
 * PR# 1261 *
 Subject: R_140 AND RHL_72 AND Packages
 From: Patrick Gonin <gonin@genethon.fr>
@@ -648,6 +643,7 @@ Date: Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
 Subject: R-1.7.0 build feedback: NetBSD 1.6
 From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
 Date: Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
+..PR#3979 is followup
 * PR# 2887 *
 Subject: tools/ldAIX4 Assumes AIX nm
 From: rgrubbfink@cox.net
@@ -665,33 +661,37 @@ none
 
 Directory:  Windows
 
-* PR# 2798 *
-Subject: Re: [R] Keyboard problem using RWin 1.7.0
-From: DJNordlund@aol.com
-Date: Sat, 19 Apr 2003 18:56:25 EDT
-..Can't reproduce so far.
 * PR# 3234 *
 Subject: scan() crash in Windows 98
 From: "Simon Fear" <Simon.Fear@synequanon.com>
 Date: Wed, 11 Jun 2003 12:09:38 +0100
 ..Currently unreproducible
+* PR# 3644 *
+Subject: Windows 2000 Bug in GMT +/- n Timezones
+From: Gabor Grothendieck <ggrothendieck@volcanomail.com>
+Date: Sun, 3 Aug 2003 20:06:49 -0700 (PDT)
+..As it says, a Windows 2000 bug
+* PR# 3841 *
+Subject: end-of-loop-timeout problem and submit-bug-report output (resending)
+Subject: ess-mode 5.1.24; end of loop timeout
+Subject: Re:  where should i increase ess-loop-timeout
+From: Scot W McNary <smcnary@charm.net>
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Date: Tue, 19 Aug 2003 16:25:18 -0400 (EDT)
+Date: Mon, 28 Jul 2003 14:30:03 -0400 (EDT)
+..Misdirected from ess-bugs?
+* PR# 4047 *
+Subject: File in use error
+From: oakeley@fmi.ch
+Date: Tue, 2 Sep 2003 11:06:16 +0200 (MET DST)
+..Windows / R(D)COM
+* PR# 4246 *
+Subject: creates directory that can't be deleted
+From: xiaobao_wang@yahoo.com
+Date: Mon, 22 Sep 2003 02:26:31 +0200 (MET DST)
 
 Directory:  incoming
 
-* PR# 2461 *
-Subject: apropos() with partial name
-From: John Maindonald <u9801539@leonard.anu.edu.au>
-Date: Thu, 16 Jan 2003 20:22:23 +1100 (EST)
-..The proposed fix would make it impossible to pass a variable to apropos
-..
-..eg 
-..
-..> sor<-"plot"
-..> apropos(sor)
-..[1] "sor"          "isoreg"       "sortedXyData" "is.unsorted"  "sort"        
-..[6] "sort.list"   
-..
-..A better fix might be to require the argument to be a string.
 * PR# 2656 *
 Subject: recursive default argument reference in debugger
 From: pburns@pburns.seanet.com
@@ -700,11 +700,66 @@ Date: Wed, 19 Mar 2003 12:23:40 +0100 (MET)
 Subject: sweave provoked segfault
 From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
 Date: Mon, 21 Apr 2003 17:01:53 -0400
-* PR# 3217 *
-Subject: inconsistent handling of NA lty
-From: paul@stat.auckland.ac.nz
-Date: Tue, 10 Jun 2003 01:23:42 +0200 (MET DST)
-* PR# 3249 *
-Subject: lapack.dll can't be found by excel
-From: dwarner@skarven.net
-Date: Fri, 13 Jun 2003 18:33:20 +0200 (MET DST)
+* PR# 4073 *
+Subject: Problem with S4 slots in C code
+From: Laurence Kell FM CEFAS <L.T.Kell@cefas.co.uk>
+Date: Fri, 5 Sep 2003 10:23:38 +0100 
+* PR# 4110 *
+Subject: Problem with 'drop' for 1-D arrays?
+From: "Raubertas, Richard" <richard_raubertas@merck.com>
+Date: Tue, 09 Sep 2003 10:53:39 -0400
+..We were using vector subsetting with fewer than 2 dimensions.
+..Note that even with drop=FALSE  x[1:4] should be a 1-d matrix (none of its
+..extents is 1).
+..
+* PR# 4184 *
+Subject: getGenerics is wrong in 1.8.0 alpha
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+From:   "base"  "base"    "base"    "base"  "base" "base" "base"
+From:   "methods"       "base"   "methods" "methods"  "methods"    "methods"
+From:   "methods"
+From:   "base"  "base"    "base"    "base"  "base" "base" "base"
+From:   "methods"       "methods" "methods" "methods"  "methods"
+From:   "methods"    "methods"
+Date: Tue, 16 Sep 2003 12:39:16 +0100 (BST)
+..body<- is fixed. Should Compare and Complex show up as base?
+* PR# 4195 *
+Subject: hclust: median, centroid
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Tue, 16 Sep 2003 22:22:53 +0200 (CEST)
+* PR# 4204 *
+Subject: strptime
+From: pliu3@ncsu.edu
+Date: Wed, 17 Sep 2003 17:13:23 +0200 (MET DST)
+* PR# 4281 *
+Subject: Calling C fn crashes
+From: ashenfluff@yahoo.com
+Date: Wed, 24 Sep 2003 17:54:21 +0200 (MET DST)
+* PR# 4295 *
+Subject: Bugs compiling R-1.7.1 with Intel compilers icc and ifc
+From: <CanisMaior@web.de>
+Date: Thu, 25 Sep 2003 11:26:09 +0200
+* PR# 4329 *
+Subject: (fwd) package inst directory copied too early?
+From: Duncan Murdoch <dmurdoch@pair.com>
+Date: Sat, 27 Sep 2003 19:19:29 -0400
+* PR# 4361 *
+Subject: dump/source problem with hclust object
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Tue, 30 Sep 2003 19:28:27 +0200 (CEST)
+* PR# 4364 *
+Subject: Re: [Rd] another dump/source problem?
+From: Ross Ihaka <ihaka@stat.auckland.ac.nz>
+Date: Wed, 01 Oct 2003 07:45:41 +1200
+* PR# 4450 *
+Subject: 
+From: "Raoul Grasman" <R.P.P.P.Grasman@uva.nl>
+Date: Tue, 7 Oct 2003 17:05:56 +0200
+* PR# 4459 *
+Subject: Redhat 7.2 gcc optimisation 
+From: Paul Murrell <p.murrell@auckland.ac.nz>
+Date: Wed, 08 Oct 2003 15:28:11 +1300
+* PR# 4460 *
+Subject: Unpredictable EPS->PDF rotation
+From: Arni Magnusson <arnima@u.washington.edu>
+Date: Tue, 7 Oct 2003 20:01:42 -0700 (PDT)

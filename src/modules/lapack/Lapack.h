@@ -36,7 +36,13 @@ void F77_NAME(dgesdd)(const char *jobz,
 		      double *vt, const int *ldvt,
 		      double *work, const int *lwork, int *iwork, int *info);
 
+/* DGETRF - compute an LU factorization of a general M-by-N */
+/* matrix A using partial pivoting with row interchanges */
+void F77_NAME(dgetrf)(const int* m, const int* n, double* a, const int* lda,
+		      int* ipiv, int* info);
+
 #ifdef HAVE_LAPACK
+
 /* DGEEV - compute for an N-by-N real nonsymmetric matrix A, the   */
 /* eigenvalues and, optionally, the left and/or right eigenvectors */
 void F77_NAME(dgeev)(const char *jobvl, const char *jobvr,
@@ -168,8 +174,7 @@ void F77_NAME(dgesv)(const int *n, const int *nrhs, double *a,
 void F77_NAME(dgeqp3)(const int *m, const int *n,
 		      double *a, const int *lda,
 		      int *jpvt, double *tau,
-		      double *work, const int *lwork,
-		      double *rwork, int *info);
+		      double *work, const int *lwork, int *info);
 
 /* DORMQR applies Q or Q**T from the Left or Right */
 void F77_NAME(dormqr)(const char *side, const char *trans,

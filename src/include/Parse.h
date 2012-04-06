@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-1999 R Development Core Team
+ *  Copyright (C) 1998-2003 R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,26 +17,25 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define PARSE_NULL		0
-#define PARSE_OK		1
-#define PARSE_INCOMPLETE	2
-#define PARSE_ERROR		3
-#define PARSE_EOF		4
-
-#define INPUT_CONSOLE		1
-#define INPUT_TEXT		2
-#define INPUT_FILE		3
+#include <R_ext/Parse.h>
 
 	/* Parse A Single Expression */
 
-SEXP R_Parse1File(FILE*, int, int*);
-SEXP R_Parse1Buffer(IoBuffer*, int, int*);
-SEXP R_Parse1Vector(TextBuffer*, int, int *);
-SEXP R_Parse1General(int (*)(), int (*)(), int, int *);
+SEXP R_Parse1File(FILE*, int, ParseStatus *);
+SEXP R_Parse1Buffer(IoBuffer*, int, ParseStatus *);
+SEXP R_Parse1Vector(TextBuffer*, int, ParseStatus *);
+SEXP R_Parse1General(int (*)(), int (*)(), int, ParseStatus *);
 
 	/* Parse Several Expressions */
 
-SEXP R_ParseFile(FILE*, int, int*);
-SEXP R_ParseBuffer(IoBuffer*, int, int*, SEXP);
-SEXP R_ParseVector(SEXP, int, int *);
-SEXP R_ParseGeneral(int (*)(), int (*)(), int, int *);
+SEXP R_ParseFile(FILE*, int, ParseStatus *);
+SEXP R_ParseBuffer(IoBuffer*, int, ParseStatus *, SEXP);
+/* SEXP R_ParseVector(SEXP, int, ParseStatus *); in R_ext/Parse.h */
+SEXP R_ParseGeneral(int (*)(), int (*)(), int, ParseStatus *);
+
+
+#ifndef HAVE_RCONNECTION_TYPEDEF
+typedef struct Rconn  *Rconnection;
+#define HAVE_RCONNECTION_TYPEDEF
+#endif
+SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status);

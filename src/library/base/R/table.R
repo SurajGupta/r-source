@@ -75,12 +75,16 @@ table <- function (..., exclude = c(NA, NaN),
 ## Better (NA in dimnames *should* be printed):
 print.table <-
 function (x, digits = getOption("digits"), quote = FALSE, na.print = "",
-          justify = "none", ...)
+	  zero.print = "0",
+	  justify = "none", ...)
 {
     xx <- format(unclass(x), digits = digits, justify = justify)
     ## na.print handled here
     if(any(ina <- is.na(x)))
-        xx[ina] <- na.print
+	xx[ina] <- na.print
+    if(is.integer(x) && zero.print != "0" && any(i0 <- !ina & x == 0))
+	## MM thinks this should be an option for many more print methods...
+	xx[i0] <- sub("0", zero.print, xx[i0])
     print(xx, quote = quote, ...)
     invisible(x)
 }
@@ -116,7 +120,7 @@ print.summary.table <-
 function(x, digits = max(1, getOption("digits") - 3), ...)
 {
     if(!inherits(x, "summary.table"))
-	stop("x must inherit from class `summary.table'")
+	stop(paste("x must inherit from class", sQuote("summary.table")))
     if(!is.null(x$call)) {
 	cat("Call: "); print(x$call)
     }

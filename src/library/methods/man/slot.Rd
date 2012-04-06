@@ -13,7 +13,7 @@ object@name
 object@name <- value
 
 slot(object, name)
-slot(object, name) <- value
+slot(object, name, check = TRUE) <- value
 
 slotNames(x)
 }
@@ -26,7 +26,12 @@ slotNames(x)
   \item{x}{Either the name of a class or an object from that class.
     Print \code{\link{getClass}(class)} to see the full description of
     the slots.}
-}
+  \item{check}{If \code{TRUE}, check the assigned value for validity
+    as the value of this slot.  You should never set this to
+    \code{FALSE} in normal use, since the result can create invalid objects.
+    }
+    
+  }
 \details{
   The \code{"@"} operator and the \code{slot} function extract or
   replace the formally defined slots for the object.  The operator
@@ -51,15 +56,14 @@ slotNames(x)
   error.
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
-  programming interface for classes
-  and methods in the book \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
-  and chapters 7 and 8.
+  The R package \pkg{methods} implements, with a few exceptions, the
+  programming interface for classes and methods in the book
+  \emph{Programming with Data} (John M. Chambers, Springer, 1998), in
+  particular sections 1.6, 2.7, 2.8, and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
   discussion of details and ongoing development, see the web page 

@@ -1,29 +1,31 @@
-# Subroutines for building R documentation
+## Subroutines for building R documentation
 
-# Copyright (C) 1997-2002 R Development Core Team
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# A copy of the GNU General Public License is available via WWW at
-# http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+## Copyright (C) 1997-2003 R Development Core Team
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+## General Public License for more details.
+##
+## A copy of the GNU General Public License is available via WWW at
+## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
+## writing to the Free Software Foundation, Inc., 59 Temple Place, Suite
+## 330, Boston, MA 02111-1307 USA.
 
-# Send any bug reports to r-bugs@r-project.org
+## Send any bug reports to r-bugs@r-project.org.
 
 package R::Rdlists;
 
 require  Exporter;
 @ISA     = qw(Exporter);
-@EXPORT  = qw(buildinit read_titles read_htmlindex read_htmlpkgindex read_anindex build_htmlpkglist build_index fileolder foldorder);
+@EXPORT  = qw(buildinit read_titles read_htmlindex read_htmlpkgindex
+	      read_anindex build_htmlpkglist build_index fileolder
+	      foldorder);
 
 use Cwd;
 use File::Basename;
@@ -35,60 +37,59 @@ if($main::opt_dosnames) { $HTML = ".htm"; } else { $HTML = ".html"; }
 
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
 
-# determine if pkg and lib directory are accessible; chdir to pkg man dir
-# and return pkg name, full path to lib dir and contents of mandir
+### Determine if package (pkg_dir) and lib directories are accessible;
+### chdir to package man dir and return package name, full path to lib
+### dir and contents of mandir.
 
 sub buildinit {
 
-    my $pkg = $ARGV[0];
-    my $lib = $ARGV[1];
+    my ($pkg_dir, $lib, $dest, $pkg_name) = @ARGV;
 
     my $currentdir = cwd();
 
-    if($pkg){
-	die("Package $pkg does not exist\n") unless (-d $pkg);
+    if($pkg_dir) {
+	die("Package directory ${pkg_dir} does not exist\n")
+	    unless (-d $pkg_dir);
     }
-    else{
-	$pkg=file_path($main::R_HOME, "src", "library", "base");
+    else {
+	$pkg_dir = file_path($main::R_HOME, "src", "library", "base");
     }
 
-    chdir $currentdir;
+    chdir($currentdir);
 
-    if($lib){
-	if(! -d $lib) {
-	    mkdir ("$lib", $dir_mod) or die "Could not create $lib: $!\n";
+    if($lib) {
+	if(!(-d $lib)) {
+	    mkdir("$lib", $dir_mod) or die "Could not create $lib: $!\n";
 	}
-	chdir $lib;
-	$lib=cwd();
-	chdir $currentdir;
+	## <NOTE>
+	## A version of file_path_as_absolute() would be handy ...
+	chdir($lib);
+	$lib = cwd();
+	chdir($currentdir);
+	## </NOTE>
     }
     else{
-	$lib=file_path($main::R_HOME, "library");
+	$lib = file_path($main::R_HOME, "library");
     }
 
-    chdir $currentdir;
+    chdir($currentdir);
 
-    chdir($pkg) or die("Cannot change to $pkg\n");
+    chdir($pkg_dir) or die("Cannot change to ${pkg_dir}\n");
     $tmp = cwd();
     if($main::OSdir eq "windows") {
-	$tmp =~ s+\\+/+g; # need Unix-style path here
+	$tmp =~ s+\\+/+g;	# need Unix-style path here
     }
-#    elsif($main::OSdir eq "mac") {
-    elsif($R::Vars::OSTYPE eq "mac"){
-    $tmp = $pkg;
-    }
-    $pkg = basename($tmp);
+    $pkg_name = basename($tmp) unless($pkg_name);
 
-    chdir "man" or die("There are no man pages in $pkg\n");
-    if($R::Vars::OSTYPE eq "mac"){
-  #  if($main::OSdir eq "mac") {
-	opendir man, ':';
-    } else {
-	opendir man, '.';
-    }
+    chdir "man" or die("There are no man pages in ${pkg_dir}\n");
+
+    ## <FIXME>
+    ## Why not simply use
+    ##   list_files_with_type(".", "docs", $main::OSdir)
+    ## ???
+    opendir man, '.';
     @mandir = sort(readdir(man));
     closedir man;
-
     if(-d $main::OSdir) {
 	foreach $file (@mandir) { $Rds{$file} = $file; }
 	opendir man, $main::OSdir;
@@ -99,8 +100,19 @@ sub buildinit {
 	@mandir = sort(values %Rds);
 	push @mandir, sort(values %RdsOS);
     }
+    if(-d $main::AQUAdir) {
+	foreach $file (@mandir) { $Rds{$file} = $file; }
+	opendir man, $main::AQUAdir;
+	foreach $file (readdir(man)) {
+	    delete $Rds{$file};
+	    $RdsOS{$file} = file_path($main::AQUAdir, $file);
+	}
+	@mandir = sort(values %Rds);
+	push @mandir, sort(values %RdsOS);
+    }
+    ## </FIXME>
 
-    ($pkg, $lib, @mandir);
+    ($pkg_name, $lib, @mandir);
 }
 
 
@@ -334,7 +346,7 @@ sub build_index { # lib, dest
 	    my $rdtitle = $1;
 	    $rdtitle =~ s/\n/ /sg;
 	    $rdtitle =~ s/\\R/R/g; # don't use \R in titles
-	    $internal = 1 if $text=~ /\\keyword\{internal\}/;
+	    $internal = 1 if $text =~ /\\keyword\{\s*internal\s*\}/;
 
 	    $main::filenm{$rdname} = $manfilebase;
 	    if($main::opt_chm) {
@@ -391,9 +403,10 @@ sub build_index { # lib, dest
     }
 
     if(-d file_path($dest, "doc")){
-	print htmlfile "<a href=\"../doc\">Accompanying documentation</a> "
-	    . "is available in the subdirectory \"doc\" "
-	    . "of the installed package.<p>\n\n";
+	print htmlfile "<h2>User Guides and Package Vignettes</h2>\n"
+	    . "Read <a href=\"../doc/index.html\">overview</a> or "
+	    . "browse <a href=\"../doc\">directory</a>.\n\n"
+	    . "<h2>Help Pages</h2>\n\n";
     }
 	
     if($naliases>100){

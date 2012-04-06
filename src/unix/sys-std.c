@@ -88,10 +88,66 @@ void Rstd_Suicide(char *s)
 	 * considerably more complex.
 	 */
 
-
 #define __SYSTEM__
 #include <R_ext/eventloop.h>
 #undef __SYSTEM__
+
+/*
+  The following provides a version of select() that catches interrupts
+  and handles them using the supplied interrupt handler or the default
+  one if NULL is supplied.  The interrupt handler must exit using a
+  longjmp.  If the supplied timout value os zero, select is called
+  without setting up an error handler since it should return
+  immediately.
+ */
+
+static SIGJMP_BUF seljmpbuf;
+
+static RETSIGTYPE (*oldSigintHandler)(int) = SIG_DFL;
+
+typedef void (*sel_intr_handler_t)(void);
+
+static RETSIGTYPE handleSelectInterrupt(int dummy)
+{
+    signal(SIGINT, oldSigintHandler);
+    SIGLONGJMP(seljmpbuf, 1);
+}
+
+int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
+	       fd_set *exceptfds, struct timeval *timeout,
+	       void (*intr)(void))
+{
+    if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
+	return select(n, readfds, writefds, exceptfds, timeout);
+    else {
+	volatile sel_intr_handler_t myintr = intr != NULL ? intr : onintr;
+	if (SIGSETJMP(seljmpbuf, 1)) {
+	    myintr();
+	    error("interrupt handler must not return");
+	    return 0; /* not reached */
+	}
+	else {
+	    int val;
+
+	    /* install a temporary signal handler for breaking out of
+	       a blocking select */
+	    oldSigintHandler = signal(SIGINT, handleSelectInterrupt);
+
+	    /* once the new sinal handler is in place we need to check
+	       for and handle any pending interrupt registered by the
+	       standard handler. */
+	    if (R_interrupts_pending)
+		myintr();
+
+	    /* now do the (possibly blocking) select, restore the
+	       signal handler, and return the result of the select. */
+	    val = select(n, readfds, writefds, exceptfds, timeout);
+	    signal(SIGINT, oldSigintHandler);
+	    return val;
+	}
+    }
+}
+
 
 /*
    This object is used for the standard input and its file descriptor
@@ -233,7 +289,7 @@ int R_wait_usec = 0; /* 0 means no timeout */
 static int setSelectMask(InputHandler *, fd_set *);
 
 
-fd_set *R_checkActivity(int usec, int ignore_stdin)
+fd_set *R_checkActivityEx(int usec, int ignore_stdin, void (*intr)(void))
 {
     int maxfd;
     struct timeval tv;
@@ -245,11 +301,16 @@ fd_set *R_checkActivity(int usec, int ignore_stdin)
     maxfd = setSelectMask(R_InputHandlers, &readMask);
     if (ignore_stdin)
 	FD_CLR(fileno(stdin), &readMask);
-    if (select(maxfd+1, &readMask, NULL, NULL,
-		     (usec >= 0) ? &tv : NULL))
+    if (R_SelectEx(maxfd+1, &readMask, NULL, NULL,
+		   (usec >= 0) ? &tv : NULL, intr))
 	return(&readMask);
     else
 	return(NULL);
+}
+
+fd_set *R_checkActivity(int usec, int ignore_stdin)
+{
+    return R_checkActivityEx(usec, ignore_stdin, NULL);
 }
 
 /*
@@ -456,12 +517,17 @@ static void readline_handler(char *line)
  signals itself.
 */
 static void
-handleInterrupt(int dummy)
+handleInterrupt(void)
 {
     popReadline();
     onintr();
 }
-
+#else
+static void
+handleInterrupt(void)
+{
+    onintr();
+}
 #endif /* HAVE_LIBREADLINE */
 
 /* Fill a text buffer from stdin or with user typed console input. */
@@ -502,7 +568,6 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	    rl_data.prev = rl_top;
 	    rl_top = &rl_data;
 	    pushReadline(prompt, readline_handler);
-	    signal(SIGINT, handleInterrupt);
 	}
 	else
 #endif /* HAVE_LIBREADLINE */
@@ -516,8 +581,9 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 
 	for (;;) {
 	    fd_set *what;
-
-	    what = R_checkActivity(R_wait_usec ? R_wait_usec : -1, 0);
+	    
+	    what = R_checkActivityEx(R_wait_usec ? R_wait_usec : -1, 0,
+				     handleInterrupt);
 	    /* This is slightly clumsy. We have advertised the
 	     * convention that R_wait_usec == 0 means "wait forever",
 	     * but we also need to enable R_checkActivity to return
@@ -603,12 +669,9 @@ void Rstd_Busy(int which)
    If ask = SA_SUICIDE, no save, no .Last, possibly other things.
  */
 
-void R_dot_Last(void);		/* in main.c */
-void R_RunExitFinalizers(void);	/* in memory.c */
-
 void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
-    unsigned char buf[128];
+    unsigned char buf[1024];
     char * tmpdir;
 
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
@@ -662,11 +725,11 @@ void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     }
     R_RunExitFinalizers();
     CleanEd();
-    if((tmpdir = getenv("R_SESSION_TMPDIR"))) {
-	sprintf((char *)buf, "rm -rf %s", tmpdir);
-	system((char *)buf);
-    }
     if(saveact != SA_SUICIDE) KillAllDevices();
+    if((tmpdir = getenv("R_SESSION_TMPDIR"))) {
+	snprintf((char *)buf, 1024, "rm -rf %s", tmpdir);
+	R_system((char *)buf);
+    }
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
     fpu_setup(FALSE);
@@ -721,8 +784,8 @@ int Rstd_ShowFiles(int nfile, 		/* number of files */
 	    }
 	    fclose(tfp);
 	}
-	sprintf(buf, "%s < %s", pager, filename);
-	res = system(buf);
+	snprintf(buf, 1024, "%s < %s", pager, filename);
+	res = R_system(buf);
 	unlink(filename);
 	return (res != 0);
     }
@@ -753,7 +816,7 @@ int Rstd_ChooseFile(int new, char *buf, int len)
 
 void Rstd_ShowMessage(char *s)
 {
-    REprintf("%s", s);
+    REprintf("%s\n", s);
 }
 
 

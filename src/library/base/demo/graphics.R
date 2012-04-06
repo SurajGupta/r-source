@@ -1,7 +1,7 @@
 if(dev.cur() <= 1) get(getOption("device"))()
 
 opar <- par(ask = interactive() &&
-            (.Device %in% c("X11", "GTK", "gnome", "windows", "Macintosh")))
+            (.Device %in% c("X11", "GTK", "gnome", "windows","quartz")))
 # For source
 
 ## Here is some code which illustrates some of the differences between
@@ -56,7 +56,7 @@ title(xlab="(Don't try this at home kids)", cex.lab=0.8, font.lab=3)
 par(bg="cornsilk")
 n <- 10
 g <- gl(n, 100, n*100)
-x <- rnorm(n*100) + sqrt(codes(g))
+x <- rnorm(n*100) + sqrt(as.numeric(g))
 boxplot(split(x,g), col="lavender", notch=TRUE)
 title(main="Notched Boxplots", xlab="Group", font.main=4, font.lab=1)
 
@@ -108,7 +108,7 @@ title(main="1000 Normal Random Variates", font.main=3)
 data("iris")
 pairs(iris[1:4], main="Edgar Anderson's Iris Data", font.main=4, pch=19)
 pairs(iris[1:4], main="Edgar Anderson's Iris Data", pch=21,
-      bg=c("red", "green3", "blue")[codes(iris$Species)])
+      bg=c("red", "green3", "blue")[unclass(iris$Species)])
 
 
 ## Contour plotting

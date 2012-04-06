@@ -87,11 +87,6 @@ static Rboolean have_broken_mktime(void)
 
 }
 
-#if (defined(Macintosh) & defined(__MRC__))
-#define mktime POSIXMakeTime
-#endif
-
- 
 #ifndef HAVE_WORKING_STRPTIME
 /* Substitute based on glibc code. */
 # include "Rstrptime.h"
@@ -203,7 +198,7 @@ static double mktime00 (struct tm *tm)
 static double guess_offset (struct tm *tm)
 {
     double offset, offset1, offset2;
-    int oldmonth, oldyear, olddst;
+    int oldmonth, oldyear, olddst, oldwday, oldyday;
 
     /*
        adjust as best we can for timezones: if isdst is unknown,
@@ -212,6 +207,8 @@ static double guess_offset (struct tm *tm)
     oldmonth = tm->tm_mon;
     oldyear = tm->tm_year;
     olddst = tm->tm_isdst;
+    oldwday = tm->tm_wday;
+    oldyday = tm->tm_yday;
     tm->tm_mon = 0;
     tm->tm_year = 100;
     tm->tm_isdst = -1;
@@ -235,6 +232,8 @@ static double guess_offset (struct tm *tm)
     }
     tm->tm_year = oldyear;
     tm->tm_isdst = olddst;
+    tm->tm_wday = oldwday;
+    tm->tm_yday = oldyday;
     return offset;
 }
 
@@ -279,7 +278,7 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
     }
 
     day = (long) floor(d/86400.0);
-    left = (int) (d - day * 86400.0 +0.5);
+    left = (int) (d - day * 86400.0 + 0.5);
 
     /* hour, min, and sec */
     res->tm_hour = left / 3600;
@@ -339,32 +338,12 @@ SEXP do_systime(SEXP call, SEXP op, SEXP args, SEXP env)
 
 #ifdef Win32
 #define tzname _tzname
-#else
-# ifdef Macintosh
-#define tzname mytzname
-static char mytzname[2][21];
-static int tz_is_set = 0;
-static void mac_find_tznames(void)
-{
-    time_t ct;
-    struct tm *ltm;
-
-    ct = time(NULL); ltm = localtime(&ct);
-    ltm->tm_isdst = 0; strftime(tzname[0], 20, "%Z", ltm);
-    ltm->tm_isdst = 1; strftime(tzname[1], 20, "%Z", ltm);
-    tz_is_set = 1;
-}
-# else /* Unix */
+#else /* Unix */
 extern char *tzname[2];
-# endif
 #endif
 
 static int set_tz(char *tz, char *oldtz)
 {
-#ifdef Macintosh
-    warning("timezones except "" and UTC are not supported on the Mac");
-    return 0;
-#else
     char *p = NULL;
     int settz = 0;
     static char buff[200];
@@ -386,14 +365,10 @@ static int set_tz(char *tz, char *oldtz)
 #endif
     tzset();
     return settz;
-#endif /* Macintosh */
 }
 
 static void reset_tz(char *tz)
 {
-#ifdef Macintosh
-    return;
-#else
     if(strlen(tz)) {
 #ifdef HAVE_PUTENV
         static char buff[200];
@@ -414,7 +389,6 @@ static void reset_tz(char *tz)
 #endif
     }
     tzset();
-#endif /* Macintosh */
 }
 
 
@@ -457,9 +431,6 @@ SEXP do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     tz = CHAR(STRING_ELT(stz, 0));
     if(strcmp(tz, "GMT") == 0  || strcmp(tz, "UTC") == 0) isgmt = 1;
     if(!isgmt && strlen(tz) > 0) settz = set_tz(tz, oldtz);
-#ifdef Macintosh
-    if(!isgmt && !tz_is_set) mac_find_tznames();
-#endif
 
     n = LENGTH(x);
     PROTECT(ans = allocVector(VECSXP, 9));

@@ -126,21 +126,6 @@ static void PMoveTo(double x, double y)
 
 /* Basic Font Properties */
 
-#ifdef OLD
-static double FontHeight()
-{
-    double height, depth, width;
-    /* 
-     * FIXME:  When fontfamily is passed to GEMetricInfo,
-     * this will need updating (times many in this file)
-     */
-    GEMetricInfo(0, 
-		MathFont, MathCex, MathPs,
-		&height, &depth, &width, MathDevice);
-    return fromDeviceHeight(height + depth, MetricUnit, MathDevice);
-}
-#endif
-
 static double xHeight()
 {
     double height, depth, width;
@@ -197,20 +182,6 @@ static double DescDepth()
     return fromDeviceHeight(depth, MetricUnit, MathDevice);
 }
 
-#ifdef NOT_used_currently/*-- out 'def'	 (-Wall) --*/
-static double AscHeight()
-{
-    double height, depth, width, save;
-    GEMetricInfo('d', 
-		MathFont, MathCex, MathPs,
-		&height, &depth, &width, MathDevice);
-    save = height;
-    GEMetricInfo('a', 
-		MathFont, MathCex, MathPs,
-		&height, &depth, &width, MathDevice);
-    return fromDeviceHeight(save - height, MetricUnit, MathDevice);
-}
-#endif
 /* Thickness of rules */
 static double RuleThickness()
 {
@@ -1970,7 +1941,8 @@ static BBOX RenderDelim(int which, double dist, int draw)
     double axisHeight = TeX(sigma22);
 
     switch(which) {
-    case '.':
+    case '.': 
+	SetFont(prev);
 	return NullBBox();
 	break;
     case '|':
@@ -2743,11 +2715,7 @@ static BBOX RenderCommaList(SEXP expr, int draw)
 	if (NameAtom(CAR(expr)) && NameMatch(CAR(expr), "...")) {
 	    if (i > 0) {
 		bbox = CombineBBoxes(bbox, RenderSymbolChar(S_COMMA, draw));
-#ifdef OLD
-		bbox = CombineBBoxes(bbox, RenderGap(small, draw));
-#else
 		bbox = CombineBBoxes(bbox, RenderSymbolChar(S_SPACE, draw));
-#endif
 	    }
 	    bbox = CombineBBoxes(bbox, RenderSymbolChar(S_ELLIPSIS, draw));
 	    bbox = CombineBBoxes(bbox, RenderGap(small, draw));

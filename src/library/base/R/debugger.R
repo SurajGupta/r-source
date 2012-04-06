@@ -102,20 +102,23 @@ recover <-
 }
 
 
-trace <- function(what, tracer, exit, at, print, signature) {
-    needsAttach <- !.isMethodsDispatchOn()
+trace <- function(what, tracer, exit, at, print, signature, where = topenv(parent.frame())) {
+    needsAttach <- nargs() > 1 && !.isMethodsDispatchOn()
     if(needsAttach) {
-        cat("Tracing functions requires the methods package\n: see ?trace)\n")
-        require(methods)
-        on.exit(detach("package:methods")) ## in case of error
+        ns <- try(loadNamespace("methods"))
+        if(isNamespace(ns))
+            methods:::message("(loaded the methods namespace)")
+        else
+            stop("Tracing functions requires the methods package, but unable to load methods namespace")
     }
-    else
-        on.exit(tracingState(tState))
+    else if(nargs() == 1)
+        return(.primTrace(what))
     tState <- tracingState(FALSE)
     ## now call the version in the methods package, to ensure we get
     ## the correct name space (e.g., correct version of class())
     call <- sys.call()
-    call[[1]] <- quote(.TraceWithMethods)
+    call[[1]] <- quote(methods:::.TraceWithMethods)
+    call$where <- where
     value <- eval.parent(call)
     on.exit() ## no error
     tracingState(tState)
@@ -123,10 +126,8 @@ trace <- function(what, tracer, exit, at, print, signature) {
 }
 
 
-## while trace() has to invoke the version in the methods package to get namespace
-## details correct, the current version of untrace does no computations ITSELF that
-## depend on the methods namespace.  But this assertion needs thorough testing.
-untrace <- function(what, signature = NULL) {
+untrace <- function(what, signature = NULL, where = topenv(parent.frame())) {
+    ## NOTE: following test is TRUE after loadNamespace("methods") (even if not in search())
     MethodsDispatchOn <- .isMethodsDispatchOn()
     if(MethodsDispatchOn) {
         tState <- tracingState(FALSE)
@@ -148,34 +149,35 @@ untrace <- function(what, signature = NULL) {
         }
     }
     if(!MethodsDispatchOn)
-        return(.primUntrace(what)) ## can't have called trace exc. in primitive form
+        return(.primUntrace(what)) ## can't have called trace except in primitive form
+    ## at this point we can believe that the methods namespace was successfully loaded
+    f <- NULL
     if(is.null(signature)) {
-        where <- findFunction(what)
+        where <- methods:::findFunction(what, where = where)
         if(length(where) == 0)
             warning("No function \"", what, "\" to untrace")
         else {
-            f <- getFunction(what)
+            f <- methods:::getFunction(what, where = where[[1]])
             ## ensure that the version to assign is untraced (should be, but ...)
-            if(is(f, "traceable")) {
-                assign(what, .untracedFunction(f), where[[1]])
+            if(methods:::is(f, "traceable")) {
+                methods:::.untracedFunction(f, what, where[[1]])
             }
             else
                 .primUntrace(what) # to be safe--no way to know if it's traced or not
         }
     }
     else {
-        where <- findMethod(what, signature)
-        if(length(where) == 0)
+        f <- methods:::getMethod(what, signature,  where)
+        if(is.null(f))
             warning("No method for \"", what, "\" for this signature to untrace")
         else {
-            where <- where[[1]]
-            f <- getMethod(what, signature, where = where)
             if(is(f, "traceable"))
-                setMethod(what, signature, .untracedFunction(f), where = where)
+                methods:::.untracedFunction(f, what, where, signature)
             else
                 warning("The method for \"", what, "\" for this signature was not being traced")
         }
     }
+    invisible(f)
 }
         
 

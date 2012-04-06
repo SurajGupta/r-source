@@ -376,6 +376,9 @@
 /* Define if log() is correct for 0/-1. */
 #define HAVE_WORKING_LOG 1
 
+/* Define if log1p() exists and is accurate enough. */
+#define HAVE_WORKING_LOG1P 1
+
 /* Define if strptime() exists and does not fail pre-1970. */
 /* #undef HAVE_WORKING_STRPTIME */
 
@@ -391,9 +394,6 @@
 
 /* Define if you have 32 bit ints. */
 #define INT_32_BITS 1
-
-/* Define according to your operating system type. */
-/* #undef Macintosh */
 
 /* Define if your system needs __setfpucw() to control FPU rounding. This was
    used to control floating point precision, rounding and floating point
@@ -411,13 +411,13 @@
 #define PACKAGE_NAME "R"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "R 1.7.0"
+#define PACKAGE_STRING "R 1.8.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "R"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.7.0"
+#define PACKAGE_VERSION "1.8.0"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -491,7 +491,7 @@
 /* #undef Unix */
 
 /* Version number of package */
-#define VERSION "1.7.0"
+#define VERSION "1.8.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -515,7 +515,6 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 /* #undef size_t */
-
 
 
 #endif /* not _CONFIG_H */

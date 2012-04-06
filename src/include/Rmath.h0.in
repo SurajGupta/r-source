@@ -17,8 +17,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
 
- * Mathlib.h  should contain ALL headers from R's C code in `src/nmath'
-   ---------  such that ``the Math library'' can be used by simply
+ * Rmath.h  should contain ALL headers from R's C code in `src/nmath'
+   -------  such that ``the Math library'' can be used by simply
 
    ``#include <Rmath.h> ''
 
@@ -30,7 +30,6 @@
 /*-- Mathlib as part of R --  define this for standalone : */
 /* #undef MATHLIB_STANDALONE */
 
-#ifndef Macintosh
 #ifndef HAVE_LOG1P
 @RMATH_HAVE_LOG1P@
 #endif
@@ -38,16 +37,21 @@
 #ifndef HAVE_EXPM1
 @RMATH_HAVE_EXPM1@
 #endif
+
+#ifndef HAVE_WORKING_LOG1P
+@RMATH_HAVE_WORKING_LOG1P@
+#endif
+
+#if defined(HAVE_LOG1P) && !defined(HAVE_WORKING_LOG1P)
+/* remap to avoid problems with getting the right entry point */
+double  Rlog1p(double);
+#define log1p Rlog1p
 #endif
 
 #include <errno.h>
 #include <limits.h>
 #include <float.h>
-#ifdef Macintosh
-# include <fp.h>
-#else
-# include <math.h>
-#endif
+#include <math.h>
 
 #include <stdlib.h>
 
@@ -326,6 +330,7 @@ double	unif_rand(void);
 double	exp_rand(void);
 #ifdef MATHLIB_STANDALONE
 void	set_seed(unsigned int, unsigned int);
+void	get_seed(unsigned int *, unsigned int *);
 #endif
 
 	/* Normal Distribution */
@@ -478,6 +483,7 @@ double	qnf(double, double, double, double, int, int);
 
 	/* Non-central Student t Distribution */
 
+double	dnt(double, double, double, int);
 double	pnt(double, double, double, int, int);
 double	qnt(double, double, double, int, int);
 
@@ -562,7 +568,11 @@ double	gamma_cody(double);
 #ifdef MATHLIB_STANDALONE
 #ifndef MATHLIB_PRIVATE_H
 
-#define ISNAN(x)       R_IsNaNorNA(x)
+#ifdef IEEE_754
+# define ISNAN(x) (isnan(x)!=0)
+#else
+# define ISNAN(x)      R_IsNaNorNA(x)
+#endif
 #define R_FINITE(x)    R_finite(x)
 int R_IsNaNorNA(double);
 int R_finite(double);

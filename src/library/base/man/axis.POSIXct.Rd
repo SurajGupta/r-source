@@ -8,12 +8,15 @@
   \code{"POSIXct"} representing calendar dates and times. 
 }
 \usage{
-\method{plot}{POSIXct}(x, y, xlab = "", \dots)
 axis.POSIXct(side, x, at, format, \dots)
+
+\method{plot}{POSIXct}(x, y, xlab = "", \dots)
+
+\method{plot}{POSIXlt}(x, y, xlab = "", \dots)
 }
 \synopsis{
-plot.POSIXct(x, y, xlab = "", xaxt = par("xaxt"), ...)
-plot.POSIXlt(x, y, xlab = "", xaxt = par("xaxt"), ...)
+plot.POSIXct(x, y, xlab = "", axes = TRUE, frame.plot = axes, xaxt = par("xaxt"), ...)
+plot.POSIXlt(x, y, xlab = "", axes = TRUE, frame.plot = axes, xaxt = par("xaxt"), ...)
 axis.POSIXct(side, x, at, format, ...)
 }
 \arguments{
@@ -23,7 +26,8 @@ axis.POSIXct(side, x, at, format, ...)
   \item{side}{See \code{\link{axis}}.}
   \item{format}{See \code{\link{strptime}}.}
   \item{\dots}{Further arguments to be passed from or to other methods,
-    typically graphical parameters.}
+    typically graphical parameters or arguments of
+    \code{\link{plot.default}}.}
 }
 \details{
   The functions plot against an x-axis of date-times.
@@ -40,8 +44,8 @@ axis.POSIXct(side, x, at, format, ...)
   \link{DateTimeClasses} for details of the classes.
 }
 \examples{
-if(require(MASS, quietly = TRUE)) {
-data(beav1)
+res <- try(data(beav1, package = MASS))
+if(!inherits(res, "try-error")) {
 attach(beav1)
 time <- strptime(paste(1990, day, time \%/\% 100, time \%\% 100),
                  "\%Y \%j \%H \%M")
@@ -52,7 +56,6 @@ r <- as.POSIXct(round(range(time), "hours"))
 axis.POSIXct(1, at=seq(r[1], r[2], by="hour"), format="\%H")
 rm(time)
 detach(beav1)
-detach(package:MASS)
 }
 
 plot(.leap.seconds, 1:22, type="n", yaxt="n",

@@ -115,8 +115,8 @@ coplot <-
 		    cbind(i - 0.5, i + 0.5)
 		}
 		else {
-		    if(length(number)==1) number  <- rep(number,2)
-		    if(length(overlap)==1)overlap <- rep(overlap,2)
+		    if(length(number)==1) number  <- rep.int(number,2)
+		    if(length(overlap)==1)overlap <- rep.int(overlap,2)
 		    co.intervals(b,number=number[2],overlap=overlap[2])
 		}
 	    }
@@ -163,7 +163,7 @@ coplot <-
 	rows	<- nrow(b.intervals)
 	columns <- nrow(a.intervals)
 	nplots <- rows * columns
-	if(length(show.given) < 2) show.given <- rep(show.given, 2)
+	if(length(show.given) < 2) show.given <- rep.int(show.given, 2)
     }
     else {
 	nplots <- nrow(a.intervals)
@@ -191,7 +191,7 @@ coplot <-
 	f.col <- columns/total.columns
     }
 
-    mar <- if(have.b) rep(0, 4) else c(0.5, 0, 0.5, 0)
+    mar <- if(have.b) rep.int(0, 4) else c(0.5, 0, 0.5, 0)
     oma <- c(5, 6, 5, 4)
     if(have.b) { oma[2] <- 5 ; if(!b.is.fac) oma[4] <- 5 }
     if(a.is.fac && show.given[1]) oma[3] <- oma[3] - 1
@@ -209,10 +209,9 @@ coplot <-
 	ylim <- range(as.numeric(y), finite = TRUE)
     pch <- rep(pch, length=nobs)
     col <- rep(col, length=nobs)
-    do.panel <- function(index, subscripts = FALSE) {
+    do.panel <- function(index, subscripts = FALSE, id) {
 	## Use `global' variables
-	##	id;	rows, columns,	total.rows, total.columns, nplots
-	##		xlim, ylim
+	##	rows, columns,	total.rows, total.columns, nplots, xlim, ylim
         Paxis <- function(side, x) {
             if(nlevels(x)) {
                 lab <- axlabels(x)
@@ -253,14 +252,14 @@ coplot <-
 	    for(j in 1:columns) {
 		id <- ((a.intervals[j,1] <= a) & (a <= a.intervals[j,2]) &
 		       (b.intervals[i,1] <= b) & (b <= b.intervals[i,2]))
-		do.panel(count, subscripts)
+		do.panel(count, subscripts, id)
 		count <- count + 1
 	    }
 	}
     } else {
 	for (i in 1:nplots) {
 	    id <- ((a.intervals[i,1] <= a) & (a <= a.intervals[i,2]))
-	    do.panel(i, subscripts)
+	    do.panel(i, subscripts, id)
 	}
     }
     mtext(xlab[1], side=1, at=0.5*f.col, outer=TRUE, line=3.5, xpd=NA)

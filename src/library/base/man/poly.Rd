@@ -7,6 +7,7 @@
 \usage{
 poly(x, \dots, degree = 1, coefs = NULL)
 polym(\dots, degree = 1)
+
 \method{predict}{poly}(object, newdata, \dots)
 }
 \description{
@@ -44,7 +45,8 @@ polym(\dots, degree = 1)
   
   The orthogonal polynomial is summarized by the coefficients, which can
   be used to evaluate it via the three-term recursion given in Kennedy
-  \& Gentle (1980, pp. 343-4), and use in the ``predict'' part of the code.
+  \& Gentle (1980, pp. 343-4), and use in the \dQuote{predict} part of
+  the code.
 }
 \note{
   This routine is intended for statistical purposes such as

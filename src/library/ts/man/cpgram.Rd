@@ -11,7 +11,7 @@
 }
 \usage{
 cpgram(ts, taper=0.1, main=
-         paste("Series: ", deparse(substitute(ts))), ci.col="blue")
+       paste("Series: ", deparse(substitute(ts))), ci.col="blue")
 }
 \arguments{
   \item{ts}{a univariate time series}
@@ -27,7 +27,7 @@ cpgram(ts, taper=0.1, main=
 }
 \author{B.D. Ripley}
 \note{
-  From package \file{MASS}.
+  From package \pkg{MASS}.
 }
 \examples{
 par(pty = "s", mfrow = c(1,2))

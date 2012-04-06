@@ -92,6 +92,17 @@ FUNTAB R_FunTab[] =
 {"return",	do_return,	0,	0,	-1,	{PP_RETURN,  PREC_FN,	  0}},
 {"stop",	do_stop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 {"warning",	do_warning,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+#ifdef NEW_CONDITION_HANDLING
+{".addCondHands",do_addCondHands,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	  0}},
+{".resetCondHands",do_resetCondHands,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	  0}},
+{".signalCondition",do_signalCondition,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	  0}},
+{".dfltStop",do_dfltStop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{".dfltWarn",do_dfltWarn,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{".addRestart",do_addRestart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
+{".getRestart",do_getRestart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
+{".invokeRestart",do_invokeRestart,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+#endif
+{".addTryHandlers",do_addTryHandlers,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	  0}},
 {"geterrmessage",do_geterrmessage, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	  0}},
 {"restart",	do_restart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {"function",	do_function,	0,	0,	-1,	{PP_FUNCTION,PREC_FN,	  0}},
@@ -418,8 +429,8 @@ FUNTAB R_FunTab[] =
 {"max",		do_summary,	3,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"prod",	do_summary,	4,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"range",	do_range,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"cov",		do_cov,		0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"cor",		do_cov,		1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"cov",		do_cov,		0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"cor",		do_cov,		1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"cumsum",	do_cum,		1,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"cumprod",	do_cum,		2,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -432,7 +443,7 @@ FUNTAB R_FunTab[] =
 {"as.vector",	do_asvector,	0,	10,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"paste",	do_paste,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"format",	do_format,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"format.info",	do_formatinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"format.info",	do_formatinfo,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"cat",		do_cat,		0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"call",	do_call,	0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"do.call",	do_docall,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -449,10 +460,10 @@ FUNTAB R_FunTab[] =
 {"strsplit",	do_strsplit,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"abbreviate",	do_abbrev,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.names",	do_makenames,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"grep",	do_grep,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"grep",	do_grep,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"sub",		do_gsub,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"gsub",	do_gsub,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"regexpr",	do_regexpr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"regexpr",	do_regexpr,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"grep.perl",	do_pgrep,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"sub.perl",    do_pgsub,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"gsub.perl",	do_pgsub,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -462,6 +473,7 @@ FUNTAB R_FunTab[] =
 {"toupper",	do_toupper,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"chartr",	do_chartr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"sprintf",	do_sprintf,	1,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"make.unique",	do_makeunique,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 
 
 /* Type Checking (typically implemented in ./coerce.c ) */
@@ -480,12 +492,10 @@ FUNTAB R_FunTab[] =
 {"is.expression",do_is,		EXPRSXP,1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"is.object",	do_is,		50,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"is.factor",	do_is,		75,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"is.numeric",	do_is,		100,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.matrix",	do_is,		101,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.array",	do_is,		102,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"is.ts",	do_is,		103,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"is.atomic",	do_is,		200,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.recursive",do_is,		201,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -506,7 +516,7 @@ FUNTAB R_FunTab[] =
 /* Miscellaneous */
 
 {"proc.time",	do_proctime,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"gc.time",	do_gctime,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"gc.time",	do_gctime,	0,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"Version",	do_version,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"machine",	do_machine,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 /*{"Machine",	do_Machine,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},*/
@@ -538,23 +548,13 @@ FUNTAB R_FunTab[] =
 {"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"chooseFiles", do_chooseFiles, 0,  11, 5,  {PP_FUNCALL, PREC_FN,   0}},
 #endif
-#ifdef Macintosh
-{"unlink",	do_unlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"int.unzip",	do_int_unzip,	0,	11,    -1,	{PP_FUNCALL, PREC_FN,	0}},
-{"dir.create",	do_dircreate,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"file.edit",	do_fileedit,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"new.file",	do_newfile,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"add.menu.cmd",do_addmenucmd,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"del.menu.cmd",do_delmenucmd,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"get.menu.cmd",do_getmenucmd,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"get.num.cmd",	do_getnumcmd,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"del.num.cmd",	do_delnumcmd,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"del.usr.cmd",	do_delusrcmd,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+#if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
-{"truepath",	do_truepath,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-#endif
-#if defined(Unix) && defined(HAVE_AQUA)
-{"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
+{"pkgbrowser",	do_browsepkgs,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"data.manager",	do_datamanger,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"package.manager",	do_packagemanger,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"hsbrowser",	do_hsbrowser,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 {"parse",	do_parse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"save",	do_save,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -612,6 +612,7 @@ FUNTAB R_FunTab[] =
 {"is.unsorted",	do_isunsorted,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"psort",	do_psort,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"qsort",	do_qsort,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"radixsort",	do_radixsort,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"order",	do_order,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rank",	do_rank,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"missing",	do_missing,	1,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -627,6 +628,7 @@ FUNTAB R_FunTab[] =
 {"args",	do_args,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"formals",	do_formals,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"body",	do_body,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"bodyCode",	do_bodyCode,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"globalenv",	do_globalenv,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment",	do_envir,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment<-",do_envirgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
@@ -700,7 +702,7 @@ FUNTAB R_FunTab[] =
 {"XFig",	do_XFig,	0,	111,   11,	{PP_FUNCALL, PREC_FN,	0}},
 {"PDF",		do_PDF,		0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
+{"devga",	do_devga,	0,	111,   13,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #ifdef Unix
 {"X11",		do_X11,		0,	111,	8,	{PP_FUNCALL, PREC_FN,	0}},
@@ -708,15 +710,10 @@ FUNTAB R_FunTab[] =
 {"GTK",		do_GTK,		0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"Quartz",	do_Quartz,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
-#ifdef Macintosh
-{"Macintosh",	do_Macintosh,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"applescript",	do_applescript,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"Quartz",	do_Quartz,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
-#endif
 
 /* Graphics */
 
-{"dev.control",	do_devcontrol,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"dev.control",	do_devcontrol,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"dev.copy",	do_devcopy,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"dev.cur",	do_devcur,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	0}},
 /*
@@ -802,6 +799,17 @@ FUNTAB R_FunTab[] =
 {"format.POSIXlt",do_formatPOSIXlt,0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"strptime",	do_strptime,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 
+#ifdef BYTECODE
+{"mkCode",     do_mkcode,       0,      11,     2,      {PP_FUNCALL, PREC_FN, 0}},
+{"bcClose",    do_bcclose,      0,      11,     3,      {PP_FUNCALL, PREC_FN, 0}},
+{"is.builtin.internal",    do_is_builtin_internal,      0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
+{"disassemble", do_disassemble,     0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
+{"bcVersion", do_bcversion,     0,      11,     0,      {PP_FUNCALL, PREC_FN, 0}},
+{"load.from.file", do_loadfile, 0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
+{"save.to.file", do_savefile,   0,      11,     3,      {PP_FUNCALL, PREC_FN, 0}},
+{"putconst", do_putconst,       0,      11,     2,      {PP_FUNCALL, PREC_FN, 0}},
+#endif
+
 /* Connections */
 {"stdin", 	do_stdin,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"stdout", 	do_stdout,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
@@ -829,8 +837,9 @@ FUNTAB R_FunTab[] =
 {"truncate", 	do_truncate,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBack", 	do_pushback,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBackLength",do_pushbacklength,0,  11,     1,      {PP_FUNCALL, PREC_FN,	0}},
-{"textConnection",do_textconnection,0,	11,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"textConnection",do_textconnection,0,	11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"socketConnection",do_sockconn,0,	11,     6,      {PP_FUNCALL, PREC_FN,	0}},
+{"sockSelect",do_sockselect,0,	11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"getAllConnections",do_getallconnections,0,11, 0,      {PP_FUNCALL, PREC_FN,	0}},
 {"summary.connection",do_sumconnection,0,11,    1,      {PP_FUNCALL, PREC_FN,	0}},
 {"download", 	do_download,	0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
@@ -846,26 +855,21 @@ FUNTAB R_FunTab[] =
 {"setToCConverterActiveStatus", do_setToCConverterActiveStatus, 0, 11, 2, {PP_FUNCALL, PREC_FN, 0}},
 {"removeToCConverterActiveStatus", do_setToCConverterActiveStatus, 1, 11, 1, {PP_FUNCALL, PREC_FN, 0}},
 
-#ifdef ENVIRONMENT_LOCKING
 {"lockEnvironment", do_lockEnv,		0, 11,  2,      {PP_FUNCALL, PREC_FN,	0}},
 {"environmentIsLocked",	do_envIsLocked,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
-#endif
-#ifdef FANCY_BINDINGS
 {"lockBinding", do_lockBnd,		0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"unlockBinding", do_lockBnd,		1, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"bindingIsLocked", do_bndIsLocked,	0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"makeActiveBinding", do_mkActiveBnd,	0, 11,	3,      {PP_FUNCALL, PREC_FN,	0}},
 {"bindingIsActive", do_bndIsActive,	0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"mkUnbound",	do_mkUnbound,		0, 11,	1,      {PP_FUNCALL, PREC_FN,	0}},
-#endif
-#ifdef EXPERIMENTAL_NAMESPACES
 {"isNamespaceEnv",do_isNSEnv,		0, 11,	1,      {PP_FUNCALL, PREC_FN,	0}},
 {"registerNamespace",do_regNS,		0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"unregisterNamespace",do_unregNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getRegisteredNamespace",do_getRegNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getNamespaceRegistry",do_getNSRegistry, 0, 11, 0,     {PP_FUNCALL, PREC_FN,	0}},
 {"importIntoEnv",do_importIntoEnv, 0, 11, 4,     {PP_FUNCALL, PREC_FN,	0}},
-#endif
+
 
 {NULL,		NULL,		0,	0,	0,	{0,	PREC_FN,	0}},
 };
@@ -898,23 +902,6 @@ int StrToInternal(char *s)
 	if (strcmp(s, R_FunTab[i].name) == 0) return i;
     return 0;
 }
-
-#ifdef OLD
-/* string hashing */
-int hashpjw(char *s)
-{
-    char *p;
-    unsigned h = 0, g;
-    for (p = s; *p; p = p + 1) {
-	h = (h << 4) + (*p);
-	if ((g = h & 0xf0000000) != 0) {
-	    h = h ^ (g >> 24);
-	    h = h ^ g;
-	}
-    }
-    return h % HSIZE;
-}
-#endif
 
 static void installFunTab(int i)
 {
@@ -1000,6 +987,9 @@ void InitNames()
     /*  Unbound values which are to be preserved through GCs */
     R_PreciousList = R_NilValue;
     framenames = R_NilValue;
+#ifdef BYTECODE
+    R_initialize_bcode();
+#endif
 }
 
 

@@ -1,4 +1,4 @@
-## $Id: splineClasses.R,v 1.10 2003/02/01 18:36:52 ripley Exp $
+## $Id: splineClasses.R,v 1.12 2003/08/10 10:08:33 ripley Exp $
 ##
 ## Classes and methods for determining and manipulating interpolation
 ## splines.
@@ -343,7 +343,6 @@ predict.bSpline <- function(object, x, nseg = 50, deriv = 0, ...)
 
 predict.nbSpline <- function(object, x, nseg = 50, deriv = 0, ...)
 {
-    oclass <- oldClass(object)
     value <- NextMethod("predict")
     if(!any(is.na(value$y))) # when x were inside knots
         return(value)
@@ -429,9 +428,6 @@ predict.ppolySpline <- function(object, x, nseg = 50, deriv = 0, ...)
 {
     knots <- splineKnots(object)
     nknot <- length(knots)
-    coeff <- coef(object)
-    cdim <- dim(coeff)
-    ord <- cdim[2]
     period <- object$period
     if(missing(x))
         x <- seq(knots[1], knots[1] + period, length = nseg + 1)

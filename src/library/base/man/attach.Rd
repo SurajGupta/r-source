@@ -5,8 +5,9 @@ attach(what, pos = 2, name = deparse(substitute(what)))
 }
 \alias{attach}
 \arguments{
-  \item{what}{``database''. This may currently be a \code{data.frame} or
-    \code{list} or a \R data file created with \code{\link{save}}.}
+  \item{what}{\dQuote{database}.  This may currently be a
+    \code{data.frame} or \code{list} or a \R data file created with
+    \code{\link{save}}.}
   \item{pos}{integer specifying position in \code{\link{search}()} where
     to attach.}
   \item{name}{alternative way to specify the database to be attached.}
@@ -51,16 +52,16 @@ attach(what, pos = 2, name = deparse(substitute(what)))
 }
 \seealso{
   \code{\link{library}}, \code{\link{detach}}, \code{\link{search}},
-  \code{\link{objects}}, \code{\link{environment}}.
+  \code{\link{objects}}, \code{\link{environment}}, \code{\link{with}}.
 }
 \examples{
 data(women)
-summary(women$height) ## refers to variable `height' in the data frame
+summary(women$height) ## refers to variable 'height' in the data frame
 attach(women)
 summary(height)      ## The same variable now available by name
 height <- height*2.54  ## Don't do this. It creates a new variable
 detach("women")
-summary(height)      ## The new variable created by modifying `height'
+summary(height)      ## The new variable created by modifying 'height'
 rm(height)
 }
 \keyword{data}

@@ -24,7 +24,7 @@
 
 #include <Rconfig.h>
 #define MATHLIB_PRIVATE
-#include <R_ext/Mathlib.h>
+#include <Rmath.h>
 #undef  MATHLIB_PRIVATE
 #include <R_ext/RS.h>
 
@@ -43,17 +43,6 @@
 #define ML_NEGINF	R_NegInf
 #define ML_NAN		R_NaN
 
-#ifdef IEEE_754
-#define ML_ERROR(x)	/* nothing */
-#define ML_UNDERFLOW	(DBL_MIN * DBL_MIN)
-#define ML_VALID(x)	(!ISNAN(x))
-#else
-void ml_error(int n);
-#define ML_ERROR(x)	ml_error(x)
-#define ML_UNDERFLOW	0
-#define ML_VALID(x)	(errno == 0)
-#endif
-
 #else
 /* Mathlib standalone */
 
@@ -64,7 +53,11 @@ void ml_error(int n);
 # define MATHLIB_WARNING3(fmt,x,x2,x3)	printf(fmt,x,x2,x3)
 # define MATHLIB_WARNING4(fmt,x,x2,x3,x4) printf(fmt,x,x2,x3,x4)
 
-#define ISNAN(x)       R_IsNaNorNA(x)
+#ifdef IEEE_754
+# define ISNAN(x) (isnan(x)!=0)
+#else
+# define ISNAN(x)      R_IsNaNorNA(x)
+#endif
 #define R_FINITE(x)    R_finite(x)
 int R_IsNaNorNA(double);
 int R_finite(double);

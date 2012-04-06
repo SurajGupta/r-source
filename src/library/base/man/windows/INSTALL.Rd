@@ -27,12 +27,12 @@
   CRAN (these are then extracted in a temporary directory
   \file{R.INSTALL} of the current directory).
 
-  If the option \code{--save} is used, the installation procedure
+  If the option \option{--save} is used, the installation procedure
   creates a binary image of the package code, which is then loaded when
   the library is attached, rather than evaluating the package source at
   that time.  Having a file \code{install.R} in the package directory
   makes this the default behavior for the package (option
-  \code{--no-save} overrides).  You may need \code{--save} if your
+  \option{--no-save} overrides).  You may need \option{--save} if your
   package requires other packages to evaluate its own source.  If the
   file \file{install.R} is non-empty, it should contain R expressions to
   be executed when the package is attached, after loading the saved
@@ -42,7 +42,7 @@
   use \code{Rcmd check [-l lib] <pkg>}: use \code{Rcmd check --help}
   for more information.
 
-  Which forms of help are produced is controlled by the \code{--docs}
+  Which forms of help are produced is controlled by the \option{--docs}
   option which takes values \code{none} or \code{normal} (text and HTML)
   or \code{chm} (the default, text, HTML and CHTML) or \code{winhlp} or
   \code{all} (adding old-style Windows \code{.hlp} files, no longer tested).
@@ -53,15 +53,17 @@ Packages that require the methods package, and that use functions such as
 \code{\link[methods]{setMethod}} or \code{\link[methods]{setClass}},
 should be installed by creating a binary image.
 
-The package should require the methods package, both during installation
-and when the user attaches the package.  A good solution for most
-cases is to include the line \code{require("methods")} twice, once at
-the beginning of the package's R source, and once in the file
-\file{install.R} in the package directory (the top-level directory, \emph{not}
-in the \file{R} directory below that).  The \file{install.R} file
-causes an image to be saved, and the contents will ensure that methods
-are available when
-the package is attached.
+  The presence of a file named
+  \file{install.R} in the package's main directory causes an image to
+  be saved.  Note that the file is not in the \file{R} subdirectory: all
+  the code in that subdirectory is used to construct the binary image.
+
+  Normally, the file \file{install.R} will be empty; if it does contain R expressions
+  these will be evaluated when the package is attached, e.g. by a call to
+  the function \code{\link{library}}.  (Specifically, the source code
+  evaluated for a package with a saved image consists of a suitable
+  definition of \code{.First.lib} to ensure loading of the saved
+  image, followed by the R code in file \file{install.R}, if any.)
 
 }
 \seealso{

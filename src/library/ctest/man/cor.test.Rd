@@ -2,6 +2,11 @@
 \alias{cor.test}
 \alias{cor.test.default}
 \alias{cor.test.formula}
+\concept{Kendall correlation coefficient}
+\concept{Kendall's tau}
+\concept{Pearson correlation coefficient}
+\concept{Spearman correlation coefficient}
+\concept{Spearman's rho}
 \title{Test for Association/Correlation Between Paired Samples}
 \description{
   Test for association between paired samples, using one of
@@ -9,10 +14,13 @@
   Kendall's \eqn{\tau}{tau} or Spearman's \eqn{\rho}{rho}.
 }
 \usage{
+cor.test(x, \dots)
+
 \method{cor.test}{default}(x, y,
          alternative = c("two.sided", "less", "greater"),
          method = c("pearson", "kendall", "spearman"),
          exact = NULL, conf.level = 0.95, \dots)
+
 \method{cor.test}{formula}(formula, data, subset, na.action, \dots)
 }
 \arguments{

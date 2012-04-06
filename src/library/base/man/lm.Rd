@@ -1,7 +1,7 @@
 \name{lm}
 \alias{lm}
 \alias{print.lm}
-\alias{print.lm.null}
+%\alias{print.lm.null}
 \title{Fitting Linear Models}
 \description{
   \code{lm} is used to fit linear models.
@@ -35,7 +35,7 @@ lm(formula, data, subset, weights, na.action,
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset. The ``factory-fresh''
+    \code{\link{na.fail}} if that is unset. The \dQuote{factory-fresh}
     default is \code{\link{na.omit}}.}
 
   \item{method}{the method to be used; for fitting, currently only
@@ -46,8 +46,8 @@ lm(formula, data, subset, weights, na.action,
     components of the fit (the model frame, the model matrix, the
     response, the QR decomposition) are returned.}
 
-  \item{singular.ok}{logical, defaulting to
-    \code{TRUE}. \emph{\code{FALSE} is not yet implemented}.}
+  \item{singular.ok}{logical. If \code{FALSE} (the default in S but
+    not in \R) a singular fit is an error.}
 
   \item{contrasts}{an optional list. See the \code{contrasts.arg}
     of \code{model.matrix.default}.}
@@ -73,6 +73,7 @@ lm(formula, data, subset, weights, na.action,
   indicates the \emph{cross} of \code{first} and \code{second}.  This is
   the same as \code{first + second + first:second}.  If \code{response} 
   is a matrix a linear model is fitted to each column of the matrix.
+  See \code{\link{model.matrix}} for some further details.
 
   \code{lm} calls the lower level functions \code{\link{lm.fit}}, etc,
   see below, for the actual numerical computations.  For programming
@@ -81,8 +82,6 @@ lm(formula, data, subset, weights, na.action,
 \value{
   \code{lm} returns an object of \code{\link[base]{class}} \code{"lm"} or for
   multiple responses of class \code{c("mlm", "lm")}.
-%% actually also c("lm.null","lm") and c("mlm.null", "lm.null", "mlm", "lm")
-%% but I'm still not sure that this should be `it' for the future. {MM}.
 
   The functions \code{summary} and \code{\link{anova}} are used to
   obtain and print a summary and analysis of variance table of the

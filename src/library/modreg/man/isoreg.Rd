@@ -3,22 +3,18 @@
 \alias{isoreg}
 %\alias{fitted.isoreg}
 %\alias{residuals.isoreg}
-\alias{as.stepfun.isoreg}
 \description{
   Compute the isotonic (monotonely increasing nonparametric) least
   squares regression which is piecewise constant.
 }
 \usage{
 isoreg(x, y = NULL)
-%\method{fitted}{isoreg}(object, \dots)
-%\method{residuals}{isoreg}(object, \dots)
-\method{as.stepfun}{isoreg}(x, \dots)
 }
 \arguments{
-  \item{x, y}{coordinate vectors of the regression points.
-    Alternatively a single ``plotting'' structure can be
-    specified: see \code{\link{xy.coords}}.}
-  \item{object}{a \code{isoreg} object.}
+  \item{x, y}{in \code{isoreg}, coordinate vectors of the regression
+    points.  Alternatively a single \dQuote{plotting} structure can be
+    specified: see \code{\link{xy.coords}}.
+  }
   \item{\dots}{potentially further arguments passed to methods.}
 }
 \details{
@@ -27,7 +23,8 @@ isoreg(x, y = NULL)
   linear and the result is \eqn{m'(x)}, a step function with level
   changes at locations where the convex \eqn{m(x)} touches the
   cumulative data polygon and changes slope.\cr
-  \code{as.stepfun()} returns a \code{\link[stepfun]{stepfun}} object
+  \code{\link[stepfun]{as.stepfun}()} in \pkg{stepfun}
+  returns a \code{\link[stepfun]{stepfun}} object
   which can be more parsimonious.
 }
 \value{
@@ -38,7 +35,7 @@ isoreg(x, y = NULL)
   \item{yf}{fitted values corresponding to \emph{ordered} x values.}
   \item{yc}{cumulative y values corresponding to \emph{ordered} x values.}
   \item{iKnots}{integer vector giving indices where the fitted curve jumps,
-    i.e. where the convex minorant has kinks.}
+    i.e., where the convex minorant has kinks.}
   \item{isOrd}{logical indicating if original x values were ordered
     increasingly already.}
   \item{ord}{\code{if(!isOrd)}: integer permutation \code{\link{order}(x)} of
@@ -48,18 +45,18 @@ isoreg(x, y = NULL)
 \note{
   The code should be improved to accept \emph{weights} additionally and
   solve the corresponding weighted least squares problem.\cr
-  ``Patches are welcome!''
+  \dQuote{Patches are welcome!}
 }
 \references{
   Barlow, R. E., Bartholomew, D. J., Bremner, J. M., and Brunk, H. D. (1972)
   \emph{Statistical inference under order restrictions}; Wiley, London.
 
-  Robertson, T., Wright,F.T. and Dykstra, R.L. (1988)
+  Robertson, T., Wright,F. T. and Dykstra, R. L. (1988)
   \emph{Order Restricted Statistical Inference}; Wiley, New York.
 }
 %%\author{Original C code by Brian Ripley; all else: Martin Maechler}
 \seealso{the plotting method \code{\link{plot.isoreg}} with more examples;
-  \code{\link[MASS]{isoMDS}()} from the \code{MASS} package internally
+  \code{\link[MASS]{isoMDS}()} from the \pkg{MASS} package internally
   uses isotonic regression.
 }
 \examples{

@@ -1,14 +1,19 @@
 \name{library.dynam}
 \alias{library.dynam}
+\alias{library.dynam.unload}
 \alias{.dynLibs}
 \title{Loading Shared Libraries}
 \description{
   Load the specified file of compiled code if it has not been loaded
-  already.
+  already, or unloads it.
 }
 \usage{
 library.dynam(chname, package = .packages(), lib.loc = NULL,
-              verbose = getOption("verbose"), file.ext, \dots)
+              verbose = getOption("verbose"),
+              file.ext = .Platform$dynlib.ext, \dots)
+library.dynam.unload(chname, libpath,
+              verbose = getOption("verbose"),
+              file.ext = .Platform$dynlib.ext)
 .dynLibs(new)
 }
 \arguments{
@@ -18,6 +23,8 @@ library.dynam(chname, package = .packages(), lib.loc = NULL,
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through, or \code{NULL}.  The default value
     of \code{NULL} corresponds to all libraries currently known.}
+  \item{libpath}{the path to the loaded package whose shared library is
+    to be unloaded.}
   \item{verbose}{a logical value indicating whether an announcement
     is printed on the console before loading the shared library.  The
     default value is taken from the verbose entry in the system
@@ -32,10 +39,10 @@ library.dynam(chname, package = .packages(), lib.loc = NULL,
     libraries.}
 }
 \details{
-  This is designed to be used inside a package rather than at the
-  command line, and should really only be used inside
-  \code{\link{.First.lib}()}.  The system-specific extension 
-  for shared libraries
+  \code{library.dynam} is designed to be used inside a package rather
+  than at the command line, and should really only be used inside
+  \code{\link{.First.lib}} on \code{\link{.onLoad}}.  The
+  system-specific extension for shared libraries
 #ifdef unix
   (e.g., \file{.so} or \file{.sl} on Unix systems)
 #endif
@@ -43,6 +50,9 @@ library.dynam(chname, package = .packages(), lib.loc = NULL,
   (\file{.dll} on Windows)
 #endif
   should not be added.
+
+  \code{library.dynam.unload} is designed for use in \code{\link{.Last.lib}} or
+  \code{\link{.onUnload}}.
 
   \code{.dynLibs} is used for getting or setting the packages that have
   loaded shared libraries (using \code{library.dynam}).  Versions of \R
@@ -54,6 +64,8 @@ library.dynam(chname, package = .packages(), lib.loc = NULL,
   packages which have used it in the current \R session to load shared
   libraries.  This vector is returned as \code{\link{invisible}}, unless
   the \code{chname} argument is missing.
+
+  \code{library.dynam.unload} returns the updated character vector, invisibly.
 }
 \seealso{
   \code{\link{.First.lib}}, \code{\link{library}},
@@ -73,6 +85,6 @@ library.dynam(chname, package = .packages(), lib.loc = NULL,
   Wadsworth \& Brooks/Cole.
 }
 \examples{
-library.dynam()# which packages have been ``dynamically loaded''
+library.dynam() # which packages have been "dynamically loaded"
 }
 \keyword{data}

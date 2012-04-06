@@ -10,9 +10,6 @@ print.default <- function(x, digits = NULL, quote = TRUE, na.print = NULL,
                             noOpt))
 }
 
-
-print.atomic <- function(x, quote = TRUE, ...) print.default(x, quote=quote)
-
 print.matrix <- print.default  ## back-compatibility
 
 prmatrix <-
@@ -67,7 +64,7 @@ print.listof <- function(x, ...)
 print.simple.list <- function(x, ...)
     print(noquote(cbind("_"=unlist(x))), ...)
 
-print.coefmat <-
+printCoefmat <-
     function(x, digits = max(3, getOption("digits") - 2),
 	     signif.stars = getOption("show.signif.stars"),
 	     dig.tst = max(1, min(5, digits - 1)),
@@ -75,7 +72,7 @@ print.coefmat <-
 	     P.values = NULL,
 	     has.Pvalue = nc >= 4 && substr(colnames(x)[nc],1,3) == "Pr(",
              eps.Pvalue = .Machine$double.eps,
-	     na.print = "", ...)
+	     na.print = "NA", ...)
 {
     ## For printing ``coefficient matrices'' as they are in summary.xxx(.) where
     ## xxx in {lm, glm, aov, ..}. (Note: summary.aov(.) gives a class "anova").
@@ -114,9 +111,12 @@ print.coefmat <-
     ok <- !(ina <- is.na(xm))
     if(length(cs.ind)>0) {
 	acs <- abs(coef.se <- xm[, cs.ind, drop=FALSE])# = abs(coef. , stderr)
-	## #{digits} BEFORE decimal point -- for min/max. value:
-	digmin <- 1+floor(log10(range(acs[acs != 0], na.rm= TRUE)))
-	Cf[,cs.ind] <- format(round(coef.se,max(1,digits-digmin)),digits=digits)
+        if(any(is.finite(acs))) {
+            ## #{digits} BEFORE decimal point -- for min/max. value:
+            digmin <- 1+floor(log10(range(acs[acs != 0], na.rm= TRUE)))
+            Cf[,cs.ind] <- format(round(coef.se, max(1,digits-digmin)),
+                                  digits=digits)
+        }
     }
     if(length(tst.ind)>0)
 	Cf[, tst.ind]<- format(round(xm[, tst.ind], dig=dig.tst), digits=digits)
@@ -159,7 +159,7 @@ print.anova <- function(x, digits = max(getOption("digits") - 2, 3),
 {
     if (!is.null(heading <- attr(x, "heading")))
 	cat(heading, sep = "\n")
-    nc <- (d <- dim(x))[2]
+    nc <- dim(x)[2]
     if(is.null(cn <- colnames(x))) stop("anova object must have colnames(.)!")
     ncn <- nchar(cn)
     has.P <- substr(cn[nc],1,3) == "Pr(" # P-value as last column
@@ -172,11 +172,11 @@ print.anova <- function(x, digits = max(getOption("digits") - 2, 3),
     if(length(i <- which(substr(cn,ncn-1,ncn) == "Df")))
 	zap.i <- zap.i[!(zap.i %in% i)]
 
-    print.coefmat(x, digits = digits, signif.stars = signif.stars,
-                  has.Pvalue = has.P, P.values = has.P,
-                  cs.ind = NULL, zap.ind = zap.i, tst.ind= tst.i,
-                  na.print = "", # not yet in print.matrix:  print.gap = 2,
-                  ...)
+    printCoefmat(x, digits = digits, signif.stars = signif.stars,
+                 has.Pvalue = has.P, P.values = has.P,
+                 cs.ind = NULL, zap.ind = zap.i, tst.ind= tst.i,
+                 na.print = "", # not yet in print.matrix:  print.gap = 2,
+                 ...)
     invisible(x)
 }
 

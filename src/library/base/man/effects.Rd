@@ -2,7 +2,8 @@
 \title{Effects from Fitted Model}
 \usage{
 effects(object, \dots)
-effects.lm(object, set.sign=FALSE, \dots)
+
+\method{effects}{lm}(object, set.sign=FALSE, \dots)
 }
 \alias{effects}
 \alias{effects.lm}
@@ -18,8 +19,8 @@ effects.lm(object, set.sign=FALSE, \dots)
 }
 \description{
   Returns (orthogonal) effects from a fitted model, usually a linear
-  model. This is a generic function, but currently only has a method for
-  objects inheriting from class \code{"lm"}.
+  model. This is a generic function, but currently only has a methods for
+  objects inheriting from classes \code{"lm"} and \code{"glm"}.
 }
 \details{
   For a linear model fitted by \code{\link{lm}} or \code{\link{aov}},
@@ -29,6 +30,8 @@ effects.lm(object, set.sign=FALSE, \dots)
   process. The first \eqn{r} (the rank of the model) are associated with
   coefficients and the remainder span the space of residuals (but are
   not associated with particular residuals).
+
+  Empty models do not have effects.
 }
 \value{
   A (named) numeric vector of the same length as
@@ -37,8 +40,8 @@ effects.lm(object, set.sign=FALSE, \dots)
 
   The first \eqn{r} rows are labelled by the corresponding coefficients,
   and the remaining rows are unlabelled.  Note that in rank-deficient
-  models the ``corresponding''
-  coefficients will be in a different order if pivoting occurred.
+  models the \dQuote{corresponding} coefficients will be in a different
+  order if pivoting occurred.
 }
 \references{
   Chambers, J. M. and Hastie, T. J. (1992)

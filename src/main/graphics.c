@@ -2195,9 +2195,6 @@ static int	fontmainsave;	/* font.main */
 static int	fontlabsave;	/* font.lab */
 static int	fontsubsave;	/* font.sub */
 static int	fontaxissave;	/* font.axis */
-#ifdef NO
-   static int	csisave;	/* line spacing in inches */
-#endif
 static int	errsave;	/* error mode */
 static int	labsave[3];	/* axis labelling parameters */
 static int	lassave;	/* label style */
@@ -2348,7 +2345,11 @@ void GCheckState(DevDesc *dd)
     if(Rf_gpptr(dd)->state == 0)
 	error("plot.new has not been called yet");
     if (!Rf_gpptr(dd)->valid)
+#ifdef OLD
 	onintr();
+#else
+        error("invalid graphics state");
+#endif
 }
 
 /*-------------------------------------------------------------------
@@ -3326,23 +3327,6 @@ void GCircle(double x, double y, int coords,
     }
 }
 
-#ifdef OLD
-/* radius is specified in INCHES */
-void GCircle(double x, double y, int coords,
-	     double radius, int col, int border, DevDesc *dd)
-{
-    double ir;
-    ir = radius/Rf_gpptr(dd)->ipr[0];
-    ir = (ir > 0) ? ir : 1;
-    if (Rf_dpptr(dd)->canClip) {
-	GClip(dd);
-	clipCircle(x, y, coords, ir, col, border, 1, dd);
-    }
-    else
-	clipCircle(x, y, coords, ir, col, border, 0, dd);
-}
-#endif
-
 /* Return a code indicating how the rectangle should be clipped.
    0 means the rectangle is totally outside the clip region
    1 means the rectangle is totally inside the clip region
@@ -3478,12 +3462,6 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
 /* Compute string width. */
 double GStrWidth(char *str, GUnit units, DevDesc *dd)
 {
-#ifdef OLD
-    double w = Rf_dpptr(dd)->strWidth(str, dd);
-    if (units != DEVICE)
-	w = GConvertXUnits(w, DEVICE, units, dd);
-    return w;
-#else
     double w;
     static char *sbuf = NULL;
 
@@ -3530,7 +3508,6 @@ double GStrWidth(char *str, GUnit units, DevDesc *dd)
 	}
     }
     return w;
-#endif
 }
 
 
@@ -4015,12 +3992,9 @@ void GPretty(double *lo, double *up, int *ndiv)
 #define TRC1	1.34677368708859836060		/* TRC0 * sqrt(3) / 2 */
 #define TRC2	0.77756015077810708036		/* TRC0 / 2 */
 #define CMAG	1.0				/* Circle magnifier, now defunct */
-#ifdef OLDSYMSIZE
-#define GSTR_0  GStrWidth("0", INCHES, dd)
-#else
 #define GSTR_0  Rf_dpptr(dd)->cra[1] * 0.5 * Rf_gpptr(dd)->ipr[0] * Rf_gpptr(dd)->cex
 /* NOTE: This cex is already multiplied with cexbase */
-#endif
+
 /* Draw one of the R special symbols. */
 void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 {
@@ -4399,52 +4373,79 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 /* Based on HSV_TO_RGB from Foley and Van Dam First Ed. Page 616 */
 /* See Alvy Ray Smith, Color Gamut Transform Pairs, SIGGRAPH '78 */
 
-void hsv2rgb(double *h, double *s, double *v, double *r, double *g, double *b)
+void hsv2rgb(double h, double s, double v, double *r, double *g, double *b)
 {
     double f, p, q, t;
     int i;
 
-    f = modf(*h * 6.0, &t);
+    f = modf(h * 6.0, &t);
     i = ((int) t) % 6;
 
-    p = *v * (1 - *s);
-    q = *v * (1 - *s * f);
-    t = *v * (1 - (*s * (1 - f)));
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - (s * (1 - f)));
     switch (i) {
-    case 0:
-	*r = *v;
-	*g = t;
-	*b = p;
-	break;
-    case 1:
-	*r = q;
-	*g = *v;
-	*b = p;
-	break;
-    case 2:
-	*r = p;
-	*g = *v;
-	*b = t;
-	break;
-    case 3:
-	*r = p;
-	*g = q;
-	*b = *v;
-	break;
-    case 4:
-	*r = t;
-	*g = p;
-	*b = *v;
-	break;
-    case 5:
-	*r = *v;
-	*g = p;
-	*b = q;
-	break;
+    case 0:	*r = v;		*g = t;		*b = p;	break;
+    case 1:	*r = q;		*g = v;		*b = p;	break;
+    case 2:	*r = p;		*g = v;		*b = t;	break;
+    case 3:	*r = p;		*g = q;		*b = v; break;
+    case 4:	*r = t;		*g = p;		*b = v; break;
+    case 5:	*r = v;		*g = p;		*b = q;	break;
     default:
 	error("bad hsv to rgb color conversion");
     }
 }
+
+/* rgb2hsv() -- the reverse (same reference as above
+ *	this implementation is adapted from code by Nicholas Lewin-Koh.
+ */
+void rgb2hsv(double r, double g, double b,
+	     double *h, double *s, double *v)
+{
+    double min, max, delta;
+
+    /* Compute  min(r,g,b) and max(r,g,b): */
+    min = max = r;
+    if(min > g) { /* g < r */
+	if(b < g)
+	    min = b;/* &  max = r */
+        else { /* g <= b, g < r */
+	    min = g;
+	    if(b > r) max = g; /* else : g <= b <=r */
+	}
+    } else { /* r <= g */
+	if(b > g)
+	    max = b;/* &  min = r */
+        else { /* b,r <= g */
+	    max = g;
+	    if(b < r) min = b; /* else : r <= b <= g */
+	}
+    }
+
+    *v = max;
+    if( max == 0 || (delta = max - min) == 0) {
+	/*   r = g = b : "gray" : s = 0, h is undefined */
+	*s = 0;
+	*h = NA_REAL;
+	return;
+    }
+    /* else : */
+    *s = delta / max;
+
+    if( r == max )
+	*h = ( g - b ) / delta;  /* between yellow & magenta */
+    else if( g == max )
+	*h = 2 + ( b - r ) / delta; /* between cyan & yellow*/
+    else
+	*h = 4 + ( r - g ) / delta; /* between magenta & cyan */
+
+    *h *= 60; /* degrees */
+    if(*h < 0)
+	*h += 360;
+    *h /= 360;
+    return;
+}
+
 
 /*
  *  Color Specification
@@ -5368,7 +5369,8 @@ static int nlinetype = (sizeof(linetype)/sizeof(LineTYPE)-2);
 unsigned int LTYpar(SEXP value, int ind)
 {
     char *p;
-    int i, code, shift, digit;
+    int i, code, shift, digit, len;
+    double rcode;
 
     if(isString(value)) {
 	for(i = 0; linetype[i].name; i++) { /* is it the i-th name ? */
@@ -5378,7 +5380,11 @@ unsigned int LTYpar(SEXP value, int ind)
 	/* otherwise, a string of hex digits: */
 	code = 0;
 	shift = 0;
-	for(p = CHAR(STRING_ELT(value, ind)); *p; p++) {
+	p = CHAR(STRING_ELT(value, ind));
+	len = strlen(p);
+	if(len < 2 || len > 8 || len % 2 == 1)
+	    error("invalid line type: must be length 2, 4, 6 or 8");
+	for(; *p; p++) {
 	    digit = hexdigit(*p);
 	    code  |= (digit<<shift);
 	    shift += 4;
@@ -5387,17 +5393,18 @@ unsigned int LTYpar(SEXP value, int ind)
     }
     else if(isInteger(value)) {
 	code = INTEGER(value)[ind];
-#define LTY_do_int				\
-	if(code==NA_INTEGER || code < 0)	\
-	    return NA_INTEGER;			\
-	if (code > 0)				\
-	    code = (code-1) % nlinetype + 1;	\
+	if(code == NA_INTEGER || code < 0) error("invalid line type");
+	if (code > 0)
+	    code = (code-1) % nlinetype + 1;
 	return linetype[code].pattern;
-	LTY_do_int;
     }
     else if(isReal(value)) {
-	code = REAL(value)[ind];
-	LTY_do_int;
+	rcode = REAL(value)[ind];
+	if(!R_FINITE(rcode) || rcode < 0) error("invalid line type");
+	code = rcode;
+	if (code > 0)
+	    code = (code-1) % nlinetype + 1;
+	return linetype[code].pattern;
     }
     else {
 	error("invalid line type"); /*NOTREACHED, for -Wall : */ return 0;
@@ -5952,8 +5959,6 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->fig[3] = Rf_dpSavedptr(dd)->fig[3];
     Rf_dpptr(dd)->fin[0] = Rf_dpSavedptr(dd)->fin[0];
     Rf_dpptr(dd)->fin[1] = Rf_dpSavedptr(dd)->fin[1];
-    Rf_dpptr(dd)->fin[2] = Rf_dpSavedptr(dd)->fin[2];
-    Rf_dpptr(dd)->fin[3] = Rf_dpSavedptr(dd)->fin[3];
     Rf_dpptr(dd)->fUnits = Rf_dpSavedptr(dd)->fUnits;
     Rf_dpptr(dd)->defaultFigure = Rf_dpSavedptr(dd)->defaultFigure;
     Rf_dpptr(dd)->mar[0] = Rf_dpSavedptr(dd)->mar[0];
@@ -6006,8 +6011,6 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->plt[3] = Rf_dpSavedptr(dd)->plt[3];
     Rf_dpptr(dd)->pin[0] = Rf_dpSavedptr(dd)->pin[0];
     Rf_dpptr(dd)->pin[1] = Rf_dpSavedptr(dd)->pin[1];
-    Rf_dpptr(dd)->pin[2] = Rf_dpSavedptr(dd)->pin[2];
-    Rf_dpptr(dd)->pin[3] = Rf_dpSavedptr(dd)->pin[3];
     Rf_dpptr(dd)->pUnits = Rf_dpSavedptr(dd)->pUnits;
     Rf_dpptr(dd)->defaultPlot = Rf_dpSavedptr(dd)->defaultPlot;
     Rf_dpptr(dd)->pty = Rf_dpSavedptr(dd)->pty;
@@ -6120,4 +6123,13 @@ void inhibitDisplayList(DevDesc *dd)
 	((GEDevDesc*) dd)->dev->displayListOn = FALSE;
     else
 	dd->displayListOn = FALSE;
+}
+
+void enableDisplayList(DevDesc *dd)
+{
+    GEinitDisplayList((GEDevDesc*) dd);
+    if (dd->newDevStruct)
+	((GEDevDesc*) dd)->dev->displayListOn = TRUE;
+    else
+	dd->displayListOn = TRUE;
 }

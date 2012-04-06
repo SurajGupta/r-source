@@ -1,23 +1,22 @@
 useDynLib(mva)
 
 export(as.dendrogram, as.dist, as.hclust, biplot, cancor, cmdscale,
-       cophenetic, cutree, dist, factanal, format.dist, hclust,
-       heatmap, kmeans, loadings, order.dendrogram, plclust, prcomp,
-       princomp, promax, rect.hclust, reorder, reorder.dendrogram,
-       screeplot, varimax)
+       cophenetic, cutree, dist, factanal, hclust, heatmap, kmeans,
+       loadings, order.dendrogram, plclust, prcomp, princomp, promax,
+       rect.hclust, reorder, screeplot, varimax)
 
-# methods which are documented but not exported
-# export(as.hclust.default, as.matrix.dist,
-#        biplot.princomp, cut.dendrogram,
-#        identify.hclust, plot.dendrogram, plot.hclust,
-#        print.dist, print.factanal,
-#        print.loadings, print.summary.princomp, str.dendrogram,
-#        summary.princomp)
+## <FIXME>
+## These used to be exported ... still needed?
+## export("format.dist", "plot.hclust", "princomp.formula", "reorder.dendrogram, ")
+## </FIXME>
 
-# package cluster calls
-export(plot.hclust)
-# using match.call needs
-export(princomp.formula)
+## methods which are documented but not exported
+## export(as.hclust.default, as.matrix.dist,
+##        biplot.princomp, cut.dendrogram,
+##        identify.hclust, plot.dendrogram, plot.hclust,
+##        print.dist, print.factanal,
+##        print.loadings, print.summary.princomp, str.dendrogram,
+##        summary.princomp)
 
 S3method("[[", dendrogram)
 S3method(as.dendrogram, hclust)
@@ -48,6 +47,7 @@ S3method(print, princomp)
 S3method(print, summary.prcomp)
 S3method(print, summary.princomp)
 S3method(reorder, dendrogram)
+S3method(rev, dendrogram)
 S3method(str, dendrogram)
 S3method(summary, prcomp)
 S3method(summary, princomp)

@@ -7,7 +7,7 @@
 }
 \usage{
 contrasts(x, contrasts = TRUE)
-contrasts(x, how.many) <- ctr
+contrasts(x, how.many) <- value
 }
 \arguments{
   \item{x}{a factor.}
@@ -15,7 +15,7 @@ contrasts(x, how.many) <- ctr
   \item{how.many}{How many contrasts should be made. Defaults to one
     less than the number of levels of \code{x}.  This need not be the
     same as the number of columns of \code{ctr}.}
-  \item{ctr}{either a matrix whose columns give coefficients for
+  \item{value}{either a matrix whose columns give coefficients for
     contrasts in the levels of \code{x}, or the (quoted) name of a
     function which computes such matrices.}
 }
@@ -53,7 +53,7 @@ contrasts(x, how.many) <- ctr
 }
 \examples{
 example(factor)
-(fff <- factor(ff))
+fff <- ff[, drop=TRUE]  # reduce to 5 levels.
 contrasts(fff) # treatment contrasts by default
 contrasts(C(fff, sum))
 contrasts(fff, contrasts = FALSE) # the 5x5 identity matrix

@@ -1,11 +1,7 @@
 \name{diag}
 \title{Matrix Diagonals}
-\synopsis{
-diag(x = 1, nrow, ncol = n)
-diag(x) <- value
-}
 \usage{
-diag(x = 1, nrow, ncol)
+diag(x = 1, nrow, ncol= )
 diag(x) <- value
 }
 \alias{diag}
@@ -40,7 +36,7 @@ diag(x) <- value
 \note{
   Using \code{diag(x)} can have unexpected effects if \code{x} is a
   vector that could be of length one. Use \code{diag(x, nrow =
-    length(x))} for consistent behaviour. 
+    length(x))} for consistent behaviour.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

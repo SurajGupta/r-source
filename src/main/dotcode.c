@@ -248,7 +248,7 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort, R_NativePrimitiveArgType typ
 	if(Fort) {
 	    /* only return one string: warned on the R -> Fortran step */
 	    strncpy(buf, (char*)p, 255);
-	    buf[256] = '\0';
+	    buf[255] = '\0';
 	    PROTECT(s = allocVector(type, 1));
 	    SET_STRING_ELT(s, 0, mkChar(buf));
 	    UNPROTECT(1);
@@ -302,38 +302,6 @@ comparePrimitiveTypes(R_NativePrimitiveArgType type, SEXP s, Rboolean dup)
 /* or Fortran code which is either statically or dynamically linked. */
 
 /* NB: despite its name, this leaves NAOK and DUP arguments on the list */
-#ifdef OLD
-static SEXP naoktrim(SEXP s, int * len, int *naok, int *dup)
-{
-    SEXP value;
-    if(s == R_NilValue) {
-	value = R_NilValue;
-	*naok = 0;
-	*dup = 1;
-	*len = 0;
-    }
-    else if(TAG(s) == NaokSymbol) {
-	value = naoktrim(CDR(s), len, naok, dup);
-	*naok = asLogical(CAR(s));
-	(*len)++;
-    }
-    else if(TAG(s) == DupSymbol) {
-	value = naoktrim(CDR(s), len, naok, dup);
-	*dup = asLogical(CAR(s));
-	(*len)++;
-    }
-    else if(TAG(s) == PkgSymbol) {
-	value = naoktrim(CDR(s), len, naok, dup);
-	strcpy(DLLname, CHAR(STRING_ELT(CAR(s), 0)));
-	return value;
-    }
-    else {
-	CDR(s) = naoktrim(CDR(s), len, naok, dup);
-	(*len)++;
-    }
-    return s;
-}
-#endif
 
 /* find NAOK and DUP, find and remove PACKAGE */
 static SEXP naokfind(SEXP args, int * len, int *naok, int *dup)
@@ -1259,11 +1227,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 	q++;
     }
 
-#ifdef Macintosh
-    if (!(fun = R_FindSymbol(buf, "", &symbol)))
-#else
     if (!(fun = R_FindSymbol(buf, DLLname, &symbol)))
-#endif /* Macintosh */
 	errorcall(call, "C/Fortran function name not in load table");
 
     if(symbol.symbol.c && symbol.symbol.c->numArgs > -1) {

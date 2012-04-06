@@ -22,22 +22,11 @@ fix(x, \dots)
 }
 \examples{
 \dontrun{
- ## Assume  `my.fun' is a user defined function :
+ ## Assume 'my.fun' is a user defined function :
  fix(my.fun)
  ## now my.fun is changed
  ## Also,
  fix(my.data.frame) # calls up data editor
  fix(my.data.frame, factor.mode="char") # use of ...
-}
-\testonly{
- if(.Platform$OS.type != "mac") {
-  oo <- options(editor="touch") # not really changing anything
-  fix(pi)
-  if(!is.numeric(pi) || length(pi)!=1 ||
-     !is.null(attributes(pi)) || abs(pi - 3.1415) > 1e-4)
-        stop("OOPS:  fix() is broken ...")
-  rm(pi); options(oo)
- }
-}
-}
+}}
 \keyword{utilities}

@@ -4,10 +4,10 @@
   <object name="rootObject" class="NSCustomObject" id="1">
     <string name="customClass">NSApplication</string>
   </object>
-  <array count="35" name="allObjects">
+  <array count="166" name="allObjects">
     <object class="IBCarbonMenu" id="29">
       <string name="title">main</string>
-      <array count="4" name="items">
+      <array count="7" name="items">
         <object class="IBCarbonMenuItem" id="185">
           <string name="title">R</string>
           <object name="submenu" class="IBCarbonMenu" id="184">
@@ -17,6 +17,7 @@
                 <string name="title">About R</string>
                 <int name="keyEquivalentModifier">0</int>
                 <ostype name="command">abou</ostype>
+                <string name="helpTagText">General information on this binary distribution of R for MacOSX</string>
               </object>
             </array>
             <string name="name">_NSAppleMenu</string>
@@ -27,15 +28,19 @@
           <object name="submenu" class="IBCarbonMenu" id="131">
             <string name="title">File</string>
             <array count="10" name="items">
-              <object class="IBCarbonMenuItem" id="139">
-                <string name="title">New</string>
-                <string name="keyEquivalent">n</string>
-                <ostype name="command">new </ostype>
-              </object>
               <object class="IBCarbonMenuItem" id="134">
-                <string name="title">Open...</string>
+                <string name="title">Source R Code...</string>
                 <string name="keyEquivalent">o</string>
                 <ostype name="command">open</ostype>
+              </object>
+              <object class="IBCarbonMenuItem" id="226">
+                <string name="title">Edit File...</string>
+                <ostype name="command">edtf</ostype>
+              </object>
+              <object class="IBCarbonMenuItem" id="227">
+                <string name="title">File Show...</string>
+                <string name="keyEquivalent">f</string>
+                <ostype name="command">fshw</ostype>
               </object>
               <object class="IBCarbonMenuItem" id="133">
                 <boolean name="separator">TRUE</boolean>
@@ -54,11 +59,6 @@
                 <string name="title">Save As...</string>
                 <string name="keyEquivalent">S</string>
                 <ostype name="command">svas</ostype>
-              </object>
-              <object class="IBCarbonMenuItem" id="132">
-                <string name="title">Revert</string>
-                <string name="keyEquivalent">r</string>
-                <ostype name="command">rvrt</ostype>
               </object>
               <object class="IBCarbonMenuItem" id="128">
                 <boolean name="separator">TRUE</boolean>
@@ -80,18 +80,19 @@
           <string name="title">Edit</string>
           <object name="submenu" class="IBCarbonMenu" id="147">
             <string name="title">Edit</string>
-            <array count="8" name="items">
-              <object class="IBCarbonMenuItem" id="141">
+            <array count="10" name="items">
+              <object class="IBCarbonMenuItem" id="326">
                 <string name="title">Undo</string>
                 <string name="keyEquivalent">z</string>
                 <ostype name="command">undo</ostype>
               </object>
-              <object class="IBCarbonMenuItem" id="146">
+              <object class="IBCarbonMenuItem" id="327">
                 <string name="title">Redo</string>
                 <string name="keyEquivalent">Z</string>
+                <int name="keyEquivalentModifier">1179648</int>
                 <ostype name="command">redo</ostype>
               </object>
-              <object class="IBCarbonMenuItem" id="142">
+              <object class="IBCarbonMenuItem" id="328">
                 <boolean name="separator">TRUE</boolean>
               </object>
               <object class="IBCarbonMenuItem" id="143">
@@ -118,6 +119,232 @@
                 <string name="keyEquivalent">a</string>
                 <ostype name="command">sall</ostype>
               </object>
+              <object class="IBCarbonMenuItem" id="230">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="231">
+                <string name="title">Edit Object</string>
+                <string name="keyEquivalent">e</string>
+                <ostype name="command">edbj</ostype>
+                <string name="helpTagText">Open R Object editor</string>
+              </object>
+            </array>
+          </object>
+        </object>
+        <object class="IBCarbonMenuItem" id="197">
+          <string name="title">Tools</string>
+          <object name="submenu" class="IBCarbonMenu" id="198">
+            <string name="title">Tools</string>
+            <array count="7" name="items">
+              <object class="IBCarbonMenuItem" id="205">
+                <string name="title">Load history</string>
+                <ostype name="command">hstl</ostype>
+                <string name="helpTagText">Loads the history file in the current working directory</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="207">
+                <string name="title">Save history</string>
+                <ostype name="command">hsts</ostype>
+                <string name="helpTagText">Saves command history file into the current working directory</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="208">
+                <string name="title">Show history</string>
+                <ostype name="command">hstw</ostype>
+                <string name="helpTagText">Shows history file</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="209">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="210">
+                <string name="title">Change Working Directory...</string>
+                <string name="keyEquivalent">d</string>
+                <ostype name="command">scwd</ostype>
+                <string name="helpTagText">Set the current working directory to a specified location</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="212">
+                <string name="title">Show Working Directory</string>
+                <ostype name="command">shwd</ostype>
+                <string name="helpTagText">Shows current working directory</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="211">
+                <string name="title">Reset Working Directory</string>
+                <ostype name="command">rswd</ostype>
+                <string name="helpTagText">Sets working directory to user&apos;s home</string>
+              </object>
+            </array>
+          </object>
+        </object>
+        <object class="IBCarbonMenuItem" id="234">
+          <string name="title">Workspace</string>
+          <object name="submenu" class="IBCarbonMenu" id="235">
+            <string name="title">Workspace</string>
+            <array count="9" name="items">
+              <object class="IBCarbonMenuItem" id="243">
+                <string name="title">Show Workspace</string>
+                <ostype name="command">dols</ostype>
+                <string name="helpTagText">Show the objects in the workspace</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="238">
+                <string name="title">Clear Workspace</string>
+                <ostype name="command">dorm</ostype>
+                <string name="helpTagText">Remove all objects from workspace</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="240">
+                <string name="title">Browse Workspace</string>
+                <ostype name="command">shwb</ostype>
+                <string name="helpTagText">A browser for the R objects</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="245">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="239">
+                <string name="title">Load Workspace</string>
+                <ostype name="command">ldws</ostype>
+                <string name="helpTagText">Load workspace in current working directory</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="237">
+                <string name="title">Load Workspace File..</string>
+                <ostype name="command">lwsf</ostype>
+                <string name="helpTagText">Load Workspace previously saved on file</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="246">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="241">
+                <string name="title">Save Workspace</string>
+                <ostype name="command">svws</ostype>
+                <string name="helpTagText">Save the content of the workspace in the current working directory</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="242">
+                <string name="title">Save Workspace As...</string>
+                <ostype name="command">swsf</ostype>
+                <string name="helpTagText">Save Workspace on a file</string>
+              </object>
+            </array>
+          </object>
+        </object>
+        <object class="IBCarbonMenuItem" id="216">
+          <string name="title">Packages</string>
+          <object name="submenu" class="IBCarbonMenu" id="217">
+            <string name="title">Packages</string>
+            <array count="9" name="items">
+              <object class="IBCarbonMenuItem" id="218">
+                <string name="title">Package Manager</string>
+                <ostype name="command">ipkg</ostype>
+                <string name="helpTagText">Shows the list of currently installed packages and allow for loading and unloading them in the current session</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="219">
+                <string name="title">Datasets Manager</string>
+                <ostype name="command">shdt</ostype>
+                <string name="helpTagText">Shows the lists of available datasets and allow to the select dataset to load in the current session</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="221">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="351">
+                <string name="title">Get CRAN Packages</string>
+                <object name="submenu" class="IBCarbonMenu" id="352">
+                  <string name="title">Get CRAN Packages</string>
+                  <array count="2" name="items">
+                    <object class="IBCarbonMenuItem" id="353">
+                      <string name="title">Ready-to-use Binary</string>
+                      <ostype name="command">crab</ostype>
+                      <string name="helpTagText">Download and install (binary) packages from CRAN</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="360">
+                      <string name="title">Source</string>
+                      <ostype name="command">cran</ostype>
+                      <string name="helpTagText">Download and compile source packages from CRAN</string>
+                    </object>
+                  </array>
+                </object>
+              </object>
+              <object class="IBCarbonMenuItem" id="354">
+                <string name="title">Update CRAN packages</string>
+                <object name="submenu" class="IBCarbonMenu" id="355">
+                  <string name="title">Update CRAN packages</string>
+                  <array count="2" name="items">
+                    <object class="IBCarbonMenuItem" id="356">
+                      <string name="title">Ready-to-use Binary</string>
+                      <ostype name="command">crub</ostype>
+                      <string name="helpTagText">Update packages with newer binary versions on CRAN</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="362">
+                      <string name="title">Source</string>
+                      <ostype name="command">crup</ostype>
+                      <string name="helpTagText">Compile and update packages with newer source versions on CRAN</string>
+                    </object>
+                  </array>
+                </object>
+              </object>
+              <object class="IBCarbonMenuItem" id="364">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="365">
+                <string name="title">BioConductor</string>
+                <object name="submenu" class="IBCarbonMenu" id="366">
+                  <string name="title">BioConductor</string>
+                  <array count="5" name="items">
+                    <object class="IBCarbonMenuItem" id="367">
+                      <string name="title">Download all</string>
+                      <ostype name="command">bial</ostype>
+                      <string name="helpTagText">Get all BioConductor packages</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="368">
+                      <string name="title">Download Affy bundle</string>
+                      <ostype name="command">biaf</ostype>
+                      <string name="helpTagText">Get BioConductor packages for analyzing Affymetrix expression arrays</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="370">
+                      <string name="title">Download cDNA bundle</string>
+                      <ostype name="command">bicd</ostype>
+                      <string name="helpTagText">Get BioConductor packages for analyzing cDNA arrays</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="376">
+                      <string name="title">Update BioConductor</string>
+                      <ostype name="command">bcup</ostype>
+                      <string name="helpTagText">Update to the most recent version of BioConductor packages</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="372">
+                      <string name="title">Individual packages</string>
+                      <object name="submenu" class="IBCarbonMenu" id="373">
+                        <string name="title">Individual packages</string>
+                        <array count="2" name="items">
+                          <object class="IBCarbonMenuItem" id="374">
+                            <string name="title">Ready-to-use binary</string>
+                            <ostype name="command">biob</ostype>
+                          </object>
+                          <object class="IBCarbonMenuItem" id="375">
+                            <string name="title">Source</string>
+                            <ostype name="command">bioc</ostype>
+                          </object>
+                        </array>
+                      </object>
+                      <string name="helpTagText">Download individual packages from Bioconductor</string>
+                    </object>
+                  </array>
+                </object>
+              </object>
+              <object class="IBCarbonMenuItem" id="224">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="344">
+                <string name="title">Compile Package From Source</string>
+                <object name="submenu" class="IBCarbonMenu" id="345">
+                  <string name="title">Compile Package From Source</string>
+                  <array count="2" name="items">
+                    <object class="IBCarbonMenuItem" id="346">
+                      <string name="title">File (.tar.gz)</string>
+                      <ostype name="command">ipfs</ostype>
+                      <string name="helpTagText">Install source package from a local file (tarball)</string>
+                    </object>
+                    <object class="IBCarbonMenuItem" id="347">
+                      <string name="title">Directory</string>
+                      <ostype name="command">ipsd</ostype>
+                      <string name="helpTagText">Install source package from a local directory tree</string>
+                    </object>
+                  </array>
+                </object>
+              </object>
             </array>
           </object>
         </object>
@@ -125,7 +352,33 @@
           <string name="title">Window</string>
           <object name="submenu" class="IBCarbonMenu" id="154">
             <string name="title">Window</string>
-            <array count="5" name="items">
+            <array count="10" name="items">
+              <object class="IBCarbonMenuItem" id="229">
+                <string name="title">New Edit Window</string>
+                <string name="keyEquivalent">n</string>
+                <ostype name="command">new </ostype>
+                <string name="helpTagText">Open a brand new editable window</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="402">
+                <boolean name="separator">TRUE</boolean>
+              </object>
+              <object class="IBCarbonMenuItem" id="397">
+                <string name="title">New quartz() window</string>
+                <string name="keyEquivalent">N</string>
+                <int name="keyEquivalentModifier">1179648</int>
+                <ostype name="command">nwqz</ostype>
+                <string name="helpTagText">Opens a new quartz() device and make the active one for R</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="401">
+                <string name="title">Activate quartz() device</string>
+                <string name="keyEquivalent">A</string>
+                <int name="keyEquivalentModifier">1179648</int>
+                <ostype name="command">awqz</ostype>
+                <string name="helpTagText">Activate the quartz() device corresponding to the current graphic window</string>
+              </object>
+              <object class="IBCarbonMenuItem" id="228">
+                <boolean name="separator">TRUE</boolean>
+              </object>
               <object class="IBCarbonMenuItem" id="155">
                 <boolean name="dynamic">TRUE</boolean>
                 <string name="title">Minimize Window</string>
@@ -164,19 +417,14 @@
     <reference idRef="128"/>
     <reference idRef="130"/>
     <reference idRef="131"/>
-    <reference idRef="132"/>
     <reference idRef="133"/>
     <reference idRef="134"/>
     <reference idRef="135"/>
     <reference idRef="136"/>
     <reference idRef="137"/>
     <reference idRef="138"/>
-    <reference idRef="139"/>
-    <reference idRef="141"/>
-    <reference idRef="142"/>
     <reference idRef="143"/>
     <reference idRef="144"/>
-    <reference idRef="146"/>
     <reference idRef="147"/>
     <reference idRef="148"/>
     <reference idRef="149"/>
@@ -188,15 +436,33 @@
     <reference idRef="156"/>
     <reference idRef="157"/>
     <object class="IBCarbonWindow" id="166">
-      <string name="windowRect">204 300 564 780 </string>
+      <string name="windowRect">132 188 496 757 </string>
       <string name="title">R Console</string>
       <object name="rootControl" class="IBCarbonRootControl" id="167">
-        <string name="bounds">0 0 360 480 </string>
+        <string name="bounds">0 0 364 569 </string>
+        <array count="3" name="subviews">
+          <object class="IBCarbonSeparator" id="399">
+            <string name="bounds">23 0 24 581 </string>
+            <ostype name="controlSignature">RGUI</ostype>
+            <int name="controlID">1001</int>
+          </object>
+          <object class="IBCarbonChasingArrows" id="398">
+            <string name="bounds">4 550 20 566 </string>
+            <ostype name="controlSignature">RGUI</ostype>
+            <int name="controlID">1000</int>
+          </object>
+          <object class="IBCarbonStaticText" id="400">
+            <string name="bounds">6 20 22 542 </string>
+            <ostype name="controlSignature">RGUI</ostype>
+            <int name="controlID">1002</int>
+            <boolean name="small">TRUE</boolean>
+            <string name="title">Working...</string>
+            <int name="justification">1</int>
+          </object>
+        </array>
       </object>
-      <boolean name="liveResize">TRUE</boolean>
-      <int name="carbonWindowClass">6</int>
-      <int name="themeBrush">0</int>
-      <int name="windowPosition">0</int>
+      <int name="themeBrush">50</int>
+      <int name="windowPosition">7</int>
     </object>
     <reference idRef="167"/>
     <reference idRef="184"/>
@@ -204,8 +470,704 @@
     <reference idRef="187"/>
     <reference idRef="188"/>
     <reference idRef="189"/>
+    <object class="IBCarbonWindow" id="190">
+      <string name="windowRect">211 300 449 677 </string>
+      <string name="title">About RAqua</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="191">
+        <string name="bounds">0 0 238 377 </string>
+        <string name="viewFrame">0 0 377 238 </string>
+        <array count="4" name="subviews">
+          <object class="IBCarbonStaticText" id="194">
+            <string name="bounds">109 20 142 357 </string>
+            <string name="viewFrame">20 109 337 33 </string>
+            <ostype name="controlSignature">0FFF</ostype>
+            <int name="controlID">133</int>
+            <boolean name="small">TRUE</boolean>
+            <string name="title">Copyiright Info</string>
+            <string name="helpTagText">Copyright Info</string>
+            <int name="justification">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="196">
+            <string name="bounds">192 20 218 357 </string>
+            <string name="viewFrame">20 192 337 26 </string>
+            <ostype name="controlSignature">0FFF</ostype>
+            <int name="controlID">135</int>
+            <boolean name="small">TRUE</boolean>
+            <string name="title">Thanks to</string>
+            <string name="helpTagText">People who help the development of RAqua</string>
+            <int name="justification">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="322">
+            <string name="bounds">20 20 36 357 </string>
+            <string name="viewFrame">20 20 337 16 </string>
+            <ostype name="controlSignature">0FFF</ostype>
+            <int name="controlID">132</int>
+            <boolean name="small">TRUE</boolean>
+            <string name="title">Version Info</string>
+            <string name="helpTagText">Version of the R Kernel</string>
+            <int name="justification">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="323">
+            <string name="bounds">157 20 184 357 </string>
+            <string name="viewFrame">20 157 337 27 </string>
+            <ostype name="controlSignature">0FFF</ostype>
+            <int name="controlID">134</int>
+            <boolean name="small">TRUE</boolean>
+            <string name="title">RAqua author</string>
+            <string name="helpTagText">RAqua GUI developers</string>
+            <int name="justification">1</int>
+          </object>
+        </array>
+      </object>
+      <boolean name="hasCollapseBox">FALSE</boolean>
+      <boolean name="hasHorizontalZoom">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="hasVerticalZoom">FALSE</boolean>
+      <boolean name="compositing">TRUE</boolean>
+      <int name="themeBrush">1</int>
+      <int name="windowPosition">1</int>
+    </object>
+    <reference idRef="191"/>
+    <reference idRef="194"/>
+    <reference idRef="196"/>
+    <reference idRef="197"/>
+    <reference idRef="198"/>
+    <reference idRef="205"/>
+    <reference idRef="207"/>
+    <reference idRef="208"/>
+    <reference idRef="209"/>
+    <reference idRef="210"/>
+    <reference idRef="211"/>
+    <reference idRef="212"/>
+    <reference idRef="216"/>
+    <reference idRef="217"/>
+    <reference idRef="218"/>
+    <reference idRef="219"/>
+    <reference idRef="221"/>
+    <reference idRef="224"/>
+    <reference idRef="226"/>
+    <reference idRef="227"/>
+    <reference idRef="228"/>
+    <reference idRef="229"/>
+    <reference idRef="230"/>
+    <reference idRef="231"/>
+    <reference idRef="234"/>
+    <reference idRef="235"/>
+    <reference idRef="237"/>
+    <reference idRef="238"/>
+    <reference idRef="239"/>
+    <reference idRef="240"/>
+    <reference idRef="241"/>
+    <reference idRef="242"/>
+    <reference idRef="243"/>
+    <reference idRef="245"/>
+    <reference idRef="246"/>
+    <object class="IBCarbonWindow" id="247">
+      <string name="windowRect">100 44 543 536 </string>
+      <string name="title">R Preferences</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="248">
+        <string name="bounds">0 0 443 492 </string>
+        <array count="5" name="subviews">
+          <object class="IBCarbonButton" id="277">
+            <string name="bounds">394 141 414 211 </string>
+            <ostype name="controlSignature">PREF</ostype>
+            <int name="controlID">5000</int>
+            <string name="title">Apply</string>
+            <string name="helpTagText">Use current preferences settings for the current session only</string>
+            <int name="buttonType">1</int>
+          </object>
+          <object class="IBCarbonButton" id="278">
+            <string name="bounds">394 268 414 338 </string>
+            <ostype name="controlSignature">PREF</ostype>
+            <int name="controlID">5003</int>
+            <string name="title">Save</string>
+            <string name="helpTagText">Applies current settings to this session and saves for future use</string>
+          </object>
+          <object class="IBCarbonButton" id="279">
+            <string name="bounds">394 398 414 468 </string>
+            <ostype name="controlSignature">PREF</ostype>
+            <int name="controlID">5001</int>
+            <string name="title">Cancel</string>
+            <string name="helpTagText">Ignores the changes and exits the Preferences panel</string>
+            <int name="buttonType">2</int>
+          </object>
+          <object class="IBCarbonButton" id="276">
+            <string name="bounds">394 20 414 96 </string>
+            <ostype name="controlSignature">PREF</ostype>
+            <int name="controlID">5002</int>
+            <string name="title">Defaults</string>
+            <string name="helpTagText">Resets settings to default values. Does not apply or save changes until you take an action.</string>
+          </object>
+          <object class="IBCarbonTab" id="249">
+            <string name="bounds">12 20 374 468 </string>
+            <array count="4" name="subviews">
+              <object class="IBCarbonUserPane" id="377">
+                <string name="bounds">42 20 374 468 </string>
+                <array count="5" name="subviews">
+                  <object class="IBCarbonStaticText" id="378">
+                    <string name="bounds">133 53 149 129 </string>
+                    <string name="title">CRAN</string>
+                    <int name="justification">-1</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="379">
+                    <string name="bounds">197 31 213 129 </string>
+                    <string name="title">Bioconductor</string>
+                    <int name="justification">-1</int>
+                  </object>
+                  <object class="IBCarbonEditText" id="380">
+                    <string name="bounds">134 140 150 396 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">4501</int>
+                    <string name="title">http://cran.r-project.org</string>
+                    <string name="helpTagText">Choose a CRAN mirror from the list at http://cran.r-project.org/mirrors/</string>
+                    <boolean name="useInlineInput">TRUE</boolean>
+                  </object>
+                  <object class="IBCarbonEditText" id="381">
+                    <string name="bounds">198 140 214 396 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">4502</int>
+                    <string name="title">http://www.bioconductor.org</string>
+                    <string name="helpTagText">Your bioconductor repository</string>
+                    <boolean name="useInlineInput">TRUE</boolean>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="385">
+                    <string name="bounds">85 40 262 440 </string>
+                    <string name="title">Internet package archives</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">PRTB</ostype>
+                <int name="controlID">1002</int>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="251">
+                <string name="bounds">42 20 374 468 </string>
+                <array count="8" name="subviews">
+                  <object class="IBCarbonGroupBox" id="255">
+                    <string name="bounds">190 30 285 430 </string>
+                    <array count="6" name="subviews">
+                      <object class="IBCarbonStaticText" id="256">
+                        <string name="bounds">218 46 234 132 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1007</int>
+                        <string name="title">Read Only</string>
+                        <string name="helpTagText">This option applies to all read-only windows like R Console Out and any other read-only windows like R Help, etc.</string>
+                      </object>
+                      <object class="IBCarbonButton" id="257">
+                        <string name="bounds">218 140 238 256 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1009</int>
+                        <string name="title">Choose Color</string>
+                        <string name="helpTagText">Sets foreground color</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="258">
+                        <string name="bounds">253 46 269 132 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1008</int>
+                        <string name="title">Read &amp; Write</string>
+                        <string name="helpTagText">This option applies to all read-write windows like R Console In and any other read-write windows like R Edit, etc.</string>
+                      </object>
+                      <object class="IBCarbonButton" id="259">
+                        <string name="bounds">250 140 270 256 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1010</int>
+                        <string name="title">Choose Color</string>
+                        <string name="helpTagText">Sets foreground color</string>
+                      </object>
+                      <object class="IBCarbonButton" id="260">
+                        <string name="bounds">218 268 238 422 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1011</int>
+                        <string name="title">Choose Background</string>
+                        <string name="helpTagText">Sets background color</string>
+                      </object>
+                      <object class="IBCarbonButton" id="261">
+                        <string name="bounds">250 268 270 422 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1012</int>
+                        <string name="title">Choose Background</string>
+                        <string name="helpTagText">Sets background color</string>
+                      </object>
+                    </array>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">1006</int>
+                    <string name="title">Text Colors</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="254">
+                    <string name="bounds">76 30 168 430 </string>
+                    <array count="3" name="subviews">
+                      <object class="IBCarbonButton" id="252">
+                        <string name="bounds">104 46 124 167 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1002</int>
+                        <string name="title">Choose Font</string>
+                        <string name="helpTagText">Select Font size and family for text windows. Style is ignored.</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="298">
+                        <string name="bounds">104 262 120 321 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1004</int>
+                        <string name="title">Tab Size</string>
+                      </object>
+                      <object class="IBCarbonEditText" id="299">
+                        <string name="bounds">107 334 123 411 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">1005</int>
+                        <string name="helpTagText">Tab size for all text windows. You should pass the number of characters between tabs</string>
+                        <boolean name="useInlineInput">TRUE</boolean>
+                      </object>
+                    </array>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">1001</int>
+                    <string name="title">Fonts and Tabs</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="319">
+                    <string name="bounds">139 50 155 410 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">1003</int>
+                    <boolean name="enabled">FALSE</boolean>
+                    <string name="title">Font name and size</string>
+                    <string name="helpTagText">Current R Console Font Name and Size</string>
+                  </object>
+                  <object class="IBCarbonCheckBox" id="337">
+                    <string name="bounds">301 40 315 225 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">1013</int>
+                    <string name="title">Buffered console output?</string>
+                    <string name="helpTagText">Display text output on the console in batches, rather than line by line. Much faster, but doesn&apos;t allow for progress reports.</string>
+                    <int name="initialState">1</int>
+                  </object>
+                  <object class="IBCarbonSlider" id="340">
+                    <string name="bounds">301 341 357 364 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">1014</int>
+                    <string name="helpTagText">Smaller buffers give smoother but slower scrolling</string>
+                    <boolean name="isLive">TRUE</boolean>
+                    <int name="numTickMarks">4</int>
+                    <int name="initialValue">10</int>
+                    <int name="minimumValue">10</int>
+                    <int name="maximumValue">32000</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="342">
+                    <string name="bounds">341 372 357 448 </string>
+                    <string name="title">10</string>
+                  </object>
+                  <object class="IBCarbonStaticText" id="343">
+                    <string name="bounds">319 251 335 327 </string>
+                    <string name="title">Buffer size </string>
+                  </object>
+                  <object class="IBCarbonStaticText" id="341">
+                    <string name="bounds">301 372 317 417 </string>
+                    <string name="title">32000</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">PRTB</ostype>
+                <int name="controlID">1000</int>
+                <string name="title">Console</string>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="294">
+                <string name="bounds">42 20 374 468 </string>
+                <array count="5" name="subviews">
+                  <object class="IBCarbonButton" id="304">
+                    <string name="bounds">88 30 108 135 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">3001</int>
+                    <string name="title">Device Font</string>
+                    <string name="helpTagText">Select Font size and family for the quartz. Style is ignored.</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="309">
+                    <string name="bounds">128 30 224 430 </string>
+                    <array count="6" name="subviews">
+                      <object class="IBCarbonStaticText" id="307">
+                        <string name="bounds">162 46 178 122 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3005</int>
+                        <string name="title">Width</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="308">
+                        <string name="bounds">192 46 208 122 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3006</int>
+                        <string name="title">Height</string>
+                      </object>
+                      <object class="IBCarbonEditText" id="311">
+                        <string name="bounds">163 150 179 227 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3008</int>
+                        <string name="title">5</string>
+                      </object>
+                      <object class="IBCarbonEditText" id="312">
+                        <string name="bounds">193 150 209 227 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3009</int>
+                        <string name="title">6</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="316">
+                        <string name="bounds">162 284 178 360 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3011</int>
+                        <string name="title">inches</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="317">
+                        <string name="bounds">192 284 208 360 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3012</int>
+                        <string name="title">inches</string>
+                      </object>
+                    </array>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">3003</int>
+                    <string name="title">Device Dimensions</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="315">
+                    <string name="bounds">242 30 300 430 </string>
+                    <array count="2" name="subviews">
+                      <object class="IBCarbonCheckBox" id="313">
+                        <string name="bounds">270 42 284 144 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3013</int>
+                        <string name="title">Antialiasing</string>
+                        <string name="helpTagText">With Antialiasing &quot;ON&quot; it looks very nice but slower.</string>
+                        <int name="initialState">1</int>
+                      </object>
+                      <object class="IBCarbonCheckBox" id="314">
+                        <string name="bounds">270 309 284 414 </string>
+                        <ostype name="controlSignature">PREF</ostype>
+                        <int name="controlID">3014</int>
+                        <string name="title">Auto Refresh</string>
+                        <string name="helpTagText">With Auto Refresh &quot;ON&quot; it is slower but more user friendly</string>
+                        <int name="initialState">1</int>
+                      </object>
+                    </array>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">3013</int>
+                    <string name="title">Quartz Features</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="320">
+                    <string name="bounds">90 188 106 427 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">3002</int>
+                    <boolean name="enabled">FALSE</boolean>
+                    <string name="title">Font Name and Size</string>
+                    <string name="helpTagText">Should be a Postscript Font Name</string>
+                  </object>
+                  <object class="IBCarbonCheckBox" id="321">
+                    <string name="bounds">332 40 346 440 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">3007</int>
+                    <string name="title">Override R quartz() device defaults</string>
+                    <string name="helpTagText">The above quartz device settings take place only when this option is checked, otherwise R default options for the quartz device are considered.</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">PRTB</ostype>
+                <int name="controlID">1001</int>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="407">
+                <string name="bounds">42 20 374 468 </string>
+                <array count="2" name="subviews">
+                  <object class="IBCarbonCheckBox" id="408">
+                    <string name="bounds">62 40 76 277 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">6000</int>
+                    <string name="title">Grab Stdout to R Console Out</string>
+                    <string name="helpTagText">Check this item if you want to grab stdout to the R Console Out. This is useful to have feedback on things like packages installation</string>
+                    <int name="initialState">1</int>
+                  </object>
+                  <object class="IBCarbonCheckBox" id="409">
+                    <string name="bounds">92 40 106 277 </string>
+                    <ostype name="controlSignature">PREF</ostype>
+                    <int name="controlID">6001</int>
+                    <string name="title">Grab Stderr to R Console Out</string>
+                    <string name="helpTagText">Check this item if you want to grab stderr to the R Console Out. This is useful to have feedback on things like packages installation of system() calls</string>
+                    <int name="initialState">1</int>
+                  </object>
+                </array>
+                <ostype name="controlSignature">PRTB</ostype>
+                <int name="controlID">1003</int>
+                <int name="featureBits">2</int>
+              </object>
+            </array>
+            <ostype name="controlSignature">PRTT</ostype>
+            <int name="controlID">1000</int>
+            <int name="tabSelection">3</int>
+            <array count="4" name="tabItems">
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Text Windows</string>
+                <string>userPane</string>
+                <reference idRef="251"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Quartz Device</string>
+                <string>userPane</string>
+                <reference idRef="294"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Packages</string>
+                <string>userPane</string>
+                <reference idRef="377"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Misc</string>
+                <string>userPane</string>
+                <reference idRef="407"/>
+              </dictionary>
+            </array>
+          </object>
+        </array>
+      </object>
+      <boolean name="hasCloseBox">FALSE</boolean>
+      <boolean name="hasCollapseBox">FALSE</boolean>
+      <boolean name="hasHorizontalZoom">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="hasVerticalZoom">FALSE</boolean>
+      <int name="carbonWindowClass">5</int>
+      <int name="themeBrush">49</int>
+      <int name="windowPosition">7</int>
+      <string name="helpTagText">Choose your favorite R settings</string>
+    </object>
+    <reference idRef="248"/>
+    <reference idRef="249"/>
+    <reference idRef="251"/>
+    <reference idRef="252"/>
+    <reference idRef="254"/>
+    <reference idRef="255"/>
+    <reference idRef="256"/>
+    <reference idRef="257"/>
+    <reference idRef="258"/>
+    <reference idRef="259"/>
+    <reference idRef="260"/>
+    <reference idRef="261"/>
+    <reference idRef="276"/>
+    <reference idRef="277"/>
+    <reference idRef="278"/>
+    <reference idRef="279"/>
+    <object class="IBCarbonUserPane" id="280">
+      <string name="bounds">-10755 28413 -10457 28853 </string>
+      <array count="9" name="subviews">
+        <object class="IBCarbonCheckBox" id="281">
+          <string name="bounds">27909 -7870 27911 -7870 </string>
+          <string name="title">AntiAliasing</string>
+        </object>
+        <object class="IBCarbonCheckBox" id="282">
+          <string name="bounds">27909 24804 27911 24806 </string>
+          <string name="title">Auto Refresh</string>
+        </object>
+        <object class="IBCarbonStaticText" id="284">
+          <string name="bounds">28009 26181 28025 26574 </string>
+          <string name="title">Font Name</string>
+        </object>
+        <object class="IBCarbonButton" id="283">
+          <string name="bounds">27969 27925 27989 27933 </string>
+          <string name="title">Choose Font</string>
+        </object>
+        <object class="IBCarbonEditText" id="285">
+          <string name="bounds">27981 29847 27977 29842 </string>
+          <string name="title">12</string>
+        </object>
+        <object class="IBCarbonStaticText" id="286">
+          <string name="bounds">27971 31327 27987 31403 </string>
+          <string name="title">Point Size</string>
+        </object>
+        <object class="IBCarbonEditText" id="287">
+          <string name="bounds">28110 -32608 28106 -32608 </string>
+          <string name="title">5</string>
+        </object>
+        <object class="IBCarbonStaticText" id="288">
+          <string name="bounds">28099 -31073 28115 -31026 </string>
+          <string name="title">Width:</string>
+        </object>
+        <object class="IBCarbonStaticText" id="290">
+          <string name="bounds">28099 -29265 28115 -29218 </string>
+          <string name="title">Height:</string>
+        </object>
+      </array>
+      <int name="featureBits">2</int>
+    </object>
+    <reference idRef="281"/>
+    <reference idRef="282"/>
+    <reference idRef="283"/>
+    <reference idRef="284"/>
+    <reference idRef="285"/>
+    <reference idRef="286"/>
+    <reference idRef="287"/>
+    <reference idRef="288"/>
+    <reference idRef="290"/>
+    <reference idRef="294"/>
+    <reference idRef="298"/>
+    <reference idRef="299"/>
+    <reference idRef="304"/>
+    <reference idRef="307"/>
+    <reference idRef="308"/>
+    <reference idRef="309"/>
+    <reference idRef="311"/>
+    <reference idRef="312"/>
+    <reference idRef="313"/>
+    <reference idRef="314"/>
+    <reference idRef="315"/>
+    <reference idRef="316"/>
+    <reference idRef="317"/>
+    <reference idRef="319"/>
+    <reference idRef="320"/>
+    <reference idRef="321"/>
+    <reference idRef="322"/>
+    <reference idRef="323"/>
+    <reference idRef="326"/>
+    <reference idRef="327"/>
+    <reference idRef="328"/>
+    <reference idRef="337"/>
+    <reference idRef="340"/>
+    <reference idRef="341"/>
+    <reference idRef="342"/>
+    <reference idRef="343"/>
+    <reference idRef="344"/>
+    <reference idRef="345"/>
+    <reference idRef="346"/>
+    <reference idRef="347"/>
+    <object class="IBCarbonMenuItem" id="348">
+      <string name="title">Get BioConductor Packages</string>
+      <object name="submenu" class="IBCarbonMenu">
+        <string name="title">Get BioConductor Packages</string>
+        <array count="2" name="items">
+          <object class="IBCarbonMenuItem">
+            <string name="title">Ready-to-use Binary</string>
+            <ostype name="command">biob</ostype>
+            <string name="helpTagText">Download and install binary packages from the BioConductor project</string>
+          </object>
+          <object class="IBCarbonMenuItem">
+            <string name="title">Source</string>
+            <ostype name="command">bioc</ostype>
+            <string name="helpTagText">Download and compile source packages from the BioConductor project</string>
+          </object>
+        </array>
+      </object>
+    </object>
+    <reference idRef="351"/>
+    <reference idRef="352"/>
+    <reference idRef="353"/>
+    <reference idRef="354"/>
+    <reference idRef="355"/>
+    <reference idRef="356"/>
+    <object class="IBCarbonMenuItem" id="357">
+      <string name="title">Update BioConductor Packages</string>
+      <object name="submenu" class="IBCarbonMenu">
+        <string name="title">Update BioConductor Packages</string>
+        <array count="2" name="items">
+          <object class="IBCarbonMenuItem">
+            <string name="title">Ready-to-use Binary</string>
+            <ostype name="command">bcub</ostype>
+            <string name="helpTagText">Update packages with newer binary version at BioConductor</string>
+          </object>
+          <object class="IBCarbonMenuItem">
+            <string name="title">Source</string>
+            <ostype name="command">bcup</ostype>
+            <string name="helpTagText">Compile and update packages with newer source versions at BioConductor</string>
+          </object>
+        </array>
+      </object>
+    </object>
+    <reference idRef="360"/>
+    <reference idRef="362"/>
+    <reference idRef="364"/>
+    <reference idRef="365"/>
+    <reference idRef="366"/>
+    <reference idRef="367"/>
+    <reference idRef="368"/>
+    <reference idRef="370"/>
+    <reference idRef="372"/>
+    <reference idRef="373"/>
+    <reference idRef="374"/>
+    <reference idRef="375"/>
+    <reference idRef="376"/>
+    <reference idRef="377"/>
+    <reference idRef="378"/>
+    <reference idRef="379"/>
+    <reference idRef="380"/>
+    <reference idRef="381"/>
+    <reference idRef="385"/>
+    <object class="IBCarbonWindow" id="391">
+      <string name="windowRect">140 260 291 648 </string>
+      <string name="title">Window</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="392">
+        <string name="bounds">0 0 151 388 </string>
+        <string name="viewFrame">0 0 388 151 </string>
+        <array count="4" name="subviews">
+          <object class="IBCarbonStaticText" id="393">
+            <string name="bounds">20 20 61 368 </string>
+            <string name="viewFrame">20 20 348 41 </string>
+            <ostype name="controlSignature">RDLG</ostype>
+            <int name="controlID">1000</int>
+            <string name="title">Message Text</string>
+            <int name="justification">1</int>
+          </object>
+          <object class="IBCarbonEditText" id="394">
+            <string name="bounds">72 23 88 365 </string>
+            <string name="viewFrame">23 72 342 16 </string>
+            <ostype name="controlSignature">RDLG</ostype>
+            <int name="controlID">1001</int>
+            <string name="helpTagText">Input text field</string>
+            <boolean name="useInlineInput">TRUE</boolean>
+          </object>
+          <object class="IBCarbonButton" id="395">
+            <string name="bounds">111 298 131 368 </string>
+            <string name="viewFrame">298 111 70 20 </string>
+            <ostype name="controlSignature">RDLG</ostype>
+            <int name="controlID">1002</int>
+            <string name="title">Proceed</string>
+            <int name="buttonType">1</int>
+          </object>
+          <object class="IBCarbonButton" id="396">
+            <string name="bounds">111 20 131 90 </string>
+            <string name="viewFrame">20 111 70 20 </string>
+            <ostype name="controlSignature">RDLG</ostype>
+            <int name="controlID">1003</int>
+            <string name="title">Cancel</string>
+            <int name="buttonType">2</int>
+          </object>
+        </array>
+      </object>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="compositing">TRUE</boolean>
+      <int name="carbonWindowClass">4</int>
+      <int name="themeBrush">49</int>
+      <int name="windowPosition">1</int>
+    </object>
+    <reference idRef="392"/>
+    <reference idRef="393"/>
+    <reference idRef="394"/>
+    <reference idRef="395"/>
+    <reference idRef="396"/>
+    <reference idRef="397"/>
+    <reference idRef="398"/>
+    <reference idRef="399"/>
+    <reference idRef="400"/>
+    <reference idRef="401"/>
+    <reference idRef="402"/>
+    <reference idRef="407"/>
+    <reference idRef="408"/>
+    <reference idRef="409"/>
   </array>
-  <array count="35" name="allParents">
+  <array count="166" name="allParents">
     <reference idRef="1"/>
     <reference idRef="29"/>
     <reference idRef="131"/>
@@ -217,11 +1179,6 @@
     <reference idRef="131"/>
     <reference idRef="131"/>
     <reference idRef="131"/>
-    <reference idRef="131"/>
-    <reference idRef="131"/>
-    <reference idRef="147"/>
-    <reference idRef="147"/>
-    <reference idRef="147"/>
     <reference idRef="147"/>
     <reference idRef="147"/>
     <reference idRef="152"/>
@@ -241,14 +1198,156 @@
     <reference idRef="184"/>
     <reference idRef="154"/>
     <reference idRef="154"/>
+    <reference idRef="1"/>
+    <reference idRef="190"/>
+    <reference idRef="191"/>
+    <reference idRef="191"/>
+    <reference idRef="29"/>
+    <reference idRef="197"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="29"/>
+    <reference idRef="216"/>
+    <reference idRef="217"/>
+    <reference idRef="217"/>
+    <reference idRef="217"/>
+    <reference idRef="217"/>
+    <reference idRef="131"/>
+    <reference idRef="131"/>
+    <reference idRef="154"/>
+    <reference idRef="154"/>
+    <reference idRef="147"/>
+    <reference idRef="147"/>
+    <reference idRef="29"/>
+    <reference idRef="234"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="235"/>
+    <reference idRef="1"/>
+    <reference idRef="247"/>
+    <reference idRef="248"/>
+    <reference idRef="249"/>
+    <reference idRef="254"/>
+    <reference idRef="251"/>
+    <reference idRef="251"/>
+    <reference idRef="255"/>
+    <reference idRef="255"/>
+    <reference idRef="255"/>
+    <reference idRef="255"/>
+    <reference idRef="255"/>
+    <reference idRef="255"/>
+    <reference idRef="248"/>
+    <reference idRef="248"/>
+    <reference idRef="248"/>
+    <reference idRef="248"/>
+    <reference idRef="249"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="280"/>
+    <reference idRef="249"/>
+    <reference idRef="254"/>
+    <reference idRef="254"/>
+    <reference idRef="294"/>
+    <reference idRef="309"/>
+    <reference idRef="309"/>
+    <reference idRef="294"/>
+    <reference idRef="309"/>
+    <reference idRef="309"/>
+    <reference idRef="315"/>
+    <reference idRef="315"/>
+    <reference idRef="294"/>
+    <reference idRef="309"/>
+    <reference idRef="309"/>
+    <reference idRef="251"/>
+    <reference idRef="294"/>
+    <reference idRef="294"/>
+    <reference idRef="191"/>
+    <reference idRef="191"/>
+    <reference idRef="147"/>
+    <reference idRef="147"/>
+    <reference idRef="147"/>
+    <reference idRef="251"/>
+    <reference idRef="251"/>
+    <reference idRef="251"/>
+    <reference idRef="251"/>
+    <reference idRef="251"/>
+    <reference idRef="217"/>
+    <reference idRef="344"/>
+    <reference idRef="345"/>
+    <reference idRef="345"/>
+    <reference idRef="217"/>
+    <reference idRef="217"/>
+    <reference idRef="351"/>
+    <reference idRef="352"/>
+    <reference idRef="217"/>
+    <reference idRef="354"/>
+    <reference idRef="355"/>
+    <reference idRef="217"/>
+    <reference idRef="352"/>
+    <reference idRef="355"/>
+    <reference idRef="217"/>
+    <reference idRef="217"/>
+    <reference idRef="365"/>
+    <reference idRef="366"/>
+    <reference idRef="366"/>
+    <reference idRef="366"/>
+    <reference idRef="366"/>
+    <reference idRef="372"/>
+    <reference idRef="373"/>
+    <reference idRef="373"/>
+    <reference idRef="366"/>
+    <reference idRef="249"/>
+    <reference idRef="377"/>
+    <reference idRef="377"/>
+    <reference idRef="377"/>
+    <reference idRef="377"/>
+    <reference idRef="377"/>
+    <reference idRef="1"/>
+    <reference idRef="391"/>
+    <reference idRef="392"/>
+    <reference idRef="392"/>
+    <reference idRef="392"/>
+    <reference idRef="392"/>
+    <reference idRef="154"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="154"/>
+    <reference idRef="154"/>
+    <reference idRef="249"/>
+    <reference idRef="407"/>
+    <reference idRef="407"/>
   </array>
-  <dictionary count="3" name="nameTable">
+  <dictionary count="6" name="nameTable">
+    <string>AboutWindow</string>
+    <reference idRef="190"/>
     <string>Files Owner</string>
     <reference idRef="1"/>
+    <string>InputDialog</string>
+    <reference idRef="391"/>
     <string>MainWindow</string>
     <reference idRef="166"/>
     <string>MenuBar</string>
     <reference idRef="29"/>
+    <string>PrefsWindow</string>
+    <reference idRef="247"/>
   </dictionary>
-  <unsigned_int name="nextObjectID">190</unsigned_int>
+  <unsigned_int name="nextObjectID">410</unsigned_int>
 </object>

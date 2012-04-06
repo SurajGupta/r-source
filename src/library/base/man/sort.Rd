@@ -37,20 +37,21 @@ is.unsorted(x, na.rm = FALSE)
   sequence of the locale in use: see \code{\link{Comparison}}.
 
   \code{is.unsorted} returns a logical indicating if \code{x} is sorted
-  increasingly, i.e. \code{is.unsorted(x)} is true if \code{any(x !=
+  increasingly, i.e., \code{is.unsorted(x)} is true if \code{any(x !=
     sort(x))} (and there are no \code{NA}s).
 
-  \code{method = "shell"} uses Shellsort and was the only method
-  before \R version 1.5.x (although improved there to an
-  \eqn{O(n^{4/3})} variant of Sedgewick (1996)).
+  \code{method = "shell"} uses Shellsort (an \eqn{O(n^{4/3})} variant
+  from Sedgewick (1996)).  If \code{x} has names a stable sort is used,
+  so ties are not reordered.  (This only matters if names are present.)
 
   Method \code{"quick"} uses Singleton's Quicksort implementation and is
-  only available when \code{x} is numeric, the sort is increasing and
+  only available when \code{x} is numeric (double or integer) and
   \code{partial} is \code{NULL}.  It is normally somewhat faster than
   Shellsort (perhaps twice as fast on vectors of length a million) but
   has poor performance in the rare worst case.
   (Peto's modification using a pseudo-random midpoint is used to make
-  the worst case rarer.)
+  the worst case rarer.)  This is not a stable sort, and ties may be
+  reordered.
 }
 \value{
   For \code{sort} the sorted vector unless
@@ -80,9 +81,9 @@ is.unsorted(x, na.rm = FALSE)
 data(swiss)
 x <- swiss$Education[1:25]
 x; sort(x); sort(x, partial = c(10, 15))
-median # shows you another example for `partial'
+median # shows you another example for 'partial'
 
-## illustrate `stable' sorting (of ties):
+## illustrate 'stable' sorting (of ties):
 sort(c(10:3,2:12), method = "sh", index=TRUE) # is stable
 ## $x : 2  3  3  4  4  5  5  6  6  7  7  8  8  9  9 10 10 11 12
 ## $ix: 9  8 10  7 11  6 12  5 13  4 14  3 15  2 16  1 17 18 19

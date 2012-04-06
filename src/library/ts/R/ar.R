@@ -1,7 +1,7 @@
 ## based on, especially multivariate case, code by Martyn Plummer
 ar <-
     function (x, aic = TRUE, order.max = NULL,
-              method=c("yule-walker","burg", "ols", "mle", "yw",),
+              method=c("yule-walker","burg", "ols", "mle", "yw"),
               na.action = na.fail, series = deparse(substitute(x)), ...)
 {
     res <- switch(match.arg(method),
@@ -241,6 +241,6 @@ predict.ar <- function(object, newdata, n.ahead = 1, se.fit=TRUE, ...)
     }
     pred <- ts(pred, start = st + dt, frequency=xfreq)
     if(se.fit) se <- ts(se, start = st + dt, frequency=xfreq)
-    if(se.fit) return(pred, se) else return(pred)
+    if(se.fit) return(list(pred=pred, se=se)) else return(pred)
 }
 

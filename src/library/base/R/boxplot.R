@@ -37,7 +37,7 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
         ng <- c(ng, i$n)
         if((lo <- length(i$out))) {
             out   <- c(out,i$out)
-            group <- c(group, rep(ct, lo))
+            group <- c(group, rep.int(ct, lo))
         }
         ct <- ct+1
     }
@@ -69,13 +69,13 @@ boxplot.formula <- function(formula, data = NULL, ..., subset)
 boxplot.stats <- function(x, coef = 1.5, do.conf=TRUE, do.out=TRUE)
 {
     nna <- !is.na(x)
-    n <- sum(nna) # including +/- Inf
+    n <- sum(nna)                       # including +/- Inf
     stats <- fivenum(x, na.rm = TRUE)
     iqr <- diff(stats[c(2, 4)])
-    if(coef < 0) stop("`coef' must not be negative")
+    if(coef < 0) stop(paste(sQuote("coef"), "must not be negative"))
     if(coef == 0)
 	do.out <- FALSE
-    else { # coef > 0
+    else {                              # coef > 0
 	out <- x < (stats[2] - coef * iqr) | x > (stats[4] + coef * iqr)
 	if(any(out[nna])) stats[c(1, 5)] <- range(x[!out], na.rm = TRUE)
     }
@@ -101,7 +101,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 	if(!any(is.na(stats))) {
             ## stats = +/- Inf:	polygon & segments should handle
 
-            ## Compute "x + w" -- ``correctly'' in log-coord. case:
+            ## Compute 'x + w' -- "correctly" in log-coord. case:
             xP <-
                 if(xlog) function(x,w) x * exp(w)
                 else function(x,w) x + w
@@ -122,21 +122,21 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
                 polygon(yy, xx, col = col, border = border)
                 segments(stats[3], xP(x, -wntch),
                          stats[3], xP(x, +wntch), col = border)
-                segments(stats[c(1, 5)], rep(x, 2),
-                         stats[c(2, 4)], rep(x, 2), lty= "dashed", col= border)
-                segments(stats[c(1, 5)], rep(xP(x, -wid/2), 2),
-                         stats[c(1, 5)], rep(xP(x, +wid/2), 2), col = border)
-                do.call("points",c(list(out, rep(x, length(out))), pt.pars))
+                segments(stats[c(1, 5)], rep.int(x, 2),
+                         stats[c(2, 4)], rep.int(x, 2), lty= "dashed", col= border)
+                segments(stats[c(1, 5)], rep.int(xP(x, -wid/2), 2),
+                         stats[c(1, 5)], rep.int(xP(x, +wid/2), 2), col = border)
+                do.call("points",c(list(out, rep.int(x, length(out))), pt.pars))
             }
             else { ## vertical
                 polygon(xx, yy, col=col, border=border)
                 segments(xP(x, -wntch), stats[3],
                          xP(x, +wntch), stats[3], col=border)
-                segments(rep(x,2), stats[c(1,5)],
-                         rep(x,2), stats[c(2,4)], lty= "dashed",col= border)
-                segments(rep(xP(x, -wid/2), 2), stats[c(1,5)],
-                         rep(xP(x, +wid/2), 2), stats[c(1,5)], col=border)
-                do.call("points",c(list(rep(x,length(out)), out), pt.pars))
+                segments(rep.int(x,2), stats[c(1,5)],
+                         rep.int(x,2), stats[c(2,4)], lty= "dashed",col= border)
+                segments(rep.int(xP(x, -wid/2), 2), stats[c(1,5)],
+                         rep.int(xP(x, +wid/2), 2), stats[c(1,5)], col=border)
+                do.call("points",c(list(rep.int(x,length(out)), out), pt.pars))
             }
 	    if(any(inf <- !is.finite(out))) {
 		## FIXME: should MARK on plot !! (S-plus doesn't either)
@@ -154,7 +154,9 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
     if(is.null(at))
         at <- 1:n
     else if(length(at) != n)
-        stop(paste("`at' must have same length as `z $ n', i.e.",n))
+        stop(paste(sQuote("at"), " must have same length as ",
+                   sQuote("z $ n"), ", i.e. ", n,
+                   sep = ""))
     ## just for compatibility with S
     if(is.null(z$out))
         z$out <- numeric()
@@ -198,7 +200,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 	}
 	else if(varwidth) boxwex * sqrt(z$n/max(z$n))
 	else if(n == 1) 0.5 * boxwex
-	else rep(boxwex, n)
+	else rep.int(boxwex, n)
     for(i in 1:n)
 	bplt(at[i], wid=width[i],
 	     stats= z$stats[,i],
@@ -212,7 +214,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
     axes <- is.null(pars$axes)
     if(!axes) { axes <- pars$axes; pars$axes <- NULL }
     if(axes) {
-        ax.pars <- pars[names(pars) %in% c("xaxt", "yaxt", "las")]
+        ax.pars <- pars[names(pars) %in% c("xaxt", "yaxt", "las", "cex.axis")]
         if (is.null(show.names)) show.names <- n > 1
         if (show.names)
             do.call("axis", c(list(side = 1 + horizontal,

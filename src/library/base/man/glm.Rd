@@ -1,12 +1,9 @@
 \name{glm}
+\title{Fitting Generalized Linear Models}
 \alias{glm}
 \alias{glm.fit}
-\alias{glm.fit.null}
 \alias{weights.glm}
 \alias{print.glm}
-\alias{print.glm.null}
-
-\title{Fitting Generalized Linear Models}
 \description{
   \code{glm} is used to fit generalized linear models, specified by
   giving a symbolic description of the linear predictor and a
@@ -18,16 +15,11 @@ glm(formula, family = gaussian, data, weights = NULL, subset = NULL,
     offset = NULL, control = glm.control(\dots), model = TRUE,
     method = "glm.fit", x = FALSE, y = TRUE, contrasts = NULL, \dots)
 
-glm.fit(x, y, weights = rep(1, nrow(x)),
+glm.fit(x, y, weights = rep(1, nobs),
         start = NULL, etastart = NULL, mustart = NULL,
-        offset = rep(0, nrow(x)),
-        family = gaussian(), control = glm.control(),
-        intercept = TRUE)
-glm.fit.null(x, y, weights = rep(1, nrow(x)),
-        start = NULL, etastart = NULL, mustart = NULL,
-        offset = rep(0, nrow(x)),
-        family = gaussian(), control = glm.control(),
-        intercept = FALSE)
+        offset = rep(0, nobs), family = gaussian(),
+        control = glm.control(), intercept = TRUE)
+
 \method{weights}{glm}(object, type = c("prior", "working"), \dots)
 }
 \arguments{
@@ -35,8 +27,10 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
     The details of model specification are given below.}
 
   \item{family}{a description of the error distribution and link
-    function to be used in the model.
-    See \code{\link{family}} for details.}
+    function to be used in the model. This can be a character string
+    naming a family function, a family function or the result of a call
+    to a family function.  (See \code{\link{family}} for details of
+    family functions.)}
 
   \item{data}{an optional data frame containing the variables
     in the model.  By default the variables are taken from
@@ -52,7 +46,7 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset.  The ``factory-fresh''
+    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
     default is \code{\link{na.omit}}.}
 
   \item{start}{starting values for the parameters in the linear predictor.}
@@ -73,8 +67,9 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
     should be included as a component of the returned value.}
 
   \item{method}{the method to be used in fitting the model.
-    The default (and presently only) method \code{glm.fit}
-    uses iteratively reweighted least squares (IWLS).}
+    The default method \code{"glm.fit"} uses iteratively reweighted
+    least squares (IWLS).  The only current alternative is
+    \code{"model.frame"} which returns the model frame and does no fitting.}
 
   \item{x, y}{For \code{glm}:
     logical values indicating whether the response
@@ -179,10 +174,7 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   \item{xlevels}{(where relevant) a record of the levels of the factors
     used in fitting.}
 
-  Fits from null models have class \code{"glm.null"} inheriting from
-  \code{"glm"}.
-  
-  In addition, non-null fits will have components \code{qr}, \code{R}
+  In addition, non-empty fits will have components \code{qr}, \code{R}
   and \code{effects} relating to the final weighted linear fit.
 
   Objects of class \code{"glm"} are normally of class \code{c("glm",
@@ -226,7 +218,7 @@ glm.fit.null(x, y, weights = rep(1, nrow(x)),
   \emph{Generalized linear models.}
   Chapter 6 of \emph{Statistical Models in S}
   eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
-  
+
   McCullagh P. and Nelder, J. A. (1989)
   \emph{Generalized Linear Models.}
   London: Chapman and Hall.
@@ -247,7 +239,7 @@ anova(glm.D93)
 summary(glm.D93)
 
 ## an example with offsets from Venables & Ripley (2002, p.189)
-\testonly{"anorexia" <-
+\dontshow{"anorexia" <-
 structure(list(Treat = structure(c(2, 2, 2, 2, 2, 2, 2, 2, 2,
 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -275,9 +267,9 @@ structure(list(Treat = structure(c(2, 2, 2, 2, 2, 2, 2, 2, 2,
 "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60",
 "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71",
 "72"))}
-%% "else" (not testonly)
+%% "else" (not dontshow)
 \dontrun{
-## Need the anorexia data from a recent version of the package MASS:
+## Need the anorexia data from a recent version of the package 'MASS':
 library(MASS)
 data(anorexia)
 }

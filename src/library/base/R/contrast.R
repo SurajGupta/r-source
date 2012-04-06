@@ -8,11 +8,12 @@ contrasts <-
         return(structure(diag(nlevels(x)), dimnames=list(levels(x), levels(x))))
     ctr <- attr(x, "contrasts")
     if (is.null(ctr)) {
-	ctr <- get(getOption("contrasts")[[if (is.ordered(x)) 2 else 1]])(levels(x), contrasts = contrasts)
+        ctrname <- getOption("contrasts")[[if (is.ordered(x)) 2 else 1]]
+	ctr <- get(ctrname, mode="function", envir=parent.frame())(levels(x), contrasts = contrasts)
 	dimnames(ctr) <- list(levels(x), dimnames(ctr)[[2]])
     }
     else if (is.character(ctr))
-	ctr <- get(ctr)(levels(x), contrasts = contrasts)
+	ctr <- get(ctr, mode="function", envir=parent.frame())(levels(x), contrasts = contrasts)
     #if(ncol(ctr)==1) dimnames(ctr) <- list(dimnames(ctr)[[1]], "")
     ctr
 }
@@ -39,7 +40,7 @@ contrasts <-
 	    cm[,1:nc] <- value
 	    dimnames(cm) <- list(levels(x),NULL)
 	    if(!is.null(nmcol <- dimnames(value)[[2]]))
-		dimnames(cm)[[2]] <- c(nmcol, rep("", n1-nc))
+		dimnames(cm)[[2]] <- c(nmcol, rep.int("", n1-nc))
 	} else cm <- value[, 1:n1, drop=FALSE]
     }
     else if(is.character(value)) cm <- value

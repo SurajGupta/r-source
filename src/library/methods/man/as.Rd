@@ -4,6 +4,24 @@
 \alias{coerce}
 \alias{coerce<-}
 \alias{setAs}
+\alias{coerce-methods}
+\alias{coerce,ANY,array-method}
+\alias{coerce,ANY,call-method}
+\alias{coerce,ANY,character-method}
+\alias{coerce,ANY,complex-method}
+\alias{coerce,ANY,environment-method}
+\alias{coerce,ANY,expression-method}
+\alias{coerce,ANY,function-method}
+\alias{coerce,ANY,integer-method}
+\alias{coerce,ANY,list-method}
+\alias{coerce,ANY,logical-method}
+\alias{coerce,ANY,matrix-method}
+\alias{coerce,ANY,name-method}
+\alias{coerce,ANY,numeric-method}
+\alias{coerce,ANY,single-method}
+\alias{coerce,ANY,ts-method}
+\alias{coerce,ANY,vector-method}
+\alias{coerce,ANY,NULL-method}
 \title{Force an Object to Belong to a Class}
 \description{
   These functions manage the relations that allow coercing an object to
@@ -14,7 +32,7 @@ as(object, Class, strict=TRUE)
 
 as(object, Class) <- value
 
-setAs(from, to, def, replace, where = 1)
+setAs(from, to, def, replace, where = topenv(parent.frame()))
 
 }
 \section{Summary of Functions}{
@@ -22,7 +40,7 @@ setAs(from, to, def, replace, where = 1)
     \item{\code{as}:}{
       Returns the version of this object coerced to be the given
       \code{Class}.
-  
+
       If the corresponding \code{is} relation is true, it will be used.
       In particular, if the relation has a coerce method, the method
       will be invoked on \code{object}.
@@ -90,8 +108,9 @@ setAs(from, to, def, replace, where = 1)
     \code{setAs} will do the conversion.) }
   \item{replace}{If supplied, the function to use as a replacement
     method.}
-  \item{where}{ The position or environment in which to store the resulting method for
-    \code{coerce}; by default, the global environment. }
+  \item{where}{the position or environment in which to store the
+    resulting method for \code{coerce}.}
+  %% FIXME: ; by default, the ... environment.}
 }
 
 %% <FIXME>
@@ -117,7 +136,7 @@ setAs(from, to, def, replace, where = 1)
   As a first step in conversion, the \code{as} function determines
   whether \code{is(object, Class)} is \code{TRUE}.  This can be the case
   either because the class definition of \code{object} includes
-  \code{Class} as a ``super class'' (directly or indirectly), or because
+  \code{Class} as a \dQuote{super class} (directly or indirectly), or because
   a call to \code{\link{setIs}} established the relationship.
 
   Either way, the inheritance relation defines a method to coerce
@@ -175,10 +194,10 @@ setAs(from, to, def, replace, where = 1)
 %% Currently Rdconv cannot deal with markup in section titles.
 %% \section{The Function \code{as} Used in Replacements}{
 \section{The Function `as' Used in Replacements}{
-  %% </FIXME>    
+  %% </FIXME>
   When \code{as} appears on the left of an assignment, the intuitive
-  meaning is ``Replace the part of \code{object} that was inherited from
-  \code{Class} by the \code{value} on the right of the assignment.''
+  meaning is \dQuote{Replace the part of \code{object} that was inherited from
+  \code{Class} by the \code{value} on the right of the assignment.}
 
   This usually has a straightforward interpretation, but you can control
   explicitly what happens, and sometimes you should to avoid possible
@@ -218,26 +237,33 @@ setAs(from, to, def, replace, where = 1)
   essentially the same.
   }
 
+\section{Basic Coercion Methods}{
+Methods are pre-defined for coercing any object to one of the basic
+datatypes.  For example, \code{as(x, "numeric")} uses the existing
+\code{as.numeric} function.  These built-in methods can be listed by
+\code{showMethods("coerce")}.
+}
+
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
+  The R package \pkg{methods} implements, with a few exceptions, the
   programming interface for classes
   and methods in the book \emph{Programming with Data} (John
   M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
   and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page 
+  discussion of details and ongoing development, see the web page
   \url{http://developer.r-project.org/methodsPackage.html} and the
   pointers from that page.
 }
 \examples{
 ## using the definition of class "track" from \link{Classes}
 
-\testonly{
+\dontshow{
 setClass("track",
             representation(x="numeric", y="numeric"))
 setClass("trackCurve",
@@ -274,7 +300,7 @@ setAs("cb", "ca", function(from, to )new(to, a=from@b, id = from@id))
 
 as(CB, "numeric")
 
-\testonly{
+\dontshow{
 ## should generate an error (should have been a function of one argument)
 try(setAs("track", "numeric", function(x, y,z)x@y))
 

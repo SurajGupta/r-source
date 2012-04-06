@@ -11,11 +11,9 @@ help <- function(topic, offline = FALSE, package = .packages(),
         if (is.name(y <- substitute(package)))
             package <- as.character(y)
     if (!missing(topic)) {
-        topic <- substitute(topic)
-        if (is.name(topic))
-            topic <- as.character(topic)
-        else if (!is.character(topic))
-            stop("Unimplemented help feature")
+        ischar<-try(is.character(topic), silent=TRUE)
+        if (inherits(ischar, "try-error")) ischar<-FALSE
+        if (!ischar) topic <- deparse(substitute(topic))
         # for cmd/help ..
         if (!is.na(match(topic, c("+", "-", "*", "/", "^", "%%"))))
             topic <- "Arithmetic"
@@ -32,8 +30,9 @@ help <- function(topic, offline = FALSE, package = .packages(),
         file <- index.search(topic, INDICES, "AnIndex", type)
         if (length(file) && file != "") {
             if (verbose)
-                cat("\t\t\t\t\t\tHelp file name `", sub(".*/", "", file),
-                    ".Rd'\n", sep = "")
+                cat("\t\t\t\t\t\tHelp file name ",
+                    sQuote(paste(basename(file), ".Rd", sep = "")),
+                    "\n", sep = "")
             if (!offline) {
                 if (htmlhelp) {
                     if(file.exists(file)) {
@@ -62,8 +61,8 @@ help <- function(topic, offline = FALSE, package = .packages(),
                         return(invisible())
                     } else {
                         if(verbose)
-                            cat("no HTML help for `", topic,
-                                "' is available\n", sep = "")
+                            cat("no HTML help for", sQuote(topic),
+                                "is available\n", sep = "")
                         file <- index.search(topic, INDICES, "AnIndex", "help")
                     }
                 }
@@ -72,12 +71,12 @@ help <- function(topic, offline = FALSE, package = .packages(),
                 ## end of experimental code
                 if(file.exists(zfile))
                     file.show(zfile,
-                              title = paste("R Help on `", topic, "'", sep=""),
-                              delete.file = (zfile!=file),
+                              title = paste("R Help on", sQuote(topic)),
+                              delete.file = (zfile != file),
                               pager = pager)
                 else
-                    stop(paste("The help file for `", topic, "' is missing",
-                               sep = ""))
+                    stop(paste("The help file for", sQuote(topic),
+                               "is missing"))
                 return(invisible())
             }
             else {
@@ -148,28 +147,34 @@ help <- function(topic, offline = FALSE, package = .packages(),
                         }
                     }
                 if(length(pkgs) == 1) {
-                    cat("  topic `", topic, "' is not in any loaded package\n",
-                        "  but can be found in package `", pkgs,
-                        "' in library `", libs, "'\n", sep = "")
+                    writeLines(c(paste("  topic", sQuote(topic),
+                                       "is not in any loaded package"),
+                                 paste("  but can be found in package",
+                                       sQuote(pkgs), "in library",
+                                       sQuote(libs))))
                 } else if(length(pkgs) > 1) {
-                    cat("  topic `", topic, "' is not in any loaded package\n",
-                        "  but can be found in the following packages:\n\n",
-                        sep="")
-                    A <- cbind(package=pkgs, library=libs)
-                    rownames(A) <- 1:nrow(A)
-                    print(A, quote=FALSE)
+                    writeLines(c(paste("  topic", sQuote(topic),
+                                       "is not in any loaded package"),
+                                 paste("  but can be found in the",
+                                       "following packages:")))
+                    A <- cbind(package = pkgs, library = libs)
+                    rownames(A) <- 1 : nrow(A)
+                    print(A, quote = FALSE)
                 } else {
-                    stop(paste("No documentation for `", topic,
-                               "' in specified packages and libraries:\n",
-                               "  you could try `help.search(\"", topic,
-                               "\")'",
+                    stop(paste("No documentation for ", sQuote(topic),
+                               " in specified packages and libraries:\n",
+                               "  you could try ",
+                               sQuote(paste("help.search(\"", topic,
+                                            "\")", sep = "")),
                                sep = ""))
+                         
                 }
             } else {
-                    stop(paste("No documentation for `", topic,
-                               "' in specified packages and libraries:\n",
-                               "  you could try `help.search(\"", topic,
-                               "\")'",
+                    stop(paste("No documentation for ", sQuote(topic),
+                               " in specified packages and libraries:\n",
+                               "  you could try ",
+                               sQuote(paste("help.search(\"", topic,
+                                            "\")", sep = "")),
                                sep = ""))
             }
         }

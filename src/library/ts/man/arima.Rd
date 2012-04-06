@@ -118,7 +118,7 @@ arima(x, order = c(0, 0, 0),
   from observation \code{n.cond} on, (where \code{n.cond} is at least
   the maximum lag of an AR term), treating all earlier innovations to
   be zero.  Argument \code{n.cond} can be used to allow comparability
-  between different fits.  The ``part log-likelihood'' is the first
+  between different fits.  The \dQuote{part log-likelihood} is the first
   term, half the log of the estimated mean square.  Missing values
   are allowed, but will cause many of the innovations to be missing.
 
@@ -200,8 +200,7 @@ arima(x, order = c(0, 0, 0),
 
 \examples{
 data(lh)
-\dontrun{arima(lh, order = c(1,0,0))}
-\testonly{(fit <- arima(lh, c(1,0,0))); tsdiag(fit)}
+arima(lh, order = c(1,0,0))
 arima(lh, order = c(3,0,0))
 arima(lh, order = c(1,0,1))
 

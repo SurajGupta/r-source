@@ -12,10 +12,11 @@
   table of the counts at each combination of factor levels.
 }
 \usage{
-table(\dots, exclude = c(NA, NaN), dnn, deparse.level = 1)
+table(\dots, exclude = c(NA, NaN), dnn = list.names(...), deparse.level = 1)
 as.table(x, \dots)
 is.table(x)
-as.data.frame.table(x, row.names = NULL, optional = FALSE, \dots)
+
+\method{as.data.frame}{table}(x, row.names = NULL, optional = FALSE, \dots)
 }
 \arguments{
   \item{\dots}{objects which can be interpreted as factors (including
@@ -28,15 +29,36 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE, \dots)
     \emph{dimnames names}).}
   \item{deparse.level}{controls how the default \code{dnn} is
     constructed.  See details.}
-  \item{x}{an arbitrary \R object.}
+  \item{x}{an arbitrary \R object, or an object inheriting from class
+    \code{"table"} for the \code{as.data.frame} method.}
   \item{row.names}{a character vector giving the row names for the data
     frame.}
   \item{optional}{a logical controlling whether row names are set.
     Currently not used.}
 }
+\value{
+  \code{table()} returns a \emph{contingency table}, an object of
+  \code{\link[base]{class}} \code{"table"}; see the \code{\link{print}}
+  method's separate documentation.
+
+  There is a \code{summary} method for objects created by \code{table}
+  or \code{\link{xtabs}}, which gives basic information and performs a
+  chi-squared test for independence of factors (note that the function
+  \code{\link[ctest]{chisq.test}} in package \pkg{ctest} currently only
+  handles 2-d tables).
+
+  \code{as.table} and \code{is.table} coerce to and test for contingency
+  table, respectively.
+
+  The \code{as.data.frame} method for objects inheriting from class
+  \code{"table"} can be used to convert the array-based representation
+  of a contingency table to a data frame containing the classifying
+  factors and the corresponding counts (the latter as component
+  \code{Freq}).  This is the inverse of \code{\link{xtabs}}.
+}
 \details{
   If the argument \code{dnn} is not supplied, the internal function
-  \code{list.names} is called to compute the `dimname names'.  If the
+  \code{list.names} is called to compute the \sQuote{dimname names}.  If the
   arguments in \code{\dots} are named, those names are used.  For the
   remaining arguments, \code{deparse.level = 0} gives an empty name,
   \code{deparse.level = 1} uses the supplied argument if it is a symbol,
@@ -44,21 +66,6 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE, \dots)
 
   Only when \code{exclude} is specified (i.e., not by default), will
   \code{table} drop levels of factor arguments potentially.
-
-  There is a \code{summary} method for contingency table objects created
-  by \code{table} or \code{xtabs}, which gives basic information and
-  performs a chi-squared test for independence of factors (note that the
-  function \code{\link[ctest]{chisq.test}} in package \bold{ctest}
-  currently only handles 2-d tables).
-
-  \code{as.table} and \code{is.table} coerce to and test for contingency
-  table, respectively.
-
-  \code{as.data.frame.table} is a method for the generic function
-  \code{as.data.frame} to convert the array-based representation of a
-  contingency table to a data frame containing the classifying factors
-  and the corresponding counts (the latter as component \code{Freq}).
-  This is the inverse of \code{\link{xtabs}}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -74,11 +81,11 @@ attach(warpbreaks)
 table(wool, tension)
 data(state)
 table(state.division, state.region)
+detach()
 
 data(airquality)
-attach(airquality)
 # simple two-way contingency table
-table(cut(Temp, quantile(Temp)), Month)
+with(airquality, table(cut(Temp, quantile(Temp)), Month))
 
 a <- letters[1:3]
 table(a, sample(a))                    # dnn is c("a", "")
@@ -89,7 +96,7 @@ table(a, sample(a), deparse.level = 2) # dnn is c("a", "sample(a)")
 data(UCBAdmissions) ## already a contingency table
 DF <- as.data.frame(UCBAdmissions)
 class(tab <- xtabs(Freq ~ ., DF))# xtabs & table
-## tab *is* ``the same'' as the original table:
+## tab *is* "the same" as the original table:
 all(tab == UCBAdmissions)
 all.equal(dimnames(tab), dimnames(UCBAdmissions))
 

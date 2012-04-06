@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997--2003  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,8 +37,6 @@
  * The first pass calculates the width of the paste buffer,
  * then it is alloc-ed and the second pass stuffs the information in.
  */
-
-
 SEXP do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, collapse, sep, x, tmpchar;
@@ -80,7 +79,7 @@ SEXP do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 	    maxlen = length(VECTOR_ELT(x, j));
     }
     if(maxlen == 0)
-	return mkString("");
+	return (!isNull(collapse)) ? mkString("") : allocVector(STRSXP, 0);
 
     PROTECT(ans = allocVector(STRSXP, maxlen));
 
@@ -258,11 +257,12 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x;
-    int n, w, d, e;
+    int n, nsmall, w, d, e;
     int wi, di, ei;
     checkArity(op, args);
     x = CAR(args);
     n = LENGTH(x);
+    nsmall = asInteger(CADR(args));
     w = 0;
     d = 0;
     e = 0;
@@ -277,12 +277,12 @@ SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 	break;
 
     case REALSXP:
-	formatReal(REAL(x), n, &w, &d, &e, 0);
+	formatReal(REAL(x), n, &w, &d, &e, nsmall);
 	break;
 
     case CPLXSXP:
 	wi = di = ei = 0;
-	formatComplex(COMPLEX(x), n, &w, &d, &e, &wi, &di, &ei, 0);
+	formatComplex(COMPLEX(x), n, &w, &d, &e, &wi, &di, &ei, nsmall);
 	n = -1;/* complex 'code' */
 	break;
 

@@ -7,14 +7,14 @@
 \title{Random Number Generation}
 \description{
   \code{.Random.seed} is an integer vector, containing the random number
-  generator (RNG) \bold{state} for random number generation in \R. It
+  generator (RNG) \bold{state} for random number generation in \R.  It
   can be saved and restored, but should not be altered by the user.
 
   \code{RNGkind} is a more friendly interface to query or set the kind
   of RNG in use.
 
   \code{RNGversion} can be used to set the random generators as they
-  were in an earlier \R{} version (for reproducibility).
+  were in an earlier \R version (for reproducibility).
   
   \code{set.seed} is the recommended way to specify seeds.
 }
@@ -36,7 +36,7 @@ set.seed(seed, kind = NULL)
     to return to the \R default.}
   \item{seed}{a single value, interpreted as an integer.}
   \item{vstr}{a character string containing a version number,
-    e.g. \code{"1.6.2"}}
+    e.g., \code{"1.6.2"}}
   \item{rng.kind}{integer code in \code{0:k} for the above \code{kind}.}
   \item{n1, n2, \dots}{integers. See the details for how many are required
     (which depends on \code{rng.kind}).}
@@ -81,7 +81,7 @@ set.seed(seed, kind = NULL)
     \item{\code{"Mersenne-Twister":}}{
       From Matsumoto and Nishimura (1998). A twisted GFSR with period
       \eqn{2^{19937} - 1}{2^19937 - 1} and equidistribution in 623
-      consecutive dimensions (over the whole period).  The ``seed'' is a
+      consecutive dimensions (over the whole period).  The \dQuote{seed} is a
       624-dimensional set of 32-bit integers plus a current position in
       that set.
     }
@@ -91,7 +91,7 @@ set.seed(seed, kind = NULL)
       subtraction. That is, the recurrence used is
       \deqn{X_j = (X_{j-100} - X_{j-37}) \bmod 2^{30}%
       }{X[j] = (X[j-100] - X[j-37]) mod 2^30}
-      and the ``seed'' is the set of the 100 last numbers (actually
+      and the \dQuote{seed} is the set of the 100 last numbers (actually
       recorded as 101 numbers, the last being a cyclic shift of the
       buffer).  The period is around \eqn{2^{129}}{2^129}.
       }
@@ -100,7 +100,7 @@ set.seed(seed, kind = NULL)
       The 2002 version which not backwards compatible with the earlier
       version: the initialization of the GFSR from the seed was altered.
       \R did not allow you to choose consecutive
-      seeds, the reported `weakness', and already scrambled the seeds.
+      seeds, the reported \sQuote{weakness}, and already scrambled the seeds.
     }
 
     \item{\code{"user-supplied":}}{
@@ -134,6 +134,9 @@ set.seed(seed, kind = NULL)
   not save the state of the Box--Muller normal generator.  If you want
   to reproduce work later, call \code{set.seed} rather than set
   \code{.Random.seed}.
+
+  As from \R 1.8.0, \code{.Random.seed} is only looked for in the user's
+  workspace.
 }
 \value{
   \code{.Random.seed} is an \code{\link{integer}} vector whose first
@@ -215,12 +218,12 @@ set.seed(seed, kind = NULL)
 %	this is ./Uniform.Rd
 \examples{
 runif(1); .Random.seed; runif(1); .Random.seed
-## If there is no seed,  a ``random'' new one is created:
+## If there is no seed, a "random" new one is created:
 rm(.Random.seed); runif(1); .Random.seed
 
 RNGkind("Wich")# (partial string matching on 'kind')
 
-## This shows how `runif(.)' works for Wichmann-Hill,
+## This shows how 'runif(.)' works for Wichmann-Hill,
 ## using only R functions:
 
 p.WH <- c(30269, 30307, 30323)

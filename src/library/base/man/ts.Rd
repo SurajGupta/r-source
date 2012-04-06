@@ -14,7 +14,7 @@
 }
 \usage{
 ts(data = NA, start = 1, end = numeric(0), frequency = 1,
-   deltat = 1, ts.eps = getOption("ts.eps"), class, names)
+   deltat = 1, ts.eps = getOption("ts.eps"), class = , names = )
 as.ts(x)
 is.ts(x)
 }
@@ -24,7 +24,7 @@ is.ts(x)
     \code{data.matrix}.}
   \item{start}{the time of the first observation.  Either a single
     number or a vector of two integers, which specify a natural time
-    unit and a (1-based) number of samples into the time unit.  See 
+    unit and a (1-based) number of samples into the time unit.  See
     the examples for the use of the second form.}
   \item{end}{the time of the last observation, specified in the same way
     as \code{start}.}
@@ -54,7 +54,7 @@ is.ts(x)
 
   Class \code{"ts"} has a number of methods.  In particular arithmetic
   will attempt to align time axes, and subsetting to extract subsets of
-  series can be used (e.g. \code{EuStockMarkets[, "DAX"]}).  However,
+  series can be used (e.g., \code{EuStockMarkets[, "DAX"]}).  However,
   subsetting the first (or only) dimension will return a matrix or
   vector, as will matrix subsetting.
 
@@ -88,7 +88,7 @@ is.ts(x)
   \code{\link{window}};
   \code{\link{print.ts}}, the print method for time series objects;
   \code{\link{plot.ts}}, the plot method for time series objects.
-  Standard package \bold{ts} for many additional time-series functions.
+  Standard package \pkg{ts} for many additional time-series functions.
 }
 \examples{
 ts(1:10, frequency = 4, start = c(1959, 2)) # 2nd Quarter of 1959
@@ -96,7 +96,7 @@ print( ts(1:10, freq = 7, start = c(12, 2)), calendar = TRUE) # print.ts(.)
 ## Using July 1954 as start date:
 gnp <- ts(cumsum(1 + round(rnorm(100), 2)),
           start = c(1954, 7), frequency = 12)
-plot(gnp) # using `plot.ts' for time-series plot
+plot(gnp) # using 'plot.ts' for time-series plot
 
 ## Multivariate
 z <- ts(matrix(rnorm(300), 100, 3), start=c(1961, 1), frequency=12)

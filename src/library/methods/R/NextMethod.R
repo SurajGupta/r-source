@@ -8,7 +8,7 @@
     if(!is(method, "MethodDefinition"))
         stop("NextMethod not defined because the the current method is not a MethodDefinition object")
     ## remove all cached methods
-    mlist@allMethods <- list()
+    mlist@allMethods <- mlist@methods
     ## delete the excluded method(s)
     for(signature in excluded) {
         if(!is(signature, "signature"))
@@ -83,7 +83,7 @@ callNextMethod <- function(...) {
         ## may be a method call for a primitive; not available as .Method
         f <- as.character(mcall[[1]])
         ## check that this could be a basic function with methods
-        if(!is.function(.BasicFunsList[[f]]))
+        if(is.null(genericForPrimitive(f)))
             stop("A call to callNextMethod() appears in a call to \"",
                  f, "\", but the call doesn't seem to come from either a generic function or another callNextMethod.")
         method <- maybeMethod

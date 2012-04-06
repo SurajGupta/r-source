@@ -143,7 +143,6 @@ my %develfiles=("doc\\html\\logo.jpg" => 1,
 		"bin\\Rd2dvi.sh" => 1,
 		"bin\\Rd2txt" => 1,
 		"bin\\Rdconv" => 1,
-		"bin\\Rdindex" => 1,
 		"bin\\Rdiff.sh" => 1,
 		"bin\\Sd2Rd" => 1);
 		
@@ -192,8 +191,7 @@ sub listFiles {
 	    if (m/R-admin.pdf/ || m/R-exts.pdf/ || m/R-lang.pdf/) {
 		$mini = 0;
 	    }
-	} elsif (m/^library\\[^\\]*\\latex/
-		 || m/^share\\texmf/) {
+	} elsif (m/^library\\[^\\]*\\latex/) {
 	    	$component = "latex";
 	    	$mini = 0;
 	} elsif (m/^Tcl/) {
@@ -207,6 +205,7 @@ sub listFiles {
 		 || m/^share\\make/
 		 || m/^share\\perl/
 		 || m/^share\\R/
+		 || m/^share\\texmf/
 		 || m/^lib\\/) {
 	    $component = "devel";
 	    $mini = 0;

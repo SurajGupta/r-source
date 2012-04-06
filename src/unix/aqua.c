@@ -36,6 +36,10 @@
 # endif
 #endif
 
+#ifdef __APPLE_CC__
+# include "dlfcn-darwin.h"
+# define HAVE_DYNAMIC_LOADING
+#else
 /* HP-UX 11.0 has dlfcn.h, but according to libtool as of Dec 2001
    this support is broken. So we force use of shlib even when dlfcn.h
    is available */
@@ -50,9 +54,14 @@
 #  define HAVE_DYNAMIC_LOADING
 # endif
 #endif
+#endif /* __APPLE_CC__ */
 
 #if defined(HAVE_AQUA) && defined(HAVE_DYNAMIC_LOADING)
+#define __DEBUGGING__
 
+#include <R_ext/eventloop.h>
+
+#include <Carbon/Carbon.h>
 static DL_FUNC Rdlsym(void *handle, char const *name)
 {
     char buf[MAXIDSIZE+1];
@@ -64,18 +73,26 @@ static DL_FUNC Rdlsym(void *handle, char const *name)
     return (DL_FUNC) dlsym(handle, buf);
 }
 
-/*
-extern DL_FUNC ptr_R_Suicide, ptr_R_ShowMessage, ptr_R_ReadConsole,
-    ptr_R_WriteConsole, ptr_R_ResetConsole, ptr_R_FlushConsole,
-    ptr_R_ClearerrConsole, ptr_R_Busy, ptr_R_CleanUp, ptr_R_ShowFiles,
-    ptr_R_ChooseFile, ptr_gnome_start,
-    ptr_GnomeDeviceDriver, ptr_GTKDeviceDriver,
-    ptr_R_loadhistory, ptr_R_savehistory;
-*/
+extern DL_FUNC 	ptr_R_ReadConsole, ptr_R_WriteConsole, ptr_R_ResetConsole, 
+                ptr_R_FlushConsole, ptr_R_ClearerrConsole, ptr_R_StartConsole, 
+                ptr_R_ShowFiles, ptr_R_loadhistory,  ptr_R_savehistory,
+                ptr_R_ChooseFile, ptr_R_CleanUp, ptr_R_ShowMessage, ptr_R_Suicide,
+                ptr_R_Busy;
 
-extern DL_FUNC ptr_R_ReadConsole, ptr_R_WriteConsole, ptr_R_ResetConsole, 
-    ptr_R_FlushConsole, ptr_R_ClearerrConsole, ptr_R_StartConsole;
 
+DL_FUNC ptr_do_wsbrowser, ptr_GetQuartzParameters, 
+        ptr_Raqua_Edit, ptr_do_dataentry, ptr_do_browsepkgs, ptr_do_datamanger,
+        ptr_do_packagemanger, ptr_do_flushconsole, ptr_do_hsbrowser, ptr_InitAquaIO;
+
+
+void R_ProcessEvents(void);
+
+/* #define AQUA_POLLED_EVENTS 1 */
+ 
+#ifdef AQUA_POLLED_EVENTS 
+static void (* otherPolledEventHandler)(void);
+static void	Raqua_ProcessEvents2(void);
+#endif
 
 /* This is called too early to use moduleCdynload */
 void R_load_aqua_shlib(void)
@@ -104,11 +121,9 @@ void R_load_aqua_shlib(void)
 	sprintf(buf, "The AQUA shared library could not be loaded.\n  The error was %s\n", dlerror());
 	R_Suicide(buf);
     }
-   /* ptr_R_Suicide = Rdlsym(handle, "Rgnome_Suicide");
-    if(!ptr_R_Suicide) Rstd_Suicide("Cannot load R_Suicide");
-    ptr_R_ShowMessage = Rdlsym(handle, "Rgnome_ShowMessage");
-    if(!ptr_R_ShowMessage) R_Suicide("Cannot load R_ShowMessage");
-    */
+
+    ptr_R_Suicide = Rdlsym(handle, "Raqua_Suicide");
+    if(!ptr_R_Suicide) Rstd_Suicide("Cannot load Raqua_Suicide");
     ptr_R_StartConsole = Rdlsym(handle, "Raqua_StartConsole");
     if(!ptr_R_StartConsole) R_Suicide("Cannot load R_StartConsole");
     ptr_R_ReadConsole = Rdlsym(handle, "Raqua_ReadConsole");
@@ -121,27 +136,150 @@ void R_load_aqua_shlib(void)
     if(!ptr_R_FlushConsole) R_Suicide("Cannot load R_FlushConsole");
     ptr_R_ClearerrConsole = Rdlsym(handle, "Raqua_ClearerrConsole");
     if(!ptr_R_ClearerrConsole) R_Suicide("Cannot load R_ClearerrConsole");
-/*
-    ptr_R_Busy = Rdlsym(handle, "Rgnome_Busy");
-    if(!ptr_R_Busy) R_Suicide("Cannot load R_Busy");
-    ptr_R_CleanUp = Rdlsym(handle, "Rgnome_CleanUp");
-    if(!ptr_R_CleanUp) R_Suicide("Cannot load R_CleanUp");
-    ptr_R_ShowFiles = Rdlsym(handle, "Rgnome_ShowFiles");
-    if(!ptr_R_ShowFiles) R_Suicide("Cannot load R_ShowFiles");
-    ptr_R_ChooseFile = Rdlsym(handle, "Rgnome_ChooseFile");
-    if(!ptr_R_ChooseFile) R_Suicide("Cannot load R_ChooseFile");
-    ptr_gnome_start = Rdlsym(handle, "gnome_start");
-    if(!ptr_gnome_start) R_Suicide("Cannot load gnome_start");
-    ptr_GTKDeviceDriver = Rdlsym(handle, "GTKDeviceDriver");
-    if(!ptr_GTKDeviceDriver) R_Suicide("Cannot load GTKDeviceDriver");
-    ptr_R_loadhistory = Rdlsym(handle, "Rgnome_loadhistory");
-    if(!ptr_R_loadhistory) R_Suicide("Cannot load Rgnome_loadhsitoryr");
-    ptr_R_savehistory = Rdlsym(handle, "Rgnome_savehistory");
-    if(!ptr_R_savehistory) R_Suicide("Cannot load Rgnome_savehistory");
-    ptr_GnomeDeviceDriver = Rdlsym(handle, "GnomeDeviceDriver");
-    if(!ptr_GnomeDeviceDriver) R_Suicide("Cannot load GnomeDeviceDriver");
-*/    
+    ptr_do_wsbrowser = Rdlsym(handle, "Raqua_do_wsbrowser");
+    if(!ptr_do_wsbrowser) R_Suicide("Cannot load do_wsbrowser");
+    ptr_R_ShowFiles = Rdlsym(handle, "Raqua_ShowFiles");
+    if(!ptr_R_ShowFiles) R_Suicide("Cannot load Raqua_R_ShowFiles");
+    ptr_R_loadhistory = Rdlsym(handle, "Raqua_loadhistory");
+    if(!ptr_R_loadhistory) R_Suicide("Cannot load Raqua_loadhistory");
+    ptr_R_savehistory = Rdlsym(handle, "Raqua_savehistory");
+    if(!ptr_R_savehistory) R_Suicide("Cannot load Raqua_savehistory");
+    ptr_R_ChooseFile = Rdlsym(handle, "Raqua_ChooseFile");
+    if(!ptr_R_ChooseFile) R_Suicide("Cannot load Raqua_R_ChooseFile");
+    ptr_GetQuartzParameters = Rdlsym(handle, "Raqua_GetQuartzParameters");
+    if(!ptr_GetQuartzParameters) R_Suicide("Cannot load Raqua_GetQuartzParameters");
+    ptr_Raqua_Edit = Rdlsym(handle, "Raqua_Edit");
+    if(!ptr_Raqua_Edit) R_Suicide("Cannot load Raqua_Edit");
+    ptr_do_dataentry = Rdlsym(handle, "Raqua_dataentry");
+    if(!ptr_do_dataentry) R_Suicide("Cannot load Raqua_dataentry");
+    ptr_do_browsepkgs = Rdlsym(handle, "Raqua_browsepkgs");
+    if(!ptr_do_browsepkgs) R_Suicide("Cannot load Raqua_browsepkgs");
+    ptr_R_ShowMessage = Rdlsym(handle, "Raqua_ShowMessage");
+    if(!ptr_R_ShowMessage) R_Suicide("Cannot load Raqua_ShowMessage");
+    ptr_R_CleanUp = Rdlsym(handle, "Raqua_CleanUp");
+    if(!ptr_R_CleanUp) R_Suicide("Cannot load Raqua_CleanUp");
+    ptr_do_datamanger = Rdlsym(handle, "Raqua_datamanger");
+    if(!ptr_do_datamanger) R_Suicide("Cannot load Raqua_datamanger");
+    ptr_do_packagemanger = Rdlsym(handle, "Raqua_packagemanger");
+    if(!ptr_do_packagemanger) R_Suicide("Cannot load Raqua_packagemanger");
+    ptr_do_flushconsole = Rdlsym(handle, "Raqua_doflushconsole");
+    if(!ptr_do_flushconsole) R_Suicide("Cannot load Raqua_doflushconsole");
+    ptr_do_hsbrowser = Rdlsym(handle, "Raqua_helpsearchbrowser");
+    if(!ptr_do_hsbrowser) R_Suicide("Cannot load Raqua_helpsearchbrowser");
+    ptr_R_Busy = Rdlsym(handle, "Raqua_Busy");
+    if(!ptr_R_Busy) R_Suicide("Cannot load Raqua_Busy");
+    ptr_InitAquaIO = Rdlsym(handle, "InitAquaIO");
+    if(!ptr_InitAquaIO) R_Suicide("Cannot load InitAquaIO");
+
+#ifdef AQUA_POLLED_EVENTS 
+    otherPolledEventHandler = R_PolledEvents;
+    R_PolledEvents = Raqua_ProcessEvents2;  
+#endif
 }
+
+
+SEXP do_wsbrowser(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+ return(ptr_do_wsbrowser(call, op, args, env));
+}
+
+
+SEXP do_dataentry(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_dataentry(call, op, args, env));
+}
+
+SEXP do_browsepkgs(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_browsepkgs(call, op, args, env));
+}
+
+
+SEXP do_datamanger(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_datamanger(call, op, args, env));
+}
+
+
+SEXP do_hsbrowser(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_hsbrowser(call, op, args, env));
+}
+
+SEXP do_packagemanger(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_packagemanger(call, op, args, env));
+}
+
+SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    return(ptr_do_flushconsole(call, op, args, env));
+}
+
+void InitAquaIO(void);
+void InitAquaIO(void){
+ ptr_InitAquaIO();
+}
+
+void R_ProcessEvents(void)
+{
+    EventRef theEvent;
+    EventRecord	outEvent;
+    EventTargetRef theTarget = GetEventDispatcherTarget();
+    bool	conv = false;
+
+   if(CheckEventQueueForUserCancel())
+      onintr();
+
+   if(ReceiveNextEvent(0, NULL,kEventDurationNoWait,true,&theEvent)== noErr){       
+         conv = ConvertEventRefToEventRecord(theEvent, &outEvent);
+    
+        if(conv && (outEvent.what == kHighLevelEvent))
+            AEProcessAppleEvent(&outEvent);
+   
+        SendEventToEventTarget (theEvent, theTarget);
+        ReleaseEvent(theEvent);
+            
+    }
+
+}
+
+
+
+#ifdef AQUA_POLLED_EVENTS 
+extern WindowRef ConsoleWindow;     
+static void	Raqua_ProcessEvents2(void)
+{
+    EventRef theEvent;
+    EventRecord	outEvent;
+    EventTargetRef theTarget = GetEventDispatcherTarget();
+    bool	conv = false;
+     ProcessSerialNumber ourPSN;
+   
+   if(otherPolledEventHandler)
+      otherPolledEventHandler();
+
+/*    if (GetCurrentProcess(&ourPSN) == noErr)
+        (void)SetFrontProcess(&ourPSN);
+*/
+    if(CheckEventQueueForUserCancel())
+       onintr();
+     
+ /*
+ 
+    if(ReceiveNextEvent(0, NULL,kEventDurationNoWait,true,&theEvent)== noErr){
+        conv = ConvertEventRefToEventRecord(theEvent, &outEvent);
+    
+        if(conv && (outEvent.what == kHighLevelEvent))
+            AEProcessAppleEvent(&outEvent);
+         
+        SendEventToEventTarget (theEvent, theTarget);
+        ReleaseEvent(theEvent);
+            
+    }
+ */   
+}
+#endif
 
 #else
 

@@ -9,13 +9,13 @@
   specified file.  The objects can be read back from the file at a later
   date by using the function \code{load} (or \code{data} in some cases).
 
-  \code{save.image()} is just a short-cut for ``save my current
-  environment'',
+  \code{save.image()} is just a short-cut for \dQuote{save my current
+    environment},
   i.e., \code{save(list = ls(all=TRUE), file = ".RData")}. It is what also
   happens with \code{\link{q}("yes")}.
 }
 \usage{
-save(\dots, list = character(0), file = stop("`file' must be specified"),
+save(\dots, list = character(0), file = stop("'file' must be specified"),
      ascii = FALSE, version = NULL, envir = parent.frame(), 
      compress = FALSE)
 save.image(file = ".RData", version = NULL, ascii = FALSE,

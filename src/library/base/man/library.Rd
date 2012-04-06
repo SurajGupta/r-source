@@ -16,22 +16,26 @@
 \alias{print.packageInfo}
 \description{
   \code{library} and \code{require} load add-on packages.
+
   \code{.First.lib} is called when a package is loaded;
   \code{.Last.lib} is called when a package is detached.
+
   \code{.packages} returns information about package availability.
+
   \code{.path.package} returns information about where a package was
   loaded from.
+
   \code{.find.package} returns the directory paths of installed
   packages.
 }
 \usage{
-library(package, help, lib.loc = NULL, character.only = FALSE,
+library(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         logical.return = FALSE, warn.conflicts = TRUE,
         keep.source = getOption("keep.source.pkgs"),
         verbose = getOption("verbose"), version)
 require(package, quietly = FALSE, warn.conflicts = TRUE,
         keep.source = getOption("keep.source.pkgs"),
-        character.only=FALSE, version)
+        character.only = FALSE, version, save = TRUE)
 
 .First.lib(libname, pkgname)
 .Last.lib(libpath)
@@ -46,28 +50,40 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
 .Autoloaded
 }
 \arguments{
-  \item{package, help}{\link{name} or character string giving the name
-    of a package.}
+  \item{package, help}{the name of a package, given as a \link{name} or
+    literal character string, or a character string, depending on
+    whether \code{character.only} is \code{FALSE} (default) or
+    \code{TRUE}).}
+  \item{pos}{the position on the search list at which to attach the
+    loaded package.  Note that \code{.First.lib} may attach other
+    packages, and \code{pos} is computed \emph{after} \code{.First.lib}
+    has been run.  Can also be the name of a position on the current
+    search list as given by \code{\link{search}()}.}
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through, or \code{NULL}.  The default value
     of \code{NULL} corresponds to all libraries currently known.}
   \item{character.only}{a logical indicating whether \code{package} or
     \code{help} can be assumed to be character strings.}
-  \item{version}{A character string denoting a version number of the 
+  \item{version}{A character string denoting a version number of the
      package to be loaded.  If no version is given, a suitable default
      is chosen.}
   \item{logical.return}{logical.  If it is \code{TRUE},  \code{FALSE} or
-      \code{TRUE} is returned to indicate success.}
+    \code{TRUE} is returned to indicate success.}
   \item{warn.conflicts}{logical.  If \code{TRUE}, warnings are
     printed about \code{\link{conflicts}} from attaching the new
     package, unless that package contains an object \code{.conflicts.OK}.}
-  \item{keep.source}{logical.  If \code{TRUE}, functions ``keep their
-    source'' including comments, see argument \code{keep.source} to
+  \item{keep.source}{logical.  If \code{TRUE}, functions \dQuote{keep their
+    source} including comments, see argument \code{keep.source} to
     \code{\link{options}}.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
   \item{quietly}{a logical.  If \code{TRUE}, no message confirming
-      package loading is printed.}
+    package loading is printed.}
+  \item{save}{logical or environment.  IF \code{TRUE}, a call to
+  \code{require} from the source for a package will save the name of
+  the required package in the variable \code{".required"}, allowing
+  function \code{\link{detach}} to warn if a required package is
+  detached. See section \sQuote{Packages that require other packages} below.}
   \item{libname}{a character string giving the library directory where
     the package was found.}
   \item{pkgname}{a character string giving the name of the package.}
@@ -86,9 +102,9 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{library(package)} and \code{require(package)} both load the
   package with name \code{package}.  \code{require} is designed for use
   inside other functions; it returns \code{FALSE} and gives a warning
-  (rather than an error as \code{library()} does) if the package does not exist.
-  Both functions check and update the list of currently loaded packages
-  and do not reload code that is already loaded.
+  (rather than an error as \code{library()} does) if the package does
+  not exist.  Both functions check and update the list of currently
+  loaded packages and do not reload code that is already loaded.
 
   For large packages, setting \code{keep.source = FALSE} may save quite
   a bit of memory.
@@ -99,7 +115,8 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   object of class \code{"libraryIQR"}.  The structure of this class may
   change in future versions.  In earlier versions of R, only the names
   of all available packages were returned; use \code{.packages(all =
-    TRUE)} for obtaining these.
+    TRUE)} for obtaining these.  Note that
+  \code{\link{installed.packages}()} returns even more information.
 
   \code{library(help = somename)} computes basic information about the
   package \code{somename}, and returns this in an object of class
@@ -113,17 +130,17 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   order).  It is a good place to put calls to \code{\link{library.dynam}}
   which are needed when loading a package into this function (don't call
   \code{library.dynam} directly, as this will not work if the package
-  is not installed in a ``standard'' location).  \code{.First.lib}
+  is not installed in a \dQuote{standard} location).  \code{.First.lib}
   is invoked after the search path interrogated by \code{search()}
   has been updated, so
-  \code{as.environment(match("package:name"), search())} will return the
+  \code{as.environment(match("package:name", search()))} will return the
   environment in which the package is stored.  If calling
   \code{.First.lib} gives an error the loading of the package is
   abandoned, and the package will be unavailable.  Similarly, if the
   option \code{".First.lib"} has a list element with the package's name,
   this element is called in the same manner as \code{.First.lib} when
   the package is loaded.  This mechanism allows the user to set package
-  ``load hooks'' in addition to startup code as provided by the package
+  \dQuote{load hooks} in addition to startup code as provided by the package
   maintainers.
 
   \code{.Last.lib} is called when a package is detached.  Beware
@@ -131,7 +148,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   should be written defensively. (It is called within \code{\link{try}},
   so errors will not stop the package being detached.)
 
-  \code{.packages()} returns the ``base names'' of the currently attached
+  \code{.packages()} returns the \dQuote{base names} of the currently attached
   packages \emph{invisibly} whereas
   \code{.packages(all.available = TRUE)} gives (visibly) \emph{all}
   packages available in the library location path \code{lib.loc}.
@@ -153,11 +170,11 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   function is not meant to be called by users, and its interface might
   change in future versions.
 
-  \code{.Autoloaded} contains the ``base names'' of the packages for
+  \code{.Autoloaded} contains the \dQuote{base names} of the packages for
   which autoloading has been promised.
 
   \code{.Library} is a character string giving the location of the
-  default library, the \file{library} subdirectory of \code{R_HOME}.
+  default library, the \file{library} subdirectory of \env{R\_HOME}.
   \code{.libPaths} is used for getting or setting the library trees that
   \R knows about (and hence uses when looking for packages).  If called
   with argument \code{new}, the library search path is set to
@@ -166,18 +183,16 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   returned.
 
 #ifdef unix
-  The library search path is initialized at startup from the
-  environment variable \code{R_LIBS} (which should be a
-  colon-separated
-  list of directories at which \R library trees are rooted) by calling
-  \code{.libPaths} with the directories specified in \code{R_LIBS}.
+  The library search path is initialized at startup from the environment
+  variable \env{R\_LIBS} (which should be a colon-separated list of
+  directories at which \R library trees are rooted) by calling
+  \code{.libPaths} with the directories specified in \env{R\_LIBS}.
 #endif
-#ifdef windows  
-  The library search path is initialized at startup from the
-  environment variable \code{R_LIBS} (which should be a
-  semicolon-separated
-  list of directories at which \R library trees are rooted) by calling
-  \code{.libPaths} with the directories specified in \code{R_LIBS}.
+#ifdef windows
+  The library search path is initialized at startup from the environment
+  variable \env{R\_LIBS} (which should be a semicolon-separated list of
+  directories at which \R library trees are rooted) by calling
+  \code{.libPaths} with the directories specified in \env{R\_LIBS}.
 #endif
 }
 \value{
@@ -186,15 +201,28 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{require} returns a logical indicating whether the required
   package is available.
 }
+\section{Packages that require other packages}{The source code for a
+  package that requires one or more other packages should have a call
+  to \code{require}, preferably near the beginning of the source, and
+  of course before any code that uses functions, classes or methods
+  from the other package.  The default for argument \code{save} will
+  save the names of all required packages in the environment of the
+  new package.  The saved package names are used by
+  \code{\link{detach}} when a package is detached to warn if other
+  packages still require the detached package.  Also, if a package is
+  installed with saved image (see \link{INSTALL}), the saved package
+  names are used to require these packages when the new package is attached.}
 \section{Formal methods}{
-  \code{library} takes some further actions when package \code{methods}
+  \code{library} takes some further actions when package \pkg{methods}
   is attached (as it is by default).  Packages may define formal generic
   functions as well as re-defining functions in other packages (notably
-  \code{base}) to be generic, and this information is cached whenever
-  such a package is loaded after \code{methods} and re-defined functions
-  are excluded from the list of conflicts.  This may take appreciable
-  time and can be prevented by defining an object \code{.noGenerics}
-  (with any value) in the package.
+  \pkg{base}) to be generic, and this information is cached whenever
+  such a package is loaded after \pkg{methods} and re-defined functions
+  are excluded from the list of conflicts.  The check requires looking
+  for a pattern of objects; the pattern search may be avoided by
+  defining an object \code{.noGenerics}
+  (with any value) in the package.  Naturally, if the package
+  \emph{does} have any such methods, this will prevent them from being used.
 }
 \note{
   \code{library} and \code{require} can only load an \emph{installed}
@@ -221,13 +249,16 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   exact matches.
 
 }
-\author{R core;  Guido Masarotto for the \code{all.available=TRUE}
-  part of \code{.packages}.}
+\author{
+  R core;
+  Guido Masarotto for the \code{all.available=TRUE} part of
+  \code{.packages}.
+}
 \seealso{
   \code{\link{attach}}, \code{\link{detach}}, \code{\link{search}},
   \code{\link{objects}}, \code{\link{autoload}},
-  \code{\link{library.dynam}},
-  \code{\link{data}}, \code{\link{install.packages}},
+  \code{\link{library.dynam}}, \code{\link{data}},
+  \code{\link{install.packages}} and \code{\link{installed.packages}};
   \code{\link{INSTALL}}, \code{\link{REMOVE}}.
 }
 \references{
@@ -236,14 +267,14 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   Wadsworth \& Brooks/Cole.
 }
 \examples{
-(.packages())		    # maybe just "base"
+(.packages())               # maybe just "base"
 .packages(all = TRUE)       # return all available as character vector
 library()                   # list all available packages
 library(lib = .Library)     # list all packages in the default library
-library(help = eda)         # documentation on package `eda'
-library(eda)                # load package `eda'
+library(help = eda)         # documentation on package 'eda'
+library(eda)                # load package 'eda'
 require(eda)                # the same
-(.packages())		    # "eda", too
+(.packages())               # "eda", too
 detach("package:eda")
 
 # if the package name is in a character vector, use
@@ -260,10 +291,14 @@ detach(pos = match(paste("package", pkg, sep=":"), search()))
 .libPaths()                 # all library trees R knows about
 
 require(nonexistent)        # FALSE
-\dontrun{## Suppose a package needs to call a shared library named `fooEXT',
-## where `EXT' is the system-specific extension.  Then you should use
+\dontrun{
+## Suppose a package needs to call a shared library named 'fooEXT',
+## where 'EXT' is the system-specific extension.  Then you should use
 .First.lib <- function(lib, pkg) {
   library.dynam("foo", pkg, lib)
-}}
 }
+
+## if you want to mask as little as possible, use
+library(mypkg, pos = "package:base")
+}}
 \keyword{data}

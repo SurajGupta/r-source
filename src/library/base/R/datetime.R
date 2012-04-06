@@ -313,21 +313,29 @@ axis.POSIXct <- function(side, x, at, format, ...)
     axis(side, at = z, labels = labels, ...)
 }
 
-plot.POSIXct <- function(x, y, xlab = "", xaxt = par("xaxt"), ...)
+plot.POSIXct <- function(x, y, xlab = "", axes = TRUE, frame.plot = axes,
+                         xaxt = par("xaxt"), ...)
 {
-    ## trick to remove arguments intended for title()
-    axisInt <- function(x, main, sub, xlab, ylab, ...) axis.POSIXct(1, x, ...)
-    plot.default(x, y, xaxt = "n", xlab = xlab, ...)
-    if(xaxt != "n") axisInt(x, ...)
+    ## trick to remove arguments intended for title() or plot.default()
+    axisInt <- function(x, main, sub, xlab, ylab, col, lty, lwd,
+                        xlim, ylim, bg, pch, log, asp, ...)
+        axis.POSIXct(1, x, ...)
+    plot.default(x, y, xaxt = "n", xlab = xlab, axes = axes,
+                 frame.plot = frame.plot, ...)
+    if(axes && xaxt != "n") axisInt(x, ...)
 }
 
-plot.POSIXlt <- function(x, y, xlab = "",  xaxt = par("xaxt"), ...)
+plot.POSIXlt <- function(x, y, xlab = "",  axes = TRUE, frame.plot = axes,
+                         xaxt = par("xaxt"), ...)
 {
-    ## trick to remove arguments intended for title()
-    axisInt <- function(x, main, sub, xlab, ylab, ...) axis.POSIXct(1, x, ...)
+    ## trick to remove arguments intended for title() or plot.default()
+    axisInt <- function(x, main, sub, xlab, ylab, col, lty, lwd,
+                        xlim, ylim, bg, pch, log, asp, ...)
+        axis.POSIXct(1, x, ...)
     x <- as.POSIXct(x)
-    plot.default(x, y, xaxt = "n", xlab = xlab, ...)
-    if(xaxt != "n") axisInt(x, ...)
+    plot.default(x, y, xaxt = "n", xlab = xlab, axes = axes,
+                 frame.plot = frame.plot, ...)
+    if(axes && xaxt != "n") axisInt(x, ...)
 }
 
 ISOdatetime <- function(year, month, day, hour, min, sec, tz="")
@@ -436,8 +444,12 @@ Ops.difftime <- function(e1, e2)
         }
         NextMethod(.Generic)
     } else if(.Generic == "+" || .Generic == "-") {
-        if(!inherits(e1, "difftime") || !inherits(e2, "difftime"))
-            stop("both arguments of ", .Generic, " must be difftime objects")
+        if(inherits(e1, "difftime") && !inherits(e2, "difftime"))
+            return(structure(NextMethod(.Generic),
+                             units = attr(e1, "units"), class = "difftime"))
+        if(!inherits(e1, "difftime") && inherits(e2, "difftime"))
+            return(structure(NextMethod(.Generic),
+                             units = attr(e2, "units"), class = "difftime"))
         u1 <- attr(e1, "units")
         if(attr(e2, "units") == u1) {
             structure(NextMethod(.Generic), units=u1, class="difftime")
@@ -462,6 +474,15 @@ Ops.difftime <- function(e1, e2)
               class = "difftime")
 }
 
+"/.difftime" <- function (e1, e2)
+{
+    ## need one scalar, one difftime.
+    if(inherits(e2, "difftime"))
+        stop("second argument of / cannot be a difftime object")
+    structure(unclass(e1) / e2, units = attr(e1, "units"),
+              class = "difftime")
+}
+
 Math.difftime <- function (x, ...)
 {
     stop(paste(.Generic, "not defined for difftime objects"))
@@ -481,47 +502,6 @@ Summary.difftime <- function (x, ...)
     structure(do.call(.Generic, args), units="secs", class="difftime")
 }
 
-## for back-compatibility only: POSIXt versions are used as from 1.3.0
-
-"-.POSIXct" <- function(e1, e2)
-{
-    if(!inherits(e1, "POSIXct"))
-        stop("Can only subtract from POSIXct objects")
-    if (nargs() == 1) stop("unary - is not defined for POSIXct objects")
-    res<- NextMethod()
-    if(inherits(e2, "POSIXct")) unclass(res) else res
-}
-
-"-.POSIXlt" <- function(e1, e2)
-{
-    if (nargs() == 1)
-        stop("unary - is not defined for dt objects")
-    if(inherits(e1, "POSIXlt")) e1 <- as.POSIXct(e1)
-    if(inherits(e2, "POSIXlt")) e2 <- as.POSIXct(e2)
-    e1 - e2
-}
-
-Ops.POSIXct <- function(e1, e2)
-{
-    if (nargs() == 1)
-        stop(paste("unary", .Generic, "not defined for POSIXct objects"))
-    boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
-                      "!=" = , "<=" = , ">=" = TRUE, FALSE)
-    if (!boolean) stop(paste(.Generic, "not defined for POSIXct objects"))
-    NextMethod(.Generic)
-}
-
-Ops.POSIXlt <- function(e1, e2)
-{
-    if (nargs() == 1)
-        stop(paste("unary", .Generic, "not defined for POSIXlt objects"))
-    boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
-                      "!=" = , "<=" = , ">=" = TRUE, FALSE)
-    if (!boolean) stop(paste(.Generic, "not defined for POSIXlt objects"))
-    e1 <- as.POSIXct(e1)
-    e2 <- as.POSIXct(e2)
-    NextMethod(.Generic)
-}
 
 ## ----- convenience functions -----
 
@@ -586,7 +566,7 @@ seq.POSIXt <-
             res <- seq.default(0, to - from, by) + from
         }
         return(structure(res, class=c("POSIXt", "POSIXct")))
-    } else {  # months or years or Days
+    } else {  # months or years or DSTdays
         r1 <- as.POSIXlt(from)
         if(valid == 7) {
             if(missing(to)) { # years
@@ -610,8 +590,8 @@ seq.POSIXt <-
             res <- as.POSIXct(r1)
         } else if(valid == 8) { # DSTdays
             if(!missing(to)) {
-                length.out <- 1 + floor((as.POSIXct(to) -
-                                         as.POSIXct(from))/(7*86400))
+                length.out <- 1 + floor((unclass(as.POSIXct(to)) -
+                                         unclass(as.POSIXct(from)))/86400)
             }
             r1$mday <- seq(r1$mday, by = by, length = length.out)
             r1$isdst <- -1
@@ -623,7 +603,8 @@ seq.POSIXt <-
 }
 
 cut.POSIXt <-
-    function (x, breaks, labels = NULL, start.on.monday = TRUE, ...)
+    function (x, breaks, labels = NULL, start.on.monday = TRUE,
+              right = FALSE, ...)
 {
     if(!inherits(x, "POSIXt")) stop("`x' must be a date-time object")
     x <- as.POSIXct(x)
@@ -633,10 +614,13 @@ cut.POSIXt <-
     } else if(is.numeric(breaks) && length(breaks) == 1) {
 	## specified number of breaks
     } else if(is.character(breaks) && length(breaks) == 1) {
+        by2 <- strsplit(breaks, " ")[[1]]
+        if(length(by2) > 2 || length(by2) < 1)
+            stop("invalid specification of `breaks'")
 	valid <-
-	    pmatch(breaks,
+	    pmatch(by2[length(by2)],
 		   c("secs", "mins", "hours", "days", "weeks",
-		     "months", "years"))
+		     "months", "years", "DSTdays"))
 	if(is.na(valid)) stop("invalid specification of `breaks'")
 	start <- as.POSIXlt(min(x, na.rm=TRUE))
 	incr <- 1
@@ -651,11 +635,14 @@ cut.POSIXt <-
 	}
 	if(valid == 6) { start$mday <- 1; incr <- 31*86400 }
 	if(valid == 7) { start$mon <- 0; incr <- 366*86400 }
+        if(valid == 8) incr <- 25*3600
+        if (length(by2) == 2) incr <- incr * as.integer(by2[1])
 	maxx <- max(x, na.rm = TRUE)
 	breaks <- seq(start, maxx + incr, breaks)
 	breaks <- breaks[1:(1+max(which(breaks < maxx)))]
     } else stop("invalid specification of `breaks'")
-    res <- cut(unclass(x), unclass(breaks), labels = labels, right = FALSE)
+    res <- cut(unclass(x), unclass(breaks), labels = labels,
+               right = right, ...)
     if(is.null(labels)) levels(res) <- as.character(breaks[-length(breaks)])
     res
 }
@@ -692,18 +679,19 @@ trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
 {
     units <- match.arg(units)
     x <- as.POSIXlt(x)
-    switch(units,
-           "secs" = {x$sec <- trunc(x$sec)},
-           "mins" = {x$sec <- 0},
-           "hours"= {x$sec <- 0; x$min <- 0},
-           "days" = {x$sec <- 0; x$min <- 0; x$hour <- 0; x$isdst <- -1}
-           )
+    if(length(x$sec) > 0)
+	switch(units,
+	       "secs" = {x$sec <- trunc(x$sec)},
+	       "mins" = {x$sec <- 0},
+	       "hours"= {x$sec <- 0; x$min <- 0},
+	       "days" = {x$sec <- 0; x$min <- 0; x$hour <- 0; x$isdst <- -1}
+	       )
     x
 }
 
 round.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
 {
-    # this gets the default from the generic, as that has two args.
+    ## this gets the default from the generic, as that has two args.
     if(is.numeric(units) && units == 0.0) units <-"secs"
     units <- match.arg(units)
     x <- as.POSIXct(x)
@@ -741,7 +729,7 @@ as.data.frame.POSIXlt <- function(x, row.names = NULL, optional = FALSE)
 }
 
 hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
-                        axes = TRUE, plot = TRUE, freq = FALSE,
+                        plot = TRUE, freq = FALSE,
                         start.on.monday = TRUE, format)
 {
     if(!inherits(x, "POSIXt")) stop("wrong method")
@@ -789,19 +777,58 @@ hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
         }
         else stop("invalid specification of `breaks'")
     }
-    res <- hist.default(unclass(x), unclass(breaks), plot = FALSE)
+    res <- hist.default(unclass(x), unclass(breaks), plot = FALSE, ...)
     res$equidist <- TRUE # years are of uneven lengths
     res$intensities <- res$intensities*incr
     res$xname <- xlab
     if(plot) {
-        plot(res, xlab = xlab, axes = FALSE, freq = freq, ...)
-        if(axes) {
-            axis(2, ...)
-            if(num.br)
-                breaks <- c.POSIXct(res$breaks)
-            axis.POSIXct(1, at = breaks,  format = format, ...)
+        ## trick to swallow arguments for hist.default, separate out `axes'
+        myplot <- function(res, xlab, freq, format, breaks,
+                           right, include.lowest, labels = FALSE,
+                           axes = TRUE, ...)
+        {
+            plot(res, xlab = xlab, axes = FALSE, freq = freq,
+                 labels = labels, ...)
+            if(axes) {
+                axis(2, ...)
+                if(num.br) breaks <- c.POSIXct(res$breaks)
+                axis.POSIXct(1, at = breaks,  format = format, ...)
                                         # `...' : e.g. cex.axis
+            }
         }
+        myplot(res, xlab, freq, format, breaks, ...)
      }
     invisible(res)
+}
+
+# ---- additions in 1.8.0 -----
+
+rep.POSIXct <- function(x, times, ...)
+{
+    y <- rep.int(unclass(x), times)
+    structure(y, class=c("POSIXt", "POSIXct"))
+}
+
+rep.POSIXlt <- function(x, times, ...)
+{
+    y <- lapply(x, rep.int, times=times)
+    attributes(y) <- attributes(x)
+    y
+}
+
+diff.POSIXt <- function (x, lag = 1, differences = 1, ...)
+{
+    ismat <- is.matrix(x)
+    xlen <- if (ismat) dim(x)[1] else length(x)
+    if (length(lag) > 1 || length(differences) > 1 || lag < 1 || differences < 1)
+        stop("`lag' and `differences' must be integers >= 1")
+    if (lag * differences >= xlen)
+        return(structure(numeric(0), class="difftime", units="secs"))
+    r <- x
+    i1 <- -1:-lag
+    if (ismat) for (i in 1:differences) r <- r[i1, , drop = FALSE] -
+            r[-nrow(r):-(nrow(r) - lag + 1), , drop = FALSE]
+    else for (i in 1:differences)
+        r <- r[i1] - r[-length(r):-(length(r) - lag + 1)]
+    r
 }

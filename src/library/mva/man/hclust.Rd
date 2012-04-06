@@ -12,9 +12,9 @@
 hclust(d, method = "complete", members=NULL)
 
 \method{plot}{hclust}(x, labels = NULL, hang = 0.1,
-            axes = TRUE, frame.plot = FALSE, ann = TRUE,
-            main = "Cluster Dendrogram",
-            sub = NULL, xlab = NULL, ylab = "Height", \dots)
+     axes = TRUE, frame.plot = FALSE, ann = TRUE,
+     main = "Cluster Dendrogram",
+     sub = NULL, xlab = NULL, ylab = "Height", \dots)
 
 plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
         square = TRUE, labels = NULL, plot. = TRUE,
@@ -30,7 +30,8 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
     \code{"average"}, \code{"mcquitty"}, \code{"median"} or
     \code{"centroid"}.}
 
-  \item{members}{\code{NULL} or a vector with length size of \code{d}.}
+  \item{members}{\code{NULL} or a vector with length size of
+    \code{d}. See the Details section.}
 
   \item{x,tree}{an object of the type produced by \code{hclust}.}
 
@@ -48,8 +49,14 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
     default when there's a \code{tree$call}.}
   \item{\dots}{Further graphical arguments.}
 
-  \item{unit, level, hmin, square, plot.}{as yet unimplemented arguments of
-    \code{plclust} for S-plus compatibility.}
+  \item{unit}{logical.  If true, the splits are plotted at
+    equally-spaced heights rather than at the height in the object.}
+
+  \item{hmin}{numeric.  All heights less than \code{hmin} are regarded
+    as being \code{hmin}: this can be used to suppress detail at the
+    bottom of the tree.}
+  \item{level, square, plot.}{as yet unimplemented arguments of
+    \code{plclust} for S-PLUS compatibility.}
 }
 \value{
   An object of class \bold{hclust} which describes the
@@ -109,7 +116,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   spherical clusters.  The \emph{complete linkage} method finds
   similar clusters. The \emph{single linkage} method
   (which is closely related to the minimal spanning tree)
-  adopts a `friends of friends' clustering strategy.
+  adopts a \sQuote{friends of friends} clustering strategy.
   The other methods can be regarded as aiming
   for clusters with characteristics somewhere between
   the single and complete link methods.
@@ -117,14 +124,15 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   If \code{members!=NULL}, then \code{d} is taken to be a
   dissimilarity matrix between clusters instead of dissimilarities
   between singletons and \code{members} gives the number of observations
-  per cluster. This way the hierarchical cluster algorithm can be ``started
-  in the middle of the dendrogram'', e.g., in order to reconstruct the
-  part of the tree above a cut (see examples). Dissimilarities between
-  clusters can be efficiently computed (i.e., without \code{hclust}
-  itself) only for a limited number of distance/linkage combinations,
-  the simplest one being squared Euclidean distance and centroid
-  linkage. In this case the dissimilarities between the clusters are
-  the squared Euclidean distances between cluster means.
+  per cluster.  This way the hierarchical cluster algorithm can be
+  \dQuote{started in the middle of the dendrogram}, e.g., in order to
+  reconstruct the part of the tree above a cut (see examples).
+  Dissimilarities between clusters can be efficiently computed (i.e.,
+  without \code{hclust} itself) only for a limited number of
+  distance/linkage combinations, the simplest one being squared
+  Euclidean distance and centroid linkage.  In this case the
+  dissimilarities between the clusters are the squared Euclidean
+  distances between cluster means.
 
   In hierarchical cluster displays, a decision is needed at each merge to
   specify which subtree should go on the left and which on the right.
@@ -132,7 +140,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   there are \eqn{2^{(n-1)}} possible orderings for the leaves
   in a cluster tree, or dendrogram.
   The algorithm used in \code{hclust} is to order the subtree so that
-  the tighter cluster is on the left (the last, i.e. most recent,
+  the tighter cluster is on the left (the last, i.e., most recent,
   merge of the left subtree is at a lower value than the last
   merge of the right subtree).
   Single observations are the tightest clusters possible,
@@ -165,7 +173,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   London: Chapman and Hall / CRC
 
   Murtagh, F. (1985).
-  ``Multidimensional Clustering Algorithms'', in
+  \dQuote{Multidimensional Clustering Algorithms}, in
   \emph{COMPSTAT Lectures 4}.
   Wuerzburg: Physica-Verlag
   (for algorithmic details of algorithms used).
@@ -175,7 +183,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   contributed to STATLIB by F. Murtagh.
 }
 \seealso{
-  \code{\link{kmeans}}.
+  \code{\link{cutree}}, \code{\link{dendrogram}}, \code{\link{kmeans}}.
 }
 \examples{
 library(mva)

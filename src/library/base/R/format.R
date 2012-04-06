@@ -20,7 +20,7 @@ format.default <-
 	nc <- nchar(x)
         nc[is.na(nc)] <- 2
 	w <- max(nc)
-	sp <- substring(paste(rep(" ", w), collapse=""), 1, w-nc)
+	sp <- substring(paste(rep.int(" ", w), collapse=""), 1, w-nc)
 	res <-
 	    if(justify == "left") paste(x, sp, sep="") else paste(sp, x, sep="")
 	attributes(res) <- attributes(x) ## at least names, dim, dimnames
@@ -189,7 +189,7 @@ formatC <- function (x, digits = NULL, width = NULL,
 			     ifelse(flag!="",nchar(flag),0) + 1
 		     }
 	     } else # format == "g" or "e":
-	     rep(digits+8, n)
+	     rep.int(digits+8, n)
 	     )
     r <- .C("str_signif",
 	    x = x,
@@ -220,19 +220,37 @@ format.factor <- function(x, ...)
 format.data.frame <- function(x, ..., justify = "none")
 {
     dims <- dim(x)
+    nr <- dims[1]
     nc <- dims[2]
     rval <- vector("list", nc)
     for(i in 1:nc)
 	rval[[i]] <- format(x[[i]], ..., justify = justify)
+    lens <- sapply(rval, NROW)
+    if(any(lens != nr)) { # corrupt data frame, must have at least one column
+        warning("corrupt data frame: columns will be truncated or padded with NAs")
+        for(i in 1:nc) {
+            len <- NROW(rval[[i]])
+            if(len == nr) next
+            if(length(dim(rval[[i]])) == 2) {
+                rval[[i]] <- if(len < nr)
+                    rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
+                else rval[[i]][1:nr,]
+            } else {
+                rval[[i]] <- if(len < nr) c(rval[[i]], rep(NA, nr-len))
+                else rval[[i]][1:nr]
+            }
+        }
+    }
     dn <- dimnames(x)
     cn <- dn[[2]]
     m <- match(c("row.names", "check.rows", "check.names"), cn, 0)
-    if(any(m > 0)) cn[m] <- paste(".", m[m>0], sep="")
+    if(any(m > 0)) cn[m] <- paste("..dfd.", cn[m], sep="")
     names(rval) <- cn
     rval$check.names <- FALSE
     rval$row.names <- dn[[1]]
     x <- do.call("data.frame", rval)
-    if(any(m > 0)) names(x) <- dn[[2]]
+    ## x will have more cols than rval if there are matrix/data.frame cols
+    if(any(m > 0)) names(x) <- sub("^..dfd.", "", names(x))
     x
 }
 
@@ -240,7 +258,7 @@ format.AsIs <- function(x, width = 12, ...)
 {
     if(is.character(x)) return(format.default(x, ...))
     n <- length(x)
-    rvec <- rep(as.character(NA), n)
+    rvec <- rep.int(as.character(NA), n)
     for(i in 1:n)
 	rvec[i] <- toString(x[[i]], width, ...)
 #    return(format.char(rvec, flag = "+"))

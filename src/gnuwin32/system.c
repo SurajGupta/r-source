@@ -86,7 +86,7 @@ void R_ProcessEvents(void)
     while (peekevent()) doevent();
     if (UserBreak) {
 	UserBreak = FALSE;
-	raise(SIGINT);
+	onintr();
     }
     R_CallBackHook();
     if(R_tcldo) R_tcldo();
@@ -101,7 +101,7 @@ void R_Suicide(char *s)
 {
     char  pp[1024];
 
-    sprintf(pp, "Fatal error: %s\n", s);
+    snprintf(pp, 1024, "Fatal error: %s\n", s);
     R_ShowMessage(pp);
     R_CleanUp(SA_SUICIDE, 2, 0);
 }
@@ -356,10 +356,6 @@ void R_Busy(int which)
    If ask = SA_SUICIDE, no save, no .Last, possibly other things.
  */
 
-void R_dot_Last(void);		/* in main.c */
-void R_RunExitFinalizers(void);	/* in memory.c */
-
-
 void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
@@ -473,19 +469,21 @@ int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
 			if (del) DeleteFile(file[i]);
 		    }
 		    else {
-			sprintf(buf,"Unable to open file '%s'", file[i]);
+			snprintf(buf, 1024, "Unable to open file '%s'",
+				 file[i]);
 			warning(buf);
 		    }
 		} else {
                     /* Quote path if necessary */
 		    if(pager[0] != '"' && strchr(pager, ' '))
-			sprintf(buf, "\"%s\" \"%s\"", pager, file[i]);
+			snprintf(buf, 1024, "\"%s\" \"%s\"", pager, file[i]);
 		    else
-			sprintf(buf, "%s \"%s\"", pager, file[i]);
+			snprintf(buf, 1024, "%s \"%s\"", pager, file[i]);
 		    runcmd(buf, 0, 1, "");
 		}
 	    } else {
-		sprintf(buf, "file.show(): file %s does not exist\n", file[i]);
+		snprintf(buf, 1024, "file.show(): file %s does not exist\n",
+			 file[i]);
 		warning(buf);
 	    }
 	}
@@ -631,6 +629,7 @@ static void env_command_line(int *pac, char **argv)
     *pac = newac;
 }
 
+#include <winbase.h>
 
 int cmdlineoptions(int ac, char **av)
 {
@@ -641,7 +640,7 @@ int cmdlineoptions(int ac, char **av)
     structRstart rstart;
     Rstart Rp = &rstart;
     MEMORYSTATUS ms;
-    Rboolean usedRdata = FALSE;
+    Rboolean usedRdata = FALSE, processing = TRUE;
 
     /* ensure R_Home gets set early: we are in rgui or rterm here */
     R_Home = getRHOME();
@@ -684,6 +683,19 @@ int cmdlineoptions(int ac, char **av)
 	    Rp->R_Interactive = FALSE;
 	    Rp->ReadConsole = FileReadConsole;
 	}
+	/* Windows 95/98/ME have a shell that cannot redirect stderr,
+	   so don't use that on those OSes */
+	{
+	    OSVERSIONINFO verinfo;
+	    GetVersionEx(&verinfo);
+	    switch(verinfo.dwPlatformId) {
+	    case VER_PLATFORM_WIN32_WINDOWS:
+		R_Consolefile = stdout; /* used for errors */
+		break;
+	    default:
+		R_Consolefile = stderr; /* used for errors */
+	    }
+	}
 	R_Consolefile = stderr; /* used for errors */
 	R_Outputfile = stdout;  /* used for sink-able output */
         Rp->WriteConsole = TermWriteConsole;
@@ -717,7 +729,7 @@ int cmdlineoptions(int ac, char **av)
     R_common_command_line(&ac, av, Rp);
 
     while (--ac) {
-	if (**++av == '-') {
+	if (processing && **++av == '-') {
 	    if (!strcmp(*av, "--no-environ")) {
 		Rp->NoRenviron = TRUE;
 	    } else if (!strcmp(*av, "--ess")) {
@@ -755,10 +767,11 @@ int cmdlineoptions(int ac, char **av)
 		    R_ShowMessage(s);
 		} else
 		    R_max_memory = value;
-	    } else {
-		sprintf(s, "WARNING: unknown option %s\n", *av);
-		R_ShowMessage(s);
+	    } else if(!strcmp(*av, "--args")) {
 		break;
+	    } else {
+		snprintf(s, 1024, "WARNING: unknown option %s\n", *av);
+		R_ShowMessage(s);
 	    }
 	} else {
 	    /* Look for *.RData, as given by drag-and-drop */
@@ -782,7 +795,7 @@ int cmdlineoptions(int ac, char **av)
 		usedRdata = TRUE;
 		Rp->RestoreAction = SA_RESTORE;
 	    } else {
-		sprintf(s, "ARGUMENT '%s' __ignored__\n", *av);
+		snprintf(s, 1024, "ARGUMENT '%s' __ignored__\n", *av);
 		R_ShowMessage(s);
 	    }
 	}

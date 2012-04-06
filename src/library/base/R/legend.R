@@ -1,28 +1,27 @@
 legend <-
-function(x, y, legend, fill, col = "black", lty, lwd, pch,
+function(x, y = NULL, legend, fill=NULL, col = "black", lty, lwd, pch,
 	 angle = NULL, density = NULL, bty = "o",
 	 bg = par("bg"), pt.bg = NA, cex = 1,
-	 xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1, adj = 0,
+	 xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1, adj = c(0, 0.5),
 	 text.width = NULL, merge = do.lines && has.pch, trace = FALSE,
 	 plot = TRUE, ncol = 1, horiz = FALSE)
 {
-    if(is.list(x)) {
-	if(!missing(y)) {	# the 2nd arg may really be `legend'
-	    if(!missing(legend))
-		stop("`y' and `legend' when `x' is list (need no `y')")
-	    legend <- y
-	}
-	y <- x$y; x <- x$x
-    } else if(missing(y)) stop("missing y")
-    if (!is.numeric(x) || !is.numeric(y))
-	stop("non-numeric coordinates")
-    if ((nx <- length(x)) <= 0 || nx != length(y) || nx > 2)
-	stop("invalid coordinate lengths")
+    ## the 2nd arg may really be `legend'
+    if(missing(legend) && !missing(y) &&
+       (is.character(y) || is.expression(y))) {
+        legend <- y
+        y <- NULL
+    }
+    mfill <- !missing(fill) || !missing(density)
+
+    xy <- xy.coords(x, y); x <- xy$x; y <- xy$y
+    nx <- length(x)
+    if (nx < 1 || nx > 2) stop("invalid coordinate lengths")
 
     xlog <- par("xlog")
     ylog <- par("ylog")
 
-    rect2 <- function(left, top, dx, dy, angle, ...) {
+    rect2 <- function(left, top, dx, dy, density = NULL, angle, ...) {
 	r <- left + dx; if(xlog) { left <- 10^left; r <- 10^r }
 	b <- top  - dy; if(ylog) {  top <- 10^top;  b <- 10^b }
 	rect(left, top, r, b, angle = angle, density = density, ...)
@@ -64,7 +63,7 @@ function(x, y, legend, fill, col = "black", lty, lwd, pch,
     ychar <- yextra + ymax
     if(trace) catn("  xchar=", xchar, "; (yextra,ychar)=", c(yextra,ychar))
 
-    if(!missing(fill)) {
+    if(mfill) {
 	##= sizes of filled boxes.
 	xbox <- xc * 0.8
 	ybox <- yc * 0.5
@@ -72,7 +71,7 @@ function(x, y, legend, fill, col = "black", lty, lwd, pch,
     }
     do.lines <- (!missing(lty) && (is.character(lty) || any(lty > 0))
 		 ) || !missing(lwd)
-    n.leg <- length(legend)
+    n.leg <- if(is.call(legend)) 1 else length(legend)
 
     ## legends per column:
     n.legpercol <-
@@ -90,7 +89,7 @@ function(x, y, legend, fill, col = "black", lty, lwd, pch,
 	    if(length(pch) > 1)
 		warning("Not using pch[2..] since pch[1] has multiple chars")
 	    np <- nchar(pch[1])
-	    pch <- substr(rep(pch[1], np), 1:np, 1:np)
+	    pch <- substr(rep.int(pch[1], np), 1:np, 1:np)
 	}
 	if(!merge) dx.pch <- x.intersp/2 * xchar
     }
@@ -120,7 +119,7 @@ function(x, y, legend, fill, col = "black", lty, lwd, pch,
 	## -- (w,h) := (width,height) of the box to draw -- computed in steps
 	h <- n.legpercol * ychar + yc
 	w0 <- text.width + (x.intersp + 1) * xchar
-	if(!missing(fill))	w0 <- w0 + dx.fill
+	if(mfill)	w0 <- w0 + dx.fill
 	if(has.pch && !merge)	w0 <- w0 + dx.pch
 	if(do.lines)		w0 <- w0 + (2+x.off) * xchar
 	w <- ncol*w0 + .5* xchar
@@ -132,22 +131,25 @@ function(x, y, legend, fill, col = "black", lty, lwd, pch,
     if (plot && bty != "n") { ## The legend box :
 	if(trace)
 	    catn("  rect2(",left,",",top,", w=",w,", h=",h,", ...)",sep="")
-	rect2(left, top, dx = w, dy = h, col = bg, angle = NULL)
+	rect2(left, top, dx = w, dy = h, col = bg, density = NULL)
     }
     ## (xt[],yt[]) := `current' vectors of (x/y) legend text
-    xt <- left + xchar + (w0 * rep(0:(ncol-1), rep(n.legpercol,ncol)))[1:n.leg]
-    yt <- top - (rep(1:n.legpercol,ncol)[1:n.leg]-1) * ychar - 0.5 * yextra - ymax
+    xt <- left + xchar + (w0 * rep.int(0:(ncol-1),
+                                       rep.int(n.legpercol,ncol)))[1:n.leg]
+    yt <- top - (rep.int(1:n.legpercol,ncol)[1:n.leg]-1) * ychar -
+        0.5 * yextra - ymax
 
-    if (!missing(fill)) {		#- draw filled boxes -------------
+    if (mfill) {		#- draw filled boxes -------------
 	if(plot) {
-	    fill <- rep(fill, length.out=n.leg)
-	    rect2(left=xt, top=yt+ybox/2, dx = xbox, dy = ybox,
-		  col = fill, angle = angle)
+	    fill <- rep(fill, length.out = n.leg)
+	    rect2(left = xt, top=yt+ybox/2, dx = xbox, dy = ybox,
+		  col = fill,
+                  density = density, angle = angle, border = "black")
 	}
 	xt <- xt + dx.fill
     }
     if(plot && (has.pch || do.lines))
-	col <- rep(col,length.out = n.leg)
+	col <- rep(col, length.out = n.leg)
 
     if (do.lines) {			#- draw lines ---------------------
 	seg.len <- 2 # length of drawn segment, in xchar units

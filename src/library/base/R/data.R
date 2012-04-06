@@ -1,16 +1,14 @@
 data <-
 function(..., list = character(0),
          package = .packages(), lib.loc = NULL,
-         verbose = getOption("verbose"))
+         verbose = getOption("verbose"), envir = .GlobalEnv)
 {
-    sQuote <- function(s) paste("'", s, "'", sep = "")
-
+    fileExt <- function(x) sub(".*\\.", "", x)
+    
     names <- c(as.character(substitute(list(...))[-1]), list)
     if(!missing(package))
         if(is.name(y <- substitute(package)))
             package <- as.character(y)
-    found <- FALSE
-    fsep <- .Platform$file.sep
 
     ## Find the directories of the given packages and maybe the working
     ## directory.
@@ -20,28 +18,11 @@ function(..., list = character(0),
     paths <- unique(paths[file.exists(paths)])
 
     ## Find the directories with a 'data' subdirectory.
-    nodata <- !(file.exists(file.path(paths, "data"))
-                & file.info(file.path(paths, "data"))$isdir)
-    if(any(nodata)) {
-        if(!missing(package) && (length(package) > 0)) {
-            ## Warn about given packages which do not have a 'data'
-            ## subdirectory.
-            packagesWithNoData <-
-                package[package %in% sapply(paths[nodata], basename)]
-            if(length(packagesWithNoData) > 1) {
-                warning(paste("packages",
-                              paste(sQuote(packagesWithNoData),
-                                    collapse=", "),
-                              "contain no datasets"))
-            }
-            else if(length(packagesWithNoData) == 1) {
-                warning(paste("package", sQuote(packagesWithNoData),
-                              "contains no datasets"))
+    paths <- paths[tools::fileTest("-d", file.path(paths, "data"))]
+    ## Earlier versions remembered given packages with no 'data'
+    ## subdirectory, and warned about them.
 
-            }
-        }
-        paths <- paths[!nodata]
-    }
+    dataExts <- tools:::.makeFileExts("data")
 
     if(length(names) == 0) {
         ## List all possible data sets.
@@ -51,41 +32,50 @@ function(..., list = character(0),
         noindex <- character(0)
         for(path in paths) {
             entries <- NULL
-            ## <NOTE>
-            ## Check for new-style 'Meta/data.rds' (and intermediate
-            ## 'data/00Index.rds' and 'data/00Index.dcf'), then for
-            ## '00Index'.
+            ## Use "." as the 'package name' of the working directory.
+            packageName <-
+                if(tools::fileTest("-f",
+                                   file.path(path, "DESCRIPTION")))
+                    basename(path)
+                else
+                    "."
+            ## Check for new-style 'Meta/data.rds', then for '00Index'.
             ## Earlier versions also used to check for 'index.doc'.
-            ## </NOTE>
-            if(file.exists(INDEX <-
-                           file.path(path, "Meta", "data.rds"))) {
+            if(tools::fileTest("-f",
+                               INDEX <-
+                               file.path(path, "Meta", "data.rds"))) {
                 entries <- .readRDS(INDEX)
             }
-            ## <FIXME>
-            ## Remove this once 1.7.0 is out.
-            ## (The 1.7 development versions for some time used indices
-            ## serialized as 'data/00Index.rds' and 'data/00Index.dcf'.)
-            else if(file.exists(INDEX <-
-                                file.path(path, "data", "00Index.rds"))) {
-                entries <- .readRDS(INDEX)
-            }
-            else if(file.exists(INDEX <-
-                                file.path(path, "data", "00Index.dcf"))) {
-                entries <- read.dcf(INDEX)
-                entries <- cbind(colnames(entries), c(entries))
-            }
-            ## </FIXME>
-            else if(file.exists(INDEX <-
-                                file.path(path, "data", "00Index")))
+            else if(tools::fileTest("-f",
+                                    INDEX <-
+                                    file.path(path, "data", "00Index")))
                 entries <- read.00Index(INDEX)
             else {
-                ## No index: check whether subdir 'data' contains files.
-                if(length(list.files(file.path(path, "data"))) > 0)
-                    noindex <- c(noindex, basename(path))
+                ## No index: check whether subdir 'data' contains data
+                ## sets.  Easy if data files were not collected into a
+                ## zip archive ... in any case, as data sets found are
+                ## available for loading, we also list their names.
+                dataDir <- file.path(path, "data")
+                entries <- tools::listFilesWithType(dataDir, "data")
+                if((length(entries) == 0)
+                   && all(tools::fileTest("-f",
+                                          file.path(dataDir,
+                                                    c("Rdata.zip",
+                                                      "filelist"))))) {
+                    entries <- readLines(file.path(dataDir, "filelist"))
+                    entries <- entries[fileExt(entries) %in% dataExts]
+                }
+                if(length(entries) > 0) {
+                    entries <-
+                        unique(tools::filePathSansExt(basename(entries)))
+                    entries <- cbind(entries, "")
+                }
+                else
+                    noindex <- c(noindex, packageName)
             }
             if(NROW(entries) > 0) {
                 db <- rbind(db,
-                            cbind(basename(path), dirname(path),
+                            cbind(packageName, dirname(path),
                                   entries))
             }
         }
@@ -96,16 +86,11 @@ function(..., list = character(0),
                 ## Warn about given packages which do not have a data
                 ## index.
                 packagesWithNoIndex <- package[package %in% noindex]
-                if(length(packagesWithNoIndex) > 1) {
-                    warning(paste("packages",
+                if(length(packagesWithNoIndex) > 0)
+                    warning(paste("packages with data sets",
+                                  "but no index:",
                                   paste(sQuote(packagesWithNoIndex),
-                                        collapse=", "),
-                                  "contain data sets but no index"))
-                }
-                else if(length(packagesWithNoIndex) == 1)
-                    warning(paste("package",
-                                  sQuote(packagesWithNoIndex),
-                                  "contains data sets but no index"))
+                                        collapse = ",")))
             }
         }
 
@@ -118,8 +103,8 @@ function(..., list = character(0),
                   sep = "")
         else
             NULL
-        y <- list(type = "data", title = "Data sets",
-                  header = NULL, results = db, footer = footer)
+        y <- list(title = "Data sets", header = NULL, results = db,
+                  footer = footer)
         class(y) <- "packageIQR"
         return(y)
     }
@@ -127,68 +112,68 @@ function(..., list = character(0),
     paths <- file.path(paths, "data")
     for(name in names) {
         files <- NULL
-        for (p in paths) {
-            if(file.exists(file.path(p, "Rdata.zip"))) {
-                if(file.exists(fp <- file.path(p, "filelist")))
+        for(p in paths) {
+            if(tools::fileTest("-f", file.path(p, "Rdata.zip"))) {
+                if(tools::fileTest("-f",
+                                   fp <- file.path(p, "filelist")))
                     files <-
                         c(files,
                           file.path(p, scan(fp, what="", quiet = TRUE)))
                 else warning(paste(sQuote("filelist"),
-                                   "is missing for dir",
+                                    "is missing for dir",
                                    sQuote(p)))
             } else {
                 files <- c(files, list.files(p, full = TRUE))
             }
         }
-        files <- files[grep(name, files)]
+        files <- files[grep(name, files, fixed = TRUE)]
         found <- FALSE
-        if (length(files) > 1) {
+        if(length(files) > 1) {
             ## more than one candidate
-            ## use the order given in data.Rd within path
-            good <- c("R", "r", "RData", "rdata", "rda",
-                      "tab", "txt", "TXT", "csv", "CSV")
-            exts <- sub(".*\\.", "", files)
-            o <- match(exts, good, nomatch = 100)
-            paths <- dirname(files)
-            paths <- factor(paths, levels=paths)
-            files <- files[order(paths, o)]
+            o <- match(fileExt(files), dataExts, nomatch = 100)
+            paths0 <- dirname(files)
+            paths0 <- factor(paths0, levels=paths0)
+            files <- files[order(paths0, o)]
         }
-        if (length(files) > 0) {
-            subpre <- paste(".*", fsep, sep = "")
-            for (file in files) {
-                if (verbose)
-                    cat("name=", name, ":\t file= ...", fsep,
-                        sub(subpre, "", file), "::\t", sep = "")
-                if (found)
+        if(length(files) > 0) {
+            for(file in files) {
+                if(verbose)
+                    cat("name=", name, ":\t file= ...",
+                        .Platform$file.sep, basename(file), "::\t",
+                        sep = "")
+                if(found)
                     break
                 found <- TRUE
-                ext <- sub(".*\\.", "", file)
+                ext <- fileExt(file)
                 ## make sure the match is really for 'name.ext'
                 ## otherwise
-                if (sub(subpre, "", file) != paste(name, ".", ext, sep = ""))
+                if(basename(file) != paste(name, ".", ext, sep = ""))
                     found <- FALSE
                 else {
                     zfile <- zip.file.extract(file, "Rdata.zip")
                     switch(ext,
-                           R = , r = source(zfile, chdir = TRUE),
+                           R = , r =
+                           sys.source(zfile, chdir = TRUE,
+                                      envir = envir),
                            RData = , rdata = , rda =
-                             load(zfile, envir = .GlobalEnv),
+                           load(zfile, envir = envir),
                            TXT = , txt = , tab =
-                             assign(name, read.table(zfile, header = TRUE),
-                                    env = .GlobalEnv),
+                           assign(name,
+                                  read.table(zfile, header = TRUE),
+                                  envir = envir),
                            CSV = , csv =
-                             assign(name,
-                                    read.table(zfile, header = TRUE, sep = ";"),
-                                   env = .GlobalEnv),
+                           assign(name,
+                                  read.table(zfile, header = TRUE,
+                                             sep = ";"),
+                                  envir = envir),
                            found <- FALSE)
-                    if (zfile != file) unlink(zfile)
+                    if(zfile != file) unlink(zfile)
                 }
-                if (verbose)
-                    cat(if (!found)
-                        "*NOT* ", "found\n")
+                if(verbose)
+                    cat(if(!found) "*NOT* ", "found\n")
             }
         }
-        if (!found)
+        if(!found)
             warning(paste("Data set", sQuote(name), "not found"))
     }
     invisible(names)

@@ -12,25 +12,13 @@
   classes \code{"POSIXlt"} and \code{"POSIXct"} representing calendar
   dates and times.
 }
-\synopsis{
-format.POSIXct(x, format = "", tz = "", usetz = FALSE, \dots)
-format.POSIXlt(x, format = "", usetz = FALSE, \dots)
+\usage{
+\method{format}{POSIXct}(x, format = "", tz = "", usetz = FALSE, \dots)
+\method{format}{POSIXlt}(x, format = "", usetz = FALSE, \dots)
 
 \method{as.character}{POSIXt}(x, \dots)
 
 strftime(x, format="", usetz = FALSE, \dots)
-strptime(x, format)
-
-ISOdatetime(year, month, day, hour, min, sec, tz = "")
-ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
-}
-\usage{
-format.POSIXct(x, format = "", tz = "", usetz = FALSE, \dots)
-format.POSIXlt(x, format = "", usetz = FALSE, \dots)
-
-\method{as.character}{POSIXt}(x, \dots)
-
-strftime(x, format="\%Y-\%m-\%d \%X", usetz = FALSE, \dots)
 strptime(x, format)
 
 ISOdatetime(year, month, day, hour, min, sec, tz = "")
@@ -41,7 +29,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \item{tz}{A timezone specification to be used for the conversion.
     System-specific, but \code{""} is the current time zone, and
     \code{"GMT"} is UTC.}
-  \item{format}{A character vector. The default is
+  \item{format}{A character string.  The default is
     \code{"\%Y-\%m-\%d \%H:\%M:\%S"} if any component has a time
     component which is not midnight, and \code{"\%Y-\%m-\%d"}
     otherwise.}
@@ -132,10 +120,6 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 
   If the timezone specified is invalid on your system, what happens is
   system-specific but it will probably be ignored.
-#ifdef mac
-  Under MacOS only the current timezone \code{""} and UTC (or GMT)
-  are supported.
-#endif
 
   OS facilities will probably not print years before 1CE (aka 1AD)
   correctly.
@@ -161,7 +145,7 @@ format(Sys.time(), "\%a \%b \%d \%X \%Y")
 ## format(Sys.time(), "\%a \%b \%d \%X \%Y \%Z")
 ## but this crashes some Linux systems
 
-## read in date info in format `ddmmmyyyy'
+## read in date info in format 'ddmmmyyyy'
 ## This will give NA(s) in some locales; setting the C locale
 ## as in the commented lines will overcome this on most systems.
 ## lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
@@ -170,7 +154,7 @@ z <- strptime(x, "\%d\%b\%Y")
 ## Sys.setlocale("LC_TIME", lct)
 z
 
-## read in date/time info in format `m/d/y h:m:s'
+## read in date/time info in format 'm/d/y h:m:s'
 dates <- c("02/27/92", "02/27/92", "01/14/92",
            "02/28/92", "02/01/92")
 times <- c("23:03:20", "22:29:56", "01:03:30",

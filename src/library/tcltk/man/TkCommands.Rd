@@ -28,6 +28,10 @@
 \alias{tkgrab.release}
 \alias{tkgrab.set}
 \alias{tkgrab.status}
+\alias{tkimage.cget}
+\alias{tkimage.configure}
+\alias{tkimage.create}
+\alias{tkimage.names}
 \alias{tkXselection.clear}
 \alias{tkXselection.get}
 \alias{tkXselection.handle}
@@ -140,6 +144,11 @@ tkgrab.release(...)
 tkgrab.set(...)
 tkgrab.status(...)
 
+tkimage.cget(...)
+tkimage.configure(...)
+tkimage.create(...)
+tkimage.names(...)
+
 ## NB: some widgets also have a selection.clear command, hence the "X".
 
 tkXselection.clear(...)
@@ -218,7 +227,11 @@ tkplace.slaves(...)
 ## Standard dialogs
 tkgetOpenFile(...)
 tkgetSaveFile(...)
+tkchooseDirectory(...)
 tkmessageBox(...)
+tkdialog(...)
+tkpopup(...)
+
 
 ## File handling functions
 tkfile.tail(...)
@@ -226,6 +239,7 @@ tkfile.dir(...)
 tkopen(...)
 tkclose(...)
 tkputs(...)
+tkread(...)
 }
 \arguments{
   \item{x}{A window object}
@@ -233,9 +247,11 @@ tkputs(...)
   \item{\dots}{Handled via \code{.Tcl.args}}
 }
 \details{
+   
   \code{tkcmd} provides a generic interface to calling any Tk or Tcl
-  command by simply running \code{.Tcl.args} on the arguments and passing the
-  result to \code{.Tcl}. Most of the other commands simply call
+  command by simply running \code{.Tcl.args.objv} on the argument list
+  and passing the
+  result to \code{.Tcl.objv}. Most of the other commands simply call
   \code{tkcmd} with a particular
   first argument and sometimes also a second argument giving the
   subcommand.

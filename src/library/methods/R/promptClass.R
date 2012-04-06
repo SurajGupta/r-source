@@ -1,7 +1,10 @@
 "promptClass" <-
-function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), type = "class",
-          keywords = "classes", where = find(classMetaName(clName)))
+function (clName, filename = NULL, type = "class",
+          keywords = "classes", where = topenv(parent.frame()))
 {
+    if(is.null(filename))
+        filename <- paste(topicName(type, clName), ".Rd", sep = "")
+    
     classesInSig <- function(g, where) {
     # given a generic g, obtain list of all classes
     # named among its signatures
@@ -24,7 +27,7 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     # given a class cl
     # obtain list of all generics with cl in
     # one of its signatures
-        allgen <- getGenerics()
+        allgen <- getGenerics(where=where)
         o <- list()
         for (i in seq(along=allgen)) o[[allgen[i]]] <- classesInSig(allgen[i],
             where)
@@ -71,11 +74,11 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     }
     slotClassWithSource <- function(clname) {
         clDef <- getClassDef(clname)
-        extds <- names(getExtends(clDef))
+        extds <- names(clDef@contains)
         allslots <- getSlots(clDef) ## establishes all slots, in the right order
         for(j in rev(seq(along=extds))) {
             i <- extds[[j]]
-            slotsi <- getSlots(i)
+            slotsi <- getSlots(getClass(i))
             if(length(slotsi)>0)
                 allslots[names(slotsi)] <- paste0("\"", as.character(slotsi),
                                                   "\", from class \"", i, "\"")
@@ -95,12 +98,22 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
         paste("(", paste(xn, "\"", x, "\"", sep="", collapse = ", "),
         ")", sep = "")
     }
-    if(length(where) == 0)
+    whereClass <- find(classMetaName(clName))
+    if(length(whereClass) == 0)
         stop(paste0("No definition of class \"", clName,"\" found"))
-    else if(length(where) > 1) {
-        where <- where[[1]]
-        warning("Multiple definitions of \"", clName, "\" found; using the one on ",
-                where)
+    else if(length(whereClass) > 1) {
+        if(identical(where, topenv(parent.frame()))) {
+            whereClass <- whereClass[[1]]
+            warning("Multiple definitions of \"", clName, "\" found; using the one on ",
+                    whereClass)
+        }
+        else {
+            if(exists(classMetaName(clName), where, inherits = FALSE))
+                whereClass <- where
+            else
+                stop("No definition of class \"", clName, "\" in the specified position, ",
+                     where, "; definition(s) on :", paste(whereClass, collapse = ", "))
+        }
     }
     fullName <- topicName("class", clName)
     clDef <- getClass(clName)
@@ -110,7 +123,7 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     .title <- paste0("\\title{Class \"", clName, "\" ~~~ }")
     .desc <- paste0("\\description{", "  ~~ A concise (1-5 lines) description of what the class is.  ~~",
         "}")
-    slotclasses <- getSlots(clName)
+    slotclasses <- getSlots(getClass(clName))
     slotnames <- names(slotclasses)
     slotclasses <- as.character(slotclasses)
     nslots <- length(slotclasses)
@@ -138,26 +151,39 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     }
     else
         .slots <- character()
-    .extends <- getExtends(clDef)
+    .extends <- clDef@contains
     if(length(.extends)>0) {
-         .extends <- showExtends(.extends, print=FALSE)
-        .extends <- c("\\section{Extends}{",
-                      paste("Class \\code{\"", .extends$what, "\"}, ",
-                            .extends$how, ".", sep=""),
-                      "}")
+        .extends <- showExtends(.extends, print=FALSE)
+        .extends <-
+            c("\\section{Extends}{",
+              paste("Class \\code{\"",
+                    .extends$what,
+                    "\"}, ",
+                    ## Add Rd markup to 'by class "CLASS"' results
+                    gsub("^(by class) (\".*\")$", "\\1 \\\\code{\\2}",
+                         .extends$how),
+                    ".",
+                    sep = ""),
+              "}")
     }
     else
         .extends <- character()
-    nmeths <- length(methnms <- genWithClass(clName, where))
+    nmeths <- length(methnms <- genWithClass(clName, where=whereClass))
     .meths.head <- "\\section{Methods}{"
+    .methAliases <- ""
     if (nmeths > 0) {
         .meths.body <- "  \\describe{"
         for (i in 1:nmeths) {
             .sigmat <- sigsList(methnms[i], where)
             for (j in seq(along = .sigmat)) {
-                if (!all(is.na(match(.sigmat[[j]],clName))))
+                if (!all(is.na(match(.sigmat[[j]],clName)))) {
                 .meths.body <- c(.meths.body, paste0("    \\item{",
                   methnms[i], "}{\\code{signature", pastePar(.sigmat[[j]]), "}: ... }"))
+
+                  cur <- paste(.sigmat[[j]], collapse = ",")
+                  .methAliases <- paste(.methAliases, "\\alias{",
+                    methnms[i], ",", cur, "-method}\n", sep = "")
+                 }
             }
         }
         .meths.body <- c(.meths.body, "  }")
@@ -169,25 +195,68 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     }
     .meths.tail <- "}"
     .keywords <- paste("\\keyword{", keywords, "}", sep = "")
-    .boilerplate <- c( "\\references{ ~put references to the literature/web site here ~ }",
-            "\\author{ ~~who you are~~ }", "\\note{ ~~further notes~~ }",
-            "", " ~Make other sections like Warning with \\section{Warning }{....} ~",
-            "", "\\seealso{ ~~objects to See Also as \\code{\\link{~~fun~~}}, ~~~",
-                  " or\\code{\\link{CLASSNAME-class}} for links to other classes }",
-            "", "\\examples{", "##---- Should be DIRECTLY executable !! ----","}")
-    cat(.name, .type, .alias,  .title, .desc,
-        .usage,
-        .slots,  .extends,
-        .meths.head,  .meths.body,  .meths.tail,
-        .boilerplate, .keywords, sep ="\n",
-        file = filename)
-    if(is.character(filename))
-        what <- paste0(" to the file \"", filename, "\"")
+
+    Rdtxt <-
+        list(name = .name,
+             type = .type,
+             aliases = .alias,
+        methAliases = .methAliases,
+             title = .title,
+             description = .desc,
+             "section{Objects from the Class}" = .usage,
+             "section{Slots}" = .slots,
+             "section{Extends}" = .extends,
+             "section{Methods}" =
+             c(.meths.head, .meths.body, .meths.tail),
+             references = paste("\\references{ ~put references to the",
+             "literature/web site here ~ }"),
+             author = "\\author{ ~~who you are~~ }",
+             note = c("\\note{ ~~further notes~~ }",
+             "",
+             paste(" ~Make other sections like Warning with",
+                   "\\section{Warning }{....} ~"),
+             ""),
+             seealso = c("\\seealso{",
+             paste("  ~~objects to See Also as",
+                   "\\code{\\link{~~fun~~}}, ~~~"),
+             paste("  or \\code{\\link{CLASSNAME-class}}",
+                   "for links to other classes"),
+             "}"),
+             examples = c("\\examples{",
+             "##---- Should be DIRECTLY executable !! ----",
+             "}"),
+             keywords = .keywords)
+
+    if(is.na(filename)) return(Rdtxt)
+
+    cat(unlist(Rdtxt), file = filename, sep = "\n")
+    if(is.character(filename)) {
+        what <- if(nchar(filename))
+            paste(" to the file", sQuote(filename))
+        else
+            " to the standard output connection"
+    }
     else if(inherits(filename, "connection"))
-        ##  Doesn't seem to be any way in R to get the description from the connection
-        what <- " to the connection"
+        what <- paste(" to the connection",
+                      sQuote(summary(filename)$description))
     else
-        what <- "" # what, indeed?
+        what <- ""                      # what, indeed?
     message("A shell of class documentation has been written",what,".\n")
     invisible(filename)
+}
+
+
+.makeCallString <- function (def, name = substitute(def), args = formalArgs(def)) 
+{
+#
+# need this for experimentation because the function is not exported
+#
+    if (is.character(def)) {
+        if (missing(name)) 
+            name <- def
+        def <- getFunction(def)
+    }
+    if (is(def, "function")) 
+        paste(name, "(", paste(args, collapse = ", "), ")", sep = "")
+    else ""
 }

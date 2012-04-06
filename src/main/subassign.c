@@ -227,6 +227,9 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level, SEXP call)
     case 1915:  /* vector     <- complex    */
     case 1916:  /* vector     <- character  */
     case 1920:  /* vector     <- expression  */
+#ifdef BYTECODE
+    case 1921:  /* vector     <- bytecode   */
+#endif
     case 1922:  /* vector     <- eternal pointer */
     case 1923:  /* vector     <- weak reference */
     case 1903: case 1907: case 1908: case 1999: /* functions */
@@ -1338,7 +1341,10 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    return x;
         }
         UNPROTECT(1);
-        PROTECT(x = allocVector(TYPEOF(y), 0));
+	if (length(y) <= 1)
+	    PROTECT(x = allocVector(TYPEOF(y), 0));
+	else
+	    PROTECT(x = allocVector(VECSXP, 0));
     }
 
     /* Ensure that the LHS is a local variable. */
@@ -1370,6 +1376,8 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 			error("recursive indexing failed at level %d\n", i+1);
 		    off = get1index(CAR(subs), getAttrib(x, R_NamesSymbol),
 				    length(x), /*partial ok*/TRUE, i);
+		    if(off < 0)
+			error("no such index at level %d\n", i+1);
 		    xup = x;
 		    recursed = TRUE;
 		    x = VECTOR_ELT(x, off);
@@ -1503,6 +1511,9 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case 1915:  /* vector     <- complex    */
 	case 1916:  /* vector     <- character  */
 	case 1920:  /* vector     <- expression */
+#ifdef BYTECODE
+	case 1921:  /* vector     <- bytecode   */
+#endif
 	case 1922:  /* vector     <- external pointer */
 	case 1923:  /* vector     <- weak reference */
 	case 1903: case 1907: case 1908: case 1999: /* functions */
@@ -1602,7 +1613,7 @@ SEXP do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
 
-    /* Note the RHS has alreaty been evaluated at this point */
+    /* Note the RHS has already been evaluated at this point */
 
     input = allocVector(STRSXP, 1);
 
@@ -1636,6 +1647,9 @@ SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
 
     PROTECT_WITH_INDEX(x, &pxidx);
     PROTECT_WITH_INDEX(val, &pvalidx);
+
+    if (NAMED(x) == 2)
+	REPROTECT(x = duplicate(x), pxidx);
 
     if (NAMED(val))
 	REPROTECT(val = duplicate(val), pvalidx);

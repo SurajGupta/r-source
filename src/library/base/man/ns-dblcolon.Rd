@@ -1,20 +1,24 @@
 \name{ns-dblcolon}
-\title{Double Colon Operator}
+\title{Double Colon and Triple Colon Operators}
 \alias{::}
+\alias{:::}
 \description{
-  Accessing exported variables in a name space.
+  Accessing exported and internal variables in a name space.
 }
 \usage{
 pkg::name
+pkg:::name
 }
 \arguments{
-  \item{pkg}{package name symbol or string literal.}
-  \item{name}{variable name symbol or string literal.}
+  \item{pkg}{package name symbol or literal character string.}
+  \item{name}{variable name symbol or literal character string.}
 }
 \details{
   The expression \code{pkg::name} returns the value of the exported
   variable \code{name} in package \code{pkg} if the package has a name
-  space.  The package will be loaded if it was not loaded already
+  space.  The expression \code{pkg:::name} returns the value of the
+  internal variable \code{name} in package \code{pkg} if the package has
+  a name space.  The package will be loaded if it was not loaded already
   before the call.  Assignment into name spaces is not supported.
 }
 \examples{

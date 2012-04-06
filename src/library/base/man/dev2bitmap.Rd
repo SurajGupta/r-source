@@ -27,11 +27,12 @@ dev2bitmap(file, type = "png256", height = 6, width = 6, res = 72,
   \code{dev2bitmap} works by copying the current device to a
   \code{\link{postscript}} device, and post-processing the output file
   using \code{ghostscript}.  \code{bitmap} works in the same way using a
-  \code{postscript} device and postprocessing the output as ``printing''.
+  \code{postscript} device and postprocessing the output as
+  \dQuote{printing}.
 
-  You will need a recent version of \code{ghostscript} (5.10 and
+  You will need a version of \code{ghostscript} (5.10 and
   later have been tested): the full path to the executable can be set by
-  the environment variable \code{"R_GSCMD"}.
+  the environment variable \env{R\_GSCMD}.
 
   The types available will depend on the version of \code{ghostscript},
   but are likely to include
@@ -49,6 +50,9 @@ dev2bitmap(file, type = "png256", height = 6, width = 6, res = 72,
 
   Note: despite the name of the functions they can produce PDF \emph{via}
   \code{type = "pdfwrite"}, and the PDF produced is not bitmapped.
+
+  For formats which contain a single image, a file specification like
+  \code{Rplots\%03d.png} can be used: this is intepreted by GhostScript.
 
   For \code{dev2bitmap} if just one of \code{width} and \code{height} is
   specified, the other is chosen to preserve aspect ratio of the
@@ -72,6 +76,8 @@ dev2bitmap(file, type = "png256", height = 6, width = 6, res = 72,
   \code{\link{jpeg}} and on Windows \code{bmp}.
 
   \code{\link{pdf}} generate PDF directly.
+
+  To display an array of data, see \code{\link{image}}.
 }
 
 \keyword{utilities}

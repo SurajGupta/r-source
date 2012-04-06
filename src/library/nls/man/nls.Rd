@@ -1,7 +1,7 @@
 \name{nls}
 \alias{nls}
 %\alias{anova.nls}
-\alias{anovalist.nls}
+%\alias{anovalist.nls}
 %\alias{coef.nls}
 %\alias{deviance.nls}
 %\alias{df.residual.nls}
@@ -14,10 +14,9 @@
 %\alias{weights.nls}
 %\alias{vcov.nls}
 \title{Nonlinear Least Squares}
-\synopsis{
-nls(formula, data = parent.frame(), start, control,
-    algorithm = "default", trace = FALSE, subset,
-    weights, na.action)
+\description{
+  Determine the nonlinear least-squares estimates of the nonlinear model
+  parameters and return a class \code{nls} object.
 }
 \usage{
 nls(formula, data = parent.frame(), start, control = nls.control(),
@@ -49,10 +48,6 @@ nls(formula, data = parent.frame(), start, control = nls.control(),
      yet implemented}}
 \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.}
-}
-\description{
-  Determine the nonlinear least squares estimates of the nonlinear model
-  parameters and return a class \code{nls} object.
 }
 \details{
   \bold{Do not use \code{nls} on artificial "zero-residual" data.}
@@ -117,9 +112,9 @@ weighted.MM <- function(resp, conc, Vm, K)
 {
     ## Purpose: exactly as white book p.451 -- RHS for nls()
     ##  Weighted version of Michaelis-Menten model
-    ## -------------------------------------------------------------------------
-    ## Arguments: `y', `x' and the two parameters (see book)
-    ## -------------------------------------------------------------------------
+    ## ------------------------------------------------------------
+    ## Arguments: 'y', 'x' and the two parameters (see book)
+    ## ------------------------------------------------------------
     ## Author: Martin Maechler, Date: 23 Mar 2001, 18:48
 
     pred <- (Vm * conc)/(K + conc)

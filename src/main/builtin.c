@@ -123,6 +123,14 @@ SEXP do_body(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP)
+	return duplicate(BODY_EXPR(CAR(args)));
+    else return R_NilValue;
+}
+
+SEXP do_bodyCode(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    if (TYPEOF(CAR(args)) == CLOSXP)
 	return duplicate(BODY(CAR(args)));
     else return R_NilValue;
 }
@@ -419,13 +427,6 @@ SEXP do_makelist(SEXP call, SEXP op, SEXP args, SEXP rho)
     return list;
 }
 
-#ifdef NOT_used
-SEXP do_namedlist(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-}
-#endif /* NOT_used */
-
-
 SEXP do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, ans, nms;
@@ -498,12 +499,6 @@ SEXP do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    COMPLEX(s)[i].r = 0.;
 	    COMPLEX(s)[i].i = 0.;
 	}
-#ifdef OLD
-    else if (mode == STRSXP) {
-	for (i = 0; i < len; i++)
-	    SET_STRING_ELT(s, i, R_BlankString);
-    }
-#endif
     /* other cases: list/expression have "NULL", ok */
     return s;
 }

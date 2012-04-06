@@ -11,14 +11,14 @@ getFromNamespace(x, ns, pos = -1, envir = as.environment(pos))
 fixInNamespace(x, ns, pos = -1, envir = as.environment(pos), \dots)
 }
 \arguments{
-  \item{x}{an object name (given as a quoted character string).}
+  \item{x}{an object name (given as a character string).}
   \item{ns}{a namespace, or character string giving the namespace.}
   \item{pos}{where to look for the object: see \code{\link{get}}.}
   \item{envir}{an alternative way to specify an environment to look in.}
   \item{\dots}{arguments to pass to the editor: see \code{\link{edit}}.}
 }
 \details{
-  The namespace can be specified in several ways.  Using e.g.{}
+  The namespace can be specified in several ways.  Using, for example,
   \code{ns="modreg"} is the most direct, but a loaded package with a
   namespace can be specified via any of the methods used for
   \code{\link{get}}: \code{ns} can also be the environment

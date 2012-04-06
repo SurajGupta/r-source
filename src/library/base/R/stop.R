@@ -1,7 +1,19 @@
 stop <- function(..., call. = TRUE)
 {
-    message <- if(nargs() > 0) paste(..., sep="")
-    .Internal(stop(as.logical(call.),message))
+    args <- list(...)
+    if (length(args) == 1 && inherits(args[[1]], "condition")) {
+        cond <- args[[1]]
+        message <- conditionMessage(cond)
+        call = conditionCall(cond)
+        .Internal(.signalCondition(cond, message, call))
+        .Internal(.dfltStop(message, call))
+    }
+    else {
+        if (length(args) > 0)
+            message <- paste(..., sep = "")
+        else message <- ""
+        .Internal(stop(as.logical(call.), message))
+    }
 }
 
 stopifnot <- function(...)
@@ -17,7 +29,21 @@ stopifnot <- function(...)
 
 warning <- function(..., call. = TRUE)
 {
-    message <- if(nargs() > 0) paste(..., sep="")
-    .Internal(warning(as.logical(call.), message))
+    args <- list(...)
+    if (length(args) == 1 && inherits(args[[1]], "condition")) {
+        cond <- args[[1]]
+        message <- conditionMessage(cond)
+        call = conditionCall(cond)
+        withRestarts({
+                .Internal(.signalCondition(cond, message, call))
+                .Internal(.dfltStop(message, call))
+            }, muffleWarning = function() NULL) #**** allow simpler form??
+        invisible(message)
+    }
+    else {
+        if (length(args) > 0)
+            message <- paste(..., sep = "")
+        else message <- ""
+        .Internal(warning(as.logical(call.), message))
+    }
 }
-

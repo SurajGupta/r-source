@@ -40,8 +40,8 @@ static void Init_R_Machine(SEXP rho)
 	   &minexp, &maxexp, &eps, &epsneg, &xmin, &xmax);
 
     R_dec_min_exponent = floor(log10(xmin)); /* smallest decimal exponent */
-    PROTECT(ans = allocVector(VECSXP, 17));
-    PROTECT(nms = allocVector(STRSXP, 17));
+    PROTECT(ans = allocVector(VECSXP, 18));
+    PROTECT(nms = allocVector(STRSXP, 18));
     SET_STRING_ELT(nms, 0, mkChar("double.eps"));
     SET_VECTOR_ELT(ans, 0, ScalarReal(eps));
 
@@ -92,6 +92,9 @@ static void Init_R_Machine(SEXP rho)
 
     SET_STRING_ELT(nms, 16, mkChar("sizeof.longdouble"));
     SET_VECTOR_ELT(ans, 16, ScalarInteger(SIZEOF_LONG_DOUBLE));
+
+    SET_STRING_ELT(nms, 17, mkChar("sizeof.pointer"));
+    SET_VECTOR_ELT(ans, 17, ScalarInteger(sizeof(SEXP)));
     setAttrib(ans, R_NamesSymbol, nms);
     defineVar(install(".Machine"), ans, rho);
     UNPROTECT(2);
@@ -177,23 +180,6 @@ SEXP do_date(SEXP call, SEXP op, SEXP args, SEXP rho)
  *  version, write down a pipe to a pager.
  */
 
-#ifdef OLD
-SEXP do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP fn, tl;
-    checkArity(op, args);
-    fn = CAR(args);
-    tl = CADR(args);
-    if (!isString(fn) || length(fn) < 1 || STRING_ELT(fn, 0) == R_NilValue)
-	errorcall(call, "invalid filename");
-    if (!isString(tl) || length(tl) < 1 || STRING_ELT(tl, 0) == R_NilValue)
-	errorcall(call, "invalid filename");
-    if (!R_ShowFile(R_ExpandFileName(CHAR(STRING_ELT(fn, 0))),
-                    CHAR(STRING_ELT(tl, 0))))
-	error("unable to display file \"%s\"", CHAR(STRING_ELT(fn, 0)));
-    return R_NilValue;
-}
-#else
 SEXP do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, tl, hd, pg;
@@ -241,7 +227,6 @@ SEXP do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
     vmaxset(vm);
     return R_NilValue;
 }
-#endif
 
 
 /*  append.file
@@ -407,7 +392,7 @@ SEXP do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
-#if defined(Win32) || defined(Macintosh)
+#if defined(Win32)
 # include <errno.h>
 #endif
 
@@ -438,30 +423,16 @@ SEXP do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
     return Rwin_rename(from, to) == 0 ? mkTrue() : mkFalse();
 #endif
 
-#if defined(Macintosh)
-    /* rename() on Windows/Mac does not overwrite files */
-    if (!unlink(to))
-	if (errno == EACCES) return mkFalse();
-#endif
     return rename(from, to) == 0 ? mkTrue() : mkFalse();
 }
 
 #ifdef HAVE_STAT
-# ifndef Macintosh
-#  ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
-#  endif
-#  ifdef HAVE_SYS_STAT_H
-#   include <sys/stat.h>
-#  endif
-# else /* Macintosh */
-#  include <types.h>
-#  ifndef __MRC__
-#   include <stat.h>
-#  else
-#   include <mpw_stat.h>
-#  endif
-# endif /* Macintosh */
+# ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+# endif
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
 
 # if defined(Unix) && defined(HAVE_PWD_H) && defined(HAVE_GRP_H) \
   && defined(HAVE_GETPWUID) && defined(HAVE_GETGRGID)
@@ -565,11 +536,7 @@ SEXP do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 #endif
 
-#ifndef Macintosh
 # include <sys/types.h>
-#else
-# include <types.h>
-#endif /* mac */
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
@@ -579,8 +546,6 @@ SEXP do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 # include <sys/dir.h>
 #elif HAVE_NDIR_H
 # include <ndir.h>
-#elif defined(Macintosh)
-# include "dirent.h"		/* use a local equivalent to dirent.h */
 #endif
 
 #ifdef USE_SYSTEM_REGEX
@@ -622,7 +587,8 @@ static void count_files(char *dnp, int *count,
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 #ifdef HAVE_STAT
 		if(recursive) {
-		    sprintf(p, "%s%s%s", dnp, R_FileSep, de->d_name);
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp, 
+			     R_FileSep, de->d_name);
 		    stat(p, &sb);
 		    if((sb.st_mode & S_IFDIR) > 0) {
 			 count_files(p, count, allfiles, recursive,
@@ -655,12 +621,13 @@ static void list_files(char *dnp, char *stem, int *count, SEXP ans,
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 #ifdef HAVE_STAT
 		if(recursive) {
-		    sprintf(p, "%s%s%s", dnp, R_FileSep, de->d_name);
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp, 
+			     R_FileSep, de->d_name);
 		    stat(p, &sb);
 		    if((sb.st_mode & S_IFDIR) > 0) {
 			if(stem)
-			    sprintf(stem2, "%s%s%s", stem, R_FileSep,
-				    de->d_name);
+			    snprintf(stem2, PATH_MAX, "%s%s%s", stem, 
+				     R_FileSep, de->d_name);
 			else
 			    strcpy(stem2, de->d_name);
 			list_files(p, stem2, count, ans, allfiles, recursive,
@@ -800,11 +767,11 @@ SEXP do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isString(type) || length(type) < 1 || isNull(type))
 	error("invalid \"type\" argument");
     strcpy(ctype, CHAR(STRING_ELT(type, 0)));
-    sprintf(topicbuf, "%s\t", CHAR(STRING_ELT(topic, 0)));
+    snprintf(topicbuf, 256, "%s\t", CHAR(STRING_ELT(topic, 0)));
     ltopicbuf = strlen(topicbuf);
     npath = length(path);
     for (i = 0; i < npath; i++) {
-	sprintf(linebuf, "%s%s%s%s%s",
+	snprintf(linebuf, 256, "%s%s%s%s%s",
 		CHAR(STRING_ELT(path, i)),
 		CHAR(STRING_ELT(sep, 0)),
 		"help", CHAR(STRING_ELT(sep, 0)),
@@ -816,25 +783,25 @@ SEXP do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    while(isspace((int)*p)) p++;
 		    fclose(fp);
 		    if (!strcmp(ctype, "html"))
-			sprintf(topicbuf, "%s%s%s%s%s%s",
+			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
 				CHAR(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"html", CHAR(STRING_ELT(sep, 0)),
 				p, ".html");
 		    else if (!strcmp(ctype, "R-ex"))
-			sprintf(topicbuf, "%s%s%s%s%s%s",
+			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
 				CHAR(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"R-ex", CHAR(STRING_ELT(sep, 0)),
 				p, ".R");
 		    else if (!strcmp(ctype, "latex"))
-			sprintf(topicbuf, "%s%s%s%s%s%s",
+			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
 				CHAR(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"latex", CHAR(STRING_ELT(sep, 0)),
 				p, ".tex");
 		    else /* type = "help" */
-			sprintf(topicbuf, "%s%s%s%s%s",
+			snprintf(topicbuf, 256, "%s%s%s%s%s",
 				CHAR(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				ctype, CHAR(STRING_ELT(sep, 0)), p);
@@ -1145,7 +1112,7 @@ SEXP do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
        use */
     SET_STRING_ELT(ansnames, i, mkChar("cledit"));
     LOGICAL(ans)[i] = FALSE;
-#if defined(Win32) || defined(Macintosh)
+#if defined(Win32)
     if(R_Interactive) LOGICAL(ans)[i] = TRUE;
 #endif
 #ifdef Unix

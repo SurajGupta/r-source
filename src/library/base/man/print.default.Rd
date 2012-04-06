@@ -1,21 +1,16 @@
 \name{print.default}
 \alias{print.default}
-\alias{print.atomic}
 \alias{print.matrix}
 \description{
   \code{print.default} is the \emph{default} method of the generic
   \code{\link{print}} function which prints its argument.
   \code{print.matrix} is currently identical, but was not prior to
   \code{1.7.0}.
-
-  \code{print.atomic} is almost the same and exists purely for
-  compatibility reasons.
 }
 \title{Default Printing}
 \usage{
-print.default(x, digits = NULL, quote = TRUE, na.print = NULL,
-              print.gap = NULL, right = FALSE, \dots)
-print.atomic(x, quote = TRUE, \dots)
+\method{print}{default}(x, digits = NULL, quote = TRUE, na.print = NULL,
+      print.gap = NULL, right = FALSE, \dots)
 }
 \arguments{
   \item{x}{the object to be printed.}
@@ -35,8 +30,7 @@ print.atomic(x, quote = TRUE, \dots)
     methods. They are ignored in these functions.}
 }
 \details{
-  \code{print.atomic} differs from \code{print.default} only in its
-  argument sequence.  Prior to \R 1.7.0, \code{print.matrix} did not
+  Prior to \R 1.7.0, \code{print.matrix} did not
   print attributes and did not have a \code{digits} argument.
   
   The default for printing \code{NA}s is to print \code{NA} (without
@@ -52,7 +46,7 @@ print.atomic(x, quote = TRUE, \dots)
   using the values of \code{digits} to \code{print.default}, but using the
   default values (for the methods called) of the other arguments.
 
-  When the \code{methods} package is attached, \code{print} will call
+  When the \pkg{methods} package is attached, \code{print} will call
   \code{\link[methods]{show}} for methods with formal classes if called
   with no optional arguments.
 }

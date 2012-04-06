@@ -18,14 +18,7 @@
 #include <R_ext/eventloop.h>
 #endif
 
-/* From Parse.h -- must find better solution: */
-#define PARSE_NULL              0
-#define PARSE_OK                1
-#define PARSE_INCOMPLETE        2
-#define PARSE_ERROR             3
-#define PARSE_EOF               4
-
-SEXP R_ParseVector(SEXP, int, int *);
+#include <R_ext/Parse.h>
 
 #include "tcltk.h" /* declarations of our `public' interface */
 extern int (*R_timeout_handler)();
@@ -62,7 +55,8 @@ static int R_eval(ClientData clientData,
 		  int argc,
 		  CONST84 char *argv[])
 {
-    int status, i;
+    ParseStatus status;
+    int i;
     SEXP text, expr, ans=R_NilValue /* -Wall */;
 
     text = PROTECT(allocVector(STRSXP, argc - 1));
@@ -155,7 +149,7 @@ static int R_call_lang(ClientData clientData,
 }
 
 
-Tcl_Obj * tk_eval(char *cmd)
+static Tcl_Obj * tk_eval(char *cmd)
 {
     if (Tcl_Eval(RTcl_interp, cmd) == TCL_ERROR)
     {
@@ -184,6 +178,53 @@ SEXP dotTcl(SEXP args)
     val = tk_eval(cmd);
     ans = makeRTclObject(val);
     return ans;
+}
+
+SEXP dotTclObjv(SEXP args)
+{
+    SEXP t, 
+	avec = CADR(args), 
+	nm = getAttrib(avec, R_NamesSymbol);
+    int objc, i, result;
+    Tcl_Obj **objv;
+    
+    for (objc = 0, i = 0; i < length(avec); i++){
+	if (!isNull(VECTOR_ELT(avec, i)))
+	    objc++;
+	if (!isNull(nm) && strlen(CHAR(STRING_ELT(nm, i))))
+	    objc++;
+    }
+
+    objv = (Tcl_Obj **) R_alloc(objc, sizeof(Tcl_Obj *)); 
+
+    for (objc = i = 0; i < length(avec); i++){
+	char *s, *tmp;
+	if (!isNull(nm) && strlen(s = CHAR(STRING_ELT(nm, i)))){
+	    tmp = calloc(strlen(s)+2, sizeof(char));
+	    *tmp = '-';
+	    strcpy(tmp+1, s);
+	    objv[objc++] = Tcl_NewStringObj(tmp, -1);
+	    free(tmp);
+	}
+	if (!isNull(t = VECTOR_ELT(avec, i)))
+	    objv[objc++] = (Tcl_Obj *) R_ExternalPtrAddr(t);
+    }
+
+    for (i = objc; i--; ) Tcl_IncrRefCount(objv[i]);
+    result = Tcl_EvalObjv(RTcl_interp, objc, objv, 0);
+    for (i = objc; i--; ) Tcl_DecrRefCount(objv[i]);
+    
+    if (result == TCL_ERROR)
+    {
+	char p[512];
+	if (strlen(Tcl_GetStringResult(RTcl_interp))>500)
+	    strcpy(p,"tcl error.\n");
+	else
+	    sprintf(p,"[tcl] %s.\n",Tcl_GetStringResult(RTcl_interp));
+	error(p);
+    }
+
+    return makeRTclObject(Tcl_GetObjResult(RTcl_interp));
 }
 
 
@@ -269,18 +310,22 @@ SEXP RTcl_ObjFromCharVector(SEXP args)
     int count;
     Tcl_Obj *tclobj, *elem;
     int i;
-    SEXP val;
+    SEXP val, drop;
 
     val = CADR(args);
+    drop = CADDR(args);
 
     tclobj = Tcl_NewObj();
 
     count = length(val);
-    for ( i = 0 ; i < count ; i++) {
-	elem = Tcl_NewObj();
-	Tcl_SetStringObj(elem, CHAR(STRING_ELT(val, i)), -1);
-	Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
-    }
+    if (count == 1 && LOGICAL(drop)[0])
+	Tcl_SetStringObj(tclobj, CHAR(STRING_ELT(val, 0)), -1);
+    else
+	for ( i = 0 ; i < count ; i++) {
+	    elem = Tcl_NewObj();
+	    Tcl_SetStringObj(elem, CHAR(STRING_ELT(val, i)), -1);
+	    Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
+	}
 
     return makeRTclObject(tclobj);
 }
@@ -317,22 +362,36 @@ SEXP RTcl_ObjAsDoubleVector(SEXP args)
     return ans;
 }
 
+static Tcl_Obj *NewIntOrDoubleObj(double x)
+{
+    /* This function works around two quirks: (1) that numeric values
+       in R are generally stored as doubles, even small integer
+       constants and (2) that Tcl stringifies a double constant like 2
+       into the form 2.0, which will not work ins some connections */
+    int i = (int) x;
+    return ((double) i == x) ? Tcl_NewIntObj(i) : Tcl_NewDoubleObj(x);
+}
+
 SEXP RTcl_ObjFromDoubleVector(SEXP args)
 {
     int count;
     Tcl_Obj *tclobj, *elem;
     int i;
-    SEXP val;
+    SEXP val, drop;
 
     val = CADR(args);
+    drop = CADDR(args);
 
     tclobj = Tcl_NewObj();
 
     count = length(val);
-    for ( i = 0 ; i < count ; i++) {
-	elem = Tcl_NewDoubleObj(REAL(val)[i]);
-	Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
-    }
+    if (count == 1 && LOGICAL(drop)[0])
+	tclobj = NewIntOrDoubleObj(REAL(val)[0]);
+    else
+	for ( i = 0 ; i < count ; i++) {
+	    elem = NewIntOrDoubleObj(REAL(val)[i]);
+	    Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
+	}
 
     return makeRTclObject(tclobj);
 }
@@ -374,21 +433,75 @@ SEXP RTcl_ObjFromIntVector(SEXP args)
     int count;
     Tcl_Obj *tclobj, *elem;
     int i;
-    SEXP val;
+    SEXP val, drop;
 
     val = CADR(args);
+    drop = CADDR(args);
 
     tclobj = Tcl_NewObj();
 
     count = length(val);
-    for ( i = 0 ; i < count ; i++) {
-	elem = Tcl_NewIntObj(INTEGER(val)[i]);
-	Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
-    }
+    if (count == 1 && LOGICAL(drop)[0])
+	tclobj = Tcl_NewIntObj(INTEGER(val)[0]);
+    else
+	for ( i = 0 ; i < count ; i++) {
+	    elem = Tcl_NewIntObj(INTEGER(val)[i]);
+	    Tcl_ListObjAppendElement(RTcl_interp, tclobj, elem);
+	}
 
     return makeRTclObject(tclobj);
 }
 
+SEXP RTcl_GetArrayElem(SEXP args)
+{
+    SEXP x, i;
+    char *xstr, *istr;
+    Tcl_Obj *tclobj;
+
+    x = CADR(args);
+    i = CADDR(args);
+
+    xstr = CHAR(STRING_ELT(x, 0));
+    istr = CHAR(STRING_ELT(i, 0));
+    tclobj = Tcl_GetVar2Ex(RTcl_interp, xstr, istr, 0);
+
+    if (tclobj == NULL)
+	return R_NilValue;
+    else
+	return makeRTclObject(tclobj);
+}
+
+SEXP RTcl_SetArrayElem(SEXP args)
+{
+    SEXP x, i;
+    char *xstr, *istr;
+    Tcl_Obj *value;
+
+    x = CADR(args);
+    i = CADDR(args);
+    value = (Tcl_Obj *) R_ExternalPtrAddr(CADDDR(args));
+
+    xstr = CHAR(STRING_ELT(x, 0));
+    istr = CHAR(STRING_ELT(i, 0));
+    Tcl_SetVar2Ex(RTcl_interp, xstr, istr, value, 0);
+
+    return R_NilValue;
+}
+
+SEXP RTcl_RemoveArrayElem(SEXP args)
+{
+    SEXP x, i;
+    char *xstr, *istr;
+
+    x = CADR(args);
+    i = CADDR(args);
+
+    xstr = CHAR(STRING_ELT(x, 0));
+    istr = CHAR(STRING_ELT(i, 0));
+    Tcl_UnsetVar2(RTcl_interp, xstr, istr, 0);
+
+    return R_NilValue;
+}
 
 /* Warning: These two functions return a pointer to internal static
    data. Copy immediately. */
@@ -457,7 +570,7 @@ static void (* OldHandler)(void);
 static int OldTimeout;
 static int Tcl_loaded = 0;
 
-void TclHandler(void)
+static void TclHandler(void)
 {
     while (Tcl_DoOneEvent(TCL_DONT_WAIT))
 	;
@@ -465,14 +578,14 @@ void TclHandler(void)
     OldHandler();
 }
 
-int Gtk_TclHandler(void)
+static int Gtk_TclHandler(void)
 {
     while (Tcl_DoOneEvent(TCL_DONT_WAIT))
 	;
     return 1;
 }
 
-void addTcl(void)
+static void addTcl(void)
 {
     if (Tcl_loaded)
 	error("Tcl already loaded");
@@ -508,11 +621,11 @@ void delTcl(void)
 /* ----- Event loop interface routines -------- */
 static Tcl_Time timeout;
 
-void RTcl_setupProc(ClientData clientData, int flags)
+static void RTcl_setupProc(ClientData clientData, int flags)
 {
     Tcl_SetMaxBlockTime(&timeout);
 }
-void RTcl_eventProc(RTcl_Event *evPtr, int flags)
+static void RTcl_eventProc(RTcl_Event *evPtr, int flags)
 {
     fd_set *readMask = R_checkActivity(0 /*usec*/, 1 /*ignore_stdin*/);
 
@@ -521,7 +634,7 @@ void RTcl_eventProc(RTcl_Event *evPtr, int flags)
    
     R_runHandlers(R_InputHandlers, readMask);
 }
-void RTcl_checkProc(ClientData clientData, int flags)
+static void RTcl_checkProc(ClientData clientData, int flags)
 {
     fd_set *readMask = R_checkActivity(0 /*usec*/, 1 /*ignore_stdin*/);
     RTcl_Event * evPtr;
@@ -624,7 +737,8 @@ extern FILE * R_Outputfile;
 
 /* Fill a text buffer with user typed console input. */
 
-int RTcl_ReadConsole (char *prompt, unsigned char *buf, int len,
+static int 
+RTcl_ReadConsole (char *prompt, unsigned char *buf, int len,
 		  int addtohistory)
 {
     Tcl_Obj *cmd[3];
@@ -641,7 +755,7 @@ int RTcl_ReadConsole (char *prompt, unsigned char *buf, int len,
     if (code != TCL_OK)
 	return 0;
     else
-	strncpy(buf, Tcl_GetStringResult(RTcl_interp), len);
+	strncpy((char *)buf, (char *) Tcl_GetStringResult(RTcl_interp), len);
 
     /* At some point we need to figure out what to do if the result is
      * longer than "len"... For now, just truncate. */
@@ -654,7 +768,7 @@ int RTcl_ReadConsole (char *prompt, unsigned char *buf, int len,
 
 /* Write a text buffer to the console. */
 /* All system output is filtered through this routine. */
-void
+static void
 RTcl_WriteConsole (char *buf, int len)
 {
     Tcl_Obj *cmd[2];
@@ -673,20 +787,20 @@ RTcl_WriteConsole (char *buf, int len)
 }
 
 /* Indicate that input is coming from the console */
-void
+static void
 RTcl_ResetConsole ()
 {
 }
 
 /* Stdio support to ensure the console file buffer is flushed */
-void
+static void
 RTcl_FlushConsole ()
 {
 }
 
 
 /* Reset stdin if the user types EOF on the console. */
-void
+static void
 RTcl_ClearerrConsole ()
 {
 }

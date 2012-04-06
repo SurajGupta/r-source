@@ -43,9 +43,12 @@ socketConnection(host = "localhost", port, server = FALSE,
                  blocking = FALSE, open = "a+",
                  encoding = getOption("encoding"))
 
+open(con, \dots)
 \method{open}{connection}(con, open = "r", blocking = TRUE, \dots)
+close(con, \dots)
 \method{close}{connection}(con, type = "rw", \dots)
-\method{flush}{connection}(con)
+
+flush(con)
 
 isOpen(con, rw = "")
 isIncomplete(con)
@@ -64,7 +67,7 @@ isIncomplete(con)
   \item{server}{logical.  Should the socket be a client or a server?}
   \item{open}{character.  A description of how to open the connection
     (if at all). See Details for possible values.}
-  \item{blocking}{logical.  See `Blocking' section below.}
+  \item{blocking}{logical.  See \sQuote{Blocking} section below.}
   \item{encoding}{An integer vector of length 256.}
   \item{compression}{integer in 0--9.  The amount of compression to be
     applied when writing, from none to maximal.  The default is a good
@@ -203,8 +206,8 @@ isIncomplete(con)
   \code{"r+"}, known as \code{"*"}.
 
   On platforms where \code{vsnprintf} does not return the needed length
-  of output (e.g. Windows) there is a 100,000 character output limit on the
-  length of line for \code{fifo}, \code{gzfile} and \code{bzfile}
+  of output (e.g., Windows) there is a 100,000 character output limit on
+  the length of line for \code{fifo}, \code{gzfile} and \code{bzfile}
   connections: longer lines will be truncated with a warning.
 }
 }
@@ -215,10 +218,15 @@ isIncomplete(con)
 
 \seealso{
   \code{\link{textConnection}}, \code{\link{seek}}, \code{\link{readLines}},
+  \code{\link{readBin}}, \code{\link{writeLines}}, \code{\link{writeBin}},
   \code{\link{showConnections}}, \code{\link{pushBack}}.
 
   \code{\link{capabilities}} to see if \code{gzfile}, \code{url},
   \code{fifo} and \code{socketConnection} are supported by this build of \R.
+
+#ifdef windows
+  To flush output to the console, see \code{\link{flush.console}}.
+#endif
 }
 
 \examples{

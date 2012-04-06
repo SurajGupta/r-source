@@ -6,7 +6,6 @@
 \alias{split<-}
 \alias{split<-.default}
 \alias{split<-.data.frame}
-\alias{split.data.frame<-}
 \alias{unsplit}
 \description{
   \code{split} divides the data in the vector \code{x} into the groups
@@ -16,22 +15,21 @@
 }
 \usage{
 split(x, f)
-split.default(x, f)
-split.data.frame(x, f)
 split(x, f) <- value
-split.default(x, f) <- value
-split.data.frame(x, f) <- value
 unsplit(value, f)
 }
 \arguments{
   \item{x}{vector or data frame containing values to be divided into groups.}
-  \item{f}{a ``factor'' such that \code{factor(f)} defines the grouping,
-    or a list of such factors in which case their interaction is used
-    for the grouping.}
+  \item{f}{a \dQuote{factor} such that \code{factor(f)} defines the
+    grouping, or a list of such factors in which case their interaction
+    is used for the grouping.}
   \item{value}{a list of vectors or data frames compatible with a
     splitting of \code{x}}
 }
 \details{
+  \code{split} and \code{split<-} are generic functions with default and
+  \code{data.frame} methods.
+
   \code{f} is recycled as necessary and if the length of \code{x} is not
   a multiple of the length of \code{f} a warning is printed.
   \code{unsplit} works only with  lists of vectors. The data frame
@@ -48,12 +46,14 @@ unsplit(value, f)
   \code{unsplit} returns a vector for which \code{split(x, f)} equals
   \code{value}
 }
+\seealso{
+  \code{\link{cut}}
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
 }
-\seealso{\code{\link{cut}}}
 \examples{
 n <- 10; nn <- 100
 g <- factor(round(n * runif(n * nn)))

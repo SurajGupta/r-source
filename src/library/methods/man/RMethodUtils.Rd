@@ -1,11 +1,14 @@
 \name{RMethodUtils}
 %% FIXME:  undocumented utilities (Sep. 23/02)
 \alias{asMethodDefinition}
+\alias{standardGeneric-class}
+\alias{standardGenericWithTrace-class}
 \alias{nonstandardGeneric-class}
 \alias{nonstandardGenericFunction-class}
 \alias{nonstandardGroupGenericFunction-class}
 \alias{OptionalFunction-class}
 \alias{PossibleMethod-class}
+\alias{derivedDefaultMethod-class}
 %%
 \alias{substituteFunctionArgs}
 \alias{makeGeneric}
@@ -13,7 +16,6 @@
 \alias{generic.skeleton}
 \alias{defaultDumpName}
 \alias{getAllMethods}
-\alias{setAllMethodsSlot}
 \alias{doPrimitiveMethod}
 \alias{conformMethod}
 \alias{getGeneric}
@@ -22,12 +24,8 @@
 \alias{assignMethodsMetaData}
 \alias{matchSignature}
 \alias{mlistMetaName}
-\alias{assignToMethodMetaData}
-\alias{getFromMethodMetaData}
 \alias{removeMethodsObject}
 \alias{findUnique}
-\alias{removeFromMethodMetaData}
-\alias{removeSubclassMetaData}
 \alias{MethodAddCoerce}
 \alias{is.primitive}
 \alias{.saveImage}
@@ -39,12 +37,13 @@
 \alias{sigToEnv}
 \alias{rematchDefinition}
 \alias{unRematchDefinition}
+\alias{addNextMethod,MethodDefinition-method}
+\alias{addNextMethod,MethodWithNext-method}
 \alias{addNextMethod}
-\alias{.valueClassTest}
+alias{.valueClassTest}
 %% Not for the user to know about!
 \alias{.ShortPrimitiveSkeletons} %% used from C code
 \alias{.EmptyPrimitiveSkeletons}
-\alias{__MethodMetaData}
 \title{RMethodUtils}
 \description{
   Utility functions to support the definition and use of formal
@@ -52,8 +51,16 @@
   by the user.
 }
 \usage{
-makeGeneric(f, fdef, fdefault, group=character(),
-            valueClass=character(), package, signature, genericFunction)
+getGeneric(f, mustFind=FALSE, where)
+
+getGroup(fdef, recursive, where)
+
+getMethodsMetaData(f, where)
+assignMethodsMetaData (f, value, fdef, where, deflt)
+mlistMetaName (name, package)
+
+makeGeneric(f, fdef, fdefault, group=list(), valueClass=character(),
+            package, signature = NULL, genericFunction = NULL)
 
 makeStandardGeneric(f, fdef)
 
@@ -61,40 +68,25 @@ generic.skeleton(name, fdef, fdefault)
 
 defaultDumpName(generic, signature)
 
-getAllMethods(f, fdef, libs=search())
+getAllMethods(f, fdef, where)
 
-setAllMethodsSlot(mlist)
-
-doPrimitiveMethod(name, def, call=sys.call(-1), ev=sys.frame(-2))
+doPrimitiveMethod(name, def, call= sys.call(-1), ev= sys.frame(sys.parent(2)))
 
 conformMethod(signature, mnames, fnames, f)
 
-getGeneric(f, mustFind=FALSE)
-
-getGroup(fdef, recursive=FALSE)
-
-matchSignature(signature, fun)
-
-## manage method metadata
-getFromMethodMetaData(name)
-
-assignToMethodMetaData(name, value)
-
-removeFromMethodMetaData(name)
-
-removeSubclassMetaData(ClassDef1, ClassDef2) 
+matchSignature(signature, fun, where)
 
 removeMethodsObject(f, where)
 
-findUnique(what, doFind, message)
+findUnique(what, message, where)
 
 MethodAddCoerce(method, argName, thisClass, methodClass)
 
 is.primitive(fdef)
 
-cacheMetaData(where, attach = TRUE)
+cacheMetaData(where, attach = TRUE, searchWhere)
 
-cacheGenericsMetaData(generics, attach = TRUE, where, package)
+cacheGenericsMetaData(f, fdef, attach = TRUE, where, package, methods)
 
 setPrimitiveMethods(f, fdef, code, generic, mlist)
 
@@ -102,7 +94,7 @@ missingArg(symbol, envir = parent.frame(), eval)
 
 balanceMethodsList(mlist, args, check = TRUE)
 
-sigToEnv(signature)
+sigToEnv(signature, genericSig)
 
 rematchDefinition(definition, generic, mnames, fnames, signature)
 unRematchDefinition(definition)
@@ -112,90 +104,17 @@ asMethodDefinition(def, signature, sealed = FALSE)
 addNextMethod(method, f, mlist, optional, envir)
 }
 \section{Summary of Functions}{
- 
+
   \describe{
-   
-    \item{\code{makeGeneric}:}{ 
-      Makes a generic function object corresponding to the given
-      function name, optional definition and optional default method.
-      Other arguments supply optional elements for the slots of
-      \code{\link{genericFunction-class}}.
-    }
 
-    \item{\code{makeStandardGeneric}:}{ 
-      a utility function that makes a valid function calling
-      \code{standardGeneric} for name \code{f}.  Works (more or less)
-      even if the actual definition, \code{fdef}, is not a proper
-      function, that is, it's a primitive or internal.
-    }
-    
-    \item{\code{conformMethod}:}{
-      If the formal arguments, \code{mnames}, are not identical to the
-      formal arguments to the function, \code{fnames},
-      \code{conformMethod} determines whether the signature and the two
-      sets of arguments conform, and returns the signature, possibly
-      extended.  The function name, \code{f} is supplied for error
-      messages.
-
-      The method assignment conforms if either method and function have
-      identical formal argument lists.  It can also conform if the
-      method omits some of the formal arguments of the function but: (1)
-      the non-omitted arguments are a subset of the function arguments,
-      appearing in the same order; (2) there are no arguments to the
-      method that are not arguments to the function; and (3) the omitted
-      formal arguments do not appear as explicit classes in the
-      signature.
-    }
-
-    \item{\code{defaultDumpName}:}{ 
-      the default name to be used for dumping a method.
-    }
-    
-    \item{\code{getAllMethods}:}{ 
-      a generic function (with methods) representing the merge of all
-      the versions of \code{f} on the specified packages (anything on
-      the current search path by default).
-
-      If the generic \code{f} has a group generic, methods for this
-      group generic (and further generations of group generics, if any)
-      are also merged.
-  
-      The merging rule is as follows: each generic is merged across
-      packages, and the group generics are then merged, finally adding
-      the directly defined methods of \code{f}.
-
-      The effect of the merging rule is that any method directly defined
-      for \code{f} on any included package overrides a method for the
-      same signature defined for the group generic; similarly for the
-      group generic and its group, if any, etc.
-
-      For \code{f} or for a specific group generic, methods override in
-      the order of the packages being searched.  A method for a
-      particular signature on a particular package overrides any methods
-      for the same signature on packages later on in the list of
-      packages being searched.
-
-      The slot \code{"allMethods"} of the merged methods list is set to
-      a copy of the methods slot; this is the slot where inherited
-      methods are stored.
-    }
-    
-    \item{\code{doPrimitiveMethod}:}{ 
-      do a primitive call to builtin function \code{name} the definition
-      and call provided, and carried out in the environment \code{ev}.
-
-      A call to \code{doPrimitiveMethod} is used when the actual method
-      is a .Primitive.  (Because primitives don't behave correctly as
-      ordinary functions, not having either formal arguments nor a
-      function body).
-    }
-
-    \item{\code{getGeneric}:}{ 
+    \item{\code{getGeneric}:}{
       return the definition of the function named \code{f} as a generic.
 
-      If there is no definition in the current search list, throws an
+      If no definition is found, throws an
       error or returns \code{NULL} according to the value of
-      \code{mustFind}.
+      \code{mustFind}.  By default, searches in the top-level
+      environment (normally the global environment, but adjusted to
+      work correctly when package code is evaluated from the function \code{\link{library}}.
 
       Primitive functions are dealt with specially, since there is never
       a formal generic definition for them.  The value returned is the
@@ -204,10 +123,23 @@ addNextMethod(method, f, mlist, optional, envir)
       \code{getGeneric} returns \code{NULL} or throws an error.
     }
 
-    \item{\code{getGroup}:}{ 
-      return the groups to which this generic belongs.  
+    \item{\code{getGroup}:}{
+      return the groups to which this generic belongs, searching from
+      environment \code{where} (the global environment normally by default).
 
       If \code{recursive=TRUE}, also all the group(s) of these groups.
+    }
+
+    \item{\code{getMethodsMetaData},
+      \code{assignMethodsMetaData},
+      \code{mlistMetaName}:}{
+      Utilities to get (\code{getMethodsMetaData}) and assign  (\code{assignMethodsMetaData}) the metadata object recording the
+      methods defined in a particular package, or to return the
+      mangled name for that object  (\code{mlistMetaName}).
+
+      The assign function should not be used directly.  The get
+    function may be useful if you want explicitly only the outcome of
+    the methods assigned in this package.  Otherwise, use \code{\link{getMethods}}.
     }
 
     \item{\code{matchSignature}:}{
@@ -220,27 +152,16 @@ addNextMethod(method, f, mlist, optional, envir)
       empty, the returned signature is a single \code{"ANY"} matching
       the first formal argument (so the returned value is always
       non-empty).
-  
+
       Generates an error if any of the supplied signature names are
       not legal; that is, not in the signature slot of the generic
       function.
+
+      If argument \code{where} is supplied, a warning will be issued
+      if any of the classes does not have a formal definition visible
+      from \code{where}.
     }
 
-    \item{\code{getMethodsMetaData},
-      \code{assignMethodsMetaData},
-      \code{mlistMetaName}:}{ 
-      utilities to manage methods list objects in a particular
-      environment.
-      Not to be called directly.
-    }
-    
-    \item{\code{getFromMethodMetaData},
-      \code{assignToMethodMetaData},
-      \code{removeFromMethodMetaData}:}{
-      Functions to manage the session metadata for methods.  Don't
-      call these directly.
-    }
-    
     \item{\code{MethodAddCoerce}:}{
       Possibly modify one or more methods to explicitly coerce this
       argument to \code{methodClass}, the class for which the method is
@@ -248,38 +169,32 @@ addNextMethod(method, f, mlist, optional, envir)
       coerce is required to coerce from \code{thisClass} to
       \code{methodClass}.
     }
-    
+
     \item{\code{is.primitive}:}{
       Is this object a primitive function (either a builtin or special)?
     }
-    
+
     \item{\code{removeMethodsObject}:}{
       remove the metadata object containing methods for \code{f}.
     }
-    
-    \item{\code{findUnique}:}{
-      Find the first position on the search list containing object
-      \code{what}; if more than one is found, a warning message is
-      generated, using \code{message} to identify what was being
-      searched for.
 
-      If \code{doFind} is supplied, it's the version of \code{find} used
-      to do the search (e.g., \code{findFunction}).
+    \item{\code{findUnique}:}{
+      Return the list of environments (or equivalent) having an object named
+      \code{what}, using environment \code{where} and its parent
+      environments.  If more than one is found, a warning message is
+      generated, using \code{message} to identify what was being
+      searched for, unless \code{message} is the empty string.
     }
-  
+
     \item{\code{cacheMetaData},
       \code{cacheGenericsMetaData},
       \code{setPrimitiveMethods}:}{
-      Utilities for ensuring that the session-scope information about
+      Utilities for ensuring that the internal information about
       class and method definitions is up to date.  Should normally be
       called automatically whenever needed (for example, when a method
       or class definition changes, or when a package is attached or
-      detached).
-
-      The \code{environment} must be one of the environments on the
-      current search list; note in particular that even on detaching
-      (\code{attach=FALSE}), the environment will normally still be on
-      the search list.
+      detached).  Required primarily because primitive functions are
+      dispatched in C code, rather than by the official model.
 
       The \code{setPrimitiveMethods} function resets the caching
       information for a particular primitive function.  Don't call it
@@ -291,12 +206,12 @@ addNextMethod(method, f, mlist, optional, envir)
         the call} corresponding to the environment supplied (by default,
       environment of the call to \code{missingArg}).  If \code{eval} is
       true, the argument is evaluated to get the name of the symbol to
-      test.  Note that \code{missingArg} is closer to the ``blue-book''
-      sense of the \code{\link{missing}} function, not that of the
-      current R base package implementation.  But beware that it works
-      reliably only if no assignment has yet been made to the argument.
-      (For method dispatch this is fine, because computations are done
-      at the begining of the call.)
+      test.  Note that \code{missingArg} is closer to the
+      \dQuote{blue-book} sense of the \code{\link{missing}} function,
+      not that of the current R base package implementation.  But beware
+      that it works reliably only if no assignment has yet been made to
+      the argument.  (For method dispatch this is fine, because
+      computations are done at the begining of the call.)
     }
 
     \item{\code{balanceMethodsList}:}{
@@ -321,7 +236,7 @@ addNextMethod(method, f, mlist, optional, envir)
       signature.  Usually not called directly: see
       \code{\link{selectMethod}}.
     }
-      
+
     \item{\code{.saveImage}:}{
       Flag, used in dynamically initializing the methods package from
       \code{.First.lib}
@@ -354,5 +269,87 @@ addNextMethod(method, f, mlist, optional, envir)
       calls to \code{\link{callNextMethod}}.
     }
   }
+
+    \item{\code{makeGeneric}:}{
+      Makes a generic function object corresponding to the given
+      function name, optional definition and optional default method.
+      Other arguments supply optional elements for the slots of
+      \code{\link{genericFunction-class}}.
+    }
+
+    \item{\code{makeStandardGeneric}:}{
+      a utility function that makes a valid function calling
+      \code{standardGeneric} for name \code{f}.  Works (more or less)
+      even if the actual definition, \code{fdef}, is not a proper
+      function, that is, it's a primitive or internal.
+    }
+
+    \item{\code{conformMethod}:}{
+      If the formal arguments, \code{mnames}, are not identical to the
+      formal arguments to the function, \code{fnames},
+      \code{conformMethod} determines whether the signature and the two
+      sets of arguments conform, and returns the signature, possibly
+      extended.  The function name, \code{f} is supplied for error
+      messages.
+
+      The method assignment conforms if either method and function have
+      identical formal argument lists.  It can also conform if the
+      method omits some of the formal arguments of the function but: (1)
+      the non-omitted arguments are a subset of the function arguments,
+      appearing in the same order; (2) there are no arguments to the
+      method that are not arguments to the function; and (3) the omitted
+      formal arguments do not appear as explicit classes in the
+      signature.
+    }
+
+    \item{\code{defaultDumpName}:}{
+      the default name to be used for dumping a method.
+    }
+
+    \item{\code{getAllMethods}:}{
+      A generic function (with methods) representing the merge of all
+      the methods defined for this generic starting from environment
+      \code{where}, including all parent environments.  By default,
+      uses the global environment (and therefore all packages on the
+      search list).  This function exists largely
+      to re-compute the full set of methods when a change to the
+      available methods occurs.  Since all such recomputations are
+      supposed to be automatic, direct calls to \code{getAllMethods}
+      should not be needed.
+
+      If the generic \code{f} has a group generic, methods for this
+      group generic (and further generations of group generics, if any)
+      are also merged.
+
+      The merging rule is as follows: each generic is merged across
+      packages, and the group generics are then merged, finally adding
+      the directly defined methods of \code{f}.
+
+      The effect of the merging rule is that any method directly defined
+      for \code{f} on any included package overrides a method for the
+      same signature defined for the group generic; similarly for the
+      group generic and its group, if any, etc.
+
+      For \code{f} or for a specific group generic, methods override in
+      the order of the packages being searched.  A method for a
+      particular signature on a particular package overrides any methods
+      for the same signature on packages later on in the list of
+      packages being searched.
+
+      The slot \code{"allMethods"} of the merged methods list is set to
+      a copy of the methods slot; this is the slot where inherited
+      methods are stored.
+    }
+
+    \item{\code{doPrimitiveMethod}:}{
+      do a primitive call to builtin function \code{name} the definition
+      and call provided, and carried out in the environment \code{ev}.
+
+      A call to \code{doPrimitiveMethod} is used when the actual method
+      is a .Primitive.  (Because primitives don't behave correctly as
+      ordinary functions, not having either formal arguments nor a
+      function body).
+    }
+
 }
 \keyword{internal}

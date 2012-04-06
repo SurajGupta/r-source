@@ -22,7 +22,7 @@
 ## <FIXME>
 ## This is not portable: has Unix-style file paths and system().  (But
 ## we need to call tar/gzip and zip, respectively, so it is not clear
-## how platform-independent the code can be.
+## how platform-independent the code can be.)
 ## </FIXME>
 
 use Cwd;
@@ -43,7 +43,7 @@ use Text::Wrap;
 ## don't buffer output
 $| = 1;
 
-my $revision = ' $Revision: 1.57.2.4 $ ';
+my $revision = ' $Revision: 1.69 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -73,14 +73,13 @@ GetOptions(@known_options) or usage();
 R_version("R add-on package builder", $version) if $opt_version;
 usage() if $opt_help;
 
+## Use system default unless explicitly specified otherwise.
+$ENV{"R_DEFAULT_PACKAGES"} = "";
+
 my $startdir = cwd();
 
 my $R_platform = R_getenv("R_PLATFORM", "unknown-binary");
 my $tar = R_getenv("TAR", "tar");
-
-## JG:  topLevelFiles will be files that sit in the top level of a
-##      zip/tarball along with any included directories.
-my $topLevelFiles = "DESCRIPTION";
 
 my $INSTALL_opts = "";
 $INSTALL_opts .= " --use-zip" if $opt_use_zip;
@@ -133,22 +132,27 @@ foreach my $pkg (@ARGV) {
 	chdir($libdir);
 
 	my $pkgs = $pkgname;
+	## JG:  topLevelFiles will be files that sit in the top level of
+	## a zip/tarball along with any included directories.
+	my $topLevelFiles;
 	if($description->{"Contains"}) {
-	    $log->message("Looks like '${pkg}' is a package bundle");
+	    $log->message("looks like '${pkg}' is a package bundle");
 	    $is_bundle = 1;
 	    my @bundlepkgs = split(/\s+/, $description->{"Contains"});
-	    ## JG: Get a copy of the bundle's DESCRIPTION file
-	    ##     and add it into the zip archive
-	    $log->message("Copying $pkg/DESCRIPTION");
-	    copy("$startdir/$pkg/DESCRIPTION","DESCRIPTION");
 	    $pkgs = join(" ", @bundlepkgs);
+	    ## JG: Get a copy of the bundle's DESCRIPTION file and add
+	    ## it into the zip archive.
+	    $log->message("copying $pkg/DESCRIPTION");
+	    copy("$startdir/$pkg/DESCRIPTION", "DESCRIPTION");
+	    $topLevelFiles = "DESCRIPTION";
 	}
 
 	if($WINDOWS) {
 	    my $filename = "${pkgname}_" . $description->{"Version"};
 	    $log->message("building '$filename.zip'");
 	    system("rm -f $startdir/$filename.zip");
-	    system("zip -r9X $startdir/$filename.zip $pkgs $topLevelFiles");
+	    system("zip -r9X $startdir/$filename.zip " .
+		   "$pkgs $topLevelFiles");
 	    chdir($startdir);
 	} else {
 	    ## <FIXME>
@@ -170,7 +174,8 @@ foreach my $pkg (@ARGV) {
 	    my $filename = "${pkgname}_" . $description->{"Version"} .
 		"_R_${R_platform}.tar";
 	    $log->message("building '$filename.gz'");
-	    system("$tar chXf $exclude $startdir/$filename $pkgs $topLevelFiles");
+	    system("$tar chXf $exclude $startdir/$filename " .
+		   "$pkgs $topLevelFiles");
 	    chdir($startdir);
 	    system("gzip -9f $filename");
 	    unlink($exclude);
@@ -181,7 +186,7 @@ foreach my $pkg (@ARGV) {
     }
     else {
 	if($description->{"Contains"}) {
-	    $log->message("Looks like '${pkg}' is a package bundle");
+	    $log->message("looks like '${pkg}' is a package bundle");
 	    $is_bundle = 1;
 	    my @bundlepkgs = split(/\s+/, $description->{"Contains"});
 	    foreach my $ppkg (@bundlepkgs) {
@@ -248,12 +253,11 @@ foreach my $pkg (@ARGV) {
                         ## *shell* patterns, where '*', '?', and '[...]'
                         ## are the usual shell wildcards and '\' escapes
 			## them.  Hence we need to escape the wildchard
-			## characters in file names (maybe we should do
-			## the same on Windows).  Not that using these
-			## characters in file names seems a good idea ...
+			## characters in file names.  On Windows, the
+			## first two are invalid (and hence rejected by
+			## R CMD check), and the last two do not need
+			## escaping.
 			$filename = "$File::Find::name";
-			$filename =~ s/\*/\\\*/g;
-			$filename =~ s/\?/\\\?/g;
 			$filename =~ s/\[/\\\[/g;
 			$filename =~ s/\]/\\\]/g;
 			print EXCLUDE "$filename\n";
@@ -272,10 +276,45 @@ foreach my $pkg (@ARGV) {
 	    ## workaround for paths in Cygwin tar
 	    $filepath =~ s+^([A-Za-x]):+/cygdrive/\1+;
 	}
-	system("$tar chXf $exclude $filepath $pkgname");
-	chdir($startdir);
-	system("gzip -9f $filename");
+	## <FIXME>
+	## Is option '-h' portable?
+	system("$tar chf $filepath $pkgname");
+	## </FIXME>
+	my $tmpdir = "${R::Vars::TMPDIR}/Rbuild.$$";
+	## (Same as $libdir for building a binary package.)
+	rmtree($tmpdir) if(-d $tmpdir);
+	mkdir("$tmpdir", 0755)
+	    or die "Cannot create directory '$tmpdir'\n";
+	chdir($tmpdir);
+	system("$tar xhf $filepath");
+	## Remove exclude files.
+	open(EXCLUDE, "< $exclude");
+	while(<EXCLUDE>) {
+	    rmtree(glob($_));
+	}
+	close(EXCLUDE);
 	unlink($exclude);
+	## Fix permissions.
+	sub fix_permissions {
+	    ## Note that when called via File::Find::find, $_ holds the
+	    ## file name within the current directory.
+	    if(-d $_) {
+		## Directories should really be mode 00755 if possible.
+		chmod(00755, $_);
+	    }
+	    elsif(-f $_) {
+		## Files should be readable by everyone, and writable
+		## only for user.  This leaves a bit of uncertainty
+		## about the execute bits.
+		chmod(((stat $_)[2] | 00644) & 00755, $_);
+	    }
+	}
+	find(\&fix_permissions, "${pkgname}") if(!$WINDOWS);
+	## Finalize.
+	system("$tar chf $filepath $pkgname");
+	chdir($startdir);
+	rmtree($tmpdir);
+	system("gzip -9f $filename");
     }
     $log->close();
     print("\n");
@@ -322,16 +361,15 @@ sub prepare_pkg {
 	system("./cleanup");
     }
 
-    &updateRdIndex("INDEX", "man", 0, $log);
-    &updateRdIndex(&file_path("data", "00Index"), "man", 1, $log)
-	if((-d "data") && &list_files_with_type("data", "data"));
+    &updateRdIndex("INDEX", "man", $log);
 
     if((-d &file_path("inst", "doc"))
        && &list_files_with_type(&file_path("inst", "doc"),
 				"vignette")) {
 	if(!$opt_no_vignettes) {
 	    $log->creating("vignettes");
-	    my $Rcmd = "library(tools); buildVignettes(dir='.')\n";
+	    my $Rcmd = "library(tools)\n";
+	    $Rcmd .= "buildVignettes(dir = '.')\n";
 	    my @out = R_runR($Rcmd, "--vanilla --no-save --quiet");
 	    my @err = grep(/^Error/, @out);
 	    if($#err >= 0) {
@@ -344,9 +382,6 @@ sub prepare_pkg {
 		$log->result("OK");
 	    }
 	}
-	&updateVignetteIndex(&file_path("inst", "doc", "00Index.dcf"),
-			     &file_path("inst", "doc"),
-			     $log);
     }
 
     1;
@@ -362,7 +397,7 @@ sub deleteJunkFiles {
 
 sub updateIndex {
     my ($oldindex, $newindex, $log) = @_;
-    
+
     $log->checking("whether '$oldindex' is up-to-date");
     if(-r $oldindex) {
 	if(compare($oldindex, $newindex) != 0) {
@@ -390,77 +425,26 @@ sub updateIndex {
 	unlink $oldindex;
 	rename($newindex, $oldindex);
     }
-    
+
     1;
 }
 
 sub updateRdIndex {
-    my ($oldindex, $Rdfiles, $dataset, $log) = @_;
+    my ($oldindex, $Rdfiles, $log) = @_;
 
     my $newindex = ".Rbuildindex.$$";
 
-    my $Rcmd = "library(tools)\n";
-    $Rcmd .= "Rdindex(\"${Rdfiles}\", \"${newindex}\"";
-    $Rcmd .= ", type = \"data\"" if($dataset);
-    $Rcmd .= ")";
+    my $Rcmd = "Rdindex(\"${Rdfiles}\", \"${newindex}\")\n";
 
     ## <FIXME>
     ## What if this fails?
-    R_runR($Rcmd, "--vanilla --quiet");
+    R_runR($Rcmd, "--vanilla --quiet", "R_DEFAULT_PACKAGES=tools");
     ## </FIXME>
 
     updateIndex($oldindex, $newindex, $log);
     1;
 }
 
-sub updateVignetteIndex {
-    my ($oldindex, $dir, $log) = @_;
-    
-    my $newindex = ".Rbuildindex.$$";
-    
-    buildVignetteIndex($dir, $newindex);
-    updateIndex($oldindex, $newindex, $log);
-    
-    1;
-}
-
-sub buildVignetteIndex {
-    my ($dir, $newindex) = @_;
-
-    my $delimcurly = new Text::DelimMatch("\\{", "\\}");
-    $delimcurly->escape("\\");
-    my @entries = ();
-    my @vignette_files = &list_files_with_type($dir, "vignette");
-
-    foreach my $file (@vignette_files) {
-        open(FILE, "< $file")
-            or die("Error: cannot open '$file' for reading");
-        my @text = <FILE>;
-        @text = split(/\n\s*\%+\s*\\VignetteIndexEntry\{/,
-                      "\n" . join("\n", @text));
-	$file =~ s/\.[[:alpha:]]+$//;
-	$file = basename($file);
-        if($#text >= 1) {
-            $delimcurly->match("\{" . $text[1]);
-            push(@entries,
-                 "$file.pdf: " . substr($delimcurly->matched, 1, -1));
-        }
-	else {
-	    push(@entries, "$file.pdf:");
-	}
-        close(FILE);
-    }
-
-    open(NEWINDEX, "> $newindex")
-        or die("Error: cannot open '$newindex' for writing");
-    foreach my $entry (@entries) {
-        print NEWINDEX wrap("", "    ", $entry), "\n";
-    }
-    close(NEWINDEX);
-
-    1;
-
-}
 
 
 sub usage {
@@ -474,7 +458,7 @@ Options:
   -h, --help		print short help message and exit
   -v, --version		print version info and exit
 
-  --force               force overwriting of (index) files
+  --force               force overwriting of INDEX file
   --no-vignettes        do not rebuild package vignettes
 
   --binary              build pre-compiled binary packages, with options:

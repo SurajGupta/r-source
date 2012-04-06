@@ -16,7 +16,7 @@ capabilities(what = NULL)
   A named logical vector. Current components are
     \item{jpeg}{Is the \code{\link{jpeg}} function operational?}
     \item{png}{Is the \code{\link{png}} function operational?}
-    \item{tcltk}{Is the \code{tcltk} package operational?}
+    \item{tcltk}{Is the \pkg{tcltk} package operational?}
     \item{X11}{(Unix)  Are \code{X11} and the data editor available?}
     \item{GNOME}{(Unix)  Is the GNOME GUI in use and are \code{GTK} and
       \code{GNOME} graphics devices available?}
@@ -30,9 +30,9 @@ capabilities(what = NULL)
       the \R event loop?}
     \item{cledit}{Is command-line editing available in the current \R
       session?  This is false in non-interactive sessions.
-#ifdef Unix
+#ifdef unix
       It will be true if \code{readline} supported has been compiled in
-      and \code{--no-readline} was \emph{not} invoked.
+      and \option{--no-readline} was \emph{not} invoked.
 #endif
       }
     \item{IEEE754}{Does this platform have IEEE 754 arithmetic?  Note
@@ -52,6 +52,6 @@ capabilities()
 if(!capabilities("http/ftp"))
    warning("internal download.file() is not available")
 
-## See also the examples for `connections'.
+## See also the examples for 'connections'.
 }
 \keyword{utilities}

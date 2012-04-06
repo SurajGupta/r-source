@@ -4,6 +4,10 @@
 .Tcl <- function(...)
     structure(.External("dotTcl", ..., PACKAGE = "tcltk"),
               class="tclObj")
+.Tcl.objv <- function(objv)
+    structure(.External("dotTclObjv", objv, PACKAGE = "tcltk"),
+              class="tclObj")
+
 .Tcl.callback <- function(...)
     .External("dotTclcallback", ..., PACKAGE = "tcltk")
 
@@ -41,7 +45,7 @@
     val2string <- function(x) {
         if (is.null(x)) return("")
         if (is.tkwin(x)){current.win <<- x ; return (.Tk.ID(x))}
-	if (inherits(x,"tclVar")) return(ls(x$env))
+	if (inherits(x,"tclVar")) return(ls(unclass(x)$env))
         if (isCallback(x)){
 	    # Jump through some hoops to protect from GC...
 	    e <- parent.frame()
@@ -84,6 +88,65 @@
     val <- sapply(val, val2string)
     paste(as.vector(rbind(nm, val)), collapse=" ")
 }
+
+.Tcl.args.objv <- function(...) {
+    isCallback <- function(x)
+	is.function(x) || is.call(x) || is.expression(x)
+
+    makeAtomicCallback <- function(x, e) {
+	if (is.name(x))
+	    x <- eval(x, e)
+	if (is.call(x)){
+	    if(identical(x[[1]], as.name("break")))
+		return("break")
+	    if(identical(x[[1]], as.name("function")))
+                x <- eval(x, e)
+        }
+	.Tcl.callback(x, e)
+    }
+
+    makeCallback <- function(x, e) {
+	if (is.expression(x))
+	    paste(lapply(x,makeAtomicCallback, e),collapse=";")
+	else
+	    makeAtomicCallback(x, e)
+    }
+
+    ## Convert arguments. Callbacks and windows require special treatment
+    ## everything else is converted to strings
+    val2obj <- function(x) {
+        if (is.null(x)) return(NULL)
+        if (is.tkwin(x)){current.win <<- x ; return(as.tclObj(.Tk.ID(x)))}
+	if (inherits(x,"tclVar")) return(as.tclObj(ls(unclass(x)$env)))
+        if (isCallback(x)){
+	    # Jump through some hoops to protect from GC...
+	    e <- parent.frame()
+	    ref <- local({value<-x; envir<-e; environment()})
+            callback <- makeCallback(get("value",envir=ref),
+		                     get("envir",envir=ref))
+            assign(callback, ref, envir=current.win$env)
+            return(as.tclObj(callback, drop=TRUE))
+        }
+        as.tclObj(x, drop=TRUE)
+    }
+
+    val <- list(...)
+
+    ## This is a bit dodgy: we need to ensure that callbacks don't get
+    ## garbage collected, so we try registering them with the relevant
+    ## window, which is assumed to be the last preceding window
+    ## argument during val2string processing if one occurs, or the
+    ## "win" variable of the caller (tkwidget calls) or as a last
+    ## resort .TkRoot. What a mess!
+
+    current.win <-
+        if (exists("win", envir=parent.frame()))
+            get("win", envir=parent.frame())
+        else .TkRoot
+
+    lapply(val, val2obj)
+}
+
 
 .Tk.ID <- function(win) win$ID
 
@@ -161,7 +224,7 @@ print.tclObj <- function(x,...) {
 }
 
 "tclvalue<-.tclVar" <- function(x, value) {
-    name <- ls(x$env)
+    name <- ls(unclass(x)$env)
     tkcmd("set", name, value)
     x
 }
@@ -174,7 +237,7 @@ tclvalue.default <- function(x) tclvalue(tkcmd("set", as.character(x)))
     x
 }
 
-as.character.tclVar <- function(x) ls(x$env)
+as.character.tclVar <- function(x) ls(unclass(x)$env)
 
 as.character.tclObj <- function(x) .External("RTcl_ObjAsCharVector",
                                              x, PACKAGE="tcltk")
@@ -182,19 +245,25 @@ as.double.tclObj <- function(x, ...) .External("RTcl_ObjAsDoubleVector",
                                              x, PACKAGE="tcltk")
 as.integer.tclObj <- function(x, ...) .External("RTcl_ObjAsIntVector",
                                              x, PACKAGE="tcltk")
+as.logical.tclObj <- function(x, ...)
+    as.logical(.External("RTcl_ObjAsIntVector",
+                         x, PACKAGE="tcltk"))
 
 is.tclObj <- function(x) inherits(x, "tclObj")
 
-as.tclObj <- function(x) {
+as.tclObj <- function(x, drop=FALSE) {
     if (is.tclObj(x)) return(x)
-    z <- switch (storage.mode(x),
-                 character =
-                 .External("RTcl_ObjFromCharVector", x, PACKAGE="tcltk"),
-                 double =
-                 .External("RTcl_ObjFromDoubleVector", x, PACKAGE="tcltk"),
-                 integer =
-                 .External("RTcl_ObjFromIntVector", x, PACKAGE="tcltk"),
-                 stop(paste("Cannot handle object of mode ", storage.mode(x))))
+    z <- switch(storage.mode(x),
+                character =
+                .External("RTcl_ObjFromCharVector", x, drop, PACKAGE="tcltk"),
+                double =
+                .External("RTcl_ObjFromDoubleVector", x,drop,PACKAGE="tcltk"),
+                integer =
+                .External("RTcl_ObjFromIntVector", x, drop, PACKAGE="tcltk"),
+                logical =
+                .External("RTcl_ObjFromIntVector", as.integer(x), drop,
+                          PACKAGE="tcltk"),
+                stop(paste("Cannot handle object of mode ", storage.mode(x))))
     class(z) <- "tclObj"
     z
 }
@@ -213,7 +282,7 @@ evalq(TclVarCount <- 0, .TkRoot$env)
 tkwidget <- function (parent, type, ...) # generic
 {
     win <- .Tk.subwin(parent)
-    .Tcl(paste(type, .Tk.ID(win), .Tcl.args(...)))
+    tkcmd(type, .Tk.ID(win), ...)
     win
 }
 
@@ -245,8 +314,7 @@ tktoplevel    <- function(parent=.TkRoot,...) {
 }
 ### ------ Window & Geometry managers, widget commands &c ------
 
-
-tkcmd <- function(...) .Tcl(.Tcl.args(...)) # generic "catchall"
+tkcmd <- function(...) .Tcl.objv(.Tcl.args.objv(...))
 
 
 tktitle <- function(x) tkcmd("wm", "title", x)
@@ -288,6 +356,11 @@ tkgrab.current <- function(...) tkcmd("grab", "current", ...)
 tkgrab.release <- function(...) tkcmd("grab", "release", ...)
 tkgrab.set     <- function(...) tkcmd("grab", "set", ...)
 tkgrab.status  <- function(...) tkcmd("grab", "status", ...)
+
+tkimage.cget     <- function(...) tkcmd("image","cget",...)
+tkimage.configure<- function(...) tkcmd("image","configure",...)
+tkimage.create   <- function(...) tkcmd("image","create",...)
+tkimage.names    <- function(...) tkcmd("image","names",...)
 
 ## NB: some widgets also have a selection.clear command, hence the "X".
 ## tkselection.clear might be made a generic function instead.
@@ -416,10 +489,6 @@ tkget           <- function(widget, ...) tkcmd(widget, "get", ...)
 tkgettags       <- function(widget, ...) tkcmd(widget, "gettags", ...)
 tkicursor       <- function(widget, ...) tkcmd(widget, "icursor", ...)
 tkidentify      <- function(widget, ...) tkcmd(widget, "identify", ...)
-tkimage.cget     <- function(widget, ...) tkcmd(widget,"image","cget",...)
-tkimage.configure<- function(widget, ...) tkcmd(widget,"image","configure",...)
-tkimage.create   <- function(widget, ...) tkcmd(widget,"image","create",...)
-tkimage.names    <- function(widget, ...) tkcmd(widget,"image","names",...)
 tkindex         <- function(widget, ...) tkcmd(widget, "index", ...)
 tkinsert        <- function(widget, ...) tkcmd(widget, "insert", ...)
 tkinvoke        <- function(widget, ...) tkcmd(widget, "invoke", ...)

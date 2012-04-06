@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2001  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998-2003  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,9 +49,10 @@ SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
     GEDevDesc* dd;
     char *display, *vmax;
     double height, width, ps, xpinch, ypinch, gamma;
-    int recording = 0, resize = 1, canvas;
+    int recording = 0, resize = 1, canvas, xpos, ypos, buffered;
     SEXP sc;
 
+    checkArity(op, args);
     gcall = call;
     vmax = vmaxget();
     display = SaveString(CAR(args), 0);
@@ -82,6 +83,14 @@ SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
     canvas = RGBpar(sc, 0);
     args = CDR(args);
     gamma = asReal(CAR(args));
+    args = CDR(args);
+    xpos = asInteger(CAR(args));
+    args = CDR(args);
+    ypos = asInteger(CAR(args));
+    args = CDR(args);
+    buffered = asLogical(CAR(args));
+    if (buffered == NA_LOGICAL)
+	errorcall(call, "invalid value of `buffered'");
     
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
@@ -96,7 +105,8 @@ SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
 	dev->savedSnapshot = R_NilValue;
 	GAsetunits(xpinch, ypinch);
 	if (!GADeviceDriver(dev, display, width, height, ps, 
-			    (Rboolean)recording, resize, canvas, gamma)) {
+			    (Rboolean)recording, resize, canvas, gamma,
+			    xpos, ypos, (Rboolean)buffered)) {
 	    free(dev);
 	    errorcall(call, "unable to start device devga");
 	}

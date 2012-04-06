@@ -6,7 +6,8 @@
   Evaluate an \R expression in an environment constructed from data.
 }
 \usage{
-\method{with}{default}(data, expr, \dots)
+with(data, expr, \dots)
+%\method{with}{default}(data, expr, \dots)
 }
 \arguments{
   \item{data}{data to use for constructing an environment. For the
@@ -20,9 +21,12 @@
   local environment constructed from \code{data}.  The environment has
   the caller's environment as its parent.  This is useful for
   simplifying calls to modeling functions.
+
+  Note that assignments within \code{expr} take place in the constructed
+  environment and not in the user's workspace.
 }
 \seealso{
-  \code{\link{evalq}}.
+  \code{\link{evalq}}, \code{\link{attach}}.
 }
 \examples{
 #examples from glm:

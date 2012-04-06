@@ -37,6 +37,9 @@
 # include <locale.h>
 #endif
 
+#ifdef HAVE_AQUA
+extern void InitAquaIO(void);
+#endif
 
 /* The `real' main() program is in ../<SYSTEM>/system.c */
 /* e.g. ../unix/system.c */
@@ -57,6 +60,8 @@ void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean
 
 static int ParseBrowser(SEXP, SEXP);
 
+static void onpipe(int);
+
 extern void InitDynload();
 
 
@@ -64,7 +69,8 @@ extern void InitDynload();
 
 static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 {
-    int status, count=0;
+    ParseStatus status;
+    int count=0;
 
     for(;;) {
 	R_PPStackTop = savestack;
@@ -90,6 +96,9 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 	    break;
 	case PARSE_EOF:
 	    return;
+	    break;
+	case PARSE_INCOMPLETE:
+	    /* can't happen: just here to quieten -Wall */
 	    break;
 	}
     }
@@ -150,7 +159,7 @@ char *R_PromptString(int browselevel, int type)
   and so put it into one of the public R header files.
  */
 typedef struct {
-  int            status;
+  ParseStatus    status;
   int            prompt_type;
   int            browselevel;
   unsigned char  buf[1025];
@@ -190,7 +199,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 #ifdef SHELL_ESCAPE
     if (*state->bufp == '!') {
 #ifdef HAVE_SYSTEM
-	    system(&(state->buf[1]));
+	    R_system(&(state->buf[1]));
 #else
 	    Rprintf("error: system commands are not supported in this version of R.\n");
 #endif /* HAVE_SYSTEM */
@@ -276,7 +285,7 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
     R_IoBufferWriteReset(&R_ConsoleIob);
     state.buf[0] = '\0';
-    state.buf[1025] = '\0'; /* stopgap measure if line > 1024 chars */
+    state.buf[1024] = '\0'; /* stopgap measure if line > 1024 chars */
     state.bufp = state.buf;
     if(R_Verbose)
 	REprintf(" >R_ReplConsole(): before \"for(;;)\" {main.c}\n");
@@ -303,7 +312,8 @@ void R_ReplDLLinit()
 
 int R_ReplDLLdo1()
 {
-    int c, status;
+    int c;
+    ParseStatus status;
     SEXP rho = R_GlobalEnv;
 
     if(!*DLLbufp) {
@@ -368,22 +378,22 @@ FILE* R_OpenSysInitFile(void);
 FILE* R_OpenSiteFile(void);
 FILE* R_OpenInitFile(void);
 
-#ifdef OLD
-static void R_LoadProfile(FILE *fp)
-#else
+static void handleInterrupt(int dummy)
+{
+    R_interrupts_pending = 1;
+    signal(SIGINT, handleInterrupt);
+}
+
 static void R_LoadProfile(FILE *fparg, SEXP env)
-#endif
 {
     FILE * volatile fp = fparg; /* is this needed? */
     if (fp != NULL) {
 	if (! SETJMP(R_Toplevel.cjmpbuf)) {
 	    R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-	    signal(SIGINT, onintr);
-#ifdef OLD
-	    R_ReplFile(fp, R_NilValue, 0, 0);
-#else
-	    R_ReplFile(fp, env, 0, 0);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+	    signal(SIGINT, handleInterrupt);
 #endif
+	    R_ReplFile(fp, env, 0, 0);
 	}
 	fclose(fp);
     }
@@ -399,7 +409,6 @@ void setup_Rmainloop(void)
     volatile SEXP baseEnv;
     SEXP cmd;
     FILE *fp;
-    char *p = getenv("R_NO_UNDERLINE");
 
     InitConnections(); /* needed to get any output at all */
 
@@ -426,7 +435,7 @@ void setup_Rmainloop(void)
     /* setlocale(LC_MESSAGES,""); */
 #endif
 #endif
-#if defined(Unix) || defined(Win32) || defined(Macintosh)
+#if defined(Unix) || defined(Win32)
     InitTempDir(); /* must be before InitEd */
 #endif
     InitMemory();
@@ -439,7 +448,10 @@ void setup_Rmainloop(void)
     InitColors();
     InitGraphics();
     R_Is_Running = 1;
-
+#ifdef HAVE_AQUA 
+     if (strcmp(R_GUIType, "AQUA") == 0) 
+       InitAquaIO(); /* must be after InitTempDir() */
+#endif
     /* gc_inhibit_torture = 0; */
 
     /* Initialize the global context for error handling. */
@@ -455,19 +467,24 @@ void setup_Rmainloop(void)
     R_Toplevel.cloenv = R_NilValue;
     R_Toplevel.sysparent = R_NilValue;
     R_Toplevel.conexit = R_NilValue;
+    R_Toplevel.vmax = NULL;
+#ifdef BYTECODE
+    R_Toplevel.nodestack = R_BCNodeStackTop;
+# ifdef BC_INT_STACK
+    R_Toplevel.intstack = R_BCIntStackTop;
+# endif
+#endif
     R_Toplevel.cend = NULL;
+    R_Toplevel.intsusp = FALSE;
+#ifdef NEW_CONDITION_HANDLING
+    R_Toplevel.handlerstack = R_HandlerStack;
+    R_Toplevel.restartstack = R_RestartStack;
+#endif
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
     R_Warnings = R_NilValue;
 
-#ifdef EXPERIMENTAL_NAMESPACES
     baseEnv = R_BaseNamespace;
-#else
-    baseEnv = R_NilValue;
-#endif
-
-    /* Temporary flag to disable _ for a session */
-    if(p && strlen(p)) R_no_underline = TRUE;
 
     /* Set up some global variables */
     Init_R_Variables(baseEnv);
@@ -486,9 +503,12 @@ void setup_Rmainloop(void)
     doneit = 0;
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-    signal(SIGINT, onintr);
+    signal(SIGINT, handleInterrupt);
     signal(SIGUSR1,onsigusr1);
     signal(SIGUSR2,onsigusr2);
+#ifdef Unix
+    signal(SIGPIPE, onpipe);
+#endif
     if (!doneit) {
 	doneit = 1;
 	R_ReplFile(fp, baseEnv, 0, 0);
@@ -506,10 +526,9 @@ void setup_Rmainloop(void)
     if (strcmp(R_GUIType, "Tk") == 0) {
 	char buf[256];
 
-	sprintf(buf, "%s/library/tcltk/exec/Tk-frontend.R", R_Home);
+	snprintf(buf, 256, "%s/library/tcltk/exec/Tk-frontend.R", R_Home);
 	R_LoadProfile(R_fopen(buf, "r"), R_GlobalEnv);
     }
-
 
     /* Print a platform and version dependent */
     /* greeting and a pointer to the copyleft. */
@@ -530,9 +549,14 @@ void setup_Rmainloop(void)
     doneit = 0;
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-    signal(SIGINT, onintr);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+    signal(SIGINT, handleInterrupt);
     signal(SIGUSR1,onsigusr1);
     signal(SIGUSR2,onsigusr2);
+#ifdef Unix
+    signal(SIGPIPE, onpipe);
+#endif
+#endif
     if (!doneit) {
 	doneit = 1;
 	R_InitialData();
@@ -547,7 +571,9 @@ void setup_Rmainloop(void)
     doneit = 0;
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-    signal(SIGINT, onintr);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+    signal(SIGINT, handleInterrupt);
+#endif
     if (!doneit) {
 	doneit = 1;
 	PROTECT(cmd = install(".First"));
@@ -566,7 +592,9 @@ void setup_Rmainloop(void)
     doneit = 0;
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-    signal(SIGINT, onintr);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+    signal(SIGINT, handleInterrupt);
+#endif
     if (!doneit) {
 	doneit = 1;
 	PROTECT(cmd = install(".First.sys"));
@@ -592,10 +620,8 @@ void end_Rmainloop(void)
 
 static void onpipe(int dummy)
 {
-#ifndef __MRC__
     /* do nothing */
     signal(SIGPIPE, onpipe);
-#endif
 }
 
 void run_Rmainloop(void)
@@ -606,11 +632,13 @@ void run_Rmainloop(void)
     R_IoBufferInit(&R_ConsoleIob);
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-    signal(SIGINT, onintr);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+    signal(SIGINT, handleInterrupt);
     signal(SIGUSR1,onsigusr1);
     signal(SIGUSR2,onsigusr2);
 #ifdef Unix
     signal(SIGPIPE, onpipe);
+#endif
 #endif
     R_ReplConsole(R_GlobalEnv, 0, 0);
     end_Rmainloop(); /* must go here */
@@ -664,16 +692,17 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 
 	    /* Run onexit/cend code for everything above the target.
                The browser context is still on the stack, so any error
-               will drop us back to the current browser.  */
+               will drop us back to the current browser.  Not clear
+               this is a good thing.  Also not clear this should still
+               be here now that jump_to_toplevel is used for the
+               jump. */
 	    R_run_onexits(R_ToplevelContext);
 
 	    /* this is really dynamic state that should be managed as such */
 	    R_BrowseLevel = 0;
 	    SET_DEBUG(rho,0); /*PR#1721*/
 
-	    R_restore_globals(R_ToplevelContext);
-	    R_GlobalContext = R_ToplevelContext;
-            LONGJMP(R_ToplevelContext->cjmpbuf, CTXT_TOPLEVEL);
+	    jump_to_toplevel();
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"where")) {
 	    printwhere();
@@ -739,9 +768,13 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    R_Visible = 0;
 	}
 	R_GlobalContext = &thiscontext;
-	signal(SIGINT, onintr);
+#ifdef NEW_CONDITION_HANDLING
+	R_InsertRestartHandlers(&thiscontext, TRUE);
+#endif
 	R_BrowseLevel = savebrowselevel;
-    signal(SIGINT, onintr);
+#ifdef REINSTALL_SIGNAL_HANDLERS
+	signal(SIGINT, handleInterrupt);
+#endif
 	R_ReplConsole(rho, savestack, R_BrowseLevel);
 	endcontext(&thiscontext);
     }
@@ -832,7 +865,8 @@ static R_ToplevelCallbackEl *Rf_ToplevelTaskHandlers = NULL;
   position).
  */
 R_ToplevelCallbackEl *
-Rf_addTaskCallback(R_ToplevelCallback cb, void *data, void (*finalizer)(void *), const char *name, int *pos)
+Rf_addTaskCallback(R_ToplevelCallback cb, void *data, 
+		   void (*finalizer)(void *), const char *name, int *pos)
 {
     int which;
     R_ToplevelCallbackEl *el;
@@ -959,20 +993,20 @@ Rf_removeTaskCallbackByIndex(int id)
 SEXP
 R_removeTaskCallback(SEXP which)
 {
-   int id;
-   Rboolean val;
-   SEXP status;
+    int id;
+    Rboolean val;
+    SEXP status;
 
-   if(TYPEOF(which) == STRSXP) {
-       val = Rf_removeTaskCallbackByName(CHAR(STRING_ELT(which, 0)));
-   } else {
-       id = asInteger(which) - 1;
-       val = Rf_removeTaskCallbackByIndex(id);
-   }
-   status = allocVector(LGLSXP, 1);
-   LOGICAL(status)[0] = val;
+    if(TYPEOF(which) == STRSXP) {
+	val = Rf_removeTaskCallbackByName(CHAR(STRING_ELT(which, 0)));
+    } else {
+	id = asInteger(which) - 1;
+	val = Rf_removeTaskCallbackByIndex(id);
+    }
+    status = allocVector(LGLSXP, 1);
+    LOGICAL(status)[0] = val;
 
-   return(status);
+    return(status);
 }
 
 SEXP
@@ -1015,7 +1049,8 @@ R_getTaskCallbackNames()
 static Rboolean Rf_RunningToplevelHandlers = FALSE;
 
 void
-Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean visible)
+Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, 
+			Rboolean visible)
 {
     R_ToplevelCallbackEl *h, *prev = NULL;
     Rboolean again;
@@ -1028,7 +1063,8 @@ Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean visi
     while(h) {
 	again = (h->cb)(expr, value, succeeded, visible, h->data);
 	if(R_CollectWarnings) {
-	    REprintf("warning messages from top-level task callback `%s'\n", h->name);
+	    REprintf("warning messages from top-level task callback `%s'\n", 
+		     h->name);
 	    PrintWarnings();
 	}
         if(again) {
@@ -1054,7 +1090,7 @@ Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean visi
 
 Rboolean
 R_taskCallbackRoutine(SEXP expr, SEXP value, Rboolean succeeded,
-                          Rboolean visible, void *userData)
+		      Rboolean visible, void *userData)
 {
     SEXP f = (SEXP) userData;
     SEXP e, tmp, val, cur;
@@ -1108,16 +1144,17 @@ R_addTaskCallback(SEXP f, SEXP data, SEXP useData, SEXP name)
 
     internalData = allocVector(VECSXP, 3);
     R_PreserveObject(internalData);
-       SET_VECTOR_ELT(internalData, 0, f);
-       SET_VECTOR_ELT(internalData, 1, data);
-       SET_VECTOR_ELT(internalData, 2, useData);
+    SET_VECTOR_ELT(internalData, 0, f);
+    SET_VECTOR_ELT(internalData, 1, data);
+    SET_VECTOR_ELT(internalData, 2, useData);
 
     if(length(name))
 	tmpName = CHAR(STRING_ELT(name, 0));
 
     PROTECT(index = allocVector(INTSXP, 1));
     el = Rf_addTaskCallback(R_taskCallbackRoutine,  internalData,
-                             (void (*)(void*)) R_ReleaseObject, tmpName, INTEGER(index));
+			    (void (*)(void*)) R_ReleaseObject, tmpName, 
+			    INTEGER(index));
 
     if(length(name) == 0) {
 	PROTECT(name = allocVector(STRSXP, 1));

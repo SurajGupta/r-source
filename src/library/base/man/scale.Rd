@@ -9,10 +9,6 @@
 \usage{
 scale(x, center = TRUE, scale = TRUE)
 }
-\synopsis{
-scale.default(x, center = TRUE, scale = TRUE)
-scale(x, center = TRUE, scale = TRUE)
-}
 \arguments{
   \item{x}{a numeric matrix(like object).}
   \item{center}{either a logical value or a numeric vector of length
@@ -57,6 +53,8 @@ scale(x, center = TRUE, scale = TRUE)
 \seealso{
   \code{\link{sweep}} which allows centering (and scaling) with
   arbitrary statistics.
+
+  For working with the scale of a plot, see \code{\link{par}}.
 }
 \examples{
 x <- matrix(1:10, nc=2)

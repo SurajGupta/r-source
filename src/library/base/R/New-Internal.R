@@ -2,20 +2,22 @@
 
 geterrmessage <- function() .Internal(geterrmessage())
 
-try <- function(expr, silent = FALSE, first = TRUE)
+try <- function(expr, silent = FALSE)
 {
-    restart <- function(on = TRUE).Internal(restart(on))
-    restart(first)
-    if(is.logical(first) && first) {
-        if(silent) {
+    if (! exists("first", inherits = FALSE)) {
+        first <- FALSE
+        # turn on the restart bit of the current context, push an
+        # error handler on the condition handler stack, and push
+        # a tryRestart restart on the restart stack
+        .Internal(.addTryHandlers())
+        if (silent) {
             op <- options("show.error.messages")
             on.exit(options(op))
             options(show.error.messages = FALSE)
         }
-        first <- FALSE
         expr
-    } else
-       invisible(structure(.Internal(geterrmessage()), class="try-error"))
+    }
+    else invisible(structure(.Internal(geterrmessage()), class = "try-error"))
 }
 
 
@@ -67,21 +69,23 @@ rbind <- function(..., deparse.level=1) {
 }
 
 dataentry <- function (data, modes) {
-    if(!is.list(data) || !length(data) || !all(md <- sapply(data, is.vector)))
+    if(!is.list(data) || !length(data) || !all(sapply(data, is.vector)))
         stop("invalid data argument")
     if(!is.list(modes) ||
-       (length(modes) && !all(mm <- sapply(modes, is.character))))
+       (length(modes) && !all(sapply(modes, is.character))))
         stop("invalid modes argument")
     .Internal(dataentry(data, modes))
 }
 
 deparse <-
-    function(expr, width.cutoff = 60).Internal(deparse(expr, width.cutoff))
+    function(expr, width.cutoff = 60,
+	     backtick = mode(expr) %in% c("call","expression","("))
+	.Internal(deparse(expr, width.cutoff, backtick))
 
 
 do.call <- function(what,args).Internal(do.call(what,args))
 drop <- function(x).Internal(drop(x))
-format.info <- function(x).Internal(format.info(x))
+format.info <- function(x, nsmall=0).Internal(format.info(x, nsmall))
 gc <- function(verbose = getOption("verbose"))
 {
     res <-.Internal(gc(verbose))/c(1, 1, 10, 10, 1, 1, rep(10,4))
@@ -115,25 +119,7 @@ nchar <- function(x).Internal(nchar(x))
 plot.window <- function(xlim, ylim, log = "", asp = NA, ...)
     .Internal(plot.window(xlim, ylim, log, asp, ...))
 polyroot <- function(z).Internal(polyroot(z))
-rank <- function(x, na.last = TRUE) {
-    nas <- is.na(x)
-    y <- .Internal(rank(x[!nas]))
-    if(!is.na(na.last) && any(nas)) {
-        x <- numeric(length(x))
-        if(na.last) {
-            ## NOTE that the internal code gets NAs reversed
-            x[!nas] <- y
-            x[nas] <- (length(y) + 1:1):length(x)
-        }
-        else {
-            len <- sum(nas)
-            x[!nas] <- y + len
-            x[nas] <- 1 : len
-        }
-        y <- x
-    }
-    y
-}
+
 readline <- function(prompt="").Internal(readline(prompt))
 search <- function().Internal(search())
 searchpaths <- function()

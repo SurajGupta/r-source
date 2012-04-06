@@ -15,22 +15,12 @@
   Fit a projection pursuit regression model.
 }
 \usage{
-ppr(formula, data = sys.parent(), weights,
-    subset, na.action, contrasts = NULL,
-    ww = rep(1,q), nterms, max.terms = nterms, optlevel = 2,
-    sm.method = c("supsmu", "spline", "gcvspline"),
-    bass = 0, span = 0, df = 5, gcvpen = 1)
-
-ppr(x, y, weights = rep(1,n),
-    ww = rep(1,q), nterms, max.terms = nterms, optlevel = 2,
-    sm.method = c("supsmu", "spline", "gcvspline"),
-    bass = 0, span = 0, df = 5, gcvpen = 1)
-}
-\synopsis{
 ppr(x, \dots)
-ppr.formula(formula, data = sys.parent(), weights, subset, na.action, 
-    contrasts = NULL, \dots) 
-ppr.default(x, y, weights = rep(1,n),
+
+\method{ppr}{formula}(formula, data = sys.parent(), weights,
+    subset, na.action, contrasts = NULL, \dots)
+
+\method{ppr}{default}(x, y, weights = rep(1,n),
     ww = rep(1,q), nterms, max.terms = nterms, optlevel = 2,
     sm.method = c("supsmu", "spline", "gcvspline"),
     bass = 0, span = 0, df = 5, gcvpen = 1, \dots)
@@ -65,10 +55,8 @@ ppr.default(x, y, weights = rep(1,n),
   }
   \item{na.action}{
     a function to specify the action to be taken if \code{\link{NA}}s are
-    found. The default action is for the procedure to fail.  An
-    alternative is \code{\link{na.omit}}, which leads to rejection of cases
-    with missing values on any required variable.  (NOTE: If given, this
-    argument must be named.)
+    found. The default action is given by \code{getOption("na.action")}.
+    (NOTE: If given, this argument must be named.)
   }
   \item{contrasts}{
     the contrasts to be used when any factor explanatory variables are coded.
@@ -105,6 +93,7 @@ ppr.default(x, y, weights = rep(1,n),
     if \code{sm.method} is \code{"gcvspline"} this is the penalty used
     in the GCV selection for each degree of freedom used.
   }
+  \item{\dots}{arguments to be passed to or from other methods.}
 }
 \value{
 A list with the following components, many of which are for use by the
@@ -144,8 +133,9 @@ method functions.
 
   The algorithm first adds up to \code{max.terms} ridge terms one at a
   time; it will use less if it is unable to find a term to add that makes
-  sufficient difference.  It then removes the least ``\emph{important}''
-  term at each step until \code{nterm} terms are left.
+  sufficient difference.  It then removes the least
+  \dQuote{\emph{important}} term at each step until \code{nterm} terms
+  are left.
 
   The levels of optimization (argument \code{optlevel})
   differ in how thoroughly the models are refitted during this process.
@@ -210,7 +200,7 @@ plot(rock.ppr, main="ppr(log(perm)~ ., nterms=2, max.terms=5)")
 plot(update(rock.ppr, bass=5), main = "update(..., bass = 5)")
 plot(update(rock.ppr, sm.method="gcv", gcvpen=2),
      main = "update(..., sm.method=\"gcv\", gcvpen=2)")
-\testonly{predict(rock.ppr, rock)}
+cbind(perm=rock$perm, prediction=round(exp(predict(rock.ppr)), 1))
 detach()
 }
 \keyword{regression}

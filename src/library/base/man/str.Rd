@@ -2,8 +2,10 @@
 \title{Compactly Display the Structure of an Arbitrary R Object}
 \usage{
 str(object, \dots)
-str.data.frame(object, \dots)
-str.default(object, max.level = 0, vec.len = 4, digits.d = 3,
+
+\method{str}{data.frame}(object, \dots)
+
+\method{str}{default}(object, max.level = 0, vec.len = 4, digits.d = 3,
     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
     wid = getOption("width"), nest.lev = 0,
     indent.str = paste(rep(" ", max(0, nest.lev + 1)), collapse = ".."),
@@ -20,14 +22,14 @@ lsf.str(pos = 1, \dots, envir = as.environment(pos))
 \alias{lsf.str}
 \description{
   Compactly display the internal \bold{str}ucture of an \R object, a
-  ``diagnostic'' function and an alternative to \code{\link{summary}}
+  \dQuote{diagnostic} function and an alternative to \code{\link{summary}}
   (and to some extent, \code{\link{dput}}).  Ideally, only one line for
-  each ``basic'' structure is displayed.  It is especially well suited
+  each \dQuote{basic} structure is displayed.  It is especially well suited
   to compactly display the (abbreviated) contents of (possibly nested)
   lists.  The idea is to give reasonable output for \bold{any} \R
   object.  It calls \code{\link{args}} for (non-primitive) function objects.
 
-  \code{\link{ls.str}} and \code{\link{lsf.str}} are useful ``versions''
+  \code{\link{ls.str}} and \code{\link{lsf.str}} are useful \dQuote{versions}
   of \code{\link{ls}}, calling \code{str} on each object.  They are not
   foolproof and should rather not be used for programming, but are
   provided for their usefulness.
@@ -38,7 +40,7 @@ lsf.str(pos = 1, \dots, envir = as.environment(pos))
   \item{max.level}{maximal level of nesting which is applied for
     displaying nested structures, e.g., a list containing sub lists.
     Default 0: Display all nesting levels.}
-  \item{vec.len}{numeric (>= 0) indicating how many ``first few'' elements
+  \item{vec.len}{numeric (>= 0) indicating how many \dQuote{first few} elements
     are displayed of each vector.  The number is multiplied by different
     factors (from .5 to 3) depending on the kind of vector.  Default 4.}
   \item{digits.d}{number of digits for numerical components (as for
@@ -80,7 +82,7 @@ lsf.str(pos = 1, \dots, envir = as.environment(pos))
   \code{\link{summary}}, \code{\link{args}}.
 }
 \examples{
-## The following examples show some of `str' capabilities
+## The following examples show some of 'str' capabilities
 str(1:12)
 str(ls)
 str(args)#- more useful than  args(args) !
@@ -105,7 +107,7 @@ lsf.str()#- how do the functions look like which I am using?
 ls.str(mode = "list")#- what are the structured objects I have defined?
 ## which base functions have "file" in their name ?
 lsf.str(pos = length(search()), pattern = "file")
-\testonly{
+\dontshow{
  ##-- Some "crazy" objects
  str(array(1:5, dim=20))
  str(factor(character(0)))

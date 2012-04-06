@@ -7,7 +7,10 @@
 \alias{predict.princomp}
 \title{Principal Components Analysis}
 \usage{
+princomp(x, \dots)
+
 \method{princomp}{formula}(formula, data = NULL, subset, na.action, \dots)
+
 \method{princomp}{default}(x, cor = FALSE, scores = TRUE, covmat = NULL,
          subset = rep(TRUE, nrow(as.matrix(x))), \dots)
 }
@@ -23,7 +26,7 @@
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset. The ``factory-fresh''
+    \code{\link{na.fail}} if that is unset. The \dQuote{factory-fresh}
     default is \code{\link{na.omit}}.}
   \item{cor}{a logical value indicating whether the calculation should
     use the correlation matrix or the covariance matrix.}
@@ -119,7 +122,8 @@ biplot(pc.cr)
 princomp(~ ., data = USArrests, cor = TRUE)
 # NA-handling
 USArrests[1, 2] <- NA
-pc.cr <- princomp(~ ., data = USArrests, na.action=na.exclude, cor = TRUE)
+pc.cr <- princomp(~ Murder + Assault + UrbanPop,
+                  data = USArrests, na.action=na.exclude, cor = TRUE)
 pc.cr$scores
 }
 \keyword{multivariate}

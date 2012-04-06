@@ -3,8 +3,6 @@
 \alias{ccf}
 \alias{pacf}
 \alias{pacf.default}
-\alias{pacf.ts}
-\alias{pacf.mts}
 \title{Auto- and Cross- Covariance and -Correlation Function Estimation}
 \description{
   The function \code{acf} computes (and by default plots) estimates of
@@ -17,21 +15,26 @@
 acf(x, lag.max = NULL,
     type = c("correlation", "covariance", "partial"),
     plot = TRUE, na.action = na.fail, demean = TRUE, \dots)
-pacf(x, lag.max = NULL, plot = TRUE, na.action = na.fail, \dots)
+
+pacf(x, lag.max, plot, na.action, \dots)
+
+\method{pacf}{default}(x, lag.max = NULL, plot = TRUE, na.action = na.fail, 
+    ...) 
+
 ccf(x, y, lag.max = NULL, type = c("correlation", "covariance"),
     plot = TRUE, na.action = na.fail, \dots)
 }
 \arguments{
-  \item{x, y}{a univariate or multivariate (not \code{ccf}) time
+  \item{x, y}{a univariate or multivariate (not \code{ccf}) numeric time
     series object or a numeric vector or matrix.}
   \item{lag.max}{maximum number of lags at which to calculate the acf.
-    Default is \eqn{10\log_{10}(N)}{10*log10(N)} where \eqn{N} is the
-    number of observations.}
+    Default is \eqn{10\log_{10}(N/m)}{10*log10(N/m)} where \eqn{N} is the
+    number of observations and \eqn{m} the number of series.}
   \item{type}{character string giving the type of acf to be computed.
     Allowed values are
     \code{"correlation"} (the default), \code{"covariance"} or
     \code{"partial"}.}
-  \item{plot}{logical. If \code{TRUE} the acf is plotted.}
+  \item{plot}{logical. If \code{TRUE} (the default) the acf is plotted.}
   \item{na.action}{function to be called to handle missing
     values. \code{na.pass} can be used.}
   \item{demean}{logical.  Should the covariances be about the sample

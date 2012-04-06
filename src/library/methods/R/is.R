@@ -7,7 +7,7 @@ function(object, class2)
     cl <- .class1(object)
     if(missing(class2))
         return(extends(cl))
-    if(identical(cl, class2) || identical(class2, "ANY"))
+    if(.identC(cl, class2) || .identC(class2, "ANY"))
         return(TRUE)
     ext <- possibleExtends(cl, class2)
     if(is.logical(ext))
@@ -21,11 +21,11 @@ function(object, class2)
 extends <-
   ## Does the first class extend the second class?
   ## Returns `maybe' if the extension includes a non-trivial test.
-  function(class1, class2, maybe = TRUE)
+  function(class1, class2, maybe = TRUE, fullInfo = FALSE)
 {
     if(is(class1, "classRepresentation")) {
         classDef1 <- class1
-        class1 <- getClassName(classDef1)
+        class1 <- classDef1@className
     }
     else if(is.character(class1) && length(class1)==1)
         classDef1 <- getClass(class1, TRUE)
@@ -34,22 +34,29 @@ extends <-
     if(missing(class2)) {
         if(is.null(classDef1))
             return(class1)
-        ext <- getExtends(classDef1)
-        if(identical(maybe, TRUE))
-            return(c(class1, names(ext)))
-        else {
+        ext <- classDef1@contains
+        if(!identical(maybe, TRUE))
+        {
             noTest <- sapply(ext, function(obj)identical(obj@test, .simpleExtTest))
-            return(c(class1, names(ext[noTest])))
+            ext <- ext[noTest]
         }
+        if(fullInfo) {
+            elNamed(ext, class1) <- TRUE
+            return(ext)
+        }
+        else
+            return(c(class1,names(ext)))
     }
-    if(identical(class1, class2))
+    if(.identC(class1, class2))
         return(TRUE)
     if(is(class2, "classRepresentation"))
-        class2 <- getClassName(class2)
+        class2 <- class2@className
     else if(!(is.character(class2) && length(class2) == 1))
         stop("class2 must be the name of a class or a class definition")
     value <- possibleExtends(class1, class2)
-    if(is.logical(value))
+    if(fullInfo)
+        value
+    else if(is.logical(value))
         value
     else if(value@simple || identical(value@test, .simpleExtTest))
         TRUE
@@ -70,27 +77,54 @@ setIs <-
   ## more elaborate one.  If the `replace' argument is supplied as an S replacement
   ## function, this function will be used to implement `as(obj, class2) <- value'.
   function(class1, class2, test = NULL, coerce = NULL,
-           replace = NULL, by = character(), where = 1, classDef = getClass(class1, TRUE))
+           replace = NULL, by = character(), where = topenv(parent.frame()),
+           classDef = getClass(class1, TRUE, where = where), extensionObject = NULL, doComplete = TRUE)
 {
-    complete <- missing(classDef) # else, called from setClass
     ## class2 should exist
-    classDef2 <- getClass(class2, TRUE)
-    ## check some requirements
-    .validExtends(class1, class2, classDef,  classDef2, complete && is.null(coerce))
-    
-    obj <- makeExtends(class1, class2, coerce, test, replace, by,
-                       classDef1 = classDef, classDef2 = classDef2)
-    setExtendsMetaData(classDef, classDef2, obj, where = where)
-    subDef <- setSubclassMetaData(classDef2, classDef, where = where)
-    resetClass(class1)
-    ## Usually it would be OK to do:  resetClass(class2)
-    ## However, resetting a basic class can throw us into a loop.
-    classDef2 <- getClassDef(class2, 0)
-    if(!is.null(classDef2)) {
-        elNamed(classDef2@subclasses, class1) <- subDef
-        assignClassDef(class2, classDef2, 0)
+    classDef2 <- getClassDef(class2, where)
+    ## check some requirements:
+    ## One of the classes must be on the target environment (so that the relation can
+    ## be retained by saving the corresponding image)
+    m1 <- classMetaName(class1)
+    local1 <- exists(m1, where, inherits = FALSE) &&
+    !(classDef@sealed || bindingIsLocked(m1, where))
+    m2 <- classMetaName(class2)
+    local2 <- exists(m2, where, inherits = FALSE) &&
+    !(classDef2@sealed || bindingIsLocked(m2, where))
+    if(!(local1 || local2) )
+        stop("Cannot create a setIs relation when neither of the classes (\"",
+             class1,"\" and \"", class2, "\") is local and modifiable in this package")
+    if(classDef@sealed && !isClassUnion(classDef2))
+        stop("Class \"", class1,
+             "\" is sealed; new superclasses can not be defined, except by setClassUnion")
+    if(is.null(extensionObject))
+        obj <- makeExtends(class1, class2, coerce, test, replace, by,
+                           classDef1 = classDef, classDef2 = classDef2,
+                           package = getPackageName(where))
+    else
+        obj <- extensionObject
+    ## revise the superclass/subclass info in the stored class definition
+    .validExtends(class1, class2, classDef,  classDef2, obj@simple)
+    if(!classDef@sealed) {
+        where1 <- findClass(class1, where)[[1]]
+        if(!bindingIsLocked(m1, where1)) {
+            ## the direct contains information 
+            elNamed(classDef@contains, class2) <- obj
+            if(doComplete)
+                classDef@contains <- completeExtends(classDef, class2, obj, where = where)
+            assignClassDef(class1, classDef, where1)
+        }
     }
-    invisible(obj)
+    if(!classDef2@sealed) {
+        where2 <- findClass(class2, where)[[1]]
+        if(!bindingIsLocked(m2, where2)) {
+            elNamed(classDef2@subclasses, class1) <- obj
+            if(doComplete)
+                classDef2@subclasses <- completeSubclasses(classDef2, class1, obj, where)
+            assignClassDef(class2, classDef2, where2)
+        }
+    }
+    invisible(classDef)
 }
 
 .validExtends <- function(class1, class2, classDef1,  classDef2, slotTests) {

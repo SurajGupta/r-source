@@ -1,32 +1,43 @@
 \name{pairs}
 \alias{pairs}
 \alias{pairs.default}
+\alias{pairs.formula}
+
 \title{Scatterplot Matrices}
 \description{
   A matrix of scatterplots is produced.
 }
 \synopsis{
 pairs(x, \dots)
-pairs.default(x, labels = colnames(x), panel = points, \dots,
+pairs.formula(formula, data = NULL, \dots, subset)
+pairs.default(x, labels, panel = points, \dots,
               main = NULL, oma = NULL,
               font.main = par("font.main"), cex.main = par("cex.main"),
               lower.panel = panel, upper.panel = panel,
               diag.panel = NULL, text.panel = textPanel,
               label.pos = 0.5 + has.diag/3,
               cex.labels = NULL, font.labels = 1,
-              row1attop = TRUE, gap=1)
+              row1attop = TRUE, gap = 1)
 }
 \usage{
 pairs(x, \dots)
-pairs.default(x, labels = colnames(x), panel = points, \dots,
-              lower.panel = panel, upper.panel = panel,
-              diag.panel = NULL, text.panel = textPanel,
-              label.pos = 0.5 + has.diag/3,
-              cex.labels = NULL, font.labels = 1,
-              row1attop = TRUE, gap=1)
+
+\method{pairs}{formula}(formula, data = NULL, \dots, subset)
+
+\method{pairs}{default}(x, labels, panel = points, \dots,
+      lower.panel = panel, upper.panel = panel,
+      diag.panel = NULL, text.panel = textPanel,
+      label.pos = 0.5 + has.diag/3,
+      cex.labels = NULL, font.labels = 1,
+      row1attop = TRUE, gap = 1)
 }
 \arguments{
   \item{x}{the coordinates of points given as columns of a matrix.}
+  \item{formula}{a formula, such as \code{y ~ x}.}
+  \item{data}{a data.frame (or list) from which the variables in
+    \code{formula} should be taken.}
+  \item{subset}{an optional vector specifying a subset of observations
+    to be used for plotting.}
   \item{labels}{the names of the variables.}
   \item{panel}{\code{function(x,y,\dots)} which is used to plot
     the contents of each panel of the display.}
@@ -46,7 +57,7 @@ pairs.default(x, labels = colnames(x), panel = points, \dots,
 }
 \details{
   The \eqn{ij}th scatterplot contains \code{x[,i]} plotted against
-  \code{x[,j]}.  The ``scatterplot' can be customised by setting panel
+  \code{x[,j]}.  The \dQuote{scatterplot} can be customised by setting panel
   functions to appear as something completely different. The
   off-diagonal panel functions are passed the appropriate columns of
   \code{x} as \code{x} and \code{y}: the diagonal panel function (if
@@ -75,8 +86,13 @@ pairs.default(x, labels = colnames(x), panel = points, \dots,
 }
 \examples{
 data(iris)
-pairs(iris[1:4], main = "Anderson's Iris Data -- 3 species", 
-      pch = 21, bg = c("red", "green3", "blue")[codes(iris$Species)])
+pairs(iris[1:4], main = "Anderson's Iris Data -- 3 species",
+      pch = 21, bg = c("red", "green3", "blue")[unclass(iris$Species)])
+
+## formula method
+data(swiss)
+pairs(~ Fertility + Education + Catholic, data = swiss,
+      subset = Education < 20, main = "Swiss data, Education < 20")
 
 data(USJudgeRatings)
 pairs(USJudgeRatings)

@@ -4,8 +4,8 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2003
-@set FAQ-VERSION 1.7-18, @value{FAQ-YEAR}-06-13
-@set REL-VERSION 1.7.1
+@set FAQ-VERSION 1.8-1, @value{FAQ-YEAR}-10-07
+@set REL-VERSION 1.8.0
 @set FAQ-ISBN 3-901167-51-X
 @documentlanguage en
 @documentencoding ISO-8859-1
@@ -179,7 +179,7 @@ In particular, note that I do not have access to Windows or Mac systems.
 Features specific to the Windows and Mac OS ports of R are described in
 the @uref{http://www.stats.ox.ac.uk/pub/R/rw-FAQ.html, ``R for Windows
 @acronym{FAQ}''} and the
-@uref{http://cran.r-project.org/bin/macos/rmac-FAQ.html, ``R for
+@uref{http://cran.r-project.org/bin/macosx/RAqua-FAQ.html, ``R for
 Macintosh @acronym{FAQ}/DOC''}.  If you have information on Mac or
 Windows systems that you think should be added to this document, please
 let me know.
@@ -234,8 +234,8 @@ flexible graphical environment for creating various kinds of data
 presentations.  Additional modules (``add-on packages'') are available
 for a variety of specific purposes (@pxref{R Add-On Packages}).
 
-R was initially written by @email{Ross.Ihaka@@r-project.org, Ross Ihaka}
-and @email{Robert.Gentleman@@r-project.org, Robert Gentleman} at the
+R was initially written by @email{Ross.Ihaka@@R-project.org, Ross Ihaka}
+and @email{Robert.Gentleman@@R-project.org, Robert Gentleman} at the
 Department of Statistics of the University of Auckland in Auckland, New
 Zealand.  In addition, a large group of individuals has contributed to R
 by sending code and bug reports.
@@ -244,10 +244,10 @@ Since mid-1997 there has been a core group (the ``R Core Team'') who can
 modify the R source code CVS archive.  The group currently consists of
 Doug Bates, John Chambers, Peter Dalgaard, Robert Gentleman, Kurt
 Hornik, Stefano Iacus, Ross Ihaka, Friedrich Leisch, Thomas Lumley,
-Martin Maechler, Guido Masarotto, Duncan Murdoch, Paul Murrell, Martyn
-Plummer, Brian Ripley, Duncan Temple Lang, and Luke Tierney.
+Martin Maechler, Duncan Murdoch, Paul Murrell, Martyn Plummer, Brian
+Ripley, Duncan Temple Lang, and Luke Tierney.
 
-R has a home page at @uref{http://www.r-project.org/}.  It is free
+R has a home page at @uref{http://www.R-project.org/}.  It is free
 software distributed under a @acronym{GNU}-style copyleft, and an
 official part of the @acronym{GNU} project (``@acronym{GNU} S'').
 
@@ -287,9 +287,9 @@ the ``Comprehensive R Archive Network'' (see @ref{What is CRAN?}).
 
 Sources are also available via anonymous rsync.  Use
 
-@smallexample
-rsync -rC rsync.r-project.org::@var{module} R
-@end smallexample
+@example
+rsync -rC --delete rsync.R-project.org::@var{module} R
+@end example
 
 @noindent
 to create a copy of the source tree specified by @var{module} in the
@@ -298,7 +298,7 @@ specifies one of the three existing flavors of the R sources, and can be
 one of @samp{r-release} (current released version), @samp{r-patched}
 (patched released version), and @samp{r-devel} (development version).
 The rsync trees are created directly from the master CVS archive and are
-updated hourly.  The @option{-C} option in the @command{rsync} command
+updated hourly.  The @option{-C} and in the @command{rsync} command
 is to cause it to skip the CVS directories.  Further information on
 @command{rsync} is available at @uref{http://rsync.samba.org/rsync/}.
 
@@ -333,10 +333,10 @@ can obtain a PDF version of the object reference manual via @CRAN{}.)
 In the simplest case, untar the R source code, change to the directory
 thus created, and issue the following commands (at the shell prompt):
 
-@smallexample
+@example
 $ ./configure
 $ make
-@end smallexample
+@end example
 
 If these commands execute successfully, the R binary and a shell script
 front-end called @file{R} are created and copied to the @file{bin}
@@ -378,9 +378,9 @@ In the above, @code{prefix} is determined during configuration
 (typically @file{/usr/local}) and can be set by running
 @command{configure} with the option
 
-@smallexample
+@example
 $ ./configure --prefix=/where/you/want/R/to/go
-@end smallexample
+@end example
 
 @noindent
 (E.g., the R executable will then be installed into
@@ -399,7 +399,7 @@ to run on Windows 95, 98, ME, NT4, 2000, and XP (at least) on Intel and
 clones (but not on other platforms).  The Windows version of R was
 created by Robert Gentleman, and is now being developed and maintained
 by @email{murdoch@@stats.uwo.ca, Duncan Murdoch} and
-@email{Brian.Ripley@@r-project.org, Brian D. Ripley}.
+@email{Brian.Ripley@@R-project.org, Brian D. Ripley}.
 
 @c Note that when uncompressing the zip files, the pkunzip program needs to
 @c be invoked with the @samp{-D} flag to create subdirectories.  Also, be
@@ -415,43 +415,48 @@ Windows @acronym{FAQ}''} for more details.
 @node How can R be installed (Macintosh),  , How can R be installed (Windows), How can R be installed?
 @subsection How can R be installed (Macintosh)
 
+The @file{bin/macosx} directory of a @CRAN{} site contains a standard
+Apple installer package named @file{RAqua.pkg.sit} compressed in Aladdin
+Stuffit format.  Once downloaded, uncompressed and executed, the
+installer will install the current non-developer release of R.  RAqua is
+a native MacOSX Darwin version with Aqua GUI.
+
+Inside @file{bin/macosx/@var{x}.@var{y}} there are prebuilt binary
+version of packages ready to be used with RAqua corresponding to R major
+release ``@var{x}.@var{y}''. The installation of these packages is
+available through the ``Package'' menu of the RAqua GUI.
+
+This port of R for MacOSX is maintained by
+@email{Stefano.Iacus@@R-project.org, Stefano Iacus}.  The
+@uref{http://cran.r-project.org/bin/macosx/RAqua-FAQ.html, ``R for
+Macintosh @acronym{FAQ}/DOC''} has more details.
+
 The @file{bin/macos} directory of a @CRAN{} site contains bin-hexed
 (@file{hqx}) and stuffit (@file{sit}) archives for a base distribution
-and a large number of add-on packages to run under MacOS 8.6 to MacOS
-9.1 or MacOS X natively.  The Mac version of R and the Mac binaries are
-maintained by
-@c @email{stefano.iacus@@unimi.it, Stefano Iacus}.
-@email{Stefano.Iacus@@r-project.org, Stefano Iacus}.
-
-The @uref{http://www.eco-dip.unimi.it/R/rmac-FAQ.html, ``R for Macintosh
-@acronym{FAQ}/DOC''} has more details.
-
-Binaries of base distributions for MacOS X (Darwin) with X11 are made
-available by @email{deleeuw@@stat.ucla.edu, Jan de Leeuw} in the
-@file{bin/macosx} directory of a @CRAN{} site.
-@c @uref{http://www.stat.ucla.edu/~deleeuw/R/}.
+and a large number of add-on packages of R 1.7.1 to run under MacOS 8.6
+to MacOS 9.2.2.  This port of R for Macintosh is no longer supported.
 
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2003-05-02:
+@c Linux binaries as of 2003-07-15:
 @c
-@c debian    woody i386  1.7.0  Dirk Eddelbuettel <edd@debian.org>
-@c           sarge i386  1.7.0  Dirk Eddelbuettel <edd@debian.org>
-@c mandrake  8.0   i386  1.6.2  Michele Alzetta <mikalzet@libero.it>
-@c           8.1   i386  1.6.2  Michele Alzetta <mikalzet@libero.it>
-@c           8.2   i386  1.7.0  Michele Alzetta <mikalzet@libero.it>
-@c           9.0   i386  1.7.0  Michele Alzetta <mikalzet@libero.it>
-@c           9.1   i386  1.7.0  Michele Alzetta <mikalzet@libero.it>
+@c debian    woody i386  1.7.1  Dirk Eddelbuettel <edd@debian.org>
+@c           sarge i386  1.7.1  Dirk Eddelbuettel <edd@debian.org>
+@c mandrake  8.0   i386  1.7.1  Michele Alzetta <mikalzet@libero.it>
+@c           8.1   i386  1.7.1  Michele Alzetta <mikalzet@libero.it>
+@c           8.2   i386  1.7.1  Michele Alzetta <mikalzet@libero.it>
+@c           9.0   i386  1.7.1  Michele Alzetta <mikalzet@libero.it>
+@c           9.1   i386  1.7.1  Michele Alzetta <mikalzet@libero.it>
 @c redhat    7.x   alpha 1.6.0  Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c                 i386  1.7.0  Martyn Plummer <plummer@iarc.fr>
-@c           8.x   i386  1.7.0  Martyn Plummer <plummer@iarc.fr>
-@c           9     i386  1.7.0  Martyn Plummer <plummer@iarc.fr>
-@c suse      7.3   i386  1.7.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c           8.0   i386  1.7.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c           8.1   i386  1.7.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c           8.2   i386  1.7.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c vinelinux 2.6   i386  1.6.2  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
+@c                 i386  1.7.1  Martyn Plummer <plummer@iarc.fr>
+@c           8.x   i386  1.7.1  Martyn Plummer <plummer@iarc.fr>
+@c           9     i386  1.7.1  Martyn Plummer <plummer@iarc.fr>
+@c suse      7.3   i386  1.7.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c           8.0   i386  1.7.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c           8.1   i386  1.7.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c           8.2   i386  1.7.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c vinelinux 2.6   i386  1.7.1  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
 
 The @file{bin/linux} directory of a @CRAN{} site contains Debian
 stable/testing packages for the i386 platform (now part of the Debian
@@ -464,9 +469,9 @@ Steuer, and VineLinux 2.6 i386 packages by Susunu Tanimura.
 The Debian packages can be accessed through APT, the Debian package
 maintenance tool.  Simply add the line
 
-@smallexample
-deb http://cran.r-project.org/bin/linux/debian @var{distribution} main
-@end smallexample
+@example
+deb http://cran.R-project.org/bin/linux/debian @var{distribution} main
+@end example
 
 @noindent
 (where @var{distribution} is either @samp{stable} or @samp{testing};
@@ -606,7 +611,7 @@ An annotated bibliography (Bib@TeX{} format) of R-related publications
 which includes most of the above references can be found at
 
 @display
-@uref{http://www.r-project.org/doc/bib/R.bib}
+@uref{http://www.R-project.org/doc/bib/R.bib}
 @end display
 
 @node Citing R, What mailing lists exist for R?, What documentation exists for R?, R Basics
@@ -614,7 +619,7 @@ which includes most of the above references can be found at
 
 To cite R in publications, use
 
-@smallexample
+@example
 @group
 @@article@{,
   author =    @{Ross Ihaka and Robert Gentleman@},
@@ -626,50 +631,56 @@ To cite R in publications, use
   pages =     @{299--314@}
 @}
 @end group
-@end smallexample
+@end example
 
 @node What mailing lists exist for R?, What is CRAN?, Citing R, R Basics
 @section What mailing lists exist for R?
 
-Thanks to @email{Martin.Maechler@@r-project.org, Martin Maechler}, there
-are three mailing lists devoted to R.
+Thanks to @email{Martin.Maechler@@R-project.org, Martin Maechler}, there
+are four mailing lists devoted to R.
 
 @table @code
-@item r-announce
-This list is for announcements about the development of R and the
+@item R-announce
+A moderated list for announcements about the development of R and the
 availability of new code.
-@item r-devel
+@item R-packages
+A moderated list for announcements on the availability of new or
+enhanced contributed packages.
+@item R-help
+The `main' R mailing list, for discussion about problems and solutions
+using R, announcements (not covered by `R-announce' and `R-packages')
+about the development of R and the availability of new code,
+enhancements and patches to the source code and documentation of R,
+comparison and compatibility with S and @SPLUS{}, and for the posting of
+nice examples and benchmarks.
+@item R-devel
 This list is for discussions about the future of R and pre-testing of
 new versions.  It is meant for those who maintain an active position in
 the development of R.
-@item r-help
-The `main' R mailing list, for announcements about the development of R
-and the availability of new code, questions and answers about problems
-and solutions using R, enhancements and patches to the source code and
-documentation of R, comparison and compatibility with S and @SPLUS{},
-and for the posting of nice examples and benchmarks.
 @end table
 
 @noindent
-Note that the r-announce list is gatewayed into r-help, so you don't
-need to subscribe to both of them.
+Note that the R-announce and R-packages lists are gatewayed into R-help.
+Hence, you should subscribe to either of them only in case you are not
+subscribed to R-help.
 
-Send email to @email{r-help@@lists.r-project.org} to reach everyone on
-the r-help mailing list.  To subscribe (or unsubscribe) to this list
+Send email to @email{R-help@@lists.R-project.org} to reach everyone on
+the R-help mailing list.  To subscribe (or unsubscribe) to this list
 send @samp{subscribe} (or @samp{unsubscribe}) in the @emph{body} of the
 message (not in the subject!) to
-@email{r-help-request@@lists.r-project.org}.  Information about the list
+@email{R-help-request@@lists.R-project.org}.  Information about the list
 can be obtained by sending an email with @samp{info} as its contents to
-@email{r-help-request@@lists.r-project.org}.
+@email{R-help-request@@lists.R-project.org}.
 
 Subscription and posting to the other lists is done analogously, with
-`r-help' replaced by `r-announce' and `r-devel', respectively.
+@samp{R-help} replaced by @samp{R-announce}, @samp{R-packages}, and
+@samp{R-devel}, respectively.
 
-Subscriptions to `r-help' and `r-devel' are also available in digest
-format, see the @file{doc/html/mail.html} file in @CRAN{} for more
-information.
+Subscriptions to the R-help and R-devel mailing lists are also available
+in digest (plain or MIME) format, see the @file{doc/html/mail.html} file
+in @CRAN{} for more information.
 
-It is recommended that you send mail to r-help rather than only to the R
+It is recommended that you send mail to R-help rather than only to the R
 Core developers (who are also subscribed to the list, of course).  This
 may save them precious time they can use for constantly improving R, and
 will typically also result in much quicker feedback for yourself.
@@ -684,7 +695,7 @@ in a monthly schedule via the @file{doc/html/mail.html} file in @CRAN{}.
 Searchable archives of the lists are available via
 @uref{http://maths.newcastle.edu.au/~rking/R/}.
 
-The R Core Team can be reached at @email{r-core@@lists.r-project.org}
+The R Core Team can be reached at @email{R-core@@lists.R-project.org}
 for comments and reports.
 
 @node What is CRAN?, Can I use R for commercial purposes?, What mailing lists exist for R?, R Basics
@@ -701,38 +712,38 @@ The @CRAN{} master site at TU Wien, Austria, can be found at the
 @quotation
 @c @multitable @columnfractions .45 .30
 @c @item
-@uref{http://cran.r-project.org/}
+@uref{http://cran.R-project.org/}
 @c @tab (Austria)
 @c @end multitable
 @end quotation
 
 @noindent
-@c (which is the same as @uref{http://cran.at.r-project.org/})
+@c (which is the same as @uref{http://cran.at.R-project.org/})
 and is currently being mirrored daily at
 
 @quotation
 @multitable @columnfractions .45 .40
-@item @uref{http://cran.at.r-project.org/}
+@item @uref{http://cran.at.R-project.org/}
 @tab (TU Wien, Austria)
-@item @uref{http://cran.au.r-project.org/}
+@item @uref{http://cran.au.R-project.org/}
 @tab (PlanetMirror, Australia)
-@item @uref{http://cran.br.r-project.org/}
+@item @uref{http://cran.br.R-project.org/}
 @tab (Universidade Federal de Paran@'a, Brazil)
-@item @uref{http://cran.ch.r-project.org/}
+@item @uref{http://cran.ch.R-project.org/}
 @tab (ETH Z@"urich, Switzerland)
-@item @uref{http://cran.de.r-project.org/}
+@item @uref{http://cran.de.R-project.org/}
 @tab (APP, Germany)
-@item @uref{http://cran.dk.r-project.org/}
+@item @uref{http://cran.dk.R-project.org/}
 @tab (SunSITE, Denmark)
-@item @uref{http://cran.hu.r-project.org/}
+@item @uref{http://cran.hu.R-project.org/}
 @tab (Semmelweis U, Hungary)
-@c @item @uref{http://cran.it.r-project.org/}
+@c @item @uref{http://cran.it.R-project.org/}
 @c @tab (Italy)
-@item @uref{http://cran.uk.r-project.org/}
+@item @uref{http://cran.uk.R-project.org/}
 @tab (U of Bristol, United Kingdom)
-@item @uref{http://cran.us.r-project.org/}
+@item @uref{http://cran.us.R-project.org/}
 @tab (U of Wisconsin, USA)
-@item @uref{http://cran.za.r-project.org/}
+@item @uref{http://cran.za.R-project.org/}
 @tab (Rhodes U, South Africa)
 @end multitable
 @end quotation
@@ -748,8 +759,8 @@ and MS Windows).  @CRAN{} also provides access to documentation on R,
 existing mailing lists and the R Bug Tracking system.
 
 To ``submit'' to @CRAN{}, simply upload to
-@uref{ftp://cran.r-project.org/incoming/} and send an email to
-@email{cran@@r-project.org}.  Note that @CRAN{} generally does not
+@uref{ftp://cran.R-project.org/incoming/} and send an email to
+@email{cran@@R-project.org}.  Note that @CRAN{} generally does not
 accept submissions of precompiled binaries due to security reasons.
 
 @quotation
@@ -926,19 +937,19 @@ bindings that were in effect at the time the function was created.
 
 Consider the following function:
 
-@smallexample
+@example
 @group
 cube <- function(n) @{
   sq <- function() n * n
   n * sq()
 @}
 @end group
-@end smallexample
+@end example
 
 Under S, @code{sq()} does not ``know'' about the variable @code{n}
 unless it is defined globally:
 
-@smallexample
+@example
 @group
 S> cube(2)
 Error in sq():  Object "n" not found
@@ -947,29 +958,29 @@ S> n <- 3
 S> cube(2)
 [1] 18
 @end group
-@end smallexample
+@end example
 
 In R, the ``environment'' created when @code{cube()} was invoked is
 also looked in:
 
-@smallexample
+@example
 @group
 R> cube(2)
 [1] 8
 @end group
-@end smallexample
+@end example
 
 @c The following more `realistic' example illustrating the differences in
 @c scoping is due to @email{tlumley@@u.washington.edu, Thomas Lumley}.
 @c The function
 
-@c @smallexample
+@c @example
 @c jackknife.lm <- function(lmobj) @{
 @c   n <- length(resid(lmobj))
 @c   jval <- sapply(1:n, function(i) coef(update(lmobj, subset = -i)))
 @c   (n - 1) * (n - 1) * var(jval) / n
 @c @}
-@c @end smallexample
+@c @end example
 
 @c @noindent
 @c does something useful in R, but does not work in S.  In order to make it
@@ -981,7 +992,7 @@ R> cube(2)
 
 @c The following version works in S.
 
-@c @smallexample
+@c @example
 @c jackknife.S.lm <- function(lmobj) @{
 @c   n <- length(resid(lmobj))
 @c   jval <- sapply(1:n,
@@ -989,7 +1000,7 @@ R> cube(2)
 @c                  lmobj = lmobj)
 @c   (n - 1) * (n - 1) * var(jval) / n
 @c @}
-@c @end smallexample
+@c @end example
 
 @c (The S version was written independently by Thomas and at least three of
 @c his fellow students over the past couple of years, causing literally
@@ -1005,7 +1016,7 @@ postings by Luke Tierney.)
 The @SPLUS{} documentation for @code{call()} basically suggests the
 following:
 
-@smallexample
+@example
 @group
 dorder <- function(n, r, pfun, dfun) @{
   f <- function(x) NULL
@@ -1020,7 +1031,7 @@ dorder <- function(n, r, pfun, dfun) @{
   f
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent Rather tricky, isn't it?  The code uses the fact that in S,
 functions are just lists of special mode with the function body as the
@@ -1030,7 +1041,7 @@ work, though).
 A version which makes heavy use of @code{substitute()} and seems to work
 under both S and R is
 
-@smallexample
+@example
 @group
 dorder <- function(n, r, pfun, dfun) @{
   con <- round(exp(lgamma(n + 1) - lgamma(r) - lgamma(n - r + 1)))
@@ -1039,14 +1050,14 @@ dorder <- function(n, r, pfun, dfun) @{
                        a = r - 1, b = n - r, K = con)))
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent
 (the @code{eval()} is not needed in S).
 
 However, in R there is a much easier solution:
 
-@smallexample
+@example
 @group
 dorder <- function(n, r, pfun, dfun) @{
   con <- round(exp(lgamma(n + 1) - lgamma(r) - lgamma(n - r + 1)))
@@ -1055,7 +1066,7 @@ dorder <- function(n, r, pfun, dfun) @{
   @}
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent
 This seems to be the ``natural'' implementation, and it works because
@@ -1068,7 +1079,7 @@ in the above version, the free variables in the value function are not
 modified, you can actually use it in S as well if you abstract out the
 closure operation into a function @code{MC()} (for ``make closure''):
 
-@smallexample
+@example
 @group
 dorder <- function(n, r, pfun, dfun) @{
   con <- round(exp(lgamma(n + 1) - lgamma(r) - lgamma(n - r + 1)))
@@ -1078,7 +1089,7 @@ dorder <- function(n, r, pfun, dfun) @{
      list(con = con, pfun = pfun, dfun = dfun, r = r, n = n))
 @}
 @end group
-@end smallexample
+@end example
 
 Given the appropriate definitions of the closure operator, this works in
 both R and S, and is much ``cleaner'' than a substitute/eval solution
@@ -1087,13 +1098,13 @@ access to evaluation frames, as is of course possible in both R and S).
 
 For R, @code{MC()} simply is
 
-@smallexample
+@example
 MC <- function(f, env) f
-@end smallexample
+@end example
 
 @noindent (lexical scope!), a version for S is
 
-@smallexample
+@example
 @group
 MC <- function(f, env = NULL) @{
   env <- as.list(env)
@@ -1112,7 +1123,7 @@ MC <- function(f, env = NULL) @{
   return(cf)
 @}
 @end group
-@end smallexample
+@end example
 
 Similarly, most optimization (or zero-finding) routines need some
 arguments to be optimized over and have other parameters that depend on
@@ -1135,13 +1146,14 @@ Computing'', @uref{http://www.amstat.org/publications/jcgs/, ,
 
 Lexical scoping also implies a further major difference.  Whereas S
 stores all objects as separate files in a directory somewhere (usually
-@file{.Data} under the current directory), R does not.  All objects
-in R are stored internally.  When R is started up it grabs a very large
-piece of memory and uses it to store the objects.  R performs its own
-memory management of this piece of memory.  Having everything in memory
-is necessary because it is not really possible to externally maintain
-all relevant ``environments'' of symbol/value pairs.  This difference
-also seems to make R @emph{faster} than S.
+@file{.Data} under the current directory), R does not.  All objects in R
+are stored internally.  When R is started up it grabs a piece of memory
+and uses it to store the objects.  R performs its own memory management
+of this piece of memory, growing and shrinking its size as needed.
+Having everything in memory is necessary because it is not really
+possible to externally maintain all relevant ``environments'' of
+symbol/value pairs.  This difference also seems to make R @emph{faster}
+than S.
 
 The down side is that if R crashes you will lose all the work for the
 current session.  Saving and restoring the memory ``images'' (the
@@ -1283,9 +1295,9 @@ By default, @code{ls()} returns the names of the objects in the current
 (under R) and global (under S) environment, respectively.  For example,
 given
 
-@smallexample
+@example
 x <- 1; fun <- function() @{y <- 1; ls()@}
-@end smallexample
+@end example
 
 @noindent
 then @code{fun()} returns @code{"y"} in R and @code{"x"} (together with
@@ -1400,16 +1412,6 @@ There is no such thing.
 @node R Web Interfaces, R Add-On Packages, R and S, Top
 @chapter R Web Interfaces
 
-@strong{Rcgi} is a CGI WWW interface to R by
-@email{mjr@@stats.mth.uea.ac.uk, Mark J. Ray}.  Recent versions have the
-ability to use ``embedded code'': you can mix user input and code,
-allowing the @HTML{} author to do anything from load in data sets to
-enter most of the commands for users without writing CGI scripts.
-Graphical output is possible in PostScript or GIF formats and the
-executed code is presented to the user for revision.
-
-See @uref{http://stats.mth.uea.ac.uk/Rcgi/} for more information.
-
 @strong{Rweb} is developed and maintained by
 @email{jeff@@math.montana.edu, Jeff Banfield}.  The
 @uref{http://www.math.montana.edu/Rweb/, Rweb Home Page} provides access
@@ -1432,6 +1434,27 @@ intends to make the first steps in statistical programming with R
 a local installation since the only requirement for the user is a
 JavaScript capable browser.  See @uref{http://osvisions.com/r-online/}
 for more information.
+
+@strong{CGIwithR} is an R add-on package by
+@email{david.firth@@nuffield.ox.ac.uk, David Firth} and has its home
+page at @uref{http://www.stats.ox.ac.uk/~firth/CGIwithR/index.html}.  It
+provides some simple extensions to R to facilitate running R scripts
+through the CGI interface to a web server.  It is easily installed using
+Apache under Linux and in principle should run on any platform that
+supports R and a web server provided that the installer has the
+necessary security permissions.
+
+@strong{Rcgi} is a CGI WWW interface to R by
+@email{mjr@@stats.mth.uea.ac.uk, Mark J. Ray}.  It had the ability to
+use ``embedded code'': you could mix user input and code, allowing the
+@HTML{} author to do anything from load in data sets to enter most of
+the commands for users without writing CGI scripts.  Graphical output
+was possible in PostScript or GIF formats and the executed code was
+presented to the user for revision.  However, it is not clear if the
+project is still active and recent attempts to contact the author or
+find the package have failed.
+@c URL no longer seems to work ...
+@c See @uref{http://stats.mth.uea.ac.uk/Rcgi/} for more information.
 
 @node R Add-On Packages, R and Emacs, R Web Interfaces, Top
 @chapter R Add-On Packages
@@ -1469,11 +1492,22 @@ Wilcoxon tests.
 @item eda
 Exploratory Data Analysis.  Currently only contains functions for robust
 line fitting, and median polish and smoothing.
+@c <FIXME 1.8.0>
+@item grid
+A rewrite of the graphics layout capabilities, plus some support for
+interaction.
+(Added in R 1.8.0).
+@c </FIXME>
 @item lqs
 Resistant regression and covariance estimation.
 @item methods
 Formally defined methods and classes for R objects, plus other
 programming tools, as described in the Green Book.
+@c <FIXME 1.8.0>
+@item mle
+Generic (smooth) likelihood maximization and profiling.
+(Added in R 1.8.0).
+@c </FIXME>
 @item modreg
 MODern REGression: smoothing and local methods.
 @item mva
@@ -1515,6 +1549,9 @@ Circular Statistics, from ``Topics in Circular Statistics'' by S. Rao
 Jammalamadaka and A. SenGupta, 2001, World Scientific.
 @item CoCoAn
 Constrained Correspondence Analysis.
+@item DAAG
+Various data sets used in examples and exercises in ``Data Analysis and
+Graphics Using R'' by John H. Maindonald and W. John Brown, 2003.
 @item DBI
 A common database interface (DBI) class and method definitions.  All
 classes in this package are virtual and need to be extended by the
@@ -1522,9 +1559,24 @@ various DBMS implementations.
 @item Davies
 Functions for the Davies quantile function and the Generalized Lambda
 distribution.
+@item Design
+Regression modeling, testing, estimation, validation, graphics,
+prediction, and typesetting by storing enhanced model design attributes
+in the fit.  Design is a collection of about 180 functions that assist
+and streamline modeling, especially for biostatistical and epidemiologic
+applications.  It also contains new functions for binary and ordinal
+logistic regression models and the Buckley-James multiple regression
+model for right-censored responses, and implements penalized maximum
+likelihood estimation for logistic and ordinary linear models.  Design
+works with almost any regression model, but it was especially written to
+work with logistic regression, Cox regression, accelerated failure time
+models, ordinary linear models, and the Buckley-James model.
 @item Devore5
 Data sets and sample analyses from ``Probability and Statistics for
 Engineering and the Sciences (5th ed)'' by Jay L. Devore, 2000, Duxbury.
+@item Devore6
+Data sets and sample analyses from ``Probability and Statistics for
+Engineering and the Sciences (6th ed)'' by Jay L. Devore, 2003, Duxbury.
 @item EMV
 Estimation of missing values in a matrix by a @math{k}-th nearest
 neighboors algorithm.
@@ -1538,8 +1590,18 @@ a range of R functions to match the interface metadata structures.
 @item GenKern
 Functions for generating and manipulating generalised binned kernel
 density estimates.
-@item GeneSOM
-Clustering genes using Self-Organizing Maps (SOMs).
+@item Hmisc
+Functions useful for data analysis, high-level graphics, utility
+operations, functions for computing sample size and power, importing
+datasets, imputing missing values, advanced table making, variable
+clustering, character string manipulation, conversion of S objects to
+La@TeX{} code, recoding variables, and bootstrap repeated measures
+analysis.
+@item HyperbolicDist
+Basic functions for the hyperbolic distribution: probability density
+function, distribution function, quantile function, a routine for
+generating observations from the hyperbolic, and a function for fitting
+the hyperbolic distribution to data.
 @item ISwR
 Data sets for ``Introductory Statistics with R'' by Peter Dalgaard,
 2002, Springer.
@@ -1568,6 +1630,10 @@ A set of test nonlinear least squares examples from @acronym{NIST}, the
 U.S. National Institute for Standards and Technology.
 @item Oarray
 Arrays with arbitrary offsets.
+@item PHYLOGR
+Manipulation and analysis of phylogenetically simulated data sets (as
+obtained from PDSIMUL in package PDAP) and phylogenetically-based
+analyses using GLS.
 @item PTAk
 A multiway method to decompose a tensor (array) of any order, as a
 generalisation of SVD also supporting non-identity metrics and
@@ -1639,6 +1705,8 @@ distributions).
 @item VLMC
 Functions, classes & methods for estimation, prediction, and simulation
 (bootstrap) of VLMC (Variable Length Markov Chain) models.
+@item VaR
+Methods for calculation of Value at Risk (VaR).
 @item XML
 Facilities for reading @XML{} documents and DTDs.
 @item abind
@@ -1672,10 +1740,15 @@ various approaches.
 David Scott's ASH routines for 1D and 2D density estimation.
 @item aws
 Functions to perform adaptive weights smoothing.
+@item bim
+Bayesian interval mapping diagnostics:  functions to interpret QTLCart
+and Bmapqtl samples.
 @item bindata
 Generation of correlated artificial binary data.
 @item blighty
 Function for drawing the coastline of the United Kingdom.
+@item boolean
+Boolean logit and probit: a procedure for testing Boolean hypotheses.
 @item boot
 Functions and datasets for bootstrapping from the book ``Bootstrap
 Methods and Their Applications'' by A. C. Davison and D. V. Hinkley,
@@ -1695,6 +1768,8 @@ Companion to Applied Regression, containing functions for applied
 regession, linear models, and generalized linear models, with an
 emphasis on regression diagnostics, particularly graphical diagnostic
 methods.
+@item cat
+Analysis of categorical-variable datasets with missing values.
 @item cclust
 Convex clustering methods, including @math{k}-means algorithm, on-line
 update algorithm (Hard Competitive Learning) and Neural Gas algorithm
@@ -1707,8 +1782,12 @@ A package for working with chronological objects (times and dates).
 @item class
 Functions for classification (@math{k}-nearest neighbor and LVQ).
 Contained in the @file{VR} bundle.  @emph{Recommended}.
+@item classPP
+Projection Pursuit for supervised classification.
 @item clim.pact
 Climate analysis and downscaling for monthly and daily data.
+@item clines
+Calculates Contour Lines.
 @item cluster
 Functions for cluster analysis.  @emph{Recommended}.
 @item cmprsk
@@ -1748,6 +1827,8 @@ or sampling grids.
 @item dichromat
 Color schemes for dichromats: collapse red-green distinctions to
 simulate the effects of colour-blindness.
+@item diptest
+Compute Hartigan's dip test statistic for unimodality.
 @item dispmod
 Functions for modelling dispersion in GLMs.
 @item dr
@@ -1785,6 +1866,8 @@ distribution, quantile and density functions to univariate, bivariate
 and (for simulation) multivariate parametric extreme value
 distributions, and provides fitting functions which calculate maximum
 likelihood estimates for univariate and bivariate models.
+@item exactLoglinTest
+Monte Carlo exact tests for log-linear models.
 @item exactRankTests
 Computes exact @math{p}-values and quantiles using an implementation of
 the Streitberg/Roehmel shift algorithm.
@@ -1799,13 +1882,23 @@ on spatial data.  The major methods implemented include cubic and thin
 plate splines, universal Kriging and Kriging for large data sets.  The
 main feature is that any covariance function implemented in R can be
 used for spatial prediction.
+@item flexmix
+Flexible Mixture Modeling: a general framework for finite mixtures of
+regression models using the EM algorithm.
 @item foreign
 Functions for reading and writing data stored by statistical software
 like Minitab, SAS, SPSS, Stata, etc.  @emph{Recommended}.
+@item forward
+Forward search approach to robust analysis in linear and generalized
+linear regression models.
+@item fpc
+Fixed point clusters, clusterwise regression and discriminant plots.
 @item fracdiff
 Maximum likelihood estimation of the parameters of a fractionally
 differenced ARIMA(@math{p,d,q}) model (Haslett and Raftery, Applied
 Statistics, 1989).
+@item ftnonpar
+Features and strings for nonparametric regression.
 @item g.data
 Create and maintain delayed-data packages (DDP's).
 @item gafit
@@ -1834,6 +1927,9 @@ Functions to perform geostatistical data analysis including model-based
 methods.
 @item geoRglm
 Functions for inference in generalised linear spatial models.
+@item ggm
+Functions for defining directed acyclic graphs and undirected graphs,
+finding induced graphs and fitting Gaussian Markov models.
 @item gld
 Basic functions for the generalised (Tukey) lambda distribution.
 @item glmmML
@@ -1848,7 +1944,15 @@ Generalized Regression Analysis and Spatial Predictions for R.
 Miscellaneous functions written/maintained by Gregory R. Warnes.
 @item grid
 The Grid graphics package, a rewrite of the graphics layout
-capabilities, plus some support for interaction.  @emph{Recommended}.
+capabilities, plus some support for interaction.
+@c <FIXME 1.8.0>
+@emph{Recommended}
+(will be integrated into the R distribution for version 1.8.0).
+@c </FIXME>
+@c <FIXME 1.8.0>
+@c @item gridBase
+@c Integration of base and grid graphics.
+@c </FIXME>
 @item gss
 A comprehensive package for structural multivariate function estimation
 using smoothing splines.
@@ -1890,6 +1994,8 @@ Functions to support the computations carried out in ``An Introduction
 to Statistical Modeling of Extreme Values;' by S. Coles, 2001, Springer.
 The functions may be divided into the following groups; maxima/minima,
 order statistics, peaks over thresholds and point processes.
+@item its
+An S4 class for handling irregular time series.
 @item knnTree
 Construct or predict with @math{k}-nearest-neighbor classifiers, using
 cross-validation to select @math{k}, choose variables (by forward or
@@ -1915,6 +2021,14 @@ and also performs searches using a number of less time-consuming
 techniques.
 @item lgtdl
 A set of methods for longitudinal data objects.
+@item linprog
+Solve linear programming/linear optimization problems by using the
+simplex algorithm.
+@item lme4
+Fit linear and generalized linear mixed-effects models.
+@item lmeSplines
+Fit smoothing spline terms in Gaussian linear and nonlinear
+mixed-effects models.
 @item lmtest
 A collection of tests on the assumptions of linear regression models
 from the book ``The linear regression model under test'' by W. Kraemer
@@ -1926,8 +2040,20 @@ Logspline density estimation.
 @item lokern
 Kernel regression smoothing with adaptive local or global plug-in
 bandwidth selection.
+@item lpSolve
+Functions that solve general linear/integer problems, assignment
+problems, and transportation problems via interfacing Lp_solve.
 @item lpridge
 Local polynomial (ridge) regression.
+@item mapdata
+Supplement to package @strong{maps}, providing the larger and/or
+higher-resolution databases.
+@item maps
+Draw geographical maps.  Projection code and larger maps are in separate
+packages.
+@item maptools
+Set of tools for manipulating and reading geographic data, in particular
+ESRI shapefiles.
 @item maptree
 Functions with example data for graphing and mapping models from
 hierarchical clustering and classification and regression trees.
@@ -1946,6 +2072,8 @@ additive regression splines (MARS), adaptive back-fitting splines
 @item meanscore
 Mean Score method for missing covariate data in logistic regression
 models.
+@item merror
+Accuracy and precision of measurements.
 @item mgcv
 Routines for GAMs and other genralized ridge regression problems with
 multiple smoothing parameter selection by GCV or UBRE.
@@ -1978,17 +2106,26 @@ Functions for hierarchical clustering, partitioning, bond energy
 algorithm, Sammon mapping, PCA and correspondence analysis.
 @item mvnmle
 ML estimation for multivariate normal data with missing values.
+@item mvnormtest
+Generalization of the Shapiro-Wilk test for multivariate variables.
 @item mvtnorm
 Multivariate normal and @math{t} distributions.
 @item ncomplete
 Functions to perform the regression depth method (RDM) to binary
 regression to approximate the minimum number of observations that can be
 removed such that the reduced data set has complete separation.
+@item negenes
+Estimating the number of essential genes in a genome on the basis of
+data from a random transposon mutagenesis experiment, through the use of
+a Gibbs sampler.
 @item netCDF
 Read data from netCDF files.
 @item nlme
 Fit and compare Gaussian linear and nonlinear mixed-effects models.
 @emph{Recommended}.
+@item nlmeODE
+Combine the @strong{nlme} and @strong{odesolve} packages for
+mixed-effects modelling using differential equations.
 @item nlrq
 Nonlinear quantile regression.
 @item nnet
@@ -2013,9 +2150,13 @@ data set has no longer overlap.
 Nonparametric Multiple Comparisons:  provides simultaneous rank test
 procedures for the one-way layout without presuming a certain
 distribution.
+@item nprq
+Nonparametric and sparse quantile regression methods.
 @item odesolve
 An interface for the Ordinary Differential Equation (ODE) solver lsoda.
 ODEs are expressed as R functions.
+@item orientlib
+Representations, conversions and display of orientation SO(3) data.
 @item oz
 Functions for plotting Australia's coastline and state boundaries.
 @item pamr
@@ -2056,10 +2197,22 @@ polymars, by C. Kooperberg and co-authors.
 @item polynom
 A collection of functions to implement a class for univariate polynomial
 manipulations.
+@item pps
+Functions to select samples using PPS (probability proportional to size)
+sampling, for stratified simple random sampling, and to compute joint
+inclusion probabilities for Sampford's method of PPS sampling.
+@item prabclus
+Distance based parametric bootstrap tests for clustering, mainly thought
+for presence-absence data (clustering of species distribution maps).
+Jaccard and Kulczynski distance measures, clustering of MDS scores, and
+nearest neighbor based noise detection.
 @item princurve
 Fits a principal curve to a matrix of points in arbitrary dimension.
 @item pspline
 Smoothing splines with penalties on order @math{m} derivatives.
+@item psy
+Various procedures used in psychometry: Kappa, ICC, Cronbach alpha,
+screeplot, PCA and related methods.
 @item qtl
 Analysis of experimental crosses to identify QTLs.
 @item quadprog
@@ -2090,6 +2243,8 @@ Recursive PARTitioning and regression trees.  @emph{Recommended}.
 @item rpvm
 R interface to PVM (Parallel Virtual Machine).  Provides interface to
 PVM APIs, and examples and documentation for its use.
+@item rqmcmb2
+Markov chain marginal bootstrap for quantile regression.
 @item rsprng
 Provides interface to SPRNG (Scalable Parallel Random Number Generators)
 APIs, and examples and documentation for its use.
@@ -2098,8 +2253,19 @@ Implements a modified version of the Sampford sampling algorithm.  Given
 a quantity assigned to each unit in the population, samples are drawn
 with probability proportional to te product of the quantities of the
 units included in the sample.
+@item sca
+Simple Component Analysis.
 @item scatterplot3d
 Plots a three dimensional (3D) point cloud perspectively.
+@item seacarb
+Calculates parameters of the seawater carbonate system.
+@item seao
+Simple Evolutionary Algorithm Optimization.
+@item seao.gui
+Simple Evolutionary Algorithm Optimization: graphical user interface.
+@item segmented
+Functions to estimate break-points of segmented relationships in
+regression models (GLMs).
 @item sem
 Functions for fitting general linear Structural Equation Models (with
 observed and unobserved variables) by the method of maximum likelihood
@@ -2112,6 +2278,11 @@ Functions for interacting with, saving and restoring R sessions.
 An object-oriented framework for geostatistical modeling.
 @item shapefiles
 Functions to read and write ESRI shapefiles.
+@item shapes
+Routines for the statistical analysis of shapes, including procrustes
+analysis, displaying shapes and principal components, testing for mean
+shape difference, thin-plate spline transformation grids and edge
+superimposition methods.
 @item sm
 Software linked to the book ``Applied Smoothing Techniques for Data
 Analysis:  The Kernel Approach with @SPLUS{} Illustrations'' by
@@ -2121,6 +2292,11 @@ Functions for exploratory (statistical) microarray analysis.
 @item sn
 Functions for manipulating skew-normal probability distributions and for
 fitting them to data, in the scalar and the multivariate case.
+@item sna
+A range of tools for social network analysis, including node and
+graph-level indices, structural distance and covariance methods,
+structural equivalence detection, p* modeling, and network
+visualization.
 @c <COMMENT>
 @c Removed ...
 @c @item snns
@@ -2129,6 +2305,8 @@ fitting them to data, in the scalar and the multivariate case.
 @item snow
 Simple Network of Workstations: support for simple parallel computing in
 R.
+@item som
+Self-Organizing Maps (with application in gene clustering).
 @item sound
 A sound interface for R: Basic functions for dealing with @file{.wav}
 files and sound samples.
@@ -2152,7 +2330,7 @@ formerly the three packages: @strong{spweights}, @strong{sptests}, and
 @item splancs
 Spatial and space-time point pattern analysis functions.
 @c <COMMENT>
-@c Deprecated in favor of new @pkg{spdep} along with 1.5.0 release.
+@c Deprecated in favor of new @strong{spdep} along with 1.5.0 release.
 @c @item spsarlm
 @c Functions for estimating spatial simultaneous autoregressive (SAR)
 @c models, including sparse matrix methods for computing the Jacobian.
@@ -2198,6 +2376,8 @@ Survival analysis for recurrent event data.
 Contains functions for fitting simultaneous systems of equations using
 Ordinary Least Sqaures (OLS), Two-Stage Least Squares (2SLS), and
 Three-Stage Least Squares (3SLS).
+@item tapiR
+Tools for accessing (UK) parliamentary information in R.
 @item tensor
 Tensor product of arrays.
 @item tkrplot
@@ -2211,6 +2391,8 @@ Package for time series analysis with emphasis on non-linear modelling.
 @item twostage
 Functions for optimal design of two-stage-studies using the Mean Score
 method.
+@item udunits
+Interface to Unidata's routines to convert units.
 @item vardiag
 Interactive variogram diagnostics.
 @item vcd
@@ -2243,14 +2425,6 @@ contains
 @table @strong
 @item Dopt
 Finding D-optimal experimental designs.
-
-@c <NOTE>
-@c Moved to Devel for 1.6 as it fails R CMD check.
-@item PHYLOGR
-Manipulation and analysis of phylogenetically simulated data sets (as
-obtained from PDSIMUL in package PDAP) and phylogenetically-based
-analyses using GLS.
-@c </NOTE>
 
 @c <NOTE>
 @c Moved to Devel for 1.6 as it fails R CMD check.
@@ -2316,8 +2490,12 @@ including some latent class models via EM and Fisher scoring approaches.
 @c general linear hypothesis.
 @c </COMMENT>
 
-@item pls
-Univariate Partial Least Squares Regression.
+@c <COMMENT>
+@c Moved to Attic on 2003-09-12 as requested by the package maintainer,
+@c "kjetil brinchmann halvorsen" <kjetil@@entelnet.bo>.
+@c @item pls
+@c Univariate Partial Least Squares Regression.
+@c </COMMENT>
 
 @c <COMMENT>
 @c Moved to Attic for 1.5.1 as no longer needed.
@@ -2327,15 +2505,6 @@ Univariate Partial Least Squares Regression.
 
 @item runStat
 Running median and mean.
-
-@c <NOTE>
-@c Moved to Devel for 1.7 as it fails R CMD check.
-@item sna
-A range of tools for social network analysis, including node and
-graph-level indices, structural distance and covariance methods,
-structural equivalence detection, p* modeling, and network
-visualization.
-@c </NOTE>
 
 @item write.snns
 Function for writing a @acronym{SNNS} pattern file from a data frame or
@@ -2563,15 +2732,7 @@ Jim has also started @strong{dna}, a package with procedures for the
 analysis of DNA sequences.  Jim's packages can be obtained from
 @uref{http://www.luc.ac.be/~jlindsey/rcode.html}.
 
-@c @email{hfe@@math.uio.no, Harald Fekjaer} has written @strong{addreg}, a
-@c package for additive hazards regression, which can be obtained from
-@c @uref{http://www.med.uio.no/imb/stat/addreg/}.
-
-@email{fharrell@@virginia.edu, Frank Harrell} has made R ports of his
-@strong{Design} and @strong{Hmisc} packages available via
-@uref{http://hesweb1.med.virginia.edu/biostat/s/library/r/}.
-
-More code has been posted to the r-help mailing list, and can be
+More code has been posted to the R-help mailing list, and can be
 obtained from the mailing list archive.
 
 @node How can add-on packages be installed?, How can add-on packages be used?, Which add-on packages exist for R?, R Add-On Packages
@@ -2582,9 +2743,9 @@ files named @code{@var{pkg}_@var{version}.tar.gz}, which may in fact be
 ``bundles'' containing more than one package.  Provided that
 @command{tar} and @command{gzip} are available on your system, type
 
-@smallexample
+@example
 $ R CMD INSTALL /path/to/@var{pkg}_@var{version}.tar.gz
-@end smallexample
+@end example
 
 @noindent
 at the shell prompt to install to the library tree rooted at the first
@@ -2595,9 +2756,9 @@ to the default library by default.)
 
 To install to another tree (e.g., your private one), use
 
-@smallexample
+@example
 $ R CMD INSTALL -l @var{lib} /path/to/@var{pkg}_@var{version}.tar.gz
-@end smallexample
+@end example
 
 @noindent
 where @var{lib} gives the path to the library tree to install to.
@@ -2613,16 +2774,16 @@ trees are rooted.  You do not have to specify the default tree in
 @env{R_LIBS}.  E.g., to use a private tree in @file{$HOME/lib/R} and a
 public site-wide tree in @file{/usr/local/lib/R-contrib}, put
 
-@smallexample
+@example
 R_LIBS="$HOME/lib/R:/usr/local/lib/R-contrib"; export R_LIBS
-@end smallexample
+@end example
 
 @noindent
 into your (Bourne) shell profile or even preferably, add the line
 
-@smallexample
+@example
 R_LIBS="$HOME/lib/R:/usr/local/lib/R-contrib"
-@end smallexample
+@end example
 
 @noindent
 your @file{~/.Renviron} file.  (Note that no @code{export} statement is
@@ -2634,9 +2795,9 @@ for more information.)
 
 To find out which additional packages are available on your system, type
 
-@smallexample
+@example
 library()
-@end smallexample
+@end example
 
 @noindent
 at the R prompt.  
@@ -2662,6 +2823,8 @@ foreign       Read data stored by Minitab, S, SAS, SPSS, Stata, ...
 grid          The Grid Graphics Package
 lattice       Lattice Graphics
 lqs           Resistant Regression and Covariance Estimation
+methods       Formal Methods and Classes
+mle           Maximum likelihood estimation
 mgcv          Multiple smoothing parameter estimation and GAMs by GCV
 modreg        Modern Regression: Smoothing and Local Methods
 mva           Classical Multivariate Analysis
@@ -2674,38 +2837,38 @@ spatial       functions for kriging and point pattern analysis
 splines       Regression Spline Functions and Classes
 stepfun       Step Functions, including Empirical Distributions
 survival      Survival analysis, including penalised likelihood
-tcltk         Interface to Tcl/Tk
+tcltk         Tcl/Tk Interface
 tools         Tools for Package Development and Administration
 ts            Time series functions
 @end smallexample
 
 You can ``load'' the installed package @var{pkg} by
 
-@smallexample
+@example
 library(@var{pkg})
-@end smallexample
+@end example
 
 You can then find out which functions it provides by typing one of
 
-@smallexample
+@example
 library(help = @var{pkg})
 help(package = @var{pkg})
-@end smallexample
+@end example
 
 You can unload the loaded package @var{pkg} by
 
-@smallexample
+@example
 detach("package:@var{pkg}")
-@end smallexample
+@end example
 
 @node How can add-on packages be removed?, How can I create an R package?, How can add-on packages be used?, R Add-On Packages
 @section How can add-on packages be removed?
 
 Use
 
-@smallexample
+@example
 $ R CMD REMOVE @var{pkg_1} @dots{} @var{pkg_n}
-@end smallexample
+@end example
 
 @noindent
 to remove the packages @var{pkg_1}, @dots{}, @var{pkg_n} from the
@@ -2715,9 +2878,9 @@ of R prior to 1.3.0 removed from the default library by default.)
 
 To remove from library @var{lib}, do
 
-@smallexample
+@example
 $ R CMD REMOVE -l @var{lib} @var{pkg_1} @dots{} @var{pkg_n}
-@end smallexample
+@end example
 
 @node How can I create an R package?, How can I contribute to R?, How can add-on packages be removed?, R Add-On Packages
 @section How can I create an R package?
@@ -2762,7 +2925,7 @@ as described in ``Statistical Models in S'' (see @ref{What is S?});
 Generalized Additive Models (@pxref{Are GAMs implemented in R?}) and
 some of the nonlinear modeling code are not there yet.
 
-The @uref{http://developer.r-project.org/, R Developer Page} acts as an
+The @uref{http://developer.R-project.org/, R Developer Page} acts as an
 intermediate repository for more or less finalized ideas and plans for
 the R statistical system.  It contains (pointers to) TODO lists, RFCs,
 various other writeups, ideas lists, and CVS miscellanea.
@@ -2771,7 +2934,7 @@ Many (more) of the packages available at the Statlib S Repository might
 be worth porting to R.
 
 If you are interested in working on any of these projects, please notify
-@email{Kurt.Hornik@@r-project.org, Kurt Hornik}.
+@email{Kurt.Hornik@@R-project.org, Kurt Hornik}.
 
 @node R and Emacs, R Miscellanea, R Add-On Packages, Top
 @chapter R and Emacs
@@ -2867,7 +3030,7 @@ debugger GDB, type @kbd{M-x gdb} and give the path to the R
 @emph{binary} as argument.  At the @command{gdb} prompt, set
 @env{R_HOME} and other environment variables as needed (using e.g.@:
 @kbd{set env R_HOME /path/to/R/}, but see also below), and start the
-binary with the desired arguments (e.g., @kbd{run --vsize=12M}).
+binary with the desired arguments (e.g., @kbd{run --quiet}).
 
 If you have @acronym{ESS}, you can do @kbd{C-u M-x R @key{RET} - d
 @key{SPC} g d b @key{RET}} to start an inferior R process with arguments
@@ -2890,7 +3053,7 @@ the R binary.  That way @file{.gdbinit} can stay in the directory with
 the code and be used to set up the environment and the search paths for
 the source, e.g.@: as follows:
 
-@smallexample
+@example
 set env R_HOME /opt/R
 set env R_PAPERSIZE letter
 set env R_PRINTCMD lpr
@@ -2898,7 +3061,7 @@ dir /opt/R/src/appl
 dir /opt/R/src/main
 dir /opt/R/src/nmath
 dir /opt/R/src/unix
-@end smallexample
+@end example
 
 @node R Miscellanea, R Programming, R and Emacs, Top
 @chapter R Miscellanea
@@ -3026,9 +3189,9 @@ reading in data files.  This should no longer happen.
 
 You can use
 
-@smallexample
+@example
 x[i] <- list(NULL)
-@end smallexample
+@end example
 
 @noindent
 to set component @code{i} of the list @code{x} to @code{NULL}, similarly
@@ -3053,9 +3216,9 @@ can save the image under a different name.
 To remove all objects in the currently active environment (typically
 @code{.GlobalEnv}), you can do
 
-@smallexample
+@example
 rm(list = ls(all = TRUE))
-@end smallexample
+@end example
 
 @noindent
 (Without @option{all = TRUE}, only the objects with names not starting
@@ -3077,10 +3240,10 @@ differentiated.  What you (most likely) really want is obtained by
 ``quoting'' the first argument upon surrounding it with
 @code{expression()}.  For example,
 
-@smallexample
+@example
 R> D(expression(x^2), "x")
 2 * x
-@end smallexample
+@end example
 
 Although this behavior may initially seem to be rather strange, is
 perfectly logical.  The ``intuitive'' behavior could easily be
@@ -3088,17 +3251,17 @@ implemented, but problems would arise whenever the expression is
 contained in a variable, passed as a parameter, or is the result of a
 function call.  Consider for instance the semantics in cases like
 
-@smallexample
+@example
 D2 <- function(e, n) D(D(e, n), n)
-@end smallexample
+@end example
 
 @noindent
 or
 
-@smallexample
+@example
 g <- function(y) eval(substitute(y), sys.frame(sys.parent(n = 2)))
 g(a * b)
-@end smallexample
+@end example
 
 See the help page for @code{deriv()} for more examples.
 
@@ -3115,27 +3278,27 @@ been determined to be a @emph{feature}.
 To prevent this happening, add the option @option{drop = FALSE} to the
 subscripting.  For example,
 
-@smallexample
+@example
 rowmatrix <- mat[2, , drop = FALSE]  # @r{creates a row matrix}
 colmatrix <- mat[, 2, drop = FALSE]  # @r{creates a column matrix}
 a <- b[1, 1, 1, drop = FALSE]        # @r{creates a 1 x 1 x 1 array}
-@end smallexample
+@end example
 
 The @option{drop = FALSE} option should be used defensively when
 programming.  For example, the statement
 
-@smallexample
+@example
 somerows <- mat[index, ]
-@end smallexample
+@end example
 
 @noindent
 will return a vector rather than a matrix if @code{index} happens to
 have length 1, causing errors later in the code.  It should probably be
 rewritten as
 
-@smallexample
+@example
 somerows <- mat[index, , drop = FALSE]
-@end smallexample
+@end example
 
 @node How does autoloading work?, How should I set options?, Why do my matrices lose dimensions?, R Miscellanea
 @section How does autoloading work?
@@ -3165,7 +3328,7 @@ variable.
 
 For example, given
 
-@smallexample
+@example
 test1 <- function(x = pi, dig = 3) @{
   oo <- options(digits = dig); on.exit(options(oo));
   cat(.Options$digits, x, "\n")
@@ -3174,17 +3337,17 @@ test2 <- function(x = pi, dig = 3) @{
   .Options$digits <- dig
   cat(.Options$digits, x, "\n")
 @}
-@end smallexample
+@end example
 
 @noindent
 we obtain:
 
-@smallexample
+@example
 R> test1()
 3 3.14 
 R> test2()
 3 3.141593
-@end smallexample
+@end example
 
 What is really used is the @emph{global} value of @code{.Options}, and
 using @kbd{options(OPT = VAL)} correctly updates it.  Local copies of
@@ -3239,18 +3402,20 @@ It may happen that when reading numeric data into R (usually, when
 reading in a file), they come in as factors.  If @code{f} is such a
 factor object, you can use
 
-@smallexample
+@example
 as.numeric(as.character(f))
-@end smallexample
+@end example
 
 @noindent
 to get the numbers back.  More efficient, but harder to remember, is
 
-@smallexample
+@example
 as.numeric(levels(f))[as.integer(f)]
-@end smallexample
+@end example
 
-In any case, do not call @code{as.numeric()} or their likes directly.
+In any case, do not call @code{as.numeric()} or their likes directly for
+the task at hand (as @code{as.numeric()} or @code{unclass()} give the
+internal codes).
 
 @node Are Trellis displays implemented in R?, What are the enclosing and parent environments?, How do I convert factors to numeric?, R Miscellanea
 @section Are Trellis displays implemented in R?
@@ -3329,9 +3494,9 @@ case, either use @code{parse()} on your pasted character string or use
 @code{substitute()} on an expression.  For example, if @code{ahat} is an
 estimator of your parameter @math{a} of interest, use
 
-@smallexample
+@example
 title(substitute(hat(a) == ahat, list(ahat = ahat)))
-@end smallexample
+@end example
 
 @noindent
 (note that it is @samp{==} and not @samp{=}).  There are more worked
@@ -3400,16 +3565,16 @@ from package @strong{mda}.
 
 Most R commands do not generate any output. The command
 
-@smallexample
+@example
 1+1
-@end smallexample
+@end example
 
 @noindent
 computes the value 2 and returns it; the command
 
-@smallexample
+@example
 summary(glm(y~x+z, family=binomial))
-@end smallexample
+@end example
 
 @noindent
 fits a logistic regression model, computes some summary information and
@@ -3424,16 +3589,16 @@ specifically print it.
 
 To print the value use
 
-@smallexample
+@example
 print(1+1)
-@end smallexample
+@end example
 
 @noindent
 or
 
-@smallexample
+@example
 print(summary(glm(y~x+z, family=binomial)))
-@end smallexample
+@end example
 
 @noindent
 instead, or use @code{source(@var{file}, echo=TRUE)}.
@@ -3454,28 +3619,28 @@ scalars, then you can still use @code{outer()} but you will need to wrap
 your function up first, to simulate vectorized behavior.  Suppose your
 function is
 
-@smallexample
+@example
 foo <- function(x, y, happy) @{
   stopifnot(length(x) == 1, length(y) == 1) # scalars only!
   (x + y) * happy
 @}
-@end smallexample
+@end example
 
 @noindent
 If you define the general function
 
-@smallexample
+@example
 wrapper <- function(x, y, my.fun, ...) @{
   sapply(seq(along = x), FUN = function(i) my.fun(x[i], y[i], ...))
 @}
-@end smallexample
+@end example
 
 @noindent
 then you can use @code{outer()} by writing, e.g.,
 
-@smallexample
+@example
 outer(1:4, 1:2, FUN = wrapper, my.fun = foo, happy = 10)
-@end smallexample
+@end example
 
 @node Why does the output from anova() depend on the order of factors in the model?, How do I produce PNG graphics in batch mode?, Why does outer() behave strangely with my function?, R Miscellanea
 @section Why does the output from anova() depend on the order of factors in the model?
@@ -3495,7 +3660,7 @@ full model to the models with each factor removed one at a time (the
 famous `Type III sums of squares' from SAS, for example).  These do not
 depend on the order of factors in the model.  The question of which set
 of sums of squares is the Right Thing provokes low-level holy wars on
-r-help from time to time.
+R-help from time to time.
 
 There is no need to be agitated about the particular sums of squares
 that R reports.  You can compute your favorite sums of squares quite
@@ -3531,60 +3696,60 @@ packages such as @code{libreadline-dev} (Debian) or
 
 If you have
 
-@smallexample
+@example
 varname <- c("a", "b", "d")
-@end smallexample
+@end example
 
 @noindent
 you can do
 
-@smallexample
+@example
 get(varname[1]) + 2
-@end smallexample
+@end example
 
 @noindent
 for
 
-@smallexample
+@example
 a + 2
-@end smallexample
+@end example
 
 @noindent
 or
 
-@smallexample
+@example
 assign(varname[1], 2 + 2)
-@end smallexample
+@end example
 
 @noindent
 for
 
-@smallexample
+@example
 a <- 2 + 2
-@end smallexample
+@end example
 
 @noindent
 or
 
-@smallexample
+@example
 eval(substitute(lm(y ~ x + variable),
                 list(variable = as.name(varname[1]))
-@end smallexample
+@end example
 
 @noindent
 for
 
-@smallexample
+@example
 lm(y ~ x + a)
-@end smallexample
+@end example
 
 At least in the first two cases it is often easier to just use a list,
 and then you can easily index it by name
 
-@smallexample
+@example
 vars <- list(a = 1:10, b = rnorm(100), d = LETTERS)
 vars[["a"]]
-@end smallexample
+@end example
 
 @noindent
 without any of this messing about.
@@ -3673,9 +3838,9 @@ are a Bourne shell user, you can also pass the desired flags to Make
 (which is used for controlling compilation) via the Make variable
 @code{MAKEFLAGS}, as in
 
-@smallexample
+@example
 MAKEFLAGS="CFLAGS=-O3" R CMD SHLIB *.c
-@end smallexample
+@end example
 
 @node R Bugs, Acknowledgments, R Programming, Top
 @chapter R Bugs
@@ -3749,9 +3914,9 @@ unnecessary work for the ones trying to fix the problem.
 For example, suppose that on a data set which you know to be quite large
 the command
 
-@smallexample
+@example
 R> data.frame(x, y, z, monday, tuesday)
-@end smallexample
+@end example
 
 @noindent
 never returns.  Do not report that @code{data.frame()} fails for large
@@ -3783,11 +3948,11 @@ read.
 On Unix systems a bug report can be generated using the function
 @code{bug.report()}.  This automatically includes the version
 information and sends the bug to the correct address.  Alternatively the
-bug report can be emailed to @email{r-bugs@@r-project.org} or submitted
-to the Web page at @uref{http://bugs.r-project.org/}.
+bug report can be emailed to @email{R-bugs@@R-project.org} or submitted
+to the Web page at @uref{http://bugs.R-project.org/}.
 
 Bug reports on contributed packages should perhaps be sent to the
-package maintainer rather than to r-bugs.
+package maintainer rather than to R-bugs.
 
 @node Acknowledgments,  , R Bugs, Top
 @chapter Acknowledgments

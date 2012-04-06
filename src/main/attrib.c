@@ -540,6 +540,35 @@ SEXP do_dimnamesgets(SEXP call, SEXP op, SEXP args, SEXP env)
     return CAR(args);
 }
 
+static SEXP dimnamesgets1(SEXP val1)
+{
+    SEXP this2;
+    
+    if (LENGTH(val1) == 0) return R_NilValue;
+    /* if (isObject(val1)) dispatch on as.character.foo, but we don't
+       have the context at this point to do so */
+    if (isFactor(val1)) { /* mimic as.character.factor */
+	int i, n = LENGTH(val1);
+	SEXP labels = getAttrib(val1, install("levels"));
+	PROTECT(this2 = allocVector(STRSXP, n));
+	for(i = 0; i < n; i++) {
+	    SET_STRING_ELT(this2, i, 
+			   STRING_ELT(labels, INTEGER(val1)[i] - 1));
+	}
+	UNPROTECT(1);
+	return this2;
+    }
+    if (!isString(val1)) { /* mimic as.character.default */
+	PROTECT(this2 = coerceVector(val1, STRSXP));
+	SET_ATTRIB(this2, R_NilValue);
+	SET_OBJECT(this2, 0);
+	UNPROTECT(1);
+	return this2;
+    }
+    return val1;
+}
+
+
 SEXP dimnamesgets(SEXP vec, SEXP val)
 {
     SEXP dims, top;
@@ -569,23 +598,13 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	PROTECT(val = newval);
     }
     for (i = 0; i < k; i++) {
-	if (VECTOR_ELT(val, i) != R_NilValue) {
-	    if (!isVector(VECTOR_ELT(val, i)))
+	SEXP this = VECTOR_ELT(val, i);
+	if (this != R_NilValue) {   
+	    if (!isVector(this))
 		error("invalid type for dimname (must be a vector)");
-	    if (INTEGER(dims)[i] != LENGTH(VECTOR_ELT(val, i))
-		&& LENGTH(VECTOR_ELT(val, i)) != 0)
+	    if (INTEGER(dims)[i] != LENGTH(this) && LENGTH(this) != 0)
 		error("length of dimnames[%d] not equal to array extent",i+1);
-	    if (LENGTH(VECTOR_ELT(val, i)) == 0) {
-		SET_VECTOR_ELT(val, i, R_NilValue);
-	    }
-	    else if (!isString(VECTOR_ELT(val, i))) {
-		SEXP this;
-		PROTECT(this = coerceVector(VECTOR_ELT(val, i), STRSXP));
-		SET_ATTRIB(this, R_NilValue);
-		SET_OBJECT(this, 0);
-		SET_VECTOR_ELT(val, i, this);
-		UNPROTECT(1);
-	    }
+	    SET_VECTOR_ELT(val, i, dimnamesgets1(this));
 	}
     }
     installAttrib(vec, R_DimNamesSymbol, val);
@@ -956,7 +975,7 @@ static SEXP data_part(SEXP obj) {
     SETCAR(e, s_getDataPart);
     val = CDR(e);
     SETCAR(val, obj);
-    val = eval(e, R_GlobalEnv);
+    val = eval(e, R_MethodsNamespace);
     UNPROTECT(1);
     return(val);
 }
@@ -971,7 +990,7 @@ static SEXP set_data_part(SEXP obj,  SEXP rhs) {
     SETCAR(val, obj);
     val = CDR(val);
     SETCAR(val, rhs);
-    val = eval(e, R_GlobalEnv);
+    val = eval(e, R_MethodsNamespace);
     UNPROTECT(1);
     return(val);
 }
@@ -994,10 +1013,10 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 	if(isSymbol(name) ) {
 	    input = PROTECT(allocVector(STRSXP, 1));  nprotect++;
 	    SET_STRING_ELT(input, 0, PRINTNAME(name));
-	classString = GET_CLASS(obj);
-	if(isNull(classString))
-	    error("Can't get a slot (\"%s\") from an object of type \"%s\"",
-		  CHAR(asChar(input)), CHAR(type2str(TYPEOF(obj))));
+	    classString = GET_CLASS(obj);
+	    if(isNull(classString))
+		error("Can't get a slot (\"%s\") from an object of type \"%s\"",
+		      CHAR(asChar(input)), CHAR(type2str(TYPEOF(obj))));
 	}
 	else classString = R_NilValue; /* make sure it is initialized */
  	/* not there.  But since even NULL really does get stored, this
@@ -1062,11 +1081,14 @@ SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 #endif
  
-
 #ifndef noSlotCheck
 
-static SEXP class_meta_data_env = NULL;
+/* This does not get used anymore (commented out in the code below).
+   Hence, comment out as well to make -Wall -pedantic happier.
+   KH 2003-06-07.
 
+static SEXP class_meta_data_env = NULL;
+   
 static int make_class_meta_data_env()
 {
     class_meta_data_env = findVar(install("__ClassMetaData"), R_GlobalEnv);
@@ -1077,6 +1099,7 @@ static int make_class_meta_data_env()
     else
 	return 1;
 }
+*/
 
 /* check for a class definition from the internal table -- will not get
  * classes whose definition has not been completed for this session,
@@ -1091,7 +1114,6 @@ static Rboolean has_class_definition(SEXP class_name)
 	else */
 	return FALSE;
 }
-
 
 SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1157,4 +1179,3 @@ SEXP do_AT_assign(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 #endif
-

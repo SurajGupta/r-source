@@ -7,9 +7,12 @@
   Performs one and two sample t-tests on vectors of data.
 }
 \usage{
+t.test(x, \dots)
+
 \method{t.test}{default}(x, y = NULL, alternative = c("two.sided", "less", "greater"),
        mu = 0, paired = FALSE, var.equal = FALSE,
        conf.level = 0.95, \dots)
+
 \method{t.test}{formula}(formula, data, subset, na.action, \dots)
 }
 \arguments{
@@ -80,9 +83,7 @@ t.test(1:10,y=c(7:20, 200)) # P = .1245    -- NOT significant anymore
 data(sleep)
 plot(extra ~ group, data = sleep)
 ## Traditional interface
-attach(sleep)
-t.test(extra[group == 1], extra[group == 2])
-detach()
+with(sleep, t.test(extra[group == 1], extra[group == 2]))
 ## Formula interface
 t.test(extra ~ group, data = sleep)
 }

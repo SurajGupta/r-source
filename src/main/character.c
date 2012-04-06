@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,11 +23,7 @@
 # include <config.h>
 #endif
 
-#ifndef Macintosh
 # include <sys/types.h>
-#else 
-# include <types.h>
-#endif
 
 #include "Defn.h"
 
@@ -63,7 +59,7 @@ SEXP do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
     for (i = 0; i < len; i++) {
 	ch = STRING_ELT(x, i);
 	/* give print width for an NA_STRING */
-	INTEGER(s)[i] = 
+	INTEGER(s)[i] =
 	    (ch == NA_STRING) ? R_print.na_width : strlen(CHAR(ch));
     }
     if ((d = getAttrib(x, R_DimSymbol)) != R_NilValue)
@@ -131,8 +127,12 @@ SEXP do_substr(SEXP call, SEXP op, SEXP args, SEXP env)
     if(len > 0) {
       if (!isInteger(sa) || !isInteger(so) || k==0 || l==0)
 	errorcall(call, "invalid substring argument(s) in substr()");
-      
+
       for (i = 0; i < len; i++) {
+	if (STRING_ELT(x,i)==NA_STRING){
+	    SET_STRING_ELT(s,i,NA_STRING);
+	    continue;
+	}
 	start = INTEGER(sa)[i % k];
 	stop = INTEGER(so)[i % l];
 	slen = strlen(CHAR(STRING_ELT(x, i)));
@@ -185,12 +185,16 @@ SEXP do_substrgets(SEXP call, SEXP op, SEXP args, SEXP env)
     if(len > 0) {
       if (!isInteger(sa) || !isInteger(so) || k==0 || l==0)
 	errorcall(call,"invalid substring argument(s) in substr<-()");
-      
+
       v = LENGTH(value);
       if (!isString(value) || v == 0)
 	errorcall(call, "invalid rhs in substr<-()");
-      
+
       for (i = 0; i < len; i++) {
+	if (STRING_ELT(x,i)==NA_STRING || STRING_ELT(value, i % v)==NA_STRING){
+	    SET_STRING_ELT(s, i, NA_STRING);
+	    continue;
+	}
 	start = INTEGER(sa)[i % k];
 	stop = INTEGER(so)[i % l];
 	slen = strlen(CHAR(STRING_ELT(x, i)));
@@ -216,12 +220,12 @@ SEXP do_substrgets(SEXP call, SEXP op, SEXP args, SEXP env)
     return s;
 }
 
-/* strsplit is going to split the strings in the first argument into */
-/* tokens depending on the second argument. The characters of the second */
-/* argument are used to split the first argument.  A list of vectors is */
-/* returned of length equal to the input vector x, each element of the */
-/* list is the collection of splits for the corresponding element of x. */
-
+/* strsplit is going to split the strings in the first argument into
+ * tokens depending on the second argument. The characters of the second
+ * argument are used to split the first argument.  A list of vectors is
+ * returned of length equal to the input vector x, each element of the
+ * list is the collection of splits for the corresponding element of x.
+*/
 SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, t, tok, x;
@@ -238,18 +242,34 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if(!isString(x) || !isString(tok))
 	errorcall_return(call,"non-character argument in strsplit()");
-    if(extended_opt == NA_INTEGER) extended_opt = 1;    
-    
+    if(extended_opt == NA_INTEGER) extended_opt = 1;
+
     eflags = 0;
-    if(extended_opt) eflags = eflags | REG_EXTENDED;    
+    if(extended_opt) eflags = eflags | REG_EXTENDED;
 
     len = LENGTH(x);
     tlen = LENGTH(tok);
     PROTECT(s = allocVector(VECSXP, len));
     for(i = 0; i < len; i++) {
+	if (STRING_ELT(x,i)==NA_STRING){
+	    PROTECT(t=allocVector(STRSXP,1));
+	    SET_STRING_ELT(t,0,NA_STRING);
+	    SET_VECTOR_ELT(s,i,t);
+	    UNPROTECT(1);
+	    continue;
+	}
 	AllocBuffer(strlen(CHAR(STRING_ELT(x, i))));
 	strcpy(buff, CHAR(STRING_ELT(x, i)));
 	if(tlen > 0) {
+	    /* NA token doesn't split*/
+	    if (STRING_ELT(tok,i % tlen)==NA_STRING){
+		    PROTECT(t=allocVector(STRSXP,1));
+		    bufp = buff;
+		    SET_STRING_ELT(t, 0, mkChar(bufp));
+		    SET_VECTOR_ELT(s, i, t);
+		    UNPROTECT(1);
+		    continue;
+	    }
 	    /* find out how many splits there will be */
 	    split = CHAR(STRING_ELT(tok, i % tlen));
 	    ntok = 0;
@@ -313,6 +333,9 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(1);
 	SET_VECTOR_ELT(s, i, t);
     }
+
+    if (getAttrib(x, R_NamesSymbol) != R_NilValue)
+	namesgets(s, getAttrib(x, R_NamesSymbol));
     UNPROTECT(1);
     AllocBuffer(-1);
     free(pt);
@@ -448,8 +471,12 @@ SEXP do_abbrev(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(STRSXP, len));
     minlen = asInteger(CADR(args));
     uclass = asLogical(CAR(CDDR(args)));
-    for (i = 0 ; i < len ; i++)
-	SET_STRING_ELT(ans, i, stripchars(STRING_ELT(CAR(args), i), minlen));
+    for (i = 0 ; i < len ; i++) {
+	if (STRING_ELT(CAR(args),i)==NA_STRING)
+	    SET_STRING_ELT(ans,i,NA_STRING);
+	else
+	    SET_STRING_ELT(ans, i, stripchars(STRING_ELT(CAR(args), i), minlen));
+    }
 
     UNPROTECT(1);
     return(ans);
@@ -460,7 +487,8 @@ SEXP do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP arg, ans;
     int i, l, n;
-    char *p;
+    char *p, *this;
+    Rboolean need_prefix;
 
     checkArity(op ,args);
     arg = CAR(args);
@@ -469,15 +497,22 @@ SEXP do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
     n = length(arg);
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0 ; i < n ; i++) {
-	l = strlen(CHAR(STRING_ELT(arg, i)));
-	if (isalpha((int)CHAR(STRING_ELT(arg, i))[0])) {
-	    SET_STRING_ELT(ans, i, allocString(l));
-	    strcpy(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
-	}
-	else {
+	this = CHAR(STRING_ELT(arg, i));
+	l = strlen(this);
+	/* need to prefix names not beginning with alpha or ., as
+	   well as . followed by a number */
+	need_prefix = FALSE;
+	if (this[0] == '.') {
+	    if (l >= 1 && isdigit((int) this[1])) need_prefix = TRUE;
+	} else if (!isalpha((int) this[0])) need_prefix = TRUE;
+	if (need_prefix) {
 	    SET_STRING_ELT(ans, i, allocString(l + 1));
 	    strcpy(CHAR(STRING_ELT(ans, i)), "X");
 	    strcat(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
+	    
+	} else {
+	    SET_STRING_ELT(ans, i, allocString(l));
+	    strcpy(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
 	}
 	p = CHAR(STRING_ELT(ans, i));
 	while (*p) {
@@ -490,12 +525,30 @@ SEXP do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
+/* This could be faster for plen > 1, but uses in R are for small strings */
+static int fgrep_one(char *pat, char *target)
+{
+    int i = -1, plen=strlen(pat), len=strlen(target);
+    char *p;
+
+    if(plen == 0) return 0;
+    if(plen == 1) {
+    /* a single char is a common case */
+	for(i = 0, p = target; *p; p++, i++)
+	    if(*p == pat[0]) return i;
+	return -1;
+    }
+    for(i = 0; i <= len-plen; i++)
+	if(strncmp(pat, target+i, plen) == 0) return i;
+    return -1;
+}
+
 SEXP do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP pat, vec, ind, ans;
     regex_t reg;
     int i, j, n, nmatches;
-    int igcase_opt, extended_opt, value_opt, eflags;
+    int igcase_opt, extended_opt, value_opt, fixed_opt, eflags;
 
     checkArity(op, args);
     pat = CAR(args); args = CDR(args);
@@ -503,48 +556,70 @@ SEXP do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
     igcase_opt = asLogical(CAR(args)); args = CDR(args);
     extended_opt = asLogical(CAR(args)); args = CDR(args);
     value_opt = asLogical(CAR(args)); args = CDR(args);
+    fixed_opt = asLogical(CAR(args));
     if (igcase_opt == NA_INTEGER) igcase_opt = 0;
     if (extended_opt == NA_INTEGER) extended_opt = 1;
     if (value_opt == NA_INTEGER) value_opt = 0;
+    if (fixed_opt == NA_INTEGER) fixed_opt = 0;
 
     if (!isString(pat) || length(pat) < 1 || !isString(vec))
 	errorcall(call, R_MSG_IA);
 
-    eflags = 0;
-
-    if (extended_opt) eflags = eflags | REG_EXTENDED;
-    if (igcase_opt) eflags = eflags | REG_ICASE;
-
-    if (regcomp(&reg, CHAR(STRING_ELT(pat, 0)), eflags))
-	errorcall(call, "invalid regular expression");
-
     n = length(vec);
-    ind = allocVector(LGLSXP, n);
     nmatches = 0;
-    for (i = 0 ; i < n ; i++) {
-	if (regexec(&reg, CHAR(STRING_ELT(vec, i)), 0, NULL, 0) == 0) {
-	    INTEGER(ind)[i] = 1;
-	    nmatches++;
+    PROTECT(ind = allocVector(LGLSXP, n));
+    /* NAs are removed in R code so this isn't used */
+    /* it's left in case we change our minds again */
+    /* special case: NA pattern matches only NAs in vector */
+    if (STRING_ELT(pat, 0) == NA_STRING){
+	for(i = 0; i < n; i++){
+	    if(STRING_ELT(vec, i) == NA_STRING){
+		LOGICAL(ind)[i] = 1;
+		nmatches++;
+	    } else LOGICAL(ind)[i] = 0;
 	}
-	else INTEGER(ind)[i] = 0;
-    }
-    regfree(&reg);
-    PROTECT(ind);
-    if (value_opt) {
-	ans = allocVector(STRSXP, nmatches);
-	j = 0;
-	for (i = 0 ; i < n ; i++)
-	    if (INTEGER(ind)[i]) {
-		SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
-		/* FIXME: Want to inherit 'names(vec)': [the following is wrong]
-		   TAG	 (ans)[j]   = TAG(vec)[i]; */
+	/* end NA pattern handling */
+    } else {
+	eflags = 0;
+	if (extended_opt) eflags = eflags | REG_EXTENDED;
+	if (igcase_opt) eflags = eflags | REG_ICASE;
+
+	if (!fixed_opt && regcomp(&reg, CHAR(STRING_ELT(pat, 0)), eflags))
+	    errorcall(call, "invalid regular expression");
+
+	for (i = 0 ; i < n ; i++) {
+	    LOGICAL(ind)[i] = 0;
+	    if (STRING_ELT(vec, i) != NA_STRING) {
+		if (fixed_opt) LOGICAL(ind)[i] = 
+				   fgrep_one(CHAR(STRING_ELT(pat, 0)),
+					     CHAR(STRING_ELT(vec, i))) >= 0;
+		else if(regexec(&reg, CHAR(STRING_ELT(vec, i)), 0, NULL, 0) == 0)
+		    LOGICAL(ind)[i] = 1;
 	    }
+	    if(LOGICAL(ind)[i]) nmatches++;
+	}
+	if (!fixed_opt) regfree(&reg);
     }
-    else {
+
+    if (value_opt) {
+	SEXP nmold = getAttrib(vec, R_NamesSymbol), nm;
+	ans = allocVector(STRSXP, nmatches);
+	for (i = 0, j = 0; i < n ; i++)
+	    if (LOGICAL(ind)[i])
+		SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
+	/* copy across names and subset */
+	if (!isNull(nmold)) {
+	    nm = allocVector(STRSXP, nmatches);
+	    for (i = 0, j = 0; i < n ; i++)
+		if (LOGICAL(ind)[i])
+		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
+	    setAttrib(ans, R_NamesSymbol, nm);
+	}
+    } else {
 	ans = allocVector(INTSXP, nmatches);
 	j = 0;
 	for (i = 0 ; i < n ; i++)
-	    if (INTEGER(ind)[i]) INTEGER(ans)[j++] = i + 1;
+	    if (LOGICAL(ind)[i]) INTEGER(ans)[j++] = i + 1;
     }
     UNPROTECT(1);
     return ans;
@@ -646,6 +721,21 @@ SEXP do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(STRSXP, n));
 
     for (i = 0 ; i < n ; i++) {
+      /* NA `pat' are removed in R code */
+      /* the C code is left in case we change our minds again */
+      /* NA matches only itself */
+        if (STRING_ELT(vec,i)==NA_STRING){
+	    if (STRING_ELT(pat,0)==NA_STRING) 
+		SET_STRING_ELT(ans, i, STRING_ELT(rep,0));
+	    else
+		SET_STRING_ELT(ans, i, NA_STRING);
+	    continue;
+	}
+	if (STRING_ELT(pat, 0)==NA_STRING){
+	    SET_STRING_ELT(ans, i, STRING_ELT(vec,i));
+	    continue;
+	}
+	/* end NA handling */
 	offset = 0;
 	nmatch = 0;
 	s = CHAR(STRING_ELT(vec, i));
@@ -664,6 +754,8 @@ SEXP do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	if (nmatch == 0)
 	    SET_STRING_ELT(ans, i, STRING_ELT(vec, i));
+	else if (STRING_ELT(rep, 0)==NA_STRING)
+	    SET_STRING_ELT(ans, i, NA_STRING);
 	else {
 	    SET_STRING_ELT(ans, i, allocString(ns));
 	    offset = 0;
@@ -703,36 +795,49 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP pat, text, ans, matchlen;
     regex_t reg;
     regmatch_t regmatch[10];
-    int i, n, st, extended_opt, eflags;
+    int i, n, st, extended_opt, fixed_opt, eflags;
+    char *spat = NULL; /* -Wall */
 
     checkArity(op, args);
     pat = CAR(args); args = CDR(args);
     text = CAR(args); args = CDR(args);
-    extended_opt = asLogical(CAR(args));
+    extended_opt = asLogical(CAR(args)); args = CDR(args);
     if (extended_opt == NA_INTEGER) extended_opt = 1;
+    fixed_opt = asLogical(CAR(args));
+    if (fixed_opt == NA_INTEGER) fixed_opt = 0;
 
     if (!isString(pat) || length(pat) < 1 ||
-	!isString(text) || length(text) < 1 )
+	!isString(text) || length(text) < 1 ||
+	STRING_ELT(pat,0) == NA_STRING)
 	errorcall(call, R_MSG_IA);
 
     eflags = extended_opt ? REG_EXTENDED : 0;
 
-    if (regcomp(&reg, CHAR(STRING_ELT(pat, 0)), eflags))
+    if (!fixed_opt && regcomp(&reg, CHAR(STRING_ELT(pat, 0)), eflags))
 	errorcall(call, "invalid regular expression");
+    if (fixed_opt) spat = CHAR(STRING_ELT(pat, 0));
     n = length(text);
     PROTECT(ans = allocVector(INTSXP, n));
     PROTECT(matchlen = allocVector(INTSXP, n));
 
     for (i = 0 ; i < n ; i++) {
-	if(regexec(&reg, CHAR(STRING_ELT(text, i)), 1, regmatch, 0) == 0) {
-	    st = regmatch[0].rm_so;
-	    INTEGER(ans)[i] = st + 1; /* index from one */
-	    INTEGER(matchlen)[i] = regmatch[0].rm_eo - st;
+	if (STRING_ELT(text, i) == NA_STRING) {
+	    INTEGER(matchlen)[i] = INTEGER(ans)[i] = R_NaInt;
 	} else {
-	    INTEGER(ans)[i] = INTEGER(matchlen)[i] = -1;
+	    if (fixed_opt) {
+		INTEGER(ans)[i] = fgrep_one(spat, CHAR(STRING_ELT(text, i)));
+		INTEGER(matchlen)[i] = INTEGER(ans)[i] >= 0 ? strlen(spat):-1;
+	    } else {
+		if(regexec(&reg, CHAR(STRING_ELT(text, i)), 1, 
+			   regmatch, 0) == 0) {
+		    st = regmatch[0].rm_so;
+		    INTEGER(ans)[i] = st + 1; /* index from one */
+		    INTEGER(matchlen)[i] = regmatch[0].rm_eo - st;
+		} else INTEGER(ans)[i] = INTEGER(matchlen)[i] = -1;
+	    }
 	}
     }
-    regfree(&reg);
+    if (!fixed_opt) regfree(&reg);
     setAttrib(ans, install("match.length"), matchlen);
     UNPROTECT(2);
     return ans;
@@ -758,7 +863,10 @@ do_tolower(SEXP call, SEXP op, SEXP args, SEXP env)
 
     for(i = 0; i < n; i++) {
 	for(p = CHAR(STRING_ELT(y, i)); *p != '\0'; p++) {
-	    *p = tolower(*p);
+	    if (STRING_ELT(x,i)==NA_STRING) 
+		SET_STRING_ELT(y,i,NA_STRING);
+	    else
+		*p = tolower(*p);
 	}
     }
     UNPROTECT(1);
@@ -785,7 +893,10 @@ do_toupper(SEXP call, SEXP op, SEXP args, SEXP env)
 
     for(i = 0; i < n; i++) {
 	for(p = CHAR(STRING_ELT(y, i)); *p != '\0'; p++) {
-	    *p = toupper(*p);
+	    if (STRING_ELT(x,i)==NA_STRING) 
+		SET_STRING_ELT(y,i,NA_STRING);
+	    else
+	        *p = toupper(*p);
 	}
     }
     UNPROTECT(1);
@@ -898,8 +1009,13 @@ do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
     x = CAR(args);
     if(!isString(old) || (length(old) < 1) ||
        !isString(new) || (length(new) < 1) ||
-       !isString(x))
+       !isString(x) )
 	errorcall(call, R_MSG_IA);
+
+    if (STRING_ELT(old,0)==NA_STRING ||
+	STRING_ELT(new,0)==NA_STRING){
+	errorcall(call,"invalid (NA) arguments.");
+    }
 
     for(i = 0; i <= UCHAR_MAX; i++)
 	xtable[i] = i;
@@ -943,9 +1059,12 @@ do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 
     for(i = 0; i < length(y); i++) {
-	for(p = (unsigned char *)CHAR(STRING_ELT(y, i)); *p != '\0'; p++) {
-	    *p = xtable[*p];
-	}
+	if (STRING_ELT(x,i)==NA_STRING)
+	    SET_STRING_ELT(y,i,NA_STRING);
+	else
+	    for(p = (unsigned char *)CHAR(STRING_ELT(y, i)); *p != '\0'; p++) {
+	        *p = xtable[*p];
+	    }
     }
 
     UNPROTECT(1);
@@ -961,7 +1080,7 @@ do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     int max_deletions_opt, max_insertions_opt, max_substitutions_opt;
     apse_t *aps;
     char *str;
-    
+
     checkArity(op, args);
     pat = CAR(args); args = CDR(args);
     vec = CAR(args); args = CDR(args);
@@ -981,6 +1100,40 @@ do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString(pat) || length(pat) < 1 || !isString(vec))
 	errorcall(call, R_MSG_IA);
 
+    /* NAs are removed in R code so this isn't used */
+    /* it's left in case we change our minds again */
+    /* special case: NA pattern matches only NAs in vector */
+    if (STRING_ELT(pat,0)==NA_STRING){
+	n = length(vec);
+	nmatches=0;
+	PROTECT(ind = allocVector(LGLSXP, n));
+	for(i=0; i<n; i++){
+	    if(STRING_ELT(vec,i)==NA_STRING){
+		INTEGER(ind)[i]=1;
+		nmatches++;
+	    } 
+	    else
+		INTEGER(ind)[i]=0;
+	}
+	if (value_opt) {
+	    ans = allocVector(STRSXP, nmatches);
+	    j = 0;
+	    for (i = 0 ; i < n ; i++)
+		if (INTEGER(ind)[i]) {
+		    SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
+		}
+	}
+	else {
+	    ans = allocVector(INTSXP, nmatches);
+	    j = 0;
+	    for (i = 0 ; i < n ; i++)
+		if (INTEGER(ind)[i]) INTEGER(ans)[j++] = i + 1;
+	}
+	UNPROTECT(1);
+    return ans;
+    }
+    /* end NA pattern handling */
+
     /* Create search pattern object. */
     str = CHAR(STRING_ELT(pat, 0));
     aps = apse_create((unsigned char *)str, (apse_size_t)strlen(str),
@@ -998,6 +1151,10 @@ do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ind = allocVector(LGLSXP, n));
     nmatches = 0;
     for(i = 0 ; i < n ; i++) {
+	if (STRING_ELT(vec,i)==NA_STRING){
+		INTEGER(ind)[i]=0;
+		continue;
+	}
 	str = CHAR(STRING_ELT(vec, i));
 	/* Set case ignore flag for the whole string to be matched. */
 	if(!apse_set_caseignore_slice(aps, 0,
@@ -1030,7 +1187,7 @@ do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     else {
 	for(j = i = 0 ; i < n ; i++) {
-	    if(INTEGER(ind)[i])
+	    if(INTEGER(ind)[i]==1)
 		INTEGER(ans)[j++] = i + 1;
 	}
     }

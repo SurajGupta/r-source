@@ -33,7 +33,6 @@ factanal <-
     }
     else if (is.matrix(covmat)) {
         cv <- covmat
-        cen <- NULL
         have.x <- FALSE
     }
     else if (is.null(covmat)) {
@@ -125,6 +124,11 @@ factanal <-
         colnames(sc) <- colnames(Lambda)
         if(!is.null(na.act)) sc <- napredict(na.act, sc)
         fit$scores <- sc
+    }
+    if(!is.na(n.obs) && dof > 0) {
+        fit$STATISTIC <- (n.obs - 1 - (2 * p + 5)/6 -
+                     (2 * factors)/3) * fit$criteria["objective"]
+        fit$PVAL <- pchisq(fit$STATISTIC, dof, lower.tail = FALSE)
     }
     fit$n.obs <- n.obs
     fit$call <- cl
@@ -224,17 +228,13 @@ print.factanal <- function(x, digits = 3, ...)
     cat("Uniquenesses:\n")
     print(round(x$uniquenesses, digits), ...)
     print(x$loadings, digits = digits, ...)
-    p <- nrow(x$loadings); factors <- x$factors
-    if(!is.na(x$n.obs) && x$dof > 0) {
-        dof <- x$dof
-        stat <- (x$n.obs - 1 - (2 * p + 5)/6 -
-                 (2 * factors)/3) * x$criteria["objective"]
+    if(!is.null(x$STATISTIC)) {
+        factors <- x$factors
         cat("\nTest of the hypothesis that", factors, if(factors == 1)
             "factor is" else "factors are", "sufficient.\n")
-        cat("The chi square statistic is", round(stat, 2), "on", dof,
-            if(dof == 1) "degree" else "degrees",
-            "of freedom.\nThe p-value is",
-            signif(pchisq(stat, dof, lower.tail = FALSE), 3), "\n")
+        cat("The chi square statistic is", round(x$STATISTIC, 2), "on", x$dof,
+            if(x$dof == 1) "degree" else "degrees",
+            "of freedom.\nThe p-value is", signif(x$PVAL, 3), "\n")
     } else {
         cat(paste("\nThe degrees of freedom for the model is",
                   x$dof, "and the fit was", round(x$criteria["objective"], 4),
@@ -246,7 +246,6 @@ print.factanal <- function(x, digits = 3, ...)
 varimax <- function(x, normalize = TRUE, eps = 1e-5)
 {
     nc <- ncol(x)
-    dn <- dimnames(x)
     if(nc < 2) return(x)
     if(normalize) {
         sc <- sqrt(drop(apply(x, 1, function(x) sum(x^2))))

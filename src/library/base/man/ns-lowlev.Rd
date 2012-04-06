@@ -5,13 +5,22 @@
 \alias{loadNamespace}
 \alias{loadedNamespaces}
 \alias{unloadNamespace}
+\alias{.onLoad}
+\alias{.onUnload}
+\alias{.onAttach}
+\alias{loadingNamespaceInfo}
+\alias{saveNamespaceImage}
 
 \usage{
 attachNamespace(ns, pos = 2)
 loadNamespace(package, lib.loc = NULL,
-              keep.source = getOption("keep.source.pkgs"))
+              keep.source = getOption("keep.source.pkgs"),
+              partial = FALSE, declarativeOnly = FALSE)
 loadedNamespaces()
 unloadNamespace(ns)
+loadingNamespaceInfo()
+saveNamespaceImage(package, rdafile, lib.loc = NULL,
+                   keep.source = getOption("keep.source.pkgs"))
 }
 \arguments{
   \item{ns}{string or namespace object.}
@@ -19,6 +28,8 @@ unloadNamespace(ns)
   \item{package}{string naming the package/name space to load.}
   \item{lib.loc}{character vector specifying library search path.}
   \item{keep.source}{logical specifying whether to retain source.}
+  \item{partial}{logical; if true, stop just after laoding code.}
+  \item{declarativeOnly}{logical; disables \code{.Import}, etc, if true.}
 }
 \description{
   Low level name space support functions.
@@ -36,7 +47,8 @@ unloadNamespace(ns)
   \code{loadNamespace} looks for a hook function named \code{.onLoad} as 
   an internal variable in the name space (it should not be exported).
   This function is called with the same arguments as
-  \code{.First.lib}.
+  \code{.First.lib}.  Partial loading is used so support installation with
+  the \option{--save} option.
 
   \code{loadNamespace} does not attach the name space it loads to the
   search path.  \code{attachNamespace} can be used to attach a frame
@@ -47,11 +59,23 @@ unloadNamespace(ns)
   time by the \code{.onLoad} hook.
 
   \code{loadedNamespaces} returns a character vector of the names of
-  the loaded name spaces. \code{unloadNamespace} can be used to force
+  the loaded name spaces.
+
+  \code{unloadNamespace} can be used to force
   a name space to be unloaded.  An error is signaled if the name space
   is imported by other loaded name spaces.  If defined, a hook
   function \code{.onUnload}, analogous to \code{.Last.lib}, is run
-  after removing the name space from the internal registry.
+  before removing the name space from the internal registry.
+  \code{unloadNamespace} will first \code{\link{detach}} a package of
+  the same name if one is on the path, thereby running a
+  \code{.Last.lib} function in the package if one is exported.
+
+  \code{loadingNamespaceInfo} returns a list of the arguments that
+  would be passed to \code{.onLoad} when a name space is being loaded.
+  An error is signaled of a name space is not currently being loaded.
+
+  \code{saveNamespaceImage} is used to save name space images for
+  packages installed with \option{--save}.
 }
 \keyword{internal}
 \author{Luke Tierney}

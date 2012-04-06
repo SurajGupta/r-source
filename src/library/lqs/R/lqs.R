@@ -1,5 +1,5 @@
 ### file lqs/R/lqs.R
-### copyright (C) 1998-9 B. D. Ripley
+### copyright (C) 1998-2003 B. D. Ripley
 
 lqs <- function(x, ...) UseMethod("lqs")
 
@@ -104,11 +104,11 @@ lqs.default <-
 	nsamp <- nexact
 
     if(samp && !missing(seed)) {
-	if(exists(".Random.seed", envir=.GlobalEnv))  {
-	    seed.keep <- .Random.seed
+	if(exists(".Random.seed", envir=.GlobalEnv, inherits=FALSE))  {
+	    seed.keep <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
 	    on.exit(assign(".Random.seed", seed.keep, envir=.GlobalEnv))
 	}
-	.Random.seed <<- seed
+	assign(".Random.seed", seed, envir=.GlobalEnv)
     }
     z <-  .C("lqs_fitlots",
 	     as.double(x), as.double(y), as.integer(n), as.integer(p),
@@ -137,7 +137,6 @@ lqs.default <-
     z$scale <- c(s, sqrt(s2))
     if(method == "S") { # IWLS refinement
 	psi <- function(u, k0) (1  - pmin(1, abs(u/k0))^2)^2
-	coef <- z$coef
 	resid <- z$residuals
 	scale <- s
 	for(i in 1:30) {
@@ -171,11 +170,14 @@ print.lqs <- function (x, digits = max(3, getOption("digits") - 3), ...)
     invisible(x)
 }
 
-predict.lqs <- function (object, newdata, ...)
+predict.lqs <- function (object, newdata, na.action = na.pass, ...)
 {
     if (missing(newdata)) return(fitted(object))
-    X <- model.matrix(delete.response(terms(object)), newdata,
-		      contrasts = object$contrasts, xlev = object$xlevels)
+    ## work hard to predict NA for rows with missing data
+    Terms <- delete.response(terms(object))
+    m <- model.frame(Terms, newdata, na.action = na.action,
+                     xlev = object$xlevels)
+    X <- model.matrix(Terms, m, contrasts = object$contrasts)
     drop(X %*% object$coefficients)
 }
 
@@ -213,11 +215,11 @@ cov.rob <- function(x, cor = FALSE, quantile.used = floor((n+p+1)/2),
 	} else nsamp <- nexact
 
 	if(samp && !missing(seed)) {
-	    if(exists(".Random.seed", envir=.GlobalEnv))  {
-		seed.keep <- .Random.seed
+	    if(exists(".Random.seed", envir=.GlobalEnv, inherits=FALSE))  {
+		seed.keep <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
 		on.exit(assign(".Random.seed", seed.keep, envir=.GlobalEnv))
 	    }
-	    .Random.seed <<- seed
+            assign(".Random.seed", seed, envir=.GlobalEnv)
 	}
 	z <-  .C("mve_fitlots",
 		 as.double(x), as.integer(n), as.integer(p),

@@ -1,4 +1,5 @@
-### Regression tests for which the printed output is the issue
+## Regression tests for which the printed output is the issue
+### _and_ must work (no Recommended packages, please)
 
 postscript("reg-tests-2.ps")
 RNGversion("1.6.2")
@@ -890,20 +891,6 @@ str(levels(ff))
 ## not quite ok previous to 1.7.0
 
 
-## str() for character & factors with NA (levels), and for Surv objects:
-ff <- factor(c(2:1,  NA),  exclude = NULL)
-str(levels(ff))
-str(ff)
-str(ordered(ff, exclude=NULL))
-if(require(survival)) {
-    data(aml)
-    (sa <- Surv(aml$time, aml$status))
-    str(sa)
-    detach("package:survival")
-}
-## were different, the last one failed in 1.6.2 (at least)
-
-
 ## PR#3058  printing with na.print and right=TRUE
 a <- matrix( c(NA, "a", "b", "10",
                NA, NA,  "d", "12",
@@ -922,3 +909,138 @@ A
 dimnames(A)
 ## 1.7.0 gave internal codes as display and dimnames()
 ## 1.7.1beta gave NAs via dimnames()
+## 1.8.0 converts factors to character
+
+
+## wishlist PR#2776: aliased coefs in lm/glm
+set.seed(123)
+x2 <- x1 <- 1:10
+x3 <- 0.1*(1:10)^2
+y <- x1 + rnorm(10)
+(fit <- lm(y ~ x1 + x2 + x3))
+summary(fit, cor = TRUE)
+(fit <- glm(y ~ x1 + x2 + x3))
+summary(fit, cor = TRUE)
+## omitted silently in summary.glm < 1.8.0
+
+
+## list-like indexing of data frames with drop specified
+data(women)
+women["height"]
+women["height", drop = FALSE]  # same with a warning
+women["height", drop = TRUE]   # ditto
+women[,"height", drop = FALSE] # no warning
+women[,"height", drop = TRUE]  # a vector
+## second and third were interpreted as women["height", , drop] in 1.7.x
+
+
+## make.names
+make.names("")
+make.names(".aa")
+## was "X.aa" in 1.7.1
+make.names(".2")
+make.names(".2a") # not valid in R
+make.names(as.character(NA))
+##
+
+
+## strange names in data frames
+as.data.frame(list(row.names=17))  # 0 rows in 1.7.1
+aa <- data.frame(aa=1:3)
+aa[["row.names"]] <- 4:6
+aa # fine in 1.7.1
+A <- matrix(4:9, 3, 2)
+colnames(A) <- letters[1:2]
+aa[["row.names"]] <- A
+aa
+## wrong printed names in 1.7.1
+
+## assigning to NULL
+a <- NULL
+a[["a"]] <- 1
+a
+a <- NULL
+a[["a"]] <- "something"
+a
+a <- NULL
+a[["a"]] <- 1:3
+a
+## Last was an error in 1.7.1
+
+
+## examples of 0-rank models, some empty, some rank-deficient
+y <- rnorm(10)
+x <- rep(0, 10)
+(fit <- lm(y ~ 0))
+summary(fit)
+anova(fit)
+predict(fit)
+predict(fit, data.frame(x=x), se=TRUE)
+predict(fit, type="terms", se=TRUE)
+variable.names(fit) #should be empty
+model.matrix(fit)
+
+(fit <- lm(y ~ x + 0))
+summary(fit)
+anova(fit)
+predict(fit)
+predict(fit, data.frame(x=x), se=TRUE)
+predict(fit, type="terms", se=TRUE)
+variable.names(fit) #should be empty
+model.matrix(fit)
+
+(fit <- glm(y ~ 0))
+summary(fit)
+anova(fit)
+predict(fit)
+predict(fit, data.frame(x=x), se=TRUE)
+predict(fit, type="terms", se=TRUE)
+
+(fit <- glm(y ~ x + 0))
+summary(fit)
+anova(fit)
+predict(fit)
+predict(fit, data.frame(x=x), se=TRUE)
+predict(fit, type="terms", se=TRUE)
+## Lots of problems in 1.7.x
+
+
+## lm.influence on deficient lm models
+dat <- data.frame(y=rnorm(10), x1=1:10, x2=1:10, x3 = 0, wt=c(0,rep(1, 9)),
+                  row.names=letters[1:10])
+dat[3, 1] <- dat[4, 2] <- NA
+lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.omit))
+lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.exclude))
+lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.omit))
+lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.exclude))
+lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.omit))
+lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.exclude))
+lm.influence(lm(y ~ 0, data=dat, na.action=na.exclude))
+## last three misbehaved in 1.7.x, none had proper names.
+
+
+## length of results in ARMAacf when lag.max is used
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=1) # was 4 in 1.7.1
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=2)
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=3)
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=4)
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=5) # failed in 1.7.1
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=6)
+ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=10)
+##
+
+
+## Indexing non-existent columns in a data frame
+x <- data.frame(a = 1, b = 2)
+try(x[c("a", "c")])
+try(x[, c("a", "c")])
+try(x[1, c("a", "c")])
+## Second succeeded, third gave uniformative error message in 1.7.x.
+
+
+## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
+meth2gen <- function(cl)
+    noquote(sub(paste("\\.",cl,"$",sep=""),"", methods(class = cl)))
+meth2gen("data.frame")
+meth2gen("dendrogram")
+## --> the output may need somewhat frequent updating..

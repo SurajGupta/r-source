@@ -52,16 +52,19 @@ prototype(...)
   the prototype object is usually supplied to create the definition).
 }
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html}
-  is the primary documentation.
+  The R package \pkg{methods} implements, with a few exceptions, the
+  programming interface for classes and methods in the book
+  \emph{Programming with Data} (John M. Chambers, Springer, 1998), in
+  particular sections 1.6, 2.7, 2.8, and chapters 7 and 8.
 
-  The functions in this package emulate the facility for classes
-  and methods described in \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998).  See this book for further details and
-  examples.
-}
-\author{
-  John Chambers
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
 \seealso{ \code{\link{setClass}} }
 
@@ -69,19 +72,33 @@ prototype(...)
 ## representation for a new class with a directly define slot "smooth"
 ## which should be a "numeric" object, and extending class "track"
 representation("track", smooth ="numeric")
-\testonly{
+\dontshow{
+prev <- getClassDef("class3")
 setClass("class1", representation(a="numeric", b = "character"))
 setClass("class2", representation(a2 = "numeric", b = "numeric"))
 try(setClass("class3", representation("class1", "class2")))
-
+{if(is.null(prev))
+  stopifnot(!isClass("class3"))
+else
+  stopifnot(identical(getClassDef("class3"), prev))}
 }
 
 setClass("Character",representation("character"))
 setClass("TypedCharacter",representation("Character",type="character"),
           prototype(character(0),type="plain"))
 ttt <- new("TypedCharacter", "foo", type = "character")
-\testonly{
+\dontshow{
 stopifnot(identical(as(ttt, "character"), "foo"))
+}
+
+setClass("num1", representation(comment = "character"),
+         contains = "numeric",
+         prototype = prototype(pi, comment = "Start with pi"))
+
+\dontshow{
+stopifnot(identical(new("num1"), new("num1", pi, comment = "Start with pi")))
+for(cl in c("num1", "TypedCharacter", "Character", "class2", "class1"))
+    removeClass(cl)
 }
 
 }

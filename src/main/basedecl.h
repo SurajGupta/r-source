@@ -45,6 +45,7 @@ SEXP La_dgesv(SEXP, SEXP);
 SEXP La_dgeqp3(SEXP);
 SEXP qr_coef_real(SEXP, SEXP);
 SEXP qr_qy_real(SEXP, SEXP, SEXP);
+SEXP det_ge_real(SEXP, SEXP);
 
 void signrank_free();
 void wilcox_free();
@@ -77,3 +78,17 @@ void Rf_InitColors(void);
 
 SEXP R_compress1(SEXP);
 SEXP R_decompress1(SEXP);
+
+SEXP R_serializeb(SEXP, SEXP, SEXP);
+SEXP R_serialize(SEXP, SEXP, SEXP, SEXP);
+SEXP R_unserialize(SEXP, SEXP);
+
+SEXP R_getVarsFromFrame(SEXP, SEXP, SEXP);
+SEXP R_lazyLoadDBinsertValue(SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP R_lazyLoadDBfetch(SEXP, SEXP, SEXP, SEXP);
+
+#ifdef BYTECODE
+SEXP R_getbcprofcounts();
+SEXP R_startbcprof();
+SEXP R_stopbcprof();
+#endif

@@ -1,17 +1,28 @@
 grep <-
 function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
-         value = FALSE)
+         value = FALSE, fixed = FALSE)
 {
-    if(perl)
-        .Internal(grep.perl(pattern, x, ignore.case, value))
+  ## behaves like == for NA pattern 
+  if (is.na(pattern)){
+    if(value)
+      return(rep(as.character(NA),length(x)))
     else
-        .Internal(grep(pattern, x, ignore.case, extended, value))
+      return(rep(NA,length(x)))
+  }
+  
+  if(perl)
+    .Internal(grep.perl(pattern, x, ignore.case, value))
+  else
+    .Internal(grep(pattern, x, ignore.case, extended, value, fixed))
 }
 
 sub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
          perl = FALSE)
 {
+  if (is.na(pattern))
+    return(rep(as.character(NA), length(x)))
+  
     if(perl)
         .Internal(sub.perl(pattern, replacement, x, ignore.case))
     else
@@ -22,30 +33,41 @@ gsub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
          perl = FALSE)
 {
-    if(perl)
+  if (is.na(pattern))
+    return(rep(as.character(NA), length(x)))
+
+  if(perl)
         .Internal(gsub.perl(pattern, replacement, x, ignore.case))
     else
         .Internal(gsub(pattern, replacement, x, ignore.case, extended))
 }
 
 regexpr <-
-function(pattern, text, extended = TRUE, perl = FALSE)
+function(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE)
 {
     if(perl)
         .Internal(regexpr.perl(pattern, text))
     else
-        .Internal(regexpr(pattern, text, extended))
+        .Internal(regexpr(pattern, text, extended, fixed))
 }
 
 agrep <-
 function(pattern, x, ignore.case = FALSE, value = FALSE,
          max.distance = 0.1)
 {
+  ## behaves like == for NA pattern 
+   if (is.na(pattern)){
+     if (value)
+       return(rep(as.character(NA), length(x)))
+     else
+       return(rep(NA, length(x)))
+   }
+  
     if(!is.character(pattern)
        || (length(pattern) < 1)
        || ((n <- nchar(pattern)) == 0))
         stop("pattern must be a non-empty character string")
-    
+
     if(!is.list(max.distance)) {
         if(!is.numeric(max.distance) || (max.distance < 0))
             stop("max.distance must be non-negative")
@@ -77,7 +99,7 @@ function(pattern, x, ignore.case = FALSE, value = FALSE,
             max.insertions <- max.distance$insertions
         if(!is.null(max.distance$substitutions))
             max.substitutions <- max.distance$substitutions
-        max.distance <- max.distance$all        
+        max.distance <- max.distance$all
         ## transform percentages
         if(max.distance < 1)
             max.distance <- ceiling(n * max.distance)

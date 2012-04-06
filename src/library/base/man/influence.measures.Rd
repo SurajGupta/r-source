@@ -1,5 +1,5 @@
-\title{Regression Deletion Diagnostics}
 \name{influence.measures}
+\title{Regression Deletion Diagnostics}
 \alias{influence.measures}
 \alias{print.infl}
 \alias{summary.infl}
@@ -24,36 +24,38 @@
 \usage{
 influence.measures(model)
 
-rstandard (model, \dots)
-rstandard.lm(model, infl = lm.influence(model, do.coef=FALSE),
-             sd = sqrt(deviance(model)/df.residual(model)), \dots)
-rstandard.glm(model, infl = lm.influence(model, do.coef=FALSE), \dots)
-rstudent   (model, \dots)
-rstudent.lm(model, infl = lm.influence(model, do.coef=FALSE),
-	    res = infl$wt.res, \dots)
-rstudent.glm(model, infl = lm.influence(model, do.coef=FALSE), \dots)
+rstandard(model, \dots)
+\method{rstandard}{lm}(model, infl = lm.influence(model, do.coef=FALSE),
+          sd = sqrt(deviance(model)/df.residual(model)), \dots)
+\method{rstandard}{glm}(model, infl = lm.influence(model, do.coef=FALSE), \dots)
 
-dffits   (model, infl = \dots, res = \dots)
+rstudent(model, \dots)
+\method{rstudent}{lm}(model, infl = lm.influence(model, do.coef=FALSE),
+	 res = infl$wt.res, \dots)
+\method{rstudent}{glm}(model, infl = influence(model, do.coef=FALSE), \dots)
 
-dfbeta    (model, \dots)
-dfbeta.lm (model, infl = lm.influence(model, do.coef=TRUE), \dots)
-dfbetas   (model, \dots)
-dfbetas.lm(model, infl = lm.influence(model, do.coef=TRUE), \dots)
+dffits(model, infl = , res = )
 
-covratio (model, infl = lm.influence(model, do.coef=FALSE), res = \dots)
+dfbeta(model, \dots)
+\method{dfbeta}{lm}(model, infl = lm.influence(model, do.coef=TRUE), \dots)
+
+dfbetas(model, \dots)
+\method{dfbetas}{lm}(model, infl = lm.influence(model, do.coef=TRUE), \dots)
+
+covratio(model, infl = lm.influence(model, do.coef=FALSE),
+         res = weighted.residuals(model))
 
 cooks.distance(model, \dots)
-cooks.distance.lm(model, infl = lm.influence(model, do.coef=FALSE),
-         res = weighted.residuals(model),
-         sd = sqrt(deviance(model)/df.residual(model)),
-         hat = infl$hat, \dots)
-cooks.distance.glm(model, infl = influence(model, do.coef=FALSE),
-          res = infl$pear.res,
-          dispersion = summary(model)$dispersion,
-          hat = infl$hat, \dots)
+\method{cooks.distance}{lm}(model, infl = lm.influence(model, do.coef=FALSE),
+               res = weighted.residuals(model),
+               sd = sqrt(deviance(model)/df.residual(model)),
+               hat = infl$hat, \dots)
+\method{cooks.distance}{glm}(model, infl = influence(model, do.coef=FALSE),
+               res = infl$pear.res, dispersion = summary(model)$dispersion,
+               hat = infl$hat, \dots)
 
-hatvalues   (model, \dots)
-hatvalues.lm(model, infl = lm.influence(model, do.coef=FALSE), \dots)
+hatvalues(model, \dots)
+\method{hatvalues}{lm}(model, infl = lm.influence(model, do.coef=FALSE), \dots)
 
 hat(x, intercept = TRUE)
 }
@@ -150,12 +152,12 @@ data(LifeCycleSavings)
 lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings)
 
 inflm.SR <- influence.measures(lm.SR)
-which(apply(inflm.SR$is.inf, 1, any)) # which observations `are' influential
+which(apply(inflm.SR$is.inf, 1, any)) # which observations 'are' influential
 summary(inflm.SR) # only these
 inflm.SR          # all
 plot(rstudent(lm.SR) ~ hatvalues(lm.SR)) # recommended by some
 
-## The `infl' argument is not needed, but avoids recomputation:
+## The 'infl' argument is not needed, but avoids recomputation:
 rs <- rstandard(lm.SR)
 iflSR <- influence(lm.SR)
 identical(rs, rstandard(lm.SR, infl = iflSR))

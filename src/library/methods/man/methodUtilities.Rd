@@ -3,6 +3,7 @@
 \alias{functionBody<-}
 \alias{allNames}
 \alias{getFunction}
+\alias{existsFunction}
 \alias{el}
 \alias{elNamed}
 \alias{el<-}
@@ -14,8 +15,8 @@
 \alias{initMethodDispatch}
 \title{Utility Functions for Methods and S-Plus Compatibility}
 \description{
-  These are utilities, currently in the methods package, that either
-  provide some functionality needed by the package (e.g., element
+  These are utilities, currently in the \pkg{methods} package, that
+  either provide some functionality needed by the package (e.g., element
   matching by name), or add compatibility with S-Plus, or both.
 }
 \usage{
@@ -51,7 +52,7 @@ initMethodDispatch()
   
     \item{\code{elNamed}:}{ 
       get the element of the vector corresponding to name.  Unlike the
-      \code{[}, \code{[[}, and \code{$} operators, this function
+      \code{[}, \code{[[}, and \code{$} operators, this function %$
       requires \code{name} to match the element name exactly (no partial
       matching).
     }
@@ -77,6 +78,12 @@ initMethodDispatch()
     \item{\code{showDefault}:}{ 
       Utility, used to enable \code{show} methods to be called by the
       automatic printing (via \code{print.default}).
+ 
+  { Argument \code{oldMethods} controls whether old-style print
+    methods are used for this
+    object.  It is  \code{TRUE} by default if called directly, but \code{FALSE}
+    when called from the \pkg{methods} package for automatic printing (to
+    avoid potential recursion).
     }
     \item{\code{initMethodDispatch}:}{
         Turn on the internal method dispatch code.  Called on

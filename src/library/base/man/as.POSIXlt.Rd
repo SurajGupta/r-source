@@ -29,8 +29,9 @@ as.POSIXlt(x, tz = "")
   classes used to represent date/times (calendar dates plus time to the
   nearest second).  They can take convert a wide variety of objects,
   including objects of the other class and of classes \code{"date"}
-  (from package \code{\link[date:as.date]{date}}), \code{"chron"} and
-  \code{"dates"} (from package \code{\link[chron]{chron}}) to these
+  (from package \pkg{\link[date:as.date]{date}} or
+  \pkg{\link[date:as.date]{survival}}), \code{"chron"} and
+  \code{"dates"} (from package \pkg{\link[chron]{chron}}) to these
   classes.  They can also convert character strings of the formats
   \code{"2001-02-03"} and \code{"2001/02/03"} optionally followed by
   white space and a time in the format \code{"14:52"} or
@@ -55,10 +56,6 @@ as.POSIXlt(x, tz = "")
 
   If a timezone is needed and that specified is invalid on your system,
   what happens is system-specific but it will probably be ignored. 
-#ifdef mac
-  Under MacOS only the current timezone \code{""} and UTC (or GMT)
-  are supported.
-#endif
 }
 \seealso{
   \link{DateTimeClasses} for details of the classes;

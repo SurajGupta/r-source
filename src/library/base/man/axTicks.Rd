@@ -13,14 +13,14 @@ axTicks(side, axp = NULL, usr = NULL, log = NULL)
 \arguments{
   \item{side}{integer in 1:4, as for \code{\link{axis}}.}
   \item{axp}{numeric vector of length three, defaulting to
-    \code{\link{par}("Zaxp")} where ``Z'' is ``x'' or ``y'' depending on
-    the \code{side} argument.}
+    \code{\link{par}("Zaxp")} where \dQuote{Z} is \dQuote{x} or
+    \dQuote{y} depending on the \code{side} argument.}
   \item{usr}{numeric vector of length four, defaulting to
-    \code{\link{par}("usr")} giving horizontal (`x') and vertical (`y')
-    user coordinate limits.}
-  \item{log}{logical indicating if log coordinates are active; defaults to
-    \code{\link{par}("Zlog")} where `Z' is as for the \code{axp} argument
-      above.}
+    \code{\link{par}("usr")} giving horizontal (\sQuote{x}) and vertical
+    (\sQuote{y}) user coordinate limits.}
+  \item{log}{logical indicating if log coordinates are active; defaults
+    to \code{\link{par}("Zlog")} where \sQuote{Z} is as for the
+    \code{axp} argument above.}
 }
 \details{
   The \code{axp}, \code{usr}, and \code{log} arguments must be consistent
@@ -39,8 +39,10 @@ axTicks(side, axp = NULL, usr = NULL, log = NULL)
   these values should be identical to those that
   \code{\link{axis}(side)} would use or has used.
 }
-\seealso{\code{\link{axis}},\code{\link{par}}.}
-
+\seealso{\code{\link{axis}}, \code{\link{par}}.  \code{\link{pretty}}
+  uses the same algorithm but is independent of the graphics
+  environment and has more options.
+}
 \examples{
  plot(1:7, 10*21:27)
  axTicks(1)

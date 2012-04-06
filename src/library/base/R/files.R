@@ -33,8 +33,13 @@ list.files <- function(path=".", pattern=NULL, all.files=FALSE,
 
 dir <- list.files
 
-file.path <- function(..., fsep=.Platform$file.sep)
-paste(..., sep=fsep)
+file.path <-
+function(..., fsep=.Platform$file.sep)
+{
+    if(any(sapply(list(...), length) == 0)) return(character())
+    paste(..., sep = fsep)
+}
+
 
 file.exists <- function(...)
 .Internal(file.exists(c(...)))
@@ -50,16 +55,18 @@ file.copy <- function(from, to, overwrite=FALSE)
     if (!(nf <- length(from))) stop("no files to copy from")
     if (!(nt <- length(to)))   stop("no files to copy to")
     if (nt == 1 && file.exists(to) && file.info(to)$isdir)
-        to <- file.path(to, from)
-    else if (nf > nt)  stop("more `from' files than `to' files")
-    if(!overwrite) {
-        if(nt > nf) from <- rep(from, length = nt)
-        exists <- file.exists(from)
-        from <- from[exists]
-        to <- to[exists]
+        to <- file.path(to, basename(from))
+    else if (nf > nt) stop("more 'from' files than 'to' files")
+    if(nt > nf) from <- rep(from, length = nt)
+    if (!overwrite) okay <- !file.exists(to)
+    else okay <- rep(TRUE, length(to))
+    if (any(from[okay] %in% to[okay]))
+        stop("file can't be copied both from and to")
+    if (any(okay)) { 
+    	file.create(to[okay])
+    	okay[okay] <- file.append(to[okay], from[okay])
     }
-    file.create(to)
-    file.append(to, from)
+    okay
 }
 
 file.symlink <- function(from, to) {
@@ -117,7 +124,7 @@ function(..., package = "base", lib.loc = NULL)
     if(nargs() == 0)
         return(file.path(.Library, "base"))
     if(length(package) != 1)
-        stop("argument `package' must be of length 1")
+        stop(paste("argument", sQuote("package"), "must be of length 1"))
     packagePath <- .find.package(package, lib.loc, quiet = TRUE)
     if(length(packagePath) == 0)
         return("")

@@ -4,7 +4,6 @@ str <- function(object, ...) UseMethod("str")
 str.data.frame <- function(object, ...)
 {
     ## Method to 'str' for  'data.frame' objects
-    ## $Id: str.R,v 1.28.2.1 2003/04/19 19:11:45 maechler Exp $
     if(! is.data.frame(object)) {
 	warning("str.data.frame(.) called with non-data.frame. Coercing one.")
 	object <- data.frame(object)
@@ -139,22 +138,23 @@ str.default <-
 			       paste("		#>#>", mod, NULL)
 			       )
 	    }
-	} else if (inherits(object,"rts") || inherits(object,"cts")
-		   || inherits(object,"its")) {
-	    tsp.a <- tspar(object)
-	    t.cl <- cl[b.ts <- substring(cl,2,3) == "ts"] # "rts" "cts" or "its"
-	    ts.kind <- switch(t.cl,
-			      rts="Regular", cts="Calendar", its="Irregular")
-	    ## from  print.summary.ts(.) :
-	    pars <- unlist(sapply(summary(object)$ pars, format,
-				  nsmall=0, digits=digits.d, justify = "none"))
-	    if(length(pars)>=4) pars <- pars[-3]
-	    pars <- paste(abbreviate(names(pars),min=2), pars,
-			  sep= "=", collapse=", ")
-	    str1 <- P0(ts.kind, " Time-Series ", le.str, " ", pars, ":")
-	    v.len <- switch(t.cl,rts=.8, cts=.6, its=.9) * v.len
-	    class(object) <- if(any(!b.ts)) cl[!b.ts]
-	    std.attr <- c(std.attr, "tspar")
+#  These are S-PLUS classes not found in R.
+# 	} else if (inherits(object,"rts") || inherits(object,"cts")
+# 		   || inherits(object,"its")) {
+# 	    tsp.a <- tspar(object)
+# 	    t.cl <- cl[b.ts <- substring(cl,2,3) == "ts"] # "rts" "cts" or "its"
+# 	    ts.kind <- switch(t.cl,
+# 			      rts="Regular", cts="Calendar", its="Irregular")
+# 	    ## from  print.summary.ts(.) :
+# 	    pars <- unlist(sapply(summary(object)$ pars, format,
+# 				  nsmall=0, digits=digits.d, justify = "none"))
+# 	    if(length(pars)>=4) pars <- pars[-3]
+# 	    pars <- paste(abbreviate(names(pars),min=2), pars,
+# 			  sep= "=", collapse=", ")
+# 	    str1 <- P0(ts.kind, " Time-Series ", le.str, " ", pars, ":")
+# 	    v.len <- switch(t.cl,rts=.8, cts=.6, its=.9) * v.len
+# 	    class(object) <- if(any(!b.ts)) cl[!b.ts]
+# 	    std.attr <- c(std.attr, "tspar")
 	} else if(is.ts(object)) {
 	    tsp.a <- tsp(object)
 	    str1 <- P0(" Time-Series ", le.str, " from ", format(tsp.a[1]),
@@ -215,10 +215,11 @@ str.default <-
 	    ##-- has.class superfluous --
 	    mod <- mode(object)
 	    give.mode <- FALSE
-	    if (any(mod == c("call", "language", "symbol", "externalptr", "weakref"))
-                || is.environment(object)) {
+	    if (any(mod == c("call", "language", "(", "symbol",
+                    "externalptr", "weakref")) || is.environment(object)) {
 		##give.mode <- !is.vector(object)#--then it has not yet been done
 		object <- deparse(object)
+                if(mod == "(") give.mode <- TRUE
 		le <- length(object) #== 1, always / depending on char.length ?
 		format.fun <- function(x)x
 		v.len <- round(.5 * v.len)

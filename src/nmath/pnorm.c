@@ -64,20 +64,22 @@ double pnorm5(double x, double mu, double sigma, int lower_tail, int log_p)
     double p, cp;
 
     /* Note: The structure of these checks has been carefully thought through.
-     * For example, if x == mu and sigma == 0, we still get the correct answer.
+     * For example, if x == mu and sigma == 0, we get the correct answer 1.
      */
 #ifdef IEEE_754
     if(ISNAN(x) || ISNAN(mu) || ISNAN(sigma))
 	return x + mu + sigma;
 #endif
-    if (sigma < 0) ML_ERR_return_NAN;
-
-    x = (x - mu) / sigma;
-    if(!R_FINITE(x)) {
-	if(ISNAN(x)) /* e.g. x=mu=Inf */ return(ML_NAN);
-	if(x < 0) return R_DT_0;
-	else return R_DT_1;
+    if(!R_FINITE(x) && mu == x) return ML_NAN;/* x-mu is NaN */
+    if (sigma <= 0) {
+	if(sigma < 0) ML_ERR_return_NAN;
+	/* sigma = 0 : */
+	return (x < mu) ? R_DT_0 : R_DT_1;
     }
+    p = (x - mu) / sigma;
+    if(!R_FINITE(p))
+	return (x < mu) ? R_DT_0 : R_DT_1;
+    x = p;
 
     pnorm_both(x, &p, &cp, (lower_tail ? 0 : 1), log_p);
 

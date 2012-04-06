@@ -89,8 +89,7 @@
 #include <unistd.h>
 #endif
 
-/* Need "" rather than <> for the Macintosh, apparently. */
-#include "Defn.h"
+#include <Defn.h>
 #include <Rmath.h>
 
 #include <Rdynpriv.h>
@@ -115,12 +114,11 @@
 # endif /* HAVE_NO_SYMBOL_UNDERSCORE */
 #endif
 
-#ifdef Macintosh
-# define HAVE_NO_SYMBOL_UNDERSCORE 
+#ifdef Win32
 # define HAVE_DYNAMIC_LOADING
 #endif
 
-#ifdef Win32
+#ifdef __APPLE_CC__
 # define HAVE_DYNAMIC_LOADING
 #endif
 
@@ -400,7 +398,7 @@ R_callDLLUnload(DllInfo *dllInfo)
     DL_FUNC f;
     R_RegisteredNativeSymbol sym;
 
-    sprintf(buf, "R_unload_%s", dllInfo->name);
+    snprintf(buf, 1024, "R_unload_%s", dllInfo->name);
     f = R_dlsym(dllInfo, buf, &sym);
     if(f) 
        f(dllInfo);
@@ -451,9 +449,6 @@ DL_FUNC Rf_lookupCachedSymbol(const char *name, const char *pkg, int all)
 {
 #ifdef CACHE_DLL_SYM
     int i;
-#ifdef Macintosh
-    all = 0;
-#endif
     for (i = 0; i < nCPFun; i++)
 	if (!strcmp(name, CPFun[i].name) && 
 	    (all || !strcmp(pkg, CPFun[i].pkg)))
@@ -740,9 +735,9 @@ static DL_FUNC R_dlsym(DllInfo *info, char const *name,
 	return(NULL);
 
 #ifdef HAVE_NO_SYMBOL_UNDERSCORE
-    sprintf(buf, "%s", name);
+    snprintf(buf, MAXIDSIZE+1, "%s", name);
 #else
-    sprintf(buf, "_%s", name);
+    snprintf(buf, MAXIDSIZE+1,"_%s", name);
 #endif
 
 #ifdef HAVE_F77_UNDERSCORE
@@ -772,11 +767,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 		     R_RegisteredNativeSymbol *symbol)
 {
     DL_FUNC fcnptr = (DL_FUNC) NULL;
-#ifndef Macintosh
     int i, all = (strlen(pkg) == 0), doit;
-#else /* cannot load locally */
-    int i, all = (strlen("") == 0), doit;
-#endif
 
     if(R_osDynSymbol->lookupCachedSymbol)
 	fcnptr = R_osDynSymbol->lookupCachedSymbol(name, pkg, all);
@@ -868,15 +859,11 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
 
 int moduleCdynload(char *module, int local, int now)
 {
-#ifndef Macintosh
     char dllpath[PATH_MAX], *p = getenv("R_HOME");
-#else
-    char dllpath[PATH_MAX], *p = R_Home;
-#endif
     int res;
 
     if(!p) return 0;
-    sprintf(dllpath, "%s%smodules%s%s%s", p, FILESEP, FILESEP, 
+    snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", p, FILESEP, FILESEP, 
 	    module, SHLIB_EXT);
     res = AddDLL(dllpath, local, now);
     if(!res)
@@ -1023,10 +1010,6 @@ R_getSymbolInfo(SEXP sname, SEXP spackage)
 
 void InitFunctionHashing()
 {
-#ifdef OLD
-    NaokSymbol = install("NAOK");
-    DupSymbol = install("DUP");
-#endif
 }
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg, 

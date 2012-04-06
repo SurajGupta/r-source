@@ -24,7 +24,7 @@ use R::Rdconv;
 use R::Rdlists;
 use R::Utils;
 
-my $revision = ' $Revision: 1.12 $ ';
+my $revision = ' $Revision: 1.14 $ ';
 my $version;
 my $name;
 
@@ -40,6 +40,8 @@ GetOptions (@knownoptions) || usage();
 
 $OSdir ="unix";
 $OSdir = $opt_os if $opt_os;
+
+$AQUAdir = "aqua" if($ENV{"R_USE_AQUA_SUBDIRS"} eq "yes");
 
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
 

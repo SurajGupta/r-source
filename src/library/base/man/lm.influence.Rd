@@ -2,8 +2,8 @@
 \title{Regression Diagnostics}
 \usage{
 influence(model, \dots)
-influence.lm (model, do.coef = TRUE, \dots)
-influence.glm(model, do.coef = TRUE, \dots)
+\method{influence}{lm}(model, do.coef = TRUE, \dots)
+\method{influence}{glm}(model, do.coef = TRUE, \dots)
 
 lm.influence(model, do.coef = TRUE)
 }
@@ -27,14 +27,24 @@ lm.influence(model, do.coef = TRUE)
   \bold{See Also} provide a more user oriented way of computing a
   variety of regression diagnostics.  These all build on
   \code{lm.influence}.
+
+  An attempt is made to ensure that computed hat values that are
+  probably one are treated as one, and the corresponding rows in
+  \code{sigma} and \code{coefficients} are \code{NaN}.  (Dropping such a
+  case would normally result in a variable being dropped, so it is not
+  possible to give simple drop-one diagnostics.)
 }
 \value{
   A list containing the following components of the same length or
   number of rows \eqn{n}, which is the number of non-zero weights.
-  \item{hat}{a vector containing the diagonal of the ``hat'' matrix.}
+  Cases omitted in the fit are omitted unless a \code{\link{na.action}}
+  method was used (such as \code{\link{na.exclude}}) which restores them.
+  
+  \item{hat}{a vector containing the diagonal of the \dQuote{hat} matrix.}
   \item{coefficients}{(unless \code{do.coef} is false) a matrix whose
     i-th row contains the change in the estimated coefficients which
-    results when the i-th case is dropped from the regression.}
+    results when the i-th case is dropped from the regression.  Note
+    that aliased coefficients are not included in the matrix.}
   \item{sigma}{a vector whose i-th element contains the estimate
     of the residual standard deviation obtained when the i-th
     case is dropped from the regression.}
@@ -84,6 +94,6 @@ summary(lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi,
         corr = TRUE)
 str(lmI <- lm.influence(lm.SR))
 
-## For more `user level' examples, use example(influence.measures)
+## For more "user level" examples, use example(influence.measures)
 }
 \keyword{regression}

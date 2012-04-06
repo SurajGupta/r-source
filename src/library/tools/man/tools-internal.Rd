@@ -1,15 +1,10 @@
 \name{tools-internal}
 \title{Internal tools Objects}
-% \alias{.convertFilePathToAbsolute}
-% \alias{.delimMatch}
-% \alias{.fileTest}
 % \alias{.isS3Generic}
-% \alias{.listFilesWithExts}
 % \alias{.loadPackageQuietly}
 % \alias{.makeFileExts}
 % \alias{.makeS3MethodsStopList}
 % \alias{.sourceAssignments}
-% \alias{sQuote}
 % \alias{SweaveParseOptions}
 % \alias{SweaveHooks}
 % \alias{RweaveLatexRuncode}
@@ -28,6 +23,7 @@
 % \alias{Rdinfo}
 % \alias{Rdcontents}
 % \alias{Rd2contents}
+\alias{.installPacakgeCodeFiles}
 \alias{.installPackageDescription}
 \alias{.installPackageIndices}
 % \alias{.installPackageRdIndices}
@@ -48,13 +44,12 @@
   Internal tools functions.
 }
 \usage{
-% sQuote(s)
-% .convertFilePathToAbsolute(path)
-% .delimMatch(x, delim = c("{", "}"), syntax = "Rd")
-% .fileTest(op, x, y)
+RweaveLatexOptions(options)
+RtangleWritedoc(object, chunk)
+buildVignettes(package, dir, lib.loc = NULL)
+pkgVignettes(package, dir, lib.loc = NULL)
+
 % .isS3Generic(fname, envir)
-% .listFilesWithExts(dir, exts, path = TRUE)
-% .listFilesWithType(dir, type)
 % .loadPackageQuietly(package, lib.loc)
 % .makeFileExts(type)
 % .makeS3MethodsStopList(package)
@@ -70,6 +65,7 @@
 % .buildDemoIndex(demoDir)
 % .buildRdIndex(contents, type = NULL)
 % .buildVignetteIndex(vignetteDir)
+.installPackageCodeFiles(dir, outDir)
 .installPackageDescription(dir, outDir)
 .installPackageIndices(dir, outDir)
 % .installPackageRdIndices(dir, outDir)

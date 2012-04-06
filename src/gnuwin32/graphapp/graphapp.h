@@ -450,6 +450,7 @@ bitmap	imagetobitmap(image img);
 bitmap	createbitmap(int width, int height, int depth, byte *data);
 void	setbitmapdata(bitmap b, byte data[]);
 void	getbitmapdata(bitmap b, byte data[]);
+void	getbitmapdata2(bitmap b, byte **data, int *row_bytes);
 
 /*
  *  Images.
@@ -488,6 +489,7 @@ void	drawbrighter(image img, rect dr, rect sr);
 window	newwindow(char *name, rect r, long flags);
 void	show(window w);
 void	hide(window w);
+rect    GetCurrentWinPos(window obj);
 
 /*
  *  Window creation flags.

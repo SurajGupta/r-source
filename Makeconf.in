@@ -1,6 +1,8 @@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
+include $(top_srcdir)/share/make/vars.mk
+
 AR = @AR@
 ACLOCAL = @ACLOCAL@
 AUTOCONF = @AUTOCONF@
@@ -18,6 +20,9 @@ DEFS = @DEFS@
 DISTDIR_TAR_EXCLUDE = --exclude=CVS --exclude=Makefile --exclude="*.o" --exclude="*$(SHLIB_EXT)"
 DVIPS = @DVIPS@
 DYLIB_EXT = @DYLIB_EXT@
+DYLIB_LD = @DYLIB_LD@
+DYLIB_LDFLAGS = @DYLIB_LDFLAGS@
+DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -53,13 +58,10 @@ MAIN_LDFLAGS = @MAIN_LDFLAGS@
 @USE_LIBTOOL_FALSE@MAIN_LINK = $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
 @USE_LIBTOOL_TRUE@MAIN_LINK = $(LIBTOOL) --mode=link $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
 MAKEINDEX = @MAKEINDEX@
-MKINSTALLDIRS = $(top_srcdir)/tools/mkinstalldirs
+MKINSTALLDIRS = $(SHELL) $(top_srcdir)/src/scripts/mkinstalldirs
 PERL = @PERL@
 R_GUIS = @R_GUIS@
 R_OSTYPE = @R_OSTYPE@
-R_PKGS_BASE = base ctest eda lqs methods modreg mva nls splines stepfun tcltk tools ts
-R_PKGS_RECOMMENDED = survival boot cluster foreign grid lattice KernSmooth mgcv nlme rpart VR
-R_PKGS_RECOMMENDED_EXPANDED = survival boot cluster foreign grid lattice KernSmooth mgcv nlme rpart MASS nnet spatial class
 R_PKGS = $(R_PKGS_BASE) @USE_RECOMMENDED_PACKAGES_TRUE@ $(R_PKGS_RECOMMENDED)
 R_PLATFORM = @R_PLATFORM@
 R_XTRA_CFLAGS = @R_XTRA_CFLAGS@

@@ -1,8 +1,7 @@
 \name{exists}
 \title{Is an Object Defined?}
 \usage{
-exists(x, where = -1, envir = parent.frame(),
-       frame = NULL, mode = "any", inherits = TRUE)
+exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)
 }
 \alias{exists}
 \arguments{
@@ -32,7 +31,7 @@ exists(x, where = -1, envir = parent.frame(),
   access the currently active function calls).
   The \code{envir} argument is an alternative way to specify an
   environment, but is primarily there for back compatibility.
-  
+
   This function looks to see if the name \code{x} has a value bound to it.
   If \code{inherits} is \code{TRUE} and a value is not found for \code{x},
   then the parent frames of the environment are searched until the name

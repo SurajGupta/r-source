@@ -27,7 +27,7 @@ de(\dots, Modes = list(), Names = NULL)
   The data entry editor is only available on some platforms and GUIs.
   Where available it provides a means to visually edit a matrix or
   a collection of variables (including a data frame) as described in the
-  ``Notes'' section.
+  \dQuote{Notes} section.
   
   \code{data.entry} has side
   effects, any changes made in the spreadsheet are reflected in the
@@ -174,9 +174,6 @@ de(\dots, Modes = list(), Names = NULL)
 \seealso{
   \code{\link{vi}}, \code{\link{edit}}: \code{edit} uses
   \code{dataentry} to edit data frames.
-}
-\section{Warning}{
-    At present the data editor is limited to 65535 rows.
 }
 \examples{
 # call data entry with variables x and y

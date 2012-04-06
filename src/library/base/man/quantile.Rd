@@ -9,6 +9,8 @@
   largest to a probability of 1.
 }
 \usage{
+quantile(x, \dots)
+
 \method{quantile}{default}(x, probs = seq(0, 1, 0.25), na.rm = FALSE,
          names = TRUE, \dots)
 }
@@ -42,10 +44,11 @@
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link[stepfun]{ecdf}} (in the \code{stepfun} package) for
-  empirical distributions of which \code{quantile} is the "inverse".
+  \code{\link[stepfun]{ecdf}} (in the \pkg{stepfun} package) for
+  empirical distributions of which \code{quantile} is the
+  \dQuote{inverse};
   \code{\link{boxplot.stats}} and \code{\link{fivenum}} for computing
-  ``versions'' of quartiles, etc.
+  \dQuote{versions} of quartiles, etc.
 }
 \examples{
 quantile(x <- rnorm(1001))# Extremes & Quartiles by default

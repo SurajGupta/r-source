@@ -184,6 +184,9 @@
 /* Define if external LAPACK is available. */
 #undef HAVE_LAPACK
 
+/* Define to 1 if you have the `cc_dynamic' library (-lcc_dynamic). */
+#undef HAVE_LIBCC_DYNAMIC
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
@@ -378,6 +381,9 @@
 /* Define if log() is correct for 0/-1. */
 #undef HAVE_WORKING_LOG
 
+/* Define if log1p() exists and is accurate enough. */
+#undef HAVE_WORKING_LOG1P
+
 /* Define if strptime() exists and does not fail pre-1970. */
 #undef HAVE_WORKING_STRPTIME
 
@@ -393,9 +399,6 @@
 
 /* Define if you have 32 bit ints. */
 #undef INT_32_BITS
-
-/* Define according to your operating system type. */
-#undef Macintosh
 
 /* Define if your system needs __setfpucw() to control FPU rounding. This was
    used to control floating point precision, rounding and floating point

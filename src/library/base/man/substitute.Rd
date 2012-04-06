@@ -29,7 +29,7 @@ quote(expr)
 
   Substitution takes place by examining each component of the parse tree
   as follows: If it is not a bound symbol in \code{env}, it is
-  unchanged. If it is a promise object, i.e. a formal argument to a
+  unchanged. If it is a promise object, i.e., a formal argument to a
   function or explicitly created using \code{\link{delay}()}, the expression
   slot of the promise replaces the symbol. If it is an ordinary
   variable, its value is substituted, unless \code{env} is
@@ -56,7 +56,10 @@ quote(expr)
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{missing}} for argument ``missingness''.
+  \code{\link{missing}} for argument \dQuote{missingness},
+  \code{\link{bquote}} for partial substitution,
+  \code{\link{sQuote}} and \code{\link{dQuote}} for adding quotation
+  marks to strings.
 }
 \examples{
 (s.e <- substitute(expression(a + b), list(a = 1)))  #> expression(1 + b)

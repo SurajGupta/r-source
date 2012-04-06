@@ -11,8 +11,8 @@
   text and the output of the statistical anlysis. 
 }
 \usage{
-Sweave(file, driver=RWeaveLatex(), syntax=getOption("SweaveSyntax"), ...)
-Stangle(file, driver=RTangle(), syntax=getOption("SweaveSyntax"), ...)
+Sweave(file, driver=RweaveLatex(), syntax=getOption("SweaveSyntax"), ...)
+Stangle(file, driver=Rtangle(), syntax=getOption("SweaveSyntax"), ...)
 }
 \arguments{
   \item{file}{Name of Sweave source file.}
@@ -91,6 +91,6 @@ Stangle(testfile)
 ## which can be simply sourced
 source("Sweave-test-1.R")
 
-\testonly{if(!interactive()) unlink("Sweave-test-1*")}
+\dontshow{if(!interactive()) unlink("Sweave-test-1*")}
 }
 \keyword{utilities}

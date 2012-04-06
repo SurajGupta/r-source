@@ -108,20 +108,22 @@ extern int isValidName(char*);
 typedef R_StringBuffer DeparseBuffer;
 
 typedef struct {
- int linenumber;
- int len;
- int incurly;
- int inlist;
- Rboolean startline; /* = TRUE; */
- int indent;
- SEXP strvec;
-
- DeparseBuffer buffer;
-
- int cutoff;
+    int linenumber;
+    int len;
+    int incurly;
+    int inlist;
+    Rboolean startline; /* = TRUE; */
+    int indent;
+    SEXP strvec;
+	
+    DeparseBuffer buffer;
+    
+    int cutoff;
+    int backtick;
 } LocalParseData;
 
-static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff);
+static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff, 
+			       Rboolean backtick);
 static void args2buff(SEXP, int, int, LocalParseData *);
 static void deparse2buff(SEXP, LocalParseData *);
 static void print2buff(char *, LocalParseData *);
@@ -173,7 +175,7 @@ void R_FreeStringBuffer(DeparseBuffer *buf)
 SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ca1;
-    int  cut0;
+    int  cut0, backtick;
     /*checkArity(op, args);*/
     if(length(args) < 1) errorcall(call, "too few arguments");
 
@@ -186,16 +188,22 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    cut0 = DEFAULT_Cutoff;
 	}
     }
-    ca1 = deparse1WithCutoff(ca1, 0, cut0);
+    args = CDR(args);
+    backtick = 0;
+    if(!isNull(CAR(args))) 
+	backtick = asLogical(CAR(args));
+    ca1 = deparse1WithCutoff(ca1, 0, cut0, backtick);
     return ca1;
 }
 
 SEXP deparse1(SEXP call, Rboolean abbrev)
 {
-    return(deparse1WithCutoff(call, abbrev, DEFAULT_Cutoff));
+    Rboolean backtick = TRUE;
+    return(deparse1WithCutoff(call, abbrev, DEFAULT_Cutoff, backtick));
 }
 
-static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff)
+static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff, 
+			       Rboolean backtick)
 {
 /* Arg. abbrev:
 	If abbrev is TRUE, then the returned value
@@ -213,9 +221,10 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff)
 	    {0, 0, 0, 0, /*startline = */TRUE, 0,
 	     NULL,
 	     /*DeparseBuffer=*/{NULL, 0, BUFSIZE},
-	     DEFAULT_Cutoff};
+	     DEFAULT_Cutoff, 0};
     DeparseBuffer *buffer = &localData.buffer;
     localData.cutoff = cutoff;
+    localData.backtick = backtick;
     localData.strvec = R_NilValue;
 
     PrintDefaults(R_NilValue);/* from global options() */
@@ -247,8 +256,9 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff)
 SEXP deparse1line(SEXP call, Rboolean abbrev)
 {
    SEXP temp;
+   Rboolean backtick=TRUE;
 
-   temp = deparse1WithCutoff(call, abbrev, MAX_Cutoff);
+   temp = deparse1WithCutoff(call, abbrev, MAX_Cutoff, backtick);
    return(temp);
 }
 
@@ -296,12 +306,25 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (CAR(args));
 }
 
+static Rboolean need_quotes(char *name)
+{
+    char *p;
+    /* check for illegal chars */
+    for (p = name; *p; p++)
+	if(!isalnum((int) *p) && *p != '.') return TRUE;
+    /* name has to start with alpha or ., and not with .[0-9] */
+    if (isalpha((int) name[0])) return FALSE;
+    /* now must start with a . */
+    return isdigit((int) name[1]);
+}
+
 SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, names, o, objs, tval, source;
     int i, j, nobjs, res;
     Rboolean wasopen, havewarned = FALSE;
     Rconnection con;
+    char *obj_name;
 
     checkArity(op, args);
 
@@ -327,7 +350,12 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     o = objs;
     if(INTEGER(file)[0] == 1) {
 	for (i = 0; i < nobjs; i++) {
-	    Rprintf("\"%s\" <-\n", CHAR(STRING_ELT(names, i)));
+	    obj_name = CHAR(STRING_ELT(names, i));
+	    /* figure out if we need to quote the name */
+	    if(need_quotes(obj_name))
+		Rprintf("\"%s\" <-\n", obj_name);
+	    else
+		Rprintf("%s <-\n", obj_name);
 	    if (TYPEOF(CAR(o)) != CLOSXP ||
 		isNull(tval = getAttrib(CAR(o), R_SourceSymbol)))
 	    tval = deparse1(CAR(o), 0);
@@ -527,7 +555,32 @@ static void printcomment(SEXP s, LocalParseData *d)
     }
 }
 
-	/* This is the recursive part of deparsing. */
+static char * backquotify(char *s)
+{
+    static char buf[120];
+    char *t = buf;
+ 
+    /* If a symbol is not a valid name, put it in backquotes, escaping
+     * any backquotes in the string itself */
+
+    /* NOTE: This could be fragile if sufficiently weird names are
+     * used. Ideally, we should insert backslash escapes, etc. */
+
+    if (isValidName(s) || *s == '\0') return s;
+
+    *t++ = '`';
+    while ( *s ) {
+	if ( *s  == '`' || *s == '\\' ) 
+	    *t++ = '\\';
+	*t++ = *s++;
+    }
+    *t++ = '`';
+    *t = '\0';
+    return buf;
+}
+	
+/* This is the recursive part of deparsing. */
+
 
 static void deparse2buff(SEXP s, LocalParseData *d)
 {
@@ -541,14 +594,17 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	print2buff("NULL", d);
 	break;
     case SYMSXP:
-	print2buff(CHAR(PRINTNAME(s)), d);
+	if (d->backtick)
+	    print2buff(backquotify(CHAR(PRINTNAME(s))), d);
+	else
+	    print2buff(CHAR(PRINTNAME(s)), d);
 	break;
     case CHARSXP:
 	print2buff(CHAR(s), d);
 	break;
     case SPECIALSXP:
     case BUILTINSXP:
-	sprintf(tpb, ".Primitive(\"%s\")", PRIMNAME(s));
+	snprintf(tpb, 120, ".Primitive(\"%s\")", PRIMNAME(s));
 	print2buff(tpb, d);
 	break;
     case PROMSXP:
@@ -559,7 +615,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	args2buff(FORMALS(s), 0, 1, d);
 	print2buff(") ", d);
 	writeline(d);
-	deparse2buff(BODY(s), d);
+	deparse2buff(BODY_EXPR(s), d);
 	break;
     case ENVSXP:
 	print2buff("<environment>", d);
@@ -761,7 +817,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    deparse2buff(CAR(s), d);
 		    if (parens)
 			print2buff(")", d);
-		    deparse2buff(op, d);
+		    print2buff(CHAR(PRINTNAME(op)), d);
 		    /*temp fix to handle printing of x$a's */
 		    if( isString(CADR(s)) &&
 			isValidName(CHAR(STRING_ELT(CADR(s), 0))))
@@ -856,6 +912,13 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    	print2buff("::", d);
 			deparse2buff(CADDR(s), d);
 		    }
+		    else if ( isSymbol(CAR(s))
+		      && TYPEOF(SYMVALUE(CAR(s))) == CLOSXP
+		      && streql(CHAR(PRINTNAME(CAR(s))), ":::") ){ /*  ::: is special case */
+		    	deparse2buff(CADR(s), d);
+		    	print2buff(":::", d);
+			deparse2buff(CADDR(s), d);
+		    }
 		    else {
 			if ( isSymbol(CAR(s)) ){
 			    if ( !isValidName(CHAR(PRINTNAME(CAR(s)))) ){
@@ -902,6 +965,11 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	sprintf(tpb, "<pointer: %p>", R_ExternalPtrAddr(s));
 	print2buff(tpb, d);
 	break;
+#ifdef BYTECODE
+    case BCODESXP:
+	print2buff("<bytecode>", d);
+	break;
+#endif
     case WEAKREFSXP:
 	sprintf(tpb, "<weak reference>");
 	print2buff(tpb, d);
@@ -1041,7 +1109,7 @@ static void args2buff(SEXP arglist, int lineb, int formals, LocalParseData *d)
 		print2buff(CHAR(PRINTNAME(s)), d);
 	    else {
 		if( strlen(CHAR(PRINTNAME(s)))< 117 ) {
-		    sprintf(tpb,"\"%s\"",CHAR(PRINTNAME(s)));
+		    snprintf(tpb, 120, "\"%s\"",CHAR(PRINTNAME(s)));
 		    print2buff(tpb, d);
 		}
 		else {

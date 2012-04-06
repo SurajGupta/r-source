@@ -17,10 +17,9 @@ proc.time()
   them to be recorded to of the order of 1/100 second, and elapsed
   time is rounded to the nearest 1/100.
 
-  It is most useful for ``timing'' the evaluation of \R expressions,
+  It is most useful for \dQuote{timing} the evaluation of \R expressions,
   which can be done conveniently with \code{\link{system.time}}.
 }
-#ifndef mac
 \note{
 #ifdef unix
   It is possible to compile \R without support for \code{proc.time},
@@ -28,11 +27,10 @@ proc.time()
 #endif
 #ifdef windows
   CPU times will be returned as \code{NA} on Windows 9x/ME systems, but
-  are genuine times on NT4 and 2000 systems. Times of child processes are
+  are genuine times on NT4/2000/XP systems. Times of child processes are
   not available and will always be given as \code{NA}.
 #endif
 }
-#endif
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.

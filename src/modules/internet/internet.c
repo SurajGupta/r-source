@@ -60,14 +60,17 @@ static Rboolean url_open(Rconnection con)
     UrlScheme type = ((Rurlconn)(con->private))->type;
 
     if(con->mode[0] != 'r') {
-	error("can only open URLs for reading");
+	REprintf("can only open URLs for reading");
+	return FALSE;
     }
 
     switch(type) {
     case HTTPsh:
 	ctxt = in_R_HTTPOpen(url, 0);
 	if(ctxt == NULL) {
-	    error("cannot open URL `%s'", url);
+	  /* if we call error() we get a connection leak*/
+	  /* so do_url has to raise the error*/
+	  /* error("cannot open URL `%s'", url); */
 	    return FALSE;
 	}
 	((Rurlconn)(con->private))->ctxt = ctxt;
@@ -75,7 +78,9 @@ static Rboolean url_open(Rconnection con)
     case FTPsh:
 	ctxt = in_R_FTPOpen(url);
 	if(ctxt == NULL) {
-	    error("cannot open URL `%s'", url);
+	  /* if we call error() we get a connection leak*/
+	  /* so do_url has to raise the error*/
+	  /* error("cannot open URL `%s'", url); */
 	    return FALSE;
 	}
 	((Rurlconn)(con->private))->ctxt = ctxt;
@@ -443,7 +448,7 @@ void *in_R_HTTPOpen(const char *url, int cacheOK)
 	int rc = RxmlNanoHTTPReturnCode(ctxt);
 	if(rc != 200) {
 	    RxmlNanoHTTPClose(ctxt);
-	    error("cannot open: HTTP status was `%d %s'", rc,
+	    warning("cannot open: HTTP status was `%d %s'", rc,
 		  RxmlNanoHTTPStatusMsg(ctxt));
 	    return NULL;
 	} else {
@@ -560,7 +565,7 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 {
     WIctxt  wictxt;
     DWORD status, d1 = 4, d2 = 0, d3 = 100;
-    char buf[101];
+    char buf[101], *p;
 
 /*	BOOL res = InternetAttemptConnect(0);
 
@@ -582,7 +587,8 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 	             );
     if(!wictxt->hand) {
 	free(wictxt);
-	error("cannot open Internet connection");
+	/* error("cannot open Internet connection"); */
+	return NULL;
     }
 
 #ifdef USE_WININET_ASYNC
@@ -612,7 +618,8 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 	if(callback_status != INTERNET_STATUS_REQUEST_COMPLETE) {
 	    InternetCloseHandle(wictxt->hand);
 	    free(wictxt);
-	    error("InternetOpenUrl timed out");
+	    warning("InternetOpenUrl timed out");
+	    return NULL;
 	}
     }
 
@@ -633,7 +640,13 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 	free(wictxt);
 	if (err1 == ERROR_INTERNET_EXTENDED_ERROR) {
 	    InternetGetLastResponseInfo(&err2, buf, &blen);
-	    error("InternetOpenUrl failed: `%s'", buf);
+	    /* some of these messages end in \r\n */
+	    while(1) {
+		p = buf + strlen(buf) - 1;
+		if(*p == '\n' || *p == '\r') *p = '\0'; else break;
+	    }
+	    warning("InternetOpenUrl failed: `%s'", buf);
+	    return NULL;
 	} else {
 	    FormatMessage( 
 		FORMAT_MESSAGE_FROM_HMODULE,
@@ -641,7 +654,13 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 		err1,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		buf, 101, NULL);
-	    error("InternetOpenUrl failed: `%s'", buf);
+	    /* some of these messages end in \r\n */
+	    while(1) {
+		p = buf + strlen(buf) - 1;
+		if(*p == '\n' || *p == '\r') *p = '\0'; else break;
+	    }
+	    warning("InternetOpenUrl failed: `%s'", buf);
+	    return NULL;
 	}
     }
 
@@ -655,7 +674,8 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 	InternetCloseHandle(wictxt->session);
 	InternetCloseHandle(wictxt->hand);
 	free(wictxt);
-	error("cannot open: HTTP status was `%d %s'", status, buf);
+	warning("cannot open: HTTP status was `%d %s'", status, buf);
+	return NULL;
     }
 
     HttpQueryInfo(wictxt->session,
@@ -725,7 +745,7 @@ static void *in_R_FTPOpen(const char *url)
 	             );
     if(!wictxt->hand) {
 	free(wictxt);
-	error("cannot open Internet connection");
+	return NULL;
     }
 
 #ifdef USE_WININET_ASYNC
@@ -754,7 +774,8 @@ static void *in_R_FTPOpen(const char *url)
 	if(callback_status != INTERNET_STATUS_REQUEST_COMPLETE) {
 	    InternetCloseHandle(wictxt->hand);
 	    free(wictxt);
-	    error("InternetOpenUrl timed out");
+	    warning("InternetOpenUrl timed out");
+	    return NULL;
 	}
     }
 
@@ -775,7 +796,8 @@ static void *in_R_FTPOpen(const char *url)
 	free(wictxt);
 	if (err1 == ERROR_INTERNET_EXTENDED_ERROR) {
 	    InternetGetLastResponseInfo(&err2, buf, &blen);
-	    error("InternetOpenUrl failed: `%s'", buf);
+	    warning("InternetOpenUrl failed: `%s'", buf);
+	    return NULL;
 	} else {
 	    FormatMessage( 
 		FORMAT_MESSAGE_FROM_HMODULE,
@@ -783,7 +805,8 @@ static void *in_R_FTPOpen(const char *url)
 		err1,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		buf, 101, NULL);
-	    error("InternetOpenUrl failed: `%s'", buf);
+	    warning("InternetOpenUrl failed: `%s'", buf);
+	    return NULL;
 	}
     }
 #endif /* USE_WININET_ASYNC */
@@ -851,8 +874,7 @@ void RxmlMessage(int level, const char *format, ...)
     va_end(ap);
     p = buf + strlen(buf) - 1;
     if(strlen(buf) > 0 && *p == '\n') *p = '\0';
-    REprintf(buf);
-    REprintf("\n");
+    warning(buf);
 }
 
 #include "sock.h"
@@ -888,5 +910,7 @@ void R_init_internet(DllInfo *info)
     tmp->sockclose = in_Rsockclose;
     tmp->sockread = in_Rsockread;
     tmp->sockwrite = in_Rsockwrite;
+
+    tmp->sockselect = in_Rsockselect;
     R_setInternetRoutines(tmp);
 }

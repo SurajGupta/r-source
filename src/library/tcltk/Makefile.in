@@ -11,7 +11,7 @@ subdir = src/library/tcltk
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = DESCRIPTION.in Makefile.in
+DISTFILES = DESCRIPTION.in Makefile.in NAMESPACE
 
 pkg = tcltk
 
@@ -24,8 +24,12 @@ all: Makefile DESCRIPTION
 	  else \
 	    cp $(srcdir)/R/unix/zzz.Rstub $${f}; \
 	  fi; \
-	  $(top_srcdir)/tools/move-if-change $${f} \
+	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
 	    $(top_builddir)/library/$(pkg)/R/$(pkg))
+	@if test @use_tcltk@ = yes; then \
+	  $(INSTALL_DATA) $(srcdir)/NAMESPACE \
+	    $(top_builddir)/library/$(pkg); \
+	fi;
 	@for f in COPYRIGHTS INDEX SOURCES; do \
 	  if test -f $(srcdir)/$${f}; then \
 	    $(INSTALL_DATA) $(srcdir)/$${f} \
@@ -34,11 +38,13 @@ all: Makefile DESCRIPTION
 	done
 	@if test -f DESCRIPTION; then \
 	  $(INSTALL_DATA) DESCRIPTION $(top_builddir)/library/$(pkg); \
-	  (if test -d $(srcdir)/src; then \
-	      echo "Built: R" $(VERSION)\;  $(R_PLATFORM)\;  `date`; \
-	    else \
-	      echo "Built: R" $(VERSION)\;  \;  `date`; \
-	    fi) >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
+	  (tmp="Built: R $(VERSION); "; \
+	    if test -d $(srcdir)/src; then \
+	      tmp="$${tmp}$(R_PLATFORM)"; \
+	    fi; \
+	    tmp="$${tmp}; `date`; $(R_OSTYPE)"; \
+	    echo "$${tmp}") \
+	    >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
 	fi
 	@if test -d $(srcdir)/data; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/data; \
@@ -64,7 +70,7 @@ all: Makefile DESCRIPTION
 	    for rdfile in $(srcdir)/man/*.Rd; do \
 	      cat $${rdfile}; echo '\eof'; \
 	    done >> $${f}; \
-	    $(top_srcdir)/tools/move-if-change $${f} \
+	    $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
 	      $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
 	fi
 	@if test -d src -a @use_tcltk@ = yes; then \

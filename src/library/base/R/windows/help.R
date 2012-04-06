@@ -13,11 +13,7 @@ help <-
         if (is.name(y <- substitute(package)))
             package <- as.character(y)
     if (!missing(topic)) {
-        topic <- substitute(topic)
-        if (is.name(topic))
-            topic <- as.character(topic)
-        else if (!is.character(topic))
-            stop("Unimplemented help feature")
+        if (!is.character(topic)) topic <- deparse(substitute(topic))
         # for cmd/help ..
         if (!is.na(match(topic, c("+", "-", "*", "/", "^", "%%"))))
             topic <- "Arithmetic"
@@ -52,6 +48,7 @@ help <-
                     if(file.exists(hlpfile)) {
                         err <- .C("Rchtml", hlpfile, topic,
                                   err = integer(1), PACKAGE = "")$err
+                        if(err) stop("CHM file could not be displayed")
                         if(verbose)
                             cat("help() for `", topic,
                                 "' is shown in Compiled HTML\n",

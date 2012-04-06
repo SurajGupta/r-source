@@ -3,19 +3,22 @@
 \alias{formula.lm}
 \alias{residuals.lm}
 \alias{weights}
-\alias{weights.lm}
 \alias{weights.default}
 \title{Accessing Linear Model Fits}
 \usage{
 \method{family}{lm}(object, \dots)
+
 \method{formula}{lm}(x, \dots)
+
 \method{residuals}{lm}(object,
-          type=c("working","response", "deviance","pearson", "partial"), \dots)
+          type = c("working", "response", "deviance","pearson", "partial"),
+          \dots)
+
 weights(object, \dots)
 }
 \arguments{
-  \item{object, x}{an object of class \code{lm}, usually, a result of a
-    call to \code{\link{lm}}.}
+  \item{object, x}{an object inheriting from class \code{lm}, usually
+    the result of a call to \code{\link{lm}} or \code{\link{aov}}.}
   \item{\dots}{further arguments passed to or from other methods.}
   \item{type}{the type of residuals which should be returned.}
 }
@@ -27,12 +30,12 @@ weights(object, \dots)
   \code{fitted} and \code{residuals} can be used to extract
   various useful features of the value returned by \code{lm}.
 
-  The working and response residuals are ``observed - fitted''.  The
+  The working and response residuals are \dQuote{observed - fitted}.  The
   deviance and pearson residuals are weighted residuals, scaled by the
   square root of the weights used in fitting.  The partial residuals
   are a matrix with each column formed by omitting a term from the
   model.  In all these, zero weight cases are never omitted (as opposed
-  to the standardized \code{\link{rstudent}} and \code{}similarobservations
+  to the standardized \code{\link{rstudent}} residuals).
 
 }
 \seealso{
@@ -54,7 +57,7 @@ weights(object, \dots)
   eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
 }
 \examples{
-\testonly{example("lm", echo = FALSE)}
+\dontshow{example("lm", echo = FALSE)}
 ##-- Continuing the  lm(.) example:
 coef(lm.D90)# the bare coefficients
 

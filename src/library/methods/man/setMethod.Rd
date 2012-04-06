@@ -6,8 +6,8 @@
   Create and save a formal method for a given function and list of classes.
 }
 \usage{
-setMethod(f, signature=character(), definition, where=1, valueClass,
-          sealed = FALSE)
+setMethod(f, signature=character(), definition, where= topenv(parent.frame()),
+          valueClass = NULL, sealed = FALSE)
 
 removeMethod(f, signature, where)
 }
@@ -21,8 +21,8 @@ removeMethod(f, signature, where)
   \item{definition}{ A function definition, which will become the method
     called when the arguments in a call to \code{f} match the
     classes in \code{signature}, directly or through inheritance. }
-  \item{where}{ The database in which to store the definition of the
-    method; by default, the current global environment.
+  \item{where}{the database in which to store the definition of the
+    method; % FIXME: by default, the ... environment.
 
     For \code{removeMethod}, the default is the location of the (first)
     instance of the method for this signature.}
@@ -67,9 +67,9 @@ removeMethod(f, signature, where)
   appear in the call in order to match this signature.  Don't confuse
   these two:  if an argument isn't mentioned in a signature, it
   corresponds implicitly to class \code{"ANY"}, not to
-  \code{"missing"}.  See the example below. Old-style (``S3'') classes
-  can also be used, if you need compatibility with these, but you
-  should definitely declare these classes by calling
+  \code{"missing"}.  See the example below.  Old-style (\dQuote{S3})
+  classes can also be used, if you need compatibility with these, but
+  you should definitely declare these classes by calling
   \code{\link{setOldClass}} if you want S3-style inheritance to work.
 
 
@@ -78,7 +78,7 @@ removeMethod(f, signature, where)
   the definition for a single generic function.  When R proceeds to
   select and evaluate methods for \code{f}, the methods on the current
   search list are merged to form a single methods list.  When \code{f}
-  is called and a method is ``dispatched'', the evaluator matches the
+  is called and a method is \dQuote{dispatched}, the evaluator matches the
   classes of the actual arguments to the signatures of the available
   methods.  When a match is found, the body of the corresponding
   method is evaluated (in R, the body is evaluated in the lexical
@@ -93,7 +93,7 @@ removeMethod(f, signature, where)
   \code{f}.  (What actually happens is that a local function is
   created inside the method, with its formal arguments, and the method
   is re-defined to call that local function.)
- 
+
   Method dispatch tries to match the class of the actual arguments in a
   call to the available methods collected for \code{f}.  Roughly, for
   each formal argument in turn, we look for the best match (the exact
@@ -104,23 +104,22 @@ removeMethod(f, signature, where)
 
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
-  programming interface for classes
-  and methods in the book \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
-  and chapters 7 and 8.
+  The R package \pkg{methods} implements, with a few exceptions, the
+  programming interface for classes and methods in the book
+  \emph{Programming with Data} (John M. Chambers, Springer, 1998), in
+  particular sections 1.6, 2.7, 2.8, and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page 
+  discussion of details and ongoing development, see the web page
   \url{http://developer.r-project.org/methodsPackage.html} and the
   pointers from that page.
 }
 \examples{
-\testonly{  require(modreg)
+\dontshow{  require(modreg)
   setClass("track",
     representation(x="numeric", y = "numeric"))
   setClass("trackCurve", representation("track",
@@ -189,7 +188,7 @@ setGeneric("summary") ## make the function into a generic
 
 setMethod("summary", "missing", function() "<No Object>")
 
-\testonly{
+\dontshow{
 
 stopifnot(identical(summary(), "<No Object>"))
 

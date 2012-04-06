@@ -8,61 +8,69 @@
 \alias{[<-}
 \alias{[[<-}
 \alias{$<-}
-%- methods
-\alias{[.data.frame}
-\alias{[[.data.frame}
-\alias{[<-.data.frame}
-\alias{[[<-.data.frame}
+%- methods not documented elsewhere
 \alias{[.formula}
 \alias{[.ts}
-\alias{[.noquote}
 \alias{.subset}
 \alias{.subset2}
 \description{
-  Operators act on vectors, arrays, data frames and lists to extract or
+  Operators act on vectors, arrays and lists to extract or
   replace subsets.
 }
 \usage{
 x[i]
-x[i, j, \dots]
 x[i, j, \dots , drop=TRUE]
 x[[i]]
 x[[i, j, \dots]]
 x$name
+
 .subset(x, \dots)
 .subset2(x, \dots)
 }
 \arguments{
-  \item{x}{object from which to extract elements}
-  \item{i,j,\dots,name}{elements to extract or replace. \code{i,j} are
-    either \code{numeric} or \code{character} where \code{name} must be
+  \item{x}{object from which to extract elements or in which to replace
+    elements.}
+  \item{i, j, \dots, name}{elements to extract or replace. \code{i, j} are
+    \code{numeric} or \code{character} or empty whereas \code{name} must be
     character or an (unquoted) name.  Numeric values are coerced to
-    integer as by \code{\link{as.integer}(i)}.}
-  \item{drop}{For data frames, matrices, and arrays.  If \code{TRUE} the
+    integer as by \code{\link{as.integer}}.
+    
+    For \code{[}-indexing only: \code{i, j, \dots} can be
+    logical vectors, indicating elements/slices to select. Such vectors
+    are recycled if necessary to match the corresponding extent. When
+    indexing arrays, \code{i} can be a (single) matrix with as many
+    columns as there are dimensions of \code{x}; the result is then a
+    vector with elements corresponding to the sets of indices in each
+    row of \code{i}.}
+  \item{drop}{For matrices, and arrays.  If \code{TRUE} the
     result is coerced to the lowest possible dimension (see examples
-    below).}
+    below). This only works for extracting elements, not for the
+    replacement forms.}
 }
 \details{
+  These operators are generic.  You can write methods to handle subsetting
+  of specific classes of objects, see \link{InternalMethods} as well as
+  \code{\link{[.data.frame}} and \code{\link{[.factor}}.  The
+  descriptions here apply only to the default methods.
+
+  The most important distinction between \code{[}, \code{[[} and
+  \code{$} is that the \code{[} can select more than one element whereas
+  the other two select a single element.  \code{$} does not allow
+  computed indices, whereas \code{[[} does.  \code{x$name} is equivalent
+  to \code{x[["name"]]} if \code{x} is recursive
+  (see \code{\link{is.recursive}}) and \code{NULL} otherwise.
+  
+  The \code{[[} operator requires all relevant subscripts to be supplied.
+  With the \code{[} operator an empty index (a comma separated blank)
+  indicates that all entries in that dimension are selected.
+
   If one of these expressions appears on the left side of an assignment
   then that part of \code{x} is set to the value of the right hand side
   of the assignment.
 
-  These operators are generic. You can write methods to handle subsetting
-  of specific classes of objects, see \link{InternalMethods}.
-
-  The \code{[[} operator requires all relevant subscripts to be supplied.
-  With the \code{[} operator a comma separated blank indicates that all
-  entries in that dimension are selected.
-
   Indexing by factors is allowed and is equivalent to indexing by the
   numeric codes (see \code{\link{factor}}) and not by the character
   values which are printed (for which use \code{[as.character(i)]}).
-
-  When \code{[.data.frame} is used for subsetting rows of a
-  \code{\link{data.frame}}, it returns a data frame with unique
-  (and non-missing)row names, if necessary transforming the names using
-  \code{\link{make.names}( * , unique = TRUE)}. See the \code{swiss}
-  example below.
 
   When operating on a list, the \code{[[} operator gives the specified
   element of the list while the \code{[} operator returns a list with
@@ -77,10 +85,15 @@ x$name
   argument.  It is translated to a string and that string is used to
   locate the correct component of the first argument.
 
+  When \code{$<-} is applied to a \code{NULL} \code{x}, it coerces
+  \code{x} to \code{list()}.  This is what happens with \code{[[<-} is
+  \code{y} is of length greater than one: if \code{y} has length 1 or 0,
+  \code{x} is coerced to a zero-length vector of the type of \code{value}, 
+
   The functions \code{.subset} and \code{.subset2} are essentially
   equivalent to the \code{[} and \code{[[} operators, except that
   methods dispatch does not take place.  This is to avoid expensive
-  unclassing in order to apply the default method to an object.  They
+  unclassing when applying the default method to an object.  They
   should not normally be invoked by end users.
 }
 \references{
@@ -90,25 +103,26 @@ x$name
 }
 \seealso{
   \code{\link{list}}, \code{\link{array}}, \code{\link{matrix}}.
-  \code{\link{factor}} for the behaviour of \code{[} applied to factors.
+
+  \code{\link{[.data.frame}} and \code{\link{[.factor}} for the
+  behaviour when applied to data.frame and factors.
 
   \code{\link{Syntax}} for operator precedence, and the
   \emph{R Language} reference manual about indexing details.
-%% Fixme: Link (to html in `help.start()', pdf from `ref manual', `info' from ESS
-%%  , see \url{http://cran.R-project.org/manuals.html}.
+  %% Fixme: Link (to html in 'help.start()', pdf from 'ref manual',
+  %% 'info' from ESS, see \url{http://cran.R-project.org/manuals.html}.
 }
 \examples{
 x <- 1:12; m <- matrix(1:6,nr=2); li <- list(pi=pi, e = exp(1))
 x[10]                 # the tenth element of x
 m[1,]                 # the first row of matrix m
 m[1, , drop = FALSE]  # is a 1-row matrix
+m[,c(TRUE,FALSE,TRUE)]# logical indexing
+m[cbind(c(1,2,1),3:1)]# matrix index
 li[[1]]               # the first element of list li
 y <- list(1,2,a=4,5)
 y[c(3,4)]             # a list containing elements 3 and 4 of y
 y$a                   # the element of y named a
-
-data(swiss)
-swiss[ c(1, 1:2), ]   # duplicate row, unique row names
 
 ## non-integer indices are truncated:
 (i <- 3.999999999) # "4" is printed

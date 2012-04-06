@@ -37,12 +37,7 @@
 #include "dpq.h"
 
 #ifndef MATHLIB_STANDALONE
-#ifdef Macintosh
-extern void isintrpt();
-#endif
-#ifdef Win32
-extern void R_ProcessEvents();
-#endif
+void R_CheckUserInterrupt(void);
 #endif
 
 static double ***w;
@@ -109,13 +104,7 @@ cwilcox(int k, int m, int n)
     int c, u, i, j, l;
 
 #ifndef MATHLIB_STANDALONE
-    /* check for a user interrupt */
-#ifdef Macintosh
-    isintrpt();
-#endif
-#ifdef Win32
-    R_ProcessEvents();
-#endif
+    R_CheckUserInterrupt();
 #endif
 
     u = m * n;

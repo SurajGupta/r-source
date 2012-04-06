@@ -69,6 +69,13 @@ stopifnot(ls("Autoloads") == ls(envir = .AutoloadEnv))
 ## end of moved from autoload.Rd
 
 
+## axis
+Y <- c(10.50, 4.0, 13.75, 7.25)
+plot(1:4, Y, xlim=c(0,5), ylim=c(0,15))
+axis(side=4, at=Y, labels=LETTERS[1:4])
+## end of moved from axis.Rd
+
+
 ## backsolve
 r <- rbind(c(1,2,3),
 	   c(0,1,1),
@@ -161,6 +168,13 @@ stopifnot(grC["red",] == grC["green",],
 	  grC["red",] == grC["blue",],
 	  grC["red", 1:4] == c(0,3,5,8))
 ## end of moved from col2rgb.Rd
+
+
+## colnames
+m0 <- matrix(NA, 4, 0)
+rownames(m0, do.NULL = FALSE)
+colnames(m0, do.NULL = FALSE)
+## end of moved from colnames.Rd
 
 
 ## complex
@@ -319,6 +333,16 @@ stopifnot(it[c(1,203)] == c(0, 100),
 	  findInterval(tt,X) ==	 apply( outer(tt, X, ">="), 1, sum)
 	  )
 ## end of moved from findint.Rd
+
+
+## fix
+oo <- options(editor="touch") # not really changing anything
+fix(pi)
+if(!is.numeric(pi) || length(pi)!=1 ||
+   !is.null(attributes(pi)) || abs(pi - 3.1415) > 1e-4)
+      stop("OOPS:  fix() is broken ...")
+rm(pi); options(oo)
+## end of moved from fix.Rd
 
 
 ## format
@@ -494,8 +518,8 @@ stopifnot(kronecker(diag(1, 3), M) == diag(1, 3) %x% M)
 stopifnot(all.equal(log(1:10), log(1:10, exp(1))))
 stopifnot(all.equal(log10(30), log(30, 10)))
 stopifnot(all.equal(log2(2^pi), 2^log2(pi)))
-stopifnot(Mod(pi - log(exp(pi*1i)) / 1i) < .Machine$double.eps)
-stopifnot(Mod(1+exp(pi*1i)) < .Machine$double.eps)
+stopifnot(Mod(pi - log(exp(pi*1i)) / 1i) < 10*.Machine$double.eps)
+stopifnot(Mod(1+exp(pi*1i)) < 10*.Machine$double.eps)
 ## end of moved from Log.Rd
 
 
@@ -847,7 +871,7 @@ stopifnot(all.equal(xx1, xx2))
 library(splines)
 xx3 <- predict(interpSpline(x, y), 0:12)
 stopifnot(all.equal(xx1, xx3$y))
-detach("package:splines")
+unloadNamespace("splines")
 ## Comments: all three differed in 1.2.1.
 
 
@@ -1424,13 +1448,14 @@ persp(1:2, 1:2, matrix(1:4, 2), xlab=1)
 
 
 ## PR#1244 bug in det using method="qr"
-m2 <- structure(c(9822616000, 3841723000, 79790.09, 3841723000, 1502536000,
-		  31251.82, 79790.09, 31251.82, 64156419.36), .Dim = c(3, 3))
-(d1 <- det(m2, method="eigenvalues"))
-(d2 <- det(m2, method="qr"))
-stopifnot(d2 == 0) ## 1.4.1 gave 9.331893e+19
-(d3 <- det(m2, method="qr", tol = 1e-10))
-stopifnot(all.equal(d1, d3, tol=1e-3))
+## method argument is no longer used in det
+#m2 <- structure(c(9822616000, 3841723000, 79790.09, 3841723000, 1502536000,
+#		  31251.82, 79790.09, 31251.82, 64156419.36), .Dim = c(3, 3))
+#(d1 <- det(m2, method="eigenvalues"))
+#(d2 <- det(m2, method="qr"))
+#stopifnot(d2 == 0) ## 1.4.1 gave 9.331893e+19
+#(d3 <- det(m2, method="qr", tol = 1e-10))
+#stopifnot(all.equal(d1, d3, tol=1e-3))
 
 
 ## PR#1422 glm start/offset bugs
@@ -1465,7 +1490,7 @@ for(der in 0:3)	 # deriv=3 failed
     print(formatC(try(predict(isB, xo, deriv = der)$y), wid=7,format="f"),
 	  quote = FALSE)
 options(op)
-detach("package:splines")
+unloadNamespace("splines")
 
 
 ## PR 902 segfaults when warning string is too long, Ben Bolker 2001-04-09
@@ -2214,6 +2239,445 @@ try(testdata[["a"]] <- strptime(c("31121991", "31121991"), "%d%m%Y"))
 stopifnot(inherits(.Last.value, "try-error"))
 ## succeeded in 1.7.0
 
+
+## pacf on n x 1 matrix: Paul Gilbert, R-devel, 2003-06-18
+z <- as.ts(matrix(rnorm(100), , 1))
+class(z) # not "mts"
+is.matrix(z) # TRUE in 1.7.1
+pacf(z)
+pacf(matrix(rnorm(100), , 1))
+## both failed in 1.7.1.
+
+
+## lsfit was not setting residuals in the rank=0 case
+fit <- lsfit(matrix(0, 10, 1), 1:10, intercept=FALSE)
+stopifnot(fit$residuals == 1:10)
+## zero residuals in 1.7.1.
+
+
+## interval calculations on predict.lm
+x <- 1:10
+y <- rnorm(10)
+predict(lm(y ~ x), type="terms", interval="confidence")
+##
+
+
+## 0-level factors
+f <- factor(numeric(0))
+sort(f)
+unique(f)
+## both failed in 1.7.1
+
+
+## data failed with some multiple inputs
+data(cars, women)
+## failed in 1.7.1
+
+
+## body() and formals() looked in different places
+bar <- function(x=NULL)
+{
+   foo <- function(y=3) testit()
+   print(formals("foo"))
+   print(body("foo"))
+}
+bar()
+## the call to body() failed in 1.7.0
+
+
+## string NAs shouldn't have any internal structure.(PR#3078)
+a <- c("NA", NA, "BANANA")
+na <- as.character(NA)
+a1 <- substr(a,1,1)
+stopifnot(is.na(a1)==is.na(a))
+a2 <- substring(a,1,1)
+stopifnot(is.na(a2)==is.na(a))
+a3 <- sub("NA","na",a)
+stopifnot(is.na(a3)==is.na(a))
+a3 <- gsub("NA","na",a)
+stopifnot(is.na(a3)==is.na(a))
+substr(a3, 1, 2) <- "na"
+stopifnot(is.na(a3)==is.na(a))
+substr(a3, 1, 2) <- na
+stopifnot(all(is.na(a3)))
+stopifnot(agrep("NA", a) == c(1, 3))
+stopifnot(grep("NA", a) == c(1, 3))
+stopifnot(grep("NA", a, perl=TRUE) == c(1, 3))
+stopifnot(all(is.na(agrep(na, a))))
+stopifnot(all(is.na(grep(na, a))))
+stopifnot(all(is.na(grep(na, a, perl=TRUE))))
+a4 <- abbreviate(a)
+stopifnot(is.na(a4) == is.na(a))
+a5 <- chartr("NA", "na", a)
+stopifnot(is.na(a5) == is.na(a))
+a6 <- gsub(na, "na", a)
+stopifnot(all(is.na(a6)))
+a6a <- gsub("NANA", na, a)
+stopifnot(is.na(a6a)==c(FALSE, TRUE, TRUE))
+a7 <- a; substr(a7, 1, 2) <- "na"
+stopifnot(is.na(a7) == is.na(a))
+a8 <- a; substr(a8, 1, 2) <- na
+stopifnot(all(is.na(a8)))
+stopifnot(identical(a, toupper(tolower(a))))
+a9<-strsplit(a, "NA")
+stopifnot(identical(a9, list("",na,c("BA",""))))
+a10<-strsplit(a, na)
+stopifnot(identical(a10, as.list(a)))
+## but nchar doesn't fit this pattern
+stopifnot(all(!is.na(nchar(a))))
+## NA and "NA" were not distinguished in 1.7.x
+
+
+## coercing 0-length generic vectors
+as.double(list())
+as.integer(list())
+as.logical(list())
+as.complex(list())
+as.character(list())
+## all but the last failed in 1.7.x
+
+
+## help on reserved words
+## if else repeat while function for in next break  will fail
+if(.Platform$OS.type == "windows") options(pager="console")
+for(topic in c("TRUE", "FALSE",  "NULL", "NA", "Inf", "NaN")) {
+    eval(parse(text=paste("?", topic, sep="")))
+    eval(parse(text=paste("help(", topic, ")", sep="")))
+}
+## ?NULL and all the help calls fail in 1.7.x
+
+
+## row names in data frames
+xx <- structure(1:3, names=letters[1:3])
+data.frame(xx)
+data.frame(xx, yy=1:6) # failed with misleading message in 1.7.x
+data.frame(xx, yy=1:6, row.names=NULL) # no warning
+##
+
+
+## empty paste
+stopifnot(length(paste(character(0), character(0))) == 0) # was ""
+stopifnot(identical(paste(character(0), character(0), collapse="+"), ""))
+##
+
+
+## concatenation of make.names (Tom Minka, R-help, 2003-06-17)
+a1 <- make.names(c("a", "a", "a"), unique=TRUE)
+a2 <- make.names(c(make.names(c("a", "a"), unique=TRUE), "a"), unique=TRUE)
+stopifnot(identical(a1, a2))
+
+df1 <- rbind(data.frame(x=1), data.frame(x=2), data.frame(x=3))
+df2 <- rbind(rbind(data.frame(x=1), data.frame(x=2)), data.frame(x=3))
+stopifnot(identical(df1, df2))
+##
+
+
+## PR#3280 data.frame(check.name=FALSE) was not always respected
+DF <- data.frame(list("a*" = 3), check.names = FALSE)
+stopifnot(identical(names(DF), "a*"))
+## gave "a." in 1.7.1
+
+
+## functions using get() were not always looking for functions or in the
+## right place
+x <- factor(1:3)
+contrasts(x) <- "ctr"
+test <- function(x)
+{
+    ctr <- contr.treatment
+    contrasts(x)  # failed in 1.7.1
+}
+test(x)
+##
+
+## get/exists were ignoring mode in base
+stopifnot(exists(".Device"))
+stopifnot(!exists(".Device", mode="function")) # was true in 1.7.1
+##
+
+
+## inadvertent recursive indexing bug (PR#3324)
+x <- list(a=1:3, b=2:4)
+try(x[[c("c", "d")]])
+try(x[[c("c", "d")]] <- NA)
+## both segfaulted in 1.7.1
+
+
+## empty indexing of data frames  (PR#3532)
+x <- data.frame(x = "1.5")
+num <- numeric(0)
+x[num] <- list()
+x[, num] <- list()
+## x[[num]] is rightly an error
+## x[num] etc failed in 1.7.x.
+
+
+## .Random.seed was searched for with inherits=TRUE
+rm(.Random.seed)
+attach(list(.Random.seed=c(0:4)))
+runif(1)
+detach(2)
+(new <- RNGkind())
+stopifnot(identical(new, c("Mersenne-Twister", "Inversion")))
+stopifnot(identical(find(".Random.seed"), ".GlobalEnv"))
+## took from and assigned to list in 1.7.x.
+
+
+## PR#3750
+y <- c(1, NA, NA, 7)
+identical(y, qqnorm(y, plot.it=FALSE)$y)
+## qqnorm() used to drop NA's in its result till 1.7.x
+
+
+## PR#3763
+d0 <- ISOdate(2001,1,1)[0] # length 0 POSIX
+(rd0 <- round(d0, "day"))
+stopifnot(identical(rd0, as.POSIXlt(d0)))
+## 2nd line gave floating point exception (in format(*)!)
+
+
+## New det() function
+stopifnot(det(m <- cbind(1, c(1, 1))) == 0,
+          determinant(m           )$mod == -Inf,
+          determinant(m, log=FALSE)$mod == 0)
+## gave error for singular matrices in earlier Aug.2003
+
+
+## tests of model fitting in the presence of non-syntactic names
+data(swiss)
+names(swiss)[6] <- "Infant Mortality"
+(lm1 <- lm(Fertility ~ ., data = swiss))
+formula(lm1) # is expanded out
+slm1 <- step(lm1)
+add1(lm1, ~ I(Education^2) + .^2)
+step(lm1, scope=~ I(Education^2) + .^2)
+
+Quine <- structure(list(Eth = structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2), .Label = c("A", "N"), class = "factor"),
+    Sex = structure(c(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), .Label = c("F",
+    "M"), class = "factor"), Age = structure(c(1, 1, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4,
+    4, 4, 4, 4, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 4), .Label = c("F0", "F1", "F2", "F3"
+    ), class = "factor"), Lrn = structure(c(2, 2, 2, 1, 1, 1,
+    1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
+    2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1), .Label = c("AL", "SL"), class = "factor"),
+    Days = c(2, 11, 14, 5, 5, 13, 20, 22, 6, 6, 15, 7, 14, 6,
+    32, 53, 57, 14, 16, 16, 17, 40, 43, 46, 8, 23, 23, 28, 34,
+    36, 38, 3, 5, 11, 24, 45, 5, 6, 6, 9, 13, 23, 25, 32, 53,
+    54, 5, 5, 11, 17, 19, 8, 13, 14, 20, 47, 48, 60, 81, 2, 0,
+    2, 3, 5, 10, 14, 21, 36, 40, 6, 17, 67, 0, 0, 2, 7, 11, 12,
+    0, 0, 5, 5, 5, 11, 17, 3, 4, 22, 30, 36, 8, 0, 1, 5, 7, 16,
+    27, 0, 30, 10, 14, 27, 41, 69, 25, 10, 11, 20, 33, 5, 7,
+    0, 1, 5, 5, 5, 5, 7, 11, 15, 5, 14, 6, 6, 7, 28, 0, 5, 14,
+    2, 2, 3, 8, 10, 12, 1, 1, 9, 22, 3, 3, 5, 15, 18, 22, 37)),
+          .Names = c("Eth", "Sex", "Age", "Slow or fast", "Days"),
+          class = "data.frame",
+          row.names = c("1",
+"2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24",
+"25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
+"36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46",
+"47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57",
+"58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68",
+"69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+"80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90",
+"91", "92", "93", "94", "95", "96", "97", "98", "99", "100",
+"101", "102", "103", "104", "105", "106", "107", "108", "109",
+"110", "111", "112", "113", "114", "115", "116", "117", "118",
+"119", "120", "121", "122", "123", "124", "125", "126", "127",
+"128", "129", "130", "131", "132", "133", "134", "135", "136",
+"137", "138", "139", "140", "141", "142", "143", "144", "145",
+"146"))
+step(aov(log(Days+2.5) ~ .^4, data=Quine))
+DF <- data.frame(y=rnorm(21), `x 1`=-10:10., check.names = FALSE)
+lm(y ~ ., data = DF)
+(fm <- lm(y ~ `x 1` + I(`x 1`^2), data = DF))
+step(fm)
+
+N <- c(0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,1,1,0,0)
+P <- c(1,1,0,0,0,1,0,1,1,1,0,0,0,1,0,1,1,0,0,1,0,1,1,0)
+K <- c(1,0,0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,0,1,1,1,0,1,0)
+yield <- c(49.5,62.8,46.8,57.0,59.8,58.5,55.5,56.0,62.8,55.8,69.5,55.0,
+           62.0,48.8,45.5,44.2,52.0,51.5,49.8,48.8,57.2,59.0,53.2,56.0)
+npk <- data.frame(`block no`=gl(6,4), N=factor(N), P=factor(P),
+                  K=factor(K), yield=yield, check.names=FALSE)
+op <- options(contrasts=c("contr.helmert", "contr.treatment"))
+(npk.aovE <- aov(yield ~  N*P*K + Error(`block no`), npk))
+summary(npk.aovE)
+model.tables(npk.aovE)
+model.tables(npk.aovE, "means")
+options(op)# reset to previous
+## Didn't work before 1.8.0
+
+
+library(mva)
+## cmdscale
+## failed in versions <= 1.4.0 :
+data(eurodist)
+cm1 <- cmdscale(eurodist, k=1, add=TRUE, x.ret = TRUE)
+cmdsE <- cmdscale(eurodist, k=20, add = TRUE, eig = TRUE, x.ret = TRUE)
+stopifnot(identical(cm1$x,  cmdsE$x),
+          identical(cm1$ac, cmdsE$ac))
+## end of moved from cmdscale.Rd
+
+
+## cutree
+data(USArrests)
+hc <- hclust(dist(USArrests))
+ct <- cutree(hc, h = c(0, hc$height[c(1,49)], 1000))
+stopifnot(ct[,"0"]== 1:50,
+          unique(ct[,2]) == 1:49,
+          ct[,3]  == ct[,4],
+          ct[,4]  == 1)
+## end of moved from cutree.Rd
+
+
+## princomp
+data(USArrests)
+USArrests[1, 2] <- NA
+pc.cr <- princomp(~ Murder + Assault + UrbanPop,
+                  data = USArrests, na.action=na.exclude, cor = TRUE)
+update(pc.cr, ~ . + Rape)
+## end of moved from princomp.Rd
+
+
+library(modreg)
+## smooth.spline.Rd
+y18 <- c(1:3,5,4,7:3,2*(2:5),rep(10,4))
+xx  <- seq(1,length(y18), len=201)
+s2. <- smooth.spline(y18, cv=TRUE,con=list(trace=TRUE, tol=1e-6,low= -3,maxit=20))
+s2. ## Intel-Linux: Df ~= (even! > ) 18 : interpolating -- much smaller PRESS
+## {others, e.g., may end quite differently!}
+lines(predict(s2., xx), col = 4)
+mtext(deparse(s2.$call,200), side= 1, line= -1, cex= 0.8, col= 4)
+
+sdf8 <- smooth.spline(y18, df = 8, con=list(trace=TRUE))
+sdf8 ; sdf8$df - 8
+
+try(smooth.spline(y18, spar = 50)) #>> error : spar 'way too large'
+## end of moved from smooth.spline.Rd
+
+
+library(ts)
+## arima{0}
+data(lh)
+(fit <- arima(lh, c(1,0,0)))
+tsdiag(fit)
+(fit <- arima0(lh, c(1,0,0)))
+tsdiag(fit)
+## end of moved from arima{0}.Rd
+
+
+## predict.arima
+data(lh, package="ts")
+predict(arima(lh, order=c(1,0,1)), n.ahead=5)
+predict(arima(lh, order=c(1,1,0)), n.ahead=5)
+predict(arima(lh, order=c(0,2,1)), n.ahead=5)
+## end of moved from predict.arima.Rd
+
+
+library(splines)
+## ns
+## Consistency:
+x <- c(1:3,5:6)
+stopifnot(identical(ns(x), ns(x, df = 1)),
+          !is.null(kk <- attr(ns(x), "knots")),# not true till 1.5.1
+          length(kk) == 0)
+## end of moved from ns.Rd
+
+
+## predict.bs
+## Consistency:
+data(women)
+basis <- ns(women$height, df = 5)
+newX <- seq(58, 72, len = 51)
+wh <- women$height
+bbase <- bs(wh)
+nbase <- ns(wh)
+stopifnot(identical(predict(basis), predict(basis, newx=wh)),
+          identical(predict(bbase), predict(bbase, newx=wh)),
+          identical(predict(nbase), predict(nbase, newx=wh)))
+## end of moved from predict.bs.Rd
+
+
+## internal coerceVector() was too lenient
+plot(1)
+r <- try(strwidth(plot))## Error: cannot coerce
+stopifnot(inherits(r, "try-error"),
+          grep("cannot coerce", r) == 1)
+## gave seg.fault or memory allocation error before 1.8.0
+
+
+## rank sometimes kept and sometimes dropped names
+x2 <- c(3, 1, 4, 1, 5, NA, 9, 2, 6, 5, 3, 5)
+names(x2) <- letters[1:12]
+(y1 <- rank(x2))
+(y2 <- rank(x2, na.last=FALSE))
+(y3 <- rank(x2, na.last=NA))
+(y4 <- rank(x2, na.last="keep"))
+stopifnot(identical(names(y1), names(x2)),
+          identical(names(y2), names(x2)),
+          identical(names(y4), names(x2)),
+          identical(names(y3), names(x2)[-6]))
+##
+
+## as.dist(x) only obeyed `diag=TRUE' or `upper=TRUE' when x was "dist" already
+m <- as.matrix(dist(matrix(rnorm(100), nrow=5)))
+stopifnot(identical(TRUE, attr(as.dist(m, diag=TRUE), "Diag")))
+## failed previous to 1.8.0
+
+stopifnot(1:2 == ave(1:2,factor(2:3,levels=1:3)))
+## gave "2 NA" previous to 1.8.0, because unused levels weren't dropped
+
+## PR#4092: arrays with length(dim(.)) = 1
+z <- array(c(-2:1, 1.4),5)
+cz <- crossprod(as.vector(z))
+dimnames(z) <- list(letters[1:5])
+z0 <- z
+names(dimnames(z)) <- "D1"
+stopifnot(crossprod(z) == cz,# the first has NULL dimnames
+          identical(crossprod(z), crossprod(z0)),
+          identical(crossprod(z), crossprod(z,z0)))
+## crossprod(z) segfaulted (or gave silly error message) before 1.8.0
+
+## PR#4431
+stopifnot(!is.na(rmultinom(12,100, c(3, 4, 2, 0,0))))
+## 3rd line was all NA before 1.8.0
+
+## PR#4275: getAnywhere with extra "."
+g0 <- getAnywhere("predict.loess")
+g1 <- getAnywhere("as.dendrogram.hclust")
+g2 <- getAnywhere("predict.smooth.spline")
+g3 <- getAnywhere("print.data.frame")
+is.S3meth <- function(ga) any(substr(ga$where, 1,20) == "registered S3 method")
+stopifnot(is.S3meth(g0), is.S3meth(g1),
+          is.S3meth(g2), is.S3meth(g3))
+## all but g0 failed until 1.8.0 (Oct 6)
 
 ## keep at end, as package `methods' has had persistent side effects
 library(methods)

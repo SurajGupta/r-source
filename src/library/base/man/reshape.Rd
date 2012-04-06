@@ -2,28 +2,30 @@
 \alias{reshape}
 \title{Reshape Grouped Data}
 \description{
-  This function reshapes a data frame between `wide' format with repeated
-  measurements in separate columns of the same record and `long' format
-  with the repeated measurements in separate records.
+  This function reshapes a data frame between \sQuote{wide} format with
+  repeated measurements in separate columns of the same record and
+  \sQuote{long} format with the repeated measurements in separate
+  records.
 }
 \usage{
 reshape(data, varying = NULL, v.names = NULL, timevar = "time",
 	idvar = "id", ids = 1:NROW(data),
 	times = seq(length = length(varying[[1]])),
-	drop = NULL, direction, new.row.names = TRUE,
+	drop = NULL, direction, new.row.names = NULL,
 	split = list(regexp="\\.", include=FALSE))
 }
 \arguments{
   \item{data}{a data frame}
-  \item{varying}{names of sets of variables in the wide format that correspond
-    to single variables in long format (`time-varying').  A list of
-    vectors (or optionally a matrix for \code{direction="wide"}).  See below
-    for more details and options.}
- \item{v.names}{names of variables in the long format that correspond
-   to multiple variables in the wide format.}
- \item{timevar}{the variable in long format that differentiates multiple
+  \item{varying}{names of sets of variables in the wide format that
+    correspond to single variables in long format
+    (\sQuote{time-varying}).  A list of vectors (or optionally a matrix
+    for \code{direction="wide"}).  See below for more details and
+    options.}
+  \item{v.names}{names of variables in the long format that correspond
+    to multiple variables in the wide format.}
+  \item{timevar}{the variable in long format that differentiates multiple
     records from the same group or individual.}
-   \item{idvar}{the variable in long format that identifies multiple
+  \item{idvar}{the variable in long format that identifies multiple
     records from the same group/individual.  This variable may also be
     present in wide format.}
   \item{ids}{the values to use for a newly created \code{idvar}
@@ -31,8 +33,8 @@ reshape(data, varying = NULL, v.names = NULL, timevar = "time",
   \item{times}{the values to use for a newly created \code{timevar}
     variable in long format.}
   \item{drop}{a vector of names of variables to drop before reshaping}
-  \item{direction}{\code{"wide"} to reshape to wide format,
-    \code{"long"} to reshape to long format.}
+  \item{direction}{character string, either \code{"wide"} to reshape to
+    wide format, or \code{"long"} to reshape to long format.}
   \item{new.row.names}{logical; if \code{TRUE} and \code{direction="wide"},
     create new row names in long format from the values of the id and
     time variables.}
@@ -41,15 +43,15 @@ reshape(data, varying = NULL, v.names = NULL, timevar = "time",
 }
 \details{
   The arguments to this function are described in terms of longitudinal
-  data, as that is the application motivating the functions.  A `wide'
+  data, as that is the application motivating the functions.  A \sQuote{wide}
   longitudinal dataset will have one record for each individual with
   some time-constant variables that occupy single columns and some
   time-varying variables that occupy a column for each time point.  In
-  `long' format there will be multiple records for each individual, with
+  \sQuote{long} format there will be multiple records for each individual, with
   some variables being constant across these records and others varying
-  across the records.  A `long' format dataset also needs a `time'
+  across the records.  A \sQuote{long} format dataset also needs a \sQuote{time}
   variable identifying which time point each record comes from and an
-  `id' variable showing which records refer to the same person.
+  \sQuote{id} variable showing which records refer to the same person.
 
   If the data frame resulted from a previous \code{reshape} then the
   operation can be reversed by specifying just the \code{direction}
@@ -98,7 +100,7 @@ reshape(df, timevar="visit", idvar="id", direction="wide")
 reshape(df, timevar="visit", idvar="id", direction="wide", v.names="x")
 
 
-##  unbalanced `long' data leads to NA fill in `wide' form
+##  unbalanced 'long' data leads to NA fill in 'wide' form
 df2 <- df[1:7,]
 df2
 reshape(df2, timevar="visit", idvar="id", direction="wide")

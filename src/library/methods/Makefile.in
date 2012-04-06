@@ -10,7 +10,7 @@ subdir = src/library/methods
 
 include $(top_builddir)/Makeconf
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = LICENSE DESCRIPTION.in Makefile.in
+DISTFILES = LICENSE DESCRIPTION.in Makefile.in NAMESPACE install.R
 
 pkg = methods
 
@@ -20,8 +20,8 @@ all: Makefile DESCRIPTION
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
           echo ".packageName <- \"$(pkg)\"" >  $${f}; \
 	  cat `ls $(srcdir)/R/*.R` >> $${f}; \
-	  $(top_srcdir)/tools/move-if-change $${f} all.R)
-	@for f in COPYRIGHTS INDEX SOURCES; do \
+	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} all.R)
+	@for f in COPYRIGHTS INDEX SOURCES NAMESPACE; do \
 	  if test -f $(srcdir)/$${f}; then \
 	    $(INSTALL_DATA) $(srcdir)/$${f} \
 	      $(top_builddir)/library/$(pkg); \
@@ -29,11 +29,13 @@ all: Makefile DESCRIPTION
 	done
 	@if test -f DESCRIPTION; then \
 	  $(INSTALL_DATA) DESCRIPTION $(top_builddir)/library/$(pkg); \
-	  (if test -d $(srcdir)/src; then \
-	      echo "Built: R" $(VERSION)\;  $(R_PLATFORM)\;  `date`; \
-	    else \
-	      echo "Built: R" $(VERSION)\;  \;  `date`; \
-	    fi) >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
+	  (tmp="Built: R $(VERSION); "; \
+	    if test -d $(srcdir)/src; then \
+	      tmp="$${tmp}$(R_PLATFORM)"; \
+	    fi; \
+	    tmp="$${tmp}; `date`; $(R_OSTYPE)"; \
+	    echo "$${tmp}") \
+	    >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
 	fi
 	@if test -d $(srcdir)/data; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/data; \
@@ -47,7 +49,7 @@ all: Makefile DESCRIPTION
 	    for rdfile in $(srcdir)/man/*.Rd; do \
 	      cat $${rdfile}; echo '\eof'; \
 	    done >> $${f}; \
-	    $(top_srcdir)/tools/move-if-change $${f} \
+	    $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
 	      $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
 	fi
 	@if test -d src; then \
@@ -63,17 +65,36 @@ DESCRIPTION: $(srcdir)/DESCRIPTION.in $(top_builddir)/config.status
 Rfiles: $(top_builddir)/library/$(pkg)/R/$(pkg) \
   $(top_builddir)/library/$(pkg)/R/all.rda
 
-$(top_builddir)/library/$(pkg)/R/$(pkg): $(top_srcdir)/share/R/firstlib.R
-	@cp $(top_srcdir)/share/R/firstlib.R $@
+$(top_builddir)/library/$(pkg)/R/$(pkg): $(srcdir)/install.R
+	@$(INSTALL_DATA) $(srcdir)/install.R $@
 
 $(top_builddir)/library/$(pkg)/R/all.rda: all.R
 	@echo "dumping R code in package '$(pkg)'"
-	@R_DEFAULT_PACKAGES=NULL $(top_builddir)/bin/R --vanilla --slave < all.R
+	@if test -f $(srcdir)/NAMESPACE; then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	  echo "loadNamespace(\"$(pkg)\")" | \
+	    R_DEFAULT_PACKAGES=NULL \
+	    $(top_builddir)/bin/R --vanilla --slave; \
+	  $(INSTALL_DATA) $(top_srcdir)/share/R/nsrdaload.R \
+	    $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	else \
+	  (echo \
+	    "options(save.image.defaults=list(compress=TRUE, safe=FALSE))"; \
+	    cat all.R) | \
+	    R_DEFAULT_PACKAGES=NULL \
+	    $(top_builddir)/bin/R --vanilla --slave --save; \
+	  $(INSTALL_DATA) .RData $@; \
+	  $(INSTALL_DATA) $(top_srcdir)/share/R/firstlib.R \
+	    $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	  if test -f $(top_builddir)/library/$(pkg)/NAMESPACE; then \
+	    rm -f $(top_builddir)/library/$(pkg)/NAMESPACE; \
+	  fi; \
+	fi
 
 mostlyclean: clean
 clean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
-	-@rm -f all.R
+	-@rm -f all.R .RData
 distclean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
 	-@rm -f Makefile DESCRIPTION

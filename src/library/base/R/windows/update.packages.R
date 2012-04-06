@@ -6,7 +6,7 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
     unpackPkg <- function(pkg, pkgname, lib, installWithVers=FALSE)
     {
         ## the `spammy' (his phrase) comments are from Gentry
-        ## However, at least some of his errors have been removed
+        ## However, at least some of his many errors have been removed
 
         ## Create a temporary directory and unpack the zip to it
         ## then get the real package & version name, copying the
@@ -17,7 +17,10 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
         on.exit(setwd(cDir), add = TRUE)
         res <- zip.unpack(pkg, tmpDir)
         setwd(tmpDir)
-        tools::checkMD5sums(pkgname)
+        res <- tools::checkMD5sums(pkgname, file.path(tmpDir,pkgname))
+        if(!is.na(res) && res)
+            cat("package ", pkgname,
+                " successfully unpacked and MD5 sums checked\n")
 
         ## Check to see if this is a bundle or a single package
         if (file.exists("DESCRIPTION")) {
@@ -27,9 +30,7 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
                 stop("Malformed bundle DESCRIPTION file, no Contains field")
             else
                 pkgs <- strsplit(conts," ")[[1]]
-        }
-        else
-            pkgs <- pkgname
+        } else pkgs <- pkgname
 
         for (curPkg in pkgs) {
             desc <- read.dcf(file.path(curPkg, "DESCRIPTION"),

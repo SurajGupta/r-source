@@ -21,11 +21,7 @@
 #ifndef R_ARITH_H_
 #define R_ARITH_H_
 
-#ifdef Macintosh
-#include <fp.h> 
-#else
 #include <math.h>
-#endif
 
 #include <R_ext/libextern.h>
 #ifdef  __cplusplus
@@ -55,7 +51,11 @@ int R_IsNaNorNA(double);	/* True for both */
 int R_finite(double);		/* True if none of NA, NaN, +/-Inf */
 
 #define ISNA(x)	       R_IsNA(x)
-#define ISNAN(x)       R_IsNaNorNA(x)
+#ifdef IEEE_754
+# define ISNAN(x) (isnan(x)!=0)
+#else
+# define ISNAN(x)      R_IsNaNorNA(x)
+#endif
 #define R_FINITE(x)    R_finite(x)
 
 #ifdef  __cplusplus

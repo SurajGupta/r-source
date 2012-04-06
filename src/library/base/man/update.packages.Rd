@@ -20,7 +20,7 @@ update.packages(lib.loc = NULL, CRAN = getOption("CRAN"),
 		installWithVers=FALSE)
 
 installed.packages(lib.loc = NULL, priority = NULL)
-CRAN.packages(CRAN = getOption("CRAN"), method = "auto",
+CRAN.packages(CRAN = getOption("CRAN"), method,
               contriburl = contrib.url(CRAN))
 old.packages(lib.loc = NULL, CRAN = getOption("CRAN"),
              contriburl = contrib.url(CRAN),
@@ -28,7 +28,7 @@ old.packages(lib.loc = NULL, CRAN = getOption("CRAN"),
 
 download.packages(pkgs, destdir, available = NULL,
                   CRAN = getOption("CRAN"),
-                  contriburl = contrib.url(CRAN), method = "auto")
+                  contriburl = contrib.url(CRAN), method)
 install.packages(pkgs, lib, CRAN = getOption("CRAN"),
                  contriburl = contrib.url(CRAN),
                  method, available = NULL, destdir = NULL,
@@ -57,8 +57,8 @@ install.packages(pkgs, lib, CRAN = getOption("CRAN"),
     install the packages.}
   \item{ask}{logical indicating to ask before packages are actually downloaded
     and installed.}
-  \item{installWithVers}{If TRUE, will invoke the install the package such
-    that it can be referenced by package version}
+  \item{installWithVers}{If \code{TRUE}, will invoke the install the
+    package such that it can be referenced by package version}
 }
 \details{
   \code{installed.packages} scans the \file{DESCRIPTION} files of each

@@ -5,18 +5,16 @@
 \title{Merge Two Data Frames}
 \description{
   Merge two data frames by common columns or row names, or do other
-  versions of database ``join'' operations.
+  versions of database \dQuote{join} operations.
 }
 \usage{
-merge(x, y, by, by.x, by.y, all = FALSE, all.x = all, all.y = all,
-      sort = TRUE, suffixes = c(".x",".y"))
-}
-\synopsis{
 merge(x, y, \dots)
-merge.data.frame(x, y, by = intersect(names(x), names(y)),
-                 by.x = by, by.y = by,
-                 all = FALSE, all.x = all, all.y = all,
-                 sort = TRUE, suffixes = c(".x",".y"), \dots)
+
+\method{merge}{default}(x, y, \dots)
+
+\method{merge}{data.frame}(x, y, by = intersect(names(x), names(y)),
+      by.x = by, by.y = by, all = FALSE, all.x = all, all.y = all,
+      sort = TRUE, suffixes = c(".x",".y"), \dots)
 }
 \arguments{
   \item{x, y}{data frames, or objects to be coerced to one}
@@ -34,6 +32,7 @@ merge.data.frame(x, y, by = intersect(names(x), names(y)),
     columns?}
   \item{suffixes}{character(2) specifying the suffixes to be used for
     making non-\code{by} \code{names()} unique.}
+  \item{\dots}{arguments to be passed to or from methods.}
 }
 \details{
   By default the data frames are merged on the columns with names they
@@ -45,7 +44,7 @@ merge.data.frame(x, y, by = intersect(names(x), names(y)),
   together.  If there is more than one match, all possible matches
   contribute one row each.\cr
   If the \code{by.*} vector are of length 0, the result, \code{r}, is the
-  ``Cartesian product'' of \code{x} and \code{y}, i.e.,
+  \dQuote{Cartesian product} of \code{x} and \code{y}, i.e.,
   \code{dim(r) = c(nrow(x)*nrow, ncol(x) + ncol(y))}.
 
   If \code{all.x} is true, all the non matching cases of \code{x} are

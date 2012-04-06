@@ -53,7 +53,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \item{sep}{the field separator character.  Values on each line of the
     file are separated by this character.  If \code{sep = ""} (the
-    default for \code{read.table}) the separator is ``white space'',
+    default for \code{read.table}) the separator is \dQuote{white space},
     that is one or more spaces, tabs or newlines.}
 
   \item{quote}{the set of quoting characters. To disable quoting
@@ -82,8 +82,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     character variables (which are not converted to logical, numeric or
     complex) to factors.  The variable \code{as.is}
     controls this conversion.  Its value is either a vector of logicals
-    (values are recycled if necessary), or a vector of numeric indices
-    which specify which columns should not be converted to factors.
+    (values are recycled if necessary), or a vector of numeric or
+    character indices which specify which columns should not be
+    converted to factors.
 
     Note: to suppress all conversions including those of numeric
     columns, set \code{colClasses = "character"}.
@@ -99,7 +100,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     character), there needs to be an \code{as} method for
     conversion from \code{"character"} to the specified class, or
     \code{NA} when \code{\link{type.convert}} is used.  NB: \code{as} is
-    in package \code{methods}.}
+    in package \pkg{methods}.}
 
   \item{nrows}{the maximum number of rows to read in.  Negative values
     are ignored.}
@@ -154,7 +155,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   
   \code{read.csv} and \code{read.csv2} are identical to
   \code{read.table} except for the defaults.  They are intended for
-  reading ``comma separated value'' files (\file{.csv}) or the variant
+  reading \dQuote{comma separated value} files (\file{.csv}) or the variant
   used in countries that use a comma as decimal point and a semicolon
   as field separator.  Similarly, \code{read.delim} and
   \code{read.delim2} are for reading delimited files, defaulting to the

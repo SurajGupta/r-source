@@ -1,19 +1,20 @@
 
 R : Copyright 2003, The R Development Core Team
-Version 1.7.1 Beta (2003-06-11)
+Version 1.8.0 beta (2003-09-30)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
+Type 'license()' or 'licence()' for distribution details.
 
 R is a collaborative project with many contributors.
-Type `contributors()' for more information.
+Type 'contributors()' for more information.
 
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
 
-> ### Regression tests for which the printed output is the issue
+> ## Regression tests for which the printed output is the issue
+> ### _and_ must work (no Recommended packages, please)
 > 
 > postscript("reg-tests-2.ps")
 > RNGversion("1.6.2")
@@ -1746,11 +1747,11 @@ Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1,      0))
 
 Coefficients:
 (Intercept)            x  
-     0.5113       0.1709  
+     0.5114       0.1690  
 
 Degrees of Freedom: 99 Total (i.e. Null);  98 Residual
 Null Deviance:	    68.01 
-Residual Deviance: 60.67 	AIC: 168.7 
+Residual Deviance: 60.66 	AIC: 168.7 
 Warning messages: 
 1: Step size truncated: out of bounds 
 2: Step size truncated: out of bounds 
@@ -1763,12 +1764,12 @@ Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1,      0))
 
 Coefficients:
 (Intercept)            x  
-     1.1078       0.4228  
+     1.1561       0.4413  
 
 Degrees of Freedom: 99 Total (i.e. Null);  98 Residual
 Null Deviance:	    317.2 
-Residual Deviance: 230.2 	AIC: 346.4 
-There were 12 warnings (use warnings() to see them)
+Residual Deviance: 228.5 	AIC: 344.7 
+There were 27 warnings (use warnings() to see them)
 > warnings()
 Warning messages:
 1: Step size truncated: out of bounds
@@ -1781,8 +1782,23 @@ Warning messages:
 8: Step size truncated: out of bounds
 9: Step size truncated: out of bounds
 10: Step size truncated: out of bounds
-11: Algorithm did not converge in: (if (is.empty.model(mt)) glm.fit.null else glm.fit)(x = X, y = Y,   ...
-12: Algorithm stopped at boundary value in: (if (is.empty.model(mt)) glm.fit.null else glm.fit)(x = X, y = Y,   ...
+11: Step size truncated: out of bounds
+12: Step size truncated: out of bounds
+13: Step size truncated: out of bounds
+14: Step size truncated: out of bounds
+15: Step size truncated: out of bounds
+16: Step size truncated: out of bounds
+17: Step size truncated: out of bounds
+18: Step size truncated: out of bounds
+19: Step size truncated: out of bounds
+20: Step size truncated: out of bounds
+21: Step size truncated: out of bounds
+22: Step size truncated: out of bounds
+23: Step size truncated: out of bounds
+24: Step size truncated: out of bounds
+25: Step size truncated: out of bounds
+26: Algorithm did not converge in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
+27: Algorithm stopped at boundary value in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
 > 
 > 
 > ## extending char arrrays
@@ -1896,13 +1912,13 @@ y    2    5 8
 4   4  9 14 19  24
 5   5 10 15 20  25
 11 -1 -3 -5 -7  -9
-22 -2 -4 -6 -8 -10
+21 -2 -4 -6 -8 -10
 > rbind(test1, test)
    V1 V2 V3 V4  V5
 1  -1 -3 -5 -7  -9
 2  -2 -4 -6 -8 -10
 11  1  6 11 16  21
-22  2  7 12 17  22
+21  2  7 12 17  22
 3   3  8 13 18  23
 4   4  9 14 19  24
 5   5 10 15 20  25
@@ -2259,7 +2275,7 @@ print method
 show method
 > 
 > setMethod("print", "bar", function(x, ...){cat("S4 print method\n")})
-Creating a new generic function for "print" 
+Creating a new generic function for "print" in ".GlobalEnv" 
 [1] "print"
 > foo
 S4 print method
@@ -2335,29 +2351,6 @@ Coefficients:
 > ## not quite ok previous to 1.7.0
 > 
 > 
-> ## str() for character & factors with NA (levels), and for Surv objects:
-> ff <- factor(c(2:1,  NA),  exclude = NULL)
-> str(levels(ff))
- chr [1:3] "1" "2" NA
-> str(ff)
- Factor w/ 3 levels "1","2",NA: 2 1 3
-> str(ordered(ff, exclude=NULL))
- Ord.factor w/ 3 levels "1"<"2"<NA: 2 1 3
-> if(require(survival)) {
-+     data(aml)
-+     (sa <- Surv(aml$time, aml$status))
-+     str(sa)
-+     detach("package:survival")
-+ }
-Loading required package: survival 
- Surv [1:23, 1:2]  9  13  13+ 18  23  28+ 31  34  45+ 48  ...
- - attr(*, "dimnames")=List of 2
-  ..$ : NULL
-  ..$ : chr [1:2] "time" "status"
- - attr(*, "type")= chr "right"
-> ## were different, the last one failed in 1.6.2 (at least)
-> 
-> 
 > ## PR#3058  printing with na.print and right=TRUE
 > a <- matrix( c(NA, "a", "b", "10",
 +                NA, NA,  "d", "12",
@@ -2382,15 +2375,872 @@ Loading required package: survival
 > dimnames(A) <- list(aa, NULL)
 > A
   [,1] [,2]
-1    1    3
-2    2    4
+a    1    3
+b    2    4
 > dimnames(A)
 [[1]]
-[1] "1" "2"
+[1] "a" "b"
 
 [[2]]
 NULL
 
 > ## 1.7.0 gave internal codes as display and dimnames()
 > ## 1.7.1beta gave NAs via dimnames()
+> ## 1.8.0 converts factors to character
+> 
+> 
+> ## wishlist PR#2776: aliased coefs in lm/glm
+> set.seed(123)
+> x2 <- x1 <- 1:10
+> x3 <- 0.1*(1:10)^2
+> y <- x1 + rnorm(10)
+> (fit <- lm(y ~ x1 + x2 + x3))
+
+Call:
+lm(formula = y ~ x1 + x2 + x3)
+
+Coefficients:
+(Intercept)           x1           x2           x3  
+     1.4719       0.5867           NA       0.2587  
+
+> summary(fit, cor = TRUE)
+
+Call:
+lm(formula = y ~ x1 + x2 + x3)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.0572 -0.4836  0.0799  0.4424  1.2699 
+
+Coefficients: (1 not defined because of singularities)
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)   1.4719     0.9484   1.552    0.165
+x1            0.5867     0.3961   1.481    0.182
+x2                NA         NA      NA       NA
+x3            0.2587     0.3509   0.737    0.485
+
+Residual standard error: 0.8063 on 7 degrees of freedom
+Multiple R-Squared: 0.9326,	Adjusted R-squared: 0.9134 
+F-statistic: 48.43 on 2 and 7 DF,  p-value: 7.946e-05 
+
+Correlation of Coefficients:
+   (Intercept) x1   
+x1 -0.91            
+x3  0.81       -0.97
+
+> (fit <- glm(y ~ x1 + x2 + x3))
+
+Call:  glm(formula = y ~ x1 + x2 + x3) 
+
+Coefficients:
+(Intercept)           x1           x2           x3  
+     1.4719       0.5867           NA       0.2587  
+
+Degrees of Freedom: 9 Total (i.e. Null);  7 Residual
+Null Deviance:	    67.53 
+Residual Deviance: 4.551 	AIC: 28.51 
+> summary(fit, cor = TRUE)
+
+Call:
+glm(formula = y ~ x1 + x2 + x3)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.0572  -0.4836   0.0799   0.4424   1.2699  
+
+Coefficients: (1 not defined because of singularities)
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)   1.4719     0.9484   1.552    0.165
+x1            0.5867     0.3961   1.481    0.182
+x2                NA         NA      NA       NA
+x3            0.2587     0.3509   0.737    0.485
+
+(Dispersion parameter for gaussian family taken to be 0.6501753)
+
+    Null deviance: 67.5316  on 9  degrees of freedom
+Residual deviance:  4.5512  on 7  degrees of freedom
+AIC: 28.507
+
+Number of Fisher Scoring iterations: 2
+
+Correlation of Coefficients:
+   (Intercept) x1   
+x1 -0.91            
+x3  0.81       -0.97
+
+> ## omitted silently in summary.glm < 1.8.0
+> 
+> 
+> ## list-like indexing of data frames with drop specified
+> data(women)
+> women["height"]
+   height
+1      58
+2      59
+3      60
+4      61
+5      62
+6      63
+7      64
+8      65
+9      66
+10     67
+11     68
+12     69
+13     70
+14     71
+15     72
+> women["height", drop = FALSE]  # same with a warning
+   height
+1      58
+2      59
+3      60
+4      61
+5      62
+6      63
+7      64
+8      65
+9      66
+10     67
+11     68
+12     69
+13     70
+14     71
+15     72
+Warning message: 
+drop argument will be ignored in: "[.data.frame"(women, "height", drop = FALSE) 
+> women["height", drop = TRUE]   # ditto
+   height
+1      58
+2      59
+3      60
+4      61
+5      62
+6      63
+7      64
+8      65
+9      66
+10     67
+11     68
+12     69
+13     70
+14     71
+15     72
+Warning message: 
+drop argument will be ignored in: "[.data.frame"(women, "height", drop = TRUE) 
+> women[,"height", drop = FALSE] # no warning
+   height
+1      58
+2      59
+3      60
+4      61
+5      62
+6      63
+7      64
+8      65
+9      66
+10     67
+11     68
+12     69
+13     70
+14     71
+15     72
+> women[,"height", drop = TRUE]  # a vector
+ [1] 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72
+> ## second and third were interpreted as women["height", , drop] in 1.7.x
+> 
+> 
+> ## make.names
+> make.names("")
+[1] "X"
+> make.names(".aa")
+[1] ".aa"
+> ## was "X.aa" in 1.7.1
+> make.names(".2")
+[1] "X.2"
+> make.names(".2a") # not valid in R
+[1] "X.2a"
+> make.names(as.character(NA))
+[1] "NA."
+> ##
+> 
+> 
+> ## strange names in data frames
+> as.data.frame(list(row.names=17))  # 0 rows in 1.7.1
+  row.names
+1        17
+> aa <- data.frame(aa=1:3)
+> aa[["row.names"]] <- 4:6
+> aa # fine in 1.7.1
+  aa row.names
+1  1         4
+2  2         5
+3  3         6
+> A <- matrix(4:9, 3, 2)
+> colnames(A) <- letters[1:2]
+> aa[["row.names"]] <- A
+> aa
+  aa row.names.a row.names.b
+1  1           4           7
+2  2           5           8
+3  3           6           9
+> ## wrong printed names in 1.7.1
+> 
+> ## assigning to NULL
+> a <- NULL
+> a[["a"]] <- 1
+> a
+a 
+1 
+> a <- NULL
+> a[["a"]] <- "something"
+> a
+          a 
+"something" 
+> a <- NULL
+> a[["a"]] <- 1:3
+> a
+$a
+[1] 1 2 3
+
+> ## Last was an error in 1.7.1
+> 
+> 
+> ## examples of 0-rank models, some empty, some rank-deficient
+> y <- rnorm(10)
+> x <- rep(0, 10)
+> (fit <- lm(y ~ 0))
+
+Call:
+lm(formula = y ~ 0)
+
+No coefficients
+
+> summary(fit)
+
+Call:
+lm(formula = y ~ 0)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-1.369192 -0.210726  0.008405  0.084366  0.552922 
+
+No Coefficients
+
+Residual standard error: 0.5235 on 10 degrees of freedom
+
+> anova(fit)
+Analysis of Variance Table
+
+Response: y
+          Df  Sum Sq Mean Sq F value Pr(>F)
+Residuals 10 2.74036 0.27404               
+> predict(fit)
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+> predict(fit, data.frame(x=x), se=TRUE)
+$fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$se.fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$df
+[1] 10
+
+$residual.scale
+[1] 0.5234843
+
+> predict(fit, type="terms", se=TRUE)
+$fit
+
+ [1,]
+ [2,]
+ [3,]
+ [4,]
+ [5,]
+ [6,]
+ [7,]
+ [8,]
+ [9,]
+[10,]
+attr(,"constant")
+[1] 0
+
+$se.fit
+
+ [1,]
+ [2,]
+ [3,]
+ [4,]
+ [5,]
+ [6,]
+ [7,]
+ [8,]
+ [9,]
+[10,]
+
+$df
+[1] 10
+
+$residual.scale
+[1] 0.5234843
+
+> variable.names(fit) #should be empty
+character(0)
+> model.matrix(fit)
+
+1 
+2 
+3 
+4 
+5 
+6 
+7 
+8 
+9 
+10
+attr(,"assign")
+numeric(0)
+> 
+> (fit <- lm(y ~ x + 0))
+
+Call:
+lm(formula = y ~ x + 0)
+
+Coefficients:
+ x  
+NA  
+
+> summary(fit)
+
+Call:
+lm(formula = y ~ x + 0)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-1.369192 -0.210726  0.008405  0.084366  0.552922 
+
+Coefficients: (1 not defined because of singularities)
+  Estimate Std. Error t value Pr(>|t|)
+x       NA         NA      NA       NA
+
+Residual standard error: 0.5235 on 10 degrees of freedom
+
+> anova(fit)
+Analysis of Variance Table
+
+Response: y
+          Df  Sum Sq Mean Sq F value Pr(>F)
+Residuals 10 2.74036 0.27404               
+> predict(fit)
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+> predict(fit, data.frame(x=x), se=TRUE)
+$fit
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+
+$se.fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$df
+[1] 10
+
+$residual.scale
+[1] 0.5234843
+
+Warning message: 
+prediction from a rank-deficient fit may be misleading in: predict.lm(fit, data.frame(x = x), se = TRUE) 
+> predict(fit, type="terms", se=TRUE)
+$fit
+   x
+1  0
+2  0
+3  0
+4  0
+5  0
+6  0
+7  0
+8  0
+9  0
+10 0
+attr(,"constant")
+[1] 0
+
+$se.fit
+   x
+1  0
+2  0
+3  0
+4  0
+5  0
+6  0
+7  0
+8  0
+9  0
+10 0
+
+$df
+[1] 10
+
+$residual.scale
+[1] 0.5234843
+
+> variable.names(fit) #should be empty
+character(0)
+> model.matrix(fit)
+   x
+1  0
+2  0
+3  0
+4  0
+5  0
+6  0
+7  0
+8  0
+9  0
+10 0
+attr(,"assign")
+[1] 1
+> 
+> (fit <- glm(y ~ 0))
+
+Call:  glm(formula = y ~ 0) 
+
+No coefficients
+
+
+Degrees of Freedom: 10 Total (i.e. Null);  10 Residual
+Null Deviance:	    2.74 
+Residual Deviance: 2.74 	AIC: 17.43 
+> summary(fit)
+
+Call:
+glm(formula = y ~ 0)
+
+Deviance Residuals: 
+      Min         1Q     Median         3Q        Max  
+-1.369192  -0.210726   0.008405   0.084366   0.552922  
+
+No Coefficients
+
+(Dispersion parameter for gaussian family taken to be 0.2740358)
+
+    Null deviance: 2.7404  on 10  degrees of freedom
+Residual deviance: 2.7404  on 10  degrees of freedom
+AIC: 17.434
+
+Number of Fisher Scoring iterations: 0
+
+> anova(fit)
+Analysis of Deviance Table
+
+Model: gaussian, link: identity
+
+Response: y
+
+Terms added sequentially (first to last)
+
+
+     Df Deviance Resid. Df Resid. Dev
+NULL                    10     2.7404
+> predict(fit)
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+> predict(fit, data.frame(x=x), se=TRUE)
+$fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$se.fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$residual.scale
+[1] 0.5234843
+
+> predict(fit, type="terms", se=TRUE)
+$fit
+
+ [1,]
+ [2,]
+ [3,]
+ [4,]
+ [5,]
+ [6,]
+ [7,]
+ [8,]
+ [9,]
+[10,]
+attr(,"constant")
+[1] 0
+
+$se.fit
+
+ [1,]
+ [2,]
+ [3,]
+ [4,]
+ [5,]
+ [6,]
+ [7,]
+ [8,]
+ [9,]
+[10,]
+
+$residual.scale
+[1] 0.5234843
+
+> 
+> (fit <- glm(y ~ x + 0))
+
+Call:  glm(formula = y ~ x + 0) 
+
+Coefficients:
+ x  
+NA  
+
+Degrees of Freedom: 10 Total (i.e. Null);  10 Residual
+Null Deviance:	    2.74 
+Residual Deviance: 2.74 	AIC: 17.43 
+> summary(fit)
+
+Call:
+glm(formula = y ~ x + 0)
+
+Deviance Residuals: 
+      Min         1Q     Median         3Q        Max  
+-1.369192  -0.210726   0.008405   0.084366   0.552922  
+
+Coefficients: (1 not defined because of singularities)
+  Estimate Std. Error t value Pr(>|t|)
+x       NA         NA      NA       NA
+
+(Dispersion parameter for gaussian family taken to be 0.2740358)
+
+    Null deviance: 2.7404  on 10  degrees of freedom
+Residual deviance: 2.7404  on 10  degrees of freedom
+AIC: 17.434
+
+Number of Fisher Scoring iterations: 2
+
+> anova(fit)
+Analysis of Deviance Table
+
+Model: gaussian, link: identity
+
+Response: y
+
+Terms added sequentially (first to last)
+
+
+     Df Deviance Resid. Df Resid. Dev
+NULL                    10     2.7404
+x     0   0.0000        10     2.7404
+> predict(fit)
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+> predict(fit, data.frame(x=x), se=TRUE)
+$fit
+ 1  2  3  4  5  6  7  8  9 10 
+ 0  0  0  0  0  0  0  0  0  0 
+
+$se.fit
+ [1] 0 0 0 0 0 0 0 0 0 0
+
+$residual.scale
+[1] 0.5234843
+
+Warning message: 
+prediction from a rank-deficient fit may be misleading in: predict.lm(object, newdata, se.fit, scale = residual.scale, type = ifelse(type ==  
+> predict(fit, type="terms", se=TRUE)
+$fit
+   x
+1  0
+2  0
+3  0
+4  0
+5  0
+6  0
+7  0
+8  0
+9  0
+10 0
+attr(,"constant")
+[1] 0
+
+$se.fit
+   x
+1  0
+2  0
+3  0
+4  0
+5  0
+6  0
+7  0
+8  0
+9  0
+10 0
+
+$residual.scale
+[1] 0.5234843
+
+> ## Lots of problems in 1.7.x
+> 
+> 
+> ## lm.influence on deficient lm models
+> dat <- data.frame(y=rnorm(10), x1=1:10, x2=1:10, x3 = 0, wt=c(0,rep(1, 9)),
++                   row.names=letters[1:10])
+> dat[3, 1] <- dat[4, 2] <- NA
+> lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.omit))
+$hat
+        b         e         f         g         h         i         j 
+0.6546053 0.2105263 0.1546053 0.1447368 0.1809211 0.2631579 0.3914474 
+
+$coefficients
+  (Intercept)           x1
+b  1.39138784 -0.173267165
+e -0.70930972  0.068642877
+f  0.12039809 -0.007818058
+g  0.01971595  0.001314397
+h  0.03272637 -0.017325726
+i -0.36929526  0.092323814
+j  0.33861311 -0.070163076
+
+$sigma
+        b         e         f         g         h         i         j 
+0.9641441 0.7434598 1.0496727 1.0681908 1.0389586 0.7633748 1.0093187 
+
+$wt.res
+         b          e          f          g          h          i          j 
+ 0.5513046 -1.3728575  0.4018482  0.1708716 -0.4793451  1.2925334 -0.5643552 
+
+> lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.exclude))
+$hat
+        b         e         c         d         f         g         h         i 
+0.6546053 0.2105263 0.0000000 0.0000000 0.1546053 0.1447368 0.1809211 0.2631579 
+        j 
+0.3914474 
+
+$coefficients
+  (Intercept)           x1
+b  1.39138784 -0.173267165
+e -0.70930972  0.068642877
+c  0.00000000  0.000000000
+d  0.00000000  0.000000000
+f  0.12039809 -0.007818058
+g  0.01971595  0.001314397
+h  0.03272637 -0.017325726
+i -0.36929526  0.092323814
+j  0.33861311 -0.070163076
+
+$sigma
+        b         e         c         d         f         g         h         i 
+0.9641441 0.7434598 0.9589854 0.9589854 1.0496727 1.0681908 1.0389586 0.7633748 
+        j 
+1.0093187 
+
+$wt.res
+         b          e          c          d          f          g          h 
+ 0.5513046 -1.3728575         NA         NA  0.4018482  0.1708716 -0.4793451 
+         i          j 
+ 1.2925334 -0.5643552 
+
+> lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.omit))
+$hat
+b d e f g h i j 
+0 0 0 0 0 0 0 0 
+
+$coefficients
+
+b
+d
+e
+f
+g
+h
+i
+j
+
+$sigma
+        b         d         e         f         g         h         i         j 
+0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 
+
+$wt.res
+         b          d          e          f          g          h          i 
+ 0.3604547  0.1146812 -1.1426753  0.7723744  0.6817419  0.1718693  2.0840918 
+         j 
+ 0.3675473 
+
+> lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.exclude))
+$hat
+b d c e f g h i j 
+0 0 0 0 0 0 0 0 0 
+
+$coefficients
+
+b
+d
+c
+e
+f
+g
+h
+i
+j
+
+$sigma
+        b         d         c         e         f         g         h         i 
+0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 
+        j 
+0.8830622 
+
+$wt.res
+         b          d          c          e          f          g          h 
+ 0.3604547  0.1146812         NA -1.1426753  0.7723744  0.6817419  0.1718693 
+         i          j 
+ 2.0840918  0.3675473 
+
+> lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.omit))
+$hat
+b d e f g h i j 
+0 0 0 0 0 0 0 0 
+
+$coefficients
+
+b
+d
+e
+f
+g
+h
+i
+j
+
+$sigma
+        b         d         e         f         g         h         i         j 
+0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 
+
+$wt.res
+         b          d          e          f          g          h          i 
+ 0.3604547  0.1146812 -1.1426753  0.7723744  0.6817419  0.1718693  2.0840918 
+         j 
+ 0.3675473 
+
+> lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.exclude))
+$hat
+b d c e f g h i j 
+0 0 0 0 0 0 0 0 0 
+
+$coefficients
+
+b
+d
+c
+e
+f
+g
+h
+i
+j
+
+$sigma
+        b         d         c         e         f         g         h         i 
+0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 
+        j 
+0.9366289 
+
+$wt.res
+         b          d          c          e          f          g          h 
+ 0.3604547  0.1146812         NA -1.1426753  0.7723744  0.6817419  0.1718693 
+         i          j 
+ 2.0840918  0.3675473 
+
+> lm.influence(lm(y ~ 0, data=dat, na.action=na.exclude))
+$hat
+a b c d e f g h i j 
+0 0 0 0 0 0 0 0 0 0 
+
+$coefficients
+
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+
+$sigma
+        a         b         c         d         e         f         g         h 
+0.8860916 0.8860916 0.8860916 0.8860916 0.8860916 0.8860916 0.8860916 0.8860916 
+        i         j 
+0.8860916 0.8860916 
+
+$wt.res
+         a          b          c          d          e          f          g 
+ 0.2196280  0.3604547         NA  0.1146812 -1.1426753  0.7723744  0.6817419 
+         h          i          j 
+ 0.1718693  2.0840918  0.3675473 
+
+> ## last three misbehaved in 1.7.x, none had proper names.
+> 
+> 
+> ## length of results in ARMAacf when lag.max is used
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=1) # was 4 in 1.7.1
+        0         1 
+1.0000000 0.7644046 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=2)
+        0         1         2 
+1.0000000 0.7644046 0.2676056 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=3)
+         0          1          2          3 
+ 1.0000000  0.7644046  0.2676056 -0.2343150 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=4)
+         0          1          2          3          4 
+ 1.0000000  0.7644046  0.2676056 -0.2343150 -0.5180538 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=5) # failed in 1.7.1
+         0          1          2          3          4          5 
+ 1.0000000  0.7644046  0.2676056 -0.2343150 -0.5180538 -0.5099616 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=6)
+         0          1          2          3          4          5          6 
+ 1.0000000  0.7644046  0.2676056 -0.2343150 -0.5180538 -0.5099616 -0.2784942 
+> ARMAacf(ar=c(1.3,-0.6, -0.2, 0.1),lag.max=10)
+         0          1          2          3          4          5          6 
+ 1.0000000  0.7644046  0.2676056 -0.2343150 -0.5180538 -0.5099616 -0.2784942 
+         7          8          9         10 
+ 0.0241137  0.2486313  0.3134551  0.2256408 
+> ##
+> 
+> 
+> ## Indexing non-existent columns in a data frame
+> x <- data.frame(a = 1, b = 2)
+> try(x[c("a", "c")])
+Error in "[.data.frame"(x, c("a", "c")) : undefined columns selected
+> try(x[, c("a", "c")])
+Error in "[.data.frame"(x, , c("a", "c")) : 
+	undefined columns selected
+> try(x[1, c("a", "c")])
+Error in "[.data.frame"(x, 1, c("a", "c")) : 
+	undefined columns selected
+> ## Second succeeded, third gave uniformative error message in 1.7.x.
+> 
+> 
+> ## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
+> meth2gen <- function(cl)
++     noquote(sub(paste("\\.",cl,"$",sep=""),"", methods(class = cl)))
+> meth2gen("data.frame")
+ [1] [             [<-           [[            [[<-          aggregate    
+ [6] as.data.frame as.list       as.matrix     by            dim          
+[11] dimnames      dimnames<-    duplicated    edit          format       
+[16] formula       is.na         mean          merge         na.exclude   
+[21] na.omit       plot          print         prompt        row.names    
+[26] row.names<-   rowsum        split         split<-       stack        
+[31] str           subset        summary       t             transform    
+[36] unique        unstack      
+> meth2gen("dendrogram")
+[1] [[      cut     plot    print   reorder rev     str    
+> ## --> the output may need somewhat frequent updating..
 > 

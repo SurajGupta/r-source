@@ -87,9 +87,9 @@ co.intervals(x, number = 6, overlap = 0.5)
   discussed in the reference below.
 }
 \details{
-  In the case of a single conditioning variable \code{a}, when both \code{rows}
-  and \code{columns} are unspecified, a ``close to square'' layout is
-  chosen with \code{columns >= rows}.
+  In the case of a single conditioning variable \code{a}, when both
+  \code{rows} and \code{columns} are unspecified, a \dQuote{close to
+    square} layout is chosen with \code{columns >= rows}.
 
   In the case of multiple \code{rows}, the \emph{order} of the panel
   plots is from the bottom and from the left (corresponding to
@@ -133,17 +133,17 @@ coplot(ll.dm, data = quakes, number=c(3,7),
 
 data(warpbreaks)
 ## given two factors
-coplot(breaks ~ 1:54 | wool * tension, data = warpbreaks, show.given = 0:1)
-coplot(breaks ~ 1:54 | wool * tension, data = warpbreaks,
-       col = "red", bg = "pink", pch = 21,
-       bar.bg = c(fac = "light blue"))
+Index <- seq(length=nrow(warpbreaks)) # to get nicer default labels
+coplot(breaks ~ Index | wool * tension, data = warpbreaks, show.given = 0:1)
+coplot(breaks ~ Index | wool * tension, data = warpbreaks,
+       col = "red", bg = "pink", pch = 21, bar.bg = c(fac = "light blue"))
 
 ## Example with empty panels:
 data(state)
-attach(data.frame(state.x77))#> don't need `data' arg. below
+attach(data.frame(state.x77))#> don't need 'data' arg. below
 coplot(Life.Exp ~ Income | Illiteracy * state.region, number = 3,
        panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-## y ~ factor -- not really sensical, but `show off':
+## y ~ factor -- not really sensical, but 'show off':
 coplot(Life.Exp ~ state.region | Income * state.division,
        panel = panel.smooth)
 detach() # data.frame(state.x77)

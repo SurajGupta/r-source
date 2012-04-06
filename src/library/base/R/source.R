@@ -9,7 +9,6 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 		  enclos = if (is.list(envir) || is.pairlist(envir))
 		  parent.frame())
 	.Internal(eval.with.vis(expr, envir, enclos))
-    sQuote <- function(s) paste("'", s, "'", sep = "")
 
     envir <- if (local)
 	parent.frame()
@@ -38,7 +37,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	setwd(path)
     }
     #-- ass1 :	the  '<-' symbol/name
-    ass1 <- expression(y <- x)[[1]][[1]]
+#    ass1 <- expression(y <- x)[[1]][[1]]
     if (echo) {
 	## Reg.exps for string delimiter/ NO-string-del /
         ## odd-number-of-str.del needed, when truncating below
@@ -93,11 +92,10 @@ sys.source <-
 function(file, envir = NULL, chdir = FALSE,
          keep.source = getOption("keep.source.pkgs"))
 {
-    sQuote <- function(s) paste("'", s, "'", sep = "")
-
     if(!(is.character(file) && file.exists(file)))
 	stop(paste(sQuote(file), "is not an existing file"))
-    oop <- options(keep.source = as.logical(keep.source))
+    oop <- options(keep.source = as.logical(keep.source),
+                   topLevelEnvironment = as.environment(envir))
     on.exit(options(oop))
     exprs <- parse(n = -1, file = file)
     if (length(exprs) == 0)
@@ -107,9 +105,7 @@ function(file, envir = NULL, chdir = FALSE,
 	on.exit(setwd(owd), add = TRUE)
 	setwd(path)
     }
-    for (i in exprs) {
-	yy <- eval(i, envir)
-    }
+    for (i in exprs) eval(i, envir)
     invisible()
 }
 
@@ -118,33 +114,12 @@ function(topic, device = getOption("device"),
          package = .packages(), lib.loc = NULL,
          character.only = FALSE, verbose = getOption("verbose"))
 {
-    sQuote <- function(s) paste("'", s, "'", sep = "")
-
     paths <- .find.package(package, lib.loc, verbose = verbose)
 
     ## Find the directories with a 'demo' subdirectory.
-    nodemo <- !(file.exists(file.path(paths, "demo"))
-                & file.info(file.path(paths, "demo"))$isdir)
-    if(any(nodemo)) {
-        if(!missing(package) && (length(package) > 0)) {
-            ## Warn about given packages which do not have a 'demo'
-            ## subdirectory.
-            packagesWithNoDemo <-
-                package[package %in% sapply(paths[nodemo], basename)]
-            if(length(packagesWithNoDemo) > 1) {
-                warning(paste("packages",
-                              paste(sQuote(packagesWithNoDemo),
-                                    collapse=", "),
-                              "contain no demos"))
-            }
-            else if(length(packagesWithNoDemo) == 1) {
-                warning(paste("package", sQuote(packagesWithNoDemo),
-                              "contains no demos"))
-
-            }
-        }
-        paths <- paths[!nodemo]
-    }
+    paths <- paths[tools::fileTest("-d", file.path(paths, "demo"))]
+    ## Earlier versions remembered given packages with no 'demo'
+    ## subdirectory, and warned about them.
 
     if(missing(topic)) {
         ## List all possible demos.
@@ -154,35 +129,26 @@ function(topic, device = getOption("device"),
         noindex <- character(0)
         for(path in paths) {
             entries <- NULL
-            ## <NOTE>
-            ## Check for new-style 'Meta/demo.rds' (and intermediate
-            ## 'demo/00Index.rds' and 'demo/00Index.dcf'), then for
-            ## '00Index'.
-            ## </NOTE>
-            if(file.exists(INDEX <-
-                           file.path(path, "Meta", "demo.rds"))) {
+            ## Check for new-style 'Meta/demo.rds', then for '00Index'.
+            if(tools::fileTest("-f",
+                               INDEX <-
+                               file.path(path, "Meta", "demo.rds"))) {
                 entries <- .readRDS(INDEX)
             }
-            ## <FIXME>
-            ## Remove this once 1.7.0 is out.
-            ## (The 1.7 development versions for some time used indices
-            ## serialized as 'demo/00Index.rds' and 'demo/00Index.dcf'.)
-            else if(file.exists(INDEX <-
-                           file.path(path, "demo", "00Index.rds"))) {
-                entries <- .readRDS(INDEX)
-            }
-            else if(file.exists(INDEX <-
-                           file.path(path, "demo", "00Index.dcf"))) {
-                entries <- read.dcf(INDEX)
-                entries <- cbind(colnames(entries), c(entries))
-            }
-            ## </FIXME>
-            else if(file.exists(INDEX <-
-                                file.path(path, "demo", "00Index")))
+            else if(tools::fileTest("-f",
+                                    INDEX <-
+                                    file.path(path, "demo", "00Index")))
                 entries <- read.00Index(INDEX)
             else {
-                ## No index: check whether subdir 'demo' contains files.
-                if(length(list.files(file.path(path, "demo"))) > 0)
+                ## No index: check whether subdir 'demo' contains demos.
+                demoDir <- file.path(path, "demo")
+                entries <- tools::listFilesWithType(demoDir, "demo")
+                if(length(entries) > 0) {
+                    entries <-
+                        unique(tools::filePathSansExt(basename(entries)))
+                    entries <- cbind(entries, "")
+                }
+                else
                     noindex <- c(noindex, basename(path))
             }
             if(NROW(entries) > 0) {
@@ -198,16 +164,11 @@ function(topic, device = getOption("device"),
                 ## Warn about given packages which do not have a demo
                 ## index.
                 packagesWithNoIndex <- package[package %in% noindex]
-                if(length(packagesWithNoIndex) > 1) {
-                    warning(paste("packages",
+                if(length(packagesWithNoIndex) > 0)
+                    warning(paste("packages with demos",
+                                  "but no index:",
                                   paste(sQuote(packagesWithNoIndex),
-                                        collapse=", "),
-                                  "contain demos but no index"))
-                }
-                else if(length(packagesWithNoIndex) == 1)
-                    warning(paste("package",
-                                  sQuote(packagesWithNoIndex),
-                                  "contains demos but no index"))
+                                        collapse = ",")))
             }
         }
 
@@ -220,8 +181,8 @@ function(topic, device = getOption("device"),
                   sep = "")
         else
             NULL
-        y <- list(type = "demo", title = "Demos",
-                  header = NULL, results = db, footer = footer)
+        y <- list(title = "Demos", header = NULL, results = db,
+                  footer = footer)
         class(y) <- "packageIQR"
         return(y)
     }
@@ -231,11 +192,9 @@ function(topic, device = getOption("device"),
     available <- character(0)
     paths <- file.path(paths, "demo")
     for(p in paths) {
-        files <- list.files(p)
-        ## Files with extension 'R' or 'r'
-        files <- files[sub(".*\\.", "", files) %in% c("R", "r")]
-        ## Files with base names matching topic
-        files <- files[grep(topic, files)]
+        files <- basename(tools::listFilesWithType(p, "demo"))
+        ## Files with base names sans extension matching topic
+        files <- files[topic == tools::filePathSansExt(files)]
         if(length(files) > 0)
             available <- c(available, file.path(p, files))
     }
@@ -243,11 +202,12 @@ function(topic, device = getOption("device"),
         stop(paste("No demo found for topic", sQuote(topic)))
     if(length(available) > 1) {
         available <- available[1]
-        warning("Demo for topic",
-                sQuote(topic),
-                "found more than once,\n",
-                "using the one found in",
-                sQuote(dirname(available[1])))
+        warning(paste("Demo for topic ",
+                      sQuote(topic),
+                      " found more than once,\n",
+                      "using the one found in ",
+                      sQuote(dirname(available[1])),
+                      sep = ""))
     }
     cat("\n\n",
         "\tdemo(", topic, ")\n",
@@ -265,8 +225,6 @@ function(topic, package = .packages(), lib.loc = NULL, local = FALSE,
          echo = TRUE, verbose = getOption("verbose"),
          prompt.echo = paste(abbreviate(topic, 6), "> ", sep = ""))
 {
-    sQuote <- function(s) paste("'", s, "'", sep = "")
-
     topic <- substitute(topic)
     if(!is.character(topic))
 	topic <- deparse(topic)[1]
@@ -276,12 +234,15 @@ function(topic, package = .packages(), lib.loc = NULL, local = FALSE,
 	warning(paste("No help file found for", sQuote(topic)))
 	return(invisible())
     }
-    comp <- strsplit(file, .Platform$file.sep)[[1]]
-    pkg <- comp[length(comp) - 2]
-    if(length(file) > 1)
+    packagePath <- dirname(dirname(file))
+    if(length(file) > 1) {
+        packagePath <- packagePath[1]
 	warning(paste("More than one help file found: using package",
-                      sQuote(pkg)))
-    lib <- sub(file.path("", pkg, "R-ex", ".*\\.R"), "", file[1])
+                      sQuote(basename(packagePath))))
+        file <- file[1]
+    }
+    pkg <- basename(packagePath)
+    lib <- dirname(packagePath)
     ## experimental code
     zfile <- zip.file.extract(file, "Rex.zip")
     if(zfile != file) on.exit(unlink(zfile))

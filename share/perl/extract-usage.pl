@@ -20,11 +20,12 @@
 ## Send any bug reports to r-bugs@r-project.org
 
 use Getopt::Long;
+use FileHandle;
 use R::Rdtools;
 use R::Utils;
 use R::Vars;
 
-my $revision = ' $Revision: 1.11 $ ';
+my $revision = ' $Revision: 1.17 $ ';
 my $version;
 my $name;
 
@@ -67,9 +68,9 @@ GetOptions("h|help"    => \&usage,
 &R_version($name, $version) if $opt_version;
 
 open(INFILE, "< $ARGV[0]")
-    or die "Error: cannot open '$ARGV[0]' for reading\n";
-open(OUTFILE, "> $ARGV[1]")
-    or die "Error: cannot open '$ARGV[1]' for writing\n";
+  or die "Error: cannot open '$ARGV[0]' for reading\n";
+my $out = new FileHandle("> $ARGV[1]")
+  or die "Error: cannot open '$ARGV[1]' for writing\n";
 
 while (<INFILE>) {
     chomp;
@@ -103,22 +104,59 @@ while (<INFILE>) {
 	## for non-empty matches right away.
 	next if($text !~ /\\name\s*{\s*([^}]*[^}\s])\s*}.*/);
 
-	print OUTFILE "# usages in documentation object $1\n";
-	print OUTFILE "# arglist: ", join(" ", get_arglist($text)), "\n"
-	  unless ($opt_mode eq "codoc");
+	$out->print("# usages in documentation object $1\n");
+	$out->print("# arglist: ", join(" ", get_arglist($text)), "\n")
+	  unless($opt_mode eq "codoc");
 
-	{
-	    local $/;		# unset for get_usages()
-	    %usages = get_usages($text, $opt_mode, $opt_verbose);
+	my %usages = get_usages($text, $opt_mode, $opt_verbose);
+
+	if($opt_mode eq "codoc") {
+	    $out->print("# variables: ",
+			join(" ", @{$usages{"variables"}}),
+			"\n");
+	    $out->print("# data sets: ",
+			join(" ", @{$usages{"data_sets"}}),
+			"\n");
 	}
 
-	foreach my $key (keys(%usages)){
-	    $usages{$key} =~ s/ *\\.?dots/ .../g;
+	if($opt_mode eq "args") {
+	    $out->print("# aliases: ",
+			join(" ",
+			     map(substr($_, 1, -1),
+				 get_section($text, "alias"))),
+			"\n");
+	}
+
+	my %functions = @{$usages{"functions"}};
+	foreach my $key (keys(%functions)) {
+	    $functions{$key} =~ s/ *\\.?dots/ .../g;
 	    if ($key !~ /^</) {
-		print OUTFILE "$key <- function$usages{$key} NULL\n";
+		$out->print("\"${key}\" <- ",
+			    "function$functions{$key} NULL\n");
 	    }
 	}
 
-	print OUTFILE "\n";
+	if($opt_mode ne "style") {
+	    my %S4methods = @{$usages{"S4methods"}};
+	    foreach my $key (keys(%S4methods)) {
+		$S4methods{$key} =~ s/ *\\.?dots/ .../g;
+		$out->print("\"\\${key}\" <- ",
+			    "function$S4methods{$key} NULL\n");
+	    }
+	}
+
+	## Add the \usage text, currently only for mode 'args'.
+	if($opt_mode eq "args") {
+	    $out->print("\".__Usage__.\" <- ");
+	    my @usages = get_section($text, "usage");
+	    $text = substr(shift(@usages), 1, -1);
+	    $text =~ s/\\/\\\\/g;
+	    $text =~ s/\"/\\\"/g;
+	    $text =~ s/\n/\\\n/g;
+	    $text =~ s/\r//g;
+	    $out->print("\"${text}\"\n");
+	}
+
+	$out->print("\n");
     }
 }

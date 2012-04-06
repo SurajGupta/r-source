@@ -6,6 +6,7 @@
   one of several methods.}
 \usage{
 p.adjust(p, method=p.adjust.methods, n=length(p))
+
 p.adjust.methods
 }
 \arguments{
@@ -87,7 +88,7 @@ p.adjust.methods
 }
 
 \seealso{
-  \code{pairwise.*} functions in the \code{ctest} package, such
+  \code{pairwise.*} functions in the \pkg{ctest} package, such
   as \code{\link[ctest]{pairwise.t.test}}.
 }
 

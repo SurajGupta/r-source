@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2002  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 /*--- Device Driver for Windows; this file started from
  *  ../unix/X11/devX11.c --
  */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -39,6 +40,8 @@
 
 extern console RConsole;
 extern Rboolean AllDevicesKilled;
+
+int graphicsx = -25, graphicsy = 0;
 
 /* a colour used to represent the background on png if transparent
    NB: used as RGB and BGR
@@ -79,10 +82,15 @@ static rgb GArgb(int color, double gamma)
 #define MM_PER_INCH	25.4	/* mm -> inch conversion */
 
 #define TRACEDEVGA(a)
-#define NOBM(a) if(xd->kind==SCREEN){a;}
 #define CLIP if (xd->clip.width>0) gsetcliprect(_d,xd->clip)
-#define DRAW(a) {drawing _d=xd->gawin;CLIP;a;NOBM(_d=xd->bm;CLIP;a;)}
-#define SHOW  gbitblt(xd->gawin,xd->bm,pt(0,0),getrect(xd->bm));
+
+static drawing _d;
+
+#define DRAW(a) {if(xd->kind != SCREEN) {_d=xd->gawin; CLIP; a;} else {_d=xd->bm; CLIP; a; if(!xd->buffered) {_d=xd->gawin; CLIP; a;} _d=xd->bm; CLIP; a;}}
+
+#define SHOW  if(xd->kind==SCREEN) {gbitblt(xd->gawin,xd->bm,pt(0,0),getrect(xd->bm));GALastUpdate=GetTickCount();}
+#define SH if(xd->kind==SCREEN && xd->buffered) GA_Timer(xd)
+
 
 #define SF 20  /* scrollbar resolution */
 
@@ -158,6 +166,8 @@ typedef struct {
     double rescale_factor;
     int fast; /* Use fast fixed-width lines? */
     unsigned int pngtrans; /* what PNG_TRANS get mapped to */
+    Rboolean buffered;
+    int timeafter, timesince;
 } gadesc;
 
 rect getregion(gadesc *xd)
@@ -168,6 +178,34 @@ rect getregion(gadesc *xd)
     r.width = min(r.width, xd->showWidth);
     r.height = min(r.height, xd->showHeight);
     return r;
+}
+
+/* Update the screen 100ms after last plotting call or 500ms after last
+   update */
+
+static UINT TimerNo = 0;
+static gadesc *GA_xd;
+static DWORD GALastUpdate = 0;
+
+static VOID CALLBACK
+GA_timer_proc(HWND hwnd, UINT message, UINT tid, DWORD time)
+{
+    if ((message != WM_TIMER) || tid != TimerNo) return;
+    gbitblt(GA_xd->gawin, GA_xd->bm, pt(0,0), getrect(GA_xd->bm));
+    GALastUpdate = time;
+}
+
+static void GA_Timer(gadesc *xd)
+{
+    DWORD now = GetTickCount();
+    if(TimerNo != 0) KillTimer(0, TimerNo);
+    if(now > GALastUpdate + xd->timesince) {
+	gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+	GALastUpdate = now;
+    } else {
+	GA_xd = xd;
+	TimerNo = SetTimer(0, 0, (UINT) xd->timeafter, GA_timer_proc);
+    }
 }
 
 	/********************************************************/
@@ -221,7 +259,7 @@ static void GA_Text(double x, double y, char *str,
 		    int col, double gamma, int font, double cex, double ps,
 		    NewDevDesc *dd);
 static Rboolean GA_Open(NewDevDesc*, gadesc*, char*, double, double,
-			Rboolean, int, int, double);
+			Rboolean, int, int, double, int, int);
 
 	/********************************************************/
 	/* end of list of required device driver actions 	*/
@@ -264,7 +302,7 @@ static void SaveAsWin(NewDevDesc *dd, char *display)
     NewDevDesc *ndd = (NewDevDesc *) calloc(1, sizeof(NewDevDesc));
     GEDevDesc* gdd = (GEDevDesc*) GetDevice(devNumber((DevDesc*) dd));
     if (!ndd) {
-	R_ShowMessage("No enough memory to copy graphics window");
+	R_ShowMessage("Not enough memory to copy graphics window");
 	return;
     }
     if(!R_CheckDeviceAvailableBool()) {
@@ -280,7 +318,7 @@ static void SaveAsWin(NewDevDesc *dd, char *display)
 		       fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
 					GE_INCHES, gdd),
 		       ((gadesc*) dd->deviceSpecific)->basefontsize,
-		       0, 1, White, 1))
+		       0, 1, White, 1, NA_INTEGER, NA_INTEGER, FALSE))
         PrivateCopyDevice(dd, ndd, display);
 }
 
@@ -675,7 +713,9 @@ static void HelpMouseClick(window w, int button, point pt)
 	if (!xd->locator)
 	    return;
 	if (button & LeftButton) {
-	    gabeep();
+	    int useBeep = asLogical(GetOption(install("locatorBell"), 
+					      R_NilValue));
+	    if(useBeep) gabeep();
 	    xd->clicked = 1;
 	    xd->px = pt.x;
 	    xd->py = pt.y;
@@ -753,12 +793,16 @@ static void menupdf(control m)
 static void menuwm(control m)
 {
     NewDevDesc *dd = (NewDevDesc *) getdata(m);
-    char  display[512], *fn;
+    char  display[550], *fn;
 
     setuserfilter("Enhanced metafiles (*.emf)\0*.emf\0All files (*.*)\0*.*\0\0");
     fn = askfilesave("Enhanced metafiles", "");
     if (!fn) return;
     fixslash(fn);
+    if(strlen(fn) > 512) {
+	askok("file path selected is too long: only 512 bytes are allowed");
+	return;
+    }
     sprintf(display, "win.metafile:%s", fn);
     SaveAsWin(dd, display);
 }
@@ -802,9 +846,9 @@ static void menuclose(control m)
 
 #ifdef PLOTHISTORY
 
-extern SEXP savedSnapshot;
+/* extern SEXP savedSnapshot;*/
 
-/* NB: this puts .SavedPlots in package:base */
+/* NB: this puts .SavedPlots in .GlobalEnv */
 #define GROWTH 4
 #define GETDL SEXP vDL=findVar(install(".SavedPlots"), R_GlobalEnv)
 #define SETDL defineVar(install(".SavedPlots"), vDL, R_GlobalEnv)
@@ -1209,7 +1253,7 @@ static void devga_sbf(control c, int pos)
 
 static int
 setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
-		  Rboolean recording, int resize)
+		  Rboolean recording, int resize, int xpos, int ypos)
 {
     menu  m;
     int   iw, ih;
@@ -1242,11 +1286,17 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     iw = dw + 0.5;
     ih = dh + 0.5;
     if (resize == 2) xd->rescale_factor = dw/dw0;
-    if (!(xd->gawin = newwindow("R Graphics",
-				rect(devicewidth(NULL) - iw - 25, 0, iw, ih),
-				Document | StandardWindow | Menubar |
-				VScrollbar | HScrollbar))) {
-	return 0;
+    {
+	int grx, gry;
+	grx = (xpos == NA_INTEGER) ? graphicsx : xpos;
+	gry = (ypos == NA_INTEGER) ? graphicsy : ypos;
+	if (grx < 0) grx = devicewidth(NULL)  - iw + grx;
+	if (gry < 0) gry = deviceheight(NULL) - ih + gry;
+	if (!(xd->gawin = newwindow("R Graphics",
+				    rect(grx, gry, iw, ih),
+				    Document | StandardWindow | Menubar |
+				    VScrollbar | HScrollbar)))
+	    return 0;
     }
     gchangescrollbar(xd->gawin, VWINSB, 0, ih/SF-1, ih/SF, 0);
     gchangescrollbar(xd->gawin, HWINSB, 0, iw/SF-1, iw/SF, 0);
@@ -1407,10 +1457,11 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
 
 static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 			double w, double h, Rboolean recording,
-			int resize, int canvascolor, double gamma)
+			int resize, int canvascolor, double gamma,
+			int xpos, int ypos)
 {
     rect  rr;
-    char buf[512];
+    char buf[600]; /* allow for pageno formats */
 
     if (!fontinitdone)
 	RFontInit();
@@ -1427,7 +1478,7 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
     xd->xshift = xd->yshift = 0;
     xd->npage = 0;
     if (!dsp[0]) {
-	if (!setupScreenDevice(dd, xd, w, h, recording, resize))
+	if (!setupScreenDevice(dd, xd, w, h, recording, resize, xpos, ypos))
 	    return FALSE;
     } else if (!strncmp(dsp, "win.print:", 10)) {
 	xd->kind = PRINTER;
@@ -1441,6 +1492,8 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    xd->bg = dd->startfill = canvascolor;
 	/* was R_RGB(255, 255, 255); white */
         xd->kind = (dsp[0]=='p') ? PNG : BMP;
+	if(strlen(dsp+4) >= 512) error("filename too long in %s() call", 
+				       (dsp[0]=='p') ? "png" : "bmp");
 	strcpy(xd->filename, dsp+4);
 	if (!Load_Rbitmap_Dll()) {
 	    warning("Unable to load Rbitmap.dll");
@@ -1455,7 +1508,7 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    warning("Unable to allocate bitmap");
 	    return FALSE;
 	}
-	sprintf(buf, xd->filename, 1);
+	snprintf(buf, 600, xd->filename, 1);
 	if ((xd->fp = fopen(buf, "wb")) == NULL) {
 	    del(xd->gawin);
 	    warning("Unable to open file `%s' for writing", buf);
@@ -1473,12 +1526,13 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	*p = '\0';
 	xd->quality = atoi(&dsp[5]);
 	*p = ':' ;
+	if(strlen(p+1) >= 512) error("filename too long in jpeg() call");
 	strcpy(xd->filename, p+1);
 	if((xd->gawin = newbitmap(w, h, 256)) == NULL) {
 	    warning("Unable to allocate bitmap");
 	    return FALSE;
 	}
-	sprintf(buf, xd->filename, 1);
+	snprintf(buf, 600, xd->filename, 1);
 	if ((xd->fp = fopen(buf, "wb")) == NULL) {
 	    del(xd->gawin);
 	    warning("Unable to open file `%s' for writing", buf);
@@ -1498,8 +1552,10 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    return FALSE;
 	if (strncmp(dsp, s, ls) || (dsp[ls] && (dsp[ls] != ':')))
 	    return FALSE;
+	if(ld > ls && strlen(&dsp[ls + 1]) >= 512) 
+	    error("filename too long in win.metafile() call");
 	strcpy(xd->filename, (ld > ls) ? &dsp[ls + 1] : "");
-	sprintf(buf, xd->filename, 1);
+	snprintf(buf, 600, xd->filename, 1);
 	xd->w = MM_PER_INCH * w;
 	xd->h =  MM_PER_INCH * h;
 	xd->gawin = newmetafile(buf, MM_PER_INCH * w, MM_PER_INCH * h);
@@ -1573,9 +1629,18 @@ static void GA_MetricInfo(int c, int font, double cex, double ps,
 
     SetFont(font, size, 0.0, dd);
     gcharmetric(xd->gawin, xd->font, c, &a, &d, &w);
-    *ascent = (double) a;
-    *descent = (double) d;
-    *width = (double) w;
+    /* Some Windows systems report that space has height and depth,
+       so we have a kludge.  Note that 32 is space in symbol font too */
+    if(c == 32) {
+	*ascent  = 0.0;
+	*descent = 0.0;
+	*width   = (double) w;
+	
+    } else {
+	*ascent  = (double) a;
+	*descent = (double) d;
+	*width   = (double) w;
+    }
 }
 
 	/********************************************************/
@@ -1716,28 +1781,30 @@ static void GA_Resize(NewDevDesc *dd)
 static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
-    char buf[512];
 
     xd->npage++;
     if ((xd->kind == PRINTER) && xd->needsave)
 	nextpage(xd->gawin);
     if ((xd->kind == METAFILE) && xd->needsave) {
+	char buf[600];
 	if (strlen(xd->filename) == 0)
 	    error("A clipboard metafile can store only one figure.");
 	else {
 	    del(xd->gawin);
-	    sprintf(buf, xd->filename, xd->npage);
+	    snprintf(buf, 600, xd->filename, xd->npage);
 	    xd->gawin = newmetafile(buf, xd->w, xd->h);
 	}
     }
     if ((xd->kind == PNG || xd->kind == JPEG || xd->kind == BMP)
 	&& xd->needsave) {
+	char buf[600];
 	SaveAsBitmap(dd);
-	sprintf(buf, xd->filename, xd->npage);
+	snprintf(buf, 600, xd->filename, xd->npage);
 	if ((xd->fp = fopen(buf, "wb")) == NULL)
 	    error("Unable to open file `%s' for writing", buf);
     }
     if (xd->kind == SCREEN) {
+        if(xd->buffered) SHOW;
 #ifdef PLOTHISTORY
 	if (xd->recording && xd->needsave)
 	    AddtoPlotHistory(dd->savedSnapshot, 0);
@@ -1764,6 +1831,7 @@ static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
 	xd->clip = getregion(xd);
 	DRAW(gfillrect(_d, xd->bgcolor, xd->clip));
     }
+    SH;
 }
 
 	/********************************************************/
@@ -1777,8 +1845,15 @@ static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
 static void GA_Close(NewDevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
+    GEDevDesc *gdd = (GEDevDesc *) GetDevice(devNumber((DevDesc*) dd));
+    GETDL;
 
-    if (xd->kind==SCREEN) {
+    if (xd->kind == SCREEN) {
+	if(xd->recording) {
+	    AddtoPlotHistory(GEcreateSnapshot(gdd), 0);
+	    pCURRENTPOS++; /* so PgUp goes to the last saved plot
+			      when a windows() device is opened */
+	}
 	hide(xd->gawin);
 	del(xd->bm);
     } else if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) {
@@ -1789,7 +1864,7 @@ static void GA_Close(NewDevDesc *dd)
 /*
  * this is needed since the GraphApp delayed clean-up
  * ,i.e, I want free all resources NOW
-*/
+ */
     doevent();
     free(xd);
 }
@@ -1890,6 +1965,7 @@ static void GA_Rect(double x0, double y0, double x1, double y1,
 	SetLinetype(lty, lwd, dd);
 	DRAW(gdrawrect(_d, xd->lwd, xd->lty, xd->fgcolor, r, 0));
     }
+    SH;
 }
 
 	/********************************************************/
@@ -1916,11 +1992,7 @@ static void GA_Circle(double x, double y, double r,
     rect  rr;
 
     TRACEDEVGA("circle");
-#ifdef OLD
-    ir = ceil(r);
-#else
     ir = floor(r + 0.5);
-#endif
     if (ir < 1) ir = 1;
     /* In-place conversion ok */
 
@@ -1936,6 +2008,7 @@ static void GA_Circle(double x, double y, double r,
 	SetColor(col, gamma, dd);
 	DRAW(gdrawellipse(_d, xd->lwd, xd->fgcolor, rr, 0));
     }
+    SH;
 }
 
 	/********************************************************/
@@ -1960,11 +2033,13 @@ static void GA_Line(double x1, double y1, double x2, double y2,
     xx2 = (int) x2;
     yy2 = (int) y2;
 
-    SetColor(col, gamma, dd),
-    SetLinetype(lty, lwd, dd);
-    if (R_OPAQUE(xd->fgcolor))
+    if (R_OPAQUE(col)) {
+	SetColor(col, gamma, dd);
+	SetLinetype(lty, lwd, dd);
 	DRAW(gdrawline(_d, xd->lwd, xd->lty, xd->fgcolor,
 		       pt(xx1, yy1), pt(xx2, yy2), 0));
+	SH;
+    }
 }
 
 	/********************************************************/
@@ -1999,6 +2074,7 @@ static void GA_Polyline(int n, double *x, double *y,
 	DRAW(gdrawpolyline(_d, xd->lwd, xd->lty, xd->fgcolor, p, n, 0, 0));
     }
     vmaxset(vmax);
+    SH;
 }
 
 	/********************************************************/
@@ -2043,6 +2119,7 @@ static void GA_Polygon(int n, double *x, double *y,
 	DRAW(gdrawpolygon(_d, xd->lwd, xd->lty, xd->fgcolor, points, n, 0 ));
     }
     vmaxset(vmax);
+    SH;
 }
 
 
@@ -2086,6 +2163,7 @@ static void GA_Text(double x, double y, char *str,
 	DRAW(gdrawstr1(_d, xd->font, xd->fgcolor, pt(x, y), str, hadj));
 #endif
     }
+    SH;
 }
 
 	/********************************************************/
@@ -2114,7 +2192,7 @@ static Rboolean GA_Locator(double *x, double *y, NewDevDesc *dd)
     gsetcursor(xd->gawin, CrossCursor);
     setstatus("Locator is active");
     while (!xd->clicked) {
-      /*	SHOW;*/
+	if(xd->buffered) SHOW;
         WaitMessage();
 	R_ProcessEvents();
     }
@@ -2195,7 +2273,7 @@ static void GA_Hold(NewDevDesc *dd)
 Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 			double height, double pointsize,
 			Rboolean recording, int resize, int canvas,
-			double gamma)
+			double gamma, int xpos, int ypos, Rboolean buffered)
 {
     /* if need to bail out with some sort of "error" then */
     /* must free(dd) */
@@ -2229,7 +2307,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
     /* Start the Device Driver and Hardcopy.  */
 
     if (!GA_Open(dd, xd, display, width, height, recording, resize, canvas,
-		 gamma)) {
+		 gamma, xpos, ypos)) {
 	free(xd);
 	return FALSE;
     }
@@ -2315,7 +2393,19 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 
     xd->resize = (resize == 3);
     xd->locator = FALSE;
-    dd->displayListOn = TRUE;
+    xd->buffered = buffered; 
+    {
+	SEXP timeouts = GetOption(install("windowsTimeouts"), R_NilValue);
+	if(isInteger(timeouts)){
+	    xd->timeafter = INTEGER(timeouts)[0]; 
+	    xd->timesince = INTEGER(timeouts)[1];
+	} else {
+	    warning("option `windowsTimeouts' should be integer");
+	    xd->timeafter = 100;
+	    xd->timesince = 500;
+	}
+    }
+    dd->displayListOn = (xd->kind == SCREEN);
     if (RConsole && (xd->kind!=SCREEN)) show(RConsole);
     return TRUE;
 }
@@ -2323,7 +2413,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 SEXP do_saveDevga(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP filename, type;
-    char *fn, *tp, display[512];
+    char *fn, *tp, display[550];
     int device;
     NewDevDesc* dd;
 
@@ -2351,6 +2441,10 @@ SEXP do_saveDevga(SEXP call, SEXP op, SEXP args, SEXP env)
       /*Default quality suggested in libjpeg*/
         SaveAsJpeg(dd, 75, fn);
     } else if (!strcmp(tp, "wmf")) {
+	if(strlen(fn) > 512) {
+	    askok("file path selected is too long: only 512 bytes are allowed");
+	    return R_NilValue;
+	}
 	sprintf(display, "win.metafile:%s", fn);
 	SaveAsWin(dd, display);
     } else if (!strcmp(tp, "ps")) {
@@ -2406,24 +2500,55 @@ static unsigned long privategetpixel(void *d,int i, int j)
     return ggetpixel((bitmap)d,pt(j,i));
 }
 
+static int png_rows = 0;
+
+static unsigned long privategetpixel2(void *d,int i, int j)
+{
+    rgb c;
+    c = ((rgb *)d)[i*png_rows + j];
+    return c;
+}
+
 /* This is the device version */
 static void SaveAsBitmap(NewDevDesc *dd)
 {
-    rect r;
+    rect r, r2;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
+    unsigned char *data;
+    int row_bytes;
+    
     r = ggetcliprect(xd->gawin);
-    gsetcliprect(xd->gawin, getrect(xd->gawin));
+    gsetcliprect(xd->gawin, r2 = getrect(xd->gawin));
     if(xd->fp) {
-	if (xd->kind==PNG)
-	    R_SaveAsPng(xd->gawin, xd->windowWidth, xd->windowHeight,
-			privategetpixel, 0, xd->fp,
-			R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
-	else if (xd->kind==JPEG)
-	    R_SaveAsJpeg(xd->gawin, xd->windowWidth, xd->windowHeight,
-			 privategetpixel, 0, xd->quality, xd->fp) ;
-	else
-	    R_SaveAsBmp(xd->gawin, xd->windowWidth, xd->windowHeight,
-			privategetpixel, 0, xd->fp);
+	if (getdepth(xd->gawin) > 8) {
+	    getbitmapdata2(xd->gawin, &data, &row_bytes);
+	    if(data) {
+		png_rows = r2.width;
+		if (xd->kind == PNG)
+		    R_SaveAsPng(data, xd->windowWidth, xd->windowHeight,
+				privategetpixel2, 0, xd->fp,
+				R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
+		else if (xd->kind == JPEG)
+		    R_SaveAsJpeg(data, xd->windowWidth, xd->windowHeight,
+				 privategetpixel2, 0, xd->quality, xd->fp) ;
+		else
+		    R_SaveAsBmp(data, xd->windowWidth, xd->windowHeight,
+				privategetpixel2, 0, xd->fp);
+		free(data);
+	    } else
+		warning("processing of the plot ran out of memory");
+	} else {
+	    if (xd->kind == PNG)
+		R_SaveAsPng(xd->gawin, xd->windowWidth, xd->windowHeight,
+			    privategetpixel, 0, xd->fp,
+			    R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
+	    else if (xd->kind == JPEG)
+		R_SaveAsJpeg(xd->gawin, xd->windowWidth, xd->windowHeight,
+			     privategetpixel, 0, xd->quality, xd->fp) ;
+	    else
+		R_SaveAsBmp(xd->gawin, xd->windowWidth, xd->windowHeight,
+			    privategetpixel, 0, xd->fp);
+	}
 	fclose(xd->fp);
     }
     gsetcliprect(xd->gawin, r);
@@ -2521,7 +2646,7 @@ SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
     if(dev == -1) { /* console */
 	if(CharacterMode == RGui) BringToTop(RConsole);
     } else {
-	if(dev < 1 || dev > NumDevices() || dev == NA_INTEGER)
+	if(dev < 1 || dev > R_MaxDevices || dev == NA_INTEGER)
 	    errorcall(call, "invalid value of `which'");
 	gdd = (GEDevDesc *) GetDevice(dev - 1);
 	if(!gdd) errorcall(call, "invalid device");

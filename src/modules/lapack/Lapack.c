@@ -397,13 +397,13 @@ static SEXP modLa_zgeqp3(SEXP Ain)
     F77_CALL(zgeqp3)(&m, &n, COMPLEX(A), &m, INTEGER(jpvt), COMPLEX(tau),
 		     &tmp, &lwork, rwork, &info);
     if (info != 0)
-	error("error code %d from Lapack routine zqeqp3", info);
+	error("error code %d from Lapack routine zgeqp3", info);
     lwork = (int) tmp.r;
     work = (Rcomplex *) R_alloc(lwork, sizeof(Rcomplex));
     F77_CALL(zgeqp3)(&m, &n, COMPLEX(A), &m, INTEGER(jpvt), COMPLEX(tau),
 		     work, &lwork, rwork, &info);
     if (info != 0)
-	error("error code %d from Lapack routine zqeqp3", info);
+	error("error code %d from Lapack routine zgeqp3", info);
     val = PROTECT(allocVector(VECSXP, 4));
     nm = PROTECT(allocVector(STRSXP, 4));
     rank = PROTECT(allocVector(INTSXP, 1));
@@ -686,7 +686,7 @@ static SEXP modLa_chol(SEXP A)
 	int m = INTEGER(adims)[0];
 	int n = INTEGER(adims)[1];
 	int i, j;
-	
+
 	if (m != n) error("A must be a square matrix");
 	if (m <= 0) error("A must have dims > 0");
 	for (j = 0; j < n; j++) {	/* zero the lower triangle */
@@ -721,7 +721,7 @@ static SEXP modLa_chol2inv(SEXP A, SEXP size)
 	int m = INTEGER(adims)[0];
 	int n = INTEGER(adims)[1];
 	int i, j;
-	
+
 	if (sz > n) error("size cannot exceed ncol(x) = %d", n);
 	if (sz > m) error("size cannot exceed nrow(x) = %d", m);
 	ans = PROTECT(allocMatrix(REALSXP, sz, sz));
@@ -788,7 +788,6 @@ static SEXP modLa_dgeqp3(SEXP Ain)
 {
     int i, m, n, *Adims, info, lwork;
     double *work, tmp;
-    double *rwork;
     SEXP val, nm, jpvt, tau, rank, A;
 
     if (!(isMatrix(Ain) && isReal(Ain)))
@@ -797,22 +796,21 @@ static SEXP modLa_dgeqp3(SEXP Ain)
     Adims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
     m = Adims[0];
     n = Adims[1];
-    rwork = (double *) R_alloc(2*n, sizeof(double));
 
     jpvt = PROTECT(allocVector(INTSXP, n));
     for (i = 0; i < n; i++) INTEGER(jpvt)[i] = 0;
     tau = PROTECT(allocVector(REALSXP, m < n ? m : n));
     lwork = -1;
     F77_CALL(dgeqp3)(&m, &n, REAL(A), &m, INTEGER(jpvt), REAL(tau),
-		     &tmp, &lwork, rwork, &info);
+		     &tmp, &lwork, &info);
     if (info < 0)
-	error("error code %d from Lapack routine dqeqp3", info);
+	error("error code %d from Lapack routine dgeqp3", info);
     lwork = (int) tmp;
     work = (double *) R_alloc(lwork, sizeof(double));
     F77_CALL(dgeqp3)(&m, &n, REAL(A), &m, INTEGER(jpvt), REAL(tau),
-		     work, &lwork, rwork, &info);
+		     work, &lwork, &info);
     if (info < 0)
-	error("error code %d from Lapack routine dqeqp3", info);
+	error("error code %d from Lapack routine dgeqp3", info);
     val = PROTECT(allocVector(VECSXP, 4));
     nm = PROTECT(allocVector(STRSXP, 4));
     rank = PROTECT(allocVector(INTSXP, 1));
@@ -904,6 +902,63 @@ static SEXP modqr_qy_real(SEXP Q, SEXP Bin, SEXP trans)
     return B;
 }
 
+static SEXP moddet_ge_real(SEXP Ain, SEXP logarithm)
+{
+    int i, n, *Adims, info, *jpvt, sign, useLog;
+    double modulus = 0.0; /* -Wall */
+    SEXP val, nm, A;
+
+    if (!(isMatrix(Ain) && isReal(Ain)))
+	error("A must be a real matrix");
+    useLog = asLogical(logarithm);
+    if (useLog == NA_LOGICAL) error("argument logarithm must be logical");
+    PROTECT(A = duplicate(Ain));
+    Adims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
+    n = Adims[0];
+    if (Adims[1] != n)
+	error("A must be a square matrix");
+    jpvt = (int *) R_alloc(n, sizeof(int));
+    F77_CALL(dgetrf)(&n, &n, REAL(A), &n, jpvt, &info);
+    sign = 1;
+    if (info < 0)
+	error("error code %d from Lapack routine dgetrf", info);
+    else if (info > 0) { /* Singular matrix:  U[i,i] (i := info) is 0 */
+	/*warning("Lapack dgetrf(): singular matrix: U[%d,%d]=0", info,info);*/
+	modulus = (useLog ? R_NegInf : 0.);
+    }
+    else {
+	for (i = 0; i < n; i++) if (jpvt[i] != (i + 1))
+	    sign = -sign;
+	if (useLog) {
+	    modulus = 0.0;
+	    for (i = 0; i < n; i++) {
+		double dii = REAL(A)[i*(n + 1)]; /* ith diagonal element */
+		modulus += log(dii < 0 ? -dii : dii);
+		if (dii < 0) sign = -sign;
+	    }
+	} else {
+	    modulus = 1.0;
+	    for (i = 0; i < n; i++)
+		modulus *= REAL(A)[i*(n + 1)];
+	    if (modulus < 0) {
+		modulus = -modulus;
+		sign = -sign;
+	    }
+	}
+    }
+    val = PROTECT(allocVector(VECSXP, 2));
+    nm = PROTECT(allocVector(STRSXP, 2));
+    SET_STRING_ELT(nm, 0, mkChar("modulus"));
+    SET_STRING_ELT(nm, 1, mkChar("sign"));
+    setAttrib(val, R_NamesSymbol, nm);
+    SET_VECTOR_ELT(val, 0, ScalarReal(modulus));
+    setAttrib(VECTOR_ELT(val, 0), install("logarithm"), ScalarLogical(useLog));
+    SET_VECTOR_ELT(val, 1, ScalarInteger(sign));
+    setAttrib(val, R_ClassSymbol, ScalarString(mkChar("det")));
+    UNPROTECT(3);
+    return val;
+}
+
 /* ------------------------------------------------------------ */
 
 
@@ -932,6 +987,7 @@ R_init_lapack(DllInfo *info)
     tmp->dgeqp3 = modLa_dgeqp3;
     tmp->qr_coef_real = modqr_coef_real;
     tmp->qr_qy_real = modqr_qy_real;
+    tmp->det_ge_real = moddet_ge_real;
     R_setLapackRoutines(tmp);
 }
 

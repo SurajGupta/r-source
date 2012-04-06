@@ -8,37 +8,40 @@
 }
 \usage{
 prompt(object, filename = NULL, name = NULL, \dots)
-prompt.default(object, filename = NULL, name = NULL,
-               force.function = FALSE, \dots)
-prompt.data.frame(object, filename = NULL, name = NULL, \dots)
+\method{prompt}{default}(object, filename = NULL, name = NULL,
+       force.function = FALSE, \dots)
+\method{prompt}{data.frame}(object, filename = NULL, name = NULL, \dots)
 }
 \arguments{
-  \item{object}{an \R object, typically a function.}
-  \item{name}{a character string specifying the name of the object.}
+  \item{object}{an \R object, typically a function for the default
+    method.}
   \item{filename}{usually, a connection or a character string giving the
     name of the file to which the documentation shell should be written.
     The default corresponds to a file whose name is \code{name} followed
     by \code{".Rd"}.  Can also be \code{NA} (see below).}
+  \item{name}{a character string specifying the name of the object.}
   \item{force.function}{a logical.  If \code{TRUE}, treat \code{object}
     as function in any case.}
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \value{
-  Unless \code{filename} is \code{NA}, it is returned invisibly;
-  otherwise, a list-style representation of the documentation shell.
+  If \code{filename} is \code{NA}, a list-style representation of the
+  documentation shell.  Otherwise, the name of the file written to is
+  returned invisibly.
 }
 \details{
   Unless \code{filename} is \code{NA}, a documentation shell for
-  \code{object} is written to \code{filename}, and a message about this
-  is given.  For function objects, this shell contains the proper
-  function and argument names.  R documentation files thus created still
-  need to be edited and moved into the \file{man} subdirectory of the
-  package containing the object to be documented.
+  \code{object} is written to the file specified by \code{filename}, and
+  a message about this is given.  For function objects, this shell
+  contains the proper function and argument names.  R documentation
+  files thus created still need to be edited and moved into the
+  \file{man} subdirectory of the package containing the object to be
+  documented.
 
   If \code{filename} is \code{NA}, a list-style representation of the
-  documentation shell is returned.  Writing the shell to a file really
-  amounts to \code{cat(unlist(x), file = filename, sep = "\n")}, where
-  \code{x} is the list-style representation.
+  documentation shell is created and returned.  Writing the shell to a
+  file amounts to \code{cat(unlist(x), file = filename, sep = "\\n")},
+  where \code{x} is the list-style representation.
 
   When \code{prompt} is used in \code{\link{for}} loops or scripts, the
   explicit \code{name} specification will be useful.
@@ -46,7 +49,7 @@ prompt.data.frame(object, filename = NULL, name = NULL, \dots)
 \note{
   The documentation file produced by \code{prompt.data.frame} does not
   have the same format as many of the data frame documentation files in
-  the \code{base} library.  We are trying to settle on a preferred
+  the \pkg{base} package.  We are trying to settle on a preferred
   format for the documentation.
 }
 \section{Warning}{
@@ -57,8 +60,10 @@ prompt.data.frame(object, filename = NULL, name = NULL, \dots)
 }
 \seealso{
   \code{\link{promptData}}, \code{\link{help}} and the chapter on
-  ``Writing \R documentation'' in ``Writing \R Extensions'' (see the
-  \file{doc/manual} subdirectory of the \R source tree).
+  \dQuote{Writing \R documentation} in \dQuote{Writing \R Extensions}
+  (see the \file{doc/manual} subdirectory of the \R source tree).
+
+  To prompt the user for input, see \code{\link{readline}}.
 }
 \author{Douglas Bates for \code{prompt.data.frame}}
 \references{

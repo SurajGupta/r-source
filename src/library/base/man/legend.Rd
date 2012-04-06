@@ -2,10 +2,10 @@
 \alias{legend}
 \title{Add Legends to Plots}
 \usage{
-legend(x, y, legend, fill, col = "black", lty, lwd, pch,
-       angle = NULL, density = NULL,
-       bty = "o", bg = par("bg"), pt.bg = NA, cex = 1,
-       xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1, adj = 0,
+legend(x, y = NULL, legend, fill = NULL, col = "black", lty, lwd, pch,
+       angle = NULL, density = NULL, bty = "o", bg = par("bg"),
+       pt.bg = NA, cex = 1, xjust = 0, yjust = 1,
+       x.intersp = 1, y.intersp = 1, adj = c(0, 0.5),
        text.width = NULL, merge = do.lines && has.pch, trace = FALSE,
        plot = TRUE, ncol = 1, horiz = FALSE)
 }
@@ -15,17 +15,15 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
   and \code{y} arguments.
 }
 \arguments{
-  \item{x,y}{the x and y location of the legend.
-    \code{x} can be a list with \code{x} and \code{y} components.}
-%% if argument \code{y} is missing.
-%S: location of the rectangle in which to put the legend.
-%S: If x & y are length 1, they determine the top left corner of the rectangle;
-%S: if .. length 2 vectors, they give opposite corners of the rectangular area.
-%S: A list containing x and y values may be supplied.
+  \item{x, y}{the x and y co-ordinates to be used to position the legend.
+    They can be specified in any way which is accepted by
+    \code{\link{xy.coords}}: See Details.}
   \item{legend}{a vector of text values or an \code{\link{expression}}
-    of length \eqn{\ge 1}{>= 1} to appear in the legend.}
+    of length \eqn{\ge 1}{>= 1}, or a \code{\link{call}} (as resulting
+    from \code{\link{substitute}}) to appear in the legend.}
   \item{fill}{if specified, this argument will cause boxes filled
-    with the specified colors to appear beside the legend text.}
+    with the specified colors (or shaded in the specified colors)
+    to appear beside the legend text.}
   \item{col}{the color of points or lines appearing in the legend.}
   \item{lty,lwd}{the line types and widths for lines appearing in the
     legend.  One of these two \emph{must} be specified for line drawing.}
@@ -33,9 +31,13 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
     vector of 1-character strings, or one (multi character)
     string. \emph{Must} be specified for symbol drawing.}
   \item{angle}{angle of shading lines.}
-  \item{density}{the density of shading lines, if numeric and positive.}
-  \item{bty}{the type of box to be drawn around the legend.}
-  \item{bg}{the background color for the legend box.}
+  \item{density}{the density of shading lines, if numeric and
+    positive. If \code{NULL} or negative or \code{NA} color filling
+    is assumed.}
+  \item{bty}{the type of box to be drawn around the legend.  The allowed
+    values are \code{"o"} (the default) and \code{"n"}.}
+  \item{bg}{the background color for the legend box.  (Note that this is
+    only used if \code{bty = "n"}.)}
   \item{pt.bg}{the background color for the \code{\link{points}}.}
   \item{cex}{character expansion factor \bold{relative} to current
     \code{par("cex")}.}
@@ -51,7 +53,7 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
   \item{text.width}{the width of the legend text in x (\code{"user"})
     coordinates.
     Defaults to the proper value computed by \code{\link{strwidth}(legend)}.}
-  \item{merge}{logical; if \code{TRUE}, ``merge'' points and lines but
+  \item{merge}{logical; if \code{TRUE}, \dQuote{merge} points and lines but
     not filled boxes.  Defaults to \code{TRUE} if there are points and lines.}
   \item{trace}{logical; if \code{TRUE}, shows how \code{legend} does all
     its magical computations.}
@@ -64,7 +66,20 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
      specification).}
 }
 \details{
- ``Attribute'' arguments such as \code{col}, \code{pch}, \code{lty},
+  Arguments \code{x, y, legend} are interpreted in a non-standard way to
+  allow the coordinates to be specified \emph{via} one or two arguments.
+  If \code{legend} is missing and \code{y} is not numeric, it is assumed
+  that the second argument is intended to be \code{legend} and that the
+  first argument specifies the coordinates.
+
+  The coordinates can be specified in any way which is accepted by
+  \code{\link{xy.coords}}.  If this gives the coordinates of one point,
+  it is used as the top-left coordinate of the rectangle containing the
+  legend.  If it gives the coordinates of two points, these specify
+  opposite corners of the rectangle (either pair of corners, in any
+  order).
+
+  \dQuote{Attribute} arguments such as \code{col}, \code{pch}, \code{lty},
   etc, are recycled if necessary.  \code{merge} is not.
 
   Points are drawn \emph{after} lines in order that they can cover the
@@ -73,7 +88,7 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
   See the examples for how to right-justify labels.
 }
 \value{
-  A (\code{\link{invisible}}) list with list components
+  A list with list components
   \item{rect}{a list with components
     \describe{
       \item{\code{w, h}}{positive numbers giving \bold{w}idth and
@@ -88,6 +103,7 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
 	giving the x and y coordinates of the legend's text(s).}
     }
   }
+  returned invisibly.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -99,7 +115,7 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
   \code{\link{text}} for more examples of math expressions.
 }
 \examples{
-## Run the example in `?matplot' or the following:
+## Run the example in '?matplot' or the following:
 leg.txt <- c("Setosa     Petals", "Setosa     Sepals",
              "Versicolor Petals", "Versicolor Sepals")
 y.leg <- c(4.5, 3, 2.1, 1.4, .7)
@@ -111,7 +127,7 @@ for (i in seq(cexv)) {
   legend(3, y.leg[i], leg.txt, pch = "sSvV", col = c(1, 3), cex = cexv[i])
 }
 
-## `merge = TRUE' for merging lines & points:
+## 'merge = TRUE' for merging lines & points:
 x <- seq(-pi, pi, len = 65)
 plot(x, sin(x), type = "l", ylim = c(-1.2, 1.8), col = 3, lty = 2)
 points(x, cos(x), pch = 3, col = 4)
@@ -150,6 +166,7 @@ for(ll in c("","x","y","xy")) {
 par(mfrow=c(1,1))
 
 ##-- Math expressions:  ------------------------------
+x <- seq(-pi, pi, len = 65)
 plot(x, sin(x), type="l", col = 2,xlab=expression(phi),ylab=expression(f(phi)))
 abline(h=-1:1, v=pi/2*(-6:6), col="gray90")
 lines(x, cos(x), col = 3, lty = 2)
@@ -165,12 +182,14 @@ ex12 <- expression(bar(x) == sum(over(x[i], n), i==1, n),
                    hat(x) == median(x[i], i==1,n))
 str(legend(4.1, 30, ex12, col = 2:3, lty=2:3, lwd=2))
 
-## `Filled' boxes -- for more, see example(plotfactor)
+## 'Filled' boxes -- for more, see example(plotfactor)
+op <- par(bg="white") # to get an opaque box for the legend
 data(PlantGrowth)
 plot(cut(weight, 3) ~ group, data = PlantGrowth,
      col = NULL, density = 16*(1:3))
+par(op)
 
-## Using `ncol' :
+## Using 'ncol' :
 x <- 0:64/64
 matplot(x, outer(x, 1:7, function(x, k) sin(k * pi * x)),
         type = "o", col = 1:7, ylim = c(-1, 1.5), pch = "*")
@@ -185,8 +204,8 @@ par(op)
 
 ## point covering line :
 y <- sin(3*pi*x)
-plot(x,y,type="l",col="blue", main = "points with bg & legend(*, pt.bg)")
-points(x,y,pch=21,bg="white")
-legend(.4,1,"sin(c x)",pch=21,pt.bg="white",lty=1, col = "blue")
+plot(x, y, type="l", col="blue", main = "points with bg & legend(*, pt.bg)")
+points(x, y, pch=21, bg="white")
+legend(.4,1, "sin(c x)", pch=21, pt.bg="white", lty=1, col = "blue")
 }
 \keyword{aplot}

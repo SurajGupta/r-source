@@ -20,16 +20,19 @@ png(filename ="Rplot\%03d.png", width = 480, height = 480, pointsize = 12,
     bg = "white")
 }
 \arguments{
- \item{filename}{the name of the output file.  The page number is
-   substituted if an integer format is included in the character string.}
- \item{width}{the width of the device in pixels.}
- \item{height}{the height of the device in pixels.}
- \item{pointsize}{the default pointsize of plotted text.}
- \item{quality}{the `quality' of the JPEG image, as a
-   percentage. Smaller values will give more compression but also more
-   degradation of the image.}
- \item{bg}{default background colour.}
- \item{\dots}{additional arguments to the \code{\link{X11}} device.}
+  \item{filename}{the name of the output file.
+    The page number is substituted if an integer format is included
+    in the character string. (The result must be less than \code{PATH_MAX}
+    characters long, and may be truncated if not.)
+    Tilde expansion is performed where supported by the platform.}
+  \item{width}{the width of the device in pixels.}
+  \item{height}{the height of the device in pixels.}
+  \item{pointsize}{the default pointsize of plotted text.}
+  \item{quality}{the \sQuote{quality} of the JPEG image, as a
+    percentage.  Smaller values will give more compression but also more
+    degradation of the image.}
+  \item{bg}{default background colour.}
+  \item{\dots}{additional arguments to the \code{\link{X11}} device.}
 }
 \details{
   Plots in PNG and JPEG format can easily be converted to many other
@@ -47,7 +50,7 @@ png(filename ="Rplot\%03d.png", width = 480, height = 480, pointsize = 12,
   \R can be compiled without support for either or both of these
   devices: this will be reported if you attempt to use them on a system
   where they are not supported.  They will not be available if \R has
-  been started with \code{--gui=none} (and will give a different error
+  been started with \samp{--gui=none} (and will give a different error
   message), and they may not be usable unless the X11 display is
   available to the owner of the \R process.
 }

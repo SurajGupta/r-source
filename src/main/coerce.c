@@ -594,12 +594,6 @@ static SEXP coerceToExpression(SEXP v)
 	    for (i = 0; i < n; i++)
 		SET_VECTOR_ELT(ans, i, ScalarString(STRING_ELT(v, i)));
 	    break;
-#ifdef never_used
-	case VECSXP:
-	    for (i = 0; i < n; i++)
-		SET_VECTOR_ELT(ans, i, VECTOR_ELT(v, i));
-	    break;
-#endif
 	}
     }
     else {/* not used either */
@@ -754,7 +748,8 @@ static SEXP coercePairList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error("pairlist object cannot be coerced to  vector type [%d]",type);
+	error("pairlist object cannot be coerced to %s",
+	      CHAR(type2str(type)));
 
     /* If any tags are non-null then we */
     /* need to add a names attribute. */
@@ -793,6 +788,14 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 	for (i = 0; i < n;  i++) {
 	    if (isString(VECTOR_ELT(v, i)) && length(VECTOR_ELT(v, i)) == 1)
 		SET_STRING_ELT(rval, i, STRING_ELT(VECTOR_ELT(v, i), 0));
+#if 0
+	    /* this will make as.character(list(s)) not backquote
+	     * non-syntactic name s. It is not entirely clear that
+	     * that is really desirable though....
+	     */
+	    else if (isSymbol(VECTOR_ELT(v, i)))
+	    	SET_STRING_ELT(rval, i, PRINTNAME(VECTOR_ELT(v, i)));
+#endif
 	    else
 		SET_STRING_ELT(rval, i,
 			       STRING_ELT(deparse1line(VECTOR_ELT(v, i), 0), 0));
@@ -827,7 +830,8 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error("(list) object cannot be coerced to vector type %d",type);
+	error("(list) object cannot be coerced to %s",
+	      CHAR(type2str(type)));
 
     names = getAttrib(v, R_NamesSymbol);
     if (names != R_NilValue)
@@ -849,7 +853,9 @@ static SEXP coerceSymbol(SEXP v, SEXPTYPE type)
 
 SEXP coerceVector(SEXP v, SEXPTYPE type)
 {
-    SEXP ans = R_NilValue;	/* -Wall */
+    SEXP op, vp, ans = R_NilValue;	/* -Wall */
+    int i,n;
+
     if (TYPEOF(v) == type)
 	return v;
 
@@ -864,8 +870,42 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	break;
     case NILSXP:
     case LISTSXP:
-    case LANGSXP:
 	ans = coercePairList(v, type);
+	break;
+    case LANGSXP:
+	if (type != STRSXP) {
+	    ans = coercePairList(v, type);
+	    break;
+	}
+
+	/* This is mostly copied from coercePairList, but we need to
+	 * special-case the first element so as not to get operators
+	 * put in backticks. */
+	n = length(v);
+	PROTECT(ans = allocVector(type, n));
+	if (n == 0) break; /* Can this actually happen? */
+	i = 0;
+	op = CAR(v);
+	/* The case of practical relevance is "lhs ~ rhs", which
+	 * people tend to split using as.character(), modify, and
+	 * paste() back together. However, we might as well
+	 * special-case all symbolic operators here. */
+	if (TYPEOF(op) == SYMSXP) {
+	    SET_STRING_ELT(ans, i, PRINTNAME(op));
+	    i++;
+	    v = CDR(v);
+	}
+
+	/* The distinction between strings and other elements was
+	 * here "always", but is really dubious since it makes x <- a
+	 * and x <- "a" come out identical. Won't fix just now. */
+	for (vp = v;  vp != R_NilValue; vp = CDR(vp), i++) {
+	    if (isString(CAR(vp)) && length(CAR(vp)) == 1)
+		SET_STRING_ELT(ans, i, STRING_ELT(CAR(vp), 0));
+	    else
+		SET_STRING_ELT(ans, i, STRING_ELT(deparse1line(CAR(vp), 0), 0));
+	}
+	UNPROTECT(1);
 	break;
     case VECSXP:
     case EXPRSXP:
@@ -879,38 +919,41 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
     case REALSXP:
     case CPLXSXP:
     case STRSXP:
+
+#define COERCE_ERROR						\
+	error("cannot coerce type %s to %s vector",		\
+	      CHAR(type2str(TYPEOF(v))), CHAR(type2str(type)))
+
 	switch (type) {
 	case SYMSXP:
-	    ans = coerceToSymbol(v);
-	    break;
+	    ans = coerceToSymbol(v);	    break;
 	case LGLSXP:
-	    ans = coerceToLogical(v);
-	    break;
+	    ans = coerceToLogical(v);	    break;
 	case INTSXP:
-	    ans = coerceToInteger(v);
-	    break;
+	    ans = coerceToInteger(v);	    break;
 	case REALSXP:
-	    ans = coerceToReal(v);
-	    break;
+	    ans = coerceToReal(v);	    break;
 	case CPLXSXP:
-	    ans = coerceToComplex(v);
-	    break;
+	    ans = coerceToComplex(v);	    break;
 	case STRSXP:
-	    ans = coerceToString(v);
-	    break;
+	    ans = coerceToString(v);	    break;
 	case EXPRSXP:
-	    ans = coerceToExpression(v);
-	    break;
+	    ans = coerceToExpression(v);    break;
 	case VECSXP:
-	    ans = coerceToVectorList(v);
-	    break;
+	    ans = coerceToVectorList(v);    break;
 	case LISTSXP:
-	    ans = coerceToPairList(v);
-	    break;
+	    ans = coerceToPairList(v);	    break;
+	default:
+	    COERCE_ERROR;
 	}
+	break;
+    default:
+	COERCE_ERROR;
     }
     return ans;
 }
+#undef COERCE_ERROR
+
 
 SEXP CreateTag(SEXP x)
 {
@@ -961,20 +1004,10 @@ static SEXP asFunction(SEXP x)
     return f;
 }
 
-static SEXP ascommon(SEXP call, SEXP u, int type)
+SEXP ascommon(SEXP call, SEXP u, SEXPTYPE type)
 {
     /* -> as.vector(..) or as.XXX(.) : coerce 'u' to 'type' : */
-    SEXP  v;
-#ifdef OLD
-    if (type == SYMSXP) {
-	if (TYPEOF(u) == SYMSXP)
-	    return u;
-	if (!isString(u) || LENGTH(u) < 0 || CHAR(STRING_ELT(u, 0))[0] == '\0')
-	    errorcall(call, "character argument required");
-	return install(CHAR(STRING_ELT(u, 0)));
-    }
-    else
-#endif
+    SEXP v;
     if (type == CLOSXP) {
 	return asFunction(u);
     }
@@ -1095,13 +1128,8 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Check the arguments; we need a list and environment. */
 
     arglist = CAR(args);
-#if OLD
-    if (length(arglist) > 1 && !isNewList(arglist))
-	errorcall(call, "list argument expected");
-#else
     if (!isNewList(arglist))
 	errorcall(call, "list argument expected");
-#endif
 
     envir = CADR(args);
     if (!isNull(envir) && !isEnvironment(envir))
@@ -1121,14 +1149,7 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 	pargs = CDR(pargs);
     }
     CheckFormals(args);
-#if OLD
-    if( n == 1 )
-	args =  mkCLOSXP(args, arglist, envir);
-    else
-	args =  mkCLOSXP(args, VECTOR_ELT(arglist, n - 1), envir);
-#else
     args =  mkCLOSXP(args, VECTOR_ELT(arglist, n - 1), envir);
-#endif
     UNPROTECT(1);
     return args;
 }
@@ -1234,9 +1255,6 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
     case 50:		/* is.object */
 	LOGICAL(ans)[0] = OBJECT(CAR(args));
 	break;
-    case 75:		/* is.factor */
-	LOGICAL(ans)[0] = isFactor(CAR(args));
-	break;
     case 80:
 	LOGICAL(ans)[0] = isFrame(CAR(args));
 	break;
@@ -1250,9 +1268,6 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case 102:		/* is.array */
 	LOGICAL(ans)[0] = isArray(CAR(args));
-	break;
-    case 103:		/* is.ts */
-	LOGICAL(ans)[0] = isTs(CAR(args));
 	break;
 
     case 200:		/* is.atomic */
@@ -1286,6 +1301,9 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case ANYSXP:
 	case EXPRSXP:
 	case EXTPTRSXP:
+#ifdef BYTECODE
+	case BCODESXP:
+#endif
 	case WEAKREFSXP:
 	    LOGICAL(ans)[0] = 1;
 	    break;
@@ -1750,10 +1768,6 @@ SEXP substitute(SEXP lang, SEXP rho)
 		}
 		while(TYPEOF(t) == PROMSXP);
 		return t;
-#ifdef OLD
-		return substitute(PREXPR(t), rho);
-		return PREXPR(t);
-#endif
 	    }
 	    else if (TYPEOF(t) == DOTSXP) {
 		error("... used in an incorrect context");
@@ -1795,14 +1809,11 @@ SEXP substituteList(SEXP el, SEXP rho)
 	UNPROTECT(2);
 	return t;
     }
-#ifdef OLD
-    else if (CAR(el) == R_MissingArg) {
-	return substituteList(CDR(el), rho);
-    }
-#endif
     else {
-	PROTECT(h = substitute(CAR(el), rho));
+	/* This could involve deep recursion on long lists, so do tail
+	 * first to avoid overflowing the protect stack */
 	PROTECT(t = substituteList(CDR(el), rho));
+	PROTECT(h = substitute(CAR(el), rho));
 	if (isLanguage(el))
 	    t = LCONS(h, t);
 	else
@@ -1868,7 +1879,7 @@ static classType classTable[] = {
     { (char *)0,	(SEXPTYPE)-1, FALSE}
 };
 
-static int class2type(char *s) 
+static int class2type(char *s)
 {
     /* return the type if the class string is one of the basic types, else -1.
        Note that this is NOT str2type:  only certain types are defined to be basic
@@ -1924,7 +1935,7 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 	    }
 	    else if(valueType != TYPEOF(obj))
 		error("\"%s\" can only be set as the class if the object has this type; found \"%s\"",
-		      valueString, type2str(TYPEOF(obj)));
+		      valueString, CHAR(type2str(TYPEOF(obj))));
 	    /* else, leave alone */
 	}
 	else if(!strcmp("numeric", valueString)) {

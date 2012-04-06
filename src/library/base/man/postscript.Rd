@@ -61,16 +61,13 @@ ps.options(paper, horizontal, width, height, family, encoding,
     border on each side.}
   \item{family}{the font family to be used.  EITHER a single character
     string OR a character vector of length
-    four or five.  See the section `Families'.}
+    four or five.  See the section \sQuote{Families}.}
   \item{encoding}{the name of an encoding file. Defaults to
 #ifdef unix
 "ISOLatin1.enc"
 #endif
 #ifdef windows
 "WinAnsi.enc"
-#endif
-#ifdef mac
-"MacRoman.enc"
 #endif
     in the \file{R\_HOME/afm} directory, which is used
     if the path does not contain a path separator.  An extension
@@ -87,7 +84,7 @@ ps.options(paper, horizontal, width, height, family, encoding,
     page: defaults to true.}
   \item{print.it}{logical: should the file be printed when the device is
     closed?  (This only applies if \code{file} is a real file name.)}
-  \item{command}{the command to be used for ``printing''.  Defaults to
+  \item{command}{the command to be used for \dQuote{printing}.  Defaults to
     option \code{"printcmd"}; this can also be selected as
     \code{"default"}.}
   \item{append}{logical; currently \bold{disregarded}; just there for
@@ -276,7 +273,7 @@ TestChars()
 TestChars("ISOLatin2")
 TestChars("WinAnsi")
 }
-\testonly{
+\dontshow{
 xx <- seq(0, 7, length=701)
 yy <- sin(xx)/xx; yy[1] <- 1
 plot(xx,yy)                     # produce the desired graph(s)

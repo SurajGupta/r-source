@@ -9,9 +9,9 @@ use Text::Tabs;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(R_getenv R_version R_tempfile R_system R_runR
-	     file_path env_path list_files
-	     list_files_with_exts list_files_with_type make_file_exts
-	     formatDL);
+	     file_path env_path
+	     list_files list_files_with_exts list_files_with_type
+	     make_file_exts);
 
 #**********************************************************
 
@@ -65,13 +65,6 @@ sub file_path {
     my $filesep = "/";
     my $v;
 
-    if($R::Vars::OSTYPE eq "mac") {
-	foreach $v (@args) {
-	    $v =~ s/:\z//;
-	}
-	$filesep = ":";
-    }
-
     join($filesep, @args);
 }
 
@@ -100,12 +93,7 @@ sub list_files_with_exts {
     my @files;
     $exts = ".*" unless $exts;
     opendir(DIR, $dir) or die "cannot opendir $dir: $!";
-    if($R::Vars::OSTYPE eq "mac"){
-	@files = grep { /\.$exts$/ && -f "$dir:$_" } readdir(DIR);
-    }
-    else{
-	@files = grep { /\.$exts$/ && -f "$dir/$_" } readdir(DIR);
-    }
+    @files = grep { /\.$exts$/ && -f "$dir/$_" } readdir(DIR);
     closedir(DIR);
     ## We typically want the paths to the files, see also the R variant
     ## .listFilesWithExts() used in some of the QC tools.
@@ -145,16 +133,15 @@ sub get_exclude_patterns {
     ## Return list of file patterns excluded by R CMD build and check.
     ## Kept here so that we ensure that the lists are in sync, but not
     ## exported.
+    ## <NOTE>
+    ## Has Unix-style '/' path separators hard-coded.
     my @exclude_patterns = ("^.Rbuildignore\$", "^.DS_Store\$",
-			    "\~\$", "\\.swp\$", "\\.bak\$",
-			    "^.*/\\.#[^/]*\$", "^.*/#[^/]*#\$",
-			    "^TITLE\$");
-    ## <FIXME>
-    ## Add
-    ##   "^data/00Index\$"
-    ##   "^inst/doc/00Index.dcf\$"
-    ## once 1.7 is out ...
-    ## </FIXME>
+			    "\~\$", "\\.bak\$", "\\.swp\$",
+			    "(^|/)\\.#[^/]*\$", "(^|/)#[^/]*#\$",
+			    "^TITLE\$", "^data/00Index\$",
+			    "^inst/doc/00Index.dcf\$"
+			    );
+    ## </NOTE>
     @exclude_patterns;
 }
 
@@ -178,25 +165,24 @@ sub R_tempfile {
 
 sub R_system
 {
-    my $cmd = $_[0];
+    my ($cmd, $Renv) = @_;
     my $tmpf = R_tempfile();
     if($R::Vars::OSTYPE eq "windows") {
 	open(tmpf, "> $tmpf")
 	  or die "Error: cannot write to '$tmpf'\n";
-	print tmpf "$cmd\n";
+	print tmpf "$cmd $Renv\n";
 	close tmpf;
 	$res = system("sh $tmpf");
 	unlink($tmpf);
 	return $res;
     } else {
-	return system($cmd);
+	return system("$Renv $cmd");
     }
 }
 
 sub R_runR
 {
-    my $cmd = $_[0];
-    my $Ropts = $_[1];
+    my ($cmd, $Ropts, $Renv) = @_;
     my $Rin = R_tempfile("Rin");
     my $Rout = R_tempfile("Rout");
 
@@ -204,7 +190,8 @@ sub R_runR
     open RIN, "> $Rin" or die "Error: cannot write to '$Rin'\n";
     print RIN "$cmd\n";
     close RIN;
-    R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1");
+    R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1",
+	     $Renv);
     my @out;
     open ROUT, "< $Rout";
     while(<ROUT>) {chomp; push(@out, $_);}
@@ -212,46 +199,6 @@ sub R_runR
     unlink($Rin);
     unlink($Rout);
     return(@out);
-}
-
-sub formatDL {
-    ## Format a description list entry (an item and its description)
-    ## as 2-column table or LaTeX-style description list entry.
-    ## Similar to R's formatDL(), but not 'vectorized'.
-    ## (Also, using Text::Wrap::fill destroys whitespace ...)
-
-    my ($item, $description, $style, $width, $indent) = @_;
-
-    ## Default values.
-    $style = "table" if(!$style);
-    $width = 72 if(!$width);
-    $indent = $width / 3 if(!$indent && ($style eq "table"));
-    $indent = $width / 9 if(!$indent && ($style eq "list"));
-
-    $Text::Wrap::columns = $width; # fill column
-
-    $description =~ s/^\s*//;	# remove leading whitespace
-
-    my $txt;
-    my $prefix = " " x $indent;
-    if($style eq "table") {
-	my $len = length($item);
-	$txt = expand(fill($prefix, $prefix, $description));
-	if($len > $indent - 3) {
-	    $txt = $item . "\n" . $txt;
-	}
-	else {
-	    substr($txt, 0, $len) = $item;
-	}
-    }
-    elsif($style eq "list") {
-	$txt = expand(fill("", $prefix, ($item . ": " . $description)));
-    }
-    else {
-	die "ERROR: unknown value for option 'style'.";
-    }
-
-    $txt;
 }
 
 1;

@@ -9,7 +9,7 @@
 \arguments{
   \item{x}{character vector, to be split.}
   \item{split}{character vector containing a regular expression to use
-    as ``split''.  If empty matches occur, in particular if \code{split}
+    as \dQuote{split}.  If empty matches occur, in particular if \code{split}
     has length 0, \code{x} is split into single characters.  If
     \code{split} has length greater than 1, it is re-cycled along \code{x}.}
   \item{extended}{if \code{TRUE}, extended regular expression matching
@@ -27,14 +27,14 @@
 \examples{
 noquote(strsplit("A text I want to display with spaces", NULL)[[1]])
 
-x <- c("asfef", "qwerty", "yuiop[", "b", "stuff.blah.yech")
+x <- c(as = "asfef", qu = "qwerty", "yuiop[", "b", "stuff.blah.yech")
 # split x on the letter e
 strsplit(x,"e")
 
 unlist(strsplit("a.b.c", "."))
 ## [1] "" "" "" "" ""
-## Note that `split' is a regexp!
-## If you really want to split on `.', use
+## Note that 'split' is a regexp!
+## If you really want to split on '.', use
 unlist(strsplit("a.b.c", "\\\\."))
 ## [1] "a" "b" "c"
 
@@ -44,7 +44,7 @@ strReverse <- function(x)
 strReverse(c("abc", "Statistics"))
 
 a <- readLines(file.path(R.home(),"AUTHORS"))[-(1:8)]
-a <- a[0:1-length(a)]
+a <- a[(0:2)-length(a)]
 sub("\t.*","", a)
 strReverse(sub(" .*","", a))
 }

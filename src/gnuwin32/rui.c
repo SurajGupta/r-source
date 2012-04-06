@@ -53,14 +53,15 @@ console RConsole = NULL;
 int   RguiMDI = RW_MDI | RW_TOOLBAR | RW_STATUSBAR;
 int   MDIset = 0;
 static window RFrame;
+rect MDIsize;
 #endif
 extern int ConsoleAcceptCmd, R_is_running;
 static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
     msavehistory, mpaste, mcopy, mcopypaste, mlazy, mconfig,
     mls, mrm, msearch, mhelp, mmanintro, mmanref, mmandata,
-    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ,
-    mpkgl, mpkgi, mpkgil, mpkgb, mpkgu, mpkgbu, mde;
+    mmanext, mmanlang, mapropos, mhelpstart, mhelpsearch, mFAQ,
+    mrwFAQ, mpkgl, mpkgi, mpkgil, mpkgb, mpkgu, mpkgbu, mde;
 static int lmanintro, lmanref, lmandata, lmanlang, lmanext;
 static menu m, mman;
 static char cmd[1024];
@@ -94,7 +95,7 @@ static void menusource(control m)
 /*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
-	sprintf(cmd, "source(\"%s\")", fn);
+	snprintf(cmd, 1024, "source(\"%s\")", fn);
 	consolecmd(RConsole, cmd);
     }
 }
@@ -116,7 +117,7 @@ static void menuloadimage(control m)
 /*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
-	sprintf(cmd, "load(\"%s\")", fn);
+	snprintf(cmd, 1024, "load(\"%s\")", fn);
 	consolecmd(RConsole, cmd);
     }
 }
@@ -132,7 +133,7 @@ static void menusaveimage(control m)
 /*    show(RConsole); */
     if (fn) {
 	fixslash(fn);
-	sprintf(cmd, "save.image(\"%s\")", fn);
+	snprintf(cmd, 1024, "save.image(\"%s\")", fn);
 	consolecmd(RConsole, cmd);
     }
 }
@@ -223,6 +224,31 @@ static void menucopypaste(control m)
 /*    show(RConsole); */
 }
 
+/* button* versions force focus back to the console: needed for PR#3285 */
+static void buttoncopy(control m)
+{
+    menucopy(m);
+    show(RConsole);
+}
+
+static void buttonpaste(control m)
+{
+    menupaste(m);
+    show(RConsole);
+}
+
+static void buttoncopypaste(control m)
+{
+    menucopypaste(m);
+    show(RConsole);
+}
+
+static void buttonkill(control m)
+{
+    show(RConsole);
+    UserBreak = TRUE;
+}
+
 static void menuclear(control m)
 {
     consoleclear(RConsole);
@@ -238,10 +264,10 @@ static void menude(control m)
     if(s) {
 	var = findVar(install(s), R_GlobalEnv);
 	if (var != R_UnboundValue) {
-	    sprintf(cmd, "fix(%s)", s);
+	    snprintf(cmd, 1024,"fix(%s)", s);
 	    consolecmd(RConsole, cmd);
 	} else {
-	    sprintf(cmd, "`%s' cannot be found", s);
+	    snprintf(cmd, 1024, "`%s' cannot be found", s);
 	    askok(cmd);
 	}
     }
@@ -262,7 +288,7 @@ static void menulazy(control m)
 
 static void menukill(control m)
 {
-/*    show(RConsole); */
+    /*  show(RConsole); */
     UserBreak = TRUE;
 }
 
@@ -347,7 +373,7 @@ static void menuhelp(control m)
     s = askstring("Help on", olds);
 /*    show(RConsole); */
     if (s) {
-	sprintf(cmd, "help(\"%s\")", s);
+	snprintf(cmd, 1024, "help(\"%s\")", s);
 	if (strlen(s) > 256) s[255] = '\0';
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
@@ -379,6 +405,21 @@ static void menumainlang(control m)
     internal_shellexec("doc\\manual\\R-lang.pdf");
 }
 
+static void menuhelpsearch(control m)
+{
+    char *s;
+    static char olds[256] = "";
+
+    if (!ConsoleAcceptCmd) return;
+    s = askstring("Search help", olds);
+    if (s && strlen(s)) {
+	snprintf(cmd, 1024, "help.search(\"%s\")", s);
+	if (strlen(s) > 256) s[255] = '\0';
+	strcpy(olds, s);
+	consolecmd(RConsole, cmd);
+    }
+}
+
 static void menuapropos(control m)
 {
     char *s;
@@ -388,7 +429,7 @@ static void menuapropos(control m)
     s = askstring("Apropos", olds);
 /*    show(RConsole); */
     if (s) {
-	sprintf(cmd, "apropos(\"%s\")", s);
+	snprintf(cmd, 1024, "apropos(\"%s\")", s);
 	if (strlen(s) > 256) s[255] = '\0';
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
@@ -441,6 +482,7 @@ static void menuact(control m)
 	enable(mrm);
 	enable(msearch);
 	enable(mhelp);
+	enable(mhelpsearch);
 	enable(mapropos);
 	enable(mpkgl);
 	enable(mpkgi);
@@ -457,6 +499,7 @@ static void menuact(control m)
 	disable(mrm);
 	disable(msearch);
 	disable(mhelp);
+	disable(mhelpsearch);
 	disable(mapropos);
 	disable(mpkgl);
 	disable(mpkgi);
@@ -484,7 +527,8 @@ static void menuact(control m)
 
 void readconsolecfg()
 {
-    int   consoler, consolec, pagerrow, pagercol, multiplewin, widthonresize;
+    int   consoler, consolec, consolex, consoley, pagerrow, pagercol,
+	multiplewin, widthonresize;
     int   bufbytes, buflines;
     rgb   consolebg, consolefg, consoleuser, highlight ;
     int   ok, fnchanged, done, cfgerr;
@@ -496,6 +540,7 @@ void readconsolecfg()
 
     consoler = 32;
     consolec = 90;
+    consolex = consoley = 0;
     consolebg = White;
     consolefg = Black;
     consoleuser = gaRed;
@@ -511,6 +556,7 @@ void readconsolecfg()
 	RguiMDI |= RW_MDI;
     if (MDIset == -1)
 	RguiMDI &= ~RW_MDI;
+    MDIsize = rect(0, 0, 0, 0);
 #endif
     sprintf(optf, "%s/RConsole", getenv("R_USER"));
     if (!optopenfile(optf)) {
@@ -554,6 +600,22 @@ void readconsolecfg()
 	    }
 	    if (!strcmp(opt[0], "columns")) {
 		consolec = atoi(opt[1]);
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "xconsole")) {
+		consolex = atoi(opt[1]);
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "yconsole")) {
+		consoley = atoi(opt[1]);
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "xgraphics")) {
+		graphicsx = atoi(opt[1]);
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "ygraphics")) {
+		graphicsy = atoi(opt[1]);
 		done = 1;
 	    }
 	    if (!strcmp(opt[0], "pgrows")) {
@@ -601,6 +663,31 @@ void readconsolecfg()
 		    RguiMDI &= ~RW_STATUSBAR;
 		done = 1;
 	    }
+	    if (!strcmp(opt[0], "MDIsize")) { /* wxh+x+y */
+		int x=0, y=0, w=0, h=0, sign;
+		char *p = opt[1];
+
+		if(*p == '-') {sign = -1; p++;} else sign = +1;
+		for(w=0; isdigit(*p); p++) w = 10*w + (*p - '0');
+		w *= sign;
+		p++;
+
+		if(*p == '-') {sign = -1; p++;} else sign = +1;
+		for(h=0; isdigit(*p); p++) h = 10*h + (*p - '0');
+		h *= sign;
+
+		if(*p == '-') sign = -1; else sign = +1;
+		p++;
+		for(x=0; isdigit(*p); p++) x = 10*x + (*p - '0');
+		x *= sign;
+		if(*p == '-') sign = -1; else sign = +1;
+		p++;
+		for(y=0; isdigit(*p); p++) y = 10*y + (*p - '0');
+		y *= sign;
+
+		MDIsize = rect(x, y, w, h);
+		done = 1;
+	    }
 #endif
 	    if (!strcmp(opt[0], "background")) {
 		if (!strcmpi(opt[1], "Windows"))
@@ -641,7 +728,8 @@ void readconsolecfg()
 	if (!done) {
 	    char  buf[128];
 
-	    sprintf(buf, "Error at line %d of file %s", optline(), optfile());
+	    snprintf(buf, 128, "Error at line %d of file %s",
+		     optline(), optfile());
 	    askok(buf);
 	    cfgerr = 1;
 	}
@@ -650,8 +738,9 @@ void readconsolecfg()
 	app_cleanup();
 	exit(10);
     }
-    setconsoleoptions(fn, sty, pointsize, consoler, consolec, consolefg,
-		      consoleuser, consolebg, highlight,
+    setconsoleoptions(fn, sty, pointsize, consoler, consolec,
+		      consolex, consoley,
+		      consolefg, consoleuser, consolebg, highlight,
 		      pagerrow, pagercol, multiplewin, widthonresize,
 		      bufbytes, buflines);
 }
@@ -670,13 +759,13 @@ static void dropconsole(control m, char *fn)
 	if(stricmp(p+1, "R") == 0) {
 	    if(ConsoleAcceptCmd) {
 		fixslash(fn);
-		sprintf(cmd, "source(\"%s\")", fn);
+		snprintf(cmd, 1024, "source(\"%s\")", fn);
 		consolecmd(RConsole, cmd);
 	    }
 	} else if(stricmp(p+1, "RData") == 0 || stricmp(p+1, "rda")) {
 	    if(ConsoleAcceptCmd) {
 		fixslash(fn);
-		sprintf(cmd, "load(\"%s\")", fn);
+		snprintf(cmd, 1024, "load(\"%s\")", fn);
 		consolecmd(RConsole, cmd);
 	    }
 	}
@@ -725,7 +814,7 @@ int setupui()
 #ifdef USE_MDI
     if (RguiMDI & RW_MDI) {
 	TRACERUI("Rgui");
-	RFrame = newwindow("RGui", rect(0, 0, 0, 0),
+	RFrame = newwindow("RGui", MDIsize,
 			   StandardWindow | Menubar | Workspace);
 	setclose(RFrame, closeconsole);
 	show(RFrame);
@@ -758,19 +847,19 @@ int setupui()
           MCHECK(addtooltip(bt,  "Save image"));
           r.x += (btsize + 6);
 
-          MCHECK(bt = newtoolbutton(copy_image, r, menucopy));
+          MCHECK(bt = newtoolbutton(copy_image, r, buttoncopy));
           MCHECK(addtooltip(bt, "Copy"));
           r.x += (btsize + 1);
 
-          MCHECK(bt = newtoolbutton(paste_image, r, menupaste));
+          MCHECK(bt = newtoolbutton(paste_image, r, buttonpaste));
           MCHECK(addtooltip(bt, "Paste"));
           r.x += (btsize + 1);
 
-          MCHECK(bt = newtoolbutton(copypaste_image, r, menucopypaste));
+          MCHECK(bt = newtoolbutton(copypaste_image, r, buttoncopypaste));
           MCHECK(addtooltip(bt, "Copy and paste"));
           r.x += (btsize + 6);
 
-          MCHECK(bt = newtoolbutton(stop_image,r,menukill));
+          MCHECK(bt = newtoolbutton(stop_image, r, buttonkill));
           MCHECK(addtooltip(bt,"Stop current computation"));
           r.x += (btsize + 6) ;
 
@@ -842,7 +931,7 @@ int setupui()
     MCHECK(mpkgu = newmenuitem("Update packages from CRAN", 0,
 			       menupkgupdate));
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mpkgi = newmenuitem("Install package(s) from Bioconductor...",
+    MCHECK(mpkgb = newmenuitem("Install package(s) from Bioconductor...",
 			       0, menupkginstallbioc));
     MCHECK(mpkgbu = newmenuitem("Update packages from Bioconductor",
 				0, menupkgupdatebioc));
@@ -856,10 +945,7 @@ int setupui()
     if (!check_doc_file("doc\\html\\faq.html")) disable(mFAQ);
     MCHECK(mrwFAQ = newmenuitem("FAQ on R for &Windows", 0, menurwFAQ));
     if (!check_doc_file("doc\\html\\rw-faq.html")) disable(mrwFAQ);
-    MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mhelp = newmenuitem("R functions (text)...", 0, menuhelp));
-    MCHECK(mhelpstart = newmenuitem("Html help", 0, menuhelpstart));
-    if (!check_doc_file("doc\\html\\rwin.html")) disable(mhelpstart);
+
     MCHECK(mman = newsubmenu(m, "Manuals"));
     MCHECK(mmanintro = newmenuitem("An &Introduction to R", 0, menumainman));
     lmanintro = check_doc_file("doc\\manual\\R-intro.pdf");
@@ -879,6 +965,11 @@ int setupui()
     if (!lmanintro && !lmanref && !lmanlang && !lmanext) disable(mman);
     addto(m);
 
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mhelp = newmenuitem("R functions (text)...", 0, menuhelp));
+    MCHECK(mhelpstart = newmenuitem("Html help", 0, menuhelpstart));
+    if (!check_doc_file("doc\\html\\rwin.html")) disable(mhelpstart);
+    MCHECK(mhelpsearch = newmenuitem("Search help...", 0, menuhelpsearch));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mapropos = newmenuitem("Apropos...", 0, menuapropos));
     MCHECK(newmenuitem("-", 0, NULL));

@@ -184,7 +184,7 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
                           "rows from a combined fit"))
     }
     n <- nrow(x)
-    if(is.null(wt)) wt <- rep(1, n)
+    if(is.null(wt)) wt <- rep.int(1, n)
     Terms <- attr(Terms, "term.labels")
     asgn <- attr(x, "assign")
     ousex <- match(asgn, match(oTerms, Terms), 0) > 0
@@ -307,7 +307,7 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
     dfs <- numeric(ns)
     RSS <- numeric(ns)
     y <- object$residuals + predict(object)
-    rank <- object$rank
+    na.coef <- (1:length(object$coefficients))[!is.na(object$coefficients)]
     for(i in 1:ns) {
 	ii <- seq(along=asgn)[asgn == ndrop[i]]
 	if(all.cols) jj <- setdiff(seq(ncol(x)), ii)
@@ -367,7 +367,7 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 		      k = 2, ...)
 {
     x <- model.matrix(object)
-    iswt <- !is.null(wt <- object$weights)
+#    iswt <- !is.null(wt <- object$weights)
     n <- nrow(x)
     asgn <- attr(x, "assign")
     tl <- attr(object$terms, "term.labels")
@@ -386,10 +386,9 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     dev <- numeric(ns)
     y <- object$y
     if(is.null(y)) y <- model.response(model.frame(object), "numeric")
-    na.coef <- (1:length(object$coefficients))[!is.na(object$coefficients)]
+#    na.coef <- (1:length(object$coefficients))[!is.na(object$coefficients)]
     wt <- object$prior.weights
-    if(is.null(wt)) wt <- rep(1, n)
-    rank <- object$rank
+    if(is.null(wt)) wt <- rep.int(1, n)
     for(i in 1:ns) {
 	ii <- seq(along=asgn)[asgn == ndrop[i]]
 	jj <- setdiff(seq(ncol(x)), ii)
@@ -482,7 +481,7 @@ factor.scope <- function(factor, scope)
 	} else nmdrop <- colnames(factor)
 	if(ncol(facs) > 1) {
             ## check no interactions will be left without margins.
-	    keep <- rep(TRUE, ncol(facs))
+	    keep <- rep.int(TRUE, ncol(facs))
 	    f <- crossprod(facs > 0)
 	    for(i in seq(keep)) keep[i] <- max(f[i, - i]) != f[i, i]
 	    nmdrop <- nmdrop[keep]
@@ -500,7 +499,7 @@ factor.scope <- function(factor, scope)
 	    add <- add[, -where, drop = FALSE]
 	}
 	if(ncol(add) > 1) {             # check marginality:
-	    keep <- rep(TRUE, ncol(add))
+	    keep <- rep.int(TRUE, ncol(add))
 	    f <- crossprod(add > 0)
 	    for(i in seq(keep)) keep[-i] <- keep[-i] & (f[i, -i] < f[i, i])
 	    nmadd <- nmadd[keep]
@@ -578,12 +577,6 @@ step <- function(object, scope, scale = 0,
 	fit
     }
 
-    ## need to fix up . in formulae in R
-#     object$formula <- fixFormulaObject(object)
-#     Terms <- object$formula
-#     object$call$formula <- object$formula
-#     attributes(Terms) <- attributes(object$terms)
-#     object$terms <- Terms
     Terms <- terms(object)
     object$call$formula <- object$formula <- Terms
     md <- missing(direction)
@@ -610,10 +603,7 @@ step <- function(object, scope, scale = 0,
 	}
     }
     models <- vector("list", steps)
-    if(!is.null(keep)) {
-	keep.list <- vector("list", steps)
-	nv <- 1
-    }
+    if(!is.null(keep)) keep.list <- vector("list", steps)
     n <- length(object$residuals)
     fit <- object
     bAIC <- extractAIC(fit, scale, k = k, ...)
@@ -634,7 +624,6 @@ step <- function(object, scope, scale = 0,
     while(steps > 0) {
 	steps <- steps - 1
 	AIC <- bAIC
-	bfit <- fit
 	ffac <- attr(Terms, "factors")
 	scope <- factor.scope(ffac, list(add = fadd, drop = fdrop))
 	aod <- NULL
@@ -644,10 +633,11 @@ step <- function(object, scope, scale = 0,
                          trace = trace, k = k, ...)
 	    rn <- row.names(aod)
 	    row.names(aod) <- c(rn[1], paste("-", rn[-1], sep=" "))
-            ## drop all zero df terms first.
+            ## drop zero df terms first: one at time since they
+            ## may mask each other
 	    if(any(aod$Df == 0, na.rm=TRUE)) {
 		zdf <- aod$Df == 0 & !is.na(aod$Df)
-		change <- paste(rownames(aod)[zdf])
+		change <- rev(rownames(aod)[zdf])[1]
 	    }
 	}
 	if(is.null(change)) {
@@ -679,10 +669,6 @@ step <- function(object, scope, scale = 0,
         fit <- eval.parent(fit)
         if(length(fit$residuals) != n)
             stop("number of rows in use has changed: remove missing values?")
-## 	fit$formula <- fixFormulaObject(fit)
-## 	Terms <- fit$formula
-## 	attributes(Terms) <- attributes(fit$terms)
-## 	fit$terms <- Terms
         Terms <- terms(fit)
 	bAIC <- extractAIC(fit, scale, k = k, ...)
 	edf <- bAIC[1]
@@ -690,7 +676,8 @@ step <- function(object, scope, scale = 0,
 	if(trace)
 	    cat("\nStep:  AIC=", format(round(bAIC, 2)), "\n",
 		cut.string(deparse(as.vector(formula(fit)))), "\n\n")
-	if(bAIC >= AIC) break
+        ## add a tolerance as dropping 0-df terms might increase AIC slightly
+	if(bAIC >= AIC + 1e-7) break
 	nm <- nm + 1
 	models[[nm]] <-
 	    list(deviance = mydeviance(fit), df.resid = n - edf,

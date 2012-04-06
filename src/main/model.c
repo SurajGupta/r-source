@@ -175,6 +175,7 @@ static void ExtractVars(SEXP formula, int checkonly)
 {
     int len, i;
     SEXP v;
+
     if (isNull(formula) || isZeroOne(formula))
 	return;
     if (isSymbol(formula)) {
@@ -256,7 +257,7 @@ static void ExtractVars(SEXP formula, int checkonly)
 	InstallVar(formula);
 	return;
     }
-    error("invalid model formula");
+    error("invalid model formula in ExtractVars");
 }
 
 
@@ -640,7 +641,7 @@ static SEXP EncodeVars(SEXP formula)
 	SetBit(term, InstallVar(formula), 1);
 	return CONS(term, R_NilValue);
     }
-    error("invalid model formula");
+    error("invalid model formula in EncodeVars");
     return R_NilValue;/*NOTREACHED*/
 }
 
@@ -813,12 +814,8 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Step 2a: Compute variable names */
 
     PROTECT(varnames = allocVector(STRSXP, nvar));
-    for (v = CDR(varlist), i = 0; v != R_NilValue; v = CDR(v)) {
-	if (isSymbol(CAR(v)))
-	    SET_STRING_ELT(varnames, i++, PRINTNAME(CAR(v)));
-	else
-	    SET_STRING_ELT(varnames, i++, STRING_ELT(deparse1line(CAR(v), 0), 0));
-    }
+    for (v = CDR(varlist), i = 0; v != R_NilValue; v = CDR(v))
+	SET_STRING_ELT(varnames, i++, STRING_ELT(deparse1line(CAR(v), 0), 0));
     
     /* Step 2b: Remove any offset(s) */
 
@@ -1285,6 +1282,8 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0,j = 0; i < ndots; i++) {
 	if (VECTOR_ELT(dots, i) == R_NilValue)
 	    continue;
+	if(strlen(CHAR(STRING_ELT(dotnames, i))) + 3 > 256)
+	    error("overlong names in %s", CHAR(STRING_ELT(dotnames, i)));
 	sprintf(buf, "(%s)", CHAR(STRING_ELT(dotnames, i)));
 	SET_VECTOR_ELT(data, nvars + j, VECTOR_ELT(dots, i));
 	SET_STRING_ELT(names, nvars + j,  mkChar(buf));
@@ -1524,8 +1523,8 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     nVar = nterms = 0;		/* -Wall */
     PROTECT(factors = duplicate(getAttrib(terms, install("factors"))));
     if (length(factors) == 0) {
-	if (intrcept == 0)
-	    errorcall(call, "illegal model (zero parameters).");
+	/* if (intrcept == 0)
+	   errorcall(call, "illegal model (zero parameters).");*/
 	nVar = 1;
 	nterms = 0;
     }
@@ -1689,7 +1688,8 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	nc = 0;
     for (j = 0; j < nterms; j++) {
 	if (j == rhs_response) {
-	    INTEGER(count)[j]=0;  /* need this initialised */
+	    warning("the response appeared on the rhs and was dropped");
+	    INTEGER(count)[j] = 0;  /* need this initialised */
 	    continue;
 	}
 	k = 1;
@@ -1726,15 +1726,6 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Create column labels for the matrix columns. */
 
     PROTECT(xnames = allocVector(STRSXP, nc));
-#ifdef TNAMES
-    tnames = getAttrib(factors, R_DimNamesSymbol);
-    if (nterms > 0) {
-	if (isNull(tnames))
-	    errorcall(call, "invalid terms object!");
-	tnames = CADR(tnames);
-    }
-    else tnames = R_NilValue;
-#endif
 
     /* Here we loop over the terms in the model and, within each */
     /* term, loop over the corresponding columns of the design */

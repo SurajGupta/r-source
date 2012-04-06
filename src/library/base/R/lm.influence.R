@@ -26,48 +26,62 @@ weighted.residuals <- function(obj, drop0 = TRUE)
 
 lm.influence <- function (model, do.coef = TRUE)
 {
-    if (is.empty.model(model$terms)) {
-	warning("Can't compute influence on an empty model")
-	return(NULL)
+    wt.res <- if(inherits(model, "glm"))
+        residuals(model, type="deviance")[model$prior.weights != 0]
+    else weighted.residuals(model)
+    e <- na.omit(wt.res)
+
+    if (model$rank == 0) {
+        n <- length(wt.res) # drops 0 wt, may drop NAs
+        sigma <- sqrt(deviance(model)/df.residual(model))
+        res <- list(hat = rep(0, n), coefficients = matrix(0, n, 0),
+                    sigma = rep(sigma, n), wt.res = e)
+    } else {
+        ## if we have a point with hat = 1, the corresponding e should be
+        ## exactly zero.  Protect against returning Inf by forcing this
+        e[abs(e) < 100 * .Machine$double.eps * median(abs(e))] <- 0
+        n <- as.integer(nrow(model$qr$qr))
+        k <- as.integer(model$qr$rank)
+        ## in na.exclude case, omit NAs; also drop 0-weight cases
+        if(NROW(e) != n)
+            stop("non-NA residual length does not match cases used in fitting")
+        do.coef <- as.logical(do.coef)
+        res <- .Fortran("lminfl",
+                        model$qr$qr,
+                        n,
+                        n,
+                        k,
+                        as.integer(do.coef),
+                        model$qr$qraux,
+                        wt.res = e,
+                        hat = double(n),
+                        coefficients= if(do.coef) matrix(0, n, k) else double(0),
+                        sigma = double(n),
+                        tol = 10 * .Machine$double.eps,
+                        DUP = FALSE, PACKAGE="base"
+                        )[c("hat", "coefficients", "sigma","wt.res")]
+        if(!is.null(model$na.action)) {
+            hat <- naresid(model$na.action, res$hat)
+            hat[is.na(hat)] <- 0       # omitted cases have 0 leverage
+            res$hat <- hat
+            if(do.coef) {
+                coefficients <- naresid(model$na.action, res$coefficients)
+                coefficients[is.na(coefficients)] <- 0 # omitted cases have 0 change
+                res$coefficients <- coefficients
+            }
+            sigma <- naresid(model$na.action, res$sigma)
+            sigma[is.na(sigma)] <- sqrt(deviance(model)/df.residual(model))
+            res$sigma <- sigma
+        }
     }
-    n <- as.integer(nrow(model$qr$qr))
-    k <- as.integer(model$qr$rank)
-    ## in na.exclude case, omit NAs; also drop 0-weight cases
-    e <- na.omit(if(inherits(model, "glm"))
-		 residuals(model, type="deviance")[model$prior.weights != 0]
-		 else weighted.residuals(model))
-    if(NROW(e) != n)
-	stop("non-NA residual length does not match cases used in fitting")
-    do.coef <- as.logical(do.coef)
-    res <- .Fortran("lminfl",
-		    model$qr$qr,
-		    n,
-		    n,
-		    k,
-		    as.integer(do.coef),
-		    model$qr$qraux,
-		    wt.res = e,
-		    hat = double(n),
-		    coefficients= if(do.coef) matrix(0, n, k) else double(1),
-		    sigma = double(n),
-		    DUP = FALSE, PACKAGE="base")[
-				 c("hat", "coefficients", "sigma","wt.res")]
-    if(!is.null(model$na.action)) {
-	hat <- naresid(model$na.action, res$hat)
-	hat[is.na(hat)] <- 0 # omitted cases have 0 leverage
-	res$hat <- hat
-	if(do.coef) {
-	    coefficients <- naresid(model$na.action, res$coefficients)
-	    coefficients[is.na(coefficients)] <- 0 # omitted cases have 0 change
-	    res$coefficients <- coefficients
-	}
-	sigma <- naresid(model$na.action, res$sigma)
-	sigma[is.na(sigma)] <- sqrt(deviance(model)/df.residual(model))
-	res$sigma <- sigma
-	res$wt.res <- naresid(model$na.action, res$wt.res)
-    }
+    res$wt.res <- naresid(model$na.action, res$wt.res)
+    names(res$hat) <- names(res$sigma) <- names(res$wt.res)
     if(!do.coef) ## drop it
 	res$coefficients <- NULL
+    else {
+        rownames(res$coefficients) <- names(res$wt.res)
+        colnames(res$coefficients) <- names(coef(model))[!is.na(coef(model))]
+    }
     res
 }
 
@@ -207,7 +221,7 @@ influence.measures <- function(model)
     dffits <- e*sqrt(h)/(si*(1-h))
     cov.ratio <- (si/s)^(2 * p)/(1 - h)
     cooks.d <- ((e/(s * (1 - h)))^2 * h)/p
-    dn <- dimnames(model$qr$qr)
+#    dn <- dimnames(model$qr$qr)
     infmat <- cbind(dfbetas, dffit = dffits, cov.r = cov.ratio,
 		    cook.d = cooks.d, hat=h)
     is.inf <- is.influential(infmat, sum(h>0))
@@ -231,7 +245,9 @@ summary.infl <- function(object, digits = max(2, getOption("digits") - 5), ...)
 {
     ## object must be as the result of	influence.measures(.)
     is.inf <- object$is.inf
-    is.star <- apply(is.inf, 1, any, na.rm=TRUE)
+    ## will have NaN values from any hat=1 rows.
+    is.inf[is.na(is.inf)] <- FALSE
+     is.star <- apply(is.inf, 1, any)
     is.inf <- is.inf[is.star,]
     cat("Potentially influential observations of\n\t",
 	deparse(object$call),":\n")

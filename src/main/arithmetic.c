@@ -165,10 +165,6 @@ int R_IsNaNorNA(double x)
 
 int R_finite(double x)
 {
-#ifdef Macintosh
-    /* FIXME: merge with generic isfinite case */
-    return isfinite(x);
-#endif
 #ifdef HAVE_WORKING_FINITE
     return finite(x);
 #else
@@ -357,34 +353,52 @@ SEXP do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;			/* never used; to keep -Wall happy */
 }
 
+#define COERCE_IF_NEEDED(v, tp, vpi) do { \
+    if (TYPEOF(v) != (tp)) { \
+        int __vo__ = OBJECT(v); \
+	REPROTECT(v = coerceVector(v, (tp)), vpi); \
+	if (__vo__) SET_OBJECT(v, 1); \
+    } \
+} while (0)
+
+#define FIXUP_NULL_AND_CHECK_TYPES(v, vpi) do { \
+    switch (TYPEOF(v)) { \
+    case NILSXP: REPROTECT(v = allocVector(REALSXP,0), vpi); break; \
+    case CPLXSXP: case REALSXP: case INTSXP: case LGLSXP: break; \
+    default: errorcall(lcall, "non-numeric argument to binary operator"); \
+    } \
+} while (0)
 
 SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
 {
-    SEXP class, dims, tsp, xnames, ynames;
+    SEXP class, dims, tsp, xnames, ynames, val;
     int mismatch, nx, ny, xarray, yarray, xts, yts;
+    int xattr, yattr;
     SEXP lcall = call;
     PROTECT_INDEX xpi, ypi;
+    int nprotect = 2; /* x and y */
 
 
     PROTECT_WITH_INDEX(x, &xpi);
     PROTECT_WITH_INDEX(y, &ypi);
 
-    /* fix up NULL */
-    if (isNull(x))
-	REPROTECT(x = allocVector(REALSXP,0), xpi);
-    if (isNull(y))
-	REPROTECT(y = allocVector(REALSXP,0), ypi);
+    FIXUP_NULL_AND_CHECK_TYPES(x, xpi);
+    FIXUP_NULL_AND_CHECK_TYPES(y, ypi);
 
-    if (!(isNumeric(x) || isComplex(x)) || !(isNumeric(y) || isComplex(y))) {
-	errorcall(lcall, "non-numeric argument to binary operator");
-	return R_NilValue;	/* -Wall */
+    nx = LENGTH(x);
+    if (ATTRIB(x) != R_NilValue) {
+	xattr = TRUE;
+	xarray = isArray(x);
+	xts = isTs(x);
     }
-
-    mismatch = 0;
-    xarray = isArray(x);
-    yarray = isArray(y);
-    xts = isTs(x);
-    yts = isTs(y);
+    else xarray = xts = xattr = FALSE;
+    ny = LENGTH(y);
+    if (ATTRIB(y) != R_NilValue) {
+	yattr = TRUE;
+	yarray = isArray(y);
+	yts = isTs(y);
+    }
+    else yarray = yts = yattr = FALSE;
 
     /* If either x or y is a matrix with length 1 and the other is a
        vector, we want to coerce the matrix to be a vector. */
@@ -394,19 +408,18 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
      * If we have NAMED(x) or NAMED(y) we should duplicate!
      */
     if (xarray != yarray) {
-	if (xarray && length(x)==1 && length(y)!=1) {
+	if (xarray && nx==1 && ny!=1) {
 	    REPROTECT(x = duplicate(x), xpi);
 	    setAttrib(x, R_DimSymbol, R_NilValue);
 	}
-	if (yarray && length(y)==1 && length(x)!=1) {
+	if (yarray && ny==1 && nx!=1) {
 	    REPROTECT(y = duplicate(y), ypi);
 	    setAttrib(y, R_DimSymbol, R_NilValue);
 	}
     }
 
+    mismatch = 0;
     if (xarray || yarray) {
-	nx = length(x);
-	ny = length(y);
 	if (xarray && yarray) {
 	    if (!conformable(x, y))
 		errorcall(lcall, "non-conformable arrays");
@@ -418,19 +431,35 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
 	else {			/* (yarray) */
 	    PROTECT(dims = getAttrib(y, R_DimSymbol));
 	}
-	PROTECT(xnames = getAttrib(x, R_DimNamesSymbol));
-	PROTECT(ynames = getAttrib(y, R_DimNamesSymbol));
+	nprotect++;
+	if (xattr) {
+	    PROTECT(xnames = getAttrib(x, R_DimNamesSymbol));
+	    nprotect++;
+	}
+	else xnames = R_NilValue;
+	if (yattr) {
+	    PROTECT(ynames = getAttrib(y, R_DimNamesSymbol));
+	    nprotect++;
+	}
+	else ynames = R_NilValue;
     }
     else {
-	nx = length(x);
-	ny = length(y);
-	if (nx > 0 && ny > 0) {
+	if (nx == ny || nx == 1 || ny == 1) mismatch = 0;
+	else if (nx > 0 && ny > 0) {
 	    if (nx > ny) mismatch = nx % ny;
 	    else mismatch = ny % nx;
 	}
-	PROTECT(dims = R_NilValue);
-	PROTECT(xnames = getAttrib(x, R_NamesSymbol));
-	PROTECT(ynames = getAttrib(y, R_NamesSymbol));
+	dims = R_NilValue;
+	if (xattr) {
+	    PROTECT(xnames = getAttrib(x, R_NamesSymbol));
+	    nprotect++;
+	}
+	else xnames = R_NilValue;
+	if (yattr) {
+	    PROTECT(ynames = getAttrib(y, R_NamesSymbol));
+	    nprotect++;
+	}
+	else ynames = R_NilValue;
     }
 
     if (xts || yts) {
@@ -441,75 +470,73 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
 	    PROTECT(class = getAttrib(x, R_ClassSymbol));
 	}
 	else if (xts) {
-	    if (length(x) < length(y))
+	    if (nx < ny)
 		ErrorMessage(lcall, ERROR_TSVEC_MISMATCH);
 	    PROTECT(tsp = getAttrib(x, R_TspSymbol));
 	    PROTECT(class = getAttrib(x, R_ClassSymbol));
 	}
 	else {			/* (yts) */
-	    if (length(y) < length(x))
+	    if (ny < nx)
 		ErrorMessage(lcall, ERROR_TSVEC_MISMATCH);
 	    PROTECT(tsp = getAttrib(y, R_TspSymbol));
 	    PROTECT(class = getAttrib(y, R_ClassSymbol));
 	}
-    } else {
-	class = tsp = R_NilValue; /* -Wall */
+	nprotect += 2;
     }
+    else class = tsp = NULL; /* -Wall */
 
     if (mismatch)
 	warningcall(lcall, "longer object length\n\tis not a multiple of shorter object length");
 
-/* need to preserve object here, as *_binary copies class attributes */
+    /* need to preserve object here, as *_binary copies class attributes */
     if (TYPEOF(x) == CPLXSXP || TYPEOF(y) == CPLXSXP) {
-        int xo = OBJECT(x), yo = OBJECT(y);
-	REPROTECT(x = coerceVector(x, CPLXSXP), xpi);
-	REPROTECT(y = coerceVector(y, CPLXSXP), ypi);
-        SET_OBJECT(x, xo);
-	SET_OBJECT(y, yo);
-	x = complex_binary(PRIMVAL(op), x, y);
+	COERCE_IF_NEEDED(x, CPLXSXP, xpi);
+	COERCE_IF_NEEDED(y, CPLXSXP, ypi);
+	val = complex_binary(PRIMVAL(op), x, y);
     }
-    else
-	if (TYPEOF(x) == REALSXP || TYPEOF(y) == REALSXP) {
-            int xo = OBJECT(x), yo = OBJECT(y);
-	    REPROTECT(x = coerceVector(x, REALSXP), xpi);
-	    REPROTECT(y = coerceVector(y, REALSXP), ypi);
-	    SET_OBJECT(x, xo);
-	    SET_OBJECT(y, yo);
-	    x = real_binary(PRIMVAL(op), x, y);
-	}
-	else {
-	    x = integer_binary(PRIMVAL(op), x, y, lcall);
-	}
+    else if (TYPEOF(x) == REALSXP || TYPEOF(y) == REALSXP) {
+	COERCE_IF_NEEDED(x, REALSXP, xpi);
+	COERCE_IF_NEEDED(y, REALSXP, ypi);
+	val = real_binary(PRIMVAL(op), x, y);
+    }
+    else val = integer_binary(PRIMVAL(op), x, y, lcall);
 
-    PROTECT(x);
+    /* quick return if there are no attributes */
+    if (! xattr && ! yattr) {
+	UNPROTECT(nprotect);
+	return val;
+    }
+
+    PROTECT(val);
+    nprotect++;
+
     /* Don't set the dims if one argument is an array of size 0 and the
        other isn't of size zero, cos they're wrong */
     /* Not if the other argument is a scalar (PR#1979) */
     if (dims != R_NilValue) {
 	if (!((xarray && (nx == 0) && (ny > 1)) ||
 	      (yarray && (ny == 0) && (nx > 1)))){
-	    setAttrib(x, R_DimSymbol, dims);
+	    setAttrib(val, R_DimSymbol, dims);
 	    if (xnames != R_NilValue)
-		setAttrib(x, R_DimNamesSymbol, xnames);
+		setAttrib(val, R_DimNamesSymbol, xnames);
 	    else if (ynames != R_NilValue)
-		setAttrib(x, R_DimNamesSymbol, ynames);
+		setAttrib(val, R_DimNamesSymbol, ynames);
 	}
     }
     else {
-	if (length(x) == length(xnames))
-	    setAttrib(x, R_NamesSymbol, xnames);
-	else if (length(x) == length(ynames))
-	    setAttrib(x, R_NamesSymbol, ynames);
+	if (length(val) == length(xnames))
+	    setAttrib(val, R_NamesSymbol, xnames);
+	else if (length(val) == length(ynames))
+	    setAttrib(val, R_NamesSymbol, ynames);
     }
 
     if (xts || yts) {		/* must set *after* dims! */
-	setAttrib(x, R_TspSymbol, tsp);
-	setAttrib(x, R_ClassSymbol, class);
-	UNPROTECT(2);
+	setAttrib(val, R_TspSymbol, tsp);
+	setAttrib(val, R_ClassSymbol, class);
     }
 
-    UNPROTECT(6);
-    return x;
+    UNPROTECT(nprotect);
+    return val;
 }
 
 SEXP R_unary(SEXP call, SEXP op, SEXP s1)
@@ -762,6 +789,10 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
     }
 
 
+    /* quick return if there are no attributes */
+    if (ATTRIB(s1) == R_NilValue && ATTRIB(s2) == R_NilValue)
+	return ans;
+
     /* Copy attributes from longer argument. */
 
     if (n1 > n2)
@@ -905,6 +936,9 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	break;
     }
 
+    /* quick return if there are no attributes */
+    if (ATTRIB(s1) == R_NilValue && ATTRIB(s2) == R_NilValue)
+	return ans;
 
     /* Copy attributes from longer argument. */
 
@@ -1270,7 +1304,7 @@ SEXP do_log(SEXP call, SEXP op, SEXP args, SEXP env)
 static SEXP math3(SEXP sa, SEXP sb, SEXP sc, double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, n, na, nb, nc, 
+    int i, ia, ib, ic, n, na, nb, nc,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc);
     double ai, bi, ci, *a, *b, *c, *y;
     int naflag;
@@ -1336,7 +1370,7 @@ static SEXP math3(SEXP sa, SEXP sb, SEXP sc, double (*f)(), SEXP lcall)
 static SEXP math3_1(SEXP sa, SEXP sb, SEXP sc, SEXP sI, double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, n, na, nb, nc, 
+    int i, ia, ib, ic, n, na, nb, nc,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc);
     double ai, bi, ci, *a, *b, *c, *y;
     int i_1;
@@ -1363,7 +1397,7 @@ static SEXP math3_1(SEXP sa, SEXP sb, SEXP sc, SEXP sI, double (*f)(), SEXP lcal
 static SEXP math3_2(SEXP sa, SEXP sb, SEXP sc, SEXP sI, SEXP sJ, double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, n, na, nb, nc, 
+    int i, ia, ib, ic, n, na, nb, nc,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc);
     double ai, bi, ci, *a, *b, *c, *y;
     int i_1,i_2;
@@ -1444,14 +1478,9 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     case 34:  return Math3_1(args, dnchisq);
     case 35:  return Math3_2(args, pnchisq);
-/* #ifdef UNIMP */
-/* This appears to be IMP already */
     case 36:  return Math3_2(args, qnchisq);
-/* #endif */
 
-#ifdef UNIMP
     case 37:  return Math3_1(args, dnt);
-#endif
     case 38:  return Math3_2(args, pnt);
 #ifdef UNIMP
     case 39:  return Math3_2(args, qnt);
@@ -1487,7 +1516,7 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 static SEXP math4(SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, id, n, na, nb, nc, nd, 
+    int i, ia, ib, ic, id, n, na, nb, nc, nd,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc), sdo = OBJECT(sd);
     double ai, bi, ci, di, *a, *b, *c, *d, *y;
     int naflag;
@@ -1562,7 +1591,7 @@ static SEXP math4(SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)(), SEXP lcall)
 static SEXP math4_1(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP sI, double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, id, n, na, nb, nc, nd, 
+    int i, ia, ib, ic, id, n, na, nb, nc, nd,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc), sdo = OBJECT(sd);
     double ai, bi, ci, di, *a, *b, *c, *d, *y;
     int i_1;
@@ -1590,7 +1619,7 @@ static SEXP math4_2(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP sI, SEXP sJ,
 		    double (*f)(), SEXP lcall)
 {
     SEXP sy;
-    int i, ia, ib, ic, id, n, na, nb, nc, nd, 
+    int i, ia, ib, ic, id, n, na, nb, nc, nd,
 	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc), sdo = OBJECT(sd);
     double ai, bi, ci, di, *a, *b, *c, *d, *y;
     int i_1, i_2;
@@ -1687,8 +1716,8 @@ SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
 static SEXP math5(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se, double (*f)())
 {
     SEXP sy;
-    int i, ia, ib, ic, id, ie, n, na, nb, nc, nd, ne, 
-	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc), 
+    int i, ia, ib, ic, id, ie, n, na, nb, nc, nd, ne,
+	sao = OBJECT(sa), sbo = OBJECT(sb), sco = OBJECT(sc),
 	sdo = OBJECT(sd), seo = OBJECT(se);
     double ai, bi, ci, di, ei, *a, *b, *c, *d, *e, *y;
 

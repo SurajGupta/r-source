@@ -26,6 +26,7 @@ sm(predict(fit2))
 
 ## same as before: napredict is only applied to predictions on the
 ## original data, following Therneau's original code (and S-PLUS).
+## However, as from R 1.8.0 there is a separate na.action arg to predict.lm()
 stopifnot(all.equal(pp, pp2))
 
 ## should fail

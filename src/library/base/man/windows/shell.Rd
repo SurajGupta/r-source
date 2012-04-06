@@ -11,7 +11,7 @@ shell(cmd, shell, flag="/c", intern=FALSE, wait=TRUE,
   \item{cmd}{the system command to be invoked, as a string.}
   \item{shell}{a string giving the name of the shell to be used, or
     \code{NULL} (no shell). If missing, a suitable shell is chosen:
-    see `details'}
+    see \sQuote{Details}.}
   \item{flag}{the switch to run a command under the shell. If the
     shell is \code{bash} or \code{tcsh} the default is changed to
     \code{"-c"}.}
@@ -51,8 +51,8 @@ shell(cmd, shell, flag="/c", intern=FALSE, wait=TRUE,
 
 \details{
   If no \code{shell} is specified, the environment variables
-  \code{R\_SHELL}, \code{SHELL} and \code{COMSPEC} are tried in turn:
-  \code{COMSPEC} should always succeed. Using \code{shell=NULL}
+  \env{R\_SHELL}, \env{SHELL} and \env{COMSPEC} are tried in turn:
+  \env{COMSPEC} should always succeed. Using \code{shell=NULL}
   invokes the command \code{cmd} directly, in which case an extension
   of \code{.exe} is assumed. It is possible to use batch files
   directly if their extension is given: Windows (rather than \R) then

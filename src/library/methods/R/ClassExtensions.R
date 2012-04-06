@@ -1,11 +1,12 @@
 .InitExtensions <- function(where) {
     ## to be called from the initialization
-    setClass("SClassExtension", representation(superClass = "character", package = "character",
+    setClass("SClassExtension", representation(subClass = "character", superClass = "character", package = "character",
                                                coerce = "function", test = "function",
                                                replace = "function",
                                                simple = "logical", by = "character",
                                                dataPart = "logical"),
-             sealed = TRUE, where = where)
+             where = where)
+    assign(".SealedClasses", c(get(".SealedClasses", where), "SClassExtension"), where);
 }
 
 .simpleExtCoerce <- function(from, strict = TRUE)from
@@ -25,8 +26,8 @@
 .InhSlotNames <- function(Class) {
    ClassDef <- getClass(Class)
     value <- names(ClassDef@slots)
-    if(length(value)==0 && !is.na(match("vector", names(ClassDef@contains))))
-        ## usually a basic class; treat as data part
+    if(length(value)==0 && (Class %in% .BasicClasses || extends(ClassDef, "vector")))
+        ## No slots, but extends "vector" => usually a basic class; treat as data part
         value <- ".Data"
    value
 }
@@ -61,24 +62,31 @@
 
 makeExtends <- function(Class, to,
                         coerce = NULL, test = NULL, replace = NULL,
-                        by = character(), package = getPackageName(findClass(to)),
-                        slots = getSlots(classDef1),
-                        classDef1 = getClass(Class, TRUE), classDef2 = getClass(to, TRUE)) {
+                        by = character(), package,
+                        slots = names(getSlots(classDef1)),
+                        classDef1 = getClass(Class), classDef2) {
     ## test for datapart class:  must be the data part class, except
     ## that extensions within the basic classes are allowed (numeric, integer)
     dataEquiv <- function(cl1, cl2) {
-        identical(cl1, cl2) ||
+        .identC(cl1, cl2) ||
           (extends(cl1, cl2) && !any(is.na(match(c(cl1, cl2), .BasicClasses))))
     }
     class1Defined <- missing(slots) # only at this time can we construct methods
     simple <- is.null(coerce) && is.null(test) && is.null(replace) && (length(by)==0)
     dataPartClass <- elNamed(slots, ".Data")
-    dataPart <- simple && !is.null(dataPartClass) && dataEquiv(to, dataPartClass)
+    dataPart <- FALSE
+    if(simple && !is.null(dataPartClass)) {
+        if(isClass(dataPartClass) && isClass(to)) {
+            ## note that dataPart, to are looked up in the methods package & parents:
+            ## Assertion is that only these classes are allowed as data slots
+            dataPart <- dataEquiv(dataPartClass, to)
+        }
+    }
     if(is.null(coerce)) {
         coerce <- .simpleExtCoerce
         if(!isVirtualClass(classDef2))
             body(coerce, envir = environment(coerce)) <-
-                 .simpleCoerceExpr(Class, to, slots)
+                 .simpleCoerceExpr(Class, to, slots, classDef2)
     }
     else if(is(coerce, "function")) {
         ## we allow definitions with and without the `strict' argument
@@ -117,10 +125,10 @@ makeExtends <- function(Class, to,
         }
         else if(simple) {
             replace <- .simpleExtReplace
-            if(isVirtualClass(to)) {  # a simple is to a virtual class => a union
+            if(isVirtualClass(classDef2)) {  # a simple is to a virtual class => a union
                 body(replace, envir = environment(replace)) <-
                     substitute({
-                        if(!is(value, FROM))
+                        if(!is(value, TO))
                             stop("The computation: as(object,\"", TO,
                                  "\") <- value is valid when object has class",
                                  FROM, "\" only if is(value, \"",TO,"\") is TRUE ( class(value) was \"",
@@ -135,7 +143,7 @@ makeExtends <- function(Class, to,
                 toSlots <- classDef2@slots
                 sameSlots <- TRUE
                 for(eclass in ext)
-                    if(!identical(eclass, to) && isClass(eclass) &&
+                    if(!.identC(eclass, to) && isClass(eclass) &&
                        length(getClassDef(eclass)@slots) > 0) {
                         sameSlots <- FALSE
                         break
@@ -168,18 +176,31 @@ makeExtends <- function(Class, to,
     else
         stop("the replace= argument to setIs() should be a function of 2 or 3 arguments, got an object of class \"",
              class(replace), "\"")
-    new("SClassExtension", superClass = to, package = package, coerce = coerce,
+    new("SClassExtension", subClass = Class, superClass = to, package = package, coerce = coerce,
                test = test, replace = replace, simple = simple, by = by, dataPart = dataPart)
     
     
 }
 
-.findMetaData <- function(what, where = search()) {
+.findAll <- function(what, where = topenv(parent.frame())) {
+    ## search in envir. & parents thereof
     ## must avoid R's find() function because it uses
     ## regular expressions
-    ok <- logical(length(where))
-    for(i in seq(along=where))
-        ok[i] <- exists(what, where[i], inherits = FALSE)
-    where[ok]
+    value <- list()
+    if(is.environment(where))
+        repeat {
+            if(exists(what, where, inherits = FALSE))
+                value <- c(value, list(where))
+            ## two forms of test for the end of the parent env. chain
+            if(isBaseNamespace(where) || is.null(where))
+                break
+            where <- parent.env(where)
+        }
+    else
+        for(i in where) {
+            if(exists(what, i, inherits = FALSE))
+                value <- c(value, list(i))
+        }
+    value
 }
     

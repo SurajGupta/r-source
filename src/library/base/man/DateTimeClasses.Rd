@@ -3,6 +3,7 @@
 \alias{DateTimeClasses}
 \alias{POSIXct}
 \alias{POSIXlt}
+\alias{POSIXt}
 \alias{print.POSIXct}
 \alias{print.POSIXlt}
 \alias{summary.POSIXct}
@@ -30,12 +31,6 @@
 \alias{mean.POSIXct}
 \alias{mean.POSIXlt}
 \alias{str.POSIXt}
-
-% back-compatibility functions
-\alias{-.POSIXct}
-\alias{-.POSIXlt}
-\alias{Ops.POSIXct}
-\alias{Ops.POSIXlt}
 
 \title{Date-Time Classes}
 \description{
@@ -80,10 +75,10 @@ time1 lop time2
     \item{\code{isdst}}{Daylight savings time flag. Positive if in
       force, zero if not, negative if unknown.}
   }
-  The classes correspond to the ANSI C constructs of ``calendar time''
-  (the \code{time\_t} data type) and ``local time'' (or broken-down
-  time, the \code{struct tm} data type), from which they also inherit
-  their names.
+  The classes correspond to the ANSI C constructs of \dQuote{calendar
+    time} (the \code{time\_t} data type) and \dQuote{local time} (or
+  broken-down time, the \code{struct tm} data type), from which they
+  also inherit their names.
 
   \code{"POSIXct"} is more convenient for including in data frames, and
   \code{"POSIXlt"} is closer to human-readable forms.
@@ -101,7 +96,7 @@ time1 lop time2
 
   \code{"POSIXlt"} objects will often have an attribute \code{"tzone"},
   a character vector of length 3 giving the timezone name from the
-  \code{"TZ"} environment variable and the names of the base timezone
+  \env{TZ} environment variable and the names of the base timezone
   and the alternate (daylight-saving) timezone.  Sometimes this may
   just be of length one, giving the timezone name.
 

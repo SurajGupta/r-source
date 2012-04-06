@@ -11,13 +11,6 @@ profiles: ../../../library/base/R/Rprofile
 	@$(CAT)  $^ > $@
 
 
-SED0='/^\#/d'
-SED01='/Rsockfork/d'
-SED1='s/F77_SUBROUTINE(\(.*\))/void * \1_();/'
-SED2='s/C_FUNCTION(\(.*\))/void * \1();/'
-SED3='s/F77_SUBROUTINE(\(.*\))/	{ "\1_",	\1_},/'
-SED4='s/C_FUNCTION(\(.*\))/{ "\1",	\1 },/'
-
 version: ../../include/Rversion.h
 fixh: version h/config.h \
   ../../include/Rconfig.h  ../../include/Rmath.h
@@ -35,7 +28,7 @@ fixh: version h/config.h \
 	$(RM) ../../../tools/GV
 
 ../../include/Rmath.h: ../../include/Rmath.h0.in
-	$(SED) -e 's/@RMATH_HAVE_LOG1P@/# define HAVE_LOG1P 1/'  -e /@RMATH_HAVE_EXPM1@/d $< > $@
+	$(SED) -e 's/@RMATH_HAVE_LOG1P@/# define HAVE_LOG1P 1/'  -e /@RMATH_HAVE_EXPM1@/d  -e  's/@RMATH_HAVE_WORKING_LOG1P@/# define HAVE_WORKING_LOG1P 1/' $< > $@
 
 ../../../bin/massage-Examples: ../../../share/perl/massage-Examples.pl
 	$(SED) -e 's/"contr.poly")/"contr.poly"), pager="console"/' $< > $@
@@ -52,9 +45,6 @@ fixh: version h/config.h \
 ../../../bin/Rdconv: ../../scripts/Rdconv.in
 	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ -e "s/R CMD/Rcmd/" $< > $@
 
-../../../bin/Rdindex: ../../scripts/Rdindex.in
-	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ -e "s/R CMD/Rcmd/" $< > $@
-
 ../../../bin/Rdiff.sh: ../../scripts/Rdiff
 	$(SED) -e 1d -e 's/\$${EGREP}/grep -E/' $< > $@
 
@@ -62,7 +52,7 @@ fixh: version h/config.h \
 	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
 
 fixbin: ../../../bin/massage-Examples ../../../bin/build \
-	   ../../../bin/check ../../../bin/Rdconv ../../../bin/Rdindex \
+	   ../../../bin/check ../../../bin/Rdconv \
 	   ../../../bin/Sd2Rd ../../../bin/Rdiff.sh ../../../bin/Rprof cp2bin
 	@$(ECHO) done > fixbin
 

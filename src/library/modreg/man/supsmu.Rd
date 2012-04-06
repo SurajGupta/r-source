@@ -2,16 +2,15 @@
 \alias{supsmu}
 \title{Friedman's SuperSmoother}
 \description{
-  Smooth the (x, y) values by Friedman's ``super smoother''.
+  Smooth the (x, y) values by Friedman's \dQuote{super smoother}.
 }
 \usage{
-supsmu(x, y, wt = rep(1, length(y)), span = "cv", periodic = FALSE,
-       bass = 0)
+supsmu(x, y, wt, span = "cv", periodic = FALSE, bass = 0)
 }
 \arguments{
   \item{x}{x values for smoothing}
   \item{y}{y values for smoothing}
-  \item{wt}{case weights}
+  \item{wt}{case weights, by default all equal}
   \item{span}{the fraction of the observations in the span of the running
     lines smoother, or \code{"cv"} to choose this by leave-one-out
     cross-validation.}
@@ -32,10 +31,10 @@ supsmu(x, y, wt = rep(1, length(y)), span = "cv", periodic = FALSE,
   prediction. The best spans are then smoothed by a running lines
   smoother and the final prediction chosen by linear interpolation. 
  
-  The FORTRAN code says: ``For small samples (\code{n < 40}) or if there
-  are substantial serial correlations between observations close in x -
-  value, then a prespecified fixed span smoother (\code{span > 0})
-  should be used.  Reasonable span values are 0.2 to 0.4.''
+  The FORTRAN code says: \dQuote{For small samples (\code{n < 40}) or if
+    there are substantial serial correlations between observations close
+    in x-value, then a prespecified fixed span smoother (\code{span >
+      0}) should be used.  Reasonable span values are 0.2 to 0.4.}
 }
 \value{
   A list with components
@@ -57,10 +56,10 @@ supsmu(x, y, wt = rep(1, length(y)), span = "cv", periodic = FALSE,
 
 \examples{
 data(cars)
-attach(cars)
-plot(speed, dist)
-lines(supsmu(speed, dist))
-lines(supsmu(speed, dist, bass=7), lty=2)
-detach()
+with(cars, {
+    plot(speed, dist)
+    lines(supsmu(speed, dist))
+    lines(supsmu(speed, dist, bass = 7), lty = 2)
+    })
 }
 \keyword{smooth}

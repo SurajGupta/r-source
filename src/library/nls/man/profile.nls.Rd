@@ -1,4 +1,4 @@
-% $Id: profile.nls.Rd,v 1.7.6.1 2003/06/12 11:30:10 ripley Exp $
+% $Id: profile.nls.Rd,v 1.8 2003/06/12 11:51:31 ripley Exp $
 \name{profile.nls}
 \alias{profile.nls}
 \title{ Method for Profiling nls Objects}

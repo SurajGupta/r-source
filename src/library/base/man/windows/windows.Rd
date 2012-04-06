@@ -14,7 +14,9 @@
 windows(width = 7, height = 7, pointsize = 12,
         record = getOption("graphics.record"),
         rescale = c("R", "fit", "fixed"), xpinch, ypinch,
-        canvas = "white", gamma = getOption("gamma"))
+        canvas = "white", gamma = getOption("gamma"),
+        xpos = NA, ypos = NA, buffered = getOption("windowsBuffered"))
+
 win.graph(width = 7, height = 7, pointsize = 12)
 x11(width = 7, height = 7, pointsize = 12)
 X11(width = 7, height = 7, pointsize = 12)
@@ -23,9 +25,13 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
 }
 
 \arguments{
-  \item{display}{indicates the purpose of the device.}
   \item{filename}{the name of the output file: it will be an enhanced
-    Windows metafile, usually given extension \code{.emf} or \code{.wmf}.}
+    Windows metafile, usually given extension \code{.emf} or
+    \code{.wmf}. Up to 511 characters are allowed.
+    The page number is substituted if an integer format is included
+    in the character string. (The result must be less than 600
+    characters long.)
+  }
   \item{width}{the (nominal) width of the plotting window in inches.}
   \item{height}{the (nominal) height of the plotting window in inches.}
   \item{pointsize}{the default pointsize of plotted text. The allowed
@@ -41,8 +47,14 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
     to ensure that the colors displayed are linearly related to
     RGB values. By default this is taken from
     \code{\link{options}("gamma"}, or is 1 (no correction) if that is
-    unset.  It sets \code{par("gamma")} for the device.
-  }
+    unset.  It sets \code{par("gamma")} for the device.}
+  \item{xpos, ypos}{integer.  Position of the top left of the window, in
+    pixels.  Negative values are taken from the opposite edge of the
+    monitor.  Missing values meant take the default from the
+    \file{\link{Rconsole}} file, which in turn defaults to
+    \code{xpos=-25, ypos=0}: this puts the right edge of the windows 25
+    pixels from the right edge of the monitor.}
+  \item{buffered}{logical.  Should the screen output be double-buffered?}
   \item{printer}{The name of a printer as known to Windows. The default
     causes a dialog box to come for the user to choose a printer.}
 }
@@ -95,10 +107,10 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   original units, but only approximately as they are derived from the
   metrics of the rescaled fonts (which are in integer sizes)
 
-  The displayed region may be bigger than the `paper' size, and areas
-  outside the `paper' are coloured in the Windows application background
-  colour.  Graphics parameters such
-  as \code{"din"} refer to the scaled plot if rescaling is in effect.
+  The displayed region may be bigger than the \sQuote{paper} size, and
+  areas outside the \sQuote{paper} are coloured in the Windows
+  application background colour.  Graphics parameters such as
+  \code{"din"} refer to the scaled plot if rescaling is in effect.
 
   The different colours need to be distinguished carefully. The area
   outside the device region is coloured in the Windows application background
@@ -113,7 +125,13 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   \code{print} method, and a subset method.  As the individual plots are
   of class \code{"recordedplot"} they can be replayed by printing them:
   see \code{\link{recordPlot}}.  The active plot history is stored in
-  variable \code{.SavedPlots} in package \code{base}.
+  variable \code{.SavedPlots} in package \pkg{base}.
+
+  When a screen device is double-buffered (the default from \R 1.8.0) the
+  screen is updated 100ms after last plotting call or every 500ms during
+  continuous plotting.  These times can be altered by setting
+  \code{options("windowsTimeout")} to a vector of two integers before
+  opening the device.
 }
 
 \value{

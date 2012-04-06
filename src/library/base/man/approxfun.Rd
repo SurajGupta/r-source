@@ -9,6 +9,7 @@
 \usage{
 approx   (x, y = NULL, xout, method="linear", n=50,
           yleft, yright, rule = 1, f=0, ties = mean)
+
 approxfun(x, y = NULL,       method="linear",
           yleft, yright, rule = 1, f=0, ties = mean)
 }
@@ -88,7 +89,7 @@ points(x, y)
 is.function(fc <- approxfun(x, y, method = "const")) # TRUE
 curve(fc(x), 0, 10, col = "darkblue", add = TRUE)
 
-## Show treatment of `ties' :
+## Show treatment of 'ties' :
 
 x <- c(2,2:4,4,4,5,5,7,7,7)
 y <- c(1:6, 5:4, 3:1)

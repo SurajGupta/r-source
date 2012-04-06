@@ -7,23 +7,25 @@
 \description{
   \code{grep} searches for matches to \code{pattern} (its first
   argument) within the character vector \code{x} (second
-  argument). \code{regexpr} does too, but returns more detail in a
+  argument).  \code{regexpr} does too, but returns more detail in a
   different format.
 
   \code{sub} and \code{gsub} perform replacement of matches determined
   by regular expression matching.
 }
 \usage{
-grep(pattern, x, ignore.case=FALSE, extended=TRUE, perl=FALSE, value=FALSE)
+grep(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
+     value = FALSE, fixed = FALSE)
 sub(pattern, replacement, x,
-        ignore.case=FALSE, extended=TRUE, perl=FALSE)
+        ignore.case = FALSE, extended = TRUE, perl = FALSE)
 gsub(pattern, replacement, x,
-        ignore.case=FALSE, extended=TRUE, perl=FALSE)
-regexpr(pattern, text,  extended=TRUE, perl=FALSE)
+        ignore.case = FALSE, extended = TRUE, perl = FALSE)
+regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
 }
 \arguments{
-  \item{pattern}{character string containing a regular expression to be
-    matched in the given character vector.}
+  \item{pattern}{character string containing a regular expression (or
+    character string for \code{fixed = TRUE}) to be matched in the given
+    character vector.}
   \item{x, text}{a character vector where matches are sought.}
   \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
       sensitive} and if \code{TRUE}, case is ignored during matching.}
@@ -35,6 +37,8 @@ regexpr(pattern, text,  extended=TRUE, perl=FALSE)
     indices of the matches determined by \code{grep} is returned, and if
     \code{TRUE}, a vector containing the matching elements themselves is
     returned.}
+  \item{fixed}{logical.  If \code{TRUE}, \code{pattern} is a string to be
+    matched as is.  Overrides all other arguments.} 
   \item{replacement}{a replacement for matched pattern in \code{sub} and
     \code{gsub}.}
 }
@@ -42,6 +46,9 @@ regexpr(pattern, text,  extended=TRUE, perl=FALSE)
   The two \code{*sub} functions differ only in that \code{sub} replaces
   only the first occurrence of a \code{pattern} whereas \code{gsub}
   replaces all occurrences.
+
+  For \code{regexpr} it is an error for \code{pattern} to be \code{NA},
+  otherwise \code{NA} is permitted and matches only itself.
 
   The regular expressions used are those specified by POSIX 1003.2,
   either extended or basic, depending on the value of the
@@ -62,11 +69,11 @@ regexpr(pattern, text,  extended=TRUE, perl=FALSE)
   is none, with attribute \code{"match.length"} giving the length of the
   matched text (or \eqn{-1} for no match).
 }
-\note{
-  \code{perl=TRUE} will only be available if \R was compiled against 
-  PCRE: this is detected at configure time.  All Unix and Windows system
-  should have it.
-}
+% \note{
+%   \code{perl = TRUE} will only be available if \R was compiled against 
+%   PCRE: this is detected at configure time.  All Unix and Windows system
+%   should have it.
+% }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -85,11 +92,11 @@ grep("[a-z]", letters)
 
 txt <- c("arm","foot","lefroo", "bafoobar")
 if(any(i <- grep("foo",txt)))
-   cat("`foo' appears at least once in\n\t",txt,"\n")
+   cat("'foo' appears at least once in\n\t",txt,"\n")
 i # 2 and 4
 txt[i]
 
-## Double all 'a' or 'b's;  "\\" must be escaped, i.e. `doubled'
+## Double all 'a' or 'b's;  "\\" must be escaped, i.e., 'doubled'
 %% and escaped even once more in this *.Rd file!
 gsub("([ab])", "\\\\1_\\\\1_", "abc and ABC")
 

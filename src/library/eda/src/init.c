@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-3   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,21 +21,21 @@
 #include "eda.h"
 #include <R_ext/Rdynload.h>
 
-R_CMethodDef CEntries[] = {
+static const R_CMethodDef CEntries[] = {
     {"Rsm_3RSR", (DL_FUNC) &Rsm_3RSR, 5},  
     {"Rsm_3RSS", (DL_FUNC) &Rsm_3RSS, 5},
     {"Rsm_3RS3R", (DL_FUNC) &Rsm_3RS3R, 5},  
     {"Rsm_3R", (DL_FUNC) &Rsm_3R, 5},  
     {"Rsm_3", (DL_FUNC) &Rsm_3, 5},  
     {"Rsm_S", (DL_FUNC) &Rsm_S, 5},  
+    {"tukeyline", (DL_FUNC) &tukeyline, 6},  
     {NULL, NULL, 0}
 };
 
 
 void R_init_eda(DllInfo *dll)
 {
-/*
+    R_useDynamicSymbols(dll, FALSE);
     R_registerRoutines(dll, CEntries, NULL, NULL, NULL);
-*/
 }
 

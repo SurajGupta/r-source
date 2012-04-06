@@ -1,10 +1,11 @@
 \name{text}
 \title{Add Text to a Plot}
 \usage{
-text (x, \dots)
-text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
-       pos = NULL, offset = 0.5, vfont = NULL,
-       cex = 1, col = NULL, font = NULL, xpd = NULL, \dots)
+text(x, \dots)
+
+\method{text}{default} (x, y = NULL, labels = seq(along = x), adj = NULL,
+     pos = NULL, offset = 0.5, vfont = NULL,
+     cex = 1, col = NULL, font = NULL, xpd = NULL, \dots)
 }
 \alias{text}
 \alias{text.default}
@@ -96,7 +97,7 @@ mtext("«ISO-accents»: ± éè øØ å<Å æ<Æ", side=3)
 points(c(6,2), c(2,1), pch = 3, cex = 4, col = "red")
 text(6, 2, "the text is CENTERED around (x,y) = (6,2) by default",
      cex = .8)
-text(2, 1, "or Left/Bottom - JUSTIFIED at (2,1) by `adj = c(0,0)'",
+text(2, 1, "or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'",
      adj = c(0,0))
 text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))
 text(4, 8.4, "expression(hat(beta) == (X^t * X)^{-1} * X^t * y)", cex = .75)

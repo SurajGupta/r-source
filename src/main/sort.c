@@ -603,15 +603,6 @@ static void orderVector(int *indx, int n, SEXP key, Rboolean nalast,
 		    indx[j] = itmp; \
 		}
 
-#define insertion_with_index \
-            for (i = lo; i <= hi; i++) { \
-		itmp = indx[i]; \
-		j = i; \
-		while (j >= 1 && less2(indx[j - 1], itmp)) {  \
-		    indx[j] = indx[j - 1]; j--;} \
-		indx[j] = itmp; \
-	    }
-
 
 static void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 			 Rboolean decreasing)
@@ -652,41 +643,30 @@ static void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 	    if(nalast) hi -= numna; else lo += numna;
 	}
 
-    /* Shell sort isn't stable, but it proves to be somewhat faster
-       to run a final insertion sort to re-order runs of ties when
-       comparison is cheap.
-    */
+    /* Shell sort isn't stable, so add test on index */
     for (t = 0; incs[t] > hi-lo+1; t++);
     switch (TYPEOF(key)) {
     case LGLSXP:
     case INTSXP:
-#define less2(a, b) (ix[a] == ix[b] && a > b)
 	if (decreasing) {
-#define less(a, b) (ix[a] < ix[b])
+#define less(a, b) (ix[a] < ix[b] || (ix[a] == ix[b] && a > b))
 	    sort2_with_index
-	    insertion_with_index
 #undef less
         } else {
-#define less(a, b) (ix[a] > ix[b])
+#define less(a, b) (ix[a] > ix[b] || (ix[a] == ix[b] && a > b))
 	    sort2_with_index
-	    insertion_with_index
 #undef less
-#undef less2
         }
 	break;
     case REALSXP:
-#define less2(a, b) (x[a] == x[b] && a > b)
 	if (decreasing) {
-#define less(a, b) (x[a] < x[b])
+#define less(a, b) (x[a] < x[b] || (x[a] == x[b] && a > b))
 	    sort2_with_index
-	    insertion_with_index
 #undef less
         } else {
-#define less(a, b) (x[a] > x[b])
+#define less(a, b) (x[a] > x[b] || (x[a] == x[b] && a > b))
 	    sort2_with_index
-	    insertion_with_index
 #undef less
-#undef less2
         }
 	break;
     case STRSXP:
@@ -784,4 +764,67 @@ SEXP do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     }
     return rank;
+}
+
+#include <R_ext/RS.h>
+
+SEXP do_radixsort(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP x, ans;
+    Rboolean nalast, decreasing;
+    unsigned int *cnts;
+    int i, n, tmp, xmax = NA_INTEGER, xmin = NA_INTEGER, off, napos;
+
+    checkArity(op, args);
+
+    x = CAR(args);
+    nalast = asLogical(CADR(args));
+    if(nalast == NA_LOGICAL)
+	error("`na.last' is invalid");
+    decreasing = asLogical(CADDR(args));
+    if(decreasing == NA_LOGICAL)
+	error("`decreasing' must be TRUE or FALSE");
+    off = nalast^decreasing ? 0 : 1;
+    n = LENGTH(x);
+    PROTECT(ans = allocVector(INTSXP, n));
+    for(i = 0; i < n; i++) {
+	tmp = INTEGER(x)[i];
+	if(tmp == NA_INTEGER) continue;
+	if(tmp < 0) errorcall(call, "negative value in x");
+	if(xmax == NA_INTEGER || tmp > xmax) xmax = tmp;
+	if(xmin == NA_INTEGER || tmp < xmin) xmin = tmp;
+    }
+    if(xmin == NA_INTEGER) {  /* all NAs, so nothing to do */
+	for(i = 0; i < n; i++) INTEGER(ans)[i] = i+1;
+	UNPROTECT(1);
+	return ans;
+    }
+
+    xmax -= xmin;
+    if(xmax > 100000) errorcall(call, "too large a range of values in x");
+    napos = off ? 0 : xmax + 1;
+    off -= xmin;
+    cnts = Calloc(xmax+1, unsigned int);
+
+    for(i = 0; i <= xmax+1; i++) cnts[i] = 0;
+    for(i = 0; i < n; i++) {
+	if(INTEGER(x)[i] == NA_INTEGER) cnts[napos]++;
+	else cnts[off+INTEGER(x)[i]]++;
+    }
+    
+    for(i = 1; i <= xmax+1; i++) cnts[i] += cnts[i-1];
+    if(decreasing)
+	for(i = 0; i < n; i++){
+	    tmp = INTEGER(x)[i];
+	    INTEGER(ans)[n-(cnts[(tmp==NA_INTEGER) ? napos : off+tmp]--)] = i+1;
+	}
+    else
+	for(i = n-1; i >= 0; i--) {
+	    tmp = INTEGER(x)[i];
+	    INTEGER(ans)[--cnts[(tmp==NA_INTEGER) ? napos : off+tmp]] = i+1;
+	}
+
+    Free(cnts);
+    UNPROTECT(1);
+    return ans;
 }

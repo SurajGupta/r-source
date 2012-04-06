@@ -2,7 +2,7 @@
 \title{Reconstruct the Q, R, or X Matrices from a QR Object}
 \usage{
 qr.X(qr, complete = FALSE, ncol =)
-qr.Q(qr, complete = FALSE, Dvec = 1)
+qr.Q(qr, complete = FALSE, Dvec =)
 qr.R(qr, complete = FALSE)
 }
 \alias{qr.X}
@@ -28,7 +28,7 @@ qr.R(qr, complete = FALSE)
     the remaining columns.}
   \item{Dvec}{vector (not matrix) of diagonal values.  Each column of
     the returned \eqn{\bold{Q}} will be multiplied by the corresponding
-    diagonal value.}
+    diagonal value.  Defaults to all \code{1}s.}
 }
 \description{
   Returns the original matrix from which the object was constructed or
@@ -59,7 +59,7 @@ qr.R(qr, complete = FALSE)
 }
 \examples{
 data(LifeCycleSavings)
-p <- ncol(x <- LifeCycleSavings[,-1]) # not the `sr'
+p <- ncol(x <- LifeCycleSavings[,-1]) # not the 'sr'
 qrstr <- qr(x)   # dim(x) == c(n,p)
 qrstr $ rank # = 4 = p
 Q <- qr.Q(qrstr) # dim(Q) == dim(x)

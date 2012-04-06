@@ -1,6 +1,3 @@
-## file biplot.R
-## copyright (C) 1998 W. N. Venables and B. D. Ripley
-##
 biplot <- function(x, ...) UseMethod("biplot")
 
 biplot.default <-
@@ -27,7 +24,7 @@ biplot.default <-
     if(length(cex) == 1) cex <- c(cex, cex)
     if(missing(col)) {
 	col <- par("col")
-	if (!is.numeric(col)) col <- match(col, palette())
+	if (!is.numeric(col)) col <- match(col, palette(), nomatch=1)
 	col <- c(col, col + 1)
     }
     else if(length(col) == 1) col <- c(col, col)
@@ -40,7 +37,8 @@ biplot.default <-
 
     if(missing(xlim) && missing(ylim))
 	xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
-    else if(missing(xlim)) xlim <- rangx1 else ylim <- rangx2
+    else if(missing(xlim)) xlim <- rangx1
+    else if(missing(ylim)) ylim <- rangx2
     ratio <- max(rangy1/rangx1, rangy2/rangx2)/expand
     on.exit(par(op))
     op <- par(pty = "s")
@@ -68,6 +66,24 @@ biplot.princomp <- function(x, choices = 1:2, scale = 1, pc.biplot=FALSE, ...)
 	stop(paste("object", deparse(substitute(x)), "has no scores"))
     lam <- x$sdev[choices]
     if(is.null(n <- x$n.obs)) n <- 1
+    lam <- lam * sqrt(n)
+    if(scale < 0 || scale > 1) warning("scale is outside [0, 1]")
+    if(scale != 0) lam <- lam^scale else lam <- 1
+    if(pc.biplot) lam <- lam / sqrt(n)
+    biplot.default(t(t(scores[, choices]) / lam),
+		   t(t(x$loadings[, choices]) * lam), ...)
+    invisible()
+}
+
+biplot.prcomp <- function(x, choices = 1:2, scale = 1, pc.biplot=FALSE, ...)
+{
+    if(length(choices) != 2) stop("length of choices must be 2")
+    if(!length(scores <- x$x))
+	stop(paste("object", deparse(substitute(x)), "has no scores"))
+    if(is.complex(scores))
+        stop("biplots are not defined for complex PCA")
+    lam <- x$sdev[choices]
+    n <- NROW(scores)
     lam <- lam * sqrt(n)
     if(scale < 0 || scale > 1) warning("scale is outside [0, 1]")
     if(scale != 0) lam <- lam^scale else lam <- 1

@@ -37,27 +37,15 @@ SEXP do_XFig(SEXP, SEXP, SEXP, SEXP);
 SEXP do_PDF(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Quartz(SEXP, SEXP, SEXP, SEXP);
 
-#if defined(Unix) && defined(HAVE_AQUA)
+#if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
+SEXP do_browsepkgs(SEXP, SEXP, SEXP, SEXP);
+SEXP do_datamanger(SEXP, SEXP, SEXP, SEXP);
+SEXP do_packagemanger(SEXP, SEXP, SEXP, SEXP);
+SEXP do_flushconsole(SEXP, SEXP, SEXP, SEXP);
+SEXP do_hsbrowser(SEXP, SEXP, SEXP, SEXP);
 #endif
 
-#ifdef Macintosh
-SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
-SEXP do_Macintosh(SEXP, SEXP, SEXP, SEXP);
-SEXP do_applescript(SEXP, SEXP, SEXP, SEXP);
-SEXP do_fileedit(SEXP, SEXP, SEXP, SEXP);
-SEXP do_newfile(SEXP, SEXP, SEXP, SEXP);
-SEXP do_addmenucmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_delmenucmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_getmenucmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_getnumcmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_delnumcmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_delusrcmd(SEXP, SEXP, SEXP, SEXP);
-SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
-SEXP do_truepath(SEXP, SEXP, SEXP, SEXP);
-SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
-SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
-#endif
 
 /* Function Names */
 
@@ -87,6 +75,11 @@ SEXP do_writeClipboard(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abs(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
+SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
+#endif
+SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_alias(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
@@ -119,6 +112,7 @@ SEXP do_basename(SEXP, SEXP, SEXP, SEXP);
 SEXP do_begin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bind(SEXP, SEXP, SEXP, SEXP);
 SEXP do_body(SEXP, SEXP, SEXP, SEXP);
+SEXP do_bodyCode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_box(SEXP, SEXP, SEXP, SEXP);
 SEXP do_break(SEXP, SEXP, SEXP, SEXP);
 SEXP do_browser(SEXP, SEXP, SEXP, SEXP);
@@ -163,6 +157,10 @@ SEXP do_devnext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devoff(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devprev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devset(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_dfltStop(SEXP, SEXP, SEXP, SEXP);
+SEXP do_dfltWarn(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_dim(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimnames(SEXP, SEXP, SEXP, SEXP);
@@ -219,6 +217,9 @@ SEXP do_get(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_geterrmessage(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getlocale(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_getRestart(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_getwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_globalenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gray(SEXP, SEXP, SEXP, SEXP);
@@ -235,6 +236,9 @@ SEXP do_int_unzip(SEXP, SEXP, SEXP, SEXP);
 SEXP do_interactive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_internal(SEXP, SEXP, SEXP, SEXP);
 SEXP do_invisible(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_invokeRestart(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_is(SEXP, SEXP, SEXP, SEXP);
 SEXP do_isfinite(SEXP, SEXP, SEXP, SEXP);
 SEXP do_isinfinite(SEXP, SEXP, SEXP, SEXP);
@@ -265,6 +269,7 @@ SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
+SEXP do_makeunique(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makevector(SEXP, SEXP, SEXP, SEXP);
 SEXP do_match(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matchcall(SEXP, SEXP, SEXP, SEXP);
@@ -325,6 +330,7 @@ SEXP do_psort(SEXP, SEXP, SEXP, SEXP);
 SEXP do_qsort(SEXP, SEXP, SEXP, SEXP);
 SEXP do_quit(SEXP, SEXP, SEXP, SEXP);
 SEXP do_quote(SEXP, SEXP, SEXP, SEXP);
+SEXP do_radixsort(SEXP, SEXP, SEXP, SEXP);
 SEXP do_random1(SEXP, SEXP, SEXP, SEXP);
 SEXP do_random2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_random3(SEXP, SEXP, SEXP, SEXP);
@@ -345,6 +351,9 @@ SEXP do_remove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_repeat(SEXP, SEXP, SEXP, SEXP);
 SEXP do_replay(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_resetCondHands(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_restart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_restoreb(SEXP, SEXP, SEXP, SEXP);
 SEXP do_return(SEXP, SEXP, SEXP, SEXP);
@@ -371,6 +380,9 @@ SEXP do_setwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shade(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strheight(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strwidth(SEXP, SEXP, SEXP, SEXP);
+#ifdef NEW_CONDITION_HANDLING
+SEXP do_signalCondition(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_sink(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sinknumber(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sort(SEXP, SEXP, SEXP, SEXP);
@@ -442,6 +454,17 @@ SEXP do_playSnapshot(SEXP, SEXP, SEXP, SEXP);
 SEXP R_do_data_class(SEXP call, SEXP op, SEXP args, SEXP env);
 SEXP R_do_set_class(SEXP call, SEXP op, SEXP args, SEXP env);
 
+#ifdef BYTECODE
+SEXP do_mkcode(SEXP, SEXP, SEXP, SEXP);
+SEXP do_bcclose(SEXP, SEXP, SEXP, SEXP);
+SEXP do_is_builtin_internal(SEXP, SEXP, SEXP, SEXP);
+SEXP do_disassemble(SEXP, SEXP, SEXP, SEXP);
+SEXP do_bcversion(SEXP, SEXP, SEXP, SEXP);
+SEXP do_loadfile(SEXP, SEXP, SEXP, SEXP);
+SEXP do_savefile(SEXP, SEXP, SEXP, SEXP);
+SEXP do_putconst(SEXP, SEXP, SEXP, SEXP);
+#endif
+
 /* Connections */
 SEXP do_stdin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_stdout(SEXP, SEXP, SEXP, SEXP);
@@ -472,25 +495,20 @@ SEXP do_getallconnections(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sumconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_download(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockconn(SEXP, SEXP, SEXP, SEXP);
+SEXP do_sockselect(SEXP, SEXP, SEXP, SEXP);
 SEXP do_nsl(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gzcon(SEXP, SEXP, SEXP, SEXP);
 
-#ifdef ENVIRONMENT_LOCKING
 SEXP do_lockEnv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envIsLocked(SEXP, SEXP, SEXP, SEXP);
-#endif
-#ifdef FANCY_BINDINGS
 SEXP do_lockBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsLocked(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkActiveBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsActive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkUnbound(SEXP, SEXP, SEXP, SEXP);
-#endif
-#ifdef EXPERIMENTAL_NAMESPACES
 SEXP do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_unregNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_getRegNS(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_getNSRegistry(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
-#endif

@@ -135,7 +135,7 @@ static int	xxvalue(SEXP, int);
 %token		LEFT_ASSIGN EQ_ASSIGN RIGHT_ASSIGN LBB
 %token		FOR IN IF ELSE WHILE NEXT BREAK REPEAT
 %token		GT GE LT LE EQ NE AND OR
-%token		NS_GET
+%token		NS_GET NS_GET_INT
 
 %left		'?'
 %left		LOW WHILE FOR REPEAT
@@ -156,7 +156,7 @@ static int	xxvalue(SEXP, int);
 %left		UMINUS UPLUS
 %right		'^'
 %left		'$' '@'
-%left		NS_GET
+%left		NS_GET NS_GET_INT
 %nonassoc	'(' '[' LBB
 
 %%
@@ -224,6 +224,10 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	SYMBOL NS_GET STR_CONST		{ $$ = xxbinary($2,$1,$3); }
 	|	STR_CONST NS_GET SYMBOL		{ $$ = xxbinary($2,$1,$3); }
 	|	STR_CONST NS_GET STR_CONST	{ $$ = xxbinary($2,$1,$3); }
+	|	SYMBOL NS_GET_INT SYMBOL	{ $$ = xxbinary($2,$1,$3); }
+	|	SYMBOL NS_GET_INT STR_CONST	{ $$ = xxbinary($2,$1,$3); }
+	|	STR_CONST NS_GET_INT SYMBOL	{ $$ = xxbinary($2,$1,$3); }
+	|	STR_CONST NS_GET_INT STR_CONST	{ $$ = xxbinary($2,$1,$3); }
 	|	expr '$' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
 	|	expr '$' STR_CONST		{ $$ = xxbinary($2,$1,$3); }
 	|	expr '@' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
@@ -819,17 +823,6 @@ static void PopComment(void)
 	R_CommentSxp = CDR(R_CommentSxp);
 }
 
-#ifdef NOT_used
-int IsComment(SEXP l)
-{
-    if (isList(l) && isString(CAR(l))
-	&& !strncmp(CHAR(STRING(CAR(l))[0]), "#", 1))
-	return 1;
-    else
-	return 0;
-}
-#endif
-
 static void AddComment(SEXP l)
 {
     SEXP tcmt, cmt;
@@ -895,11 +888,11 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *  The following routines parse a single expression:
  *
  *
- *	SEXP R_Parse1File(FILE *fp, int gencode, int *status)
+ *	SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
  *
- *	SEXP R_Parse1Vector(TextBuffer *text, int gencode, int *status)
+ *	SEXP R_Parse1Vector(TextBuffer *text, int gencode, ParseStatus *status)
  *
- *	SEXP R_Parse1Buffer(IOBuffer *buffer, int gencode, int *status)
+ *	SEXP R_Parse1Buffer(IOBuffer *buffer, int gencode, ParseStatus *status)
  *
  *
  *  The success of the parse is indicated as folllows:
@@ -915,11 +908,11 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *  The following routines parse several expressions and return
  *  their values in a single expression vector.
  *
- *	SEXP R_ParseFile(FILE *fp, int n, int *status)
+ *	SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
  *
- *	SEXP R_ParseVector(TextBuffer *text, int n, int *status)
+ *	SEXP R_ParseVector(TextBuffer *text, int n, ParseStatus *status)
  *
- *	SEXP R_ParseBuffer(IOBuffer *buffer, int n, int *status)
+ *	SEXP R_ParseBuffer(IOBuffer *buffer, int n, ParseStatus *status)
  *
  *  Here, status is 1 for a successful parse and 0 if parsing failed
  *  for some reason.
@@ -943,7 +936,7 @@ static void ParseInit()
     KeepSource = *LOGICAL(GetOption(install("keep.source"), R_NilValue));
 }
 
-static SEXP R_Parse1(int *status)
+static SEXP R_Parse1(ParseStatus *status)
 {
     switch(yyparse()) {
     case 0:                     /* End of file */
@@ -977,7 +970,7 @@ static int file_ungetc(int c)
     return ungetc(c, fp_parse);
 }
 
-SEXP R_Parse1File(FILE *fp, int gencode, int *status)
+SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
@@ -1000,7 +993,7 @@ static int buffer_ungetc(int c)
     return R_IoBufferUngetc(c, iob);
 }
 
-SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, int *status)
+SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
@@ -1023,7 +1016,7 @@ static int text_ungetc(int c)
     return R_TextBufferUngetc(c, txtb);
 }
 
-SEXP R_Parse1Vector(TextBuffer *textb, int gencode, int *status)
+SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
@@ -1038,7 +1031,7 @@ SEXP R_Parse1Vector(TextBuffer *textb, int gencode, int *status)
 #ifdef GENERAL
 
 SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
-		     int gencode, int *status)
+		     int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
@@ -1049,7 +1042,7 @@ SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
 }
 #endif
 
-SEXP R_Parse(int n, int *status)
+SEXP R_Parse(int n, ParseStatus *status)
 {
     int i;
     SEXP t, rval;
@@ -1108,7 +1101,7 @@ SEXP R_Parse(int n, int *status)
     }
 }
 
-SEXP R_ParseFile(FILE *fp, int n, int *status)
+SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
 {
     GenerateCode = 1;
     R_ParseError = 1;
@@ -1137,7 +1130,7 @@ static int con_ungetc(int c)
     return Rconn_ungetc(c, con_parse);
 }
 
-SEXP R_ParseConn(Rconnection con, int n, int *status)
+SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
 {
     GenerateCode = 1;
     R_ParseError = 1;
@@ -1147,7 +1140,7 @@ SEXP R_ParseConn(Rconnection con, int n, int *status)
     return R_Parse(n, status);
 }
 
-SEXP R_ParseVector(SEXP text, int n, int *status)
+SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
 {
     SEXP rval;
     TextBuffer textb;
@@ -1163,7 +1156,8 @@ SEXP R_ParseVector(SEXP text, int n, int *status)
 }
 
 #ifdef GENERAL
-SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n, int *status)
+SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
+		    ParseStatus *status)
 {
     GenerateCode = 1;
     R_ParseError = 1;
@@ -1189,7 +1183,7 @@ static char *Prompt(SEXP prompt, int type)
     }
 }
 
-SEXP R_ParseBuffer(IoBuffer *buffer, int n, int *status, SEXP prompt)
+SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt)
 {
     SEXP rval, t;
     char *bufp, buf[1024];
@@ -1489,6 +1483,13 @@ static void CheckFormalArgs(SEXP formlist, SEXP new)
 
 static char yytext[MAXELTSIZE];
 
+#define DECLARE_YYTEXT_BUFP(bp) char *bp = yytext
+#define YYTEXT_PUSH(c, bp) do { \
+    if ((bp) - yytext >= sizeof(yytext) - 1) \
+        error("input buffer overflow"); \
+	*(bp)++ = (c); \
+} while(0)
+
 static int SkipSpace(void)
 {
     int c;
@@ -1505,13 +1506,12 @@ static int SkipSpace(void)
 
 static int SkipComment(void)
 {
-    char *p;
+    DECLARE_YYTEXT_BUFP(yyp);
     int c;
-    p = yytext;
-    *p++ = '#';
+    YYTEXT_PUSH('#', yyp);
     while ((c = xxgetc()) != '\n' && c != R_EOF)
-	*p++ = c;
-    *p = '\0';
+	YYTEXT_PUSH(c, yyp);
+    YYTEXT_PUSH('\0', yyp);
     if (c == R_EOF) EndOfFile = 2;
     return c;
 }
@@ -1520,15 +1520,15 @@ static int NumericValue(int c)
 {
     int seendot = (c == '.');
     int seenexp = 0;
-    char *p = yytext;
-    *p++ = c;
+    DECLARE_YYTEXT_BUFP(yyp);
+    YYTEXT_PUSH(c, yyp);
     while (isdigit(c = xxgetc()) || c == '.' || c == 'e' || c == 'E') {
 	if (c == 'E' || c == 'e') {
 	    if (seenexp)
 		break;
 	    seenexp = 1;
 	    seendot = 1;
-	    *p++ = c;
+	    YYTEXT_PUSH(c, yyp);
 	    c = xxgetc();
 	    if (!isdigit(c) && c != '+' && c != '-')
 		break;
@@ -1538,9 +1538,9 @@ static int NumericValue(int c)
 		break;
 	    seendot = 1;
 	}
-	*p++ = c;
+	YYTEXT_PUSH(c, yyp);
     }
-    *p = '\0';
+    YYTEXT_PUSH('\0', yyp);
     if(c == 'i') {
 	yylval = mkComplex(yytext);
     }
@@ -1559,7 +1559,7 @@ static int NumericValue(int c)
 static int StringValue(int c)
 {
     int quote = c;
-    char *p = yytext;
+    DECLARE_YYTEXT_BUFP(yyp);
     while ((c = xxgetc()) != R_EOF && c != quote) {
 	if (c == '\n') {
 	    xxungetc(c);
@@ -1608,27 +1608,35 @@ static int StringValue(int c)
 		}
 	    }
 	}
-	*p++ = c;
+	YYTEXT_PUSH(c, yyp);
     }
-    *p = '\0';
+    YYTEXT_PUSH('\0', yyp);
     PROTECT(yylval = mkString(yytext));
     return STR_CONST;
 }
 
+static int QuotedSymbolValue(int c)
+{
+    (void) StringValue(c); /* always returns STR_CONST */
+    UNPROTECT(1);
+    PROTECT(yylval = install(yytext));
+    return SYMBOL;
+}
+
 static int SpecialValue(int c)
 {
-    char *p = yytext;
-    *p++ = c;
+    DECLARE_YYTEXT_BUFP(yyp);
+    YYTEXT_PUSH(c, yyp);
     while ((c = xxgetc()) != R_EOF && c != '%') {
 	if (c == '\n') {
 	    xxungetc(c);
 	    return ERROR;
 	}
-	*p++ = c;
+	YYTEXT_PUSH(c, yyp);
     }
     if (c == '%')
-	*p++ = c;
-    *p++ = '\0';
+	YYTEXT_PUSH(c, yyp);
+    YYTEXT_PUSH('\0', yyp);
     yylval = install(yytext);
     return SPECIAL;
 }
@@ -1667,13 +1675,13 @@ int isValidName(char *name)
 static int SymbolValue(int c)
 {
     int kw;
-    char *p = yytext;
+    DECLARE_YYTEXT_BUFP(yyp);
     do {
-	*p++ = c;
+	YYTEXT_PUSH(c, yyp);
     }
     while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.'));
     xxungetc(c);
-    *p = '\0';
+    YYTEXT_PUSH('\0', yyp);
     if ((kw = KeywordLookup(yytext))) {
 	if ( kw == FUNCTION ) {
 	    if (FunctionLevel >= MAXNEST)
@@ -1738,18 +1746,12 @@ static int token()
 
     /* functions, constants and variables */
 
+    if (c == '`')
+	return QuotedSymbolValue(c);
  symbol:
 
     if (c == '.' || isalpha(c))
 	return SymbolValue(c);
-
-    /* gag, barf, but the punters want it */
-
-    if (!R_no_underline && c == '_') {
-	yylval = install("<-");
-	    warning("The use of _ is soon to be removed: you will be warned repeatedly");
-	return LEFT_ASSIGN;
-    }
 
     /* compound tokens */
 
@@ -1809,8 +1811,14 @@ static int token()
 	return EQ_ASSIGN;
     case ':':
 	if (nextchar(':')) {
-	    yylval = install("::");
-	    return NS_GET;
+            if (nextchar(':')) {
+		yylval = install(":::");
+		return NS_GET_INT;
+	    }
+	    else {
+		yylval = install("::");
+		return NS_GET;
+	    }
 	}
 	if (nextchar('=')) {
 	    yylval = install(":=");

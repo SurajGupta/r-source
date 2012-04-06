@@ -7,7 +7,6 @@
 \alias{getGenerics}
 \alias{allGenerics}
 \alias{dumpMethod}
-\alias{existsFunction}
 \alias{findFunction}
 \alias{dumpMethods}
 \alias{removeMethods}
@@ -25,12 +24,11 @@ isGeneric(f, where, fdef, getName = FALSE)
 isGroup(f, where, fdef)
 removeGeneric(f, where)
 dumpMethod(f, signature, file, where, def)
-existsFunction(f, generic = TRUE, where)
-findFunction(f, generic=TRUE)
+findFunction(f, generic=TRUE, where)
 dumpMethods(f, file, signature, methods, where)
 signature(\dots)
-removeMethods(f, where)
-setReplaceMethod(f, \dots)
+removeMethods(f, where, all)
+setReplaceMethod(f, \dots, where)
 getGenerics(where, searchForm = FALSE)
 allGenerics(where, searchForm = FALSE)
 callGeneric(\dots)
@@ -45,8 +43,6 @@ removeGeneric(f, where)
 standardGeneric(f)
 
 dumpMethod(f, signature, file, where, def)
-
-existsFunction(f, generic = TRUE, where)
 
 findFunction(f, generic=TRUE)
 
@@ -106,17 +102,18 @@ callGeneric(\dots)
     \item{\code{dumpMethod}:}{ 
       Dump the method for this generic function and signature.  
     }
-    \item{\code{existsFunction}:}{ 
-      Is there a function of this name.  If \code{generic} is
-      \code{FALSE}, generic functions are not counted.
-    }
     \item{\code{findFunction}:}{ 
-      return all the elements of the search list on which a function
-      definition for \code{name} exists.
+      return a list of either the positions on the search list, or the
+      current top-level environment, on which a function object
+      for \code{name} exists.  The returned value is \emph{always} a
+      list, use the first element to access the first visible version
+      of the function.  See the example.
 
       \emph{NOTE:} Use this rather than \code{\link{find}} with
       \code{mode="function"}, which is not as meaningful, and has a few
-      subtle bugs from its use of regular expressions.
+      subtle bugs from its use of regular expressions.  Also,
+      \code{findFunction} works correctly in the code for a package
+      when attaching the package via a call to \code{\link{library}}.
     }
     \item{\code{selectMethod}:}{ 
       Returns the method (a function) that R would use to evaluate a
@@ -159,9 +156,13 @@ callGeneric(\dots)
 
 \arguments{
   \item{f}{ The character string naming the function. }
-  \item{where}{ Where on the search list of attached packages to look
-    for functions or methods.  By default, use the whole search list to
-    find the relevant object(s).  }
+  \item{where}{ The environment, namespace, or search-list position
+  from which to search for objects.  By default, start at the
+  top-level environment of the calling function, typically the global
+  environment (i.e., use the search list), or the namespace of a
+  package from which the call came.  It is important to supply this
+  argument when calling any of these functions indirectly.  With
+  package namespaces, the default is likely to be wrong in such calls.}
 
   \item{signature}{ The class signature of the relevant method.  A
     signature is a named or unnamed vector of character strings.  If
@@ -284,7 +285,7 @@ callGeneric(\dots)
   }
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
+  The R package \pkg{methods} implements, with a few exceptions, the
   programming interface for classes
   and methods in the book \emph{Programming with Data} (John
   M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
@@ -305,7 +306,18 @@ callGeneric(\dots)
   \code{\link{showMethods}}
 }
 \examples{
-\testonly{
+\dontrun{
+  ## get the function "myFun" -- throw an error if 0 or > 1 versions visible
+  allF <- findFunction("myFun")
+  if(length(allF) == 0)
+    stop("No versions of myFun visible")
+  else if(length(allF) > 1)
+    stop("myFun is ambiguous: ", length(allF), " versions")
+  else
+    fdef <- get("myFun", allF[[1]])
+}
+  
+\dontshow{
 ## because nosegfault runs standardGeneric w/o the methods package, nothing
 ## really gets tested.  The following check that it catches some errors
 mustDie <- function(expr) stopifnot(is(trySilent(expr), "try-error"))

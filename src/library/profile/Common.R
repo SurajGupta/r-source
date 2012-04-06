@@ -34,6 +34,8 @@ options(timeout = 60)
 options(internet.info = 2)
 options(encoding = native.enc)
 options(show.error.messages = TRUE)
+options(scipen = 0)
+options(locatorBell = TRUE)
 local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
        if(identical(dp, "")) # marginally faster to do methods last
            dp <- c("ts", "nls", "modreg", "mva", "ctest", "methods")
@@ -46,7 +48,7 @@ local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
 .First.sys <- function()
 {
     for(pkg in getOption("defaultPackages")) {
-        res <- require(pkg, quietly = TRUE, character.only = TRUE)
+        res <- require(pkg, quietly = TRUE, character.only = TRUE, save = FALSE)
         if(!res)
             warning("package ", pkg,
                     ' in options("defaultPackages") was not found', call.=FALSE)

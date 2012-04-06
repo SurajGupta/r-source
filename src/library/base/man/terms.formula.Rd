@@ -7,8 +7,8 @@
   construct a \code{\link{model.matrix}}.
 }
 \usage{
-terms.formula(x, specials = NULL, abb = NULL, data = NULL, neg.out = TRUE,
-              keep.order = FALSE, simplify = FALSE, ...)
+\method{terms}{formula}(x, specials = NULL, abb = NULL, data = NULL, neg.out = TRUE,
+     keep.order = FALSE, simplify = FALSE, ...)
 }
 \arguments{
   \item{x}{a formula.}
@@ -40,7 +40,6 @@ terms.formula(x, specials = NULL, abb = NULL, data = NULL, neg.out = TRUE,
   is the order in which the variables occur in the formula.
 }
 \seealso{
-  \code{\link{terms.object}},
-  \code{\link{terms.default}}
+  \code{\link{terms}}, \code{\link{terms.object}}
 }
 \keyword{models}

@@ -34,7 +34,7 @@ MAKEINFO_HTML_OPTS = --html --no-split
 MAKEINFO_TEXT_OPTS = --number-sections --fill-column=76 --no-split --no-headers
 TEXI2HTML = $(MAKEINFO) $(MAKEINFO_HTML_OPTS)
 TEXI2TEXT = $(MAKEINFO) $(MAKEINFO_TEXT_OPTS)
-TEXI2DVI = $(top_builddir)/bin/texi2dvi --texinfo="@set UseExternalXrefs"
+TEXI2DVI = $(top_builddir)/bin/texi2dvi --texinfo="@set UseExternalXrefs "
 TEXI2PDF = $(TEXI2DVI) --pdf
 PDFLATEX = @PDFLATEX@
 PDFTEX = @PDFTEX@
@@ -48,8 +48,8 @@ R_RD4DVI = @R_RD4DVI@
 R_RD4PDF = @R_RD4PDF@
 
 texinputs_BASE = $(R_PKGS_BASE:=-pkg.tex)
-texinputs_RECOMMENDED = $(R_PKGS_RECOMMENDED_EXPANDED:=-pkg.tex)
-R_PKGS_refman = base methods tools @USE_RECOMMENDED_PACKAGES_TRUE@ grid
+texinputs_RECOMMENDED = $(R_PKGS_RECOMMENDED:=-pkg.tex)
+R_PKGS_refman = base methods tools grid
 refman_TEXINPUTS = $(R_PKGS_refman:=-pkg.tex)
 refman_DEPENDENCIES = version.tex $(top_srcdir)/share/texmf/Rd.sty
 fullrefman_TEXINPUTS = $(texinputs_BASE) @USE_RECOMMENDED_PACKAGES_TRUE@ $(texinputs_RECOMMENDED)
@@ -123,6 +123,8 @@ version.tex: Makefile $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
 	  echo "$${v}") > $@
 stamp-refman-dvi: $(refman_TEXINPUTS)
 	@touch $@
+
+## <NOTE> This assumes none of the latex dirs are zipped </NOTE>
 $(texinputs_BASE): FORCE $(top_srcdir)/share/perl/build-help.pl
 	@(pkg=`basename $@ -pkg.tex`; \
 	if $(PERL) $(top_srcdir)/tools/Rdnewer.pl \
@@ -130,16 +132,17 @@ $(texinputs_BASE): FORCE $(top_srcdir)/share/perl/build-help.pl
 	  echo "collecting LaTeX docs for package '$${pkg}' ..."; \
 	  (cd $(top_builddir)/src/library && \
 	    OPTS="--latex" $(MAKE) R_PKGS_BASE="$${pkg}" DOCS); \
-	  $(PERL) $(top_srcdir)/tools/pkg2tex.pl $${pkg}; \
+	  PERL5LIB=$(top_srcdir)/share/perl $(PERL) $(top_srcdir)/tools/pkg2tex.pl $${pkg}; \
 	fi)
 FORCE:
+
 $(texinputs_RECOMMENDED): FORCE
 	@(pkg=`basename $@ -pkg.tex`; \
 	if find $@ -newer $(top_builddir)/library/$${pkg}/DESCRIPTION \
 	    -print 2> /dev/null | grep $@ > /dev/null; then :; else \
 	  echo "collecting LaTeX docs for package '$${pkg}' ..."; \
 	  RLIB="$(top_builddir)/library" \
-	    $(PERL) $(top_srcdir)/tools/pkg2tex.pl $${pkg}; \
+	    PERL5LIB=$(top_srcdir)/share/perl $(PERL) $(top_srcdir)/tools/pkg2tex.pl $${pkg}; \
 	fi)
 
 fullrefman.dvi: $(refman_DEPENDENCIES) stamp-fullrefman-dvi
@@ -370,8 +373,8 @@ clean:
 	-@rm -f *.aux *.cp *.cps *.dvi *.fn *.fns *.html *.info* \
 	  *.ky *.kys *.log *.out *.pdf *.pg *.pgs *.ps *.ps-2 *.tmp \
 	  *.toc *.tp *.vr *.vrs \
-	  *-pkg.tex refman.i?? refman.tex version.tex \
-	  version.texi
+	  *-pkg.tex refman.i?? refman.tex fullrefman.i?? fullrefman.tex \
+	  version.tex version.texi
 	-@rm -f stamp-*
 distclean: clean
 	-@rm -f Makefile

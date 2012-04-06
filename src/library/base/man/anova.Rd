@@ -1,7 +1,5 @@
 \name{anova}
 \alias{anova}
-\alias{anova.mlm}
-% others in ./lm.summaries.Rd
 \alias{print.anova}
 \title{Anova Tables}
 \usage{
@@ -12,8 +10,8 @@ anova(object, \dots)
   fitted model objects.
 }
 \arguments{
-  \item{object}{an object containing the results returned
-    by a model fitting function (e.g. \code{lm} or \code{glm}).}
+  \item{object}{an object containing the results returned by a model
+    fitting function (e.g., \code{lm} or \code{glm}).} 
   \item{\dots}{additional objects of the same type.}
 }
 \value{
@@ -26,7 +24,7 @@ anova(object, \dots)
   the models against one another in the order specified.
 
   The print method for \code{anova} objects prints
-  tables in a ``pretty'' form.
+  tables in a \dQuote{pretty} form.
 }
 \section{Warning}{
   The comparison between two or more models will only be valid if they
@@ -39,7 +37,8 @@ anova(object, \dots)
 }
 \seealso{
   \code{\link{coefficients}}, \code{\link{effects}},
-  \code{\link{fitted.values}}, \code{\link{residuals}}, \code{\link{summary}}.
+  \code{\link{fitted.values}}, \code{\link{residuals}},
+  \code{\link{summary}}, \code{\link{drop1}}, \code{\link{add1}}.
 }
 \keyword{regression}
 \keyword{models}

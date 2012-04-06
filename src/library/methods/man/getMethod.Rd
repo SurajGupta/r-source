@@ -20,18 +20,19 @@
   The other functions are support functions: see the details below.
 }
 \usage{
-getMethod(f, signature=character(), where, optional=FALSE)
+getMethod(f, signature=character(), where, optional=FALSE, mlist)
 
 findMethod(f, signature, where)
 
-getMethods(f, where=-1)
+getMethods(f, where)
 
 existsMethod(f, signature = character(), where)
 
-hasMethod(f, signature=character())
+hasMethod(f, signature=character(), where)
 
-selectMethod(f, signature, optional=FALSE, useInherited,
-             mlist=getMethods(f), fdef = getGeneric(f))
+selectMethod(f, signature, optional = FALSE, useInherited = TRUE,
+             mlist = (if (is.null(fdef)) NULL else getMethods(fdef)),
+             fdef = getGeneric(f, !optional))
 
 MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
                   useInherited, fdef, resetAllowed)
@@ -51,7 +52,7 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
     are not likely to find this approach convenient, but it is used
     internally and is marginally more efficient.)
   }
-  \item{where}{ The position or environment in which to look for the method:  by default,
+  \item{where}{ The position or environment in which to look for the method(s):  by default,
       anywhere in
     the current search list.}
   \item{optional}{ If the selection does not produce a unique result,
@@ -59,8 +60,15 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
     case, the value returned is either a \code{MethodsList} object, if
     more than one method matches this signature, or \code{NULL} if no
     method matches.}
+  \item{mlist}{Optionally, the list of methods in which to search.  By
+    default, the function finds the methods for the corresponding
+    generic function.  To restrict the search to a particular package
+    or environment, e.g., supply this argument as
+    \code{getMethodsMetaData(f,where)}.  For \code{selectMethod}, see
+    the discussion of argument \code{fdef}.
+    }
 
-  \item{mlist, fdef}{In \code{selectMethod}, the \code{MethodsList} object
+  \item{fdef}{In \code{selectMethod}, the \code{MethodsList} object
     and/or the generic function object can be explicitly supplied.  (Unlikely to be used, except in the
     recursive call that finds matches to more than one argument.)}
 
@@ -124,7 +132,10 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
   particular generic (in the form of a generic function with the
   methods information in its environment).  The function is called
   from the evaluator to merge method information, and is not intended
-  to be called directly.
+  to be called directly.  Note that it gets \emph{all} the visible
+  methods for the specified functions.  If you want only the methods
+  defined explicitly in a particular environment, use the function
+  \code{\link{getMethodsMetaData}} instead.
 
   The function \code{MethodsListSelect} performs a full search
   (including all inheritance and group generic information: see the
@@ -164,20 +175,43 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
   error in this case.
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
+  The R package \pkg{methods} implements, with a few exceptions, the
   programming interface for classes
   and methods in the book \emph{Programming with Data} (John
   M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
   and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page 
+  discussion of details and ongoing development, see the web page
   \url{http://developer.r-project.org/methodsPackage.html} and the
   pointers from that page.
+}
+\examples{
+setGeneric("testFun", function(x)standardGeneric("testFun"))
+setMethod("testFun", "numeric", function(x)x+1)
+hasMethod("testFun", "numeric")
+\dontrun{[1] TRUE}
+hasMethod("testFun", "integer") #inherited
+\dontrun{[1] TRUE}
+existsMethod("testFun", "integer")
+\dontrun{[1] FALSE}
+hasMethod("testFun") # default method
+\dontrun{[1] FALSE}
+hasMethod("testFun", "ANY")
+\dontrun{[1] FALSE}
+\dontshow{
+stopifnot(isGeneric("testFun"))
+stopifnot(hasMethod("testFun", "numeric"))
+stopifnot(hasMethod("testFun", "integer"))
+stopifnot(!existsMethod("testFun", "integer"))
+stopifnot(!hasMethod("testFun"))
+stopifnot(!hasMethod("testFun", "ANY"))
+removeGeneric("testFun")
+}
 }
 \keyword{programming}
 \keyword{classes}

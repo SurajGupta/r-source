@@ -4,7 +4,7 @@
 \description{
   Run all the \R code from the \bold{Examples} part of \R's online help
   topic \code{topic} with two possible exceptions, \code{dontrun} and
-  \code{testonly}, see Details below.
+  \code{dontshow}, see Details below.
 }
 \usage{
 example(topic, package = .packages(), lib.loc = NULL,
@@ -12,8 +12,8 @@ example(topic, package = .packages(), lib.loc = NULL,
         prompt.echo = paste(abbreviate(topic, 6),"> ", sep=""))
 }
 \arguments{
-  \item{topic}{name or string constant: the online \code{\link{help}}
-    topic the examples of which should be run.}
+  \item{topic}{name or literal character string: the online
+    \code{\link{help}} topic the examples of which should be run.}
   \item{package}{a character vector with package names.  By default,
     all packages in the search path are used.}
   \item{lib.loc}{a character vector of directory names of \R libraries,
@@ -48,9 +48,10 @@ example(topic, package = .packages(), lib.loc = NULL,
   the help page can markup parts of the examples for two exception rules
   \describe{
     \item{\code{dontrun}}{encloses code that should not be run.}
-    \item{\code{testonly}}{encloses code that is invisible on help
+    \item{\code{dontshow}}{encloses code that is invisible on help
       pages, but will be run both by the package checking tools,
-      and the \code{example()} function.}
+      and the \code{example()} function.  This was previously
+      \code{testonly}, and that form is still accepted.}
     }
 }
 \note{
@@ -63,7 +64,7 @@ example(topic, package = .packages(), lib.loc = NULL,
 \seealso{\code{\link{demo}}}
 \examples{
 example(InsectSprays)
-## force use of the standard package eda:
+## force use of the standard package 'eda':
 example("smooth", package="eda", lib.loc=.Library)
 }
 \keyword{documentation}

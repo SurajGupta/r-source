@@ -70,7 +70,7 @@ extern int R_OutputCon; /* from connections.c */
 
 #define BUFSIZE 8192  /* used by Rprintf etc */
 static R_StringBuffer gBuffer = {NULL, 0, BUFSIZE};
-static R_StringBuffer *buffer = &gBuffer; /*XX Add appropriate const here 
+static R_StringBuffer *buffer = &gBuffer; /*XX Add appropriate const here
                                             and in the routines that use it. */
 
 
@@ -166,7 +166,7 @@ char *EncodeReal(double x, int w, int d, int e)
 	}
 #endif
     }
-    else {
+    else { /* e = 0 */
 	sprintf(fmt,"%%%d.%df", w, d);
 	sprintf(buffer->data, fmt, x);
     }
@@ -175,12 +175,8 @@ char *EncodeReal(double x, int w, int d, int e)
 
 char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei)
 {
-#if OLD
-    char fmt[64], *efr, *efi;
-#else
     char *Re, *Im, *tmp;
     int  flagNegIm = 0;
-#endif
 
     R_AllocStringBuffer(0, buffer);
     /* IEEE allows signed zeros; strip these here */
@@ -192,13 +188,6 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei)
 		CHAR(R_print.na_string));
     }
     else {
-#if OLD
-	if(er) efr = "e"; else efr = "f";
-	if(ei) efi = "e"; else efi = "f";
-	sprintf(fmt,"%%%d.%d%s%%+%d.%d%si", wr, dr, efr, wi, di, efi);
-	sprintf(buffer->data, fmt, x.r, x.i);
-#else
-
 	/* EncodeReal returns pointer to static storage so copy */
 
 	tmp = EncodeReal(x.r, wr, dr, er);
@@ -215,20 +204,9 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei)
 
 	Free(Re); Free(Im);
     }
-#endif
     return buffer->data;
 }
 
-	/* There is a heavy ASCII emphasis here */
-	/* Latin1 types are (rightfully) upset */
-	/* WHAT NEEDS TO CHANGE */
-
-#ifdef OLD
-static int hexdigit(unsigned int x)
-{
-    return ((x <= 9)? '0' :	 'A'-10) + x;
-}
-#endif
 
 /* strlen() using escaped rather than literal form */
 int Rstrlen(char *s, int quote)
@@ -263,11 +241,7 @@ int Rstrlen(char *s, int quote)
 	case '\v':
 	    len += 2; break;
 	default:
-#ifdef OLD
-	    len += 4; break;
-#else
 	    len += 1; break;
-#endif
 	}
 	p++;
     }
@@ -282,14 +256,14 @@ char *EncodeString(char *s, int w, int quote, int right)
 
     if (s == CHAR(NA_STRING)) {
 	p = quote ? CHAR(R_print.na_string) : CHAR(R_print.na_string_noquote);
-	i = quote ? strlen(CHAR(R_print.na_string)) : 
+	i = quote ? strlen(CHAR(R_print.na_string)) :
 	    strlen(CHAR(R_print.na_string_noquote));
 	quote = 0;
     } else {
 	p = s;
 	i = Rstrlen(s, quote);
     }
-    
+
     R_AllocStringBuffer((i+2 >= w)?(i+2):w, buffer); /* +2 allows for quotes */
     q = buffer->data;
     if(right) { /* Right justifying */
@@ -327,16 +301,8 @@ char *EncodeString(char *s, int w, int quote, int right)
 	case '\t': *q++ = '\\'; *q++ = 't'; break;
 	case '\v': *q++ = '\\'; *q++ = 'v'; break;
 
-	    /* Latin1 Swallowed Here */
-
-#ifdef OLD
-	default: *q++ = '0'; *q++ = 'x';
-	    *q++ = hexdigit((*p & 0xF0) >> 4);
-	    *q++ = hexdigit(*p & 0x0F);
-#else
 	default:
 	    *q++ = *p; break;
-#endif
 	}
 	p++;
     }
@@ -439,7 +405,7 @@ void Rcons_vprintf(const char *format, va_list arg)
 void Rvprintf(const char *format, va_list arg)
 {
     Rconnection con = getConnection(R_OutputCon);
-    
+
     con->vfprintf(con, format, arg);
     con->fflush(con);
 }
@@ -481,6 +447,12 @@ void REvprintf(const char *format, va_list arg)
 	buf[BUFSIZE-1] = '\0';
 	slen = strlen(buf);
 	R_WriteConsole(buf, slen);
+#ifdef HAVE_AQUA
+	/* the function doesn't access or  manipulate its arguments,
+	   so this is safe, if ugly */
+	do_flushconsole(NULL,NULL,NULL,NULL); 
+#endif
+
     }
 }
 
@@ -500,7 +472,7 @@ void MatrixColumnLabel(SEXP cl, int j, int w)
     int l;
     SEXP tmp;
 
-    if (!isNull(cl)) { 
+    if (!isNull(cl)) {
         tmp = STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
 	else l = Rstrlen(CHAR(tmp), 0);
@@ -517,7 +489,7 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
     int l;
     SEXP tmp;
 
-    if (!isNull(cl)) { 
+    if (!isNull(cl)) {
         tmp = STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
 	else l = Rstrlen(CHAR(tmp), 0);
@@ -532,9 +504,9 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
 void LeftMatrixColumnLabel(SEXP cl, int j, int w)
 {
     int l;
-    SEXP tmp; 
+    SEXP tmp;
 
-    if (!isNull(cl)) { 
+    if (!isNull(cl)) {
         tmp= STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
 	else l = Rstrlen(CHAR(tmp), 0);
@@ -551,12 +523,12 @@ void MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
     int l;
     SEXP tmp;
 
-    if (!isNull(rl)) { 
+    if (!isNull(rl)) {
         tmp= STRING_ELT(rl, i);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
 	else l = Rstrlen(CHAR(tmp), 0);
 	Rprintf("\n%*s%s%*s", lbloff, "",
-		EncodeString(CHAR(tmp), l, 0, Rprt_adj_left), 
+		EncodeString(CHAR(tmp), l, 0, Rprt_adj_left),
 		rlabw-l-lbloff, "");
     }
     else {

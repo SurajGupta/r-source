@@ -41,7 +41,7 @@ nlevels <- function(x) length(levels(x))
 {
     xlevs <- levels(x)
     if (is.list(value)) {
-        nlevs <- rep(names(value), lapply(value, length))
+        nlevs <- rep.int(names(value), lapply(value, length))
         value <- unlist(value)
         m <- match(value, xlevs, nomatch=0)
         xlevs[m] <- nlevs[m > 0]
@@ -53,35 +53,12 @@ nlevels <- function(x) length(levels(x))
     factor(xlevs[x], levels = unique(nlevs))
 }
 
-codes <- function(x, ...) UseMethod("codes")
-
-codes.factor <- function(x, ...)
+as.vector.factor <- function(x, mode="any")
 {
-    ## This is the S-plus semantics.
-    ## The deeper meaning? Search me...
-    rank(levels(x))[x]
-}
-
-codes.ordered <- as.integer
-
-"codes<-" <- function(x, value, ...)
-{
-    if ( length(value) == 1 )
-	value <- rep(value, length(x))
-    else if ( length(x) != length(value) )
-	stop("Length mismatch in \"codes<-\"")
-    ## S-plus again...
-    if ( !is.ordered(x) ) value <- order(levels(x))[value]
-    attributes(value) <- attributes(x)
-    value
-}
-
-as.vector.factor <- function(x, type="any")
-{
-    if(type== "any" || type== "character" || type== "logical" || type== "list")
-	as.vector(levels(x)[x], type)
+    if(mode== "any" || mode== "character" || mode== "logical" || mode== "list")
+	as.vector(levels(x)[x], mode)
     else
-	as.vector(unclass(x), type)
+	as.vector(unclass(x), mode)
 }
 
 as.character.factor <- function(x,...)
@@ -132,7 +109,7 @@ Ops.factor <- function(e1, e2)
     ok <- switch(.Generic, "=="=, "!="=TRUE, FALSE)
     if(!ok) {
 	warning('"',.Generic,'"', " not meaningful for factors")
-	return(rep(NA, max(length(e1),if(!missing(e2))length(e2))))
+	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
     }
     nas <- is.na(e1) | is.na(e2)
     if (nchar(.Method[1])) {
@@ -195,7 +172,7 @@ function (e1, e2)
 		 FALSE)
     if(!ok) {
 	warning('"',.Generic,'"', " not meaningful for ordered factors")
-	return(rep(NA, max(length(e1),if(!missing(e2))length(e2))))
+	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
     }
     if (.Generic %in% c("==", "!="))
       return(NextMethod(.Generic))  ##not S-PLUS compatible, but saner
@@ -213,16 +190,16 @@ function (e1, e2)
     if (all(nchar(.Method)) && (length(l1) != length(l2) || !all(l2 == l1)))
 	stop("Level sets of factors are different")
     if (ord1 && ord2) {
-	e1 <- codes(e1)
-	e2 <- codes(e2)
+	e1 <- as.integer(e1) # was codes, but same thing for ordered factor.
+	e2 <- as.integer(e2)
     }
     else if (!ord1) {
 	e1 <- match(e1, l2)
-	e2 <- codes(e2)
+	e2 <- as.integer(e2)
     }
     else if (!ord2) {
 	e2 <- match(e2, l1)
-	e1 <- codes(e1)
+	e1 <- as.integer(e1)
     }
     value <- get(.Generic, mode = "function")(e1, e2)
     value[nas] <- NA

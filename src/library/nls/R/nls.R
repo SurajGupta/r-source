@@ -1,4 +1,4 @@
-### $Id: nls.R,v 1.22 2003/03/04 11:44:43 ripley Exp $
+### $Id: nls.R,v 1.26 2003/08/10 09:24:39 ripley Exp $
 ###
 ###            Nonlinear least squares for R
 ###
@@ -393,8 +393,8 @@ nls.control <- function( maxiter = 50, tol = 0.00001, minFactor = 1/1024 ) {
 }
 
 nls <-
-  function (formula, data = parent.frame(), start, control,
-            algorithm="default", trace = FALSE,
+  function (formula, data = parent.frame(), start, control = nls.control(),
+            algorithm = "default", trace = FALSE,
             subset, weights, na.action)
 {
     mf <- match.call()             # for creating the model frame
@@ -469,7 +469,7 @@ coef.nls <- function( object, ... ) object$m$getAllPars()
 print.nls <- function(x, ...) {
     cat( "Nonlinear regression model\n" )
     cat( "  model: ", deparse( formula(x) ), "\n" )
-    cat( "   data: ", as.character( x$data ), "\n" )
+    cat( "   data: ", deparse( x$data ), "\n" )
     print( x$m$getAllPars() )
     cat( " residual sum-of-squares: ", format( x$m$deviance() ), "\n" )
     invisible(x)
@@ -485,7 +485,6 @@ summary.nls <- function (object, ...)
     pnames <- names(param)
     p <- length(param)
     rdf <- n - p
-    p1 <- 1:p
     f <- as.vector(object$m$fitted())
     w <- z$weights
     R <- z$m$Rmat()
@@ -530,7 +529,7 @@ print.summary.nls <-
     df <- x$df
     rdf <- df[2]
     cat("\nParameters:\n")
-    print.coefmat(x$parameters, digits = digits, signif.stars = signif.stars,
+    printCoefmat(x$parameters, digits = digits, signif.stars = signif.stars,
                   ...)
     cat("\nResidual standard error:", format(signif(x$sigma,
                                                     digits)), "on", rdf, "degrees of freedom\n")

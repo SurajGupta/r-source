@@ -7,8 +7,8 @@ rug(x, ticksize=0.03, side=1, lwd=0.5, col,
 }
 \arguments{
  \item{x}{A numeric vector}
- \item{ticksize}{The length of the ticks making up the `rug'. Positive
-   lengths give inwards ticks.}
+ \item{ticksize}{The length of the ticks making up the \sQuote{rug}.
+   Positive lengths give inwards ticks.}
  \item{side}{On which side of the plot box the rug will be
    plotted. Normally 1 (bottom) or 3 (top).}
  \item{lwd}{The line width of the ticks.}
@@ -39,10 +39,10 @@ rug(x, ticksize=0.03, side=1, lwd=0.5, col,
 \seealso{\code{\link{jitter}} which you may want for ties in \code{x}.}
 \examples{
 data(faithful)
-attach(faithful)
-plot(density(eruptions, bw=0.15))
-rug(eruptions)
-rug(jitter(eruptions, amount = .01), side = 3, col = "light blue")
-detach("faithful")
+with(faithful, {
+    plot(density(eruptions, bw=0.15))
+    rug(eruptions)
+    rug(jitter(eruptions, amount = .01), side = 3, col = "light blue")
+})
 }
 \keyword{aplot}

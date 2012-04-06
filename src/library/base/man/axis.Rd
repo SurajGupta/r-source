@@ -52,8 +52,14 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
   extend outside the plot region.
 
   When \code{at = NULL}, pretty tick mark locations are computed internally,
-  from \code{\link{par}("usr","lab")}, and \code{\link{par}("xlog")} (or
+  the same \code{\link{axTicks}(side)} would, from
+  \code{\link{par}("usr","lab")}, and \code{\link{par}("xlog")} (or
   \code{ylog} respectively).
+}
+\seealso{\code{\link{axTicks}} returns the axis tick locations
+  corresponding to \code{at=NULL}; \code{\link{pretty}} is more flexible
+  for computing pretty tick coordinates and does \emph{not} depend on
+  (nor adapt to) the coordinate system in use.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -72,10 +78,5 @@ axis(1, 1:7, LETTERS[1:7], col.axis = "blue")
 # unusual options:
 axis(4, col = "violet", col.axis="dark violet",lwd = 2)
 axis(3, col = "gold", lty = 2, lwd = 0.5)
-\testonly{ # test sorting of labels
- Y <- c(10.50, 4.0, 13.75, 7.25)
- plot(1:4, Y, xlim=c(0,5), ylim=c(0,15))
- axis(side=4, at=Y, labels=LETTERS[1:4])
-}
 }
 \keyword{aplot}

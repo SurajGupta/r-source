@@ -9,11 +9,11 @@
   control.  See the details section.
 }
 \usage{
-setGeneric(name, def, group=NULL, valueClass=NULL, where=1, package, 
-           signature, useAsDefault, genericFunction)
+setGeneric(name, def= , group=list(), valueClass=character(), where= ,
+           package= , signature= , useAsDefault= , genericFunction= )
 
-setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, 
-                package, where=1)
+setGroupGeneric(name, def= , group=list(), valueClass=character(),
+                knownMembers=list(), package= , where= )
 }
 \arguments{
   \item{name}{ The character string name of the generic function.  In
@@ -28,7 +28,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
     can also supply this argument if you want the generic function to
     do something other than just dispatch methods (an advanced topic
     best left alone unless you are sure you want it).
-    
+
     Note that \code{def} is \emph{not} the default method; use argument
     \code{useAsDefault} if you want to specify the default separately.
   }
@@ -39,7 +39,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
     been explicitly defined for the corresponding signature.  See the
     references for more discussion.
   }
-  \item{valueClass}{ An optional character vector or unevaluated 
+  \item{valueClass}{ An optional character vector or unevaluated
       expression.  The value returned by the generic function must
       have (or extend) this class, or one of the classes; otherwise,
       an error is generated.  See the
@@ -134,7 +134,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
   definition of the generic function
   does \emph{not} call \code{standardGeneric} you are in trouble,
   because none of the methods for the function will ever be
-  dispatched. 
+  dispatched.
 
       By default, the generic function can return any object.
    If \code{valueClass} is supplied, it should be a vector of
@@ -162,8 +162,8 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
   functions are eligible to have methods, but are handled differently
   by \code{setGeneric} and \code{setGroupGeneric}.  A call to
   \code{setGeneric} for a primitive function does not create a new
-  definition of the function, and the call is allowed only to ``turn
-  on'' methods for that function.
+  definition of the function, and the call is allowed only to
+  \dQuote{turn on} methods for that function.
 
   A call to \code{setGeneric} for a primitive causes the evaluator to
   look for methods for that generic; a call to \code{setGroupGeneric}
@@ -173,7 +173,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
 
   You usually only need to use either function if the methods are
   being defined only for the group generic.  Defining a method for a
-  primitive function, say \code{"+"}, by a call to \code{setMethod} 
+  primitive function, say \code{"+"}, by a call to \code{setMethod}
   turns on method dispatch for that function.  But in R defining a
   method for the corresponding group generic, \code{"Arith"}, does not
   currently turn on method dispatch (for efficiency reasons).  If
@@ -192,23 +192,22 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers,
   \code{name}.
 }
 \references{
-  The R package \code{methods} implements, with a few exceptions, the
-  programming interface for classes
-  and methods in the book \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
-  and chapters 7 and 8.
+  The R package \pkg{methods} implements, with a few exceptions, the
+  programming interface for classes and methods in the book
+  \emph{Programming with Data} (John M. Chambers, Springer, 1998), in
+  particular sections 1.6, 2.7, 2.8, and chapters 7 and 8.
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
+  While the programming interface for the \pkg{methods} package follows
+  the reference, the R software is an original implementation, so
+  details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page 
+  discussion of details and ongoing development, see the web page
   \url{http://developer.r-project.org/methodsPackage.html} and the
   pointers from that page.
 }
 \examples{
-\testonly{
+\dontshow{
 setClass("track",
             representation(x="numeric", y="numeric"))
 }
@@ -217,7 +216,7 @@ setClass("track",
 ###   return a non-empty character vector (a stronger requirement than
 ###    valueClass = "character" in the call to setGeneric)
 
-setGeneric("authorNames", 
+setGeneric("authorNames",
     function(text) {
       value <- standardGeneric("authorNames")
       if(!(is(value, "character") && any(nchar(value)>0)))
@@ -225,7 +224,7 @@ setGeneric("authorNames",
       value
       })
 
-\testonly{
+\dontshow{
 
 setMethod("authorNames", "character", function(text)text)
 
@@ -245,13 +244,13 @@ stopifnot(is(trySilent(setGeneric("[", function(x,...)standardGeneric("["))),
 
 #define a method for the Arith group
 
-setMethod("Arith", c("track", "numeric"), 
+setMethod("Arith", c("track", "numeric"),
  function(e1, e2){
   e1@y <- callGeneric(e1@y , e2)
   e1
 })
 
-setMethod("Arith", c("numeric", "track"), 
+setMethod("Arith", c("numeric", "track"),
  function(e1, e2){
   e2@y <- callGeneric(e1, e2@y)
   e2
@@ -265,7 +264,7 @@ t1 - 100
 
 1/t1
 
-\testonly{
+\dontshow{
 removeGeneric("authorNames")
 removeClass("track")
 removeMethods("Arith")

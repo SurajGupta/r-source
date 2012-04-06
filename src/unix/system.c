@@ -51,8 +51,8 @@
 #include "Runix.h"
 
 
-#ifdef HAVE_AQUA
-void R_StartConsole(void) { ptr_R_StartConsole(); }
+#ifdef HAVE_AQUA 
+void R_StartConsole(Rboolean OpenConsole) { ptr_R_StartConsole(); }
 #endif
 
 
@@ -170,9 +170,11 @@ int Rf_initialize_R(int ac, char **av)
 		useTk = TRUE;
 	    else {
 #ifdef HAVE_X11
-		sprintf(msg, "WARNING: unknown gui `%s', using X11\n", p);
+		snprintf(msg, 1024,
+			 "WARNING: unknown gui `%s', using X11\n", p);
 #else
-		sprintf(msg, "WARNING: unknown gui `%s', using none\n", p);
+		snprintf(msg, 1024,
+			 "WARNING: unknown gui `%s', using none\n", p);
 #endif
 		R_ShowMessage(msg);
 	    }
@@ -220,12 +222,14 @@ int Rf_initialize_R(int ac, char **av)
 	if (**++av == '-') {
 	    if(!strcmp(*av, "--no-readline")) {
 		UsingReadline = FALSE;
+	    } else if(!strcmp(*av, "--args")) {
+		break;
 	    } else {
-		sprintf(msg, "WARNING: unknown option %s\n", *av);
+		snprintf(msg, 1024, "WARNING: unknown option %s\n", *av);
 		R_ShowMessage(msg);
 	    }
 	} else {
-	    sprintf(msg, "ARGUMENT '%s' __ignored__\n", *av);
+	    snprintf(msg, 1024, "ARGUMENT '%s' __ignored__\n", *av);
 	    R_ShowMessage(msg);
 	}
     }
@@ -237,7 +241,13 @@ int Rf_initialize_R(int ac, char **av)
 
     /* On Unix the console is a file; we just use stdio to write on it */
 
+#ifdef HAVE_AQUA
+    if(useaqua) 
+      R_Interactive = useaqua;
+    else
+#endif
     R_Interactive = isatty(0);
+
 #ifdef HAVE_AQUA
     if(useaqua){
      R_Outputfile = NULL;
@@ -274,11 +284,12 @@ int Rf_initialize_R(int ac, char **av)
 
 #ifdef HAVE_AQUA    
     if(useaqua)
-     R_StartConsole();
+     R_StartConsole(TRUE);
 #endif
 
  return(0);
 }
+
 
 
 /*

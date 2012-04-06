@@ -18,8 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- *  print.default()  ->	 do_printdefault & its sub-functions.
- *			 do_sink, do_invisible
+ *  print.default()  ->	 do_printdefault (with call tree below)
  *
  *  auto-printing   ->  PrintValueEnv
  *                      -> PrintValueRec
@@ -51,7 +50,7 @@
  *
  *  Also ./printvector.c,  ./printarray.c
  *
- *  do_sink.c moved to connections.c as of 1.3.0
+ *  do_sink moved to connections.c as of 1.3.0
  *
  *  <FIXME> These routines are not re-entrant: they reset the
  *  global R_print.
@@ -86,6 +85,8 @@ void PrintDefaults(SEXP rho)
     R_print.quote = 1;
     R_print.right = 0;
     R_print.digits = GetOptionDigits(rho);
+    R_print.scipen = asInteger(GetOption(install("scipen"), rho));
+    if (R_print.scipen == NA_INTEGER) R_print.scipen = 0;
     R_print.gap = 1;
     R_print.width = GetOptionWidth(rho);
 }
@@ -148,7 +149,7 @@ SEXP do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 }/* do_prmatrix */
 
 
-/* .Internal(print.default(x, digits, quote, na.print, print.gap, 
+/* .Internal(print.default(x, digits, quote, na.print, print.gap,
                            right, useS4)) */
 SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -198,7 +199,7 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CDR(args);
 
     tryS4 = asLogical(CAR(args));
-    if(R_print.right == NA_LOGICAL)
+    if(tryS4 == NA_LOGICAL)
 	errorcall(call, "invalid tryS4 internal parameter");
 
     if(tryS4 && isObject(x) && isMethodsDispatchOn()) {
@@ -220,7 +221,7 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
     } else {
 	CustomPrintValue(x, rho);
     }
-    
+
     PrintDefaults(rho); /* reset, as na.print.etc may have been set */
     return x;
 }/* do_printdefault */
@@ -517,11 +518,9 @@ static void PrintEnvir(SEXP rho)
     else if (R_IsPackageEnv(rho))
 	Rprintf("<environment: %s>\n",
 		CHAR(STRING_ELT(R_PackageEnvName(rho), 0)));
-#ifdef EXPERIMENTAL_NAMESPACES
     else if (R_IsNamespaceEnv(rho))
 	Rprintf("<environment: namespace:%s>\n",
 		CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0)));
-#endif
     else Rprintf("<environment: %p>\n", rho);
 }
 
@@ -534,8 +533,10 @@ void PrintValueRec(SEXP s,SEXP env)
     case NILSXP:
 	Rprintf("NULL\n");
 	break;
-    case SYMSXP:
-	Rprintf("%s\n", CHAR(PRINTNAME(s)));
+    case SYMSXP: /* Use deparse here to handle backtick quotification
+		  * of "weird names" */
+	t = deparse1(s, 0);
+	Rprintf("%s\n", CHAR(STRING_ELT(t, 0)));
 	break;
     case SPECIALSXP:
     case BUILTINSXP:
@@ -556,6 +557,10 @@ void PrintValueRec(SEXP s,SEXP env)
 	    t = deparse1(s, 0);
 	for (i = 0; i < LENGTH(t); i++)
 	    Rprintf("%s\n", CHAR(STRING_ELT(t, i)));
+#ifdef BYTECODE
+	if (TYPEOF(s) == CLOSXP && isByteCode(BODY(s)))
+	    Rprintf("<bytecode: %p>\n", BODY(s));
+#endif
 	if (TYPEOF(s) == CLOSXP) t = CLOENV(s);
 	else t = R_GlobalEnv;
 	if (t != R_GlobalEnv)
@@ -565,8 +570,8 @@ void PrintValueRec(SEXP s,SEXP env)
 	PrintEnvir(s);
 	break;
     case PROMSXP:
-	Rprintf("<promise: %p>\n", s);
-	break;
+        Rprintf("<promise: %p>\n", s);
+        break;
     case DOTSXP:
 	Rprintf("<...>\n");
 	break;
@@ -624,6 +629,11 @@ void PrintValueRec(SEXP s,SEXP env)
     case EXTPTRSXP:
 	Rprintf("<pointer: %p>\n", R_ExternalPtrAddr(s));
 	break;
+#ifdef BYTECODE
+    case BCODESXP:
+	Rprintf("<bytecode: %p>\n", s);
+	break;
+#endif
     case WEAKREFSXP:
 	Rprintf("<weak reference>\n");
 	break;
@@ -706,13 +716,13 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 		SETCAR(t, allocVector(INTSXP, 1));
 		INTEGER(CAR(t))[0] = digits;
 		SET_TAG(t, install("digits")); /* t = CDR(t);
-		CAR(t) = allocVector(LGLSXP, 1);
+		SETCAR(t, allocVector(LGLSXP, 1));
 		LOGICAL(CAR(t))[0] = quote;
 		SET_TAG(t, install("quote")); t = CDR(t);
-		CAR(t) = allocVector(LGLSXP, 1);
+		SETCAR(t, allocVector(LGLSXP, 1));
 		LOGICAL(CAR(t))[0] = right;
 		SET_TAG(t, install("right")); t = CDR(t);
-		CAR(t) = allocVector(INTSXP, 1);
+		SETCAR(t, allocVector(INTSXP, 1));
 		INTEGER(CAR(t))[0] = gap;
 		SET_TAG(t, install("gap")); */
 		eval(s, env);
@@ -748,9 +758,9 @@ void PrintValueEnv(SEXP s, SEXP env)
     tagbuf[0] = '\0';
     PROTECT(s);
     if(isObject(s)) {
-	/* The intention here is call show() on S4 objects, otherwise
+	/* The intention here is to call show() on S4 objects, otherwise
 	   print(), so S4 methods for show() have precedence over those for
-	   print(). We decided not to do this, at least for now
+	   print(). We decided not to do this, at least for now.
 	*/
         /*if(isMethodsDispatchOn()) {
 	    SEXP class = getAttrib(s, R_ClassSymbol);

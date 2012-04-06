@@ -23,6 +23,9 @@
 
 #define COUNTING
 
+#define BYTECODE
+#define NEW_CONDITION_HANDLING
+
 /* To test the write barrier used by the generational collector,
    define TESTING_WRITE_BARRIER.  This makes the internal structure of
    SEXPRECs visible only inside of files that explicitly define
@@ -66,11 +69,6 @@ void R_ProcessEvents(void);
 # define FILESEP     "/"
 #endif /* Unix */
 
-#ifdef Macintosh
-# define OSTYPE      "mac"
-# define FILESEP     ":"
-#endif /* Macintosh */
-
 #ifdef Win32
 # define OSTYPE      "windows"
 # define FILESEP     "/"
@@ -108,11 +106,7 @@ typedef unsigned long R_size_t;
 #define	R_VSIZE		6291456L
 #endif
 
-#ifdef Macintosh
-#include <fp.h>
-#else
 #include <math.h>
-#endif
 
 /* declare substitutions */
 #if defined(HAVE_DECL_ACOSH) && !HAVE_DECL_ACOSH
@@ -164,10 +158,16 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #endif
 
 #ifdef HAVE_POSIX_SETJMP
+# define SIGJMP_BUF sigjmp_buf
+# define SIGSETJMP(x,s) sigsetjmp(x,s)
+# define SIGLONGJMP(x,i) siglongjmp(x,i)
 # define JMP_BUF sigjmp_buf
-# define SETJMP(x) sigsetjmp(x,1)
+# define SETJMP(x) sigsetjmp(x,0)
 # define LONGJMP(x,i) siglongjmp(x,i)
 #else
+# define SIGJMP_BUF jmp_buf
+# define SIGSETJMP(x,s) setjmp(x)
+# define SIGLONGJMP(x,i) longjmp(x,i)
 # define JMP_BUF jmp_buf
 # define SETJMP(x) setjmp(x)
 # define LONGJMP(x,i) longjmp(x,i)
@@ -176,7 +176,7 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 /* Availability of timing: on Unix, we need times(2).
    On Windows and the Mac, we can do without.
 */
-#if (defined(HAVE_TIMES) || defined(Win32) || defined(Macintosh))
+#if (defined(HAVE_TIMES) || defined(Win32))
 # define _R_HAVE_TIMING_ 1
 #endif
 
@@ -270,12 +270,11 @@ typedef struct {
 #define PRIMPRINT(x)	(((R_FunTab[(x)->u.primsxp.offset].eval)/100)%10)
 
 /* Promise Access Macros */
-#define PREXPR(x)	((x)->u.promsxp.expr)
+#define PRCODE(x)	((x)->u.promsxp.expr)
 #define PRENV(x)	((x)->u.promsxp.env)
 #define PRVALUE(x)	((x)->u.promsxp.value)
 #define PRSEEN(x)	((x)->sxpinfo.gp)
 #ifndef USE_WRITE_BARRIER
-# define SET_PREXPR(x,v)  (((x)->u.promsxp.expr)=(v))
 # define SET_PRENV(x,v)	  (((x)->u.promsxp.env)=(v))
 # define SET_PRVALUE(x,v) (((x)->u.promsxp.value)=(v))
 #endif
@@ -312,6 +311,12 @@ typedef struct VECREC *VECP;
 #define PRIMPRINT(x)	(((R_FunTab[PRIMOFFSET(x)].eval)/100)%10)
 #endif
 
+#ifdef BYTECODE
+# ifdef BC_INT_STACK
+typedef union { void *p; int i; } IStackval;
+# endif
+#endif
+
 /* Evaluation Context Structure */
 typedef struct RCNTXT {
     struct RCNTXT *nextcontext;	/* The next context up the chain */
@@ -328,6 +333,17 @@ typedef struct RCNTXT {
     void (*cend)(void *);	/* C "on.exit" thunk */
     void *cenddata;		/* data for C "on.exit" thunk */
     char *vmax;		        /* top of R_alloc stack */
+    int intsusp;                /* interrupts enables */
+#ifdef NEW_CONDITION_HANDLING
+    SEXP handlerstack;          /* condition handler stack */
+    SEXP restartstack;          /* stack of available restarts */
+#endif
+#ifdef BYTECODE
+    SEXP *nodestack;
+# ifdef BC_INT_STACK
+    IStackval *intstack;
+# endif
+#endif
 } RCNTXT, *context;
 
 /* The Various Context Types.
@@ -438,6 +454,9 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 /* extern int	errno; already have errno.h ! */
 extern int	gc_inhibit_torture INI_as(1);
 
+LibExtern Rboolean R_interrupts_suspended INI_as(FALSE);
+LibExtern int R_interrupts_pending INI_as(0);
+
 /* R Home Directory */
 extern char*	R_Home;		    /* Root of the R tree */
 
@@ -464,14 +483,11 @@ LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel environment */
 LibExtern RCNTXT* R_GlobalContext;    /* The global environment */
 LibExtern int	R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
-extern int	R_EvalCount	INI_as(0);	/* Evaluation count */
 extern int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
 
 extern int	R_Expressions	INI_as(500);	/* options(expressions) */
 extern Rboolean	R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
-#ifdef EXPERIMENTAL_NAMESPACES
 extern int	R_UseNamespaceDispatch INI_as(TRUE);
-#endif
 extern int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
 
 /* File Input/Output */
@@ -504,15 +520,29 @@ LibExtern int	R_RestoreHistory;	/* restore the history file? */
 extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
 extern SEXP	R_Warnings;	    /* the warnings and their calls */
 extern int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
+#ifdef NEW_CONDITION_HANDLING
+extern SEXP	R_HandlerStack;	/* Condition handler stack */
+extern SEXP	R_RestartStack;	/* Stack of available restarts */
+#endif
 
 /* GUI type */
 
 extern char*	R_GUIType	INI_as("unknown");
 
+#ifdef BYTECODE
+#define R_BCNODESTACKSIZE 10000
+extern SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
+# ifdef BC_INT_STACK
+#define R_BCINTSTACKSIZE 10000
+extern IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
+# endif
+#endif
+
 /* Pointer  type and utilities for dispatch in the methods package */
 typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
 R_stdGen_ptr_t R_get_standardGeneric_ptr(); /* get method */
-R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t newValue); /* set method */
+R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t, SEXP); /* set method */
+extern SEXP R_MethodsNamespace;
 SEXP R_deferred_default_method();
 SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef, SEXP mlist);
 SEXP do_set_prim_method(SEXP op, char *code_string, SEXP fundef, SEXP mlist);
@@ -522,9 +552,6 @@ SEXP R_primitive_methods(SEXP op);
 /* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
-
-/* temporary switch to control underline-as-assigment */
-extern Rboolean R_no_underline		INI_as(FALSE);
 
 /* smallest decimal exponent, needed in format.c, set in Init_R_Machine */
 extern int R_dec_min_exponent		INI_as(-308);
@@ -643,13 +670,14 @@ char*	R_Date(void);
 char*	R_HomeDir(void);
 Rboolean R_FileExists(char*);
 Rboolean R_HiddenFile(char*);
+double	R_FileMtime(char*);
 
 /* environment cell access */
 typedef struct R_varloc_st *R_varloc_t;
 R_varloc_t R_findVarLocInFrame(SEXP, SEXP);
 SEXP R_GetVarLocValue(R_varloc_t);
 SEXP R_GetVarLocSymbol(R_varloc_t);
-int R_GetVarLocMISSING(R_varloc_t);
+Rboolean R_GetVarLocMISSING(R_varloc_t);
 void R_SetVarLocValue(R_varloc_t, SEXP);
 
 /* Other Internally Used Functions */
@@ -696,9 +724,13 @@ void InitOptions(void);
 void Init_R_Variables(SEXP);
 void InitTempDir(void);
 void initStack(void);
+#ifdef NEW_CONDITION_HANDLING
+void R_InsertRestartHandlers(RCNTXT *, Rboolean);
+#endif
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 Rboolean isMethodsDispatchOn(void);
 int isValidName(char *);
+void R_JumpToContext(RCNTXT *, int, SEXP);
 void jump_to_toplevel(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
@@ -735,13 +767,13 @@ SEXP R_LoadFromFile(FILE*, int);
 SEXP R_NewHashedEnv(SEXP);
 extern int R_Newhashpjw(char*);
 FILE* R_OpenLibraryFile(char *);
-void R_PreserveObject(SEXP);
-void R_ReleaseObject(SEXP);
+char *R_LibraryFileName(char *, char *, size_t);
 void R_RestoreGlobalEnv(void);
 void R_RestoreGlobalEnvFromFile(const char *, Rboolean);
 void R_SaveGlobalEnv(void);
 void R_SaveGlobalEnvToFile(const char *);
 void R_SaveToFile(SEXP, FILE*, int);
+void R_SaveToFileV(SEXP, FILE*, int, int);
 SEXP R_set_class(SEXP, SEXP, SEXP);
 int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
@@ -764,17 +796,15 @@ void unbindVar(SEXP, SEXP);
 #ifdef ALLOW_OLD_SAVE
 void unmarkPhase(void);
 #endif
-#ifdef EXPERIMENTAL_NAMESPACES
 SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
-#else
-int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP*);
-#endif
+
 /* ../main/errors.c : */
 void errorcall(SEXP, const char*, ...);
 void warningcall(SEXP, const char*,...);
 void ErrorMessage(SEXP, int, ...);
 void WarningMessage(SEXP, R_WARNING, ...);
+SEXP R_GetTraceback(int);
 
 R_size_t R_GetMaxVSize(void);
 void R_SetMaxVSize(R_size_t);
@@ -795,18 +825,13 @@ void yyprompt(char *format, ...);
 int yywrap(void);
 
 /* Macros for suspending interrupts */
-#ifdef HAVE_POSIX_SETJMP
-# define BEGIN_SUSPEND_INTERRUPTS do { \
-    sigset_t mask, omask; \
-    sigemptyset(&mask); \
-    sigaddset(&mask,SIGINT); \
-    sigprocmask(SIG_BLOCK, &mask, &omask);
-# define END_SUSPEND_INTERRUPTS sigprocmask(SIG_SETMASK, &omask, &mask); \
-    } while(0)
-#else /* not HAVE_POSIX_SETJMP */
-# define BEGIN_SUSPEND_INTERRUPTS do {
-# define END_SUSPEND_INTERRUPTS } while (0)
-#endif /* not HAVE_POSIX_SETJMP */
+#define BEGIN_SUSPEND_INTERRUPTS do { \
+    Rboolean __oldsusp__ = R_interrupts_suspended; \
+    R_interrupts_suspended = TRUE;
+#define END_SUSPEND_INTERRUPTS R_interrupts_suspended = __oldsusp__; \
+    if (R_interrupts_pending && ! R_interrupts_suspended) \
+        onintr(); \
+} while(0)
 
 #endif /* DEFN_H_ */
 /*
