@@ -1,4 +1,3 @@
-#### -*- R -*-
 opar <- par(ask = interactive() && .Device == "X11")	# For source(..)
 
 data(volcano)
@@ -33,4 +32,3 @@ box()
 title(main="Maunga Whau Volcano \n col=gray(100:200/200)", font.main=4)
 
 par(opar)
-

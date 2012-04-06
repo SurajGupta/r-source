@@ -1,4 +1,3 @@
-###-*- R -*-
 opar <- par(ask = interactive() && .Device == "X11")	# For source
 
 # Here is some code which illustrates some of the differences between
@@ -140,7 +139,7 @@ mtext("10 Meter Contour Spacing", side=3, line=0.35, outer=FALSE,
 
 par(bg="cornsilk")
 data(quakes)
-coplot(long~lat|depth, data=quakes, pch=21, bg="green3")
+coplot(long ~ lat | depth, data=quakes, pch=21, bg="green3")
 
 par(opar)
 
