@@ -29,16 +29,17 @@ ar.yw <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     xfreq <- frequency(x)
     x <- as.matrix(x)
     if(any(is.na(x))) stop("NAs in x")
+    nser <- ncol(x)
     if (demean) {
         xm <- apply(x, 2, mean)
         x <- sweep(x, 2, xm)
     } else xm <- rep(0, nser)
     n.used <- nrow(x)
-    nser <- ncol(x)
     order.max <- if (is.null(order.max)) floor(10 * log10(n.used))
                  else round(order.max)
     if (order.max < 1) stop("order.max must be >= 1")
-    xacf <- acf(x, type = "covariance", lag.max = order.max, plot=FALSE)$acf
+    xacf <- acf(x, type = "covariance", lag.max = order.max, plot = FALSE,
+                demean = demean)$acf
     if(nser > 1) {
         ## multivariate case
         snames <- colnames(x)
@@ -66,7 +67,7 @@ ar.yw <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
                 B[i + 1, , ] <<- Bold[i + 1, , ] + KB %*% Aold[m + 2 - i, , ]
             }
         }
-        cal.aic <- function() {
+        cal.aic <- function() { # omits mean params, that is constant adj
             det <- abs(prod(diag(qr(EA)$qr)))
             return(n.used * log(det) + 2 * m * nser * nser)
         }
@@ -113,7 +114,7 @@ ar.yw <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
         coefs <- matrix(z$coefs, order.max, order.max)
         partialacf <- array(diag(coefs), dim=c(order.max, 1, 1))
         var.pred <- c(r[1], z$vars)
-        xaic <- n.used * log(var.pred) + 2 * (0:order.max)
+        xaic <- n.used * log(var.pred) + 2 * (0:order.max) + 2 * demean
         xaic <- xaic - min(xaic)
         names(xaic) <- 0:order.max
         order <- if (aic) (0:order.max)[xaic == 0] else order.max
@@ -134,7 +135,8 @@ ar.yw <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
                 partialacf=partialacf, resid=resid, method = "Yule-Walker",
                 series=series, frequency=xfreq, call=match.call())
     if(nser == 1 && order > 0)
-        res$asy.var.coef <- solve(toeplitz(drop(xacf)[seq(length=order)]))*var.pred/n.used
+        res$asy.var.coef <-
+            solve(toeplitz(drop(xacf)[seq(length=order)]))*var.pred/n.used
     class(res) <- "ar"
     res
 }
@@ -180,28 +182,34 @@ predict.ar <- function(object, newdata, n.ahead = 1, se.fit=TRUE, ...)
         stop("number of series in fit and newdata do not match")
     n <- NROW(newdata)
     if(nser > 1) {
-        x <- rbind(newdata, matrix(newdata[n, ], n.ahead, nser, byrow=TRUE))
+        if(is.null(object$x.intercept)) xint <- rep(0, nser)
+        else xint <- object$x.intercept
+        x <- rbind(sweep(newdata, 2, object$x.mean),
+                   matrix(rep(0, nser), n.ahead, nser, byrow=TRUE))
+        ar <- aperm(ar, c(2, 3, 1))
         if(p > 0) {
             for(i in 1:n.ahead) {
-                x[n+i,] <- x[n+i-1,] %*% ar[1,,]
+                x[n+i,] <- ar[,,1] %*% x[n+i-1,] + xint
                 if(p > 1) for(j in 2:p)
-                    x[n+i,] <- x[n+i,] + x[n+i-j,] %*% ar[j,,]
+                    x[n+i,] <- x[n+i,] + ar[,,j] %*% x[n+i-j,]
             }
             pred <- x[n+(1:n.ahead), ]
         } else {
-            pred <- matrix(0, n.ahead, nser)
+            pred <- matrix(xint, n.ahead, nser, byrow=TRUE)
         }
         pred <- pred + matrix(object$x.mean, n.ahead, nser, byrow=TRUE)
-        colnames(pred) <- colnames(jj$var.pred)
+        colnames(pred) <- colnames(object$var.pred)
         if(se.fit) {
-            warn("se.fit not yet implemented for multivariate models")
-            se <- array(NA, dim=c(n.ahead, nser, nser))
+            warning("se.fit not yet implemented for multivariate models")
+            se <- matrix(NA, n.ahead, nser)
         }
     } else {
+        if(is.null(object$x.intercept)) xint <- 0
+        else xint <- object$x.intercept
         x <- c(newdata-object$x.mean, rep(0, n.ahead))
         if(p > 0) {
             for(i in 1:n.ahead) {
-                x[n+i] <- sum(ar * x[n+i - (1:p)])
+                x[n+i] <- sum(ar * x[n+i - (1:p)]) + xint
             }
             pred <- x[n+(1:n.ahead)]
             if(se.fit) {
@@ -211,15 +219,16 @@ predict.ar <- function(object, newdata, n.ahead = 1, se.fit=TRUE, ...)
                         psi = double(npsi+object$order+1),
                         as.integer(npsi), PACKAGE="ts")$psi[1:npsi]
                 vars <- cumsum(c(1, psi^2))
-                se <- sqrt(object$var.pred*vars)
+                se <- sqrt(object$var.pred*vars)[1:n.ahead]
             }
         } else {
-            pred <- rep(0, n.ahead)
+            pred <- rep(xint, n.ahead)
             if (se.fit) se <- rep(sqrt(object$var.pred), n.ahead)
         }
         pred <- pred + rep(object$x.mean, n.ahead)
     }
     pred <- ts(pred, start = st + dt, frequency=xfreq)
+    if(se.fit) se <- ts(se, start = st + dt, frequency=xfreq)
     if(se.fit) return(pred, se) else return(pred)
 }
 

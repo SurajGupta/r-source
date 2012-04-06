@@ -84,7 +84,7 @@ static SEXP EnlargeVector(SEXP x, int newlen)
     if (LOGICAL(GetOption(install("check.bounds"), R_NilValue))[0])
 	warning("assignment outside vector/list limits");
     if (!isVector(x))
-	error("attempt to enlarge non-vector\n");
+	error("attempt to enlarge non-vector");
 
     /* Enlarge the vector itself. */
     len = length(x);
@@ -248,7 +248,7 @@ static void SubassignTypeFix(SEXP *x, SEXP *y,
 	break;
 
     default:
-	errorcall(gcall, "incompatible types\n");
+	errorcall(gcall, "incompatible types");
 
     }
 
@@ -341,7 +341,7 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     if ((TYPEOF(x) != VECSXP && TYPEOF(x) != EXPRSXP) || y != R_NilValue) {
 	if (n > 0 && ny == 0)
-	    errorcall(call, "nothing to replace with\n");
+	    errorcall(call, "nothing to replace with");
 	if (n > 0 && n % ny)
 	    warning("number of items to replace is not a multiple of replacement length");
     }
@@ -564,7 +564,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     SEXP sr, sc;
 
     if (!isMatrix(x))
-	error("incorrect number of subscripts on matrix\n");
+	error("incorrect number of subscripts on matrix");
 
     nr = nrows(x);
     ny = LENGTH(y);
@@ -581,13 +581,13 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     /* <TSL> 21Oct97
        if (length(y) == 0)
-       error("Replacement length is zero\n");
+       error("Replacement length is zero");
        </TSL>  */
 
     if (n > 0 && ny == 0)
-	errorcall(call, "nothing to replace with\n");
+	errorcall(call, "nothing to replace with");
     if (n > 0 && n % ny)
-	errorcall(call, "number of items to replace is not a multiple of replacement length\n");
+	errorcall(call, "number of items to replace is not a multiple of replacement length");
 
     which = 100 * TYPEOF(x) + TYPEOF(y);
 
@@ -769,7 +769,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	}
 	break;
     default:
-	error("incompatible types in subset assignment\n");
+	error("incompatible types in subset assignment");
     }
     UNPROTECT(2);
     return x;
@@ -786,7 +786,7 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     PROTECT(dims = getAttrib(x, R_DimSymbol));
     if (dims == R_NilValue || (k = LENGTH(dims)) != length(s))
-	error("incorrect number of subscripts\n");
+	error("incorrect number of subscripts");
 
     subs = (int**)R_alloc(k, sizeof(int*));
     index = (int*)R_alloc(k, sizeof(int));
@@ -815,9 +815,9 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     }
 
     if (n > 0 && ny == 0)
-	errorcall(call, "nothing to replace with\n");
+	errorcall(call, "nothing to replace with");
     if (n > 0 && n % ny)
-	errorcall(call, "number of items to replace is not a multiple of replacement length\n");
+	errorcall(call, "number of items to replace is not a multiple of replacement length");
 
     offset[0] = 1;
     for (i = 1; i < k; i++)
@@ -956,7 +956,7 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     int i, ii, n, nx, ny, stretch=1;
 
     if (length(s) > 1)
-	error("invalid number of subscripts to list assign\n");
+	error("invalid number of subscripts to list assign");
 
     PROTECT(index = makeSubscript(x, CAR(s), &stretch));
     n = length(index);
@@ -982,9 +982,9 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     nx = length(x);
 
     if (n > 0 && ny == 0)
-	errorcall(call, "nothing to replace with\n");
+	errorcall(call, "nothing to replace with");
     if (n > 0 && n % ny)
-	errorcall(call, "no of items to replace is not a multiple of replacement length\n");
+	errorcall(call, "no of items to replace is not a multiple of replacement length");
 
     if (stretch) {
 	yi = allocList(stretch - nx);
@@ -1068,7 +1068,7 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
     default:
 	dims = getAttrib(x, R_DimSymbol);
 	if (dims == R_NilValue || LENGTH(dims) != length(subs))
-	    error("incorrect number of subscripts\n");
+	    error("incorrect number of subscripts");
 
 	PROTECT(ax = allocArray(STRSXP, dims));
 	for (px = x, i = 0; px != R_NilValue; px = CDR(px))
@@ -1095,72 +1095,11 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
     return x;
 }
 
-
-/* This is a special version of EvalArgs.  We don't want to */
-/* evaluate the last argument. It has already been evaluated */
-/* by applydefine. */
-
-static SEXP EvalSubassignArgs(SEXP el, SEXP rho)
-{
-    SEXP ans, h, tail;
-
-    PROTECT(ans = tail = CONS(R_NilValue, R_NilValue));
-
-    while (CDR(el) != R_NilValue) {
-
-	/* If we have a ... symbol, we look to see what it is bound to. */
-	/* If its binding is Null (i.e. zero length) we just ignore it */
-	/* and return the cdr with all its expressions evaluated; if it */
-	/* is bound to a ... list of promises, we force all the promises */
-	/* and then splice the list of resulting values into the return */
-	/* value.  Anything else bound to a ... symbol is an error */
-
-	if (CAR(el) == R_DotsSymbol) {
-	    h = findVar(CAR(el), rho);
-	    if (TYPEOF(h) == DOTSXP || h == R_NilValue) {
-		while (h != R_NilValue) {
-		    if (CAR(h) == R_MissingArg)
-			CDR(tail) = CONS(R_MissingArg, R_NilValue);
-		    else
-			CDR(tail) = CONS(eval(CAR(h), rho), R_NilValue);
-		    TAG(CDR(tail)) = TAG(h);
-		    tail = CDR(tail);
-		    h = CDR(h);
-		}
-	    }
-	    else if (h != R_MissingArg)
-		error("... used in an incorrect context\n");
-	}
-	else if (CAR(el) == R_MissingArg) {
-	    CDR(tail) = CONS(R_MissingArg, R_NilValue);
-	    tail = CDR(tail);
-	    TAG(tail) = TAG(el);
-	}
-	else {
-	    CDR(tail) = CONS(eval(CAR(el), rho), R_NilValue);
-	    tail = CDR(tail);
-	    TAG(tail) = TAG(el);
-	}
-	el = CDR(el);
-    }
-
-    /* Danger Will Robinson!!! This is obscure code!!! */
-    /* The calling code may have wrapped the last value */
-    /* in a promise.  If this is the case, we must unwrap */
-    /* it here or we will be assigning a promise into the result!!! */
-
-    if (TYPEOF(CAR(el)) == PROMSXP)
-	CDR(tail) = CONS(PREXPR(CAR(el)), R_NilValue);
-    else
-	CDR(tail) = CONS(CAR(el), R_NilValue);
-    UNPROTECT(1);
-    return CDR(ans);
-}
-
-
 static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 {
     SEXP p;
+    if (length(args) < 3)
+	error("SubAssignArgs: invalid number of arguments");
     *x = CAR(args);
     *s = p = CDR(args);
     while (CDDR(p) != R_NilValue)
@@ -1171,7 +1110,7 @@ static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 
 
 /* The [<- operator.  "x" is the vector that is to be assigned into, */
-/* y is the vector that is going to provide the new values and s is */
+/* y is the vector that is going to provide the new values and subs is */
 /* the vector of subscripts that are going to be replaced. */
 /* On entry (CAR(args)) and the last argument have been evaluated */
 /* and the remainder of args have not.  If this was called directly */
@@ -1179,7 +1118,7 @@ static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 
 SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP subs, x, y;
+    SEXP subs, x, y, ans;
     int nsubs, oldtype;
     RCNTXT cntxt;
 
@@ -1188,22 +1127,16 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* If the dispatch fails, we "drop through" to the default code below. */
 
     gcall = call;
-    CAR(args) = eval(CAR(args), rho);
-    if (isObject(CAR(args)) && CAR(call) != install("[<-.default")) {
-	CDR(args) = promiseArgs(CDR(args), rho);
-	begincontext(&cntxt,CTXT_RETURN, call, rho, rho, args);
-	if (usemethod("[<-", CAR(args), call, args, rho, &y)) {
-	    endcontext(&cntxt);
-	    return y;
-	}
-	endcontext(&cntxt);
-    }
-    PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
+    if(DispatchOrEval(call, op, args, rho, &ans, 0))
+      return(ans);
+
+    PROTECT(args = ans);
 
     /* If there are multiple references to an object we must */
     /* duplicate it so that only the local version is mutated. */
     /* This will duplicate more often than necessary, but saves */
     /* over always duplicating. */
+    /* FIXME: shouldn't x be protected? */
 
     if (NAMED(CAR(args)) == 2)
 	x = CAR(args) = duplicate(CAR(args));
@@ -1251,7 +1184,7 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	errorcall(call, "object is not subsetable\n");
+	errorcall(call, "object is not subsetable");
 	break;
     }
 
@@ -1307,22 +1240,17 @@ static SEXP DeleteOneVectorListItem(SEXP x, int which)
 
 SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP dims, index, names, newname, subs, x, y;
+    SEXP dims, index, names, newname, subs, x, y, ans;
     int i, ndims, nsubs, offset, stretch, which;
     RCNTXT cntxt;
 
     gcall = call;
-    CAR(args) = eval(CAR(args), rho);
-    if (isObject(CAR(args)) && CAR(call) != install("[[<-.default")) {
-	CDR(args) = promiseArgs(CDR(args), rho);
-	begincontext(&cntxt,CTXT_RETURN, call, rho, rho, args);
-	if (usemethod("[[<-", CAR(args), call, args, rho, &y)) {
-	    endcontext(&cntxt);
-	    return y;
-	}
-	endcontext(&cntxt);
-    }
-    PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
+
+    if(DispatchOrEval(call, op, args, rho, &ans, 0))
+      return(ans);
+
+    PROTECT(args = ans);
+
     SubAssignArgs(args, &x, &subs, &y);
 
     /* Handle NULL left-hand sides.  If the right-hand side */
@@ -1351,7 +1279,9 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
     stretch = 0;
     if (isVector(x)) {
 	if (!isVectorList(x) && LENGTH(y) > 1)
-	    error("more elements supplied than there are to replace\n");
+	    error("more elements supplied than there are to replace");
+	if (nsubs == 0 || CAR(subs) == R_MissingArg) 
+	    error("[[]] with missing subscript");
 	if (nsubs == 1) {
 	    offset = OneIndex(x, CAR(subs), length(x), 0, &newname);
 	    if (isVectorList(x) && isNull(y)) {
@@ -1360,13 +1290,13 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		return x;
 	    }
 	    if (offset < 0)
-		error("[[]] subscript out of bounds\n");
+		error("[[]] subscript out of bounds");
 	    if (offset >= LENGTH(x))
 		    stretch = offset + 1;
 	}
 	else {
 	    if (ndims != nsubs)
-		error("[[]] improper number of subscripts\n");
+		error("[[]] improper number of subscripts");
 	    PROTECT(index = allocVector(INTSXP, ndims));
 	    names = getAttrib(x, R_DimNamesSymbol);
 	    for (i = 0; i < ndims; i++) {
@@ -1377,7 +1307,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		subs = CDR(subs);
 		if (INTEGER(index)[i] < 0 ||
 		    INTEGER(index)[i] >= INTEGER(dims)[i])
-		    error("[[]] subscript out of bounds\n");
+		    error("[[]] subscript out of bounds");
 	    }
 	    offset = 0;
 	    for (i = (ndims - 1); i > 0; i--)
@@ -1494,7 +1424,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    break;
 
 	default:
-	    error("incompatible types in subset assignment\n");
+	    error("incompatible types in subset assignment");
 	}
 	/* If we stretched, we may have a new name. */
 	/* In this case we must create a names attribute */
@@ -1529,7 +1459,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	else {
 	    if (ndims != nsubs)
-		error("[[]] improper number of subscripts\n");
+		error("[[]] improper number of subscripts");
 	    PROTECT(index = allocVector(INTSXP, ndims));
 	    names = getAttrib(x, R_DimNamesSymbol);
 	    for (i = 0; i < ndims; i++) {
@@ -1538,7 +1468,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		subs = CDR(subs);
 		if (INTEGER(index)[i] < 0 ||
 		    INTEGER(index)[i] >= INTEGER(dims)[i])
-		    error("[[]] subscript out of bounds\n");
+		    error("[[]] subscript out of bounds");
 	    }
 	    offset = 0;
 	    for (i = (ndims - 1); i > 0; i--)
@@ -1549,7 +1479,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	UNPROTECT(1);
     }
-    else errorcall(gcall, "object is not subsetable\n");
+    else errorcall(gcall, "object is not subsetable");
 
     UNPROTECT(1);
     NAMED(x) = 0;
@@ -1565,7 +1495,7 @@ SEXP do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     /* Note the RHS has alreaty been evaluated at this point */
 
     PROTECT(x = eval(CAR(args), env));
-    val = CADDR(args);
+    val = eval( CADDR(args), env);
     if (NAMED(val)) val = duplicate(val);
     PROTECT(val);
 

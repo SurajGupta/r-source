@@ -53,14 +53,14 @@ static SEXP gcall;
 
 static void par_error(char *what)
 {
-    error("invalid value specified for graphics parameter \"%s\".\n",  what);
+    error("invalid value specified for graphics parameter \"%s\".",  what);
 }
 
 
 static void lengthCheck(char *what, SEXP v, int n)
 {
     if (length(v) != n)
-	errorcall(gcall, "parameter \"%s\" has the wrong length\n", what);
+	errorcall(gcall, "parameter \"%s\" has the wrong length", what);
 }
 
 
@@ -451,7 +451,7 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	int row, col, nrow, ncol, np;
 	value = coerceVector(value, INTSXP);
 	np = length(value);
-	if(np != 2 && np != 4) 
+	if(np != 2 && np != 4)
 	    errorcall(gcall, "parameter \"mfg\" has the wrong length");
 	posIntCheck(INTEGER(value)[0], what);
 	posIntCheck(INTEGER(value)[1], what);
@@ -459,9 +459,9 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	col = INTEGER(value)[1];
 	nrow = dd->dp.numrows;
 	ncol = dd->dp.numcols;
-	if(row <= 0 || row > nrow) 
+	if(row <= 0 || row > nrow)
 	    errorcall(gcall, "parameter \"i\" in \"mfg\" is out of range");
-	if(col <= 0 || col > ncol) 
+	if(col <= 0 || col > ncol)
 	    errorcall(gcall, "parameter \"j\" in \"mfg\" is out of range");
 	if(np == 4) {
 	    posIntCheck(INTEGER(value)[2], what);
@@ -1462,7 +1462,7 @@ static SEXP Query(char *what, DevDesc *dd)
     else if (streql(what, "yaxt")) {
 	char buf[2];
 	PROTECT(value = allocVector(STRSXP, 1));
-	buf[0] = dd->dp.xaxt;
+	buf[0] = dd->dp.yaxt;
 	buf[1] = '\0';
 	STRING(value)[0] = mkChar(buf);
 	UNPROTECT(1);
@@ -1490,7 +1490,7 @@ SEXP do_par(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (isString(defdev) && length(defdev) > 0) {
 	    PROTECT(defdev = lang1(install(CHAR(STRING(defdev)[0]))));
 	}
-	else errorcall(call, "No active or default device\n");
+	else errorcall(call, "No active or default device");
 	eval(defdev, R_GlobalEnv);
 	UNPROTECT(1);
     }
@@ -1532,7 +1532,7 @@ SEXP do_par(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(2);
     }
     else {
-	errorcall(call, "invalid parameter passed to \"par\"\n");
+	errorcall(call, "invalid parameter passed to \"par\"");
 	return R_NilValue/* -Wall */;
     }
     /* should really only do this if specifying new pars ?  yes! [MM] */
@@ -1572,7 +1572,7 @@ SEXP do_layout(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (isString(defdev) && length(defdev) > 0) {
 	    PROTECT(defdev = lang1(install(CHAR(STRING(defdev)[0]))));
 	}
-	else errorcall(call, "No active or default device\n");
+	else errorcall(call, "No active or default device");
 	eval(defdev, R_GlobalEnv);
 	UNPROTECT(1);
     }

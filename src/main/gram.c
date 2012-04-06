@@ -489,7 +489,7 @@ static const short yycheck[] = {     0,
     40,    41,    -1,    -1,    44,    45,    46,    47
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/local/share/bison.simple"
+#line 3 "/usr/share/misc/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -506,7 +506,7 @@ static const short yycheck[] = {     0,
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
@@ -640,7 +640,9 @@ int yydebug;			/*  nonzero means print parse trace	*/
 
 /* Prevent warning if -Wstrict-prototypes.  */
 #ifdef __GNUC__
+#ifndef YYPARSE_PARAM
 int yyparse (void);
+#endif
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
@@ -682,7 +684,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/local/share/bison.simple"
+#line 196 "/usr/share/misc/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -1280,7 +1282,7 @@ case 73:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/local/share/bison.simple"
+#line 498 "/usr/share/misc/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1952,7 +1954,7 @@ static SEXP TagArg(SEXP arg, SEXP tag)
     case SYMSXP:
 	return lang2(arg, tag);
     default:
-	error("incorrect tag type\n"); return R_NilValue/* -Wall */;
+	error("incorrect tag type"); return R_NilValue/* -Wall */;
     }
 }
 
@@ -2639,7 +2641,7 @@ static void CheckFormalArgs(SEXP formlist, SEXP new)
 {
     while (formlist != R_NilValue) {
 	if (TAG(formlist) == new) {
-	    error("Repeated formal argument.\n");
+	    error("Repeated formal argument");
 	}
 	formlist = CDR(formlist);
     }

@@ -353,7 +353,7 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
 	    break;
 
 	case Unknown:
-	    printf("Warning: unknown AFM entity encountered\n");
+	    printf("Warning: unknown AFM entity encountered");
 	    break;
 
 	case Empty:
@@ -707,7 +707,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 
     if(strlen(file) > 127) {
 	free(dd);
-	error("filename to long in postscript\n");
+	error("filename to long in postscript");
     }
 
     /* allocate new postscript device description */
@@ -732,7 +732,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     if(pd->bg == NA_INTEGER && pd->col == NA_INTEGER) {
 	free(dd);
 	free(pd);
-	error("invalid foreground/background color (postscript)\n");
+	error("invalid foreground/background color (postscript)");
     }
 
     /* Deal with paper and plot size and orientation */
@@ -775,7 +775,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     else {
 	free(dd);
 	free(pd);
-	error("invalid page type (postscript)\n");
+	error("invalid page type (postscript)");
     }
     pd->pagecentre = pagecentre;
     pd->paperwidth = 72 * pd->pagewidth;
@@ -885,7 +885,7 @@ static int MatchFamily(char *name)
     int i;
     for(i = 0; Family[i].family != NULL; i++)
 	if(!strcmp(name, Family[i].family)) return i;
-    warning("unknown postscript font family, using %s\n",
+    warning("unknown postscript font family, using %s",
 	    Family[3].family);
     return 3;
 }

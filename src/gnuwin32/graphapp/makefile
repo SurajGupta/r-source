@@ -14,16 +14,9 @@ OBJS=$(foreach i, $(SOURCES), $(basename $i).o)
 winalloc-CFLAGS=-DDANGER=1
 
 ../ga.a: $(OBJS)
-# uncomment to work around line-limit problems on djtools make
-#	$(AR) cr $@ *.o
-#	$(RANLIB) $@ 
-
-# to allow changing USE_NATIVE*
-buttons.o : internal.h
 
 clean:
 	$(RM) *.o *.a *~ \#*\#
-	$(MAKE) -C gifs clean
 
 #dependencies
 arith.o: graphapp.h
@@ -39,7 +32,6 @@ events.o: internal.h ga.h graphapp.h
 fonts.o: internal.h ga.h graphapp.h
 gbuttons.o: internal.h ga.h graphapp.h
 gdraw.o: internal.h ga.h graphapp.h
-gif.o: internal.h ga.h graphapp.h
 gimage.o: ga.h graphapp.h
 gmenus.o: internal.h ga.h graphapp.h
 graphappmain.o: internal.h ga.h graphapp.h

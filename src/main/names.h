@@ -64,6 +64,7 @@ SEXP do_int_unzip(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winver(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devga(SEXP, SEXP, SEXP, SEXP);
 SEXP do_saveDevga(SEXP, SEXP, SEXP, SEXP);
+SEXP do_shellexec(SEXP, SEXP, SEXP, SEXP);
 #endif
 #ifdef oldWin32
 SEXP do_winedit(SEXP, SEXP, SEXP, SEXP);
@@ -266,6 +267,7 @@ SEXP do_rank(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readln(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rect(SEXP, SEXP, SEXP, SEXP);
+SEXP do_regexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_relop(SEXP, SEXP, SEXP, SEXP);
 SEXP do_remove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rep(SEXP, SEXP, SEXP, SEXP);

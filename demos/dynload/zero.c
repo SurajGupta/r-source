@@ -1,3 +1,6 @@
+/* A version for R of the example in 
+        Becker, Chambers & Wilks (1998) pp. 205-211. */
+
 #include <S.h>
 
 static void *func;
@@ -26,9 +29,9 @@ static double zero_approx(double(*f)(), double x0, double x1, double tol)
     if(f0 == 0.0) return x0;
     if(f1 == 0.0) return x1;
     if(f0*f1 > 0.0)
-	error("x[0] and x[1] have the same sign\n");
+	error("x[0] and x[1] have the same sign");
     if(tol <= 0.0)
-	error("non-positive tol value\n");
+	error("non-positive tol value");
     for(;;) {
 	xc = 0.5*(x0+x1);
 	if(fabs(x0-x1) < tol) return xc;

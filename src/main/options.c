@@ -73,7 +73,7 @@ SEXP GetOption(SEXP tag, SEXP rho)
 {
     SEXP opt = findVar(Options(), R_NilValue);
     if (!isList(opt))
-	error("corrupted options list\n");
+	error("corrupted options list");
     opt = FindTaggedItem(opt, tag);
     return CAR(opt);
 }
@@ -109,7 +109,7 @@ static SEXP SetOption(SEXP tag, SEXP value)
     SEXP opt, old, t;
     t = opt = SYMVALUE(Options());
     if (!isList(opt))
-	error("corrupted options list\n");
+	error("corrupted options list");
     opt = FindTaggedItem(opt, tag);
 
     /* The option is being removed. */
@@ -156,7 +156,7 @@ int R_SetOptionWidth(int w)
 int R_SetOptionWarn(int w)
 {
     SEXP t, v;
- 
+
     t = install("warn");
     PROTECT(v = ScalarInteger(w));
     v = SetOption(t, v);
@@ -170,7 +170,7 @@ int R_SetOptionWarn(int w)
 void InitOptions(void)
 {
     SEXP t, val, v;
-    PROTECT(v = val = allocList(12));
+    PROTECT(v = val = allocList(11));
 
     TAG(v) = install("prompt");
     CAR(v) = mkString("> ");
@@ -215,30 +215,44 @@ void InitOptions(void)
     CAR(v) = allocVector(LGLSXP, 1);
     LOGICAL(CAR(v))[0] = !R_Slave;
     v = CDR(v);
-    
+
     TAG(v) = install("check.bounds");
     CAR(v) = allocVector(LGLSXP, 1);
     LOGICAL(CAR(v))[0] = 0;	/* no checking */
     v = CDR(v);
-    
+
     TAG(v) = install("keep.source");
     CAR(v) = allocVector(LGLSXP, 1);
     LOGICAL(CAR(v))[0] = 0;	/* no storage of function source */
                                 /* turned on after load of base  */
-    v = CDR(v);
-
-    TAG(v) = install("error.halt");
-    CAR(v) = allocVector(LGLSXP, 1);
-    LOGICAL(CAR(v))[0] = R_Error_Halt;
-    /* stop on error()/stop() if not interactive() */
-
     SYMVALUE(install(".Options")) = val;
     UNPROTECT(2);
 }
 
-/* FIXME:  SEXP EnsureString(SEXP s)
-   is globally defined in ./util.c, used in ./bind.c , but not used here (anymore!)
-*/
+#if 0
+/* FIXME : This functionality should be universal */
+/* See also in bind.c. */
+
+/* static */ SEXP EnsureString(SEXP s)
+{
+    switch(TYPEOF(s)) {
+    case SYMSXP:
+	s = PRINTNAME(s);
+	break;
+    case STRSXP:
+	s = STRING(s)[0];
+	break;
+    case CHARSXP:
+	break;
+    case NILSXP:
+	s = R_BlankString;
+	break;
+    default:
+	error("invalid tag in name extraction");
+    }
+    return s;
+}
+#endif
 
 SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -274,7 +288,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* The arguments to "options" can either be a sequence of name =
        value form, or can be a single list.  This means that we must
-       code so that both forms will work.  
+       code so that both forms will work.
        [ Vomits quietly onto shoes ... ]
        */
 
@@ -317,64 +331,68 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    if (streql(CHAR(namei), "width")) {
 		k = asInteger(argi);
 		if (k < MIN_WIDTH || k > MAX_WIDTH)
-		    errorcall(call, "invalid width parameter\n");
+		    errorcall(call, "invalid width parameter");
 		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "digits")) {
 		k = asInteger(argi);
 		if (k < MIN_DIGITS || k > MAX_DIGITS)
-		    errorcall(call, "invalid digits parameter\n");
+		    errorcall(call, "invalid digits parameter");
 		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "expressions")) {
 		k = asInteger(argi);
 		if (k < 25 || k > MAX_EXPRESSIONS)
-		    errorcall(call, "expressions parameter invalid\n");
+		    errorcall(call, "expressions parameter invalid");
 		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "editor")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "invalid editor parameter\n");
+		    errorcall(call, "invalid editor parameter");
 		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "continue")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "invalid continue parameter\n");
+		    errorcall(call, "invalid continue parameter");
 		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "prompt")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "prompt parameter invalid\n");
+		    errorcall(call, "prompt parameter invalid");
 		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "contrasts")) {
 		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 2)
-		    errorcall(call, "contrasts parameter invalid\n");
+		    errorcall(call, "contrasts parameter invalid");
 		VECTOR(value)[i] = SetOption(tag, argi);
 	    }
 	    else if (streql(CHAR(namei), "warn")) {
 		if (!isNumeric(argi) || length(argi) != 1)
-		    errorcall(call, "warn parameter invalid\n");
+		    errorcall(call, "warn parameter invalid");
                 VECTOR(value)[i] = SetOption(tag, argi);
+	    }
+	    else if ( streql(CHAR(namei), "warning.expression") )  {
+		if( !isLanguage(argi) &&  ! isExpression(argi) )
+		    errorcall(call, "warning.expression parameter invalid");
+		VECTOR(value)[i] = SetOption(tag, argi);
+	    }
+	    else if ( streql(CHAR(namei), "error") ) {
+		if( !isLanguage(argi) &&  !isExpression(argi) )
+		    errorcall(call, "error parameter invalid");
+		VECTOR(value)[i] = SetOption(tag, argi);
 	    }
 	    else if (streql(CHAR(namei), "echo")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
-		    errorcall(call, "echo parameter invalid\n");
+		    errorcall(call, "echo parameter invalid");
 		k = asInteger(argi);
 		/* Should be quicker than checking options(echo)
 		   every time R prompts for input:
 		   */
 		R_Slave = !k;
 		VECTOR(value)[i] = SetOption(tag, ScalarLogical(k));
-	    }
-	    else if (streql(CHAR(namei), "error.halt")) {
-		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
-		    errorcall(call, "error.halt parameter invalid\n");
-		R_Error_Halt = asLogical(argi);
-		VECTOR(value)[i] = SetOption(tag, ScalarLogical(R_Error_Halt));
 	    }
 	    else {
 		VECTOR(value)[i] = SetOption(tag, duplicate(argi));
@@ -383,7 +401,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	else {
 	    if (!isString(argi) || LENGTH(argi) <= 0)
-		errorcall(call, "invalid argument\n");
+		errorcall(call, "invalid argument");
 	    VECTOR(value)[i] = duplicate(CAR(FindTaggedItem(options,
 				     install(CHAR(STRING(argi)[0])))));
 	    STRING(names)[i] = STRING(argi)[0];

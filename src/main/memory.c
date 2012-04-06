@@ -57,7 +57,6 @@
 
 static int gc_reporting = 0;
 static int gc_count = 0;
-int gc_inhibit_torture = 1; /* gets set to zero after initialisations */
 
 #define GC_TORTURE
 /*
@@ -113,11 +112,14 @@ SEXP do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
     gc();
     gc_reporting = ogc;
     /*- now return the [free , total ] for cells and heap */
-    PROTECT(value = allocVector(INTSXP, 4));
+    PROTECT(value = allocVector(INTSXP, 6));
     INTEGER(value)[0] = R_Collected;
     INTEGER(value)[1] = (int)(R_VSize - (R_VTop - R_VHeap));
     INTEGER(value)[2] = R_NSize;
     INTEGER(value)[3] = R_VSize;
+    /* next two are in 0.1Mb, rounded up */
+    INTEGER(value)[4] = 10.0 * R_NSize/1048576.0 * sizeof(SEXPREC) + 0.999;
+    INTEGER(value)[5] = 10.0 * R_VSize/131072.0 + 0.999;
     UNPROTECT(1);
     return value;
 }
@@ -125,7 +127,7 @@ SEXP do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 void mem_err_heap(long size)
 {
-    error("heap memory (%ld Kb) exhausted [needed %ld Kb more]\n       See \"help(Memory)\" on how to increase the heap size.\n",
+    error("heap memory (%ld Kb) exhausted [needed %ld Kb more]\n       See \"help(Memory)\" on how to increase the heap size.",
 	  (R_VSize * sizeof(VECREC))/1024,
   (size * sizeof(VECREC))/1024);
 }
@@ -133,7 +135,7 @@ void mem_err_heap(long size)
 
 void mem_err_cons()
 {
-    error("cons memory (%ld cells) exhausted\n       See \"help(Memory)\" on how to increase the number of cons cells.\n", R_NSize);
+    errorcall(R_NilValue, "cons memory (%ld cells) exhausted\n       See \"help(Memory)\" on how to increase the number of cons cells.", R_NSize);
 }
 
 #ifdef OLD_Macintosh
@@ -308,7 +310,7 @@ SEXP allocVector(SEXPTYPE type, int length)
     long size=0;
     if (length < 0 )
 	errorcall(R_GlobalContext->call,
-		  "negative length vectors are not allowed\n");
+		  "negative length vectors are not allowed");
     /* number of vector cells to allocate */
     switch (type) {
     case NILSXP:
@@ -351,7 +353,7 @@ SEXP allocVector(SEXPTYPE type, int length)
     case LISTSXP:
 	return allocList(length);
     default:
-	error("invalid type/length (%d/%d) in vector allocation\n", type, length);
+	error("invalid type/length (%d/%d) in vector allocation", type, length);
     }
     /* we need to do the gc here so allocSExp doesn't! */
     if (FORCE_GC || R_FreeSEXP == NULL || R_VMax - R_VTop < size) {
@@ -404,7 +406,8 @@ void gc(void)
 #ifdef HAVE_SIGLONGJMP
     sigset_t mask, omask;
 #endif
-    int vcells, vfrac;
+    int vcells;
+    double vfrac;
 
     gc_count++;
     if (gc_reporting)
@@ -425,8 +428,8 @@ void gc(void)
 	REprintf("\n%ld cons cells free (%ld%%)\n",
 		 R_Collected, (100 * R_Collected / R_NSize));
 	vcells = R_VSize - (R_VTop - R_VHeap);
-	vfrac = 100 * vcells / R_VSize;
-	REprintf("%ld Kbytes of heap free (%ld%%)\n",
+	vfrac = (100.0 * vcells) / R_VSize;
+	REprintf("%ld Kbytes of heap free (%.0f%%)\n",
 		 vcells * sizeof(VECREC) / 1024, vfrac);
     }
 }
@@ -641,7 +644,7 @@ void scanPhase(void)
 SEXP protect(SEXP s)
 {
     if (R_PPStackTop >= R_PPStackSize)
-	error("protect(): stack overflow\n");
+	error("protect(): stack overflow");
     R_PPStack[R_PPStackTop] = s;
     R_PPStackTop++;
     return s;
@@ -655,7 +658,7 @@ void unprotect(int l)
     if (R_PPStackTop > 0)
 	R_PPStackTop = R_PPStackTop - l;
     else
-	error("unprotect(): stack imbalance\n");
+	error("unprotect(): stack imbalance");
 }
 
 /* "unprotect_ptr" remove pointer from somewhere in R_PPStack */
@@ -668,7 +671,7 @@ void unprotect_ptr(SEXP s)
     /* (should be among the top few items) */
     do {
     	if (i == 0)
-	    error("unprotect_ptr: pointer not found\n");
+	    error("unprotect_ptr: pointer not found");
     } while ( R_PPStack[--i] != s );
 
     /* OK, got it, and  i  is indexing its location */
@@ -720,11 +723,11 @@ char *C_alloc(long nelem, int eltsize)
 	if(C_Pointers[i] == NULL) {
 	    C_Pointers[i] = malloc(nelem * eltsize);
 	    if(C_Pointers[i] == NULL)
-		error("C_alloc(): unable to malloc memory\n");
+		error("C_alloc(): unable to malloc memory");
 	    else return C_Pointers[i];
 	}
     }
-    error("C_alloc(): all pointers in use (sorry)\n");
+    error("C_alloc(): all pointers in use (sorry)");
     /*-Wall:*/return C_Pointers[0];
 }
 
@@ -738,7 +741,7 @@ void C_free(char *p)
 	    return;
 	}
     }
-    error("C_free(): attempt to free pointer not allocated by C_alloc()\n");
+    error("C_free(): attempt to free pointer not allocated by C_alloc()");
 }
 
 /* S-like wrappers for calloc, realloc and free that check for error
@@ -752,20 +755,22 @@ void *R_chk_calloc(size_t nelem, size_t elsize)
 	return(NULL);
 #endif
     p = calloc(nelem, elsize);
-    if(!p) error("Calloc could not allocate memory\n");
+    if(!p) error("Calloc could not allocate memory");
     return(p);
 }
 void *R_chk_realloc(void *ptr, size_t size)
 {
     void *p;
     p = realloc(ptr, size);
-    if(!p) error("Realloc could not re-allocate memory\n");
+    if(!p) error("Realloc could not re-allocate memory");
     return(p);
 }
 void R_chk_free(void *ptr)
 {
-    if(!ptr) warning("attempt to free NULL pointer by Free");
-    free(ptr);
+    /* S-PLUS warns here, but there seems no reason to do so */
+    /* if(!ptr) warning("attempt to free NULL pointer by Free"); */
+    if(ptr) free(ptr); /* ANSI C says free has no effect on NULL, but
+			  better to be safe here */
 }
 
 /* This code keeps a list of objects which are not assigned to variables

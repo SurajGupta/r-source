@@ -69,20 +69,20 @@ $infiles = 0;
 $language = "0x409 English (United States)";
 while(<HHP>) {
     if(/Compiled file=(.*)$/) {
-	chomp $1;
 	$outhtm = $1;
+	chomp $outhtm;
     }
     if(/Contents file=(.*)$/) {
-	chomp $1;
 	$contentshtm = $1;
+	chomp $contentshtm;
     }
     if(/Default topic=(.*)$/) {
-	chomp $1;
 	$defaulthtm = $1;
+	chomp $defaulthtm;
     }
     if(/Language=(.*)$/) {
-	chomp $1;
 	$language = $1;
+	chomp $language;
     }
     if(/\[/) {
 	$infiles = 0;
@@ -178,7 +178,7 @@ print RTF "{\\f2\\froman Symbol;}\n";
 print RTF "}\n";
 print RTF "{\\colortbl\n";
 print RTF "\\red0\\green0\\blue0;\n";
-print RTF "\\red0\\green0\\blue192;\n";
+print RTF "\\red0\\green0\\blue220;\n";
 print RTF "\\red0\\green255\\blue255;\n";
 print RTF "\\red0\\green255\\blue0;\n";
 print RTF "\\red255\\green0\\blue255;\n";
@@ -191,8 +191,8 @@ print RTF "\\red0\\green128\\blue0;\n";
 print RTF "\\red128\\green0\\blue128;\n";
 print RTF "\\red128\\green0\\blue0;\n";
 print RTF "\\red128\\green128\\blue0;\n";
-print RTF "\\red128\\green128\\blue128;\n";
-print RTF "\\red192\\green192\\blue192;\n";
+print RTF "\\red102\\green102\\blue102;\n";
+print RTF "\\red150\\green150\\blue150;\n";
 print RTF "}\n";
 
 foreach $file (@filelist) {

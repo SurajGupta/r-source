@@ -6,14 +6,16 @@ sub(pattern, replacement, x,
         ignore.case=FALSE, extended=TRUE)
 gsub(pattern, replacement, x,
         ignore.case=FALSE, extended=TRUE)
+regexpr(pattern, text,  extended=TRUE)
 }
 \alias{grep}
 \alias{sub}
 \alias{gsub}
+\alias{regexpr}
 \arguments{
 \item{pattern}{character string containing a regular expression
   to be matched in the vector of character string \code{vec}.}
-\item{x}{a vector of character strings where matches are sought.}
+\item{x, text}{a vector of character strings where matches are sought.}
 \item{ignore.case}{if \code{FALSE}, the pattern matching is
   \emph{case sensitive} and if \code{TRUE}, case is ignored during matching.}
 \item{extended}{if \code{TRUE}, extended regular expression matching
@@ -26,33 +28,56 @@ gsub(pattern, replacement, x,
   \code{sub} and \code{gsub}.}
 }
 \description{
-\code{grep} searches for matches to \code{pattern} (its first
-argument) within the vector \code{x} of character strings (second argument).
+  \code{grep} searches for matches to \code{pattern} (its first
+  argument) within the vector \code{x} of character strings (second
+  argument). \code{regexpr} does too, but returns more detail in a
+  different format.
 
-\code{sub} and \code{gsub} perform replacement of matches
-determined by regular expression matching.
-The two functions differ only in that \code{sub} replaces only
-the first occurence of a \code{pattern} whereas \code{gsub} replaces
-all occurences.
+  \code{sub} and \code{gsub} perform replacement of matches
+  determined by regular expression matching.
+}
+\details{
+  The two \code{*sub} functions differ only in that \code{sub} replaces only
+  the first occurence of a \code{pattern} whereas \code{gsub} replaces
+  all occurences.
 
-The regular expressions used are those specified by POSIX 1003.2,
-either extended or basic, depending on the value of the
-\code{extended} argument.
+  The regular expressions used are those specified by POSIX 1003.2,
+  either extended or basic, depending on the value of the
+  \code{extended} argument.
+}
+\value{
+    For \code{gsub} a vector giving either the indices of the elements
+    of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
+    the matched elements.
+
+    For \code{sub} and \code{gsub} a character vector of the same
+    length as the original.
+
+    For \code{regexpr} an integer vector of the same length as
+    \code{text} giving the starting position of the first match, or -1
+    if there is none, with attribute \code{"match.length"} giving the
+    length of the matched text (or -1 for no match).
 }
 \note{
-    It is possible to compile \R without support for regular
-    expressions, and then these functions are not operational.
-    
-    On the Macintosh port this function is based on the \emph{regex}
-    regular expression library written by Henry Spencer of the
-    University of Toronto.
+  It is possible to compile \R without support for regular
+  expressions, and then these functions are not operational.
+
+  On the Macintosh port this function is based on the \emph{regex}
+  regular expression library written by Henry Spencer of the
+  University of Toronto.
 }
 \seealso{
-    \code{\link{charmatch}}, \code{\link{pmatch}}, \code{\link{match}}.
-    \code{\link{apropos}} uses regexps and has nice examples.
+  \code{\link{charmatch}}, \code{\link{pmatch}}, \code{\link{match}}.
+  \code{\link{apropos}} uses regexps and has nice examples.
 }
 \examples{
 grep("[a-z]", letters)
+
+txt <- c("arm","foot","lefroo", "bafoobar")
+if(any(i <- grep("foo",txt)))
+   cat("`foo' appears at least once in\n\t",txt,"\n")
+i # 2 and 4
+txt[i]
 
 ## Double all 'a' or 'b's;  "\\" must be escaped, i.e. `doubled'
 %% and escaped even once more in this *.Rd file!
@@ -73,6 +98,8 @@ txt[ot != gsub("[b-e]",".", txt)]#- gsub does "global" substitution
 
 txt[gsub("g","#", txt) !=
     gsub("g","#", txt, ignore.case = TRUE)] # the "G" words
+
+regexpr("en", txt)
 }
 \keyword{character}
 \keyword{utilities}

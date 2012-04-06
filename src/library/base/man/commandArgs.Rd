@@ -3,13 +3,10 @@
 \usage{
 commandArgs()
 }
+%- maybe also `usage' for other objects documented here.
 \description{
   provides access to a copy of the command line
   arguments supplied when this R session was invoked.
-  This can be useful for passing the arguments on to other
-  embedded applications and libraries such as X11, CORBA, 
-  etc. Clones of the application can be constructed for
-  use in clustered distributed computing.
 }
 \details{
   These arguments are captured before the standard
@@ -26,17 +23,16 @@ commandArgs()
   is platform dependent. It may be the fully qualified name, or simply
   the last component (or basename) of the application.
 }
-\
+
 %\author{DTL}
+#ifdef unix
 \seealso{\code{\link{BATCH}}}
+#endif
 
 \examples{
-commandArgs()
-\dontrun{
-  # Spawn a copy of this application as it was invoked,
-  # running it in the background.
- system(paste(commandArgs(),"&",collapse=" "))
-}
+  commandArgs()
+# Spawn a copy of this  application as it was invoked.
+# system(paste(commandArgs(),collapse=" "))
 }
 \keyword{environment}
 \keyword{sysdata}

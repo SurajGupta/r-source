@@ -3,8 +3,8 @@ include MkRules
 HELP=YES
 WINHELP=BOTH # NO, CHM, BOTH
 
-PACKAGES=base eda lqs modreg mva stepfun ts
-RPREFIX=rw0651
+PACKAGES=base eda lqs modreg mva nls splines stepfun ts
+RPREFIX=rw0900
 
 ifdef DEBUG
  OPTFLAGS=-g -O2
@@ -35,7 +35,7 @@ FFLAGS=$(OPTFLAGS)
 rbuild: fixfiles makeMakedeps rlibs ../../bin/R.dll libR.a CHTML \
 	../include/globalvar.h front-ends COPYRIGHTS
 
-rpackage: $(PKGS)
+rpackage: fixed/fixdesc $(PKGS)
 
 rinstaller:
 	$(MAKE) -C installer PREFIX=$(RPREFIX)
@@ -44,9 +44,9 @@ rdemo:  libR.a
 	make -C ../../demos/dynload -f ../../src/gnuwin32/MkDyndemo
 
 rlibs: 
-	$(MAKE) -C ../appl OPTFLAGS="$(OPTFLAGS)"
-	$(MAKE) -C ../main OPTFLAGS="$(OPTFLAGS)"
-	$(MAKE) -C ../nmath OPTFLAGS="$(OPTFLAGS)"
+	$(MAKE) -C ../appl OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
+	$(MAKE) -C ../main OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
+	$(MAKE) -C ../nmath OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
 	$(MAKE) -C ./regex
 	$(MAKE) -C ./graphapp
 	$(MAKE) -C ./getline
@@ -61,6 +61,9 @@ fixfiles:
 	$(MAKE) -C ./fixed
 	$(CP) -pr unzip ../..
 	$(RM) ../../unzip/*.h
+
+fixed/fixdesc:
+	sh fixed/GETDESC $(PACKAGES)
 
 R.dll: R.a $(MAINLIBS) $(EXTRALIBS)
 
@@ -144,7 +147,8 @@ ziponly-%:
 bootstrap-DLLNM=boott
 
 clean: cleanwin $(PKGCLEAN)
-	$(RM) -f ../*/*.o $(WINOBJS) *.a ../*/*.d ../*/Makedeps
+	$(RM) -f ../*/*.o $(WINOBJS) *.a ../*/*.d ../*/Makedeps fixed/fixdesc
+	-$(MAKE) -C ../../doc/manual -f Makefile.win distclean
 
 distclean veryclean: clean
 	$(RM) -rf R.exp ../../bin ../../library
@@ -170,6 +174,7 @@ cleanwin:
 	$(MAKE) -C front-ends clean
 	$(MAKE) -C xdr clean
 	$(MAKE) -C math clean
+	$(MAKE) -C bitmap clean
 	-$(MAKE) -C installer clean
 
 
@@ -179,7 +184,8 @@ bindist:
 	$(CP) -pr ../../bin ../../afm ../../demos  ../../unzip $(RPREFIX)
 	$(MKDIR) $(RPREFIX)/library
 	$(CP) -pr $(LIBFILES) $(RPREFIX)/library
-	$(RM) $(RPREFIX)/demos/dynload/*.o
+	$(RM) $(RPREFIX)/demos/dynload/*.o $(RPREFIX)/demos/dynload/*.def
+	$(RM) $(RPREFIX)/*/Makefile.in
 	$(MKDIR) $(RPREFIX)/etc
 	$(CP) -p ../../etc/Rprofile $(RPREFIX)/etc/Rprofile
 	$(CP) -p ../../etc/Rconsole $(RPREFIX)/etc/Rconsole
@@ -191,25 +197,26 @@ bindist:
 	$(CP) -p ../../COPYING COPYRIGHTS ../../FAQ ../../NEWS \
 		../../Y2K $(RPREFIX)
 	$(CP) -p readme $(RPREFIX)/README
-	$(CP) -p rw-faq $(RPREFIX)/rw-faq
-	$(CP) -p Announce $(RPREFIX)/Announce
+	$(CP) -p rw-faq $(RPREFIX)/rw-FAQ
+#	$(CP) -p Announce $(RPREFIX)/Announce
 	$(CP) -p CHANGES $(RPREFIX)/CHANGES
-	zip -l docs.zip $(RPREFIX)/*
-	unzip -o docs.zip
+	zip docs.zip $(RPREFIX)/*
+	unzip -a -o docs.zip
 	$(RM) docs.zip
 	$(RM) -rf $(RPREFIX)b.zip $(RPREFIX)h.zip $(RPREFIX)w.zip $(RPREFIX)l.zip
 	$(RM) anindex.zip
 	zip -mrX anindex.zip $(RPREFIX)/library/*/help/AnIndex $(RPREFIX)/library/*/help/00Titles
-	zip -mrX $(RPREFIX)h.zip $(RPREFIX)/library/*/help \
-		$(RPREFIX)/library/*/R-ex
+	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help 
 	unzip anindex.zip
 	$(RM) anindex.zip
-	zip -rmX $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
-	zip -rmX $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml  $(RPREFIX)/bin/Rchtml.dll
+	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
+	zip -rm9X $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml  $(RPREFIX)/bin/Rchtml.dll
 	$(RM)  $(RPREFIX)/library/*/winhlp/*.GID
-	zip -rmX $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
-	zip -rmX $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
-	zip -rX $(RPREFIX)b.zip $(RPREFIX)
+	zip -rm9X $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
+	zip -rm9X $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
+	$(RM) -r $(RPREFIX)/doc
+	zip -rm9X $(RPREFIX)b2.zip $(RPREFIX)/library
+	zip -r9X $(RPREFIX)b1.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
 
 
@@ -221,6 +228,9 @@ srcdist:
 	$(CP)  -pr ./* ../src/gnuwin32
 	$(RM) -r ../src/gnuwin32/old ../src/gnuwin32/*.zip
 	$(RM) -r ../src/gnuwin32/installer/unzip
+	$(RM) -r ../src/gnuwin32/bitmap/jpeg-6b
+	$(RM) -r ../src/gnuwin32/bitmap/libpng
+	$(RM) -r ../src/gnuwin32/bitmap/zlib 
 	$(RM) -f ../src/gnuwin32/unzip/*.dll
 	$(MAKE) -C ../src/gnuwin32 cleanwin
 	mv ../src .
@@ -234,7 +244,7 @@ SRC_HEADERS = Applic.h Arith.h Blas.h Complex.h Error.h Errormsg.h \
 	Fortran.h Linpack.h Mathlib.h Memory.h PrtUtil.h Random.h \
 	Rdefines.h Rinternals.h S.h S_compat.h Utils.h f2c.h
 OBJ_HEADERS = Rconfig.h Rversion.h
-GW32_HEADERS = globalvar.h
+GW32_HEADERS = globalvar.h psignal.h
 
 packagedist:
 	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
@@ -243,6 +253,7 @@ packagedist:
 	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll $(RPREFIX)/src/gnuwin32
 	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
 	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
+	$(RM) $(RPREFIX)/src/gnuwin32/help/*.c
 	$(MAKE) -C $(RPREFIX)/src/gnuwin32/help clean
 	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS) $(GW32_HEADERS),../include/$i) $(RPREFIX)/src/include
 	$(CP) readme.packages $(RPREFIX)
@@ -269,6 +280,18 @@ pkgcheck-base:
 	-@mkdir -p ../library/base/check
 	-@$(MAKE) -C ../library/base/check PKG=base -f ../../../gnuwin32/check/PkgCheck
 	@(cd ../../library/base/R-ex; rm -f *.R)
+
+docs manuals:
+	@$(MAKE) -C ../../doc/manual -f Makefile.win clean
+	@$(MAKE) -C ../../doc/manual -f Makefile.win
+	$(RM) ../../library/base/latex/*.tex
+
+docsdist:
+	$(RM) -rf $(RPREFIX)
+	$(MKDIR) $(RPREFIX) $(RPREFIX)/doc $(RPREFIX)/doc/manuals 
+	$(CP) -pr ../../doc/manual/*.pdf $(RPREFIX)/doc/manuals
+	zip -rm9X $(RPREFIX)d.zip $(RPREFIX)
+
 
 # Dependencies
 CSOURCES=$(wildcard *.c)

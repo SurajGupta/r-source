@@ -59,13 +59,40 @@ static int ConsoleGetchar()
     return *ConsoleBufp++;
 }
 
-
 static int save = 0;
 static int sepchar = 0;
 static FILE *fp;
 static int ttyflag;
 static int quiet;
 static SEXP NAstrings;
+
+static complex strtoc(const char *nptr, char **endptr) {
+    complex z;
+    double x, y;
+    char *s, *endp;
+
+    x = strtod(nptr, &endp);
+    if (isBlankString(endp)) {
+	z.r = x; z.i = 0;
+    }
+    else if (*endp == 'i')  {
+	z.r = 0; z.i = x;
+	endp++;
+    }
+    else {
+	s = endp;
+	y = strtod(s, &endp);
+	if (*endp == 'i') {
+	    z.r = x; z.i = y;
+	    endp++;
+	}
+	else {
+	    z.r = 0; z.i = 0;
+	}
+    }
+    *endptr = endp;
+    return(z);
+}
 
 static int scanchar(void)
 {
@@ -180,7 +207,7 @@ static void expected(char *what, char *got)
     }
     else
 	fclose(fp);
-    error("\"scan\" expected %s, got \"%s\"\n", what, got);
+    error("\"scan\" expected %s, got \"%s\"", what, got);
 }
 
 static void extractItem(char *buffer, SEXP ans, int i)
@@ -207,20 +234,19 @@ static void extractItem(char *buffer, SEXP ans, int i)
 	    REAL(ans)[i] = NA_REAL;
 	else {
 	    REAL(ans)[i] = strtod(buffer, &endp);
-	    if (*endp != '\0')
+	    if (!isBlankString(endp))
 		expected("a real", buffer);
 	}
 	break;
-#ifdef scan_complex
     case CPLXSXP:
-	/* FIXME: Extract "complex" number from buffer ... */
-	/* =====
-	   Then, eliminate all the  #ifdef scan_complex ..
-
-	   Once you have done it, you have fixed R-bug PR#125 (22 Feb 1999)
-	*/
+	if (isNAstring(buffer))
+	    COMPLEX(ans)[i].r = COMPLEX(ans)[i].i = NA_REAL;
+	else {
+	    COMPLEX(ans)[i] = strtoc(buffer, &endp);
+	    if (!isBlankString(endp))
+		expected("a complex", buffer);
+	}
 	break;
-#endif
     case STRSXP:
 	if (isNAstring(buffer))
 	    STRING(ans)[i]= NA_STRING;
@@ -287,10 +313,9 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
 		break;
 	    }
 	}
-	if (flush) {
-	    while ((c=scanchar()) != '\n')
-		;
-	    unscanchar(c);
+	if (flush && (bch != '\n') && (bch != R_EOF)) {
+	    while ((c = scanchar()) != '\n' && (c != R_EOF));
+	    bch = c;
 	}
     }
     if (!quiet) REprintf("Read %d items\n", n);
@@ -316,12 +341,10 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
 	for (i = 0; i < n; i++)
 	    REAL(bns)[i] = REAL(ans)[i];
 	break;
-#ifdef scan_complex
     case CPLXSXP:
 	for (i = 0; i < n; i++)
 	    COMPLEX(bns)[i] = COMPLEX(ans)[i];
 	break;
-#endif
     case STRSXP:
 	for (i = 0; i < n; i++)
 	    STRING(bns)[i] = STRING(ans)[i];
@@ -349,7 +372,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     for (i = 0; i < nc; i++) {
 	if (!isVector(VECTOR(what)[i])) {
 	    if (!ttyflag) fclose(fp);
-	    error("\"scan\" invalid \"what=\" specified\n");
+	    error("\"scan\": invalid \"what=\" specified");
 	}
 	VECTOR(ans)[i] = allocVector(TYPEOF(VECTOR(what)[i]), blksize);
     }
@@ -409,10 +432,9 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 		n++;
 		ii = 0;
 		colsread = 0;
-		if (flush) {
-		    while (c != '\n' && c != R_EOF)
-			c=scanchar();
-		    unscanchar(c);
+		if (flush && (bch != '\n') && (bch != R_EOF)) {
+		    while ((c = scanchar()) != '\n' && c != R_EOF);
+		    bch = c;
 		}
 		if (length(stripwhite) == length(what))
 		    strip = LOGICAL(stripwhite)[0];
@@ -448,12 +470,10 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	    for (j = 0; j < n; j++)
 		REAL(new)[j] = REAL(old)[j];
 	    break;
-#ifdef scan_complex
 	case CPLXSXP:
 	    for (j = 0; j < n; j++)
 		COMPLEX(new)[j] = COMPLEX(old)[j];
 	    break;
-#endif
 	case STRSXP:
 	    for (j = 0; j < n; j++)
 		STRING(new)[j] = STRING(old)[j];
@@ -465,6 +485,23 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     return ans;
 }
 
+#define scan_sep_check				\
+    if (isString(sep) || isNull(sep)) {		\
+	if (length(sep) == 0)			\
+	    sepchar = 0;			\
+	else					\
+	    sepchar = CHAR(STRING(sep)[0])[0];	\
+    }						\
+    else					\
+	errorcall(call, "invalid sep value");
+
+#define scan_file						\
+	ttyflag = 0;						\
+	filename = R_ExpandFileName(filename);			\
+	if ((fp = R_fopen(filename, "r")) == NULL)		\
+	    errorcall(call, "can't open file %s", filename);	\
+	for (i = 0; i < nskip; i++)				\
+	    while ((c = scanchar()) != '\n' && c != R_EOF);
 
 SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -485,45 +522,31 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     stripwhite = CAR(args);	   args = CDR(args);
     quiet = asLogical(CAR(args));
 
-    if (quiet == NA_LOGICAL)
-	quiet = 0;
-    if (nskip < 0 || nskip == NA_INTEGER)
-	nskip = 0;
-    if (nlines < 0 || nlines == NA_INTEGER)
-	nlines = 0;
-    if (nmax < 0 || nmax == NA_INTEGER)
-	nmax = 0;
+    if (quiet == NA_LOGICAL)			quiet = 0;
+    if (nskip < 0 || nskip == NA_INTEGER)	nskip = 0;
+    if (nlines < 0 || nlines == NA_INTEGER)	nlines = 0;
+    if (nmax < 0 || nmax == NA_INTEGER)		nmax = 0;
 
-    if (isString(sep) || isNull(sep)) {
-	if (LENGTH(sep) == 0)
-	    sepchar = 0;
-	else
-	    sepchar = CHAR(STRING(sep)[0])[0];
-    }
-    else
-	errorcall(call, "invalid sep value\n");
     if (TYPEOF(stripwhite) != LGLSXP)
-	errorcall(call, "invalid strip.white value\n");
+	errorcall(call, "invalid strip.white value");
     if (length(stripwhite) != 1 && length(stripwhite) != length(what))
-	errorcall(call, "invalid strip.white length\n");
+	errorcall(call, "invalid strip.white length");
     if (TYPEOF(NAstrings) != STRSXP)
-	errorcall(call, "invalid na.strings value\n");
+	errorcall(call, "invalid na.strings value");
+
+    scan_sep_check
+
     filename = NULL;
-    if (!isNull(file) && isString(file)) {
-	filename = CHAR(*STRING(file));
-	if (strlen(filename) == 0)
+    if (isValidString(file)) {
+	filename = CHAR(STRING(file)[0]);
+	if (strlen(filename) == 0)/* file == "" */
 	    filename = NULL;
     }
     else
-	errorcall(call, "\"scan\" file name required\n");
+	errorcall(call, "invalid file name");
 
     if (filename) {
-	ttyflag = 0;
-	filename = R_ExpandFileName(filename);
-	if ((fp = R_fopen(filename, "r")) == NULL)
-	    error("\"scan\" can't open file\n");
-	for (i = 0; i < nskip; i++)
-	    while ((c = scanchar()) != '\n' && c != R_EOF);
+	scan_file
     }
     else ttyflag = 1;
 
@@ -534,9 +557,7 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     case LGLSXP:
     case INTSXP:
     case REALSXP:
-#ifdef scan_complex
     case CPLXSXP:
-#endif
     case STRSXP:
 	ans = scanVector(TYPEOF(what), nmax, nlines, flush, stripwhite);
 	break;
@@ -544,16 +565,10 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     case VECSXP:
 	ans = scanFrame(what, nmax, nlines, flush, stripwhite);
 	break;
-#ifndef scan_complex
-    case CPLXSXP:
-	if (!ttyflag)
-	    fclose(fp);
-	error("scan(): what=\"complex\" is not yet supported\n");
-#endif
     default:
 	if (!ttyflag)
 	    fclose(fp);
-	error("\"scan\" invalid \"what=\" specified\n");
+	errorcall(call, "invalid \"what=\" specified");
     }
     if (!ttyflag)
 	fclose(fp);
@@ -569,36 +584,22 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
 
-    file = CAR(args); args = CDR(args);
-    sep = CAR(args); args = CDR(args);
+    file = CAR(args);	args = CDR(args);
+    sep = CAR(args);	args = CDR(args);
     nskip = asInteger(CAR(args));
 
     if (nskip < 0 || nskip == NA_INTEGER) nskip = 0;
 
-    if (isString(sep) || isNull(sep)) {
-	if (length(sep) == 0) sepchar = 0;
-	else sepchar = CHAR(STRING(sep)[0])[0];
-    }
-    else errorcall(call, "invalid sep value\n");
+    scan_sep_check
 
-    if (isValidString(file)) {
-	filename = CHAR(*STRING(file));
-	if (strlen(filename) == 0)
-	    filename = NULL;
+    if (isValidStringF(file)) {
+	filename = CHAR(STRING(file)[0]);
     }
     else
-	filename = NULL;
-
-    if (filename == NULL)
-	errorcall(call, "\"scan\" file name required\n");
+	errorcall(call, "invalid file name");
 
     if (filename) {
-	ttyflag = 0;
-	filename = R_ExpandFileName(filename);
-	if ((fp = R_fopen(filename, "r")) == NULL)
-	    error("\"scan\" can't open file\n");
-	for (i = 0; i < nskip; i++)
-	    while ((c = scanchar()) != '\n' && c != R_EOF);
+	scan_file
     }
 
     blocksize = SCAN_BLOCKSIZE;
@@ -642,7 +643,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		while ((c=scanchar()) != quote) {
 		    if (c == R_EOF || c == '\n') {
 			fclose(fp);
-			errorcall(call, "string terminated by newline or EOF\n");
+			errorcall(call, "string terminated by newline or EOF");
 		    }
 		}
 	    }
@@ -674,6 +675,8 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     return bns;
 }
+#undef scan_sep_check
+#undef scan_file
 
 /* frame.convert(char, na.strings, as.is) */
 
@@ -692,11 +695,11 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
 
     if (!isString(CAR(args)))
-	errorcall(call,"the first argument must be of mode character\n");
+	errorcall(call,"the first argument must be of mode character");
 
     NAstrings = CADR(args);
     if (TYPEOF(NAstrings) != STRSXP)
-	errorcall(call, "invalid na.strings value\n");
+	errorcall(call, "invalid na.strings value");
 
     asIs = asLogical(CADDR(args));
     if (asIs == NA_LOGICAL) asIs = 0;
@@ -722,12 +725,12 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	else {
 	    if (strlen(tmp) != 0) {
 		REAL(rval)[i] = strtod(tmp, &endp);
-		if (*endp != '\0') {
+		if (!isBlankString(endp)) {
 		    numeric = 0;
 		    break;
 		}
 	    }
-	    else errorcall(call,"null string encountered\n");
+	    else errorcall(call,"null string encountered");
 	}
     }
     if (!numeric) {
@@ -821,7 +824,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op,args);
 
     if (!isString(CAR(args)))
-	errorcall(call,"wrong argument\n");
+	errorcall(call,"wrong argument");
 
     sprintf(ConsolePrompt, "Selection: ");
 

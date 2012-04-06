@@ -42,6 +42,16 @@ image(x, y, z, zlim, col = heat.colors(12),
   topographical color schemes suitable for displaying ordered data, with
   \code{n} giving the number of colors desired.
 }
+\details{
+    The length of \code{x} should be equal to the \code{nrow(x)+1} or
+    \code{nrow(x)}. In the first case \code{x} specifies the boundaries
+    between the cells: in the second case \code{x} specifies the
+    midpoints of the cells. Similar reasoning applies to \code{y}. It
+    probably only makes sense to specify the midpoints of an
+    equally-spaced grid. If you specify just one row or column and a
+    length-one \code{x} or \code{y}, the whole user area in the
+    corresponding direction is filled.
+}
 \note{
   Based on a function by Thomas Lumley
   \email{thomas@biostat.washington.edu}.

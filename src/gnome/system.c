@@ -34,14 +34,20 @@
 
 #include "Startup.h"
 
-#include "terminal.h"
 #include "gtkconsole.h"
+#include "terminal.h"
+#include "terminal-prefs.h"
 
 #include <gnome.h>
+#include <glade/glade.h>
+#include <libgnome/libgnome.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /*-- necessary for some (older, i.e., ~ <= 1997) Linuxen:*/
-#ifdef linux
 #ifndef FD_SET
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #endif
@@ -85,7 +91,7 @@ void R_Suicide(char *s)
 
     gnome_dialog_run_and_close(GNOME_DIALOG(dialog));
 
-    R_CleanUp(SA_SUICIDE);
+    R_CleanUp(SA_SUICIDE, 2, 0);
 }
 
 
@@ -125,14 +131,15 @@ void R_Busy(int which)
 
 void R_dot_Last(void);		/* in main.c */
 
-void R_CleanUp(int saveact)
+void R_CleanUp(int saveact, int status, int runLast)
 {
     GtkWidget *dialog;
     gint which; /* yes = 0, no = 1, cancel = 2 || -1 */
 
+/*
     GList *curfile = R_gtk_editfiles;
     R_gtk_edititem *edititem;
-
+*/
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
 	saveact = SaveAction;
 
@@ -169,33 +176,36 @@ void R_CleanUp(int saveact)
 
     switch (saveact) {
     case SA_SAVE:
-	R_dot_Last();
-	R_SaveGlobalEnv();
+	if(runLast) R_dot_Last();
+	if(R_DirtyImage) R_SaveGlobalEnv();
 	if(R_Interactive)
 	    gtk_console_save_history(GTK_CONSOLE(R_gtk_terminal_text), 
 				     R_HistoryFile, R_HistorySize, NULL);
 	break;
     case SA_NOSAVE:
-	R_dot_Last();
+	if(runLast) R_dot_Last();
 	break;
     case SA_SUICIDE:
     default:
 	break;
     }
 
-    /* unlink all the files we opened for editing */
+    /* save GUI preferences */
+    R_gnome_prefs_save();
+/* unlink all the files we opened for editing 
     while(curfile != NULL) {
       edititem = (R_gtk_edititem *) curfile->data;
       unlink(edititem->filename);
       curfile = g_list_next(curfile);
     }
+*/
 
 
     /* close all the graphics devices */
     KillAllDevices();
     fpu_setup(0);
 
-    exit(0);
+    exit(status);
 }
 
 void R_ShowMessage(char *s)
@@ -241,14 +251,18 @@ void R_ShowQueuedMessages()
 	/*--- Initialization Code ---*/
 
 
+void R_set_gnome_prefs(Rstart Rp)
+{
+    Rp->RestoreAction = prefs_get_restoreact();
+    Rp->SaveAction = prefs_get_saveact();
+}
 static const struct poptOption popt_options[] = {
   { NULL, '\0', 0, NULL, 0, NULL, NULL }
 };
 
-void handle_gnome_args()
+void R_set_SaveAction(int sa)
 {
-    /* handle gnome-specific command line options */
-    /* from popt_options above */
+    SaveAction = sa;
 }
 
 void setStartTime(); /* in sys-unix.c */
@@ -259,6 +273,7 @@ int main(int ac, char **av)
     int value, ierr;
     structRstart rstart;
     Rstart Rp = &rstart;
+    struct stat sb;
 
     gc_inhibit_torture = 1;
 #ifdef HAVE_TIMES
@@ -267,23 +282,29 @@ int main(int ac, char **av)
 
     R_DefParams(Rp);
     R_SizeFromEnv(Rp);
+
+    /* Gnome startup preferences */
+    gnomelib_init("R",
+		  g_strdup_printf("%s.%s %s (%s %s %s)", R_MAJOR, R_MINOR, R_STATUS, R_MONTH, R_DAY, R_YEAR));
+    R_gnome_prefs_cmd_load(RestoreAction, SaveAction);
+    R_set_gnome_prefs(Rp);
+
+    /* command line params */
     R_common_command_line(&ac, av, Rp);
 
-    /* Initialise Gnome library and parse command line arguments */
-    gnome_init_with_popt_table("R.gnome",
-			       g_strdup_printf("%s.%s %s (%s %s, %s)", R_MAJOR, R_MINOR, R_STATUS, R_MONTH, R_DAY, R_YEAR),
-			       ac, av,
-			       popt_options, 0, NULL);
-
+    /* Initialise Gnome library */
+    gnome_init("R",
+	       g_strdup_printf("%s.%s %s (%s %s %s)", R_MAJOR, R_MINOR, R_STATUS, R_MONTH, R_DAY, R_YEAR),
+	       ac, av);
     R_gnome_initialised = TRUE;
 
+    /* Initialise libglade */
+    glade_gnome_init();
+
+    /* Gnome GUI preferences */
+    R_gnome_prefs_gui_load();
+
     R_ShowQueuedMessages();
-
-    /* Load saved preferences */
-    R_gnome_load_prefs();
-
-    /* Act on previously parsed command line arguments */
-    handle_gnome_args();
 
     R_SetParams(Rp);
 
@@ -292,6 +313,11 @@ int main(int ac, char **av)
     if((R_Home = R_HomeDir()) == NULL) {
 	R_Suicide("R home directory is not defined");
     }
+    glade_interface_file = g_strdup_printf(GLADE_INTERFACE_FILE, R_Home);
+    if(stat(glade_interface_file, &sb) == -1) {
+	R_Suicide("GNOME interface file not found");
+    }
+
 /*
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.

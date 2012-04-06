@@ -5,7 +5,6 @@
 \alias{download.file}
 \alias{download.packages}
 \alias{install.packages}
-\alias{parse.description}
 \title{Download packages from CRAN}}
 \usage{
 update.packages(lib.loc=.lib.loc, CRAN=options("CRAN"),
@@ -19,14 +18,12 @@ download.packages(pkgs, destdir, available=NULL,
                   CRAN=options("CRAN"), method="auto")
 install.packages(pkgs, lib, available=NULL,
                   CRAN=options("CRAN"), method="auto")
-
-parse.description <- function(desc)
 }
 \arguments{ 
  \item{lib.loc}{A character vector describing the location of R
      library trees to search through (and update packages therein).}
  \item{CRAN}{Base URL of the CRAN mirror to use, i.e., URL of a CRAN
-     root such as \code{"http://www.ci.tuwien.ac.at/R"} or
+     root such as \code{"http://www.r-project.org"} (the default) or
      \code{"http://lib.stat.cmu.edu/R/CRAN"}.}
  \item{method}{Tool to be used for downloading files. Currently download
    methods \code{"auto"}, \code{"wget"}, \code{"lynx"} and \code{"cp"} are
@@ -39,16 +36,13 @@ parse.description <- function(desc)
  \item{destdir}{Directory where downloaded packages are stored.}
  \item{available}{List of packages available at CRAN as returned by
      \code{CRAN.packages()}.}
- \item{desc}{A character vector with each element containing one line of
-   a package description file.}
  \item{lib,instlib}{A character string giving the library directory where to
      install the packages.}
 }
 \description{
     These functions can be used to automatically compare the version
     numbers of installed packages with the newest available version on
-    CRAN and update outdated packages on the fly. This currently works
-    only on Unix systems.}
+    CRAN and update outdated packages on the fly.}
 }
 \details{
   \code{installed.packages()} scans the DESCRIPTION files of each
@@ -58,7 +52,7 @@ parse.description <- function(desc)
   available in the contrib section of CRAN, the comprehensive R archive
   network.  The current list of packages is downloaded over the internet
   (or copied from a local CRAN mirror). Both functions use
-  \code{parse.description()} for parsing the description files.
+  \code{\link{parse.dcf}} for parsing the description files.
 
   The function \code{download.file()} can be used to download a single
   file as described by \code{url} from the internet and store it in
@@ -86,9 +80,12 @@ parse.description <- function(desc)
 
   \code{install.packages()} can be used to install new packages, it
   takes a vector of package names and a destination directory, downloads
-  the packages from CRAN and installs them.
+  the packages from CRAN and installs them. If the destination directory
+  is omitted it defaults to the first directory in \code{.lib.loc}, with
+  a warning.
 }
 \seealso{\code{\link{INSTALL}}, \code{\link{REMOVE}},
-    \code{\link{library}}, \code{\link{.packages}}
+  \code{\link{library}}, \code{\link{.packages}},
+  \code{\link{parse.dcf}}
 }
 \keyword{utilities}

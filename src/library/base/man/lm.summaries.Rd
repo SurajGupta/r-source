@@ -19,7 +19,6 @@ print(summary.lm.obj, digits = max(3, .Options$digits - 3),
 }
 \alias{anova.lm}
 \alias{anova.lm.null}
-\alias{anova.mlm}
 \alias{anovalist.lm}
 \alias{summary.lm}
 \alias{summary.lm.null}
@@ -33,7 +32,6 @@ print(summary.lm.obj, digits = max(3, .Options$digits - 3),
 \alias{weights}
 \alias{weights.lm}
 \alias{weights.default}
-\alias{plot.lm}
 \alias{plot.mlm}
 \alias{print.lm}
 \alias{print.lm.null}

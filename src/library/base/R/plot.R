@@ -100,16 +100,18 @@ plot.function <- function(fn, from=0, to=1, ...) {
     curve(fn, from, to, ...)
 }
 
+### NOTE: cex = 1 is correct, cex = par("cex") gives *square* of intended!
+
 plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
 			 log="", main=NULL, sub=NULL, xlab=NULL, ylab=NULL,
 			 ann=par("ann"), axes=TRUE, frame.plot=axes,
 			 panel.first=NULL, panel.last=NULL,
-			 col=par("fg"), bg=NA, pch=par("pch"),
-			 cex=par("cex"), lty=par("lty"), lab=par("lab"),
+			 col=par("col"), bg=NA, pch=par("pch"),
+			 cex=1, lty=par("lty"), lab=par("lab"),
                          lwd=par("lwd"), asp=NA, ...)
 {
-    xlabel <- if (!missing(x)) deparse(substitute(x))	else NULL
-    ylabel <- if (!missing(y)) deparse(substitute(y))	else NULL
+    xlabel <- if (!missing(x)) deparse(substitute(x))
+    ylabel <- if (!missing(y)) deparse(substitute(y))
     xy <- xy.coords(x, y, xlabel, ylabel, log)
     xlab <- if (is.null(xlab)) xy$xlab else xlab
     ylab <- if (is.null(ylab)) xy$ylab else ylab
@@ -133,11 +135,17 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
 
 plot.factor <- function(x, y, legend.text=levels(y), ...)
 {
-    if (missing(y))
-	barplot(table(x), ...)
-    else if (is.factor(y)) 
-        barplot(table(y, x), legend.text=legend.text, ...)
-    else if (is.numeric(y))
+    if(missing(y) || is.factor(y)) ## <==> will do barplot(.)
+        axisnames <- if(length(dargs <- list(...)) > 0) {
+            nam <- names(dargs)
+            ((any("axes" == nam) && dargs$axes) ||
+             (any("xaxt" == nam) && dargs$xaxt != "n"))
+        } else TRUE
+    if (missing(y)) {
+	barplot(table(x), axisnames=axisnames, ...)
+    } else if (is.factor(y)) {
+        barplot(table(y, x), legend.text=legend.text, axisnames=axisnames, ...)
+    } else if (is.numeric(y))
 	boxplot(y ~ x, ...)
     else NextMethod("plot")
 }
@@ -160,12 +168,12 @@ plot.formula <- function(formula, data = NULL, subset, na.action,
 	    opar <- par(ask = ask)
 	    on.exit(par(opar))
 	}
-        if (is.null(list(...)[["xlab"]])) {
-            for (i in varnames[-response]) plot(mf[[i]], y, xlab = i, 
-                                                ylab = ylab, ...)
-        } else {
-            for (i in varnames[-response]) plot(mf[[i]], y, ylab = ylab, ...)
-        }
+	xn <- .Alias(varnames[-response])
+	if (is.null(list(...)[["xlab"]])) {
+	    for (i in xn) plot(mf[[i]], y, ylab = ylab, xlab = i, ...)
+	} else {
+	    for (i in xn) plot(mf[[i]], y, ylab = ylab, ...)
+	}
     }
     else plot.data.frame(mf)
 }

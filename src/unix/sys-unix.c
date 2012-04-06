@@ -115,53 +115,6 @@ FILE *R_OpenInitFile(void)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-
-extern char ** environ;
-
-SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int i, j;
-    char *s;
-    char **e;
-    SEXP ans;
-
-    checkArity(op, args);
-
-    if (!isString(CAR(args)))
-	errorcall(call, "wrong type for argument\n");
-
-    i = LENGTH(CAR(args));
-    if (i == 0) {
-	for (i = 0, e = environ; *e != NULL; i++, e++);
-	PROTECT(ans = allocVector(STRSXP, i));
-	for (i = 0, e = environ; *e != NULL; i++, e++)
-	    STRING(ans)[i] = mkChar(*e);
-    } else {
-	PROTECT(ans = allocVector(STRSXP, i));
-	for (j = 0; j < i; j++) {
-	    s = getenv(CHAR(STRING(CAR(args))[j]));
-	    if (s == NULL)
-		STRING(ans)[j] = mkChar("");
-	    else
-		STRING(ans)[j] = mkChar(s);
-	}
-    }
-    UNPROTECT(1);
-    return (ans);
-}
-
-SEXP do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP rval;
-
-    rval=allocVector(LGLSXP, 1);
-    if( R_Interactive )
-	LOGICAL(rval)[0]=1;
-    else
-	LOGICAL(rval)[0]=0;
-    return rval;
-}
-
 SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     return mkString("Unix");
@@ -211,7 +164,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     if (!isString(CAR(args)))
-	errorcall(call, "character argument expected\n");
+	errorcall(call, "character argument expected");
     if (isLogical(CADR(args)))
 	read = INTEGER(CADR(args))[0];
     if (read) {

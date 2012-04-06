@@ -413,7 +413,8 @@ static int XRotPaintAlignedString(Display *dpy, XFontStruct *font, double angle,
 
     /* this gc has similar properties to the user's gc */
     my_gc=XCreateGC(dpy, drawable, (unsigned long)0, 0);
-    XCopyGC(dpy, gc, GCForeground|GCBackground|GCFunction|GCPlaneMask,
+    XCopyGC(dpy, gc, GCForeground|GCBackground|GCFunction|GCPlaneMask
+	    |GCClipMask,
 	    my_gc);
 
     /* alignment : which point (hot_x, hot_y) relative to bitmap centre
@@ -628,7 +629,7 @@ static int XRotDrawHorizontalString(Display *dpy, XFontStruct *font,
     my_gc=XCreateGC(dpy, drawable, (unsigned long)0, 0);
     XCopyGC(dpy, gc,
 	    GCForeground|GCBackground|GCFunction|GCStipple|GCFillStyle|
-	    GCTileStipXOrigin|GCTileStipYOrigin|GCPlaneMask, my_gc);
+	    GCTileStipXOrigin|GCTileStipYOrigin|GCPlaneMask|GCClipMask, my_gc);
     XSetFont(dpy, my_gc, font->fid);
 
     /* count number of sections in string */
@@ -864,6 +865,7 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
     int xp, yp;
     double sin_angle, cos_angle;
     int it, jt;
+    double itd, jtd;
     double di, dj;
     int ic=0;
     double xl, xr, xinc;
@@ -1093,8 +1095,10 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
 	    i<((xr>=item->cols_out)?item->cols_out:(int)xr); i++) {
 
 	    /* rotate coordinates */
-	    it=(double)item->cols_in/2 + ( di*cos_angle + dj*sin_angle);
-	    jt=(double)item->rows_in/2 - (-di*sin_angle + dj*cos_angle);
+	    itd=(double)item->cols_in/2 + ( di*cos_angle + dj*sin_angle);
+	    jtd=(double)item->rows_in/2 - (-di*sin_angle + dj*cos_angle);
+	    it = itd - (itd < 0); /* (int) -0.5 == 0 */
+	    jt = jtd - (jtd < 0);
 
 	    /* set pixel if required */
 	    if(it>=0 && it<item->cols_in && jt>=0 && jt<item->rows_in)

@@ -23,6 +23,16 @@
 #include <Rconfig.h>
 #endif
 
+/*
+#define OLD
+*/
+
+#ifdef HAVE_RINT
+#define R_rint(x) rint(x)
+#else
+#define R_rint(x) ((int) x + 0.5)
+#endif
+
 #include <stdio.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -78,6 +88,8 @@ typedef struct {
     int bg;				/* Background */
     int fontface;			/* Typeface */
     int fontsize;			/* Size in points */
+    int basefontface;			/* Typeface */
+    int basefontsize;			/* Size in points */
 
     /* X11 Driver Specific */
     /* Parameters with copy per X11 device. */
@@ -370,7 +382,7 @@ static void SetupPseudoColor()
 		break;
         }
 	if (PaletteSize == 0) {
-	    warning("X11 driver unable to obtain color cube\n");
+	    warning("X11 driver unable to obtain color cube");
 	    depth = 1;
 	}
     }
@@ -415,8 +427,7 @@ static unsigned int GetPseudoColor2Pixel(int r, int g, int b)
     XPalette[PaletteSize].blue  = pow(b / 255.0, BlueGamma) * 0xffff;
     if (PaletteSize == 256 ||
 	XAllocColor(display, colormap, &XPalette[PaletteSize]) == 0) {
-	REprintf("Error: X11 cannot allocate additional graphics colors.\n");
-	error("Consider using colortype=\"pseudo.cube\" or \"gray\".\n");
+	error("Error: X11 cannot allocate additional graphics colors.\nConsider using colortype=\"pseudo.cube\" or \"gray\".");
     }
     RPalette[PaletteSize].red = r;
     RPalette[PaletteSize].green = g;
@@ -609,6 +620,7 @@ void ProcessEvents(void)
     }
 }
 
+#ifdef OLD
         /* Font information array. */
         /* Point sizes: 6-24 */
         /* Faces: plain, bold, oblique, bold-oblique */
@@ -770,6 +782,145 @@ static void SetFont(int face, int size, DevDesc *dd)
 	XSetFont(display, xd->wgc, xd->font->fid);
     }
 }
+#else /* not OLD */
+static char *fontname = "-*-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*";
+static char *symbolname	 = "-*-symbol-*-*-*-*-%d-*-*-*-*-*-*-*";
+
+static char *slant[]  = {"r", "o"};
+static char *weight[] = {"medium", "bold"};
+
+/* That number is sum(2^(x-1)) with x the Adobe design sizes (see
+   below). I suppose I should get it converted to hex... --pd */
+
+static unsigned int adobe_sizes = 8600544;
+
+#define MAXFONTS 64
+#define CLRFONTS 16 /* Number to free when cache runs full */
+
+typedef struct {int face, size;  XFontStruct *font;} cacheentry;
+
+static cacheentry fontcache[MAXFONTS];
+static int nfonts = 0;
+static int force_nonscalable = 0; /* for testing */
+
+#define ADOBE_SIZE(I) (adobe_sizes & (1<<((I)-1)))
+#define SMALLEST 2
+
+static XFontStruct *RLoadFont(int face, int size)
+{
+    int pixelsize, i;
+    cacheentry *f;
+    char buf[128];
+    XFontStruct *tmp;
+
+    if (size < SMALLEST) size = SMALLEST;
+    face--;
+
+    /* search fontcache */
+    for ( i = nfonts ; i-- ; ) {
+	f = &fontcache[i];
+	if ( f->face == face && f->size == size ) return f->font;
+    }
+
+    
+
+    /* Here's a 1st class fudge: make sure that the Adobe design sizes
+       8, 10, 11, 12, 14, 17, 18, 20, 24, 25, 34 can be obtained via
+       an integer "size", namely 6, 7, 8, 9, 10, 12, 13, 14, 17, 18,
+       24 points. It's almost y = x * 100/72, but not quite. The
+       constants were found using lm(). --pd */
+    
+    pixelsize = R_rint(size * 1.43 - 0.4);
+
+    if(face == 4)
+	sprintf(buf, symbolname,  pixelsize);
+    else
+	sprintf(buf, fontname, 
+		weight[face & 1],
+		slant[(face & 2)>>1 ],  pixelsize);
+#ifdef DEBUG_X11
+    Rprintf("loading:\n%s\n",buf);
+#endif
+    tmp = XLoadQueryFont(display, buf);
+#ifdef DEBUG_X11
+    if(tmp) Rprintf("success\n"); else Rprintf("failure\n");
+#endif
+    if (!tmp || (force_nonscalable && !ADOBE_SIZE(size)) ){
+ 	static int near[]=
+	  {20,24,24,25,25,25,34,34,34};
+	/* 15 16 17 18 19 20 21 22 23 */
+	if ( ADOBE_SIZE(size) ) return NULL; /* tried it */ 
+
+	if ( size <= 5 ) 
+	    pixelsize = 8;
+	else if (size == 11)
+	    pixelsize = 14;
+	else if (size < 24) /* must be at least 15 */
+	    pixelsize = near[size-15];
+	else
+	    pixelsize = 34;
+
+
+	if(face == 4)
+	    sprintf(buf, symbolname, pixelsize);
+	else
+	    sprintf(buf, fontname, 
+		    weight[face & 1],
+		    slant[(face & 2)>>1 ],  pixelsize);
+#ifdef DEBUG_X11
+	Rprintf("loading:\n%s\n",buf);
+#endif
+	tmp = XLoadQueryFont(display, buf);
+#ifdef DEBUG_X11
+	if(tmp) Rprintf("success\n"); else Rprintf("failure\n");
+#endif
+    }
+
+    if (tmp){
+	f = &fontcache[nfonts++];
+	f->face = face;
+	f->size = size;
+	f->font = tmp; 
+    }
+    if (nfonts == MAXFONTS) /* make room in the font cache */
+    {
+	for (i = 0 ; i < CLRFONTS ; i++)
+	    XFreeFont(display, fontcache[i].font);
+	for (i = CLRFONTS ; i < MAXFONTS ; i++)
+	    fontcache[i - CLRFONTS] = fontcache[i];
+	nfonts -= CLRFONTS;
+    }
+    return tmp;
+}
+static int SetBaseFont(x11Desc *xd)
+{
+    xd->fontface = xd->basefontface;
+    xd->fontsize = xd->basefontsize;
+    xd->usefixed = 0;
+    xd->font = RLoadFont(xd->fontface, xd->fontsize);
+    if(!xd->font) {
+	xd->usefixed = 1;
+	xd->font = xd->fixedfont = XLoadQueryFont(display, "fixed");
+	if(!xd->fixedfont)
+	    return 0;
+    }
+    return 1;
+}
+static void SetFont(int face, int size, DevDesc *dd)
+{
+    x11Desc *xd = (x11Desc *) dd->deviceSpecific;
+
+    if(face < 1 || face > 5) face = 1;
+
+    if(!xd->usefixed && (size != xd->fontsize  || face != xd->fontface)) {
+	xd->font = RLoadFont(face, size);
+	xd->fontface = face;
+	xd->fontsize = size;
+	XSetFont(display, xd->wgc, xd->font->fid);
+    }
+}
+#endif
+
 
 static void SetColor(int color, DevDesc *dd)
 {
@@ -1037,21 +1188,23 @@ static void X11_Clip(double x0, double x1, double y0, double y1, DevDesc *dd)
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
     if (x0 < x1) {
-	xd->clip.x = (int)x0;
-	xd->clip.width = (int)(x1 - x0);
+	xd->clip.x = (int) x0 ;
+	xd->clip.width = (int) x1 - (int) x0 + 1;
     }
     else {
-	xd->clip.x = (int)x1;
-	xd->clip.width = (int)(x0 - x1);
+	xd->clip.x = (int) x1;
+	xd->clip.width = (int) x0 - (int) x1 + 1;
     }
+
     if (y0 < y1) {
-	xd->clip.y = (int)y0;
-	xd->clip.height = (int)(y1 - y0);
+	xd->clip.y = (int) y0;
+	xd->clip.height = (int) y1 -  (int) y0 + 1;
     }
     else {
-	xd->clip.y = (int)y1;
-	xd->clip.height = (int)(y0 - y1);
+	xd->clip.y = (int) y1;
+	xd->clip.height = (int) y0 - (int) y1 + 1;
     }
+
     XSetClipRectangles(display, xd->wgc, 0, 0, &(xd->clip), 1, Unsorted);
 #ifdef XSYNC
     XSync(display, 0);
@@ -1115,7 +1268,9 @@ static void X11_NewPage(DevDesc *dd)
 
 static void X11_Close(DevDesc *dd)
 {
+#ifdef OLD
     int i, j;
+#endif
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
     /* process pending events */
@@ -1128,7 +1283,9 @@ static void X11_Close(DevDesc *dd)
 
     numX11Devices--;
     if (numX11Devices == 0)  {
+
 	/* Free Resources Here */
+#ifdef OLD
 	for(i=0 ; i<NFONT ; i++)
 	    for(j=0 ; j<5 ; j++) {
 		if(fontarray[i][j] != NULL) {
@@ -1137,6 +1294,10 @@ static void X11_Close(DevDesc *dd)
 		}
 		missingfont[i][j] = 0;
 	    }
+#else 
+	while (nfonts--)  XFreeFont(display, fontcache[nfonts].font);
+	nfonts = 0;
+#endif
 	XCloseDisplay(display);
 	displayOpen = 0;
     }
@@ -1151,7 +1312,6 @@ static void X11_Close(DevDesc *dd)
 	/* the device to the user.  not all device types will	*/
 	/* do anything						*/
 	/********************************************************/
-
 static char title[11] = "R Graphics";
 
 static void X11_Activate(DevDesc *dd)
@@ -1435,7 +1595,8 @@ static void X11_Text(double x, double y, int coords,
     if(xc != 0.0 || yc != 0) {
 	rot1 = DEG2RAD * rot;
 	xl = X11_StrWidth(str, dd);
-	yl = GConvertYUnits(1, CHARS, DEVICE, dd);
+	/* yl = GConvertYUnits(1, CHARS, DEVICE, dd); */
+	yl = xd->font->ascent;
 	x += -xc * xl * cos(rot1) + yc * yl * sin(rot1);
 	y -= -xc * xl * sin(rot1) - yc * yl * cos(rot1);
     }
@@ -1463,7 +1624,7 @@ static int X11_Locator(double *x, double *y, DevDesc *dd)
     XSync(display, 1);
     /* handle X events as normal until get a button */
     /* click in the desired device */
-    while (!done) {
+    while (!done && displayOpen) {
 	XNextEvent(display, &event);
 	if (event.type == ButtonPress) {
 	    XFindContext(display, event.xbutton.window,
@@ -1589,6 +1750,8 @@ int X11DeviceDriver(DevDesc *dd,
     ps = 2*(ps/2);
     xd->fontface = -1;
     xd->fontsize = -1;
+    xd->basefontface = 1;
+    xd->basefontsize = ps;
     dd->dp.font = 1;
     dd->dp.ps = ps;
 
@@ -1631,6 +1794,7 @@ int X11DeviceDriver(DevDesc *dd,
 
     /* Nominal Character Sizes in Pixels */
 
+    SetBaseFont(xd);
     dd->dp.cra[0] = xd->font->max_bounds.rbearing -
 	xd->font->min_bounds.lbearing;
     dd->dp.cra[1] = xd->font->max_bounds.ascent +
@@ -1650,14 +1814,12 @@ int X11DeviceDriver(DevDesc *dd,
     dd->dp.ipr[1] = pixelHeight();
 
     /* Device capabilities */
-    /* Clipping is problematic for X11 */
-    /* Graphics is clipped, text is not */
 
     dd->dp.canResizePlot = 1;
     dd->dp.canChangeFont = 0;
     dd->dp.canRotateText = 1;
     dd->dp.canResizeText = 1;
-    dd->dp.canClip = 0;
+    dd->dp.canClip = 1;
 
     /* initialise x11 device description (most of the work */
     /* has been done in X11_Open) */

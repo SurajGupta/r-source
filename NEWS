@@ -1,3 +1,225 @@
+				Dear Emacs, please make this -*-Text-*- mode!
+	**************************************************
+	*						 *
+	*	       0.90 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+NEW FEATURES
+
+    o	packages splines (for regression smoothing splines or
+	interpolating splines) and nls (nonlinear least squares) are
+	part of the base distribution.
+
+    o	New error handling using
+	options ( error = expression(..) ,  warning.expr = ... ).
+	REPLACING version 0.65.1's  options(error.halt = T/F)
+
+    o	collected warnings before an error are no longer lost but
+	are printed after the error message (unless the error makes
+	this impossible).
+
+    o	A couple of substantial graphics changes, esp. in the X11
+	driver. The scaling of symbols is now linear in cex=, rather
+	than being tied to the available font's size. The fonts on an
+	X11 device also scale linearly with cex= insofar as your X
+	server can do it. On systems with the scalable type 1
+	PostScript fonts installed, this looks particularly nice. Note
+	that the scaling is linear in the *diameter*, but quadratic in
+	area. The distance between lines of margin text in the X11
+	device is now proportional to the size given to
+	x11(pointsize).
+
+
+    o	abline(a,b) now (again) refers to transformed coordinates on
+	plots with log-axes, so that abline(lm(log10(y)~log10(x)))
+	(say) draws a best-fitting line on a log-log plot. The earlier
+	convention (to draw a curve representing a line in original
+	coordinates) is available using a new untf= argument.
+
+    o	barplot.default() has new `axisnames' (and `sub') arguments, easily
+	allowing suppression of bar labeling.
+
+    o	cbind() and rbind() now actually do what deparse.level=1 implies:
+	add column/row names based on the deparsed argument, provided it
+	is a simple symbol. The behaviour is still hardcoded, though.
+
+    o	gc() now reports the total sizes in Mb as well as numbers.
+
+    o	New function help.search() for searching the names, titles,
+	aliases, or keywords in the help system.
+
+    o	image() allows x and y to specify either the boundaries or the
+	midpoints of the cells. If the latter, the whole cells are
+	drawn, rather than the outer cells being half-sized as previously.
+
+    o	NULL extra arguments to model.frame() are now treated as missing
+	(instead of an error).
+
+    o	optimization with nlm() can use analytic gradients and Hessians
+	if they are supplied.
+
+    o	on.exit() allows add=TRUE.
+
+    o	function parse.dcf() for parsing files in debian control file format
+	(DESCRIPTION, CONTENTS, ...)
+
+    o	predict.{g}lm has a type="terms" option, and residual.glm has
+	type="partial" as a step towards plot.gam().
+
+    o	New arguments to q() and quit() allow the exit status to be set
+	and the execution of .Last() to be skipped.
+
+    o	New function regexpr(), similar to grep but returns the position
+	of the match in each string. (For S-PLUS compatibility.)
+
+    o	scan() now supports complex numbers.
+
+    o	New function sort.list, for S compatibility. (This has argument
+	partial, but always sorts completely.)
+
+    o	storage.mode<- can be used to set "single", and if setting
+	anything other than "single" it removes the "Csingle" attribute.
+
+    o	new function sunflowerplot().
+
+    o	New function undoc() for listing undocumented objects.
+
+
+    o	User's .Rprofile now executes in global environment
+
+    o	All HTML pages now use the new style sheet doc/html/R.css
+
+    o	html and text files have now a header line giving the name of
+	the help file and the package. The description section now
+	comes first.
+
+    o	All the standard packages have DESCRIPTION files with
+	"Priority: base", so installed.packages and
+	package.description will work with them.
+
+    o	The R-external manual which describes programming for the
+	.Call and .External interfaces is in the doc/manual directory.
+
+    o	New target `make pdf' in doc/manuals makes hyperlinked PDF 
+	documentation. (This is experimental for this release. See
+	doc/manual/README for further details.)
+
+
+    o	S.h now contains (via Rdefines.h) a MESSAGE macro, and
+	Free NULLs the pointer, for compatibility with S3 (but not S4).
+
+    o	New subroutine REALPR callable from Fortran (like DBLEPR but
+	for real arguments): useful if as.single is in use.
+
+    o	The cex= argument to plot() etc. can be a vector, like pch=.
+
+    o	lty=0 now (again) makes lines invisible. Looks better for
+	barplot label axis.
+
+    o	zero.R tries to find the zero DLL in a system-independent way.
+
+
+BUG FIXES
+
+    o	apply should now work for all un-dimnamed arrays (PR#318).
+
+    o	ar(..., demean=F) works more consistently across methods.
+
+    o	barplot() had lower limits set at -0.01, causing trouble with
+	small heights. Switch to relative scale. (Thanks to Matt Wiener)
+
+    o	density() should work better with NAs and infinite values. See
+	?density for the current definitions of how these are handled.
+
+    o	diag(x) now works (as pre 0.65.1) for 1-d arrays.
+
+    o	Stored-source was dropped by dump().
+
+    o	expand.grid returns a data frame even for one arg.
+
+    o	expand.grid(x) now also works for vector arguments x.
+
+    o	factor(list()) or factor(character(0)) *is* now a factor
+	with valid levels(.);
+	ordered does NOT allow an `ordered' argument anymore
+	and is now defined as trivial call to factor.
+
+    o	help page for gc gives correct size of cons cells (20 bytes
+	for 32-bit systems, 36 or more for 64-bit systems).
+
+    o	gcinfo reports correct percentages of heap even for vsize > 200M.
+
+    o	gl(6,3,12) and gl(6,3,2) now both work.
+
+    o	Empty lists now deparse correctly.
+
+    o	na.omit.ts and na.contiguous preserve classes.
+
+    o	plot.factor {plot(<factor>)} now obeys axes=FALSE and xaxt="n".
+
+    o	read.table(as.is = TRUE) would leave everything as character.
+	Now it correctly tries to convert to numeric.
+
+    o	require() now has the warn.conflicts argument of library().
+
+    o	Fix problems in scan(flush = TRUE).
+
+    o   scan() got confused by trailing whitespace.
+
+    o	split(x,f) now works even when f is a factor with unused levels
+	(PR#294).
+
+    o	mosaicplot() has a formula interface and
+	NULL instead of NA default args.
+
+    o	stars() has "NULL" instead of "NA" defaults.
+
+    o	str() is quite a bit nicer with factors.
+
+    o	ts.union, cbind.ts, arithmetic on ts objects now allow
+	non-integer frequencies.
+
+
+    o	Switch to <tt> in HTML pages since Linux Netscape mangles
+	Courier.
+
+    o	When documentation is "compiled" (build-help), you now get warnings
+	for multiple (conflicting) \alias{.} or \name{.}s.
+
+    o	making the reference manual with `make dvi' copes better with
+	isolatin1 characters (but not perfectly as these are not in
+	standard TeX fonts).
+
+    o	Rd.sty now uses standard LaTeX constructs like \bm for bold
+	math and \url for URLs.
+
+
+    o	Protect R_fopen against NULL filename in Unix.
+
+    o	Math text in outer margins didn't work.
+
+    o	Text clipping now works in the X11 device.
+
+    o   Pixel rows sometimes got doubled in rotated text on the X11 device.
+
+    o	par("yaxt") is now ok.
+
+    o	Problems with realloc on some systems in AllocBuffer.
+
+    o	Problem with formatReal on non-IEEE systems.
+
+    o	demos/dynload/Makefile used macros that gave incorrect build
+	on some non-GNU makes.
+
+    o	Windows version copes better with paths with spaces in.
+
+    o	R CMD check had a typo which made the final message fail.
+
+    o	R_EOF redefined as -1, was causing trouble with isxxxx contructions.
+
+
 
 	**************************************************
 	*						 *
@@ -66,13 +288,13 @@ NEW FEATURES
 	this is available, and so is always consistent with the ordering
 	used by sort().
 
-    o	sapply  has a new argument USE.NAMES=TRUE  and now returns a named
-        result when its input was a character.
+    o	sapply	has a new argument USE.NAMES=TRUE  and now returns a named
+	result when its input was a character.
 
-    o	plot.stepfun  has new arguments  lty and lwd.
+    o	plot.stepfun  has new arguments	 lty and lwd.
 
-    o   x labels in boxplot now handled differently, so that math
-    	expressions are allowed.
+    o	x labels in boxplot now handled differently, so that math
+	expressions are allowed.
 
     o	postscript() argument `onefile' now does something, and there
 	is a new paper type `special' and new argument `pagecentre'.

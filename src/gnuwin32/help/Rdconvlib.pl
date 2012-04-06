@@ -63,13 +63,14 @@ $Math_del = "\$"; #UNquoted '$'
 $MAXLOOPS = 1000;
 
 
-sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename)
+sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 
     $Rdname = $_[0];
     open rdfile, "<$Rdname" || die "Rdconv(): Couldn't open '$Rdfile':$!\n";
 
     $type = $_[1];
     $debug = $_[2];
+    $pkgname = $_[4];
 
     if($type !~ /,/) {
 	## Trivial (R 0.62 case): Only 1 $type at a time ==> one filename is ok.
@@ -97,9 +98,22 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename)
     undef @section_body;
     undef @section_title;
 
-
+    $skipping = 0;
     #-- remove comments (everything after a %)
     while(<rdfile>){
+	if (/^#ifdef\s+([A-Za-z0-9]+)/o) {
+	    if ($1 ne $OSdir) { $skipping = 1; }
+	    next;
+	}
+	if (/^#ifndef\s+([A-Za-z0-9]+)/o) {
+	    if ($1 eq $OSdir) { $skipping = 1; }
+	    next;
+	}
+	if (/^#endif/o) {
+	    $skipping = 0;
+	    next;
+	}
+	next if $skipping > 0;
 	next if /^\s*%/o;#- completely drop full comment lines
 	my $loopcount = 0;
 	while(checkloop($loopcount++, $_, "\\%") &&
@@ -448,12 +462,13 @@ sub rdoc2html { # (filename) ; 0 for STDOUT
       if($_[0]) { open htmlout, "> $_[0]"; } else { open htmlout, "| cat"; }
     }
     $using_chm = 0;
-    print htmlout html_functionhead($blocks{"title"});
+    print htmlout html_functionhead($blocks{"title"}, $pkgname,
+				    $blocks{"name"});
 
+    html_print_block("description", "Description");
     html_print_codeblock("usage", "Usage");
     html_print_argblock("arguments", "Arguments");
     html_print_block("format", "Format");
-    html_print_block("description", "Description");
     html_print_block("details", "Details");
     html_print_argblock("value", "Value");
 
@@ -806,13 +821,14 @@ sub rdoc2nroff { # (filename); 0 for STDOUT
     print nroffout ".pl 100i\n";
     print nroffout ".po 3\n";
     print nroffout ".na\n";
+    print nroffout ".tl '", $blocks{"name"},
+          "($pkgname)''R Documentation'\n\n" if $pkgname;
     print nroffout ".SH\n";
     print nroffout $blocks{"title"}, "\n";
-
-    nroff_print_codeblock("usage", "");
+    nroff_print_block("description", "Description");
+    nroff_print_codeblock("usage", "Usage");
     nroff_print_argblock("arguments", "Arguments");
     nroff_print_block("format", "Format");
-    nroff_print_block("description", "Description");
     nroff_print_block("details", "Details");
     nroff_print_argblock("value", "Value");
 
@@ -852,8 +868,6 @@ sub text2nroff {
     ## be done first
     $text = nroff_tables($text);
     $text =~ s/\\cr\n?/\n.br\n/sgo;
-
-
 
     $text =~ s/\n\s*\n/\n.IP \"\" $indent\n/sgo;
     $text =~ s/\\dots/\\&.../go;
@@ -1286,9 +1300,9 @@ sub rdoc2ex { # (filename)
 	    }
 	    print Exout "\n";
 	}
-	
+
 	ex_print_exampleblock("examples", "Examples");
-	
+
 	if(@keywords) {
 	    print Exout "## Keywords: ";
 	    &print_vec(Exout, 'keywords');
@@ -1350,16 +1364,16 @@ sub rdoc2latex {# (filename)
       print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
 	if $debug;
       printf latexout "\\alias\{%s\}\{%s\}\n", $a, $blocks{"name"}
-	unless /^$blocks{"name"}$/;
+	unless /^\Q$blocks{"name"}\E$/; # Q..E : Quote (escape) Metacharacters
     }
     foreach (@keywords) {
       printf latexout "\\keyword\{%s\}\{%s\}\n", $_, $blocks{"name"}
       unless /^$/ ;
     }
+    latex_print_block("description", "Description");
     latex_print_codeblock("usage", "Usage");
     latex_print_argblock("arguments", "Arguments");
     latex_print_block("format", "Format");
-    latex_print_block("description", "Description");
     latex_print_block("details", "Details");
     latex_print_argblock("value", "Value");
 
@@ -1609,7 +1623,8 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
       if($_[0]) { open htmlout, "> $_[0]"; } else { open htmlout, "| cat"; }
     }
     $using_chm = 1;
-    print htmlout chm_functionhead($blocks{"title"});
+    print htmlout chm_functionhead($blocks{"title"}, $pkgname,
+				   $blocks{"name"});
 
     html_print_codeblock("usage", "Usage");
     html_print_argblock("arguments", "Arguments");

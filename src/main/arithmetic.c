@@ -293,7 +293,7 @@ SEXP do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
     case 2:
 	return binary(op, args);
     default:
-	error("operator with more than two arguments");
+	error("operator needs one or two arguments");
     }
     return ans;			/* never used; to keep -Wall happy */
 }
@@ -384,7 +384,7 @@ static SEXP binary(SEXP op, SEXP args)
 	    PROTECT(tsp = getAttrib(x, R_TspSymbol));
 	    PROTECT(class = getAttrib(x, R_ClassSymbol));
 	}
-	else {			/* (yts) */ 
+	else {			/* (yts) */
 	    if (length(y) < length(x))
 		ErrorMessage(lcall, ERROR_TSVEC_MISMATCH);
 	    PROTECT(tsp = getAttrib(y, R_TspSymbol));
@@ -414,7 +414,7 @@ static SEXP binary(SEXP op, SEXP args)
 
     PROTECT(x);
     /* Don't set the dims if one argument is an array of size 0 and the
-       other isn't of size zero, cos they're wrong */ 
+       other isn't of size zero, cos they're wrong */
     if (dims != R_NilValue) {
 	if (!((xarray && (nx == 0) && (ny != 0)) ||
 	      (yarray && (ny == 0) && (nx != 0)))){
@@ -513,7 +513,9 @@ static SEXP real_unary(int code, SEXP s1)
  * in the loop (tested on Intel and Sparc)
  */
 #define mod_iterate(n1,n2,i1,i2) for (i=i1=i2=0; i<n; \
-(++i1, (i1==n1)&&(i1=0), ++i2, (i2==n2)&&(i2=0), ++i))
+	i1 = (++i1 == n1) ? 0 : i1,\
+	i2 = (++i2 == n2) ? 0 : i2,\
+	++i)
 
 static SEXP integer_binary(int code, SEXP s1, SEXP s2)
 {
@@ -1023,7 +1025,7 @@ SEXP do_round(SEXP call, SEXP op, SEXP args, SEXP env)
     int n;
     if (DispatchGroup("Math", call, op, args, env, &a))
 	return a;
-    b = R_NilValue;		/* -Wall */
+    b = R_NilValue;	/* -Wall */
     lcall = call;
     switch (n = length(args)) {
     case 1:
@@ -1033,7 +1035,7 @@ SEXP do_round(SEXP call, SEXP op, SEXP args, SEXP env)
 	break;
     case 2:
 	if (length(CADR(args)) == 0)
-	    errorcall(call, "illegal 2nd arg of length 0");	    
+	    errorcall(call, "illegal 2nd arg of length 0");
 	PROTECT(a = CAR(args));
 	PROTECT(b = CADR(args));
 	break;
@@ -1065,7 +1067,7 @@ SEXP do_log(SEXP call, SEXP op, SEXP args, SEXP env)
 	    return math1(op, CAR(args), R_log);
     case 2:
 	if (length(CADR(args)) == 0)
-	    errorcall(call, "illegal 2nd arg of length 0");	    
+	    errorcall(call, "illegal 2nd arg of length 0");
 	if (isComplex(CAR(args)) || isComplex(CDR(args)))
 	    return complex_math2(call, op, args, env);
 	else
@@ -1092,7 +1094,7 @@ SEXP do_signif(SEXP call, SEXP op, SEXP args, SEXP env)
 	break;
     case 2:
 	if (length(CADR(args)) == 0)
-	    errorcall(call, "illegal 2nd arg of length 0");	    
+	    errorcall(call, "illegal 2nd arg of length 0");
 	PROTECT(a = CAR(args));
 	PROTECT(b = CADR(args));
 	break;
@@ -1110,9 +1112,10 @@ SEXP do_signif(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #define mod_iterate3(n1,n2,n3,i1,i2,i3) for (i=i1=i2=i3=0; i<n; \
-	(++i1, (i1==n1)&&(i1=0),\
-	 ++i2, (i2==n2)&&(i2=0),\
-	 ++i3, (i3==n3)&&(i3=0), ++i))
+	 i1 = (++i1==n1) ? 0 : i1,\
+	 i2 = (++i2==n2) ? 0 : i2,\
+	 i3 = (++i3==n3) ? 0 : i3,\
+	 ++i)
 
 static SEXP math3(SEXP op, SEXP sa, SEXP sb, SEXP sc, double (*f)())
 {
@@ -1268,8 +1271,11 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 } /* do_math3() */
 
 #define mod_iterate4(n1,n2,n3,n4,i1,i2,i3,i4) for (i=i1=i2=i3=i4=0; i<n; \
-(++i1, (i1==n1)&&(i1=0), ++i2, (i2==n2)&&(i2=0),\
- ++i3, (i3==n3)&&(i3=0), ++i4, (i4==n4)&&(i4=0), ++i))
+	 i1 = (++i1==n1) ? 0 : i1,\
+	 i2 = (++i2==n2) ? 0 : i2,\
+	 i3 = (++i3==n3) ? 0 : i3,\
+	 i4 = (++i4==n4) ? 0 : i4,\
+	 ++i)
 
 static SEXP math4(SEXP op, SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)())
 {

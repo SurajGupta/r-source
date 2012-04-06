@@ -1,9 +1,13 @@
-\name{RHOME}
-\title{R Home Directory}
-\alias{RHOME}
-\alias{R_HOME}
-\usage{R RHOME}
+\name{R.home}
+\alias{R.home}
+\title{Return the R Home Directory}
 \description{
-    Returns the location of the R home directory, which is the root of
-    the installed R tree.
+ Return the \R home directory.
 }
+\usage{
+R.home()
+}
+\value{
+  A character string giving the current home directory.
+}
+\keyword{utilities}

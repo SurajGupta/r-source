@@ -139,7 +139,7 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ca1;
     int savecutoff, cut0;
     /*checkArity(op, args);*/
-    if(length(args) < 1) errorcall(call, "too few arguments\n");
+    if(length(args) < 1) errorcall(call, "too few arguments");
 
     ca1 = CAR(args); args = CDR(args);
     savecutoff = cutoff;
@@ -225,14 +225,14 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     file = CADR(args);
     if (!isValidString(file))
-	errorcall(call, "file name must be a valid character string\n");
+	errorcall(call, "file name must be a valid character string");
 
     fp = NULL;
     if (strlen(CHAR(STRING(file)[0])) > 0) {
 	fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "w");
 	if (!fp)
-	    errorcall(call, "unable to open file\n");
-    }
+	    errorcall(call, "unable to open file");
+    }/* else: "Stdout" */
     for (i = 0; i < LENGTH(tval); i++)
 	if (fp == NULL)
 	    Rprintf("%s\n", CHAR(STRING(tval)[i]));
@@ -254,10 +254,10 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     names = CAR(args);
     file = CADR(args);
     if(!isString(names) || !isString(file))
-	errorcall(call, "character arguments expected\n");
+	errorcall(call, "character arguments expected");
     nobjs = length(names);
     if(nobjs < 1 || length(file) < 1)
-	errorcall(call, "zero length argument\n");
+	errorcall(call, "zero length argument");
 
     fp = NULL;
 
@@ -272,6 +272,8 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(strlen(CHAR(STRING(file)[0])) == 0) {
 	for (i = 0; i < nobjs; i++) {
 	    Rprintf("\"%s\" <-\n", CHAR(STRING(names)[i]));
+	    if (TYPEOF(CAR(o)) != CLOSXP || 
+		isNull(tval = getAttrib(CAR(o), R_SourceSymbol)))
 	    tval = deparse1(CAR(o), 0);
 	    for (j = 0; j<LENGTH(tval); j++) {
 		Rprintf("%s\n", CHAR(STRING(tval)[j]));
@@ -281,9 +283,11 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else {
 	if(!(fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "w")))
-	    errorcall(call, "unable to open file\n");
+	    errorcall(call, "unable to open file");
 	for (i = 0; i < nobjs; i++) {
 	    fprintf(fp, "\"%s\" <-\n", CHAR(STRING(names)[i]));
+	    if (TYPEOF(CAR(o)) != CLOSXP || 
+		isNull(tval = getAttrib(CAR(o), R_SourceSymbol)))
 	    tval = deparse1(CAR(o), 0);
 	    for (j = 0; j<LENGTH(tval); j++) {
 		fprintf(fp, "%s\n", CHAR(STRING(tval)[j]));
@@ -450,7 +454,8 @@ static void deparse2buff(SEXP s)
 	print2buff("<environment>");
 	break;
     case VECSXP:
-	if(length(s) <= 0) print2buff("NULL");
+	if(length(s) <= 0)
+	    print2buff("list()");
 	else {
 	    attr1(s);
 	    print2buff("list(");
@@ -460,7 +465,8 @@ static void deparse2buff(SEXP s)
 	}
 	break;
     case EXPRSXP:
-	if(length(s) <= 0) print2buff("expression()");
+	if(length(s) <= 0)
+	    print2buff("expression()");
 	else {
 	    print2buff("expression(");
 	    vec2buff(s);
@@ -755,7 +761,7 @@ static void print2buff(char *strng)
     bufflen = strlen(buff);
     /*if (bufflen + tlen > BUFSIZE) {
 	buff[0] = '\0';
-	error("string too long in deparse\n");
+	error("string too long in deparse");
 	}*/
     AllocBuffer(bufflen + tlen);
     strcat(buff, strng);

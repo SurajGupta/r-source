@@ -129,7 +129,7 @@ void R_SaveGlobalEnv(void)
 {
     FILE *fp = R_fopen(".RData", "wb"); /* binary file */
     if (!fp)
-	error("can't save data -- unable to open ./.RData\n");
+	error("can't save data -- unable to open ./.RData");
     if (HASHTAB(R_GlobalEnv) != R_NilValue)
 	R_SaveToFile(HASHTAB(R_GlobalEnv), fp, 0);
     else
@@ -167,7 +167,7 @@ int R_HiddenFile(char *name)
 
 FILE *R_fopen(const char *filename, const char *mode)
 {
-    return( fopen(filename, mode) );
+    return(filename ? fopen(filename, mode) : NULL );
 }
 
 /*
@@ -181,6 +181,69 @@ char *R_HomeDir()
     return getenv("R_HOME");
 }
 
+/*
+ *  7) PLATFORM DEPENDENT FUNCTIONS
+ */
+
+#ifdef Win32
+#include <windows.h>
+#else
+extern char ** environ;
+#endif
+
+SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    int i, j;
+    char *s;
+    SEXP ans;
+
+    checkArity(op, args);
+
+    if (!isString(CAR(args)))
+	errorcall(call, "wrong type for argument");
+
+    i = LENGTH(CAR(args));
+    if (i == 0) {
+#ifdef Win32
+	char *envir, *e;
+	envir = (char *) GetEnvironmentStrings();
+	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1);
+	PROTECT(ans = allocVector(STRSXP, i));
+	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1)
+	    STRING(ans)[i] = mkChar(e);
+	FreeEnvironmentStrings(envir);
+#else
+	char **e;
+	for (i = 0, e = environ; *e != NULL; i++, e++);
+	PROTECT(ans = allocVector(STRSXP, i));
+	for (i = 0, e = environ; *e != NULL; i++, e++)
+	    STRING(ans)[i] = mkChar(*e);
+#endif
+    } else {
+	PROTECT(ans = allocVector(STRSXP, i));
+	for (j = 0; j < i; j++) {
+	    s = getenv(CHAR(STRING(CAR(args))[j]));
+	    if (s == NULL)
+		STRING(ans)[j] = mkChar("");
+	    else
+		STRING(ans)[j] = mkChar(s);
+	}
+    }
+    UNPROTECT(1);
+    return (ans);
+}
+
+SEXP do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP rval;
+
+    rval=allocVector(LGLSXP, 1);
+    if( R_Interactive )
+	LOGICAL(rval)[0]=1;
+    else
+	LOGICAL(rval)[0]=0;
+    return rval;
+}
 
 /*
  *  INITIALIZATION HELPER CODE

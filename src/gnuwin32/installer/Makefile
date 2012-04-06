@@ -1,6 +1,6 @@
 # Makefile for R for Windows Installer
 
-PREFIX=rw0651
+PREFIX=rw0900
 include ../MkRules
 UNZIPDIR=unzip
 

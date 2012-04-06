@@ -1,5 +1,6 @@
 \name{arima0}
 \alias{arima0}
+\alias{arima0.diag}
 \alias{print.arima0}
 \alias{predict.arima0}
 \title{ARIMA Modelling of Time Series -- Preliminary Version}
@@ -9,6 +10,7 @@ arima0(x, order = c(0, 0, 0),
        xreg = NULL, include.mean, na.action = na.fail,
        delta = 0.01, transform.pars = 2)
 predict(arima0.obj, n.ahead = 1, newxreg, se.fit = TRUE)
+arima0.diag(fit, gof.lag = 10) 
 }
 \arguments{
  \item{x}{a univariate time series}
@@ -33,12 +35,12 @@ predict(arima0.obj, n.ahead = 1, newxreg, se.fit = TRUE)
  \item{delta}{A value to indicate at which point `fast recursions'
      should be used. See the Details section.}
 
- \item{transform.pars}{If grater than 0, the ARMA parameters are
+ \item{transform.pars}{If greater than 0, the ARMA parameters are
      transformed to ensure that they remain in the region of
      invertibility. If equal to 2, the optimization is rerun on
      the original scale to find the Hessian.}
 
- \item{arima0.obj}{The result of an \code{arima0} fit.}
+ \item{arima0.obj, fit}{The result of an \code{arima0} fit.}
 
  \item{newxreg}{New values of \code{xreg} to be used for
      prediction. Must have at least \code{n.ahead} rows.}
@@ -46,12 +48,21 @@ predict(arima0.obj, n.ahead = 1, newxreg, se.fit = TRUE)
  \item{n.ahead}{The number of steps ahead for which prediction is required.}
 
  \item{se.fit}{Logical: should standard errors of prediction be returned?}
+
+ \item{gof.lag}{Number of lags to be used in goodness-of-fit test.}
 }
 \description{
     Fit an ARIMA model to a univariate time series by exact maximum
     likelihood, and forecast from the fitted model.
 }
 \details{
+    Different definitions of ARIMA models have different signs for the
+    AR and/or MA coefficients. The definition here has
+
+    X[t] = a[1]X[t-1] + ... + a[p]X[t-p] + e[t] + b[1]e[t-1] + ... + b[q]e[t-q]
+
+    and so the MA coefficients differ in sign from those of S-PLUS.
+    
     The exact likelihood is computed via a state-space representation of
     the ARMA process, and the innovations and their variance found by a
     Kalman filter using the Fortran code of Gardener \emph{et al.}

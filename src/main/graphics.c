@@ -287,7 +287,7 @@ double yDevtoCharUnits(double y, DevDesc *dd)
 
 static void BadUnitsError(char *where)
 {
-    error("Bad units specified in %s, please report!\n", where);
+    error("Bad units specified in %s, please report!", where);
 }
 
 /* the functions GConvertXUnits and ConvertYUnits convert a single */
@@ -1743,7 +1743,7 @@ DevDesc *GNewPlot(int recording, int ask)
 	if (isString(defdev) && length(defdev) > 0) {
 	    PROTECT(defdev = lang1(install(CHAR(STRING(defdev)[0]))));
 	}
-	else error("No active or default device\n");
+	else error("No active or default device");
 	eval(defdev, R_GlobalEnv);
 	UNPROTECT(1);
     }
@@ -1763,7 +1763,7 @@ DevDesc *GNewPlot(int recording, int ask)
 	    if (dd->gp.ask && recording) {
 		NewFrameConfirm();
 		if (NoDevices())
-		    error("attempt to plot on null device\n");
+		    error("attempt to plot on null device");
 		else
 		    dd = CurrentDevice();
 	    }
@@ -1799,25 +1799,25 @@ DevDesc *GNewPlot(int recording, int ask)
     dd->dp.valid = dd->gp.valid = 0;
     if (!validOuterMargins(dd)) {
 	if (recording)
-	    invalidError("Outer margins too large (fig.region too small)\n", dd);
+	    invalidError("Outer margins too large (fig.region too small)", dd);
 	else
 	    GText(0.5,0.5,NFC,"Outer margins too large (fig.region too small)",
 		  0.5,0.5, 0, dd);
     } else if (!validFigureRegion(dd)) {
 	if (recording)
-	    invalidError("Figure region too large\n", dd);
+	    invalidError("Figure region too large", dd);
 	else
 	    GText(0.5,0.5,NFC,"Figure region too large",
 		  0.5,0.5, 0, dd);
     } else if (!validFigureMargins(dd)) {
 	if (recording)
-	    invalidError("Figure margins too large\n", dd);
+	    invalidError("Figure margins too large", dd);
 	else
 	    GText(0.5,0.5,NFC,"Figure margins too large",
 		  0.5,0.5, 0, dd);
     } else if (!validPlotRegion(dd)) {
 	if (recording)
-	    invalidError("Plot region too large\n", dd);
+	    invalidError("Plot region too large", dd);
 	else
 	    GText(0.5,0.5,NFC,"Plot region too large",
 		  0.5,0.5, 0, dd);
@@ -1880,7 +1880,7 @@ void GScale(double min, double max, int axis, DevDesc *dd)
     case 's':/* FIXME --- implement  's' and 'e' axis styles ! */
     case 'e':
     default:
-	error("axis style \"%c\" unimplemented\n", style);
+	error("axis style \"%c\" unimplemented", style);
     }
 
     if(axis == 1 || axis == 3) {
@@ -2127,7 +2127,7 @@ void copyGPar(GPar *source, GPar *dest)
 void GRestore(DevDesc *dd)
 {
     if (NoDevices())
-	error("No graphics device is active\n");
+	error("No graphics device is active");
     copyGPar(&(dd->dp), &(dd->gp));
 }
 
@@ -2307,7 +2307,7 @@ void GSetState(int newstate, DevDesc *dd)
 void GCheckState(DevDesc *dd)
 {
     if(dd->gp.state == 0)
-	error("plot.new has not been called yet\n");
+	error("plot.new has not been called yet");
     if (dd->gp.valid == 0)
 	onintr();
 }
@@ -2484,7 +2484,7 @@ static void CScliplines(int n, double *x, double *y, int coords, DevDesc *dd)
     xx = (double *) C_alloc(n, sizeof(double));
     yy = (double *) C_alloc(n, sizeof(double));
     if (xx == NULL || yy == NULL)
-	error("out of memory while clipping polyline\n");
+	error("out of memory while clipping polyline");
 
     xx[0] = x1 = x[0];
     yy[0] = y1 = y[0];
@@ -2537,6 +2537,7 @@ static void CScliplines(int n, double *x, double *y, int coords, DevDesc *dd)
 /* Draw a line. */
 void GLine(double x1, double y1, double x2, double y2, int coords, DevDesc *dd)
 {
+    if (dd->gp.lty == LTY_BLANK) return;
     if (dd->dp.canClip) {
 	GClip(dd);
 	dd->dp.line(x1, y1, x2, y2, coords, dd);
@@ -2557,7 +2558,7 @@ void GLine(double x1, double y1, double x2, double y2, int coords, DevDesc *dd)
 int GLocator(double *x, double *y, int coords, DevDesc *dd)
 {
     if(!dd->dp.locator)
-	error("no locator capability in device driver\n");
+	error("no locator capability in device driver");
     if(dd->dp.locator(x, y, dd)) {
 	GConvert(x, y, DEVICE, coords, dd);
 	return 1;
@@ -2574,7 +2575,7 @@ void GMetricInfo(int c, double *ascent, double *descent, double *width,
     if(dd->dp.metricInfo)
 	dd->dp.metricInfo(c, ascent, descent, width, dd);
     else
-	error("detailed character metric information unavailable\n");
+	error("detailed character metric information unavailable");
 #else
     dd->dp.metricInfo(c & 0xFF, ascent, descent, width, dd);
 #endif
@@ -2596,7 +2597,7 @@ void GMetricInfo(int c, double *ascent, double *descent, double *width,
 void GMode(int mode, DevDesc *dd)
 {
     if (NoDevices())
-	error("No graphics device is active\n");
+	error("No graphics device is active");
     if(mode != dd->gp.devmode)
 	dd->dp.mode(mode, dd);
     dd->gp.new = dd->dp.new = 0;
@@ -2825,6 +2826,7 @@ static void clipPolygon(int n, double *x, double *y, int coords,
 void GPolygon(int n, double *x, double *y, int coords,
 	      int bg, int fg, DevDesc *dd)
 {
+    if (dd->gp.lty == LTY_BLANK) return;
     if (dd->dp.canClip) {
 	GClip(dd);
 	dd->dp.polygon(n, x, y, coords, bg, fg, dd);
@@ -2838,12 +2840,13 @@ void GPolygon(int n, double *x, double *y, int coords,
 /* Draw a series of line segments. */
 void GPolyline(int n, double *x, double *y, int coords, DevDesc *dd)
 {
-  if (dd->dp.canClip) {
-      GClip(dd);
-      dd->dp.polyline(n, x, y, coords, dd);
-  }
-  else
-      CScliplines(n, x, y, coords, dd);
+    if (dd->gp.lty == LTY_BLANK) return;
+    if (dd->dp.canClip) {
+        GClip(dd);
+        dd->dp.polyline(n, x, y, coords, dd);
+    }
+    else
+        CScliplines(n, x, y, coords, dd);
 }
 
 /* draw a circle */
@@ -2888,8 +2891,15 @@ static void clipCircle(double x, double y, int coords,
 	    char *vmax;
 	    double *xc, *yc;
 	    int i;
-	    /* replace circle with decagon */
-	    int numvert = 10;
+
+	    /* Replace circle with polygon.
+
+	       Heuristic for number of vertices is to use theta so
+	       that cos(theta)*r ~ r - 1 in device units. This is
+	       roughly const * sqrt(r) so there'd be little point in
+	       enforcing an upper limit. */
+
+	    int numvert = (r <= 6) ? 10 : 2 * M_PI/acos(1 - 1/r) ;
 	    double theta = 2*M_PI/numvert;
 	    vmax = vmaxget();
 	    xc = (double*)R_alloc(numvert+1, sizeof(double));
@@ -2931,6 +2941,7 @@ void GCircle(double x, double y, int coords,
     ir = radius/(72.0 * dd->gp.ipr[0]);
 #endif
     ir = radius/dd->gp.ipr[0];
+    ir = (ir > 0) ? ir : 1;
     if (dd->dp.canClip) {
 	GClip(dd);
 	dd->dp.circle(x, y, coords, ir, col, border, dd);
@@ -3009,7 +3020,7 @@ double GStrWidth(char *str, int units, DevDesc *dd)
 	double wdash;
 	sbuf = (char*)malloc(strlen(str) + 1);
         if (sbuf == NULL)
-            error("unable to allocate memory (in GStrWidth)\n");
+            error("unable to allocate memory (in GStrWidth)");
 	sb = sbuf;
         for(s = str; ; s++) {
             if (*s == '\n' || *s == '\0') {
@@ -3034,8 +3045,7 @@ double GStrWidth(char *str, int units, DevDesc *dd)
 
 
 /* Compute string height. */
-/* Just return the height of n lines in the current font */
-/* If you want more detail, use GMetricInfo */
+
 double GStrHeight(char *str, int units, DevDesc *dd)
 {
 #ifdef BUG61
@@ -3061,15 +3071,23 @@ double GStrHeight(char *str, int units, DevDesc *dd)
 #else
     double h;
     char *s;
+    double asc, dummy;
     int n;
-    /* Count the lines of text */
-    n = 1;
+    /* Count the lines of text minus one */
+    n = 0;
     for(s = str; *s ; s++)
 	if (*s == '\n')
-	    n += 1;
-    h = n * GConvertYUnits(1, CHARS, DEVICE, dd);
+	    n++;
+    h = n ? n * GConvertYUnits(1, CHARS, DEVICE, dd) : 0.;
+    /*  Add in the ascent of the font, if available */
+    if(dd->dp.metricInfo)
+	GMetricInfo('M', &asc, &dummy, &dummy, DEVICE, dd);
+    else
+	asc = 1;
+    h += asc;
     if (units != DEVICE)
 	h = GConvertYUnits(h, DEVICE, units, dd);
+
     return h;
 #endif
 }
@@ -3360,7 +3378,7 @@ void GBox(int which, DevDesc *dd)
 	GPolygon(4, x, y, NDC, NA_INTEGER, dd->gp.col, dd);
 	break;
     default:
-	error("invalid GBox argument\n");
+	error("invalid GBox argument");
     }
 }
 
@@ -3419,11 +3437,11 @@ void GPretty(double *lo, double *up, int *ndiv)
     int ns, nu, nd0;
     short i_small;
     if(*ndiv <= 0)
-	error("invalid axis extents [GPretty(.,.,n=%d)\n", *ndiv);
+	error("invalid axis extents [GPretty(.,.,n=%d)", *ndiv);
     if(*lo == R_PosInf || *up == R_PosInf ||
        *lo == R_NegInf || *up == R_NegInf ||
        !R_FINITE(dx = *up - *lo)) {
-	error("Infinite axis extents [GPretty(%g,%g,%d)]\n", *lo, *up, *ndiv);
+	error("Infinite axis extents [GPretty(%g,%g,%d)]", *lo, *up, *ndiv);
 	return;/*-Wall*/
     }
 
@@ -3486,11 +3504,11 @@ void GPretty(double *lo, double *up, int *ndiv)
     double high_u_fact[2] = { .8, 1.7 };
 
     if(*ndiv <= 0)
-	error("invalid axis extents [GPretty(.,.,n=%d)\n", *ndiv);
+	error("invalid axis extents [GPretty(.,.,n=%d)", *ndiv);
     if(*lo == R_PosInf || *up == R_PosInf ||
        *lo == R_NegInf || *up == R_NegInf ||
        !R_FINITE(*up - *lo)) {
-	error("Infinite axis extents [GPretty(%g,%g,%d)]\n", *lo, *up, *ndiv);
+	error("Infinite axis extents [GPretty(%g,%g,%d)]", *lo, *up, *ndiv);
 	return;/*-Wall*/
     }
 
@@ -3534,8 +3552,12 @@ void GPretty(double *lo, double *up, int *ndiv)
 #else
 #define CMAG	1.1				/* Circle magnifier */
 #endif
-
-/* Draw one of the R special symbols. */
+#ifdef OLDSYMSIZE
+#define GSTR_0  GStrWidth("0", INCHES, dd)
+#else
+#define GSTR_0  xDevtoInch(dd->dp.cra[0] * 0.66, dd) * dd->gp.cex
+/* NOTE: This cex is already multiplied with cexbase */
+#endif /* Draw one of the R special symbols. */
 void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 {
     double r, xc, yc;
@@ -3560,19 +3582,19 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	switch(pch) {
 
 	case 0: /* S square */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GRect(x-xc, y-xc, x+xc, y+xc, INCHES, NA_INTEGER,
 		  dd->gp.col, dd);
 	    break;
 
 	case 1: /* S octahedron ( circle) */
-	    xc = CMAG * RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = CMAG * RADIUS * GSTR_0;
 	    GCircle(x, y, coords, xc, NA_INTEGER, dd->gp.col, dd);
 	    break;
 
 	case 2:	/* S triangle - point up */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3584,21 +3606,21 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 3: /* S plus */
-	    xc = sqrt(2.)*RADIUS*GStrWidth("0", INCHES, dd);
+	    xc = sqrt(2.)*RADIUS*GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y, x+xc, y, INCHES, dd);
 	    GLine(x, y-xc, x, y+xc, INCHES, dd);
 	    break;
 
 	case 4: /* S times */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y-xc, x+xc, y+xc, INCHES, dd);
 	    GLine(x-xc, y+xc, x+xc, y-xc, INCHES, dd);
 	    break;
 
 	case 5: /* S diamond */
-	    xc = sqrt(2.) * RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = sqrt(2.) * RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x-xc; yy[0] = y;
 	    xx[1] = x; yy[1] = y+xc;
@@ -3608,7 +3630,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 6: /* S triangle - point down */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3620,7 +3642,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 7:	/* S square and times superimposed */
-	    xc =  RADIUS * GStrWidth("0", INCHES, dd);
+	    xc =  RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y-xc, x+xc, y+xc, INCHES, dd);
 	    GLine(x-xc, y+xc, x+xc, y-xc, INCHES, dd);
@@ -3629,7 +3651,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 8: /* S plus and times superimposed */
-	    xc =  RADIUS * GStrWidth("0", INCHES, dd);
+	    xc =  RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y-xc, x+xc, y+xc, INCHES, dd);
 	    GLine(x-xc, y+xc, x+xc, y-xc, INCHES, dd);
@@ -3639,7 +3661,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 9: /* S diamond and plus superimposed */
-	    xc = sqrt(2.) * RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = sqrt(2.) * RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x-xc; yy[0] = y;
 	    xx[1] = x; yy[1] = y+xc;
@@ -3651,7 +3673,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 10: /* S hexagon (circle) and plus superimposed */
-	    xc = CMAG * RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = CMAG * RADIUS * GSTR_0;
 	    GCircle(x, y, coords, xc, NA_INTEGER, dd->gp.col, dd);
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y, x+xc, y, INCHES, dd);
@@ -3659,7 +3681,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 11: /* S superimposed triangles */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3676,7 +3698,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 12: /* S square and plus superimposed */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y, x+xc, y, INCHES, dd);
 	    GLine(x, y-xc, x, y+xc, INCHES, dd);
@@ -3685,7 +3707,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 13: /* S octagon (circle) and times superimposed */
-	    xc = CMAG * RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = CMAG * RADIUS * GSTR_0;
 	    GCircle(x, y, coords, xc, NA_INTEGER, dd->gp.col, dd);
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GLine(x-xc, y-xc, x+xc, y+xc, INCHES, dd);
@@ -3693,7 +3715,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 14: /* S square and point-up triangle superimposed */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x; yy[0] = y+xc;
 	    xx[1] = x+xc; yy[1] = y-xc;
@@ -3704,7 +3726,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 15: /* S filled square */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x-xc; yy[0] = y-xc;
 	    xx[1] = x+xc; yy[1] = y-xc;
@@ -3715,12 +3737,12 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 16: /* S filled octagon (circle) */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GCircle(x, y, coords, xc, dd->gp.col, dd->gp.col, dd);
 	    break;
 
 	case 17: /* S filled point-up triangle */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3733,7 +3755,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 18:
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x;	  yy[0] = y-xc;
 	    xx[1] = x+xc; yy[1] = y;
@@ -3744,31 +3766,31 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 19: /* R filled circle */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GCircle(x, y, coords, xc, dd->gp.col, dd->gp.col, dd);
 	    break;
 
 
 	case 20: /* R Dot */
-	    xc = SMALL * GStrWidth("0", INCHES, dd);
+	    xc = SMALL * GSTR_0;
 	    GCircle(x, y, coords, xc, dd->gp.col, dd->gp.col, dd);
 	    break;
 
 
 	case 21: /* circles */
-	    xc = RADIUS * CMAG * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * CMAG * GSTR_0;
 	    GCircle(x, y, coords, xc, dd->gp.bg, dd->gp.col, dd);
 	    break;
 
 	case  22: /* squares */
-	    xc = RADIUS * SQRC * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * SQRC * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    GRect(x-xc, y-xc, x+xc, y+xc, INCHES,
 		  dd->gp.bg, dd->gp.col, dd);
 	    break;
 
 	case 23: /* diamonds */
-	    xc = RADIUS * DMDC * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * DMDC * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    xx[0] = x	  ; yy[0] = y-xc;
 	    xx[1] = x+xc; yy[1] = y;
@@ -3779,7 +3801,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 24: /* triangle (point up) */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3792,7 +3814,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 	    break;
 
 	case 25: /* triangle (point down) */
-	    xc = RADIUS * GStrWidth("0", INCHES, dd);
+	    xc = RADIUS * GSTR_0;
 	    GConvert(&x, &y, coords, INCHES, dd);
 	    r = TRC0 * xc;
 	    yc = TRC2 * xc;
@@ -3958,7 +3980,7 @@ void hsv2rgb(double *h, double *s, double *v, double *r, double *g, double *b)
 	*b = q;
 	break;
     default:
-	error("bad hsv to rgb color conversion\n");
+	error("bad hsv to rgb color conversion");
     }
 }
 
@@ -4676,7 +4698,7 @@ static unsigned int hexdigit(int digit)
     if('0' <= digit && digit <= '9') return digit - '0';
     else if('A' <= digit && digit <= 'F') return 10 + digit - 'A';
     else if('a' <= digit && digit <= 'f') return 10 + digit - 'a';
-    else error("invalid hex digit in color\n");
+    else error("invalid hex digit in color");
     return digit - '0';	/* never occurs but avoid compiler warnings */
 }
 
@@ -4715,7 +4737,7 @@ unsigned int rgb2col(char *rgb)
 {
     unsigned int r, g, b;
     if(rgb[0] != '#' || strlen(rgb) != 7)
-	error("invalid RGB specification\n");
+	error("invalid RGB specification");
     r = 16 * hexdigit(rgb[1]) + hexdigit(rgb[2]);
     g = 16 * hexdigit(rgb[3]) + hexdigit(rgb[4]);
     b = 16 * hexdigit(rgb[5]) + hexdigit(rgb[6]);
@@ -4731,7 +4753,7 @@ unsigned int name2col(char *nm)
 	if(StrMatch(ColorDataBase[i].name, nm))
 	    return ColorDataBase[i].code;
     }
-    error("invalid color name\n");
+    error("invalid color name");
     return 0;		/* never occurs but avoid compiler warnings */
 }
 
@@ -4742,7 +4764,7 @@ unsigned int number2col(char *nm)
     int index;
     char *ptr;
     index = strtod(nm, &ptr);
-    if(*ptr) error("invalid color specification\n");
+    if(*ptr) error("invalid color specification");
     if(index == 0) return CurrentDevice()->dp.bg;
     else return R_ColorTable[(index-1) % R_ColorTableSize];
 }
@@ -4857,17 +4879,19 @@ typedef struct {
     unsigned int pattern;
 } LineTYPE;
 
+/* LTY_... integer patterns are in ../include/Graphics.h ! */
 static LineTYPE linetype[] = {
-    { "solid",	 LTY_SOLID   },
-    { "dashed",	 LTY_DASHED  },
-    { "dotted",	 LTY_DOTTED  },
-    { "dotdash", LTY_DOTDASH },
-    { "longdash",LTY_LONGDASH},
-    { "twodash", LTY_TWODASH },
+    { "blank",   LTY_BLANK   },/* 0 */
+    { "solid",	 LTY_SOLID   },/* 1 */
+    { "dashed",	 LTY_DASHED  },/* 2 */
+    { "dotted",	 LTY_DOTTED  },/* 3 */
+    { "dotdash", LTY_DOTDASH },/* 4 */
+    { "longdash",LTY_LONGDASH},/* 5 */
+    { "twodash", LTY_TWODASH },/* 6 */
     { NULL,	 0	     },
 };
 
-static int nlinetype = (sizeof(linetype)/sizeof(LineTYPE)-1);
+static int nlinetype = (sizeof(linetype)/sizeof(LineTYPE)-2);
 
 unsigned int LTYpar(SEXP value, int index)
 {
@@ -4890,19 +4914,21 @@ unsigned int LTYpar(SEXP value, int index)
     }
     else if(isInteger(value)) {
 	code = INTEGER(value)[index];
-	if(code==NA_INTEGER || code <= 0)
+	if(code==NA_INTEGER || code < 0)
 	    return NA_INTEGER;
-	code = (code-1) % nlinetype;
+	if (code > 0)
+	    code = (code-1) % nlinetype + 1;
 	return linetype[code].pattern;
     }
     else if(isReal(value)) {
 	code = REAL(value)[index];
-	if(!R_FINITE(code) || code <= 0)
+	if(!R_FINITE(code) || code < 0)
 	    return NA_INTEGER;
-	code = (code-1) % nlinetype;
+        if (code > 0)
+	    code = (code-1) % nlinetype + 1;
 	return linetype[code].pattern;
     }
-    else error("invalid line type\n");
+    else error("invalid line type");
     /*NOTREACHED*/
     return 0;		/* never occurs but avoid compiler warnings */
 }
@@ -4981,7 +5007,7 @@ DevDesc nullDevice;
 void devError()
 {
     error("No graphics device is active -- "
-	  "SHOULDN'T happen anymore -- please report\n");
+	  "SHOULDN'T happen anymore -- please report");
 }
 
 
@@ -5305,7 +5331,7 @@ void restoredpSaved(DevDesc *dd)
     dd->dp.mgp[2] = dd->dpSaved.mgp[2];
     dd->dp.mkh = dd->dpSaved.mkh;
     dd->dp.pch = dd->dpSaved.pch;
-    /* dd->dp.ps = dd->dpSaved.ps; */
+    dd->dp.ps = dd->dpSaved.ps; /*was commented out --why?*/
     dd->dp.smo = dd->dpSaved.smo;
     dd->dp.srt = dd->dpSaved.srt;
     dd->dp.tck = dd->dpSaved.tck;

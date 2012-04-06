@@ -8,6 +8,8 @@ smooth.spline(x, y, w=rep(1, length(x)), df=5, spar=0, cv=FALSE,
               all.knots=FALSE, df.offset=0, penalty=1)
 }
 \alias{smooth.spline}
+\alias{predict.smooth.spline.fit}
+\alias{print.smooth.spline}
 \arguments{
  \item{x}{a vector giving the values of the predictor variable, or  a
    list or a two-column matrix specifying x and y. }
@@ -20,7 +22,7 @@ smooth.spline(x, y, w=rep(1, length(x)), df=5, spar=0, cv=FALSE,
    second derivative in the fit (penalized log lik.) criterion.}
  \item{cv}{ordinary (TRUE) or `generalized' (FALSE) cross-validation.}
  \item{all.knots}{if TRUE, all points in \code{x} are uses as knots. If
-   FAlSE, a suitably fine grid of knots is used.}
+   FALSE, a suitably fine grid of knots is used.}
  \item{df.offset}{allows the degrees of freedom to be increased by
    \code{df.offset} in the GCV criterion.}
  \item{penalty}{the coefficient of the penalty for degrees of freedom
@@ -29,7 +31,7 @@ smooth.spline(x, y, w=rep(1, length(x)), df=5, spar=0, cv=FALSE,
 \description{Fits a cubic smoothing spline to the supplied data.
 }
 \details{
-  The \code{x} vextor should contain at lest ten distinct values.
+  The \code{x} vector should contain at least ten distinct values.
 
   If \code{spar} is missing or 0, the value of \code{df} is used to
   determine the degree of smoothing. If both are missing, leave-one-out

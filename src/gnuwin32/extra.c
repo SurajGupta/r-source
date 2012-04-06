@@ -35,17 +35,25 @@
 
 static char DefaultFileName[MAX_PATH];
 
-/* 
+/*
  * replacement for Windows function that uses root directory
  */
 char * tmpnam(char * str)
 {
-    char *tmp, *tmp2;
+    char *tmp, tmp1[MAX_PATH], *tmp2, *p;
+    int hasspace = 0;
 
     if(str) tmp2 = str; else tmp2 = DefaultFileName;
     tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
-    if (!tmp) tmp = getenv("R_USER");
+    if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
+    /* make sure no spaces in path */
+    for (p = tmp; *p; p++)
+	if (isspace(*p)) { hasspace = 1; break; }
+    if (hasspace)
+	GetShortPathName(tmp, tmp1, MAX_PATH);
+    else
+	strcpy(tmp1, tmp);
     sprintf(tmp2, "%s/RtmpXXXXXX", tmp);
     mktemp(tmp2); /* Windows function to replace X's */
     return(tmp2);
@@ -55,22 +63,30 @@ char * tmpnam(char * str)
 SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  ans;
-    char *tmp, *tn, tm[MAX_PATH];
+    char *tmp, *tn, tm[MAX_PATH], tmp1[MAX_PATH], *p;
     unsigned int n, done = 0;
+    int hasspace = 0;
 
     WIN32_FIND_DATA fd;
     HANDLE h;
     checkArity(op, args);
     if (!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
-	errorcall(call, "invalid file name argument\n");
+	errorcall(call, "invalid file name argument");
     tn = CHAR(STRING(CAR(args))[0]);
     /* try to get a new file name */
     tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
-    if (!tmp) tmp = getenv("R_USER");
+    if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
+    /* make sure no spaces in path */
+    for (p = tmp; *p; p++)
+	if (isspace(*p)) { hasspace = 1; break; }
+    if (hasspace)
+	GetShortPathName(tmp, tmp1, MAX_PATH);
+    else
+	strcpy(tmp1, tmp);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
-        sprintf(tm, "%s\\%s%d", tmp, tn, rand());
+        sprintf(tm, "%s\\%s%d", tmp1, tn, rand());
         if ((h = FindFirstFile(tm, &fd)) == INVALID_HANDLE_VALUE) {
 	    done = 1;
 	    break;
@@ -79,7 +95,7 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
         tm[0] = '\0';
     }
     if(!done)
-	error("cannot find unused tempfile name\n");
+	error("cannot find unused tempfile name");
     PROTECT(ans = allocVector(STRSXP, 1));
     STRING(ans)[0] = mkChar(tm);
     UNPROTECT(1);
@@ -102,7 +118,7 @@ SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     fn = CAR(args);
     nfiles = length(fn);
     if (!isString(fn) || nfiles < 1)
-	errorcall(call, "invalid file name argument\n");
+	errorcall(call, "invalid file name argument");
     for(i = 0; i < nfiles; i++) {
 	strcpy(tmp, CHAR(STRING(fn)[i]));
 	for(p = tmp; *p != '\0'; p++)
@@ -145,14 +161,14 @@ SEXP do_helpstart(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     home = getenv("R_HOME");
     if (home == NULL)
-	error("R_HOME not set\n");
-    sprintf(buf, "%s\\doc\\html\\index.html", home);
+	error("R_HOME not set");
+    sprintf(buf, "%s\\doc\\html\\rwin.html", home);
     ff = fopen(buf, "r");
     if (!ff) {
-	sprintf(buf, "%s\\doc\\html\\index.htm", home);
+	sprintf(buf, "%s\\doc\\html\\rwin.htm", home);
 	ff = fopen(buf, "r");
 	if (!ff) {
-	    sprintf(buf, "%s\\doc\\html\\index.htm[l] not found\n", home);
+	    sprintf(buf, "%s\\doc\\html\\rwin.htm[l] not found", home);
 	    error(buf);
 	}
     }
@@ -180,40 +196,40 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     if (!isString(CAR(args)))
-	errorcall(call, "invalid topic argument\n");
+	errorcall(call, "invalid topic argument");
     item = CHAR(STRING(CAR(args))[0]);
     type = asInteger(CADR(args));
     if (type == 1) {
 	ff = fopen(item, "r");
 	if (!ff) {
-	    sprintf(buf, "%s not found\n", item);
+	    sprintf(buf, "%s not found", item);
 	    error(buf);
 	}
 	fclose(ff);
 	home = getenv("R_HOME");
 	if (home == NULL)
-	    error("R_HOME not set\n");
+	    error("R_HOME not set");
 	ShellExecute(NULL, "open", item, NULL, home, SW_SHOW);
     } else if (type == 2) {
 	if (!isString(CADDR(args)))
-	    errorcall(call, "invalid hlpfile argument\n");
+	    errorcall(call, "invalid hlpfile argument");
 	hfile = CHAR(STRING(CADDR(args))[0]);
 	if (!WinHelp((HWND) 0, hfile, HELP_KEY, (DWORD) item))
-	    warning("WinHelp call failed\n");
+	    warning("WinHelp call failed");
 	else {
 	    if (nhfiles >= 50)
-		error("too many .hlp files opened\n");
+		error("too many .hlp files opened");
 	    hfiles[nhfiles] = malloc(strlen(hfile) * sizeof(char));
 	    strcpy(hfiles[nhfiles++], hfile);
 	}
     } else if (type == 3) {
 	if (!isString(CADDR(args)))
-	    warningcall(call, "invalid hlpfile argument\n");
+	    warningcall(call, "invalid hlpfile argument");
 	hfile = CHAR(STRING(CADDR(args))[0]);
 	if (!WinHelp((HWND) 0, hfile, HELP_QUIT, (DWORD) 0))
-	    error("WinHelp call failed\n");
+	    error("WinHelp call failed");
     } else
-	warning("type not yet implemented\n");
+	warning("type not yet implemented");
     return R_NilValue;
 }
 
@@ -233,22 +249,22 @@ SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #include <winbase.h>
-/* typedef struct _OSVERSIONINFO{  
-    DWORD dwOSVersionInfoSize; 
-    DWORD dwMajorVersion; 
-    DWORD dwMinorVersion; 
-    DWORD dwBuildNumber; 
-    DWORD dwPlatformId; 
-    TCHAR szCSDVersion[ 128 ]; 
+/* typedef struct _OSVERSIONINFO{
+    DWORD dwOSVersionInfoSize;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    DWORD dwPlatformId;
+    TCHAR szCSDVersion[ 128 ];
     } OSVERSIONINFO; */
- 
+
 
 SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char isNT[8]="??", ver[256];
     SEXP ans;
     OSVERSIONINFO verinfo;
-    
+
     checkArity(op, args);
     verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&verinfo);
@@ -261,18 +277,35 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 	break;
     case VER_PLATFORM_WIN32s:
 	strcpy(isNT, "win32s");
-	break;	
+	break;
     default:
 	sprintf(isNT, "ID=%d", (int)verinfo.dwPlatformId);
 	break;
     }
-    
+
     sprintf(ver, "Windows %s %d.%d (build %d) %s", isNT,
 	    (int)verinfo.dwMajorVersion, (int)verinfo.dwMinorVersion,
 	    LOWORD(verinfo.dwBuildNumber), verinfo.szCSDVersion);
-    
+
     PROTECT(ans = allocVector(STRSXP, 1));
     STRING(ans)[0] = mkChar(ver);
     UNPROTECT(1);
     return (ans);
+}
+
+SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    char *home, buf[MAX_PATH];
+    SEXP file;
+
+    checkArity(op, args);
+    home = getenv("R_HOME");
+    if (home == NULL)
+	error("R_HOME not set");
+    file = CAR(args);
+    if (!isString(file) || length(file) != 1)
+	errorcall(call, "invalid file argument");
+    strcpy(buf, CHAR(STRING(file)[0]));
+    ShellExecute(NULL, "open", buf, NULL, home, SW_SHOW);
+    return R_NilValue;
 }

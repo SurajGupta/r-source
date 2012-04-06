@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   
-  $Source: /users/rdev/R/CVS-ARCHIVE/R/doc/html/search/IndexEntry.java,v $
+  $Source: /home/rdevel/CVS-ARCHIVE//R/doc/html/search/IndexEntry.java,v $
   
   $Revision: 1.3 $
 

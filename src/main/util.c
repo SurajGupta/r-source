@@ -194,12 +194,15 @@ SEXP asChar(SEXP x)
 	    return mkChar(buf);
 	case REALSXP:
 	    formatReal(REAL(x), 1, &w, &d, &e);
+#ifdef OLD
 	    if (e)
 		sprintf(buf, "%*.*e", w, d, REAL(x)[0]);
 	    else
 		sprintf(buf, "%*.*f", w, d, REAL(x)[0]);
 	    return mkChar(buf);
-
+#else
+	    return mkChar(EncodeReal(REAL(x)[0], w, d, e));
+#endif
         /* case CPLXSXP: --- FIXME here */
 
 	case STRSXP:
@@ -228,6 +231,12 @@ void internalTypeCheck(SEXP call, SEXP s, SEXPTYPE type)
 int isValidString(SEXP x)
 {
     return isString(x) && LENGTH(x) > 0 && !isNull(STRING(x)[0]);
+}
+
+/* non-empty ("") valid string :*/
+int isValidStringF(SEXP x)
+{
+    return isValidString(x) && CHAR(STRING(x)[0])[0];
 }
 
 int isSymbol(SEXP s)
@@ -460,7 +469,7 @@ int nrows(SEXP s)
     else if (isFrame(s)) {
 	return nrows(CAR(s));
     }
-    else error("object is not a matrix\n");
+    else error("object is not a matrix");
     return -1;
 }
 
@@ -476,7 +485,7 @@ int ncols(SEXP s)
     else if (isFrame(s)) {
 	return length(s);
     }
-    else error("object is not a matrix\n");
+    else error("object is not a matrix");
     return -1;/*NOTREACHED*/
 }
 
@@ -639,6 +648,13 @@ SEXP type2str(SEXPTYPE t)
     return R_NilValue; /* for -Wall */
 }
 
+int isBlankString(unsigned char *s)
+{
+    while (*s)
+	if (!isspace(*s++)) return 0;
+    return 1;
+}
+
 int StringBlank(SEXP x)
 {
     if (x == R_NilValue) return 1;
@@ -680,7 +696,7 @@ SEXP EnsureString(SEXP s)
 	s = R_BlankString;
 	break;
     default:
-	error("invalid tag in name extraction\n");
+	error("invalid tag in name extraction");
     }
     return s;
 }
@@ -689,7 +705,7 @@ SEXP EnsureString(SEXP s)
 void checkArity(SEXP op, SEXP args)
 {
     if (PRIMARITY(op) >= 0 && PRIMARITY(op) != length(args))
-	error("%d argument%s passed to \"%s\" which requires %d.\n",
+	error("%d argument%s passed to \"%s\" which requires %d.",
 	      length(args), (length(args) == 1 ? "" : "s"),
 	      PRIMNAME(op), PRIMARITY(op));
 }
@@ -700,12 +716,12 @@ SEXP nthcdr(SEXP s, int n)
     if (isList(s) || isLanguage(s) || isFrame(s) || TYPEOF(s) == DOTSXP ) {
 	while( n-- > 0 ) {
 	    if (s == R_NilValue)
-		error("\"nthcdr\" list shorter than %d\n", n);
+		error("\"nthcdr\" list shorter than %d", n);
 	    s = CDR(s);
 	}
 	return s;
     }
-    else error("\"nthcdr\" needs a list to CDR down\n");
+    else error("\"nthcdr\" needs a list to CDR down");
     return R_NilValue;/* for -Wall */
 }
 
@@ -801,10 +817,10 @@ do_setwd(SEXP call, SEXP op, SEXP args, SEXP rho) {
 
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
-	errorcall(call, "character argument expected\n");
+	errorcall(call, "character argument expected");
     path = R_ExpandFileName(CHAR(STRING(s)[0]));
     if(chdir(path) < 0)
-	errorcall(call, "cannot change working directory\n");
+	errorcall(call, "cannot change working directory");
     return(R_NilValue);
 }
 
@@ -817,7 +833,7 @@ do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
-	errorcall(call, "character argument expected\n");
+	errorcall(call, "character argument expected");
     strcpy (buf, R_ExpandFileName(CHAR(STRING(s)[0])));
 #ifdef Win32
     for (p = buf; *p != '\0'; p++)
@@ -842,7 +858,7 @@ do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
-	errorcall(call, "character argument expected\n");
+	errorcall(call, "character argument expected");
     strcpy(buf, R_ExpandFileName(CHAR(STRING(s)[0])));
 #ifdef Win32
     for(p = buf; *p != '\0'; p++)

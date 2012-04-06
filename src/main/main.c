@@ -75,7 +75,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
-	    error("syntax error\n");
+	    error("syntax error");
 	    break;
 	case PARSE_EOF:
 	    return;
@@ -183,7 +183,7 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
 	case PARSE_ERROR:
 
-	    error("syntax error\n");
+	    error("syntax error");
 	    R_IoBufferWriteReset(&R_ConsoleIob);
 	    prompt_type = 1;
 	    break;
@@ -258,7 +258,7 @@ int R_ReplDLLdo1()
 	prompt_type = 1;
 	break;
     case PARSE_ERROR:
-	error("syntax error\n");
+	error("syntax error");
 	R_IoBufferWriteReset(&R_ConsoleIob);
 	prompt_type = 1;
 	break;
@@ -290,7 +290,11 @@ FILE* R_OpenSiteFile(void);
 FILE* R_OpenInitFile(void);
 #endif
 
+#ifdef OLD
 static void R_LoadProfile(FILE *fp)
+#else
+static void R_LoadProfile(FILE *fp, SEXP env)
+#endif
 {
     if (fp != NULL) {
 	R_Inputfile = fp;
@@ -300,7 +304,11 @@ static void R_LoadProfile(FILE *fp)
 	signal(SIGINT, onintr);
 	if (!doneit) {
 	    doneit = 1;
+#ifdef OLD
 	    R_ReplFile(R_Inputfile, R_NilValue, 0, 0);
+#else
+	    R_ReplFile(R_Inputfile, env, 0, 0);
+#endif
 	}
         R_Inputfile = NULL;
     }
@@ -399,12 +407,19 @@ void setup_Rmainloop(void)
     /* This is where we source the system-wide, the site's and the
        user's profile (in that order).  If there is an error, we
        drop through to further processing. */
+#ifdef OLD
     R_LoadProfile(R_OpenSysInitFile());
 #ifndef Macintosh
     R_LoadProfile(R_OpenSiteFile());
     R_LoadProfile(R_OpenInitFile());
 #endif
-
+#else
+    R_LoadProfile(R_OpenSysInitFile(), R_NilValue);
+#ifndef Macintosh
+    R_LoadProfile(R_OpenSiteFile(), R_NilValue); 
+    R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
+#endif
+#endif
     /* Initial Loading is done.  At this point */
     /* we try to invoke the .First Function. */
     /* If there is an error we continue */
@@ -447,7 +462,7 @@ void end_Rmainloop(void)
     Rprintf("\n");
     /* run the .Last function. If it gives an error, will drop back to main
        loop. */
-    R_CleanUp(SA_DEFAULT);
+    R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
 void mainloop(void)
@@ -504,7 +519,7 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (!DEBUG(rho)) {
 	cptr=R_GlobalContext;
-	while (cptr->callflag != CTXT_RETURN && cptr->callflag )
+	while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->callflag )
 	    cptr = cptr->nextcontext;
 	Rprintf("Called from: ");
 	PrintValueRec(cptr->call,rho);
@@ -567,14 +582,14 @@ void R_dot_Last(void)
 SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     char *tmp;
-    int ask=SA_DEFAULT;
+    int ask=SA_DEFAULT, status, runLast;
 
     if(R_BrowseLevel) {
-	warning("can't quit from browser\n");
+	warning("can't quit from browser");
 	return R_NilValue;
     }
     if( !isString(CAR(args)) )
-	errorcall(call,"one of \"yes\", \"no\", \"ask\" or \"default\" expected.\n");
+	errorcall(call,"one of \"yes\", \"no\", \"ask\" or \"default\" expected.");
     tmp = CHAR(STRING(CAR(args))[0]);
     if( !strcmp(tmp, "ask") ) {
 	ask = SA_SAVEASK;
@@ -587,10 +602,20 @@ SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if( !strcmp(tmp, "default") )
 	ask = SA_DEFAULT;
     else
-	errorcall(call, "unrecognized value of save\n");
+	errorcall(call, "unrecognized value of save");
+    status = asInteger(CADR(args));
+    if (status == NA_INTEGER) {
+        warningcall(call, "invalid status, 0 assumed");
+	runLast = 0;
+    }
+    runLast = asLogical(CADDR(args));
+    if (runLast == NA_LOGICAL) {
+        warningcall(call, "invalid runLast, FALSE assumed");
+	runLast = 0;
+    }
     /* run the .Last function. If it gives an error, will drop back to main
        loop. */
-    R_CleanUp(ask);
+    R_CleanUp(ask, status, runLast);
     exit(0);
     /*NOTREACHED*/
 }

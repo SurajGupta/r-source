@@ -4,7 +4,7 @@
 library(name, help = NULL, lib.loc = .lib.loc,
 	character.only = FALSE, logical.return = FALSE,
 	warn.conflicts = TRUE)
-require(name, quietly = FALSE)
+require(name, quietly = FALSE, warn.conflicts = TRUE)
 provide(name)
 
 .First.lib(libname, pkgname)
@@ -47,13 +47,13 @@ provide(name)
       vector of all available packages in \code{lib.loc}.}
 }
 \description{
-    \code{library(name)} and \code{require(name)} both load the package
-    named \code{name}.  \code{provide} allows code to register services that
-    it provides.
+  \code{library(name)} and \code{require(name)} both load the package
+  named \code{name}.  \code{provide} allows code to register services that
+  it provides.
 
-    \code{.First.lib()} is called when a package is loaded by \code{library()}.
-    \code{.packages()} and the \code{.xxx} variables return information about
-    package availability.
+  \code{.First.lib()} is called when a package is loaded by \code{library()}.
+  \code{.packages()} and the \code{.xxx} variables return information about
+  package availability.
 }
 \details{
   \code{library(name)} and \code{require(name)} both load the package
@@ -116,8 +116,10 @@ provide(name)
 }
 
 \section{Creating Packages}{
+#ifdef unix
   For installation etc, refer to \code{\link{INSTALL}} and
-  \code{\link{REMOVE}},
+  \code{\link{REMOVE}}.
+#endif
 
     Packages provide a mechanism for loading optional code and attached
     documentation as needed.  The \R distribution provides the example
@@ -199,7 +201,9 @@ provide(name)
     \code{\link{objects}}, \code{\link{autoload}},
     \code{\link{library.dynam}};
     \code{\link{data}};
+#ifdef unix
     \code{\link{INSTALL}}, \code{\link{REMOVE}}
+#endif
 }
 \examples{
 .packages()	    	    # maybe just "base"

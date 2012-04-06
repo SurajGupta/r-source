@@ -1,7 +1,7 @@
 \name{contributors}
 \title{R Project Contributors}
 \alias{contributors}
-\section{The \R Project}{
+\section{The \R\ Project}{
   \R is a project which is attempting to provide a modern
   piece of statistical software for the GNU suite of software.
 }
@@ -40,6 +40,8 @@
   Thomas Baier,
   Ben Bolker,
   Goran Brostrom,
+  Saikat DebRoy,
+  Lyndon Drake,
   Paul Gilbert,
   Robert King,
   Philippe Lambert,
@@ -49,6 +51,7 @@
   Steve Oncley and Gordon Maclean,
   Richard Okeefe,
   Hubert Palme,
+  Jose Pinheiro,
   Martyn Plummer,
   Jonathan Rougier,
   Bill Simpson,

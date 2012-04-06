@@ -29,19 +29,13 @@
 extern IoBuffer R_ConsoleIob;
 extern int errno;
 
-static int ValidFileSpec(SEXP f)
-{
-    if (isString(f) && length(f) > 0 && CHAR(STRING(f)[0])[0])
-	return 1;
-    return 0;
-}
+/* "do_parse" - the user interface input/output to files.
 
-/* "do_parse" - the user interface input/output to files. */
-/* See parse, below, for the internal function.  The */
-/* arguments are "file", "number", "text", "prompt". */
-/* If there is text then that is read and the other */
-/* arguments are ignored. */
+ The internal R_Parse.. functions are defined in ./gram.y (-> gram.c)
 
+ .Internal( parse(file, n, text, prompt) )
+ If there is text then that is read and the other arguments are ignored.
+*/
 SEXP do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP file, text, prompt, s;
@@ -52,51 +46,42 @@ SEXP do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
     R_ParseError = 0;
     R_ParseCnt = 0;
 
-    PROTECT(file = coerceVector(CAR(args), STRSXP));
-    args = CDR(args);
-
-    num = asInteger(CAR(args));
-    args = CDR(args);
-
-    PROTECT(text = coerceVector(CAR(args), STRSXP)); 
-    args = CDR(args);
-
-    prompt = CAR(args);
+    PROTECT(file = coerceVector(CAR(args), STRSXP));	args = CDR(args);
+    num = asInteger(CAR(args));				args = CDR(args);
+    PROTECT(text = coerceVector(CAR(args), STRSXP));	args = CDR(args);
+    prompt = CAR(args);					args = CDR(args);
     if (prompt == R_NilValue)
 	PROTECT(prompt);
     else
 	PROTECT(prompt = coerceVector(prompt, STRSXP));
-    args = CDR(args);
 
     if (length(text) > 0) {
 	if (num == NA_INTEGER)
 	    num = -1;
 	s = R_ParseVector(text, num, &status);
 	if (status != PARSE_OK)
-	    errorcall(call, "parse error\n");
-	UNPROTECT(3);
-	return s;
+	    errorcall(call, "parse error");
     }
-    else if (ValidFileSpec(file)) {
+    else if (isValidStringF(file)) {/* file != "" */
 	if (num == NA_INTEGER)
 	    num = -1;
 	fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "r");
 	if (!fp)
-	    errorcall(call, "unable to open file for parsing\n");
+	    errorcall(call, "unable to open file for parsing");
 	s = R_ParseFile(fp, num, &status);
 	fclose(fp);
 	if (status != PARSE_OK)
-	    errorcall(call, "syntax error on line %d\n", R_ParseError);
-	UNPROTECT(3);
-	return s;
+	    errorcall(call, "syntax error on line %d", R_ParseError);
     }
     else {
 	if (num == NA_INTEGER)
 	    num = 1;
 	s = R_ParseBuffer(&R_ConsoleIob, num, &status, prompt);
 	if (status != PARSE_OK)
-	    errorcall(call, "parse error\n");
-	UNPROTECT(3);
-	return s;
+	    errorcall(call, "parse error");
     }
+    UNPROTECT(3);
+    return s;
 }
+
+

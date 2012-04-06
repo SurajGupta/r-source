@@ -95,57 +95,12 @@ char *R_ExpandFileName(char *s)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-#include <windows.h>
-SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int i, j;
-    char *s;
-    char *e;
-    SEXP ans;
-
-    char *envir;
-
-    checkArity(op, args);
-
-    if (!isString(CAR(args)))
-	errorcall(call, "wrong type for argument\n");
-
-    i = LENGTH(CAR(args));
-    if (i == 0) {
-	envir = (char *) GetEnvironmentStrings();
-	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1);
-	PROTECT(ans = allocVector(STRSXP, i));
-	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1) {
-	    STRING(ans)[i] = mkChar(e);
-	}
-	FreeEnvironmentStrings(envir);
-    } else {
-	PROTECT(ans = allocVector(STRSXP, i));
-	for (j = 0; j < i; j++) {
-	    s = getenv(CHAR(STRING(CAR(args))[j]));
-	    if (s == NULL)
-		STRING(ans)[j] = mkChar("");
-	    else
-		STRING(ans)[j] = mkChar(s);
-	}
-    }
-    UNPROTECT(1);
-    return (ans);
-}
-
-SEXP do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP rval;
-
-    rval = allocVector(LGLSXP, 1);
-    LOGICAL(rval)[0] = R_Interactive;
-    return rval;
-}
-
 SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     return mkString("Win32");
 }
+
+#include <windows.h>
 
 #ifdef HAVE_TIMES
 
@@ -220,19 +175,19 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     if (!isString(CAR(args)))
-	errorcall(call, "character string expected as first argument\n");
+	errorcall(call, "character string expected as first argument");
     if (isInteger(CADR(args)))
 	flag = INTEGER(CADR(args))[0];
-    if (flag > 20) {
+    if (flag >= 20) {
 	vis = -1;
 	flag -= 20;
-    } else if (flag > 10) {
+    } else if (flag >= 10) {
 	vis = 0;
 	flag -= 10;
     } else
 	vis = 1;
     if (!isString(CADDR(args)))
-	errorcall(call, "character string expected as third argument\n");
+	errorcall(call, "character string expected as third argument");
     if ((CharacterMode != RGui) && (flag == 2))
 	flag = 1;
     if (CharacterMode == RGui) {

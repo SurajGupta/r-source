@@ -64,7 +64,6 @@
 #define R_BLUE(col)	(((col)>>16)&255)
 #define COLOR_TABLE_SIZE 256
 
-
 /*
  *	Some Notes on Line Textures
  *
@@ -98,6 +97,8 @@
 /*--- The basic numbered & names line types; Here device-independent:
   e.g. "dashed" == "44",  "dotdash" == "1343"
 */
+
+#define LTY_BLANK	-1
 #define LTY_SOLID	0
 #define LTY_DASHED	4 + (4<<4)
 #define LTY_DOTTED	1 + (3<<4)

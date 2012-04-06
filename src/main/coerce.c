@@ -48,13 +48,6 @@ static char *falsenames[] = {
     (char *) 0,
 };
 
-static int isblankstr(unsigned char *s)
-{
-    while (*s)
-	if (!isspace(*s++)) return 0;
-    return 1;
-}
-
 #define WARN_NA	   1
 #define WARN_INACC 2
 #define WARN_IMAG  4
@@ -166,7 +159,7 @@ int IntegerFromString(SEXP x, int *warn)
     char *endp;
     if (x != R_NaString) {
 	xdouble = strtod(CHAR(x), &endp);
-	if (isblankstr(endp)) {
+	if (isBlankString(endp)) {
 	    if (xdouble > INT_MAX) {
 		*warn |= WARN_INACC;
 		return INT_MAX;
@@ -212,7 +205,7 @@ double RealFromString(SEXP x, int *warn)
     char *endp;
     if (x != R_NaString) {
 	xdouble = strtod(CHAR(x), &endp);
-	if (isblankstr(endp))
+	if (isBlankString(endp))
 	    return xdouble;
 	else
 	    *warn |= WARN_NA;
@@ -270,13 +263,13 @@ complex ComplexFromString(SEXP x, int *warn)
     z.r = z.i = NA_REAL;
     if (x != R_NaString) {
 	xr = strtod(endp, &endp);
-	if (isblankstr(endp)) {
+	if (isBlankString(endp)) {
 	    z.r = xr;
 	    z.i = 0.0;
 	}
 	else if (*endp == '+' || *endp == '-') {
 	    xi = strtod(endp, &endp);
-	    if (*endp++ == 'i' && isblankstr(endp)) {
+	    if (*endp++ == 'i' && isBlankString(endp)) {
 		z.r = xr;
 		z.i = xi;
 	    }
@@ -372,7 +365,7 @@ static SEXP coerceToSymbol(SEXP v)
     SEXP ans = R_NilValue;
     int warn;
     if (length(v) <= 0)
-	error("Invalid data of mode \"%s\" (too short)\n",
+	error("Invalid data of mode \"%s\" (too short)",
 	      type2str(TYPEOF(v)));
     PROTECT(v);
     switch(TYPEOF(v)) {
@@ -732,7 +725,7 @@ static SEXP coercePairList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error("pairlist object cannot be coerced to  vector type [%d]\n",type);
+	error("pairlist object cannot be coerced to  vector type [%d]",type);
 
     /* If any tags are non-null then we */
     /* need to add a names attribute. */
@@ -804,7 +797,7 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error("(list) object cannot be coerced to vector type %d\n",type);
+	error("(list) object cannot be coerced to vector type %d",type);
 
     names = getAttrib(v, R_NamesSymbol);
     if (names != R_NilValue)
@@ -838,7 +831,7 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	ans = coerceVectorList(v, type);
 	break;
     case ENVSXP:
-	error("environments cannot be coerced to other types\n");
+	error("environments cannot be coerced to other types");
 	break;
     case LGLSXP:
     case INTSXP:
@@ -935,7 +928,7 @@ static SEXP ascommon(SEXP call, SEXP u, int type)
 	if (TYPEOF(u) == SYMSXP)
 	    return u;
 	if (!isString(u) || LENGTH(u) < 0 || CHAR(STRING(u)[0])[0] == '\0')
-	    errorcall(call, "character argument required\n");
+	    errorcall(call, "character argument required");
 	return install(CHAR(STRING(u)[0]));
     }
     else
@@ -969,7 +962,7 @@ static SEXP ascommon(SEXP call, SEXP u, int type)
 	STRING(v)[0] = PRINTNAME(u);
 	return v;
     }
-    else errorcall(call, "cannot coerce to vector\n");
+    else errorcall(call, "cannot coerce to vector");
     return u;/* -Wall */
 }
 
@@ -988,7 +981,7 @@ SEXP do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     if (!isString(CADR(args)) || LENGTH(CADR(args)) < 1)
-	errorcall(call, "invalid \"mode\" of argument\n");
+	errorcall(call, "invalid \"mode\" of argument");
 
     if (!strcmp("function", (CHAR(STRING(CADR(args))[0]))))
 	type = CLOSXP;
@@ -1009,7 +1002,7 @@ SEXP do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     case ANYSXP: /* any */
 	break;
     default:
-	errorcall(call, "invalid mode\n");
+	errorcall(call, "invalid mode");
     }
     ans = ascommon(call, CAR(args), type);
     switch(TYPEOF(ans)) {/* keep attributes for these:*/
@@ -1038,16 +1031,16 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Check the arguments; we need a list and environment. */
 
     arglist = CAR(args);
-    if (!isNewList(arglist))
-	errorcall(call, "list argument expected\n");
+    if (length(arglist) > 1 && !isNewList(arglist))
+	errorcall(call, "list argument expected");
 
     envir = CADR(args);
     if (!isNull(envir) && !isEnvironment(envir))
-	errorcall(call, "invalid environment\n");
+	errorcall(call, "invalid environment");
 
     n = length(arglist);
     if (n < 1)
-	errorcall(call, "argument must have length at least 1\n");
+	errorcall(call, "argument must have length at least 1");
     names = getAttrib(arglist, R_NamesSymbol);
     PROTECT(pargs = args = allocList(n - 1));
     for (i = 0; i < n - 1; i++) {
@@ -1059,7 +1052,10 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 	pargs = CDR(pargs);
     }
     CheckFormals(args);
-    args =  mkCLOSXP(args, VECTOR(arglist)[n - 1], envir);
+    if( n == 1 )
+	args =  mkCLOSXP(args, arglist, envir);
+    else
+	args =  mkCLOSXP(args, VECTOR(arglist)[n - 1], envir);
     UNPROTECT(1);
     return args;
 }
@@ -1078,7 +1074,7 @@ SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
     case VECSXP:
     case EXPRSXP:
 	if(0 == (n = length(args)))
-	    errorcall(call,"illegal length 0 argument\n");
+	    errorcall(call,"illegal length 0 argument");
 	names = getAttrib(args, R_NamesSymbol);
 	PROTECT(ap = ans = allocList(n));
 	for (i = 0; i < n; i++) {
@@ -1093,7 +1089,7 @@ SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	ans = duplicate(args);
 	break;
     default:
-	errorcall(call, "invalid argument list\n");
+	errorcall(call, "invalid argument list");
 	ans = R_NilValue;
     }
     TYPEOF(ans) = LANGSXP;
@@ -1112,6 +1108,9 @@ SEXP do_typeof(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
+/* Define many of the <primitive> "is.xxx" functions :
+   Note that  isNull, isNumeric, etc are defined in ./util.c
+*/
 SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
@@ -1228,9 +1227,9 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
 
     case 999:		/* is.single */
-	errorcall(call, "type \"single\" unimplemented in R\n");
+	errorcall(call, "type \"single\" unimplemented in R");
     default:
-	errorcall(call, "unimplemented predicate\n");
+	errorcall(call, "unimplemented predicate");
     }
     UNPROTECT(1);
     return (ans);
@@ -1246,7 +1245,7 @@ SEXP do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, a;
     checkArity(op, args);
     if (!isString(CADR(args)) || LENGTH(CADR(args)) <= 0)
-	errorcall(call, "invalid \"mode\" of argument\n");
+	errorcall(call, "invalid \"mode\" of argument");
     PROTECT(ans = allocVector(LGLSXP, 1));
     if (streql(CHAR(STRING(CADR(args))[0]), "any")) {
 	LOGICAL(ans)[0] = isVector(CAR(args));/* from ./util.c */
@@ -1288,7 +1287,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
-	errorcall(call, "is.na applies only to lists and vectors\n");
+	errorcall(call, "is.na applies only to lists and vectors");
 #endif
     x = CAR(args);
     n = length(x);
@@ -1489,7 +1488,7 @@ SEXP do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
-	errorcall(call, "is.finite applies only to lists and vectors\n");
+	errorcall(call, "is.finite applies only to lists and vectors");
 #endif
     x = CAR(args);
     n = length(x);
@@ -1539,7 +1538,7 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
-	errorcall(call, "is.infinite applies only to list and vectors\n");
+	errorcall(call, "is.infinite applies only to list and vectors");
 #endif
     x = CAR(args);
     n = length(x);
@@ -1599,7 +1598,7 @@ SEXP do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(rfun = eval(CAR(args), rho));
     if (!isString(rfun) || length(rfun) <= 0 ||
 	streql(CHAR(STRING(rfun)[0]), ""))
-	errorcall(call, "first argument must be a character string\n");
+	errorcall(call, "first argument must be a character string");
     PROTECT(rfun = install(CHAR(STRING(rfun)[0])));
     PROTECT(evargs = duplicate(CDR(args)));
     for (rest = evargs; rest != R_NilValue; rest = CDR(rest))
@@ -1620,10 +1619,10 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CADR(args);
 
     if (!isString(fun) || length(fun) <= 0 || CHAR(STRING(fun)[0]) == '\0')
-	    errorcall(call, "first argument must be a string\n");
+	    errorcall(call, "first argument must be a string");
 
     if (!isNull(args) && !isNewList(args))
-	errorcall(call, "second argument must be a list\n");
+	errorcall(call, "second argument must be a list");
     n = length(args);
     names = getAttrib(args, R_NamesSymbol);
 
@@ -1677,7 +1676,7 @@ SEXP substitute(SEXP lang, SEXP rho)
 #endif
 	    }
 	    else if (TYPEOF(t) == DOTSXP) {
-		error("... used in an incorrect context\n");
+		error("... used in an incorrect context");
 	    }
 	    if (rho != R_GlobalEnv)
 		return t;
@@ -1706,7 +1705,7 @@ SEXP substituteList(SEXP el, SEXP rho)
 	if (TYPEOF(h) != DOTSXP) {
 	    if (h == R_MissingArg)
 		return substituteList(CDR(el), rho);
-	    error("... used in an incorrect context\n");
+	    error("... used in an incorrect context");
 	}
 	PROTECT(h = substituteList(h, R_NilValue));
 	PROTECT(t = substituteList(CDR(el), rho));
@@ -1751,7 +1750,7 @@ SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(2);
     }
     if (TYPEOF(env) != ENVSXP)
-	errorcall(call, "invalid environment specified\n");
+	errorcall(call, "invalid environment specified");
 
     PROTECT(env);
     PROTECT(t = duplicate(args));

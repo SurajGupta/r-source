@@ -43,7 +43,9 @@ extern int ConsoleAcceptCmd;
 static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mpaste, mcopy, 
     mcopypaste, mlazy;
-static menuitem mls, mrm, msearch, mhelp, mapropos, mhelpstart;
+static menuitem mls, mrm, msearch, mhelp, mmanmain, mmanref, 
+    mmanext, mapropos, mhelpstart;
+static menu m;
 static char cmd[1024];
 
 /* menu callbacks */
@@ -140,7 +142,7 @@ static void menuprint(control m)
 
 static void menuexit(control m)
 {
-    R_CleanUp(1);
+    R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
 static void menuselectall(control m)
@@ -231,6 +233,21 @@ static void menuhelp(control m)
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
     }
+}
+
+static void menumainman(control m)
+{
+    consolecmd(RConsole, "shell.exec('doc/manual/Manual.pdf')");
+}
+
+static void menumainref(control m)
+{
+    consolecmd(RConsole, "shell.exec('doc/manual/Reference.pdf')");
+}
+
+static void menumainext(control m)
+{
+    consolecmd(RConsole, "shell.exec('doc/manual/R-external.pdf')");
 }
 
 static void menuapropos(control m)
@@ -451,7 +468,10 @@ static void readconsolecfg()
 	    cfgerr = 1;
 	}
     }
-    if (cfgerr) exitapp();
+    if (cfgerr) {
+	app_cleanup();
+	exit(10);
+    }
     setconsoleoptions(fn, sty, pointsize, consoler, consolec, consolefg,
 		      consoleuser, consolebg,
 		      pagerrow, pagercol, multiplewin, widthonresize);
@@ -459,7 +479,7 @@ static void readconsolecfg()
 
 static void closeconsole(control m)
 {
-    R_CleanUp(1);
+    R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
 void setup_term_ui()
@@ -583,6 +603,7 @@ int setupui()
     MCHECK(newmenuitem("Print", 0, menuprint));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("Exit", 0, menuexit));
+
     MCHECK(newmenu("Edit"));
     MCHECK(mcopy = newmenuitem("Copy          \tCTRL+C", 0, menucopy));
     MCHECK(mpaste = newmenuitem("Paste         \tCTRL+V", 0, menupaste));
@@ -596,11 +617,19 @@ int setupui()
     MCHECK(mls = newmenuitem("List objects", 0, menuls));
     MCHECK(mrm = newmenuitem("Remove all objects", 0, menurm));
     MCHECK(msearch = newmenuitem("List &search path", 0, menusearch));
+
     newmdimenu();
-    MCHECK(newmenu("Help"));
+    MCHECK(m = newmenu("Help"));
     MCHECK(newmenuitem("Console", 0, menuconsolehelp));
     MCHECK(mhelp = newmenuitem("R language (standard)", 0, menuhelp));
     MCHECK(mhelp = newmenuitem("R language (html)", 0, menuhelpstart));
+
+    MCHECK(newsubmenu(m, "Manuals"));
+    MCHECK(mmanmain = newmenuitem("R Manual", 0, menumainman));
+    MCHECK(mmanref = newmenuitem("R Reference Manual", 0, menumainref));
+    MCHECK(mmanext = newmenuitem(".Call and .External", 0, menumainext));
+    addto(m);
+
     MCHECK(mapropos = newmenuitem("Apropos", 0, menuapropos));
     MCHECK(newmenuitem("About", 0, menuabout));
     consolesetbrk(RConsole, menukill, ESC, 0);

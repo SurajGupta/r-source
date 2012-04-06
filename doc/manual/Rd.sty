@@ -1,11 +1,13 @@
 %%% Rd.sty ... Style for printing the R manual
 %%%
 %%% Modified 1998/01/05 by Friedrich.Leisch@ci.tuwien.ac.at
-%%% Last modified 1998/07/07 by Martin Maechler
+%%% Modified 1998/07/07 by Martin Maechler
+%%% Last modified 1999/11/20 by Brian Ripley
 
-\RequirePackage{amsbsy}          % AMS boldsymbol: defines `\boldsymbol'
+\RequirePackage{bm}              % standard boldsymbol
 \RequirePackage{alltt}           % {verbatim} allowing \..
 \RequirePackage{verbatim}        % small example code
+\RequirePackage{url}             % set urls
 
 \addtolength{\textheight}{12mm}
 \addtolength{\topmargin}{-9mm}   % still fits on US paper
@@ -135,10 +137,9 @@
 %
 \newcommand{\deqn}[2]{\[#1\]}
 \newcommand{\eqn}[2]{$#1$}
-\newcommand{\bold}[1]{\ifmmode\boldsymbol{#1}\else\textbf{#1}\fi}
+\newcommand{\bold}[1]{\ifmmode\bm{#1}\else\textbf{#1}\fi}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\file}[1]{`\textsf{#1}'}
-\newcommand{\url}[1]{\textsf{#1}}
 \newcommand{\link}[1]{#1\index{#1}}
 \newcommand{\email}[1]{$\langle${#1}$\rangle$}
 

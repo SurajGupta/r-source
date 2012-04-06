@@ -27,7 +27,7 @@
  *
  *	FRAME(envir) = environment frame
  *	ENCLOS(envir) = parent environment
- *      HASHTAB(envir) = (optional) hash table
+ *	HASHTAB(envir) = (optional) hash table
  *
  *  In addition, environments which are created by binding a
  *  function's (=closure's) formals to its actuals have a value
@@ -62,17 +62,17 @@
 
   Hash Tables
 
-  We use a basic se[parate chaining algorithm.  A hash table consists
+  We use a basic se[parate chaining algorithm.	A hash table consists
   of SEXP (vector) which contains a number of SEXPs (lists).
-   
+
 */
 
-#define HASHSIZE(x)          LENGTH(x)
-#define HASHPRI(x)           TRUELENGTH(x)
+#define HASHSIZE(x)	     LENGTH(x)
+#define HASHPRI(x)	     TRUELENGTH(x)
 #define HASHTABLEGROWTHRATE  1.2
-#define HASHMINSIZE          29
+#define HASHMINSIZE	     29
 
-#define IS_HASHED(x)         (HASHTAB(x) != R_NilValue)
+#define IS_HASHED(x)	     (HASHTAB(x) != R_NilValue)
 
 /*----------------------------------------------------------------------
 
@@ -88,11 +88,11 @@ static int newhashpjw(char *s)
     char *p;
     unsigned h = 0, g;
     for (p = s; *p; p = p + 1) {
-        h = (h << 4) + (*p);
-        if ((g = h & 0xf0000000) != 0) {
-            h = h ^ (g >> 24);
-            h = h ^ g;
-        }
+	h = (h << 4) + (*p);
+	if ((g = h & 0xf0000000) != 0) {
+	    h = h ^ (g >> 24);
+	    h = h ^ g;
+	}
     }
     return h;
 }
@@ -102,7 +102,7 @@ static int newhashpjw(char *s)
   R_HashSet
 
   Hashtable set function.  Sets 'symbol' in 'table' to be 'value'.
-  'hashcode' must be provided by user.  Allocates some memory for list
+  'hashcode' must be provided by user.	Allocates some memory for list
   entries.
 
   At some point we need to remove the sanity checks here.  This
@@ -117,10 +117,10 @@ void R_HashSet(int hashcode, SEXP symbol, SEXP table, SEXP value)
 
     /* Do some checking */
     if (TYPEOF(table) != VECSXP) {
-	error("3rd arg (table) not of type VECSXP, from R_HashSet\n");
-    }  
+	error("3rd arg (table) not of type VECSXP, from R_HashSet");
+    }
     if (isNull(table)) {
-	error("Table is null, from R_HashSet\n");
+	error("Table is null, from R_HashSet");
     }
     /* Grab the chain from the hashtable */
     chain = VECTOR(table)[hashcode];
@@ -160,7 +160,7 @@ SEXP R_HashGet(int hashcode, SEXP symbol, SEXP table)
 	printf("3rd arg (table) not of type VECSXP, from R_HashGet\n");
     }
     if (isNull(table)) {
-	error("Table is null, from R_HashGet\n");
+	error("Table is null, from R_HashGet");
     }
     /* Grab the chain from the hashtable */
     chain = VECTOR(table)[hashcode];
@@ -195,7 +195,7 @@ SEXP R_HashGetLoc(int hashcode, SEXP symbol, SEXP table)
 	printf("3rd arg (table) not of type VECSXP, from R_HashGet\n");
     }
     if (isNull(table)) {
-	error("Table is null, from R_HashGet\n");
+	error("Table is null, from R_HashGet");
     }
     /* Grab the chain from the hashtable */
     chain = VECTOR(table)[hashcode];
@@ -212,21 +212,21 @@ SEXP R_HashGetLoc(int hashcode, SEXP symbol, SEXP table)
 
 
 /*----------------------------------------------------------------------
-  
+
   R_NewHashTable
-  
+
   Hash table initialisation function.  Creates a table of size 'size'
   that increases in size by 'growth_rate' after a threshold is met.
-  
+
 */
 
 SEXP R_NewHashTable(int size, int growth_rate)
 {
     SEXP table;
-  
+
     /* Some checking */
     if (growth_rate == 0) {
-	error("Hash table growth rate must be > 0\n");
+	error("Hash table growth rate must be > 0");
     }
     if (size == 0) {
 	size = HASHMINSIZE;
@@ -240,7 +240,7 @@ SEXP R_NewHashTable(int size, int growth_rate)
 }
 
 
- 
+
 /*----------------------------------------------------------------------
 
   R_HashDelete
@@ -274,7 +274,7 @@ void R_HashDelete(int hashcode, SEXP symbol, SEXP table)
   R_HashResize
 
   Hash table resizing function Increase the size of the hash table by
-  the growth_rate of the table.  The vector is reallocated, however
+  the growth_rate of the table.	 The vector is reallocated, however
   the lists with in the hash table have their pointers shuffled around
   so that they are not reallocated.
 
@@ -287,10 +287,10 @@ SEXP R_HashResize(SEXP table)
 
     /* Do some checking */
     if (TYPEOF(table) != VECSXP) {
-	error("1st arg (table) not of type VECSXP,  from R_HashResize\n");
+	error("1st arg (table) not of type VECSXP,  from R_HashResize");
     }
-  
-    /* This may have to change.  The growth rate should
+
+    /* This may have to change.	 The growth rate should
        be independent of the size (not implemented yet) */
     /* hash_grow = HASHSIZE(table); */
 
@@ -318,9 +318,9 @@ SEXP R_HashResize(SEXP table)
     /* Some debugging statements */
 #ifdef MIKE_DEBUG
     fprintf(stdout, "Resized O.K.\n");
-    fprintf(stdout, "Old size: %d, New size: %d\n", 
+    fprintf(stdout, "Old size: %d, New size: %d\n",
 	    HASHSIZE(table), HASHSIZE(new_table));
-    fprintf(stdout, "Old pri: %d, New pri: %d\n", 
+    fprintf(stdout, "Old pri: %d, New pri: %d\n",
 	    HASHPRI(table), HASHPRI(new_table));
 #endif
     return new_table;
@@ -332,7 +332,7 @@ SEXP R_HashResize(SEXP table)
 
   R_HashSizeCheck
 
-  Hash table size rechecking function.  Compares the load factor
+  Hash table size rechecking function.	Compares the load factor
   (size/# of primary slots used).  to a praticular threshhold value.
   Returns true if the table needs to be resized.
 
@@ -342,10 +342,10 @@ int R_HashSizeCheck(SEXP table)
 {
     int resize;
     double thresh_val;
-  
+
     /* Do some checking */
     if (TYPEOF(table) != VECSXP){
-	error("1st arg (table) not of type VECSXP, R_HashSizeCheck\n");
+	error("1st arg (table) not of type VECSXP, R_HashSizeCheck");
     }
     resize = 0; thresh_val = 0.85;
     if ((double)HASHPRI(table) > (double)HASHSIZE(table) * thresh_val)
@@ -360,7 +360,7 @@ int R_HashSizeCheck(SEXP table)
   R_HashFrame
 
   Hashing for environment frames.  This function ensures that the
-  first frame in the given environment has been hashed.  Ultimately
+  first frame in the given environment has been hashed.	 Ultimately
   all enironments should be created in hashed form.  At that point
   this function will be redundant.
 
@@ -370,15 +370,15 @@ SEXP R_HashFrame(SEXP rho)
 {
     int hashcode;
     SEXP frame, chain, tmp_chain, table;
-  
+
     /* Do some checking */
     if (TYPEOF(rho) != ENVSXP) {
-	error("1st arg (table) not of type ENVSXP, from R_HashVector2Hash\n");
+	error("1st arg (table) not of type ENVSXP, from R_HashVector2Hash");
     }
     table = HASHTAB(rho);
     frame = FRAME(rho);
     while (!isNull(frame)) {
-	hashcode = newhashpjw(CHAR(PRINTNAME(TAG(frame)))) % HASHSIZE(table); 
+	hashcode = newhashpjw(CHAR(PRINTNAME(TAG(frame)))) % HASHSIZE(table);
 	chain = VECTOR(table)[hashcode];
 	/* If using a primary slot then increase HASHPRI */
 	if (isNull(chain)) HASHPRI(table)++;
@@ -465,7 +465,7 @@ void InitGlobalEnv()
 /*----------------------------------------------------------------------
 
   unbindVar
-    
+
   Remove a value from an environment. This happens only in the frame
   of the specified frame.
 
@@ -517,7 +517,7 @@ SEXP findVarLocInFrame(SEXP rho, SEXP symbol)
 	    frame = CDR(frame);
 	return frame;
     }
-    else {    
+    else {
 	hashcode = newhashpjw(CHAR(PRINTNAME(symbol))) %
 	    HASHSIZE(HASHTAB(rho));
 	/* Will return 'R_NilValue' if not found */
@@ -532,7 +532,7 @@ SEXP findVarLocInFrame(SEXP rho, SEXP symbol)
 
   findVarInFrame
 
-  Look up the value of a symbol in a single environment frame.  This
+  Look up the value of a symbol in a single environment frame.	This
   is the basic building block of all variable lookups.
 
   It is important that this be as efficient as possible.
@@ -551,7 +551,7 @@ SEXP findVarInFrame(SEXP rho, SEXP symbol)
 	    frame = CDR(frame);
 	}
     }
-    else {    
+    else {
 	hashcode = newhashpjw(CHAR(PRINTNAME(symbol))) %
 	    HASHSIZE(HASHTAB(rho));
 	/* Will return 'R_UnboundValue' if not found */
@@ -565,11 +565,11 @@ SEXP findVarInFrame(SEXP rho, SEXP symbol)
 /*----------------------------------------------------------------------
 
   findVar
-    
+
   Look up a symbol in an environment.
-    
+
   This needs to be changed so that the environment chain is searched
-  and then the searchpath is traversed.  
+  and then the searchpath is traversed.
 
 */
 
@@ -590,7 +590,7 @@ SEXP findVar(SEXP symbol, SEXP rho)
 /*----------------------------------------------------------------------
 
   findVar1
-    
+
   Look up a symbol in an environment.  Ignore any values which are
   not of the specified type.
 
@@ -603,20 +603,20 @@ SEXP findVar1(SEXP symbol, SEXP rho, SEXPTYPE mode, int inherits)
 {
     SEXP vl;
     while (rho != R_NilValue) {
-	vl = findVarInFrame(rho, symbol);	    
-	
+	vl = findVarInFrame(rho, symbol);
+
 	if (vl != R_UnboundValue) {
 	    if (mode == ANYSXP) return vl;
 	    if (TYPEOF(vl) == PROMSXP) {
-	        PROTECT(vl);
-	        vl = eval(vl, rho);
+		PROTECT(vl);
+		vl = eval(vl, rho);
 		UNPROTECT(1);
 	    }
 	    if (TYPEOF(vl) == mode) return vl;
 	    if (mode == FUNSXP && (TYPEOF(vl) == CLOSXP ||
 				   TYPEOF(vl) == BUILTINSXP ||
 				   TYPEOF(vl) == SPECIALSXP))
-	        return (vl);
+		return (vl);
 	}
 	if (inherits)
 	    rho = ENCLOS(rho);
@@ -666,10 +666,10 @@ SEXP ddfindVar(SEXP symbol, SEXP rho)
 	    return(CAR(vl));
 	}
 	else
-	    error("The ... list does not contain %d elements\n",i);
+	    error("The ... list does not contain %d elements",i);
     }
     else
-        error("..%d used in an incorrect context, no ... to look in\n",i);
+	error("..%d used in an incorrect context, no ... to look in",i);
     return R_NilValue;
 }
 
@@ -691,7 +691,7 @@ SEXP dynamicfindVar(SEXP symbol, RCNTXT *cptr)
 {
     SEXP vl;
     while (cptr != R_ToplevelContext) {
-	if (cptr->callflag == CTXT_RETURN) {
+	if (cptr->callflag & CTXT_FUNCTION) {
 	    vl = findVarInFrame(cptr->cloenv, symbol);
 	    if (vl != R_UnboundValue)
 		return vl;
@@ -732,7 +732,7 @@ SEXP findFun(SEXP symbol, SEXP rho)
 		TYPEOF(vl) == SPECIALSXP)
 		return (vl);
 	    if (vl == R_MissingArg)
-		error("Argument \"%s\" is missing, with no default\n",
+		error("Argument \"%s\" is missing, with no default",
 		      CHAR(PRINTNAME(symbol)));
 #ifdef Warn_on_non_function
 	    warning("ignored non function \"%s\"",
@@ -742,7 +742,7 @@ SEXP findFun(SEXP symbol, SEXP rho)
 	rho = ENCLOS(rho);
     }
     if (SYMVALUE(symbol) == R_UnboundValue)
-	error("couldn't find function \"%s\"\n", CHAR(PRINTNAME(symbol)));
+	error("couldn't find function \"%s\"", CHAR(PRINTNAME(symbol)));
     return SYMVALUE(symbol);
 }
 
@@ -826,7 +826,7 @@ SEXP setVarInFrame(SEXP rho, SEXP symbol, SEXP value)
 
     setVar
 
-    Assign a new value to bound symbol.  Note this does the "inherits"
+    Assign a new value to bound symbol.	 Note this does the "inherits"
     case.  I.e. it searches frame-by-frame for an symbol and binds the
     given value to the first symbol encountered.  If no symbol is
     found then a binding is created in the global environment.
@@ -853,7 +853,7 @@ void setVar(SEXP symbol, SEXP value, SEXP rho)
 
   gsetVar
 
-  Assignment in the system environment.  Here we assign directly into
+  Assignment in the system environment.	 Here we assign directly into
   the system environment.
 
 */
@@ -901,7 +901,7 @@ static SEXP mfindVarInFrame(SEXP rho, SEXP symbol)
 
   do_assign
 
-  
+
  */
 
 SEXP do_assign(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -912,18 +912,18 @@ SEXP do_assign(SEXP call, SEXP op, SEXP args, SEXP rho)
     name = findVar(CAR(args), rho);
     PROTECT(args = evalList(args, rho));
     if (!isString(CAR(args)) || length(CAR(args)) == 0)
-	error("assign: invalid first argument\n");
+	error("assign: invalid first argument");
     else
 	name = install(CHAR(STRING(CAR(args))[0]));
     PROTECT(val = CADR(args));
     R_Visible = 0;
     aenv = CAR(CDDR(args));
     if (TYPEOF(aenv) != ENVSXP && aenv != R_NilValue)
-	error("invalid envir argument\n");
+	error("invalid envir argument");
     if (isLogical(CAR(nthcdr(args, 3))))
 	ginherits = LOGICAL(CAR(nthcdr(args, 3)))[0];
     else
-	error("get: invalid inherits argument\n");
+	error("get: invalid inherits argument");
     if (ginherits)
 	setVar(name, val, aenv);
     else
@@ -975,13 +975,13 @@ SEXP do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     name = CAR(args);
     if (!isString(name))
-	error("invalid first argument to remove.\n");
+	error("invalid first argument to remove.");
     args = CDR(args);
 
     envarg = CAR(args);
     if (envarg != R_NilValue) {
 	if (TYPEOF(envarg) != ENVSXP)
-	    error("invalid envir argument\n");
+	    error("invalid envir argument");
     }
     else envarg = R_GlobalContext->sysparent;
     args = CDR(args);
@@ -989,7 +989,7 @@ SEXP do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isLogical(CAR(args)))
 	ginherits = asLogical(CAR(args));
     else
-	error("get: invalid inherits argument\n");
+	error("get: invalid inherits argument");
 
     for (i = 0; i < LENGTH(name); i++) {
 	done = 0;
@@ -1003,7 +1003,7 @@ SEXP do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    tenv = CDR(tenv);
 	}
 	if (!done)
-	    warning("remove: variable \"%s\" was not found\n",
+	    warning("remove: variable \"%s\" was not found",
 		    CHAR(PRINTNAME(tsym)));
     }
     return R_NilValue;
@@ -1050,7 +1050,7 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (!isString(CAR(args)) || length(CAR(args)) < 1
 	|| strlen(CHAR(STRING(CAR(args))[0])) == 0) {
-	errorcall(call, "invalid first argument\n");
+	errorcall(call, "invalid first argument");
 	t1 = R_NilValue;
     }
     else
@@ -1065,7 +1065,7 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (TYPEOF(CADR(args)) == ENVSXP || CADR(args) == R_NilValue)
 	genv = CADR(args);
     else {
-	errorcall(call,"invalid envir argument\n");
+	errorcall(call,"invalid envir argument");
 	genv = R_NilValue;  /* -Wall */
     }
 
@@ -1077,14 +1077,14 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else
 	    gmode = str2type(CHAR(STRING(CAR(CDDR(args)))[0]));
     } else {
-	errorcall(call,"invalid mode argument\n");
+	errorcall(call,"invalid mode argument");
 	gmode = FUNSXP;/* -Wall */
     }
 
     if (isLogical(CAR(nthcdr(args, 3))))
 	ginherits = LOGICAL(CAR(nthcdr(args, 3)))[0];
     else
-	errorcall(call,"invalid inherits argument\n");
+	errorcall(call,"invalid inherits argument");
 
     /* Search for the object */
     rval = findVar1(t1, genv, gmode, ginherits);
@@ -1093,7 +1093,7 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (PRIMVAL(op)) { /* have get(.) */
 	if (rval == R_UnboundValue)
-	    errorcall(call,"variable \"%s\" was not found\n",
+	    errorcall(call,"variable \"%s\" was not found",
 		      CHAR(PRINTNAME(t1)));
 	/* We need to evaluate if it is a promise */
 	if (TYPEOF(rval) == PROMSXP)
@@ -1126,12 +1126,12 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 static int isMissing(SEXP symbol, SEXP rho)
 {
     SEXP vl, s;
-  
+
     if (DDVAL(symbol))
 	s = R_DotsSymbol;
     else
 	s = symbol;
-  
+
     vl = mfindVarInFrame(rho, s);
     if (vl != R_NilValue) {
 	if (DDVAL(symbol)) {
@@ -1159,7 +1159,7 @@ SEXP do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     s = sym = CAR(args);
     if (!isSymbol(sym))
-	error("\"missing\" illegal use of missing\n");
+	error("\"missing\" illegal use of missing");
 
     if (DDVAL(sym)) {
 	sym = R_DotsSymbol;
@@ -1183,7 +1183,7 @@ SEXP do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else goto havebinding;
     }
     else  /* it wasn't an argument to the function */
-	error("\"missing\" illegal use of missing\n");
+	error("\"missing\" illegal use of missing");
 
  havebinding:
 
@@ -1231,29 +1231,29 @@ SEXP do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (!isNewList(CAR(args)))
-	error("attach only works for lists and data frames\n");
+	error("attach only works for lists and data frames");
     CAR(args) = VectorToPairList(CAR(args));
 
     pos = asInteger(CADR(args));
     if (pos == NA_INTEGER)
-	error("attach: pos must be an integer\n");
+	error("attach: pos must be an integer");
 
     name = CADDR(args);
     if (!isString(name) || length(name) != 1)
-	error("attach: invalid object name\n");
+	error("attach: invalid object name");
 
     for (x = CAR(args); x != R_NilValue; x = CDR(x))
 	if (TAG(x) == R_NilValue)
-	    error("attach: all elements must be named\n");
+	    error("attach: all elements must be named");
     PROTECT(s = allocSExp(ENVSXP));
     setAttrib(s, install("name"), name);
 
     FRAME(s) = duplicate(CAR(args));
-    
+
     /* Connect FRAME(s) into HASHTAB(s) */
     if (length(s) < HASHMINSIZE)
 	hsize = HASHMINSIZE;
-    else 
+    else
 	hsize = length(s);
 
     HASHTAB(s) = R_NewHashTable(hsize, HASHTABLEGROWTHRATE);
@@ -1301,7 +1301,7 @@ SEXP do_detach(SEXP call, SEXP op, SEXP args, SEXP env)
     for (t = R_GlobalEnv ; ENCLOS(t) != R_NilValue && pos > 2 ; t = ENCLOS(t))
 	pos--;
     if (pos != 2) {
-	error("detach: invalid pos= given\n");
+	error("detach: invalid pos= given");
 	s = t;	/* for -Wall */
     }
     else {
@@ -1367,7 +1367,7 @@ static int FrameSize(SEXP frame, int all)
     int count = 0;
     while (frame != R_NilValue) {
 	if ((all || CHAR(PRINTNAME(TAG(frame)))[0] != '.') &&
-	                              CAR(frame) != R_UnboundValue)
+				      CAR(frame) != R_UnboundValue)
 	    count += 1;
 	frame = CDR(frame);
     }
@@ -1378,7 +1378,7 @@ static void FrameNames(SEXP frame, int all, SEXP names, int *index)
 {
     while (frame != R_NilValue) {
 	if ((all || CHAR(PRINTNAME(TAG(frame)))[0] != '.') &&
-	                              CAR(frame) != R_UnboundValue) {
+				      CAR(frame) != R_UnboundValue) {
 	    STRING(names)[*index] = PRINTNAME(TAG(frame));
 	    (*index)++;
 	}
@@ -1471,7 +1471,7 @@ SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    else
 		k += FrameSize(FRAME(VECTOR(env)[i]), all);
 	}
-	else error("invalid envir= argument\n");
+	else error("invalid envir= argument");
     }
     /* Step 2 : Allocate and Fill the Result */
     ans = allocVector(STRSXP, k);
@@ -1535,7 +1535,7 @@ SEXP do_libfixup(SEXP call, SEXP op, SEXP args, SEXP rho)
     lib = CAR(args);
     env = CADR(args);
     if (TYPEOF(lib) != ENVSXP || !isEnvironment(env))
-	errorcall(call, "invalid arguments\n");
+	errorcall(call, "invalid arguments");
     if (HASHTAB(lib) != R_NilValue) {
 	int i, n;
 	n = length(HASHTAB(lib));
@@ -1564,27 +1564,27 @@ SEXP do_libfixup(SEXP call, SEXP op, SEXP args, SEXP rho)
   do_pos2env
 
   This function returns the environment at a specified position in the
-  search path.  It will does soon.
+  search path.	It will does soon.
 
  */
 static SEXP pos2env(int pos, SEXP call)
 {
     SEXP env;
     if (pos == NA_INTEGER || pos < -1 || pos == 0) {
-	errorcall(call, "invalid argument\n");
+	errorcall(call, "invalid argument");
 	env = call;/* just for -Wall */
     }
     else if (pos == -1) {
 	env = R_GlobalContext->sysparent;
 	if (R_GlobalEnv != R_NilValue && env == R_NilValue)
-	    errorcall(call, "invalid argument\n");
+	    errorcall(call, "invalid argument");
     }
     else {
 	for (env = R_GlobalEnv; env != R_NilValue && pos > 1;
 	     env = ENCLOS(env))
 	    pos--;
 	if (pos != 1)
-	    error("invalid argument\n");
+	    error("invalid argument");
     }
     return env;
 }
@@ -1596,7 +1596,7 @@ SEXP do_pos2env(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(pos = coerceVector(CAR(args), INTSXP));
     npos = length(pos);
     if (npos <= 0)
-	errorcall(call, "invalid \"pos\" argument\n");
+	errorcall(call, "invalid \"pos\" argument");
     PROTECT(env = allocVector(VECSXP, npos));
     for (i = 0; i < npos; i++) {
 	VECTOR(env)[i] = pos2env(INTEGER(pos)[i], call);

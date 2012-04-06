@@ -38,6 +38,15 @@ library <-
                               "'", sep = ""))
             }
             file <- system.file("R", name, pkg = name, lib = lib.loc)
+            ## allowed zipped R source files
+            if (file == "") {
+                tfile <- file.path(which.lib.loc, name, "R", name)
+                zfile <- zip.file.extract(tfile)
+                if (zfile != tfile) {
+                    file <- zfile
+                    on.exit(unlink(file))
+                }
+            }
             # create environment
             env <- attach(NULL, name = pkgname)
             # "source" file into env
@@ -151,7 +160,7 @@ library.dynam <-
   invisible(.Dyn.libs)
 }
 
-require <- function(name, quietly = FALSE) {
+require <- function(name, quietly = FALSE, warn.conflicts = TRUE) {
     name <- as.character(substitute(name)) # allowing "require(eda)"
     if (!exists(".Provided", inherits = TRUE))
 	assign(".Provided", character(0), envir = .GlobalEnv)
@@ -159,7 +168,8 @@ require <- function(name, quietly = FALSE) {
 	&& is.na(match(name, .Provided))) {
 	if (!quietly)
 	    cat("Loading required package:", name, "\n")
-	library(name, char = TRUE, logical = TRUE)
+	library(name, char = TRUE, logical = TRUE,
+                warn.conflicts = warn.conflicts )
     }
     else
 	TRUE

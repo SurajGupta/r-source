@@ -25,8 +25,10 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     det <- function(x) { prod(diag(qr(x)$qr))*(-1)^(ncol(x)-1) }
 
     ## remove means for conditioning
-    xm <- apply(x, 2, mean)
-    x <- sweep(x, 2, xm)
+    if(demean) {
+        xm <- apply(x, 2, mean)
+        x <- sweep(x, 2, xm)
+    } else xm <- rep(0, nser)
     ## Fit models of increasing order
 
     for (m in order.min:order.max)
@@ -59,7 +61,7 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
         seA[[m - order.min+1]] <- if(ncol(varA) > 0) sqrt(diag(varA))
         else numeric(0)
         aic[m - order.min+1] <-
-            n.used*log(det(varE[[m-order.min+1]]))+2*nser*(nser*m+1)
+            n.used*log(det(varE[[m-order.min+1]]))+2*nser*(nser*m+demean)
     }
 
     m <- which(aic==min(aic)) + order.min - 1 # Determine best model
@@ -69,19 +71,19 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     y <- embed(x, m+1)
     AA <- A[[m - order.min + 1]]
     if(demean) {
-        x.mean <- AA[, 1]
+        xint <- AA[, 1]
         ar <- AA[, -1]
         if (m > 0) X <- cbind(rep(1,nrow(y)), y[, (nser+1):ncol(y)])
         else X <- as.matrix(rep(1, nrow(y)))
     } else {
         if (m > 0) X <- y[, (nser+1):ncol(y)]
         else X <- matrix(0, nrow(y), 0)
-        x.mean <- rep(0, nser)
+        xint <- NULL
         ar <- AA
     }
     Y <- t(y[, 1:nser, drop=FALSE])
     YH <- AA %*% t(X)
-    E <- rbind(matrix(NA, m, nser), t(Y - YH))
+    E <- drop(rbind(matrix(NA, m, nser), t(Y - YH)))
 
     aic <- aic - min(aic)
     names(aic) <- order.min:order.max
@@ -106,9 +108,9 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
         attr(E, "class") <- "ts"
     }
     res <- list(order = m, ar = ar, var.pred = var.pred,
-                x.mean = x.mean + xm, aic = aic,
+                x.mean = xm, x.intercept = xint, aic = aic,
                 n.used = n.used, order.max = order.max,
-                partialacf=NULL, resid=E, method = "Unconstrained LS",
+                partialacf = NULL, resid = E, method = "Unconstrained LS",
                 series = series, frequency = xfreq, call = match.call(),
                 asy.se.coef = list(x.mean = sem, ar=drop(ses)))
     class(res) <- "ar"

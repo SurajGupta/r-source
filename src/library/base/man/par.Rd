@@ -55,11 +55,11 @@ par(\dots, no.readonly = FALSE)
     arguments,  only parameters are returned which can be set by a
     subsequent \code{par(.)} call.}
   \item{adj}{The value of \code{adj} determines the way in which text
-    strings are justified.  A value of \code{0} produces right
+    strings are justified.  A value of \code{0} produces
     left-justified text, \code{0.5} centered text and \code{1}
     right-justified text.  Note that the \code{adj} argument of
-    \code{\link{text}} and \code{\link{mtext}} also allows \code{adj=
-      c(x,y)} for different adjustment in x- and y- direction.}
+    \code{\link{text}} and \code{\link{mtext}} also allows
+    \code{adj= c(x,y)} for different adjustment in x- and y- direction.}
   \item{ann}{If set to \code{FALSE}, high-level plotting functions do
     not annotate the plots they produce with axis and overall titles.
     The default is to do annotation.}
@@ -138,11 +138,13 @@ par(\dots, no.readonly = FALSE)
     does \emph{not} affect the axis labels.
   }
   \item{lty}{The line type.
-    Line types can either be specified as an integer (1=solid, 2=dashed,
-    3=dotted, 4=dotdashed, 5=longdashed, 6=twodashed) or as one of the
-    character strings
-    \code{"solid"}, \code{"dashed"}, \code{"dotted"}
-    \code{"dotdashed"}, \code{"longdashed"} or \code{"twodashed"}.
+    Line types can either be specified as an integer
+    (0=blank, 1=solid, 2=dashed, 3=dotted, 4=dotdash, 5=longdash, 6=twodash)
+    or as one of the character strings
+    \code{"blank"}, \code{"solid"}, \code{"dashed"}, \code{"dotted"}
+    \code{"dotdash"}, \code{"longdash"}, or \code{"twodash"}, where
+    \code{"blank"} uses `invisible lines' (i.e. doesn't draw them).
+
     Alternatively, a string of up to 8 characters
     (from code{c(0:9, "A":"F")}) may be given, giving
     the length (typically in points/pixels) of line segments which are
@@ -219,8 +221,21 @@ par(\dots, no.readonly = FALSE)
   \item{xaxp}{A vector of the form \code{c(x1, x2, n)} giving the
     coordinates of the extreme tick marks and the number of intervals
     between tick-marks.}
-  \item{xaxs}{(\emph{Unimplemented}) The style of axis interval
-    calculation to be used for the x-axis.}
+  \item{xaxs}{The style of axis interval
+    calculation to be used for the x-axis. Possible values are
+    \code{"r"}, \code{"i"}, \code{"e"}, \code{"s"}, \code{"d"}. The
+    styles are generally controlled by the range of data or \code{xlim},
+    if given. Style \code{"r"} (regular) first extends the data range by
+    4 percent and then finds an axis with pretty labels that fits within the
+    range. Style \code{"i"} (internal) just finds an axis with pretty
+    labels that fits within the original data range. Style \code{"s"}
+    (standard) finds an axis with pretty labels within which the
+    original data range fits. Style \code{"e"} (extended) is like style
+    \code{"s"}, except that it is also ensured that there is room for
+    plotting symbols within the bounding box.   Style \code{"d"}
+    (direct) specifies that the current axis should be used on
+    subsequent plots. (\emph{Only "r" and "i"
+	styles are currently implemented})}
   \item{xaxt}{A character which specifies the axis type.
     Specifying \code{"n"} causes an axis to be set up, but not plotted.}
   \item{xlog}{\emph{\bold{R.O.}}.  A logical value (see \code{log} in
@@ -234,8 +249,8 @@ par(\dots, no.readonly = FALSE)
   \item{yaxp}{A vector of the form \code{c(y1, y2, n)} giving
     the coordinates of the extreme tick marks and the number of
     intervals between tick-marks.}
-  \item{yaxs}{(\emph{Unimplemented}) The style of axis interval
-    calculation to be used for the y-axis.}
+  \item{yaxs}{The style of axis interval
+    calculation to be used for the y-axis. See \code{xaxs} above.}
   \item{yaxt}{A character which specifies the axis type.
     Specifying \code{"n"} causes an axis to be set up, but not plotted.}
   \item{ylog}{\emph{\bold{R.O.}}.  A logical value (see \code{log} in

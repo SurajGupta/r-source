@@ -11,6 +11,8 @@ use File::Basename;
 use Cwd;
 use Getopt::Long;
 
+$OSdir ="unix";
+
 @knownoptions = ("rhome:s", "html", "nroff", "latex", "example", "debug",
 		 "dosnames", "htmllists");
 GetOptions (@knownoptions) || usage();
@@ -117,7 +119,7 @@ foreach $manfile (@mandir) {
 		$textflag = "text";
 		open(nroffout, "| $TBL | $NROFF -ms 2> /dev/null | " .
 		     " ${R_HOME}/bin/help.pretty > '$destfile'");
-		Rdconv($manfile, "nroff", "", -1);
+		Rdconv($manfile, "nroff", "", -1, $pkg);
 	    }
 	}
 
@@ -128,7 +130,7 @@ foreach $manfile (@mandir) {
 	    if(fileolder($destfile,$manage)) {
 		$htmlflag = "html";
 		print "\t$destfile" if $opt_debug;
-		Rdconv($manfile, "html", "", "$destfile");
+		Rdconv($manfile, "html", "", "$destfile", $pkg);
 	    }
 	}
 

@@ -39,6 +39,7 @@
 extern console RConsole;
 extern int AllDevicesKilled;
 
+
 	/********************************************************/
 	/* This device driver has been documented so that it be	*/
 	/* used as a template for new drivers 			*/
@@ -46,8 +47,8 @@ extern int AllDevicesKilled;
 
 #define MM_PER_INCH	25.4	/* mm -> inch conversion */
 
-#define TRACEDEVGA(a)  
-#define NOBM(a) if(!xd->kind){a;}
+#define TRACEDEVGA(a)
+#define NOBM(a) if(xd->kind==SCREEN){a;}
 #define CLIP if (xd->clip.width>0) gsetcliprect(_d,xd->clip)
 #define DRAW(a) {drawing _d=xd->gawin;CLIP;a;NOBM(_d=xd->bm;CLIP;a;)}
 #define SHOW  gbitblt(xd->gawin,xd->bm,pt(0,0),getrect(xd->bm));
@@ -65,33 +66,44 @@ extern int AllDevicesKilled;
 	/* specific structure					*/
 	/********************************************************/
 
+enum DeviceKinds {SCREEN=0, PRINTER, METAFILE, PNG, JPEG, BMP};
+
 typedef struct {
     /* R Graphics Parameters */
     /* local device copy so that we can detect */
     /* when parameter changes */
-    int   col;			/* Color */
-    int   fg;			/* Foreground */
-    int   bg;			/* Background */
-    int   fontface;		/* Typeface */
-    int   fontsize;		/* Size in points */
+    int   col;			   /* Color */
+    int   fg;			   /* Foreground */
+    int   bg;			   /* Background */
+    int   fontface;		   /* Typeface */
+    int   fontsize, basefontsize;  /* Size in points */
     double fontangle;
 
     /* X11 Driver Specific */
     /* parameters with copy per x11 device */
 
-    int   kind;
+    enum DeviceKinds kind;
     int   windowWidth;		/* Window width (pixels) */
     int   windowHeight;		/* Window height (pixels) */
     int   resize;		/* Window resized */
     window gawin;		/* Graphics window */
+  /*FIXME: we should have union for this stuff and
+    maybe change gawin to canvas*/
+  /* SCREEN section*/
     popup locpopup, grpopup;
     button  stoploc;
     menubar mbar, mbarloc;
     menu  msubsave;
-    menuitem mgif, mps, mwm, mclpbm, mclpwm, mprint, mclose;
+    menuitem mpng, mbmp, mjpeg50, mjpeg75, mjpeg100;
+    menuitem mps, mwm, mclpbm, mclpwm, mprint, mclose;
     menuitem mrec, madd, mreplace, mprev, mnext, mclear, msvar, mgvar;
     int   recording, replaying, needsave;
     bitmap bm;
+  /* PNG and JPEG section */
+    FILE *fp;
+    int quality;
+  /*Used to rescale font size so that bitmap devices have 72dpi */
+    int truedpi, wanteddpi; 
     rgb   fgcolor;		/* Foreground color */
     rgb   bgcolor;		/* Background color */
     rect  clip;			/* The clipping rectangle */
@@ -167,29 +179,13 @@ static double pixelWidth(drawing d);
 static void SetColor(int, DevDesc *);
 static void SetFont(int, int, double, DevDesc *);
 static void SetLinetype(int, double, DevDesc *);
+static int Load_Rbitmap_Dll();
+void UnLoad_Rbitmap_Dll();
+static void SaveAsPng(DevDesc *dd,char *fn);
+static void SaveAsJpeg(DevDesc *dd,int quality,char *fn);
+static void SaveAsBmp(DevDesc *dd,char *fn);
+static void SaveAsBitmap(DevDesc *dd);
 void  ProcessEvents();
-
-
-static void SaveAsGif(DevDesc *dd, char *fn)
-{
-    x11Desc *xd = (x11Desc *) dd->deviceSpecific;
-    image img;
-    int   l;
-
-    l = strlen(fn);
-    if ((l < 5) || strcmpi(&fn[l - 4], ".gif")) {
-	R_ShowMessage("File extension must be .gif");
-	return;
-    }
-    img = bitmaptoimage(xd->bm);
-    if (!img) {
-	R_ShowMessage("Insufficient memory to copy graphics device");
-	return;
-    }
-    saveimage(img, fn);
-    del(img);
-}
-
 
 static void PrivateCopyDevice(DevDesc *dd,DevDesc *ndd, char *name)
 {
@@ -207,7 +203,7 @@ static void PrivateCopyDevice(DevDesc *dd,DevDesc *ndd, char *name)
     show(xd->gawin);
 }
 
-static void SaveAsWin(DevDesc *dd, char *display) 
+static void SaveAsWin(DevDesc *dd, char *display)
 {
     DevDesc *ndd = (DevDesc *) malloc(sizeof(DevDesc));
     if (!ndd) {
@@ -219,10 +215,10 @@ static void SaveAsWin(DevDesc *dd, char *display)
     if (X11DeviceDriver(ndd, display,
 			 GConvertXUnits(1.0, NDC, INCHES, dd),
 			 GConvertYUnits(1.0, NDC, INCHES, dd),
-			 dd->gp.ps)) 
+			 dd->gp.ps))
         PrivateCopyDevice(dd,ndd,display);
 }
-    
+
 
 static void SaveAsPostscript(DevDesc *dd, char *fn)
 {
@@ -264,13 +260,13 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
            done += 1;
         }
       }
-   }   
+   }
    if (PSDeviceDriver(ndd, fn, paper, family, bg, fg,
 		      GConvertXUnits(1.0, NDC, INCHES, dd),
 		      GConvertYUnits(1.0, NDC, INCHES, dd),
-		      (double)0, dd->gp.ps, 0, 1)) 
+		      (double)0, dd->gp.ps, 0, 1))
     /* horizontal=F, onefile=F, pagecentre=T */
-        PrivateCopyDevice(dd, ndd, "postscript");
+     PrivateCopyDevice(dd, ndd, "postscript");
 }
 
 
@@ -360,7 +356,7 @@ static void RFontInit()
 	    strcat(oops, optfile());
 	    strcat(oops, " will be ignored.");
 	    R_ShowMessage(oops);
-	    for (i = 0; i < fontnum; i++) winfree(fontname);
+	    for (i = 0; i < fontnum; i++) free(fontname);
 	    RStandardFonts();
 	    notdone = 0;
 	}
@@ -376,10 +372,11 @@ static void RFontInit()
 static int SetBaseFont(x11Desc *xd)
 {
     xd->fontface = 1;
-    xd->fontsize = 12;
+    xd->fontsize = xd->basefontsize;
     xd->fontangle = 0.0;
     xd->usefixed = 0;
-    xd->font = gnewfont(xd->gawin, fontname[0], fontstyle[0], 12, 0.0);
+    xd->font = gnewfont(xd->gawin, fontname[0], fontstyle[0], 
+			MulDiv(xd->fontsize,xd->wanteddpi,xd->truedpi), 0.0);
     if (!xd->font) {
 	xd->usefixed = 1;
 	xd->font = xd->fixedfont = FixedFont;
@@ -391,11 +388,11 @@ static int SetBaseFont(x11Desc *xd)
 
 
 
- /* Set the font size and face */
-			/* If the font of this size and at that the specified */
-			/* rotation is not present it is loaded. */
-			/* 0 = plain text, 1 = bold */
-			/* 2 = oblique, 3 = bold-oblique */
+/* Set the font size and face */
+/* If the font of this size and at that the specified */
+/* rotation is not present it is loaded. */
+/* 0 = plain text, 1 = bold */
+/* 2 = oblique, 3 = bold-oblique */
 
 #define SMALLEST 8
 #define LARGEST 64
@@ -406,7 +403,7 @@ static void SetFont(int face, int size, double rot, DevDesc *dd)
 
     if (face < 1 || face > fontnum)
 	face = 1;
-    size = 2 * size / 2;
+    size = MulDiv(size,xd->wanteddpi,xd->truedpi);
     if (size < SMALLEST)
 	size = SMALLEST;
     if (size > LARGEST)
@@ -528,7 +525,6 @@ static void HelpClose(window w)
     if (AllDevicesKilled) return;
     {
 	DevDesc *dd = (DevDesc *) getdata(w);
-
 	KillDevice(dd);
     }
 }
@@ -570,30 +566,41 @@ static void HelpMouseClick(window w, int button, point pt)
     }
 }
 
-static void menustop(control m) 
+static void menustop(control m)
 {
   DevDesc *dd = (DevDesc *) getdata(m);
   x11Desc *xd = (x11Desc *) dd->deviceSpecific;
-  if (!xd->locator) 
+  if (!xd->locator)
      return;
   xd->clicked = 2;
 }
 
 void  fixslash(char *);
 
-static void menugif(control m)
+static void menufilebitmap(control m)
 {
     DevDesc *dd = (DevDesc *) getdata(m);
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
     char *fn;
-
-    setuserfilter("Gif files (*.gif)\0*.gif\0\0");
-    fn = askfilesave("Gif file", "");
+    if (m==xd->mpng) {
+      setuserfilter("Png files (*.png)\0*.png\0\0");
+      fn = askfilesave("Portable network graphics file", "");
+    } else if (m==xd->mbmp) {
+      setuserfilter("Windows bitmap files (*.bmp)\0*.bmp\0\0");
+      fn = askfilesave("Windows bitmap file", "");      
+    } else { 
+      setuserfilter("Jpeg files (*.jpeg,*jpg)\0*.jpeg;*.jpg\0\0");
+      fn = askfilesave("Jpeg file", "");
+    }
     if (!fn) return;
     fixslash(fn);
     gsetcursor(xd->gawin, WatchCursor);
     show(xd->gawin);
-    SaveAsGif(dd,fn);
+    if (m==xd->mpng) SaveAsPng(dd,fn);
+    else if (m==xd->mbmp) SaveAsBmp(dd,fn);
+    else if (m==xd->mjpeg50) SaveAsJpeg(dd,50,fn);
+    else if (m==xd->mjpeg75) SaveAsJpeg(dd,75,fn);
+    else SaveAsJpeg(dd,100,fn);
     gsetcursor(xd->gawin, ArrowCursor);
     show(xd->gawin);
 }
@@ -622,7 +629,7 @@ static void menuwm(control m)
     if (!fn) return;
     fixslash(fn);
     sprintf(display, "win.metafile:%s", fn);
-    SaveAsWin(dd,display);    
+    SaveAsWin(dd,display);
 }
 
 
@@ -630,7 +637,7 @@ static void menuwm(control m)
 static void menuclpwm(control m)
 {
     DevDesc *dd = (DevDesc *) getdata(m);
-    SaveAsWin(dd,"win.metafile");        
+    SaveAsWin(dd,"win.metafile");
 }
 
 static void menuclpbm(control m)
@@ -647,7 +654,7 @@ static void menuclpbm(control m)
 static void menuprint(control m)
 {
     DevDesc *dd = (DevDesc *) getdata(m);
-    SaveAsWin(dd,"win.print");        
+    SaveAsWin(dd,"win.print");
 }
 
 
@@ -960,18 +967,28 @@ static void mbarf(control m)
     if (dd->displayList != R_NilValue) {
 	enable(xd->madd);
 	enable(xd->mprint);
-	enable(xd->mgif);
+	enable(xd->mpng);
+	enable(xd->mbmp);
+	enable(xd->mjpeg50);
+	enable(xd->mjpeg75);
+	enable(xd->mjpeg100);
 	enable(xd->mwm);
 	enable(xd->mps);
 	enable(xd->mclpwm);
+	enable(xd->mclpbm);
     } else {
 	disable(xd->madd);
 	disable(xd->mprint);
 	disable(xd->msubsave);
-	disable(xd->mgif);
+	disable(xd->mpng);
+	disable(xd->mbmp);
+	disable(xd->mjpeg50);
+	disable(xd->mjpeg75);
+	disable(xd->mjpeg100);
 	disable(xd->mwm);
 	disable(xd->mps);
 	disable(xd->mclpwm);
+	disable(xd->mclpbm);
     }
     draw(xd->mbar);
 }
@@ -995,158 +1012,231 @@ static void mbarf(control m)
 
 #define MCHECK(m) {if(!(m)) {del(xd->gawin); return 0;}}
 
+static int setupScreenDevice(DevDesc *dd, x11Desc *xd, int w, int h) 
+{
+  menu  m;
+  int   iw, ih;
+  double dw, dh, d;
 
-static int X11_Open(DevDesc *dd, x11Desc *xd, char *dsp, 
+  xd->kind = SCREEN;
+  dw = w / pixelWidth(NULL);
+  dh = h / pixelHeight(NULL);
+  if ((dw / devicewidth(NULL)) > 0.85) {
+    d = dh / dw;
+    dw = 0.85 * devicewidth(NULL);
+    dh = d * dw;
+  }
+  if ((dh / deviceheight(NULL)) > 0.85) {
+    d = dw / dh;
+    dh = 0.85 * deviceheight(NULL);
+    dw = d * dh;
+  }
+  iw = dw + 0.5;
+  ih = dh + 0.5;
+  if (!(xd->gawin = newwindow("R Graphics",
+			     rect(devicewidth(NULL) - iw - 5, 0, iw, ih),
+			     Document | StandardWindow | Menubar))) {
+    return 0;
+  }
+
+  addto(xd->gawin);
+  gsetcursor(xd->gawin, ArrowCursor);
+  if (ismdi() && (RguiMDI & RW_TOOLBAR)) {
+    int btsize = 24;
+    rect r = rect(2, 2, btsize, btsize);
+    control bt, tb;
+    
+    MCHECK(tb = newtoolbar(btsize + 4));
+    gsetcursor(tb, ArrowCursor);
+    addto(tb);
+    
+    MCHECK(bt = newtoolbutton(cam_image, r, menuclpwm));
+    MCHECK(addtooltip(bt, "Copy to the clipboard as a metafile"));
+    gsetcursor(bt, ArrowCursor);
+    setdata(bt, (void *) dd);
+    r.x += (btsize + 6);
+    
+    MCHECK(bt = newtoolbutton(print_image, r, menuprint));
+    MCHECK(addtooltip(bt, "Print"));
+    gsetcursor(bt, ArrowCursor);
+    setdata(bt, (void *) dd);
+    r.x += (btsize + 6);
+
+    MCHECK(bt = newtoolbutton(console_image, r, menuconsole));
+    MCHECK(addtooltip(bt, "Return focus to console"));
+    gsetcursor(bt, ArrowCursor);
+    setdata(bt, (void *) dd);
+    r.x += (btsize + 6);
+
+    MCHECK(xd->stoploc = newtoolbutton(stop_image, r, menustop));
+    MCHECK(addtooltip(xd->stoploc, "Stop locator"));
+    gsetcursor(bt, ArrowCursor);
+    setdata(xd->stoploc,(void *) dd);
+    hide(xd->stoploc);
+  } else
+    xd->stoploc = NULL;
+
+  /* First we prepare 'locator' menubar and popup */
+  addto(xd->gawin);
+  MCHECK(xd->mbarloc = newmenubar(NULL));
+  MCHECK(newmenu("Stop"));
+  MCHECK(m = newmenuitem("Stop locator", 0, menustop));
+  setdata(m, (void *) dd);
+  MCHECK(xd->locpopup = newpopup(NULL));
+  MCHECK(m = newmenuitem("Stop", 0, menustop));
+  setdata(m, (void *) dd);
+  MCHECK(newmenuitem("Continue", 0, NULL));
+  
+  /* Normal menubar */
+  MCHECK(xd->mbar = newmenubar(mbarf));
+  MCHECK(m = newmenu("File"));
+  MCHECK(xd->msubsave = newsubmenu(m, "Save as"));
+  MCHECK(xd->mwm = newmenuitem("Metafile", 0, menuwm));
+  MCHECK(xd->mps = newmenuitem("Postscript", 0, menups));
+  MCHECK(xd->mpng = newmenuitem("Png", 0, menufilebitmap));
+  MCHECK(xd->mbmp = newmenuitem("Bmp", 0, menufilebitmap));
+  MCHECK(newsubmenu(xd->msubsave,"Jpeg"));
+  MCHECK(xd->mjpeg50 = newmenuitem("50% quality", 0, menufilebitmap));
+  MCHECK(xd->mjpeg75 = newmenuitem("75% quality", 0, menufilebitmap));
+  MCHECK(xd->mjpeg100 = newmenuitem("100% quality", 0, menufilebitmap));
+  MCHECK(newsubmenu(m, "Copy to the clipboard"));
+  MCHECK(xd->mclpbm = newmenuitem("as a Bitmap\tCTRL+C", 0, menuclpbm));
+  MCHECK(xd->mclpwm = newmenuitem("as a Metafile\tCTRL+W", 0, menuclpwm));
+  addto(m);
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->mprint = newmenuitem("Print\tCTRL+P", 0, menuprint));
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->mclose = newmenuitem("close Device", 0, menuclose));
+  MCHECK(newmenu("History"));
+  MCHECK(xd->mrec = newmenuitem("Recording", 0, menurec));
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->madd = newmenuitem("Add\tINS", 0, menuadd));
+  MCHECK(xd->mreplace = newmenuitem("Replace", 0, menureplace));
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->mprev = newmenuitem("Previous\tPgUp", 0, menuprev));
+  MCHECK(xd->mnext = newmenuitem("Next\tPgDown", 0, menunext));
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->msvar = newmenuitem("Save to variable", 0, menusvar));
+  MCHECK(xd->mgvar = newmenuitem("Get from variable", 0, menugvar));
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(xd->mclear = newmenuitem("Clear history", 0, menuclear));
+  newmdimenu();
+
+  /* Normal popup */
+  MCHECK(xd->grpopup = newpopup(NULL));
+  MCHECK(m = newmenuitem("Copy as metafile", 0, menuclpwm));
+  setdata(m, (void *) dd);
+  MCHECK(m = newmenuitem("Copy as bitmap", 0, menuclpbm));
+  setdata(m, (void *) dd);
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(m = newmenuitem("Save as metafile", 0, menuwm));
+  setdata(m, (void *) dd);
+  MCHECK(m = newmenuitem("Save as postscript", 0, menups));
+  setdata(m, (void *) dd);
+  MCHECK(newmenuitem("-", 0, NULL));
+  MCHECK(m = newmenuitem("Print", 0, menuprint));
+  setdata(m, (void *) dd);
+  gchangepopup(xd->gawin, xd->grpopup);
+
+  MCHECK(xd->bm = newbitmap(getwidth(xd->gawin), getheight(xd->gawin), 
+			    getdepth(xd->gawin)));
+
+  addto(xd->gawin);
+  setdata(xd->mbar, (void *) dd);
+  setdata(xd->mpng, (void *) dd);
+  setdata(xd->mbmp, (void *) dd);
+  setdata(xd->mjpeg50, (void *) dd);
+  setdata(xd->mjpeg75, (void *) dd);
+  setdata(xd->mjpeg100, (void *) dd);
+  setdata(xd->mps, (void *) dd);
+  setdata(xd->mwm, (void *) dd);
+  setdata(xd->mclpwm, (void *) dd);
+  setdata(xd->mclpbm, (void *) dd);
+  setdata(xd->mprint, (void *) dd);
+  setdata(xd->mclose, (void *) dd);
+  setdata(xd->mrec, (void *) dd);
+  setdata(xd->mprev, (void *) dd);
+  setdata(xd->mnext, (void *) dd);
+  setdata(xd->mgvar, (void *) dd);
+  setdata(xd->madd, (void *) dd);
+  setdata(xd->mreplace, (void *) dd);
+  show(xd->gawin);
+  show(xd->gawin);
+  setresize(xd->gawin, HelpResize);
+  setredraw(xd->gawin, HelpExpose);
+  setmousedown(xd->gawin, HelpMouseClick);
+  setkeydown(xd->gawin, NHelpKeyIn);
+  setkeyaction(xd->gawin, CHelpKeyIn);
+  setclose(xd->gawin, HelpClose);
+  xd->recording = 0;
+  xd->replaying = 0;
+
+  return 1;
+}
+
+static int X11_Open(DevDesc *dd, x11Desc *xd, char *dsp,
                     double w, double h)
 {
-    /* if have to bail out with "error" then must */
-    /* free(dd) and free(xd) */
-
-    int   iw, ih;
-    double dw, dh, d;
     rect  rr;
 
     if (!fontinitdone)
 	RFontInit();
 
     /* Foreground and Background Colors */
-
     xd->bg = dd->dp.bg = R_RGB(255, 255, 255);
     xd->fg = dd->dp.fg = R_RGB(0, 0, 0);
     xd->col = dd->dp.col = xd->fg;
 
     xd->fgcolor = Black;
     xd->bgcolor = White;
-    /* Try to create a simple window */
-    /* Want to know about exposures */
-    /* and window-resizes and locations */
+
     if (!dsp[0]) {
-	xd->kind = 0;
-	dw = w / pixelWidth(NULL);
-	dh = h / pixelHeight(NULL);
-	if ((dw / devicewidth(NULL)) > 0.85) {
-	    d = dh / dw;
-	    dw = 0.85 * devicewidth(NULL);
-	    dh = d * dw;
-	}
-	if ((dh / deviceheight(NULL)) > 0.85) {
-	    d = dw / dh;
-	    dh = 0.85 * deviceheight(NULL);
-	    dw = d * dh;
-	}
-	iw = dw + 0.5;
-	ih = dh + 0.5;
-	if ((xd->gawin = newwindow("R Graphics",
-				rect(devicewidth(NULL) - iw - 5, 0, iw, ih),
-
-				   Document | StandardWindow | Menubar))) {
-	    menu  m;
-            gsetcursor(xd->gawin, ArrowCursor);
-            if (ismdi() && (RguiMDI & RW_TOOLBAR)) {
-                int btsize = 24;
-                rect r = rect(2, 2, btsize, btsize);
-                control bt, tb;
-                
-                MCHECK(tb = newtoolbar(btsize + 4));
-		gsetcursor(tb, ArrowCursor);
-                addto(tb);
-
-                MCHECK(bt = newtoolbutton(cam_image, r, menuclpwm));
-                MCHECK(addtooltip(bt, "Copy to the clipboard as a metafile"));
-		gsetcursor(bt, ArrowCursor);
-		setdata(bt, (void *) dd);
-                r.x += (btsize + 6);
-
-                MCHECK(bt = newtoolbutton(print_image, r, menuprint));
-                MCHECK(addtooltip(bt, "Print"));
-		gsetcursor(bt, ArrowCursor);
-                setdata(bt, (void *) dd);
-                r.x += (btsize + 6);
-
-                MCHECK(bt = newtoolbutton(console_image, r, menuconsole));
-                MCHECK(addtooltip(bt, "Return focus to console"));
-		gsetcursor(bt, ArrowCursor);
-                setdata(bt, (void *) dd);
-                r.x += (btsize + 6);
-
-                MCHECK(xd->stoploc = newtoolbutton(stop_image, r, menustop));
-                MCHECK(addtooltip(xd->stoploc, "Stop locator"));
-		gsetcursor(bt, ArrowCursor);
-                setdata(xd->stoploc,(void *) dd);            
-                hide(xd->stoploc);
-            } else
-                xd->stoploc = NULL;
-
-	    /* First we prepare 'locator' menubar and popup */
-            addto(xd->gawin);
-	    MCHECK(xd->mbarloc = newmenubar(NULL));
-	    MCHECK(newmenu("Stop"));
-	    MCHECK(m = newmenuitem("Stop locator", 0, menustop));
-            setdata(m, (void *) dd);
-	    MCHECK(xd->locpopup = newpopup(NULL));
-	    MCHECK(m = newmenuitem("Stop", 0, menustop));
-            setdata(m, (void *) dd);
-	    MCHECK(newmenuitem("Continue", 0, NULL));
-
-	    /* Normal menubar */
-	    MCHECK(xd->mbar = newmenubar(mbarf));
-	    MCHECK(m = newmenu("File"));
-	    MCHECK(xd->msubsave = newsubmenu(m, "Save as"));
-	    MCHECK(xd->mgif = newmenuitem("Gif", 0, menugif));
-	    MCHECK(xd->mwm = newmenuitem("Metafile", 0, menuwm));
-	    MCHECK(xd->mps = newmenuitem("Postscript", 0, menups));
-	    MCHECK(newsubmenu(m, "Copy to the clipboard"));
-	    MCHECK(xd->mclpbm = newmenuitem("as a Bitmap\tCTRL+C", 0,
-					    menuclpbm));
-	    MCHECK(xd->mclpwm = newmenuitem("as a Metafile\tCTRL+W", 0,
-					    menuclpwm));
-	    addto(m);
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->mprint = newmenuitem("Print\tCTRL+P", 0, menuprint));
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->mclose = newmenuitem("close Device", 0, menuclose));
-	    MCHECK(newmenu("History"));
-	    MCHECK(xd->mrec = newmenuitem("Recording", 0, menurec));
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->madd = newmenuitem("Add\tINS", 0, menuadd));
-	    MCHECK(xd->mreplace = newmenuitem("Replace", 0, menureplace));
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->mprev = newmenuitem("Previous\tPgUp", 0, menuprev));
-	    MCHECK(xd->mnext = newmenuitem("Next\tPgDown", 0, menunext));
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->msvar = newmenuitem("Save to variable", 0, menusvar));
-	    MCHECK(xd->mgvar = newmenuitem("Get from variable", 0, menugvar));
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(xd->mclear = newmenuitem("Clear history", 0, menuclear));
-	    newmdimenu();
-
-	    /* Normal popup */
-	    MCHECK(xd->grpopup = newpopup(NULL));
-	    MCHECK(m = newmenuitem("Copy as metafile", 0, menuclpwm));
-            setdata(m, (void *) dd);
-	    MCHECK(m = newmenuitem("Copy as bitmap", 0, menuclpbm));
-            setdata(m, (void *) dd);
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(m = newmenuitem("Save as metafile", 0, menuwm));
-            setdata(m, (void *) dd);
-	    MCHECK(m = newmenuitem("Save as postscript", 0, menups));
-            setdata(m, (void *) dd);
-	    MCHECK(newmenuitem("-", 0, NULL));
-	    MCHECK(m = newmenuitem("Print", 0, menuprint));
-            setdata(m, (void *) dd);
-            gchangepopup(xd->gawin, xd->grpopup);
-	}
+      if (!setupScreenDevice(dd, xd, w, h)) return 0;
     } else if (!strcmp(dsp, "win.print")) {
-	xd->kind = 1;
+	xd->kind = PRINTER;
 	xd->gawin = newprinter(MM_PER_INCH * w, MM_PER_INCH * h);
 	if (!xd->gawin)
 	    return 0;
+    } else if (!strncmp(dsp, "png:", 4) || !strncmp(dsp,"bmp:",4)) {
+        xd->kind = (dsp[0]=='p') ? PNG : BMP;
+	if (!Load_Rbitmap_Dll()) {
+	  warning("Impossible to load Rbitmap.dll");
+	  return 0;
+	}
+	/*
+	  Observe that given actual graphapp implementation 256 is 
+	  irrilevant,i.e., depth of the bitmap is the one of graphic card
+	  if required depth > 1
+	*/
+	if (((xd->gawin = newbitmap(w,h,256)) == NULL) || 
+	    ((xd->fp=fopen(&dsp[4],"wb")) == NULL )) {
+	  if (xd->gawin != NULL) del(xd->gawin);
+	  if (xd->fp != NULL) fclose(xd->fp);
+	  return 0;
+	}
+    } else if (!strncmp(dsp, "jpeg:", 5)) {
+        char *p = strchr(&dsp[5], ':');
+        xd->kind = JPEG ;
+	if (!p) return 0;
+	if (!Load_Rbitmap_Dll()) {
+	  warning("Impossible to load Rbitmap.dll");
+	  return 0;
+	}
+	*p = '\0';
+	xd->quality = atoi(&dsp[5]);
+	*p = ':' ;
+	if (((xd->gawin = newbitmap(w,h,256)) == NULL) || 
+	    ((xd->fp=fopen(p+1,"wb")) == NULL )) {
+	  if (xd->gawin != NULL) del(xd->gawin);
+	  if (xd->fp != NULL) fclose(xd->fp);
+	  return 0;
+	}
     } else {
-/*
- *         win.metafile[:] in memory (for the clipboard)
- *         win.metafile:filename
- *         anything else return 0
- */
+	/*
+	 * win.metafile[:] in memory (for the clipboard)
+	 * win.metafile:filename
+	 * anything else return 0
+	 */
 	char  *s = "win.metafile";
 	int   ls = strlen(s);
 	int   ld = strlen(dsp);
@@ -1157,52 +1247,26 @@ static int X11_Open(DevDesc *dd, x11Desc *xd, char *dsp,
 	    return 0;
 	xd->gawin = newmetafile((ld > ls) ? &dsp[ls + 1] : "",
 				rect(0, 0, MM_PER_INCH * w, MM_PER_INCH * h));
-	xd->kind = 2;
+	xd->kind = METAFILE;
 	if (!xd->gawin)
 	    return 0;
     }
+    xd->truedpi = devicepixelsy(xd->gawin);
+    if ((xd->kind==PNG) || (xd->kind==JPEG) || (xd->kind==BMP)) 
+      xd->wanteddpi = 72 ;
+    else
+      xd->wanteddpi = xd->truedpi;
     if (!SetBaseFont(xd)) {
 	Rprintf("can't find any fonts\n");
 	del(xd->gawin);
+	if (xd->kind==SCREEN) del(xd->bm);
 	return 0;
     }
     rr = getrect(xd->gawin);
-    iw = xd->windowWidth = rr.width;
-    ih = xd->windowHeight = rr.height;
+    xd->windowWidth = rr.width;
+    xd->windowHeight = rr.height;
     xd->clip = rr;
     setdata(xd->gawin, (void *) dd);
-    if (!xd->kind) {
-	xd->bm = newbitmap(iw, ih, getdepth(xd->gawin));
-	if (!xd->bm) {
-	    del(xd->gawin);
-	    return 0;
-	}
-	addto(xd->gawin);
-	setdata(xd->mbar, (void *) dd);
-	setdata(xd->mgif, (void *) dd);
-	setdata(xd->mps, (void *) dd);
-	setdata(xd->mwm, (void *) dd);
-	setdata(xd->mclpwm, (void *) dd);
-	setdata(xd->mclpbm, (void *) dd);
-	setdata(xd->mprint, (void *) dd);
-	setdata(xd->mclose, (void *) dd);
-	setdata(xd->mrec, (void *) dd);
-	setdata(xd->mprev, (void *) dd);
-	setdata(xd->mnext, (void *) dd);
-	setdata(xd->mgvar, (void *) dd);
-	setdata(xd->madd, (void *) dd);
-	setdata(xd->mreplace, (void *) dd);
-	show(xd->gawin);
-	show(xd->gawin);
-	setresize(xd->gawin, HelpResize);
-	setredraw(xd->gawin, HelpExpose);
-	setmousedown(xd->gawin, HelpMouseClick);
-	setkeydown(xd->gawin, NHelpKeyIn);
-	setkeyaction(xd->gawin, CHelpKeyIn);
-	setclose(xd->gawin, HelpClose);
-	xd->recording = 0;
-	xd->replaying = 0;
-    }
     xd->needsave = 0;
     return 1;
 }
@@ -1262,6 +1326,8 @@ static void X11_Clip(double x0, double x1, double y0, double y1, DevDesc *dd)
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
     xd->clip = rcanon(rpt(pt(x0, y0), pt(x1, y1)));
+    xd->clip.width  += 1;
+    xd->clip.height += 1;
 }
 
 	/********************************************************/
@@ -1288,7 +1354,7 @@ static void X11_Resize(DevDesc *dd)
 	dd->dp.bottom = dd->gp.bottom = ih = xd->windowHeight;
 	dd->dp.top = dd->gp.top = 0.0;
 	xd->resize = 0;
-	if (!xd->kind) {
+	if (xd->kind==SCREEN) {
 	    del(xd->bm);
 	    xd->bm = newbitmap(iw, ih, getdepth(xd->gawin));
 	    if (!xd->bm) {
@@ -1311,11 +1377,17 @@ static void X11_NewPage(DevDesc *dd)
 {
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
-    if ((xd->kind == 1) && xd->needsave)
+    if ((xd->kind == PRINTER) && xd->needsave)
 	nextpage(xd->gawin);
-    if ((xd->kind == 2) && xd->needsave)
-	error("A metafile can store only one figure.\n");
-    if (!xd->kind) {
+    if ((xd->kind == METAFILE) && xd->needsave)
+	error("A metafile can store only one figure.");
+    if ((xd->kind == PNG) && xd->needsave)
+	error("A png file can store only one figure.");
+    if ((xd->kind == JPEG) && xd->needsave)
+	error("A jpeg file can store only one figure.");
+    if ((xd->kind == BMP) && xd->needsave)
+	error("A bmp file can store only one figure.");
+    if (xd->kind==SCREEN) {
 	if (xd->recording && xd->needsave)
 	    AddtoPlotHistory(savedDisplayList, &savedGPar, 0);
 	if (xd->replaying)
@@ -1327,13 +1399,13 @@ static void X11_NewPage(DevDesc *dd)
     xd->bgcolor = rgb(R_RED(xd->bg),
 		      R_GREEN(xd->bg),
 		      R_BLUE(xd->bg));
-    if (xd->kind) 
-       xd->clip = getrect(xd->gawin);
-    else
-       xd->clip = getrect(xd->bm);
+    if (xd->kind!=SCREEN) {
+      xd->needsave = 1;
+      xd->clip = getrect(xd->gawin);
+    } else {
+      xd->clip = getrect(xd->bm);
+    }
     DRAW(gfillrect(_d, xd->bgcolor, getrect(_d)));
-    if (xd->kind)
-	xd->needsave = 1;
 }
 
 	/********************************************************/
@@ -1348,16 +1420,20 @@ static void X11_Close(DevDesc *dd)
 {
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
-    if (!xd->kind) {
+    if (xd->kind==SCREEN) {
 	hide(xd->gawin);
 	del(xd->bm);
-    }
+    } else if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) {
+      SaveAsBitmap(dd);
+    } 
     del(xd->font);
     del(xd->gawin);
-    doevent();			/* this is needed since the GraphApp delayed
-				   clean-up */
-    /* ,i.e, I want free all resources NOW */
-    winfree(xd);
+/* 
+ * this is needed since the GraphApp delayed clean-up 
+ * ,i.e, I want free all resources NOW 
+*/
+    doevent();			
+    free(xd);
 }
 
 	/********************************************************/
@@ -1376,7 +1452,7 @@ static void X11_Activate(DevDesc *dd)
     char  num[3];
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
-    if (xd->replaying || xd->kind)
+    if (xd->replaying || (xd->kind!=SCREEN))
 	return;
     strcpy(t, (char *) title);
     strcat(t, ": Device ");
@@ -1400,7 +1476,7 @@ static void X11_Deactivate(DevDesc *dd)
     char  num[3];
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
-    if (xd->replaying || xd->kind)
+    if (xd->replaying || (xd->kind!=SCREEN))
 	return;
     strcpy(t, (char *) title);
     strcat(t, ": Device ");
@@ -1640,11 +1716,11 @@ static void X11_Text(double x, double y, int coords,
 #ifdef NOCLIPTEXT
     gsetcliprect(xd->gawin, getrect(xd->gawin));
     gdrawstr(xd->gawin, xd->font, xd->fgcolor, pt(x, y), str);
-    if (!xd->kind) {
+    if (xd->kind==SCREEN) {
 	gsetcliprect(xd->bm, getrect(xd->bm));
 	gdrawstr(xd->bm, xd->font, xd->fgcolor, pt(x, y), str);
     }
-#else      
+#else
     DRAW(gdrawstr(_d, xd->font, xd->fgcolor, pt(x, y), str));
 #endif
 }
@@ -1660,7 +1736,7 @@ static int X11_Locator(double *x, double *y, DevDesc *dd)
 {
     x11Desc *xd = (x11Desc *) dd->deviceSpecific;
 
-    if (xd->kind)
+    if (xd->kind!=SCREEN)
 	return 0;
     xd->locator = 1;
     xd->clicked = 0;
@@ -1684,7 +1760,7 @@ static int X11_Locator(double *x, double *y, DevDesc *dd)
     if (xd->stoploc) {
       hide(xd->stoploc);
       show(xd->gawin);
-    }    
+    }
     gsetcursor(xd->gawin, ArrowCursor);
     gchangepopup(xd->gawin, xd->grpopup);
     addto(xd->gawin);
@@ -1777,9 +1853,10 @@ X11DeviceDriver
     int   ps;
     x11Desc *xd;
     rect  rr;
+    int a, d, w;
 
     /* allocate new device description */
-    if (!(xd = (x11Desc *) winmalloc(sizeof(x11Desc))))
+    if (!(xd = (x11Desc *) malloc(sizeof(x11Desc))))
 	return 0;
 
     /* from here on, if need to bail out with "error", must also */
@@ -1793,13 +1870,14 @@ X11DeviceDriver
     ps = 2 * (ps / 2);
     xd->fontface = -1;
     xd->fontsize = -1;
+    xd->basefontsize = ps ;
     dd->dp.font = 1;
     dd->dp.ps = ps;
 
     /* Start the Device Driver and Hardcopy.  */
 
     if (!X11_Open(dd, xd, display, width, height)) {
-	winfree(xd);
+	free(xd);
 	return 0;
     }
     /* Set up Data Structures  */
@@ -1826,16 +1904,16 @@ X11DeviceDriver
     /* set graphics parameters that must be set by device driver */
     /* Window Dimensions in Pixels */
     rr = getrect(xd->gawin);
-    dd->dp.left = (xd->kind == 1) ? rr.x : 0;	/* left */
+    dd->dp.left = (xd->kind == PRINTER) ? rr.x : 0;	/* left */
     dd->dp.right = dd->dp.left + rr.width;	/* right */
-    dd->dp.top = (xd->kind == 1) ? rr.y : 0;	/* top */
+    dd->dp.top = (xd->kind == PRINTER) ? rr.y : 0;	/* top */
     dd->dp.bottom = dd->dp.top + rr.height;	/* bottom */
 
 
     /* Nominal Character Sizes in Pixels */
-    dd->dp.cra[0] = fontwidth(xd->font);
-    dd->dp.cra[1] = fontascent(xd->font) + fontdescent(xd->font);
-
+    gcharmetric(xd->gawin, xd->font, 0, &a, &d, &w);
+    dd->dp.cra[0] = w;
+    dd->dp.cra[1] = a + d;
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
     /* so that it is exactly over the plotting point */
@@ -1866,7 +1944,7 @@ X11DeviceDriver
     xd->locator = 0;
     dd->deviceSpecific = (void *) xd;
     dd->displayListOn = 1;
-    if (RConsole && xd->kind) show(RConsole);
+    if (RConsole && (xd->kind!=SCREEN)) show(RConsole);
     return 1;
 }
 
@@ -1881,27 +1959,172 @@ SEXP do_saveDevga(SEXP call, SEXP op, SEXP args, SEXP env)
     device = asInteger(CAR(args));
     if(device < 1 || device > NumDevices())
 	errorcall(call, "invalid device number");
-    dd = GetDevice(device);
+    dd = GetDevice(device - 1);
     if(!dd) errorcall(call, "invalid device");
     filename = CADR(args);
     if (!isString(filename) || LENGTH(filename) != 1)
-	errorcall(call, "invalid filename argument\n");
+	errorcall(call, "invalid filename argument");
     fn = CHAR(STRING(filename)[0]);
     fixslash(fn);
     type = CADDR(args);
     if (!isString(type) || LENGTH(type) != 1)
-	errorcall(call, "invalid filename argument\n");
+	errorcall(call, "invalid filename argument");
     tp = CHAR(STRING(type)[0]);
-    Rprintf("device %d fn %s tp %s\n", device, fn, tp);
-    
-    if(!strcmp(tp, "gif")) {
-	SaveAsGif(dd, fn);
+
+    if(!strcmp(tp, "png")) {
+	SaveAsPng(dd, fn);
+    } else if (!strcmp(tp,"bmp")) {
+        SaveAsBmp(dd,fn);
+    } else if(!strcmp(tp, "jpeg") || !strcmp(tp,"jpg")) {
+      /*Default quality suggested in libjpeg*/
+        SaveAsJpeg(dd, 75, fn); 
     } else if (!strcmp(tp, "wmf")) {
 	sprintf(display, "win.metafile:%s", fn);
 	SaveAsWin(dd, display);
     } else if (!strcmp(tp, "ps")) {
 	SaveAsPostscript(dd, fn);
-    } else 
-	errorcall(call, "unknown type\n");
+    } else
+	errorcall(call, "unknown type");
     return R_NilValue;
 }
+
+
+/* Rbitmap  */
+#define BITMAP_DLL_NAME "\\BIN\\RBITMAP.DLL\0"
+typedef int (*R_SaveAsBitmap)();
+static R_SaveAsBitmap R_SaveAsPng, R_SaveAsJpeg, R_SaveAsBmp;
+static int RbitmapAlreadyLoaded=0;
+static HINSTANCE hRbitmapDll;
+
+static int Load_Rbitmap_Dll()
+{    
+ if (!RbitmapAlreadyLoaded) {
+   char szFullPath[PATH_MAX];
+   strcpy(szFullPath, R_HomeDir());
+   strcat(szFullPath, BITMAP_DLL_NAME);
+   if (((hRbitmapDll = LoadLibrary(szFullPath)) != NULL) && 
+       ((R_SaveAsPng=
+	 (R_SaveAsBitmap)GetProcAddress(hRbitmapDll,"R_SaveAsPng")) 
+	!= NULL) &&
+       ((R_SaveAsBmp=
+	 (R_SaveAsBitmap)GetProcAddress(hRbitmapDll,"R_SaveAsBmp")) 
+	!= NULL) &&
+       ((R_SaveAsJpeg=
+	 (R_SaveAsBitmap)GetProcAddress(hRbitmapDll,"R_SaveAsJpeg")) 
+	!= NULL)) {
+     RbitmapAlreadyLoaded = 1;
+   } else {	
+     if (hRbitmapDll != NULL) FreeLibrary(hRbitmapDll);
+     RbitmapAlreadyLoaded= -1;
+   }
+ }
+ return (RbitmapAlreadyLoaded>0);    
+}
+
+void UnLoad_Rbitmap_Dll()
+{
+    if (RbitmapAlreadyLoaded) FreeLibrary(hRbitmapDll);
+    RbitmapAlreadyLoaded = 0;
+}
+
+static unsigned long privategetpixel(void *d,int i, int j) {
+  return ggetpixel((bitmap)d,pt(j,i));
+}
+
+/* This is the device version */
+static void SaveAsBitmap(DevDesc *dd)
+{
+  rect r;
+  x11Desc *xd = (x11Desc *) dd->deviceSpecific;
+  r = ggetcliprect(xd->gawin);
+  gsetcliprect(xd->gawin,getrect(xd->gawin));
+  if (xd->kind==PNG) 
+    R_SaveAsPng(xd->gawin,xd->windowWidth, xd->windowHeight,
+		privategetpixel,0,xd->fp) ;
+  else if (xd->kind==JPEG)
+    R_SaveAsJpeg(xd->gawin, xd->windowWidth, xd->windowHeight,
+		 privategetpixel,0,xd->quality,xd->fp) ;
+  else 
+    R_SaveAsBmp(xd->gawin, xd->windowWidth, xd->windowHeight,
+		 privategetpixel,0,xd->fp) ;
+  gsetcliprect(xd->gawin,r);
+  fclose(xd->fp);
+}
+
+/* This are the menu item version */
+static void SaveAsPng(DevDesc *dd,char *fn)
+{
+  FILE *fp;
+  rect r;
+  x11Desc *xd = (x11Desc *) dd->deviceSpecific;
+  if (!Load_Rbitmap_Dll()) {
+    R_ShowMessage("Impossible to load Rbitmap.dll");
+    return;
+  }
+  if ((fp=fopen(fn,"wb"))==NULL) {
+    char msg[MAX_PATH+32];
+
+    strcpy(msg,"Impossible to open ");
+    strncat(msg,fn,MAX_PATH);
+    R_ShowMessage(msg);
+    return;
+  }
+  r = ggetcliprect(xd->bm);
+  gsetcliprect(xd->bm,getrect(xd->bm));
+  R_SaveAsPng(xd->bm,xd->windowWidth, xd->windowHeight,
+	      privategetpixel,0,fp) ;
+  gsetcliprect(xd->bm,r);
+  fclose(fp);
+}
+
+static void SaveAsJpeg(DevDesc *dd,int quality,char *fn)
+{
+  FILE *fp;
+  rect r;
+  x11Desc *xd = (x11Desc *) dd->deviceSpecific;
+  if (!Load_Rbitmap_Dll()) {
+    R_ShowMessage("Impossible to load Rbitmap.dll");
+    return;
+  }
+  if ((fp=fopen(fn,"wb"))==NULL) {
+    char msg[MAX_PATH+32];
+    strcpy(msg,"Impossible to open ");
+    strncat(msg,fn,MAX_PATH);
+    R_ShowMessage(msg);
+    return;
+  }
+  r = ggetcliprect(xd->bm);
+  gsetcliprect(xd->bm,getrect(xd->bm));
+  R_SaveAsJpeg(xd->bm,xd->windowWidth, xd->windowHeight,
+	      privategetpixel,0,quality,fp) ;
+  gsetcliprect(xd->bm,r);
+  fclose(fp);
+}
+
+
+static void SaveAsBmp(DevDesc *dd,char *fn)
+{
+  FILE *fp;
+  rect r;
+  x11Desc *xd = (x11Desc *) dd->deviceSpecific;
+  if (!Load_Rbitmap_Dll()) {
+    R_ShowMessage("Impossible to load Rbitmap.dll");
+    return;
+  }
+  if ((fp=fopen(fn,"wb"))==NULL) {
+    char msg[MAX_PATH+32];
+
+    strcpy(msg,"Impossible to open ");
+    strncat(msg,fn,MAX_PATH);
+    R_ShowMessage(msg);
+    return;
+  }
+  r = ggetcliprect(xd->bm);
+  gsetcliprect(xd->bm,getrect(xd->bm));
+  R_SaveAsBmp(xd->bm,xd->windowWidth, xd->windowHeight,
+	      privategetpixel,0,fp) ;
+  gsetcliprect(xd->bm,r);
+  fclose(fp);
+}
+
+

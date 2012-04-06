@@ -162,7 +162,6 @@ typedef struct SEXPREC {
 #define CHAR(x)		((x)->u.vecsxp.type.c)
 #define STRING(x)	((x)->u.vecsxp.type.s)
 #define LOGICAL(x)	((x)->u.vecsxp.type.i)
-#define FACTOR(x)	((x)->u.vecsxp.type.i)
 #define INTEGER(x)	((x)->u.vecsxp.type.i)
 #define REAL(x)		((x)->u.vecsxp.type.f)
 #define COMPLEX(x)	((x)->u.vecsxp.type.z)
@@ -353,6 +352,7 @@ int isTs(SEXP);
 int isUnordered(SEXP);
 int isUserBinop(SEXP);
 int isValidString(SEXP);
+int isValidStringF(SEXP);
 int isVector(SEXP);
 int isVectorizable(SEXP);
 int isVectorAtomic(SEXP);
@@ -398,6 +398,7 @@ SEXP setAttrib(SEXP, SEXP, SEXP);
 void setSVector(SEXP*, int, SEXP);
 void setVar(SEXP, SEXP, SEXP);
 int StringBlank(SEXP);
+SEXP substitute(SEXP,SEXP);
 void unprotect(int);
 void unprotect_ptr(SEXP);
 

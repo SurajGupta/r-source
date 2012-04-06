@@ -2,9 +2,12 @@
 \title{Initialization at Start of an R Session}
 \usage{
 .First <- function() { \dots\dots }
+
+.Rprofile <startup file>
 }
 \alias{Startup}
-\alias{RProfile}
+\alias{Rprofile}
+\alias{.Rprofile}
 \alias{.First}
 \description{
     In \R, the startup mechanism is as follows.  \R first searches for

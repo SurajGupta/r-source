@@ -20,10 +20,10 @@
  *  print.default()  ->	 do_printdefault & its sub-functions.
  *			 do_printmatrix, do_sink, do_invisible
  *
- *  do_printdefault 
+ *  do_printdefault
  *	-> PrintDefaults
  *	-> CustomPrintValue
- *	    -> PrintValueRec  
+ *	    -> PrintValueRec
  *		-> __ITSELF__  (recursion)
  *		-> PrintGenericVector	-> PrintValueRec  (recursion)
  *		-> PrintList		-> PrintValueRec  (recursion)
@@ -83,21 +83,21 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
     file = CAR(args);
     append = asLogical(CADR(args));
     if (append == NA_LOGICAL)
-        errorcall(call, "invalid append specification\n");
-    
+        errorcall(call, "invalid append specification");
+
     if(isNull(file)) {
 	if(R_Sinkfile) fclose(R_Sinkfile);
 	R_Sinkfile = NULL;
 	R_Outputfile = R_Consolefile;
     } else {
 	if (!isString(file) || length(file) != 1)
-	    errorcall(call, "invalid file name\n");
+	    errorcall(call, "invalid file name");
 	if (append)
 	    fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "a");
 	else
 	    fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "w");
 	if (!fp)
-	    errorcall(call, "unable to open file\n");
+	    errorcall(call, "unable to open file");
 	R_Sinkfile = fp;
 	R_Outputfile = fp;
     }
@@ -136,8 +136,10 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     x = CAR(a); a = CDR(a);
     rowlab = CAR(a); a = CDR(a);
     collab = CAR(a); a = CDR(a);
+
     quote = asInteger(CAR(a)); a = CDR(a);
     R_print.right = asInteger(CAR(a));
+
 #ifdef OLD
     PROTECT(oldnames = getAttrib(x, R_DimNamesSymbol));
     /* fix up the dimnames */
@@ -158,6 +160,11 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (length(rowlab) == 0) rowlab = R_NilValue;
     if (length(collab) == 0) collab = R_NilValue;
 #endif
+    if (!isNull(rowlab) && !isString(rowlab))
+	errorcall(call, "invalid row labels");
+    if (!isNull(collab) && !isString(collab))
+	errorcall(call, "invalid column labels");
+
     printMatrix(x, 0, getAttrib(x, R_DimSymbol), quote, R_print.right, rowlab, collab, rowname, colname);
 #ifdef OLD
     setAttrib(x, R_DimNamesSymbol, oldnames);
@@ -173,7 +180,7 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho){
 /* FIXME:
  * Should now also dispatch to e.g., print.matrix(..)
  * The 'digits' must be "stored" here, since print.matrix
- * (aka prmatrix) does NOT accept a digits argument ... 
+ * (aka prmatrix) does NOT accept a digits argument ...
  */
 
     SEXP x, naprint;
@@ -187,19 +194,19 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho){
 	if (R_print.digits == NA_INTEGER ||
 	    R_print.digits < 1 ||
 	    R_print.digits > 22)
-		errorcall(call, "invalid digits parameter\n");
+		errorcall(call, "invalid digits parameter");
     }
     args = CDR(args);
 
     R_print.quote = asLogical(CAR(args));
     if(R_print.quote == NA_LOGICAL)
-	errorcall(call, "invalid quote parameter\n");
+	errorcall(call, "invalid quote parameter");
     args = CDR(args);
 
     naprint = CAR(args);
     if(!isNull(naprint))  {
 	if(!isString(naprint) || LENGTH(naprint) < 1)
-	    errorcall(call, "invalid na.print specification\n");
+	    errorcall(call, "invalid na.print specification");
 	R_print.na_string = STRING(naprint)[0];
 	R_print.na_width = strlen(CHAR(R_print.na_string));
     }
@@ -208,13 +215,13 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho){
     if(!isNull(CAR(args))) {
 	R_print.gap = asInteger(CAR(args));
 	if (R_print.gap == NA_INTEGER || R_print.gap < 1 || R_print.gap > 10)
-	    errorcall(call, "invalid gap parameter\n");
+	    errorcall(call, "invalid gap parameter");
     }
     args = CDR(args);
 
     R_print.right = asLogical(CAR(args));
     if(R_print.right == NA_LOGICAL)
-	errorcall(call, "invalid right parameter\n");
+	errorcall(call, "invalid right parameter");
     args = CDR(args);
 
     CustomPrintValue(x, rho);
@@ -271,7 +278,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	if (LENGTH(dims) == 2) {
 	    SEXP rl, cl;
 	    GetMatrixDimnames(s, &rl, &cl, &rn, &cn);
-	    printMatrix(t, 0, dims, R_print.quote, R_print.right, rl, cl, 
+	    printMatrix(t, 0, dims, R_print.quote, R_print.right, rl, cl,
 			rn, cn);
 	}
 	else {
@@ -509,7 +516,7 @@ void PrintValueRec(SEXP s,SEXP env)
 		if (t != R_NilValue && VECTOR(t)[0] != R_NilValue) {
 		    SEXP nn = getAttrib(t, R_NamesSymbol);
 		    char *title = NULL;
-		    
+
 		    if (!isNull(nn))
 		        title = CHAR(STRING(nn)[0]);
 
@@ -523,7 +530,7 @@ void PrintValueRec(SEXP s,SEXP env)
 		SEXP rl, cl;
 		char *rn, *cn;
 		GetMatrixDimnames(s, &rl, &cl, &rn, &cn);
-		printMatrix(s, 0, t, R_print.quote, R_print.right, rl, cl, 
+		printMatrix(s, 0, t, R_print.quote, R_print.right, rl, cl,
 			    rn, cn);
 	    }
 	    else {
@@ -656,3 +663,21 @@ int F77_SYMBOL(intpr) (char *label, int *nchar, int *data, int *ndata)
     printIntegerVector(data, *ndata, 1);
     return(0);
 }
+
+int F77_SYMBOL(realpr) (char *label, int *nchar, float *data, int *ndata)
+{
+    int k;
+    double *ddata;
+    
+    ddata = malloc((*ndata)*sizeof(double));
+    if(!ddata) error("memory allocation error in realpr");
+    for (k = 0; k < *ndata; k++) ddata[k] = (double) data[k];
+    for (k = 0; k < *nchar; k++) {
+	Rprintf("%c", label[k]);
+    }
+    Rprintf("\n");
+    printRealVector(ddata, *ndata, 1);
+    free(ddata);
+    return(0);
+}
+

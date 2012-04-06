@@ -17,13 +17,19 @@ all: Makefile
 	@echo "building package \`base'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/base/R
 	@(f=/tmp/R$$$$; \
-	  cat `ls $(srcdir)/R/*.R | sed '/system.*/d'` \
-	      $(srcdir)/R/system.unix.R | \
-	  sed '/^[ 	]*$$/d' > $${f}; \
+	  cat $(srcdir)/R/*.R $(srcdir)/R/unix/*.R >> $${f}; \
           $(top_srcdir)/tools/move-if-change $${f} \
 	    $(top_builddir)/library/base/R/base)
-	@$(INSTALL_DATA) $(srcdir)/INDEX $(top_builddir)/library/base
-	@$(INSTALL_DATA) $(srcdir)/TITLE $(top_builddir)/library/base
+	@for f in INDEX TITLE; do \
+	if test -f $(srcdir)/$${f}; then \
+	  $(INSTALL_DATA) $(srcdir)/$${f} \
+	    $(top_builddir)/library/base; \
+	fi; \
+	done
+	@if test -f $(top_builddir)/$(subdir)/DESCRIPTION; then \
+	  $(INSTALL_DATA)  $(top_builddir)/$(subdir)/DESCRIPTION \
+	    $(top_builddir)/library/base; \
+	fi
 	@$(MKINSTALLDIRS) $(top_builddir)/library/base/data
 	@for f in `ls -d $(srcdir)/data/* | sed '/data\/CVS/d'`; do \
 	  $(INSTALL_DATA) $${f} $(top_builddir)/library/base/data; \
