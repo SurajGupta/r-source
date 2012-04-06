@@ -24,7 +24,7 @@ use R::Rdconv;
 use R::Rdlists;
 use R::Utils;
 
-my $revision = ' $Revision: 1.1 $ ';
+my $revision = ' $Revision: 1.3 $ ';
 my $version;
 my $name;
 
@@ -38,7 +38,7 @@ GetOptions (@knownoptions) || usage();
 &R_version($name, $version) if $opt_version;
 &usage() if $opt_help;
 
-$OSdir ="mac";
+$OSdir =":mac";
 $OSdir = $opt_os if $opt_os;
 
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
@@ -142,7 +142,7 @@ foreach $manfile (@mandir) {
 	    $destfile = file_path($dest, "help", $targetfile);
 	    if(fileolder($destfile, $manage)) {
 		$textflag = "text";
-		Rdconv(":$manfile", "txt", "", "$destfile", $pkg);
+		Rdconv($manfile, "txt", "", "$destfile", $pkg);
 	    }
 	}
 
@@ -153,7 +153,7 @@ foreach $manfile (@mandir) {
 	    if(fileolder($destfile, $manage)) {
 		$htmlflag = "html";
 		print "\t$destfile" if $opt_debug;
-		Rdconv(":$manfile", "html", "", "$destfile", $pkg);
+		Rdconv($manfile, "html", "", "$destfile", $pkg);
 	    }
 	}
 
@@ -162,7 +162,7 @@ foreach $manfile (@mandir) {
 	    $destfile = file_path($dest, "latex", $targetfile.".tex");
 	    if(fileolder($destfile, $manage)) {
 		$latexflag = "latex";
-		Rdconv(":$manfile", "latex", "", "$destfile");
+		Rdconv($manfile, "latex", "", "$destfile");
 	    }
 	}
 
@@ -170,7 +170,7 @@ foreach $manfile (@mandir) {
 	    my $targetfile = $filenm{$manfilebase};
 	    $destfile = file_path($dest, "R-ex", $targetfile.".R");
 	    if(fileolder($destfile, $manage)) {
-		Rdconv(":$manfile", "example", "", "$destfile");
+		Rdconv($manfile, "example", "", "$destfile");
 		if(-f $destfile) {$exampleflag = "example";}
 	    }
 	}

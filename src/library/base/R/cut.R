@@ -17,7 +17,7 @@ cut.default <- function (x, breaks, labels=NULL, include.lowest = FALSE,
     codes.only <- FALSE
     if (is.null(labels)) {#- try to construct nice ones ..
 	for(dig in dig.lab:12) {
-	    ch.br <- formatC(breaks, dig=dig, wid=1)
+	    ch.br <- formatC(breaks, digits=dig, wid=1)
 	    if(ok <- all(ch.br[-1]!=ch.br[-nb])) break
 	}
 	labels <-
@@ -42,7 +42,7 @@ cut.default <- function (x, breaks, labels=NULL, include.lowest = FALSE,
                nb,
 	       code= 	integer(length(x)),
                right=	as.logical(right),
-	       include= as.logical(include.lowest),
+	       include= as.logical(include.lowest), naok = TRUE,
 	       NAOK= TRUE, DUP = FALSE, PACKAGE = "base") $code
     ## NB this relies on passing NAOK in that position!
     if(codes.only) code

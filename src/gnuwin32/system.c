@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-         /* See ../unix/system.txt for a description of functions */
+/* See ../unix/system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include "Defn.h"
@@ -32,8 +32,9 @@
 #include "console.h"
 #include "rui.h"
 #include "getline/getline.h"
-#include <windows.h>  /* for CreateEvent,.. */
-#include <process.h> /* for _beginthread,... */
+#include <windows.h>		/* for CreateEvent,.. */
+#include <process.h>		/* for _beginthread,... */
+#include <io.h>			/* for isatty, chdir */
 #include "run.h"
 #include "Startup.h"
 
@@ -399,7 +400,9 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     AllDevicesKilled = TRUE;
     if (R_Interactive && CharacterMode == RTerm) 
 	SetConsoleTitle(oldtitle);
+#if 0
     UnLoad_Unzip_Dll();
+#endif
     UnLoad_Rbitmap_Dll();
     if (R_CollectWarnings && saveact != SA_SUICIDE
 	&& CharacterMode == RTerm)
@@ -583,6 +586,7 @@ void R_SetWin32(Rstart Rp)
     if(!Rp->NoRenviron)
 	process_user_Renviron();
     _controlfp(_MCW_EM, _MCW_EM);
+    _controlfp(_PC_64, _MCW_PC);
 }
 
 
@@ -626,7 +630,7 @@ int cmdlineoptions(int ac, char **av)
     MEMORYSTATUS ms;
     Rboolean usedRdata = FALSE;
 
-#ifdef HAVE_TIMES
+#ifdef _R_HAVE_TIMING_
     R_setStartTime();
 #endif
 

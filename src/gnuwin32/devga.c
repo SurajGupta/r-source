@@ -41,9 +41,9 @@ extern console RConsole;
 extern Rboolean AllDevicesKilled;
 
 /* a colour used to represent the background on png if transparent
-   NB: must be grey as used as RGB and BGR
+   NB: used as RGB and BGR
 */
-#define PNG_TRANS 0xfefefe
+#define PNG_TRANS 0xd6d3d6
 
 /* these really are globals: per machine, not per window */
 static double user_xpinch = 0.0, user_ypinch = 0.0;
@@ -154,6 +154,7 @@ typedef struct {
     int resizing; /* {1,2,3} */
     double rescale_factor;
     int fast; /* Use fast fixed-width lines? */
+    unsigned int pngtrans; /* what PNG_TRANS get mapped to */
 } gadesc;
 
 rect getregion(gadesc *xd)
@@ -1035,6 +1036,8 @@ static void menuR(control m)
     uncheck(xd->mfix);
     uncheck(xd->mfit);
     xd->resizing = 1;
+    xd->resize = TRUE;
+    HelpExpose(m, getrect(xd->gawin));
 }
 
 static void menufit(control m)
@@ -1046,6 +1049,8 @@ static void menufit(control m)
     check(xd->mfit);
     uncheck(xd->mfix);
     xd->resizing = 2;
+    xd->resize = TRUE;
+    HelpExpose(m, getrect(xd->gawin));
 }
 
 static void menufix(control m)
@@ -1057,9 +1062,11 @@ static void menufix(control m)
     uncheck(xd->mfit);
     check(xd->mfix);
     xd->resizing = 3;
+    xd->resize = TRUE;
+    HelpExpose(m, getrect(xd->gawin));
 }
 
-static void CHelpKeyIn(control w,int key)
+static void CHelpKeyIn(control w, int key)
 {
 #ifdef PLOTHISTORY
     NewDevDesc *dd = (NewDevDesc *) getdata(w);
@@ -1414,9 +1421,9 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
     if (!dsp[0]) {
 	if (!setupScreenDevice(dd, xd, w, h, recording, resize)) 
 	    return FALSE;
-    } else if (!strcmp(dsp, "win.print")) {
+    } else if (!strncmp(dsp, "win.print:", 10)) {
 	xd->kind = PRINTER;
-	xd->gawin = newprinter(MM_PER_INCH * w, MM_PER_INCH * h);
+	xd->gawin = newprinter(MM_PER_INCH * w, MM_PER_INCH * h, &dsp[10]);
 	if (!xd->gawin)
 	    return FALSE;
     } else if (!strncmp(dsp, "png:", 4) || !strncmp(dsp,"bmp:", 4)) {
@@ -1439,7 +1446,7 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    warning("Unable to allocate bitmap");
 	    return FALSE;
 	}  
-	if ((xd->fp = fopen(&dsp[4],"wb")) == NULL) {
+	if ((xd->fp = fopen(&dsp[4], "wb")) == NULL) {
 	    del(xd->gawin);
 	    warning("Unable to open file `%s' for writing", &dsp[4]);
 	    return FALSE;
@@ -1613,6 +1620,9 @@ static void GA_Resize(NewDevDesc *dd)
 	iw = xd->windowWidth;
 	ih = xd->windowHeight;
 	if(xd->resizing == 1) {
+	    /* last mode might have been 3, so remove scrollbars */
+	    gchangescrollbar(xd->gawin, VWINSB, 0, ih/SF-1, ih/SF, 0);
+	    gchangescrollbar(xd->gawin, HWINSB, 0, iw/SF-1, iw/SF, 0);
 	    dd->left = 0.0;
 	    dd->top = 0.0;
 	    dd->right = iw;
@@ -1620,6 +1630,9 @@ static void GA_Resize(NewDevDesc *dd)
 	    xd->showWidth = iw;
 	    xd->showHeight =  ih;
 	} else if (xd->resizing == 2) {
+	    /* last mode might have been 3, so remove scrollbars */
+	    gchangescrollbar(xd->gawin, VWINSB, 0, ih/SF-1, ih/SF, 0);
+	    gchangescrollbar(xd->gawin, HWINSB, 0, iw/SF-1, iw/SF, 0);
 	    fw = (iw + 0.5)/(iw0 + 0.5);
 	    fh = (ih + 0.5)/(ih0 + 0.5);
 	    rf = min(fw, fh);
@@ -1703,7 +1716,7 @@ static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
     if (xd->kind == SCREEN) {
 #ifdef PLOTHISTORY
 	if (xd->recording && xd->needsave)
-	    AddtoPlotHistory(savedSnapshot, 0);
+	    AddtoPlotHistory(dd->savedSnapshot, 0);
 	if (xd->replaying)
 	    xd->needsave = FALSE;
 	else
@@ -1722,6 +1735,7 @@ static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
 	   xd->kind == BMP || xd->kind == JPEG )
 	    DRAW(gfillrect(_d, R_OPAQUE(xd->bg) ? xd->bgcolor : PNG_TRANS, 
 			   xd->clip));
+	if(xd->kind == PNG) xd->pngtrans = ggetpixel(xd->gawin, pt(0,0));
     } else {
 	xd->clip = getregion(xd);
 	DRAW(gfillrect(_d, xd->bgcolor, xd->clip));
@@ -1883,7 +1897,7 @@ static void GA_Circle(double x, double y, double r,
 #else
     ir = floor(r + 0.5);
 #endif
-
+    if (ir < 1) ir = 1;
     /* In-place conversion ok */
 
     ix = (int) x;
@@ -2377,7 +2391,7 @@ static void SaveAsBitmap(NewDevDesc *dd)
     if (xd->kind==PNG) 
 	R_SaveAsPng(xd->gawin, xd->windowWidth, xd->windowHeight,
 		    privategetpixel, 0, xd->fp,
-		    R_OPAQUE(xd->bg) ? 0 : PNG_TRANS) ;
+		    R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
     else if (xd->kind==JPEG)
 	R_SaveAsJpeg(xd->gawin, xd->windowWidth, xd->windowHeight,
 		     privategetpixel, 0, xd->quality, xd->fp) ;

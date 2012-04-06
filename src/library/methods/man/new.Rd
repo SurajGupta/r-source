@@ -1,44 +1,58 @@
 \name{new}
 \alias{new}
-%- Also NEED an `\alias' for EACH other topic documented here.
+\alias{initialize}
 \title{ Generate an Object from a Class }
 \description{
-  Given the the name or the definition of a class, plus optionally
-  data to be included in the object, \code{new} returns an object from that class.
+  Given the the name or the definition of a class, plus optionally data
+  to be included in the object, \code{new} returns an object from that
+  class.
 }
 \usage{
-new(Class, ..., .Force=FALSE)
+new(Class, ...)
+
+initialize(object, ...)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
   \item{Class}{ Either the name of a class (the usual case) or the
-    object describing the class (e.g., the value returned by \code{getClass}). }
+    object describing the class (e.g., the value returned by
+    \code{getClass}).}
   \item{\dots}{ Data to include in the new object.  Named arguments
     correspond to slots in the class definition. Unnamed arguments must
     be objects from classes that this class extends.}
-  \item{.Force}{ Normally, an attempt to apply \code{new} to a virtual
-    or an undefined class generates an error.  If \code{.Force} is
-    \code{TRUE}, an ``empty'' object is returned instead.  Users are
-    very unlikely to need this argument. }
+  \item{object}{ An object:  see the Details section.}
 }
 \details{
-  The function begins by copying the prototype object from the class
-  definition.  Then information is inserted according to the \dots
-  arguments, if any, first from the superclasses (the unnamed arguments)
-  then from the named slots.  Thus, explicit slots override inherited
-  information for the same slot, regardless of the order in which the
-  arguments appear.
+  The function \code{new} begins by copying the prototype object from
+  the class definition.  Then information is inserted according to the
+  \code{\dots} arguments, if any.
 
-  Note that the basic vector classes, \code{"numeric"}, etc. are implicitly defined,
-  so one can use \code{new} for these classes.
+  The interpretation of the \code{\dots} arguments can be specialized to
+  particular classes, if an appropriate method has been defined for the
+  generic function \code{"initialize"}.  The \code{new} function calls
+  \code{initialize} with the object generated from the prototype as the
+  \code{object} argument to \code{initialize}.
 
+  By default, unnamed arguments in the \code{\dots} are interpreted as
+  objects from a superclass, and named arguments are interpreted as
+  objects to be assigned into the correspondingly named slots.  Thus,
+  explicit slots override inherited information for the same slot,
+  regardless of the order in which the arguments appear.
+
+  The \code{initialize} methods do not have to have \code{\dots} as
+  there second argument (see the examples), and generally it is better
+  design \emph{not} to have \code{\dots} as a formal argument, if only a
+  fixed set of arguments make sense.
+
+  Note that the basic vector classes, \code{"numeric"}, etc. are
+  implicitly defined, so one can use \code{new} for these classes.
 }
 \references{
-The web page \url{http://www.omegahat.org/RSMethods/index.html} is the primary documentation.
+  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
+  primary documentation.
 
-The functions in this package emulate the facility for classes and methods described in
-\emph{Programming with Data}, (John M. Chambers, Springer, 1998).  See this book
-for further details and examples.
+  The functions in this package emulate the facility for classes and
+  methods described in \emph{Programming with Data} (John M. Chambers,
+  Springer, 1998).  See this book for further details and examples.
 }
 \author{
   John Chambers
@@ -62,6 +76,40 @@ t1 <- new("track", x = seq(along=ydata), y = ydata)
 
 # a new object including an object from a superclass, plus a slot
 t2 <- new("trackCurve", t1, smooth = ysmooth)
+
+### define a method for initialize, to ensure that new objects have
+### equal-length x and y slots.
+
+setMethod("initialize", "track", function(object, x = numeric(0), y = numeric(0)) {
+    if(nargs() > 1) {
+      if(length(x) != length(y))
+        stop("specified x and y of different lengths")
+      object@x <- x
+      object@y <- y
+    }
+    object
+  })
+
+### the next example will cause an error (x will be numeric(0)),
+### because we didn't build in defaults for x,
+### although we could with a more elaborate method for initialize
+
+try(new("track", y = sort(rnorm(10))))
+
+## a better way to implement the previous initialize method.
+## Why?  By using callNextMethod to call the default initialize method
+## we don't inhibit classes that extend "track" from using the general
+## form of the new() function.  In the previous version, they could only
+## use x and y as arguments to new, unless they wrote their own
+## intialize method.
+
+setMethod("initialize", "track", function(object, ...) {
+    object <- callNextMethod()
+    if(length(object@x) != length(object@y))
+     stop("specified x and y of different lengths")
+    object
+  })
+
 }
 \keyword{programming}
 \keyword{classes}

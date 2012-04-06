@@ -24,8 +24,7 @@ SOURCES = \
 	system-choosefile.c system-console.c system-showfiles.c \
 	system.c \
 	terminal-find.c terminal-functions.c terminal-menu.c \
-	terminal-prefs.c terminal-toolbar.c terminal.c \
-	device-support.c
+	terminal-prefs.c terminal-toolbar.c terminal.c 
 DEPENDS = $(SOURCES:.c=.d)
 OBJECTS = $(SOURCES:.c=.lo)
 HEADERS = \
@@ -35,36 +34,28 @@ HEADERS = \
 	gnome-find-dialog.h \
 	gtkconsole.h \
 	terminal-find.h terminal-functions.h terminal-menu.h \
-	terminal-prefs.h terminal-toolbar.h terminal.h \
-	device-support.h
+	terminal-prefs.h terminal-toolbar.h terminal.h 
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in $(SOURCES) $(HEADERS)
 
-## FIXME:
-## Change to `R_gnome.la' when using libtool for shlibs.
-## Remove when using automake ... also fix install then.
+## <FIXME>
+## Change to 'R_gnome.la' when using libtool for shlibs.
+## Remove when using automake ... also fix target 'install' then.
 R_gnome_la = R_gnome$(SHLIB_EXT)
 ## </FIXME>
 Rexecmodulesdir_LTLIBRARIES = $(R_gnome_la)
 R_gnome_la_SOURCES = $(SOURCES)
 R_gnome_la_OBJECTS = $(OBJECTS)
 @USE_LIBTOOL_TRUE@R_gnome_la_LDFLAGS = -avoid-version -rpath $(Rexecmodulesdir) -module
-## FIXME:
-## This used to have `-lm' hard-wired, but note that we test for it at
-## configure time.  The default automake rule would add $(LIBS) anyway,
-## so hopefully we can remove the `-lm' ...
 R_gnome_la_LIBADD = $(ALL_GNOME_LIBS) $(ALL_X_LIBS) $(R_XTRA_LIBS) $(LIBR)
-## </FIXME>
 
 all: Makefile Makedeps R
 
 Makefile: $(srcdir)/Makefile.in \
   $(top_builddir)/config.status \
   $(SOURCES)
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 Makedeps: Makefile $(DEPENDS)
 	@cat $(DEPENDS) >> Makefile
@@ -76,7 +67,8 @@ R: Makefile
 
 $(R_gnome_la): $(R_gnome_la_OBJECTS) $(R_gnome_la_DEPENDENCIES)
 	$(SHLIB_LINK) -o $@ $(R_gnome_la_LDFLAGS) $(R_gnome_la_OBJECTS) $(R_gnome_la_LIBADD) $(LIBS)
-## FIXME: Not sure of we want to do this ...
+## <FIXME>
+## Not sure of we want to do this ...
 	@$(MAKE) rhome=`cd $(top_builddir); pwd` install
 ## </FIXME>
 

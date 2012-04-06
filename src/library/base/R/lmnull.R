@@ -13,7 +13,7 @@ anova.lm.null <- function (object, ...)
     df <- dfr
     ms <- ss/df
     f <- ms/(ssr/dfr)
-    p <- 1 - pf(f, df, dfr)
+    p <- pf(f, df, dfr, lower.tail = FALSE)
     table <- data.frame(df, ss, ms, f, p)
     table[length(p), 4:5] <- NA
     dimnames(table) <- list(c(attr(object$terms, "term.labels"), "Residuals"),
@@ -85,7 +85,7 @@ summary.lm.null <- function (object, correlation = FALSE, ...)
     ans$coefficients <- NULL
     ans$sigma <- sqrt(resvar)
     ans$df <- c(p, n - p, n - p)
-    ans$r.squared <- 0
+    ans$r.squared <- ans$adj.r.squared <- 0
     ans$cov.unscaled <- NULL
     class(ans) <- "summary.lm.null"
     ans

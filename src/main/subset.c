@@ -216,7 +216,13 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 		    COMPLEX(result)[ij].i = NA_REAL;
 		    break;
 		case STRSXP:
-		    SET_STRING_ELT(result, i, NA_STRING);
+		    SET_STRING_ELT(result, ij, NA_STRING);
+		    break;
+		case VECSXP:
+		    SET_VECTOR_ELT(result, ij, R_NilValue);
+		    break;
+		default:
+		    error("matrix subscripting not handled for this type");
 		    break;
 		}
 	    }
@@ -235,6 +241,12 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 		    break;
 		case STRSXP:
 		    SET_STRING_ELT(result, ij, STRING_ELT(x, iijj));
+		    break;
+		case VECSXP:
+		    SET_VECTOR_ELT(result, ij, VECTOR_ELT(x, iijj));
+		    break;
+		default:
+		    error("matrix subscripting not handled for this type");
 		    break;
 		}
 	    }
@@ -376,6 +388,15 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
 		SET_STRING_ELT(result, i, STRING_ELT(x, ii));
 	    else
 		SET_STRING_ELT(result, i, NA_STRING);
+	    break;
+	case VECSXP:
+	    if (ii != NA_INTEGER)
+		SET_VECTOR_ELT(result, i, VECTOR_ELT(x, ii));
+	    else
+		SET_VECTOR_ELT(result, i, R_NilValue);
+	    break;
+	default:
+	    error("matrix subscripting not handled for this type");
 	    break;
 	}
 	if (n > 1) {
@@ -670,7 +691,8 @@ SEXP do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if(isPairList(x)) {
 	ans = CAR(nthcdr(x, offset));
-	SET_NAMED(ans, NAMED(x));
+	if (NAMED(x) > NAMED(ans))
+	    SET_NAMED(ans, NAMED(x));
     }
     else if(isVectorList(x)) {
 	ans = duplicate(VECTOR_ELT(x, offset));
@@ -797,7 +819,8 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 	    switch(pstrmatch(TAG(y), input, slen)) {
 	    case EXACT_MATCH:
 		y = CAR(y);
-		SET_NAMED(y, NAMED(x));
+		if (NAMED(x) > NAMED(y))
+		    SET_NAMED(y, NAMED(x));
 		return y;
 	    case PARTIAL_MATCH:
 		havematch++;
@@ -809,7 +832,8 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 	}
 	if (havematch == 1) {
 	    y = CAR(xmatch);
-	    SET_NAMED(y, NAMED(x));
+	    if (NAMED(x) > NAMED(y))
+		SET_NAMED(y, NAMED(x));
 	    return y;
 	}
 	return R_NilValue;
@@ -824,7 +848,8 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 	    switch(pstrmatch(STRING_ELT(nlist, i), input, slen)) {
 	    case EXACT_MATCH:
 		y = VECTOR_ELT(x, i);
-		SET_NAMED(y, NAMED(x));
+		if (NAMED(x) > NAMED(y))
+		    SET_NAMED(y, NAMED(x));
 		return y;
 	    case PARTIAL_MATCH:
 		havematch++;
@@ -836,7 +861,8 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 	}
 	if(havematch ==1) {
 	    y = VECTOR_ELT(x, imatch);
-	    SET_NAMED(y, NAMED(x));
+	    if (NAMED(x) > NAMED(y))
+		SET_NAMED(y, NAMED(x));
 	    return y;
 	}
 	return R_NilValue;

@@ -12,7 +12,7 @@ R_HOME = $(top_builddir)
 include $(top_builddir)/Makeconf
 
 SOURCES = Rsock.c internet.c nanoftp.c nanohttp.c sock.c sockconn.c
-HEADERS = sock.h win32config.h 
+HEADERS = sock.h
 DEPENDS = $(SOURCES:.c=.d)
 OBJECTS = $(SOURCES:.c=.lo)
 
@@ -21,9 +21,9 @@ DISTFILES = \
 	README Makefile.in Makefile.win $(SOURCES) $(HEADERS) \
 	dllversion.rc internet.mcp.hqx
 
-## FIXME:
-## Change to `internet.la' when using libtool for shlibs.
-## Remove when using automake ... also fix install then.
+## <FIXME>
+## Change to 'internet.la' when using libtool for shlibs.
+## Remove when using automake ... also fix target 'install' then.
 internet_la = internet$(SHLIB_EXT)
 ## </FIXME>
 Rexecmodulesdir_LTLIBRARIES = $(internet_la)
@@ -37,9 +37,7 @@ all: Makefile Makedeps R
 Makefile: $(srcdir)/Makefile.in \
   $(top_builddir)/config.status \
   $(SOURCES)
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 Makedeps: Makefile $(DEPENDS)
 	@cat $(DEPENDS) >> Makefile
@@ -51,7 +49,8 @@ R: Makefile
 
 $(internet_la): $(internet_la_OBJECTS) $(internet_la_DEPENDENCIES)
 	$(SHLIB_LINK) -o $@ $(internet_la_LDFLAGS) $(internet_la_OBJECTS) $(internet_la_LIBADD)
-## FIXME: Not sure if we want to do this ...
+## <FIXME>
+## Not sure if we want to do this ...
 	@$(MAKE) rhome=`cd $(top_builddir); pwd` install
 ## </FIXME>
 

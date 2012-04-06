@@ -149,7 +149,7 @@ model.tables.aovlist <- function(x, type = "effects", se = FALSE, ...)
 				    efficiency, n, type = type)
 	}
     result <- list(tables = tables, n = n)
-    if(se) result <- append(result, list(se = se.tables))
+    if(se) result$se <- se.tables
     attr(result, "type") <- type
     class(result) <- c("tables.aov", "list.of")
     result
@@ -343,8 +343,8 @@ print.tables.aov <- function(x, digits = 4, ...)
 		ctable <- aperm(ctable, c(1, d, 2:(d - 1)))
 		dim(ctable) <- c(dim.t[1] * dim.t[d], dim.t[-c(1, d)])
 		dimnames(ctable) <-
-		    append(list(format(c(rownames(table), rep("rep", dim.t[1])))),
-			   dimnames(table)[-1])
+		    c(list(format(c(rownames(table), rep("rep", dim.t[1])))),
+                      dimnames(table)[-1])
 		ctable <- eval(parse(text = paste(
 				     "ctable[as.numeric(t(matrix(seq(nrow(ctable)),ncol=2)))", paste(rep(", ", d - 2), collapse = " "), "]")))
 		names(dimnames(ctable)) <- names(dimnames(table))
@@ -431,8 +431,8 @@ model.frame.aovlist <- function(formula, data = NULL, ...)
     rm(formula)
     indError <- attr(Terms, "specials")$Error
     errorterm <-  attr(Terms, "variables")[[1 + indError]]
-    form <- update.formula(Terms, paste(". ~ .-", deparse(errorterm),
-					"+", deparse(errorterm[[2]])))
+    form <- update.formula(Terms, paste(". ~ .-", deparse(errorterm, width=500),
+					"+", deparse(errorterm[[2]], width=500)))
     nargs <- as.list(call)
     oargs <- as.list(oc)
     nargs <- nargs[match(c("data", "na.action", "subset"), names(nargs), 0)]

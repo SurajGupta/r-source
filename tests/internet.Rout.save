@@ -1,6 +1,6 @@
 
-R : Copyright 2001, The R Development Core Team
-Version 1.4.0 Under development (unstable) (2001-12-17)
+R : Copyright 2002, The R Development Core Team
+Version 1.5.0 Under development (unstable) (2002-04-28)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -28,45 +28,50 @@ Type `q()' to quit R.
 > # test do_download.
 > CRAN.packages()[, 1]
 trying URL `http://cran.r-project.org/src/contrib/PACKAGES'
-Content type `text/plain' length 58872 bytes
+Content type `text/plain; charset=iso-8859-1' length 71128 bytes
 opened URL
 .......... .......... .......... .......... ..........
-.......
-downloaded 57Kb
+.......... .........
+downloaded 69Kb
 
-  [1] "acepack"        "adapt"          "akima"          "AnalyzeFMRI"   
-  [5] "ash"            "bindata"        "blighty"        "boot"          
-  [9] "bootstrap"      "bqtl"           "car"            "cclust"        
- [13] "cfa"            "chron"          "cluster"        "cmprsk"        
- [17] "CoCoAn"         "coda"           "conf.design"    "cramer"        
- [21] "date"           "Devore5"        "diamonds"       "dse"           
- [25] "e1071"          "ellipse"        "emplik"         "EMV"           
- [29] "event.chart"    "exactRankTests" "fastICA"        "fdim"          
- [33] "fields"         "foreign"        "fracdiff"       "g.data"        
- [37] "gafit"          "gee"            "GeneSOM"        "GenKern"       
- [41] "geoR"           "gld"            "GLMMGibbs"      "gregmisc"      
- [45] "gss"            "ineq"           "KernSmooth"     "leaps"         
- [49] "lgtdl"          "lmtest"         "locfit"         "logspline"     
- [53] "lokern"         "lpridge"        "maptree"        "Matrix"        
- [57] "maxstat"        "mclust"         "mda"            "meanscore"     
- [61] "mgcv"           "mlbench"        "moc"            "muhaz"         
- [65] "multiv"         "mvnmle"         "mvtnorm"        "netCDF"        
- [69] "NISTnls"        "nlme"           "nlrq"           "norm"          
- [73] "Oarray"         "odesolve"       "oz"             "panel"         
- [77] "pcurve"         "permax"         "PHYLOGR"        "pinktoe"       
- [81] "pixmap"         "polymars"       "polynom"        "princurve"     
- [85] "pspline"        "PTAk"           "qtl"            "quadprog"      
- [89] "quantreg"       "RandomFields"   "RArcInfo"       "rmeta"         
- [93] "RmSQL"          "RMySQL"         "RODBC"          "ROracle"       
- [97] "rpart"          "RPgSQL"         "rpvm"           "RSQLite"       
-[101] "Rwave"          "SASmixed"       "scatterplot3d"  "sem"           
-[105] "sgeostat"       "sm"             "sma"            "sn"            
-[109] "sna"            "splancs"        "sptests"        "spweights"     
-[113] "strucchange"    "SuppDists"      "survival"       "tensor"        
-[117] "tree"           "tripack"        "tseries"        "twostage"      
-[121] "vegan"          "VR"             "waveslim"       "wavethresh"    
-[125] "wle"            "xgobi"          "XML"            "xtable"        
-[129] "zmatrix"       
+  [1] "acepack"        "adapt"          "agce"           "akima"         
+  [5] "AnalyzeFMRI"    "ash"            "aws"            "Bhat"          
+  [9] "bindata"        "blighty"        "boot"           "bootstrap"     
+ [13] "bqtl"           "car"            "cclust"         "cfa"           
+ [17] "chron"          "CircStats"      "cluster"        "cmprsk"        
+ [21] "CoCoAn"         "coda"           "combinat"       "conf.design"   
+ [25] "cramer"         "date"           "dblcens"        "deldir"        
+ [29] "Devore5"        "diamonds"       "dr"             "dse"           
+ [33] "e1071"          "ellipse"        "emplik"         "EMV"           
+ [37] "evd"            "exactRankTests" "fastICA"        "fdim"          
+ [41] "fields"         "foreign"        "fracdiff"       "g.data"        
+ [45] "gafit"          "gee"            "GeneSOM"        "GenKern"       
+ [49] "geoR"           "geoRglm"        "gld"            "gllm"          
+ [53] "GLMMGibbs"      "gregmisc"       "grid"           "gss"           
+ [57] "hdf5"           "ifs"            "ineq"           "ipred"         
+ [61] "KernSmooth"     "lasso2"         "lattice"        "leaps"         
+ [65] "lgtdl"          "lmtest"         "locfit"         "logspline"     
+ [69] "lokern"         "lpridge"        "maptree"        "Matrix"        
+ [73] "maxstat"        "mclust"         "mda"            "meanscore"     
+ [77] "mgcv"           "mlbench"        "moc"            "muhaz"         
+ [81] "multiv"         "mvnmle"         "mvtnorm"        "netCDF"        
+ [85] "NISTnls"        "nlme"           "nlrq"           "norm"          
+ [89] "npmc"           "Oarray"         "odesolve"       "oz"            
+ [93] "panel"          "pastecs"        "pcurve"         "pear"          
+ [97] "permax"         "PHYLOGR"        "pinktoe"        "pixmap"        
+[101] "polynom"        "princurve"      "pspline"        "qtl"           
+[105] "quadprog"       "quantreg"       "RadioSonde"     "randomForest"  
+[109] "RArcInfo"       "rmeta"          "Rmpi"           "RmSQL"         
+[113] "RMySQL"         "ROracle"        "rpart"          "RPgSQL"        
+[117] "rpvm"           "RQuantLib"      "rsprng"         "RSQLite"       
+[121] "Rwave"          "SASmixed"       "scatterplot3d"  "sem"           
+[125] "sgeostat"       "sm"             "sma"            "sn"            
+[129] "sna"            "spatstat"       "spdep"          "splancs"       
+[133] "strucchange"    "subselect"      "SuppDists"      "survival"      
+[137] "tensor"         "tree"           "tripack"        "tseries"       
+[141] "twostage"       "vegan"          "VLMC"           "VR"            
+[145] "waveslim"       "wavethresh"     "wle"            "xgobi"         
+[149] "XML"            "xtable"        
 > 
 > # test url connections on http
 > zz <- url("http://cran.r-project.org/")
@@ -84,7 +89,7 @@ downloaded 57Kb
 [11] "<FRAME src=\"logo.html\" name=\"logo\" frameborder=0>"         
 [12] "<FRAME src=\"navbar.html\" name=\"contents\" frameborder=0>"   
 [13] "</FRAMESET>"                                                   
-[14] "<FRAME src=\"banner.html\" name=\"banner\" frameborder=0>"     
+[14] "<FRAME src=\"banner.shtml\" name=\"banner\" frameborder=0>"    
 [15] "<noframes>"                                                    
 [16] "<h1>The Comprehensive R Archive Network</h1>"                  
 [17] ""                                                              

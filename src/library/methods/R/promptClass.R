@@ -1,6 +1,6 @@
 "promptClass" <-
 function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), type = "class",
-          where = find(classMetaName(clName)))
+          keywords = "classes", where = find(classMetaName(clName)))
 {
     classesInSig <- function(g, where) {
     # given a generic g, obtain list of all classes
@@ -66,19 +66,15 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
         tmp <- listFromMlist(getMethods(g, where))
         if (length(tmp[[1]]) == 0)
             NULL
-        else if ((lt <- length(tmp[[1]])) == 1)
-            list(unlist(tmp[[1]]))
-        else {
-            o <- list()#matrix(" ", nc = length(tmp[[1]][[1]]), nr = length(tmp[[1]]))
-            for (i in 1:lt) o[[i]] <- unlist(tmp[[1]][[i]])
-            o
-        }
+        else
+            tmp[[1]]
     }
     slotClassWithSource <- function(clname) {
         clDef <- getClassDef(clname)
         extds <- names(getExtends(clDef))
-        allslots <- list()
-        for(i in rev(extds)) {
+        allslots <- getSlots(clDef) ## establishes all slots, in the right order
+        for(j in rev(seq(along=extds))) {
+            i <- extds[[j]]
             slotsi <- getSlots(i)
             if(length(slotsi)>0)
                 allslots[names(slotsi)] <- paste0("\"", as.character(slotsi),
@@ -90,8 +86,15 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
         allslots
     }
     paste0 <- function(...) paste(..., sep = "")
-    pastePar <- function(x) paste("(", paste(x, collapse = ", "),
+    pastePar <- function(x) {
+        xn <- names(x); x <- as.character(x)
+        if(length(xn) == length(x))
+            xn <- paste(xn, "= ")
+        else
+            xn <- ""
+        paste("(", paste(xn, "\"", x, "\"", sep="", collapse = ", "),
         ")", sep = "")
+    }
     if(length(where) == 0)
         stop(paste0("No definition of class \"", clName,"\" found"))
     else if(length(where) > 1) {
@@ -104,33 +107,32 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
     .name <- paste0("\\name{", fullName, "}")
     .type <- paste0("\\docType{", type, "}")
     .alias <- paste0("\\alias{", fullName, "}")
-    .title <- paste0("\\title{Class ", clName, ", ~~class for ... ~~ }")
-    .desc <- paste0("\\description{", "  ~~ A concise (1-5 lines) description of what the class is  ~~",
+    .title <- paste0("\\title{Class \"", clName, "\" ~~~ }")
+    .desc <- paste0("\\description{", "  ~~ A concise (1-5 lines) description of what the class is.  ~~",
         "}")
     slotclasses <- getSlots(clName)
     slotnames <- names(slotclasses)
     slotclasses <- as.character(slotclasses)
-    .usage.head <- "\\section{Creating Objects}"
+    nslots <- length(slotclasses)
+    .usage <- "\\section{Objects from the Class}"
     if(isVirtualClass(clName)) {
-        .usage.head <- paste0(.usage.head, "{A Virtual Class; no objects may be created from it}")
-        .usage.body <- .usage.tail <- character()
+        .usage <- paste0(.usage, "{A virtual Class: No objects may be created from it.}")
     }
     else {
-        .usage.head <- c(paste0(.usage.head, "{"), paste0("\\code{  new('", clName, "',}\\cr"))
-        .usage.body <- character()
-        nslots <- length(slotnames)
-        if (nslots > 0) {
-            .usage.body <-
-                paste0("\\code{    ", format(slotnames),
-                      " = ...., # Object of class ", slotclasses,"}\\cr")
-        }
-        .usage.tail <- "\\code{  )}}"
+        initMethod <- unRematchDefinition(selectMethod("initialize", clName))
+        argNames <- formalArgs(initMethod)
+        ## but for new() the first argument is the class name
+        argNames[[1]] <- paste0('"', clName, '"')
+        .usage <- c(paste0(.usage,"{"),
+                    paste0("Objects can be created by calls of the form \\code{", makeCallString(initMethod, "new", argNames), "}."),
+                    "    ~~ describe objects here ~~ ", "}")
     }
     if (nslots > 0) {
         slotclasses <- slotClassWithSource(clName)
+        slotnames <- names(slotclasses)
         .slots.head <- c("\\section{Slots}{", "  \\describe{")
         .slots.body <-  paste0("    \\item{\\code{", slotnames,
-                "}:}", "{Object of class ", slotclasses, " ~~ }")
+                "}:}", "{Object of class \\code{", slotclasses, "} ~~ }")
         .slots.tail <- c("  }","}")
         .slots <- c(.slots.head,  .slots.body,  .slots.tail)
     }
@@ -138,8 +140,10 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
         .slots <- character()
     .extends <- getExtends(clDef)
     if(length(.extends)>0) {
+         .extends <- showExtends(.extends, print=FALSE)
         .extends <- c("\\section{Extends}{",
-                      showExtends(.extends, print=FALSE),
+                      paste("Class \\code{\"", .extends$what, "\"}, ",
+                            .extends$how, ".", sep=""),
                       "}")
     }
     else
@@ -153,7 +157,7 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
             for (j in seq(along = .sigmat)) {
                 if (!all(is.na(match(.sigmat[[j]],clName))))
                 .meths.body <- c(.meths.body, paste0("    \\item{",
-                  methnms[i], "}{", pastePar(.sigmat[[j]]), ": ... }"))
+                  methnms[i], "}{\\code{signature", pastePar(.sigmat[[j]]), "}: ... }"))
             }
         }
         .meths.body <- c(.meths.body, "  }")
@@ -164,12 +168,18 @@ function (clName, filename = paste(topicName(type, clName), ".Rd", sep = ""), ty
                               "\" in the signature.")
     }
     .meths.tail <- "}"
-    .keywords <- "\\keyword{methods}"
+    .keywords <- paste("\\keyword{", keywords, "}", sep = "")
+    .boilerplate <- c( "\\references{ ~put references to the literature/web site here ~ }", 
+            "\\author{ ~~who you are~~ }", "\\note{ ~~further notes~~ }", 
+            "", " ~Make other sections like WARNING with \\section{WARNING }{....} ~", 
+            "", "\\seealso{ ~~objects to SEE ALSO as \\code{\\link{~~fun~~}}, ~~~",
+                  " or\\code{\\link{CLASSNAME-class}} for links to other classes }", 
+            "", "\\examples{", "##---- Should be DIRECTLY executable !! ----","}")
     cat(.name, .type, .alias,  .title, .desc,
-        .usage.head,  .usage.body,  .usage.tail,
+        .usage,
         .slots,  .extends,
         .meths.head,  .meths.body,  .meths.tail,
-        .keywords, sep ="\n",
+        .boilerplate, .keywords, sep ="\n",
         file = filename)
     if(is.character(filename))
         what <- paste0(" to the file \"", filename, "\"")

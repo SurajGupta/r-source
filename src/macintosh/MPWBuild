@@ -7,6 +7,13 @@
 ### After a while this script exists and it has generated MakeR.
 ### Follow the instruction displayed to build R.
 ### 
+### If you have problems with the line endings of this file
+### uncomment the following three lines and execute them:
+###
+### Duplicate -y MPWBuild MPWBuild.ux
+### translate ¶0x0a ¶0x0d <MPWBuild.ux >MPWBuild
+### delete -y MPWBuild.ux
+###
 ###
 ###
 ### Notes:  to build R and run this script you need "sed" and "f2c".
@@ -28,23 +35,28 @@
 ###
 ###  Jago Nov 11 2001, Stefano M. Iacus
 ###  (`iacus-ng' recently released, so it can't be bug free)
+###
+###  Last update: April 14th 2002
 ###   
 ###  bug report or optimization hints can be sent to
 ###
 ###  stefano.iacus@unimi.it
 ###
 
-if !`Exists "{MPW}tools:sed"`
+if !"`Exists "{MPW}tools:sed"`"
 Alert "You need to install sed tool before continuing"
 end
 
 echo "Setting up creator and type for scripts and makefiles"
 
-set fileList  "`WhereIs -x -s ::: Makefile.mac ¶
+set fileList  "`WhereIs -x -s ::: Å.mac ¶
  BuildAll.mac News.MAC`"
 if "{fileList}"
  for f in {fileList}
   SetFile -c 'ttxt' -t 'TEXT' "{f}"
+  Duplicate  -y "{f}" "{f}.tmp"
+  translate ¶0x0a ¶0x0d <"{f}.tmp" >"{f}"
+  delete -y "{f}.tmp"
  end
 end
 
@@ -70,6 +82,10 @@ if `Exists ::main:alloca.c`
 end
 
 
+if `Exists ::main:qsort-body.c`
+ Rename "::main:qsort-body.c" "::main:qsort-body_c" 
+end
+
 echo "Setting variables and file list..."
 echo " "
 
@@ -78,12 +94,8 @@ begin
  Alert "Please identify Stuffit Expander"
  set   Stuffit "`GetFilename`" 
  {Stuffit} -wait :res:R.rsrc.hqx
- duplicate -y :script :::
+ duplicate -y :script: :::
  {Stuffit} -wait :::script:Å.hqx
-# {Stuffit} -wait :::script:demo.hqx
-# {Stuffit} -wait :::script:execute_cmd.hqx
-# {Stuffit} -wait :::script:source_file.hqx
-# {Stuffit} -wait :::script:zip.expand.hqx
   delete -y :::script:Å.hqx
 end
 end
@@ -225,6 +237,7 @@ echo "### Generates Rconfig.h" >>MakeR
 echo Rconfig.h Ä ::include:config.h config.mac.h >> MakeR
 echo '	' Duplicate -y config.mac.h ::include:config.h >>MakeR
 echo "	 execute :tools:GETCONFIG > Rconfig.h" >> MakeR
+echo '	' Duplicate -y ::include:Rmath.h.in ::include:Rmath.h >>MakeR
 echo " " >>MakeR
 echo " " >>MakeR
 
@@ -322,16 +335,13 @@ echo '.o Ä .c Rversion.h Rconfig.h FFTab.h FFDecl.h ¶
 echo '	'Mrc '{'DepDir'}''{'default'}'.c '{'includes'}' -o ¶
 :obj:'{'default'}'.o -sym full -opt off -includes Unix ¶
 -shared_lib_export on '¶' >> MakeR
-echo '	'-w 35,2,7,29,30 -d HAVE_CONFIG_H  -d Macintosh  -d ¶
+echo '	'-w 35,2,7,29,30,23 -d HAVE_CONFIG_H  -d Macintosh  -d ¶
 TARGET_API_MAC_CARBON '¶' >> MakeR
 echo '	'-typecheck relaxed -noMapCR -ansi off ¶
--prefix RHeaders.h -alloca  >> MakeR
-
-
+-prefix RHeaders.h -alloca  -enum int >> MakeR
 if `Exists :expvar`
  Delete :expvar
 end
-
 echo " " >> MakeR
 echo "### Main command build" >> MakeR
 echo " " >> MakeR
@@ -400,6 +410,10 @@ for f in {FortList}
    | sed "s/[^/]*:/:obj:\1/"` "Ä" '"'{f}'"' >>MakeR
  end
 end
+
+if 'Exists ::main:qsort-body_c'
+ Rename "::main:qsort-body_c" "::main:qsort-body.c" 
+end
 echo " "
 echo "Done !"
 date
@@ -423,11 +437,6 @@ echo "Make -f MakeR R > MyMake"
 echo "MyMake"
 echo "Make -f makefile.mac > build"
 echo "build" 
-echo "directory ::library"
-echo "buildall.mac"
-echo "directory ::modules"
-echo "buildall.mac"
-echo "directory ::macintosh"
 echo " "
 echo ":::R"
 echo " "
@@ -436,5 +445,4 @@ echo " "
 echo "Make -f MakeR R > MyMake"
 echo "MyMake"
 echo " "
-
 

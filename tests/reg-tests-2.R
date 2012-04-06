@@ -314,3 +314,142 @@ data <- data.frame(weight, group)
 fit <- lm(cbind(w=weight, w2=weight^2) ~ group, data=data)
 predict(fit, newdata=data[1:2, ])
 ## was 20 rows in R <= 1.4.0
+
+
+## Chong Gu 2002-Feb-8: `.' not expanded in drop1
+data(HairEyeColor)
+lab <- dimnames(HairEyeColor)
+HairEye <- cbind(expand.grid(Hair=lab$Hair, Eye=lab$Eye, Sex=lab$Sex),
+                 Fr=as.vector(HairEyeColor))
+HairEye.fit <- glm(Fr ~ . ^2, poisson, HairEye)
+drop1(HairEye.fit)
+## broken around 1.2.1 it seems.
+
+
+## PR#1329  (subscripting matrix lists)
+m <- list(a1=1:3, a2=4:6, a3=pi, a4=c("a","b","c"))
+dim(m) <- c(2,2)
+m
+m[,2]
+m[2,2]
+## 1.4.1 returned null components: the case was missing from a switch.
+
+m <- list(a1=1:3, a2=4:6, a3=pi, a4=c("a","b","c"))
+matrix(m, 2, 2)
+## 1.4.1 gave `Unimplemented feature in copyVector'
+
+x <- vector("list",6)
+dim(x) <- c(2,3)
+x[1,2] <- list(letters[10:11])
+x
+## 1.4.1 gave `incompatible types in subset assignment'
+
+
+## printing of matrix lists
+m <- list(as.integer(1), pi, 3+5i, "testit", TRUE, factor("foo"))
+dim(m) <- c(1, 6)
+m
+## prior to 1.5.0 had quotes for 2D case (but not kD, k > 2),
+## gave "numeric,1" etc, (even "numeric,1" for integers and factors)
+
+
+## ensure RNG is unaltered.
+for(type in c("Wichmann-Hill", "Marsaglia-Multicarry", "Super-Duper",
+              "Mersenne-Twister", "Knuth-TAOCP", "Knuth-TAOCP-2002"))
+{
+    set.seed(123, type)
+    print(RNGkind())
+    runif(100); print(runif(4))
+    set.seed(1000, type)
+    runif(100); print(runif(4))
+    set.seed(77, type)
+    runif(100); print(runif(4))
+}
+RNGkind(normal.kind = "Kinderman-Ramage")
+set.seed(123)
+RNGkind()
+rnorm(4)
+RNGkind(normal.kind = "Ahrens-Dieter")
+set.seed(123)
+RNGkind()
+rnorm(4)
+RNGkind(normal.kind = "Box-Muller")
+set.seed(123)
+RNGkind()
+rnorm(4)
+set.seed(123)
+runif(4)
+set.seed(123, "default")
+runif(4)
+## last set.seed failed < 1.5.0.
+
+## merging, ggrothendieck@yifan.net, 2002-03-16
+d.df <- data.frame(x = 1:3, y = c("A","D","E"), z = c(6,9,10))
+merge(d.df[1,], d.df)
+## 1.4.1 got confused by inconsistencies in as.character
+
+## PR#1394 (levels<-.factor)
+f <- factor(c("a","b"))
+levels(f) <- list(C="C", A="a", B="b")
+f
+## was  [1] C A; Levels:  C A  in 1.4.1
+
+
+## PR#1408 Inconsistencies in sum()
+x <- as.integer(2^30)
+sum(x, x)    # did not warn in 1.4.1
+sum(c(x, x)) # did warn
+(z <- sum(x, x, 0.0)) # was NA in 1.4.1
+typeof(z)
+
+
+## NA levels in factors
+(x <- factor(c("a", "NA", "b"), exclude=NULL))
+## 1.4.1 had wrong order for levels
+is.na(x)[3] <- TRUE
+x
+## missing entry prints as <NA>
+
+
+## printing/formatting NA strings
+(x <- c("a", "NA", NA, "b"))
+print(x, quote = FALSE)
+paste(x)
+format(x)
+format(x, justify = "right")
+format(x, justify = "none")
+## not ideal.
+
+
+## print.ts problems  ggrothendieck@yifan.net on R-help, 2002-04-01
+x <- 1:20
+tt1 <- ts(x,start=c(1960,2), freq=12)
+tt2 <- ts(10+x,start=c(1960,2), freq=12)
+cbind(tt1, tt2)
+## 1.4.1 had `Jan 1961' as `NA 1961'
+
+## glm boundary bugs (related to PR#1331)
+x <- c(0.35, 0.64, 0.12, 1.66, 1.52, 0.23, -1.99, 0.42, 1.86, -0.02,
+       -1.64, -0.46, -0.1, 1.25, 0.37, 0.31, 1.11, 1.65, 0.33, 0.89,
+       -0.25, -0.87, -0.22, 0.71, -2.26, 0.77, -0.05, 0.32, -0.64, 0.39,
+       0.19, -1.62, 0.37, 0.02, 0.97, -2.62, 0.15, 1.55, -1.41, -2.35,
+       -0.43, 0.57, -0.66, -0.08, 0.02, 0.24, -0.33, -0.03, -1.13, 0.32,
+       1.55, 2.13, -0.1, -0.32, -0.67, 1.44, 0.04, -1.1, -0.95, -0.19,
+       -0.68, -0.43, -0.84, 0.69, -0.65, 0.71, 0.19, 0.45, 0.45, -1.19,
+       1.3, 0.14, -0.36, -0.5, -0.47, -1.31, -1.02, 1.17, 1.51, -0.33,
+       -0.01, -0.59, -0.28, -0.18, -1.07, 0.66, -0.71, 1.88, -0.14,
+       -0.19, 0.84, 0.44, 1.33, -0.2, -0.45, 1.46, 1, -1.02, 0.68, 0.84)
+y <- c(1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0,
+       0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1,
+       1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1,
+       0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+       1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0)
+try(glm(y ~ x, family = poisson(identity)))
+## failed because start = NULL in 1.4.1
+## now gives useful error message
+glm(y ~ x, family = poisson(identity), start = c(1,0))
+## step reduction failed in 1.4.1
+set.seed(123)
+y <- rpois(100, pmax(3*x, 0))
+glm(y ~ x, family = poisson(identity), start = c(1,0))
+warnings()

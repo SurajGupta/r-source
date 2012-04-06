@@ -3,12 +3,12 @@ read.fwf <- function(file, widths, sep = "\t", as.is = FALSE,
 {
     doone <- function(x) {
         x <- substring(x, first, last)
-        x[nchar(x)==0] <- "NA"
+        x[nchar(x)==0] <- as.character(NA)
         x
     }
     FILE <- tempfile("Rfwf.")
     on.exit(unlink(FILE))
-    raw <- scan(file, what="", sep="\n", quote="", quiet=TRUE, n=n)
+    raw <- readLines(file, n=n)
     st <- c(1, 1+cumsum(widths))
     first <- st[-length(st)]
     last <- cumsum(widths)

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2001  The R Development Core Team.
+ *  Copyright (C) 1998--2002  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@
 # define USE_RINTERNALS
 #endif
 
-#include "config.h"
-
 #include <Rinternals.h>		/*-> Arith.h, Complex.h, Error.h, Memory.h
 				  PrtUtil.h, Utils.h */
 #include "Internal.h"		/* do_FOO */
@@ -51,21 +49,17 @@
 # endif
 #endif /* SunOS4 */
 
-/* PSIGNAL may be defined on Win32 in config.h */
-#ifdef PSIGNAL
+#ifdef Win32
+#define PLOTHISTORY
+void R_ProcessEvents(void);
+#endif /* Win32 */
+
+#ifdef Win32
 # include <psignal.h>
 #else
 # include <signal.h>
 # include <setjmp.h>
 #endif
-
-/*
-#include <time.h>
-
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
-*/
 
 #ifdef Unix
 # define OSTYPE      "unix"
@@ -116,17 +110,28 @@
 #include <math.h>
 #endif
 
-/* all these are in Rinternals.h
-#include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <limits.h>
-#include <float.h>
-#include <ctype.h>
-*/
+/* declare substitutions */
+#if defined(HAVE_DECL_ACOSH) && !HAVE_DECL_ACOSH
+extern double acosh(double x);
+#endif
+#if defined(HAVE_DECL_ASINH) && !HAVE_DECL_ASINH
+extern double asinh(double x);
+#endif
+#if defined(HAVE_DECL_ATANH) && !HAVE_DECL_ATANH
+extern double atanh(double x);
+#endif
+#if defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
+extern int snprintf (char *s, size_t n, const char *format, ...);
+#endif
+#if defined(HAVE_DECL_STRDUP) && !HAVE_DECL_STRDUP
+extern char *strdup(const char *s1);
+#endif
+#if defined(HAVE_DECL_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
+extern int strncasecmp(const char *s1, const char *s2, size_t n);
+#endif
+#if defined(HAVE_DECL_VSNPRINTF) && !HAVE_DECL_VSNPRINTF
+extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
+#endif
 
 /* Getting the working directory */
 #if defined(HAVE_GETCWD)
@@ -146,8 +151,9 @@
 #  define PATH_MAX MAXPATHLEN
 # elif defined(Win32)
 #  define PATH_MAX 260
-# else
-#  define PATH_MAX 255
+# else 
+/* quite possibly unlimited, so we make this large, and test when used */
+#  define PATH_MAX 5000
 # endif
 #endif
 
@@ -159,6 +165,13 @@
 # define JMP_BUF jmp_buf
 # define SETJMP(x) setjmp(x)
 # define LONGJMP(x,i) longjmp(x,i)
+#endif
+
+/* Availability of timing: on Unix, we need times(2).
+   On Windows and the Mac, we can do without.
+*/
+#if (defined(HAVE_TIMES) || defined(Win32) || defined(Macintosh))
+# define _R_HAVE_TIMING_ 1
 #endif
 
 #include "R_ext/Rdynload.h"
@@ -375,9 +388,9 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 #include <R_ext/libextern.h>
 
 #ifdef __MAIN__
-#define INI_as(v) = v
+# define INI_as(v) = v
 #else
-#define INI_as(v)
+# define INI_as(v)
 #endif
 
 /* Formerly in Arith.h */
@@ -471,107 +484,103 @@ void R_set_quick_method_check(R_stdGen_ptr_t);
 
 /* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
-SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP check, SEXP value);
-/* (in objects.c) */
-SEXP R_do_slot_check(SEXP obj, SEXP name, SEXP value);
+SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 
 #ifdef __MAIN__
-#undef extern
-#undef LibExtern
+# undef extern
+# undef LibExtern
 #endif
 #undef INI_as
-
-
 
 
 /*--- FUNCTIONS ------------------------------------------------------ */
 
 #ifndef R_NO_REMAP
-#define begincontext		Rf_begincontext
-#define checkArity		Rf_checkArity
-#define CheckFormals		Rf_CheckFormals
-#define CleanEd			Rf_CleanEd
-#define DataFrameClass		Rf_DataFrameClass
-#define ddfindVar		Rf_ddfindVar
-#define deparse1		Rf_deparse1
-#define deparse1line		Rf_deparse1line
-#define DispatchGroup		Rf_DispatchGroup
-#define DispatchOrEval		Rf_DispatchOrEval
-#define duplicated		Rf_duplicated
-#define dynamicfindVar		Rf_dynamicfindVar
-#define endcontext		Rf_endcontext
-#define errorcall		Rf_errorcall
-#define ErrorMessage		Rf_ErrorMessage
-#define factorsConform		Rf_factorsConform
-#define FetchMethod		Rf_FetchMethod
-#define findcontext		Rf_findcontext
-#define findVar1		Rf_findVar1
-#define FrameClassFix		Rf_FrameClassFix
-#define framedepth		Rf_framedepth
-#define frameSubscript		Rf_frameSubscript
-#define get1index		Rf_get1index
-#define getVar			Rf_getVar
-#define getVarInFrame		Rf_getVarInFrame
-#define hashpjw			Rf_hashpjw
-#define InheritsClass		Rf_InheritsClass
-#define InitArithmetic		Rf_InitArithmetic
-#define InitColors		Rf_InitColors
-#define InitConnections		Rf_InitConnections
-#define InitEd			Rf_InitEd
-#define InitFunctionHashing	Rf_InitFunctionHashing
-#define InitGlobalEnv		Rf_InitGlobalEnv
-#define InitMemory		Rf_InitMemory
-#define InitNames		Rf_InitNames
-#define InitOptions		Rf_InitOptions
-#define initStack		Rf_initStack
-#define internalTypeCheck	Rf_internalTypeCheck
-#define isValidName		Rf_isValidName
-#define jump_to_toplevel	Rf_jump_to_toplevel
-#define levelsgets		Rf_levelsgets
-#define mainloop		Rf_mainloop
-#define mat2indsub		Rf_mat2indsub
-#define match			Rf_match
-#define mkCLOSXP		Rf_mkCLOSXP
-#define mkComplex              	Rf_mkComplex
-#define mkFalse			Rf_mkFalse
-#define mkFloat			Rf_mkFloat
-#define mkNA			Rf_mkNA
-#define mkPROMISE		Rf_mkPROMISE
-#define mkQUOTE			Rf_mkQUOTE
-#define mkSYMSXP		Rf_mkSYMSXP
-#define mkTrue			Rf_mkTrue
-#define NewEnvironment		Rf_NewEnvironment
-#define OneIndex		Rf_OneIndex
-#define onintr			Rf_onintr
-#define onsigusr1               Rf_onsigusr1
-#define onsigusr2               Rf_onsigusr2
-#define parse			Rf_parse
-#define PrintGreeting		Rf_PrintGreeting
-#define PrintVersion		Rf_PrintVersion
-#define PrintWarnings		Rf_PrintWarnings
-#define promiseArgs		Rf_promiseArgs
-#define RemoveClass		Rf_RemoveClass
-#define setVarInFrame		Rf_setVarInFrame
-#define sortVector		Rf_sortVector
-#define ssort			Rf_ssort
-#define str2type		Rf_str2type
-#define StrToInternal		Rf_StrToInternal
-#define substituteList		Rf_substituteList
-#define tsConform		Rf_tsConform
-#define tspgets			Rf_tspgets
-#define type2str		Rf_type2str
-#define type2symbol		Rf_type2symbol
-#define unbindVar		Rf_unbindVar
-#define usemethod		Rf_usemethod
-#define warningcall		Rf_warningcall
-#define WarningMessage		Rf_WarningMessage
-#define yyerror			Rf_yyerror
-#define yyinit			Rf_yyinit
-#define yylex			Rf_yylex
-#define yyparse			Rf_yyparse
-#define yyprompt		Rf_yyprompt
-#define yywrap			Rf_yywrap
-#endif
+# define begincontext		Rf_begincontext
+# define checkArity		Rf_checkArity
+# define CheckFormals		Rf_CheckFormals
+# define CleanEd		Rf_CleanEd
+# define DataFrameClass		Rf_DataFrameClass
+# define ddfindVar		Rf_ddfindVar
+# define deparse1		Rf_deparse1
+# define deparse1line		Rf_deparse1line
+# define DispatchGroup		Rf_DispatchGroup
+# define DispatchOrEval		Rf_DispatchOrEval
+# define duplicated		Rf_duplicated
+# define dynamicfindVar		Rf_dynamicfindVar
+# define endcontext		Rf_endcontext
+# define errorcall		Rf_errorcall
+# define ErrorMessage		Rf_ErrorMessage
+# define factorsConform		Rf_factorsConform
+# define FetchMethod		Rf_FetchMethod
+# define findcontext		Rf_findcontext
+# define findVar1		Rf_findVar1
+# define FrameClassFix		Rf_FrameClassFix
+# define framedepth		Rf_framedepth
+# define frameSubscript		Rf_frameSubscript
+# define get1index		Rf_get1index
+# define getVar			Rf_getVar
+# define getVarInFrame		Rf_getVarInFrame
+# define hashpjw		Rf_hashpjw
+# define InheritsClass		Rf_InheritsClass
+# define InitArithmetic		Rf_InitArithmetic
+# define InitColors		Rf_InitColors
+# define InitConnections	Rf_InitConnections
+# define InitEd			Rf_InitEd
+# define InitFunctionHashing	Rf_InitFunctionHashing
+# define InitGlobalEnv		Rf_InitGlobalEnv
+# define InitMemory		Rf_InitMemory
+# define InitNames		Rf_InitNames
+# define InitOptions		Rf_InitOptions
+# define initStack		Rf_initStack
+# define internalTypeCheck	Rf_internalTypeCheck
+# define isValidName		Rf_isValidName
+# define jump_to_toplevel	Rf_jump_to_toplevel
+# define levelsgets		Rf_levelsgets
+# define mainloop		Rf_mainloop
+# define mat2indsub		Rf_mat2indsub
+# define match			Rf_match
+# define mkCLOSXP		Rf_mkCLOSXP
+# define mkComplex              Rf_mkComplex
+# define mkFalse		Rf_mkFalse
+# define mkFloat		Rf_mkFloat
+# define mkNA			Rf_mkNA
+# define mkPROMISE		Rf_mkPROMISE
+# define mkQUOTE		Rf_mkQUOTE
+# define mkSYMSXP		Rf_mkSYMSXP
+# define mkTrue			Rf_mkTrue
+# define NewEnvironment		Rf_NewEnvironment
+# define OneIndex		Rf_OneIndex
+# define onintr			Rf_onintr
+# define onsigusr1              Rf_onsigusr1
+# define onsigusr2              Rf_onsigusr2
+# define parse			Rf_parse
+# define PrintGreeting		Rf_PrintGreeting
+# define PrintVersion		Rf_PrintVersion
+# define PrintWarnings		Rf_PrintWarnings
+# define promiseArgs		Rf_promiseArgs
+# define RemoveClass		Rf_RemoveClass
+# define setVarInFrame		Rf_setVarInFrame
+# define sortVector		Rf_sortVector
+# define ssort			Rf_ssort
+# define str2type		Rf_str2type
+# define StrToInternal		Rf_StrToInternal
+# define substituteList		Rf_substituteList
+# define tsConform		Rf_tsConform
+# define tspgets		Rf_tspgets
+# define type2str		Rf_type2str
+# define type2symbol		Rf_type2symbol
+# define unbindVar		Rf_unbindVar
+# define usemethod		Rf_usemethod
+# define warningcall		Rf_warningcall
+# define WarningMessage		Rf_WarningMessage
+# define yyerror		Rf_yyerror
+# define yyinit			Rf_yyinit
+# define yylex			Rf_yylex
+# define yyparse		Rf_yyparse
+# define yyprompt		Rf_yyprompt
+# define yywrap			Rf_yywrap
+#endif /* not R_NO_REMAP */
 
 /* Platform Dependent Gui Hooks */
 
@@ -690,7 +699,7 @@ int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
 void R_Suicide(char*);
 SEXP setVarInFrame(SEXP, SEXP, SEXP);
-void sortVector(SEXP);
+void sortVector(SEXP, Rboolean);
 void ssort(SEXP*,int);
 SEXPTYPE str2type(char*);
 int StrToInternal(char*);
@@ -738,17 +747,17 @@ int yywrap(void);
 
 /* Macros for suspending interrupts */
 #ifdef HAVE_POSIX_SETJMP
-#define BEGIN_SUSPEND_INTERRUPTS do { \
+# define BEGIN_SUSPEND_INTERRUPTS do { \
     sigset_t mask, omask; \
     sigemptyset(&mask); \
     sigaddset(&mask,SIGINT); \
     sigprocmask(SIG_BLOCK, &mask, &omask);
-#define END_SUSPEND_INTERRUPTS sigprocmask(SIG_SETMASK, &omask, &mask); \
+# define END_SUSPEND_INTERRUPTS sigprocmask(SIG_SETMASK, &omask, &mask); \
     } while(0)
-#else
-#define BEGIN_SUSPEND_INTERRUPTS do {
-#define END_SUSPEND_INTERRUPTS } while (0)
-#endif
+#else /* not HAVE_POSIX_SETJMP */
+# define BEGIN_SUSPEND_INTERRUPTS do {
+# define END_SUSPEND_INTERRUPTS } while (0)
+#endif /* not HAVE_POSIX_SETJMP */
 
 #endif /* DEFN_H_ */
 /*

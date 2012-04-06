@@ -64,10 +64,10 @@ GEDevDesc* GEcreateDevDesc(NewDevDesc* dev)
     /* NULL the gesd array
      */
     int i;
-    for (i=0; i<MAX_GRAPHICS_SYSTEMS; i++)
-	dd->gesd[i] = NULL;
     if (!dd)
 	error("Not enough memory to allocate device (in addDevice)");
+    for (i=0; i<MAX_GRAPHICS_SYSTEMS; i++)
+	dd->gesd[i] = NULL;
     dd->newDevStruct = 1;
     dd->dev = dev;
     return dd;
@@ -1337,11 +1337,11 @@ void GEText(double x, double y, char *str,
 			    double maxDepth = 0.0;
 			    char *ss;
 			    int charNum = 0;
-			    h = fromDeviceHeight(h, GE_INCHES, dd);
-			    d = fromDeviceHeight(d, GE_INCHES, dd);
 			    for (ss=sbuf; *ss; ss++) {
 				GEMetricInfo((unsigned char) *ss,
 					     font, cex, ps, &h, &d, &w, dd);
+				h = fromDeviceHeight(h, GE_INCHES, dd);
+				d = fromDeviceHeight(d, GE_INCHES, dd);
 				/* Set maxHeight and maxDepth from height
 				   and depth of first char.
 				   Must NOT set to 0 in case there is
@@ -1851,6 +1851,10 @@ void GENewPage(int fill, double gamma, GEDevDesc *dd)
 void GEinitDisplayList(GEDevDesc *dd)
 {
     int i;
+    /* Save the current dislpayList so that, for example, a device
+     * can maintain a plot history
+     */
+    dd->dev->savedSnapshot = GEcreateSnapshot(dd);
     /* Get each graphics system to save state required for 
      * replaying the display list
      */

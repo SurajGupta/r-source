@@ -4,6 +4,15 @@ DPKG=$(RLIB)/$(PKG)
 SPKG=.
 SAVE=CHECK
 
+ifneq ($(strip $(BUILD)),CROSS)
+SPKG0 = $(shell $(RHOME)/src/gnuwin32/Rpwd.exe $(SPKG))
+DPKG0 = $(shell $(RHOME)/src/gnuwin32/Rpwd.exe $(DPKG))
+else
+SPKG0=$(SPKG)
+DPKG0=$(DPKG)
+endif
+
+
 ifeq ($(strip $(DLLNM)),)
   DLLNAME=$(PKG)
 else
@@ -53,7 +62,7 @@ OFILES0=$(wildcard $(SPKG)/*)
 OFILES1= INDEX TITLE
 OFILES-NO= R r chm data man src src-c demo Makefile.in inst check orig tests \
 	DESCRIPTION DESCRIPTION.in INDEX TITLE index title \
-	configure configure.in cleanup CVS cvs
+	configure configure.in configure.win cleanup CVS cvs
 OFILES3=$(foreach i, $(OFILES1), $(SPKG)/$i)
 OFILES2=$(foreach i, $(OFILES-NO), $(SPKG)/$i)
 OFILES=$(filter-out $(OFILES2),$(OFILES0))
@@ -97,21 +106,30 @@ endif
 
 $(SPKG)/TITLE:
 	if [ ! -f $(SPKG)/TITLE -a -f $(SPKG)/DESCRIPTION ] ; then \
-	  perl $(RHOME)/share/perl/maketitle.pl $(SPKG)/DESCRIPTION > $@; \
+	  PERL5LIB=$(RHOME)/share/perl perl $(RHOME)/share/perl/maketitle.pl $(SPKG)/DESCRIPTION > $@; \
 	fi
 
 # This fails if DESCRIPTION.. doesn't exist.
 # $(DPKG)/zzzz: $(OFILES3) $(OFILES)
 # On the other hand, ...zzzz is never created so
 $(DPKG)/zzzz: $(SPKG)/TITLE
+ifeq ($(SPKG0),$(DPKG0))
+	@echo
+	@echo "  *** cannot install a package into its source directory ***"
+	@echo
+	@exit 111
+endif
 	@$(ECHO) "---------- Making package $(PKG) ------------"
-	@if test -f ${SPKG}/configure; then \
-	  echo ; \
-	  echo "   **********************************************" ; \
-	  echo "   WARNING: this package has a configure script" ; \
-	  echo "         It probably needs manual configuration" ; \
-	  echo "   **********************************************" ; \
-	  echo ; \
+	@if test -f ${SPKG}/configure.win; then \
+	  sh -c configure.win; \
+	else if test -f ${SPKG}/configure; then \
+	    echo ; \
+	    echo "   **********************************************" ; \
+	    echo "   WARNING: this package has a configure script" ; \
+	    echo "         It probably needs manual configuration" ; \
+	    echo "   **********************************************" ; \
+	    echo ; \
+	  fi; \
 	fi
 	$(MKDIR) -p $(DPKG)
 ifeq ($(strip $(INSTFILES)),)
@@ -122,9 +140,11 @@ endif
 	@if test -f ${SPKG}/DESCRIPTION; then \
 	  $(SED) '/^\s*$$/d' ${SPKG}/DESCRIPTION  > ${DPKG}/DESCRIPTION; \
 	fi
+ifneq ($(strip $(BUILD)),CROSS)
 ifeq ($(strip $(STAMP)),YES)
 	@echo "  adding build stamp to DESCRIPTION"
 	@echo "cat('Built: R ', R.version[['major']], '.', R.version[['minor']], ';  Win32;  ', format(Sys.time()), sep='')" | $(RHOME)/bin/Rterm --slave --vanilla >> ${DPKG}/DESCRIPTION
+endif
 endif
 
 $(DATA): $(DSOURCES)
@@ -135,8 +155,8 @@ $(DATA): $(DSOURCES)
 
 
 $(DYNLIB): $(SSPKG)/$(DLLNAME).dll
-	$(MKDIR) -p $(DPKG)/libs
-	$(CP) $^ $@
+	@$(MKDIR) -p $(DPKG)/libs
+	@$(CP) $^ $@
 
 $(SSPKG)/$(DLLNAME).dll: FORCE
 	@echo "  making DLL"
@@ -163,8 +183,13 @@ MANWIN32=$(wildcard $(SPKG)/man/windows/*.[Rr]d)
 
 mansrcs: $(DPKG)/man/$(PKG).Rd
 
+PKGMANFILES=$(MANMAIN) $(MANWIN32)
 $(DPKG)/man/$(PKG).Rd: $(MANMAIN) $(MANWIN32)
+ifneq ($(strip $(PKGMANFILES)),)
 	@echo "  installing man source files"
 	@$(RM) -rf $(DPKG)/man
 	@$(MKDIR) -p $(DPKG)/man
 	@$(CAT) $^ > $(DPKG)/man/$(PKG).Rd
+else
+	@$(ECHO) "  no man files in this package"
+endif

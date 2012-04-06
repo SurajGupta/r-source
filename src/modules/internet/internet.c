@@ -53,28 +53,36 @@ static void  in_R_FTPClose(void *ctx);
 
 static Rboolean IDquiet=TRUE;
 
-static void url_open(Rconnection con)
+static Rboolean url_open(Rconnection con)
 {
     void *ctxt;
     char *url = con->description;
     UrlScheme type = ((Rurlconn)(con->private))->type;
 
-    if(con->mode[0] != 'r')
+    if(con->mode[0] != 'r') {
 	error("can only open URLs for reading");
+    }
 
     switch(type) {
     case HTTPsh:
 	ctxt = in_R_HTTPOpen(url, 0);
-	if(ctxt == NULL) error("cannot open URL `%s'", url);
+	if(ctxt == NULL) {
+	    error("cannot open URL `%s'", url);
+	    return FALSE;
+	}
 	((Rurlconn)(con->private))->ctxt = ctxt;
 	break;
     case FTPsh:
 	ctxt = in_R_FTPOpen(url);
-	if(ctxt == NULL) error("cannot open URL `%s'", url);
+	if(ctxt == NULL) {
+	    error("cannot open URL `%s'", url);
+	    return FALSE;
+	}
 	((Rurlconn)(con->private))->ctxt = ctxt;
 	break;
     default:
-	error("unknown URL scheme");
+	warning("unknown URL scheme");
+	return FALSE;
     }
 
     con->isopen = TRUE;
@@ -83,6 +91,7 @@ static void url_open(Rconnection con)
     if(strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
     else con->text = TRUE;
     con->save = -1000;
+    return TRUE;
 }
 
 static void url_close(Rconnection con)
@@ -279,7 +288,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	    R_FlushConsole();
 	    wprog = newwindow("Download progress", rect(0, 0, 540, 100),
 			      Titlebar | Centered);
-	    setbackground(wprog, LightGrey);
+	    setbackground(wprog, dialog_bg());
 	    strcpy(buf, "URL: ");
 	    if(strlen(url) > 60) {
 		strcat(buf, "... ");
@@ -836,12 +845,8 @@ void RxmlMessage(int level, const char *format, ...)
     if(level < clevel) return;
 
     va_start(ap, format);
-#ifdef HAVE_VSNPRINTF
     vsnprintf(buf, MBUFSIZE, format, ap);
     buf[MBUFSIZE-1] = '\0';
-#else
-    vsprintf(buf, format, ap);
-#endif
     va_end(ap);
     p = buf + strlen(buf) - 1;
     if(strlen(buf) > 0 && *p == '\n') *p = '\0';

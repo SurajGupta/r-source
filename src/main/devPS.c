@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -790,7 +790,7 @@ static void PSEncodeFont(FILE *fp, char *encname)
 static void PSFileHeader(FILE *fp, char* encname,
 			 char *papername, double paperwidth,
 			 double paperheight, Rboolean landscape,
-			 int EPSFheader,
+			 int EPSFheader, Rboolean paperspecial,
 			 double left, double bottom, double right, double top)
 {
     int i;
@@ -810,11 +810,11 @@ static void PSFileHeader(FILE *fp, char* encname,
     fprintf(fp, "%%%%Title: R Graphics Output\n");
     fprintf(fp, "%%%%Creator: R Software\n");
     fprintf(fp, "%%%%Pages: (atend)\n");
-    if (landscape) {
-	fprintf(fp, "%%%%Orientation: Landscape\n");
-    }
-    else {
-	fprintf(fp, "%%%%Orientation: Portrait\n");
+    if (!EPSFheader && !paperspecial) { /* gs gets confused by this */
+	if (landscape)
+	    fprintf(fp, "%%%%Orientation: Landscape\n");
+	else
+	    fprintf(fp, "%%%%Orientation: Portrait\n");
     }
     fprintf(fp, "%%%%BoundingBox: %.0f %.0f %.0f %.0f\n",
 	    left, bottom, right, top);
@@ -983,6 +983,7 @@ typedef struct {
     FILE *psfp;		/* output file */
 
     Rboolean onefile;	/* EPSF header etc*/
+    Rboolean paperspecial;	/* suppress %%Orientation */
 
     /* This group of variables track the current device status.
      * They should only be set by routines that emit PostScript code. */
@@ -1077,7 +1078,7 @@ innerPSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 		    double width, double height,
 		    Rboolean horizontal, double ps,
 		    Rboolean onefile, Rboolean pagecentre,
-		    Rboolean printit, char*cmd)
+		    Rboolean printit, char *cmd)
 {
     /* If we need to bail out with some sort of "error"
        then we must free(dd) */
@@ -1105,6 +1106,11 @@ innerPSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
     strcpy(pd->filename, file);
     strcpy(pd->papername, paper);
     pd->fontfamily = strcmp(family, "User") ? MatchFamily(family) : USERAFM;
+    if(strlen(encoding) > PATH_MAX - 1) {
+	free(dd);
+	free(pd);
+	error("encoding path is too long");
+    }
     strcpy(pd->encpath, encoding);
     pd->afmpaths = afmpaths;
 
@@ -1121,6 +1127,11 @@ innerPSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	error("invalid foreground/background color (postscript)");
     }
     pd->printit = printit;
+    if(strlen(cmd) > PATH_MAX - 1) {
+	free(dd);
+	free(pd);
+	error("`command' is too long");
+    }
     strcpy(pd->command, cmd);
     if (printit && strlen(cmd) == 0)
 	error("postscript(print.it=T) used with an empty print command");
@@ -1129,6 +1140,7 @@ innerPSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 
     /* Deal with paper and plot size and orientation */
 
+    pd->paperspecial = FALSE;
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
 	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
@@ -1164,6 +1176,7 @@ innerPSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	    pd->pagewidth  =  width;
 	    pd->pageheight = height;
 	}
+	pd->paperspecial = TRUE;
     }
     else {
 	free(dd);
@@ -1368,6 +1381,11 @@ static void SetFont(int style, int size, NewDevDesc *dd)
     }
 }
 
+#ifdef Win32
+/* exists, but does not work on GUI processes */
+# undef HAVE_POPEN
+#endif
+
 static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 {
     char buf[512], *p;
@@ -1426,6 +1444,7 @@ static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 		     pd->paperheight,
 		     pd->landscape,
 		     !(pd->onefile),
+		     pd->paperspecial,
 		     dd->bottom,
 		     dd->left,
 		     dd->top,
@@ -1438,6 +1457,7 @@ static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 		     pd->paperheight,
 		     pd->landscape,
 		     !(pd->onefile),
+		     pd->paperspecial,
 		     dd->left,
 		     dd->bottom,
 		     dd->right,
@@ -2178,6 +2198,7 @@ static Rboolean XFig_Open(NewDevDesc *dd, XFigDesc *pd)
 	pd->psfp = R_fopen(R_ExpandFileName(buf), "w");
     }
     if (!pd->psfp) return FALSE;
+    /* assume tmpname is less than PATH_MAX */
 #ifdef Unix
     strcpy(pd->tmpname, Runix_tmpnam("Rxfig"));
 #endif
@@ -2547,8 +2568,9 @@ typedef struct {
     } current;
 
     int nobjs;  /* number of objects */
-    int pos[1100]; /* object positions */
-    int pageobj[500]; /* page object numbers */
+    int *pos; /* object positions */
+    int *pageobj; /* page object numbers */
+    int pagemax;
     int startstream; /* position of start of current stream */
     Rboolean inText;
 }
@@ -2617,13 +2639,30 @@ innerPDFDeviceDriver(NewDevDesc* dd, char *file, char *family, char *encoding,
     /* allocate new PDF device description */
     if (!(pd = (PDFDesc *) malloc(sizeof(PDFDesc))))
 	return 0;
-
     /* from here on, if need to bail out with "error", must also */
     /* free(pd) */
+
+    pd->pos = (int *) calloc(350, sizeof(int));
+    if(!pd->pos) {
+	free(pd); free(dd);
+	error("cannot allocate pd->pos");
+    }
+    pd->pageobj = (int *) calloc(100, sizeof(int));
+    if(!pd->pageobj) {
+	free(pd->pos);free(pd); free(dd);
+	error("cannot allocate pd->pageobj");
+    }
+    pd->pagemax = 100;
+
 
     /* initialize PDF device description */
     strcpy(pd->filename, file);
     pd->fontfamily = MatchFamily(family);
+    if(strlen(encoding) > PATH_MAX - 1) {
+	free(dd);
+	free(pd->pos); free(pd->pageobj); free(pd);
+	error("encoding path is too long");
+    }
     strcpy(pd->encpath, encoding);
     setbg = str2col(bg);
     setfg = str2col(fg);
@@ -2633,7 +2672,7 @@ innerPDFDeviceDriver(NewDevDesc* dd, char *file, char *family, char *encoding,
     pointsize = floor(ps);
     if(setbg == NA_INTEGER && setfg  == NA_INTEGER) {
 	free(dd);
-	free(pd);
+	free(pd->pos); free(pd->pageobj); free(pd);
 	error("invalid foreground/background color (pdf)");
     }
 
@@ -2690,7 +2729,7 @@ innerPDFDeviceDriver(NewDevDesc* dd, char *file, char *family, char *encoding,
     /*	Start the driver */
 
     if(!PDF_Open(dd, pd)) {
-	free(pd);
+	free(pd->pos); free(pd->pageobj); free(pd);
 	return 0;
     }
 
@@ -2999,8 +3038,16 @@ static void PDF_NewPage(int fill, double gamma, NewDevDesc *dd)
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     char buf[512];
 
-    if(pd->pageno > 499 || pd->nobjs > 1099)
-	error("limit on pages or objects exceeded:please shut down the PDFdevice");
+    if(pd->pageno >= pd->pagemax || pd->nobjs >= 3*pd->pagemax) {
+	pd->pageobj = (int *) 
+	    realloc(pd->pageobj, 2*pd->pagemax * sizeof(int));
+	pd->pos = (int *) realloc(pd->pos, 
+				  (6*pd->pagemax + 50) * sizeof(int));
+	if(!pd->pos || !pd->pageobj)
+	    error("unable to increase page limit: please shutdown the pdf device");
+	pd->pagemax *= 2;
+    }
+    
 
     if(pd->pageno > 0) {
 	PDF_endpage(pd);
@@ -3039,7 +3086,7 @@ static void PDF_Close(NewDevDesc *dd)
 
     if(pd->pageno > 0) PDF_endpage(pd);
     PDF_endfile(pd);
-    free(pd);
+    free(pd->pos); free(pd->pageobj); free(pd);
 }
 
 static void PDF_Activate(NewDevDesc *dd) {}

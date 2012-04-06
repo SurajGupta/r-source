@@ -29,8 +29,17 @@
 #include <glade/glade.h>
 #include <libgnome/libgnome.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#if defined(HAVE_LOCALE_H)
+#include <locale.h>
+#endif
+
+/* used to have Mac conditionals, but not used on classic MacOS */
+#ifdef HAVE_STAT
+# include <sys/types.h>
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
+#endif
 
 #include <Rversion.h>
 
@@ -287,6 +296,14 @@ void gnome_start(int ac, char **av, Rstart Rp)
 			       R_STATUS, R_YEAR, R_MONTH, R_DAY),
 	       ac, av);
     R_gnome_initialised = TRUE;
+
+    /* Reset locale information */
+    #if defined(HAVE_LOCALE_H)
+    setlocale(LC_ALL, "C");
+    setlocale(LC_CTYPE, "");/*- make ISO-latin1 etc. work for LOCALE users */
+    setlocale(LC_COLLATE, "");/*- alphabetically sorting */
+    setlocale(LC_TIME, "");/*- names and defaults for date-time formats */
+    #endif 
 
     /* Initialise libglade */
     glade_gnome_init();

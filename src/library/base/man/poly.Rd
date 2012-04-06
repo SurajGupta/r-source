@@ -1,34 +1,71 @@
 \name{poly}
+\alias{poly}
+\alias{polym}
+\alias{predict.poly}
+\alias{makepredictcall.poly}
 \title{Compute Orthogonal Polynomials}
 \usage{
-poly(x, degree=1)
-}
-\alias{poly}
-\arguments{
- \item{x}{a numeric vector at which to evaluate the polynomial}
- \item{degree}{the degree of the polynomial}
+poly(x, ..., degree = 1, coefs = NULL)
+polym(..., degree)
+\method{predict}{poly}(object, newdata, \dots)
 }
 \description{
-Returns orthogonal polynomials of degree 1 to \code{degree} over the
-specified set of points \code{x}. These are all orthogonal to the
-constant polynomial of degree 0.
+  Returns or evaluates orthogonal polynomials of degree 1 to
+  \code{degree} over the specified set of points \code{x}. These are all
+  orthogonal to the constant polynomial of degree 0.
+}
+\arguments{
+ \item{x, newdata}{a numeric vector at which to evaluate the
+   polynomial. \code{x} can also be a matrix.}
+ \item{degree}{the degree of the polynomial}
+ \item{coefs}{for prediction, coefficients from a previous fit.}
+ \item{object}{an object inheriting from class \code{"poly"}, normally
+   the result of a call to \code{poly} with a single vector argument.}
+ \item{\dots}{\code{poly, polym}: further vectors.\cr
+   \code{predict.poly}: arguments to be passed to or from other methods.
+ }
 }
 \value{
+  For \code{poly} with a single vector argument:\cr
   A matrix with rows corresponding to points in \code{x} and columns
   corresponding to the degree, with attributes \code{"degree"} specifying
   the degrees of the columns and \code{"coefs"} which contains the
   centring and normalization constants used in constructing the
-  orthogonal polynomials.}
-\author{B.D. Ripley}
+  orthogonal polynomials.  The matrix is given class
+  \code{c("poly", "matrix")} as from \R 1.5.0.
 
-\note{This routine is intended for statistical purposes such as
-    \code{contr.poly}: it does not attempt to orthogonalize to
-    machine accuracy.
+  Other cases of \code{poly} and \code{polym}, and \code{predict.poly}:
+  a matrix.
+}
+\details{
+  Although formally \code{degree} should be named (as it follows
+  \code{\dots}), an unnamed second argument of length 1 will be
+  interpreted as the degree.
+  
+  The orthogonal polynomial is summarized by the coefficients, which can
+  be used to evaluate it via the three-term recursion given in Kennedy
+  \& Gentle (1980, pp. 343-4), and use in the ``predict'' part of the code.
+}
+\author{B. D. Ripley}
+
+\note{
+  This routine is intended for statistical purposes such as
+  \code{contr.poly}: it does not attempt to orthogonalize to
+  machine accuracy.
+}
+\references{
+  Kennedy, W. J. Jr and Gentle, J. E. (1980)
+  \emph{Statistical Computing} Marcel Dekker.
 }
 
 \seealso{\code{\link{contr.poly}}}
 
 \examples{
-poly(1:10, 3)
+(z <- poly(1:10, 3))
+predict(z, seq(2, 4, 0.5))
+poly(seq(4, 6, 0.5), 3, coefs = attr(z, "coefs"))
+
+polym(1:4, c(1, 4:6), degree=3) # or just poly()
+poly(cbind(1:4, c(1, 4:6)), degree=3)
 }
 \keyword{math}

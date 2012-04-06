@@ -29,6 +29,11 @@ We recommend that you use a recent snapshot of the Mingw port of gcc
 from http://sourceforge.net/projects/mingw/.  For example, at the time
 of writing, MinGW-1.1.tar.gz based on gcc-2.95.3.  Just unpack this
 somewhere and put its bin directory in your path, *after* our tools.
+It is desirable to update the header files, for example with
+mingw-runtime-1.3.tar.gz and w32api-1.3.tar.gz.  (Version 2 of the
+mingw-runtime is a beta and needs some changes.  When a version based
+on gcc-3.1 is released, it is expected that yet other changes will be
+required.)
 
 No earlier Mingw compiler has been tested and support for using the
 Cygwin compiler has been withdrawn.  If you see errors about `-shared'
@@ -67,6 +72,7 @@ BEWARE: if you have Norton Anti-Virus you may need to disable it.
 Some versions lock up the machine when windres is run.
 
 BEWARE: Don't expect this to work if the path to R_HOME contains spaces.
+As from R 1.5.0 it may work, but we don't recommend it.
 
 Then
 
@@ -74,7 +80,7 @@ Then
 	make libR.a
 
 which might take up to a minute.  This only needs to be done once for
-each R release, and should be done automatically when needed if
+each R release, and will be done automatically when needed if
 omitted at this point.
 
 
@@ -82,7 +88,7 @@ At this point there are two approaches:
 
 1) Streamlined way
 
-Assuming that ...\rw1040\bin is in your path, use
+Assuming that ...\rw1050\bin is in your path, use
 
 	Rcmd INSTALL package
 
@@ -177,7 +183,7 @@ default is c:\TEMP.
 These have been used successfully under NT/2000.  We have seen
 problems with some Perl versions on Win 95/98/ME, but believe these
 are now resolved.  make pkgcheck-mypkg will perform the tests of the
-examples and tests directory, as far as we know on all OSes.
+examples and tests directory, as far as we know on all versions of Windows.
 
 
 Debugging
@@ -234,7 +240,7 @@ implib R.lib R.def
 and then add R.lib to the bcc32 command line, for example (from
 Venables & Ripley's `S Programming')
 
-bcc32 -u- -6 -O2 -WDE -I\R\rw1040\src\include VCrndR.c R.lib
+bcc32 -u- -6 -O2 -WDE -I\R\rw1050\src\include VCrndR.c R.lib
 
 We believe that when referencing variables (rather than functions)
 exported from R.dll these must be declared __declspec(dllimport) just
@@ -343,19 +349,18 @@ HEADER) as needed, and check that Makefile has WINHELP set to NO.
 Then packages can be made as natively, for example by
 
 	cd .../src/gnuwin32
-	make STAMP=NO PKGDIR=/mysources RLIB=/R/win/library pkg-mypkg
+	make PKGDIR=/mysources RLIB=/R/win/library pkg-mypkg
 	make PKGDIR=/mysources RLIB=/R/win/library pkgcheck-mypkg
 	cd /R/win/library
-	zip -r9l /dest/mypkg.zip mypkg
+	zip -r9 /dest/mypkg.zip mypkg
 
-(Rcmd is a Windows executable, so cannot be used.  Notice the STAMP=NO
-on the second line.)
+(Rcmd is a Windows executable, so cannot be used.)
 
 
 Feedback
 ========
 
-Please send comments and bug reports to (preferably both of)
+Please send comments and bug reports to
 
-    Guido Masarotto <guido@hal.stat.unipd.it>
-    Brian Ripley <ripley@stats.ox.ac.uk>
+	R-windows@r-project.org
+

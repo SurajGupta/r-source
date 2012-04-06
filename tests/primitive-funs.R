@@ -50,12 +50,12 @@ Real.primitives <-
            "as.character", "as.environment",
 	   ##maybe ? "gc", "gcinfo",
 	   ##
-	   "debug", "undebug", "trace", "untrace",
+	   "debug", "undebug", ".primTrace", ".primUntrace",
 	   "browser",  "proc.time", "gc.time", #"traceback",
 	   ),
 
 	 language2= c(":", "~", "c", "list", #nomore (Sep.9,1998): "unlist",
-	 ".Alias",
+	 # ".Alias", removed for 1.5.0
 	 "call", "as.call", "expression", "substitute",
 	 "UseMethod", ## ? really ?
          "standardGeneric",

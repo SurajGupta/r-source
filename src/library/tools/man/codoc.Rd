@@ -6,7 +6,6 @@
 codoc(package, dir, lib.loc = NULL,
       use.values = FALSE, use.positions = TRUE,
       ignore.generic.functions = FALSE,
-      keep.tempfiles = FALSE,
       verbose = getOption("verbose"))
 }
 \description{
@@ -31,9 +30,6 @@ codoc(package, dir, lib.loc = NULL,
     values when comparing code and docs.}
   \item{ignore.generic.functions}{if \code{TRUE}, functions the body of
     which contains \code{"UseMethod"} are ignored.}
-  \item{keep.tempfiles}{if \code{TRUE}, keep temporary code and docs
-    files used for comparison.  This used to be useful for debugging,
-    but is now deprecated and will be removed in future versions.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
 }
@@ -57,13 +53,18 @@ codoc(package, dir, lib.loc = NULL,
 
   Currently, synopsis sections are used, but multiple usage examples
   (such as in \code{\link{abline}}) are not combined when building the
-  stubs.
+  stubs.  Occurences of synopsis sections are reported if \code{verbose}
+  is true.
 }
 \value{
-  A list the names of which are the names of the functions where an
-  inconsistency was found.  The elements of the list are lists of length
-  2 with elements \code{code} and \code{docs}, giving the corresponding
-  arguments obtained from the function's code and documented usage.
+  An object of class \code{"codoc"} which is a list the names of which
+  are the names of the functions where an inconsistency was found.  The
+  elements of the list are lists of length 2 with elements \code{code}
+  and \code{docs}, giving the corresponding arguments obtained from the
+  function's code and documented usage.
+
+  There is a \code{print} method for nicely displaying the information
+  contained in such objects.
 }
 \seealso{
   \code{\link{undoc}}

@@ -28,7 +28,7 @@ La.eigen <- function (x, symmetric, only.values = FALSE,
             .Call("La_rg", x, only.values, PACKAGE = "base")
         else
             .Call("La_rg_cmplx", x, only.values, PACKAGE = "base")
-        ord <- rev(order(Mod(z$values)))
+        ord <- sort.list(Mod(z$values), decreasing = TRUE)
     }
     list(values = z$values[ord],
          vectors = if (!only.values) z$vectors[, ord])
@@ -44,6 +44,7 @@ La.svd <- function(x, nu = min(n, p), nv = min(n, p),
         method <- "dgesvd"
     }
     x <- as.matrix(x)
+    if (is.numeric(x)) storage.mode(x) <- "double"
     n <- nrow(x)
     p <- ncol(x)
     if(!n || !p) stop("0 extent dimensions")

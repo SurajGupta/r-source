@@ -17,13 +17,13 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: rproxy.c,v 1.10 2001/12/10 09:35:34 ripley Exp $
+ *  $Id: rproxy.c,v 1.12 2002/04/05 04:04:18 murrell Exp $
  */
 
 #define NONAMELESSUNION
 #include <windows.h>
 #include <stdio.h>
-#include "config.h"
+#include <config.h>
 #include "Rversion.h"
 #include "bdx.h"
 #include "SC_proxy.h"
@@ -485,6 +485,10 @@ int SYSCALL R_set_graphics_device (struct _SC_Proxy_Object* object,
 
     /* Do this for early redraw attempts */
     lDev->displayList = R_NilValue;
+    /* Make sure that this is initialised before a GC can occur.
+     * This (and displayList) get protected during GC
+     */
+    lDev->savedSnapshot = R_NilValue;
     R_Proxy_Graphics_Driver (lDev,
 			     "ActiveXDevice 1",
 			     100.0,

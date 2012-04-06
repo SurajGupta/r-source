@@ -22,8 +22,9 @@
 #define __GNOME_TERMINAL_H__
 
 #include <gnome.h>
-#include <unistd.h>
-#include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "gtkconsole.h"
 

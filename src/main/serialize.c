@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+/* we substitute if XDR is not found */
+#ifndef HAVE_XDR
+# define HAVE_XDR 1
 #endif
 
 #define NEED_CONNECTION_PSTREAMS
@@ -184,12 +189,8 @@ static int Rsnprintf(char *buf, int size, const char *format, ...)
     int val;
     va_list(ap);
     va_start(ap, format);
-#ifdef HAVE_VSNPRINTF
     val = vsnprintf(buf, size, format, ap);
     buf[size-1] = '\0';
-#else
-    val = vsprintf(buf, format, ap);
-#endif
     va_end(ap);
     return val;
 }

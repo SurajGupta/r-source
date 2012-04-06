@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -576,15 +576,15 @@ int nlevels(SEXP f)
 }
 
 /* Is an object of numeric type. */
-/* FIXME:  the LGLSXP case should be excluded here. */
+/* FIXME:  the LGLSXP case should be excluded here
+ * (really? in many places we affirm they are treated like INTs)*/
 
 Rboolean isNumeric(SEXP s)
 {
-    if (inherits(s,"factor")) return FALSE;
-
     switch(TYPEOF(s)) {
-    case LGLSXP:
     case INTSXP:
+	if (inherits(s,"factor")) return FALSE;
+    case LGLSXP:
     case REALSXP:
 	return TRUE;
     default:
@@ -993,7 +993,9 @@ SEXP do_setwd(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
     path = R_ExpandFileName(CHAR(STRING_ELT(s, 0)));
+#ifdef HAVE_CHDIR
     if(chdir(path) < 0)
+#endif
 	errorcall(call, "cannot change working directory");
     return(R_NilValue);
 }
@@ -1008,7 +1010,10 @@ SEXP do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
-    strcpy (buf, R_ExpandFileName(CHAR(STRING_ELT(s, 0))));
+    p = R_ExpandFileName(CHAR(STRING_ELT(s, 0)));
+    if (strlen(p) > PATH_MAX - 1)
+	errorcall(call, "path too long");
+    strcpy (buf, p);
 #ifdef Win32
     for (p = buf; *p != '\0'; p++)
 	if (*p == '\\') *p = '/';
@@ -1034,7 +1039,10 @@ SEXP do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
-    strcpy(buf, R_ExpandFileName(CHAR(STRING_ELT(s, 0))));
+    p = R_ExpandFileName(CHAR(STRING_ELT(s, 0)));
+    if (strlen(p) > PATH_MAX - 1)
+	errorcall(call, "path too long");
+    strcpy (buf, p);
 #ifdef Win32
     for(p = buf; *p != '\0'; p++)
 	if(*p == '\\') *p = '/';

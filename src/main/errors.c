@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  The R Development Core Team.
+ *  Copyright (C) 1997--2002  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,13 +36,6 @@
    back into the standard R event loop.
  */
 void jump_now();
-/*
-  Method that resets the global state of the evaluator in the event
-  of an error. Was in jump_now(), but is now a separate method so that
-  we can call it without invoking the longjmp. This is needed when embedding
-  R in other applications.
-*/
-void Rf_resetStack(int topLevel);
 
 /*
 Different values of inError are used to indicate different places
@@ -146,12 +139,8 @@ static void setupwarnings(void)
 static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
 {
     int val;
-#ifdef HAVE_VSNPRINTF
     val = vsnprintf(buf, size, format, ap);
     buf[size-1] = '\0';
-#else
-    val = vsprintf(buf, format, ap);
-#endif
     return val;
 }
 
@@ -498,20 +487,6 @@ void jump_now()
        control mechanism.  LT. */
     R_run_onexits(R_ToplevelContext);
 
-    Rf_resetStack(0);
-    LONGJMP(R_ToplevelContext->cjmpbuf, 0);
-}
-
-
-/*
- The topLevelReset argument controls whether the R_GlobalContext is 
- reset to its initial condition.
- In regular stand-alone R, this is not needed (see jump_now() above).
- But when R is embedded in an application, this must be set or otherwise
- subsequent errors get caught in an infinite loop when iterating over
- the contexts in the error handling routine jump_to_toplevel() above.
-*/
-void Rf_resetStack(int topLevelReset) {
     if( inError == 2 )
 	REprintf("Lost warning messages\n");
     inError=0;
@@ -519,12 +494,12 @@ void Rf_resetStack(int topLevelReset) {
     R_Warnings = R_NilValue;
     R_CollectWarnings = 0;
 
-    R_restore_globals(R_ToplevelContext);
+    R_GlobalContext = R_ToplevelContext;
+    R_restore_globals(R_GlobalContext);
 
-    if(topLevelReset) {
-        R_GlobalContext = R_ToplevelContext;
-    }
+    LONGJMP(R_ToplevelContext->cjmpbuf, 0);
 }
+
 
 #ifdef OLD_Macintosh
 
@@ -577,19 +552,27 @@ SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *cptr;
+    SEXP c_call;
 
-    cptr = R_GlobalContext->nextcontext;
-    while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->nextcontext != NULL)
-	cptr = cptr->nextcontext;
+    if(asLogical(CAR(args))) {/* find context -> "... in: ..:" */
+	cptr = R_GlobalContext->nextcontext;
+	while ( !(cptr->callflag & CTXT_FUNCTION) && 
+		cptr->nextcontext != NULL)
+	    cptr = cptr->nextcontext;
+	c_call = cptr->call;
+    } else
+	c_call = R_NilValue;
+
+    args = CDR(args);
     if (CAR(args) != R_NilValue) {
 	SETCAR(args, coerceVector(CAR(args), STRSXP));
 	if(!isValidString(CAR(args)))
-	    warningcall(cptr->call, " [invalid string in warning(.)]");
+	    warningcall(c_call, " [invalid string in warning(.)]");
 	else
-	    warningcall(cptr->call,"%s", CHAR(STRING_ELT(CAR(args), 0)));
+	    warningcall(c_call, "%s", CHAR(STRING_ELT(CAR(args), 0)));
     }
     else
-	warningcall(cptr->call,"");
+	warningcall(c_call, "");
     return CAR(args);
 }
 
@@ -730,8 +713,8 @@ void R_JumpToToplevel(Rboolean restart)
     /* Run onexit/cend code for everything above the target. */
     R_run_onexits(c);
 
-    R_restore_globals(c);
     R_ToplevelContext = R_GlobalContext = c;
+    R_restore_globals(R_GlobalContext);
     LONGJMP(c->cjmpbuf, CTXT_TOPLEVEL);
 }
 

@@ -50,7 +50,7 @@ getOption(x)
   }
 
   \item{browser}{default HTML browser used by \code{\link{help.start}()}
-    on UNIX.}
+    on UNIX, or a non-default browser on Windows.}
 
   \item{mailer}{default mailer used by \code{\link{bug.report}()}. can
     be \code{"none"}.}
@@ -158,10 +158,18 @@ getOption(x)
     Currently download methods \code{"internal"}, \code{"wget"} and
     \code{"lynx"} are available.  There is no default for this option,
     when \code{method = "auto"} is chosen: see \code{\link{download.file}}.}
-  
-  \item{unzip}{the command used unzipping help files.
+
+  \item{unzip}{the command used for unzipping help files.
+#ifdef unix
+    Defaults to the value of \code{R\_UNZIPCMD}, which is set in
+    \file{etc/Renviron} if an \code{unzip} command was found during
+    configuration.
+#endif
 #ifdef windows
-    Defaults to "internal" when the internal unzip DLL is used.
+    Defaults to "internal" when the internal unzip code is used.
+#endif
+#ifdef mac
+    Defaults to "internal" when the internal unzip code is used.
 #endif
   }
   \item{de.cellwidth}{integer: the cell widths (number of  characters)
@@ -172,7 +180,7 @@ getOption(x)
     encoding.  Defaults to \code{native.enc} (= \code{0:255}).
     See \code{\link{connections}}.}
 
-  \item{timeout}{Integer.  The timeout for Internet operations,
+  \item{timeout}{integer.  The timeout for Internet operations,
     in seconds.  Default 60 seconds.}
 
   \item{internet.info}{The minimum level of information to be printed on
@@ -188,7 +196,8 @@ getOption(x)
 }
 \details{
   Invoking \code{options()} with no arguments returns a list with the
-  current values of the options.  To access the value of a single
+  current values of the options.  Note that not all options listed above
+  are set initially.  To access the value of a single
   option, one should use \code{getOption("width")}, e.g., rather than
   \code{options("width")} which is a \emph{list} of length one.
 

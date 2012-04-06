@@ -1,3 +1,4 @@
+## Hmm, MM thinks diag(.) needs checking { diag(vec) when length(vec)==1 !}
 factanal <-
     function (x, factors, data = NULL, covmat = NULL, n.obs = NA,
               subset, na.action, start = NULL,
@@ -12,7 +13,7 @@ factanal <-
         ssq <- apply(Lambda, 2, function(x) -sum(x^2))
         Lambda <- Lambda[, order(ssq), drop = FALSE]
         colnames(Lambda) <- cn
-        neg <- apply(Lambda, 2, sum) < 0
+        neg <- colSums(Lambda) < 0
         Lambda[, neg] <- -Lambda[, neg]
         if(!is.null(Phi)) {
             unit <- ifelse(neg, -1, 1)
@@ -205,7 +206,7 @@ print.loadings <- function(x, digits = 3, cutoff = 0.1, sort = FALSE, ...)
     nc <- nchar(fx[1])
     fx[abs(Lambda) < cutoff] <- paste(rep(" ", nc), collapse = "")
     print(fx, quote = FALSE, ...)
-    vx <- apply(x^2, 2, sum)
+    vx <- colSums(x^2)
     varex <- rbind("SS loadings" = vx)
     if(is.null(attr(x, "covariance"))) {
         varex <- rbind(varex, "Proportion Var" = vx/p)
@@ -233,7 +234,7 @@ print.factanal <- function(x, digits = 3, ...)
         cat("The chi square statistic is", round(stat, 2), "on", dof,
             if(dof == 1) "degree" else "degrees",
             "of freedom.\nThe p-value is",
-            signif(1 - pchisq(stat, dof), 3), "\n")
+            signif(pchisq(stat, dof, lower.tail = FALSE), 3), "\n")
     } else {
         cat(paste("\nThe degrees of freedom for the model is",
                   x$dof, "and the fit was", round(x$criteria["objective"], 4),
@@ -273,7 +274,6 @@ promax <- function(x, m = 4)
 {
     if(ncol(x) < 2) return(x)
     dn <- dimnames(x)
-    Phi <- attr(x, "covariance")
     xx <- varimax(x)
     x <- xx$loadings
     Q <- x * abs(x)^(m-1)
@@ -284,6 +284,5 @@ promax <- function(x, m = 4)
     z <- x %*% U
     U <- xx$rotmat %*% U
     dimnames(z) <- dn
-    attr(z, "covariance") <- crossprod(U)
     list(loadings = z, rotmat = U)
 }

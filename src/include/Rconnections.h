@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000, 2001   The R Development Core Team.
+ *  Copyright (C) 2000-2002   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ struct Rconn {
     char* description;
     char mode[5];
     Rboolean text, isopen, incomplete, canread, canwrite, canseek, blocking;
-    void (*open)(struct Rconn *);
+    Rboolean (*open)(struct Rconn *);
     void (*close)(struct Rconn *); /* routine closing after auto open */
     void (*destroy)(struct Rconn *); /* when closing connection */
     int (*vfprintf)(struct Rconn *, const char *, va_list);
@@ -58,12 +58,10 @@ typedef struct fifoconn {
     int fd;
 } *Rfifoconn;
 
-#ifdef HAVE_ZLIB
 typedef struct gzfileconn {
     void *fp;
     int cp;
 } *Rgzfileconn;
-#endif
 
 typedef struct textconn {
     char *data;  /* all the data */
@@ -94,6 +92,15 @@ typedef struct sockconn {
     char inbuf[4096], *pstart, *pend;
 } *Rsockconn;
 
+typedef struct unzconn {
+    void *uf;
+} *Runzconn;
+
+typedef struct bzfileconn {
+    FILE *fp;
+    void *bfp;
+} *Rbzfileconn;
+
 int Rconn_fgetc(Rconnection con);
 int Rconn_ungetc(int c, Rconnection con);
 int Rconn_getline(Rconnection con, char *buf, int bufsize);
@@ -108,4 +115,5 @@ void init_con(Rconnection new, char *description, char *mode);
 Rconnection R_newurl(char *description, char *mode);
 Rconnection R_newsock(char *host, int port, int server, char *mode);
 Rconnection in_R_newsock(char *host, int port, int server, char *mode);
+Rconnection R_newunz(char *description, char *mode);
 int dummy_vfprintf(Rconnection con, const char *format, va_list ap);

@@ -76,6 +76,8 @@ delete.response <- function (termobj)
         f[[2]] <- NULL
     tt <- terms(f, specials = names(attr(termobj, "specials")))
     attr(tt, "intercept") <- attr(termobj, "intercept")
+    if (length(f) == 3)
+        attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
     tt
 }
 
@@ -211,16 +213,25 @@ model.frame.default <-
     }
     if(missing(data))
 	data <- environment(formula)
-    else if (!is.data.frame(data) && !is.environment(data) && !is.null(attr(data, "class")))
+    else if (!is.data.frame(data) && !is.environment(data)
+             && !is.null(attr(data, "class")))
         data <- as.data.frame(data)
     else if (is.array(data))
-        stop("`data' must been a data.frame, not a matrix or  array")
+        stop("`data' must be a data.frame, not a matrix or  array")
     env <- environment(formula)
     if(!inherits(formula, "terms"))
 	formula <- terms(formula, data = data)
     rownames <- attr(data, "row.names")
-    varnames <- as.character(attr(formula, "variables")[-1])
-    variables <- eval(attr(formula, "variables"), data, env)
+    vars <- attr(formula, "variables")
+    predvars <- attr(formula, "predvars")
+    if(is.null(predvars)) predvars <- vars
+    varnames <- as.character(vars[-1])
+    variables <- eval(predvars, data, env)
+    if(is.null(attr(formula, "predvars"))) {
+        for (i in seq(along = varnames))
+            predvars[[i+1]] <- makepredictcall(variables[[i]], vars[[i+1]])
+        attr(formula, "predvars") <- predvars
+    }
     extranames <- names(substitute(list(...))[-1])
     extras <- substitute(list(...))
     extras <- eval(extras, data, env)
@@ -309,7 +320,7 @@ model.matrix.default <- function(object, data = environment(object),
             }
         }
     } else { # internal model.matrix needs some variable
-        isF <-  F
+        isF <-  FALSE
         data <- list(x=rep(0, nrow(data)))
     }
     ans <- .Internal(model.matrix(t, data))
@@ -368,4 +379,14 @@ is.empty.model <- function (x)
 {
     tt <- terms(x)
     (length(attr(tt, "factors")) == 0) & (attr(tt, "intercept")==0)
+}
+
+makepredictcall <- function(var, call) UseMethod("makepredictcall")
+
+makepredictcall.default  <- function(var, call)
+{
+    if(as.character(call)[1] != "scale") return(call)
+    if(!is.null(z <- attr(var, "scaled:center"))) call$center <- z
+    if(!is.null(z <- attr(var, "scaled:scale"))) call$scale <- z
+    call
 }

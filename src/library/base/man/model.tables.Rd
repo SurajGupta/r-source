@@ -43,7 +43,11 @@ model.tables.aovlist(x, type = "effects", se = FALSE, \dots)
 
 \author{B.D. Ripley}
 
-\seealso{\code{\link{aov}}}, \code{\link{proj}}}, \code{\link{replications}}}}
+\seealso{
+  \code{\link{aov}}, \code{\link{proj}},
+  \code{\link{replications}}, \code{\link{TukeyHSD}},
+  \code{\link{se.contrast}}
+}
 
 \examples{
 ## From Venables and Ripley (1997) p.210.

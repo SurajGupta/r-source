@@ -3,7 +3,7 @@
 \alias{print.integrate}
 \title{Integration of One-Dimensional Functions}
 \description{
-  Adaptive quadrature of functions of one variable over a finit or
+  Adaptive quadrature of functions of one variable over a finite or
   infinite interval.
 }
 \usage{
@@ -13,7 +13,7 @@ integrate(f, lower, upper, subdivisions=100,
 }
 \arguments{
   \item{f}{An \R function taking a numeric first argument and returning
-    a numeric vector the same length. Returning a non-finite will
+    a numeric vector the same length. Returning a non-finite element will
     generate an error.}
   \item{lower, upper}{The limits of integration. Can be infinite.}
   \item{subdivisions}{the maximum number of subintervals.}
@@ -49,19 +49,33 @@ integrate(f, lower, upper, subdivisions=100,
   Based on QUADPACK routines \code{dqags} and \code{dqagi} by
   R. Piessens and E. deDoncker-Kapenga, available from Netlib.
 
-  See\\
-  R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner
-  \emph{Quadpack: a Subroutine Package for Automatic Integration.}
-  Springer Verlag, 1983.
+  See\cr
+  R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner (1983)
+  \emph{Quadpack: a Subroutine Package for Automatic Integration};
+  Springer Verlag.
 }
-
+\seealso{
+  The function \code{\link[adapt]{adapt}} in the \code{adapt} package on
+  CRAN, for multivariate integration.
+}
 \examples{
 integrate(dnorm, -1.96, 1.96)
 integrate(dnorm, -Inf, Inf)
+\testonly{
+ ii <- integrate(dnorm, -1.96, 1.96); ii
+ i1 <- integrate(dnorm, -Inf, Inf)  ; i1
+ stopifnot(all.equal(0.9500042097, ii$val, tol = ii$abs.err, scale=1),
+           all.equal( 1,           i1$val, tol = i1$abs.err, scale=1))
+}
 
 ## a slowly-convergent integral
 integrand <- function(x) {1/((x+1)*sqrt(x))}
 integrate(integrand, lower = 0, upper = Inf)
+\testonly{
+  ii <- integrate(integrand, lower = 0, upper = Inf, rel.tol = 1e-10)
+  ii
+  stopifnot(all.equal(pi, ii$val, tol = ii$abs.err, scale=1))
+}
 integrate(integrand, lower = 0, upper = 10)
 integrate(integrand, lower = 0, upper = 100000)
 integrate(integrand, lower = 0, upper = 1000000, stop.on.error = FALSE)
@@ -71,4 +85,3 @@ integrate(function(x) rep(2, length(x)), 0, 1)  ## correct
 }
 \keyword{math}
 \keyword{utilities}
-

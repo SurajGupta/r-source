@@ -13,29 +13,28 @@ removeMethod(f, signature, where)
 \arguments{
   \item{f}{ The character-string name of the generic function. }
   \item{signature}{ A match of formal argument names for \code{f} with
-      the character-string names of corresponding classes.  This
-      argument can also just be the vector of class names, in which case
-      the first name corresponds to the first formal argument, the
-      next to the second formal argument, etc.}
+    the character-string names of corresponding classes.  This
+    argument can also just be the vector of class names, in which case
+    the first name corresponds to the first formal argument, the
+    next to the second formal argument, etc.}
   \item{definition}{ A function definition, which will become the method
-      called when the arguments in a call to \code{f} match the
-      classes in \code{signature}, directly or through inheritance. }
+    called when the arguments in a call to \code{f} match the
+    classes in \code{signature}, directly or through inheritance. }
   \item{where}{ The database in which to store the definition of the
     method; by default, the current global environment.
 
-  For \code{removeMethod}, the default is the location of the (first)
-  instance of the method for this signature.}
+    For \code{removeMethod}, the default is the location of the (first)
+    instance of the method for this signature.}
   \item{valueClass}{ If supplied, this argument asserts that the
-      method will return a value of this class.  (At present this
-      argument is stored but not explicitly used.) }
+    method will return a value of this class.  (At present this
+    argument is stored but not explicitly used.) }
 }
 \value{
+  These functions exist for their side-effect, in setting or removing a
+  method in the object defining methods for the specified generic.
 
-These functions exist for their side-effect, in setting or removing a
-method in the object defining methods for the specified generic.
-
-The value returned by \code{removeMethod} is \code{TRUE} if a method
-was found to be removed.
+  The value returned by \code{removeMethod} is \code{TRUE} if a method
+  was found to be removed.
 }
 \details{
   R methods for a particular generic function are stored in an object
@@ -64,7 +63,7 @@ was found to be removed.
   \code{"missing"}.  See the example below.
 
   While \code{f} can correspond to methods defined on several packages
-  or databases, the underlying model is that these together make up
+  or environments, the underlying model is that these together make up
   the definition for a single generic function.  When R proceeds to
   select and evaluate methods for \code{f}, the methods on the current
   search list are merged to form a single generic.  In particular, all
@@ -77,17 +76,18 @@ was found to be removed.
   \code{definition} match those of the generic..
 }
 \references{
-The web page \url{http://www.omegahat.org/RSMethods/index.html} is the primary documentation.
+  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
+  primary documentation.
 
-The functions in this package emulate the facility for classes and methods described in
-\emph{Programming with Data}, (John M. Chambers, Springer, 1998).  See this book
-for further details and examples.
+  The functions in this package emulate the facility for classes and
+  methods described in \emph{Programming with Data} (John M. Chambers,
+  Springer, 1998).  See this book for further details and examples.
 }
 \author{
   John Chambers
 }
 \examples{
-\testonly{  library(modreg)
+\testonly{  if(!exists("smooth.spline")) library(modreg)
   setClass("track",
     representation(x="numeric", y = "numeric"))
   setClass("trackCurve", representation("track",
@@ -115,17 +115,20 @@ tc1 <- new("trackCurve", t1)
 slot(tc1, "smooth") <- smooth.spline(slot(tc1, "x"), slot(tc1, "y"))$y #$
 plot(t1)
 plot(qnorm(ppoints(20)), t1)
-## An example of inherited methods.
+## An example of inherited methods, and of conforming method arguments
+## (note the dotCurve argument in the method, which will be pulled out
+## of ... in the generic.
 setMethod("plot", c("trackCurve", "missing"),
-function(x, y, ...) {
+function(x, y, dotCurve = FALSE, ...) {
   plot(as(x, "track"))
   if(length(slot(x, "smooth") > 0))
-    lines(slot(x, "x"), slot(x, "smooth"))
+    lines(slot(x, "x"), slot(x, "smooth"),
+         lty = if(dotCurve) 2 else 1)
   }
 )
 ## the plot of tc1 alone has an added curve; other uses of tc1
 ## are treated as if it were a "track" object.
-plot(tc1)
+plot(tc1, dotCurve = TRUE)
 plot(qnorm(ppoints(20)), tc1)
 
 ## defining methods for a special function.
@@ -183,9 +186,16 @@ ISOdate(1990, 12, 1)- ISOdate(1980, 12, 1)
 
 ## verify we can remove methods and generic
 
-stopifnot(removeMethods("-"))
-stopifnot(removeMethods("length"))
-stopifnot(removeMethods("plot"))
+removeMethods("-")
+removeMethods("length")
+
+## repeat the test one more time on the primitives
+
+length(ISOdate(1990, 12, 1)- ISOdate(1980, 12, 1))
+
+removeMethods("plot")
+
+stopifnot(existsFunction("plot", FALSE) && !isGeneric("plot", 1))
 
 ## methods for plotData
 plotData <- function(x, y, ...) plot(x, y, ...)
@@ -196,8 +206,57 @@ setMethod("plotData", signature(x="track", y="missing"),
   function(x,  y, ...) plot(slot(x, "x"), slot(x, "y"), ...)
 )
 ## and now remove the whole generic
-stopifnot(removeGeneric("plotData"))
+removeGeneric("plotData")
+
 stopifnot(!exists("plotData", 1))
+
+##  Tests of method inheritance & multiple dispatch
+setClass("A0", representation(a0 = "numeric"))
+
+setClass("A1", representation("A0", a1 = "character"))
+
+setClass("B0" ,representation(b0 = "numeric"))
+
+setClass("B1", "B0")
+
+setClass("B2", representation("B1", b2 = "logical"))
+
+setClass("AB0", representation("A1", "B2", ab0 = "matrix"))
+
+f1 <- function(x,  y)"ANY"
+
+setGeneric("f1")
+
+setMethod("f1", c("A0", "B1"), function(x, y)"A0 B1")
+setMethod("f1", c("B1", "A0"), function(x, y)"B1 A0")
+
+a0 <- new("A0")
+a1 <- new("A1")
+b0 <- new("B0")
+b1 <- new("B1")
+b2 <- new("B2")
+
+deparseText <- function(expr)
+    paste(deparse(expr), collapse = "\\  ")
+
+mustEqual <- function(e1, e2){
+    if(!identical(e1, e2))
+        stop(paste("!identical(", deparseText(substitute(e1)),
+                   ", ", deparseText(substitute(e2)), ")", sep=""))
+}
+
+mustEqual(f1(a0, b0), "ANY")
+mustEqual(f1(a1,b0), "ANY")
+mustEqual(f1(a1,b1), "A0 B1")
+mustEqual(f1(b1,a1), "B1 A0")
+mustEqual(f1(b1,b1), "ANY")
+
+for(.cl in c("A0", "A1", "B0", "B1", "B2"))
+    removeClass(.cl)
+
+removeGeneric("f1")
+
+
 
 }
 }

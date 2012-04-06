@@ -320,7 +320,6 @@ SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
 #define VER_SUITE_EMBEDDEDNT                0x00000040
 #define VER_SUITE_DATACENTER                0x00000080
 #define VER_SUITE_SINGLEUSERTS              0x00000100
-/* next one is a guess */
 #define VER_SUITE_PERSONAL                  0x00000200
 
 typedef struct _OSVERSIONINFOEX {
@@ -336,6 +335,10 @@ typedef struct _OSVERSIONINFOEX {
   BYTE wProductType;
   BYTE wReserved;
 } OSVERSIONINFOEX;
+#endif
+/* next is from Nov 2001 Platform SDK */
+#ifndef VER_SUITE_BLADE
+#define VER_SUITE_BLADE                     0x00000400
 #endif
 
 SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -392,10 +395,14 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
                   type = "Professional";
             } else if ( osvi.wProductType == VER_NT_SERVER )
             {
+               if ( osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1 )
+                  desc = ".NET";
                if( osvi.wSuiteMask & VER_SUITE_DATACENTER )
                   type = "DataCenter Server";
                else if( osvi.wSuiteMask & VER_SUITE_ENTERPRISE )
                   type = "Advanced Server";
+               else if ( osvi.wSuiteMask == VER_SUITE_BLADE )
+                  type = "Web Server";
                else
 		   type = "Server";
             }
@@ -583,6 +590,7 @@ void Rwin_fpset()
 {
     _fpreset();
     _controlfp(_MCW_EM, _MCW_EM);
+    _controlfp(_PC_64, _MCW_PC);
 }
 
 #include "getline/getline.h"  /* for gl_load/savehistory */
@@ -861,7 +869,7 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
     wselect = newwindow(multiple ? "Select" : "Select one", 
 			rect(0, 0, xmax, ymax),
 			Titlebar | Centered | Modal);
-    setbackground(wselect, myGetSysColor(COLOR_MENU));
+    setbackground(wselect, dialog_bg());
     if(multiple)
 	f_list = newmultilist(clist, rect(10, 10, 35+8*mw, ylist), NULL);
     else

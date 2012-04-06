@@ -33,10 +33,10 @@
 #include <Rconnections.h>
 #include <R_ext/R-ftp-http.h>
 
-static void sock_open(Rconnection con)
+static Rboolean sock_open(Rconnection con)
 {
     Rsockconn this = (Rsockconn)con->private;
-    int sock, sock1;
+    int sock, sock1, mlen;
     int timeout = asInteger(GetOption(install("timeout"), R_NilValue));
     char buf[256];
 
@@ -46,26 +46,36 @@ static void sock_open(Rconnection con)
 
     if(this->server) {
 	sock1 = R_SockOpen(this->port);
-	if(sock1 < 0) error("port %d cannot be opened", this->port);
+	if(sock1 < 0) {
+	    warning("port %d cannot be opened", this->port);
+	    return FALSE;
+	}
 	sock = R_SockListen(sock1, buf, 256);
-	if(sock < 0) error("problem in listening on this socket");
+	if(sock < 0) {
+	    warning("problem in listening on this socket");
+	    return FALSE;
+	}
 	free(con->description);
 	con->description = (char *) malloc(strlen(buf) + 10);
 	sprintf(con->description, "<-%s:%d", buf, this->port);
 	R_SockClose(sock1);
     } else {
 	sock = R_SockConnect(this->port, con->description);
-	if(sock < 0) error("%s:%d cannot be opened", con->description,
-			   this->port);
+	if(sock < 0) {
+	    warning("%s:%d cannot be opened", con->description, this->port);
+	    return FALSE;
+	}
 	sprintf(buf, "->%s:%d", con->description, this->port);
 	strcpy(con->description, buf);
     }
     this->fd = sock;
     
+    mlen = strlen(con->mode);
     con->isopen = TRUE;
-    if(strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
+    if(mlen >= 2 && con->mode[mlen - 1] == 'b') con->text = FALSE;
     else con->text = TRUE;
     con->save = -1000;
+    return TRUE;
 }
 
 static void sock_close(Rconnection con)
@@ -79,19 +89,39 @@ static int sock_read_helper(Rconnection con, void *ptr, size_t size)
 {
     Rsockconn this = (Rsockconn)con->private;
     int res;
+    int nread = 0, n;
 
-    if(this->pstart == this->pend){
-	this->pstart = this->pend = this->inbuf;
-	res = R_SockRead(this->fd, this->inbuf, 4096, con->blocking);
-	/* Rprintf("socket read %d\n", res); */
-	con->incomplete = (-res == EAGAIN);
-	if(res <= 0) return res;
-	this->pend = this->inbuf + res;
-    } else res = this->pend - this->pstart;
-    if(size < res) res = size;
-    memcpy(ptr, this->pstart, res);
-    this->pstart += res;
-    return res;
+    do {
+	/* read data into the buffer if it's empty and size > 0 */
+	if (size > 0 && this->pstart == this->pend) {
+	    this->pstart = this->pend = this->inbuf;
+	    do
+		res = R_SockRead(this->fd, this->inbuf, 4096, con->blocking);
+	    while (-res == EINTR);
+	    if (! con->blocking && -res == EAGAIN) {
+		con->incomplete = TRUE;
+		return nread > 0 ? nread : res;
+	    }
+	    else if (con->blocking && res == 0) /* should mean EOF */
+		return nread;
+	    else if (res < 0) return res;
+	    else this->pend = this->inbuf + res;
+	}
+
+	/* copy data from buffer to ptr */
+	if (this->pstart + size <= this->pend)
+	    n = size;
+	else
+	    n = this->pend - this->pstart;
+	memcpy(ptr, this->pstart, n);
+	ptr = ((char *) ptr) + n;
+	this->pstart += n;
+	size -= n;
+	nread += n;
+    } while (size > 0);
+
+    con->incomplete = FALSE;
+    return nread;
 }
 
 

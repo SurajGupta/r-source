@@ -1749,13 +1749,6 @@ static void invalidError(char* message, DevDesc *dd)
 }
 
 /*  GNewPlot -- Begin a new plot (advance to new frame if needed)  */
-#ifdef PLOTHISTORY
-void copyGPar(GPar *source, GPar *dest);
-SEXP savedDisplayList;
-GPar savedGPar;
-SEXP savedSnapshot;
-#endif
-
 DevDesc *GNewPlot(Rboolean recording)
 {
     DevDesc *dd;
@@ -1798,32 +1791,12 @@ DevDesc *GNewPlot(Rboolean recording)
 		    else
 			dd = CurrentDevice();
 		}
-#ifdef PLOTHISTORY
-		/* Remove savedDisplayList and savedGPar once
-		 * devga.c is working as new device
-		 */
-		if (dd->newDevStruct) {
-		    PROTECT(savedSnapshot = GEcreateSnapshot((GEDevDesc*) dd));
-		    PROTECT(savedDisplayList=((GEDevDesc*) dd)->dev->displayList); 
-		}
-		else
-		    PROTECT(savedDisplayList=dd->displayList);
-		copyGPar(Rf_dpSavedptr(dd), &(savedGPar));
-#endif
 		GEinitDisplayList((GEDevDesc*) dd);
 	    }
 	    if (dd->newDevStruct)
 		GENewPage(Rf_dpptr(dd)->bg, Rf_dpptr(dd)->gamma, (GEDevDesc*) dd);
 	    else
 		Rf_dpptr(dd)->newPage(dd);
-#ifdef PLOTHISTORY
-	    if (recording) {
-		if (dd->newDevStruct)
-		    UNPROTECT(2);
-		else
-		    UNPROTECT(1);
-	    }
-#endif
 	    Rf_dpptr(dd)->currentFigure = Rf_gpptr(dd)->currentFigure = 1;
 	}
 
@@ -3125,7 +3098,14 @@ void GPolygon(int n, double *x, double *y, int coords,
     int i;
     double *xx;
     double *yy;
+
+    /*  FIXME:
+     *  This omits polygons entirely if lty="blank", even if
+     *  a fill colour is specified.  Probably the right way to
+     *  do this is to reset fg to transparent.
+     */
     if (Rf_gpptr(dd)->lty == LTY_BLANK) return;
+
     /* Work in device coordinates because then it is easier to
      * work with both old and new devices.
      */
@@ -3269,6 +3249,10 @@ void GCircle(double x, double y, int coords,
     int xpdsaved = Rf_gpptr(dd)->xpd;
     ir = radius/Rf_gpptr(dd)->ipr[0];
     ir = (ir > 0) ? ir : 1;
+
+    /*  FIXME:
+     *  lty="blank" is not handled here
+     */
 
     /* Work in device coordinates because then it is easier to
      * work with both old and new devices.
@@ -3414,6 +3398,13 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
     double *xc, *yc;
     int result;
     int xpdsaved = Rf_gpptr(dd)->xpd; /* -Wall */
+
+    /*  FIXME:
+     *  This omits rectangle entirely if lty="blank", even if
+     *  a fill colour is specified.  Probably the right way to
+     *  do this is to reset fg to transparent.
+     */
+    if (Rf_gpptr(dd)->lty == LTY_BLANK) return;
 
     /* Work in device coordinates because then it is easier to
      * work with both old and new devices.
@@ -5980,16 +5971,16 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->numcols = Rf_dpSavedptr(dd)->numcols;
     Rf_dpptr(dd)->currentFigure = Rf_dpSavedptr(dd)->currentFigure;
     Rf_dpptr(dd)->lastFigure = Rf_dpSavedptr(dd)->lastFigure;
-    for (i = 0; i < Rf_dpSavedptr(dd)->numrows; i++) {
+    for (i = 0; i < Rf_dpSavedptr(dd)->numrows && i < MAX_LAYOUT_ROWS; i++) {
 	Rf_dpptr(dd)->heights[i] = Rf_dpSavedptr(dd)->heights[i];
 	Rf_dpptr(dd)->cmHeights[i] = Rf_dpSavedptr(dd)->cmHeights[i];
     }
-    for (j = 0; j < Rf_dpSavedptr(dd)->numcols; j++) {
+    for (j = 0; j < Rf_dpSavedptr(dd)->numcols && j < MAX_LAYOUT_COLS; j++) {
 	Rf_dpptr(dd)->widths[j] = Rf_dpSavedptr(dd)->widths[j];
 	Rf_dpptr(dd)->cmWidths[j] = Rf_dpSavedptr(dd)->cmWidths[j];
     }
-    for (i = 0; i < Rf_dpSavedptr(dd)->numrows; i++)
-	for (j=0; j<Rf_dpSavedptr(dd)->numcols; j++) {
+    for (i = 0; i < Rf_dpSavedptr(dd)->numrows && i < MAX_LAYOUT_ROWS; i++)
+	for (j=0; j<Rf_dpSavedptr(dd)->numcols && j < MAX_LAYOUT_COLS; j++) {
 	    Rf_dpptr(dd)->order[i][j] = Rf_dpSavedptr(dd)->order[i][j];
 	    Rf_dpptr(dd)->respect[i][j] = Rf_dpSavedptr(dd)->respect[i][j];
 	}

@@ -794,6 +794,22 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	    }
 	}
 	break;
+    case 1919: /* vector <- vector */
+
+	for (j = 0; j < ncs; j++) {
+	    jj = INTEGER(sc)[j];
+	    if (jj == NA_INTEGER) continue;
+	    jj = jj - 1;
+	    for (i = 0; i < nrs; i++) {
+		ii = INTEGER(sr)[i];
+		if (ii == NA_INTEGER) continue;
+		ii = ii - 1;
+		ij = ii + jj * nr;
+		SET_VECTOR_ELT(x, ij, VECTOR_ELT(y, k));
+		k = (k + 1) % ny;
+	    }
+	}
+	break;
     default:
 	error("incompatible types in subset assignment");
     }
@@ -958,6 +974,14 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 	    SET_STRING_ELT(x, ii, STRING_ELT(y, i % ny));
 	    break;
+
+	case 1919: /* vector <- vector */
+
+	    SET_VECTOR_ELT(x, ii, VECTOR_ELT(y, i % ny));
+	    break;
+
+	default:
+	    error("incompatible types in subset assignment");
 	}
 	if (n > 1) {
 	    j = 0;
@@ -1125,14 +1149,20 @@ static SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 {
     SEXP p;
-    if (length(args) < 3)
+    if (length(args) < 2)
 	error("SubAssignArgs: invalid number of arguments");
     *x = CAR(args);
-    *s = p = CDR(args);
-    while (CDDR(p) != R_NilValue)
-	p = CDR(p);
-    *y = CADR(p);
-    SETCDR(p, R_NilValue);
+    if(length(args) == 2) {
+	*s = R_NilValue;
+	*y = CADR(args);
+    }
+    else {
+	*s = p = CDR(args);
+	while (CDDR(p) != R_NilValue)
+	    p = CDR(p);
+	*y = CADR(p);
+	SETCDR(p, R_NilValue);
+    }
 }
 
 
@@ -1204,6 +1234,7 @@ SEXP do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     case VECSXP:
 	switch (nsubs) {
 	case 0:
+	    x = VectorAssign(call, x, R_MissingArg, y);
 	    break;
 	case 1:
 	    x = VectorAssign(call, x, CAR(subs), y);

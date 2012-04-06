@@ -1,6 +1,6 @@
 /*  R : A Computer Language for Statistical Data Analysis
  *
- *  Copyright (C) 1999-2001	The R Development Core Team
+ *  Copyright (C) 1999-2002	The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,62 +29,15 @@
 #ifndef max
 #define max(a,b) ((a < b)?(b):(a))
 #endif
-
-/* Imports : */
-void F77_NAME(starma)(int* ip, int* iq, int* ir, int* np, double* phi,
-		      double* theta, double* a,
-		      double* p, double* v, double* thetab, double* xnext,
-		      double* xrow, double* rbar, int* nrbar, int* ifault);
-
-void F77_NAME(karma)(int* ip, int* iq, int* ir, int* np, double* phi,
-		     double* theta, double* a, double* p,
-		     double* v, int *n, double*  w, double* resid,
-		     double* sumlog, double* ssq, int* iupd,
-		     double* delta, double* e, int* nit);
-
-void F77_NAME(kalfor)(int *m, int* ip, int* ir, int* np, double* phi,
-		      double *a, double *p, double *v, double *work,
-		      double *x, double *var);
-
-void F77_NAME(forkal)(int *ip, int *iq, int *ir, int *np, int *ird, 
-		      int *irz, int *id, int *il, int *n, int *nrbar, 
-		      double *phi, double *theta, double *delta, 
-		      double *w, double *y, double *amse, double *a, 
-		      double *p, double *v, double *resid, double *e, 
-		      double *xnext, double *xrow, double *rbar, 
-		      double *thetab, double *store, int *ifault);
-/* Exports : */
-void uni_pacf(double *cor, double *p, int *pnlag);
-void setup_starma(int *na, double *x, int *pn, double *xreg, int *pm,
-		  double *dt, int *ptrans);
-void free_starma(void);
-void Dotrans(double *x, double *y);
-void arma0fa(double *inparams, double *res);
-void arma0_kfore(int *pd, int *psd, int *n_ahead, double *x, double *var);
-void artoma(int *pp, double *phi, double *psi, int *npsi);
-#ifdef WHEN_USED
-void arma0_fore(int *n_ahead, double *x, double *var);
-void arima0_fore(int *n_ahead, int *pn, double *x, int *seas, int *nsea);
-void arimatoma(int *arma, double *params, double *psi, int *npsi);
+#ifndef min
+#define min(a,b) ((a > b)?(b):(a))
 #endif
-void get_s2(double *res);
-void get_resid(double *res);
+
 
 /* Internal */
 static void partrans(int np, double *raw, double *new);
-static void dotrans(double *raw, double *new, int trans);
+static void dotrans(Starma G, double *raw, double *new, int trans);
 
-/* Globals for `starma' : */
-#ifdef ONE_global
-typedef struct {
-#endif
-    int ip, iq, mp, mq, msp, msq, ns, ir, np, nrbar, n, m, trans;
-    double *a, *p, *v, *thetab, *xnext, *xrow, *rbar, *e,
-	*w, *wkeep, delta, *resid, *phi, *theta, s2, *reg, *params;
-#ifdef ONE_global
-} starma_Gtype
-static starma_Gtype *starma_G;
-#endif
 
 /* cor is the autocorrelations starting from 0 lag*/
 void uni_pacf(double *cor, double *p, int *pnlag)
@@ -113,297 +66,396 @@ void uni_pacf(double *cor, double *p, int *pnlag)
     }
 }
 
-void setup_starma(int *na, double *x, int *pn, double *xreg, int *pm,
-		  double *dt, int *ptrans)
-{
-    int i;
+/* Use an external reference to store the structure we keep allocated
+   memory in */
+static SEXP Starma_tag;
 
-    mp = na[0];
-    mq = na[1];
-    msp = na[2];
-    msq = na[3];
-    ns = na[4];
-    n = *pn;
-    m = *pm;
-    params = Calloc(mp+mq+msp+msq+m, double);
-    ip = ns*msp + mp;
-    iq = ns*msq + mq;
-    ir = max(ip, iq+1);
-    np = (ir*(ir+1))/2;
-    nrbar = max(1, np*(np-1)/2);
-    trans = *ptrans;
-    a = Calloc(ir, double);
-    p = Calloc(np, double);
-    v = Calloc(np, double);
-    thetab = Calloc(np, double);
-    xnext = Calloc(np, double);
-    xrow = Calloc(np, double);
-    rbar = Calloc(nrbar, double);
-    e = Calloc(ir, double);
-    w = Calloc(n, double);
-    wkeep = Calloc(n, double);
-    resid = Calloc(n, double);
-    phi = Calloc(ir, double);
-    theta = Calloc(ir, double);
-    reg = Calloc(1+n*m, double); /* AIX can't calloc 0 items */
-    delta = *dt;
-    for(i = 0; i < n; i++) w[i] = wkeep[i] = x[i];
-    for(i = 0; i < n*m; i++) reg[i] = xreg[i];
+#define GET_STARMA \
+    Starma G; \
+    if (TYPEOF(pG) != EXTPTRSXP || R_ExternalPtrTag(pG) != Starma_tag) \
+        error("bad Starma struct");\
+    G = (Starma) R_ExternalPtrAddr(pG)
+
+SEXP setup_starma(SEXP na, SEXP x, SEXP pn, SEXP xreg, SEXP pm,
+		  SEXP dt, SEXP ptrans, SEXP sncond)
+{
+    Starma G;
+    int i, n, m, ip, iq, ir, np;
+    SEXP res;
+
+    G = Calloc(1, starma_struct);
+    G->mp = INTEGER(na)[0];
+    G->mq = INTEGER(na)[1];
+    G->msp = INTEGER(na)[2];
+    G->msq = INTEGER(na)[3];
+    G->ns = INTEGER(na)[4];
+    G->n = n = asInteger(pn);
+    G->ncond = asInteger(sncond);
+    G->m = m = asInteger(pm);
+    G->params = Calloc(G->mp + G->mq + G->msp + G->msq + G->m, double);
+    G->p = ip = G->ns*G->msp + G->mp;
+    G->q = iq = G->ns*G->msq + G->mq;
+    G->r = ir = max(ip, iq + 1);
+    G->np = np = (ir*(ir + 1))/2;
+    G->nrbar = max(1, np*(np - 1)/2);
+    G->trans = asInteger(ptrans);
+    G->a = Calloc(ir, double);
+    G->P = Calloc(np, double);
+    G->V = Calloc(np, double);
+    G->thetab = Calloc(np, double);
+    G->xnext = Calloc(np, double);
+    G->xrow = Calloc(np, double);
+    G->rbar = Calloc(G->nrbar, double);
+    G->w = Calloc(n, double);
+    G->wkeep = Calloc(n, double);
+    G->resid = Calloc(n, double);
+    G->phi = Calloc(ir, double);
+    G->theta = Calloc(ir, double);
+    G->reg = Calloc(1 + n*m, double); /* AIX can't calloc 0 items */
+    G->delta = asReal(dt);
+    for(i = 0; i < n; i++) G->w[i] = G->wkeep[i] = REAL(x)[i];
+    for(i = 0; i < n*m; i++) G->reg[i] = REAL(xreg)[i];
+    Starma_tag = install("STARMA_TAG");
+    res = R_MakeExternalPtr(G, Starma_tag, R_NilValue);
+    return res;
 }
 
-void free_starma(void)
+SEXP free_starma(SEXP pG)
 {
-    Free(params); Free(a); Free(p); Free(v); Free(thetab);
-    Free(xnext); Free(xrow); Free(rbar); Free(e);
-    Free(w); Free(wkeep); Free(resid); Free(phi); Free(theta); Free(reg);
+    GET_STARMA;
+
+    Free(G->params); Free(G->a); Free(G->P); Free(G->V); Free(G->thetab);
+    Free(G->xnext); Free(G->xrow); Free(G->rbar);
+    Free(G->w); Free(G->wkeep); Free(G->resid); Free(G->phi); Free(G->theta);
+    Free(G->reg); Free(G);
+    return R_NilValue;
 }
 
-void Dotrans(double *x, double *y)
+SEXP Starma_method(SEXP pG, SEXP method)
 {
-    dotrans(x, y, 1);
+    GET_STARMA;
+
+    G->method = asInteger(method);
+    return R_NilValue;
 }
 
-void arma0fa(double *inparams, double *res)
+SEXP Dotrans(SEXP pG, SEXP x)
 {
-    int i, j, ifault, it, iupd, streg;
-    double sumlog, ssq, tmp;
+    SEXP y = allocVector(REALSXP, LENGTH(x));
+    GET_STARMA;
 
-    /*for(i=0; i < mp+mq+msp+msq+m; i++)
-      printf(" %f", inparams[i]); printf("\n");  */
-    dotrans(inparams, params, trans);
-    /*for(i=0; i < mp+mq+msp+msq+m; i++)
-      printf(" %f", params[i]); printf("\n");  */
-    
-    if(ns > 0) {
+    dotrans(G, REAL(x), REAL(y), 1);
+    return y;
+}
+
+SEXP set_trans(SEXP pG, SEXP ptrans)
+{
+    GET_STARMA;
+
+    G->trans = asInteger(ptrans);
+    return R_NilValue;
+}
+
+SEXP arma0fa(SEXP pG, SEXP inparams)
+{
+    int i, j, ifault = 0, it, streg;
+    double sumlog, ssq, tmp, ans;
+    SEXP res;
+    GET_STARMA;
+
+    dotrans(G, REAL(inparams), G->params, G->trans);
+
+    if(G->ns > 0) {
 	/* expand out seasonal ARMA models */
-	for(i = 0; i < mp; i++) phi[i] = params[i];
-	for(i = 0; i < mq; i++) theta[i] = params[i+mp];
-	for(i = mp; i < ip; i++) phi[i] = 0.0;
-	for(i = mq; i < iq; i++) theta[i] = 0.0;
-	for(j = 0; j < msp; j++) {
-	    phi[(j+1)*ns-1] += params[j+mp+mq];
-	    for(i = 0; i < mp; i++)
-		phi[(j+1)*ns+i] -= params[i]*params[j+mp+mq];
+	for(i = 0; i < G->mp; i++) G->phi[i] = G->params[i];
+	for(i = 0; i < G->mq; i++) G->theta[i] = G->params[i + G->mp];
+	for(i = G->mp; i < G->p; i++) G->phi[i] = 0.0;
+	for(i = G->mq; i < G->q; i++) G->theta[i] = 0.0;
+	for(j = 0; j < G->msp; j++) {
+	    G->phi[(j + 1)*G->ns - 1] += G->params[j + G->mp + G->mq];
+	    for(i = 0; i < G->mp; i++)
+		G->phi[(j + 1)*G->ns + i] -= G->params[i]*
+		    G->params[j + G->mp + G->mq];
 	}
-	for(j = 0; j < msq; j++) {
-	    theta[(j+1)*ns-1] += params[j+mp+mq+msp];
-	    for(i = 0; i < mq; i++)
-		theta[(j+1)*ns+i] += params[i+mp]*params[j+mp+mq+msp];
+	for(j = 0; j < G->msq; j++) {
+	    G->theta[(j + 1)*G->ns - 1] +=
+		G->params[j + G->mp + G->mq + G->msp];
+	    for(i = 0; i < G->mq; i++)
+		G->theta[(j + 1)*G->ns + i] += G->params[i + G->mp]*
+		    G->params[j + G->mp + G->mq + G->msp];
 	}
     } else {
-	for(i = 0; i < mp; i++) phi[i] = params[i];
-	for(i = 0; i < mq; i++) theta[i] = params[i+mp];
+	for(i = 0; i < G->mp; i++) G->phi[i] = G->params[i];
+	for(i = 0; i < G->mq; i++) G->theta[i] = G->params[i + G->mp];
     }
-/*    for(i=0; i < ip; i++) printf(" %f", phi[i]); printf("\n");
-      for(i=0; i < iq; i++) printf(" %f", theta[i]); printf("\n");*/
 
-    streg = mp + mq + msp + msq;
-    if(m > 0) {
-	for(i = 0; i < n; i++) {
-	    tmp = wkeep[i];
-	    for(j = 0; j < m; j++) tmp -= reg[i + n*j] * params[streg + j];
-	    w[i] = tmp;
+    streg = G->mp + G->mq + G->msp + G->msq;
+    if(G->m > 0) {
+	for(i = 0; i < G->n; i++) {
+	    tmp = G->wkeep[i];
+	    for(j = 0; j < G->m; j++)
+		tmp -= G->reg[i + G->n*j] * G->params[streg + j];
+	    G->w[i] = tmp;
 	}
     }
 
-    F77_CALL(starma)(&ip, &iq, &ir, &np, phi, theta, a, p, v, thetab,
-		     xnext, xrow, rbar, &nrbar, &ifault);
-    sumlog = 0.0;
-    ssq = 0.0;
-    it = 0;
-    iupd = 1;
-    F77_CALL(karma)(&ip, &iq, &ir, &np, phi, theta, a, p, v, &n, w, resid,
-		    &sumlog, &ssq, &iupd, &delta, e, &it);
-    *res = 0.5*(log(ssq/(double)n) + sumlog/(double)n);
-    s2 = ssq/(double)n;
+    if(G->method == 1) {
+	int p = G->mp + G->ns * G->msp, q = G->mq + G->ns * G->msq, nu = 0;
+	ssq = 0.0;
+	for(i = 0; i < G->ncond; i++) G->resid[i] = 0.0;
+	for(i = G->ncond; i < G->n; i++) {
+	    tmp = G->w[i];
+	    for(j = 0; j < p; j++)
+		tmp -= G->phi[j] * G->w[i - j - 1];
+	    for(j = 0; j < min(i - G->ncond, q); j++)
+		tmp -= G->theta[j] * G->resid[i - j - 1];
+	    G->resid[i] = tmp;
+	    if(!ISNAN(tmp)) {
+		nu++;
+		ssq += tmp * tmp;
+	    }
+	}
+	G->s2 = ssq/(double)(nu);
+	ans = 0.5 * log(G->s2);
+    } else {
+	starma(G, &ifault);
+	if(ifault) error("starma error code %d", ifault);
+	sumlog = 0.0;
+	ssq = 0.0;
+	it = 0;
+	karma(G, &sumlog, &ssq, 1, &it);
+	G->s2 = ssq/(double)G->nused;
+	ans = 0.5*(log(ssq/(double)G->nused) + sumlog/(double)G->nused);
+    }
+    res = allocVector(REALSXP, 1);
+    REAL(res)[0] = ans;
+    return res;
 }
 
-void get_s2(double *res)
+SEXP get_s2(SEXP pG)
 {
-    *res=s2;
+    SEXP res = allocVector(REALSXP, 1);
+    GET_STARMA;
+
+    REAL(res)[0] = G->s2;
+    return res;
 }
 
-void get_resid(double *res)
+SEXP get_resid(SEXP pG)
 {
+    SEXP res;
     int i;
+    GET_STARMA;
 
-    for(i = 0; i < n; i++) res[i] = resid[i];
+    res = allocVector(REALSXP, G->n);
+    for(i = 0; i < G->n; i++) REAL(res)[i] = G->resid[i];
+    return res;
 }
 
-#ifdef WHEN_USED
-void arma0_fore(int *n_ahead, double *x, double *var)
+SEXP arma0_kfore(SEXP pG, SEXP pd, SEXP psd, SEXP nahead)
 {
-    double *work;
+    int dd = asInteger(pd);
+    int d, il = asInteger(nahead), ifault = 0, i, j;
+    double *del, *del2;
+    SEXP res, x, var;
+    GET_STARMA;
 
-    work = Calloc(ir, double);
-    F77_CALL(kalfor)(n_ahead, &ip, &ir, &np, phi, a, p, v, work, x, var);
-    Free(work);
-}
-#endif
+    PROTECT(res = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(res, 0, x = allocVector(REALSXP, il));
+    SET_VECTOR_ELT(res, 1, var = allocVector(REALSXP, il));
 
-void arma0_kfore(int *pd, int *psd, int *n_ahead, double *x, double *var)
-{
-    int d, ird, irz, il=*n_ahead, ifault=0, i, j;
-    double *del, *del2, *a1, *p1, *e1, *store;
-    
-    d = *pd + ns**psd;
-    ird = ir + d;
-    irz = ird*(ird+1)/2;
-    
-    del = (double *) R_alloc(d+1, sizeof(double));
-    del2 = (double *) R_alloc(d+1, sizeof(double));
+    d = dd + G->ns * asInteger(psd);
+
+    del = (double *) R_alloc(d + 1, sizeof(double));
+    del2 = (double *) R_alloc(d + 1, sizeof(double));
     del[0] = 1;
     for(i = 1; i <= d; i++) del[i] = 0;
-    for (j = 0; j < *pd; j ++) {
+    for (j = 0; j < dd; j++) {
 	for(i = 0; i <= d; i++) del2[i] = del[i];
-	for(i = 0; i <= d-1; i++) del[i+1] -= del2[i];
+	for(i = 0; i <= d - 1; i++) del[i+1] -= del2[i];
     }
-    for (j = 0; j < *psd; j ++) {
+    for (j = 0; j < asInteger(psd); j++) {
 	for(i = 0; i <= d; i++) del2[i] = del[i];
-	for(i = 0; i <= d-ns; i++) del[i+ns] -= del2[i];
+	for(i = 0; i <= d - G->ns; i++) del[i + G->ns] -= del2[i];
     }
     for(i = 1; i <= d; i++) del[i] *= -1;
-    /*for(i = 1; i <= d; i++) printf(" %f", del[i]); printf("\n");*/
 
-    
-    a1 = (double *) R_alloc(ird, sizeof(double));
-    p1 = (double *) R_alloc(irz, sizeof(double));
-    e1 = (double *) R_alloc(ir, sizeof(double));
-    store = (double *) R_alloc(ird, sizeof(double));
 
-    F77_CALL(forkal)(&ip, &iq, &ir, &np, &ird, 
-		     &irz, &d, &il, &n, &nrbar, 
-		     phi, theta, del+1, 
-		     w, x, var, a1, 
-		     p1, v, resid, e1, 
-		     xnext, xrow, rbar, 
-		     thetab, store, &ifault);
+    forkal(G, d, il, del + 1, REAL(x), REAL(var), &ifault);
+    if(ifault) error("forkal error code %d", ifault);
+    UNPROTECT(1);
+    return res;
 }
-
-#ifdef WHEN_USED
-void arima0_fore(int *n_ahead, int *pn, double *x, int *seas, int *nsea)
-{
-    int i, k, sd, n = *pn, na = *n_ahead, N = n+na, ns = *nsea, nc = 0;
-
-    /* initialize all the differenced series */
-    for(k = 0; k < ns; k++) {
-	sd = seas[k];
-	nc += sd;
-	for(i = nc; i < n; i++) 
-	    x[i + (k+1)*N] = x[i + k*N] - x[i - sd + k*N];
-    }
-    /* predict them all one step at a time: the top level is already there */
-    for(i = 0; i < na; i++) {
-	for(k = ns - 1; k >= 0; k--)
-	    x[n + i + k*N] = x[n + i - seas[k] + k*N] + x[n+i + (k+1)*N];
-    }	    
-}
-#endif
 
 void artoma(int *pp, double *phi, double *psi, int *npsi)
 {
-    int i, j, p =*pp;
+    int i, j, p = *pp;
 
     for(i = 0; i < p; i++) psi[i] = phi[i];
-    for(i = p+1; i < *npsi; i++) psi[i] = 0.0;
+    for(i = p + 1; i < *npsi; i++) psi[i] = 0.0;
     for(i = 0; i < *npsi - p - 1; i++) {
-	for(j = 0; j < p; j++) psi[i+j+1] += phi[j]*psi[i];
+	for(j = 0; j < p; j++) psi[i + j + 1] += phi[j]*psi[i];
     }
 }
 
-#ifdef WHEN_USED
-void arimatoma(int *arma, double *params, double *psi, int *npsi)
+static void partrans(int p, double *raw, double *new)
 {
-    int i, j;
-    double tmp;
+    int j, k;
+    double a, work[100];
 
-    ns = arma[4];
-    ip = arma[0] + arma[5] + ns*(arma[3] + arma[6]);
-    iq = arma[1] + ns*arma[3];
-    phi = (double*) R_alloc(ip, sizeof(double));
-    theta = (double*) R_alloc(iq, sizeof(double));
-    
-    mp = arma[0];
-    mq = arma[1];
-    msp = arma[2];
-    msq = arma[3];
-    if(ns > 0) {
-	/* expand out seasonal ARMA models */
-	for(i = 0; i < mp; i++) phi[i] = params[i];
-	for(i = 0; i < mq; i++) theta[i] = params[i+mp];
-	for(i = mp; i < ip; i++) phi[i] = 0.0;
-	for(i = mq; i < iq; i++) theta[i] = 0.0;
-	for(j = 0; j < msp; j++) {
-	    phi[(j+1)*ns-1] += params[j+mp+mq];
-	    for(i = 0; i < mp; i++)
-		phi[(j+1)*ns+i] -= params[i]*params[j+mp+mq];
-	}
-	for(j = 0; j < msq; j++) {
-	    theta[(j+1)*ns-1] += params[j+mp+mq+msp];
-	    for(i = 0; i < mq; i++)
-		theta[(j+1)*ns+i] += params[i+mp]*params[j+mp+mq+msp];
-	}
-    } else {
-	for(i = 0; i < mp; i++) phi[i] = params[i];
-	for(i = 0; i < mq; i++) theta[i] = params[i+mp];
-    }
+    if(p > 100) error("can only transform 100 pars in arima0");
 
-    /* expand out differencing */
-    for(i = 0; i < arma[5]; i++) {
-	for(j = ip - 1; j >= 1; j--) phi[j] -= phi[j-1];
-	phi[0] += 1.0;
-    }
-    for(i = 0; i < arma[6]; i++) {
-	for(j = ip - 1; j >= ns; j--) phi[j] -= phi[j-ns];
-	phi[ns-1] += 1.0;
-    }
-
-    /* Invert: Harvey 1993, p. 117) */
-    for(i = 0; i < *npsi; i++) {
-	tmp = 0.0;
-	for(j = 0; j < ip; j ++) {
-	    if(j == i){
-		tmp += phi[j]; /* implied 1 on psi */
-		break;
-	    }
-	    tmp += phi[j] * psi[i - j - 1];
-	}
-	if(i < iq) tmp += theta[i];
-	psi[i] = tmp;
+    /* Step one: map (-Inf, Inf) to (-1, 1) via tanh
+       The parameters are now the pacf phi_{kk} */
+    for(j = 0; j < p; j++) work[j] = new[j] = tanh(raw[j]);
+    /* Step two: run the Durbin-Levinson recursions to find phi_{j.},
+       j = 2, ..., p and phi_{p.} are the autoregression coefficients */
+    for(j = 1; j < p; j++) {
+	a = new[j];
+	for(k = 0; k < j; k++)
+	    work[k] -= a * new[j - k - 1];
+	for(k = 0; k < j; k++) new[k] = work[k];
     }
 }
+
+static void dotrans(Starma G, double *raw, double *new, int trans)
+{
+    int i, v, n = G->mp + G->mq + G->msp + G->msq + G->m;
+
+    for(i = 0; i < n; i++) new[i] = raw[i];
+    if(trans) {
+	partrans(G->mp, raw, new);
+	v = G->mp;
+	partrans(G->mq, raw + v, new + v);
+	v += G->mq;
+	partrans(G->msp, raw + v, new + v);
+	v += G->msp;
+	partrans(G->msq, raw + v, new + v);
+    }
+}
+
+#ifdef WIN32
+extern double atanh(double);
 #endif
 
-static void partrans(int np, double *raw, double *new)
+static void invpartrans(int p, double *phi, double *new)
 {
-    int i, j;
+    int j, k;
+    double a, work[100];
 
-    for(i = 0; i < np; i++) raw[i] = new[i] = tanh(raw[i]);
-    for(j = 1; j < np; j++)
-	for(i = 0; i < j; i++)
-	    raw[i] -= new[j] * new[j - i - 1];
-	    for(i = 0; i < j; i++) new[i] = raw[i];
+    if(p > 100) error("can only transform 100 pars in arima0");
+
+    for(j = 0; j < p; j++) work[j] = new[j] = phi[j];
+    /* Run the Durbin-Levinson recursions backwards
+       to find the PACF phi_{j.} from the autoregression coefficients */
+    for(j = p - 1; j > 0; j--) {
+	a = new[j];
+	for(k = 0; k < j; k++)
+	    work[k]  = (new[k] + a * new[j - k - 1]) / (1 - a * a);
+	for(k = 0; k < j; k++) new[k] = work[k];
+    }
+    for(j = 0; j < p; j++) new[j] = atanh(new[j]);
 }
 
-/* raw is overwritten */
-static void dotrans(double *raw, double *new, int trans)
+SEXP Invtrans(SEXP pG, SEXP x)
 {
-    int i, v;
+    SEXP y = allocVector(REALSXP, LENGTH(x));
+    int i, v, n;
+    double *raw = REAL(x), *new = REAL(y);
+    GET_STARMA;
 
-    if(trans) {
-	v = 0;
-	for(i = 0; i < mp; i++)
-	    partrans(mp, raw+v, new+v);
-	v += mp;
-	for(i = 0; i < mq; i++)
-	    partrans(mq, raw+v, new+v);
-	v += mq;
-	for(i = 0; i < msp; i++)
-	    partrans(msp, raw+v, new+v);
-	v += msp;
-	for(i = 0; i < msq; i++)
-	    partrans(msq, raw+v, new+v);
-	for(i = mp+mq+msp+msq; i < mp+mq+msp+msq + m; i++) new[i] = raw[i];
-    } else
-	for(i = 0; i < mp+mq+msp+msq+m; i++) new[i] = raw[i];
+    n = G->mp + G->mq + G->msp + G->msq;
+    
+    v = 0;
+    invpartrans(G->mp, raw + v, new + v);
+    v += G->mp;
+    invpartrans(G->mq, raw + v, new + v);
+    v += G->mq;
+    invpartrans(G->msp, raw + v, new + v);
+    v += G->msp;
+    invpartrans(G->msq, raw + v, new + v);
+    for(i = n; i < n + G->m; i++) new[i] = raw[i];
+    return y;
 }
+
+#define eps 1e-3
+SEXP Gradtrans(SEXP pG, SEXP x)
+{
+    SEXP y = allocMatrix(REALSXP, LENGTH(x), LENGTH(x));
+    int i, j, v, n;
+    double *raw = REAL(x), *A = REAL(y), w1[100], w2[100], w3[100];
+    GET_STARMA;
+
+    n = G->mp + G->mq + G->msp + G->msq + G->m;
+    for(i = 0; i < n; i++)
+	for(j = 0; j < n; j++)
+	    A[i + j*n] = (i == j);
+    if(G->mp > 0) {
+	for(i = 0; i < G->mp; i++) w1[i] = raw[i];
+	partrans(G->mp, w1, w2);
+	for(i = 0; i < G->mp; i++) {
+	    w1[i] += eps;
+	    partrans(G->mp, w1, w3);
+	    for(j = 0; j < G->mp; j++) A[i + j*n] = (w3[j] - w2[j])/eps;
+	    w1[i] -= eps;
+	}
+    }
+    if(G->mq > 0) {
+	v = G->mp;
+	for(i = 0; i < G->mq; i++) w1[i] = raw[i + v];
+	partrans(G->mq, w1, w2);
+	for(i = 0; i < G->mq; i++) {
+	    w1[i] += eps;
+	    partrans(G->mq, w1, w3);
+	    for(j = 0; j < G->mq; j++) A[i + v + j*n] = (w3[j] - w2[j])/eps;
+	    w1[i] -= eps;
+	}
+    }
+    if(G->msp > 0) {
+	v = G->mp + G->mq;
+	for(i = 0; i < G->msp; i++) w1[i] = raw[i + v];
+	partrans(G->msp, w1, w2);
+	for(i = 0; i < G->msp; i++) {
+	    w1[i] += eps;
+	    partrans(G->msp, w1, w3);
+	    for(j = 0; j < G->msp; j++) 
+		A[i + v + (j+v)*n] = (w3[j] - w2[j])/eps;
+	    w1[i] -= eps;
+	}
+    }
+    if(G->msq > 0) {
+	v = G->mp + G->mq + G->msp;
+	for(i = 0; i < G->msq; i++) w1[i] = raw[i + v];
+	partrans(G->msq, w1, w2);
+	for(i = 0; i < G->msq; i++) {
+	    w1[i] += eps;
+	    partrans(G->msq, w1, w3);
+	    for(j = 0; j < G->msq; j++) 
+		A[i + v + (j+v)*n] = (w3[j] - w2[j])/eps;
+	    w1[i] -= eps;
+	}
+    }
+    return y;
+}
+
+SEXP
+ARMAtoMA(SEXP ar, SEXP ma, SEXP lag_max)
+{
+    int i, j, p = LENGTH(ar), q = LENGTH(ma), m = asInteger(lag_max);
+    double *phi = REAL(ar), *theta = REAL(ma), *psi, tmp;
+    SEXP res;
+    
+    if(m <= 0 || m == NA_INTEGER)
+	error("invalid value of lag.max");
+    PROTECT(res = allocVector(REALSXP, m));
+    psi = REAL(res);
+    for(i = 0; i < m; i++) {
+	tmp = (i < q) ? theta[i] : 0.0;
+	for(j = 0; j < min(i+1, p); j++)
+	    tmp += phi[j] * ((i-j-1 >= 0) ? psi[i-j-1] : 1.0);
+	psi[i] = tmp;
+    }
+    UNPROTECT(1);
+    return res;
+}
+

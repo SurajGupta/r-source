@@ -25,19 +25,10 @@ actual reference number, of course!).
 
 Directory:  Accuracy
 
-* PR# 1218 *
-Subject:  behavior of r* and d* functions at boundaries 
-From: Ben Bolker <bolker@zoo.ufl.edu>
-Date: Mon, 17 Dec 2001 11:04:27 -0500
---points 1 and 2 were fixed for 1.4.0
 * PR# 1228 *
 Subject: bug with var(rep(1e30, 3))
 From: Emmanuel Paradis <paradis@isem.univ-montp2.fr>
 Date: Wed, 26 Dec 2001 13:03:31 +0100
-* PR# 1244 *
-Subject: possible bug in det using method="qr"
-From: armin@approximity.com
-Date: Sat, 5 Jan 2002 01:48:13 +0100 (MET)
 
 Directory:  Add-ons
 
@@ -71,14 +62,15 @@ Date: Tue, 20 Nov 2001 23:38:17 +0100
 Subject: pixmap: infinite recursion with nonascii pnm-files
 From: thomas.baumann@ch.tum.de
 Date: Fri, 7 Dec 2001 11:07:52 +0100 (CET)
-* PR# 1249 *
-Subject: cluster - clusplot.default
-From: Kjetilh Halvorsen <kjetilh@umsanet.edu.bo>
-Date: Mon, 7 Jan 2002 14:55:27 -0400 (BOT)
-* PR# 1266 *
-Subject: bug in survival package basehaz function
-From: Nicholas Lewin-Koh <kohnicho@comp.nus.edu.sg>
-Date: Wed, 16 Jan 2002 14:15:21 +0800 (GMT-8)
+* PR# 1295 *
+Subject:  typo and user-proofing in odesolve() 
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Date: Fri, 1 Feb 2002 12:42:25 -0500
+* PR# 1361 *
+Subject: Matrix identification bug
+From: hyu@stats.uwo.ca
+Date: Tue, 5 Mar 2002 21:19:46 +0100 (MET)
+--seems to be about Matrix package, not solve
 
 Directory:  Analyses
 
@@ -105,10 +97,10 @@ From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
 Date: Tue, 4 Dec 2001 11:29:58 -0500 (EST)
 --This isn't really a bug: the line in question is a plain-text equation, not a
 --piece of R code.
-* PR# 1257 *
-Subject: documentation of `las' on `par' help page
-From: Achim Zeileis <zeileis@ci.tuwien.ac.at>
-Date: Fri, 11 Jan 2002 12:30:20 +0100
+* PR# 1442 *
+Subject: Undocumenten in: R INSTALL --help
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Mon, 8 Apr 2002 17:19:20 +0200 (CEST)
 
 Directory:  Graphics
 
@@ -196,19 +188,11 @@ Date: Wed, 27 Jun 2001 11:54:06 +0200
 Subject: Palette changes on redraw
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 08 Aug 2001 19:08:01 +0200
-* PR# 1088 *
-Subject:  barplot forces xpd=TRUE 
-From: Peter Whiting <pwhiting@whitings.org>
-Date: Sat, 8 Sep 2001 10:19:00 -0500
 * PR# 1147 *
 Subject: postscript problem
 From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
 Date: Fri, 26 Oct 2001 15:23:45 -0400
 --This seems to be a problem with screen/layout rather than postscript.
-* PR# 1157 *
-Subject: identify(...plot=F)
-From: Rolf Turner <rolf@maths.uwa.edu.au>
-Date: Fri, 2 Nov 2001 09:43:49 +0800 (WST)
 * PR# 1161 *
 Subject: x-axis label in persp()
 From: Rolf Turner <rolf@maths.uwa.edu.au>
@@ -225,10 +209,26 @@ Date: Thu, 3 Jan 2002 15:29:02 +0100 (MET)
 Subject: abline and log plots
 From: stephen@cogsci.ed.ac.uk
 Date: Sat, 5 Jan 2002 01:11:47 +0100 (MET)
-* PR# 1248 *
-Subject: piechart default colour
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 07 Jan 2002 18:54:02 +0100
+* PR# 1300 *
+Subject: FW: layout and piechart diameter problem
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Thu, 7 Feb 2002 11:05:15 -0500 
+* PR# 1305 *
+Subject: interaction.plot (with misplaced legend)
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Fri, 08 Feb 2002 14:27:01 +0100
+* PR# 1395 *
+Subject: mgp parameter in par()
+From: mh.smith@niwa.cri.nz
+Date: Tue, 19 Mar 2002 06:11:49 +0100 (MET)
+* PR# 1470 *
+Subject: color of axis lines
+From: gray@jimmy.harvard.edu
+Date: Sat, 20 Apr 2002 22:21:44 +0200 (MET DST)
+* PR# 1476 *
+Subject: Bug: persp and colors
+From: oliver.niggemann@acterna.com
+Date: Tue, 23 Apr 2002 09:41:37 +0200 (MET DST)
 
 Directory:  In-Out
 
@@ -241,6 +241,28 @@ Subject: configure: sed: Function s%@PDFLATEX@%/usr/local/bin/pdflatex%g
 From: Peter Kleiweg <kleiweg@let.rug.nl>
 Date: Thu, 20 Dec 2001 14:09:42 +0100 (CET)
 --problem is on hppa2.0-hp-hpux10.20: may be HP-UX specific
+* PR# 1268 *
+Subject: Solaris 2.6 Compile
+From: gm81640@development.nssmb.com
+Date: Thu, 17 Jan 2002 06:28:26 +0100 (MET)
+--Most likely a compiler installation problem
+* PR# 1291 *
+Subject: Installation problem : SunOS
+From: brendan_mcmahon@prusec.com
+Date: Thu, 31 Jan 2002 18:00:55 +0100 (MET)
+--looks like gcc compiled under different OS version.
+* PR# 1415 *
+Subject: int 32 bit error on SPARC 64bit
+From: kss28@mail.cba.nau.edu
+Date: Mon, 25 Mar 2002 21:18:58 +0100 (MET)
+--Was gcc 2.95.2 in private followup.
+--Probably unappropriate flags
+* PR# 1428 *
+Subject: R compile on Solaris 8 fails
+From: brower@bst.rochester.edu
+Date: Mon, 1 Apr 2002 22:19:07 +0200 (MET DST)
+--problems with g++ not finding -lstdc++
+--Not a problem with R per se
 
 Directory:  Language
 
@@ -295,10 +317,6 @@ Directory:  Low-level
 Subject: "[.data.frame" allows un-named 3rd subscript
 From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
 Date: Mon, 18 Jun 2001 13:13:46 -0700 (PDT)
-* PR# 1063 *
-Subject: interrupting Sys.sleep
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Mon, 20 Aug 2001 13:55:29 -0700 (PDT)
 * PR# 1068 *
 Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
 From: Luke Tierney <luke@nokomis.stat.umn.edu>
@@ -324,11 +342,6 @@ Date: Tue, 11 Dec 2001 17:34:07 -0500 (EST)
 Subject: Mishandling missing "..."
 From: David Brahm  <brahm@alum.mit.edu>
 Date: Mon, 7 Jan 2002 10:52:09 -0500
-* PR# 1267 *
-Subject: hashing NaN
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Wed, 16 Jan 2002 16:29:35 -0800 (PST)
---Patch put in R-devel for further testing.
 
 Directory:  Macintosh
 
@@ -373,7 +386,7 @@ Date: Thu, 20 Sep 2001 23:54:19 -0500
 Subject: Possible bug, Rprof() and scan(pipe())
 From: Don MacQueen <macq@llnl.gov>
 Date: Tue, 23 Oct 2001 13:50:26 -0700
---Doesn't happen on Solaris or Linux
+--MacOS X: Doesn't happen on Solaris or Linux
 * PR# 1145 *
 Subject: Problem testing R version 1.3.1 on SGI Irix
 From: Gordon Lack <gml4410@ggr.co.uk>
@@ -385,11 +398,6 @@ Subject: R_140 AND RHL_72 AND Packages
 From: Patrick Gonin <gonin@genethon.fr>
 Date: Wed, 15 Jan 2003 13:25:17 +0100
 --Seems to relate to RH7.2 rpms
-* PR# 1268 *
-Subject: Solaris 2.6 Compile
-From: gm81640@development.nssmb.com
-Date: Thu, 17 Jan 2002 06:28:26 +0100 (MET)
---Most likely a compiler installation problem
 * PR# 1272 *
 Subject: eigen segfault with GCC 3 on Solaris
 From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
@@ -400,6 +408,18 @@ Date: Thu, 17 Jan 2002 15:14:33 -0500
 Subject: compile problem with bessel_i.c on IRIX64 flexor 6.5 10100655 IP35 (uname -a)
 From: Walter Tautz <wtautz@math.uwaterloo.ca>
 Date: Tue, 22 Jan 2002 10:05:20 -0500 (EST)
+* PR# 1289 *
+Subject: R 1.4.0 build fails on AIX
+From: lio@hpss1.ccs.ornl.gov
+Date: Wed, 30 Jan 2002 14:10:30 +0100 (MET)
+* PR# 1316 *
+Subject: shared libraries on AIX
+From: lio@hpss1.ccs.ornl.gov
+Date: Mon, 18 Feb 2002 18:53:41 +0100 (MET)
+* PR# 1461 *
+Subject: make check fails d-p-q-r-tests.R - OpenBSD 3.0
+From: Jason Turner <jasont@indigoindustrial.co.nz>
+Date: Mon, 15 Apr 2002 10:13:36 +0000
 
 Directory:  TooMuchAtOnce
 
@@ -411,19 +431,47 @@ none
 
 Directory:  incoming
 
-* PR# 1240 *
-Subject:  R CMD check 
-From: hoffmann@wsl.ch
-Date: Fri, 4 Jan 2002 12:51:15 +0100 (MET)
-* PR# 1283 *
-Subject: max/min of NULL gives MININT/MAXINT instead of -INF/+INF
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-Date: Fri, 25 Jan 2002 14:36:52 -0500
-* PR# 1284 *
-Subject: make check fails when R_HOME env var set
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-Date: Fri, 25 Jan 2002 15:08:33 -0500
-* PR# 1288 *
-Subject: dimnames usage in ts
-From: tkeitt@ms.cc.sunysb.edu
-Date: Tue, 29 Jan 2002 21:11:08 +0100 (MET)
+* PR# 1471 *
+Subject: Rprof segfault
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 20 Apr 2002 23:48:01 +0200
+* PR# 1473 *
+Subject: predict.*bSpline() bugs extrapolating for deriv >= 1
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 22 Apr 2002 12:30:12 +0200
+* PR# 1484 *
+Subject: Want an Investment Backed By Real Property?
+From: "Customer Service" <B.Chase@forfas.ie>
+Date: Fri, 26 Apr 2002 03:08:11 -1900
+* PR# 1485 *
+Subject: A special  new website
+From: r-devel-request <r-devel-request@hypatia.math.ethz.ch>
+Date: Fri, 26 Apr 2002 20:45:19 +0800 (CST)
+* PR# 1486 *
+Subject: Can't install packages
+From: Poizot Emmanuel <poizot@cnam.fr>
+Date: Fri, 26 Apr 2002 17:13:05 +0200
+* PR# 1487 *
+Subject: <±¤,°?>??´?M??µ? ???º´????¡!!
+From: IMCARD <i@i.net>
+Date: Sat, 27 Apr 2002 04:04:17 +0900
+* PR# 1488 *
+Subject: Align
+From: smithk <smithk@stolaf.edu>
+Date: Fri, 26 Apr 2002 22:11:05 -0500 (CDT)
+* PR# 1489 *
+Subject: Document.writeln(
+From: r-help-request <r-help-request@hypatia.math.ethz.ch>
+Date: Sat, 27 Apr 2002 12:37:57 +0800 (CST)
+* PR# 1490 *
+Subject: Can be found at the 
+From: julie326 <julie326@hotmail.com>
+Date: Sun, 28 Apr 2002 12:08:53 +0800 (CST)
+* PR# 1491 *
+Subject:  
+From: 690460109 <690460109@s90.tku.edu.tw>
+Date: Sun, 28 Apr 2002 19:28:18 +0800 (CST)
+* PR# 1492 *
+Subject: [±¤°?]1?????? ´???°?´??? °??¥º?±? ?±?°
+From: ?ý?°?¤º? <moduda7@lycos.co.kr>
+Date: Sun, 28 Apr 2002 22:29:37 +0900

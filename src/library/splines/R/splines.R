@@ -1,8 +1,7 @@
-### $Id: splines.R,v 1.3 2000/08/06 03:30:52 bates Exp $
+### $Id: splines.R,v 1.5 2002/02/25 08:19:28 maechler Exp $
 
-bs <-
-    function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
-             Boundary.knots = range(x))
+bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
+               Boundary.knots = range(x))
 {
     nx <- names(x)
     x <- as.vector(x)
@@ -21,7 +20,7 @@ bs <-
         nIknots <- df - ord + (1 - intercept)
         if(nIknots < 0) {
             nIknots <- 0
-            warning(paste("df was too small; have used ", ord - (1 - intercept)))
+            warning("df was too small; have used  ", ord - (1 - intercept))
         }
         knots <-
             if(nIknots > 0) {
@@ -67,9 +66,8 @@ bs <-
     basis
 }
 
-ns <-
-    function(x, df = NULL, knots = NULL, intercept = FALSE,
-             Boundary.knots = range(x))
+ns <- function(x, df = NULL, knots = NULL, intercept = FALSE,
+               Boundary.knots = range(x))
 {
     nx <- names(x)
     x <- as.vector(x)
@@ -133,8 +131,7 @@ ns <-
     basis
 }
 
-predict.bs <-
-    function(object, newx, ...)
+predict.bs <- function(object, newx, ...)
 {
     if(missing(newx))
         return(object)
@@ -143,8 +140,7 @@ predict.bs <-
     do.call("bs", a)
 }
 
-predict.ns <-
-    function(object, newx, ...)
+predict.ns <- function(object, newx, ...)
 {
     if(missing(newx))
         return(object)
@@ -152,6 +148,26 @@ predict.ns <-
                 c("knots", "Boundary.knots", "intercept")])
     do.call("ns", a)
 }
+
+makepredictcall.ns <- function(var, call)
+{
+    if(as.character(call)[1] != "ns") return(call)
+    at <- attributes(var)[c("knots", "Boundary.knots", "intercept")]
+    xxx <- call[1:2]
+    xxx[names(at)] <- at
+    xxx
+}
+
+makepredictcall.bs <- function(var, call)
+{
+    if(as.character(call)[1] != "bs") return(call)
+    at <- attributes(var)[c("degree", "knots", "Boundary.knots",
+                            "intercept")]
+    xxx <- call[1:2]
+    xxx[names(at)] <- at
+    xxx
+}
+
 
 spline.des <- function(knots, x, ord = 4, derivs = integer(length(x)))
 {

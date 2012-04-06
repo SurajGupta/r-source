@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2001   Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1998-2002   Robert Gentleman, Ross Ihaka
  *                             and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -171,101 +171,224 @@ void optif0(int nr, int n, double *x, fcn_p fcn, void *state,
 	    double *a, double *wrk);
 
 
-/* ALL ../appl/<foobar>.f	[semi-automatically by
+/* ALL ../../appl/<foobar>.f	[semi-automatically by
  *				 f2c -A -P *.f; cat *.P > all.h	 and editing]
  */
 typedef double (*D_fp)();
 typedef /* Subroutine */ int (*S_fp)();
 
-/* ../appl/blas.f ---> see also ./Linpack.h - "extern"s all of BLAS+Linpack*/
-double F77_NAME(dasum)(int *n, double *dx, int *incx);
-int F77_NAME(daxpy)(int *n, double *da, double *dx, int *incx,
-		    double *dy, int *incy);
-int F77_NAME(dcopy)(int *n, double *dx, int *incx, double *dy, int *incy);
-double F77_NAME(ddot)(int *n, double *dx, int *incx, double *dy, int *incy);
-double F77_NAME(dmach)(int *job);
-double F77_NAME(dnrm2)(int *n, double *x, int *incx);
-int F77_NAME(drot)(int *n, double *dx, int *incx, double *dy, int *incy,
-		   double *c__, double *s);
-int F77_NAME(drotg)(double *da, double *db, double *c__, double *s);
-int F77_NAME(dscal)(int *n, double *da, double *dx, int *incx);
-int F77_NAME(dswap)(int *n, double *dx, int *incx, double *dy, int *incy);
-int F77_NAME(idamax)(int *n, double *dx, int *incx);
-int F77_NAME(dgemm)(char *transa, char *transb, int *m, int *n, int *k,
-		    double *alpha, double *a, int *lda, double *b, int *ldb,
-		    double *beta, double *c, int *ldc);
-int F77_NAME(dtrsm)(const char* side, const char* uplo,
-		    const char* transa, const char* diag,
-		    const int* m, const int* n,
-		    const double* alpha, const double *a, const int* lda,
-		    double *b, const int* ldb);
+/* ../../appl/blas.f ---> see also ./Linpack.h */
+extern double
+F77_NAME(dasum)(int *, double *, int *);
+extern void
+F77_NAME(daxpy)(int *, double *, double *, int *, double *, int *);
+extern void
+F77_NAME(dcopy)(int *, double *, int *, double *, int *);
+extern double
+F77_NAME(ddot)(int *, double *, int *, double *, int *);
+extern void
+F77_NAME(dgbmv)(char *, int *, int *, int *, int *, double *, double *,
+		int *, double *, int *, double *, double *, int *);
+extern void
+F77_NAME(dgemm)(char *, char *, int *, int *, int *, double *, double *, int *,
+	double *, int *, double *, double *, int *);
+extern void
+F77_NAME(dgemv)(char *, int *, int *, double *, double *, int *, double *,
+		int *, double *, double *, int *);
+extern void
+F77_NAME(dger)(int *, int *, double *, double *, int *, double *, int *,
+	       double *, int *);
+extern double
+F77_NAME(dnrm2)(int *, double *, int *incx);
+extern void
+F77_NAME(drot)(int *, double *, int *, double *, int *, double *, double *);
+extern void
+F77_NAME(drotg)(double *, double *, double *, double *);
+extern void
+F77_NAME(drotm)(int *, double *, int *, double *, int *, double *);
+extern void
+F77_NAME(drotmg)(double *dd1, double *dd2, double * dx1, double *, double *);
+extern void
+F77_NAME(dsbmv)(char *, int *, int *, double *, double *, int *, double *,
+		int *, double *, double *, int *);
+extern void
+F77_NAME(dscal)(int *, double *, double *, int *);
+extern void
+F77_NAME(dspmv)(char *, int *, double *, double *, double *, int *, double *,
+		double *, int *);
+extern void
+F77_NAME(dspr)(char *, int *, double *, double *, int *, double *);
+extern void
+F77_NAME(dspr2)(char *, int *, double *, double *, int *, double *, int *,
+		double *);
+extern void
+F77_NAME(dswap)(int *, double *, int *, double *, int *);
+extern void
+F77_NAME(dsymm)(char *, char *, int *, int *, double *, double *, int *,
+		double *, int *, double *, double *, int *);
+extern void
+F77_NAME(dsymv)(char *, int *, double *, double *, int *, double *, int *,
+		double *, double *, int *);
+extern void
+F77_NAME(dsyr)(char *, int *, double *, double *, int *, double *, int *);
+extern void
+F77_NAME(dsyr2)(char *, int *, double *, double *, int *, double *,
+		int *, double *, int *);
+extern void
+F77_NAME(dsyr2k)(char *, char *, int *, int *, double *, double *, int *,
+		 double *, int *, double *, double *, int *);
+extern void
+F77_NAME(dsyrk)(char *, char *, int *, int *, double *, double *, int *,
+		double *, double *, int *);
+extern void
+F77_NAME(dtbmv)(char *, char *, char *, int *, int *, double *, int *,
+		double *, int *);
+extern void
+F77_NAME(dtbsv)(char *, char *, char *, int *, int *, double *, int *,
+		double *, int *);
+extern void
+F77_NAME(dtpmv)(char *, char *, char *, int *, double *, double *, int *);
+extern void
+F77_NAME(dtpsv)(char *, char *, char *, int *, double *, double *, int *);
+extern void
+F77_NAME(dtrmm)(char *, char *, char *, char *, int *, int *, double *,
+		double *, int *, double *, int *);
+extern void
+F77_NAME(dtrmv)(char *, char *, char *, int *, double *, int *, double *,
+		int *);
+extern void
+F77_NAME(dtrsm)(char *, char *, char *, char *, int *, int *, double *,
+		double *, int *, double *, int *);
+extern void
+F77_NAME(dtrsv)(char *, char *, char *, int *, double *, int *, double *,
+		int *);
+extern int
+F77_NAME(idamax)(int *, double *, int *);
+extern int
+F77_NAME(lsame)(char *, char *);
+
 /*----*/
-int F77_NAME(ch2inv)(double *x, int *ldx, int *n, double *v, int *info);
-int F77_NAME(chol)(double *a, int *lda, int *n, double *v, int *info);
+void F77_NAME(ch2inv)(double *x, int *ldx, int *n, double *v, int *info);
+void F77_NAME(chol)(double *a, int *lda, int *n, double *v, int *info);
 
-int F77_NAME(dpoco)(double *a, int *lda, int *n, double *rcond,
-		    double *z__, int *info);
-int F77_NAME(dpodi)(double *a, int *lda, int *n, double *det, int *job);
-int F77_NAME(dpofa)(double *a, int *lda, int *n, int *info);
-int F77_NAME(dposl)(double *a, int *lda, int *n, double *b);
+void F77_NAME(dpoco)(double *a, int *lda, int *n, double *rcond,
+		     double *z__, int *info);
+void F77_NAME(dpodi)(double *a, int *lda, int *n, double *det, int *job);
+void F77_NAME(dpofa)(double *a, int *lda, int *n, int *info);
+void F77_NAME(dposl)(double *a, int *lda, int *n, double *b);
 /* find qr decomposition, dqrdc2() is basis of R's qr() */
-int F77_NAME(dqrdc)(double *x, int *ldx, int *n, int *p,
-		    double *qraux, int *jpvt, double *work, int *job);
-int F77_NAME(dqrdc2)(double *x, int *ldx, int *n, int *p,
-		     double *tol, int *rank,
-		     double *qraux, int *pivot, double *work);
-int F77_NAME(dqrls)(double *x, int *n, int *p, double *y, int *ny,
-		    double *tol, double *b, double *rsd,
-		    double *qty, int *k,
-		    int *jpvt, double *qraux, double *work);
+void F77_NAME(dqrdc)(double *x, int *ldx, int *n, int *p,
+		     double *qraux, int *jpvt, double *work, int *job);
+void F77_NAME(dqrdc2)(double *x, int *ldx, int *n, int *p,
+		      double *tol, int *rank,
+		      double *qraux, int *pivot, double *work);
+void F77_NAME(dqrls)(double *x, int *n, int *p, double *y, int *ny,
+		     double *tol, double *b, double *rsd,
+		     double *qty, int *k,
+		     int *jpvt, double *qraux, double *work);
 /* solve for QR coefficients */
-int F77_NAME(dqrsl)(double *x, int *ldx, int *n, int *k,
-		    double *qraux, double *y,
-		    double *qy, double *qty, double *b,
-		    double *rsd, double *xb, int *job, int *info);
+void F77_NAME(dqrsl)(double *x, int *ldx, int *n, int *k,
+		     double *qraux, double *y,
+		     double *qy, double *qty, double *b,
+		     double *rsd, double *xb, int *job, int *info);
 
-/* ../appl/dqrutl.f */
-int F77_NAME(dqrqty)(double *x, int *n, int *k, double *qraux,
-		     double *y, int *ny, double *qty);
-int F77_NAME(dqrqy)(double *x, int *n, int *k, double *qraux,
-		    double *y, int *ny, double *qy);
-int F77_NAME(dqrcf)(double *x, int *n, int *k, double *qraux,
-		    double *y, int *ny, double *b, int *info);
-int F77_NAME(dqrrsd)(double *x, int *n, int *k, double *qraux,
+/* ../../appl/dqrutl.f */
+void F77_NAME(dqrqty)(double *x, int *n, int *k, double *qraux,
+		      double *y, int *ny, double *qty);
+void F77_NAME(dqrqy)(double *x, int *n, int *k, double *qraux,
+		     double *y, int *ny, double *qy);
+void F77_NAME(dqrcf)(double *x, int *n, int *k, double *qraux,
+		     double *y, int *ny, double *b, int *info);
+void F77_NAME(dqrrsd)(double *x, int *n, int *k, double *qraux,
 		     double *y, int *ny, double *rsd);
-int F77_NAME(dqrxb)(double *x, int *n, int *k, double *qraux,
-		    double *y, int *ny, double *xb);
+void F77_NAME(dqrxb)(double *x, int *n, int *k, double *qraux,
+		     double *y, int *ny, double *xb);
 /*---*/
 
-int F77_NAME(dsvdc)(double *x, int *ldx, int *n, int *p,
-		    double *s, double *e,
-		    double *u, int *ldu, double *v, int *ldv,
-		    double *work, int *job, int *info);
-int F77_NAME(dtrco)(double *t, int *ldt, int *n, double *rcond,
-		    double *z__, int *job);
-int F77_NAME(dtrsl)(double *t, int *ldt, int *n, double *b, int *job,
-		    int *info);
+void F77_NAME(dsvdc)(double *x, int *ldx, int *n, int *p,
+		     double *s, double *e,
+		     double *u, int *ldu, double *v, int *ldv,
+		     double *work, int *job, int *info);
+void F77_NAME(dtrco)(double *t, int *ldt, int *n, double *rcond,
+		     double *z__, int *job);
+void F77_NAME(dtrsl)(double *t, int *ldt, int *n, double *b, int *job,
+		     int *info);
 
 double Brent_fmin(double ax, double bx, double (*f)(double, void *),
 		  void *info, double tol);
-int F77_NAME(lminfl)(double *x, int *ldx, int *n, int *k, double *qraux,
-		     double *resid, double *hat, double *coef, double *sigma);
+void F77_NAME(lminfl)(double *x, int *ldx, int *n, int *k, double *qraux,
+		      double *resid, double *hat, double *coef, double *sigma);
 
-/* ../appl/zeroin.c */
+/* ../../appl/interv.c */
+int findInterval(double *xt, int n, double x,
+		 Rboolean rightmost_closed,  Rboolean all_inside, int ilo,
+		 int *mflag);
+int F77_SUB(interv)(double *xt, int *n, double *x,
+		    Rboolean *rightmost_closed, Rboolean *all_inside,
+		    int *ilo, int *mflag);
+void find_interv_vec(double *xt, int *n,	double *x,   int *nx,
+		     int *rightmost_closed, int *all_inside, int *indx);
+
+/* ../../appl/zeroin.c */
 double R_zeroin(double ax, double bx, double (*f)(double, void *), void *info,
 		double *Tol, int *Maxit);
 
-/* ../appl/lbfgsb.c */
+/* ../../appl/lbfgsb.c */
 void setulb(int n, int m, double *x, double *l, double *u, int *nbd,
 	    double *f, double *g, double factr, double *pgtol,
 	    double *wa, int * iwa, char *task, int iprint,
 	    int *lsave, int *isave, double *dsave);
 
-/* ../appl/loglin.c */
+/* ../../appl/loglin.c */
 void loglin(int *nvar, int *dim, int *ncon, int *config, int *ntab,
 	    double *table, double *fit, int *locmar, int *nmar, double *marg,
 	    int *nu, double *u, double *maxdev, int *maxit,
 	    double *dev, int *nlast, int *ifault);
+
+/* ../../appl/integrate.c */
+typedef void integr_fn(double *x, int n, void *ex);
+/* vectorizing function   f(x[1:n], ...) -> x[]  {overwriting x[]}. */
+
+void Rdqags(integr_fn f, void *ex, double *a, double *b,
+	    double *epsabs, double *epsrel,
+	    double *result, double *abserr, int *neval, int *ier,
+	    int *limit, int *lenw, int *last, int *iwork, double *work);
+
+void Rdqagi(integr_fn f, void *ex, double *bound, int *inf,
+	    double *epsabs, double *epsrel,
+	    double *result, double *abserr, int *neval, int *ier,
+	    int *limit, int *lenw, int *last,
+	    int *iwork, double *work);
+
+
+/* ../../main/optim.c */
+typedef double optimfn(int, double *, void *);
+typedef void optimgr(int, double *, double *, void *);
+
+void vmmin(int n, double *b, double *Fmin,
+	   optimfn fn, optimgr gr, int maxit, int trace,
+	   int *mask, double abstol, double reltol, int nREPORT,
+	   void *ex, int *fncount, int *grcount, int *fail);
+void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fn,
+	   int *fail, double abstol, double intol, void *ex,
+	   double alpha, double bet, double gamm, int trace,
+	   int *fncount, int maxit);
+void cgmin(int n, double *Bvec, double *X, double *Fmin,
+	   optimfn fn, optimgr gr,
+	   int *fail, double abstol, double intol, void *ex,
+	   int type, int trace, int *fncount, int *grcount, int maxit);
+void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
+	    double *Fmin, optimfn fn, optimgr gr, int *fail, void *ex,
+	    double factr, double pgtol, int *fncount, int *grcount,
+	    int maxit, char *msg, int trace, int nREPORT);
+void samin(int n, double *pb, double *yb, optimfn fn, int maxit,
+	   int tmax, double ti, int trace, void *ex);
+
+/* ../../main/qsort.c -- only F77 ones: */
+void F77_NAME(qsort4)(double *v, int *indx, int *ii, int *jj);
+void F77_NAME(qsort3)(double *v,            int *ii, int *jj);
+
+
 #ifdef  __cplusplus
 }
 #endif

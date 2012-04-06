@@ -8,7 +8,7 @@
         horiz = FALSE, density = NULL, angle = 45,
         col = heat.colors(NR), border = par("fg"),
         main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
-        xlim = NULL, ylim = NULL,
+        xlim = NULL, ylim = NULL, xpd = TRUE,
         axes = TRUE, axisnames = TRUE,
         cex.axis = par("cex.axis"), cex.names = par("cex.axis"),
         inside = TRUE, plot = TRUE, \dots)
@@ -66,6 +66,7 @@
   \item{ylab}{a label for the y axis.}
   \item{xlim}{limits for the x axis.}
   \item{ylim}{limits for the y axis.}
+  \item{xpd}{logical. Should bars be allowed to go outside region?}
   \item{axes}{logical.  If \code{TRUE}, a vertical (or horizontal, if
     \code{horiz} is true) axis is drawn.}
   \item{axisnames}{logical.  If \code{TRUE}, and if there are
@@ -92,7 +93,7 @@
   \code{mp}, giving the coordinates of \emph{all} the bar midpoints
   drawn, useful for adding to the graph.
 
-  If \code{beside} is true, use \code{apply(mp, 2, mean)} for the
+  If \code{beside} is true, use \code{colMeans(mp)} for the
   midpoints of each \emph{group} of bars, see example.
 }
 \seealso{
@@ -113,7 +114,7 @@ barplot(VADeaths, plot = FALSE)
 barplot(VADeaths, plot = FALSE, beside = TRUE)
 
 mp <- barplot(VADeaths) # default
-tot <- apply(VADeaths, 2, sum)
+tot <- colMeans(VADeaths)
 text(mp, tot + 3, format(tot), xpd = TRUE, col = "blue")
 barplot(VADeaths, beside = TRUE,
         col = c("lightblue", "mistyrose", "lightcyan",
@@ -132,8 +133,8 @@ mp <- barplot(hh, beside = TRUE,
         cex.names = 1.5)
 segments(mp, hh, mp, hh + 2*sqrt(1000*hh/100), col = mybarcol, lwd = 1.5)
 stopifnot(dim(mp) == dim(hh))# corresponding matrices
-mtext(side = 1, at = apply(mp, 2, mean), line = -2,
-      text = paste("Mean", formatC(apply(hh, 2, mean))), col = "red")
+mtext(side = 1, at = colMeans(mp), line = -2,
+      text = paste("Mean", formatC(colMeans(hh))), col = "red")
 
 # Bar shading example
 barplot(VADeaths, angle = 15+10*1:5, density = 20, col = "black", 

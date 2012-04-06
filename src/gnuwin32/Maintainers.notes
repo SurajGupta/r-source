@@ -1,0 +1,26 @@
+Notes for Windows Maintainers
+=============================
+
+1) fixed/h/config.h can be made automatically.  Some of this is
+achieved by overrides in the configure script.
+
+You will need a few more tools (ln, pwd, tr, ...), and I put a cygwin
+toolchain at the end of my path.  Then with the R sources in
+/R/rw1050, I used in /TEMP/R (any other directory will do, except the
+sources)
+
+/R/rw1050/configure --build=i386-pc-mingw32
+
+This ran fairly slowly, producing a src/include/config.h that differs only
+
+ - it found R_PRINTCMD = lpr on my system, but that is not used under 
+   Windows, so the actual setting is irrelevant.
+
+ - watch out for local features: e.g. I have libz installed in my
+   mingw compiler system.
+
+ - watch out for versions of the header files. <strings.h> is in
+   mingw-runtime-1.2 and later, but not in the Mingw-1.1 bundle.
+
+
+BDR 2002-04-15

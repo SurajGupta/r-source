@@ -14,8 +14,7 @@ as <-
     if(coerceFlag  || !is(object, Class)) {
         ## TO DO:  this call to selectMethod probably deserves implementing in C
         ## to save on the environment generation each time.
-      sig <-  new.env(); assign("from", thisClass, envir = sig)
-      assign("to", Class, envir = sig)
+      sig <-  sigToEnv(list(from=thisClass, to = Class))
       asMethod <- selectMethod("coerce", sig, TRUE, c(from = TRUE, to = FALSE))
       if(!is.null(asMethod))
           return(asMethod(object))
@@ -47,9 +46,8 @@ as <-
     if(coerceFlag && !identical(data.class(value), Class))
       value <- as(value, Class)
     if(coerceFlag || !is(object, Class)) {
-      sig <-  new.env(); assign("from", thisClass, envir = sig)
-      assign("to", Class, envir = sig)
-      asMethod <- selectMethod("coerce<-", sig, TRUE, c(from = TRUE, to = FALSE))
+        sig <- sigToEnv(list(from=thisClass, to=Class))
+        asMethod <- selectMethod("coerce<-", sig, TRUE, c(from = TRUE, to = FALSE))
       ## TO DO:  figure out how inheritance works in this function
       if(!is.null(asMethod))
         return(asMethod(object, Class, value))
@@ -89,17 +87,29 @@ setAs <-
     }
     else {
       args <- formalArgs(def)
-      if(length(args) != 1)
-        stop("a method definition in setAs must be a function of one argument")
       def <- body(def)
-      if(!identical(args, "from")) {
-        ll <- list(quote(from), as.name(args))
-        names(ll) <- c(args, "from")
-        def <- substituteDirect(def, ll)
-        warning("Argument name in def changed to \"from\" instead of \"",
-                args, "\":\n", paste(deparse(def), sep="\n    "), "\n")
+      if(length(args) == 1) {
+          if(!identical(args, "from")) {
+              ll <- list(quote(from), as.name(args))
+              names(ll) <- c(args, "from")
+              def <- substituteDirect(def, ll)
+              message("Argument name in def changed to \"from\" instead of \"",
+                      args, "\"")
+          }
       }
-      method <- eval(function(from, to)NULL)
+      else if(length(args) == 2) {
+          if(!identical(args, c("from", "to"))) {
+              ll <- list(quote(from), quote(to), as.name(args[[1]]), as.name(args[[2]]))
+              names(ll) <- c(args, "from", "to")
+              def <- substituteDirect(def, ll)
+              message("Argument names in def changed to c(\"from\", \"to\") instead of ",
+                      deparse(args))
+          }
+      }
+      else stop(paste("as method must have one or two arguments; got", length(args)))
+      method <- as.list(function(from, to)NULL)
+      method$to <- to
+      method <- as.function(method)
       functionBody(method, envir = .GlobalEnv) <- def
       setMethod("coerce", c(from, to), method, where = where)
       if(!is.null(replace)) {
@@ -128,14 +138,24 @@ setAs <-
   setGeneric("coerce", function(from, to)standardGeneric("coerce"), where = where)
   setGeneric("coerce<-", function(from, to, value)standardGeneric("coerce<-"), where = where)
   basics <- c(
- "POSIXct",  "POSIXlt",  "array",  "call",  "character",  "complex",  "data.frame", "double", 
+ "POSIXct",  "POSIXlt",  "array",  "call",  "character",  "complex",  "data.frame", 
  "environment",  "expression",  "factor",  "formula",  "function",  "integer", 
- "list",  "logical",  "matrix",  "name",  "null",  "numeric",  "ordered", 
- "pairlist",  "real",  "single",  "symbol",  "table",  "ts",  "vector")
+ "list",  "logical",  "matrix",  "name",  "numeric",  "ordered", 
+  "single",  "table",  "ts",  "vector")
   for(what in basics) {
       method  <- eval(function(from, to)NULL, .GlobalEnv)
       body(method) <- substitute(AS(from),
                               list(AS = as.name(paste("as.", what, sep=""))))
       setMethod("coerce", c("ANY", what), method, where = where)
   }
+  ## and some hand-coded ones
+  body(method) <- quote(as.null(from))
+  setMethod("coerce", c("ANY", "NULL"), method)
+  body(method) <- quote({
+            if(length(from) != 1)
+              warning("ambiguous object (length!=1) to coerce to \"name\"")
+            as.name(from)
+        })
+  setMethod("coerce", c("ANY","name"), method)
+  ## not accounted for and maybe not needed:  real, pairlist, double
 }

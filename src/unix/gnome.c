@@ -26,7 +26,9 @@
 
 #include "Runix.h"
 #include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #ifndef HAVE_NO_SYMBOL_UNDERSCORE
 # ifdef HAVE_ELF_H
@@ -69,7 +71,6 @@ extern DL_FUNC ptr_R_Suicide, ptr_R_ShowMessage, ptr_R_ReadConsole,
     ptr_R_ChooseFile, ptr_gnome_start,
     ptr_GnomeDeviceDriver, ptr_GTKDeviceDriver,
     ptr_R_loadhistory, ptr_R_savehistory;
-
 
 /* This is called too early to use moduleCdynload */
 void R_load_gnome_shlib(void)

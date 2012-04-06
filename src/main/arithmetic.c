@@ -171,7 +171,7 @@ int R_finite(double x)
 #ifdef HAVE_WORKING_FINITE
     return finite(x);
 #else
-# ifdef HAVE_ISFINITE_IN_MATH_H
+# if defined(HAVE_DECL_ISFINITE) && HAVE_DECL_ISFINITE
     return isfinite(x);
 # else
 #  ifdef _AIX
@@ -827,7 +827,7 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
 	}
 	break;
     }
-    
+
 
     /* Copy attributes from longer argument. */
 
@@ -858,7 +858,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     /* S4-compatibility change: if n1 or n2 is 0, result is of length 0 */
     if (n1 == 0 || n2 == 0) return(allocVector(REALSXP, 0));
 
-    n = (n1 > n2) ? n1 : n2;    
+    n = (n1 > n2) ? n1 : n2;
     ans = allocVector(REALSXP, n);
 
 /*    if (n1 < 1 || n2 < 1) {
@@ -971,7 +971,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	}
 	break;
     }
-    
+
 
     /* Copy attributes from longer argument. */
 
@@ -989,23 +989,6 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 
 
 /* Mathematical Functions of One Argument */
-
-#if !defined(HAVE_ASINH) || !defined(HAVE_ACOSH) || !defined(HAVE_ATANH)
-static double unavailable(double x)
-{
-    errorcall(lcall, "function unavailable in this R");
-    return 0.;			/* to keep -Wall happy */
-}
-#ifndef HAVE_ASINH
-#define asinh unavailable
-#endif
-#ifndef HAVE_ACOSH
-#define acosh unavailable
-#endif
-#ifndef HAVE_ATANH
-#define atanh unavailable
-#endif
-#endif
 
 static SEXP math1(SEXP sa, double(*f)(), SEXP lcall)
 {
@@ -1062,6 +1045,7 @@ SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     case 5: return MATH1(trunc);
 
     case 10: return MATH1(exp);
+    case 11: return MATH1(expm1);
     case 12: return MATH1(log1p);
     case 20: return MATH1(cos);
     case 21: return MATH1(sin);
@@ -1090,6 +1074,14 @@ SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "unimplemented real function (of 1 arg.)");
     }
     return s;			/* never used; to keep -Wall happy */
+}
+
+SEXP do_abs(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP s;
+    if (DispatchGroup("Math", call, op, args, env, &s))
+	return s;
+    return do_cmathfuns(call, op, args, env);
 }
 
 /* Mathematical Functions of Two Numeric Arguments (plus 1 int) */

@@ -19,10 +19,7 @@ optim(par, fn, gr = NULL,
    place. It should return a scalar result.}
  \item{gr}{A function to return the gradient. Not needed for the
    \code{"Nelder-Mead"} and \code{"SANN"} method. If it is \code{NULL}
-   and it is needed, a
-   finite-difference approximation will be used. It is guaranteed that
-   \code{gr} will be called immediately after a call to \code{fn} at
-   the same parameter values.}
+   and it is needed, a finite-difference approximation will be used.}
  \item{method}{The method to be used. See \bold{Details}.}
  \item{lower, upper}{Bounds on the variables for the \code{"L-BFGS-B"} method.}
  \item{control}{A list of control parameters. See \bold{Details}.}
@@ -187,6 +184,10 @@ optim(par, fn, gr = NULL,
   Springer.
 }
 \note{
+  \code{optim} will work with one-dimensional \code{par}s, but the
+  default method does not work well (and will warn).  Use
+  \code{\link{optimize}} instead.
+  
   The code for methods \code{"Nelder-Mead"}, \code{"BFGS"} and
   \code{"CG"} was based originally on Pascal code in Nash (1990) that was
   translated by \code{p2c} and then hand-optimized.  Dr Nash has agreed

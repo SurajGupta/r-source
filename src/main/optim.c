@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2001  the R Development Core Team
+ *  Copyright (C) 1999-2002  the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
  */
 
 #include <Defn.h>
-#include <Rdefines.h>		/* for CREATE_STRING_VECTOR */
 #include <R_ext/Random.h>	/* for the random number generation in
 				   samin() */
 #include <R_ext/Applic.h>	/* setulb() */
@@ -41,7 +40,6 @@ static double * vect(int n)
     return (double *)R_alloc(n, sizeof(double));
 }
 
-
 typedef struct opt_struct
 {
     SEXP R_fcall;    /* function */
@@ -54,30 +52,14 @@ typedef struct opt_struct
     double* lower, *upper;
 } opt_struct, *OptStruct;
 
-static void vmmin(int n, double *b, double *Fmin, int maxit, int trace,
-		  int *mask, double abstol, double reltol, int nREPORT,
-		  OptStruct OS, int *fncount, int *grcount, int *fail);
-static void nmmin(int n, double *Bvec, double *X, double *Fmin,
-		  int *fail, double abstol, double intol, OptStruct OS,
-		  double alpha, double beta, double gamm, int trace,
-		  int *fncount, int maxit);
-static void cgmin(int n, double *Bvec, double *X, double *Fmin,
-		  int *fail, double abstol, double intol, OptStruct OS,
-		  int type, int trace, int *fncount, int *grcount, int maxit);
-static void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
-		   double *Fmin, int *fail, OptStruct OS,
-		   double factr, double pgtol, int *fncount, int *grcount,
-		   int maxit, char *msg, int trace, int nREPORT);
-static void samin(int n, double *pb, double *yb, int maxit, int tmax,
-		  double ti, int trace, OptStruct OS);
 
 
-
-static double fminfn(int n, double *p, OptStruct OS)
+static double fminfn(int n, double *p, void *ex)
 {
     SEXP s, x;
     int i;
     double val;
+    OptStruct OS = (OptStruct) ex;
     PROTECT_INDEX ipx;
 
     PROTECT(x = allocVector(REALSXP, n));
@@ -93,11 +75,12 @@ static double fminfn(int n, double *p, OptStruct OS)
     return val;
 }
 
-static void fmingr(int n, double *p, double *df, OptStruct OS)
+static void fmingr(int n, double *p, double *df, void *ex)
 {
     SEXP s, x;
     int i;
     double val1, val2, eps, epsused, tmp;
+    OptStruct OS = (OptStruct) ex;
     PROTECT_INDEX ipx;
 
     if (!isNull(OS->R_gcall)) { /* analytical derivatives */
@@ -109,8 +92,8 @@ static void fmingr(int n, double *p, double *df, OptStruct OS)
 	SETCADR(OS->R_gcall, x);
 	PROTECT_WITH_INDEX(s = eval(OS->R_gcall, OS->R_env), &ipx);
 	REPROTECT(s = coerceVector(s, REALSXP), ipx);
-	if(LENGTH(s) != n) 
-	    error("gradient in optim evaluated to length %d not %d", 
+	if(LENGTH(s) != n)
+	    error("gradient in optim evaluated to length %d not %d",
 		  LENGTH(s), n);
 	for (i = 0; i < n; i++)
 	    df[i] = REAL(s)[i] * (OS->parscale[i])/(OS->fnscale);
@@ -231,8 +214,8 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	alpha = asReal(getListElement(options, "alpha"));
 	beta = asReal(getListElement(options, "beta"));
 	gamm = asReal(getListElement(options, "gamma"));
-	nmmin(npar, dpar, opar, &val, &ifail, abstol, reltol, OS,
-	      alpha, beta, gamm, trace, &fncount, maxit);
+	nmmin(npar, dpar, opar, &val, fminfn, &ifail, abstol, reltol,
+	      (void *)OS, alpha, beta, gamm, trace, &fncount, maxit);
 	for (i = 0; i < npar; i++)
 	    REAL(par)[i] = opar[i] * (OS->parscale[i]);
 	grcount = NA_INTEGER;
@@ -242,7 +225,7 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
       tmax = asInteger(getListElement(options, "tmax"));
       temp = asReal(getListElement(options, "temp"));
       if (tmax == NA_INTEGER) error("tmax is not an integer");
-      samin (npar, dpar, &val, maxit, tmax, temp, trace, OS);
+      samin (npar, dpar, &val, fminfn, maxit, tmax, temp, trace, (void *)OS);
       for (i = 0; i < npar; i++)
 	  REAL(par)[i] = dpar[i] * (OS->parscale[i]);
       fncount = maxit;
@@ -266,8 +249,8 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	mask = (int *) R_alloc(npar, sizeof(int));
 	for (i = 0; i < npar; i++) mask[i] = 1;
-	vmmin(npar, dpar, &val, maxit, trace, mask, abstol, reltol,
-	      nREPORT, OS, &fncount, &grcount, &ifail);
+	vmmin(npar, dpar, &val, fminfn, fmingr, maxit, trace, mask, abstol,
+	      reltol, nREPORT, (void *)OS, &fncount, &grcount, &ifail);
 	for (i = 0; i < npar; i++)
 	    REAL(par)[i] = dpar[i] * (OS->parscale[i]);
 	UNPROTECT(1); /* OS->R_gcall */
@@ -288,8 +271,8 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    for (i = 0; i < npar; i++) OS->ndeps[i] = REAL(ndeps)[i];
 	    UNPROTECT(1);
 	}
-	cgmin(npar, dpar, opar, &val, &ifail, abstol, reltol, OS, type, trace,
-	      &fncount, &grcount, maxit);
+	cgmin(npar, dpar, opar, &val, fminfn, fmingr, &ifail, abstol,
+	      reltol, (void *)OS, type, trace, &fncount, &grcount, maxit);
 	for (i = 0; i < npar; i++)
 	    REAL(par)[i] = opar[i] * (OS->parscale[i]);
 	UNPROTECT(1); /* OS->R_gcall */
@@ -331,13 +314,14 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	OS->usebounds = 1;
 	OS->lower = lower;
 	OS->upper = upper;
-	lbfgsb(npar, lmm, dpar, lower, upper, nbd, &val, &ifail, OS,
-	       factr, pgtol, &fncount, &grcount, maxit, msg, trace, nREPORT);
+	lbfgsb(npar, lmm, dpar, lower, upper, nbd, &val, fminfn, fmingr,
+	       &ifail, (void *)OS, factr, pgtol, &fncount, &grcount,
+	       maxit, msg, trace, nREPORT);
 	for (i = 0; i < npar; i++)
 	    REAL(par)[i] = dpar[i] * (OS->parscale[i]);
 	UNPROTECT(1); /* OS->R_gcall */
 	PROTECT(smsg = allocVector(STRSXP, 1));
-	SET_STRING_ELT(smsg, 0, CREATE_STRING_VECTOR(msg));
+	SET_STRING_ELT(smsg, 0, mkChar(msg));
 	SET_VECTOR_ELT(res, 4, smsg);
 	UNPROTECT(1);
     } else
@@ -405,9 +389,9 @@ SEXP do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < npar; i++) {
 	eps = OS->ndeps[i]/(OS->parscale[i]);
 	dpar[i] = dpar[i] + eps;
-	fmingr(npar, dpar, df1, OS);
+	fmingr(npar, dpar, df1, (void *)OS);
 	dpar[i] = dpar[i] - 2 * eps;
-	fmingr(npar, dpar, df2, OS);
+	fmingr(npar, dpar, df2, (void *)OS);
 	for (j = 0; j < npar; j++)
 	    REAL(ans)[i * npar + j] = (OS->fnscale) * (df1[j] - df2[j])/
 		(2 * eps * (OS->parscale[i]) * (OS->parscale[j]));
@@ -452,9 +436,10 @@ static double ** Lmatrix(int n)
 in J.C. Nash, `Compact Numerical Methods for Computers', 2nd edition,
 converted by p2c then re-crafted by B.D. Ripley */
 
-static void
-vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
-      double abstol, double reltol, int nREPORT, OptStruct OS,
+void
+vmmin(int n0, double *b, double *Fmin, optimfn fminfn, optimgr fmingr,
+      int maxit, int trace, int *mask,
+      double abstol, double reltol, int nREPORT, void *ex,
       int *fncount, int *grcount, int *fail)
 {
     Rboolean accpoint, enough;
@@ -466,24 +451,30 @@ vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
     double D1, D2;
     int   n, *l;
 
+    if (maxit <= 0) {
+	*fail = 0;
+	*Fmin = fminfn(n0, b, ex);
+	*fncount = *grcount = 0;
+	return;
+    }
+
     if (nREPORT <= 0)
 	error("REPORT must be > 0 (method = \"BFGS\")");
     l = (int *) R_alloc(n0, sizeof(int));
     n = 0;
     for (i = 0; i < n0; i++) if (mask[i]) l[n++] = i;
-
     g = vect(n0);
     t = vect(n);
     X = vect(n);
     c = vect(n);
     B = Lmatrix(n);
-    f = fminfn(n, b, OS);
+    f = fminfn(n0, b, ex);
     if (!R_FINITE(f))
 	error("initial value in vmmin is not finite");
     if (trace) Rprintf("initial  value %f \n", f);
     *Fmin = f;
     funcount = gradcount = 1;
-    fmingr(n, b, g, OS);
+    fmingr(n0, b, g, ex);
     iter++;
     ilast = gradcount;
 
@@ -518,7 +509,7 @@ vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
 			count++;
 		}
 		if (count < n) {
-		    f = fminfn(n, b, OS);
+		    f = fminfn(n0, b, ex);
 		    funcount++;
 		    accpoint = R_FINITE(f) &&
 			(f <= *Fmin + gradproj * steplength * acctol);
@@ -536,7 +527,7 @@ vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
 	    }
 	    if (count < n) {/* making progress */
 		*Fmin = f;
-		fmingr(n, b, g, OS);
+		fmingr(n0, b, g, ex);
 		gradcount++;
 		iter++;
 		D1 = 0.0;
@@ -588,6 +579,7 @@ vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
 	if (iter < maxit) Rprintf("converged\n");
 	else Rprintf("stopped after %i iterations\n", iter);
     }
+    *fail = (iter < maxit) ? 0 : 1;
     *fncount = funcount;
     *grcount = gradcount;
 }
@@ -597,10 +589,9 @@ vmmin(int n0, double *b, double *Fmin, int maxit, int trace, int *mask,
 
 
 /* Nelder-Mead */
-static
-void nmmin(int n, double *Bvec, double *X, double *Fmin,
-	   int *fail, double abstol, double intol, OptStruct OS,
-	   double alpha, double beta, double gamm, int trace,
+void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
+	   int *fail, double abstol, double intol, void *ex,
+	   double alpha, double bet, double gamm, int trace,
 	   int *fncount, int maxit)
 {
     char action[50];
@@ -615,11 +606,17 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
     char tstr[6];
     double VH, VL, VR;
 
+    if (maxit <= 0) {
+	*Fmin = fminfn(n, Bvec, ex);
+	*fncount = 0;
+	*fail = 0;
+	return;
+    }
     if (trace)
 	Rprintf("  Nelder-Mead direct search function minimizer\n");
     P = matrix(n, n+1);
     *fail = FALSE;
-    f = fminfn(n, Bvec, OS);
+    f = fminfn(n, Bvec, ex);
     if (!R_FINITE(f)) {
 	error("Function cannot be evaluated at initial parameters");
 	*fail = TRUE;
@@ -665,7 +662,7 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
 		    if (j + 1 != L) {
 			for (i = 0; i < n; i++)
 			    Bvec[i] = P[i][j];
-			f = fminfn(n, Bvec, OS);
+			f = fminfn(n, Bvec, ex);
 			if (!R_FINITE(f)) f = big;
 			funcount++;
 			P[n1 - 1][j] = f;
@@ -704,7 +701,7 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
 		}
 		for (i = 0; i < n; i++)
 		    Bvec[i] = (1.0 + alpha) * P[i][C - 1] - alpha * P[i][H - 1];
-		f = fminfn(n, Bvec, OS);
+		f = fminfn(n, Bvec, ex);
 		if (!R_FINITE(f)) f = big;
 		funcount++;
 		strcpy(action, "REFLECTION     ");
@@ -716,7 +713,7 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
 			P[i][C - 1] = Bvec[i];
 			Bvec[i] = f;
 		    }
-		    f = fminfn(n, Bvec, OS);
+		    f = fminfn(n, Bvec, ex);
 		    if (!R_FINITE(f)) f = big;
 		    funcount++;
 		    if (f < VR) {
@@ -739,8 +736,8 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
 		    }
 
 		    for (i = 0; i < n; i++)
-			Bvec[i] = (1 - beta) * P[i][H - 1] + beta * P[i][C - 1];
-		    f = fminfn(n, Bvec, OS);
+			Bvec[i] = (1 - bet) * P[i][H - 1] + bet * P[i][C - 1];
+		    f = fminfn(n, Bvec, ex);
 		    if (!R_FINITE(f)) f = big;
 		    funcount++;
 
@@ -756,7 +753,8 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
 			    for (j = 0; j < n1; j++) {
 				if (j + 1 != L) {
 				    for (i = 0; i < n; i++) {
-					P[i][j] = beta * (P[i][j] - P[i][L - 1]) + P[i][L - 1];
+					P[i][j] = bet * (P[i][j] - P[i][L - 1])
+					    + P[i][L - 1];
 					size += fabs(P[i][j] - P[i][L - 1]);
 				    }
 				}
@@ -790,9 +788,9 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin,
     *fncount = funcount;
 }
 
-static
-void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
-	   double abstol, double intol, OptStruct OS, int type, int trace,
+void cgmin(int n, double *Bvec, double *X, double *Fmin,
+	   optimfn fminfn, optimgr fmingr, int *fail,
+	   double abstol, double intol, void *ex, int type, int trace,
 	   int *fncount, int *grcount, int maxit)
 {
     Rboolean accpoint;
@@ -804,6 +802,12 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
     double newstep, oldstep, setstep, steplength=1.0;
     double tol;
 
+    if (maxit <= 0) {
+	*Fmin = fminfn(n, Bvec, ex);
+	*fncount = *grcount = 0;
+	*fail = FALSE;
+	return;
+    }
     if (trace) {
 	Rprintf("  Conjugate gradients function minimiser\n");
 	switch (type) {
@@ -822,7 +826,7 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
     tol = intol * n * sqrt(intol);
 
     if (trace) Rprintf("tolerance used in gradient test=%g\n", tol);
-    f = fminfn(n, Bvec, OS);
+    f = fminfn(n, Bvec, ex);
     if (!R_FINITE(f)) {
 	error("Function cannot be evaluated at initial parameters");
     } else {
@@ -856,7 +860,7 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
 		    *fail = 1;
 		    return;
 		}
-		fmingr(n, Bvec, g, OS);
+		fmingr(n, Bvec, g, ex);
 		G1 = 0.0;
 		G2 = 0.0;
 		for (i = 0; i < n; i++) {
@@ -904,7 +908,7 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
 				count++;
 			}
 			if (count < n) {
-			    f = fminfn(n, Bvec, OS);
+			    f = fminfn(n, Bvec, ex);
 			    funcount++;
 			    accpoint = (R_FINITE(f) &&
 					f <= *Fmin + gradproj * steplength * acctol);
@@ -922,7 +926,7 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
 			    for (i = 0; i < n; i++)
 				Bvec[i] = X[i] + newstep * t[i];
 			    *Fmin = f;
-			    f = fminfn(n, Bvec, OS);
+			    f = fminfn(n, Bvec, ex);
 			    funcount++;
 			    if (f < *Fmin) {
 				*Fmin = f;
@@ -953,10 +957,9 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin, int *fail,
     *grcount = gradcount;
 }
 
-static
 void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
-	    double *Fmin, int *fail, OptStruct OS,
-	    double factr, double pgtol,
+	    double *Fmin, optimfn fminfn, optimgr fmingr, int *fail,
+	    void *ex, double factr, double pgtol,
 	    int *fncount, int *grcount, int maxit, char *msg,
 	    int trace, int nREPORT)
 {
@@ -986,10 +989,10 @@ void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
 	       tr, lsave, isave, dsave);
 /*	Rprintf("in lbfgsb - %s\n", task);*/
 	if (strncmp(task, "FG", 2) == 0) {
-	    f = fminfn(n, x, OS);
+	    f = fminfn(n, x, ex);
 	    if (!R_FINITE(f))
 		error("L-BFGS-B needs finite values of fn");
-	    fmingr(n, x, g, OS);
+	    fmingr(n, x, g, ex);
 	} else if (strncmp(task, "NEW_X", 5) == 0) {
 	    if(trace == 1 && (iter % nREPORT == 0)) {
 		Rprintf("iter %4d value %f\n", iter, f);
@@ -1025,8 +1028,8 @@ void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
 #define E1 1.7182818  /* exp(1.0)-1.0 */
 #define STEPS 100
 
-static void samin(int n, double *pb, double *yb, int maxit, int tmax,
-		  double ti, int trace, OptStruct OS)
+void samin(int n, double *pb, double *yb, optimfn fminfn, int maxit,
+	   int tmax, double ti, int trace, void *ex)
 
 /* Given a starting point pb[0..n-1], simulated annealing minimization
    is performed on the function fminfn. The starting temperature
@@ -1044,7 +1047,7 @@ static void samin(int n, double *pb, double *yb, int maxit, int tmax,
 
     p = vect (n); dp = vect (n); ptry = vect (n);
     GetRNGstate();
-    *yb = fminfn (n, pb, OS);  /* init best system state pb, *yb */
+    *yb = fminfn (n, pb, ex);  /* init best system state pb, *yb */
     if (!R_FINITE(*yb)) *yb = big;
     for (j = 0; j < n; j++) p[j] = pb[j];
     y = *yb;  /* init system state p, y */
@@ -1064,7 +1067,7 @@ static void samin(int n, double *pb, double *yb, int maxit, int tmax,
 		dp[i] = scale * t * norm_rand();  /* random perturbation */
 	    for (i = 0; i < n; i++)
 		ptry[i] = p[i] + dp[i];  /* new candidate point */
-	    ytry = fminfn (n, ptry, OS);
+	    ytry = fminfn (n, ptry, ex);
 	    if (!R_FINITE(ytry)) ytry = big;
 	    dy = ytry - y;
 	    if ((dy <= 0.0) || (unif_rand() < exp(-dy/t))) {  /* accept new point? */

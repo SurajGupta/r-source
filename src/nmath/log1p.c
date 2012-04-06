@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000 The R Development Core Team
+ *  Copyright (C) 2000, 2002 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,10 +35,19 @@
  */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+# include <config.h>
 #endif
 #include "nmath.h"
 
+#ifndef MATHLIB_STANDALONE
+/* back-compatibility entry point */
+double Rf_log1p(double x)
+{
+    return log1p(x);
+}
+#endif
+
+#ifndef HAVE_LOG1P
 double log1p(double x)
 {
     /* series for log1p on the interval -.375 to .375
@@ -127,6 +136,7 @@ double log1p(double x)
     }
     return log(1 + x);
 }
+#endif
 
 
 

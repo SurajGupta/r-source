@@ -15,7 +15,9 @@ ts <- function(data = NA, start = 1, end = numeric(0), frequency = 1,
                else paste("Series", seq(nseries))
                )
 {
-    if(is.matrix(data) || is.data.frame(data)) {
+    if(is.data.frame(data)) data <- data.matrix(data)
+#   if(!is.numeric(data)) stop("`data'  must be a numeric vector or matrix")
+    if(is.matrix(data)) {
 	nseries <- ncol(data)
 	ndata <- nrow(data)
         dimnames(data) <- list(NULL, names)
@@ -70,9 +72,9 @@ tsp <- function(x) attr(x, "tsp")
     cl <- class(x)
     attr(x, "tsp") <- value # does error-checking internally
     if (inherits(x, "ts") && is.null(value))
-        class(x) <- cl["ts" != cl]
-    if (inherits(x, "mts") && is.null(value))
-        class(x) <- cl["mts" != cl]
+        class(x) <- if(!identical(cl,"ts")) cl["ts" != cl]
+    else if (inherits(x, "mts") && is.null(value))
+        class(x) <- if(!identical(cl,"mts")) cl["mts" != cl]
     x
 }
 
@@ -370,7 +372,7 @@ print.ts <- function(x, calendar, ...)
     } else { # multi-column matrix
 	if(calendar && fr.x > 1) {
 	    tm <- time(x)
-	    t2 <- 1 + round(fr.x*(tm %%1))# round() was floor()
+	    t2 <- 1 + round(fr.x*((tm+0.001) %%1))
 	    p1 <- format(floor(tm))# yr
 	    rownames(x) <-
 		if(fr.x == 12)
@@ -448,23 +450,27 @@ function (x, y = NULL, type = "l", xlim = NULL, ylim = NULL,
 	return(invisible())
     }
     ## Else : no y, only x
+
     if(missing(ylab)) {
         ylab <- colnames(x)
         if(length(ylab) != 1)
             ylab <- xlabel
     }
-    xy <- xy.coords(x,y,log=log)# using this mainly because of the log
-    ## but it doesn't work correctly if x is a matrix!
-    if(is.null(xlim)) xlim <- range(xy$x)
-#    if(is.null(ylim)) ylim <- range(xy$y[is.finite(xy$y)])
-    if(is.null(ylim)) {
-        yvals <- as.vector(x)
-        ylim <- range(yvals[is.finite(yvals)])
+    ## using xy.coords() mainly for the log treatment
+    if(is.matrix(x)) {
+        k <- ncol(x)
+        tx <- time(x)
+        xy <- xy.coords(x = matrix(rep(tx, k), ncol = k),
+                        y = x, log=log)
+        xy$x <- tx
     }
+    else xy <- xy.coords(x, NULL, log=log)
+    if(is.null(xlim)) xlim <- range(xy$x)
+    if(is.null(ylim)) ylim <- range(xy$y[is.finite(xy$y)])
     plot.new()
     plot.window(xlim, ylim, log, ...)
     if(is.matrix(x)) {
-	for(i in 1:ncol(x))
+	for(i in seq(length=k))
 	    lines.default(xy$x, x[,i],
 			  col = col[(i-1) %% length(col) + 1],
 			  lty = lty[(i-1) %% length(lty) + 1],

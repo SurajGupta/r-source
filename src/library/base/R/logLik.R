@@ -29,7 +29,10 @@ logLik.glm <- function(object, ...)
 {
     if(length(list(...)))
         warning("extra arguments discarded")
+    fam <- family(object)$family
     p <- object$rank
+    ## allow for estimated dispersion
+    if(fam %in% c("gaussian", "Gamma", "inverse.gaussian")) p <- p + 1
     val <- p - object$aic / 2
     attr(val, "df") <- p
     class(val) <- "logLik"
@@ -59,7 +62,7 @@ logLik.lm <- function(object, REML = FALSE, ...)
     if(REML) val <- val - sum(log(abs(diag(object$qr$qr)[1:p])))
     attr(val, "nall") <- N0
     attr(val, "nobs") <- N
-    attr(val, "df") <- p
+    attr(val, "df") <- p + 1
     class(val) <- "logLik"
     val
 }

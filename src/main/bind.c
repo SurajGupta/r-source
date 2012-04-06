@@ -476,7 +476,7 @@ static void NewExtractNames(SEXP v, SEXP base, SEXP tag, int recurse,
 	    nameData->firstpos = data->ans_nnames;
 	nameData->count++;
 	namei = NewName(base, R_NilValue, 0, 1, ++(nameData->seqno));
-	SET_STRING_ELT(data->ans_names, (data->ans_nnames)++, base);
+	SET_STRING_ELT(data->ans_names, (data->ans_nnames)++, namei);
     }
     if (tag != R_NilValue) {
 	if (nameData->firstpos >= 0 && nameData->count == 1)
@@ -567,10 +567,9 @@ SEXP do_c_dflt(SEXP call, SEXP op, SEXP args, SEXP env)
 
     usenames = 1;
     recurse = 0;
-    if (length(args) > 1)
-	PROTECT(args = ExtractOptionals(args, &recurse, &usenames));
-    else
-	PROTECT(args);
+    /* this was only done for length(args) > 1 prior to 1.5.0,
+       _but_ `recursive' might be the only argument */
+    PROTECT(args = ExtractOptionals(args, &recurse, &usenames));
 
     /* Determine the type of the returned value. */
     /* The strategy here is appropriate because the */

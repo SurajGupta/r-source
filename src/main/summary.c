@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2000   Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997-2002   Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -319,7 +319,7 @@ static void cprod(Rcomplex *x, int n, Rcomplex *value)
 SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, a;
-    double tmp;
+    double tmp, s;
     Rcomplex z, ztmp, zcum;
     int itmp, icum=0, int_a, empty;
     short iop;
@@ -336,8 +336,20 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
     iop = PRIMVAL(op);
     switch(iop) {
     case 0:/* sum */
-	ans_type = INTSXP;/* try to keep if possible.. */
-	zcum.r = zcum.i = 0.; icum = 0; break;
+    /* we need to find out if _all_ the arguments are integer in advance, 
+       as we might overflow before we find out */
+	a = args;
+	int_a = 1;
+	while (a != R_NilValue) {
+	    if(!isInteger(CAR(a))) {
+		int_a = 0;
+		break;
+	    }
+	    a = CDR(a);
+	}
+	ans_type = int_a ? INTSXP: REALSXP; /* try to keep if possible.. */
+	zcum.r = zcum.i = 0.; icum = 0; 
+	break;
 
     case 2:/* min */
 	DbgP2("do_summary: min(.. na.rm=%d) ", narm);
@@ -347,7 +359,8 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 #else
 	zcum.r = NA_REAL;
 #endif
-	icum = INT_MAX; break;
+	icum = INT_MAX; 
+	break;
 
     case 3:/* max */
 	DbgP2("do_summary: max(.. na.rm=%d) ", narm);
@@ -440,9 +453,14 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 		    isum(INTEGER(a), length(a), &itmp);
 		    if(updated) {
 			if(itmp == NA_INTEGER) goto na_answer;
-			if(ans_type == INTSXP)
-			    icum += itmp;
-			else
+			if(ans_type == INTSXP) {
+			    s = (double) icum + (double) itmp;
+			    if(s > INT_MAX || s < R_INT_MIN){
+				warning("Integer overflow in sum(.); use sum(as.numeric(.))");
+				goto na_answer;
+			    }
+			    else icum += itmp;
+			} else
 			    zcum.r += Int2Real(itmp);
 		    }
 		    break;
@@ -519,10 +537,13 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	    }/* switch(iop) */
 
-	} else/*len(a)=0*/ if(ans_type < TYPEOF(a) && ans_type != CPLXSXP) {
-	    if(!empty && ans_type == INTSXP)
-		zcum.r = Int2Real(icum);
-	    ans_type = TYPEOF(a);
+	} else { /*len(a)=0*/ 
+	    if(TYPEOF(a) == CPLXSXP && (iop == 2 || iop == 3)) goto badmode;
+	    if(ans_type < TYPEOF(a) && ans_type != CPLXSXP) {
+		if(!empty && ans_type == INTSXP)
+		    zcum.r = Int2Real(icum);
+		ans_type = TYPEOF(a);
+	    }
 	}
 	DbgP3(" .. upd.=%d, empty: old=%d", updated, empty);
 	if(empty && updated) empty=0;
@@ -531,8 +552,13 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
     } /*-- while(..) loop over args */
 
     /*-------------------------------------------------------*/
-    if(empty && (iop == 2 || iop == 3))
-	warningcall(call,"no finite arguments to min/max; returning extreme.");
+    if(empty && (iop == 2 || iop == 3)) {
+	if(iop == 2)
+	    warning("no finite arguments to min; returning Inf");
+	else 
+	    warning("no finite arguments to max; returning -Inf");
+	ans_type = REALSXP;
+    }
 
     ans = allocVector(ans_type, 1);
     switch(ans_type) {

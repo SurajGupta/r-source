@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-2  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,12 +28,23 @@
 #include <config.h>
 #endif
 
+/* we have a substitute snprintf */
+#ifndef HAVE_SNPRINTF
+#define HAVE_SNPRINTF 1
+#endif
+
 #if !defined(Unix) || defined(HAVE_BSD_NETWORKING)
 
 #ifdef Win32
-#define INCLUDE_WINSOCK
-#include "win32config.h"
+#include <io.h>
+#include <winsock.h>
 #define _WINSOCKAPI_
+extern void R_ProcessEvents(void);
+#endif
+
+#ifdef HAVE_STRINGS_H
+   /* may be needed to define bzero in FD_ZERO (eg AIX) */
+  #include <strings.h>
 #endif
 
 #include <R_ext/R-ftp-http.h>
@@ -64,9 +75,6 @@
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
 #endif
 
 

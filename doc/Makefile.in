@@ -20,9 +20,7 @@ HELP2MAN = $(PERL) $(top_srcdir)/tools/help2man.pl
 all: Makefile R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 R: Makefile @MAINTAINER_MODE_TRUE@ maintainer-build
 	@for d in $(SUBDIRS); do \
@@ -84,21 +82,21 @@ distclean: clean
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
-	@rm -f Makefile
+	-@rm -f Makefile
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use; it"
 	@echo "deletes files that may need special rules to rebuild"
-	@rm -f $(srcdir)/R.1
+	-@rm -f $(srcdir)/R.1
 
 maintainer-build: $(srcdir)/R.1 windocs
-$(srcdir)/R.1: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/src/scripts/R.sh.in $(srcdir)/R.aux
+$(srcdir)/R.1: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/VERSION $(top_srcdir)/date-stamp $(top_srcdir)/src/scripts/R.sh.in $(srcdir)/R.aux
 	@(cd $(top_builddir)/src/scripts && $(MAKE) R.fe)
 	@$(HELP2MAN) --include=$(srcdir)/R.aux --no-info --output=$@ \
 	  --name="a language for data analysis and graphics" \
 	  $(top_builddir)/src/scripts/R.fe
 
 windocs:
-	@(cd $(top_srcdir)/src/gnuwin32 && $(MAKE) docfiles)
+	@(cd $(top_srcdir)/src/gnuwin32 && $(MAKE) -f Makefile.docfiles)
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \

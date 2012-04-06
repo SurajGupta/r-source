@@ -98,7 +98,7 @@ spec.pgram <-
             x[, i] <- x[, i] - mean(x[, i]) - sum(x[, i] * t) * t/sumt2
     }
     else if (demean) {
-        x <- sweep(x, 2, apply(x, 2, mean))
+        x <- sweep(x, 2, colMeans(x))
     }
     x <- spec.taper(x, taper)
     ## to correct for tapering: Bloomfield (1976, p. 194)
@@ -182,7 +182,7 @@ plot.spec <-
             stop("coverage probability out of range [0,1)")
         tail <- (1 - coverage)
         df <- spec.obj$df
-        upper.quantile <- 1 - tail * (1 - pchisq(df, df))
+        upper.quantile <- 1 - tail * pchisq(df, df, lower.tail = FALSE)
         lower.quantile <- tail * pchisq(df, df)
         1/(qchisq(c(upper.quantile, lower.quantile), df)/df)
     }

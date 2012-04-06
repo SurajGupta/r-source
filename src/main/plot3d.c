@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2001   Robert Gentleman, Ross Ihaka and the R core team.
+ *  Copyright (C) 1997-2002   Robert Gentleman, Ross Ihaka and the R core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1161,11 +1161,6 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 	    errorcall(call, "increasing y values expected");
     }
 
-#ifdef OLDcontour
-    ctr_xtol = 1e-3 * fabs(REAL(x)[nx-1]-REAL(x)[0]);
-    ctr_ytol = 1e-3 * fabs(REAL(y)[ny-1]-REAL(y)[0]);
-#endif
-
     for (i = 0; i < nc; i++)
 	if (!R_FINITE(REAL(c)[i]))
 	    errorcall(call, "illegal NA contour values");
@@ -1186,16 +1181,11 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 	return R_NilValue;
     }
 
-#ifdef OLDcontour 
-    /* R versions up to incl. 0.61.3, 1998-05-03): */
-    atom = DBL_EPSILON * (zmax - zmin);
-#else
     /* change to 1e-3, reconsidered because of PR#897
      * but 1e-7, and even  2*DBL_EPSILON do not prevent inf.loop in contour().
      * maybe something like   16 * DBL_EPSILON * (..).
      * see also MAX_ns above */
     atom = 1e-3 * (zmax - zmin);
-#endif
 
     /* Initialize the segment data base */
 
@@ -1403,6 +1393,15 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     nc = length(sc);
     args = CDR(args);
 
+    if (nx < 2 || ny < 2)
+	errorcall(call, "insufficient x or y values");
+
+    if (nrows(sz) != nx || ncols(sz) != ny)
+	errorcall(call, "dimension mismatch");
+
+    if (nc < 1)
+	errorcall(call, "no contour values");
+
     PROTECT(scol = FixupCol(CAR(args), NA_INTEGER));
     ncol = length(scol);
 
@@ -1573,7 +1572,7 @@ static void MakeVector (double x, double y, double z, Vector3d v)
 /* Set up the light source */
 static double Light[4];
 static double Shade;
-static int DoLighting;
+static Rboolean DoLighting;
 
 static void SetUpLight(double theta, double phi)
 {
@@ -2098,16 +2097,37 @@ static void PerspAxis(double *x, double *y, double *z,
     }
 }
 
+/* Determine the transformed (x, y) coordinates (in USER space)
+ * for the four corners of the x-y plane of the persp plot
+ * These will be used to determine which sides of the persp
+ * plot to label with axes
+ * The strategy is to determine which corner has the lowest y-value
+ * to decide which of the x- and y-axes to label AND which corner
+ * has the lowest x-value to decide which of the z-axes to label
+ */
 static void PerspAxes(double *x, double *y, double *z,
                       char *xlab, char *ylab, char *zlab,
 		      int nTicks, int tickType, DevDesc *dd) {
     int xAxis=0, yAxis=0, zAxis=0; /* -Wall */
     int xpdsave;
-    Vector3d u0 = {0, 0, 0, 1};
-    Vector3d u1 = {1, 0, 0, 1};
-    Vector3d u2 = {0, 1, 0, 1};
-    Vector3d u3 = {1, 1, 0, 1};
+    Vector3d u0, u1, u2, u3;
     Vector3d v0, v1, v2, v3;
+    u0[0] = x[0];
+    u0[1] = y[0];
+    u0[2] = z[0];
+    u0[3] = 1;
+    u1[0] = x[1];
+    u1[1] = y[0];
+    u1[2] = z[0];
+    u1[3] = 1;
+    u2[0] = x[0];
+    u2[1] = y[1];
+    u2[2] = z[0];
+    u2[3] = 1;
+    u3[0] = x[1];
+    u3[1] = y[1];
+    u3[2] = z[0];
+    u3[3] = 1;
     TransVector(u0, VT, v0);
     TransVector(u1, VT, v1);
     TransVector(u2, VT, v2);
@@ -2218,12 +2238,18 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     xlab = CAR(args); args = CDR(args);
     ylab = CAR(args); args = CDR(args);
     zlab = CAR(args); args = CDR(args);
+    if (!isString(xlab) || length(xlab) < 1)
+	error("`xlab' must be a character vector of length 1");
+    if (!isString(ylab) || length(ylab) < 1)
+	error("`ylab' must be a character vector of length 1");
+    if (!isString(zlab) || length(zlab) < 1)
+	error("`zlab' must be a character vector of length 1");
 
     if (R_FINITE(Shade) && Shade <= 0) Shade = 1;
     if (R_FINITE(ltheta) && R_FINITE(lphi) && R_FINITE(Shade))
-	DoLighting = 1;
+	DoLighting = TRUE;
     else
-	DoLighting = 0;
+	DoLighting = FALSE;
 
     if (!scale) {
 	double s;
@@ -2252,6 +2278,7 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(col = FixupCol(col, Rf_gpptr(dd)->bg));
     ncol = LENGTH(col);
     if (ncol < 1) errorcall(call, "invalid col specification");
+    if(!R_OPAQUE(INTEGER(col)[0])) DoLighting = FALSE;
     PROTECT(border = FixupCol(border, Rf_gpptr(dd)->fg));
     if (length(border) < 1) errorcall(call, "invalid border specification");
 

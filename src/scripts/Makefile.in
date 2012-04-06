@@ -10,9 +10,9 @@ subdir = src/scripts
 
 include $(top_builddir)/Makeconf
 
-SCRIPTS_S = BATCH LINK Rcmd Rdiff Rd2dvi Rd2txt help pager
+SCRIPTS_S = BATCH LINK Rcmd Rdiff Rd2dvi Rd2txt config help pager texi2dvi
 SCRIPTS_B_IN = COMPILE.in INSTALL.in REMOVE.in Rdconv.in Rdindex.in \
-	Rprof.in SHLIB.in Sd2Rd.in build.in check.in
+	Rprof.in SHLIB.in Sd2Rd.in build.in check.in f77.in
 SCRIPTS_B = $(SCRIPTS_B_IN:.in=)
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
@@ -22,16 +22,12 @@ DISTFILES = Makefile.in $(SCRIPTS_S) $(SCRIPTS_B_IN) R.sh.in
 .SUFFIXES: .in
 
 .in:
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 all: Makefile R
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 	@(for f in $(SCRIPTS_B); do \
 	    echo "$${f}: $(srcdir)/$${f}.in"; \
 	  done) >> $@
@@ -42,12 +38,13 @@ R: $(SCRIPTS_B) R.fe
 
 $(SCRIPTS_B): $(top_builddir)/config.status
 
-# NOTE: the front-end shell script now (2000-08-02) also contains the
-# version information.  As we keep this information outside configure
-# (as otherwise developers would have to reconfigure and hence rebuild
-# every day), we now first create `R.sh' from `R.sh.in' via configure,
-# and then use sed to create the front end (`R.fe') which gets installed
-# as `R'.
+## <NOTE>
+## The front-end shell script now (2000-08-02) also contains the version
+## information.  As we keep this information outside configure (as
+## otherwise developers would have to reconfigure and hence rebuild
+## every day), we now first create 'R.sh' from 'R.sh.in' via configure,
+## and then use sed to create the front end ('R.fe') which gets
+## installed as 'R'.
 R.sh: $(srcdir)/R.sh.in $(top_builddir)/config.status
 R.fe: R.sh $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	@echo "creating $(subdir)/$@"
@@ -58,6 +55,7 @@ R.fe: R.sh $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	       s@REPLACE_BY_VERSION@$${v}@; \
 	       s@REPLACE_BY_YEAR@$${y}@" < R.sh > $@)
 	@chmod +x $@
+## </NOTE>
 
 $(top_builddir)/libtool:
 	@(cd $(@D); $(MAKE) $(@F))
@@ -93,7 +91,7 @@ uninstall:
 mostlyclean: clean
 clean:
 distclean:
-	@rm -f Makefile R.fe R.sh $(SCRIPTS_B)
+	-@rm -f Makefile R.fe R.sh $(SCRIPTS_B)
 maintainer-clean: distclean
 
 TAGS info dvi check:

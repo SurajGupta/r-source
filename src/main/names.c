@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -85,8 +85,8 @@ FUNTAB R_FunTab[] =
 {"break",	do_break, CTXT_BREAK,	0,	-1,	PP_BREAK},
 {"next",	do_break, CTXT_NEXT,	0,	-1,	PP_NEXT},
 {"return",	do_return,	0,	0,	-1,	PP_RETURN},
-{"stop",	do_stop,	0,	11,	1,	PP_FUNCALL},
-{"warning",	do_warning,	0,	111,	1,	PP_FUNCALL},
+{"stop",	do_stop,	0,	11,	2,	PP_FUNCALL},
+{"warning",	do_warning,	0,	111,	2,	PP_FUNCALL},
 {"geterrmessage",do_geterrmessage, 0,	11,	0,	PP_FUNCALL},
 {"restart",	do_restart,	0,	11,	1,	PP_FUNCALL},
 {"function",	do_function,	0,	0,	-1,	PP_FUNCTION},
@@ -108,15 +108,15 @@ FUNTAB R_FunTab[] =
 {"browser",	do_browser,	0,	100,	0,	PP_FUNCALL},
 {"debug",	do_debug,	0,	101,	1,	PP_FUNCALL},
 {"undebug",	do_debug,	1,	101,	1,	PP_FUNCALL},
-{"trace",	do_trace,	0,	101,	1,	PP_FUNCALL},
-{"untrace",	do_trace,	1,	101,	1,	PP_FUNCALL},
+{".primTrace",	do_trace,	0,	101,	1,	PP_FUNCALL},
+{".primUntrace",do_trace,	1,	101,	1,	PP_FUNCALL},
 {".Internal",	do_internal,	0,	0,	1,	PP_FUNCALL},
 {"on.exit",	do_onexit,	0,	100,	1,	PP_FUNCALL},
 {"Recall",	do_recall,	0,	10,	-1,	PP_FUNCALL},
 {"delay",	do_delay,	0,	11,	2,	PP_FUNCALL},
-{".Alias",	do_alias,	0,	1,	1,	PP_FUNCALL},
+/*{".Alias",	do_alias,	0,	1,	1,	PP_FUNCALL},*/
 {".Primitive",	do_primitive,	0,	1,	1,	PP_FUNCALL},
-{"identical",	do_ident,	0,	11,	2,	PP_FUNCALL}, 
+{"identical",	do_ident,	0,	11,	2,	PP_FUNCALL},
 
 
 /* Binary Operators */
@@ -209,6 +209,7 @@ FUNTAB R_FunTab[] =
 {"atan",	do_atan,	10002,	1,	1,	PP_FUNCALL},
 {"log",		do_log,		10003,	11,	1,	PP_FUNCALL},
 {"signif",	do_signif,	10004,	11,	1,	PP_FUNCALL},
+{"abs",		do_abs,		6,	1,	1,	PP_FUNCALL},
 
 /* KH(1999/09/12)-> complex: {"abs", do_math1, 0, 1, 1, PP_FUNCALL}, */
 {"floor",	do_math1,	1,	1,	1,	PP_FUNCALL},
@@ -218,6 +219,7 @@ FUNTAB R_FunTab[] =
 {"trunc",	do_math1,	5,	1,	1,	PP_FUNCALL},
 
 {"exp",		do_math1,	10,	1,	1,	PP_FUNCALL},
+{"expm1",	do_math1,	11,	11,	1,	PP_FUNCALL},
 {"log1p",	do_math1,	12,	11,	1,	PP_FUNCALL},
 
 {"cos",		do_math1,	20,	1,	1,	PP_FUNCALL},
@@ -288,7 +290,7 @@ FUNTAB R_FunTab[] =
 {"Mod",		do_cmathfuns,	3,	1,	1,	PP_FUNCALL},
 {"Arg",		do_cmathfuns,	4,	1,	1,	PP_FUNCALL},
 {"Conj",	do_cmathfuns,	5,	1,	1,	PP_FUNCALL},
-{"abs",		do_cmathfuns,	6,	1,	1,	PP_FUNCALL},
+/* {"abs",		do_cmathfuns,	6,	1,	1,	PP_FUNCALL},*/
 
 
 /* Mathematical Functions of Three Numeric (+ 1-2 int) Variables */
@@ -445,6 +447,7 @@ FUNTAB R_FunTab[] =
 {"tolower",	do_tolower,	1,	11,	1,	PP_FUNCALL},
 {"toupper",	do_toupper,	1,	11,	1,	PP_FUNCALL},
 {"chartr",	do_chartr,	1,	11,	3,	PP_FUNCALL},
+{"sprintf",	do_sprintf,	1,	11,	-1,	PP_FUNCALL},
 
 
 /* Type Checking (typically implemented in ./coerce.c ) */
@@ -488,14 +491,13 @@ FUNTAB R_FunTab[] =
 
 /* Miscellaneous */
 
-#ifdef HAVE_TIMES
 {"proc.time",	do_proctime,	0,	1,	0,	PP_FUNCALL},
 {"gc.time",	do_gctime,	0,	1,	0,	PP_FUNCALL},
-#endif
 {"Version",	do_version,	0,	11,	0,	PP_FUNCALL},
 {"machine",	do_machine,	0,	11,	0,	PP_FUNCALL},
 {"Machine",	do_Machine,	0,	11,	0,	PP_FUNCALL},
 {"commandArgs", do_commandArgs, 0,	11,	0,	PP_FUNCALL},
+{"int.unzip",	do_int_unzip,	0,	11,    -1,	PP_FUNCALL},
 #ifdef Win32
 {"system",	do_system,	0,	11,	3,	PP_FUNCALL},
 #else
@@ -506,7 +508,6 @@ FUNTAB R_FunTab[] =
 {"help.start",	do_helpstart,	0,	11,	0,	PP_FUNCALL},
 {"show.help.item",do_helpitem,	0,	11,	3,	PP_FUNCALL},
 {"flush.console",do_flushconsole,0,	11,	0,	PP_FUNCALL},
-{"int.unzip",	do_int_unzip,	0,	11,    -1,	PP_FUNCALL},
 {"win.version", do_winver,	0,	11,	0,	PP_FUNCALL},
 {"saveDevga",	do_saveDevga,	0,	11,	3,	PP_FUNCALL},
 {"shell.exec",	do_shellexec,	0,	11,	1,	PP_FUNCALL},
@@ -585,9 +586,10 @@ FUNTAB R_FunTab[] =
 {"sys.parents",	do_sys,		8,	10,	-1,	PP_FUNCALL},
 {"sys.function",do_sys,		9,	10,	-1,	PP_FUNCALL},
 {"parent.frame",do_parentframe,	0,	10,	-1,	PP_FUNCALL},
-{"sort",	do_sort,	1,	11,	1,	PP_FUNCALL},
+{"sort",	do_sort,	1,	11,	2,	PP_FUNCALL},
 {"is.unsorted",	do_isunsorted,	0,	11,	1,	PP_FUNCALL},
 {"psort",	do_psort,	0,	11,	2,	PP_FUNCALL},
+{"qsort",	do_qsort,	0,	11,	2,	PP_FUNCALL},
 {"order",	do_order,	0,	11,	-1,	PP_FUNCALL},
 {"rank",	do_rank,	0,	11,	1,	PP_FUNCALL},
 {"missing",	do_missing,	1,	0,	1,	PP_FUNCALL},
@@ -614,6 +616,10 @@ FUNTAB R_FunTab[] =
 {"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL},
 {"lapply",	do_lapply,	0,	10,	2,	PP_FUNCALL},
 {"apply",	do_apply,	0,	11,	3,	PP_FUNCALL},
+{"colSums",	do_colsum,	0,	11,	4,	PP_FUNCALL},
+{"colMeans",	do_colsum,	1,	11,	4,	PP_FUNCALL},
+{"rowSums",	do_colsum,	2,	11,	4,	PP_FUNCALL},
+{"rowMeans",	do_colsum,	3,	11,	4,	PP_FUNCALL},
 {"Rprof",	do_Rprof,	0,	11,	3,	PP_FUNCALL},
 {"object.size",	do_objectsize,	0,	11,	1,	PP_FUNCALL},
 {"mem.limits",	do_memlimits,	0,	11,	2,	PP_FUNCALL},
@@ -711,7 +717,7 @@ FUNTAB R_FunTab[] =
 {"rect",	do_rect,	0,	111,	6,	PP_FUNCALL},
 {"polygon",	do_polygon,	0,	111,	5,	PP_FUNCALL},
 {"par",		do_par,		0,	11,	1,	PP_FUNCALL},
-{"readonly.pars",do_readonlypars,0,	11,	0,	PP_FUNCALL},   
+{"readonly.pars",do_readonlypars,0,	11,	0,	PP_FUNCALL},
 {"segments",	do_segments,	0,	111,	6,	PP_FUNCALL},
 {"arrows",	do_arrows,	0,	111,	9,	PP_FUNCALL},
 {"layout",	do_layout,	0,	111,	10,	PP_FUNCALL},
@@ -788,6 +794,8 @@ FUNTAB R_FunTab[] =
 {"pipe", 	do_pipe,	0,      11,     3,      PP_FUNCALL},
 {"fifo", 	do_fifo,	0,      11,     4,      PP_FUNCALL},
 {"gzfile", 	do_gzfile,	0,      11,     4,      PP_FUNCALL},
+{"unz", 	do_unz,		0,      11,     3,      PP_FUNCALL},
+{"bzfile", 	do_bzfile,	0,      11,     3,      PP_FUNCALL},
 {"seek", 	do_seek,	0,      11,     4,      PP_FUNCALL},
 {"truncate", 	do_truncate,	0,      11,     1,      PP_FUNCALL},
 {"pushBack", 	do_pushback,	0,      11,     3,      PP_FUNCALL},
@@ -935,7 +943,7 @@ void InitNames()
     R_ParseText = R_NilValue;
     /* String constants (CHARSXP values */
     /* Note: changed from mkChar so mkChar can see if it is getting
-       "NA" and then retrun NA_STRING rather than alloc a new CHAR */
+       "NA" and then return NA_STRING rather than alloc a new CHAR */
     /* NA_STRING */
     NA_STRING = allocString(strlen("NA"));
     strcpy(CHAR(NA_STRING), "NA");

@@ -18,7 +18,7 @@ SOURCES_C = \
 	character.c coerce.c colors.c complex.c connections.c context.c \
 	cov.c cum.c \
 	dcf.c datetime.c debug.c devPS.c devPicTeX.c deparse.c deriv.c \
-	devices.c dotcode.c dstruct.c duplicate.c \
+	devices.c dotcode.c dounzip.c dstruct.c duplicate.c \
 	engine.c envir.c errors.c eval.c \
 	format.c fourier.c \
 	gram.c gram-ex.c graphics.c \
@@ -29,25 +29,26 @@ SOURCES_C = \
 	objects.c optim.c optimize.c options.c \
 	par.c paste.c platform.c \
 	plot.c plot3d.c plotmath.c \
-	print.c printarray.c printvector.c printutils.c \
+	print.c printarray.c printvector.c printutils.c qsort.c \
 	random.c regex.c relop.c \
 	saveload.c scan.c seq.c serialize.c size.c sort.c source.c split.c \
-	subassign.c subscript.c subset.c summary.c \
+	sprintf.c subassign.c subscript.c subset.c summary.c \
 	unique.c util.c \
 	version.c vfonts.c
-
 SOURCES_F = \
 	xxxpr.f
-## <FIXME>
-## Need better names ...
-EXTRA_SOURCES_C = alloca.c strdup.c
-## </FIXME>
+EXTRA_SOURCES_C = \
+	alloca.c acosh.c asinh.c atanh.c \
+	snprintf.c strdup.c strncasecmp.c \
+	vsnprintf.c
 DEPENDS = $(SOURCES_C:.c=.d) $(EXTRA_SOURCES_C:.c=.d)
 SOURCES = $(SOURCES_C) $(SOURCES_F)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o)
 HEADERS = \
 	Rregex.h Rstrptime.h \
-	arithmetic.h
+	arithmetic.h \
+	qsort-body.c \
+	unzip.h
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in Makefile.win \
@@ -57,9 +58,15 @@ DISTFILES = Makefile.in Makefile.win \
 	$(SOURCES_F) \
 	gram.y
 
+## these are built with CPICFLAGS so safe to use in libR.so
+ZLIB_CPPFLAGS = @BUILD_ZLIB_TRUE@ -I$(top_srcdir)/src/extra/zlib
+## use an explicit library: there might be an unsatisfactory -lz around
+R_ZLIBS = @BUILD_ZLIB_TRUE@ ../extra/zlib/libz.a
+R_XDR = @BUILD_XDR_TRUE@ ../extra/xdr/libxdr.a
+
 ## <FIXME>
-## Names in here should use `$(top_builddir)' instead ...
-RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a 
+## Names in here should use '$(top_builddir)' instead ...
+RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a $(R_XDR)
 ## </FIXME>
 
 Rexecbin_PROGRAMS = R.bin
@@ -70,26 +77,26 @@ R_bin_OBJECTS = $(OBJECTS)
 ## -export-symbols SYMFILE.
 @USE_LIBTOOL_TRUE@R_bin_LDFLAGS = -export-dynamic
 ## </FIXME>
-R_bin_LDADD = @LIBOBJS@ @ALLOCA@ $(RLIBS) $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS)
+R_bin_LDADD = @LIBOBJS@ @ALLOCA@ $(RLIBS) $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(R_ZLIBS)
 ## <NOTE>
 ## Automake would figure this out itself.
-R_bin_DEPENDENCIES = @LIBOBJS@ @ALLOCA@ $(RLIBS) @EXPORTFILE@
+R_bin_DEPENDENCIES = @LIBOBJS@ @ALLOCA@ $(RLIBS) @USE_EXPORTFILE_TRUE@ $(top_builddir)/etc/R.exp
 ## </NOTE>
 
 ## <FIXME>
-## Change to `libR.la' when using libtool for shlibs.
-## Remove when using automake ... also fix install then.
+## Change to 'libR.la' when using libtool for shlibs.
+## Remove when using automake ... also fix target 'install' then.
 libR_la = libR$(LIBR_EXT)
 ## </FIXME>
 Rexeclib_LTLIBRARIES = $(libR_la)
 libR_la_SOURCES = $(SOURCES)
-libR_la_LDFLAGS = 
+libR_la_LDFLAGS =
 libR_la_OBJECTS = $(OBJECTS:.o=.lo)
 ## <FIXME>
 ## This should also have `ls ../appl/*.lo ../nmath/*.lo ../unix/*.lo`, but
 ## of course this will not work when the files do not exist yet :-)
-libR_la_LIBADD = @LTLIBOBJS@ @LTALLOCA@ $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS)
-libR_la_DEPENDENCIES = @LTLIBOBJS@ @LTALLOCA@ ../appl/stamp-lo ../nmath/stamp-lo ../unix/stamp-lo
+libR_la_LIBADD = @LTLIBOBJS@ @LTALLOCA@ $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(R_ZLIBS) $(R_XDR)
+libR_la_DEPENDENCIES = @LTLIBOBJS@ @LTALLOCA@ ../appl/stamp-lo ../nmath/stamp-lo ../unix/stamp-lo @USE_EXPORTFILE_TRUE@ $(top_builddir)/etc/R.exp
 ## </FIXME>
 @USE_LIBTOOL_TRUE@libR_la_LDFLAGS = -avoid-version -rpath $(Rexeclibdir)
 
@@ -100,9 +107,7 @@ Makefile: $(srcdir)/Makefile.in \
   ../include/config.h \
   ../include/Rversion.h \
   $(SOURCES_C)
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 Makedeps: Makefile $(DEPENDS)
 	@cat $(DEPENDS) >> Makefile
@@ -152,6 +157,12 @@ $(srcdir)/gram.c: @MAINTAINER_MODE_TRUE@ $(srcdir)/gram.y
 	$(YACC) $(YFLAGS) $(srcdir)/gram.y
 	$(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gram.c
 
+connections.o: $(srcdir)/connections.c
+	$(CC) $(ZLIB_CPPFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+
+dounzip.o: $(srcdir)/dounzip.c
+	$(CC) $(ZLIB_CPPFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+
 install: installdirs
 	@$(MAKE) install-bin
 	@if test -f $(libR_la); then $(MAKE) install-lib; fi
@@ -183,7 +194,7 @@ distclean: clean
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use; it"
 	@echo "deletes files that may need special rules to rebuild"
-	@rm -f $(srcdir)/gram.c
+	@-rm -f $(srcdir)/gram.c
 
 tags: TAGS
 TAGS: $(SOURCES) $(EXTRA_SOURCES_C) $(HEADERS)

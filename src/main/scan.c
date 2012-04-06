@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2001   The R Development Core Team.
+ *  Copyright (C) 1998-2002   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -141,6 +141,7 @@ static Rcomplex strtoc(const char *nptr, char **endptr)
 	}
 	else {
 	    z.r = 0; z.i = 0;
+	    endp = (char *) nptr; /* -Wall */
 	}
     }
     *endptr = endp;
@@ -346,6 +347,8 @@ static void extractItem(char *buffer, SEXP ans, int i)
 {
     char *endp;
     switch(TYPEOF(ans)) {
+    case NILSXP:
+	break;
     case LGLSXP:
 	if (isNAstring(buffer, 0))
 	    LOGICAL(ans)[i] = NA_INTEGER;
@@ -511,11 +514,13 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     PROTECT(ans = allocVector(VECSXP, nc));
     for (i = 0; i < nc; i++) {
 	w = VECTOR_ELT(what, i);
-	if (!isVector(w)) {
-	    if (!ttyflag & !wasopen) con->close(con);
-	    error("invalid `what=' specified");
+	if (!isNull(w)) {
+	    if (!isVector(w)) {
+		if (!ttyflag & !wasopen) con->close(con);
+		error("invalid `what=' specified");
+	    }
+	    SET_VECTOR_ELT(ans, i, allocVector(TYPEOF(w), blksize));
 	}
-	SET_VECTOR_ELT(ans, i, allocVector(TYPEOF(w), blksize));
     }
     setAttrib(ans, R_NamesSymbol, getAttrib(what, R_NamesSymbol));
 
@@ -561,9 +566,11 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	    blksize = 2 * blksize;
 	    for (i = 0; i < nc; i++) {
 		old = VECTOR_ELT(ans, i);
-		new = allocVector(TYPEOF(old), blksize);
-		copyVector(new, old);
-		SET_VECTOR_ELT(ans, i, new);
+		if(!isNull(old)) {
+		    new = allocVector(TYPEOF(old), blksize);
+		    copyVector(new, old);
+		    SET_VECTOR_ELT(ans, i, new);
+		}
 	    }
 	}
 
@@ -719,7 +726,7 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	wasopen = con->isopen; 
 	if(!wasopen) {
 	    strcpy(con->mode, "r");
-	    con->open(con);
+	    if(!con->open(con)) error("cannot open the connection");
 	}
 	for (i = 0; i < nskip; i++)
 	    while ((c = scanchar(FALSE)) != '\n' && c != R_EOF);
@@ -804,7 +811,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	wasopen = con->isopen; 
 	if(!wasopen) {
 	    strcpy(con->mode, "r");
-	    con->open(con);
+	    if(!con->open(con)) error("cannot open the connection");
 	}
 	for (i = 0; i < nskip; i++)
 	    while ((c = scanchar(FALSE)) != '\n' && c != R_EOF);
@@ -1058,7 +1065,7 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	    /* put the levels in lexicographic order */
 
-	    sortVector(levs);
+	    sortVector(levs, FALSE);
 
 	    PROTECT(a = match(levs, cvec, NA_INTEGER));
 	    for (i = 0; i < len; i++)
@@ -1193,7 +1200,7 @@ SEXP do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
     wasopen = con->isopen; 
     if(!wasopen) {
 	strcpy(con->mode, "r");
-	con->open(con);
+	if(!con->open(con)) error("cannot open the connection");
     } else { /* for a non-blocking connection, more input may
 		have become available, so re-position */
 	if(con->canseek && !con->blocking)

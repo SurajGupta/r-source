@@ -28,6 +28,7 @@ require  Exporter;
 use Cwd;
 use File::Basename;
 use R::Utils;
+use R::Vars;
 
 if($main::opt_dosnames) { $HTML = ".htm"; } else { $HTML = ".html"; }
 
@@ -71,10 +72,15 @@ sub buildinit {
     if($main::OSdir eq "windows") {
 	$tmp =~ s+\\+/+g; # need Unix-style path here
     }
+#    elsif($main::OSdir eq "mac") {
+    elsif($R::Vars::OSTYPE eq "mac"){
+    $tmp = $pkg;
+    }
     $pkg = basename($tmp);
 
     chdir "man" or die("There are no man pages in $pkg\n");
-    if($main::OSdir eq "mac") {
+    if($R::Vars::OSTYPE eq "mac"){
+  #  if($main::OSdir eq "mac") {
 	opendir man, ':';
     } else {
 	opendir man, '.';
@@ -321,7 +327,7 @@ sub build_index { # lib, dest
 		my $an = $main::aliasnm{$alias};
 		if ($an) {
 		    if($an ne $manfilebase) {
-			warn "\\$1\{$alias\} already in $an.Rd -- " .
+			warn "\\alias\{$alias\} already in $an.Rd -- " .
 			    "skipping the one in $manfilebase.Rd\n";
 		    }
 		} else {
@@ -361,7 +367,12 @@ sub build_index { # lib, dest
 	print chmfile chm_pagehead("$title");
     }
 
-
+    if(-d file_path($dest, "doc")){
+	print htmlfile "<a href=\"../doc\">Accompanying documentation</a> "
+	    . "is available in the subdirectory \"doc\" "
+	    . "of the installed package.<p>\n\n";
+    }
+	
     if($naliases>100){
 	print htmlfile html_alphabet(keys(%firstlettersfound));
 	if($main::opt_chm) {

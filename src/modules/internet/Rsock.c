@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
 
  *  Copyright (C) 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2001   Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998-2002   Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,15 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifdef Win32
+extern void R_ProcessEvents(void);
+#endif
+
+#ifdef HAVE_STRINGS_H
+   /* may be needed to define bzero in FD_ZERO (eg AIX) */
+  #include <strings.h>
 #endif
 
 #include <stdlib.h> /* for NULL */
@@ -150,9 +159,6 @@ void in_Rsockwrite(int *sockp, char **buf, int *start, int *end, int *len)
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
 
 
 #ifndef Win32
@@ -245,7 +251,9 @@ static int R_SocketWait(int sockfd, int write)
 	}
 
 #ifdef Unix
-	if(!FD_ISSET(sockfd, &rfd) || howmany > 1) {
+	if((!write && !FD_ISSET(sockfd, &rfd)) ||
+	   (write && !FD_ISSET(sockfd, &wfd)) ||
+	   howmany > 1) {
 	    /* was one of the extras */
 	    what = getSelectedHandler(R_InputHandlers, &rfd);
 	    if(what != NULL) what->handler((void*) NULL);
@@ -268,7 +276,7 @@ int R_SockConnect(int port, char *host)
     SOCKET s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     fd_set wfd, rfd;
     struct timeval tv;
-    int status;
+    int status = 0;
     double used = 0.0;
     struct sockaddr_in server;
     struct hostent *hp;
@@ -284,6 +292,7 @@ int R_SockConnect(int port, char *host)
 	status = ioctlsocket(s, FIONBIO, &one) == SOCKET_ERROR ? -1 : 0;
     }
 #else
+#ifdef HAVE_FCNTL
     if ((status = fcntl(s, F_GETFL, 0)) != -1) {
 #ifdef O_NONBLOCK
 	status |= O_NONBLOCK;
@@ -294,6 +303,7 @@ int R_SockConnect(int port, char *host)
 #endif /* !O_NONBLOCK */
 	status = fcntl(s, F_SETFL, status);
     }
+#endif
     if (status < 0) {
 	closesocket(s);
 	return(-1);
@@ -416,11 +426,26 @@ int R_SockListen(int sockp, char *buf, int len)
 
 int R_SockWrite(int sockp, const void *buf, int len)
 {
-    int res;
+    int res, out = 0;
 
     /* Rprintf("socket %d writing |%s|\n", sockp, buf); */
-    res = (int) send(sockp, buf, len, 0);
-    return (res >= 0) ? res : -socket_errno();
+    /* This function is not passed a `blocking' argument so the code
+       here is equivalent to blocking == TRUE; it's not clear
+       non-blocking writes make much sense with the current connection
+       interface since there is no way to tell how much, if anything,
+       has been written.  LT */
+    do {
+	if(/*blocking && */R_SocketWait(sockp, 1) != 0) return out;
+	res = (int) send(sockp, buf, len, 0);
+	if (res < 0 && socket_errno() != EWOULDBLOCK)
+	    return -socket_errno();
+	else {
+	    { const char *cbuf = buf; cbuf += res; buf = cbuf; }
+	    len -= res;
+	    out += res;
+	}
+    } while (/* ! blocking && */len > 0);
+    return out;
 }
 
 #endif

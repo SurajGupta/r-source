@@ -649,15 +649,9 @@ SEXP labelformat(SEXP labels)
 	UNPROTECT(1);
 	break;
     case STRSXP:
-	formatString(STRING_PTR(labels), n, &w, 0);
 	PROTECT(ans = allocVector(STRSXP, n));
 	for (i = 0; i < n; i++) {
-#ifdef OLD
-	    strp = EncodeString(CHAR(STRING_ELT(labels, i)), 0, 0, Rprt_adj_left);
-	    SET_STRING_ELT(ans, i, mkChar(strp));
-#else
 	    SET_STRING_ELT(ans, i, STRING_ELT(labels, i));
-#endif
 	}
 	UNPROTECT(1);
 	break;
@@ -815,7 +809,7 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
     double gap, labw, low, high, line, pos;
     double axis_base, axis_tick, axis_lab, axis_low, axis_high;
 
-    SEXP originalArgs = args;
+    SEXP originalArgs = args, label;
     DevDesc *dd = CurrentDevice();
 
     /* Arity Check */
@@ -1106,9 +1100,12 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 			/* Check room for perpendicular labels. */
 			if (Rf_gpptr(dd)->las == 2 || Rf_gpptr(dd)->las == 3 ||
 			    tnew - tlast >= gap) {
-			    GMtext(CHAR(STRING_ELT(lab, ind[i])), side,
-				   axis_lab, 0, x, Rf_gpptr(dd)->las, dd);
-			    tlast = temp + 0.5 *labw;
+			    label = STRING_ELT(lab, ind[i]);
+			    if(label != NA_STRING) {
+				GMtext(CHAR(label), side, axis_lab, 0, x, 
+				       Rf_gpptr(dd)->las, dd);
+				tlast = temp + 0.5 *labw;
+			    }
 			}
 		    }
 		}
@@ -1208,9 +1205,12 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 			/* Check room for perpendicular labels. */
 			if (Rf_gpptr(dd)->las == 1 || Rf_gpptr(dd)->las == 2 ||
 			    tnew - tlast >= gap) {
-			    GMtext(CHAR(STRING_ELT(lab, ind[i])), side,
-				   axis_lab, 0, y, Rf_gpptr(dd)->las, dd);
-			    tlast = temp + 0.5 *labw;
+			    label = STRING_ELT(lab, ind[i]);
+			    if(label != NA_STRING) {
+				GMtext(CHAR(label), side, axis_lab, 0, y, 
+				       Rf_gpptr(dd)->las, dd);
+				tlast = temp + 0.5 *labw;
+			    }
 			}
 		    }
 		}
@@ -1897,7 +1897,7 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
     double *x, *y;
     double xx, yy;
     Rboolean vectorFonts = FALSE;
-    SEXP originalArgs = args;
+    SEXP string, originalArgs = args;
     DevDesc *dd = CurrentDevice();
 
     GCheckState(dd);
@@ -2032,16 +2032,21 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 		    break;
 		}
 	    }
-	    if (vectorFonts)
-		GVText(xx, yy, INCHES, CHAR(STRING_ELT(txt, i % ntxt)),
-		       INTEGER(vfont)[0], INTEGER(vfont)[1],
-		       adjx, adjy, Rf_gpptr(dd)->srt, dd);
-	    else if (isExpression(txt))
+	    if (vectorFonts) {
+		string = STRING_ELT(txt, i % ntxt);
+		if(string != NA_STRING)
+		    GVText(xx, yy, INCHES, CHAR(string),
+			   INTEGER(vfont)[0], INTEGER(vfont)[1],
+			   adjx, adjy, Rf_gpptr(dd)->srt, dd);
+	    } else if (isExpression(txt))
 		GMathText(xx, yy, INCHES, VECTOR_ELT(txt, i % ntxt),
 			  adjx, adjy, Rf_gpptr(dd)->srt, dd);
-	    else
-		GText(xx, yy, INCHES, CHAR(STRING_ELT(txt, i % ntxt)),
-		      adjx, adjy, Rf_gpptr(dd)->srt, dd);
+	    else {
+		string = STRING_ELT(txt, i % ntxt);
+		if(string != NA_STRING)
+		    GText(xx, yy, INCHES, CHAR(string),
+			  adjx, adjy, Rf_gpptr(dd)->srt, dd);
+	    }
 	}
     }
     GMode(0, dd);
@@ -2908,7 +2913,7 @@ static void drawLabel(double xi, double yi, int pos, double offset, char *l,
 
 SEXP do_identify(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans, x, y, l, ind, pos, Offset, saveans;
+    SEXP ans, x, y, l, ind, pos, Offset, draw, saveans;
     double xi, yi, xp, yp, d, dmin, offset;
     int i, imin, k, n, npts, plot, posi;
     DevDesc *dd = CurrentDevice();
@@ -2921,11 +2926,12 @@ SEXP do_identify(SEXP call, SEXP op, SEXP args, SEXP env)
 	x = CAR(args); args = CDR(args);
 	y = CAR(args); args = CDR(args);
 	Offset = CAR(args); args = CDR(args);
-	l = CAR(args);
+	l = CAR(args); args = CDR(args);
+	draw = CAR(args);
 	n = length(x);
 	for (i=0; i<n; i++) {
-	    plot = LOGICAL(ind)[i];
-	    if (plot) {
+	    plot = LOGICAL(ind)[i]; 
+	    if (LOGICAL(draw)[0] && plot) {
 		xi = REAL(x)[i];
 		yi = REAL(y)[i];
 		GConvert(&xi, &yi, USER, INCHES, dd);
@@ -3017,19 +3023,22 @@ SEXP do_identify(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(ans = allocList(2));
 	SETCAR(ans, ind);
 	SETCADR(ans, pos);
-	PROTECT(saveans = allocList(6));
+	PROTECT(saveans = allocList(7));
 	SETCAR(saveans, ind);
 	SETCADR(saveans, pos);
 	SETCADDR(saveans, x);
 	SETCADDDR(saveans, y);
 	SETCAD4R(saveans, Offset);
 	SETCAD4R(CDR(saveans), l);
+	PROTECT(draw = allocVector(LGLSXP, 1));
+	LOGICAL(draw)[0] = plot;
+	SETCAD4R(CDDR(saveans), draw);
 
 	/* If we are recording, save enough information to be able to
 	   redraw the text labels beside identified points */
 	if (GRecording(call))
 	    recordGraphicOperation(op, saveans, dd);
-	UNPROTECT(4);
+	UNPROTECT(5);
 
 	return ans;
     }

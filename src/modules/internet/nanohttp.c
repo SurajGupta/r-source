@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-2   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,12 +39,21 @@
 #if !defined(Unix) || defined(HAVE_BSD_NETWORKING)
 
 #ifdef Win32
-#define INCLUDE_WINSOCK
-#include "win32config.h"
+#include <io.h>
+#include <winsock.h>
+#define EWOULDBLOCK             WSAEWOULDBLOCK
+#define EINPROGRESS             WSAEINPROGRESS
+#define EALREADY                WSAEALREADY
 #define _WINSOCKAPI_
+extern void R_ProcessEvents(void);
 #endif
 
 #include <R_ext/R-ftp-http.h>
+
+#ifdef HAVE_STRINGS_H
+   /* may be needed to define bzero in FD_ZERO (eg AIX) */
+  #include <strings.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -71,9 +80,6 @@
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
 #endif
 #ifdef SUPPORT_IP6
 #include <resolv.h>
@@ -124,8 +130,15 @@ setSelectMask(InputHandler *handlers, fd_set *readMask)
 #define SOCKET int
 #endif
 
+/* where strncasecmp is defined seems system-specific,
+   and on Windows the cross-compiler doesn't find strings.h */
+#if defined(HAVE_STRINGS_H) && !defined(Win32)
+# include <strings.h>
+#endif
+#if defined(HAVE_DECL_STRNCASECMP) || !HAVE_DECL_STRNCASECMP
+extern int strncasecmp(const char *s1, const char *s2, size_t n);
+#endif
 #define xmlStrncasecmp(a, b, n) strncasecmp((char *)a, (char *)b, n)
-
 
 #define XML_NANO_HTTP_MAX_REDIR	10
 
@@ -754,7 +767,7 @@ RxmlNanoHTTPConnectAttempt(struct sockaddr *addr)
     SOCKET s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     fd_set wfd, rfd;
     struct timeval tv;
-    int status;
+    int status = 0;
     double used = 0.0;
 
     if (s==-1) {
@@ -777,6 +790,7 @@ RxmlNanoHTTPConnectAttempt(struct sockaddr *addr)
 	status = ioctl(s, FIONBIO, &enable);
     }
 #else /* VMS */
+#ifdef HAVE_FCNTL
     if ((status = fcntl(s, F_GETFL, 0)) != -1) {
 #ifdef O_NONBLOCK
 	status |= O_NONBLOCK;
@@ -787,6 +801,7 @@ RxmlNanoHTTPConnectAttempt(struct sockaddr *addr)
 #endif /* !O_NONBLOCK */
 	status = fcntl(s, F_SETFL, status);
     }
+#endif
     if (status < 0) {
 #ifdef DEBUG_HTTP
 	perror("nonblocking");

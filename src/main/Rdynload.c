@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1996 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2001 The R Development Core Team
+ *  Copyright (C) 1997-2002 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -86,20 +86,19 @@
 
 #include <Rdynpriv.h>
 
+#ifdef Unix
 /* HP-UX 11.0 has dlfcn.h, but according to libtool as of Dec 2001
    this support is broken. So we force use of shlib even when dlfcn.h
    is available */
-#ifdef __hpux
-# ifdef HAVE_DL_H
-#  define HAVE_DYNAMIC_LOADING
-# endif
-#else
-# ifdef HAVE_DLFCN_H
-#  define HAVE_DYNAMIC_LOADING
-# endif
-#endif
-
-#ifdef Unix
+# ifdef __hpux
+#  ifdef HAVE_DL_H
+#   define HAVE_DYNAMIC_LOADING
+#  endif
+# else
+#  ifdef HAVE_DLFCN_H
+#   define HAVE_DYNAMIC_LOADING
+#  endif
+# endif /* __hpux */
 # ifndef HAVE_NO_SYMBOL_UNDERSCORE
 #  ifdef HAVE_ELF_H
 #   define HAVE_NO_SYMBOL_UNDERSCORE
@@ -108,8 +107,12 @@
 #endif
 
 #ifdef Macintosh
-  extern char *strdup(); 
 # define HAVE_NO_SYMBOL_UNDERSCORE 
+# define HAVE_DYNAMIC_LOADING
+#endif
+
+#ifdef Win32
+# define HAVE_DYNAMIC_LOADING
 #endif
 
 /* The following code loads in a compatibility module written by Luke
@@ -477,7 +480,8 @@ DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
     /* keep only basename from path */
     p = strrchr(dpath, FILESEP[0]); 
     if(!p) p = dpath; else p++;
-    strcpy(DLLname, p);
+    if(strlen(p) < PATH_MAX) strcpy(DLLname, p);
+    else error("DLLname %s is too long", p);
 
     /* FIXME: didn't work on Mac, unsafe
     p = strchr(DLLname, '.');
@@ -755,7 +759,7 @@ SEXP do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "character argument expected");
     GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
     /* AddDLL does this DeleteDLL(buf); */
-    if(!AddDLL(buf,LOGICAL(CADR(args))[0],LOGICAL(CADDR(args))[0]))
+    if(!AddDLL(buf, LOGICAL(CADR(args))[0], LOGICAL(CADDR(args))[0]))
 	errorcall(call, "unable to load shared library \"%s\":\n  %s",
 		  buf, DLLerror);
     return R_NilValue;

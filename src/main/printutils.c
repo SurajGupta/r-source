@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999--2000  The R Development Core Team
+ *  Copyright (C) 1999--2002  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -132,16 +132,12 @@ char *EncodeReal(double x, int w, int d, int e)
     /* IEEE allows signed zeros (yuck!) */
     if (x == 0.0) x = 0.0;
     if (!R_FINITE(x)) {
+	if(ISNA(x)) sprintf(Encodebuf, "%*s", w, CHAR(R_print.na_string));
 #ifdef IEEE_754
-	if(ISNA(x)) sprintf(Encodebuf, "%*s", w, CHAR(R_print.na_string));
 	else if(ISNAN(x)) sprintf(Encodebuf, "%*s", w, "NaN");
-	else if(x > 0) sprintf(Encodebuf, "%*s", w, "Inf");
-	else sprintf(Encodebuf, "%*s", w, "-Inf");
-#else
-	if(ISNA(x)) sprintf(Encodebuf, "%*s", w, CHAR(R_print.na_string));
-	else if(x > 0) sprintf(Encodebuf, "%*s", w, "Inf");
-	else sprintf(Encodebuf, "%*s", w, "-Inf");
 #endif
+	else if(x > 0) sprintf(Encodebuf, "%*s", w, "Inf");
+	else sprintf(Encodebuf, "%*s", w, "-Inf");
     }
     else if (e) {
 #ifndef Win32
@@ -286,6 +282,12 @@ char *EncodeString(char *s, int w, int quote, int right)
     int b, i ;
     char *p, *q;
 
+    if (s == CHAR(NA_STRING)) {
+	p = quote ? CHAR(R_print.na_string) : CHAR(R_print.na_string_noquote);
+	quote = 0;
+    } else 
+	p = s;
+
     i = Rstrlen(s, quote);
     AllocBuffer((i+2 >= w)?(i+2):w); /* +2 allows for quotes */
     q = Encodebuf;
@@ -294,9 +296,6 @@ char *EncodeString(char *s, int w, int quote, int right)
 	for(i=0 ; i<b ; i++) *q++ = ' ';
     }
     if(quote) *q++ = quote;
-    if (s == CHAR(NA_STRING) )
-	p = CHAR(R_print.na_string);
-    else	p = s;
     while(*p) {
 
 	/* ASCII */
@@ -418,7 +417,6 @@ void REprintf(char *format, ...)
 void Rcons_vprintf(const char *format, va_list arg)
 {
     char buf[BUFSIZE], *p = buf, *vmax = vmaxget();
-#ifdef HAVE_VSNPRINTF
     int res;
 
     res = vsnprintf(p, BUFSIZE, format, arg);
@@ -433,11 +431,6 @@ void Rcons_vprintf(const char *format, va_list arg)
 	    warning("printing of extremely long output is truncated");
 	}
     }
-#else
-    /* allocate a large buffer and hope */
-    p = R_alloc(10*BUFSIZE, sizeof(char));
-    vsprintf(p, format, arg);
-#endif
     R_WriteConsole(p, strlen(buf));
     vmaxset(vmax);
 }

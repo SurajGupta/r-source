@@ -6,7 +6,7 @@ function(height, width = 1, space = NULL, names.arg = NULL,
          density = NULL, angle = 45,
          col = heat.colors(NR), border = par("fg"),
          main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
-         xlim = NULL, ylim = NULL,
+         xlim = NULL, ylim = NULL, xpd = TRUE,
          axes = TRUE, axisnames = TRUE,
          cex.axis = par("cex.axis"), cex.names = par("cex.axis"),
          inside = TRUE, plot = TRUE, ...)
@@ -64,8 +64,8 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 	w.m <- matrix(w.m, nc = NC)
     if(plot) { ##-------- Plotting :
 	opar <-
-	    if (horiz)	par(xaxs = "i", xpd = TRUE)
-	    else	par(yaxs = "i", xpd = TRUE)
+	    if (horiz)	par(xaxs = "i", xpd = xpd)
+	    else	par(yaxs = "i", xpd = xpd)
 	on.exit(par(opar))
 
 	plot.new()
@@ -88,7 +88,7 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 	if (axisnames && !is.null(names.arg)) { # specified or from {col}names
 	    at.l <- if (length(names.arg) != length(w.m)) {
 		if (length(names.arg) == NC) # i.e. beside (!)
-		    apply(w.m, 2, mean)
+		    colMeans(w.m)
 		else
 		    stop("incorrect number of names")
 	    } else w.m

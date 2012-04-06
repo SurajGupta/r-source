@@ -1,4 +1,4 @@
-piechart <-
+pie <-
     function (x, labels = names(x), edges = 200, radius = 0.8,
               density = NULL, angle = 45, col = NULL,
               main = NULL, ...)
@@ -16,7 +16,10 @@ piechart <-
     plot.new()
     plot.window(xlim, ylim, "", asp = 1)
     nx <- length(dx)
-    if (is.null(col)) col <- if(is.null(density)) par("bg") else par("fg")
+    if (is.null(col))
+        col <- if(is.null(density))
+            c("white", "lightblue", "mistyrose", "lightcyan", "lavender", "cornsilk")
+        else par("fg")
     col <- rep(col, length = nx)
     angle <- rep(angle, length = nx)
     density <- rep(density, length = nx)

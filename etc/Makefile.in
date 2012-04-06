@@ -15,13 +15,10 @@ OBJECTS = $(SOURCES:.in=)
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in $(SOURCES)
 
-EXPORTFILE = @EXPORTFILE@
+EXPORTFILE = @USE_EXPORTFILE_TRUE@ R.exp
 
-## <FIXME>
-## Remove eventually.
-GNOME_IF_FILES = @GNOME_IF_FILES@
-CLEANFILES = $(GNOME_IF_FILES) Makeconf-tests
-## </FIXME>
+CLEANFILES = $(EXPORTFILE)
+DISTCLEANFILES = $(OBJECTS) Makefile
 
 all: Makefile R
 
@@ -29,14 +26,10 @@ all: Makefile R
 .SUFFIXES: .in
 
 .in:
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 	@(for f in $(OBJECTS); do \
 	    echo "$${f}: $(srcdir)/$${f}.in"; \
 	  done) >> $@
@@ -59,22 +52,16 @@ uninstall:
 	  && test "`cd $(rhome); $(GETWD)`" \
 	       != "`cd $(top_builddir); $(GETWD)`"; then \
 	  (cd $(rhome)/etc && \
-	    rm -f $(OBJECTS) $(EXPORTFILE) *.pl $(CLEANFILES)); \
+	    rm -f $(OBJECTS) $(EXPORTFILE)); \
 	  rmdir $(rhome)/etc 2> /dev/null \
 	    || echo "  subdir etc not removed"; \
 	fi
 
 mostlyclean: clean
 clean:
-## <FIXME>
-## Remove eventually.
-	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
-	  rm -f *.pl $(CLEANFILES); \
-	fi
-## </FIXME>
-	@-test -z "$(EXPORTFILE)" || rm -f $(EXPORTFILE)
+	-@test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 distclean: clean
-	@rm -f $(OBJECTS) Makefile
+	-@test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)

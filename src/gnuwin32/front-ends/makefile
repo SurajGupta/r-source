@@ -38,8 +38,9 @@ rgui-CFLAGS=-DWin32
 rterm-CFLAGS=-DWin32
 Rgui-LINKFLAGS=-mwindows
 
-Rterm-LIBS=-luser32 -L.. -lRm
-Rgui-LIBS=-L.. -lRm
+Rterm-LIBS=-luser32 -L.. -lR
+Rgui-LIBS=-L.. -lR
+Rpwd-LIBS=-lkernel32
 
 Rgui.exe: graphappmain.o  rgui.o rgico.o
 
@@ -48,6 +49,12 @@ Rterm.exe: graphappmain.o rterm.o rtico.o
 Rcmd.exe: rcmd.o ../rhome.o rcico.o
 
 RSetReg.exe: RSetReg.o ../rhome.o rcico.o
+
+Rpwd:
+	$(MAKE) -C ../fixed version
+	$(MAKE) Rpwd.exe
+
+Rpwd.exe: rpwd.o rcico.o
 
 rgui.o rterm.o rproxy_impl.o rgico.o rtico.o rcico.o: ../../include/Rversion.h
 

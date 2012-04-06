@@ -5,7 +5,7 @@ lm <- function (formula, data = list(), subset, weights, na.action,
 {
     ret.x <- x
     ret.y <- y
-    mt <- terms(formula, data = data)
+#    mt <- terms(formula, data = data)
     cl <- match.call()
     mf <- match.call(expand.dots = FALSE)
     mf$singular.ok <- mf$model <- mf$method <- NULL
@@ -18,6 +18,7 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     else if (method != "qr")
 	warning(paste("method =", method,
 		      "is not supported. Using \"qr\"."))
+    mt <- attr(mf, "terms") # allow model.frame to update it
     na.act <- attr(mf, "na.action")
     xvars <- as.character(attr(mt, "variables"))[-1]
     if((yvar <- attr(mt, "response")) > 0) xvars <- xvars[-yvar]
@@ -272,7 +273,8 @@ summary.lm <- function (object, correlation = FALSE, ...)
     tval <- est/se
     ans <- z[c("call", "terms")]
     ans$residuals <- r
-    ans$coefficients <- cbind(est, se, tval, 2*(1 - pt(abs(tval), rdf)))
+    ans$coefficients <-
+	cbind(est, se, tval, 2*pt(abs(tval), rdf, lower.tail = FALSE))
     dimnames(ans$coefficients)<-
 	list(names(z$coefficients)[Qr$pivot[p1]],
 	     c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
@@ -281,11 +283,10 @@ summary.lm <- function (object, correlation = FALSE, ...)
     if (p != attr(z$terms, "intercept")) {
 	df.int <- if (attr(z$terms, "intercept")) 1 else 0
 	ans$r.squared <- mss/(mss + rss)
-	ans$adj.r.squared <- 1 - (1 - ans$r.squared) *
-	    ((n - df.int)/rdf)
+	ans$adj.r.squared <- 1 - (1 - ans$r.squared) * ((n - df.int)/rdf)
 	ans$fstatistic <- c(value = (mss/(p - df.int))/resvar,
 			    numdf = p - df.int, dendf = rdf)
-    }
+    } else ans$r.squared <- ans$adj.r.squared <- 0
     ans$cov.unscaled <- R
     dimnames(ans$cov.unscaled) <- dimnames(ans$coefficients)[c(1,1)]
     if (correlation) {
@@ -332,12 +333,12 @@ print.summary.lm <-
 	format(signif(x$sigma, digits)), "on", rdf, "degrees of freedom\n")
     if (!is.null(x$fstatistic)) {
 	cat("Multiple R-Squared:", formatC(x$r.squared, digits=digits))
-	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,d=digits),
+	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,digits=digits),
 	    "\nF-statistic:", formatC(x$fstatistic[1], digits=digits),
 	    "on", x$fstatistic[2], "and",
 	    x$fstatistic[3], "DF,  p-value:",
-	    formatC(1 - pf(x$fstatistic[1], x$fstatistic[2],
-			   x$fstatistic[3]), dig=digits),
+	    format.pval(pf(x$fstatistic[1], x$fstatistic[2],
+                           x$fstatistic[3], lower.tail = FALSE), digits=digits),
 	    "\n")
     }
     correl <- x$correlation
@@ -446,7 +447,7 @@ anova.lm <- function(object, ...)
     df <- c(unlist(lapply(split(asgn,  asgn), length)), dfr)
     ms <- ss/df
     f <- ms/(ssr/dfr)
-    p <- 1 - pf(f,df,dfr)
+    p <- pf(f,df,dfr, lower.tail = FALSE)
     table <- data.frame(df,ss,ms,f,p)
     table[length(p),4:5] <- NA
     dimnames(table) <- list(c(tlabels, "Residuals"),
@@ -541,14 +542,14 @@ anovalist.lm <- function (object, ..., test = NULL)
     for(i in 2:nmodels) {
 	if(df[i] > 0) {
 	    f[i] <- ms[i]/(ss.r[i]/df.r[i])
-	    p[i] <- 1 - pf(f[i], df[i], df.r[i])
+	    p[i] <- pf(f[i], df[i], df.r[i], lower.tail = FALSE)
 	}
 	else if(df[i] < 0) {
 	    f[i] <- ms[i]/(ss.r[i-1]/df.r[i-1])
-	    p[i] <- 1 - pf(f[i], -df[i], df.r[i-1])
+	    p[i] <- pf(f[i], -df[i], df.r[i-1], lower.tail = FALSE)
 	}
 	else { # df[i] == 0
-	  ss[i] <- 0
+	    ss[i] <- 0
 	}
     }
     table <- data.frame(df.r,ss.r,df,ss,f,p)

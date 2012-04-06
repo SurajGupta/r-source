@@ -84,6 +84,11 @@
  *
  * LT */
 
+/* This is needed for now for the write barrier test to work.  But
+   since it disables testing of this file it should either be removed
+   or at least limited to code that really needs it. LT */
+#define USE_RINTERNALS
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -806,7 +811,7 @@ static SEXP findVarLocInFrame(SEXP rho, SEXP symbol, Rboolean *canCache)
         table = (R_ObjectTable *) R_ExternalPtrAddr(HASHTAB(rho));
 	/* Better to use exists() here if we don't actually need the value! */
         val = table->get(CHAR(PRINTNAME(symbol)), canCache, table);
-        if(val != R_NilValue) {
+        if(val != R_UnboundValue) {
 	    tmp = allocSExp(LISTSXP); 
 	    SETCAR(tmp, val);
 	    SET_TAG(tmp, symbol);
@@ -1685,6 +1690,7 @@ static int isMissing(SEXP symbol, SEXP rho)
 	if (MISSING(vl) == 1 || CAR(vl) == R_MissingArg)
 	    return 1;
 	if (TYPEOF(CAR(vl)) == PROMSXP &&
+	    PRVALUE(CAR(vl)) == R_UnboundValue &&
 	    TYPEOF(PREXPR(CAR(vl))) == SYMSXP)
 	    return isMissing(PREXPR(CAR(vl)), PRENV(CAR(vl)));
 	else
@@ -2102,7 +2108,7 @@ SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     }
     UNPROTECT(1);
-    sortVector(ans);
+    sortVector(ans, FALSE);
     return ans;
 }
 
@@ -2126,7 +2132,7 @@ SEXP do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
     ans = allocVector(STRSXP, nelts);
     nelts = 0;
     BuiltinNames(1, intern, ans, &nelts);
-    sortVector(ans);
+    sortVector(ans, TRUE);
     return ans;
 }
 

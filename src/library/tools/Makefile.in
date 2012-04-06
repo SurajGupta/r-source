@@ -16,7 +16,7 @@ DISTFILES = INDEX TITLE DESCRIPTION.in Makefile.in
 pkg = tools
 
 all: Makefile DESCRIPTION
-	@echo "building package \`$(pkg)'"
+	@echo "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/R
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
 	  cat `ls $(srcdir)/R/*.R` > $${f}; \
@@ -44,6 +44,17 @@ all: Makefile DESCRIPTION
 	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/demo; \
 	  done; \
 	fi
+	@if test -d $(srcdir)/inst/Sweave; then \
+	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/Sweave; \
+	  for f in `ls -d $(srcdir)/inst/Sweave/* | sed '/CVS/d'`; do \
+	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/Sweave; \
+	  done; \
+	fi
+	@if test -f $(srcdir)/inst/Sweave/Sweave.sty; then \
+	  $(MKINSTALLDIRS) $(top_builddir)/share/texmf; \
+	  $(INSTALL_DATA) $(srcdir)/inst/Sweave/Sweave.sty \
+	     $(top_builddir)/share/texmf; \
+	fi
 	@if test -d $(srcdir)/man; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/man; \
 	  (f=$${TMPDIR:-/tmp}/R$$$$; \
@@ -56,20 +67,16 @@ all: Makefile DESCRIPTION
 	fi
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 DESCRIPTION: $(srcdir)/DESCRIPTION.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean: clean
 clean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
 distclean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
-	@rm -f Makefile DESCRIPTION
+	-@rm -f Makefile DESCRIPTION
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)
@@ -78,7 +85,7 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for d in R data demo exec man src; do \
+	@for d in R data demo exec inst man src; do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); \
 	          $(TAR) -c -f - $(DISTDIR_TAR_EXCLUDE) $${d}) \

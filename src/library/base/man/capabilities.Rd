@@ -20,7 +20,8 @@ capabilities(what = NULL)
     \item{X11}{(Unix)  Are \code{X11} and the data editor available?}
     \item{GNOME}{(Unix)  Is the GNOME GUI in use and are \code{GTK} and
       \code{GNOME} graphics devices available?}
-    \item{libz}{Is \code{\link{gzfile}} available?}
+    \item{libz}{Is \code{\link{gzfile}} available?  From \R 1.5.0 this
+      will always be true.}
     \item{http/ftp}{Are \code{\link{url}} and the internal method for
       \code{\link{download.file}} available?}
     \item{sockets}{Are \code{\link{make.socket}} and related functions
@@ -33,9 +34,11 @@ capabilities(what = NULL)
       It will be true if \code{readline} supported has been compiled in
       and \code{--no-readline} was \emph{not} invoked.
 #endif
-    \item{IEEE754}{Does this platform have IEEE 754 arithmetic.  Note
+      }
+    \item{IEEE754}{Does this platform have IEEE 754 arithmetic?  Note
       that this is more correctly known by the international standard
       IEC 60059.}
+    \item{bzip2}{Is \code{\link{bzfile}} available?}
     }
 }
 \seealso{\code{\link{.Platform}}}

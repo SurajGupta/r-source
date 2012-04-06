@@ -9,7 +9,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
      quote = if (sep=="\n") "" else "'\"", dec = ".",
      skip = 0, nlines = 0, na.strings = "NA",
      flush = FALSE, fill = FALSE, strip.white = FALSE, quiet = FALSE,
-     blank.lines.skip = TRUE, multi.line = TRUE, comment.char = "#")
+     blank.lines.skip = TRUE, multi.line = TRUE, comment.char = "")
 }
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
@@ -93,13 +93,14 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   
   \item{comment.char}{character: a character vector of length one
     containing a single character or an empty string.  Use \code{""} to
-    turn off the interpretation of comments altogether.}
+    turn off the interpretation of comments altogether (the default).}
 }
 \details{
   The value of \code{what} can be a list of types, in which case
   \code{scan} returns a list of vectors with the types given by the
   types of the elements in \code{what}.  This provides a way of reading
-  columnar data.
+  columnar data.  If any of the type is \code{NULL}, the corresponding
+  field is skipped (but a \code{NULL} component appears in the result).
 
   Empty numeric fields are always regarded as missing values.
   Empty character fields are scanned as empty character vectors, unless
@@ -127,6 +128,12 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   should be regarded as a comment and be discarded.  Lines beginning
   with a comment character (possibly after white space) are treated
   as blank lines. 
+}
+\value{
+  if \code{what} is a list, a list of the same length and same names (as
+  any) as \code{what}.
+
+  Otherwise, a vector of the type of \code{what}.
 }
 \note{
   The default for \code{multi.line} differs from S.  To read one record

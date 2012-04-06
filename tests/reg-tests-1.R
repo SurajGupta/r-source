@@ -3,7 +3,7 @@
 library(ts)
 y <- ts(rnorm(24), freq=12)
 x <- ts(rnorm(24), freq=12)
-arima0(y,xreg=x, seasonal=list(order=c(0,1,0)))
+arima0(y, xreg = x, seasonal = list(order=c(0,1,0)))
 ## Comments:
 
 ## PR 644 (crash using fisher.test on Windows)
@@ -463,8 +463,18 @@ p4 <- predict(fit, newdata = DF, se = TRUE)
 stopifnot(all.equal(p1, p2$fit), all.equal(p1, p3), all.equal(p2, p4))
 
 
+## PR#1267 hashing NaN
+load(file.path(Sys.getenv("SRCDIR"), "nanbug.rda"))
+bb <- b; bb[5] <- NaN
+identical(b, bb)            # TRUE
+unique(c(NaN, bb))          #[1] NaN 0 1 2 3 NA
+stopifnot(identical(unique(c(NaN, b)), unique(c(NaN, bb))))
+## 1.4.0 gives [1] NaN 0 1 2 NaN 3 NA   on most platforms
+
+
 ## PR 1271  detach("package:base") crashes R.
 try(detach("package:base"))
+
 
 ## reported by PD 2002-01-24
 Y <- matrix(rnorm(20), , 2)
@@ -473,6 +483,7 @@ fit # failed
 print(fit, intercept = TRUE)
 summary(fit) # failed
 summary(fit, intercept = TRUE)
+
 
 ## Several  qr.*() functions lose (dim)names.
 ## reported by MM 2002-01-26
@@ -508,7 +519,109 @@ stopifnot(identical(dimnames(c1), dimnames(c2)),
 )
 
 
-## This example last ##
+## PR 1297  read.fwf() was interpreting `#' in 1.4.0/1
+cat(file="test.fwf", "123ABC123", "123#3 123", "123XYZ123", sep="\n")
+(res <- read.fwf("test.fwf", widths=c(3,3,3), comment.char=""))
+unlink("test.fwf")
+stopifnot(res[2, 2] == "#3 ")
+
+
+## abs was failing to dispatch as part of the Math group generic
+tmp <- data.frame(x = -5:5)
+abs(tmp)
+## failed in 1.4.1.
+
+
+## PR 1363 La.svd was not working for integer args
+m <- matrix(1:4, 2)
+(s1 <- svd(m))
+(s2 <- La.svd(m))
+stopifnot(all.equal(s1$d, s2$d), all.equal(s1$u, s2$u),
+          all.equal(s1$v, t(s2$vt)))
+(e1 <- eigen(m))
+(e2 <- La.eigen(m))
+stopifnot(all.equal(e1$d, e1$d))
+
+
+## order/sort.list on NA_STRING
+x <- c("A", NA, "Z")
+stopifnot(identical(sort(x, na.last = TRUE), x[sort.list(x, na.last = TRUE)]))
+stopifnot(identical(sort(x, na.last = FALSE), x[sort.list(x, na.last = FALSE)]))
+## 1.4.1 sorted NA correctly with sort but not sort.list.
+
+
+## Don MacQueen 2002-03-26
+stopifnot(length(seq(1024902010, 1024902025, by=1)) == 16)
+t0 <- ISOdatetime(2002,6,24,0,0,10)
+x <- seq.POSIXt(from=t0,to=t0+15,by='1 sec')
+stopifnot(length(x) == 16)
+
+
+## whilst reading the code BDR 2002-03-31
+z <- try(max(complex(0)))
+stopifnot(inherits(z, "try-error"))
+z <- try(min(complex(0)))
+stopifnot(inherits(z, "try-error"))
+## 1.4.1 gave +-Inf + random imaginary part
+
+
+## PR#1238  min/max(NULL) or (integer(0))
+z <- min(NULL)
+stopifnot(!is.na(z), mode(z) == "numeric", z == Inf)
+z <- min(integer(0))
+stopifnot(!is.na(z), mode(z) == "numeric", z == Inf)
+z <- max(NULL)
+stopifnot(!is.na(z), mode(z) == "numeric", z == -Inf)
+z <- max(integer(0))
+stopifnot(!is.na(z), mode(z) == "numeric", z == -Inf)
+
+
+## more reading the code BDR 2002-03-31
+stopifnot(identical(range(), range(numeric(0))))
+## in 1.4.1 range() was c(1,1)
+stopifnot(is.null(c()))
+## in 1.4.1 this was structure(TRUE, names="recursive")
+
+## range(numeric(0)) was not as documented
+x <- numeric(0)
+(rx <- range(x))
+stopifnot(identical(rx, c(min(x), max(x))))
+## 1.4.1 had c(NA, NA)
+
+
+## PR 1431 persp() crashes with numeric values for [x,y,z]lab
+persp(1:2, 1:2, matrix(1:4, 2), xlab=1)
+## segfaulted in 1.4.1
+
+
+## PR#1244 bug in det using method="qr"
+m2 <- structure(c(9822616000, 3841723000, 79790.09, 3841723000, 1502536000,
+                  31251.82, 79790.09, 31251.82, 64156419.36), .Dim = c(3, 3))
+(d1 <- det(m2, method="eigenvalues"))
+(d2 <- det(m2, method="qr"))
+stopifnot(d2 == 0) ## 1.4.1 gave 9.331893e+19
+(d3 <- det(m2, method="qr", tol = 1e-10))
+stopifnot(all.equal(d1, d3, tol=1e-3))
+
+
+## PR#1422 glm start/offset bugs
+if(require(MASS)) {
+data(ships, package = MASS)
+ships.glm <- glm(incidents ~ type + year + period + offset(log(service)),
+                 family = poisson, data = ships, subset = (service != 0))
+update(ships.glm, start = coef(ships.glm))
+}
+## failed in 1.4.1.
+
+
+## PR#1439 file.info()$isdir was only partially logical
+(info <- file.info("."))
+info$isdir
+stopifnot(info$isdir == TRUE)
+## 1.4.1 had a TRUE value that was not internally integer 1.
+
+
+## This example last: needed < 1.5.0 ##
 
 ## PR 902 segfaults when warning string is too long, Ben Bolker 2001-04-09
 provoke.bug <- function(n=9000) {

@@ -1,4 +1,6 @@
 \name{persp}
+\alias{persp}
+\alias{persp.default}
 \title{Perspective Plots}
 \usage{
 persp(x, ...)
@@ -6,12 +8,10 @@ persp.default(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), z,
       xlim = range(x), ylim = range(y), zlim = range(z, na.rm = TRUE), 
       xlab = NULL, ylab = NULL, zlab = NULL, main = NULL, sub = NULL,
       theta = 0, phi = 15, r = sqrt(3), d = 1, scale = TRUE, expand = 1, 
-      col = NULL, border = NULL, ltheta = -135, lphi = 0, shade = NA,
+      col = "white", border = NULL, ltheta = -135, lphi = 0, shade = NA,
       box = TRUE, axes = TRUE, nticks = 5, ticktype = "simple",
       ...) 
 }
-\alias{persp}
-\alias{persp.default}
 \arguments{
   \item{x, y}{locations of grid lines at which the values in \code{z} are
     measured.  These must be in ascending order.  By default, equally
@@ -23,8 +23,9 @@ persp.default(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), z,
     convenience.}
   \item{xlim, ylim, zlim}{x-, y-  and z-limits.  The plot is produced
     so that the rectangular volume defined by these limits is visible.}
-  \item{xlab, ylab, zlab}{titles for the axes. N.B. These must the
-    character strings; expressions are not accepted.}
+  \item{xlab, ylab, zlab}{titles for the axes.  N.B. These must be
+    character strings; expressions are not accepted.  Numbers will be
+    coerced to character strings.}
   \item{main, sub}{main and sub title, as for \code{\link{title}}.}
   \item{theta, phi}{angles defining the viewing direction.
     \code{theta} gives the azimuthal direction and \code{phi}
@@ -43,7 +44,8 @@ persp.default(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), z,
   \item{expand}{a expansion factor applied to the \code{z}
     coordinates. Often used with \code{0 < expand < 1} to shrink the
     plotting box in the \code{z} direction.}
-  \item{col}{the color of the surface facets.}
+  \item{col}{the color of the surface facets.  Transparent colours are
+    ignored.}
   \item{border}{the color of the line drawn around the surface facets.
     A value of \code{NA} will disable the drawing of borders.  This is
     sometimes useful when the surface is shaded.}

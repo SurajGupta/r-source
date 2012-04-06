@@ -9,8 +9,11 @@ F. Gergeleit. This is no longer available directly, but is part of the
 NISGINA distribution <www.dcs.qmw.ac.uk/~williams>.  Only that part of
 XDR used by R is included.
 
+[A later version of ONC/RPC is available at 
+http://www.plt.rwth-aachen.de/ks/english/oncrpc.html]
+
 For copyright see the Sun copyright in COPYRGHT.TXT and the header
-of rpc.c.
+of xdr.c.
 
 The only changes I made were
 
@@ -18,7 +21,7 @@ The only changes I made were
 those in Windows/Sockets.h
 
 (b) to define ntohl and htonl via assembler code at the head of 
-rpc_stdio.c. This will need to be altered for any other little-endian
+xdr_stdio.c. This will need to be altered for any other little-endian
 system; generic code for 32-bit systems is provided.
 
 (c) to report errors directly rather than to NT services.

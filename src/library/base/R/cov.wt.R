@@ -16,7 +16,9 @@ cov.wt <- function(x, wt = rep(1/nrow(x), nrow(x)), cor = FALSE,
 	wt <- wt / s
     }
     if (is.logical(center)) {
-	center <- if (center) apply(wt * x, 2, sum) else 0
+	center <- if (center)
+	    colSums(wt * x)
+	else 0
     } else {
 	if (length(center) != ncol(x))
 	    stop("length of center must equal the number of columns in x")

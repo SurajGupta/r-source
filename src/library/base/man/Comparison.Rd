@@ -18,6 +18,13 @@ x >= y
 x == y
 x != y
 }
+\details{
+  Comparison of strings in character vectors is lexicographic within the
+  strings using the collating sequence of the locale in use: see
+  \code{\link{locales}}.  The collating sequence of locales such as
+  \code{en_US} is normally different from \code{C} (which should use
+  ASCII) and can be surprising.
+}
 \value{
   A vector of logicals indicating the result of the element by element
   comparison.  The elements of shorter vectors are recycled as
@@ -36,7 +43,10 @@ x != y
   For numerical values, remember \code{==} and \code{!=} do not allow
   for the finite representation of fractions, nor for rounding error.
   Using \code{\link{all.equal}} with \code{identical} is almost
-  always preferable. See the examples.
+  always preferable.  See the examples.
+}
+\seealso{
+  \code{\link{Syntax}} for operator precedence.
 }
 \examples{
 x <- rnorm(20)

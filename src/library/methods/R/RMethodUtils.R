@@ -2,7 +2,8 @@
 makeGeneric <-
 ## Makes a generic function object corresponding to the given function name.
 ## and optional definition.
-  function(f, fdef, keepMethods = TRUE, useAsDefault = NA,
+  function(f, fdef, keepMethods = TRUE,
+           fdefault = getFunction(f, generic = FALSE, mustFind = FALSE),
            group = character(), valueClass = character()) {
   if(missing(fdef)) {
     ## either find a generic or use either a pre-defined template or a non-generic
@@ -12,19 +13,8 @@ makeGeneric <-
   }
   fdef <- makeStandardGeneric(f, fdef)
   generic <- isGeneric(f, fdef = fdef)
-  if(is.na(useAsDefault))
-    useAsDefault <- !generic
   if(keepMethods && generic)
     return(fdef)
-  if(!useAsDefault || generic) {
-    ## create a generic with the same body (usually
-    ## standardGeneric(f)) but NULL default method
-    fdefault <- NULL
-  }
-  else {
-    ## a non-generic function becomes the default
-    fdefault <- getFunction(f, generic = FALSE, mustFind = FALSE)
-  }
   anames <- formalArgs(fdef)
   if(length(anames) == 0 || (length(anames) == 1 && el(anames, 1) == "..."))
     stop("must have a named argument for a generic function.")
@@ -47,7 +37,7 @@ makeGeneric <-
   if(is.null(fdefault))
     methods <- MethodsList(name)
   else
-    methods <- MethodsList(name, fdefault)
+    methods <- MethodsList(name, asMethodDefinition(fdefault))
   assign(".Methods", methods, envir=env)
   fdef
 }
@@ -181,7 +171,7 @@ mergeMethods <-
     for(i in seq(along=sigs)) {
       sigi <- el(sigs, i)
       args <- names(sigi)
-      m1 <- insertMethod(m1, as.character(sigi), args, el(methods, i))
+      m1 <- insertMethod(m1, as.character(sigi), args, el(methods, i), FALSE)
     }
     m1
   }
@@ -205,7 +195,6 @@ setAllMethodsSlot <- function(mlist) {
     }
   }
   mlist@allMethods <- methods
-  mlist@fromClass <- mnames
   if(modified)
     mlist@methods <- methods
   mlist
@@ -236,9 +225,6 @@ doPrimitiveMethod <-
 conformMethod <-
   function(signature, mnames, fnames)
 {
-    if(any(is.na(match(mnames, fnames))))
-        stop(paste("Method has formal arguments not in generic function:",
-                   paste(mnames[is.na(match(mnames, fnames))], collapse = ", ")))
     ## TO DO:  arrange for "missing" to be a valid for "..." in a signature
     ## until then, allow an omitted "..." w/o checking
     if(is.na(match("...", mnames)) && !is.na(match("...", fnames)))
@@ -258,9 +244,68 @@ conformMethod <-
     signature[omitted] <- "missing"
     ## there may have been some unspecified, but included, args; they go to "ANY"
     signature[nchar(signature) == 0] <- "ANY"
+    ## remove trailing "ANY"'s
+    n <- length(signature)
+    while(identical(signature[[n]], "ANY"))
+        n <- n - 1
+    length(signature) <- n
     signature
 }
 
+rematchDefinition <- function(definition, generic, mnames, fnames) {
+    added <- is.na(match(mnames, fnames))
+    if(!any(added))
+        return(definition)
+    dotsPos <- match("...", fnames)
+    if(is.na(dotsPos))
+        stop("Methods can add arguments to the generic only if \"...\" is an argument to the generic")
+    ## pass down all the names in common between method & generic, plus "..."
+    ## even if the method doesn't have it.  But NOT any arguments having class
+    ## "missing" implicitly (see conformMethod)
+    useNames <- !is.na(match(fnames, mnames)) | fnames == "..."
+    newCall <- lapply(c(".local", fnames[useNames]), as.name)
+    ## leave newCall as a list while checking the trailing args
+    if(dotsPos < length(fnames)) {
+        ## trailing arguments are required to match.  This is a little stronger
+        ## than necessary, but this is a dicey case, because the argument-matching
+        ## may not be consistent otherwise (in the generic, such arguments have to be
+        ## supplied by name).  The important special case is replacement methods, where
+        ## value is the last argument.
+        ntrail <- length(fnames) - dotsPos
+        trailingArgs <- fnames[seq(to = length(fnames), length = ntrail)]
+        if(!identical(mnames[seq(to = length(mnames), length = ntrail)],
+                      trailingArgs))
+            stop(paste("Arguments after \"...\" in the generic (",
+                       paste(trailingArgs, collapse=", "),
+                       ") must appear in the method, in the same place at the end of the argument list",
+                       sep=""))
+        newCallNames <- character(length(newCall))
+        newCallNames[seq(to =length(newCallNames), length = ntrail)] <-
+            trailingArgs
+        names(newCall) <- newCallNames
+    }
+    newCall <- as.call(newCall)
+    newBody <- substitute({.local <- DEF; NEWCALL},
+                          list(DEF = definition, NEWCALL = newCall))
+    body(generic, envir = environment(definition)) <- newBody
+    generic
+}
+
+unRematchDefinition <- function(definition) {
+    ## undo the effects of rematchDefiniition, if it was used.
+    ## Has the obvious disadvantage of depending on the implementation.
+    ## If we considered the rematching part of the API, a cleaner solution
+    ## would be to include the "as given to setMethod" definition as a slot
+    bdy <- body(definition)
+    if(identical(class(bdy),"{") && length(bdy) > 1) {
+        bdy <- bdy[[2]]
+        if(identical(class(bdy), "<-") &&
+           identical(bdy[[2]], as.name(".local")))
+            definition <- bdy[[3]]
+    }
+    definition
+}
+    
 getGeneric <-
   ## return the definition of the function named f as a generic.
   ##
@@ -372,17 +417,19 @@ cacheMetaData <-
 cacheGenericsMetaData <-
   function(generics, attach = TRUE, envir = NULL) {
     for(f in generics) {
-        ## Some tests: don't cache generic if no methods defined        
-      if(!isGeneric(f))
-          next
-      methods <- getMethods(f)
-      if(is.null(methods))
-         next
-      methods <- methods@methods
-      if(length(methods)==0)
-          next
-      if(!is.null(getFromMethodMetaData(f)))
-        removeFromMethodMetaData(f)
+        ## Some tests: don't cache generic if no methods defined
+        if(attach) {
+            if(!isGeneric(f))
+                next
+            methods <- getMethods(f)
+            if(is.null(methods))
+                next
+            methods <- methods@methods
+            if(length(methods)==0)
+                next
+        }
+        if(!is.null(getFromMethodMetaData(f)))
+            removeFromMethodMetaData(f)
       ## find the function.  It may be a generic, but will be a primitive
       ## if the internal C code is being used to dispatch methods for primitives.
       ## It may also be NULL, if no function is found (when detaching the only
@@ -452,8 +499,9 @@ MethodAddCoerce <- function(method, argName, thisClass, methodClass)
     if(identical(thisClass, methodClass))
         return(method)
     ext <- extendsCoerce(thisClass, methodClass, formFunction = FALSE)
-    ## findExtends in this version only returns a function if there
-    ## is an explicit coerce somewhere along the line.
+    ## extendsCoerce with formFunction=FALSE only returns a function if there
+    ## is an explicit coerce somewhere along the line, not for direct inclusion
+    ## or for the data part.
     if(!is.function(ext))
         return(method)
     methodInsert <- function(method, addExpr) {
@@ -473,4 +521,124 @@ MethodAddCoerce <- function(method, argName, thisClass, methodClass)
     addExpr <- substitute(XXX <- as(XXX, CLASS),
                           list(XXX = argName, CLASS = methodClass))
     methodInsert(method, addExpr)
+}
+
+missingArg <- function(symbol, envir = parent.frame(), eval = FALSE)
+    .Call("R_missingArg", if(eval) symbol else substitute(symbol), envir, PACKAGE = "methods")
+
+balanceMethodsList <- function(mlist, args, check = TRUE) {
+    moreArgs <- args[-1]
+    if(length(moreArgs) == 0)
+        return(mlist)
+    methods <- mlist@methods
+    if(check && length(methods) > 0) {
+        ## check whether the current depth is enough (i.e.,
+        ## whether a method with this no. of args or more was set before
+        depth <- 0
+        el <- methods[[1]]
+        while(is(el, "MethodsList")) {
+            mm <- el@methods
+            if(length(mm) == 0)
+                break
+            depth <- depth+1
+            el <- mm[[1]]
+        }
+        if(depth >= length(args))
+            ## already balanced to this length: An assertion
+            ## relying on balance having been used consistently,
+            ## which in turn relies on setMethod being called to
+            ## add methods.  If you roll your own, tough luck!
+            return(mlist)
+    }
+    for(i in seq(along = methods)) {
+        el <- methods[[i]]
+        if(is(el, "MethodsList"))
+            el <- Recall(el, moreArgs, FALSE)
+        else {
+            if(is(el, "MethodDefinition")) {
+                el@target[moreArgs] <- "ANY"
+                el@defined[moreArgs] <- "ANY"
+            }
+            for(what in rev(moreArgs))
+                el <- new("MethodsList", argument = as.name(what),
+                          methods = list(ANY = el))
+        }
+        methods[[i]] <- el
+    }
+    mlist@methods <- methods
+    mlist
+}
+    
+    
+sigToEnv <- function(signature) {
+    value <- new.env()
+    classes <- as.character(signature)
+    args <- names(signature)
+    for(i in seq(along=args))
+        assign(args[[i]], classes[[i]], envir = value)
+    value
+}
+
+methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
+    if(length(sigSlots)>0) {
+        allSlots <- lapply(sigSlots, slot, object = object)
+        mm <- unlist(allSlots)
+        mm <- matrix(mm, nrow = length(allSlots), byrow = TRUE)
+        dimnames(mm) <- list(sigSlots, names(allSlots[[1]]))
+        mm
+    }
+    else matrix(character(), 0, 0)
+}
+
+.valueClassTest <- function(object, classes, fname) {
+    if(length(classes) > 0) {
+        for(Cl in classes)
+            if(is(object, Cl))
+               return(object)
+        stop(paste("Invalid value from generic function \"",
+                   fname, "\", class \"", class(object),
+                   "\", expected ",
+                   paste("\"", classes, "\"", sep = "", collapse = " or "),
+                   sep = ""))
+    }
+    ## empty test is allowed
+    object
+}
+
+    
+.getOrMakeMethodsList <- function(f, fnames, where) {
+    allMethods <- getMethodsMetaData(f, where = where)
+    argName <- ""
+    for(i in fnames)
+        if(!identical(i, "..."))
+        { argName <- i; break}
+    if(nchar(argName) == 0)
+        stop(paste("\"", f, "\" can't be a generic; no valid argument name", sep=""))
+    if(is.null(allMethods)) {
+        allMethods <- new("MethodsList", argument = as.name(argName))
+        other <- getMethodsMetaData(f)
+        if(is.null(other))
+            ## this utility is called AFTER ensuring the existence of a generic for f
+            ## Therefore, the case below can only happen for a primitive for which
+            ## no methods currently are attached.  Make the prmitive the default
+            deflt <- getFunction(f, generic = FALSE, mustFind = FALSE)
+        else
+            ## inherit the default method, if any
+            deflt <- finalDefaultMethod(other)
+        if(!is.null(deflt))
+            allMethods <- insertMethod(allMethods, "ANY", argName, deflt)
+        }
+    allMethods
+}
+
+makeCallString <- function(def, name = substitute(def), args = formalArgs(def)) {
+    if(is.character(def)) {
+        if(missing(name))
+            name <- def
+        def <- getFunction(def)
+    }
+    if(is(def, "function"))
+        paste(name, "(", paste(args, collapse=", "), ")", sep="")
+    else
+        ""
 }

@@ -14,8 +14,8 @@ INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS FAQ NEWS RESOURCES THANKS
 DISTFILES = $(INSTFILES) \
 	BUGS ChangeLog INSTALL ONEWS README VERSION Y2K \
 	Makeconf.in Makefile.in \
-	acconfig.h acinclude.m4 aclocal.m4 \
-	config.site configure configure.in \
+	acinclude.m4 aclocal.m4 \
+	config.site configure configure.ac \
 	date-stamp
 SUBDIRS = m4 tools afm doc etc share src tests
 
@@ -24,29 +24,27 @@ GZIP = --best
 all: Makefile Makeconf R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) \
-	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $@
 Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
-	@cd $(top_builddir) \
-	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $@
 
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 ACLOCAL_DEPENDENCIES = \
-	configure.in \
+	configure.ac \
 	acinclude.m4
 ACINCLUDE_DEPENDENCIES = \
 	m4/R.m4 \
-	m4/am-fixes.m4 \
 	m4/gnome-gnorba-check.m4 \
 	m4/gnome-orbit-check.m4 \
 	m4/gnome.m4 \
 	m4/libglade.m4 \
 	m4/libtool.m4
+CONFIGURE_DEPENDENCIES = $(srcdir)/VERSION
 config.status: $(srcdir)/configure
 	@$(SHELL) ./config.status --recheck
-$(srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(ACLOCAL_M4)
+$(srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.ac $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
 	@cd $(srcdir) && $(AUTOCONF)
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(ACLOCAL_DEPENDENCIES)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.ac $(ACLOCAL_DEPENDENCIES)
 	@cd $(srcdir) && $(ACLOCAL)
 $(srcdir)/acinclude.m4: @MAINTAINER_MODE_TRUE@ $(ACINCLUDE_DEPENDENCIES)
 	@cd $(srcdir) && cat $(ACINCLUDE_DEPENDENCIES) > $@
@@ -65,7 +63,7 @@ R: Makefile
 	  (cd $${d} && $(MAKE) R) || exit 1; \
 	done
 	@if [ ! -f src/library/stamp-docs ]; then \
-	  echo "you should \`make docs' now ..."; \
+	  echo "you should 'make docs' now ..."; \
 	fi
 
 docs: FORCE
@@ -106,15 +104,14 @@ clean:
 distclean: clean
 	@(for d in $(SUBDIRS); do rsd="$${d} $${rsd}"; done; \
 	  for d in $${rsd}; do (cd $${d} && $(MAKE) $@); done)
-	@rm -rf bin include library modules gnome
-	@rm -f Makeconf Makefile Makefile.bak Makefrag.* \
+	-@rm -rf bin include library modules gnome
+	-@rm -f Makeconf Makefile Makefile.bak Makefrag.* \
 	  config.cache config.log config.status libtool
-## FIXME:
-## This should really do something!
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use; it"
 	@echo "deletes files that may need special rules to rebuild"
-## </FIXME>
+	@(for d in $(SUBDIRS); do rsd="$${d} $${rsd}"; done; \
+	  for d in $${rsd}; do (cd $${d} && $(MAKE) $@); done)
 
 dist: dist-unix
 dist-unix: distdir

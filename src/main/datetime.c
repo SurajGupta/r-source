@@ -620,6 +620,8 @@ static void glibc_fix(struct tm *tm, int *invalid)
 #endif
     tm0 = localtime(&t);
     if(tm->tm_year == NA_INTEGER) tm->tm_year = tm0->tm_year;
+    if(tm->tm_mon != NA_INTEGER && tm->tm_mday != NA_INTEGER) return;
+    /* at least one of the month and the day of the month is missing */
     if(tm->tm_yday != NA_INTEGER) {
 	/* since we have yday, let that take precedence over mon/mday */
 	int yday = tm->tm_yday, mon = 0;
@@ -674,6 +676,8 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	    !strptime(CHAR(STRING_ELT(x, i%n)),
 		      CHAR(STRING_ELT(sformat, i%m)), &tm);
 	if(!invalid) {
+	    /* Solaris sets missing fields to 0 */
+	    if(tm.tm_mday == 0) tm.tm_mday = NA_INTEGER;
 	    if(tm.tm_mon == NA_INTEGER || tm.tm_mday == NA_INTEGER
 	       || tm.tm_year == NA_INTEGER)
 		glibc_fix(&tm, &invalid);

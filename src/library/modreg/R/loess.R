@@ -106,11 +106,11 @@ simpleLoess <-
     for(j in 1:iterations) {
 	robust <- weights * robust
 	if(j > 1) statistics <- "none"
-	if(surface == "interpolate" && statistics == "approximate")
-	    statistics <- if(trace.hat == "approximate") "2.approx"
-	    else if(trace.hat == "exact") "1.approx"
+	else if(surface == "interpolate" && statistics == "approximate")
+	    statistics <- if(trace.hat == "exact") "1.approx"
+            else "2.approx" # trace.hat == "approximate"
 	surf.stat <- paste(surface, statistics, sep="/")
-	z <- .C("loess_raw",
+	z <- .C("loess_raw", # ../src/loessc.c
 		as.double(y),
 		as.double(x),
 		as.double(weights),
@@ -484,7 +484,7 @@ anova.loess <- function(object, ...)
     dfnum <- c(d1diff^2/abs(diff(delta2)))
     dfden <- (delta1^2/delta2)[max.enp]
     Fvalue <- c(NA, (abs(diff(rss))/d1diff)/s[max.enp]^2)
-    pr <- 1 - pf(Fvalue, dfnum, dfden)
+    pr <- pf(Fvalue, dfnum, dfden, lower.tail = FALSE)
     ans <- data.frame(ENP = round(enp,2), RSS = rss, "F-value" = Fvalue,
 		      "Pr(>F)" = pr, check.names = FALSE)
     attr(ans, "heading") <-

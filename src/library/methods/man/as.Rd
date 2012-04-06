@@ -5,6 +5,10 @@
 \alias{coerce<-}
 \alias{setAs}
 \title{Force an Object to Belong to a Class}
+\description{
+  These functions manage the relations that allow coercing an object to
+  a given class.
+}
 \usage{
 as(object, Class, coerceFlag=TRUE)
 
@@ -13,82 +17,79 @@ as(object, Class, coerceFlag=TRUE) <- value
 setAs(from, to, def, replace, where = 1)
 
 }
-\description{
-  These functions manage the relations that allow coercing an object to
-  a given class.
-  }
 \section{Summary of Functions}{
-\describe{
-  \item{\code{as}:}{
-  Returns the version of this object coerced to be the given \code{Class}.  
+  \describe{
+    \item{\code{as}:}{
+      Returns the version of this object coerced to be the given
+      \code{Class}.
   
-  
-If the corresponding \code{is} relation is true, it will be used.  In particular,
-if the relation has a coerce method, the method will be invoked on \code{object}.
+      If the corresponding \code{is} relation is true, it will be used.
+      In particular, if the relation has a coerce method, the method
+      will be invoked on \code{object}.
 
-If the \code{is} relation is FALSE, and \code{coerceFlag} is \code{TRUE},
-the coerce function will be called (which will throw an error if there is
-no valid way to coerce the two objects).  Otherwise, \code{NULL} is
-returned.
+      If the \code{is} relation is \code{FALSE}, and \code{coerceFlag}
+      is \code{TRUE}, the coerce function will be called (which will
+      throw an error if there is no valid way to coerce the two
+      objects).  Otherwise, \code{NULL} is returned.
 
-Coerce methods are pre-defined for basic classes (including all the types of
-vectors, functions and a few others).  The object \code{asFunctions}
-contains the list of such pre-defined relations:
-\code{names(asFunctions)} gives the names of all the classes.
+      Coerce methods are pre-defined for basic classes (including all
+      the types of vectors, functions and a few others).  The object
+      \code{asFunctions} contains the list of such pre-defined
+      relations: \code{names(asFunctions)} gives the names of all the
+      classes.
 
-Beyond these two sources of  methods, further methods are defined by
-calls to the \code{setAs} function.
-}
+      Beyond these two sources of methods, further methods are defined
+      by calls to the \code{setAs} function.
+    }
 
-  \item{\code{coerce}:}{
-    Coerce \code{from} to be of the same class as \code{to}.
+    \item{\code{coerce}:}{
+      Coerce \code{from} to be of the same class as \code{to}.
 
-    Not a function you should usually
-    call explicitly.  The function \code{\link{setAs}} creates
-    methods for \code{coerce} for the \code{as} function to use.
-}
+      Not a function you should usually call explicitly.  The function
+      \code{\link{setAs}} creates methods for \code{coerce} for the
+      \code{as} function to use.
+    }
 
-  \item{\code{setAs}:}{
-  The function supplied as the third argument is to be called to
-  implement \code{as(x, to)} when \code{x} has class \code{from}.
-  Need we add that the function should return a suitable object with
-  class \code{to}.
-}
-}
+    \item{\code{setAs}:}{
+      The function supplied as the third argument is to be called to
+      implement \code{as(x, to)} when \code{x} has class \code{from}.
+      Need we add that the function should return a suitable object with
+      class \code{to}.
+    }
+  }
 }
 \arguments{
   \item{object}{ Any object. }
-  \item{Class}{ The name of the class to which \code{object} should be coerced. }
+  \item{Class}{ The name of the class to which \code{object} should be
+    coerced. }
   \item{coerceFlag}{ A logical flag.  If \code{FALSE},  only inheritance
-  relations will be used; i.e., \code{is(object, Class)} must be
-  \code{TRUE}, and if not, \code{NULL} is returned.
+    relations will be used; i.e., \code{is(object, Class)} must be
+    \code{TRUE}, and if not, \code{NULL} is returned.
 
-  If the flag is \code{TRUE}, however, coerce methods will be called if
-  inheritance is not true (and an error will result if coercion fails).
-}
+    If the flag is \code{TRUE}, however, coerce methods will be called
+    if inheritance is not true (and an error will result if coercion
+    fails).}
   \item{value}{The value to use to modify \code{object} (see the
     discussion below).  You should supply an object with class
     \code{Class}; some coercion is done, but you're unwise to rely on
-    it.
-    }
+    it.}
 
-\item{from, to}{ The classes between which \code{def} performs coercion.
+  \item{from, to}{ The classes between which \code{def} performs coercion.
 
-  (In the case of the \code{coerce} function these are objects from the
-  classes, not the names of the classes, but you're not expected to call \code{coerce} directly.)
-}
+    (In the case of the \code{coerce} function these are objects from
+    the classes, not the names of the classes, but you're not expected
+    to call \code{coerce} directly.)}
   \item{def}{ A function of one argument.  It will get an object from
     class \code{from} and had better return an object of class
     \code{to}. (If you want to save \code{setAs} a little work, make
     the name of the argument \code{from}, but don't worry about it,
     \code{setAs} will do the conversion.) }
   \item{replace}{If supplied, the function to use as a replacement
-    method.
-    }
-  \item{where}{ The database on which to store the resulting method for
+    method.}
+  \item{where}{ The position or environment in which to store the resulting method for
     \code{coerce}; by default, the global environment. }
-
 }
+
 %% <FIXME>
 %% Currently Rdconv cannot deal with markup in section titles.
 %% \section{How Functions \code{as} and \code{setAs} Work}{
@@ -147,9 +148,20 @@ calls to the \code{setAs} function.
   With this explanation as background, the function \code{setAs} does a
   fairly obvious computation:  It constructs and sets a method for the function
   \code{coerce} with signature \code{c(from, to)}, using the \code{def}
-  argument to define the body of the method.  The function \code{coerce}
+  argument to define the body of the method.  The function supplied as
+  \code{def} can have one argument (interpreted as an object to be
+  coerced) or two arguments (the \code{from} object and the \code{to}
+  class).  Either way, \code{setAs} constructs a function of two
+  arguments, with the second defaulting to the name of the \code{to}
+  class.  The method will be called from \code{as} with the object
+  as the only argument:  The default for the
+  second argument is provided so the method can know the intended
+  \code{to} class.
+
+  The function \code{coerce}
   exists almost entirely as a repository for such methods, to be
-  selected as desribed above by the \code{as} function.  In fact, it
+  selected as desribed above by the \code{as} function.
+  In fact, it
   would usually be a bad idea to call \code{coerce} directly, since then
   you would get inheritance on the \code{to} argument; as mentioned,
   this is not likely to be what you want.
@@ -203,11 +215,12 @@ calls to the \code{setAs} function.
   }
 
 \references{
-The web page \url{http://www.omegahat.org/RSMethods/index.html} is the primary documentation.
+  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
+  primary documentation.
 
-The functions in this package emulate the facility for classes and methods described in
-\emph{Programming with Data}, (John M. Chambers, Springer, 1998).  See this book
-for further details and examples.
+  The functions in this package emulate the facility for classes and
+  methods described in \emph{Programming with Data} (John M. Chambers,
+  Springer, 1998).  See this book for further details and examples.
 }
 
 \examples{
@@ -227,8 +240,7 @@ t1 <- new("track", x=1:20, y=(1:20)^2)
 as(t1, "numeric")
 
 ## The next example shows:
-##  1. A virtual class to define setAs for
-##     several classes at once.
+##  1. A virtual class to define setAs for several classes at once.
 ##  2. as() using inherited information
 
 setClass("ca", representation(a = "character", id = "numeric"))
@@ -247,13 +259,13 @@ CA <- new("ca", a ="A", id = 1)
 
 CB <- new("cb", b = "B", id = 2)
 
-setAs("cb", "ca", function(from)new("ca", a=from@b, id = from@id))
+setAs("cb", "ca", function(from, to )new(to, a=from@b, id = from@id))
 
 as(CB, "numeric")
 
 \testonly{
 ## should generate an error (should have been a function of one argument)
-try(setAs("track", "numeric", function(x, ...)x@y))
+try(setAs("track", "numeric", function(x, y,z)x@y))
 
 }
 

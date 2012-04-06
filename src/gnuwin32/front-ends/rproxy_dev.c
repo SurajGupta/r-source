@@ -17,7 +17,7 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: rproxy_dev.c,v 1.4.2.1 2001/12/21 06:54:42 ripley Exp $
+ *  $Id: rproxy_dev.c,v 1.5 2001/12/21 06:55:37 ripley Exp $
  */
 
 // virtual device size

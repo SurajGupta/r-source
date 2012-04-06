@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2001 R Development Core Team
+# Copyright (C) 1997-2002 R Development Core Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,36 +20,22 @@ use Getopt::Long;
 use R::Rd;
 use R::Rdtools;
 use R::Utils;
+use R::Vars;
+
+my $OSdir = $R::Vars::OSTYPE;
 
 my @knownoptions = ("o|output:s", "os|OS:s");
-
 GetOptions (@knownoptions) || &usage();
 
-sub usage {
-  print STDERR <<END;
-Usage: [R CMD] perl /path/to/Rd2contents.pl [options] FILE
-
-Prepare the CONTENTS file for a directory.
-
-Options:
-  -o, --output=OUT	use \`OUT\' as the output file
-      --os=NAME		use OS subdir \`NAME\' (unix, mac or windows)
-      --OS=NAME		the same as \`--os\'.
-END
-  exit 0;
-}
-
-## <FIXME>
-## Currently, R_OSTYPE is always set on Unix/Windows.
-$OSdir = R_getenv("R_OSTYPE", "mac");
-## </FIXME>
 $OSdir = $opt_os if $opt_os;
+$OSdir = ":mac" if($R::Vars::OSTYPE eq "mac");
 
 my $out = 0;
 $out = $opt_o if(defined $opt_o && length($opt_o));
 
 my $pkg;
-if($OSdir eq "mac") {
+
+if($R::Vars::OSTYPE eq "mac") {
     $ARGV[0] =~ /([^\:]*)$/;
     $pkg = $1;
 } else {
@@ -59,7 +45,7 @@ if($OSdir eq "mac") {
 
 my $outfile;
 if($out) {
-    open(OUTFILE, "> $out") or die "Cannot write to \`$out'";
+    open(OUTFILE, "> $out") or die "Cannot write to '$out'";
     $outfile = OUTFILE;
 } else {
     $outfile = STDOUT;
@@ -83,7 +69,22 @@ foreach my $rdfile (@Rdfiles) {
     print $outfile "Description: " . $rdinfo->{"title"} . "\n";
 
     ## <FIXME>
-    ## This has extension `html' hard-wired.
+    ## This has extension 'html' hard-wired.
     print $outfile "URL: ../../../library/$pkg/html/$file.html\n\n";
     ## </FIXME>
+}
+
+
+sub usage {
+  print STDERR <<END;
+Usage: [R CMD] perl /path/to/Rd2contents.pl [options] FILE
+
+Prepare the CONTENTS file for a directory.
+
+Options:
+  -o, --output=OUT	use 'OUT' as the output file
+      --os=NAME		use OS subdir 'NAME' (unix, mac or windows)
+      --OS=NAME		the same as '--os'.
+END
+  exit 0;
 }

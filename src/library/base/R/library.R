@@ -4,6 +4,31 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
          keep.source = getOption("keep.source.pkgs"),
          verbose = getOption("verbose"))
 {
+    testRversion <- function(descfile)
+    {
+        current <- paste(R.Version()[c("major", "minor")], collapse = ".")
+        fields <- read.dcf(descfile, fields =
+                           c("Package", "Depends", "Built"))
+        ## depends on R version?
+        if(!package.dependencies(fields, check = TRUE)) {
+            dep <- package.dependencies(fields)[[1]][1,]
+            stop(paste("This is R ", current, ", package ",
+                       fields[1, "Package"],
+                       " needs ", dep[2], " ", dep[3], sep=""),
+                 call. = FALSE)
+        }
+        ## which version was this package built under?
+        if(!is.na(built <- fields[1, "Built"])) {
+            builtunder <- substring(strsplit(built, ";")[[1]][1], 3)
+            if(nchar(builtunder) &&
+               compareVersion(current, builtunder) < 0) {
+                warning(paste("package", fields[1, "Package"],
+                              "was built under R version", builtunder),
+                        call. = FALSE)
+            }
+        }
+    }
+
     sQuote <- function(s) paste("`", s, "'", sep = "")
     if(!missing(package)) {
 	if(!character.only)
@@ -29,6 +54,9 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
 		else stop(txt)
             }
             which.lib.loc <- dirname(pkgpath)
+            descfile <- system.file("DESCRIPTION", package = package,
+                                    lib.loc = which.lib.loc)
+            if(nchar(descfile)) testRversion(descfile)
             ## if the name space mechanism is available and the package
             ## has a name space, then the name space loading mechanism
             ## takes over.
@@ -106,24 +134,38 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
     else if(!missing(help)) {
 	if(!character.only)
 	    help <- as.character(substitute(help))
-        help <- help[1]                 # only give help on one package
-
-        pkgpath <- .find.package(help, lib.loc, verbose = verbose)
-        outFile <- tempfile("Rlibrary")
-        outConn <- file(outFile, open = "w")
-        docFiles <- file.path(pkgpath,
-                              c("TITLE", "DESCRIPTION", "INDEX"))
-        headers <- c("", "Description:\n\n", "Index:\n\n")
-        footers <- c("\n", "\n", "")
-        for(i in which(file.exists(docFiles))) {
-            writeLines(headers[i], outConn, sep="")
-            writeLines(readLines(docFiles[i]), outConn)
-            writeLines(footers[i], outConn, sep="")
+        pkgName <- help[1]              # only give help on one package
+        pkgPath <- .find.package(pkgName, lib.loc, verbose = verbose)
+        docFiles <- file.path(pkgPath,
+                              c("TITLE", "DESCRIPTION", "INDEX",
+                                file.path("doc", "00Index.dcf")))
+        pkgInfo <- vector(length = 4, mode = "list")
+        readDocFile <- function(f) {
+            if(basename(f) %in% c("DESCRIPTION", "00Index.dcf")) {
+                ## This should be in valid DCF format ...
+                txt <- try(read.dcf(f))
+                if(inherits(txt, "try-error")) {
+                    warning(paste("file",
+                                  sQuote(f),
+                                  "is not in valid DCF format"))
+                    return(NULL)
+                }
+                ## Return a list so that the print method knows to
+                ## format as a description list (if non-empty).
+                txt <- if(all(dim(txt) >= 1))
+                    list(colnames(txt), as.character(txt[1, ]))
+                else
+                    NULL
+            }
+            else
+                txt <- readLines(f)
+            txt
         }
-        close(outConn)
-        file.show(outFile, delete.file = TRUE,
-                  title = paste("Documentation for package",
-                  sQuote(help)))
+        for(i in which(file.exists(docFiles)))
+            pkgInfo[[i]] <- readDocFile(docFiles[i])
+        y <- list(name = pkgName, path = pkgPath, info = pkgInfo)
+        class(y) <- "packageInfo"
+        return(y)
     }
     else {
 	## library():
@@ -139,6 +181,7 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
                 title <- if(file.exists(INDEX))
                     read.00Index(INDEX)[, 2]
                 else ""
+                if(length(title) == 0) title <- ""
                 db <- rbind(db, cbind(i, lib, title))
             }
             if(length(a) == 0)
@@ -245,17 +288,20 @@ function(package = .packages(), quiet = FALSE)
     searchpaths <-
         lapply(1:length(s), function(i) attr(as.environment(i), "path"))
     searchpaths[[length(s)]] <- system.file()
-    pkgs <- paste("package", package, sep=":")
+    pkgs <- paste("package", package, sep = ":")
     pos <- match(pkgs, s)
     if(any(m <- is.na(pos))) {
         if(!quiet) {
-            miss <- paste(package[m], collapse=", ")
-            if(all(m)) stop(paste("none of the packages are not loaded"))
-            else warning(paste("package(s)", miss, "are not loaded"))
+            if(all(m))
+                stop(paste("none of the packages are not loaded"))
+            else
+                warning(paste("package(s)",
+                              paste(package[m], collapse=", "),
+                              "are not loaded"))
         }
         pos <- pos[!m]
     }
-    unlist(searchpaths[pos], use.names=FALSE)
+    unlist(searchpaths[pos], use.names = FALSE)
 }
 
 .find.package <-
@@ -263,7 +309,7 @@ function(package, lib.loc = NULL, use.attached, quiet = FALSE,
          verbose = getOption("verbose"))
 {
     sQuote <- function(s) paste("`", s, "'", sep = "")
-    
+
     if(!missing(use.attached))
         warning(paste("argument", sQuote("use.attached"),
                       "is deprecated"))
@@ -272,7 +318,7 @@ function(package, lib.loc = NULL, use.attached, quiet = FALSE,
         use.attached <- TRUE
         lib.loc <- .libPaths()
     }
-    
+
     n <- length(package)
     if(n == 0) return(character(0))
 
@@ -317,4 +363,39 @@ function(new)
     if(!missing(new))
         assign(".lib.loc", unique(c(new, .Library)), envir = NULL)
     get(".lib.loc", envir = NULL)
+}
+
+print.packageInfo <-
+function(x, ...)
+{
+    if(!inherits(x, "packageInfo")) stop("wrong class")
+    sQuote <- function(s) paste("`", s, "'", sep = "")
+    outFile <- tempfile("RpackageInfo")
+    outConn <- file(outFile, open = "w")
+    vignetteMsg <-
+        paste("Further information is available in the following ",
+              "vignettes in directory ",
+              sQuote(file.path(x$path, "doc")),
+              ":",
+              sep = "")
+    headers <- c("", "Description:\n\n", "Index:\n\n",
+                 paste(paste(strwrap(vignetteMsg), collapse = "\n"),
+                       "\n\n", sep = ""))
+    footers <- c("\n", "\n", "\n", "")
+    formatDocEntry <- function(entry) {
+        if(is.list(entry))
+            formatDL(entry, style = "list")
+        else
+            entry
+    }
+    for(i in which(!sapply(x$info, is.null))) {
+        writeLines(headers[i], outConn, sep = "")
+        writeLines(formatDocEntry(x$info[[i]]), outConn)
+        writeLines(footers[i], outConn, sep = "")
+    }
+    close(outConn)
+    file.show(outFile, delete.file = TRUE,
+              title = paste("Documentation for package",
+              sQuote(x$name)))
+    invisible(x)
 }

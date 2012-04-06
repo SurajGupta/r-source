@@ -30,12 +30,13 @@ aov <- function(formula, data = NULL, projections = FALSE, qr = TRUE,
         on.exit(options(opcons))
         allTerms <- Terms
         errorterm <-  attr(Terms, "variables")[[1 + indError]]
-        eTerm <- deparse(errorterm[[2]])
+        eTerm <- deparse(errorterm[[2]], width = 500)
         intercept <- attr(Terms, "intercept")
         ecall <- lmcall
-        ecall$formula <- as.formula(paste(deparse(formula[[2]]), "~", eTerm,
-                                          if(!intercept) "- 1"),
-                                    env=environment(formula))
+        ecall$formula <-
+            as.formula(paste(deparse(formula[[2]], width = 500), "~", eTerm,
+                             if(!intercept) "- 1"),
+                       env=environment(formula))
 
         ecall$method <- "qr"
         ecall$qr <- TRUE
@@ -93,7 +94,7 @@ aov <- function(formula, data = NULL, projections = FALSE, qr = TRUE,
             if(!ni) next
             ## helpful to drop constant columns.
             xi <- qtx[select, , drop = FALSE]
-            cols <- apply(xi^2, 2, sum) > 1e-5
+            cols <- colSums(xi^2) > 1e-5
             if(any(cols)) {
                 xi <- xi[, cols, drop = FALSE]
                 attr(xi, "assign") <- asgn.t[cols]
@@ -143,7 +144,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
             ai <- asgn==uasgn[i]
             df[i] <- sum(ai)
             ef <- effects[ai,, drop=FALSE]
-            ss[i,] <- if(sum(ai) > 1) apply(ef^2, 2, sum) else ef^2
+            ss[i,] <- if(sum(ai) > 1) colSums(ef^2) else ef^2
         }
         keep <- df > 0
         if(!intercept && uasgn[1] == 0) keep[1] <- FALSE
@@ -156,7 +157,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
     if(nterms == 0) {
         ## empty model
         if(rdf > 0) {
-            ss <- apply(as.matrix(x$residuals)^2,2,sum)
+            ss <- colSums(as.matrix(x$residuals)^2)
             ssp <- sapply(ss, format)
             if(!is.matrix(ssp)) ssp <- t(ssp)
             tmp <- as.matrix(c(ssp, format(rdf)))
@@ -177,7 +178,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
             resid <- as.matrix(x$residuals)
             nterms <- nterms + 1
             df <- c(df, rdf)
-            ss <- rbind(ss, apply(resid^2, 2, sum))
+            ss <- rbind(ss, colSums(resid^2))
             nmeffect <- c(nmeffect, "Residuals")
         }
         ssp <- apply(zapsmall(ss), 2, format)
@@ -193,7 +194,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
         nobs <- NROW(x$residuals) - !(is.null(int) || int == 0)
         cat("\n")
         if(rdf > 0) {
-            rs <- sqrt(apply(as.matrix(x$residuals)^2,2,sum)/rdf)
+            rs <- sqrt(colSums(as.matrix(x$residuals)^2)/rdf)
             cat("Residual standard error:", sapply(rs, format), "\n")
         }
         coef <- as.matrix(x$coef)[,1]
@@ -213,8 +214,49 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
     invisible(x)
 }
 
-summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE, ...)
+summary.aov <- function(object, intercept = FALSE, split,
+                        expand.split = TRUE, keep.zero.df = TRUE, ...)
 {
+    splitInteractions <- function(split, factors, names, asgn, df.names)
+    {
+        ns <- names(split)
+        for(i in unique(asgn)) {
+            if(i == 0 || names[i+1] %in% ns) next
+            f <- rownames(factors)[factors[, i] > 0]
+            sp <- f %in% ns
+            if(any(sp)) {              # some marginal terms are split
+                if(sum(sp) > 1) {
+                    old <- split[ f[sp] ]
+                    nn <- f[sp]
+                    names(nn) <- nn
+                    marg <- lapply(nn, function(x)
+                                   df.names[asgn == (match(x, names) - 1)])
+                    term.coefs <- strsplit(df.names[asgn == i], ":")
+                    ttc <- sapply(term.coefs, function(x) x[sp])
+                    rownames(ttc) <- nn
+                    splitnames <- apply(expand.grid(lapply(old, names)), 1,
+                                        function(x) paste(x, collapse="."))
+                    names(splitnames) <- splitnames
+                    tmp <- sapply(nn, function(i)
+                                  names(old[[i]])[match(ttc[i, ], marg[[i]])] )
+                    tmp <- apply(tmp, 1, function(x) paste(x, collapse="."))
+                    new <- lapply(splitnames, function(x) match(x, tmp))
+                    split[[ names[i+1] ]] <-
+                        new[sapply(new, function(x) length(x) > 0)]
+                } else {
+                    old <- split[[ f[sp] ]]
+                    marg.coefs <- df.names[asgn == (match(f[sp], names) - 1)]
+                    term.coefs <- strsplit(df.names[asgn == i], ":")
+                    ttc <- sapply(term.coefs, function(x) x[sp])
+                    new <- lapply(old, function(x)
+                                  seq(along=ttc)[ttc %in% marg.coefs[x]])
+                    split[[ names[i+1] ]] <- new
+                }
+            }
+        }
+        split
+    }
+
     asgn <- object$assign[object$qr$pivot[1:object$rank]]
     uasgn <- unique(asgn)
     nterms <- length(uasgn)
@@ -237,34 +279,60 @@ summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE, ...)
             names(ans)[y] <- paste(" Response", cn)
         }
     }
+
+    if(!is.null(effects) && !missing(split)) {
+        ns <- names(split)
+        if(!is.null(Terms <- object$terms)) {
+            if(!is.list(split))
+                stop("The split argument must be a list")
+            if(!all(ns %in% nmeffect))
+                stop("Unknown name(s) in the split list")
+        }
+        if(expand.split) {
+            df.names <- names(coef(object))
+            split <- splitInteractions(split, attr(Terms, "factors"),
+                                       nmeffect, asgn, df.names)
+            ns <- names(split)
+        }
+    }
+
     for (y in 1:nresp) {
         if(is.null(effects)) {
-            df <- nterms <- neff <- 0
-            ss <- ms <- numeric(0)
+            nterms <- neff <- 0
+            df <- ss <- ms <- numeric(0)
             nmrows <- character(0)
         } else {
             nobs <- length(resid[, y])
-            df <- ss <- numeric(nterms)
-            nmrows <- character(nterms)
+            df <- ss <- numeric(0)
+            nmrows <- character(0)
             for(i in seq(nterms)) {
                 ai <- (asgn == uasgn[i])
-                df[i] <- sum(ai)
-                ss[i] <- sum(effects[ai, y]^2)
-                nmrows[i] <- nmeffect[1 + uasgn[i]]
+                df <- c(df, sum(ai))
+                ss <- c(ss, sum(effects[ai, y]^2))
+                nmi <- nmeffect[1 + uasgn[i]]
+                nmrows <- c(nmrows, nmi)
+                if(!missing(split) && !is.na(int <- match(nmi, ns))) {
+                    df <- c(df, unlist(lapply(split[[int]], length)))
+                    if(is.null(nms <- names(split[[int]])))
+                        nms <- paste("C", seq(along = split[[int]]), sep = "")
+                    ss <- c(ss, unlist(lapply(split[[int]],
+                                              function(i, e)
+                                              sum(e[i]^2), effects[ai, y])))
+                    nmrows <- c(nmrows, paste("  ", nmi, ": ", nms, sep = ""))
+                }
             }
         }
-        nt <- nterms
         if(rdf > 0) {
-            nt <- nterms + 1
-            df[nt] <- rdf
-            ss[nt] <- sum(resid[,y]^2)
-            nmrows[nt] <- "Residuals"
+            df <- c(df, rdf)
+            ss <- c(ss, sum(resid[, y]^2))
+            nmrows <- c(nmrows,  "Residuals")
         }
+        nt <- length(df)
         ms <- ifelse(df > 0, ss/df, NA)
         x <- list(Df = df, "Sum Sq" = ss, "Mean Sq" = ms)
         if(rdf > 0) {
             TT <- ms/ms[nt]
-            TP <- 1 - pf(TT, df, rdf)
+            TP <- pf(TT, df, rdf, lower.tail = FALSE)
             TT[nt] <- TP[nt] <- NA
             x$"F value" <- TT
             x$"Pr(>F)" <- TP
@@ -407,9 +475,8 @@ summary.aovlist <- function(object, ...)
     }
     x <- vector(length = length(strata), mode = "list")
     names(x) <- paste("Error:", strata)
-    for(i in seq(along = strata)) {
-        x[[i]] <- do.call("summary", append(list(object = object[[i]]), dots))
-    }
+    for(i in seq(along = strata))
+        x[[i]] <- do.call("summary", c(list(object = object[[i]]), dots))
     class(x) <- "summary.aovlist"
     x
 }
@@ -447,12 +514,11 @@ se.contrast.aov <-
         nmeffect <- c("(Intercept)",
                       attr(object$terms, "term.labels"))[1 + uasgn]
         effects <- as.matrix(qr.qty(object$qr, contrast))
-        effect.sq <- effects[seq(along=asgn), , drop = FALSE]^2
         res <- matrix(0, nrow = nterms, ncol = ncol(effects),
                       dimnames = list(nmeffect, colnames(contrast)))
         for(i in seq(nterms)) {
             select <- (asgn == uasgn[i])
-            res[i,] <- rep(1, sum(select)) %*% effect.sq[select, , drop = FALSE]
+            res[i,] <- colSums(effects[seq(along=asgn)[select], , drop = FALSE]^2)
         }
         res
     }
@@ -494,7 +560,7 @@ se.contrast.aovlist <-
     function(object, contrast.obj, coef = contr.helmert(ncol(contrast))[, 1],
              data = NULL, ...)
 {
-    contrast.weight.aovlist <- function(object, contrast, onedf = TRUE)
+    contrast.weight.aovlist <- function(object, contrast)
     {
         e.qr <- attr(object, "error.qr")
         if(!is.qr(e.qr))
@@ -502,27 +568,27 @@ se.contrast.aovlist <-
         c.qr <- qr.qty(e.qr, contrast)
         e.assign <- attr(e.qr$qr, "assign")
         n.object <- length(object)
-        if(length(e.assign) < n.object)
-            e.assign[[names(object)[n.object]]] <-
-                attr(e.qr$qr, "assign.residual")
+        e.assign <- c(e.assign,
+                      rep(n.object - 1, nrow(c.qr) - length(e.assign)))
         res <- vector(length = n.object, mode = "list")
         names(res) <- names(object)
-        for(strata.nm in names(object)) {
-            strata <- object[[strata.nm]]
+        for(j in seq(along=names(object))) {
+            strata <- object[[j]]
             if(is.qr(strata$qr)) {
-                scontrast <- c.qr[e.assign[[strata.nm]], , drop = FALSE]
+                scontrast <- c.qr[e.assign == (j - 1), , drop = FALSE]
                 effects <- as.matrix(qr.qty(strata$qr, scontrast))
-                asgn <- strata$assign
                 asgn <- strata$assign[strata$qr$pivot[1:strata$rank]]
                 uasgn <- unique(asgn)
-                res.i <- matrix(0, nrow = length(asgn), ncol = ncol(effects),
-                                dimnames= list(names(asgn), colnames(contrast)))
+                nm <- c("(Intercept)", attr(strata$terms, "term.labels"))
+                res.i <-
+                    matrix(0, length(asgn), ncol(effects),
+                           dimnames = list(nm[1 + uasgn], colnames(contrast)))
                 for(i in seq(along = asgn)) {
                     select <- (asgn == uasgn[i])
-                    res.i[i, ] <- rep(1, length(select)) %*%
-                        effect[select, , drop = FALSE]^2
+                    res.i[i, ] <-
+                        colSums(effects[seq(along=asgn)[select], , drop = FALSE]^2)
                 }
-                res[[strata.nm]] <- res.i
+                res[[j]] <- res.i
             }
         }
         res
@@ -571,7 +637,7 @@ se.contrast.aovlist <-
         if(length(colnames(contrast)) == 0)
             colnames(contrast) <- paste("Contrast", seq(ncol(contrast)))
     }
-    weights <- contrast.weight.aovlist(object, contrast, onedf = FALSE)
+    weights <- contrast.weight.aovlist(object, contrast)
     weights <- weights[-match("(Intercept)", names(weights))]
     effic <- eff.aovlist(object)
     ## Need to identify the lowest stratum where each nonzero term appears
@@ -591,5 +657,5 @@ se.contrast.aovlist <-
         wgt[i, ] <- weights[[strata.nms[i]]][var.nms[i], , drop = FALSE]
     rse <- rse.list[strata.nms]
     eff <- effic[eff.used]
-    sqrt((rse/eff^2) %*% wgt)
+    drop(sqrt((rse/eff^2) %*% wgt))
 }

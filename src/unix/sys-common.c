@@ -1,7 +1,7 @@
 /*
   R : A Computer Language for Statistical Data Analysis
   Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
-  Copyright (C) 1997-2000   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2002   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -33,9 +33,6 @@
 #include "Startup.h"
 
 #include <string.h>
-#ifndef HAVE_STRDUP
-extern char *strdup();
-#endif
 
 extern SA_TYPE	SaveAction;
 extern SA_TYPE	RestoreAction;
@@ -135,7 +132,9 @@ void R_SaveGlobalEnv(void)
 
 #ifdef HAVE_STAT
 #include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 Rboolean R_FileExists(char *path)
 {
@@ -231,6 +230,20 @@ SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
     return (ans);
 }
 
+#ifdef HAVE_PUTENV
+static int Rputenv(char *str)
+{
+    char *buf;
+    buf = (char *) malloc((strlen(str) + 1) * sizeof(char));
+    if(!buf) return 1;
+    strcpy(buf, str);
+    putenv(buf);
+    /* no free here: storage remains in use */
+    return 0;
+}
+#endif
+
+
 SEXP do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 #ifdef HAVE_PUTENV
@@ -245,7 +258,7 @@ SEXP do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
     n = LENGTH(vars);
     PROTECT(ans = allocVector(LGLSXP, n));
     for (i = 0; i < n; i++) {
-	LOGICAL(ans)[i] = putenv(CHAR(STRING_ELT(vars, i))) == 0;
+	LOGICAL(ans)[i] = Rputenv(CHAR(STRING_ELT(vars, i))) == 0;
     }
     UNPROTECT(1);
     return ans;
@@ -701,6 +714,10 @@ void process_system_Renviron()
 {
     char buf[PATH_MAX];
     
+    if(strlen(R_Home) + strlen("/etc/Renviron") > PATH_MAX - 1) {
+	R_ShowMessage("path to system Renviron is too long: skipping");
+	return;
+    }
     strcpy(buf, R_Home);
     strcat(buf, "/etc/Renviron");
     if(!process_Renviron(buf))
@@ -713,6 +730,10 @@ void process_site_Renviron ()
     char buf[PATH_MAX];
 
     if(process_Renviron(getenv("R_ENVIRON"))) return;
+    if(strlen(R_Home) + strlen("/etc/Renviron.site") > PATH_MAX - 1) {
+	R_ShowMessage("path to Renviron.site is too long: skipping");
+	return;
+    }
     sprintf(buf, "%s/etc/Renviron.site", R_Home);
     process_Renviron(buf);
 }

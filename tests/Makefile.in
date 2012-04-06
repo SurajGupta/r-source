@@ -43,6 +43,7 @@ test-src-lapack = lapack.R
 test-src-nafns = nafns.R
 test-src-random = p-r-random-tests.R
 test-src-postscript = ps-tests.R
+test-src-ts = ts-tests.R
 
 test-src-reg-1 = \
 	reg-tests-1.R reg-tests-2.R reg-IO.R reg-IO2.R reg-plot.R
@@ -64,10 +65,12 @@ DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-random) p-r-random-tests.Rout.save \
 	$(test-src-reg) reg-IO.Rout.save reg-IO2.Rout.save \
 	  reg-plot.Rout.save reg-tests-2.Rout.save \
-	gct-foot.R
+	$(test-src-ts) \
+	gct-foot.R \
+	nanbug.rda
 SUBDIRS = Embedding Examples
 
-R = LC_ALL=C $(top_builddir)/bin/R --vanilla
+R = LC_ALL=C SRCDIR=$(srcdir) $(top_builddir)/bin/R --vanilla
 RDIFF = $(top_builddir)/bin/Rdiff
 
 test-out-strict = $(test-src-strict:.R=.Rout)
@@ -81,10 +84,12 @@ test-out-nafns = $(test-src-nafns:.R=.Rout)
 test-out-postscript = $(test-src-postscript:.R=.Rout)
 test-out-random = $(test-src-random:.R=.Rout)
 test-out-reg = $(test-src-reg:.R=.Rout)
+test-out-ts = $(test-src-ts:.R=.Rout)
 
 test-out = $(test-src:.R=.Rout) $(test-out-gct) \
 	$(test-out-internet) $(test-out-lapack) $(test-out-nafns) \
-	$(test-out-random) $(test-out-postscript) $(test-out-reg)
+	$(test-out-random) $(test-out-postscript) $(test-out-reg) \
+	$(test-out-ts)
 
 .SUFFIXES:
 .SUFFIXES: .R .Rin .Rout .Rout-gct
@@ -92,9 +97,7 @@ test-out = $(test-src:.R=.Rout) $(test-out-gct) \
 all check: Makefile test-all-basics
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 Makedeps: Makefile
 	@(for f in $(test-src) $(test-src-reg); do \
@@ -111,30 +114,30 @@ Makedeps: Makefile
 FORCE:
 
 .Rin.R:
-	@echo "creating \`$@'"
+	@echo "creating '$@'"
 	@$(R) < $< > /dev/null
 
 .R.Rout:
 	@rm -f $@ $@.fail
-	@echo @ECHO_N@ "running code in \`$<' ...@ECHO_C@"
+	@echo @ECHO_N@ "running code in '$<' ...@ECHO_C@"
 	@$(R) < $< > $@ || (mv $@ $@.fail && exit 1)
 	@echo "@ECHO_T@ OK"
 	@if [ -f $(srcdir)/$@.save ] ; then \
 	  mv $@ $@.fail; \
 	  echo @ECHO_N@ \
-	    "comparing \`$@' to \`$(srcdir)/$@.save' ...@ECHO_C@"; \
+	    "comparing '$@' to '$(srcdir)/$@.save' ...@ECHO_C@"; \
 	  $(RDIFF) $@.fail $(srcdir)/$@.save $(RVAL_IF_DIFF) || exit 1; \
 	  mv $@.fail $@; \
 	  echo "@ECHO_T@ OK"; \
 	fi
 
 .R.Rout-gct:
-	@echo "running gctorture() + \`$<'"
+	@echo "running gctorture() + '$<'"
 	@(echo '.ptime <- proc.time(); gctorture()' ; \
 	  cat $< $(srcdir)/gct-foot.R) | $(R) > $@
 	@mv $@ $@.fail; Ro=`basename $@ .Rout-gct`.Rout; \
 	  if test ! -r $$Ro ; then $(MAKE) $$Ro ; fi; \
-	  echo @ECHO_N@ "comparing \`$@' to \`$$Ro' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "comparing '$@' to '$$Ro' ...@ECHO_C@"; \
 	  grep -v 'gctorture()' $@.fail | $(RDIFF) - $$Ro  1 || exit 1; \
 	  mv $@.fail $@; \
 	  echo "@ECHO_T@ OK"
@@ -180,11 +183,14 @@ test-Random:
 test-Reg:
 	@echo "running regression tests"
 	@$(MAKE) $(test-out-reg) RVAL_IF_DIFF=0
+test-Ts:
+	@echo "running tests of package ts functions"
+	@$(MAKE) $(test-out-ts) RVAL_IF_DIFF=0
 test-DocArgs:
 	@echo "checking whether arguments from usage are documented"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
                 echo "checkDocArgs(package = \"$${p}\")") | \
 	       $(R) -q | sed '/^>/d'`; \
@@ -201,7 +207,7 @@ test-DocStyle:
 	@echo "checking usages for method documentation style"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
 	        echo "checkDocStyle(package = \"$${p}\")") | \
 	       $(R) -q | sed '/^>/d'`; \
@@ -218,10 +224,10 @@ test-FF:
 	@echo "checking foreign function calls"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
 	        echo "checkFF(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d; /^loading/d'`; \
+	       $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
 	    echo "$${out}"; \
@@ -233,7 +239,7 @@ test-Methods:
 	@echo "checking generic/method consistency"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
 	        echo "checkMethods(package = \"$${p}\")") | \
 	       $(R) -q | sed '/^>/d'`; \
@@ -250,10 +256,10 @@ test-codoc:
 	@echo "checking code/documentation mismatches"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
 	        echo "codoc(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d; /^Using/d'`; \
+	       $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
 	    echo; \
@@ -267,10 +273,10 @@ test-undoc:
 	@echo "checking undocumented objects"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
-	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  echo @ECHO_N@ "$${out} '$${p}' ...@ECHO_C@"; \
 	  out=`(echo "library(tools)"; \
 	        echo "undoc(package = \"$${p}\")") | \
-	       $(R) -q | sed '/^>/d; /^character/d'`; \
+	       $(R) -q | sed '/^>/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
 	    echo "$${out}"; \
@@ -285,15 +291,15 @@ stamp-R: $(top_builddir)/bin/R.bin $(top_builddir)/library/base/R/base
 
 mostlyclean: clean
 clean:
-	@-(cd Examples; $(MAKE) $@)
-	@-(cd Embedding; $(MAKE) $@)
-	@rm -f stamp-R Makedeps Rplot* Rprof.out *.Rd data dumpdata.R \
+	-@(cd Examples; $(MAKE) $@)
+	-@(cd Embedding; $(MAKE) $@)
+	-@rm -f stamp-R Makedeps Rplot* Rprof.out *.Rd data dumpdata.R \
 	  reg-plot.ps
-	@rm -rf anRpackage
+	-@rm -rf anRpackage
 distclean: clean
-	@-(cd Examples; $(MAKE) $@)
-	@-(cd Embedding; $(MAKE) $@)
-	@rm -f Makefile $(test-out) $(test-src-auto) .RData
+	-@(cd Examples; $(MAKE) $@)
+	-@(cd Embedding; $(MAKE) $@)
+	-@rm -f Makefile $(test-out) $(test-src-auto) .RData
 maintainer-clean: distclean
 
 R install install-strip uninstall TAGS info dvi:

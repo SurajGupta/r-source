@@ -13,14 +13,12 @@ include $(top_builddir)/Makeconf
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in
 
-SUBDIRS = scripts include appl nmath unix main modules library
+SUBDIRS = scripts include appl nmath unix extra main modules library
 
 all: Makefile R
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 R: Makefile
 
@@ -35,7 +33,7 @@ uninstall mostlyclean clean:
 distclean:
 	@(for d in $(SUBDIRS); do rsd="$${d} $${rsd}"; done; \
 	  for d in $${rsd}; do (cd $${d} && $(MAKE) $@); done)
-	@rm -f Makefile
+	-@rm -f Makefile
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)
@@ -53,6 +51,6 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	done
 	@((cd $(srcdir); \
-	      $(TAR) -c -f - --exclude=CVS extra gnuwin32 macintosh) \
+	      $(TAR) -c -f - --exclude=CVS gnuwin32 macintosh) \
 	    | (cd $(distdir); $(TAR) -x -f -)) \
 	  || exit 1

@@ -6,7 +6,7 @@
 
 core.pkgs <-
 {x <- installed.packages(file.path(R.home(), "library"));
-    x[x[,"Priority"]=="base", "Package"]}
+    x[x[,"Priority"] %in% "base", "Package"]}
 core.pkgs <- core.pkgs[- match(c("methods", "tcltk"), core.pkgs)]
 ## move methods to the end because it has side effects (overrides primitives)
 core.pkgs <- c(core.pkgs, "methods")
@@ -19,7 +19,10 @@ edit.int <- c("fix", "edit", "edit.data.frame", "edit.matrix",
               "edit.default", "vi",
               "emacs", "pico", "xemacs", "xedit")
 ## warning: readLines will work, but read all the rest of the script
-misc.int <- c("browser", "bug.report", "menu", "repeat", "readLines")
+## warning: trace will load methods.
+## warning: rm and remove zaps c0, l0, m0, df0 
+misc.int <- c("browser", "bug.report", "menu", "repeat", "readLines",
+              "package.skeleton", "trace", "recover", "rm", "remove")
 stop.list[["base"]] <-
     if(nchar(Sys.getenv("R_TESTLOTS"))) {## SEVERE TESTING, try almost ALL
 	c(edit.int, misc.int)
@@ -42,7 +45,7 @@ stop.list[["base"]] <-
 	c(inet.list, socket.fun, dev.int, edit.int, misc.int, misc.2)
     }
 stop.list[["methods"]] <- c("browseAll", "recover")
-stop.list[["ts"]] <- "arma0f"
+stop.list[["ts"]] <- c("arma0f", "KalmanLike")
 
 sink("no-segfault.R")
 
@@ -73,8 +76,9 @@ for (pkg in core.pkgs) {
 	  cat("\n## ", nm, " :\n")
 	  cat("f <- get(\"",nm,"\", pos = ", this.pos, ")\n", sep="")
 	  cat("f()\nf(NULL)\nf(,NULL)\nf(NULL,NULL)\n",
-	      "f(list())\nf(l0)\nf(c0)\nf(m0)\nf(df0)\nf(F)\n",
-	      "f(list(),list())\nf(l0,l0)\nf(c0,c0)\nf(df0,df0)\nf(F,F)\n",
+	      "f(list())\nf(l0)\nf(c0)\nf(m0)\nf(df0)\nf(FALSE)\n",
+	      "f(list(),list())\nf(l0,l0)\nf(c0,c0)\n",
+              "f(df0,df0)\nf(FALSE,FALSE)\n",
 	      sep="")
       }
   }
