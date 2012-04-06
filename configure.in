@@ -25,9 +25,15 @@ dnl Copyright (C) 1998 R Core Team
 AC_INIT(src/include/Defn.h)
 AC_CONFIG_HEADER(src/include/Platform.h)
 
-. ./config.site
+. ${srcdir}/config.site
+if test -f ${HOME}/.Rconf; then . ${HOME}/.Rconf; fi
 
-AC_CONFIG_AUX_DIR(`pwd`/etc)
+R_MAJOR="0"
+R_MINOR="63.0"
+R_STATUS=""
+R_STATUS_REV="0"
+
+AC_CONFIG_AUX_DIR(aux)
 
 ### Platform
 ###
@@ -36,23 +42,28 @@ AC_CONFIG_AUX_DIR(`pwd`/etc)
 ### sort of sanity check written into configure.  We bypass the check by
 ### invoking config.guess directly and parsing the results ourselves.
 
-host=`etc/config.guess`
+host=`${srcdir}/aux/config.guess`
 set `echo ${host} | tr '-' ' '`
 host_cpu=$1
 host_vendor=$2
 host_os=$3
 
-AC_DEFINE(R_MAJOR, "0")
-AC_DEFINE(R_MINOR, "62.4")
-AC_DEFINE(R_STATUS, "")
-AC_DEFINE(R_STATUS_REV, "0")
-AC_DEFINE_UNQUOTED(R_DAY, "`awk -F/ '{print $3+0}' date-stamp`")
-AC_DEFINE_UNQUOTED(R_MONTH, "`awk -F/ '{print $2}' date-stamp`")
-AC_DEFINE_UNQUOTED(R_YEAR, "`awk -F/ '{print $1}' date-stamp`")
+AC_DEFINE_UNQUOTED(R_MAJOR, "${R_MAJOR}")
+AC_DEFINE_UNQUOTED(R_MINOR, "${R_MINOR}")
+AC_DEFINE_UNQUOTED(R_STATUS, "${R_STATUS}")
+AC_DEFINE_UNQUOTED(R_STATUS_REV, "${R_STATUS_REV}")
+AC_DEFINE_UNQUOTED(R_DAY, "`awk -F/ '{print $3+0}' ${srcdir}/date-stamp`")
+AC_DEFINE_UNQUOTED(R_MONTH, "`awk -F/ '{print $2}' ${srcdir}/date-stamp`")
+AC_DEFINE_UNQUOTED(R_YEAR, "`awk -F/ '{print $1}' ${srcdir}/date-stamp`")
 AC_DEFINE_UNQUOTED(R_PLATFORM, "${host}")
 AC_DEFINE_UNQUOTED(R_CPU, "${host_cpu}")
 AC_DEFINE_UNQUOTED(R_VENDOR, "${host_vendor}")
 AC_DEFINE_UNQUOTED(R_OS, "${host_os}")
+
+PACKAGE="R"
+VERSION="${R_MAJOR}.${R_MINOR}"
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
 
 ### Handle arguments to configure
 
@@ -110,6 +121,13 @@ AC_ARG_ENABLE(readline,
 ### Programs.
 
 AC_PROG_INSTALL
+## Fix a bug in autoconf---the path of the install shell script is
+## not cached.  Could also use an absolute path in AC_CONFIG_AUX_DIR().
+case ${INSTALL} in
+  *install-sh*)
+    INSTALL="\$\(top_srcdir\)/${INSTALL}" ;;
+esac
+
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_YACC
@@ -119,6 +137,7 @@ AC_CHECK_PROG(RATFOR, ratfor, ratfor)
 
 AC_PATH_PROG(LATEX, latex, false)
 AC_PATH_PROG(DVIPS, dvips, false)
+AC_PATH_PROG(MAKEINDEX, makeindex, false)
 
 ## Make.
 
@@ -144,6 +163,11 @@ else
 fi
 AC_SUBST(NO_PERL5)
 
+## Tar.
+
+TAR=${TAR-tar}
+AC_SUBST(TAR)
+
 ## C compiler.
 ##
 ## If a C compiler is specified in config.site we use that.
@@ -162,7 +186,7 @@ cc_is_gcc=false
 cc_output=`${CC} -v 2>&1 | grep gcc`
 if test -n "${cc_output}"; then
   cc_is_gcc=true
-fi  
+fi
 
 case ${host} in
   *hpux*)
@@ -221,7 +245,15 @@ elif ${use_f2c}; then
   AC_MSG_RESULT([defining F2C to be ${F2C}])
 else
   if test -z "${FC}"; then
-    AC_CHECK_PROGS(F77, f77 g77 fort77 f90 xlf cf77 fc)
+    AC_PATH_PROGS(F77, g77 f77 fort77 f90 xlf cf77 fc)
+    if test -n "${F77}"; then
+      if test -n "`file ${F77} | grep script`"; then
+        ## If F77 found above is a shell or perl script, don't use it.
+	F77=
+      else
+        F77=`basename ${F77}`
+      fi
+    fi
   else
     F77=${FC}
   fi
@@ -265,14 +297,17 @@ EOF
     fi
   fi
   rm -rf conftest conftest.* conftestf.*
-  f77_rules_frag=Makefrag.f77
-  cat << \EOF > ${f77_rules_frag}
-
+  f77_rules_frag_top=Makefrag.top
+  cat << \EOF > ${f77_rules_frag_top}
 .f.c:
-
 .f.o:
 	$(FC) $(FFLAGS) -c $< -o $@
-
+EOF
+  f77_rules_frag_etc=Makefrag.etc
+  cat << \EOF > ${f77_rules_frag_etc}
+.f.c:
+.f.o:
+	$(FC) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 EOF
 elif test -n "${F2C}"; then
 ### -- I cannibalized most of the following out of octave 2.0.5,
@@ -315,16 +350,19 @@ EOF
   if test -z "${FLIBS}"; then
     AC_MSG_WARN([I found f2c but not libf2c, or libF77 and libI77])
   fi
-  f77_rules_frag=Makefrag.f77
+  f77_rules_frag_top=Makefrag.top
   ### for some reason these can't be .f.c/.f.o, at least in GNU make
   ### this probably makes *other* makes useless... (-pd)
-  cat << \EOF > ${f77_rules_frag}
-
+  cat << \EOF > ${f77_rules_frag_top}
 %.c : %.f
 	cat $< | $(F2C) $(F2CFLAGS) > $(@F)
-
 %.o : %.f
-
+EOF
+  f77_rules_frag_etc=Makefrag.etc
+  cat << \EOF > ${f77_rules_frag_etc}
+%.c : %.f
+	cat $< | $(F2C) $(F2CFLAGS) > $(@F)
+%.o : %.f
 EOF
 else
   AC_MSG_ERROR([Neither an F77 compiler nor f2c found])
@@ -336,7 +374,8 @@ fi
 
 AC_SUBST(FC)
 AC_SUBST(F2C)
-AC_SUBST_FILE(f77_rules_frag)
+AC_SUBST_FILE(f77_rules_frag_top)
+AC_SUBST_FILE(f77_rules_frag_etc)
 
 ### Libraries.
 
@@ -362,6 +401,10 @@ AC_CHECK_LIB(ncurses, main,,
     AC_CHECK_LIB(termlib, main)
 ))
 AC_CHECK_LIB(dl, dlopen)
+
+AC_CHECK_LIB(hdf5, main)
+AC_CHECK_LIB(z, main)
+
 BLAS="blas.o"
 if ${use_dxml}; then
   AC_CHECK_LIB(dxml, main, FLIBS="-ldxml ${FLIBS}" BLAS="",
@@ -388,13 +431,13 @@ fi
 AC_FUNC_VFORK
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(acosh asinh atanh bcopy finite isnan matherr memcpy \
-  memmove regcomp rint strcoll strtod strtol times)
+  memmove regcomp rint strcoll strtod strtol system times)
 
 ### Header files
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(dl.h dlfcn.h elf.h locale.h readline/history.h \
-  rpc/xdr.h sys/times.h time.h ieeefp.h ieee754.h)
+  rpc/xdr.h sys/times.h time.h ieeefp.h ieee754.h unistd.h hdf5.h)
 
 ### Typedefs
 
@@ -451,13 +494,13 @@ SHLIBEXT=so
 AC_CHECK_PROG(XMKMF, xmkmf, xmkmf)
 if test -n "${XMKMF}"; then
   AC_MSG_CHECKING(how to make shared libraries)
-  mv Makefile Makefile-SAFE
+  # mv ${srcdir}/Makefile ${srcdir}/Makefile-SAFE
   echo > Imakefile
   xmkmf > /dev/null
   cpicflags=`grep '^ *PICFLAGS' Makefile | sed 's/^ *PICFLAGS *= *//'`
   shlibldflags=`grep 'SHLIBLDFLAGS' Makefile | sed 's/ *SHLIBLDFLAGS *= *//'`
   rm Imakefile Makefile
-  mv Makefile-SAFE Makefile
+  # mv ${srcdir}/Makefile-SAFE ${srcdir}/Makefile
   AC_MSG_RESULT(done)
 else
   cpicflags=
@@ -567,22 +610,29 @@ AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(F2CFLAGS)
 
-AC_OUTPUT(Makeconf cmd/fwf2table doc/keyword-test etc/COMPILE
-  etc/INSTALL etc/Makeconf etc/REMOVE etc/Rdconv etc/Rdindex etc/Rman2Rd
-  etc/SHLIB etc/Sd2Rd etc/build-help etc/help.pretty
-  etc/html2dos src/front/R.sh demos/dynload/Makefile
-  doc/manual/lib2tex
-  src/appl/Makefile src/graphics/Makefile src/main/Makefile
-  src/nmath/Makefile src/unix/Makefile
+AC_OUTPUT(Makeconf Makefile
+  afm/Makefile
+  demos/Makefile
+  doc/Makefile doc/keyword-test doc/manual/Makefile doc/manual/lib2tex
+  etc/Makefile etc/Makeconf
+  src/Makefile src/appl/Makefile src/include/Makefile
+  src/library/Makefile src/main/Makefile src/nmath/Makefile
+  src/scripts/Makefile src/unix/Makefile
+  src/library/base/Makefile src/library/profile/Makefile
+  src/library/eda/Makefile src/library/eda/src/Makefile
+  src/library/modreg/Makefile src/library/modreg/src/Makefile
+  src/library/mva/Makefile src/library/mva/src/Makefile
+  src/library/stepfun/Makefile
+  src/scripts/COMPILE src/scripts/INSTALL src/scripts/REMOVE
+  src/scripts/R.sh src/scripts/Rdconv src/scripts/Rdindex
+  src/scripts/Rman2Rd src/scripts/SHLIB src/scripts/Sd2Rd
+  src/scripts/build-help src/scripts/fwf2table src/scripts/help.pretty
+  src/scripts/html2dos
+  tests/Makefile tests/Examples/Makefile
 )
 
 AC_OUTPUT_COMMANDS(
-(cd cmd; chmod +x fwf2table)
-(cd doc; chmod +x keyword-test)
-(cd doc/manual; chmod +x lib2tex)
-(cd etc; chmod +x INSTALL REMOVE Rdconv Rdindex Rman2Rd Sd2Rd \
-         build-help help.pretty html2dos)
-mkdir -p bin include library src/lib
+  chmod +x doc/keyword-test doc/manual/lib2tex
 )
 
 if test -z "${F77}"; then

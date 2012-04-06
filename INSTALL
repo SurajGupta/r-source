@@ -39,6 +39,10 @@ other than their default, you can do that by either editing the file
 One common variable to change is R_PAPERSIZE, which defaults to a4, not
 letter.
 
+If you have libraries and header files, e.g. for GNU readline, in
+non-system directories, use the variables LIBS (for libraries) and
+CPPFLAGS (for header files), respectively, to specify these locations.
+
 Make will also build plain text help pages as well as HTML and LaTeX
 versions of the documentation (the three kinds can also be generated
 separately using make help, make html and make latex).  Note that as
@@ -48,14 +52,17 @@ documentation files via the `doc/pre-formatted-help' directory of the
 Comprehensive R Archive Network (CRAN), see the file `RESOURCES' for
 information on CRAN.
 
-Now type R and reach for your S manuals ...
+Now rehash if necessary, type `R' and reach for your S manuals ...
+And, read the R FAQ (http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html).
 
 
 INSTALLATION
 
 After
+
 	./configure
 	make
+
 have been completed successfully, you can install the complete R tree
 to your system by typing
 
@@ -63,7 +70,7 @@ to your system by typing
 
 This will install to the following directories:
 
-	$prefix/bin		executables
+	$prefix/bin		(some) executables
 	$prefix/man/man1	man pages
 	$prefix/lib/R		all the rest (libraries, online help
 				system, ...)
@@ -76,9 +83,14 @@ and can be set by running configure with the option
 The prefix of the installation directories can also be seen in the
 status message that is displayed at the end of configure.
 
-If you have libraries and header files, e.g. for GNU readline, in
-non-system directories, use the variables LIBS (for libraries) and
-CPPFLAGS (for header files), respectively, to specify these locations.
+You do not necessarily have to build R in the top-level source
+directory (say, TOP_SRCDIR).  To build in BUILDDIR, cd there and run 
+
+	TOP_SRCDIR/configure
+	make
+
+and so on, as described further above.  This has the advantage of always
+keeping your source tree `clean'.
 
 
 USING FORTRAN
@@ -89,8 +101,8 @@ cf77, and fc (in that order), and then for f2c, and use whichever is
 found first; if none is found, R cannot be compiled.  The search
 mechanism can be changed using the `--with-g77', `--with-f77', and
 `--with-f2c' command line options to configure.  If your FORTRAN
-compiler is in a non-standard location, you can specify it via
-`--with-f77=path.to.f77'.
+compiler is in a non-standard location, you should set the enviroment
+vaiable PATH accordingly before running configure.
 
 
 TWO-LEVEL MAKE
