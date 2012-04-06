@@ -1,8 +1,165 @@
 	**************************************************
 	*						 *
+	*	       0.64 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 0.64.0
+
+NEW FEATURES
+
+    o   Files BUGS and FAQ are now included with distribution and
+	various "front matter" files have been cleaned up.
+
+    o	readline has now an argument  prompt = ""
+
+    o	coplot() now labels levels when conditioning variable is factor
+	(John Maindonald).
+
+    o	A new function filled.contour() has been added.	 It produces
+	a variant of contour plots where the area between contours
+	is filled with a solid colour.	The function (currently)
+	uses the layout() function and so is restricted to a full
+	page display.
+
+    o	The function terrain.colors() has been modified to remove a
+	visual discontinuity (at yellow).  In addition, a function
+	cm.colors() which implements a Cleveland-style cyan-magenta
+	palette has been added.
+
+    o	Primitive function .External() to call dynamically loaded
+	`internal'-style functions (code from Jean Meloche).
+
+    o	Function page() to view an R object in a pager.
+
+    o	Support for handling embedded '\n's in text strings
+	handed to low-level graphics functions has been added.
+	Some changes to the PostScript graphics driver were
+	needed to support this, so there may some minor change
+	in the appearance of plots produced in PostScript.
+
+    o	The LaTeX documentation is now split into 2 parts: the (currently
+	almost non-existent) manual and a reference index.
+	Manual: new section on loading C++ code.
+
+    o	[EXPERIMENTAL] Gnome support added. Use ./configure --with-gnome
+	to try it, but don't expect too much yet.
+
+    o   HDF5 support improved. Still not perfect, though.
+
+    o	The X11 graphics driver can now use a variety of strategies
+	for handing color.  This means that it is now possible to
+	use black and white or grayscale graphics on color displays.
+	There are two strategies for handing color on pseudocolor
+	displays.  The original "allocate-colors-until-they-run-out"
+	strategy has been supplemented by one which allocates a
+	color cube at startup and approximates requested colors
+	by those in the cube.  On truecolor displays, there is no
+	limit on the number of colors which can be displayed and
+	you get exactly the color you request.	(Note that
+	Directcolor and staticcolor displays are not supported yet).
+
+    o	The "persp" function now allows shading of the rendered
+	surface using a simple lighting model.
+
+    o	Many functions providing an interface to the operating system
+	have been made "platform independent".	See the manual entries
+	for "file", "list.files" and "file.show" for details of the new
+	interface. The system.file() interface has been changed.
+
+    o	There is a new function "eval.with.vis" which behaves exactly
+	like "eval", but which returns both the result of the evaluation
+	an a logical value indicating whether the value is ``visible''.
+	This has been used to replace some ad-hoc tests for whether
+	value should be printed or not in "source".  As a consequence,
+	the "example" and "demo" functions no longer print invisible
+	values when the example script is run.
+
+    o   Index files in data directories in packages should be `00Index'
+	not `index.doc'.
+
+    o   Function interaction() to compute factor interactions.
+
+    o   load() can load to specific environments.
+
+    o	Sockets interface: make/read/write/close.socket()
+
+    o	Function chull() for planar convex hulls
+
+    o	pairs.formula() allows formula notations for scatter plot matrix.
+
+    o   new dataset co2.
+
+    o   documentation for datasets mtcars, plants, pressure, randu and sleep.
+
+    o   the sunspots dataset is now monthly rather than annual.
+
+BUG FIXES
+
+    o   strsplit(), scan() and friends use a much larger char buffer
+	 (still fixed size; this will change again)
+
+    o   ts() allows a data-frame argument `data'.
+
+    o   anova.lm handles singular models better, and deparses responses.
+
+    o   dump() now uses digits=12 rather than the current setting.
+
+    o   tabulate ignores entries beyond nbins rather than core dumps.
+
+    o	?.C documents what C/Fortran types R objects correspond to
+	in foreign function calls, which is not what everyone thought.
+
+    o	changed long to int in several .C calls to follow the above rules.
+
+    o	rbind(x1,x2) now does not lose dimnames when xi are 
+	character or complex.
+
+    o	readline() accidentally inherited menu()'s prompt.
+
+    o	.C() and .Fortran() now correctly report that there might be
+	NaN/Infs, not just NAs, unless NAOK=TRUE.
+
+    o	Resizing an inactive graphics window to an invalid size left
+	that window active and produced a spurious prompt and newline
+	in the console window.	This no longer happens.
+
+    o	poly() rescales x to increase accuracy
+
+    o	apply() preserves names in yet another case [-> new example].
+
+    o	phyper() now works for larger arguments than before.
+
+    o	Missing values didn't work in log plot
+
+    o	outer() doesn't produce all-empty dimnames any more
+
+    o	quantile.default() works when `probs' has zero length
+
+    o	example() now works again in all cases [AnIndex spaces].
+
+    o	typos fixed in nlm() message, glm help
+
+    o	pt() now works better for extreme `df' arguments and gives
+	at least an approximate answer for ncp > 37.6. __more to change__
+
+    o	fixed some glitches with formatC() and its docs.
+
+    o	several fixes in *.c code to make -Wall happy
+
+    o	curve() [and plot.function()] now use proper `x' values with log="x";
+	`type = "."' now works with curve() and plot.function()
+
+    o   zapped old windows files since they didn't build any more. 
+	The sources for the later gnuwin32 version are expected to 
+	appear here for 0.64.1. The #ifdef Win32's here are for that
+	version.
+
+
+	**************************************************
+	*						 *
 	*	       0.63 SERIES NEWS			 *
-	*    (This label is really only here to keep	 *
-	*     CVS from getting confused...)		 *
 	*						 *
 	**************************************************
 
@@ -37,7 +194,7 @@ NEW FEATURES
     o	[pdqr]negbin() now also work with non-integer 'size' [by Ben Bolker].
 
     o	New standard package `lqs' for resistant regression and
-	covariance estimation, contributed by B. D. Ripley.
+	covariance estimation, contributed by Brian Ripley.
 
     o	new functions match.fun() and kronecker() [by Jonathan Rougier]
 
@@ -47,18 +204,18 @@ NEW FEATURES
 
 BUG FIXES
 
-    o   system(command, intern=FALSE, ignore.errors=FALSE) 
+    o	system(command, intern=FALSE, ignore.errors=FALSE) 
 	changed 1st & 3rd argument names and is better documented.
 
-    o   "/Font5 /Symbol findfont definefont" confused some printers
+    o	"/Font5 /Symbol findfont definefont" confused some printers
 
-    o   Bounding box rotated 90 deg for landscape (shouldn't be)
+    o	Bounding box rotated 90 deg for landscape (shouldn't be)
 
-    o   Legend skipped symbol for pch=0
+    o	Legend skipped symbol for pch=0
 
-    o   compilation on non-Intel Linux systems no longer looks for __setfpucw
+    o	compilation on non-Intel Linux systems no longer looks for __setfpucw
 
-    o   a %% b -- is now periodic instead of symmetric; more S compatible.
+    o	a %% b -- is now periodic instead of symmetric; more S compatible.
 
     o	locator(n=512) -- default: MANY points, not just one.
 
