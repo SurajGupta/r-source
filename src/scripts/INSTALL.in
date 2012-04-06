@@ -7,7 +7,7 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 43501 $'
+revision='$Rev: 43663 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
@@ -340,7 +340,6 @@ else
   fi
   cd "${lib}"
   lib=`${GETWD}`
-  echo "$lib"
   cd "${startdir}"
 fi
 

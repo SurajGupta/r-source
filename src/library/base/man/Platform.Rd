@@ -39,7 +39,7 @@
     values given via the \option{-g} command-line flag (\code{"X11"},
     \code{"Tk"}, \code{"none"} and perhaps others under alternative
     front-ends or embedded \R), \code{"AQUA"} (running under
-    \code{R.app} on MacOS X), \code{"RGui"} and \code{"RTerm"} (Windows).
+    \code{R.app} on MacOS X), \code{"Rgui"} and \code{"RTerm"} (Windows).
   }
   \item{endian}{
     character string, \code{"big"} or \code{"little"}, giving the
@@ -73,10 +73,12 @@
 }
 
 \examples{
-## Note: this can be done in a system-independent way by file.info()$isdir
+## Note: this can be done in a system-independent way
+## by file.info()$isdir
 if(.Platform$OS.type == "unix") {
    system.test <- function(...) { system(paste("test", ...)) == 0 }
-   dir.exists <- function(dir) sapply(dir, function(d)system.test("-d", d))
+   dir.exists <- function(dir)
+       sapply(dir, function(d)system.test("-d", d))
    dir.exists(c(R.home(), "/tmp", "~", "/NO"))# > T T T F
 }
 }

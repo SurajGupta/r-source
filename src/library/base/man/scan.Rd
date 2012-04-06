@@ -15,7 +15,8 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
      skip = 0, nlines = 0, na.strings = "NA",
      flush = FALSE, fill = FALSE, strip.white = FALSE,
      quiet = FALSE, blank.lines.skip = TRUE, multi.line = TRUE,
-     comment.char = "", allowEscapes = FALSE, encoding = "unknown")
+     comment.char = "", allowEscapes = FALSE,
+     encoding = "unknown")
 }
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
@@ -141,7 +142,11 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   }
   \item{encoding}{encoding to be assumed for input strings.  It is
     used to mark character strings as known to be in
-    Latin-1 or UTF-8: it is not used to re-encode the input.}
+    Latin-1 or UTF-8: it is not used to re-encode the input.  To do the
+    latter, specify the encoding as part of the connection \code{con} or
+    via \code{\link{options}(encoding=)}: see the example under
+    \code{\link{file}}.
+  }
 }
 \details{
   The value of \code{what} can be a list of types, in which case
@@ -187,11 +192,6 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   should be regarded as a comment and be discarded.  Lines beginning
   with a comment character (possibly after white space with the default
   separator) are treated as blank lines.
-
-  \code{scan} attempts to share storage with character strings that have
-  already been read in the call. If an upper bound on the number of
-  character strings cannot be deduced from \code{nmax} or \code{n},
-  sharing is used for the first 10000 unique strings which are read in.
 
   There is a check for a user interrupt every 1000 lines if \code{what}
   is a list, otherwise every 10000 items.
@@ -240,8 +240,8 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 \examples{
 cat("TITLE extra line", "2 3 5 7", "11 13 17", file="ex.data", sep="\n")
 pp <- scan("ex.data", skip = 1, quiet= TRUE)
-    scan("ex.data", skip = 1)
-    scan("ex.data", skip = 1, nlines=1)# only 1 line after the skipped one
+scan("ex.data", skip = 1)
+scan("ex.data", skip = 1, nlines=1) # only 1 line after the skipped one
 scan("ex.data", what = list("","","")) # flush is F -> read "7"
 scan("ex.data", what = list("","",""), flush = TRUE)
 unlink("ex.data") # tidy up

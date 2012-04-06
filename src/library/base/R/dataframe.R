@@ -55,8 +55,16 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
     }
     else if (length(value) != n)
 	stop("invalid 'row.names' length")
-    if (any(duplicated(value)))
+    if (any(duplicated(value))) {
+        nonuniq <- sort(unique(value[duplicated(value)]))
+        warning(ngettext(length(nonuniq),
+                         sprintf("non-unique value when setting 'row.names': %s",
+                                 sQuote(nonuniq[1])),
+                         sprintf("non-unique values when setting 'row.names': %s",
+                                 paste(sQuote(nonuniq), collapse = ", "))),
+                domain = NA, call. = FALSE)
 	stop("duplicate 'row.names' are not allowed")
+    }
     if (any(is.na(value)))
 	stop("missing values in 'row.names' are not allowed")
     attr(x, "row.names") <- value
@@ -707,6 +715,7 @@ data.frame <-
         if(any(is.na(j)))
             stop("missing values are not allowed in subscripted assignments of data frames")
 	if(is.character(j)) {
+            if("" %in% j) stop("column name \"\" cannot match any column")
 	    jj <- match(j, names(x))
 	    nnew <- sum(is.na(jj))
 	    if(nnew > 0L) {
@@ -917,10 +926,10 @@ data.frame <-
 	stop("non-existent rows not allowed")
 
     if(is.character(j)) {
+        if("" %in% j) stop("column name \"\" cannot match any column")
 	jseq <- match(j, names(x))
 	if(any(is.na(jseq)))
-	    stop("replacing element in non-existent column: ",
-                 j[is.na(jseq)])
+	    stop("replacing element in non-existent column: ", j[is.na(jseq)])
     }
     else if(is.logical(j) || min(j) < 0L)
 	jseq <- seq_along(x)[j]
@@ -1010,7 +1019,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
     match.names <- function(clabs, nmi)
     {
 	if(identical(clabs, nmi)) NULL
-	else if(length(nmi) == length(clabs) && all(match(nmi, clabs, 0L))) {
+	else if(length(nmi) == length(clabs) && all(nmi %in% clabs)) {
             ## we need 1-1 matches here
 	    m <- pmatch(nmi, clabs, 0L)
             if(any(m == 0L))

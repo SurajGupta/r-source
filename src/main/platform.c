@@ -1138,7 +1138,9 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP  fn;
     int i, j, nfiles, res, failures = 0, recursive;
     const char *names;
+#if defined(HAVE_GLOB) || defined(Win32)
     glob_t globbuf;
+#endif
 
     checkArity(op, args);
     fn = CAR(args);
@@ -1214,6 +1216,8 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 #endif
 }
+
+extern void invalidate_cached_recodings(void);  /* from sysutils.c */
 
 /* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1316,6 +1320,7 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 #if defined(Win32) && defined(SUPPORT_UTF8)
     utf8locale = mbcslocale = TRUE;
 #endif
+    invalidate_cached_recodings();
     return ans;
 #else
     return R_NilValue;

@@ -31,7 +31,7 @@
    See the file COPYLIB.TXT for details.
 */
 
-/* Copyright (C) 2004 	The R Foundation
+/* Copyright (C) 2004-8  The R Foundation
 
    Changes for R:
 
@@ -1049,7 +1049,7 @@ void changescrollbar(scrollbar obj, int where, int max, int pagesize)
 	SetScrollInfo(hwnd, SB_CTL, &si, 1);
 }
 
-listbox newlistbox(const char *list[], rect r, scrollfn fn)
+listbox newlistbox(const char *list[], rect r, scrollfn fn, actionfn dble)
 {
 	listbox obj;
 
@@ -1061,13 +1061,14 @@ listbox newlistbox(const char *list[], rect r, scrollfn fn)
 		return obj;
 	obj->kind = ListboxObject;
 	obj->hit = fn;
+	obj->dble = dble;
 
 	changelistbox(obj, list);
 
 	return obj;
 }
 
-listbox newmultilist(const char *list[], rect r, scrollfn fn)
+listbox newmultilist(const char *list[], rect r, scrollfn fn, actionfn dble)
 {
 	listbox obj;
 
@@ -1081,6 +1082,7 @@ listbox newmultilist(const char *list[], rect r, scrollfn fn)
 		return obj;
 	obj->kind = MultilistObject;
 	obj->hit = fn;
+	obj->dble = dble;
 
 	changelistbox(obj, list);
 
@@ -1099,7 +1101,7 @@ listbox newdroplist(const char *list[], rect r, scrollfn fn)
 		r.height += h;
 
 	obj = newchildwin("combobox", NULL,
-			  CBS_DROPDOWNLIST |
+			  CBS_DROPDOWNLIST | CBS_AUTOHSCROLL |
 			  //CBS_DISABLENOSCROLL |
 			  WS_BORDER |
 			  WS_VSCROLL | WS_HSCROLL,
@@ -1126,7 +1128,7 @@ listbox newdropfield(const char *list[], rect r, scrollfn fn)
 		r.height += h;
 
 	obj = newchildwin("combobox", NULL,
-			  CBS_DROPDOWN |
+			  CBS_DROPDOWN | CBS_AUTOHSCROLL |
 			  // CBS_DISABLENOSCROLL |
 			  WS_BORDER |
 			  WS_VSCROLL | WS_HSCROLL,
@@ -1280,14 +1282,22 @@ void handle_control(HWND hwnd, UINT message)
 		break;
 
 	  case ListboxObject:
+	      if (message == LBN_DBLCLK) {
+		  if(obj->dble) obj->dble(obj);
+		  return;
+	      }
 		/* Ignore all but selection-change events. */
-		if (message != LBN_SELCHANGE)
-			return;
+	        if (message != LBN_SELCHANGE) return;
+	      
 		index = sendmessage(hwnd, LB_GETCURSEL, 0, 0L);
 		obj->value = index;
 		break;
 
 	  case MultilistObject:
+	      if (message == LBN_DBLCLK) {
+		  if(obj->dble) obj->dble(obj);
+		  return;
+	      }
 		/* Ignore all but selection-change events. */
 		if (message != LBN_SELCHANGE)
 			return;

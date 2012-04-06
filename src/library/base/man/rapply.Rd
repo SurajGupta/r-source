@@ -20,7 +20,7 @@ rapply(object, f, classes = "ANY", deflt = NULL,
     \code{"ANY"} to match any class.}
   \item{deflt}{The default result (not used if \code{how = "replace"}).}
   \item{how}{A character string matching the three possibilities given:
-    see Details.}
+    see \sQuote{Details}.}
   \item{\dots}{additional arguments passed to the call to \code{f}.}
 }
 \details{
@@ -56,8 +56,10 @@ rapply(object, f, classes = "ANY", deflt = NULL,
 X <- list(list(a=pi, b=list(c=1:1)), d="a test")
 rapply(X, function(x) x, how="replace")
 rapply(X, sqrt, classes="numeric", how="replace")
-rapply(X, nchar, classes="character", deflt = as.integer(NA), how="list")
-rapply(X, nchar, classes="character", deflt = as.integer(NA), how="unlist")
+rapply(X, nchar, classes="character",
+       deflt = as.integer(NA), how="list")
+rapply(X, nchar, classes="character",
+       deflt = as.integer(NA), how="unlist")
 rapply(X, nchar, classes="character", how="unlist")
 rapply(X, log, classes="numeric", how="replace", base=2)
 }

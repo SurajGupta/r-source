@@ -82,10 +82,31 @@ Rboolean attribute_hidden R_HiddenFile(const char *name)
     else return 1;
 }
 
+/* The MSVC runtime has a global to determine whether an unspecified file open
+   is in text or binary mode.  We force explicit text mode here to avoid depending 
+   on that global, which may have been changed by user code.
+*/
+
+#ifdef Win32
+static char fixedmode[6]; /* Rconnection can have a mode of 4 chars plus a null; we might add one char */
+
+static char * fixmode(const char *mode)
+{
+    fixedmode[4] = '\0';
+    strncpy(fixedmode, mode, 4);
+    if (!strpbrk(fixedmode, "bt")) {
+    	strcat(fixedmode, "t");
+    }
+    return fixedmode;
+}
+
+#else
+#define fixmode(mode) (mode)
+#endif
 
 FILE *R_fopen(const char *filename, const char *mode)
 {
-    return(filename ? fopen(filename, mode) : NULL );
+    return(filename ? fopen(filename, fixmode(mode)) : NULL );
 }
 
 /* The point of this function is to allow file names in foreign
@@ -120,7 +141,7 @@ FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand)
     Riconv_close(obj);
     if(res == -1 || inb > 0) error(_("file name conversion problem"));
 
-    mbstowcs(wmode, mode, 10);
+    mbstowcs(wmode, fixmode(mode), 10);
     return _wfopen(filename, wmode);
 }
 
@@ -556,7 +577,7 @@ void * Riconv_open (const char* tocode, const char* fromcode)
 size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
 	       char **outbuf, size_t *outbytesleft)
 {
-    /* here libiconv has const char **, glibc has const ** for inbuf */
+    /* here libiconv has const char **, glibc has char ** for inbuf */
     return iconv((iconv_t) cd, (ICONV_CONST char **) inbuf, inbytesleft, 
 		 outbuf, outbytesleft);
 }
@@ -628,6 +649,14 @@ next_char:
     R_FreeStringBuffer(&cbuff);
     return p;
 }
+
+void attribute_hidden
+invalidate_cached_recodings(void)
+{
+    latin1_obj = NULL;
+    utf8_obj = NULL;
+}
+
 #else
 void * Riconv_open (const char* tocode, const char* fromcode)
 {
@@ -652,6 +681,11 @@ const char *translateChar(SEXP x)
 {
     return CHAR(x);
 }
+
+void attribute_hidden
+invalidate_cached_recodings(void)
+{
+} 
 #endif
 
 /* moved from src/unix/sys-unix.c and src/gnuwin32/extra.c */
@@ -802,7 +836,9 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
 SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef _R_HAVE_TIMING_
 {
-    SEXP ans = allocVector(REALSXP, 5), nm = allocVector(STRSXP, 5);
+    SEXP ans, nm;
+    PROTECT(ans = allocVector(REALSXP, 5));
+    PROTECT(nm = allocVector(STRSXP, 5));
     R_getProcTime(REAL(ans));
     SET_STRING_ELT(nm, 0, mkChar("user.self"));
     SET_STRING_ELT(nm, 1, mkChar("sys.self"));
@@ -811,6 +847,7 @@ SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(nm, 4, mkChar("sys.child"));
     setAttrib(ans, R_NamesSymbol, nm);
     setAttrib(ans, R_ClassSymbol, mkString("proc_time"));
+    UNPROTECT(2);
     return ans;
 }
 #else

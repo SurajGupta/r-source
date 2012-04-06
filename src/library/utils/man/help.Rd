@@ -40,7 +40,7 @@ type?topic
    on S4 method documentation.  Unlike \code{help}, all names are
    deparsed to give the desired topic.
 
-   See Details for what happens if this is omitted for \code{help}.
+   See \sQuote{Details} for what happens if this is omitted for \code{help}.
  }
  \item{offline}{a logical indicating whether documentation should be
    displayed on-line to the screen (the default) or hardcopy of it
@@ -105,8 +105,8 @@ type?topic
 #ifdef unix
   HTML help works best if \code{\link{help.start}()} has been called in
   the session.  Otherwise there will be a warning about
-  \sQuote{Using non-linked HTML file: style sheet and hyperlinks may be
-    incorrect} and cross-library links will most likely not be resolved.
+  \sQuote{Using non-linked HTML file: hyperlinks may be incorrect} and
+  cross-library links will most likely not be resolved.
  
   If \code{offline} is \code{TRUE}, hardcopy of the documentation is
   produced by running the LaTeX version of the help page through
@@ -216,7 +216,7 @@ help(help)              # the same
 help(lapply)
 ?lapply                 # the same
 
-help("for")             # or ?"for", but the quotes or backticks are needed
+help("for")             # or ?"for", but quotes/backticks are needed
 ?`+`
 
 help(package="splines") # get help even when package is not loaded
@@ -228,7 +228,8 @@ topi <- "women"
 help(topi)
 
 try(help("bs", try.all.packages=FALSE)) # reports not found (an error)
-help("bs", try.all.packages=TRUE) # reports can be found in package 'splines'
+help("bs", try.all.packages=TRUE)       # reports can be found
+                                        # in package 'splines'
 
 \dontrun{
 require(methods)
@@ -237,7 +238,8 @@ combo <- function(x, y) c(x, y)
 setGeneric("combo")
 setMethod("combo", c("numeric", "numeric"), function(x, y) x+y)
 
-## assume we have written some documentation for combo, and its methods ....
+## assume we have written some documentation
+## for combo, and its methods ....
 
 ?combo  ## produces the function documentation
 

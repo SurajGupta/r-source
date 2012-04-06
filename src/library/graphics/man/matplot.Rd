@@ -41,7 +41,7 @@ matlines (x, y, type = "l", lty = 1:5, lwd = 1, pch = NULL,
     plotting characters, see \code{\link{points}}.
     The first character is the plotting-character for the first plot,
     the second for the second, etc.  The default is the digits (1
-    through 9, 0) then the letters.
+    through 9, 0) then the lowercase and uppercase letters.
 %%__FIXME__ Which of the following is still true; what's the "right" UI ?
 %  To mix special plotting symbols (those specified by integers) and
 %  plotting characters, either use character escapes \code{pch="Xe002"}
@@ -129,7 +129,8 @@ legend(1, 4, c("    Setosa Petals", "    Setosa Sepals",
 
 nam.var <- colnames(iris)[-5]
 nam.spec <- as.character(iris[1+50*0:2, "Species"])
-iris.S <- array(NA, dim = c(50,4,3), dimnames = list(NULL, nam.var, nam.spec))
+iris.S <- array(NA, dim = c(50,4,3),
+                dimnames = list(NULL, nam.var, nam.spec))
 for(i in 1:3) iris.S[,,i] <- data.matrix(iris[1:50+50*(i-1), -5])
 
 matplot(iris.S[,"Petal.Length",], iris.S[,"Petal.Width",], pch="SCV",

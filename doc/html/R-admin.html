@@ -57,7 +57,7 @@ ul.menu{list-style-type: decimal}
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.6.1 (2007-11-26).
+   <p>The current version of this document is 2.6.2 (2008-02-08).
 
    <p>ISBN 3-900051-09-7
 
@@ -241,8 +241,9 @@ functionality, but you should look carefully at any reported
 discrepancies.  (Note that the tests may not run successfully in all
 locales: we expect them to do so using an 8-bit or UTF-8 character set,
 but probably not using other multibyte character sets.  If you have
-problems try <code>C</code> or an English locale &ndash; a UTF-8 locale if you
-usually use UTF-8.)
+problems try an English locale &ndash; a UTF-8 locale if you
+usually use UTF-8.  On some systems they will not work in the <code>C</code>
+locale, since that may exclude all non-ASCII characters.)
 
    <p>To re-run the tests including those successfully run you would need
 
@@ -462,7 +463,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.6.1</code>.
+<code>rincludedir=/usr/local/include/R-2.6.2</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
@@ -559,12 +560,42 @@ This will not be done if the package has an executable <code>configure</code>
 script or a <samp><span class="file">src/Makefile</span></samp> file.  In such cases you can install for
 extra builds by
 
-<pre class="example">     R --arch=<var>name</var> CMD INSTALL --libs-only <var>pkg(s)</var>
+<pre class="example">     R --arch=<var>name</var> CMD INSTALL --libs-only <var>pkg</var>(s)
 </pre>
    <p>If you want to mix sub-architectures compiled on different platforms
 (for example `<samp><span class="samp">x86_64</span></samp>' Linux and `<samp><span class="samp">i686</span></samp>' Linux), it is
 wise to use explicit names for each, and you may also need to set
 <samp><span class="option">libdir</span></samp> to ensure that they install into the same place.
+
+   <p>On Linux, there is an alternative mechanism for mixing 32-bit and
+64-bit libraries known as <em>multilib</em>. If a Linux distribution supports
+multilib, then parallel builds of R may be installed in the
+sub-directories <samp><span class="file">lib</span></samp> (32-bit) and <samp><span class="file">lib64</span></samp> (64-bit).  The
+build to be run may then be chosen using the <samp><span class="command">setarch</span></samp>
+command. For example, a 32-bit build may be chosen by
+
+<pre class="example">     setarch i686 R
+</pre>
+   <p>The <samp><span class="command">setarch</span></samp> command is only operational if both 32-bit and
+64-bit builds are installed. If there is only one installation of R,
+then this will always be run regardless of the architecture specified
+by the <samp><span class="command">setarch</span></samp> command.
+
+   <p>There can be problems with installing packages on the non-native
+architecture.  It is a good idea to run e.g. <code>setarch i686 R</code> for
+sessions in which packages are to be installed, even if that is the only
+version of R installed (since this tells the package installation
+code the architecture needed).
+
+   <p>At present there is a protential problem with packages using Java, as
+the post-install for a `<samp><span class="samp">i386</span></samp>' RPM on `<samp><span class="samp">x86_64</span></samp>' Linux
+reconfigures Java and will find the `<samp><span class="samp">x86_64</span></samp>' Java.  If you know
+where a 32-bit Java is installed you may be able to run (as root)
+
+<pre class="example">     export JAVA_HOME=&lt;path to jre directory of 32-bit Java&gt;
+     setarch i686 R CMD javareconf
+</pre>
+   <p class="noindent">to get a suitable setting.
 
 <p><a name="Installing-R-under-Windows"></a>
 
@@ -580,7 +611,7 @@ AMD64/EM64T chips and Windows x64).
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.6.1-win32.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.6.2-win32.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -617,11 +648,11 @@ will call this directory <var>R_HOME</var> below.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.6.1.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.6.2.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at
 directory <var>R_HOME</var>, and run
 
-     <pre class="example">          tar zxvf R-2.6.1.tar.gz
+     <pre class="example">          tar zxvf R-2.6.2.tar.gz
      </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -864,7 +895,7 @@ customizations to that installation.  Then in
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
 installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.6.1-win32.exe</span></samp>, so
+executable with the standard name, <samp><span class="file">R-2.6.2-win32.exe</span></samp>, so
 please rename it to indicate that it is customized.
 
    <p>The defaults for the startup parameters may also be customized.  For example
@@ -932,14 +963,14 @@ supported: the flavour is selected by the macro <code>CROSS-GCC</code>.
 make the manuals) <samp><span class="command">makeinfo</span></samp> version 4.7 or later (part of GNU
 <code>texinfo</code>) as well as <samp><span class="file">texinfo.tex</span></samp>.
 
-   <p>You also need the R source (<samp><span class="file">R-2.6.1.tar.gz</span></samp>),
+   <p>You also need the R source (<samp><span class="file">R-2.6.2.tar.gz</span></samp>),
 <samp><span class="file">R_Tcl.zip</span></samp> and <samp><span class="file">iconv.dll</span></samp> (see above).
 
-   <p>Then: untar <samp><span class="file">R-2.6.1.tar.gz</span></samp> somewhere, unpack
+   <p>Then: untar <samp><span class="file">R-2.6.2.tar.gz</span></samp> somewhere, unpack
 <samp><span class="file">R_Tcl.zip</span></samp> at the top level and put <samp><span class="file">iconv.dll</span></samp> in
 <samp><span class="file">src/gnuwin32/unicode</span></samp>, then
 
-<pre class="example">     cd /somewhere/R-2.6.1/src/gnuwin32
+<pre class="example">     cd /somewhere/R-2.6.2/src/gnuwin32
 </pre>
    <p>Edit <samp><span class="file">MkRules</span></samp> to set <code>BUILD=CROSS</code>, <code>CROSS-GCC</code> as
 appropriate and the appropriate paths (including <code>HEADER</code> if
@@ -976,7 +1007,7 @@ for testing) use
 <pre class="example">     make all recommended manuals
      cd installer
      make imagedir
-     zip -r9X R-2.6.1.zip R-2.6.1  # or something similar
+     zip -r9X R-2.6.2.zip R-2.6.2  # or something similar
 </pre>
    <p>Note that <samp><span class="file">.chm</span></samp> help files (the default for a vanilla binary
 installation) will not be made when cross-building.
@@ -996,7 +1027,7 @@ binaries for Mac OS X for a base distribution and a large number of
 add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.4.4 or
 higher.
 
-   <p>The simplest way is to use <samp><span class="file">R-2.6.1.dmg</span></samp>.  Just
+   <p>The simplest way is to use <samp><span class="file">R-2.6.2.dmg</span></samp>.  Just
 double-click on the icon and the disk image file will be mounted. Read
 the <samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
 
@@ -1011,8 +1042,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document.  Then you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.6.1.tar.gz
-     cd R-2.6.1
+<pre class="example">     tar zxvf R-2.6.2.tar.gz
+     cd R-2.6.2
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -1563,8 +1594,9 @@ to Estonian and the language to Spanish.)
 
    <p>It is usually possible to change the language once R is running
 <em>via</em> (not Windows) <code>Sys.setlocale("LC_MESSAGES",
-"new_locale")</code>, or by setting environment variables such as
-<samp><span class="env">LANGUAGE</span></samp>.
+"new_locale")</code>, or by setting an environment variable such as
+<samp><span class="env">LANGUAGE</span></samp>, <em>provided</em><a rel="footnote" href="#fn-6" name="fnd-6"><sup>6</sup></a> the language you are changing to can be output in the current
+character set.
 
    <p>Messages are divided into <em>domains</em>, and translations may be
 available for some or all messages in a domain.  R makes use of the
@@ -1629,15 +1661,15 @@ are given below under specific OSes).  For most a 32-bit version is the
 default, but for some (e.g., `<samp><span class="samp">x86_64</span></samp>' Linux) 64-bit is.
 
    <p>All current versions of R use 32-bit integers and
-<acronym>IEC</acronym>&nbsp;<!-- /@w -->60559<a rel="footnote" href="#fn-6" name="fnd-6"><sup>6</sup></a> double-precision reals, and so compute to
-the same precision<a rel="footnote" href="#fn-7" name="fnd-7"><sup>7</sup></a> and with the same limits on the sizes of
+<acronym>IEC</acronym>&nbsp;<!-- /@w -->60559<a rel="footnote" href="#fn-7" name="fnd-7"><sup>7</sup></a> double-precision reals, and so compute to
+the same precision<a rel="footnote" href="#fn-8" name="fnd-8"><sup>8</sup></a> and with the same limits on the sizes of
 numerical quantities.  The principal difference is in the size of the
 pointers.
 
    <p>64-bit builds have both advantages and disadvantages:
      <ul>
 <li>The total virtual memory space made available to a 32-bit
-process<a rel="footnote" href="#fn-8" name="fnd-8"><sup>8</sup></a> is limited to 4GB, and on most OSes to 3GB (or even
+process<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a> is limited to 4GB, and on most OSes to 3GB (or even
 2GB).  The limits for 64-bit processes are much larger.
 
      <p>R allocates memory for large objects as needed, and removes any
@@ -1657,12 +1689,12 @@ Windows.)  64-bit builds have much larger limits.
 
      <li>Because the pointers are larger, R's basic structure (the cons cell)
 is larger (normally twice the size).  This means that R objects take
-more space and more time to manipulate, especially during garbage
-collection.  So 64-bit versions of R will typically run slower than
-32-bit versions.  (On Sparc Solaris the difference was 15-20%, on
-`<samp><span class="samp">x86_64</span></samp>' around 10%.)
-
-   </ul>
+more space and (usually) more time to manipulate.  So 64-bit versions of
+R will typically run slower than 32-bit versions.  (On Sparc Solaris
+the difference was 15-20%, on Linux on Opteron around 10%.  The pattern
+is not universal on Intel Core 2 Duo the 64-bit version is around 10%
+faster on both Linux and Mac OS X.) 
+</ul>
 
    <p>So, for speed you may want to use a 32-bit build, but to handle large
 datasets (and perhaps large files) a 64-bit build.  You can build both
@@ -1685,14 +1717,14 @@ objects is (in 2005) several years off.
 happily on Windows 64 on AMD64 and EM64T, but is limited to (we are
 told) a 2GB address space.  It will not be possible to provide a native
 version for Windows 64 until suitable compilers are available, and
-currently (mid-2007) that is not imminent.<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a>
+currently (mid-2007) that is not imminent.<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a>
 
 <p><a name="The-standalone-Rmath-library"></a>
 
 <h2 class="chapter">9 The standalone Rmath library</h2>
 
 <p>The routines supporting the distribution and
-special<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a> functions in R
+special<a rel="footnote" href="#fn-11" name="fnd-11"><sup>11</sup></a> functions in R
 and a few others are declared in C header file <samp><span class="file">Rmath.h</span></samp>.  These
 can be compiled into a standalone library for linking to other
 applications.  (Note that they are not a separate library when R is
@@ -1856,11 +1888,11 @@ installed.
 <h3 class="section">A.1 Essential programs</h3>
 
 <p>You need a means of compiling C and FORTRAN 77 (see <a href="#Using-FORTRAN">Using FORTRAN</a>).  Some add-on packages also need a C++ compiler.  Your C
-compiler should be <acronym>IEC</acronym>&nbsp;<!-- /@w -->60059<a rel="footnote" href="#fn-11" name="fnd-11"><sup>11</sup></a>, POSIX 1003.1 and C99-compliant if at all
+compiler should be <acronym>IEC</acronym>&nbsp;<!-- /@w -->60059<a rel="footnote" href="#fn-12" name="fnd-12"><sup>12</sup></a>, POSIX 1003.1 and C99-compliant if at all
 possible.  R tries to choose suitable flags for the C compilers it
 knows about, but you may have to set <code>CC</code> or <code>CFLAGS</code>
 suitably.  For recent versions of <samp><span class="command">gcc</span></samp> with <code>glibc</code> this
-means including <samp><span class="option">-std=gnu99</span></samp><a rel="footnote" href="#fn-12" name="fnd-12"><sup>12</sup></a>.  If the compiler is
+means including <samp><span class="option">-std=gnu99</span></samp><a rel="footnote" href="#fn-13" name="fnd-13"><sup>13</sup></a>.  If the compiler is
 detected as <samp><span class="command">gcc</span></samp>, <code>-std=gnu99</code> will be appended to
 <code>CC</code> unless it conflicts with a setting of <code>CFLAGS</code>.
 
@@ -1968,7 +2000,7 @@ the Tcl and Tk libraries and for finding the <samp><span class="file">tcl.h</spa
 versions of Tcl/Tk installed, setting the paths to the correct config
 files may be necessary to avoid confusion between them.
 
-   <p>Versions of Tcl/Tk from 8.3 to 8.4.16 have been used successfully: 8.0 is
+   <p>Versions of Tcl/Tk from 8.3 to 8.5.0 have been used successfully: 8.0 is
 no longer supported.
 
 <p><a name="Java-support"></a>
@@ -2024,7 +2056,7 @@ Some of the above variables can be queried using <code>R CMD config</code>.
 
 <p>The linear algebra routines in R can make use of enhanced BLAS (Basic
 Linear Algebra Subprograms, <a href="http://www.netlib.org/blas/faq.html"><code>www.netlib.org/blas/faq.html</code></a>) routines.  However, as from R
-2.4.0<a rel="footnote" href="#fn-13" name="fnd-13"><sup>13</sup></a> these have to be explicitly
+2.4.0<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a> these have to be explicitly
 requested at configure time: R provides an internal BLAS which is
 well-tested and will be adequate for most uses of R.
 
@@ -2044,14 +2076,14 @@ to a library), it is prefixed by <code>-l</code>, so
 (which needs to be found both at link time and run time).
 
    <p>The configure code checks that the external BLAS is complete (it must
-include all <a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a> double
-precision and double complex routines<a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a>, as well as <code>LSAME</code>), and
+include all <a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a> double
+precision and double complex routines<a rel="footnote" href="#fn-16" name="fnd-16"><sup>16</sup></a>, as well as <code>LSAME</code>), and
 appears to be usable.  However, an external BLAS has to be usable from a
 shared object (so must contain position-independent code), and that is
 not checked.
 
    <p>Some enhanced BLASes are compiler-system-specific (<code>libsunperf</code> on
-Sun Sparc<a rel="footnote" href="#fn-16" name="fnd-16"><sup>16</sup></a>, <code>libessl</code> on IBM, <code>vecLib</code> on Mac OS X).  The
+Sun Sparc<a rel="footnote" href="#fn-17" name="fnd-17"><sup>17</sup></a>, <code>libessl</code> on IBM, <code>vecLib</code> on Mac OS X).  The
 correct incantation for these is usually found <em>via</em>
 <samp><span class="option">--with-blas</span></samp> with no value on the appropriate platforms.
 
@@ -2073,10 +2105,11 @@ to be re-installed.
 <h5 class="subsubsection">A.3.1.1 ATLAS</h5>
 
 <p>ATLAS (<a href="http://math-atlas.sourceforge.net/"><code>math-atlas.sourceforge.net</code></a>) is a &ldquo;tuned&rdquo; BLAS that runs on a
-wide range of Unix-alike platforms.  If no more specific library is
-found, a <code>libblas</code> library in the library path will be used.  (The
-later may not be an enhanced BLAS and so may be less desirable than the
-internal BLAS.)
+wide range of Unix-alike platforms.  Unfortunately it is usually built
+as a static library that on some platforms cannot be used with shared
+libraries such as are used in R packages.  Be careful when using
+pre-built versions of ATLAS (they seem to work on `<samp><span class="samp">ix86</span></samp>'
+platforms, but not on `<samp><span class="samp">x86_64</span></samp>' ones).
 
    <p>The usual way to specify ATLAS will be via
 
@@ -2116,18 +2149,19 @@ Solaris 10 there is the AMD Core Math Library (ACML)
 <pre class="example">     --with-blas="-lacml"
 </pre>
    <p class="noindent">if the appropriate library directory (such as
-<a name="index-LD_005fLIBRRARY_005fPATH-67"></a><samp><span class="file">/opt/acml4.0.0/gfortran64/lib</span></samp>) is in the <samp><span class="env">LD_LIBRRARY_PATH</span></samp>. 
+<a name="index-LD_005fLIBRRARY_005fPATH-67"></a><samp><span class="file">/opt/acml4.0.1/gfortran64/lib</span></samp>) is in the <samp><span class="env">LD_LIBRRARY_PATH</span></samp>. 
 For other compilers, see the ACML documentation.  There is a
 multithreaded Linux version of ACML available for <samp><span class="command">gfortran</span></samp>
-which needs <samp><span class="command">gcc</span></samp> &gt;= 4.2.0 (or some RedHat versions of 4.1.1). 
+which needs <samp><span class="command">gcc</span></samp> &gt;= 4.2.0 (or some RedHat versions of 4.1.x). 
 To make use of this you will need something like
 
-<pre class="example">     --with-blas="-L/opt/acml4.0.0/gfortran64_mp/lib -lacml_mp"
+<pre class="example">     --with-blas="-L/opt/acml4.0.1/gfortran64_mp/lib -lacml_mp"
 </pre>
    <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
 way to use ACML.
 
-   <p>ACML can be used on Windows when building from source.
+   <p>Earlier versions of ACML are available for 32-bit Linux systems and for
+those using <samp><span class="command">g77</span></samp>.
 
 <p><a name="Goto-BLAS"></a>
 
@@ -2144,25 +2178,25 @@ is built and installed, it can be used by configuring with
 
 <pre class="example">     --with-blas="-lgoto"
 </pre>
-   <p class="noindent">It has been reported that on some RedHat-based Linux systems it is
-necessary to set <code>GOTO_NUM_THREADS=1</code> or <code>OMP_NUM_THREADS=1</code>
-(to disable multiple threads) in the environment when using a
-multi-threaded Goto BLAS, but others run happily with multiple threads.
+   <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
+way to use recent versions of the Goto BLAS.
 
    <p>Note that currently (Nov 2007) a multi-threaded Goto BLAS will be built
 by default if and only if the building is on a multi-processor system
 (counting multiple cores and hyperthreading), and at run time the
 default number of threads is the number of CPUs detected.
 
-   <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
-way to use recent versions of the Goto BLAS.
+   <p>It has been reported that on some RedHat-based Linux systems it is
+necessary to set <code>GOTO_NUM_THREADS=1</code> or <code>OMP_NUM_THREADS=1</code>
+(to disable multiple threads) in the environment when using a
+multi-threaded Goto BLAS, but ours run happily with multiple threads.
 
 <p><a name="MKL"></a>
 
 <h5 class="subsubsection">A.3.1.4 Intel MKL</h5>
 
 <p>For Intel processors under Linux, Intel's Math Kernel Library
-(<a href="http://www.intel.com/software/products/mkl/"><code>www.intel.com/software/products/mkl</code></a>) can be used
+(<a href="http://www.intel.com/software/products/mkl/"><code>www.intel.com/software/products/mkl</code></a>) version 9 can be used
 by
 
 <pre class="example">     --with-blas="-lmkl -lguide -lpthread"
@@ -2171,6 +2205,19 @@ by
 be increased by setting <code>OMP_NUM_THREADS</code>). 
 (Thanks to Andy Liaw for the information.)
 
+   <p>For version 10 on `<samp><span class="samp">x86_64</span></samp>', Ei-Ji Nakama used GCC compilers and
+
+<pre class="example">     MKL_LIB_PATH=/opt/intel/mkl/10.0.1.014/lib/em64t
+     MKL="   -L${MKL_LIB_PATH}                               \
+             -Wl,--start-group                               \
+                     ${MKL_LIB_PATH}/libmkl_gf_lp64.a        \
+                     ${MKL_LIB_PATH}/libmkl_gnu_thread.a     \
+                     ${MKL_LIB_PATH}/libmkl_core.a           \
+             -Wl,--end-group                                 \
+             -liomp5 -lguide -lpthread -lgomp"
+     
+     ./configure --with-lapack="$MKL" --with-blas="$MKL"
+</pre>
    <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
 way to use MKL.
 
@@ -2187,8 +2234,8 @@ compiled into the R executable and each BLAS-using package.
 <code>libRblas</code> stored in <samp><var>R_HOME</var><span class="file">/lib</span></samp> and linking both R
 itself and all the add-on packages against that library.
 
-   <p>This is the default on most platforms unless an external BLAS is
-specified and found: for the latter it can be used by specifying the
+   <p>This is the default on all platforms except AIX unless an external BLAS
+is specified and found: for the latter it can be used by specifying the
 option <samp><span class="option">--enable-BLAS-shlib</span></samp>, and it can always be disabled via
 <samp><span class="option">--disable-BLAS-shlib</span></samp>.
 
@@ -2219,7 +2266,7 @@ library (such as ACML or Goto's) to <samp><var>R_HOME</var><span class="file">/l
 For example, just
 
 <pre class="example">     mv <var>R_HOME</var>/lib/libRblas.so <var>R_HOME</var>/lib/libRblas.so.keep
-     ln -s /opt/acml4.0.0/gfortran64_mp/lib/libacml_mp.so <var>R_HOME</var>/lib/libRblas.so
+     ln -s /opt/acml4.0.1/gfortran64_mp/lib/libacml_mp.so <var>R_HOME</var>/lib/libRblas.so
 </pre>
    <p>will change the BLAS in use to multithreaded ACML.  A similar link
 works for recent versions of the Goto BLAS and for MKL (provided the
@@ -2333,7 +2380,7 @@ a dynamic (shared) library, typically called <samp><span class="file">libR.so</s
 the main R executable <samp><span class="file">R.bin</span></samp> against that library.  This can
 only be done if all the code (including system libraries) can be
 compiled into a dynamic library, and there may be a
-performance<a rel="footnote" href="#fn-17" name="fnd-17"><sup>17</sup></a> penalty.  So you probably only want this
+performance<a rel="footnote" href="#fn-18" name="fnd-18"><sup>18</sup></a> penalty.  So you probably only want this
 if you will be using an application which embeds R.  Note that C code
 in packages installed on an R system linked with
 <samp><span class="option">--enable-R-shlib</span></samp> is linked against the dynamic library and so
@@ -2350,7 +2397,7 @@ way.
 <p>R can be compiled with support for multi-byte character sets
 (<acronym>MBCS</acronym>), in particular for UTF-8 locales (which are usually
 identified by suffix `<samp><span class="samp">.utf8</span></samp>', something like
-`<samp><span class="samp">en_GB.utf8</span></samp>'<a rel="footnote" href="#fn-18" name="fnd-18"><sup>18</sup></a>.  UTF-8 is an encoding of Unicode and in principle
+`<samp><span class="samp">en_GB.utf8</span></samp>'<a rel="footnote" href="#fn-19" name="fnd-19"><sup>19</sup></a>.  UTF-8 is an encoding of Unicode and in principle
 covers all human languages simultaneously: however, a given system may
 not have fonts capable of displaying more than a few of these languages.
 
@@ -2362,7 +2409,7 @@ character functions, for UTF-8 or MBCS support in X11 and for
 are found, <code>MBCS</code> will be listed as one of the &ldquo;Additional
 capabilities&rdquo;.  Then if R is started in a UTF-8 locale it assumes
 that the terminal will supply and display UTF-8-encoded
-characters<a rel="footnote" href="#fn-19" name="fnd-19"><sup>19</sup></a>. 
+characters<a rel="footnote" href="#fn-20" name="fnd-20"><sup>20</sup></a>. 
 If run in a single-byte locale, R behaves almost exactly as if it was
 configured with <samp><span class="option">--disable-mbcs</span></samp>.
 
@@ -2463,7 +2510,7 @@ On most platforms using <samp><span class="command">gcc</span></samp>, having `<
 <code>CFLAGS</code> and <code>FFLAGS</code> produces worthwhile performance gains. 
 On systems using the GNU linker (especially those using R as a shared
 library), it is likely that including `<samp><span class="samp">-Wl,-O1</span></samp>' in <code>LDFLAGS</code>
-is worthwhile, and on recent systems<a rel="footnote" href="#fn-20" name="fnd-20"><sup>20</sup></a>
+is worthwhile, and on recent systems<a rel="footnote" href="#fn-21" name="fnd-21"><sup>21</sup></a>
 `<samp><span class="samp">'-Bdirect,--hash-style=both,-Wl,-O1'</span></samp>' is recommended at
 <a href="http://lwn.net/Articles/192624/">http://lwn.net/Articles/192624/</a>
 
@@ -2516,7 +2563,7 @@ is to search for
 <!-- F77 compilers in m4/R.m4: -->
 <samp><span class="command">g77</span></samp>, <samp><span class="command">f77</span></samp>, <samp><span class="command">xlf</span></samp>, <samp><span class="command">frt</span></samp>,
 <samp><span class="command">pgf77</span></samp>, <samp><span class="command">cf77</span></samp>, <samp><span class="command">fort77</span></samp>, <samp><span class="command">fl32</span></samp>,
-<samp><span class="command">af77</span></samp> (in that order)<a rel="footnote" href="#fn-21" name="fnd-21"><sup>21</sup></a>, and use whichever is found first; if none is found,
+<samp><span class="command">af77</span></samp> (in that order)<a rel="footnote" href="#fn-22" name="fnd-22"><sup>22</sup></a>, and use whichever is found first; if none is found,
 R cannot be compiled. 
 <!-- GCC_Fortran_compiler in m4/R.m4: -->
 However, if <samp><span class="command">CC</span></samp> is <samp><span class="command">gcc</span></samp>, the matching FORTRAN compiler
@@ -2544,11 +2591,11 @@ pointer.  This is checked during the configuration process.
 
    <p>Some of the FORTRAN code makes use of <code>COMPLEX*16</code> variables, which
 is a Fortran 90 extension.  This is checked for at configure
-time<a rel="footnote" href="#fn-22" name="fnd-22"><sup>22</sup></a>, but you may need to avoid
-compiler flags<a rel="footnote" href="#fn-23" name="fnd-23"><sup>23</sup></a> asserting
+time<a rel="footnote" href="#fn-23" name="fnd-23"><sup>23</sup></a>, but you may need to avoid
+compiler flags<a rel="footnote" href="#fn-24" name="fnd-24"><sup>24</sup></a> asserting
 FORTRAN 77 compliance.
 
-   <p><a name="index-BLAS-library-82"></a>For performance reasons<a rel="footnote" href="#fn-24" name="fnd-24"><sup>24</sup></a> you may want to choose a FORTRAN 90/95 compiler.
+   <p><a name="index-BLAS-library-82"></a>For performance reasons<a rel="footnote" href="#fn-25" name="fnd-25"><sup>25</sup></a> you may want to choose a FORTRAN 90/95 compiler.
 
    <p>It is possible to use <samp><span class="command">f2c</span></samp>, the FORTRAN-to-C converter
 (<a href="http://www.netlib.org/f2c"><code>www.netlib.org/f2c</code></a>), via a
@@ -2663,7 +2710,7 @@ machine, you may have to setup the fonts differently for the two usages.
 
    <p>When X11 was designed, most displays were around 75dpi, whereas today
 they are of the order of 100dpi or even higher.  If you find that X11()
-is reporting<a rel="footnote" href="#fn-25" name="fnd-25"><sup>25</sup></a> missing font sizes, especially larger ones, it is likely
+is reporting<a rel="footnote" href="#fn-26" name="fnd-26"><sup>26</sup></a> missing font sizes, especially larger ones, it is likely
 that you are not using scalable fonts and have not installed the 100dpi
 versions of the X11 fonts.  The names and details differ by system, but
 will likely have something like Fedora Core 5's
@@ -2819,6 +2866,11 @@ errors when linking R as a shared library.
 </pre>
    <p class="noindent">the additional flags being needed to problems linking against
 <samp><span class="file">libnmath.a</span></samp> and when linking R as a shared library.
+
+   <p>On some<a rel="footnote" href="#fn-27" name="fnd-27"><sup>27</sup></a> <code>glibc</code> systems,
+`<samp><span class="samp">-fgnu89-inline</span></samp>' needs to be added to <samp><span class="option">CFLAGS</span></samp> when using
+the (currently unreleased) <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.3.0, since
+<samp><span class="file">wchar.h</span></samp> is not set up properly for C99-style inlines.
 
 <p><a name="Intel-compilers"></a>
 
@@ -3008,9 +3060,9 @@ version of Solaris in use.  (This can be ascertained from <samp><span class="com
 several reports of problems were due to using <samp><span class="command">gcc</span></samp> compiled on
 one version of Solaris on a later version.  A version of <samp><span class="command">gcc</span></samp>
 optimized for Sparc (using technology from Sun's compilers) is available
-from Sun.<a rel="footnote" href="#fn-26" name="fnd-26"><sup>26</sup></a>
+from Sun.<a rel="footnote" href="#fn-28" name="fnd-28"><sup>28</sup></a>
 
-   <p>When using the Sun compilers<a rel="footnote" href="#fn-27" name="fnd-27"><sup>27</sup></a> do <em>not</em> specify <samp><span class="option">-fast</span></samp>, as this disables
+   <p>When using the Sun compilers<a rel="footnote" href="#fn-29" name="fnd-29"><sup>29</sup></a> do <em>not</em> specify <samp><span class="option">-fast</span></samp>, as this disables
 <acronym>IEEE</acronym> arithmetic and <samp><span class="command">make check</span></samp> will fail.
 
    <p>To compile for a 64-bit Sparc target with <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4 we used
@@ -3174,7 +3226,7 @@ allows 1024 symbols on a 64-bit build (and 2048 on a 32-bit build).
 
    <p><a name="index-BLAS-library-94"></a><a name="index-LAPACK-library-95"></a>
 Note that using <samp><span class="command">f95</span></samp> allows the Sun performance library
-<code>libsunperf</code> to be selected: it may not work<a rel="footnote" href="#fn-28" name="fnd-28"><sup>28</sup></a> with <samp><span class="command">f77</span></samp>, and will not with <samp><span class="command">g77</span></samp>. 
+<code>libsunperf</code> to be selected: it may not work<a rel="footnote" href="#fn-30" name="fnd-30"><sup>30</sup></a> with <samp><span class="command">f77</span></samp>, and will not with <samp><span class="command">g77</span></samp>. 
 <code>libsunperf</code> contains both BLAS and LAPACK code, and
 <samp><span class="option">--with-lapack</span></samp> may be required if you use it.  On our test
 system using <code>libsunperf</code> failed for 64-bit builds with both Forte
@@ -3418,7 +3470,7 @@ could be installed.)
 This is unsupported, but experiments have been conducted and a few
 workarounds added for R 2.6.0.
 
-   <p>Only building as a shared library works,<a rel="footnote" href="#fn-29" name="fnd-29"><sup>29</sup></a> so use
+   <p>Only building as a shared library works,<a rel="footnote" href="#fn-31" name="fnd-31"><sup>31</sup></a> so use
 
 <pre class="example">     ./configure --disable-nls --disable-mbcs --enable-R-shlib
      make
@@ -3431,7 +3483,7 @@ warnings about the use of auto-import.
    <p>It almost passes <samp><span class="command">make check</span></samp>: FIFOs are supposedly supported
 but hung in `<samp><span class="samp">example(fifo)</span></samp>'.
 
-   <p>Note that this gives you a command-line application using <strong>readline</strong>
+   <p>Note that this gives you a command-line application using <code>readline</code>
 for command editing.  The `<samp><span class="samp">X11</span></samp>' graphics device will work if a
 suitable X server is running, and the standard Unix-alike ways of
 installing source packages work.  There was a bug in the
@@ -3520,9 +3572,8 @@ started</code>.) Then click on one of the keywords and after a short delay
 
    <p>If this fails you should double-check that Java is enabled in your
 browser by visiting a page such as
-<a href="http://www.java.com/en/download/help/testvm.jsp"><code>www.java.com/en/download/help/testvm.jsp</code></a> (although that will
-fail for earlier versions of Java such as the Microsoft JVM which do
-work with R).  Java 1.1 is sufficent.
+<a href="http://www.java.com/en/download/help/testvm.jsp"><code>www.java.com/en/download/help/testvm.jsp</code></a>.  Java 1.4 or
+later is needed.
 
    <p>On Mozilla-based browsers the links on the results page will
 become inactive if you return to it: to work around this you can open
@@ -3535,33 +3586,34 @@ enabling the Java search engine.
 
 <h3 class="section">D.1 Java Virtual Machines on Linux</h3>
 
-<p>We are aware of problems with certain Java installations.  In
-particular, Sun's Java Run-time Environment <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_02 to
-_05 do not work under `<samp><span class="samp">ix86</span></samp>' Linux.  Version
-<code>jre</code>&nbsp;<!-- /@w -->1.5.0 is strongly recommended for Mozilla-based
-browsers.
+<p>We are aware of problems with certain older Java installations: Sun's
+Java Run-time Environment version 1.5.0 or later is strongly recommended
+for Mozilla-based browsers.  In particular, Sun's Java Run-time
+Environment <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_02 to _05 do not work under
+`<samp><span class="samp">ix86</span></samp>' Linux.
 
-   <p>This and <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_01 do work: the latter can be found in
-Sun's archive at <a href="http://java.sun.com/products/archive/"><code>java.sun.com/products/archive/</code></a>.
+   <p>Note that there appears not to be a Sun Java plugin for 64-bit browsers
+on `<samp><span class="samp">x86_64</span></samp>' Linux:
+(<a href="http://forum.java.sun.com/thread.jspa?threadID=568127&amp;tstart=75"><code>forum.java.sun.com/thread.jspa?threadID=568127&amp;tstart=75</code></a>)
+(although one is promised for Java 7) but 32-bit browsers have been used
+on that platform.
+
+   <p>Marc Schwartz reports that the `IcedTea' JVM that ships with Fedora 8
+does not work with the search applet.  On `<samp><span class="samp">ix86</span></samp>' the Sun JRE and
+plugin can be instaled: see
+<a href="http://www.fedorafaq.org/#java"><code>www.fedorafaq.org/#java</code></a>. 
+(The same FAQ documents the use of 32-bit Firefox on `<samp><span class="samp">x86_64</span></samp>'.)
 
    <p>Other Java installations, for example those from Blackdown and IBM, have
 been used.
 
-   <p>Other useful links are for Mozilla,
-<a href="http://plugindoc.mozdev.org/faqs/java.html"><code>plugindoc.mozdev.org/faqs/java.html</code></a>
-and
-<a href="http://www.mozilla.org/releases/mozilla1.7/installation-extras.html"><code>www.mozilla.org/releases/mozilla1.7/installation-extras.html</code></a>,
+   <p>Older but still useful links are for Firefox/Mozilla,
+<a href="http://plugindoc.mozdev.org/faqs/java.html"><code>plugindoc.mozdev.org/faqs/java.html</code></a>,
 for Konqueror <a href="http://www.konqueror.org/javahowto/"><code>www.konqueror.org/javahowto/</code></a>,
 for Opera
 <a href="http://www.opera.com/support/search/supsearch.dml?index=459"><code>www.opera.com/support/search/supsearch.dml?index=459</code></a>
 and for Debian GNU/Linux
 <a href="http://www.debian.org/doc/manuals/debian-java-faq/"><code>www.debian.org/doc/manuals/debian-java-faq/</code></a>.
-
-   <p>Note that there appears not to be a Sun Java plugin for 64-bit browsers
-on `<samp><span class="samp">x86_64</span></samp>' Linux:
-(<a href="http://forum.java.sun.com/thread.jspa?threadID=568127&amp;tstart=75"><code>forum.java.sun.com/thread.jspa?threadID=568127&amp;tstart=75</code></a>) but
-32-bit browsers have been used on that platform, and a Blackdown Java
-plugin is available (but failed when tried on FC3).
 
 <p><a name="Java-Virtual-Machines-on-Unix"></a>
 
@@ -3569,7 +3621,7 @@ plugin is available (but failed when tried on FC3).
 
 <p>We have much less experience than under Linux, but we do know that Sun's
 Run-time Environment <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_03 does not work under
-Solaris, whereas <code>jre</code>&nbsp;<!-- /@w -->1.5.0 and <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_01
+Sparc Solaris 8, whereas <code>jre</code>&nbsp;<!-- /@w -->1.5.0 and <code>j2re</code>&nbsp;<!-- /@w -->1.4.2_01
 (available from <a href="http://java.sun.com/products/archive/"><code>java.sun.com/products/archive</code></a>) do.
 
 <p><a name="Java-Virtual-Machines-on-Windows"></a>
@@ -3578,10 +3630,9 @@ Solaris, whereas <code>jre</code>&nbsp;<!-- /@w -->1.5.0 and <code>j2re</code>&n
 
 <p>We have not seen any problems on Windows provided a Java Virtual Machine
 has been installed and is operational: Sun's current
-<code>j2re</code>&nbsp;<!-- /@w -->1.5.0 works in Internet Explorer, Netscape&nbsp;<!-- /@w -->7.x,
-Mozilla&nbsp;<!-- /@w -->1.6/7 and Mozilla Firefox on Windows XP.  Note that a
-recent Windows system may not have a JVM installed at all.  For
-Netscape/Mozilla/Firefox visit
+<code>j2re</code>&nbsp;<!-- /@w -->1.6.0 works in Internet Explorer, Mozilla&nbsp;<!-- /@w -->1.7 and
+Mozilla Firefox on Windows XP/Vista.  Note that a recent Windows system
+may not have a JVM installed at all.  Visit
 <a href="http://java.sun.com/getjava/manual.html"><code>java.sun.com/getjava/manual.html</code></a> to install a Sun JVM.  Which
 (if any) JVM is enabled can be set in `Set Program Access and Defaults'
 in Windows XP (SP1 or later), and which JVM is used by browser plugins
@@ -3590,16 +3641,14 @@ may also be controlled by the Sun Java applet in the Control Panel.
    <p>Recent versions of Internet Explorer may block the use of Java applets
 and need the block removed <em>via</em> the <em>information bar</em>.
 
+   <p>Apple's Safari 3.0.4 also works.
+
 <p><a name="Java-Virtual-Machines-on-Mac-OS-X"></a>
 
 <h3 class="section">D.4 Java Virtual Machines on Mac OS X</h3>
 
-<p>The <acronym>HTML</acronym> search engine does not work with Safari under Mac OS X, but
-<code>j2re</code>&nbsp;<!-- /@w -->1.4.x may work with Mozilla, Firefox and Camino if the
-Java Embedding Plugin (<a href="http://javaplugin.sourceforge.net/"><code>javaplugin.sourceforge.net</code></a>) is used.
-
-   <p>The Aqua GUI provides an interface to <code>help.search</code> that may
-substitute for the Java search.
+<p>Java 1.5.0 ships with recent versions of Mac OS X, and the <acronym>HTML</acronym>
+search engine works with Safari under Mac OS 10.5.
 
 <p><a name="The-Windows-toolset"></a>
 
@@ -3620,7 +3669,7 @@ harmful.)
 
    <p>We have found that the build process for R is quite sensitive to
 the choice of tools: please follow our instructions <strong>exactly</strong>,
-even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-30" name="fnd-30"><sup>30</sup></a>  The build process for add-on packages is somewhat more
+even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-32" name="fnd-32"><sup>32</sup></a>  The build process for add-on packages is somewhat more
 forgiving, but we recommend using the exact toolset at first, and only
 substituting other tools once you are familiar with the process.
 
@@ -3648,7 +3697,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.6.1-win32.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.6.2-win32.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -3750,7 +3799,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">E.4 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.6.1-win32.exe</span></samp>) we require
+<p>To make the installer package (<samp><span class="file">R-2.6.2-win32.exe</span></samp>) we require
 Inno Setup 5.1.7 or later (including 5.2.x) from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.  This is <em>not</em> included in <samp><span class="file">Rtools.exe</span></samp>.
 
    <p>Edit file <samp><span class="file">src/gnuwin32/MkRules</span></samp> and change <code>ISDIR</code> to the
@@ -3969,16 +4018,20 @@ so users cannot easily change it.</p>
    <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> If a proxy needs to
 be set, see <samp><span class="command">?download.file</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-6" href="#fnd-6">6</a>]</small> also known as <acronym>IEC</acronym>&nbsp;<!-- /@w -->559
+   <p class="footnote"><small>[<a name="fn-6" href="#fnd-6">6</a>]</small> If you try changing from French
+to Russian except in a UTF-8 locale, you will find messages change to
+English.</p>
+
+   <p class="footnote"><small>[<a name="fn-7" href="#fnd-7">7</a>]</small> also known as <acronym>IEC</acronym>&nbsp;<!-- /@w -->559
 and <acronym>IEEE</acronym>&nbsp;<!-- /@w -->754</p>
 
-   <p class="footnote"><small>[<a name="fn-7" href="#fnd-7">7</a>]</small> at least when storing quantities: the on-FPU
+   <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> at least when storing quantities: the on-FPU
 precision is allowed to vary</p>
 
-   <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> until recently this limit applied to all processes, not
+   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> until recently this limit applied to all processes, not
 just to one process</p>
 
-   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> It is likely that
+   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> It is likely that
 commercial 64-bit compilers could be used, but those we have looked at
 do not work in the same way as the MinGW compilers so extensive changes
 to the build system would be needed.  Also, end users would need to have
@@ -3986,68 +4039,70 @@ the same compilers to install extension packages.  There is an
 experimental version of MinGW for 64-bit Windows, but it is not yet good
 enough to build a working R.</p>
 
-   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> e.g. Bessel, beta and gamma function</p>
+   <p class="footnote"><small>[<a name="fn-11" href="#fnd-11">11</a>]</small> e.g. Bessel, beta and gamma function</p>
 
-   <p class="footnote"><small>[<a name="fn-11" href="#fnd-11">11</a>]</small> also known as
+   <p class="footnote"><small>[<a name="fn-12" href="#fnd-12">12</a>]</small> also known as
 <acronym>IEEE</acronym>&nbsp;<!-- /@w -->754</p>
 
-   <p class="footnote"><small>[<a name="fn-12" href="#fnd-12">12</a>]</small> <samp><span class="option">-std=c99</span></samp>
+   <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> <samp><span class="option">-std=c99</span></samp>
 excludes POSIX functionality, but <samp><span class="file">config.h</span></samp> will turn on all GNU
 extensions include the POSIX functuonality.</p>
 
-   <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> Earlier versions of R searched for external BLASes,
+   <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> Earlier versions of R searched for external BLASes,
 but this caused frequent difficulties.</p>
 
-   <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> he generic BLAS supplied with Fedora Core 3 and 4
+   <p class="footnote"><small>[<a name="fn-15" href="#fnd-15">15</a>]</small> he generic BLAS supplied with Fedora Core 3 and 4
 Extras is missing <code>drotm</code>, <code>drotmg</code> and <code>zdrot</code></p>
 
-   <p class="footnote"><small>[<a name="fn-15" href="#fnd-15">15</a>]</small> unless FORTRAN double
+   <p class="footnote"><small>[<a name="fn-16" href="#fnd-16">16</a>]</small> unless FORTRAN double
 complex is not supported on the platform</p>
 
-   <p class="footnote"><small>[<a name="fn-16" href="#fnd-16">16</a>]</small> Using the Sun Studio <samp><span class="command">cc</span></samp> and <samp><span class="command">f95</span></samp>
+   <p class="footnote"><small>[<a name="fn-17" href="#fnd-17">17</a>]</small> Using the Sun Studio <samp><span class="command">cc</span></samp> and <samp><span class="command">f95</span></samp>
 compilers</p>
 
-   <p class="footnote"><small>[<a name="fn-17" href="#fnd-17">17</a>]</small> We have measured 15&ndash;20% on i686 Linux and around
+   <p class="footnote"><small>[<a name="fn-18" href="#fnd-18">18</a>]</small> We have measured 15&ndash;20% on i686 Linux and around
 10% on `<samp><span class="samp">x86_64</span></samp>' Linux.</p>
 
-   <p class="footnote"><small>[<a name="fn-18" href="#fnd-18">18</a>]</small> AIX has to be different: it has
+   <p class="footnote"><small>[<a name="fn-19" href="#fnd-19">19</a>]</small> AIX has to be different: it has
 `<samp><span class="samp">EN_US.UTF-8</span></samp>'!</p>
 
-   <p class="footnote"><small>[<a name="fn-19" href="#fnd-19">19</a>]</small> You may have to set this with <code>luit</code>, but it
+   <p class="footnote"><small>[<a name="fn-20" href="#fnd-20">20</a>]</small> You may have to set this with <code>luit</code>, but it
 should be the default in a window manager session started in UTF-8.</p>
 
-   <p class="footnote"><small>[<a name="fn-20" href="#fnd-20">20</a>]</small> e.g. Fedora Core 6</p>
+   <p class="footnote"><small>[<a name="fn-21" href="#fnd-21">21</a>]</small> e.g. Fedora Core 6</p>
 
-   <p class="footnote"><small>[<a name="fn-21" href="#fnd-21">21</a>]</small> On HP-UX <samp><span class="command">fort77</span></samp> is the
+   <p class="footnote"><small>[<a name="fn-22" href="#fnd-22">22</a>]</small> On HP-UX <samp><span class="command">fort77</span></samp> is the
 <acronym>POSIX</acronym> compliant FORTRAN compiler, and comes after
 <samp><span class="command">g77</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-22" href="#fnd-22">22</a>]</small> as well as its equivalence to the <code>Rcomplex</code>
+   <p class="footnote"><small>[<a name="fn-23" href="#fnd-23">23</a>]</small> as well as its equivalence to the <code>Rcomplex</code>
 structure defined in <samp><span class="file">R_ext/Complex.h</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-23" href="#fnd-23">23</a>]</small> In particular, avoid <samp><span class="command">g77</span></samp>'s
+   <p class="footnote"><small>[<a name="fn-24" href="#fnd-24">24</a>]</small> In particular, avoid <samp><span class="command">g77</span></samp>'s
 <samp><span class="option">-pedantic</span></samp>, which gives confusing error messages.</p>
 
-   <p class="footnote"><small>[<a name="fn-24" href="#fnd-24">24</a>]</small> e.g., to use an optimized BLAS on
+   <p class="footnote"><small>[<a name="fn-25" href="#fnd-25">25</a>]</small> e.g., to use an optimized BLAS on
 Sun/Sparc</p>
 
-   <p class="footnote"><small>[<a name="fn-25" href="#fnd-25">25</a>]</small> for example, <code>X11 font at size 14 could not
+   <p class="footnote"><small>[<a name="fn-26" href="#fnd-26">26</a>]</small> for example, <code>X11 font at size 14 could not
 be loaded</code>.</p>
 
-   <p class="footnote"><small>[<a name="fn-26" href="#fnd-26">26</a>]</small> <a href="http://www.sun.com/download/index.jsp?cat=Application%20Development&amp;tab=3&amp;subcat=Development%20Tools">http://www.sun.com/download/index.jsp?cat=Application%20Development&amp;tab=3&amp;subcat=Development%20Tools</a></p>
+   <p class="footnote"><small>[<a name="fn-27" href="#fnd-27">27</a>]</small> e.g. Fedora Core 5</p>
 
-   <p class="footnote"><small>[<a name="fn-27" href="#fnd-27">27</a>]</small> including <samp><span class="command">gcc</span></samp> for Sparc
+   <p class="footnote"><small>[<a name="fn-28" href="#fnd-28">28</a>]</small> <a href="http://www.sun.com/download/index.jsp?cat=Application%20Development&amp;tab=3&amp;subcat=Development%20Tools">http://www.sun.com/download/index.jsp?cat=Application%20Development&amp;tab=3&amp;subcat=Development%20Tools</a></p>
+
+   <p class="footnote"><small>[<a name="fn-29" href="#fnd-29">29</a>]</small> including <samp><span class="command">gcc</span></samp> for Sparc
 from Sun.</p>
 
-   <p class="footnote"><small>[<a name="fn-28" href="#fnd-28">28</a>]</small> recent
+   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> recent
 versions have <samp><span class="command">f77</span></samp> as a wrapper for <samp><span class="command">f95</span></samp>, and these do
 work.</p>
 
-   <p class="footnote"><small>[<a name="fn-29" href="#fnd-29">29</a>]</small> DLLs need to have all
+   <p class="footnote"><small>[<a name="fn-31" href="#fnd-31">31</a>]</small> DLLs need to have all
 links resolved at build time and so cannot resolve against
 <samp><span class="file">R.bin</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> For
+   <p class="footnote"><small>[<a name="fn-32" href="#fnd-32">32</a>]</small> For
 example, the Cygwin version of <code>make 3.81</code> fails to work
 correctly.</p>
 

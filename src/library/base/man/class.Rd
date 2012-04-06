@@ -29,7 +29,7 @@ oldClass(x) <- value
   \item{x}{a \R object}
   \item{what, value}{a character vector naming classes.  \code{value}
     can also be \code{NULL}.}
-  \item{which}{logical affecting return value: see Details.}
+  \item{which}{logical affecting return value: see \sQuote{Details}.}
 }
 
 \details{
@@ -97,7 +97,7 @@ oldClass(x) <- value
 
 \seealso{
   \code{\link{UseMethod}}, \code{\link{NextMethod}},
-  \code{\link{group generic}}.
+  \sQuote{\link{group generic}}, \sQuote{\link{internal generic}}
 }
 \examples{
 x <- 10

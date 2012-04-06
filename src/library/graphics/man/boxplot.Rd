@@ -1,6 +1,6 @@
 % File src/library/graphics/man/boxplot.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{boxplot}
@@ -64,7 +64,9 @@ boxplot(x, \dots)
     for the calculations used.}
   \item{outline}{if \code{outline} is not true, the outliers are
     not drawn (as points whereas S+ uses lines).}% the argument name is most ugly but S+ compatible
-  \item{names}{group labels which will be printed under each boxplot.}
+  \item{names}{group labels which will be printed under each boxplot.
+    Can be a character vector or an \link{expression} (see
+    \link{plotmath}).}
   \item{boxwex}{a scale factor to be applied to all boxes.  When there
     are only a few groups, the appearance of the plot can be improved
     by making the boxes narrower.}
@@ -160,7 +162,8 @@ arrows(xi, mn.t - sd.t, xi, mn.t + sd.t,
 ## boxplot on a matrix:
 mat <- cbind(Uni05 = (1:100)/21, Norm = rnorm(100),
              `5T` = rt(100, df = 5), Gam2 = rgamma(100, shape = 2))
-boxplot(as.data.frame(mat), main = "boxplot(as.data.frame(mat), main = ...)")
+boxplot(as.data.frame(mat),
+        main = "boxplot(as.data.frame(mat), main = ...)")
 par(las=1)# all axis labels horizontal
 boxplot(as.data.frame(mat), main = "boxplot(*, horizontal = TRUE)",
         horizontal = TRUE)

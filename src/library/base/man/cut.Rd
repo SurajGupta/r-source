@@ -16,8 +16,9 @@ cut(x, \dots)
 \alias{cut.default}
 \arguments{
   \item{x}{a numeric vector which is to be converted to a factor by cutting.}
-  \item{breaks}{either a numeric vector of cut points or number
-    giving the number of intervals which \code{x} is to be cut into.}
+  \item{breaks}{either a numeric vector of two or more cut points or a
+    single number (greater than or equal to 2) giving the number of
+    intervals into which \code{x} is to be cut.}
   \item{labels}{labels for the levels of the resulting category.  By default,
     labels are constructed using \code{"(a,b]"} interval notation. If
     \code{labels = FALSE}, simple integer codes are returned instead of
@@ -39,11 +40,14 @@ cut(x, \dots)
   The leftmost interval corresponds to level one,
   the next leftmost to level two and so on.
 }
-\value{
-  A \code{\link{factor}} is returned, unless \code{labels = FALSE} which
-  results in the mere integer level codes.
-}
 \details{
+  When \code{breaks} is specified as a single number, the range of the
+  data is divided into \code{breaks} pieces of equal length, and then
+  the outer limits are moved away by 0.1\% of the range to ensure that
+  the extreme values both fall within the break intervals.  (If \code{x}
+  is a constant vector, equal-length intervals are created that cover
+  the single value.)
+  
   If a \code{labels} parameter is specified, its values are used
   to name the factor levels. If none is specified, the factor
   level labels are constructed as \code{"(b1, b2]"}, \code{"(b2, b3]"}
@@ -54,6 +58,10 @@ cut(x, \dots)
   A larger value (up to 12) will be used if needed to distinguish
   between any pair of  endpoints: if this fails labels such as
   \code{"Range3"} will be used.
+}
+\value{
+  A \code{\link{factor}} is returned, unless \code{labels = FALSE} which
+  results in the mere integer level codes.
 }
 \note{
   Instead of \code{table(cut(x, br))}, \code{hist(x, br, plot = FALSE)} is
@@ -69,6 +77,10 @@ cut(x, \dots)
   \code{\link{split}} for splitting a variable according to a group factor;
   \code{\link{factor}}, \code{\link{tabulate}}, \code{\link{table}},
   \code{\link{findInterval}()}.
+
+  \code{\link{quantile}} for ways of choosing breaks of roughly equal
+  content (rather than length), \code{\link[Hmisc]{cut2}} in package
+  \pkg{hmisc} for a canned way to form quantile groups.
 }
 \examples{
 Z <- stats::rnorm(10000)

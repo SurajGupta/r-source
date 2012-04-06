@@ -21,7 +21,8 @@ read.table(file, header = FALSE, sep = "", quote = "\"'",
            na.strings = "NA", colClasses = NA, nrows = -1,
            skip = 0, check.names = TRUE, fill = !blank.lines.skip,
            strip.white = FALSE, blank.lines.skip = TRUE,
-           comment.char = "#", allowEscapes = FALSE, flush = FALSE,
+           comment.char = "#",
+           allowEscapes = FALSE, flush = FALSE,
            stringsAsFactors = default.stringsAsFactors(),
            encoding = "unknown")
 
@@ -147,7 +148,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     that there are no duplicates.}
 
   \item{fill}{logical. If \code{TRUE} then in case the rows have unequal
-    length, blank fields are implicitly added.  See Details.}
+    length, blank fields are implicitly added.  See \sQuote{Details}.}
 
   \item{strip.white}{logical. Used only when \code{sep} has
     been specified, and allows the stripping of leading and trailing
@@ -176,7 +177,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \item{encoding}{encoding to be assumed for input strings.  It is
     used to mark character strings as known to be in
-    Latin-1 or UTF-8: it is not used to re-encode the input.}
+    Latin-1 or UTF-8: it is not used to re-encode the input.  For an
+    example of how to do so, see the examples under \code{\link{file}}.
+  }
 
   \item{\dots}{Further arguments to be passed to \code{read.table}.}
 }

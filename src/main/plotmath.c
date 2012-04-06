@@ -1,11 +1,11 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2007	The R Development Core Team
+ *  Copyright (C) 1998-2008	The R Development Core Team
  *
  *  This source code module:
  *  Copyright (C) 1997, 1998 Paul Murrell and Ross Ihaka
- *  Copyright (C) 1998-2006	The R Development Core Team
+ *  Copyright (C) 1998-2008	The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1053,7 +1053,7 @@ static BBOX RenderSymbolStr(const char *str, int draw, mathContext *mc,
 	    while (*s) {
 		wc = 0;
 		res = mbrtowc(&wc, s, MB_LEN_MAX, &mb_st);
-		if(res == -1) error("invalid multibyte string");
+		if(res == -1) error("invalid multibyte string '%s'", s);
 		if (iswdigit(wc) && font != PlainFont) {
 		    font = PlainFont;
 		    SetFont(PlainFont, gc);
@@ -3320,6 +3320,7 @@ void GEMathText(double x, double y, SEXP expr,
  * Code below here ...
  * ... should be moved to base.c and
  * ... is part of the base graphics API NOT the graphics engine API
+ * used in plot.c
  ********************************
  */
 double GExpressionWidth(SEXP expr, GUnit units, DevDesc *dd)
@@ -3345,6 +3346,8 @@ double GExpressionHeight(SEXP expr, GUnit units, DevDesc *dd)
     else
 	return GConvertYUnits(height, DEVICE, units, dd);
 }
+
+/* NOT true: used in plot.c */
 
 /* This is just here to satisfy the Rgraphics.h API.
  * This allows new graphics API (GraphicsDevice.h, GraphicsEngine.h)

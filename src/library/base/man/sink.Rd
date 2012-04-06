@@ -1,6 +1,6 @@
 % File src/library/base/man/sink.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{sink}
@@ -41,7 +41,7 @@ sink.number(type = c("output", "message"))
   Normal \R output (to connection \code{\link{stdout}))} is diverted by
   the default \code{type = "output"}.  Only prompts and (most)
   messages continue to appear on the console.  Messages sent to
-  \code{\link{stdout}()} (including those from \code{\link{message}},
+  \code{\link{stderr}()} (including those from \code{\link{message}},
   \code{\link{warning}} and \code{\link{stop}}) can be diverted by
   \code{sink(type = "message")} (see below).
 
@@ -69,6 +69,9 @@ sink.number(type = c("output", "message"))
   \code{sink(split = TRUE)} is only available on systems which support
   the C99 function \code{va_copy} (or under the name \code{__va_copy}),
   but we know of no current systems which do not.
+
+  It only splits internal \R output, not that from \R-level use of
+  \code{\link{stdout}}.
 }
 \section{Warning}{
   Don't use a connection that is open for \code{sink} for any other

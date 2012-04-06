@@ -11,8 +11,9 @@
 }
 \title{Default Printing}
 \usage{
-\method{print}{default}(x, digits = NULL, quote = TRUE, na.print = NULL,
-      print.gap = NULL, right = FALSE, max = NULL, useSource = TRUE, \dots)
+\method{print}{default}(x, digits = NULL, quote = TRUE,
+      na.print = NULL, print.gap = NULL, right = FALSE,
+      max = NULL, useSource = TRUE, \dots)
 }
 \arguments{
   \item{x}{the object to be printed.}
@@ -26,7 +27,8 @@
   \item{quote}{logical, indicating whether or not strings
     (\code{\link{character}}s) should be printed with surrounding quotes.}
   \item{na.print}{a character string which is used to indicate
-    \code{\link{NA}} values in printed output, or \code{NULL} (see Details)}
+    \code{\link{NA}} values in printed output, or \code{NULL}
+    (see \sQuote{Details}).}
   \item{print.gap}{a non-negative integer \eqn{\le 1024}{<= 1024},
     or \code{NULL} (meaning 1), giving the spacing between adjacent
     columns in printed vectors, matrices and arrays.}
@@ -137,8 +139,9 @@ print(pi, digits = 16)
 LETTERS[1:16]
 print(LETTERS, quote = FALSE)
 
-M <- cbind(I=1, matrix(1:10000, ncol=10, dimnames=list(NULL, LETTERS[1:10])))
+M <- cbind(I = 1, matrix(1:10000, ncol = 10,
+                         dimnames = list(NULL, LETTERS[1:10])))
 utils::head(M) # makes more sense than
-print(M, max= 1000)# prints 90 rows and a message about omitting 910
+print(M, max = 1000)# prints 90 rows and a message about omitting 910
 }
 \keyword{print}

@@ -16,7 +16,8 @@ contour(x, \dots)
 \method{contour}{default}(x = seq(0, 1, length.out = nrow(z)),
         y = seq(0, 1, length.out = ncol(z)),
         z,
-        nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
+        nlevels = 10, levels = pretty(zlim, nlevels),
+        labels = NULL,
         xlim = range(x, finite = TRUE),
         ylim = range(y, finite = TRUE),
         zlim = range(z, finite = TRUE),
@@ -48,7 +49,7 @@ contour(x, \dots)
   \item{drawlabels}{logical.  Contours are labelled if \code{TRUE}.}
   \item{method}{character string specifying where the labels will be
     located. Possible values are \code{"simple"}, \code{"edge"} and
-    \code{"flattest"} (the default). See the Details section.}
+    \code{"flattest"} (the default).  See the \sQuote{Details} section.}
   \item{vfont}{if a character vector of length 2 is specified, then Hershey
     vector fonts are used for the contour labels.
     The first element of the vector

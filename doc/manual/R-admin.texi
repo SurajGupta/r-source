@@ -132,7 +132,7 @@ cat R-@var{x}.@var{y}.@var{z}-split.* > R-@var{x}.@var{y}.@var{z}.tar.gz
 @noindent
 and proceed as above.  If you want the build to be usable by a group of
 users, set @code{umask} before unpacking so that the files will be
-readable by the target group (e.g., @code{umask 022} to be usable by all
+readable by the target group (e.g.,@: @code{umask 022} to be usable by all
 users).  (Keep this setting of @code{umask} whilst building and
 installing.)
 
@@ -306,8 +306,9 @@ functionality, but you should look carefully at any reported
 discrepancies.  (Note that the tests may not run successfully in all
 locales: we expect them to do so using an 8-bit or UTF-8 character set,
 but probably not using other multibyte character sets.  If you have
-problems try @code{C} or an English locale -- a UTF-8 locale if you
-usually use UTF-8.)
+problems try an English locale -- a UTF-8 locale if you
+usually use UTF-8.  On some systems they will not work in the @code{C}
+locale, since that may exclude all non-ASCII characters.)
 
 To re-run the tests including those successfully run you would need
 
@@ -696,13 +697,48 @@ script or a @file{src/Makefile} file.  In such cases you can install for
 extra builds by
 
 @example
-R --arch=@var{name} CMD INSTALL --libs-only @var{pkg(s)}
+R --arch=@var{name} CMD INSTALL --libs-only @var{pkg}(s)
 @end example
 
 If you want to mix sub-architectures compiled on different platforms
 (for example @cputype{x86_64} Linux and @cputype{i686} Linux), it is
 wise to use explicit names for each, and you may also need to set
 @option{libdir} to ensure that they install into the same place.
+
+On Linux, there is an alternative mechanism for mixing 32-bit and
+64-bit libraries known as @emph{multilib}. If a Linux distribution supports
+multilib, then parallel builds of @R{} may be installed in the
+sub-directories @file{lib} (32-bit) and @file{lib64} (64-bit).  The
+build to be run may then be chosen using the @command{setarch}
+command. For example, a 32-bit build may be chosen by
+
+@example
+setarch i686 R
+@end example
+
+The @command{setarch} command is only operational if both 32-bit and
+64-bit builds are installed. If there is only one installation of @R{},
+then this will always be run regardless of the architecture specified
+by the @command{setarch} command.
+
+There can be problems with installing packages on the non-native
+architecture.  It is a good idea to run e.g.@: @code{setarch i686 R} for
+sessions in which packages are to be installed, even if that is the only
+version of @R{} installed (since this tells the package installation
+code the architecture needed).
+
+At present there is a protential problem with packages using Java, as
+the post-install for a @cputype{i386} RPM on @cputype{x86_64} Linux
+reconfigures Java and will find the @cputype{x86_64} Java.  If you know
+where a 32-bit Java is installed you may be able to run (as root)
+
+@example
+export JAVA_HOME=<path to jre directory of 32-bit Java>
+setarch i686 R CMD javareconf
+@end example
+
+@noindent
+to get a suitable setting.
 
 @node Installing R under Windows, Installing R under Mac OS X, Installing R under Unix-alikes, Top
 @chapter Installing R under Windows
@@ -759,7 +795,7 @@ The @file{Rtools.exe} executable installer described in @ref{The
 Windows toolset} also includes some additions to the @R{} source as
 noted below. You should run it first, to obtain a working @code{tar}
 and other necessities.  Choose a ``Full installation'', and install
-the extra files into your intended @R{} source directory, e.g.
+the extra files into your intended @R{} source directory, e.g.@:
 @file{C:/R}. The directory name @emph{should not contain spaces}. We
 will call this directory @var{R_HOME} below.
 
@@ -1896,8 +1932,11 @@ to Estonian and the language to Spanish.)
 
 It is usually possible to change the language once @R{} is running
 @emph{via} (not Windows) @code{Sys.setlocale("LC_MESSAGES",
-"new_locale")}, or by setting environment variables such as
-@env{LANGUAGE}.
+"new_locale")}, or by setting an environment variable such as
+@env{LANGUAGE}, @emph{provided}@footnote{If you try changing from French
+to Russian except in a UTF-8 locale, you will find messages change to
+English.} the language you are changing to can be output in the current
+character set.
 
 Messages are divided into @emph{domains}, and translations may be
 available for some or all messages in a domain.  @R{} makes use of the
@@ -2003,11 +2042,11 @@ Windows.)  64-bit builds have much larger limits.
 @item
 Because the pointers are larger, @R{}'s basic structure (the cons cell)
 is larger (normally twice the size).  This means that @R{} objects take
-more space and more time to manipulate, especially during garbage
-collection.  So 64-bit versions of @R{} will typically run slower than
-32-bit versions.  (On Sparc Solaris the difference was 15-20%, on
-@cputype{x86_64} around 10%.)
-
+more space and (usually) more time to manipulate.  So 64-bit versions of
+@R{} will typically run slower than 32-bit versions.  (On Sparc Solaris
+the difference was 15-20%, on Linux on Opteron around 10%.  The pattern
+is not universal on Intel Core 2 Duo the 64-bit version is around 10%
+faster on both Linux and Mac OS X.)
 @end itemize
 
 So, for speed you may want to use a 32-bit build, but to handle large
@@ -2043,7 +2082,7 @@ enough to build a working @R{}.}
 @chapter The standalone Rmath library
 
 The routines supporting the distribution and
-special@footnote{e.g. Bessel, beta and gamma function} functions in @R{}
+special@footnote{e.g.@: Bessel, beta and gamma function} functions in @R{}
 and a few others are declared in C header file @file{Rmath.h}.  These
 can be compiled into a standalone library for linking to other
 applications.  (Note that they are not a separate library when @R{} is
@@ -2133,7 +2172,7 @@ will make standalone libraries @file{libRmath.a} and @file{libRmath.so}.
 @strong{NB:} certain compilers are unable to do compile-time IEEE-754
 arithmetic and so cannot compile @file{mlutils.c} and several other
 files.  The known example is earlier versions of Sun's @code{cc}
-(e.g. Forte 6 and 7): the Sun Studio 11 suite does work.
+(e.g.@: Forte 6 and 7): the Sun Studio 11 suite does work.
 
 
 To use the routines in your own C or C++ programs, include
@@ -2379,7 +2418,7 @@ the Tcl and Tk libraries and for finding the @file{tcl.h} and
 versions of Tcl/Tk installed, setting the paths to the correct config
 files may be necessary to avoid confusion between them.
 
-Versions of Tcl/Tk from 8.3 to 8.4.16 have been used successfully: 8.0 is
+Versions of Tcl/Tk from 8.3 to 8.5.0 have been used successfully: 8.0 is
 no longer supported.
 
 @node Java support,  , Tcl/Tk, Useful libraries and programs
@@ -2512,10 +2551,11 @@ to be re-installed.
 
 ATLAS (@url{http://math-atlas.sourceforge.net/,
 @code{math-atlas.sourceforge.net}}) is a ``tuned'' BLAS that runs on a
-wide range of Unix-alike platforms.  If no more specific library is
-found, a @code{libblas} library in the library path will be used.  (The
-later may not be an enhanced BLAS and so may be less desirable than the
-internal BLAS.)
+wide range of Unix-alike platforms.  Unfortunately it is usually built
+as a static library that on some platforms cannot be used with shared
+libraries such as are used in @R{} packages.  Be careful when using
+pre-built versions of ATLAS (they seem to work on @cputype{ix86}
+platforms, but not on @cputype{x86_64} ones).
 
 The usual way to specify ATLAS will be via
 
@@ -2571,20 +2611,21 @@ Solaris 10 there is the AMD Core Math Library (ACML)
 @noindent
 if the appropriate library directory (such as
 @enindex LD_LIBRRARY_PATH
-@file{/opt/acml4.0.0/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
+@file{/opt/acml4.0.1/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
 For other compilers, see the ACML documentation.  There is a
 multithreaded Linux version of ACML available for @command{gfortran}
-which needs @command{gcc} >= 4.2.0 (or some RedHat versions of 4.1.1).
+which needs @command{gcc} >= 4.2.0 (or some RedHat versions of 4.1.x).
 To make use of this you will need something like
 
 @example
---with-blas="-L/opt/acml4.0.0/gfortran64_mp/lib -lacml_mp"
+--with-blas="-L/opt/acml4.0.1/gfortran64_mp/lib -lacml_mp"
 @end example
 
 See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
 way to use ACML.
 
-ACML can be used on Windows when building from source.
+Earlier versions of ACML are available for 32-bit Linux systems and for
+those using @command{g77}.
 
 @node Goto BLAS, MKL, ACML, BLAS
 @subsubsection Goto BLAS
@@ -2603,19 +2644,18 @@ is built and installed, it can be used by configuring with
 --with-blas="-lgoto"
 @end example
 
-@noindent
-It has been reported that on some RedHat-based Linux systems it is
-necessary to set @code{GOTO_NUM_THREADS=1} or @code{OMP_NUM_THREADS=1}
-(to disable multiple threads) in the environment when using a
-multi-threaded Goto BLAS, but others run happily with multiple threads.
+See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
+way to use recent versions of the Goto BLAS.
 
 Note that currently (Nov 2007) a multi-threaded Goto BLAS will be built
 by default if and only if the building is on a multi-processor system
 (counting multiple cores and hyperthreading), and at run time the
 default number of threads is the number of CPUs detected.
 
-See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
-way to use recent versions of the Goto BLAS.
+It has been reported that on some RedHat-based Linux systems it is
+necessary to set @code{GOTO_NUM_THREADS=1} or @code{OMP_NUM_THREADS=1}
+(to disable multiple threads) in the environment when using a
+multi-threaded Goto BLAS, but ours run happily with multiple threads.
 
 
 @node MKL, Shared BLAS, Goto BLAS, BLAS
@@ -2623,7 +2663,7 @@ way to use recent versions of the Goto BLAS.
 
 For Intel processors under Linux, Intel's Math Kernel Library
 (@url{http://www.intel.com/software/products/mkl/,
-@code{www.intel.com/@/software/@/products/@/mkl}}) can be used
+@code{www.intel.com/@/software/@/products/@/mkl}}) version 9 can be used
 by
 
 @example
@@ -2634,6 +2674,22 @@ by
 This is multi-threaded, but the number of threads defaults to 1 (and can
 be increased by setting @code{OMP_NUM_THREADS}).
 (Thanks to Andy Liaw for the information.)
+
+For version 10 on @cputype{x86_64}, Ei-Ji Nakama used GCC compilers and
+
+@example
+MKL_LIB_PATH=/opt/intel/mkl/10.0.1.014/lib/em64t
+MKL="   -L$@{MKL_LIB_PATH@}                               \
+        -Wl,--start-group                               \
+                $@{MKL_LIB_PATH@}/libmkl_gf_lp64.a        \
+                $@{MKL_LIB_PATH@}/libmkl_gnu_thread.a     \
+                $@{MKL_LIB_PATH@}/libmkl_core.a           \
+        -Wl,--end-group                                 \
+        -liomp5 -lguide -lpthread -lgomp"
+
+./configure --with-lapack="$MKL" --with-blas="$MKL"
+@end example
+
 
 See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
 way to use MKL.
@@ -2651,8 +2707,8 @@ compiled into the @R{} executable and each BLAS-using package.
 @code{libRblas} stored in @file{@var{R_HOME}/lib} and linking both @R{}
 itself and all the add-on packages against that library.
 
-This is the default on most platforms unless an external BLAS is
-specified and found: for the latter it can be used by specifying the
+This is the default on all platforms except AIX unless an external BLAS
+is specified and found: for the latter it can be used by specifying the
 option @option{--enable-BLAS-shlib}, and it can always be disabled via
 @option{--disable-BLAS-shlib}.
 
@@ -2687,7 +2743,7 @@ For example, just
 
 @example
 mv @var{R_HOME}/lib/libRblas.so @var{R_HOME}/lib/libRblas.so.keep
-ln -s /opt/acml4.0.0/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
+ln -s /opt/acml4.0.1/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
 @end example
 
 will change the BLAS in use to multithreaded ACML.  A similar link
@@ -3400,6 +3456,11 @@ FFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
 @noindent
 the additional flags being needed to problems linking against
 @file{libnmath.a} and when linking @R{} as a shared library.
+
+On some@footnote{e.g.@: Fedora Core 5} @code{glibc} systems,
+@samp{-fgnu89-inline} needs to be added to @option{CFLAGS} when using
+the (currently unreleased) @command{gcc}@tie{}4.3.0, since
+@file{wchar.h} is not set up properly for C99-style inlines.
 
 @menu
 * Intel compilers::             
@@ -4118,7 +4179,7 @@ warnings about the use of auto-import.
 It almost passes @command{make check}: FIFOs are supposedly supported
 but hung in @samp{example(fifo)}.
 
-Note that this gives you a command-line application using @pkg{readline}
+Note that this gives you a command-line application using @code{readline}
 for command editing.  The @samp{X11} graphics device will work if a
 suitable X server is running, and the standard Unix-alike ways of
 installing source packages work.  There was a bug in the
@@ -4212,9 +4273,8 @@ started}.) Then click on one of the keywords and after a short delay
 If this fails you should double-check that Java is enabled in your
 browser by visiting a page such as
 @url{http://www.java.com/en/download/help/testvm.jsp,
-@code{www.java.com/en/download/help/testvm.jsp}} (although that will
-fail for earlier versions of Java such as the Microsoft JVM which do
-work with R).  Java 1.1 is sufficent.
+@code{www.java.com/en/download/help/testvm.jsp}}.  Java 1.4 or
+later is needed.
 
 On Mozilla-based browsers the links on the results page will
 become inactive if you return to it: to work around this you can open
@@ -4233,25 +4293,31 @@ enabling the Java search engine.
 @node Java Virtual Machines on Linux , Java Virtual Machines on Unix, Enabling search in HTML help, Enabling search in HTML help
 @section Java Virtual Machines on Linux
 
-We are aware of problems with certain Java installations.  In
-particular, Sun's Java Run-time Environment @code{j2re}@tie{}1.4.2_02 to
-_05 do not work under @cputype{ix86} Linux.  Version
-@code{jre}@tie{}1.5.0 is strongly recommended for Mozilla-based
-browsers.
+We are aware of problems with certain older Java installations: Sun's
+Java Run-time Environment version 1.5.0 or later is strongly recommended
+for Mozilla-based browsers.  In particular, Sun's Java Run-time
+Environment @code{j2re}@tie{}1.4.2_02 to _05 do not work under
+@cputype{ix86} Linux.
 
-This and @code{j2re}@tie{}1.4.2_01 do work: the latter can be found in
-Sun's archive at @url{http://java.sun.com/products/archive/,
-@code{java.sun.com/@/products/@/archive/}}.
+Note that there appears not to be a Sun Java plugin for 64-bit browsers
+on @cputype{x86_64} Linux:
+(@url{http://forum.java.sun.com/thread.jspa?threadID=568127&tstart=75,
+@code{forum.java.sun.com/thread.jspa?threadID=568127&tstart=75}})
+(although one is promised for Java 7) but 32-bit browsers have been used
+on that platform.
+
+Marc Schwartz reports that the `IcedTea' JVM that ships with Fedora 8
+does not work with the search applet.  On @cputype{ix86} the Sun JRE and
+plugin can be instaled: see
+@url{http://www.fedorafaq.org/#java, @code{www.fedorafaq.org/#java}}.
+(The same FAQ documents the use of 32-bit Firefox on @cputype{x86_64}.)
 
 Other Java installations, for example those from Blackdown and IBM, have
 been used.
 
-Other useful links are for Mozilla,
+Older but still useful links are for Firefox/Mozilla,
 @url{http://plugindoc.mozdev.org/faqs/java.html,
-@code{plugindoc.mozdev.org/@/faqs/@/java.html}}
-and
-@url{http://www.mozilla.org/releases/mozilla1.7/installation-extras.html,
-@code{www.@/mozilla.org/@/releases/@/mozilla1.7/@/installation-extras.html}},
+@code{plugindoc.mozdev.org/@/faqs/@/java.html}},
 for Konqueror @url{http://www.konqueror.org/javahowto/,
 @code{www.@/konqueror.org/@/javahowto/}},
 for Opera
@@ -4261,20 +4327,13 @@ and for Debian GNU/Linux
 @url{http://www.debian.org/doc/manuals/debian-java-faq/,
 @code{www.debian.org/@/doc/@/manuals/@/debian-java-faq/}}.
 
-Note that there appears not to be a Sun Java plugin for 64-bit browsers
-on @cputype{x86_64} Linux:
-(@url{http://forum.java.sun.com/thread.jspa?threadID=568127&tstart=75,
-@code{forum.java.sun.com/thread.jspa?threadID=568127&tstart=75}}) but
-32-bit browsers have been used on that platform, and a Blackdown Java
-plugin is available (but failed when tried on FC3).
-
 
 @node Java Virtual Machines on Unix, Java Virtual Machines on Windows, Java Virtual Machines on Linux , Enabling search in HTML help
 @section Java Virtual Machines on Unix
 
 We have much less experience than under Linux, but we do know that Sun's
 Run-time Environment @code{j2re}@tie{}1.4.2_03 does not work under
-Solaris, whereas @code{jre}@tie{}1.5.0 and @code{j2re}@tie{}1.4.2_01
+Sparc Solaris 8, whereas @code{jre}@tie{}1.5.0 and @code{j2re}@tie{}1.4.2_01
 (available from @url{http://java.sun.com/products/archive/,
 @code{java.sun.com/products/archive}}) do.
 
@@ -4283,10 +4342,9 @@ Solaris, whereas @code{jre}@tie{}1.5.0 and @code{j2re}@tie{}1.4.2_01
 
 We have not seen any problems on Windows provided a Java Virtual Machine
 has been installed and is operational: Sun's current
-@code{j2re}@tie{}1.5.0 works in Internet Explorer, Netscape@tie{}7.x,
-Mozilla@tie{}1.6/7 and Mozilla Firefox on Windows XP.  Note that a
-recent Windows system may not have a JVM installed at all.  For
-Netscape/Mozilla/Firefox visit
+@code{j2re}@tie{}1.6.0 works in Internet Explorer, Mozilla@tie{}1.7 and
+Mozilla Firefox on Windows XP/Vista.  Note that a recent Windows system
+may not have a JVM installed at all.  Visit
 @url{http://java.sun.com/getjava/manual.html,
 @code{java.sun.com/getjava/manual.html}} to install a Sun JVM.  Which
 (if any) JVM is enabled can be set in `Set Program Access and Defaults'
@@ -4296,16 +4354,13 @@ may also be controlled by the Sun Java applet in the Control Panel.
 Recent versions of Internet Explorer may block the use of Java applets
 and need the block removed @emph{via} the @emph{information bar}.
 
+Apple's Safari 3.0.4 also works.
+
 @node Java Virtual Machines on Mac OS X,  , Java Virtual Machines on Windows, Enabling search in HTML help
 @section Java Virtual Machines on Mac OS X
 
-The @HTML{} search engine does not work with Safari under Mac OS X, but
-@code{j2re}@tie{}1.4.x may work with Mozilla, Firefox and Camino if the
-Java Embedding Plugin (@url{http://javaplugin.sourceforge.net/,
-@code{javaplugin.sourceforge.net}}) is used.
-
-The Aqua GUI provides an interface to @code{help.search} that may
-substitute for the Java search.
+Java 1.5.0 ships with recent versions of Mac OS X, and the @HTML{}
+search engine works with Safari under Mac OS 10.5.
 
 @node The Windows toolset, Function and variable index, Enabling search in HTML help, Top
 @appendix The Windows toolset

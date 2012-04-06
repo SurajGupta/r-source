@@ -105,13 +105,17 @@ profiler.nls <- function(fitted, ...)
                  ## change fittedModel into profiledModel
 		 if(algorithm != "port") {
 		     if(sum(vary)) .Call(R_nls_iter, fittedModel, ctrl, trace)
+		     dev <- fittedModel$deviance()
 		 } else {
 		     iv <- nls_port_fit(fittedModel, startPars[vary],
 					lower[vary], upper[vary], ctrl, trace)
-		     if(!iv[1] %in% 3:6) fittedModel$deviance <- NA
+		     dev <- if(!iv[1] %in% 3:6) 
+			NA_real_ 
+		     else 
+			fittedModel$deviance()
 		 }
 		 profiledModel <- fittedModel
-                 fstat <- (profiledModel$deviance()-S.hat)/s2.hat
+                 fstat <- (dev - S.hat)/s2.hat
                  fittedModel$setVarying()
                  ans <- list(fstat = fstat,
                              parameters = profiledModel$getAllPars(),
@@ -243,7 +247,7 @@ plot.profile.nls <- function(x, levels, conf = c(99, 95, 90, 80, 50)/100,
             xlim <- predict(bsp, c(-mlev, mlev))$y
             if (is.na(xlim[1])) xlim[1] <- min(x[[i]]$par.vals[, i])
             if (is.na(xlim[2])) xlim[2] <- max(x[[i]]$par.vals[, i])
-            plot(abs(tau) ~ par.vals[, i], data = obj[[i]], xlab = nm[i],
+            plot(abs(tau) ~ par.vals[, i], data = obj[[i]], xlab = i,
                  ylim = c(0, mlev), xlim = xlim, ylab = expression(abs(tau)),
                  type = "n")
             avals <- rbind(as.data.frame(predict(sp)),
@@ -265,7 +269,7 @@ plot.profile.nls <- function(x, levels, conf = c(99, 95, 90, 80, 50)/100,
             xlim <- predict(bsp, c(-mlev, mlev))$y
             if (is.na(xlim[1])) xlim[1] <- min(x[[i]]$par.vals[, i])
             if (is.na(xlim[2])) xlim[2] <- max(x[[i]]$par.vals[, i])
-            plot(tau ~ par.vals[, i], data = obj[[i]], xlab = nm[i],
+            plot(tau ~ par.vals[, i], data = obj[[i]], xlab = i,
                  ylim = c(-mlev, mlev), xlim = xlim, ylab = expression(tau),
                  type = "n")
             lines(predict(sp), col = 4)

@@ -24,7 +24,8 @@ rbind(\dots, deparse.level = 1)
 \arguments{
   \item{\dots}{vectors or matrices.  These can be given as named
     arguments.  Other \R objects will be coerced as appropriate: see
-    section Details and Value.  (For the \code{"data.frame"} method of
+    sections \sQuote{Details} and \sQuote{Value}.  (For the
+    \code{"data.frame"} method of
     \code{cbind} these can be further arguments to
     \code{\link{data.frame}} such as \code{stringsAsFactors}.)}
   \item{deparse.level}{integer controlling the construction of labels in
@@ -69,7 +70,7 @@ rbind(\dots, deparse.level = 1)
   The \code{cbind} data frame method is just a wrapper for
   \code{\link{data.frame}(..., check.names = FALSE)}.  This means that
   it will split matrix columns in data frame arguments, and convert
-  character columns to factors unless \code{stringsAsFactors = TRUE} is
+  character columns to factors unless \code{stringsAsFactors = FALSE} is
   passed.
 
   The \code{rbind} data frame method first drops all zero-column and

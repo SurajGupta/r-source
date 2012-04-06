@@ -1,6 +1,6 @@
 
-R version 2.7.0 Under development (unstable) (2007-09-11 r42820)
-Copyright (C) 2007 The R Foundation for Statistical Computing
+R version 2.6.1 Patched (2008-01-19 r44061)
+Copyright (C) 2008 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -2369,7 +2369,7 @@ x2                NA         NA      NA       NA
 x3            0.2587     0.3509   0.737    0.485
 
 Residual standard error: 0.8063 on 7 degrees of freedom
-Multiple R-Squared: 0.9326,	Adjusted R-squared: 0.9134 
+Multiple R-squared: 0.9326,	Adjusted R-squared: 0.9134 
 F-statistic: 48.43 on 2 and 7 DF,  p-value: 7.946e-05 
 
 Correlation of Coefficients:
@@ -5529,8 +5529,8 @@ Residuals:
 -3.28057 -0.90572  0.04996  0.80200  2.54584 
 
 Coefficients:
-     Estimate Std. Error t value Pr(>|t|)    
-[1,]   1.1866     0.1797   6.602  4.4e-08 ***
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.1866     0.1797   6.602  4.4e-08 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
@@ -5548,8 +5548,8 @@ Residuals:
 -4.4712 -0.6591  0.3364  1.0945  3.6686 
 
 Coefficients:
-     Estimate Std. Error t value Pr(>|t|)    
-[1,]   2.8988     0.2586   11.21 1.75e-14 ***
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.8988     0.2586   11.21 1.75e-14 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 

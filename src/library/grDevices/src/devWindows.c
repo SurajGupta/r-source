@@ -328,7 +328,7 @@ static void SaveAsPostscript(NewDevDesc *dd, const char *fn)
     /* Set default values and pad with zeroes ... */
     strncpy(family, "Helvetica", 256);
     strcpy(encoding, "ISOLatin1.enc");
-    strncpy(paper, "default", 256);
+    strncpy(paper, "special", 256);
     strncpy(bg, "transparent", 256);
     strncpy(fg, "black", 256);
     /* and then try to get it from .PostScript.Options */
@@ -2822,7 +2822,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, const char *display, double width,
     /* initialise device description (most of the work */
     /* has been done in GA_Open) */
 
-    xd->resize = (resize == 3);
+    xd->resize = (resize == 3) || ismdi();   // MDI windows may be zoomed automatically
     xd->locator = FALSE;
     xd->buffered = buffered;
     xd->psenv = psenv;

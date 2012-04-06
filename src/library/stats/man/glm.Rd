@@ -22,7 +22,8 @@
 glm(formula, family = gaussian, data, weights, subset,
     na.action, start = NULL, etastart, mustart,
     offset, control = glm.control(\dots), model = TRUE,
-    method = "glm.fit", x = FALSE, y = TRUE, contrasts = NULL, \dots)
+    method = "glm.fit", x = FALSE, y = TRUE, contrasts = NULL,
+    \dots)
 
 glm.fit(x, y, weights = rep(1, nobs),
         start = NULL, etastart = NULL, mustart = NULL,
@@ -35,7 +36,7 @@ glm.fit(x, y, weights = rep(1, nobs),
   \item{formula}{an object of class \code{"\link{formula}"} (or one that
     can be coerced to that class): a symbolic description of the
     model to be fitted.  The details of model specification are given
-    under Details.}
+    under \sQuote{Details}.}
 
   \item{family}{a description of the error distribution and link
     function to be used in the model. This can be a character string
@@ -100,14 +101,20 @@ glm.fit(x, y, weights = rep(1, nobs),
   \item{contrasts}{an optional list. See the \code{contrasts.arg}
     of \code{model.matrix.default}.}
 
+  \item{intercept}{logical. Should an intercept be included in the
+    \emph{null} model?}
+
   \item{object}{an object inheriting from class \code{"glm"}.}
   \item{type}{character, partial matching allowed.  Type of weights to
     extract from the fitted model object.}
 
-  \item{intercept}{logical. Should an intercept be included in the
-    \emph{null} model?}
-
-  \item{\dots}{further arguments passed to or from other methods.}
+  \item{\dots}{
+    For \code{glm}: arguments to be passed by default to
+    \code{\link{glm.control}}: see argument \code{control}.
+    
+    For \code{weights}:
+    further arguments passed to or from other methods.
+  }
 }
 \details{
   A typical predictor has the form \code{response ~ terms} where

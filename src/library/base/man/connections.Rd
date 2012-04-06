@@ -68,9 +68,9 @@ isIncomplete(con)
 }
 \arguments{
   \item{description}{character string. A description of the connection:
-    see Details.}
+    see \sQuote{Details}.}
   \item{open}{character.  A description of how to open the connection
-    (if at all).  See Details for possible values.}
+    (if at all).  See \sQuote{Details} for possible values.}
   \item{blocking}{logical.  See the \sQuote{Blocking} section below.}
   \item{encoding}{The name of the encoding to be used.  See the
     \sQuote{Encoding} section below.}
@@ -253,7 +253,7 @@ isIncomplete(con)
 #ifdef windows
   (including that used on Windows)
 #endif
-  will handle BOMs using encoding \code{"UCS2"} but many
+  will handle BOMs using encoding \code{"UCS-2"} but many
 #ifdef windows
   (including that in \code{glibc})
 #endif
@@ -470,7 +470,7 @@ while(isIncomplete(con2)) {Sys.sleep(1); readLines(con2)}
 close(con2)
 }
 
-\dontrun{ ## examples of use of encodings
+\dontrun{## examples of use of encodings
 cat(x, file = file("foo", "w", encoding="UTF-8"))
 # read a 'Windows Unicode' file including names
 A <- read.table(file("students", encoding="UCS-2LE"))
