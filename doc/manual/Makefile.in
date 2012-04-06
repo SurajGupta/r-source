@@ -11,44 +11,45 @@ subdir = doc/manual
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+SOURCES_TEXI = R-FAQ.texi R-exts.texi R-intro.texi
 DISTFILES = \
-	EQN README \
+	README \
 	Makefile.in Makefile.win \
-	R-defs.texi R-exts.texi dir texinfo.tex \
-	Rd.sty lib2tex.in \
+	R-defs.texi dir texinfo.tex \
+	$(SOURCES_TEXI) \
+	R-intro.R \
+	Rd.sty hyperref.cfg \
 	omsaer.fd omsaett.fd omscmtt.fd \
-	refman.top.in refman.bot
-SUBDIRS = ae pdf
+	refman.top refman.bot
+SUBDIRS = images
+
+OBJECTS_DVI = $(SOURCES_TEXI:.texi=.dvi)
+OBJECTS_INFO = $(SOURCES_TEXI:.texi=.info)
+OBJECTS_PDF = $(SOURCES_TEXI:.texi=.pdf)
 
 MAKEINFO = @MAKEINFO@
-TEXI2DVI = $(top_srcdir)/tools/texi2dvi
+TEXI2DVI = $(top_srcdir)/tools/texi2dvi --texinfo="@set UseExternalXrefs"
 TEXI2PDF = $(TEXI2DVI) --pdf
 PDFLATEX = @PDFLATEX@
 
 infodir = @infodir@
 INSTALL_INFO = @INSTALL_INFO@
 
-# set the next to `.' if your LaTeX lacks the ae font package
-AE = @AE@
-# set the next to `ae' to omit the hyperlinks
-PDF = pdf
+R_PAPERSIZE = @R_PAPERSIZE@
+R_RD4DVI = @R_RD4DVI@
+R_RD4PDF = @R_RD4PDF@
 
 pkgsrcs = $(R_PKGS:=-pkg.tex)
 
 .SUFFIXES:
 .SUFFIXES: .dvi .info .texi .pdf
 
-all: Makefile lib2tex R dvi
+all: Makefile R dvi
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
-lib2tex: $(srcdir)/lib2tex.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
-	@chmod +x $@
 
 R:
 	@if [ "$(srcdir)" != "." ]; then \
@@ -58,84 +59,132 @@ R:
 .texi.dvi:
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2DVI) $<
 .texi.info:
-	$(MAKEINFO) -I$(srcdir) $<
+	$(MAKEINFO) -D UseExternalXrefs -I$(srcdir) $<
 .texi.pdf:
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2PDF) $<
 
-dvi: refman.dvi R-exts.dvi
-refman.dvi: refman.tex version.tex $(pkgsrcs) $(srcdir)/Rd.sty
-	@echo "LaTeX documentation: Reference Index ..."
-	@rm -f *.aux refman.toc refman.ind
-	@TEXINPUTS="$(srcdir)/$(AE):$(srcdir):$$TEXINPUTS" \
+dvi: refman.dvi $(OBJECTS_DVI)
+refman.dvi: version.tex $(srcdir)/Rd.sty stamp-refman-dvi
+	@echo "DVI/LaTeX documentation: reference index ..."
+	@rm -f *.aux refman.toc refman.ind stamp-refman-dvi
+	@(opt="$${R_PAPERSIZE:-$(R_PAPERSIZE)}paper"; \
+	  echo "\\documentclass[$${opt}]{book}"; \
+	  opt="$${R_RD4DVI:-$(R_RD4DVI)}"; \
+	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  cat $(srcdir)/refman.top; \
+	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
+	  cat $(srcdir)/refman.bot) > refman.tex
+	@TEXINPUTS="$(srcdir):$$TEXINPUTS" \
 	  $(LATEX) '\nonstopmode\input{refman.tex}'
 	@$(MAKEINDEX) refman
-	@TEXINPUTS="$(srcdir)/$(AE):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(srcdir):$$TEXINPUTS" \
 	  $(LATEX) '\nonstopmode\input{refman.tex}'
-refman.tex: lib2tex refman.top $(srcdir)/refman.bot
-	@echo "creating $(subdir)/$@"
-	@(cat refman.top; \
-	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
-	  cat $(srcdir)/refman.bot) > $@
-refman.top: $(srcdir)/refman.top.in $(top_builddir)/config.status
-	@cd $(top_builddir) && \
-	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
-	  $(SHELL) ./config.status
-version.tex: $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
+	@touch stamp-refman-dvi
+version.tex: Makefile $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
 	@echo "creating $(subdir)/$@"
 	@(v=`cat $(top_srcdir)/VERSION`; \
 	  y=`cut -d/ -f1 < $(top_srcdir)/date-stamp`; \
 	  m=`cut -d/ -f2 < $(top_srcdir)/date-stamp`; \
 	  d=`cut -d/ -f3 < $(top_srcdir)/date-stamp`; \
 	  echo "$${v} ($${m} $${d}, $${y})") > $@
+stamp-refman-dvi: $(pkgsrcs)
+	@touch $@
 %-pkg.tex: FORCE
-	@echo "Collecting components of $@ ..."
-	@cd $(top_builddir)/src/library && \
-	  OPTS="--latex" $(MAKE) PKGS="$*" DOCS
-	./lib2tex $*
+	@if $(top_builddir)/tools/Rdnewer \
+	    "$(top_srcdir)/src/library/$*" "$@"; then \
+	  echo "collecting LaTeX docs for package \`$*' ..."; \
+	  (cd $(top_builddir)/src/library && \
+	    OPTS="--latex" $(MAKE) R_PKGS="$*" DOCS); \
+	  $(top_builddir)/tools/pkg2tex $*; \
+	fi
 FORCE:
-R-exts.dvi: R-exts.texi version.texi $(srcdir)/texinfo.tex
 
-version.texi: $(top_srcdir)/VERSION
+$(OBJECTS_DVI): $(srcdir)/texinfo.tex
+R-exts.dvi: version.texi
+version.texi: Makefile $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	@echo "creating $(subdir)/$@"
 	@(v=`sed 's/\([^ ]*\).*/\1/' $(top_srcdir)/VERSION`; \
+	  v="$${v} (`sed 's|/| |g' $(top_srcdir)/date-stamp`)"; \
 	  echo "@set VERSION $${v}" > $@)
+R-intro.dvi: stamp-images-eps version.texi
+stamp-images-eps:
+	@if [ "$(srcdir)" != "." ]; then \
+	  $(MAKE) rhome=$(top_builddir) install-images-eps; \
+	fi
+	@touch $@
 
-info: R-exts.info
-R-exts.info: R-exts.texi version.texi
+info: $(OBJECTS_INFO)
+R-exts.info: version.texi
+R-intro.info: version.texi
 
-pdf: refman.pdf R-exts.pdf
-refman.pdf: refman.tex version.tex $(pkgsrcs) $(srcdir)/$(PDF)/Rd.sty
-	@echo "PDF LaTeX documentation: Reference Index ..."
-	@rm -f *.aux refman.toc refman.ind
-	@TEXINPUTS="$(srcdir)/$(PDF):$(srcdir):$$TEXINPUTS" \
+pdf: refman.pdf $(OBJECTS_PDF)
+refman.pdf: version.tex $(srcdir)/Rd.sty stamp-refman-pdf
+	@echo "PDF/LaTeX documentation: reference index ..."
+	@rm -f *.aux refman.toc refman.ind stamp-refman-pdf
+	@(opt="$${R_PAPERSIZE:-$(R_PAPERSIZE)}paper"; \
+	  echo "\\documentclass[$${opt}]{book}"; \
+	  opt="$${R_RD4PDF:-$(R_RD4PDF)}"; \
+	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  cat $(srcdir)/refman.top; \
+	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
+	  cat $(srcdir)/refman.bot) > refman.tex
+	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@$(MAKEINDEX) refman
-	@TEXINPUTS="$(srcdir)/$(PDF):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
-	@TEXINPUTS="$(srcdir)/$(PDF):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
-R-exts.pdf: R-exts.texi version.texi $(srcdir)/texinfo.tex
+	@touch stamp-refman-pdf
+stamp-refman-pdf: $(pkgsrcs)
+	@touch $@
+
+$(OBJECTS_PDF): $(srcdir)/texinfo.tex
+R-exts.pdf: version.texi
+R-intro.pdf: stamp-images-pdf version.texi
+stamp-images-pdf:
+	@if [ "$(srcdir)" != "." ]; then \
+	  $(MAKE) rhome=$(top_builddir) install-images-pdf; \
+	fi
+	@touch $@
 
 install: installdirs install-tex
-	@echo "Installing doc/manual ..."
+	@echo "installing doc/manual ..."
 installdirs:
 	@$(MKINSTALLDIRS) $(rhome)/doc/manual
 install-strip: install
-install-dvi: dvi
-	@$(MKINSTALLDIRS) $(rhome)/doc/dvi
+install-dvi: dvi installdirs install-images-eps
+	@echo "installing R manuals in DVI format ..."
 	@for f in *.dvi; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/doc/dvi; \
+	  $(INSTALL_DATA) $${f} $(rhome)/doc/manual; \
+	done
+install-images-eps:
+	@$(MKINSTALLDIRS) $(rhome)/doc/manual/images
+	@-for f in $(srcdir)/images/*.eps; do \
+	  $(INSTALL_DATA) $${f} $(rhome)/doc/manual/images; \
+	done
+install-images-pdf:
+	@$(MKINSTALLDIRS) $(rhome)/doc/manual/images
+	@-for f in $(srcdir)/images/*.pdf; do \
+	  $(INSTALL_DATA) $${f} $(rhome)/doc/manual/images; \
 	done
 install-info: info $(infodir)/dir
-	@for f in R-exts.info*; do \
+	@echo "installing R info pages ..."
+	@for f in $(OBJECTS_INFO:.info=.info*); do \
 	  $(INSTALL_DATA) $${f} $(infodir); \
 	done
-	@$(INSTALL_INFO) --info-dir=$(infodir) $(infodir)/R-exts.info \
-	  || echo "You need to adjust $(infodir)/dir manually"
-install-pdf: pdf
-	@$(MKINSTALLDIRS) $(rhome)/doc/pdf
+	@echo "updating \`$(infodir)/dir' ..."
+	@for f in $(OBJECTS_INFO); do \
+	  $(INSTALL_INFO) --info-dir=$(infodir) $(infodir)/$${f} \
+	    || echo "you need to adjust $(infodir)/dir manually"; \
+	done
+install-pdf: pdf installdirs
+	@echo "installing R manuals in PDF format ..."
 	@for f in *.pdf; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/doc/pdf; \
+	  $(INSTALL_DATA) $${f} $(rhome)/doc/manual; \
 	done
 install-tex:
 	@for f in $(srcdir)/Rd.sty; do \
@@ -147,41 +196,56 @@ $(infodir)/dir:
 	$(INSTALL_DATA) $(srcdir)/dir $(infodir)
 
 uninstall:
-	@echo "Uninstalling doc/manual ..."
+	@echo "uninstalling doc/manual ..."
 	@rm -rf $(rhome)/doc/manual
 uninstall-dvi:
-	@-rm -f $(rhome)/doc/dvi/*
-	@-rmdir $(rhome)/doc/dvi
+	@echo "uninstalling R manuals in DVI format ..."
+	@-rm -f $(rhome)/doc/manual/images/*.eps
+	@-rmdir $(rhome)/doc/manual/images
+	@-rm -f $(rhome)/doc/manual/*.dvi
 uninstall-info:
-	@$(INSTALL_INFO) --remove \
-	  --info-dir=$(infodir) $(infodir)/R-exts.info \
-	  || echo "You need to adjust $(infodir)/dir manually"
-	@rm -f $(infodir)/R-exts.info*
+	@echo "uninstalling R info pages ..."
+	@for f in $(OBJECTS_INFO); do \
+	  $(INSTALL_INFO) --remove --info-dir=$(infodir) $${f} \
+	    || echo "you need to adjust $(infodir)/dir manually"; \
+	done
+	@for f in $(OBJECTS_INFO:.info=.info*); do \
+	  rm -f $(infodir)/$${f}; \
+	done
 uninstall-pdf:
-	@-rm -f $(rhome)/doc/pdf/*
-	@-rmdir $(rhome)/doc/pdf
+	@echo "uninstalling R manuals in PDF format ..."
+	@-rm -f $(rhome)/doc/manual/*.pdf
 
 mostlyclean: clean
 clean:
-	@echo cleaning in doc/manual
+	@echo "cleaning in doc/manual"
 	@if [ "$(srcdir)" != "." ]; then \
-	  rm -f Rd.sty Rd2dvi.tex; \
+	  rm -rf Rd.sty Rd2dvi.tex images; \
 	fi
 	@-rm -f *.aux *.cp *.cps *.dvi *.fn *.fns *.info* *.ky *.kys \
 	  *.log *.out *.pdf *.pg *.pgs *.ps *.ps-2 *.tmp *.toc *.tp  \
 	  *.vr *.vrs *-pkg.tex refman.i?? refman.tex version.tex \
 	  version.texi
+	@rm -f stamp-*
 distclean: clean
-	@-rm -f Makefile lib2tex refman.top
+	@-rm -f Makefile
 maintainer-clean: distclean
+
+MAKEINFO_TEXT_OPTS = --number-sections --fill-column=76 --no-split --no-headers
+MAKEINFO_HTML_OPTS = --number-sections --html
+maintainer-build: $(top_srcdir)/FAQ $(top_srcdir)/doc/html/faq.html
+$(top_srcdir)/FAQ: $(srcdir)/R-FAQ.texi
+	@$(MAKEINFO) $(MAKEINFO_TEXT_OPTS) $< -o $@
+$(top_srcdir)/doc/html/faq.html: $(srcdir)/R-FAQ.texi
+	@$(MAKEINFO) $(MAKEINFO_HTML_OPTS) $< -o $@
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \
 	  test -f $(distdir)/$${f} \
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
-        done
-	@for d in $(SUBDIRS) man; do \
+	done
+	@for d in $(SUBDIRS); do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); $(TAR) -c -f - --exclude=CVS $${d}) \
 	        | (cd $(distdir); $(TAR) -x -f -)) \

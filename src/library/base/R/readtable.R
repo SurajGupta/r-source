@@ -1,25 +1,27 @@
-count.fields <- function(file, sep = "", skip = 0)
-    .Internal(count.fields(file, sep, skip))
+count.fields <- function(file, sep = "", quote = "", skip = 0)
+    .Internal(count.fields(file, sep, quote, skip))
 
 
 read.table <-
-    function (file, header=FALSE, sep="", row.names, col.names, as.is=FALSE,
+    function (file, header=FALSE, sep="", quote="\"\'", dec=".",
+              row.names, col.names, as.is=FALSE,
 	      na.strings="NA", skip=0)
 {
-    type.convert <- function(x, na.strings="NA", as.is=FALSE)
-	.Internal(type.convert(x, na.strings, as.is))
+    type.convert <- function(x, na.strings = "NA",
+                             as.is = FALSE, dec = ".")
+	.Internal(type.convert(x, na.strings, as.is, dec))
 
     ##	basic column counting and header determination;
     ##	rlabp (logical) := it looks like we have column names
 
-    row.lens <- count.fields(file, sep, skip)
+    row.lens <- count.fields(file, sep, quote, skip)
     nlines <- length(row.lens)
     rlabp <- nlines > 1 && (row.lens[2] - row.lens[1]) == 1
     if(rlabp && missing(header))
 	header <- TRUE
 
     if (header) { # read in the header
-	col.names <- scan(file, what="", sep=sep, nlines=1,
+	col.names <- scan(file, what="", sep=sep, quote=quote, nlines=1,
 			  quiet=TRUE, skip=skip)
 	skip <- skip + 1
 	row.lens <- row.lens[-1]
@@ -42,7 +44,7 @@ read.table <-
     if (rlabp)
 	col.names <- c("row.names", col.names)
     names(what) <- col.names
-    data <- scan(file=file, what=what, sep=sep, skip=skip,
+    data <- scan(file=file, what=what, sep=sep, quote=quote, skip=skip,
 		 na.strings=na.strings, quiet=TRUE)
 
     ##	now we have the data;
@@ -67,7 +69,7 @@ read.table <-
 	stop(paste("as.is has the wrong length",
 		   length(as.is),"!= cols =", cols))
     for (i in 1:cols)
-        data[[i]] <- type.convert(data[[i]], as.is = as.is[i])
+        data[[i]] <- type.convert(data[[i]], as.is = as.is[i], dec = dec)
 
     ##	now determine row names
 
@@ -99,3 +101,14 @@ read.table <-
     row.names(data) <- row.names
     data
 }
+
+read.csv <-
+    function (file, header = TRUE, sep = ",", quote="\"", dec=".",
+              row.names, col.names, as.is=FALSE, na.strings="", skip=0)
+    read.table(file, header, sep, quote, dec, row.names, col.names,
+               as.is, na.strings, skip)
+read.csv2 <-
+    function (file, header = TRUE, sep = ";", quote="\"", dec=",",
+              row.names, col.names, as.is=FALSE, na.strings="", skip=0)
+    read.table(file, header, sep, quote, dec, row.names, col.names,
+               as.is, na.strings, skip)

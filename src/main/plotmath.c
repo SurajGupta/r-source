@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-1999	The R Development Core Team
+ *  Copyright (C) 1998-2000	The R Development Core Team
  *
  *  This source code module:
  *  Copyright (C) 1997, 1998 Paul Murrell and Ross Ihaka
@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include <ctype.h>
@@ -2414,7 +2414,7 @@ static BBOX RenderCurly(SEXP expr, int draw)
  */
 
 				/* Binary Relationships */
-
+static
 SymTab RelTable[] = {
     { "<",		 60 },	/* less */
     { "==",		 61 },	/* equal */
@@ -2820,6 +2820,7 @@ static BBOX RenderOffsetElement(SEXP expr, double x, double y, int draw)
 /* Calculate width of expression */
 /* BBOXes are in INCHES (see MetricUnit) */
 
+static
 void GExpressionBBox(SEXP expr, int units, double *width,
 		     double *height, double *depth, DevDesc *dd)
 {
@@ -2909,7 +2910,7 @@ void GMathText(double x, double y, int coords, SEXP expr,
     else
 	CurrentY = ReferenceY;
     CurrentAngle = rot;
-    rot *= M_PI_half / 90 ;/* radians */
+    rot *= M_PI_2 / 90 ;/* radians */
     CosAngle = cos(rot);
     SinAngle = sin(rot);
     RenderElement(expr, 1);

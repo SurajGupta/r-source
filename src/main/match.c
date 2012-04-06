@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +39,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -52,7 +53,7 @@ int NonNullStringMatch(SEXP s, SEXP t)
 	return 0;
 }
 
-int psmatch(char *f, char *t, int exact)
+static int psmatch(char *f, char *t, int exact)
 {
     if (exact) {
 	return !strcmp(f, t);

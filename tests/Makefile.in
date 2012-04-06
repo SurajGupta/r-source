@@ -10,9 +10,15 @@ subdir = tests
 
 include $(top_builddir)/Makeconf
 
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+DISTFILES = Makefile.in README \
+	mode-methods.R make*.R \
+	$(TESTsrc) \
+	$(TESTsrc:.R=.Rout.save)
 SUBDIRS = Examples
 
 R = LC_ALL=C $(top_builddir)/bin/R --vanilla
+RDIFF = $(top_srcdir)/tools/Rdiff
 
 TESTsrc-strict-1 = \
 	arith-true.R \
@@ -20,6 +26,7 @@ TESTsrc-strict-1 = \
 	d-p-q-r-tests.R \
 	eval-etc.R \
 	is-things.R \
+	lm-tests.R \
 	primitive-funs.R \
 	mode-methods.R \
 	simple-true.R
@@ -33,8 +40,8 @@ TESTsrc-sloppy-auto = \
 TESTsrc-strict = $(TESTsrc-strict-1) $(TESTsrc-strict-auto)
 TESTsrc-sloppy = $(TESTsrc-sloppy-1) $(TESTsrc-sloppy-auto)
 # These two "hand made":
-TESTsrc-Rdiff = $(TESTsrc-strict) $(TESTsrc-sloppy-1)
-TESTsrc-NO-diff = no-segfault.R
+#TESTsrc-Rdiff = $(TESTsrc-strict) $(TESTsrc-sloppy-1)
+#TESTsrc-NO-diff = no-segfault.R
 
 TESTsrc = $(TESTsrc-strict) $(TESTsrc-sloppy)
 TESTsrc-auto = $(TESTsrc-strict-auto) $(TESTsrc-sloppy-auto)
@@ -42,14 +49,8 @@ TESTsrc-auto = $(TESTsrc-strict-auto) $(TESTsrc-sloppy-auto)
 TESTout-strict = $(TESTsrc-strict:.R=.Rout)
 TESTout-sloppy = $(TESTsrc-sloppy:.R=.Rout)
 TESTout = $(TESTsrc:.R=.Rout)
-TESTout-Rdiff = $(TESTsrc-Rdiff:.R=.Rout)
-TESTout-NO-diff = $(TESTsrc-NO-diff:.R=.Rout)
-
-distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = Makefile.in README Rdiff \
-	mode-methods.R make*.R \
-	$(TESTsrc) \
-	$(TESTsrc:.R=.Rout.save)
+#TESTout-Rdiff = $(TESTsrc-Rdiff:.R=.Rout)
+#TESTout-NO-diff = $(TESTsrc-NO-diff:.R=.Rout)
 
 .SUFFIXES:
 .SUFFIXES: .R .Rout
@@ -61,28 +62,31 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 Makedeps: Makefile
-	@(for f in $(TESTsrc-Rdiff); do \
-	    echo "$${f}out: $${f} \$$(srcdir)/$${f}out.save \$$(FORCE)"; \
+	@(for f in $(TESTsrc); do \
+	    if [ -f $(srcdir)/${f}out.save ]; then \
+	      echo "$${f}out: $${f} \$$(srcdir)/$${f}out.save \$$(FORCE)"; \
+	    else \
+	      echo "$${f}out: $${f} \$$(FORCE)"; \
+	    fi \
 	  done) >> Makefile
 	@touch $@
 FORCE:
 
-$(TESTsrc-auto): %.R : $(srcdir)/make-%.R
+%.R : $(srcdir)/make-%.R stamp-R
 	$(R) < $< > /dev/null
 
-$(TESTout-Rdiff): %.Rout : %.R
-	@rm -f $@.fail
-	@(SRCDIR=$(srcdir); export SRCDIR; \
-	  echo "$(R) < $< > $@"; \
-	  $(R) < $< > $@)
-	@echo @ECHO_N@ \
-	  "Comparing \`$@' to \`$(srcdir)/$@.save' ...@ECHO_C@"
-	@$(srcdir)/Rdiff $@ $(srcdir)/$@.save $(RVAL_IF_DIFF) || \
-	  (mv $@ $@.fail && exit 1)
-	@echo "@ECHO_T@ OK"
-
-$(TESTout-NO-diff): %.Rout : %.R
-	$(R) < $< > $@
+%.Rout : %.R
+	@rm -f $@ $@.fail
+	@echo "running \`$<'"
+	@$(R) < $< > $@
+	@if [ -f $(srcdir)/$@.save ] ; then \
+	  mv $@ $@.fail; \
+	  echo @ECHO_N@ \
+	    "comparing \`$@' to \`$(srcdir)/$@.save' ...@ECHO_C@"; \
+	  $(RDIFF) $@.fail $(srcdir)/$@.save $(RVAL_IF_DIFF) || exit 1; \
+	  mv $@.fail $@; \
+	  echo "@ECHO_T@ OK"; \
+	fi
 
 test-All: Makefile
 	@$(MAKE) test-Examples
@@ -103,8 +107,8 @@ test-Specific:
 # follows to make sure we can load the base package twice.
 test-undoc:
 	@for p in $(R_PKGS); do \
-	  echo "Undocumented objects in package \`$${p}':"; \
-	  echo "undoc(\"$${p}\")" | $(R) --nsize 500000 | grep "^ *\\["; \
+	  echo "undocumented objects in package \`$${p}':"; \
+	  echo "undoc(\"$${p}\")" | $(R) --nsize=500000 | grep "^ *\\["; \
 	  echo; \
 	done
 
@@ -117,11 +121,11 @@ stamp-R: $(top_builddir)/bin/R.X11 $(top_builddir)/library/base/R/base
 mostlyclean: clean
 clean:
 	-(cd Examples; $(MAKE) $@)
-	rm -f stamp-R Makedeps
+	rm -f stamp-R Makedeps Rplots.* *.Rd
 distclean: clean
 	@rm -f $(TESTout)
 	-(cd Examples; $(MAKE) $@)
-	@rm -f Makefile
+	@rm -f Makefile $(TESTsrc-auto)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)
@@ -129,7 +133,7 @@ distdir: $(DISTFILES)
 	  test -f $(distdir)/$${f} \
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
-        done
+	done
 	@for d in $(SUBDIRS); do \
 	  test -d $(distdir)/$${d} \
 	    || mkdir $(distdir)/$${d} \
@@ -137,7 +141,7 @@ distdir: $(DISTFILES)
 	  chmod 755 $(distdir)/$${d}; \
 	  (cd $${d} && $(MAKE) distdir) \
 	    || exit 1; \
-        done
+	done
 
 ## Automagically generated dependencies:
 

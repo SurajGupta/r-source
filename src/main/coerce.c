@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995-1998  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1995-2000  Robert Gentleman, Ross Ihaka and the
  *			     R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"/*-- Maybe modularize into own Coerce.h ..*/
@@ -1376,10 +1376,6 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-/* Convenience for using LIST_VEC_NAN macro later */
-#ifndef IEEE_754
-# define R_IsNaN(x) (0)
-#endif
 SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, dims, names, x;
@@ -1419,12 +1415,8 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case CPLXSXP:
 	for (i = 0; i < n; i++)
-#ifdef IEEE_754
 	    LOGICAL(ans)[i] = (R_IsNaN(COMPLEX(x)[i].r) ||
 			       R_IsNaN(COMPLEX(x)[i].i));
-#else
-	    LOGICAL(ans)[i] = 0;
-#endif
 	break;
 
 /* Same code for LISTSXP and VECSXP : */
@@ -1479,9 +1471,6 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     return ans;
 }
-#ifndef IEEE_754
-# undef R_isNaN
-#endif
 
 SEXP do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1553,12 +1542,11 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    names = getAttrib(x, R_NamesSymbol);
     }
     else	dims = names = R_NilValue;
-#ifdef IEEE_754
     switch (TYPEOF(x)) {
     case REALSXP:
 	for (i = 0; i < n; i++) {
 	    xr = REAL(x)[i];
-	    if (xr != xr /*NaN*/|| R_FINITE(xr))
+	    if (ISNAN(xr) || R_FINITE(xr))
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -1568,7 +1556,7 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < n; i++) {
 	    xr = COMPLEX(x)[i].r;
 	    xi = COMPLEX(x)[i].i;
-	    if ((xr != xr || R_FINITE(xr)) && (xi != xi || R_FINITE(xi)))
+	    if ((ISNAN(xr) || R_FINITE(xr)) && (ISNAN(xi) || R_FINITE(xi)))
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -1578,10 +1566,6 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
     }
-#else
-    for (i = 0; i < n; i++)
-	LOGICAL(ans)[i] = 0;
-#endif
     if (!isNull(dims))
 	setAttrib(ans, R_DimSymbol, dims);
     if (!isNull(names)) {

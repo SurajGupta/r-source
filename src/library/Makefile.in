@@ -12,9 +12,10 @@ include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in
-PKGS = $(R_PKGS)
 
-SUBDIRS = profile $(PKGS)
+SUBDIRS = profile $(R_PKGS)
+
+PKGS = $(R_PKGS)
 
 all: Makefile R
 
@@ -25,14 +26,14 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 
 R:
 	@$(MKINSTALLDIRS) $(top_builddir)/library
-	@for pkg in $(PKGS) profile; do \
+	@for pkg in $(R_PKGS) profile; do \
 	  (cd $${pkg} && $(MAKE)) || exit 1; \
 	done
 	@(cd $(top_builddir)/library; \
 	  cat */TITLE > LibIndex 2> /dev/null)
 
 docs:
-	@echo "Building ALL documentation (help, HTML, LaTeX, examples)"
+	@echo "building all R object docs (help, HTML, LaTeX, examples)"
 	@$(MAKE) DOCS
 	@R_HOME=`cd $(top_builddir); pwd`; export R_HOME; \
 	  $${R_HOME}/bin/build-help --htmllists
@@ -52,7 +53,11 @@ $(top_builddir)/library/LibIndex:
 	@if [ ! -f $@ ]; then touch $@; fi
 
 DOCS:
-	@for pkg in $(PKGS); do \
+	@if @NO_PERL5@; then \
+	  echo "you need Perl version 5 to build the R object docs"; \
+	  exit 1; \
+	fi
+	@for pkg in $(R_PKGS); do \
 	  R_HOME=`cd $(top_builddir); pwd`; export R_HOME; \
 	  $${R_HOME}/bin/build-help $${OPTS} $(srcdir)/$${pkg}; \
 	  $${R_HOME}/bin/Rd2contents $(srcdir)/$${pkg} \
@@ -72,6 +77,7 @@ distclean:
 	  (cd $${d} && $(MAKE) $@); \
 	done
 	@rm -f Makefile
+
 maintainer-clean: distclean
 
 install install-strip uninstall TAGS info dvi check::
@@ -81,7 +87,7 @@ distdir: $(DISTFILES)
 	  test -f $(distdir)/$${f} \
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
-        done
+	done
 	@for d in $(SUBDIRS); do \
 	  test -d $(distdir)/$${d} \
 	    || mkdir $(distdir)/$${d} \
@@ -89,4 +95,4 @@ distdir: $(DISTFILES)
 	  chmod 755 $(distdir)/$${d}; \
 	  (cd $${d} && $(MAKE) distdir) \
 	    || exit 1; \
-        done
+	done

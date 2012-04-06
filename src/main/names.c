@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #define __R_Names__
@@ -34,8 +34,13 @@
  *
  * Each entry is a line with
  *
- * printname	c-entry		offset	eval	arity	pp-info
- * ---------	-------		------	----	-----	-------
+ * printname	c-entry	offset	eval	arity	pp-info
+ * ---------	-------	------	----	-----	-------
+ *2	name	cfun	code	eval	arity	gram
+ *3 PRIMNAME	PRIMFUN	PRIMVAL	 [*]  PRIMARITY PPINFO
+ *
+ * where "2" are the component names of the FUNTAB struct (Defn.h)
+ * and   "3" are the accessor macros. [*]: PRIMPRINT(.) uses the eval component
  *
  * printname:	The function name in R
  *
@@ -56,7 +61,7 @@
  *		    (the least common situation).
  *		Y=1 says that this is an internal function which must
  *		    be accessed with a	.Internal(.) call, any other value is
- *		    accessable directly and printed in R as ".Primitive(..)".
+ *		    accessible directly and printed in R as ".Primitive(..)".
  *		Z=1 says evaluate arguments before calling and
  *		Z=0 says don't evaluate.
  *
@@ -238,7 +243,7 @@ FUNTAB R_FunTab[] =
 
 {"gammaCody",	do_math1,	46,	11,	1,	PP_FUNCALL},
 
-/* Mathematical Functions of Two Variables */
+/* Mathematical Functions of Two Numeric (+ 1-2 int) Variables */
 
 {"atan2",	do_math2,	0,	11,	2,	PP_FUNCALL},
 
@@ -247,29 +252,29 @@ FUNTAB R_FunTab[] =
 {"lchoose",	do_math2,	4,	11,	2,	PP_FUNCALL},
 {"choose",	do_math2,	5,	11,	2,	PP_FUNCALL},
 
-{"dchisq",	do_math2,	6,	11,	2,	PP_FUNCALL},
-{"pchisq",	do_math2,	7,	11,	2,	PP_FUNCALL},
-{"qchisq",	do_math2,	8,	11,	2,	PP_FUNCALL},
+{"dchisq",	do_math2,	6,	11,	2+1,	PP_FUNCALL},
+{"pchisq",	do_math2,	7,	11,	2+2,	PP_FUNCALL},
+{"qchisq",	do_math2,	8,	11,	2+2,	PP_FUNCALL},
 
-{"dexp",	do_math2,	9,	11,	2,	PP_FUNCALL},
-{"pexp",	do_math2,	10,	11,	2,	PP_FUNCALL},
-{"qexp",	do_math2,	11,	11,	2,	PP_FUNCALL},
+{"dexp",	do_math2,	9,	11,	2+1,	PP_FUNCALL},
+{"pexp",	do_math2,	10,	11,	2+2,	PP_FUNCALL},
+{"qexp",	do_math2,	11,	11,	2+2,	PP_FUNCALL},
 
-{"dgeom",	do_math2,	12,	11,	2,	PP_FUNCALL},
-{"pgeom",	do_math2,	13,	11,	2,	PP_FUNCALL},
-{"qgeom",	do_math2,	14,	11,	2,	PP_FUNCALL},
+{"dgeom",	do_math2,	12,	11,	2+1,	PP_FUNCALL},
+{"pgeom",	do_math2,	13,	11,	2+2,	PP_FUNCALL},
+{"qgeom",	do_math2,	14,	11,	2+2,	PP_FUNCALL},
 
-{"dpois",	do_math2,	15,	11,	2,	PP_FUNCALL},
-{"ppois",	do_math2,	16,	11,	2,	PP_FUNCALL},
-{"qpois",	do_math2,	17,	11,	2,	PP_FUNCALL},
+{"dpois",	do_math2,	15,	11,	2+1,	PP_FUNCALL},
+{"ppois",	do_math2,	16,	11,	2+2,	PP_FUNCALL},
+{"qpois",	do_math2,	17,	11,	2+2,	PP_FUNCALL},
 
-{"dt",		do_math2,	18,	11,	2,	PP_FUNCALL},
-{"pt",		do_math2,	19,	11,	2,	PP_FUNCALL},
-{"qt",		do_math2,	20,	11,	2,	PP_FUNCALL},
+{"dt",		do_math2,	18,	11,	2+1,	PP_FUNCALL},
+{"pt",		do_math2,	19,	11,	2+2,	PP_FUNCALL},
+{"qt",		do_math2,	20,	11,	2+2,	PP_FUNCALL},
 
-{"dsignrank",	do_math2,	21,	11,	2,	PP_FUNCALL},
-{"psignrank",	do_math2,	22,	11,	2,	PP_FUNCALL},
-{"qsignrank",	do_math2,	23,	11,	2,	PP_FUNCALL},
+{"dsignrank",	do_math2,	21,	11,	2+1,	PP_FUNCALL},
+{"psignrank",	do_math2,	22,	11,	2+2,	PP_FUNCALL},
+{"qsignrank",	do_math2,	23,	11,	2+2,	PP_FUNCALL},
 
 {"besselJ",	do_math2,	24,	11,	2,	PP_FUNCALL},
 {"besselY",	do_math2,	25,	11,	2,	PP_FUNCALL},
@@ -284,84 +289,84 @@ FUNTAB R_FunTab[] =
 {"abs",		do_cmathfuns,	6,	1,	1,	PP_FUNCALL},
 
 
-/* Mathematical Functions of Three Variables */
+/* Mathematical Functions of Three Numeric (+ 1-2 int) Variables */
 
-{"dbeta",	do_math3,	1,	11,	3,	PP_FUNCALL},
-{"pbeta",	do_math3,	2,	11,	3,	PP_FUNCALL},
-{"qbeta",	do_math3,	3,	11,	3,	PP_FUNCALL},
+{"dbeta",	do_math3,	1,	11,	3+1,	PP_FUNCALL},
+{"pbeta",	do_math3,	2,	11,	3+2,	PP_FUNCALL},
+{"qbeta",	do_math3,	3,	11,	3+2,	PP_FUNCALL},
 
-{"dbinom",	do_math3,	4,	11,	3,	PP_FUNCALL},
-{"pbinom",	do_math3,	5,	11,	3,	PP_FUNCALL},
-{"qbinom",	do_math3,	6,	11,	3,	PP_FUNCALL},
+{"dbinom",	do_math3,	4,	11,	3+1,	PP_FUNCALL},
+{"pbinom",	do_math3,	5,	11,	3+2,	PP_FUNCALL},
+{"qbinom",	do_math3,	6,	11,	3+2,	PP_FUNCALL},
 
-{"dcauchy",	do_math3,	7,	11,	3,	PP_FUNCALL},
-{"pcauchy",	do_math3,	8,	11,	3,	PP_FUNCALL},
-{"qcauchy",	do_math3,	9,	11,	3,	PP_FUNCALL},
+{"dcauchy",	do_math3,	7,	11,	3+1,	PP_FUNCALL},
+{"pcauchy",	do_math3,	8,	11,	3+2,	PP_FUNCALL},
+{"qcauchy",	do_math3,	9,	11,	3+2,	PP_FUNCALL},
 
-{"df",		do_math3,	10,	11,	3,	PP_FUNCALL},
-{"pf",		do_math3,	11,	11,	3,	PP_FUNCALL},
-{"qf",		do_math3,	12,	11,	3,	PP_FUNCALL},
+{"df",		do_math3,	10,	11,	3+1,	PP_FUNCALL},
+{"pf",		do_math3,	11,	11,	3+2,	PP_FUNCALL},
+{"qf",		do_math3,	12,	11,	3+2,	PP_FUNCALL},
 
-{"dgamma",	do_math3,	13,	11,	3,	PP_FUNCALL},
-{"pgamma",	do_math3,	14,	11,	3,	PP_FUNCALL},
-{"qgamma",	do_math3,	15,	11,	3,	PP_FUNCALL},
+{"dgamma",	do_math3,	13,	11,	3+1,	PP_FUNCALL},
+{"pgamma",	do_math3,	14,	11,	3+2,	PP_FUNCALL},
+{"qgamma",	do_math3,	15,	11,	3+2,	PP_FUNCALL},
 
-{"dlnorm",	do_math3,	16,	11,	3,	PP_FUNCALL},
-{"plnorm",	do_math3,	17,	11,	3,	PP_FUNCALL},
-{"qlnorm",	do_math3,	18,	11,	3,	PP_FUNCALL},
+{"dlnorm",	do_math3,	16,	11,	3+1,	PP_FUNCALL},
+{"plnorm",	do_math3,	17,	11,	3+2,	PP_FUNCALL},
+{"qlnorm",	do_math3,	18,	11,	3+2,	PP_FUNCALL},
 
-{"dlogis",	do_math3,	19,	11,	3,	PP_FUNCALL},
-{"plogis",	do_math3,	20,	11,	3,	PP_FUNCALL},
-{"qlogis",	do_math3,	21,	11,	3,	PP_FUNCALL},
+{"dlogis",	do_math3,	19,	11,	3+1,	PP_FUNCALL},
+{"plogis",	do_math3,	20,	11,	3+2,	PP_FUNCALL},
+{"qlogis",	do_math3,	21,	11,	3+2,	PP_FUNCALL},
 
-{"dnbinom",	do_math3,	22,	11,	3,	PP_FUNCALL},
-{"pnbinom",	do_math3,	23,	11,	3,	PP_FUNCALL},
-{"qnbinom",	do_math3,	24,	11,	3,	PP_FUNCALL},
+{"dnbinom",	do_math3,	22,	11,	3+1,	PP_FUNCALL},
+{"pnbinom",	do_math3,	23,	11,	3+2,	PP_FUNCALL},
+{"qnbinom",	do_math3,	24,	11,	3+2,	PP_FUNCALL},
 
-{"dnorm",	do_math3,	25,	11,	3,	PP_FUNCALL},
-{"pnorm",	do_math3,	26,	11,	3,	PP_FUNCALL},
-{"qnorm",	do_math3,	27,	11,	3,	PP_FUNCALL},
+{"dnorm",	do_math3,	25,	11,	3+1,	PP_FUNCALL},
+{"pnorm",	do_math3,	26,	11,	3+2,	PP_FUNCALL},
+{"qnorm",	do_math3,	27,	11,	3+2,	PP_FUNCALL},
 
-{"dunif",	do_math3,	28,	11,	3,	PP_FUNCALL},
-{"punif",	do_math3,	29,	11,	3,	PP_FUNCALL},
-{"qunif",	do_math3,	30,	11,	3,	PP_FUNCALL},
+{"dunif",	do_math3,	28,	11,	3+1,	PP_FUNCALL},
+{"punif",	do_math3,	29,	11,	3+2,	PP_FUNCALL},
+{"qunif",	do_math3,	30,	11,	3+2,	PP_FUNCALL},
 
-{"dweibull",	do_math3,	31,	11,	3,	PP_FUNCALL},
-{"pweibull",	do_math3,	32,	11,	3,	PP_FUNCALL},
-{"qweibull",	do_math3,	33,	11,	3,	PP_FUNCALL},
+{"dweibull",	do_math3,	31,	11,	3+1,	PP_FUNCALL},
+{"pweibull",	do_math3,	32,	11,	3+2,	PP_FUNCALL},
+{"qweibull",	do_math3,	33,	11,	3+2,	PP_FUNCALL},
 
-{"dnchisq",	do_math3,	34,	11,	3,	PP_FUNCALL},
-{"pnchisq",	do_math3,	35,	11,	3,	PP_FUNCALL},
-{"qnchisq",	do_math3,	36,	11,	3,	PP_FUNCALL},
+{"dnchisq",	do_math3,	34,	11,	3+1,	PP_FUNCALL},
+{"pnchisq",	do_math3,	35,	11,	3+2,	PP_FUNCALL},
+{"qnchisq",	do_math3,	36,	11,	3+2,	PP_FUNCALL},
 
-{"dnt",		do_math3,	37,	11,	3,	PP_FUNCALL},
-{"pnt",		do_math3,	38,	11,	3,	PP_FUNCALL},
-{"qnt",		do_math3,	39,	11,	3,	PP_FUNCALL},
+{"dnt",		do_math3,	37,	11,	3+1,	PP_FUNCALL},
+{"pnt",		do_math3,	38,	11,	3+2,	PP_FUNCALL},
+{"qnt",		do_math3,	39,	11,	3+2,	PP_FUNCALL},
 
-{"dwilcox",	do_math3,	40,	11,	3,	PP_FUNCALL},
-{"pwilcox",	do_math3,	41,	11,	3,	PP_FUNCALL},
-{"qwilcox",	do_math3,	42,	11,	3,	PP_FUNCALL},
+{"dwilcox",	do_math3,	40,	11,	3+1,	PP_FUNCALL},
+{"pwilcox",	do_math3,	41,	11,	3+2,	PP_FUNCALL},
+{"qwilcox",	do_math3,	42,	11,	3+2,	PP_FUNCALL},
 
 {"besselI",	do_math3,	43,	11,	3,	PP_FUNCALL},
 {"besselK",	do_math3,	44,	11,	3,	PP_FUNCALL},
 
-/* Mathematical Functions of Four Variables */
+/* Mathematical Functions of Four Numeric (+ 1-2 int) Variables */
 
-{"dhyper",	do_math4,	1,	11,	4,	PP_FUNCALL},
-{"phyper",	do_math4,	2,	11,	4,	PP_FUNCALL},
-{"qhyper",	do_math4,	3,	11,	4,	PP_FUNCALL},
+{"dhyper",	do_math4,	1,	11,	4+1,	PP_FUNCALL},
+{"phyper",	do_math4,	2,	11,	4+2,	PP_FUNCALL},
+{"qhyper",	do_math4,	3,	11,	4+2,	PP_FUNCALL},
 
-{"dnbeta",	do_math4,	4,	11,	4,	PP_FUNCALL},
-{"pnbeta",	do_math4,	5,	11,	4,	PP_FUNCALL},
-{"qnbeta",	do_math4,	6,	11,	4,	PP_FUNCALL},
+{"dnbeta",	do_math4,	4,	11,	4+1,	PP_FUNCALL},
+{"pnbeta",	do_math4,	5,	11,	4+2,	PP_FUNCALL},
+{"qnbeta",	do_math4,	6,	11,	4+2,	PP_FUNCALL},
 
-{"dnf",		do_math4,	7,	11,	4,	PP_FUNCALL},
-{"pnf",		do_math4,	8,	11,	4,	PP_FUNCALL},
-{"qnf",		do_math4,	9,	11,	4,	PP_FUNCALL},
+{"dnf",		do_math4,	7,	11,	4+1,	PP_FUNCALL},
+{"pnf",		do_math4,	8,	11,	4+2,	PP_FUNCALL},
+{"qnf",		do_math4,	9,	11,	4+2,	PP_FUNCALL},
 
-{"dtukey",	do_math4,	10,	11,	4,	PP_FUNCALL},
-{"ptukey",	do_math4,	11,	11,	4,	PP_FUNCALL},
-{"qtukey",	do_math4,	12,	11,	4,	PP_FUNCALL},
+{"dtukey",	do_math4,	10,	11,	4+1,	PP_FUNCALL},
+{"ptukey",	do_math4,	11,	11,	4+2,	PP_FUNCALL},
+{"qtukey",	do_math4,	12,	11,	4+2,	PP_FUNCALL},
 
 /* Random Numbers */
 
@@ -389,7 +394,8 @@ FUNTAB R_FunTab[] =
 
 {"sample",	do_sample,	0,	11,	4,	PP_FUNCALL},
 
-{"RNGkind",	do_RNGkind,	0,	11,	1,	PP_FUNCALL},
+{"RNGkind",	do_RNGkind,	0,	11,	2,	PP_FUNCALL},
+{"set.seed",	do_setseed,	0,	11,	2,	PP_FUNCALL},
 
 /* Data Summaries */
 
@@ -417,7 +423,7 @@ FUNTAB R_FunTab[] =
 {"call",	do_call,	0,	0,	-1,	PP_FUNCALL},
 {"do.call",	do_docall,	0,	11,	2,	PP_FUNCALL},
 {"as.call",	do_ascall,	0,	1,	1,	PP_FUNCALL},
-{"type.convert",do_typecvt,	1,	11,	3,	PP_FUNCALL},
+{"type.convert",do_typecvt,	1,	11,	4,	PP_FUNCALL},
 
 
 /* String Manipulation */
@@ -498,15 +504,17 @@ FUNTAB R_FunTab[] =
 {"flush.console",do_flushconsole,0,     11,     0,      PP_FUNCALL},
 {"int.unzip",   do_int_unzip,   0,      11,    -1,      PP_FUNCALL},
 {"win.version", do_winver,      0,      11,     0,      PP_FUNCALL},
-{"saveDevga",  do_saveDevga,    0,      11,     3,      PP_FUNCALL},
+{"saveDevga",   do_saveDevga,   0,      11,     3,      PP_FUNCALL},
 {"shell.exec",  do_shellexec,   0,      11,     1,      PP_FUNCALL},
 {"dir.create",  do_dircreate,   0,      11,     1,      PP_FUNCALL},
+{"winDialog",   do_windialog,   0,      11,     2,      PP_FUNCALL},
+{"winDialogString",  do_windialogstring,   0,      11,     2,      PP_FUNCALL},
+{"winMenuAdd",  do_winmenuadd, 0,      11,     3,      PP_FUNCALL},
+{"winMenuDel",  do_winmenudel, 0,      11,     2,      PP_FUNCALL},
 #endif
 {"parse",	do_parse,	0,	11,	4,	PP_FUNCALL},
-{"save",	do_save,	0,	111,	3,	PP_FUNCALL},
+{"save",	do_save,	0,	111,	4,	PP_FUNCALL},
 {"load",	do_load,	0,	111,	2,	PP_FUNCALL},
-{"hdf5save",	do_hdf5save,	0,	0,	-1,	PP_FUNCALL},
-{"hdf5load",	do_hdf5load,	0,	11,	 2,	PP_FUNCALL},
 {"deparse",	do_deparse,	0,	11,	2,	PP_FUNCALL},
 {"dput",	do_dput,	0,	111,	2,	PP_FUNCALL},
 {"dump",	do_dump,	0,	111,	2,	PP_FUNCALL},
@@ -554,8 +562,8 @@ FUNTAB R_FunTab[] =
 {"rank",	do_rank,	0,	11,	1,	PP_FUNCALL},
 {"missing",	do_missing,	1,	0,	1,	PP_FUNCALL},
 {"nargs",	do_nargs,	1,	0,	0,	PP_FUNCALL},
-{"scan",	do_scan,	0,	11,	10,	PP_FUNCALL},
-{"count.fields",do_countfields,	0,	11,	3,	PP_FUNCALL},
+{"scan",	do_scan,	0,	11,	12,	PP_FUNCALL},
+{"count.fields",do_countfields,	0,	11,	4,	PP_FUNCALL},
 {"t.default",	do_transpose,	0,	11,	1,	PP_FUNCALL},
 {"aperm",	do_aperm,	0,	11,	3,	PP_FUNCALL},
 {"builtins",	do_builtins,	0,	11,	1,	PP_FUNCALL},
@@ -571,6 +579,8 @@ FUNTAB R_FunTab[] =
 {"sink",	do_sink,	0,	111,	1,	PP_FUNCALL},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	PP_FUNCALL},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL},
+{"lapply",	do_lapply,	0,	11,	2,	PP_FUNCALL},
+{"apply",	do_apply,	0,	11,	3,	PP_FUNCALL},
 
 /* Functions To Interact with the Operating System */
 
@@ -629,7 +639,7 @@ FUNTAB R_FunTab[] =
 {"plot.window",	do_plot_window,	0,	111,	3,	PP_FUNCALL},
 {"axis",	do_axis,	0,	111,	7,	PP_FUNCALL},
 {"plot.xy",	do_plot_xy,	0,	111,	6,	PP_FUNCALL},
-{"text",	do_text,	0,	111,	6,	PP_FUNCALL},
+{"text",	do_text,	0,	111,	7,	PP_FUNCALL},
 {"mtext",	do_mtext,	0,	111,	5,	PP_FUNCALL},
 {"title",	do_title,	0,	111,	4,	PP_FUNCALL},
 {"abline",	do_abline,	0,	111,	6,	PP_FUNCALL},
@@ -644,7 +654,7 @@ FUNTAB R_FunTab[] =
 {"identify",	do_identify,	0,	11,	6,	PP_FUNCALL},
 {"strheight",	do_strheight,	0,	11,	3,	PP_FUNCALL},
 {"strwidth",	do_strwidth,	0,	11,	3,	PP_FUNCALL},
-{"contour",	do_contour,	0,	11,	6,	PP_FUNCALL},
+{"contour",	do_contour,	0,	11,	11,	PP_FUNCALL},
 {"image",	do_image,	0,	11,	5,	PP_FUNCALL},
 {"dend",	do_dend,	0,	111,	6,	PP_FUNCALL},
 {"dend.window",	do_dendwindow,	0,	111,	6,	PP_FUNCALL},
@@ -653,11 +663,6 @@ FUNTAB R_FunTab[] =
 {"dotplot",	do_dotplot,	0,	111,	1,	PP_FUNCALL},
 {"persp",	do_persp,	0,	111,	4,	PP_FUNCALL},
 {"filledcontour",do_filledcontour,0,    111,    5,      PP_FUNCALL},
-#ifdef NICK
-{"shade",       do_shade,       0,      111,    14,     PP_FUNCALL},
-{"surface",     do_surface,     0,      111,    18,     PP_FUNCALL},
-{"flatContour", do_flatContour, 0,      111,    9,      PP_FUNCALL},
-#endif
 
 /* Objects */
 {"UseMethod",	do_usemethod,	0,	 0,	-1,	PP_FUNCALL},
@@ -668,6 +673,8 @@ FUNTAB R_FunTab[] =
 {"nlm",		do_nlm,		0,	11,	11,	PP_FUNCALL},
 {"fmin",	do_fmin,	0,	11,	4,	PP_FUNCALL},
 {"zeroin",	do_zeroin,	0,	11,	5,	PP_FUNCALL},
+{"optim",	do_optim,	0,	11,	7,	PP_FUNCALL},
+{"optimhess",	do_optimhess,	0,	11,	4,	PP_FUNCALL},
 {"terms.formula",do_termsform,	0,	11,	5,	PP_FUNCALL},
 {"update.formula",do_updateform,0,	11,	2,	PP_FUNCALL},
 {"model.frame",	do_modelframe,	0,	11,	8,	PP_FUNCALL},
@@ -722,7 +729,7 @@ int hashpjw(char *s)
     return h % HSIZE;
 }
 
-extern void installFunTab(int i)
+static void installFunTab(int i)
 {
     if ((R_FunTab[i].eval % 100 )/10)
 	INTERNAL(install(R_FunTab[i].name))
@@ -732,7 +739,7 @@ extern void installFunTab(int i)
 	    = mkPRIMSXP(i, R_FunTab[i].eval % 10);
 }
 
-void SymbolShortcuts()
+static void SymbolShortcuts()
 {
     R_Bracket2Symbol = install("[[");
     R_BracketSymbol = install("[");

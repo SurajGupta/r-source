@@ -2,8 +2,8 @@
 \title{Read Data Values}
 \usage{
 scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
-     skip = 0, nlines = 0, na.strings = "NA", flush = FALSE,
-     strip.white = FALSE, quiet = FALSE)
+     quote = "", dec = ".", skip = 0, nlines = 0, na.strings = "NA",
+     flush = FALSE, strip.white = FALSE, quiet = FALSE)
 }
 \alias{scan}
 \arguments{
@@ -24,8 +24,10 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{n}{the maximum number of data values to be read, defaulting to
     no limit.}
   \item{sep}{by default, scan expects to read white-space delimited
-    input fields.  Alternatively, \code{sep} can be used to specify a
-    character which delimits fields.}
+      input fields.  Alternatively, \code{sep} can be used to specify a
+      character which delimits fields.} 
+  \item{quote}{the set of quoting characters as a single character string.}
+  \item{dec}{decimal point character.}
   \item{skip}{this many lines of the input file should be skipped before
     starting to read data values.}
   \item{nlines}{the maximum number of lines of data to be read.}
@@ -57,6 +59,11 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   types of the elements in \code{what}.  This provides a way of reading
   columnar data.
 
+  If \code{sep} is nondefault, the fields may be quoted in the style of
+  .csv format files where separators inside quotes (\code{''} or
+  \code{""}) are ignored and quotes may be put inside strings by
+  doubling them.
+  
   Keyboard entry is terminated by typing a blank line.
 }
 \seealso{

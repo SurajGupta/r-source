@@ -1,4 +1,4 @@
-install.packages <- function(pkgs, lib, CRAN=.Options$CRAN,
+install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
                              contriburl=contrib.url(CRAN),
                              method="auto", available=NULL)
 {
@@ -54,35 +54,8 @@ install.packages <- function(pkgs, lib, CRAN=.Options$CRAN,
 }
 
 
-download.file <- function(url, destfile, method="auto")
-{
-    method <- match.arg(method,
-                        c("auto", "wget", "lynx", "cp"))
-
-    if(method == "auto") {
-        if(length(grep("^file:", url)))
-            method <- "cp"
-        else if(system("wget --help", invisible=TRUE)==0)
-            method <- "wget"
-        else if(shell("lynx -help", invisible=TRUE)==0)
-            method <- "lynx"
-        else
-            stop("No download method found")
-    }
-
-    if(method=="wget")
-        status <- system(paste("wget", url, "-O", destfile))
-    else if(method=="lynx")
-        status <- shell(paste("lynx -dump", url, ">", destfile))
-    else if(method=="cp") {
-        url <- sub("^file:", "", url)
-        status <- system(paste("cp", url, destfile))
-    }
-    invisible(status)
-}
-
 download.packages <- function(pkgs, destdir, available=NULL,
-                              CRAN=.Options$CRAN,
+                              CRAN=getOption("CRAN"),
                               contriburl=contrib.url(CRAN),
                               method="auto")
 {
@@ -94,19 +67,23 @@ download.packages <- function(pkgs, destdir, available=NULL,
     for(p in unique(pkgs))
     {
         ok <- (available[,"Package"] == p) | (available[,"Bundle"] == p)
-        fn <- paste(p, ".zip", sep="")
-        if(localcran){
-            fn <- paste(substring(contriburl, 6), fn, sep="/")
-            retval <- rbind(retval, c(p, fn))
-        }
+        if(!any(ok))
+            warning(paste("No package \"", p, "\" on CRAN.", sep=""))
         else{
-            url <- paste(contriburl, fn, sep="/")
-            destfile <- file.path(destdir, fn)
-
-            if(download.file(url, destfile, method) == 0)
-                retval <- rbind(retval, c(p, destfile))
-            else
-                warning(paste("Download of package", p, "failed"))
+            fn <- paste(p, ".zip", sep="")
+            if(localcran){
+                fn <- paste(substring(contriburl, 6), fn, sep="/")
+                retval <- rbind(retval, c(p, fn))
+            }
+            else{
+                url <- paste(contriburl, fn, sep="/")
+                destfile <- file.path(destdir, fn)
+                
+                if(download.file(url, destfile, method) == 0)
+                    retval <- rbind(retval, c(p, destfile))
+                else
+                    warning(paste("Download of package", p, "failed"))
+            }
         }
     }
 

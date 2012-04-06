@@ -59,3 +59,13 @@ table <- function (..., exclude = c(NA, NaN),
     class(y) <- "table"
     y
 }
+
+print.table <- function(x, digits = getOption("digits"), quote = FALSE,
+                        na.print = "", ...) {
+    print.default(unclass(x), digits = digits, quote = quote,
+                  na.print = na.print, ...)
+}
+prop.table<-function (x, margin) 
+sweep(x, margin, margin.table(x, margin), "/")
+margin.table<-function (x, margin) 
+apply(x, margin, sum)

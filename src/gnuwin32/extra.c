@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file extra.c
- *  Copyright (C) 1998--1999  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2000  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 /* extra commands for R */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include <stdio.h>
@@ -33,22 +33,16 @@
 #include <time.h>
 #include <windows.h>
 #include "graphapp/ga.h"
+#include "rui.h"
 
-
-SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
+char * Rwin32_tmpnam(char * prefix)
 {
-    SEXP  ans;
-    char *tmp, *tn, tm[MAX_PATH], tmp1[MAX_PATH], *p;
-    unsigned int n, done = 0;
+    char *tmp, tm[MAX_PATH], tmp1[MAX_PATH], *p, *res;
     int hasspace = 0;
-
+    unsigned int n, done = 0;
     WIN32_FIND_DATA fd;
     HANDLE h;
-    checkArity(op, args);
-    if (!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
-	errorcall(call, "invalid file name argument");
-    tn = CHAR(STRING(CAR(args))[0]);
-    /* try to get a new file name */
+
     tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
     if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
@@ -61,7 +55,7 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 	strcpy(tmp1, tmp);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
-        sprintf(tm, "%s\\%s%d", tmp1, tn, rand());
+        sprintf(tm, "%s\\%s%d", tmp1, prefix, rand());
         if ((h = FindFirstFile(tm, &fd)) == INVALID_HANDLE_VALUE) {
 	    done = 1;
 	    break;
@@ -71,8 +65,26 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if(!done)
 	error("cannot find unused tempfile name");
+    res = (char *) malloc((strlen(tm)+1) * sizeof(char));
+    strcpy(res, tm);
+    return res;
+}
+
+
+SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  ans;
+    char *tn, *tm;
+
+    checkArity(op, args);
+    if (!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
+	errorcall(call, "invalid file name argument");
+    tn = CHAR(STRING(CAR(args))[0]);
+    /* try to get a new file name */
+    tm = Rwin32_tmpnam(tn);
     PROTECT(ans = allocVector(STRSXP, 1));
     STRING(ans)[0] = mkChar(tm);
+    free(tm);
     UNPROTECT(1);
     return (ans);
 }
@@ -96,6 +108,8 @@ SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(1);
     return (ans);
 }
+
+
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -288,19 +302,145 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
     return (ans);
 }
 
-SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
+void internal_shellexec(char * file)
 {
     char *home, buf[MAX_PATH];
-    SEXP file;
 
-    checkArity(op, args);
     home = getenv("R_HOME");
     if (home == NULL)
 	error("R_HOME not set");
+    strcpy(buf, file);
+    ShellExecute(NULL, "open", buf, NULL, home, SW_SHOW);
+}
+
+SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP file;
+
+    checkArity(op, args);
     file = CAR(args);
     if (!isString(file) || length(file) != 1)
 	errorcall(call, "invalid file argument");
-    strcpy(buf, CHAR(STRING(file)[0]));
-    ShellExecute(NULL, "open", buf, NULL, home, SW_SHOW);
+    internal_shellexec(CHAR(STRING(file)[0]));
     return R_NilValue;
 }
+
+int check_doc_file(char * file)
+{
+    char *home, path[MAX_PATH];
+    struct stat sb;
+
+    home = getenv("R_HOME");
+    if (home == NULL)
+	error("R_HOME not set");
+    strcpy(path, home);
+    strcat(path, "/");
+    strcat(path, file);
+    return stat(path, &sb) == 0;
+}
+
+SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP message, ans;
+    char * type;
+    int res=YES;
+
+    checkArity(op, args);
+    type = CHAR(STRING(CAR(args))[0]);
+    message = CADR(args);
+    if (strcmp(type, "ok")  == 0) {
+	askok(CHAR(STRING(message)[0]));
+	res = 10;
+    } else if (strcmp(type, "okcancel")  == 0) {
+	res = askokcancel(CHAR(STRING(message)[0]));
+	if(res == YES) res = 2;
+    } else if (strcmp(type, "yesno")  == 0) {
+	res = askyesno(CHAR(STRING(message)[0]));
+    } else if (strcmp(type, "yesnocancel")  == 0) {
+	res = askyesnocancel(CHAR(STRING(message)[0]));
+    } else
+	errorcall(call, "unknown type");
+    ans = allocVector(INTSXP, 1);
+    INTEGER(ans)[0] = res;
+    return (ans);
+}
+
+SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  message, def, ans;
+    char *string;
+
+    checkArity(op, args);
+    message = CAR(args);
+    def = CADR(args);
+    string = askstring(CHAR(STRING(message)[0]), CHAR(STRING(def)[0]));
+    if (string) {
+	ans = allocVector(STRSXP, 1);
+	STRING(ans)[0] = mkChar(string);
+	return (ans);
+    } else
+	return (R_NilValue);
+}
+
+#include "Startup.h"
+extern UImode CharacterMode;
+static char msgbuf[256];
+
+SEXP do_winmenuadd(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP smenu, sitem;
+    int res;
+    char errmsg[50];
+    
+    checkArity(op, args);
+    if (CharacterMode != RGui)
+	errorcall(call, "Menu functions can only be used in the GUI");
+    smenu = CAR(args);
+    sitem = CADR(args);
+    if (isNull(sitem)) { /* add a menu */
+	res = winaddmenu (CHAR(STRING(smenu)[0]), errmsg);
+	if (res > 0) {
+	    sprintf(msgbuf, "unable to add menu (%s)", errmsg);
+	    errorcall(call, msgbuf);
+	}
+	
+    } else { /* add an item */
+	res = winaddmenuitem (CHAR(STRING(sitem)[0]),
+			      CHAR(STRING(smenu)[0]),
+			      CHAR(STRING(CADDR(args))[0]),
+			      errmsg);
+	if (res > 0) {
+	    sprintf(msgbuf, "unable to add menu item (%s)", errmsg);
+	    errorcall(call, msgbuf);
+	}
+    }
+    return (R_NilValue);
+}
+
+SEXP do_winmenudel(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP smenu, sitem;
+    int res;
+    char errmsg[50];
+    
+    checkArity(op, args);
+    if (CharacterMode != RGui)
+	errorcall(call, "Menu functions can only be used in the GUI");
+    smenu = CAR(args);
+    sitem = CADR(args);
+    if (isNull(sitem)) { /* delete a menu */
+	res = windelmenu (CHAR(STRING(smenu)[0]), errmsg);
+	if (res > 0) 
+	    errorcall(call, "menu does not exist");
+    } else { /* delete an item */
+	res = windelmenuitem (CHAR(STRING(sitem)[0]),
+			      CHAR(STRING(smenu)[0]), errmsg);
+	if (res > 0) {
+	    sprintf(msgbuf, "unable to delete menu item (%s)", errmsg);
+	    errorcall(call, msgbuf);
+	}
+    }
+    return (R_NilValue);
+}
+
+

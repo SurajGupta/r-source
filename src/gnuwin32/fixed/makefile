@@ -1,6 +1,6 @@
 include ../MkRules
 
-all: profiles fixh fixr fixbin fixetc
+all: profiles FAQs fixh fixr fixbin fixetc
 
 profiles: ../../../library/base/R/Rprofile
 
@@ -13,8 +13,8 @@ profiles: ../../../library/base/R/Rprofile
 
 SED0='/^\#/d'
 SED01='/Rsockfork/d'
-SED1='s/F77_SUBROUTINE(\(.*\))/int \1_();/'
-SED2='s/C_FUNCTION(\(.*\))/int \1();/'
+SED1='s/F77_SUBROUTINE(\(.*\))/void * \1_();/'
+SED2='s/C_FUNCTION(\(.*\))/void * \1();/'
 SED3='s/F77_SUBROUTINE(\(.*\))/	{ "\1_",	\1_},/'
 SED4='s/C_FUNCTION(\(.*\))/{ "\1",	\1 },/'
 
@@ -23,10 +23,18 @@ SED4='s/C_FUNCTION(\(.*\))/{ "\1",	\1 },/'
 ../../include/FFTab.h: ../../appl/ROUTINES
 	$(SED) -e $(SED0) -e $(SED01) -e $(SED3) -e $(SED4) ../../appl/ROUTINES > ../../include/FFTab.h
 
+FAQs: ../rw-faq r/rw-FAQ.html
+r/rw-FAQ.html: ../rw-FAQ.texi
+	makeinfo --html --no-headers --number-sections -o $@ $<
 
-fixh: h/Rconfig.h ../../../date-stamp ../../include/FFDecl.h ../../include/FFTab.h
-	$(CP) -p ./h/Rconfig.h ./h/psignal.h ../../include
+../rw-faq: ../rw-FAQ.texi
+	makeinfo --no-headers --number-sections -o $@ $<
+
+
+fixh: h/config.h ../../../date-stamp ../../include/FFDecl.h ../../include/FFTab.h
+	$(CP) -p ./h/config.h ./h/psignal.h ../../include
 	sh ./GETVERSION > ../../include/Rversion.h
+	sh ./GETCONFIG > ../../include/Rconfig.h
 	$(ECHO) done > fixh
 
 fixbin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))

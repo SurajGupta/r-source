@@ -1,30 +1,36 @@
 \name{Cauchy}
-\title{The Cauchy Distribution}
-\usage{
-dcauchy(x, location = 0, scale = 1)
-pcauchy(q, location = 0, scale = 1)
-qcauchy(p, location = 0, scale = 1)
-rcauchy(n, location = 0, scale = 1)
-}
 \alias{dcauchy}
 \alias{pcauchy}
 \alias{qcauchy}
 \alias{rcauchy}
+\title{The Cauchy Distribution}
+\description{
+  Density, distribution function, quantile function and random
+  generation for the Cauchy distribution with location parameter
+  \code{location} and scale parameter \code{scale}.
+}
+\usage{
+dcauchy(x, location = 0, scale = 1, log = FALSE)
+pcauchy(q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE)
+qcauchy(p, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE)
+rcauchy(n, location = 0, scale = 1)
+}
 \arguments{
-\item{x,q}{vector of quantiles.}
-\item{p}{vector of probabilities.}
-\item{n}{number of observations to generate.}
-\item{location,scale}{location and scale parameters.}
+  \item{x, q}{vector of quantiles.}
+  \item{p}{vector of probabilities.}
+  \item{n}{number of observations to generate.}
+  \item{location, scale}{location and scale parameters.}
+  \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
+  \item{lower.tail}{logical; if TRUE (default), probabilities are
+    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
 }
 \value{
-  These functions provide information about the Cauchy distribution with
-  location parameter \code{location} and scale parameter \code{scale}.
-
   \code{dcauchy}, \code{pcauchy}, and \code{qcauchy} are respectively
   the density, distribution function and quantile function of the Cauchy
   distribution.  \code{rcauchy} generates random deviates from the
   Cauchy.
-
+}
+\details{
   If \code{location} or \code{scale} are not specified, they assume
   the default values of \code{0} and \code{1} respectively.
 

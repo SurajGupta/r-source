@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-1999	    The R Development Core Team.
+ *  Copyright (C) 1998--2000	    The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"		/*-> Arith.h */
@@ -30,16 +30,16 @@
 /* Error Handling for Floating Point Errors */
 
 #ifndef IEEE_754
+#ifdef Unix
 #include <signal.h>
 
 static RETSIGTYPE handle_fperror(int dummy)
 {
     errno = ERANGE;
-#ifdef Unix
     signal(SIGFPE, handle_fperror);
-#endif
 }
 #endif
+#endif /* not IEEE_754 */
 
 #ifdef HAVE_MATHERR
 
@@ -72,10 +72,10 @@ typedef union
   unsigned int word[2];
 } ieee_double;
 
-static int little_endian;
 static int hw;
 static int lw;
 
+#ifdef OLD
 static void establish_endianness()
 {
     ieee_double x;
@@ -92,6 +92,7 @@ static void establish_endianness()
     }
     else R_Suicide("couldn't determine endianness for IEEE 754!\n");
 }
+#endif
 
 static double R_ValueOfNA(void)
 {
@@ -120,7 +121,75 @@ int R_IsNaN(double x)
     }
     return 0;
 }
+
+int R_IsNaNorNA(double x)
+{
+/* True for *both* NA and NaN.
+   NOTE: some systems do not return 1 for TRUE. */
+    return (isnan(x) != 0);
+}
+
+/* Include the header file defining finite() */
+#ifdef HAVE_IEEE754_H
+# include <ieee754.h>		/* newer Linuxen */
+#else
+# ifdef HAVE_IEEEFP_H
+#  include <ieeefp.h>		/* others [Solaris 2.5.x], .. */
+# endif
 #endif
+#if defined(Win32) && defined(_MSC_VER)
+#include <float.h>
+#endif
+
+int R_finite(double x)
+{
+#ifdef Macintosh
+    return isfinite(x);
+#endif
+#ifndef FINITE_BROKEN
+    return finite(x);
+# else
+#  ifdef _AIX
+#   include <fp.h>
+     return FINITE(x);
+#  else
+    return (!isnan(x) & (x != R_PosInf) & (x != R_NegInf));
+#  endif
+#endif
+}
+
+#else /* not IEEE_754 */
+
+int R_IsNA(double x)
+{
+    return (x == R_NaReal);
+}
+
+/* NaN but not NA: never true */
+int R_IsNaN(double x)
+{
+    return 0;
+}
+
+int R_IsNaNorNA(double x)
+{
+# ifndef HAVE_ISNAN
+    return (x == R_NaReal);
+# else
+    return (isnan(x) != 0 || x == R_NaReal);
+# endif
+}
+
+int R_finite(double x)
+{
+# ifndef HAVE_FINITE
+    return (x != R_NaReal && x < R_PosInf && x > R_NegInf);
+# else
+    int finite(double);
+    return finite(x);
+# endif
+}
+#endif /* IEEE_754 */
 
 /* Arithmetic Initialization */
 
@@ -129,16 +198,23 @@ void InitArithmetic()
     R_NaInt = INT_MIN;
 
 #ifdef IEEE_754
-    establish_endianness();
+    /* establish_endianness(); */
+#  ifdef WORDS_BIGENDIAN
+    hw = 0;
+    lw = 1;
+#  else
+    hw = 1;
+    lw = 0;
+#  endif
     R_NaN = 0.0/R_Zero_Hack;
     R_NaReal = R_ValueOfNA();
     R_PosInf = 1.0/R_Zero_Hack;
     R_NegInf = -1.0/R_Zero_Hack;
 #else
-    R_NaN = -DBL_MAX;
+    R_NaN = -DBL_MAX*(1-1e-15);
     R_NaReal = R_NaN;
-    R_PosInf = -DBL_MAX;
-    R_NegInf = DBL_MAX;
+    R_PosInf = DBL_MAX;
+    R_NegInf = -DBL_MAX;
 #ifdef Unix
     signal(SIGFPE, handle_fperror);
 #endif
@@ -229,6 +305,10 @@ double R_pow(double x, double y) /* = x ^ y */
 {
     if(x == 1. || y == 0.)
 	return(1.);
+    if(x == 0.) {
+	if(y > 0.) return(0.);
+	/* y < 0 */return(R_PosInf);
+    }
     if (R_FINITE(x) && R_FINITE(y))
 	return(pow(x,y));
     if (ISNAN(x) || ISNAN(y)) {
@@ -259,9 +339,27 @@ double R_pow(double x, double y) /* = x ^ y */
 }
 #endif
 
+double R_pow_di(double x, int n)
+{
+    double pow = 1.0;
+
+    if (ISNAN(x)) return x;
+    if (n == NA_INTEGER) return NA_REAL;
+    if (n != 0) {
+	if (!R_FINITE(x)) return R_pow(x, (double)n);
+	if (n < 0) { n = -n; x = 1/x; }
+	for(;;) {
+	    if(n & 01) pow *= x;
+	    if(n >>= 1) x *= x; else break;
+	}
+    }
+    return pow;
+}
+
+
 /* General Base Logarithms */
 
-double logbase(double x, double base)
+static double logbase(double x, double base)
 {
     return R_log(x) / log(base);
 }
@@ -774,6 +872,15 @@ static SEXP real_binary(int code, SEXP s1, SEXP s2)
     return ans;
 }
 
+#ifdef IEEE_754
+# define NA_MSG		"NaNs produced"
+#else
+# define NA_MSG		"NAs produced"
+#endif
+
+#define NON_NUM_MSG "Non-numeric argument to mathematical function"
+
+
 /* Mathematical Functions of One Argument */
 
 #if !defined(HAVE_ASINH) || !defined(HAVE_ACOSH) || !defined(HAVE_ATANH)
@@ -793,46 +900,38 @@ static double unavailable(double x)
 #endif
 #endif
 
-static SEXP math1(SEXP op, SEXP sa, double(*f)())
+static SEXP math1(SEXP sa, double(*f)())
 {
     SEXP sy;
     double *y, *a;
     int i, n;
 
-    if (isNumeric(sa)) {
-	n = length(sa);
-	PROTECT(sa = coerceVector(sa, REALSXP));
-	PROTECT(sy = allocVector(REALSXP, n));
-	a = REAL(sa);
-	y = REAL(sy);
-	naflag = 0;
-	for (i = 0; i < n; i++) {
-	    if (ISNAN(a[i]))
-		y[i] = a[i];
-	    else {
-		y[i] = MATH_CHECK(f(a[i]));
-		if (ISNAN(y[i])) {
-#ifdef OLD
-		    y[i] = NA_REAL;
-#endif
-		    naflag = 1;
-		}
-	    }
+    if (!isNumeric(sa))
+	errorcall(lcall, NON_NUM_MSG);
+
+    n = length(sa);
+    PROTECT(sa = coerceVector(sa, REALSXP));
+    PROTECT(sy = allocVector(REALSXP, n));
+    a = REAL(sa);
+    y = REAL(sy);
+    naflag = 0;
+    for (i = 0; i < n; i++) {
+	if (ISNAN(a[i]))
+	    y[i] = a[i];
+	else {
+	    y[i] = MATH_CHECK(f(a[i]));
+	    if (ISNAN(y[i])) naflag = 1;
 	}
-	if (naflag)
-#ifdef IEEE_754
-	    warningcall(lcall, "NaNs produced");
-#else
-	    warningcall(lcall, "NAs produced");
-#endif
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
-	UNPROTECT(2);
-	return sy;
     }
-    else errorcall(lcall, "Non-numeric argument to mathematical function");
-    return sa;			/* never used; to keep -Wall happy */
+    if(naflag)
+	warningcall(lcall, NA_MSG);
+
+    ATTRIB(sy) = duplicate(ATTRIB(sa));
+    OBJECT(sy) = OBJECT(sa);
+    UNPROTECT(2);
+    return sy;
 }
+
 
 SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -848,102 +947,158 @@ SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     lcall = call;
 
     switch (PRIMVAL(op)) {
-    case 1: return math1(op, CAR(args), floor);
-    case 2: return math1(op, CAR(args), ceil);
-    case 3: return math1(op, CAR(args), sqrt);
-    case 4: return math1(op, CAR(args), sign);
-    case 5: return math1(op, CAR(args), trunc);
+    case 1: return math1(CAR(args), floor);
+    case 2: return math1(CAR(args), ceil);
+    case 3: return math1(CAR(args), sqrt);
+    case 4: return math1(CAR(args), sign);
+    case 5: return math1(CAR(args), trunc);
 
-    case 10: return math1(op, CAR(args), exp);
-    case 20: return math1(op, CAR(args), cos);
-    case 21: return math1(op, CAR(args), sin);
-    case 22: return math1(op, CAR(args), tan);
-    case 23: return math1(op, CAR(args), acos);
-    case 24: return math1(op, CAR(args), asin);
+    case 10: return math1(CAR(args), exp);
+    case 20: return math1(CAR(args), cos);
+    case 21: return math1(CAR(args), sin);
+    case 22: return math1(CAR(args), tan);
+    case 23: return math1(CAR(args), acos);
+    case 24: return math1(CAR(args), asin);
 
-    case 30: return math1(op, CAR(args), cosh);
-    case 31: return math1(op, CAR(args), sinh);
-    case 32: return math1(op, CAR(args), tanh);
-    case 33: return math1(op, CAR(args), acosh);
-    case 34: return math1(op, CAR(args), asinh);
-    case 35: return math1(op, CAR(args), atanh);
+    case 30: return math1(CAR(args), cosh);
+    case 31: return math1(CAR(args), sinh);
+    case 32: return math1(CAR(args), tanh);
+    case 33: return math1(CAR(args), acosh);
+    case 34: return math1(CAR(args), asinh);
+    case 35: return math1(CAR(args), atanh);
 
-    case 40: return math1(op, CAR(args), lgammafn);
-    case 41: return math1(op, CAR(args), gammafn);
+    case 40: return math1(CAR(args), lgammafn);
+    case 41: return math1(CAR(args), gammafn);
 
-    case 42: return math1(op, CAR(args), digamma);
-    case 43: return math1(op, CAR(args), trigamma);
-    case 44: return math1(op, CAR(args), tetragamma);
-    case 45: return math1(op, CAR(args), pentagamma);
+    case 42: return math1(CAR(args), digamma);
+    case 43: return math1(CAR(args), trigamma);
+    case 44: return math1(CAR(args), tetragamma);
+    case 45: return math1(CAR(args), pentagamma);
 
-    case 46: return math1(op, CAR(args), gamma_cody);
+    case 46: return math1(CAR(args), gamma_cody);
 
     default:
-	errorcall(call, "unimplemented real function");
+	errorcall(call, "unimplemented real function (of 1 arg.)");
     }
     return s;			/* never used; to keep -Wall happy */
 }
 
-static SEXP math2(SEXP op, SEXP sa, SEXP sb, double (*f)())
+/* Mathematical Functions of Two Numeric Arguments (plus 1 int) */
+
+#define if_NA_Math2_set(y,a,b)				\
+	if      (ISNA (a) || ISNA (b)) y = NA_REAL;	\
+	else if (ISNAN(a) || ISNAN(b)) y = R_NaN;
+
+static SEXP math2(SEXP sa, SEXP sb, double (*f)())
 {
     SEXP sy;
     int i, ia, ib, n, na, nb;
     double ai, bi, *a, *b, *y;
 
     if (!isNumeric(sa) || !isNumeric(sb))
-	errorcall(lcall, "Non-numeric argument to mathematical function");
+	errorcall(lcall, NON_NUM_MSG);
 
-    na = LENGTH(sa);
-    nb = LENGTH(sb);
-    if ((na == 0) || (nb == 0))
-	return(allocVector(REALSXP, 0));
-    n = (na < nb) ? nb : na;
-    PROTECT(sa = coerceVector(sa, REALSXP));
-    PROTECT(sb = coerceVector(sb, REALSXP));
-    PROTECT(sy = allocVector(REALSXP, n));
-    a = REAL(sa);
-    b = REAL(sb);
-    y = REAL(sy);
-    naflag = 0;
+#define SETUP_Math2				\
+    na = LENGTH(sa);				\
+    nb = LENGTH(sb);				\
+    if ((na == 0) || (nb == 0))			\
+	return(allocVector(REALSXP, 0));	\
+    n = (na < nb) ? nb : na;			\
+    PROTECT(sa = coerceVector(sa, REALSXP));	\
+    PROTECT(sb = coerceVector(sb, REALSXP));	\
+    PROTECT(sy = allocVector(REALSXP, n));	\
+    a = REAL(sa);				\
+    b = REAL(sb);				\
+    y = REAL(sy);				\
+    naflag = 0
+
+    SETUP_Math2;
+
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
 	bi = b[ib];
-	if (ISNAN(ai) || ISNAN(bi)) {
-#ifdef IEEE_754
-	    y[i] = ai + bi;
-#else
-	    y[i] = NA_REAL;
-#endif
-	}
+	if_NA_Math2_set(y[i], ai, bi)
 	else {
 	    y[i] = MATH_CHECK(f(ai, bi));
-	    if (ISNAN(y[i])) {
-#ifdef OLD
-		y[i] = NA_REAL;
-#endif
-		naflag = 1;
-	    }
+	    if (ISNAN(y[i])) naflag = 1;
 	}
     }
-    if (naflag)
-#ifdef IEEE_754
-	warningcall(lcall, "NaNs produced");
-#else
-	warningcall(lcall, "NAs produced");
-#endif
-    if (n == na) {
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
-    }
-    else if (n == nb) {
-	ATTRIB(sy) = duplicate(ATTRIB(sb));
-	OBJECT(sy) = OBJECT(sb);
-    }
-    UNPROTECT(3);
-    return sy;
-}
 
-/* Mathematical Functions of Two Arguments */
+#define FINISH_Math2				\
+    if(naflag)					\
+	warningcall(lcall, NA_MSG);		\
+						\
+    if (n == na) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
+	OBJECT(sy) = OBJECT(sa);		\
+    }						\
+    else if (n == nb) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
+	OBJECT(sy) = OBJECT(sb);		\
+    }						\
+    UNPROTECT(3)
+
+    FINISH_Math2;
+
+    return sy;
+} /* math2() */
+
+static SEXP math2_1(SEXP sa, SEXP sb, SEXP sI, double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, n, na, nb;
+    double ai, bi, *a, *b, *y;
+    int m_opt;
+
+    if (!isNumeric(sa) || !isNumeric(sb))
+	errorcall(lcall, NON_NUM_MSG);
+
+    SETUP_Math2;
+    m_opt = asInteger(sI);
+
+    mod_iterate(na, nb, ia, ib) {
+	ai = a[ia];
+	bi = b[ib];
+	if_NA_Math2_set(y[i], ai, bi)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, m_opt));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+    FINISH_Math2;
+    return sy;
+} /* math2_1() */
+
+static SEXP math2_2(SEXP sa, SEXP sb, SEXP sI1, SEXP sI2, double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, n, na, nb;
+    double ai, bi, *a, *b, *y;
+    int i_1, i_2;
+
+    if (!isNumeric(sa) || !isNumeric(sb))
+	errorcall(lcall, NON_NUM_MSG);
+
+    SETUP_Math2;
+    i_1 = asInteger(sI1);
+    i_2 = asInteger(sI2);
+
+    mod_iterate(na, nb, ia, ib) {
+	ai = a[ia];
+	bi = b[ib];
+	if_NA_Math2_set(y[i], ai, bi)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, i_1, i_2));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+    FINISH_Math2;
+    return sy;
+} /* math2_2() */
+
+#define Math2(A, FUN)	  math2(CAR(A), CADR(A), FUN);
+#define Math2_1(A, FUN)	math2_1(CAR(A), CADR(A), CADDR(A), FUN);
+#define Math2_2(A, FUN) math2_2(CAR(A), CADR(A), CADDR(A), CADDDR(A), FUN)
 
 SEXP do_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -954,46 +1109,47 @@ SEXP do_math2(SEXP call, SEXP op, SEXP args, SEXP env)
     lcall = call;
 
     switch (PRIMVAL(op)) {
-    case  0: return math2(op, CAR(args), CADR(args), atan2);
-    /* case 1: return math2(op, CAR(args), CADR(args), prec); */
+    case  0: return Math2(args, atan2);
+    /*case 1: return Math2(args, prec); */
 
-    case  2: return math2(op, CAR(args), CADR(args), lbeta);
-    case  3: return math2(op, CAR(args), CADR(args), beta);
-    case  4: return math2(op, CAR(args), CADR(args), lchoose);
-    case  5: return math2(op, CAR(args), CADR(args), choose);
+    case  2: return Math2(args, lbeta);
+    case  3: return Math2(args, beta);
+    case  4: return Math2(args, lchoose);
+    case  5: return Math2(args, choose);
 
-    case  6: return math2(op, CAR(args), CADR(args), dchisq);
-    case  7: return math2(op, CAR(args), CADR(args), pchisq);
-    case  8: return math2(op, CAR(args), CADR(args), qchisq);
+    case  6: return Math2_1(args, dchisq);
+    case  7: return Math2_2(args, pchisq);
+    case  8: return Math2_2(args, qchisq);
 
-    case  9: return math2(op, CAR(args), CADR(args), dexp);
-    case 10: return math2(op, CAR(args), CADR(args), pexp);
-    case 11: return math2(op, CAR(args), CADR(args), qexp);
+    case  9: return Math2_1(args, dexp);
+    case 10: return Math2_2(args, pexp);
+    case 11: return Math2_2(args, qexp);
 
-    case 12: return math2(op, CAR(args), CADR(args), dgeom);
-    case 13: return math2(op, CAR(args), CADR(args), pgeom);
-    case 14: return math2(op, CAR(args), CADR(args), qgeom);
+    case 12: return Math2_1(args, dgeom);
+    case 13: return Math2_2(args, pgeom);
+    case 14: return Math2_2(args, qgeom);
 
-    case 15: return math2(op, CAR(args), CADR(args), dpois);
-    case 16: return math2(op, CAR(args), CADR(args), ppois);
-    case 17: return math2(op, CAR(args), CADR(args), qpois);
+    case 15: return Math2_1(args, dpois);
+    case 16: return Math2_2(args, ppois);
+    case 17: return Math2_2(args, qpois);
 
-    case 18: return math2(op, CAR(args), CADR(args), dt);
-    case 19: return math2(op, CAR(args), CADR(args), pt);
-    case 20: return math2(op, CAR(args), CADR(args), qt);
+    case 18: return Math2_1(args, dt);
+    case 19: return Math2_2(args, pt);
+    case 20: return Math2_2(args, qt);
 
-    case 21: return math2(op, CAR(args), CADR(args), dsignrank);
-    case 22: return math2(op, CAR(args), CADR(args), psignrank);
-    case 23: return math2(op, CAR(args), CADR(args), qsignrank);
+    case 21: return Math2_1(args, dsignrank);
+    case 22: return Math2_2(args, psignrank);
+    case 23: return Math2_2(args, qsignrank);
 
-    case 24: return math2(op, CAR(args), CADR(args), bessel_j);
-    case 25: return math2(op, CAR(args), CADR(args), bessel_y);
+    case 24: return Math2(args, bessel_j);
+    case 25: return Math2(args, bessel_y);
 
     default:
-	errorcall(call, "unimplemented real function");
+	errorcall(call, "unimplemented real function of 2 numeric arg.s");
     }
     return op;			/* never used; to keep -Wall happy */
 }
+
 
 SEXP do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1007,12 +1163,12 @@ SEXP do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (isComplex(CAR(args)))
 	    return complex_math1(call, op, args, env);
 	else
-	    return math1(op, CAR(args), atan);
+	    return math1(CAR(args), atan);
     case 2:
 	if (isComplex(CAR(args)) || isComplex(CDR(args)))
 	    return complex_math2(call, op, args, env);
 	else
-	    return math2(op, CAR(args), CADR(args), atan2);
+	    return math2(CAR(args), CADR(args), atan2);
     default:
 	error("%d arguments passed to \"atan\" which requires 1 or 2", n);
     }
@@ -1047,7 +1203,7 @@ SEXP do_round(SEXP call, SEXP op, SEXP args, SEXP env)
 	a = complex_math2(call, op, args, env);
     }
     else
-	a = math2(op, a, b, rround);
+	a = math2(a, b, rround);
     UNPROTECT(2);
     return a;
 }
@@ -1064,14 +1220,14 @@ SEXP do_log(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (isComplex(CAR(args)))
 	    return complex_math1(call, op, args, env);
 	else
-	    return math1(op, CAR(args), R_log);
+	    return math1(CAR(args), R_log);
     case 2:
 	if (length(CADR(args)) == 0)
 	    errorcall(call, "illegal 2nd arg of length 0");
 	if (isComplex(CAR(args)) || isComplex(CDR(args)))
 	    return complex_math2(call, op, args, env);
 	else
-	    return math2(op, CAR(args), CADR(args), logbase);
+	    return math2(CAR(args), CADR(args), logbase);
     default:
 	error("%d arguments passed to \"log\" which requires 1 or 2", n);
     }
@@ -1106,90 +1262,141 @@ SEXP do_signif(SEXP call, SEXP op, SEXP args, SEXP env)
 	a = complex_math2(call, op, args, env);
     }
     else
-	a = math2(op, a, b, prec);
+	a = math2(a, b, prec);
     UNPROTECT(2);
     return a;
 }
 
-#define mod_iterate3(n1,n2,n3,i1,i2,i3) for (i=i1=i2=i3=0; i<n; \
-	 i1 = (++i1==n1) ? 0 : i1,\
-	 i2 = (++i2==n2) ? 0 : i2,\
-	 i3 = (++i3==n3) ? 0 : i3,\
-	 ++i)
+/* Mathematical Functions of Three (Real) Arguments */
 
-static SEXP math3(SEXP op, SEXP sa, SEXP sb, SEXP sc, double (*f)())
+#define if_NA_Math3_set(y,a,b,c)			        \
+	if      (ISNA (a) || ISNA (b)|| ISNA (c)) y = NA_REAL;	\
+	else if (ISNAN(a) || ISNAN(b)|| ISNAN(c)) y = R_NaN;
+
+#define mod_iterate3(n1,n2,n3,i1,i2,i3) for (i=i1=i2=i3=0; i<n; \
+	i1 = (++i1==n1) ? 0 : i1,				\
+	i2 = (++i2==n2) ? 0 : i2,				\
+	i3 = (++i3==n3) ? 0 : i3,				\
+	++i)
+
+static SEXP math3(SEXP sa, SEXP sb, SEXP sc, double (*f)())
 {
     SEXP sy;
     int i, ia, ib, ic, n, na, nb, nc;
     double ai, bi, ci, *a, *b, *c, *y;
 
-    if (!isNumeric(sa) || !isNumeric(sb) || !isNumeric(sc))
-	errorcall(lcall,
-		  "Non-numeric argument to mathematical function");
+#define SETUP_Math3						\
+    if (!isNumeric(sa) || !isNumeric(sb) || !isNumeric(sc))	\
+	errorcall(lcall, NON_NUM_MSG);				\
+								\
+    na = LENGTH(sa);						\
+    nb = LENGTH(sb);						\
+    nc = LENGTH(sc);						\
+    if ((na == 0) || (nb == 0) || (nc == 0))			\
+	return(allocVector(REALSXP, 0));			\
+    n = na;							\
+    if (n < nb) n = nb;						\
+    if (n < nc) n = nc;						\
+    PROTECT(sa = coerceVector(sa, REALSXP));			\
+    PROTECT(sb = coerceVector(sb, REALSXP));			\
+    PROTECT(sc = coerceVector(sc, REALSXP));			\
+    PROTECT(sy = allocVector(REALSXP, n));			\
+    a = REAL(sa);						\
+    b = REAL(sb);						\
+    c = REAL(sc);						\
+    y = REAL(sy);						\
+    naflag = 0
 
-    na = LENGTH(sa);
-    nb = LENGTH(sb);
-    nc = LENGTH(sc);
-    if ((na == 0) || (nb == 0) || (nc == 0))
-	return(allocVector(REALSXP, 0));
-    n = na;
-    if (n < nb) n = nb;
-    if (n < nc) n = nc;
-    PROTECT(sa = coerceVector(sa, REALSXP));
-    PROTECT(sb = coerceVector(sb, REALSXP));
-    PROTECT(sc = coerceVector(sc, REALSXP));
-    PROTECT(sy = allocVector(REALSXP, n));
-    a = REAL(sa);
-    b = REAL(sb);
-    c = REAL(sc);
-    y = REAL(sy);
-    naflag = 0;
+    SETUP_Math3;
+
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
 	bi = b[ib];
 	ci = c[ic];
-	if (ISNAN(ai) || ISNAN(bi) || ISNAN(ci)) {
-#ifdef IEEE_754
-	    y[i] = ai + bi + ci;
-#else
-	    y[i] = NA_REAL;
-#endif
-	}
+	if_NA_Math3_set(y[i], ai,bi,ci)
 	else {
 	    y[i] = MATH_CHECK(f(ai, bi, ci));
-	    if (ISNAN(y[i])) {
-#ifdef OLD
-		y[i] = NA_REAL;
-#endif
-		naflag = 1;
-	    }
+	    if (ISNAN(y[i])) naflag = 1;
 	}
     }
-    if (naflag)
-#ifdef IEEE_754
-	warningcall(lcall, "NaNs produced");
-#else
-	warningcall(lcall, "NAs produced");
-#endif
-    if (n == na) {
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
-    }
-    else if (n == nb) {
-	ATTRIB(sy) = duplicate(ATTRIB(sb));
-	OBJECT(sy) = OBJECT(sb);
-    }
-    else if (n == nc) {
-	ATTRIB(sy) = duplicate(ATTRIB(sc));
-	OBJECT(sy) = OBJECT(sc);
-    }
-    UNPROTECT(4);
+
+#define FINISH_Math3				\
+    if(naflag)					\
+	warningcall(lcall, NA_MSG);		\
+						\
+    if (n == na) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
+	OBJECT(sy) = OBJECT(sa);		\
+    }						\
+    else if (n == nb) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
+	OBJECT(sy) = OBJECT(sb);		\
+    }						\
+    else if (n == nc) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
+	OBJECT(sy) = OBJECT(sc);		\
+    }						\
+    UNPROTECT(4)
+
+    FINISH_Math3;
+
     return sy;
-}
+} /* math3 */
 
-/* Mathematical Functions of Three (Real) Arguments */
+static SEXP math3_1(SEXP sa, SEXP sb, SEXP sc, SEXP sI, double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, ic, n, na, nb, nc;
+    double ai, bi, ci, *a, *b, *c, *y;
+    int i_1;
 
-#define Math3(op, A, FUN) math3(op, CAR(A), CADR(A), CADDR(A), FUN);
+    SETUP_Math3;
+    i_1 = asInteger(sI);
+
+    mod_iterate3 (na, nb, nc, ia, ib, ic) {
+	ai = a[ia];
+	bi = b[ib];
+	ci = c[ic];
+	if_NA_Math3_set(y[i], ai,bi,ci)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, ci, i_1));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+
+    FINISH_Math3;
+    return sy;
+} /* math3_1 */
+
+static SEXP math3_2(SEXP sa, SEXP sb, SEXP sc, SEXP sI, SEXP sJ, double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, ic, n, na, nb, nc;
+    double ai, bi, ci, *a, *b, *c, *y;
+    int i_1,i_2;
+
+    SETUP_Math3;
+    i_1 = asInteger(sI);
+    i_2 = asInteger(sJ);
+
+    mod_iterate3 (na, nb, nc, ia, ib, ic) {
+	ai = a[ia];
+	bi = b[ib];
+	ci = c[ic];
+	if_NA_Math3_set(y[i], ai,bi,ci)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, ci, i_1, i_2));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+
+    FINISH_Math3;
+    return sy;
+} /* math3_2 */
+
+#define Math3(A, FUN)   math3  (CAR(A), CADR(A), CADDR(A), FUN);
+#define Math3_1(A, FUN)	math3_1(CAR(A), CADR(A), CADDR(A), CADDDR(A), FUN);
+#define Math3_2(A, FUN) math3_2(CAR(A), CADR(A), CADDR(A), CADDDR(A), CAD4R(A), FUN)
 
 SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1198,166 +1405,227 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     switch (PRIMVAL(op)) {
 
-    case  1:  return Math3(op, args, dbeta);
-    case  2:  return Math3(op, args, pbeta);
-    case  3:  return Math3(op, args, qbeta);
+    case  1:  return Math3_1(args, dbeta);
+    case  2:  return Math3_2(args, pbeta);
+    case  3:  return Math3_2(args, qbeta);
 
-    case  4:  return Math3(op, args, dbinom);
-    case  5:  return Math3(op, args, pbinom);
-    case  6:  return Math3(op, args, qbinom);
+    case  4:  return Math3_1(args, dbinom);
+    case  5:  return Math3_2(args, pbinom);
+    case  6:  return Math3_2(args, qbinom);
 
-    case  7:  return Math3(op, args, dcauchy);
-    case  8:  return Math3(op, args, pcauchy);
-    case  9:  return Math3(op, args, qcauchy);
+    case  7:  return Math3_1(args, dcauchy);
+    case  8:  return Math3_2(args, pcauchy);
+    case  9:  return Math3_2(args, qcauchy);
 
-    case 10:  return Math3(op, args, df);
-    case 11:  return Math3(op, args, pf);
-    case 12:  return Math3(op, args, qf);
+    case 10:  return Math3_1(args, df);
+    case 11:  return Math3_2(args, pf);
+    case 12:  return Math3_2(args, qf);
 
-    case 13:  return Math3(op, args, dgamma);
-    case 14:  return Math3(op, args, pgamma);
-    case 15:  return Math3(op, args, qgamma);
+    case 13:  return Math3_1(args, dgamma);
+    case 14:  return Math3_2(args, pgamma);
+    case 15:  return Math3_2(args, qgamma);
 
-    case 16:  return Math3(op, args, dlnorm);
-    case 17:  return Math3(op, args, plnorm);
-    case 18:  return Math3(op, args, qlnorm);
+    case 16:  return Math3_1(args, dlnorm);
+    case 17:  return Math3_2(args, plnorm);
+    case 18:  return Math3_2(args, qlnorm);
 
-    case 19:  return Math3(op, args, dlogis);
-    case 20:  return Math3(op, args, plogis);
-    case 21:  return Math3(op, args, qlogis);
+    case 19:  return Math3_1(args, dlogis);
+    case 20:  return Math3_2(args, plogis);
+    case 21:  return Math3_2(args, qlogis);
 
-    case 22:  return Math3(op, args, dnbinom);
-    case 23:  return Math3(op, args, pnbinom);
-    case 24:  return Math3(op, args, qnbinom);
+    case 22:  return Math3_1(args, dnbinom);
+    case 23:  return Math3_2(args, pnbinom);
+    case 24:  return Math3_2(args, qnbinom);
 
-    case 25:  return Math3(op, args, dnorm);
-    case 26:  return Math3(op, args, pnorm);
-    case 27:  return Math3(op, args, qnorm);
+    case 25:  return Math3_1(args, dnorm);
+    case 26:  return Math3_2(args, pnorm);
+    case 27:  return Math3_2(args, qnorm);
 
-    case 28:  return Math3(op, args, dunif);
-    case 29:  return Math3(op, args, punif);
-    case 30:  return Math3(op, args, qunif);
+    case 28:  return Math3_1(args, dunif);
+    case 29:  return Math3_2(args, punif);
+    case 30:  return Math3_2(args, qunif);
 
-    case 31:  return Math3(op, args, dweibull);
-    case 32:  return Math3(op, args, pweibull);
-    case 33:  return Math3(op, args, qweibull);
+    case 31:  return Math3_1(args, dweibull);
+    case 32:  return Math3_2(args, pweibull);
+    case 33:  return Math3_2(args, qweibull);
 
-    case 34:  return Math3(op, args, dnchisq);
-    case 35:  return Math3(op, args, pnchisq);
+    case 34:  return Math3_1(args, dnchisq);
+    case 35:  return Math3_2(args, pnchisq);
 #ifdef UNIMP
-    case 36:  return Math3(op, args, qnchisq);
+    case 36:  return Math3_2(args, qnchisq);
 #endif
 
 #ifdef UNIMP
-    case 37:  return Math3(op, args, dnt);
+    case 37:  return Math3_1(args, dnt);
 #endif
-    case 38:  return Math3(op, args, pnt);
+    case 38:  return Math3_2(args, pnt);
 #ifdef UNIMP
-    case 39:  return Math3(op, args, qnt);
+    case 39:  return Math3_2(args, qnt);
 #endif
 
-    case 40:  return Math3(op, args, dwilcox);
-    case 41:  return Math3(op, args, pwilcox);
-    case 42:  return Math3(op, args, qwilcox);
+    case 40:  return Math3_1(args, dwilcox);
+    case 41:  return Math3_2(args, pwilcox);
+    case 42:  return Math3_2(args, qwilcox);
 
-    case 43:  return Math3(op, args, bessel_i);
-    case 44:  return Math3(op, args, bessel_k);
+    case 43:  return Math3(args, bessel_i);
+    case 44:  return Math3(args, bessel_k);
 
 
     default:
-	errorcall(call, "unimplemented real function");
+	errorcall(call, "unimplemented real function of 3 numeric arg.s");
     }
     return op;			/* never used; to keep -Wall happy */
 } /* do_math3() */
 
-#define mod_iterate4(n1,n2,n3,n4,i1,i2,i3,i4) for (i=i1=i2=i3=i4=0; i<n; \
-	 i1 = (++i1==n1) ? 0 : i1,\
-	 i2 = (++i2==n2) ? 0 : i2,\
-	 i3 = (++i3==n3) ? 0 : i3,\
-	 i4 = (++i4==n4) ? 0 : i4,\
-	 ++i)
+/* Mathematical Functions of Four (Real) Arguments */
 
-static SEXP math4(SEXP op, SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)())
+#define if_NA_Math4_set(y,a,b,c,d)			        	\
+	if      (ISNA (a)|| ISNA (b)|| ISNA (c)|| ISNA (d)) y = NA_REAL;\
+	else if (ISNAN(a)|| ISNAN(b)|| ISNAN(c)|| ISNAN(d)) y = R_NaN;
+
+#define mod_iterate4(n1,n2,n3,n4,i1,i2,i3,i4) for (i=i1=i2=i3=i4=0; i<n; \
+	i1 = (++i1==n1) ? 0 : i1,					\
+	i2 = (++i2==n2) ? 0 : i2,					\
+	i3 = (++i3==n3) ? 0 : i3,					\
+	i4 = (++i4==n4) ? 0 : i4,					\
+	++i)
+
+static SEXP math4(SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)())
 {
     SEXP sy;
     int i, ia, ib, ic, id, n, na, nb, nc, nd;
     double ai, bi, ci, di, *a, *b, *c, *d, *y;
 
-    if (!isNumeric(sa) || !isNumeric(sb) || !isNumeric(sc) || !isNumeric(sd))
-	errorcall(lcall, "Non-numeric argument to mathematical function");
+#define SETUP_Math4							\
+    if(!isNumeric(sa)|| !isNumeric(sb)|| !isNumeric(sc)|| !isNumeric(sd))\
+	errorcall(lcall, NON_NUM_MSG);					\
+									\
+    na = LENGTH(sa);							\
+    nb = LENGTH(sb);							\
+    nc = LENGTH(sc);							\
+    nd = LENGTH(sd);							\
+    if ((na == 0) || (nb == 0) || (nc == 0) || (nd == 0))		\
+	return(allocVector(REALSXP, 0));				\
+    n = na;								\
+    if (n < nb) n = nb;							\
+    if (n < nc) n = nc;							\
+    if (n < nd) n = nd;							\
+    PROTECT(sa = coerceVector(sa, REALSXP));				\
+    PROTECT(sb = coerceVector(sb, REALSXP));				\
+    PROTECT(sc = coerceVector(sc, REALSXP));				\
+    PROTECT(sd = coerceVector(sd, REALSXP));				\
+    PROTECT(sy = allocVector(REALSXP, n));				\
+    a = REAL(sa);							\
+    b = REAL(sb);							\
+    c = REAL(sc);							\
+    d = REAL(sd);							\
+    y = REAL(sy);							\
+    naflag = 0
 
-    na = LENGTH(sa);
-    nb = LENGTH(sb);
-    nc = LENGTH(sc);
-    nd = LENGTH(sd);
-    if ((na == 0) || (nb == 0) || (nc == 0) || (nd == 0))
-	return(allocVector(REALSXP, 0));
-    n = na;
-    if (n < nb) n = nb;
-    if (n < nc) n = nc;
-    if (n < nd) n = nd;
-    PROTECT(sa = coerceVector(sa, REALSXP));
-    PROTECT(sb = coerceVector(sb, REALSXP));
-    PROTECT(sc = coerceVector(sc, REALSXP));
-    PROTECT(sd = coerceVector(sd, REALSXP));
-    PROTECT(sy = allocVector(REALSXP, n));
-    a = REAL(sa);
-    b = REAL(sb);
-    c = REAL(sc);
-    d = REAL(sd);
-    y = REAL(sy);
-    naflag = 0;
+    SETUP_Math4;
+
     mod_iterate4 (na, nb, nc, nd, ia, ib, ic, id) {
 	ai = a[ia];
 	bi = b[ib];
 	ci = c[ic];
 	di = d[id];
-	if (ISNAN(ai) || ISNAN(bi) || ISNAN(ci) || ISNAN(di)) {
-#ifdef IEEE_754
-	    y[i] = ai + bi + ci + di;
-#else
-	    y[i] = NA_REAL;
-#endif
-	}
+	if_NA_Math4_set(y[i], ai,bi,ci,di)
 	else {
 	    y[i] = MATH_CHECK(f(ai, bi, ci, di));
-	    if (ISNAN(y[i])) {
-#ifdef OLD
-		y[i] = NA_REAL;
-#endif
-		naflag = 1;
-	    }
+	    if (ISNAN(y[i])) naflag = 1;
 	}
     }
-    if (naflag)
-#ifdef IEEE_754
-	warningcall(lcall, "NaNs produced");
-#else
-	warningcall(lcall, "NAs produced");
-#endif
-    if (n == na) {
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
-    }
-    else if (n == nb) {
-	ATTRIB(sy) = duplicate(ATTRIB(sb));
-	OBJECT(sy) = OBJECT(sb);
-    }
-    else if (n == nc) {
-	ATTRIB(sy) = duplicate(ATTRIB(sc));
-	OBJECT(sy) = OBJECT(sc);
-    }
-    else if (n == nd) {
-	ATTRIB(sy) = duplicate(ATTRIB(sd));
-	OBJECT(sy) = OBJECT(sd);
-    }
-    UNPROTECT(5);
+
+#define FINISH_Math4				\
+    if(naflag)					\
+	warningcall(lcall, NA_MSG);		\
+						\
+    if (n == na) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
+	OBJECT(sy) = OBJECT(sa);		\
+    }						\
+    else if (n == nb) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
+	OBJECT(sy) = OBJECT(sb);		\
+    }						\
+    else if (n == nc) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
+	OBJECT(sy) = OBJECT(sc);		\
+    }						\
+    else if (n == nd) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sd));	\
+	OBJECT(sy) = OBJECT(sd);		\
+    }						\
+    UNPROTECT(5)
+
+    FINISH_Math4;
+
     return sy;
 } /* math4() */
 
-/* Mathematical Functions of Four (Real) Arguments */
+static SEXP math4_1(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP sI, double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, ic, id, n, na, nb, nc, nd;
+    double ai, bi, ci, di, *a, *b, *c, *d, *y;
+    int i_1;
 
-#define Math4(op, A, FUN) math4(op, CAR(A), CADR(A), CADDR(A), CADDDR(A), FUN);
+    SETUP_Math4;
+    i_1 = asInteger(sI);
+
+    mod_iterate4 (na, nb, nc, nd, ia, ib, ic, id) {
+	ai = a[ia];
+	bi = b[ib];
+	ci = c[ic];
+	di = d[id];
+	if_NA_Math4_set(y[i], ai,bi,ci,di)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, ci, di, i_1));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+    FINISH_Math4;
+    return sy;
+} /* math4_1() */
+
+static SEXP math4_2(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP sI, SEXP sJ,
+		    double (*f)())
+{
+    SEXP sy;
+    int i, ia, ib, ic, id, n, na, nb, nc, nd;
+    double ai, bi, ci, di, *a, *b, *c, *d, *y;
+    int i_1, i_2;
+
+    SETUP_Math4;
+    i_1 = asInteger(sI);
+    i_2 = asInteger(sJ);
+
+    mod_iterate4 (na, nb, nc, nd, ia, ib, ic, id) {
+	ai = a[ia];
+	bi = b[ib];
+	ci = c[ic];
+	di = d[id];
+	if_NA_Math4_set(y[i], ai,bi,ci,di)
+	else {
+	    y[i] = MATH_CHECK(f(ai, bi, ci, di, i_1, i_2));
+	    if (ISNAN(y[i])) naflag = 1;
+	}
+    }
+    FINISH_Math4;
+    return sy;
+} /* math4_2() */
+
+
+#define CAD3R	CADDDR
+/* This is not (yet) in Rinternals.h : */
+#define CAD5R(e)	CAR(CDR(CDR(CDR(CDR(CDR(e))))))
+
+#define Math4(A, FUN)   math4  (CAR(A), CADR(A), CADDR(A), CAD3R(A), FUN)
+#define Math4_1(A, FUN) math4_1(CAR(A), CADR(A), CADDR(A), CAD3R(A), CAD4R(A), \
+				FUN)
+#define Math4_2(A, FUN) math4_2(CAR(A), CADR(A), CADDR(A), CAD3R(A), CAD4R(A), \
+				CAD5R(A), FUN)
+
 
 SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1365,76 +1633,96 @@ SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
     lcall = call;
 
     switch (PRIMVAL(op)) {
-    case  1: return Math4(op, args, dhyper);
-    case  2: return Math4(op, args, phyper);
-    case  3: return Math4(op, args, qhyper);
-    case  4: return Math4(op, args, dnbeta);
-    case  5: return Math4(op, args, pnbeta);
+
+	/* Completely dummy for -Wall -- math4() at all! : */
+    case -99: return Math4(args, dhyper);
+
+    case  1: return Math4_1(args, dhyper);
+    case  2: return Math4_2(args, phyper);
+    case  3: return Math4_2(args, qhyper);
+
+    case  4: return Math4_1(args, dnbeta);
+    case  5: return Math4_2(args, pnbeta);
 #ifdef UNIMP
-    case  6: return Math4(op, args, qnbeta);
+    case  6: return Math4_2(args, qnbeta);
 #endif
 #ifdef UNIMP
-    case  7: return Math4(op, args, dnf);
+    case  7: return Math4_1(args, dnf);
 #endif
-    case  8: return Math4(op, args, pnf);
+    case  8: return Math4_2(args, pnf);
 #ifdef UNIMP
-    case  9: return Math4(op, args, qnf);
+    case  9: return Math4_2(args, qnf);
 #endif
 #ifdef UNIMP
-    case 10: return Math4(op, args, dtukey);
+    case 10: return Math4_1(args, dtukey);
 #endif
-    case 11: return Math4(op, args, ptukey);
-    case 12: return Math4(op, args, qtukey);
+    case 11: return Math4_2(args, ptukey);
+    case 12: return Math4_2(args, qtukey);
     default:
-	errorcall(call, "unimplemented real function");
+	errorcall(call, "unimplemented real function of 4 numeric arg.s");
     }
     return op;			/* never used; to keep -Wall happy */
 }
 
-#ifdef WHEN_MATH5_IS_THERE
 
-#define mod_iterate5(n1,n2,n3,n4,n5, i1,i2,i3,i4,i5) \
- for (i=i1=i2=i3=i4=i5=0; i<n; \
-(++i1, (i1==n1)&&(i1=0), ++i2, (i2==n2)&&(i2=0),\
- ++i3, (i3==n3)&&(i3=0), ++i4, (i4==n4)&&(i4=0),\
- ++i5, (i5==n5)&&(i5=0), ++i))
+#ifdef LTRUE/* WHEN_MATH5_IS_THERE */
 
-static SEXP math5(SEXP op, SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se,
-		  double (*f)())
+/* Mathematical Functions of Five (Real) Arguments */
+
+#define if_NA_Math5_set(y,a,b,c,d,e)					\
+	if     (ISNA (a)|| ISNA (b)|| ISNA (c)|| ISNA (d)|| ISNA (e)) 	\
+    		y = NA_REAL;						\
+	else if(ISNAN(a)|| ISNAN(b)|| ISNAN(c)|| ISNAN(d)|| ISNAN(e))	\
+		y = R_NaN;
+
+#define mod_iterate5(n1,n2,n3,n4,n5, i1,i2,i3,i4,i5)	\
+ for (i=i1=i2=i3=i4=i5=0; i<n;				\
+	i1 = (++i1==n1) ? 0 : i1,			\
+	i2 = (++i2==n2) ? 0 : i2,			\
+	i3 = (++i3==n3) ? 0 : i3,			\
+	i4 = (++i4==n4) ? 0 : i4,			\
+	i5 = (++i5==n5) ? 0 : i5,			\
+	++i)
+
+static SEXP math5(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se, double (*f)())
 {
     SEXP sy;
     int i, ia, ib, ic, id, ie, n, na, nb, nc, nd, ne;
     double ai, bi, ci, di, ei, *a, *b, *c, *d, *e, *y;
 
-    if (!isNumeric(sa) || !isNumeric(sb) || !isNumeric(sc) ||
-	!isNumeric(sd) || !isNumeric(se))
-	errorcall(lcall, "Non-numeric argument to mathematical function");
+#define SETUP_Math5							\
+    if (!isNumeric(sa) || !isNumeric(sb) || !isNumeric(sc) ||		\
+	!isNumeric(sd) || !isNumeric(se))				\
+	errorcall(lcall, NON_NUM_MSG);					\
+									\
+    na = LENGTH(sa);							\
+    nb = LENGTH(sb);							\
+    nc = LENGTH(sc);							\
+    nd = LENGTH(sd);							\
+    ne = LENGTH(se);							\
+    if ((na == 0) || (nb == 0) || (nc == 0) || (nd == 0) || (ne == 0))	\
+	return(allocVector(REALSXP, 0));				\
+    n = na;								\
+    if (n < nb) n = nb;							\
+    if (n < nc) n = nc;							\
+    if (n < nd) n = nd;							\
+    if (n < ne) n = ne;		/* n = max(na,nb,nc,nd,ne) */		\
+    PROTECT(sa = coerceVector(sa, REALSXP));				\
+    PROTECT(sb = coerceVector(sb, REALSXP));				\
+    PROTECT(sc = coerceVector(sc, REALSXP));				\
+    PROTECT(sd = coerceVector(sd, REALSXP));				\
+    PROTECT(se = coerceVector(se, REALSXP));				\
+    PROTECT(sy = allocVector(REALSXP, n));				\
+    a = REAL(sa);							\
+    b = REAL(sb);							\
+    c = REAL(sc);							\
+    d = REAL(sd);							\
+    e = REAL(se);							\
+    y = REAL(sy);							\
+    naflag = 0
 
-    na = LENGTH(sa);
-    nb = LENGTH(sb);
-    nc = LENGTH(sc);
-    nd = LENGTH(sd);
-    ne = LENGTH(se);
-    if ((na == 0) || (nb == 0) || (nc == 0) || (nd == 0) || (ne == 0))
-	return(allocVector(REALSXP, 0));
-    n = na;
-    if (n < nb) n = nb;
-    if (n < nc) n = nc;
-    if (n < nd) n = nd;
-    if (n < ne) n = ne;		/* n = max(na,nb,nc,nd,ne) */
-    PROTECT(sa = coerceVector(sa, REALSXP));
-    PROTECT(sb = coerceVector(sb, REALSXP));
-    PROTECT(sc = coerceVector(sc, REALSXP));
-    PROTECT(sd = coerceVector(sd, REALSXP));
-    PROTECT(se = coerceVector(se, REALSXP));
-    PROTECT(sy = allocVector(REALSXP, n));
-    a = REAL(sa);
-    b = REAL(sb);
-    c = REAL(sc);
-    d = REAL(sd);
-    e = REAL(se);
-    y = REAL(sy);
-    naflag = 0;
+    SETUP_Math5;
+
     mod_iterate5 (na, nb, nc, nd, ne,
 		  ia, ib, ic, id, ie) {
 	ai = a[ia];
@@ -1442,57 +1730,46 @@ static SEXP math5(SEXP op, SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se,
 	ci = c[ic];
 	di = d[id];
 	ei = e[ie];
-	if (ISNAN(ai) || ISNAN(bi) || ISNAN(ci) || ISNAN(di) || ISNAN(ei)) {
-#ifdef IEEE_754
-	    y[i] = ai + bi + ci + di + ei;
-#else
-	    y[i] = NA_REAL;
-#endif
-	}
+	if_NA_Math5_set(y[i], ai,bi,ci,di,ei)
 	else {
 	    y[i] = MATH_CHECK(f(ai, bi, ci, di, ei));
-	    if (ISNAN(y[i])) {
-#ifdef OLD
-		y[i] = NA_REAL;
-#endif
-		naflag = 1;
-	    }
+	    if (ISNAN(y[i])) naflag = 1;
 	}
     }
-    if (naflag)
-#ifdef IEEE_754
-	warningcall(lcall, "NaNs produced");
-#else
-	warningcall(lcall, "NAs produced");
-#endif
-    if (n == na) {
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
-    }
-    else if (n == nb) {
-	ATTRIB(sy) = duplicate(ATTRIB(sb));
-	OBJECT(sy) = OBJECT(sb);
-    }
-    else if (n == nc) {
-	ATTRIB(sy) = duplicate(ATTRIB(sc));
-	OBJECT(sy) = OBJECT(sc);
-    }
-    else if (n == nd) {
-	ATTRIB(sy) = duplicate(ATTRIB(sd));
-	OBJECT(sy) = OBJECT(sd);
-    }
-    else if (n == ne) {
-	ATTRIB(sy) = duplicate(ATTRIB(se));
-	OBJECT(sy) = OBJECT(se);
-    }
-    UNPROTECT(6);
+
+#define FINISH_Math5				\
+    if(naflag)					\
+	warningcall(lcall, NA_MSG);		\
+						\
+    if (n == na) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
+	OBJECT(sy) = OBJECT(sa);		\
+    }						\
+    else if (n == nb) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
+	OBJECT(sy) = OBJECT(sb);		\
+    }						\
+    else if (n == nc) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
+	OBJECT(sy) = OBJECT(sc);		\
+    }						\
+    else if (n == nd) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(sd));	\
+	OBJECT(sy) = OBJECT(sd);		\
+    }						\
+    else if (n == ne) {				\
+	ATTRIB(sy) = duplicate(ATTRIB(se));	\
+	OBJECT(sy) = OBJECT(se);		\
+    }						\
+    UNPROTECT(6)
+
+    FINISH_Math5;
+
     return sy;
 } /* math5() */
 
-/* Mathematical Functions of Five (Real) Arguments */
-
-#define Math5(op, A, FUN) \
-	math5(op, CAR(A), CADR(A), CADDR(A), CADDDR(A), CAD4R(A), FUN);
+#define Math5(A, FUN) \
+	math5(CAR(A), CADR(A), CADDR(A), CAD3R(A), CAD4R(A), FUN);
 
 SEXP do_math5(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1500,28 +1777,15 @@ SEXP do_math5(SEXP call, SEXP op, SEXP args, SEXP env)
     lcall = call;
 
     switch (PRIMVAL(op)) {
-    case  1: return Math5(op, args, dhyper);
-    case  2: return Math5(op, args, phyper);
-    case  3: return Math5(op, args, qhyper);
-    case  4: return Math5(op, args, dnbeta);
-    case  5: return Math5(op, args, pnbeta);
+
+	/* Completely dummy for -Wall -- use math5() at all! : */
+    case -99: return Math5(args, dhyper);
 #ifdef UNIMP
-    case  6: return Math5(op, args, qnbeta);
+    case  2: return Math5(args, p...);
+    case  3: return Math5(args, q...);
 #endif
-#ifdef UNIMP
-    case  7: return Math5(op, args, dnf);
-#endif
-    case  8: return Math5(op, args, pnf);
-#ifdef UNIMP
-    case  9: return Math5(op, args, qnf);
-#endif
-#ifdef UNIMP
-    case 10: return Math5(op, args, dtukey);
-#endif
-    case 11: return Math5(op, args, ptukey);
-    case 12: return Math5(op, args, qtukey);
     default:
-	errorcall(call, "unimplemented real function");
+	errorcall(call, "unimplemented real function of 5 numeric arg.s");
     }
     return op;			/* never used; to keep -Wall happy */
 } /* do_math5() */

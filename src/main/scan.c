@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -61,17 +62,47 @@ static int ConsoleGetchar()
 
 static int save = 0;
 static int sepchar = 0;
+static int decchar = '.';
+static char *quoteset;
+static char *quotesave = NULL;
 static FILE *fp;
 static int ttyflag;
 static int quiet;
 static SEXP NAstrings;
+
+static char convbuf[100];
+
+static double Strtod (const char *nptr, char **endptr) 
+{
+    if (decchar == '.')
+	return strtod(nptr, endptr);
+    else { 
+	/* jump through some hoops... This is a kludge! 
+	   Should most likely use regexps instead */
+
+	char *end;
+	double x;
+	int i;
+
+	strncpy(convbuf, nptr, 100);
+	for ( i = 0 ; i < 100 ; i++ )
+	    /* switch '.' and decchar around */
+	    if (convbuf[i] == decchar)
+		convbuf[i] = '.';
+	    else if (convbuf[i] == '.')
+		convbuf[i] = decchar;
+	x = strtod(convbuf, &end);
+	*endptr = (char *) nptr + (end - convbuf);
+	return x;
+    } 
+}	
 
 static Rcomplex strtoc(const char *nptr, char **endptr) {
     Rcomplex z;
     double x, y;
     char *s, *endp;
 
-    x = strtod(nptr, &endp);
+    x = Strtod(nptr, &endp);
     if (isBlankString(endp)) {
 	z.r = x; z.i = 0;
     }
@@ -81,7 +112,7 @@ static Rcomplex strtoc(const char *nptr, char **endptr) {
     }
     else {
 	s = endp;
-	y = strtod(s, &endp);
+	y = Strtod(s, &endp);
 	if (*endp == 'i') {
 	    z.r = x; z.i = y;
 	    endp++;
@@ -125,7 +156,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 	    filled = c;
 	    goto donefill;
 	}
-	if (type == STRSXP && (c == '\"' || c == '\'')) {
+	if (type == STRSXP && strchr(quoteset, c)) {
 	    quote = c;
 	    while ((c = scanchar()) != R_EOF && c != quote) {
 		if (bufp >= &buffer[MAXELTSIZE - 2])
@@ -172,6 +203,28 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 			    filled=c;
 			    goto donefill;
 			}
+		/* CSV style quoted string handling */
+		if (type == STRSXP && strchr(quoteset, c)) {
+		    quote = c;
+		inquote:
+		    while ((c = scanchar()) != R_EOF && c != quote) {
+			if (bufp >= &buffer[MAXELTSIZE - 2])
+			    continue;
+			*bufp++ = c;
+		    }
+		    c = scanchar();
+		    if (c == quote) {
+			if (bufp < &buffer[MAXELTSIZE - 2]) 
+			    *bufp++ = quote;
+			goto inquote; /* FIXME: Ick! Clean up logic */
+		    }
+		    if (c==sepchar || c=='\n' || c=='\r' || c==R_EOF){
+			filled=c;
+			goto donefill;
+		    }
+		    else
+			unscanchar(c);
+		}
 		if (bufp >= &buffer[MAXELTSIZE - 2])
 		    continue;
 		if (!strip || bufp != &buffer[0] || !isspace(c))
@@ -233,7 +286,7 @@ static void extractItem(char *buffer, SEXP ans, int i)
 	if (isNAstring(buffer))
 	    REAL(ans)[i] = NA_REAL;
 	else {
-	    REAL(ans)[i] = strtod(buffer, &endp);
+	    REAL(ans)[i] = Strtod(buffer, &endp);
 	    if (!isBlankString(endp))
 		expected("a real", buffer);
 	}
@@ -485,6 +538,8 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     return ans;
 }
 
+/* FIXME: These two macros are used only two times each. Silly. --pd */
+
 #define scan_sep_check				\
     if (isString(sep) || isNull(sep)) {		\
 	if (length(sep) == 0)			\
@@ -505,7 +560,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 
 SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, file, sep, what, stripwhite;
+    SEXP ans, file, sep, what, stripwhite, dec, quotes;
     int i, c, nlines, nmax, nskip, flush;
     char *filename;
 
@@ -515,13 +570,14 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     what = CAR(args);		   args = CDR(args);
     nmax = asInteger(CAR(args));   args = CDR(args);
     sep = CAR(args);		   args = CDR(args);
+    dec = CAR(args);		   args = CDR(args);
+    quotes = CAR(args);		   args = CDR(args);
     nskip = asInteger(CAR(args));  args = CDR(args);
     nlines = asInteger(CAR(args)); args = CDR(args);
     NAstrings = CAR(args);	   args = CDR(args);
     flush = asLogical(CAR(args));  args = CDR(args);
     stripwhite = CAR(args);	   args = CDR(args);
-    quiet = asLogical(CAR(args));
-
+    quiet = asLogical(CAR(args)); 
     if (quiet == NA_LOGICAL)			quiet = 0;
     if (nskip < 0 || nskip == NA_INTEGER)	nskip = 0;
     if (nlines < 0 || nlines == NA_INTEGER)	nlines = 0;
@@ -535,6 +591,29 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, "invalid na.strings value");
 
     scan_sep_check
+
+    if (isString(dec) || isNull(dec)) {		
+	if (length(dec) == 0)
+	    decchar = '.';	
+	else		
+	    decchar = CHAR(STRING(dec)[0])[0];
+    }						
+    else					
+	errorcall(call, "invalid decimal separator");
+
+    if (isString(quotes)) {
+	/* This appears to be necessary to protect quoteset against GC */
+	quoteset = CHAR(STRING(quotes)[0]);
+	quotesave = realloc(quotesave, strlen(quoteset) + 1);
+	if (!quotesave)
+	    errorcall(call, "out of memory");
+	strcpy(quotesave, quoteset);
+	quoteset = quotesave;
+    } else if (isNull(quotes)) 
+	quoteset = ""; 
+    else
+	errorcall(call, "invalid quote symbol set");
+
 
     filename = NULL;
     if (isValidString(file)) {
@@ -577,8 +656,8 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, file, sep, bns;
-    int nfields, nskip, i, c;
+    SEXP ans, file, sep,  bns, quotes;
+    int nfields, nskip, i, c, inquote, quote = 0;
     int blocksize, nlines;
     char *filename = "";	/* -Wall */
 
@@ -586,11 +665,26 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     file = CAR(args);	args = CDR(args);
     sep = CAR(args);	args = CDR(args);
+    quotes = CAR(args);	 args = CDR(args);
     nskip = asInteger(CAR(args));
 
     if (nskip < 0 || nskip == NA_INTEGER) nskip = 0;
 
     scan_sep_check
+
+    if (isString(quotes)) {
+	/* This appears to be necessary to protect quoteset against GC */
+	quoteset = CHAR(STRING(quotes)[0]);
+	quotesave = realloc(quotesave, strlen(quoteset) + 1);
+	if (!quotesave)
+	    errorcall(call, "out of memory");
+	strcpy(quotesave, quoteset);
+	quoteset = quotesave;
+    } else if (isNull(quotes)) 
+	quoteset = ""; 
+    else
+	errorcall(call, "invalid quote symbol set");
+
 
     if (isValidStringF(file)) {
 	filename = CHAR(STRING(file)[0]);
@@ -606,6 +700,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(ans = allocVector(INTSXP, blocksize));
     nlines=0;
     nfields=0;
+    inquote = 0;
 
     save = 0;
 
@@ -622,6 +717,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		INTEGER(ans)[nlines] = nfields;
 		nlines++;
 		nfields = 0;
+		inquote = 0;
 	    }
 	    if (nlines == blocksize) {
 		bns = ans;
@@ -636,12 +732,22 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else if (sepchar) {
 	    if (nfields == 0)
 		nfields++;
-	    if (c == sepchar)
+	    if (inquote && (c == R_EOF || c == '\n')) {
+		fclose(fp);
+		errorcall(call, "string terminated by newline or EOF");
+	    }
+	    if (inquote && c == quote)
+		inquote = 0;
+	    else if (strchr(quoteset, c)) {
+		inquote = 1;
+		quote = c;
+	    }
+	    if (c == sepchar && !inquote)
 		nfields++;
 	}
 	else if (!isspace(c)) {
-	    if (c == '"' || c == '\'') {
-		int quote = c;
+	    if (strchr(quoteset, c)) {
+		quote = c;
 		while ((c=scanchar()) != quote) {
 		    if (c == R_EOF || c == '\n') {
 			fclose(fp);
@@ -690,7 +796,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP cvec, a, rval, dup, levs, dims, names;
+    SEXP cvec, a, rval, dup, levs, dims, names, dec;
     int i, j, len, numeric, asIs;
     char *endp, *tmp;
 
@@ -705,6 +811,15 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
     asIs = asLogical(CADDR(args));
     if (asIs == NA_LOGICAL) asIs = 0;
+
+    dec = CADDDR(args);
+
+    if (isString(dec) || isNull(dec)) {		
+	if (length(dec) == 0)
+	    decchar = '.';	
+	else		
+	    decchar = CHAR(STRING(dec)[0])[0];
+    }
 
     cvec = CAR(args);
     len = length(cvec);
@@ -722,17 +837,14 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(rval = allocVector(REALSXP, length(cvec)));
     for (i = 0; i < len; i++) {
 	tmp = CHAR(STRING(cvec)[i]);
-	if (isNAstring(tmp))
+	if (isNAstring(tmp) || strlen(tmp) == 0)
 	    REAL(rval)[i] = NA_REAL;
 	else {
-	    if (strlen(tmp) != 0) {
-		REAL(rval)[i] = strtod(tmp, &endp);
-		if (!isBlankString(endp)) {
-		    numeric = 0;
-		    break;
-		}
+	    REAL(rval)[i] = Strtod(tmp, &endp);
+	    if (!isBlankString(endp)) {
+		numeric = 0;
+		break;
 	    }
-	    else errorcall(call,"null string encountered");
 	}
     }
     if (!numeric) {
@@ -842,7 +954,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
     while (isspace((int)*bufp)) bufp++;
     first = LENGTH(CAR(args)) + 1;
     if (isdigit((int)*bufp)) {
-	first = strtod(buffer, NULL);
+	first = Strtod(buffer, NULL);
     }
     else {
 	for (j = 0; j < LENGTH(CAR(args)); j++) {

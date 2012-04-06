@@ -6,11 +6,11 @@
    */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include <math.h>
-#include "S.h"
+#include "R.h"
 
 #undef max
 #undef min

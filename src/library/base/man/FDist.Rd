@@ -1,32 +1,38 @@
 \name{FDist}
-\title{The F Distribution}
-\usage{
-df(x, df1, df2)
-pf(q, df1, df2, ncp=0)
-qf(p, df1, df2)
-rf(n, df1, df2)
-}
 \alias{df}
 \alias{pf}
 \alias{qf}
 \alias{rf}
+\title{The F Distribution}
+\description{
+  Density, distribution function, quantile function and random
+  generation for the F distribution with \code{df1} and \code{df2}
+  degrees of freedom (and optional non-centrality parameter
+  \code{ncp}).
+}
+\usage{
+df(x, df1, df2, log = FALSE)
+pf(q, df1, df2, ncp=0, lower.tail = TRUE, log.p = FALSE)
+qf(p, df1, df2,        lower.tail = TRUE, log.p = FALSE)
+rf(n, df1, df2)
+}
 \arguments{
-\item{x,q}{vector of quantiles.}
-\item{p}{vector of probabilities.}
-\item{n}{number of observations to generate.}
-\item{df1,df2}{degrees of freedom.}
-\item{ncp}{non-centrality parameter.}
+  \item{x, q}{vector of quantiles.}
+  \item{p}{vector of probabilities.}
+  \item{n}{number of observations to generate.}
+  \item{df1, df2}{degrees of freedom.}
+  \item{ncp}{non-centrality parameter.}
+  \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
+  \item{lower.tail}{logical; if TRUE (default), probabilities are
+    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
 }
 \value{
-  These functions provide information about the F distribution with
-  \code{df1} and \code{df2} degrees of freedom (and optional non-centrality
-  parameter \code{ncp}).
   \code{df} gives the density,
   \code{pf} gives the distribution function
-  \code{qf} gives the quantile function
-  and
+  \code{qf} gives the quantile function, and
   \code{rf} generates random deviates.
-
+}
+\details{
   The F distribution with \code{df1 =} \eqn{n_1}{n1} and \code{df2 =}
   \eqn{n_2}{n2} degrees of freedom has density
   \deqn{

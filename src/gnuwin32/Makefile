@@ -3,8 +3,8 @@ include MkRules
 HELP=YES
 WINHELP=BOTH # NO, CHM, BOTH
 
-PACKAGES=base eda lqs modreg mva nls splines stepfun ts
-RPREFIX=rw0901
+PACKAGES=base ctest eda lqs modreg mva nls splines stepfun ts
+RPREFIX=rw0990
 
 RHOME=$(shell cd ../..; pwd)# must be absolute path
 RLIB=$(RHOME)/library
@@ -24,7 +24,7 @@ R-DLLLIBS=-L. $(FLIBS) -lwsock32 -lcomctl32
 SOURCES=$(wildcard *.c *.f)
 OBJS=$(foreach i, $(SOURCES), $(basename $i).o)
 MAINLIBS=libmain.a libappl.a libmath.a
-EXTRALIBS=rx.a ga.a gl.a xdr.a em.a
+EXTRALIBS=ga.a gl.a xdr.a em.a
 
 LIBFILES=$(foreach i, $(PACKAGES), ../../library/$i)
 PKGS=$(foreach i, $(PACKAGES), pkg-$i)
@@ -34,7 +34,7 @@ PKGCLEAN=$(foreach i, $(PACKAGES), pkgclean-$i)
 
 all: rbuild rdemo rpackage
 
-CFLAGS=$(OPTFLAGS) -I../include -I.
+CFLAGS=$(OPTFLAGS) -I../include -I../include/R_ext -I. -DHAVE_CONFIG_H
 FFLAGS=$(OPTFLAGS)
 
 rbuild: fixfiles makeMakedeps rlibs ../../bin/R.dll libR.a CHTML \
@@ -52,7 +52,6 @@ rlibs:
 	$(MAKE) -C ../appl OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
 	$(MAKE) -C ../main OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
 	$(MAKE) -C ../nmath OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
-	$(MAKE) -C ./regex
 	$(MAKE) -C ./graphapp
 	$(MAKE) -C ./getline
 	$(MAKE) -C ./xdr
@@ -86,7 +85,7 @@ R.a: $(OBJS)
 
 
 # R.dll exports all global symbols BUT import library (libR.a)
-# only (all functions) + (global vars listed  in exported-vars))
+# only (all functions) + (global vars listed in exported-vars))
 
 libR.a:  R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def R.exp --output-lib libR.a
@@ -104,7 +103,7 @@ R.exp1: R.a $(MAINLIBS) $(EXTRALIBS) exported-vars
 
 # avoid building globalvar.h with errors
 ../include/globalvar.h: exported-vars
-	$(AWK) -- '//{if ($$1 != "") print "#define " $$1 " (*__imp_" $$1 ")"}' \
+	$(AWK) -- '//{if ($$1 != "") print "#define " $$1 " (*_imp__" $$1 ")"}' \
 	           exported-vars > ../include/globalvar.h
 
 CHTML:
@@ -174,10 +173,9 @@ distclean veryclean: clean
 
 cleanwin:
 	$(RM) *.o *.exe *.dll *.a *~ \#*\# *.zip R.def R.exp1 \
-	.RData .Rhistory Makedeps *.d
+	   .RData .Rhistory Makedeps *.d
 	$(MAKE) -C graphapp clean
 	$(MAKE) -C fixed clean
-	$(MAKE) -C regex clean
 	$(MAKE) -C getline clean
 	$(MAKE) -C help clean
 	$(MAKE) -C front-ends clean
@@ -212,7 +210,8 @@ bindist:
 	zip docs.zip $(RPREFIX)/*
 	unzip -a -o docs.zip
 	$(RM) docs.zip
-	$(RM) -rf $(RPREFIX)b.zip $(RPREFIX)h.zip $(RPREFIX)w.zip $(RPREFIX)l.zip
+	$(RM) -f $(RPREFIX)b1.zip $(RPREFIX)b2.zip $(RPREFIX)h.zip \
+	   $(RPREFIX)w.zip $(RPREFIX)l.zip $(RPREFIX)ch.zip
 	$(RM) anindex.zip
 	zip -mrX anindex.zip $(RPREFIX)/library/*/help/AnIndex $(RPREFIX)/library/*/help/00Titles
 	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help 
@@ -220,7 +219,7 @@ bindist:
 	$(RM) anindex.zip
 	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
 	-zip -rm9X $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml  $(RPREFIX)/bin/Rchtml.dll
-	$(RM)  $(RPREFIX)/library/*/winhlp/*.GID
+	$(RM) $(RPREFIX)/library/*/winhlp/*.GID
 	-zip -rm9X $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
 	zip -rm9X $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
 	$(RM) -r $(RPREFIX)/doc
@@ -249,25 +248,29 @@ srcdist:
 
 
 #taken from ../include/Makefile.in
-SRC_HEADERS = Applic.h Arith.h Blas.h Complex.h Error.h Errormsg.h \
-	Fortran.h Linpack.h Mathlib.h Memory.h PrtUtil.h Random.h \
-	Rdefines.h Rinternals.h S.h S_compat.h Utils.h f2c.h
+SRC_HEADERS = R.h S.h Rdefines.h Rinternals.h S_compat.h
 OBJ_HEADERS = Rconfig.h Rversion.h
-GW32_HEADERS = globalvar.h psignal.h
+GW32_HEADERS = globalvar.h # psignal.h
 
 packagedist:
 	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
-	$(MKDIR) $(RPREFIX) $(RPREFIX)/src $(RPREFIX)/src/include 
-	$(MKDIR) $(RPREFIX)/src/library $(RPREFIX)/src/gnuwin32 
-	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll $(RPREFIX)/src/gnuwin32
+	$(MKDIR) $(RPREFIX) $(RPREFIX)/etc $(RPREFIX)/src \
+	  $(RPREFIX)/src/include $(RPREFIX)/src/library \
+	  $(RPREFIX)/src/gnuwin32 $(RPREFIX)/src/gnuwin32/fixed
+	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll \
+	  $(RPREFIX)/src/gnuwin32
 	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
-	$(MKDIR) $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) fixed/dobundle.pl $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
-	$(RM) $(RPREFIX)/src/gnuwin32/help/*.c
+	$(RM) $(RPREFIX)/src/gnuwin32/help/*.c \
+	  $(RPREFIX)/src/gnuwin32/help/MkChmDll
 	$(MAKE) -C $(RPREFIX)/src/gnuwin32/help clean
-	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS) $(GW32_HEADERS),../include/$i) $(RPREFIX)/src/include
+	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS) $(GW32_HEADERS), \
+	  ../include/$i) $(RPREFIX)/src/include
+	$(CP) -pr ../include/R_ext $(RPREFIX)/src/include
 	$(CP) readme.packages $(RPREFIX)
+	$(CP) ../../etc/Rdconvlib.pl ../../etc/buildlib.pl \
+	   ../../etc/html-layout.pl $(RPREFIX)/etc
 	zip -rX $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
 
@@ -276,11 +279,11 @@ distribution: bindist packagedist docsdist
 
 # tests
 check: all test
-test: stricttests pkgtests
+test: test-Specific pkgtests
 
-stricttests:
+test-Specific:
 	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests clean
-	-@$(MAKE) -k -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests
+	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests
 
 PKGS-CHK=$(foreach i, $(PACKAGES), pkgcheck-$i)
 pkgtests: $(PKGS-CHK)
@@ -300,13 +303,18 @@ bundle-%:
 docs manuals:
 	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win clean
 	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win R_PKGS="$(PACKAGES)"
-	$(RM) $(RHOME)/library/base/latex/*.tex
+#	$(RM) $(RHOME)/library/base/latex/*.tex
+	@$(MAKE) ziponly-base
 
 docsdist:
 	$(RM) -rf $(RPREFIX)
-	$(MKDIR) $(RPREFIX) $(RPREFIX)/doc $(RPREFIX)/doc/manuals 
-	$(CP) -pr $(RHOME)/doc/manual/*.pdf $(RPREFIX)/doc/manuals
-	zip -rm9X $(RPREFIX)d.zip $(RPREFIX)
+	$(RM) -f $(RPREFIX)d1.zip $(RPREFIX)d2.zip
+	$(MKDIR) $(RPREFIX) $(RPREFIX)/doc $(RPREFIX)/doc/manual
+	$(CP) -pr $(RHOME)/doc/manual/*.pdf $(RPREFIX)/doc/manual
+	zip -rm9X $(RPREFIX)d2.zip $(RPREFIX)/doc/manual/refman.pdf
+	zip -rm9X $(RPREFIX)d1.zip $(RPREFIX)/doc/manual \
+	  -x $(RPREFIX)/doc/manual/R-FAQ.pdf
+	$(RM) -rf $(RPREFIX)
 
 
 # Dependencies

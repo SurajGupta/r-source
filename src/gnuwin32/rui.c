@@ -18,12 +18,15 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 /* R user interface based on GraphApp */
 #include "Defn.h"
+#undef append /* defined by graphapp/internal.h */
 #include <stdio.h>
+/* the user menu code looks at the internal structure */
+#include "graphapp/internal.h"
 #include "graphapp/ga.h"
 #include "graphapp/stdimg.h"
 #include "console.h"
@@ -43,9 +46,10 @@ extern int ConsoleAcceptCmd;
 static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mpaste, mcopy, 
     mcopypaste, mlazy;
-static menuitem mls, mrm, msearch, mhelp, /*mmanmain,*/ mmanref, 
+static menuitem mls, mrm, msearch, mhelp, mmanintro, mmanref, 
     mmanext, mapropos, mhelpstart;
-static menu m;
+static int lhelpstart, lmanintro, lmanref, lmanext;
+static menu m, mman;
 static char cmd[1024];
 
 /* menu callbacks */
@@ -91,10 +95,11 @@ static void menudisplay(control m)
     show(RConsole);
     if (fn) {
 	fixslash(fn);
-	sprintf(cmd, 
+/*	sprintf(cmd, 
 		"file.show(\"%s\", title=\"File\", header=\"%s\")",
 		fn, fn);
-	consolecmd(RConsole, cmd);
+		consolecmd(RConsole, cmd);*/
+	internal_ShowFile(fn, fn);
     }
 }
 
@@ -235,19 +240,19 @@ static void menuhelp(control m)
     }
 }
 
-/*static void menumainman(control m)
+static void menumainman(control m)
 {
-    consolecmd(RConsole, "shell.exec('doc/manual/Manual.pdf')");
-}*/
+    internal_shellexec("doc/manual/R-intro.pdf");
+}
 
 static void menumainref(control m)
 {
-    consolecmd(RConsole, "shell.exec('doc/manual/refman.pdf')");
+    internal_shellexec("doc/manual/refman.pdf");
 }
 
 static void menumainext(control m)
 {
-    consolecmd(RConsole, "shell.exec('doc/manual/R-exts.pdf')");
+    internal_shellexec("doc/manual/R-exts.pdf");
 }
 
 static void menuapropos(control m)
@@ -268,9 +273,10 @@ static void menuapropos(control m)
 
 static void menuhelpstart(control m)
 {
-    if (!ConsoleAcceptCmd) return;
+/*    if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole, "help.start()");
-    show(RConsole);
+    show(RConsole);*/
+    internal_shellexec("doc/html/rwin.html");
 }
 
 static void menuabout(control m)
@@ -294,17 +300,13 @@ static void menuact(control m)
 	uncheck(mlazy);
     if (ConsoleAcceptCmd) {
 	enable(msource);
-	enable(mdisplay);
 	enable(mload);
 	enable(msave);
 	enable(mls);
 	enable(mrm);
 	enable(msearch);
 	enable(mhelp);
-	enable(mmanref);
-	enable(mmanext);
 	enable(mapropos);
-	enable(mhelpstart);
     }
     if (consolecancopy(RConsole)) {
 	enable(mcopy);
@@ -319,17 +321,13 @@ static void menuact(control m)
 	disable(mpaste);
     if (!ConsoleAcceptCmd) {
 	disable(msource);
-	disable(mdisplay);
 	disable(mload);
 	disable(msave);
 	disable(mls);
 	disable(mrm);
 	disable(msearch);
 	disable(mhelp);
-	disable(mmanref);
-	disable(mmanext);
 	disable(mapropos);
-	disable(mhelpstart);
     }
     draw(RMenuBar);
 }
@@ -611,7 +609,8 @@ int setupui()
     MCHECK(newmenu("Edit"));
     MCHECK(mcopy = newmenuitem("Copy          \tCTRL+C", 0, menucopy));
     MCHECK(mpaste = newmenuitem("Paste         \tCTRL+V", 0, menupaste));
-    MCHECK(mcopypaste = newmenuitem("Copy And Paste  \tCTRL+X", 0, menucopypaste));
+    MCHECK(mcopypaste = newmenuitem("Copy And Paste  \tCTRL+X", 
+				    0, menucopypaste));
     MCHECK(newmenuitem("Select all", 0, menuselectall));
     MCHECK(newmenu("Misc"));
     MCHECK(newmenuitem("Stop current computation           \tESC", 0, menukill));
@@ -626,12 +625,21 @@ int setupui()
     MCHECK(m = newmenu("Help"));
     MCHECK(newmenuitem("Console", 0, menuconsolehelp));
     MCHECK(mhelp = newmenuitem("R language (standard)", 0, menuhelp));
-    MCHECK(mhelp = newmenuitem("R language (html)", 0, menuhelpstart));
-
-    MCHECK(newsubmenu(m, "Manuals"));
-/*    MCHECK(mmanmain = newmenuitem("R Manual", 0, menumainman));*/
-    MCHECK(mmanref = newmenuitem("R Reference Manual", 0, menumainref));
-    MCHECK(mmanext = newmenuitem("R Extension Writer's Manual", 0, menumainext));
+    MCHECK(mhelpstart = newmenuitem("R language (&html)", 0, menuhelpstart));
+    lhelpstart = check_doc_file("doc/html/rwin.html");
+    if (!lhelpstart) disable(mhelpstart);
+    MCHECK(mman = newsubmenu(m, "Manuals"));
+    MCHECK(mmanintro = newmenuitem("An &Introduction to R", 0, menumainman));
+    lmanintro = check_doc_file("doc/manual/R-intro.pdf");
+    if (!lmanintro) disable(mmanintro);
+    MCHECK(mmanref = newmenuitem("R &Reference Manual", 0, menumainref));
+    lmanref = check_doc_file("doc/manual/refman.pdf");
+    if (!lmanref) disable(mmanref);
+    MCHECK(mmanext = newmenuitem("R Extension &Writer's Manual", 
+				 0, menumainext));
+    lmanext = check_doc_file("doc/manual/R-exts.pdf");
+    if (!lmanext) disable(mmanext);
+    if (!lmanintro && !lmanref && !lmanext) disable(mman);
     addto(m);
 
     MCHECK(mapropos = newmenuitem("Apropos", 0, menuapropos));
@@ -656,4 +664,190 @@ int DialogSelectFile(char *buf, int len)
     else
 	strcpy(buf, "");
     return (strlen(buf));
+}
+
+static menu usermenus[10];
+static char usermenunames[10][51];
+
+typedef struct {
+    menuitem m;
+    char *name;
+    char *action;
+}  uitem;
+typedef uitem *Uitem;
+
+static Uitem  umitems[500];
+
+static int nmenus=0, nitems=0;
+
+static void menuuser(control m)
+{
+    int item = m->max;
+    char *p = umitems[item]->action;
+
+    if (strcmp(p, "none") == 0) return;
+    Rconsolecmd(p);
+}
+
+
+int winaddmenu(char * name, char *errmsg)
+{
+    int i;
+    char *p, *submenu = name, start[50];
+    
+    if (nmenus > 9) {
+	strcpy(errmsg, "Only 10 menus are allowed");
+	return 2;
+    }
+    if (strlen(name) > 50) {
+	strcpy(errmsg, "`menu' is limited to 50 chars");
+	return 5;
+    }
+    p = strrchr(name, '/');
+    if (p) {
+	submenu = p + 1;
+	strcpy(start, name);
+	*strrchr(start, '/') = '\0';
+	for (i = 0; i < nmenus; i++)
+	    if (strcmp(start, usermenunames[i]) == 0) break;
+	if (i == nmenus) {
+	    strcpy(errmsg, "base menu does not exist");
+	    return 3;
+	}
+	m = newsubmenu(usermenus[i], submenu);
+    } else {
+	addto(RMenuBar);
+	m = newmenu(submenu);
+    }
+    if (m) {
+	usermenus[nmenus] = m;
+	strcpy(usermenunames[nmenus], name);
+	nmenus++;
+	show(RConsole);
+	return 0;
+    } else {
+	strcpy(errmsg, "failed to allocate menu");
+	return 1;
+    }
+}
+
+int winaddmenuitem(char * item, char * menu, char * action, char *errmsg)
+{
+    int i, im;
+    menuitem m;
+    char mitem[102], *p;
+
+    if (nitems > 499) {
+	strcpy(errmsg, "too many menu items have been created");
+	return 2;
+    }
+    if (strlen(item) + strlen(menu) > 100) {
+	strcpy(errmsg, "menu + item is limited to 100 chars");
+	return 5;
+    }
+
+    for (im = 0; im < nmenus; im++) {
+	if (strcmp(menu, usermenunames[im]) == 0) break;
+    }
+    if (im == nmenus) {
+	strcpy(errmsg, "menu does not exist");
+	return 3;
+    }
+    
+    strcpy(mitem, menu); strcat(mitem, "/"); strcat(mitem, item);
+
+    for (i = 0; i < nitems; i++) {
+	if (strcmp(mitem, umitems[i]->name) == 0) break;
+    }
+    if (i < nitems) { /* existing item */
+	if (strcmp(action, "enable") == 0) {
+	    enable(umitems[i]->m);
+	} else if (strcmp(action, "disable") == 0) {
+	    disable(umitems[i]->m);
+	} else {
+	    p = umitems[i]->action;
+	    p = realloc(p, strlen(action) + 1);
+	    if(!p) {
+		strcpy(errmsg, "failed to allocate char storage");
+		return 4;
+	    }
+	    strcpy(p, action);
+	}
+    } else {
+	addto(usermenus[im]);
+	m  = newmenuitem(item, 0, menuuser);
+	if (m) {
+	    umitems[nitems] = (Uitem) malloc(sizeof(uitem));
+	    umitems[nitems]->m = m;
+	    umitems[nitems]->name = p = (char *) malloc(strlen(mitem) + 1);
+	    if(!p) {
+		strcpy(errmsg, "failed to allocate char storage");
+		return 4;
+	    }
+	    strcpy(p, mitem);
+	    if(!p) {
+		strcpy(errmsg, "failed to allocate char storage");
+		return 4;
+	    }
+	    umitems[nitems]->action = p = (char *) malloc(strlen(action) + 1);
+	    strcpy(p, action);
+	    m->max = nitems;
+	    nitems++;
+	} else {
+	    strcpy(errmsg, "failed to allocate menuitem");
+	    return 1;
+	}
+    }
+    show(RConsole);
+    return 0;
+}
+
+#define NEW
+int windelmenu(char * menu, char *errmsg)
+{
+    int i, j;
+
+    for (i = 0; i < nmenus; i++) {
+	if (strcmp(menu, usermenunames[i]) == 0) break;
+    }
+    if (i == nmenus) {
+	strcpy(errmsg, "menu does not exist");
+	return 3;
+    }
+#ifdef NEW
+    remove_menu_item(usermenus[i]);
+    nmenus--;
+    for(j = i; j < nmenus; j++) {
+	usermenus[j] = usermenus[j+1];
+	strcpy(usermenunames[j], usermenunames[j+1]);
+    }
+    show(RConsole);
+#else
+    error("cannot currently delete menus");
+#endif
+    return 0;
+}
+
+int windelmenuitem(char * item, char * menu, char *errmsg)
+{
+    int i;
+    char mitem[52];
+
+    if (strlen(item) + strlen(menu) > 50) {
+	strcpy(errmsg, "menu + item is limited to 50 chars");
+	return 5;
+    }
+    strcpy(mitem, menu); strcat(mitem, "/"); strcat(mitem, item);
+    for (i = 0; i < nitems; i++) {
+	if (strcmp(mitem, umitems[i]->name) == 0) break;
+    }
+    if (i == nitems) {
+	strcpy(errmsg, "menu or item does not exist");
+	return 3;
+    }
+    delobj(umitems[i]->m);
+    strcpy(umitems[i]->name, "invalid");
+    free(umitems[i]->action);
+    show(RConsole);
+    return 0;
 }

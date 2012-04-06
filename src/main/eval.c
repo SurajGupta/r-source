@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-1999	The R Development Core Team.
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #undef HASHING
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #define ARGUSED(x) LEVELS(x)
@@ -36,13 +36,12 @@ SEXP do_browser(SEXP, SEXP, SEXP, SEXP);
 /* The universe will end if the Stack on the Mac grows til it hits the heap. */
 /* This code places a limit on the depth to which eval can recurse. */
 
-#define EVAL_LIMIT 500
 void isintrpt(){}
 
 #endif
 
 #ifdef Win32
-extern void ProcessEvents();
+extern void R_ProcessEvents();
 #endif
 
 /* NEEDED: A fixup is needed in browser, because it can trap errors,
@@ -59,11 +58,9 @@ SEXP eval(SEXP e, SEXP rho)
     /* of non-local returns from evaluation.  Without this an "expression */
     /* too complex error" is quite likely. */
 
-#ifdef EVAL_LIMIT
     int depthsave = R_EvalDepth++;
-    if (R_EvalDepth > EVAL_LIMIT)
-	error("expression too complex for evaluator");
-#endif
+    if (R_EvalDepth > asInteger(GetOption(install("expressions"), rho)))
+	error("evaluation is nested too deeply: infinite recursion?");
 #ifdef Macintosh
     /* check for a user abort */
     if ((R_EvalCount++ % 100) == 0) {
@@ -72,7 +69,7 @@ SEXP eval(SEXP e, SEXP rho)
 #endif
 #ifdef Win32
     if ((R_EvalCount++ % 100) == 0) {
-	ProcessEvents();
+	R_ProcessEvents();
 /* Is this safe? R_EvalCount is not used in other part and
  * don't want to overflow it
 */
@@ -204,9 +201,7 @@ SEXP eval(SEXP e, SEXP rho)
     default:
 	UNIMPLEMENTED("eval");
     }
-#ifdef EVAL_LIMIT
     R_EvalDepth = depthsave;
-#endif
     return (tmp);
 }
 
@@ -751,7 +746,7 @@ static SEXP evalseq(SEXP expr, SEXP rho, int forcelocal, SEXP tmploc)
 static char *asym[] = {":=", "<-", "<<-"};
 
 
-SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
+static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP expr, lhs, rhs, saverhs, tmp, tmp2, tmploc, tmpsym;
     char buf[32];

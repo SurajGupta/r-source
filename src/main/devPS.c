@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 1999  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998-2000   Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include <stdio.h>
@@ -36,7 +36,7 @@
    hyphen = 45 or 173;	(n-dash not available as code!)
    175 = "¯" (= "overline" (= high 'negative' sign))
 */
-char PS_minus = PS_minus_default;/*-> TODO: make this a ps.option() !*/
+static char PS_minus = PS_minus_default;/*-> TODO: make this a ps.option() !*/
 
 /* Part 0.  AFM File Names */
 
@@ -663,8 +663,7 @@ static void   PS_Rect(double, double, double, double, int, int, int, DevDesc*);
 static void   PS_Resize(DevDesc*);
 static double PS_StrWidth(char*, DevDesc*);
 static void   PS_MetricInfo(int, double*, double*, double*, DevDesc*);
-static void   PS_Text(double, double, int, char*, double, double, double,
-		      DevDesc*);
+static void   PS_Text(double, double, int, char*, double, DevDesc*);
 
 
 
@@ -1225,14 +1224,14 @@ static void PS_Polyline(int n, double *x, double *y, int coords,
 }
 
 static void PS_Text(double x, double y, int coords,
-		    char *str, double xc, double yc, double rot, DevDesc *dd)
+		    char *str, double rot, DevDesc *dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
     GConvert(&x, &y, coords, DEVICE, dd);
     SetFont(dd->gp.font, floor(dd->gp.cex * dd->gp.ps + 0.5), dd);
     SetColor(dd->gp.col, dd);
-    PostScriptText(pd->psfp, x, y, str, xc, yc, rot);
+    PostScriptText(pd->psfp, x, y, str, 0.0, 0.0, rot);
 }
 
 static int PS_Locator(double *x, double *y, DevDesc *dd)

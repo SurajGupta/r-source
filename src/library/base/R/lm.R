@@ -139,6 +139,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7, ...)
 	warning(paste("Extra arguments", deparse(substitute(...)),
 		      "are just disregarded."))
     y <- y - offset
+    x.asgn <- attr(x, "assign")# save
     zero.weights <- any(w == 0)
     if (zero.weights) {
 	save.r <- y
@@ -213,12 +214,12 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7, ...)
         z$fitted.values <- z$fitted.values + offset
     c(z[c("coefficients", "residuals", "fitted.values", "effects",
 	  "weights", "rank")],
-      list(assign = attr(x, "assign"),
+      list(assign = x.asgn,
 	   qr = z[c("qr", "qraux", "pivot", "tol", "rank")],
 	   df.residual = n - z$rank))
 }
 
-print.lm <- function(x, digits = max(3, .Options$digits - 3), ...)
+print.lm <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("\nCall:\n",deparse(x$call),"\n\n",sep="")
     cat("Coefficients:\n")
@@ -232,28 +233,28 @@ summary.lm <- function (object, correlation = FALSE, ...)
 {
     z <- .Alias(object)
     Qr <- .Alias(object$qr)
+    if (is.null(z$terms) || is.null(Qr))
+	stop("invalid \'lm\' object:  no terms or qr component")
     n <- NROW(Qr$qr)
     p <- z$rank
     rdf <- n - p
+    if(rdf != z$df.residual)
+        warning("inconsistent residual degrees of freedom. -- please report!")
     p1 <- 1:p
     r <- resid(z)
     f <- fitted(z)
     w <- weights(z)
-    if (is.null(z$terms)) {
-	stop("invalid \'lm\' object:  no terms component")
+    if (is.null(w)) {
+        mss <- if (attr(z$terms, "intercept"))
+            sum((f - mean(f))^2) else sum(f^2)
+        rss <- sum(r^2)
     } else {
-	if (is.null(w)) {
-	    mss <- if (attr(z$terms, "intercept"))
-		sum((f - mean(f))^2) else sum(f^2)
-	    rss <- sum(r^2)
-	} else {
-	    mss <- if (attr(z$terms, "intercept")) {
-		m <- sum(w * f /sum(w))
-		sum(w * (f - m)^2)
-	    } else sum(w * f^2)
-	    rss <- sum(w * r^2)
-	    r <- sqrt(w) * r
-	}
+        mss <- if (attr(z$terms, "intercept")) {
+            m <- sum(w * f /sum(w))
+            sum(w * (f - m)^2)
+        } else sum(w * f^2)
+        rss <- sum(w * r^2)
+        r <- sqrt(w) * r
     }
     resvar <- rss/rdf
     R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
@@ -287,15 +288,16 @@ summary.lm <- function (object, correlation = FALSE, ...)
 }
 
 print.summary.lm <-
-    function (x, digits = max(3, .Options$digits - 3), symbolic.cor = p > 4,
-	      signif.stars= .Options$show.signif.stars,	...)
+    function (x, digits = max(3, getOption("digits") - 3), symbolic.cor = p > 4,
+	      signif.stars= getOption("show.signif.stars"),	...)
 {
     cat("\nCall:\n")#S: ' ' instead of '\n'
     cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
     resid <- x$residuals
     df <- x$df
     rdf <- df[2]
-    cat("Residuals:\n")
+    cat(if(!is.null(x$w) && diff(range(x$w))) "Weighted ",
+        "Residuals:\n", sep="")
     if (rdf > 5) {
 	nam <- c("Min", "1Q", "Median", "3Q", "Max")
 	rq <- if (length(dim(resid)) == 2)
@@ -307,7 +309,7 @@ print.summary.lm <-
     else if (rdf > 0) {
 	print(resid, digits = digits, ...)
     } else { # rdf == 0 : perfect fit!
-	cat("ALL",df[1],"residuals are 0: no residual degrees of freedom!\n")
+	cat("ALL", df[1], "residuals are 0: no residual degrees of freedom!\n")
     }
     if (nsingular <- df[3] - df[1])
 	cat("\nCoefficients: (", nsingular,
@@ -330,14 +332,14 @@ print.summary.lm <-
     }
     correl <- x$correlation
     if (!is.null(correl)) {
-	p <- dim(correl)[2]
+	p <- NCOL(correl)
 	if (p > 1) {
 	    cat("\nCorrelation of Coefficients:\n")
 	    if(symbolic.cor)
 		print(symnum(correl)[-1,-p])
 	    else {
 		correl[!lower.tri(correl)] <- NA
-		print(correl[-1, -p],
+		print(correl[-1, -p, drop=FALSE],
 		      digits = digits, na = "")
 	    }
 	}
@@ -351,7 +353,16 @@ print.summary.lm <-
 ## update.lm <- function(lm.obj, formula, data, weights, subset, na.action)
 ## .....
 
-residuals.lm <- function(object, ...) object$residuals
+residuals.lm <- function(object,
+                         type = c("working", "pearson", "deviance"), ...)
+{
+    type <- match.arg(type)
+    r <- .Alias(object$residuals)
+    switch(type,
+           working = r,
+           deviance=,
+           pearson =if(is.null(object$weights)) r else r * sqrt(object$weights))
+}
 fitted.lm <- function(object, ...) object$fitted.values
 coef.lm <- function(object, ...) object$coefficients
 ## need this for results of lm.fit() in drop1():
@@ -474,13 +485,13 @@ predict.lm <- function(object, newdata,
     attrassign<-function (object, ...) UseMethod("attrassign")
     attrassign.lm<-function (lmobj)  attrassign(model.matrix(lmobj), terms(lmobj))
     attrassign.default<-function (mmat, tt) {
-      if (!inherits(tt, "terms")) 
+      if (!inherits(tt, "terms"))
         stop("need terms object")
       aa <- attr(mmat, "assign")
-      if (is.null(aa)) 
+      if (is.null(aa))
         stop("argument is not really a model matrix")
       ll <- attr(tt, "term.labels")
-      if (attr(tt, "intercept") > 0) 
+      if (attr(tt, "intercept") > 0)
         ll <- c("(Intercept)", ll)
       aaa <- factor(aa, labels = ll)
       split(order(aa), aaa)

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1999  The R Development Core Team.
+ *  Copyright (C) 1997--2000  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,31 +19,34 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
+/* limit on call length at which errorcall/warningcall is split over
+   two lines */
+#define LONGCALL 30
 
 static void jump_now();
 
-/* 
+/*
 Different values of inError are used to indicate different places
 in the error handling.
 */
-static int inError = 0; 
+static int inError = 0;
 static int inWarning = 0;
 
 /* Interface / Calling Hierarchy :
 
   R__stop()   -> do_error ->   errorcall --> jump_to_toplevel --> jump_now
-			 /  
-		    error  
+			 /
+		    error
 
   R__warning()-> do_warning   -> warningcall -> if(warn >= 2) errorcall
 			     /
 		    warning /
 
-  ErrorMessage   : similar to errorcall()   but with message from ErrorDB[]
+  ErrorMessage	 : similar to errorcall()   but with message from ErrorDB[]
 
   WarningMessage : similar to warningcall() but with message from WarningDB[].
 */
@@ -84,13 +87,13 @@ void warningcall(SEXP call, char *format, ...)
 
     s = GetOption(install("warning.expression"), R_NilValue);
     if( s!= R_NilValue ) {
-        if( !isLanguage(s) &&  ! isExpression(s) )
-            error("invalid option \"warning.expression\"");
-        cptr = R_GlobalContext;
-        while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->callflag )
-            cptr = cptr->nextcontext;
+	if( !isLanguage(s) &&  ! isExpression(s) )
+	    error("invalid option \"warning.expression\"");
+	cptr = R_GlobalContext;
+	while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->callflag )
+	    cptr = cptr->nextcontext;
 	eval(s, cptr->cloenv);
-        return;
+	return;
     }
 
     w = asInteger(GetOption(install("warn"), R_NilValue));
@@ -99,40 +102,41 @@ void warningcall(SEXP call, char *format, ...)
 	w = 0;
 
     if(w<0 || inWarning || inError)  {/* ignore if w<0 or already in here*/
-        return;
+	return;
     }
     inWarning = 1;
 
     if(w>=2) { /* make it an error */
-        va_list(ap);
-        va_start(ap, format);
-        slen = vsprintf(buf, format, ap);
-        va_end(ap);
-        errorcall(call, "(converted from warning) %s", buf);
+	va_list(ap);
+	va_start(ap, format);
+	slen = vsprintf(buf, format, ap);
+	va_end(ap);
+	errorcall(call, "(converted from warning) %s", buf);
     }
     else if(w==1) {	/* print as they happen */
-        va_list(ap);
-        if( call != R_NilValue ) {
-            dcall = CHAR(STRING(deparse1(call, 0))[0]);
-            REprintf("Warning in %s : ", dcall);
-        }
-        else
-            REprintf("Warning: ");
-        va_start(ap, format);
-        REvprintf(format, ap);
-        va_end(ap);
-        REprintf("\n");
+	va_list(ap);
+	if( call != R_NilValue ) {
+	    dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	    REprintf("Warning in %s : ", dcall);
+	    if (strlen(dcall) > LONGCALL) REprintf("\n	 ");
+	}
+	else
+	    REprintf("Warning: ");
+	va_start(ap, format);
+	REvprintf(format, ap);
+	va_end(ap);
+	REprintf("\n");
     }
     else if(w==0) {	/* collect them */
 	va_list(ap);
-        va_start(ap, format);
+	va_start(ap, format);
 	if(!R_CollectWarnings)
-            setupwarnings();
+	    setupwarnings();
 	if( R_CollectWarnings > 49 )
 	    return;
-        VECTOR(R_Warnings)[R_CollectWarnings] = call;
-        slen = vsprintf(buf, format, ap);
-        va_end(ap);
+	VECTOR(R_Warnings)[R_CollectWarnings] = call;
+	slen = vsprintf(buf, format, ap);
+	va_end(ap);
 	names = CAR(ATTRIB(R_Warnings));
 	STRING(names)[R_CollectWarnings++] = mkChar(buf);
     }
@@ -150,19 +154,19 @@ void PrintWarnings(void)
 	REprintf("Warning message: \n");
 	names = CAR(ATTRIB(R_Warnings));
 	if( VECTOR(R_Warnings)[0] == R_NilValue )
-           REprintf("%s \n", CHAR(STRING(names)[0]));
-        else
+	   REprintf("%s \n", CHAR(STRING(names)[0]));
+	else
 	   REprintf("%s in: %s \n", CHAR(STRING(names)[0]),
-                CHAR(STRING(deparse1(VECTOR(R_Warnings)[0],0))[0]));
+		CHAR(STRING(deparse1(VECTOR(R_Warnings)[0],0))[0]));
     }
     else if( R_CollectWarnings <= 10 ) {
-        REprintf("Warning messages: \n");
+	REprintf("Warning messages: \n");
 	names = CAR(ATTRIB(R_Warnings));
 	for(i=0; i<R_CollectWarnings; i++) {
-            if( STRING(R_Warnings)[i] == R_NilValue )
-               REprintf("%d: %s \n",i+1, CHAR(STRING(names)[i]));
-            else
-	       REprintf("%d: %s in: %s \n",i+1, CHAR(STRING(names)[i]),
+	    if( STRING(R_Warnings)[i] == R_NilValue )
+	       REprintf("%d: %s \n",i+1, CHAR(STRING(names)[i]));
+	    else
+	       REprintf("%d: %s in: %s \n", i+1, CHAR(STRING(names)[i]),
 		   CHAR(STRING(deparse1(VECTOR(R_Warnings)[i], 0))[0]));
 	}
     }
@@ -182,8 +186,8 @@ void PrintWarnings(void)
     defineVar(install("last.warning"), s, R_GlobalEnv);
     UNPROTECT(2);
     inWarning = 0;
-    R_CollectWarnings=0;
-    R_Warnings=R_NilValue;
+    R_CollectWarnings = 0;
+    R_Warnings = R_NilValue;
     return;
 }
 
@@ -191,7 +195,7 @@ void PrintWarnings(void)
 void errorcall(SEXP call, char *format,...)
 {
     char buf[BUFSIZE], *p, *dcall;
-    
+
     va_list(ap);
 
     if ( inError ) {
@@ -201,8 +205,9 @@ void errorcall(SEXP call, char *format,...)
     }
 
     if(call != R_NilValue ) {
-        dcall = CHAR(STRING(deparse1(call, 0))[0]);
-        sprintf(buf, "Error in %s : ", dcall);
+	dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	sprintf(buf, "Error in %s : ", dcall);
+	if (strlen(dcall) > LONGCALL) strcat(buf, "\n	");
     }
     else
 	sprintf(buf, "Error: ");
@@ -264,7 +269,7 @@ void jump_to_toplevel()
 	    if (isLanguage(s))
 		eval(s, c->cloenv);
 	    else /* expression */
-            {
+	    {
 		int i, n = LENGTH(s);
 		for (i = 0 ; i < n ; i++)
 		    eval(VECTOR(s)[i], c->cloenv);
@@ -354,10 +359,12 @@ void do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     cptr = R_GlobalContext->nextcontext;
     while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->nextcontext != NULL)
-        cptr = cptr->nextcontext;
+	cptr = cptr->nextcontext;
 
     if (CAR(args) != R_NilValue) {
       CAR(args) = coerceVector(CAR(args), STRSXP);
+      if(!isValidString(CAR(args)))
+	  errorcall(cptr->call, " [invalid string in stop(.)]");
       errorcall(cptr->call, "%s", CHAR(STRING(CAR(args))[0]));
     }
     else
@@ -374,7 +381,10 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cptr = cptr->nextcontext;
     if (CAR(args) != R_NilValue) {
 	CAR(args) = coerceVector(CAR(args), STRSXP);
-	warningcall(cptr->call,"%s", CHAR(STRING(CAR(args))[0]));
+	if(!isValidString(CAR(args)))
+	    warningcall(cptr->call, " [invalid string in warning(.)]");
+	else
+	    warningcall(cptr->call,"%s", CHAR(STRING(CAR(args))[0]));
     }
     else
 	warningcall(cptr->call,"");
@@ -418,6 +428,7 @@ void  ErrorMessage(SEXP call, int which_error, ...)
     if (call != R_NilValue) {
 	dcall = CHAR(STRING(deparse1(call, 0))[0]);
 	REprintf("Error in %s : ", dcall);
+	if (strlen(dcall) > LONGCALL) REprintf("\n   ");
     }
     else
 	REprintf("Error: ");	/* -- dcall = ??? */

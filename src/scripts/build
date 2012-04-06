@@ -1,0 +1,368 @@
+#!/bin/sh
+#
+# ${R_HOME}/bin/build
+
+revision='$Revision: 1.10 $'
+version=`set - ${revision}; echo ${2}`
+version="R package builder ${version}
+
+Copyright (C) 2000 R Development Core Team.
+There is NO warranty.  You may redistribute this software under the
+terms of the GNU General Public License.
+For more information about these matters, see the files named COPYING."
+
+usage="Usage: R CMD build [options] pkgdirs
+
+Build R packages from package sources in the directories specified by
+pkgdirs.  A variety of diagnostic checks and cleanups are performed
+prior to building the packages.
+
+If necessary for passing the checks, use the \`--vsize' and \`--nsize'
+options to increase R's memory (\`--vanilla' is used by default).
+
+Options:
+  -d, --debug		turn on shell debugging (set -x)
+  -h, --help		print short help message and exit
+  -v, --version		print version info and exit
+  --vsize=N		set R's vector heap size to N bytes
+  --nsize=N		set R's number of cons cells to N
+  --force		force overwriting of (index) files  
+
+Email bug reports to <r-bugs@lists.r-project.org>."
+
+R_opts="--vanilla"
+debug=false
+force=false
+pkgs=
+
+## Parse argument command line
+while test -n "${1}"; do
+  case ${1} in
+    -h|--help)
+      echo "${usage}"; exit 0 ;;
+    -v|--version)
+      echo "${version}"; exit 0 ;;
+    -d|--debug)
+      debug=true ;;
+    --force)
+      force=true ;;
+    --nsize=*)
+      R_opts="{R_opts} ${1}" ;;
+    --vsize=*)
+      R_opts="{R_opts} ${1}" ;;
+    *)
+      pkgs="${pkgs} ${1}" ;;
+  esac
+  shift
+done
+
+## Determine whether echo can suppress newlines.
+if echo "testing\c" | grep c >/dev/null; then
+  if echo -n "testing" | sed s/-n/xn/ | grep xn >/dev/null; then
+    ECHO_N= ECHO_C= ECHO_T='	'
+  else
+    ECHO_N=-n ECHO_C= ECHO_T=
+  fi
+else
+  ECHO_N= ECHO_C='\c' ECHO_T=
+fi
+
+## A few useful output functions
+checking () {
+  if ${debug}; then
+    echo "* checking $@ ..."
+  else
+    echo ${ECHO_N} "* checking $@ ...${ECHO_C}"
+  fi
+}
+message () { echo "* $@"; }
+result () { echo "${ECHO_T} $@"; }
+
+## For updating `INDEX' and `data/00Index;
+updateIndex () {
+  oldindex=${1}
+  newindex=${TMPDIR:-/tmp}/Rbuild${$}
+  ${R_HOME}/bin/Rdindex ${Rdfiles} > ${newindex}
+  if diff -b ${newindex} ${oldindex} > /dev/null; then
+    result "OK"
+  else
+    result "NO"
+    if ${force}; then
+      echo "overwriting \`${oldindex}' as \`--force' was given"
+      cp ${newindex} ${oldindex}
+    else
+      echo "use \`--force' to overwrite the existing \`${oldindex}'"
+    fi
+  fi
+  rm -f ${newindex}
+}
+
+## For updating `TITLE'
+updateTitle () {
+  oldtitle=TITLE
+  newtitle=${TMPDIR:-/tmp}/Rbuild${$}
+  ${R_HOME}/bin/maketitle > ${newtitle}
+  foo=`cat TITLE`
+  package=`set - ${foo}; echo ${1}`
+  title=`set - ${foo}; shift; echo ${*}`
+  if test "${package}" != "${1}"; then
+    if ${force}; then
+      result "NO"
+      echo "overwriting \`${oldtitle} as \`--force' was given"
+      cp ${newtitle} ${oldtitle}
+    else
+      result "ERROR: package names do not match"
+      echo "use \`--force' to overwrite the existing \`${oldtitle}'"
+      exit 1
+    fi
+  elif diff -b ${newtitle} ${oldtitle} > /dev/null; then
+    result "OK"
+  else
+    result "NO"
+    if ${force}; then
+      echo "overwriting \`${oldtitle} as \`--force' was given"
+      cp ${newtitle} ${oldtitle}
+    else
+      echo "use \`--force' to overwrite the existing \`${oldtitle}'"
+    fi
+  fi
+  rm -f ${newtitle}
+}
+
+start_dir=`pwd`
+
+## The work horse
+buildpkg () {
+  echo "Building package \`${1}' ..."
+
+  cd ${start_dir}
+
+  checking "package dir"
+  if test -d ${1}; then
+    dir=`cd ${1}; pwd`
+  else
+    result "ERROR: package dir \`${1}' does not exist"
+    exit 1
+  fi
+  result "OK"
+
+  ## Check whether `DESCRIPTION' exists and contains required fields
+  checking "for \`DESCRIPTION'"
+  if test -r ${dir}/DESCRIPTION; then
+    cd ${dir}
+  else
+    result "ERROR: file \`DESCRIPTION' not found"
+    exit 1
+  fi
+  result "OK"
+  checking "\`DESCRIPTION' license entry"
+  foo=`grep "^License" DESCRIPTION`
+  foo=`set - ${foo}; echo ${2}`
+  if test -z "${foo}"; then
+    result "ERROR: no license entry in \`DESCRIPTION'"
+    exit 1
+  fi
+  result "OK"
+  checking "\`DESCRIPTION' package entry"
+  foo=`grep "^Package" DESCRIPTION`
+  package=`set - ${foo}; echo ${2}`
+  if test -z "${package}"; then
+    result "ERROR: no package entry in \`DESCRIPTION'"
+    exit 1
+  fi
+  if test "${package}" != `basename ${dir}`; then
+    result "ERROR: package field in \`DESCRIPTION' differs from dir name"
+    exit 1
+  fi
+  result "OK"
+  checking "\`DESCRIPTION' version entry"
+  foo=`grep "^Version" DESCRIPTION`
+  version=`set - ${foo}; echo ${2}`
+  if test -z "${version}"; then
+    result "ERROR: no version entry in \`DESCRIPTION'"
+    exit 1
+  fi
+  result "OK"
+
+  ## Check for title entry and/or `TITLE'
+  checking "\`DESCRIPTION' title entry"
+  title=`grep -s "^Title:" DESCRIPTION | sed "s/^Title:[ \t]*//"`
+  if test -z "${title}"; then
+    result "WARNING: no title entry in \`DESCRIPTION'"
+  else
+    result "OK"
+  fi
+  checking "for \`TITLE'"
+  if test -r TITLE; then
+    result "OK"
+    if test -n "${title}"; then
+      checking "whether \`TITLE' is up-to-date"
+      updateTitle "${package}"
+    fi
+  else
+    result "NO"
+    if test -n "${title}"; then
+      message "creating \`TITLE' from \`DESCRIPTION' title entry"
+      ${R_HOME}/bin/maketitle > TITLE
+      if test ${?} -ne 0; then
+	result "ERROR"
+	exit 1
+      else
+	result "OK"
+      fi
+    else
+      result "ERROR: no \`TITLE' and no \`DESCRIPTION' title entry"
+      exit 1
+    fi
+  fi
+
+  ## Check R documentation files
+  if test -d man; then
+    checking "Rd files"    
+    Rdfiles=`find man -name "*.[Rr]d" -print | sort`
+    if test -n "${Rdfiles}"; then
+      any=
+      for tag in name alias title description keyword; do
+	badfiles=`grep -L "^\\\\\\\\${tag}" ${Rdfiles} 2>/dev/null`
+	if test -n "${badfiles}"; then
+	  if test -z "${any}"; then
+	    result "WARNING:"
+	  fi
+	  any="${any} ${tag}"
+	  echo "Rd files without ${tag}:"
+	  echo "${badfiles}"
+	fi
+      done
+      if test -z "${any}"; then
+	result "OK"
+      fi
+    else
+      result "WARNING: no Rd files found"
+    fi
+  fi
+
+  ## Check for `INDEX'
+  checking "for \`INDEX'"
+  if test -r INDEX; then
+    result "OK"
+    if test -n "${Rdfiles}"; then
+      checking "whether \`INDEX' is up-to-date"
+      updateIndex "INDEX"
+    fi
+  else
+    result "NO"
+    if test -n "${Rdfiles}"; then
+      message "creating \`INDEX' from Rd files"
+      ${R_HOME}/bin/Rdindex ${Rdfiles} > INDEX
+      if test ${?} -ne 0; then
+	result "ERROR"
+	exit 1
+      else
+	result "OK"
+      fi
+    else
+      result "ERROR: no \`INDEX' and no Rd files found."
+      exit 1
+    fi
+  fi
+  
+  ## Update `data/00Index'
+  if test -d data; then
+    if test -n "${Rdfiles}"; then
+      Rdfiles=`grep -l "\\\\keyword{datasets}" ${Rdfiles}`
+    fi
+    checking "for \`data/00Index'"
+    if test -r data/00Index; then
+      result "OK"
+      if test -n "${Rdfiles}"; then
+	checking "whether \`data/00Index' is up-to-date"
+	updateIndex "data/00Index"
+      fi
+    else
+      result "NO"
+      if test -n "${Rdfiles}"; then
+	message "creating \`data/00Index' from Rd files"
+	${R_HOME}/bin/Rdindex ${Rdfiles} > data/00Index
+	if test ${?} -ne 0; then
+	  result "ERROR"
+	  exit 1
+	else
+	  result "OK"
+	fi
+      else
+	result "ERROR: no \`data/00Index' and no Rd files found."
+	exit 1
+      fi
+    fi
+  fi
+
+  ## Check for undocumented objects
+  if test -d R -a -d man; then
+    checking "for undocumented objects"
+    out=`echo "undoc(dir = \"${dir}\")" \
+      | ${R_HOME}/bin/R.X11 ${R_opts} \
+      | grep "^Error\\|^ *\\["`
+    err=`echo "${out}" | grep "^Error"`
+    if test -z "${err}"; then
+      if test -n "${out}"; then
+	result "WARNING:"
+	echo "${out}"
+      else
+	result "OK"
+      fi
+    else
+      err=`echo "${err}" | sed -e 's/^Error *//'`
+      result "ERROR:"
+      echo "${err}"
+      exit 1
+    fi
+  fi
+
+  ## Clean up `src'
+  if test -d src; then
+    message "cleaning \`src'"
+    if test -r src/Makefile; then
+      (cd src && make clean)
+    else
+      rm -f *.o *.s[lo]
+    fi
+  fi
+
+  ## Other cleanups
+  for f in .Rdata .Rhistory; do
+    junk=`find . -name ${f}`
+    if test -n "${junk}"; then
+      message "removing left-over \`${f}' files"
+      rm -f ${junk}
+    fi
+  done
+  if test -x cleanup; then
+    message "running \`cleanup'"
+    ./cleanup
+  fi
+
+  ## And finally build the package
+  cd ..
+  exclude_file=${TMPDIR:-/tmp}/Rbuild${$}
+  rm -f ${exclude_file} 2>/dev/null \
+    || (echo "cannot create file with exclude patterns" && exit 2)
+  for pattern in "*~" "CVS" "GNUMakefile"; do
+    echo "${pattern}" >> ${exclude_file}
+  done
+  message "building \`${start_dir}/${package}_${version}.tar.gz'"
+  tar zch -X ${exclude_file} \
+    -f ${start_dir}/${package}_${version}.tar.gz ${package}
+  rm -f ${exclude_file}
+}
+
+## The main loop
+if ${debug}; then set -x; fi
+for p in ${pkgs}; do
+  buildpkg ${p}
+  echo
+done
+
+### Local Variables: ***
+### mode: sh ***
+### sh-indentation: 2 ***
+### End: ***

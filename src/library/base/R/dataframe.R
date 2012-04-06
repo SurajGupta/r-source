@@ -157,11 +157,16 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE)
     row.names <- dn[[1]]
     collabs <- dn[[2]]
     value <- vector("list", ncols)
-    for(i in 1:ncols)
-	value[[i]] <- as.vector(x[,i])
-    if(length(row.names)==nrows) {}
-    else if(optional) row.names <- character(nrows)
-    else row.names <- as.character(1:nrows)
+    if(mode(x) == "character" || mode(x) == "logical") {
+        for(i in 1:ncols)
+            value[[i]] <- as.factor(x[,i])
+    } else {
+        for(i in 1:ncols)
+            value[[i]] <- as.vector(x[,i])
+    }
+    if(length(row.names) != nrows)
+        if(optional) row.names <- character(nrows)
+        else row.names <- as.character(1:nrows)
     if(length(collabs) == ncols) names(value) <- collabs
     else if(!optional) names(value) <- paste("V", 1:ncols, sep="")
     attr(value, "row.names") <- row.names
@@ -480,8 +485,16 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
 	n <- nrows
     p <- length(jseq)
     m <- length(value)
-    value <- as.data.frame(value)
-    dimv <- dim(value)
+## careful, as.data.frame turns things into factors.
+##    value <- as.data.frame(value)
+    if(!is.list(value) && (missing(j) || !missing(i))) { # [i, ] or [i,j]
+        value <- matrix(value, n, p)
+        dimv <- c(n, p)
+        value <- split(value, col(value))
+    } else {
+        value <- as.data.frame(value)
+        dimv <- dim(value)
+    }
     nrowv <- dimv[[1]]
     if(nrowv < n) {
 	if(n %% nrowv == 0)
@@ -662,6 +675,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
 	else ri
     }
     allargs <- list(...)
+    allargs <- allargs[sapply(allargs, length) > 0]
     n <- length(allargs)
     if(n == 0)
 	return(structure(list(),

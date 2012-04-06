@@ -18,11 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
-#endif
-
-#include "Memory.h"
+#include "R.h"
 
 void
 burg(int *pn, double*x, int *pp, double *coefs, double *var1, double *var2)

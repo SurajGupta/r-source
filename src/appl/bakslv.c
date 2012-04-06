@@ -24,11 +24,10 @@
    */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
-#include "Fortran.h"		/* incl Rconfig.h */
-#include "Linpack.h"		/* incl Blas.h    */
+#include "Linpack.h"
 #include "Applic.h"
 
 void bakslv(double *t, int *ldt, int *n,

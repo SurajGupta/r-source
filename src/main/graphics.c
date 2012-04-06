@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Graphics.h"
@@ -97,7 +97,7 @@ static char HexDigits[] = "0123456789ABCDEF";
  *
  */
 
-double Log10(double x)
+double R_Log10(double x)
 {
     return (R_FINITE(x) && x > 0.0) ? log10(x) : NA_REAL;
 }
@@ -468,14 +468,14 @@ double yNPCtoDev(double y, DevDesc *dd)
 double xUsrtoDev(double x, DevDesc *dd)
 {
     if (dd->gp.xlog)
-	x = Log10(x);
+	x = R_Log10(x);
     return xNFCtoDev(dd->gp.win2fig.ax + x*dd->gp.win2fig.bx, dd);
 }
 
 double yUsrtoDev(double y, DevDesc *dd)
 {
     if (dd->gp.ylog)
-	y = Log10(y);
+	y = R_Log10(y);
     return yNFCtoDev(dd->gp.win2fig.ay + y*dd->gp.win2fig.by, dd);
 }
 
@@ -1643,6 +1643,7 @@ void GMapWin2Fig(DevDesc *dd)
 /*  mapping -- Set up mappings between coordinate systems  */
 /*  This is the user's interface to the mapping routines above */
 
+static
 void mapping(DevDesc *dd, int which)
 {
     switch(which) {
@@ -1679,7 +1680,7 @@ void GReset(DevDesc *dd)
 
 /*  Is the figure region too big ? */
 
-int validFigureRegion(DevDesc *dd)
+static int validFigureRegion(DevDesc *dd)
 {
     return ((dd->gp.fig[0] > 0-FLT_EPSILON) &&
 	    (dd->gp.fig[1] < 1+FLT_EPSILON) &&
@@ -1689,7 +1690,7 @@ int validFigureRegion(DevDesc *dd)
 
 /*  Is the figure region too small ? */
 
-int validOuterMargins(DevDesc *dd)
+static int validOuterMargins(DevDesc *dd)
 {
     return ((dd->gp.fig[0] < dd->gp.fig[1]) &&
 	    (dd->gp.fig[2] < dd->gp.fig[3]));
@@ -1697,7 +1698,7 @@ int validOuterMargins(DevDesc *dd)
 
 /* Is the plot region too big ? */
 
-int validPlotRegion(DevDesc *dd)
+static int validPlotRegion(DevDesc *dd)
 {
     return ((dd->gp.plt[0] > 0-FLT_EPSILON) &&
 	    (dd->gp.plt[1] < 1+FLT_EPSILON) &&
@@ -1707,7 +1708,7 @@ int validPlotRegion(DevDesc *dd)
 
 /* Is the plot region too small ? */
 
-int validFigureMargins(DevDesc *dd)
+static int validFigureMargins(DevDesc *dd)
 {
     return ((dd->gp.plt[0] < dd->gp.plt[1]) &&
 	    (dd->gp.plt[2] < dd->gp.plt[3]));
@@ -2571,14 +2572,7 @@ int GLocator(double *x, double *y, int coords, DevDesc *dd)
 void GMetricInfo(int c, double *ascent, double *descent, double *width,
 		 int units, DevDesc *dd)
 {
-#ifdef BUG61
-    if(dd->dp.metricInfo)
-	dd->dp.metricInfo(c, ascent, descent, width, dd);
-    else
-	error("detailed character metric information unavailable");
-#else
     dd->dp.metricInfo(c & 0xFF, ascent, descent, width, dd);
-#endif
     if (units != DEVICE) {
 	*ascent = GConvertYUnits(*ascent, DEVICE, units, dd);
 	*descent = GConvertYUnits(*descent, DEVICE, units, dd);
@@ -2637,6 +2631,7 @@ typedef struct {
 }
 GClipRect;
 
+static
 int inside (Edge b, double px, double py, GClipRect *clip)
 {
     switch (b) {
@@ -2648,6 +2643,7 @@ int inside (Edge b, double px, double py, GClipRect *clip)
     return 1;
 }
 
+static
 int cross (Edge b, double x1, double y1, double x2, double y2,
 	   GClipRect *clip)
 {
@@ -2656,6 +2652,7 @@ int cross (Edge b, double x1, double y1, double x2, double y2,
     else return 1;
 }
 
+static
 void intersect (Edge b, double x1, double y1, double x2, double y2,
 		double *ix, double *iy, GClipRect *clip)
 {
@@ -2684,6 +2681,7 @@ void intersect (Edge b, double x1, double y1, double x2, double y2,
     }
 }
 
+static
 void clipPoint (Edge b, double x, double y,
 		double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
@@ -2735,6 +2733,7 @@ void clipPoint (Edge b, double x, double y,
     }
 }
 
+static
 void closeClip (double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
 {
@@ -3048,27 +3047,6 @@ double GStrWidth(char *str, int units, DevDesc *dd)
 
 double GStrHeight(char *str, int units, DevDesc *dd)
 {
-#ifdef BUG61
-    /* VERY old stuff */
-    double h = dd->gp.cex * dd->gp.cra[1];
-    if (units != DEVICE)
-	h = GConvertYUnits(h, DEVICE, units, dd);
-    return h;
-    /* #else */
-    /* old stuff */
-    double h;
-    char *s;
-    int n;
-    /* Count the lines of text */
-    n = 1;
-    for(s = str; *s ; s++)
-	if (*s == '\n')
-	    n += 1;
-    h = n * dd->gp.cex * dd->gp.cra[1];
-    if (units != DEVICE)
-	h = GConvertYUnits(h, DEVICE, units, dd);
-    return h;
-#else
     double h;
     char *s;
     double asc, dsc, wid;
@@ -3088,7 +3066,6 @@ double GStrHeight(char *str, int units, DevDesc *dd)
 	h = GConvertYUnits(h, DEVICE, units, dd);
 
     return h;
-#endif
 }
 
 /* Draw text in a plot. */
@@ -3109,24 +3086,9 @@ void GText(double x, double y, int coords, char *str,
 	int i, n;
 	double xoff, yoff;
 	double sin_rot, cos_rot;/* sin() & cos() of rot{ation} in radians */
-#ifdef BUG61
-	double yadj;
-	/* Fixup for string centering. */
-	/* Higher functions send in NA_REAL */
-	/* when true text centering is desired */
-	if (!R_FINITE(yc)) {
-	    yadj = (dd->gp.yCharOffset - 0.5);
-	    yc = 0.5;
-	}
-	else yadj = 0;
-	if (!R_FINITE(xc)) xc = 0.5;
-	/* We work in NDC coordinates */
-	GConvert(&x, &y, coords, NDC, dd);
-#else
 	double xleft, ybottom;
 	/* We work in INCHES */
 	GConvert(&x, &y, coords, INCHES, dd);
-#endif
 	/* Count the lines of text */
 	n = 1;
         for(s = str; *s ; s++)
@@ -3142,17 +3104,6 @@ void GText(double x, double y, int coords, char *str,
         for(s = str; ; s++) {
             if (*s == '\n' || *s == '\0') {
 		*sb = '\0';
-#ifdef BUG61
-		/* Compute the approriate offset. */
-		/* (translate verticaly then rotate). */
-                yoff = (1 - yc) * (n - 1) - i - yadj;
-		yoff = GConvertYUnits(yoff, CHARS, INCHES, dd);
-		xoff = - yoff * sin_rot;
-		yoff = yoff * cos_rot;
-		GConvert(&xoff, &yoff, INCHES, NDC, dd);
-		xoff = x + xoff;
-		yoff = y + yoff;
-#else
 		if (n > 1) {
 		    /* first determine location of THIS line */
 		    if (!R_FINITE(xc))
@@ -3219,30 +3170,11 @@ void GText(double x, double y, int coords, char *str,
 		    xleft = xoff;
 		    ybottom = yoff;
 		}
-#endif
 		if(dd->dp.canClip) {
 		    GClip(dd);
-#ifdef BUG61
-		    dd->dp.text(xoff, yoff, NDC, sbuf, xc, yc, rot, dd);
-#else
-		    dd->dp.text(xleft, ybottom, INCHES, sbuf, 0., 0., rot, dd);
-#endif
+		    dd->dp.text(xleft, ybottom, INCHES, sbuf, rot, dd);
 		}
 		else {
-#ifdef BUG61
-		    double xtest = xoff;
-		    double ytest = yoff;
-		    switch (dd->gp.xpd) {
-		    case 0:
-			GConvert(&xtest, &ytest, NDC, NPC, dd);
-			break;
-		    case 1:
-			GConvert(&xtest, &ytest, NDC, NFC, dd);
-			break;
-		    case 2:
-			break;
-		    }
-#else
 		    double xtest = xleft;
 		    double ytest = ybottom;
 		    switch (dd->gp.xpd) {
@@ -3256,14 +3188,9 @@ void GText(double x, double y, int coords, char *str,
 			GConvert(&xtest, &ytest, INCHES, NDC, dd);
 			break;
 		    }
-#endif
 		    if (xtest < 0 || ytest < 0 || xtest > 1 || ytest > 1)
 			    return;
-#ifdef BUG61
-		    dd->dp.text(xoff, yoff, NDC, sbuf, xc, yc, rot, dd);
-#else
-		    dd->dp.text(xleft, ybottom, INCHES, sbuf, 0., 0., rot, dd);
-#endif
+		    dd->dp.text(xleft, ybottom, INCHES, sbuf, rot, dd);
 		}
 		sb = sbuf;
 		i += 1;
@@ -3527,11 +3454,11 @@ void GPretty(double *lo, double *up, int *ndiv)
 #ifdef DEBUG_PLOT
     x1 = ns; x2 = nu;
 #endif
-    unit = pretty0(&ns, &nu, ndiv, /* min_n = */ 1,
-		   /* shrink_sml = */ 0.25,
-		   high_u_fact,
-		   2, /* do eps_correction in any case */
-		   0/* return (ns,nu) in  (lo,up) */);
+    unit = R_pretty0(&ns, &nu, ndiv, /* min_n = */ 1,
+		     /* shrink_sml = */ 0.25,
+		     high_u_fact,
+		     2, /* do eps_correction in any case */
+		     0 /* return (ns,nu) in  (lo,up) */);
     if(nu >= ns + 1) {
 	ns++;
 	if(nu > ns + 1) nu--;
@@ -5016,12 +4943,13 @@ DevDesc* R_Devices[R_MaxDevices];
 
 DevDesc nullDevice;
 
+/* unused
 void devError()
 {
     error("No graphics device is active -- "
 	  "SHOULDN'T happen anymore -- please report");
 }
-
+*/
 
 int NoDevices()
 {
@@ -5213,7 +5141,7 @@ int selectDevice(int devNum)
 	return selectDevice(nextDevice(devNum));
 }
 
-
+static
 void removeDevice(int devNum)
 {
     if ((devNum > 0) &&
@@ -5309,6 +5237,7 @@ void recordGraphicOperation(SEXP op, SEXP args, DevDesc *dd)
 }
 
 
+static
 void restoredpSaved(DevDesc *dd)
 {
     /* NOTE that not all params should be restored before playing */

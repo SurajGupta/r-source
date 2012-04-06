@@ -1,6 +1,6 @@
 summary <- function (object, ...) UseMethod("summary")
 
-summary.default <- function(object, ..., digits = max(3, .Options$digits - 3))
+summary.default <- function(object, ..., digits = max(3, getOption("digits") - 3))
 {
     if(is.factor(object))
 	return(summary.factor(object, ...))
@@ -78,10 +78,4 @@ summary.data.frame <- function(object, maxsum = 7, ...)
     dimnames(z) <- list(rep("", nr), nm)
     attr(z, "class") <- c("table") #, "matrix")
     z
-}
-
-print.table <-
-    function(x, digits= .Options$digits, quote = FALSE, na.print='', ...)
-{
-    print.default(unclass(x), digits=digits, quote=quote, na.print=na.print, ...)
 }

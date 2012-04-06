@@ -3,14 +3,14 @@
 \usage{data(LifeCycleSavings)}
 \alias{LifeCycleSavings}
 \format{A data frame with 50 observations on 5 variables.
-    \tabular{rlll}{
-    	[,1]  \tab sr    \tab numeric  \tab aggregate personal savings\cr
-    	[,2]  \tab pop15 \tab numeric  \tab \% of population under 15\cr
-    	[,3]  \tab pop75 \tab numeric  \tab \% of population over 75\cr
-    	[,4]  \tab dpi   \tab numeric  \tab real per-capita disposable
-	    income\cr
-	[,5]  \tab ddpi  \tab numeric  \tab \% growth rate of dpi\cr
-    }
+  \tabular{rlll}{
+    [,1]  \tab sr    \tab numeric  \tab aggregate personal savings \cr
+    [,2]  \tab pop15 \tab numeric  \tab \% of population under 15 \cr
+    [,3]  \tab pop75 \tab numeric  \tab \% of population over 75 \cr
+    [,4]  \tab dpi   \tab numeric  \tab real per-capita disposable
+    income \cr
+    [,5]  \tab ddpi  \tab numeric  \tab \% growth rate of dpi
+  }
 }
 \source{
   The data were obtained from Belsley, Kuh and Welsch (1980).
@@ -30,11 +30,11 @@
   business cycle or other short-term fluctuations. 
 }
 \references{
-  Sterling, Arnie (1977). Unpublished BS Thesis.
+  Sterling, Arnie (1977) Unpublished BS Thesis.
   Massachusetts Institute of Technology.
 
-  Belsley, D. A., E. Kuh and R. E. Welsch (1980).
-  \emph{Regression Diagnostics}.  New York: Wiley.
+  Belsley, D. A., E. Kuh. E. and  Welsch, R. E. (1980)
+  \emph{Regression Diagnostics.} New York: Wiley.
 }
 \examples{
 data(LifeCycleSavings)

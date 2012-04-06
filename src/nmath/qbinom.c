@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,72 +17,92 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
- *  SYNOPSIS
- *
- *    #include "Mathlib.h"
- *    double qbinom(double x, double n, double p);
- *
  *  DESCRIPTION
  *
- *    The quantile function of the binomial distribution.
+ *	The quantile function of the binomial distribution.
  *
- *  NOTES
+ *  METHOD
  *
- *    The function uses the Cornish-Fisher Expansion to include
- *    a skewness correction to a normal approximation.  This gives
- *    an initial value which never seems to be off by more than
- *    1 or 2.  A search is then conducted of values close to
- *    this initial start point.
+ *	Uses the Cornish-Fisher Expansion to include a skewness
+ *	correction to a normal approximation.  This gives an
+ *	initial value which never seems to be off by more than
+ *	1 or 2.	 A search is then conducted of values close to
+ *	this initial start point.
  */
-
 #include "Mathlib.h"
 
-double qbinom(double x, double n, double p)
+#ifdef DEBUG_qbinom
+# include "PrtUtil.h"
+#endif
+
+double qbinom(double p, double n, double pr, int lower_tail, int log_p)
 {
     double q, mu, sigma, gamma, z, y;
 
 #ifdef IEEE_754
-    if (ISNAN(x) || ISNAN(n) || ISNAN(p))
-	return x + n + p;
-    if(!R_FINITE(x) || !R_FINITE(n) || !R_FINITE(p)) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
+    if (ISNAN(p) || ISNAN(n) || ISNAN(pr))
+	return p + n + pr;
 #endif
+    if(!R_FINITE(p) || !R_FINITE(n) || !R_FINITE(pr))
+	ML_ERR_return_NAN;
+    R_Q_P01_check(p);
 
     n = floor(n + 0.5);
-    if (x < 0 || x > 1 || p <= 0 || p >= 1 || n <= 0) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
-    if (x == 0) return 0.0;
-    if (x == 1) return n;
-    q = 1 - p;
-    mu = n * p;
-    sigma = sqrt(n * p * q);
-    gamma = (q-p)/sigma;
-    z = qnorm(x, 0.0, 1.0);
+    if (pr <= 0 || pr >= 1 || n <= 0)
+	ML_ERR_return_NAN;
+
+    if (p == R_DT_0) return 0.;
+    if (p == R_DT_1) return n;
+
+    q = 1 - pr;
+    mu = n * pr;
+    sigma = sqrt(n * pr * q);
+    gamma = (q - pr) / sigma;
+
+#ifdef DEBUG_qbinom
+    REprintf("qbinom(p=%7g, n=%7g, pr=%7g, l.t.=%2d, log=%2d): "
+	     "sigm=%7g, gam=%5g\n",
+	     p,n,pr, lower_tail, log_p, sigma, gamma);
+#endif
+    /* FIXME: This is far from optimal :
+       -- "same" code in qpois.c, qbinom.c, qnbinom.c */
+    if(!lower_tail || log_p)
+	p = R_DT_qIv(p);
+
+    z = qnorm(p, 0., 1., /*lower_tail*/LTRUE, /*log_p*/LFALSE);
     y = floor(mu + sigma * (z + gamma * (z*z - 1) / 6) + 0.5);
 
-    z = pbinom(y, n, p);
-    if(z >= x) {
+#ifdef DEBUG_qbinom
+    REprintf("  new p=%7g, z=%7g, y=%5g\n", p, z, y);
+#endif
+    z = pbinom(y, n, pr, /*lower_tail*/LTRUE, /*log_p*/LFALSE);
 
-	/* search to the left */
+    /* fuzz to ensure left continuity: */
+    p *= 1 - 64*DBL_EPSILON;
+#ifdef DEBUG_qbinom
+    REprintf("\tnew z=%7g >=? p = %7g\n", z,p);
+#endif
 
+#ifdef maybe_future
+    if((lower_tail && z >= p) || (!lower_tail && z <= p)) {
+#else
+    if(z >= p) {
+#endif
+			/* search to the left */
 	for(;;) {
-	    if((z = pbinom(y - 1, n, p)) < x)
+	    if(y == 0 ||
+	       (z = pbinom(y - 1, n, pr, /*l._t.*/LTRUE, /*log_p*/LFALSE)) < p)
 		return y;
 	    y = y - 1;
 	}
     }
-    else {
-
-	/* search to the right */
+    else {		/* search to the right */
 
 	for(;;) {
-	    if((z = pbinom(y + 1, n, p)) >= x)
-		return y + 1;
 	    y = y + 1;
+	    if(y == n ||
+	       (z = pbinom(y, n, pr, /*l._t.*/LTRUE, /*log_p*/LFALSE)) >= p)
+		return y;
 	}
     }
 }

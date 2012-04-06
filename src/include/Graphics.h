@@ -438,6 +438,108 @@ int MacDeviceDriver(char**, int, double*, int);
 #endif
 
 
+#ifndef R_NO_REMAP
+#define addDevice		Rf_addDevice
+#define char2col		Rf_char2col
+#define col2name		Rf_col2name
+#define copyDisplayList		Rf_copyDisplayList
+#define copyGPar		Rf_copyGPar
+#define CreateAtVector		Rf_CreateAtVector
+#define curDevice		Rf_curDevice
+#define CurrentDevice		Rf_CurrentDevice
+#define currentFigureLocation	Rf_currentFigureLocation
+#define deviceNumber		Rf_deviceNumber
+#define DevNull			Rf_DevNull
+#define FixupCex		Rf_FixupCex
+#define FixupCol		Rf_FixupCol
+#define FixupFont		Rf_FixupFont
+#define FixupLty		Rf_FixupLty
+#define FixupLwd		Rf_FixupLwd
+#define FixupPch		Rf_FixupPch
+#define FixupVFont		Rf_FixupVFont
+#define GArrow			Rf_GArrow
+#define GBox			Rf_GBox
+#define GCheckState		Rf_GCheckState
+#define GCircle			Rf_GCircle
+#define GClip			Rf_GClip
+#define GClipPolygon		Rf_GClipPolygon
+#define GConvert		Rf_GConvert
+#define GConvertX		Rf_GConvertX
+#define GConvertXUnits		Rf_GConvertXUnits
+#define GConvertY		Rf_GConvertY
+#define GConvertYUnits		Rf_GConvertYUnits
+#define GEndPath		Rf_GEndPath
+#define GetAxisLimits		Rf_GetAxisLimits
+#define GetDevice		Rf_GetDevice
+#define GExpressionHeight	Rf_GExpressionHeight
+#define GExpressionWidth	Rf_GExpressionWidth
+#define GForceClip		Rf_GForceClip
+#define GInit			Rf_GInit
+#define GLine			Rf_GLine
+#define GLocator		Rf_GLocator
+#define GLPretty		Rf_GLPretty
+#define GMapUnits		Rf_GMapUnits
+#define GMapWin2Fig		Rf_GMapWin2Fig
+#define GMathText		Rf_GMathText
+#define GMetricInfo		Rf_GMetricInfo
+#define GMMathText		Rf_GMMathText
+#define GMode			Rf_GMode
+#define GMtext			Rf_GMtext
+#define GNewPlot		Rf_GNewPlot
+#define GPolygon		Rf_GPolygon
+#define GPolyline		Rf_GPolyline
+#define GPretty			Rf_GPretty
+#define GRect			Rf_GRect
+#define GReset			Rf_GReset
+#define GRestore		Rf_GRestore
+#define GRestorePars		Rf_GRestorePars
+#define GSavePars		Rf_GSavePars
+#define GScale			Rf_GScale
+#define GSetState		Rf_GSetState
+#define GSetupAxis		Rf_GSetupAxis
+#define GStartPath		Rf_GStartPath
+#define GStrHeight		Rf_GStrHeight
+#define GStrWidth		Rf_GStrWidth
+#define GSymbol			Rf_GSymbol
+#define GText			Rf_GText
+#define GVStrHeight		Rf_GVStrHeight
+#define GVStrWidth		Rf_GVStrWidth
+#define GVText			Rf_GVText
+#define inhibitDisplayList	Rf_inhibitDisplayList
+#define initDisplayList		Rf_initDisplayList
+#define InitGraphics		Rf_InitGraphics
+#define KillAllDevices		Rf_KillAllDevices
+#define KillDevice		Rf_KillDevice
+#define killDevice		Rf_killDevice
+#define labelformat		Rf_labelformat
+#define LTYget			Rf_LTYget
+#define LTYpar			Rf_LTYpar
+#define name2col		Rf_name2col
+#define NewFrameConfirm		Rf_NewFrameConfirm
+#define nextDevice		Rf_nextDevice
+#define NoDevices		Rf_NoDevices
+#define NumDevices		Rf_NumDevices
+#define playDisplayList		Rf_playDisplayList
+#define prevDevice		Rf_prevDevice
+#define ProcessInlinePars	Rf_ProcessInlinePars
+#define recordGraphicOperation	Rf_recordGraphicOperation
+#define rgb2col			Rf_rgb2col
+#define RGB2rgb			Rf_RGB2rgb
+#define RGBpar			Rf_RGBpar
+#define ScaleColor		Rf_ScaleColor
+#define selectDevice		Rf_selectDevice
+#define Specify2		Rf_Specify2
+#define StartDevice		Rf_StartDevice
+#define str2col			Rf_str2col
+#define StrMatch		Rf_StrMatch
+#define xDevtoNDC		Rf_xDevtoNDC
+#define xDevtoNFC		Rf_xDevtoNFC
+#define xNPCtoUsr		Rf_xNPCtoUsr
+#define yDevtoNDC		Rf_yDevtoNDC
+#define yDevtoNFC		Rf_yDevtoNFC
+#define yNPCtoUsr		Rf_yNPCtoUsr
+#endif
+
 		/* User Callable Functions */
 
 /*-------------------------------------------------------------------
@@ -446,7 +548,6 @@ int MacDeviceDriver(char**, int, double*, int);
  *  of devices.
  *
  */
-
 
 /* Return a pointer to the current device. */
 DevDesc* CurrentDevice();
@@ -526,6 +627,7 @@ SEXP FixupFont(SEXP, int);
 SEXP FixupCol(SEXP, unsigned int);
 SEXP FixupCex(SEXP, double);
 SEXP FixupLwd(SEXP, double);
+SEXP FixupVFont(SEXP);
 
 
 
@@ -598,6 +700,12 @@ void GEndPath(DevDesc*);
 void GMathText(double, double, int, SEXP, double, double, double, DevDesc*);
 void GMMathText(SEXP, int, double, int, double, int, DevDesc*);
 
+void GVText(double x, double y, int unit, char* s, int typeface, int fontindex,
+	    double xadj, double yadj, double rot, DevDesc *dd);
+double GVStrWidth(const unsigned char *s, int typeface, int fontindex,
+		  int unit, DevDesc *dd);
+double GVStrHeight(const unsigned char *s, int typeface, int fontindex,
+		   int unit, DevDesc *dd);
 
 /*-------------------------------------------------------------------
  *
@@ -682,7 +790,7 @@ void GSetupAxis(int, DevDesc*);
 /* Return row and column of current figure in the layout matrix */
 void currentFigureLocation(int*, int*, DevDesc*);
 
-double Log10(double);
+double R_Log10(double);
 
 double xDevtoNDC(double x, DevDesc *dd);
 double yDevtoNDC(double y, DevDesc *dd);
@@ -705,5 +813,18 @@ unsigned int ScaleColor(double x);
 char* RGB2rgb(unsigned int, unsigned int, unsigned int);
 
 int StrMatch(char *s, char *t);
+void copyGPar(GPar *, GPar *);
+
+/* some functions that plot.c needs to share with plot3d.c */
+SEXP CreateAtVector(double*, double*, int, int);
+void GetAxisLimits(double, double, double*, double*);
+SEXP labelformat(SEXP);
+
+/* Vector fonts */
+
+double GVStrWidth (const unsigned char *, int, int, int, DevDesc *);
+double GVStrHeight (const unsigned char *, int, int, int, DevDesc *);
+void GVText (double, double, int, char *, int, int, 
+	     double, double, double, DevDesc *);
 
 #endif

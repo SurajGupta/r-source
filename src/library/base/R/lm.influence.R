@@ -40,49 +40,48 @@ lm.influence <- function (lm.obj)
 	     DUP = FALSE, PACKAGE="base")[c("hat", "coefficients", "sigma")]
 }
 
-rstandard <- function(lm.obj)
-{
-    infl <- lm.influence(lm.obj)
-    weighted.residuals(lm.obj)/(summary(lm.obj)$sigma * sqrt(1 - infl$hat))
-}
+rstandard <- function(lm.obj, infl = lm.influence(lm.obj),
+                      res = weighted.residuals(lm.obj),
+                      sd = sqrt(deviance(lm.obj)/df.residual(lm.obj)))
+    res / (sd * sqrt(1 - infl$hat))
+## OLD (<= 0.90.1); fails for glm objects:
+##  res / (summary(lm.obj)$sigma * sqrt(1 - infl$hat))
 
-rstudent <- function(lm.obj)
-{
-    infl <- lm.influence(lm.obj)
-    weighted.residuals(lm.obj)/(infl$sigma * sqrt(1 - infl$hat))
-}
 
-dfbetas <- function (lm.obj)
+rstudent <- function(lm.obj, infl = lm.influence(lm.obj),
+                     res = weighted.residuals(lm.obj))
+    res / (infl$sigma * sqrt(1 - infl$hat))
+
+dffits <- function(lm.obj, infl = lm.influence(lm.obj),
+                   res = weighted.residuals(lm.obj))
+    res * sqrt(infl$hat)/(infl$sigma*(1-infl$hat))
+
+dfbetas <- function (lm.obj, infl = lm.influence(lm.obj))
 {
-    infl <- lm.influence(lm.obj)
     xxi <- chol2inv(lm.obj$qr$qr, lm.obj$qr$rank)
     d <- infl$coefficients/(outer(infl$sigma, sqrt(diag(xxi))))
     dimnames(d) <- list(case.names(lm.obj), variable.names(lm.obj))
     d
 }
 
-dffits <- function(lm.obj)
+covratio <- function(lm.obj, infl = lm.influence(lm.obj),
+                     res = weighted.residuals(lm.obj))
 {
-    infl <- lm.influence(lm.obj)
-    sqrt(infl$hat)*residuals(lm.obj)/(infl$sigma*(1-infl$hat))
-}
-
-covratio <- function(lm.obj)
-{
-    infl <- lm.influence(lm.obj)
     n <- nrow(lm.obj$qr$qr)
     p <- lm.obj$rank
-    e.star <- residuals(lm.obj)/(infl$sigma*sqrt(1-infl$hat))
-    1/((((n - p - 1)+e.star^2)/(n - p))^p*(1-infl$hat))
+    omh <- 1-infl$hat
+    e.star <- res/(infl$sigma*sqrt(omh))
+    1/(omh*(((n - p - 1)+e.star^2)/(n - p))^p)
 }
 
-cooks.distance <- function(lm.obj)
+## Used in plot.lm(); allow passing of known parts:
+cooks.distance <- function(lm.obj, infl = lm.influence(lm.obj),
+                           res = weighted.residuals(lm.obj),
+                           sd = sqrt(deviance(lm.obj)/df.residual(lm.obj)))
 {
     p <- lm.obj$rank
-    e <- weighted.residuals(lm.obj)
-    s <- sqrt(deviance(lm.obj)/df.residual(lm.obj))
-    h <- lm.influence(lm.obj)$hat
-    ((e/(s * (1 - h)))^2 * h)/p
+    hat <- .Alias(infl$hat)
+    ((res/(sd * (1 - hat)))^2 * hat)/p
 }
 
 influence.measures <- function(lm.obj)
@@ -126,7 +125,7 @@ influence.measures <- function(lm.obj)
     ans
 }
 
-print.infl <- function(x, digits = max(3, .Options$digits - 4), ...)
+print.infl <- function(x, digits = max(3, getOption("digits") - 4), ...)
 {
     ## `x' : as the result of  influence.measures(.)
     cat("Influence measures of\n\t", deparse(x$call),":\n\n")
@@ -137,7 +136,7 @@ print.infl <- function(x, digits = max(3, .Options$digits - 4), ...)
     invisible(x)
 }
 
-summary.infl <- function(object, digits = max(2, .Options$digits - 5), ...)
+summary.infl <- function(object, digits = max(2, getOption("digits") - 5), ...)
 {
     ## object must be as the result of	influence.measures(.)
     is.inf <- object$is.inf

@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1998	Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -229,7 +230,7 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     if (gamma < 0 || gamma > 100)
 	errorcall(call, "invalid gamma value");
 
-    if (!isString(CAR(args)) || length(CAR(args)) < 1)
+    if (!isValidString(CAR(args)))
 	error("invalid colortype passed to X11 driver");
     cname = CHAR(STRING(CAR(args))[0]);
     if (strcmp(cname, "mono") == 0)
@@ -250,7 +251,7 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     maxcubesize = asInteger(CAR(args));
     if (maxcubesize < 1 || maxcubesize > 256)
         maxcubesize = 256;
-	    
+
     /* Allocate and initialize the device driver data */
     if (!(dd = (DevDesc*)malloc(sizeof(DevDesc))))
 	return 0;

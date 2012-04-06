@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,13 +35,7 @@
 
 double rchisq(double df)
 {
-    if (
-#ifdef IEEE_754
-	!R_FINITE(df) ||
-#endif
-	df <= 0.0) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
+    if (!R_FINITE(df) || df <= 0.0) ML_ERR_return_NAN;
+
     return rgamma(df / 2.0, 2.0);
 }

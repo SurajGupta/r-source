@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Arith.h"
@@ -75,8 +75,8 @@ static double approx1(double v, double *x, double *y, int n, int method)
 
 	/* R Frontend for Linear and Constant Interpolation */
 
-void approx(double *x, double *y, int *nxy, double *xout, int *nout,
-	    int *method, double *yleft, double *yright, double *f)
+void R_approx(double *x, double *y, int *nxy, double *xout, int *nout,
+	      int *method, double *yleft, double *yright, double *f)
 {
     int i;
 

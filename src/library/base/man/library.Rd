@@ -1,11 +1,11 @@
 \name{library}
 \title{Loading and Listing of Packages}
 \usage{
-library(name, help = NULL, lib.loc = .lib.loc,
-	character.only = FALSE, logical.return = FALSE,
-	warn.conflicts = TRUE)
-require(name, quietly = FALSE, warn.conflicts = TRUE)
-provide(name)
+library(package, help = NULL, lib.loc = .lib.loc,
+        character.only = FALSE, logical.return = FALSE,
+        warn.conflicts = TRUE)
+require(package, quietly = FALSE, warn.conflicts = TRUE)
+provide(package)
 
 .First.lib(libname, pkgname)
 
@@ -26,11 +26,11 @@ provide(name)
 \alias{.packages}
 \alias{.lib.loc}
 \arguments{
-  \item{name, help}{\code{name} or character string giving the name of a
-    package.}
+  \item{package, help}{\code{\link{name}} or character string giving the
+    name of a package.}
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through.}
-  \item{character.only}{a logical indicating whether \code{name} or
+  \item{character.only}{a logical indicating whether \code{package} or
     \code{help} can be assumed to be character strings.}
   \item{logical.return}{logical.  If it is \code{TRUE},  \code{FALSE} or
       \code{TRUE} is returned to indicate success.}
@@ -46,18 +46,15 @@ provide(name)
       vector of all available packages in \code{lib.loc}.}
 }
 \description{
-  \code{library(name)} and \code{require(name)} both load the package
-  named \code{name}.  \code{provide} allows code to register services that
-  it provides.
-
-  \code{.First.lib()} is called when a package is loaded by \code{library()}.
-  \code{.packages()} and the \code{.xxx} variables return information about
-  package availability.
+  \code{library} and \code{require} load add-on packages; \code{provide}
+  allows code to register services that packages provide.
+  \code{.First.lib()} is called when a package is loaded;
+  \code{.packages()} returns information about package availability.
 }
 \details{
-  \code{library(name)} and \code{require(name)} both load the package
-  with name \code{name}.  \code{require} is designed for use inside
-  other functions; it returns \code{FALSE} and optionally gives a
+  \code{library(package)} and \code{require(package)} both load the
+  package with name \code{package}.  \code{require} is designed for use
+  inside other functions; it returns \code{FALSE} and optionally gives a
   warning, rather than giving an error, if the package does not exist.
   Both functions check and update the list of currently loaded packages
   and do not reload code that is already loaded.  \code{require} also
@@ -65,27 +62,23 @@ provide(name)
 
   \code{provide} allows code to register services that it provides.  The
   argument is stored in the list \code{.Provided}.  \code{provide}
-  returns \code{FALSE} if the name was already present in
+  returns \code{FALSE} if the package was already present in
   \code{.Provided} or among the packages in \code{search()}.  The main
-  use for \code{provide} is when multiple packages share code.	This is
+  use for \code{provide} is when multiple packages share code.  This is
   most likely when the code implements features present in S(-PLUS) but
-  not in R. For example, the spline functions \code{ns}, \code{bs} and
-  so on are not included in the \R distribution.  A package containing
-  these functions can use \code{provide(splines)} to register this fact.
-  Another package that needs the functions can execute
-  \code{require(splines)} rather than \code{library(splines)} to load
-  the spline package only if their functionality is not already available.
+  not in R.
 
-  If \code{library} is called with no \code{name} or \code{help}
+  If \code{library} is called with no \code{package} or \code{help}
   argument, it gives a list of all available packages in \code{lib.loc}
-  and invisibly returns their names (same as \code{.packages(all=T)}).
+  and invisibly returns their names (same as
+  \code{.packages(all = TRUE)}).
 
-  \code{library(help = name)} prints information on
-  the package \code{name}, typically by listing the most important user
-  level objects it contains.
+  \code{library(help = somename)} prints information on the package
+  \code{somename}, typically by listing the most important user level
+  objects it contains.
 
   \code{.First.lib()} is called when a package is loaded by
-  \code{library(.)}.  It is called with two arguments, the name of the
+  \code{library()}.  It is called with two arguments, the name of the
   library tree where the package was found (i.e., the corresponding
   element of \code{lib.loc}), and the name of the package (in that
   order).  It is a good place to put calls to \code{library.dynam()}
@@ -97,9 +90,9 @@ provide(name)
   environment in which the package is stored.
 
   \code{.packages()} returns the ``base names'' of the currently attached
-  packages \emph{invisibly} whereas \code{.packages(all.available =TRUE)}
-  gives (visibly) \emph{all} packages available in the library
-  location path \code{lib.loc}.
+  packages \emph{invisibly} whereas
+  \code{.packages(all.available = TRUE)} gives (visibly) \emph{all}
+  packages available in the library location path \code{lib.loc}.
 
   \code{.Autoloaded} contains the ``base names'' of the packages for
   which autoloading has been promised.
@@ -133,19 +126,19 @@ provide(name)
     \code{\link{library.dynam}},
     \code{\link{data}}, \code{\link{install.packages}}.
 #ifdef unix
-    \code{\link{INSTALL}}, \code{\link{REMOVE}} 
+    \code{\link{INSTALL}}, \code{\link{REMOVE}}
 #endif
 }
 \examples{
-.packages()	    	    # maybe just "base"
+.packages()                 # maybe just "base"
 .packages(all = TRUE)       # return all available as char.vector
-library()		    # list all available packages
-library(lib = .Library)	    # list all packages in the default library
-library(help = eda)	    # documentation on package "eda"
-library(eda)		    # load package "eda"
-require(eda)		    # the same
+library()                   # list all available packages
+library(lib = .Library)     # list all packages in the default library
+library(help = eda)         # documentation on package "eda"
+library(eda)                # load package "eda"
+require(eda)                # the same
 .packages()                 # "eda", too
-require(nonexistent)	    # FALSE
+require(nonexistent)        # FALSE
 ## Suppose the a package needs to call a shared library named "foo.EXT",
 ## where "EXT" is the system-specific extension.  Then you should use
 .First.lib <- function(lib, pkg) {

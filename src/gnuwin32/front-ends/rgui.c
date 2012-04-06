@@ -22,15 +22,11 @@
 #include "Rversion.h"
 #include "Startup.h"
 
-#ifndef _MSC_VER
-#define CharacterMode (*__imp_CharacterMode)
-#else
 #define CharacterMode (*_imp__CharacterMode)
-#endif
 
 extern void cmdlineoptions(int, char **);
 extern int setupui(void);
-extern void mainloop(void);
+extern void Rf_mainloop(void);
 extern UImode CharacterMode;
 
 extern char *getDLLVersion();
@@ -52,7 +48,7 @@ int AppMain (int argc, char **argv)
     }
     cmdlineoptions(argc, argv);
     setupui();
-    mainloop();
+    Rf_mainloop();
     /* NOTREACHED */
     return 0;
 }

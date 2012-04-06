@@ -1,28 +1,35 @@
 \name{Lognormal}
-\title{The Log Normal Distribution}
-\usage{
-dlnorm(x, meanlog = 0, sdlog = 1)
-plnorm(q, meanlog = 0, sdlog = 1)
-qlnorm(p, meanlog = 0, sdlog = 1)
-rlnorm(n, meanlog = 0, sdlog = 1)
-}
 \alias{dlnorm}
 \alias{plnorm}
 \alias{qlnorm}
 \alias{rlnorm}
-\arguments{
-\item{x,q}{vector of quantiles.}
-\item{p}{vector of probabilities.}
-\item{n}{number of observations to generate.}
-\item{meanlog,sdlog}{mean and standard deviation of the distribution
-on the log scale}
-}
+\title{The Log Normal Distribution}
 \description{
-  These functions provide information about the log normal distribution
-  whose logarithm has mean equal to \code{meanlog} and standard
-  deviation equal to \code{sdlog}.  \code{dlnorm} gives the density,
-  \code{plnorm} gives the distribution function \code{qlnorm} gives the
-  quantile function and \code{rlnorm} generates random deviates.
+  Density, distribution function, quantile function and random
+  generation for the log normal distribution whose logarithm has mean
+  equal to \code{meanlog} and standard  deviation equal to \code{sdlog}.
+}
+\usage{
+dlnorm(x, meanlog = 0, sdlog = 1, log = FALSE)                    
+plnorm(q, meanlog = 0, sdlog = 1, lower.tail = TRUE, log.p = FALSE)
+qlnorm(p, meanlog = 0, sdlog = 1, lower.tail = TRUE, log.p = FALSE)
+rlnorm(n, meanlog = 0, sdlog = 1)
+}
+\arguments{
+  \item{x, q}{vector of quantiles.}
+  \item{p}{vector of probabilities.}
+  \item{n}{number of observations to generate.}
+  \item{meanlog, sdlog}{mean and standard deviation of the distribution
+    on the log scale.}
+  \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
+  \item{lower.tail}{logical; if TRUE (default), probabilities are
+    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+}
+\value{
+  \code{dlnorm} gives the density,
+  \code{plnorm} gives the distribution function,
+  \code{qlnorm} gives the quantile function, and
+  \code{rlnorm} generates random deviates.
 }
 \details{
   If \code{meanlog} or \code{sdlog} are not specified they assume the
@@ -40,7 +47,7 @@ on the log scale}
 }
 \examples{
 dlnorm(1) == dnorm(0)
-x <- rlnorm(1000)	# not yet always :
+x <- rlnorm(1000)       # not yet always :
 all(abs(x  -  qlnorm(plnorm(x))) < 1e4 * .Machine$double.eps * x)
 }
 \keyword{distribution}

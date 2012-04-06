@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -124,19 +124,19 @@ static int sequal(SEXP x, int i, SEXP y, int j)
 }
 
 /* Choose M to be the smallest power of 2 */
-/* not less than 2*n and set K = log2(M) */
+/* not less than 4*n and set K = log2(M) */
 static void MKsetup(int n)
 {
-    int n2 = 2 * n;
+    int n4 = 4 * n;
     M = 1;
     K = 0;
-    while (M < n2) {
+    while (M < n4) {
 	M *= 2;
 	K += 1;
     }
 }
 
-void HashTableSetup(SEXP x)
+static void HashTableSetup(SEXP x)
 {
     switch (TYPEOF(x)) {
     case LGLSXP:

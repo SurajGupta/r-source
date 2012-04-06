@@ -180,7 +180,7 @@ the training set points.
   Friedman, J. H. and Stuetzle, W. (1981)
   Projection pursuit regression. 
   \emph{Journal of the American Statistical Association},
-  \bold{76}, 817-823.
+  \bold{76}, 817--823.
 
   Friedman, J. H. (1984)
   SMART User's Guide.
@@ -196,7 +196,7 @@ data(rock)
 attach(rock)
 area1 <- area/10000; peri1 <- peri/10000
 rock.ppr <- ppr(log(perm) ~ area1 + peri1 + shape,
-		data=rock, nterms=2, max.terms=5)
+                data = rock, nterms = 2, max.terms = 5)
 rock.ppr
 # Call:
 # ppr.formula(formula = log(perm) ~ area1 + peri1 + shape, data = rock, 

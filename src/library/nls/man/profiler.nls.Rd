@@ -1,4 +1,4 @@
-% $Id: profiler.nls.Rd,v 1.1.2.1 1999/12/15 08:04:29 ripley Exp $
+% $Id: profiler.nls.Rd,v 1.3 2000/01/17 16:23:10 ripley Exp $
 \name{profiler.nls}
 \alias{profiler.nls}
 \title{ Constructor for Profiler Objects from nls Objects}
@@ -61,4 +61,6 @@ prof1$getProfile()
 # finally, set defaults back to original estimates
 prof1$setDefault()
 }
-\keyword{ nonlinear, regression, models }
+\keyword{nonlinear}
+\keyword{regression}
+\keyword{models}

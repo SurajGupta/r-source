@@ -1,30 +1,44 @@
 #! /bin/sh
-
+#
 # ${R_HOME}/bin/REMOVE for removing add-on packages
-# Usage:
-#	R REMOVE [options] [-l lib] pkg_1 ... pkg_n
 
-VERSION="0.1-0"
-USAGE_MSG="Usage:  R REMOVE [options] [-l lib] pkg_1 ... pkg_n"
-PKGS=
+revision='$Revision: 1.8 $'
+version=`set - ${revision}; echo ${2}`
+version="R add-on package remover ${version}"
+
+usage="Usage: R REMOVE [options] pkgs
+
+Remove the add-on packages specified by pkgs from the default library
+tree (${R_HOME}/library) or the tree specified via \`--library'.
+
+Options:
+  -h, --help		print short help message and exit
+  -l, --library=LIB	remove packages from library tree LIB
+  -v, --version		print version info and exit
+
+Report bugs to <R-bugs@lists.r-project.org>."
+
+pkgs=
 lib=${R_HOME}/library
 
 while test -n "${1}"; do
   case ${1} in
-    -h|--help|-\?)
-      echo "${USAGE_MSG}"; exit 0 ;;
-    -V|--version)
-      echo "${VERSION}"; exit 0 ;;
+    -h|--help)
+      echo "${usage}"; exit 0 ;;
+    -v|--version)
+      echo "${version}"; exit 0 ;;
     -l)
       lib=${2}; shift ;;
+    --library=*)
+      lib=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     *)
-      PKGS="${PKGS} ${1}" ;;
+      pkgs="${pkgs} ${1}" ;;
   esac
   shift
 done  
 
-if test -z "${PKGS}"; then
-  echo "${USAGE_MSG}"
+if test -z "${pkgs}"; then
+  echo "ERROR: no packages specified"
   exit 1
 fi
 
@@ -32,18 +46,18 @@ if test -d ${lib} -a -w ${lib}; then
   cd ${lib}
   lib=`pwd`
 else    
-  echo "ERROR:  cannot cd to or remove from directory \`${lib}'"
+  echo "ERROR: cannot cd to or remove from directory \`${lib}'"
   exit 2
 fi    
 
-for pkg in ${PKGS}; do
+for pkg in ${pkgs}; do
   if test -d ${pkg}; then
     rm -rf ${pkg}
   else
-    echo "Warning:  there is no pkg \`${pkg}' in lib \`${lib}'"
+    echo "WARNING: there is no pkg \`${pkg}' in lib \`${lib}'"
     continue
   fi
-done  
+done
 
 cat */TITLE > LibIndex 2> /dev/null
 
@@ -60,3 +74,8 @@ if test ${lib} = ${R_HOME}/library; then
   ${R_HOME}/bin/build-help --htmllists
   cat ${R_HOME}/library/*/CONTENTS > ${R_HOME}/doc/html/search/index.txt
 fi
+
+### Local Variables: ***
+### mode: sh ***
+### sh-indentation: 2 ***
+### End: ***

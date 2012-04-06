@@ -1,9 +1,308 @@
 				Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
+	*	       0.99 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+		CHANGES IN R VERSION 0.99.0
+
+
+NEW FEATURES
+
+    o	The ``Introduction to R'' manual, in doc/manual.
+	The ``Writing R Extensions'' manual is much enhanced for
+	this release.
+
+    o	The format for save/load has been changed. Workspaces and
+	objects saved in earlier versions can be loaded into this
+	version, but not conversely. Use save() or save.image() with
+	argument oldstyle=TRUE to save in the old format if you need to.
+
+    o	The header files for C code have been reorganised. The
+	preferred header file for user code is now "R.h", and
+	ancillary files such as Arith.h now need to be referred to
+	as "R_ext/Arith.h". The `Writing R Extensions' manual now
+	contains the beginnings of a description of the public API and
+	how to use it.
+
+    o	Many of the exported symbols have been remapped or hidden. This
+	means that code using Rdefines.h or Rinternals.h or Mathlib.h
+	will need to be re-compiled, and code using Applic.h may do
+	so.
+
+	Many packages will need to be re-installed for use with this
+	release.
+
+    o	The random number generation interface has changed, although
+	saved .Random.seed's will work unchanged. The default
+	generator is now Marsaglia's multicarry, and the Mersenne
+	Twister GFSR and Knuth's Fibonacci subtraction are also
+	available.  The type of normal generation can be selected by
+	RNGkind() (and is encoded in .Random.seed).
+
+	The new function set.seed() which uses a single integer to set
+	the random number seeds is now the recommended way to do so.
+
+	It is now possible for a user to plug-in in a new RNG written
+	in C: consult ?Random and ?Random-user for the details.
+
+    o	All the DPQ {probability density quantile} functions have new
+	arguments, "lower_tail = TRUE" and "log{_p} = FALSE".  This allows
+	more precise results when values would be close to 0 or 1.
+
+    o	R CMD Rd2dvi has new options --pdf, --title and --output.
+
+    o	New fields Date, URL and Title in the DESCRIPTION file of
+	packages. The Title field replaces the separate TITLE file of
+	packages, which is no longer necessary.
+
+    o	residuals.lm() has a "type" argument, as S does.
+
+    o	The underlying code for nlm has been translated from Fortran
+	to C and made re-entrant (changes contributed by Saikat DebRoy).
+
+    o	optimize() can now be used recursively.
+
+    o	New suite of optimization methods optim(), covering
+	Nelder-Mead, BFGS quasi-Newton and conjugate-gradients methods
+	for unconstrained minimization and maximization with and
+	without derivatives.
+
+	optim() also allows box constraints (interval bounds on
+	individual variables) in its limited-memory BFGS option.
+
+    o	R now compiles in the GNU version of regex, so regular
+	expressions (grep, sub, gsub, regexpr, "pattern" in ls) are
+	always available. The class of regular expressions supported
+	is now slightly wider on some Unix platforms.
+
+    o	package ctest (for classical tests) is now part of the base
+	distribution, and also contains chisq.test, prop.test and
+	t.test which previously were in package base. These three
+	functions are auto-loaded from ctest.
+
+    o	New utility `R CMD build' for building add-on packages along
+	with some useful testing and cleaning up.
+
+    o	Conversion of .Rd help files to text format is done in Perl,
+	and no longer requires nroff.  This makes the conversion 8-bit
+	clean and more accurate.
+
+    o	Building help for a package now removes help files that no
+	longer exist in the source.
+
+    o	strsplit() now uses split regexps, and no longer insists on
+	splitting into non-empty tokens.
+
+    o	Long-named options with arguments such as `--vsize' now use the
+	`--name=VALUE' form; the old `--name VALUE' is deprecated.
+	The old-style command line options `-v' and `-n' are now defunct.
+
+    o	par("cxy") { == par("cin")/par("pin") in user coordinates}
+	for S compatibility.
+
+    o	If R_PAPERSIZE is not specified otherwise, configure now tries
+	to compute it by calling paperconf.
+
+    o	The deprecated alternative RPROFILE is no longer accepted: use
+	R_PROFILE instead.
+
+    o	Added setequal() for set equality.
+
+    o	First argument renamed to "package" for library(), require(),
+	provide().
+
+    o	model.frame() now accepts data= arguments that can be coerced to
+	data frames.
+
+    o	Help files can now contain \describe groups.
+
+    o	Hyperlinks in help files can now use LaTeX special characters.
+
+    o	rstandard() now also works for glm objects.
+
+    o	glm drops 0-weight observations when fitting so that the
+	output is compatible with lm.influence() and plot.lm().
+
+    o	New function ftable() for creating and manipulating flat
+	contingency tables.
+
+    o	New function cutree() for cutting hclust trees in package
+	mva.  New functions rect.hclust() and identify.hclust().
+
+    o	Under Unix, the default editor is obtained from the environment
+	variables EDITOR or VISUAL if either is set.
+
+    o	New command line option `--gui' to specify the graphical user
+	interface under Unix.  Currently, possible values are `X11' (the
+	(default) and `GNOME', provided that GNOME support is available.
+	Command line options \`-g' and `--gnome' are defunct.
+
+    o	power.t.test() and power.prop.test() functions added for power and
+	sample size calculations.
+
+    o	edit() is now generic and a new edit.data.frame() function
+	calls up the spreadsheet data editor. This is still rather
+	rudimentary, since the data editor really only knows about
+	numeric and character vectors.
+
+    o	Modifications to the data editor so that one can use ESC to
+	quit a partial cell entry and entering an empty cell causes
+	the element to be set to NA.
+
+    o	prop.table() and margin.table() functions (these are *really* trivial).
+
+    o	R INSTALL checks the Depends field of DESCRIPTION if the
+	currently running version of R meets an R
+	dependency. old.packages() reports only packages conforming
+	to the current version of R. New function
+	package.dependencies() for parsing and checking dependencies.
+
+    o	options("expressions") now does something, and the evaluation
+	depth is checked on all platforms (not just Macintosh). This
+	will catch infinite recursions gracefully.
+
+    o	The default number of cons cells (`nsize') is now 350k (it
+	was 250k).  This reflects the added base code and packages,
+	and increases memory usage by about 2Mb (on a 32-bit machine).
+
+    o	Some simple multiple comparison procedures: p.adjust() for
+	generic adjustment of a set of p values by variants of the
+	Bonferroni method; pairwise.t.test, pairwise.wilcox.test,
+	pairwise.prop.test for pairwise comparisons of grouped data
+	and proportions.
+
+    o	Error / warning calls with a long description of the call are
+	split into two lines. (This helps avoid scrolling in the
+	Windows GUI.)
+
+    o	lapply() is now internal and substantially faster (7% overall
+	speed-up on the tests for the base package).
+
+    o	apply() no longer names the output dimensions unless FUN returns
+	a result with names, and the same names for every result.
+
+    o	contour() can (at last) label contours by level.
+
+    o	persp() labels its axes.
+
+    o	scan() and read.table() now have a dec= argument to set the
+	decimal point character. If sep= is set, quoting of strings is
+	now possible and follows the conventions for comma-separated
+	files. This should make it easier to read the "continental
+	CSV" format (fields separated by semicolon and using comma as
+	decimal point).	 The set of quoting characters has also been
+	made optional. Variants of read.table(), read.csv() and
+	read.csv2() have been defined
+
+    o	HDF5 support is gone from the R distribution, and provided by an
+	add-on package available from CRAN.
+
+    o	New function getOption() for retrieving the value of a single
+	option.
+
+    o	read.table.url() and related functions now use download.file,
+	which has an extra "socket" method for direct HTTP socket
+	connection. download.file has new option ``quiet''.
+
+    o	pairs.default() has an oma argument to allow users to override
+	the internal setting of that graphics parameter.
+
+    o	princomp() in package mva allows the user to specify the
+	covariance matrix (and hence use, e.g. cov.mve).
+
+
+BUG FIXES
+
+    o	svd(matrix(2,1,0)),
+	arma0f(NULL), cancor(F,F) and prcomp(F[F]) no longer segfault.
+
+    o	loess.smooth(F[F],F[F]) and supsmu(F[F],F[F]) no longer segfault.
+
+    o	save(1, file = ""[F])  no longer segfaults.
+
+    o	stop(list()) and warning(list()) no longer segfault.
+
+    o	system(""[F]) and save(1, file = ""[F])	 no longer segfault.
+
+    o	Overflow of the pointer protection stack is handled correctly
+
+    o	predict.glm(, type="link", se.fit=T) works
+
+    o	str() now works with Surv(.) objects from library(survival5).
+
+    o	all.equal(-Inf, -1e5) now gives "Mean absolute difference: Inf"
+	instead of "Mean relative  difference: NaN".
+
+    o	strsplit fix broke copy.url.
+
+    o	0 ^ -1 == Inf  and  min(NA, NaN) is now always NA
+
+    o	R CMD xxx sets $R_HOME/bin to be first in PATH
+
+    o	Added more warnings to update.packages & friends. New function
+	old.packages for better control of update.packages.
+
+    o	Adding matrices to data frames now happens column by column as
+	documented, so character or logical matrices generate factor
+	columns.
+
+    o	Formulae containing interactions with the response were
+	handled incorrectly by model.matrix, giving wrong answers or crashes.
+
+    o	anova(lm(.)) with 0 weights now works.
+
+    o	plot.lm(), dffits(), covratio() now do the right thing for weighted
+	lm regression.
+
+    o	formatC(as.integer(c(1,0,NA))) now works. PR#394, thanks to Jens O.-A.
+
+    o	format.char(.) is much faster for long vector argument [Jens O.-A.]
+
+    o	\enumerate now enumerates in text conversion of .Rd files.
+
+    o	glm() no longer fails with names<- errors in cases where
+	observations with fits on the mu.eta boundary have been dropped.
+
+    o	Deviance residuals could be NaN instead of 0 by rounding error.
+
+    o	shapiro.test(x) now gives better error messages (eg. x=rep(1,5))
+	and doesn't print ANYTHING anymore (in some cases).
+
+    o	mode(as.formula(paste("~", paste(1:50, collapse="+")))[2]) now works.
+
+    o	glm() now handles cases with numerically 0 or 1 fitted values in
+	binomial and numerically 0 in poisson correctly. (Previously
+	these observations were dropped even though the variances were
+	also numerically 0.)
+
+    o	(-4 + 0i) ^ (1/2)  now gives 2i.
+
+    o	system.time() now does sensible things in the non-HAVE_TIMES
+	case, and that and proc.time() have better documentation.
+
+    o	A couple of bugs in the data editor spreadsheet have been
+	eliminated.
+
+    o	Elapsed time in proc.time() is no longer rounded to whole
+	seconds under Unix.
+
+    o	Assigning character vectors to subsets of data frames now
+	works correctly (it used to assign the numeric codes of factors).
+
+    o	Extensive enhancements and corrections to the help pages.
+
+    o	The possibility of buffer overruns during printing has been
+	much reduced, and eliminated on systems with vsnprintf.
+
+
+	**************************************************
+	*						 *
 	*	       0.90 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
 
 		CHANGES IN R VERSION 0.90.1
 
@@ -14,14 +313,14 @@ NEW FEATURES
 
     o	legend() has a `adj' argument and has been streamlined (and fixed up).
 
-    o   `unname' convenience function [experimental data.frame behavior].
+    o	`unname' convenience function [experimental data.frame behavior].
 
-    o   `examples' sections have been added to the documentation
-        for most of the data sets in the base library.
+    o	`examples' sections have been added to the documentation
+	for most of the data sets in the base library.
 
-    o   update.packages & friends have new argument contriburl for
-        incomplete CRAN mirrors. Package bundles such as VR can be
-        directly installed both from the shell and from inside R.
+    o	update.packages & friends have new argument contriburl for
+	incomplete CRAN mirrors. Package bundles such as VR can be
+	directly installed both from the shell and from inside R.
 
     o	RLIBS is no longer accepted as well as R_LIBS (which has been
 	the documented form since 0.65.0).
@@ -33,21 +332,21 @@ NEW FEATURES
 
     o	setting cex in matplot(matrix(1:25,5), cex=1:5) now works
 
-    o   ar.ols() has separate demean and intercept arguments, uses
-        internal scaling for greater accuracy.
+    o	ar.ols() has separate demean and intercept arguments, uses
+	internal scaling for greater accuracy.
 
-    o   xxxPR functions allow NCHAR=-1 for S compatibility.
+    o	xxxPR functions allow NCHAR=-1 for S compatibility.
 
-    o   `Rcomplex' is preferred to `complex' (a future reserved word
+    o	`Rcomplex' is preferred to `complex' (a future reserved word
 	in C) for R complex objects passed to C.
 
-    o   new function dir.create() for platform-independence.
+    o	new function dir.create() for platform-independence.
 
-    o   help.search() creates a database for faster searching later in
+    o	help.search() creates a database for faster searching later in
 	the R session.
 
     o	density() allows for more kernels and has a new argument
-        `give.Rkern' to access the relevant kernel property.
+	`give.Rkern' to access the relevant kernel property.
 
     o	multivariate methods for ar: "yule-walker" (now in C) and
 	"burg" (new) contributed by Martyn Plummer.
@@ -61,17 +360,17 @@ BUG FIXES
 
     o	Many help pages have been revised and enhanced.
 
-    o   predict.glm() works again with type="link".
+    o	predict.glm() works again with type="link".
 
-    o   subscripting arrays and matrices no longer loses the names of
+    o	subscripting arrays and matrices no longer loses the names of
 	the dimnames vector.  Transpose also preserves the names.
 
-    o   examples in help files containing \testonly are no longer
+    o	examples in help files containing \testonly are no longer
 	(partially) duplicated.
 
-    o   is.numeric() of a factor is now FALSE
+    o	is.numeric() of a factor is now FALSE
 
-    o   prevent a segfault in plotmath
+    o	prevent a segfault in plotmath
 
     o	f <- get("function"); f(,); f(F,F)  now "ok" (PR#361).
 
@@ -82,38 +381,38 @@ BUG FIXES
 
     o	font size fixups for the X11 driver (mainly)
 
-    o   some.list[[NA]] is NULL, following S, rather than giving spurious
-        error messages
+    o	some.list[[NA]] is NULL, following S, rather than giving spurious
+	error messages
 
-    o   segfault when running out of heap
+    o	segfault when running out of heap
 
-    o   segfault in rbind of a vector without names fixed. cbind, too.
+    o	segfault in rbind of a vector without names fixed. cbind, too.
 
-    o   fixed symbol size problems with PostScript driver
+    o	fixed symbol size problems with PostScript driver
 
-    o   unique() & duplicated() only work for atomic vectors;
-        unique(data.frame(""[F])) doesn't segfault anymore.
+    o	unique() & duplicated() only work for atomic vectors;
+	unique(data.frame(""[F])) doesn't segfault anymore.
 
-    o   get("attr<-")(""[0],""[0]) doesn't segfault anymore.
+    o	get("attr<-")(""[0],""[0]) doesn't segfault anymore.
 
-    o   blunder in do_memoryprofile, causing segfault on Alpha machines
+    o	blunder in do_memoryprofile, causing segfault on Alpha machines
 
-    o   erroneous error message in coerceToSymbol
+    o	erroneous error message in coerceToSymbol
 
-    o   partial workaround for workspace restore problems. This can
-        happen if an environment on the search path is assigned to a
-        variable which gets saved. The error "unresolved node during
-        restore" is turned into a warning, allowing the rest of the
-        workspace to be restored, but the variable contains an empty
-        environment on reload.
+    o	partial workaround for workspace restore problems. This can
+	happen if an environment on the search path is assigned to a
+	variable which gets saved. The error "unresolved node during
+	restore" is turned into a warning, allowing the rest of the
+	workspace to be restored, but the variable contains an empty
+	environment on reload.
 
-    o   density(x) now works also when IQR(x) == 0.
-        density(x, window=...) now works [S compatibility].
+    o	density(x) now works also when IQR(x) == 0.
+	density(x, window=...) now works [S compatibility].
 
-    o   prevent points from being plotted if pch, cex, or col are NA.
-        Does not apply to bg on pch 21--25 (where NA means
-        "transparent") because it would require fixes at the driver
-        level.
+    o	prevent points from being plotted if pch, cex, or col are NA.
+	Does not apply to bg on pch 21--25 (where NA means
+	"transparent") because it would require fixes at the driver
+	level.
 
 
 		CHANGES IN R VERSION 0.90.0
@@ -724,9 +1023,8 @@ NEW FEATURES
     o	new global variable R.version.string (for plots & reports).
 	Deprecated version & Version for new  R.version & R.Version.
 
-    o	R CMD Rd2dvi  has builtin "Usage" help and works for multiple files.
+    o	R CMD Rd2dvi has builtin "Usage" help and works for multiple files.
 	Useful for automatic reference manual of a package.
-	(doc/manual/lib2tex is more efficient for installed packages, however).
 
 
 BUG FIXES

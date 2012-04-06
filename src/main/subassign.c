@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997, 1998  The R Development Core Team
+ *  Copyright (C) 1997-2000   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -1050,7 +1050,8 @@ static SEXP listRemove(SEXP x, SEXP s)
     return CDR(a);
 }
 
-SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
+/* unused
+static SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 {
     SEXP ax, ay, px, py, dims;
     int i, nsubs, ny;
@@ -1094,6 +1095,7 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
     }
     return x;
 }
+*/
 
 static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 {

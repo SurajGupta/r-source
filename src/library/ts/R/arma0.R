@@ -36,6 +36,7 @@ arima0 <- function(x, order=c(0,0,0),
         if(d <- order[2]) xreg <- diff(xreg, 1, d)
         if(d <- seasonal$order[2]) xreg <- diff(xreg, seasonal$period, d)
         xreg <- as.matrix(xreg)
+        if(qr(xreg)$rank < ncol(xreg)) stop("xreg is collinear")
     }
     .C("setup_starma",
        as.integer(arma), as.double(x), as.integer(n.used),
@@ -93,10 +94,11 @@ arima0 <- function(x, order=c(0,0,0),
 
 arma0f <- function(p)
 {
+    if(!length(p)) stop("argument has length 0")
     .C("arma0fa", as.double(p), res=double(1), PACKAGE="ts")$res
 }
 
-print.arima0 <- function(x, digits = max(3, .Options$digits - 3),
+print.arima0 <- function(x, digits = max(3, getOption("digits") - 3),
                          se=TRUE, ...)
 {
     cat("\nCall:\n", deparse(x$call), "\n\n", sep = "")
@@ -119,11 +121,12 @@ print.arima0 <- function(x, digits = max(3, .Options$digits - 3),
 
 predict.arima0 <- function(object, n.ahead=1, newxreg=NULL, se.fit=TRUE)
 {
-    data <- eval(parse(text=object$series))
+    myNCOL <- function(x) if(is.null(x)) 0 else NCOL(x)
+    data <- eval.parent(parse(text=object$series))
     xr <- object$call$xreg
-    xreg <- if(!is.null(xr)) eval(parse(text=xr)) else NULL
-    ncxreg <- NROW(xreg)
-    if(NROW(newxreg) != ncxreg)
+    xreg <- if(!is.null(xr)) eval.parent(xr) else NULL
+    ncxreg <- myNCOL(xreg)
+    if(myNCOL(newxreg) != ncxreg)
         stop("xreg and newxreg have different numbers of columns")
     class(xreg) <- NULL
     xtsp <- tsp(data)

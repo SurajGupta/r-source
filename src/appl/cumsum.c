@@ -19,12 +19,12 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Applic.h"
 
-void cumsum(double *x, int *n, double *na_value, double *ans)
+void R_cumsum(double *x, int *n, double *na_value, double *ans)
 {
     double sum;
     int i;

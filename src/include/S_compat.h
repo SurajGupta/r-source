@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--1999  R Development Core Team
+ *  Copyright (C) 1998--2000  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,12 +22,20 @@
 			maps internal functions in S to R equivalents
  */
 
-#ifndef S_COMPAT_H_
-#define S_COMPAT_H_
+#ifndef R_S_COMPAT_H_
+#define R_S_COMPAT_H_
 
 #include "S.h"
-#include "Fortran.h"
-#include "Linpack.h"/*-> Blas.h */
+/* #include "Fortran.h"*/
+#include "R_ext/Linpack.h"
+
+/* REdefine these for (undocumented!) S compatibility : */
+#undef dnorm
+#undef pnorm
+#undef qnorm
+#define dnorm(x,m,s) dnorm4(x,m,s, 0)
+#define pnorm(x,m,s) pnorm5(x,m,s, 1, 0)
+#define qnorm(x,m,s) qnorm5(x,m,s, 1, 0)
 
 extern void
 F77_NAME(dqrdca) (double*, longint*, longint*, longint*,

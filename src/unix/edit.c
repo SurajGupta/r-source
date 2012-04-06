@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 1999  The R Core Development Team
+ *  Copyright (C) 1998, 1999  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -58,7 +58,12 @@ static int  EdFileUsed = 0;
 
 void InitEd()
 {
+#ifdef Win32
+    char * Rwin32_tmpnam(char *);
+    DefaultFileName = Rwin32_tmpnam("Redit");
+#else
     DefaultFileName = tmpnam(NULL);
+#endif
 }
 
 void CleanEd()
@@ -121,15 +126,14 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     rc = system(editcmd);
 #endif
 
-    if((fp=R_fopen(R_ExpandFileName(filename), "r")) == NULL)
+    if((fp = R_fopen(R_ExpandFileName(filename), "r")) == NULL)
 	errorcall(call, "unable to open file to read");
     R_ParseCnt = 0;
     x = PROTECT(R_ParseFile(fp, -1, &status));
+    fclose(fp);
     if (status != PARSE_OK)
 	errorcall(call,
-		  "An error occurred on line %d\n use a command like\n x <- vi()\n to recover", R_ParseError);
-    else
-	fclose(fp);
+		  "An error occurred on line %d\n use a command like\n x <- edit()\n to recover", R_ParseError);
     R_ResetConsole();
     {   /* can't just eval(x) here */
 	int i, n;

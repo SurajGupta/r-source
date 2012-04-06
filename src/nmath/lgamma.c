@@ -76,17 +76,23 @@ double lgammafn(double x)
 	return ML_POSINF;
     }
 
-    if (x > 0) /* i.e. y = x > 10 */
-	return M_LN_SQRT_2PI + (x - 0.5) * log(x) - x + lgammacor(y);
-
+    if (x > 0) { /* i.e. y = x > 10 */
+#ifdef IEEE_754
+	if(x > 1e17)
+	    return(x*(log(x) - 1.));
+	else if(x > 4934720.)
+	    return(M_LN_SQRT_2PI + (x - 0.5) * log(x) - x);
+	else
+#endif
+	    return M_LN_SQRT_2PI + (x - 0.5) * log(x) - x + lgammacor(x);
+    }
     /* else: x < -10; y = -x */
     sinpiy = fabs(sin(M_PI * y));
 
     if (sinpiy == 0) { /* Negative integer argument ===
 			  Now UNNECESSARY: caught above */
 	MATHLIB_WARNING(" ** should NEVER happen! *** [lgamma.c: Neg.int, y=%g]\n",y);
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
+	ML_ERR_return_NAN;
     }
 
     ans = M_LN_SQRT_PId2 + (x - 0.5) * log(y) - x - log(sinpiy) - lgammacor(y);

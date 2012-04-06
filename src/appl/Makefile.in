@@ -26,7 +26,9 @@ SOURCES_C = \
 	cumsum.c \
 	distance.c \
 	fft.c \
+	fmin.c \
 	fortran.c \
+	lbfgsb.c \
 	loglin.c \
 	lowess.c \
 	machar.c \
@@ -39,6 +41,7 @@ SOURCES_C = \
 	stem.c \
 	strsignif.c \
 	tabulate.c \
+	uncmin.c \
 	zeroin.c
 SOURCES_F = \
 	ch2inv.f \
@@ -51,16 +54,14 @@ SOURCES_F = \
 	dposl.f \
 	dqrdc.f \
 	dqrdc2.f \
-        dqrls.f \
+	dqrls.f \
 	dqrsl.f \
 	dqrutl.f \
 	dsvdc.f \
 	dtrco.f \
 	dtrsl.f \
 	eigen.f \
-	fmin.f \
-	lminfl.f \
-	uncmin.f
+	lminfl.f
 DEPENDS = $(SOURCES_C:.c=.d)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o) $(BLAS)
 HEADERS = Rsock.h sock.h
@@ -92,7 +93,7 @@ $(LIB):	$(OBJECTS)
 
 mostlyclean: clean
 clean:
-	@echo "Cleaning in $(subdir)"
+	@echo "cleaning in $(subdir)"
 	@-rm -f Makedeps *.d *.o *.a
 distclean: clean
 	@-rm -f Makefile

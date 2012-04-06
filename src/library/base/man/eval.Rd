@@ -1,9 +1,12 @@
 \name{eval}
-\title{Evaluate an (Unevaluated) Expression}
 \alias{eval}
 \alias{evalq}
 \alias{eval.parent}
 \alias{local}
+\title{Evaluate an (Unevaluated) Expression}
+\description{
+  Evaluate an \R expression in a specified environment.
+}
 \usage{
 eval(expr, envir = sys.frame(sys.parent()), 
      enclos = if(is.list(envir) || is.pairlist(envir)) 
@@ -23,9 +26,6 @@ local(expr, envir = new.env())
     \code{envir}.}
   \item{n}{parent generations to go back}
 }
-\description{
-  Evaluate an \R expression in a specified environment.
-}
 \details{
   \code{eval} evaluates the expression \code{expr} argument in the
   environment specified by \code{envir} and returns the computed value.
@@ -33,8 +33,11 @@ local(expr, envir = new.env())
   \code{\link{sys.frame}(\link{sys.parent}())}, the environment where
   the call to \code{eval} was made is used.
 
-  The \code{evalq} form is equivalent to \code{eval(quote(expr), ...)}.
+  The \code{evalq} form is equivalent to \code{eval(quote(expr), \dots)}.
   %% FIXME: This is not what the code says?
+  As \code{eval} evaluates its first argument before passing it to the
+  evaluator, it allows you to assign complicated expressions to symbols
+  and then evaluate them.  \code{evalq} avoids this.
 
   \code{eval.parent(expr, n)} is a shorthand for \code{eval(expr,
     parent.frame(n))}. 
@@ -48,11 +51,6 @@ local(expr, envir = new.env())
 \seealso{
   \code{\link{expression}}, \code{quote}, \code{\link{sys.frame}},
   \code{\link{environment}}. 
-}
-\details{
-  As \code{eval} evaluates its first argument before passing it to the
-  evaluator, it allows you to assign complicated expressions to symbols
-  and then evaluate them.  \code{evalq} avoids this.
 }
 \note{
   Due to the difference in scoping rules, there are some differences
@@ -73,12 +71,12 @@ a <- 3 ; aa <- 4 ; evalq(evalq(a+b+aa, list(a=1)), list(b=5)) # == 10
 a <- 3 ; aa <- 4 ; evalq(evalq(a+b+aa, 1), list(b=5))         # == 12
 
 ev <- function() {
-	e1 <- sys.frame(sys.parent())
-	## Evaluate a in e1
-	aa <- eval(expression(a),e1)
-	## evaluate the expression bound to a in e1
-	a <- expression(x+y)
-	list(aa = aa, eval = eval(a, e1))
+   e1 <- sys.frame(sys.parent())
+   ## Evaluate a in e1
+   aa <- eval(expression(a),e1)
+   ## evaluate the expression bound to a in e1
+   a <- expression(x+y)
+   list(aa = aa, eval = eval(a, e1))
 }
 tst.ev <- function(a = 7) { x <- pi; y <- 1; ev() }
 tst.ev()#-> aa : 7,  eval : 4.14
@@ -90,25 +88,25 @@ tst.ev()#-> aa : 7,  eval : 4.14
 # Mutual recursives. 
 # gg gets value of last assignment, an anonymous version of f.
 
-gg<-local({
-    k<-function(y)f(y)
-    f<-function(x)if(x)x*k(x-1)else 1
+gg <- local({
+    k <- function(y)f(y)
+    f <- function(x) if(x) x*k(x-1) else 1
 })
 gg(10)
-sapply(1:5,gg)
+sapply(1:5, gg)
 
 # Nesting locals. a is private storage accessible to k
-gg<-local({
-    k<-local({
-        a<-1
-        function(y){print(a<<-a+1);f(y)}
+gg <- local({
+    k <- local({
+        a <- 1
+        function(y){print(a <<- a+1);f(y)}
     })
-    f<-function(x)if(x)x*k(x-1)else 1
+    f <- function(x) if(x) x*k(x-1) else 1
 })
-sapply(1:5,gg)
+sapply(1:5, gg)
 
 ls(envir=environment(gg))
-ls(envir=environment(get("k",envir=environment(gg))))
+ls(envir=environment(get("k", envir=environment(gg))))
 }
 \keyword{data}
 \keyword{programming}

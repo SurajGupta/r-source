@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 1999 The R Development Core Team
+ *  Copyright (C) 1998, 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -274,9 +274,7 @@ SEXP do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
 #elif HAVE_NDIR_H
 # include <ndir.h>
 #endif
-#ifdef HAVE_REGCOMP
 #include "regex.h"
-#endif
 
 #define DIRNAMEBUFSIZE 256
 
@@ -302,9 +300,7 @@ SEXP do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     int allfiles, fullnames, count, pattern;
     int i, ndir;
     char *dnp, dirname[DIRNAMEBUFSIZE];
-#ifdef HAVE_REGCOMP
     regex_t reg;
-#endif
     checkArity(op, args);
     d = CAR(args);  args = CDR(args);
     if (!isString(d))
@@ -318,12 +314,8 @@ SEXP do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     allfiles = asLogical(CAR(args)); args = CDR(args);
     fullnames = asLogical(CAR(args));
     ndir = length(d);
-#ifdef HAVE_REGCOMP
     if (pattern && regcomp(&reg, CHAR(STRING(p)[0]), REG_EXTENDED))
         errorcall(call, "invalid pattern regular expression");
-#else
-	warning("pattern specification is not available in \"list.files\"");
-#endif
     count = 0;
     for (i = 0; i < ndir ; i++) {
 	dnp = R_ExpandFileName(CHAR(STRING(d)[i]));
@@ -334,13 +326,11 @@ SEXP do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, "invalid directory/folder name");
 	while ((de = readdir(dir))) {
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
-#ifdef HAVE_REGCOMP
 		if (pattern) {
 		    if(regexec(&reg, de->d_name, 0, NULL, 0) == 0)
 			count++;
 		}
 		else
-#endif
 		  count++;
 	    }
 	}
@@ -361,22 +351,18 @@ SEXP do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, "invalid directory/folder name");
 	while ((de = readdir(dir))) {
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
-#ifdef HAVE_REGCOMP
 		if (pattern) {
 		    if (regexec(&reg, de->d_name, 0, NULL, 0) == 0)
 			STRING(ans)[count++] = filename(dnp, de->d_name);
 		}
 		else
-#endif
 		  STRING(ans)[count++] = filename(dnp, de->d_name);
 	    }
 	}
 	closedir(dir);
     }
-#ifdef HAVE_REGCOMP
     if (pattern)
 	regfree(&reg);
-#endif
     ssort(STRING(ans), count);
     UNPROTECT(1);
     return ans;

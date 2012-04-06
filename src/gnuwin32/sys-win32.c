@@ -24,7 +24,7 @@
         /* Windows analogue of unix/sys-unix.c: often rather similar */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -108,7 +108,7 @@ static DWORD StartTime;
 
 static FILETIME Create, Exit, Kernel, User;
 
-void setStartTime(void)
+void R_setStartTime(void)
 {
     StartTime = GetTickCount();
 }

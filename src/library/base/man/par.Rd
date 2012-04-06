@@ -14,17 +14,18 @@ par(\dots, no.readonly = FALSE)
   Parameters can be set by specifying them as arguments to \code{par} in
   \code{tag = value} form, or by passing them as a list of tagged values.
 }
-\details{The former values are returned in an
-  invisible tagged list.  Such a list can be passed as an argument to
-  \code{par} to restore the parameter values.
-  Use \code{par(no.readonly = TRUE)} for the full list in that case.
+\details{
+  The former values are returned in an invisible tagged list.  Such a
+  list can be passed as an argument to \code{par} to restore the
+  parameter values.  Use \code{par(no.readonly = TRUE)} for the full
+  list in that case.
 
   Parameters are queried by giving vectors of character strings to
   \code{par}.  In this case, the values are returned in a tagged list.
 
   \code{par()} (no arguments) or \code{par(no.readonly=TRUE)} is used to
-  get \emph{all} the graphical parameters (as named list).
-  Their names are currently taken from the variable \code{.Pars}.
+  get \emph{all} the graphical parameters (as named list).  Their names
+  are currently taken from the variable \code{.Pars}.
   \code{.Pars.readonly} contains the names of the \code{par} arguments
   which are \emph{readonly}.
 
@@ -91,13 +92,19 @@ par(\dots, no.readonly = FALSE)
   \item{col.main}{The color to be used for plot main titles.}
   \item{col.sub}{The color to be used for plot sub-titles.}
   \item{cra}{\emph{\bold{R.O.}}; size of default character
-    \code{(width,height)} in "rasters" (pixels).}
+    \code{(width,height)} in ``rasters'' (pixels).}
   \item{crt}{A numerical value specifying (in degrees) how single characters
     should be rotated.  It is unwise to expect values other than
     multiples of 90 to work.  Compare with \code{srt} which does string
     rotation.}
   \item{csi}{\emph{\bold{R.O.}}. The height of (default sized)
       characters in inches.}
+  \item{cxy}{\emph{\bold{R.O.}}; size of default character
+    \code{(width,height)} in user coordinate units.
+    \code{par("cxy")} is \code{par("cin")/par("pin")} scaled to user
+    coordinates.
+    Note that \code{c(\link{strwidth}(ch),\link{strheight}(ch))} for a
+    given string \code{ch} is usually much more precise.}
   \item{din}{\emph{\bold{R.O.}}. The device dimensions in inches.}
   \item{err}{(\emph{Unimplemented}; \R is silent when
     points outside the plot region are \emph{not} plotted.)
@@ -146,7 +153,7 @@ par(\dots, no.readonly = FALSE)
     \code{"blank"} uses `invisible lines' (i.e. doesn't draw them).
 
     Alternatively, a string of up to 8 characters
-    (from code{c(0:9, "A":"F")}) may be given, giving
+    (from \code{c(0:9, "A":"F")}) may be given, giving
     the length (typically in points/pixels) of line segments which are
     alternatively drawn and skipped.  For example, \code{"44"} is dashed and
     \code{"13"} is dotted.}
@@ -180,7 +187,7 @@ par(\dots, no.readonly = FALSE)
     axis labels and axis line.  The default is \code{c(3, 1, 0)}.}
   \item{mkh}{The height in inches of symbols to be drawn when the value
     of \code{pch} is an integer.
-%%--- FIXME ---
+    %%--- FIXME ---
     \bold{Completely ignored currently}.}
   \item{new}{logical, defaulting to \code{FALSE}.  If set to
     \code{TRUE}, the next high-level plotting command (actually
@@ -236,8 +243,8 @@ par(\dots, no.readonly = FALSE)
     \code{"s"}, except that it is also ensured that there is room for
     plotting symbols within the bounding box.   Style \code{"d"}
     (direct) specifies that the current axis should be used on
-    subsequent plots. (\emph{Only "r" and "i"
-	styles are currently implemented})}
+    subsequent plots. (\emph{Only \code{"r"} and \code{"i"} styles are
+      currently implemented})}
   \item{xaxt}{A character which specifies the axis type.
     Specifying \code{"n"} causes an axis to be set up, but not plotted.}
   \item{xlog}{\emph{\bold{R.O.}}.  A logical value (see \code{log} in

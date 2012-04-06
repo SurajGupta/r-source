@@ -1,7 +1,7 @@
-R 0.90.1 for Windows 9x and NT
+R 0.99.0 for Windows 9x and NT
 ==============================
 
-This distribution contains a binary distribution of R-0.90.1 to run on
+This distribution contains a binary distribution of R-0.99.0 to run on
 Windows 95, 98 and NT4 on Intel/clone chips. It is designed to
 be as close as possible to the implementation on Unix, but see the
 list of differences below. The port was by Guido Masarotto with
@@ -13,28 +13,44 @@ See CHANGES for the new features of this version.
 Installation
 ============
 
-The simplest way is to run the installer (double-click on the icon for
-rwinst.exe and navigate its wizard-like pages).
+The distribution consists of several zip files:
 
-To install manually, unpack rw0901b1.zip and rw0901b2.zip anywhere you
-like. It will unpack to a directory tree under rw0901. The help, HTML
-and latex help files are in separate files rw0901h.zip, rw0901w.zip
-and rw0901l.zip which should be unpacked in the same directory you
-unpacked rw0901b.zip.  File rw0901d.zip contains PDF versions of the
-(draft) manuals for R, which unpack into rw0901/doc/manual.
+rw0990b1.zip and rw0990b2.zip		the base system
+rw0990h.zip				text help
+rw0990ch.zip				compiled HTML help
+rw0990w.zip				HTML help files
+rw0990l.zip				latex help for offline help
+rw0990d1.zip				PDF manuals except
+rw0990d2.zip				PDF version of the reference manual
+rw0990sp.zip				files to install source packages
+
+and optionally the installer rwinst.exe.
+
+The simplest way to install is to run the installer (double-click on
+the icon for rwinst.exe and navigate its wizard-like pages).
+
+To install manually, unpack rw0990b1.zip and rw0990b2.zip anywhere you
+like. It will unpack to a directory tree under rw0990. The help,
+compiled HTML, HTML and latex help files are in separate files
+rw0990h.zip, rw0990ch.zip rw0990w.zip and rw0990l.zip which should be
+unpacked in the same directory you unpacked rw0990b1.zip.  File
+rw0990d.zip contains PDF versions of the (draft) manuals for R, which
+unpack into rw0990/doc/manual.
+
+You should install either the text or compiled HTML help.
 
 
 Usage
 =====
 
-There are two executables in rw0901\bin:
+There are two executables in rw0990\bin:
 
 GUI:
 
 Rgui.exe runs as a standard Windows GUI executable and provides an R
 console in its own window. It takes the standard R command-line
 arguments; these are most easily set by making a shortcut to
-...\rw0901\bin\rgui.exe and adding the arguments in the Target field.
+...\rw0990\bin\rgui.exe and adding the arguments in the Target field.
 Set the `Start in' field of the shortcut to the directory you want to use
 as the working directory (where workspaces and files are saved and
 loaded from).
@@ -73,14 +89,14 @@ editing.
 Batch use: At it simplest, Rterm.exe can be used in a batch mode by
 commands like
 
-Rterm.exe --vsize 10M --nsize 400k --no-restore --no-save < infile > outfile
+Rterm.exe --vsize=10M --nsize=400k --no-restore --no-save < infile > outfile
 
 although users will probably want to set up simple .bat or .cmd files
 to run batch jobs.
 
 
 Use with ESS: You can use Rterm.exe to provide inferior R-mode in
-ESS under NTEmacs, for example ess-5.1.9.  The pager is automatically
+ESS under NTEmacs, for example ess-5.1.11.  The pager is automatically
 set to "console" so help will be displayed in emacs buffers.
 
 
@@ -131,7 +147,7 @@ help(topic, htmlhelp=T).  Using help.start() sets the browser to the
 top-level page, from which you can access a search engine.
 
 (v) Latex help files are available for use with help(topic, offline=T).
-You will need to customize the file rw0901\bin\helpPRINT.bat: it
+You will need to customize the file rw0990\bin\helpPRINT.bat: it
 contains instructions.
 
 
@@ -175,7 +191,7 @@ Adding packages
 
 Binaries for many packages are available at
 CRAN/bin/windows/windows-NT/contrib. These are zip files which should
-be unpacked in rw0901\library. They are then available for use. You
+be unpacked in rw0990\library. They are then available for use. You
 can also use the installer rwinst.exe to selectively unpack the zip
 files.
 
@@ -185,10 +201,10 @@ search engine can be updated from a running R process by the command
 	link.html.help()
 
 provided the owner of the process has write permission on
-rw0901\doc\html.  If you have the source-package files and Perl
+rw0990\doc\html.  If you have the source-package files and Perl
 installed you can use
 
-	cd ...\rw0901\src\gnuwin32\help
+	cd ...\rw0990\src\gnuwin32\help
 	make indices
 
 Private libraries of packages can be used and can be specified by the
@@ -205,7 +221,7 @@ in the environment or on the command line, or add the line
 to your .Rprofile or at the end of R_HOME\etc\Rprofile.
 
 To install a package from source code you need the source-package
-distribution rw0901sp.zip installed (but not the R source). This contains
+distribution rw0990sp.zip installed (but not the R source). This contains
 detailed instructions.
 
 
@@ -233,7 +249,7 @@ Differences from Unix
 - Graphics save and replay only here.
 
 - system() is enhanced here and does not automatically use a shell.
-  See its help page and that of shell.
+  See its help page and that of shell().
 
 - graphics devices png(), jpeg() and bmp() are available in this version.
 

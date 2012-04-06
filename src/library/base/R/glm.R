@@ -6,7 +6,7 @@
 glm <- function(formula, family=gaussian, data=list(), weights=NULL,
 		subset=NULL, na.action=na.fail, start=NULL, offset=NULL,
 		control=glm.control(...), model=TRUE, method="glm.fit",
-                x=FALSE, y=TRUE, contrasts = NULL, ...)
+		x=FALSE, y=TRUE, contrasts = NULL, ...)
 {
     call <- match.call()
 
@@ -55,10 +55,10 @@ glm <- function(formula, family=gaussian, data=list(), weights=NULL,
 
     ## fit model via iterative reweighted least squares
     fit <-
-        (if (is.empty.model(mt))
-         glm.fit.null else glm.fit)(x=X, y=Y, weights=weights, start=start,
-                                    offset=offset,family=family,control=control,
-                                    intercept=attr(mt, "intercept") > 0)
+	(if (is.empty.model(mt))
+	 glm.fit.null else glm.fit)(x=X, y=Y, weights=weights, start=start,
+				    offset=offset,family=family,control=control,
+				    intercept=attr(mt, "intercept") > 0)
 
     if(any(offset) && attr(mt, "intercept") > 0) {
 	fit$null.deviance <-
@@ -105,10 +105,10 @@ glm.fit <-
     nobs <- NROW(y)
     nvars <- NCOL(x)
     if (nvars == 0) {
-        ## oops, you'd want glm.fit.null, then
-        cc <- match.call()
-        cc[[1]] <- as.name("glm.fit.null")
-        return(eval(cc, sys.frame(sys.parent())))
+	## oops, you'd want glm.fit.null, then
+	cc <- match.call()
+	cc[[1]] <- as.name("glm.fit.null")
+	return(eval(cc, sys.frame(sys.parent())))
     }
     ## define weights and offset if needed
     if (is.null(weights))
@@ -154,22 +154,26 @@ glm.fit <-
 
     ##------------- THE Iteratively Reweighting L.S. iteration -----------
     for (iter in 1:control$maxit) {
+	good <- weights > 0
+        varmu <- variance(mu)[good]
+	if (any(is.na(varmu)))
+	    stop("NAs in V(mu)")
+	if (any(varmu == 0))
+	    stop("0s in V(mu)")
 	mu.eta.val <- mu.eta(eta)
-	if (any(ina <- is.na(mu.eta.val)))
-	    mu.eta.val[ina] <- mu.eta(mu)[ina]
-	if (any(is.na(mu.eta.val)))
+	if (any(is.na(mu.eta.val[good])))
 	    stop("NAs in d(mu)/d(eta)")
+        ## drop observations for which w will be zero
+	good <- (weights > 0) & (mu.eta.val != 0)
 
-	## calculate z and w using only values where mu.eta != 0
-	good <- mu.eta.val != 0
 	if (all(!good)) {
 	    conv <- FALSE
 	    warning(paste("No observations informative at iteration",
 			  iter))
 	    break
 	}
-	z <- (eta-offset)[good] + (y - mu)[good]/mu.eta.val[good]
-	w <- sqrt((weights * mu.eta.val^2)[good]/variance(mu)[good])
+	z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+	w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
 	ngoodobs <- as.integer(nobs - sum(!good))
 	ncols <- as.integer(1)
 	## call linpack code
@@ -183,7 +187,7 @@ glm.fit <-
 			rank = integer(1),
 			pivot = 1:nvars, qraux = double(nvars),
 			work = double(2 * nvars),
-                        PACKAGE = "base")
+			PACKAGE = "base")
 	## stop if not enough parameters
 	if (nobs < fit$rank)
 	    stop(paste("X matrix has rank", fit$rank, "but only",
@@ -191,36 +195,22 @@ glm.fit <-
 	## calculate updated values of eta and mu with the new coef:
 	start <- coef <- fit$coefficients
 	start[fit$pivot] <- coef
-	eta[good] <-
-	    if (nvars == 1) x[good] * start else as.vector(x[good, ] %*% start)
+	eta[good] <- drop(x[good, , drop=FALSE] %*% start)
 	mu <- linkinv(eta <- eta + offset)
-	if (family$family == "binomial") {
-	    if (any(mu == 1) || any(mu == 0))
-		warning("fitted probabilities of 0 or 1 occurred")
-	    mu0 <- 0.5 * control$epsilon/length(mu)
-	    mu[mu == 1] <- 1 - mu0
-	    mu[mu == 0] <- mu0
-	}
-	else if (family$family == "poisson") {
-	    if (any(mu == 0))
-		warning("fitted rates of 0 occured")
-	    mu[mu == 0] <- 0.5 * control$epsilon/length(mu)^2
-	}
 	dev <- sum(dev.resids(y, mu, weights))
 	if (control$trace)
 	    cat("Deviance =", dev, "Iterations -", iter, "\n")
 	## check for divergence
 	boundary <- FALSE
-	if (any(is.na(dev)) || any(is.na(coef))) {
+	if (is.na(dev) || any(is.na(coef))) {
 	    warning("Step size truncated due to divergence")
 	    ii <- 1
-	    while ((any(is.na(dev)) || any(is.na(start)))) {
+	    while ((is.na(dev) || any(is.na(start)))) {
 		if (ii > control$maxit)
 		    stop("inner loop 1; can't correct step size")
 		ii <- ii+1
 		start <- (start + coefold)/2
-		eta[good] <-
-		    if (nvars == 1) x[good] * start else as.vector(x[good, ] %*% start)
+		eta[good] <- drop(x[good, , drop=FALSE] %*% start)
 		mu <- linkinv(eta <- eta + offset)
 		dev <- sum(dev.resids(y, mu, weights))
 	    }
@@ -238,8 +228,7 @@ glm.fit <-
 		    stop("inner loop 2; can't correct step size")
 		ii <- ii + 1
 		start <- (start + coefold)/2
-		eta[good] <-
-		    if (nvars == 1) x[good] * start else as.vector(x[good, ] %*% start)
+		eta[good] <- drop(x[good, , drop=FALSE] %*% start)
 		mu <- linkinv(eta <- eta + offset)
 	    }
 	    boundary <- TRUE
@@ -260,6 +249,15 @@ glm.fit <-
 
     if (!conv) warning("Algorithm did not converge")
     if (boundary) warning("Algorithm stopped at boundary value")
+    eps <- 10*.Machine$double.eps
+    if (family$family == "binomial") {
+        if (any(mu > 1 - eps) || any(mu < eps))
+            warning("fitted probabilities numerically 0 or 1 occurred")
+    }
+    if (family$family == "poisson") {
+        if (any(mu < eps))
+            warning("fitted rates numerically 0 occurred")
+    }
     ## If X matrix was not full rank then columns were pivoted,
     ## hence we need to re-label the names ...
     ## Original code changed as suggested by BDR---give NA rather
@@ -276,7 +274,7 @@ glm.fit <-
     nr <- min(sum(good), nvars)
     if (nr < nvars) {
 	Rmat <- diag(nvars)
-	Rmat[1:nr,1:nvars] <- fit$qr[1:nr,1:nvars]
+	Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
     }
     else Rmat <- fit$qr[1:nvars, 1:nvars]
     Rmat <- as.matrix(Rmat)
@@ -287,12 +285,15 @@ glm.fit <-
     names(residuals) <- ynames
     names(mu) <- ynames
     names(eta) <- ynames
-    names(w) <- ynames
+    # for compatibility with lm, which has a full-length weights vector
+    wt <- rep(0, nobs)
+    wt[good] <- w^2
+    names(wt) <- ynames
     names(weights) <- ynames
     names(y) <- ynames
     names(fit$effects) <-
-	c(xxnames[seq(fit$rank)], rep("", nobs - fit$rank))
-    ## calculate null deviance
+	c(xxnames[seq(fit$rank)], rep("", sum(good) - fit$rank))
+    ## calculate null deviance -- corrected in glm() if offset and intercept
     wtdmu <-
 	if (intercept) sum(weights * y)/sum(weights) else linkinv(offset)
     nulldev <- sum(dev.resids(y, wtdmu, weights))
@@ -309,13 +310,13 @@ glm.fit <-
 	 effects = fit$effects, R = Rmat, rank = fit$rank,
 	 qr = fit[c("qr", "rank", "qraux", "pivot", "tol")], family = family,
 	 linear.predictors = eta, deviance = dev, aic = aic.model,
-	 null.deviance = nulldev, iter = iter, weights = w^2,
+	 null.deviance = nulldev, iter = iter, weights = wt,
 	 prior.weights = weights, df.residual = resdf, df.null = nulldf,
 	 y = y, converged = conv, boundary = boundary)
 }
 
 
-print.glm <- function (x, digits= max(3, .Options$digits - 3), na.print="", ...)
+print.glm <- function (x, digits= max(3, getOption("digits") - 3), na.print="", ...)
 {
     cat("\nCall: ", deparse(x$call), "\n\n")
     cat("Coefficients")
@@ -327,9 +328,9 @@ print.glm <- function (x, digits= max(3, .Options$digits - 3), na.print="", ...)
 		  print.gap = 2, quote = FALSE)
     cat("\nDegrees of Freedom:", x$df.null, "Total (i.e. Null); ",
 	x$df.residual, "Residual\n")
-    cat("Null Deviance:	   ",   format(signif(x$null.deviance, digits)),
-        "\nResidual Deviance:", format(signif(x$deviance, digits)),
-        "\tAIC:", format(signif(x$aic, digits)), "\n")
+    cat("Null Deviance:	   ",	format(signif(x$null.deviance, digits)),
+	"\nResidual Deviance:", format(signif(x$deviance, digits)),
+	"\tAIC:", format(signif(x$aic, digits)), "\n")
     invisible(x)
 }
 
@@ -408,8 +409,8 @@ anova.glm <- function(object, ..., test=NULL, na.action=na.omit)
 
     if(!is.null(test))
 	table <- stat.anova(table=table, test=test,
-                            scale=sum(object$weights*object$residuals^2)/
-                            object$df.residual,
+			    scale=sum(object$weights*object$residuals^2)/
+			    object$df.residual,
 			    df.scale=object$df.residual, n=NROW(x))
     structure(table, heading = title, class= c("anova", "data.frame"))
 }
@@ -427,7 +428,7 @@ anova.glmlist <- function(object, test=NULL, na.action=na.omit)
     if(!all(sameresp)) {
 	object <- object[sameresp]
 	warning(paste("Models with response", deparse(responses[!sameresp]),
-                      "removed because response differs from",
+		      "removed because response differs from",
 		      "model 1"))
     }
 
@@ -435,7 +436,7 @@ anova.glmlist <- function(object, test=NULL, na.action=na.omit)
 
     nmodels <- length(object)
     if(nmodels==1)
-        return(anova.glm(object[[1]], na.action=na.action, test=test))
+	return(anova.glm(object[[1]], na.action=na.action, test=test))
 
     ## extract statistics
 
@@ -457,7 +458,7 @@ anova.glmlist <- function(object, test=NULL, na.action=na.omit)
     if(!is.null(test)) {
 	bigmodel <- object[[(order(resdf)[1])]]
 	table <- stat.anova(table=table, test=test,
-                            scale=sum(bigmodel$weights * bigmodel$residuals^2)/
+			    scale=sum(bigmodel$weights * bigmodel$residuals^2)/
 			    bigmodel$df.residual, df.scale=min(resdf),
 			    n=length(bigmodel$residuals))
     }
@@ -473,7 +474,7 @@ stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
     switch(test,
 	   "Chisq" = {
 	       cbind(table,"P(>|Chi|)"= 1-pchisq(abs(table[, dev.col]),
-                             abs(table[, "Df"])))
+			     abs(table[, "Df"])))
 	   },
 	   "F" = {
 	       Fvalue <- abs((table[, dev.col]/table[, "Df"])/scale)
@@ -482,7 +483,7 @@ stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
 	   },
 	   "Cp" = {
 	       cbind(table, Cp = table[,"Resid. Dev"] +
-                     2*scale*(n - table[,"Resid. Df"]))
+		     2*scale*(n - table[,"Resid. Df"]))
 	   })
 }
 
@@ -558,9 +559,9 @@ summary.glm <- function(object, dispersion = NULL,
     return(ans)
 }
 
-print.summary.glm <- function (x, digits = max(3, .Options$digits - 3),
+print.summary.glm <- function (x, digits = max(3, getOption("digits") - 3),
 			       na.print = "", symbolic.cor = p > 4,
-			       signif.stars= .Options$show.signif.stars, ...)
+			       signif.stars= getOption("show.signif.stars"), ...)
 {
     cat("\nCall:\n")
     cat(paste(deparse(x$call), sep="\n", collapse="\n"), "\n\n", sep="")
@@ -585,19 +586,23 @@ print.summary.glm <- function (x, digits = max(3, .Options$digits - 3),
 	      1, paste, collapse=" "),
 	"AIC: ", format(x$aic, digits= max(4, digits+1)),"\n\n",
 	"Number of Fisher Scoring iterations: ", x$iter,
-	"\n\n", sep="")
+	"\n", sep="")
 
     correl <- x$correlation
     if(!is.null(correl)) {
-	p <- dim(correl)[2]
+	p <- NCOL(correl)
 	if(p > 1) {
-	    cat("Correlation of Coefficients:\n")
-	    correl[!lower.tri(correl)] <- NA
-	    print(correl[-1, -NCOL(correl), drop=FALSE],
-		  digits=digits, na="")
+	    cat("\nCorrelation of Coefficients:\n")
+	    if(symbolic.cor)
+		print(symnum(correl)[-1,-p])
+	    else {
+                correl[!lower.tri(correl)] <- NA
+                print(correl[-1, -p, drop=FALSE],
+                      digits = digits, na = "")
+            }
 	}
-	cat("\n")
     }
+    cat("\n")
     invisible(x)
 }
 
@@ -611,23 +616,24 @@ fitted.glm <- function(object, ...) object$fitted.values
 
 family.glm <- function(object, ...) object$family
 
-residuals.glm <- function(object, type="deviance", ...)
+residuals.glm <-
+    function(object,
+	     type = c("deviance", "pearson", "working", "response", "partial"),
+	     ...)
 {
-    ntyp <- match(type, c("deviance", "pearson", "working", "response", "partial"))
-    if(is.na(ntyp))
-	stop(paste("invalid `type':", type))
-    y  <- object$y
-    mu <- object$fitted.values
-    wts <- object$prior.weights
-    switch(ntyp,
+    type <- match.arg(type)
+    y <- object$y
+    mu	<- .Alias(object$fitted.values)
+    wts <- .Alias(object$prior.weights)
+    switch(type,
 	   deviance = if(object$df.res > 0) {
-	       d.res <- sqrt((object$family$dev.resids)(y, mu, wts))
+	       d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
 	       ifelse(y > mu, d.res, -d.res)
 	   } else rep(0, length(mu)),
-	   pearson	 = object$residuals * sqrt(object$weights),
-	   working	 = object$residuals,
+	   pearson = object$residuals * sqrt(object$weights),
+	   working = object$residuals,
 	   response = y - mu,
-           partial=object$residuals+predict(object,type="terms")
+	   partial = object$residuals + predict(object,type="terms")
 	   )
 }
 
@@ -635,28 +641,7 @@ residuals.glm <- function(object, type="deviance", ...)
 ## update.default() should be more general now ...
 ##update.glm <- function (glm.obj, formula, data, weights, subset, na.action,
 ##			offset, family, x)
-##{
-##	call <- glm.obj$call
-##	if (!missing(formula))
-##	  call$formula <- update.formula(call$formula, formula)
-##	if (!missing(data))	call$data <- substitute(data)
-##	if (!missing(subset))	call$subset <- substitute(subset)
-##	if (!missing(na.action))call$na.action <- substitute(na.action)
-##	if (!missing(weights))	call$weights <- substitute(weights)
-##	if (!missing(offset))	call$offset <- substitute(offset)
-##	if (!missing(family))	call$family <- substitute(family)
-##	if (!missing(x))	call$x <- substitute(x)
-####	notparent <- c("NextMethod", "update", methods(update))
-####	for (i in 1:(1+sys.parent())) {
-####		parent <- sys.call(-i)[[1]]
-####		if (is.null(parent))
-####		break
-####	if (is.na(match(as.character(parent), notparent)))
-####			break
-####	}
-####	eval(call, sys.frame(-i))
-##	eval(call, sys.frame(sys.parent()))
-##}
+##{ ...... }
 
 model.frame.glm <-
     function (formula, data, na.action, ...)

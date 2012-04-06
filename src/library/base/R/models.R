@@ -214,6 +214,8 @@ model.frame.default <-
     }
     if(missing(data))
 	data <- sys.frame(sys.parent())
+    else if (!is.data.frame(data) && !is.environment(data) && !is.null(class(data)))
+        data<-as.data.frame(data)
     if(!inherits(formula, "terms"))
 	formula <- terms(formula, data = data)
     rownames <- attr(data, "row.names")
@@ -281,7 +283,7 @@ model.matrix.default <- function(formula, data = sys.frame(sys.parent()),
 	    stop("model frame and formula mismatch in model.matrix()")
 	data <- data[,reorder, drop=FALSE]
     }
-    contr.funs <- as.character(.Options$contrasts)
+    contr.funs <- as.character(getOption("contrasts"))
     isF <- sapply(data, is.factor)[-1]
     isOF <- sapply(data, is.ordered)
     namD <- names(data)

@@ -9,23 +9,25 @@ stop.list <- vector("list", length(core.pkgs))
 names(stop.list) <- core.pkgs
 
 ## -- Stop List for "base" :
-edit.int <- c("fix", "edit", "vi", "emacs", "pico", "xemacs", "xedit")
-misc.int <- c("browser", "bug.report", "menu")
+edit.int <- c("fix", "edit", "edit.data.frame", "edit.default", "vi",
+              "emacs", "pico", "xemacs", "xedit")
+misc.int <- c("browser", "bug.report", "menu", "repeat")
 stop.list[["base"]] <-
     if(nchar(getenv("R_TESTLOTS"))) {## SEVERE TESTING, try almost ALL
 	c(edit.int, misc.int)
     } else {
 	inet.list <- c(apropos("download\."),
 		       apropos("^url\."), apropos("\.url"),
-		       paste(c("CRAN", "install", "update"),"packages",sep="."))
+		       paste(c("CRAN", "install", "update", "old"),
+                             "packages",sep="."))
 	socket.fun <- apropos("socket")
 	## "Interactive" ones:
-	dev.int <- c("X11", "windows", "macintosh")
+	dev.int <- c("X11", "x11", "windows", "macintosh")
 	## print.plot() will print a blank page on the printer and is
 	## deprecated anyway --pd
 	misc.2 <- c("help.start", "print.plot",
 		    "gctorture", "q", "quit",
-                    ## now `works': "function",
+                    "read.fwf", "source",## << MM thinks "FIXME"
 		    "data.entry", "dataentry", "de", apropos("^de\."))
 	c(inet.list, socket.fun, dev.int, edit.int, misc.int, misc.2)
     }
@@ -47,7 +49,7 @@ for (pkg in core.pkgs) {
   }
   else {
       library(pkg, character = TRUE)
-      cat("library(",pkg,", character = TRUE)\n")
+      cat("library(",pkg,")\n")
       this.pos <- 2
   }
 

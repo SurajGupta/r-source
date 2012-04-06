@@ -23,13 +23,12 @@ model.weights(x)
   \item{x}{a modle frame.}
 }
 \description{
-    \code{model.matrix} creates a design matrix.
-    \code{model.weights} extracts the weights.
+  \code{model.matrix} creates a design matrix.
+  \code{model.weights} extracts the weights.
 }
-\details
-{
-  \code{model.matrix} creates a design matrix from the description given in
-  \code{terms(formula)}, using the data in \code{data} which must
+\details{
+  \code{model.matrix} creates a design matrix from the description given
+  in \code{terms(formula)}, using the data in \code{data} which must
   contain columns with the same names as would be created by a call to
   \code{model.frame(formula)} or, more precisely, by evaluating
   \code{attr(terms(formula), "variables")}.  There may be other columns
@@ -41,7 +40,9 @@ model.weights(x)
   and data.
 }
 \references{
-  Chambers and Hastie: "\emph{Statistical Models in S}".
+  Chambers, J. M. and Hastie, T. J. eds (1992)
+  \emph{Statistical Models in S.}
+  Chapman & Hall, London.
 }
 \seealso{
   \code{\link{model.frame}},
@@ -55,10 +56,10 @@ mat <- model.matrix(ff, m)
 
 dd <- data.frame(a = gl(3,4), b = gl(4,1,12))# balanced 2-way
 options("contrasts")
-model.matrix(~a+b,dd)
-model.matrix(~a+b,dd,contrasts=list(a="contr.sum"))
-model.matrix(~a+b,dd,contrasts=list(a="contr.sum",b="contr.poly"))
-m.orth <- model.matrix(~a+b,dd, contrasts=list(a="contr.helmert"))
+model.matrix(~ a + b, dd)
+model.matrix(~ a + b, dd, contrasts = list(a="contr.sum"))
+model.matrix(~ a + b, dd, contrasts = list(a="contr.sum", b="contr.poly"))
+m.orth <- model.matrix(~a+b, dd, contrasts = list(a="contr.helmert"))
 crossprod(m.orth)# m.orth is  ALMOST  orthogonal
 }
 \keyword{models}

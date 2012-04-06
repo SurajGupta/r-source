@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
    */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -206,7 +207,7 @@ static SEXP rep2(SEXP s, SEXP ncopy)
     return a;
 }
 
-SEXP rep(SEXP s, SEXP ncopy)
+static SEXP rep(SEXP s, SEXP ncopy)
 {
     int i, ns, na, nc;
     SEXP a, t;

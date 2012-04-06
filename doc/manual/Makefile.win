@@ -2,44 +2,63 @@
 #
 # ${R_HOME}/doc/manual/Makefile.win
 
-PAPER = a4
+srcdir = .
+top_srcdir = ../..
+subdir = doc/manual
+
+SOURCES_TEXI = R-FAQ.texi R-exts.texi R-intro.texi
+
+OBJECTS_DVI = $(SOURCES_TEXI:.texi=.dvi)
+OBJECTS_INFO = $(SOURCES_TEXI:.texi=.info)
+OBJECTS_PDF = $(SOURCES_TEXI:.texi=.pdf)
+
+R_PAPERSIZE = a4
+# set the next to `ae' to omit the hyperlinks
+R_RD4PDF = ae,hyper
+
+MAKEINFO = makeinfo
 PDFLATEX = pdflatex
 PDFTEX = pdftex
 MAKEINDEX = makeindex
 TEXINDEX = texindex
 RHOME=$(shell cd ../..; pwd)
-R_PKGS=base eda lqs modreg mva nls splines stepfun ts
-
-# set the next to `ae' to omit the hyperlinks
-PDF=pdf
-
-srcdir = .
-top_srcdir = ../..
+R_PKGS=base ctest eda lqs modreg mva nls splines stepfun ts
 
 pkgsrcs = $(R_PKGS:=-pkg.tex)
 
 .SUFFIXES:
 .SUFFIXES: .dvi .info .texi .pdf
 
-all: lib2tex.pl pdf
+all: pdf
 
-lib2tex.pl: lib2tex.in
-	sed -e 1d  $^ > $@
+pkg2tex.pl: $(top_srcdir)/tools/pkg2tex.in
+	@sed -e 1d  $^ > $@
+
+Rdnewer.pl: $(top_srcdir)/tools/Rdnewer.in
+	@sed -e 1d  $^ > $@
 
 .texi.pdf:
 	$(PDFTEX) $<
 	$(PDFTEX) $<
 
-pdf: refman.pdf R-exts.pdf
+.texi.info:
+	$(MAKEINFO)  -D UseExternalXrefs $<
 
-refman.tex: lib2tex.pl refman.top $(srcdir)/refman.bot
-	@echo "creating $(subdir)/$@"
-	@(cat refman.top; \
+info: $(OBJECTS_INFO)
+R-exts.info: version.texi
+R-intro.info: version.texi
+
+pdf: refman.pdf $(OBJECTS_PDF)
+
+refman.tex: refman.top $(srcdir)/refman.bot
+	@echo "creating $@"
+	@(opt="$${R_PAPERSIZE:-$(R_PAPERSIZE)}paper"; \
+	  echo "\\documentclass[$${opt}]{book}"; \
+	  opt="$${R_RD4PDF:-$(R_RD4PDF)}"; \
+	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  cat $(srcdir)/refman.top; \
 	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
 	  cat $(srcdir)/refman.bot) > $@
-
-refman.top: $(srcdir)/refman.top.in
-	sed -e s/@R_PAPERSIZE@/$(PAPER)/ $^ > $@
 
 version.tex: ../../bin/rterm.exe $(top_srcdir)/VERSION
 	@echo "creating $(subdir)/$@"
@@ -49,31 +68,39 @@ version.tex: ../../bin/rterm.exe $(top_srcdir)/VERSION
 	  d=`cut -d/ -f3 < $(top_srcdir)/date-stamp`; \
 	  echo "$${v} ($${m} $${d}, $${y})") > $@
 
-%-pkg.tex: FORCE
-	@echo "Collecting components of $@ ..."
-	cd ../../src/gnuwin32/help && $(MAKE) RHOME=$(RHOME) latex-$*
-	perl lib2tex.pl $*
+%-pkg.tex: FORCE Rdnewer.pl pkg2tex.pl
+	@if perl Rdnewer.pl \
+	    "$(top_srcdir)/src/library/$*" "$@"; then \
+	  echo "collecting LaTeX docs for package \`$*' ..."; \
+	  (cd ../../src/gnuwin32/help && $(MAKE) RHOME=$(RHOME) latex-$*); \
+	  perl pkg2tex.pl $*; \
+	fi
 FORCE:
 
 refman.pdf: refman.tex version.tex $(pkgsrcs) $(srcdir)/Rd.sty
-	@echo " PDF LaTeX documentation: Reference Index ..."
+	@echo " PDF/LaTeX documentation: reference index ..."
 	@$(RM) -f *.aux refman.toc refman.ind
-	@TEXINPUTS="$(PDF);.;" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@$(MAKEINDEX) refman
-	@TEXINPUTS="$(PDF);.;" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
-	@TEXINPUTS="$(PDF);.;" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
 
 R-exts.pdf: R-exts.texi version.texi 
 	$(PDFTEX) R-exts.texi
 	$(TEXINDEX) R-exts.cp R-exts.fn R-exts.vr
 	$(PDFTEX) R-exts.texi
+	$(PDFTEX) R-exts.texi
 
-version.texi: $(top_srcdir)/VERSION
+R-intro.pdf: R-intro.texi version.texi 
+	$(PDFTEX) R-intro.texi
+	$(TEXINDEX) R-intro.cp R-intro.fn R-intro.vr
+	$(PDFTEX) R-intro.texi
+	$(PDFTEX) R-intro.texi
+
+version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	@echo "creating $(subdir)/$@"
 	@(v=`sed 's/\([^ ]*\).*/\1/' $(top_srcdir)/VERSION`; \
+	  v="$${v} (`sed 's|/| |g' $(top_srcdir)/date-stamp`)"; \
 	  echo "@set VERSION $${v}" > $@)
 
 
@@ -82,9 +109,9 @@ clean:
 	@echo cleaning in doc/manual
 	@-rm -f *.aux *.toc refman.i?? *.out *.log
 	@-rm -f *.cp *.cps *.fn *.fns *.ky *.kys \
-	  *.out *.pg *.pgs *.tmp *.tp *.vr *.vrs
+	  *.out *.pg *.pgs *.tmp *.tp *.vr *.vrs \
+	  version.tex version.texi refman.tex *-pkg.tex 
 distclean: clean
-	@-rm -f version.tex *-pkg.tex lib2tex.pl \
-	  refman.tex refman.top *.pdf
+	@-rm -f pkg2tex.pl Rdnewer.pl *.pdf *.info*
 maintainer-clean: distclean
 

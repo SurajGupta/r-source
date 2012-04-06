@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1998  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -104,7 +104,7 @@ static SEXP cummax(SEXP x, SEXP s)
 #ifdef IEEE_754
     max = R_NegInf;
 #else
-    max = NA_REAL;
+    max = 0.999*R_NegInf; /* not NA */
 #endif
     for (i = 0 ; i < length(x) ; i++) {
 	if(ISNAN(REAL(x)[i]) || ISNAN(max))
@@ -124,11 +124,7 @@ static SEXP cummin(SEXP x, SEXP s)
 {
     int i;
     double min;
-#ifdef IEEE_754
-    min = R_PosInf;
-#else
-    min = NA_REAL;
-#endif
+    min = R_PosInf; /* always positive, not NA */
     for (i = 0 ; i < length(x) ; i++ ) {
 	if (ISNAN(REAL(x)[i]) || ISNAN(min))
 #ifdef IEEE_754

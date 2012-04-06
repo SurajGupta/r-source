@@ -1,3 +1,31 @@
+rw0990
+======
+
+The console and internal pager now have horizontal scollbars. These
+are disabled (greyed out) if no text is obscured in the current view.
+
+Help menu items will be greyed out if the corresponding files are not
+installed.
+
+Many of the menu items now call internal functions and so are much
+faster, but produce nothing on the console.
+
+Help files will be displayed in the internal pager with headings
+in a contrasting colour.
+
+There are new functions winDialog() and winDialogString() to produce
+dialog boxes, and functions winMenu* (use ?winMenus) to manipulate
+user menus.
+
+Following Unix, the handling of help(, offline=TRUE) has been altered.
+It will be necessary to adjust helpPRINT.bat to set the TEXINPUTS path
+to find Rd.sty. TeX processing of these help files normally uses LaTeX
+package `ae' to handle Latin-1 characters: this can be changed by
+setting the environment variable R_RD4DVI.
+
+The conversion to text help no longer requires groff.
+
+
 rw0901
 ======
 

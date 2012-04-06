@@ -1,27 +1,34 @@
 \name{Weibull}
-\title{The Weibull Distribution}
-\usage{
-dweibull(x, shape, scale = 1)
-pweibull(q, shape, scale = 1)
-qweibull(p, shape, scale = 1)
-rweibull(n, shape, scale = 1)
-}
 \alias{dweibull}
 \alias{pweibull}
 \alias{qweibull}
 \alias{rweibull}
-\arguments{
-\item{x,q}{vector of quantiles.}
-\item{p}{vector of probabilities.}
-\item{n}{number of observations to generate.}
-\item{shape,scale}{shape and scale parameters.}
-}
+\title{The Weibull Distribution}
 \description{
-  These functions provide information about the Weibull distribution
-  with parameters \code{shape} and \code{scale}.  \code{dweibull} gives
-  the density, \code{pweibull} gives the distribution function,
-  \code{qweibull} gives the quantile function and \code{rweibull}
-  generates random deviates.
+  Density, distribution function, quantile function and random
+  generation for the Weibull distribution with parameters \code{shape}
+  and \code{scale}.
+}
+\usage{
+dweibull(x, shape, scale = 1, log = FALSE)
+pweibull(q, shape, scale = 1, lower.tail = TRUE, log.p = FALSE)
+qweibull(p, shape, scale = 1, lower.tail = TRUE, log.p = FALSE)
+rweibull(n, shape, scale = 1)
+}
+\arguments{
+  \item{x, q}{vector of quantiles.}
+  \item{p}{vector of probabilities.}
+  \item{n}{number of observations to generate.}
+  \item{shape, scale}{shape and scale parameters.}
+  \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
+  \item{lower.tail}{logical; if TRUE (default), probabilities are
+    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+}
+\value{
+  \code{dweibull} gives the density,
+  \code{pweibull} gives the distribution function,
+  \code{qweibull} gives the quantile function, and
+  \code{rweibull} generates random deviates.
 }
 \details{
   If \code{scale} is omitted it assumes the default value of \code{1}.
@@ -36,7 +43,7 @@ rweibull(n, shape, scale = 1)
 }
 \seealso{
   \code{\link{dexp}} for the Exponential which is a special case of a
-  Weibull distribution. 
+  Weibull distribution.
 }
 \examples{
 x <- 1:10

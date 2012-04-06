@@ -10,12 +10,13 @@
 \format{A 4-dimensional array resulting from cross-tabulating 2201
   observations on 4 variables.  The variables and their levels are as
   follows:
+
   \tabular{rll}{
-    No \tab Name \tab Levels \cr
-    1 \tab Class \tab 1st, 2nd, 3rd, Crew \cr
-    2 \tab Sex \tab Male, Female \cr
-    3 \tab Age \tab Child, Adult \cr
-    4 \tab Survived \tab No, Yes \cr
+    No \tab Name \tab Levels\cr
+    1 \tab Class \tab 1st, 2nd, 3rd, Crew\cr
+    2 \tab Sex \tab Male, Female\cr
+    3 \tab Age \tab Child, Adult\cr
+    4 \tab Survived \tab No, Yes
   }
 }
 \details{
@@ -38,7 +39,7 @@
   (\url{http://www.rmplc.co.uk/eduweb/sites/phind}).
 }
 \source{
-  Robert J. MacG. Dawson (1995),
+  Dawson, Robert J. MacG. (1995),
   The `Unusual Episode' Data Revisited.
   \emph{Journal of Statistics Education}, \bold{3}.
   \url{http://www.amstat.org/publications/jse/v3n3/datasets.dawson.html}
@@ -57,7 +58,7 @@ data(Titanic)
 mosaicplot(Titanic, main = "Survival on the Titanic")
 ## Higher survival rates in children?
 apply(Titanic, c(3, 4), sum)
-## HIgher survival rates in females?
+## Higher survival rates in females?
 apply(Titanic, c(2, 4), sum)
 ## Use loglm() in package `MASS' for further analysis ...
 }

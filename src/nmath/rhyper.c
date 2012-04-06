@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,23 +108,17 @@ double rhyper(double nn1in, double nn2in, double kkin)
 
     /* check parameter validity */
 
-#ifdef IEEE_754
-    if(!R_FINITE(nn1in) || !R_FINITE(nn2in) || !R_FINITE(kkin)) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
-#endif
+    if(!R_FINITE(nn1in) || !R_FINITE(nn2in) || !R_FINITE(kkin))
+	ML_ERR_return_NAN;
 
     nn1 = floor(nn1in+0.5);
     nn2 = floor(nn2in+0.5);
     kk	= floor(kkin +0.5);
 
-    if (nn1 < 0 || nn2 < 0 || kk < 0 || kk > nn1 + nn2) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
-    /* if new parameter values, initialize */
+    if (nn1 < 0 || nn2 < 0 || kk < 0 || kk > nn1 + nn2)
+	ML_ERR_return_NAN;
 
+    /* if new parameter values, initialize */
     reject = LTRUE;
     setup1 = LFALSE;
     setup2 = LFALSE;
@@ -191,7 +186,7 @@ double rhyper(double nn1in, double nn2in, double kkin)
       L10:
 	p = w;
 	ix = minjx;
-	u = sunif() * scale;
+	u = unif_rand() * scale;
       L20:
 	if (u > p) {
 	    u = u - p;
@@ -231,8 +226,8 @@ double rhyper(double nn1in, double nn2in, double kkin)
 	    p3 = p2 + kr / lamdr;
 	}
       L30:
-	u = sunif() * p3;
-	v = sunif();
+	u = unif_rand() * p3;
+	v = unif_rand();
 	if (u < p1) {		/* rectangular region */
 	    ix = xl + u;
 	} else if (u <= p2) {	/* left tail */

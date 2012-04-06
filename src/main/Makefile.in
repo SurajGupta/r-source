@@ -10,7 +10,9 @@ subdir = src/main
 
 include $(top_builddir)/Makeconf
 
-SOURCES = \
+SOURCES_C = \
+	@LIBOBJS@ \
+	apply.c \
 	arithmetic.c \
 	array.c \
 	attrib.c \
@@ -37,10 +39,13 @@ SOURCES = \
 	eval.c \
 	format.c \
 	fourier.c \
+	g_her_glyph.c \
+	g_fontdb.c \
+	g_cntrlify.c \
+	g_alab_her.c \
 	gram.c \
 	gram-ex.c \
 	graphics.c \
-	hdf5.c \
 	iosupport.c \
 	list.c \
 	logic.c \
@@ -50,6 +55,7 @@ SOURCES = \
 	model.c \
 	names.c \
 	objects.c \
+	optim.c \
 	optimize.c \
 	options.c \
 	par.c \
@@ -63,6 +69,8 @@ SOURCES = \
 	printvector.c \
 	printutils.c \
 	random.c \
+	RNG.c \
+	regex.c \
 	relop.c \
 	saveload.c \
 	scan.c \
@@ -79,11 +87,13 @@ SOURCES = \
 	version.c
 SOURCES_F = \
 	xxxpr.f
-DEPENDS = $(SOURCES:.c=.d)
-OBJECTS = $(SOURCES:.c=.o) $(SOURCES_F:.f=.o)
+DEPENDS = $(SOURCES_C:.c=.d)
+OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o)
+HEADERS = arithmetic.h names.h regex.h
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = $(SOURCES) arithmetic.h names.h gram.y
+DISTFILES = Makefile.in Makefile.win \
+	$(SOURCES_C) $(SOURCES_F) $(HEADERS)
 
 RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libmath.a
 RGNOMELIBS = ../gnome/libRgnome.a ../appl/libappl.a ../nmath/libmath.a
@@ -96,10 +106,10 @@ all: Makefile Makedeps R
 
 Makefile: $(srcdir)/Makefile.in \
   $(top_builddir)/config.status \
-  ../include/Rconfig.h \
+  ../include/config.h \
   ../include/Rversion.h \
   ../include/FFDecl.h \
-  $(SOURCES)
+  $(SOURCES_C)
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
@@ -113,7 +123,7 @@ R: Makefile
 	  $(MAKE) $${t}; \
 	done
 
-../include/Rconfig.h:
+../include/config.h:
 	(cd ../include; $(MAKE) $(@F))
 ../include/Rversion.h:
 	(cd ../include; $(MAKE) $(@F))
@@ -124,7 +134,7 @@ $(top_builddir)/bin/R.X11: $(OBJECTS) $(RLIBS) @EXPORTFILE@
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
 	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(ALL_LIBS)
 
-$(top_builddir)/bin/R.gnome: $(OBJECTS) $(RGNOMELIBS)
+$(top_builddir)/bin/R.GNOME: $(OBJECTS) $(RGNOMELIBS)
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
 	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) $(GNOME_LIBDIR) -o $@ $(OBJECTS) $(ALL_GNOME_LIBS)
 
@@ -144,11 +154,13 @@ gram.c: $(srcdir)/gram.y
 
 mostlyclean: clean
 clean:
-	@echo "Cleaning in $(subdir)"
-	@-rm -f R.binary R.X11 R.gnome R-Image *core Makedeps *.d *.o
+	@echo "cleaning in $(subdir)"
+	@-rm -f R.binary R.X11 R.GNOME R-Image *core Makedeps *.d *.o
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean
+	@echo "This command is intended for maintainers to use; it"
+	@echo "deletes files that may need special rules to rebuild"
 	@rm -f gram.c
 
 tags: *.h *.c

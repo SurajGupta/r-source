@@ -5,8 +5,8 @@ index.search <- function(topic, path, file="AnIndex", type="help")
 
 help <-
     function (topic, offline = FALSE, package = c(.packages(), .Autoloaded),
-              lib.loc = .lib.loc, verbose = .Options$verbose,
-              htmlhelp = .Options$htmlhelp)
+              lib.loc = .lib.loc, verbose = getOption("verbose"),
+              htmlhelp = getOption("htmlhelp"))
 {
     htmlhelp <- is.logical(htmlhelp) && htmlhelp
     if (!missing(package))
@@ -40,9 +40,9 @@ help <-
                 if (htmlhelp) {
                     if(file.exists(file)) {
                         file <- paste("file:", file, sep="")
-                        if (is.null(.Options$browser))
+                        if (is.null(getOption("browser")))
                             stop("options(\"browser\") not set")
-                        browser <- .Options$browser
+                        browser <- getOption("browser")
                         system(paste(browser, " -remote \"openURL(",
                                      file, ")\" 2>/dev/null || ", browser, " ",
                                      file, " &", sep = ""))
@@ -77,22 +77,37 @@ help <-
                 if(file.exists(zfile)) {
                     FILE <- tempfile()
                     on.exit(unlink(FILE))
-                    cat("\\documentclass[", .Options$papersize, "paper]{article}\n",
+                    cat("\\documentclass[",
+                        getOption("papersize"),
+                        "paper]{article}",
+                        "\n",
+                        "\\usepackage[",
+                        getenv("R_RD4DVI"),
+                        "]{Rd}",
+                        "\n",
+                        "\\InputIfFileExists{Rhelp.cfg}{}{}\n",
+                        "\\begin{document}\n",
                         file = FILE, sep = "")
-                    file.append(FILE,
-                                file.path(R.home(), "doc", "manual", "Rd.sty"))
-                    cat("\\InputIfFileExists{Rhelp.cfg}{}{}\n\\begin{document}\n",
-                        file = FILE, append = TRUE)
                     file.append(FILE, zfile)
-                    cat("\\end{document}\n", file = FILE, append = TRUE)
-                    system(paste(file.path(R.home(), "bin", "help"),
-                                 "PRINT", FILE, topic,
-                                 .Options$latexcmd, .Options$dvipscmd)
-                           )
+                    cat("\\end{document}\n",
+                        file = FILE, append = TRUE)
+                    system(paste(paste("TEXINPUTS=",
+                                       file.path(R.home(), "doc",
+                                                 "manual"),
+                                       ":",
+                                       "$TEXINPUTS",
+                                       sep = ""),
+                                 file.path(R.home(), "bin", "help"),
+                                 "PRINT",
+                                 FILE,
+                                 topic,
+                                 getOption("latexcmd"),
+                                 getOption("dvipscmd")))
                     return(invisible())
                 }
                 else
-                    stop(paste("No offline documentation for", topic, "is available"))
+                    stop(paste("No offline documentation for", topic,
+                               "is available"))
             }
         }
         else

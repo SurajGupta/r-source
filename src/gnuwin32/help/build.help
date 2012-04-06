@@ -3,8 +3,7 @@
 # Subroutines for converting R documentation into HTML, LaTeX, Nroff
 # and R (Examples) format
 #
-# Copyright (C) 1997 Friedrich Leisch
-# Modifications for Windows (C) 1998, 1999 B. D. Ripley
+# Copyright (C) 1997-2000 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,19 +21,17 @@
 # Suite 330, Boston, MA  02111-1307  USA.
 #
 # ${R_HOME}/bin/build-help
-# Usage:  build-help [options]  [pkg] [lib]
+# Usage: build-help [options] [pkg] [lib]
 # Install all help files for package pkg to library lib
 # (defaults are `${R_HOME}/src/library/base' and the default library,
 #  `${R_HOME}/library', respectively).
-
-# This version: if pkg is not found, it is tried in $R_HOME/src/library.
 
 use File::Basename;
 use Cwd;
 use Getopt::Long;
 
 fileparse_set_fstype; # Unix, in case one gets anything else.
-$OSdir ="windows";
+$OSdir = "windows";
 
 
 @knownoptions = ("rhome:s", "html", "nroff", "latex", "example", "debug",
@@ -58,20 +55,11 @@ else{
 }
 $R_HOME =~ s+\\+/+g; # Unix-style path
 
-require "$R_HOME/src/gnuwin32/help/Rdconvlib.pl";
-require "$R_HOME/src/gnuwin32/help/buildlib.pl";
+require "$R_HOME/etc/Rdconvlib.pl";
+require "$R_HOME/etc/buildlib.pl";
 
 chdir($cwd);
 print STDERR "Current directory (cwd): '$cwd'\n" if $opt_debug;
-
-$tmpdir=$ENV{"TEMP"};
-if(!$tmpdir) {
-    if ($^O eq "Unix") {$tmpdir = "/tmp";}
-    else {$tmpdir = "c:/windows/temp";}
-}
-$tmpdir =~ s+\\+/+g;
-#print "temp=$temp\n";
--d $tmpdir  or die "TEMP is set to `$tmpdir' which is not a directory\n";
 
 # if option --htmllists is set we only rebuild some list files and
 # exit
@@ -144,9 +132,10 @@ format STDOUT =
 .
 
 foreach $manfile (@mandir) {
-    if($manfile =~ /\.[Rr]d$/) {
+    if($manfile =~ /\.[Rr]d$/ && !($manfile =~ /^\.#/)) {
 	$manfilebase = basename($manfile, (".Rd", ".rd"));
 	$manage = (-M $manfile);
+	$manfiles{$manfilebase} = $manfile;
 
 	$textflag = $htmlflag = $latexflag = $exampleflag = $chmflag = "";
 
@@ -155,29 +144,7 @@ foreach $manfile (@mandir) {
 	    $destfile = "$dest/help/$targetfile";
 	    if(fileolder($destfile, $manage)) {
 		$textflag = "text";
-		$tmpfile = "$tmpdir/nr1";
-		$tmp2 = "$tmpdir/nr2";
-		Rdconv($manfile, "nroff", "", "$tmpfile", $pkg);
-# Unix needs / : some Win32 Perls need \
-		if(!($^O eq "Unix")) {
-		    $tmp2 =~ s+/+\\+g;
-		}
-		$cmd = "tbl $tmpfile | troff -Tlatin1 -ms | grotty -buo > $tmp2";
-		system("$cmd") ==0 or die "cannot execute nroff cmd\n";
-		unlink($tmpfile);
-		open hlpfile, "<$tmp2" || die "Couldn't open '$tmp2'\n";
-		open dest, ">$destfile" || die "Couldn't open '$destfile'\n";
-		$keep = $/; undef $/;
-		while (<hlpfile>) {
-		    s/\xAD/-/go;	    # ISO Latin hyphen to -
-		    s/\n*$/\n\n/s;          # remove all trailing blank lines
-		    s/\n\s*\n\s*\n/\n\n/sg; # convert two blank lines into one
-		    print dest $_;
-		}
-		$/ = $keep;
-		close hlpfile;
-		close dest;
-		unlink($tmp2);
+		Rdconv($manfile, "txt", "", "$destfile", $pkg);
 	    }
 	}
 
@@ -228,6 +195,70 @@ foreach $manfile (@mandir) {
     }
 }
 
+# remove files not in source directory
+if($opt_nroff){
+    my @destdir;
+    opendir dest,  "$dest/help";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	if($destfile eq "." || $destfile eq ".." ||
+	   $destfile eq "AnIndex" || $destfile eq "00Titles") { next; }
+#	print "$dest/help/$destfile\n" unless defined $manfiles{$destfile};
+	unlink "$dest/help/$destfile" unless defined $manfiles{$destfile};
+    }
+}
+if($opt_html){
+    my @destdir;
+    opendir dest,  "$dest/html";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	$destfilebase = basename($destfile, (".html"));
+	if($destfile eq "." || $destfile eq ".." ||
+	   $destfile eq "00Index.html") { next; }
+#	print "$dest/html/$destfile\n" unless defined $manfiles{$destfilebase};
+	unlink "$dest/html/$destfile" unless defined $manfiles{$destfilebase};
+    }
+}
+if($opt_latex){
+    my @destdir;
+    opendir dest,  "$dest/latex";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	$destfilebase = basename($destfile, (".tex"));
+	if($destfile eq "." || $destfile eq "..") { next; }
+#	print "$dest/latex/$destfile\n" unless defined $manfiles{$destfilebase};
+	unlink "$dest/latex/$destfile" unless defined $manfiles{$destfilebase};
+    }
+}
+if($opt_example){
+    my @destdir;
+    opendir dest,  "$dest/R-ex";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	$destfilebase = basename($destfile, (".R"));
+	if($destfile eq "." || $destfile eq "..") { next; }
+#	print "$dest/R-ex/$destfile\n" unless defined $manfiles{$destfilebase};
+	unlink "$dest/R-ex/$destfile" unless defined $manfiles{$destfilebase};
+    }
+if($opt_chm){
+    my @destdir;
+    opendir dest,  "../chm";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	$destfilebase = basename($destfile, (".html"));
+	if($destfile eq "." || $destfile eq ".." ||
+	   $destfile eq "00Index.html" || $destfile eq "00Titles") { next; }
+#	print "../chm/$destfile\n" unless defined $manfiles{$destfilebase};
+	unlink "../chm/$destfile" unless defined $manfiles{$destfilebase};
+    }
+}
+}
+
 sub usage {
 
     print "Usage:  build-help [--rhome dir] [--html] [--nroff] [--latex]\n" .
@@ -251,5 +282,47 @@ sub open_hhp {
     "Full-text search=Yes\n",
     "Full text search stop list file=..\\..\\..\\gnuwin32\\help\\R.stp\n",
     "\n\n[FILES]\n00Index.html\n";
+}
+
+
+sub build_chm_toc {
+    open tocfile, ">../chm/$pkg.toc"
+	|| die "Couldn't open the chm toc file";
+    print tocfile
+	"<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n",
+	"<HEAD></HEAD><HTML><BODY>\n<UL>\n";
+    print tocfile
+	"<LI> <OBJECT type=\"text/sitemap\">\n",
+	"<param name=\"Name\" value=\"Package $pkg:  Contents\">\n",
+	"<param name=\"Local\" value=\"00Index.html\">\n",
+	"</OBJECT>\n";
+    print tocfile
+	"<LI> <OBJECT type=\"text/sitemap\">\n",
+	"<param name=\"Name\" value=\"Package $pkg:  R objects\">\n",
+	"</OBJECT>\n";
+    print tocfile "<UL>\n";   # contents of a book
+    foreach $alias (sort foldorder keys %aliasnm) {
+	print tocfile
+	    "<LI> <OBJECT type=\"text/sitemap\">\n",
+	    "<param name=\"Name\" value=\"$alias\">\n",
+	    "<param name=\"Local\" value=\"$aliasnm{$alias}.html\">\n",
+	    "</OBJECT>\n";
+    }
+    print tocfile "</UL>\n";  # end of a book
+    print tocfile
+	"<LI> <OBJECT type=\"text/sitemap\">\n",
+	"<param name=\"Name\" value=\"Package $pkg:  Titles\">\n",
+	"</OBJECT>\n";
+    print tocfile "<UL>\n";   # contents of a book
+    foreach $title (sort foldorder keys %title2file) {
+	print tocfile
+	    "<LI> <OBJECT type=\"text/sitemap\">\n",
+	    "<param name=\"Name\" value=\"$title\">\n",
+	    "<param name=\"Local\" value=\"$title2file{$title}.html\">\n",
+	    "</OBJECT>\n";
+    }
+    print tocfile "</UL>\n";  # end of a book
+    print tocfile "</UL>\n</BODY></HTML>\n";
+    close tocfile;
 }
 

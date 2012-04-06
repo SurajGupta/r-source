@@ -13,7 +13,7 @@ pmatch <-
     y
 }
 
-"%in%" <- function(x, y) match(x, y, nomatch = 0) > 0
+"%in%" <- function(x, table) match(x, table, nomatch = 0) > 0
 
 match.arg <- function (arg, choices) {
     if (missing(choices)) {
@@ -43,7 +43,7 @@ char.expand <-
     if(length(input) != 1)
 	stop("char.expand: input must have length 1")
     if(!(is.character(input) && is.character(target)))
-	stop("char.expand: input must be character")
+	stop("char.expand: input and target must be character")
     y <- .Internal(charmatch(input,target))
     if(any(is.na(y))) eval(nomatch)
     target[y]

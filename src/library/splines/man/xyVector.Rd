@@ -1,4 +1,4 @@
-%% $Id: xyVector.Rd,v 1.3.2.1 1999/12/15 08:04:29 ripley Exp $
+%% $Id: xyVector.Rd,v 1.4 1999/12/15 17:20:29 pd Exp $
 \name{xyVector}
 \title{Construct an xyVector Object}
 \usage{

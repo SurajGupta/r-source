@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -185,7 +186,7 @@ void InitOptions(void)
     v = CDR(v);
 
     TAG(v) = install("expressions");
-    CAR(v) = ScalarInteger(100);
+    CAR(v) = ScalarInteger(500);
     v = CDR(v);
 
     TAG(v) = install("width");
@@ -342,7 +343,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	    else if (streql(CHAR(namei), "expressions")) {
 		k = asInteger(argi);
-		if (k < 25 || k > MAX_EXPRESSIONS)
+		if (k < MIN_EXPRESSIONS || k > MAX_EXPRESSIONS)
 		    errorcall(call, "expressions parameter invalid");
 		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }

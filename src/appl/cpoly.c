@@ -35,19 +35,32 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include <float.h>
-#include "Fortran.h"
+#include "Mathlib.h" /* for R_pow_di */
 #include "Arith.h"
 #include "Applic.h"
+
+#define True    (1)
+#define False   (0)
 
 static void calct(int *);
 static void fxshft(int *, double *, double *, int *);
 static void vrshft(int, double *, double *, int *);
 static void nexth(int *);
 static void noshft(int);
+static void polyev(int *,
+	    double *, double *, double *, double *,
+	    double *, double *, double *, double *);
+static double errev(int *, double *, double *, double *,
+	     double *, double *, double *);
+static double cpoly_cauchy(int *, double *, double *);
+static void cpoly_scale(int *, double *, double *, double *,
+			double *, double *, double *);
+static void cdivid(double *, double *, double *, double *, double *, double *);
+static double cpoly_cmod(double *, double *);
 
 /* Global Variables (too many!) */
 
@@ -73,8 +86,8 @@ static double eta;
 static double infin;
 
 
-int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
-		      double *zeror, double *zeroi, int *fail)
+int R_cpoly(double *opr, double *opi, int *degree,
+	  double *zeror, double *zeroi, int *fail)
 {
     int i__1;
     double d__1, d__2;
@@ -102,7 +115,7 @@ int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
     sinr = (float).99756405;
     xx = (float).70710678;
     yy = -xx;
-    *fail = FALSE;
+    *fail = False;
 
     nn = *degree;
     d1 = nn - 1;
@@ -110,7 +123,7 @@ int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
     /* algorithm fails if the leading coefficient is zero. */
 
     if (opr[0] == 0.0 && opi[0] == 0.0) {
-	*fail = TRUE;
+	*fail = True;
 	return 0;
     }
 
@@ -134,9 +147,9 @@ int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
 
     /* scale the polynomial with factor 'bnd'. */
 
-    scale(&nn, shr,
-	  &eta, &infin, &smalno, &base,
-	  &bnd);
+    cpoly_scale(&nn, shr,
+		&eta, &infin, &smalno, &base,
+		&bnd);
 
     if (bnd != 1.0) {
 	for (i=0; i<nn; i++) {
@@ -152,9 +165,9 @@ int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
 	/* calculate bnd, a lower bound on the modulus of the zeros. */
 
 	for (i=0 ; i < nn ; i++)
-	    shr[i] = cmod(&pr[i], &pi[i]);
+	    shr[i] = cpoly_cmod(&pr[i], &pi[i]);
 
-	bnd = cauchy(&nn, shr, shi);
+	bnd = cpoly_cauchy(&nn, shr, shi);
 
 	/* outer loop to control 2 major passes */
 	/* with different sequences of shifts */
@@ -191,7 +204,7 @@ int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
 	/* the zerofinder has failed on two major passes */
 	/* return empty handed */
 
-	*fail = TRUE;
+	*fail = True;
 	return 0;
 
 	/* the second stage jumps directly to the third stage iteration.
@@ -240,7 +253,8 @@ static void noshft(int l1)
 
     for (jj = 1; jj <= l1; jj++) {
 
-	if (cmod(&hr[n-1], &hi[n-1]) <= eta * 10.0 * cmod(&pr[n-1], &pi[n-1])) {
+	if (cpoly_cmod(&hr[n-1], &hi[n-1]) <= 
+	    eta * 10.0 * cpoly_cmod(&pr[n-1], &pi[n-1])) {
 
 	    /*	If the constant term is essentially zero, */
 	    /*	shift h coefficients. */
@@ -296,8 +310,8 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
     polyev(&nn, &sr, &si,
 	   pr, pi, qpr, qpi, &pvr, &pvi);
 
-    test = TRUE;
-    pasd = FALSE;
+    test = True;
+    pasd = False;
 
     /* calculate first t = -p(s)/h(s). */
 
@@ -323,11 +337,11 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
 	if (!bool && test && j != *l2) {
 	    d__1 = tr - otr;
 	    d__2 = ti - oti;
-	    if (cmod(&d__1, &d__2) >= cmod(zr, zi) * 0.5) {
-		pasd = FALSE;
+	    if (cpoly_cmod(&d__1, &d__2) >= cpoly_cmod(zr, zi) * 0.5) {
+		pasd = False;
 	    }
 	    else if (! pasd) {
-		pasd = TRUE;
+		pasd = True;
 	    }
 	    else {
 
@@ -351,7 +365,7 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
 		/* turn off testing and restore */
 		/* h, s, pv and t. */
 
-		test = FALSE;
+		test = False;
 		for (i=1 ; i<=n ; i++) {
 		    hr[i-1] = shr[i-1];
 		    hi[i-1] = shi[i-1];
@@ -385,8 +399,8 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
     static double r1, r2, mp, ms, tp, relstp;
     static double omp;
 
-    *conv = FALSE;
-    b = FALSE;
+    *conv = False;
+    b = False;
     sr = *zr;
     si = *zi;
 
@@ -399,8 +413,8 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 	polyev(&nn, &sr, &si,
 	       pr, pi, qpr, qpi,
 	       &pvr, &pvi);
-	mp = cmod(&pvr, &pvi);
-	ms = cmod(&sr, &si);
+	mp = cpoly_cmod(&pvr, &pvi);
+	ms = cpoly_cmod(&sr, &si);
 	if (mp <=  20. * errev(&nn, qpr, qpi, &ms, &mp, &are, &mre)) {
 	    goto L_conv;
 	}
@@ -419,7 +433,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 		/* one zero to dominate. */
 
 		tp = relstp;
-		b = TRUE;
+		b = True;
 		if (relstp < eta)
 		    tp = eta;
 		r1 = sqrt(tp);
@@ -454,7 +468,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 	nexth(&bool);
 	calct(&bool);
 	if (!bool) {
-	    relstp = cmod(&tr, &ti) / cmod(&sr, &si);
+	    relstp = cpoly_cmod(&tr, &ti) / cpoly_cmod(&sr, &si);
 	    sr += tr;
 	    si += ti;
 	}
@@ -462,7 +476,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
     return;
 
 L_conv:
-    *conv = TRUE;
+    *conv = True;
     *zr = sr;
     *zi = si;
 }
@@ -482,7 +496,7 @@ static void calct(int *bool)
 
     polyev(&n, &sr, &si, hr, hi,
 	   qhr, qhi, &hvr, &hvi);
-    *bool = cmod(&hvr, &hvi) <= are * 10. * cmod(&hr[n-1], &hi[n-1]);
+    *bool = cpoly_cmod(&hvr, &hvi) <= are * 10. * cpoly_cmod(&hr[n-1], &hi[n-1]);
     if (!*bool) {
 	d__1 = -pvr;
 	d__2 = -pvi;
@@ -534,6 +548,7 @@ static void nexth(int *bool)
 
 /*--------------------- Independent Complex Polynomial Utilities ----------*/
 
+static
 void polyev(int *nn,
 	    double *sr, double *si,
 	    double *pr, double *pi,
@@ -557,7 +572,7 @@ void polyev(int *nn,
     }
 }
 
-
+static
 double errev(int *nn, double *qr, double *qi, double *ms,
 	     double *mp, double *are, double *mre)
 {
@@ -572,15 +587,16 @@ double errev(int *nn, double *qr, double *qi, double *ms,
     double e;
     int i;
 
-    e = cmod(&qr[0], &qi[0]) * *mre / (*are + *mre);
+    e = cpoly_cmod(&qr[0], &qi[0]) * *mre / (*are + *mre);
     for (i=0 ; i < *nn ; i++) {
-	e *= (*ms + cmod(&qr[i], &qi[i]));
+	e *= (*ms + cpoly_cmod(&qr[i], &qi[i]));
     }
     return e * (*are + *mre) - *mp * *mre;
 }
 
 
-double cauchy(int *nn, double *pt, double *q)
+static 
+double cpoly_cauchy(int *nn, double *pt, double *q)
 {
     /* Computes a lower bound on the moduli of the zeros of a polynomial
      * pt[1:nn] is the modulus of the coefficients.
@@ -618,7 +634,7 @@ double cauchy(int *nn, double *pt, double *q)
 
     dx = x;
 
-    /* do newton iteration until x converges to two decimal places. */
+    /* do Newton iteration until x converges to two decimal places. */
 
     while (fabs(dx / x) > 0.005) {
 	q[0] = pt[0];
@@ -636,10 +652,10 @@ double cauchy(int *nn, double *pt, double *q)
     return x;
 }
 
-
-void scale(int *nn, double *pt,
-	   double *eta, double *infin, double *smalno, double *base,
-	   double *fact)
+static
+void cpoly_scale(int *nn, double *pt,
+		 double *eta, double *infin, double *smalno, double *base,
+		 double *fact)
 {
     /* Returns a scale factor to multiply the coefficients of the polynomial.
      * The scaling is done to avoid overflow and to avoid
@@ -680,13 +696,13 @@ void scale(int *nn, double *pt,
 		sc = 1.0;
 	}
 	ell = (int) (log(sc) / log(*base) + 0.5);
-	*fact = POW_DI(base, &ell);
+	*fact = R_pow_di(*base, ell);
     }
     else *fact = 1.0;
 }
 
 
-
+static
 void cdivid(double *ar, double *ai, double *br, double *bi,
 	    double *cr, double *ci)
 {
@@ -713,8 +729,8 @@ void cdivid(double *ar, double *ai, double *br, double *bi,
     }
 }
 
-
-double cmod(double *r, double *i)
+static
+double cpoly_cmod(double *r, double *i)
 {
     /* modulus of a complex number avoiding overflow. */
     double ai, ar, d1;

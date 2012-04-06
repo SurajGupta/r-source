@@ -7,8 +7,8 @@ barplot(height, width = 1, space = NULL, names.arg = NULL,
         legend.text = NULL, beside = FALSE, horiz = FALSE,
         col = heat.colors(NR), border = par("fg"),
         main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
-	xlim = NULL, ylim = NULL,
-	axes = TRUE, axisnames = TRUE, inside = TRUE, plot = TRUE, \dots)
+        xlim = NULL, ylim = NULL,
+        axes = TRUE, axisnames = TRUE, inside = TRUE, plot = TRUE, \dots)
 }
 \arguments{
   \item{height}{either a vector or matrix of values describing the
@@ -83,7 +83,8 @@ barplot(height, width = 1, space = NULL, names.arg = NULL,
 \examples{
 tN <- table(Ni <- rpois(100, lambda=5))
 r <- barplot(tN, col='gray')
-lines(r, tN, type='h', col='red', lwd=2)#- type = "h" plotting *is* `bar'plot
+#- type = "h" plotting *is* `bar'plot
+lines(r, tN, type='h', col='red', lwd=2)
 
 barplot(tN, space = 1.5, axisnames=FALSE,
         sub = "barplot(...., space= 1.5, axisnames = FALSE)")
@@ -109,9 +110,9 @@ mp <- barplot(hh, beside = TRUE,
         legend = colnames(VADeaths), ylim= c(0,100),
         main = "Death Rates in Virginia", font.main = 4,
         sub = "Faked upper 2*sigma error bars", col.sub = mybarcol)
-segments(mp, hh, mp, hh+ 2*sqrt(1000*hh/100), col=mybarcol, lwd=1.5)
+segments(mp, hh, mp, hh + 2*sqrt(1000*hh/100), col = mybarcol, lwd = 1.5)
 all(dim(mp) == dim(hh))# corresponding matrices
-mtext(side=1, at=apply(mp,2,mean), line = -2,
-      text=paste("Mean",formatC(apply(hh,2,mean))),col="red")
+mtext(side = 1, at = apply(mp, 2, mean), line = -2,
+      text = paste("Mean", formatC(apply(hh, 2, mean))), col = "red")
 }
 \keyword{hplot}

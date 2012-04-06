@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: rprx.c,v 1.2.4.1 1999/12/09 16:47:17 ripley Exp $
+ *  $Id: rprx.c,v 1.3 1999/12/11 20:57:35 pd Exp $
  */
 
 // simple test application w/o a COM server

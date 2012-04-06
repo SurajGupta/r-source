@@ -1,12 +1,16 @@
 \name{data}
+\alias{data}
+\alias{show.data}
 \title{Data Sets}
+\description{
+  \code{data} loads a data set or lists (via \code{show.data})
+  the available data sets.
+}
 \usage{
 data(\dots, list = character(0), package = c(.packages(),.Autoloaded),
      lib.loc = .lib.loc)
 show.data(package = c(.packages(),.Autoloaded), lib.loc = .lib.loc)
 }
-\alias{data}
-\alias{show.data}
 \arguments{
   \item{\dots}{a sequence of \code{name}s or character strings}
   \item{list}{a character vector}
@@ -15,34 +19,30 @@ show.data(package = c(.packages(),.Autoloaded), lib.loc = .lib.loc)
     path are used.} 
   \item{lib.loc}{a character vector of directory names of \R
     libraries.  Defaults to all libraries currently known.}}
-\description{
-  \code{data} loads a data set or lists (via \code{show.data})
-  the available data sets.
+\value{
+  \code{data()} returns a character vector of all data sets specified,
+  an empty character vector if none were specified.
 }
 \details{
   Currently, four formats of data files are supported:
-  \enumerate{
-    \item files ending \code{".RData"} or \code{".rda"} are
-    \code{\link{load}()ed}. 
 
-    \item files ending \code{".R"} or \code{".r"} are
-    \code{\link{source}()d} in, with the R working directory changed
+  \enumerate{
+    \item files ending \file{.RData} or \file{.rda} are
+    \code{\link{load}()}ed.
+
+    \item files ending \file{.R} or \file{.r} are
+    \code{\link{source}()}d in, with the \R working directory changed
     temporarily to the directory containing the respective file.
 
-    \item files ending \code{".tab"} or \code{".txt"} are read using
+    \item files ending \file{.tab} or \file{.txt} are read using
     \code{\link{read.table}(\dots, header = TRUE)}, and hence result in
-    a \code{\link{data.frame}}.
+    a data frame.
 
-    \item files ending \code{".csv"} are read using
-    \code{\link{read.table}(\dots, header = TRUE, sep=";")},
-    and also result in a \code{\link{data.frame}}.
+    \item files ending \file{.csv} are read using
+    \code{\link{read.table}(\dots, header = TRUE, sep = ";")},
+    and also result in a data frame.
   }
-}
-\value{
-  A character vector of all data sets specified, an empty character
-  vector if none were specified.
-}
-\details{
+
   The data sets to be loaded can be specified as a sequence of
   \code{name}s or character strings, or as the character vector
   \code{list}, or as both.  If no data sets are specified or
@@ -58,7 +58,7 @@ show.data(package = c(.packages(),.Autoloaded), lib.loc = .lib.loc)
 }
 
 \seealso{
-\code{\link{help}} for obtaining documentation on data sets.
+  \code{\link{help}} for obtaining documentation on data sets.
 }
 \examples{
 data()                       # list all available data sets

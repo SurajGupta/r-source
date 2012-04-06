@@ -21,12 +21,12 @@
 /* Factor Tabulation */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Arith.h"
 
-void tabulate(int *x, int *n, int *nbin, int *ans)
+void R_tabulate(int *x, int *n, int *nbin, int *ans)
 {
     int i;
     if(*n < 1) return;

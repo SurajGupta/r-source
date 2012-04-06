@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,13 +31,8 @@
 
 double rlnorm(double logmean, double logsd)
 {
-    if(
-#ifdef IEEE_754
-	!R_FINITE(logmean) || !R_FINITE(logsd) ||
-#endif
-	logsd <= 0.0) {
-        ML_ERROR(ME_DOMAIN);
-        return ML_NAN;
-    }
+    if(!R_FINITE(logmean) || !R_FINITE(logsd) || logsd <= 0.)
+	ML_ERR_return_NAN;
+
     return exp(rnorm(logmean, logsd));
 }

@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 2000		    The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,13 +19,12 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
 #include "Mathlib.h"
-#include "Fortran.h"		/* POW_DI */
-#include "Applic.h"		/* cpoly */
+#include "Applic.h"		/* R_cpoly */
 
 #include "arithmetic.h"		/* complex_ */
 
@@ -97,18 +97,19 @@ static void complex_div(Rcomplex *c, Rcomplex *a, Rcomplex *b)
 
 static void complex_pow(Rcomplex *r, Rcomplex *a, Rcomplex *b)
 {
+/* r := a^b */
     double logr, logi, x, y;
     int ib;
 
-    if(b->i == 0.) {		/* be fast (and more accurate)*/
+    if(b->i == 0.) {		/* ^ "real" : be fast (and more accurate)*/
 	if(b->r == 1.) {	/* a^1 */
 	    r->r = a->r; r->i = a->i; return;
 	}
-	if(a->i == 0.) {
-	    r->r = pow(a->r, b->r); r->i = 0.; return;
+	if(a->i == 0. && a->r >= 0.) {
+	    r->r = R_pow(a->r, b->r); r->i = 0.; return;
 	}
 	if(a->r == 0. && b->r == (ib = (int)b->r)) {/* (|a|*i)^b */
-	    x = POW_DI(&(a->i), &ib);
+	    x = R_pow_di(a->i, ib);
 	    if(ib % 2) {	/* ib is odd ==> imaginary r */
 		r->r = 0.;
 		r->i = ((ib>0 && ib %4 == 3)||(ib<0 && (-ib)%4 == 1))? -x : x;
@@ -463,7 +464,7 @@ static void z_acos(Rcomplex *r, Rcomplex *z)
 {
     Rcomplex asin;
     z_asin(&asin, z);
-    r->r = M_PI_half - asin.r;
+    r->r = M_PI_2 - asin.r;
     r->i = - asin.i;
 }
 
@@ -489,7 +490,7 @@ static void z_atan2(Rcomplex *r, Rcomplex *csn, Rcomplex *ccs)
 	    r->i = NA_REAL;
 	}
 	else {
-	    r->r = fsign(M_PI_half, csn->r);
+	    r->r = fsign(M_PI_2, csn->r);
 	    r->i = 0;
 	}
     }
@@ -770,8 +771,7 @@ SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(zr)[degree-i] = COMPLEX(z)[i].r;
 	    REAL(zi)[degree-i] = COMPLEX(z)[i].i;
 	}
-	F77_SYMBOL(cpoly)(REAL(zr), REAL(zi), &degree,
-			  REAL(rr), REAL(ri), &fail);
+	R_cpoly(REAL(zr), REAL(zi), &degree, REAL(rr), REAL(ri), &fail);
 	if(fail) errorcall(call, "root finding code failed");
 	UNPROTECT(2);
 	r = allocVector(CPLXSXP, degree);

@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,32 +19,47 @@
  *
  *  SYNOPSIS
  *
- *    #include "Mathlib.h"
- *    double dnorm(double x, double mu, double sigma);
+ *	double dnorm4(double x, double mu, double sigma, int give_log)
+ *	      {dnorm (..) is synonymous and preferred inside R}
  *
  *  DESCRIPTION
  *
- *    Compute the density of the normal distribution.
- *
- * 	M_1_SQRT_2PI = 1 / sqrt(2 * pi)
+ *	Compute the density of the normal distribution.
  */
 
 #include "Mathlib.h"
 
-	/* The Normal Density Function */
-
-double dnorm(double x, double mu, double sigma)
+double dnorm4(double x, double mu, double sigma, int give_log)
 {
-
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(mu) || ISNAN(sigma))
 	return x + mu + sigma;
 #endif
-    if (sigma <= 0) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
+    if (sigma <= 0) ML_ERR_return_NAN;
 
     x = (x - mu) / sigma;
-    return M_1_SQRT_2PI * exp(-0.5 * x * x) / sigma;
+
+    return (give_log ?
+	    -(M_LN_SQRT_2PI  +	0.5 * x * x + log(sigma)) :
+	    M_1_SQRT_2PI * exp(-0.5 * x * x)  /	  sigma);
+    /* M_1_SQRT_2PI = 1 / sqrt(2 * pi) */
 }
+
+#ifndef NEW_NORM_ONLY
+/* These are defined in Mathlib.h */
+#undef dnorm
+#undef pnorm
+#undef qnorm
+double dnorm(double x, double mu, double sigma)
+{
+    return dnorm4(x, mu, sigma, 0);
+}
+double pnorm(double x, double mu, double sigma)
+{
+    return pnorm5(x, mu, sigma, 1, 0);
+}
+double qnorm(double x, double mu, double sigma)
+{
+    return qnorm5(x, mu, sigma, 1, 0);    
+}
+#endif

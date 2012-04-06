@@ -25,17 +25,12 @@
 #define PSIGNAL
 #include "psignal.h"
 
-#ifndef _MSC_VER
-#define CharacterMode (*__imp_CharacterMode)
-#define UserBreak     (*__imp_UserBreak)
-#else
 #define CharacterMode (*_imp__CharacterMode)
 #define UserBreak     (*_imp__UserBreak)
-#endif
 
 extern void cmdlineoptions(int, char **);
 extern void setup_term_ui(void);
-extern void mainloop(void);
+extern void Rf_mainloop(void);
 extern UImode CharacterMode;
 extern int UserBreak;
 
@@ -70,7 +65,7 @@ int AppMain (int argc, char **argv)
     mainThreadId = GetCurrentThreadId() ;
     signal(SIGBREAK, my_onintr);
     setup_term_ui();
-    mainloop();
+    Rf_mainloop();
     /* NOTREACHED */
     return 0;
 }

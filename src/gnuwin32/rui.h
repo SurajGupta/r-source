@@ -31,5 +31,14 @@ void R_ShowMessage(char *s);
 /*void (*R_ShowMessage)(char *s);*/
 int (*R_yesnocancel)(char *s);
 
+int check_doc_file(char *);
+void internal_shellexec(char *);
+int internal_ShowFile(char *, char *);
+
+int winaddmenu(char * name, char *errmsg);
+int winaddmenuitem(char * item, char * menu, char * action, char *errmsg);
+int windelmenu(char * menu, char *errmsg);
+int windelmenuitem(char * item, char * menu, char *errmsg);
+
 
 

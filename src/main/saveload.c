@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#undef USE_NEW_SAVE_FORMAT
+#define USE_NEW_SAVE_FORMAT
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -266,7 +266,7 @@ static char *AsciiInString(FILE *fp)
     return buf;
 }
 
-void AsciiSave(SEXP s, FILE *fp)
+static void AsciiSave(SEXP s, FILE *fp)
 {
     OutInit = DummyInit;
     OutInteger = AsciiOutInteger;
@@ -279,7 +279,7 @@ void AsciiSave(SEXP s, FILE *fp)
     DataSave(s, fp);
 }
 
-SEXP AsciiLoad(FILE *fp)
+static SEXP AsciiLoad(FILE *fp)
 {
     VersionId = 0;
     InInit = DummyInit;
@@ -291,7 +291,7 @@ SEXP AsciiLoad(FILE *fp)
     return DataLoad(fp);
 }
 
-SEXP AsciiLoadOld(FILE *fp, int version)
+static SEXP AsciiLoadOld(FILE *fp, int version)
 {
     VersionId = version;
     InInit = DummyInit;
@@ -491,7 +491,7 @@ static char *BinaryInString(FILE *fp)
     return buf;
 }
 
-void BinarySave(SEXP s, FILE *fp)
+static void BinarySave(SEXP s, FILE *fp)
 {
     OutInit = DummyInit;
     OutInteger = BinaryOutInteger;
@@ -504,7 +504,7 @@ void BinarySave(SEXP s, FILE *fp)
     DataSave(s, fp);
 }
 
-SEXP BinaryLoad(FILE *fp)
+static SEXP BinaryLoad(FILE *fp)
 {
     VersionId = 0;
     InInit = DummyInit;
@@ -516,7 +516,7 @@ SEXP BinaryLoad(FILE *fp)
     return DataLoad(fp);
 }
 
-SEXP BinaryLoadOld(FILE *fp, int version)
+static SEXP BinaryLoadOld(FILE *fp, int version)
 {
     VersionId = version;
     InInit = DummyInit;
@@ -982,7 +982,7 @@ static SEXP DataLoad(FILE *fp)
     /* symbols are all installed */
     /* gc() and check space */
 
-    gc();
+    R_gc();
 
     /* a gc after this point will be a disaster */
     /* because nothing will have been protected */
@@ -1178,7 +1178,7 @@ static int NewLookup (SEXP item, SEXP list)
  *
  *  We don't really need to build a table of symbols here, but it does
  *  prevent repeated "install"s.  On the other hand there will generally
- *  be huge delays because of disk or network latency ... 
+ *  be huge delays because of disk or network latency ...
  *
  *  CKY: One thing I've found out is that you have to build all the
  *  lists together or you risk getting infinite loops.  Of course, the
@@ -1344,7 +1344,7 @@ static void NewWriteItem (SEXP s, SEXP sym_list, SEXP env_list, FILE *fp)
  *  symbols or environments are encountered, references to them are
  *  made instead of writing them out totally.  */
 
-void NewDataSave (SEXP s, FILE *fp)
+static void NewDataSave (SEXP s, FILE *fp)
 {
     SEXP the_sym_list = R_NilValue, the_env_list = R_NilValue, iterator;
     int sym_count, env_count;
@@ -1379,13 +1379,15 @@ static SEXP InCHARSXP (FILE *fp)
 {
     SEXP s;
     char *tmp;
+    int len;
 
-    AllocBuffer(MAXELTSIZE - 1);
     /* FIXME: rather than use strlen, use actual length of string when
      * sized strings get implemented in R's save/load code.  */
     tmp = InString(fp);
-    s = allocVector(CHARSXP, strlen(tmp));
-    memcpy(CHAR(s), tmp, strlen(tmp));
+    len = strlen(tmp);
+    AllocBuffer(len);
+    s = allocVector(CHARSXP, len);
+    memcpy(CHAR(s), tmp, len+1);
     return s;
 }
 
@@ -1479,7 +1481,7 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp)
     return s;
 }
 
-SEXP NewDataLoad (FILE *fp)
+static SEXP NewDataLoad (FILE *fp)
 {
     int sym_count, env_count, count;
     SEXP sym_table, env_table, obj;
@@ -1675,7 +1677,7 @@ static Rcomplex InComplexAscii(FILE *fp)
     return x;
 }
 
-void NewAsciiSave(SEXP s, FILE *fp)
+static void NewAsciiSave(SEXP s, FILE *fp)
 {
     OutInit = DummyInit;
     OutInteger = OutIntegerAscii;
@@ -1688,7 +1690,7 @@ void NewAsciiSave(SEXP s, FILE *fp)
     NewDataSave(s, fp);
 }
 
-SEXP NewAsciiLoad(FILE *fp)
+static SEXP NewAsciiLoad(FILE *fp)
 {
     InInit = DummyInit;
     InInteger = InIntegerAscii;
@@ -1769,7 +1771,7 @@ static Rcomplex InComplexBinary(FILE * fp)
     return x;
 }
 
-void NewBinarySave(SEXP s, FILE *fp)
+static void NewBinarySave(SEXP s, FILE *fp)
 {
     OutInit = DummyInit;
     OutInteger = OutIntegerBinary;
@@ -1782,7 +1784,7 @@ void NewBinarySave(SEXP s, FILE *fp)
     NewDataSave(s, fp);
 }
 
-SEXP NewBinaryLoad(FILE *fp)
+static SEXP NewBinaryLoad(FILE *fp)
 {
     VersionId = 0;
     InInit = DummyInit;
@@ -1900,7 +1902,7 @@ static Rcomplex InComplexXdr(FILE * fp)
     return x;
 }
 
-void NewXdrSave(SEXP s, FILE *fp)
+static void NewXdrSave(SEXP s, FILE *fp)
 {
     OutInit = OutInitXdr;
     OutInteger = OutIntegerXdr;
@@ -1913,7 +1915,7 @@ void NewXdrSave(SEXP s, FILE *fp)
     NewDataSave(s, fp);
 }
 
-SEXP NewXdrLoad(FILE *fp)
+static SEXP NewXdrLoad(FILE *fp)
 {
     InInit = InInitXdr;
     InInteger = InIntegerXdr;
@@ -1927,7 +1929,7 @@ SEXP NewXdrLoad(FILE *fp)
 
 /* ----- F i l e -- M a g i c -- N u m b e r s ----- */
 
-void R_WriteMagic(FILE *fp, int number)
+static void R_WriteMagic(FILE *fp, int number)
 {
     unsigned char buf[5];
     number = abs(number);
@@ -1951,7 +1953,7 @@ void R_WriteMagic(FILE *fp, int number)
     fwrite((char*)buf, sizeof(char), 5, fp);
 }
 
-int R_ReadMagic(FILE *fp)
+static int R_ReadMagic(FILE *fp)
 {
     unsigned char buf[6];
     int d1, d2, d3, d4, d1234;
@@ -1975,35 +1977,34 @@ int R_ReadMagic(FILE *fp)
 
 /* ----- E x t e r n a l -- I n t e r f a c e s ----- */
 
-void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
+void R_SaveToFile(SEXP obj, FILE *fp, int ascii, int oldstyle)
 {
-#ifdef USE_NEW_SAVE_FORMAT
-    if (ascii) {
-	R_WriteMagic(fp, R_MAGIC_ASCII_V1);
-	NewAsciiSave(obj, fp);
-    }
-    else {
+    if (!oldstyle) {
+	if (ascii) {
+	    R_WriteMagic(fp, R_MAGIC_ASCII_V1);
+	    NewAsciiSave(obj, fp);
+	} else {
 #ifdef HAVE_RPC_XDR_H
-	R_WriteMagic(fp, R_MAGIC_XDR_V1);
-	NewXdrSave(obj, fp);
+	    R_WriteMagic(fp, R_MAGIC_XDR_V1);
+	    NewXdrSave(obj, fp);
 #else
-	R_WriteMagic(fp, R_MAGIC_BINARY_V1);
-	NewBinarySave(obj, fp);
+	    R_WriteMagic(fp, R_MAGIC_BINARY_V1);
+	    NewBinarySave(obj, fp);
 #endif
-#else
-    if (ascii) {
-	R_WriteMagic(fp, R_MAGIC_ASCII);
-	AsciiSave(obj, fp);
-    }
-    else {
+	}
+    } else {
+	if (ascii) {
+	    R_WriteMagic(fp, R_MAGIC_ASCII);
+	    AsciiSave(obj, fp);
+	} else {
 #ifdef HAVE_RPC_XDR_H
-	R_WriteMagic(fp, R_MAGIC_XDR);
-	XdrSave(obj, fp);
+	    R_WriteMagic(fp, R_MAGIC_XDR);
+	    XdrSave(obj, fp);
 #else
-	R_WriteMagic(fp, R_MAGIC_BINARY);
-	BinarySave(obj, fp);
+	    R_WriteMagic(fp, R_MAGIC_BINARY);
+	    BinarySave(obj, fp);
 #endif
-#endif
+	}
     }
 }
 
@@ -2042,6 +2043,8 @@ SEXP R_LoadFromFile(FILE *fp, int startup)
 
 SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+/* save(list, file, ascii, oldstyle) */
+
     SEXP s, t;
     int len, j;
     FILE *fp;
@@ -2051,10 +2054,12 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (TYPEOF(CAR(args)) != STRSXP)
 	errorcall(call, "first argument must be a character vector");
-    if (TYPEOF(CADR(args)) != STRSXP)
-	errorcall(call, "second argument must be a string");
+    if (!isValidStringF(CADR(args)))
+	errorcall(call, "`file' must be non-empty string");
     if (TYPEOF(CADDR(args)) != LGLSXP)
-	errorcall(call, "third argument must be a logical vector");
+	errorcall(call, "`ascii' must be logical");
+    if (TYPEOF(CADDDR(args)) != LGLSXP)
+	errorcall(call, "`oldstyle' must be logical");
 
     fp = R_fopen(R_ExpandFileName(CHAR(STRING(CADR(args))[0])), "wb");
     if (!fp)
@@ -2071,7 +2076,7 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 	    error("Object \"%s\" not found", CHAR(PRINTNAME(TAG(t))));
     }
 
-    R_SaveToFile(s, fp, INTEGER(CADDR(args))[0]);
+    R_SaveToFile(s, fp, INTEGER(CADDR(args))[0], INTEGER(CADDDR(args))[0]);
 
     UNPROTECT(1);
     fclose(fp);

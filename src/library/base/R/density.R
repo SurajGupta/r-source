@@ -24,6 +24,7 @@ density <-
     if (!is.numeric(x))
         stop("argument must be numeric")
     name <- deparse(substitute(x))
+    x <- as.vector(x)
     x.na <- is.na(x)
     if (any(x.na)) {
         if (na.rm) x <- x[!x.na]

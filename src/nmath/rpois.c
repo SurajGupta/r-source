@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -101,7 +102,7 @@ double rpois(double mu)
 	    repeat {
 				/* Step U. uniform sample */
 				/* for inversion method */
-		u = sunif();
+		u = unif_rand();
 		ipois = 0;
 		if (u <= p0)
 		    return (double)ipois;
@@ -137,8 +138,8 @@ double rpois(double mu)
 	}
     }
     /* Step N. normal sample */
-    /* snorm() for standard normal deviate */
-    g = mu + s * snorm();
+    /* norm_rand() for standard normal deviate */
+    g = mu + s * norm_rand();
     if (g >= 0.0) {
 	ipois = g;
 	/* Step I. immediate acceptance */
@@ -146,10 +147,10 @@ double rpois(double mu)
 	if (ipois >= l)
 	    return (double)ipois;
 	/* Step S. squeeze acceptance */
-	/* sunif() for (0,1)-sample u */
+	/* unif_rand() for (0,1)-sample u */
 	fk = ipois;
 	difmuk = mu - fk;
-	u = sunif();
+	u = unif_rand();
 	if (d * u >= difmuk * difmuk * difmuk)
 	    return (double)ipois;
     }
@@ -179,11 +180,11 @@ double rpois(double mu)
     }
     repeat {
 	/* Step E. Exponential Sample */
-	/* sexp() for standard exponential deviate */
+	/* exp_rand() for standard exponential deviate */
 	/* e and sample t from the laplace 'hat' */
 	/* (if t <= -0.6744 then pk < fk for all mu >= 10.) */
-	e = sexp();
-	u = sunif();
+	e = exp_rand();
+	u = unif_rand();
 	u = u + u - 1.0;
 	t = 1.8 + fsign(e, u);
 	if (t > -0.6744) {

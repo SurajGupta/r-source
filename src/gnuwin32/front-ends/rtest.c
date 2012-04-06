@@ -19,7 +19,7 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include "Rconfig.h"
+#include "config.h"
 #include "Rversion.h"
 #include "Startup.h"
 /* for askok and askyesnocancel */
@@ -43,7 +43,7 @@
 #ifdef _MSC_VER
 __declspec(dllimport) int UserBreak;
 #else
-#define UserBreak     (*__imp_UserBreak)
+#define UserBreak     (*_imp__UserBreak)
 extern int UserBreak;
 #endif
 

@@ -3,6 +3,7 @@
 \alias{mosaicplot.default}
 \alias{mosaicplot.formula}
 \title{Mosaic Plots}
+\description{Plots a mosaic on the current graphics device.}
 \usage{
 mosaicplot(x, \dots)
 mosaicplot.default(X, main = NULL, xlab = NULL, ylab = NULL,
@@ -34,7 +35,7 @@ mosaicplot.formula(formula, data = NULL, subset, na.action, \dots)
   \item{color}{(\code{TRUE} or vector of integer colors) for color
     shading or (\code{FALSE}, the default) for empty boxes with no
     shading.}
-  \item{formula}{a formula, such as \code{y ~ x}.
+  \item{formula}{a formula, such as \code{y ~ x}.}
   \item{data}{a data.frame (or list) from which the variables in
     \code{formula} should be taken.}
   \item{subset}{an optional vector specifying a subset of observations
@@ -43,7 +44,6 @@ mosaicplot.formula(formula, data = NULL, subset, na.action, \dots)
     the data contain \code{NA}s.}
   \item{\dots}{further arguments to the default mosaicplot method.}
 }
-\description{Plots a mosaic on the current graphics device.}
 \details{
   This is a generic function.  It currently has a default method
   (\code{\link{mosaicplot.default}}) and a formula interface
@@ -57,33 +57,32 @@ mosaicplot.formula(formula, data = NULL, subset, na.action, \dots)
   Slightly modified for \R by KH.
 }
 \references{
-  Hartigan, J.A., and Kleiner, B. (1984).
+  Hartigan, J.A., and Kleiner, B. (1984)
   A mosaic of television ratings. \emph{The American Statistician},
-  \bold{38}, 32-35.
+  \bold{38}, 32--35.
 
-  John W. Emerson (1998).
+  Emerson, J. W. (1998)
   Mosaic displays in S-PLUS: a general implementation and a case study.
   \emph{Statistical Computing and Graphics Newsletter (ASA)},
-  \bold{9}, 1, 17-23.
+  \bold{9}, 1, 17--23.
 
-  Friendly, M. (1994).
+  Friendly, M. (1994)
   Mosaic displays for multi-way contingency tables.
   \emph{Journal of the American Statistical Association}, \bold{89},
-  190-200.
-  \cr
+  190--200.
+
   The home page of Michael Friendly
   (\url{http://hotspur.psych.yorku.ca/SCS/friendly.html}) provides
   information on various aspects of graphical methods for analyzing
   categorical data, including mosaic plots.
 }
 \examples{
-## FIXME: Use interesting data!
+data(Titanic)
+mosaicplot(Titanic, main = "Survival on the Titanic", color = TRUE)
 
-## Artificial 4-way table
-Y <- table(trunc(3*runif(1000)), trunc(3*runif(1000)),
-           trunc(5*runif(1000))-10, trunc(3*runif(1000)))
-dimnames(Y)[[2]] <- c("Cat", "Dog", "Horse")
-mosaicplot(Y, main = "Sample Mosaic", color = TRUE)
-
-## FIXME: Provide an example for the formula interface
+## Formula interface: visualize crosstabulation of numbers of gears and
+## carburettors in Motor Trend car data.
+data(mtcars)
+mosaicplot(~ gear + carb, data = mtcars, color = TRUE)
 }
+\keyword{hplot}

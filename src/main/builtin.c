@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1999,2000  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -438,19 +439,12 @@ SEXP do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* (if it is vectorizable). We could probably be fairly */
 /* clever with memory here if we wanted to. */
 
-SEXP do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP lengthgets(SEXP x, int len)
 {
-    int len, lenx, i;
-    SEXP rval, x, names, xnames, t;
-    checkArity(op, args);
-    x = CAR(args);
+    int lenx, i;
+    SEXP rval, names, xnames, t;
     if (!isVector(x) && !isVectorizable(x))
-	error("length<- invalid first argument");
-    if (length(CADR(args)) != 1)
-	error("length<- invalid second argument");
-    len = asInteger(CADR(args));
-    if (len == NA_INTEGER)
-	error("length<- missing value for length");
+	error("can not set length of non-vector");
     lenx = length(x);
     if (lenx == len)
 	return (x);
@@ -508,12 +502,38 @@ SEXP do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    CAR(t) = CAR(x);
 	    TAG(t) = TAG(x);
 	}
+    case VECSXP:
+	for (i = 0; i < len; i++)
+	    if (i < lenx) {
+		VECTOR(rval)[i] = VECTOR(x)[i];
+		if (xnames != R_NilValue)
+		    STRING(names)[i] = STRING(xnames)[i];
+	    }
+	break;	
     }
     if (isVector(x) && xnames != R_NilValue)
 	setAttrib(rval, R_NamesSymbol, names);
     UNPROTECT(1);
     return rval;
 }
+
+
+SEXP do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    int len;
+    SEXP x;
+    checkArity(op, args);
+    x = CAR(args);
+    if (!isVector(x) && !isVectorizable(x))
+       error("length<- invalid first argument");
+    if (length(CADR(args)) != 1)
+       error("length<- invalid second argument");
+    len = asInteger(CADR(args));
+    if (len == NA_INTEGER)
+       error("length<- missing value for length");
+    return lengthgets(x, len);
+}
+
 
 
 /* For switch, evaluate the first arg, if it is a character then try */
@@ -526,7 +546,7 @@ SEXP do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* things like switch(as.character(answer), yes=, YES=1, no=, NO=2, 3) */
 /* will work. */
 
-SEXP switchList(SEXP el, SEXP rho)
+static SEXP switchList(SEXP el, SEXP rho)
 {
     SEXP h;
     if (CAR(el) == R_DotsSymbol) {

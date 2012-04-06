@@ -1,4 +1,4 @@
-% $Id: SSfol.Rd,v 1.1.2.1 1999/12/13 07:15:35 hornik Exp $
+% $Id: SSfol.Rd,v 1.2 1999/12/15 17:20:29 pd Exp $
 \name{SSfol}
 \title{First-order Compartment Model}
 \usage{

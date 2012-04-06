@@ -43,7 +43,7 @@ convolve(x, y, conj = TRUE, type = c("circular", "open", "filter"))
   \eqn{x_{j} := x_{n+j}}{x[j] := x[n+j]} for \eqn{j < 1}.
 }
 \references{
-  Brillinger, D. R. (1981).
+  Brillinger, D. R. (1981)
   \emph{Time Series: Data Analysis and Theory}, Second Edition.
   San Francisco: Holden-Day.
 }
@@ -52,7 +52,7 @@ convolve(x, y, conj = TRUE, type = c("circular", "open", "filter"))
 \examples{
 x <- c(0,0,0,100,0,0,0)
 y <- c(0,0,1, 2 ,1,0,0)/4
-zapsmall(convolve(x,y))		#  *NOT* what you first thought..
+zapsmall(convolve(x,y))         #  *NOT* what you first thought..
 zapsmall(convolve(x, y[3:5], type="f")) # rather
 x <- rnorm(50)
 y <- rnorm(50)

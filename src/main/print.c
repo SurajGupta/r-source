@@ -46,7 +46,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -445,8 +445,10 @@ static void PrintExpression(SEXP s)
 
     u = deparse1(s, 0);
     n = LENGTH(u);
-    for (i=0; i<n ; i++)
-	Rprintf("%s\n", CHAR(STRING(u)[i]));
+    for (i = 0; i < n ; i++) {
+	Rprintf(CHAR(STRING(u)[i])); 
+	Rprintf("\n");
+    }
 }
 
 
@@ -471,7 +473,9 @@ void PrintValueRec(SEXP s,SEXP env)
 	Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
 	break;
     case CHARSXP:
-	Rprintf("\"%s\"\n", EncodeString(CHAR(s),0,'"', adj_left));
+	Rprintf("\"");
+	Rprintf(EncodeString(CHAR(s), 0, '"', adj_left));
+	Rprintf("\"\n");
 	break;
     case EXPRSXP:
 	PrintExpression(s);
@@ -593,7 +597,7 @@ static void printAttributes(SEXP s,SEXP env)
 		Rprintf("\n");
 	    sprintf(ptag, "attr(,\"%s\")",
 		    EncodeString(CHAR(PRINTNAME(TAG(a))),0,0, adj_left));
-	    Rprintf("%s\n", tagbuf);
+	    Rprintf(tagbuf); Rprintf("\n");
 	    PrintValueRec(CAR(a),env);
 	nextattr:
 	    *ptag = '\0';
@@ -632,6 +636,14 @@ void PrintValue(SEXP s)
 }
 
 
+/* Ditto, but only for objects, for use in debugging */
+
+void R_PV(SEXP s)
+{
+    if(isObject(s)) PrintValueEnv(s, R_NilValue);
+}
+
+
 void CustomPrintValue(SEXP s, SEXP env)
 {
     tagbuf[0] = '\0';
@@ -641,7 +653,7 @@ void CustomPrintValue(SEXP s, SEXP env)
 
 /* xxxpr are mostly for S compatibility (as mentioned in V&R) */
 
-int F77_SYMBOL(dblepr0) (char *label, int *nchar, double *data, int *ndata)
+int F77_NAME(dblepr0) (char *label, int *nchar, double *data, int *ndata)
 {
     int k, nc = *nchar;
 
@@ -658,7 +670,7 @@ int F77_SYMBOL(dblepr0) (char *label, int *nchar, double *data, int *ndata)
     return(0);
 }
 
-int F77_SYMBOL(intpr0) (char *label, int *nchar, int *data, int *ndata)
+int F77_NAME(intpr0) (char *label, int *nchar, int *data, int *ndata)
 {
     int k, nc = *nchar;
 
@@ -675,7 +687,7 @@ int F77_SYMBOL(intpr0) (char *label, int *nchar, int *data, int *ndata)
     return(0);
 }
 
-int F77_SYMBOL(realpr0) (char *label, int *nchar, float *data, int *ndata)
+int F77_NAME(realpr0) (char *label, int *nchar, float *data, int *ndata)
 {
     int k, nc = *nchar, nd=*ndata;
     double *ddata;

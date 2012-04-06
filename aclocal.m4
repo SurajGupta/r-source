@@ -2,23 +2,23 @@ dnl aclocal.m4 -- extra macros for configuring R
 dnl
 dnl Copyright (C) 1998, 1999 R Core Team
 dnl
-dnl This file is part of R.
-dnl
-dnl R is free software; you can redistribute it and/or modify it under
-dnl the terms of the GNU General Public License as published by the Free
-dnl Software Foundation; either version 2 of the License, or (at your
-dnl option) any later version.
-dnl
-dnl R is distributed in the hope that it will be useful, but WITHOUT ANY
-dnl WARRANTY; without even the implied warranty of MERCHANTABILITY or
-dnl FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-dnl License for more details.
-dnl
-dnl You should have received a copy of the GNU General Public License
-dnl along with R; if not, you can obtain it via the World Wide Web at
-dnl `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-dnl Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
-dnl 02111-3307, USA.
+### This file is part of R.
+###
+### R is free software; you can redistribute it and/or modify it under
+### the terms of the GNU General Public License as published by the Free
+### Software Foundation; either version 2 of the License, or (at your
+### option) any later version.
+###
+### R is distributed in the hope that it will be useful, but WITHOUT ANY
+### WARRANTY; without even the implied warranty of MERCHANTABILITY or
+### FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+### License for more details.
+###
+### You should have received a copy of the GNU General Public License
+### along with R; if not, you can obtain it via the World Wide Web at
+### `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
+### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
+### 02111-3307, USA.
 dnl
 dnl
 dnl R_PROG_ECHO_N
@@ -47,25 +47,29 @@ dnl
 dnl R_PROG_PERL
 dnl
 AC_DEFUN(R_PROG_PERL,
-  [ AC_PATH_PROG(PERL, perl)
-    if test -n "${PERL}"; then
-      AC_CACHE_CHECK([whether perl version is at least 5],
-	r_cv_prog_perl_v5,
-        [ perl_version=`${PERL} -v | sed -n 's/^.*perl.*version \(.\).*/\1/p'`
-	  if test ${perl_version} -ge 5; then
-	    r_cv_prog_perl_v5=yes
-	  else
-	    r_cv_prog_perl_v5=no
-	  fi
-	])
-    fi
-    if test "${r_cv_prog_perl_v5}" = yes; then
-      NO_PERL5=false
-    else
-      NO_PERL5=true
-    fi
-    AC_SUBST(NO_PERL5)
-  ])
+ [AC_PATH_PROG(PERL, perl)
+  if test -n "${PERL}"; then
+    AC_CACHE_CHECK([whether perl version is at least 5],
+      r_cv_prog_perl_v5,
+      [ perl_version=`${PERL} -v | \
+	  sed -n 's/^.*perl.*version \(.\).*/\1/p'`
+	if test ${perl_version} -ge 5; then
+	  r_cv_prog_perl_v5=yes
+	else
+	  r_cv_prog_perl_v5=no
+	fi
+      ])
+  else
+    PERL=false
+  fi
+  if test "${r_cv_prog_perl_v5}" = yes; then
+    NO_PERL5=false
+  else
+    AC_MSG_WARN([you cannot build the object documentation system])
+    NO_PERL5=true
+  fi
+  AC_SUBST(NO_PERL5)
+ ])
 dnl
 dnl R_PROG_TEXMF
 dnl
@@ -73,19 +77,44 @@ AC_DEFUN(R_PROG_TEXMF,
  [AC_REQUIRE([R_PROG_PERL])
   AC_PATH_PROG(DVIPS, [${DVIPS} dvips], false)
   AC_PATH_PROG(LATEX, [${LATEX} latex], false)
+  if test "{ac_cv_path_LATEX}" = false; then
+    AC_MSG_WARN([you cannot build DVI versions of the R manuals])
+  fi
   AC_PATH_PROG(MAKEINDEX, [${MAKEINDEX} makeindex], false)
   AC_PATH_PROG(PDFLATEX, [${PDFLATEX} pdflatex], false)
-  AC_PATH_PROG(KPSEWHICH, [${KPSEWHICH} kpsewhich], false)
-  AE=`${KPSEWHICH} ae.sty`
-  if test -z "${AE}"; then AE="."; else AE=ae; fi
-  AC_SUBST(AE)
-  AC_PATH_PROG(MAKEINFO, [${MAKEINFO} makeinfo], false)
-  if test -n "${PERL}"; then
+  if test "{ac_cv_path_PDFLATEX}" = false; then
+    AC_MSG_WARN([you cannot build PDF versions of the R manuals])
+  fi
+  AC_PATH_PROG(MAKEINFO, [${MAKEINFO} makeinfo])
+  if test -n "${MAKEINFO}"; then
+    AC_CACHE_CHECK([whether makeinfo version is at least 4],
+      r_cv_prog_makeinfo_v4,
+      [ makeinfo_version=`${MAKEINFO} --version | grep "^makeinfo" | \
+          sed 's/[[^)]]*) \(.\).*/\1/'`
+	if test -z "${makeinfo_version}"; then
+	  r_cv_prog_makeinfo_v4=no
+	elif test ${makeinfo_version} -lt 4; then
+	  r_cv_prog_makeinfo_v4=no
+	else
+	  r_cv_prog_makeinfo_v4=yes
+	fi
+      ])
+  fi
+  if test "${r_cv_prog_makeinfo_v4}" != yes; then
+    AC_MSG_WARN([you cannot build info versions of the R manuals])
+    MAKEINFO=false
+  fi
+  if test "${PERL}" != false; then
     INSTALL_INFO="\$(top_builddir)/tools/install-info"
     AC_SUBST(INSTALL_INFO)
   else
     AC_PATH_PROG(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
-  fi])
+  fi
+  : ${R_RD4DVI="ae"}
+  AC_SUBST(R_RD4DVI)
+  : ${R_RD4PDF="ae,hyper"}
+  AC_SUBST(R_RD4PDF)
+  ])
 dnl
 dnl R_PROG_CC_M
 dnl
@@ -327,6 +356,31 @@ octave_cv_flibs="$flibs_result"])
 FLIBS="$octave_cv_flibs"
 AC_MSG_RESULT([$FLIBS])])
 dnl
+dnl R_PROG_F77_FLIBS
+dnl
+dnl Determine the libraries wanted by the Fortran compiler, and whether
+dnl they have all been installed ...
+AC_DEFUN(R_PROG_F77_FLIBS, [
+  AC_REQUIRE([OCTAVE_FLIBS])
+  AC_CACHE_CHECK([whether Fortran libraries work correctly],
+    r_cv_prog_f77_flibs_ok, [
+      echo "      END" > conftest.f
+      ${FC} -c ${FFLAGS} conftest.f 1>&AC_FD_CC 2>&AC_FD_CC
+      ${CC} ${LDFLAGS} -o conftest conftest.o ${FLIBS} \
+        1>&AC_FD_CC 2>&AC_FD_CC
+      if test ${?} = 0; then
+        r_cv_prog_f77_flibs_ok=yes
+      else
+        r_cv_prog_f77_flibs_ok=no
+      fi])
+  rm -rf conftest conftest.* core
+  if test ${r_cv_prog_f77_flibs_ok} = no; then
+    AC_MSG_WARN([Fortran libraries do not work correctly])
+    AC_MSG_ERROR([Maybe your Fortran installation is incomplete])
+  fi])
+dnl
+dnl R_PROG_F77_G77
+dnl
 dnl See if ${F77-f77} is the GNU Fortran compiler
 dnl
 AC_DEFUN(R_PROG_F77_G77,
@@ -489,28 +543,6 @@ EOF
     AC_MSG_WARN([I found f2c but not libf2c, or libF77 and libI77])
   fi])
 dnl
-dnl R_LIB_HDF5
-dnl
-AC_DEFUN(R_LIB_HDF5,
-  [ AC_CHECK_LIB(hdf5, main,
-      [ ac_save_LIBS="${LIBS}"
-	LIBS="-lhdf5 ${LIBS}"
-	AC_CACHE_CHECK([for HDF5 version >= 1.2],
-	  r_cv_lib_hdf5,
-	  AC_TRY_LINK(
-	    [#include <hdf5.h>],
-	    [ H5T_pers_t convtype = H5T_PERS_SOFT;
-	      H5Tclose ((hid_t) 0);],
-	    r_cv_lib_hdf5=yes,
-	    r_cv_lib_hdf5=no))
-	if test "${r_cv_lib_hdf5}" = yes; then
-	  AC_DEFINE(HAVE_HDF5)
-	else
-	  LIBS=${ac_save_LIBS}
-	fi
-      ])
-  ])
-dnl
 dnl R_FUNC___SETFPUCW
 dnl
 AC_DEFUN(R_FUNC___SETFPUCW,
@@ -660,30 +692,28 @@ int main () {
 dnl
 dnl R_GNOME
 dnl
-AC_DEFUN(R_GNOME,
-  [ if ${use_gnome}; then
-      GNOME_INIT_HOOK([], cont)
-      if test "${GNOMEUI_LIBS}"; then
-	AM_PATH_LIBGLADE(
-	  [ use_gnome="yes"
-	    RGNOMEDIR="gnome"
-	    RGNOMEBIN="\$(top_builddir)/bin/R.gnome"
-	    GNOME_IF_FILES="gnome-interface.glade"],
-	  [ AC_MSG_WARN(
-	      [GNOME support requires libglade version >= 0.3])],
-	  gnome)
-      fi
+AC_DEFUN(R_GNOME, [ 
+  if test ${want_gnome} = yes; then
+    GNOME_INIT_HOOK([], cont)
+    if test "${GNOMEUI_LIBS}"; then
+      AM_PATH_LIBGLADE(
+        [use_gnome="yes"
+	  RGNOMEDIR="gnome"
+	  RGNOMEBIN="\$(top_builddir)/bin/R.GNOME"
+	  GNOME_IF_FILES="gnome-interface.glade"],
+        [AC_MSG_WARN([GNOME support requires libglade version >= 0.3])],
+        gnome)
     fi
-    if test "${use_gnome}" != yes; then
-      use_gnome="no"
-      RGNOMEDIR=
-      RGNOMEBIN=
-      GNOME_IF_FILES=
-    fi
-    AC_SUBST(RGNOMEDIR)
-    AC_SUBST(RGNOMEBIN)
-    AC_SUBST(GNOME_IF_FILES)
-  ])
+  fi
+  if test "${use_gnome}" != yes; then
+    use_gnome="no"
+    RGNOMEDIR=
+    RGNOMEBIN=
+    GNOME_IF_FILES=
+  fi
+  AC_SUBST(RGNOMEDIR)
+  AC_SUBST(RGNOMEBIN)
+  AC_SUBST(GNOME_IF_FILES)])
 dnl
 dnl GNOME_INIT_HOOK (script-if-gnome-enabled, failflag)
 dnl
@@ -709,24 +739,6 @@ AC_DEFUN([GNOME_INIT_HOOK], [
     LDFLAGS="$LDFLAGS -L$withval"
     gnome_prefix=$withval
   ])
-
-  AC_ARG_WITH(gnome,
-    [  --with-gnome            Specify prefix for GNOME files],
-    if test "${withval}" = yes; then
-      want_gnome=yes
-      dnl Note that an empty true branch is not valid sh syntax.
-      ifelse([$1], [], :, [$1])
-    else
-      if test "${withval}" = no; then
-	want_gnome=no
-      else
-	want_gnome=yes
-	LDFLAGS="$LDFLAGS -L${withval}/lib"
-	CFLAGS="$CFLAGS -I${withval}/include"
-	gnome_prefix=${withval}/lib
-      fi
-    fi,
-    want_gnome=yes)
 
   if test "${want_gnome}" = yes; then
     AC_PATH_PROG(GNOME_CONFIG, gnome-config, no)
@@ -918,3 +930,8 @@ AC_DEFUN(AM_CONDITIONAL, [
     $1_FALSE=
   fi
 ])
+
+dnl Local Variables: ***
+dnl mode: sh ***
+dnl sh-indentation: 2 ***
+dnl End: ***

@@ -22,7 +22,7 @@
          /* See system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"
@@ -190,7 +190,7 @@ int R_ReadConsole(char *prompt, unsigned char *buf, int len, int addtohistory)
 	    int what = waitForActivity();
 	    switch (what) {
 	    case XActivity:
-		ProcessEvents();
+		R_ProcessEvents();
 		break;
 	    case StdinActivity:
 #ifdef HAVE_LIBREADLINE
@@ -412,7 +412,7 @@ void R_ShowMessage(char *s)
     REprintf(s);
 }
 
-void setStartTime(); /* in sys-unix.c */
+void R_setStartTime(); /* in sys-unix.c */
 
 int main(int ac, char **av)
 {
@@ -422,7 +422,7 @@ int main(int ac, char **av)
     Rstart Rp = &rstart;
 
 #ifdef HAVE_TIMES
-    setStartTime();
+    R_setStartTime();
 #endif
 
     R_DefParams(Rp);

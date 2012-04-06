@@ -1,6 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
+ *  Copyright (C) 2000 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,11 +17,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
- *  SYNOPSIS
- *
- *    #include "Mathlib.h"
- *    double ppois(double x, double lambda)
- *
  *  DESCRIPTION
  *
  *    The distribution function of the Poisson distribution.
@@ -28,22 +24,19 @@
 
 #include "Mathlib.h"
 
-double ppois(double x, double lambda)
+double ppois(double x, double lambda, int lower_tail, int log_p)
 {
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(lambda))
 	return x + lambda;
 #endif
-    if(lambda <= 0.0) {
-	ML_ERROR(ME_DOMAIN);
-	return ML_NAN;
-    }
+    if(lambda <= 0.0) ML_ERR_return_NAN;
+
     x = floor(x + 1e-7);
     if (x < 0)
-	return 0;
-#ifdef IEEE_754
+	return R_DT_0;
     if (!R_FINITE(x))
-	return 1;
-#endif
-    return  1 - pgamma(lambda, x + 1, 1.0);
+	return R_DT_1;
+
+    return pgamma(lambda, x + 1, 1., !lower_tail, log_p);
 }

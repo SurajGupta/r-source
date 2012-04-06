@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
 #include "Defn.h"/* => Utils.h with the protos from here */
@@ -86,7 +87,7 @@ static int scmp(SEXP x, SEXP y)
 	    x[j] = v;\
 	}
 
-void isort(int *x, int n)
+void R_isort(int *x, int n)
 {
     int v;
 #define TYPE_CMP icmp
@@ -94,7 +95,7 @@ void isort(int *x, int n)
 #undef TYPE_CMP
 }
 
-void rsort(double *x, int n)
+void R_rsort(double *x, int n)
 {
     double v;
 #define TYPE_CMP rcmp
@@ -102,7 +103,7 @@ void rsort(double *x, int n)
 #undef TYPE_CMP
 }
 
-void csort(Rcomplex *x, int n)
+void R_csort(Rcomplex *x, int n)
 {
     Rcomplex v;
 #define TYPE_CMP ccmp
@@ -196,13 +197,13 @@ void sortVector(SEXP s)
 	switch (TYPEOF(s)) {
 	case LGLSXP:
 	case INTSXP:
-	    isort(INTEGER(s), n);
+	    R_isort(INTEGER(s), n);
 	    break;
 	case REALSXP:
-	    rsort(REAL(s), n);
+	    R_rsort(REAL(s), n);
 	    break;
 	case CPLXSXP:
-	    csort(COMPLEX(s), n);
+	    R_csort(COMPLEX(s), n);
 	    break;
 	case STRSXP:
 	    ssort(STRING(s), n);
@@ -269,7 +270,7 @@ void cPsort(Rcomplex *x, int n, int k)
 }
 
 
-void sPsort(SEXP *x, int n, int k)
+static void sPsort(SEXP *x, int n, int k)
 {
     SEXP v, w;
 #define TYPE_CMP scmp
@@ -277,7 +278,7 @@ void sPsort(SEXP *x, int n, int k)
 #undef TYPE_CMP
 }
 
-void Psort(SEXP x, int k)
+static void Psort(SEXP x, int k)
 {
     switch (TYPEOF(x)) {
     case LGLSXP:
@@ -405,7 +406,7 @@ static int listgreater(int i, int j, SEXP key)
     return 1;
 }
 
-void orderVector(int *index, int n, SEXP key, int greater())
+static void orderVector(int *index, int n, SEXP key, int greater())
 {
     int i, j, h;
     int itmp;

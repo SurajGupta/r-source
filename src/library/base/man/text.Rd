@@ -1,9 +1,9 @@
 \name{text}
 \title{Add Text to a Plot}
 \usage{
-text (x, ...)
+text (x, \dots)
 text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
-              pos = NULL, offset = 0.5, \dots)
+              pos = NULL, offset = 0.5, vfont = NULL, \dots)
 }
 \alias{text}
 \alias{text.default}
@@ -11,8 +11,8 @@ text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
   \item{x, y}{numeric vectors of coordinates where the text
     \code{labels} should be written.  If the length of \code{x} and
     \code{y} differs, the shorter one is recycled.}
-  \item{labels}{character or expression with the \emph{text} to be
-    written.}
+  \item{labels}{one or more character strings or expressions specifying
+    the \emph{text} to be written.}
   \item{adj}{one or two values in \eqn{[0,1]} which specify the x
     (and optionally y) adjustment of the labels.}
   \item{pos}{a position specifier for the text.  If specified this
@@ -23,6 +23,10 @@ text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
   \item{offset}{when \code{pos} is specified, this value gives the
     offset of the label from the specified coordinate in fractions
     of a character width.}
+  \item{vfont}{if a character vector of length 2 is specified, then Hershey
+    vector fonts are used.  The first element of the vector
+    selects a typeface and the second element selects a style 
+    (see the Details section).} 
   \item{\dots}{further graphical parameters (from \code{\link{par}}),
     such as \code{cex}, etc.}
 }
@@ -51,10 +55,42 @@ text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
 
   Text can be rotated by using graphical parameters \code{srt} (see
   \code{\link{par}}); this rotates about the centre set by \code{adj}.
+
+  The available values for \code{(typeface, fontindex)} for Hershey
+  vector fonts are:
+    \code{("serif", "symbol")},
+    \code{("serif", "plain")},
+    \code{("serif", "italic")},
+    \code{("serif", "bold")},
+    \code{("serif", "bold italic")},
+    \code{("sans serif", "symbol")},
+    \code{("sans serif", "plain")},
+    \code{("sans serif", "italic")},
+    \code{("sans serif", "bold")},
+    \code{("sans serif", "bold italic")},
+    \code{("script", "symbol")},
+    \code{("script", "plain")},
+    \code{("script", "italic")},
+    \code{("script", "bold")},
+    \code{("gothic english", "symbol")},
+    \code{("gothic english", "plain")},
+    \code{("gothic german", "symbol")},
+    \code{("gothic german", "plain")},
+    \code{("gothic italian", "symbol")},
+    \code{("gothic italian", "plain")},
+    \code{("serif symbol", "symbol")},
+    \code{("serif symbol", "plain")},
+    \code{("serif symbol", "italic")},
+    \code{("serif symbol", "bold")},
+    \code{("serif symbol", "bold italic")},
+    \code{("sans serif symbol", "symbol")},
+    \code{("sans serif symbol", "plain")},
+    \code{("sans serif symbol", "italic")}.
 }
 \seealso{
   \code{\link{mtext}}, \code{\link{title}};
-  \code{\link{plotmath}} for details and more examples on mathematical annotation.
+  \code{\link{plotmath}} for details and more examples on
+  mathematical annotation.
 }
 \examples{
 plot(-1:1,-1:1, type = "n", xlab = "Re", ylab = "Im")

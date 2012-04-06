@@ -2,13 +2,13 @@
 \title{Documentation}
 \usage{
 help(topic, offline = FALSE, package = c(.packages(), .Autoloaded),
-     lib.loc = .lib.loc, verbose = .Options$verbose,
+     lib.loc = .lib.loc, verbose = getOption("verbose"),
 #ifdef unix
-     htmlhelp = .Options$htmlhelp)
+     htmlhelp = getOption("htmlhelp"))
 #endif
 #ifdef windows
-     chmhelp = .Options$chmhelp,
-     htmlhelp = .Options$htmlhelp, winhelp = .Options$winhelp)
+     chmhelp = getOption("chmhelp"),
+     htmlhelp = getOption("htmlhelp"), winhelp = getOption("winhelp"))
 #endif
 ?topic
 }
@@ -98,18 +98,18 @@ help(topic, offline = FALSE, package = c(.packages(), .Autoloaded),
 }
 \examples{
 help()
-help(help)		# the same
+help(help)              # the same
 
 help(lapply)
-?lapply			# the same
+?lapply                 # the same
 
-help("for")		# or ?"for", but the quotes are needed
+help("for")             # or ?"for", but the quotes are needed
 ?"+"
 
-help(package = stepfun)	# get help even when it's not present
+help(package = stepfun) # get help even when it's not present
 
-data()			# list all available data sets
-?women			# information about data set "women"
+data()                  # list all available data sets
+?women                  # information about data set "women"
 
 topi <- "women"
 \dontrun{help(topi) ##--> Error: No documentation for `topi'}

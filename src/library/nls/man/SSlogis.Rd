@@ -1,4 +1,4 @@
-% $Id: SSlogis.Rd,v 1.1.2.1 1999/12/15 08:04:29 ripley Exp $
+% $Id: SSlogis.Rd,v 1.2 1999/12/15 17:20:29 pd Exp $
 \name{SSlogis}
 \title{Logistic Model}
 \usage{

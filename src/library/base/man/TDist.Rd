@@ -1,33 +1,40 @@
 \name{TDist}
-\title{The Student t Distribution}
-\usage{
-dt(x, df)
-pt(q, df, ncp=0)
-qt(p, df)
-rt(n, df)
-}
 \alias{dt}
 \alias{pt}
 \alias{qt}
 \alias{rt}
-\arguments{
-\item{x,q}{vector of quantiles.}
-\item{p}{vector of probabilities.}
-\item{n}{number of observations to generate.}
-\item{df}{degrees of freedom (\eqn{> 0}, maybe non-integer).}
-\item{ncp}{non-centrality parameter \eqn{\delta};
-    currently \code{ncp <= 37.62}.}
-}
+\title{The Student t Distribution}
 \description{
-  These functions provide information about the t distribution with
-  \code{df} degrees of freedom (and optional noncentrality parameter
-  \code{ncp}).  \code{dt} gives the density, \code{pt}
-  gives the distribution function, \code{qt} gives the quantile function
-  and \code{rt} generates random deviates.
+  Density, distribution function, quantile function and random
+  generation for the t distribution with \code{df} degrees of freedom
+  (and optional noncentrality parameter \code{ncp}).
+}
+\usage{
+dt(x, df, log = FALSE)
+pt(q, df, ncp=0, lower.tail = TRUE, log.p = FALSE)
+qt(p, df,        lower.tail = TRUE, log.p = FALSE)
+rt(n, df)
+}
+\arguments{
+  \item{x, q}{vector of quantiles.}
+  \item{p}{vector of probabilities.}
+  \item{n}{number of observations to generate.}
+  \item{df}{degrees of freedom (\eqn{> 0}, maybe non-integer).}
+  \item{ncp}{non-centrality parameter \eqn{\delta};
+    currently \code{ncp <= 37.62}.}
+  \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
+  \item{lower.tail}{logical; if TRUE (default), probabilities are
+    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+}
+\value{
+  \code{dt} gives the density,
+  \code{pt} gives the distribution function,
+  \code{qt} gives the quantile function, and
+  \code{rt} generates random deviates.
 }
 \details{
-  The \eqn{t} distribution with \code{df} \eqn{= \nu}{= n} degrees of freedom
-  has density
+  The \eqn{t} distribution with \code{df} \eqn{= \nu}{= n} degrees of
+  freedom has density
   \deqn{
     f(x) = \frac{\Gamma ((\nu+1)/2)}{\sqrt{\pi \nu} \Gamma (\nu/2)}
     (1 + x^2/\nu)^{-(\nu+1)/2}%
@@ -59,7 +66,7 @@ rt(n, df)
   degrees of freedom and \bold{n}on-\bold{c}entrality \bold{p}arameter
   \code{ncp}\eqn{= \mu - \mu_0}{= mu - m0}.
 }
-\references{Lenth, R. V. (1989). \emph{Algorithm AS 243} --
+\references{Lenth, R. V. (1989). \emph{Algorithm AS 243} ---
     Cumulative distribution function of the non-central \eqn{t} distribution,
     \emph{Appl.\ Statist.} \bold{38}, 185--189.
 }

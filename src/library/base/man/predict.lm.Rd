@@ -1,15 +1,28 @@
 \name{predict.lm}
-\title{Predicting from Linear Model Fits}
+\title{Predict method for Linear Model Fits}
 \alias{predict.lm}
 \alias{predict.mlm}
+\description{
+  Predicted values based on linear model object
+}
 \usage{
 predict[.lm](object, newdata, se.fit = FALSE, scale = NULL, df = Inf, 
              interval = c("none", "confidence", "prediction"),
              level = 0.95, type = c("response", "terms"),
              terms = NULL, \dots)
 }
-%% FIXME \arguments{} is missing!
-\description{
+\arguments{
+ \item{object}{Object of class inheriting from \code{"lm"}}
+ \item{newdata}{Data frame in which to predict}
+ \item{se.fit}{A switch indicating if standard errors are required.}
+ \item{scale}{Scale parameter for std.err. calculation}
+ \item{df}{Degrees of freedom for scale}
+ \item{interval}{Type of interval calculation}
+ \item{level}{Tolerance/confidence level}
+ \item{type}{Type of prediction (response or model term)}
+ \item{terms}{If model term prediction, which term}
+}
+\details{
   \code{predict.lm} produces predicted values, obtained by evaluating
   the regression function in the frame \code{newdata} (which defaults to
   \code{model.frame(object)}.  If the logical \code{se.fit} is
@@ -25,7 +38,6 @@ predict[.lm](object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
   predictions and bounds with column names \code{fit}, \code{lwr}, and
   \code{upr} if \code{interval} is set.  If \code{se.fit} is
   \code{TRUE}, a list with the following components is returned: 
-
   \item{fit}{vector or matrix as above}
   \item{se.fit}{standard error of predictions}
   \item{residual.scale}{residual standard deviations}
@@ -39,6 +51,12 @@ predict[.lm](object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
 x <- rnorm(15)
 y <- x + rnorm(15)
 predict(lm(y ~ x))
-predict(lm(y ~ x), data.frame(x = seq(-3, 3, 0.1)), se = TRUE)
+new <- data.frame(x = seq(-3, 3, 0.5))
+predict(lm(y ~ x), new, se.fit = TRUE)
+pred.w.plim <- predict(lm(y ~ x), new, interval="prediction")
+pred.w.clim <- predict(lm(y ~ x), new, interval="confidence")
+matplot(new$x,cbind(pred.w.clim, pred.w.plim[,-1]),
+        lty=c(1,2,2,3,3), type="l", ylab="predicted y")
 }
 \keyword{regression}
+

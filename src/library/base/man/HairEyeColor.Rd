@@ -8,6 +8,7 @@
 \format{A 3-dimensional array resulting from cross-tabulating 592
   observations on 3 variables.  The variables and their levels are as 
   follows:
+
   \tabular{rll}{
     No \tab Name \tab Levels \cr
     1 \tab Hair \tab Black, Brown, Red, Blond \cr
@@ -27,15 +28,15 @@
   \emph{The American Statistician}, \bold{28}, 9--12.
 
   Friendly, M. (1992),
-  Graphical Methods for Categorical Data.
+  Graphical methods for categorical data.
   \emph{SAS User Group International Conference Proceedings}, \bold{17},
   190--200.
   \url{http://hotspur.psych.yorku.ca/SCS/sugi/sugi17-paper.html}
 
   Friendly, M. (1992),
   Mosaic displays for loglinear models.
-  \emph{Proceedings of the Statistical Graphics Section}, 61-68.
-  American Statistical Association.
+  \emph{Proceedings of the Statistical Graphics Section},
+  American Statistical Association, pp. 61--68.
   \url{http://hotspur.psych.yorku.ca/SCS/Papers/asa92.html}
 }
 \seealso{

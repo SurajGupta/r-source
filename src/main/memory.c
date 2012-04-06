@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998--2000  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,10 +49,10 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
+#include <config.h>
 #endif
 
-#include "Memory.h"
+/* #include "Memory.h" included in Defn.h */
 #include "Defn.h"
 #include "Graphics.h"
 
@@ -109,7 +110,7 @@ SEXP do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     ogc = gc_reporting;
     gc_reporting = asLogical(CAR(args));
-    gc();
+    R_gc();
     gc_reporting = ogc;
     /*- now return the [free , total ] for cells and heap */
     PROTECT(value = allocVector(INTSXP, 6));
@@ -217,7 +218,7 @@ char *R_alloc(long nelem, int eltsize)
     unsigned int size = BYTE2VEC(nelem * eltsize);
     if (size > 0) {
 	if (FORCE_GC || R_VMax - R_VTop < size) {
-	    gc();
+	    R_gc();
 	    if (R_VMax - R_VTop < size)
 		mem_err_heap(size);
 	}
@@ -249,6 +250,8 @@ char *S_realloc(char *p, long new, long old, int size)
     nold = old * size;
     for(i=0 ; i<nold ; i++)
 	q[i] = p[i];
+    for(i=nold; i < new*size; i++)
+	q[i] = 0;
     return q;
 }
 
@@ -259,7 +262,7 @@ SEXP allocSExp(SEXPTYPE t)
 {
     SEXP s;
     if (FORCE_GC || R_FreeSEXP == NULL) {
-	gc();
+	R_gc();
 	if (R_FreeSEXP == NULL)
 	    mem_err_cons();
     }
@@ -286,7 +289,7 @@ SEXP allocString(int length)
     size = 1 + BYTE2VEC(length + 1);
     /* we need to do the gc here so allocSExp doesn't! */
     if (FORCE_GC || R_FreeSEXP == NULL || R_VMax - R_VTop < size) {
-	gc();
+	R_gc();
 	if (R_FreeSEXP == NULL)
 	    mem_err_cons();
 	if (R_VMax - R_VTop < size)
@@ -357,7 +360,7 @@ SEXP allocVector(SEXPTYPE type, int length)
     }
     /* we need to do the gc here so allocSExp doesn't! */
     if (FORCE_GC || R_FreeSEXP == NULL || R_VMax - R_VTop < size) {
-	gc();
+	R_gc();
 	if (R_FreeSEXP == NULL)
 	    mem_err_cons();
 	if (R_VMax - R_VTop < size)
@@ -401,7 +404,7 @@ SEXP allocList(int n)
 
 /* "gc" a mark-sweep garbage collector */
 
-void gc(void)
+void R_gc(void)
 {
 #ifdef HAVE_SIGLONGJMP
     sigset_t mask, omask;
@@ -641,10 +644,14 @@ void scanPhase(void)
 
 /* "protect" push a single argument onto R_PPStack */
 
+/* In handling a stack overflow we have to be careful not to 
+   use PROTECT. error("protect(): stack overflow") would call
+   deparse1, which uses PROTECT and segfaults */
+   
 SEXP protect(SEXP s)
 {
     if (R_PPStackTop >= R_PPStackSize)
-	error("protect(): stack overflow");
+	errorcall(R_NilValue,"protect(): stack overflow");
     R_PPStack[R_PPStackTop] = s;
     R_PPStackTop++;
     return s;

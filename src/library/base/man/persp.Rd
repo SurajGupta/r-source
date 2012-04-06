@@ -1,10 +1,12 @@
 \name{persp}
 \title{Perspective Plots}
 \usage{
-persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-        z, xlim = range(x), ylim = range(y), zlim = range(z, na.rm=T),
-        theta = 0, phi = 15, d = 1, scale = TRUE, col, border,
-        ltheta = -135, lphi = 0, shade = NA, box = TRUE, ...)
+persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), z,
+      xlim = range(x), ylim = range(y), zlim = range(z, na.rm = TRUE), 
+      theta = 0, phi = 15, r = sqrt(3), d = 1,
+      scale = TRUE, expand = 1, 
+      col = NULL, border = NULL, ltheta = -135, lphi = 0,
+      shade = NA, box = TRUE, axes = TRUE, ...) 
 }
 \alias{persp}
 \arguments{
@@ -21,6 +23,7 @@ persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
   \item{theta, phi}{angles defining the viewing direction.
     \code{theta} gives the azimuthal direction and \code{phi}
     the colattitude.}
+  \item{r}{the distance of the eyepoint from the centre of the plotting box.}
   \item{d}{a value which can be used to vary the strength of
     the perspective transformation.  Values of \code{d} greater
     than 1 will lessen the perspective effect and values less
@@ -31,6 +34,9 @@ persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
     are transformed separately.  If \code{scale} is \code{FALSE}
     the coordinates are scaled so that aspect ratios are retained.
     This is useful for rendering things like DEM information.}
+  \item{expand}{a expansion factor applied to the \code{z}
+    coordinates. Often used with \code{0 < expand < 1} to shrink the
+    plotting box in the \code{z} direction.}
   \item{col}{the color of the surface facets.}
   \item{border}{the color of the line drawn around the surface facets.
     A value of \code{NA} will disable the drawing of borders.  This is
@@ -49,6 +55,9 @@ persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
     illumination.}
   \item{box}{should the bounding box for the surface be displayed.
     The default is \code{TRUE}.}
+  \item{axes}{should ticks and labels be added to the box.  The 
+    default is \code{TRUE}.  If \code{box} is \code{FALSE} then no
+    ticks or labels are drawn.}
   \item{\dots}{additional graphical parameters (see \code{\link{par}})
     and the arguments to \code{\link{title}} may also be supplied.}
 }
@@ -72,19 +81,19 @@ persp(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
 # (1) The Obligatory Mathematical surface.
 #     Rotated sinc function.
 
-x <- seq(-10,10,length=50)
+x <- seq(-10, 10, length=50)
 y <- x
 f <- function(x,y)
 {
-        r <- sqrt(x^2+y^2)
-        10 * sin(r)/r
+    r <- sqrt(x^2+y^2)
+    10 * sin(r)/r
 }
-z <- outer(x,y,f)
+z <- outer(x, y, f)
 z[is.na(z)] <- 1
-par(bg="white")
-persp(x, y, z, theta=30, phi=30, expand=0.5, col="lightblue") 
-persp(x, y, z, theta=30, phi=30, expand=0.5, col="lightblue",
-	ltheta=120, shade = 0.75)
+par(bg = "white")
+persp(x, y, z, theta = 30, phi = 30, expand = 0.5, col = "lightblue") 
+persp(x, y, z, theta = 30, phi = 30, expand = 0.5, col = "lightblue",
+      ltheta = 120, shade = 0.75)
 
 
 # (2) Visualizing a simple DEM model
@@ -93,34 +102,34 @@ data(volcano)
 z <- 2 * volcano        # Exaggerate the relief
 x <- 10 * (1:nrow(z))   # 10 meter spacing (S to N)
 y <- 10 * (1:ncol(z))   # 10 meter spacing (E to W)
-persp(x, y, z, theta=120, phi=15, scale=FALSE)
+persp(x, y, z, theta = 120, phi = 15, scale = FALSE)
 
 
 # (3) Now something more complex
 #     We border the surface, to make it more "slice like"
 #     and color the top and sides of the surface differently.
 
-zmin <- min(z)-20
+zmin <- min(z) - 20
 z <- rbind(zmin, cbind(zmin, z, zmin), zmin)
-x <- c(min(x)-1e-10, x, max(x)+1e-10)
-y <- c(min(y)-1e-10, y, max(y)+1e-10)
+x <- c(min(x) - 1e-10, x, max(x) + 1e-10)
+y <- c(min(y) - 1e-10, y, max(y) + 1e-10)
 
-fill <- matrix("green3", nr=nrow(z)-1, nc=ncol(z)-1)
+fill <- matrix("green3", nr = nrow(z)-1, nc = ncol(z)-1)
 fill[,1] <- "gray"
 fill[,ncol(fill)] <- "gray"
 fill[1,] <- "gray"
 fill[nrow(fill),] <- "gray"
 
-par(bg="lightblue")
-persp(x, y, z, theta=120, phi=15, col=fill, scale=F)
-title(main="Maunga Whau\nOne of 50 Volcanoes in the Auckland Region.",
-font.main=4)
+par(bg = "lightblue")
+persp(x, y, z, theta = 120, phi = 15, col = fill, scale = FALSE)
+title(main = "Maunga Whau\nOne of 50 Volcanoes in the Auckland Region.",
+      font.main = 4)
 
-par(bg="slategray")
-persp(x, y, z, theta=135, phi=30, col=fill, scale=F, ltheta=-120,
-        lphi=15, shade=0.65)
-persp(x, y, z, theta=135, phi=30, col="green3", scale=F,
-        ltheta=-120, shade=0.75, border=NA, box=FALSE)
+par(bg = "slategray")
+persp(x, y, z, theta = 135, phi = 30, col = fill, scale = FALSE,
+      ltheta = -120, lphi = 15, shade = 0.65)
+persp(x, y, z, theta = 135, phi = 30, col = "green3", scale = FALSE,
+      ltheta = -120, shade = 0.75, border = NA, box = FALSE)
 }
 \keyword{hplot}
 \keyword{aplot}

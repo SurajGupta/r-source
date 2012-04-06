@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--1999  The R Development Core Team.
+ *  Copyright (C) 1998--2000  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,23 +23,39 @@
 
 #define COUNTING
 
-#include "Rinternals.h"		/*-> Arith.h, Complex.h, Errormsg.h, Memory.h
-				  PrtUtil.h, Utils.h, Rconfig.h */
+#include "config.h"
+#include "Rinternals.h"		/*-> Arith.h, Complex.h, Error.h, Memory.h
+				  PrtUtil.h, Utils.h */
+#include "Errormsg.h"
+
+/* PSIGNAL may be defined on Win32 in config.h */
+#ifdef PSIGNAL
+#include <psignal.h>
+#else
+#include <signal.h>
+#include <setjmp.h>
+#endif
+#include <time.h>
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
+
 
 /*  Heap and Pointer Protection Stack Sizes.  */
-/*  These values are minima and can be overriden in Rconfig.h	*/
 
 #define Mega 1048576. /* 1 Mega Byte := 2^20 (= 1048576) Bytes */
 
 /*	R_PPSSIZE  The pointer protection stack size  */
 /*	R_NSIZE	   The number of cons cells	 */
 /*	R_VSIZE	   The vector heap size in bytes */
+/*  These values are defaults and can be overriden in config.h	
+    The maxima and minima are in ../unix/sys-common.c */
 
 #ifndef R_PPSSIZE
 #define	R_PPSSIZE	10000L
 #endif
 #ifndef R_NSIZE
-#define	R_NSIZE		250000L
+#define	R_NSIZE		350000L
 #endif
 #ifndef R_VSIZE
 #define	R_VSIZE		6291456L
@@ -61,13 +77,20 @@
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
-#include <signal.h>
-#include <setjmp.h>
-#include <time.h>
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
 */
+
+/* Formerly in Arith.h */
+#ifdef IEEE_754
+# define MATH_CHECK(call)	(call)
+#else
+# ifdef __MAIN__
+    double R_tmp;
+# else
+    extern double R_tmp;
+# endif
+#  define MATH_CHECK(call)	(errno=0,R_tmp=call,(errno==0)?R_tmp:R_NaN)
+#endif
+
 
 /* Getting the working directory */
 #if defined(HAVE_GETCWD)
@@ -101,6 +124,10 @@
 # define SETJMP(x) setjmp(x)
 # define LONGJMP(x,i) longjmp(x,i)
 #endif
+
+/* Dynamic loaded functions */
+typedef void * (*DL_FUNC)();
+DL_FUNC R_FindSymbol(char const *, char const *);
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
 #define MAXELTSIZE 8192 /* The largest string size */
@@ -341,10 +368,6 @@ extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
 extern SEXP	R_Warnings;	    /* the warnings and their calls */
 
 
-
-extern char ** CommandLineArgs	  INI_as(NULL); /* permanent copy of the command line arguments passed to the application. */
-extern int     NumCommandLineArgs INI_as(0); /* the number of command line arguments. */
-
 #ifdef __MAIN__
 #undef extern
 #endif
@@ -352,6 +375,96 @@ extern int     NumCommandLineArgs INI_as(0); /* the number of command line argum
 
 
 /*--- FUNCTIONS ------------------------------------------------------ */
+
+#ifndef R_NO_REMAP
+#define begincontext		Rf_begincontext
+#define checkArity		Rf_checkArity
+#define CheckFormals		Rf_CheckFormals
+#define classgets		Rf_classgets
+#define CleanEd			Rf_CleanEd
+#define compactPhase		Rf_compactPhase
+#define DataFrameClass		Rf_DataFrameClass
+#define ddfindVar		Rf_ddfindVar
+#define deparse1		Rf_deparse1
+#define deparse1line		Rf_deparse1line
+#define DispatchGroup		Rf_DispatchGroup
+#define DispatchOrEval		Rf_DispatchOrEval
+#define DropDims		Rf_DropDims
+#define duplicated		Rf_duplicated
+#define dynamicfindVar		Rf_dynamicfindVar
+#define endcontext		Rf_endcontext
+#define factorsConform		Rf_factorsConform
+#define FetchMethod		Rf_FetchMethod
+#define findcontext		Rf_findcontext
+#define findVar1		Rf_findVar1
+#define findVarInFrame		Rf_findVarInFrame
+#define findVarLocInFrame	Rf_findVarLocInFrame
+#define FrameClassFix		Rf_FrameClassFix
+#define framedepth		Rf_framedepth
+#define frameSubscript		Rf_frameSubscript
+#define get1index		Rf_get1index
+#define getVar			Rf_getVar
+#define getVarInFrame		Rf_getVarInFrame
+#define hashpjw			Rf_hashpjw
+#define InheritsClass		Rf_InheritsClass
+#define InitArithmetic		Rf_InitArithmetic
+#define InitColors		Rf_InitColors
+#define InitEd			Rf_InitEd
+#define InitFunctionHashing	Rf_InitFunctionHashing
+#define InitGlobalEnv		Rf_InitGlobalEnv
+#define InitMemory		Rf_InitMemory
+#define InitNames		Rf_InitNames
+#define InitOptions		Rf_InitOptions
+#define initStack		Rf_initStack
+#define internalTypeCheck	Rf_internalTypeCheck
+#define isValidName		Rf_isValidName
+#define jump_to_toplevel	Rf_jump_to_toplevel
+#define levelsgets		Rf_levelsgets
+#define mainloop		Rf_mainloop
+#define markPhase		Rf_markPhase
+#define markSExp		Rf_markSExp
+#define mat2indsub		Rf_mat2indsub
+#define match			Rf_match
+#define mkCLOSXP		Rf_mkCLOSXP
+#define mkComplex              	Rf_mkComplex
+#define mkFalse			Rf_mkFalse
+#define mkFloat			Rf_mkFloat
+#define mkNA			Rf_mkNA
+#define mkPROMISE		Rf_mkPROMISE
+#define mkQUOTE			Rf_mkQUOTE
+#define mkSYMSXP		Rf_mkSYMSXP
+#define mkTrue			Rf_mkTrue
+#define NewEnvironment		Rf_NewEnvironment
+#define OneIndex		Rf_OneIndex
+#define onintr			Rf_onintr
+#define parse			Rf_parse
+#define PrintGreeting		Rf_PrintGreeting
+#define PrintVersion		Rf_PrintVersion
+#define PrintWarnings		Rf_PrintWarnings
+#define promiseArgs		Rf_promiseArgs
+#define RemoveClass		Rf_RemoveClass
+#define scanPhase		Rf_scanPhase
+#define setVarInFrame		Rf_setVarInFrame
+#define sortVector		Rf_sortVector
+#define ssort			Rf_ssort
+#define str2type		Rf_str2type
+#define StrToInternal		Rf_StrToInternal
+#define substituteList		Rf_substituteList
+#define tsConform		Rf_tsConform
+#define tspgets			Rf_tspgets
+#define type2str		Rf_type2str
+#define unbindVar		Rf_unbindVar
+#define unmarkPhase		Rf_unmarkPhase
+#define usemethod		Rf_usemethod
+#define warningcall		Rf_warningcall
+#define WarningMessage		Rf_WarningMessage
+#define yyerror			Rf_yyerror
+#define yyinit			Rf_yyinit
+#define yylex			Rf_yylex
+#define yyparse			Rf_yyparse
+#define yyprompt		Rf_yyprompt
+#define yywrap			Rf_yywrap
+#endif
 
 /* Platform Dependent Gui Hooks */
 
@@ -377,7 +490,6 @@ int	R_FileExists(char*);
 
 /* Other Internally Used Functions */
 
-SEXP applyRelOp(int, int, int);
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP);
 void checkArity(SEXP, SEXP);
 void CheckFormals(SEXP);
@@ -398,6 +510,7 @@ SEXP duplicated(SEXP);
 SEXP dynamicfindVar(SEXP, RCNTXT*);
 void endcontext(RCNTXT*);
 int factorsConform(SEXP, SEXP);
+SEXP FetchMethod(char *, char *, SEXP);
 void findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 SEXP findVarInFrame(SEXP, SEXP);
@@ -429,12 +542,16 @@ void markSExp(SEXP);
 SEXP mat2indsub(SEXP, SEXP);
 SEXP match(SEXP, SEXP, int);
 SEXP mkCLOSXP(SEXP, SEXP, SEXP);
+SEXP mkComplex(char *s);
 /* SEXP mkEnv(SEXP, SEXP, SEXP); */
+SEXP mkFalse(void);
+SEXP mkFloat(char *s);
+SEXP mkNA(void);
 SEXP mkPRIMSXP (int, int);
 SEXP mkPROMISE(SEXP, SEXP);
 SEXP mkQUOTE(SEXP);
 SEXP mkSYMSXP(SEXP, SEXP);
-SEXP mkFalse(void);
+SEXP mkTrue(void);
 SEXP NewEnvironment(SEXP, SEXP, SEXP);
 void onintr();
 int OneIndex(SEXP, SEXP, int, int, SEXP*);
@@ -443,13 +560,14 @@ void PrintGreeting(void);
 void PrintVersion(char *);
 void PrintWarnings(void);
 SEXP promiseArgs(SEXP, SEXP);
+void RemoveClass(SEXP, char *);
 SEXP R_LoadFromFile(FILE*, int);
 FILE* R_OpenLibraryFile(char *);
 void R_PreserveObject(SEXP);
 void R_ReleaseObject(SEXP);
 void R_RestoreGlobalEnv(void);
 void R_SaveGlobalEnv(void);
-void R_SaveToFile(SEXP, FILE*, int);
+void R_SaveToFile(SEXP, FILE*, int, int);
 int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
 void R_Suicide(char*);
