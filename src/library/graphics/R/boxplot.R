@@ -87,7 +87,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
     bplt <- function(x, wid, stats, out, conf, notch, xlog, i)
     {
 	## Draw single box plot
-
+        ok <- TRUE
 	if(!any(is.na(stats))) {
 	    ## stats = +/- Inf:	polygon & segments should handle
 
@@ -97,6 +97,9 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 		else function(x,w) x + w
 	    wid <- wid/2
 	    if (notch) {
+                ## check for overlap of notches and hinges
+                ok <- stats[2] <= conf[1] && conf[2] <= stats[4]
+
 		xx <- xP(x, wid * c(-1, 1, 1, notch.frac, 1,
 				    1, -1,-1,-notch.frac,-1))
 		yy <- c(stats[c(2, 2)], conf[1], stats[3], conf[2],
@@ -144,6 +147,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 			domain = NA)
 	    }
 	}
+        return(ok)
     } ## bplt
 
     if(!is.list(z) || 0 == (n <- length(z$n)))
@@ -199,7 +203,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	stats::quantile(diff(sort(if(xlog) log(at) else at)), 0.10) })
     medlty    <- pcycle(pars$medlty,	p("lty"), par("lty"))
     medlwd    <- pcycle(pars$medlwd,	3*p("lwd"), 3*par("lwd"))
-    medpch    <- pcycle(pars$medpch,	as.integer(NA))# NA when that works
+    medpch    <- pcycle(pars$medpch,	NA_integer_)# NA when that works
     medcex    <- pcycle(pars$medcex,	p("cex"), par("cex"))
     medcol    <- pcycle(pars$medcol,	border)
     medbg     <- pcycle(pars$medbg,	p("bg"),  par("bg"))
@@ -239,12 +243,15 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	xysegments <- segments
     }
 
+    ok <- TRUE
     for(i in 1:n)
-	bplt(at[i], wid=width[i],
-	     stats= z$stats[,i],
-	     out  = z$out[z$group==i],
-	     conf = z$conf[,i],
-	     notch= notch, xlog = xlog, i = i)
+	ok <- ok & bplt(at[i], wid=width[i],
+			stats= z$stats[,i],
+			out  = z$out[z$group==i],
+			conf = z$conf[,i],
+			notch= notch, xlog = xlog, i = i)
+    if(!ok)
+	warning("some notches went outside hinges ('box'): maybe set notch=FALSE")
 
     axes <- is.null(pars$axes)
     if(!axes) { axes <- pars$axes; pars$axes <- NULL }

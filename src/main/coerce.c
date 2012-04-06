@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995-2006  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1995-2007  Robert Gentleman, Ross Ihaka and the
  *			     R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -65,8 +65,7 @@ const static char * const falsenames[] = {
   SEXP __from__ = (from); \
   if (ATTRIB(__from__) != R_NilValue) { \
     SEXP __to__ = (to); \
-    SET_ATTRIB(__to__, duplicate(ATTRIB(__from__))); \
-    if (OBJECT(__from__)) SET_OBJECT(__to__, 1); \
+    (DUPLICATE_ATTRIB)(__to__, __from__);	\
   } \
 } while (0)
 
@@ -75,6 +74,7 @@ const static char * const falsenames[] = {
   if (ATTRIB(__x__) != R_NilValue) { \
     SET_ATTRIB(__x__, R_NilValue); \
     if (OBJECT(__x__)) SET_OBJECT(__x__, 0); \
+    if (IS_S4_OBJECT(__x__)) UNSET_S4_OBJECT(__x__); \
   } \
 } while (0)
 
@@ -174,10 +174,10 @@ LogicalFromString(SEXP x, int *warn)
     if (x != R_NaString) {
 	int i;
 	for (i = 0; truenames[i]; i++)
-	    if (!strcmp(CHAR(x), truenames[i]))
+	    if (!strcmp(CHAR(x), truenames[i])) /* ASCII */
 		return 1;
 	for (i = 0; falsenames[i]; i++)
-	    if (!strcmp(CHAR(x), falsenames[i]))
+	    if (!strcmp(CHAR(x), falsenames[i])) /* ASCII */
 		return 0;
     }
     return NA_LOGICAL;
@@ -222,8 +222,8 @@ IntegerFromString(SEXP x, int *warn)
 {
     double xdouble;
     char *endp;
-    if (x != R_NaString && !isBlankString(CHAR(x))) {
-	xdouble = R_strtod(CHAR(x), &endp);
+    if (x != R_NaString && !isBlankString(CHAR(x))) { /* ASCII */
+	xdouble = R_strtod(CHAR(x), &endp); /* ASCII */
 	if (isBlankString(endp)) {
 	    if (xdouble > INT_MAX) {
 		*warn |= WARN_INACC;
@@ -272,8 +272,8 @@ RealFromString(SEXP x, int *warn)
 {
     double xdouble;
     char *endp;
-    if (x != R_NaString && !isBlankString(CHAR(x))) {
-	xdouble = R_strtod(CHAR(x), &endp);
+    if (x != R_NaString && !isBlankString(CHAR(x))) { /* ASCII */
+	xdouble = R_strtod(CHAR(x), &endp); /* ASCII */
 	if (isBlankString(endp))
 	    return xdouble;
 	else
@@ -332,7 +332,7 @@ ComplexFromString(SEXP x, int *warn)
 {
     double xr, xi;
     Rcomplex z;
-    char *endp = CHAR(x);
+    char *endp = CHAR(x); /* ASCII */
     z.r = z.i = NA_REAL;
     if (x != R_NaString && !isBlankString(endp)) {
 	xr = R_strtod(endp, &endp);
@@ -436,8 +436,8 @@ SEXP VectorToPairList(SEXP x)
     xptr = xnew;
     for (i = 0; i < len; i++) {
 	SETCAR(xptr, VECTOR_ELT(x, i));
-	if (named && CHAR(STRING_ELT(xnames, i))[0] != '\0')
-	    SET_TAG(xptr, install(CHAR(STRING_ELT(xnames, i))));
+	if (named && CHAR(STRING_ELT(xnames, i))[0] != '\0') /* ASCII */
+	    SET_TAG(xptr, install(translateChar(STRING_ELT(xnames, i))));
 	xptr = CDR(xptr);
     }
     if (len>0)       /* can't set attributes on NULL */
@@ -926,7 +926,10 @@ static SEXP coercePairList(SEXP v, SEXPTYPE type)
     int i, n=0;
     SEXP rval= R_NilValue, vp, names;
 
+    /* Hmm, this is also called to LANGSXP, and coerceVector already
+       did the check of TYPEOF(v) == type */
     if(type == LISTSXP) return v;/* IS pairlist */
+
     names = v;
     if (type == EXPRSXP) {
 	PROTECT(rval = allocVector(type, 1));
@@ -1010,18 +1013,18 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
     /* expression -> list, new in R 2.4.0 */
     if (type == VECSXP && TYPEOF(v) == EXPRSXP) {
 	/* This is sneaky but saves us rewriting a lot of the duplicate code */
-	rval = duplicate(v);
+	rval = NAMED(v) ? duplicate(v) : v;
 	SET_TYPEOF(rval, VECSXP);
 	return rval;
     }
 
-    if (type == EXPRSXP) {
-	PROTECT(rval = allocVector(type, 1));
-	SET_VECTOR_ELT(rval, 0, v);
-	UNPROTECT(1);
+    if (type == EXPRSXP && TYPEOF(v) == VECSXP) {
+	rval = NAMED(v) ? duplicate(v) : v;
+	SET_TYPEOF(rval, EXPRSXP);
 	return rval;
     }
-    else if (type == STRSXP) {
+
+    if (type == STRSXP) {
 	n = length(v);
 	PROTECT(rval = allocVector(type, n));
 #ifdef R_MEMORY_PROFILING
@@ -1220,7 +1223,7 @@ SEXP CreateTag(SEXP x)
     if (isString(x)
 	&& length(x) >= 1
 	&& length(STRING_ELT(x, 0)) >= 1)
-	x = install(CHAR(STRING_ELT(x, 0)));
+	x = install(translateChar(STRING_ELT(x, 0)));
     else
 	x = install(CHAR(STRING_ELT(deparse1(x, 1, SIMPLEDEPARSE), 0)));
     return x;
@@ -1310,7 +1313,7 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
 
-    if (DispatchOrEval(call, op, "as.character", args, rho, &ans, 1, 0))
+    if (DispatchOrEval(call, op, "as.character", args, rho, &ans, 0, 1))
 	return(ans);
 
     /* Method dispatch has failed, we now just */
@@ -1318,7 +1321,6 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     PROTECT(args = ans);
     checkArity(op, args);
-
     ans = ascommon(call, CAR(args), STRSXP);
     CLEAR_ATTRIB(ans);
     UNPROTECT(1);
@@ -1331,7 +1333,7 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans;
     int type;
 
-    if (DispatchOrEval(call, op, "as.vector", args, rho, &ans, 1, 0))
+    if (DispatchOrEval(call, op, "as.vector", args, rho, &ans, 0, 1))
 	return(ans);
 
     /* Method dispatch has failed, we now just */
@@ -1339,14 +1341,13 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     PROTECT(args = ans);
     checkArity(op, args);
-
     if (!isString(CADR(args)) || LENGTH(CADR(args)) < 1)
 	errorcall_return(call, R_MSG_mode);
 
-    if (!strcmp("function", (CHAR(STRING_ELT(CADR(args), 0)))))
+    if (!strcmp("function", (CHAR(STRING_ELT(CADR(args), 0))))) /* ASCII */
 	type = CLOSXP;
     else
-	type = str2type(CHAR(STRING_ELT(CADR(args), 0)));
+	type = str2type(CHAR(STRING_ELT(CADR(args), 0))); /* ASCII */
 
     switch(type) {/* only those are valid : */
     case SYMSXP:
@@ -1410,8 +1411,8 @@ SEXP attribute_hidden do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(pargs = args = allocList(n - 1));
     for (i = 0; i < n - 1; i++) {
 	SETCAR(pargs, VECTOR_ELT(arglist, i));
-	if (names != R_NilValue && *CHAR(STRING_ELT(names, i)) != '\0')
-	    SET_TAG(pargs, install(CHAR(STRING_ELT(names, i))));
+	if (names != R_NilValue && *CHAR(STRING_ELT(names, i)) != '\0') /* ASCII */
+	    SET_TAG(pargs, install(translateChar(STRING_ELT(names, i))));
 	else
 	    SET_TAG(pargs, R_NilValue);
 	pargs = CDR(pargs);
@@ -1455,7 +1456,7 @@ SEXP attribute_hidden do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < n; i++) {
 	    SETCAR(ap, VECTOR_ELT(args, i));
 	    if (names != R_NilValue && !StringBlank(STRING_ELT(names, i)))
-		SET_TAG(ap, install(CHAR(STRING_ELT(names, i))));
+		SET_TAG(ap, install(translateChar(STRING_ELT(names, i))));
 	    ap = CDR(ap);
 	}
 	UNPROTECT(1);
@@ -1587,15 +1588,19 @@ SEXP attribute_hidden do_typeof(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* Define many of the <primitive> "is.xxx" functions :
-   Note that  isNull, isNumeric, etc are defined in ./util.c
+   Note that  isNull, isNumeric, etc are defined in util.c or Rinlinedfuns.h
 */
 SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     checkArity(op, args);
 
-    if( isObject(CAR(args)) && DispatchOrEval(call, op,
-	       CHAR(PRINTNAME(CAR(call))), args, rho, &ans, 0,1))
+    /* These are all builtins, so we do not need to worry about
+       evaluating arguments in DispatchOrEval */
+    if(PRIMVAL(op) >= 100 && PRIMVAL(op) < 200 &&
+       isObject(CAR(args)) &&
+       DispatchOrEval(call, op, CHAR(PRINTNAME(CAR(call))), /* ASCII */
+		      args, rho, &ans, 0,1))
 	return(ans);
 
     PROTECT(ans = allocVector(LGLSXP, 1));
@@ -1607,9 +1612,10 @@ SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == LGLSXP);
 	break;
     case INTSXP:	/* is.integer */
-	LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == INTSXP);
+	LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == INTSXP)
+	    && !inherits(CAR(args), "factor");
 	break;
-    case REALSXP:	/* is.double */
+    case REALSXP:	/* is.double == is.real */
 	LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == REALSXP);
 	break;
     case CPLXSXP:	/* is.complex */
@@ -1635,17 +1641,22 @@ SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
     case EXPRSXP:	/* is.expression */
 	LOGICAL(ans)[0] = TYPEOF(CAR(args)) == EXPRSXP;
 	break;
+    case RAWSXP:	/* is.raw */
+	LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == RAWSXP);
+	break;
 
     case 50:		/* is.object */
 	LOGICAL(ans)[0] = OBJECT(CAR(args));
 	break;
+/* no longer used: is.data.frame is R code
     case 80:
 	LOGICAL(ans)[0] = isFrame(CAR(args));
 	break;
+*/
 
     case 100:		/* is.numeric */
-	LOGICAL(ans)[0] = (isNumeric(CAR(args)) &&
-			   !isLogical(CAR(args)));
+	LOGICAL(ans)[0] = isNumeric(CAR(args)) &&
+	    !isLogical(CAR(args));  /* isNumeric excludes factors */
 	break;
     case 101:		/* is.matrix */
 	LOGICAL(ans)[0] = isMatrix(CAR(args));
@@ -1732,14 +1743,14 @@ SEXP attribute_hidden do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall_return(call, R_MSG_mode);
 
     PROTECT(ans = allocVector(LGLSXP, 1));
-    if (streql(CHAR(STRING_ELT(CADR(args), 0)), "any")) {
+    if (streql(CHAR(STRING_ELT(CADR(args), 0)), "any")) { /* ASCII */
 	LOGICAL(ans)[0] = isVector(CAR(args));/* from ./util.c */
     }
-    else if (streql(CHAR(STRING_ELT(CADR(args), 0)), "numeric")) {
+    else if (streql(CHAR(STRING_ELT(CADR(args), 0)), "numeric")) { /* ASCII */
 	LOGICAL(ans)[0] = (isNumeric(CAR(args)) &&
 			   !isLogical(CAR(args)));
     }
-    else if (streql(CHAR(STRING_ELT(CADR(args), 0)),
+    else if (streql(CHAR(STRING_ELT(CADR(args), 0)), /* ASCII */
 		    type2char(TYPEOF(CAR(args))))) {
 	LOGICAL(ans)[0] = 1;
     }
@@ -1766,10 +1777,10 @@ SEXP attribute_hidden do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, dims, names, x;
     int i, n;
 
+    checkArity(op, args);
     if (DispatchOrEval(call, op, "is.na", args, rho, &ans, 1, 1))
 	return(ans);
     PROTECT(args = ans);
-    checkArity(op, args);
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
 	errorcall_return(call, "is.na " R_MSG_list_vec);
@@ -1876,12 +1887,11 @@ SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, dims, names, x;
     int i, n;
 
+    checkArity(op, args);
     if (DispatchOrEval(call, op, "is.nan", args, rho, &ans, 1, 1))
 	return(ans);
 
     PROTECT(args = ans);
-    checkArity(op, args);
-
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
 	errorcall_return(call, "is.nan " R_MSG_list_vec);
@@ -2080,9 +2090,9 @@ SEXP attribute_hidden do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     PROTECT(rfun = eval(CAR(args), rho));
     if (!isString(rfun) || length(rfun) <= 0 ||
-	streql(CHAR(STRING_ELT(rfun, 0)), ""))
+	streql(CHAR(STRING_ELT(rfun, 0)), "")) /* ASCII */
 	errorcall_return(call, R_MSG_A1_char);
-    PROTECT(rfun = install(CHAR(STRING_ELT(rfun, 0))));
+    PROTECT(rfun = install(translateChar(STRING_ELT(rfun, 0))));
     PROTECT(evargs = duplicate(CDR(args)));
     for (rest = evargs; rest != R_NilValue; rest = CDR(rest))
 	SETCAR(rest, eval(CAR(rest), rho));
@@ -2105,7 +2115,7 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* must be a string or a function */
     if( isString(fun) ) {
-	if( length(fun) != 1 || CHAR(STRING_ELT(fun,0)) == '\0')
+	if( length(fun) != 1 || CHAR(STRING_ELT(fun,0)) == '\0') /* ASCII */
 	    errorcall_return(call, _("first argument must be a character string or a function"))
     } else if (!isFunction(fun) )
 	    errorcall_return(call, _("first argument must be a character string or a function"))
@@ -2122,7 +2132,7 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(c = call = allocList(n + 1));
     SET_TYPEOF(c, LANGSXP);
     if( isString(fun) )
-        SETCAR(c, install(CHAR(STRING_ELT(fun, 0))));
+        SETCAR(c, install(translateChar(STRING_ELT(fun, 0))));
     else
         SETCAR(c, fun);
     c = CDR(c);
@@ -2134,7 +2144,7 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
         SET_PRVALUE(CAR(c), VECTOR_ELT(args, i)); */
 #endif
         if (ItemName(names, i) != R_NilValue)
-            SET_TAG(c, install(CHAR(ItemName(names, i))));
+            SET_TAG(c, install(translateChar(ItemName(names, i))));
         c = CDR(c);
     }
     call = eval(call, envir);
@@ -2158,14 +2168,14 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-/* 
+/*
    do_substitute has two arguments, an expression and an environment
    (optional).	Symbols found in the expression are substituted with their
    values as found in the environment.	There is no inheritance so only
    the supplied environment is searched. If no environment is specified
    the environment in which substitute was called is used.  If the
    specified environment is R_GlobalEnv it is converted to R_NilValue, for
-   historical reasons. In substitute(), R_NilValue signals that no 
+   historical reasons. In substitute(), R_NilValue signals that no
    substitution should be done, only extraction of promise expressions.
    Arguments to do_substitute should not be evaluated.
 */
@@ -2328,9 +2338,8 @@ static int class2type(char *s)
 
 /* set the class to value, and return the modified object.  This is
    NOT a primitive assignment operator , because there is no code in R
-   that changes type in place. See the definition of "class<-" in the methods
-   package for the use of this code. */
-SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
+   that changes type in place. */
+static SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 {
     int nProtect = 0;
     if(isNull(value)) {
@@ -2350,11 +2359,11 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
     else {
 	char *valueString, *classString; int whichType;
 	SEXP cur_class; SEXPTYPE valueType;
-	valueString = CHAR(asChar(value));
+	valueString = CHAR(asChar(value)); /* ASCII */
 	whichType = class2type(valueString);
 	valueType = (whichType == -1) ? -1 : classTable[whichType].sexp;
 	PROTECT(cur_class = R_data_class(obj, FALSE)); nProtect++;
-	classString = CHAR(asChar(cur_class));
+	classString = CHAR(asChar(cur_class)); /* ASCII */
 	/*  assigning type as a class deletes an explicit class attribute. */
 	if(valueType != -1) {
 	    setAttrib(obj, R_ClassSymbol, R_NilValue);
@@ -2396,3 +2405,10 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
     UNPROTECT(nProtect);
     return obj;
 }
+
+SEXP attribute_hidden R_do_set_class(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+  checkArity(op, args);
+  return R_set_class(CAR(args), CADR(args), call);
+}
+

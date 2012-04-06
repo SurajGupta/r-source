@@ -21,7 +21,7 @@ validObject(object, test = FALSE, complete = FALSE)
 setValidity(Class, method, where = topenv(parent.frame()) )
 }
 \arguments{
-  \item{object}{ Any object, but not much will happen unless the
+  \item{object}{ any object, but not much will happen unless the
     object's class has a formal definition.}
   \item{test}{logical; if \code{TRUE} and validity fails, the
     function returns a vector of strings describing the problems.  If

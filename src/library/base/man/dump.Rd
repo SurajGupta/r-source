@@ -51,11 +51,11 @@ dump(list, file = "dumpdata.R", append = FALSE,
   simplifications that make \code{source} less likely to produce an
   identical copy.  See \code{\link{deparse}} for details.
   
-  To deparse the internal function representation rather than displaying
-  the saved source, use \code{control = c("keepInteger", "quoteExpressions", 
-  "showAttributes", "warnIncomplete")}.  This will lose all
-  formatting and comments, but may be useful in those cases where
-  the saved source is no longer correct.
+  To deparse the internal representation of a function rather than
+  displaying the saved source, use \code{control = c("keepInteger",
+    "warnIncomplete", "keepNA")}.  This will lose all formatting and
+  comments, but may be useful in those cases where the saved source is
+  no longer correct.
 
   Promises will normally only be encountered by users as a result of
   lazy-loading (when the default \code{evaluate = TRUE} is essential)
@@ -67,7 +67,7 @@ dump(list, file = "dumpdata.R", append = FALSE,
   which were dumped.
 }
 \note{
-  As \code{dump} is defined in the base namespace, the \pkg{base}
+  As \code{dump} is defined in the base name space, the \pkg{base}
   package will be searched \emph{before} the global environment unless
   \code{dump} is called from the top level or the \code{envir} argument
   is given explicitly.

@@ -526,7 +526,7 @@ getGeneric <-
           return(remove(list = name, envir = .genericTable))
         else if(length(prev) == 1)
           prev <- prev[[1]]
-        assign(name, prev, envir  = .GenericTable)
+        assign(name, prev, envir  = .genericTable)
     }
 }
 
@@ -1291,12 +1291,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
 
 .identC <- function(c1 = NULL, c2 = NULL) {
     ## are the two objects identical class references?
-    ## FIXME:  without the preliminary test, this segfaults when
-    ## called in the form .identC("logical", FALSE) ????
-    if(is.character(c1) && is.character(c2))
-        .Call("R_identC", c1, c2, PACKAGE="methods")
-    else
-        FALSE
+    .Call("R_identC", c1, c2, PACKAGE="methods")
 }
 
 ## a version of match that avoids the is.factor() junk: faster & safe for bootstrapping

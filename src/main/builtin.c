@@ -81,7 +81,7 @@ SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isString(CAR(args)) || length(CAR(args)) == 0)
     	errorcall(call, _("invalid first argument"));
     else
-	name = install(CHAR(STRING_ELT(CAR(args), 0)));
+	name = install(translateChar(STRING_ELT(CAR(args), 0)));
     args = CDR(args);
     expr = CAR(args);
     
@@ -163,18 +163,53 @@ SEXP attribute_hidden do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_args(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP s;
+    
     checkArity(op,args);
     if (TYPEOF(CAR(args)) == STRSXP && length(CAR(args))==1) {
-	PROTECT(s = install(CHAR(STRING_ELT(CAR(args), 0))));
+	PROTECT(s = install(translateChar(STRING_ELT(CAR(args), 0))));
 	SETCAR(args, findFun(s, rho));
 	UNPROTECT(1);
     }
+
     if (TYPEOF(CAR(args)) == CLOSXP) {
 	s = allocSExp(CLOSXP);
 	SET_FORMALS(s, FORMALS(CAR(args)));
 	SET_BODY(s, R_NilValue);
 	SET_CLOENV(s, R_GlobalEnv);
-	return(s);
+	return s;
+    }
+
+    if (TYPEOF(CAR(args)) == BUILTINSXP || TYPEOF(CAR(args)) == SPECIALSXP) {
+	char *nm = PRIMNAME(CAR(args));
+	SEXP env, s2;
+	PROTECT_INDEX xp;
+
+	PROTECT_WITH_INDEX(env = findVarInFrame3(R_BaseEnv, 
+						 install(".ArgsEnv"), TRUE),
+			   &xp);
+	
+	if (TYPEOF(env) == PROMSXP) REPROTECT(env = eval(env, R_BaseEnv), xp);
+	PROTECT(s2 = findVarInFrame3(env, install(nm), TRUE));
+	if(s2 != R_UnboundValue) {
+	    s = duplicate(s2);
+	    SET_CLOENV(s, R_GlobalEnv);
+	    UNPROTECT(2);
+	    return s;
+	}
+	UNPROTECT(1); /* s2 */
+	REPROTECT(env = findVarInFrame3(R_BaseEnv, install(".GenericArgsEnv"),
+					TRUE), xp);
+	if (TYPEOF(env) == PROMSXP) REPROTECT(env = eval(env, R_BaseEnv), xp);
+	PROTECT(s2 = findVarInFrame3(env, install(nm), TRUE));
+	if(s2 != R_UnboundValue) {
+	    s = allocSExp(CLOSXP);
+	    SET_FORMALS(s, FORMALS(s2));
+	    SET_BODY(s, R_NilValue);
+	    SET_CLOENV(s, R_GlobalEnv);
+	    UNPROTECT(2);
+	    return s;
+	}
+	UNPROTECT(2);
     }
     return R_NilValue;
 }
@@ -242,13 +277,14 @@ SEXP attribute_hidden do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP enclos;
+    SEXP enclos, size, ans;
     int hash;
 
     checkArity(op, args);
 
     hash = asInteger(CAR(args));
-    enclos = CADR(args);
+    args = CDR(args);
+    enclos = CAR(args);
     if (isNull(enclos)) {
 	error(_("use of NULL environment is defunct"));
 	enclos = R_BaseEnv;
@@ -256,10 +292,17 @@ SEXP attribute_hidden do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( !isEnvironment(enclos) )
 	errorcall(call, _("'enclos' must be an environment"));
 
-    if( hash )
-	return R_NewHashedEnv(enclos);
-    else
-	return NewEnvironment(R_NilValue, R_NilValue, enclos);
+    if( hash ) {
+        args = CDR(args);
+        PROTECT(size = coerceVector(CAR(args), INTSXP));
+        if (INTEGER(size)[0] == NA_INTEGER || INTEGER(size)[0] <= 0)
+            errorcall(call, _("'size' must be a positive integer"));
+	ans = R_NewHashedEnv(enclos, size);
+        UNPROTECT(1);
+    } else
+	ans = NewEnvironment(R_NilValue, R_NilValue, enclos);
+    return ans;
+
 }
 
 SEXP attribute_hidden do_parentenv(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -300,6 +343,23 @@ SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
     return( env );
 }
 
+SEXP attribute_hidden do_envirName(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP env = CAR(args), ans=mkString("");
+
+    checkArity(op, args);
+    if (TYPEOF(env) == ENVSXP) {
+	if (env == R_GlobalEnv) ans = mkString("R_GlobalEnv");
+	else if (env == R_BaseEnv) ans = mkString("base");
+	else if (env == R_EmptyEnv) ans = mkString("R_EmptyEnv");
+	else if (R_IsPackageEnv(env))
+	    ans = ScalarString(STRING_ELT(R_PackageEnvName(env), 0));
+	else if (R_IsNamespaceEnv(env))
+	    ans = ScalarString(STRING_ELT(R_NamespaceEnvSpec(env), 0));
+    }
+    return ans;
+}
+
 static void cat_newline(SEXP labels, int *width, int lablen, int ntot)
 {
     Rprintf("\n");
@@ -325,7 +385,7 @@ static void cat_printsep(SEXP sep, int ntot)
     if (sep == R_NilValue || LENGTH(sep) == 0)
 	return;
 
-    sepchar = CHAR(STRING_ELT(sep, ntot % LENGTH(sep)));
+    sepchar = translateChar(STRING_ELT(sep, ntot % LENGTH(sep)));
     Rprintf("%s",sepchar);
     return;
 }
@@ -338,7 +398,7 @@ typedef struct cat_info {
 
 static void cat_cleanup(void *data)
 {
-    cat_info *pci = data;
+    cat_info *pci = (cat_info *) data;
     Rconnection con = pci->con;
     Rboolean wasopen = pci->wasopen;
     int changedcon = pci->changedcon;
@@ -377,7 +437,7 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid '%s' specification"), "sep");
     nlsep = 0;
     for (i = 0; i < LENGTH(sepr); i++)
-	if (strstr(CHAR(STRING_ELT(sepr, i)), "\n")) nlsep = 1;
+	if (strstr(CHAR(STRING_ELT(sepr, i)), "\n")) nlsep = 1; /* ASCII */
     args = CDR(args);
 
     fill = CAR(args);
@@ -431,12 +491,12 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (n > 0) {
 	    if (labs != R_NilValue && (iobj == 0)
 		&& (asInteger(fill) > 0)) {
-		Rprintf("%s ", CHAR(STRING_ELT(labs, nlines)));
-		width += strlen(CHAR(STRING_ELT(labs, nlines % lablen))) + 1;
+		Rprintf("%s ", translateChar(STRING_ELT(labs, nlines)));
+		width += strlen(translateChar(STRING_ELT(labs, nlines % lablen))) + 1;
 		nlines++;
 	    }
 	    if (isString(s))
-		p = CHAR(STRING_ELT(s, 0));
+		p = translateChar(STRING_ELT(s, 0));
             else if (isSymbol(s))
                 p = CHAR(PRINTNAME(s));
 	    else if (isVectorAtomic(s)) {
@@ -470,7 +530,7 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (i < (n - 1)) {
 		    cat_printsep(sepr, ntot);
 		    if (isString(s))
-			p = CHAR(STRING_ELT(s, i+1));
+			p = translateChar(STRING_ELT(s, i+1));
 		    else {
 			p = EncodeElement(s, i+1, 0, OutDec);
 			strcpy(buf,p);
@@ -538,7 +598,10 @@ SEXP attribute_hidden do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(ans = allocVector(EXPRSXP, n));
     a = args;
     for (i = 0; i < n; i++) {
-	SET_VECTOR_ELT(ans, i, duplicate(CAR(a)));
+	if(NAMED(CAR(a)))
+	    SET_VECTOR_ELT(ans, i, duplicate(CAR(a)));
+	else
+	    SET_VECTOR_ELT(ans, i, CAR(a));
 	if (TAG(a) != R_NilValue) named = 1;
 	a = CDR(a);
     }
@@ -570,7 +633,7 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
     s = coerceVector(CAR(args), STRSXP);
     if (length(s) == 0)
 	error(_("vector: zero-length 'type' argument"));
-    mode = str2type(CHAR(STRING_ELT(s, 0)));
+    mode = str2type(CHAR(STRING_ELT(s, 0))); /* ASCII */
     if (mode == -1 && streql(CHAR(STRING_ELT(s, 0)), "double"))
 	mode = REALSXP;
     switch (mode) {
@@ -589,7 +652,7 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     default:
 	error(_("vector: cannot make a vector of mode \"%s\"."),
-	      CHAR(STRING_ELT(s, 0)));
+	      translateChar(STRING_ELT(s, 0)));
     }
     if (mode == INTSXP || mode == LGLSXP)
 	memset(INTEGER(s), 0, len*sizeof(int));

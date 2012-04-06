@@ -1,6 +1,6 @@
 
-R version 2.4.0 Under development (unstable) (2006-07-13 r38594)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.5.0 alpha (2007-03-30 r40962)
+Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -84,6 +84,9 @@ Type 'q()' to quit R.
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -199,6 +202,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -247,7 +255,6 @@ IS: [1] TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -380,6 +387,9 @@ non-square matrix in: as.dist.default(x)
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -492,6 +502,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -540,7 +555,6 @@ Error: x is not TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -670,6 +684,9 @@ Error: x is not TRUE
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -783,6 +800,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -831,7 +853,6 @@ IS: [1] TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -967,6 +988,9 @@ non-square matrix in: as.dist.default(x)
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -1086,6 +1110,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -1137,7 +1166,6 @@ IS: [1] TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -1280,6 +1308,9 @@ inaccurate integer conversion in coercion
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -1402,6 +1433,11 @@ inaccurate integer conversion in coercion
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -1453,7 +1489,6 @@ IS: [1] TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -1596,6 +1631,9 @@ inaccurate integer conversion in coercion
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -1714,6 +1752,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -1901,6 +1944,9 @@ IS: [1] TRUE
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -2016,6 +2062,11 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -2066,7 +2117,6 @@ IS: [1] TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -2198,6 +2248,11 @@ IS: [1] TRUE
 [1] TRUE
 > res <- try(as.qr( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.qr(res))
+> res <- try(as.raw( x ), silent = TRUE)
+Warning message:
+out-of-range values treated as 0 in coercion to raw 
+> if(!inherits(res, 'try-error')) report(is.raw(res))
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.real(res))
 [1] TRUE
@@ -2314,6 +2369,13 @@ Error: x is not all TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.qr(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
+> res <- try(as.raw( x ), silent = TRUE)
+Warning message:
+out-of-range values treated as 0 in coercion to raw 
+> if(!inherits(res, 'try-error'))
++    report({if(is.raw(x)) { cat('IS: ');all.equal(x, res, tol=0)
++    } else   !isall.equal(x, res)})
+[1] TRUE
 > res <- try(as.real( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.real(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -2363,7 +2425,6 @@ Error: x is not TRUE
 [1] TRUE
 > f <- try(as.difftime( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.difftime( f )))
-[1] TRUE
 > f <- try(as.double( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
@@ -2441,6 +2502,6 @@ non-square matrix in: as.dist.default(x)
 > f <- try(as.ts( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.ts( f )))
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.187 0.005 0.193 0 0 
+Time elapsed:  0.349 0.014 0.365 0 0 
 > 
 > 

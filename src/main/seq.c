@@ -39,6 +39,7 @@ static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
     if (length(s) != length(t))
 	errorcall(call, _("unequal factor lengths"));
     n = length(s);
+    /* <FIXME> arrange to translate these */
     ls = getAttrib(s, R_LevelsSymbol);
     lt = getAttrib(t, R_LevelsSymbol);
     nls = LENGTH(ls);
@@ -321,7 +322,9 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, x, ap, times = R_NilValue /* -Wall */, ind;
     int i, lx, len = NA_INTEGER, each = 1, nt, nprotect = 4;
 
-    if (DispatchOrEval(call, op, "rep", args, rho, &ans, 0, 0)) return(ans);
+    if (DispatchOrEval(call, op, "rep", args, rho, &ans, 0, 0))
+	return(ans);
+
     /* This has evaluated all the non-missing arguments into ans */
     PROTECT(args = ans);
 
@@ -382,6 +385,8 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
 	len = sum * each;
     }
     PROTECT(ind = allocVector(INTSXP, len));
+    if(len > 0 && each == 0)
+	errorcall(call, _("invalid '%s' argument"), "each");
     if(nt == 1)
 	for(i = 0; i < len; i++) INTEGER(ind)[i] = 1 + ((i/each) % lx);
     else {
@@ -415,7 +420,8 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, nargs = length(args), lf, lout = NA_INTEGER;
     Rboolean One = nargs == 1;
 
-    if (DispatchOrEval(call, op, "seq", args, rho, &ans, 0, 0)) return(ans);
+    if (DispatchOrEval(call, op, "seq", args, rho, &ans, 0, 0))
+	return(ans);
 
     /* This is a primitive and we have not dispatched to a method
        so we manage the argument matching ourselves.  We pretend this is
@@ -571,22 +577,19 @@ done:
     return ans;
 }
 
-/* here args are not evaluated */
 SEXP attribute_hidden do_seq_along(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     int i, len, *p;
 
     checkArity(op, args);
-    len = length(eval(CAR(args), rho));
+    len = length(CAR(args));
     ans = allocVector(INTSXP, len);
     p = INTEGER(ans);
     for(i = 0; i < len; i++) p[i] = i+1;
-    
     return ans;
 }
 
-/* here args are evaluated */
 SEXP attribute_hidden do_seq_len(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;

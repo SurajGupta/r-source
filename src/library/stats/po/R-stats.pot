@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-01 10:45\n"
+"POT-Creation-Date: 2007-04-03 11:44\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -89,6 +89,9 @@ msgstr ""
 msgid "no terms in scope for adding to object"
 msgstr ""
 
+msgid "trying +"
+msgstr ""
+
 msgid "number of rows in use has changed: remove missing values?"
 msgstr ""
 
@@ -104,6 +107,9 @@ msgstr ""
 msgid "scope is not a subset of term labels"
 msgstr ""
 
+msgid "trying -"
+msgstr ""
+
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr ""
 
@@ -117,6 +123,12 @@ msgid "upper scope does not include model term(s) %s"
 msgstr ""
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
+msgstr ""
+
+msgid "Start:  AIC="
+msgstr ""
+
+msgid "Step:  AIC="
 msgstr ""
 
 msgid "'A' must be an array or table"
@@ -213,6 +225,9 @@ msgid "no degrees of freedom for residuals"
 msgstr ""
 
 msgid "'object' does not include an error 'qr' component"
+msgstr ""
+
+msgid "Refitting model to allow projection"
 msgstr ""
 
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
@@ -479,13 +494,10 @@ msgstr ""
 msgid "numeric contrasts or contrast name expected"
 msgstr ""
 
-msgid "contrasts not defined for 0 degrees of freedom"
+msgid "not enough degrees of freedom to define contrasts"
 msgstr ""
 
 msgid "baseline group number out of range"
-msgstr ""
-
-msgid "not enough degrees of freedom to define contrasts"
 msgstr ""
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
@@ -1364,6 +1376,12 @@ msgstr ""
 msgid "no terms component"
 msgstr ""
 
+msgid "'termlabels' must be a character vector of length at least one"
+msgstr ""
+
+msgid "'termobj' must be a object of class \"terms\""
+msgstr ""
+
 msgid "variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
 msgstr ""
 
@@ -1397,6 +1415,9 @@ msgstr ""
 msgid "variable '%s' is absent, its contrast will be ignored"
 msgstr ""
 
+msgid "using type=\"numeric\" with a factor response will be ignored"
+msgstr ""
+
 msgid "invalid response type"
 msgstr ""
 
@@ -1413,6 +1434,9 @@ msgid "invalid argument 'omit'"
 msgstr ""
 
 msgid "'print.level' must be in {0,1,2}"
+msgstr ""
+
+msgid "'interval' must be a vector of length 2"
 msgstr ""
 
 msgid "lower < upper  is not fulfilled"
@@ -1466,6 +1490,9 @@ msgstr ""
 msgid "'data' must be a list or an environment"
 msgstr ""
 
+msgid "no parameters to fit"
+msgstr ""
+
 msgid "No starting values specified"
 msgstr ""
 
@@ -1487,9 +1514,6 @@ msgstr ""
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
-msgid "Convergence failure:"
-msgstr ""
-
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr ""
 
@@ -1503,6 +1527,9 @@ msgid "formula '%s' must be of the form '~expr'"
 msgstr ""
 
 msgid "'%s' cannot be of mode '%s'"
+msgstr ""
+
+msgid "a two-sided formula is required"
 msgstr ""
 
 msgid "not enough groups"
@@ -1785,6 +1812,9 @@ msgid "'span' must be between 0 and 1."
 msgstr ""
 
 msgid "'x' must be between 0 and 1 for periodic smooth"
+msgstr ""
+
+msgid "no finite observations"
 msgstr ""
 
 msgid "observation(s) with NAs, NaNs and/or Infs deleted"

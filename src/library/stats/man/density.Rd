@@ -103,7 +103,8 @@ density(x, \dots)
   underlying structure is a list containing the following components.
   \item{x}{the \code{n} coordinates of the points where the density is
     estimated.}
-  \item{y}{the estimated density values.}
+  \item{y}{the estimated density values.  These will be non-negative,
+    but can be zero.}
   \item{bw}{the bandwidth used.}
   \item{n}{the sample size after elimination of missing values.}
   \item{call}{the call which produced the result.}
@@ -160,6 +161,15 @@ fe <- sort(faithful$eruptions) # has quite a few non-unique values
 dw <- density(unique(fe), weights = table(fe)/length(fe), bw = d$bw)
 str(dw) ## smaller n: only 126, but identical estimate:
 stopifnot(all.equal(d[1:3], dw[1:3]))
+
+## simulation from a density() fit:
+# a kernel density fit is an equally-weighted mixture.
+fit <- density(xx)
+N <- 1e6
+x.new <- rnorm(N, sample(xx, size = N, replace = TRUE), fit$bw)
+plot(fit)
+lines(density(x.new), col="blue")
+
 
 (kernels <- eval(formals(density.default)$kernel))
 

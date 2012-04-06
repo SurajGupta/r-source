@@ -98,11 +98,15 @@ list_data_in_pkg <- function(package, lib.loc = NULL, dataDir = NULL)
 
 data2LazyLoadDB <- function(package, lib.loc = NULL, compress = TRUE)
 {
+    options(warn=1)
     pkgpath <- .find.package(package, lib.loc, quiet = TRUE)
     if(length(pkgpath) == 0)
         stop(gettextf("there is no package called '%s'", package),
              domain = NA)
     dataDir <- file.path(pkgpath, "data")
+    ## set the encoding for text files to be read, if specified
+    enc <- .read_description(file.path(pkgpath, "DESCRIPTION"))["Encoding"]
+    if(!is.na(enc)) options(encoding=enc)
     if(file_test("-d", dataDir)) {
         if(file.exists(file.path(dataDir, "Rdata.rds")) &&
 	    file.exists(file.path(dataDir, paste(package, "rdx", sep="."))) &&
@@ -222,7 +226,7 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
         if (length(vars) != length(from) || any(nchar(vars) == 0))
             stop("source list must have names for all elements")
     }
-    else stop("source must be an environment or a list");
+    else stop("source must be an environment or a list")
 
     for (i in seq_along(vars)) {
         key <- if (is.null(from) || is.environment(from))
@@ -249,6 +253,7 @@ makeLazyLoading <-
     function(package, lib.loc = NULL, compress = TRUE,
              keep.source = getOption("keep.source.pkgs"))
 {
+    options(warn=1)
     findpack <- function(package, lib.loc) {
         pkgpath <- .find.package(package, lib.loc, quiet = TRUE)
         if(length(pkgpath) == 0)

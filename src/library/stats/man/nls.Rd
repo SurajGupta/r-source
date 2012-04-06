@@ -22,8 +22,8 @@ nls(formula, data, start, control, algorithm,
     lower, upper, \dots)
 }
 \arguments{
-  \item{formula}{a nonlinear model formula including variables and
-    parameters.}
+  \item{formula}{a nonlinear model \link{formula} including variables and
+    parameters.  Will be coerced to a formula if necessary.}
   \item{data}{an optional data frame in which to evaluate the variables in
     \code{formula}.  Can also be a list or an environment, but not a matrix.}
   \item{start}{a named list or named numeric vector of starting
@@ -103,15 +103,26 @@ nls(formula, data, start, control, algorithm,
   \item{data}{the expression that was passed to \code{nls} as the data
     argument.  The actual data values are present in the environment of
     the \code{m} component.}
-  \item{call}{the matched call.}
+  \item{call}{the matched call with several components, notably
+    \code{algorithm}.}
   \item{na.action}{the \code{"na.action"} attribute (if any) of the
     model frame.}
   \item{dataClasses}{the \code{"dataClasses"} attribute (if any) of the
     \code{"terms"} attribute of the model frame.}
   \item{model}{if \code{model = TRUE}, the model frame.}
   \item{weights}{if \code{weights} is supplied, the weights.}
+  \item{convInfo}{when \code{algorithm} is not "port", a list with
+    convergence information.}
+  \item{control}{the control \code{list} used, see the \code{control}
+    argument.}
   \item{convergence, message}{for an \code{algorithm = "port"} fit only,
-    a convergence code (always 0) and message.}
+    a convergence code (\code{0} for convergence) and message.
+  }
+
+  \bold{Note} that setting \code{warnOnly = TRUE} in the \code{control}
+  argument (see \code{\link{nls.control}}) returns a non-converged
+  object (since \R version 2.5.0) which might be useful for further
+  convergence analysis, \emph{but \bold{not} for inference}.
 }
 \references{
   Bates, D. M. and Watts, D. G. (1988)

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-01 10:45\n"
+"POT-Creation-Date: 2007-04-13 12:51\n"
 "PO-Revision-Date: 2005-05-31 09:50+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -12,21 +12,22 @@ msgstr ""
 "\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-msgid "'format' must be \"normal\" or \"short\". Using \"normal\""
-msgstr ""
-"'format'는 \"normal\" 또는 \"short\" 이어야만 합니다. \"normal\"를 사용해주십"
-"시오"
-
-msgid "wrong 'sortby' specified. Using sortby=\"score\""
-msgstr "'sortby'는 지정이 잘못되었습니다. \"sortby=\"score\"를 사용해주십시오"
-
 msgid ""
-"wrong restriction specified.\n"
-"Using '%s'"
+"RShowDoc() should be used with a character string argument specifying\n"
+"   a documentation file"
 msgstr ""
-"제한은 잘못된 지정을 했습니다.\n"
-"'%s'를 사용 해주십시오"
 
+#, fuzzy
+msgid "no documentation for '%s' found in package '%s'"
+msgstr "함수 '%s' 그리고 기호 '%s' 때문에 documentation이 없습니다"
+
+#, fuzzy
+msgid "document not found"
+msgstr ""
+"검색되지 않는 object '%s' 입니다\n"
+"검색되지 않는 objects '%s' 입니다"
+
+#, fuzzy
 msgid "A search query has been submitted to"
 msgstr "탐색에 관한 query는 받아들여졌습니다"
 
@@ -208,6 +209,10 @@ msgstr "무효의 'data' 인수입니다"
 msgid "invalid 'modes' argument"
 msgstr "무효의 'modes' 인수입니다"
 
+#, fuzzy
+msgid "invalid 'x' argument"
+msgstr "무효의 'data' 인수입니다"
+
 msgid "can only handle vector and factor elements"
 msgstr "vector 그리고 요인의 요소를 단지 취급할수 있습니다"
 
@@ -233,8 +238,23 @@ msgstr ""
 msgid "'%s' has a help file but no examples file"
 msgstr "'%s'는 help file를 지원하지만, examples 파일을 지원하지 않습니다"
 
+#, fuzzy
+msgid "test '%s' is not available"
+msgstr ""
+"dependency '%s'는 이용 가능하지는 않습니다\n"
+"dependencies '%s'는 이용 가능하지는 않습니다"
+
 msgid "'fix' requires a name"
 msgstr "'fix'는 이름을 요구합니다"
+
+msgid "too many list items (at most up to number 26)"
+msgstr ""
+
+msgid "too many list items (at most up to number 3899)"
+msgstr ""
+
+msgid "'form' must be a two-sided formula"
+msgstr ""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "지정된 패키지 및 라이브러리에서 '%s'때문에 documentation는 없습니다"
@@ -317,14 +337,33 @@ msgstr "무엇을 검색해야할 것인지를 알수가 없습니다"
 msgid "argument 'help.db' is deprecated"
 msgstr "인수 'help.db'는 반대합니다"
 
+msgid "Rebuilding the data base ..."
+msgstr ""
+
+msgid "Packages {.readRDS() sequentially}:"
+msgstr ""
+
 msgid "could not find package '%s'"
 msgstr "패키지 '%s'를 검색할수 가 없었습니다"
+
+msgid "package '%s' has empty hsearch data - strangely"
+msgstr ""
 
 msgid "no hsearch.rds meta data for package"
 msgstr ""
 
+msgid "reencoding ..."
+msgstr ""
+
+msgid "done"
+msgstr ""
+
 msgid "removing all entries with invalid multi-byte character data"
 msgstr "무효의 다중 바이트 문자 데이터를 갖춘 엔트리가 모두 제거하였습니다"
+
+#, fuzzy
+msgid "saving the database ..."
+msgstr "첫번째 match를 사용해주십시오..."
 
 msgid ""
 "no information in the data base for package '%s': need 'rebuild = TRUE'?"
@@ -332,6 +371,9 @@ msgstr ""
 
 msgid "incorrect 'agrep' specification"
 msgstr "'agrep' 명세는 적적하지 않습니다"
+
+msgid "matched %d objects."
+msgstr ""
 
 msgid "no package '%s' was found"
 msgstr "패키지 '%s'는 검색되지 않았습니다"
@@ -497,6 +539,30 @@ msgstr "패키지%s는 서로 의존합니다"
 msgid "no packages were specified"
 msgstr "패키지는 지정되지 않았습니다"
 
+#, fuzzy
+msgid "argument 'lib' is missing: using '%s'"
+msgstr "인수'lib'는 잘못되었습니다: %s를 사용합니다"
+
+#, fuzzy
+msgid "'lib' is not writable"
+msgstr ""
+"dependency '%s'는 이용 가능하지는 않습니다\n"
+"dependencies '%s'는 이용 가능하지는 않습니다"
+
+msgid ""
+"Would you like to create a personal library\n"
+"'%s'\n"
+"to install packages into?"
+msgstr ""
+
+#, fuzzy
+msgid "unable to install packages"
+msgstr "패키지 '%s'를 검색할수 가 없었습니다"
+
+#, fuzzy
+msgid "unable to create"
+msgstr "'%s'를 작성하는데 실패 되었습니다"
+
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "windows에 MacOs의 X 2진법의 패키지를 인스톨 할수 없습니다"
 
@@ -517,7 +583,8 @@ msgstr ""
 msgid "installation of package '%s' had non-zero exit status"
 msgstr "패키지 '%s'의 설치는 zero이 아닌 exit 상태를 가지고 있었습니다"
 
-msgid "Unable to create temporary directory '%s'"
+#, fuzzy
+msgid "unable to create temporary directory '%s'"
 msgstr "일시적 디렉토리 '%s'를 작성할수가 없습니다"
 
 msgid ""
@@ -656,6 +723,16 @@ msgstr ""
 msgid "invalid 'row.names' specification"
 msgstr "'agrep' 명세는 적적하지 않습니다"
 
+#, fuzzy
+msgid "invalid 'row.names' length"
+msgstr "'agrep' 명세는 적적하지 않습니다"
+
+msgid "duplicate 'row.names' are not allowed"
+msgstr ""
+
+msgid "missing values in 'row.names' are not allowed"
+msgstr ""
+
 msgid "missing lengths for some fields"
 msgstr "몇개의 필드가 잘못되어진 길이입니다"
 
@@ -678,6 +755,18 @@ msgstr ""
 #, fuzzy
 msgid "option must be a length one character vector or NULL"
 msgstr "'package'는 문자열이나 NULL이어야만 합니다"
+
+msgid "empty beginning of file"
+msgstr ""
+
+msgid "first five rows are empty: giving up"
+msgstr ""
+
+msgid "cannot coerce 'x' to roman"
+msgstr ""
+
+msgid "Invalid roman numeral(s): %s"
+msgstr ""
 
 msgid "invalid 'socket' argument"
 msgstr "무효의 'socket' 인수입니다"
@@ -713,12 +802,11 @@ msgstr "유형 정보를 회복할 수 없었습니다"
 msgid "no events were recorded"
 msgstr "events는 기록되지 않았습니다"
 
-#, fuzzy
 msgid ""
 "vignette '%s' found more than once,\n"
 "using the one found in '%s'"
 msgstr ""
-"vignette(당초무늬) '%d'로 검색된것을 사용하고,\n"
+"vignette(당초무늬) '%s'로 검색된것을 사용하고,\n"
 "두번 이상 검색되어졌습니다"
 
 msgid "vignette '%s' *not* found"
@@ -735,6 +823,33 @@ msgstr "space에 의해서 분리된 0 이상의 수를 입력합니다"
 
 msgid "Invalid input, please try again"
 msgstr "무효의 입력 행렬입니다"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr ""
+
+msgid "invalid numbers in 'quote'"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'quote' specification"
+msgstr "'agrep' 명세는 적적하지 않습니다"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'col.names' specification"
+msgstr "'agrep' 명세는 적적하지 않습니다"
+
+msgid "appending column names to file"
+msgstr ""
+
+msgid "attempt to change '%s' ignored"
+msgstr ""
+
+#, fuzzy
+msgid "'unzip' must be a single character string"
+msgstr "인수 '%s'는 단일의 문자열이어야만 합니다"
 
 msgid "'subject' missing"
 msgstr "'subject'는 잘못되어집니다"
@@ -772,10 +887,12 @@ msgstr ""
 msgid "Otherwise, be patient ..."
 msgstr "그렇지 않으면, 수동적으로 해주십시오 ..."
 
-msgid "url must be a non-empty character string"
+#, fuzzy
+msgid "'url' must be a non-empty character string"
 msgstr "url는 non-empty이어야만 합니다"
 
-msgid "browser must be a non-empty character string"
+#, fuzzy
+msgid "'browser' must be a non-empty character string"
 msgstr "브라우저는 non-empty 문자열이어야만 합니다"
 
 msgid "cannot create HTML package index"
@@ -802,10 +919,6 @@ msgstr "non-standard 라이브러리에 고정하는 URL입니다"
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr "아무것도 일어나지 않는 경우, 그 자체에 '%s'를 열어야 합니다"
 
-#, fuzzy
-msgid "unable to create temporary directory '%s'"
-msgstr "일시적 디렉토리 '%s'를 작성할수가 없습니다"
-
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr "패키지 '%s'는 성공적으로 unpack 하였고 MD5 합계가 체크되었습니다"
 
@@ -831,12 +944,6 @@ msgstr "검색되지 않는 zip파일'%s'입니다"
 msgid "updating HTML package descriptions"
 msgstr "갱신하는 HTML 패키지 기술입니다"
 
-msgid "cannot update HTML package index"
-msgstr "HTML 패키지 인덱스를 갱신할 수 없습니다"
-
-msgid "cannot update HTML search index"
-msgstr "HTML 탐색 인덱스를 갱신할 수 없습니다"
-
 msgid "cannot update '%s'"
 msgstr "'%s'를 갱신할 수 없습니다"
 
@@ -855,14 +962,28 @@ msgstr[0] ""
 "검색되지 않는 object '%s' 입니다\n"
 "검색되지 않는 objects '%s' 입니다"
 
-msgid "dependency '%s' is not available"
-msgid_plural "dependencies '%s' are not available"
+#, fuzzy
+msgid "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
+msgstr[0] "'destdir'는 디렉토리가 아닙니다"
+
+#, fuzzy
+msgid "package %s is not available"
+msgid_plural "packages %s are not available"
 msgstr[0] ""
 "dependency '%s'는 이용 가능하지는 않습니다\n"
 "dependencies '%s'는 이용 가능하지는 않습니다"
 
-msgid "also installing the dependency "
-msgid_plural "also installing the dependencies "
+#, fuzzy
+msgid "dependency %s is not available"
+msgid_plural "dependencies %s are not available"
+msgstr[0] ""
+"dependency '%s'는 이용 가능하지는 않습니다\n"
+"dependencies '%s'는 이용 가능하지는 않습니다"
+
+#, fuzzy
+msgid "also installing the dependency %s"
+msgid_plural "also installing the dependencies %s"
 msgstr[0] ""
 "한층 더 dependency를 인스톨 합니다\n"
 "한층 더 depengencies를 인스톨 합니다"
@@ -872,3 +993,34 @@ msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] ""
 "package '%s'는 사용되고 있어 인스톨 되지 않을 것입니다\n"
 "packages '%s'는 사용되고 있어 인스톨 되지 않을 것입니다"
+
+#~ msgid "cannot update HTML package index"
+#~ msgstr "HTML 패키지 인덱스를 갱신할 수 없습니다"
+
+#~ msgid "cannot update HTML search index"
+#~ msgstr "HTML 탐색 인덱스를 갱신할 수 없습니다"
+
+#~ msgid "'format' must be \"normal\" or \"short\". Using \"normal\""
+#~ msgstr ""
+#~ "'format'는 \"normal\" 또는 \"short\" 이어야만 합니다. \"normal\"를 사용해"
+#~ "주십시오"
+
+#~ msgid "wrong 'sortby' specified. Using sortby=\"score\""
+#~ msgstr ""
+#~ "'sortby'는 지정이 잘못되었습니다. \"sortby=\"score\"를 사용해주십시오"
+
+#~ msgid ""
+#~ "wrong restriction specified.\n"
+#~ "Using '%s'"
+#~ msgstr ""
+#~ "제한은 잘못된 지정을 했습니다.\n"
+#~ "'%s'를 사용 해주십시오"
+
+#~ msgid "Unable to create temporary directory '%s'"
+#~ msgstr "일시적 디렉토리 '%s'를 작성할수가 없습니다"
+
+#~ msgid "dependency '%s' is not available"
+#~ msgid_plural "dependencies '%s' are not available"
+#~ msgstr[0] ""
+#~ "dependency '%s'는 이용 가능하지는 않습니다\n"
+#~ "dependencies '%s'는 이용 가능하지는 않습니다"

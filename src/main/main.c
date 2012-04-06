@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2006   The R Development Core Team
+ *  Copyright (C) 1998-2007   The R Development Core Team
  *  Copyright (C) 2002-2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 
 #define __MAIN__
 #include "Defn.h"
+#include "Rinterface.h"
 #include "Graphics.h"
 #include <Rdevices.h>		/* for InitGraphics */
 #include "IOStuff.h"
@@ -89,7 +90,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 	case PARSE_NULL:
 	    break;
 	case PARSE_OK:
-	    R_Visible = 0;
+	    R_Visible = FALSE;
 	    R_EvalDepth = 0;
 	    count++;
 	    PROTECT(R_CurrentExpr);
@@ -249,7 +250,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 		return(0);
 	    }
 	}
-	R_Visible = 0;
+	R_Visible = FALSE;
 	R_EvalDepth = 0;
 	PROTECT(R_CurrentExpr);
 	R_Busy(1);
@@ -292,7 +293,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 {
     int status;
-    R_ReplState state = {0, 1, 0, "", NULL};
+    R_ReplState state = { PARSE_NULL, 1, 0, "", NULL};
 
     R_IoBufferWriteReset(&R_ConsoleIob);
     state.buf[0] = '\0';
@@ -350,7 +351,7 @@ int R_ReplDLLdo1()
     case PARSE_OK:
 	R_IoBufferReadReset(&R_ConsoleIob);
 	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status);
-	R_Visible = 0;
+	R_Visible = FALSE;
 	R_EvalDepth = 0;
 	PROTECT(R_CurrentExpr);
 	R_Busy(1);
@@ -429,7 +430,7 @@ static void win32_segv(int signum)
 }
 #endif
 
-#if defined(HAVE_SIGALTSTACK) && defined(HAVE_SIGACTION) && defined(HAVE_SIGEMPTYSET)
+#if defined(HAVE_SIGALTSTACK) && defined(HAVE_SIGACTION) && defined(HAVE_WORKING_SIGACTION) && defined(HAVE_SIGEMPTYSET)
 
 /* NB: this really isn't safe, but suffices for experimentation for now.
    In due course just set a flag and do this after the return.  OTOH,
@@ -557,7 +558,7 @@ static void sigactionSegv(int signum, siginfo_t *ip, void *context)
     }
     if(R_Interactive) {
 	REprintf("\nPossible actions:\n1: %s\n2: %s\n3: %s\n4: %s\n", 
-		 "abort (with core dump)", 
+		 "abort (with core dump, if enabled)", 
 		 "normal R exit", 
 		 "exit R without saving workspace",
 		 "exit R saving workspace");
@@ -721,6 +722,7 @@ void setup_Rmainloop(void)
 #endif
 #endif
 
+    InitRand();
     InitTempDir(); /* must be before InitEd */
     InitMemory();
     InitNames();
@@ -734,7 +736,12 @@ void setup_Rmainloop(void)
     InitGraphics();
     R_Is_Running = 1;
 #ifdef HAVE_LANGINFO_CODESET
-    utf8locale = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+    {
+	char  *p = nl_langinfo(CODESET);
+	if(streql(p, "UTF-8")) known_to_be_utf8 = utf8locale =TRUE;
+	if(streql(p, "ISO-8859-1")) known_to_be_latin1 = latin1locale =TRUE;
+	/* fprintf(stderr, "using %s\n", p); */
+    }
 #endif
 #ifdef SUPPORT_MBCS
     mbcslocale = MB_CUR_MAX > 1;
@@ -744,6 +751,8 @@ void setup_Rmainloop(void)
 	char *ctype = setlocale(LC_CTYPE, NULL), *p;
 	p = strrchr(ctype, '.');
 	if(p && isdigit(p[1])) localeCP = atoi(p+1); else localeCP = 1252;
+	/* Not 100% correct */
+	known_to_be_latin1 = latin1locale = (localeCP == 1252);
     }
 #endif
 #if defined(Win32) && defined(SUPPORT_UTF8)
@@ -821,6 +830,7 @@ void setup_Rmainloop(void)
     /* At least temporarily unlock some bindings uses in graphics */
     R_unLockBinding(install(".Device"), R_BaseEnv);
     R_unLockBinding(install(".Devices"), R_BaseEnv);
+    R_unLockBinding(install(".Library.site"), R_BaseEnv);
 
     /* require(methods) if it is in the default packages */
     doneit = 0;
@@ -858,6 +868,7 @@ void setup_Rmainloop(void)
     }
 
     R_LoadProfile(R_OpenSiteFile(), baseEnv);
+    R_LockBinding(install(".Library.site"), R_BaseEnv);
     R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
 
     /* This is where we try to load a user's saved data.
@@ -1016,7 +1027,7 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
    is maintained across LONGJMP's */
 static void browser_cend(void *data)
 {
-    int *psaved = data;
+    int *psaved = (int *) data;
     R_BrowseLevel = *psaved - 1;
 }
 
@@ -1066,7 +1077,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (SETJMP(thiscontext.cjmpbuf)) {
 	    SET_RESTART_BIT_ON(thiscontext.callflag);
 	    R_ReturnedValue = R_NilValue;
-	    R_Visible = 0;
+	    R_Visible = FALSE;
 	}
 	R_GlobalContext = &thiscontext;
 	R_InsertRestartHandlers(&thiscontext, TRUE);
@@ -1104,12 +1115,21 @@ void R_dot_Last(void)
 	UNPROTECT(1);
     }
     UNPROTECT(1);
+    PROTECT(cmd = install(".Last.sys"));
+    R_CurrentExpr = findVar(cmd, R_BaseNamespace);
+    if (R_CurrentExpr != R_UnboundValue && TYPEOF(R_CurrentExpr) == CLOSXP) {
+	PROTECT(R_CurrentExpr = lang1(cmd));
+	R_CurrentExpr = eval(R_CurrentExpr, R_GlobalEnv);
+	UNPROTECT(1);
+    }
+    UNPROTECT(1);
 }
 
 SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     char *tmp;
-    int ask=SA_DEFAULT, status, runLast;
+    SA_TYPE ask=SA_DEFAULT;
+    int status, runLast;
 
     if(R_BrowseLevel) {
 	warning(_("cannot quit from browser"));
@@ -1117,7 +1137,7 @@ SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if( !isString(CAR(args)) )
 	errorcall(call, _("one of \"yes\", \"no\", \"ask\" or \"default\" expected."));
-    tmp = CHAR(STRING_ELT(CAR(args), 0));
+    tmp = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
     if( !strcmp(tmp, "ask") ) {
 	ask = SA_SAVEASK;
 	if(!R_Interactive)

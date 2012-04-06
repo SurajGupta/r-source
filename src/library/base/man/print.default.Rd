@@ -7,7 +7,7 @@
 \title{Default Printing}
 \usage{
 \method{print}{default}(x, digits = NULL, quote = TRUE, na.print = NULL,
-      print.gap = NULL, right = FALSE, max = NULL, \dots)
+      print.gap = NULL, right = FALSE, max = NULL, useSource = TRUE, \dots)
 }
 \arguments{
   \item{x}{the object to be printed.}
@@ -31,6 +31,9 @@
     maximum number of entries to be printed.  The default, \code{NULL},
     uses \code{\link{getOption}(max.print)}; see that help page for more
     details.}
+  \item{useSource}{logical, indicating whether to use source
+    references or copies rather than deparsing language objects.
+    The default is to use the original source if it is available.}
   \item{\dots}{further arguments to be passed to or from other
     methods.  They are ignored in this function.}
 }
@@ -39,7 +42,7 @@
   quotes) unless this is a character \code{NA} \emph{and} \code{quote =
     FALSE}, when \code{<NA>} is printed.
 
-  The same number of decimal places is used throughout a vector,  This
+  The same number of decimal places is used throughout a vector.  This
   means that \code{digits} specifies the minimum number of significant
   digits to be used, and that at least one entry will be encoded with
   that minimum number.  However, if all the encoded elements then have
@@ -54,6 +57,16 @@
   When the \pkg{methods} package is attached, \code{print} will call
   \code{\link{show}} for \R objects with formal classes if called
   with no optional arguments.
+}
+\section{Warning}{
+  Using too large a value of \code{digits} may lead to representation
+  errors in the calculation of the number of significant digits and the
+  decimal representation: these are likely for \code{digits >= 16}, and
+  as from \R 2.5.0 these possible errors are taken into account in
+  assessing the numher of significant digits to be printed in that case.
+
+  Whereas earlier versions of \R might have printed further digits for
+  \code{digits >= 16} on some platforms, they were not necessarily reliable.
 }
 \section{Single-byte locales}{
   If a non-printable character is encountered during output, it is
@@ -101,7 +114,7 @@
   It is possible to have a character string in a character vector that
   is not valid in the current locale.  If a byte is encountered that is
   not part of a valid character it is printed in hex in the form
-  \code{<xx>} and this is repeated until the start of a valid character.
+  \code{\xab} and this is repeated until the start of a valid character.
 #ifdef unix
   (This will rapidly recover from minor errors in UTF-8.)
 #endif

@@ -22,7 +22,7 @@
    It is only called if COMPILING_R is defined (in util.c) or
    from GNU C systems.
 
-   There are different comventions for inlining across compilation units.
+   There are different conventions for inlining across compilation units.
    We pro tem only use the GCC one.  See
    http://www.greenend.org.uk/rjk/2003/03/inline.html
  */
@@ -30,7 +30,14 @@
 #define R_INLINES_H_
 
 #ifndef COMPILING_R /* defined only in util.c */
-# define INLINE_FUN extern R_INLINE
+/* The following was added in gcc 4.1.3.  It is defined if
+   GCC is following C99 inline semantics by default: we
+   switch R's usage to the older GNU semantics via attributes. */
+# ifdef __GNUC_STDC_INLINE__
+#  define INLINE_FUN extern __attribute__((gnu_inline)) inline
+# else
+#  define INLINE_FUN extern R_INLINE
+# endif
 #else
 # define INLINE_FUN
 #endif
@@ -266,13 +273,13 @@ INLINE_FUN SEXP asS4(SEXP s, Rboolean flag)
 
 INLINE_FUN Rboolean inherits(SEXP s, char *name)
 {
-    SEXP class;
+    SEXP klass;
     int i, nclass;
     if (isObject(s)) {
-	class = getAttrib(s, R_ClassSymbol);
-	nclass = length(class);
+	klass = getAttrib(s, R_ClassSymbol);
+	nclass = length(klass);
 	for (i = 0; i < nclass; i++) {
-	    if (!strcmp(CHAR(STRING_ELT(class, i)), name))
+	    if (!strcmp(CHAR(STRING_ELT(klass, i)), name))
 		return TRUE;
 	}
     }
@@ -387,12 +394,12 @@ INLINE_FUN Rboolean isVector(SEXP s)/* === isVectorList() or isVectorAtomic() */
 
 INLINE_FUN Rboolean isFrame(SEXP s)
 {
-    SEXP class;
+    SEXP klass;
     int i;
     if (isObject(s)) {
-	class = getAttrib(s, R_ClassSymbol);
-	for (i = 0; i < length(class); i++)
-	    if (!strcmp(CHAR(STRING_ELT(class, i)), "data.frame")) return TRUE;
+	klass = getAttrib(s, R_ClassSymbol);
+	for (i = 0; i < length(klass); i++)
+	    if (!strcmp(CHAR(STRING_ELT(klass, i)), "data.frame")) return TRUE;
     }
     return FALSE;
 }
@@ -412,6 +419,8 @@ INLINE_FUN Rboolean isMatrix(SEXP s)
     SEXP t;
     if (isVector(s)) {
 	t = getAttrib(s, R_DimSymbol);
+	/* You are not supposed to be able to assign a non-integer dim,
+	   although this might be possible by misuse of ATTRIB. */
 	if (TYPEOF(t) == INTSXP && LENGTH(t) == 2)
 	    return TRUE;
     }
@@ -423,6 +432,8 @@ INLINE_FUN Rboolean isArray(SEXP s)
     SEXP t;
     if (isVector(s)) {
 	t = getAttrib(s, R_DimSymbol);
+	/* You are not supposed to be able to assign a 0-length dim,
+	 nor a non-integer dim */
 	if (TYPEOF(t) == INTSXP && LENGTH(t) > 0)
 	    return TRUE;
     }

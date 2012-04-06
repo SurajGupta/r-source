@@ -31,9 +31,10 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \item{version}{a string describing the PDF version that will be
     required to view the output.  This is a minimum, and will be
     increased (with a warning) if necessary.}
-  \item{paper}{the size of paper in the printer.  The choices are
-    \code{"a4"}, \code{"letter"}, \code{"legal"} and
-    \code{"executive"} (and these can be capitalized).
+  \item{paper}{the target paper size.  The choices are
+    \code{"a4"}, \code{"letter"}, \code{"legal"} (or \code{"us"}) and
+    \code{"executive"} (and these can be capitalized), or \code{"a4r"}
+    and \code{"USr"} for rotated (\sQuote{landscape}).
     The default is \code{"special"}, which means that the \code{width}
     and \code{height} specify the paper size.  A further choice is
     \code{"default"}; if this is selected, the
@@ -103,7 +104,9 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 
   Line widths as controlled by \code{par(lwd=)} are in multiples of
   1/96 inch.  Multiples less than 1 are allowed.  \code{pch="."} with
-  \code{cex = 1} corresponds to a square of side 1/72 inch.
+  \code{cex = 1} corresponds to a square of side 1/72 inch, which is
+  also the \sQuote{pixel} size assumed for graphics parameters such as
+  \code{"cra"}.
 }
 \note{
   Acrobat Reader does not use the fonts specified but rather emulates

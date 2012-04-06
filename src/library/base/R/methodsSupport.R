@@ -8,7 +8,7 @@ trace <- function(what, tracer, exit, at, print, signature, where = topenv(paren
             stop("Tracing functions requires the methods package, but unable to load methods namespace")
     }
     else if(nargs() == 1)
-        return(invisible(.primTrace(what)))
+        return(.primTrace(what))
     tState <- tracingState(FALSE)
     ## now call the version in the methods package, to ensure we get
     ## the correct name space (e.g., correct version of class())
@@ -58,3 +58,19 @@ asS4 <- function(object, value = TRUE) {
       stop("Expected a single logical value for the S4 object state")
     .Call("R_setS4Object", object, value, PACKAGE = "base")
   }
+
+.doTrace <- function(expr, msg) {
+    on <- tracingState(FALSE) # turn it off QUICKLY (via a .Call)
+    if(on) {
+        on.exit(tracingState(TRUE)) # restore on exit, keep off during trace
+        if(!missing(msg)) {
+            call <- deparse(sys.call(sys.parent(1)))
+            if(length(call)>1)
+              call <- paste(call[[1]], "....")
+            cat("Tracing", call, msg, "\n")
+        }
+        exprObj <- substitute(expr)
+        eval.parent(exprObj)
+    }
+    NULL
+}

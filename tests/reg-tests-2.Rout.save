@@ -1,6 +1,6 @@
 
-R version 2.5.0 Under development (unstable) (2006-11-28 r40035)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.5.0 Under development (unstable) (2007-02-13 r40710)
+Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -354,7 +354,8 @@ There were 22 warnings (use warnings() to see them)
 > ## data.frame
 > set.seed(123)
 > L3 <- LETTERS[1:3]
-> str(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
+> d <- data.frame(cbind(x=1, y=1:10), fac = sample(L3, 10, replace=TRUE))
+> str(d)
 'data.frame':	10 obs. of  3 variables:
  $ x  : num  1 1 1 1 1 1 1 1 1 1
  $ y  : num  1 2 3 4 5 6 7 8 9 10
@@ -364,24 +365,14 @@ NULL data frame with 10 rows
 > (d.0 <- d[FALSE, ]) # <0 rows> dataframe  (3 cols)
 [1] x   y   fac
 <0 rows> (or 0-length row.names)
-> (d00 <- d0[FALSE,])  # NULL dataframe with 0 rows
+> (d00 <- d0[FALSE,]) # NULL dataframe with 0 rows
 NULL data frame with 0 rows
-> (d000 <- data.frame()) #but not quite the same as d00:
-NULL data frame with 0 rows
-> !identical(d00, d000)
-[1] TRUE
-> dput(d00)
-structure(list(), .Names = character(0), row.names = integer(0), class = "data.frame")
-> dput(d000)
-structure(list(), .Names = character(0), row.names = character(0), class = "data.frame")
 > stopifnot(identical(d, cbind(d, d0)),
-+           identical(d, cbind(d0, d)),
-+           identical(d, rbind(d,d.0)),
++           identical(d, cbind(d0, d)))
+> stopifnot(identical(d, rbind(d,d.0)),
 +           identical(d, rbind(d.0,d)),
 +           identical(d, rbind(d00,d)),
-+           identical(d, rbind(d,d00)),
-+ 
-+           TRUE )
++           identical(d, rbind(d,d00)))
 > ## Comments: failed before ver. 1.4.0
 > 
 > ## diag
@@ -982,12 +973,14 @@ $B$subset
 > ## All entries show all 3 digits after the decimal point now.
 > 
 > ## Chong Gu 2001-Feb-16.  step on binomials
-> "detg1" <-
-+ structure(list(Temp = structure(c(2, 1, 2, 1, 2, 1, 2, 1, 2,
-+ 1, 2, 1), .Label = c("High", "Low"), class = "factor"), M.user = structure(c(1,
-+ 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2), .Label = c("N", "Y"), class = "factor"),
-+     Soft = structure(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), .Label = c("Hard",
-+     "Medium", "Soft"), class = "factor"), M = c(42, 30, 52, 43,
+> detg1 <-
++ structure(list(Temp = structure(c(2L, 1L, 2L, 1L, 2L, 1L, 2L,
++     1L, 2L, 1L, 2L, 1L), .Label = c("High", "Low"), class = "factor"),
++     M.user = structure(c(1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L, 1L,
++     1L, 2L, 2L), .Label = c("N", "Y"), class = "factor"),
++     Soft = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L),
++     .Label = c("Hard", "Medium", "Soft"), class = "factor"),
++     M = c(42, 30, 52, 43,
 +     50, 23, 55, 47, 53, 27, 49, 29), X = c(68, 42, 37, 24, 66,
 +     33, 47, 23, 63, 29, 57, 19)), .Names = c("Temp", "M.user",
 + "Soft", "M", "X"), class = "data.frame", row.names = c("1", "3",
@@ -1005,8 +998,8 @@ Degrees of Freedom: 11 Total (i.e. Null);  11 Residual
 Null Deviance:	    32.83 
 Residual Deviance: 32.83 	AIC: 92.52 
 > step(detg1.m0,scope=list(upper=~M.user*Temp*Soft))
-Start:  AIC= 92.52 
- cbind(X, M) ~ 1 
+Start:  AIC=92.52
+cbind(X, M) ~ 1
 
          Df Deviance    AIC
 + M.user  1   12.244 73.942
@@ -1014,8 +1007,8 @@ Start:  AIC= 92.52
 <none>        32.826 92.524
 + Soft    2   32.430 96.128
 
-Step:  AIC= 73.94 
- cbind(X, M) ~ M.user 
+Step:  AIC=73.94
+cbind(X, M) ~ M.user
 
          Df Deviance    AIC
 + Temp    1    8.444 72.142
@@ -1023,8 +1016,8 @@ Step:  AIC= 73.94
 + Soft    2   11.967 77.665
 - M.user  1   32.826 92.524
 
-Step:  AIC= 72.14 
- cbind(X, M) ~ M.user + Temp 
+Step:  AIC=72.14
+cbind(X, M) ~ M.user + Temp
 
               Df Deviance    AIC
 + M.user:Temp  1    5.656 71.354
@@ -1033,8 +1026,8 @@ Step:  AIC= 72.14
 + Soft         2    8.228 75.926
 - M.user       1   28.464 90.162
 
-Step:  AIC= 71.35 
- cbind(X, M) ~ M.user + Temp + M.user:Temp 
+Step:  AIC=71.35
+cbind(X, M) ~ M.user + Temp + M.user:Temp
 
               Df Deviance    AIC
 <none>              5.656 71.354
@@ -1095,10 +1088,8 @@ Residual Deviance: 5.656 	AIC: 71.35
 +     -0.756802495307928, 0.67546318055115, -0.0583741434275801
 +     ), groups = structure(c(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2,
 +     2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3), class = "factor", .Label = c("1",
-+     "2", "3"))), .Names = c("A", "B", "C", "D", "groups"), row.names = c("1",
-+ "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-+ "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"
-+ ), class = "data.frame")
++     "2", "3"))), .Names = c("A", "B", "C", "D", "groups"), row.names = 1:24,
++             class = "data.frame")
 > 
 > gofX.manova <- manova(formula = cbind(A, B, C, D) ~ groups, data = gofX.df)
 > try(summary(gofX.manova))
@@ -2248,8 +2239,7 @@ Warning messages:
 +                    y = c(78.5, 74.3, 104.3, 87.6, 95.9, 109.2, 102.7, 72.5,
 +                    93.1, 115.9, 83.8, 113.3, 109.4)),
 +               .Names = c("x1", "x2", "x3", "x4", "y"), class = "data.frame",
-+               row.names = c("1", "2", "3", "4", "5", "6", "7", "8", "9",
-+               "10", "11", "12", "13"))
++               row.names = 1:13)
 > teststep <- function(formula, data)
 + {
 +     d2 <- data
@@ -2257,8 +2247,8 @@ Warning messages:
 +     step(fit)
 + }
 > teststep(formula(y ~ .), cement)
-Start:  AIC= 26.94 
- y ~ x1 + x2 + x3 + x4 
+Start:  AIC=26.94
+y ~ x1 + x2 + x3 + x4
 
        Df Sum of Sq    RSS    AIC
 - x3    1     0.109 47.973 24.974
@@ -2267,8 +2257,8 @@ Start:  AIC= 26.94
 <none>              47.864 26.944
 - x1    1    25.951 73.815 30.576
 
-Step:  AIC= 24.97 
- y ~ x1 + x2 + x4 
+Step:  AIC=24.97
+y ~ x1 + x2 + x4
 
        Df Sum of Sq    RSS    AIC
 <none>               47.97  24.97
@@ -3183,13 +3173,13 @@ Error in `[.data.frame`(x, 1, c("a", "c")) :
 > meth2gen("data.frame")
  [1] $<-           Math          Ops           Summary       [            
  [6] [<-           [[            [[<-          aggregate     as.data.frame
-[11] as.list       as.matrix     by            dim           dimnames     
-[16] dimnames<-    duplicated    edit          format        formula      
-[21] head          is.na         mean          merge         na.exclude   
-[26] na.omit       plot          print         prompt        row.names    
-[31] row.names<-   rowsum        split         split<-       stack        
-[36] str           subset        summary       t             tail         
-[41] transform     unique        unstack      
+[11] as.list       as.matrix     by            cbind         dim          
+[16] dimnames      dimnames<-    duplicated    edit          format       
+[21] formula       head          is.na         mean          merge        
+[26] na.exclude    na.omit       plot          print         prompt       
+[31] rbind         row.names     row.names<-   rowsum        split        
+[36] split<-       stack         str           subset        summary      
+[41] t             tail          transform     unique        unstack      
 > meth2gen("dendrogram")
 [1] [[         cophenetic cut        labels     plot       print      reorder   
 [8] rev        str       
@@ -3979,8 +3969,8 @@ Error in try(x[-c(1, NA)]) : only 0's may be mixed with negative subscripts
 "2002-12-26" "2002-12-27" "2002-12-28" "2002-12-28" "2002-12-29" "2002-12-31" 
 > ## printed all "2002.-12-29" in 1.9.1 {because digits was too small}
 > as.matrix(data.frame(d = as.POSIXct("2004-07-20")))
-  d           
-1 "2004-07-20"
+     d           
+[1,] "2004-07-20"
 > ## gave a warning in 1.9.1
 > 
 > 
@@ -4346,8 +4336,8 @@ Levels: "a" "a \" test" "b" NA
 [2,] Integer,2 5        
 > write.table(x)
 "V1" "V2"
-"1" 1 c(3, 4)
-"2" c(1, 2) 5
+"1" 1 3:4
+"2" 1:2 5
 > 
 > x1 <- data.frame(a=1:2, b=I(matrix(LETTERS[1:4], 2, 2)), c = c("(i)", "(ii)"))
 > x1
@@ -4706,11 +4696,11 @@ out-of-range values treated as 0 in coercion to raw
 3  3
 4  4
 > m1[m1 == 0] <- 2;   m1
-   a
-1 NA
-2  2
-3  3
-4  4
+      a
+[1,] NA
+[2,]  2
+[3,]  3
+[4,]  4
 > df2[df2 == 0] <- 2; df2  # not allowed in 2.{0,1}.z
    a
 1 NA
@@ -4718,11 +4708,11 @@ out-of-range values treated as 0 in coercion to raw
 3  2
 4  4
 > m2[m2 == 0] <- 2;   m2
-   a
-1 NA
-2  2
-3  2
-4  4
+      a
+[1,] NA
+[2,]  2
+[3,]  2
+[4,]  4
 > df1[df1 == 2] # this is first coerced to a matrix, and drops to a vector
 [1] NA  2
 > df3 <- data.frame(a=1:2, b=2:3)
@@ -4730,7 +4720,7 @@ out-of-range values treated as 0 in coercion to raw
 [1] 2 2
 > # but not allowed
 > try(df2[df2 == 2] <- 1:2)
-Error in x[[v]][thisvar] <- if (N > 1) value[n + (1:nv)] else value : 
+Error in x[[v]][thisvar] <- if (N > 1L) value[n + seq_len(nv)] else value : 
 	NAs are not allowed in subscripted assignments
 > try(m2[m2 == 2] <- 1:2)
 Error in m2[m2 == 2] <- 1:2 : NAs are not allowed in subscripted assignments
@@ -5605,4 +5595,420 @@ $y
 > 
 > 
 > ### end of tests added in 2.4.1 ###
+> 
+> 
+> ## tests of deparsing
+> x <-list(a = NA, b = as.integer(NA), c=0+NA, d=0i+NA,
++          e = 1, f = 1:1, g = 1:3, h = c(NA, 1:3),
++          i = as.character(NA), j = c("foo", NA, "bar")
++          )
+> dput(x, control=NULL)
+list(a = NA, b = NA, c = NA, d =  NA, e = 1, f = 1, g = 1:3, 
+    h = c(NA, 1, 2, 3), i = NA, j = c("foo", NA, "bar"))
+> dput(x, control="keepInteger")
+list(a = NA, b = NA_integer_, c = NA, d =  NA, e = 1, f = 1L, 
+    g = 1:3, h = c(NA, 1L, 2L, 3L), i = NA, j = c("foo", NA, 
+    "bar"))
+> dput(x, control="keepNA")
+list(a = NA, b = NA_integer_, c = NA_real_, d = NA_complex_, 
+    e = 1, f = 1, g = 1:3, h = c(NA, 1, 2, 3), i = NA_character_, 
+    j = c("foo", NA, "bar"))
+> dput(x)
+structure(list(a = NA, b = NA_integer_, c = NA_real_, d = NA_complex_, 
+    e = 1, f = 1L, g = 1:3, h = c(NA, 1L, 2L, 3L), i = NA_character_, 
+    j = c("foo", NA, "bar")), .Names = c("a", "b", "c", "d", 
+"e", "f", "g", "h", "i", "j"))
+> dput(x, control="all")
+structure(list(a = NA, b = NA_integer_, c = NA_real_, d = NA_complex_, 
+    e = 1, f = 1L, g = 1:3, h = c(NA, 1L, 2L, 3L), i = NA_character_, 
+    j = c("foo", NA, "bar")), .Names = c("a", "b", "c", "d", 
+"e", "f", "g", "h", "i", "j"))
+> dput(x, control=c("all", "S_compatible"))
+structure(list(a = NA, b = as.integer(NA), c = as.double(NA), 
+    d = as.complex( NA), e = 1., f = as.integer(1), g = 1:3, 
+    h = as.integer(c(NA, 1, 2, 3)), i = as.character(NA), j = c("foo", 
+    NA, "bar")), .Names = c("a", "b", "c", "d", "e", "f", "g", 
+"h", "i", "j"))
+> tmp <- tempfile()
+> dput(x, tmp, control="all")
+> stopifnot(identical(dget(tmp), x))
+> dput(x, tmp, control=c("all", "S_compatible"))
+> stopifnot(identical(dget(tmp), x))
+> unlink(tmp)
+> ## changes in 2.5.0
+> 
+> 
+> ## give better error message for nls with no parameters
+> ## Ivo Welch, R-help, 2006-12-23.
+> d <- data.frame(y= runif(10), x=runif(10))
+> try(nls(y ~ 1/(1+x), data = d, start=list(x=0.5,y=0.5), trace=TRUE))
+Error in nls(y ~ 1/(1 + x), data = d, start = list(x = 0.5, y = 0.5),  : 
+	no parameters to fit
+> ## changed in 2.4.1 patched
+> 
+> 
+> ## cut(breaks="years"), in part PR#9433
+> cut(as.Date(c("2000-01-17","2001-01-13","2001-01-20")), breaks="years")
+[1] 2000-01-01 2001-01-01 2001-01-01
+Levels: 2000-01-01 2001-01-01
+> cut(as.POSIXct(c("2000-01-17","2001-01-13","2001-01-20")), breaks="years")
+[1] 2000-01-01 2001-01-01 2001-01-01
+Levels: 2000-01-01 2001-01-01
+> ## did not get day 01 < 2.4.1 patched
+> 
+> 
+> ## manipulating rownames: problems in pre-2.5.0
+> A <- data.frame(a=character(0))
+> try(row.names(A) <- 1:10) # succeeded in Dec 2006
+Error in `row.names<-.data.frame`(`*tmp*`, value = 1:10) : 
+	invalid 'row.names' length
+> A <- list(a=1:3)
+> class(A) <- "data.frame"
+> row.names(A) <- letters[24:26] # failed at one point in Dec 2006
+> A
+  a
+x 1
+y 2
+z 3
+> ##
+> 
+> 
+> ## extreme cases for subsetting of data frames
+> w <- women[1, ]
+> w[]
+  height weight
+1     58    115
+> w[,drop = TRUE]
+  height weight
+1     58    115
+Warning message:
+drop argument will be ignored in: `[.data.frame`(w, , drop = TRUE) 
+> w[1,]
+  height weight
+1     58    115
+> w[,]
+  height weight
+1     58    115
+> w[1, , drop = FALSE]
+  height weight
+1     58    115
+> w[, , drop = FALSE]
+  height weight
+1     58    115
+> w[1, , drop = TRUE]
+$height
+[1] 58
+
+$weight
+[1] 115
+
+> w[, , drop = TRUE]
+$height
+[1] 58
+
+$weight
+[1] 115
+
+> ## regression test: code changed for 2.5.0
+> 
+> 
+> ## data.frame() with zero columns ignored 'row.names'
+> (x <- data.frame(row.names=1:4))
+NULL data frame with 4 rows
+> nrow(x)
+[1] 4
+> row.names(x)
+[1] "1" "2" "3" "4"
+> attr(x, "row.names")
+[1] 1 2 3 4
+> ## ignored prior to 2.5.0.
+> 
+> 
+> ## identical on data.frames
+> d0 <- d1 <- data.frame(1:4, row.names=1:4)
+> row.names(d0) <- NULL
+> dput(d0)
+structure(list(X1.4 = 1:4), .Names = "X1.4", row.names = c(NA, 
+-4L), class = "data.frame")
+> dput(d1)
+structure(list(X1.4 = 1:4), .Names = "X1.4", row.names = c(NA, 
+4L), class = "data.frame")
+> identical(d0, d1)
+[1] TRUE
+> all.equal(d0, d1)
+[1] TRUE
+> row.names(d1) <- as.character(1:4)
+> dput(d1)
+structure(list(X1.4 = 1:4), .Names = "X1.4", row.names = c("1", 
+"2", "3", "4"), class = "data.frame")
+> identical(d0, d1)
+[1] FALSE
+> all.equal(d0, d1)
+[1] "Attributes: < Component 2: Modes: numeric, character >"              
+[2] "Attributes: < Component 2: target is numeric, current is character >"
+> ## identical used internal representation prior to 2.5.0
+> 
+> 
+> ## all.equal
+> # ignored check.attributes in 2.4.1
+> all.equal(data.frame(x=1:5, row.names=letters[1:5]),
++           data.frame(x=1:5,row.names=LETTERS[1:5]),
++           check.attributes=FALSE)
+[1] TRUE
+> # treated logicals as numeric
+> all.equal(c(T, F, F), c(T, T, F))
+[1] "1 element mismatch"
+> all.equal(c(T, T, F), c(T, F, F))
+[1] "1 element mismatch"
+> # ignored raw:
+> all.equal(as.raw(1:3), as.raw(1:3))
+[1] TRUE
+> all.equal(as.raw(1:3), as.raw(3:1))
+[1] "2 element mismatches"
+> ##
+> 
+> 
+> ## tests of deparsing
+> # if we run this from stdin, we will have no source, so fake it
+> f <- function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
+> attr(f, "source") <-
++     "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"
+> f # uses the source
+function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
+> dput(f) # not source
+function (x, xm = max(1L, x)) 
+{
+    xx <- 0L
+    yy <- NA_real_
+}
+> dput(f, control="all") # uses the source
+function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
+
+> cat(deparse(f), sep="\n")
+function (x, xm = max(1L, x)) 
+{
+    xx <- 0L
+    yy <- NA_real_
+}
+> dump("f", file="")
+f <-
+function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
+
+> # remove the source
+> attr(f, "source") <- NULL
+> f
+function (x, xm = max(1L, x)) 
+{
+    xx <- 0L
+    yy <- NA_real_
+}
+> dput(f, control="all")
+function (x, xm = max(1L, x)) 
+{
+    xx <- 0L
+    yy <- NA_real_
+}
+> dump("f", file="")
+f <-
+function (x, xm = max(1L, x)) 
+{
+    xx <- 0L
+    yy <- NA_real_
+}
+> 
+> expression(bin <- bin + 1L)
+expression(bin <- bin + 1L)
+> ## did not preserve e.g. 1L at some point in pre-2.5.0
+> 
+> 
+> ## NAs in substr were handled as large negative numbers
+> x <- "abcde"
+> substr(x, 1, 3)
+[1] "abc"
+> substr(x, NA, 1)
+[1] NA
+> substr(x, 1, NA)
+[1] NA
+> substr(x, NA, 3) <- "abc"; x
+[1] NA
+> substr(x, 1, NA) <- "AA"; x
+[1] NA
+> substr(x, 1, 2) <- NA_character_; x
+[1] NA
+> ## "" or no change in 2.4.1, except last
+> 
+> 
+> ## regression tests for pmin/pmax, rewritten in C for 2.5.0
+> # NULL == integer(0)
+> pmin(NULL, integer(0))
+integer(0)
+> pmin(integer(0), NULL)
+integer(0)
+> try(pmin(NULL, 1:3))
+Error in pmin(na.rm, ...) : cannot mix 0-length vectors with others
+> 
+> x <- c(1, NA, NA, 4, 5)
+> y <- c(2, NA, 4, NA, 3)
+> pmin(x, y)
+[1]  1 NA NA NA  3
+> stopifnot(identical(pmin(x, y), pmin(y, x)))
+> pmin(x, y, na.rm=TRUE)
+[1]  1 NA  4  4  3
+> stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+> pmax(x, y)
+[1]  2 NA NA NA  5
+> stopifnot(identical(pmax(x, y), pmax(y, x)))
+> pmax(x, y, na.rm=TRUE)
+[1]  2 NA  4  4  5
+> stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+> 
+> x <- as.integer(x); y <- as.integer(y)
+> pmin(x, y)
+[1]  1 NA NA NA  3
+> stopifnot(identical(pmin(x, y), pmin(y, x)))
+> pmin(x, y, na.rm=TRUE)
+[1]  1 NA  4  4  3
+> stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+> pmax(x, y)
+[1]  2 NA NA NA  5
+> stopifnot(identical(pmax(x, y), pmax(y, x)))
+> pmax(x, y, na.rm=TRUE)
+[1]  2 NA  4  4  5
+> stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+> 
+> x <- as.character(x); y <- as.character(y)
+> pmin(x, y)
+[1] "1" NA  NA  NA  "3"
+> stopifnot(identical(pmin(x, y), pmin(y, x)))
+> pmin(x, y, na.rm=TRUE)
+[1] "1" NA  "4" "4" "3"
+> stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+> pmax(x, y)
+[1] "2" NA  NA  NA  "5"
+> stopifnot(identical(pmax(x, y), pmax(y, x)))
+> pmax(x, y, na.rm=TRUE)
+[1] "2" NA  "4" "4" "5"
+> stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+> 
+> # tests of classed quantities
+> x <- .leap.seconds; y <- rev(x)
+> x[2] <- y[2] <- x[3] <- y[4] <- NA
+> format(pmin(x, y), tz="GMT")  # TZ names differ by platform
+ [1] "1972-07-01" NA           NA           NA           "1976-01-01"
+ [6] "1977-01-01" "1978-01-01" "1979-01-01" "1980-01-01" "1981-07-01"
+[11] "1982-07-01" "1983-07-01" "1982-07-01" "1981-07-01" "1980-01-01"
+[16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
+[21] "1974-01-01" "1973-01-01" "1972-07-01"
+> class(pmin(x, y))
+[1] "POSIXt"  "POSIXct"
+> stopifnot(identical(pmin(x, y), pmin(y, x)))
+> format(pmin(x, y, na.rm=TRUE), tz="GMT")
+ [1] "1972-07-01" NA           "1997-07-01" "1975-01-01" "1976-01-01"
+ [6] "1977-01-01" "1978-01-01" "1979-01-01" "1980-01-01" "1981-07-01"
+[11] "1982-07-01" "1983-07-01" "1982-07-01" "1981-07-01" "1980-01-01"
+[16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
+[21] "1974-01-01" "1973-01-01" "1972-07-01"
+> stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+> format(pmax(x, y), tz="GMT")
+ [1] "2006-01-01" NA           NA           NA           "1994-07-01"
+ [6] "1993-07-01" "1992-07-01" "1991-01-01" "1990-01-01" "1988-01-01"
+[11] "1985-07-01" "1983-07-01" "1985-07-01" "1988-01-01" "1990-01-01"
+[16] "1991-01-01" "1992-07-01" "1993-07-01" "1994-07-01" "1996-01-01"
+[21] "1997-07-01" "1999-01-01" "2006-01-01"
+> stopifnot(identical(pmax(x, y), pmax(y, x)))
+> format(pmax(x, y, na.rm=TRUE), tz="GMT")
+ [1] "2006-01-01" NA           "1997-07-01" "1975-01-01" "1994-07-01"
+ [6] "1993-07-01" "1992-07-01" "1991-01-01" "1990-01-01" "1988-01-01"
+[11] "1985-07-01" "1983-07-01" "1985-07-01" "1988-01-01" "1990-01-01"
+[16] "1991-01-01" "1992-07-01" "1993-07-01" "1994-07-01" "1996-01-01"
+[21] "1997-07-01" "1999-01-01" "2006-01-01"
+> stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+> 
+> x <- as.POSIXlt(x, tz="GMT"); y <- as.POSIXlt(y, tz="GMT")
+> format(pmin(x, y), tz="GMT")
+ [1] "1972-07-01" NA           NA           NA           "1976-01-01"
+ [6] "1977-01-01" "1978-01-01" "1979-01-01" "1980-01-01" "1981-07-01"
+[11] "1982-07-01" "1983-07-01" "1982-07-01" "1981-07-01" "1980-01-01"
+[16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
+[21] "1974-01-01" "1973-01-01" "1972-07-01"
+> class(pmin(x, y))
+[1] "POSIXt"  "POSIXlt"
+> stopifnot(identical(pmin(x, y), pmin(y, x)))
+> format(pmin(x, y, na.rm=TRUE), tz="GMT")
+ [1] "1972-07-01" NA           "1997-07-01" "1975-01-01" "1976-01-01"
+ [6] "1977-01-01" "1978-01-01" "1979-01-01" "1980-01-01" "1981-07-01"
+[11] "1982-07-01" "1983-07-01" "1982-07-01" "1981-07-01" "1980-01-01"
+[16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
+[21] "1974-01-01" "1973-01-01" "1972-07-01"
+> stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+> format(pmax(x, y), tz="GMT")
+ [1] "2006-01-01" NA           NA           NA           "1994-07-01"
+ [6] "1993-07-01" "1992-07-01" "1991-01-01" "1990-01-01" "1988-01-01"
+[11] "1985-07-01" "1983-07-01" "1985-07-01" "1988-01-01" "1990-01-01"
+[16] "1991-01-01" "1992-07-01" "1993-07-01" "1994-07-01" "1996-01-01"
+[21] "1997-07-01" "1999-01-01" "2006-01-01"
+> stopifnot(identical(pmax(x, y), pmax(y, x)))
+> format(pmax(x, y, na.rm=TRUE), tz="GMT")
+ [1] "2006-01-01" NA           "1997-07-01" "1975-01-01" "1994-07-01"
+ [6] "1993-07-01" "1992-07-01" "1991-01-01" "1990-01-01" "1988-01-01"
+[11] "1985-07-01" "1983-07-01" "1985-07-01" "1988-01-01" "1990-01-01"
+[16] "1991-01-01" "1992-07-01" "1993-07-01" "1994-07-01" "1996-01-01"
+[21] "1997-07-01" "1999-01-01" "2006-01-01"
+> stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+> ## regresion tests
+> 
+> 
+> ## regression tests on names of 1D arrays
+> x <- as.array(1:3)
+> names(x) <- letters[x] # sets dimnames, really
+> names(x)
+[1] "a" "b" "c"
+> dimnames(x)
+[[1]]
+[1] "a" "b" "c"
+
+> attributes(x)
+$dim
+[1] 3
+
+$dimnames
+$dimnames[[1]]
+[1] "a" "b" "c"
+
+
+> names(x) <- NULL
+> attr(x, "names") <- LETTERS[x] # sets dimnames, really
+> names(x)
+[1] "A" "B" "C"
+> dimnames(x)
+[[1]]
+[1] "A" "B" "C"
+
+> attributes(x)
+$dim
+[1] 3
+
+$dimnames
+$dimnames[[1]]
+[1] "A" "B" "C"
+
+
+> ## regression tests
+> 
+> 
+> ## regression tests on NA attribute names
+> x <- 1:3
+> attr(x, "NA") <- 4
+> attributes(x)
+$`NA`
+[1] 4
+
+> attr(x, "NA")
+[1] 4
+> attr(x, NA_character_)
+NULL
+> try(attr(x, NA_character_) <- 5)
+Error in "attr<-"(`*tmp*`, NA_character_, value = 5) : 
+	'name' must be non-null character string
+> ## prior to 2.5.0 NA was treated as "NA"
 > 

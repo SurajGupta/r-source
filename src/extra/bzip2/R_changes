@@ -1,3 +1,5 @@
+*** further changes made in November 2006 ***
+
 The changes for R are all to do with portability:
 
 __inline__ is not portable.

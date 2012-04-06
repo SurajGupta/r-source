@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-11 10:41\n"
+"POT-Creation-Date: 2007-04-10 07:41\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -27,6 +27,12 @@ msgstr "Veja help(\"Defunct\") e help(\"%s-defunct\")."
 
 msgid "See help(\"Defunct\")"
 msgstr "Veja help(\"Defunct\")"
+
+msgid "'symbol.C' is not needed: please remove it"
+msgstr ""
+
+msgid "'symbol.For' is not needed: please remove it"
+msgstr ""
 
 msgid "'%s' is deprecated."
 msgstr "'%s' é obsoleto."
@@ -51,9 +57,6 @@ msgstr "'nu' deve ser 0, nrow(x) ou ncol(x)"
 
 msgid "'nv' must be 0, nrow(x) or ncol(x)"
 msgstr "'nv' deve ser 0, nrow(x) ou ncol(x)"
-
-msgid "'all' can not be used with other deparse options"
-msgstr "'all' não pode ser usado junto com outras opções de deparse"
 
 msgid "second argument must be a list"
 msgstr "segundo argumento deve ser uma lista"
@@ -109,6 +112,10 @@ msgstr "é exigido por"
 
 msgid "(still attached)"
 msgstr "(ainda anexado)"
+
+#, fuzzy
+msgid "namespace cannot be unloaded"
+msgstr "espaço de nomes '%s' não carregado"
 
 #, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
@@ -251,6 +258,12 @@ msgstr ","
 msgid "--> row.names NOT used"
 msgstr "--> row.names NÃO utilizados"
 
+msgid "row names contain missing values"
+msgstr "nomes de linhas contém valores faltantes"
+
+msgid "duplicate row.names:"
+msgstr "row.names duplicados:"
+
 msgid "arguments imply differing number of rows:"
 msgstr "argumentos implicam em número de linhas conflitantes:"
 
@@ -263,12 +276,6 @@ msgstr "nomes de linhas especificado com comprimento errado"
 msgid "row names were found from a short variable and have been discarded"
 msgstr ""
 "nomes de linhas foram encontrados em uma variável curta e foram descartados"
-
-msgid "row names contain missing values"
-msgstr "nomes de linhas contém valores faltantes"
-
-msgid "duplicate row.names:"
-msgstr "row.names duplicados:"
 
 msgid "drop argument will be ignored"
 msgstr "argumento 'drop' será ignorado"
@@ -477,6 +484,17 @@ msgstr "não definido para objetos \"POSIXct\""
 msgid "not defined for \"POSIXlt\" objects"
 msgstr "não definido para objetos \"POSIXlt\""
 
+#, fuzzy
+msgid "'tim' is not character or numeric"
+msgstr "'%s' não é uma função, caracter ou símbolo"
+
+msgid "need explicit units for numeric conversion"
+msgstr ""
+
+#, fuzzy
+msgid "invalid units specified"
+msgstr "especificação de 'quote' inválida"
+
 msgid "not defined for \"difftime\" objects"
 msgstr "não definidos para objetos \"difftime\""
 
@@ -635,14 +653,15 @@ msgstr "'subset' deve poder ser avaliado logicamente"
 msgid "'subset' must be logical"
 msgstr "'subset' deve ser lógico"
 
-msgid "'form' must be a two-sided formula"
-msgstr "'form' deve ser uma fórmula com dois lados"
-
 msgid "value for '"
 msgstr "valor para '"
 
 msgid "' not found"
 msgstr "' não encontrado"
+
+#, fuzzy
+msgid "all arguments must be named"
+msgstr "todos os argumentos devem ter o mesmo comprimento"
 
 msgid "'pattern' must be a non-empty character string"
 msgstr "'pattern' deve ser uma string de caracteres não vazia"
@@ -857,6 +876,10 @@ msgstr "argumento 'category' inválido"
 msgid "must specify formal argument names to vectorize"
 msgstr "nomes de argumentos formais devem ser especificados para vetorizar"
 
+#, fuzzy
+msgid "'arg' must be NULL or a character vector of length >= 1"
+msgstr "'normal.kind' deve ser uma string de caractres de tamanho 1."
+
 msgid "'arg' should be one of"
 msgstr "'arg' deve ser um dentre"
 
@@ -889,6 +912,10 @@ msgstr ""
 msgid "argument is not numeric or logical: returning NA"
 msgstr "argumento não é numérico nem lógico: retornando NA"
 
+#, fuzzy
+msgid "'trim' must be numeric of length one"
+msgstr "'origin' deve ter comprimento 1"
+
 msgid "trimmed means are not defined for complex data"
 msgstr "médias aparadas não são definidas para dados complexos"
 
@@ -908,6 +935,9 @@ msgstr "'by' deve especificar coluna(s) válida(s)"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' e 'by.y' especificam números de colunas diferentes"
 
+msgid "additional arguments ignored in message()"
+msgstr ""
+
 msgid "(loaded the methods namespace)"
 msgstr ""
 
@@ -919,6 +949,9 @@ msgstr ""
 "carregar o seu espaço de nomes"
 
 msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
+msgid "invalid to change the storage mode of a factor"
 msgstr ""
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
@@ -1003,7 +1036,7 @@ msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s falhou em unloadNamespace(%s)"
 
 #, fuzzy
-msgid "name space '%s' is still used by: '%s'"
+msgid "name space '%s' is still used by: %s"
 msgstr "espaço de nomes '%s' ainda em uso por:"
 
 msgid "imperative name space directives are disabled"
@@ -1097,6 +1130,10 @@ msgstr "argumento errado"
 msgid "not defined for package_version objects"
 msgstr "não definido para objetos package_version"
 
+#, fuzzy
+msgid "no arguments"
+msgstr "argumento errado"
+
 msgid "invalid 'n' value"
 msgstr "valor de 'n' inválido"
 
@@ -1138,39 +1175,6 @@ msgstr "'k' é muito grande"
 
 msgid "need larger value of 'ncol' as pivoting occurred"
 msgstr "necessário valor maior de 'ncol', pois houve pivotamento"
-
-msgid "no lines available in input"
-msgstr "nenhuma linha disponível na entrada"
-
-msgid "empty beginning of file"
-msgstr "começo de arquivo vazio"
-
-msgid "header and 'col.names' are of different lengths"
-msgstr "'header' e 'col.names' têm comprimentos diferentes"
-
-msgid "more columns than column names"
-msgstr "mais colunas que nomes de colunas"
-
-msgid "more column names than columns"
-msgstr "mais nomes de colunas que colunas"
-
-msgid "first five rows are empty: giving up"
-msgstr "cinco primeiras linhas vazias: desistindo"
-
-msgid "not all columns named in 'colClasses' exist"
-msgstr "nem todas as colunas com nome em 'colClasses' existem"
-
-msgid "invalid numeric 'as.is' expression"
-msgstr "expressão numérica 'as.is' inválida"
-
-msgid "not all columns named in 'as.is' exist"
-msgstr "nem todas as colunas nomeadas em 'as.is' existem"
-
-msgid "'as.is' has the wrong length %d  != cols = %d"
-msgstr "'as.is' tem o comprimento errado %d != cols = %d"
-
-msgid "invalid 'row.names' specification"
-msgstr "especificação de 'row.names' inválida"
 
 msgid "'x' must be a vector"
 msgstr "'x' deve ser um vetor"
@@ -1301,6 +1305,15 @@ msgstr "'chdir = TRUE' não faz sentido para uma conexão"
 msgid "'%s' is not an existing file"
 msgstr "'%s' não é um arquivo existente"
 
+msgid "Timestamp of '"
+msgstr ""
+
+msgid "' has changed"
+msgstr ""
+
+msgid "additional arguments ignored in stop()"
+msgstr ""
+
 #, fuzzy
 msgid "is not"
 msgstr "não é TRUE"
@@ -1311,10 +1324,7 @@ msgstr ""
 msgid "TRUE"
 msgstr ""
 
-msgid "adding class \"ts\": this is deprecated"
-msgstr ""
-
-msgid "conversion to factor is deprecated"
+msgid "additional arguments ignored in warning()"
 msgstr ""
 
 msgid "incorrect value for 'x'"
@@ -1371,6 +1381,15 @@ msgstr "Excluindo"
 msgid "Registering evaluate as low-level callback"
 msgstr "Registrando avaliação como chamada de retorno em baixo nível"
 
+msgid "user"
+msgstr ""
+
+msgid "system"
+msgstr ""
+
+msgid "elapsed"
+msgstr ""
+
 msgid "'width' must be positive"
 msgstr "'width' deve ser positivo"
 
@@ -1380,29 +1399,17 @@ msgstr "Nenhum rastreamento disponível"
 msgid "argument to 'which' is not logical"
 msgstr "argumento para 'which' não é lógico"
 
-msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
-msgstr ""
-
-msgid "invalid numbers in 'quote'"
-msgstr "números inválidos em 'quote'"
-
-msgid "invalid 'quote' specification"
-msgstr "especificação de 'quote' inválida"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr "col.names = NA não faz sentido com quando row.names = FALSE"
-
-msgid "invalid 'col.names' specification"
-msgstr "especificação de 'col.names' inválida"
-
-msgid "appending column names to file"
-msgstr "acrescentando nomes de coluna no arquivo"
-
-msgid "attempt to change '%s' ignored"
-msgstr "tentativa de mudar '%s' ignorada"
-
 msgid "invalid 'digits'"
 msgstr "'digits' inválido"
+
+msgid ""
+"arguments 'show.output.on.console', 'minimized' and 'invisible' are for "
+"Windows only"
+msgstr ""
+
+#, fuzzy
+msgid "'input' must be a character vector or 'NULL'"
+msgstr "'input' e 'target' devem ser vetores de caracteres"
 
 msgid "argument must be character"
 msgstr "argumento deve ser caracter"
@@ -1460,8 +1467,62 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
 
+#~ msgid "'all' can not be used with other deparse options"
+#~ msgstr "'all' não pode ser usado junto com outras opções de deparse"
+
 #~ msgid "no rows to match"
 #~ msgstr "nenhuma linha para parear"
+
+#~ msgid "'form' must be a two-sided formula"
+#~ msgstr "'form' deve ser uma fórmula com dois lados"
+
+#~ msgid "no lines available in input"
+#~ msgstr "nenhuma linha disponível na entrada"
+
+#~ msgid "empty beginning of file"
+#~ msgstr "começo de arquivo vazio"
+
+#~ msgid "header and 'col.names' are of different lengths"
+#~ msgstr "'header' e 'col.names' têm comprimentos diferentes"
+
+#~ msgid "more columns than column names"
+#~ msgstr "mais colunas que nomes de colunas"
+
+#~ msgid "more column names than columns"
+#~ msgstr "mais nomes de colunas que colunas"
+
+#~ msgid "first five rows are empty: giving up"
+#~ msgstr "cinco primeiras linhas vazias: desistindo"
+
+#~ msgid "not all columns named in 'colClasses' exist"
+#~ msgstr "nem todas as colunas com nome em 'colClasses' existem"
+
+#~ msgid "invalid numeric 'as.is' expression"
+#~ msgstr "expressão numérica 'as.is' inválida"
+
+#~ msgid "not all columns named in 'as.is' exist"
+#~ msgstr "nem todas as colunas nomeadas em 'as.is' existem"
+
+#~ msgid "'as.is' has the wrong length %d  != cols = %d"
+#~ msgstr "'as.is' tem o comprimento errado %d != cols = %d"
+
+#~ msgid "invalid 'row.names' specification"
+#~ msgstr "especificação de 'row.names' inválida"
+
+#~ msgid "invalid numbers in 'quote'"
+#~ msgstr "números inválidos em 'quote'"
+
+#~ msgid "col.names = NA makes no sense when row.names = FALSE"
+#~ msgstr "col.names = NA não faz sentido com quando row.names = FALSE"
+
+#~ msgid "invalid 'col.names' specification"
+#~ msgstr "especificação de 'col.names' inválida"
+
+#~ msgid "appending column names to file"
+#~ msgstr "acrescentando nomes de coluna no arquivo"
+
+#~ msgid "attempt to change '%s' ignored"
+#~ msgstr "tentativa de mudar '%s' ignorada"
 
 #, fuzzy
 #~ msgid "rows are empty: giving up"

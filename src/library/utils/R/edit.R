@@ -1,10 +1,30 @@
-dataentry <- function (data, modes) {
+dataentry <- function (data, modes)
+{
     if(!is.list(data) || !length(data) || !all(sapply(data, is.vector)))
         stop("invalid 'data' argument")
     if(!is.list(modes) ||
        (length(modes) && !all(sapply(modes, is.character))))
         stop("invalid 'modes' argument")
     .Internal(dataentry(data, modes))
+}
+
+View <- function (x, title)
+{
+    if(missing(title)) title <- paste("Data:", deparse(substitute(x)))
+    as.num.or.char <- function(x)
+    {
+        if (is.character(x)) x
+        else if(is.numeric(x)) {storage.mode(x) <- "double"; x}
+        else as.character(x)
+    }
+    x0 <- as.data.frame(x)
+    x <- lapply(x0, as.num.or.char)
+    rn <- row.names(x0)
+    if(any(rn != seq_along(rn))) x <- c(list(row.names = rn), x)
+    if(!is.list(x) || !length(x) || !all(sapply(x, is.atomic)) ||
+       !max(sapply(x, length)))
+        stop("invalid 'x' argument")
+    .Internal(dataviewer(x, title))
 }
 
 edit <- function(name,...)UseMethod("edit")

@@ -420,16 +420,19 @@ Rf_freeDllInfo(DllInfo *info)
 }
 
 
+typedef void (*DllInfoUnloadCall)(DllInfo *);
+typedef DllInfoUnloadCall DllInfoInitCall;
+
 static Rboolean
 R_callDLLUnload(DllInfo *dllInfo)
 {
     char buf[1024];
-    DL_FUNC f;
+    DllInfoUnloadCall f;
     R_RegisteredNativeSymbol symbol;
     symbol.type = R_ANY_SYM;
 
     snprintf(buf, 1024, "R_unload_%s", dllInfo->name);
-    f = R_dlsym(dllInfo, buf, &symbol);
+    f = (DllInfoUnloadCall) R_dlsym(dllInfo, buf, &symbol);
     if(f)
        f(dllInfo);
 
@@ -535,7 +538,7 @@ static DllInfo* AddDLL(char *path, int asLocal, int now)
     */
     if(info) {
 	char *tmp;
-	DL_FUNC f;
+	DllInfoInitCall f;
 #ifdef HAVE_NO_SYMBOL_UNDERSCORE
 	tmp = (char*) malloc(sizeof(char)*(strlen("R_init_") +
 					   strlen(info->name)+ 1));
@@ -545,7 +548,7 @@ static DllInfo* AddDLL(char *path, int asLocal, int now)
 					   strlen(info->name)+ 2));
 	sprintf(tmp, "_%s%s","R_init_", info->name);
 #endif
-	f = (DL_FUNC) R_osDynSymbol->dlsym(info, tmp);
+	f = (DllInfoInitCall) R_osDynSymbol->dlsym(info, tmp);
 	free(tmp);
 	if(f)
 	    f(info);
@@ -567,7 +570,7 @@ static DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
     */
     info->useDynamicLookup = TRUE;
 
-    dpath = malloc(strlen(path)+1);
+    dpath = (char *) malloc(strlen(path)+1);
     if(dpath == NULL) {
 	strcpy(DLLerror, _("could not allocate space for 'path'"));
 	R_osDynSymbol->closeLibrary(handle);
@@ -601,7 +604,7 @@ static int
 addDLL(char *dpath, char *DLLname, HINSTANCE handle)
 {
     int ans = CountDLL;
-    char *name = malloc(strlen(DLLname)+1);
+    char *name = (char *) malloc(strlen(DLLname)+1);
     if(name == NULL) {
 	strcpy(DLLerror, _("could not allocate space for 'name'"));
 	if(handle)
@@ -873,7 +876,7 @@ SEXP attribute_hidden do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
 	errorcall(call, _("character argument expected"));
-    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
+    GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     /* AddDLL does this DeleteDLL(buf); */
     info = AddDLL(buf, LOGICAL(CADR(args))[0], LOGICAL(CADDR(args))[0]);
     if(!info)
@@ -889,7 +892,7 @@ SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
 	errorcall(call, _("character argument expected"));
-    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
+    GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     if(!DeleteDLL(buf))
 	errorcall(call, _("dynamic/shared library '%s\' was not loaded"),
 		  buf);
@@ -1066,11 +1069,11 @@ R_getSymbolInfo(SEXP sname, SEXP spackage, SEXP withRegistrationInfo)
 
     package = "";
 
-    name = CHAR(STRING_ELT(sname, 0));
+    name = translateChar(STRING_ELT(sname, 0));
 
     if(length(spackage)) {
 	if(TYPEOF(spackage) == STRSXP) {
-	    package = CHAR(STRING_ELT(spackage, 0));
+	    package = translateChar(STRING_ELT(spackage, 0));
 	}
 	else if(TYPEOF(spackage) == EXTPTRSXP &&
 		R_ExternalPtrTag(spackage) == Rf_install("DLLInfo")) {
@@ -1300,7 +1303,7 @@ SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 SEXP attribute_hidden
-R_getSymbolInfo(SEXP sname, SEXP spackage)
+R_getSymbolInfo(SEXP sname, SEXP spackage, SEXP withRegistrationInfo)
 {
     error(_("no dyn.load support in this R version"));
 }
@@ -1332,13 +1335,13 @@ static SEXP get_package_CEntry_table(char *package)
     SEXP penv, pname;
 
     if (CEntryTable == NULL) {
-	CEntryTable = R_NewHashedEnv(R_NilValue);
+	CEntryTable = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
 	R_PreserveObject(CEntryTable);
     }
     pname = install(package);
     penv = findVarInFrame(CEntryTable, pname);
     if (penv == R_UnboundValue) {
-	penv = R_NewHashedEnv(R_NilValue);
+	penv = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
 	defineVar(pname, penv, CEntryTable);
     }
     return penv;

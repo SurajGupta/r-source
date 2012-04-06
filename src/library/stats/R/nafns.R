@@ -6,7 +6,7 @@ na.fail <- function(object, ...) UseMethod("na.fail")
 na.fail.default <- function(object, ...)
 {
     ok <- complete.cases(object)
-    if(all(ok)) object else stop("missing values in object");
+    if(all(ok)) object else stop("missing values in object")
 }
 
 na.omit <- function(object, ...) UseMethod("na.omit")
@@ -56,7 +56,7 @@ na.omit.data.frame <- function(object, ...)
     xx <- object[!omit, , drop = FALSE]
     if (any(omit)) {
 	temp <- seq(omit)[omit]
-	names(temp) <- row.names(object)[omit]
+	names(temp) <- attr(object, "row.names")[omit]
 	attr(temp, "class") <- "omit"
 	attr(xx, "na.action") <- temp
     }
@@ -110,7 +110,7 @@ na.exclude.data.frame <- function(object, ...)
     xx <- object[!omit, , drop = FALSE]
     if (any(omit)) {
 	temp <- seq(omit)[omit]
-	names(temp) <- row.names(object)[omit]
+	names(temp) <- attr(object, "row.names")[omit]
 	attr(temp, "class") <- "exclude"
 	attr(xx, "na.action") <- temp
     }

@@ -251,19 +251,35 @@ function(dir, outDir)
         stop(gettextf("cannot open directory '%s'", outCodeDir),
              domain = NA)
     outFile <- file.path(outCodeDir, db["Package"])
-    ## <NOTE>
-    ## It may be safer to do
-    ##   writeLines(sapply(codeFiles, readLines), outFile)
-    ## instead, but this would be much slower ...
     if(!file.create(outFile))
-        stop(gettextf("unable to create '%s'", outFile),
-             domain = NA)
+        stop(gettextf("unable to create '%s'", outFile), domain = NA)
     writeLines(paste(".packageName <- \"", db["Package"], "\"", sep=""),
                outFile)
-    # use fast version of file.append that ensures LF between files
-    if(!all(.file_append_ensuring_LFs(outFile, codeFiles)))
-        stop("unable to write code files")
-    ## </NOTE>
+    enc <- as.vector(db["Encoding"])
+    need_enc <- !is.na(enc) # Encoding was specified
+    ## assume that if locale if 'C' we can used 8-bit encodings unchanged.
+    if(need_enc && capabilities("iconv") &&
+       !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))
+       ) {
+        con <- file(outFile, "a")
+        on.exit(close(con))  # Windows does not like files left open
+        for(f in codeFiles) {
+            tmp <- iconv(readLines(f, warn = FALSE), from = enc, to = "")
+            if(any(is.na(tmp)))
+               stop(gettextf("unable to re-encode '%s'", basename(f)),
+                    domain = NA, call. = FALSE)
+            writeLines(tmp, con)
+        }
+    } else {
+        ## <NOTE>
+        ## It may be safer to do
+        ##   writeLines(sapply(codeFiles, readLines), outFile)
+        ## instead, but this would be much slower ...
+        ## use fast version of file.append that ensures LF between files
+        if(!all(.file_append_ensuring_LFs(outFile, codeFiles)))
+            stop("unable to write code files")
+        ## </NOTE>
+    }
 
     invisible()
 }
@@ -466,7 +482,7 @@ function(src_dir, out_dir, packages)
 ### * .install_package_vignettes
 
 .install_package_vignettes <-
-function(dir, outDir)
+function(dir, outDir, keep.source = FALSE)
 {
     dir <- file_path_as_absolute(dir)
     vignetteDir <- file.path(dir, "inst", "doc")
@@ -509,9 +525,9 @@ function(dir, outDir)
     ## (Yes, it would be nice to have envPath() similar to file.path().)
     texinputs <- Sys.getenv("TEXINPUTS")
     bibinputs <- Sys.getenv("BIBINPUTS")
-    on.exit(Sys.putenv(TEXINPUTS = texinputs, BIBINPUTS = bibinputs),
+    on.exit(Sys.setenv(TEXINPUTS = texinputs, BIBINPUTS = bibinputs),
             add = TRUE)
-    Sys.putenv(TEXINPUTS = paste(vignetteDir, Sys.getenv("TEXINPUTS"),
+    Sys.setenv(TEXINPUTS = paste(vignetteDir, Sys.getenv("TEXINPUTS"),
                sep = envSep),
                BIBINPUTS = paste(vignetteDir, Sys.getenv("BIBINPUTS"),
                sep = envSep))
@@ -520,7 +536,7 @@ function(dir, outDir)
         base <- basename(file_path_sans_ext(srcfile))
         texfile <- paste(base, ".tex", sep = "")
         yy <- try(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
-                                quiet = TRUE))
+                                quiet = TRUE, keep.source = keep.source))
         if(inherits(yy, "try-error"))
             stop(yy)
         ## In case of an error, do not clean up: should we point to

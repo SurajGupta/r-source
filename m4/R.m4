@@ -192,7 +192,7 @@ fi
 if test -n "${warn_pdf}"; then
   AC_MSG_WARN([${warn_pdf}])
 fi
-AC_PATH_PROGS(MAKEINFO_CMD, [${MAKEINFO} makeinfo])
+R_PROG_MAKEINFO
 ## This test admittedly looks a bit strange ... see R_PROG_PERL.
 if test "${PERL}" = "${FALSE}"; then
   AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
@@ -209,23 +209,16 @@ AC_SUBST(R_RD4PDF)
 ## R_PROG_MAKEINFO
 ## ---------------
 AC_DEFUN([R_PROG_MAKEINFO],
-## This used to be part of R_PROG_TEXMF, where it really belongs.
-## Unfortunately, AC_PROG_LIBTOOL unconditionally overwrites MAKEINFO
-## by makeinfo or missing.  To allow users to pass a MAKEINFO setting to
-## configure, we thus have to run R_PROG_TEXMF before AC_PROG_LIBTOOL,
-## save the result to something not overwritten (hence MAKEINFO_CMD),
-## and finally set MAKEINFO according to our needs.
-[AC_REQUIRE([R_PROG_TEXMF])
-AC_REQUIRE([AC_PROG_LIBTOOL])
-if test -n "${MAKEINFO_CMD}"; then
+[AC_PATH_PROGS(MAKEINFO, [${MAKEINFO} makeinfo])
+if test -n "${MAKEINFO}"; then
   _R_PROG_MAKEINFO_VERSION
 fi
 if test "${r_cv_prog_makeinfo_v4}" != yes; then
-  warn_info="you cannot build info or html versions of the R manuals"
+  warn_info="you cannot build info or HTML versions of the R manuals"
   AC_MSG_WARN([${warn_info}])
   MAKEINFO=false
 else
-  MAKEINFO="${MAKEINFO_CMD}"
+  MAKEINFO="${MAKEINFO}"
 fi
 ])# R_PROG_MAKEINFO
 
@@ -239,7 +232,7 @@ fi
 AC_DEFUN([_R_PROG_MAKEINFO_VERSION],
 [AC_CACHE_CHECK([whether makeinfo version is at least 4.7],
                 [r_cv_prog_makeinfo_v4],
-[makeinfo_version=`${MAKEINFO_CMD} --version | \
+[makeinfo_version=`${MAKEINFO} --version | \
   grep "^makeinfo" | sed 's/[[^)]]*) \(.*\)/\1/'`
 makeinfo_version_maj=`echo ${makeinfo_version} | cut -f1 -d.`
 makeinfo_version_min=`echo ${makeinfo_version} | \
@@ -480,6 +473,7 @@ AC_DEFUN([R_PROG_CC_FLAG_D__NO_MATH_INLINES],
                 [r_cv_c_no_math_inlines],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #if defined(__GLIBC__)
 int main () {
   double x, y;
@@ -512,6 +506,7 @@ AC_DEFUN([R_C_OPTIEEE],
                 [r_cv_c_optieee],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #include <ieeefp.h>
 int main () {
   double x = 0;
@@ -759,7 +754,9 @@ LIBS="${r_save_LIBS}"
 ## better also against '-lcrtbegin.o'), which (unlike '-lcrt0.o') are
 ## not stripped by AC_F77_LIBRARY_LDFLAGS.  This in particular causes
 ## R_PROG_F77_CC_COMPAT to fail.  Hence, we make sure all -lcrt*.o are
-## removed.
+## removed. In Addition, -lmx and -lSystem are implicit and their
+## manual inclusion leads to ordering problems (remove when autoconf
+## is fixed - supposedly the CVS version is, but 2.6.0 is not).
 ##
 ## Native f90 on HPUX 11 comes up with '-l:libF90.a' causing trouble
 ## when using gcc for linking.  The '-l:' construction is similar to
@@ -824,7 +821,7 @@ r_save_flibs=""
 for arg in ${FLIBS}; do
   case "${arg}" in
     ## this is not for a Fortran main program
-    -lcrt*.o | -lfrtbegin | -lgfortranbegin)
+    -lcrt*.o | -lfrtbegin | -lgfortranbegin | -lmx | -lSystem)
       ;;
     -[[a-zA-Z]]/*\" | -[[a-zA-Z]]*\\) # ifc
       ;;
@@ -955,6 +952,7 @@ ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
 ## Yes we need to double quote this ...
 [cat > conftest.c <<EOF
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
 #ifdef HAVE_F77_UNDERSCORE
 # define F77_SYMBOL(x)   x ## _
@@ -1018,6 +1016,8 @@ ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
 ## Yes we need to double quote this ...
 [cat > conftest.c <<EOF
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "confdefs.h"
 #ifdef HAVE_F77_UNDERSCORE
 # define F77_SYMBOL(x)   x ## _
@@ -1099,7 +1099,9 @@ ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
 ## Yes we need to double quote this ...
 [cat > conftest.c <<EOF
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
+#include <stdio.h>
 #ifdef HAVE_F77_UNDERSCORE
 # define F77_SYMBOL(x)   x ## _
 #else
@@ -1190,6 +1192,171 @@ else
 fi
 ])# R_PROG_F77_FLAG
 
+## R_PROG_OBJC_RUNTIME
+## -------------------
+## Check for ObjC runtime and style.
+## Effects:
+##  * ac_cv_objc_runtime
+##    either "none" or flags necessary to link ObjC runtime
+##    in the latter case they are also appended to OBJC_LIBS
+##  * ac_cv_objc_runtime_style
+##    one of: unknown, gnu, next
+##  * conditionals OBJC_GNU_RUNTIME and OBJC_NEXT_RUNTIME
+AC_DEFUN([R_PROG_OBJC_RUNTIME],
+[
+  ac_has_objc_headers=no
+
+  if test -z "${OBJC}"; then
+    ac_cv_objc_runtime=none
+  else
+
+  AC_LANG_PUSH([Objective C])
+
+  # Don't check for headers, becasue that will require Obj-C preprocessor unconditionally (autoconf bug?)
+  #AC_MSG_CHECKING([for ObjC headers])
+  # Check for common headers
+  #AC_CHECK_HEADERS_ONCE([objc/objc.h objc/objc-api.h objc/Object.h], [ ac_has_objc_headers=yes ], [
+  #  AC_MSG_FAILURE([Objective C runtime headers were not found])
+  #])
+
+  # FIXME: we don't check whether the runtime needs -lpthread which is possible
+  #        (empirically Linux GNU and Apple runtime don't)
+  AC_CACHE_CHECK([for ObjC runtime library], [ac_cv_objc_runtime], [
+    save_OBJCFLAGS="$OBJCFLAGS"
+    save_LIBS="$LIBS"
+    ac_cv_objc_runtime=none
+    for libobjc in objc objc-gnu objc-lf objc-lf2; do
+      LIBS="${save_LIBS} -l${libobjc}"
+      #OBJCFLAGS="$OBJCFLAGS $PTHREAD_CFLAGS -fgnu-runtime"
+      AC_LINK_IFELSE([
+	AC_LANG_PROGRAM([
+#include <objc/Object.h>
+			], [
+  @<:@Object class@:>@;
+			])
+		      ], [
+		        ac_cv_objc_runtime="-l${libobjc}"
+			OBJC_LIBS="${ac_cv_objc_runtime} ${OBJC_LIBS}"
+			break
+		      ])
+    done
+    LIBS="$save_LIBS"
+    OBJCFLAGS="$save_OBJCFLAGS"
+  ])
+
+  if test "${ac_cv_objc_runtime}" != none; then
+  AC_CACHE_CHECK([for ObjC runtime style], [ac_cv_objc_runtime_style], [
+    save_OBJCFLAGS="$OBJCFLAGS"
+    save_LIBS="$LIBS"
+    ac_cv_objc_runtime_style=unknown
+    LIBS="${OBJC_LIBS} $LIBS"
+    for objc_lookup_class in objc_lookup_class objc_lookUpClass; do
+      AC_LINK_IFELSE([
+        AC_LANG_PROGRAM([
+#include <objc/objc.h>
+#include <objc/objc-api.h>
+			], [
+  id class = ${objc_lookup_class} ("Object");
+			])
+		      ], [
+		        if test ${objc_lookup_class} = objc_lookup_class; then
+			  ac_cv_objc_runtime_style=gnu
+			else
+			  ac_cv_objc_runtime_style=next
+			fi
+			break
+		      ])
+    done
+    LIBS="$save_LIBS"
+    OBJCFLAGS="$save_OBJCFLAGS"
+  ])
+  fi
+
+  if test "${ac_cv_objc_runtime_style}" = gnu; then
+    AC_DEFINE([OBJC_GNU_RUNTIME], 1, [Define if using GNU-style Objective C runtime.])
+  fi
+  if test "${ac_cv_objc_runtime_style}" = next; then
+    AC_DEFINE([OBJC_NEXT_RUNTIME], 1, [Define if using NeXT/Apple-style Objective C runtime.])
+  fi
+
+  AC_LANG_POP([Objective C])
+  fi # -n ${OBJC}
+]
+)
+
+## R_PROG_OBJCXX_WORKS(compiler, [action on success], [action on failure])
+## -------------------
+## 
+## Check whether $1 compiles ObjC++ code successfully.
+## The default action on success is to set OBJCXX to $1
+AC_DEFUN([R_PROG_OBJCXX_WORKS],
+[AC_MSG_CHECKING([whether $1 can compile ObjC++])
+## we don't use AC_LANG_xx because ObjC++ is not defined as a language (yet)
+## (the test program is from the gcc test suite)
+cat << \EOF > conftest.mm
+#include <objc/Object.h>
+#include <iostream>
+
+@interface Greeter : Object
+- (void) greet: (const char *)msg;
+@end
+
+@implementation Greeter
+- (void) greet: (const char *)msg { std::cout << msg; }
+@end
+
+int
+main ()
+{
+  std::cout << "Hello from C++\n";
+  Greeter *obj = @<:@Greeter new@:>@;
+  @<:@obj greet: "Hello from Objective-C\n"@:>@;
+}
+EOF
+echo "running: $1 -c conftest.mm ${CPPFLAGS} ${OBJCXXFLAGS}" >&AS_MESSAGE_LOG_FD
+if $1 -c conftest.mm ${CPPFLAGS} ${OBJCXXFLAGS} >&AS_MESSAGE_LOG_FD 2>&1; then
+   AC_MSG_RESULT([yes])
+   rm -f conftest.mm conftest.o
+   m4_default([$2], OBJCXX=$1)
+else
+   AC_MSG_RESULT([no])
+   rm -f conftest.mm
+   [$3]
+fi
+]) # R_PROG_OBJCXX_WORKS
+
+## R_PROG_OBJCXX
+## -------------
+## Check for ObjC++ compiler and set+subst OBJCXX correspondingly.
+##
+## We could add Objective-C++ language definition, but we still hope
+## that autoconf will do that at some point, so we'll confine ourselves
+## to finding a working compiler.
+AC_DEFUN([R_PROG_OBJCXX],
+[AC_BEFORE([AC_PROG_CXX], [$0])
+AC_BEFORE([AC_PROG_OBJC], [$0])
+if test -n "${OBJCXX}"; then
+  AC_MSG_RESULT([defining OBJCXX to be ${OBJCXX}])
+  R_PROG_OBJCXX_WORKS(${OBJCXX},,OBJCXX='')
+fi
+# try the sequence $OBJCXX, $CXX, $OBJC
+if test -z "${OBJCXX}"; then
+  R_PROG_OBJCXX_WORKS(${CXX},,
+    if test -z "${OBJC}"; then
+      R_PROG_OBJCXX_WORKS(${OBJC})
+    fi
+  )
+fi
+AC_MSG_CHECKING([for Objective C++ compiler])
+if test -z "${OBJCXX}"; then
+  AC_MSG_RESULT([no working compiler found])
+else
+  AC_MSG_RESULT([${OBJCXX}])
+fi
+AC_SUBST(OBJCXX)
+])# R_PROG_OBJCXX
+
+
 ### * Library functions
 
 ## R_FUNC___SETFPUCW
@@ -1201,6 +1368,7 @@ AC_DEFUN([R_FUNC___SETFPUCW],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 int main () {
 #include <fpu_control.h>
+#include <stdlib.h>
 #if defined(_FPU_DEFAULT) && defined(_FPU_IEEE)
   exit(_FPU_DEFAULT != _FPU_IEEE);
 #endif
@@ -1247,6 +1415,7 @@ AC_DEFUN([R_FUNC_FINITE],
 [AC_CACHE_CHECK([for working finite], [r_cv_func_finite_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
 int main () {
 #ifdef HAVE_FINITE
@@ -1271,6 +1440,7 @@ AC_DEFUN([R_FUNC_ISFINITE],
 [AC_CACHE_CHECK([for working isfinite], [r_cv_func_isfinite_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
 int main () {
 #ifdef HAVE_DECL_ISFINITE
@@ -1295,6 +1465,7 @@ AC_DEFUN([R_FUNC_LOG],
 [AC_CACHE_CHECK([for working log], [r_cv_func_log_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
 int main () {
 /* we require isnan as from R 2.0.0 */
@@ -1324,6 +1495,7 @@ AC_DEFUN([R_FUNC_LOG1P],
 [AC_CACHE_CHECK([for working log1p], [r_cv_func_log1p_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
+#include <stdlib.h>
 #include "confdefs.h"
 int main () {
 #ifdef HAVE_LOG1P
@@ -1508,26 +1680,29 @@ fi])# R_TYPE_KEYSYM
 
 ## R_X11
 ## -----
+## Updated for R 2.5.0.  We need -lXt, and nowadays that is unbundled.
 AC_DEFUN([R_X11],
 [AC_PATH_XTRA			# standard X11 search macro
 if test -z "${no_x}"; then
-  ## We force the use of -lX11 (perhaps this is not necessary?).
-  X_LIBS="${X_LIBS} -lX11 -lXt"
-  use_X11="yes"
+  ## now we look for Xt and its header: it seems Intrinsic.h is key.
+  r_save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} ${X_CFLAGS}"
+  AC_CHECK_HEADER(X11/Intrinsic.h)
+  CFLAGS="${r_save_CFLAGS}"
+  if test "${ac_cv_header_X11_Intrinsic_h}" = yes ; then
+    AC_CHECK_LIB(Xt, XtToolkitInitialize, [have_Xt=yes], [have_Xt=no],
+                 [${X_LIBS} -lX11])
+    if test "${have_Xt}" = yes; then
+      use_X11="yes"
+    fi
+  fi
+fi
+if test "x${use_X11}" = "xyes"; then
   AC_DEFINE(HAVE_X11, 1,
             [Define if you have the X11 headers and libraries, and want
              the X11 GUI to be built.])
-  r_save_LIBS=${LIBS}
-  if test "$want_utf8_support" == yes ; then
-    LIBS="${LIBS} ${X_LIBS}"
-    AC_CHECK_FUNCS(Xutf8DrawString Xutf8DrawImageString Xutf8LookupString \
-                   Xutf8TextEscapement Xutf8TextExtents \
-                   XmbDrawString XmbDrawImageString XmbLookupString \
-                   XmbTextEscapement XmbTextExtents, , , [#include <X11.h>])
-    LIBS=${r_save_LIBS}
-  fi
+  X_LIBS="${X_LIBS} -lX11 -lXt"
 else
-  use_X11="no"
   if test "x${with_x}" != "xno"; then
     AC_MSG_ERROR(
       [--with-x=yes (default) and X11 headers/libs are not available])
@@ -1535,6 +1710,26 @@ else
 fi
   AC_MSG_RESULT([using X11 ... ${use_X11}])
 ])# R_X11
+
+## R_X11_Xmu
+## ---------
+## test for -lXmu and for X11/Xmu/Xatom.h header (for XA_CLIPBOARD).
+AC_DEFUN([R_X11_Xmu],
+[if test "${use_X11}" = yes; then
+  r_save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} ${X_CFLAGS}"
+  AC_CHECK_HEADER(X11/Xmu/Atoms.h)
+  CFLAGS="${r_save_CFLAGS}"
+  if test "${ac_cv_header_X11_Xmu_Atoms_h}" = yes ; then
+    AC_CHECK_LIB(Xmu, XmuInternAtom, [use_Xmu=yes], [use_Xmu=no], ${X_LIBS})
+    if test "${use_Xmu}" = yes; then
+      AC_DEFINE(HAVE_X11_Xmu, 1,
+                [Define if you have the X11/Xmu headers and libraries.])
+      X_LIBS="${X_LIBS} -lXmu"
+    fi
+  fi
+fi])# R_X11_XMu
+
 
 # R_CHECK_FRAMEWORK(function, framework,
 #                   [action-if-found], [action-if-not-found],
@@ -1580,6 +1775,116 @@ if test "${use_aqua}" = yes; then
              and want the Aqua GUI to be built.])
 fi
 ])# R_AQUA
+
+## R_OBJC_FOUNDATION_TEST
+## ---------------------
+## Checks whether ObjC code using Foundation classes can be compiled and sets
+## ac_objc_foundation_works accordingly (yes/no)
+AC_DEFUN([R_OBJC_FOUNDATION_TEST],
+[
+  if test -n "$1"; then AC_MSG_CHECKING([$1]); fi
+  ac_objc_foundation_works=no
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([
+#import <Foundation/Foundation.h>
+], [[
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  NSString *s = @"hello, world";
+  
+  [pool release];
+]])], [ ac_objc_foundation_works=yes ])
+  if test "${ac_objc_foundation_works}" = yes; then
+    if test -n "$1"; then AC_MSG_RESULT(yes); fi
+    [$2]
+  else
+    if test -n "$1"; then AC_MSG_RESULT(no); fi
+    [$3]
+  fi
+])
+
+## R_OBJC_FOUNDATION
+## -----------------
+## Checks whether a Foundation framework implementation is available.
+## * ac_objc_foundation: yes|no
+## * FOUNDATION_CPPFLAGS, FOUNDATION_LIBS (subst)
+##
+## Currently supports (in order of precedence):
+## - native (or custom FOUNDATION_LIBS/CPPFLAGS)
+## - Apple Foundation (via -framework Foundation)
+## - libFoundation
+## - GNUstep
+AC_DEFUN([R_OBJC_FOUNDATION],
+[
+  ac_objc_foundation=no
+  if test -n "${OBJC}"; then
+
+  AC_LANG_PUSH([Objective C])
+  rof_save_LIBS="${LIBS}"
+  rof_save_CPPFLAGS="${CPPFLAGS}"
+  LIBS="${LIBS} ${FOUNDATION_LIBS}"
+  CPPFLAGS="${CPPFLAGS} ${FOUNDATION_CPPFLAGS}"
+  R_OBJC_FOUNDATION_TEST([whether default Foundation framework works])
+  if test "${ac_objc_foundation_works}" != yes; then
+    LIBS="${rof_save_LIBS} -framework Foundation"
+    CPPFLAGS="${rof_save_CPPFLAGS}"
+    R_OBJC_FOUNDATION_TEST([whether -framework Foundation works],
+      [FOUNDATION_LIBS='-framework Foundation'])
+  fi
+  if test "${ac_objc_foundation_works}" != yes; then
+    LIBS="${rof_save_LIBS} -lFoundation ${OBJC_LIBS}"
+    R_OBJC_FOUNDATION_TEST([whether libFoundation works],
+      [FOUNDATION_LIBS='-lFoundation'])
+  fi
+  if test "${ac_objc_foundation_works}" != yes; then
+    LIBS="${rof_save_LIBS}"
+    ac_working_gnustep=no
+    AC_MSG_CHECKING([for GNUstep])
+    if test -z "${GNUSTEP_SYSTEM_ROOT}"; then
+      for dir in /usr/lib/GNUstep /usr/local/lib/GNUstep; do
+	if test -e "${dir}/System/Makefiles"; then GNUSTEP_SYSTEM_ROOT="${dir}/System"; break; fi
+      done
+    fi
+    if test -z "${GNUSTEP_SYSTEM_ROOT}"; then
+      AC_MSG_RESULT([no])
+    else
+      AC_MSG_RESULT([in ${GNUSTEP_SYSTEM_ROOT}])
+      # this is a hack - we extract the relevant flags from GNUstep's makefiles.
+      # in order to do that, we must setup the entire GNUstep environment which we do
+      # in a separate script as to not pollute configure's environment
+      cat << EOF > gnusteptest.sh
+#!/bin/sh
+. ${GNUSTEP_SYSTEM_ROOT}/Library/Makefiles/GNUstep.sh
+${MAKE} -s -f gnustepmake -f \${GNUSTEP_MAKEFILES}/common.make -f \${GNUSTEP_MAKEFILES}/rules.make \${1}
+EOF
+	   cat << \EOF > gnustepmake
+printcppflags: FORCE
+	@echo $(ALL_CPPFLAGS) $(ADDITIONAL_OBJCFLAGS) $(AUXILIARY_OBJCFLAGS) $(GNUSTEP_HEADERS_FLAGS)
+printlibs: FORCE
+	@echo $(ALL_LIB_DIRS) $(FND_LIBS) $(ADDITIONAL_OBJC_LIBS) $(AUXILIARY_OBJC_LIBS) $(OBJC_LIBS) $(SYSTEM_LIBS) $(TARGET_SYSTEM_LIBS)
+FORCE:
+EOF
+	GNUSTEP_CPPFLAGS=`sh gnusteptest.sh printcppflags`  
+	GNUSTEP_LIBS=`sh gnusteptest.sh printlibs`
+	#echo "  GNUstep CPPFLAGS: ${GNUSTEP_CPPFLAGS}"
+	#echo "  GNUstep LIBS: ${GNUSTEP_LIBS}"
+	LIBS="${rof_save_LIBS} ${GNUSTEP_LIBS}"
+	CPPFLAGS="${rof_save_CPPFLAGS} ${GNUSTEP_CPPFLAGS}"
+	rm -f gnusteptest.sh gnustepmake
+	R_OBJC_FOUNDATION_TEST([whether GNUstep works],[
+	  FOUNDATION_CPPFLAGS="${GNUSTEP_CPPFLAGS}"
+	  FOUNDATION_LIBS="${GNUSTEP_LIBS}"])
+    fi # -n GNUSTEP_SYSTEM_ROOT
+  fi
+  LIBS="${rof_save_LIBS}"
+  CPPFLAGS="${rof_save_CPPFLAGS}"
+  AC_SUBST(FOUNDATION_CPPFLAGS)
+  AC_SUBST(FOUNDATION_LIBS)
+  AC_LANG_POP([Objective C])
+  ac_objc_foundation=${ac_objc_foundation_works}
+
+  fi # -n ${OBJC}
+  AC_MSG_CHECKING([for working Foundation implementation])
+  AC_MSG_RESULT(${ac_objc_foundation})
+])
 
 ## R_IEEE_754
 ## ----------
@@ -2595,6 +2900,7 @@ AC_DEFUN([_R_HEADER_ZLIB],
 [AC_CACHE_CHECK([if zlib version >= 1.2.1],
                 [r_cv_header_zlib_h],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
 int main() {
@@ -2616,6 +2922,7 @@ AC_DEFUN([_R_ZLIB_MMAP],
 [AC_CACHE_CHECK([mmap support for zlib],
                 [r_cv_zlib_mmap],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -2837,7 +3144,7 @@ AC_CACHE_CHECK(for iconv, ac_cv_func_iconv, [
 if test "$ac_cv_func_iconv" != no; then
   AC_DEFINE(HAVE_ICONV, 1, [Define if you have the `iconv' function.])
 
-  AC_CACHE_CHECK([whether iconv() accepts "UTF-8", "latin1" and "UCS-*"],
+  AC_CACHE_CHECK([whether iconv accepts "UTF-8", "latin1" and "UCS-*"],
   [r_cv_iconv_latin1],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include "confdefs.h"
@@ -3168,6 +3475,105 @@ int main () {
     AC_DEFINE(HAVE_KERN_USRSTACK, 1, [Define if KERN_USRSTACK sysctl is supported.])
   fi
 ])
+
+
+## R_PUTENV_AS_UNSETENV
+## --------------------
+## On some OSes putenv can unset an environment variable via
+## putenv(FOO) (glibc >= 2.2) or putenv(FOO=) (Windows)
+AC_DEFUN([R_PUTENV_AS_UNSETENV],
+[
+  AC_CACHE_CHECK([whether putenv("FOO") can unset an environment variable],
+  [r_cv_putenv_unset],
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <stdlib.h>
+#include <string.h>
+int main()
+{
+    char *p;
+#ifdef HAVE_PUTENV
+    putenv("R_TEST=testit");
+    p = getenv("R_TEST");
+    if(!p) exit(10);
+    if(strcmp(p, "testit")) exit(11);
+    putenv("R_TEST");
+    p = getenv("R_TEST");
+    if(!p) exit(0);
+#endif
+    exit(1);
+}
+  ]])], [r_cv_putenv_unset=yes], [r_cv_putenv_unset=no], 
+    [r_cv_putenv_unset=no])])
+
+  if test $r_cv_putenv_unset = yes; then
+    AC_DEFINE(HAVE_PUTENV_UNSET, 1, [Define if putenv("FOO") can unset an environment variable])
+  fi
+]
+[
+  AC_CACHE_CHECK([whether putenv("FOO=") can unset an environment variable],
+  [r_cv_putenv_unset2],
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <stdlib.h>
+#include <string.h>
+int main()
+{
+    char *p;
+#ifdef HAVE_PUTENV
+    putenv("R_TEST=testit");
+    p = getenv("R_TEST");
+    if(!p) exit(10);
+    if(strcmp(p, "testit")) exit(11);
+    putenv("R_TEST=");
+    p = getenv("R_TEST");
+    if(!p) exit(0);
+#endif
+    exit(1);
+}
+  ]])], [r_cv_putenv_unset2=yes], [r_cv_putenv_unset2=no], 
+    [r_cv_putenv_unset2=no])])
+
+  if test $r_cv_putenv_unset2 = yes; then
+    AC_DEFINE(HAVE_PUTENV_UNSET2, 1, [Define if putenv("FOO=") can unset an environment variable])
+  fi
+]
+)
+
+## R_FUNC_SIGACTION
+## ----------------
+## Some people claim that the SA_SIGINFO flag is an extension,
+## despite the clarity of POSIX markup.  One such case is Hurd.
+AC_DEFUN([R_FUNC_SIGACTION],
+[
+  AC_CACHE_CHECK([for working sigaction],
+                 [r_cv_func_sigaction_works],
+                 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <stdlib.h>
+#include <signal.h>
+int main ()
+{
+    struct sigaction sa;
+    siginfo_t si, *ip;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_ONSTACK | SA_SIGINFO;
+    ip = &si;
+    {
+	void *addr = ip->si_addr;
+	int code = ip->si_code;
+    } 
+    exit(0);
+}
+]])],
+               [r_cv_func_sigaction_works=yes],
+               [r_cv_func_sigaction_works=no],
+               [r_cv_func_sigaction_works=no])])
+  if test "x${r_cv_func_sigaction_works}" = xyes; then
+    AC_DEFINE(HAVE_WORKING_SIGACTION, 1, 
+              [Define if sigaction() is complete enough for R's usage])
+  fi
+])# R_FUNC_SIGACTION
 
 
 ### Local variables: ***

@@ -3,6 +3,7 @@
 \alias{trace}
 \alias{untrace}
 \alias{tracingState}
+\alias{.doTrace}
 %% internal
 \alias{.primTrace}
 \alias{.primUntrace}
@@ -20,6 +21,7 @@ trace(what, tracer, exit, at, print, signature,
 untrace(what, signature = NULL, where = topenv(parent.frame()))
 
 tracingState(on = NULL)
+.doTrace(expr, msg)
 }
 \arguments{
   \item{what}{The name (quoted or not) of a function to be traced or
@@ -57,24 +59,30 @@ tracingState(on = NULL)
     \code{trace}.
 
     An important use of this argument is to trace a function when it
-  is called from a package with a namespace.  The current namespace mechanism
+  is called from a package with a name space.  The current name space mechanism
   imports the functions to be called (with the exception of functions
   in the base package).  The functions being called are \emph{not} the
   same objects seen from the top-level (in general, the imported
   packages may not even be attached).  Therefore, you must ensure that
   the correct versions are being traced.  The way to do this is to set
-  argument \code{where} to a function in the namespace.  The tracing
+  argument \code{where} to a function in the name space.  The tracing
   computations will then start looking in the environment of that
-  function (which will be the namespace of the corresponding package).
+  function (which will be the name space of the corresponding package).
   (Yes, it's subtle, but the semantics here are central to how
-  namespaces work in R.)
+  name spaces work in R.)
   }
-  \item{on}{logical; a call to \code{tracingState} returns \code{TRUE}
+  \item{on}{logical; a call to  the support function \code{tracingState} returns \code{TRUE}
     if tracing is globally turned on, \code{FALSE} otherwise.  An
     argument of one or the other of those values sets the state.  If the
     tracing state is \code{FALSE}, none of the trace actions will
     actually occur (used, for example, by debugging functions to shut
     off tracing during debugging).}
+  \item{expr, msg} { arguments to the support function \code{.doTrace}, calls to
+      which are inserted into the modified function or method:
+      \code{expr} is the tracing action (such as a call to
+      \code{browser()}, and \code{msg} is a string identifying the
+      place where the trace action occurs.
+    }
 }
 \details{
   The \code{trace} function operates by constructing a revised version
@@ -174,7 +182,7 @@ tracingState(on = NULL)
   versions of the traced functions).
 
   If methods dispatch is not currently on, \code{trace} will load the
-  methods namespace, but will not put the methods package on the search
+  methods name space, but will not put the methods package on the search
   list.
 }
 \value{
@@ -228,7 +236,7 @@ if(.isMethodsDispatchOn()) { # non-simple use needs 'methods' package
 
  \dontrun{
  ## trace calls to the function lm() that come from the nlme package
- ## (The function nlme is in that package, and the package has a namespace,
+ ## (The function nlme is in that package, and the package has a name space,
  ## so the where= argument must be used to get the right version of lm)
 
  trace(lm, exit = recover, where = nlme)

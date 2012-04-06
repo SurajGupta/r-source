@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004        The R Foundation
- *  Copyright (C) 2004-5      The R Development Core Team
+ *  Copyright (C) 2004-7      The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <Defn.h>
 #include <Graphics.h>
 #include <Rdevices.h>
+#include <Fileio.h>
 #include <stdio.h>
 #include "opt.h"
 #include "graphapp/ga.h"
@@ -341,7 +342,7 @@ static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 		       fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
 					GE_INCHES, gdd),
 		       (double)0, ((gadesc*) dd->deviceSpecific)->basefontsize,
-		       0, 1, 0, "", "R Graphics Output", R_NilValue))
+		       0, 1, 0, "", "R Graphics Output", R_NilValue, "rgb"))
 	/* horizontal=F, onefile=F, pagecentre=T, print.it=F */
 	PrivateCopyDevice(dd, ndd, "postscript");
 }
@@ -842,15 +843,16 @@ static void menufilebitmap(control m)
     NewDevDesc *dd = (NewDevDesc *) getdata(m);
     gadesc *xd = (gadesc *) dd->deviceSpecific;
     char *fn;
-    if (m==xd->mpng) {
+    /* the following use a private hook to set the default extension */
+    if (m == xd->mpng) {
       setuserfilter(G_("Png files (*.png)\0*.png\0\0"));
-      fn = askfilesave(G_("Portable network graphics file"), "");
-    } else if (m==xd->mbmp) {
+      fn = askfilesave(G_("Portable network graphics file"), "|.png");
+    } else if (m == xd->mbmp) {
       setuserfilter(G_("Windows bitmap files (*.bmp)\0*.bmp\0\0"));
-      fn = askfilesave(G_("Windows bitmap file"), "");
+      fn = askfilesave(G_("Windows bitmap file"), "|.bmp");
     } else {
       setuserfilter(G_("Jpeg files (*.jpeg,*jpg)\0*.jpeg;*.jpg\0\0"));
-      fn = askfilesave(G_("Jpeg file"), "");
+      fn = askfilesave(G_("Jpeg file"), "|.jpg");
     }
     if (!fn) return;
     gsetcursor(xd->gawin, WatchCursor);
@@ -871,7 +873,7 @@ static void menups(control m)
     char  *fn;
 
     setuserfilter(G_("Postscript files (*.ps)\0*.ps\0All files (*.*)\0*.*\0\0"));
-    fn = askfilesave(G_("Postscript file"), "");
+    fn = askfilesave(G_("Postscript file"), "|.ps");
     if (!fn) return;
     SaveAsPostscript(dd, fn);
 }
@@ -883,7 +885,7 @@ static void menupdf(control m)
     char  *fn;
 
     setuserfilter(G_("PDF files (*.pdf)\0*.pdf\0All files (*.*)\0*.*\0\0"));
-    fn = askfilesave(G_("PDF file"), "");
+    fn = askfilesave(G_("PDF file"), "|.pdf");
     if (!fn) return;
     SaveAsPDF(dd, fn);
 }
@@ -895,7 +897,7 @@ static void menuwm(control m)
     char  display[550], *fn;
 
     setuserfilter(G_("Enhanced metafiles (*.emf)\0*.emf\0All files (*.*)\0*.*\0\0"));
-    fn = askfilesave(G_("Enhanced metafiles"), "");
+    fn = askfilesave(G_("Enhanced metafiles"), "|.emf");
     if (!fn) return;
     if(strlen(fn) > 512) {
 	askok(G_("file path selected is too long: only 512 bytes are allowed"));
@@ -1427,6 +1429,7 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     int   iw, ih;
     int   cw, ch;
     double dw, dw0, dh, d;
+    char buf[100];
 
     xd->kind = SCREEN;
     if (R_FINITE(user_xpinch) && user_xpinch > 0.0)
@@ -1481,7 +1484,7 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
 
     addto(xd->gawin);
     gsetcursor(xd->gawin, ArrowCursor);
-    if (ismdi() && (RguiMDI & RW_TOOLBAR)) {
+    if (ismdi()) {
 	int btsize = 24;
 	rect r = rect(2, 2, btsize, btsize);
 	control bt, tb;
@@ -1543,9 +1546,13 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     MCHECK(xd->mpng = newmenuitem(G_("Png..."), 0, menufilebitmap));
     MCHECK(xd->mbmp = newmenuitem(G_("Bmp..."), 0, menufilebitmap));
     MCHECK(newsubmenu(xd->msubsave,G_("Jpeg")));
-    MCHECK(xd->mjpeg50 = newmenuitem(G_("50% quality..."), 0, menufilebitmap));
-    MCHECK(xd->mjpeg75 = newmenuitem(G_("75% quality..."), 0, menufilebitmap));
-    MCHECK(xd->mjpeg100 = newmenuitem(G_("100% quality..."), 0, menufilebitmap));
+    /* avoid gettext confusion with % */ 
+    snprintf(buf, 100, G_("%s quality..."), "50%");
+    MCHECK(xd->mjpeg50 = newmenuitem(buf, 0, menufilebitmap));
+    snprintf(buf, 100, G_("%s quality..."), "75%");
+    MCHECK(xd->mjpeg75 = newmenuitem(buf, 0, menufilebitmap));
+    snprintf(buf, 100, G_("%s quality..."), "100%");
+    MCHECK(xd->mjpeg100 = newmenuitem(buf, 0, menufilebitmap));
     MCHECK(newsubmenu(m, G_("Copy to the clipboard")));
     MCHECK(xd->mclpbm = newmenuitem(G_("as a Bitmap\tCTRL+C"), 0, menuclpbm));
     MCHECK(xd->mclpwm = newmenuitem(G_("as a Metafile\tCTRL+W"), 0, menuclpwm));
@@ -1624,6 +1631,7 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     setdata(xd->mR, (void *) dd);
     setdata(xd->mfit, (void *) dd);
     setdata(xd->mfix, (void *) dd);
+    if (ismdi() && !(RguiMDI & RW_TOOLBAR)) toolbar_hide();
     show(xd->gawin); /* twice, for a Windows bug */
     show(xd->gawin);
     BringToTop(xd->gawin, 0);
@@ -1713,7 +1721,7 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    return FALSE;
 	}
 	snprintf(buf, 600, xd->filename, 1);
-	if ((xd->fp = fopen(buf, "wb")) == NULL) {
+	if ((xd->fp = R_fopen(buf, "wb")) == NULL) {
 	    del(xd->gawin);
 	    warning(_("Unable to open file '%s' for writing"), buf);
 	    return FALSE;
@@ -1741,7 +1749,7 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    return FALSE;
 	}
 	snprintf(buf, 600, xd->filename, 1);
-	if ((xd->fp = fopen(buf, "wb")) == NULL) {
+	if ((xd->fp = R_fopen(buf, "wb")) == NULL) {
 	    del(xd->gawin);
 	    warning(_("Unable to open file '%s' for writing"), buf);
 	    return FALSE;
@@ -2021,7 +2029,7 @@ static void GA_NewPage(R_GE_gcontext *gc,
 	char buf[600];
 	SaveAsBitmap(dd, xd->res_dpi);
 	snprintf(buf, 600, xd->filename, xd->npage);
-	if ((xd->fp = fopen(buf, "wb")) == NULL)
+	if ((xd->fp = R_fopen(buf, "wb")) == NULL)
 	    error(_("Unable to open file '%s' for writing"), buf);
     }
     if (xd->kind == SCREEN) {
@@ -2093,10 +2101,8 @@ static void GA_Close(NewDevDesc *dd)
 	hide(xd->gawin);
 	
 	del(xd->bm);
+	/* If this is the active device and buffered, shut updates off */
 	if (xd == GA_xd) GA_xd = NULL;
-	/* graphapp will do this for us
-	deleteGraphMenus(devNumber((DevDesc*) dd) + 1);
-	*/
     } else if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) {
 	SaveAsBitmap(dd, xd->res_dpi);
     } 
@@ -2106,6 +2112,8 @@ static void GA_Close(NewDevDesc *dd)
  * this is needed since the GraphApp delayed clean-up
  * ,i.e, I want free all resources NOW
  */
+    /* I think the concern is rather to run all pending events on the
+       device (but also on the console and others) */
     doevent();
     free(xd);
 }
@@ -2819,7 +2827,7 @@ static void SaveAsPng(NewDevDesc *dd,char *fn)
 	R_ShowMessage(_("Impossible to load Rbitmap.dll"));
 	return;
     }
-    if ((fp=fopen(fn, "wb")) == NULL) {
+    if ((fp = R_fopen(fn, "wb")) == NULL) {
 	char msg[MAX_PATH+32];
 
 	strcpy(msg, "Impossible to open ");
@@ -2852,7 +2860,7 @@ static void SaveAsJpeg(NewDevDesc *dd,int quality,char *fn)
 	R_ShowMessage(_("Impossible to load Rbitmap.dll"));
 	return;
     }
-    if ((fp=fopen(fn,"wb")) == NULL) {
+    if ((fp = R_fopen(fn,"wb")) == NULL) {
 	char msg[MAX_PATH+32];
 	strcpy(msg, "Impossible to open ");
 	strncat(msg, fn, MAX_PATH);
@@ -2885,7 +2893,7 @@ static void SaveAsBmp(NewDevDesc *dd,char *fn)
 	R_ShowMessage(_("Impossible to load Rbitmap.dll"));
 	return;
     }
-    if ((fp=fopen(fn, "wb")) == NULL) {
+    if ((fp = R_fopen(fn, "wb")) == NULL) {
 	char msg[MAX_PATH+32];
 
 	strcpy(msg, _("Impossible to open "));

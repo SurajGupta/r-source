@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file console.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
- *  Copyright (C) 2004-6      The R Foundation
+ *  Copyright (C) 2004-7      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,10 +29,8 @@ extern Rboolean mbcslocale;
 
 /* Use of strchr here is MBCS-safe */
 
-#ifdef Win32
 #define USE_MDI 1
 extern void R_ProcessEvents(void);
-#endif
 
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
@@ -50,10 +48,13 @@ extern void R_ProcessEvents(void);
 #include "rui.h"
 #include "getline/getline.h"
 #include "Startup.h" /* for UImode */
+#include <Fileio.h>
 
 extern char *alloca(size_t);
 
 extern UImode  CharacterMode;
+
+static void performCompletion(control c);
 
 #define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
 
@@ -751,7 +752,12 @@ void consoleflush(control c)
 #define CHARTRANS 20
 #define OVERWRITE 15
 #define EOFKEY 26
-/* free ^G ^Q ^R ^S, perhaps ^I ^J */
+
+/* ^I for completion */
+
+#define TABKEY 9
+
+/* free ^G ^Q ^R ^S, perhaps ^J */
 
 static void storekey(control c,int k)
 {
@@ -759,12 +765,120 @@ static void storekey(control c,int k)
 
     if (p->kind == PAGER) return;
     if (k == BKSP) k = BACKCHAR;
+    if (k == TABKEY) {
+        performCompletion(c); 
+	return;
+    }
     if (p->numkeys >= NKEYS) {
 	gabeep();
 	return;;
      }
      p->kbuf[(p->firstkey + p->numkeys) % NKEYS] = k;
      p->numkeys++;
+}
+
+
+
+#include <Rinternals.h>
+#include <R_ext/Parse.h>
+
+static int rcompgen_available = -1;
+
+static void performCompletion(control c)
+{
+    ConsoleData p = getdata(c);
+    int i, alen, max_show = 10, cursor_position = p->c - prompt_wid;
+    char *partial_line = LINE(NUMLINES - 1) + prompt_wid;
+    char *additional_text;
+    char *pline, *cmd;
+    SEXP cmdSexp, cmdexpr, ans = R_NilValue;
+    ParseStatus status;
+
+    if(!rcompgen_available) return;
+    
+    if(rcompgen_available < 0) {
+	char *p = getenv("R_COMPLETION");
+	if(p && strcmp(p, "FALSE") == 0) {
+	    rcompgen_available = 0;
+	    return;	    
+	}
+	/* First check if namespace is loaded */
+	if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	   != R_UnboundValue) rcompgen_available = 1;
+	else { /* Then try to load it */
+	    char *p = "try(loadNamespace('rcompgen'), silent=TRUE)";
+	    PROTECT(cmdSexp = mkString(p));
+	    cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+	    if(status == PARSE_OK) {
+		for(i = 0; i < length(cmdexpr); i++)
+		    eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
+	    }
+	    UNPROTECT(2);
+	    if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	       != R_UnboundValue) rcompgen_available = 1;
+	    else {
+		rcompgen_available = 0;
+		return;
+	    }
+	}
+    }
+
+    /* FIXME: need to escape quotes properly */
+    pline = alloca(strlen(partial_line) + 1);
+    strcpy(pline, partial_line);
+    /* poor attempt at escaping quotes that sort of works */
+    alen = strlen(pline);
+    for (i = 0; i < alen; i++)
+        if (pline[i] == '"') pline[i] = '\'';
+
+    cmd = alloca(strlen(pline) + 100);
+    sprintf(cmd, "rcompgen:::.win32consoleCompletion(\"%s\", %d)",
+	    pline, cursor_position);
+    PROTECT(cmdSexp = mkString(cmd));
+    cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+    if (status != PARSE_OK) {
+	UNPROTECT(2);
+	/* Uncomment next line to debug */
+	/* Rprintf("failed: %s \n", cmd); */
+	/* otherwise pretend that nothing happened and return */
+	return;
+    }
+    /* Loop is needed here as EXPSEXP will be of length > 1 */
+    for(i = 0; i < length(cmdexpr); i++)
+	ans = eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
+    UNPROTECT(2);
+
+    /* ans has the form list(addition, possible), where 'addition' is
+       unique additional text if any, and 'possible' is a character
+       vector holding possible completions if any (already formatted
+       for linewise printing in the current implementation).  If
+       'possible' has any content, we want to print those (or show in
+       status bar or whatever).  Otherwise add the 'additional' text
+       at the cursor */
+
+#define ADDITION 0
+#define POSSIBLE 1
+
+    alen = length(VECTOR_ELT(ans, POSSIBLE));
+    if (alen) {
+        /* make a copy of the current string first */
+	char *buf1, *p1 = LINE(NUMLINES - 1);
+	buf1 = alloca(strlen(p1) + 1);
+	sprintf(buf1,"%s\n", p1);
+	consolewrites(c, buf1);
+
+	for (i = 0; i < min(alen, max_show); i++) {
+	    consolewrites(c, CHAR(STRING_ELT(VECTOR_ELT(ans, POSSIBLE), i)));
+	    consolewrites(c, "\n");
+	}
+	if (alen > max_show)
+	    consolewrites(c, "\n[...truncated]\n");
+    }
+    additional_text = CHAR(STRING_ELT( VECTOR_ELT(ans, ADDITION), 0 ));
+    alen = strlen(additional_text);
+    if (alen) 
+	for (i = 0; i < alen; i++) storekey(c, additional_text[i]);
+    return;
 }
 
 void consolecmd(control c, char *cmd)
@@ -1831,7 +1945,7 @@ void consolesavefile(console c, int pager)
         fn = askfilesave(G_("Save console contents to"), "lastsave.txt");
     show(c);
     if (fn) {
-	fp = fopen(fn, "wt");
+	fp = R_fopen(fn, "wt");
 	if (!fp) return;
 	cur = currentcursor();
 	setcursor(WatchCursor);
@@ -1953,6 +2067,7 @@ void  consolehelp()
     strcat(s,G_("\nNote: Console is updated only when some input is required.\n"));
     strcat(s,G_("  Use Ctrl+W to toggle this feature off/on.\n\n"));
     strcat(s,G_("Use ESC to stop the interpreter.\n\n"));
+    strcat(s,G_("TAB starts completion of the current word.\n\n"));
     strcat(s,G_("Standard Windows hotkeys can be used to switch to the\n"));
     strcat(s,G_("graphics device (Ctrl+Tab or Ctrl+F6 in MDI, Alt+Tab in SDI)"));
     askok(s);

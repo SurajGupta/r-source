@@ -40,10 +40,13 @@ function(package, dir, lib.loc = NULL)
 
         all_doc_topics <- Rd_aliases(dir = dir)
 
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_env <- new.env()
         code_dir <- file.path(dir, "R")
         if(file_test("-d", code_dir)) {
-            .source_assignments_in_code_dir(code_dir, code_env)
+            .source_assignments_in_code_dir(code_dir, code_env, enc)
             sys_data_file <- file.path(code_dir, "sysdata.rda")
             if(file_test("-f", sys_data_file))
                 load(sys_data_file, code_env)
@@ -58,7 +61,7 @@ function(package, dir, lib.loc = NULL)
             nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
             ## Look only at exported objects (and not declared S3
             ## methods).
-            OK <- code_objs[code_objs %in% nsInfo$exports]
+            OK <- intersect(code_objs, nsInfo$exports)
             for(p in nsInfo$exportPatterns)
                 OK <- c(OK, grep(p, code_objs, value = TRUE))
             code_objs <- unique(OK)
@@ -111,13 +114,13 @@ function(package, dir, lib.loc = NULL)
         }
     }
 
-    ## Undocumented objects?
+    ## There was a time when packages contained code or data (or both).
+    ## But not anymore ...
     if(!missing(package)
        && (length(code_objs) == 0)
-       && (length(data_objs) == 0))
-        warning("neither code nor data objects found")
-    ## When working on the sources, we will not get any code objects in
-    ## case a package provides "just" S4 classes and methods.
+       && (length(data_objs) == 0)
+       && getOption("verbose"))
+        message("neither code nor data objects found")
 
     if(!is_base) {
         ## Code objects in add-on packages with names starting with a
@@ -144,13 +147,14 @@ function(package, dir, lib.loc = NULL)
         ## In the long run we need dynamic documentation.
         if(.isMethodsDispatchOn()) {
             code_objs <-
-                code_objs[sapply(code_objs, function(f) {
-                    fdef <- get(f, envir = code_env)
-                    if(methods::is(fdef, "genericFunction"))
-                        fdef@package == pkgname
-                    else
-                        TRUE
-                }) == TRUE]
+                .filter(code_objs,
+                        function(f) {
+                            fdef <- get(f, envir = code_env)
+                            if(methods::is(fdef, "genericFunction"))
+                                fdef@package == pkgname
+                            else
+                                TRUE
+                        })
         }
         ## </FIXME>
 
@@ -187,7 +191,7 @@ function(package, dir, lib.loc = NULL)
         ## The bad ones:
         S4_classes <-
             S4_classes[!sapply(S4_classes,
-                               function(u) utils::topicName("class", u))
+                               function(u) utils:::topicName("class", u))
                        %in% all_doc_topics]
         undoc_things <-
             c(undoc_things, list("S4 classes" = unique(S4_classes)))
@@ -224,7 +228,7 @@ function(package, dir, lib.loc = NULL)
                 penv <- parent.env(penv)
             else
                 penv <- parent.env(code_env)
-            if((f %in% methods::getGenerics(penv))
+            if((f %in% .get_S4_generics_really_in_env(penv))
                && !is.null(mlist_from_penv <-
                            methods::getMethodsMetaData(f, penv))) {
                 classes_from_penv <-
@@ -241,15 +245,15 @@ function(package, dir, lib.loc = NULL)
             else
                 character()
         }
-        S4_methods <-
-            sapply(methods::getGenerics(code_env), methodsSignatures)
-        S4_methods <-
-            as.character(unlist(S4_methods, use.names = FALSE))
+        S4_methods <- sapply(.get_S4_generics_really_in_env(code_env),
+                             methodsSignatures)
+        S4_methods <- as.character(unlist(S4_methods, use.names = FALSE))
+        
         ## The bad ones:
         S4_methods <-
             S4_methods[!sapply(S4_methods,
                                function(u)
-                               utils::topicName("method", u))
+                               utils:::topicName("method", u))
                        %in% all_doc_topics]
         undoc_things <-
             c(undoc_things,
@@ -257,6 +261,24 @@ function(package, dir, lib.loc = NULL)
                    unique(sub("([^,]*),(.*)",
                               "generic '\\1' and siglist '\\2'",
                               S4_methods))))
+    }
+    if(is_base) {
+        ## we use .ArgsEnv and .GenericArgsEnv in checkS3methods and codoc,
+        ## so we check here that the set of primiitives has not been changed.
+        base_funs <- ls("package:base", all=TRUE)
+        prim <- sapply(base_funs, function(x) is.primitive(get(x, "package:base")))
+        prims <- base_funs[prim]
+        prototypes <- sort(c(ls(envir=.ArgsEnv, all=TRUE),
+                             ls(envir=.GenericArgsEnv, all=TRUE)))
+        extras <- prototypes %w/o% prims
+        if(length(extras))
+            undoc_things <- c(undoc_things, list(prim_extra=extras))
+        langElts <- c("$","$<-","&&","(",":","@","[","[[",
+                      "[[<-","[<-","{","||","~","<-","<<-","=","break","for",
+                      "function","if","next","repeat","return", "while")
+        miss <- prims %w/o% c(langElts, prototypes)
+        if(length(miss))
+            undoc_things <- c(undoc_things, list(primitives=miss))
     }
 
     class(undoc_things) <- "undoc"
@@ -277,6 +299,8 @@ function(x, ...)
                       gettext("Undocumented S4 classes:"),
                       "S4 methods" =
                       gettext("Undocumented S4 methods:"),
+                      prim_extra =
+                      gettext("Prototyped non-primitives:"),
                       gettextf("Undocumented %s:", tag))
         writeLines(msg)
         ## We avoid markup for indicating S4 methods, hence need to
@@ -367,8 +391,11 @@ function(package, dir, lib.loc = NULL,
         package_name <- basename(dir)
         is_base <- package_name == "base"
 
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_env <- new.env()
-        .source_assignments_in_code_dir(code_dir, code_env)
+        .source_assignments_in_code_dir(code_dir, code_env, enc)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -386,37 +413,51 @@ function(package, dir, lib.loc = NULL,
             ns_env <- code_env
             nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
             ## Look only at exported objects.
-            OK <- objects_in_code[objects_in_code %in% nsInfo$exports]
+            OK <- intersect(objects_in_code, nsInfo$exports)
             for(p in nsInfo$exportPatterns)
                 OK <- c(OK, grep(p, objects_in_code, value = TRUE))
             objects_in_code <- unique(OK)
         }
     }
 
+    ## Find the data sets to work on.
+    data_dir <- file.path(dir, "data")
+    data_sets_in_code <- if(file_test("-d", data_dir))
+        names(.try_quietly(list_data_in_pkg(dataDir = data_dir)))
+    else
+        character()
+
     ## Find the function objects to work on.
     functions_in_code <-
-        objects_in_code[sapply(objects_in_code,
-                               function(f) {
-                                   f <- get(f, envir = code_env)
-                                   is.function(f) && (length(formals(f)) > 0)
-                               }) == TRUE]
+        .filter(objects_in_code,
+                function(f) {
+                    f <- get(f, envir = code_env)
+                    is.function(f) && (length(formals(f)) > 0)
+                })
     ## <FIXME>
     ## Sourcing all R code files in the package is a problem for base,
     ## where this misses the .Primitive functions.  Hence, when checking
     ## base for objects shown in \usage but missing from the code, we
     ## get the primitive functions from the version of R we are using.
     ## Maybe one day we will have R code for the primitives as well ...
+    ## As from R 2.5.0 we do for most generics.
     if(is_base) {
         objects_in_base <-
             objects(envir = baseenv(), all.names = TRUE)
         objects_in_code <-
             c(objects_in_code,
-              objects_in_base[sapply(objects_in_base,
-                                     .is_primitive,
-                                     baseenv())],
+              .filter(objects_in_base, .is_primitive, baseenv()),
               c(".First.lib", ".Last.lib", ".Random.seed",
                 ".onLoad", ".onAttach", ".onUnload"))
         objects_in_code_or_namespace <- objects_in_code
+        known_env <- .make_S3_primitive_generic_env(code_env, fixup=TRUE)
+        extras <- ls(known_env, all = TRUE)
+        functions_in_code <- c(functions_in_code, extras)
+        code_env <- known_env
+        known_env <- .make_S3_primitive_nongeneric_env(code_env)
+        extras <- ls(known_env, all = TRUE)
+        functions_in_code <- c(functions_in_code, extras)
+        code_env <- known_env
     }
     ## </FIXME>
 
@@ -428,11 +469,11 @@ function(package, dir, lib.loc = NULL,
     names(function_args_in_code) <- functions_in_code
     if(has_namespace) {
         functions_in_ns <-
-            objects_in_ns[sapply(objects_in_ns,
-                                 function(f) {
-                                     f <- get(f, envir = ns_env)
-                                     is.function(f) && (length(formals(f)) > 0)
-                                 }) == TRUE]
+            .filter(objects_in_ns,
+                    function(f) {
+                        f <- get(f, envir = ns_env)
+                        is.function(f) && (length(formals(f)) > 0)
+                    })
         function_args_in_ns <-
             lapply(functions_in_ns,
                    function(f) formals(get(f, envir = ns_env)))
@@ -456,20 +497,89 @@ function(package, dir, lib.loc = NULL,
         ## we only source the assignments, and hence do not get any
         ## S4 classes or methods.
         ## </NOTE>
-        lapply(methods::getGenerics(code_env),
-               function(f) {
-                   meths <-
-                       methods::linearizeMlist(methods::getMethodsMetaData(f, code_env))
-                   sigs <- sapply(methods::slot(meths, "classes"),
-                                  paste, collapse = ",")
-                   if(!length(sigs)) return()
-                   args <- lapply(methods::slot(meths, "methods"),
-                                  formals)
-                   names(args) <-
-                       paste("\\S4method{", f, "}{", sigs, "}",
-                             sep = "")
-                   function_args_in_code <<- c(function_args_in_code, args)
-               })
+        ## <NOTE>
+        ## In principle, we can get codoc checking for S4 methods
+        ## documented explicitly using the \S4method{GENERIC}{SIGLIST}
+        ## markup by adding the corresponding "pseudo functions" using
+        ## the Rd markup as their name.  However: the formals recorded
+        ## in the methods db only pertain to the signature, not to the
+        ## ones of the function actually registered.  It seems that we
+        ## can only get these by working on the internal representation:
+        ## hence, let's make this optional for the time being.
+        ## </NOTE>
+        check_S4_methods <-
+            identical(as.logical(Sys.getenv("_R_CHECK_CODOC_S4_METHODS_")),
+                      TRUE)
+        if(check_S4_methods) {
+            get_formals_from_method_definition <- function(m) {
+                ## Argh, see methods:::rematchDefinition().
+                ## We get the original definition in case it has the
+                ## "same" formals as the generic.  Otherwise, we get a
+                ## redefition of the form
+                ## function(ARGLIST) {
+                ##   .local <- function(FORMALS) BODY
+                ##   .local(ARGLIST)
+                ## }
+                ## <NOTE>
+                ## Actually, it seems that one gets the formals of the
+                ## generic if this "extends" the formals of the method
+                ## in the sense that the latter have the formals with
+                ## "missing" signature, and possibly a '...' formal,
+                ## removed.  E.g.,
+                ##   setGeneric("foo",
+                ##     function(x, y, ...) standardGeneric("foo"))
+                ##   setMethod("foo",
+                ##     signature((x = "integer", y = "missing"),
+                ##     function(x) x)
+                ## is accepted and comes out with the formals of the
+                ## generic: (x, y, ...).
+                ## There seems to be no way of dealing with possibly
+                ## non-missing '...' formals based on the information in
+                ## the S4 registry.
+                ## One could consider to remove "missing" formals from
+                ## the the formals of the registered method, but note
+                ## that one can do
+                ##   setMethod("foo",
+                ##     signature(x = "integer", y = "missing"),
+                ##     function(x, y) x)
+                ## as well ...
+                ## So, to avoid false positives, one would need to run
+                ## the check_codoc() comparisons ignoring mismatches
+                ## possibly from the above.  Not easily possible in the
+                ## current layout, and it is also not clear whether we
+                ## should do this: formally, what we get is different
+                ## from what the authors thought and documented.
+                ## </NOTE>
+                fun <- methods::slot(m, ".Data")
+                bdy <- body(fun)
+                if((length(bdy) == 3)
+                   && (bdy[[1]] == as.name("{"))
+                   && (length(bdy[[2]]) == 3)
+                   && (bdy[[2]][[2]] == as.name(".local"))
+                   && (class(bdy[[3]]) == "call")
+                   && (bdy[[3]][[1]] == as.name(".local"))) {
+                    ## Could add more tests :-)
+                    formals(bdy[[2]][[3]])
+                } else
+                    formals(fun)
+            }
+            lapply(.get_S4_generics_really_in_env(code_env),
+                   function(f) {
+                       meths <- .get_S4_methods_list(f, code_env)
+                       sigs <- sapply(methods::slot(meths, "classes"),
+                                      paste, collapse = ",")
+                       if(!length(sigs)) return()
+                       nm <- paste("\\S4method{", f, "}{", sigs, "}",
+                                   sep = "")
+                       args <- lapply(methods::slot(meths, "methods"),
+                                      get_formals_from_method_definition)
+                       names(args) <- nm
+                       functions_in_code <<-
+                           c(functions_in_code, nm)
+                       function_args_in_code <<-
+                           c(function_args_in_code, args)
+                   })
+        }
     }
 
     check_codoc <- function(fName, ffd) {
@@ -540,6 +650,7 @@ function(package, dir, lib.loc = NULL,
     variables_in_usages <- character()
     data_sets_in_usages <- character()
     functions_in_usages_not_in_code <- list()
+    data_sets_in_usages_not_in_code <- list()
 
     for(docObj in db_names) {
 
@@ -560,9 +671,12 @@ function(package, dir, lib.loc = NULL,
                                  (length(e) == 2)
                                  && e[[1]] == as.symbol("data")))
         if(any(ind)) {
-            data_sets_in_usages <-
-                c(data_sets_in_usages,
-                  sapply(exprs[ind], function(e) as.character(e[[2]])))
+            data_sets <- sapply(exprs[ind],
+                                function(e) as.character(e[[2]]))
+            data_sets_in_usages <- c(data_sets_in_usages, data_sets)
+            data_sets <- data_sets %w/o% data_sets_in_code
+            if(length(data_sets) > 0)
+                data_sets_in_usages_not_in_code[[docObj]] <- data_sets
             exprs <- exprs[!ind]
         }
         functions <- sapply(exprs, function(e) as.character(e[[1]]))
@@ -642,7 +756,7 @@ function(package, dir, lib.loc = NULL,
     objects_in_code_not_in_usages <-
         objects_in_code %w/o% c(functions_in_usages, variables_in_usages)
     functions_in_code_not_in_usages <-
-        functions_in_code[functions_in_code %in% objects_in_code_not_in_usages]
+        intersect(functions_in_code, objects_in_code_not_in_usages)
     ## (Note that 'functions_in_code' does not necessarily contain all
     ## (exported) functions in the package.)
 
@@ -654,6 +768,8 @@ function(package, dir, lib.loc = NULL,
         functions_in_usages_not_in_code
     attr(bad_doc_objects, "function_args_in_code") <-
         function_args_in_code
+    attr(bad_doc_objects, "data_sets_in_usages_not_in_code") <-
+        data_sets_in_usages_not_in_code
     attr(bad_doc_objects, "has_namespace") <- has_namespace
     attr(bad_doc_objects, "with_synopsis") <- with_synopsis
     attr(bad_doc_objects, "bad_lines") <- bad_lines
@@ -724,6 +840,17 @@ function(x, ...)
         }
     }
 
+    data_sets_in_usages_not_in_code <-
+        attr(x, "data_sets_in_usages_not_in_code")
+    if(length(data_sets_in_usages_not_in_code) > 0) {
+        for(fname in names(data_sets_in_usages_not_in_code)) {
+            writeLines(gettextf("Data sets with usage in documentation object '%s' but not in code:",
+                                fname))
+            .pretty_print(unique(data_sets_in_usages_not_in_code[[fname]]))
+            writeLines("")
+        }
+    }
+
     if(length(x) == 0)
         return(invisible(x))
     has_only_names <- is.character(x[[1]][[1]][["code"]])
@@ -735,7 +862,7 @@ function(x, ...)
             paste("function(", paste(s, collapse = ", "), ")", sep = "")
         else {
             s <- paste(deparse(s), collapse = "")
-            s <- gsub(" = \([,\\)]\)", "\\1", s)
+            s <- gsub(" = ([,\\)])", "\\1", s)
             gsub("^list", "function", s)
         }
     }
@@ -867,7 +994,7 @@ function(package, lib.loc = NULL)
 
     ## Build Rd data base.
     db <- Rd_db(package, lib.loc = dirname(dir))
-    db <- lapply(db, function(f) Rd_pp(f))
+    db <- lapply(db, Rd_pp)
 
     ## Need some heuristics now.  When does an Rd object document just
     ## one S4 class so that we can compare (at least) the slot names?
@@ -909,7 +1036,7 @@ function(package, lib.loc = NULL)
         txt <- unlist(sapply(txt, get_Rd_items))
         if(!length(txt)) return(character())
         ## And now strip enclosing '\code{...}:'
-        txt <- gsub("\\\\code\\{([^\}]*)\\}:?", "\\1", as.character(txt))
+        txt <- gsub("\\\\code\\{([^}]*)\\}:?", "\\1", as.character(txt))
         txt <- unlist(strsplit(txt, ", *"))
         txt <- sub("^[[:space:]]+", "", txt)
         txt <- sub("[[:space:]]+$", "", txt)
@@ -918,7 +1045,7 @@ function(package, lib.loc = NULL)
 
     S4_classes_checked <- character()
     for(cl in S4_classes) {
-        idx <- which(utils::topicName("class", cl) == aliases)
+        idx <- which(utils:::topicName("class", cl) == aliases)
         if(length(idx) == 1) {
             ## Add sanity checking later ...
             S4_classes_checked <- c(S4_classes_checked, cl)
@@ -1006,7 +1133,7 @@ function(package, lib.loc = NULL)
 
     ## Build Rd data base.
     db <- Rd_db(package, lib.loc = dirname(dir))
-    db <- lapply(db, function(f) Rd_pp(f))
+    db <- lapply(db, Rd_pp)
 
     ## Need some heuristics now.  When does an Rd object document a
     ## data.frame (could add support for other classes later) variable
@@ -1170,7 +1297,7 @@ function(package, dir, lib.loc = NULL)
     else
         Rd_db(dir = dir)
 
-    db <- lapply(db, function(f) Rd_pp(f))
+    db <- lapply(db, Rd_pp)
     ## Do vectorized computations for metadata first.
     db_aliases <- lapply(db, .get_Rd_metadata_from_Rd_lines, "alias")
     db_keywords <- lapply(db, .get_Rd_metadata_from_Rd_lines, "keyword")
@@ -1402,7 +1529,8 @@ function(package, dir, lib.loc = NULL)
             stop(gettextf("directory '%s' does not contain Rd sources",
                           dir),
                  domain = NA)
-        is_base <- basename(dir) == "base"
+        package_name <- package
+        is_base <- package_name == "base"
 
         ## Load package into code_env.
         if(!is_base)
@@ -1440,10 +1568,14 @@ function(package, dir, lib.loc = NULL)
             stop(gettextf("directory '%s' does not contain Rd sources",
                           dir),
                  domain = NA)
-        is_base <- basename(dir) == "base"
+        package_name <- basename(dir)
+        is_base <- package_name == "base"
 
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_env <- new.env()
-        .source_assignments_in_code_dir(code_dir, code_env)
+        .source_assignments_in_code_dir(code_dir, code_env, enc)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -1456,7 +1588,7 @@ function(package, dir, lib.loc = NULL)
             has_namespace <- TRUE
             nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
             ## Determine exported objects.
-            OK <- objects_in_code[objects_in_code %in% nsInfo$exports]
+            OK <- intersect(objects_in_code, nsInfo$exports)
             for(p in nsInfo$exportPatterns)
                 OK <- c(OK, grep(p, objects_in_code, value = TRUE))
             objects_in_code <- unique(OK)
@@ -1471,41 +1603,27 @@ function(package, dir, lib.loc = NULL)
 
     ## Find the function objects in the given package.
     functions_in_code <-
-        objects_in_code[sapply(objects_in_code,
-                               function(f)
-                               is.function(get(f, envir = code_env)))
-                        == TRUE]
+        .filter(objects_in_code,
+                function(f) is.function(get(f, envir = code_env)))
 
-    ## Find all generic functions in the given package and (the current)
-    ## base package.
-    all_generics <- character()
-    env_list <- list(code_env)
-    if(!is_base) env_list <- c(env_list, list(baseenv()))
-    for(env in env_list) {
-        ## Find all available S3 generics.
-        objects_in_env <- if(identical(env, code_env)) {
-            ## We only want the exported ones anyway ...
-            functions_in_code
-        }
-        else
-            objects(envir = env, all.names = TRUE)
-        if(length(objects_in_env))
-            all_generics <-
-                c(all_generics,
-                  objects_in_env[sapply(objects_in_env, .is_S3_generic, env)
-                                 == TRUE])
-    }
-    ## Add internal S3 generics and S3 group generics.
-    all_generics <-
-        c(all_generics,
-          .get_internal_S3_generics(),
-          .get_S3_group_generics())
+    ## Find all S3 generics "as seen from the package".
+    all_S3_generics <-
+        unique(c(.filter(functions_in_code, .is_S3_generic, code_env),
+                 .get_S3_generics_as_seen_from_package(dir,
+                                                       !missing(package),
+                                                       TRUE),
+                 .get_S3_group_generics()))
+    ## <FIXME>
+    ## Not yet:
+    code_env <- .make_S3_group_generic_env(parent = code_env)
+    ## </FIXME>
 
     ## Find all methods in the given package for the generic functions
     ## determined above.  Store as a list indexed by the names of the
     ## generic functions.
     methods_stop_list <- .make_S3_methods_stop_list(basename(dir))
-    methods_in_package <- sapply(all_generics, function(g) {
+    methods_in_package <- sapply(all_S3_generics, function(g) {
+        if(!exists(g, envir = code_env)) return(character())
         ## <FIXME>
         ## We should really determine the name g dispatches for, see
         ## a current version of methods() [2003-07-07].  (Care is needed
@@ -1525,6 +1643,16 @@ function(package, dir, lib.loc = NULL)
         methods
     })
     all_methods_in_package <- unlist(methods_in_package)
+    ## There are situations where S3 methods might be documented as
+    ## functions (i.e., with their full name), if they do something
+    ## useful also for arguments not inheriting from the class they
+    ## provide a method for.  Let's allow for this in the case the
+    ## package has a namespace and the method is exported (even though
+    ## we strongly prefer using FOO(as.BAR(x)) to FOO.BAR(x) for such
+    ## cases).
+    if(has_namespace)
+        all_methods_in_package <-
+            all_methods_in_package %w/o% functions_in_code
 
     db <- if(!missing(package))
         Rd_db(package, lib.loc = dirname(dir))
@@ -1533,6 +1661,12 @@ function(package, dir, lib.loc = NULL)
 
     db <- lapply(db, function(f) paste(Rd_pp(f), collapse = "\n"))
     names(db) <- db_names <- .get_Rd_names_from_Rd_db(db)
+
+    ## Ignore pkg-deprecated.Rd and pkg-defunct.Rd.
+    ind <- db_names %in% paste(package_name, c("deprecated", "defunct"),
+                               sep = "-")
+    db <- db[!ind]
+    db_names <- db_names[!ind]
 
     db_usage_texts <-
         .apply_Rd_filter_to_Rd_db(db, get_Rd_section, "usage")
@@ -1567,14 +1701,14 @@ function(package, dir, lib.loc = NULL)
         }
 
         methods_with_full_name <-
-            functions[functions %in% all_methods_in_package]
+            intersect(functions, all_methods_in_package)
 
         functions <- .transform_S3_method_markup(functions)
 
         methods_with_generic <-
-            sapply(functions[functions %in% all_generics],
+            sapply(intersect(functions, all_S3_generics),
                    function(g)
-                   functions[functions %in% methods_in_package[[g]]],
+                   intersect(functions, methods_in_package[[g]]),
                    simplify = FALSE)
 
         if((length(methods_with_generic) > 0) ||
@@ -1608,9 +1742,7 @@ function(x, ...) {
         if(length(methods_with_full_name > 0)) {
             writeLines(gettextf("S3 methods shown with full name in documentation object '%s':",
                                 docObj))
-            writeLines(strwrap(paste(methods_with_full_name,
-                                     collapse = " "),
-                               indent = 2, exdent = 2))
+            .pretty_print(methods_with_full_name)
             writeLines("")
         }
     }
@@ -1654,6 +1786,9 @@ function(package, dir, file, lib.loc = NULL,
                  domain = NA)
         else
             dir <- file_path_as_absolute(dir)
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         if(file.exists(file.path(dir, "NAMESPACE"))) {
             nm <- parseNamespaceFile(basename(dir), dirname(dir))
             hasNamespace <- length(nm$dynlibs)
@@ -1748,9 +1883,8 @@ function(package, dir, file, lib.loc = NULL,
             ## Also check the code in S4 methods.
             ## This may find things twice if a setMethod() with a bad FF
             ## call is from inside a function (e.g., InitMethods()).
-            for(f in methods::getGenerics(code_env)) {
-                meths <-
-                    methods::linearizeMlist(methods::getMethodsMetaData(f, code_env))
+            for(f in .get_S4_generics_really_in_env(code_env)) {
+                meths <- .get_S4_methods_list(f, code_env)
                 bodies <- lapply(methods::slot(meths, "methods"), body)
                 ## Exclude methods inherited from the 'appropriate'
                 ## parent environment.
@@ -1764,7 +1898,7 @@ function(package, dir, file, lib.loc = NULL,
                     penv <- parent.env(penv)
                 else
                     penv <- parent.env(code_env)
-                if((f %in% methods::getGenerics(penv))
+                if((f %in% .get_S4_generics_really_in_env(penv))
                     && !is.null(mlist_from_penv <-
                                 methods::getMethodsMetaData(f, penv))) {
                     classes_from_cenv <-
@@ -1782,7 +1916,12 @@ function(package, dir, file, lib.loc = NULL,
         }
     }
     else {
-        exprs <- try(parse(file = file, n = -1))
+        if(!is.na(enc) &&
+           !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
+	    con <- file(file, encoding=enc)
+            on.exit(close(con))
+	} else con <- file
+        exprs <- try(parse(file = con, n = -1))
         if(inherits(exprs, "try-error"))
             stop(gettextf("parse error in file '%s'", file),
                  domain = NA)
@@ -1870,8 +2009,11 @@ function(package, dir, lib.loc = NULL)
                  domain = NA)
         is_base <- basename(dir) == "base"
 
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_env <- new.env()
-        .source_assignments_in_code_dir(code_dir, code_env)
+        .source_assignments_in_code_dir(code_dir, code_env, enc)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -1884,7 +2026,7 @@ function(package, dir, lib.loc = NULL)
             has_namespace <- TRUE
             nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
             ## Determine exported objects.
-            OK <- objects_in_code[objects_in_code %in% nsInfo$exports]
+            OK <- intersect(objects_in_code, nsInfo$exports)
             for(p in nsInfo$exportPatterns)
                 OK <- c(OK, grep(p, objects_in_code, value = TRUE))
             objects_in_code <- unique(OK)
@@ -1899,13 +2041,11 @@ function(package, dir, lib.loc = NULL)
 
     ## Find the function objects in the given package.
     functions_in_code <-
-        objects_in_code[sapply(objects_in_code,
-                               function(f)
-                               is.function(get(f, envir = code_env)))
-                        == TRUE]
+        .filter(objects_in_code,
+                function(f) is.function(get(f, envir = code_env)))
 
-    methods_stop_list <- .make_S3_methods_stop_list(basename(dir))
     S3_group_generics <- .get_S3_group_generics()
+    S3_primitive_generics <- .get_S3_primitive_generics()
 
     checkArgs <- function(g, m) {
         ## Do the arguments of method m (in code_env) 'extend' those of
@@ -1920,7 +2060,8 @@ function(package, dir, lib.loc = NULL)
         gm <- if(m %in% S3_reg) {
             ## See registerS3method() in namespace.R.
             defenv <-
-                if (g %in% S3_group_generics) .BaseNamespaceEnv
+                if (g %in% S3_group_generics || g %in% S3_primitive_generics)
+                    .BaseNamespaceEnv
                 else {
                     if(.isMethodsDispatchOn()
                        && methods::is(genfun, "genericFunction"))
@@ -1952,7 +2093,7 @@ function(package, dir, lib.loc = NULL)
         ## formula.  (Note that any argument name mismatch throws an
         ## error in current S-PLUS versions.)
         if(length(grep("\\.formula$", m)) > 0) {
-            gArgs <- gArgs[-1]
+            if(gArgs[1] != "...") gArgs <- gArgs[-1]
             mArgs <- mArgs[-1]
         }
         dotsPos <- which(gArgs == "...")
@@ -1967,7 +2108,8 @@ function(package, dir, lib.loc = NULL)
             ipos <- ipos[seq.int(from = 1, length = dotsPos[1] - 1)]
         posMatchOK <- identical(gArgs[ipos], mArgs[ipos])
         argMatchOK <- all(gArgs %in% mArgs) || length(dotsPos) > 0
-        if(posMatchOK && argMatchOK)
+        margMatchOK <- all(mArgs %in% c("...", gArgs)) || "..." %in% ogArgs
+        if(posMatchOK && argMatchOK && margMatchOK)
             NULL
         else {
             l <- list(ogArgs, omArgs)
@@ -1976,89 +2118,22 @@ function(package, dir, lib.loc = NULL)
         }
     }
 
-    ## Deal with S3 group methods.  We create a separate environment
-    ## with pseudo-definitions for these.
-    S3_group_generics_env <- new.env()
-    assign("Math",
-           function(x, ...) UseMethod("Math"),
-           envir = S3_group_generics_env)
-    assign("Ops",
-           function(e1, e2) UseMethod("Ops"),
-           envir = S3_group_generics_env)
-    assign("Summary",
-           function(x, ...) UseMethod("Summary"),
-           envir = S3_group_generics_env)
-    assign("Complex",
-           function(x, ...) UseMethod("Complex"),
-           envir = S3_group_generics_env)
+    all_S3_generics <-
+        unique(c(.filter(functions_in_code, .is_S3_generic, code_env),
+                 .get_S3_generics_as_seen_from_package(dir,
+                                                       !missing(package),
+                                                       FALSE),
+                 S3_group_generics, S3_primitive_generics))
+    ## <FIXME>
+    ## Not yet:
+    code_env <- .make_S3_group_generic_env(parent = code_env)
+    ## </FIXME>
+    code_env <- .make_S3_primitive_generic_env(parent = code_env)
 
     ## Now determine the 'bad' methods in the function objects of the
     ## package.
     bad_methods <- list()
-    env_list <- list(code_env, S3_group_generics_env)
-    if(!is_base) {
-        ## <FIXME>
-        ## Look for generics in the whole of the former base.
-        ## Maybe eventually change this ...
-        ## (Note that this requires that these packages are already
-        ## attached.)
-        env_list <- c(env_list,
-                      list(baseenv()),
-                      list(as.environment("package:graphics")),
-                      list(as.environment("package:stats")),
-                      list(as.environment("package:utils"))
-                      )
-        ## </FIXME>
-        ## If 'package' was given, also use the loaded namespaces and
-        ## attached packages listed in the DESCRIPTION Depends field.
-        ## Not sure if this is the best approach: we could also try to
-        ## determine which namespaces/packages were made available by
-        ## loading the package (which should work at least when run from
-        ## R CMD check), or we could simply attach every package listed
-        ## as a dependency ... or perhaps do both.
-        if(!missing(package)) {
-            db <- .read_description(file.path(dir, "DESCRIPTION"))
-            if(!is.na(depends <- db["Depends"])) {
-                depends <- names(.split_dependencies(depends)) %w/o% "R"
-                ind <- depends %in% loadedNamespaces()
-                if(any(ind)) {
-                    env_list <-
-                        c(env_list, lapply(depends[ind], getNamespace))
-                    depends <- depends[!ind]
-                }
-                ind <- depends %in% .packages()
-                if(any(ind)) {
-                    env_list <-
-                        c(env_list, lapply(depends[ind], .package_env))
-                }
-            }
-        }
-    }
-
-    ## Also want the internal S3 generics from base which are not
-    ## .Primitive (as checkArgs() cannot deal with primitives).
-    all_S3_generics <- .get_internal_S3_generics()
-    all_S3_generics <- all_S3_generics[sapply(all_S3_generics,
-                                              .is_primitive,
-                                              baseenv())
-                                       == FALSE]
-    for(env in env_list) {
-        ## Find all available S3 generics.
-        objects_in_env <- if(identical(env, code_env)) {
-            ## We only want the exported ones anyway ...
-            functions_in_code
-        }
-        else
-            objects(envir = env, all.names = TRUE)
-        if(".no_S3_generics" %in% objects_in_env) next
-        S3_generics <- if(length(objects_in_env))
-            objects_in_env[sapply(objects_in_env, .is_S3_generic, env)
-                           == TRUE]
-        else character(0)
-        all_S3_generics <- c(all_S3_generics, S3_generics)
-    }
-    all_S3_generics <- unique(all_S3_generics)
-
+    methods_stop_list <- .make_S3_methods_stop_list(basename(dir))
     for(g in all_S3_generics) {
         if(!exists(g, envir = code_env)) next
         ## Find all methods in functions_in_code for S3 generic g.
@@ -2080,7 +2155,7 @@ function(package, dir, lib.loc = NULL)
         }
 
         for(m in methods)
-            ## both all() and all.equal() are generic.
+            ## Both all() and all.equal() are generic.
             bad_methods <- if(g == "all") {
                 m1 <- m[-grep("^all\\.equal", m)]
                 c(bad_methods, if(length(m1)) checkArgs(g, m1))
@@ -2160,8 +2235,11 @@ function(package, dir, lib.loc = NULL)
                  domain = NA)
         is_base <- basename(dir) == "base"
 
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_env <- new.env()
-        .source_assignments_in_code_dir(code_dir, code_env)
+        .source_assignments_in_code_dir(code_dir, code_env, enc)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -2202,34 +2280,34 @@ function(package, dir, lib.loc = NULL)
     ## Find the replacement functions (which have formal arguments) with
     ## last arg not named 'value'.
     bad_replace_funs <- if(length(replace_funs)) {
-        replace_funs[sapply(replace_funs, function(f) {
-            ## Always get the functions from code_env ...
-            ## Should maybe get S3 methods from the registry ...
-            f <- get(f, envir = code_env)
-            if(!is.function(f)) return(TRUE)
-            .check_last_formal_arg(f)
-        }) == FALSE]} else character(0)
+        .filter(replace_funs,
+                function(f) {
+                    ## Always get the functions from code_env ...
+                    ## Should maybe get S3 methods from the registry ...
+                    f <- get(f, envir = code_env)
+                    if(!is.function(f)) return(FALSE)
+                    ! .check_last_formal_arg(f)
+                })
+    } else character(0)
 
     if(.isMethodsDispatchOn()) {
-        S4_generics <- methods::getGenerics(code_env)
+        S4_generics <- .get_S4_generics_really_in_env(code_env)
         ## Assume that the ones with names ending in '<-' are always
         ## replacement functions.
         S4_generics <- grep("<-$", S4_generics, value = TRUE)
         bad_S4_replace_methods <-
             sapply(S4_generics,
                    function(f) {
-                       meths <- methods::linearizeMlist(methods::getMethodsMetaData(f, code_env))
-                       ind <- which(sapply(methods::slot(meths,
-                                                         "methods"),
-                                           .check_last_formal_arg)
-                                    == FALSE)
-                       if(!length(ind))
+                       meths <- .get_S4_methods_list(f, code_env)
+                       ind <- !as.logical(sapply(methods::slot(meths,
+                                                               "methods"),
+                                                 .check_last_formal_arg))
+                       if(!any(ind))
                            character()
                        else {
-                           sigs <-
-                               sapply(methods::slot(meths,
-                                                    "classes")[ind],
-                                      paste, collapse = ",")
+                           sigs <- sapply(methods::slot(meths,
+                                                        "classes")[ind],
+                                          paste, collapse = ",")
                            paste("\\S4method{", f, "}{", sigs, "}",
                                  sep = "")
                        }
@@ -2472,7 +2550,7 @@ function(x, ...)
     if(length(bad <- x$missing_vignette_depends)) {
         writeLines(gettext("Vignette dependencies not required:"))
         .pretty_print(bad)
-        msg <- gettext("Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests entries.")
+        msg <- gettext("Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries.")
         writeLines(strwrap(msg))
         writeLines("")
     }
@@ -2652,9 +2730,12 @@ function(db)
                       cbind(f, bad_keywords))
     }
 
-    db_aliases_by_db_names <-
-        split(rep(names(db_aliases), sapply(db_aliases, length)),
+    ## db_aliases could be length 0, or could contain nothing
+    lens <- sapply(db_aliases, length)
+    db_aliases_by_db_names <- if(sum(lens))
+        split(rep(names(db_aliases), lens),
               unlist(db_aliases, use.names = FALSE))
+    else list()
     files_with_duplicated_aliases <-
         db_aliases_by_db_names[sapply(db_aliases_by_db_names,
                                       length) > 1]
@@ -2867,14 +2948,14 @@ function(dfile)
     ## must be ASCII we well (so that the RPM works in a C locale).
     ASCII_fields <- c("Package", "Version", "Depends", "Suggests",
                       "Imports", "Priority", "Encoding")
-    ASCII_fields <- ASCII_fields[ASCII_fields %in% names(db)]
+    ASCII_fields <- intersect(ASCII_fields, names(db))
     if(any(ind <- !.is_ASCII(db[ASCII_fields])))
         out$fields_with_non_ASCII_values <- ASCII_fields[ind]
 
     ## Determine encoding and re-encode if necessary and possible.
     if("Encoding" %in% names(db)) {
         encoding <- db["Encoding"]
-        if((Sys.getlocale("LC_CTYPE") != "C")
+        if((! Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))
            && capabilities("iconv"))
             db <- iconv(db, encoding, "")
     }
@@ -2902,7 +2983,8 @@ function(dfile)
     ##   Maintainer.
     required_fields <- c("Package", "Version", "License", "Description",
                          "Title", "Author", "Maintainer")
-    if(any(i <- which(is.na(match(required_fields, names(db))))))
+    if(any(i <- which(is.na(match(required_fields, names(db))) |
+                      is.na(db[required_fields]))))
         out$missing_required_fields <- required_fields[i]
 
     val <- package_name <- db["Package"]
@@ -3183,6 +3265,8 @@ function(package, dir, lib.loc = NULL)
                                                       "recommended")],
                       use.names = FALSE),
                Rd_aliases, lib.loc = NULL)
+    ## (Don't use lib.loc = .Library, as recommended packages may have
+    ## been installed to a different place.)
 
     ## Add the aliases from the package itself, and build a db with all
     ## \link xrefs in the package Rd objects.
@@ -3222,6 +3306,76 @@ function(x, ...)
         ## Add some explanatory message and a pointer to R-exts
         ## eventually ...
         ## </FIXME>
+    }
+    x
+}
+
+
+### * .check_package_datasets
+
+.check_package_datasets <-
+function(pkgDir)
+{
+    Sys.setlocale("LC_CTYPE", "C")
+    options(warn=-1)
+    check_charsxp <- function(txt)
+    {
+        if(any(charToRaw(txt) > as.raw(127)))
+            switch(Encoding(txt),
+                   "latin1" = {latin1 <<- c(latin1, txt)},
+                   "UTF-8" = {utf8 <<- c(utf8, txt)},
+                   {non_ASCII <<- c(non_ASCII, txt)})
+        invisible()
+    }
+    check_one <- function(x)
+    {
+        if(length(x) == 0) return()
+        ## avoid as.list methods
+        if(is.list(x)) lapply(unclass(x), check_one)
+        if(is.character(x)) lapply(unclass(x), check_charsxp)
+        a <- attributes(x)
+        if(!is.null(a)) {
+            lapply(a, check_one)
+            check_one(names(a))
+        }
+        invisible()
+    }
+
+    files <- list_files_with_type(file.path(pkgDir, "data"), "data")
+    files <- unique(basename(file_path_sans_ext(files)))
+    ans <- vector("list", length(files))
+    dataEnv <- new.env(hash=TRUE)
+    names(ans) <- files
+    old <- setwd(pkgDir)
+    for(f in files)
+        .try_quietly(utils::data(list = f, package = character(0), envir = dataEnv))
+    setwd(old)
+
+    non_ASCII <- latin1 <- utf8 <- character(0)
+    for(ds in ls(envir = dataEnv, all = TRUE))
+        check_one(get(ds, envir = dataEnv))
+    structure(list(latin1 = unique(latin1), utf8 = unique(utf8),
+                   unknown = unique(non_ASCII)),
+              class = "check_package_datasets")
+}
+
+print.check_package_datasets <- function(x, ...)
+{
+    ## not sQuote as we have mucked about with locales.
+    iconv0 <- function(x, ...)
+        paste("'", if(capabilities("iconv")) iconv(x, ...) else x, "'", sep="")
+
+    if(n <- length(x$latin1)) {
+        cat(sprintf("Note: found %d marked Latin-1 string(s)\n", n))
+        # cat(iconv0(x$latin1, "latin1", "ASCII", sub="byte"), sep="  ", fill=70)
+    }
+    if(n <- length(x$utf8)) {
+        cat(sprintf("Note: found %d marked UTF-8 string(s)\n", n))
+        # cat(iconv0(x$utf8, "UTF-8", "ASCII", sub="byte"), sep="  ", fill=70)
+    }
+    if(n <- length(x$unknown)) {
+        cat("Warning: found non-ASCII string(s)\n")
+        cat(iconv0(x$unknown, "", "ASCII", sub="byte"), sep="  ", fill=70)
     }
     x
 }
@@ -3385,6 +3539,11 @@ function(txt)
     ## throw it, rather than "basically ignore" it by putting it in the
     ## bad_lines attribute.
     txt <- gsub("(<<?see below>>?)", "`\\1`", txt)
+    ## 'LanguageClasses.Rd' in package methods has '"\{"' in its usage:
+    ## the docs say that unpaired braces in \code need to be escaped, so
+    ## let's assume that this is also true for \usage.
+    txt <- gsub("\\\\\\{", "{", txt)
+    txt <- gsub("\\\\\\}", "}", txt)
     .parse_text_as_much_as_possible(txt)
 }
 
@@ -3580,14 +3739,116 @@ function(dir, respect_quotes = FALSE)
 .check_package_code_syntax <-
 function(dir)
 {
-    for(f in list_files_with_type(dir, "code",
-                                  OS_subdirs = c("unix", "windows")))
-        tryCatch(parse(f),
-                 error = function(e)
-                 writeLines(c(sprintf("File '%s':", f),
-                              sprintf("  %s",
-                                      unlist(strsplit(conditionMessage(e),
-                                                      "\n"))))))
+    if(!file_test("-d", dir))
+        stop(gettextf("directory '%s' does not exist", dir), domain = NA)
+    else
+        dir <- file_path_as_absolute(dir)
+    dir_name <- basename(dir)
+
+    descfile <- file.path(dirname(dir), "DESCRIPTION")
+    enc <- if(file.exists(descfile))
+        .read_description(descfile)["Encoding"] else NA
+
+    ## This was always run in the C locale < 2.5.0
+    ## However, what chars are alphabetic depends on the locale,
+    ## so as from R 2.5.0 we try to set a locale.
+    ## Any package with no declared encoding should have only ASCII R code.
+    if(!is.na(enc)) {  ## try to use the declared encoding
+        if(.Platform$OS.type == "windows") {
+            ## "C" is in fact "en", and there are no UTF-8 locales
+            switch(enc,
+                   "latin2" = Sys.setlocale('LC_CTYPE', 'polish'),
+                   Sys.setlocale('LC_CTYPE', 'C')
+                   )
+        } else {
+            loc <- Sys.getenv("R_ENCODING_LOCALES", NA)
+            if(!is.na(loc)) {
+                loc <- strsplit(strsplit(loc, ":")[[1]], "=")
+                nm <- lapply(loc, "[[", 1)
+                loc <- lapply(loc, "[[", 2)
+                names(loc) <- nm
+                if(!is.null(l <- loc[[enc]]))
+                    Sys.setlocale("LC_CTYPE", l)
+                else
+                    Sys.setlocale('LC_CTYPE', 'C')
+
+            } else if(l10n_info()[["UTF-8"]] && capabilities("iconv")) {
+                ## the hope is that the conversion to UTF-8 works and
+                ## so we can validly test the code in the current locale.
+            } else {
+                ## these are the POSIX forms, but of course not all Unixen
+                ## abide by POSIX.  These locales need not exist, but
+                ## do in glibc.
+                switch(enc,
+                       "latin1" = Sys.setlocale("LC_CTYPE", "en_US"),
+                       "utf-8"  =,  # not valid, but used
+                       "UTF-8"  = Sys.setlocale("LC_CTYPE", "en_US.utf8"),
+                       "latin2" = Sys.setlocale("LC_CTYPE", "pl_PL"),
+                       "latin9" = Sys.setlocale("LC_CTYPE",
+                       "fr_FR.iso885915@euro"),
+                       Sys.setlocale('LC_CTYPE', 'C')
+                      )
+            }
+        }
+    }
+
+    collect_parse_woes <- function(f) {
+        .error <- .warnings <- character()
+        file <- file.path(dir, f)
+        if(!is.na(enc) &&
+           !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
+            con <- file(file, encoding = enc)
+            on.exit(close(con))
+        } else con <- file
+        withCallingHandlers(tryCatch(parse(con),
+                                     error = function(e)
+                                     .error <<- conditionMessage(e)),
+                            warning = function(e) {
+                                .warnings <<- c(.warnings,
+                                                conditionMessage(e))
+                                invokeRestart("muffleWarning")
+                            })
+        ## (We show offending file paths starting with the base of the
+        ## given directory as this provides "nicer" output ...)
+        if(length(.error) || length(.warnings))
+            list(File = file.path(dir_name, f),
+                 Error = .error, Warnings = .warnings)
+        else
+            NULL
+    }
+
+    out <-
+        lapply(list_files_with_type(dir, "code", full.names = FALSE,
+                                    OS_subdirs = c("unix", "windows")),
+               collect_parse_woes)
+    Sys.setlocale("LC_CTYPE", "C")
+    structure(out[sapply(out, length) > 0],
+              class = "check_package_code_syntax")
+}
+
+print.check_package_code_syntax <-
+function(x, ...)
+{
+    first <- TRUE
+    for(i in seq_along(x)) {
+        if(!first) writeLines("")
+        first <- FALSE
+        xi <- x[[i]]
+        if(length(xi$Error)) {
+            msg <- gsub("\n", "\n  ", sub("[^:]*: *", "", xi$Error),
+			useBytes = TRUE)
+            writeLines(c(sprintf("Error in file '%s':", xi$File),
+                         paste(" ", msg)))
+        }
+        if(len <- length(xi$Warnings))
+            writeLines(c(sprintf(ngettext(len,
+                                          "Warning in file '%s':",
+                                          "Warnings in file '%s':"),
+                                 xi$File),
+                         paste(" ", gsub("\n\n", "\n  ", xi$Warnings,
+					 useBytes = TRUE))))
+    }
+    invisible(x)
 }
 
 ### * .check_package_code_shlib
@@ -3598,6 +3859,10 @@ function(dir) {
     ## This is very similar to what happens with checkTnF() etc.
     ## We should really have a more general-purpose tree walker.
     ## </NOTE>
+
+    descfile <- file.path(dir, "..", "DESCRIPTION")
+    enc <- if(file.exists(descfile))
+        .read_description(descfile)["Encoding"] else NA
 
     ## Workhorse function.
     filter <- function(file) {
@@ -3614,7 +3879,13 @@ function(dir) {
             if(is.recursive(e))
                 for(i in seq_along(e)) Recall(e[[i]])
         }
-        exprs <- parse(file)
+        ## assume that if locale if 'C' we can read encodings unchanged.
+        exprs <- if(!is.na(enc) &&
+                    !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
+	    con <- file(file, encoding=enc)
+            on.exit(close(con))
+	    parse(con)
+	} else parse(file)
         for(i in seq_along(exprs)) walker(exprs[[i]])
         matches
     }
@@ -3713,7 +3984,7 @@ function(package, dir, lib.loc = NULL)
     imports <- .get_requires_from_package_db(db, "Imports")
     suggests <- .get_requires_from_package_db(db, "Suggests")
     enhances <- .get_requires_from_package_db(db, "Enhances")
-   
+
     ## Need this to handle bundles ...
     contains <- .get_contains_from_package_db(db)
 
@@ -3734,13 +4005,29 @@ function(package, dir, lib.loc = NULL)
         if(is.call(e) || is.expression(e)) {
             Call <- deparse(e[[1]])[1]
             if(length(e) >= 2) pkg <- deparse(e[[2]])
-            if(Call %in% c("library", "requires")) {
+            if(Call %in% c("library", "require")) {
                 ## Zelig has library()
                 if(length(e) >= 2) {
                     pkg <- sub('^"(.*)"$', '\\1', pkg)
+                    ## <NOTE>
+                    ## Using code analysis, we really don't know which
+                    ## package was called if character.only = TRUE and
+                    ## the package argument is not a string constant.
+                    ## (Btw, what if character.only is given a value
+                    ## which is an expression evaluating to TRUE?)
+                    dunno <- FALSE
+                    pos <- which(!is.na(pmatch(names(e),
+                                               "character.only")))
+                    if(length(pos)
+                       && identical(e[[pos]], TRUE)
+                       && !identical(class(e[[2]]), "character"))
+                        dunno <- TRUE
+                    ## <NOTE>
+                    ## </NOTE>
                     ## <FIXME> could be inside substitute or a variable
                     ## and is in e.g. R.oo
-                    if(! pkg %in% c(depends_suggests, common_names))
+                    if(! dunno
+                       && ! pkg %in% c(depends_suggests, common_names))
                         bad_exprs <<- c(bad_exprs, pkg)
                 }
             } else if(Call %in%  "::") {
@@ -3769,9 +4056,8 @@ function(package, dir, lib.loc = NULL)
         if(.isMethodsDispatchOn()) {
             ## Also check the code in S4 methods.
             ## This may find things twice.
-            for(f in methods::getGenerics(code_env)) {
-                meths <-
-                    methods::linearizeMlist(methods::getMethodsMetaData(f, code_env))
+            for(f in .get_S4_generics_really_in_env(code_env)) {
+                meths <- .get_S4_methods_list(f, code_env)
                 bodies <- lapply(methods::slot(meths, "methods"), body)
                 ## Exclude methods inherited from the 'appropriate'
                 ## parent environment.
@@ -3785,7 +4071,7 @@ function(package, dir, lib.loc = NULL)
                     penv <- parent.env(penv)
                 else
                     penv <- parent.env(code_env)
-                if((f %in% methods::getGenerics(penv))
+                if((f %in% .get_S4_generics_really_in_env(penv))
                     && !is.null(mlist_from_penv <-
                                 methods::getMethodsMetaData(f, penv))) {
                     classes_from_cenv <-
@@ -3803,7 +4089,13 @@ function(package, dir, lib.loc = NULL)
         }
     }
     else {
-        exprs <- try(parse(file = file, n = -1))
+        enc <- db["Encoding"]
+        if(!is.na(enc) &&
+           !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
+	    con <- file(file, encoding=enc)
+            on.exit(close(con))
+        } else con <- file
+        exprs <- try(parse(file = con, n = -1))
         if(inherits(exprs, "try-error"))
             stop(gettextf("parse error in file '%s'", file),
                  domain = NA)
@@ -3877,6 +4169,14 @@ function(x, ...)
 .check_T_and_F <-
 function(package, dir, lib.loc = NULL)
 {
+    ## Seems that checking examples has several problems, and can result
+    ## in "strange" diagnostic output.  Let's more or less disable this
+    ## for the time being.
+    check_examples <-
+        identical(as.logical(Sys.getenv("_R_CHECK_RD_EXAMPLES_T_AND_F_")),
+                  TRUE)
+
+
     bad_closures <- character()
     bad_examples <- character()
 
@@ -3896,13 +4196,16 @@ function(package, dir, lib.loc = NULL)
         env <- new.env()
         x <- lapply(txts,
                     function(txt) {
-                        eval(parse(text =
-                                   paste("FOO <- function() {",
-                                         paste(txt, collapse = "\n"),
-                                         "}",
-                                         collapse = "\n")),
-                             env)
-                        find_bad_closures(env)
+                        tryCatch({
+                            eval(parse(text =
+                                       paste("FOO <- function() {",
+                                             paste(txt, collapse = "\n"),
+                                             "}",
+                                             collapse = "\n")),
+                                 env)
+                            find_bad_closures(env)
+                        },
+                                 error = function(e) character())
                     })
         names(txts)[sapply(x, length) > 0]
     }
@@ -3917,25 +4220,31 @@ function(package, dir, lib.loc = NULL)
             code_env <- .package_env(package)
             bad_closures <- find_bad_closures(code_env)
         }
-        example_texts <-
-            .get_example_texts_from_example_dir(file.path(dir, "R-ex"))
+        if(check_examples)
+            example_texts <-
+                .get_example_texts_from_example_dir(file.path(dir, "R-ex"))
     }
     else {
         ## The dir case.
         if(missing(dir))
             stop("you must specify 'package' or 'dir'")
         dir <- file_path_as_absolute(dir)
+        descfile <- file.path(dir, "DESCRIPTION")
+        enc <- if(file.exists(descfile))
+            .read_description(descfile)["Encoding"] else NA
         code_dir <- file.path(dir, "R")
         if(!packageHasNamespace(basename(dir), dirname(dir))
            && file_test("-d", code_dir)) {
             code_env <- new.env()
-            .source_assignments_in_code_dir(code_dir, code_env)
+            .source_assignments_in_code_dir(code_dir, code_env, enc)
             bad_closures <- find_bad_closures(code_env)
         }
-        example_texts <- .get_example_texts_from_source_dir(dir)
+        if(check_examples)
+            example_texts <- .get_example_texts_from_source_dir(dir)
     }
 
-    bad_examples <- find_bad_examples(example_texts)
+    if(check_examples)
+        bad_examples <- find_bad_examples(example_texts)
 
     out <- list(bad_closures = bad_closures,
                 bad_examples = bad_examples)
@@ -3967,18 +4276,43 @@ function(dir)
 
 print.check_T_and_F <- function(x, ...) {
     if(length(x$bad_closures)) {
-        msg <- gettext("Found possibly global T or F in the following functions:")
+        msg <- ngettext(length(x$bad_closures),
+                        "Found possibly global 'T' or 'F' in the following function:",
+                        "Found possibly global 'T' or 'F' in the following functions:"
+                        )
         writeLines(strwrap(msg))
         .pretty_print(x$bad_closures)
     }
     if(length(x$bad_examples)) {
-        msg <- gettext("Found possibly global T or F in the following Rd example files:")
+        msg <- ngettext(length(x$bad_examples),
+                        "Found possibly global 'T' or 'F' in the following Rd example file:",
+                        "Found possibly global 'T' or 'F' in the following Rd example files:"
+                        )
         writeLines(strwrap(msg))
         writeLines(paste(" ", x$bad_examples))
     }
     invisible(x)
 }
 
+### .get_S4_generics_really_in_env
+
+.get_S4_generics_really_in_env <-
+function(env)
+    .filter(methods::getGenerics(env),
+            function(g) !is.null(methods::getGeneric(g, where = env)))
+
+.get_S4_methods_list <-
+function(g, env)
+{
+    ## Encapsulate what we used to do:
+    methods::linearizeMlist(methods::getMethodsMetaData(g, env),
+                            FALSE)
+    ## <FIXME>
+    ## Seems that from 2.5.0 on, we could also do
+    ##   methods::listFromMethods(g, env)
+    ## Maybe try this in 2.6.0?
+    ## </FIXME>
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

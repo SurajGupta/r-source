@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@
 
 extern SA_TYPE SaveAction;
 extern Rboolean UsingReadline;
+extern FILE* ifp;
 
 /*
  *  1) FATAL MESSAGES AT STARTUP
@@ -411,6 +412,9 @@ extern void rl_callback_read_char(void);
 extern char *tilde_expand (const char *);
 # endif
 
+static void initialize_rlcompletion(void); /* forward declaration */
+
+
 char attribute_hidden *R_ExpandFileName_readline(char *s, char *buff)
 {
     char *s2 = tilde_expand(s);
@@ -568,6 +572,210 @@ handleInterrupt(void)
     popReadline();
     onintr();
 }
+
+#ifdef HAVE_RL_COMPLETION_MATCHES
+/* ============================================================
+   function-completion interface formerly in package rcompletion by
+   Deepayan Sarkar, whose comments these are (mainly).
+*/
+
+static char **R_custom_completion(const char *text, int start, int end);
+static char *R_completion_generator(const char *text, int state);
+
+static SEXP 
+    RComp_assignBufferSym,
+    RComp_assignStartSym,
+    RComp_assignEndSym,
+    RComp_assignTokenSym,
+    RComp_completeTokenSym,
+    RComp_getFileCompSym,
+    RComp_retrieveCompsSym;
+
+/* Tell the GNU Readline library how to complete. */
+
+static int rcompgen_active = -1;
+static SEXP rcompgen_rho;
+
+#include <R_ext/Parse.h>
+static void initialize_rlcompletion(void)
+{
+    if(rcompgen_active >= 0) return;
+
+    /* Find if package rcompgen is around */
+    if(rcompgen_active < 0) {
+	char *p = getenv("R_COMPLETION");
+	if(p && streql(p, "FALSE")) {
+	    rcompgen_active = 0;
+	    return;	    
+	}
+	/* First check if namespace is loaded */
+	if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	   != R_UnboundValue) rcompgen_active = 1;
+	else { /* Then try to load it */
+	    SEXP cmdSexp, cmdexpr;
+	    ParseStatus status;
+	    int i;
+	    char *p = "try(loadNamespace('rcompgen'), silent=TRUE)";
+
+	    PROTECT(cmdSexp = mkString(p));
+	    cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+	    if(status == PARSE_OK) {
+		for(i = 0; i < length(cmdexpr); i++)
+		    eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
+	    }
+	    UNPROTECT(2);
+	    if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	       != R_UnboundValue) rcompgen_active = 1;
+	    else {
+		rcompgen_active = 0;
+		return;
+	    }
+	}
+    }
+
+    rcompgen_rho = R_FindNamespace(mkString("rcompgen"));
+
+    RComp_assignBufferSym  = install(".assignLinebuffer");
+    RComp_assignStartSym   = install(".assignStart");
+    RComp_assignEndSym     = install(".assignEnd");
+    RComp_assignTokenSym   = install(".assignToken");
+    RComp_completeTokenSym = install(".completeToken");
+    RComp_getFileCompSym   = install(".getFileComp");
+    RComp_retrieveCompsSym = install(".retrieveCompletions");
+    
+    /* Allow conditional parsing of the ~/.inputrc file. */
+    rl_readline_name = "RCustomCompletion";
+
+    /* Tell the completer that we want a crack first. */
+    rl_attempted_completion_function = R_custom_completion;
+
+    /* Don't want spaces appended at the end */
+    rl_completion_append_character = '\0';
+
+    /* token boundaries.  Includes *,+ etc, but not $,@ because those
+       are easier to handle at the R level if the whole thing is
+       available.  However, this breaks filename completion if partial
+       filenames contain things like $, % etc.  Might be possible to
+       associate a M-/ override like bash does.  One compromise is that
+       we exclude / from the breakers because that is frequently found
+       in filenames even though it is also an operator.  This can be
+       handled in R code (although it shouldn't be necessary if users
+       surround operators with spaces, as they should).  */
+
+    /* FIXME: quotes currently lead to filename completion without any
+       further ado.  This is not necessarily the best we can do, since
+       quotes after a [, $, [[, etc should be treated differently.  I'm
+       not testing this now, but this should be doable by removing quote
+       characters from the strings below and handle it with other things
+       in 'specialCompletions()' in R.  The problem with that approach
+       is that file name completion will probably have to be done
+       manually in R, which is not trivial.  One way to go might be to
+       forego file name completion altogether when TAB completing, and
+       associate M-/ or something to filename completion (a startup
+       message might say so, to remind users)
+
+       All that might not be worth the pain though (vector names would
+       be practically impossible, to begin with) */
+
+
+    /* 
+       These break line into tokens.  Unfortunately, this also breaks
+       file names, so a path with a - in it will not be completed.
+
+       Not sure why the second one is needed.  Should play around more
+       with this at some point.
+    */
+    rl_basic_word_break_characters = " \t\n\\\"'`><=+-*%;,|&{()}[]";
+    rl_completer_word_break_characters = " \t\n\\\"'`><=+-*%;,|&{()}";
+    return;
+}
+
+
+
+/* Attempt to complete on the contents of TEXT.  START and END bound the
+   region of rl_line_buffer that contains the word to complete.  TEXT is
+   the word to complete.  We can use the entire contents of rl_line_buffer
+   in case we want to do some simple parsing.  Return the array of matches,
+   or NULL if there aren't any. */
+
+static char **
+R_custom_completion(const char *text, int start, int end)
+     /* 
+	Make some relevant information available to R, then call
+	rl_completion_matches to generate matches.  FIXME: It would be
+	nice if we could figure whether we are in a partially
+	completed line (R prompt == "+"), in which case we could keep
+	the old line buffer around and do useful things with it.
+     */
+{
+    char **matches = (char **)NULL;
+    SEXP infile,
+	linebufferCall = PROTECT(lang2(RComp_assignBufferSym, 
+				       mkString(rl_line_buffer))), 
+	startCall = PROTECT(lang2(RComp_assignStartSym, ScalarInteger(start))),
+	endCall = PROTECT(lang2(RComp_assignEndSym,ScalarInteger(end)));
+
+    eval(linebufferCall, rcompgen_rho);
+    eval(startCall, rcompgen_rho);
+    eval(endCall, rcompgen_rho);
+    UNPROTECT(3);
+    matches = rl_completion_matches(text, R_completion_generator);
+    infile = PROTECT(eval(lang1(RComp_getFileCompSym), rcompgen_rho));
+    if (!asLogical(infile)) rl_attempted_completion_over = 1;
+    UNPROTECT(1);
+    return matches;
+}
+
+/* R_completion_generator does the actual work (it is called from
+   somewhere inside rl_completion_matches repeatedly).  See readline
+   documentation for details, but one important fact is that the
+   return value of R_completion_generator will be free()-d by
+   readline */
+
+/* Generator function for command completion.  STATE lets us know
+   whether to start from scratch: we do so when STATE == 0 */
+
+static char *R_completion_generator(const char *text, int state)
+{
+    static int list_index, ncomp;
+    static char **compstrings;
+
+    /* If this is a new word to complete, initialize now.  This
+       involves saving 'text' to somewhere R can get at it, calling
+       completeToken(), and retrieving the completions. */
+
+    if (!state) {
+	int i;
+	SEXP completions,
+	    assignCall = PROTECT(lang2(RComp_assignTokenSym, mkString(text))), 
+	    completionCall = PROTECT(lang1(RComp_completeTokenSym)), 
+	    retrieveCall = PROTECT(lang1(RComp_retrieveCompsSym));
+
+	eval(assignCall, rcompgen_rho);
+	eval(completionCall, rcompgen_rho);
+	PROTECT(completions = eval(retrieveCall, rcompgen_rho));
+	list_index = 0;
+	ncomp = length(completions);
+	if (ncomp > 0) {
+	    compstrings = (char **) malloc(ncomp * sizeof(char*));
+	    for (i = 0; i < ncomp; i++)
+		compstrings[i] = strdup(CHAR(STRING_ELT(completions, i)));
+	}
+	UNPROTECT(4);
+    }
+
+    if (list_index < ncomp)
+	return compstrings[list_index++];
+    else {
+	/* nothing matched or remaining, so return NULL. */ 
+	if (ncomp > 0) free(compstrings);
+    }
+    return (char *)NULL;
+}
+
+/* ============================================================ */
+#endif /* HAVE_RL_COMPLETION_MATCHES */
+
 #else
 static void
 handleInterrupt(void)
@@ -575,6 +783,7 @@ handleInterrupt(void)
     onintr();
 }
 #endif /* HAVE_LIBREADLINE */
+
 
 /* Fill a text buffer from stdin or with user typed console input. */
 static void *cd = NULL;
@@ -587,7 +796,7 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	int ll, err = 0;
 	if (!R_Slave)
 	    fputs(prompt, stdout);
-	if (fgets((char *)buf, len, stdin) == NULL)
+	if (fgets((char *)buf, len, ifp ? ifp: stdin) == NULL)
 	    return 0;
 	ll = strlen((char *)buf);
 	/* remove CR in CRLF ending */
@@ -620,7 +829,7 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
     	}
 /* according to system.txt, should be terminated in \n, so check this
    at eof and error */
-	if ((err || feof(stdin)) 
+	if ((err || feof(ifp ? ifp : stdin)) 
 	    && (ll == 0 || buf[ll - 1] != '\n') && ll < len) {
 	    buf[ll++] = '\n'; buf[ll] = '\0';
 	}
@@ -640,6 +849,9 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	    rl_data.prev = rl_top;
 	    rl_top = &rl_data;
 	    pushReadline(prompt, readline_handler);
+#ifdef HAVE_RL_COMPLETION_MATCHES
+	    initialize_rlcompletion();
+#endif
 	}
 	else
 #endif /* HAVE_LIBREADLINE */
@@ -689,11 +901,21 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 }
 
 	/* Write a text buffer to the console. */
-	/* All system output is filtered through this routine. */
+	/* All system output is filtered through this routine (unless R_Consolefile is used). */
 
 void attribute_hidden Rstd_WriteConsole(char *buf, int len)
 {
     printf("%s", buf);
+}
+
+/* The extended version allows the distinction of errors and warnings.
+   It is not enabled by default unless pretty-printing is desired. */
+void attribute_hidden Rstd_WriteConsoleEx(char *buf, int len, int otype)
+{
+    if (otype)
+      printf("\033[1m%s\033[0m", buf);
+    else
+      printf("%s", buf);
 }
 
 
@@ -814,6 +1036,7 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     R_CleanTempDir();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
+    if(ifp) fclose(ifp);
     fpu_setup(FALSE);
 
     exit(status);
@@ -852,7 +1075,7 @@ Rstd_ShowFiles(int nfile, 		/* number of files */
     if (nfile > 0) {
         if (pager == NULL || strlen(pager) == 0) pager = "more";
 	filename = R_tmpnam(NULL, R_TempDir); /* mallocs result */
-        if ((tfp = fopen(filename, "w")) != NULL) {
+        if ((tfp = R_fopen(filename, "w")) != NULL) {
 	    for(i = 0; i < nfile; i++) {
 		if (headers[i] && *headers[i])
 		    fprintf(tfp, "%s\n\n", headers[i]);
@@ -894,7 +1117,7 @@ Rstd_ShowFiles(int nfile, 		/* number of files */
 
 
 
-int attribute_hidden Rstd_ChooseFile(int new, char *buf, int len)
+int attribute_hidden Rstd_ChooseFile(int _new, char *buf, int len)
 {
     int namelen;
     char *bufp;
@@ -932,7 +1155,7 @@ void attribute_hidden Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
 	errorcall(call, _("invalid '%s' argument"), "file");
-    p = R_ExpandFileName(CHAR(STRING_ELT(sfile, 0)));
+    p = R_ExpandFileName(translateChar(STRING_ELT(sfile, 0)));
     if(strlen(p) > PATH_MAX - 1)
 	errorcall(call, _("'file' argument is too long"));
     strcpy(file, p);
@@ -954,7 +1177,7 @@ void attribute_hidden Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
 	errorcall(call, _("invalid '%s' argument"), "file");
-    p = R_ExpandFileName(CHAR(STRING_ELT(sfile, 0)));
+    p = R_ExpandFileName(translateChar(STRING_ELT(sfile, 0)));
     if(strlen(p) > PATH_MAX - 1)
 	errorcall(call, _("'file' argument is too long"));
     strcpy(file, p);
@@ -983,7 +1206,7 @@ void attribute_hidden Rstd_addhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 #if defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_HISTORY_H)
     if(R_Interactive && UsingReadline) 
 	for (i = 0; i < LENGTH(stamp); i++) 
-	    add_history(CHAR(STRING_ELT(stamp, i)));
+	    add_history(CHAR(STRING_ELT(stamp, i))); /* ASCII */
 # endif      
 }
 
@@ -1038,7 +1261,7 @@ SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (;;) {
 	fd_set *what;
 	tm = R_MIN(tm, 2e9); /* avoid integer overflow */
-        Timeout = R_wait_usec ? R_MIN(tm, R_wait_usec) : tm;
+        Timeout = (int) (R_wait_usec ? R_MIN(tm, R_wait_usec) : tm);
 	what = R_checkActivity(Timeout, 1);
 
 	/* Time up? */

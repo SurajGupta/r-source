@@ -80,6 +80,7 @@
  GA_decrease_refcount
  GA_del_all_contexts
  GA_del_context
+ GA_del_statusbar
  GA_del_string
  GA_deletion_traversal
  GA_erase_image
@@ -159,12 +160,15 @@
  GA_this_instance
  GA_to_c_string
  GA_to_dos_string
+ GA_toolbar_show
  GA_tree_search
  GA_updatestatus
  GA_win_rgb
  GRecording
  GetCurrentWinPos
  IS_ACTIVE_BINDING
+ IS_LATIN1
+ IS_UTF8
  InitDynload
  Init_R_Variables
  LOCK_BINDING
@@ -212,12 +216,15 @@
  R_IoBufferPutc
  R_IoBufferWriteReset
  R_JumpToContext
+ R_KT_ran_arr_buf
+ R_KT_ran_arr_cycle
+ R_KT_ran_arr_ptr
+ R_KT_ran_arr_sentinel
  R_KeepSource
  R_LoadFromFile
  R_Log10
  R_NHeap
  R_NSize
- R_NewHashedEnv
  R_Newhashpjw
  R_OutputCon
  R_PPStack
@@ -251,6 +258,8 @@
  R_ToplevelExec
  R_VSize
  R_Verbose
+ R_Visible
+ R_WarnEscapes
  R_WarnLength
  R_Warnings
  R_XDRDecodeDouble
@@ -262,9 +271,12 @@
  R_binary
  R_compress1
  R_current_trace_state
+ R_data_class2
  R_dec_min_exponent
  R_decompress1
  R_dlsym
+ R_do_data_class
+ R_do_set_class
  R_fixbackslash
  R_fixslash
  R_getClockIncrement
@@ -297,6 +309,7 @@
  R_sysparent
  R_unary
  Rconsolesetwidth
+ Rf_CheckFormals
  Rf_CoercionWarning
  Rf_ComplexFromInteger
  Rf_ComplexFromLogical
@@ -326,6 +339,7 @@
  Rf_InitGraphics
  Rf_InitMemory
  Rf_InitOptions
+ Rf_InitRand
  Rf_InitTempDir
  Rf_IntegerFromComplex
  Rf_IntegerFromLogical
@@ -382,6 +396,7 @@
  Rf_lgammacor
  Rf_lookupCachedSymbol
  Rf_makeSubscript
+ Rf_markKnown
  Rf_mat2indsub
  Rf_matchArg
  Rf_matchArgExact
@@ -434,7 +449,12 @@
  Rrowsum_matrix
  Rwin_rename
  SET_ACTIVE_BINDING_BIT
+ SET_LATIN1
+ SET_UTF8
+ Sys_TempDir
  UNLOCK_BINDING
+ UNSET_LATIN1
+ UNSET_UTF8
  UseInternet2
  WrongArgCount
  _dist_code
@@ -457,6 +477,7 @@
  _nl_normalize_codeset
  _pcre_OP_lengths
  _pcre_default_tables
+ _pcre_is_newline
  _pcre_ord2utf8
  _pcre_try_flipped
  _pcre_ucp_findchar
@@ -468,6 +489,7 @@
  _pcre_utt
  _pcre_utt_size
  _pcre_valid_utf8
+ _pcre_was_newline
  _pcre_xclass
  _setextradata
  _tr_align
@@ -632,6 +654,7 @@
  do_close
  do_cmathfuns
  do_col2RGB
+ do_colon
  do_colors
  do_colsum
  do_commandArgs
@@ -645,6 +668,7 @@
  do_cov
  do_cum
  do_dataentry
+ do_dataviewer
  do_date
  do_debug
  do_delay
@@ -686,10 +710,13 @@
  do_edit
  do_emptyenv
  do_encodeString
+ do_encoding
  do_env2list
  do_envIsLocked
  do_envir
+ do_envirName
  do_envirgets
+ do_envprofile
  do_erase
  do_eval
  do_expression
@@ -707,7 +734,6 @@
  do_fileshow
  do_filesymlink
  do_filledcontour
- do_first_max
  do_first_min
  do_flush
  do_flushconsole
@@ -741,6 +767,7 @@
  do_getlocale
  do_gettext
  do_getwd
+ do_glob
  do_globalenv
  do_gpregexpr
  do_gray
@@ -752,7 +779,7 @@
  do_hcl
  do_hsv
  do_iconv
- do_ident
+ do_identical
  do_identify
  do_if
  do_image
@@ -785,6 +812,7 @@
  do_layout
  do_length
  do_lengthgets
+ do_levelsgets
  do_libfixup
  do_listfiles
  do_load
@@ -871,11 +899,13 @@
  do_plot_window
  do_plot_xy
  do_pmatch
+ do_pmin
  do_polygon
  do_polyroot
  do_pos2env
  do_pregexpr
  do_primitive
+ do_printDeferredWarnings
  do_printdefault
  do_prmatrix
  do_proctime
@@ -915,6 +945,7 @@
  do_relop_dflt
  do_remove
  do_rep
+ do_rep_int
  do_repeat
  do_replay
  do_resetCondHands
@@ -934,11 +965,17 @@
  do_segments
  do_selectlist
  do_seq
+ do_seq_along
+ do_seq_len
  do_serializeToConn
  do_set
  do_setGPar
+ do_setStatusBar
  do_setTitle
  do_setToCConverterActiveStatus
+ do_setencoding
+ do_setenv
+ do_seterrmessage
  do_setlocale
  do_setseed
  do_setwd
@@ -991,6 +1028,7 @@
  do_termsform
  do_text
  do_textconnection
+ do_textconvalue
  do_tilde
  do_title
  do_tolower
@@ -1004,6 +1042,7 @@
  do_unlist
  do_unregNS
  do_unserializeFromConn
+ do_unsetenv
  do_unz
  do_updateform
  do_url
@@ -1025,6 +1064,8 @@
  do_writelines
  do_writetable
  do_zeroin
+ dos_glob
+ dos_globfree
  dpois_raw
  drawconsole
  editorchecksave
@@ -1102,6 +1143,9 @@
  internal_shellexec
  intpr0_
  isMethodsDispatchOn
+ known_to_be_latin1
+ known_to_be_utf8
+ latin1locale
  libintl_bind_textdomain_codeset
  libintl_bindtextdomain
  libintl_dcigettext
@@ -1137,12 +1181,16 @@
  localeCP
  locale_charset
  mallinfo
+ malloc_footprint
+ malloc_max_footprint
  malloc_stats
  malloc_trim
  malloc_usable_size
  mallopt
+ max_contour_segments
  mb_char_len
  mbswidth
+ memalign
  memtrace_report
  menuclear
  menuconfig
@@ -1213,6 +1261,7 @@
  setconsoleoptions
  setfirstcol
  setfirstvisible
+ showstatusbar
  sigaction
  sigaddset
  sigblock
@@ -1334,11 +1383,9 @@
  trio_set_upper
  trio_set_width
  trio_signbit
- trio_snprintf
  trio_snprintfcat
  trio_snprintfv
  trio_span_function
- trio_sprintf
  trio_sprintfv
  trio_sscanf
  trio_sscanfv
@@ -1388,9 +1435,7 @@
  trio_vprint_ref
  trio_vprintf
  trio_vscanf
- trio_vsnprintf
  trio_vsnprintfcat
- trio_vsprintf
  trio_vsscanf
  trio_xstring_append
  trio_xstring_append_char

@@ -2,10 +2,13 @@ dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
                        pointsize, ...)
 {
     if(missing(file)) stop("'file' is missing with no default")
-    if(!is.character(file) || nchar(file) == 0)
+    if(!is.character(file) || length(file) != 1 || nchar(file) == 0)
         stop("'file' must be a non-empty character string")
     gsexe <- Sys.getenv("R_GSCMD")
-    if(is.null(gsexe) || nchar(gsexe) == 0) gsexe <- "gswin32c.exe"
+    if(is.null(gsexe) || nchar(gsexe) == 0) {
+        gsexe <- "gswin32c.exe"
+    } else if(length(grep(" ", gsexe, fixed=TRUE))> 0)
+        gsexe <- shortPathName(gsexe)
     gshelp <- system(paste(gsexe, "-help"), intern=TRUE, invisible=TRUE)
     st <- grep("^Available", gshelp)
     en <- grep("^Search", gshelp)
@@ -41,10 +44,13 @@ bitmap <- function(file, type="png256", height=6, width=6, res=72,
                    pointsize, ...)
 {
     if(missing(file)) stop("'file' is missing with no default")
-    if(!is.character(file) || nchar(file) == 0)
+    if(!is.character(file) || length(file) != 1 || nchar(file) == 0)
         stop("'file' must be a non-empty character string")
     gsexe <- Sys.getenv("R_GSCMD")
-    if(is.null(gsexe) || nchar(gsexe) == 0) gsexe <- "gswin32c.exe"
+    if(is.null(gsexe) || nchar(gsexe) == 0) {
+        gsexe <- "gswin32c.exe"
+    } else if(length(grep(" ", gsexe, fixed=TRUE))> 0)
+        gsexe <- shortPathName(gsexe)
     gshelp <- system(paste(gsexe, "-help"), intern=TRUE, invisible=TRUE)
     st <- grep("^Available", gshelp)
     en <- grep("^Search", gshelp)

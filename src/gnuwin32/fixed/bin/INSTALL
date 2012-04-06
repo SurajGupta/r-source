@@ -1,5 +1,5 @@
 #-*- perl -*-
-# Copyright (C) 2000-6  R Development Core Team
+# Copyright (C) 2000-7  R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,7 @@ use Getopt::Long;
 use R::Dcf;
 use R::Utils;
 
-
-my $revision = ' $Rev: 39671 $ ';
+my $revision = ' $Rev: 41091 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -126,9 +125,19 @@ if($opt_library){
 	die "Error: cannot change to directory \`$opt_library'\n";
     $library = cwd();
     $library = Win32::GetShortPathName($library) if $library =~ / /;
+    my $R_LIBS = $ENV{'R_LIBS'};
+    $ENV{'R_LIBS'} = join(";", $library, $R_LIBS);
     chdir($startdir);
 } else {
-    $library = $R_HOME . "/library";
+    my @out = R_runR("cat('\n~~~', .libPaths()[1], '\n', sep = '')", "--slave");
+    foreach $f (@out) {
+	if($f =~ /^~~~/) {
+	    $library = $f;
+	    $library =~ s/^~~~//;
+	}
+    }
+    $library = Win32::GetShortPathName($library) if $library =~ / /;
+    print "installing to '$library'\n";
 }
 
 my $helpflags = "HELP=YES WINHELP=CHM";
@@ -185,8 +194,9 @@ foreach $pkg (@ARGV){
 	$pkgname =~ s/\.tar\.gz$//;
 	$pkgname =~ s/\.tgz$//;
 	$pkgname =~ s/_[0-9\.-]*$//;
-	my $dir = "R.INSTALL";
-	if(! -d $dir) {
+	my $dir = "R.INSTALL.$$";
+	rmtree($dir);  # zap in the likely event it is already there
+	if(! -d $dir) {  # reuse if we failed to zap
 	    mkdir($dir, 0755) or die "Error: cannot create $dir\n";
 	}
 	$tardir = $dir;
@@ -223,6 +233,7 @@ foreach $pkg (@ARGV){
 	    }
 	    next;
 	}
+	if (defined($tardir)) { chdir($startdir); rmtree($tardir); }
 	die "cannot install package '${pkgname}' of type '$Type'\n"
     }
  
@@ -296,12 +307,14 @@ foreach $pkg (@ARGV){
 	if(-d $lockdir || -f $lockdir) {
 	    print "Failed to lock directory '${library}' for modifying\n";
 	    print "Try removing '${lockdir}'\n";
+	    if (defined($tardir)) { chdir($startdir); rmtree($tardir); }
 	    exit 3;
 	}
 	mkpath($lockdir);
 	if(! -d $lockdir) {
 	    print "Failed to lock directory '${library}' for modifying\n";
 	    print "Permission problem?\n";
+	    if (defined($tardir)) { chdir($startdir); rmtree($tardir); }
 	    exit 3;
 	}
     }
@@ -458,12 +471,10 @@ foreach $pkg (@ARGV){
     }
     # wipe out lockdir
     rmtree($lockdir) if $safe;
+    if (defined($tardir)) { chdir($startdir); rmtree($tardir); }
     exit $res if $res;
     print("\* DONE ($intname)\n");
 }
-
-## remove unpack directory
-if ($istar > 0) { chdir($startdir); rmtree("R.INSTALL"); }
 
 sub parse_description_field { # fieldname
     my ($field) = @_;

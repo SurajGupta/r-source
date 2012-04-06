@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998	Robert Gentleman and Ross Ihaka.
- *  Copyright (C) 2000-2006	The R Development Core Team.
+ *  Copyright (C) 2000-2007	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,6 +69,7 @@
 #include "Rconnections.h"
 #include <S.h>
 
+
 /* Global print parameter struct: */
 attribute_hidden R_print_par_t R_print;
 
@@ -86,7 +87,7 @@ void PrintDefaults(SEXP rho)
     R_print.na_width = strlen(CHAR(R_print.na_string));
     R_print.na_width_noquote = strlen(CHAR(R_print.na_string_noquote));
     R_print.quote = 1;
-    R_print.right = 0;
+    R_print.right = Rprt_adj_left;
     R_print.digits = GetOptionDigits(rho);
     R_print.scipen = asInteger(GetOption(install("scipen"), rho));
     if (R_print.scipen == NA_INTEGER) R_print.scipen = 0;
@@ -94,6 +95,7 @@ void PrintDefaults(SEXP rho)
     if (R_print.max == NA_INTEGER) R_print.max = 99999;
     R_print.gap = 1;
     R_print.width = GetOptionWidth(rho);
+    R_print.useSource = USESOURCE;
 }
 
 SEXP attribute_hidden do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -131,7 +133,7 @@ SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     collab = CAR(a); a = CDR(a);
 
     quote = asInteger(CAR(a)); a = CDR(a);
-    R_print.right = asInteger(CAR(a)); a = CDR(a);
+    R_print.right = (Rprt_adj) asInteger(CAR(a)); a = CDR(a);
     naprint = CAR(a);
     if(!isNull(naprint))  {
 	if(!isString(naprint) || LENGTH(naprint) < 1)
@@ -199,7 +201,7 @@ SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     args = CDR(args);
 
-    R_print.right = asLogical(CAR(args));
+    R_print.right = (Rprt_adj) asLogical(CAR(args)); /* Should this be asInteger()? */
     if(R_print.right == NA_LOGICAL)
 	errorcall(call, _("invalid '%s' argument"), "right");
     args = CDR(args);
@@ -211,16 +213,33 @@ SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     args = CDR(args);
 
+    R_print.useSource = asLogical(CAR(args));
+    if(R_print.useSource == NA_LOGICAL)
+    	errorcall(call, _("invalid '%s' argument"), "useSource");
+    if(R_print.useSource) R_print.useSource = USESOURCE;
+
     tryS4 = asLogical(CAR(args));
     if(tryS4 == NA_LOGICAL)
 	errorcall(call, _("invalid 'tryS4' internal argument"));
 
     if(tryS4 && IS_S4_OBJECT(x) && isMethodsDispatchOn())
-      callShow = TRUE;
+	callShow = TRUE;
+    args = CDR(args);
 
     if(callShow) {
-	SEXP call;
-	PROTECT(call = lang2(install("show"), x));
+	/* we need to get show from the methods namespace if it is 
+	   not visible on the search path. */
+	SEXP call, showS;
+	showS = findVar(install("show"), rho);
+	if(showS == R_UnboundValue) {
+	    SEXP methodsNS = R_FindNamespace(mkString("methods"));
+	    if(methodsNS == R_UnboundValue)
+		error("missing methods namespace: this should not happen");
+	    showS = findVarInFrame3(methodsNS, install("show"), TRUE);
+	    if(showS == R_UnboundValue)
+		error("missing show() in methods namespace: this should not happen");
+	}
+	PROTECT(call = lang2(showS, x));
 	eval(call, rho);
 	UNPROTECT(1);
     } else {
@@ -297,7 +316,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	    case STRSXP:
 		if (LENGTH(tmp) == 1) {
 		    /* This can potentially overflow */
-		    char *ctmp = CHAR(STRING_ELT(tmp, 0));
+		    char *ctmp = translateChar(STRING_ELT(tmp, 0));
 		    int len = strlen(ctmp);
 		    if(len < 100)
 			snprintf(pbuf, 115, "\"%s\"", ctmp);
@@ -336,7 +355,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	}
 	else {
 	    names = GetArrayDimnames(s);
-	    printArray(t, dims, 0, 0, names);
+	    printArray(t, dims, 0, Rprt_adj_left, names);
 	}
 	UNPROTECT(2);
     }
@@ -356,17 +375,18 @@ static void PrintGenericVector(SEXP s, SEXP env)
 		if (names != R_NilValue &&
 		    STRING_ELT(names, i) != R_NilValue &&
 		    *CHAR(STRING_ELT(names, i)) != '\0') {
-		    if (taglen + strlen(CHAR(STRING_ELT(names, i))) > TAGBUFLEN)
+		    char *ss = translateChar(STRING_ELT(names, i));
+		    if (taglen + strlen(ss) > TAGBUFLEN)
 			sprintf(ptag, "$...");
 		    else {
 			/* we need to distinguish character NA from "NA", which
 			   is a valid (if non-syntactic) name */
 			if (STRING_ELT(names, i) == NA_STRING)
 			    sprintf(ptag, "$<NA>");
-			else if( isValidName(CHAR(STRING_ELT(names, i))) )
-			    sprintf(ptag, "$%s", CHAR(STRING_ELT(names, i)));
+			else if( isValidName(ss) )
+			    sprintf(ptag, "$%s", ss);
 			else
-			    sprintf(ptag, "$`%s`", CHAR(STRING_ELT(names, i)));
+			    sprintf(ptag, "$`%s`", ss);
 		    }
 		}
 		else {
@@ -394,15 +414,15 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	else { /* ns = length(s) == 0 */
 	    /* Formal classes are represented as empty lists */
 	    char *className = NULL;
-	    SEXP class;
+	    SEXP klass;
 	    if(isObject(s) && isMethodsDispatchOn()) {
-		class = getAttrib(s, R_ClassSymbol);
-		if(length(class) == 1) {
+		klass = getAttrib(s, R_ClassSymbol);
+		if(length(klass) == 1) {
 		    /* internal version of isClass() */
-		    char str[201];
-		    snprintf(str, 200, ".__C__%s", CHAR(STRING_ELT(class, 0)));
+		    char str[201], *ss = translateChar(STRING_ELT(klass, 0));
+		    snprintf(str, 200, ".__C__%s", ss);
 		    if(findVar(install(str), env) != R_UnboundValue)
-			className = CHAR(STRING_ELT(class, 0));
+			className = ss;
 		}
 	    }
 	    if(className) {
@@ -481,7 +501,7 @@ static void printList(SEXP s, SEXP env)
 	}
 	else {
 	    dimnames = getAttrib(s, R_DimNamesSymbol);
-	    printArray(t, dims, 0, 0, dimnames);
+	    printArray(t, dims, 0, Rprt_adj_left, dimnames);
 	}
 	UNPROTECT(2);
     }
@@ -539,10 +559,10 @@ static void PrintExpression(SEXP s)
     SEXP u;
     int i, n;
 
-    u = deparse1(s, 0, SIMPLEDEPARSE);
+    u = deparse1(s, 0, R_print.useSource | DEFAULTDEPARSE);
     n = LENGTH(u);
     for (i = 0; i < n ; i++)
-	Rprintf("%s\n", CHAR(STRING_ELT(u, i)));
+	Rprintf("%s\n", CHAR(STRING_ELT(u, i))); /*translated */
 }
 
 
@@ -561,18 +581,39 @@ static void PrintEnvir(SEXP rho)
     	Rprintf("<environment: R_EmptyEnv>\n");
     else if (R_IsPackageEnv(rho))
 	Rprintf("<environment: %s>\n",
-		CHAR(STRING_ELT(R_PackageEnvName(rho), 0)));
+		translateChar(STRING_ELT(R_PackageEnvName(rho), 0)));
     else if (R_IsNamespaceEnv(rho))
 	Rprintf("<environment: namespace:%s>\n",
-		CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0)));
+		translateChar(STRING_ELT(R_NamespaceEnvSpec(rho), 0)));
     else Rprintf("<environment: %p>\n", rho);
 }
 
-void attribute_hidden PrintValueRec(SEXP s,SEXP env)
+void attribute_hidden PrintValueRec(SEXP s, SEXP env)
 {
     int i;
     SEXP t;
 
+    if(!isMethodsDispatchOn() && (IS_S4_OBJECT(s) || TYPEOF(s) == S4SXP) ) {
+	SEXP cl = getAttrib(s, install("class"));
+	if(isNull(cl)) {
+	    /* This might be a mistaken S4 bit set */
+	    if(TYPEOF(s) == S4SXP)
+		Rprintf("<S4 object without a class>\n");
+	    else
+		Rprintf("<Object of type '%s' with S4 bit but without a class>\n", 
+			type2char(TYPEOF(s)));
+	} else {
+	    SEXP pkg = getAttrib(s, install("package"));
+	    if(isNull(pkg)) {
+		Rprintf("<S4 object of class \"%s\">\n",
+			CHAR(STRING_ELT(cl, 0)));
+	    } else {
+		Rprintf("<S4 object of class \"%s\" from package '%s'>\n",
+			CHAR(STRING_ELT(cl, 0)), CHAR(STRING_ELT(pkg, 0)));
+	    }
+	}
+	return;
+    }
     switch (TYPEOF(s)) {
     case NILSXP:
 	Rprintf("NULL\n");
@@ -580,12 +621,38 @@ void attribute_hidden PrintValueRec(SEXP s,SEXP env)
     case SYMSXP: /* Use deparse here to handle backtick quotification
 		  * of "weird names" */
 	t = deparse1(s, 0, SIMPLEDEPARSE);
-	Rprintf("%s\n", CHAR(STRING_ELT(t, 0)));
+	Rprintf("%s\n", CHAR(STRING_ELT(t, 0))); /* translated */
 	break;
     case SPECIALSXP:
     case BUILTINSXP:
 	/* This is OK as .Internals are not visible to be printed */
-	Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
+    {
+	char *nm = PRIMNAME(s);
+	SEXP env, s2;
+	PROTECT_INDEX xp;
+	PROTECT_WITH_INDEX(env = findVarInFrame3(R_BaseEnv,
+						 install(".ArgsEnv"), TRUE),
+			   &xp);
+	if (TYPEOF(env) == PROMSXP) REPROTECT(env = eval(env, R_BaseEnv), xp);
+	s2 = findVarInFrame3(env, install(nm), TRUE);
+	if(s2 == R_UnboundValue) {
+	    REPROTECT(env = findVarInFrame3(R_BaseEnv,
+					    install(".GenericArgsEnv"), TRUE),
+		      xp);
+	    if (TYPEOF(env) == PROMSXP)
+		REPROTECT(env = eval(env, R_BaseEnv), xp);
+	    s2 = findVarInFrame3(env, install(nm), TRUE);
+	}
+	if(s2 != R_UnboundValue) {
+	    PROTECT(s2);
+	    t = deparse1(s2, 0, DEFAULTDEPARSE);
+	    Rprintf("%s ", CHAR(STRING_ELT(t, 0))); /* translated */
+	    Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
+	    UNPROTECT(1);
+	} else /* missing definition, e.g. 'if' */
+	    Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
+	UNPROTECT(1);
+    }
 	break;
     case CHARSXP:
 	Rprintf("<CHARSXP: ");
@@ -598,10 +665,10 @@ void attribute_hidden PrintValueRec(SEXP s,SEXP env)
     case CLOSXP:
     case LANGSXP:
 	t = getAttrib(s, R_SourceSymbol);
-	if (isNull(t))
-	    t = deparse1(s, 0, SIMPLEDEPARSE);
+	if (isNull(t) || !R_print.useSource)
+	    t = deparse1(s, 0, R_print.useSource | DEFAULTDEPARSE);
 	for (i = 0; i < LENGTH(t); i++)
-	    Rprintf("%s\n", CHAR(STRING_ELT(t, i)));
+	    Rprintf("%s\n", CHAR(STRING_ELT(t, i))); /* translated */
 #ifdef BYTECODE
 	if (TYPEOF(s) == CLOSXP && isByteCode(BODY(s)))
 	    Rprintf("<bytecode: %p>\n", BODY(s));
@@ -641,7 +708,7 @@ void attribute_hidden PrintValueRec(SEXP s,SEXP env)
 		    char *title = NULL;
 
 		    if (!isNull(nn))
-		        title = CHAR(STRING_ELT(nn, 0));
+		        title = translateChar(STRING_ELT(nn, 0));
 
 		    printNamedVector(s, VECTOR_ELT(t, 0), R_print.quote, title);
 		}
@@ -684,8 +751,9 @@ void attribute_hidden PrintValueRec(SEXP s,SEXP env)
 	Rprintf("<weak reference>\n");
 	break;
     case S4SXP:
-      /*  we got here because no show method, usually no class.
-       Print the "slots" as attributes, since we don't know the class */
+	/*  we got here because no show method, usually no class.
+	    Print the "slots" as attributes, since we don't know the class.
+	*/
 	Rprintf("<S4 Type Object>\n");
 	break;
     default:
@@ -734,7 +802,7 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 		if (TAG(a) == R_NamesSymbol)
 		    goto nextattr;
 	    }
-	    if(TAG(a) == R_CommentSymbol || TAG(a) == R_SourceSymbol)
+	    if(TAG(a) == R_CommentSymbol || TAG(a) == R_SourceSymbol || TAG(a) == R_SrcrefSymbol)
 		goto nextattr;
 	    if(useSlots)
 		sprintf(ptag, "Slot \"%s\":",
@@ -762,10 +830,12 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 		*/
 		SEXP s, t, na_string = R_print.na_string,
 		    na_string_noquote = R_print.na_string_noquote;
-		int quote = R_print.quote, right = R_print.right,
+		int quote = R_print.quote,
 		    digits = R_print.digits, gap = R_print.gap,
 		    na_width = R_print.na_width,
 		    na_width_noquote = R_print.na_width_noquote;
+		Rprt_adj right = R_print.right;
+
 		PROTECT(t = s = allocList(3));
 		SET_TYPEOF(s, LANGSXP);
 		SETCAR(t, install("print")); t = CDR(t);
@@ -804,32 +874,43 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 
 
 /* Print an S-expression using (possibly) local options.
-   This is used for auto-printing */
+   This is used for auto-printing from main.c */
 
 void attribute_hidden PrintValueEnv(SEXP s, SEXP env)
 {
-    SEXP call;
-    char *autoprint = "print";
-
     PrintDefaults(env);
     tagbuf[0] = '\0';
     PROTECT(s);
     if(isObject(s)) {
-	/* The intention here is to call show() on S4 objects, otherwise
+	/* 
+	   The intention here is to call show() on S4 objects, otherwise
 	   print(), so S4 methods for show() have precedence over those for
-	   print(), to conform with the "green book", p. 332
+	   print() to conform with the "green book", p. 332
 	*/
-        if(isMethodsDispatchOn()) {
-	  if(IS_S4_OBJECT(s))
-		    autoprint = "show";
-	}
-	PROTECT(call = lang2(install(autoprint), s));
+	SEXP call, showS;
+        if(isMethodsDispatchOn() && IS_S4_OBJECT(s)) {
+	    /*
+	      Note that we cannot assume that show() is visible from
+	      'env', but we can assume there is a loaded "methods"
+	      namespace.  It is tempting to cache the value of show in
+	      the namespace, but the latter could be unloaded and
+	      reloaded in a session.
+	    */
+	    showS = findVar(install("show"), env);
+	    if(showS == R_UnboundValue) {
+		SEXP methodsNS = R_FindNamespace(mkString("methods"));
+		if(methodsNS == R_UnboundValue)
+		    error("missing methods namespace: this should not happen");
+		showS = findVarInFrame3(methodsNS, install("show"), TRUE);
+		if(showS == R_UnboundValue)
+		    error("missing show() in methods namespace: this should not happen");
+	    }
+	    PROTECT(call = lang2(showS, s));
+	} else
+	    PROTECT(call = lang2(install("print"), s));
 	eval(call, env);
 	UNPROTECT(1);
-    }
-    else {
-	PrintValueRec(s, env);
-    }
+    } else PrintValueRec(s, env);
     UNPROTECT(1);
 }
 
@@ -838,7 +919,7 @@ void attribute_hidden PrintValueEnv(SEXP s, SEXP env)
 
 void PrintValue(SEXP s)
 {
-    PrintValueEnv(s, R_BaseEnv);
+    PrintValueEnv(s, R_GlobalEnv);
 }
 
 
@@ -846,7 +927,7 @@ void PrintValue(SEXP s)
 
 void R_PV(SEXP s)
 {
-    if(isObject(s)) PrintValueEnv(s, R_BaseEnv);
+    if(isObject(s)) PrintValueEnv(s, R_GlobalEnv);
 }
 
 
@@ -914,7 +995,7 @@ int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 	Rprintf("\n");
     }
     if(nd > 0) {
-	ddata = malloc(nd*sizeof(double));
+	ddata = (double *) malloc(nd*sizeof(double));
 	if(!ddata) error(_("memory allocation error in realpr"));
 	for (k = 0; k < nd; k++) ddata[k] = (double) data[k];
 	printRealVector(ddata, nd, 1);

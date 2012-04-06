@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2006  The R Development Core Team.
+ *  Copyright (C) 2000-2007  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@
 #endif
 
 #include <time.h>
-#include <stdlib.h> /* for putenv */
+#include <stdlib.h> /* for setenv or putenv */
 #include <Defn.h>
 
 /* The glibc in RH8.0 is broken and assumes that dates before 1970-01-01
@@ -250,8 +250,8 @@ static double mktime00 (struct tm *tm)
 static double guess_offset (struct tm *tm)
 {
     double offset, offset1, offset2;
-    int i, wday, year, oldmonth, oldyear, olddst, oldwday, oldyday, oldmday;
-
+    int i, wday, year, oldmonth, oldisdst, oldmday;
+    struct tm oldtm;
     /*
        Adjust as best we can for timezones: if isdst is unknown, use
        the smaller offset at same day in Jan or July of a valid year.
@@ -259,12 +259,11 @@ static double guess_offset (struct tm *tm)
        July 1 on the same day of the week we will likely get guess
        right (since they are usually on Sunday mornings).
     */
+
+    memcpy(&oldtm, tm, sizeof(struct tm));
     oldmonth = tm->tm_mon;
-    oldyear = tm->tm_year;
-    olddst = tm->tm_isdst;
-    oldwday = tm->tm_wday;
-    oldyday = tm->tm_yday;
     oldmday = tm->tm_mday;
+    oldisdst = tm->tm_isdst;
 
     /* so now look for a suitable year */
     tm->tm_mon = 6;
@@ -292,7 +291,7 @@ static double guess_offset (struct tm *tm)
     tm->tm_mon = 6;
     tm->tm_isdst = -1;
     offset2 = (double) mktime(tm) - mktime00(tm);
-    if(olddst > 0) {
+    if(oldisdst > 0) {
 	offset = (offset1 > offset2) ? offset2 : offset1;
     } else {
 	offset = (offset1 > offset2) ? offset1 : offset2;
@@ -300,15 +299,15 @@ static double guess_offset (struct tm *tm)
     /* now try to guess dst if unknown */
     tm->tm_mon = oldmonth;
     tm->tm_isdst = -1;
-    if(olddst < 0) {
+    if(oldisdst < 0) {
 	offset1 = (double) mktime(tm) - mktime00(tm);
-	olddst = (offset1 < offset) ? 1:0;
-	if(olddst) offset = offset1;
+	oldisdst = (offset1 < offset) ? 1:0;
+	if(oldisdst) offset = offset1;
     }
-    tm->tm_year = oldyear;
-    tm->tm_isdst = olddst;
-    tm->tm_wday = oldwday;
-    tm->tm_yday = oldyday;
+    /* restore all as mktime might alter it */
+    memcpy(tm, &oldtm, sizeof(struct tm));
+    /* and then set isdst */
+    tm->tm_isdst = oldisdst;
     return offset;
 }
 
@@ -473,22 +472,22 @@ static int set_tz(char *tz, char *oldtz)
 {
     char *p = NULL;
     int settz = 0;
-    static char buff[200];
 
     strcpy(oldtz, "");
     p = getenv("TZ");
     if(p) strcpy(oldtz, p);
-#ifdef HAVE_PUTENV
-    strcpy(buff, "TZ="); strcat(buff, tz);
-    putenv(buff);
+#ifdef HAVE_SETENV
+    if(setenv("TZ", tz, 1)) warning(_("problem with setting timezone"));
+    settz = 1;
+#elif defined(HAVE_PUTENV)
+    {
+	static char buff[200];
+	strcpy(buff, "TZ="); strcat(buff, tz);
+	if(putenv(buff)) warning(_("problem with setting timezone"));
+    }
     settz = 1;
 #else
-# ifdef HAVE_SETENV
-    setenv("TZ", tz, 1);
-    settz = 1;
-# else
     warning(_("cannot set timezones on this system"));
-# endif
 #endif
     tzset();
     return settz;
@@ -497,24 +496,22 @@ static int set_tz(char *tz, char *oldtz)
 static void reset_tz(char *tz)
 {
     if(strlen(tz)) {
-#ifdef HAVE_PUTENV
-        static char buff[200];
-	strcpy(buff, "TZ="); strcat(buff, tz);
-	putenv(buff);
-#else
-# ifdef HAVE_SETENV
-	setenv("TZ", tz, 1);
-# endif
+#ifdef HAVE_SETENV
+	if(setenv("TZ", tz, 1)) warning(_("problem with setting timezone"));
+#elif defined(HAVE_PUTENV)
+	{
+	    static char buff[200];
+	    strcpy(buff, "TZ="); strcat(buff, tz);
+	    if(putenv(buff)) warning(_("problem with setting timezone"));
+	}
 #endif
     } else {
 #ifdef HAVE_UNSETENV
-	unsetenv("TZ");
-#else
-# ifdef HAVE_PUTENV
-	/* This ought (POSIX) to set the value to "", but on MinGW
-	   it removes the variable which happens to be what we want. */
-	putenv("TZ=");
-# endif
+	unsetenv("TZ"); /* FreeBSD variants do not return a value */
+#elif defined(HAVE_PUTENV_UNSET)
+	if(putenv("TZ")) warning(_("problem with unsetting timezone"));
+#elif defined(HAVE_PUTENV_UNSET2)
+	if(putenv("TZ=")) warning(_("problem with unsetting timezone"));
 #endif
     }
     tzset();
@@ -550,7 +547,7 @@ static void makelt(struct tm *tm, SEXP ans, int i, int valid, double frac_secs)
 
 SEXP attribute_hidden do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP stz, x, ans, ansnames, class, tzone;
+    SEXP stz, x, ans, ansnames, klass, tzone;
     int i, n, isgmt = 0, valid, settz = 0;
     char *tz = NULL, oldtz[20] = "";
 
@@ -590,10 +587,10 @@ SEXP attribute_hidden do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	makelt(ptm, ans, i, valid, d - floor(d));
     }
     setAttrib(ans, R_NamesSymbol, ansnames);
-    PROTECT(class = allocVector(STRSXP, 2));
-    SET_STRING_ELT(class, 0, mkChar("POSIXt"));
-    SET_STRING_ELT(class, 1, mkChar("POSIXlt"));
-    classgets(ans, class);
+    PROTECT(klass = allocVector(STRSXP, 2));
+    SET_STRING_ELT(klass, 0, mkChar("POSIXt"));
+    SET_STRING_ELT(klass, 1, mkChar("POSIXlt"));
+    classgets(ans, klass);
     if (isgmt) {
 	PROTECT(tzone = allocVector(STRSXP, 1));
 	SET_STRING_ELT(tzone, 0, mkChar(tz));
@@ -798,7 +795,7 @@ static void glibc_fix(struct tm *tm, int *invalid)
     if(tm->tm_yday != NA_INTEGER) {
 	/* since we have yday, let that take precedence over mon/mday */
 	int yday = tm->tm_yday, mon = 0;
-	while(yday > (tmp = days_in_month[mon] +
+	while(yday >= (tmp = days_in_month[mon] +
 		      ((mon==1 && isleap(1900+tm->tm_year))? 1 : 0))) {
 	    yday -= tmp;
 	    mon++;
@@ -819,10 +816,10 @@ static void glibc_fix(struct tm *tm, int *invalid)
 
 SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP x, sformat, ans, ansnames, class, stz;
-    int i, n, m, N, invalid, isgmt = 0;
+    SEXP x, sformat, ans, ansnames, klass, stz, tzone;
+    int i, n, m, N, invalid, isgmt = 0, settz = 0;
     struct tm tm, tm2;
-    char *tz = NULL;
+    char *tz = NULL, oldtz[20] = "";
     double psecs = 0.0;
 
     checkArity(op, args);
@@ -833,7 +830,14 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString((stz = CADDR(args))) || LENGTH(stz) != 1)
 	error(_("invalid '%s' value"), "tz");
     tz = CHAR(STRING_ELT(stz, 0));
+    if(strlen(tz) == 0) {
+	/* do a direct look up here as this does not otherwise
+	   work on Windows */
+	char *p = getenv("TZ");
+	if(p) tz = p;
+    }
     if(strcmp(tz, "GMT") == 0  || strcmp(tz, "UTC") == 0) isgmt = 1;
+    if(!isgmt && strlen(tz) > 0) settz = set_tz(tz, oldtz);
 
     n = LENGTH(x); m = LENGTH(sformat);
     if(n > 0) N = (m > n)?m:n; else N = 0;
@@ -875,18 +879,34 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	invalid = invalid || validate_tm(&tm) != 0;
 	makelt(&tm, ans, i, !invalid, psecs - floor(psecs));
     }
+
     setAttrib(ans, R_NamesSymbol, ansnames);
-    PROTECT(class = allocVector(STRSXP, 2));
-    SET_STRING_ELT(class, 0, mkChar("POSIXt"));
-    SET_STRING_ELT(class, 1, mkChar("POSIXlt"));
-    classgets(ans, class);
+    PROTECT(klass = allocVector(STRSXP, 2));
+    SET_STRING_ELT(klass, 0, mkChar("POSIXt"));
+    SET_STRING_ELT(klass, 1, mkChar("POSIXlt"));
+    classgets(ans, klass);
+    if (isgmt) {
+	PROTECT(tzone = allocVector(STRSXP, 1));
+	SET_STRING_ELT(tzone, 0, mkChar(tz));
+	setAttrib(ans, install("tzone"), tzone);
+	UNPROTECT(1);
+    } else if(strlen(tz)) {
+	PROTECT(tzone = allocVector(STRSXP, 3));
+	SET_STRING_ELT(tzone, 0, mkChar(tz));
+	SET_STRING_ELT(tzone, 1, mkChar(tzname[0]));
+	SET_STRING_ELT(tzone, 2, mkChar(tzname[1]));
+	setAttrib(ans, install("tzone"), tzone);
+	UNPROTECT(1);
+    }
+    if(settz) reset_tz(oldtz);
+
     UNPROTECT(3);
     return ans;
 }
 
 SEXP attribute_hidden do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP x, ans, ansnames, class;
+    SEXP x, ans, ansnames, klass;
     int n, i, valid;
     int day;
     int y, tmp, mon;
@@ -934,10 +954,10 @@ SEXP attribute_hidden do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	makelt(&tm, ans, i, valid, 0.0);
     }
     setAttrib(ans, R_NamesSymbol, ansnames);
-    PROTECT(class = allocVector(STRSXP, 2));
-    SET_STRING_ELT(class, 0, mkChar("POSIXt"));
-    SET_STRING_ELT(class, 1, mkChar("POSIXlt"));
-    classgets(ans, class);
+    PROTECT(klass = allocVector(STRSXP, 2));
+    SET_STRING_ELT(klass, 0, mkChar("POSIXt"));
+    SET_STRING_ELT(klass, 1, mkChar("POSIXlt"));
+    classgets(ans, klass);
     setAttrib(ans, install("tzone"), mkString("UTC"));
     UNPROTECT(4);
 
@@ -946,7 +966,7 @@ SEXP attribute_hidden do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP attribute_hidden do_POSIXlt2D(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP x, ans, class;
+    SEXP x, ans, klass;
     int i, n = 0, nlen[9];
     struct tm tm;
 
@@ -986,9 +1006,9 @@ SEXP attribute_hidden do_POSIXlt2D(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
     }
 
-    PROTECT(class = allocVector(STRSXP, 1));
-    SET_STRING_ELT(class, 0, mkChar("Date"));
-    classgets(ans, class);
+    PROTECT(klass = allocVector(STRSXP, 1));
+    SET_STRING_ELT(klass, 0, mkChar("Date"));
+    classgets(ans, klass);
     UNPROTECT(3);
     return ans;
 }

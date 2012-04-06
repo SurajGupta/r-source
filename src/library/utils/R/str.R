@@ -12,7 +12,7 @@ str.data.frame <- function(object, ...)
     ## Show further classes // Assume that they do NOT have an own Method --
     ## not quite perfect ! (.Class = 'remaining classes', starting with current)
     cl <- oldClass(object); cl <- cl[cl != "data.frame"]  #- not THIS class
-    if(0 < length(cl)) cat("Classes", cl, " and ")
+    if(0 < length(cl)) cat("Classes", paste(sQuote(cl), collapse=", "), "and ")
 
     cat("'data.frame':	", nrow(object), " obs. of  ",
 	(p <- length(object)), " variable", if(p != 1)"s", if(p > 0)":",
@@ -22,6 +22,12 @@ str.data.frame <- function(object, ...)
     if(length(l <- list(...)) && any("give.length" == names(l)))
 	invisible(NextMethod("str", ...))
     else invisible(NextMethod("str", give.length=FALSE,...))
+}
+
+str.POSIXt <- function(object, ...) {
+    cl <- oldClass(object)
+    cat("'", cl[min(2, length(cl))],"', format:", sep = "")
+    str(format(object), ...)
 }
 
 strOptions <- function(strict.width = "no", digits.d = 3, vec.len = 4)
@@ -268,8 +274,11 @@ str.default <-
 		" '", paste(cl, collapse = "', '"), "' ", sep="")
 	    le <- v.len <- 0
 	    str1 <- paste("<", typeof(object), ">", sep="")
-	    if(typeof(object) == "environment")
-		str1 <- paste("length", length(object), str1)
+	    if(typeof(object) == "environment") {
+                nm <- environmentName(object)
+                str1 <- if(nchar(nm)[1]) paste("<", nm , ">", sep="")
+		else paste("length", length(object), str1)
+            }
 	    has.class <- TRUE # fake for later
 	    std.attr <- "class"
 	    ## ideally we would figure out if as.character has a
@@ -346,7 +355,7 @@ str.default <-
 	    if(give.mode) str1 <- P0(str1, ', mode "', mod,'":')
 
 	} else if(is.logical(object)) {
-	    v.len <- 3 * v.len
+	    v.len <- 1.5 * v.len # was '3' originally (but S prints 'T' 'F' ..)
 	    format.fun <- format
 	} else if(is.numeric(object)) {
 	    iv.len <- round(2.5 * v.len)

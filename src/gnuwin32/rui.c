@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1998--2005  Guido Masarotto and Brian Ripley
- *  Copyright (C) 2004--2006  The R Foundation
+ *  Copyright (C) 2004--2007  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ static menubar RMenuBar;
 static popup RConsolePopup;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
     msavehistory, mpaste, mpastecmds, mcopy, mcopypaste, mlazy, mconfig,
-    mls, mrm, msearch, mde;
+    mls, mrm, msearch, mde, mtools, mstatus;
 static int lmanintro, lmanref, lmandata, lmanlang, lmanext, lmanint, lmanadmin;
 static menu m;
 static char cmd[1024];
@@ -310,6 +310,38 @@ void menuconfig(control m)
 /*    show(RConsole); */
 }
 
+static void menutools(control m) 
+{
+    if(ischecked(mtools)) {
+	toolbar_hide();
+	uncheck(mtools);
+    } else {
+	toolbar_show();
+	check(mtools);
+    }
+}
+
+void showstatusbar()
+{
+    if(ismdi() && !ischecked(mstatus)) {
+	addstatusbar();
+	check(mstatus);
+    }
+}
+
+
+static void menustatus(control m)
+{
+    if(ischecked(mstatus)) {
+	delstatusbar();
+	uncheck(mstatus);
+    } else {
+	addstatusbar();
+	check(mstatus);
+    }
+}
+
+
 static void menulazy(control m)
 {
     consoletogglelazy(RConsole);
@@ -323,18 +355,24 @@ static void menuconsolestayontop(control m)
 
 static void menukill(control m)
 {
-    /*  show(RConsole); */
     UserBreak = TRUE;
+}
+
+static void menukillall(control m)
+{
+    consolenewline(RConsole);
+    Rf_jump_to_toplevel();
 }
 
 static Rboolean isdebuggerpresent()
 {
     typedef BOOL (*R_CheckDebugger)();
     R_CheckDebugger entry;
-    entry = (R_CheckDebugger)GetProcAddress((HMODULE)GetModuleHandle("KERNEL32"),
-                                            "IsDebuggerPresent");
+    entry = 
+	(R_CheckDebugger) GetProcAddress((HMODULE)GetModuleHandle("KERNEL32"),
+					 "IsDebuggerPresent");
     if (entry == NULL) return(FALSE);
-    else return((Rboolean)entry());
+    else return (Rboolean) entry();
 }
 
 void breaktodebugger()
@@ -549,12 +587,14 @@ static void menurwFAQ(control m)
 
 static void menuabout(control m)
 {
-    char  s[256];
+    char  s[256], s2[256];
 
-    sprintf(s, "%s %s.%s %s\n%s, %s\n\n%s",
-	    "R", R_MAJOR, R_MINOR, "- A Language and Environment",
-	    "              Copyright ", R_YEAR,
-	    "    The R Development Core Team");
+    
+    PrintVersionString(s2);
+    sprintf(s, "%s\n%s %s %s",
+	    s2,
+	    "Copyright (C)", R_YEAR,
+	    "The R Foundation for Statistical Computing");
     askok(s);
 /*    show(RConsole); */
 }
@@ -951,7 +991,7 @@ int setupui()
 	return 0;
     TRACERUI("Console done");
 #ifdef USE_MDI
-    if (ismdi() && (RguiMDI & RW_TOOLBAR)) {
+    if (ismdi()) {
           int btsize = 24;
           rect r = rect(2, 2, btsize, btsize);
           control tb, bt;
@@ -991,15 +1031,15 @@ int setupui()
           MCHECK(addtooltip(bt, G_("Print")));
     }
     if (ismdi() && (RguiMDI & RW_STATUSBAR)) {
-	char  s[256];
-
 	TRACERUI("status bar");
 	addstatusbar();
-	sprintf(s, "%s %s.%s %s",
-		"R", R_MAJOR, R_MINOR, "- A Language and Environment");
 	addto(RConsole);
-	setstatus(s);
 	TRACERUI("status bar done");
+    }
+    if (ismdi()) {
+	char s[256];
+	PrintVersionString(s);
+	setstatus(s);
     }
 #endif
     addto(RConsole);
@@ -1040,10 +1080,19 @@ int setupui()
     MCHECK(mde = newmenuitem(G_("Data editor..."), 0, menude));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mconfig = newmenuitem(G_("GUI preferences..."), 0, menuconfig));
-
+#ifdef USE_MDI
+    if (ismdi()) {
+	MCHECK(newmenu(G_("View")));
+	MCHECK(mtools = newmenuitem(G_("Toolbar"), 0, menutools));
+	MCHECK(mstatus = newmenuitem(G_("Statusbar"), 0, menustatus));
+	if(RguiMDI & RW_TOOLBAR) check(mtools);
+	if(RguiMDI & RW_STATUSBAR) check(mstatus);
+    }
+#endif
     MCHECK(newmenu(G_("Misc")));
     MCHECK(newmenuitem(G_("Stop current computation           \tESC"), 0, 
 		       menukill));
+    MCHECK(newmenuitem(G_("Stop all computations"), 0, menukillall));
     if (DebugMenuitem || isdebuggerpresent())
 	MCHECK(newmenuitem(G_("Break to debugger"), 0, menudebug));
     MCHECK(newmenuitem("-", 0, NULL));
@@ -1067,6 +1116,7 @@ int setupui()
     consolesetbrk(RConsole, menukill, ESC, 0);
     gl_hist_init(R_HistorySize, 0);
     if (R_RestoreHistory) gl_loadhistory(R_HistoryFile);
+    if (ismdi() && !(RguiMDI & RW_TOOLBAR)) toolbar_hide();
     show(RConsole);
     return 1;
 }

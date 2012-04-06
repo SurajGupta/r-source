@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2005-10-31 r36106)
+R version 2.5.0 Under development (unstable) (2006-11-27 r40028)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > #### Regression tests for GRAPHICS & PLOTS
@@ -127,4 +127,14 @@ Error in plot.xy(xy.coords(x, y), type = type, ...) :
 > 
 > plot(as.Date("2001/1/1") + 12*(1:9), 1:9)
 > ## used bad 'xlab/ylab' in some versions of R 2.2.0(unstable)
+> 
+> ## dotchart() restoring par()
+> Opar <- par(no.readonly=TRUE) ; dotchart(1:4, cex= 0.7)
+> Npar <- par(no.readonly=TRUE)
+> ii <- c(37, 50:51, 58:59, 63)
+> stopifnot(identical(names(Opar)[ii],
++                     c("mai","pin","plt","usr","xaxp","yaxp")),
++           identical(Opar[-ii], Npar[-ii]))
+> ## did not correctly restore par("mar") up to (incl) R 2.4.0
+> 
 > 

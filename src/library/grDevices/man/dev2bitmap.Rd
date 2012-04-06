@@ -28,18 +28,20 @@ dev2bitmap(file, type = "png256", height = 6, width = 6, res = 72,
   \code{dev2bitmap} works by copying the current device to a
   \code{\link{postscript}} device, and post-processing the output file
   using \code{ghostscript}.  \code{bitmap} works in the same way using a
-  \code{postscript} device and postprocessing the output as
+  \code{postscript} device and post-processing the output as
   \dQuote{printing}.
 
   You will need a version of \code{ghostscript} (5.10 and
   later have been tested): the full path to the executable can be set by
   the environment variable \env{R\_GSCMD}.
 #ifdef unix
-  (If this is unset the command \code{"gs"} is used.)
+  (If this is unset the command \code{"gs"} is used, which will work if
+  it is in your path.)
 #endif  
 #ifdef windows
-  (If this is unset the command \code{"gswin32c.exe"} is used.)
-#endif  
+  (If this is unset the command \code{"gswin32c.exe"} is used, which
+  will work if it is in your \env{PATH}.)
+#endif
 
   The types available will depend on the version of \code{ghostscript},
   but are likely to include
@@ -64,6 +66,15 @@ dev2bitmap(file, type = "png256", height = 6, width = 6, res = 72,
   For \code{dev2bitmap} if just one of \code{width} and \code{height} is
   specified, the other is chosen to preserve aspect ratio of the
   device being copied.
+
+  For graphics parameters such as \code{"cra"} that need to work in
+  pixels, the default resolution of 72dpi is always used.
+
+#ifdef windows
+  As from \R 2.5.0, paths for \code{file} and \env{R\_GSCMD} which
+  contain spaces are mapped to short names \emph{via}
+  \code{\link{shortPathName}}.
+#endif  
 }
 \value{
   None.

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2006   The R Development Core Team.
+ *  Copyright (C) 1998-2007   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -283,6 +283,7 @@ void attribute_hidden InitOptions(void)
 }
 
 
+/* This needs to manage R_Visible */
 SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP argi= R_NilValue, argnames= R_NilValue, namei= R_NilValue,
@@ -321,6 +322,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	setAttrib(value2, R_NamesSymbol, names2);
 	UNPROTECT(5);
+	R_Visible = TRUE;
 	return value2;
     }
 
@@ -353,7 +355,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNIMPLEMENTED_TYPE("options", args);
     }
 
-    R_Visible = 0;
+    R_Visible = FALSE;
     for (i = 0 ; i < n ; i++) { /* i-th argument */
 
 	switch (TYPEOF(args)) {
@@ -371,7 +373,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 
 	if (*CHAR(namei)) { /* name = value  ---> assignment */
-	    tag = install(CHAR(namei));
+	    tag = install(translateChar(namei));
 	    if (streql(CHAR(namei), "width")) {
 		k = asInteger(argi);
 		if (k < R_MIN_WIDTH_OPT || k > R_MAX_WIDTH_OPT)
@@ -414,13 +416,17 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, _("invalid continue parameter"));
-		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
+		/* We want to make sure these are in the native encoding */
+		SET_VECTOR_ELT(value, i, 
+			       SetOption(tag, mkString(translateChar(s))));
 	    }
 	    else if (streql(CHAR(namei), "prompt")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, _("prompt parameter invalid"));
-		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
+		/* We want to make sure these are in the native encoding */
+		SET_VECTOR_ELT(value, i, 
+			       SetOption(tag, mkString(translateChar(s))));
 	    }
 	    else if (streql(CHAR(namei), "contrasts")) {
 		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 2)
@@ -441,7 +447,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	    else if (streql(CHAR(namei), "warning.length")) {
 		k = asInteger(argi);
-		if (k < 100 || k > 8192)
+		if (k < 100 || k > 8170)
 		    errorcall(call, _("warning.length parameter invalid"));
 		R_WarnLength = k;
                 SET_VECTOR_ELT(value, i, SetOption(tag, argi));
@@ -490,6 +496,13 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		max_contour_segments = k;
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
+	    else if (streql(CHAR(namei), "warnEscapes")) {
+		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
+		    errorcall(call, _("warnEscapes parameter invalid"));
+		k = asLogical(argi);
+		R_WarnEscapes = k;
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
+	    }
 	    else {
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));
 	    }
@@ -501,7 +514,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    SET_VECTOR_ELT(value, i, duplicate(CAR(FindTaggedItem(options,
 				     install(CHAR(STRING_ELT(argi, 0)))))));
 	    SET_STRING_ELT(names, i, STRING_ELT(argi, 0));
-	    R_Visible = 1;
+	    R_Visible = TRUE;
 	}
     } /* for() */
     setAttrib(value, R_NamesSymbol, names);

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999--2006  The R Development Core Team
+ *  Copyright (C) 1999--2007  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -175,6 +175,37 @@ char *EncodeReal(double x, int w, int d, int e, char cdec)
     return buff;
 }
 
+char *EncodeReal2(double x, int w, int d, int e)
+{
+    static char buff[NB];
+    char fmt[20];
+
+    /* IEEE allows signed zeros (yuck!) */
+    if (x == 0.0) x = 0.0;
+    if (!R_FINITE(x)) {
+	if(ISNA(x)) snprintf(buff, NB, "%*s", w, CHAR(R_print.na_string));
+	else if(ISNAN(x)) snprintf(buff, NB, "%*s", w, "NaN");
+	else if(x > 0) snprintf(buff, NB, "%*s", w, "Inf");
+	else snprintf(buff, NB, "%*s", w, "-Inf");
+    }
+    else if (e) {
+	if(d) {
+	    sprintf(fmt,"%%#%d.%de", w, d);
+	    snprintf(buff, NB, fmt, x);
+	}
+	else {
+	    sprintf(fmt,"%%%d.%de", w, d);
+	    snprintf(buff, NB, fmt, x);
+	}
+    }
+    else { /* e = 0 */
+	sprintf(fmt,"%%#%d.%df", w, d);
+	snprintf(buff, NB, fmt, x);
+    }
+    buff[NB-1] = '\0';
+    return buff;
+}
+
 void z_prec_r(Rcomplex *r, Rcomplex *x, double digits);
 
 char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
@@ -193,7 +224,7 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
 	snprintf(buff, NB, "%*s%*s", R_print.gap, "", wr+wi+2,
 		CHAR(R_print.na_string));
     } else {
-	/* formatComplex rounded, but this does not, and we need to 
+	/* formatComplex rounded, but this does not, and we need to
 	   keep it that way so we don't get strange trailing zeros.
 	   But we do want to avoid printing small exponentials that
 	   are probably garbage.
@@ -247,7 +278,7 @@ int Rstrwid(char *str, int slen, int quote)
 
 	mbs_init(&mb_st);
 	for (i = 0; i < slen; i++) {
-	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
+	    res = (int) mbrtowc(&wc, p, MB_CUR_MAX, NULL);
 	    if(res >= 0) {
 		k = wc;
 		if(0x20 <= k && k < 0x7f && iswprint(wc)) {
@@ -364,9 +395,14 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	    strlen(CHAR(R_print.na_string_noquote));
 	quote = 0;
     } else {
-	p = CHAR(s);
-	i = Rstrlen(s, quote);
-	cnt = LENGTH(s);
+	p = translateChar(s);
+	if(p == CHAR(s)) {
+	    i = Rstrlen(s, quote);
+	    cnt = LENGTH(s);
+	} else { /* drop anything after embedded nul */
+	    cnt = strlen(p);
+	    i = Rstrwid(p, cnt, quote);
+	}
     }
 
     /* We need enough space for the encoded string, including escapes.
@@ -396,7 +432,7 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 
 	mbs_init(&mb_st);
 	for (i = 0; i < cnt; i++) {
-	    res = Mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
+	    res = (int) mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
 	    if(res >= 0) { /* res = 0 is a terminator */
 		k = wc;
 		/* To be portable, treat \0 explicitly */
@@ -450,7 +486,7 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 		}
 
 	    } else { /* invalid char */
-		snprintf(q, 5, "<%02x>", *((unsigned char *)p));
+		snprintf(q, 5, "\\x%02x", *((unsigned char *)p));
 		q += 4; p++;
 	    }
 	}
@@ -587,7 +623,11 @@ void REprintf(char *format, ...)
 }
 
 #if defined(HAVE_VASPRINTF) && !HAVE_DECL_VASPRINTF
-int vasprintf(char **strp, const char *fmt, va_list ap);
+int vasprintf(char **strp, const char *fmt, va_list ap)
+#ifdef __cplusplus
+	throw ()
+#endif
+;
 #endif
 
 #if !HAVE_VA_COPY && HAVE___VA_COPY
@@ -639,7 +679,7 @@ void Rcons_vprintf(const char *format, va_list arg)
 	    res = R_BUFSIZE;
     }
 #endif /* HAVE_VA_COPY */
-    R_WriteConsole(p, strlen(buf));
+    R_WriteConsole(p, strlen(p));
 #ifdef HAVE_VA_COPY
     if(usedRalloc) vmaxset(vmax);
     if(usedVasprintf) free(p);
@@ -712,12 +752,10 @@ void REvprintf(const char *format, va_list arg)
 	} else vfprintf(R_Consolefile, format, arg);
     } else {
 	char buf[BUFSIZE];
-	int slen;
 
 	vsnprintf(buf, BUFSIZE, format, arg);
 	buf[BUFSIZE-1] = '\0';
-	slen = strlen(buf);
-	R_WriteConsole(buf, slen);
+	R_WriteConsoleEx(buf, strlen(buf), 1);
     }
 }
 

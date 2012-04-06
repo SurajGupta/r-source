@@ -632,12 +632,12 @@ void show_window(object obj)
 		}
 	}
 	obj->state |= Visible;
-        if (hwndClient && (hwnd==hwndFrame) && (MDIFrameFirstTime)) {
+        if (hwndClient && (hwnd == hwndFrame) && (MDIFrameFirstTime)) {
 	    ShowWindow(hwnd, MDIsizeSet ? SW_SHOWNORMAL : SW_SHOWMAXIMIZED);
 	    MDIFrameFirstTime = 0;
         }
         else
-	    ShowWindow(hwnd, SW_SHOWNORMAL);
+	    ShowWindow(hwnd, SW_SHOW /* SW_SHOWNORMAL */);
 
 	/* workaround for Show bug */
 	if (incremented_aw && !IsWindowVisible(hwnd) ) active_windows -- ;
@@ -653,11 +653,13 @@ void show_window(object obj)
           else
 	    DrawMenuBar(hwnd);
         }
+#if 0
         if (obj->toolbar) {
             if (MDIToolbar) hide(MDIToolbar);
             MDIToolbar = obj->toolbar;
             SendMessage(hwndFrame,WM_PAINT,(WPARAM) 0,(LPARAM) 0);
         }
+#endif
         SetFocus(hwnd);
 	UpdateWindow(hwnd);
 	select_sibling(obj->child);

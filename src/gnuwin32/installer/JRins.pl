@@ -46,6 +46,7 @@ open insfile, "> R.iss" || die "Cannot open R.iss\n";
 print insfile <<END;
 [Setup]
 OutputBaseFilename=${RW}-win32
+PrivilegesRequired=none
 END
 
 my $lines=<<END;
@@ -107,7 +108,7 @@ Name: "associate"; Description: {cm:associate}; GroupDescription: {cm:regentries
 [Icons]
 Name: "{group}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; WorkingDir: "{app}"; Parameters: {code:CmdParms}
 Name: "{group}\\Uninstall R $RVER"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 4,4; Tasks: desktopicon; WorkingDir: "{app}"; Parameters: {code:CmdParms}
+Name: "{commondesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 4,4; Tasks: desktopicon; WorkingDir: "{app}"; Parameters: {code:CmdParms}
 Name: "{userappdata}\\Microsoft\\Internet Explorer\\Quick Launch\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; Tasks: quicklaunchicon; WorkingDir: "{app}"; Parameters: {code:CmdParms}
 
 
@@ -336,7 +337,8 @@ my %develfiles=("doc\\html\\logo.jpg" => 1,
 		"bin\\Rd2txt" => 1,
 		"bin\\Rdconv" => 1,
 		"bin\\Rdiff.sh" => 1,
-		"bin\\Sd2Rd" => 1);
+		"bin\\Sd2Rd" => 1,
+		"etc\\Makeconf" => 1);
 		
 $path="${SRCDIR}";chdir($path);
 find(\&listFiles, ".");

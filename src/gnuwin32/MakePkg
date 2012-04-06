@@ -82,6 +82,7 @@ ifeq ($(strip $(LAZYDATA)),true)
 	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s lazydata
 endif
 	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s mansrcs indices
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg $(DPKG)/zzzzlast
 
 ## this does not make any DLL, and modifies the NAMESPACE and R code
 ## to try to ensure no attempt is made to load the DLL.
@@ -173,6 +174,11 @@ $(DPKG)/zzzz: zzzfirst
 	    $(ECHO) "   **********************************************" ; \
 	    $(ECHO) ; \
 	  fi; \
+	fi
+
+$(DPKG)/zzzzlast:
+	@if test -f ${SPKG}/cleanup.win; then \
+	  sh ${SPKG}/cleanup.win; \
 	fi
 
 zzzfirst:
@@ -347,7 +353,7 @@ lazyload:
 	  if ! test -f $(DPKG)/R/$(PKG).rdb ; then \
 	    $(ECHO)  "  preparing package $(PKG) for lazy loading" ; \
             (if test -s $(SPKG0)/R_PROFILE.R; then cat $(SPKG0)/R_PROFILE.R; fi; \
-	      $(ECHO) "options(warn=1); invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); .getRequiredPackages(\"$(SPKG0)/DESCRIPTION\",useImports=TRUE); Sys.putenv('R_CROSS_BUILD'='$(R_X_BUILD)'); tools:::makeLazyLoading(\"$(PKG)\", lib.loc=\"$(RLIB)\")") | \
+	      $(ECHO) "options(warn=1); invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); .getRequiredPackages(\"$(SPKG0)/DESCRIPTION\",useImports=TRUE); Sys.setenv('R_CROSS_BUILD'='$(R_X_BUILD)'); tools:::makeLazyLoading(\"$(PKG)\", lib.loc=\"$(RLIB)\")") | \
 	      R_DEFAULT_PACKAGES=$(R_START_PACKAGES) \
 	      LC_ALL=C R_OSTYPE=windows $(REXE) > /dev/null || exit 1; \
 	    rm -f $(DPKG)/R/all.rda ; \

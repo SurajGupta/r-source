@@ -50,6 +50,17 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <R_ext/Linpack.h>
+#include <Rmodules/Rlapack.h>
+
+
+/*  These get the declarations of some routines refernced here but
+    not explicitly declared.    This is necessary when we link with
+    a C++ compiler because the linkage changes as the declarations
+    are (currently) within extern "C" blocks.
+*/
+#include <Rdevices.h>       /* For declaration of InitGraphics() */
+#include <R_ext/Callbacks.h>
+#include <Rdynpriv.h>
 
 #include "basedecl.h"
 
@@ -140,6 +151,7 @@ static R_CMethodDef cMethods [] = {
     CDEF(massdist),
     CDEF(R_max_col),
     CDEF(R_pretty),
+    /* this is called by Hmisc, although no longer used in R */
     CDEF(R_rowsum),
 
     CDEF(spline_coef),
@@ -214,6 +226,8 @@ static R_CallMethodDef callMethods [] = {
      * using Patefield's algorithm.
      */
     CALLDEF(R_r2dtable, 3),
+    CALLDEF(R_shortRowNames, 2),
+    CALLDEF(R_copyDFattr, 2),
 
     /* Methods related routines. */
     CALLDEF(R_isMethodsDispatchOn, 1),

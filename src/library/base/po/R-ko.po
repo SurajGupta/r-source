@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-11 10:41\n"
+"POT-Creation-Date: 2007-04-10 07:41\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -22,6 +22,12 @@ msgstr "lp(\"Defunct\")와 help(\"%s-defunct\")를 보아 주십시오"
 
 msgid "See help(\"Defunct\")"
 msgstr "help(\\\"Defunct\\\")를 보아 주십시오"
+
+msgid "'symbol.C' is not needed: please remove it"
+msgstr ""
+
+msgid "'symbol.For' is not needed: please remove it"
+msgstr ""
 
 msgid "'%s' is deprecated."
 msgstr "'%s'는 없어져 버릴 예정입니다"
@@ -46,9 +52,6 @@ msgstr "'nu'는 0, nrow(x) 또는 ncol(x)가 아니면 안됩니다"
 
 msgid "'nv' must be 0, nrow(x) or ncol(x)"
 msgstr "'nv'는 0, nrow(x) 또는 nod(x)가 아니면 안됩니다"
-
-msgid "'all' can not be used with other deparse options"
-msgstr "deparse 옵션에서 모든것을 사용할수가 없습니다"
 
 msgid "second argument must be a list"
 msgstr "제 2 인수는 리스트가 아니면 안됩니다"
@@ -103,6 +106,10 @@ msgstr "이하에 의해 요구되었습니다 :"
 
 msgid "(still attached)"
 msgstr "(아직 attached되어 있습니다)"
+
+#, fuzzy
+msgid "namespace cannot be unloaded"
+msgstr "name space '%s'가 적재 되었습니다"
 
 #, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
@@ -247,6 +254,12 @@ msgstr ","
 msgid "--> row.names NOT used"
 msgstr "사용되어 않는 row.names"
 
+msgid "row names contain missing values"
+msgstr "이름은 결측값를 포함하고 있습니다"
+
+msgid "duplicate row.names:"
+msgstr "row.names가 중복하고 있습니다"
+
 msgid "arguments imply differing number of rows:"
 msgstr "인수는 다른 열수를 의미합니다"
 
@@ -258,12 +271,6 @@ msgstr "주어진 열명은 잘못한 길이입니다"
 
 msgid "row names were found from a short variable and have been discarded"
 msgstr "열명은 짧은 변수로부터 검색할수 있어 버리고 갔습니다"
-
-msgid "row names contain missing values"
-msgstr "이름은 결측값를 포함하고 있습니다"
-
-msgid "duplicate row.names:"
-msgstr "row.names가 중복하고 있습니다"
 
 msgid "drop argument will be ignored"
 msgstr "drop인수는 무시됩니다"
@@ -464,6 +471,17 @@ msgstr "\"POSTIXct\" 오브젝트에 대해서는 정의 되어 있지 않습니
 msgid "not defined for \"POSIXlt\" objects"
 msgstr "\"POSIXt\" 오브젝트에 대해서는 정의 되어 있지 않습니다"
 
+#, fuzzy
+msgid "'tim' is not character or numeric"
+msgstr "'%s'는 함수, 문자, 또는 심벌이 아닙니다"
+
+msgid "need explicit units for numeric conversion"
+msgstr ""
+
+#, fuzzy
+msgid "invalid units specified"
+msgstr "무효인 'quote' 지정입니다"
+
 msgid "not defined for \"difftime\" objects"
 msgstr "\"difftime\"오브젝트에 대해서는 정의 되어 있지 않습니다"
 
@@ -626,14 +644,15 @@ msgstr "'subset'는 논리값으로서 평가되지 않으면 안됩니다"
 msgid "'subset' must be logical"
 msgstr "'subset'는 논리값이 아니면 되지 않습니다"
 
-msgid "'form' must be a two-sided formula"
-msgstr "'form'는  two-sided를 가지는 모델식이 아니면 되지 않습니다"
-
 msgid "value for '"
 msgstr "이하에 대한 값 :"
 
 msgid "' not found"
 msgstr "(을)를 찾아낼수가 없습니다"
+
+#, fuzzy
+msgid "all arguments must be named"
+msgstr "모든 인수는 동일 길이가 나오지 않으면 되지 않습니다"
 
 msgid "'pattern' must be a non-empty character string"
 msgstr "'pattern'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
@@ -851,6 +870,10 @@ msgstr "무효인 'category' 인수입니다"
 msgid "must specify formal argument names to vectorize"
 msgstr ""
 
+#, fuzzy
+msgid "'arg' must be NULL or a character vector of length >= 1"
+msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
+
 msgid "'arg' should be one of"
 msgstr "'arg'는 이하의 하나가 아니면 되지 않습니다"
 
@@ -881,6 +904,10 @@ msgstr "차원이 2 미만의 오브젝트의 열명을 설정 하려고 했습�
 msgid "argument is not numeric or logical: returning NA"
 msgstr "인수가 수치이거나 논리값이 아닙니다. NA값을 돌려줍니다"
 
+#, fuzzy
+msgid "'trim' must be numeric of length one"
+msgstr "'origin'는 길이 1이 나오지 않으면 되지 않습니다"
+
 msgid "trimmed means are not defined for complex data"
 msgstr "복소수 데이터에 대해서 절사 평균은 정의 되지 않았습니다"
 
@@ -900,6 +927,9 @@ msgstr "'by'는 유효한 colums(s)를 지정하지 않으면 되지 않습니�
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' 그리고 'by.y'는 다른 열수를 지정하고 있습니다"
 
+msgid "additional arguments ignored in message()"
+msgstr ""
+
 msgid "(loaded the methods namespace)"
 msgstr ""
 
@@ -912,6 +942,9 @@ msgstr ""
 "없습니다"
 
 msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
+msgid "invalid to change the storage mode of a factor"
 msgstr ""
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
@@ -998,7 +1031,7 @@ msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s는 unloadNamespace(%s)에 실패했습니다"
 
 #, fuzzy
-msgid "name space '%s' is still used by: '%s'"
+msgid "name space '%s' is still used by: %s"
 msgstr "이름 '%s' 여전히 이하에 의해 사용되어 있습니다"
 
 msgid "imperative name space directives are disabled"
@@ -1092,6 +1125,10 @@ msgstr "잘못된 인수입니다"
 msgid "not defined for package_version objects"
 msgstr "(은)는 package_version 오브젝트에 대해서는 정의 되어 있지 않습니다"
 
+#, fuzzy
+msgid "no arguments"
+msgstr "잘못된 인수입니다"
+
 msgid "invalid 'n' value"
 msgstr "무효인 'n'값입니다"
 
@@ -1133,39 +1170,6 @@ msgstr "'k'는 너무 큽니다"
 
 msgid "need larger value of 'ncol' as pivoting occurred"
 msgstr "pivoting 조작이 발생하도록 큰'ncol'이 필요합니다"
-
-msgid "no lines available in input"
-msgstr "입력에 이용 가능한 행이 없습니다"
-
-msgid "empty beginning of file"
-msgstr "파일의 개시 부분이 비어 있습니다"
-
-msgid "header and 'col.names' are of different lengths"
-msgstr "header 그리고 'col.names'가 다른 길이입니다"
-
-msgid "more columns than column names"
-msgstr "열명보다 많은 열이 있습니다"
-
-msgid "more column names than columns"
-msgstr "열보다 많은 열명이 있습니다"
-
-msgid "first five rows are empty: giving up"
-msgstr "최초의 5행이 비어 있습니다: 그만둡니다"
-
-msgid "not all columns named in 'colClasses' exist"
-msgstr "'colClasses'에 이름을 들수 있던 열안에 존재하지 않는 것이 있습니다"
-
-msgid "invalid numeric 'as.is' expression"
-msgstr "무효인 수치 'as.is' 표현식"
-
-msgid "not all columns named in 'as.is' exist"
-msgstr "'as.is'에 이름을 들 수 있던 열에 존재하지 않는 것이 있습니다"
-
-msgid "'as.is' has the wrong length %d  != cols = %d"
-msgstr "'as.is'는 잘못된 길이 %d !=cols = %d를 가집니다"
-
-msgid "invalid 'row.names' specification"
-msgstr "무효인 'row.names'의 지정입니다"
 
 msgid "'x' must be a vector"
 msgstr "'x'는 벡터가 아니면 되지 않습니다"
@@ -1299,6 +1303,15 @@ msgstr ""
 msgid "'%s' is not an existing file"
 msgstr "'%s'는 기존의 파일이 아닙니다"
 
+msgid "Timestamp of '"
+msgstr ""
+
+msgid "' has changed"
+msgstr ""
+
+msgid "additional arguments ignored in stop()"
+msgstr ""
+
 #, fuzzy
 msgid "is not"
 msgstr "(은)는 TRUE가 아닙니다"
@@ -1309,10 +1322,7 @@ msgstr ""
 msgid "TRUE"
 msgstr ""
 
-msgid "adding class \"ts\": this is deprecated"
-msgstr ""
-
-msgid "conversion to factor is deprecated"
+msgid "additional arguments ignored in warning()"
 msgstr ""
 
 msgid "incorrect value for 'x'"
@@ -1369,6 +1379,15 @@ msgstr "이하를 제거합니다"
 msgid "Registering evaluate as low-level callback"
 msgstr "Registering는 low-level의 callback으로 평가됩니다"
 
+msgid "user"
+msgstr ""
+
+msgid "system"
+msgstr ""
+
+msgid "elapsed"
+msgstr ""
+
 msgid "'width' must be positive"
 msgstr "'width'는 positive이 아니면 되지 않습니다"
 
@@ -1378,29 +1397,17 @@ msgstr "이용 할수 있는 traceback가 없습니다"
 msgid "argument to 'which' is not logical"
 msgstr "'which'에서 인수는 논리값이 아닙니다"
 
-msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
-msgstr ""
-
-msgid "invalid numbers in 'quote'"
-msgstr "'quote'에서 무효인 수치가 있습니다"
-
-msgid "invalid 'quote' specification"
-msgstr "무효인 'quote' 지정입니다"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr ""
-
-msgid "invalid 'col.names' specification"
-msgstr "무효인 'col.names' 지정입니다"
-
-msgid "appending column names to file"
-msgstr "파일에서 열명을 추가합니다"
-
-msgid "attempt to change '%s' ignored"
-msgstr ""
-
 msgid "invalid 'digits'"
 msgstr "무효인 'digits'입니다"
+
+msgid ""
+"arguments 'show.output.on.console', 'minimized' and 'invisible' are for "
+"Windows only"
+msgstr ""
+
+#, fuzzy
+msgid "'input' must be a character vector or 'NULL'"
+msgstr "'input' 그리고 'target'는 문자 벡터가 아니면 되지 않습니다"
 
 msgid "argument must be character"
 msgstr "인수는 문자가 아니면 되지 않습니다"
@@ -1466,8 +1473,56 @@ msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
 
+#~ msgid "'all' can not be used with other deparse options"
+#~ msgstr "deparse 옵션에서 모든것을 사용할수가 없습니다"
+
 #~ msgid "no rows to match"
 #~ msgstr "match 해야 할 행이 없습니다"
+
+#~ msgid "'form' must be a two-sided formula"
+#~ msgstr "'form'는  two-sided를 가지는 모델식이 아니면 되지 않습니다"
+
+#~ msgid "no lines available in input"
+#~ msgstr "입력에 이용 가능한 행이 없습니다"
+
+#~ msgid "empty beginning of file"
+#~ msgstr "파일의 개시 부분이 비어 있습니다"
+
+#~ msgid "header and 'col.names' are of different lengths"
+#~ msgstr "header 그리고 'col.names'가 다른 길이입니다"
+
+#~ msgid "more columns than column names"
+#~ msgstr "열명보다 많은 열이 있습니다"
+
+#~ msgid "more column names than columns"
+#~ msgstr "열보다 많은 열명이 있습니다"
+
+#~ msgid "first five rows are empty: giving up"
+#~ msgstr "최초의 5행이 비어 있습니다: 그만둡니다"
+
+#~ msgid "not all columns named in 'colClasses' exist"
+#~ msgstr "'colClasses'에 이름을 들수 있던 열안에 존재하지 않는 것이 있습니다"
+
+#~ msgid "invalid numeric 'as.is' expression"
+#~ msgstr "무효인 수치 'as.is' 표현식"
+
+#~ msgid "not all columns named in 'as.is' exist"
+#~ msgstr "'as.is'에 이름을 들 수 있던 열에 존재하지 않는 것이 있습니다"
+
+#~ msgid "'as.is' has the wrong length %d  != cols = %d"
+#~ msgstr "'as.is'는 잘못된 길이 %d !=cols = %d를 가집니다"
+
+#~ msgid "invalid 'row.names' specification"
+#~ msgstr "무효인 'row.names'의 지정입니다"
+
+#~ msgid "invalid numbers in 'quote'"
+#~ msgstr "'quote'에서 무효인 수치가 있습니다"
+
+#~ msgid "invalid 'col.names' specification"
+#~ msgstr "무효인 'col.names' 지정입니다"
+
+#~ msgid "appending column names to file"
+#~ msgstr "파일에서 열명을 추가합니다"
 
 #, fuzzy
 #~ msgid "rows are empty: giving up"

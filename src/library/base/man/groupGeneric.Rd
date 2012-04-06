@@ -7,6 +7,8 @@
 \alias{Ops.data.frame}
 \alias{Summary}
 \alias{Summary.data.frame}
+%not in S3 \alias{Arith}
+%not in S3 \alias{Compare}
 \alias{Complex}
 \alias{group generic} % used in class.Rd and zMethods.Rd
 \concept{group generic}
@@ -77,7 +79,11 @@ Summary(\dots, na.rm = FALSE)
       \item \code{cumsum}, \code{cumprod}, \code{cummax}, \code{cummin}
       % do_cum()   [cum.c:140]:    if (DispatchGroup("Math", ...))
     }
-    Members of this group dispatch on \code{x}.
+    Members of this group dispatch on \code{x}.  Not all members will
+    accept more than one argument: most members have default methods
+    expecting one argument.  (Specifically, \code{atan} and the gamma
+    functions accept only one argument and \code{log}, \code{round} and
+    \code{signif} accept one or two.)
 
     \item Group \code{"Ops"}:
     \itemize{
@@ -97,7 +103,7 @@ Summary(\dots, na.rm = FALSE)
     \code{-} and \code{!}): when a unary operator is encountered the
     \code{Ops} method is called with one argument and \code{e2} is
     missing.
-    
+
     The classes of both arguments are considered in dispatching any
     member of this group.  For each argument its vector of classes is
     examined to see if there is a matching specific (preferred) or
@@ -133,10 +139,10 @@ Summary(\dots, na.rm = FALSE)
   and not on \code{\link{class}}.  This is for efficiency: having to
   dispatch on, say, \code{Ops.integer} would be too slow.
 
-  The number of arguments supplied for \code{"Math"} group generic
-  methods is not checked prior to dispatch.  (Most have default methods
-  expecting one argument, but \code{log}, \code{round} and \code{signif}
-  expect two.)
+  The number of arguments supplied for primitive members of the
+  \code{"Math"} group generic methods is not checked prior to dispatch.
+
+  There is no lazy evaluation of arguments for group-generic functions.
 }
 \section{Technical Details}{
   The details of method dispatch and variables such as \code{.Generic}

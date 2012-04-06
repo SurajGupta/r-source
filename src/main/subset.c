@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2006   The R Development Core Team
+ *  Copyright (C) 1997-2007   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -180,6 +180,13 @@ static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
 	setAttrib(result, R_NamesSymbol, nattrib);
 	UNPROTECT(1);
     }
+    if (result != R_NilValue && (attrib = getAttrib(x, R_SrcrefSymbol)) != R_NilValue) {
+	nattrib = allocVector(VECSXP, n);
+	PROTECT(nattrib); /* seems unneeded */
+	nattrib = ExtractSubset(attrib, nattrib, indx, call);
+	setAttrib(result, R_SrcrefSymbol, nattrib);
+	UNPROTECT(1);
+    }    
     UNPROTECT(3);
     return result;
 }
@@ -532,10 +539,8 @@ SEXP attribute_hidden do_subset(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* to the generic code below.  Note that evaluation */
     /* retains any missing argument indicators. */
 
-    if(DispatchOrEval(call, op, "[", args, rho, &ans, 0, 0)) {
-	R_Visible = 1;
+    if(DispatchOrEval(call, op, "[", args, rho, &ans, 0, 0))
 	return(ans);
-    }
 
     /* Method dispatch has failed, we now */
     /* run the generic internal code. */
@@ -547,7 +552,6 @@ SEXP attribute_hidden do_subset_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, ax, px, x, subs;
     int drop, i, nsubs, type;
 
-    R_Visible = 1;
     /* By default we drop extents of length 1 */
 
     PROTECT(args);
@@ -713,10 +717,8 @@ SEXP attribute_hidden do_subset2(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* through to the generic code below.  Note that */
     /* evaluation retains any missing argument indicators. */
 
-    if(DispatchOrEval(call, op, "[[", args, rho, &ans, 0, 0)) {
-	R_Visible = 1;
+    if(DispatchOrEval(call, op, "[[", args, rho, &ans, 0, 0))
 	return(ans);
-    }
 
     /* Method dispatch has failed. */
     /* We now run the generic internal code. */
@@ -729,8 +731,6 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, dims, dimnames, indx, subs, x;
     int i, ndims, nsubs, offset = 0;
     int drop = 1;
-
-    R_Visible = 1;
 
     PROTECT(args);
     ExtractDropArg(args, &drop);
@@ -759,8 +759,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( TYPEOF(x) == ENVSXP ) {
       if( nsubs != 1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
 	error(_("wrong arguments for subsetting an environment"));
-      ans = findVarInFrame(x, install(CHAR(STRING_ELT(CAR(subs),
-						      0))));
+      ans = findVarInFrame(x, install(translateChar(STRING_ELT(CAR(subs), 0))));
       if( TYPEOF(ans) == PROMSXP ) {
 	    PROTECT(ans);
 	    ans = eval(ans, R_GlobalEnv);
@@ -874,14 +873,16 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-/* A helper to partially match tags against a candidate. */
-/* Returns: */
-static
 enum pmatch {
     NO_MATCH,
     EXACT_MATCH,
     PARTIAL_MATCH
-}
+};
+
+/* A helper to partially match tags against a candidate. */
+/* Returns: */
+static
+enum pmatch
 pstrmatch(SEXP target, SEXP input, int slen)
 {
     char *st="";
@@ -894,10 +895,10 @@ pstrmatch(SEXP target, SEXP input, int slen)
 	st = CHAR(PRINTNAME(target));
 	break;
     case CHARSXP:
-	st = CHAR(target);
+	st = translateChar(target);
 	break;
     }
-    if(strncmp(st, CHAR(input), slen) == 0) {
+    if(strncmp(st, translateChar(input), slen) == 0) {
 	if (strlen(st) == slen)
 	    return EXACT_MATCH;
 	else
@@ -945,33 +946,30 @@ SEXP attribute_hidden do_subset3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if(DispatchOrEval(call, op, "$", args, env, &ans, 0, 0)) {
 	UNPROTECT(2);
-	R_Visible = 1;
 	return(ans);
     }
 
     UNPROTECT(2);
-    return R_subset3_dflt(CAR(ans), STRING_ELT(input, 0));
+    return R_subset3_dflt(CAR(ans), STRING_ELT(input, 0), call);
 }
 
 /* used in eval.c */
-SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input)
+SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 {
     SEXP y, nlist;
     int slen;
-
-    R_Visible = 1;
 
     PROTECT(x);
     PROTECT(input);
 
     /* Optimisation to prevent repeated recalculation */
-    slen = strlen(CHAR(input));
+    slen = strlen(translateChar(input));
 
     /* If this is not a list object we return NULL. */
     /* Or should this be allocVector(VECSXP, 0)? */
 
     if (isPairList(x)) {
-	SEXP xmatch=R_NilValue;
+	SEXP xmatch = R_NilValue;
 	int havematch;
 	UNPROTECT(2);
 	havematch = 0;
@@ -1013,6 +1011,14 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input)
 		return y;
 	    case PARTIAL_MATCH:
 		havematch++;
+		if (havematch==1) {
+		    /* partial matches can cause aliasing in eval.c:evalseq 
+                       This is overkill, but alternative ways to prevent 
+                       the aliasing appear to be even worse */
+		    y=VECTOR_ELT(x,i);
+		    SET_NAMED(y,2);
+		    SET_VECTOR_ELT(x,i,y);
+		}
 		imatch = i;
 		break;
 	    case NO_MATCH:
@@ -1028,7 +1034,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input)
 	return R_NilValue;
     }
     else if( isEnvironment(x) ){
-      	y = findVarInFrame(x, install(CHAR(input)));
+      	y = findVarInFrame(x, install(translateChar(input)));
       	if( TYPEOF(y) == PROMSXP ) {
 	    PROTECT(y);
 	    y = eval(y, R_GlobalEnv);
@@ -1041,6 +1047,12 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input)
 	    return(y);
 	}
       return R_NilValue;
+    }
+    else if( isVectorAtomic(x) ){
+        warningcall(call, "$ operator is deprecated for atomic vectors, returning NULL");
+    }
+    else if( IS_S4_OBJECT(x) ){
+        warningcall(call, "$ operator not defined for this S4 class, returning NULL");
     }
     UNPROTECT(2);
     return R_NilValue;

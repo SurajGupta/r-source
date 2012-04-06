@@ -313,13 +313,12 @@ static SEXP R_NewHashTable(int size, int growth_rate)
   size/growth settings.  The only non-static hash table function.
 */
 
-SEXP attribute_hidden
-R_NewHashedEnv(SEXP enclos)
+SEXP R_NewHashedEnv(SEXP enclos, SEXP size)
 {
     SEXP s;
 
     PROTECT(s = NewEnvironment(R_NilValue, R_NilValue, enclos));
-    SET_HASHTAB(s, R_NewHashTable(0,0)); /* 0,0 gets the recomended minima */
+    SET_HASHTAB(s, R_NewHashTable(asInteger(size), 0));
     UNPROTECT(1);
     return s;
 }
@@ -478,6 +477,56 @@ static SEXP R_HashFrame(SEXP rho)
 }
 
 
+/* ---------------------------------------------------------------------
+
+   R_HashProfile
+
+   Profiling tool for analyzing hash table performance.  Returns a
+   three element list with components:
+
+   size: the total size of the hash table
+
+   nchains: the number of non-null chains in the table (as reported by
+            HASHPRI())
+
+   counts: an integer vector the same length as size giving the length of
+           each chain (or zero if no chain is present).  This allows
+           for assessing collisions in the hash table.
+ */
+
+static SEXP R_HashProfile(SEXP table)
+{
+    SEXP chain, ans, chain_counts, nms;
+    int i, count;
+
+    PROTECT(ans = allocVector(VECSXP, 3));
+    PROTECT(nms = allocVector(STRSXP, 3));
+    SET_STRING_ELT(nms, 0, mkChar("size"));    /* size of hashtable */
+    SET_STRING_ELT(nms, 1, mkChar("nchains")); /* number of non-null chains */
+    SET_STRING_ELT(nms, 2, mkChar("counts"));  /* length of each chain */
+    setAttrib(ans, R_NamesSymbol, nms);
+    UNPROTECT(1);
+
+    SET_VECTOR_ELT(ans, 0, ScalarInteger(length(table)));
+    SET_VECTOR_ELT(ans, 1, ScalarInteger(HASHPRI(table)));
+
+    PROTECT(chain_counts = allocVector(INTSXP, length(table)));
+    for (i = 0; i < length(table); i++) {
+        chain = VECTOR_ELT(table, i);
+        count = 0;
+        for (; chain != R_NilValue ; chain = CDR(chain)) {
+            count++;
+        }
+        INTEGER(chain_counts)[i] = count;
+    }
+
+    SET_VECTOR_ELT(ans, 2, chain_counts);
+
+    UNPROTECT(2);
+    return ans;
+}
+
+
 
 /*----------------------------------------------------------------------
 
@@ -572,7 +621,7 @@ void attribute_hidden InitGlobalEnv()
     SET_SYMVALUE(install(".BaseNamespaceEnv"), R_BaseNamespace);
     R_BaseNamespaceName = ScalarString(mkChar("base"));
     R_PreserveObject(R_BaseNamespaceName);
-    R_NamespaceRegistry = R_NewHashedEnv(R_NilValue);
+    R_NamespaceRegistry = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
     R_PreserveObject(R_NamespaceRegistry);
     defineVar(install("base"), R_BaseNamespace, R_NamespaceRegistry);
     /**** needed to properly initialize the base name space */
@@ -1398,9 +1447,8 @@ SEXP attribute_hidden do_assign(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isString(CAR(args)) || length(CAR(args)) == 0)
 	error(_("invalid first argument"));
     else
-	name = install(CHAR(STRING_ELT(CAR(args), 0)));
+	name = install(translateChar(STRING_ELT(CAR(args), 0)));
     PROTECT(val = CADR(args));
-    R_Visible = 0;
     aenv = CAR(CDDR(args));
     if (TYPEOF(aenv) == NILSXP)
     	error(_("use of NULL environment is defunct"));
@@ -1508,7 +1556,7 @@ SEXP attribute_hidden do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     for (i = 0; i < LENGTH(name); i++) {
 	done = 0;
-	tsym = install(CHAR(STRING_ELT(name, i)));
+	tsym = install(translateChar(STRING_ELT(name, i)));
 	if( !HASHASH(PRINTNAME(tsym)) )
 	    hashcode = R_Newhashpjw(CHAR(PRINTNAME(tsym)));
 	else
@@ -1555,7 +1603,7 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isValidStringF(CAR(args)))
 	errorcall(call, _("invalid first argument"));
     else
-	t1 = install(CHAR(STRING_ELT(CAR(args), 0)));
+	t1 = install(translateChar(STRING_ELT(CAR(args), 0)));
 
     /* envir :	originally, the "where=" argument */
 
@@ -1581,10 +1629,10 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     */
 
     if (isString(CAR(CDDR(args)))) {
-	if (!strcmp(CHAR(STRING_ELT(CAR(CDDR(args)), 0)), "function"))
+	if (!strcmp(CHAR(STRING_ELT(CAR(CDDR(args)), 0)), "function")) /* ASCII */
 	    gmode = FUNSXP;
 	else
-	    gmode = str2type(CHAR(STRING_ELT(CAR(CDDR(args)), 0)));
+	    gmode = str2type(CHAR(STRING_ELT(CAR(CDDR(args)), 0))); /* ASCII */
     } else {
 	errorcall(call, _("invalid '%s' argument"), "mode");
 	gmode = FUNSXP;/* -Wall */
@@ -1607,7 +1655,7 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 		errorcall(call,
 			  _("variable \"%s\" of mode \"%s\" was not found"),
 			  CHAR(PRINTNAME(t1)),
-			  CHAR(STRING_ELT(CAR(CDDR(args)), 0)));
+			  CHAR(STRING_ELT(CAR(CDDR(args)), 0))); /* ASCII */
 	}
 
 	/* We need to evaluate if it is a promise */
@@ -1711,7 +1759,7 @@ SEXP attribute_hidden do_mget(SEXP call, SEXP op, SEXP args, SEXP rho)
        etc */
 
     for(i = 0; i < nvals; i++) {
-	if (isString(mode)) {
+	if (isString(mode)) { /* ASCII */
 	    if (!strcmp(CHAR(STRING_ELT(CAR(CDDR(args)), i % nmode )), "function"))
 		gmode = FUNSXP;
 	    else
@@ -1733,8 +1781,9 @@ SEXP attribute_hidden do_mget(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else
 	    ifnfnd = VECTOR_ELT(ifnotfound, i);
 
-	SET_VECTOR_ELT(ans, i, gfind(CHAR(STRING_ELT(x,i % nvals)), env, gmode,
-				     ifnfnd, ginherits, rho));
+	SET_VECTOR_ELT(ans, i, 
+		       gfind(translateChar(STRING_ELT(x,i % nvals)), env,
+			     gmode, ifnfnd, ginherits, rho));
     }
 
     setAttrib(ans, R_NamesSymbol, duplicate(x));
@@ -1764,6 +1813,9 @@ static int isMissing(SEXP symbol, SEXP rho)
 
     if (symbol == R_MissingArg) /* Yes, this can happen */
         return 1;
+
+    /* check for infinite recursion */
+    R_CheckStack();
 
     if (DDVAL(symbol)) {
 	s = R_DotsSymbol;
@@ -1804,7 +1856,7 @@ SEXP attribute_hidden do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     s = sym = CAR(args);
     if( isString(sym) && length(sym)==1 )
-        s = sym = install(CHAR(STRING_ELT(CAR(args), 0)));
+        s = sym = install(translateChar(STRING_ELT(CAR(args), 0)));
     if (!isSymbol(sym))
 	errorcall(call, _("invalid use of 'missing'"));
 
@@ -2061,7 +2113,6 @@ SEXP attribute_hidden do_detach(SEXP call, SEXP op, SEXP args, SEXP env)
 	MARK_AS_LOCAL_FRAME(s); /* was _GLOBAL_ prior to 2.4.0 */
     }
 #endif
-    R_Visible = 0;
     UNPROTECT(1);
     return FRAME(s);
 }
@@ -2584,7 +2635,7 @@ static SEXP matchEnvir(SEXP call, char *what)
     for (t = ENCLOS(R_GlobalEnv); t != R_EmptyEnv ; t = ENCLOS(t)) {
 	name = getAttrib(t, nameSymbol);
 	if(isString(name) && length(name) > 0 &&
-	   !strcmp(CHAR(STRING_ELT(name, 0)), what))
+	   !strcmp(translateChar(STRING_ELT(name, 0)), what))
 	    return t;
     }
     errorcall(call, _("no item called \"%s\" on the search list"), what);
@@ -2599,7 +2650,7 @@ SEXP attribute_hidden do_as_environment(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return arg;
     switch(TYPEOF(arg)) {
     case STRSXP:
-	return matchEnvir(call, CHAR(asChar(arg)));
+	return matchEnvir(call, translateChar(asChar(arg)));
     case REALSXP:
     case INTSXP:
 	return do_pos2env(call, op, args, rho);
@@ -2913,7 +2964,7 @@ Rboolean R_IsPackageEnv(SEXP rho)
 	char *packprefix = "package:";
 	int pplen = strlen(packprefix);
 	if(isString(name) && length(name) > 0 &&
-	   ! strncmp(packprefix, CHAR(STRING_ELT(name, 0)), pplen))
+	   ! strncmp(packprefix, CHAR(STRING_ELT(name, 0)), pplen)) /* ASCII */
 	    return TRUE;
 	else
 	    return FALSE;
@@ -2930,7 +2981,7 @@ SEXP R_PackageEnvName(SEXP rho)
 	char *packprefix = "package:";
 	int pplen = strlen(packprefix);
 	if(isString(name) && length(name) > 0 &&
-	   ! strncmp(packprefix, CHAR(STRING_ELT(name, 0)), pplen))
+	   ! strncmp(packprefix, CHAR(STRING_ELT(name, 0)), pplen)) /* ASCII */
 	    return name;
 	else
 	    return R_NilValue;
@@ -2941,21 +2992,12 @@ SEXP R_PackageEnvName(SEXP rho)
 
 SEXP R_FindPackageEnv(SEXP info)
 {
-    SEXP fun, expr, val;
+    SEXP expr, val;
     PROTECT(info);
-    fun = install("findPackageEnv");
-    if (findVar(fun, R_GlobalEnv) == R_UnboundValue) { /* not a perfect test */
-	warning(_("using .GlobalEnv instead of '%s'"),
-		CHAR(STRING_ELT(info, 0)));
-	UNPROTECT(1);
-	return R_GlobalEnv;
-    }
-    else {
-	PROTECT(expr = LCONS(fun, LCONS(info, R_NilValue)));
-	val = eval(expr, R_GlobalEnv);
-	UNPROTECT(2);
-	return val;
-    }
+    PROTECT(expr = LCONS(install("findPackageEnv"), LCONS(info, R_NilValue)));
+    val = eval(expr, R_GlobalEnv);
+    UNPROTECT(2);
+    return val;
 }
 
 Rboolean R_IsNamespaceEnv(SEXP rho)
@@ -3008,20 +3050,12 @@ SEXP R_NamespaceEnvSpec(SEXP rho)
 
 SEXP R_FindNamespace(SEXP info)
 {
-    SEXP fun, expr, val;
+    SEXP expr, val;
     PROTECT(info);
-    fun = install("getNamespace");
-    if (findVar(fun, R_GlobalEnv) == R_UnboundValue) { /* not a perfect test */
-	warning(_("namespaces not available; using .GlobalEnv"));
-	UNPROTECT(1);
-	return R_GlobalEnv;
-    }
-    else {
-	PROTECT(expr = LCONS(fun, LCONS(info, R_NilValue)));
-	val = eval(expr, R_GlobalEnv);
-	UNPROTECT(2);
-	return val;
-    }
+    PROTECT(expr = LCONS(install("getNamespace"), LCONS(info, R_NilValue)));
+    val = eval(expr, R_GlobalEnv);
+    UNPROTECT(2);
+    return val;
 }
 
 static SEXP checkNSname(SEXP call, SEXP name)
@@ -3031,7 +3065,7 @@ static SEXP checkNSname(SEXP call, SEXP name)
 	break;
     case STRSXP:
 	if (LENGTH(name) >= 1) {
-	    name = install(CHAR(STRING_ELT(name, 0)));
+	    name = install(translateChar(STRING_ELT(name, 0)));
 	    break;
 	}
 	/* else fall through */
@@ -3118,8 +3152,8 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     n = LENGTH(impnames);
     for (i = 0; i < n; i++) {
-	impsym = install(CHAR(STRING_ELT(impnames, i)));
-	expsym = install(CHAR(STRING_ELT(expnames, i)));
+	impsym = install(translateChar(STRING_ELT(impnames, i)));
+	expsym = install(translateChar(STRING_ELT(expnames, i)));
 
 	/* find the binding--may be a CONS cell or a symbol */
 	for (env = expenv, binding = R_NilValue;
@@ -3153,4 +3187,22 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    defineVar(impsym, val, impenv);
     }
     return R_NilValue;
+}
+
+
+SEXP attribute_hidden do_envprofile(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    /* Return a list containing profiling information given a hashed
+       environment.  For non-hashed environments, this function
+       returns R_NilValue.  This seems appropriate since there is no
+       way to test whether an environment is hashed at the R level.
+    */
+    SEXP env, ans = R_NilValue /* -Wall */;
+    env = CAR(args);
+    if (isEnvironment(env)) {
+        if (IS_HASHED(env))
+            ans = R_HashProfile(HASHTAB(env));
+    } else
+        error("argument must be a hashed environment");
+    return ans;
 }

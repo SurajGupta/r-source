@@ -1,6 +1,5 @@
-
-R version 2.4.0 beta (2006-09-22 r39471)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.6.0 Under development (unstable) (2007-04-16 r41175)
+Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -54,17 +53,21 @@ function (x, Asym, xmid, scal)
 Nonlinear regression model
   model:  y ~ a + b * x + c * I(x^2) 
    data:  parent.frame() 
-       a        b        c 
- 1.00584  0.98239 -0.08972 
- residual sum-of-squares: 0.46041
+      a       b       c 
+ 1.0058  0.9824 -0.0897 
+ residual sum-of-squares: 0.46
+
+Algorithm "port", convergence message: relative convergence (4) 
 > (fm <- nls(y ~ a+b*x+c*I(x^2), start = c(a=1, b=1, c=0.1),
 +            algorithm = "port", lower = c(0, 0, 0)))
 Nonlinear regression model
   model:  y ~ a + b * x + c * I(x^2) 
    data:  parent.frame() 
-      a       b       c 
-1.02306 0.88971 0.00000 
- residual sum-of-squares: 0.46824
+   a    b    c 
+1.02 0.89 0.00 
+ residual sum-of-squares: 0.468
+
+Algorithm "port", convergence message: both X-convergence and relative convergence (5) 
 > confint(fm)
 Waiting for profiling to be done...
      2.5%    97.5%
@@ -125,16 +128,19 @@ Correlation of Parameter Estimates:
   a    
 b -0.89
 
+Number of iterations to convergence: 1 
+Achieved convergence tolerance: 2.74e-06 
+
 > stopifnot(all.equal(residuals(fit), residuals(fit0), 1e5,
 +                     check.attributes = FALSE))
 > stopifnot(df.residual(fit) == df.residual(fit0))
 > cf1 <- coef(summary(fit))[, 1:2]
 > fit2 <- nls(yeps ~ a + b*x, start = list(a = 0.12345, b = 0.54321),
 +             weights = wts, trace = TRUE, algorithm = "port")
-  0      56.0706: 0.123450 0.543210
-  1      6.39646:  1.34546 0.700840
-  2  0.000606391: 0.00517053 0.999153
-  3  0.000606391: 0.00517051 0.999153
+  0:     56.070572: 0.123450 0.543210
+  1:     6.3964587:  1.34546 0.700840
+  2: 0.00060639084: 0.00517053 0.999153
+  3: 0.00060639084: 0.00517052 0.999153
 > summary(fit2, cor = TRUE)
 
 Formula: yeps ~ a + b * x
@@ -151,6 +157,8 @@ Residual standard error: 0.0132 on 7 degrees of freedom
 Correlation of Parameter Estimates:
   a    
 b -0.89
+
+Algorithm "port", convergence message: both X-convergence and relative convergence (5) 
 
 > cf2 <- coef(summary(fit2))[, 1:2]
 > rownames(cf0) <- c("a", "b")
@@ -178,6 +186,9 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 0.0355 on 13 degrees of freedom
 
+Number of iterations to convergence: 2 
+Achieved convergence tolerance: 2.43e-06 
+
 > 
 > ## directly
 > fm2 <- nls(density ~ Asym/(1 + exp((xmid - log(conc))/scal)),
@@ -196,6 +207,9 @@ scal   1.0385     0.0304    34.1  4.2e-14 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
 Residual standard error: 0.0355 on 13 degrees of freedom
+
+Number of iterations to convergence: 6 
+Achieved convergence tolerance: 1.34e-07 
 
 > stopifnot(all.equal(coef(summary(fm2)), coef(summary(fm1)), tol = 1e-6))
 > stopifnot(all.equal(residuals(fm2), residuals(fm1), tol = 1e-5))
@@ -228,6 +242,9 @@ scal   1.0385     0.0304    34.1  4.2e-14 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
 Residual standard error: 0.0355 on 13 degrees of freedom
+
+Number of iterations to convergence: 6 
+Achieved convergence tolerance: 1.29e-07 
 
 > stopifnot(all.equal(coef(summary(fm3)), coef(summary(fm1)), tol = 1e-6))
 > ft <- with(DNase1, density - fitted(fm3)/sqrt(wts))
@@ -265,6 +282,9 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 0.0355 on 13 degrees of freedom
 
+Number of iterations to convergence: 5 
+Achieved convergence tolerance: 8.48e-09 
+
 > cf <- coef(summary(fm4))[c(3,1,2), ]
 > rownames(cf)[2] <- "Asym"
 > stopifnot(all.equal(cf, coef(summary(fm1)), tol = 1e-6,
@@ -301,6 +321,8 @@ scal   1.0385     0.0304    34.1  4.2e-14 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
 Residual standard error: 0.0355 on 13 degrees of freedom
+
+Algorithm "port", convergence message: relative convergence (4) 
 
 > stopifnot(all.equal(coef(summary(fm5)), coef(summary(fm1)), tol = 1e-6))
 > stopifnot(all.equal(residuals(fm5), residuals(fm1), tol = 1e-5))
@@ -350,27 +372,35 @@ scal 0.9757 1.1063
 Nonlinear regression model
   model:  y ~ x^b 
    data:  parent.frame() 
-      b 
-0.69489 
- residual sum-of-squares: 2.3866
+    b 
+0.695 
+ residual sum-of-squares: 2.39
+
+Number of iterations to convergence: 4 
+Achieved convergence tolerance: 2.81e-07 
 Waiting for profiling to be done...
    2.5%   97.5% 
 0.68704 0.70281 
 Nonlinear regression model
   model:  y ~ x^b 
    data:  parent.frame() 
-      b 
-0.69489 
- residual sum-of-squares: 2.3866
+    b 
+0.695 
+ residual sum-of-squares: 2.39
+
+Algorithm "port", convergence message: relative convergence (4) 
 Waiting for profiling to be done...
    2.5%   97.5% 
 0.68704 0.70281 
 Nonlinear regression model
   model:  y2 ~ a * x^b 
    data:  parent.frame() 
-      a       b 
-0.50191 0.72370 
- residual sum-of-squares: 2.5143
+    a     b 
+0.502 0.724 
+ residual sum-of-squares: 2.51
+
+Number of iterations to convergence: 4 
+Achieved convergence tolerance: 3.64e-06 
 Waiting for profiling to be done...
      2.5%   97.5%
 a 0.49494 0.50893
@@ -378,9 +408,11 @@ b 0.70019 0.74767
 Nonlinear regression model
   model:  y2 ~ a * x^b 
    data:  parent.frame() 
-      a       b 
-0.50191 0.72370 
- residual sum-of-squares: 2.5143
+    a     b 
+0.502 0.724 
+ residual sum-of-squares: 2.51
+
+Algorithm "port", convergence message: relative convergence (4) 
 Waiting for profiling to be done...
      2.5%   97.5%
 a 0.49494 0.50893
@@ -388,9 +420,12 @@ b 0.70019 0.74767
 Nonlinear regression model
   model:  y3 ~ a * (x + exp(logc))^b 
    data:  parent.frame() 
-       a        b     logc 
- 0.55767  0.60255 -0.17648 
- residual sum-of-squares: 2.4382
+     a      b   logc 
+ 0.558  0.603 -0.176 
+ residual sum-of-squares: 2.44
+
+Number of iterations to convergence: 5 
+Achieved convergence tolerance: 3.43e-06 
 Waiting for profiling to be done...
          2.5%   97.5%
 a     0.35005 0.66045
@@ -399,9 +434,11 @@ logc -0.64620 0.40950
 Nonlinear regression model
   model:  y3 ~ a * (x + exp(logc))^b 
    data:  parent.frame() 
-       a        b     logc 
- 0.55766  0.60256 -0.17645 
- residual sum-of-squares: 2.4382
+     a      b   logc 
+ 0.558  0.603 -0.176 
+ residual sum-of-squares: 2.44
+
+Algorithm "port", convergence message: relative convergence (4) 
 Waiting for profiling to be done...
          2.5%   97.5%
 a     0.35005 0.66045
@@ -445,7 +482,7 @@ $a
 8   2.26362    5.01493    0.97638
 9   2.70180    7.51383    1.12707
 10  3.08992   12.25766    1.26434
-11  3.40458   22.42470    1.38476
+11  3.40458   22.42471    1.38476
 
 $b
        tau par.vals.a par.vals.b
@@ -455,8 +492,8 @@ $b
 4  1.67482    3.03728    0.83406
 5  2.43255    4.61672    1.12347
 6  3.18042    7.90950    1.44117
-7  3.89865   23.13401    1.79455
-8  4.52605  166.09148    2.20381
+7  3.89865   23.13399    1.79455
+8  4.52605  166.09149    2.20381
 
 attr(,"original.fit")
 Nonlinear regression model
@@ -465,6 +502,8 @@ Nonlinear regression model
       a       b 
 1.53805 0.26331 
  residual sum-of-squares: 0.38938
+
+Algorithm "port", convergence message: relative convergence (4) 
 attr(,"summary")
 
 Formula: y ~ gfun(a, b, x)
@@ -477,6 +516,8 @@ b  0.26331    0.35188  0.7483  0.47569
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
 Residual standard error: 0.22062 on 8 degrees of freedom
+
+Algorithm "port", convergence message: relative convergence (4) 
 
 attr(,"class")
 [1] "profile.nls" "profile"    
@@ -514,6 +555,8 @@ Nonlinear regression model
       a       b 
 1.50000 0.24263 
  residual sum-of-squares: 0.38958
+
+Algorithm "port", convergence message: relative convergence (4) 
 attr(,"summary")
 
 Formula: y ~ gfun(a, b, x)
@@ -526,6 +569,8 @@ b  0.24263    0.35567  0.6822  0.51438
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 
 Residual standard error: 0.22068 on 8 degrees of freedom
+
+Algorithm "port", convergence message: relative convergence (4) 
 
 attr(,"class")
 [1] "profile.nls" "profile"    
@@ -556,13 +601,72 @@ b      NA 0.61016
 Nonlinear regression model
   model:  y ~ myf(x, a, b, n) 
    data:  xy 
-     a      b 
-1.9799 2.0046 
- residual sum-of-squares: 26.503
+   a    b 
+1.98 2.00 
+ residual sum-of-squares: 26.5
+
+Number of iterations to convergence: 6 
+Achieved convergence tolerance: 7.45e-07 
 > ## failed to find n in 2.2.x
 > ## found wrong n in 2.3.x
 > ## finally worked in 2.4.0
 > 
+> 
+> ## list 'start'
+> getExpmat <- function(theta, t)
++ {
++         conc <- matrix(nrow = length(t), ncol = length(theta))
++         for(i in 1:length(theta)) conc[, i] <- exp(-theta[i] * t)
++         conc
++ }
+> 
+> expsum <- as.vector(getExpmat(c(.05,.005), 1:100) %*% c(1,1))
+> expsumNoisy <- expsum + max(expsum) *.001 * rnorm(100)
+> expsum.df <-data.frame(expsumNoisy)
+> 
+> ## estimate decay rates, amplitudes with default Gauss-Newton
+> summary (nls(expsumNoisy ~ getExpmat(k, 1:100) %*% sp, expsum.df,
++              start = list(k = c(.6,.02), sp = c(1,2))))
+
+Formula: expsumNoisy ~ getExpmat(k, 1:100) %*% sp
+
+Parameters:
+    Estimate Std. Error t value Pr(>|t|)    
+k1  5.00e-02   3.07e-04   162.5   <2e-16 ***
+k2  4.99e-03   5.38e-05    92.8   <2e-16 ***
+sp1 1.00e+00   4.47e-03   224.0   <2e-16 ***
+sp2 9.99e-01   5.00e-03   199.8   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Residual standard error: 0.00205 on 96 degrees of freedom
+
+Number of iterations to convergence: 7 
+Achieved convergence tolerance: 1.98e-06 
+
+> 
+> ## didn't work with port in 2.4.1
+> summary (nls(expsumNoisy ~ getExpmat(k, 1:100) %*% sp, expsum.df,
++              start = list(k = c(.6,.02), sp = c(1,2)),
++              algorithm = "port"))
+
+Formula: expsumNoisy ~ getExpmat(k, 1:100) %*% sp
+
+Parameters:
+    Estimate Std. Error t value Pr(>|t|)    
+k1  5.00e-02   3.07e-04   162.5   <2e-16 ***
+k2  4.99e-03   5.38e-05    92.8   <2e-16 ***
+sp1 1.00e+00   4.47e-03   224.0   <2e-16 ***
+sp2 9.99e-01   5.00e-03   199.8   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Residual standard error: 0.00205 on 96 degrees of freedom
+
+Algorithm "port", convergence message: both X-convergence and relative convergence (5) 
+
+> 
+> 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  4.448 0.02 4.513 0 0 
+Time elapsed:  7.543 0.045 7.633 0 0 
 > 

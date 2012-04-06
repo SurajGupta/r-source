@@ -63,22 +63,17 @@ summary(bI <- besselI(x = x <- 10:700, 1))
 ## data.frame
 set.seed(123)
 L3 <- LETTERS[1:3]
-str(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
+d <- data.frame(cbind(x=1, y=1:10), fac = sample(L3, 10, replace=TRUE))
+str(d)
 (d0  <- d[, FALSE]) # NULL dataframe with 10 rows
 (d.0 <- d[FALSE, ]) # <0 rows> dataframe  (3 cols)
-(d00 <- d0[FALSE,])  # NULL dataframe with 0 rows
-(d000 <- data.frame()) #but not quite the same as d00:
-!identical(d00, d000)
-dput(d00)
-dput(d000)
+(d00 <- d0[FALSE,]) # NULL dataframe with 0 rows
 stopifnot(identical(d, cbind(d, d0)),
-          identical(d, cbind(d0, d)),
-          identical(d, rbind(d,d.0)),
+          identical(d, cbind(d0, d)))
+stopifnot(identical(d, rbind(d,d.0)),
           identical(d, rbind(d.0,d)),
           identical(d, rbind(d00,d)),
-          identical(d, rbind(d,d00)),
-
-          TRUE )
+          identical(d, rbind(d,d00)))
 ## Comments: failed before ver. 1.4.0
 
 ## diag
@@ -312,12 +307,14 @@ summary(data.frame(x))
 ## All entries show all 3 digits after the decimal point now.
 
 ## Chong Gu 2001-Feb-16.  step on binomials
-"detg1" <-
-structure(list(Temp = structure(c(2, 1, 2, 1, 2, 1, 2, 1, 2,
-1, 2, 1), .Label = c("High", "Low"), class = "factor"), M.user = structure(c(1,
-1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2), .Label = c("N", "Y"), class = "factor"),
-    Soft = structure(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), .Label = c("Hard",
-    "Medium", "Soft"), class = "factor"), M = c(42, 30, 52, 43,
+detg1 <-
+structure(list(Temp = structure(c(2L, 1L, 2L, 1L, 2L, 1L, 2L,
+    1L, 2L, 1L, 2L, 1L), .Label = c("High", "Low"), class = "factor"),
+    M.user = structure(c(1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L, 1L,
+    1L, 2L, 2L), .Label = c("N", "Y"), class = "factor"),
+    Soft = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L),
+    .Label = c("Hard", "Medium", "Soft"), class = "factor"),
+    M = c(42, 30, 52, 43,
     50, 23, 55, 47, 53, 27, 49, 29), X = c(68, 42, 37, 24, 66,
     33, 47, 23, 63, 29, 57, 19)), .Names = c("Temp", "M.user",
 "Soft", "M", "X"), class = "data.frame", row.names = c("1", "3",
@@ -368,10 +365,8 @@ gofX.df<-
     -0.756802495307928, 0.67546318055115, -0.0583741434275801
     ), groups = structure(c(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2,
     2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3), class = "factor", .Label = c("1",
-    "2", "3"))), .Names = c("A", "B", "C", "D", "groups"), row.names = c("1",
-"2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"
-), class = "data.frame")
+    "2", "3"))), .Names = c("A", "B", "C", "D", "groups"), row.names = 1:24,
+            class = "data.frame")
 
 gofX.manova <- manova(formula = cbind(A, B, C, D) ~ groups, data = gofX.df)
 try(summary(gofX.manova))
@@ -845,8 +840,7 @@ par(mfrow = c(1,1))
                    y = c(78.5, 74.3, 104.3, 87.6, 95.9, 109.2, 102.7, 72.5,
                    93.1, 115.9, 83.8, 113.3, 109.4)),
               .Names = c("x1", "x2", "x3", "x4", "y"), class = "data.frame",
-              row.names = c("1", "2", "3", "4", "5", "6", "7", "8", "9",
-              "10", "11", "12", "13"))
+              row.names = 1:13)
 teststep <- function(formula, data)
 {
     d2 <- data
@@ -2008,3 +2002,213 @@ x[2, invisible(3)]
 
 
 ### end of tests added in 2.4.1 ###
+
+
+## tests of deparsing
+x <-list(a = NA, b = as.integer(NA), c=0+NA, d=0i+NA,
+         e = 1, f = 1:1, g = 1:3, h = c(NA, 1:3),
+         i = as.character(NA), j = c("foo", NA, "bar")
+         )
+dput(x, control=NULL)
+dput(x, control="keepInteger")
+dput(x, control="keepNA")
+dput(x)
+dput(x, control="all")
+dput(x, control=c("all", "S_compatible"))
+tmp <- tempfile()
+dput(x, tmp, control="all")
+stopifnot(identical(dget(tmp), x))
+dput(x, tmp, control=c("all", "S_compatible"))
+stopifnot(identical(dget(tmp), x))
+unlink(tmp)
+## changes in 2.5.0
+
+
+## give better error message for nls with no parameters
+## Ivo Welch, R-help, 2006-12-23.
+d <- data.frame(y= runif(10), x=runif(10))
+try(nls(y ~ 1/(1+x), data = d, start=list(x=0.5,y=0.5), trace=TRUE))
+## changed in 2.4.1 patched
+
+
+## cut(breaks="years"), in part PR#9433
+cut(as.Date(c("2000-01-17","2001-01-13","2001-01-20")), breaks="years")
+cut(as.POSIXct(c("2000-01-17","2001-01-13","2001-01-20")), breaks="years")
+## did not get day 01 < 2.4.1 patched
+
+
+## manipulating rownames: problems in pre-2.5.0
+A <- data.frame(a=character(0))
+try(row.names(A) <- 1:10) # succeeded in Dec 2006
+A <- list(a=1:3)
+class(A) <- "data.frame"
+row.names(A) <- letters[24:26] # failed at one point in Dec 2006
+A
+##
+
+
+## extreme cases for subsetting of data frames
+w <- women[1, ]
+w[]
+w[,drop = TRUE]
+w[1,]
+w[,]
+w[1, , drop = FALSE]
+w[, , drop = FALSE]
+w[1, , drop = TRUE]
+w[, , drop = TRUE]
+## regression test: code changed for 2.5.0
+
+
+## data.frame() with zero columns ignored 'row.names'
+(x <- data.frame(row.names=1:4))
+nrow(x)
+row.names(x)
+attr(x, "row.names")
+## ignored prior to 2.5.0.
+
+
+## identical on data.frames
+d0 <- d1 <- data.frame(1:4, row.names=1:4)
+row.names(d0) <- NULL
+dput(d0)
+dput(d1)
+identical(d0, d1)
+all.equal(d0, d1)
+row.names(d1) <- as.character(1:4)
+dput(d1)
+identical(d0, d1)
+all.equal(d0, d1)
+## identical used internal representation prior to 2.5.0
+
+
+## all.equal
+# ignored check.attributes in 2.4.1
+all.equal(data.frame(x=1:5, row.names=letters[1:5]),
+          data.frame(x=1:5,row.names=LETTERS[1:5]),
+          check.attributes=FALSE)
+# treated logicals as numeric
+all.equal(c(T, F, F), c(T, T, F))
+all.equal(c(T, T, F), c(T, F, F))
+# ignored raw:
+all.equal(as.raw(1:3), as.raw(1:3))
+all.equal(as.raw(1:3), as.raw(3:1))
+##
+
+
+## tests of deparsing
+# if we run this from stdin, we will have no source, so fake it
+f <- function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
+attr(f, "source") <-
+    "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"
+f # uses the source
+dput(f) # not source
+dput(f, control="all") # uses the source
+cat(deparse(f), sep="\n")
+dump("f", file="")
+# remove the source
+attr(f, "source") <- NULL
+f
+dput(f, control="all")
+dump("f", file="")
+
+expression(bin <- bin + 1L)
+## did not preserve e.g. 1L at some point in pre-2.5.0
+
+
+## NAs in substr were handled as large negative numbers
+x <- "abcde"
+substr(x, 1, 3)
+substr(x, NA, 1)
+substr(x, 1, NA)
+substr(x, NA, 3) <- "abc"; x
+substr(x, 1, NA) <- "AA"; x
+substr(x, 1, 2) <- NA_character_; x
+## "" or no change in 2.4.1, except last
+
+
+## regression tests for pmin/pmax, rewritten in C for 2.5.0
+# NULL == integer(0)
+pmin(NULL, integer(0))
+pmin(integer(0), NULL)
+try(pmin(NULL, 1:3))
+
+x <- c(1, NA, NA, 4, 5)
+y <- c(2, NA, 4, NA, 3)
+pmin(x, y)
+stopifnot(identical(pmin(x, y), pmin(y, x)))
+pmin(x, y, na.rm=TRUE)
+stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+pmax(x, y)
+stopifnot(identical(pmax(x, y), pmax(y, x)))
+pmax(x, y, na.rm=TRUE)
+stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+
+x <- as.integer(x); y <- as.integer(y)
+pmin(x, y)
+stopifnot(identical(pmin(x, y), pmin(y, x)))
+pmin(x, y, na.rm=TRUE)
+stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+pmax(x, y)
+stopifnot(identical(pmax(x, y), pmax(y, x)))
+pmax(x, y, na.rm=TRUE)
+stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+
+x <- as.character(x); y <- as.character(y)
+pmin(x, y)
+stopifnot(identical(pmin(x, y), pmin(y, x)))
+pmin(x, y, na.rm=TRUE)
+stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+pmax(x, y)
+stopifnot(identical(pmax(x, y), pmax(y, x)))
+pmax(x, y, na.rm=TRUE)
+stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+
+# tests of classed quantities
+x <- .leap.seconds; y <- rev(x)
+x[2] <- y[2] <- x[3] <- y[4] <- NA
+format(pmin(x, y), tz="GMT")  # TZ names differ by platform
+class(pmin(x, y))
+stopifnot(identical(pmin(x, y), pmin(y, x)))
+format(pmin(x, y, na.rm=TRUE), tz="GMT")
+stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+format(pmax(x, y), tz="GMT")
+stopifnot(identical(pmax(x, y), pmax(y, x)))
+format(pmax(x, y, na.rm=TRUE), tz="GMT")
+stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+
+x <- as.POSIXlt(x, tz="GMT"); y <- as.POSIXlt(y, tz="GMT")
+format(pmin(x, y), tz="GMT")
+class(pmin(x, y))
+stopifnot(identical(pmin(x, y), pmin(y, x)))
+format(pmin(x, y, na.rm=TRUE), tz="GMT")
+stopifnot(identical(pmin(x, y, na.rm=TRUE), pmin(y, x, na.rm=TRUE)))
+format(pmax(x, y), tz="GMT")
+stopifnot(identical(pmax(x, y), pmax(y, x)))
+format(pmax(x, y, na.rm=TRUE), tz="GMT")
+stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
+## regresion tests
+
+
+## regression tests on names of 1D arrays
+x <- as.array(1:3)
+names(x) <- letters[x] # sets dimnames, really
+names(x)
+dimnames(x)
+attributes(x)
+names(x) <- NULL
+attr(x, "names") <- LETTERS[x] # sets dimnames, really
+names(x)
+dimnames(x)
+attributes(x)
+## regression tests
+
+
+## regression tests on NA attribute names
+x <- 1:3
+attr(x, "NA") <- 4
+attributes(x)
+attr(x, "NA")
+attr(x, NA_character_)
+try(attr(x, NA_character_) <- 5)
+## prior to 2.5.0 NA was treated as "NA"

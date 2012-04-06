@@ -3,7 +3,7 @@
  *  file extra.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004	      The R Foundation
- *  Copyright (C) 2005--2006  The R Development Core Team
+ *  Copyright (C) 2005--2007  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -147,7 +147,6 @@ SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char isNT[8]="??", ver[256];
-    SEXP ans;
     OSVERSIONINFO verinfo;
 
     checkArity(op, args);
@@ -187,31 +186,32 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 	if(GetVersionEx((OSVERSIONINFO *)&osvi)) {
 	    char tmp[]="", *desc= tmp, *type = tmp;
+	    if(osvi.dwMajorVersion == 6)
+		desc = "Vista";
 	    if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
 		desc = "2000";
 	    if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
 		desc = "XP";
+	    if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
+		desc = "Sever 2003";
             if ( osvi.wProductType == VER_NT_WORKSTATION ) {
-               if( osvi.wSuiteMask & VER_SUITE_PERSONAL )
-                  type = "Home Edition";
-               else
-                  type = "Professional";
+               if( osvi.wSuiteMask & VER_SUITE_PERSONAL ) type = " Home";
             } else if ( osvi.wProductType == VER_NT_SERVER )
             {
                if ( osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1 )
-                  desc = ".NET";
+		   desc = " .NET";
                if( osvi.wSuiteMask & VER_SUITE_DATACENTER )
-                  type = "DataCenter Server";
+		   type = " DataCenter Server";
                else if( osvi.wSuiteMask & VER_SUITE_ENTERPRISE )
-                  type = "Advanced Server";
+		   type = " Advanced Server";
                else if ( osvi.wSuiteMask == VER_SUITE_BLADE )
-                  type = "Web Server";
+		   type = " Web Server";
                else
-		   type = "Server";
+		   type = " Server";
             }
 
 	    sprintf(ver,
-		    "Windows %s %s (build %d) Service Pack %d.%d",
+		    "Windows %s%s (build %d) Service Pack %d.%d",
 		    desc, type,
 		    LOWORD(osvi.dwBuildNumber),
 		    (int)osvi.wServicePackMajor,
@@ -227,10 +227,7 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 		LOWORD(verinfo.dwBuildNumber), verinfo.szCSDVersion);
     }
 
-    PROTECT(ans = allocVector(STRSXP, 1));
-    SET_STRING_ELT(ans, 0, mkChar(ver));
-    UNPROTECT(1);
-    return (ans);
+    return mkString(ver);
 }
 
 /* also used in rui.c */
@@ -285,7 +282,7 @@ int check_doc_file(char * file)
 
 SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP message, ans;
+    SEXP message;
     char * type;
     int res=YES;
 
@@ -307,14 +304,12 @@ SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
 	res = askyesnocancel(CHAR(STRING_ELT(message, 0)));
     } else
 	errorcall(call, _("unknown type"));
-    ans = allocVector(INTSXP, 1);
-    INTEGER(ans)[0] = res;
-    return (ans);
+    return ScalarInteger(res);
 }
 
 SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP  message, def, ans;
+    SEXP  message, def;
     char *string;
 
     checkArity(op, args);
@@ -326,12 +321,8 @@ SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString(def) || length(def) != 1)
 	error(_("invalid '%s' argument"), "default");
     string = askstring(CHAR(STRING_ELT(message, 0)), CHAR(STRING_ELT(def, 0)));
-    if (string) {
-	ans = allocVector(STRSXP, 1);
-	SET_STRING_ELT(ans, 0, mkChar(string));
-	return (ans);
-    } else
-	return (R_NilValue);
+    if (string) return mkString(string);
+    else return R_NilValue;
 }
 
 #include "Startup.h"
@@ -872,14 +863,14 @@ void R_CleanTempDir()
 SEXP do_getClipboardFormats(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans = R_NilValue;
-    int size, format = 0;
+    int j, size, format = 0;
     
     checkArity(op, args);
     
     if(OpenClipboard(NULL)) {
     	size = CountClipboardFormats();
     	PROTECT(ans = allocVector(INTSXP, size));
-    	for (int j=0; j<size; j++) {
+    	for (j = 0; j < size; j++) {
     	    format = EnumClipboardFormats(format);
     	    INTEGER(ans)[j] = format;
     	}
@@ -894,7 +885,7 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans = R_NilValue;
     HGLOBAL hglb;
     char *pc;
-    int format, raw, size;
+    int j, format, raw, size;
 
     checkArity(op, args);
     format = asInteger(CAR(args));
@@ -910,7 +901,7 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    } else {
 		size = GlobalSize(hglb);
 		PROTECT(ans = allocVector(RAWSXP, size));
-		for (int j=0; j<size; j++) RAW(ans)[j] = *pc++;
+		for (j = 0; j < size; j++) RAW(ans)[j] = *pc++;
 	    }
 	    GlobalUnlock(hglb);
 	    UNPROTECT(1);	
@@ -922,7 +913,7 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, text;
+    SEXP text;
     int i, n, format;
     HGLOBAL hglb;
     char *s, *p;
@@ -968,10 +959,7 @@ SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	}
     }
-    PROTECT(ans = allocVector(LGLSXP, 1));
-    LOGICAL(ans)[0] = success;
-    UNPROTECT(1);
-    return ans;
+    return ScalarLogical(success);
 }
 
 /* We cannot use GetLongPathName (missing on W95/NT4) so write our own
@@ -1206,53 +1194,46 @@ extern window RFrame; /* from rui.c */
 
 SEXP getIdentification()
 {
-    SEXP result;
+    char *res = "" /* -Wall */;
 
-    PROTECT(result = allocVector(STRSXP, 1));
     switch(CharacterMode) {
     case RGui:
-	if(RguiMDI & RW_MDI) SET_STRING_ELT(result, 0, mkChar("RGui"));
-	else SET_STRING_ELT(result, 0, mkChar("R Console"));
+	if(RguiMDI & RW_MDI) res = "RGui"; else res = "R Console";
 	break;
     case RTerm:
-	SET_STRING_ELT(result, 0, mkChar("Rterm"));
+	res = "Rterm";
+	break;
     default:
 	/* do nothing */
 	break; /* -Wall */
     }
-    UNPROTECT(1);
-    return result;
+    return mkString(res);
 }
 
 SEXP getWindowTitle()
 {
-    SEXP result;
-    char buf[512];
+    char buf[512], *res = "";
 
-    PROTECT(result = allocVector(STRSXP, 1));
     switch(CharacterMode) {
     case RGui:
-	if(RguiMDI & RW_MDI) SET_STRING_ELT(result, 0, 
-					    mkChar(GA_gettext(RFrame)));
-	else SET_STRING_ELT(result, 0, mkChar(GA_gettext(RConsole)));
+	if(RguiMDI & RW_MDI) res = GA_gettext(RFrame);
+	else res = GA_gettext(RConsole);
 	break;
     case RTerm:
     	GetConsoleTitle(buf, 512);
     	buf[511] = '\0';
-	SET_STRING_ELT(result, 0, mkChar(buf));
+	res = buf;
+	break;
     default:
 	/* do nothing */
-	break; /* -Wall */
+	break;
     }
-    UNPROTECT(1);
-    return result;
+    return mkString(res);
 }
 
 SEXP setTitle(char *title)
 {
-    SEXP result;
-
-    PROTECT(result = getWindowTitle());
+    SEXP result = getWindowTitle();
 
     switch(CharacterMode) {
     case RGui:
@@ -1266,7 +1247,6 @@ SEXP setTitle(char *title)
 	/* do nothing */
 	break; /* -Wall */
     }
-    UNPROTECT(1);
     return result;
 }
 
@@ -1281,7 +1261,8 @@ SEXP do_setTitle(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP title = CAR(args);
 
     checkArity(op, args);
-    if(!isString(title)  || LENGTH(title) != 1)
+    if(!isString(title)  || LENGTH(title) != 1 || 
+       STRING_ELT(title, 0) == NA_STRING)
 	errorcall(call, _("'title' must be a character string"));
     return setTitle(CHAR(STRING_ELT(title, 0)));
 }
@@ -1292,25 +1273,40 @@ SEXP do_getWindowTitle(SEXP call, SEXP op, SEXP args, SEXP rho)
     return getWindowTitle();
 }
 
+SEXP do_setStatusBar(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP text = CAR(args);
+
+    checkArity(op, args);
+    if(!isString(text)  || LENGTH(text) != 1 || 
+       STRING_ELT(text, 0) == NA_STRING)
+	errorcall(call, _("'text' must be a character string"));
+    showstatusbar();
+    setstatus(CHAR(STRING_ELT(text, 0)));
+    return R_NilValue;
+}
+
+
 int getConsoleHandle(char *which)
 {
     if (CharacterMode != RGui) return(0);
-    else if (strcmp(which, "Console") == 0 && RConsole) return(getHandle(RConsole));
-    else if (strcmp(which, "Frame") == 0 && RFrame) return(getHandle(RFrame));
-    else if (strcmp(which, "Process") == 0) return((int)GetCurrentProcess());
-    else if (strcmp(which, "ProcessId") == 0) return((int)GetCurrentProcessId());
-    else return(0);
+    else if (strcmp(which, "Console") == 0 && RConsole) 
+	return getHandle(RConsole);
+    else if (strcmp(which, "Frame") == 0 && RFrame) 
+	return getHandle(RFrame);
+    else if (strcmp(which, "Process") == 0) 
+	return (int)GetCurrentProcess();
+    else if (strcmp(which, "ProcessId") == 0) 
+	return (int)GetCurrentProcessId();
+    else return 0;
 }
 
 static int getDeviceHandle(int);
 
 SEXP do_getWindowHandle(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP result;
     int handle;
     SEXP which = CAR(args);
-
-    result = R_NilValue; /* to avoid warnings */
 
     checkArity(op, args);
     if(LENGTH(which) != 1)
@@ -1319,11 +1315,7 @@ SEXP do_getWindowHandle(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (isInteger(which)) handle = getDeviceHandle(INTEGER(which)[0]);
     else handle = 0;
 
-    PROTECT(result = allocVector(INTSXP, 1));
-    INTEGER(result)[0] = handle;
-    UNPROTECT(1);
-
-    return result;
+    return ScalarInteger(handle);
 }
 
 #include "devWindows.h"

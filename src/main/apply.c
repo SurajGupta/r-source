@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-6  the R Development Core Team
+ *  Copyright (C) 2000-7  the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ SEXP attribute_hidden do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
 static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt, 
 		   Rboolean replace, SEXP rho)
 {
-    SEXP ans, names, class, R_fcall;
+    SEXP ans, names, klass, R_fcall;
     int i, j, n;
     Rboolean matched = FALSE;
     
@@ -160,14 +160,15 @@ static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt,
 	UNPROTECT(1);
 	return ans;
     }
-    if(strcmp(CHAR(STRING_ELT(classes, 0)), "ANY") == 0)
+    if(strcmp(CHAR(STRING_ELT(classes, 0)), "ANY") == 0) /* ASCII */
 	matched = TRUE;
     else {
-	PROTECT(class = R_data_class(X, FALSE));
-	for(i = 0; i < LENGTH(class); i++)
+	PROTECT(klass = R_data_class(X, FALSE));
+	for(i = 0; i < LENGTH(klass); i++)
 	    for(j = 0; j < length(classes); j++)
-		if(strcmp(CHAR(STRING_ELT(class, i)),
-		      CHAR(STRING_ELT(classes, j))) == 0) matched = TRUE;
+		if(strcmp(translateChar(STRING_ELT(klass, i)),
+			  translateChar(STRING_ELT(classes, j))) == 0) 
+		    matched = TRUE;
 	UNPROTECT(1);
     }
     if(matched) {
@@ -180,9 +181,6 @@ static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt,
     else return duplicate(deflt);
 }
 
-/* This is a special, so has unevaluated arguments.  It is called from a
-   closure wrapper, so X and FUN are promises. */
-
 SEXP attribute_hidden do_rapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP X, FUN, classes, deflt, how, ans, names;
@@ -190,15 +188,16 @@ SEXP attribute_hidden do_rapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     Rboolean replace;
     
     checkArity(op, args);
-    PROTECT(X = eval(CAR(args), rho)); args = CDR(args);
+    X = CAR(args); args = CDR(args);
     FUN = CAR(args); args = CDR(args);
-    if(!isFunction(FUN)) errorcall(call, _("invalid 'f' argument"));
+    if(!isFunction(FUN)) errorcall(call, _("invalid '%s' argument"), "f");
     classes = CAR(args); args = CDR(args);
-    if(!isString(classes)) errorcall(call, _("invalid 'classes' argument"));
+    if(!isString(classes)) errorcall(call, _("invalid '%s' argument"), 
+				     "classes");
     deflt = CAR(args); args = CDR(args);
     how = CAR(args);
-    if(!isString(how)) errorcall(call, _("invalid 'how' argument"));
-    replace = strcmp(CHAR(STRING_ELT(how, 0)), "replace") == 0;
+    if(!isString(how)) errorcall(call, _("invalid '%s' argument"), "how");
+    replace = strcmp(CHAR(STRING_ELT(how, 0)), "replace") == 0; /* ASCII */
     n = length(X);
     PROTECT(ans = allocVector(VECSXP, n));
     names = getAttrib(X, R_NamesSymbol);
@@ -207,7 +206,7 @@ SEXP attribute_hidden do_rapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     for(i = 0; i < n; i++)
 	SET_VECTOR_ELT(ans, i, do_one(VECTOR_ELT(X, i), FUN, classes, deflt,
 				      replace, rho));
-    UNPROTECT(2);
+    UNPROTECT(1);
     return ans;
 }
 

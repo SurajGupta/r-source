@@ -5,12 +5,14 @@
 # More complicated units are of the form 'unit(1, "string", "a string")'
 # or 'unit(1, "grob", a.grob)'
 unit <- function(x, units, data=NULL) {
-  if (!is.numeric(x))
-    stop("'x' must be numeric")
-  units <- as.character(units)
-  if (length(x) == 0 || length(units) == 0)
-    stop("'x' and 'units' must have length > 0")
-  valid.unit(x, units, recycle.data(data, FALSE, length(x), units))
+    # Used to throw error if !is.numeric(x), but this way
+    # user can specify unit(NA, "npc") rather than
+    # having to specify unit(as.numeric(NA), "npc")
+    x <- as.numeric(x)
+    units <- as.character(units)
+    if (length(x) == 0 || length(units) == 0)
+        stop("'x' and 'units' must have length > 0")
+    valid.unit(x, units, recycle.data(data, FALSE, length(x), units))
 }
 
 valid.unit <- function(x, units, data) {
@@ -182,9 +184,9 @@ valid.units <- function(units) {
   .Call(validUnits, units)
 }
 
-as.character.unit <- function(unit) {
-  class(unit) <- NULL
-  paste(unit, attr(unit, "unit"), sep="")
+as.character.unit <- function(x, ...) {
+  class(x) <- NULL
+  paste(x, attr(x, "unit"), sep="")
 }
 
 #########################
@@ -247,15 +249,15 @@ is.unit.arithmetic <- function(x) {
   inherits(x, "unit.arithmetic")
 }
 
-as.character.unit.arithmetic <- function(ua) {
+as.character.unit.arithmetic <- function(x, ...) {
   # bit too customised for my liking, but whatever ...
   # NOTE that paste coerces arguments to mode character hence
   # this will recurse.
-  fname <- ua$fname
+  fname <- x$fname
   if (fname == "+" || fname == "-" || fname == "*")
-    paste(ua$arg1, fname, ua$arg2, sep="")
+    paste(x$arg1, fname, x$arg2, sep="")
   else
-    paste(fname, "(", paste(ua$arg1, collapse=", "), ")", sep="")
+    paste(fname, "(", paste(x$arg1, collapse=", "), ")", sep="")
 }
 
 unit.pmax <- function(...) {
@@ -314,8 +316,8 @@ unit.list <- function(unit) {
     unit
   else {
     l <- length(unit)
-    result <- list()
-    for (i in 1:l)
+    result <- vector("list", l)
+    for (i in seq_len(l))
       result[[i]] <- unit[i]
     class(result) <- c("unit.list", "unit")
     result
@@ -326,11 +328,11 @@ is.unit.list <- function(x) {
   inherits(x, "unit.list")
 }
 
-as.character.unit.list <- function(ul) {
-  l <- length(ul)
-  result <- rep("", l)
-  for (i in 1:length(ul))
-    result[i] <- as.character(ul[[i]])
+as.character.unit.list <- function(x, ...) {
+  l <- length(x)
+  result <- character(l)
+  for (i in seq_len(l))
+    result[i] <- as.character(x[[i]])
   result
 }
 
@@ -363,11 +365,11 @@ print.unit <- function(x, ...) {
     index <- (1:this.length)[index]
   if (top && index > this.length)
     stop("Index out of bounds (unit subsetting)")
-  cl <- class(x);
+  cl <- class(x)
   units <- attr(x, "unit")
   valid.units <- attr(x, "valid.unit")
   data <- attr(x, "data")
-  class(x) <- NULL;
+  class(x) <- NULL
   # The line below may seem slightly odd, but it should only be
   # used to recycle values when this method is called to
   # subset an argument in a unit.arithmetic object
@@ -520,19 +522,19 @@ unit.rep <- function (x, ...)
 # Length of unit objects
 #########################
 
-length.unit <- function(unit) {
-  length(unclass(unit))
+length.unit <- function(x) {
+  length(unclass(x))
 }
 
-length.unit.list <- function(unit) {
-  length(unclass(unit))
+length.unit.list <- function(x) {
+  length(unclass(x))
 }
 
-length.unit.arithmetic <- function(unit) {
-  switch(unit$fname,
-         "+"=max(length(unit$arg1), length(unit$arg2)),
-         "-"=max(length(unit$arg1), length(unit$arg2)),
-         "*"=max(length(unit$arg1), length(unit$arg2)),
+length.unit.arithmetic <- function(x) {
+  switch(x$fname,
+         "+"=max(length(x$arg1), length(x$arg2)),
+         "-"=max(length(x$arg1), length(x$arg2)),
+         "*"=max(length(x$arg1), length(x$arg2)),
          "min"=1,
          "max"=1,
          "sum"=1)

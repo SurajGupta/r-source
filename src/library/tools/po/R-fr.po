@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-09-19 11:55\n"
-"PO-Revision-Date: 2006-12-05 20:54+0100\n"
+"POT-Creation-Date: 2007-02-24 16:01\n"
+"PO-Revision-Date: 2007-04-13 12:40+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -40,6 +40,9 @@ msgstr "Classes S4 non documentées :"
 msgid "Undocumented S4 methods:"
 msgstr "Méthodes S4 non documentées :"
 
+msgid "Prototyped non-primitives:"
+msgstr "Non-primitives prototypées :"
+
 msgid "Undocumented %s:"
 msgstr "%s non documentés :"
 
@@ -51,6 +54,9 @@ msgstr "le répertoire '%s' ne contient pas de sources Rd"
 
 msgid "Functions/methods with usage in documentation object '%s' but not in code:"
 msgstr "Fonctions/méthodes avec 'usage' dans la documentation de l'objet '%s', mais pas dans le code :"
+
+msgid "Data sets with usage in documentation object '%s' but not in code:"
+msgstr "Jeux de données avec 'usage' dans la documentation de l'objet '%s', mais pas dans le code :"
 
 msgid "Argument names in code not in docs:"
 msgstr "Noms d'arguments dans le code mais pas dans la doc :"
@@ -160,8 +166,8 @@ msgstr "Packages standard requis, mais maintenant obsolètes :"
 msgid "Vignette dependencies not required:"
 msgstr "Dependences de vignette non requises :"
 
-msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests entries."
-msgstr "Les dépendances de vignette (entrée \\VignetteDepends{}) doivent être contenues dans les entrées Depends/Suggests de DESCRIPTION."
+msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries."
+msgstr "Les dépendances de vignette (entrée \\VignetteDepends{}) doivent être contenues dans les entrées Depends/Suggests/Imports de DESCRIPTION."
 
 msgid "Namespace dependencies not required:"
 msgstr "Dépendances d'espaces de noms non requises :"
@@ -323,12 +329,6 @@ msgstr "importations '::' ou ':::' non déclarées depuis :"
 msgid "'library' or 'require' calls not declared from:"
 msgstr "appels 'library' ou 'require' non déclarés depuis :"
 
-msgid "Found possibly global T or F in the following functions:"
-msgstr "Des utilisations globales possibles de T ou F sont trouvées dans les fonctions suivantes :"
-
-msgid "Found possibly global T or F in the following Rd example files:"
-msgstr "Des utilisations globales possibles de T ou F sont trouvées dans les exemples des fichiers Rd suivants :"
-
 msgid "argument 'lines' must be a character vector"
 msgstr "l'argument 'lines' doit être un vecteur de chaînes de caractères"
 
@@ -410,6 +410,13 @@ msgstr ""
 msgid "unable to create temp directory"
 msgstr "impossible de créer le répertoire temporaire"
 
+msgid ""
+"processing vignette '%s' failed with diagnostics:\n"
+"%s"
+msgstr ""
+"le traitement de la vignette '%s' a échoué avec le diagnostic :\n"
+"%s"
+
 msgid "running make failed"
 msgstr "l'exécution de make a échoué"
 
@@ -445,6 +452,9 @@ msgstr "les fichiers dans '%s' sont manquants dans le champ '%s' :"
 
 msgid "unable to create '%s'"
 msgstr "impossible de créer '%s'"
+
+msgid "unable to re-encode '%s'"
+msgstr "impossible de réencoder '%s'"
 
 msgid "unable to copy INDEX to '%s'"
 msgstr "impossible de copier INDEX vers '%s'"
@@ -556,4 +566,19 @@ msgstr "fini"
 
 msgid "parsing '%s'"
 msgstr "analyse de '%s'"
+
+msgid "Warning in file '%s':"
+msgid_plural "Warnings in file '%s':"
+msgstr[0] "Avis dans le fichier '%s' :"
+msgstr[1] "Avis dans le fichier '%s' :"
+
+msgid "Found possibly global 'T' or 'F' in the following function:"
+msgid_plural "Found possibly global 'T' or 'F' in the following functions:"
+msgstr[0] "L'utilisation globale possible de 'T' ou 'F' est trouvée dans la fonction suivante :"
+msgstr[1] "Des utilisations globales possibles de 'T' ou 'F' sont trouvées dans les fonctions suivantes :"
+
+msgid "Found possibly global 'T' or 'F' in the following Rd example file:"
+msgid_plural "Found possibly global 'T' or 'F' in the following Rd example files:"
+msgstr[0] "L'utilisation globale possible de 'T' ou 'F' est trouvées dans l'exemple du fichier Rd suivant :"
+msgstr[1] "Des utilisations globales possibles de 'T' ou 'F' sont trouvées dans les exemples des fichiers Rd suivants :"
 

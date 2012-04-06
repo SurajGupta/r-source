@@ -34,8 +34,8 @@ static void hit_key(window w, int key)
 
 static void apply(button b)
 {
-    v[0] = gettext(var1);
-    v[1] = gettext(var2);
+    v[0] = GA_gettext(var1);
+    v[1] = GA_gettext(var2);
     done = strlen(v[0]) && strlen(v[1]);
     if (!done) askok("all fields must be completed");
 }
@@ -64,8 +64,8 @@ static void create_dialog()
 static void cancel(button b)
 {
     /* need these set to something malloc'ed */
-    v[0] = gettext(var1);
-    v[1] = gettext(var2);
+    v[0] = GA_gettext(var1);
+    v[1] = GA_gettext(var2);
     done = 2;
 }
 
@@ -81,20 +81,21 @@ void menu_ttest(char **vars, int ints[], double level[])
     for(;;) {
 	R_ProcessEvents();
 	if(done > 0) break;
+	Sleep(100);
     }
     vars[0] = v[0]; vars[1] = v[1];
     ints[0] =  getlistitem(alt);
     ints[1] =  ischecked(paired);
     ints[2] =  ischecked(varequal);
     ints[3] = done;
-    level[0] = atof(gettext(lvl));
+    level[0] = atof(GA_gettext(lvl));
     hide(win);
     delobj(bApply);
     delobj(win);
 }
 
 
-extern void Rconsolecmd(window c, char *cmd);
+extern void Rconsolecmd(char *cmd);
 extern __declspec(dllimport) window RConsole;
 
 
@@ -115,14 +116,15 @@ void menu_ttest2()
     for(;;) {
 	R_ProcessEvents();
 	if(done > 0) break;
+	Sleep(100);
     }
     if(done == 1){
 	sprintf(cmd, "t.test(x=%s, y=%s, alternative=\"%s\",\n      paired=%s, var.equal=%s, conf.level=%s)\n", v[0], v[1],
 		alts[getlistitem(alt)],
 		ischecked(paired) ? "TRUE" : "FALSE",
 		ischecked(varequal) ? "TRUE" : "FALSE",
-		gettext(lvl));
-	Rconsolecmd(RConsole, cmd);
+		GA_gettext(lvl));
+	Rconsolecmd(cmd);
     }    
     hide(win);
     delobj(bApply);
@@ -148,13 +150,14 @@ SEXP menu_ttest3()
     for(;;) {
 	R_ProcessEvents();
 	if(done > 0) break;
+	Sleep(100);
     }
     if(done == 1) {
 	sprintf(cmd, "t.test(x=%s, y=%s, alternative=\"%s\",\n      paired=%s, var.equal=%s, conf.level=%s)\n", v[0], v[1],
 		alts[getlistitem(alt)],
 		ischecked(paired) ? "TRUE" : "FALSE",
 		ischecked(varequal) ? "TRUE" : "FALSE",
-		gettext(lvl));
+		GA_gettext(lvl));
     }    
     hide(win);
     delobj(bApply);
@@ -162,7 +165,7 @@ SEXP menu_ttest3()
     if(done == 1) {
 	PROTECT(cmdSexp = allocVector(STRSXP, 1));
 	SET_STRING_ELT(cmdSexp, 0, mkChar(cmd));
-	cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status));
+	cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 	if (status != PARSE_OK) {
 	    UNPROTECT(2);
 	    error("invalid call %s", cmd);

@@ -33,6 +33,7 @@ list("!" = function(e1)
 , ".C" = FALSE
 , ".Call" = FALSE
 , ".Fortran" = FALSE
+# not internally generic
 , ":" = function(e1, e2)
 {
     standardGeneric(":")
@@ -98,17 +99,21 @@ list("!" = function(e1)
 {
     standardGeneric("dimnames<-")
 }
+, "names<-" = function(x, value)
+{
+    standardGeneric("names<-")
+}
 , "expression" = function(x, ...)
 {
     standardGeneric("expression")
 }
-, "is.loaded" = function(symbol)
-{
-    standardGeneric("is.loaded")
-}
 , "length<-" = function(x, value)
 {
     standardGeneric("length<-")
+}
+, "levels<-" = function(x, value)
+{
+    standardGeneric("levels<-")
 }
 , "list" = function(x, ...)
 {
@@ -116,14 +121,18 @@ list("!" = function(e1)
 }
 , "missing" = FALSE
 , "on.exit" = FALSE
+, "rep" = function(x, ...)
+{
+    standardGeneric("rep")
+}
 , "substitute" = FALSE
-, "symbol.C" = FALSE
-, "symbol.For" = FALSE
+# not primitive
 , "trace" = function(what = character(), tracer = TRUE, exit.tracer, at = numeric(), print
 	 = TRUE, signature)
 {
     standardGeneric("trace")
 }
+# not primitive
 , "untrace" = function(what)
 {
     standardGeneric("untrace")
@@ -144,7 +153,7 @@ list("!" = function(e1)
 {
     standardGeneric("as.call")
 }
-, "as.character" = function(x)
+, "as.character" = function(x, ...)
 {
     standardGeneric("as.character")
 }
@@ -176,6 +185,10 @@ list("!" = function(e1)
 {
     standardGeneric("dimnames")
 }
+, "names" = function(x)
+{
+    standardGeneric("names")
+}
 , "invisible" = function(x)
 {
     standardGeneric("invisible")
@@ -184,58 +197,20 @@ list("!" = function(e1)
 {
     standardGeneric("is.array")
 }
-, "is.atomic" = function(x)
-{
-    standardGeneric("is.atomic")
-}
-, "is.call" = function(x)
-{
-    standardGeneric("is.call")
-}
-, "is.character" = function(x)
-{
-    standardGeneric("is.character")
-}
-, "is.complex" = function(x)
-{
-    standardGeneric("is.complex")
-}
-, "is.double" = function(x)
-{
-    standardGeneric("is.double")
-}
-, "is.expression" = function(x)
-{
-    standardGeneric("is.expression")
-}
-, "is.finite" = function(x)
-{
-    standardGeneric("is.finite")
-}
-, "is.function" = function(x)
-{
-    standardGeneric("is.function")
-}
-, "is.infinite" = function(x)
-{
-    standardGeneric("is.infinite")
-}
-, "is.integer" = function(x)
-{
-    standardGeneric("is.integer")
-}
-, "is.language" = function(x)
-{
-    standardGeneric("is.language")
-}
-, "is.list" = function(x)
-{
-    standardGeneric("is.list")
-}
-, "is.logical" = function(x)
-{
-    standardGeneric("is.logical")
-}
+, "is.atomic" = FALSE
+, "is.call" = FALSE
+, "is.character" = FALSE
+, "is.complex" = FALSE
+, "is.double" = FALSE
+, "is.environment" = FALSE
+, "is.expression" = FALSE
+, "is.finite" = FALSE
+, "is.function" = FALSE
+, "is.infinite" = FALSE
+, "is.integer" = FALSE
+, "is.language" = FALSE
+, "is.list" = FALSE
+, "is.logical" = FALSE
 , "is.matrix" = function(x)
 {
     standardGeneric("is.matrix")
@@ -244,10 +219,7 @@ list("!" = function(e1)
 {
     standardGeneric("is.na")
 }
-, "is.name" = function(x)
-{
-    standardGeneric("is.name")
-}
+, "is.name" = FALSE
 , "is.nan" = function(x)
 {
     standardGeneric("is.nan")
@@ -260,14 +232,13 @@ list("!" = function(e1)
 {
     standardGeneric("is.numeric")
 }
-, "is.recursive" = function(x)
-{
-    standardGeneric("is.recursive")
-}
-, "is.single" = function(x)
-{
-    standardGeneric("is.single")
-}
+, "is.object" = FALSE
+, "is.pairlist" = FALSE
+, "is.raw" = FALSE
+, "is.real" = FALSE
+, "is.recursive" = FALSE
+, "is.single" = FALSE
+, "is.symbol" = FALSE
 , "length" = function(x)
 {
     standardGeneric("length")
@@ -288,6 +259,7 @@ list("!" = function(e1)
 , ".Primitive" = FALSE
 , "baseenv" = FALSE
 , "break" = FALSE
+# not internal generic
 , "debug" = function(fun)
 {
     standardGeneric("debug")
@@ -303,38 +275,36 @@ list("!" = function(e1)
 , "globalenv" = FALSE
 , "if" = FALSE
 , "interactive" = FALSE
-, "is.environment" = function(obj)
-{
-    standardGeneric("is.environment")
-}
-, "is.object" = function(x)
-{
-    standardGeneric("is.object")
-}
-, "is.pairlist" = function(x)
-{
-    standardGeneric("is.pairlist")
-}
-, "is.real" = function(x)
-{
-    standardGeneric("is.real")
-}
-, "is.symbol" = function(x)
-{
-    standardGeneric("is.symbol")
-}
 , "nargs" = FALSE
 , "next" = FALSE
 , "pos.to.env" = FALSE
 , "proc.time" = FALSE
 , "repeat" = FALSE
 , "return" = FALSE
+# not internal generic
 , "undebug" = function(fun)
 {
     standardGeneric("undebug")
 }
 , "while" = FALSE
 , "{" = FALSE
+, "=" = FALSE
+, "@" = FALSE
+, ".primTrace" = FALSE
+, ".primUntrace" = FALSE
+, ".subset" = FALSE
+, ".subset2" = FALSE
+, "as.environment" = FALSE
+, "oldClass" = FALSE
+, "oldClass<-" = FALSE
+, "quote" = FALSE
+, "retracemem" = FALSE
+, "seq.int" = FALSE
+, "seq_along" = FALSE
+, "seq_len" = FALSE
+, "standardGeneric" = FALSE
+, "tracemem" = FALSE
+, "untracemem" = FALSE
 )
 
 ## the names of the basic funs with the style of "["
@@ -424,8 +394,82 @@ setGenericForPrimitive <- function(f, value, where = topenv(parent.frame()),
 
 .ExcludePrimitiveGenerics <-
     c(
-      "is.null",
-      "is.primitive",
+      ".C",
+      ".Call",
+      ".Call.graphics",
+      ".External",
+      ".External.graphics",
+      ".Fortran",
+      ".Internal",
+      ".Primitive",
+      ".primTrace",
+      ".primUntrace",
+      ".subset",
+      ".subset2",
+      "UseMethod",
+      "as.call",
+      "as.environment",
+      "attr",
+      "attr<-",
+      "attributes",
+      "attributes<-",
+      "baseenv",
+      "browser",
+      "as.call",
+      "call",
+      "class",
+      "class<-",
+      "debug",
+      "emptyenv",
+      "environment<-",
+      "expression",
+      "gc.time",
+      "globalenv",
+      "interactive",
+      "invisible",
+      "is.atomic",
+      "is.call",
+      "is.character",
+      "is.complex",
+      "is.double",
+      "is.environment",
+      "is.expression",
+      "is.finite",
       "is.function",
-      "is.object"
+      "is.infinite",
+      "is.integer",
+      "is.language",
+      "is.list",
+      "is.logical",
+      "is.name",
+      "is.null",
+      "is.function",
+      "is.object",
+      "is.pairlist",
+      "is.raw",
+      "is.real",
+      "is.recursive",
+      "is.single",
+      "is.symbol",
+      "list",
+      "missing",
+      "nargs",
+      "oldClass",
+      "oldClass",
+      "oldClass<-",
+      "on.exit",
+      "pos.to.env",
+      "proc.time",
+      "quote",
+      "retracemem",
+      "seq.int",
+      "seq_along",
+      "seq_len",
+      "standardGeneric",
+      "storage.mode<-",
+      "substitute",
+      "tracemem",
+      "unclass",
+      "undebug",
+      "untracemem"
       )

@@ -3,7 +3,7 @@
 
 ## ===== configuration macros for building packages or R  ===============
 
-# Alternatives MINGW (mingw), CROSS (Linux) GFORTRAN (experimental gcc 4.2.0)
+# Alternatives MINGW (MinGW gcc3), CROSS (e.g. Linux) GFORTRAN (MinGW gcc4)
 BUILD=MINGW
 
 HELP = YES
@@ -29,7 +29,7 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 # If you want to use AMD's ACML BLAS,
 # set to YES and specify the path to libacml.a 
 USE_ACML=NO
-ACML_PATH=c:/Program Files/AMD/acml3.5.0/gnu32/lib
+ACML_PATH=c:/Program Files/AMD/acml3.6.0/gnu32/lib
 ## Set this to YES if you want to use ACML's LAPACK not R's.
 USE_ACML_LAPACK=NO
 
@@ -80,9 +80,9 @@ BINPREF=i586-mingw32-
 # Set this to where the mingw32 include files are. It must be accurate.
 # It should contain fcntl.h and windows.h
 HEADER=/users/ripley/R/cross-tools5/i586-mingw32/include
-endif
 # path (possibly full path) to same version of R on the host system
-# R_EXE=R
+R_EXE='I failed to read the instructions to set R_EXE in MkRules'
+endif
 
 ## =============== end of user-customizable parts  ===================
 
@@ -99,6 +99,7 @@ endif
 
 DEPARG=-MM
 MINGW32LDFLAG=
+C99FLAG=-std=gnu99
 
 ifeq ($(strip $(BUILD)),MINGW)
 BINPREF=
@@ -114,6 +115,8 @@ MINGW32CFLAG=
 F77=gfortran
 FLIBS=-lgfortran
 AWK=gawk
+## for mingw-runtime <= 3.11
+# C99FLAG=-std=gnu99 -fgnu89-inline
 endif
 
 ifeq ($(strip $(BUILD)),CROSS)
@@ -145,6 +148,7 @@ MKDIR=mkdir
 CAT=cat
 CC=$(BINPREF)gcc $(MINGW32CFLAG)
 CXX=$(BINPREF)g++ $(MINGW32CFLAG)
+OBJC=$(BINPREF)gcc $(MINGW32CFLAG)
 AS=$(BINPREF)as
 DLL_LDMAIN=gcc
 DLL=$(BINPREF)$(DLL_LDMAIN) $(MINGW32LDFLAG)
@@ -158,7 +162,8 @@ NM=$(BINPREF)nm
 CPP=$(CC) -E
 RESCOMP=$(BINPREF)windres
 
-.SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d .f90 .f95
+.SUFFIXES:
+.SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d .f90 .f95 .m .S
 
 .c.d:
 	@echo "making $@ from $<"
@@ -176,6 +181,10 @@ RESCOMP=$(BINPREF)windres
 	@echo "making $@ from $<"
 	@$(CXX) $(DEPARG) $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
 
+.m.d:
+	@echo "making $@ from $<"
+	@$(OBJC) $(DEPARG) $(OBJCFLAGS) $($*-OBJCFLAGS) $< -o $@
+
 .c.o:
 	$(CC) $(CFLAGS) $($*-CFLAGS) -c $< -o $@
 
@@ -191,12 +200,15 @@ RESCOMP=$(BINPREF)windres
 .C.o:
 	$(CXX) $(CXXFLAGS) $($*-CXXFLAGS) -c $< -o $@
 
+.m.o:
+	$(OBJC) $(OBJCFLAGS) $($*-OBJCFLAGS) -c $< -o $@
+
 %.exe:
 	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
 
 %.dll:
 	@$(ECHO) EXPORTS > $*.def
-	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' >> $*.def
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' >> $*.def
 	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
 	@$(RM) $*.def
 
@@ -211,8 +223,13 @@ lib%.dll.a: %.def
 	@$(RM) $@
 	$(AR) crs $@ $^
 
+ifeq ($(strip $(BUILD)),CROSS)
+%.o: %.rc
+	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -I $(HEADER) -i $< -o $@
+else
 %.o: %.rc
 	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -i $< -o $@
+endif
 
 .f90.o:
 	"$(F95)" $(F95FLAGS) -c $< -o $@

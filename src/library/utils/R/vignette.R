@@ -8,7 +8,7 @@ function(topic, package = NULL, lib.loc = NULL)
     ## Find the directories with a 'doc' subdirectory *possibly*
     ## containing vignettes.
 
-    paths <- paths[tools::file_test("-d", file.path(paths, "doc"))]
+    paths <- paths[file_test("-d", file.path(paths, "doc"))]
 
     vignettes <-
         lapply(paths,
@@ -24,7 +24,7 @@ function(topic, package = NULL, lib.loc = NULL)
         if(any(vidx)) {
 
             pdf <- sub("\\.[[:alpha:]]+$", ".pdf", vignettes)
-            pidx <- tools::file_test("-f", pdf)
+            pidx <- file_test("-f", pdf)
             ok <- vidx & pidx
 
             if(any(ok)){
@@ -104,7 +104,8 @@ print.vignette <- function(x, ...){
         if(.Platform$OS.type == "windows")
             shell.exec(x$pdf)
         else
-            system(paste(getOption("pdfviewer"), x$pdf, "&"))
+            system(paste(shQuote(getOption("pdfviewer")), shQuote(x$pdf)),
+                   wait = FALSE)
         ## </FIXME>
     } else {
         warning(gettextf("vignette '%s' has no PDF", x$topic),

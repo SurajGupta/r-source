@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2006  R Development Core Team
+ *  Copyright (C) 1997--2007  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ SEXP attribute_hidden do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 {
-    SEXP class=R_NilValue, dims, tsp=R_NilValue, xnames, ynames;
+    SEXP klass = R_NilValue, dims, tsp=R_NilValue, xnames, ynames;
     int nx, ny, xarray, yarray, xts, yts;
     Rboolean mismatch = FALSE, iS;
     PROTECT_INDEX xpi, ypi;
@@ -65,7 +65,7 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     if (ATTRIB(x) == R_NilValue && ATTRIB(y) == R_NilValue &&
 	TYPEOF(x) == REALSXP && TYPEOF(y) == REALSXP &&
 	LENGTH(x) > 0 && LENGTH(y) > 0) {
-	SEXP ans = real_relop(PRIMVAL(op), x, y);
+	SEXP ans = real_relop((RELOP_TYPE) PRIMVAL(op), x, y);
 	if (nx > 0 && ny > 0)
 	    mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
 	if (mismatch)
@@ -75,11 +75,13 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	return ans;
     }
 
+    /* That symbols and calls were allowwed was undocumented prior to
+       R 2.5.0.  We deparse them as deparse() would, minus attributes */
     if ((iS = isSymbol(x)) || TYPEOF(x) == LANGSXP) {
 	SEXP tmp = allocVector(STRSXP, 1);
 	PROTECT(tmp);
 	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(x) :
-		       STRING_ELT(deparse1(x, 0, SIMPLEDEPARSE), 0));
+		       STRING_ELT(deparse1(x, 0, DEFAULTDEPARSE), 0));
 	REPROTECT(x = tmp, xpi);
 	UNPROTECT(1);
     }
@@ -87,7 +89,7 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	SEXP tmp = allocVector(STRSXP, 1);
 	PROTECT(tmp);
 	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(y) :
-		       STRING_ELT(deparse1(y, 0, SIMPLEDEPARSE), 0));
+		       STRING_ELT(deparse1(y, 0, DEFAULTDEPARSE), 0));
 	REPROTECT(y = tmp, ypi);
 	UNPROTECT(1);
     }
@@ -145,19 +147,19 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	    if (!tsConform(x, y))
 		errorcall(call, _("non-conformable time series"));
 	    PROTECT(tsp = getAttrib(x, R_TspSymbol));
-	    PROTECT(class = getAttrib(x, R_ClassSymbol));
+	    PROTECT(klass = getAttrib(x, R_ClassSymbol));
 	}
 	else if (xts) {
 	    if (length(x) < length(y))
 		ErrorMessage(call, ERROR_TSVEC_MISMATCH);
 	    PROTECT(tsp = getAttrib(x, R_TspSymbol));
-	    PROTECT(class = getAttrib(x, R_ClassSymbol));
+	    PROTECT(klass = getAttrib(x, R_ClassSymbol));
 	}
 	else /*(yts)*/ {
 	    if (length(y) < length(x))
 		ErrorMessage(call, ERROR_TSVEC_MISMATCH);
 	    PROTECT(tsp = getAttrib(y, R_TspSymbol));
-	    PROTECT(class = getAttrib(y, R_ClassSymbol));
+	    PROTECT(klass = getAttrib(y, R_ClassSymbol));
 	}
     }
     if (mismatch)
@@ -166,32 +168,32 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     if (isString(x) || isString(y)) {
 	REPROTECT(x = coerceVector(x, STRSXP), xpi);
 	REPROTECT(y = coerceVector(y, STRSXP), ypi);
-	x = string_relop(PRIMVAL(op), x, y);
+	x = string_relop((RELOP_TYPE) PRIMVAL(op), x, y);
     }
     else if (isComplex(x) || isComplex(y)) {
 	REPROTECT(x = coerceVector(x, CPLXSXP), xpi);
 	REPROTECT(y = coerceVector(y, CPLXSXP), ypi);
-	x = complex_relop(PRIMVAL(op), x, y, call);
+	x = complex_relop((RELOP_TYPE) PRIMVAL(op), x, y, call);
     }
     else if (isReal(x) || isReal(y)) {
 	REPROTECT(x = coerceVector(x, REALSXP), xpi);
 	REPROTECT(y = coerceVector(y, REALSXP), ypi);
-	x = real_relop(PRIMVAL(op), x, y);
+	x = real_relop((RELOP_TYPE) PRIMVAL(op), x, y);
     }
     else if (isInteger(x) || isInteger(y)) {
 	REPROTECT(x = coerceVector(x, INTSXP), xpi);
 	REPROTECT(y = coerceVector(y, INTSXP), ypi);
-	x = integer_relop(PRIMVAL(op), x, y);
+	x = integer_relop((RELOP_TYPE) PRIMVAL(op), x, y);
     }
     else if (isLogical(x) || isLogical(y)) {
 	REPROTECT(x = coerceVector(x, LGLSXP), xpi);
 	REPROTECT(y = coerceVector(y, LGLSXP), ypi);
-	x = integer_relop(PRIMVAL(op), x, y);
+	x = integer_relop((RELOP_TYPE) PRIMVAL(op), x, y);
     }
     else if (TYPEOF(x) == RAWSXP || TYPEOF(y) == RAWSXP) {
 	REPROTECT(x = coerceVector(x, RAWSXP), xpi);
 	REPROTECT(y = coerceVector(y, RAWSXP), ypi);
-	x = raw_relop(PRIMVAL(op), x, y);
+	x = raw_relop((RELOP_TYPE) PRIMVAL(op), x, y);
     } else errorcall(call, _("comparison of these types is not implemented"));
 
 
@@ -211,7 +213,7 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     }
     if (xts || yts) {
 	setAttrib(x, R_TspSymbol, tsp);
-	setAttrib(x, R_ClassSymbol, class);
+	setAttrib(x, R_ClassSymbol, klass);
 	UNPROTECT(2);
     }
 
@@ -468,8 +470,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (strcmp(CHAR(STRING_ELT(s1, i % n1)),
-		       CHAR(STRING_ELT(s2, i % n2))) == 0)
+	    if (strcmp(translateChar(STRING_ELT(s1, i % n1)),
+		       translateChar(STRING_ELT(s2, i % n2))) == 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
@@ -481,8 +483,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (streql(CHAR(STRING_ELT(s1, i % n1)),
-		       CHAR(STRING_ELT(s2, i % n2))) != 0)
+	    if (streql(translateChar(STRING_ELT(s1, i % n1)),
+		       translateChar(STRING_ELT(s2, i % n2))) != 0)
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -495,8 +497,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else {
 		errno = 0;
-		res = STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
-			      CHAR(STRING_ELT(s2, i % n2)));
+		res = STRCOLL(translateChar(STRING_ELT(s1, i % n1)),
+			      translateChar(STRING_ELT(s2, i % n2)));
 		if(errno)  
 		    LOGICAL(ans)[i] = NA_LOGICAL;
 		else
@@ -511,8 +513,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else {
 		errno = 0;
-		res = STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
-			      CHAR(STRING_ELT(s2, i % n2)));
+		res = STRCOLL(translateChar(STRING_ELT(s1, i % n1)),
+			      translateChar(STRING_ELT(s2, i % n2)));
 		if(errno)  
 		    LOGICAL(ans)[i] = NA_LOGICAL;
 		else
@@ -527,8 +529,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else {
 		errno = 0;
-		res = STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
-			      CHAR(STRING_ELT(s2, i % n2)));
+		res = STRCOLL(translateChar(STRING_ELT(s1, i % n1)),
+			      translateChar(STRING_ELT(s2, i % n2)));
 		if(errno)  
 		    LOGICAL(ans)[i] = NA_LOGICAL;
 		else
@@ -543,8 +545,8 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = NA_LOGICAL;
   	    else {
 		errno = 0;
-		res = STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
-			      CHAR(STRING_ELT(s2, i % n2)));
+		res = STRCOLL(translateChar(STRING_ELT(s1, i % n1)),
+			      translateChar(STRING_ELT(s2, i % n2)));
 		if(errno)  
 		    LOGICAL(ans)[i] = NA_LOGICAL;
 		else

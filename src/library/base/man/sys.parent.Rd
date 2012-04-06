@@ -58,7 +58,7 @@ parent.frame(n = 1)
   as described in the first paragraph.
 
   \code{sys.calls} and \code{sys.frames} give a pairlist of all the
-  active calls and frames, repectively, and \code{sys.parents} returns
+  active calls and frames, respectively, and \code{sys.parents} returns
   an integer vector of indices of the parent frames of each of those
   frames.
 
@@ -81,8 +81,8 @@ parent.frame(n = 1)
 }
 \value{
   \code{sys.call} returns a call, \code{sys.function} a function
-  definition, and \code{sys.frame}, \code{sys.parent} and
-  \code{parent.frame} return an environment.
+  definition, and \code{sys.frame} and \code{parent.frame} return an
+  environment.
 
   For the other functions, see the Details section.
 }

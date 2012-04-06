@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2001-6 The R Development Core Team
+ *  Copyright (C) 1998, 2001-7 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #endif
 
 #include <Defn.h>
+#include <Rinterface.h>
 #include <Fileio.h>
 #include <R_ext/Applic.h>		/* machar */
 
@@ -240,16 +241,17 @@ SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
     h = (char**)R_alloc(n, sizeof(char*));
     for (i = 0; i < n; i++) {
 	if (!isNull(STRING_ELT(fn, i)))
-	    f[i] = CHAR(STRING_ELT(fn, i));
+	    /* Do better later for file names? */
+	    f[i] = translateChar(STRING_ELT(fn, i));
 	else
 	    f[i] = CHAR(R_BlankString);
 	if (!isNull(STRING_ELT(hd, i)))
-	    h[i] = CHAR(STRING_ELT(hd, i));
+	    h[i] = translateChar(STRING_ELT(hd, i));
 	else
 	    h[i] = CHAR(R_BlankString);
     }
     if (length(tl) >= 1 || !isNull(STRING_ELT(tl, 0)))
-	t = CHAR(STRING_ELT(tl, 0));
+	t = translateChar(STRING_ELT(tl, 0));
     else
 	t = CHAR(R_BlankString);
     if (length(pg) >= 1 || !isNull(STRING_ELT(pg, 0)))
@@ -292,11 +294,12 @@ SEXP attribute_hidden do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	title = (char**) R_alloc(n, sizeof(char*));
 	for (i = 0; i < n; i++) {
 	    if (!isNull(STRING_ELT(fn, i)))
-		f[i] = CHAR(STRING_ELT(fn, i));
+		/* Do better later for file names? */
+		f[i] = translateChar(STRING_ELT(fn, i));
 	    else
 		f[i] = CHAR(R_BlankString);
 	    if (!isNull(STRING_ELT(ti, i)))
-	    	title[i] = CHAR(STRING_ELT(ti, i));
+	    	title[i] = translateChar(STRING_ELT(ti, i));
 	    else
 	    	title[i] = CHAR(R_BlankString);
 	}
@@ -309,7 +312,8 @@ SEXP attribute_hidden do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	title[0] = CHAR(R_BlankString);
     }
     if (length(ed) >= 1 || !isNull(STRING_ELT(ed, 0)))
-	editor = CHAR(STRING_ELT(ed, 0));
+	/* Do better later for file names? */
+	editor = translateChar(STRING_ELT(ed, 0));
     else
 	editor = CHAR(R_BlankString);
     R_EditFiles(n, f, title, editor);
@@ -332,15 +336,15 @@ SEXP attribute_hidden do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
 # define APPENDBUFSIZE 512
 #endif
 
-static int R_AppendFile(char *file1, char *file2)
+static int R_AppendFile(SEXP file1, SEXP file2)
 {
     FILE *fp1, *fp2;
     char buf[APPENDBUFSIZE];
     int nchar, status = 0;
-    if((fp1 = R_fopen(R_ExpandFileName(file1), "ab")) == NULL) {
+    if((fp1 = RC_fopen(file1, "ab", TRUE)) == NULL) {
         return 0;
     }
-    if((fp2 = R_fopen(R_ExpandFileName(file2), "rb")) == NULL) {
+    if((fp2 = RC_fopen(file2, "rb", TRUE)) == NULL) {
         fclose(fp1);
         return 0;
     }
@@ -383,12 +387,11 @@ SEXP attribute_hidden do_fileappend(SEXP call, SEXP op, SEXP args, SEXP rho)
 	FILE *fp1, *fp2;
 	char buf[APPENDBUFSIZE];
 	int nchar, status = 0;
-	if(!(fp1 = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(f1, 0))), "ab")))
+	if(!(fp1 = RC_fopen(STRING_ELT(f1, 0), "ab", TRUE)))
 	   goto done;
 	for(i = 0; i < n; i++) {
 	    status = 0;
-	    if(!(fp2 = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(f2, i))),
-			       "rb"))) continue;
+	    if(!(fp2 = RC_fopen(STRING_ELT(f2, i), "rb", TRUE))) continue;
 	    while((nchar = fread(buf, 1, APPENDBUFSIZE, fp2)) == APPENDBUFSIZE)
 		if(fwrite(buf, 1, APPENDBUFSIZE, fp1) != APPENDBUFSIZE)
 		    goto append_error;
@@ -412,8 +415,7 @@ SEXP attribute_hidden do_fileappend(SEXP call, SEXP op, SEXP args, SEXP rho)
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] =
-		    R_AppendFile(CHAR(STRING_ELT(f1, i%n1)),
-				 CHAR(STRING_ELT(f2, i%n2)));
+		    R_AppendFile(STRING_ELT(f1, i%n1), STRING_ELT(f2, i%n2));
 	}
     }
 done:
@@ -435,7 +437,7 @@ SEXP attribute_hidden do_filecreate(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n; i++) {
 	LOGICAL(ans)[i] = 0;
 	if (STRING_ELT(fn, i) != R_NilValue &&
-	    (fp = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(fn, i))), "w"))
+	    (fp = RC_fopen(STRING_ELT(fn, i), "w", TRUE))
 	    != NULL) {
 	    LOGICAL(ans)[i] = 1;
 	    fclose(fp);
@@ -458,7 +460,7 @@ SEXP attribute_hidden do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n; i++) {
 	if (STRING_ELT(f, i) != R_NilValue)
 	    LOGICAL(ans)[i] =
-		(remove(R_ExpandFileName(CHAR(STRING_ELT(f, i)))) == 0);
+		(remove(R_ExpandFileName(translateChar(STRING_ELT(f, i)))) == 0);
     }
     UNPROTECT(1);
     return ans;
@@ -495,13 +497,13 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
         if (STRING_ELT(f1, i%n1) == R_NilValue || STRING_ELT(f2, i%n2) == R_NilValue)
             LOGICAL(ans)[i] = 0;
         else {
-	    p = R_ExpandFileName(CHAR(STRING_ELT(f1, i%n1)));
+	    p = R_ExpandFileName(translateChar(STRING_ELT(f1, i%n1)));
 	    if (strlen(p) >= PATH_MAX - 1) {
 		LOGICAL(ans)[i] = 0;
 		continue;
 	    }
 	    strcpy(from, p);
-	    p = R_ExpandFileName(CHAR(STRING_ELT(f2, i%n2)));
+	    p = R_ExpandFileName(translateChar(STRING_ELT(f2, i%n2)));
 	    if (strlen(p) >= PATH_MAX - 1) {
 		LOGICAL(ans)[i] = 0;
 		continue;
@@ -530,14 +532,14 @@ SEXP attribute_hidden do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
 	error(_("'source' must be a single string"));
-    p = R_ExpandFileName(CHAR(STRING_ELT(CAR(args), 0)));
+    p = R_ExpandFileName(translateChar(STRING_ELT(CAR(args), 0)));
     if (strlen(p) >= PATH_MAX - 1)
 	error(_("expanded source name too long"));
     strncpy(from, p, PATH_MAX - 1);
 
     if (TYPEOF(CADR(args)) != STRSXP || LENGTH(CADR(args)) != 1)
 	error(_("'destination' must be a single string"));
-    p = R_ExpandFileName(CHAR(STRING_ELT(CADR(args), 0)));
+    p = R_ExpandFileName(translateChar(STRING_ELT(CADR(args), 0)));
     if (strlen(p) >= PATH_MAX - 1)
 	error(_("expanded destination name too long"));
     strncpy(to, p, PATH_MAX - 1);
@@ -617,9 +619,9 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n; i++) {
 	if (STRING_ELT(fn, i) != R_NilValue &&
 #ifdef Win32
-	    _stati64(R_ExpandFileName(CHAR(STRING_ELT(fn, i))), &sb)
+	    _stati64(R_ExpandFileName(translateChar(STRING_ELT(fn, i))), &sb)
 #else
-	    stat(R_ExpandFileName(CHAR(STRING_ELT(fn, i))), &sb)
+	    stat(R_ExpandFileName(translateChar(STRING_ELT(fn, i))), &sb)
 #endif
 	    == 0) {
 	    REAL(fsize)[i] = (double) sb.st_size;
@@ -825,17 +827,17 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 #endif
     ndir = length(d);
-    if (pattern && regcomp(&reg, CHAR(STRING_ELT(p, 0)), REG_EXTENDED))
+    if (pattern && regcomp(&reg, translateChar(STRING_ELT(p, 0)), REG_EXTENDED))
         errorcall(call, _("invalid 'pattern' regular expression"));
     count = 0;
     for (i = 0; i < ndir ; i++) {
-	dnp = R_ExpandFileName(CHAR(STRING_ELT(d, i)));
+	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
 	count_files(dnp, &count, allfiles, recursive, pattern, reg);
     }
     PROTECT(ans = allocVector(STRSXP, count));
     count = 0;
     for (i = 0; i < ndir ; i++) {
-	dnp = R_ExpandFileName(CHAR(STRING_ELT(d, i)));
+	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
 	if (fullnames)
 	    list_files(dnp, dnp, &count, ans, allfiles, recursive,
 		       pattern, reg);
@@ -871,7 +873,7 @@ SEXP attribute_hidden do_fileexists(SEXP call, SEXP op, SEXP args, SEXP rho)
     for(i = 0; i < nfile; i++) {
 	LOGICAL(ans)[i] = 0;
         if (STRING_ELT(file, i) != R_NilValue)
-	    LOGICAL(ans)[i] = R_FileExists(CHAR(STRING_ELT(file, i)));
+	    LOGICAL(ans)[i] = R_FileExists(translateChar(STRING_ELT(file, i)));
     }
     return ans;
 }
@@ -916,12 +918,12 @@ SEXP attribute_hidden do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isString(type) || length(type) < 1 || isNull(type))
 	error(_("invalid '%s' argument"), "type");
     strcpy(ctype, CHAR(STRING_ELT(type, 0)));
-    snprintf(topicbuf, 256, "%s\t", CHAR(STRING_ELT(topic, 0)));
+    snprintf(topicbuf, 256, "%s\t", translateChar(STRING_ELT(topic, 0)));
     ltopicbuf = strlen(topicbuf);
     npath = length(path);
     for (i = 0; i < npath; i++) {
 	snprintf(linebuf, 256, "%s%s%s%s%s",
-		CHAR(STRING_ELT(path, i)),
+		translateChar(STRING_ELT(path, i)),
 		CHAR(STRING_ELT(sep, 0)),
 		"help", CHAR(STRING_ELT(sep, 0)),
 		CHAR(STRING_ELT(indexname, 0)));
@@ -933,25 +935,25 @@ SEXP attribute_hidden do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    fclose(fp);
 		    if (!strcmp(ctype, "html"))
 			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				CHAR(STRING_ELT(path, i)),
+				translateChar(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"html", CHAR(STRING_ELT(sep, 0)),
 				p, ".html");
 		    else if (!strcmp(ctype, "R-ex"))
 			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				CHAR(STRING_ELT(path, i)),
+				translateChar(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"R-ex", CHAR(STRING_ELT(sep, 0)),
 				p, ".R");
 		    else if (!strcmp(ctype, "latex"))
 			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				CHAR(STRING_ELT(path, i)),
+				translateChar(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				"latex", CHAR(STRING_ELT(sep, 0)),
 				p, ".tex");
 		    else /* type = "help" */
 			snprintf(topicbuf, 256, "%s%s%s%s%s",
-				CHAR(STRING_ELT(path, i)),
+				translateChar(STRING_ELT(path, i)),
 				CHAR(STRING_ELT(sep, 0)),
 				ctype, CHAR(STRING_ELT(sep, 0)), p);
 		    return mkString(topicbuf);
@@ -967,11 +969,11 @@ SEXP attribute_hidden do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int new, len;
+    int _new, len;
     char buf[CHOOSEBUFSIZE];
     checkArity(op, args);
-    new = asLogical(CAR(args));
-    if ((len = R_ChooseFile(new, buf, CHOOSEBUFSIZE)) == 0)
+    _new = asLogical(CAR(args));
+    if ((len = R_ChooseFile(_new, buf, CHOOSEBUFSIZE)) == 0)
 	error(_("file choice cancelled"));
     if (len >= CHOOSEBUFSIZE - 1)
 	errorcall(call, _("file name too long"));
@@ -998,12 +1000,16 @@ SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
     mode = asInteger(CADR(args));
     if(mode < 0 || mode > 7) error(_("invalid '%s' value"), "mode");
     modemask = 0;
+    /* Versions for Windows prior to Vista ignored X_OK, but it has
+       been changed to be an error to set it. */
+#ifndef Win32
     if (mode & 1) modemask |= X_OK;
+#endif
     if (mode & 2) modemask |= W_OK;
     if (mode & 4) modemask |= R_OK;
     PROTECT(ans = allocVector(INTSXP, n));
     for (i = 0; i < n; i++)
-	INTEGER(ans)[i] = access(R_ExpandFileName(CHAR(STRING_ELT(fn, i))),
+	INTEGER(ans)[i] = access(R_ExpandFileName(translateChar(STRING_ELT(fn, i))),
 				 modemask);
     UNPROTECT(1);
     return ans;
@@ -1063,6 +1069,7 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
+/* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 #ifdef HAVE_LOCALE_H
@@ -1148,20 +1155,25 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(p) SET_STRING_ELT(ans, 0, mkChar(p));
     else  {
 	SET_STRING_ELT(ans, 0, mkChar(""));
-	warningcall(call, _("OS reports request cannot be honored"));
+	warning(_("OS reports request to set locale to \"%s\" cannot be honored"),
+		CHAR(STRING_ELT(locale, 0)));
     }
     UNPROTECT(1);
 #ifdef HAVE_LANGINFO_CODESET
-    utf8locale = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+    p = nl_langinfo(CODESET);
+    known_to_be_utf8 = utf8locale = streql(p, "UTF-8") ? TRUE : FALSE;
+    known_to_be_latin1 = latin1locale = streql(p, "ISO-8859-1") ? TRUE : FALSE;
 #endif
 #ifdef SUPPORT_MBCS
     mbcslocale = MB_CUR_MAX > 1;
 #endif
 #ifdef Win32
     {
-	char *ctype = setlocale(LC_CTYPE, NULL), *p;
+	char *ctype = setlocale(LC_CTYPE, NULL);
 	p = strrchr(ctype, '.');
 	if(p && isdigit(p[1])) localeCP = atoi(p+1); else localeCP = 1252;
+	/* Not 100% correct */
+	known_to_be_latin1 = latin1locale = (localeCP == 1252);
     }
 #endif
 #if defined(Win32) && defined(SUPPORT_UTF8)
@@ -1249,9 +1261,11 @@ SEXP attribute_hidden do_pathexpand(SEXP call, SEXP op, SEXP args, SEXP rho)
         errorcall(call, _("invalid '%s' argument"), "path");
     n = length(fn);
     PROTECT(ans = allocVector(STRSXP, n));
-    for (i = 0; i < n; i++)
-	SET_STRING_ELT(ans, i,
-		       mkChar(R_ExpandFileName(CHAR(STRING_ELT(fn, i)))));
+    for (i = 0; i < n; i++) {
+	SEXP tmp = mkChar(R_ExpandFileName(translateChar(STRING_ELT(fn, i))));
+	markKnown(tmp, STRING_ELT(fn, i));
+	SET_STRING_ELT(ans, i, tmp);
+    }
     UNPROTECT(1);
     return ans;
 }
@@ -1314,8 +1328,8 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 	        break;
 	    }
 #endif
-    PROTECT(ans = allocVector(LGLSXP, 11));
-    PROTECT(ansnames = allocVector(STRSXP, 11));
+    PROTECT(ans = allocVector(LGLSXP, 12));
+    PROTECT(ansnames = allocVector(STRSXP, 12));
 
     SET_STRING_ELT(ansnames, i, mkChar("jpeg"));
 #ifdef HAVE_JPEG
@@ -1419,6 +1433,13 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
     LOGICAL(ans)[i++] = FALSE;
 #endif
 
+    SET_STRING_ELT(ansnames, i, mkChar("profmem"));
+#ifdef R_MEMORY_PROFILING
+    LOGICAL(ans)[i++] = TRUE;
+#else
+    LOGICAL(ans)[i++] = FALSE;
+#endif
+
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
     return ans;
@@ -1439,7 +1460,7 @@ SEXP attribute_hidden do_nsl(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if(!isString(CAR(args)) || length(CAR(args)) != 1)
 	error(_("'hostname' must be a character vector of length 1"));
-    name = CHAR(STRING_ELT(CAR(args), 0));
+    name = translateChar(STRING_ELT(CAR(args), 0));
 
     hp = gethostbyname(name);
 
@@ -1494,7 +1515,7 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
     if(show == NA_LOGICAL) show = 0;
     recursive = asLogical(CADDR(args));
     if(recursive == NA_LOGICAL) recursive = 0;
-    strcpy(dir, R_ExpandFileName(CHAR(STRING_ELT(path, 0))));
+    strcpy(dir, R_ExpandFileName(translateChar(STRING_ELT(path, 0))));
     /* remove trailing slashes */
     p = dir + strlen(dir) - 1;
     while(*p == '/' && strlen(dir) > 1) *p-- = '\0';
@@ -1532,7 +1553,7 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
     if(show == NA_LOGICAL) show = 0;
     recursive = asLogical(CADDR(args));
     if(recursive == NA_LOGICAL) recursive = 0;
-    strcpy(dir, R_ExpandFileName(CHAR(STRING_ELT(path, 0))));
+    strcpy(dir, R_ExpandFileName(translateChar(STRING_ELT(path, 0))));
     /* need DOS paths on Win 9x */
     R_fixbackslash(dir);
     /* remove trailing slashes */
@@ -1562,16 +1583,16 @@ end:
 
 SEXP attribute_hidden do_l10n_info(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP  ans, names, s;
+    SEXP  ans, names;
     checkArity(op, args);
-    PROTECT(ans = allocVector(VECSXP, 2));
-    PROTECT(names = allocVector(STRSXP, 2));
+    PROTECT(ans = allocVector(VECSXP, 3));
+    PROTECT(names = allocVector(STRSXP, 3));
     SET_STRING_ELT(names, 0, mkChar("MBCS"));
     SET_STRING_ELT(names, 1, mkChar("UTF-8"));
-    SET_VECTOR_ELT(ans, 0, s = allocVector(LGLSXP, 1));
-    LOGICAL(s)[0] = mbcslocale;
-    SET_VECTOR_ELT(ans, 1, s = allocVector(LGLSXP, 1));
-    LOGICAL(s)[0] = utf8locale;
+    SET_STRING_ELT(names, 2, mkChar("Latin-1"));
+    SET_VECTOR_ELT(ans, 0, ScalarLogical(mbcslocale));
+    SET_VECTOR_ELT(ans, 1, ScalarLogical(utf8locale));
+    SET_VECTOR_ELT(ans, 2, ScalarLogical(latin1locale));
     setAttrib(ans, R_NamesSymbol, names);
     UNPROTECT(2);
     return ans;
@@ -1595,7 +1616,7 @@ SEXP attribute_hidden do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, "'path' must be a character vector");
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
-	path = CHAR(STRING_ELT(paths, i));
+	path = translateChar(STRING_ELT(paths, i));
 	OK = strlen(path) <= PATH_MAX;
 	if(OK) {
 	    if(path[0] == '/') strncpy(abspath, path, PATH_MAX);

@@ -69,6 +69,9 @@ static Rboolean url_open(Rconnection con)
     }
 
     switch(type) {
+#ifdef USE_WININET
+    case HTTPSsh:
+#endif
     case HTTPsh:
 	ctxt = in_R_HTTPOpen(url, NULL, 0);
 	if(ctxt == NULL) {
@@ -90,7 +93,7 @@ static Rboolean url_open(Rconnection con)
 	((Rurlconn)(con->private))->ctxt = ctxt;
 	break;
     default:
-	warning(_("unknown URL scheme"));
+	warning(_("unsupported URL scheme"));
 	return FALSE;
     }
 
@@ -108,6 +111,7 @@ static void url_close(Rconnection con)
 {
     UrlScheme type = ((Rurlconn)(con->private))->type;
     switch(type) {
+    case HTTPSsh:
     case HTTPsh:
 	in_R_HTTPClose(((Rurlconn)(con->private))->ctxt);
 	break;
@@ -126,6 +130,7 @@ static int url_fgetc_internal(Rconnection con)
     size_t n = 0; /* -Wall */
 
     switch(type) {
+    case HTTPSsh:
     case HTTPsh:
 	n = in_R_HTTPRead(ctxt, (char *)&c, 1);
 	break;
@@ -144,6 +149,7 @@ static size_t url_read(void *ptr, size_t size, size_t nitems,
     size_t n = 0; /* -Wall */
 
     switch(type) {
+    case HTTPSsh:
     case HTTPsh:
 	n = in_R_HTTPRead(ctxt, ptr, size*nitems);
 	break;
@@ -155,13 +161,13 @@ static size_t url_read(void *ptr, size_t size, size_t nitems,
 }
 
 
-static Rconnection in_R_newurl(char *description, char *mode)
+static Rconnection in_R_newurl(char *description, const char * const mode)
 {
     Rconnection new;
 
     new = (Rconnection) malloc(sizeof(struct Rconn));
     if(!new) error(_("allocation of url connection failed"));
-    new->class = (char *) malloc(strlen("file") + 1);
+    new->class = (char *) malloc(strlen("url") + 1);
     if(!new->class) {
 	free(new);
 	error(_("allocation of url connection failed"));
@@ -261,7 +267,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' argument"), "destfile");
     if(length(sfile) > 1)
 	warning(_("only first element of 'destfile' argument used"));
-    file = CHAR(STRING_ELT(sfile, 0));
+    file = translateChar(STRING_ELT(sfile, 0));
     IDquiet = quiet = asLogical(CAR(args)); args = CDR(args);
     if(quiet == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "quiet");
@@ -281,7 +287,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(1);
     if(TYPEOF(sheaders) == NILSXP)
         headers = NULL;
-    else 
+    else
         headers = CHAR(STRING_ELT(sheaders, 0));
 #ifdef Win32
     if (!pbar.wprog) {
@@ -289,7 +295,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 		      Titlebar | Centered);
 	setbackground(pbar.wprog, dialog_bg());
 	pbar.l_url = newlabel(" ", rect(10, 15, 520, 25), AlignCenter);
-	pbar.pb = newprogressbar(rect(20, 50, 500, 20), 0, 1024, 1024, 1);	    	
+	pbar.pb = newprogressbar(rect(20, 50, 500, 20), 0, 1024, 1024, 1);
     }
 #endif
     if(strncmp(url, "file://", 7) == 0) {
@@ -298,7 +304,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	size_t n;
 	int nh = 7;
 #ifdef Win32
-	/* on Windows we have file:///d:/path/to 
+	/* on Windows we have file:///d:/path/to
 	   whereas on Unix it is file:///path/to */
 	if (strlen(url) > 9 && url[7] == '/' && url[9] == ':') nh = 8;
 #endif
@@ -315,7 +321,11 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	fclose(out); fclose(in);
 
 #ifdef HAVE_INTERNET
-    } else if (strncmp(url, "http://", 7) == 0) {
+    } else if (strncmp(url, "http://", 7) == 0
+#ifdef USE_WININET
+	       || strncmp(url, "https://", 8) == 0
+#endif
+	) {
 
 	FILE *out;
 	void *ctxt;
@@ -385,7 +395,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
 	    R_FlushConsole();
 	    endcontext(&(pbar.cntxt));
-	    doneprogressbar(&pbar);	    
+	    doneprogressbar(&pbar);
 #endif
 	    if (total > 0 && total != nbytes)
 		warning(_("downloaded length %d != reported length %d"),
@@ -434,7 +444,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 			 R_NilValue, R_NilValue, R_NilValue);
 	    pbar.cntxt.cend = &doneprogressbar;
 	    pbar.cntxt.cenddata = &pbar;
-	    
+
 #endif
 	    while ((len = in_R_FTPRead(ctxt, buf, sizeof(buf))) > 0) {
 		size_t res = fwrite(buf, 1, len, out);
@@ -467,7 +477,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
 	    R_FlushConsole();
 	    endcontext(&(pbar.cntxt));
-	    doneprogressbar(&pbar);	    
+	    doneprogressbar(&pbar);
 #endif
 	    if (total > 0 && total != nbytes)
 		warning(_("downloaded length %d != reported length %d"),
@@ -619,7 +629,7 @@ InternetCallback(HINTERNET hInternet, DWORD context, DWORD Status,
 }
 #endif /* USE_WININET_ASYNC */
 
-static void *in_R_HTTPOpen(const char *url, const char *headers, 
+static void *in_R_HTTPOpen(const char *url, const char *headers,
                            const int cacheOK)
 {
     WIctxt  wictxt;
@@ -707,7 +717,7 @@ static void *in_R_HTTPOpen(const char *url, const char *headers,
 	    warning(_("InternetOpenUrl failed: '%s'"), buf);
 	    return NULL;
 	} else {
-	    FormatMessage( 
+	    FormatMessage(
 		FORMAT_MESSAGE_FROM_HMODULE,
 		GetModuleHandle("wininet.dll"),
 		err1,
@@ -858,7 +868,7 @@ static void *in_R_FTPOpen(const char *url)
 	    warning(_("InternetOpenUrl failed: '%s'"), buf);
 	    return NULL;
 	} else {
-	    FormatMessage( 
+	    FormatMessage(
 		FORMAT_MESSAGE_FROM_HMODULE,
 		GetModuleHandle("wininet.dll"),
 		err1,
@@ -885,7 +895,7 @@ static void in_R_FTPClose(void *ctx)
 #endif
 
 #ifndef HAVE_INTERNET
-static void *in_R_HTTPOpen(const char *url, const char *headers, 
+static void *in_R_HTTPOpen(const char *url, const char *headers,
                            const int cacheOK)
 {
     return NULL;
@@ -925,7 +935,7 @@ void RxmlMessage(int level, const char *format, ...)
 
     clevel = asInteger(GetOption(install("internet.info"), R_BaseEnv));
     if(clevel == NA_INTEGER) clevel = 2;
-    
+
     if(level < clevel) return;
 
     va_start(ap, format);
@@ -939,7 +949,7 @@ void RxmlMessage(int level, const char *format, ...)
 
 #include "sock.h"
 #define STRICT_R_HEADERS
-#include <R_ext/RS.h> /* for Calloc */
+#include <R_ext/RS.h> /* for R_Calloc */
 
 void
 #ifdef HAVE_VISIBILITY_ATTRIBUTE

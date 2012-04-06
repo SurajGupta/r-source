@@ -22,6 +22,8 @@
    found as Rrowsum_matrix and Rrowsum_df in src/main/unique.c.  This
    old code is preserved in case it is needed by C/Fortran programs */
 
+/* However, it is still used by Hmisc as an entry point in PACKAGE=base */ 
+
 /*
 **  SCCS @(#)rowsum.c	4.2 06/30/93
 **

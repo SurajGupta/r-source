@@ -1189,6 +1189,7 @@ static encodinglist loadedEncodings = NULL;
  */
 static cidfontlist PDFloadedCIDFonts = NULL;
 static type1fontlist PDFloadedFonts = NULL;
+static encodinglist PDFloadedEncodings = NULL;
 
 /*
  * Names of R level font databases
@@ -1252,9 +1253,10 @@ void freeType1Fonts()
  * Given a path to an encoding file,
  * find an EncodingInfo that corresponds
  */
-static encodinginfo findEncoding(char *encpath, encodinglist deviceEncodings)
+static encodinginfo 
+findEncoding(char *encpath, encodinglist deviceEncodings, Rboolean isPDF)
 {
-    encodinglist enclist = loadedEncodings;
+    encodinglist enclist = isPDF ? PDFloadedEncodings : loadedEncodings;
     encodinginfo encoding = NULL;
     int found = 0;
     /*
@@ -1329,12 +1331,14 @@ static encodinginfo addEncoding(char* encpath,
 		freeEncoding(encoding);
 		encoding = NULL;
 	    } else {
-		encodinglist enclist = loadedEncodings;
+		encodinglist enclist = 
+		    isPDF ? PDFloadedEncodings : loadedEncodings;
 		safestrcpy(encoding->encpath, encpath, PATH_MAX);
 		newenc->encoding = encoding;
-		if (!enclist)
-		    loadedEncodings = newenc;
-		else {
+		if (!enclist) {
+		    if(isPDF) PDFloadedEncodings = newenc;
+		    else loadedEncodings = newenc;
+		} else {
 		    while (enclist->next)
 			enclist = enclist->next;
 		    enclist->next = newenc;
@@ -1983,7 +1987,7 @@ static type1fontfamily addFont(char *name, Rboolean isPDF,
 	    /*
 	     * Find or add encoding
 	     */
-	    if (!(encoding = findEncoding(encpath, deviceEncodings)))
+	    if (!(encoding = findEncoding(encpath, deviceEncodings, isPDF)))
 		encoding = addEncoding(encpath, isPDF);
 	    if (!encoding) {
 		freeFontFamily(fontfamily);
@@ -2051,7 +2055,7 @@ static type1fontfamily addDefaultFontFromAFMs(char *encpath, char **afmpaths,
     type1fontfamily fontfamily = makeFontFamily();
     if (fontfamily) {
 	int i;
-	if (!(encoding = findEncoding(encpath, deviceEncodings)))
+	if (!(encoding = findEncoding(encpath, deviceEncodings, isPDF)))
 	    encoding = addEncoding(encpath, isPDF);
 	if (!encoding) {
 	    freeFontFamily(fontfamily);
@@ -2180,8 +2184,9 @@ typedef struct {
     double pageheight;	/* page height in inches */
     Rboolean pagecentre;/* centre image on page? */
     Rboolean printit;	/* print page at close? */
-    char command[PATH_MAX];
+    char command[2*PATH_MAX];
     char title[1024];
+    char colormodel[30];
 
     FILE *psfp;		/* output file */
 
@@ -2370,7 +2375,7 @@ static void PSEncodeFonts(FILE *fp, PostScriptDesc *pd)
 		 * font was loaded
 		 */
 		encoding = findEncoding(fonts->family->encoding->encpath,
-					pd->encodings);
+					pd->encodings, FALSE);
 		if (!encoding)
 		    warning(_("Corrupt loaded encodings;  encoding not recorded"));
 		else {
@@ -2835,33 +2840,55 @@ static void PS_Text(double x, double y, char *str,
 
 /* PostScript Support (formerly in PostScript.c) */
 
-static void PostScriptSetCol(FILE *fp, double r, double g, double b)
+static void PostScriptSetCol(FILE *fp, double r, double g, double b, char *mm)
 {
-    if(r == 0) fprintf(fp, "0");
-    else if (r == 1) fprintf(fp, "1");
-    else fprintf(fp, "%.4f", r);
-    if(g == 0) fprintf(fp, " 0");
-    else if (g == 1) fprintf(fp, " 1");
-    else fprintf(fp, " %.4f", g);
-    if(b == 0) fprintf(fp, " 0");
-    else if (b == 1) fprintf(fp, " 1");
-    else fprintf(fp, " %.4f", b);
-    fprintf(fp," rgb\n");
+    if(r == g && g == b && !(streql(mm, "cmyk") || streql(mm, "rgb-nogray"))) { /* grey */
+	if(r == 0) fprintf(fp, "0");
+	else if (r == 1) fprintf(fp, "1");
+	else fprintf(fp, "%.4f", r);
+	fprintf(fp," setgray");	
+    } else {
+	if(strcmp(mm, "gray") == 0)
+	    error(_("only gray colors are allowed in this color model"));
+	if(strcmp(mm, "cmyk") == 0) {
+	    double c = 1.0-r, m=1.0-g, y=1.0-b, k=c;
+	    k = fmin2(k, m);
+	    k = fmin2(k, y);
+	    if(k == 1.0) c = m = y = 0.0;
+	    else {c /= (1.-k); m /= (1.-k); y /= (1.-k);}
+	    if(c == 0) fprintf(fp, "0");
+	    else if (c == 1) fprintf(fp, "1");
+	    else fprintf(fp, "%.4f", c);
+	    if(m == 0) fprintf(fp, " 0");
+	    else if (m == 1) fprintf(fp, " 1");
+	    else fprintf(fp, " %.4f", m);
+	    if(y == 0) fprintf(fp, " 0");
+	    else if (y == 1) fprintf(fp, " 1");
+	    else fprintf(fp, " %.4f", y);
+	    if(k == 0) fprintf(fp, " 0");
+	    else if (k == 1) fprintf(fp, " 1");
+	    else fprintf(fp, " %.4f", k);
+	    fprintf(fp," setcmykcolor\n");
+	} else {
+	    if(r == 0) fprintf(fp, "0");
+	    else if (r == 1) fprintf(fp, "1");
+	    else fprintf(fp, "%.4f", r);
+	    if(g == 0) fprintf(fp, " 0");
+	    else if (g == 1) fprintf(fp, " 1");
+	    else fprintf(fp, " %.4f", g);
+	    if(b == 0) fprintf(fp, " 0");
+	    else if (b == 1) fprintf(fp, " 1");
+	    else fprintf(fp, " %.4f", b);
+	    fprintf(fp," rgb");
+	}
+    }
 }
 
-static void PostScriptSetFill(FILE *fp, double r, double g, double b)
+static void PostScriptSetFill(FILE *fp, double r, double g, double b, char *m)
 {
     fprintf(fp,"/bg { ");
-    if(r == 0) fprintf(fp, "0");
-    else if (r == 1) fprintf(fp, "1");
-    else fprintf(fp, "%.4f", r);
-    if(g == 0) fprintf(fp, " 0");
-    else if (g == 1) fprintf(fp, " 1");
-    else fprintf(fp, " %.4f", g);
-    if(b == 0) fprintf(fp, " 0");
-    else if (b == 1) fprintf(fp, " 1");
-    else fprintf(fp, " %.4f", b);
-    fprintf(fp," } def\n");
+    PostScriptSetCol(fp, r, g, b, m);
+    fprintf(fp, " } def\n");
 }
 
 
@@ -2883,7 +2910,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	       Rboolean horizontal, double ps,
 	       Rboolean onefile, Rboolean pagecentre,
 	       Rboolean printit, char *cmd, char *title,
-	       SEXP fonts)
+	       SEXP fonts, char *colormodel)
 {
     /* If we need to bail out with some sort of "error"
        then we must free(dd) */
@@ -2916,6 +2943,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
     strcpy(pd->filename, file);
     strcpy(pd->papername, paper);
     strncpy(pd->title, title, 1024);
+    strncpy(pd->colormodel, colormodel, 30);
 
     if(strlen(encoding) > PATH_MAX - 1) {
 	free(dd);
@@ -2928,10 +2956,9 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
      * encpath MUST NOT BE "default"
      */
     pd->encodings = NULL;
-    if (!(enc = findEncoding(encoding, pd->encodings)))
+    if (!(enc = findEncoding(encoding, pd->encodings, FALSE)))
 	enc = addEncoding(encoding, 0);
-    if (enc && (enclist = addDeviceEncoding(enc,
-					    pd->encodings))) {
+    if (enc && (enclist = addDeviceEncoding(enc, pd->encodings))) {
 	pd->encodings = enclist;
     } else {
 	free(dd);
@@ -3098,7 +3125,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	error(_("invalid foreground/background color (postscript)"));
     }
     pd->printit = printit;
-    if(strlen(cmd) > PATH_MAX - 1) {
+    if(strlen(cmd) > 2*PATH_MAX - 1) {
 	freeDeviceFontList(pd->fonts);
 	freeDeviceCIDFontList(pd->cidfonts);
 	pd->fonts = NULL;
@@ -3129,7 +3156,9 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	pd->pageheight = 29.7  /2.54;
     }
     else if(!strcmp(pd->papername, "Letter") ||
-	    !strcmp(pd->papername, "letter")) {
+	    !strcmp(pd->papername, "letter") ||
+	    !strcmp(pd->papername, "US") ||
+	    !strcmp(pd->papername, "us")) {
 	pd->pagewidth  =  8.5;
 	pd->pageheight = 11.0;
     }
@@ -3286,7 +3315,8 @@ static void SetColor(int color, NewDevDesc *dd)
 	PostScriptSetCol(pd->psfp,
 			 R_RED(color)/255.0,
 			 R_GREEN(color)/255.0,
-			 R_BLUE(color)/255.0);
+			 R_BLUE(color)/255.0, pd->colormodel);
+	fprintf(pd->psfp, "\n");
 	pd->current.col = color;
     }
 }
@@ -3298,7 +3328,7 @@ static void SetFill(int color, NewDevDesc *dd)
 	PostScriptSetFill(pd->psfp,
 			  R_RED(color)/255.0,
 			  R_GREEN(color)/255.0,
-			  R_BLUE(color)/255.0);
+			  R_BLUE(color)/255.0, pd->colormodel);
 	pd->current.fill = color;
     }
 }
@@ -3506,9 +3536,6 @@ int   Rf_runcmd(char *cmd, int wait, int visible, char *finput);
 #endif
 static void PostScriptClose(NewDevDesc *dd)
 {
-    char buff[PATH_MAX];
-    int err = 0;
-
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
     PostScriptFileTrailer(pd->psfp, pd->pageno);
@@ -3517,6 +3544,15 @@ static void PostScriptClose(NewDevDesc *dd)
     else {
 	fclose(pd->psfp);
 	if (pd->printit) {
+	    char buff[3*PATH_MAX+ 10];
+	    int err = 0;
+	    /* This should not be possible: the command is limited
+	       to 2*PATH_MAX */
+	    if(strlen(pd->command) + strlen(pd->filename) > 3*PATH_MAX) {
+		warning(_("error from postscript() in running:\n    %s"),
+			pd->command);
+		return;
+	    }
 	    strcpy(buff, pd->command);
 	    strcat(buff, " ");
 	    strcat(buff, pd->filename);
@@ -4293,7 +4329,7 @@ XFigDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
      * Load the default encoding AS THE FIRST ENCODING FOR THIS DEVICE.
      */
     pd->encodings = NULL;
-    if (!(enc = findEncoding("ISOLatin1.enc", pd->encodings)))
+    if (!(enc = findEncoding("ISOLatin1.enc", pd->encodings, FALSE)))
 	enc = addEncoding("ISOLatin1.enc", 0);
     if (enc && (enclist = addDeviceEncoding(enc, pd->encodings))) {
 	pd->encodings = enclist;
@@ -5063,7 +5099,7 @@ static Rboolean addPDFDevicefont(type1fontfamily family,
 	     * The encoding should have been loaded when the font was loaded
 	     */
 	    encoding = findEncoding(family->encoding->encpath,
-				    pd->encodings);
+				    pd->encodings, TRUE);
 	    if (!encoding) {
 		warning(_("Corrupt loaded encodings;  font not added"));
 	    } else {
@@ -5152,7 +5188,7 @@ PDFDeviceDriver(NewDevDesc* dd, char *file, char *paper,
      * encpath MUST NOT BE "default"
      */
     pd->encodings = NULL;
-    if (!(enc = findEncoding(encoding, pd->encodings)))
+    if (!(enc = findEncoding(encoding, pd->encodings, TRUE)))
 	enc = addEncoding(encoding, 1);
     if (enc && (enclist = addDeviceEncoding(enc,
 					    pd->encodings))) {
@@ -5318,10 +5354,22 @@ PDFDeviceDriver(NewDevDesc* dd, char *file, char *paper,
 	pd->pagewidth  = 21.0 / 2.54;
 	pd->pageheight = 29.7  /2.54;
     }
+    else if(!strcmp(pd->papername, "A4r") ||
+       !strcmp(pd->papername, "a4r")) {
+	pd->pageheight = 21.0 / 2.54;
+	pd->pagewidth  = 29.7  /2.54;
+    }
     else if(!strcmp(pd->papername, "Letter") ||
-	    !strcmp(pd->papername, "letter")) {
+	    !strcmp(pd->papername, "letter") ||
+	    !strcmp(pd->papername, "US") ||
+	    !strcmp(pd->papername, "us")) {
 	pd->pagewidth  =  8.5;
 	pd->pageheight = 11.0;
+    }
+    else if(!strcmp(pd->papername, "USr") ||
+	    !strcmp(pd->papername, "usr")) {
+	pd->pageheight =  8.5;
+	pd->pagewidth  = 11.0;
     }
     else if(!strcmp(pd->papername, "Legal") ||
 	    !strcmp(pd->papername, "legal")) {
@@ -6855,14 +6903,14 @@ SEXP PostScript(SEXP args)
     GEDevDesc *dd;
     char *vmax;
     char *file, *paper, *family=NULL, *bg, *fg, *cmd;
-    char *afms[5], *encoding, *title, call[] = "postscript";
+    char *afms[5], *encoding, *title, call[] = "postscript", *colormodel;
     int i, horizontal, onefile, pagecentre, printit;
     double height, width, ps;
     SEXP fam, fonts;
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    file = CHAR(asChar(CAR(args)));  args = CDR(args);
+    file = translateChar(asChar(CAR(args)));  args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
 
     /* 'family' can be either one string or a 5-vector of afmpaths. */
@@ -6889,8 +6937,9 @@ SEXP PostScript(SEXP args)
     pagecentre = asLogical(CAR(args));args = CDR(args);
     printit = asLogical(CAR(args));   args = CDR(args);
     cmd = CHAR(asChar(CAR(args)));    args = CDR(args);
-    title = CHAR(asChar(CAR(args)));  args = CDR(args);
-    fonts = CAR(args);
+    title = translateChar(asChar(CAR(args)));  args = CDR(args);
+    fonts = CAR(args);		      args = CDR(args);
+    colormodel = CHAR(asChar(CAR(args)));
     if (!isNull(fonts) && !isString(fonts))
 	error(_("invalid 'fonts' parameter in %s"), call);
 
@@ -6906,7 +6955,8 @@ SEXP PostScript(SEXP args)
 	dev->savedSnapshot = R_NilValue;
 	if(!PSDeviceDriver(dev, file, paper, family, afms, encoding, bg, fg,
 			   width, height, (double)horizontal, ps, onefile,
-			   pagecentre, printit, cmd, title, fonts)) {
+			   pagecentre, printit, cmd, title, fonts,
+			   colormodel)) {
 	    /* free(dev); No, dev freed inside PSDeviceDrive */
 	    error(_("unable to start device PostScript"));
 	}
@@ -6948,7 +6998,7 @@ SEXP XFig(SEXP args)
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    file = CHAR(asChar(CAR(args)));  args = CDR(args);
+    file = translateChar(asChar(CAR(args)));  args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
     family = CHAR(asChar(CAR(args)));  args = CDR(args);
     bg = CHAR(asChar(CAR(args)));    args = CDR(args);
@@ -7020,7 +7070,7 @@ SEXP PDF(SEXP args)
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    file = CHAR(asChar(CAR(args)));  args = CDR(args);
+    file = translateChar(asChar(CAR(args)));  args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
     fam = CAR(args); args = CDR(args);
     if(length(fam) == 1)
@@ -7039,7 +7089,7 @@ SEXP PDF(SEXP args)
     ps = asReal(CAR(args));           args = CDR(args);
     onefile = asLogical(CAR(args)); args = CDR(args);
     pagecentre = asLogical(CAR(args));args = CDR(args);
-    title = CHAR(asChar(CAR(args))); args = CDR(args);
+    title = translateChar(asChar(CAR(args))); args = CDR(args);
     fonts = CAR(args); args = CDR(args);
     if (!isNull(fonts) && !isString(fonts))
 	error(_("invalid 'fonts' parameter in %s"), call);

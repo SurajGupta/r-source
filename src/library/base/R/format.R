@@ -227,7 +227,7 @@ format.AsIs <- function(x, width = 12, ...)
     if(is.character(x)) return(format.default(x, ...))
     if(is.null(width)) width = 12
     n <- length(x)
-    rvec <- rep.int(as.character(NA), n)
+    rvec <- rep.int(NA_character_, n)
     for(i in 1:n) rvec[i] <- toString(x[[i]], width = width, ...)
     ## AsIs might be around a matrix, which is not a class.
     dim(rvec) <- dim(x)
@@ -292,7 +292,7 @@ prettyNum <-
 			  P0("\\1",small.mark), A.[i.sml])
     }
     ## extraneous trailing dec.marks: paste(B., A., sep = decimal.mark)
-    A. <- P0(B., c(decimal.mark, "")[iN+ 1:1], A.)
+    A. <- P0(B., c(decimal.mark, "")[iN+ 1L], A.)
     if(preserve.width != "none") {
 	nnc <- nchar(A.)
 	d.len <- nnc - nchar(x) # extra space added by 'marks' above

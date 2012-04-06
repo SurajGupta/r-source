@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2006   The R Development Core Team.
+ *  Copyright (C) 1998-2007   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,14 +30,14 @@ SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 #define find_char_fun \
     if (isValidString(CAR(args))) {				\
 	SEXP s;							\
-	PROTECT(s = install(CHAR(STRING_ELT(CAR(args), 0))));	\
+	PROTECT(s = install(translateChar(STRING_ELT(CAR(args), 0))));	\
 	SETCAR(args, findFun(s, rho));				\
 	UNPROTECT(1);						\
     }
     find_char_fun
 
     if (TYPEOF(CAR(args)) != CLOSXP)
-	errorcall(call, "argument must be a function");
+	errorcall(call, _("argument must be a function"));
     switch(PRIMVAL(op)) {
     case 0:
 	SET_DEBUG(CAR(args), 1);
@@ -60,7 +60,7 @@ SEXP attribute_hidden do_trace(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (TYPEOF(CAR(args)) != CLOSXP &&
 	TYPEOF(CAR(args)) != BUILTINSXP &&
 	TYPEOF(CAR(args)) != SPECIALSXP)
-	    errorcall(call, "argument must be a function");
+	    errorcall(call, _("argument must be a function"));
 
     switch(PRIMVAL(op)) {
     case 0:
@@ -84,9 +84,9 @@ SEXP R_traceOnOff(SEXP onOff) {
     SEXP value;
     Rboolean prev = GET_TRACE_STATE;
     if(length(onOff) > 0) {
-        Rboolean new = asLogical(onOff);
-        if(new == TRUE || new == FALSE)
-            SET_TRACE_STATE(new);
+        Rboolean _new = asLogical(onOff);
+        if(_new == TRUE || _new == FALSE)
+            SET_TRACE_STATE(_new);
         else
             error("Value for tracingState must be TRUE or FALSE");
     }
@@ -111,26 +111,26 @@ SEXP attribute_hidden do_memtrace(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     object = CAR(args);
-    if (TYPEOF(object) == CLOSXP || 
+    if (TYPEOF(object) == CLOSXP ||
 	TYPEOF(object) == BUILTINSXP ||
 	TYPEOF(object) == SPECIALSXP)
-	    errorcall(call, "argument must not be a function");
+	errorcall(call, _("argument must not be a function"));
 
     if(object == R_NilValue)
-	    errorcall(call, "cannot trace NULL");
+	errorcall(call, _("cannot trace NULL"));
 
     if(TYPEOF(object) == ENVSXP || TYPEOF(object) == PROMSXP)
-	    errorcall(call,
-  "memtrace is not useful for promise and environment objects");
+	errorcall(call,
+		  _("'tracemem' is not useful for promise and environment objects"));
     if(TYPEOF(object) == EXTPTRSXP || TYPEOF(object) == WEAKREFSXP)
-	    errorcall(call,
-  "memtrace is not useful for weak reference or external pointer objects");
+	errorcall(call,
+		  _("'tracemem' is not useful for weak reference or external pointer objects"));
 
     SET_TRACE(object, 1);
-    sprintf(buffer, "<%p>", object);
+    snprintf(buffer, 20, "<%p>", (void *) object);
     return mkString(buffer);
 #else
-    errorcall(call,"R not compiled with memory profiling");
+    errorcall(call, _("R was not compiled with support for memory profiling"));
     return R_NilValue;
 #endif
 }
@@ -144,26 +144,27 @@ SEXP attribute_hidden do_memuntrace(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     object=CAR(args);
-    if (TYPEOF(object) == CLOSXP || 
+    if (TYPEOF(object) == CLOSXP ||
 	TYPEOF(object) == BUILTINSXP ||
 	TYPEOF(object) == SPECIALSXP)
-	    errorcall(call, "argument must not be a function");
+	errorcall(call, _("argument must not be a function"));
 
     if (TRACE(object))
-	    SET_TRACE(object, 0);
+	SET_TRACE(object, 0);
 #else
-    errorcall(call,"R not compiled with memory profiling");
+    errorcall(call, _("R was not compiled with support for memory profiling"));
 #endif
     return R_NilValue;
 }
 
 
 #ifndef R_MEMORY_PROFILING
-void attribute_hidden memtrace_report(SEXP old, SEXP new) {
-     return;
+void attribute_hidden memtrace_report(void* old, void *_new) {
+    return;
 }
 #else
-static void memtrace_stack_dump(void){
+static void memtrace_stack_dump(void)
+{
     RCNTXT *cptr;
 
     for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
@@ -171,17 +172,17 @@ static void memtrace_stack_dump(void){
 	    && TYPEOF(cptr->call) == LANGSXP) {
 	    SEXP fun = CAR(cptr->call);
 	    Rprintf("%s ",
-		    TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) :
+		    TYPEOF(fun) == SYMSXP ? translateChar(PRINTNAME(fun)) :
 		    "<Anonymous>");
 	}
     }
     Rprintf("\n");
-
-
 }
-void attribute_hidden memtrace_report(SEXP old, SEXP new) {
+
+void attribute_hidden memtrace_report(void * old, void * _new)
+{
     if (!R_current_trace_state()) return;
-    Rprintf("memtrace[%p->%p]: ",old,new);
+    Rprintf("tracemem[%p -> %p]: ", (void *) old, _new);
     memtrace_stack_dump();
 }
 
@@ -193,27 +194,34 @@ SEXP attribute_hidden do_memretrace(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP object, origin, ans;
     char buffer[20];
 
-    checkArity(op, args);
+    /* checkArity(op, args); */
+    if(length(args) < 1 || length(args) > 2)
+	errorcall(call, _("invalid number of arguments"));
 
     object = CAR(args);
-    if (TYPEOF(object) == CLOSXP || 
+    if (TYPEOF(object) == CLOSXP ||
 	TYPEOF(object) == BUILTINSXP ||
 	TYPEOF(object) == SPECIALSXP)
-	    errorcall(call, "argument must not be a function");
+	errorcall(call, _("argument must not be a function"));
 
-    origin = CADR(args);
+    if(length(args) >= 2) {
+	origin = CADR(args);
+	if(!isString(origin))
+	    errorcall(call, _("invalid '%s' argument"), "origin");
+    } else origin = R_NilValue;
 
     if (TRACE(object)){
-	    sprintf(buffer, "<%p>", object);
-	    ans= mkString(buffer);
-    } else ans=R_NilValue;
+	snprintf(buffer, 20, "<%p>", (void *) object);
+	ans = mkString(buffer);
+    } else ans = R_NilValue;
 
-    if (origin!=R_NilValue){
-       SET_TRACE(object, 1);
-       if (R_current_trace_state()) {
-	       Rprintf("memtrace[%s->%p]: ",CHAR(STRING_ELT(origin, 0)), object);
-	       memtrace_stack_dump();
-       }
+    if (origin != R_NilValue){
+	SET_TRACE(object, 1);
+	if (R_current_trace_state()) {
+	    Rprintf("tracemem[%s -> %p]: ", 
+		    translateChar(STRING_ELT(origin, 0)), (void *) object);
+	    memtrace_stack_dump();
+	}
     }
     return ans;
 #else

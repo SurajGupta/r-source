@@ -91,11 +91,23 @@ isIncomplete(con)
   connection is not opened (except for \code{socketConnection}), but may
   be opened by setting a non-empty value of argument \code{open}.
 
+  \code{file} allows \code{description="stdin"} to refer to the C-level
+  \code{stdin} of the process (which need not be connected to anything
+#ifdef unix
+  in a console version or embedded version of \R), provided the C99 function
+  \code{fdopen} is supported on the platform.
+#endif
+#ifdef windows
+  in a console version or embedded version of \R, and is not in \code{RGui}).
+#endif
+
+  
   \code{gzfile} applies to files compressed by \file{gzip}, and
   \code{bzfile} to those compressed by \file{bzip2}.  \code{gzfile} can
   also open uncompressed files.  In each case the actual file is opened
   in binary mode and so no translations are done if the original file
-  was a text file.
+  was a text file.  (See \code{\link{gzcon}} for a way to add
+  compression to non-file connections.)
   
   \code{unz} reads (only) single files within zip files, in binary mode.
   The description is the full path, with \file{.zip} extension if required.
@@ -166,6 +178,16 @@ isIncomplete(con)
 #endif
   Also, no attempt is made to decode an encoded URL: call
   \code{\link{URLdecode}} if necessary.
+
+  Note that \code{https://} connections are
+#ifdef unix
+  not supported.
+#endif
+#ifdef windows
+  only supported if \code{--internet2} was used (to make use of Internet
+  Explorer internals), and then only if the certificate is considered to
+  be valid.
+#endif
 }
 \value{
   \code{file}, \code{pipe}, \code{fifo}, \code{url}, \code{gzfile},
@@ -215,9 +237,6 @@ isIncomplete(con)
   result is likely to be that up to the error, with a warning.  On
   input, it will most likely be all or some of the input up to the
   error.
-
-  The encoding for \code{\link{stdin}} when redirected from a file can
-  be set by the command-line flag \code{--encoding}.
 }
 \section{Blocking}{
   The default condition for all but fifo and socket connections is to be in
@@ -240,7 +259,7 @@ isIncomplete(con)
   for no response at all, not for the whole operation.
 }
 \section{Fifos}{
-  Fifos default to non-blocking.  That follows Svr4 and it probably most
+  Fifos default to non-blocking.  That follows Svr4 and is probably most
   natural, but it does have some implications.
   In particular, opening a non-blocking fifo connection for writing
   (only) will fail unless some other process is reading on the fifo.
@@ -258,7 +277,9 @@ isIncomplete(con)
   in mode \code{"r"} only.  This reads the X11 primary selection (see
   \url{http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt}),
   which can also be specified as \code{"X11_primary"} and the secondary
-  selection as \code{"X11_secondary"}.
+  selection as \code{"X11_secondary"}.  On most systems the clipboard
+  selection (that used by \sQuote{Copy} from an \sQuote{Edit} menu) can
+  be specified as \code{"X11_clipboard"}.
 #endif
   
   When a clipboard is opened for reading, the contents are immediately
@@ -303,7 +324,7 @@ isIncomplete(con)
 }
 \references{
   Chambers, J. M. (1998)
-  \emph{Programming with Data. A Guide to the S Language.} Springer.
+  \emph{Programming with Data.  A Guide to the S Language.} Springer.
 }
 
 \seealso{
@@ -313,6 +334,8 @@ isIncomplete(con)
 
   \code{\link{capabilities}} to see if \code{url},
   \code{fifo} and \code{socketConnection} are supported by this build of \R.
+
+  \code{\link{gzcon}} to wrap gzip (de)compression around a connection.
 
 #ifdef windows
   To flush output to the console, see \code{\link{flush.console}}.

@@ -189,6 +189,9 @@
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
+/* Define to 1 if you have the `execv' function. */
+#undef HAVE_EXECV
+
 /* Define to 1 if you have the `expm1' function. */
 #undef HAVE_EXPM1
 
@@ -272,6 +275,12 @@
 /* Define if you have the GNU C library version >= 2. This is needed to fix a
    problem with getting the prototype of strptime(). */
 #undef HAVE_GLIBC2
+
+/* Define to 1 if you have the `glob' function. */
+#undef HAVE_GLOB
+
+/* Define to 1 if you have the <glob.h> header file. */
+#undef HAVE_GLOB_H
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
@@ -465,6 +474,12 @@
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
 
+/* Define if putenv("FOO") can unset an environment variable */
+#undef HAVE_PUTENV_UNSET
+
+/* Define if putenv("FOO=") can unset an environment variable */
+#undef HAVE_PUTENV_UNSET2
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
@@ -479,6 +494,9 @@
 
 /* Define to 1 if you have the `rint' function. */
 #undef HAVE_RINT
+
+/* Define to 1 if you have the `rl_completion_matches' function. */
+#undef HAVE_RL_COMPLETION_MATCHES
 
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV
@@ -512,6 +530,9 @@
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdbool.h> header file. */
+#undef HAVE_STDBOOL_H
 
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
@@ -603,6 +624,9 @@
 /* Define if you have the Tcl/Tk headers and libraries and want Tcl/Tk support
    to be built. */
 #undef HAVE_TCLTK
+
+/* Define to 1 if you have the `time' function. */
+#undef HAVE_TIME
 
 /* Define to 1 if you have the `times' function. */
 #undef HAVE_TIMES
@@ -697,39 +721,15 @@
 /* Define if log1p() exists and is accurate enough. */
 #undef HAVE_WORKING_LOG1P
 
+/* Define if sigaction() is complete enough for R's usage */
+#undef HAVE_WORKING_SIGACTION
+
 /* Define if you have the X11 headers and libraries, and want the X11 GUI to
    be built. */
 #undef HAVE_X11
 
-/* Define to 1 if you have the `XmbDrawImageString' function. */
-#undef HAVE_XMBDRAWIMAGESTRING
-
-/* Define to 1 if you have the `XmbDrawString' function. */
-#undef HAVE_XMBDRAWSTRING
-
-/* Define to 1 if you have the `XmbLookupString' function. */
-#undef HAVE_XMBLOOKUPSTRING
-
-/* Define to 1 if you have the `XmbTextEscapement' function. */
-#undef HAVE_XMBTEXTESCAPEMENT
-
-/* Define to 1 if you have the `XmbTextExtents' function. */
-#undef HAVE_XMBTEXTEXTENTS
-
-/* Define to 1 if you have the `Xutf8DrawImageString' function. */
-#undef HAVE_XUTF8DRAWIMAGESTRING
-
-/* Define to 1 if you have the `Xutf8DrawString' function. */
-#undef HAVE_XUTF8DRAWSTRING
-
-/* Define to 1 if you have the `Xutf8LookupString' function. */
-#undef HAVE_XUTF8LOOKUPSTRING
-
-/* Define to 1 if you have the `Xutf8TextEscapement' function. */
-#undef HAVE_XUTF8TEXTESCAPEMENT
-
-/* Define to 1 if you have the `Xutf8TextExtents' function. */
-#undef HAVE_XUTF8TEXTEXTENTS
+/* Define if you have the X11/Xmu headers and libraries. */
+#undef HAVE_X11_Xmu
 
 /* Define to 1 if you have the `__argz_count' function. */
 #undef HAVE___ARGZ_COUNT
@@ -769,6 +769,12 @@
 
 /* Define to disable Valgrind instrumentation */
 #undef NVALGRIND
+
+/* Define if using GNU-style Objective C runtime. */
+#undef OBJC_GNU_RUNTIME
+
+/* Define if using NeXT/Apple-style Objective C runtime. */
+#undef OBJC_NEXT_RUNTIME
 
 /* Name of package */
 #undef PACKAGE
@@ -829,16 +835,19 @@
    */
 #undef SHLIB_EXT
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `double', as computed by sizeof. */
+#undef SIZEOF_DOUBLE
+
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long double', as computed by sizeof. */
+/* The size of `long double', as computed by sizeof. */
 #undef SIZEOF_LONG_DOUBLE
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
 /* Define as the maximum value of type 'size_t', if the system doesn't define
@@ -847,7 +856,7 @@
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
+   automatically deduced at runtime.
 	STACK_DIRECTION > 0 => grows toward higher addresses
 	STACK_DIRECTION < 0 => grows toward lower addresses
 	STACK_DIRECTION = 0 => direction of growth unknown */
@@ -864,10 +873,6 @@
 
 /* Define this to enable support for UTF-8 locales. */
 #undef SUPPORT_UTF8
-
-/* Define if your system is SunOS4, which is famous for broken header files.
-   */
-#undef SunOS4
 
 /* Define to enable provoking compile errors on write barrier violation. */
 #undef TESTING_WRITE_BARRIER
@@ -920,7 +925,7 @@
 #undef inline
 #endif
 
-/* Define to `long' if <sys/types.h> does not define. */
+/* Define to `long int' if <sys/types.h> does not define. */
 #undef off_t
 
 /* Define to `int' if <sys/types.h> does not define. */
@@ -933,7 +938,7 @@
 /* Define to empty if the C compiler doesn't support this keyword. */
 #undef signed
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to unsigned long or unsigned long long if <stdint.h> and

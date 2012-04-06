@@ -38,7 +38,8 @@ default.stringsAsFactors()
 }
 \details{
   A data frame is a list of variables of the same length with unique row
-  names, given class \code{"data.frame"}.
+  names, given class \code{"data.frame"}.  If there are zero variables,
+  the row names determine the number of rows.
 
   \code{data.frame} converts each of its arguments to a data frame by
   calling \code{\link{as.data.frame}(optional=TRUE)}.  As that is a
@@ -59,7 +60,8 @@ default.stringsAsFactors()
   (If that component is subsequently recycled, the names are discarded
   with a warning.)  If \code{row.names} was supplied as \code{NULL} or no
   suitable component was found the row names are the integer sequence
-  starting at one.
+  starting at one (and such row names are considered to be
+  \sQuote{automatic}, and not preserved by \code{\link{as.matrix}}).
 
   If row names are supplied of length one and the data frame has a
   single row, the \code{row.names} is taken to specify the row names and

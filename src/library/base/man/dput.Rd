@@ -1,13 +1,15 @@
 \name{dput}
 \alias{dput}
 \alias{dget}
-\title{Write an Internal Object to a File}
+\title{Write an Object to a File or Recreate it}
 \description{
   Writes an ASCII text representation of an \R object to a file
   or connection, or uses one to recreate the object.
 }
 \usage{
-dput(x, file = "", control = "showAttributes")
+dput(x, file = "",
+     control = c("keepNA", "keepInteger", "showAttributes"))
+
 dget(file)
 }
 \arguments{
@@ -19,23 +21,28 @@ dget(file)
 }
 \details{
   \code{dput} opens \code{file} and deparses the object \code{x} into
-  that file.  The object name is not written (contrary to \code{dump}).
+  that file.  The object name is not written (unlike \code{dump}).
   If \code{x} is a function the associated environment is stripped.
   Hence scoping information can be lost.
 
   Deparsing an object is difficult, and not always possible.  With the
-  default \code{control = c("showAttributes")}, \code{dput()} attempts to deparse in
-  a way that is readable, but for more complex or unusual objects, not
-  likely to be parsed as identical to the original.  Use \code{control = "all"} 
-  for the most complete deparsing; use \code{control = NULL}
-  for the simplest deparsing, not even including attributes.
+  default \code{control}, \code{dput()} attempts to deparse in a way
+  that is readable, but for more complex or unusual objects, not likely
+  to be parsed as identical to the original.  Use \code{control = "all"}
+  for the most complete deparsing; use \code{control = NULL} for the
+  simplest deparsing, not even including attributes.
 
   \code{dput} will warn if fewer characters were written to a file than
   expected, which may indicate a full or corrupt file system.
     
   To display saved source rather than deparsing the internal representation 
-  include \code{"useSource"} in \code{control}.  \R currently saves source only for
-  function definitions.
+  include \code{"useSource"} in \code{control}.  \R currently saves
+  source only for function definitions.
+}
+\value{
+  For \code{dput}, the first argument invisibly.
+
+  For \code{dget}, the object created.
 }
 \note{
   To avoid the risk of a source attribute out of sync with the actual

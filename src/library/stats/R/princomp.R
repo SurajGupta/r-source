@@ -83,7 +83,7 @@ princomp.default <-
     names(sc) <- colnames(cv)
     scr <- if (scores && !missing(x) && !is.null(cen))
         scale(z, center = cen, scale = sc) %*% edc$vectors
-    if (is.null(cen)) cen <- rep(as.numeric(NA), nrow(cv))
+    if (is.null(cen)) cen <- rep(NA_real_, nrow(cv))
     edc <- list(sdev = sdev,
                 loadings = structure(edc$vectors, class="loadings"),
                 center = cen, scale = sc, n.obs = n.obs,
@@ -98,7 +98,7 @@ princomp.default <-
 
 print.princomp <- function(x, ...)
 {
-    cat("Call:\n"); dput(x$call)
+    cat("Call:\n"); dput(x$call, control=NULL)
     cat("\nStandard deviations:\n")
     print(x$sdev, ...)
     cat("\n", length(x$scale), " variables and ", x$n.obs,

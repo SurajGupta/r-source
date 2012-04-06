@@ -18,7 +18,7 @@ getNamespace <- function(name) {
                                   call. = FALSE, domain = NA)
                           return(getNamespace("stats"))
                       }
-                      else stop(e, domain = NA)
+                      else stop(e)
                   })
 }
 
@@ -180,7 +180,7 @@ loadNamespace <- function (package, lib.loc = NULL,
             setNamespaceInfo(env, "imports", list("base" = TRUE))
             setNamespaceInfo(env, "path", file.path(lib, name))
             setNamespaceInfo(env, "dynlibs", NULL)
-            setNamespaceInfo(env, "S3methods", matrix(as.character(NA), 0, 3))
+            setNamespaceInfo(env, "S3methods", matrix(NA_character_, 0, 3))
             assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
                    envir = env)
             .Internal(registerNamespace(name, env))
@@ -531,9 +531,8 @@ unloadNamespace <- function(ns) {
     pos <- match(paste("package", nsname, sep = ":"), search())
     if (! is.na(pos)) detach(pos = pos)
     users <- getNamespaceUsers(ns)
-    print(ns)
     if (length(users) != 0)
-        stop(gettextf("name space '%s' is still used by: '%s'",
+        stop(gettextf("name space '%s' is still used by: %s",
                       getNamespaceName(ns),
                       paste(sQuote(users), collapse = ", ")),
              domain = NA)
@@ -906,8 +905,20 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
       }
 
     nsFile <- namespaceFilePath(package, package.lib)
+    descfile <- file.path(package.lib, package, "DESCRIPTION")
+    enc <- NA
+    if (file.exists(descfile)) {
+        dcf <- read.dcf(file = descfile)
+        if(NROW(dcf) >= 1) enc <- as.list(dcf[1, ])[["Encoding"]]
+        if(is.null(enc)) enc <- NA
+    }
     if (file.exists(nsFile))
-        directives <- parse(nsFile)
+        directives <- if (!is.na(enc) &&
+                          ! Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX")) {
+	    con <- file(nsFile, encoding=enc)
+            on.exit(close(con))
+	    parse(con)
+        } else parse(nsFile)
     else if (mustExist)
         stop(gettextf("package '%s' has no NAMESPACE file", package),
              domain = NA)
@@ -920,7 +931,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
     importMethods <- list()
     importClasses <- list()
     dynlibs <- character(0)
-    S3methods <- matrix(as.character(NA), 500, 3)
+    S3methods <- matrix(NA_character_, 500, 3)
     nativeRoutines <- list()
     nS3 <- 0
     parseDirective <- function(e) {

@@ -22,16 +22,28 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.4.1\n"
+"Project-Id-Version: R 2.5.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-09-22 12:31\n"
-"PO-Revision-Date: 2006-09-22 12:31\n"
+"POT-Creation-Date: 2007-01-11 16:41\n"
+"PO-Revision-Date: 2007-01-11 16:41\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "'a' is overridden by 'reg'"
+msgstr "‘a’ is overridden by ‘reg’"
+
+msgid "only using the first two of"
+msgstr "only using the first two of"
+
+msgid "regression coefficients"
+msgstr "regression coefficients"
+
+msgid "'a' and 'b' are overridden by 'coef'"
+msgstr "‘a’ and ‘b’ are overridden by ‘coef’"
 
 msgid "'x' must be a 2-d contingency table"
 msgstr "‘x’ must be a 2-d contingency table"
@@ -89,6 +101,9 @@ msgstr "‘at’ must have same length as 'z$n', i.e."
 
 msgid "invalid boxplot widths"
 msgstr "invalid boxplot widths"
+
+msgid "some notches went outside hinges ('box'): maybe set notch=FALSE"
+msgstr "some notches went outside hinges ('box'): maybe set notch=FALSE"
 
 msgid "'formula' should specify exactly two variables"
 msgstr "‘formula’ should specify exactly two variables"

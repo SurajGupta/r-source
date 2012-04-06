@@ -17,7 +17,7 @@ substring <- function(text,first,last=1000000)
 }
 
 `substr<-` <- function(x, start, stop, value)
-    .Internal(substrgets(x, as.integer(start), as.integer(stop), value))
+    .Internal(`substr<-`(x, as.integer(start), as.integer(stop), value))
 
 `substring<-` <- function(text, first, last=1000000, value)
     `substr<-`(text, first, last, value)
@@ -38,7 +38,7 @@ abbreviate <-
     dup2 <- rep.int(TRUE, length(names.arg))
     x <- these <- names.arg
     repeat {
-	ans <- .Internal(abbreviate(these,minlength,use.classes))
+	ans <- .Internal(abbreviate(these, minlength, use.classes))
 	x[dup2] <- ans
 	dup2 <- duplicated(x)
 	if(!any(dup2))

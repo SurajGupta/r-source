@@ -7,7 +7,7 @@
 \usage{
 deparse(expr, width.cutoff = 60,
         backtick = mode(expr) \%in\% c("call", "expression", "("),
-        control = "showAttributes")
+        control = c("keepInteger", "showAttributes", "keepNA") )
 }
 \arguments{
   \item{expr}{any \R expression.}
@@ -36,8 +36,11 @@ deparse(expr, width.cutoff = 60,
 
   Using \code{control = "all"} comes closest to making \code{deparse()}
   an inverse of \code{parse()}.  However, not all objects are
-  deparseable even with this option and a warning will be issued if the
+  deparse-able even with this option and a warning will be issued if the
   function recognizes that it is being asked to do the impossible.
+
+  Numeric and complex vectors are converted using 15 significant digits:
+  see \code{\link{as.character}} for more details.
 }
 \note{
   To avoid the risk of a source attribute out of sync with the actual

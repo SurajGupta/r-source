@@ -1,6 +1,6 @@
 \name{data.matrix}
 \alias{data.matrix}
-\title{Data Frame to Numeric Matrix}
+\title{Convert a Data Frame to a Numeric Matrix}
 \description{
   Return the matrix obtained by converting all the variables in a data
   frame to numeric mode and then binding them together as the columns of
@@ -8,11 +8,16 @@
   codes.
 }
 \usage{
-data.matrix(frame)
+data.matrix(frame, rownames.force = NA)
 }
 \arguments{
   \item{frame}{a data frame whose components are logical vectors,
     factors or numeric vectors.}
+  \item{rownames.force}{logical indicating if the resulting matrix
+    should have character (rather than \code{NULL})
+    \code{\link{rownames}}.  The default, \code{NA}, uses \code{NULL}
+    rownames if the data frame has \sQuote{automatic} row.names or for a
+    zero-row data frame.}
 }
 \details{
   Supplying a data frame with columns which are not numeric, factor or logical
@@ -20,11 +25,16 @@ data.matrix(frame)
   as then information can be lost.
 }
 \value{
-  If \code{frame} is a data frame, a numeric matrix of the same
-  dimensions as \code{frame}, with dimnames taken from the row.names and
-  names.
+  If \code{frame} inherits from class \code{"data.frame"}, an integer or
+  numeric matrix of the same dimensions as \code{frame}, with dimnames
+  taken from the \code{row.names} (or \code{NULL}, depending on
+  \code{rownames.force}) and \code{names}.
 
   Otherwise, the result of \code{\link{as.matrix}}.
+}
+\note{
+  The default behaviour for data frames differs from \R < 2.5.0 which
+  always gave the result character rownames.
 }
 \seealso{
   \code{\link{as.matrix}},

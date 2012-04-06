@@ -94,6 +94,9 @@ str(nc)# gave ^ANULL^A in 2.0.0
 
 
 library(stats4)
+showMethods("coerce", classes=c("matrix", "numeric"))
+## {gave wrong result for a while in R 2.4.0}
+
 ## the following showMethods() output tends to generate errors in the tests
 ## whenever the contents of the packages change. Searching in the
 ## diff's can easily mask real problems.  If there is a point
@@ -106,15 +109,7 @@ library(stats4)
 ## showMethods("plot") # (ANY,ANY) and (profile.mle, missing)
 ## showMethods(classes="mle")
 ## showMethods(classes="matrix")
-## showMethods(classes=c("matrix", "numeric"))
-## showMethods(where = "package:methods")
 
-## stopifnot(require(Matrix),
-##           require(lme4)) # -> S4  plot
-## showMethods("plot") # more than last time
-## showMethods("show", classes = c("dgeMatrix","Matrix","matrix"))
-## showMethods("show")
-## showMethods(classes = c("dgeMatrix","matrix"))
 
 ##--- "[" fiasco before R 2.2.0 :
 d2 <- data.frame(b= I(matrix(1:6,3,2)))
@@ -168,3 +163,27 @@ setClass("C", contains = c("A", "B"), representation(z = "logical"),
          prototype = prototype(x = 1.5, y = "test", z = TRUE))
 (cc <- new("C"))
 ## failed reconcilePropertiesAndPrototype(..) after svn r37018
+
+## "Logic" group -- was missing in R <= 2.4.0
+stopifnot(all(getGroupMembers("Logic") %in% c("&", "|")),
+	  any(getGroupMembers("Ops") == "Logic"))
+setClass("brob", contains="numeric")
+b <- new("brob", 3.14)
+logic.brob.error <- function(nm)
+    stop("logic operator '", nm, "' not applicable to brobs")
+logic2 <- function(e1,e2) logic.brob.error(.Generic)
+setMethod("Logic", signature("brob", "ANY"), logic2)
+setMethod("Logic", signature("ANY", "brob"), logic2)
+## Now ensure that using group members gives error:
+assertError <- function(expr)
+    stopifnot(inherits(try(expr, silent = TRUE), "try-error"))
+assertError(b & b)
+assertError(b | 1)
+assertError(TRUE & b)
+
+## methods' hidden cbind() / rbind:
+cBind <- methods:::cbind
+setClass("myMat", representation(x = "numeric"))
+setMethod("cbind2", signature(x = "myMat", y = "missing"), function(x,y) x)
+m <- new("myMat", x = c(1, pi))
+stopifnot(identical(m, cBind(m)))

@@ -24,19 +24,19 @@
 #include <IOStuff.h>
 
 /* Public interface */
-/* SEXP R_ParseVector(SEXP, int, ParseStatus *); in R_ext/Parse.h */
+/* SEXP R_ParseVector(SEXP, int, ParseStatus *, SEXP); in R_ext/Parse.h */
 
 /* Private interface */
 SEXP R_Parse1Buffer(IoBuffer*, int, ParseStatus *); /* in ReplIteration,
 						       R_ReplDLLdo1 */
-SEXP R_ParseBuffer(IoBuffer*, int, ParseStatus *, SEXP); /* in source.c */
+SEXP R_ParseBuffer(IoBuffer*, int, ParseStatus *, SEXP, SEXP); /* in source.c */
 SEXP R_Parse1File(FILE*, int, ParseStatus *); /* in R_ReplFile */
-SEXP R_ParseFile(FILE*, int, ParseStatus *);  /* in edit.c */
+SEXP R_ParseFile(FILE*, int, ParseStatus *, SEXP);  /* in edit.c */
 
 /* Unused */
 #ifdef PARSE_UNUSED
 SEXP R_Parse1General(int (*)(), int (*)(), int, ParseStatus *);
-SEXP R_ParseGeneral(int (*)(), int (*)(), int, ParseStatus *);
+SEXP R_ParseGeneral(int (*)(), int (*)(), int, ParseStatus *, SEXP);
 SEXP R_Parse1Vector(TextBuffer*, int, ParseStatus *);
 #endif
 
@@ -44,7 +44,7 @@ SEXP R_Parse1Vector(TextBuffer*, int, ParseStatus *);
 typedef struct Rconn  *Rconnection;
 #define HAVE_RCONNECTION_TYPEDEF
 #endif
-SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status);
+SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status, SEXP srcfile);
 
 	/* Report a parse error */
 	

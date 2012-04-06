@@ -2,14 +2,6 @@ available.packages <-
     function(contriburl = contrib.url(getOption("repos")), method,
              fields = NULL)
 {
-    .checkRversion <- function(x) {
-        if(is.na(xx <- x["Depends"])) return(TRUE)
-        xx <- tools:::.split_dependencies(xx)
-        if(length(z <- xx[["R"]]) > 1)
-            eval(parse(text=paste("currentR", z$op, "z$version")))
-        else TRUE
-    }
-
     requiredFields <-
         tools:::.get_standard_repository_db_fields()
     if (is.null(fields))
@@ -18,7 +10,7 @@ available.packages <-
 	stopifnot(is.character(fields))
 	fields <- unique(c(requiredFields, fields))
     }
-    res <- matrix(as.character(NA), 0, length(fields) + 1,
+    res <- matrix(NA_character_, 0, length(fields) + 1,
 		  dimnames = list(NULL, c(fields, "Repository")))
     for(repos in contriburl) {
         localcran <- length(grep("^file:", repos)) > 0
@@ -74,7 +66,7 @@ available.packages <-
         if (length(res0)) {
             missingFields <- fields[!(fields %in% colnames(res0))]
             if (length(missingFields)) {
-                toadd <- matrix(as.character(NA), nrow=nrow(res0),
+                toadd <- matrix(NA_character_, nrow=nrow(res0),
                                 ncol=length(missingFields),
                                 dimnames=list(NULL, missingFields))
                 res0 <- cbind(res0, toadd)
@@ -86,6 +78,7 @@ available.packages <-
     }
     ## ignore packages which don't fit our version of R
     if(length(res)) {
+        currentR <- getRversion()
         .checkRversion <- function(x) {
             if(is.na(xx <- x["Depends"])) return(TRUE)
             xx <- tools:::.split_dependencies(xx)
@@ -93,7 +86,6 @@ available.packages <-
                 eval(parse(text=paste("currentR", z$op, "z$version")))
             else TRUE
         }
-        currentR <- getRversion()
         res <- res[apply(res, 1, .checkRversion), , drop=FALSE]
     }
     res
@@ -170,11 +162,12 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 
     if(!is.null(update)) {
         if(is.null(instlib)) instlib <-  update[,"LibPath"]
-
-        install.packages(update[,"Package"], instlib,
-                         contriburl = contriburl,
-                         method = method,
-                         available = available, ..., type = type)
+        ## do this a library at a time, to handle dependencies correctly.
+        libs <- unique(instlib)
+        for(l in libs)
+            install.packages(update[instlib == l ,"Package"], l,
+                             contriburl = contriburl, method = method,
+                             available = available, ..., type = type)
     }
 }
 
@@ -363,7 +356,7 @@ installed.packages <-
                                            encoding = NA)
                 ## this gives NA if the package has no Version field
                 if (is.logical(desc)) {
-                    desc <- rep(as.character(NA), length(fields))
+                    desc <- rep(NA_character_, length(fields))
                     names(desc) <- fields
                 } else {
                     desc <- unlist(desc)
@@ -414,14 +407,14 @@ remove.packages <- function(pkgs, lib, version) {
     is_bundle <- pkgs %in% have[, "Bundle"]
     pkgs0 <- pkgs; pkgs <- pkgs[!is_bundle]
     if(hv) {
-        names(version) <- pkgs0;
+        names(version) <- pkgs0
         if(length(pkgs)) pkgs <- manglePackageName(pkgs, version[!is_bundle])
     }
     for(p in pkgs0[is_bundle]) {
         ## for consistency with packages, need unversioned names
         ## and let .find.packages() figure out what to do.
         add <- have[have[, "Bundle"] %in% p, "Package"]
-        add <- unique(sub("_[0-9.\-]*$", "", add))
+        add <- unique(sub("_[0-9.-]*$", "", add))
         if(hv) add <- manglePackageName(add, version[p])
         pkgs <- c(pkgs, add)
     }

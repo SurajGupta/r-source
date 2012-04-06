@@ -116,7 +116,7 @@ mosaicplot(x, \dots)
   Zeileis and Hornik, 2005).
 }
 \author{
-  S-PLUS original by John Emerson \email{emerson@stat.yale.edu}.
+  S-PLUS original by John Emerson \email{john.emerson@yale.edu}.
   Originally modified and enhanced for \R by Kurt Hornik.
 }
 \references{
@@ -170,7 +170,7 @@ mosaicplot(HairEyeColor, shade = TRUE, margin = list(1:2, 3))
 fm <- loglin(HairEyeColor, list(1:2, 3))
 pchisq(fm$pearson, fm$df, lower.tail = FALSE)
 
-## Formula interface for raw data: visualize crosstabulation of numbers
+## Formula interface for raw data: visualize cross-tabulation of numbers
 ## of gears and carburettors in Motor Trend car data.
 mosaicplot(~ gear + carb, data = mtcars, color = TRUE, las = 1)
 # color recycling

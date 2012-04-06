@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-01 10:45\n"
+"POT-Creation-Date: 2007-04-03 11:44\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -100,6 +100,9 @@ msgstr "nenhum termo no escopo"
 msgid "no terms in scope for adding to object"
 msgstr "nenhum termo no escopo para adicionar ao objeto"
 
+msgid "trying +"
+msgstr ""
+
 msgid "number of rows in use has changed: remove missing values?"
 msgstr "número de linhas em uso mudou: remover valores ausentes?"
 
@@ -115,6 +118,9 @@ msgstr "nenhum método 'add1' implementado para modelos \"mlm\""
 msgid "scope is not a subset of term labels"
 msgstr "escopo não é um subconjunto dos rótulos dos termos"
 
+msgid "trying -"
+msgstr ""
+
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "nenhum método 'drop1' para modelos \"mlm\""
 
@@ -129,6 +135,12 @@ msgstr "escopo superior não inclui termos do modelo %s"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr "AIC não definido para esse modelo, então 'step' não pode continuar"
+
+msgid "Start:  AIC="
+msgstr ""
+
+msgid "Step:  AIC="
+msgstr ""
 
 #, fuzzy
 msgid "'A' must be an array or table"
@@ -233,6 +245,9 @@ msgstr "nenhum grau de liberdade para os resíduos"
 
 msgid "'object' does not include an error 'qr' component"
 msgstr "'object' não tem um componente de erro 'qr'"
+
+msgid "Refitting model to allow projection"
+msgstr ""
 
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr "colunas de 'contrast.obj' devem definir um contraste (somar zero)"
@@ -503,14 +518,11 @@ msgstr "matriz de contrastes singular"
 msgid "numeric contrasts or contrast name expected"
 msgstr "contrastes numéricos ou nome de contraste esperado"
 
-msgid "contrasts not defined for 0 degrees of freedom"
-msgstr "contrastes não definidos para 0 graus de liberdade"
+msgid "not enough degrees of freedom to define contrasts"
+msgstr "não há graus de liberdade suficientes para definir contrastes"
 
 msgid "baseline group number out of range"
 msgstr "grupo basal fora de limites"
-
-msgid "not enough degrees of freedom to define contrasts"
-msgstr "não há graus de liberdade suficientes para definir contrastes"
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "especifique tanto 'x' como 'y' ou um 'x' matricial"
@@ -1465,6 +1477,14 @@ msgstr "eff.aovlist: contrastes não ortogonais dariam uma resposta incorreta"
 msgid "no terms component"
 msgstr "nenhum componente de termos"
 
+#, fuzzy
+msgid "'termlabels' must be a character vector of length at least one"
+msgstr "'ColSideColors' deve ser um vetor de caracteres de comprimento ncol(x)"
+
+#, fuzzy
+msgid "'termobj' must be a object of class \"terms\""
+msgstr "'centers' deve ser um número ou uma matriz"
+
 msgid ""
 "variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
 msgstr ""
@@ -1503,6 +1523,9 @@ msgstr "argumento 'contrasts.arg' inválido"
 msgid "variable '%s' is absent, its contrast will be ignored"
 msgstr "variável '%s' ausente, e seus contrastes serão ignorados"
 
+msgid "using type=\"numeric\" with a factor response will be ignored"
+msgstr ""
+
 msgid "invalid response type"
 msgstr "tipo de resposta inválida"
 
@@ -1520,6 +1543,10 @@ msgstr "argumento 'omit' inválido"
 
 msgid "'print.level' must be in {0,1,2}"
 msgstr "'print.level' deve estar em {0,1,2}"
+
+#, fuzzy
+msgid "'interval' must be a vector of length 2"
+msgstr "'margins' deve ser um vetor numérico de comprimento 2"
 
 msgid "lower < upper  is not fulfilled"
 msgstr "lower < upper não satisfeito"
@@ -1576,6 +1603,10 @@ msgid "'data' must be a list or an environment"
 msgstr "'newdata' deve ser uma matriz um data frame"
 
 #, fuzzy
+msgid "no parameters to fit"
+msgstr "todos os parâmetros foram fixados"
+
+#, fuzzy
 msgid "No starting values specified"
 msgstr "nenhum valor de início especificado"
 
@@ -1600,9 +1631,6 @@ msgstr ""
 "Limites superiores ou inferiores ignorados a não ser que o algoritmo seja = "
 "\"port\""
 
-msgid "Convergence failure:"
-msgstr "Falha na convergência: "
-
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "não é possível calcular verossimilhança REML para objetos \"nls\""
 
@@ -1617,6 +1645,9 @@ msgstr "fórmula '%s' deve ser da forma '~expr'"
 
 msgid "'%s' cannot be of mode '%s'"
 msgstr "'%s' não pode ser do modo '%s'"
+
+msgid "a two-sided formula is required"
+msgstr ""
 
 msgid "not enough groups"
 msgstr "número de grupos insuficiente"
@@ -1917,6 +1948,10 @@ msgstr "'span' deve estar entre 0 e 1."
 
 msgid "'x' must be between 0 and 1 for periodic smooth"
 msgstr "'x' deve estar entre 0 e 1 para alisamento periódico"
+
+#, fuzzy
+msgid "no finite observations"
+msgstr "não há um número suficiente de observações finitas"
 
 msgid "observation(s) with NAs, NaNs and/or Infs deleted"
 msgstr "observações com NAs, NaNs e/ou Infs deletadas"
@@ -2229,6 +2264,12 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "parâmetro %s não ocorre na fórmula do modelo"
 msgstr[1] "parâmetros %s não ocorrem na fórmula do modelo"
+
+#~ msgid "contrasts not defined for 0 degrees of freedom"
+#~ msgstr "contrastes não definidos para 0 graus de liberdade"
+
+#~ msgid "Convergence failure:"
+#~ msgstr "Falha na convergência: "
 
 #~ msgid ""
 #~ "link \"%s\" not available for binomial family, available links are \"logit"

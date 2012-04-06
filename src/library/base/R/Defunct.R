@@ -1,12 +1,17 @@
-.Defunct <- function(new, package=NULL) {
-    msg <- gettextf("'%s' is defunct.\n",
-                    as.character(sys.call(sys.parent())[[1]]))
-    if(!missing(new))
-        msg <- c(msg, gettextf("Use '%s' instead.\n", new))
-    if(!is.null(package))
-        msg <- c(msg,
-                 gettextf("See help(\"Defunct\") and help(\"%s-defunct\").", package))
-    else msg <- c(msg, gettext("See help(\"Defunct\")"))
+.Defunct <- function(new, package=NULL, msg) {
+    if (missing(msg)) {
+	msg <- gettextf("'%s' is defunct.\n",
+			as.character(sys.call(sys.parent())[[1]]))
+	if(!missing(new))
+	    msg <- c(msg, gettextf("Use '%s' instead.\n", new))
+	msg <- c(msg,
+		 if(!is.null(package))
+		 gettextf("See help(\"Defunct\") and help(\"%s-defunct\").",
+			  package)
+		 else gettext("See help(\"Defunct\")"))
+    }
+    else msg <- as.character(msg)
+
     stop(paste(msg, collapse=""), call. = FALSE, domain = NA)
 }
 
@@ -110,3 +115,26 @@ format.char <- function(x, width = NULL, flag = "-")
 La.chol <- function(x) .Defunct("chol")
 La.chol2inv <- function(x, size = ncol(x)) .Defunct("chol2inv")
 ## </entry>
+
+## <entry>
+## Deprecated in 2.4.0
+## Defunct in 2.5.0
+symbol.C <- function(name)
+{
+    warning("'symbol.C' is not needed: please remove it", immediate.=TRUE)
+    name
+}
+symbol.For <- function(name)
+{
+    warning("'symbol.For' is not needed: please remove it", immediate.=TRUE)
+    name
+}
+## </entry>
+
+## <entry>
+## Deprecated in 1999
+## Defunct in 2.5.0
+unix <- function(call, intern = FALSE) .Defunct("system")
+## </entry>
+
+

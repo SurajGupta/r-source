@@ -76,7 +76,7 @@ x$name <- value
   contain \code{NULL} elements which will cause the corresponding
   columns to be deleted.  (See the Examples.)
 
-  Matrixing indexing using \code{[} is not recommended, and barely
+  Matrix indexing using \code{[} is not recommended, and barely
   supported.  For extraction, \code{x} is first coerced to a matrix.
   For replacement a logical matrix (only) can be used to select the
   elements to be replaced in the same way as for a matrix.
@@ -134,7 +134,14 @@ sw[[1]]      # the same
 
 sw[1,]       # a one-row data frame
 sw[1,, drop=TRUE]  # a list
-
+\dontshow{
+stopifnot(identical(sw[,1], sw[[1]]),
+          identical(sw[,1][1], 80.2),
+          identical(sw[,1, drop = FALSE], sw[1]),
+          is.data.frame(sw[1]), dim(sw[1] ) == c(5,1),
+          is.data.frame(sw[1,]),dim(sw[1,]) == c(1,4),
+          is.list(s1 <- sw[1,, drop=TRUE]), identical(s1$Fertility, 80.2))
+}
 swiss[ c(1, 1:2), ]   # duplicate row, unique row names are created
 
 sw[sw <= 6] <- 6  # logical matrix indexing

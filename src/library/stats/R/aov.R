@@ -135,7 +135,7 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
 {
     if(!is.null(cl <- x$call)) {
         cat("Call:\n   ")
-        dput(cl)
+        dput(cl, control=NULL)
     }
     asgn <- x$assign[x$qr$pivot[1:x$rank]]
     effects <- x$effects
@@ -350,7 +350,7 @@ summary.aov <- function(object, intercept = FALSE, split,
             ## 'nterms' ~= 'Residuals' have no P-value
         }
         class(x) <- c("anova", "data.frame")
-        row.names(x) <- format(nmrows)
+        attr(x, "row.names") <- format(nmrows)
         if(!keep.zero.df) x <- x[df > 0, ]
         pm <- pmatch("(Intercept)", row.names(x), 0)
         if(!intercept && pm > 0) x <- x[-pm ,]
@@ -619,7 +619,7 @@ se.contrast.aovlist <-
         sum(resid^2)/rdf
     }
     if(is.null(attr(object, "error.qr"))) {
-        cat("Refitting model to allow projection\n")
+        message("Refitting model to allow projection")
         object <- update(object, qr = TRUE)
     }
     contrast.obj <-

@@ -32,7 +32,7 @@ spineplot(x, \dots)
   \item{formula}{a \code{"formula"} of type \code{y ~ x} with a single
     dependent \code{"factor"} and a single explanatory variable.}    
   \item{data}{an optional data frame.}
-  \item{breaks}{if the explantory variable is numeric, this controls how
+  \item{breaks}{if the explanatory variable is numeric, this controls how
     it is discretized. \code{breaks} is passed to \code{\link{hist}} and can
     be a list of arguments.}
   \item{tol.ylab}{convenience tolerance parameter for y-axis annotation.
@@ -68,7 +68,7 @@ spineplot(x, \dots)
   \eqn{x} and \eqn{y} are categorical), both quantities are approximated
   by the corresponding empirical relative frequencies.  For the
   spinogram (where \eqn{x} is numerical), \eqn{x} is first discretized
-  (by caling \code{\link{hist}} with \code{breaks} argument) and then
+  (by calling \code{\link{hist}} with \code{breaks} argument) and then
   empirical relative frequencies are taken.
   
   Thus, spine plots can also be seen as a generalization of stacked bar

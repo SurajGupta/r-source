@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-6  R Development Core Team
+ *  Copyright (C) 2001-7  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,8 +78,14 @@ Rboolean attribute_hidden compute_identical(SEXP x, SEXP y)
 		char *tx = CHAR(PRINTNAME(TAG(elx)));
 		for(ely = ay; ely != R_NilValue; ely = CDR(ely))
 		    if(streql(tx, CHAR(PRINTNAME(TAG(ely))))) {
-			if(!compute_identical(CAR(elx), CAR(ely))) 
-			    return FALSE;
+			/* We need to treat row.names specially here */
+			if(streql(tx, "row.names")) {
+			    if(!compute_identical(getAttrib(x, R_RowNamesSymbol),
+						  getAttrib(y, R_RowNamesSymbol)))
+			       return FALSE;
+			} else
+			    if(!compute_identical(CAR(elx), CAR(ely))) 
+				return FALSE;
 			break;
 		    }
 		if(ely == R_NilValue) return FALSE;
@@ -138,6 +144,7 @@ Rboolean attribute_hidden compute_identical(SEXP x, SEXP y)
     }
     case CHARSXP:
     {
+	/* NB: R strings can have embedded nuls */
 	int n1 = LENGTH(x), n2 = LENGTH(y);
 	if (n1 != n2) return FALSE;
 	if(memcmp(CHAR(x), CHAR(y), n1) != 0) return FALSE;

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2006   The R Development Core Team
+ *  Copyright (C) 1997-2007   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -293,7 +293,17 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level,
     case 1419:  /* real       <- vector     */
     case 1519:  /* complex    <- vector     */
     case 1619:  /* character  <- vector     */
+    case 2419:  /* raw        <- vector     */
 	*x = coerceVector(*x, VECSXP);
+	break;
+
+    case 1020:  /* logical    <- expression */
+    case 1320:  /* integer    <- expression */
+    case 1420:  /* real       <- expression */
+    case 1520:  /* complex    <- expression */
+    case 1620:  /* character  <- expression */
+    case 2420:  /* raw        <- expression */
+	*x = coerceVector(*x, EXPRSXP);
 	break;
 
     case 2001:	/* expression <- symbol	    */
@@ -1217,6 +1227,7 @@ static SEXP listRemove(SEXP x, SEXP s)
 	}
     }
     SET_ATTRIB(CDR(a), ATTRIB(x));
+    IS_S4_OBJECT(x) ?  SET_S4_OBJECT(CDR(a)) : UNSET_S4_OBJECT(CDR(a));
     SET_OBJECT(CDR(a), OBJECT(x));
     SET_NAMED(CDR(a), NAMED(x));
     UNPROTECT(2);
@@ -1485,7 +1496,7 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
     if( TYPEOF(x) == ENVSXP) {
       if( nsubs!=1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
 	error(_("wrong args for environment subassignment"));
-      defineVar(install(CHAR(STRING_ELT(CAR(subs),0))), y, x);
+      defineVar(install(translateChar(STRING_ELT(CAR(subs),0))), y, x);
       UNPROTECT(1);
       return(x);
     }
@@ -1777,7 +1788,7 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
       return(ans);
 
     if (! iS)
-	nlist = install(CHAR(STRING_ELT(input, 0)));
+	nlist = install(translateChar(STRING_ELT(input, 0)));
 
     return R_subassign3_dflt(call, CAR(ans), nlist, CADDR(ans));
 }
@@ -1811,6 +1822,7 @@ SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
 	if (TAG(x) == nlist) {
 	    if (val == R_NilValue) {
 		SET_ATTRIB(CDR(x), ATTRIB(x));
+		IS_S4_OBJECT(x) ?  SET_S4_OBJECT(CDR(x)) : UNSET_S4_OBJECT(CDR(x));
 		SET_OBJECT(CDR(x), OBJECT(x));
 		SET_NAMED(CDR(x), NAMED(x));
 		x = CDR(x);

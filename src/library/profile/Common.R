@@ -18,6 +18,9 @@ version <- R.version            # for S compatibility
 ## for backwards compatibility only
 R.version.string <- R.version$version.string
 
+## NOTA BENE: options() for non-base package functionality are in places like
+##            --------- ../utils/R/zzz.R
+
 options(keep.source = interactive())
 options(warn = 0)
 # options(repos = c(CRAN="@CRAN@"))
@@ -51,10 +54,6 @@ local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
             warning("package ", pkg,
                     ' in options("defaultPackages") was not found', call.=FALSE)
     }
-    sch <- search()
-    if(! "package:stats" %in% sch) {
-        autoload("ts", "stats")
-    }
 }
 
 .OptRequireMethods <- function()
@@ -66,4 +65,14 @@ local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
             warning("package \"methods\"",
                     ' in options("defaultPackages") was not found', call.=FALSE)
     }
+}
+
+if(Sys.getenv("R_BATCH") != "") {
+    .Last.sys <- function()
+    {
+        cat("> proc.time()\n")
+        print(proc.time())
+    }
+    ## avoid passing on to spawned R processes
+    Sys.unsetenv("R_BATCH")
 }

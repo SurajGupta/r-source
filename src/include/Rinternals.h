@@ -349,6 +349,7 @@ void (SET_OBJECT)(SEXP x, int v);
 void (SET_TYPEOF)(SEXP x, int v);
 void (SET_NAMED)(SEXP x, int v);
 void SET_ATTRIB(SEXP x, SEXP v);
+void DUPLICATE_ATTRIB(SEXP to, SEXP from);
 
 /* S4 object testing */
 int (IS_S4_OBJECT)(SEXP x);
@@ -523,7 +524,8 @@ LibExtern SEXP	R_SourceSymbol;     /* "source" */
 LibExtern SEXP	R_DotEnvSymbol;     /* ".Environment" */
 LibExtern SEXP	R_RecursiveSymbol;  /* "recursive" */
 LibExtern SEXP	R_UseNamesSymbol;   /* "use.names" */
-LibExtern SEXP	R_RowNamesSymbol;   /* "row.names" */
+LibExtern SEXP  R_SrcfileSymbol;    /* "srcfile" */
+LibExtern SEXP  R_SrcrefSymbol;     /* "srcref" */
 
 /* Missing Values - others from Arith.h */
 #define NA_STRING	R_NaString
@@ -598,12 +600,15 @@ Rboolean Rf_pmatch(SEXP, SEXP, Rboolean);
 Rboolean Rf_psmatch(char *, char *, Rboolean);
 void Rf_PrintValue(SEXP);
 SEXP Rf_protect(SEXP);
-SEXP Rf_rownamesgets(SEXP,SEXP);
 SEXP Rf_setAttrib(SEXP, SEXP, SEXP);
 void Rf_setSVector(SEXP*, int, SEXP);
 void Rf_setVar(SEXP, SEXP, SEXP);
+SEXPTYPE Rf_str2type(char*);
 Rboolean Rf_StringBlank(SEXP);
 SEXP Rf_substitute(SEXP,SEXP);
+char * Rf_translateChar(SEXP);
+char * Rf_type2char(SEXPTYPE);
+SEXP Rf_type2str(SEXPTYPE);
 void Rf_unprotect(int);
 void Rf_unprotect_ptr(SEXP);
 
@@ -760,7 +765,7 @@ void R_InitConnInPStream(R_inpstream_t stream,  Rconnection con,
 void R_Serialize(SEXP s, R_outpstream_t ops);
 SEXP R_Unserialize(R_inpstream_t ips);
 
-/* slot management */
+/* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 
@@ -908,8 +913,12 @@ int R_system(char *);
 #define setAttrib		Rf_setAttrib
 #define setSVector		Rf_setSVector
 #define setVar			Rf_setVar
+#define str2type		Rf_str2type
 #define StringBlank		Rf_StringBlank
 #define substitute		Rf_substitute
+#define translateChar		Rf_translateChar
+#define type2char		Rf_type2char
+#define type2str		Rf_type2str
 #define unprotect		Rf_unprotect
 #define unprotect_ptr		Rf_unprotect_ptr
 #define VectorToPairList	Rf_VectorToPairList

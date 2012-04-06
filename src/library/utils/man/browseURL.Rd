@@ -54,7 +54,7 @@ browseURL(url, browser = getOption("browser"))
 #ifdef windows
 \examples{
 \dontrun{browseURL("http://www.r-project.org")
-browseURL("file://c|/R/R-2.4.0/doc/html/index.html",
+browseURL("file://c|/R/R-2.5.0/doc/html/index.html",
           browser="C:/Program Files/Mozilla Firefox/firefox.exe")
 }}
 #endif

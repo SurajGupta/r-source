@@ -11,7 +11,7 @@ srcdir = .
 ## Can't test when cross-building
 RHOME = $(shell ../src/gnuwin32/Rpwd.exe ..)# must be absolute path
 R= $(RHOME)/bin/Rterm --vanilla LC_ALL=C SRCDIR=. R_DEFAULT_PACKAGES=
-RDIFF = $(RHOME)/bin/R CMD Rdiff.sh
+RDIFF = $(RHOME)/bin/R CMD Rdiff
 RVAL_IF_DIFF=0
 
 test-src-gct = \
@@ -28,7 +28,8 @@ test-src-strict-1 = \
 test-src-strict-auto =
 test-src-sloppy-1 = \
 	complex.R \
-	print-tests.R
+	print-tests.R \
+	datasets.R
 test-src-sloppy-auto =
 
 test-src-1 = $(test-src-strict-1) $(test-src-sloppy-1)
@@ -42,6 +43,7 @@ test-src-demo = demos.R demos2.R
 test-src-internet = internet.R
 test-src-isas = isas-tests.R
 test-src-lapack = lapack.R
+test-src-primitive = primitives.R
 test-src-random = p-r-random-tests.R
 test-src-segfault = no-segfault.R
 
@@ -58,6 +60,7 @@ test-out-demo = $(test-src-demo:.R=.Rout)
 test-out-internet = $(test-src-internet:.R=.Rout)
 test-out-isas = $(test-src-isas:.R=.Rout)
 test-out-lapack = $(test-src-lapack:.R=.Rout)
+test-out-primitive = $(test-src-primitive:.R=.Rout)
 test-out-random = $(test-src-random:.R=.Rout)
 test-out-reg = $(test-src-reg:.R=.Rout)
 test-out-reg3 = $(test-src-reg3:.R=.Rout)
@@ -73,7 +76,7 @@ test-out = $(test-src:.R=.Rout) $(test-out-demo) $(test-out-gct) \
 .SUFFIXES: .R .Rin .Rout
 
 all-basic-tests = Specific Reg Internet
-all-devel-tests = Docs IsAs Lapack Random Demo Segfault \
+all-devel-tests = Docs IsAs Lapack Random Demo Primitive Segfault \
    Standalone Packages
 
 all check: test-all-basics
@@ -175,6 +178,10 @@ test-Lapack:
 	@echo "running tests of LAPACK-based functions"
 	@$(MAKE) -f Makefile.win $(test-out-lapack) RVAL_IF_DIFF=0
 
+test-Primitive:
+	@echo "running tests of primitives"
+	@$(MAKE) -f Makefile.win $(test-out-primitive) RVAL_IF_DIFF=0
+
 test-Random:
 	@echo "running tests of random deviate generation"
 	@$(MAKE) -f Makefile.win $(test-out-random) RVAL_IF_DIFF=1
@@ -196,7 +203,7 @@ test-Standalone:
 
 clean:
 	@rm -f *.Rout *.Rout.fail internet.Rout2 Rplots.ps reg-plot.ps \
-	  reg-tests-?.ps $(test-src-auto) R-exts.* R-intro.R Makedeps
+	  reg-tests-?.ps $(test-src-auto) R-exts.* R-exts_res.rc R-intro.R Makedeps
 	@rm -rf *.Rcheck
 	@rm -f FALSE* .R .tex mirrors.html
 	@$(MAKE) -C Embedding -f Makefile.win clean

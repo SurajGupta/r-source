@@ -68,7 +68,10 @@ barplot(height, \dots)
   \item{col}{a vector of colors for the bars or bar components.
     By default, grey is used if \code{height} is a vector, and a
     gamma-corrected grey palette if \code{height} is a matrix.}
-  \item{border}{the color to be used for the border of the bars.}
+  \item{border}{the color to be used for the border of the bars.
+    Use \code{border = NA} to omit borders.  If there are shading
+    lines, \code{border = TRUE} means use the same colour for
+    the border as for the shading lines.}
   \item{main,sub}{overall and sub title for the plot.}
   \item{xlab}{a label for the x axis.}
   \item{ylab}{a label for the y axis.}
@@ -87,7 +90,7 @@ barplot(height, \dots)
   \item{inside}{logical.  If \code{TRUE}, the lines which divide
     adjacent (non-stacked!) bars will be drawn.  Only applies when
     \code{space = 0} (which it partly is when \code{beside = TRUE}).}
-%MM: we still have "NotYetUsed" -- the above describe's S-plus 6.1 (not
+%MM: we still have "NotYetUsed" -- the above describes S-plus 6.1 (not
 % precisely documented!) behavior!
   \item{plot}{logical.  If \code{FALSE}, nothing is plotted.}
   \item{axis.lty}{the graphics parameter \code{lty} applied to the axis

@@ -27,6 +27,7 @@ require  Exporter;
 @EXPORT  = qw(Rdconv);
 
 use FileHandle;
+use Text::DelimMatch;
 use Text::Tabs;
 use Text::Wrap;
 
@@ -594,16 +595,27 @@ sub transform_S3method {
     ## Note that this markup should really only be used inside \usage.
     ## NB: \w includes _ as well as [:alnum:], which R now allows in name
     my ($text) = @_;
+    my ($method, $prefix, $match, $rest);
+    my $delimround = new Text::DelimMatch("\\(", "\\)");
+    $delimround->quote('"');
+    $delimround->quote("'");
     my $S3method_RE =
       "([ \t]*)\\\\(S3)?method\{([\\w.]+)\}\{([\\w.]+)\}";
-    while($text =~ /$S3method_RE/) {
+    while($text =~ /$S3method_RE(.*)/s) {
+	$method = "method";
+	($prefix, $match, $rest) = $delimround->match($5);
+	if(($prefix eq "") && ($rest =~ m/^[ \t]*<-/)) {
+	    ## (Note that the RHS should really be called 'value', and
+	    ## that we could check for a syntacticaly valid R name.)
+	    $method = "replacement method";
+	}
 	if($4 eq "default") {
 	    $text =~
-		s/$S3method_RE/$1\#\# Default S3 method:\n$1$3/s;
+		s/$S3method_RE/$1\#\# Default S3 $method:\n$1$3/s;
 	}
 	else {
 	    $text =~
-		s/$S3method_RE/$1\#\# S3 method for class '$4':\n$1$3/s;
+		s/$S3method_RE/$1\#\# S3 $method for class '$4':\n$1$3/s;
 	}
     }
     ## Also try to handle markup for S3 methods for subscripting and
@@ -611,7 +623,7 @@ sub transform_S3method {
     $S3method_RE = "([ \t]*)\\\\(S3)?method" .
 	"\{(\\\$|\\\[\\\[?)\}\{([\\w.]+)\}\\\(([^)]+)\\\)";
     my ($str, $name, @args);
-    while($text =~ /$S3method_RE/) {
+    while($text =~ /$S3method_RE(.*)/s) {
 	## <NOTE>
 	## The hard part is to rewrite the argument list, because
 	## although something like
@@ -621,22 +633,22 @@ sub transform_S3method {
 	##   Method for class 'foo':
 	##   x[i, ..., drop = FALSE]
 	## This can be tricky if the argument list contains embedded
-	## parentheses (e.g., in default argument strings), so that a
-	## refined Text::DelimMatch analysis would be needed.  For the
-	## time being, let us be happy with what we have ...
+	## parentheses (e.g., in default argument strings), so we use
+	## Text::DelimMatch.
 	## </NOTE>
 	$str = "$1\#\# S3 method for class '$4':\n$1";
 	$name = $3;
-	@args = split(/,\s*/, $5);
-	if($name eq "\$") {
-	    ## Should really check on scalar(@args) to be 2 ...
-	    $str .= "$args[0]\$$args[1]";
-	}
-	else {
-	    $str .= "$args[0]$name" . join(", ", @args[1..$#args]);
-	    $str .= "]" x length($name);
-	}
-	$text =~ s/$S3method_RE/$str/s;
+	## The match was for something ending in a pair of balanced
+	## parentheses, which are not necessarily the matching ones.
+	($prefix, $match, $rest) = $delimround->match("($5)$6");
+	## Extract the first argument from the argument list.
+	substr($match, 1, -1) =~ m/\s*([^,]+),\s*(.*)/s;
+	## Now put things together.
+	$str .= "$1$name$2";
+	$str .= "]" x length($name) if($name ne "\$");
+	$str =~ s/method/replacement method/ if($rest =~ m/^[ \t]*<-/);
+	
+	$text =~ s/$S3method_RE.*/$str$rest/s;
     }
     ## Also try to handle markup for S3 methods for binary ops.
     $S3method_RE = "([ \t]*)\\\\(S3)?method" .
@@ -882,7 +894,7 @@ sub text2html {
 		    if($pkg ne $pkgname) {
 			$htmlfile = mklink($opt, $topic . $HTML);
 		    } else {
-			$htmlfile = $topic . $HTML;
+			$htmlfile = "href=\"" . $topic . $HTML . "\"";
 		    }
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a $htmlfile>$arg<\/a>/s;
 		} else {
@@ -1039,7 +1051,7 @@ sub code2html {
 		    if($pkg ne $pkgname) {
 			$htmlfile = mklink($opt, $topic . $HTML);
 		    } else {
-			$htmlfile = $topic . $HTML;
+			$htmlfile = "href=\"" . $topic . $HTML . "\"";
 		    }
        		    $text =~ s/\\link(\[.*\])?$id.*$id/<a $htmlfile>$arg<\/a>/s;
 		} else {
@@ -1313,9 +1325,10 @@ sub html_functionfoot
 
 sub chm_functionhead
 {
-    my ($title, $pkgname, $name) = @_;
+    my ($title, $pkgname, $name, $enc) = @_;
 
     my $retval = "<html><head><title>$title</title>\n" .
+	"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$enc\">\n" .
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"Rchm.css\">\n".
 	    "</head>\n<body>\n\n";
 
@@ -1351,6 +1364,9 @@ sub rdoc2txt { # (filename); 0 for STDOUT
     } else {
 	$txtout = "STDOUT";
     }
+    local $encoding = "unknown";
+    $encoding = latex_canonical_encoding($blocks{"encoding"})
+	if defined $blocks{"encoding"};
 
     $INDENT = 3;  # indent for \itemize and \enumerate first line
     $INDENTD = 0; # indent for \describe list first line
@@ -1358,9 +1374,12 @@ sub rdoc2txt { # (filename); 0 for STDOUT
 
     if ($pkgname) {
 	my $pad = 75 - length($blocks{"name"}) - length($pkgname) - 30;
+	$pad = $pad - 2 - length($encoding) if $encoding ne "unknown";
 	$pad = int($pad/2);
 	print $txtout  &html_escape_name($blocks{"name"}), " " x $pad,
-	"package:$pkgname", " " x $pad,"R Documentation\n\n";
+	"package:$pkgname", " " x $pad,"R Documentation";
+	print $txtout "($encoding)" if $encoding ne "unknown";
+	print $txtout "\n\n";
     }
     print $txtout (txt_header(txt_striptitle($blocks{"title"})), "\n");
     txt_print_block("description", "Description");
@@ -1616,27 +1635,36 @@ sub Rwrap
     my $nl = "";
     my $remainder = "";
 
-    if ($ll <= 0) {
-	##	warn "warning. indent:\n".
-	##	    &nounder(expand($ip))."\nis wider than the page\n";
-	$ll = 5;
+    $ll = 0 if($ll <= 0);
+    ## Allow for wrapping after the expansion of $ip.
+    if($t =~ s/^([^\n]{0,$ll})(\s|\Z(?!\n))//xm) {
+	$r .= $nl . $lead . $1;
+	$remainder = $2;
     }
+    else {
+	$r .= $nl . $lead;
+    }
+
+    $lead = $xp;
+    $ll = $nll;
+    $nl = "\n";
+    
     while ($t !~ /^\s*$/) {
 	if ($t =~ s/^([^\n]{0,$ll})(\s|\Z(?!\n))//xm) {
 	    $r .= $nl . $lead . $1;
 	    $remainder = $2;
-	} elsif ($t =~ s/^([^\n]{$ll})//) {
+	}
+	elsif ($t =~ s/([^\n]*?)(\s|\Z(?!\n))//xm) {
+	    ## Prefer overflow to wrap at fill column, cf Text::Wrap.
 	    $r .= $nl . $lead . $1;
-	    $remainder = "\n";
+	    $remainder = $2;
 	} else {
 	    print "$t\n";
 	    die "This shouldn't happen";
 	}
 
-	$lead = $xp;
-	$ll = $nll;
-	$nl = "\n";
     }
+
     $r .= $remainder;
 
     $r .= $lead . $t if $t ne "";
@@ -2553,7 +2581,7 @@ sub text2latex {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\enc") &&  $text =~ /\\enc/){
 	my ($id, $enc, $ascii) = get_arguments("enc", $text, 2);
-	if($encoding eq "unknown") { # \enc withou \encoding
+	if($encoding eq "unknown") { # \enc without \encoding
 	    $enc = $ascii if $ascii;
 	    $enc =~ s/\\([^&])/$1/go;
 	}
@@ -2886,11 +2914,15 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
     } else {
 	$htmlout = "STDOUT";
     }
+    $encoding = mime_canonical_encoding($blocks{"encoding"})
+	if defined $blocks{"encoding"};
     $using_chm = 1;
     $nlink = 0;
     print $htmlout (chm_functionhead(html_striptitle($blocks{"title"}),
 				     $pkgname,
-				     &html_escape_name($blocks{"name"})));
+				     &html_escape_name($blocks{"name"}),
+				     $encoding,
+				     ));
 
     html_print_block("description", "Description");
     html_print_codeblock("usage", "Usage");

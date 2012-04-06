@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2006   The R Development Core Team.
+ *  Copyright (C) 1998-2007   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,6 +72,8 @@ typedef struct {
     Rboolean wasopen;
     Rboolean escapes;
     int save; /* = 0; */
+    Rboolean isLatin1;
+    Rboolean isUTF8;
     void *hash;
 
     char convbuf[100];
@@ -125,12 +127,20 @@ static HashData *HashTableSetup(int maxstrings)
     return d;
 }
 
-static SEXP insertString(char *str, HashData *d)
+static SEXP insertString(char *str, LocalData *l)
 {
+    HashData *d = l->hash;
     int i;
     SEXP tmp, *h = d->HashTable;
 
-    if(d->nins >= d->maxstrings) return mkChar(str);
+    if(d->nins >= d->maxstrings) {
+	tmp = mkChar(str);
+	if(!utf8strIsASCII(str)) {
+	    if(l->isLatin1) SET_LATIN1(tmp);
+	    if(l->isUTF8) SET_UTF8(tmp);
+	}
+	return tmp;
+    }
     i = shash(str, d);
     while (h[i] != NULL) {
 	if (sequal(str, CHAR(h[i]))) return h[i];
@@ -138,6 +148,10 @@ static SEXP insertString(char *str, HashData *d)
     }
     d->nins++;
     tmp = mkChar(str);
+    if(!utf8strIsASCII(str)) {
+	if(l->isLatin1) SET_LATIN1(tmp);
+	if(l->isUTF8) SET_UTF8(tmp);
+    }
     h[i] = tmp;
     return tmp;
 }
@@ -429,7 +443,7 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
 		    R_AllocStringBuffer(nbuf, buffer);
 		}
 		if (c == '\\') {
-		    /* If this is an embedded quote, unquote it, but 
+		    /* If this is an embedded quote, unquote it, but
 		       otherwise keep backslashes */
 		    c = scanchar(TRUE, d);
 		    if (c == R_EOF) break;
@@ -606,7 +620,7 @@ static void extractItem(char *buffer, SEXP ans, int i, LocalData *d)
 	if (isNAstring(buffer, 1, d))
 	    SET_STRING_ELT(ans, i, NA_STRING);
 	else
-	    SET_STRING_ELT(ans, i, insertString(buffer, d->hash));
+	    SET_STRING_ELT(ans, i, insertString(buffer, d));
 	break;
     case RAWSXP:
 	if (isNAstring(buffer, 0, d))
@@ -914,10 +928,10 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep, what, stripwhite, dec, quotes, comstr;
     int i, c, nlines, nmax, nskip, flush, fill, blskip, multiline, escapes;
-    char *p, *vmax;
+    char *p, *vmax, *encoding;
     RCNTXT cntxt;
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0};
+		      FALSE, 0, FALSE, FALSE, NULL};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
@@ -939,7 +953,12 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     blskip = asLogical(CAR(args)); args = CDR(args);
     multiline = asLogical(CAR(args)); args = CDR(args);
     comstr = CAR(args);            args = CDR(args);
-    escapes = asLogical(CAR(args));
+    escapes = asLogical(CAR(args));args = CDR(args);
+    if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
+	errorcall(call, _("invalid '%s' value"), "encoding");
+    encoding = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
+    if(streql(encoding, "latin1")) data.isLatin1 = TRUE;
+    if(streql(encoding, "UTF-8"))  data.isUTF8 = TRUE;
 
     if (data.quiet == NA_LOGICAL)		data.quiet = 0;
     if (blskip == NA_LOGICAL)			blskip = 1;
@@ -960,7 +979,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isString(sep) || isNull(sep)) {
 	if (length(sep) == 0) data.sepchar = 0;
 	else {
-	    char *sc = CHAR(STRING_ELT(sep, 0));
+	    char *sc = translateChar(STRING_ELT(sep, 0));
 	    if(strlen(sc) > 1)
 		errorcall(call, _("invalid 'sep' value: must be one byte"));
 	    data.sepchar = (unsigned char) sc[0];
@@ -972,9 +991,9 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (length(dec) == 0)
 	    data.decchar = '.';
 	else {
-	    char *dc = CHAR(STRING_ELT(dec, 0));
+	    char *dc = translateChar(STRING_ELT(dec, 0));
 	    if(strlen(dc) != 1)
-		errorcall(call, 
+		errorcall(call,
 			  _("invalid decimal separator: must be one byte"));
 	    data.decchar = dc[0];
 	}
@@ -984,7 +1003,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (isString(quotes)) {
 	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = CHAR(STRING_ELT(quotes, 0));
+	data.quoteset = translateChar(STRING_ELT(quotes, 0));
 	/* Protect against broken realloc */
 	if(data.quotesave)
 	    data.quotesave = realloc(data.quotesave,
@@ -999,9 +1018,9 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	errorcall(call, _("invalid quote symbol set"));
 
-    p = CHAR(STRING_ELT(comstr, 0));
+    p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
-    if (strlen(p) > 1) 
+    if (strlen(p) > 1)
 	errorcall(call, _("invalid '%s' value"), "comment.char");
     else if (strlen(p) == 1) data.comchar = (unsigned char)*p;
     if(escapes == NA_LOGICAL)
@@ -1027,7 +1046,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     ans = R_NilValue;		/* -Wall */
     data.save = 0;
 
-    /* set up a context which will close the connection if there is 
+    /* set up a context which will close the connection if there is
        an error or user interrupt */
     begincontext(&cntxt, CTXT_CCODE, call, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
@@ -1078,7 +1097,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     Rboolean dbcslocale = (MB_CUR_MAX == 2);
 #endif
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0};
+		      FALSE, 0, FALSE, FALSE, NULL};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
@@ -1091,7 +1110,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     comstr = CAR(args);
     if (TYPEOF(comstr) != STRSXP || length(comstr) != 1)
 	errorcall(call, _("invalid '%s' value"), "comment.char");
-    p = CHAR(STRING_ELT(comstr, 0));
+    p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
     if (strlen(p) > 1)
 	errorcall(call, _("invalid '%s' value"), "comment.char");
@@ -1102,13 +1121,13 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (isString(sep) || isNull(sep)) {
 	if (length(sep) == 0) data.sepchar = 0;
-	else data.sepchar = (unsigned char) CHAR(STRING_ELT(sep, 0))[0];
+	else data.sepchar = (unsigned char) translateChar(STRING_ELT(sep, 0))[0];
 	/* gets compared to chars: bug prior to 1.7.0 */
     } else errorcall(call, _("invalid '%s' value"), "sep");
 
     if (isString(quotes)) {
 	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = CHAR(STRING_ELT(quotes, 0));
+	data.quoteset = translateChar(STRING_ELT(quotes, 0));
 	/* Protect against broken realloc */
 	if(data.quotesave) data.quotesave = realloc(data.quotesave, strlen(data.quoteset) + 1);
 	else data.quotesave = malloc(strlen(data.quoteset) + 1);
@@ -1193,7 +1212,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		while ((c = scanchar(inquote, &data)) != quote) {
 		    if (c == R_EOF || c == '\n') {
 			if(!data.wasopen) data.con->close(data.con);
-			errorcall(call, 
+			errorcall(call,
 				  _("string terminated by newline or EOF"));
 		    }
 		}
@@ -1239,6 +1258,54 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     return bns;
 }
 
+/* A struct used by do_typecvt to keep track of possible types for the input */
+typedef struct typecvt_possible_types {
+    unsigned int islogical  : 1;
+    unsigned int isinteger  : 1;
+    unsigned int isreal     : 1;
+    unsigned int iscomplex  : 1;
+} Typecvt_Info;
+
+/* Sets fields of typeInfo, ruling out possible types based on s.
+ *
+ * The typeInfo struct should be initialized with all fields TRUE.
+ */
+void ruleout_types(char *s, Typecvt_Info *typeInfo, LocalData *data)
+{
+    int res;
+    char *endp;
+
+    if (typeInfo->islogical) {
+        if (strcmp(s, "F") == 0 || strcmp(s, "FALSE") == 0
+            || strcmp(s, "T") == 0 || strcmp(s, "TRUE") == 0) {
+            typeInfo->isinteger = FALSE;
+            typeInfo->isreal = FALSE;
+            typeInfo->iscomplex = FALSE;
+        } else {
+            typeInfo->islogical = TRUE;
+        }
+    }
+
+    if (typeInfo->isinteger) {
+        res = Strtoi(s, 10);
+        if (res == NA_INTEGER)
+            typeInfo->isinteger = FALSE;
+    }
+
+    if (typeInfo->isreal) {
+        Strtod(s, &endp, TRUE, data);
+        if (!isBlankString(endp))
+            typeInfo->isreal = FALSE;
+    }
+
+    if (typeInfo->iscomplex) {
+        strtoc(s, &endp, TRUE, data);
+        if (!isBlankString(endp))
+            typeInfo->iscomplex = FALSE;
+    }
+}
+
+
 /* type.convert(char, na.strings, as.is, dec) */
 
 /* This is a horrible hack which is used in read.table to take a
@@ -1252,12 +1319,16 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP cvec, a, dup, levs, dims, names, dec;
     SEXP rval = R_NilValue; /* -Wall */
-    int i, j, len, numeric, asIs, res;
-    Rboolean islogical = TRUE, isinteger = TRUE, isreal = TRUE,
-	iscomplex = TRUE, done = FALSE;
+    int i, j, len, numeric, asIs;
+    Rboolean done = FALSE;
     char *endp, *tmp = NULL;
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0};
+		      FALSE, 0, FALSE, FALSE, NULL};
+    Typecvt_Info typeInfo;      /* keep track of possible types of cvec */
+    typeInfo.islogical = TRUE;  /* we can't rule anything out initially */
+    typeInfo.isinteger = TRUE;
+    typeInfo.isreal = TRUE;
+    typeInfo.iscomplex = TRUE;
     data.NAstrings = R_NilValue;
 
     checkArity(op,args);
@@ -1278,7 +1349,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (length(dec) == 0)
 	    data.decchar = '.';
 	else
-	    data.decchar = CHAR(STRING_ELT(dec, 0))[0];
+	    data.decchar = translateChar(STRING_ELT(dec, 0))[0];
     }
 
     cvec = CAR(args);
@@ -1286,7 +1357,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
     numeric = 1;
 
-    /* save the dim/dimname attributes */
+    /* save the dim/dimnames attributes */
 
     PROTECT(dims = getAttrib(cvec, R_DimSymbol));
     if (isArray(cvec))
@@ -1302,16 +1373,10 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    break;
     }
     if (i < len) {  /* not all entries are NA */
-	if (strcmp(tmp, "F") != 0 && strcmp(tmp, "FALSE") != 0
-	    && strcmp(tmp, "T") != 0 && strcmp(tmp, "TRUE") != 0)
-	    islogical = FALSE;
-
-	res = Strtoi(tmp, 10); if (res == NA_INTEGER) isinteger = FALSE;
-	Strtod(tmp, &endp, TRUE, &data); if (!isBlankString(endp)) isreal = FALSE;
-	strtoc(tmp, &endp, TRUE, &data); if (!isBlankString(endp)) iscomplex = FALSE;
+        ruleout_types(tmp, &typeInfo, &data);
     }
 
-    if (islogical) {
+    if (typeInfo.islogical) {
 	PROTECT(rval = allocVector(LGLSXP, len));
 	for (i = 0; i < len; i++) {
 	    tmp = CHAR(STRING_ELT(cvec, i));
@@ -1324,15 +1389,16 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 		else if(strcmp(tmp, "T") == 0 || strcmp(tmp, "TRUE") == 0)
 		    LOGICAL(rval)[i] = 1;
 		else {
-		    islogical = FALSE;
+		    typeInfo.islogical = FALSE;
+                    ruleout_types(tmp, &typeInfo, &data);
 		    break;
 		}
 	    }
 	}
-	if (islogical) done = TRUE; else UNPROTECT(1);
+	if (typeInfo.islogical) done = TRUE; else UNPROTECT(1);
     }
 
-    if (!done && isinteger) {
+    if (!done && typeInfo.isinteger) {
 	PROTECT(rval = allocVector(INTSXP, len));
 	for (i = 0; i < len; i++) {
 	    tmp = CHAR(STRING_ELT(cvec, i));
@@ -1342,15 +1408,16 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else {
 		INTEGER(rval)[i] = Strtoi(tmp, 10);
 		if (INTEGER(rval)[i] == NA_INTEGER) {
-		    isinteger = FALSE;
+		    typeInfo.isinteger = FALSE;
+                    ruleout_types(tmp, &typeInfo, &data);
 		    break;
 		}
 	    }
 	}
-	if(isinteger) done = TRUE; else UNPROTECT(1);
+	if(typeInfo.isinteger) done = TRUE; else UNPROTECT(1);
     }
 
-    if (!done && isreal) {
+    if (!done && typeInfo.isreal) {
 	PROTECT(rval = allocVector(REALSXP, len));
 	for (i = 0; i < len; i++) {
 	    tmp = CHAR(STRING_ELT(cvec, i));
@@ -1360,15 +1427,16 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else {
 		REAL(rval)[i] = Strtod(tmp, &endp, FALSE, &data);
 		if (!isBlankString(endp)) {
-		    isreal = FALSE;
+		    typeInfo.isreal = FALSE;
+                    ruleout_types(tmp, &typeInfo, &data);
 		    break;
 		}
 	    }
 	}
-	if(isreal) done = TRUE; else UNPROTECT(1);
+	if(typeInfo.isreal) done = TRUE; else UNPROTECT(1);
     }
 
-    if (!done && iscomplex) {
+    if (!done && typeInfo.iscomplex) {
 	PROTECT(rval = allocVector(CPLXSXP, len));
 	for (i = 0; i < len; i++) {
 	    tmp = CHAR(STRING_ELT(cvec, i));
@@ -1378,12 +1446,14 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else {
 		COMPLEX(rval)[i] = strtoc(tmp, &endp, FALSE, &data);
 		if (!isBlankString(endp)) {
-		    iscomplex = FALSE;
+		    typeInfo.iscomplex = FALSE;
+                    /* this is not needed, unless other cases are added */
+                    ruleout_types(tmp, &typeInfo, &data);
 		    break;
 		}
 	    }
 	}
-	if(iscomplex) done = TRUE; else UNPROTECT(1);
+	if(typeInfo.iscomplex) done = TRUE; else UNPROTECT(1);
     }
 
     if (!done) {
@@ -1394,7 +1464,6 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(rval, i, NA_STRING);
 	}
 	else {
-	    PROTECT(rval = allocVector(INTSXP, len));
 	    PROTECT(dup = duplicated(cvec));
 	    j = 0;
 	    for (i = 0; i < len; i++) {
@@ -1412,6 +1481,11 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(levs, j++, STRING_ELT(cvec, i));
 	    }
 
+            /* We avoid an allocation by reusing dup,
+             * a LGLSXP of the right length
+             */
+            rval = dup;
+	    SET_TYPEOF(rval, INTSXP);
 
 	    /* put the levels in lexicographic order */
 
@@ -1425,7 +1499,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    PROTECT(a = allocVector(STRSXP, 1));
 	    SET_STRING_ELT(a, 0, mkChar("factor"));
 	    setAttrib(rval, R_ClassSymbol, a);
-	    UNPROTECT(4);
+	    UNPROTECT(3);
 	}
     }
 
@@ -1452,7 +1526,7 @@ SEXP attribute_hidden do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
     else {
 	PROTECT(prompt = coerceVector(prompt, STRSXP));
 	if(length(prompt) > 0)
-	    strncpy(ConsolePrompt, CHAR(STRING_ELT(prompt, 0)),
+	    strncpy(ConsolePrompt, translateChar(STRING_ELT(prompt, 0)),
 		    CONSOLE_PROMPT_SIZE - 1);
     }
 
@@ -1485,7 +1559,7 @@ SEXP attribute_hidden do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
     char buffer[MAXELTSIZE], *bufp = buffer;
     SEXP ans;
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0};
+		      FALSE, 0, FALSE, FALSE, NULL};
     data.NAstrings = R_NilValue;
 
     checkArity(op,args);
@@ -1509,7 +1583,7 @@ SEXP attribute_hidden do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 	first = Strtod(buffer, NULL, TRUE, &data);
     } else {
 	for (j = 0; j < LENGTH(CAR(args)); j++) {
-	    if (streql(CHAR(STRING_ELT(CAR(args), j)), buffer)) {
+	    if (streql(translateChar(STRING_ELT(CAR(args), j)), buffer)) {
 		first = j + 1;
 		break;
 	    }
@@ -1531,7 +1605,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
     char *p, *buf;
     Rboolean empty, skip;
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0};
+		      FALSE, 0, FALSE, FALSE, NULL};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
@@ -1548,7 +1622,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (blskip == NA_LOGICAL) blskip = 1;
     if (isString(quotes)) {
 	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = CHAR(STRING_ELT(quotes, 0));
+	data.quoteset = translateChar(STRING_ELT(quotes, 0));
 	/* Protect against broken realloc */
 	if(data.quotesave)
 	    data.quotesave = realloc(data.quotesave,
@@ -1565,14 +1639,14 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (TYPEOF(comstr) != STRSXP || length(comstr) != 1)
 	errorcall(call, _("invalid '%s' value"), "comment.char");
-    p = CHAR(STRING_ELT(comstr, 0));
+    p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
-    if (strlen(p) > 1) 
+    if (strlen(p) > 1)
 	errorcall(call, _("invalid '%s' value"), "comment.char");
     else if (strlen(p) == 1) data.comchar = (int)*p;
     if (isString(sep) || isNull(sep)) {
 	if (length(sep) == 0) data.sepchar = 0;
-	else data.sepchar = (unsigned char) CHAR(STRING_ELT(sep, 0))[0];
+	else data.sepchar = (unsigned char) translateChar(STRING_ELT(sep, 0))[0];
 	/* gets compared to chars: bug prior to 1.7.0 */
     } else errorcall(call, _("invalid '%s' value"), "sep");
 
@@ -1631,7 +1705,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 		}
 	    } else if(!quote && !skip && strchr(data.quoteset, c)) quote = c;
 	    /* A line is empty only if it contains nothing before
-	       EOL, EOF or a comment char. 
+	       EOL, EOF or a comment char.
 	       A line containing just white space is not empty if sep=","
 	    */
 	    if(empty && !skip)
@@ -1731,7 +1805,7 @@ static char *EncodeElement2(SEXP x, int indx, Rboolean quote,
     char *p, *p0, *q;
 
     if(TYPEOF(x) == STRSXP) {
-	p0 = CHAR(STRING_ELT(x, indx));
+	p0 = translateChar(STRING_ELT(x, indx));
 	if(!quote) return p0;
 	for(nbuf = 2, p = p0; *p; p++) /* find buffer length needed */
 	    nbuf += (*p == '"') ? 2 : 1;
@@ -1759,7 +1833,7 @@ static void wt_cleanup(void *data)
 {
     wt_info *ld = data;
     if(!ld->wasopen) ld->con->close(ld->con);
-    R_FreeStringBuffer(ld->buf);    
+    R_FreeStringBuffer(ld->buf);
     R_print.digits = ld->savedigits;
 }
 
@@ -1769,7 +1843,7 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     int nr, nc, i, j, qmethod;
     Rboolean wasopen, quote_rn = FALSE, *quote_col;
     Rconnection con;
-    char *csep, *ceol, *cna, cdec, *tmp=NULL /* -Wall */;
+    char *csep, *ceol, *cna, cdec, *sdec, *tmp=NULL /* -Wall */;
     SEXP *levels;
     R_StringBuffer strBuf = {NULL, 0, MAXELTSIZE};
     wt_info wi;
@@ -1808,13 +1882,13 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isString(na)) errorcall(call, _("invalid '%s' value"), "na");
     if(!isString(dec)) errorcall(call, _("invalid '%s' value"), "dec");
     if(qmethod == NA_LOGICAL) errorcall(call, _("invalid '%s' value"), "qmethod");
-    csep = CHAR(STRING_ELT(sep, 0));
-    ceol = CHAR(STRING_ELT(eol, 0));
-    cna = CHAR(STRING_ELT(na, 0));
-    if(strlen(CHAR(STRING_ELT(dec, 0))) != 1)
+    csep = translateChar(STRING_ELT(sep, 0));
+    ceol = translateChar(STRING_ELT(eol, 0));
+    cna = translateChar(STRING_ELT(na, 0));
+    sdec = translateChar(STRING_ELT(dec, 0));
+    if(strlen(sdec) != 1)
 	errorcall(call, _("'dec' must be a single character"));
-    cdec = CHAR(STRING_ELT(dec, 0))[0];
-    /* cdec = (cdec == '.') ? '\0' : cdec; */
+    cdec = sdec[0];
     quote_col = (Rboolean *) R_alloc(nc, sizeof(Rboolean));
     for(j = 0; j < nc; j++) quote_col[j] = FALSE;
     for(i = 0; i < length(quote); i++) { /* NB, quote might be NULL */

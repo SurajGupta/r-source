@@ -29,14 +29,14 @@ as.single(x, \dots)
 
   \code{as.double} attempts to coerce its argument to be of double
   type: like \code{\link{as.vector}} it strips attributes including
-  names.  Character strings containing either a decimal representation or a
-  heaxadecimal representation (starting with \code{0x} or \code{0X}) can
+  names.  (To ensure that an object is of double type without
+  stripping attributes, use \code{\link{storage.mode}}.)
+  Character strings containing either a decimal representation or a
+  hexadecimal representation (starting with \code{0x} or \code{0X}) can
   be converted.
 
   \code{is.double} returns \code{TRUE} or \code{FALSE} depending on
-  whether its argument is of double \link{type} or not.  It is generic:
-  you can write methods to handle specific classes of objects, see
-  \link{InternalMethods}.
+  whether its argument is of double \link{type} or not.
 }
 \note{
   \emph{\R has no single precision data type.  All real numbers are
@@ -52,7 +52,7 @@ as.single(x, \dots)
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{integer}}, \code{\link{numeric}}.
+  \code{\link{integer}}, \code{\link{numeric}}, \code{\link{storage.mode}}.
 }
 \examples{
 is.double(1)

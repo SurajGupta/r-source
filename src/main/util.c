@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,20 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef __cplusplus
+#include "Clinkage.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void F77_SYMBOL(rwarnc)(char *msg, int *nchar);
+void F77_SYMBOL(rexitc)(char *msg, int *nchar);
+
+#ifdef __cplusplus
+}
 #endif
 
 /* Many small functions are included from Rinlinedfuns.h */
@@ -121,35 +135,39 @@ const static char * const falsenames[] = {
 
 SEXP asChar(SEXP x)
 {
-    int w, d, e, wi, di, ei;
-    char buf[MAXELTSIZE];
+    if (LENGTH(x) >= 1) {
+	if (isVectorAtomic(x)) {
+	    int w, d, e, wi, di, ei;
+	    char buf[MAXELTSIZE];  /* probably 100 would suffice */
 
-    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    if (LOGICAL(x)[0] == NA_LOGICAL)
+	    switch (TYPEOF(x)) {
+	    case LGLSXP:
+		if (LOGICAL(x)[0] == NA_LOGICAL)
+		    return NA_STRING;
+		if (LOGICAL(x)[0])
+		    sprintf(buf, "T");
+		else
+		    sprintf(buf, "F");
+		return mkChar(buf);
+	    case INTSXP:
+		if (INTEGER(x)[0] == NA_INTEGER)
+		    return NA_STRING;
+		sprintf(buf, "%d", INTEGER(x)[0]);
+		return mkChar(buf);
+	    case REALSXP:
+		formatReal(REAL(x), 1, &w, &d, &e, 0);
+		return mkChar(EncodeReal(REAL(x)[0], w, d, e, OutDec));
+	    case CPLXSXP:
+		formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei, 0);
+		return mkChar(EncodeComplex(COMPLEX(x)[0], w, d, e, wi, di, ei, OutDec));
+	    case STRSXP:
+		return STRING_ELT(x, 0);
+	    default:
 		return NA_STRING;
-	    if (LOGICAL(x)[0])
-		sprintf(buf, "T");
-	    else
-		sprintf(buf, "F");
-	    return mkChar(buf);
-	case INTSXP:
-	    if (INTEGER(x)[0] == NA_INTEGER)
-		return NA_STRING;
-	    sprintf(buf, "%d", INTEGER(x)[0]);
-	    return mkChar(buf);
-	case REALSXP:
-	    formatReal(REAL(x), 1, &w, &d, &e, 0);
-	    return mkChar(EncodeReal(REAL(x)[0], w, d, e, OutDec));
-        case CPLXSXP:
-	    formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei, 0);
-	    return mkChar(EncodeComplex(COMPLEX(x)[0], w, d, e, wi, di, ei, OutDec));
-	case STRSXP:
-	    return STRING_ELT(x, 0);
-	default:
-	    return NA_STRING;
+	    }
 	}
+	else if(TYPEOF(x) == SYMSXP)
+	    return PRINTNAME(x);
     }
     return NA_STRING;
 }
@@ -202,7 +220,8 @@ SEXPTYPE str2type(char *s)
 	if (!strcmp(s, TypeTable[i].str))
 	    return TypeTable[i].type;
     }
-    return -1;
+    /* SEXPTYPE is an unsigned int, so the compiler warns us w/o the cast. */
+    return (SEXPTYPE) -1;
 }
 
 
@@ -554,7 +573,7 @@ SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* printf("i %d nnx %d j %d nny %d\n", i, nnx, j, nny); */
 	nans += (nnx-i)*(nny-j);
     }
-    
+
 
     /* 2. allocate and store result components */
     PROTECT(ans = allocVector(VECSXP, 4));
@@ -583,7 +602,7 @@ SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(i0 = i; i0 < nnx; i0++)
 	    for(j0 = j; j0 < nny; j0++) {
 		INTEGER(ansx)[k]   = ix[i0];
-		INTEGER(ansy)[k++] = iy[j0];		
+		INTEGER(ansy)[k++] = iy[j0];
 	    }
     }
 
@@ -646,7 +665,7 @@ SEXP attribute_hidden do_setwd(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* get current directory to return */
     wd = intern_getwd();
 
-    path = R_ExpandFileName(CHAR(STRING_ELT(s, 0)));
+    path = R_ExpandFileName(translateChar(STRING_ELT(s, 0)));
 #ifdef HAVE_CHDIR
     if(chdir(path) < 0)
 #endif
@@ -667,7 +686,7 @@ SEXP attribute_hidden do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("a character vector argument expected"));
     PROTECT(ans = allocVector(STRSXP, n = LENGTH(s)));
     for(i = 0; i < n; i++) {
-	p = R_ExpandFileName(CHAR(STRING_ELT(s, i)));
+	p = R_ExpandFileName(translateChar(STRING_ELT(s, i)));
 	if (strlen(p) > PATH_MAX - 1)
 	    errorcall(call, _("path too long"));
 	strcpy (buf, p);
@@ -675,7 +694,10 @@ SEXP attribute_hidden do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
 	R_fixslash(buf);
 #endif
 	/* remove trailing file separator(s) */
-	while ( *(p = buf + strlen(buf) - 1) == fsp ) *p = '\0';
+	if (*buf) {
+	    p = buf + strlen(buf) - 1;
+	    while (p >= buf && *p == fsp) *(p--) = '\0';
+	}
 	if ((p = Rf_strrchr(buf, fsp)))
 	    p++;
 	else
@@ -701,7 +723,7 @@ SEXP attribute_hidden do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("a character vector argument expected"));
     PROTECT(ans = allocVector(STRSXP, n = LENGTH(s)));
     for(i = 0; i < n; i++) {
-	p = R_ExpandFileName(CHAR(STRING_ELT(s, i)));
+	p = R_ExpandFileName(translateChar(STRING_ELT(s, i)));
 	if (strlen(p) > PATH_MAX - 1)
 	    errorcall(call, _("path too long"));
 	strcpy (buf, p);
@@ -754,7 +776,7 @@ SEXP attribute_hidden do_encodeString(SEXP call, SEXP op, SEXP args, SEXP rho)
     s = CADDR(args);
     if(LENGTH(s) != 1 || TYPEOF(s) != STRSXP)
 	errorcall(call, _("invalid '%s' value"), "quote");
-    cs = CHAR(STRING_ELT(s, 0));
+    cs = translateChar(STRING_ELT(s, 0));
     if(strlen(cs) > 0) quote = cs[0];
     if(strlen(cs) > 1)
 	warningcall(call,
@@ -780,10 +802,71 @@ SEXP attribute_hidden do_encodeString(SEXP call, SEXP op, SEXP args, SEXP rho)
     for(i = 0; i < len; i++) {
 	s = STRING_ELT(x, i);
 	if(na || s != NA_STRING)
-	    SET_STRING_ELT(ans, i, mkChar(EncodeString(s, w, quote, justify)));
+	    SET_STRING_ELT(ans, i, mkChar(EncodeString(s, w, quote, (Rprt_adj) justify)));
     }
     UNPROTECT(1);
     return ans;
+}
+
+SEXP attribute_hidden do_encoding(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, x;
+    int i, n;
+    char *tmp;
+
+    checkArity(op, args);
+    if (TYPEOF(x = CAR(args)) != STRSXP)
+	errorcall(call, _("a character vector argument expected"));
+    n = LENGTH(x);
+    PROTECT(ans = allocVector(STRSXP, n));
+    for (i = 0; i < n; i++) {
+	if(IS_LATIN1(STRING_ELT(x, i))) tmp = "latin1";
+	else if(IS_UTF8(STRING_ELT(x, i))) tmp = "UTF-8";
+	else tmp = "unknown";
+	SET_STRING_ELT(ans, i, mkChar(tmp));
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP attribute_hidden do_setencoding(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP x, enc, tmp;
+    int i, m, n;
+    char *this;
+
+    checkArity(op, args);
+    if (TYPEOF(x = CAR(args)) != STRSXP)
+	errorcall(call, _("a character vector argument expected"));
+    if (TYPEOF(enc = CADR(args)) != STRSXP)
+	errorcall(call, _("a character vector argument expected"));
+    m = LENGTH(enc);
+    if(m == 0)
+	errorcall(call, _("'value must be of positive length"));
+    if(NAMED(x)) x = duplicate(x);
+    PROTECT(x);
+    n = LENGTH(x);
+    for(i = 0; i < n; i++) {
+	tmp = STRING_ELT(x, i);
+	UNSET_LATIN1(tmp);
+	UNSET_UTF8(tmp);
+	this = CHAR(STRING_ELT(enc, i % m)); /* ASCII */
+	if(streql(this, "latin1")) SET_LATIN1(tmp);
+	else if(streql(this, "UTF-8")) SET_UTF8(tmp);
+	SET_STRING_ELT(x, i, tmp);
+    }
+    UNPROTECT(1);
+    return x;
+}
+
+void attribute_hidden markKnown(SEXP x, SEXP ref)
+{
+    if(TYPEOF(x) != CHARSXP)
+	error("invalid use of 'markKnown'");
+    if(IS_LATIN1(ref) || IS_UTF8(ref)) {
+	if(known_to_be_latin1) SET_LATIN1(x);
+	if(known_to_be_utf8) SET_UTF8(x);
+    }
 }
 
 /* Note: this is designed to be fast and valid only for UTF-8 strings.
@@ -970,3 +1053,4 @@ void F77_SYMBOL(rchkusr)(void)
 {
     R_CheckUserInterrupt();
 }
+

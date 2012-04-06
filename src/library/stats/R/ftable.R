@@ -216,12 +216,12 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
         ## We really need something seekable, see below.  If it is not,
         ## the best we can do is write everything to a tempfile.
         tmpf <- tempfile()
-        cat(file, file = tmpf)
-        file <- tmpf
-        on.exit(unlink(file))
+        cat(readLines(file), file = tmpf, sep="\n")
+        file <- file(tmpf, "r")
+        on.exit({close(file);unlink(tmpf)}, add=TRUE)
     }
 
-    z <- count.fields(file, sep, quote, skip)
+    z <- utils::count.fields(file, sep, quote, skip)
     n.row.vars <- z[max(which(z == max(z)))] - z[length(z)] + 1
 
     seek(file, where = 0)

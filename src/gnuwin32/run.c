@@ -2,6 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file run.c: a simple 'reading' pipe (and a command executor)
  *  Copyright (C) 1999-2001  Guido Masarotto  and Brian Ripley
+ *            (C) 2007       the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +22,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <Defn.h>
 #include "win-nls.h"
 
 #define WIN32_LEAN_AND_MEAN 1
@@ -36,9 +38,8 @@ static char RunError[256] = "";
 static char * expandcmd(char *cmd)
 {
     char  c;
-    char *s, *p, *q, *f, *dest, *src;
-    char  fl[MAX_PATH], fn[MAX_PATH];
-    int   d , ext;
+    char *s, *p, *q, *f, *dest, *src, *fl, *fn;
+    int   d , ext, len = strlen(cmd)+1;
 
     if (!(s = (char *) malloc(MAX_PATH + strlen(cmd)))) {
 	strcpy(RunError, _("Insufficient memory (expandcmd)"));
@@ -63,7 +64,9 @@ static char * expandcmd(char *cmd)
      if ((*f == '\\') || (*f == '/')) ext = 0;
      else if (*f == '.') ext = 1;
    }
-   /* SearchFile doesn't like \" */
+   /* SearchPath doesn't like \" */
+   fl = alloca(len);
+   fn = alloca(len);
    for ( dest = fl , src = p; *src ; src++)
        if (*src != '\"') *dest++ = *src;
    *dest = '\0';
@@ -243,7 +246,8 @@ int runcmd(char *cmd, int wait, int visible, char *finput)
      redirect stdin for the child.
    newconsole != 0 to use a new console (if not waiting)
    visible = -1, 0, 1 for hide, minimized, default
-   io = 0 to read from pipe, 1 to write to pipe.
+   io = 0 to read stdout from pipe, 1 to write to pipe,
+   2 to read stdout and stderr from pipe.
  */
 rpipe * rpipeOpen(char *cmd, int visible, char *finput, int io)
 {
@@ -257,7 +261,7 @@ rpipe * rpipeOpen(char *cmd, int visible, char *finput, int io)
 	return NULL;
     }
     r->process = NULL;
-    if(io) { /* pipe to write to */
+    if(io == 1) { /* pipe to write to */
 	res = CreatePipe(&(r->read), &hTemp, NULL, 0);
 	if (res == FALSE) {
 	    rpipeClose(r);
@@ -290,11 +294,11 @@ rpipe * rpipeOpen(char *cmd, int visible, char *finput, int io)
     CloseHandle(hTemp);
     CloseHandle(hTHIS);
     SetStdHandle(STD_OUTPUT_HANDLE, r->write);
-    SetStdHandle(STD_ERROR_HANDLE, r->write);
+    if(io > 0) SetStdHandle(STD_ERROR_HANDLE, r->write);
     r->process = pcreate(cmd, finput, 0, visible, 1);
     r->active = 1;
     SetStdHandle(STD_OUTPUT_HANDLE, hOUT);
-    SetStdHandle(STD_ERROR_HANDLE, hERR);
+    if(io > 0) SetStdHandle(STD_ERROR_HANDLE, hERR);
     if (!r->process)
 	return NULL;
     if (!(hThread = CreateThread(NULL, 0, threadedwait, r, 0, &id))) {
@@ -306,6 +310,8 @@ rpipe * rpipeOpen(char *cmd, int visible, char *finput, int io)
     return r;
 }
 
+#include "graphapp/ga.h"
+extern Rboolean UserBreak;
 
 int
 rpipeGetc(rpipe * r)
@@ -327,6 +333,14 @@ rpipeGetc(rpipe * r)
 	    else
 		return NOLAUNCH;/* error but...treated as eof */
 	}
+	/* we want to look for user break here */
+	while (peekevent()) doevent();
+	if (UserBreak) {
+	    rpipeClose(r);
+	    break;
+	}
+	R_ProcessEvents();
+	Sleep(100);
     }
     return NOLAUNCH;		/* again.. */
 }
@@ -375,7 +389,6 @@ int rpipeClose(rpipe * r)
 
 /* ------------------- Windows pipe connections --------------------- */
 
-#include <Defn.h>
 #include <Fileio.h>
 #include <Rconnections.h>
 

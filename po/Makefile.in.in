@@ -335,7 +335,7 @@ R_EXE = $(top_builddir)/bin/R --vanilla
 	@pkg=`echo $@ | sed -e 's/\.pkg-update$$//'`; \
 	tmpdir=`pwd`; \
 	src=$(top_srcdir)/src/library/$${pkg}; \
-	test "$(srcdir)" = . && cdcmd="../src/library/$${pkg}/po" || cdcmd="cd $(top_srcdir)/src/library/$${pkg}/po && "; \
+	test "$(srcdir)" = . && cdcmd="cd ../src/library/$${pkg}/po" || cdcmd="cd $(top_srcdir)/src/library/$${pkg}/po && "; \
 	if test -f $${src}/po/$${pkg}.pot; then \
 	  echo $(ECHO_N) "updating $${pkg}.pot "$(ECHO_C); \
 	  (cd $${src}/src; $(XGETTEXT) \
@@ -479,7 +479,7 @@ Makefile: Makefile.in.in $(top_builddir)/config.status @POMAKEFILEDEPS@
 	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
 	       $(SHELL) ./config.status
 
-update-RGui: Makefile remove-potcdate.sed 
+update-RGui: Makefile remove-potcdate.sed RGui.pot-update
 	@trs=`cd $(srcdir) && ls RGui-*.po 2> /dev/null`; \
 	if test -n "$${trs}"; then \
 	  for tr in $${trs}; do \

@@ -23,9 +23,9 @@
   variety of diagnostic checks.
 
   \code{R CMD build}
-  builds \R source or binary packages from their sources.  It will
-  create index files in the sources if necessary, so it is often helpful
-  to run \code{build} before \code{check}.
+  builds \R source or binary packages from their sources.  The name(s)
+  of the packages are taken from the \file{DESCRIPTION} files and not
+  from the directory names (as from \R 2.5.0).
 
   Use
   \code{R CMD foo --help}
@@ -39,7 +39,7 @@
   These may not work correctly under Windows 95/98/ME because of
   problems Perl has launching programs on those limited OSes.
 
-  They make use of a temporary directory specified by the enironment
+  They make use of a temporary directory specified by the environment
   variable \code{TMPDIR} and defaulting to \code{c:/TEMP}.  Do ensure
   that if set forward slashes are used.
 }

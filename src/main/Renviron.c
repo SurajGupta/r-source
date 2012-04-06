@@ -1,6 +1,6 @@
 /*
   R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -30,13 +30,22 @@
 #endif
 
 #if defined(HAVE_GLIBC2)
-/* for isnan in Rinlinedfuns.h */
-# define _SVID_SOURCE 1
+#include <features.h>
+# ifndef __USE_POSIX
+#  define __USE_POSIX           /* so that we get isnan */
+# endif
+# ifndef __USE_SVID
+#  define __USE_SVID             /* so that we get putenv */
+# endif
+# ifndef __USE_BSD
+#  define __USE_BSD             /* so that we get setenv() */
+# endif
 #endif
 
-#include <stdlib.h> /* for putenv */
+#include <stdlib.h> /* for setenv or putenv */
 #include <Defn.h> /* for PATH_MAX */
-
+#include <Rinterface.h>
+#include <Fileio.h>
 
 /* remove leading and trailing space */
 static char *rmspace(char *s)
@@ -70,7 +79,7 @@ static char *subterm(char *s)
     } else q = NULL;
     p = getenv(s);
     if(p && strlen(p)) return p; /* variable was set and non-empty */
-    return q ? subterm(q) : "";
+    return q ? subterm(q) : (char *) "";
 }
 
 /* skip along until we find an unmatched right brace */
@@ -110,7 +119,7 @@ static char *findterm(char *s)
 	/* copy over leading part */
 	nans = strlen(ans);
 	strncat(ans, s, p-s); ans[nans + p - s] = '\0';
-	r = alloca(q - p + 2);
+	r = (char *) alloca(q - p + 2);
 	strncpy(r, p, q - p + 1);
 	r[q - p + 1] = '\0';
 	r2 = subterm(r);
@@ -127,10 +136,16 @@ static void Putenv(char *a, char *b)
     char *buf, *value, *p, *q, quote='\0';
     int inquote = 0;
 
+#ifdef HAVE_SETENV
+    buf = (char *) malloc((strlen(b) + 1) * sizeof(char));
+    if(!buf) R_Suicide("allocation failure in reading Renviron");
+    value = buf;
+#else
     buf = (char *) malloc((strlen(a) + strlen(b) + 2) * sizeof(char));
     if(!buf) R_Suicide("allocation failure in reading Renviron");
     strcpy(buf, a); strcat(buf, "=");
     value = buf+strlen(buf);
+#endif
 
     /* now process the value */
     for(p = b, q = value; *p; p++) {
@@ -153,12 +168,20 @@ static void Putenv(char *a, char *b)
 	*q++ = *p;
     }
     *q = '\0';
-#ifdef HAVE_PUTENV
-    putenv(buf);
+#ifdef HAVE_SETENV
+    if(setenv(a, buf, 1))
+	warningcall(R_NilValue, 
+		    _("problem in setting variable '%s' in Renviron"), a);
+    free(buf);
+#elif defined(HAVE_PUTENV)
+    if(putenv(buf))
+	warningcall(R_NilValue, 
+		    _("problem in setting variable '%s' in Renviron"), a);
+    /* no free here: storage remains in use */
 #else
     /* pretty pointless, and was not tested prior to 2.3.0 */
+    free(buf);
 #endif
-    /* no free here: storage remains in use */
 }
 
 
@@ -170,7 +193,7 @@ static int process_Renviron(char *filename)
     char *s, *p, sm[BUF_SIZE], *lhs, *rhs, msg[MSG_SIZE+50];
     int errs = 0;
 
-    if (!filename || !(fp = fopen(filename, "r"))) return 0;
+    if (!filename || !(fp = R_fopen(filename, "r"))) return 0;
     snprintf(msg, MSG_SIZE+50,
 	     "\n   File %s contains invalid line(s)", filename);
 

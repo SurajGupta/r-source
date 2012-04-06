@@ -171,7 +171,7 @@ void attribute_hidden R_restore_globals(RCNTXT *cptr)
 
 static void jumpfun(RCNTXT * cptr, int mask, SEXP val)
 {
-    int savevis = R_Visible;
+    Rboolean savevis = R_Visible;
 
     /* run onexit/cend code for all contexts down to but not including
        the jump target */
@@ -235,7 +235,7 @@ void endcontext(RCNTXT * cptr)
     R_RestartStack = cptr->restartstack;
     if (cptr->cloenv != R_NilValue && cptr->conexit != R_NilValue ) {
 	SEXP s = cptr->conexit;
-	int savevis = R_Visible;
+	Rboolean savevis = R_Visible;
 	cptr->conexit = R_NilValue; /* prevent recursion */
 	PROTECT(s);
 	eval(s, cptr->cloenv);
@@ -450,14 +450,16 @@ SEXP attribute_hidden do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* An implementation of S's frame access functions. They usually count */
 /* up from the globalEnv while we like to count down from the currentEnv. */
 /* So if the argument is negative count down if positive count up. */
-/* We don't want to count the closure that do_sys is contained in so the */
+/* We don't want to count the closure that do_sys is contained in, so the */
 /* indexing is adjusted to handle this. */
 
 SEXP attribute_hidden do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int i, n, nframe;
-    SEXP rval,t;
+    int i, n  = -1, nframe;
+    SEXP rval, t;
     RCNTXT *cptr;
+
+    checkArity(op, args);
     /* first find the context that sys.xxx needs to be evaluated in */
     cptr = R_GlobalContext;
     t = cptr->sysparent;
@@ -468,12 +470,7 @@ SEXP attribute_hidden do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cptr = cptr->nextcontext;
     }
 
-    if (length(args) == 1) {
-	t = eval(CAR(args), rho);
-	n = asInteger(t);
-    }
-    else
-	n = - 1;
+    if (length(args) == 1) n = asInteger(CAR(args));
 
     switch (PRIMVAL(op)) {
     case 1: /* parent */
@@ -543,8 +540,8 @@ SEXP attribute_hidden do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP t;
     RCNTXT *cptr;
 
- 
-    t = eval(CAR(args), rho);
+    checkArity(op, args);
+    t = CAR(args);
     n = asInteger(t);
 
     if(n == NA_INTEGER || n < 1 )
@@ -607,7 +604,8 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
 /*
   This is a simple interface for evaluating R expressions
   from C with a guarantee that one will return to the 
-  point in the code from which the call was made.
+  point in the code from which the call was made (if it does
+  return at all).
   This uses R_TopleveExec to do this.  It is important
   in applications that embed R or wish to make general 
   callbacks to R with error handling.
@@ -616,6 +614,8 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
   and C routine visible only here. The R_tryEval() is the
   only visible aspect. This can be lifted into the header
   files if necessary. (DTL)
+
+  R_tryEval is in Rinternals.h (so public), but not in the API.
  */
 typedef struct {
     SEXP expression;

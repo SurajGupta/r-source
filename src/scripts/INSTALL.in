@@ -7,11 +7,11 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 39198 $'
+revision='$Rev: 41091 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
-Copyright (C) 2000-2006 The R Core Development Team.
+Copyright (C) 2000-2007 The R Core Development Team.
 This is free software; see the GNU General Public Licence version 2
 or later for copying conditions.  There is NO warranty."
 
@@ -21,9 +21,8 @@ Install the add-on packages specified by pkgs.  The elements of pkgs can
 be relative or absolute paths to directories with the package (bundle)
 sources, or to gzipped package 'tar' archives.  The library tree to
 install to can be specified via '--library'.  By default, packages are
-installed in the library tree rooted at the first directory given in the
-environment variable R_LIBS if this is set and non-null, and into the
-default R library tree (${R_HOME}/library) otherwise.
+installed in the library tree rooted at the first directory in
+.libPaths() for an R session run in the current environment
 
 Options:
   -h, --help		print short help message and exit
@@ -105,6 +104,9 @@ tmpdir=`cd "${tmpdir}" && ${GETWD}`
 R_EXE="${R_HOME}/bin/R"
 ## </NOTE>
 
+## record R_LIBS at this point
+R_LIBS0=${R_LIBS}
+
 ## <NOTE>
 ## This could be made a bit more general: if R CMD INSTALL is run by
 ## another tool (e.g., when building or checking a package, its messages
@@ -134,7 +136,7 @@ get_packages () {
         ## Try being defensive about missing final newlines, or extra
 	## empty lines.
         (cat "${1}/${p}/DESCRIPTION.in" "${1}/DESCRIPTION"
-	 echo) | ${SED} '/^ *$/d' > "${1}/${p}/DESCRIPTION"
+	 echo) | tr '\r' ' ' | ${SED} '/^ *$/d' > "${1}/${p}/DESCRIPTION"
       fi
     done
   else
@@ -173,13 +175,8 @@ do_cleanup_tmpdir () {
 ### 
 ### Setup and command line processing.
 
-if test -n "${R_LIBS}"; then
-  lib=`echo "${R_LIBS}" | cut -f1 -d:`
-else
-  lib="${R_HOME}/library"
-fi
-
 pkgs=
+lib=
 clean=false
 debug=false
 build_text=true
@@ -297,6 +294,20 @@ while test -n "${1}"; do
   shift
 done
 
+lib=`tilde_expand "${lib}"`
+if test -z "${lib}"; then
+  lib=`echo "cat('\n~~~', .libPaths()[1], '\n', sep = '')" | \
+    R_DEFAULT_PACKAGES=NULL "${R_EXE}" --no-save --slave | \
+    grep '^~~~' | sed 's/.*~~~//'`
+  message "Installing to library '$lib'"
+else
+  lib0=${lib}
+  cd ${lib}
+  lib=`${GETWD}`
+  cd ${startdir}
+fi
+
+
 if (${tar_up} && ${fake}); then
   error "building a fake installation is disallowed"
   do_cleanup_tmpdir;
@@ -322,7 +333,6 @@ if test -z "${pkgs}"; then
   exit 1
 fi
 
-lib=`tilde_expand "${lib}"`
 if (test -d "${lib}" && test -w "${lib}") || \
     ${MKDIR_P} "${lib}" 2> /dev/null; then
   lib=`cd "${lib}" && ${GETWD}`
@@ -430,6 +440,17 @@ do_install_source () {
   export R_LIBRARY_DIR
   export R_PACKAGE_DIR
   export R_PACKAGE_NAME
+
+  if test -n "${lib0}" ; then
+    ## set R_LIBS to include the current installation directory
+    if test -n "${R_LIBS}"; then
+      R_LIBS="${lib}:${R_LIBS}"
+    else
+      R_LIBS="${lib}"
+    fi
+    export R_LIBS
+  fi
+  
 
   Type=`get_dcf_field Type DESCRIPTION`
   if test "$Type" = "Frontend" ; then
@@ -556,7 +577,7 @@ do_install_source () {
       cd ..
     else
       cd src;
-      srcs=`ls *.[cfC] *.cc *.cpp *.f90 *.f95 2>/dev/null`
+      srcs=`ls *.[cfmCM] *.cc *.cpp *.f90 *.f95 *.mm 2>/dev/null`
       archs=`(cd ${R_HOME}/bin/exec; ls)`
       R_ARCH_keep=${R_ARCH}
       if test -n "${srcs}"; then
@@ -613,8 +634,9 @@ do_install_source () {
     message "R"
       ${MKDIR_P} "${R_PACKAGE_DIR}/R"
       rm -f "${R_PACKAGE_DIR}/R/"*
+      ## this uses the locale to find a suitable charset
       echo "tools:::.install_package_code_files(\".\", \"${R_PACKAGE_DIR}\")" | \
-        R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla >/dev/null
+        R_DEFAULT_PACKAGES=NULL LC_COLLATE=C "${R_EXE}" --vanilla >/dev/null
       if test ${?} -ne 0; then
         error "unable to collate files for package '${pkg_name}'"
         do_exit_on_error

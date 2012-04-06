@@ -82,7 +82,7 @@ persp(x, \dots)
 \value{
   \code{persp()} returns the \emph{viewing transformation matrix}, say
   \code{VT}, a \eqn{4 \times 4}{4 x 4} matrix suitable for projecting 3D coordinates
-  \eqn{(x,y,z)} into the 2D plane using homogenous 4D coordinates
+  \eqn{(x,y,z)} into the 2D plane using homogeneous 4D coordinates
   \eqn{(x,y,z,t)}.
   It can be used to superimpose additional graphical elements on the 3D
   plot, by \code{\link{lines}()} or \code{\link{points}()},
@@ -107,6 +107,12 @@ persp(x, \dots)
   number and the y axis to column number, with column 1 at the bottom,
   so that with the standard rotation angles, the top left corner of the
   matrix is displayed at the left hand side, closest to the user.
+
+  The sizes and fonts of the axis labels and the annotations for
+  \code{ticktype="detailed"} are controlled by graphics parameters
+  \code{"cex.lab"}/\code{"font.lab"} and
+  \code{"cex.axis"}/\code{"font.axis"} respectively.  (This changed in
+  \R 2.5.0.)
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

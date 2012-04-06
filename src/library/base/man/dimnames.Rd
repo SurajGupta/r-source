@@ -9,10 +9,17 @@
 }
 \usage{
 dimnames(x)
+%MM dimnames(x, \dots)
+%MM \method{dimnames}{data.frame}(x, maybeNULL = FALSE, \dots)
 dimnames(x) <- value
 }
 \arguments{
   \item{x}{an \R object, for example a matrix, array or data frame.}
+%MM \item{\dots}{potentially further arguments for \code{dimnames} methods.}
+%MM \item{maybeNULL}{for the \code{\link{data.frame}} method, a
+%MM   \code{\link{logical}} indicating if the \code{dimnames()[[1]]}
+%MM   component may be \code{\link{NULL}} when \code{x} is a data frame
+%MM   with trivial row names, i.e., rownames equivalent to \code{1:nrow(x)}.}
   \item{value}{a possible value for \code{dimnames(x)}: see
     \dQuote{Value}.}
 }
@@ -45,6 +52,13 @@ dimnames(x) <- value
 
   For the \code{"data.frame"} method both dimnames are character
   vectors, and the rownames must contain no duplicates nor missing values.
+}
+\note{
+  Setting components of the dimnames, e.g.
+  \code{dimnames(A)[[1]] <- value} is a common paradigm, but note that
+  it will not work if the value assigned is \code{NULL}.  Use
+  \code{\link{rownames}} instead, or (as it does) manipulate the whole
+  dimnames list.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

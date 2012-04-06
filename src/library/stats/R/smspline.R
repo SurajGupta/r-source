@@ -202,7 +202,7 @@ print.smooth.spline <- function(x, digits = getOption("digits"), ...)
 {
     if(!is.null(cl <- x$call)) {
 	cat("Call:\n")
-	dput(cl)
+	dput(cl, control=NULL)
     }
     ip <- x$iparms
     cv <- cl$cv
@@ -294,6 +294,8 @@ supsmu <-
     ord <- cumsum(!okay)[okay][ord] + ord
     xo <- x[ord]
     leno <- length(ord)
+    if(leno == 0)
+        stop("no finite observations")
     if(diff <- n - leno)
 	warning(diff, " observation(s) with NAs, NaNs and/or Infs deleted")
     .Fortran(R_setsmu)

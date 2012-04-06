@@ -32,7 +32,7 @@ DATE = $(shell date +%F)
 RLIB = $(RHOME)/library
 PKGDIR = $(RHOME)/src/library
 
-OPTFLAGS=-O3 -Wall -pedantic -std=gnu99
+OPTFLAGS=-O3 -Wall -pedantic $(C99FLAG)
 FOPTFLAGS=-O3 -Wall
 ifdef DEBUG
  OPTFLAGS+=$(G_FLAG)
@@ -55,11 +55,11 @@ R-DLLFLAGS = -mwindows
 endif
 
 R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion $(LIBEXTRAS)
-dllversion-RESFLAGS =--include-dir ../include
+dllversion-RESFLAGS =-I../include
 SOURCES = \
   console.c dataentry.c dynload.c edit.c editor.c embeddedR.c extra.c \
-  opt.c pager.c preferences.c psignal.c rhome.c rui.c run.c shext.c \
-  sys-win32.c system.c
+  opt.c pager.c preferences.c psignal.c rhome.c rt_complete.c \
+  rui.c run.c shext.c sys-win32.c system.c dos_glob.c
 OBJS = $(SOURCES:.c=.o) e_pow.o
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
 EXTRALIBS = graphapp/ga.a getline/gl.a ../extra/xdr/libxdr.a \
@@ -139,7 +139,7 @@ endif
 	  echo "preparing package tools for lazy loading" ; \
 	  (cat ../library/tools/R/makeLazyLoad.R; \
 	    echo "makeLazyLoading(\"tools\", lib.loc=\"$(RLIB)\")") | \
-	    R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(R_EXE) --vanilla --slave > /dev/null ; \
+	    R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) --vanilla --slave > /dev/null ; \
 	fi
 	@$(ECHO)
 	@for pkg in $(R_PKGS0); do \
@@ -160,10 +160,10 @@ endif
 
 
 rlibs:
-	$(MAKE) --no-print-directory -C ../extra/intl -f Makefile.win
-	$(MAKE) --no-print-directory -C ../appl  OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(MAKE) --no-print-directory -C ../extra/intl OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
+	$(MAKE) --no-print-directory -C ../appl OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../main  OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(MAKE) --no-print-directory -C ../main OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ./graphapp OPTFLAGS='$(OPTFLAGS)'
 	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
 	@for ex in pcre bzip2 zlib xdr trio; do \
@@ -190,7 +190,7 @@ dllversion.o: ../include/Rversion.h
 
 R.dll: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 	@$(ECHO) EXPORTS > R.def
-	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' | sort | uniq > R0.def
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | sort | uniq > R0.def
 	@comm -23 R0.def Rdll.hide >> R.def
 	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ R.def $^ $($*-DLLLIBS) $(DLLLIBS)
 	@$(RM) R.def R0.def
@@ -198,7 +198,7 @@ R.dll: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 R.exp: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 	@$(ECHO) LIBRARY R.dll > R.exp
 	@$(ECHO) EXPORTS >> R.exp
-	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' | sort | uniq > R0.def
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | sort | uniq > R0.def
 	@comm -23 R0.def Rdll.hide >> R.exp
 	@$(RM) R0.def
 
@@ -519,7 +519,7 @@ CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER-PAT)/Recommended
 ## Use -c here to avoid re-downloading the same versions of files
 rsync-recommended:
 	@(cd ../library; \
-	rsync -rcvC --delete --exclude=Makefile.in --exclude=.cvsignore \
+	rsync --timeout=60 -rcvC --delete --exclude=Makefile.in --exclude=.cvsignore \
 	  --include=*.tar.gz --exclude=*.tgz --exclude=".svn" $(CRANREC) . ); \
 	$(RM) ../library/Recommended/*.tgz; \
 	(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
@@ -553,11 +553,11 @@ recommended: unpack-recommended
 	@$(ECHO) "--- Making recommended packages"
 ifeq ($(strip $(BUILD)),CROSS)
 	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-          $(R_EXE) CMD perl XINSTALL --unsafe --docs=normal ../library/$${p} || exit 1; \
+          $(R_EXE) CMD perl XINSTALL --unsafe -l $(RHOME)/library --docs=normal ../library/$${p} || exit 1; \
         done
 else
 	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-	  $(RHOME)/bin/rcmd.exe INSTALL --unsafe ../library/$${p} --docs=$(DOCSTYPE) || exit 1; \
+	  $(RHOME)/bin/rcmd.exe INSTALL --unsafe -l $(RHOME)/library ../library/$${p} --docs=$(DOCSTYPE) || exit 1; \
 	done
 endif
 

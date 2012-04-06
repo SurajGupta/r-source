@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2006  The R Development Core Team.
+ *  Copyright (C) 1998--2007  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ R_size_t attribute_hidden R_GetMaxVSize(void)
 void attribute_hidden R_SetMaxVSize(R_size_t size)
 {
     if (size == R_SIZE_T_MAX) return;
-    if (size / vsfac >= R_VSize) R_MaxVSize = (size+1)/sizeof(VECREC);
+    if (size / vsfac >= R_VSize) R_MaxVSize = (size+1)/vsfac;
 }
 
 R_size_t attribute_hidden R_GetMaxNSize(void)
@@ -251,6 +251,7 @@ void R_SetPPSize(R_size_t size)
 /* Miscellaneous Globals. */
 
 static SEXP R_VStack = NULL;		/* R_alloc stack pointer */
+static SEXP R_PreciousList = NULL;      /* List of Persistent Objects */
 static R_size_t R_LargeVallocSize = 0;
 static R_size_t R_SmallVallocSize = 0;
 static R_size_t orig_R_NSize;
@@ -1460,40 +1461,38 @@ SEXP attribute_hidden do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP value;
     int ogc, reset_max;
-    R_size_t onsize = R_NSize;
+    R_size_t onsize = R_NSize /* can change during collection */;
 
     checkArity(op, args);
     ogc = gc_reporting;
     gc_reporting = asLogical(CAR(args));
-    reset_max=asLogical(CADR(args));
+    reset_max = asLogical(CADR(args));
     num_old_gens_to_collect = NUM_OLD_GENERATIONS;
     R_gc();
     gc_reporting = ogc;
     /*- now return the [used , gc trigger size] for cells and heap */
-    PROTECT(value = allocVector(INTSXP, 14));
-    INTEGER(value)[0] = onsize - R_Collected;
-    /* careful here: we can't report large sizes in R's integer */
-    INTEGER(value)[1] = (R_VSize - VHEAP_FREE() < INT_MAX) ? 
-	R_VSize - VHEAP_FREE() : NA_INTEGER;  /* Overflows at 2Gb free */
-    INTEGER(value)[4] = (R_NSize < INT_MAX) ? R_NSize : NA_INTEGER;
-    INTEGER(value)[5] = (R_VSize < INT_MAX) ? R_VSize : NA_INTEGER;
+    PROTECT(value = allocVector(REALSXP, 14));
+    REAL(value)[0] = onsize - R_Collected;
+    REAL(value)[1] = R_VSize - VHEAP_FREE();
+    REAL(value)[4] = R_NSize;
+    REAL(value)[5] = R_VSize;
     /* next four are in 0.1Mb, rounded up */
-    INTEGER(value)[2] = 10. * (onsize - R_Collected)/Mega * sizeof(SEXPREC) + 0.999;
-    INTEGER(value)[3] = 10. * (R_VSize - VHEAP_FREE())/Mega * vsfac + 0.999;
-    INTEGER(value)[6] = 10. * R_NSize/Mega * sizeof(SEXPREC) + 0.999;
-    INTEGER(value)[7] = 10. * R_VSize/Mega * vsfac + 0.999;
-    INTEGER(value)[8] = (R_MaxNSize < R_SIZE_T_MAX) ?
-	(10. * R_MaxNSize/Mega * sizeof(SEXPREC) + 0.999) : NA_INTEGER;
-    INTEGER(value)[9] = (R_MaxVSize < R_SIZE_T_MAX) ?
-	(10. * R_MaxVSize/Mega * vsfac + 0.999) : NA_INTEGER;
+    REAL(value)[2] = 0.1*ceil(10. * (onsize - R_Collected)/Mega * sizeof(SEXPREC));
+    REAL(value)[3] = 0.1*ceil(10. * (R_VSize - VHEAP_FREE())/Mega * vsfac);
+    REAL(value)[6] = 0.1*ceil(10. * R_NSize/Mega * sizeof(SEXPREC));
+    REAL(value)[7] = 0.1*ceil(10. * R_VSize/Mega * vsfac);
+    REAL(value)[8] = (R_MaxNSize < R_SIZE_T_MAX) ?
+	0.1*ceil(10. * R_MaxNSize/Mega * sizeof(SEXPREC)) : NA_REAL;
+    REAL(value)[9] = (R_MaxVSize < R_SIZE_T_MAX) ?
+	0.1*ceil(10. * R_MaxVSize/Mega * vsfac) : NA_REAL;
     if (reset_max){
-	    R_N_maxused = INTEGER(value)[0];
-	    R_V_maxused = INTEGER(value)[1];
+	    R_N_maxused = onsize - R_Collected;
+	    R_V_maxused = R_VSize - VHEAP_FREE();
     }
-    INTEGER(value)[10] = (R_N_maxused < INT_MAX) ? R_N_maxused : NA_INTEGER;
-    INTEGER(value)[11] = (R_V_maxused < INT_MAX) ? R_V_maxused : NA_INTEGER;
-    INTEGER(value)[12] = 10. * R_N_maxused/Mega*sizeof(SEXPREC)+0.999;
-    INTEGER(value)[13] = 10. * R_V_maxused/Mega*vsfac +0.999;
+    REAL(value)[10] = R_N_maxused;
+    REAL(value)[11] = R_V_maxused;
+    REAL(value)[12] = 0.1*ceil(10. * R_N_maxused/Mega*sizeof(SEXPREC));
+    REAL(value)[13] = 0.1*ceil(10. * R_V_maxused/Mega*vsfac);
     UNPROTECT(1);
     return value;
 }
@@ -1595,6 +1594,9 @@ void attribute_hidden InitMemory()
     R_weak_refs = R_NilValue;
 
     R_HandlerStack = R_RestartStack = R_NilValue;
+
+    /*  Unbound values which are to be preserved through GCs */
+    R_PreciousList = R_NilValue;
 }
 
 /* Since memory allocated from the heap is non-moving, R_alloc just
@@ -1617,7 +1619,7 @@ void vmaxset(char *ovmax)
 char *R_alloc(long nelem, int eltsize)
 {
     R_size_t size = nelem * eltsize;
-    double dsize = nelem * eltsize;
+    double dsize = (double)nelem * eltsize;
     if (dsize > 0) { /* precaution against integer overflow */
 	SEXP s;
 #if SIZEOF_LONG > 4
@@ -1629,11 +1631,34 @@ char *R_alloc(long nelem, int eltsize)
 	    s = allocVector(REALSXP, (int)(0.99+dsize/sizeof(double)));
 	else {
 	    s = R_NilValue; /* -Wall */
-	    error(_("cannot allocate memory block of size %.0f"), dsize);
+	    if(dsize > 1024.0*1024.0*1024.0)
+		error(_("cannot allocate memory block of size %0.1f Gb"), 
+		      dsize/1024.0/1024.0/1024.0);
+	    else if(dsize > 1024.0*1024.0)
+		error(_("cannot allocate memory block of size %0.1f Mb"), 
+		      dsize/1024.0/1024.0);
+	    else if(dsize > 1024.0)
+		error(_("cannot allocate memory block of size %0.1f Kb"), 
+		      dsize/1024.0);
+	    else
+		error(_("cannot allocate memory block of size %.0f"),
+		      dsize);
 	}
 #else
-	if(dsize > R_LEN_T_MAX)
-	    error(_("cannot allocate memory block of size %.0f"), dsize);
+	if(dsize > R_LEN_T_MAX) {
+	    if(dsize > 1024.0*1024.0*1024.0)
+		error(_("cannot allocate memory block of size %0.1f Gb"), 
+		      dsize/1024.0/1024.0/1024.0);
+	    else if(dsize > 1024.0*1024.0)
+		error(_("cannot allocate memory block of size %0.1f Mb"), 
+		      dsize/1024.0/1024.0);
+	    else if(dsize > 1024.0)
+		error(_("cannot allocate memory block of size %0.1f Kb"), 
+		      dsize/1024.0);
+	    else
+		error(_("cannot allocate memory block of size %.0f"),
+		      dsize);
+	}	
 	s = allocString(size); /**** avoid extra null byte?? */
 #endif
 	ATTRIB(s) = R_VStack;
@@ -1722,7 +1747,7 @@ static SEXP allocSExpNonCons(SEXPTYPE t)
     return s;
 }
 
-/* cons is defined directly do avoid the need to protect its arguments
+/* cons is defined directly to avoid the need to protect its arguments
    unless a GC will actually occur. */
 SEXP cons(SEXP car, SEXP cdr)
 {
@@ -1978,10 +2003,21 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 #endif
 	    }
 	    if (! success) {
+		double dsize = (double)size * sizeof(VECREC)/1024.0;
 		/* reset the vector heap limit */
 		R_VSize = old_R_VSize;
-		errorcall(R_NilValue, _("cannot allocate vector of size %lu Kb"),
-			  (size * sizeof(VECREC))/1024);
+		if(dsize > 1024.0*1024.0)
+		    errorcall(R_NilValue, 
+			      _("cannot allocate vector of size %0.1f Gb"),
+			      dsize/1024.0/1024.0);
+		if(dsize > 1024.0)
+		    errorcall(R_NilValue,
+			      _("cannot allocate vector of size %0.1f Mb"),
+			      dsize/1024.0);
+		else
+		    errorcall(R_NilValue, 
+			      _("cannot allocate vector of size %0.f Kb"),
+			      dsize);
 	    }
 	    s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
 	    SET_NODE_CLASS(s, LARGE_NODE_CLASS);
@@ -2126,8 +2162,8 @@ static void gc_end_timing(void)
 
 static void R_gc_internal(R_size_t size_needed)
 {
-    R_size_t vcells;
-    double vfrac;
+    R_size_t onsize = R_NSize /* can change during collection */;
+    double ncells, vcells, vfrac, nfrac;
     Rboolean first = TRUE;
 
  again:
@@ -2144,14 +2180,17 @@ static void R_gc_internal(R_size_t size_needed)
     } END_SUSPEND_INTERRUPTS;
 
     if (gc_reporting) {
-	REprintf("\n%lu cons cells free (%d%%)\n",
-		 R_Collected, (100 * R_Collected / R_NSize));
-	vcells = VHEAP_FREE();
+	ncells = onsize - R_Collected;
+	nfrac = (100.0 * ncells) / R_NSize;
+	/* We try to make this consistent with the results returned by gc */
+	ncells = 0.1*ceil(10*ncells * sizeof(SEXPREC)/Mega);
+	REprintf("\n%.1f Mbytes of cons cells used (%d%%)\n",
+		 ncells, (int) (nfrac + 0.5));
+	vcells = R_VSize - VHEAP_FREE();
 	vfrac = (100.0 * vcells) / R_VSize;
-	/* arrange for percentage to be rounded down, or we get
-	   `100% free' ! */
-	REprintf("%.1f Mbytes of heap free (%d%%)\n",
-		 vcells * sizeof(VECREC) / Mega, (int)vfrac);
+	vcells = 0.1*ceil(10*vcells * vsfac/Mega);
+	REprintf("%.1f Mbytes of vectors used (%d%%)\n",
+		 vcells, (int) (vfrac + 0.5));
     }
 
     if (first) {
@@ -2460,6 +2499,11 @@ void (SET_TYPEOF)(SEXP x, int v) { SET_TYPEOF(x, v); }
 void (SET_NAMED)(SEXP x, int v) { SET_NAMED(x, v); }
 void (SET_TRACE)(SEXP x, int v) { SET_TRACE(x, v); }
 int (SETLEVELS)(SEXP x, int v) { return SETLEVELS(x, v); }
+void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
+    SET_ATTRIB(to, duplicate(ATTRIB(from)));
+    SET_OBJECT(to, OBJECT(from));
+    IS_S4_OBJECT(from) ?  SET_S4_OBJECT(to) : UNSET_S4_OBJECT(to);
+}
 
 /* S4 object testing */
 int (IS_S4_OBJECT)(SEXP x){ return IS_S4_OBJECT(x); }
@@ -2761,6 +2805,13 @@ void attribute_hidden
 void attribute_hidden (LOCK_BINDING)(SEXP b) {LOCK_BINDING(b);}
 void attribute_hidden (UNLOCK_BINDING)(SEXP b) {UNLOCK_BINDING(b);}
 
+/* for use when testing the write barrier */
+int  attribute_hidden (IS_LATIN1)(SEXP x) { return IS_LATIN1(x); }
+int  attribute_hidden (IS_UTF8)(SEXP x) { return IS_UTF8(x); }
+void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
+void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
+void attribute_hidden (UNSET_LATIN1)(SEXP x) { UNSET_LATIN1(x); }
+void attribute_hidden (UNSET_UTF8)(SEXP x) { UNSET_UTF8(x); }
 
 /*******************************************/
 /* Non-sampling memory use profiler
@@ -2801,11 +2852,9 @@ static void R_OutputStackTrace(FILE *file)
 
 static void R_ReportAllocation(R_size_t size)
 {
-    int newline = 0;
-
     if (R_IsMemReporting) {
 	if(size > R_MemReportingThreshold) {
-	    fprintf(R_MemReportingOutfile,"%ld :", (unsigned long) size);
+	    fprintf(R_MemReportingOutfile, "%ld :", (unsigned long) size);
 	    R_OutputStackTrace(R_MemReportingOutfile);
 	}
     }
@@ -2814,15 +2863,12 @@ static void R_ReportAllocation(R_size_t size)
 
 static void R_ReportNewPage(void)
 {
-    int newline = 0;
-
     if (R_IsMemReporting) {
 	fprintf(R_MemReportingOutfile, "new page:");
 	R_OutputStackTrace(R_MemReportingOutfile);
     }
     return;
 }
-
 
 static void R_EndMemReporting()
 {

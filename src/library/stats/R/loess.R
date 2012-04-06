@@ -310,7 +310,7 @@ predLoess <-
 	(x.evaluate >= rep(ranges[1,], rep(M, D)))
 	inside <- inside %*% rep(1, D) == D
 	M1 <- sum(inside)
-	fit <- rep(as.numeric(NA), M)
+	fit <- rep(NA_real_, M)
 	if(any(inside))
 	    fit[inside] <- .C(R_loess_ifit,
 			      as.integer(kd$parameter),
@@ -320,7 +320,7 @@ predLoess <-
 			      as.double(x.evaluate[inside, ]),
 			      fit = double(M1))$fit
 	if(se) {
-	    se.fit <- rep(as.numeric(NA), M)
+	    se.fit <- rep(NA_real_, M)
 	    if(any(inside)) {
 		L <- .C(R_loess_ise,
 			as.double(y),
@@ -358,7 +358,7 @@ print.loess <- function(x, digits=max(3, getOption("digits")-3), ...)
 {
     if(!is.null(cl <- x$call)) {
 	cat("Call:\n")
-	dput(cl)
+	dput(cl, control=NULL)
     }
     cat("\nNumber of Observations:", x$n, "\n")
     cat("Equivalent Number of Parameters:", format(round(x$enp, 2)), "\n")
@@ -378,7 +378,7 @@ print.summary.loess <- function(x, digits=max(3, getOption("digits")-3), ...)
 {
     if(!is.null(cl <- x$call)) {
 	cat("Call:\n")
-	dput(cl)
+	dput(cl, control=NULL)
     }
     cat("\nNumber of Observations:", x$n, "\n")
     cat("Equivalent Number of Parameters:", format(round(x$enp, 2)), "\n")

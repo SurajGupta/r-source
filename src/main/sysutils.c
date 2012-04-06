@@ -1,7 +1,7 @@
 /*
   R : A Computer Language for Statistical Data Analysis
   Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
-  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include <stdlib.h> /* for putenv */
 #include <Defn.h>
 #include <R_ext/Riconv.h>
+#include <Rinterface.h>
 
 /*
   See ../unix/system.txt for a description of some of these functions.
@@ -100,6 +101,51 @@ FILE *R_fopen(const char *filename, const char *mode)
     return(filename ? fopen(filename, mode) : NULL );
 }
 
+/* The point of this function is to allow file names in foreign
+   character sets.  On Unix-alikes in a UTF-8 locale all that is
+   needed is to convert file names to UTF-8, since they will be stored
+   in UTF-8.  For other locales, it seems that there is no way to specify
+   a file name in UTF-8.
+
+   On NT-based versions of Windows, file names are stored in 'Unicode'
+   (UCS-2), and _wfopen is provided to access them by UCS-2 names.
+*/
+
+#if 0 && defined(Win32)
+FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand)
+{
+    wchar_t filename[MAX_PATH+1], wmode[10];
+    void *obj;
+    char *from = "", *inbuf, *outbuf;
+    size_t inb, outb, res;
+    
+    if(IS_LATIN1(fn)) from = "latin1";
+    if(IS_UTF8(fn)) from = "UTF=8";
+    obj = Riconv_open("UCS-2LE", from);
+    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+
+    if(expand) inbuf = R_ExpandFileName(CHAR(fn)); else inbuf = CHAR(fn);
+
+    inb = strlen(inbuf)+1; outb = 2*(MAX_PATH+1);
+    outbuf = (char *) filename;
+    res = Riconv(obj, &inbuf , &inb, &outbuf, &outb);
+    Riconv_close(obj);
+    if(res == -1 || inb > 0) error(_("file name conversion problem"));
+
+    mbstowcs(wmode, mode, 10);
+    return _wfopen(filename, wmode);
+}
+
+#else
+FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand)
+{
+    char *filename = translateChar(fn);
+    if(!filename) return NULL;
+    if(expand) return fopen(R_ExpandFileName(filename), mode);
+    else return fopen(filename, mode);
+}
+#endif
+
 /*
  *  SYSTEM INFORMATION
  */
@@ -152,8 +198,8 @@ SEXP attribute_hidden do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     slen = (n1 > n2) ? n1 : n2;
     PROTECT(ans = allocVector(STRSXP, slen));
     for(i = 0; i < slen; i++) {
-	tn = CHAR( STRING_ELT( pattern , i%n1 ) );
-	td = CHAR( STRING_ELT( tempdir , i%n2 ) );
+	tn = translateChar( STRING_ELT( pattern , i%n1 ) );
+	td = translateChar( STRING_ELT( tempdir , i%n2 ) );
 	/* try to get a new file name */
 	tm = R_tmpnam(tn, td);
 	SET_STRING_ELT(ans, i, mkChar(tm));
@@ -192,10 +238,10 @@ int R_system(char *command)
     sigaddset(&ss, SIGPROF);
     sigprocmask(SIG_BLOCK, &ss,  NULL);
 #ifdef HAVE_AQUA
-	if(useaqua)
-		val = ptr_CocoaSystem(command);
+    if(useaqua)
+	val = ptr_CocoaSystem(command);
     else
-#endif		
+#endif
     val = system(command);
     sigprocmask(SIG_UNBLOCK, &ss, NULL);
 #else
@@ -225,16 +271,17 @@ SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
     if (!isString(CAR(args)))
 	errorcall(call, _("wrong type for argument"));
 
+    if (!isString(CADR(args)) || LENGTH(CADR(args)) != 1)
+	errorcall(call, _("wrong type for argument"));
+
     i = LENGTH(CAR(args));
     if (i == 0) {
 #ifdef Win32
-	char *envir, *e;
-	envir = (char *) GetEnvironmentStrings();
-	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1);
+	char **e;
+	for (i = 0, e = _environ; *e != NULL; i++, e++);
 	PROTECT(ans = allocVector(STRSXP, i));
-	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1)
-	    SET_STRING_ELT(ans, i, mkChar(e));
-	FreeEnvironmentStrings(envir);
+	for (i = 0, e = _environ; *e != NULL; i++, e++)
+	    SET_STRING_ELT(ans, i, mkChar(*e));
 #else
 	char **e;
 	for (i = 0, e = environ; *e != NULL; i++, e++);
@@ -245,34 +292,73 @@ SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
     } else {
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (j = 0; j < i; j++) {
-	    s = getenv(CHAR(STRING_ELT(CAR(args), j)));
+	    s = getenv(translateChar(STRING_ELT(CAR(args), j)));
 	    if (s == NULL)
-		SET_STRING_ELT(ans, j, mkChar(""));
-	    else
-		SET_STRING_ELT(ans, j, mkChar(s));
+		SET_STRING_ELT(ans, j, STRING_ELT(CADR(args), 0));
+	    else {
+		SEXP tmp = mkChar(s);
+		if(known_to_be_latin1) SET_LATIN1(tmp);
+		if(known_to_be_utf8) SET_UTF8(tmp);
+		SET_STRING_ELT(ans, j, tmp);
+	    }
 	}
     }
     UNPROTECT(1);
     return (ans);
 }
 
-#ifdef HAVE_PUTENV
-static int Rputenv(char *str)
+#if !defined(HAVE_SETENV) && defined(HAVE_PUTENV)
+static int Rputenv(char *nm, char *val)
 {
     char *buf;
-    buf = (char *) malloc((strlen(str) + 1) * sizeof(char));
+    buf = (char *) malloc((strlen(nm) + strlen(val) + 2) * sizeof(char));
     if(!buf) return 1;
-    strcpy(buf, str);
-    putenv(buf);
+    sprintf(buf, "%s=%s", nm, val);
+    if(putenv(buf)) return 1;
     /* no free here: storage remains in use */
     return 0;
 }
 #endif
 
 
-SEXP attribute_hidden do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_setenv(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-#ifdef HAVE_PUTENV
+#if defined(HAVE_PUTENV) || defined(HAVE_SETENV)
+    int i, n;
+    SEXP ans, nm, vars;
+
+    checkArity(op, args);
+
+    if (!isString(nm = CAR(args)))
+	errorcall(call, _("wrong type for argument"));
+    if (!isString(vars = CADR(args)))
+	errorcall(call, _("wrong type for argument"));
+    if(LENGTH(nm) != LENGTH(vars))
+	errorcall(call, _("wrong length for argument"));
+
+    n = LENGTH(vars);
+    PROTECT(ans = allocVector(LGLSXP, n));
+#ifdef HAVE_SETENV
+    for (i = 0; i < n; i++)
+	LOGICAL(ans)[i] = setenv(translateChar(STRING_ELT(nm, i)),
+				 translateChar(STRING_ELT(vars, i)),
+				 1) == 0;
+#else
+    for (i = 0; i < n; i++)
+	LOGICAL(ans)[i] = Rputenv(translateChar(STRING_ELT(nm, i)),
+				  translateChar(STRING_ELT(vars, i))) == 0;
+#endif
+    UNPROTECT(1);
+    return ans;
+#else
+    error(_("'Sys.putenv' is not available on this system"));
+    return R_NilValue; /* -Wall */
+#endif
+}
+
+SEXP attribute_hidden do_unsetenv(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+#if defined(HAVE_UNSETENV) || defined(HAVE_PUTENV_UNSET) || defined(HAVE_PUTENV_UNSET2)
     int i, n;
     SEXP ans, vars;
 
@@ -280,16 +366,26 @@ SEXP attribute_hidden do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (!isString(vars = CAR(args)))
 	errorcall(call, _("wrong type for argument"));
-
     n = LENGTH(vars);
-    PROTECT(ans = allocVector(LGLSXP, n));
-    for (i = 0; i < n; i++) {
-	LOGICAL(ans)[i] = Rputenv(CHAR(STRING_ELT(vars, i))) == 0;
+#ifdef HAVE_UNSETENV
+    for (i = 0; i < n; i++) unsetenv(translateChar(STRING_ELT(vars, i)));
+#elif defined(HAVE_PUTENV_UNSET)
+    for (i = 0; i < n; i++) putenv(translateChar(STRING_ELT(vars, i)));
+#elif defined(HAVE_PUTENV_UNSET2)
+    {
+	char buf[1000];
+	for (i = 0; i < n; i++) {
+	    snprintf(buf, 1000, "%s=", translateChar(STRING_ELT(vars, i)));
+	    putenv(buf);
+	}
     }
-    UNPROTECT(1);
+#endif
+    ans = allocVector(LGLSXP, n);
+    for (i = 0; i < n; i++)
+	LOGICAL(ans)[i] = !getenv(translateChar(STRING_ELT(vars, i)));
     return ans;
 #else
-    error(_("'putenv' is not available on this system"));
+        error(_("'Sys.unsetenv' is not available on this system"));
     return R_NilValue; /* -Wall */
 #endif
 }
@@ -311,7 +407,7 @@ static void iconv_Init(void)
 {
     static int initialized = 0;
     char dllpath[PATH_MAX];
-    snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", getenv("R_HOME"), 
+    snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", getenv("R_HOME"),
 	     FILESEP, FILESEP, "iconv", SHLIB_EXT);
     if(!initialized) {
 	int res = R_moduleCdynload("iconv", 1, 1);
@@ -343,19 +439,19 @@ typedef void* iconv_t;
 #ifdef HAVE_ICONVLIST
 static unsigned int cnt;
 
-static int 
+static int
 count_one (unsigned int namescount, char * *names, void *data)
 {
     cnt += namescount;
     return 0;
 }
 
-static int 
+static int
 write_one (unsigned int namescount, char * *names, void *data)
 {
   unsigned int i;
   SEXP ans = (SEXP) data;
-  
+
   for (i = 0; i < namescount; i++)
       SET_STRING_ELT(ans, cnt++, mkChar(names[i]));
   return 0;
@@ -376,7 +472,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
     char *sub;
     size_t inb, outb, res;
     R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
-    
+
     checkArity(op, args);
 #ifdef Win32
     iconv_Init();
@@ -392,6 +488,9 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = R_NilValue);
 #endif
     } else {
+	char *from, *to;
+	Rboolean isLatin1 = FALSE, isUTF8 = FALSE;
+
 	if(TYPEOF(x) != STRSXP)
 	    errorcall(call, _("'x' must be a character vector"));
 	if(!isString(CADR(args)) || length(CADR(args)) != 1)
@@ -401,10 +500,15 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(!isString(CADDDR(args)) || length(CADDDR(args)) != 1)
 	    errorcall(call, _("invalid '%s' argument"), "sub");
 	if(STRING_ELT(CADDDR(args), 0) == NA_STRING) sub = NULL;
-	else sub = CHAR(STRING_ELT(CADDDR(args), 0));
-
-	obj = Riconv_open(CHAR(STRING_ELT(CADDR(args), 0)),
-			  CHAR(STRING_ELT(CADR(args), 0)));
+	else sub = translateChar(STRING_ELT(CADDDR(args), 0));
+	from = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
+	to = CHAR(STRING_ELT(CADDR(args), 0));
+	/* Should we do something about marked CHARSXPs in 'from = ""'? */
+	if(streql(to, "UTF-8")) isUTF8 = TRUE;
+	if(streql(to, "latin1") || streql(to, "ISO_8859-1")) isLatin1 = TRUE;
+	if(streql(to, "") && known_to_be_latin1) isLatin1 = TRUE;
+	if(streql(to, "") && known_to_be_utf8) isUTF8 = TRUE;
+	obj = Riconv_open(to, from);
 	if(obj == (iconv_t)(-1))
 	    errorcall(call, _("unsupported conversion"));
 	PROTECT(ans = duplicate(x));
@@ -419,7 +523,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	    /* Then convert input  */
 	    res = iconv(obj, &inbuf , &inb, &outbuf, &outb);
 	    *outbuf = '\0';
-	    /* other possible error conditions are incomplete 
+	    /* other possible error conditions are incomplete
 	       and invalid multibyte chars */
 	    if(res == -1 && errno == E2BIG) {
 		R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
@@ -444,9 +548,12 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		inbuf++; inb--;
 		goto next_char;
 	    }
-	
-	    if(res != -1 && inb == 0)
+
+	    if(res != -1 && inb == 0) {
 		SET_STRING_ELT(ans, i, mkChar(cbuff.data));
+		if(isLatin1) SET_LATIN1(STRING_ELT(ans, i));
+		if(isUTF8) SET_UTF8(STRING_ELT(ans, i));
+	    }
 	    else SET_STRING_ELT(ans, i, NA_STRING);
 	}
 	Riconv_close(obj);
@@ -477,7 +584,7 @@ void * Riconv_open (char* tocode, char* fromcode)
 #endif
 }
 
-size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft, 
+size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft,
 	       char **outbuf, size_t *outbytesleft)
 {
     return iconv((iconv_t) cd, inbuf, inbytesleft, outbuf, outbytesleft);
@@ -487,6 +594,68 @@ int Riconv_close (void *cd)
 {
     return iconv_close((iconv_t) cd);
 }
+
+static void *latin1_obj = NULL, *utf8_obj=NULL;
+
+char *translateChar(SEXP x)
+{
+    void * obj;
+    char *inbuf, *outbuf, *ans = CHAR(x), *p;
+    size_t inb, outb, res;
+    R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
+
+    if(x == NA_STRING || !(IS_LATIN1(x) || IS_UTF8(x))) return ans;
+    if(utf8locale && IS_UTF8(x)) return ans;
+    if(latin1locale && IS_LATIN1(x)) return ans;
+    if(utf8strIsASCII(CHAR(x))) return ans;
+
+    if(IS_LATIN1(x)) {
+	if(!latin1_obj) {
+	    obj = Riconv_open("", "latin1");
+	    /* should never happen */
+	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    latin1_obj = obj;
+	}
+	obj = latin1_obj;
+    } else {
+	if(!utf8_obj) {
+	    obj = Riconv_open("", "UTF-8");
+	    /* should never happen */
+	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    utf8_obj = obj;
+	}
+	obj = utf8_obj;
+	
+    }
+    R_AllocStringBuffer(0, &cbuff);
+top_of_loop:
+    inbuf = ans; inb = strlen(inbuf);
+    outbuf = cbuff.data; outb = cbuff.bufsize - 1;
+    /* First initialize output */
+    Riconv (obj, NULL, NULL, &outbuf, &outb);
+next_char:
+    /* Then convert input  */
+    res = iconv(obj, &inbuf , &inb, &outbuf, &outb);
+    if(res == -1 && errno == E2BIG) {
+	R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
+	goto top_of_loop;
+    } else if(res == -1 && errno == EILSEQ) {
+	if(outb < 5) {
+	    R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
+	    goto top_of_loop;
+	}
+	snprintf(outbuf, 5, "<%02x>", (unsigned char)*inbuf);
+	outbuf += 4; outb -= 4;
+	inbuf++; inb--;
+	goto next_char;
+    }
+    *outbuf = '\0';
+    res = strlen(cbuff.data) + 1;
+    p = R_alloc(res, 1);
+    memcpy(p, cbuff.data, res);
+    R_FreeStringBuffer(&cbuff);
+    return p;
+}
 #else
 void * Riconv_open (char* tocode, char* fromcode)
 {
@@ -494,7 +663,7 @@ void * Riconv_open (char* tocode, char* fromcode)
     return (void *)-1;
 }
 
-size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft, 
+size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft,
 	       char **outbuf, size_t *outbytesleft)
 {
     error(_("'iconv' is not available on this system"));
@@ -505,6 +674,11 @@ int Riconv_close (void * cd)
 {
     error(_("'iconv' is not available on this system"));
     return -1;
+}
+
+char *translateChar(SEXP x)
+{
+    return CHAR(x);
 }
 #endif
 
@@ -562,9 +736,9 @@ void attribute_hidden InitTempDir()
 	tm = getenv("TMPDIR");
 	if (!isDir(tm)) {
 	    tm = getenv("TMP");
-	    if (!isDir(tm)) { 
+	    if (!isDir(tm)) {
 		tm = getenv("TEMP");
-		if (!isDir(tm)) 
+		if (!isDir(tm))
 #ifdef Win32
 		    tm = getenv("R_USER"); /* this one will succeed */
 #else
@@ -586,21 +760,28 @@ void attribute_hidden InitTempDir()
 #endif
 	tmp = mkdtemp(tmp1);
 	if(!tmp) R_Suicide(_("cannot mkdir R_TempDir"));
-#if defined(HAVE_PUTENV) && !defined(Win32)
+#ifndef Win32
+# ifdef HAVE_SETENV
+	if(setenv("R_SESSION_TMPDIR", tmp, 1))
+	    errorcall(R_NilValue, _("unable to set R_SESSION_TMPDIR"));
+# elif defined(HAVE_PUTENV)
 	{
 	    char * buf = (char *) malloc((strlen(tmp) + 20) * sizeof(char));
 	    if(buf) {
 		sprintf(buf, "R_SESSION_TMPDIR=%s", tmp);
-		putenv(buf);
+		if(putenv(buf)) 
+		    errorcall(R_NilValue, _("unable to set R_SESSION_TMPDIR"));
 		/* no free here: storage remains in use */
-	    }
+	    } else 
+		errorcall(R_NilValue, _("unable to set R_SESSION_TMPDIR"));
 	}
+# endif
 #endif
     }
 
     len = strlen(tmp) + 1;
     p = (char *) malloc(len);
-    if(!p) 
+    if(!p)
 	R_Suicide(_("cannot allocate R_TempDir"));
     else {
 	R_TempDir = p;
@@ -608,6 +789,34 @@ void attribute_hidden InitTempDir()
 	Sys_TempDir = R_TempDir;
     }
 }
+
+#ifdef HAVE_GETTIMEOFDAY
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# endif
+#else
+# ifdef HAVE_TIME_H
+# include <time.h>
+# endif
+#endif
+
+void attribute_hidden InitRand()
+{
+    unsigned int seed;
+#if HAVE_GETTIMEOFDAY
+  {
+    struct timeval tv;
+    gettimeofday (&tv, NULL);
+    seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
+  }
+#elif HAVE_TIME
+    seed = (unsigned int) time(NULL);
+#else
+    /* unlikely, but use random contents */
+#endif
+    srand(seed);
+}
+
 
 char * R_tmpnam(const char * prefix, const char * tempdir)
 {
@@ -629,9 +838,9 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
 #else
 	sprintf(tm, "%s%s%s%x%x", tmp1, filesep, prefix, rand(), rand());
 #endif
-        if(!R_FileExists(tm)) { 
-	    done = 1; 
-	    break; 
+        if(!R_FileExists(tm)) {
+	    done = 1;
+	    break;
 	}
     }
     if(!done)
@@ -640,3 +849,24 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
     strcpy(res, tm);
     return res;
 }
+
+SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
+#ifdef _R_HAVE_TIMING_
+{
+    SEXP ans = allocVector(REALSXP, 5), nm = allocVector(STRSXP, 5);
+    R_getProcTime(REAL(ans));
+    SET_STRING_ELT(nm, 0, mkChar("user.self"));
+    SET_STRING_ELT(nm, 1, mkChar("sys.self"));
+    SET_STRING_ELT(nm, 2, mkChar("elapsed"));
+    SET_STRING_ELT(nm, 3, mkChar("user.child"));
+    SET_STRING_ELT(nm, 4, mkChar("sys.child"));
+    setAttrib(ans, R_NamesSymbol, nm);
+    setAttrib(ans, R_ClassSymbol, mkString("proc_time"));
+    return ans;
+}
+#else
+{
+    error(_("proc.time() is not implemented on this system"));
+    return R_NilValue;		/* -Wall */
+}
+#endif

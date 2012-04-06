@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-12-01 10:45\n"
+"POT-Creation-Date: 2007-04-13 12:51\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11,13 +11,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 
-msgid "'format' must be \"normal\" or \"short\". Using \"normal\""
+msgid "RShowDoc() should be used with a character string argument specifying\n   a documentation file"
 msgstr ""
 
-msgid "wrong 'sortby' specified. Using sortby=\"score\""
+msgid "no documentation for '%s' found in package '%s'"
 msgstr ""
 
-msgid "wrong restriction specified.\nUsing '%s'"
+msgid "document not found"
 msgstr ""
 
 msgid "A search query has been submitted to"
@@ -185,6 +185,9 @@ msgstr ""
 msgid "invalid 'modes' argument"
 msgstr ""
 
+msgid "invalid 'x' argument"
+msgstr ""
+
 msgid "can only handle vector and factor elements"
 msgstr ""
 
@@ -209,7 +212,19 @@ msgstr ""
 msgid "'%s' has a help file but no examples file"
 msgstr ""
 
+msgid "test '%s' is not available"
+msgstr ""
+
 msgid "'fix' requires a name"
+msgstr ""
+
+msgid "too many list items (at most up to number 26)"
+msgstr ""
+
+msgid "too many list items (at most up to number 3899)"
+msgstr ""
+
+msgid "'form' must be a two-sided formula"
 msgstr ""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
@@ -272,19 +287,40 @@ msgstr ""
 msgid "argument 'help.db' is deprecated"
 msgstr ""
 
+msgid "Rebuilding the data base ..."
+msgstr ""
+
+msgid "Packages {.readRDS() sequentially}:"
+msgstr ""
+
 msgid "could not find package '%s'"
+msgstr ""
+
+msgid "package '%s' has empty hsearch data - strangely"
 msgstr ""
 
 msgid "no hsearch.rds meta data for package"
 msgstr ""
 
+msgid "reencoding ..."
+msgstr ""
+
+msgid "done"
+msgstr ""
+
 msgid "removing all entries with invalid multi-byte character data"
+msgstr ""
+
+msgid "saving the database ..."
 msgstr ""
 
 msgid "no information in the data base for package '%s': need 'rebuild = TRUE'?"
 msgstr ""
 
 msgid "incorrect 'agrep' specification"
+msgstr ""
+
+msgid "matched %d objects."
 msgstr ""
 
 msgid "no package '%s' was found"
@@ -440,6 +476,21 @@ msgstr ""
 msgid "no packages were specified"
 msgstr ""
 
+msgid "argument 'lib' is missing: using '%s'"
+msgstr ""
+
+msgid "'lib' is not writable"
+msgstr ""
+
+msgid "Would you like to create a personal library\n'%s'\nto install packages into?"
+msgstr ""
+
+msgid "unable to install packages"
+msgstr ""
+
+msgid "unable to create"
+msgstr ""
+
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr ""
 
@@ -455,7 +506,7 @@ msgstr ""
 msgid "installation of package '%s' had non-zero exit status"
 msgstr ""
 
-msgid "Unable to create temporary directory '%s'"
+msgid "unable to create temporary directory '%s'"
 msgstr ""
 
 msgid "Do not know which element of 'lib' to install dependencies into\nskipping dependencies"
@@ -569,6 +620,15 @@ msgstr ""
 msgid "invalid 'row.names' specification"
 msgstr ""
 
+msgid "invalid 'row.names' length"
+msgstr ""
+
+msgid "duplicate 'row.names' are not allowed"
+msgstr ""
+
+msgid "missing values in 'row.names' are not allowed"
+msgstr ""
+
 msgid "missing lengths for some fields"
 msgstr ""
 
@@ -588,6 +648,18 @@ msgid "HTTPUserAgent"
 msgstr ""
 
 msgid "option must be a length one character vector or NULL"
+msgstr ""
+
+msgid "empty beginning of file"
+msgstr ""
+
+msgid "first five rows are empty: giving up"
+msgstr ""
+
+msgid "cannot coerce 'x' to roman"
+msgstr ""
+
+msgid "Invalid roman numeral(s): %s"
 msgstr ""
 
 msgid "invalid 'socket' argument"
@@ -641,6 +713,30 @@ msgstr ""
 msgid "Invalid input, please try again"
 msgstr ""
 
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr ""
+
+msgid "invalid numbers in 'quote'"
+msgstr ""
+
+msgid "invalid 'quote' specification"
+msgstr ""
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr ""
+
+msgid "invalid 'col.names' specification"
+msgstr ""
+
+msgid "appending column names to file"
+msgstr ""
+
+msgid "attempt to change '%s' ignored"
+msgstr ""
+
+msgid "'unzip' must be a single character string"
+msgstr ""
+
 msgid "'subject' missing"
 msgstr ""
 
@@ -668,10 +764,10 @@ msgstr ""
 msgid "Otherwise, be patient ..."
 msgstr ""
 
-msgid "url must be a non-empty character string"
+msgid "'url' must be a non-empty character string"
 msgstr ""
 
-msgid "browser must be a non-empty character string"
+msgid "'browser' must be a non-empty character string"
 msgstr ""
 
 msgid "cannot create HTML package index"
@@ -698,9 +794,6 @@ msgstr ""
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr ""
 
-msgid "unable to create temporary directory '%s'"
-msgstr ""
-
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr ""
 
@@ -725,12 +818,6 @@ msgstr ""
 msgid "updating HTML package descriptions"
 msgstr ""
 
-msgid "cannot update HTML package index"
-msgstr ""
-
-msgid "cannot update HTML search index"
-msgstr ""
-
 msgid "cannot update '%s'"
 msgstr ""
 
@@ -748,13 +835,23 @@ msgid_plural "objects '%s' not found"
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "dependency '%s' is not available"
-msgid_plural "dependencies '%s' are not available"
+msgid        "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "also installing the dependency "
-msgid_plural "also installing the dependencies "
+msgid        "package %s is not available"
+msgid_plural "packages %s are not available"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "dependency %s is not available"
+msgid_plural "dependencies %s are not available"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "also installing the dependency %s"
+msgid_plural "also installing the dependencies %s"
 msgstr[0]    ""
 msgstr[1]    ""
 

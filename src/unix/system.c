@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka
  *			      and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,7 @@
 
 #include "Runix.h"
 
+attribute_hidden FILE *ifp = NULL;
 
 attribute_hidden
 Rboolean UsingReadline = TRUE;  /* used in sys-std.c & ../main/platform.c */
@@ -69,7 +70,8 @@ void R_Suicide(char *s) { ptr_R_Suicide(s); }
 void R_ShowMessage(char *s) { ptr_R_ShowMessage(s); }
 int R_ReadConsole(char *prompt, unsigned char *buf, int len, int addtohistory)
 { return ptr_R_ReadConsole(prompt, buf, len, addtohistory); }
-void R_WriteConsole(char *buf, int len) {ptr_R_WriteConsole(buf, len);}
+void R_WriteConsole(char *buf, int len) {if (ptr_R_WriteConsole) ptr_R_WriteConsole(buf, len); else ptr_R_WriteConsoleEx(buf, len, 0); }
+void R_WriteConsoleEx(char *buf, int len, int otype) {if (ptr_R_WriteConsole) ptr_R_WriteConsole(buf, len); else ptr_R_WriteConsoleEx(buf, len, otype); }
 void R_ResetConsole(void) { ptr_R_ResetConsole(); }
 void R_FlushConsole(void) { ptr_R_FlushConsole(); }
 void R_ClearerrConsole(void) { ptr_R_ClearerrConsole(); }
@@ -79,8 +81,8 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
 		Rboolean del, char *pager)
 { return ptr_R_ShowFiles(nfile, file, headers, wtitle, del, pager); }
-int R_ChooseFile(int new, char *buf, int len)
-{ return ptr_R_ChooseFile(new, buf, len); }
+int R_ChooseFile(int _new, char *buf, int len)
+{ return ptr_R_ChooseFile(_new, buf, len); }
 
 
 void R_setStartTime(void); /* in sys-unix.c */
@@ -133,9 +135,10 @@ int Rf_initialize_R(int ac, char **av)
 {
     int i, ioff = 1, j;
     Rboolean useX11 = TRUE, useTk = FALSE;
-    char *p, msg[1024], **avv;
+    char *p, msg[1024], cmdlines[10000], **avv;
     structRstart rstart;
     Rstart Rp = &rstart;
+    cmdlines[0] = '\0';
 
 #ifdef ENABLE_NLS
     char localedir[PATH_MAX+20];
@@ -296,6 +299,35 @@ int Rf_initialize_R(int ac, char **av)
 	if (**++av == '-') {
 	    if(!strcmp(*av, "--no-readline")) {
 		UsingReadline = FALSE;
+	    } else if(!strcmp(*av, "-f")) {
+		ac--; av++;
+		Rp->R_Interactive = FALSE;
+		if(strcmp(*av, "-")) {
+		    ifp = R_fopen(*av, "r");
+		    if(!ifp) {
+			snprintf(msg, 1024, _("cannot open file '%s'"), *av);
+			R_Suicide(msg);
+		    }
+		}
+	    } else if(!strncmp(*av, "--file=", 7)) {
+		Rp->R_Interactive = FALSE;
+		if(strcmp((*av)+7, "-")) {
+		    ifp = R_fopen( (*av)+7, "r");
+		    if(!ifp) {
+			snprintf(msg, 1024, _("cannot open file '%s'"), (*av)+7);
+			R_Suicide(msg);
+		    }
+		}
+	    } else if(!strcmp(*av, "-e")) {
+		ac--; av++;
+		Rp->R_Interactive = FALSE;
+		if(strlen(cmdlines) + strlen(*av) + 2 <= 10000) {
+		    strcat(cmdlines, *av);
+		    strcat(cmdlines, "\n");
+		} else {
+		    snprintf(msg, 1024, _("WARNING: '-e %s' omitted as input is too long\n"), *av);
+		    R_ShowMessage(msg);
+		}   
 	    } else if(!strcmp(*av, "--args")) {
 		break;
 	    } else {
@@ -312,11 +344,23 @@ int Rf_initialize_R(int ac, char **av)
 	    R_ShowMessage(msg);
 	}
     }
+
+    if(strlen(cmdlines)) { /* had at least one -e option */
+	if(ifp) R_Suicide(_("cannot use -e with -f or --file"));
+	ifp = tmpfile();
+	fwrite(cmdlines, strlen(cmdlines)+1, 1, ifp);
+	fflush(ifp);
+	rewind(ifp);
+    }
+    if (ifp && Rp->SaveAction != SA_SAVE) Rp->SaveAction = SA_NOSAVE;
+
     R_SetParams(Rp);
+
     if(!Rp->NoRenviron) {
 	process_site_Renviron();
 	process_user_Renviron();
     }
+
 
     /* On Unix the console is a file; we just use stdio to write on it */
 
@@ -325,12 +369,16 @@ int Rf_initialize_R(int ac, char **av)
 	R_Interactive = useaqua;
     else
 #endif
-    R_Interactive = isatty(0);
+	R_Interactive = R_Interactive && isatty(0);
 
 #ifdef HAVE_AQUA
-    if(useaqua){
+    /* for Aqua and non-dumb terminal use callbacks instead of connections
+       and pretty-print warnings/errors (ESS = dumb terminal) */
+    if(useaqua || (R_Interactive && getenv("TERM") && strcmp(getenv("TERM"),"dumb"))) {
 	R_Outputfile = NULL;
 	R_Consolefile = NULL;
+	ptr_R_WriteConsoleEx = Rstd_WriteConsoleEx;
+	ptr_R_WriteConsole = NULL;
     } else {
 #endif
     R_Outputfile = stdout;
@@ -347,7 +395,7 @@ int Rf_initialize_R(int ac, char **av)
     if (!R_Interactive && Rp->SaveAction != SA_SAVE && 
 	Rp->SaveAction != SA_NOSAVE)
 	R_Suicide(_("you must specify '--save', '--no-save' or '--vanilla'"));
-
+    
     R_setupHistory();
     if (R_RestoreHistory)
 	Rstd_read_history(R_HistoryFile);

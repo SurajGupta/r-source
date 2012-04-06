@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-6     the R Development Core Team
+ *  Copyright (C) 2002-7     the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,12 +30,12 @@
 SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int i, nargs, cnt, v, thislen;
-    char *formatString, *starc;
+    char *formatString, *starc, *ss;
     char fmt[MAXLINE+1], fmt2[MAXLINE+1], *fmtp, bit[MAXLINE+1], 
 	outputString[MAXLINE+1];
     size_t n, cur, chunk;
 
-    SEXP format, ans, this, a[100], tmp;
+    SEXP format, ans, _this, a[100], tmp;
     int ns, maxlen, lens[100], nthis, has_star, star_arg = 0, nstar;
 
     /* grab the format string */
@@ -70,7 +70,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
     for(ns = 0; ns < maxlen; ns++) {
 	cnt = 0;
 	outputString[0] = '\0';
-	formatString = CHAR(STRING_ELT(format, ns % length(format)));
+	formatString = translateChar(STRING_ELT(format, ns % length(format)));
 	n = strlen(formatString);
 	if (n > MAXLINE)
 	    errorcall(call, _("'fmt' length exceeds maximal buffer length %d"),
@@ -143,14 +143,14 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			if (strchr(starc+1, '*'))
 			    errorcall(call, _("at most one asterisk `*' is supported in each conversion specification"));
 
-			this = a[nstar];
-			if(TYPEOF(this) == REALSXP)
-			    this = coerceVector(this, INTSXP);
-			if(TYPEOF(this) != INTSXP || LENGTH(this)<1 ||
-			   INTEGER(this)[ns % LENGTH(this)] == NA_INTEGER)
+			_this = a[nstar];
+			if(TYPEOF(_this) == REALSXP)
+			    _this = coerceVector(_this, INTSXP);
+			if(TYPEOF(_this) != INTSXP || LENGTH(_this)<1 ||
+			   INTEGER(_this)[ns % LENGTH(_this)] == NA_INTEGER)
 			    errorcall(call, _("argument for `*' conversion specification must be a number"));
 			has_star = 1;
-			star_arg = INTEGER(this)[ns % LENGTH(this)];
+			star_arg = INTEGER(_this)[ns % LENGTH(_this)];
 		    }
 
 		    if (fmt[strlen(fmt) - 1] == '%') {
@@ -164,7 +164,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    if (cnt >= nargs) errorcall(call, _("too few arguments"));
 			    nthis = cnt++;
 			}
-			this = a[nthis];
+			_this = a[nthis];
 			if (has_star) {
 			    char *p, *q = fmt2;
 			    for (p = fmt; *p; p++)
@@ -181,41 +181,41 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			case 'i':
 			case 'x':
 			case 'X':
-			    if(TYPEOF(this) == REALSXP) {
-				double r = REAL(this)[0];
+			    if(TYPEOF(_this) == REALSXP) {
+				double r = REAL(_this)[0];
 				if((double)((int) r) == r)
-				    this = coerceVector(this, INTSXP);
+				    _this = coerceVector(_this, INTSXP);
 			    }
 			    break;
 			case 'e':
 			case 'f':
 			case 'g':
-			    if(TYPEOF(this) != REALSXP) {
-				PROTECT(tmp = lang2(install("as.double"), this));
-				this = eval(tmp, env);
+			    if(TYPEOF(_this) != REALSXP) {
+				PROTECT(tmp = lang2(install("as.double"), _this));
+				_this = eval(tmp, env);
 				UNPROTECT(1);
 			    }
 			    break;
 			case 's':
-			    if(TYPEOF(this) != STRSXP) {
+			    if(TYPEOF(_this) != STRSXP) {
 				PROTECT(tmp = 
-					lang2(install("as.character"), this));
-				this = eval(tmp, env);
+					lang2(install("as.character"), _this));
+				_this = eval(tmp, env);
 				UNPROTECT(1);
 			    }
 			    break;
 			default:
 			    break;
 			}
-			PROTECT(this);
-			thislen = length(this);
+			PROTECT(_this);
+			thislen = length(_this);
 			if(thislen == 0)
 			    error(_("coercion has changed vector length to 0"));
 			
-			switch(TYPEOF(this)) {
+			switch(TYPEOF(_this)) {
 			case LGLSXP:
 			    {
-				int x = LOGICAL(this)[ns % thislen];
+				int x = LOGICAL(_this)[ns % thislen];
 				if (strcspn(fmtp, "di") >= strlen(fmtp))
 				    error("%s", 
 					  _("use format %d or %i for logical objects"));
@@ -229,7 +229,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    }
 			case INTSXP:
 			    {
-				int x = INTEGER(this)[ns % thislen];
+				int x = INTEGER(_this)[ns % thislen];
 				if (strcspn(fmtp, "dixX") >= strlen(fmtp))
 				    error("%s",
 					  _("use format %d, %i, %x or %X for integer objects"));
@@ -243,7 +243,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    }
 			case REALSXP:
 			    {
-				double x = REAL(this)[ns % thislen];
+				double x = REAL(_this)[ns % thislen];
 				if (strcspn(fmtp, "feEgG") >= strlen(fmtp))
 				    error("%s", 
 					  _("use format %f, %e or %g for numeric objects"));
@@ -281,11 +281,10 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    /* NA_STRING will be printed as `NA' */
 			    if (strcspn(fmtp, "s") >= strlen(fmtp))
 				error("%s", _("use format %s for character objects"));
-			    if(strlen(CHAR(STRING_ELT(this, ns % thislen)))
-			       > MAXLINE)
+			    ss = translateChar(STRING_ELT(_this, ns % thislen));
+			    if(strlen(ss) > MAXLINE)
 				warning(_("Likely truncation of character string"));
-			    snprintf(bit, MAXLINE, fmtp, 
-				     CHAR(STRING_ELT(this, ns % thislen)));
+			    snprintf(bit, MAXLINE, fmtp, ss);
 			    bit[MAXLINE] = '\0';
 			    break;
 			    
