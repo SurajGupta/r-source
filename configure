@@ -574,7 +574,7 @@ cat >> confdefs.h <<\EOF
 EOF
 
 cat >> confdefs.h <<\EOF
-#define R_MINOR "62.3"
+#define R_MINOR "62.4"
 EOF
 
 cat >> confdefs.h <<\EOF

@@ -1,3 +1,25 @@
+		CHANGES IN R VERSION 0.62.4
+BUG FIXES
+
+    o   plot.default(.) has now 'sub' argument which eliminates
+	"Warning: parameter "sub" couldn't be set in high-level plot() function"
+
+    o	formatC(numeric(0)) now works.
+
+    o	menu(.) works for empty imput
+
+    o   0i ^ 2  now gives  0+0i as it should.
+
+    o   ppoints() now behaves like S, and has additional argument 'a'
+
+    o   seq(1,6,by=3) and similar "by" calls now work okay
+
+    o   mahalanobis(.) now fixed; does *NOT* have default arguments for
+	center and cov anymore.
+
+    o   diag(.) doesn't return non-sensical dimnames anymore.
+
+
 		CHANGES IN R VERSION 0.62.3
 
 NEW FEATURES
