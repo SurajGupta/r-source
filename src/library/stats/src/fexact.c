@@ -993,8 +993,8 @@ LoopNode: /* Generate a node */
     } else { /* Column marginals are new node */
 
 	for (i = 1; i <= nco; ++i)
-	    it[i] = ico[i] - lb[i];
-
+	    it[i] = imax2(ico[i] - lb[i], 0);
+	
 	/* Sort column marginals it[] : */
 	if (nco == 2) {
 	    if (it[1] > it[2]) { /* swap */
@@ -1008,7 +1008,7 @@ LoopNode: /* Generate a node */
 	for (i = 3; i <= nco; ++i) {
 	    key = it[i] + key * kyy;
 	}
-	if(key < 0)
+	if (key < -1)
 	    PROBLEM "Bug in FEXACT: gave negative key" RECOVER(NULL_ENTRY);
 	/* Table index */
 	ipn = key % ldst + 1;

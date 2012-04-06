@@ -180,6 +180,7 @@ foreach my $pkg (@ARGV) {
 	print EXCLUDE "$File::Find::name\n" if /^GNUMakefile$/;
 	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^CVS$/);
 	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^\.svn$/);
+	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^\.arch-ids$/);
 	if($WINDOWS) {
 	    ## exclude stray dependency files
 	    print EXCLUDE "$File::Find::name\n" if /\.d$/;
@@ -236,8 +237,10 @@ foreach my $pkg (@ARGV) {
     mkdir("$tmpdir", 0755)
 	or die "Error: cannot create directory '$tmpdir'\n";
     chdir($tmpdir);
+    ## was xhf, but there are no symbolic links here and that is invalid
+    ## on FreeBSD, see http://www.freebsd.org/cgi/man.cgi?query=tar&apropos=0&sektion=0&manpath=FreeBSD+5.4-RELEASE+and+Ports&format=html
     R_system(join(" ",
-		  ("$tar xhf",
+		  ("$tar xf",
 		   &shell_quote_file_path($filepath))));
     ## Remove exclude files.
     open(EXCLUDE, "< $exclude");
@@ -497,10 +500,11 @@ sub cleanup_pkg {
 		$makefiles .= " -f Makefile";
 		R_system("${R::Vars::MAKE} $makefiles clean");
 	    } else {
-		foreach my $file (<*.o *.s[lo] .dylib>) {
-		    unlink($file);
-		}
+		## Also cleanup possible Windows leftovers ...
+		unlink((<*.o *.s[lo] *.dylib>, 
+			"$pkgname.a", "$pkgname.dll", "$pkgname.def"));
 		rmtree(".libs") if (-d ".libs");
+		rmtree("_libs") if (-d "_libs");		
 	    }
 	}
     }

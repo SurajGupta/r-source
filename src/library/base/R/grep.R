@@ -18,30 +18,30 @@ function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
 
 sub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
-         perl = FALSE, fixed = FALSE)
+         perl = FALSE, fixed = FALSE, useBytes = FALSE)
 {
     if (is.na(pattern))
         return(rep.int(as.character(NA), length(x)))
 
     if(perl)
-        .Internal(sub.perl(pattern, replacement, x, ignore.case))
+        .Internal(sub.perl(pattern, replacement, x, ignore.case, useBytes))
     else
         .Internal(sub(pattern, replacement, x, ignore.case,
-                      extended, fixed))
+                      extended, fixed, useBytes))
 }
 
 gsub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
-         perl = FALSE, fixed = FALSE)
+         perl = FALSE, fixed = FALSE, useBytes = FALSE)
 {
   if (is.na(pattern))
       return(rep.int(as.character(NA), length(x)))
 
   if(perl)
-        .Internal(gsub.perl(pattern, replacement, x, ignore.case))
+        .Internal(gsub.perl(pattern, replacement, x, ignore.case, useBytes))
     else
         .Internal(gsub(pattern, replacement, x, ignore.case,
-                       extended, fixed))
+                       extended, fixed, useBytes))
 }
 
 regexpr <-
@@ -52,6 +52,16 @@ function(pattern, text, extended = TRUE, perl = FALSE,
         .Internal(regexpr.perl(pattern, text, useBytes))
     else
         .Internal(regexpr(pattern, text, extended, fixed, useBytes))
+}
+
+gregexpr <-
+function(pattern, text, extended = TRUE, perl = FALSE,
+         fixed = FALSE, useBytes = FALSE)
+{
+    if(perl)
+      .Internal(gregexpr.perl(pattern, text, useBytes))
+    else
+      .Internal(gregexpr(pattern, text, extended, fixed, useBytes))
 }
 
 agrep <-

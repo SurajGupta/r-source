@@ -172,6 +172,7 @@ void InitArithmetic()
     R_NegInf = -1.0/R_Zero_Hack;
 }
 
+/* Keep these two in step */
 static double myfmod(double x1, double x2)
 {
     double q = x1 / x2, tmp;
@@ -182,6 +183,15 @@ static double myfmod(double x1, double x2)
 	warning(_("probable complete loss of accuracy in modulus"));
     q = floor(tmp/x2);
     return tmp - q * x2;
+}
+
+static double myfloor(double x1, double x2)
+{
+    double q = x1 / x2, tmp;
+
+    if (x2 == 0.0) return q;
+    tmp = x1 - floor(q) * x2;
+    return floor(q) + floor(tmp/x2);
 }
 
 
@@ -559,7 +569,7 @@ static SEXP real_unary(ARITHOP_TYPE code, SEXP s1, SEXP lcall)
    OK. */
 
 #ifndef INT_32_BITS
-/* configure checks whehter int is 32 bits.  If not this code will
+/* configure checks whether int is 32 bits.  If not this code will
    need to be rewritten.  Since 32 bit ints are pretty much universal,
    we can worry about writing alternate code when the need arises.
    To be safe, we signal a compiler error if int is not 32 bits. */
@@ -791,7 +801,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	break;
     case IDIVOP:
 	mod_iterate(n1, n2, i1, i2) {
-	    REAL(ans)[i] = floor(REAL(s1)[i1] / REAL(s2)[i2]);
+	    REAL(ans)[i] = myfloor(REAL(s1)[i1], REAL(s2)[i2]);
 	}
 	break;
     }

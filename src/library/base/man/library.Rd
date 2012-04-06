@@ -41,7 +41,8 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
     search list as given by \code{\link{search}()}.}
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through, or \code{NULL}.  The default value
-    of \code{NULL} corresponds to all libraries currently known.}
+    of \code{NULL} corresponds to all libraries currently known.
+    Non-existent library trees are silently ignored.}
   \item{character.only}{a logical indicating whether \code{package} or
     \code{help} can be assumed to be character strings.}
   \item{version}{A character string denoting a version number of the
@@ -52,9 +53,16 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \item{warn.conflicts}{logical.  If \code{TRUE}, warnings are
     printed about \code{\link{conflicts}} from attaching the new
     package, unless that package contains an object \code{.conflicts.OK}.}
-  \item{keep.source}{logical.  If \code{TRUE}, functions \dQuote{keep their
-    source} including comments, see argument \code{keep.source} to
-    \code{\link{options}}.}
+  \item{keep.source}{logical.  If \code{TRUE}, functions
+    \dQuote{keep their source} including comments, see argument
+    \code{keep.source} to \code{\link{options}}.  This applies only to
+    the named package, and not to any packages or namespaces which might be
+    loaded to satisfy dependencies or imports.
+
+    This argument does not apply to packages using lazy-loading or saved
+    images.  Whether they have kept source is determined when they are
+    installed (and is most likely false).
+  }
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
   \item{quietly}{a logical.  If \code{TRUE}, no message confirming
@@ -80,9 +88,6 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   not exist.  Both functions check and update the list of currently
   loaded packages and do not reload code that is already loaded.
 
-  For large packages, setting \code{keep.source = FALSE} may save quite
-  a bit of memory.
-
   If \code{library} is called with no \code{package} or \code{help}
   argument, it lists all available packages in the libraries specified
   by \code{lib.loc}, and returns the corresponding information in an
@@ -104,12 +109,13 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{\link{.onLoad}}.)  It is called with two arguments, the name of
   the library directory where the package was found (i.e., the
   corresponding element of \code{lib.loc}), and the name of the package
-  (in that order).  It is a good place to put calls to
-  \code{\link{library.dynam}} which are needed when loading a package
-  into this function (don't call \code{library.dynam} directly, as this
-  will not work if the package is not installed in a \dQuote{standard}
-  location).  \code{.First.lib} is invoked after the search path
-  interrogated by \code{search()} has been updated, so
+  (in that order, and with the package name including the version for a
+  versioned install, e.g. \code{tree_1.0-16}).  It is a good place to
+  put calls to \code{\link{library.dynam}} which are needed when loading
+  a package into this function (don't call \code{library.dynam}
+  directly, as this will not work if the package is not installed in a
+  \dQuote{standard} location).  \code{.First.lib} is invoked after the
+  search path interrogated by \code{search()} has been updated, so
   \code{as.environment(match("package:name", search()))} will return the
   environment in which the package is stored.  If calling
   \code{.First.lib} gives an error the loading of the package is
@@ -119,7 +125,6 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   the package is loaded.  This mechanism allows the user to set package
   \dQuote{load hooks} in addition to startup code as provided by the
   package maintainers, but \code{\link{setHook}} is preferred.
-  
 
   \code{.Last.lib} is called when a package is detached.  Beware
   that it might be called if \code{.First.lib} has failed, so it
@@ -177,7 +182,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   If \code{version} is not specified, \code{require} will accept any
   version that is already loaded, whereas \code{library} will look for
   an unversioned install even if a versioned install is already loaded.
-  
+
   Loading more than one version of a package into an \R session is not
   currently supported.  Support for versioned installs is patchy.
 }

@@ -20,7 +20,10 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     paper, encoding, bg, fg, pointsize)
 }
 \arguments{
-  \item{file}{a character string giving the name of the file.}
+  \item{file}{a character string giving the name of the file.
+    For use with \code{onefile=FALSE} give a \code{printf} format such
+    as \code{"Rplot\%03d.pdf"} (the default in that case).
+  }
   \item{width, height}{the width and height of the graphics region in
     inches.}
   \item{onefile}{logical: if true (the default) allow multiple figures
@@ -68,9 +71,13 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \code{pdf()} opens the file \code{file} and the PDF commands needed to
   plot any graphics requested are sent to that file.
 
-  The \code{family} argument can be used to specify either a
-  device-independent R graphics font family (see
-  \code{postscriptFonts}) or a PDF-specific
+  The \code{file} argument is interpreted as a C integer format as used
+  by \code{\link{sprintf}}, with integer argument the page number.
+  The default gives files \file{Rplot001.pdf}, \dots, \file{Rplot999.pdf},
+  \file{Rplot1000.pdf}, \dots.
+  
+  The \code{family} argument can be used to specify 
+  a PDF-specific
   font family as the initial/default font for the device.
 
   If a device-independent R graphics font family is specified
@@ -78,12 +85,18 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   the PDF device makes use of the PostScript font mappings to
   convert the R graphics font family
   to a PDF-specific font family description.  R does \emph{not}
-  embed fonts in the PDF file though, so it is only possible to
+  embed fonts in the PDF file though, so it is only possible
+  straightforward to
   use mappings to the font families that are
   assumed to be available in a PDF viewer: \code{"Times"} or
   \code{"Times New Roman"},
   \code{"Helvetica"} or \code{"Arial"}, \code{"Courier"},
-  \code{"Symbol"}, and \code{"ZapfDingbats"}.
+  \code{"Symbol"}, and \code{"ZapfDingbats"}.  Other fonts may
+  be specified, but it is the user's responsibility to ensure
+  that these fonts are available on the system and third-party
+  software, e.g., ghostscript,
+  may be required to embed the fonts so that the PDF
+  can be included in other documents (e.g., LaTeX).
   
   See \code{\link{postscript}} for details of encodings, as the internal
   code is shared between the drivers.  The native PDF encoding is given
@@ -131,8 +144,8 @@ TestChars <- function(encoding="ISOLatin1", ...)
     title(paste("Centred chars in encoding", encoding))
     grid(17, 17, lty=1)
     for(i in c(32:255)) {
-	x <- i %% 16
-	y <- i %/% 16
+	x <- i \%\% 16
+	y <- i \%/\% 16
 	points(x, y, pch=i)
     }
     dev.off()

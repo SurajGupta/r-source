@@ -87,7 +87,8 @@ static int R_call(ClientData clientData,
 		  CONST84 char *argv[])
 {
     int i;
-    SEXP expr, fun, alist, ans;
+    SEXP expr, alist, ans;
+    void *fun;
 
     alist = R_NilValue;
     for (i = argc - 1 ; i > 1 ; i--){
@@ -96,37 +97,38 @@ static int R_call(ClientData clientData,
 	UNPROTECT(1);
     }
 
-    fun = (SEXP) strtoul(argv[1], NULL, 16);
+    sscanf(argv[1], "%p", &fun);
 
-    expr = LCONS(fun, alist);
+    expr = LCONS( (SEXP)fun, alist);
     expr = LCONS(install("try"), LCONS(expr, R_NilValue));
 
     ans = eval(expr, R_GlobalEnv);
 
     /* If return value is of class tclObj, use as Tcl result */
     if (inherits(ans, "tclObj"))
-	    Tcl_SetObjResult(interp, (Tcl_Obj*) R_ExternalPtrAddr(ans));
+	Tcl_SetObjResult(interp, (Tcl_Obj*) R_ExternalPtrAddr(ans));
 
     return TCL_OK;
 }
 
 static int R_call_lang(ClientData clientData,
-		  Tcl_Interp *interp,
-		  int argc,
-		  CONST84 char *argv[])
+		       Tcl_Interp *interp,
+		       int argc,
+		       CONST84 char *argv[])
 {
-    SEXP expr, env, ans;
+    void *expr, *env; 
+    SEXP ans;
 
-    expr = (SEXP) strtoul(argv[1], NULL, 16);
-    env  = (SEXP) strtoul(argv[2], NULL, 16);
+    sscanf(argv[1], "%p", &expr);
+    sscanf(argv[2], "%p", &env);
 
     expr = LCONS(install("try"), LCONS(expr, R_NilValue));
 
-    ans = eval(expr, env);
+    ans = eval((SEXP)expr, (SEXP)env);
 
     /* If return value is of class tclObj, use as Tcl result */
     if (inherits(ans, "tclObj"))
-	    Tcl_SetObjResult(interp, (Tcl_Obj*) R_ExternalPtrAddr(ans));
+	Tcl_SetObjResult(interp, (Tcl_Obj*) R_ExternalPtrAddr(ans));
 
     return TCL_OK;
 }
@@ -578,37 +580,31 @@ SEXP RTcl_RemoveArrayElem(SEXP args)
 }
 #endif /* TCL80 */
 
-/* Warning: These two functions return a pointer to internal static
-   data. Copy immediately. */
-
-static char * callback_closure(SEXP closure)
+static void callback_closure(char * buf, int buflen, SEXP closure)
 {
-    static char buf[256], tmp[20];
+    static char tmp[21];
     SEXP formals;
 
     formals = FORMALS(closure);
 
-    sprintf(buf, "R_call 0x%lx", (unsigned long) closure);
+    sprintf(buf, "R_call %p", (void *) closure);
 
     while ( formals != R_NilValue )
     {
 	if (TAG(formals) ==  R_DotsSymbol) break;
-	sprintf(tmp, " %%%s", CHAR(PRINTNAME(TAG(formals))));
+	snprintf(tmp, 20, " %%%s", CHAR(PRINTNAME(TAG(formals))));
+	tmp[20] = '\0';
+	if (strlen(buf) + strlen(tmp) >= buflen)
+	    error("argument list is too long in tcltk internal function 'callback_closure'");
 	strcat(buf, tmp);
 	formals = CDR(formals);
     }
-    return buf;
 }
 
-static char * callback_lang(SEXP call, SEXP env)
+static void callback_lang(char *buf, SEXP call, SEXP env)
 {
-    static char buf[256];
+    sprintf(buf, "R_call_lang %p %p", (void *) call, (void *) env);
 
-    sprintf(buf, "R_call_lang 0x%lx 0x%lx",
-	    (unsigned long) call,
-	    (unsigned long) env);
-
-    return buf;
 }
 
 /* Setup to invoke callback from Tcl. Notice that something needs to
@@ -617,17 +613,17 @@ static char * callback_lang(SEXP call, SEXP env)
    assigning into the environment of the window with which the
    callback is associated */
 
+#define BUFFLEN 256
 SEXP dotTclcallback(SEXP args)
 {
     SEXP ans, callback = CADR(args), env;
-
-    char *rval = NULL; /* -Wall */
+    char buff[BUFFLEN];
 
     if (isFunction(callback))
-        rval = callback_closure(callback);
+        callback_closure(buff, BUFFLEN, callback);
     else if (isLanguage(callback)) {
         env = CADDR(args);
-        rval = callback_lang(callback, env);
+        callback_lang(buff, callback, env);
     }
     else
     	error("argument is not of correct type");
@@ -638,12 +634,12 @@ SEXP dotTclcallback(SEXP args)
 	Tcl_DString s_ds;
 
 	Tcl_DStringInit(&s_ds);
-	s = Tcl_UtfToExternalDString(NULL, rval, -1, &s_ds);
+	s = Tcl_UtfToExternalDString(NULL, buff, -1, &s_ds);
 	ans = mkString(s);
 	Tcl_DStringFree(&s_ds);
     }
 #else
-    ans = mkString(rval);
+    ans = mkString(buff);
 #endif
     return ans;
 }
@@ -680,6 +676,7 @@ static void addTcl(void)
 	error("Tcl already loaded");
     Tcl_loaded = 1;
     if (strcmp(R_GUIType, "GNOME") == 0) {
+	/* This gets polled in the gnomeGUI console's event loop */
         R_timeout_handler = Gtk_TclHandler;
         R_timeout_val = 500;
     } else {

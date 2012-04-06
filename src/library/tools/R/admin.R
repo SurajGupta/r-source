@@ -79,8 +79,10 @@ function(db)
     if(!is.na(Built <- db["Built"])) {
         Built <- as.list(strsplit(Built, "; ")[[1]])
         if(length(Built) != 4) {
-            warning("*** someone has corrupted the Built field in package ",
-                    sQuote(db["Package"]), " ***", call.=FALSE)
+            warning(gettextf("*** someone has corrupted the Built field in package '%s' ***",
+                             db["Package"]),
+                    domain = NA,
+                    call. = FALSE)
             Built <- NULL
         } else {
             names(Built) <- c("R", "Platform", "Date", "OStype")
@@ -198,39 +200,37 @@ function(dir, outDir)
         badFiles <-
             unique(codeFilesInCspec[duplicated(codeFilesInCspec)])
         if(length(badFiles)) {
-            out <- paste("\nduplicated files in",
-                         sQuote(collationField),
-                         "field:")
+            out <- gettextf("\nduplicated files in '%s' field:",
+                            collationField)
             out <- paste(out,
                          paste(" ", badFiles, collapse = "\n"),
                          sep = "\n")
-            stop(out)
+            stop(out, domain = NA)
         }
         ## See which files are listed in the collation spec but don't
         ## exist.
         badFiles <- codeFilesInCspec %w/o% codeFiles
         if(length(badFiles)) {
-            out <- paste("\nfiles in ", sQuote(collationField),
-                         " field missing from ", sQuote(codeDir),
-                         ":",
-                         sep = "")
+            out <- gettextf("\nfiles in '%s' field missing from '%s':",
+                            collationField,
+                            codeDir)
             out <- paste(out,
                          paste(" ", badFiles, collapse = "\n"),
                          sep = "\n")
-            stop(out)
+            stop(out, domain = NA)
         }
         ## See which files exist but are missing from the collation
         ## spec.  Note that we do not want the collation spec to use
         ## only a subset of the available code files.
         badFiles <- codeFiles %w/o% codeFilesInCspec
         if(length(badFiles)) {
-            out <- paste("\nfiles in", sQuote(codeDir),
-                         "missing from", sQuote(collationField),
-                         "field:")
+            out <- gettextf("\nfiles in '%s' missing from '%s' field:",
+                            codeDir,
+                            collationField)
             out <- paste(out,
                          paste(" ", badFiles, collapse = "\n"),
                          sep = "\n")
-            stop(out)
+            stop(out, domain = NA)
         }
         ## Everything's groovy ...
         codeFiles <- codeFilesInCspec
@@ -283,7 +283,9 @@ function(dir, outDir)
         if(!file.copy(file.path(dir, "INDEX"),
                       file.path(outDir, "INDEX"),
                       overwrite = TRUE))
-            stop("unable to copy INDEX to ", file.path(outDir, "INDEX"))
+            stop(gettextf("unable to copy INDEX to '%s'",
+                          file.path(outDir, "INDEX")),
+                 domain = NA)
 
     outMetaDir <- file.path(outDir, "Meta")
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
@@ -302,10 +304,17 @@ function(dir, outDir)
 {
     dir <- file_path_as_absolute(dir)
     docsDir <- file.path(dir, "man")
-    if(!file_test("-d", docsDir)) return(invisible())
-
     dataDir <- file.path(outDir, "data")
     outDir <- file_path_as_absolute(outDir)
+
+    ## allow for a data dir but no man pages
+    if(!file_test("-d", docsDir)) {
+        if(file_test("-d", dataDir))
+            .saveRDS(.build_data_index(dataDir, NULL),
+                     file.path(outDir, "Meta", "data.rds"))
+        return(invisible())
+    }
+
     ## <FIXME>
     ## Not clear whether we should use the basename of the directory we
     ## install to, or the package name as obtained from the DESCRIPTION
@@ -446,6 +455,7 @@ function(src_dir, out_dir, packages)
     for(p in unlist(strsplit(packages, "[[:space:]]+")))
         tools:::.install_package_indices(file.path(src_dir, p),
                                          file.path(out_dir, p))
+    tools:::unix.packages.html(.Library)
     invisible()
 }
 
@@ -505,7 +515,8 @@ function(dir, outDir)
     for(srcfile in vignetteFiles[!upToDate]) {
         base <- basename(file_path_sans_ext(srcfile))
         texfile <- paste(base, ".tex", sep = "")
-        yy <- try(Sweave(srcfile, pdf = TRUE, eps = FALSE, quiet = TRUE))
+        yy <- try(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
+                                quiet = TRUE)) 
         if(inherits(yy, "try-error"))
             stop(yy)
         ## In case of an error, do not clean up: should we point to
@@ -571,7 +582,7 @@ function(dir, outDir)
     outMetaDir <- file.path(outDir, "Meta")
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
         stop(gettextf("cannot open directory '%s'", outMetaDir),
-             domain = NA) 
+             domain = NA)
     .saveRDS(nsInfo, nsInfoFilePath)
     invisible()
 }

@@ -19,6 +19,9 @@ x \%/\% y
 \alias{Arithmetic}
 \concept{remainder}
 \concept{modulo}
+\concept{modulus}
+\concept{quotient}
+\concept{division}
 \description{
   These binary operators perform arithmetic on numeric or complex vectors
   (or objects which can be coerced to them).
@@ -28,7 +31,7 @@ x \%/\% y
     coerced to such, or other objects for which methods have been written.}
 }
 \value{
-  They return numeric vectors containing the result of the element
+  These operators return vectors containing the result of the element
   by element operations.  The elements of shorter vectors are recycled
   as necessary (with a \code{\link{warning}} when they are recycled only
   \emph{fractionally}).  The operators are \code{+} for addition,
@@ -40,6 +43,22 @@ x \%/\% y
     \%/\% y )} (up to rounding error) unless \code{y == 0}
   where the result is \code{\link{NA}} or \code{\link{NaN}} (depending
   on the \code{\link{typeof}} of the arguments).
+
+  If either argument is complex the result will be complex, and if one
+  or both arguments are numeric, the result will be numeric.  If both
+  arguments are integer, the result of \code{/} and \code{^} is numeric
+  and of the other operators integer (with overflow returned as
+  \code{NA} with a warning).
+
+  The rules for determining the attributes of the result are rather
+  complicated.  Most attributes are taken from the longer argument, the
+  first if they are of the same length.  Names will be copied from the
+  first if it is the same length as the answer, otherwise from the
+  second if that is.  For time series, these operations are allowed only
+  if the series are compatible, when the class and \code{\link{tsp}}
+  attribute of whichever is a time series (the same, if both are) are
+  used.  For arrays (and an array result) the dimensions and dimnames
+  are taken from first argument if it is an array, otherwise the second.
 }
 \details{
   The binary arithmetic operators are generic functions: methods can be
@@ -73,6 +92,8 @@ x \%/\% y
   mathematical functions.
 
   \code{\link{Syntax}} for operator precedence.
+  
+  \code{\link{\%*\%}} for matrix multiplication.
 }
 \examples{
 x <- -1:12

@@ -6,7 +6,7 @@
     ## were not there.  The definition is applied literally by deleting the given
     ## method and then calling MethodListSelect.
     if(!is(method, "MethodDefinition"))
-        stop("'NextMethod' not defined because the the current method is not a 'MethodDefinition' object")
+        stop("'NextMethod' not defined because the current method is not a 'MethodDefinition' object")
     ## remove all cached methods
     mlist@allMethods <- mlist@methods
     ## delete the excluded method(s)
@@ -122,8 +122,11 @@ callNextMethod <- function(...) {
         stop(gettextf("bad object found as method (class \"%s\")",
                       class(method)), domain = NA)
     subsetCase <- !is.na(match(f, .BasicSubsetFunctions))
-    if(nargs()>0)
-        eval(substitute(.nextMethod(...)), callEnv)
+    if(nargs()>0) {
+      call <- sys.call()
+      call[[1]] <- as.name(".nextMethod")
+      eval(call, callEnv)
+      }
     else {
         if(subsetCase) {
             ## don't use match.call, because missing args will screw up for "[", etc.

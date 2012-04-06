@@ -67,8 +67,15 @@ methods <- function (generic.function, class)
     if (!missing(generic.function)) {
 	if (!is.character(generic.function))
 	    generic.function <- deparse(substitute(generic.function))
+        else if(!exists(generic.function, mode = "function",
+                        envir = parent.frame()))
+            stop(gettextf("no function '%s' is visible", generic.function),
+                 domain = NA)
         if(!any(generic.function == knownGenerics)) {
             truegf <- findGeneric(generic.function, parent.frame())
+            if(truegf == "")
+                warning(gettextf("function '%s' appears not to be generic",
+                                 generic.function), domain = NA)
             if(nchar(truegf) && truegf != generic.function) {
                 warning(gettextf("generic function '%s' dispatches methods for generic '%s'",
                         generic.function, truegf), domain = NA)
@@ -284,7 +291,7 @@ getAnywhere <- function(x)
             cl <- paste(parts[i:np], collapse=".")
             if (gen == "" || cl == "") next
             if(!is.null(f <- getS3method(gen, cl, TRUE))) {
-                ev <- topenv(environment(f), NULL)
+                ev <- topenv(environment(f), baseenv())
                 nmev <- if(isNamespace(ev)) getNamespaceName(ev) else NULL
                 objs <- c(objs, f)
                 msg <- paste("registered S3 method for", gen)
@@ -309,7 +316,7 @@ getAnywhere <- function(x)
     ln <- length(objs)
     dups <- rep.int(FALSE, ln)
     objs2 <- lapply(objs, function(x) {
-        if(is.function(x)) environment(x) <- NULL
+        if(is.function(x)) environment(x) <- baseenv()
         x
     })
     if(ln > 1)

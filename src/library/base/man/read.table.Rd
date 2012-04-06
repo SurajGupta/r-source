@@ -15,19 +15,19 @@ read.table(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
            colClasses = NA, nrows = -1,
            skip = 0, check.names = TRUE, fill = !blank.lines.skip,
            strip.white = FALSE, blank.lines.skip = TRUE,
-           comment.char = "#")
+           comment.char = "#", allowEscapes = FALSE)
 
 read.csv(file, header = TRUE, sep = ",", quote="\"", dec=".",
          fill = TRUE, \dots)
 
 read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",",
-         fill = TRUE, \dots)
+          fill = TRUE, \dots)
 
 read.delim(file, header = TRUE, sep = "\t", quote="\"", dec=".",
-         fill = TRUE, \dots)
+           fill = TRUE, \dots)
 
 read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
-         fill = TRUE, \dots)
+            fill = TRUE, \dots)
 }
 \arguments{
   \item{file}{the name of the file which the data are to be read from.
@@ -99,9 +99,10 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     columns to be skipped.
   }
 
-  \item{na.strings}{a vector of strings which are to be interpreted as
-    \code{\link{NA}} values.  Blank fields are also considered to be
-    missing values.}
+  \item{na.strings}{a character vector of strings which are to be
+    interpreted as \code{\link{NA}} values.  Blank fields are also
+    considered to be missing values in logical, integer, numeric and
+    complex fields.}
 
   \item{colClasses}{character.  A vector of classes to be assumed for
     the columns.  Recycled as necessary, or if the character vector is
@@ -147,6 +148,11 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     containing a single character or an empty string.  Use \code{""} to
     turn off the interpretation of comments altogether.}
 
+  \item{allowEscapes}{logical.  Should C-style escapes such as
+    \code{\n} be processed or read verbatim (the default)?   Note that if
+    not within quotes these could be interpreted as a delimiter (but not
+    as a comment character).  For more details see \code{\link{scan}}.}
+
   \item{\dots}{Further arguments to \code{read.table}.}
 }
 \value{
@@ -176,7 +182,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   
   \code{read.csv} and \code{read.csv2} are identical to
   \code{read.table} except for the defaults.  They are intended for
-  reading \dQuote{comma separated value} files (\file{.csv}) or the variant
+  reading \dQuote{comma separated value} files (\file{.csv}) or
+  (\code{read.csv2}) the variant
   used in countries that use a comma as decimal point and a semicolon
   as field separator.  Similarly, \code{read.delim} and
   \code{read.delim2} are for reading delimited files, defaulting to the

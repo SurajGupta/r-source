@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-27 15:02\n"
+"POT-Creation-Date: 2005-09-16 08:35\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -497,7 +497,7 @@ msgstr ""
 msgid "Cannot compute exact p-value with ties"
 msgstr ""
 
-msgid "p-values may be incorrect due to ties"
+msgid "Cannot compute exact p-values with ties"
 msgstr ""
 
 msgid "'formula' missing or invalid"
@@ -584,10 +584,25 @@ msgstr ""
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr ""
 
+msgid "non-matched further arguments are disregarded"
+msgstr ""
+
 msgid "argument 'x' must be numeric"
 msgstr ""
 
 msgid "'x' contains missing values"
+msgstr ""
+
+msgid "'x' and 'weights' have unequal length"
+msgstr ""
+
+msgid "'weights' must all be finite"
+msgstr ""
+
+msgid "'weights' must not be negative"
+msgstr ""
+
+msgid "sum(weights) != 1  -- will not get true density"
 msgstr ""
 
 msgid "need at least 2 points to select a bandwidth automatically"
@@ -618,6 +633,9 @@ msgid "bad value for 'lag' or 'differences'"
 msgstr ""
 
 msgid "'xi' has not the right length"
+msgstr ""
+
+msgid "incorrect dimensions for 'xi'"
 msgstr ""
 
 msgid "'x' is not a vector or matrix"
@@ -1001,9 +1019,6 @@ msgstr ""
 msgid "a limit is missing"
 msgstr ""
 
-msgid "'m' is negative"
-msgstr ""
-
 msgid "'r' is less than 1"
 msgstr ""
 
@@ -1011,6 +1026,9 @@ msgid "'m' is less than 1"
 msgstr ""
 
 msgid "'r' is less than 0"
+msgstr ""
+
+msgid "'m' must be numeric with non-negative integers"
 msgstr ""
 
 msgid "unknown named kernel"
@@ -1175,9 +1193,6 @@ msgstr ""
 msgid "'newdata' does not contain the variables needed"
 msgstr ""
 
-msgid "need response in formula"
-msgstr ""
-
 msgid "no models to compare"
 msgstr ""
 
@@ -1271,9 +1286,6 @@ msgstr ""
 msgid "X does not define a subspace of M"
 msgstr ""
 
-msgid "one-argument anova() not implemented for 'mlm' objects"
-msgstr ""
-
 msgid "residuals have rank"
 msgstr ""
 
@@ -1364,6 +1376,18 @@ msgstr ""
 msgid "_NOT_ converged in"
 msgstr ""
 
+msgid "control argument must be a named list"
+msgstr ""
+
+msgid "unrecognized control element(s) named `"
+msgstr ""
+
+msgid "' ignored"
+msgstr ""
+
+msgid "Logical `hessian' argument not allowed.  See documentation."
+msgstr ""
+
 msgid "'params' has wrong length"
 msgstr ""
 
@@ -1389,6 +1413,12 @@ msgid "setVarying : vary length must match length of parameters"
 msgstr ""
 
 msgid "singular gradient matrix at initial parameter estimates"
+msgstr ""
+
+msgid "Upper or lower bounds ignored unless algorithm = \"port\""
+msgstr ""
+
+msgid "Convergence failure:"
 msgstr ""
 
 msgid "rows with zero weights not counted"
@@ -1436,7 +1466,7 @@ msgstr ""
 msgid "use only with \"lm\" objects"
 msgstr ""
 
-msgid "'which' must be in 1:4"
+msgid "'which' must be in 1:6"
 msgstr ""
 
 msgid "'id.n' must be in {1,..,%d}"
@@ -1574,6 +1604,9 @@ msgstr ""
 msgid "no 'time' or 'id' specified"
 msgstr ""
 
+msgid "'k' must be positive"
+msgstr ""
+
 msgid "'k' must be odd!  Changing 'k' to"
 msgstr ""
 
@@ -1638,6 +1671,12 @@ msgid "NA lev[]; probably smoothing parameter 'spar' way too large!"
 msgstr ""
 
 msgid "setting df = 1  __use with care!__"
+msgstr ""
+
+msgid "need result of smooth.spline(*, keep.data=TRUE)"
+msgstr ""
+
+msgid "type = \"partial\" is not yet implemented"
 msgstr ""
 
 msgid "not a valid \"smooth.spline\" object"
@@ -1865,6 +1904,9 @@ msgstr ""
 msgid "not enough (finite) 'x' observations"
 msgstr ""
 
+msgid "Requested conf.level not achievable"
+msgstr ""
+
 msgid "cannot compute exact confidence interval with ties"
 msgstr ""
 
@@ -1872,6 +1914,9 @@ msgid "cannot compute exact p-value with zeroes"
 msgstr ""
 
 msgid "cannot compute exact confidence interval with zeroes"
+msgstr ""
+
+msgid "must supply either 'formula' or 'data'"
 msgstr ""
 
 msgid "too few distinct input values to fit an asymptotic regression model"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-04-01 10:55+0100\n"
+"POT-Creation-Date: 2005-09-27 08:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,23 +16,23 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: grid.c:213
+#: grid.c:209
 msgid "Cannot clip to rotated viewport"
 msgstr ""
 
-#: grid.c:643 grid.c:648 grid.c:745 grid.c:750
+#: grid.c:641 grid.c:646 grid.c:743 grid.c:748
 msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
 msgstr ""
 
-#: grid.c:941
+#: grid.c:939
 msgid "attempt to plot on null device"
 msgstr ""
 
-#: grid.c:1221
+#: grid.c:1219
 msgid "There is no layout defined"
 msgstr ""
 
-#: grid.c:1798
+#: grid.c:1796
 msgid "Invalid circle radius (must be non-negative)"
 msgstr ""
 
@@ -44,27 +44,27 @@ msgstr ""
 msgid "invalid layout.pos.col"
 msgstr ""
 
-#: state.c:170
+#: state.c:178
 msgid "Unable to store grid state.  Too many devices open?"
 msgstr ""
 
-#: unit.c:258 unit.c:398 unit.c:1040 unit.c:1120 unit.c:1200 unit.c:1280
+#: unit.c:258 unit.c:408 unit.c:1075 unit.c:1155 unit.c:1235 unit.c:1315
 msgid "Unimplemented unit function"
 msgstr ""
 
-#: unit.c:757 unit.c:1473
+#: unit.c:768 unit.c:1508
 msgid "Illegal unit or unit not yet implemented"
 msgstr ""
 
-#: unit.c:1581
+#: unit.c:1638
 msgid "Invalid unit"
 msgstr ""
 
-#: unit.c:1597
+#: unit.c:1654
 msgid "Units must be character"
 msgstr ""
 
-#: unit.c:1600
+#: unit.c:1657
 msgid "Units must be of length > 0"
 msgstr ""
 

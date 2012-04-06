@@ -6,7 +6,8 @@
 identify(x, \dots)
 
 \method{identify}{default}(x, y = NULL, labels = seq(along = x), pos = FALSE,
-         n = length(x), plot = TRUE, offset = 0.5, \dots)
+         n = length(x), plot = TRUE, atpen = FALSE, offset = 0.5,
+         tolerance = 0.25, \dots)
 }
 \arguments{
   \item{x,y}{coordinates of points in a scatter plot.  Alternatively, any
@@ -21,8 +22,14 @@ identify(x, \dots)
   \item{n}{the maximum number of points to be identified.}
   \item{plot}{logical: if \code{plot} is \code{TRUE}, the labels are printed at
     the points and if \code{FALSE} they are omitted.}
+  \item{atpen}{logical: if \code{TRUE} and \code{plot = TRUE}, the
+    lower-left corners of the labels are plotted at the points clicked
+    rather than relative to the points.}
   \item{offset}{the distance (in character widths) which separates the
-    label from identified points.}
+    label from identified points.  Ignored if \code{atpen = TRUE} or
+    \code{pos = 0}.}
+  \item{tolerance}{the maximal distance (in inches) for the pointer to be
+    \sQuote{close enough} to a point.}
   \item{\dots}{further arguments passed to \code{\link{par}} such as
     \code{cex}, \code{col} and \code{font}.}
 }
@@ -68,12 +75,6 @@ identify(x, \dots)
   recorded in the device's display list until the identification process has
   terminated.
 }
-\note{
-  If \code{plot = TRUE} the size of the text and the units of
-  \code{offset} are scaled by the setting of \code{\link{par}("cex")}.
-
-  \sQuote{Close enough} is defined to be within 0.25 inch.
-}
 \value{
   If \code{pos} is \code{FALSE}, an integer
   vector containing the indexes of the identified points.
@@ -81,7 +82,8 @@ identify(x, \dots)
   If \code{pos} is \code{TRUE}, a list containing a component
   \code{ind}, indicating which points were identified and a component
   \code{pos}, indicating where the labels were placed relative to the
-  identified points (1=below, 2=left, 3=above and 4=right).
+  identified points (1=below, 2=left, 3=above, 4=right and 0=no offset,
+  used if \code{atpen = TRUE}).
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

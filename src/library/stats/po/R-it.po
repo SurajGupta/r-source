@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-27 15:02\n"
+"POT-Creation-Date: 2005-09-16 08:35\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -519,8 +519,9 @@ msgstr "non ci sono abbastanza osservazioni finite"
 msgid "Cannot compute exact p-value with ties"
 msgstr "Impossibile calcolare p-value esatti in presenza di ties"
 
-msgid "p-values may be incorrect due to ties"
-msgstr "i p-value possono essere sbagliati a causa dei ties"
+#, fuzzy
+msgid "Cannot compute exact p-values with ties"
+msgstr "Impossibile calcolare p-value esatti in presenza di ties"
 
 msgid "'formula' missing or invalid"
 msgstr "'formula' mancante o sbagliata"
@@ -614,11 +615,30 @@ msgstr "'ColSideColors' deve essere un vettore carattere di lunghezza ncol(x)"
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr "'RowSideColors' deve essere un vettore carattere di lunghezza nrow(x)"
 
+#, fuzzy
+msgid "non-matched further arguments are disregarded"
+msgstr "argometni extra ignorati"
+
 msgid "argument 'x' must be numeric"
 msgstr "l'argomento 'x' deve essere numerico"
 
 msgid "'x' contains missing values"
 msgstr "'x' contiene valori mancanti"
+
+#, fuzzy
+msgid "'x' and 'weights' have unequal length"
+msgstr "'x' e 'g' devono avere la stessa lunghezza"
+
+#, fuzzy
+msgid "'weights' must all be finite"
+msgstr "i predittori devono essere tutti numerici"
+
+#, fuzzy
+msgid "'weights' must not be negative"
+msgstr "'x' deve essere non negativo"
+
+msgid "sum(weights) != 1  -- will not get true density"
+msgstr ""
 
 msgid "need at least 2 points to select a bandwidth automatically"
 msgstr "necessari almeno 2 punti per selezionare il bandwidth automatico"
@@ -649,6 +669,10 @@ msgstr "valore sbagliato per 'lag' o 'differences'"
 
 msgid "'xi' has not the right length"
 msgstr "'xi' non ha la lunghezza giusta"
+
+#, fuzzy
+msgid "incorrect dimensions for 'xi'"
+msgstr "lunghezza di 'x' sbagliata"
 
 msgid "'x' is not a vector or matrix"
 msgstr "'x' non è un vettore o una matrice"
@@ -1075,9 +1099,6 @@ msgstr "valori dei parametri non validi"
 msgid "a limit is missing"
 msgstr "manca un limite"
 
-msgid "'m' is negative"
-msgstr "'m' è negativo"
-
 msgid "'r' is less than 1"
 msgstr "'r' è minori di 1"
 
@@ -1086,6 +1107,10 @@ msgstr "'m' è minore di 1"
 
 msgid "'r' is less than 0"
 msgstr "'r' è minori di 0"
+
+#, fuzzy
+msgid "'m' must be numeric with non-negative integers"
+msgstr "'x' deve essere un intero non negativo"
 
 msgid "unknown named kernel"
 msgstr "nome kernel sconosciuto"
@@ -1259,9 +1284,6 @@ msgstr "il primo argomento deve essere un oggetto \"loess\""
 msgid "'newdata' does not contain the variables needed"
 msgstr "'newdata' non contiene le variabili necessarie"
 
-msgid "need response in formula"
-msgstr "serve la risposta in formula"
-
 msgid "no models to compare"
 msgstr "nessun modello da confrontare"
 
@@ -1356,9 +1378,6 @@ msgstr "oggetti 'mlm' con pesi non sono supportati"
 
 msgid "X does not define a subspace of M"
 msgstr "X non definisce un sottospazio di M"
-
-msgid "one-argument anova() not implemented for 'mlm' objects"
-msgstr "anova() con un solo argomento non supportato per oggetti 'mlm'"
 
 msgid "residuals have rank"
 msgstr "i residue hanno rango"
@@ -1459,6 +1478,19 @@ msgstr "i valori di f() negli estremi hanno segno opposto"
 msgid "_NOT_ converged in"
 msgstr "_NON_ converge in"
 
+#, fuzzy
+msgid "control argument must be a named list"
+msgstr "l'argomento 'split' deve essere di tipo list"
+
+msgid "unrecognized control element(s) named `"
+msgstr ""
+
+msgid "' ignored"
+msgstr ""
+
+msgid "Logical `hessian' argument not allowed.  See documentation."
+msgstr ""
+
 msgid "'params' has wrong length"
 msgstr "'parms' ha lunghezza sbagliata"
 
@@ -1486,6 +1518,12 @@ msgstr ""
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "matrice gradiente singolare per le stime iniziali dei parametri"
+
+msgid "Upper or lower bounds ignored unless algorithm = \"port\""
+msgstr ""
+
+msgid "Convergence failure:"
+msgstr ""
 
 msgid "rows with zero weights not counted"
 msgstr "le righe con pesi zero non considerate"
@@ -1536,7 +1574,8 @@ msgstr "troppi pochi gruppi"
 msgid "use only with \"lm\" objects"
 msgstr "usare solo con oggetti \"lm\""
 
-msgid "'which' must be in 1:4"
+#, fuzzy
+msgid "'which' must be in 1:6"
 msgstr "'which' deve essere in 1:4"
 
 msgid "'id.n' must be in {1,..,%d}"
@@ -1684,6 +1723,10 @@ msgstr "alcune variabili 'constant' (%s) sono in realtà 'varying'"
 msgid "no 'time' or 'id' specified"
 msgstr "nessun 'time' o 'id' specificati"
 
+#, fuzzy
+msgid "'k' must be positive"
+msgstr "'iter.max' deve essere positivo"
+
 msgid "'k' must be odd!  Changing 'k' to"
 msgstr "'k' deve essere dispari! Cambio 'k' in"
 
@@ -1749,6 +1792,13 @@ msgstr "NA lev[]; probabilmente il parametro di smothh 'spar' è troppo grande!"
 
 msgid "setting df = 1  __use with care!__"
 msgstr "uso df = 1 __usare con molta cautela!__"
+
+msgid "need result of smooth.spline(*, keep.data=TRUE)"
+msgstr ""
+
+#, fuzzy
+msgid "type = \"partial\" is not yet implemented"
+msgstr "SE per il tipo '%s' non ancora implementati"
 
 msgid "not a valid \"smooth.spline\" object"
 msgstr "oggetto \"smooth.spline\" non valido"
@@ -1982,6 +2032,9 @@ msgstr "'y' deve essere numerica"
 msgid "not enough (finite) 'x' observations"
 msgstr "osservazioni 'x' (finite) insufficienti"
 
+msgid "Requested conf.level not achievable"
+msgstr ""
+
 msgid "cannot compute exact confidence interval with ties"
 msgstr ""
 "impossibile calcolare intervalli di confidenza esatti in presenza di ties"
@@ -1992,6 +2045,10 @@ msgstr "impossibile calcolare p-valu esatti in presenza di zeri"
 msgid "cannot compute exact confidence interval with zeroes"
 msgstr ""
 "impossibile calcolar eintervalli di confidenza esatti in presenza di zeri"
+
+#, fuzzy
+msgid "must supply either 'formula' or 'data'"
+msgstr "fornire uno o più vettori"
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr ""
@@ -2059,6 +2116,18 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 msgstr[1] ""
+
+#~ msgid "p-values may be incorrect due to ties"
+#~ msgstr "i p-value possono essere sbagliati a causa dei ties"
+
+#~ msgid "one-argument anova() not implemented for 'mlm' objects"
+#~ msgstr "anova() con un solo argomento non supportato per oggetti 'mlm'"
+
+#~ msgid "'m' is negative"
+#~ msgstr "'m' è negativo"
+
+#~ msgid "need response in formula"
+#~ msgstr "serve la risposta in formula"
 
 #~ msgid "non-integer counts in a Poisson glm!"
 #~ msgstr "frequenze non interne nel modello glm Poisson!"

@@ -139,7 +139,7 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 	args = naokfind(CDR(args), nargs, naok, dup, &dll);
 
 	if(*naok == NA_LOGICAL)
-	    errorcall(call, _("invalid 'naok' value"));
+	    errorcall(call, _("invalid '%s' value"), "naok");
 	if(*nargs > MAX_ARGS)
 	    errorcall(call, _("too many arguments in foreign function call"));
     } else {
@@ -175,12 +175,23 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 	if (!*fun && !(*fun = R_FindSymbol(buf, dll.DLLname, symbol))) {
 	    if(strlen(dll.DLLname))
 		errorcall(call,
-			  _("\"%s\" function name not in DLL for package '%s'"),
-			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C",
+			  _("%s entry point \"%s%s\" not in DLL for package \"%s\""),
+			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C", buf,
+#ifdef HAVE_F77_UNDERSCORE
+			  symbol->type == R_FORTRAN_SYM ? "_" : "",
+#else
+			  "",
+#endif
 			  dll.DLLname);
 	    else
-		errorcall(call, _("\"%s\" function name not in load table"),
-			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C");
+		errorcall(call, _("%s entry point \"%s%s\" not in load table"),
+			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C", buf,
+#ifdef HAVE_F77_UNDERSCORE
+			  symbol->type == R_FORTRAN_SYM ? "_" : ""
+#else
+			  ""
+#endif			  			  
+			  );
 	}
     }
 
@@ -213,6 +224,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 			const char *name, R_toCConverter **converter,
 			int targetType, char* encname)
 {
+    unsigned char *rawptr;
     int *iptr;
     float *sptr;
     double *rptr;
@@ -251,6 +263,16 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
     }
 
     switch(TYPEOF(s)) {
+    case RAWSXP:
+    n = LENGTH(s);
+    rawptr = RAW(s);
+    if (dup) {
+        rawptr = (unsigned char *) R_alloc(n, sizeof(unsigned char));
+        for (i = 0; i < n; i++)
+            rawptr[i] = RAW(s)[i];
+    }
+    return (void *) rawptr;
+    break;
     case LGLSXP:
     case INTSXP:
 	n = LENGTH(s);
@@ -387,6 +409,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 		       R_NativePrimitiveArgType type, char *encname)
 {
+    unsigned char *rawptr;
     int *iptr, n=length(arg);
     float *sptr;
     double *rptr;
@@ -397,6 +420,12 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
     SEXP s, t;
 
     switch(type) {
+    case RAWSXP:
+    s = allocVector(type, n);
+    rawptr = (unsigned char *)p;
+    for (i = 0; i < n; i++)
+        RAW(s)[i] = rawptr[i];
+    break;
     case LGLSXP:
     case INTSXP:
 	s = allocVector(type, n);
@@ -1467,10 +1496,36 @@ static SEXP
 Rf_getCallingDLL()
 {
     SEXP e, ans;
-    PROTECT(e = allocVector(LANGSXP, 1));
-    SETCAR(e, Rf_install("getCallingDLL"));
-    ans = eval(e,  R_GlobalEnv);
+    RCNTXT *cptr;
+    SEXP rho = R_NilValue;
+    Rboolean found = FALSE;
 
+    /* First find the environment of the caller.
+       Testing shows this is the right caller, despite the .C/.Call ...
+     */
+    for (cptr = R_GlobalContext;
+	 cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	 cptr = cptr->nextcontext)
+	    if (cptr->callflag & CTXT_FUNCTION) {
+		/* PrintValue(cptr->call); */
+		rho = cptr->cloenv;
+		break;
+	    }
+    /* Then search up until we hit a namespace or globalenv.
+       The idea is that we will not find a namespace unless the caller
+       was defined in one. */
+    while(rho != R_NilValue) {
+	if (rho == R_GlobalEnv) break;
+	else if (R_IsNamespaceEnv(rho)) {
+	    found = TRUE;
+	    break;
+	}
+	rho = ENCLOS(rho);
+    }
+    if(!found) return R_NilValue;
+
+    PROTECT(e = lang2(Rf_install("getCallingDLLe"), rho));
+    ans = eval(e,  R_GlobalEnv);
     UNPROTECT(1);
     return(ans);
 }
@@ -1493,6 +1548,7 @@ R_FindNativeSymbolFromDLL(char *name, DllReference *dll,
     DL_FUNC fun = NULL;
 
     if(dll->obj == NULL) {
+	/* Rprintf("\nsearching for %s\n", name); */
 	dll->obj = Rf_getCallingDLL();
 	PROTECT(dll->obj); numProtects++;
     }

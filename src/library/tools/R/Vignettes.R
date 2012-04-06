@@ -39,13 +39,13 @@ function(package, dir, lib.loc = NULL,
 
     for(f in vigns$docs) {
         if(tangle) {
-            yy <- try(Stangle(f, quiet=TRUE))
+            yy <- try(utils::Stangle(f, quiet=TRUE))
             if(inherits(yy, "try-error"))
                 result$tangle[[f]] <- yy
         }
 
         if(weave) {
-            yy <- try(Sweave(f, quiet=TRUE))
+            yy <- try(utils::Sweave(f, quiet=TRUE))
             if(inherits(yy, "try-error"))
                 result$weave[[f]] <- yy
         }
@@ -145,7 +145,7 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
         bft <- paste(bf, ".tex", sep="")
         pdfs <- c(pdfs, paste(bf, ".pdf", sep=""))
 
-        yy <- try(Sweave(f, quiet=quiet))
+        yy <- try(utils::Sweave(f, quiet=quiet))
         if(inherits(yy, "try-error")) stop(yy)
         if(!have.makefile){
             texi2dvi(file=bft, pdf=TRUE, clean=FALSE, quiet=quiet)
@@ -172,6 +172,11 @@ vignetteMetaRE <- function(tag)
 
 vignetteInfo <- function(file) {
     lines <- readLines(file)
+    ## <FIXME>
+    ## Can only proceed with lines with are valid in the current
+    ## locale ... (or should we try to iconv() from latin1?)
+    lines[is.na(nchar(lines, "c"))] <- ""
+    ## </FIXME>
     ## \VignetteIndexEntry
     vignetteIndexEntryRE <- vignetteMetaRE("IndexEntry")
     title <- grep(vignetteIndexEntryRE, lines, value = TRUE)

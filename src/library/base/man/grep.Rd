@@ -4,11 +4,12 @@
 \alias{sub}
 \alias{gsub}
 \alias{regexpr}
+\alias{gregexpr}
 \description{
   \code{grep} searches for matches to \code{pattern} (its first
-  argument) within the character vector \code{x} (second
-  argument).  \code{regexpr} does too, but returns more detail in a
-  different format.
+  argument) within the character vector \code{x} (second argument).
+  \code{regexpr} and \code{gregexpr} do too, but return more detail in
+  a different format.
 
   \code{sub} and \code{gsub} perform replacement of matches determined
   by regular expression matching.
@@ -18,12 +19,17 @@ grep(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
      value = FALSE, fixed = FALSE, useBytes = FALSE)
 
 sub(pattern, replacement, x,
-    ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE)
+    ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE,
+    useBytes = FALSE)
 
 gsub(pattern, replacement, x,
-     ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE)
+     ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE,
+     useBytes = FALSE)
 
 regexpr(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE,
+        useBytes = FALSE)
+
+gregexpr(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE,
         useBytes = FALSE)
 }
 \arguments{
@@ -49,7 +55,10 @@ regexpr(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE,
   \item{replacement}{a replacement for matched pattern in \code{sub} and
     \code{gsub}.  Coerced to character if possible.  This can include
     backreferences \code{"\\1"} to \code{"\\9"} to parenthesized
-    subexpressions of \code{pattern}.}
+    subexpressions of \code{pattern}.  For \code{perl = TRUE} only, it
+    can also contain \code{"\\U"} or \code{"\\L"} to convert the rest of
+    the replacement to upper or lower case.
+  }
 }
 \details{
   Arguments which should be character strings or character vectors are
@@ -90,6 +99,10 @@ regexpr(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE,
   quantities are in characters rather than bytes unless
   \code{useBytes = TRUE} is used with \code{fixed = TRUE} or
   \code{perl = TRUE}.
+
+  For \code{gregexpr} a list of the same length as \code{text} each
+  element of which is an integer vector as in \code{regexpr}, except
+  that the starting positions of every match are given.
 
   If in a multi-byte locale the pattern or replacement is not a valid
   sequence of bytes, an error is thrown.  An invalid string in \code{x}
@@ -162,11 +175,17 @@ txt[gsub("g","#", txt) !=
 
 regexpr("en", txt)
 
+gregexpr("e", txt)
+
 ## trim trailing white space
 str = 'Now is the time      '
 sub(' +$', '', str)  ## spaces only
 sub('[[:space:]]+$', '', str) ## white space, POSIX-style
 sub('\\\\s+$', '', str, perl = TRUE) ## Perl-style white space
+
+## capitalizing
+gsub("(\\\\w)(\\\\w*)", "\\\\U\\\\1\\\\L\\\\2", "a test of capitalizing", perl=TRUE)
+gsub("\\\\b(\\\\w)", "\\\\U\\\\1", "a test of capitalizing", perl=TRUE)
 }
 \keyword{character}
 \keyword{utilities}

@@ -832,41 +832,6 @@ par(mfrow = c(1,1))
 ## end of PR 390
 
 
-## print/show dispatch
-hasMethods <- .isMethodsDispatchOn()
-require(methods)
-setClass("bar", representation(a="numeric"))
-foo <- new("bar", a=pi)
-foo
-show(foo)
-print(foo)
-
-setMethod("show", "bar", function(object){cat("show method\n")})
-show(foo)
-foo
-print(foo)
-print(foo, digits = 4)
-
-print.bar <- function(x, ...) cat("print method\n")
-foo
-print(foo)
-show(foo)
-
-setMethod("print", "bar", function(x, ...){cat("S4 print method\n")})
-foo
-print(foo)
-show(foo)
-print(foo, digits = 4)
-
-setClassUnion("integer or NULL", members = c("integer","NULL"))
-setClass("c1", representation(x = "integer", code = "integer or NULL"))
-nc <- new("c1", x = 1:2)
-str(nc)# gave ^ANULL^A in 2.0.0
-
-if(!hasMethods) detach("package:methods")
-##
-
-
 ## scoping rules calling step inside a function
 "cement" <-
     structure(list(x1 = c(7, 1, 11, 11, 7, 11, 3, 1, 2, 21, 1, 11, 10),
@@ -1446,7 +1411,7 @@ str(factor(x, exclude=""))
 
 
 ## print.factor(quote=TRUE) was not quoting levels
-x <- c("a", NA, "b", 'a " test')
+x <- c("a", NA, "b", 'a " test') #" (comment for fontification)
 factor(x)
 factor(x, exclude="")
 print(factor(x), quote=TRUE)
@@ -1574,14 +1539,6 @@ try(x[rbind(c(1,1), c(2,2), c(-3,3))])
 try(x[rbind(c(1,1), c(2,2), c(-4,3))])
 ## generally allowed in 2.1.0.
 
-## Branch cuts in complex inverse trig functions
-atan(2)
-atan(2+0i)
-tan(atan(2+0i))
-atan(1.0001+0i)
-atan(0.9999+0i)
-## previously not as in Abramowitz & Stegun.
-
 
 ## printing RAW matrices/arrays was not implemented
 s <- sapply(0:7, function(i) rawShift(charToRaw("my text"),i))
@@ -1589,3 +1546,105 @@ s
 dim(s) <- c(7,4,2)
 s
 ## empty < 2.1.1
+
+
+## interpretation of '.' directly by model.matrix
+dd <- data.frame(a = gl(3,4), b = gl(4,1,12))
+model.matrix(~ .^2, data = dd)
+## lost ^2 in 2.1.1
+
+
+## add1.lm and drop.lm did not know about offsets (PR#8049)
+set.seed(2)
+y <- rnorm(10)
+z <- 1:10
+lm0 <- lm(y ~ 1)
+lm1 <- lm(y ~ 1, offset = 1:10)
+lm2 <- lm(y ~ z, offset = 1:10)
+
+add1(lm0, scope = ~ z)
+anova(lm1, lm2)
+add1(lm1, scope = ~ z)
+drop1(lm2)
+## Last two ignored the offset in 2.1.1
+
+
+## tests of raw conversion
+as.raw(1234)
+as.raw(list(a=1234))
+## 2.1.1: spurious and missing messages, wrong result for second.
+
+
+### end of tests added in 2.1.1 patched ###
+
+
+## Tests of logical matrix indexing with NAs
+df1 <- data.frame(a = c(NA, 0, 3, 4)); m1 <- as.matrix(df1)
+df2 <- data.frame(a = c(NA, 0, 0, 4)); m2 <- as.matrix(df2)
+df1[df1 == 0] <- 2; df1
+m1[m1 == 0] <- 2;   m1
+df2[df2 == 0] <- 2; df2  # not allowed in 2.{0,1}.z
+m2[m2 == 0] <- 2;   m2
+df1[df1 == 2] # this is first coerced to a matrix, and drops to a vector
+df3 <- data.frame(a=1:2, b=2:3)
+df3[df3 == 2]            # had spurious names
+# but not allowed
+try(df2[df2 == 2] <- 1:2)
+try(m2[m2 == 2] <- 1:2)
+##
+
+
+## vector indexing of matrices: issue is when rownames are used
+# 1D array
+m1 <- c(0,1,2,0)
+dim(m1) <- 4
+dimnames(m1) <- list(1:4)
+m1[m1 == 0]                        # has rownames
+m1[which(m1 == 0)]                 # has rownames
+m1[which(m1 == 0, arr.ind = TRUE)] # no names < 2.2.0 (side effect of PR#937)
+
+# 2D array with 2 cols
+m2 <- as.matrix(data.frame(a=c(0,1,2,0), b=0:3))
+m2[m2 == 0]                        # a vector, had names < 2.2.0
+m2[which(m2 == 0)]                 # a vector, had names < 2.2.0
+m2[which(m2 == 0, arr.ind = TRUE)] # no names (PR#937)
+
+# 2D array with one col: could use rownames but do not.
+m21 <- m2[, 1, drop = FALSE]
+m21[m21 == 0]
+m21[which(m21 == 0)]
+m21[which(m21 == 0, arr.ind = TRUE)]
+## not consistent < 2.2.0: S never gives names
+
+
+## tests of indexing as quoted in Extract.Rd
+x <- NULL
+x$foo <- 2
+x # length-1 vector
+x <- NULL
+x[[2]] <- pi
+x # numeric vector
+x <- NULL
+x[[1]] <- 1:3
+x # list
+##
+
+
+## printing of a kernel:
+kernel(1, 0)
+## printed wrongly in R <= 2.1.1
+
+
+## using NULL as a replacement value
+DF <- data.frame(A=1:2, B=3:4)
+try(DF[2, 1:3] <- NULL)
+## wrong error message in R < 2.2.0
+
+## tests of signif
+ob <- 0:9 * 2000
+print(signif(ob, 3), digits=17) # had rounding error in 2.1.1
+signif(1.2347e-305, 4)
+signif(1.2347e-306, 4)  # only 3 digits in 2.1.1
+signif(1.2347e-307, 4)
+##
+

@@ -1,15 +1,27 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-03-03 12:50\n"
-"PO-Revision-Date: 2005-06-02 15:30+0900\n"
+"POT-Creation-Date: 2005-07-13 11:08\n"
+"PO-Revision-Date: 2005-03-31 08:00+0009\n"
 "Last-Translator: Nobuo Funao\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "'coef' must not be negative"
+msgstr "'coef' は負にはなれません"
+
+msgid "no 'z' matrix specified"
+msgstr "'z' 行列が指定されていません"
+
+msgid "increasing 'x' and 'y' values expected"
+msgstr "'x' と 'y' の値は昇順でなければなりません"
+
+msgid "no proper 'z' matrix specified"
+msgstr "適切な 'z' 行列が指定されていません"
 
 msgid "'bias' must be positive"
 msgstr "'bias' は正の値でなければなりません"
@@ -137,10 +149,28 @@ msgstr "pre-2.0.0 R バージョンからのスナップショットが読み込
 msgid "loading snapshot from different R version"
 msgstr "異なった R バージョンからのスナップショットが読み込まれています"
 
+msgid "'r' must be a \"range\", hence of length 2"
+msgstr ""
+
+msgid "invalid first argument"
+msgstr ""
+
+msgid "'x' and 'y' lengths differ"
+msgstr "'x' と 'y' の長さが異なります"
+
+msgid "invalid first argument [bad language object]"
+msgstr "最初の引数が無効です [誤った言語オブジェクトです]"
+
+msgid "at least 2 columns needed"
+msgstr "少なくとも二つの列が必要です"
+
+msgid "'x', 'y' and 'z' lengths differ"
+msgstr "'x','y' そして 'z' の長さが異なります"
+
 msgid "'file' is missing with no default"
 msgstr "'file' はデフォルトなしで欠損となっています"
 
-msgid "'file' is must be a non-empty character string"
+msgid "'file' must be a non-empty character string"
 msgstr "'file' は空でない文字列でなければなりません"
 
 msgid "sorry, 'gs' cannot be found"
@@ -204,3 +234,18 @@ msgid "differs between new and previous"
 msgid_plural "differ between new and previous"
 msgstr[0] "が新しいものと古いもので異なります"
 msgstr[1] "が新しいものと古いもので異なります"
+
+msgid "%d x value <= 0 omitted from logarithmic plot"
+msgid_plural "%d x values <= 0 omitted from logarithmic plot"
+msgstr[0] "%d 個の正でない x の値が対数プロットから除かれました"
+msgstr[1] "%d 個の正でない x の値が対数プロットから除かれました"
+
+msgid "%d y value <= 0 omitted from logarithmic plot"
+msgid_plural "%d y values <= 0 omitted from logarithmic plot"
+msgstr[0] "%d 個の正でない y の値が対数プロットから除かれました"
+msgstr[1] "%d 個の正でない y の値が対数プロットから除かれました"
+
+msgid "%d z value <= 0 omitted from logarithmic plot"
+msgid_plural "%d z values <= 0 omitted from logarithmic plot"
+msgstr[0] "%d 個の正でない x の値が対数プロットから除かれました"
+msgstr[1] "%d 個の正でない x の値が対数プロットから除かれました"

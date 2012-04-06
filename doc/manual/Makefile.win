@@ -18,10 +18,10 @@ OBJECTS_INFO = $(SOURCES_TEXI:.texi=.info)
 OBJECTS_PDF = $(SOURCES_TEXI:.texi=.pdf)
 
 MAKEINFO = LC_ALL=C makeinfo
-PDFLATEX = pdflatex
-LATEX = latex
-PDFTEX = pdftex
-TEX = tex
+PDFLATEX = pdflatex $(R_TEXOPTS)
+LATEX = latex $(R_TEXOPTS)
+PDFTEX = pdftex $(R_TEXOPTS)
+TEX = tex $(R_TEXOPTS)
 
 
 MAKEINDEX = LC_ALL=C makeindex
@@ -98,6 +98,7 @@ refman.dvi: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\documentclass[$${opt}]{book}"; \
 	  opt="$(R_RD4DVI)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
 	    do echo $${f}; done) | LC_COLLATE=C sort`; \
@@ -126,8 +127,9 @@ fullrefman.dvi: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\documentclass[$${opt}]{book}"; \
 	  opt="$(R_RD4DVI)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
-	  echo "\\part{}"; \
+	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
+	  echo "\\part{}"; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
 	    do echo $${f}; done) | LC_COLLATE=C sort`; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
@@ -201,6 +203,7 @@ refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\documentclass[$${opt}]{book}"; \
 	  opt="$(R_RD4PDF)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
 	    do echo $${f}; done) | LC_COLLATE=C sort`; \
@@ -232,6 +235,7 @@ fullrefman.pdf: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\documentclass[$${opt}]{book}"; \
 	  opt="$(R_RD4PDF)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
 	  echo "\\part{}"; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
@@ -264,10 +268,10 @@ else
 	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
 endif
 
-version.tex: $(top_srcdir)/VERSION
+version.tex: $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 	@echo "creating $(subdir)/$@"
 	@(v=`cat $(top_srcdir)/VERSION`; \
-	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
+	  v="$${v} (`sed -e 1d -e 's/^Last Changed Date: //' $(top_srcdir)/SVN-REVISION`)"; \
 	  echo "$${v}") > $@
 
 # bundles such as VR are not unpacked in src/library directly
@@ -318,11 +322,11 @@ R-intro.pdf: R-intro.texi $(texiincludes)
 	$(PDFTEX) R-intro.texi
 	$(PDFTEX) R-intro.texi
 
-version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
+version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 	@echo "creating $(subdir)/$@"
 	@(v=`sed 's/\([^ ]*\).*/\1/' $(top_srcdir)/VERSION`; \
 	  echo "@set VERSIONno $${v}" > $@; \
-	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
+	  v="$${v} (`sed -e 1d -e 's/^Last Changed Date: //' $(top_srcdir)/SVN-REVISION`)"; \
 	  echo "@set VERSION $${v}" >> $@; \
 	  rwv=$(shell perl $(top_srcdir)/src/gnuwin32/fixed/rwver.pl $(top_srcdir)/VERSION); \
 	  echo "@set RWVERSION $${rwv}" >> $@ )

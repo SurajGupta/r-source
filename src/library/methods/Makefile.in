@@ -35,10 +35,12 @@ all: Makefile DESCRIPTION
 	  R_DEFAULT_PACKAGES=NULL $(R_EXE) --slave > /dev/null ; \
 	fi
 	@if test -d $(srcdir)/inst/po; then \
+	  if test "@USE_NLS@" = "yes"; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/po; \
 	  cp -pr  $(srcdir)/inst/po/* $(top_builddir)/library/$(pkg)/po; \
 	  find "$(top_builddir)/library/$(pkg)/po" -name .svn -type d -prune \
 	    -exec rm -rf \{\} \; 2>/dev/null; \
+	  fi; \
 	fi
 	@if test -d $(srcdir)/man; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/man; \
@@ -64,8 +66,11 @@ DESCRIPTION: $(srcdir)/DESCRIPTION.in $(top_builddir)/config.status
 
 RfilesLazy: $(top_builddir)/library/$(pkg)/R/$(pkg).rdb
 
-$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R
-	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
+## loadNamespace() depends on the NAMESPACE file.  We remove the
+## dumped copy (it is rebuilt later), and we have already installed
+## NAMESPACE in the library tree.
+$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R  $(srcdir)/NAMESPACE
+	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds $@
 	@echo "dumping R code in package '$(pkg)'"
 	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
 	@echo "loadNamespace(\"$(pkg)\")" | \

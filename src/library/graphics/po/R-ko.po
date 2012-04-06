@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-03-02 09:33\n"
+"POT-Creation-Date: 2005-09-21 14:10\n"
 "PO-Revision-Date: 2005-05-25 15:04+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -41,6 +41,18 @@ msgstr "무효인 'usr' 입니다"
 msgid "'height' must be a vector or a matrix"
 msgstr "'heigth'는 벡터 또는 행렬이 아니면 되지 않습니다"
 
+msgid "Cannot use shading lines in bars when log scale is used"
+msgstr ""
+
+msgid "log scale error: at least one 'height + offset' value <= 0"
+msgstr ""
+
+msgid "log scale error: 'xlim' <= 0"
+msgstr ""
+
+msgid "log scale error: 'ylim' <= 0"
+msgstr ""
+
 msgid "incorrect number of names"
 msgstr "이름의 수가 이상합니다"
 
@@ -50,14 +62,24 @@ msgstr "최초의 인수가 무효입니다"
 msgid "'formula' missing or incorrect"
 msgstr "'formula'가 없거나 부적절합니다"
 
-msgid "'coef' must not be negative"
-msgstr "'coef'는 negative로는 될수 없습니다"
-
 msgid "'at' must have same length as 'z$n', i.e."
 msgstr "'at'는 'z$n'와 동일 길이를 가지지 않으면 안됩니다"
 
 msgid "invalid boxplot widths"
 msgstr "boxplot의 폭이 무효입니다"
+
+msgid "'formula' should specify exactly two variables"
+msgstr ""
+
+msgid "dependent variable should be a factor"
+msgstr ""
+
+#, fuzzy
+msgid "explanatory variable should be numeric"
+msgstr "'y'의 변수에서 수치가 아닌것이 있습니다"
+
+msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
+msgstr ""
 
 msgid "no 'z' matrix specified"
 msgstr "'z' 행렬이 지정되어 있지 않습니다"
@@ -190,6 +212,9 @@ msgstr ""
 msgid "invalid title"
 msgstr "무효인 title입니다"
 
+msgid "'legend' is of length 0"
+msgstr ""
+
 msgid "invalid coordinate lengths"
 msgstr "무효인 좌표장입니다"
 
@@ -237,9 +262,6 @@ msgstr "'panel' 함수는 신규의 plot로 작성했습니다"
 
 msgid "'x' values must be positive."
 msgstr "'x'의 값은 positive가 아니면 되지 않습니다"
-
-msgid "'x' and 'y' lengths differ"
-msgstr "'x' 그리고 'y'의 길이가 다릅니다"
 
 msgid "invalid table 'x'"
 msgstr "테이블 'x'는 부적절합니다"
@@ -292,6 +314,12 @@ msgstr "'figs'는 벡터 또는 4열의 행렬이 아니면 되지 않습니다"
 msgid "'figs' must specify at least one screen"
 msgstr "'figs'는 적어도 하나의 screen을 지정하지 않으면 되지 않습니다"
 
+msgid "a 2-way table has to be specified"
+msgstr ""
+
+msgid "x axis is on a cumulative probability scale, 'xlim' must be in [0,1]"
+msgstr ""
+
 msgid "'x' must be a matrix or a data frame"
 msgstr "'x'는 행렬 또는 데이터 프레임이 아니면 되지 않습니다"
 
@@ -340,29 +368,35 @@ msgstr "y는 log scale:  yinch() non-sense입니다"
 msgid "log scale:  xyinch() is non-sense"
 msgstr "log scale: xyinch()는 non-sense입니다"
 
-msgid "invalid first argument [bad language object]"
-msgstr "최초의 인수가 무효입니다 [잘못한 언어 오브젝트입니다]"
-
-msgid "at least 2 columns needed"
-msgstr "적어도 두개의 열이 필요합니다"
-
-msgid "'x', 'y' and 'z' lengths differ"
-msgstr "'x', 'y' 그리고 'z'의 길이가 다릅니다"
-
 msgid "Outlier (%s) in boxplot %d is not drawn"
 msgid_plural "Outliers (%s) in boxplot %d are not drawn"
 msgstr[0] ""
 "하나가 어긋나고 값(%s)이 boxplot %d로부터 제외해졌습니다\n"
 "(복수)가 어긋나고 값(%s)이 boxplot %d로부터 제외해졌습니다"
 
-msgid "%d x value <= 0 omitted from logarithmic plot"
-msgid_plural "%d x values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d개의 올바르지 않는 x의 값이 대수 plot로부터 제외했습니다"
+#~ msgid "'coef' must not be negative"
+#~ msgstr "'coef'는 negative로는 될수 없습니다"
 
-msgid "%d y value <= 0 omitted from logarithmic plot"
-msgid_plural "%d y values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d개의 올바르지 않는 y의 값이 대수 plot로부터 제외해졌습니다"
+#~ msgid "'x' and 'y' lengths differ"
+#~ msgstr "'x' 그리고 'y'의 길이가 다릅니다"
 
-msgid "%d z value <= 0 omitted from logarithmic plot"
-msgid_plural "%d z values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d개의 올바르지 않는 x의 값이 대수 plot로부터 제외해졌습니다"
+#~ msgid "invalid first argument [bad language object]"
+#~ msgstr "최초의 인수가 무효입니다 [잘못한 언어 오브젝트입니다]"
+
+#~ msgid "at least 2 columns needed"
+#~ msgstr "적어도 두개의 열이 필요합니다"
+
+#~ msgid "'x', 'y' and 'z' lengths differ"
+#~ msgstr "'x', 'y' 그리고 'z'의 길이가 다릅니다"
+
+#~ msgid "%d x value <= 0 omitted from logarithmic plot"
+#~ msgid_plural "%d x values <= 0 omitted from logarithmic plot"
+#~ msgstr[0] "%d개의 올바르지 않는 x의 값이 대수 plot로부터 제외했습니다"
+
+#~ msgid "%d y value <= 0 omitted from logarithmic plot"
+#~ msgid_plural "%d y values <= 0 omitted from logarithmic plot"
+#~ msgstr[0] "%d개의 올바르지 않는 y의 값이 대수 plot로부터 제외해졌습니다"
+
+#~ msgid "%d z value <= 0 omitted from logarithmic plot"
+#~ msgid_plural "%d z values <= 0 omitted from logarithmic plot"
+#~ msgstr[0] "%d개의 올바르지 않는 x의 값이 대수 plot로부터 제외해졌습니다"

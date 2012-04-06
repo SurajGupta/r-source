@@ -49,7 +49,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   The usual vector re-cycling rules are applied to \code{x} and
   \code{format} so the answer will be of length that of the longer of the
   vectors.
-  
+
   Locale-specific conversions to and from character strings are used
   where appropriate and available.  This affects the names of the days
   and months, the AM/PM indicator (if used) and the separators in
@@ -61,10 +61,10 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   the \code{\%} escape sequences is interpreted literally
   (and \code{\%\%} gives \code{\%}).
   \describe{
-    \item{\code{\%a}}{Abbreviated weekday name.}
-    \item{\code{\%A}}{Full weekday name.}
-    \item{\code{\%b}}{Abbreviated month name.}
-    \item{\code{\%B}}{Full month name.}
+    \item{\code{\%a}}{Abbreviated weekday name in the current locale.}
+    \item{\code{\%A}}{Full weekday name in the current locale.}
+    \item{\code{\%b}}{Abbreviated month name in the current locale.}
+    \item{\code{\%B}}{Full month name in the current locale.}
     \item{\code{\%c}}{Date and time, locale-specific.}
     \item{\code{\%d}}{Day of the month as decimal number (01--31).}
     \item{\code{\%H}}{Hours as decimal number (00--23).}
@@ -129,9 +129,11 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \code{\%E[cCyYxX]} which can use an alternative \sQuote{era}
   (e.g. a different religious calendar).  Which of these are supported is
   OS-dependent.
-    
+
   \code{ISOdatetime} and \code{ISOdate} are convenience wrappers for
-  \code{strptime}, that differ only in their defaults.
+  \code{strptime}, that differ only in their defaults and that
+  \code{ISOdate} sets a timezone.  (For dates without times is would be
+  better to use the \code{"\link{Date}"} class.)
 }
 \value{
   The \code{format} methods and \code{strftime} return character vectors
@@ -145,7 +147,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 }
 \note{
   The default formats follow the rules of the ISO 8601 international
-  standard which expresses a day as \code{"2001-02-03"} and a time as
+  standard which expresses a day as \code{"2001-02-28"} and a time as
   \code{"14:01:02"} using leading zeroes as here.  The ISO form uses no
   space to separate dates and times.
 
@@ -173,7 +175,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 \seealso{
   \link{DateTimeClasses} for details of the date-time classes;
   \code{\link{locales}} to query or set a locale.
-  
+
   Your system's help pages on \code{strftime} and \code{strptime} to
   see how to specify their formats.
 #ifdef windows

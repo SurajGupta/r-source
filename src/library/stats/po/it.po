@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-02-16 08:34+0000\n"
+"POT-Creation-Date: 2005-09-16 08:35+0100\n"
 "PO-Revision-Date: 2005-04-14 18:06+0200\n"
 "Last-Translator: stefano iacus <stefano.iacus@r-project.org>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -24,11 +24,11 @@ msgstr "ampiezza/copertura mediane più grande di n"
 msgid "probabilities outside [0,1] in qansari()"
 msgstr "probabilità esterne a [0,1] in qansari()"
 
-#: arima.c:60 arima.c:153 arima.c:329
+#: arima.c:60 arima.c:167 arima.c:343
 msgid "invalid argument type"
 msgstr "tipo argomento non valido"
 
-#: arima.c:383 arima.c:471 pacf.c:302 pacf.c:342
+#: arima.c:402 arima.c:490 pacf.c:302 pacf.c:342
 msgid "can only transform 100 pars in arima0"
 msgstr "posso trasformare al più 100 parametri in arima0"
 
@@ -43,6 +43,21 @@ msgstr "distance(): p non valido"
 #: distance.c:217
 msgid "distance(): invalid distance"
 msgstr "distance(): distanza non valida"
+
+#: family.c:20
+#, c-format
+msgid "Value %d out of range (0, 1)"
+msgstr ""
+
+#: family.c:40 family.c:53 family.c:70
+#, c-format
+msgid "Argument %s must be a nonempty numeric vector"
+msgstr ""
+
+#: family.c:99 family.c:102
+#, c-format
+msgid "argument %s must be a numeric vector of length 1 or length %d"
+msgstr ""
 
 #: ksmooth.c:66
 msgid "only 2500 rows are allowed for sm.method=\"spline\""
@@ -64,7 +79,7 @@ msgstr "l'alrgoritmo di Burg non è riuscito a trovare correlazione parziale"
 msgid "control must be a list"
 msgstr "control deve essere di tipo list"
 
-#: nls.c:77
+#: nls.c:77 port.c:510
 msgid "m must be a list"
 msgstr "m deve essere di tipo list"
 
@@ -147,6 +162,66 @@ msgstr "codei di errore forkal %d"
 #: pacf.c:445
 msgid "invalid value of lag.max"
 msgstr "valore di lag.max non valido"
+
+#: port.c:111
+#, c-format
+msgid "Rf_divset: alg = %d must be 1, 2, 3, or 4"
+msgstr ""
+
+#: port.c:304
+#, c-format
+msgid "gradient function must return a numeric vector of length %d"
+msgstr ""
+
+#: port.c:313
+#, c-format
+msgid "Hessian function must return a square numeric matrix of order %d"
+msgstr ""
+
+#: port.c:360
+#, fuzzy
+msgid "`rho' must be an environment"
+msgstr "rho deve essere un environment"
+
+#: port.c:362 port.c:509
+msgid "`d' must be a nonempty numeric vector"
+msgstr ""
+
+#: port.c:364
+msgid "When Hessian defined must also have gradient defined"
+msgstr ""
+
+#: port.c:367
+#, c-format
+msgid "environment `rho' must contain a numeric vector `.par' of length %d"
+msgstr ""
+
+#: port.c:377 port.c:529
+msgid "lowerb and upperb must be numeric vectors"
+msgstr ""
+
+#: port.c:423
+msgid "getElement applies only to named lists"
+msgstr ""
+
+#: port.c:444
+#, c-format
+msgid "%s$%s() not found"
+msgstr ""
+
+#: port.c:457
+#, c-format
+msgid "gradient must be a numeric matrix of dimension (%d,%d)"
+msgstr ""
+
+#: port.c:478
+#, c-format
+msgid "fcn produced mode %d, length %d - wanted mode %d, length %d"
+msgstr ""
+
+#: port.c:491
+msgid "invalid type for eval_check_store"
+msgstr ""
 
 #: qr.c:30
 msgid "assert failed in src/library/ts/src/carray.c"

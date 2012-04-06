@@ -30,7 +30,7 @@ getFunction <-  function(name, generic = TRUE, mustFind = TRUE,
     ## parent.env sequence of a namespace ends in the base package namespace,
     ## of a non-namespace ends in NULL (equiv. to base environment) [sigh]
     lastEnv <- if(isNamespace(where)) function(where) isBaseNamespace(where) else
-    function(where) is.null(where)
+    function(where) identical(where, baseenv())
     repeat {
         if(exists(name, envir = where, mode = "function", inherits = FALSE)) {
             f <- get(name, envir = where)
@@ -41,8 +41,9 @@ getFunction <-  function(name, generic = TRUE, mustFind = TRUE,
         where <- parent.env(where)
     }
     if(!found && mustFind)
-        if(generic) stop(gettextf("no function '%s' found"), domain = NA)
-        else stop(gettextf("no non-generic function '%s' found"), domain = NA)
+	if(generic) stop(gettextf("no function '%s' found", name), domain = NA)
+	else stop(gettextf("no non-generic function '%s' found", name),
+		  domain = NA)
     f
 }
 

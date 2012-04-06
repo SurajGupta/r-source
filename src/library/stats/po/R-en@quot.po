@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-27 15:02\n"
-"PO-Revision-Date: 2005-04-27 15:02\n"
+"POT-Creation-Date: 2005-09-16 08:35\n"
+"PO-Revision-Date: 2005-09-16 08:35\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -528,8 +528,8 @@ msgstr "not enough finite observations"
 msgid "Cannot compute exact p-value with ties"
 msgstr "Cannot compute exact p-value with ties"
 
-msgid "p-values may be incorrect due to ties"
-msgstr "p-values may be incorrect due to ties"
+msgid "Cannot compute exact p-values with ties"
+msgstr "Cannot compute exact p-values with ties"
 
 msgid "'formula' missing or invalid"
 msgstr "‘formula’ missing or invalid"
@@ -619,11 +619,26 @@ msgstr "‘ColSideColors’ must be a character vector of length ncol(x)"
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr "‘RowSideColors’ must be a character vector of length nrow(x)"
 
+msgid "non-matched further arguments are disregarded"
+msgstr "non-matched further arguments are disregarded"
+
 msgid "argument 'x' must be numeric"
 msgstr "argument ‘x’ must be numeric"
 
 msgid "'x' contains missing values"
 msgstr "‘x’ contains missing values"
+
+msgid "'x' and 'weights' have unequal length"
+msgstr "‘x’ and ‘weights’ have unequal length"
+
+msgid "'weights' must all be finite"
+msgstr "‘weights’ must all be finite"
+
+msgid "'weights' must not be negative"
+msgstr "‘weights’ must not be negative"
+
+msgid "sum(weights) != 1  -- will not get true density"
+msgstr "sum(weights) != 1  -- will not get true density"
 
 msgid "need at least 2 points to select a bandwidth automatically"
 msgstr "need at least 2 points to select a bandwidth automatically"
@@ -654,6 +669,9 @@ msgstr "bad value for ‘lag’ or ‘differences’"
 
 msgid "'xi' has not the right length"
 msgstr "‘xi’ has not the right length"
+
+msgid "incorrect dimensions for 'xi'"
+msgstr "incorrect dimensions for ‘xi’"
 
 msgid "'x' is not a vector or matrix"
 msgstr "‘x’ is not a vector or matrix"
@@ -1074,9 +1092,6 @@ msgstr "invalid parameter values"
 msgid "a limit is missing"
 msgstr "a limit is missing"
 
-msgid "'m' is negative"
-msgstr "‘m’ is negative"
-
 msgid "'r' is less than 1"
 msgstr "‘r’ is less than 1"
 
@@ -1085,6 +1100,9 @@ msgstr "‘m’ is less than 1"
 
 msgid "'r' is less than 0"
 msgstr "‘r’ is less than 0"
+
+msgid "'m' must be numeric with non-negative integers"
+msgstr "‘m’ must be numeric with non-negative integers"
 
 msgid "unknown named kernel"
 msgstr "unknown named kernel"
@@ -1258,9 +1276,6 @@ msgstr "first argument must be a “loess” object"
 msgid "'newdata' does not contain the variables needed"
 msgstr "‘newdata’ does not contain the variables needed"
 
-msgid "need response in formula"
-msgstr "need response in formula"
-
 msgid "no models to compare"
 msgstr "no models to compare"
 
@@ -1353,9 +1368,6 @@ msgstr "‘mlm’ objects with weights are not supported"
 
 msgid "X does not define a subspace of M"
 msgstr "X does not define a subspace of M"
-
-msgid "one-argument anova() not implemented for 'mlm' objects"
-msgstr "one-argument anova() not implemented for ‘mlm’ objects"
 
 msgid "residuals have rank"
 msgstr "residuals have rank"
@@ -1452,6 +1464,18 @@ msgstr "f() values at end points not of opposite sign"
 msgid "_NOT_ converged in"
 msgstr "_NOT_ converged in"
 
+msgid "control argument must be a named list"
+msgstr "control argument must be a named list"
+
+msgid "unrecognized control element(s) named `"
+msgstr "unrecognized control element(s) named `"
+
+msgid "' ignored"
+msgstr "' ignored"
+
+msgid "Logical `hessian' argument not allowed.  See documentation."
+msgstr "Logical ‘hessian’ argument not allowed.  See documentation."
+
 msgid "'params' has wrong length"
 msgstr "‘params’ has wrong length"
 
@@ -1478,6 +1502,12 @@ msgstr "setVarying : vary length must match length of parameters"
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "singular gradient matrix at initial parameter estimates"
+
+msgid "Upper or lower bounds ignored unless algorithm = \"port\""
+msgstr "Upper or lower bounds ignored unless algorithm = “port”"
+
+msgid "Convergence failure:"
+msgstr "Convergence failure:"
 
 msgid "rows with zero weights not counted"
 msgstr "rows with zero weights not counted"
@@ -1526,8 +1556,8 @@ msgstr "too few groups"
 msgid "use only with \"lm\" objects"
 msgstr "use only with “lm” objects"
 
-msgid "'which' must be in 1:4"
-msgstr "‘which’ must be in 1:4"
+msgid "'which' must be in 1:6"
+msgstr "‘which’ must be in 1:6"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "‘id.n’ must be in {1,..,%d}"
@@ -1674,6 +1704,9 @@ msgstr "some constant variables (%s) are really varying"
 msgid "no 'time' or 'id' specified"
 msgstr "no ‘time’ or ‘id’ specified"
 
+msgid "'k' must be positive"
+msgstr "‘k’ must be positive"
+
 msgid "'k' must be odd!  Changing 'k' to"
 msgstr "‘k’ must be odd!  Changing ‘k’ to"
 
@@ -1739,6 +1772,12 @@ msgstr "NA lev[]; probably smoothing parameter ‘spar’ way too large!"
 
 msgid "setting df = 1  __use with care!__"
 msgstr "setting df = 1  __use with care!__"
+
+msgid "need result of smooth.spline(*, keep.data=TRUE)"
+msgstr "need result of smooth.spline(*, keep.data=TRUE)"
+
+msgid "type = \"partial\" is not yet implemented"
+msgstr "type = “partial” is not yet implemented"
 
 msgid "not a valid \"smooth.spline\" object"
 msgstr "not a valid “smooth.spline” object"
@@ -1969,6 +2008,9 @@ msgstr "‘y’ must be numeric"
 msgid "not enough (finite) 'x' observations"
 msgstr "not enough (finite) ‘x’ observations"
 
+msgid "Requested conf.level not achievable"
+msgstr "Requested conf.level not achievable"
+
 msgid "cannot compute exact confidence interval with ties"
 msgstr "cannot compute exact confidence interval with ties"
 
@@ -1977,6 +2019,9 @@ msgstr "cannot compute exact p-value with zeroes"
 
 msgid "cannot compute exact confidence interval with zeroes"
 msgstr "cannot compute exact confidence interval with zeroes"
+
+msgid "must supply either 'formula' or 'data'"
+msgstr "must supply either ‘formula’ or ‘data’"
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr "too few distinct input values to fit an asymptotic regression model"

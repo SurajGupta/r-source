@@ -572,7 +572,7 @@ static void InFormat(R_inpstream_t stream)
 
 #define HASHSIZE 1099
 
-#define PTRHASH(obj) (((unsigned long) (obj)) >> 2)
+#define PTRHASH(obj) (((R_size_t) (obj)) >> 2)
 
 #define HASH_TABLE_COUNT(ht) TRUELENGTH(CDR(ht))
 #define SET_HASH_TABLE_COUNT(ht, val) SET_TRUELENGTH(CDR(ht), val)
@@ -1928,7 +1928,7 @@ SEXP R_serialize(SEXP object, SEXP icon, SEXP ascii, SEXP fun)
 	SEXP val;
 
 	/* set up a context which will free the buffer if there is an error */
-	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		     R_NilValue, R_NilValue);
 	cntxt.cend = &free_mem_buffer;
 	cntxt.cenddata = &mbs;

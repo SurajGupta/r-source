@@ -1,5 +1,5 @@
 ## give the base namespace a table for registered methods
-".__S3MethodsTable__." <- new.env(hash = TRUE, parent = NULL)
+".__S3MethodsTable__." <- new.env(hash = TRUE, parent = baseenv())
 
 getNamespace <- function(name) {
     ns <- .Internal(getRegisteredNamespace(as.name(name)))
@@ -164,15 +164,15 @@ loadNamespace <- function (package, lib.loc = NULL,
             env <- new.env(parent = impenv, hash = TRUE)
             name <- as.character(as.name(name))
             version <- as.character(version)
-            info <- new.env(hash = TRUE, parent = NULL)
+            info <- new.env(hash = TRUE, parent = baseenv())
             assign(".__NAMESPACE__.", info, env = env)
             assign("spec", c(name=name,version=version), env = info)
-            setNamespaceInfo(env, "exports", new.env(hash = TRUE, parent = NULL))
+            setNamespaceInfo(env, "exports", new.env(hash = TRUE, parent = baseenv()))
             setNamespaceInfo(env, "imports", list("base"=TRUE))
             setNamespaceInfo(env, "path", file.path(lib, name))
             setNamespaceInfo(env, "dynlibs", NULL)
             setNamespaceInfo(env, "S3methods", matrix(as.character(NA), 0, 3))
-            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = NULL),
+            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
                    envir = env)
             .Internal(registerNamespace(name, env))
             env
@@ -232,22 +232,21 @@ loadNamespace <- function (package, lib.loc = NULL,
         # process imports
         for (i in nsInfo$imports) {
             if (is.character(i))
-                namespaceImport(ns, loadNamespace(i, c(lib.loc, .libPaths()),
-                                                  keep.source))
+                namespaceImport(ns, loadNamespace(i, c(lib.loc, .libPaths())))
             else
                 namespaceImportFrom(ns,
                                     loadNamespace(i[[1]],
-                                                  c(lib.loc, .libPaths()),
-                                                  keep.source), i[[2]])
+                                                  c(lib.loc, .libPaths())),
+                                    i[[2]])
         }
         for(imp in nsInfo$importClasses)
             namespaceImportClasses(ns, loadNamespace(imp[[1]],
-                                                     c(lib.loc, .libPaths()),
-                                                     keep.source), imp[[2]])
+                                                     c(lib.loc, .libPaths())),
+                                   imp[[2]])
         for(imp in nsInfo$importMethods)
             namespaceImportMethods(ns, loadNamespace(imp[[1]],
-                                                     c(lib.loc, .libPaths()),
-                                                     keep.source), imp[[2]])
+                                                     c(lib.loc, .libPaths())),
+                                   imp[[2]])
 
 
         # dynamic variable to allow/disable .Import and friends
@@ -398,7 +397,7 @@ saveNamespaceImage <- function (package, rdafile, lib.loc = NULL,
 
 topenv <- function(envir = parent.frame(),
                    matchThisEnv = getOption("topLevelEnvironment")) {
-    while (! is.null(envir)) {
+    while (! identical(envir, baseenv())) {
         if (! is.null(attr(envir, "name")) ||
             identical(envir, matchThisEnv) ||
             identical(envir, .GlobalEnv) ||
@@ -695,10 +694,10 @@ namespaceExport <- function(ns, vars) {
             objs <- .Internal(ls(exports, TRUE))
             ex <- expnames %in% objs
             if(any(ex))
-                warning(sprintf(ngettext(sum(notex),
+                warning(sprintf(ngettext(sum(ex),
                                          "previous export %s is being replaced",
                                          "previous exports %s are being replaced"),
-                                paste(sQuote(info[notex, 3]), collapse=", ")),
+                                paste(sQuote(expnames[ex]), collapse=", ")),
                         call. = FALSE, domain = NA)
             for (i in seq(along = new))
                 assign(expnames[i], intnames[i], env = exports)
@@ -852,20 +851,20 @@ registerS3method <- function(genname, class, method, envir = parent.frame()) {
         else .BaseNamespaceEnv
     }
     if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
-        assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = NULL),
+        assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
                envir = defenv)
     table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
     if (is.character(method)) {
         assignWrapped <- function(x, method, home, envir) {
             method <- method            # force evaluation
-            home <- home                # force evaluation 
+            home <- home                # force evaluation
             delayedAssign(x, get(method, env = home), assign.env = envir)
         }
         if(!exists(method, env = envir)) {
             warning(gettextf("S3 method '%s' was declared in NAMESPACE but not found",
                              method), call. = FALSE)
         } else {
-	    assignWrapped(paste(genname, class, sep = "."), method, home = envir, 
+	    assignWrapped(paste(genname, class, sep = "."), method, home = envir,
 	    	    envir = table)
         }
     }
@@ -907,7 +906,7 @@ registerS3methods <- function(info, package, env)
 {
     assignWrapped <- function(x, method, home, envir) {
 	method <- method            # force evaluation
-	home <- home                # force evaluation 
+	home <- home                # force evaluation
 	delayedAssign(x, get(method, env = home), assign.env = envir)
     }
     .registerS3method <- function(genname, class, method, nm, envir)
@@ -934,7 +933,7 @@ registerS3methods <- function(info, package, env)
             else .BaseNamespaceEnv
         }
         if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
-            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = NULL),
+            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
                    envir = defenv)
         table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
 	assignWrapped(nm, method, home = envir, envir = table)

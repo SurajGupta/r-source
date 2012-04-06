@@ -1,6 +1,5 @@
 \name{print.default}
 \alias{print.default}
-\alias{print.matrix}
 \description{
   \code{print.default} is the \emph{default} method of the generic
   \code{\link{print}} function which prints its argument.
@@ -13,9 +12,9 @@
 \arguments{
   \item{x}{the object to be printed.}
   \item{digits}{a non-null value for \code{digits} specifies the minimum
-    number of significant digits to be printed in values.  If
-    \code{digits} is \code{NULL}, the value of \code{digits} set by
-    \code{options} is used.}
+    number of significant digits to be printed in values.   The default,
+    \code{NULL}, uses \code{\link{getOption}(digits)}.  (For the
+    intepretation for complex numbers see \code{\link{signif}}.)}
   \item{quote}{logical, indicating whether or not strings
     (\code{\link{character}}s) should be printed with surrounding quotes.}
   \item{na.print}{a character string which is used to indicate
@@ -35,8 +34,10 @@
 
   The same number of decimal places is used throughout a vector,  This
   means that \code{digits} specifies the minimum number of significant
-  digits to be used, and that at least one entry will be printed with
-  that minimum number.
+  digits to be used, and that at least one entry will be encoded with
+  that minimum number.  However, if all the encoded elements then have
+  trailing zeroes, the number of decimal places is reduced until at
+  least one element has a non-zero final digit.
 
   Attributes are printed respecting their class(es), using the values of
   \code{digits} to \code{print.default}, but using the default values
@@ -68,12 +69,6 @@
   valid UTF-8.  If a byte is encountered that is not part of an
   encoded Unicode character it is printed in hex in the form \code{<xx>}
   and the next character is tried.
-}
-\note{
-  \code{print.matrix} is currently identical to \code{print.default},
-  but was prior to \code{1.7.0} did not print attributes and did not
-  have a \code{digits} argument.  It is provided only because some
-  packages call it explicitly.
 }
 \seealso{
   The generic \code{\link{print}}, \code{\link{options}}.

@@ -52,7 +52,7 @@
 /* For the input handlers of the event loop mechanism: */
 #include <R_ext/eventloop.h>
 #include <R_ext/Memory.h>	/* vmaxget */
-#include "Rdevices.h"
+#include <Rdevices.h>
 
 #ifdef SUPPORT_MBCS
 /* This uses fontsets only in mbcslocales */
@@ -1088,6 +1088,8 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     XGCValues gcv;
     /* Indicates whether the display is created within this particular call: */
     Rboolean DisplayOpened = FALSE;
+    static const char *title = "R Graphics";
+    XSizeHints *hint; 
 
 #ifdef USE_FONTSET
     if (!XSupportsLocale ())
@@ -1096,12 +1098,12 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 #endif
 
     if (!strncmp(dsp, "png::", 5)) {
-	char buf[PATH_MAX]; /* allow for pageno formats */
-	FILE *fp;
 #ifndef HAVE_PNG
 	warning(_("no png support in this version of R"));
 	return FALSE;
 #else
+	char buf[PATH_MAX]; /* allow for pageno formats */
+	FILE *fp;
 	if(strlen(dsp+5) >= PATH_MAX)
 	    error(_("filename too long in png() call"));
 	strcpy(xd->filename, dsp+5);
@@ -1117,12 +1119,12 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 #endif
     }
     else if (!strncmp(dsp, "jpeg::", 6)) {
-	char buf[PATH_MAX]; /* allow for pageno formats */
-	FILE *fp;
 #ifndef HAVE_JPEG
 	warning(_("no jpeg support in this version of R"));
 	return FALSE;
 #else
+	char buf[PATH_MAX]; /* allow for pageno formats */
+	FILE *fp;
 	p = strchr(dsp+6, ':'); *p='\0';
 	xd->quality = atoi(dsp+6);
 	if(strlen(p+1) >= PATH_MAX)
@@ -1187,34 +1189,56 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     /* We want to know about exposures */
     /* and window-resizes and locations. */
 
+    /*
+     * <MBCS-FIXED>: R on gnome window manager task-bar button see?
+     * I try it.
+     * A button such as, maximization disappears
+     * unless I give Hint for clear statement in
+     * gnome window magager.
+     */
+
+    memset(&attributes,0,sizeof(attributes));
     attributes.background_pixel = whitepixel;
     attributes.border_pixel = blackpixel;
     attributes.backing_store = Always;
     attributes.event_mask = ButtonPressMask
-	| ExposureMask
-	| StructureNotifyMask;
-
+      | ExposureMask
+      | StructureNotifyMask;
 
     if (type == WINDOW) {
 	int alreadyCreated = (xd->window != (Window)NULL);
 	if(alreadyCreated == 0) {
 	    xd->windowWidth = iw = w/pixelWidth();
 	    xd->windowHeight = ih = h/pixelHeight();
-	    if ((xd->window = XCreateWindow(
-		display, rootwin,
-		DisplayWidth(display, screen) - iw - 10, 10, iw, ih, 1,
-		DefaultDepth(display, screen),
-		InputOutput,
-		DefaultVisual(display, screen),
-		CWEventMask | CWBackPixel | CWBorderPixel | CWBackingStore,
-		&attributes)) == 0) {
-		warning(_("unable to create X11 window"));
-		return FALSE;
-	    }
 
-	    XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
-			    8, PropModeReplace,
-			    (unsigned char*)"R Graphics", 13);
+	    hint=XAllocSizeHints();
+	    hint->x      = numX11Devices*20 %
+	      ( DisplayWidth(display, screen) - iw - 10 );
+	    hint->y      = numX11Devices*20 %
+	      ( DisplayHeight(display, screen) - ih - 10 );
+	    hint->width  = iw;
+	    hint->height = ih;
+	    hint->flags  = PPosition | PSize;
+	    xd->window = XCreateSimpleWindow(display,
+					     rootwin,
+					     hint->x,hint->y,
+					     hint->width,hint->height,
+					     1,
+					     blackpixel,
+					     whitepixel);
+	    if (xd->window == 0 ){
+	      XFree(hint);
+	      warning(_("unable to create X11 window"));
+	      return FALSE;
+	    }
+	    XSetWMNormalHints( display, xd->window, hint);
+	    XFree(hint);
+      	    XChangeWindowAttributes(display, xd->window,
+				    CWEventMask | CWBackPixel |
+				    CWBorderPixel | CWBackingStore,
+				    &attributes);
+
+	    XStoreName(display, xd->window, title);
 
 	    xd->gcursor = XCreateFontCursor(display, CURSOR);
 	    XDefineCursor(display, xd->window, xd->gcursor);
@@ -1374,6 +1398,7 @@ static void newX11_MetricInfo(int c,
     int size = gc->cex * gc->ps + 0.5;
     XFontStruct *f = NULL;
 
+
     SetFont(translateFontFamily(gc->fontfamily, xd), gc->fontface, size, dd);
 
 #ifdef USE_FONTSET
@@ -1406,9 +1431,11 @@ static void newX11_MetricInfo(int c,
     if (xd->font->type != One_Font) {
 	char buf[10];
 	wchar_t wc[2] = L" ";XRectangle ink, log;
+	wchar_t *wcs=wc;
 
 	wc[0] = (unsigned int) c;
-	wcstombs(buf, wc, 10);
+	
+	wcsrtombs(buf, (const wchar_t **)&wcs, sizeof(wc), NULL);
 #ifdef HAVE_XUTF8TEXTEXTENTS
 	if(utf8locale)
 	    Xutf8TextExtents(xd->font->fontset, buf, strlen(buf), &ink, &log);
@@ -1424,9 +1451,19 @@ static void newX11_MetricInfo(int c,
 	            *width, *ascent, *descent);*/
     } else { /* symbol font */
 	if(first <= c && c <= last) {
+	  /*
+	   * <MBCS-FIXED>: try demo(lm.glm,package="stats")
+	   * per_char is NULL case.
+	   */
+	  if(f->per_char) {
 	    *ascent = f->per_char[c-first].ascent;
 	    *descent = f->per_char[c-first].descent;
 	    *width = f->per_char[c-first].width;
+	  } else {
+	    *ascent = f->max_bounds.ascent;
+	    *descent = f->max_bounds.descent;
+	    *width = f->max_bounds.width;
+	  }
 	}
     }
 #else
@@ -1680,8 +1717,11 @@ static void newX11_Activate(NewDevDesc *dd)
     sprintf(num, "%i", devNumber((DevDesc*)(dd))+1);
     strcat(t, num);
     strcat(t, " (ACTIVE)");
+    /**
     XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
 		    8, PropModeReplace, (unsigned char*)t, strlen(t));
+    **/
+    XStoreName(display, xd->window, t);
     XSync(display, 0);
 }
 
@@ -1697,8 +1737,11 @@ static void newX11_Deactivate(NewDevDesc *dd)
     sprintf(num, "%i", devNumber((DevDesc*)(dd))+1);
     strcat(t, num);
     strcat(t, " (inactive)");
+    /**
     XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
 		    8, PropModeReplace, (unsigned char*)t, strlen(t));
+    **/
+    XStoreName(display, xd->window, t);
     XSync(display, 0);
 }
 
@@ -1899,7 +1942,7 @@ static Rboolean newX11_Locator(double *x, double *y, NewDevDesc *dd)
 	    if (ddEvent == dd) {
 		if (event.xbutton.button == Button1) {
 		    int useBeep = asLogical(GetOption(install("locatorBell"),
-						      R_NilValue));
+						      R_BaseEnv));
 		    *x = event.xbutton.x;
 		    *y = event.xbutton.y;
   		       /* Make a beep! Was print "\07", but that
@@ -2153,7 +2196,7 @@ newX11Desc * Rf_allocNewX11DeviceDesc(double ps)
 static
 Rboolean in_R_GetX11Image(int d, void *pximage, int *pwidth, int *pheight)
 {
-    SEXP dev = elt(findVar(install(".Devices"), R_NilValue), d);
+    SEXP dev = elt(findVar(install(".Devices"), R_BaseEnv), d);
 
     if (TYPEOF(dev) != STRSXP ||
 	!(strcmp(CHAR(STRING_ELT(dev, 0)), "XImage") == 0 ||
@@ -2277,7 +2320,7 @@ Rf_addX11Device(char *display, double width, double height, double ps,
 	    free(dev);
 	    errorcall(gcall, _("unable to start device %s"), devname);
        	}
-	gsetVar(install(".Device"), mkString(devname), R_NilValue);
+	gsetVar(install(".Device"), mkString(devname), R_BaseEnv);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
@@ -2302,11 +2345,11 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     width = asReal(CAR(args));	args = CDR(args);
     height = asReal(CAR(args)); args = CDR(args);
     if (width <= 0 || height <= 0)
-	errorcall(call, _("invalid width or height"));
+	errorcall(call, _("invalid 'width' or 'height'"));
     ps = asReal(CAR(args)); args = CDR(args);
     gamma = asReal(CAR(args)); args = CDR(args);
     if (gamma < 0 || gamma > 100)
-	errorcall(call, _("invalid gamma value"));
+	errorcall(call, _("invalid '%s' value"), "gamma");
 
     if (!isValidString(CAR(args)))
 	error(_("invalid colortype passed to X11 driver"));
@@ -2333,17 +2376,17 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     args = CDR(args);
     sc = CAR(args);
     if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
-	errorcall(call, _("invalid value of 'bg'"));
+	errorcall(call, _("invalid '%s' value"), "bg");
     bgcolor = RGBpar(sc, 0);
     args = CDR(args);
     sc = CAR(args);
     if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
-	errorcall(call, _("invalid value of 'canvas'"));
+	errorcall(call, _("invalid '%s' value"), "canvas");
     canvascolor = RGBpar(sc, 0);
     args = CDR(args);
     sfonts = CAR(args);
     if (!isString(sfonts) || LENGTH(sfonts) != 2)
-	errorcall(call, _("invalid value of 'fonts'"));
+	errorcall(call, _("invalid '%s' value"), "fonts");
     args = CDR(args);
     res = asInteger(CAR(args));
 

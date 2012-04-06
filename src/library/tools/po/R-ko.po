@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-09 17:42\n"
+"POT-Creation-Date: 2005-06-30 15:58\n"
 "PO-Revision-Date: 2005-05-26 17:33+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -26,11 +26,88 @@ msgstr "source은 code로 패키지 할수가 없습니다"
 msgid "neither code nor data objects found"
 msgstr "code도 data 오브젝트도 검색하지 않았습니다"
 
+msgid "Undocumented code objects:"
+msgstr ""
+
+msgid "Undocumented data sets:"
+msgstr ""
+
+msgid "Undocumented S4 classes:"
+msgstr ""
+
+msgid "Undocumented S4 methods:"
+msgstr ""
+
+msgid "Undocumented %s:"
+msgstr ""
+
 msgid "directory '%s' does not contain R code"
 msgstr "디렉토리 '%s'는 R code를 포함하고 있지 않습니다"
 
 msgid "directory '%s' does not contain Rd sources"
 msgstr "디렉토리 '%s'는 Rd sources를 포함하고 있지 않습니다"
+
+msgid ""
+"Functions/methods with usage in documentation object '%s' but not in code:"
+msgstr ""
+
+#, fuzzy
+msgid "Codoc mismatches from documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+msgid "Code: %s"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "Docs: %s"
+msgstr ""
+
+msgid "docs"
+msgstr ""
+
+#, fuzzy
+msgid "S4 class codoc mismatches from documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+msgid "Slots for class '%s'"
+msgstr ""
+
+msgid "name"
+msgstr ""
+
+#, fuzzy
+msgid "Data codoc mismatches from documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "Variables in data frame '%s'"
+msgstr "'%s'를 작성할수가 없습니다"
+
+#, fuzzy
+msgid "Undocumented arguments in documentation object '%s'"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "Duplicated \\argument entries in documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "Documented arguments not in \\usage in documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "Objects in \\usage without \\alias in documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "Bad \\usage lines found in documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#, fuzzy
+msgid "S3 methods shown with full name in documentation object '%s':"
+msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
 
 msgid "unable to create"
 msgstr "작성할수가 없습니다"
@@ -47,6 +124,9 @@ msgstr "파일 '%s'는 존재하지 않습니다"
 msgid "parse error in file '%s'"
 msgstr "파일 '%s'에 있어서 에러를 해석합니다"
 
+msgid "Foreign function calls without 'PACKAGE' argument:"
+msgstr ""
+
 msgid "declared S3 method '%s' not found"
 msgstr "정의된 S3 메소드 '%s'가 검색되어 있지 않습니다"
 
@@ -56,11 +136,90 @@ msgstr "image 로서 인스톨 된 R code를 체크할 수가 없습니다"
 msgid "parse error in examples from file '%s'"
 msgstr "파일 '%s'로부터 example에 있어서 에러를 해석합니다"
 
+msgid "File '%s':"
+msgstr ""
+
+msgid "found T/F in %s"
+msgstr ""
+
+msgid "Packages required but not available:"
+msgstr ""
+
+msgid "Former standard packages required but now defunct:"
+msgstr ""
+
+msgid "Vignette dependencies not required:"
+msgstr ""
+
+msgid ""
+"Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
+"DESCRIPTION Depends/Suggests/Imports entries."
+msgstr ""
+
+msgid "Namespace dependencies not required:"
+msgstr ""
+
 msgid "Package Rd sources were installed without preserving Rd file names."
 msgstr "패키지 Rd 소스는 Rd 파일명을 저장하지 않고 인스톨 되었습니다"
 
 msgid "Please reinstall using a current version of R."
 msgstr "R의 현재 버전을 사용해 reinstall를 해주십시오"
+
+#, fuzzy
+msgid "Rd files with syntax errors:"
+msgstr "Rd 구문 에러가 검색되어졌습니다"
+
+msgid "Rd files with likely Rd problems:"
+msgstr ""
+
+msgid "Unaccounted top-level text in file '%s':"
+msgstr ""
+
+#, fuzzy
+msgid "Following section '%s'"
+msgstr "'%s'의 section를 무한했습니다"
+
+msgid "Rd files with unknown encoding:"
+msgstr ""
+
+msgid "Rd files with invalid non-ASCII meta data:"
+msgstr ""
+
+#, fuzzy
+msgid "Rd files with non-ASCII section titles:"
+msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+#, fuzzy
+msgid "Rd files with missing or empty '\\name':"
+msgstr "Rd 파일은 비어있지 않은 \\\\name를 가지고 있어야만 합니다"
+
+#, fuzzy
+msgid "Rd files with missing or empty '\\title':"
+msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+msgid "Rd files without '%s':"
+msgstr ""
+
+msgid "These entries are required in an Rd file."
+msgstr ""
+
+msgid "Rd files with duplicate '%s':"
+msgstr ""
+
+msgid "These entries must be unique in an Rd file."
+msgstr ""
+
+msgid "Rd files with non-standard keywords:"
+msgstr ""
+
+msgid ""
+"Each '\\keyword' entry should specify one of the standard keywords (as "
+"listed in file 'KEYWORDS.db' in the 'doc' subdirectory of the R home "
+"directory)."
+msgstr ""
+
+msgid "Rd files with duplicated alias '%s':"
+msgstr ""
 
 msgid "Found invalid multi-byte character data."
 msgstr "무효의 다중 바이트 문자 데이타를 검색해냈습니다"
@@ -70,6 +229,86 @@ msgstr "iconv가 이용 가능하지 않기 때문에 re-encode할수가 없습�
 
 msgid "Try running R in a single-byte locale."
 msgstr "단일 바이트 locale의 R를 실행해 주십시오"
+
+msgid "Malformed package name"
+msgstr ""
+
+msgid "Invalid package name."
+msgstr ""
+
+msgid "This is the name of a base package."
+msgstr ""
+
+msgid "This name was used for a base package and is remapped by library()."
+msgstr ""
+
+msgid "Unknown encoding"
+msgstr ""
+
+msgid "Fields with non-ASCII tags:"
+msgstr ""
+
+msgid "All field tags must be ASCII."
+msgstr ""
+
+msgid "Fields with non-ASCII values:"
+msgstr ""
+
+msgid "These fields must have ASCII values."
+msgstr ""
+
+msgid "Required fields missing:"
+msgstr ""
+
+msgid "Malformed package version."
+msgstr ""
+
+msgid "Malformed maintainer field."
+msgstr ""
+
+msgid "Malformed Depends or Suggests or Imports field."
+msgstr ""
+
+msgid "Offending entries:"
+msgstr ""
+
+msgid ""
+"Entries must be names of packages optionally followed by '<=' or '>=', white "
+"space, and a valid version number in parentheses."
+msgstr ""
+
+msgid "Entries with infeasible comparison operator:"
+msgstr ""
+
+msgid "Only operators '<=' and '>=' are possible."
+msgstr ""
+
+msgid "Entries with infeasible version number:"
+msgstr ""
+
+msgid ""
+"Version numbers must be sequences of at least two non-negative integers, "
+"separated by single '.' or '-'."
+msgstr ""
+
+msgid "Package name and namespace differ."
+msgstr ""
+
+msgid "Invalid Priority field."
+msgstr ""
+
+msgid ""
+"Packages with priorities 'base' or 'recommended' or 'defunct-base' must "
+"already be known to R."
+msgstr ""
+
+msgid ""
+"See the information on DESCRIPTION files in section 'Creating R packages' of "
+"the 'Writing R Extensions' manual."
+msgstr ""
+
+msgid "Non-portable flags in variable '%s':"
+msgstr ""
 
 msgid "argument 'lines' must be a character vector"
 msgstr "인수'lines'는 문자 벡터이어야만 합니다"
@@ -121,11 +360,9 @@ msgstr "item '%s'때문에 \\\\item 기술은 없습니다"
 msgid "unmatched \\item description for item '%s'"
 msgstr "item '%s'때문에 \\\\item 기술은 match이 되지 않습니다"
 
-msgid "unclosed \\dontrun"
+#, fuzzy
+msgid "unclosed \\%s"
 msgstr "\\\\dontrun는 닫히고 있지 않습니다"
-
-msgid "unclosed \\dontshow or \\testonly"
-msgstr "\\\\dontshow 또는 \\\\testonly는 닫히고 있지 않습니다"
 
 msgid "Rd syntax errors found"
 msgstr "Rd 구문 에러가 검색되어졌습니다"
@@ -164,28 +401,25 @@ msgstr ""
 msgid "cannot open directory '%s'"
 msgstr "디렉토리 '%s'를 열수가 없습니다"
 
-msgid "*** someone has corrupted the Built field in package"
-msgstr ""
-"*** 어떤것(someone)이 패키지'%s'에서 구축된 필드를 corrupt하게 되었습니다 ***"
-
-msgid "Package"
-msgstr "패키지"
-
-msgid "***"
-msgstr "***"
-
 msgid "cannot turn off locale-specific sorting via LC_COLLATE"
 msgstr ""
 "via LC COLLATE에 의한 locale-specific 소트 하는것을 해제할 수가 없습니다"
 
+msgid "duplicated files in '%s' field:"
+msgstr ""
+
+msgid "files in '%s' field missing from '%s':"
+msgstr ""
+
+msgid "files in '%s' missing from '%s' field:"
+msgstr ""
+
 msgid "unable to create '%s'"
 msgstr "'%s'를 작성할수가 없습니다"
 
-msgid "unable to copy INDEX to"
+#, fuzzy
+msgid "unable to copy INDEX to '%s'"
 msgstr "INDEX를 복사할수가 없습니다"
-
-msgid "INDEX"
-msgstr "인덱스"
 
 msgid "cannot create directory '%s'"
 msgstr "디렉토리 '%s'를 작성할 수가 없습니다"
@@ -215,13 +449,8 @@ msgid "package seems to be using lazy loading for data already"
 msgstr ""
 "패키지는 데이터를 위해서 나태한 로드를 이미 사용하고 있는 것처럼 보입니다"
 
-msgid "object(s)"
-msgstr "오브젝트(s)"
-
-msgid ","
-msgstr ","
-
-msgid "are created by more than one data call"
+#, fuzzy
+msgid "object(s) %s are created by more than one data call"
 msgstr "하나를 넘어가는 데이터 호출에 의해 작성됩니다"
 
 msgid "source list must have names for all elements"
@@ -239,6 +468,17 @@ msgstr "패키지는 R code를 포함하지 않습니다"
 msgid "package seems to be using lazy loading already"
 msgstr "패키지는 이미 로드 하는것을 사용하고 있는 것처럼 보입니다"
 
+#, fuzzy
+msgid "cannot update HTML package index"
+msgstr "source은 code로 패키지 할수가 없습니다"
+
+msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
+msgstr ""
+
+#, fuzzy
+msgid "cannot create HTML package index"
+msgstr "source은 code로 패키지 할수가 없습니다"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "인수 'pkg'가 1 길이어야만 합니다"
 
@@ -248,11 +488,15 @@ msgstr "패키지 '%s'가 검색되지 않습니다"
 msgid "bad operand"
 msgstr "잘못된 operand"
 
-msgid "had its dependencies reduced to a minimal set."
+#, fuzzy
+msgid "Package '%s' had its dependencies reduced to a minimal set."
 msgstr "그 의존성을 최소 set으로 감소했습니다"
 
 msgid "argument '%s' must be a character string or connection"
 msgstr "인수 '%s'는 문자열 또는 connection이어야만합니다"
+
+msgid "unimplemented encoding"
+msgstr ""
 
 msgid "test '%s' is not available"
 msgstr "test '%s'는 이용 가능하지 않습니다"
@@ -286,3 +530,26 @@ msgstr "행해졌습니다"
 
 msgid "parsing '%s'"
 msgstr "분석 '%s'"
+
+#~ msgid "unclosed \\dontshow or \\testonly"
+#~ msgstr "\\\\dontshow 또는 \\\\testonly는 닫히고 있지 않습니다"
+
+#~ msgid "*** someone has corrupted the Built field in package"
+#~ msgstr ""
+#~ "*** 어떤것(someone)이 패키지'%s'에서 구축된 필드를 corrupt하게 되었습니다 "
+#~ "***"
+
+#~ msgid "Package"
+#~ msgstr "패키지"
+
+#~ msgid "***"
+#~ msgstr "***"
+
+#~ msgid "INDEX"
+#~ msgstr "인덱스"
+
+#~ msgid "object(s)"
+#~ msgstr "오브젝트(s)"
+
+#~ msgid ","
+#~ msgstr ","

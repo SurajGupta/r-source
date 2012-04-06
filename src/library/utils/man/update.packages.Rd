@@ -1,7 +1,6 @@
 \name{update.packages}
 \alias{update.packages}
 \alias{available.packages}
-\alias{CRAN.packages}
 \alias{old.packages}
 \alias{new.packages}
 \alias{download.packages}
@@ -14,9 +13,8 @@
   the repositories and update outdated packages on the fly.
 }
 \usage{
-update.packages(lib.loc = NULL, repos = CRAN,
+update.packages(lib.loc = NULL, repos = getOption("repos"),
                 contriburl = contrib.url(repos, type),
-                CRAN = getOption("repos"),
                 method, instlib = NULL,
                 ask = TRUE, available = NULL, destdir = NULL,
 		installWithVers = FALSE, checkBuilt = FALSE,
@@ -24,28 +22,21 @@ update.packages(lib.loc = NULL, repos = CRAN,
 
 available.packages(contriburl = contrib.url(getOption("repos")), method)
 
-CRAN.packages(CRAN = getOption("repos"), method,
-              contriburl = contrib.url(CRAN))
-
-old.packages(lib.loc = NULL, repos = CRAN,
+old.packages(lib.loc = NULL, repos = getOption("repos"),
              contriburl = contrib.url(repos),
-             CRAN = getOption("repos"),
              method, available = NULL, checkBuilt = FALSE)
 
-new.packages(lib.loc = NULL, repos = CRAN,
+new.packages(lib.loc = NULL, repos = getOption("repos"),
              contriburl = contrib.url(repos),
-             CRAN = getOption("repos"),
              method, available = NULL, ask = FALSE)
 
 download.packages(pkgs, destdir, available = NULL,
-                  repos = CRAN,
+                  repos = getOption("repos"),
                   contriburl = contrib.url(repos, type),
-                  CRAN = getOption("repos"), method,
-                  type = getOption("pkgType"))
+                  method, type = getOption("pkgType"))
 
-install.packages(pkgs, lib, repos = CRAN,
+install.packages(pkgs, lib, repos = getOption("repos"),
                  contriburl = contrib.url(repos, type),
-                 CRAN = getOption("repos"),
                  method, available = NULL, destdir = NULL,
 		 installWithVers = FALSE, dependencies = FALSE,
                  type = getOption("pkgType"))
@@ -60,10 +51,10 @@ contrib.url(repos, type = getOption("pkgType"))
     \code{"http://cran.r-project.org"} or its Statlib mirror,
     \code{"http://lib.stat.cmu.edu/R/CRAN"}.
 #ifdef unix
-    Can be \code{NULL} to install from local \code{.tar.gz} files.
+    Can be \code{NULL} to install from local \file{.tar.gz} files.
 #endif
 #ifdef windows
-    Can be \code{NULL} to install from local \code{.zip} files.
+    Can be \code{NULL} to install from local \file{.zip} files.
 #endif
   }
   \item{contriburl}{URL(s) of the contrib section of the
@@ -71,22 +62,21 @@ contrib.url(repos, type = getOption("pkgType"))
     incomplete, e.g., because you burned only the \file{contrib} section on a
     CD.  Overrides argument \code{repos}.
 #ifdef unix
-    Can be \code{NULL} to install from local \code{.tar.gz} files.
+    Can be \code{NULL} to install from local \file{.tar.gz} files.
 #endif
 #ifdef windows
-    Can also be \code{NULL} to install from local \code{.zip} files.
+    Can also be \code{NULL} to install from local \file{.zip} files.
 #endif
   }
-  \item{CRAN}{character, an earlier way to specify \code{repos}.}
   \item{method}{Download method, see \code{\link{download.file}}.}
   \item{pkgs}{character vector of the short names of packages/bundles whose
-    current versions should be downloaded from \code{CRAN}.
+    current versions should be downloaded from the repositories.
     If \code{repos = NULL}, a character vector of file paths of
 #ifdef windows
-    \code{.zip} files.
+    \file{.zip} files.
 #endif
 #ifdef unix
-    \code{.tar.gz} files.  These can be source archives or binary
+    \file{.tar.gz} files.  These can be source archives or binary
     package/bundle archive files (as created by \code{R CMD build --binary}).
 #endif
     If this is a zero-length character vector, a listbox of available
@@ -95,7 +85,7 @@ contrib.url(repos, type = getOption("pkgType"))
   }
   \item{destdir}{directory where downloaded packages are stored.}
   \item{available}{an object listing packages available at the repositories
-    as returned by \code{CRAN.packages}.}
+    as returned by \code{available.packages}.}
   \item{lib}{character vector giving the library directories where to
     install the packages.  Recycled as needed.}
   \item{ask}{logical indicating whether to ask user before packages
@@ -139,13 +129,11 @@ contrib.url(repos, type = getOption("pkgType"))
   \code{install.packages} if the repository provides the necessary
   information).
   
-  \code{CRAN.packages} returns a matrix of details corresponding to
-  packages/bundles currently available in the \code{contrib} section of
-  CRAN, the comprehensive R archive network.  The current list of
-  packages is downloaded over the internet (or copied from a local CRAN
-  mirror).  \code{available.packages} does the same for one or more
-  repositories with a similar structure.  Both return only packages
-  whose version requirements are met by the running version of \R.
+  \code{available.packages} returns a matrix of details corresponding to
+  packages/bundles currently available at  one or more repositories. The
+  current list of packages is downloaded over the internet (or copied
+  from a local mirror).  It returns only packages whose version
+  requirements are met by the running version of \R.
   
   \code{old.packages} compares the information from
   \code{available.packages} with that from
@@ -172,7 +160,8 @@ contrib.url(repos, type = getOption("pkgType"))
   argument, it is obtained from repositories.  If a repository is local,
   i.e., the URL starts with \code{"file:"}, then the packages are not
   downloaded but used directly.  (Both \code{"file:"} and
-  \code{"file://"} are allowed as prefixes to a file path.)
+  \code{"file:///"} are allowed as prefixes to a file path, the latter
+  for an absolute file path.)
 
   The main function of the set is \code{update.packages}.  First a list
   of all packages/bundles found in \code{lib.loc} is created and
@@ -223,7 +212,7 @@ contrib.url(repos, type = getOption("pkgType"))
   repository on the list within which it is found.
 }
 \value{
-  For \code{CRAN.packages} and \code{available.packages}, a matrix
+  For \code{available.packages}, a matrix
   with one row per package/bundle, row names the package names and
   column names \code{"Package"}, \code{"Version"}, \code{"Priority"},
   \code{"Bundle"}, \code{"Depends"}, \code{"Imports"}, \code{"Suggests"}
@@ -235,10 +224,13 @@ contrib.url(repos, type = getOption("pkgType"))
   \code{"Built"} (the version built under), \code{"ReposVer"} and
   \code{"Repository"}.
   
-  For \code{new.packages} a character vector of package/bundle names.
+  For \code{new.packages} a character vector of package/bundle names,
+  \emph{after} any have been installed.
 
   For \code{download.packages}, a two-column matrix of names and
-  destination file names, for those packages/bundles successfully downloaded.
+  destination file names, for those packages/bundles successfully
+  downloaded.  If packages are not available or there is a problem with
+  the download, suitable warnings are given.
 
   \code{install.packages} and \code{update.packages} have no return value.
 }

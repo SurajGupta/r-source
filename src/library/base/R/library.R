@@ -140,6 +140,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 
     if(!missing(package)) {
         if (is.null(lib.loc)) lib.loc <- .libPaths()
+        ## remove any non-existent directories
+        lib.loc <- lib.loc[file.info(lib.loc)$isdir %in% TRUE]
 
 	if(!character.only)
 	    package <- as.character(substitute(package))
@@ -182,22 +184,22 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 
 	if (!missing(version)) {
 	     package <- manglePackageName(package, version)
-        } else {
-	   ## Need to find the proper package to install
-	   pkgDirs <- list.files(lib.loc,
-                                 pattern = paste("^", package, sep=""))
-           ## See if any directories in lib.loc match the pattern of
-           ## 'package', if none do, just continue as it will get caught
-           ## below.  Otherwise, if there is actually a 'package', use
-           ## that, and if not, then use the highest versioned dir.
-	   if (length(pkgDirs) > 0) {
-	       if (!(package %in% pkgDirs)) {
-		   ## Need to find the highest version available
-		   vers <- unlist(lapply(pkgDirs, libraryPkgVersion))
-		   vpos <- libraryMaxVersPos(vers)
-		   if (length(vpos) > 0) package <- pkgDirs[vpos]
-               }
-           }
+        } else { # Need to find the package version to install
+            ## this throws a warning if lib.loc has not been cleaned.
+            pkgDirs <- list.files(lib.loc,
+                                  pattern = paste("^", package, sep=""))
+            ## See if any directories in lib.loc match the pattern of
+            ## 'package', if none do, just continue as it will get caught
+            ## below.  Otherwise, if there is actually a 'package', use
+            ## that, and if not, then use the highest versioned dir.
+            if (length(pkgDirs) > 0) {
+                if (!(package %in% pkgDirs)) {
+                    ## Need to find the highest version available
+                    vers <- unlist(lapply(pkgDirs, libraryPkgVersion))
+                    vpos <- libraryMaxVersPos(vers)
+                    if (length(vpos) > 0) package <- pkgDirs[vpos]
+                }
+            }
         }
 
         ## NB from this point on `package' is either the original name or
@@ -216,13 +218,17 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             pkgpath <- .find.package(package, lib.loc, quiet = TRUE,
                                      verbose = verbose)
             if(length(pkgpath) == 0) {
-                vers <- libraryPkgVersion(package)
-                txt <- if (!is.null(vers))
-                    gettextf("there is no package called '%s', version %s",
-                             libraryPkgName(package), vers)
-                else
-                    gettextf("there is no package called '%s'",
-                             libraryPkgName(package))
+                if(length(lib.loc)) {
+                    vers <- libraryPkgVersion(package)
+                    txt <- if (!is.null(vers))
+                        gettextf("there is no package called '%s', version %s",
+                                 libraryPkgName(package), vers)
+                    else
+                        gettextf("there is no package called '%s'",
+                                 libraryPkgName(package))
+                } else {
+                    txt <- gettext("no library trees found in 'lib.loc'")
+                }
                 if(logical.return) {
                     warning(txt, domain = NA)
 		    return(FALSE)
@@ -253,7 +259,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## takes over.
             if (packageHasNamespace(package, which.lib.loc)) {
                 tt <- try({
-                    ns <- loadNamespace(package, c(which.lib.loc, lib.loc))
+                    ns <- loadNamespace(package, c(which.lib.loc, lib.loc),
+                                        keep.source = keep.source)
                     dataPath <- file.path(which.lib.loc, package, "data")
                     env <- attachNamespace(ns, pos = pos,
                                            dataPath = dataPath)
@@ -292,7 +299,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## source file into loadenv
             if(file.exists(codeFile)) {
                 res <- try(sys.source(codeFile, loadenv,
-                                     keep.source = keep.source))
+                                      keep.source = keep.source))
                 if(inherits(res, "try-error"))
                     stop(gettextf("unable to load R code in package '%s'",
                                   libraryPkgName(package)),
@@ -369,7 +376,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             if(basename(f) %in% "package.rds") {
                 txt <- .readRDS(f)$DESCRIPTION
                 if("Encoding" %in% names(txt)) {
-                    tmp <- try(iconv(txt, from=txt["Encoding"], to=""))
+                    to <- if(Sys.getlocale("LC_CTYPE") == "C") "ASCII//TRANSLIT"else ""
+                    tmp <- try(iconv(txt, from=txt["Encoding"], to=to))
                     if(!inherits(tmp, "try-error"))
                         txt <- tmp
                     else
@@ -528,6 +536,18 @@ function(chname, package = NULL, lib.loc = NULL,
             message(gettextf("shared library '%s' already loaded", chname),
                     domain = NA)
         return(invisible(dll_list[[ seq(along = dll_list)[ind] ]]))
+    }
+    if(.Platform$OS.type == "windows") {
+        ## Make it possible to find other DLLs in the same place as
+        ## @code{file}, so that e.g. binary packages can conveniently
+        ## provide possibly missing DLL dependencies in this place
+        ## (without having to bypass the default package dynload
+        ## mechanism).  Note that this only works under Windows, and a
+        ## more general solution will have to be found eventually.
+        PATH <- Sys.getenv("PATH")
+        Sys.putenv("PATH" =
+                   paste(gsub("/", "\\\\", dirname(file)), PATH, sep=";"))
+        on.exit(Sys.putenv("PATH" = PATH))
     }
     if(verbose)
         message(gettextf("now dyn.load(\"%s\") ...", file), domain = NA)
@@ -775,7 +795,7 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
                                     sep = ""),
                               search()))) {
             dirs <- sapply(pos, function(i) {
-                if(is.null(env <- as.environment(i)))
+                if(identical(env <- as.environment(i), baseenv()))
                     system.file()
                 else
                     attr(env, "path")

@@ -58,13 +58,13 @@ args <- function(name).Internal(args(name))
 ##- attr <- function(x, which).Internal(attr(x, which))
 ##- "attr<-" <- function(x, which, value).Internal("attr<-"(x, which, value))
 
-cbind <- function(..., deparse.level=1) {
-    if(deparse.level != 1) .NotYetUsed("deparse.level != 1")
-    .Internal(cbind(...))
+cbind <- function(..., deparse.level = 1) {
+    ## if(deparse.level > 1) .NotYetUsed("deparse.level > 1")
+    .Internal(cbind(deparse.level, ...))
 }
-rbind <- function(..., deparse.level=1) {
-    if(deparse.level != 1) .NotYetUsed("deparse.level != 1")
-    .Internal(rbind(...))
+rbind <- function(..., deparse.level = 1) {
+    ## if(deparse.level > 1) .NotYetUsed("deparse.level > 1")
+    .Internal(rbind(deparse.level, ...))
 }
 
 # convert deparsing options to bitmapped integer
@@ -80,7 +80,7 @@ rbind <- function(..., deparse.level=1) {
              call. = FALSE, domain = NA)
     if (any(opts == 6)) {
 	if (length(opts) != 1)
-	    stop("all can not be used with other deparse options",
+	    stop("'all' can not be used with other deparse options",
 	       	call. = FALSE)
 	else
 	    return(31)
@@ -103,7 +103,10 @@ do.call <- function(what,args,quote=FALSE) {
 }
 
 drop <- function(x).Internal(drop(x))
-format.info <- function(x, nsmall=0).Internal(format.info(x, nsmall))
+
+format.info <- function(x, digits=NULL, nsmall=0)
+    .Internal(format.info(x, digits, nsmall))
+
 gc <- function(verbose = getOption("verbose"),  reset=FALSE)
 {
     res <-.Internal(gc(verbose,reset))/c(1, 1, 10, 10, 1, 1, rep(10,4),rep(1,2),rep(10,2))
@@ -153,7 +156,7 @@ searchpaths <- function()
 sprintf <- function(fmt, ...) .Internal(sprintf(fmt, ...))
 
 ##-- DANGER ! ---   substitute(list(...))  inside functions !!!
-##substitute <- function(expr, env=NULL).Internal(substitute(expr, env))
+##substitute <- function(expr, env=baseenv()).Internal(substitute(expr, env))
 
 t.default <- function(x).Internal(t.default(x))
 typeof <- function(x).Internal(typeof(x))
@@ -163,10 +166,10 @@ memory.profile <- function() .Internal(memory.profile())
 
 capabilities <- function(what = NULL)
 {
-    z  <- .Internal(capabilities())
+    z  <- .Internal(capabilities(what))
     if(is.null(what)) return(z)
     nm <- names(z)
-    i <- pmatch(what, nm)
+    i <- match(what, nm)
     if(is.na(i)) logical(0) else z[i]
 }
 
@@ -190,18 +193,40 @@ data.class <- function(x) {
 is.numeric.factor <- function(x) FALSE
 is.integer.factor <- function(x) FALSE
 
-encodeString <- function(x, w = 0, quote = "", na = TRUE,
-                         justify = c("left", "right", "centre"))
+encodeString <- function(x, width = 0, quote = "", na.encode = TRUE,
+                         justify = c("left", "right", "centre", "none"))
 {
     at <- attributes(x)
     x <- as.character(x) # we want e.g. NULL to work
     attributes(x) <- at  # preserve names, dim etc
     oldClass(x) <- NULL  # but not class
-    justify <- match(match.arg(justify), c("left", "right", "centre")) - 1
-    .Internal(encodeString(x, w, quote, justify, na))
+    justify <- match(match.arg(justify),
+                     c("left", "right", "centre", "none")) - 1
+    .Internal(encodeString(x, width, quote, justify, na.encode))
 }
 
 l10n_info <- function() .Internal(l10n_info())
+
+iconv <- function(x, from, to, sub = NA)
+    .Internal(iconv(x, from, to, as.character(sub)))
+
+iconvlist <- function()
+{
+    int <- .Internal(iconv(NULL, "", "", ""))
+    if(length(int)) return(sort(int))
+    icfile <- system.file("iconvlist", package="utils")
+    if(!nchar(icfile)) stop("'iconvlist' is not available on this system")
+    ext <- readLines(icfile)
+    if(!length(ext)) stop("'iconvlist' is not available on this system")
+    ## glibc has lines ending //, some versions with a header and some without.
+    ## libiconv has lines with multiple entries separated by spaces
+    cnt <- grep("//$", ext)
+    if(length(cnt)/length(ext) > 0.5) {
+        ext <- grep("//$", ext, value = TRUE)
+        ext <- sub("//$", "", ext)
+    }
+    sort(unlist(strsplit(ext, "[[:space:]]")))
+}
 
 
 ## base has no S4 generics

@@ -301,12 +301,12 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
     iop = PRIMVAL(op);
     switch(iop) {
     case 0:/* sum */
-    /* we need to find out if _all_ the arguments are integer in advance,
-       as we might overflow before we find out */
+    /* we need to find out if _all_ the arguments are integer or logical
+       in advance, as we might overflow before we find out */
 	a = args;
 	int_a = 1;
 	while (a != R_NilValue) {
-	    if(!isInteger(CAR(a))) {
+	    if(!isInteger(CAR(a)) &&  !isLogical(CAR(a))) {
 		int_a = 0;
 		break;
 	    }
@@ -532,7 +532,7 @@ SEXP do_range(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(prargs = promiseArgs(args, R_GlobalEnv));
     for (a = args, b = prargs; a != R_NilValue; a = CDR(a), b = CDR(b))
 	SET_PRVALUE(CAR(b), CAR(a));
-    ans = applyClosure(call, op, prargs, env, R_NilValue);
+    ans = applyClosure(call, op, prargs, env, R_BaseEnv);
     UNPROTECT(2);
     return(ans);
 }

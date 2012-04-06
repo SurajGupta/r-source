@@ -39,10 +39,13 @@ is.integer(x)
   Non-integral numeric values are truncated towards zero (i.e.,
   \code{as.integer(x)} equals \code{\link{trunc}(x)} there), and
   imaginary parts of complex numbers are discarded (with a warning).
+  Character strings containing either a decimal representation or a
+  heaxadecimal representation (starting with \code{0x} or \code{0X}) can
+  be converted, as well as any allowed by the platform for real numbers.
   Like \code{\link{as.vector}} it strips attributes including names.
 
   \code{is.integer} returns \code{TRUE} or \code{FALSE} depending on
-  whether its argument is of integer type or not.
+  whether its argument is of integer \link{type} or not.
   \code{is.integer} is generic: you can write methods to handle
   specific classes of objects, see \link{InternalMethods}.
   There is a method for factors which returns \code{FALSE}.

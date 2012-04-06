@@ -578,8 +578,8 @@ window.default <- function(x, start = NULL, end = NULL,
     if (is.null(frequency) && is.null(deltat)) yfreq <- xfreq
     else if (is.null(deltat)) yfreq <- frequency
     else if (is.null(frequency)) yfreq <- 1/deltat
-    if (yfreq > 0 && xfreq%%yfreq < ts.eps) {
-        thin <- round(xfreq/yfreq)
+    thin <- round(xfreq/yfreq)
+    if (yfreq > 0 && abs(xfreq/yfreq -thin) < ts.eps) {
         yfreq <- xfreq/thin
     } else {
         thin <- 1
@@ -612,10 +612,10 @@ window.default <- function(x, start = NULL, end = NULL,
 	stop("'start' cannot be after 'end'")
 
     if(!extend) {
-        if(all(abs(start - xtime) > abs(start) * ts.eps))
+        if(all(abs(start - xtime) > ts.eps/xfreq))
             start <- xtime[(xtime > start) & ((start + 1/xfreq) > xtime)]
 
-        if(all(abs(end - xtime) > abs(end) * ts.eps))
+        if(all(abs(end - xtime) > ts.eps/xfreq))
             end <- xtime[(xtime < end) & ((end - 1/xfreq) < xtime)]
 
         i <- seq(trunc((start - xtsp[1]) * xfreq + 1.5),

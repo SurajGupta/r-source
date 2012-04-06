@@ -11,14 +11,15 @@ FULLVERSION=`cat ../../../VERSION`
 RPREFIX = $(shell perl ../fixed/rwver.pl $(R_HOME)/VERSION)
 LIBFILES = $(foreach i, $(R_PKGS_BASE) $(R_PKGS_RECOMMENDED) $(EXTRA_PKGS), $(R_HOME)/library/$i) $(R_HOME)/library/R.css
 
-INFO_FILES = AUTHORS COPYING COPYING.LIB FAQ NEWS ONEWS README RESOURCES \
+INFO_FILES = AUTHORS COPYING COPYING.LIB FAQ NEWS README RESOURCES \
 	THANKS Y2K
-GW_INFO_FILES = CHANGES CHANGES1 COPYRIGHTS README.Rterm rw-FAQ
+GW_INFO_FILES = CHANGES COPYRIGHTS README.Rterm rw-FAQ
 
-ETC_FILES = Rprofile Rconsole Rdevga rgb.txt repositories
+ETC_FILES = Rprofile.site Rconsole Rdevga rgb.txt repositories
 
 GW32_FILES = R.exp Rblas.def MkRules MakePkg MakeDll \
-	  Rpwd.exe pwd.pl makeDllRes.pl install-save.sh man-install.sh
+	  Rpwd.exe pwd.pl makeDllRes.pl install-save.sh man-install.sh \
+	  librproxy.a
 
 # we don't want share/{Makefile.in,sh} installed
 SHARE_DIRS = R licenses locale make perl texmf
@@ -101,17 +102,17 @@ fixups:
 	echo "make.packages.html(.Library)" | $(RPREFIX)/bin/rterm --vanilla --slave LC_COLLATE=C
 	$(CP) -pr $(R_HOME)/Tcl $(RPREFIX)
 
-R.iss: JRins.pl imagedir fixups md5sums
+R.iss: JRins.pl CustomMsg.txt imagedir fixups md5sums
 	perl JRins.pl $(RPREFIX) $(RPREFIX)
 
 $(RPREFIX).exe: R.iss
 	"$(ISDIR)/iscc" R.iss > $(RPREFIX).log 2>&1
 
 clean:
-	rm -rf R.iss Rsmall.iss *.log $(RPREFIX) 
+	rm -rf R.iss *.log $(RPREFIX) 
 
 distclean: clean
-	rm -f $(RPREFIX).exe
+	rm -f $(RPREFIX)-win32.exe
 
 myR:
 	$(CAT) $(IMAGEDIR)/library/*/CONTENTS >  \

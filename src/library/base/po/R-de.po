@@ -1,15 +1,15 @@
 # Translation of R-base.po to german
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <detlef.steuer@gmx.de>, 2005.
+# Detlef Steuer <detlef.steuer@hsuhh.de>, 2005.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.0\n"
+"Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-05-11 15:43\n"
-"PO-Revision-Date: 2005-04-18 18:00+02:00\n"
-"Last-Translator: Detlef Steuer <detlef.steuer@gmx.de>\n"
+"POT-Creation-Date: 2005-08-26 09:41\n"
+"PO-Revision-Date: 2005-09-28 18:00+02:00\n"
+"Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -37,6 +37,30 @@ msgstr "Siehe help(\"Deprecated\") und help(\"%s-deprecated\")."
 msgid "See help(\"Deprecated\")"
 msgstr "Siehe help(\"Deprecated\")"
 
+msgid "invalid numbers in 'quote'"
+msgstr "ungültige Zahlen in 'quote'"
+
+msgid "invalid 'quote' specification"
+msgstr "ungültige 'quote' Spezifikation"
+
+msgid "invalid 'row.names' specification"
+msgstr "ungültige 'row.names' Spezifikation"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr ""
+
+msgid "invalid 'col.names' specification"
+msgstr "ungültige 'col.names' Spezifikation"
+
+msgid "'file' must be a character string or connection"
+msgstr "'file' muss eine Zeichenkette oder eine Verbindung sein"
+
+msgid "appending column names to file"
+msgstr "hänge Spaltennamen an Datei an"
+
+msgid "format.char: coercing 'x' to 'character'"
+msgstr "format.char: wandle 'x' in 'character' um"
+
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "Argument zu 'La.svd' muss numerisch oder komplex sein"
 
@@ -52,11 +76,14 @@ msgstr "'nu' muss entweder 0, nrow(x) oder ncol(x) sein"
 msgid "'nv' must be 0, nrow(x) or ncol(x)"
 msgstr "'nv' muss entweder 0, nrow(x) oder ncol(x) sein"
 
-msgid "all can not be used with other deparse options"
-msgstr "all kann nicht mit anderen deparse Optionen zusammen benutzt werden"
+msgid "'all' can not be used with other deparse options"
+msgstr "'all' kann nicht mit anderen deparse Optionen zusammen benutzt werden"
 
 msgid "second argument must be a list"
 msgstr "das zweite Argument muss eine Liste sein"
+
+msgid "'iconvlist' is not available on this system"
+msgstr ""
 
 msgid "'kind' must be a character string of length 1 (RNG to be used)."
 msgstr "'kind' muss eine Zeichenkette der Länge 1 sein (zu nutzender RNG)."
@@ -172,8 +199,8 @@ msgstr "keine interaktive Sitzung"
 msgid "not a valid restart specification"
 msgstr "keine gültige restart Spezifikation"
 
-msgid "argument where of length 0"
-msgstr "Argument where hat Länge 0"
+msgid "argument 'where' of length 0"
+msgstr "Argument 'where' hat Länge 0"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
 msgstr "'origin' muss entweder 'start', 'current' oder 'end' sein"
@@ -451,6 +478,9 @@ msgstr "nicht definiert für \"POSIXt\" Objekte"
 msgid "not defined for POSIXt objects"
 msgstr "nicht definiert für \"POSIXt\" Objekte"
 
+msgid "'tzone' attributes are inconsistent"
+msgstr ""
+
 msgid "not defined for \"POSIXct\" objects"
 msgstr "nicht definiert für \"POSIXct\" Objekte"
 
@@ -471,9 +501,6 @@ msgstr "'from' muss ein \"POSIXt\" Objekt sein"
 
 msgid "'to' must be a POSIXt object"
 msgstr "'to' muss ein \"POSIXt\" Objekt sein"
-
-msgid "'file' must be a character string or connection"
-msgstr "'file' muss eine Zeichenkette oder eine Verbindung sein"
 
 msgid "'x' must be a square matrix"
 msgstr "'x' muss eine quadratische Matrix sein"
@@ -587,9 +614,6 @@ msgstr "'vec' enthält NAs"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' muss nicht-abfallend sortiert werden"
 
-msgid "format.char: coercing 'x' to 'character'"
-msgstr "format.char: wandle 'x' in 'character' um"
-
 msgid "'mode' must be \"double\" (\"real\") or \"integer\""
 msgstr "'mode' muss \"double\" (\"real\") oder \"integer\" sein"
 
@@ -675,6 +699,9 @@ msgstr "es gibt kein Paket '%s', Version %s"
 
 msgid "there is no package called '%s'"
 msgstr "es gibt kein Paket '%s'"
+
+msgid "no library trees found in 'lib.loc'"
+msgstr ""
 
 msgid "'%s' is not a valid package -- installed < 2.0.0?"
 msgstr "'%s' ist kein gültiges Paket -- vor 2.0.0 installiert?"
@@ -801,9 +828,6 @@ msgstr "'file' muss nicht-leere Zeichenkette sein"
 
 msgid "can only save to a binary connection"
 msgstr "kann nur in binäre Verbindung speichern"
-
-msgid "`file' must be non-empty string"
-msgstr "'file' muss nicht-leere Zeichenkette sein"
 
 msgid "image could not be renamed and is left in"
 msgstr "Bild konnte nicht umbenannt werden und ist geblieben in"
@@ -1067,9 +1091,6 @@ msgstr "nicht alle Spalten, die in 'as.is' benannt wurden, existieren"
 msgid "'as.is' has the wrong length %d  != cols = %d"
 msgstr "'as.is' hat die falsche Länge %d != cols = %d"
 
-msgid "invalid 'row.names' specification"
-msgstr "ungültige 'row.names' Spezifikation"
-
 msgid "'x' must be a vector"
 msgstr "'x' muss ein Vektor sein"
 
@@ -1172,6 +1193,12 @@ msgstr "'verbose' ist TRUE, 'echo' nicht; ... erzwinge 'echo <- TRUE'"
 msgid "unable to find a plausible encoding"
 msgstr "kann keine plausible Kodierung finden"
 
+msgid "'chdir = TRUE' makes no sense for a URL"
+msgstr ""
+
+msgid "'chdir = TRUE' makes no sense for a connection"
+msgstr ""
+
 msgid "'%s' is not an existing file"
 msgstr "'%s' ist keine existierende Datei"
 
@@ -1253,17 +1280,8 @@ msgstr "Kein traceback vefügbar"
 msgid "argument to 'which' is not logical"
 msgstr "Argument zu 'which' ist nicht boolesch"
 
-msgid "invalid numbers in 'quote'"
-msgstr "ungültige Zahlen in 'quote'"
-
-msgid "invalid 'quote' specification"
-msgstr "ungültige 'quote' Spezifikation"
-
-msgid "invalid 'col.names' specification"
-msgstr "ungültige 'col.names' Spezifikation"
-
-msgid "appending column names to file"
-msgstr "hänge Spaltennamen an Datei an"
+msgid "attempt to change '%s' ignored"
+msgstr ""
 
 msgid "invalid 'digits'"
 msgstr "ungültige 'digits'"
@@ -1276,6 +1294,12 @@ msgstr "'cmd' konnte nicht ausgeführt werden"
 
 msgid "'cmd' execution failed with error code %d"
 msgstr "'cmd' Ausführung mit Fehlerkode %d fehlgeschlagen"
+
+msgid "package '%s' has a non-function '.First.lib'"
+msgstr "Paket '%s' enthält eine nicht-Funktion '.First.lib'"
+
+msgid "cannot find name space environment"
+msgstr "kann keine Namensraum-Umgebung finden"
 
 msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"

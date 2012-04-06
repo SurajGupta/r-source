@@ -181,6 +181,7 @@ static void ExtractVars(SEXP formula, int checkonly)
     if (isNull(formula) || isZeroOne(formula))
 	return;
     if (isSymbol(formula)) {
+	if (formula == dotSymbol) haveDot = TRUE;
 	if (!checkonly) {
 	    if (formula == dotSymbol && framenames != R_NilValue) {
 		haveDot = TRUE;
@@ -705,7 +706,9 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, ans, v, pattern, formula, varnames, term, termlabs;
     SEXP specials, t, data, rhs;
-    int i, j, k, l, n, keepOrder;
+    int i, j, k, l, n, keepOrder, allowDot;
+
+    Rboolean hadFrameNames = FALSE;
 
     checkArity(op, args);
 
@@ -753,17 +756,23 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (isFrame(data))
 	framenames = getAttrib(data, R_NamesSymbol);
     else
-	errorcall(call, _("data argument is of the wrong type"));
+	errorcall(call, _("'data' argument is of the wrong type"));
 
-    if (framenames != R_NilValue)
+    if (framenames != R_NilValue) {
+	if(length(framenames)) hadFrameNames = TRUE;
 	if (length(CAR(args))== 3)
 	    CheckRHS(CADR(CAR(args)));
+    }
 
     /* Preserve term order? */
 
     keepOrder = asLogical(CAR(a));
     if (keepOrder == NA_LOGICAL)
 	keepOrder = 0;
+
+    a = CDR(a);
+    allowDot = asLogical(CAR(a));
+    if (allowDot == NA_LOGICAL) allowDot = 0;
 
     if (specials == R_NilValue) {
 	a = allocList(8);
@@ -990,22 +999,26 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Step 6: Fix up the formula by substituting for dot, which should be 
        the framenames joined by + */
 
-    if (haveDot && LENGTH(framenames)) {
-	PROTECT_INDEX ind;
-	PROTECT_WITH_INDEX(rhs = install(CHAR(STRING_ELT(framenames, 0))), 
-			   &ind);
-	for (i = 1; i < LENGTH(framenames); i++) {
-	    REPROTECT(rhs = lang3(plusSymbol, rhs, 
-				  install(CHAR(STRING_ELT(framenames, i)))),
-		      ind);
+    if (haveDot) {
+	if(length(framenames)) {
+	    PROTECT_INDEX ind;
+	    PROTECT_WITH_INDEX(rhs = install(CHAR(STRING_ELT(framenames, 0))), 
+			       &ind);
+	    for (i = 1; i < LENGTH(framenames); i++) {
+		REPROTECT(rhs = lang3(plusSymbol, rhs, 
+				      install(CHAR(STRING_ELT(framenames, i)))),
+			  ind);
+	    }
+	    if (!isNull(CADDR(ans)))
+		SETCADDR(ans, ExpandDots(CADDR(ans), rhs));
+	    else
+		SETCADR(ans, ExpandDots(CADR(ans), rhs));
+	    UNPROTECT(1);
+	} else if(!allowDot && !hadFrameNames) {
+	    error(_("'.' in formula and no 'data' argument"));
 	}
-	if (!isNull(CADDR(ans)))
-	    SETCADDR(ans, ExpandDots(CADDR(ans), rhs));
-	else
-	    SETCADR(ans, ExpandDots(CADR(ans), rhs));
-	UNPROTECT(1);
     }
-
+    
     SETCAR(a, allocVector(INTSXP, nterm));
     n = 0;
     for (call = formula; call != R_NilValue; call = CDR(call))
@@ -1556,7 +1569,7 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	nVar = nrows(factors);
 	nterms = ncols(factors);
     }
-    else errorcall(call, _("invalid 'terms' argument"));
+    else errorcall(call, _("invalid '%s' argument"), "terms");
 
     /* Get the variable names from the factor matrix */
 
@@ -1564,7 +1577,7 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (length(factors) > 0) {
 	if (length(vnames) < 1 ||
 	    (nVar - intrcept > 0 && !isString(VECTOR_ELT(vnames, 0))))
-	    errorcall(call, _("invalid 'terms' argument"));
+	    errorcall(call, _("invalid '%s' argument"), "terms");
 	vnames = VECTOR_ELT(vnames, 0);
     }
 

@@ -245,7 +245,7 @@ static void PrivateCopyDevice(NewDevDesc *dd, NewDevDesc *ndd, char *name)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
     gsetcursor(xd->gawin, WatchCursor);
     gsetVar(install(".Device"),
-	    mkString(name), R_NilValue);
+	    mkString(name), R_BaseEnv);
     gdd = GEcreateDevDesc(ndd);
     addDevice((DevDesc*) gdd);
     GEcopyDisplayList(devNumber((DevDesc*) dd));
@@ -505,7 +505,7 @@ static void RFontInit()
 static int SetBaseFont(gadesc *xd)
 {
     xd->fontface = 1;
-    xd->fontsize = MulDiv(xd->basefontsize, xd->wanteddpi, xd->truedpi);
+    xd->fontsize = xd->basefontsize;
     xd->fontangle = 0.0;
     xd->usefixed = FALSE;
     xd->fontfamily[0] = '\0';
@@ -590,7 +590,6 @@ static void SetFont(char *family, int face, int size, double rot,
 	face = 1;
     if (size < SMALLEST) size = SMALLEST;
     if (size > LARGEST) size = LARGEST;
-    size = MulDiv(size, xd->wanteddpi, xd->truedpi);
     if (!xd->usefixed &&
 	(size != xd->fontsize || face != xd->fontface ||
 	 rot != xd->fontangle || strcmp(family, xd->fontfamily))) {
@@ -775,7 +774,7 @@ static void HelpMouseClick(window w, int button, point pt)
 	    return;
 	if (button & LeftButton) {
 	    int useBeep = xd->locator && asLogical(GetOption(install("locatorBell"),
-					      R_NilValue));
+					      R_BaseEnv));
 	    if(useBeep) gabeep();
 	    xd->clicked = 1;
 	    xd->px = pt.x;
@@ -1884,16 +1883,10 @@ static void GA_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     NewDevDesc *dd)
 {
-    gadesc *xd = (gadesc *) dd->deviceSpecific;
-
-    int   iw, ih;
-
-    iw = xd->windowWidth;
-    ih = xd->windowHeight;
-    *left = 0.0;
-    *top = 0.0;
-    *right = iw;
-    *bottom = ih;
+    *left = dd->left;
+    *top = dd->top;
+    *right = dd->right;
+    *bottom = dd->bottom;
 }
 
 static void GA_Resize(NewDevDesc *dd)
@@ -2658,7 +2651,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
     xd->buffered = buffered;
     xd->psenv = psenv;
     {
-	SEXP timeouts = GetOption(install("windowsTimeouts"), R_NilValue);
+	SEXP timeouts = GetOption(install("windowsTimeouts"), R_BaseEnv);
 	if(isInteger(timeouts)){
 	    xd->timeafter = INTEGER(timeouts)[0];
 	    xd->timesince = INTEGER(timeouts)[1];
@@ -2704,14 +2697,14 @@ SEXP savePlot(SEXP args)
     } else if(!strcmp(tp, "jpeg") || !strcmp(tp,"jpg")) {
       /*Default quality suggested in libjpeg*/
         SaveAsJpeg(dd, 75, fn);
-    } else if (!strcmp(tp, "wmf")) {
+    } else if (!strcmp(tp, "wmf") || !strcmp(tp, "emf")) {
 	if(strlen(fn) > 512) {
 	    askok(G_("file path selected is too long: only 512 bytes are allowed"));
 	    return R_NilValue;
 	}
 	sprintf(display, "win.metafile:%s", fn);
 	SaveAsWin(dd, display);
-    } else if (!strcmp(tp, "ps")) {
+    } else if (!strcmp(tp, "ps") || !strcmp(tp, "eps")) {
 	SaveAsPostscript(dd, fn);
     } else if (!strcmp(tp, "pdf")) {
 	SaveAsPDF(dd, fn);
@@ -2975,7 +2968,7 @@ SEXP devga(SEXP args)
 	    error(_("unable to start device devWindows"));
 	}
 	gsetVar(install(".Device"),
-		mkString(display[0] ? display : "windows"), R_NilValue);
+		mkString(display[0] ? display : "windows"), R_BaseEnv);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);

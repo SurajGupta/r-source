@@ -17,7 +17,7 @@ Sweave <- function(file, driver=RweaveLatex(),
 
     text <- SweaveReadFile(file, syntax)
     syntax <- attr(text, "syntax")
-        
+
     mode <- "doc"
     chunknr <- 0
     chunk <- NULL
@@ -64,11 +64,11 @@ Sweave <- function(file, driver=RweaveLatex(),
             if(mode=="code" && any(grep(syntax$coderef, line))){
                 chunkref <- sub(syntax$coderef, "\\1", line)
                 if(!(chunkref %in% names(namedchunks)))
-                    warning(gettextf("reference to unknown chunk %s", chunkref),
-                            domain = NA)
+                    warning(gettextf("reference to unknown chunk '%s'",
+                                     chunkref), domain = NA)
                 line <- namedchunks[[chunkref]]
             }
-            
+
             if(is.null(chunk))
                 chunk <- line
             else
@@ -102,8 +102,8 @@ SweaveReadFile <- function(file, syntax)
             stop(gettextf("no Sweave file with name '%s' found", file[1]),
                  domain = NA)
         }
-        else if(length(f)>1){
-            stop(paste(gettextf("%s Sweave files for basename '%s' found:",
+        else if(length(f) > 1){
+            stop(paste(gettextf("%d Sweave files for basename '%s' found:",
                                 length(f), file),
                        paste("\n         ", f, collapse="")),
                  domain = NA)
@@ -121,17 +121,17 @@ SweaveReadFile <- function(file, syntax)
             text <- iconv(text, "latin1", "")
         else
             stop("Found invalid multi-byte character data.", "\n",
-                 "Cannot re-encode because iconv is not available.", "\n",
+                 "Cannot re-encode because 'iconv' is not available.", "\n",
                  "Try running R in a single-byte locale.")
     }
     ## </FIXME>
 
     pos <- grep(syntax$syntaxname, text)
-    
+
     if(length(pos)>1){
         warning(gettextf("more than one syntax specification found, using the first one"), domain = NA)
     }
-    if(length(pos)>0){    
+    if(length(pos)>0){
         sname <- sub(syntax$syntaxname, "\\1", text[pos[1]])
         syntax <- get(sname, mode = "list")
         if(class(syntax) != "SweaveSyntax")
@@ -154,7 +154,7 @@ SweaveReadFile <- function(file, syntax)
                  domain = NA)
             }
             itext <- SweaveReadFile(c(ifile, file), syntax)
-        
+
             if(pos==1)
                 text <- c(itext, text[-pos])
             else if(pos==length(text))
@@ -167,8 +167,8 @@ SweaveReadFile <- function(file, syntax)
     attr(text, "syntax") <- syntax
     text
 }
-   
-    
+
+
 
 ###**********************************************************
 
@@ -338,7 +338,7 @@ RweaveLatexSetup <-
     output <- file(output, open="w+")
 
     if(stylepath){
-        styfile <- file.path(R.home(),"share","texmf","Sweave")
+        styfile <- file.path(R.home("share"), "texmf", "Sweave")
         if(.Platform$OS.type == "windows")
             styfile <- gsub("\\\\", "/", styfile)
         if(any(grep(" ", styfile)))
@@ -354,7 +354,10 @@ RweaveLatexSetup <-
                     fig=FALSE, pdf=pdf, eps=eps,
                     width=6, height=6, term=TRUE,
                     echo=echo, results="verbatim", split=split,
-                    strip.white=TRUE, include=TRUE)
+                    strip.white="true", include=TRUE)
+
+    ## to be on the safe side: see if defaults pass the check
+    options <- RweaveLatexOptions(options)
 
     list(output=output, styfile=styfile, havesty=FALSE,
          debug=debug, quiet=quiet, syntax = syntax,
@@ -542,8 +545,11 @@ RweaveLatexWritedoc <- function(object, chunk)
         cmd <- substr(chunk[pos[1]], cmdloc,
                       cmdloc+attr(cmdloc, "match.length")-1)
         cmd <- sub(object$syntax$docexpr, "\\1", cmd)
-        if(object$options$eval)
+        if(object$options$eval){
             val <- as.character(eval(parse(text=cmd), envir=.GlobalEnv))
+            ## protect against character(0), because sub() will fail
+            if(length(val)==0) val <- ""
+        }
         else
             val <- paste("\\\\verb{<<", cmd, ">>{", sep="")
 
@@ -576,6 +582,10 @@ RweaveLatexFinish <- function(object, error=FALSE)
 
 RweaveLatexOptions <- function(options)
 {
+
+    ## ATTENTION: Changes in this function have to be reflected in the
+    ## defaults in the init function!
+
     ## convert a character string to logical
     c2l <- function(x){
         if(is.null(x)) return(FALSE)
@@ -632,7 +642,7 @@ RweaveChunkPrefix <- function(options)
 
 RweaveEvalWithOpt <- function (expr, options){
     if(options$eval){
-        res <- try(.Internal(eval.with.vis(expr, .GlobalEnv, NULL)),
+        res <- try(.Internal(eval.with.vis(expr, .GlobalEnv, baseenv())),
                    silent=TRUE)
         if(inherits(res, "try-error")) return(res)
         if(options$print | (options$term & res$visible))
@@ -746,7 +756,7 @@ RtangleRuncode <-  function(object, chunk, options)
 
     if(!options$eval)
         chunk <- paste("##", chunk)
-    
+
     cat(chunk,"\n", file=chunkout, append=TRUE, sep="\n")
 
     if(is.null(options$label) & options$split)

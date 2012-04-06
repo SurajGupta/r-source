@@ -32,6 +32,11 @@ R.version.string
   \item{year}{the year the version was released}
   \item{month}{the month the version was released}
   \item{day}{the day the version was released}
+  \item{svn rev}{the Subversion revision number, which should be either
+    \code{"unknown"} or a single number. (A range of numbers or a number
+    with \code{M} or \code{S} appended indicates inconsistencies in the
+    sources used to build this version of \R.)
+  }
   \item{language}{always \code{"R"}.}
 
   \code{R.version} and \code{version} are lists of class

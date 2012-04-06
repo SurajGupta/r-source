@@ -2077,6 +2077,7 @@ void GInit(GPar *dp)
     dp->colaxis = R_RGB(0, 0, 0);
     dp->gamma = 1;
 
+    dp->scale = 1.0;
     /* dp->ps = 10; */	/* Device Specific */
     dp->metricInfo = 0;
     strcpy(dp->family, "");
@@ -2482,13 +2483,19 @@ void gcontextFromGP(R_GE_gcontext *gc, DevDesc *dd)
     gc->col = Rf_gpptr(dd)->col;
     gc->fill = Rf_gpptr(dd)->bg;  /* This may need manual adjusting */
     gc->gamma = Rf_gpptr(dd)->gamma;
-    gc->lwd = Rf_gpptr(dd)->lwd;
+    /* 
+     * Scale by "zoom" factor to allow for fit-to-window resizing in Windows
+     */
+    gc->lwd = Rf_gpptr(dd)->lwd * Rf_gpptr(dd)->scale;
     gc->lty = Rf_gpptr(dd)->lty;
     gc->lend = Rf_gpptr(dd)->lend;
     gc->ljoin = Rf_gpptr(dd)->ljoin;
     gc->lmitre = Rf_gpptr(dd)->lmitre;
     gc->cex = Rf_gpptr(dd)->cex;
-    gc->ps = (double) Rf_gpptr(dd)->ps;
+    /* 
+     * Scale by "zoom" factor to allow for fit-to-window resizing in Windows
+     */
+    gc->ps = (double) Rf_gpptr(dd)->ps * Rf_gpptr(dd)->scale;
     gc->lineheight = Rf_gpptr(dd)->lheight;
     gc->fontface = Rf_gpptr(dd)->font;
     strcpy(gc->fontfamily, Rf_gpptr(dd)->family);
@@ -4489,7 +4496,7 @@ DevDesc* CurrentDevice(void)
      * check the options for a "default device".
      * If there is one, start it up. */
     if (NoDevices()) {
-	SEXP defdev = GetOption(install("device"), R_NilValue);
+	SEXP defdev = GetOption(install("device"), R_BaseEnv);
 	if (isString(defdev) && length(defdev) > 0)
 	    PROTECT(defdev = lang1(install(CHAR(STRING_ELT(defdev, 0)))));
 	else
@@ -4531,9 +4538,9 @@ void InitGraphics(void)
 
     /* init .Device and .Devices */
     PROTECT(s = mkString("null device"));
-    gsetVar(install(".Device"), s, R_NilValue);
+    gsetVar(install(".Device"), s, R_BaseEnv);
     PROTECT(t = mkString("null device"));
-    gsetVar(install(".Devices"), CONS(t, R_NilValue), R_NilValue);
+    gsetVar(install(".Devices"), CONS(t, R_NilValue), R_BaseEnv);
     UNPROTECT(2);
 
     /* Register the base graphics system with the graphics engine
@@ -4545,7 +4552,7 @@ void InitGraphics(void)
 static SEXP getSymbolValue(char *symbolName)
 {
     SEXP t;
-    t = findVar(install(symbolName), R_NilValue);
+    t = findVar(install(symbolName), R_BaseEnv);
     return t;
 }
 
@@ -4701,7 +4708,7 @@ int selectDevice(int devNum)
 	/* maintain .Device */
 	gsetVar(install(".Device"),
 		elt(getSymbolValue(".Devices"), devNum),
-		R_NilValue);
+		R_BaseEnv);
 
 	dd = CurrentDevice();
 	if (!NoDevices()) {
@@ -4744,7 +4751,7 @@ void removeDevice(int devNum)
 	    gsetVar(install(".Device"),
 		    elt(getSymbolValue(".Devices"),
 			R_CurrentDevice),
-		    R_NilValue);
+		    R_BaseEnv);
 
 	    if (!NoDevices()) {
 		dd = CurrentDevice();

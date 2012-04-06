@@ -1,7 +1,13 @@
+## called as
+# .install.winbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
+#                    method = method, available = available,
+#                    destdir = destdir,
+#                    installWithVers = installWithVers,
+#                    dependencies = dependencies)
+
 .install.winbinary <-
-    function(pkgs, lib, repos = CRAN,
+    function(pkgs, lib, repos = getOption("repos"),
              contriburl = contrib.url(repos),
-             CRAN = getOption("repos"),
              method, available = NULL, destdir = NULL,
              installWithVers = FALSE, dependencies = FALSE)
 {
@@ -52,7 +58,7 @@
                     for(lang in langs) {
                         path0 <- file.path(fp, lang, "LC_MESSAGES")
                         mos <- dir(path0, full.names = TRUE)
-                        path <- file.path(R.home(), "share", "locale", lang,
+                        path <- file.path(R.home("share"), "locale", lang,
                                           "LC_MESSAGES")
                         if(!file.exists(path))
                             if(!dir.create(path, FALSE, TRUE))
@@ -108,12 +114,13 @@
                              "unable to move temporary installation '%s' to '%s'"),
                                         normalizePath(file.path(tmpDir, curPkg)),
                                         normalizePath(instPath)),
-                                domain = NA, call. = FALSE)
-                } else
-                stop(sprintf(gettext(
-                     "cannot remove prior installation of package '%s'"),
-                             curPkg),
-                     domain = NA, call. = FALSE)
+                                domain = NA, call. = FALSE, immediate. = TRUE)
+                } else {
+                    warning(sprintf(gettext(
+                             "cannot remove prior installation of package '%s'"),
+                                    curPkg),
+                            domain = NA, call. = FALSE, immediate. = TRUE)
+                }
             }
         }
         setwd(cDir)
@@ -123,6 +130,8 @@
     if(!length(pkgs)) return(invisible())
     oneLib <- length(lib) == 1
 
+
+    ## look for packages/bundles in use.
     pkgnames <- basename(pkgs)
     pkgnames <- sub("\\.zip$", "", pkgnames)
     pkgnames <- sub("_[0-9.-]+$", "", pkgnames)
@@ -131,16 +140,25 @@
     ## but we can't tell without trying to unpack it.
     inuse <- search()
     inuse <- sub("^package:", "", inuse[grep("^package:", inuse)])
+    if(!is.null(contriburl)) { # otherwise no info on bundles
+        if(is.null(available))
+            available <- available.packages(contriburl = contriburl,
+                                            method = method)
+        bundles <- .find_bundles(available)
+        for(bundle in names(bundles))
+            if(any(bundles[[bundle]] %in% inuse)) inuse <- c(inuse, bundle)
+    }
     inuse <- pkgnames %in% inuse
     if(any(inuse)) {
         warning(sprintf(ngettext(sum(inuse),
-                "package %s is in use and will not be installed",
-                "packages %s are in use and will not be installed"),
+                "package '%s' is in use and will not be installed",
+                "packages '%s' are in use and will not be installed"),
                         paste(pkgnames[inuse], collapse=", ")),
-                call. = FALSE, domain = NA)
+                call. = FALSE, domain = NA, immediate. = TRUE)
         pkgs <- pkgs[!inuse]
         pkgnames <- pkgnames[!inuse]
     }
+
     if(is.null(contriburl)) {
         for(i in seq(along=pkgs))
             unpackPkg(pkgs[i], pkgnames[i], lib, installWithVers)
@@ -153,14 +171,10 @@
         tmpd <- file.path(tempdir(), "downloaded_packages")
         if (!file.exists(tmpd) && !dir.create(tmpd))
             stop(gettextf("unable to create temporary directory '%s'",
-                          normalzePath(tmpd)),
+                          normalizePath(tmpd)),
                  domain = NA)
     }
 
-    if(is.null(available))
-        available <- available.packages(contriburl = contriburl,
-                                        method = method)
-    bundles <- .find_bundles(available)
     for(bundle in names(bundles))
         pkgs[ pkgs %in% bundles[[bundle]] ] <- bundle
     depends <- is.character(dependencies) ||
@@ -177,8 +191,8 @@
         repeat {
             if(any(miss <- ! p1 %in% row.names(available))) {
                 cat(sprintf(ngettext(sum(miss),
-                                     "dependency %s is not available",
-                                     "dependencies %s are not available"),
+                                     "dependency '%s' is not available",
+                                     "dependencies '%s' are not available"),
                     paste(sQuote(p1[miss]), sep=", ")), "\n\n", sep ="")
                 flush.console()
             }
@@ -210,7 +224,7 @@
                                    contriburl = contriburl, method = method,
                                    type = "win.binary")
 
-    if(!is.null(foundpkgs)) {
+    if(length(foundpkgs)) {
         update <- unique(cbind(pkgs, lib))
         colnames(update) <- c("Package", "LibPath")
         for(lib in unique(update[,"LibPath"])) {
@@ -243,14 +257,6 @@ menuInstallLocal <- function()
     install.packages(choose.files('',filters=Filters[c('zip','All'),]),
                      .libPaths()[1], repos = NULL)
 }
-
-# menuInstallBioc <- function()
-# {
-#     a <- available.packages(contrib.url(getOption("BIOC")))
-#     install.packages(select.list(a[,1], , TRUE), .libPaths()[1],
-#                      available = a, repos = getOption("BIOC"),
-#                      dependencies = TRUE)
-# }
 
 ### the following function supports .install.winbinaries()
 

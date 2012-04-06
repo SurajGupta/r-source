@@ -8,6 +8,12 @@ if test -n "${R_HOME}" && \
 fi
 R_HOME="${R_HOME_DIR}"
 export R_HOME
+R_SHARE_DIR="${R_HOME_DIR}/share"
+export R_SHARE_DIR
+R_INCLUDE_DIR="${R_HOME_DIR}/include"
+export R_INCLUDE_DIR
+R_DOC_DIR="${R_HOME_DIR}/doc"
+export R_DOC_DIR
 
 ## NOTE:
 ## We must set this here rather than in the main binary.
@@ -143,7 +149,7 @@ case "${gui}" in
 gnome|GNOME)
   R_binary="${R_HOME}/bin/exec/Rgnome"
   ;;
-tk)
+Tk|tk|X11|x11)
   ;;
 "")
   ;;

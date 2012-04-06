@@ -136,6 +136,11 @@ ps.options(paper, horizontal, width, height, family, encoding,
   GhostScript version 6.0 or later).
 #endif
 
+  The \code{file} argument is interpreted as a C integer format as used
+  by \code{\link{sprintf}}, with integer argument the page number.
+  The default gives files \file{Rplot001.ps}, \dots, \file{Rplot999.ps},
+  \file{Rplot1000.ps}, \dots.
+
   The postscript produced by \R is EPS (\emph{Encapsulated PostScript})
   compatible, and can be included into other documents, e.g., into
   LaTeX, using \code{\includegraphics{<filename>}}.  For use in this way
@@ -167,8 +172,7 @@ ps.options(paper, horizontal, width, height, family, encoding,
 \section{Families}{
   Font families may be specified in several ways.  The \code{family}
   argument specifies an initial/default font family for the device.
-  This may be a device-independent R graphics font family
-  (see \code{postscriptFonts}) or
+  This is 
   a PostScript-specific font family specification (see below).
   The \code{fonts} argument specifies a set of device-independent
   font families that are mapped to PostScript-specific fonts via
@@ -311,8 +315,8 @@ TestChars <- function(encoding="ISOLatin1", family="URWHelvetica")
     title(paste("Centred chars in encoding", encoding))
     grid(17, 17, lty=1)
     for(i in c(32:255)) {
-	x <- i %% 16
-	y <- i %/% 16
+	x <- i \%\% 16
+	y <- i \%/\% 16
 	points(x, y, pch=i)
     }
     dev.off()

@@ -17,8 +17,8 @@ package.skeleton <-
     have <- sapply(list, exists)
     if(any(!have))
 	warning(sprintf(ngettext(sum(!have),
-				 "object %s not found",
-				 "objects %s not found"),
+				 "object '%s' not found",
+				 "objects '%s' not found"),
 			paste(sQuote(list[!have]), collapse=", ")),
 		domain = NA)
     list <- list[have]
@@ -140,12 +140,15 @@ package.skeleton <-
     outFile <- tempfile()
     outConn <- file(outFile, "w")
     sink(outConn, type = "output")
-    yy <- try(sapply(list,
+    yy <- try({ promptPackage(name, filename = file.path(path, name, "man",
+                                                   paste(name, "package.Rd", sep=".")),
+                              lib.loc = path);
+                sapply(list,
 		     function(item) {
 			 prompt(name = item,
 				filename = file.path(path, name, "man",
 				paste(list0[item], "Rd", sep=".")))
-		     }))
+		     })})
     sink(type = "output")
     close(outConn)
     unlink(outFile)

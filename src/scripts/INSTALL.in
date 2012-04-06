@@ -94,7 +94,7 @@ startdir=`${GETWD}`
 : ${TMPDIR=/tmp}
 { tmpdir=`(mktemp -d -q "${TMPDIR}/R.INSTALL.XXXXXX") 2>/dev/null` \
     && test -n "${tmpdir}" && test -d "${tmpdir}" ; } ||
-  { test -n "${RANDOM}" && tmp=${TMPDIR}/R.INSTALL$$-${RANDOM} \
+  { test -n "${RANDOM}" && tmpdir=${TMPDIR}/R.INSTALL$$-${RANDOM} \
       && (${MKDIR_P} "${tmpdir}") ; } ||
   { tmpdir=${TMPDIR}/R.INSTALL.$$ && (${MKDIR_P} "${tmpdir}") ; } ||
   (error "cannot create temporary directory" && exit 1)
@@ -116,7 +116,7 @@ message () { echo "${stars} $*"; }
 stars="*"
 ## </NOTE>
 
-. "${R_HOME}/share/sh/dcf.sh"	# get_dcf_field()
+. "${R_SHARE_DIR}/sh/dcf.sh"	# get_dcf_field()
 
 tilde_expand () {
     h=`echo "${HOME}" | sed 's,/,\\\/,g'`
@@ -460,7 +460,7 @@ do_install_source () {
   if test "$Type" = "Translation" ; then
     message "Installing *Translation* package '${pkg_name}' ..."
     if test -d "share"; then
-      cp -r ./share ${R_HOME}
+      cp -r ./share/* ${R_SHARE_DIR}
     fi
     if test -d "library"; then
       cp -r ./library ${R_HOME}
@@ -536,7 +536,7 @@ do_install_source () {
     ${MKDIR_P} "${R_PACKAGE_DIR}/libs"
     if test -f src/Makefile; then
       cd src;
-      makefiles="-f \"${R_HOME}\"/share/make/shlib.mk -f Makefile"
+      makefiles="-f \"${R_SHARE_DIR}\"/make/shlib.mk -f Makefile"
       if test -r "${HOME}/.R/Makevars-${R_PLATFORM}"; then
 	  makefiles="${makefiles} -f \"${HOME}/.R/Makevars-${R_PLATFORM}\""
       elif test -r "${HOME}/.R/Makevars"; then
@@ -591,7 +591,16 @@ do_install_source () {
       if test -f NAMESPACE; then
         (echo; echo ".onLoad <- .onAttach <- function(lib, pkg) NULL") >> \
 	  "${R_PACKAGE_DIR}/R/${R_PACKAGE_NAME}"
-	sed -e '/useDynLib/d' NAMESPACE > "${R_PACKAGE_DIR}/NAMESPACE"
+	## <NOTE>
+	## Tweak fake installation to provide an 'empty' useDynLib() for
+	## the time being.  Completely removing the directive results in
+	## checkFF() being too aggresive in the case where the presence
+	## of the directive enables unambiguous symbol resolution w/out
+	## 'PACKAGE' arguments.  However, empty directives are not
+	## really meant to work ...
+	sed -e 's/useDynLib.*/useDynLib("")/' NAMESPACE > \
+	  "${R_PACKAGE_DIR}/NAMESPACE"
+        ## </NOTE>
       else
         (echo; echo ".First.lib <- function(lib, pkg) NULL") >> \
           "${R_PACKAGE_DIR}/R/${R_PACKAGE_NAME}"
@@ -713,7 +722,7 @@ do_install_source () {
     ## we used to install the dumped code but this seems a waste of space
     rm "${code_file}"
     # mv "${code_file}" "${R_PACKAGE_DIR}/R/${pkg_name}.R"
-    cat "${R_HOME}/share/R/${loader_file}" > "${code_file}"
+    cat "${R_SHARE_DIR}/R/${loader_file}" > "${code_file}"
     ## If install.R is non-empty, arrange to evaluate the R code it
     ## contains after the package loader.
     if test -s install.R; then
@@ -744,7 +753,7 @@ do_install_source () {
   if ${thislazy}; then
     message "preparing package for lazy loading"
     (if test -s R_PROFILE.R; then cat R_PROFILE.R; fi; \
-    echo "tools:::makeLazyLoading(\"${R_PACKAGE_NAME}\", \"${lib}\")") | \
+    echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); tools:::makeLazyLoading(\"${R_PACKAGE_NAME}\", \"${lib}\")") | \
       R_DEFAULT_PACKAGES= LC_ALL=C "${R_EXE}" --vanilla --slave
     if test ${?} -ne 0; then
       error "lazy loading failed for package '${pkg_name}'"
@@ -780,7 +789,7 @@ do_install_source () {
 	if ${debug}; then
 	  echo "DEBUG: build-help ${build_help_opts} ${pkg_dir} ${lib} ${R_PACKAGE_DIR} ${pkg_name}"
 	fi
-	"${R_CMD}" perl "${R_HOME}/share/perl/build-help.pl" \
+	"${R_CMD}" perl "${R_SHARE_DIR}/perl/build-help.pl" \
 	  ${build_help_opts} \
 	  "${pkg_dir}" "${lib}" "${R_PACKAGE_DIR}" "${pkg_name}"
 	if test ${?} -ne 0; then
@@ -827,13 +836,13 @@ do_install_source () {
 
   ## <NOTE>
   ## Remove stuff we should not have installed in the first place.
-  ## When installing from a source directory under CVS control, we
-  ## should really exclude the CVS subdirs.  The same applies for the
-  ## .svn Subversion subdirs.
-  find "${R_PACKAGE_DIR}" -name CVS -type d -prune \
-    -exec rm -rf \{\} \; 2>/dev/null
-  find "${R_PACKAGE_DIR}" -name .svn -type d -prune \
-    -exec rm -rf \{\} \; 2>/dev/null
+  ## When installing from a source directory under version control, we
+  ## should really exclude the subdirs CVS, .svn (Subversion) and
+  ## .arch-ids (arch).
+  for d in CVS .svn .arch-ids; do
+    find "${R_PACKAGE_DIR}" -name ${d} -type d -prune \
+      -exec rm -rf \{\} \; 2>/dev/null
+  done
   ## </NOTE>
 
   if ${clean}; then
@@ -963,6 +972,11 @@ do_install () {
 
 do_exit_on_error () {
   remove_R_package_dir=${1-yes}
+  ## bundlepkg is set if this is a bundle or if the package/bundle 
+  ## is already installed, but not for a new non-bundle.
+  if test -z ${bundlepkg}; then
+    bundlepkg=${pkg_name}
+  fi
   for p in ${bundlepkg}; do
     if ${with_package_versions}; then
       p=${p}_${version}
@@ -989,13 +1003,14 @@ do_cleanup () {
   if test "${is_first_package}" = no; then
     ## Only need to do this in case we successfully installed at least
     ## *one* package ... well not so sure for bundles.
-    cp "${R_HOME}/doc/html/R.css" "${lib}"
+    cp "${R_DOC_DIR}/html/R.css" "${lib}"
     chmod 644 "${lib}/R.css"
     if test "${lib}" = "`cd \"${R_HOME}/library\" && ${GETWD}`"; then
       cat "${R_HOME}"/library/*/CONTENTS \
-        > "${R_HOME}"/doc/html/search/index.txt
+        > "${R_DOC_DIR}"/html/search/index.txt
       if ${build_help} && test "${NO_PERL5}" = "false"; then
-        "${R_CMD}" perl "${R_HOME}/share/perl/build-help.pl" --htmllists
+        echo "tools:::unix.packages.html(.Library, docdir=\"${R_DOC_DIR}\")" | \
+          R_DEFAULT_PACKAGES=NULL LC_COLLATE=C "${R_EXE}" --vanilla >/dev/null
       fi
     fi
   fi

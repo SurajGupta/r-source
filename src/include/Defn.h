@@ -83,6 +83,10 @@ void R_ProcessEvents(void);
 
 /*  Heap and Pointer Protection Stack Sizes.  */
 
+/* These are for future protection: will need to be different on Win64 */
+typedef unsigned long R_ulong_t;
+typedef long R_long_t;
+
 /* NB: will need a 64-bit type, ULONG64 or size_t, for Win64 */
 #if defined HAVE_DECL_SIZE_MAX && HAVE_DECL_SIZE_MAX
 # ifdef HAVE_INTTYPES_H
@@ -116,7 +120,7 @@ void R_ProcessEvents(void);
     The maxima and minima are in ../unix/sys-common.c */
 
 #ifndef R_PPSSIZE
-#define	R_PPSSIZE	10000L
+#define	R_PPSSIZE	50000L
 #endif
 #ifndef R_NSIZE
 #define	R_NSIZE		350000L
@@ -519,6 +523,9 @@ extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
 extern SEXP	R_ParseText;	    /* Text to be parsed */
 extern int	R_ParseCnt;	    /* Count of lines of text to be parsed */
 extern int	R_ParseError	INI_as(0); /* Line where parse error occured */
+#define PARSE_CONTEXT_SIZE 256	    /* Recent parse context kept in a circular buffer */
+extern char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
+extern int	R_ParseContextLast INI_as(0); /* last character in context buffer */
 
 /* Image Dump/Restore */
 extern int	R_DirtyImage	INI_as(0);	/* Current image dirty */
@@ -540,6 +547,8 @@ extern SEXP	R_RestartStack;	/* Stack of available restarts */
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
+
+extern char OutDec	INI_as('.');  /* decimal point used for output */
 
 /* Initialization of the R environment when it is embedded */
 extern int Rf_initEmbeddedR(int argc, char **argv);
@@ -617,6 +626,7 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define InitConnections	Rf_InitConnections
 # define InitEd			Rf_InitEd
 # define InitFunctionHashing	Rf_InitFunctionHashing
+# define InitBaseEnv		Rf_InitBaseEnv
 # define InitGlobalEnv		Rf_InitGlobalEnv
 # define InitMemory		Rf_InitMemory
 # define InitNames		Rf_InitNames
@@ -747,6 +757,7 @@ void InitColors(void);
 void InitConnections(void);
 void InitEd(void);
 void InitFunctionHashing(void);
+void InitBaseEnv(void);
 void InitGlobalEnv(void);
 Rboolean R_current_trace_state();
 Rboolean R_has_methods(SEXP);
@@ -846,7 +857,7 @@ void R_SetMaxVSize(R_size_t);
 R_size_t R_GetMaxNSize(void);
 void R_SetMaxNSize(R_size_t);
 R_size_t R_Decode2Long(char *p, int *ierr);
-void R_SetPPSize(unsigned long);
+void R_SetPPSize(R_size_t);
 
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);
@@ -864,15 +875,20 @@ int yywrap(void);
 typedef enum {
     Rprt_adj_left = 0,
     Rprt_adj_right = 1,
-    Rprt_adj_centre = 2
+    Rprt_adj_centre = 2,
+    Rprt_adj_none = 3
 } Rprt_adj;
 
 int	Rstrlen(SEXP, int);
 char *EncodeRaw(Rbyte);
 char *EncodeString(SEXP, int, int, Rprt_adj);
 
+/* main/sort.c */
+void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
+		  Rboolean decreasing);
 
-#if defined(HAVE_WCHAR_H) && defined(SUPPORT_MBCS)
+
+#ifdef SUPPORT_MBCS /* implies we have this header */
 #include <wchar.h>
 #endif
 
@@ -932,9 +948,11 @@ size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
 #endif
 #define gettext_noop(String) String
 #define N_(String) gettext_noop (String)
+#define P_(StringS, StringP, N) ngettext (StringS, StringP, N)
 #else /* not NLS */
 #define _(String) (String)
 #define N_(String) String
+#define P_(String, StringP, N) (N > 1 ? StringP: String)
 #endif
 
 
@@ -954,6 +972,20 @@ typedef struct {
 } AccuracyInfo;
 
 extern AccuracyInfo R_AccuracyInfo;
+
+/* FreeBSD defines alloca in stdlib.h, _and_ does not allow a definition
+   as here.  (Since it uses GCC, it should use the first clause.) */
+#ifdef __GNUC__
+# undef alloca
+# define alloca(x) __builtin_alloca((x))
+#else
+# ifdef HAVE_ALLOCA_H
+#  include <alloca.h>
+# endif
+# if !HAVE_DECL_ALLOCA  && !defined(__FreeBSD__)
+extern char *alloca(size_t);
+# endif
+#endif
 
 #endif /* DEFN_H_ */
 /*

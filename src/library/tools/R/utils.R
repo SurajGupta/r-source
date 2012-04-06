@@ -170,8 +170,8 @@ function(file, pdf = FALSE, clean = FALSE,
     if(clean) clean <- "--clean" else clean <- ""
     if(quiet) quiet <- "--quiet" else quiet <- ""
     if(is.null(texi2dvi)) {
-        if(file.exists(file.path(R.home(), "bin", "texi2dvi")))
-            texi2dvi <- file.path(R.home(), "bin", "texi2dvi")
+        if(file.exists(file.path(R.home("bin"), "texi2dvi")))
+            texi2dvi <- file.path(R.home("bin"), "texi2dvi")
         else
             texi2dvi <- "texi2dvi"
     }
@@ -212,6 +212,9 @@ function(x, ...)
 {
     ## Better to provide a simple variant of utils::capture.output()
     ## ourselves (so that bootstrapping R only needs base and tools).
+    out <- NULL # Prevent codetools warning about "no visible binding
+                # for global variable out".  Maybe there will eventually
+                # be a better design for output text connections ...
     file <- textConnection("out", "w", local = TRUE)
     sink(file)
     on.exit({ sink(); close(file) })
@@ -287,7 +290,7 @@ function()
 .get_standard_Rd_keywords <-
 function()
 {
-    lines <- readLines(file.path(R.home(), "doc", "KEYWORDS.db"))
+    lines <- readLines(file.path(R.home("doc"), "KEYWORDS.db"))
     lines <- grep("^.*\\\|([^:]*):.*", lines, value = TRUE)
     lines <- sub("^.*\\\|([^:]*):.*", "\\1", lines)
     lines
@@ -299,7 +302,7 @@ function()
 ## is installed, as it is not on Windows
 .get_standard_package_names <-
 local({
-    lines <- readLines(file.path(R.home(), "share", "make", "vars.mk"))
+    lines <- readLines(file.path(R.home("share"), "make", "vars.mk"))
     lines <- grep("^R_PKGS_[[:upper:]]+ *=", lines, value = TRUE)
     out <- strsplit(sub("^R_PKGS_[[:upper:]]+ *= *", "", lines), " +")
     names(out) <-
@@ -464,7 +467,8 @@ function(package)
              "hist.FD", "hist.scott"),
              XML = "text.SAX",
              car = "scatterplot.matrix",
-             graphics = c("boxplot.stats", "close.screen",
+             grDevices = "boxplot.stats",
+             graphics = c("close.screen",
              "plot.design", "plot.new", "plot.window", "plot.xy",
              "split.screen"),
              hier.part = "all.regs",
@@ -490,7 +494,8 @@ function(packages = NULL, FUN, ...)
     ## The default corresponds to all installed packages with high
     ## priority.
     if(is.null(packages))
-        packages <- unique(installed.packages(priority = "high")[ , 1])
+        packages <-
+            unique(utils::installed.packages(priority = "high")[ , 1])
     out <- lapply(packages, FUN, ...)
     names(out) <- packages
     out
@@ -636,7 +641,7 @@ function(expr)
                                     tb <- lapply(calls, deparse)
                                     stop(conditionMessage(e),
                                          "\nCall sequence:\n",
-                                         paste(capture.output(traceback(tb)),
+                                         paste(utils::capture.output(traceback(tb)),
                                                collapse = "\n"),
                                          call. = FALSE)
                                 }),

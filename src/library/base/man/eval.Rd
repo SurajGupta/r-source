@@ -9,7 +9,8 @@
 }
 \usage{
 eval(expr, envir = parent.frame(),
-     enclos = if(is.list(envir) || is.pairlist(envir)) parent.frame())
+    	   enclos = if(is.list(envir) || is.pairlist(envir))
+                       parent.frame() else baseenv())
 evalq(expr, envir, enclos)
 eval.parent(expr, n = 1)
 local(expr, envir = new.env())
@@ -56,7 +57,7 @@ local(expr, envir = new.env())
   
   
   \code{local} evaluates an expression in a local environment.  It is
-  equivalent to \code{evalq} except the its default argument creates a
+  equivalent to \code{evalq} except that its default argument creates a
   new, empty environment.  This is useful to create anonymous recursive
   functions and as a kind of limited namespace feature since variables
   defined in the environment are not visible from the outside.

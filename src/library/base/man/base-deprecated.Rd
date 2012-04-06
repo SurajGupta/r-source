@@ -1,7 +1,7 @@
 \name{base-deprecated}
 \alias{base-deprecated}
-\alias{loadURL}
-\alias{delay}
+\alias{write.table0}
+\alias{format.char}
 %------ NOTE:  ../R/Deprecated.R   must be synchronized with this!
 \title{Deprecated Functions in Base package}
 %------ PLEASE: put \alias{.} here for EACH !
@@ -10,30 +10,24 @@
   \R only, and may be defunct as soon as the next release.
 }
 \usage{
-loadURL(url, envir = parent.frame(), quiet = TRUE, \dots)
-delay(x, env = .GlobalEnv)
 %% put usage here.
+format.char(x, width = NULL, flag = "-")
 }
 \arguments{
-  \item{url}{a character string naming a URL.}
-  \item{envir}{the environment where the data should be loaded.}
-  \item{quiet, \dots}{additional arguments to
-    \code{\link{download.file}}.}
-  \item{x}{an expression}
-  \item{env}{an evaluation environment}
+  \item{x}{a character vector.}
+  \item{width, flag}{see \code{\link{formatC}}.}
 }
 \details{
+  \code{write.table0} is an \R-level version of \code{write.table}
+  provided for temporary back-compatibility.
+
+  \code{format.char} was an auxiliary function for \code{\link{formatC}}
+  whose functionality (and more) is provided by \code{\link{format.default}}.
+  
   The original help page for these functions is often
   available at \code{help("oldName-deprecated")} (note the quotes).
   Functions in packages other than the base package are listed in
   \code{help("pkg-deprecated")}.
-
-  \code{loadURL} has been superseded by \code{\link{load}(url())}.  Note
-  the comments on that help page: Windows users will need to use
-  \code{mode="wb"}.
-  
-  \code{delay} has been replaced by \code{\link{delayedAssign}}. 
-  As from \R 2.1.0 promises should never be visible unevaluated.
 }
 \seealso{
   \code{\link{Deprecated}}

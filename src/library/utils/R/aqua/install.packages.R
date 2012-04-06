@@ -14,7 +14,7 @@
     }
     untar<-function(what, where)
     {
-        xcode <- system(paste("tar zxf", what, "-C", where), intern=FALSE)
+        xcode <- system(paste("tar zxf \"", what, "\" -C \"", where, "\"", sep=''), intern=FALSE)
         if (xcode)
             warning(gettextf("'tar' returned non-zero exit code %d", ,xcode),
                     domain = NA, call. = FALSE)
@@ -130,8 +130,8 @@
         repeat {
             if(any(miss <- ! p1 %in% row.names(available))) {
                 cat(sprintf(ngettext(sum(miss),
-                                     "dependency %s is not available",
-                                     "dependencies %s are not available"),
+                                     "dependency '%s' is not available",
+                                     "dependencies '%s' are not available"),
                     paste(sQuote(p1[miss]), sep=", ")), "\n\n", sep ="")
                 flush.console()
             }
@@ -163,7 +163,7 @@
                                    contriburl = contriburl, method = method,
                                    type = "mac.binary")
 
-    if(!is.null(foundpkgs)) {
+    if(length(foundpkgs)) {
         update <- unique(cbind(pkgs, lib))
         colnames(update) <- c("Package", "LibPath")
         for(lib in unique(update[,"LibPath"])) {

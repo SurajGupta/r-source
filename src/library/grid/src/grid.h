@@ -60,6 +60,7 @@
 #define GSS_CURRGROB 12
 #define GSS_ENGINERECORDING 13
 #define GSS_ASK 14
+#define GSS_SCALE 15
 
 /*
  * Structure of a viewport
@@ -460,7 +461,7 @@ SEXP gpFontSizeSXP(SEXP gp);
 
 SEXP gpLineHeightSXP(SEXP gp);
 
-void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc);
+void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc, GEDevDesc *dd);
 
 void initGPar(GEDevDesc *dd);
 
@@ -531,7 +532,7 @@ void fillViewportContextFromViewport(SEXP vp, LViewportContext *vpc);
 
 void copyViewportContext(LViewportContext vpc1, LViewportContext *vpc2);
 
-void gcontextFromViewport(SEXP vp, R_GE_gcontext *gc);
+void gcontextFromViewport(SEXP vp, R_GE_gcontext *gc, GEDevDesc *dd);
 
 void calcViewportTransform(SEXP vp, SEXP parent, Rboolean incremental,
 			   GEDevDesc *dd);
@@ -577,8 +578,9 @@ void getViewportTransform(SEXP currentvp,
 			  double *vpWidthCM, double *vpHeightCM,
 			  LTransform transform, double *rotationAngle);
 
+SEXP L_circleBounds(SEXP x, SEXP y, SEXP r);
+SEXP L_locnBounds(SEXP x, SEXP y);
 SEXP L_rectBounds(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust);
-
 SEXP L_textBounds(SEXP label, SEXP x, SEXP y, 
 		  SEXP hjust, SEXP vjust, SEXP rot);
 

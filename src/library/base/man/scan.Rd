@@ -10,7 +10,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
      skip = 0, nlines = 0, na.strings = "NA",
      flush = FALSE, fill = FALSE, strip.white = FALSE,
      quiet = FALSE, blank.lines.skip = TRUE, multi.line = TRUE,
-     comment.char = "", allowEscapes = TRUE)
+     comment.char = "", allowEscapes = FALSE)
 }
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
@@ -38,12 +38,13 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   }
 
   \item{what}{the type of \code{what} gives the type of data to be read.
-    If \code{what} is a list, it is assumed that the lines of the data file
-    are records each containing \code{length(what)} items (\dQuote{fields}).
     The supported types are \code{logical}, \code{integer}, \code{numeric},
-    \code{complex}, \code{character}, \code{raw} and \code{list}:
-    \code{list} values should have elements which are one of the first six
-    types listed or \code{NULL}.}
+    \code{complex}, \code{character}, \code{raw} and \code{\link{list}}.
+    If \code{what} is a list, it is assumed that the lines of the data file
+    are records each containing \code{length(what)} items
+    (\dQuote{fields}) and the list components should have elements which
+    are one of the first six types listed or \code{NULL}, see section
+    \sQuote{Details} below.}
 
   \item{nmax}{the maximum number of data values to be read, or if
     \code{what} is a list, the maximum number of records to be read.  If
@@ -78,7 +79,9 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{nlines}{if positive, the maximum number of lines of data to be read.}
 
   \item{na.strings}{character vector.  Elements of this vector are to be
-    interpreted as missing (\code{\link{NA}}) values.}
+    interpreted as missing (\code{\link{NA}}) values. Blank fields are
+    also considered to be missing values in logical, integer, numeric
+    and complex fields.}
 
   \item{flush}{logical: if \code{TRUE}, \code{scan} will flush to the
     end of the line after reading the last of the fields requested.
@@ -120,7 +123,13 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{allowEscapes}{logical.  Should C-style escapes such as
     \code{\n} be processed (the default) or read verbatim?   Note that if
     not within quotes these could be interpreted as a delimiter (but not
-    as a comment character).}
+    as a comment character).
+
+    The escapes which are interpreted are the control characters
+    \code{\a, \b, \f, \n, \r, \t, \v} and octal and
+    hexadecimal representatons like \code{\040} and \code{\0x2A}.  Any
+    other escaped character is treated as itself, including backslash.
+  }
 }
 \details{
   The value of \code{what} can be a list of types, in which case
@@ -157,7 +166,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   Note that since \code{sep} is a separator and not a terminator,
   reading a file by \code{scan("foo", sep="\\n", blank.lines.skip=FALSE)}
-  will give an empty file line if the file ends in a linefeed and not if
+  will give an empty final line if the file ends in a linefeed and not if
   it does not.  This might not be what you expected; see also
   \code{\link{readLines}}.
 
@@ -182,6 +191,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 \note{
   The default for \code{multi.line} differs from S.  To read one record
   per line, use \code{flush = TRUE} and \code{multi.line = FALSE}.
+  (Note that quoted character strings can still include embedded new lines.)
 
   If number of items is not specified, the internal
   mechanism re-allocates memory in powers of two and so could use up

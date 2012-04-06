@@ -195,7 +195,7 @@ static unsigned int combineAlpha(double alpha, int col)
 /* 
  * Generate an R_GE_gcontext from a gpar
  */
-void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc) 
+void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc, GEDevDesc *dd) 
 {
     /* 
      * Combine gpAlpha with col and fill
@@ -205,14 +205,19 @@ void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc)
     gc->gamma = gpGamma(gp, i);
     /*
      * Combine gpLex with lwd
+     * Also scale by GSS_SCALE (a "zoom" factor)
      */
-    gc->lwd = gpLineWidth(gp, i) * gpLex(gp, i);
+    gc->lwd = gpLineWidth(gp, i) * gpLex(gp, i) * 
+	REAL(gridStateElement(dd, GSS_SCALE))[0];
     gc->lty = gpLineType(gp, i);
     gc->lend = gpLineEnd(gp, i);
     gc->ljoin = gpLineJoin(gp, i);
     gc->lmitre = gpLineMitre(gp, i);
     gc->cex = gpCex(gp, i);
-    gc->ps = gpFontSize(gp, i);
+    /*
+     * Scale by GSS_SCALE (a "zoom" factor)
+     */
+    gc->ps = gpFontSize(gp, i) * REAL(gridStateElement(dd, GSS_SCALE))[0];
     gc->lineheight = gpLineHeight(gp, i);
     gc->fontface = gpFont(gp, i);
     strcpy(gc->fontfamily, gpFontFamily(gp, i));
@@ -285,16 +290,11 @@ void initGPar(GEDevDesc *dd)
     SET_STRING_ELT(gparnames, GP_LINEMITRE, mkChar("linemitre"));
     SET_STRING_ELT(gparnames, GP_LEX, mkChar("lex"));
     setAttrib(gpar, R_NamesSymbol, gparnames);
-    /* FIXME:  Need to export col2name via (probably) GraphicsEngine.h
-     * In the meantime I just have to override the device settings
-     */
     PROTECT(gpfill = allocVector(STRSXP, 1));
-    /* SET_STRING_ELT(gpfill, 0, mkChar(col2name(dev->startfill))); */
-    SET_STRING_ELT(gpfill, 0, mkChar("transparent"));
+    SET_STRING_ELT(gpfill, 0, mkChar(col2name(dev->startfill)));
     SET_VECTOR_ELT(gpar, GP_FILL, gpfill);
     PROTECT(gpcol = allocVector(STRSXP, 1));
-    /* SET_STRING_ELT(gpcol, 0, mkChar(col2name(dev->startcol))); */
-    SET_STRING_ELT(gpcol, 0, mkChar("black"));
+    SET_STRING_ELT(gpcol, 0, mkChar(col2name(dev->startcol)));
     SET_VECTOR_ELT(gpar, GP_COL, gpcol);
     PROTECT(gpgamma = allocVector(REALSXP, 1));
     REAL(gpgamma)[0] = dev->startgamma;

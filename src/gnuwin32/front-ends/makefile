@@ -15,7 +15,8 @@ CFLAGS=$(OPTFLAGS) -I../../include
 all: $(R_HOME)/bin/Rgui.exe $(R_HOME)/bin/Rterm.exe \
      $(R_HOME)/bin/Rcmd.exe  $(R_HOME)/bin/RSetReg.exe  \
      $(R_HOME)/bin/Rproxy.dll $(R_HOME)/bin/R.exe \
-     $(R_HOME)/bin/md5check.exe
+     $(R_HOME)/bin/md5check.exe \
+     ../librproxy.a
 
 $(R_HOME)/bin/Rgui.exe: Rgui.exe
 	$(MKDIR) -p $(R_HOME)/bin
@@ -52,6 +53,16 @@ Rterm-LIBS=$(LIBUNICOWS) -luser32 -L.. -lR
 Rgui-LIBS=-L.. $(LIBUNICOWS) -lR
 Rpwd-LIBS=$(LIBUNICOWS) -lkernel32
 
+## needs binutils > 2.15.90 which is what the cross-compiler toolkit has.
+## uncomment these lines post 2.2.0.
+# ifneq ($(strip $(BUILD)),CROSS)
+# Rgui-LINKFLAGS+=-Wl,--large-address-aware
+# Rterm-LINKFLAGS+=-Wl,--large-address-aware
+# endif
+## Increase stack size to 10Mb
+# Rgui-LINKFLAGS+=-Wl,--stack=0xA00000
+# Rterm-LINKFLAGS+=-Wl,--stack=0xA00000
+
 Rgui.exe: graphappmain.o  rgui.o rgico.o
 
 Rterm.exe: graphappmain.o rterm.o rtico.o
@@ -74,13 +85,23 @@ Rpwd.exe: rpwd.o rcico.o
 rcmd.o R.o rgui.o rterm.o RSetReg.o rproxy_impl.o rgico.o rtico.o rcico.o: ../../include/Rversion.h
 
 clean:
-	$(RM) *.o *.obj *.exe *~ *.exp *.def *.dll *.lib
+	$(RM) *.o *.obj *.exe *~ *.exp *.def *.dll *.lib *.a
 
-bdx-CFLAGS=-I../../include
+bdx_util-CFLAGS=-D_IN_RPROXY_
+bdx_com-CFLAGS=-D_IN_RPROXY_
+bdx_SEXP-CFLAGS=-D_IN_RPROXY_
 rproxy-DLLFLAGS=-mwindows
-rproxy-DLLLIBS=-L.. $(LIBUNICOWS) -lR
-rproxy.dll: rproxy.o rproxy_dev.o rproxy_impl.o bdx.o rtico.o
+rproxy-DLLLIBS=-L.. $(LIBUNICOWS) -lR -lole32 -luuid -loleaut32
+rproxy.dll: rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
+	bdx_util.o bdx_SEXP.o bdx_com.o rtico.o
 
-$(R_HOME)/bin/Rproxy.dll: rproxy.dll
+librproxy.a: rproxy.dll rproxy.df
+	$(DLLTOOL_WIN32) $(DLLTOOLFLAGS) $(RPROXY-DLLTOOLFLAGS) --dllname rproxy.dll --def rproxy.df --output-lib $@
+
+
+../librproxy.a: librproxy.a
+	@$(CP) $< $@
+
+$(R_HOME)/bin/Rproxy.dll: rproxy.dll librproxy.a
 	$(MKDIR) -p $(R_HOME)/bin
-	$(CP) $^ $@	
+	$(CP) rproxy.dll $@	

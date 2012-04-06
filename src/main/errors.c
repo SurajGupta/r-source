@@ -36,13 +36,6 @@ extern void R_ProcessEvents(void);
 #include <R_ext/GraphicsEngine.h> /* for GEonExit */
 #include <Rmath.h> /* for imax2 */
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-#if !HAVE_DECL_ALLOCA && !defined(__FreeBSD__)
-extern char *alloca(size_t);
-#endif
-
 #ifndef min
 #define min(a, b) (a<b?a:b)
 #endif
@@ -228,7 +221,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     if (inWarning)
 	return;
 
-    s = GetOption(install("warning.expression"), R_NilValue);
+    s = GetOption(install("warning.expression"), R_BaseEnv);
     if( s!= R_NilValue ) {
 	if( !isLanguage(s) &&  ! isExpression(s) )
 	    error(_("invalid option \"warning.expression\""));
@@ -239,7 +232,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 	return;
     }
 
-    w = asInteger(GetOption(install("warn"), R_NilValue));
+    w = asInteger(GetOption(install("warn"), R_BaseEnv));
 
     if( w == NA_INTEGER ) /* set to a sensible value */
 	w = 0;
@@ -250,7 +243,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     if( w == 0 && immediateWarning ) w = 1;
 
     /* set up a context which will restore inWarning if there is an exit */
-    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
     cntxt.cend = &reset_inWarning;
 
@@ -349,13 +342,13 @@ void PrintWarnings(void)
 
     /* set up a context which will restore inPrintWarnings if there is
        an exit */
-    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
     cntxt.cend = &cleanup_PrintWarnings;
 
     inPrintWarnings = 1;
-    header = ngettext("Warning message:\n", "Warning messages:\n", 
-		      R_CollectWarnings);
+    header = P_("Warning message:\n", "Warning messages:\n", 
+		R_CollectWarnings);
     if( R_CollectWarnings == 1 ) {
 	REprintf(header);
 	names = CAR(ATTRIB(R_Warnings));
@@ -439,7 +432,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
     }
 
     /* set up a context to restore inError value on exit */
-    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
     cntxt.cend = &restore_inError;
     cntxt.cenddata = &oldInError;
@@ -586,7 +579,7 @@ static void jump_to_top_ex(Rboolean traceback,
     int haveHandler, oldInError;
 
     /* set up a context to restore inError value on exit */
-    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
     cntxt.cend = &restore_inError;
     cntxt.cenddata = &oldInError;
@@ -600,7 +593,7 @@ static void jump_to_top_ex(Rboolean traceback,
 	    inError = 1;
 
 	/*now see if options("error") is set */
-	s = GetOption(install("error"), R_NilValue);
+	s = GetOption(install("error"), R_BaseEnv);
 	haveHandler = ( s != R_NilValue );
 	if (haveHandler) {
 	    if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
@@ -714,11 +707,11 @@ SEXP do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if(isNull(string) || !n) return string;
 
-    if(!isString(string)) errorcall(call, _("invalid 'string' value"));
+    if(!isString(string)) errorcall(call, _("invalid '%s' value"), "string");
 
     if(isNull(CAR(args))) {
 	RCNTXT *cptr;
-	SEXP rho = R_NilValue;
+	SEXP rho = R_BaseEnv;
 	for (cptr = R_GlobalContext->nextcontext;
 	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
 	     cptr = cptr->nextcontext)
@@ -726,7 +719,7 @@ SEXP do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 		rho = cptr->cloenv;
 		break;
 	    }
-	while(rho != R_NilValue) {
+	while(rho != R_BaseEnv) {
 	    if (rho == R_GlobalEnv) break;
 	    else if (R_IsNamespaceEnv(rho)) {
 		domain = CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0));
@@ -741,7 +734,7 @@ SEXP do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     } else if(isString(CAR(args)))
 	domain = CHAR(STRING_ELT(CAR(args),0));
-    else errorcall(call, _("invalid 'domain' value"));
+    else errorcall(call, _("invalid '%s' value"), "domain");
 
     if(strlen(domain)) {
 	PROTECT(ans = allocVector(STRSXP, n));
@@ -809,7 +802,7 @@ SEXP do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef ENABLE_NLS
     if(isNull(sdom)) {
 	RCNTXT *cptr;
-	SEXP rho = R_NilValue;
+	SEXP rho = R_BaseEnv;
 	for (cptr = R_GlobalContext->nextcontext;
 	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
 	     cptr = cptr->nextcontext)
@@ -817,7 +810,7 @@ SEXP do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 		rho = cptr->cloenv;
 		break;
 	    }
-	while(rho != R_NilValue) {
+	while(rho != R_BaseEnv) {
 	    if (rho == R_GlobalEnv) break;
 	    else if (R_IsNamespaceEnv(rho)) {
 		domain = CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0));
@@ -832,7 +825,7 @@ SEXP do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     } else if(isString(sdom))
 	domain = CHAR(STRING_ELT(sdom,0));
-    else errorcall(call, _("invalid 'domain' value"));
+    else errorcall(call, _("invalid '%s' value"), "domain");
 
     if(strlen(domain)) {
 	char *fmt = dngettext(domain,
@@ -857,12 +850,12 @@ SEXP do_bindtextdomain(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     checkArity(op, args);
     if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1) 
-	errorcall(call, _("invalid 'domain' value"));
+	errorcall(call, _("invalid '%s' value"), "domain");
     if(isNull(CADR(args))) {
 	res = bindtextdomain(CHAR(STRING_ELT(CAR(args),0)), NULL);
     } else {
 	if(!isString(CADR(args)) || LENGTH(CADR(args)) != 1) 
-	    errorcall(call, _("invalid 'dirname' value"));
+	    errorcall(call, _("invalid '%s' value"), "dirname");
 	res = bindtextdomain(CHAR(STRING_ELT(CAR(args),0)),
 			     CHAR(STRING_ELT(CADR(args),0)));
     }
@@ -1400,12 +1393,12 @@ void R_InsertRestartHandlers(RCNTXT *cptr, Rboolean browser)
     R_HandlerStack = CONS(entry, R_HandlerStack);
     UNPROTECT(1);
     PROTECT(name = ScalarString(mkChar(browser ? "browser" : "tryRestart")));
-    entry = allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(entry, 0, name);
+    PROTECT(entry = allocVector(VECSXP, 2));
+    PROTECT(SET_VECTOR_ELT(entry, 0, name));
     SET_VECTOR_ELT(entry, 1, R_MakeExternalPtr(cptr, R_NilValue, R_NilValue));
     setAttrib(entry, R_ClassSymbol, ScalarString(mkChar("restart")));
     R_RestartStack = CONS(entry, R_RestartStack);
-    UNPROTECT(1);
+    UNPROTECT(3);
 }
 
 SEXP do_dfltWarn(SEXP call, SEXP op, SEXP args, SEXP rho)

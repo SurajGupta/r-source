@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-27 15:02\n"
+"POT-Creation-Date: 2005-09-16 08:35\n"
 "PO-Revision-Date: 2005-04-08 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -508,8 +508,8 @@ msgstr "有限值的观察量不够"
 msgid "Cannot compute exact p-value with ties"
 msgstr "无法给连结計算精確的p值"
 
-msgid "p-values may be incorrect due to ties"
-msgstr "因为有连结p-值算得可能不准"
+msgid "Cannot compute exact p-values with ties"
+msgstr "无法给连结計算精確的p值"
 
 msgid "'formula' missing or invalid"
 msgstr "'formula'遺漏或有错"
@@ -599,11 +599,26 @@ msgstr "'ColSideColors'必需是长度为ncol(x)的字节向量"
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr "'RowSideColors'必需是长度为nrow(x)的字节向量"
 
+msgid "non-matched further arguments are disregarded"
+msgstr "不匹配的额外变元略过不用"
+
 msgid "argument 'x' must be numeric"
 msgstr "变元'x'必需是数值"
 
 msgid "'x' contains missing values"
 msgstr "'x'内含遺漏值"
+
+msgid "'x' and 'weights' have unequal length"
+msgstr "'x'和'weights'的长度必需相同"
+
+msgid "'weights' must all be finite"
+msgstr "'weights'的值必需都是有限的"
+
+msgid "'weights' must not be negative"
+msgstr "'weights'不能是负数的"
+
+msgid "sum(weights) != 1  -- will not get true density"
+msgstr " sum(weights) != 1，因此无法取得真正的密度函数"
 
 msgid "need at least 2 points to select a bandwidth automatically"
 msgstr "自动选择頻寬至少需要两个数据点"
@@ -634,6 +649,9 @@ msgstr "'lag'或'differences'的值有错"
 
 msgid "'xi' has not the right length"
 msgstr "'xi'的长度不对"
+
+msgid "incorrect dimensions for 'xi'"
+msgstr "'xi'的尺寸不对"
 
 msgid "'x' is not a vector or matrix"
 msgstr "'x'不是向量或矩阵"
@@ -698,7 +716,6 @@ msgstr "因子分析至少需要三个变量"
 msgid "%d factors is too many for %d variables"
 msgstr "%2$d变量不能有%1$d这么多的因子"
 
-#, fuzzy
 msgid "'start' must have %d rows"
 msgstr "'start'必需有%d行"
 
@@ -930,7 +947,6 @@ msgstr "空模型里的线形従属変数值不对"
 msgid "invalid fitted means in empty model"
 msgstr "空模型的拟合平均值不对"
 
-#, fuzzy
 msgid ""
 "length of 'start' should equal %d and correspond to initial coefs for %s"
 msgstr "'start'的长度应该是%d，同%s的初始系数相一致"
@@ -1053,9 +1069,6 @@ msgstr "参数值不对"
 msgid "a limit is missing"
 msgstr "極限有遺漏"
 
-msgid "'m' is negative"
-msgstr "'m'是负数"
-
 msgid "'r' is less than 1"
 msgstr "'r'小于1"
 
@@ -1064,6 +1077,9 @@ msgstr "'m'小于1"
 
 msgid "'r' is less than 0"
 msgstr "'r'小于0"
+
+msgid "'m' must be numeric with non-negative integers"
+msgstr "'m'必需是非负的整数"
 
 msgid "unknown named kernel"
 msgstr "没有这样的内核名"
@@ -1234,9 +1250,6 @@ msgstr "第一个变元必需为\"loess\"目标对象"
 msgid "'newdata' does not contain the variables needed"
 msgstr "'newdata'不包含需要的变量"
 
-msgid "need response in formula"
-msgstr "公式里没有反应"
-
 msgid "no models to compare"
 msgstr "没有可用来比较的模型"
 
@@ -1329,9 +1342,6 @@ msgstr "目前不支持带重量的'mlm'目标对象"
 
 msgid "X does not define a subspace of M"
 msgstr "X不设定M的子空间"
-
-msgid "one-argument anova() not implemented for 'mlm' objects"
-msgstr "没有为'mlm'目标对象实现单变元的anova()功能"
 
 msgid "residuals have rank"
 msgstr "残差有秩"
@@ -1428,6 +1438,18 @@ msgstr "位于极点边的f()值之正负号不相反"
 msgid "_NOT_ converged in"
 msgstr "没有聚合于"
 
+msgid "control argument must be a named list"
+msgstr "控制变元必需是串列"
+
+msgid "unrecognized control element(s) named `"
+msgstr "没有叫这个名字的控制元素"
+
+msgid "' ignored"
+msgstr "' 略过不用"
+
+msgid "Logical `hessian' argument not allowed.  See documentation."
+msgstr "不能有逻辑值的`hessian变元。请参考说明书。' "
+
 msgid "'params' has wrong length"
 msgstr "'params'的长度不对"
 
@@ -1454,6 +1476,12 @@ msgstr "setVarying : vary的长度必需同参数的长度相符"
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "参数初始估计值里有奇异梯度矩阵"
+
+msgid "Upper or lower bounds ignored unless algorithm = \"port\""
+msgstr "除非algorithm = \"port\"，上限或下限将略过不用"
+
+msgid "Convergence failure:"
+msgstr "没有收斂："
 
 msgid "rows with zero weights not counted"
 msgstr "0重量的行不算"
@@ -1501,8 +1529,8 @@ msgstr "组数不够"
 msgid "use only with \"lm\" objects"
 msgstr "只对\"lm\"目标对象适用"
 
-msgid "'which' must be in 1:4"
-msgstr "'which'必需在1:4之间"
+msgid "'which' must be in 1:6"
+msgstr "'which'必需在1:6之间"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n'必需在{1,..,%d}中"
@@ -1551,18 +1579,16 @@ msgstr "PCA只适用于数值变量"
 msgid "no scores are available: refit with 'retx=TRUE'"
 msgstr "没有分数: 用'retx=TRUE'重新进行拟合"
 
-#, fuzzy
 msgid "'newdata' must be a matrix or data frame"
-msgstr "'x'必需是矩阵或是数据框"
+msgstr "'newdata'必需是矩阵或是数据框"
 
 msgid ""
 "'newdata' does not have named columns matching one or more of the original "
 "columns"
 msgstr "'newdata'同原始数据没有相同的列名"
 
-#, fuzzy
 msgid "'newdata' does not have the correct number of columns"
-msgstr "'newdata'列的的长度不对"
+msgstr "'newdata'列的数目不对"
 
 msgid "wrong number of predictors"
 msgstr "従属変数数目不对"
@@ -1648,6 +1674,9 @@ msgstr "某些恆量变量(%s) 其实在变动"
 msgid "no 'time' or 'id' specified"
 msgstr "没有设定'time'或'id'"
 
+msgid "'k' must be positive"
+msgstr "'k'必需是正数"
+
 msgid "'k' must be odd!  Changing 'k' to"
 msgstr "'k'只能是奇数! 把'k'改成"
 
@@ -1713,6 +1742,12 @@ msgstr "NA lev[];很可能平滑参数'spar'的值太大了!"
 
 msgid "setting df = 1  __use with care!__"
 msgstr "设定df = 1  小心使用!"
+
+msgid "need result of smooth.spline(*, keep.data=TRUE)"
+msgstr "需要的是.spline(*, keep.data=TRUE) 的运算结果"
+
+msgid "type = \"partial\" is not yet implemented"
+msgstr "还没有实现type=\"partial\"的算法"
 
 msgid "not a valid \"smooth.spline\" object"
 msgstr " \"smooth.spline\"目标对象不对"
@@ -1941,6 +1976,9 @@ msgstr "'y'必需是数值"
 msgid "not enough (finite) 'x' observations"
 msgstr "(有限)'x'观察量数目不够"
 
+msgid "Requested conf.level not achievable"
+msgstr "无法达到所要求的conf.level"
+
 msgid "cannot compute exact confidence interval with ties"
 msgstr "有连结时无法計算精確的置信区间"
 
@@ -1950,7 +1988,9 @@ msgstr "有0时无法計算精確的p值"
 msgid "cannot compute exact confidence interval with zeroes"
 msgstr "有0时无法計算精確的置信区间"
 
-#, fuzzy
+msgid "must supply either 'formula' or 'data'"
+msgstr "至少要提供'formula'和'data'中间的一个"
+
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr "无法拟合渐近迴歸模型，因为相互不同的输入值太少"
 
@@ -2003,8 +2043,21 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "参数%s没有在模型公式里出现过"
 msgstr[1] ""
 
+#~ msgid "p-values may be incorrect due to ties"
+#~ msgstr "因为有连结p-值算得可能不准"
+
+#~ msgid "one-argument anova() not implemented for 'mlm' objects"
+#~ msgstr "没有为'mlm'目标对象实现单变元的anova()功能"
+
+#~ msgid "'m' is negative"
+#~ msgstr "'m'是负数"
+
+#~ msgid "need response in formula"
+#~ msgstr "公式里没有反应"
+
 #~ msgid "non-integer counts in a Poisson glm!"
 #~ msgstr "Poisson通用线性模型里不能有负计数!"
 
 #~ msgid "'if 'x' is not a matrix, 'y' must be given"
 #~ msgstr "'如果'x'不是矩阵的话, 必需提供'y'值"
+

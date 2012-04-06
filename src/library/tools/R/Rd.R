@@ -17,7 +17,7 @@ function(lines)
            && capabilities("iconv")) {
             encoding <- encoding[1]     # Just making sure ...
             if(.is_ASCII(encoding))
-                lines <- utils::iconv(lines, encoding, "")
+                lines <- iconv(lines, encoding, "")
         }
     }
     else {
@@ -31,7 +31,7 @@ function(lines)
         ## (Can only happen in a MBCS locale.)
         ## Try re-encoding from Latin1.
         if(capabilities("iconv"))
-            lines <- utils::iconv(lines, "latin1", "")
+            lines <- iconv(lines, "latin1", "")
         else
             stop("Found invalid multi-byte character data.", "\n",
                  "Cannot re-encode because iconv is not available.", "\n",
@@ -689,34 +689,50 @@ function(txt)
 {
     txt <- get_Rd_section(txt, "examples")
     if(length(txt) != 1) return(character())
+
     txt <- gsub("\\\\l?dots", "...", txt)
     txt <- gsub("\\\\%", "%", txt)
 
-    ## Now try removing \dontrun{}.
-    ## Simple version of R::Rdconv::undefine_command().
+    ## Version of [Perl] R::Rdconv::drop_full_command().
+    txt <- .Rd_transform_command(txt, "dontrun",
+                                 function(u) NULL)
+    ## Version of [Perl] R::Rdconv::undefine_command().
+    txt <- .Rd_transform_command(txt, c("dontshow", "testonly"),
+                                 function(u) u)
+    txt
+}
+
+### .Rd_transform_command
+
+.Rd_transform_command <-
+function(txt, cmd, FUN)
+{
+    ## In Rd text, replace markup of the form \cmd{something} by the
+    ## result of applying FUN to something.  Covers several separate
+    ## functions in the R::Rdconv Perl code:
+    ##   drop_full_command      FUN = function(u) NULL
+    ##   undefine_command       FUN = function(u) u
+    ##   replace_command        FUN = function(u) sprintf("Bef%sAft", u)
+    ## Currently, optional arguments to \cmd are not supported.
+
+    if(length(txt) != 1) return(character())
+
+    ## Vectorized in 'cmd':
+    pattern <- sprintf("\\\\%s\\{", paste(cmd, collapse = "|"))
+
     out <- character()
-    pattern <- "\\\\dontrun\\{"
     while((pos <- regexpr(pattern, txt)) != -1) {
         out <- c(out, substring(txt, 1, pos - 1))
+        cmd <- substring(txt, pos, pos + attr(pos, "match.length") - 2)
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
         if((pos <- delimMatch(txt)) == -1)
-            stop("unclosed \\dontrun")
-        txt <- substring(txt, pos + attr(pos, "match.length"))
-    }
-    txt <- paste(c(out, txt), collapse = "")
-    ## Now try removing \dontshow{} and \testonly{}.
-    ## Simple version of R::Rdconv::replace_command().
-    out <- character()
-    pattern <- "\\\\(testonly|dontshow)\\{"
-    while((pos <- regexpr(pattern, txt)) != -1) {
-        out <- c(out, substring(txt, 1, pos - 1))
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
-        if((pos <- delimMatch(txt)) == -1)
-            stop("unclosed \\dontshow or \\testonly")
+            stop(sprintf("unclosed \\%s", cmd))
         out <- c(out,
-                 substring(txt, 2, pos + attr(pos, "match.length") - 2))
+                 FUN(substring(txt, 2,
+                               pos + attr(pos, "match.length") - 2)))
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
+
     paste(c(out, txt), collapse = "")
 }
 

@@ -32,7 +32,7 @@
 #endif
 
 #include "Defn.h"
-#include "Rmath.h" /* for rround */
+#include <Rmath.h>		/* for rround */
 #include "Graphics.h"
 #include <R_ext/Error.h>
 #include "Fileio.h"
@@ -43,12 +43,6 @@
 #include <errno.h>
 #else
 extern int errno;
-#endif
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#elif !defined (__FreeBSD__)
-extern char *alloca(size_t);
 #endif
 
 #define INVALID_COL 0xff0a0b0c
@@ -776,6 +770,13 @@ typedef struct EncList {
 static type1fontinfo makeType1Font() 
 {
     type1fontinfo font = (Type1FontInfo *) malloc(sizeof(Type1FontInfo));    
+    /*
+     * Initialise font->metrics.KernPairs to NULL
+     * so that we know NOT to free it if we fail to
+     * load this font and have to
+     * bail out and free this type1fontinfo
+     */
+    font->metrics.KernPairs = NULL;
     if (!font)
 	warning(_("Failed to allocate Type 1 font info"));
     return font;
@@ -2227,7 +2228,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
     pd->paperspecial = FALSE;
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
+	SEXP s = STRING_ELT(GetOption(install("papersize"), R_BaseEnv), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "a4");
@@ -3169,7 +3170,7 @@ XFigDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
+	SEXP s = STRING_ELT(GetOption(install("papersize"), R_BaseEnv), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "A4");
@@ -5135,10 +5136,10 @@ SEXP PostScript(SEXP args)
 	if(!PSDeviceDriver(dev, file, paper, family, afms, encoding, bg, fg,
 			   width, height, (double)horizontal, ps, onefile,
 			   pagecentre, printit, cmd, title, fonts)) {
-	    free(dev);
+	    /* free(dev); No, dev freed inside PSDeviceDrive */
 	    error(_("unable to start device PostScript"));
 	}
-	gsetVar(install(".Device"), mkString("postscript"), R_NilValue);
+	gsetVar(install(".Device"), mkString("postscript"), R_BaseEnv);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
@@ -5201,10 +5202,10 @@ SEXP XFig(SEXP args)
 	dev->savedSnapshot = R_NilValue;
 	if(!XFigDeviceDriver(dev, file, paper, family, bg, fg, width, height,
 			     (double) horizontal, ps, onefile, pagecentre)) {
-	    free(dev);
+	    /* free(dev); No, freed inside XFigDeviceDriver */
 	    error(_("unable to start device xfig"));
 	}
-	gsetVar(install(".Device"), mkString("xfig"), R_NilValue);
+	gsetVar(install(".Device"), mkString("xfig"), R_BaseEnv);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
@@ -5274,10 +5275,10 @@ SEXP PDF(SEXP args)
 	if(!PDFDeviceDriver(dev, file, paper, family, encoding, bg, fg, 
 			    width, height, ps, onefile, pagecentre,
 			    title, fonts, major, minor)) {
-	    free(dev);
+	    /* free(dev); PDFDeviceDriver now frees */
 	    error(_("unable to start device pdf"));
 	}
-	gsetVar(install(".Device"), mkString("pdf"), R_NilValue);
+	gsetVar(install(".Device"), mkString("pdf"), R_BaseEnv);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);

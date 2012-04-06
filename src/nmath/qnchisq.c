@@ -25,11 +25,11 @@
 
 double qnchisq(double p, double df, double lambda, int lower_tail, int log_p)
 {
-    const double accu = 1e-13;
-    const double racc = 4*DBL_EPSILON;
+    const static double accu = 1e-13;
+    const static double racc = 4*DBL_EPSILON;
     /* these two are for the "search" loops, can have less accuracy: */
-    const double Eps = 1e-11; /* must be > accu */
-    const double rEps= 1e-10; /* relative tolerance ... */
+    const static double Eps = 1e-11; /* must be > accu */
+    const static double rEps= 1e-10; /* relative tolerance ... */
 
     double ux, lx, nx, pp;
 
@@ -45,10 +45,7 @@ double qnchisq(double p, double df, double lambda, int lower_tail, int log_p)
      */
     if (df < 0 || lambda < 0) ML_ERR_return_NAN;
 
-    R_Q_P01_check(p);
-
-    if (p == R_DT_0) return 0;
-    if (p == R_DT_1) return ML_POSINF;
+    R_Q_P01_boundaries(p, 0, ML_POSINF);
 
     p = R_D_qIv(p);
 

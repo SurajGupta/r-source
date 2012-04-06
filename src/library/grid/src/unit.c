@@ -257,7 +257,12 @@ double pureNullUnitValue(SEXP unit, int index)
 	else 
 	    error(_("Unimplemented unit function"));
     } else if (isUnitList(unit)) {
-	result = unitValue(VECTOR_ELT(unit, index), 0);
+	/*
+	 * Recycle if necessary;  it is up to the calling code
+	 * to limit indices to unit length if desired
+	 */
+	int n = unitLength(unit);
+	result = unitValue(VECTOR_ELT(unit, index % n), 0);
     } else
 	result = unitValue(unit, index);
     return result;
@@ -270,7 +275,12 @@ int pureNullUnit(SEXP unit, int index, GEDevDesc *dd) {
     if (isUnitArithmetic(unit)) 
 	result = pureNullUnitArithmetic(unit, index, dd);
     else if (isUnitList(unit)) {
-	result = pureNullUnit(VECTOR_ELT(unit, index), 0, dd);
+	/*
+	 * Recycle if necessary;  it is up to the calling code
+	 * to limit indices to unit length if desired
+	 */
+	int n = unitLength(unit);
+	result = pureNullUnit(VECTOR_ELT(unit, index % n), 0, dd);
     } else {  /* Just a plain unit */
 	/* Special case:  if "grobwidth" or "grobheight" unit
 	 * and width/height(grob) is pure null
@@ -508,7 +518,7 @@ double evaluateGrobWidthUnit(SEXP grob,
 	result = evaluateNullUnit(pureNullUnitValue(width, 0), vpWidthCM,
 				  nullLMode, nullAMode);
     } else {
-	gcontextFromgpar(currentgp, 0, &gc);
+	gcontextFromgpar(currentgp, 0, &gc, dd);
 	result = transformWidthtoINCHES(width, 0, vpc, &gc,
 					vpWidthCM, vpHeightCM,
 					dd);
@@ -625,7 +635,7 @@ double evaluateGrobHeightUnit(SEXP grob,
 	result = evaluateNullUnit(pureNullUnitValue(height, 0), vpHeightCM,
 				  nullLMode, nullAMode);
     } else {
-	gcontextFromgpar(currentgp, 0, &gc);
+	gcontextFromgpar(currentgp, 0, &gc, dd);
 	result = transformHeighttoINCHES(height, 0, vpc, &gc,
 					 vpWidthCM, vpHeightCM,
 					 dd);
@@ -672,6 +682,7 @@ double transform(double value, int unit, SEXP data,
 	result = result/2.54;
 	break;
     case L_INCHES: 
+	result = result;
 	break;
     /* FIXME:  The following two assume that the pointsize specified
      * by the user is actually the pointsize provided by the
@@ -755,6 +766,30 @@ double transform(double value, int unit, SEXP data,
 	break;
     default:
 	error(_("Illegal unit or unit not yet implemented"));
+    }
+    /*
+     * For physical units, scale the result by GSS_SCALE (a "zoom" factor)
+     */
+    switch (unit) {
+    case L_INCHES:
+    case L_CM:
+    case L_MM:
+    case L_POINTS:
+    case L_PICAS:
+    case L_BIGPOINTS:
+    case L_DIDA:
+    case L_CICERO:
+    case L_SCALEDPOINTS:
+      result = result * REAL(gridStateElement(dd, GSS_SCALE))[0];
+      break;
+    default:
+      /*
+       * No need to scale relative coordinates (NPC, NATIVE, NULL)
+       * CHAR and LINES already scaled because of scaling in gcontextFromGPar()
+       * Ditto STRINGWIDTH/HEIGHT
+       * GROBWIDTH/HEIGHT recurse into here so scaling already done
+       */
+      break;
     }
     return result;
 }
@@ -1471,6 +1506,28 @@ double transformFromINCHES(double value, int unit,
     case L_NULL:
     default:
 	error(_("Illegal unit or unit not yet implemented"));
+    }
+    /*
+     * For physical units, reverse the scale by GSS_SCALE (a "zoom" factor)
+     */
+    switch (unit) {
+    case L_INCHES:
+    case L_CM:
+    case L_MM:
+    case L_POINTS:
+    case L_PICAS:
+    case L_BIGPOINTS:
+    case L_DIDA:
+    case L_CICERO:
+    case L_SCALEDPOINTS:
+      result = result / REAL(gridStateElement(dd, GSS_SCALE))[0];
+      break;
+    default:
+      /*
+       * No need to scale relative coordinates (NPC, NATIVE, NULL)
+       * All other units forbidden anyway
+       */
+      break;
     }
     return result;
 }

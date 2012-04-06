@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2004 R Core Team
+### Copyright (C) 1998-2005 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -51,10 +51,10 @@ AC_DEFINE_UNQUOTED(VERSION, "${VERSION}", [Version number of package])
 AC_SUBST(VERSION)
 
 ## Autoheader initialization.
-AH_TOP([#ifndef _CONFIG_H
-#define _CONFIG_H])
+AH_TOP([#ifndef R_CONFIG_H
+#define R_CONFIG_H])
 AH_BOTTOM([
-#endif /* not _CONFIG_H */])
+#endif /* not R_CONFIG_H */])
 
 ### ** Platform.
 
@@ -112,6 +112,21 @@ if test -r "${cfile}"; then
   . "${cfile}"
 fi
 
+## We need to establish suitable defaults for a 64-bit OS
+libnn=lib
+case "${host_os}" in
+  linux*)
+    case "${host_cpu}" in
+      x86_64|mips64|ppc64|sparc64|s390x)
+        libnn=lib64
+      ;;
+    esac
+    ;;
+  solaris*)
+    ## libnn=lib/sparcv9 ## on 64-bit only, but that's compiler-specific
+    ;;  
+esac
+: ${LIBnn=$libnn}
 ## We provide these defaults so that headers and libraries in
 ## '/usr/local' are found (by the native tools, mostly).
 if test -f "/sw/etc/fink.conf"; then
@@ -119,8 +134,36 @@ if test -f "/sw/etc/fink.conf"; then
   : ${LDFLAGS="-L/sw/lib -L/usr/local/lib"}
 else
   : ${CPPFLAGS="-I/usr/local/include"}
-  : ${LDFLAGS="-L/usr/local/lib"}
+  : ${LDFLAGS="-L/usr/local/${LIBnn}"}
 fi
+AC_SUBST(LIBnn)
+## take care not to  override the command-line setting
+if test "${libdir}" = '${exec_prefix}/lib'; then
+  libdir='${exec_prefix}/${LIBnn}'
+fi
+
+## R installation directories
+m4_divert_once([HELP_BEGIN], [
+R installation directories:
+  --libdir=DIR        R files to R_HOME=DIR/R @<:@EPREFIX/$LIBnn@:>@
+    rdocdir=DIR       R doc files to DIR      @<:@R_HOME/doc@:>@
+    rincludedir=DIR   R include files to DIR  @<:@R_HOME/include@:>@
+    rsharedir=DIR     R share files to DIR    @<:@R_HOME/share@:>@])dnl
+
+if test -z ${rdocdir}; then
+  rdocdir='${rhome}/doc'
+fi
+AC_SUBST([rdocdir])
+
+if test -z ${rincludedir}; then
+  rincludedir='${rhome}/include'
+fi
+AC_SUBST([rincludedir])
+
+if test -z ${rsharedir}; then
+  rsharedir='${rhome}/share'
+fi
+AC_SUBST([rsharedir])
 
 ### ** Handle arguments to configure.
 
@@ -165,6 +208,10 @@ if test "${want_R_framework}" != no; then
 	prefix="${want_R_framework}"
 	want_R_framework=yes
       fi
+      ## FW_VERSION is the sub-directory name used in R.framework/Version
+      ## By default it's the a.b form of the full a.b.c version to simplify
+      ## binary updates.
+      : ${FW_VERSION=`echo "${PACKAGE_VERSION}" | sed -e "s/[[\.]][[0-9]]$//"`}
       ;;
     *)
       want_R_framework=no
@@ -229,14 +276,16 @@ AC_ARG_WITH([blas],
 [AC_HELP_STRING([--with-blas],
                 [use BLAS library, or specify it @<:@yes@:>@])],
 [R_ARG_USE(blas)],
-[use_blas=yes])
+[use_blas=unset])
+# default is "yes" except on MacOS X
 
 ## LAPACK.
 AC_ARG_WITH([lapack],
 [AC_HELP_STRING([--with-lapack],
                 [use LAPACK library, or specify it @<:@no@:>@])],
 [R_ARG_USE(lapack)],
-[use_lapack=no])
+[use_lapack=unset])
+# default is "no" except on MacOS X
 
 ## Readline.
 AC_ARG_WITH([readline],
@@ -248,7 +297,12 @@ AC_ARG_WITH([readline],
 ## Aqua.
 AC_ARG_WITH([aqua],
 [AC_HELP_STRING([--with-aqua],
-                [MacOS X only: use Aqua (if available) @<:@no@:>@])],
+                [MacOS X only: use Aqua (if available) @<:@yes@:>@])],
+[if test "${withval}" = no; then
+  want_aqua=no
+else
+  want_aqua=yes
+fi],
 [want_aqua=yes])
 
 ## Tcl/Tk.
@@ -287,21 +341,28 @@ AC_ARG_WITH([jpeglib],
                 [use jpeglib library (if available) @<:@yes@:>@])],
 [R_ARG_USE(jpeglib)],
 [use_jpeglib=yes])
-AC_ARG_WITH([zlib],
-[AC_HELP_STRING([--with-zlib],
+AC_ARG_WITH([system-zlib],
+[AC_HELP_STRING([--with-system-zlib],
                 [use system zlib library (if available) @<:@no@:>@])],
-[R_ARG_USE(zlib)],
-[use_zlib=no])
-AC_ARG_WITH([bzlib],
-[AC_HELP_STRING([--with-bzlib],
+[R_ARG_USE_SYSTEM(zlib)],
+[use_system_zlib=no])
+AC_ARG_WITH([system-bzlib],
+[AC_HELP_STRING([--with-system-bzlib],
                 [use system bzlib library (if available) @<:@no@:>@])],
-[R_ARG_USE(bzlib)],
-[use_bzlib=no])
-AC_ARG_WITH([pcre],
-[AC_HELP_STRING([--with-pcre],
+[R_ARG_USE_SYSTEM(bzlib)],
+[use_system_bzlib=no])
+AC_ARG_WITH([system-pcre],
+[AC_HELP_STRING([--with-system-pcre],
                 [use system PCRE library (if available) @<:@no@:>@])],
-[R_ARG_USE(pcre)],
-[use_pcre=no])
+[R_ARG_USE_SYSTEM(pcre)],
+[use_system_pcre=no])
+
+## Valgrind instrumentation
+AC_ARG_WITH([valgrind-instrumentation],
+[AC_HELP_STRING([--with-valgrind-instrumentation],
+                [Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
+[valgrind_level=${withval}],
+[valgrind_level=0])
 
 ## needs to come after GNOME
 AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
@@ -338,7 +399,7 @@ AC_ARG_VAR([R_PRINTCMD],
 AC_ARG_VAR([R_PAPERSIZE],
            [paper size for the local (PostScript) printer])
 AC_ARG_VAR([R_BATCHSAVE],
-           [default behavior of R if it encounters EOF in batch mode])
+           [set default behavior of R when ending a session])
 AC_ARG_VAR([MAIN_CFLAGS],
            [additional CFLAGS used when compiling the main binary])
 AC_ARG_VAR([SHLIB_CFLAGS],
@@ -387,6 +448,7 @@ AC_ARG_VAR([BLAS_LIBS],
            [flags needed for linking against external BLAS libraries])
 AC_ARG_VAR([LAPACK_LIBS],
            [flags needed for linking against external LAPACK libraries])
+AC_ARG_VAR([LIBnn], ['lib' or 'lib64' for dynamic libraries])
 
 ### ** Check whether we build in srcdir.
 
@@ -414,7 +476,7 @@ AC_PROG_RANLIB
 AC_PROG_YACC
 R_PROG_AR
 R_PROG_INSTALL
-AC_PATH_PROG(JAVAC, javac)
+
 ## we would like a POSIX sed, and need one on Solaris
 AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
 ## Make
@@ -527,9 +589,15 @@ case "${host_os}" in
     ## MacOS 10.3 and 10.4 do
     AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
     ## SI says we want '-lcc_dynamic' on Darwin, although currently
-    ## http://developer.apple.com /documentation/MacOSX/ has nothing
-    ## official.
-    AC_CHECK_LIB(cc_dynamic, main)
+    ## http://developer.apple.com/documentation/MacOSX/ has nothing
+    ## official.  Bill Northcott <w.northcott@unsw.edu.au> points out
+    ## that it is only needed to GCC 3.x ...
+    if test "${GCC}" = yes; then
+      case "${CC_VERSION}" in
+        3.*)
+          AC_CHECK_LIB(cc_dynamic, main) ;;
+      esac
+    fi
     ;;
   *)
     AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
@@ -655,14 +723,14 @@ else
   fi
   R_PROG_F2C_FLIBS
   AC_DEFINE(HAVE_F77_UNDERSCORE, 1)
-  AC_DEFINE(HAVE_DOUBLE_COMPLEX, 1)
+  AC_DEFINE(HAVE_FORTRAN_DOUBLE_COMPLEX, 1)
   R_PROG_F2C_MAKEFRAG
   F77="\$(SHELL) \$(R_HOME)/bin/f77"
 fi
 
 AC_SUBST(F2C)
-AM_CONDITIONAL(COMPILE_DOUBLE_COMPLEX,
-               [test "x${HAVE_DOUBLE_COMPLEX}" != x])
+AM_CONDITIONAL(COMPILE_FORTRAN_DOUBLE_COMPLEX,
+               [test "x${HAVE_FORTRAN_DOUBLE_COMPLEX}" != x])
 
 ### *** C++ compiler.
 
@@ -911,16 +979,10 @@ case "${host_os}" in
     ## main_ldflags="-framework Carbon"
     ## Want '-mdynamic-no-pic' for GCC 3, says Jan de Leeuw.
     if test "${GCC}" = yes; then
-      ## <FIXME>
-      ## R_PROG_CC_M() has the same code for determining the gcc
-      ## version.  Move this into e.g. _R_PROG_CC_VERSION.
-      gcc_version=`${CC} -v 2>&1 | grep "^.*g.. version" | \
-        sed -e 's/^.*g.. version *//'`
-      case "${gcc_version}" in
+      case "${CC_VERSION}" in
         3.*)
           R_SH_VAR_ADD(main_ldflags, [-mdynamic-no-pic]) ;;
       esac
-      ## </FIXME>
     fi
     case "${host_os}" in
       ## According to Jan de Leeuw, OS X 10.1 is darwin 5, OS X 10.2 is
@@ -1198,6 +1260,7 @@ AC_SUBST(DYLIB_EXT)
 AC_SUBST(LIBR_LDFLAGS)
 AC_SUBST(RLAPACK_LDFLAGS)
 AC_SUBST(LAPACK_LDFLAGS)
+AC_SUBST(FW_VERSION)
 
 ### Now we have found all the flags, we need to use them to test appropriately.
 ### We don't currently have any C++ tests, but future-proof.
@@ -1220,11 +1283,14 @@ fi
 
 AC_CHECK_TYPES([off_t])
 AC_FUNC_ALLOCA
-AC_CHECK_DECLS([alloca], , , [#include <alloca.h>])
+AC_CHECK_DECLS([alloca], , , 
+[#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#endif])
 AC_CHECK_FUNCS(access chdir expm1 fcntl finite fseeko ftello ftruncate \
   getcwd getgrgid getpwuid getuid hypot isascii log1p \
   matherr mkdtemp mkfifo popen putenv realpath rint \
-  setenv strcoll stat strptime symlink system times unsetenv)
+  setenv strcoll stat strerror strptime symlink system times unsetenv)
 ## isfinite and isnan are in math.h but might be macros
 AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
 ## <NOTE>
@@ -1286,17 +1352,45 @@ R_FUNC_LOG1P
 R_FUNC_STRPTIME
 R_FUNC_FTELL
 
+R_C99_COMPLEX
+
+## check for vecLib framework (potentially to be used for BLAS)
+## in theory vecLib is platform-independent, in practice only
+## Apple's Mac OS X is known to provide it
+R_CHECK_FRAMEWORK(cblas_cdotu_sub, vecLib)
+
 ## BLAS.
 ## <NOTE>
 ## This has to come *after* checking for Fortran 77 compiler/converter
 ## characteristics (notably name mangling and FLIBS).
+## </NOTE>
+## The defaults are different on MacOS X
+if test "${use_blas}" = "unset"; then
+  use_blas=yes
+  case "${host_os}" in
+    darwin*)
+      if test "${have_vecLib_fw}" = "yes"; then
+        with_blas="-framework vecLib"
+        if test "${use_lapack}" = "unset"; then
+          use_lapack="yes"
+          with_lapack=""
+        fi
+      fi
+      ;;
+    *)
+      ;;
+  esac
+fi
 if test "${use_blas}" = yes; then
   R_BLAS_LIBS
 fi
-## </NOTE>
+
+AM_CONDITIONAL(USE_VECLIB_G95FIX, [test "x${use_veclib_g95fix}" = xyes])
 AM_CONDITIONAL(USE_EXTERNAL_BLAS, [test "${acx_blas_ok}" = "yes"])
 
 ## LAPACK.
+## The default has already been set on MacOS X: otherwise it is "no"
+## and so this test fails.
 if test "${use_lapack}" = "yes"; then
   R_LAPACK_LIBS
 fi
@@ -1326,6 +1420,10 @@ fi
 ## check if X11 typedefs KeySym
 R_TYPE_KEYSYM
 
+## check for CoreFoundation framework (chances are much higher
+## that we can build AQUA if this one is present)
+R_CHECK_FRAMEWORK(CFStringGetSystemEncoding, CoreFoundation)
+
 ## Aqua
 R_AQUA
 AM_CONDITIONAL(BUILD_AQUA, [test "x${use_aqua}" = xyes])
@@ -1351,10 +1449,10 @@ R_BZLIB
 
 ## PCRE headers and libraries.
 R_PCRE
-
+ 
 ## POSIX times.
 R_SYS_POSIX_LEAPSECONDS
-
+ 
 ## R profiling.
 if test "${want_R_profiling}" = yes; then
   AC_CHECK_FUNCS(setitimer,
@@ -1368,6 +1466,12 @@ AC_SUBST(R_PROFILING)
 if test "x${want_linux_lfs}" = xyes; then
 R_LARGE_FILES
 fi
+
+## Valgrind instrumentation
+if test ${valgrind_level} -eq 0; then
+  AC_DEFINE(NVALGRIND, 1, [Define to disable Valgrind instrumentation])
+fi
+AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1 or 2 to specify levels of Valgrind instrumentation])
 
 
 ### * Miscellaneous.
@@ -1391,6 +1495,9 @@ AC_SUBST(R_PAPERSIZE)
 
 ## Saving.
 AC_SUBST(R_BATCHSAVE)
+
+## Java support
+R_JAVA
 
 ## Make sure -L terms come first in LIBS.
 LIBS1=""
@@ -1428,7 +1535,7 @@ case "${host_os}" in
     ;;
 esac
 for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
-           ${TCLTK_LIBS} ${GNOME_LIBS}; do
+           ${TCLTK_LIBS} ${GNOME_LIBS} ${JAVA_LIBS}; do
   case "${arg}" in
     -L*)
       lib=`echo ${arg} | sed "s/^-L//"`
@@ -1455,6 +1562,7 @@ for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
   esac
 done
 ## </FIXME>
+
 AC_SUBST(R_LD_LIBRARY_PATH)
 
 ## Recommended packages.
@@ -1466,9 +1574,14 @@ AM_CONDITIONAL(USE_RECOMMENDED_PACKAGES,
 
 # i18n support.  To update to a new version of gettext, run:
 # gettextize -f -c --intl
-AM_GNU_GETTEXT_VERSION(0.14.1)
-AM_GNU_GETTEXT(, , [../extra/intl])
-
+AM_NLS
+if test "${USE_NLS}" = "yes"; then
+  AM_GNU_GETTEXT_VERSION(0.14.1)
+  AM_GNU_GETTEXT(, [need-ngettext], [../extra/intl])
+else
+  USE_INCLUDED_LIBINTL=no
+fi
+AM_CONDITIONAL(USE_NLS, [test "x${USE_NLS}" = xyes])
 
 ### * Win32 overrides
 case "${host_os}" in

@@ -32,6 +32,16 @@ else
 fi
 ])# R_ARG_USE
 
+## R_ARG_USE_SYSTEM
+## ----------------
+AC_DEFUN([R_ARG_USE_SYSTEM],
+[if test "${withval}" = no; then
+  use_system_$1=no
+else
+  use_system_$1=yes
+fi
+])# R_ARG_USE_SYSTEM
+
 ## R_SH_VAR_ADD(VARIABLE, VALUE, [SEPARATOR = " "])
 ## ------------------------------------------------
 ## Set sh variable VARIABLE to VALUE if empty (or undefined), or append
@@ -308,11 +318,23 @@ if test "${GCC}" = yes; then
   AC_LANG_POP(C)
 fi])# R_PROG_CPP_CPPFLAGS
 
+## R_PROG_CC_VERSION
+## -----------------
+## Determine the version of the C compiler (currently only for gcc).
+AC_DEFUN([R_PROG_CC_VERSION],
+[AC_REQUIRE([AC_PROG_CC])
+CC_VERSION=
+if test "${GCC}" = yes; then
+  CC_VERSION=`${CC} -v 2>&1 | grep "^.*g.. version" | \
+    sed -e 's/^.*g.. version *//'`
+fi])# R_PROG_CC_VERSION
+
 ## R_PROG_CC_M
 ## -----------
 ## Check whether we can figure out C Make dependencies.
 AC_DEFUN([R_PROG_CC_M],
-[AC_MSG_CHECKING([whether we can compute C Make dependencies])
+[AC_REQUIRE([R_PROG_CC_VERSION])
+AC_MSG_CHECKING([whether we can compute C Make dependencies])
 AC_CACHE_VAL([r_cv_prog_cc_m],
 [echo "#include <math.h>" > conftest.c
 ## No real point in using AC_LANG_* and ${ac_ext}, as we need to create
@@ -326,9 +348,7 @@ AC_CACHE_VAL([r_cv_prog_cc_m],
 ## For gcc 3.2 or better, we want to use '-MM' in case this works.
 cc_minus_MM=false
 if test "${GCC}" = yes; then
-  gcc_version=`${CC} -v 2>&1 | grep "^.*g.. version" | \
-    sed -e 's/^.*g.. version *//'`
-  case "${gcc_version}" in
+  case "${CC_VERSION}" in
     1.*|2.*|3.[[01]]*) ;;
     *) cc_minus_MM="${CC} -MM" ;;
   esac
@@ -669,32 +689,56 @@ fi
 ##
 ## If we have not been forced to use a particular Fortran compiler, try
 ## to find one using one of the several common names.  The list is based
-## on what the current autoconf CVS contains.  This says,
+## on what the current autoconf CVS contains (2005-05-21).  This says,
 ##
-## <Quote>
-## Compilers are ordered by
-##  1. F77, F90, F95
-##  2. Good/tested native compilers, bad/untested native compilers
-##  3. Wrappers around f2c go last.
+## <QUOTE>
+## Known compilers:
+##  f77/f90/f95: generic compiler names
+##  g77: GNU Fortran 77 compiler
+##  gfortran: putative GNU Fortran 95+ compiler (in progress)
+##  ftn: native Fortran 95 compiler on Cray X1
+##  cf77: native F77 compiler under older Crays (prefer over fort77)
+##  fort77: native F77 compiler under HP-UX (and some older Crays)
+##  frt: Fujitsu F77 compiler
+##  pgf77/pgf90/pghpf/pgf95: Portland Group F77/F90/F95 compilers
+##  xlf/xlf90/xlf95: IBM (AIX) F77/F90/F95 compilers
+##  lf95: Lahey-Fujitsu F95 compiler
+##  fl32: Microsoft Fortran 77 "PowerStation" compiler
+##  af77: Apogee F77 compiler for Intergraph hardware running CLIX
+##  epcf90: "Edinburgh Portable Compiler" F90
+##  fort: Compaq (now HP) Fortran 90/95 compiler for Tru64 and Linux/Alpha
+##  ifort, previously ifc: Intel Fortran 95 compiler for Linux/x86
+##  efc: Intel Fortran 95 compiler for IA64
+## </QUOTE>
 ##
-## 'fort77' and fc' are wrappers around 'f2c', 'fort77' being better.
-## It is believed that under HP-UX 'fort77' is the name of the native
-## compiler.  On some Cray systems, fort77 is a native compiler.
-## frt is the Fujitsu F77 compiler.
-## pgf77 and pgf90 are the Portland Group F77 and F90 compilers.
-## xlf/xlf90/xlf95 are IBM (AIX) F77/F90/F95 compilers.
-## lf95 is the Lahey-Fujitsu compiler.
-## fl32 is the Microsoft Fortran "PowerStation" compiler.
-## af77 is the Apogee F77 compiler for Intergraph hardware running CLIX.
-## epcf90 is the "Edinburgh Portable Compiler" F90.
-## fort is the Compaq Fortran 90 (now 95) compiler for Tru64 and
-## Linux/Alpha.
-## </Quote>
+## and uses the following lists:
+##   F95: f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn
+##   F90: f90 xlf90 pgf90 pghpf epcf90
+##   F77: g77 f77 xlf frt pgf77 cf77 fort77 fl32 af77
 ##
-## In fact, on HP-UX fort77 is the POSIX-compatible native compiler and
-## f77 is not: hence we need look for fort77 first!
+## We use basically the same, with the following exceptions:
+## * On HP-UX fort77 is the POSIX-compatible native compiler and
+##   f77 is not: hence we need look for fort77 first!
+## <FIXME>
+##   Is this still true?
+## </FIXME>
+## * It seems that g95 has been resurrected, see www.g95.org, hence we
+##   add this to the list of F95 compilers.
+## * Older versions of the Autoconf code used to have 'fc' as a wrapper
+##   around f2c (last in the list).  It no longer has, but we still do.
+## <FIXME>
+##   Is this still needed?
+## </FIXME>
+## * If the C compiler is gcc, we try looking for a matching GCC Fortran
+##   compiler (gfortran for 4.x, g77 for 3.x) first.  This should handle
+##   problems if GCC 4.x and 3.x suites are installed and, depending on
+##   the gcc default, the "wrong" GCC Fortran compiler is picked up (as
+##   reported by Bill Northcott <w.northcott@unsw.edu.au> for OSX with
+##   4.0 as default and g77 around and the "old" search order F77 F95
+##   F90 in use).
 AC_DEFUN([R_PROG_F77_OR_F2C],
 [AC_BEFORE([$0], [AC_PROG_LIBTOOL])
+AC_REQUIRE([R_PROG_CC_VERSION])
 if test -n "${F77}" && test -n "${F2C}"; then
   warn_F77_and_F2C="both 'F77' and 'F2C' given.
 Using the given Fortran 77 compiler ..."
@@ -705,16 +749,23 @@ if test -n "${F77}"; then
   AC_MSG_RESULT([defining F77 to be ${F77}])
 elif test -z "${F2C}"; then
   F77=
+  F95_compilers="f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn g95"
+  F90_compilers="f90 xlf90 pgf90 pghpf epcf90"
   case "${host_os}" in
     hpux*)
-      AC_CHECK_PROGS(F77, [g77 fort77 f77 xlf frt pgf77 fl32 af77 f90 \
-                           xlf90 pgf90 epcf90 f95 fort xlf95 lf95 g95 fc])
-      ;;
+      F77_compilers="g77 fort77 f77 xlf frt pgf77 cf77 fl32 af77" ;;
     *)
-      AC_CHECK_PROGS(F77, [g77 f77 xlf frt pgf77 fl32 af77 fort77 f90 \
-                           xlf90 pgf90 epcf90 f95 fort xlf95 lf95 g95 fc])
-      ;;
+      F77_compilers="g77 f77 xlf frt pgf77 cf77 fort77 fl32 af77" ;;
   esac
+  GCC_Fortran_compiler=
+  if test "${GCC}" = yes; then
+    case "${CC_VERSION}" in
+      3.*) GCC_Fortran_compiler=g77 ;;
+      4.*) GCC_Fortran_compiler=gfortran ;;
+    esac
+  fi
+  AC_CHECK_PROGS(F77, [ ${GCC_Fortran_compiler} ${F95_compilers} \
+                        ${F90_compilers} ${F77_compilers} fc ])
   if test -z "${F77}"; then
     AC_CHECK_PROG(F2C, f2c, f2c, [])
   fi
@@ -727,9 +778,12 @@ if test -n "${F77}"; then
   AC_PROG_F77
 elif test -z "${F2C}"; then
   AC_MSG_ERROR([Neither an F77 compiler nor f2c found])
+elif test "${GCC}" = yes; then
+  using_f2c=yes
 fi
-## record if we are using g77, so we can use -ffloat-store
+## record if we are using g77 or f2c/gcc, so we can use -ffloat-store
 AM_CONDITIONAL(USING_G77, [test "x${ac_cv_f77_compiler_gnu}" = xyes])
+AM_CONDITIONAL(USING_F2C, [test "x${using_f2c}" = xyes])
 ])# R_PROG_F77_OR_F2C
 
 ## R_PROG_F77_FLIBS
@@ -948,7 +1002,8 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
   then
-    output=`./conftest${ac_exeext} 2>&1`
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
     if test ${?} = 0; then
       r_cv_prog_f77_can_run=yes
     fi
@@ -1030,7 +1085,8 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
   then
-    output=`./conftest${ac_exeext} 2>&1`
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
     if test ${?} = 0; then
       r_cv_prog_f77_cc_compat=yes
     fi
@@ -1110,7 +1166,8 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
   then
-    output=`./conftest${ac_exeext} 2>&1`
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
     if test ${?} = 0; then
       r_cv_prog_f77_cc_compat_complex=yes
     fi
@@ -1120,14 +1177,14 @@ fi
 rm -rf conftest conftest.* conftestf.* core
 if test -n "${r_cv_prog_f77_cc_compat_complex}"; then
   AC_MSG_RESULT([yes])
-  AC_DEFINE(HAVE_DOUBLE_COMPLEX, 1,
+  AC_DEFINE(HAVE_FORTRAN_DOUBLE_COMPLEX, 1,
             [Define if C's Rcomplex and Fortran's COMPLEX*16 can be
              interchanged, and can do arithmetic on the latter.])
 else
   warn_f77_cc_double_complex="${F77} and ${CC} disagree on double complex"
   AC_MSG_WARN([${warn_f77_cc_double_complex}])
 fi
-AC_SUBST(HAVE_DOUBLE_COMPLEX)
+AC_SUBST(HAVE_FORTRAN_DOUBLE_COMPLEX)
 ])# R_PROG_F77_CC_COMPAT_COMPLEX
 
 ## R_PROG_F77_C_O_LO
@@ -1650,6 +1707,29 @@ fi
   AC_MSG_RESULT([using X11 ... ${use_X11}])
 ])# R_X11
 
+# R_CHECK_FRAMEWORK(function, framework,
+#                   [action-if-found], [action-if-not-found],
+#                   [other-libs])
+# generic check for a framework, a function should be supplied to
+# make sure the proper framework is found.
+# default action is to set have_..._fw to yes/no and to define
+# HAVE_..._FW if present
+
+AC_DEFUN([R_CHECK_FRAMEWORK],
+[r_check_fw_save_LIBS=$LIBS
+  AC_MSG_CHECKING([for $1 in $2 framework])
+  r_check_fw_$2=no
+  LIBS="-framework $2 $5 $LIBS"
+  AC_LINK_IFELSE([AC_LANG_CALL([],[$1])],
+                 [r_check_fw_$2="-framework $2"
+                 AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+  LIBS=$r_check_fw_save_LIBS
+  AS_IF([test "$r_check_fw_$2" != no],
+        [m4_default([$3], [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_$2_FW), 1, [Defined if framework $2 is present])
+	AS_TR_SH(have_$2_fw)=yes])],
+	[m4_default([$4], AS_TR_SH(have_$2_fw)=no)])
+])# R_CHECK_FRAMEWORK
+
 ## R_AQUA
 ## ------
 AC_DEFUN([R_AQUA],
@@ -1657,7 +1737,11 @@ AC_DEFUN([R_AQUA],
 if test "${want_aqua}" = yes; then
   case "${host_os}" in
     darwin*)
-      use_aqua=yes
+      ## we can build AQUA only with CoreFoundation, otherwise
+      ## Quartz device won't build
+      if test "${have_CoreFoundation_fw}" = yes; then
+        use_aqua=yes
+      fi
       ;;
   esac
 fi
@@ -2318,6 +2402,94 @@ if test "${acx_blas_ok}" = no; then
                [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
 fi
 
+## Now check if zdotu works (fails on AMD64 with the wrong compiler;
+## also fails on OS X with vecLib and gfortran; but in that case we
+## have a work-around using USE_VECLIB_G95FIX)
+if test "${acx_blas_ok}" = yes; then
+  AC_MSG_CHECKING([whether double complex BLAS can be used])
+  AC_CACHE_VAL([r_cv_zdotu_is_usable],
+  [cat > conftestf.f <<EOF
+c Goto's BLAS at least needs a XERBLA
+      subroutine xerbla(srname, info)
+      character*6 srname
+      integer info
+      end
+
+      subroutine test1(iflag)
+      double complex zx(2), ztemp, zres, zdotu
+      integer iflag
+      zx(1) = (3.1d0,1.7d0)
+      zx(2) = (1.6d0,-0.6d0)
+      zres = zdotu(2, zx, 1, zx, 1)
+      ztemp = (0.0d0,0.0d0)
+      do 10 i = 1,2
+ 10      ztemp = ztemp + zx(i)*zx(i)
+      if(abs(zres - ztemp) > 1.0d-10) then
+        iflag = 1
+      else
+        iflag = 0
+      endif
+      end
+EOF
+${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
+## Yes we need to double quote this ...
+[cat > conftest.c <<EOF
+#include <stdlib.h>
+#include "confdefs.h"
+#ifdef HAVE_F77_UNDERSCORE
+# define F77_SYMBOL(x)   x ## _
+#else
+# define F77_SYMBOL(x)   x
+#endif
+extern void F77_SYMBOL(test1)(int *iflag);
+
+int main () {
+  int iflag;
+  F77_SYMBOL(test1)(&iflag);
+  exit(iflag);
+}
+EOF]
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  ## <NOTE>
+  ## This should really use MAIN_LD, and hence come after this is
+  ## determined (and necessary additions to MAIN_LDFLAGS were made).
+  ## But it seems that we currently can always use the C compiler.
+  ## Also, to be defensive there should be a similar test with SHLIB_LD
+  ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
+  ## use ld for SHLIB_LD) ...
+  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+       conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
+       ${LIBM} ${BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
+  ## </NOTE>
+  then
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
+    if test ${?} = 0; then
+      r_cv_zdotu_is_usable=yes
+    fi
+  fi
+fi
+])
+  rm -rf conftest conftest.* conftestf.* core
+  if test -n "${r_cv_zdotu_is_usable}"; then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    if test "${have_vecLib_fw}" = "yes"; then
+      ## for vecLib we have a work-around by using cblas_..._sub
+      use_veclib_g95fix=yes
+      ## The fix may not work with internal lapack, because
+      ## the lapack dylib won't have the fixed functions.
+      ## those are available to the lapack module only.
+      #      use_lapack=yes
+      #	     with_lapack=""
+    else
+      BLAS_LIBS=
+      acx_blas_ok="no"
+    fi
+  fi
+fi
+
 LIBS="${acx_blas_save_LIBS}"
 
 AC_SUBST(BLAS_LIBS)
@@ -2445,7 +2617,7 @@ AM_CONDITIONAL(BUILD_XDR, [test "x${r_cv_xdr}" = xno])
 ## and that gzeof is in the library (which suggests the library
 ## is also recent enough).
 AC_DEFUN([R_ZLIB],
-[if test "x${use_zlib}" = xyes; then
+[if test "x${use_system_zlib}" = xyes; then
   AC_CHECK_LIB(z, gzeof, [have_zlib=yes], [have_zlib=no])
   if test "${have_zlib}" = yes; then
     AC_CHECK_HEADER(zlib.h, [have_zlib=yes], [have_zlib=no])
@@ -2516,7 +2688,7 @@ caddr_t hello() {
 ## Try finding pcre library and headers.
 ## RedHat puts the headers in /usr/include/pcre.
 AC_DEFUN([R_PCRE],
-[if test "x${use_pcre}" = xyes; then
+[if test "x${use_system_pcre}" = xyes; then
   AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
   if test "${have_pcre}" = yes; then
     AC_CHECK_HEADERS(pcre.h pcre/pcre.h)
@@ -2565,7 +2737,7 @@ AM_CONDITIONAL(BUILD_PCRE, [test "x${r_have_pcre4}" != xyes])
 ## We check that both are installed,
 ## and that BZ2_bzlibVersion is in the library.
 AC_DEFUN([R_BZLIB],
-[if test "x${use_bzlib}" = xyes; then
+[if test "x${use_system_bzlib}" = xyes; then
   AC_CHECK_LIB(bz2, BZ2_bzlibVersion, [have_bzlib=yes], [have_bzlib=no])
   if test "${have_bzlib}" = yes; then
     AC_CHECK_HEADER(bzlib.h, [have_bzlib=yes], [have_bzlib=no])
@@ -2696,7 +2868,7 @@ AC_DEFUN([R_LARGE_FILES],
       if test ${LX_MAJOR_VER} -gt 2 -o \
 	${LX_MAJOR_VER} -eq 2 -a ${LX_MINOR_VER} -ge 4; then
 	AC_MSG_RESULT([enabled])
-	CFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE $CFLAGS"
+	CFLAGS_KEEP="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE $CFLAGS_KEEP"
       else
 	AC_MSG_RESULT([disabled])
       fi
@@ -2806,21 +2978,39 @@ fi
 ## locales - support for MBCS and specifically UTF-8
 AC_DEFUN([R_MBCS],
 [
+## Wide character support -- first test for headers (which are assumed in code)
 if test "$want_mbcs_support" = yes ; then
-## Wide character support -- need to include headers in case of macros?
-AC_CHECK_HEADERS(wchar.h wctype.h)
-AC_CHECK_FUNCS(mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
-               wcswidth wctrans wcwidth)
-AC_CHECK_DECLS([wcwidth, wcswidth], , , [#include <wchar.h>])
-## can manage without wc[s]width
-for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
-               wctrans
-do
-this=`echo "ac_cv_func_$ac_func"`
-if test "x$this" = xno; then
-  want_mbcs_support=no
+  AC_CHECK_HEADERS(wchar.h wctype.h)
+  for ac_header in wchar wctype; do
+    as_ac_var=`echo "ac_cv_header_${ac_header}_h"`
+    this=`eval echo '${'$as_ac_var'}'`
+    if test "x$this" = xno; then
+      want_mbcs_support=no
+    fi
+  done
 fi
-done
+if test "$want_mbcs_support" = yes ; then
+  AC_CHECK_FUNCS(mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
+		 wcswidth wctrans wcwidth)
+  AC_CHECK_DECLS([wcwidth, wcswidth], , , [#include <wchar.h>])
+  ## can manage without wc[s]width
+  for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs wctrans
+  do
+    as_ac_var=`echo "ac_cv_func_$ac_func"`
+    this=`eval echo '${'$as_ac_var'}'`
+    if test "x$this" = xno; then
+      want_mbcs_support=no
+    fi
+  done
+fi
+## it seems IRIX has wctrans but not wctrans_t: we check this when we
+## know we have the headers and wctrans().
+if test "$want_mbcs_support" = yes ; then
+  AC_CHECK_TYPES([wctrans_t], , , [#include <wchar.h>
+       #include <wctype.h>])
+  if test $ac_cv_type_wctrans_t != yes; then
+    want_mbcs_support=no
+  fi 
 fi
 if test "x${want_mbcs_support}" = xyes; then
 AC_DEFINE(SUPPORT_UTF8, 1, [Define this to enable support for UTF-8 locales.])
@@ -2830,6 +3020,72 @@ AC_SUBST(SUPPORT_MBCS)
 fi
 ])# R_MBCS
 
+
+## R_C99_COMPLEX
+## -------------
+## C99 complex
+AC_DEFUN([R_C99_COMPLEX],
+[
+  AC_CACHE_CHECK([whether C99 double complex is supported],
+  [r_cv_c99_complex],
+[ AC_MSG_RESULT([])
+  AC_CHECK_HEADERS(complex.h)
+  r_cv_c99_complex=${ac_cv_header_complex_h}
+  if test "${r_cv_c99_complex}" = "yes"; then
+    AC_CHECK_TYPE([double complex], , r_cv_c99_complex=no, 
+                  [#include <complex.h>])
+  fi
+  if test "${r_cv_c99_complex}" = "yes"; then
+    AC_CHECK_FUNCS(cexp clog csqrt cpow ccos csin ctan cacos casin catan \
+		   ccosh csinh ctanh cacosh casinh catanh)
+    for ac_func in cexp clog csqrt cpow ccos csin ctan cacos casin catan \
+		   ccosh csinh ctanh cacosh casinh catanh
+    do
+      as_ac_var=`echo "ac_cv_func_$ac_func"`
+      this=`eval echo '${'$as_ac_var'}'`
+      if test "x$this" = xno; then
+	r_cv_c99_complex=no
+      fi
+    done
+  fi
+  dnl Now check if the representation is the same as Rcomplex
+  if test "${r_cv_c99_complex}" = "yes"; then
+  AC_MSG_CHECKING([whether C99 double complex is compatible with Rcomplex])
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <complex.h>
+#include <stdlib.h>
+typedef struct {
+        double r;
+        double i;
+} Rcomplex;
+
+void set_it(Rcomplex *z)
+{
+    z[0].r = 3.14159265;
+    z[0].i = 2.172;
+    z[1].i = 3.14159265;
+    z[1].r = 2.172;
+    z[2].r = 123.456;
+    z[2].i = 0.123456;
+}
+int main () {
+    double complex z[3];
+
+    set_it(z);
+    if(cabs(z[2] - 123.456 - 0.123456 * _Complex_I) < 1e-4) exit(0);
+    else exit(1);
+}
+]])], [r_c99_complex=yes], [r_c99_complex=no], [r_c99_complex=no])
+  AC_MSG_RESULT(${r_c99_complex})
+  r_cv_c99_complex=${r_c99_complex}
+  fi
+])
+if test "${r_cv_c99_complex}" = "yes"; then
+AC_DEFINE(HAVE_C99_COMPLEX, 1, [Define this if you have support for C99 complex types.])
+AC_SUBST(HAVE_C99_COMPLEX)
+fi
+])# R_COMPLEX
 
 ### Local variables: ***
 ### mode: outline-minor ***

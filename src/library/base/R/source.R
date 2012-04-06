@@ -8,7 +8,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
     eval.with.vis <-
 	function (expr, envir = parent.frame(),
 		  enclos = if (is.list(envir) || is.pairlist(envir))
-		  parent.frame())
+		  parent.frame() else baseenv())
 	.Internal(eval.with.vis(expr, envir, enclos))
 
     envir <- if (local) parent.frame() else .GlobalEnv
@@ -24,8 +24,9 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	cat("'envir' chosen:")
 	print(envir)
     }
+    ofile <- file # for use with chdir = TRUE
+    from_file <- FALSE
     if(is.character(file)) {
-        ofile <- file # for use with chdir = TRUE
         if(capabilities("iconv")) {
             if(identical(encoding, "unknown")) {
                 enc <- utils::localeToCharset()
@@ -51,19 +52,30 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
         else {
 	    file <- file(file, "r", encoding = encoding)
 	    on.exit(close(file))
+            from_file <- TRUE
 	}
     }
     Ne <- length(exprs <- .Internal(parse(file, n = -1, NULL, "?")))
+    if (from_file) { # we are done with the file now
+        close(file)
+        on.exit()
+    }
     if (verbose)
 	cat("--> parsed", Ne, "expressions; now eval(.)ing them:\n")
     if (Ne == 0)
 	return(invisible())
-    if (chdir && is.character(ofile)) {
-        isURL <- length(grep("^(ftp|http|file)://", ofile)) > 0
-        if(!isURL && (path <- dirname(ofile)) != ".") {
-            owd <- getwd()
-            on.exit(setwd(owd), add=TRUE)
-            setwd(path)
+    if (chdir){
+        if(is.character(ofile)) {
+            isURL <- length(grep("^(ftp|http|file)://", ofile)) > 0
+            if(isURL)
+                warning("'chdir = TRUE' makes no sense for a URL")
+            if(!isURL && (path <- dirname(ofile)) != ".") {
+                owd <- getwd()
+                on.exit(setwd(owd), add=TRUE)
+                setwd(path)
+            }
+        } else {
+            warning("'chdir = TRUE' makes no sense for a connection")
         }
     }
 
@@ -117,7 +129,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 }
 
 sys.source <-
-function(file, envir = NULL, chdir = FALSE,
+function(file, envir = baseenv(), chdir = FALSE,
 	 keep.source = getOption("keep.source.pkgs"))
 {
     if(!(is.character(file) && file.exists(file)))

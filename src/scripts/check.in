@@ -411,8 +411,14 @@ foreach my $pkg (@ARGV) {
 			copy(substr($opt_install, 6), $out);
 			$opt_install = "check";
 			@lines = &read_lines($out);
+			## <NOTE>
+			## We used to have
+			## $install_error =
+			##    ($lines[$#lines] !~ /^\* DONE/);
+			## but what if there is output from do_cleanup
+			## in (Unix) R CMD INSTALL?
 			$install_error =
-			    ($lines[$#lines] !~ /^\* DONE/);
+			    (scalar(grep(/^\* DONE/, @lines)) == 0);
 		    }
 		    else {
 			$cmd .= " >" .
@@ -439,6 +445,7 @@ foreach my $pkg (@ARGV) {
 					 ": warning: .*ISO C",
 					 "missing link\\(s\\):")) . ")";
 		    @lines = grep(/$warn_re/, @lines);
+
 		    ## Ignore install time readLines() warnings about
 		    ## files with incomplete final lines.  Most of these
 		    ## come from .install_package_indices(), and should be
@@ -446,6 +453,7 @@ foreach my $pkg (@ARGV) {
 		    $warn_re = "Warning: incomplete final line " .
 			"found by readLines";
 		    @lines = grep(!/$warn_re/, @lines);
+
 		    ## Package writers cannot really do anything about
 		    ## non ISO C code in *system* headers.  Also, GCC
 		    ## 3.4 or better warns about function pointers
@@ -461,6 +469,31 @@ foreach my $pkg (@ARGV) {
 			    "function pointer";
 			@lines = grep(!/$warn_re/, @lines);
 		    }
+
+		    ## Warnings spotted by gfortran 4.0 or better with
+		    ## -Wall.  Justified in principle, it seems.  Let's
+		    ## filter them for the time being, and maybe revert
+		    ## this lateron ... but make it possible to suppress
+		    ## filtering out by setting the internal environment
+		    ## variable _R_CHECK_WALL_FORTRAN_ to something
+		    ## "true".
+		    my $R_check_Wall_FORTRAN = 
+			&R_getenv("_R_CHECK_WALL_FORTRAN_", "FALSE");
+		    $R_check_Wall_FORTRAN =
+			&config_val_to_logical($R_check_Wall_FORTRAN);
+		    if(!$R_check_Wall_FORTRAN) {
+			my $warn_re =
+			    "(" .
+			    join("|",
+				 ("Label .* at \\(1\\) defined but not used",
+				  "Line truncated at \\(1\\)",
+				  "ASSIGN statement at \\(1\\)",
+				  "Assigned GOTO statement at \\(1\\)",
+				  "arithmetic IF statement at \\(1\\)")) .
+			    ")";
+			@lines = grep(!/$warn_re/, @lines);
+		    }
+		    
 		    if(scalar(@lines) > 0) {
 			$log->warning();
 			$log->print("Found the following " .
@@ -1118,6 +1151,34 @@ sub check_pkg {
 	}
     }
 
+    ## Check R code for possible problems using LT's codetools package
+    ## available from http://www.stat.uiowa.edu/~luke/R/codetools, and
+    ## scheduled for integration into base R eventually).
+
+    ## Activated only via setting the internal environment variable
+    ## _R_CHECK_USE_CODETOOLS_ to something "true".
+
+    my $R_check_use_codetools = 
+	&R_getenv("_R_CHECK_USE_CODETOOLS_", "FALSE");
+    $R_check_use_codetools =
+	&config_val_to_logical($R_check_use_codetools);
+
+    if($R_check_use_codetools && $opt_install && (-d "R")) {
+	$log->checking("R code for possible problems");
+
+	my $Rcmd = "tools:::.check_code_usage_in_package(package = \"${pkgname}\")\n";
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+                         "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
+	}
+	else {
+	    $log->result("OK");
+	}
+    }
+
     ## Check R documentation files.
 
     my @msg_writing_Rd
@@ -1257,7 +1318,9 @@ sub check_pkg {
 	my @msg_doc_files =
 	  ("Functions with \\usage entries",
 	   "need to have the appropriate \\alias entries,",
-	   "and all their arguments documented.\n");
+	   "and all their arguments documented.\n",
+	   "The \\usage entries must correspond to syntactically",
+	   "valid R code.\n");
 
 	my $Rcmd = "options(warn=1)\n";
 	if($opt_install) {
@@ -1377,8 +1440,8 @@ sub check_pkg {
 		join(" ",
 		     (&shell_quote_file_path(${R::Vars::R_EXE}),
 		      "CMD perl",
-		      &shell_quote_file_path(&file_path(${R::Vars::R_HOME},
-							"share", "perl",
+		      &shell_quote_file_path(&file_path(${R::Vars::R_SHARE_DIR},
+							"perl",
 							"massage-Examples.pl")),
 		      "${pkgname}",
 		      &shell_quote_file_path(${Rexdir}),
@@ -1487,11 +1550,10 @@ sub check_pkg {
 	    copy($file, basename($file));
 	}
         my $makefiles = "-f " .
-	    &shell_quote_file_path(&file_path(${R::Vars::R_HOME},
-					      "share", "make",
-					      "tests.mk"));
+	    &shell_quote_file_path(&file_path(${R::Vars::R_SHARE_DIR},
+					      "make", "tests.mk"));
         if($WINDOWS) {
-            $makefiles = "-f ${R::Vars::R_HOME}/share/make/wintests.mk";}
+            $makefiles = "-f ${R::Vars::R_SHARE_DIR}/make/wintests.mk";}
         my $makevars = "";
         if($WINDOWS && (-r "$testsrcdir/Makefile.win")) {
             $makefiles .= " -f $testsrcdir/Makefile.win";
@@ -1570,7 +1632,7 @@ sub check_pkg {
 	}
 
 	## Can we run the code in the vignettes?
-	if($opt_vignettes) {
+	if($opt_install && $opt_vignettes) {
 	    ## Should checking the vignettes assume the system default
 	    ## packages, or just base?
 	    my $Rcmd = "options(warn=1)\nlibrary(tools)\n";
@@ -1607,7 +1669,7 @@ sub check_pkg {
         my $latex_dir = &file_path($library, $pkgname, "latex");
 	if(-d $latex_dir) {
 	    $ENV{'TEXINPUTS'} =
-	      env_path(&file_path($R::Vars::R_HOME, "share", "texmf"),
+	      env_path(&file_path($R::Vars::R_SHARE_DIR, "texmf"),
 		       $ENV{'TEXINPUTS'});
             my $is_zipped = 0;
             # latex files might have been zipped
@@ -1627,12 +1689,31 @@ sub check_pkg {
                 }
             }
 	    $log->creating("${pkgname}-manual.tex");
+	    my @tex_files = &list_files_with_exts($latex_dir, "tex");
+	    my %encodings;
+	    foreach my $file (@tex_files) {
+		open(FILE, "< $file")
+		  or die("Error: cannot open file '$file' for reading\n");
+		while(<FILE>) {
+		    if (/^\\inputencoding/) {
+			$enc = $_;
+			chomp $enc;
+			$enc =~ s/^\\inputencoding{(.*)}/\1/;
+			$encodings{$enc} = $enc;
+		    }
+		}
+		close(FILE);
+	    }
+	    my $encs = "";
+	    if (scalar(%encodings)) {
+		$encs = "\\usepackage[" . join(",", values %encodings) .
+		    "]{inputenc}";
+	    }
 	    open(MANUAL, "> ${pkgname}-manual.tex")
 	      or die("Error: cannot open file '${pkgname}-manual.tex'" .
 		     "for writing\n");
-	    print MANUAL "\\documentclass\{article\}\n" .
-	      "\\usepackage[ae,hyper]\{Rd\}\n\\begin\{document\}\n";
-	    my @tex_files = &list_files_with_exts($latex_dir, "tex");
+	    print MANUAL "\\documentclass\{article\}\n" . $encs .
+		"\\usepackage[ae,hyper]\{Rd\}\n\\begin\{document\}\n";
 	    foreach my $file (@tex_files) {
 		open(FILE, "< $file")
 		  or die("Error: cannot open file '$file' for reading\n");
@@ -1657,6 +1738,26 @@ sub check_pkg {
                 ## We could also write stdout to a tempfile and replay
                 ## this in case of problems.  But does this really help?
 		my $cmd = "${R::Vars::LATEX}";
+		if($WINDOWS) {
+		    ## check if we have MiKTeX and call latex accordingly
+		    ## (can't do this in R::Vars::LATEX as we need R::Utils.)
+		    my $Rout = R_tempfile("Rlatex");
+		    my $cmd2 = "$cmd --version > ${Rout}";
+		    R_system($cmd2);
+		    my $is_miktex = 0;
+		    open ROUT, "< $Rout";
+		    while (<ROUT>) {
+			chomp;
+			$is_miktex = 1 if /^MiKTeX/;
+		    }
+		    close ROUT;
+		    unlink($Rout);
+		    $out =~ s/\w//;
+		    if($is_miktex) {
+			my $R_HOME = $ENV{"R_HOME"};
+			$cmd .= " --include-directory=$R_HOME/share/texmf";
+		    }
+		}
 		$cmd .= " '\\nonstopmode{}\\input{${pkgname}-manual.tex}'";
 		$cmd .= " >/dev/null 2>&1";
 		## </NOTE>
@@ -1664,6 +1765,22 @@ sub check_pkg {
 		    $log->error();
 		    $log->print("LaTeX errors when creating DVI version.\n");
 		    $log->print("This typically indicates Rd problems.\n");
+		    ## If possible, indicate the problems found.
+		    ## GNU grep rather usefully has a '-A' option for
+		    ## controlling the number of lines of trailing
+		    ## context after matching lines (not POSIX; maybe
+		    ## sed could do this?).  Not sure how to do this in
+		    ## Perl.  For the time being, try 'grep -A', and
+		    ## give no additional info if this fails.
+		    my $out = R_tempfile("gout");
+		    my $cmd = "grep -A4 '^!' ${pkgname}-manual.log";
+		    $cmd .= " > ${out} 2>/dev/null";
+		    if(!R_system($cmd)) {
+			$log->print("LaTeX errors found:\n\n");
+			$log->print(join("\n", &read_lines("${out}")) .
+				    "\n");
+		    }
+		    unlink($out);
 		    exit(1);
 		}
 		$log->result("OK");

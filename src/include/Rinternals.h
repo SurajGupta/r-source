@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2004   The R Development Core Team.
+ *  Copyright (C) 1999-2005   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _R_INTERNALS_H_
-#define _R_INTERNALS_H_
+#ifndef R_INTERNALS_H_
+#define R_INTERNALS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,7 +102,7 @@ typedef unsigned int SEXPTYPE;
 #define WEAKREFSXP  23    /* weak reference */
 #define RAWSXP      24    /* raw bytes */
 
-#define FUNSXP      99    /* Closure or Builtin */
+#define FUNSXP      99    /* Closure or Builtin or Special */
 
 
 #else /* NOT YET */
@@ -384,6 +384,7 @@ typedef int PROTECT_INDEX;
 /* Evaluation Environment */
 LibExtern SEXP	R_GlobalEnv;	    /* The "global" environment */
 
+LibExtern SEXP  R_BaseEnv;	    /* The base environment; currently R_NilValue */
 LibExtern SEXP	R_BaseNamespace;    /* The (fake) name space for base */
 LibExtern SEXP	R_NamespaceRegistry;/* Registry for registerd name spaces */
 
@@ -1050,4 +1051,4 @@ int R_system(char *);
 }
 #endif
 
-#endif /* _R_INTERNALS_H_ */
+#endif /* R_INTERNALS_H_ */

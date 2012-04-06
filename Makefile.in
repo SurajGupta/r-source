@@ -10,14 +10,13 @@ top_builddir = .
 include $(top_builddir)/Makeconf
 
 distdir = $(PACKAGE)-$(VERSION)
-INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS NEWS ONEWS THANKS
-NON_SVN_INSTFILES = FAQ RESOURCES
+INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS NEWS THANKS
+NON_SVN_INSTFILES = FAQ RESOURCES SVN-REVISION
 DISTFILES = $(INSTFILES) \
-	ChangeLog INSTALL OONEWS README VERSION Y2K \
+	ChangeLog INSTALL ONEWS OONEWS README VERSION Y2K \
 	Makeconf.in Makefile.in \
-	config.site configure configure.ac \
-	date-stamp
-SUBDIRS = m4 tools doc etc share src po tests
+	config.site configure configure.ac
+SUBDIRS = m4 tools doc etc share src tests @USE_NLS_TRUE@ po
 SUBDIRS_WITH_NO_BUILD = debian
 
 all: Makefile Makeconf R docs recommended
@@ -34,6 +33,7 @@ ACINCLUDE_DEPENDENCIES = \
 	m4/clibs.m4 \
 	m4/codeset.m4 \
 	m4/gettext.m4 \
+	m4/java.m4 \
 	m4/libtool.m4
 CONFIGURE_DEPENDENCIES = $(srcdir)/VERSION
 config.status: $(srcdir)/configure
@@ -85,9 +85,9 @@ install: installdirs svnonly
 	  $(INSTALL_DATA) $${f} "$(rhome)"; \
 	done
 @WANT_R_FRAMEWORK_TRUE@		$(MAKE) install-R-framework
-@WANT_R_FRAMEWORK_TRUE@		@(sed 's/^LIBR =.*/LIBR = -framework R/' \
+@WANT_R_FRAMEWORK_TRUE@		@(sed 's|^LIBR =.*|LIBR = -F$(R_FRAMEWORK_DIR)/.. -framework R|' \
 @WANT_R_FRAMEWORK_TRUE@		  $(top_builddir)/etc/Makeconf > "$(rhome)/etc/Makeconf")
-@WANT_R_FRAMEWORK_TRUE@		@(sed 's/Versions\/$(VERSION)\/Resources/Resources/' \
+@WANT_R_FRAMEWORK_TRUE@		@(sed 's/Versions\/$(FW_VERSION)\/Resources/Resources/' \
 @WANT_R_FRAMEWORK_TRUE@		  $(R_FRAMEWORK_DIR)/Resources/bin/R > \
 @WANT_R_FRAMEWORK_TRUE@		  $(R_FRAMEWORK_DIR)/Resources/bin/RR)
 @WANT_R_FRAMEWORK_TRUE@		@(mv $(R_FRAMEWORK_DIR)/Resources/bin/RR $(R_FRAMEWORK_DIR)/Resources/bin/R)
@@ -96,8 +96,21 @@ install: installdirs svnonly
 
 svnonly:
 	@if test ! -f "$(srcdir)/FAQ" || test -f non-tarball ; then \
-	  cd doc/manual && $(MAKE) front-matter ; \
+	  (cd doc/manual && $(MAKE) front-matter) ; \
 	  touch non-tarball ; \
+	  (cd $(srcdir); LC_ALL=C TZ=GMT svn info || echo "Revision: unknown") 2> /dev/null \
+	    | sed -n -e '/^Revision/p' -e '/^Last Changed Date/'p \
+	    |  cut -d' ' -f1,2,3,4 > SVN-REVISION-tmp ; \
+	  if grep unknown SVN-REVISION-tmp > /dev/null ; then \
+	    echo "Last Changed Date: Today" >> SVN-REVISION-tmp ; \
+	    if test -f "$(srcdir)/.svn/entries" ; then \
+	      rev=`grep committed-rev "$(srcdir)/.svn/entries" | head -1 | sed -e 's/^ *committed-rev=\"//' -e 's/\"//'`; \
+	      cdate=`grep committed-date "$(srcdir)/.svn/entries" | head -1 | sed -e 's/^ *committed-date=\"//' -e 's/T.*//'`; \
+	      sed -e "s/unknown/$${rev}/" -e "s/Today/$${cdate}/" SVN-REVISION-tmp > SVN-REVISION-tmp2; mv SVN-REVISION-tmp2 SVN-REVISION-tmp ; \
+	    fi ; \
+	  fi ; \
+	  $(top_srcdir)/tools/move-if-change SVN-REVISION-tmp SVN-REVISION ; \
+	  rm -f SVN-REVISION-tmp ; \
 	else \
 	  if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	    for f in $(NON_SVN_INSTFILES); do \
@@ -105,6 +118,13 @@ svnonly:
 	    done \
 	  fi \
 	fi
+
+libR_la = lib/libR$(DYLIB_EXT)
+install-libR:
+	@if test -f $(libR_la); then $(MAKE) install-libR-exists; fi
+install-libR-exists:
+	@$(MKINSTALLDIRS) "${libdir}"
+	@$(INSTALL_DATA) -m755 $(libR_la) "${libdir}"
 
 installdirs:
 	@$(MKINSTALLDIRS) "$(rhome)"
@@ -119,6 +139,7 @@ uninstall:
 	@rm -rf "$(Rexecbindir)" "$(Rexeclibdir)"
 	@rmdir "$(rhome)" 2>/dev/null \
           || echo "  dir $(rhome) not removed"
+	@rm -f "${libdir}/libR$(DYLIB_EXT)"
 
 mostlyclean: clean
 clean:
@@ -165,7 +186,7 @@ distdir: $(DISTFILES) vignettes
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for f in $(NON_SVN_INSTFILES); do \
+	@for f in $(NON_SVN_INSTFILES) ; do \
 	  cp -p $${f} $(distdir)/$${f}; \
 	done
 	@for d in $(SUBDIRS); do \
@@ -199,25 +220,28 @@ reset-recommended:
 	@(cd src/library/Recommended && $(MAKE) clean)
 
 install-R-framework:
-	@(cd "$(R_FRAMEWORK_DIR)/Versions/$(VERSION)" && \
+	@(cd "$(R_FRAMEWORK_DIR)/Versions/$(FW_VERSION)" && \
 	  ln -f -s -n Resources/include Headers && \
 	  ln -f -s -n Resources/lib/libR.dylib R && \
 	  test -d "Resources/bin/Frameworks" || mkdir -p "Resources/bin/Frameworks" && \
 	  cd Resources/bin/exec && \
 	  ln -f -s -n ../Frameworks Frameworks)
 	@(cd "$(R_FRAMEWORK_DIR)/Versions" && \
-	  ln -f -s -n $(VERSION) Current)
+	  ln -f -s -n $(FW_VERSION) Current)
 	@(cd "$(R_FRAMEWORK_DIR)"  && \
 	  ln -f -s -n Versions/Current/PrivateHeaders PrivateHeaders&& \
 	  ln -f -s -n Versions/Current/Headers Headers&& \
 	  ln -f -s -n Versions/Current/R R && \
 	  ln -f -s -n Versions/Current/Resources Resources)
 	@(cd "$(R_FRAMEWORK_DIR)/Resources/lib" && \
-	  install_name_tool -id "$(R_FRAMEWORK_DIR)/Versions/$(VERSION)/Resources/lib/libR.dylib" ../lib/libR.dylib)
-	@(cp -R $(srcdir)/src/include $(R_FRAMEWORK_DIR)/Versions/Current/PrivateHeaders)
-	@(install_name_tool -change libR.dylib "$(R_FRAMEWORK_DIR)/Versions/$(VERSION)/Resources/lib/libR.dylib" \
-	  $(R_FRAMEWORK_DIR)/Resources/bin/exec/R)
+	  install_name_tool -id "$(R_FRAMEWORK_DIR)/Versions/$(FW_VERSION)/Resources/lib/libR.dylib" ../lib/libR.dylib)
+	@(cp -R $(srcdir)/src/include $(R_FRAMEWORK_DIR)/Versions/Current/PrivateHeaders && \
+	  find $(R_FRAMEWORK_DIR)/Versions/Current/PrivateHeaders -name .svn | xargs rm -rf)
+
+	@(install_name_tool -change libR.dylib \
+	    "$(R_FRAMEWORK_DIR)/Versions/$(FW_VERSION)/Resources/lib/libR.dylib" \
+	    $(R_FRAMEWORK_DIR)/Resources/bin/exec/R)
 	@(find "$(R_FRAMEWORK_DIR)/Resources/" -name '*.so' -exec install_name_tool \
-	  -change libR.dylib "$(R_FRAMEWORK_DIR)/Versions/$(VERSION)/Resources/lib/libR.dylib" \{\} \;)
+	  -change libR.dylib "$(R_FRAMEWORK_DIR)/Versions/$(FW_VERSION)/Resources/lib/libR.dylib" \{\} \;)
 
 TAGS:

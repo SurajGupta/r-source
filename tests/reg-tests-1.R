@@ -184,16 +184,6 @@ colnames(m0, do.NULL = FALSE)
 ## end of moved from colnames.Rd
 
 
-## complex
-z <- 0i ^ (-3:3)
-stopifnot(Re(z) == 0 ^ (-3:3))
-set.seed(123)
-z <- complex(real = rnorm(100), imag = rnorm(100))
-stopifnot(Mod ( 1 -  sin(z) / ( (exp(1i*z)-exp(-1i*z))/(2*1i) ))
-	  < 20 * .Machine$double.eps)
-## end of moved from complex.Rd
-
-
 ## Constants
 stopifnot(
  nchar(letters) == 1,
@@ -748,61 +738,6 @@ str(s <- svd(X)); D <- diag(s$d)
 stopifnot(abs(X - s$u %*% D %*% t(s$v)) < Eps)#	 X = U D V'
 stopifnot(abs(D - t(s$u) %*% X %*% s$v) < Eps)#	 D = U' X V
 ## end of moved from svd.Rd
-
-hasMethods <- .isMethodsDispatchOn() ## (for setting back)
-## was at end, as package `methods' once had persistent side effects
-stopifnot(require(methods))
-stopifnot(all.equal(3:3, 3.), all.equal(1., 1:1))
-
-## trace (requiring methods):
-f <- function(x, y) { c(x,y)}
-xy <- 0
-
-trace(f, quote(x <- c(1, x)), exit = quote(xy <<- x), print = FALSE)
-
-fxy <- f(2,3)
-
-stopifnot(identical(fxy, c(1,2,3)))
-stopifnot(identical(xy, c(1,2)))
-
-untrace(f)
-
-## a generic and its methods
-
-setGeneric("f")
-
-setMethod("f", c("character", "character"), function(x,	 y) paste(x,y))
-
-## trace the generic
-trace("f", quote(x <- c("A", x)), exit = quote(xy <<- c(x, "Z")), print = FALSE)
-
-## should work for any method
-
-stopifnot(identical(f(4,5), c("A",4,5)))
-stopifnot(identical(xy, c("A", 4, "Z")))
-
-stopifnot(identical(f("B", "C"), paste(c("A","B"), "C")))
-stopifnot(identical(xy, c("A", "B", "Z")))
-
-## trace a method
-
-trace("f", sig = c("character", "character"), quote(x <- c(x, "D")),
-      exit = quote(xy <<- xyy <<- c(x, "W")), print = FALSE)
-
-stopifnot(identical(f("B", "C"), paste(c("A","B","D"), "C")))
-# These two got broken by Luke's lexical scoping fix
-#stopifnot(identical(xy, c("A", "B", "D", "W")))
-#stopifnot(identical(xy, xyy))
-
-## but the default method is unchanged
-
-stopifnot(identical(f(4,5), c("A",4,5)))
-stopifnot(identical(xy, c("A", 4, "Z")))
-
-removeGeneric("f")
-
-if(!hasMethods) detach("package:methods")
-## end of moved from trace.Rd
 
 
 ## Trig
@@ -2766,13 +2701,6 @@ stopifnot(ir == c(1, 3, -1),
 ## (*, fixed=TRUE) gave 0 2 -1 before R 1.8.1
 
 
-##-- S4 classes with S3 slots:
-setClass("test1", representation(date="POSIXct"))
-(x <- new("test1", date=as.POSIXct("2003-10-09")))
-stopifnot(format(x @ date) == "2003-10-09")
-## line 2 failed in 1.8.0 because of an extraneous space in "%in%"
-
-
 ## PR#5017: filter(init=) had the wrong time order
 xx <- filter(4:8, c(1, 0.5, 0.25), method="recursive", init=3:1)
 stopifnot(identical(xx[1:3], c(8.25, 15.25, 26.125)))
@@ -3600,11 +3528,6 @@ colSums(x); rowSums(x)
 ## not allowed in 2.0.1
 
 
-## PR#7781
-stopifnot(is.finite(tan(1+1000i)))
-##
-
-
 ## infinite recursion in 2.0.1 (and R-beta 2005-04-11):
 summary(data.frame(mat = I(matrix(1:8, 2))))
 summary(data.frame(x = gl(2,2), I(matrix(1:8, 4))))
@@ -3627,9 +3550,11 @@ as.data.frame(FUN(x1[1:3,,], x2 = c("a", "b"),
                   x3 = c("a", "b"), x4 = c("a", "b")))
 ## failed in 2.1.0
 
+
 ## PR#7797 citation() chops "Roeland "
 stopifnot(as.personList("Roeland Lastname")[[1]]$name[1] == "Roeland")
 ## was empty in 2.1.0.
+
 
 ## runmed()'s Turlach algorithm seg.faulted in rare cases:
 t2 <- c(-2,-7,5,2,-3, 0,1,3,2,-1,2,1,2,1,1,1,-2,4, 1,1,1, 32)
@@ -3638,11 +3563,13 @@ rT <- runmed(t2, k=21, algorithm= "Turlach")
 stopifnot(identical(rS, rT))
 ## seg.fault in 2.1.0
 
+
 ## duplicated and unique on a list
 x <- list(1, 2, 3, 2)
 duplicated(x)
 unique(x)
 ## unique failed in 2.1.0
+
 
 ## prog.aovlist on data with row.names
 N <- c(0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,1,1,0,0)
@@ -3657,6 +3584,7 @@ npk.aovE <- aov(yield ~  N*P*K + Error(block), npk)
 pr <- proj(npk.aovE)
 ## failed in 2.1.0
 
+
 ## PR#7894: Reversing axis in a log plot
 x <- 1:3
 plot(x, exp(x), log = "y", ylim = c(30,1))
@@ -3664,3 +3592,208 @@ plot(x, exp(x), log = "y", ylim = c(30,1))
 
 ### end of tests added in 2.1.0 patched ###
 
+
+## Multibyte character set regular expressions had buffer overrun
+regexpr("[a-z]", NA)
+## crashed on 2.1.1 on Windows in MBCS build.
+
+
+## PR#8033: density with 'Inf' in x:
+d <- density(1/0:2, kern = "rect", bw=1, from=0, to=1, n=2)
+stopifnot(all.equal(rep(1/sqrt(27), 2), d$y, tol=1e-14))
+## failed in R 2.1.1 (since about 1.9.0)
+
+stopifnot(all.equal(Arg(-1), pi))
+## failed in R <= 2.1.1
+
+
+## PR#7973: reversed log-scaled axis
+plot(1:100, log="y", ylim=c(100,10))
+stopifnot(axTicks(2) == 10*c(1,2,5,10))
+## empty < 2.2.0
+
+
+## rounding errors in window.default (reported by Stefano Iacus)
+x <- ts(rnorm(50001), start=0, deltat=0.1)
+length(window(x, deltat=0.4))
+length(window(x, deltat=1))
+length(window(x, deltat=4.9))
+length(window(x, deltat=5))
+## last failed in 2.1.1
+
+
+## incorrect sort in order with na.last != NA
+x <- c("5","6",NA,"4",NA)
+y <- x[order(x,na.last=FALSE)]
+stopifnot(identical(y, c(NA, NA, "4", "5", "6")))
+## 2.1.1 sorted "4" first: the fence was wrong.
+
+
+## integer overflow in cor.test (PR#8087)
+n <- 46341
+(z <- cor.test(runif(n), runif(n), method = "spearman"))
+stopifnot(!is.na(z$p.value))
+##
+
+## seek on a file messed up in Windows (PR#7896)
+tf <- tempfile()
+f <- file(tf, "w+b")
+writeChar("abcdefghijklmnopqrstuvwxyz", f, eos=NULL)
+seek(f, 0, "end", rw="r")
+stopifnot(seek(f, NA, rw="r") == 26) # MinGW messed up seek to end of file that was open for writing
+close(f)
+f <- file(tf, "rb")
+seek(f, 12)
+stopifnot(readChar(f, 1) == "m")  # First patch messed up on read-only files
+close(f)
+unlink(tf)
+##
+
+### end of tests added in 2.1.1 patched ###
+
+
+
+## tests of hexadecimal constants
+x <- 0xAbc
+stopifnot(x == 2748)
+xx <- as.integer("0xAbc")
+stopifnot(x == xx)
+xx <- as.numeric("0xAbc")
+stopifnot(x == xx)
+stopifnot(as.integer("13.7") == 13)
+## new in 2.2.0
+
+
+## save() of raw vector was incorrect on big-endian system
+(y <- x <- charToRaw("12345"))
+save(x, file="x.Rda")
+rm(x)
+load("x.Rda")
+x
+stopifnot(identical(x, y))
+unlink("x.Rda")
+## 00 00 00 00 00 in 2.1.0 on MacOS X
+## fixed for 2.1.1, but test added only in 2.2.x
+
+
+## PR#7922:  Could not use expression() as an initial expression value
+setClass("test2", representation(bar = "expression"))
+new("test2", bar = expression())
+## failed
+
+
+## Ops.data.frame had the default check.names=TRUE
+DF <- data.frame("100"=1:2, "200"=3:4, check.names=FALSE)
+DF/DF
+stopifnot(identical(names(DF), names(DF/DF)))
+## DF/DF names had X prepended < 2.2.0
+
+
+## sum(T) was double
+x <- 1:10
+stopifnot(typeof(sum(x)) == "integer")
+x <- c(TRUE, FALSE)
+stopifnot(typeof(sum(x)) == "integer")
+## double < 2.2.0
+
+
+## Overflow in PrintGenericVector
+x <- paste(1:5000, collapse="+")
+as.matrix(list(a=1:2, b=2:3, c=x))
+## segfault in 2.1.1, silent truncation in 2.1.1 patched
+
+
+## weighted.residuals for glm fits (PR#7961)
+set.seed(1)
+x <- runif(10)
+y <- x + rnorm(10)
+w <- 0:9
+r1 <- weighted.residuals(lm(y ~ x, weights = w))
+r2 <- weighted.residuals(glm(y ~ x, weights = w))
+stopifnot(all.equal(r1, r2))
+## different in 2.1.1
+
+
+## errors in add1.{lm,glm} when adding vars with missing values(PR#8049)
+set.seed(2)
+y <- rnorm(10)
+x <- 1:10
+is.na(x[9]) <- TRUE
+
+lm0 <- lm(y ~ 1)
+lm1 <- lm(y ~ 1, weights = rep(1, 10))
+
+add1(lm0, scope = ~ x)
+add1(lm1, scope = ~ x)  ## error in 2.1.1
+
+glm0 <- glm(y ~ 1)
+glm1 <- glm(y ~ 1, weights = rep(1, 10))
+glm2 <- glm(y ~ 1, offset = rep(0, 10))
+
+add1(glm0, scope = ~ x)  ## error in 2.1.1
+add1(glm1, scope = ~ x)  ## error in 2.1.1
+add1(glm2, scope = ~ x)  ## error in 2.1.1
+##
+
+
+## levels<-.factor dropped other attributes.
+## Heinz Tuechler, R-help, 2005-07-18
+f1 <- factor(c("level c", "level b", "level a", "level c"), ordered=TRUE)
+attr(f1, "testattribute") <- "teststring"
+(old <- attributes(f1))
+levels(f1) <- c("L-A", "L-B", "L-C")
+f1
+(new <- attributes(f1))
+new$levels <- old$levels <- NULL
+stopifnot(identical(old, new))
+f2 <- factor(letters[1:4])
+levels(f2) <- as.character(c(1:3, NA))
+f2
+stopifnot(nlevels(f2) == 3)
+## dropped other attributes < 2.2.0.
+
+
+## regressed at one point in pre-2.2.0
+A <- matrix(pi, 0, 2)
+stopifnot(identical(dim(A), dim(format(A))))
+## dropped dim at one point
+
+
+## ls.diag with missing values (PR#8139)
+x <- matrix(c(1,-1,1,-1,1,-1,1,-1,1,-1,  1,2,3,4,5,6,7,8,9,10), 10, 2)
+y <- as.matrix(c(1,2,3,NA,3,4,3,4,5,4))
+wt <- c(1,1,1,1,1,1,1,1,1,0)
+regres <- lsfit(x, y, wt=wt)
+regdiag <- ls.diag(regres)
+## failed < 2.2.0.
+
+
+## window.default had an inappropriate tolerance
+a <- ts(1:5000, start = 0, freq = 10)
+b <- lag(a, 1)
+bb <- window(b, start = 0)
+stopifnot(length(bb) == length(a) - 1)
+## was length(a) - 2 in 2.1.1, since the tolerance was abs(start) * ts.end
+
+
+## subassignment of length zero vector to NULL gave garbage answer (PR#8157)
+x <- NULL
+x[[1]] <- numeric(0)
+stopifnot(length(x[[1]]) == 0)
+## failed < 2.2.0
+
+
+## some checks for raw in data frames and lists
+x <- charToRaw("test")
+(z <- data.frame(x))
+z$y <- x
+z[["y2"]] <- x
+z["y3"] <- x
+z
+## lists use separate code
+z <- list(x=x)
+z$y <- x
+z[["y2"]] <- x
+z["y3"] <- list(x)
+z
+## Not completely supported prior to 2.2.0

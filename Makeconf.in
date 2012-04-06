@@ -43,11 +43,16 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DIR = ${INSTALL} -d
 JAVAC = @JAVAC@
+JAVA_HOME = @JAVA_HOME@
+JAVA_PROG = @JAVA_PROG@
+JAVA_LD_PATH = @JAVA_LD_PATH@
+JAVA_LIBS = @JAVA_LIBS@
 LATEX = @LATEX@
 LDFLAGS = @LDFLAGS@
 LIBM = @LIBM@
 LIBR = @LIBR@
 LIBS = @LIBS@
+LIBnn = @LIBnn@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 MAIN_CFLAGS = @MAIN_CFLAGS@
@@ -102,16 +107,25 @@ ALL_FFLAGS_LO = $(R_XTRA_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAGS)
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+## only used for installing 'R'.
 bindir = @bindir@
+## not used
 datadir = @datadir@
+## used for 'rhome' and installation of standalone Rmath
 libdir = @libdir@
+## used for man page
 mandir = @mandir@
+## used for installation of standalone Rmath headers
 includedir = @includedir@
 
-rhome = @libdir@/R
+rhome = ${libdir}/R
+rsharedir = @rsharedir@
+rincludedir = @rincludedir@
+rdocdir = @rdocdir@
 
-## Overrides for installing R as a framework (MacOSX).
-@WANT_R_FRAMEWORK_TRUE@rhome = $(R_FRAMEWORK_DIR)/Versions/$(VERSION)/Resources
+## Overrides for installing R as a framework (MacOS X).
+@WANT_R_FRAMEWORK_TRUE@FW_VERSION = @FW_VERSION@
+@WANT_R_FRAMEWORK_TRUE@rhome = $(R_FRAMEWORK_DIR)/Versions/$(FW_VERSION)/Resources
 @WANT_R_FRAMEWORK_TRUE@bindir = $(rhome)
 @WANT_R_FRAMEWORK_TRUE@mandir = $(rhome)
 

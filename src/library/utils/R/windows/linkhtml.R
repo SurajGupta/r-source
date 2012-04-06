@@ -1,6 +1,6 @@
 link.html.help <- function(verbose=FALSE, lib.loc=.libPaths())
 {
-    if(!file.exists(file.path(R.home(), "doc", "html", "search")))
+    if(!file.exists(file.path(R.home("doc"), "html", "search")))
        return(invisible(NULL))
     if(verbose) {
         cat(gettext("updating HTML package descriptions\n"))
@@ -13,8 +13,8 @@ link.html.help <- function(verbose=FALSE, lib.loc=.libPaths())
 
 make.packages.html <- function(lib.loc=.libPaths())
 {
-    f.tg <- file.path(R.home(), "doc/html/packages.html")
-    f.hd <- file.path(R.home(), "doc/html/packages-head.html")
+    f.tg <- file.path(R.home("doc"), "html", "packages.html")
+    f.hd <- file.path(R.home("doc"), "html", "packages-head-utf8.html")
     if(!file.create(f.tg)) {
         warning("cannot update HTML package index")
         return(FALSE)
@@ -30,7 +30,7 @@ make.packages.html <- function(lib.loc=.libPaths())
             libname <- chartr("/", "\\", lib)
             lib0 <- if(substring(lib, 2, 2) != ":")
                 paste(drive, lib, sep="") else lib
-            lib0 <- paste("file:///", lib0, sep="")
+            lib0 <- paste("file:///", URLencode(lib0), sep="")
         } else {
             lib0 <- "../../library"
             libname <- "the standard library"
@@ -43,7 +43,8 @@ make.packages.html <- function(lib.loc=.libPaths())
         cat("<p>\n<table width=\"100%\" summary=\"R Package list\">\n",
             file = out)
         for (i in  pg) {
-            title <- packageDescription(i, fields="Title", lib.loc = lib)[1]
+            title <- packageDescription(i, lib.loc = lib, field = "Title",
+                                        encoding = "UTF-8")
             if (is.na(title)) title <- "-- Title is missing --"
             cat('<tr align="left" valign="top">\n',
                 '<td width="25%"><a href="', lib0, '/', i,
@@ -59,7 +60,7 @@ make.packages.html <- function(lib.loc=.libPaths())
 
 make.search.html <- function(lib.loc=.libPaths())
 {
-    f.tg <- file.path(R.home(), "doc/html/search/index.txt")
+    f.tg <- file.path(R.home("doc"), "html", "search", "index.txt")
     if(file.access(f.tg, mode=2) == -1) {
         warning("cannot update HTML search index")
         return()
@@ -78,7 +79,7 @@ make.search.html <- function(lib.loc=.libPaths())
         if(is.na(pmatch(rh, lib))) {
             lib0 <- if(substring(lib, 2, 2) != ":") paste(drive, lib, sep="")
             else lib
-            lib0 <- paste("URL: file:///", lib0, sep="")
+            lib0 <- paste("URL: file:///", URLencode(lib0), sep="")
             sed.it <- TRUE
         } else {
             sed.it <- FALSE
@@ -91,8 +92,9 @@ make.search.html <- function(lib.loc=.libPaths())
                           fixed = TRUE, useBytes = TRUE)
             if(length(isURL) && sed.it)
                 contents[isURL] <- gsub("URL: ../../../library", lib0,
-                                        contents[isURL], fixed = TRUE)
-            writeLines(c(contents, ""), out)
+                                        contents[isURL],
+                                        fixed = TRUE, useBytes = TRUE)
+            writeLines(c(contents, ""), out) # space between packages
         }
     }
     close(out)

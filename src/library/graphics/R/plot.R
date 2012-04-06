@@ -1,98 +1,4 @@
-## NOTE that xyz.coords() in ./xyz.coords.R  should be kept in sync!
-##
-xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
-{
-    if(is.null(y)) {
-	ylab <- xlab
-	if(is.language(x)) {
-	    if (inherits(x, "formula") && length(x) == 3) {
-		ylab <- deparse(x[[2]])
-		xlab <- deparse(x[[3]])
-		y <- eval(x[[2]], environment(x), parent.frame())
-		x <- eval(x[[3]], environment(x), parent.frame())
-	    }
-	    else stop("invalid first argument")
-	}
-	else if(inherits(x, "ts")) {
-	    y <- if(is.matrix(x)) x[,1] else x
-	    x <- stats::time(x)
-	    xlab <- "Time"
-	}
-	else if(is.complex(x)) {
-	    y <- Im(x)
-	    x <- Re(x)
-	    xlab <- paste("Re(", ylab, ")", sep="")
-	    ylab <- paste("Im(", ylab, ")", sep="")
-	}
-	else if(is.matrix(x) || is.data.frame(x)) {
-	    x <- data.matrix(x)
-	    if(ncol(x) == 1) {
-		xlab <- "Index"
-		y <- x[,1]
-		x <- 1:length(y)
-	    }
-	    else {
-		colnames <- dimnames(x)[[2]]
-		if(is.null(colnames)) {
-		    xlab <- paste(ylab,"[,1]",sep="")
-		    ylab <- paste(ylab,"[,2]",sep="")
-		}
-		else {
-		    xlab <- colnames[1]
-		    ylab <- colnames[2]
-		}
-		y <- x[,2]
-		x <- x[,1]
-	    }
-	}
-	else if(is.list(x)) {
-	    xlab <- paste(ylab,"$x",sep="")
-	    ylab <- paste(ylab,"$y",sep="")
-	    y <- x[["y"]]
-	    x <- x[["x"]]
-	}
-	else {
-	    if(is.factor(x)) x <- as.numeric(x)
-	    xlab <- "Index"
-	    y <- x
-	    x <- 1:length(x)
-	}
-    }
-    ## to allow e.g. lines, points, identify to be used with plot.POSIXlt
-    if(inherits(x, "POSIXt")) x <- as.POSIXct(x)
-
-    if(length(x) != length(y)) {
-	if(recycle) {
-	    if((nx <- length(x)) < (ny <- length(y)))
-		x <- rep(x, length.out = ny)
-	    else
-		y <- rep(y, length.out = nx)
-	}
-	else
-	    stop("'x' and 'y' lengths differ")
-    }
-
-    if(length(log) && log != "") {
-	log <- strsplit(log, NULL)[[1]]
-	if("x" %in% log && any(ii <- x <= 0 & !is.na(x))) {
-	    n <- as.integer(sum(ii))
-	    warning(sprintf(ngettext(n,
-                            "%d x value <= 0 omitted from logarithmic plot",
-                            "%d x values <= 0 omitted from logarithmic plot"),
-                            n), domain = NA)
-	    x[ii] <- NA
-	}
-	if("y" %in% log && any(ii <- y <= 0 & !is.na(y))) {
-	    n <- as.integer(sum(ii))
-	    warning(sprintf(ngettext(n,
-                            "%d y value <= 0 omitted from logarithmic plot",
-                            "%d y values <= 0 omitted from logarithmic plot"),
-                            n), domain = NA)
-	    y[ii] <- NA
-	}
-    }
-    return(list(x=as.real(x), y=as.real(y), xlab=xlab, ylab=ylab))
-}
+### xy.coords() is now in the imported 'grDevices' package
 
 plot <- function (x, y, ...)
 {
@@ -152,20 +58,28 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
     invisible()
 }
 
-plot.factor <- function(x, y, legend.text=levels(y), ...)
+plot.factor <- function(x, y, legend.text = NULL, ...) 
 {
-    if(missing(y) || is.factor(y)) {## <==> will do barplot(.)
+    if (missing(y) || is.factor(y)) {
         dargs <- list(...)
-        axisnames <- if (!is.null(dargs$axes)) dargs$axes
-            else if (!is.null(dargs$xaxt)) dargs$xaxt != "n"
-            else TRUE
+        axisnames <- if (!is.null(dargs$axes)) 
+            dargs$axes
+        else if (!is.null(dargs$xaxt)) 
+            dargs$xaxt != "n"
+        else TRUE
     }
     if (missing(y)) {
-	barplot(table(x), axisnames=axisnames, ...)
-    } else if (is.factor(y)) {
-	barplot(table(y, x), legend.text=legend.text, axisnames=axisnames, ...)
-    } else if (is.numeric(y))
-	boxplot(y ~ x, ...)
+        barplot(table(x), axisnames = axisnames, ...)
+    }
+    else if (is.factor(y)) {
+        if(is.null(legend.text)) spineplot(x, y, ...) else {
+	  args <- c(list(x = x, y = y), list(...))
+	  args$yaxlabels <- legend.text
+	  do.call("spineplot", args)
+	}
+    }
+    else if (is.numeric(y)) 
+        boxplot(y ~ x, ...)
     else NextMethod("plot")
 }
 

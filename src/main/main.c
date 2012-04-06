@@ -29,7 +29,7 @@
 #define __MAIN__
 #include "Defn.h"
 #include "Graphics.h"
-#include "Rdevices.h"		/* for InitGraphics */
+#include <Rdevices.h>		/* for InitGraphics */
 #include "IOStuff.h"
 #include "Fileio.h"
 #include "Parse.h"
@@ -105,7 +105,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
-	    error(_("syntax error: evaluating expression %d"), count);
+	    parseError(R_NilValue, count);
 	    break;
 	case PARSE_EOF:
 	    return;
@@ -135,11 +135,11 @@ char *R_PromptString(int browselevel, int type)
 		return BrowsePrompt;
 	    }
 	    return (char*)CHAR(STRING_ELT(GetOption(install("prompt"),
-						    R_NilValue), 0));
+						    R_BaseEnv), 0));
 	}
 	else {
 	    return (char*)CHAR(STRING_ELT(GetOption(install("continue"),
-						    R_NilValue), 0));
+						    R_BaseEnv), 0));
 	}
     }
 }
@@ -272,7 +272,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     case PARSE_ERROR:
 
 	    state->prompt_type = 1;
-	    error(_("syntax error"));
+	    parseError(R_NilValue, 0);
 	    R_IoBufferWriteReset(&R_ConsoleIob);
 	    return(1);
 
@@ -366,7 +366,7 @@ int R_ReplDLLdo1()
 	prompt_type = 1;
 	break;
     case PARSE_ERROR:
-	error(_("syntax error"));
+	parseError(R_NilValue, 0);
 	R_IoBufferWriteReset(&R_ConsoleIob);
 	prompt_type = 1;
 	break;
@@ -459,7 +459,16 @@ void setup_Rmainloop(void)
 #ifdef ENABLE_NLS
     /* This ought to have been done earlier, but be sure */
     textdomain(PACKAGE);
-    strcpy(localedir, R_Home); strcat(localedir, "/share/locale");
+    {
+	char *p = getenv("R_SHARE_DIR");
+	if(p) {
+	    strcpy(localedir, p);
+	    strcat(localedir, "/locale");
+	} else {
+	    strcpy(localedir, R_Home);
+	    strcat(localedir, "/share/locale");
+	}
+    }
     bindtextdomain(PACKAGE, localedir);
     strcpy(localedir, R_Home); strcat(localedir, "/library/base/po");
     bindtextdomain("R-base", localedir);
@@ -471,6 +480,7 @@ void setup_Rmainloop(void)
 #endif
     InitMemory();
     InitNames();
+    InitBaseEnv();
     InitGlobalEnv();
     InitDynload();
     InitOptions();
@@ -500,8 +510,8 @@ void setup_Rmainloop(void)
     R_Toplevel.promargs = R_NilValue;
     R_Toplevel.callfun = R_NilValue;
     R_Toplevel.call = R_NilValue;
-    R_Toplevel.cloenv = R_NilValue;
-    R_Toplevel.sysparent = R_NilValue;
+    R_Toplevel.cloenv = R_BaseEnv;
+    R_Toplevel.sysparent = R_BaseEnv;
     R_Toplevel.conexit = R_NilValue;
     R_Toplevel.vmax = NULL;
 #ifdef BYTECODE
@@ -795,12 +805,12 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* acts as a target for error returns. */
 
     begincontext(&returncontext, CTXT_BROWSER, call, rho,
-		 R_NilValue, R_NilValue, R_NilValue);
+		 R_BaseEnv, R_NilValue, R_NilValue);
     returncontext.cend = browser_cend;
     returncontext.cenddata = &savebrowselevel;
     if (!SETJMP(returncontext.cjmpbuf)) {
 	begincontext(&thiscontext, CTXT_RESTART, R_NilValue, rho,
-		     R_NilValue, R_NilValue, R_NilValue);
+		     R_BaseEnv, R_NilValue, R_NilValue);
 	if (SETJMP(thiscontext.cjmpbuf)) {
 	    SET_RESTART_BIT_ON(thiscontext.callflag);
 	    R_ReturnedValue = R_NilValue;

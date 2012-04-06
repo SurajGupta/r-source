@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-03-02 09:33\n"
-"PO-Revision-Date: 2005-03-02 09:33\n"
+"POT-Creation-Date: 2005-09-21 14:10\n"
+"PO-Revision-Date: 2005-09-21 14:10\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -63,6 +63,18 @@ msgstr "invalid ‘usr’"
 msgid "'height' must be a vector or a matrix"
 msgstr "‘height’ must be a vector or a matrix"
 
+msgid "Cannot use shading lines in bars when log scale is used"
+msgstr "Cannot use shading lines in bars when log scale is used"
+
+msgid "log scale error: at least one 'height + offset' value <= 0"
+msgstr "log scale error: at least one ‘height + offset’ value <= 0"
+
+msgid "log scale error: 'xlim' <= 0"
+msgstr "log scale error: ‘xlim’ <= 0"
+
+msgid "log scale error: 'ylim' <= 0"
+msgstr "log scale error: ‘ylim’ <= 0"
+
 msgid "incorrect number of names"
 msgstr "incorrect number of names"
 
@@ -72,14 +84,23 @@ msgstr "invalid first argument"
 msgid "'formula' missing or incorrect"
 msgstr "‘formula’ missing or incorrect"
 
-msgid "'coef' must not be negative"
-msgstr "‘coef’ must not be negative"
-
 msgid "'at' must have same length as 'z$n', i.e."
 msgstr "‘at’ must have same length as 'z$n', i.e."
 
 msgid "invalid boxplot widths"
 msgstr "invalid boxplot widths"
+
+msgid "'formula' should specify exactly two variables"
+msgstr "‘formula’ should specify exactly two variables"
+
+msgid "dependent variable should be a factor"
+msgstr "dependent variable should be a factor"
+
+msgid "explanatory variable should be numeric"
+msgstr "explanatory variable should be numeric"
+
+msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
+msgstr "y axis is on a cumulative probability scale, ‘ylim’ must be in [0,1]"
 
 msgid "no 'z' matrix specified"
 msgstr "no ‘z’ matrix specified"
@@ -208,6 +229,9 @@ msgstr ""
 msgid "invalid title"
 msgstr "invalid title"
 
+msgid "'legend' is of length 0"
+msgstr "‘legend’ is of length 0"
+
 msgid "invalid coordinate lengths"
 msgstr "invalid coordinate lengths"
 
@@ -255,9 +279,6 @@ msgstr "the ‘panel’ function made a new plot"
 
 msgid "'x' values must be positive."
 msgstr "‘x’ values must be positive."
-
-msgid "'x' and 'y' lengths differ"
-msgstr "‘x’ and ‘y’ lengths differ"
 
 msgid "invalid table 'x'"
 msgstr "invalid table ‘x’"
@@ -310,6 +331,12 @@ msgstr "‘figs’ must be a vector or a matrix with 4 columns"
 msgid "'figs' must specify at least one screen"
 msgstr "‘figs’ must specify at least one screen"
 
+msgid "a 2-way table has to be specified"
+msgstr "a 2-way table has to be specified"
+
+msgid "x axis is on a cumulative probability scale, 'xlim' must be in [0,1]"
+msgstr "x axis is on a cumulative probability scale, ‘xlim’ must be in [0,1]"
+
 msgid "'x' must be a matrix or a data frame"
 msgstr "‘x’ must be a matrix or a data frame"
 
@@ -358,31 +385,7 @@ msgstr "y log scale:  yinch() is non-sense"
 msgid "log scale:  xyinch() is non-sense"
 msgstr "log scale:  xyinch() is non-sense"
 
-msgid "invalid first argument [bad language object]"
-msgstr "invalid first argument [bad language object]"
-
-msgid "at least 2 columns needed"
-msgstr "at least 2 columns needed"
-
-msgid "'x', 'y' and 'z' lengths differ"
-msgstr "'x', ‘y’ and ‘z’ lengths differ"
-
 msgid "Outlier (%s) in boxplot %d is not drawn"
 msgid_plural "Outliers (%s) in boxplot %d are not drawn"
 msgstr[0] "Outlier (%s) in boxplot %d is not drawn"
 msgstr[1] "Outliers (%s) in boxplot %d are not drawn"
-
-msgid "%d x value <= 0 omitted from logarithmic plot"
-msgid_plural "%d x values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d x value <= 0 omitted from logarithmic plot"
-msgstr[1] "%d x values <= 0 omitted from logarithmic plot"
-
-msgid "%d y value <= 0 omitted from logarithmic plot"
-msgid_plural "%d y values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d y value <= 0 omitted from logarithmic plot"
-msgstr[1] "%d y values <= 0 omitted from logarithmic plot"
-
-msgid "%d z value <= 0 omitted from logarithmic plot"
-msgid_plural "%d z values <= 0 omitted from logarithmic plot"
-msgstr[0] "%d z value <= 0 omitted from logarithmic plot"
-msgstr[1] "%d z values <= 0 omitted from logarithmic plot"

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-06-09 12:02\n"
+"POT-Creation-Date: 2005-09-23 08:54\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,19 +26,19 @@ msgstr ""
 msgid "The results page should open in your browser shortly"
 msgstr ""
 
-msgid "reference to unknown chunk %s"
+msgid "reference to unknown chunk '%s'"
 msgstr ""
 
 msgid "no Sweave file with name '%s' found"
 msgstr ""
 
-msgid "%s Sweave files for basename '%s' found:"
+msgid "%d Sweave files for basename '%s' found:"
 msgstr ""
 
 msgid "Found invalid multi-byte character data."
 msgstr ""
 
-msgid "Cannot re-encode because iconv is not available."
+msgid "Cannot re-encode because 'iconv' is not available."
 msgstr ""
 
 msgid "Try running R in a single-byte locale."
@@ -105,6 +105,9 @@ msgid "datasets have been moved from package 'base' to package 'datasets'"
 msgstr ""
 
 msgid "datasets have been moved from package 'stats' to package 'datasets'"
+msgstr ""
+
+msgid "data index for package '%s' is invalid and will be ignored"
 msgstr ""
 
 msgid "file 'filelist' is missing for directory '%s'"
@@ -269,9 +272,6 @@ msgstr ""
 msgid "incorrect 'agrep' specification"
 msgstr ""
 
-msgid "'iconvlist' is not available on this system"
-msgstr ""
-
 msgid "no package '%s' was found"
 msgstr ""
 
@@ -288,6 +288,12 @@ msgid "Enter an item from the menu, or 0 to exit"
 msgstr ""
 
 msgid "'%s' is a formal generic function; S3 methods will not likely be found"
+msgstr ""
+
+msgid "no function '%s' is visible"
+msgstr ""
+
+msgid "function '%s' appears not to be generic"
 msgstr ""
 
 msgid "generic function '%s' dispatches methods for generic '%s'"
@@ -417,6 +423,39 @@ msgid "Created file named '%s'."
 msgstr ""
 
 msgid "Edit the file and move it to the appropriate directory."
+msgstr ""
+
+msgid "Maintainer:"
+msgstr ""
+
+msgid "Index:"
+msgstr ""
+
+msgid "Further information is available in the following vignettes:"
+msgstr ""
+
+msgid "package title"
+msgstr ""
+
+msgid "A concise (1-5 lines) description of the package"
+msgstr ""
+
+msgid "An overview of how to use the package, including the most important functions"
+msgstr ""
+
+msgid "The author and/or maintainer of the package"
+msgstr ""
+
+msgid "Literature or other references for background information"
+msgstr ""
+
+msgid "Optional links to other man pages, e.g."
+msgstr ""
+
+msgid "simple examples of the most important functions"
+msgstr ""
+
+msgid "Optionally other keywords from doc/KEYWORDS, one per line"
 msgstr ""
 
 msgid "no documentation of type '%s' and topic '%s' (or error in processing help)"
@@ -584,28 +623,19 @@ msgstr ""
 msgid "this function is intended to work with the Aqua GUI"
 msgstr ""
 
-msgid "'tar' returned non-zero exit code:"
-msgstr ""
-
-msgid "no package '%s' on CRAN"
-msgstr ""
-
-msgid "Download of package '%s' failed"
+msgid "'tar' returned non-zero exit code %d"
 msgstr ""
 
 msgid "cannot remove prior installation of package"
 msgstr ""
 
-msgid "'tar' returned non-zero exit code %d"
-msgstr ""
-
-msgid        "object %s not found"
-msgid_plural "objects %s not found"
+msgid        "object '%s' not found"
+msgid_plural "objects '%s' not found"
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "dependency %s is not available"
-msgid_plural "dependencies %s are not available"
+msgid        "dependency '%s' is not available"
+msgid_plural "dependencies '%s' are not available"
 msgstr[0]    ""
 msgstr[1]    ""
 
@@ -614,7 +644,7 @@ msgid_plural "also installing the dependencies "
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "package %s is in use and will not be installed"
-msgid_plural "packages %s are in use and will not be installed"
+msgid        "package '%s' is in use and will not be installed"
+msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0]    ""
 msgstr[1]    ""

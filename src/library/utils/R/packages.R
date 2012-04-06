@@ -16,23 +16,54 @@ available.packages <-
     for(repos in contriburl) {
         localcran <- length(grep("^file:", repos)) > 0
         if(localcran) {
+            ## see note in download.packages
             tmpf <- paste(substring(repos, 6), "PACKAGES", sep = "/")
             tmpf <- sub("^//", "", tmpf)
-        } else {
-            tmpf <- tempfile()
-            on.exit(unlink(tmpf))
-            z <- try(download.file(url = paste(repos, "PACKAGES", sep = "/"),
-                                   destfile = tmpf, method = method,
-                                   cacheOK = FALSE, quiet = TRUE),
-                       silent = TRUE)
-            if(inherits(z, "try-error")) {
-                warning(gettextf("unable to access index for repository %s", repos),
-                        call. = FALSE, immediate. = TRUE, domain = NA)
-                next
+            if(.Platform$OS.type == "windows") {
+                if(length(grep("[A-Za-z]:", tmpf)))
+                    tmpf <- substring(tmpf, 2)
             }
-        }
-        res0 <- read.dcf(file = tmpf, fields = flds)
-        if(length(res0)) rownames(res0) <- res0[, "Package"]
+            res0 <- read.dcf(file = tmpf, fields = flds)
+            if(length(res0)) rownames(res0) <- res0[, "Package"]
+        } else {
+            dest <- file.path(tempdir(),
+                              paste("repos_",
+                                    URLencode(repos, TRUE),
+                                    ".rds", sep=""))
+            if(file.exists(dest)) {
+                res0 <- .readRDS(dest)
+            } else {
+                tmpf <- tempfile()
+                on.exit(unlink(tmpf))
+                op <- options("warn")
+                options(warn = -1)
+                ## This is a binary file
+                z <- try(download.file(url=paste(repos, "PACKAGES.gz", sep = "/"),
+                                       destfile = tmpf, method = method,
+                                       cacheOK = FALSE, quiet = TRUE, mode = "wb"),
+                         silent = TRUE)
+                if(inherits(z, "try-error")) {
+                    ## read.dcf is going to interpret CRLF as LF, so use
+                    ## binary mode to avoid CRCRLF.
+                    z <- try(download.file(url=paste(repos, "PACKAGES", sep = "/"),
+                                           destfile = tmpf, method = method,
+                                           cacheOK = FALSE, quiet = TRUE,
+                                           mode = "wb"),
+                             silent = TRUE)
+                }
+                options(op)
+                if(inherits(z, "try-error")) {
+                    warning(gettextf("unable to access index for repository %s", repos),
+                            call. = FALSE, immediate. = TRUE, domain = NA)
+                    next
+                }
+                res0 <- read.dcf(file = tmpf, fields = flds)
+                if(length(res0)) rownames(res0) <- res0[, "Package"]
+                .saveRDS(res0, dest, compress = TRUE)
+                unlink(tmpf)
+                on.exit()
+            } # end of download vs cached
+        } # end of localcran vs online
         res0 <- cbind(res0, Repository = repos)
         res <- rbind(res, res0)
     }
@@ -51,10 +82,6 @@ available.packages <-
     res
 }
 
-CRAN.packages <- function(CRAN = getOption("repos"), method,
-                          contriburl = contrib.url(CRAN))
-    available.packages(contriburl = contriburl, method = method)
-
 
 ## unexported helper function
 simplifyRepos <- function(repos, type)
@@ -65,9 +92,8 @@ simplifyRepos <- function(repos, type)
     substr(repos, 1, ind)
 }
 
-update.packages <- function(lib.loc = NULL, repos = CRAN,
+update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                             contriburl = contrib.url(repos, type),
-                            CRAN = getOption("repos"),
                             method, instlib = NULL, ask = TRUE,
                             available = NULL, destdir = NULL,
 			    installWithVers = FALSE,
@@ -136,9 +162,8 @@ update.packages <- function(lib.loc = NULL, repos = CRAN,
     }
 }
 
-old.packages <- function(lib.loc = NULL, repos = CRAN,
+old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                          contriburl = contrib.url(repos),
-                         CRAN = getOption("repos"),
                          method, available = NULL, checkBuilt = FALSE)
 {
     if(is.null(lib.loc))
@@ -202,9 +227,8 @@ old.packages <- function(lib.loc = NULL, repos = CRAN,
     update
 }
 
-new.packages <- function(lib.loc = NULL, repos = CRAN,
+new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                          contriburl = contrib.url(repos),
-                         CRAN = getOption("repos"),
                          method, available = NULL, ask = FALSE)
 {
     if(is.null(lib.loc)) lib.loc <- .libPaths()
@@ -260,13 +284,18 @@ new.packages <- function(lib.loc = NULL, repos = CRAN,
         update <- res[match(select.list(res, multiple = TRUE,
                                         title = "New packages to be installed")
                             , res)]
-    if(length(update))
+    if(length(update)) {
         install.packages(update, lib = lib.loc[1], repos = repos,
                          method = method, available = available)
+        # now check if they were installed and update 'res'
+        updated <- update[update %in% list.files(lib.loc[1])]
+        res <- res[!res %in% updated]
+    }
     res
 }
 
-installed.packages <- function(lib.loc = NULL, priority = NULL)
+installed.packages <-
+    function(lib.loc = NULL, priority = NULL,  noCache = FALSE)
 {
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
@@ -278,30 +307,46 @@ installed.packages <- function(lib.loc = NULL, priority = NULL)
         if(any(b <- priority %in% "high"))
             priority <- c(priority[!b], "recommended","base")
     }
-    retval <- character()
+    retval <- matrix("", 0, 2+length(pkgFlds))
     for(lib in lib.loc) {
-        # this excludes packages without DESCRIPTION files
-        pkgs <- .packages(all.available = TRUE, lib.loc = lib)
-        for(p in pkgs){
-            desc <- packageDescription(p, lib = lib, fields = pkgFlds,
-                                       encoding = NA)
-            ## this gives NA if the package has no Version field
-            if (is.logical(desc)) {
-                desc <- rep(as.character(NA), length(pkgFlds))
-                names(desc) <- pkgFlds
-            } else {
-                desc <- unlist(desc)
-                if(!is.null(priority)) # skip if priority does not match
-                    if(is.na(pmatch(desc["Priority"], priority))) next
-                Rver <- strsplit(strsplit(desc["Built"], ";")[[1]][1],
-                                 "[ \t]+")[[1]][2]
-                desc["Built"] <- Rver
+        dest <- file.path(tempdir(),
+                          paste("libloc_", URLencode(lib, TRUE), ".rds",
+                                sep=""))
+        if(!noCache && file.exists(dest) &&
+            file.info(dest)$mtime > file.info(lib.loc)$mtime) {
+            retval <- rbind(retval, .readRDS(dest))
+        } else {
+            ret0 <- character()
+            ## this excludes packages without DESCRIPTION files
+            pkgs <- .packages(all.available = TRUE, lib.loc = lib)
+            for(p in pkgs){
+                desc <- packageDescription(p, lib = lib, fields = pkgFlds,
+                                           encoding = NA)
+                ## this gives NA if the package has no Version field
+                if (is.logical(desc)) {
+                    desc <- rep(as.character(NA), length(pkgFlds))
+                    names(desc) <- pkgFlds
+                } else {
+                    desc <- unlist(desc)
+                    Rver <- strsplit(strsplit(desc["Built"], ";")[[1]][1],
+                                     "[ \t]+")[[1]][2]
+                    desc["Built"] <- Rver
+                }
+                ret0 <- rbind(ret0, c(p, lib, desc))
             }
-            retval <- rbind(retval, c(p, lib, desc))
+            if(length(ret0)) {
+                retval <- rbind(retval, ret0)
+                .saveRDS(ret0, dest, compress = TRUE)
+            }
         }
     }
+    colnames(retval) <- c("Package", "LibPath", pkgFlds)
+    if(length(retval) && !is.null(priority)) {
+        keep <- !is.na(pmatch(retval[,"Priority"], priority,
+                              duplicates.ok = TRUE))
+        retval <- retval[keep, ]
+    }
     if (length(retval)) {
-        colnames(retval) <- c("Package", "LibPath", pkgFlds)
         rownames(retval) <- retval[, "Package"]
     }
     retval
@@ -313,10 +358,6 @@ remove.packages <- function(pkgs, lib, version) {
         ## This should eventually be made public, as it could also be
         ## used by install.packages() && friends.
         if(lib == .Library) {
-            ## R version of
-            ##   ${R_HOME}/bin/build-help --htmllists
-            ##   cat ${R_HOME}/library/*/CONTENTS \
-            ##     > ${R_HOME}/doc/html/search/index.txt
             if(exists("link.html.help", mode = "function"))
                 link.html.help()
         }
@@ -355,9 +396,8 @@ remove.packages <- function(pkgs, lib, version) {
 }
 
 download.packages <- function(pkgs, destdir, available = NULL,
-                              repos = CRAN,
+                              repos = getOption("repos"),
                               contriburl = contrib.url(repos, type),
-                              CRAN = getOption("repos"),
                               method, type = getOption("pkgType"))
 {
     dirTest <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
@@ -368,14 +408,14 @@ download.packages <- function(pkgs, destdir, available = NULL,
     if(is.null(available))
         available <- available.packages(contriburl=contriburl, method=method)
 
-    retval <- NULL
+    retval <- matrix(character(0), 0, 2)
     for(p in unique(pkgs))
     {
         ok <- (available[,"Package"] == p) | (available[,"Bundle"] == p)
         ok <- ok & !is.na(ok)
         if(!any(ok))
             warning(gettextf("no package '%s' at the repositories", p),
-                    domain = NA)
+                    domain = NA, immediate. = TRUE)
         else {
             if(sum(ok) > 1) { # have multiple copies
                 vers <- package_version(available[ok, "Version"])
@@ -391,18 +431,28 @@ download.packages <- function(pkgs, destdir, available = NULL,
                         sep="")
             repos <- available[ok, "Repository"]
             if(length(grep("^file:", repos)) > 0) { # local repository
+                ## We need to derive the file name from the URL
+                ## This is tricky as so many forms have been allowed,
+                ## and indeed external methods may do even more.
                 fn <- paste(substring(repos, 6), fn, sep = "/")
                 fn <- sub("^//", "", fn)
+                fn <- URLdecode(fn)
+                ## This should leave us with a path beginning with /
+                if(.Platform$OS.type == "windows") {
+                    if(length(grep("[A-Za-z]:", fn)))
+                        fn <- substring(fn, 2)
+                }
                 retval <- rbind(retval, c(p, fn))
             } else {
                 url <- paste(repos, fn, sep="/")
                 destfile <- file.path(destdir, fn)
 
-                if(download.file(url, destfile, method, mode="wb") == 0)
+                res <- try(download.file(url, destfile, method, mode="wb"))
+                if(!inherits(res, "try-error") && res == 0)
                     retval <- rbind(retval, c(p, destfile))
                 else
                     warning(gettextf("download of package '%s' failed", p),
-                            domain = NA)
+                            domain = NA, immediate. = TRUE)
             }
         }
     }
@@ -430,7 +480,7 @@ contrib.url <- function(repos, type = getOption("pkgType"))
     res <-
         switch(type,
                "source" = paste(gsub("/$", "", repos), "src", "contrib", sep="/"),
-               "mac.binary" = paste(gsub("/$", "", repos), "bin", "macosx", ver, sep = "/"),
+               "mac.binary" = paste(gsub("/$", "", repos), "bin", "macosx", R.version$arch, "contrib", ver, sep = "/"),
                "win.binary" = paste(gsub("/$", "", repos), "bin", "windows", "contrib", ver, sep="/")
                )
     names(res) <- names(repos)
@@ -441,7 +491,7 @@ contrib.url <- function(repos, type = getOption("pkgType"))
 chooseCRANmirror <- function(graphics = TRUE)
 {
     if(!interactive()) stop("cannot choose a CRAN mirror non-interactively")
-    m <- read.csv(file.path(R.home(), "doc", "CRAN_mirrors.csv"), as.is=TRUE)
+    m <- read.csv(file.path(R.home("doc"), "CRAN_mirrors.csv"), as.is=TRUE)
     res <- menu(m[,1], graphics, "CRAN mirror")
     if(res > 0) {
         URL <- m[res, "URL"]
@@ -457,7 +507,7 @@ setRepositories <- function(graphics=TRUE)
     if(!interactive()) stop("cannot set repositories non-interactively")
     p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
     if(!file.exists(p))
-        p <- file.path(R.home(), "etc", "repositories")
+        p <- file.path(R.home("etc"), "repositories")
     a <- read.delim(p, header=TRUE,
                     colClasses=c(rep("character", 3), rep("logical", 4)))
     thisType <- a[[getOption("pkgType")]]
