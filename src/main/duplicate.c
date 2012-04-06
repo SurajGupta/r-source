@@ -47,6 +47,7 @@ SEXP duplicate(SEXP s)
 		FORMALS(t) = FORMALS(s);
 		BODY(t) = BODY(s);
 		CLOENV(t) = CLOENV(s);
+		ATTRIB(t) = duplicate(ATTRIB(s));
 		UNPROTECT(1);
 		break;
 	case LISTSXP:
@@ -74,6 +75,7 @@ SEXP duplicate(SEXP s)
 		}
 		t = CDR(h);
 		TYPEOF(t) = LANGSXP;
+		ATTRIB(t) = duplicate(ATTRIB(s));
 		UNPROTECT(2);
 		break;
 	case CHARSXP:
@@ -89,9 +91,8 @@ SEXP duplicate(SEXP s)
 	case ORDSXP:
 	case INTSXP:
 	case REALSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
+	case EXPRSXP:
 		PROTECT(s);
 		t = allocVector(TYPEOF(s), LENGTH(s));
 		copyVector(t, s);
@@ -123,8 +124,9 @@ void copyVector(SEXP s, SEXP t)
 	ns = LENGTH(s);
 	switch (TYPEOF(s)) {
 	case STRSXP:
+	case EXPRSXP:
 		for (i = 0; i < ns; i++)
-			STRING(s)[i] = STRING(t)[i % nt];
+			VECTOR(s)[i] = VECTOR(t)[i % nt];
 		break;
 	case LGLSXP:
 		for (i = 0; i < ns; i++)

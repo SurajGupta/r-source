@@ -13,7 +13,11 @@ a time series, etc.
 PARA
 Graphical parameters can also be specified as arguments.
 )
+SEEALSO(
+LANG(LINK(points)), LANG(LINK(plot)).
+)
 EXAMPLES(
+data(cars)
 # draw a smooth line through a scatter plot
 plot(cars, main="Stopping Distance versus Speed")
 lines(lowess(cars))

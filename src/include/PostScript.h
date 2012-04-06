@@ -33,6 +33,7 @@ typedef struct {
 
 int    PostScriptLoadFontMetrics(char*, FontMetricInfo*);
 double PostScriptStringWidth(char*, FontMetricInfo*);
+void   PostScriptMetricInfo(int, double*, double*, double*, FontMetricInfo*);
 void   PostScriptFilledCircle(FILE*, double, double, double);
 void   PostScriptOpenCircle(FILE*, double, double, double);
 void   PostScriptEndPage(FILE*);

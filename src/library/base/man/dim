@@ -15,6 +15,6 @@ LANG(LINK(ncol)), LANG(LINK(nrow)).
 EXAMPLES(
 # simple versions of nrow and ncol
 # could be defined as follows
-nrow <- function(x) dim(x)[1]
-ncol <- function(x) dim(x)[2]
+nrow0 <- function(x) dim(x)[1]
+ncol0 <- function(x) dim(x)[2]
 )

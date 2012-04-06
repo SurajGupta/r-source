@@ -20,28 +20,34 @@
 #include "Defn.h"
 #include "Mathlib.h"
 
-static SEXP seq(SEXP s1, SEXP s2)
+static SEXP seq(SEXP call, SEXP s1, SEXP s2)
 {
 	int i, n;
 	double n1, n2;
 	SEXP ans;
 
+	n1 = length(s1);
+	n2 = length(s1);
+	if(n1 > 1 || n2 > 1) {
+		n = (n1 > n2) ? n1 : n2;
+		warningcall(call, "Numerical expression has %d elements: only the first used\n", n);
+	}
 	n1 = asReal(s1);
 	n2 = asReal(s2);
 	if (!FINITE(n1) || !FINITE(n2))
-		error("missing value in ``n1 : n2''\n");
+		errorcall(call, "NA argument\n");
 
 	if (n1 <= n2) {
 		n = n2 - n1 + 1 + FLT_EPSILON;
-		ans = allocVector(REALSXP, n);
+		ans = allocVector(INTSXP, n);
 		for (i = 0; i < n; i++)
-			REAL(ans)[i] = n1 + i;
+			INTEGER(ans)[i] = n1 + i;
 	}
 	else {
 		n = n1 - n2 + 1 + FLT_EPSILON;
-		ans = allocVector(REALSXP, n);
+		ans = allocVector(INTSXP, n);
 		for (i = 0; i < n; i++)
-			REAL(ans)[i] = n1 - i;
+			INTEGER(ans)[i] = n1 - i;
 	}
 	return ans;
 }
@@ -102,7 +108,7 @@ SEXP do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
 			errorcall(call, "unequal factor lengths\n");
 		return cross(CAR(args), CADR(args));
 	}
-	return seq(CAR(args), CADR(args));
+	return seq(call, CAR(args), CADR(args));
 }
 
 

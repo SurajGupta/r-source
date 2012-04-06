@@ -33,6 +33,7 @@ SEEALSO(
 LANG(LINK(ts)).
 )
 EXAMPLES(
+data(presidents)
 # a simple series plot
-plot(time(x), x, type="l")
+plot(c(time(presidents)), c(presidents), type="l")
 )

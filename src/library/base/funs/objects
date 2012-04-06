@@ -12,7 +12,7 @@ function(generic=NULL, object=NULL, ...)
 methods <-
 function (generic.function, class) 
 {
-	allnames <- unique(c(ls(.SystemEnv), ls(.GlobalEnv)))
+	allnames <- unique(c(ls(pos=seq(along=search()))))
 	if (!missing(generic.function)) {
 		if (!is.character(generic.function)) 
 			generic.function <- deparse(substitute(generic.function))

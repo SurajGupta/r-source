@@ -34,6 +34,8 @@ extern char RGraphClass[];
 extern char REditClass[];
 extern char RDEClass[];
 
+extern char REdfilename[MAX_PATH];
+
 extern HMENU RMenuEdit, RMenuDE, RMenuGraph, RMenuConsole, RMenuInit;
 extern HMENU RMenuEditWin, RMenuDEWin, RMenuGraphWin, RMenuConsWin, RMenuInitWin;
 /* Function ProtoTypes */
@@ -43,10 +45,11 @@ extern HMENU RMenuEditWin, RMenuDEWin, RMenuGraphWin, RMenuConsWin, RMenuInitWin
 extern void     (*DevHold)();
 extern void     dump_image(char* , int);
 extern BOOL FAR PASCAL  About(HWND, WORD, WPARAM, LPARAM);
-extern void     RPrintGraph(HWND, HANDLE,HWND);
+extern BOOL     RPrintGraph(HWND, HANDLE);
 extern void     RPrintText(HWND, HWND);
 LRESULT CALLBACK AbortPrintJob(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK    AbortProc(HDC, int);
+void R_ProcessDropFiles(HANDLE, int);
 
 BOOL             InitApplication(HINSTANCE);
 BOOL             InitInstance(HINSTANCE,int);

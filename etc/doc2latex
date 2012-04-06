@@ -1,7 +1,10 @@
 #!/bin/sh
-NonTT='^$%&~_{}#' #- (la)TeX characters that are special
+#- (la)TeX characters which are special:
+NonTT='$^%&~_{}#' 
+#
+#- '^': NON-special chars -- can be used with TT :
 sedT='[^()'"${NonTT}]*"
-
+#
 (cat << 'END'
 undefine(`eval')
 undefine(`index')
@@ -9,6 +12,7 @@ undefine(`format')
 undefine(`include')
 undefine(`substr')
 undefine(`paste')
+define(KEYWORD,`')
 define(COMMENT,`')
 define(TITLE,`
 \begin{Header}{$1}{$2}')
@@ -95,10 +99,13 @@ define(boldgreekepsilon,`\boldsymbol{\varepsilon}')
 define(EQBOLD,`\mathbf{$1}')
 define(EQN,`$ $1 $')
 define(DEQN,`\[ $1 \]')
-define(DEQTEX,\[ $1 \])
+define(DEQTEX,`\[ $1 \]')
 define(DEQHTML,`')
 END
 # Fix up the input to protect things that m4 is sensitive about.
+#
+# Should add   s/[${NonTT}]/\\\&/g    however only if NOT in verbatim things 
+# -- just no use with 'sed' -- would need   perl  or such,   alas....
 sed "
 s/LANG(\(${sedT}\))/TT(\1)/g
 s/LANG(\(${sedT}(${sedT})${sedT}\))/TT(\1)/g
@@ -110,12 +117,12 @@ s/\\)/M4_RP/g
 s/`/M4_LQ/g
 s/'\''/M4_RQ/g
 s/,/M4_COMMA/g
-s/ @@ /,/g
+s/ @@ ?/,/g
 s/@@/,/g
 s/ifelse/M4_IFELSE/g
 ' $* ) |m4 |sed '
 /^$/d
-s/^BLANK$//
+s/^BLANK[	 ]*$//
 s/DOTS/\.\.\./g
 s/M4_unix/unix/g
 s/M4_HASH/#/g

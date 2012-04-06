@@ -1,32 +1,65 @@
+require <- function(name, quietly=FALSE)
+{
+	name <- substitute(name)#- allowing  "require(eda)"
+	if (!is.character(name)) name <- deparse(name)
+	if(is.na(match(paste("library", name, sep=":"), search()))) {
+		if(!quietly)
+			cat("Autoloading required library:", name, "\n")
+		library0(name, logical = TRUE)
+	} else TRUE
+}
+
+##--- The current (0.50: 7/7/97) manpage says: We should also have
+##---  provide()  and  work with  .Libraries  & .Provided
+##     ---------
+
 library <- function(name)
 {
-	if (!exists(".Libraries", inherits=TRUE))
-		assign(".Libraries", character(0), NULL)
 	if(missing(name)) {
 		cat("NAME\tDESCRIPTION\n")
 		system(paste("cat", system.file("help","LibIndex")))
-	}
-	else {
-		name <- substitute(name)
-		if (!is.character(name)) 
-			name <- deparse(name)
-		if(is.na(match(name, .Libraries))) {
-			file <- system.file("library", name)
-			if(file == "") stop(paste("there is no library called", name))
-			sys.source(file)
-			assign(".Libraries", c(name, .Libraries), NULL)
-		}
 		invisible(.Libraries)
+	} else {
+		name <- substitute(name)
+		if (!is.character(name)) name <- deparse(name)
+		invisible(library0(name))
 	}
+}
+
+library0 <- function(chname, logical.return = FALSE)
+{
+	lib.source <- function (file, env)
+	{
+		exprs <- parse(n = -1, file = file)
+		if (length(exprs) == 0) return(invisible())
+		for (i in exprs)
+			yy <- eval(i, env)
+		invisible()
+	}
+	libname <- paste("library", chname, sep=":")
+	if(is.na(match(libname, search()))) {
+		file <- system.file("library", chname)
+		if(file == "") {
+			txt <- paste("there is no library called '", chname,"'", sep="")
+			if(logical.return) { warning(txt); return(FALSE) 
+			} else stop(txt)
+		}
+		env <- attach(NULL, name=libname)
+		lib.source(file, env)
+		lib.fixup(env, .GlobalEnv)
+		assign(".Libraries", c(chname, .Libraries), env=NULL)
+	}
+	
+	if(logical.return) TRUE else invisible(.Libraries)
 }
 
 library.dynam <- function(name)
 {
 	if (!exists(".Dyn.libs"))
-		assign(".Dyn.libs", character(0), NULL)
+		assign(".Dyn.libs", character(0), length(search()))
 	if(is.na(match(name, .Dyn.libs))) {
 		.Internal(dyn.load(system.file("lib", name)))
-		assign(".Dyn.libs", c(.Dyn.libs, name), NULL)
+		assign(".Dyn.libs", c(.Dyn.libs, name), length(search()))
 	}
 	invisible(.Dyn.libs)
 }

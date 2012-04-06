@@ -1,6 +1,6 @@
 TITLE(prompt @@ Produce prototype of a help()-file  )
 USAGE(
-prompt(object=, filename=)
+prompt(object, filename=)
 BLANK
 prompt.default(object,
     filename = paste(name, ".man", sep = ""),

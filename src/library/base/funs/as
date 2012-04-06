@@ -9,6 +9,7 @@ as.single <- function(x)
 	.Internal(as.vector(x,"real"))
 }
 as.character <- function(x) .Internal(as.vector(x,"character"))
+as.expression <- function(x) .Internal(as.vector(x,"expression"))
 as.list <- function(x) .Internal(as.vector(x,"list"))
 as.vector <- function(x, mode="any") .Internal(as.vector(x,mode))
 as.matrix <- function(x)

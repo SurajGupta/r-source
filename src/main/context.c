@@ -55,6 +55,7 @@ Context types can be one of:
 	CTXT_NEXT	target for "next"
 	CTXT_LOOP	target for either "break" or "next"
 	CTXT_RETURN	target for "return" (i.e. a closure)
+	CTXT_BROWSER    target for "return" to exit from browser
 	CTXT_CCODE	other functions that need clean up if an error occurs
 
 A context is created with a call to
@@ -125,15 +126,16 @@ void findcontext(int mask, SEXP val)
 
 	cptr = R_GlobalContext;
 
+
 	if (mask & CTXT_LOOP) {		/* break/next */
 		if (cptr->callflag & CTXT_LOOP)
 			jumpfun(cptr, mask, val);
 		else
 			error("No loop to break from, jumping to top level\n");
 	}
-	else {				/* return */
+	else {				/* return; or browser */
 		for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext)
-			if (cptr->callflag == CTXT_RETURN)
+			if (cptr->callflag == mask)
 				jumpfun(cptr, mask, val);
 		error("No function to return from, jumping to top level\n");
 	}
@@ -293,6 +295,8 @@ SEXP sysfunction(int n, RCNTXT *cptr)
 				s=CAR(cptr->call);
 				if( isSymbol(s) )
 					t=findVar(s,cptr->sysparent);
+				else if( isLanguage(s) )
+					t=eval(s,cptr->sysparent);
 				else
 					t=R_NilValue;
 				return(t);

@@ -26,10 +26,9 @@ static SEXP coerceToFactor(SEXP v);
 static SEXP coerceToOrdered(SEXP v);
 static SEXP coerceToInteger(SEXP v);
 static SEXP coerceToReal(SEXP v);
-static SEXP coerceToString(SEXP v);
-#ifdef COMPLEX_DATA
 static SEXP coerceToComplex(SEXP v);
-#endif
+static SEXP coerceToString(SEXP v);
+static SEXP coerceToExpression(SEXP v);
 static SEXP coerceToList(SEXP v);
 
 SEXP do_codes(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -152,11 +151,13 @@ SEXP do_as(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	/* as.factor */
 	/* as.ordered */
+
 	case FACTSXP:
 	case ORDSXP:
 		return coerceVector(CAR(args), PRIMVAL(op));
 
 	/* as.vector */
+
 	case 101:
 		if (!isString(CADR(args)) || LENGTH(CADR(args)) < 1)
 			error("as.vector: invalid type argument\n");
@@ -172,10 +173,9 @@ SEXP do_as(SEXP call, SEXP op, SEXP args, SEXP rho)
 		case ORDSXP:
 		case INTSXP:
 		case REALSXP:
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
-#endif
 		case STRSXP:
+		case EXPRSXP:
 		case LISTSXP:
 		case ANYSXP:
 			break;
@@ -221,11 +221,21 @@ SEXP do_as(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+	SEXP s;
+
 	checkArity(op, args);
-	if(!isList(CAR(args)) || length(CAR(args)) < 1)
+
+	if( isLanguage(CAR(args)) )
+		return CAR(args);
+
+	if(!isList(CAR(args)) || length(CAR(args)) < 1 )
 		errorcall(call, "invalid argument list\n");
-	TYPEOF(CAR(args)) = LANGSXP;
-	return CAR(args);
+
+	s = duplicate(args);
+	TYPEOF(CAR(s)) = LANGSXP;
+	TAG(CAR(s)) = R_NilValue;
+
+	return CAR(s);
 }
 
 /* return the type of the SEXP */
@@ -266,11 +276,9 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case REALSXP:		/* is.double */
 		LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == REALSXP);
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:		/* is.complex */
 		LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == CPLXSXP);
 		break;
-#endif
 	case STRSXP:		/* is.character */
 		LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == STRSXP);
 		break;
@@ -283,7 +291,9 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case LISTSXP:		/* is.list */
 		LOGICAL(ans)[0] = ((TYPEOF(CAR(args)) == LISTSXP) || TYPEOF(CAR(args)) == NILSXP);
 		break;
-
+	case EXPRSXP:		/* is.expression */
+		LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == EXPRSXP);
+		break;
 	case 50:		/* is.object */
 		LOGICAL(ans)[0] = OBJECT(CAR(args));
 		break;
@@ -317,9 +327,7 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 		case ORDSXP:
 		case INTSXP:
 		case REALSXP:
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
-#endif
 		case STRSXP:
 			LOGICAL(ans)[0] = 1;
 			break;
@@ -394,13 +402,9 @@ SEXP do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 		LOGICAL(ans)[0] = 0;
 	UNPROTECT(1);
 
-#ifdef OLD
-	/* if there are any attributes the result is false */
-	if(ATTRIB(CAR(args))!=R_NilValue)
-		LOGICAL(ans)[0] = 0;
-#else
 	/* We allow a "names" attribute on any vector. */
 	/* "class" and "levels" attributes on factors are also ok. */
+
 	if(ATTRIB(CAR(args)) != R_NilValue) {
 		a = ATTRIB(CAR(args));
 		while(a != R_NilValue) {
@@ -411,7 +415,6 @@ SEXP do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 			a = CDR(a);
 		}
 	}
-#endif
 	return (ans);
 }
 
@@ -449,13 +452,11 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 		for (i = 0; i < length(x); i++)
 			LOGICAL(ans)[i] = !FINITE(REAL(x)[i]);
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		for (i = 0; i < length(x); i++)
 			LOGICAL(ans)[i] = !(FINITE(COMPLEX(x)[i].r)
 					&& FINITE(COMPLEX(x)[i].i));
 		break;
-#endif
 	case STRSXP:
 		for (i = 0; i < length(x); i++)
 			LOGICAL(ans)[i] = (STRING(x)[i] == NA_STRING);
@@ -479,12 +480,10 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 				case STRSXP:
 					LOGICAL(ans)[i] = (STRING(CAR(x))[0] == NA_STRING);
 					break;
-#ifdef COMPLEX_DATA
 				case CPLXSXP:
 					LOGICAL(ans)[i] = !(FINITE(COMPLEX(CAR(x))[0].r)
 						&& FINITE(COMPLEX(CAR(x))[0].i));
 					break;
-#endif
 				}
 			}
 			x = CDR(x);
@@ -520,7 +519,7 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	if (isList(v) || isLanguage(v))
 		return coerceList(v, type);
 
-	if ((type < LGLSXP || STRSXP < type) && (type != LISTSXP))
+	if ((type < LGLSXP || STRSXP < type) && (type != EXPRSXP) && (type != LISTSXP))
 		error("attempt to coerce a vector to non-vector type\n");
 
 	if (!isVector(v))
@@ -543,17 +542,14 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	case REALSXP:
 		ans = coerceToReal(v);
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		ans = coerceToComplex(v);
 		break;
-#else
-	case CPLXSXP:
-		error("no complex data in this R version\n");
-		break;
-#endif
 	case STRSXP:
 		ans = coerceToString(v);
+		break;
+	case EXPRSXP:
+		ans = coerceToExpression(v);
 		break;
 	case LISTSXP:
 		ans = coerceToList(v);
@@ -595,11 +591,9 @@ SEXP coerceList(SEXP v, SEXPTYPE type)
 			case REALSXP:
 				REAL(rval)[i] = REAL(t)[0];
 				break;
-#ifdef COMPLEX_DATA
 			case CPLXSXP:
 				COMPLEX(rval)[i] = COMPLEX(t)[0];
 				break;
-#endif
 			default:
 				UNIMPLEMENTED("coerceList");
 			}
@@ -684,7 +678,6 @@ static SEXP coerceToLogical(SEXP v)
 			else LOGICAL(ans)[i] = NA_LOGICAL;
 		}
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		for (i = 0; i < n; i++) {
 			if(FINITE(COMPLEX(v)[i].r) && FINITE(COMPLEX(v)[i].i))
@@ -692,7 +685,6 @@ static SEXP coerceToLogical(SEXP v)
 			else LOGICAL(ans)[i] = NA_LOGICAL;
 		}
 		break;
-#endif
 	case STRSXP:
 		error("character vectors cannot be coerced to logical\n");
 		for (i = 0; i < n; i++) {
@@ -737,11 +729,9 @@ static SEXP coerceToFactor(SEXP v)
 		break;
 	case INTSXP:
 	case REALSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
 	case STRSXP:
-		error("use \"factor\", \"ordered\", \"cut\" or \"code\" to create factors\n");
+		error("use \"factor\", \"ordered\" or \"cut\" to create factors\n");
 		break;
 	}
 	PROTECT(levs = allocVector(STRSXP, 1));
@@ -780,11 +770,9 @@ static SEXP coerceToOrdered(SEXP v)
 		break;
 	case INTSXP:
 	case REALSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
 	case STRSXP:
-		error("use \"factor\", \"ordered\", \"cut\" or \"code\" to create factors\n");
+		error("use \"factor\", \"ordered\" or \"cut\" to create factors\n");
 		break;
 	}
 	PROTECT(levs = allocVector(STRSXP, 2));
@@ -798,9 +786,11 @@ static SEXP coerceToOrdered(SEXP v)
 static SEXP coerceToInteger(SEXP v)
 {
 	SEXP ans;
-	int i, n, out;
+	int i, n, warn;
+	double out;
 	char *endp;
 
+	warn = 0;
 	ans = allocVector(INTSXP, n = LENGTH(v));
 	PROTECT(ans);
 	ATTRIB(ans) = duplicate(ATTRIB(v));
@@ -820,18 +810,29 @@ static SEXP coerceToInteger(SEXP v)
 		break;
 	case REALSXP:
 		for (i = 0; i < n; i++) {
-			INTEGER(ans)[i] = (FINITE(REAL(v)[i])) ?
-				REAL(v)[i] : NA_INTEGER;
+			if( !FINITE(REAL(v)[i]) )
+				INTEGER(ans)[i] = NA_INTEGER;
+			else if ( REAL(v)[i] >= LONG_MAX+1.0 || REAL(v)[i]<= LONG_MIN-1.0 ) {
+				warn = 1;
+				INTEGER(ans)[i] = NA_INTEGER;
+			}
+			else
+				INTEGER(ans)[i] = REAL(v)[i];
 		}
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		for (i = 0; i < n; i++) {
-			INTEGER(ans)[i] = (FINITE(COMPLEX(v)[i].r) && FINITE(COMPLEX(v)[i].i)) ?
-				COMPLEX(v)[i].r : NA_INTEGER;
+			if( (FINITE(COMPLEX(v)[i].r) && FINITE(COMPLEX(v)[i].i)) )
+				INTEGER(ans)[i] = NA_INTEGER;
+			else if ( COMPLEX(v)[i].r >= LONG_MAX+1.0 || COMPLEX(v)[i].r <= LONG_MIN-1.0 ) {     
+				warn = 1;
+				INTEGER(ans)[i] = NA_INTEGER;
+			}
+			else
+
+				INTEGER(ans)[i] = COMPLEX(v)[i].r;
 		}
 		break;
-#endif
 	case STRSXP:
 		/*  Jeez!  Why was this again?  I've forgotten!
 		 *  for reasons best known to ourselves we implement this by
@@ -841,8 +842,14 @@ static SEXP coerceToInteger(SEXP v)
 				INTEGER(ans)[i] = NA_INTEGER;
 			else {
 				out = strtod(CHAR(STRING(v)[i]), &endp);
-				if (*endp == '\0')	/* we have a real */
-					INTEGER(ans)[i] = out;
+				if (*endp == '\0')	/* we have a real */ {
+					if( out >= LONG_MAX+1.0 || out <= LONG_MIN-1.0 ) {
+						warn = 1;
+						INTEGER(ans)[i] = NA_INTEGER;
+					}
+					else 
+						INTEGER(ans)[i] = out;
+				}
 				else
 					INTEGER(ans)[i] = NA_INTEGER;
 			}
@@ -850,6 +857,7 @@ static SEXP coerceToInteger(SEXP v)
 		break;
 	}
 	UNPROTECT(1);
+	if( warn ) warning("integer conversion: some values were too large and were converted to NA\n");
 	return ans;
 }
 
@@ -883,7 +891,6 @@ static SEXP coerceToReal(SEXP v)
 				NA_REAL : INTEGER(v)[i];
 		}
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		for (i = 0; i < n; i++) {
 			REAL(ans)[i] = (COMPLEX(v)[i].r == NA_REAL
@@ -892,7 +899,6 @@ static SEXP coerceToReal(SEXP v)
 		}
 		warning("complex values coerced to real by dropping imaginary parts\n");
 		break;
-#endif
 	case STRSXP:
 		for (i = 0; i < n; i++) {
 			if (!strcmp(CHAR(STRING(v)[i]), "NA"))
@@ -911,7 +917,6 @@ static SEXP coerceToReal(SEXP v)
 	return ans;
 }
 
-#ifdef COMPLEX_DATA
 static SEXP coerceToComplex(SEXP v)
 {
 	SEXP ans;
@@ -991,7 +996,6 @@ static SEXP coerceToComplex(SEXP v)
 	UNPROTECT(1);
 	return ans;
 }
-#endif
 
 static SEXP coerceToString(SEXP v)
 {
@@ -1034,6 +1038,54 @@ static SEXP coerceToString(SEXP v)
 	return (ans);
 }
 
+static SEXP coerceToExpression(SEXP v)
+{
+	SEXP ans, tmp;
+	int i, n, newtype;
+
+	n = LENGTH(v);
+	PROTECT(ans = allocVector(EXPRSXP, n));
+		/* ATTRIB(ans) = duplicate(ATTRIB(v)); */
+	switch (TYPEOF(v)) {
+	case LGLSXP:
+	case FACTSXP:
+	case ORDSXP:
+	case INTSXP:
+		if(isFactor(v)) newtype = INTSXP;
+		else newtype = TYPEOF(v);
+		for(i=0 ; i<n ; i++) {
+			tmp = allocVector(newtype, 1);
+			INTEGER(tmp)[0] = INTEGER(v)[i];
+			VECTOR(ans)[i] = tmp;
+		}
+		break;
+	case REALSXP:
+		for(i=0 ; i<n ; i++) {
+			tmp = allocVector(REALSXP, 1);
+			REAL(tmp)[0] = REAL(v)[i];
+			VECTOR(ans)[i] = tmp;
+		}
+		break;
+	case CPLXSXP:
+		for(i=0 ; i<n ; i++) {
+			tmp = allocVector(CPLXSXP, 1);
+			COMPLEX(tmp)[0].r = COMPLEX(v)[i].r;
+			COMPLEX(tmp)[0].i = COMPLEX(v)[i].i;
+			VECTOR(ans)[i] = tmp;
+		}
+		break;
+	case STRSXP:
+		for(i=0 ; i<n ; i++) {
+			tmp = allocVector(STRSXP, 1);
+			STRING(tmp)[0] = STRING(v)[i];
+			VECTOR(ans)[i] = tmp;
+		}
+		break;
+	}
+	UNPROTECT(1);
+	return ans;
+}
+
 static SEXP coerceToList(SEXP v)
 {
 	SEXP ans, tmp;
@@ -1057,12 +1109,10 @@ static SEXP coerceToList(SEXP v)
 			CAR(tmp) = allocVector(REALSXP, 1);
 			REAL(CAR(tmp))[0] = REAL(v)[i];
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			CAR(tmp) = allocVector(CPLXSXP, 1);
 			COMPLEX(CAR(tmp))[0] = COMPLEX(v)[i];
 			break;
-#endif
 		case STRSXP:
 			CAR(tmp) = allocVector(STRSXP, 1);
 			STRING(CAR(tmp))[0] = STRING(v)[i];

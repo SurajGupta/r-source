@@ -15,6 +15,6 @@ LANG(source) causes R to accept its input from the named
 file (the name must be quoted).
 Input is read from that file until the
 end of the file is reached.
-LANG(parse) is used to scan the files in, they are then evaluated
+LANG(LINK(parse)) is used to scan the files in, they are then evaluated
 sequentially in the chosen environment.
 )

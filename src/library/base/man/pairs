@@ -18,5 +18,6 @@ The graphical parameters LANG(pch) and LANG(col) can be used to specify
 a vector of plotting symbols and colors to be used in the plots.
 )
 EXAMPLES(
+data(judges)
 pairs(judges)
 )

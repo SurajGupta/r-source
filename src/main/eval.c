@@ -45,7 +45,6 @@ extern int R_EvalCount;
 
 SEXP eval(SEXP e, SEXP rho)
 {
-
 	SEXP op, tmp, val;
 
 	/*
@@ -81,6 +80,7 @@ SEXP eval(SEXP e, SEXP rho)
 	case BUILTINSXP:
 	case ENVSXP:
 	case CLOSXP:
+	case VECSXP:
 		tmp = e;
 		break;
 	case SYMSXP:
@@ -102,7 +102,7 @@ SEXP eval(SEXP e, SEXP rho)
 			if (NAMED(tmp) == 1) NAMED(tmp) = 2;
 			else NAMED(tmp) = 1;
 #else
-			NAMED(tmp)=2;
+			NAMED(tmp) = 2;
 #endif
 			UNPROTECT(1);
 		}
@@ -120,6 +120,14 @@ SEXP eval(SEXP e, SEXP rho)
 			PRVALUE(e) = val;
 		}
 		tmp = PRVALUE(e);
+		break;
+	case EXPRSXP:
+		{
+		int i, n;
+		n = LENGTH(e);
+		for(i=0 ; i<n ; i++)
+			tmp = eval(VECTOR(e)[i], rho);
+		}
 		break;
 	case LANGSXP:
 		if (TYPEOF(CAR(e)) == SYMSXP)
@@ -225,13 +233,25 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 	/*end the previous context and start up a new one with the correct env*/
 
 	endcontext(&cntxt);
-	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist); 
+	/* 
+	   if we have a generic function we need to use the sysparent of the 
+	   generic as the sysparent of the method because the method is a 
+	   straight substitution of the generic 
+	*/
+	if( R_GlobalContext->callflag == CTXT_GENERIC )
+	begincontext(&cntxt, CTXT_RETURN, call, newrho, R_GlobalContext->sysparent, arglist);
+	else
+		begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist); 
 
 	/* Default value */
 	tmp = R_NilValue;
 
 	/* debugging */
 	DEBUG(newrho) = DEBUG(op);
+	if( DEBUG(op) ) {
+		Rprintf("debugging in: ");
+		PrintValueRec(call);
+	}
 		
 	if (setjmp(cntxt.cjmpbuf)) {
 		tmp = R_ReturnedValue;
@@ -240,6 +260,10 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 		tmp = eval(body, newrho);
 	}
 	endcontext(&cntxt);
+	if( DEBUG(op) ) {
+		Rprintf("exiting from: ");
+		PrintValueRec(call);
+	}
 	UNPROTECT(1);
 
 	return (tmp);
@@ -250,9 +274,8 @@ static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 {
 	SEXP vl;
 
-	vl = findVarInFrame(FRAME(rho), symbol);
-	if (vl != R_UnboundValue) {
-		vl = eval(symbol, rho);
+	if ((vl = findVarInFrame(FRAME(rho), symbol)) != R_UnboundValue) {
+		vl = eval(symbol, rho);	/* for promises */
 		if(NAMED(vl) == 2) {
 			PROTECT(vl = duplicate(vl));
 			defineVar(symbol, vl, rho);
@@ -272,55 +295,18 @@ static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 	return vl;
 }
 
-	/* evalseq - preprocess the LHS of an assignment.	*/
-	/* Given an expression, evalseq builds a list of	*/
-	/* partial values for the exression.  For example,	*/
-	/* the assignment x$a[3] <- 10 with LHS x$a[3] yields	*/
-	/* the (improper) list:					*/
-	/*							*/
-	/*	 (eval(x$a[3])  eval(x$a)  eval(x)  .  x)	*/
-	/*							*/
-	/* Note the terminating symbol.				*/
-	/* The partial evaluations are carried out efficiently	*/
-	/* using previously computed components.		*/
 
-static SEXP evalseq(SEXP expr, SEXP rho, int forcelocal)
-{
-	SEXP val, nval, nexpr;
-	if (isNull(expr))
-		error("invalid (NULL) left side of assignment\n");
-	if (isSymbol(expr)) {
-		PROTECT(expr);
-		if(forcelocal) {
-			nval = EnsureLocal(expr, rho);
-		}
-		else {
-			nval = eval(expr, rho);
-		}
-		UNPROTECT(1);
-		return CONS(nval, expr);
-	}
-	else if (isLanguage(expr)) {
-		PROTECT(expr);
-		PROTECT(val = evalseq(CADR(expr), rho, forcelocal));
-		PROTECT(nexpr = LCONS(CAR(val), CDDR(expr)));
-		PROTECT(nexpr = LCONS(CAR(expr), nexpr));
-		nval = eval(nexpr, rho);
-		UNPROTECT(4);
-		return CONS(nval, val);
-	}
-	else error("invalid (Non-language) left side of assignment\n");
-	/*NOTREACHED*/
-}
-
+	/* Note: If val is a language object it must be protected */
+	/* to prevent evaluation.  As an example consider */
+	/* e <- quote(f(x=1,y=2); names(e) <- c("","a","b") */
 
 static SEXP replaceCall(SEXP fun, SEXP val, SEXP args, SEXP rhs)
 {
 	SEXP tmp, ptmp;
 	PROTECT(fun);
-	PROTECT(val);
 	PROTECT(args);
 	PROTECT(rhs);
+	PROTECT(val);
 	ptmp = tmp = allocList(length(args)+3);
 	UNPROTECT(4);
 	CAR(ptmp) = fun; ptmp = CDR(ptmp);
@@ -423,15 +409,18 @@ SEXP do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 				setVar(sym, v, rho);
 				ans = eval(body, rho);
 				break;
-#ifdef COMPLEX_DATA
 			case CPLXSXP:
 				COMPLEX(v)[0] = COMPLEX(val)[i];
 				setVar(sym, v, rho);
 				ans = eval(body, rho);
 				break;
-#endif
 			case STRSXP:
 				STRING(v)[0] = STRING(val)[i];
+				setVar(sym, v, rho);
+				ans = eval(body, rho);
+				break;
+			case EXPRSXP:
+				VECTOR(v)[0] = VECTOR(val)[i];
 				setVar(sym, v, rho);
 				ans = eval(body, rho);
 				break;
@@ -586,7 +575,10 @@ SEXP do_return(SEXP call, SEXP op, SEXP args, SEXP rho)
 		a = args;
 		break;
 	}
-	findcontext(CTXT_RETURN, a);
+	if( R_BrowseLevel )
+		findcontext(CTXT_BROWSER, a);
+	else
+		findcontext(CTXT_RETURN, a);
 }
 
 
@@ -599,8 +591,58 @@ SEXP do_function(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-	/* Assignments for complex LVAL specifications */
-	/* We have checked to see that CAR(args) is a LANGSXP */
+	/* Assignments for complex LVAL specifications		*/
+	/* This is the stuff that nightmares are made of ...	*/
+
+	/* evalseq - preprocess the LHS of an assignment.	*/
+	/* Given an expression, evalseq builds a list of	*/
+	/* partial values for the exression.  For example,	*/
+	/* the assignment x$a[3] <- 10 with LHS x$a[3] yields	*/
+	/* the (improper) list:					*/
+	/*							*/
+	/*	 (eval(x$a[3])  eval(x$a)  eval(x)  .  x)	*/
+	/*							*/
+	/* Note the terminating symbol.				*/
+	/* The partial evaluations are carried out efficiently	*/
+	/* using previously computed components.		*/
+
+static SEXP evalseq(SEXP expr, SEXP rho, int forcelocal, SEXP tmploc)
+{
+	SEXP val, nval, nexpr;
+
+	if (isNull(expr))
+		error("invalid (NULL) left side of assignment\n");
+
+	if (isSymbol(expr)) {
+		PROTECT(expr);
+		if(forcelocal) {
+			nval = EnsureLocal(expr, rho);
+		}
+		else {
+			nval = eval(expr, rho);
+		}
+		UNPROTECT(1);
+		return CONS(nval, expr);
+	}
+	else if (isLanguage(expr)) {
+		PROTECT(expr);
+		PROTECT(val = evalseq(CADR(expr), rho, forcelocal, tmploc));
+
+		CAR(tmploc) = CAR(val);
+
+		PROTECT(nexpr = LCONS(TAG(tmploc), CDDR(expr)));
+		PROTECT(nexpr = LCONS(CAR(expr), nexpr));
+
+		nval = eval(nexpr, rho);
+		UNPROTECT(4);
+		return CONS(nval, val);
+	}
+	else error("invalid (Non-language) left side of assignment\n");
+	/*NOTREACHED*/
+}
+
+	/* Main entry point for complex assignments */
+	/* 1. We have checked to see that CAR(args) is a LANGSXP */
 
 
 static char *asym[] = {":=", "<-", "<<-"};
@@ -609,30 +651,51 @@ static char *asym[] = {":=", "<-", "<<-"};
 SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP expr, lhs, rhs, saverhs, tmp;
+	SEXP tmploc, nrho;
 	char buf[32];
 
 	expr = CAR(args);
+
 	/* it's important that the rhs get evaluated first */
-	PROTECT(saverhs =rhs = eval(CADR(args), rho));
-	lhs = evalseq(CADR(expr), rho, PRIMVAL(op)==1);
+	/* because assignment is right associative i.e. */
+	/* a <- b <- c is parsed as a <- (b <- c) */
+
+	PROTECT(saverhs = rhs = eval(CADR(args), rho));
+
+	/* This new enviroment is for temporary use here and in evalseq */
+
+	PROTECT(nrho = emptyEnv());
+	FRAME(nrho) = tmploc = CONS(R_NilValue, FRAME(rho));
+	ENCLOS(nrho) = ENCLOS(rho);
+	TAG(tmploc) = install("*tmp*");
+	
+	/* do a partial evaluation down through the lhs */
+	
+	lhs = evalseq(CADR(expr), nrho, PRIMVAL(op)==1, tmploc);
+
 	PROTECT(lhs);
 	PROTECT(rhs); /*just to get the loop right */
+
 	while (isLanguage(CADR(expr))) {
 		sprintf(buf, "%s<-", CHAR(PRINTNAME(CAR(expr))));
 		tmp = install(buf);
 		UNPROTECT(1);
-		PROTECT(rhs = replaceCall(tmp, CAR(lhs), CDDR(expr), rhs));
-		rhs = eval(rhs, rho);
+
+		CAR(tmploc) = CAR(lhs);
+		PROTECT(rhs = replaceCall(tmp, TAG(tmploc), CDDR(expr), rhs));
+
+		rhs = eval(rhs, nrho);
 		UNPROTECT(1);
 		PROTECT(rhs);
 		lhs = CDR(lhs);
 		expr = CADR(expr);
 	}
 	sprintf(buf, "%s<-", CHAR(PRINTNAME(CAR(expr))));
-	PROTECT(tmp = CAR(lhs));
+	CAR(tmploc) = CAR(lhs);
 	PROTECT(expr = assignCall(install(asym[PRIMVAL(op)]), CDR(lhs),
-				 install(buf), tmp, CDDR(expr), rhs));
-	expr = eval(expr, rho);
+				 install(buf), TAG(tmploc), CDDR(expr), rhs));
+	expr = eval(expr, nrho);
+
 	UNPROTECT(5);
 	return duplicate(saverhs);
 }
@@ -883,17 +946,14 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	env = CADR(args);
 
 	switch(TYPEOF(env)) {
-	case NILSXP: /* if no envir use the one up from eval */
-		/* PROTECT(env = sysframe(0,R_GlobalContext)); */
-		PROTECT(env);
+	case NILSXP:
+	case ENVSXP:
+		PROTECT(env);	/* so we can unprotect 2 at the end */
 		break;
 	case LISTSXP:
 		PROTECT(env = allocSExp(ENVSXP));
 		FRAME(env) = duplicate(CADR(args));
 		ENCLOS(env) = R_GlobalEnv;
-		break;
-	case ENVSXP:
-		PROTECT(env); /* so we can unprotect 2 at the end */
 		break;
 	case INTSXP:
 	case REALSXP:
@@ -909,7 +969,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 		errorcall(call, "invalid second argument\n");
 	}
 
-	if(isLanguage(expr) || isSymbol(expr)) {
+	if(isLanguage(expr) || isExpression(expr) || isSymbol(expr)) {
 		PROTECT(expr);
 		expr = eval(expr, env);
 		UNPROTECT(1);

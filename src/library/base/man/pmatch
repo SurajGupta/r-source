@@ -27,4 +27,3 @@ EXAMPLES(
 pmatch("m",   c("mean", "median", "mode")) # returns 0
 pmatch("med", c("mean", "median", "mode")) # returns 2
 )
-

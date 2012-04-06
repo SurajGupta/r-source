@@ -24,6 +24,9 @@ static void checkNames(SEXP, SEXP);
 static SEXP installAttrib(SEXP, SEXP, SEXP);
 static SEXP removeAttrib(SEXP, SEXP);
 
+SEXP comment(SEXP);
+SEXP commentgets(SEXP, SEXP);
+
 static SEXP stripAttrib(SEXP tag, SEXP lst)
 {
 	if(lst == R_NilValue) return lst;
@@ -34,20 +37,21 @@ static SEXP stripAttrib(SEXP tag, SEXP lst)
 
 SEXP getAttrib(SEXP vec, SEXP name)
 {
-	SEXP s;
+	SEXP s, blank;
 	int len, i, any;
 
 
 	if (isString(name))
 		name = install(CHAR(STRING(name)[0]));
-	if ((name == R_NamesSymbol) && (isList(vec) || isFrame(vec))) {
+	if ((name == R_NamesSymbol) && (isList(vec) || isLanguage(vec))) {
 		len = length(vec);
-		s = allocVector(STRSXP, len);
+		PROTECT(s = allocVector(STRSXP, len));
+		blank = mkChar("");
 		i = 0;
 		any = 0;
 		for (; vec != R_NilValue; vec=CDR(vec),i++) {
 			if (TAG(vec) == R_NilValue)
-				STRING(s)[i] = R_NaString;
+				STRING(s)[i] = blank;
 			else if (isSymbol(TAG(vec))) {
 				any = 1;
 				STRING(s)[i] = PRINTNAME(TAG(vec));
@@ -55,8 +59,8 @@ SEXP getAttrib(SEXP vec, SEXP name)
 			else
 				error("getAttrib: invalid type for TAG\n");
 		}
-		if (any)
-			return (s);
+		UNPROTECT(1);
+		if (any) return (s);
 		return R_NilValue;
 	}
 	for (s = ATTRIB(vec); s != R_NilValue; s = CDR(s))
@@ -74,6 +78,9 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 	if (val == R_NilValue)
 		return removeAttrib(vec, name);
 
+	if (vec == R_NilValue)
+		error("attempt to set an attribute on NULL\n");
+
 	PROTECT(vec);
 	PROTECT(name);
 	val = duplicate(val);
@@ -83,7 +90,7 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 		return namesgets(vec, val);
 	else if (name == R_DimSymbol)
 		return dimgets(vec, val);
-	else if (name == R_DimNamesSymbol)
+	else if (name == R_DimNamesSymbol) 
 		return dimnamesgets(vec, val);
 	else if (name == R_ClassSymbol)
 		return classgets(vec, val);
@@ -93,6 +100,8 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 		return tspgets(vec, val);
 	else if (name == R_RowNamesSymbol)
 		return rownamesgets(vec, val);
+	else if (name == R_CommentSymbol)
+		return commentgets(vec, val);
 	else
 		return installAttrib(vec, name, val);
 }
@@ -146,12 +155,13 @@ SEXP removeAttrib(SEXP vec, SEXP name)
 
 void checkNames(SEXP x, SEXP s)
 {
-	if (!isList(x) && !isFrame(x) && (!isVector(x) || isArray(x)))
-		error("names applied to non-vector\n");
-	if (!isVector(s) && !isList(s))
-		error("invalid type for names: must be vector\n");
-	if (length(x) != length(s))
-		error("names attribute must be the same length as the vector\n");
+	if (isVector(x) || isList(x) || isLanguage(x)) {
+		if (!isVector(s) && !isList(s))
+			error("invalid type for names: must be vector\n");
+		if (length(x) != length(s))
+			error("names attribute must be the same length as the vector\n");
+	}
+	else error("names applied to non-vector\n");
 }
 
 
@@ -207,9 +217,38 @@ SEXP levelsgets(SEXP vec, SEXP levels)
 	return vec;
 }
 
+SEXP commentgets(SEXP vec, SEXP comment)
+{
+	if(isNull(comment) || isString(comment)) {
+		if(length(comment) <= 0) {
+			ATTRIB(vec) = stripAttrib(R_CommentSymbol, vec);
+		}
+		else {
+			installAttrib(vec, R_CommentSymbol, comment);
+		}
+		return R_NilValue;
+	}
+	error("attempt to set invalid comment attribute\n");
+}
+
+SEXP do_commentgets(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	checkArity(op, args);
+	if(NAMED(CAR(args)) == 2) CAR(args) = duplicate(CAR(args));
+	if(length(CADR(args)) == 0) CADR(args) = R_NilValue;
+	setAttrib(CAR(args), R_CommentSymbol, CADR(args));
+	return CAR(args);
+}
+
+SEXP do_comment(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	checkArity(op, args);
+	return getAttrib(CAR(args), R_CommentSymbol);
+}
+
 SEXP classgets(SEXP vec, SEXP class)
 {
-	if(isString(class)) {
+	if(isNull(class) || isString(class)) {
 		if(length(class) <= 0) {
 			ATTRIB(vec) = stripAttrib(R_ClassSymbol, vec);
 			OBJECT(vec) = 0;
@@ -221,7 +260,6 @@ SEXP classgets(SEXP vec, SEXP class)
 		return R_NilValue;
 	}
 	error("attempt to set invalid class attribute\n");
-	/*NOTREACHED*/
 }
 
 SEXP do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -290,9 +328,11 @@ SEXP namesgets(SEXP vec, SEXP val)
 
 	checkNames(vec, val);
 
-	if (isList(vec) || isFrame(vec)) {
+	if (isList(vec) || isLanguage(vec)) {
 		for (s = vec; s != R_NilValue; s = CDR(s), i++)
-			if (STRING(val)[i] != R_NilValue && STRING(val)[i] != R_NaString )
+			if (STRING(val)[i] != R_NilValue
+			 && STRING(val)[i] != R_NaString
+			 && *CHAR(STRING(val)[i]) != 0)
 				TAG(s) = install(CHAR(STRING(val)[i]));
 			else
 				TAG(s) = R_NilValue;
@@ -300,7 +340,7 @@ SEXP namesgets(SEXP vec, SEXP val)
 	else if (isVector(vec))
 		installAttrib(vec, R_NamesSymbol, val);
 	else
-		error("invalid type to set names attribute");
+		error("invalid type to set names attribute\n");
 	UNPROTECT(2);
 	return vec;
 }
@@ -310,7 +350,7 @@ SEXP do_names(SEXP call, SEXP op, SEXP args, SEXP env)
 	SEXP s, t;
 	checkArity(op, args);
 	s = CAR(args);
-	if(isVector(s) || isList(s)) {
+	if(isVector(s) || isList(s) || isLanguage(s)) {
 		t = getAttrib(s, R_DimSymbol);
 		if(TYPEOF(t) == INTSXP && length(t) == 1) {
 			t = getAttrib(s, R_DimNamesSymbol);
@@ -333,8 +373,11 @@ SEXP rownamesgets(SEXP vec, SEXP val)
 
 	dups=duplicated(val);
 	for(i=0; i < length(dups) ; i++ )
-		if( LOGICAL(dups)[i] )
-			error("some row names are duplicated\n");
+		if( LOGICAL(dups)[i] ) {
+		    warning("some row names are duplicated; argument ignored\n");
+		    UNPROTECT(2);
+		    return vec;
+		}
 
 	if(isFrame(vec)) {
 		val = coerceVector(val, STRSXP);
@@ -360,7 +403,24 @@ SEXP do_dimnamesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	checkArity(op, args);
 	if(NAMED(CAR(args)) > 2) CAR(args) = duplicate(CAR(args));
-	setAttrib(CAR(args), R_DimNamesSymbol, CADR(args));
+	if( isFrame(CAR(args)) ) {
+		if( !isList(CADR(args)) )
+			errorcall(call,"wrong argument type for new dimnames\n");
+		switch( length(CADR(args)) ) {
+		case 0:
+			setAttrib(CAR(args), R_RowNamesSymbol, R_NilValue);
+			setAttrib(CAR(args), R_NamesSymbol, R_NilValue);
+			break;
+		case 2:
+			setAttrib(CAR(args), R_RowNamesSymbol, CAR(CADR(args)));
+			setAttrib(CAR(args), R_NamesSymbol, CADR(CADR(args)));
+			break;
+		default:
+			errorcall(call,"wrong length for new dimnames\n");
+		}
+	}
+	else
+		setAttrib(CAR(args), R_DimNamesSymbol, CADR(args));
 	return CAR(args);
 }
 
@@ -462,6 +522,8 @@ SEXP dimgets(SEXP vec, SEXP val)
 
 	len = length(vec);
 	ndim = length(val);
+	if( ndim == 0 )
+		error("dim: Invalid dimension vector\n");
 	total = 1;
 	for (i=0; i<ndim; i++)
 		total *= INTEGER(val)[i];

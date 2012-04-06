@@ -4,13 +4,16 @@ gray(level)
 )
 ALIAS(gray)
 VALUE(
-This function creates ``colors'' corresponding to the given level or gray.
+This function creates ``colors'' corresponding to the given level of gray.
 The level must lie between zero and one, with zero indicating LANG("black")
 and one indicating LANG("white").
 PARA
 The values returned by LANG(gray) can be used with a
-LANG(col=) specification in graphics functions or in LANG(par).
+LANG(col=) specification in graphics functions or in LANG(LINK(par)).
 )
 SEEALSO(
 LANG(LINK(rainbow)), LANG(LINK(hsv)), LANG(LINK(rgb)).
+)
+EXAMPLES(
+gray(0:8 / 8)
 )

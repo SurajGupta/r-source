@@ -15,20 +15,65 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Reference:
+ *  Algorithm 396: Student's t-quantiles by G.W. Hill
+ *  Comm. A.C.M., vol.13(10), 619-620, October 1970
  */
 
 #include "Mathlib.h"
 
-double qt(double x, double n)
-{
-	double xsign = -1.0;
+static double eps = 1.e-12;
 
-	n = floor(n + 0.5);
-	if (n <= 0 || x <= 0.0 || x >= 1.0)
+double qt(double p, double ndf)
+{
+	double a, b, c, d, prob, P, q, x, y;
+	int neg;
+
+	if (ndf < 1 || p >= 1 || p <= 0)
 		DOMAIN_ERROR;
-	if (x >= 0.5) {
-		xsign = 1.0;
-		x = 1.0 - x;
+
+	if (ndf > 1e20) return qnorm(p, 0.0, 1.0);
+
+	if(p > 0.5) {
+		neg = 0; P = 2 * (1 - p);
+	} else {
+		neg = 1; P = 2 * p;
 	}
-	return xsign * sqrt((1.0 / qbeta(2.0 * x, 0.5 * n, 0.5) - 1.0) * n);
+
+	if (fabs(ndf - 2) < eps) { /* df ~= 2 */
+		q = sqrt(2 / (P * (2 - P)) - 2);
+	} else if (ndf < 1 + eps) { /* df ~= 1 */
+		prob = P * M_PI_half;
+		q = cos(prob) / sin(prob);
+	} else { /*-- normal case;  including, e.g.,  df = 1.1 */
+		a = 1 / (ndf - 0.5);
+		b = 48 / (a * a);
+		c = ((20700 * a / b - 98) * a - 16) * a + 96.36;
+		d = ((94.5 / (b + c) - 3) / b + 1) * sqrt(a * M_PI_half) * ndf;
+		y = pow(d * P, 2 / ndf);
+
+		if (y > 0.05 + a) {
+			/* Asymptotic inverse expansion about normal */
+
+			x = qnorm(0.5 * P, 0.0, 1.0);
+			y = x * x;
+			if (ndf < 5)
+				c = c + 0.3 * (ndf - 4.5) * (x + 0.6);
+			c = (((0.05 * d * x - 5) * x - 7) * x - 2) * x + b + c;
+			y = (((((0.4 * y + 6.3) * y + 36) * y + 94.5) / c - y - 3) / b + 1) * x;
+			y = a * y * y;
+			if (y > 0.002)
+				y = exp(y) - 1;
+			else /* Taylor of  e^y -1 : */
+				y = 0.5 * y * y + y;
+		} else {
+			y = ((1 / (((ndf + 6) / (ndf * y) - 0.089 * d - 0.822)
+				   * (ndf + 2) * 3) + 0.5 / (ndf + 4))
+			     * y - 1) * (ndf + 1) / (ndf + 2) + 1 / y;
+		}
+		q = sqrt(ndf * y);
+	}
+	if(neg) q = -q;
+	return q;
 }

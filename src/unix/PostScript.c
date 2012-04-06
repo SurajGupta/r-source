@@ -160,7 +160,7 @@ static int GetCharInfo(char *buf, FontMetricInfo *metrics)
 	if(!MatchKey(buf, "C ")) return 0;
 	p = SkipToNextItem(p);
 	sscanf(p, "%d", &nchar);
-	if(nchar < 0) return 0;
+	if(nchar < 0) return 1;
 	p = SkipToNextKey(p);
 
 	if(!MatchKey(p, "WX")) return 0;
@@ -248,6 +248,22 @@ double PostScriptStringWidth(char *p, FontMetricInfo *metrics)
 			sum += metrics->CharInfo[*p].WX;
 	}
 	return 0.001 * sum;
+}
+
+void PostScriptMetricInfo(int c, double *ascent, double *descent,
+	double *width, FontMetricInfo *metrics)
+{
+	if(c == 0) {
+		*ascent = 0.001 * metrics->FontBBox[3];
+		*descent = -0.001 * metrics->FontBBox[1];
+		*width = 0.001 * (metrics->FontBBox[2] - metrics->FontBBox[0]);
+
+	}
+	else {
+		*ascent = 0.001 * metrics->CharInfo[c].BBox[3];
+		*descent = -0.001 * metrics->CharInfo[c].BBox[1];
+		*width = 0.001 * metrics->CharInfo[c].WX;
+	}
 }
 
 
@@ -435,9 +451,9 @@ void PostScriptOpenPolygon(FILE *fp, double *x, double *y, int nxy)
 {
 	int i;
 	fprintf(fp, "np\n");
-	fprintf(fp, "  %.2f %.2f m\n", x[0], y[0]);
+	fprintf(fp, "%.2f %.2f m\n", x[0], y[0]);
 	for(i=1 ; i<nxy ; i++)
-		fprintf(fp, "  %.2f %.2f l\n", x[i], y[i]);
+		fprintf(fp, "%.2f %.2f l\n", x[i], y[i]);
 	fprintf(fp, "cp o\n");
 }
 

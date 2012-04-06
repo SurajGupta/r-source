@@ -91,7 +91,7 @@
  *  of the Psi Function, Algorithm 610,
  *  ACM Transactions on Mathematical Software 9, 4 (1983), pp. 494-502.
  *
- *  Routines called: D1MACH, I1MACH.
+ *  Routines called: F77_SYMBOL(d1mach), F77_SYMBOL(i1mach).
  */
 
 #include "Mathlib.h"
@@ -129,8 +129,14 @@ static double bvalues[] = {
 static double *b = &bvalues[-1];
 static int nmax = 100;
 
-double D1MACH(int);
-int I1MACH(int);
+static int c_4  =  4;
+static int c_5  =  5;
+static int c_14 = 14;
+static int c_15 = 15;
+static int c_16 = 16;
+
+double F77_SYMBOL(d1mach)(int*);
+int F77_SYMBOL(i1mach)(int*);
 
 
 void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
@@ -153,9 +159,9 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 
 	*nz = 0;
 	mm = m;
-	nx = imin2(-I1MACH(15), I1MACH(16));
-	r1m5 = D1MACH(5);
-	r1m4 = D1MACH(4) * 0.5;
+	nx = imin2(-F77_SYMBOL(i1mach)(&c_15), F77_SYMBOL(i1mach)(&c_16));
+	r1m5 = F77_SYMBOL(d1mach)(&c_5);
+	r1m4 = F77_SYMBOL(d1mach)(&c_4) * 0.5;
 	wdtol = fmax2(r1m4, 0.5e-18);
 
 	/* elim = approximate exponential over and underflow limit */
@@ -193,7 +199,7 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 
 			/* compute xmin and the number of terms of the series,  fln+1 */
 
-			rln = r1m5 * I1MACH(14);
+			rln = r1m5 * F77_SYMBOL(i1mach)(&c_14);
 			rln = fmin2(rln, 18.06);
 			fln = fmax2(rln, 3.0) - 3.0;
 			yint = 3.50 + 0.40 * fln;

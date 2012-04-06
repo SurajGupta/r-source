@@ -1,5 +1,7 @@
-\documentclass[a4paper]{article}
+\documentclass[a4paper,11pt]{article}
 \usepackage{alltt}
+\addtolength{\textheight}{12mm}%\
+\addtolength{\topmargin}{-9mm} %/ -- still fits on US paper
 
 \newenvironment{display}[0]%
  {\begin{list}{}{\setlength{\leftmargin}{30pt}}\item}%
@@ -11,6 +13,7 @@
 
 \title{\textbf{Writing \R\ Documentation}}
 \author{\textit{Ross Ihaka \& Martin Maechler}}
+\date{July 7, 1997}
 
 \begin{document}
 \maketitle
@@ -20,19 +23,25 @@
 This directory contains detailed documentation for \R\ functions and code
 for translating them into \LaTeX\ and \emph{\HTML} help files.
 
-The help files are contained in the directories ``man'' and ``man281''.
-The ``man'' entries are for Ross-n-Robert functions and the ``man281''
-ones for Alan Lee functions.
+The help files actually \emph{used} are in the directories
+\texttt{\emph{\$RHOME}/src/library/*/man} where ``*'' stands for
+\texttt{base} where all the standard functions are and for ``proper''
+libraries such as \texttt{mva} and \texttt{eda}.
+
+The directories ``man.new'', ``man.defunct'' and ``man281'' (for Alan Lee
+functions) are not used anymore, currently.
+
 
 \section{Documentation Format}\label{sec:doc-format}
 
 The help files are written in a form which can be processed
 into a variety of formats.  The translation is carried out
-by a combination of \texttt{sed} and \texttt{m4} scripts.
+by a combination of \texttt{m4} and \texttt{sed} scripts.
 
 The basic layout of a raw documentation file is as follows.
 For a given function \texttt{do.this}, use the \R\ command
 \underline{\texttt{prompt(do.this)}} to produce the file \texttt{do.this.man}.
+Note that each file should contain at least one \texttt{ALIAS(name)} line.
 \begin{display}
 \begin{alltt}
 TITLE(\textit{name} @@ \textit{Description})
@@ -40,6 +49,7 @@ USAGE(
 \textit{One or more lines showing the synopsis of the function.
 These are set verbatim in typewriter font.}
 )
+ALIAS(\textit{name})
 ALIAS(\textit{alias 1})
 ALIAS(\textit{alias 2})
 \textit{etc.}
@@ -65,17 +75,35 @@ ARG(\textit{comp2} @@ \textit{Description of list component `comp2'})
 \textit{etc.}
 )
 REFERENCES(
-\textit{Optional references section.}
+\textit{References section.  Optional as well as all the following sections:}
 )
+NOTE( \textit{Some note you want to have pointed out\dots\dots.}
+)
+SECTION(Author @@ \dots\dots {\small(\textit{if you are not one of R\&R})}
+)
+SECTION(Warning @@ \textit{\dots\dots}
+)
+\textit{ and maybe more \texttt{SECTION(..)}  environments}
+
 SEEALSO(
-\textit{Pointers to related \R\ functions.}
+\textit{Pointers to related \R\ functions, using \texttt{LINK(.)}.}
 )
 EXAMPLES(
 \textit{Examples of how to use the function.
 These are set verbatim in typewriter font.}
+
+\fbox{Use examples which are \emph{directly} executable!}
+\textit{To this end, define data, use random number generators (e.g.,
+  \texttt{x <- rnorm(100)}), or use a standard dataset, \texttt{data(\dots)}
+  (Use \texttt{help(data=index)} for info).}
+
 )
 \end{alltt}
 \end{display}
+
+\bigskip
+\pagebreak[3]
+\pagebreak[4]%-- at the moment, given the content....
 
 \section{Emphasis}
 Within the text of the document it is possible to set
@@ -95,6 +123,19 @@ text.
 To begin a new paragraph insert \texttt{PARA} on a line by itself
 and to leave a blank line in an example place \texttt{BLANK}
 on a line by itself.
+\textbf{Note:} Do \underline{\emph{not}} use
+\texttt{PARA} in the \textsc{EXAMPLES} section, but rather \texttt{BLANK}
+({\footnotesize The reason is an \texttt{nroff} problem: The \emph{nofill}
+  command (\texttt{.nf}) is invalidated by a paragraph break}).
+
+Besides the \texttt{DESCRIPTION(..)}, \texttt{VALUE\textit{[S]}(..)},
+\texttt{REFERENCES(.)} and \texttt{NOTE(.)} sections, you can use further
+by, e.g.,
+\begin{alltt}
+SECTION(Warning @@  You must not call this function unless \ldots\ldots
+)
+\end{alltt}
+
 
 \section{Hyperlinks}
 Currently, this only affects the creation of the \HTML\ pages (used, e.g.,
@@ -106,13 +147,14 @@ One main usage of  `\texttt{LINK}' is in the \texttt{SEEALSO} section of
 the help page, see~\ref{sec:doc-format}, above.
 
 
-\pagebreak[3]
+\bigskip
+\pagebreak[4]%-- at the moment, given the content....
 
 \section{Mathematics}
-
-These are constructs that you can use for writing formulae:\\
-\samepage
-\begin{tabular}{l@{\ \ $\to$\ \ }l@{\ \ $\longrightarrow$\ \ }l}
+These are constructs that you can use for writing formulae:
+%
+\begin{center}
+\begin{tabular}{l@{\ \ $\to$\ \ }p{12em}@{\ \ $\longrightarrow$\ \ }l}
 \hline
 Help-File & \LaTeX-code & \LaTeX ``result'' \\
 \hline\hline
@@ -136,7 +178,8 @@ OVER            & \verb#{{a1} \over {a2}}#      & $ {{a1} \over {a2}} $ \\
 SUP             & \verb#`{{a1}^{a2}}'#  & $ {{a1}^{a2}} $ \\
 SUB             & \verb#`{{a1}_{a2}}'#  & $ {{a1}_{a2}} $ \\
 CHOOSE          & \footnotesize
-                    \verb#`{\left(\begin{array}{c}a1 \\ a2\end{array}\right)}'# 
+                    \verb#`{\left(\begin{array}{c}a1# 
+                        \hspace*{1em} \verb#\\ a2\end{array}\right)}'# 
                  & $ {\left(\begin{array}{c} a1 \\ a2 \end{array} \right)} $ \\
 PAREN           & \verb#`{\left( a1 \right)}'#  & $ {\left( a1 \right)} $ \\
 SP              & \verb#`'#     & $  $ \\
@@ -152,14 +195,37 @@ boldgreekepsilon& \verb#`\bold{\varepsilon}'#   & $ \bold{\varepsilon} $ \\
 \hline\hline
 EQBOLD          & \verb#`\bold{a1}'#    & $ \bold{a1} $ \\
 EQN             & \verb#`$ a1 $'#       & $  a1  $ \\
-DEQN            & \verb#`\[ a1 \]'#     &  $\displaystyle a1 $  \\
+DEQN(\textsc{tex} @@ ascii) & \verb#`\[ #\textsc{tex}\verb# \]'#
+                                        &  $\displaystyle \textsc{tex} $  \\
 DEQTEX          & \verb#\[ a1 \]#       &  $\displaystyle a1 $  \\
-DEQHTML         & \verb#`'#     & $  $ \\
+DEQHTML         & \verb#`'#     & $  $ \\ \hline
 \end{tabular}
+\end{center}
 
 \bigskip
---- Examples to be written --
-\bigskip
+
+\noindent The following example is from the \texttt{Poisson} help page:
+%\samepage
+\begin{display}
+\begin{verbatim}
+DEQN(p(x) = OVER(SUP(greeklambda@@x) SUP(e@@-greeklambda) @@ x!)
+  @@ p(x) = lambda^x exp(-lambda)/x!)
+for EQN(x = 0, 1, 2, LDOTS).
+\end{verbatim}
+\end{display}
+which, for the \LaTeX\ manual, becomes
+\begin{quote}
+\[ p(x) = {{{{\lambda}^{x}} {{e}^{-\lambda}}} \over {x!}}
+ \]
+for $ x = 0, 1, 2, \ldots $.
+\end{quote}
+where, for the \HTML\ and  the ``direct'' ('man' like) on-line help becomes
+\begin{verbatim}
+                   p(x) = lambda^x exp(-lambda)/x!
+        
+             for x = 0, 1, 2, ....
+\end{verbatim}
+        
 
 \section{Miscellaneous}
 Use \texttt{DOTS} for the dots in function argument list ``\texttt{...}'',

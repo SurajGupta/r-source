@@ -49,7 +49,6 @@ FUNTAB R_FunTab[] =
 {
 /* Language Related Constructs */
 
-{"deprecated",	do_deprecated,	0,	0,	-1,	PP_FUNCALL,	0},
 {"if",		do_if,		0,	0,	-1,	PP_IF,		0},
 {"while",	do_while,	0,	0,	-1,	PP_WHILE,	0},
 {"for",		do_for,		0,	0,	-1,	PP_FOR,		0},
@@ -79,6 +78,7 @@ FUNTAB R_FunTab[] =
 {".Internal",	do_internal,	0,	0,	1,	PP_FUNCALL,	0},
 {"on.exit",	do_onexit,	0,	100,	1,	PP_FUNCALL,	0},
 {"Recall",	do_recall,	0,	10,	-1,	PP_FUNCALL,	0},
+{"delay",	do_delay,	0,	11,	2,	PP_FUNCALL,	0},
 
 
 /* Binary Operators */
@@ -121,7 +121,7 @@ FUNTAB R_FunTab[] =
 {"matrix",	do_matrix,	0,	11,	4,	PP_FUNCALL,	0},
 {"array",	do_array,	0,	1,	2,	PP_FUNCALL,	0},
 {"length",	do_length,	0,	1,	1,	PP_FUNCALL,	0},
-{"length<-",	do_lengthgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"length<-",	do_lengthgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"nlevels",	do_nlevels,	0,	1,	1,	PP_FUNCALL,	0},
 {"row",		do_rowscols,	1,	11,	1,	PP_FUNCALL,	0},
 {"col",		do_rowscols,	2,	11,	1,	PP_FUNCALL,	0},
@@ -131,21 +131,23 @@ FUNTAB R_FunTab[] =
 {"rbind",	do_bind,	2,	1,	-1,	PP_FUNCALL,	0},
 {"drop",	do_drop,	0,	1,	1,	PP_FUNCALL,	0},
 {"class",	do_class,	0,	1,	1,	PP_FUNCALL,	0},
-{"class<-",	do_classgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"class<-",	do_classgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"unclass",	do_unclass,	0,	1,	1,	PP_FUNCALL,	0},
 {"names",	do_names,	0,	11,	1,	PP_FUNCALL,	0},
 {"names<-",	do_namesgets,	0,	11,	2,	PP_FUNCALL,	0},
 {"dimnames",	do_dimnames,	0,	1,	1,	PP_FUNCALL,	0},
-{"dimnames<-",	do_dimnamesgets,0,	0,	2,	PP_FUNCALL,	0},
+{"dimnames<-",	do_dimnamesgets,0,	1,	2,	PP_FUNCALL,	0},
 {"row.names",	do_rownames,	0,	1,	1,	PP_FUNCALL,	0},
 {"dim",		do_dim,		0,	1,	1,	PP_FUNCALL,	0},
-{"dim<-",	do_dimgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"dim<-",	do_dimgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"levels",	do_levels,	0,	1,	1,	PP_FUNCALL,	0},
-{"levels<-",	do_levelsgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"levels<-",	do_levelsgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"attributes",	do_attributes,	0,	1,	1,	PP_FUNCALL,	0},
-{"attributes<-",do_attributesgets,0,	0,	1,	PP_FUNCALL,	0},
+{"attributes<-",do_attributesgets,0,	1,	1,	PP_FUNCALL,	0},
 {"attr",	do_attr,	0,	1,	2,	PP_FUNCALL,	0},
-{"attr<-",	do_attrgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"attr<-",	do_attrgets,	0,	1,	2,	PP_FUNCALL,	0},
+{"comment",	do_comment,	0,	1,	1,	PP_FUNCALL,	0},
+{"comment<-",	do_commentgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"get",		do_get,		1,	10,	4,	PP_FUNCALL,	0},
 {"exists",	do_get,		0,	10,	4,	PP_FUNCALL,	0},
 {"assign",	do_assign,	0,	110,	4,	PP_FUNCALL,	0},
@@ -208,25 +210,25 @@ FUNTAB R_FunTab[] =
 {"lchoose",	do_math2,	4,	1,	2,	PP_FUNCALL,	0},
 {"choose",	do_math2,	5,	1,	2,	PP_FUNCALL,	0},
 
-{"dchisq",	do_math2,	6,	1,	2,	PP_FUNCALL,	0},
-{"pchisq",	do_math2,	7,	1,	2,	PP_FUNCALL,	0},
-{"qchisq",	do_math2,	8,	1,	2,	PP_FUNCALL,	0},
+{"dchisq",	do_math2,	6,	11,	2,	PP_FUNCALL,	0},
+{"pchisq",	do_math2,	7,	11,	2,	PP_FUNCALL,	0},
+{"qchisq",	do_math2,	8,	11,	2,	PP_FUNCALL,	0},
 
 {"dexp",	do_math2,	9,	11,	2,	PP_FUNCALL,	0},
 {"pexp",	do_math2,	10,	11,	2,	PP_FUNCALL,	0},
 {"qexp",	do_math2,	11,	11,	2,	PP_FUNCALL,	0},
 
-{"dgeom",	do_math2,	12,	1,	2,	PP_FUNCALL,	0},
-{"pgeom",	do_math2,	13,	1,	2,	PP_FUNCALL,	0},
-{"qgeom",	do_math2,	14,	1,	2,	PP_FUNCALL,	0},
+{"dgeom",	do_math2,	12,	11,	2,	PP_FUNCALL,	0},
+{"pgeom",	do_math2,	13,	11,	2,	PP_FUNCALL,	0},
+{"qgeom",	do_math2,	14,	11,	2,	PP_FUNCALL,	0},
 
-{"dpois",	do_math2,	15,	1,	2,	PP_FUNCALL,	0},
-{"ppois",	do_math2,	16,	1,	2,	PP_FUNCALL,	0},
-{"qpois",	do_math2,	17,	1,	2,	PP_FUNCALL,	0},
+{"dpois",	do_math2,	15,	11,	2,	PP_FUNCALL,	0},
+{"ppois",	do_math2,	16,	11,	2,	PP_FUNCALL,	0},
+{"qpois",	do_math2,	17,	11,	2,	PP_FUNCALL,	0},
 
-{"dt",		do_math2,	18,	1,	2,	PP_FUNCALL,	0},
-{"pt",		do_math2,	19,	1,	2,	PP_FUNCALL,	0},
-{"qt",		do_math2,	20,	1,	2,	PP_FUNCALL,	0},
+{"dt",		do_math2,	18,	11,	2,	PP_FUNCALL,	0},
+{"pt",		do_math2,	19,	11,	2,	PP_FUNCALL,	0},
+{"qt",		do_math2,	20,	11,	2,	PP_FUNCALL,	0},
 
 
 #ifdef COMPLEX_DATA
@@ -240,51 +242,23 @@ FUNTAB R_FunTab[] =
 
 #endif
 
-/* Mathematical Functions of Two Variables */
-
-{"lbeta",	do_math2,	1,	1,	2,	PP_FUNCALL,	0},
-{"beta",	do_math2,	2,	1,	2,	PP_FUNCALL,	0},
-{"lchoose",	do_math2,	4,	1,	2,	PP_FUNCALL,	0},
-{"choose",	do_math2,	5,	1,	2,	PP_FUNCALL,	0},
-
-{"dchisq",	do_math2,	6,	1,	2,	PP_FUNCALL,	0},
-{"pchisq",	do_math2,	7,	1,	2,	PP_FUNCALL,	0},
-{"qchisq",	do_math2,	8,	1,	2,	PP_FUNCALL,	0},
-
-{"dexp",	do_math2,	9,	11,	2,	PP_FUNCALL,	0},
-{"pexp",	do_math2,	10,	11,	2,	PP_FUNCALL,	0},
-{"qexp",	do_math2,	11,	11,	2,	PP_FUNCALL,	0},
-
-{"dgeom",	do_math2,	12,	1,	2,	PP_FUNCALL,	0},
-{"pgeom",	do_math2,	13,	1,	2,	PP_FUNCALL,	0},
-{"qgeom",	do_math2,	14,	1,	2,	PP_FUNCALL,	0},
-
-{"dpois",	do_math2,	15,	1,	2,	PP_FUNCALL,	0},
-{"ppois",	do_math2,	16,	1,	2,	PP_FUNCALL,	0},
-{"qpois",	do_math2,	17,	1,	2,	PP_FUNCALL,	0},
-
-{"dt",		do_math2,	18,	1,	2,	PP_FUNCALL,	0},
-{"pt",		do_math2,	19,	1,	2,	PP_FUNCALL,	0},
-{"qt",		do_math2,	20,	1,	2,	PP_FUNCALL,	0},
-
-
 /* Mathematical Functions of Three Variables */
 
-{"dbeta",	do_math3,	1,	1,	3,	PP_FUNCALL,	0},
-{"pbeta",	do_math3,	2,	1,	3,	PP_FUNCALL,	0},
-{"qbeta",	do_math3,	3,	1,	3,	PP_FUNCALL,	0},
+{"dbeta",	do_math3,	1,	11,	3,	PP_FUNCALL,	0},
+{"pbeta",	do_math3,	2,	11,	3,	PP_FUNCALL,	0},
+{"qbeta",	do_math3,	3,	11,	3,	PP_FUNCALL,	0},
 
-{"dbinom",	do_math3,	4,	1,	3,	PP_FUNCALL,	0},
-{"pbinom",	do_math3,	5,	1,	3,	PP_FUNCALL,	0},
-{"qbinom",	do_math3,	6,	1,	3,	PP_FUNCALL,	0},
+{"dbinom",	do_math3,	4,	11,	3,	PP_FUNCALL,	0},
+{"pbinom",	do_math3,	5,	11,	3,	PP_FUNCALL,	0},
+{"qbinom",	do_math3,	6,	11,	3,	PP_FUNCALL,	0},
 
 {"dcauchy",	do_math3,	7,	11,	3,	PP_FUNCALL,	0},
 {"pcauchy",	do_math3,	8,	11,	3,	PP_FUNCALL,	0},
 {"qcauchy",	do_math3,	9,	11,	3,	PP_FUNCALL,	0},
 
-{"df",		do_math3,	10,	1,	3,	PP_FUNCALL,	0},
-{"pf",		do_math3,	11,	1,	3,	PP_FUNCALL,	0},
-{"qf",		do_math3,	12,	1,	3,	PP_FUNCALL,	0},
+{"df",		do_math3,	10,	11,	3,	PP_FUNCALL,	0},
+{"pf",		do_math3,	11,	11,	3,	PP_FUNCALL,	0},
+{"qf",		do_math3,	12,	11,	3,	PP_FUNCALL,	0},
 
 {"dgamma",	do_math3,	13,	11,	3,	PP_FUNCALL,	0},
 {"pgamma",	do_math3,	14,	11,	3,	PP_FUNCALL,	0},
@@ -298,9 +272,9 @@ FUNTAB R_FunTab[] =
 {"plogis",	do_math3,	20,	11,	3,	PP_FUNCALL,	0},
 {"qlogis",	do_math3,	21,	11,	3,	PP_FUNCALL,	0},
 
-{"dnbinom",	do_math3,	22,	1,	3,	PP_FUNCALL,	0},
-{"pnbinom",	do_math3,	23,	1,	3,	PP_FUNCALL,	0},
-{"qnbinom",	do_math3,	24,	1,	3,	PP_FUNCALL,	0},
+{"dnbinom",	do_math3,	22,	11,	3,	PP_FUNCALL,	0},
+{"pnbinom",	do_math3,	23,	11,	3,	PP_FUNCALL,	0},
+{"qnbinom",	do_math3,	24,	11,	3,	PP_FUNCALL,	0},
 
 {"dnorm",	do_math3,	25,	11,	3,	PP_FUNCALL,	0},
 {"pnorm",	do_math3,	26,	11,	3,	PP_FUNCALL,	0},
@@ -314,39 +288,39 @@ FUNTAB R_FunTab[] =
 {"pweibull",	do_math3,	32,	11,	3,	PP_FUNCALL,	0},
 {"qweibull",	do_math3,	33,	11,	3,	PP_FUNCALL,	0},
 
-{"dnchisq",	do_math3,	34,	1,	3,	PP_FUNCALL,	0},
-{"pnchisq",	do_math3,	35,	1,	3,	PP_FUNCALL,	0},
-{"qnchisq",	do_math3,	36,	1,	3,	PP_FUNCALL,	0},
+{"dnchisq",	do_math3,	34,	11,	3,	PP_FUNCALL,	0},
+{"pnchisq",	do_math3,	35,	11,	3,	PP_FUNCALL,	0},
+{"qnchisq",	do_math3,	36,	11,	3,	PP_FUNCALL,	0},
 
 
 /* Mathematical Functions of Four Variables */
 
-{"dhyper",	do_math4,	1,	1,	4,	PP_FUNCALL,	0},
-{"phyper",	do_math4,	2,	1,	4,	PP_FUNCALL,	0},
-{"qhyper",	do_math4,	3,	1,	4,	PP_FUNCALL,	0},
+{"dhyper",	do_math4,	1,	11,	4,	PP_FUNCALL,	0},
+{"phyper",	do_math4,	2,	11,	4,	PP_FUNCALL,	0},
+{"qhyper",	do_math4,	3,	11,	4,	PP_FUNCALL,	0},
 
 
 /* Random Numbers */
 
-{"rchisq",	do_random1,	0,	1,	2,	PP_FUNCALL,	0},
+{"rchisq",	do_random1,	0,	11,	2,	PP_FUNCALL,	0},
 {"rexp",	do_random1,	1,	11,	2,	PP_FUNCALL,	0},
-{"rgeom",	do_random1,	2,	1,	2,	PP_FUNCALL,	0},
-{"rpois",	do_random1,	3,	1,	2,	PP_FUNCALL,	0},
-{"rt",		do_random1,	4,	1,	2,	PP_FUNCALL,	0},
+{"rgeom",	do_random1,	2,	11,	2,	PP_FUNCALL,	0},
+{"rpois",	do_random1,	3,	11,	2,	PP_FUNCALL,	0},
+{"rt",		do_random1,	4,	11,	2,	PP_FUNCALL,	0},
 
-{"rbeta",	do_random2,	0,	1,	3,	PP_FUNCALL,	0},
-{"rbinom",	do_random2,	1,	1,	3,	PP_FUNCALL,	0},
+{"rbeta",	do_random2,	0,	11,	3,	PP_FUNCALL,	0},
+{"rbinom",	do_random2,	1,	11,	3,	PP_FUNCALL,	0},
 {"rcauchy",	do_random2,	2,	11,	3,	PP_FUNCALL,	0},
-{"rf",		do_random2,	3,	1,	3,	PP_FUNCALL,	0},
+{"rf",		do_random2,	3,	11,	3,	PP_FUNCALL,	0},
 {"rgamma",	do_random2,	4,	11,	3,	PP_FUNCALL,	0},
 {"rlnorm",	do_random2,	5,	11,	3,	PP_FUNCALL,	0},
 {"rlogis",	do_random2,	6,	11,	3,	PP_FUNCALL,	0},
-{"rnbinom",	do_random2,	7,	1,	3,	PP_FUNCALL,	0},
+{"rnbinom",	do_random2,	7,	11,	3,	PP_FUNCALL,	0},
 {"rnorm",	do_random2,	8,	11,	3,	PP_FUNCALL,	0},
 {"runif",	do_random2,	9,	11,	3,	PP_FUNCALL,	0},
 {"rweibull",	do_random2,	10,	11,	3,	PP_FUNCALL,	0},
 
-{"rhyper",	do_random3,	0,	1,	4,	PP_FUNCALL,	0},
+{"rhyper",	do_random3,	0,	11,	4,	PP_FUNCALL,	0},
 
 {"sample",	do_sample,	0,	11,	3,	PP_FUNCALL,	0},
 
@@ -375,7 +349,7 @@ FUNTAB R_FunTab[] =
 {"as.name",	do_as,		102,	11,	1,	PP_FUNCALL,	0},
 {"as.matrix.data.frame", do_asmatrixdf,	0, 11,	1,	PP_FUNCALL,	0},
 {"codes",	do_codes,	0,	1,	1,	PP_FUNCALL,	0},
-{"codes<-",	do_codesgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"codes<-",	do_codesgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"paste",	do_paste,	0,	11,	3,	PP_FUNCALL,	0},
 {"format",	do_format,	0,	1,	-1,	PP_FUNCALL,	0},
 {"format.info",	do_formatinfo,	0,	1,	1,	PP_FUNCALL,	0},
@@ -406,13 +380,12 @@ FUNTAB R_FunTab[] =
 {"is.integer",	do_is,		INTSXP,	1,	1,	PP_FUNCALL,	0},
 {"is.real",	do_is,		REALSXP,1,	1,	PP_FUNCALL,	0},
 {"is.double",	do_is,		REALSXP,1,	1,	PP_FUNCALL,	0},
-#ifdef COMPLEX_DATA
 {"is.complex",	do_is,		CPLXSXP,1,	1,	PP_FUNCALL,	0},
-#endif
 {"is.character",do_is,		STRSXP,	1,	1,	PP_FUNCALL,	0},
 {"is.name",	do_is,		SYMSXP,	1,	1,	PP_FUNCALL,	0},
 {"is.environment",do_is,	ENVSXP,	1,	1,	PP_FUNCALL,	0},
 {"is.list",	do_is,		LISTSXP,1,	1,	PP_FUNCALL,	0},
+{"is.expression",do_is,		EXPRSXP,1,	1,	PP_FUNCALL,	0},
 
 {"is.object",	do_is,		50,	1,	1,	PP_FUNCALL,	0},
 {"is.factor",	do_is,		75,	1,	1,	PP_FUNCALL,	0},
@@ -447,7 +420,7 @@ FUNTAB R_FunTab[] =
 {"parse",	do_parse,	0,	11,	4,	PP_FUNCALL,	0},
 {"save",        do_save,        0,      111,     3,      PP_FUNCALL,     0},
 {"load",        do_load,        0,      111,     1,      PP_FUNCALL,     0},
-{"deparse",	do_deparse,	0,	1,	1,	PP_FUNCALL,	0},
+{"deparse",	do_deparse,	0,	1,	2,	PP_FUNCALL,	0},
 {"dput",	do_dput,	0,	111,	2,	PP_FUNCALL,	0},
 {"dump",	do_dump,	0,	111,	2,	PP_FUNCALL,	0},
 {"substitute",	do_substitute,	0,	0,	-1,	PP_FUNCALL,	0},
@@ -463,12 +436,16 @@ FUNTAB R_FunTab[] =
 {"rep",		do_rep,		0,	11,	2,	PP_FUNCALL,	0},
 {"list",	do_makelist,	1,	1,	-1,	PP_FUNCALL,	0},
 {"split",	do_split,	0,	11,	2,	PP_FUNCALL,	0},
+{"symbol.C",	do_symbol,	0,	1,	1,	PP_FOREIGN,	0},
+{"symbol.For",	do_symbol,	1,	1,	1,	PP_FOREIGN,	0},
+{"is.loaded",	do_isloaded,	0,	1,	1,	PP_FOREIGN,	0},
 {".C",		do_dotCode,	0,	1,	-1,	PP_FOREIGN,	0},
 {".Fortran",	do_dotCode,	1,	1,	-1,	PP_FOREIGN,	0},
 {"dyn.load",	do_dynload,	0,	111,	1,	PP_FUNCALL,	0},
-{"ls",		do_ls,		1,	11,	3,	PP_FUNCALL,	0},
+{"ls",		do_ls,		1,	11,	2,	PP_FUNCALL,	0},
 {"typeof",	do_typeof,	1,	1,	1,	PP_FUNCALL,	0},
 {"eval",	do_eval,	1,	11,	2,	PP_FUNCALL,	0},
+{"expression",	do_expression,	1,	0,	-1,	PP_FUNCALL,	0},
 {"sys.parent",	do_sys,		1,	10,	-1,	PP_FUNCALL,	0},
 {"sys.call",	do_sys,		2,	10,	-1,	PP_FUNCALL,	0},
 {"sys.frame",	do_sys,		3,	10,	-1,	PP_FUNCALL,	0},
@@ -486,7 +463,7 @@ FUNTAB R_FunTab[] =
 {"nargs",	do_nargs,	1,	0,	0,	PP_FUNCALL,	0},
 {"scan",	do_scan,	0,	11,	10,	PP_FUNCALL,	0},
 {"count.fields",do_countfields,	0,	11,	3,	PP_FUNCALL,	0},
-{"t",		do_transpose,	0,	1,	1,	PP_FUNCALL,	0},
+{"t.default",	do_transpose,	0,	1,	1,	PP_FUNCALL,	0},
 {"aperm",	do_aperm,	0,	11,	3,	PP_FUNCALL,	0},
 {"builtins",	do_builtins,	0,	11,	1,	PP_FUNCALL,	0},
 {"edit",	do_edit,	0,	11,	3,	PP_FUNCALL,	0},
@@ -496,10 +473,12 @@ FUNTAB R_FunTab[] =
 {"body",	do_body,	0,	11,	1,	PP_FUNCALL,	0},
 {"globalenv",	do_globalenv,	0,	1,	0,	PP_FUNCALL,	0},
 {"environment",	do_envir,	0,	11,	1,	PP_FUNCALL,	0},
-{"environment<-",do_envirgets,	0,	0,	2,	PP_FUNCALL,	0},
+{"environment<-",do_envirgets,	0,	1,	2,	PP_FUNCALL,	0},
 {"options",	do_options,	0,	11,	1,	PP_FUNCALL,	0},
 {"check.bounds",do_checkbounds,	0,	1,	1,	PP_FUNCALL,     0},
 {"sink",	do_sink,	0,	101,	1,	PP_FUNCALL,	0},
+{"lib.fixup",	do_libfixup,	0,	101,	2,	PP_FUNCALL,	0},
+{"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL,	0},
 
 /* Data Frames */
 
@@ -507,8 +486,8 @@ FUNTAB R_FunTab[] =
 {"is.data.frame",do_is,		80,	1,	1,	PP_FUNCALL,	0},
 {"[.data.frame",do_subsetdf,	0,	0,	-1,	PP_FUNCALL,	0},
 {"[[.data.frame",do_subsetdf2,	0,	0,	-1,	PP_FUNCALL,	0},
-{"[<-.data.frame",do_subassigndf,0,	0,	-1,	PP_FUNCALL,	0},
-{"[[<-.data.frame",do_subassigndf2,0,	0,	-1,	PP_FUNCALL,	0},
+{"[<-.data.frame",do_subassigndf,0,	1,	-1,	PP_FUNCALL,	0},
+{"[[<-.data.frame",do_subassigndf2,0,	1,	-1,	PP_FUNCALL,	0},
 {"print.data.frame",do_printdf,	0,	101,	-1,	PP_FUNCALL,	0},
 {"any.data.frame",do_anydf,	0,	1,	-1,	PP_FUNCALL,	0},
 
@@ -551,7 +530,8 @@ FUNTAB R_FunTab[] =
 {"dend",	do_dend,	0,	111,	6,	PP_FUNCALL,	0},
 {"save.plot",	do_saveplot,	0,	101,	1,	PP_FUNCALL,	0},
 {"print.plot",	do_printplot,	0,	101,	0,	PP_FUNCALL,	0},
-
+{"text.math",	do_mathtext,	0,	100,	1,	PP_FUNCALL,	0},
+{"erase",	do_erase,	0,	111,	1,	PP_FUNCALL,	0},
 
 /* Objects */
 {"UseMethod",	do_usemethod,	0,	 0,	-1,	PP_FUNCALL,	0},
@@ -604,6 +584,9 @@ extern void installFunTab(int i)
 		INTERNAL(install(R_FunTab[i].name)) = mkPRIMSXP(i, R_FunTab[i].eval % 10);
 	else
 		SYMVALUE(install(R_FunTab[i].name)) = mkPRIMSXP(i, R_FunTab[i].eval % 10);
+	/*
+	printf("%d %s %d\n", i, R_FunTab[i].name, R_FunTab[i].code);
+	*/
 }
 
 void SymbolShortcuts()
@@ -624,6 +607,7 @@ void SymbolShortcuts()
 	R_SeedsSymbol = install(".Random.seed");
 	R_LastvalueSymbol = install(".Last.value");
 	R_TspSymbol = install("tsp");
+	R_CommentSymbol = install("comment");
 }
 
 /* initialize the symbol table */
@@ -675,49 +659,6 @@ void InitNames()
 	for (i = 0; R_FunTab[i].name; i++)
 		installFunTab(i);
 }
-
-#ifdef OLD
-SEXP do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	SEXP s, ans;
-	int i, intern, count;
-
-	checkArity(op, args);
-
-	intern = asInteger(CAR(args));
-	if(intern == NA_INTEGER) intern = 0;
-
-	count = 0;
-	for (i = 0; i < HSIZE; i++) {
-		for(s=R_SymbolTable[i]; s!=R_NilValue; s=CDR(s)) {
-			if(intern) {
-				if(INTERNAL(CAR(s)) != R_NilValue)
-					count++;
-			}
-			else {
-				if(SYMVALUE(CAR(s)) != R_UnboundValue)
-					count++;
-			}
-		}
-	}
-	ans = allocVector(STRSXP, count);
-	count = 0;
-	for (i = 0; i < HSIZE; i++) {
-		for(s=R_SymbolTable[i]; s!=R_NilValue; s=CDR(s)) {
-			if(intern) {
-				if(INTERNAL(CAR(s)) != R_NilValue)
-					STRING(ans)[count++] = PRINTNAME(CAR(s));
-			}
-			else {
-				if(SYMVALUE(CAR(s)) != R_UnboundValue)
-					STRING(ans)[count++] = PRINTNAME(CAR(s));
-			}
-		}
-	}
-	sortVector(ans);
-	return ans;
-}
-#endif
 
 /* install - probe the symbol table */
 /* If name is not found, install it. */

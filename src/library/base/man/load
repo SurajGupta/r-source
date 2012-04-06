@@ -15,8 +15,8 @@ LANG(LINK(save)).
 )
 EXAMPLES(
 # save all data
-save(list=ls(), file="ALL")
+save(list = ls(), file= "all.Rdata")
 BLANK
 # restore the saved values
-load("ALL")
+load("all.Rdata")
 )

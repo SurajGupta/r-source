@@ -20,6 +20,19 @@
 #include "Defn.h"
 #include "Mathlib.h"
 
+
+/*	W A R N I N G
+ *
+ *	As things stand, these routines should not be called
+ *	recursively because of the way global variables are used.
+ *	This could be fixed by making saving and restoring these
+ *	global variables.
+ */
+
+
+
+/*--------------------------------------------------------------------*/
+
 	/* One Dimensional Minimization */
 	/* This is just wrapper code for Brent's "fmin" */
 
@@ -103,6 +116,9 @@ SEXP do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(1);
 	return CADR(R_fcall1);
 }
+
+
+/*--------------------------------------------------------------------*/
 
 	/* One Dimensional Root Finding */
 	/* This is just wrapper code for Brent's "zeroin" */
@@ -189,6 +205,10 @@ SEXP do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+/*--------------------------------------------------------------------*/
+
+	/* General Nonlinear Optimization */
+
 	/* These are unevaluated calls to R functions supplied */
 	/* by the user.  When the optimizer needs a value the */
 	/* functions below insert the function argument and then */
@@ -197,11 +217,11 @@ SEXP do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
 static SEXP R_fcall;	/* function */
 static SEXP R_gcall;	/* gradient */
 static SEXP R_hcall;	/* hessian */
+static SEXP R_env;	/* where to evaluate the calls */
 
 static int have_gradient;
 static int have_hessian;
 
-static SEXP R_env;
 
 
 	/* This how the optimizer sees them */
@@ -544,9 +564,8 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
  *	ipr	  --> device to which to send output
  */
 
-int F77_SYMBOL(result)(int *nr, int *n, double *x, 
-	double *f, double *g, double *a, double *p, int *
-	itncnt, int *iflg, int *ipr)
+int F77_SYMBOL(result)(int *nr, int *n, double *x, double *f, double *g,
+	double *a, double *p, int *itncnt, int *iflg, int *ipr)
 {
 	static int i, j;
 

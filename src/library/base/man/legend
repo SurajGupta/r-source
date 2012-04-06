@@ -1,8 +1,8 @@
 TITLE(legend @@ Add Legends to Plots)
 USAGE(
-legend(x, y, legend, fill=, col="black",
-        lty=, pch=, bty="o", bg=par("bg"),
-        xjust=0, yjust=1)
+legend(x, y, legend, fill, col= "black",
+       lty, pch, bty= "o", bg= par("bg"), cex= 1,
+       xjust=0, yjust=1,  x.intersp= NULL, y.intersp= NULL, merge = FALSE)
 )
 ALIAS(legend)
 ARGUMENTS(
@@ -16,21 +16,49 @@ ARG(lty @@ the line types for lines appearing in the legend.)
 ARG(pch @@ the plotting symbols appearing in the legend.)
 ARG(bty @@ the type of box to be drawn around the legend.)
 ARG(bg @@ the background color for the legend box.)
+ARG(cex @@ character expansion factor BOLD(relative) to current
+LANG(par("cex")).)
 ARG(xjust @@ how the legend is to be justified relative to
 the legend x location.  A value of 0 means left justified, 0.5 means
 centered and 1 means right justified.)
-ARG(yjust @@ how the legend is to be justified relative to
-the legend y location.  A value of 0 means top justified, 0.5 means
-centered and 1 means bottom justified.)
+ARG(yjust @@ the same as LANG(xjust) for the legend y location.)
+ARG(x.intersp @@ character interspacing factor for horizontal (x) spacing.)
+ARG(y.intersp @@ the same as LANG(x.intersp) for vertical (y) line distances.)
+ARG(merge @@ logical; if LANG(TRUE), "merge" points and lines but not
+filled boxes.)
 )
 DESCRIPTION(
 This function can be used to add legends to plots.
 Note that a call to the function LANG(locator) can be used
 in place of the LANG(x) and LANG(y) arguments.
+PARA
+The default values for LANG(x.intersp) and LANG(y.intersp) are computed
+from LANG(Cx <- cex * par('cex'))
 )
 SEEALSO(
-LANG(LINK(plot)), LANG(LINK(barplot)).
+LANG(LINK(plot)), LANG(LINK(barplot)) which uses LANG(legend(.)).
 )
 EXAMPLES(
-# There are no examples yet.
+##-- Run the example in '?matplot' or the following:
+matplot(c(1,8), c(0,4.5), type="n",
+	xlab="Length", ylab="Width",
+	main= "Petal and Sepal Dimensions in Iris Blossoms")
+leg.txt <- c("    Setosa Petals", "    Setosa Sepals",
+	     "Versicolor Petals", "Versicolor Sepals")
+y.leg <- c( 4, 3, 2.2, 1.5, .9)
+cexv  <- c( 1, .8, .6, .4, .25)
+for(i in seq(cexv))
+  legend(1, y.leg[i], leg.txt, pch="sSvV", col=c(1,3), cex = cexv[i])
+BLANK
+##-- 'merge = TRUE'  for merging lines & points :
+x <- seq(-pi,pi, len=65)
+plot  (x,sin(x), type="l", ylim=c(-1.2, 1.8), col=3, lty=2)
+points(x,cos(x), pch=3, col=5)
+lines (x,tan(x), type='b', lty = 1, pch = 4, col=9)
+title("legend(..... lty= c(2,-1,1), pch= c(-1,3,4), merge = TRUE)",cex.main=1.1)
+vcex <- c( 3,1.5, 1,   .8)
+vx   <- c(-2,  0, 1.5, 2.8)
+for(i in seq(vcex))
+  legend(vx[i], 1.8, c("sin","cos","tan"), xjust = .5, col = c(3,5,9),
+	 lty= c(2,-1,1), pch= c(-1,3,4), merge=TRUE, cex = vcex[i])
 )

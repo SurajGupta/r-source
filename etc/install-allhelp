@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# Should work WHEREVER this is called from :
+cd `dirname $0`/..
+#RHOME=`pwd`; export RHOME
+LIBS=`ls src/library | sed '
+/Makefile/d
+/CVS/d
+/LIB*/d
+/profile/d'`
+
+if [ ! -d help ]; then mkdir help; fi
+cp /dev/null help/LibIndex
+
+for lib in $LIBS
+do
+    ./etc/install-help $lib
+done

@@ -102,7 +102,14 @@ SEXP do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 
 	R_PPStackTop = pstacktop;
-	return s;
+	PROTECT(s);
+	t = allocVector(EXPRSXP, length(s));
+	for(num=0 ; num<LENGTH(t) ; num++) {
+		VECTOR(t)[num] = CAR(s);
+		s = CDR(s);
+	}
+	UNPROTECT(1);
+	return t;
 }
 
 	/*  parse - a function that reads a specified number        */
@@ -119,18 +126,21 @@ SEXP do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 	/*  say what line of the file was not correct).             */
 
 
-SEXP parse(FILE * fp, int number)
+SEXP parse(FILE *fp, int number)
 {
 	int j, pflag;
 	SEXP rval = R_NilValue, top;
 
+		/* set the input source */
 
 	if (R_ParseText == R_NilValue) {
 		if (R_Console == 0)
 			fclose(R_Inputfile);
-		R_Console = 0;
+		R_SetInput(R_FILE);
 		R_Inputfile = fp;
 	}
+	else R_SetInput(R_TEXT);
+
 	R_CurrentExpr = R_NilValue;
 	pflag = 3;
 	if (number > 0) {
@@ -171,5 +181,6 @@ SEXP parse(FILE * fp, int number)
 	UNPROTECT(1);
 	/* reset R_ParseText when we are done parsing */
 	R_ParseText = R_NilValue;
+	R_SetInput(R_CONSOLE);
 	return rval;
 }

@@ -1,3 +1,0 @@
-DIR=/usr/src/lib/libF77
-FILES="d_sign.c pow_di.c pow_dd.c d_lg10.c"
-(cd ${DIR}; cat ${FILES}) > f2clib.c

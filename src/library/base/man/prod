@@ -11,3 +11,11 @@ value in any of the arguments will cause
 a value of LANG(NA) to be returned, otherwise
 LANG(NA) values are ignored.
 )
+SEEALSO(
+LANG(LINK(sum)), 
+LANG(LINK(cumprod)), 
+LANG(LINK(cumsum)).
+)
+EXAMPLES(
+print(prod(1:7)) == print(gamma(8))
+)

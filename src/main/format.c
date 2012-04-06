@@ -17,6 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*== see ./printutils.c	 for general remarks on Printing and the Encode.. utils.
+ *== see ./paste.c	 for do_paste() , do_format() and  do_formatinfo()
+ *
+ * These  formatFOO (.)	 functions determine the proper	 width, digits, etc:
+ *   
+ */
+
+
 #include "Defn.h"
 #include "Mathlib.h"
 #include "Print.h"
@@ -55,7 +63,7 @@ void formatLogical(int *x, int n, int *fieldwidth)
 			break;
 			/* this is the widest it can be so stop */
 		}
-		if (x[i] == NA_LOGICAL && *fieldwidth <  print_na_width) 
+		if (x[i] == NA_LOGICAL && *fieldwidth <	 print_na_width) 
 			*fieldwidth =  print_na_width;
 	}
 }
@@ -117,39 +125,38 @@ void formatInteger(int *x, int n, int *fieldwidth)
 		if (l > *fieldwidth) *fieldwidth = l;
 	}
 }
+
+/*---------------------------------------------------------------------------
+ * scientific format determination for real numbers.
+ * This is time-critical code.	 It is worth optimizing.
 
+ *    nsig		digits altogether
+ *    kpower+1		digits to the left of "."
+ *    kpower+1+sgn	including sign
+ */
 
-	/*  scientific format determination for real numbers.
-	 *  This is time-critical code.  It is worth optimizing.
-	 *    nsig digits altogether
-	 *    kpower+1 digits to the left of .
-	 *    kpower+1+sgn including sign  */
-
-	/* F Format is used if all three following conditions hold:
-	 * 1) The maximum exponent is less than 7
-	 * 2) There are no more than 5 leading zeros after .
-	 * 3) There are at most MAXDIG digits in all  */
-
-	/* E Format has the form
-	 * [S]X[.XXX]E+XX[X]
-	 * This is indicated by setting *e to non-zero (usually 1)
-	 * If the additional exponent digit is required *e is set to 2 */
-
-
-#define MAXDIG		11
+#define MAXDIG print_digits
 
 static double tbl[] =
 {
 	0.e0, 1.e0, 1.e1, 1.e2, 1.e3, 1.e4, 1.e5, 1.e6, 1.e7, 1.e8, 1.e9
 };
 
-static double eps;
-
+static double eps;/* = 10^{- print_digits};  
+			set in formatReal/Complex,  used in scientific() */
 
 static void scientific(double *x, int *sgn, int *kpower, int *nsig)
 {
+	/* for 1 number	 x , return 
+	 *	sgn    = 1_{x < 0}  {0/1}
+	 *	kpower = Exponent of 10;
+	 *	nsig   = min(print_digits, #{significant digits of alpha}
+	 *
+	 * where  |x| = alpha * 10^kpower   and	 1 <= alpha < 10
+	 */
 	register double alpha;
 	register double r;
+	register int kp;
 	int j;
 
 	if (*x == 0.0) {
@@ -159,34 +166,32 @@ static void scientific(double *x, int *sgn, int *kpower, int *nsig)
 	}
 	else {
 		if(*x < 0.0) {
-			*sgn = 1;
-			r = -*x;
+			*sgn = 1; r = -*x;
+		} else {
+			*sgn = 0; r = *x;
 		}
-		else {
-			*sgn = 0;
-			r = *x;
-		}
-		*kpower = floor(log10(r));
-		if (abs(*kpower) < 10) {
-			if (*kpower >= 0)
-				alpha = r / tbl[*kpower + 1];	/* division slow ? */
+		kp = floor(log10(r));/*-->	 r = |x| ;  10^k <= r */
+		if (abs(kp) < 10) {
+			if (kp >= 0)
+				alpha = r / tbl[kp + 1]; /* division slow ? */
 			else
-				alpha = r * tbl[-*kpower + 1];
+				alpha = r * tbl[-kp + 1];
 		}
-		else alpha = r / pow(10.0, (double)*kpower);
+		else alpha = r / pow(10.0, (double)kp);
 
-			/* make sure that alpha is in [1,10) */
+		/* make sure that alpha is in [1,10) */
 
 		if (10.0 - alpha < eps) {
-			alpha = alpha / 10.0;
-			*kpower = *kpower + 1;
+			alpha /= 10.0;
+			kp += 1;
 		}
+		*kpower = kp;
 
-			/* compute number of digits */
+		/* compute number of digits */
 
 		*nsig = print_digits;
 		for (j=1; j <= *nsig; j++) {
-			if (fabs(alpha - floor(alpha+0.5)) / alpha < eps) {
+			if (fabs(alpha - floor(alpha+0.5)) < eps * alpha) {
 				*nsig = j;
 				break;
 			}
@@ -195,155 +200,79 @@ static void scientific(double *x, int *sgn, int *kpower, int *nsig)
 	}
 }
 
-#ifdef UNUSED
-static void FormatDbl(double *x, int l, int incr, int *m, int *n, int *e)
-{
-	int left, right, sleft;
-	int mnl, mxl, rt, mxs, mxe;
-	int neg, sgn;
-	int i, kpower, nsig;
-	int naflag;
-
-	eps = pow(10.0, -(double)print_digits);
-
-	neg = 0;
-	mxl = INT_MIN;
-	rt = INT_MAX;
-	mxs = INT_MIN;
-	mnl = INT_MAX;
-	mxe = INT_MIN;
-	naflag = 0;
-
-	for (i = 0; i < l; i += incr) {
-		if (!FINITE(x[i])) {
-			naflag = 1;
-		}
-		else {
-			scientific(&x[i], &sgn, &kpower, &nsig);
-
-			left = kpower + 1;
-			sleft = sgn + ((left <= 0) ? 1 : left);
-			right = left - nsig;
-			if (sgn) neg = 1;
-
-			if (right < rt) rt = right;	/* digits to right of . */
-			if (left > mxl) mxl = left;	/* max digits to left of . */
-			if (left < mnl) mnl = left;	/* min digits to left of . */
-			if (sleft > mxs) mxs = sleft;	/* max left including sign */
-			if (nsig >= mxe) mxe = nsig;	/* max sig digits */
-
-		}
-	}
-
-
-	/* F Format is used if all three following conditions hold: */
-	/* 1) The maximum exponent is less than 7 */
-	/* 2) There are no more than 5 leading zeros after . */
-	/* 3) There are at most MAXDIG digits in all */
-
-	/* E Format has the form */
-	/* [S]X[.XXX]E+XX[X] */
-	/* This is indicated by setting *e to non-zero (usually 1) */
-	/* If the additional exponent digit is required *e is set to 2 */
-
-	if (mxl < 8 && mnl > -5 && mxl - rt <= MAXDIG) {
-		*e = 0;
-		if (mxl != mnl && mxl - rt > MAXDIG)
-			rt = mxl - MAXDIG;
-		if (mxl < 0)
-			mxs = 1 + neg;
-		if (rt > 0)
-			rt = 0;
-		if (rt < -MAXDIG)
-			rt = -MAXDIG;
-		*n = -rt;
-		*m = mxs - rt + (rt != 0);
-	}
-	else {
-		*e = 1;
-		*n = mxe - 1;
-		*m = neg + (*n > 0) + *n + 5;
-		if (mxl > 100 || mnl < -99) {
-			*m += 1;
-			*e = 2;
-		}
-	}
-	if (naflag && *m < print_na_width)
-		*m = print_na_width;
-}
-#endif
-
 void formatReal(double *x, int l, int *m, int *n, int *e)
 {
 	int left, right, sleft;
-	int mnl, mxl, rt, mxs, mxe;
-	int neg, sgn;
-	int i, kpower, nsig;
-	int naflag;
+	int mnl, mxl, rt, mxsl, mxns, mF;
+	int neg, sgn, kpower, nsig;
+	int i, naflag;
 
 	eps = pow(10.0, -(double)print_digits);
 
-	neg = 0;
-	mxl = INT_MIN;
-	rt = INT_MAX;
-	mxs = INT_MIN;
-	mnl = INT_MAX;
-	mxe = INT_MIN;
 	naflag = 0;
+	neg = 0;
+	rt = mxl = mxsl = mxns = INT_MIN;
+	mnl = INT_MAX;
 
 	for (i=0; i<l; i++) {
-		if (!FINITE(x[i])) {
-			naflag = 1;
-		}
-		else {
-			scientific(&x[i], &sgn, &kpower, &nsig);
-
-			left = kpower + 1;
-			sleft = sgn + ((left <= 0) ? 1 : left);
-			right = left - nsig;
-			if (sgn) neg = 1;
-
-			if (right < rt) rt = right;	/* digits to right of . */
-			if (left > mxl) mxl = left;	/* max digits to left of . */
-			if (left < mnl) mnl = left;	/* min digits to left of . */
-			if (sleft > mxs) mxs = sleft;	/* max left including sign */
-			if (nsig >= mxe) mxe = nsig;	/* max sig digits */
-		}
+	 if (!FINITE(x[i])) {
+		naflag = 1;
+	 } else {
+		scientific(&x[i], &sgn, &kpower, &nsig);
+		 
+		left = kpower + 1;
+		sleft = sgn + ((left <= 0) ? 1 : left); /* >= 1 */
+		right = nsig - left; /* #{digits} right of '.' ( > 0 often)*/
+		if (sgn) neg = 1; /* if any < 0, need extra space for sign */
+			
+					   /* Infinite precision "F" Format : */
+		if (right > rt) rt = right;	/* max digits to right of . */
+		if (left > mxl) mxl = left;	/* max digits to  left of . */
+		if (left < mnl) mnl = left;	/* min digits to  left of . */
+		if (sleft> mxsl) mxsl = sleft;	/* max left including sign(s)*/
+		if (nsig > mxns) mxns = nsig;	/* max sig digits */
+	 }
 	}
-	if (mxl < 8 && mnl > -5 && mxl - rt <= MAXDIG) {
+	/* F Format (NEW):  use "F" format
+	 *	    WHENEVER we use not more space than 'E'
+	 *		and still satisfy 'print_digits'
+	 
+	 * E Format has the form   [S]X[.XXX]E+XX[X]
+	 *
+	 * This is indicated by setting *e to non-zero (usually 1)
+	 * If the additional exponent digit is required *e is set to 2
+	 */
+
+	/*-- These  'mxsl' & 'rt'  are	used in	 F Format 
+	 *   AND in the	 ____ if(.) "F" else "E" ___   below: */
+	if (mxl < 0) mxsl = 1 + neg;
+	/* old?? if (mxl != mnl && mxl + rt > MAXDIG) rt = MAXDIG - mxl; */
+	if (rt < 0)		rt = 0;
+	/* NO! else if (rt > MAXDIG)	rt = MAXDIG; */
+	mF = mxsl + rt + (rt != 0);	   /* width m for F  format */
+
+	/*-- 'see' how	"E" Exponential format would be like : */
+	if (mxl > 100 || mnl < -99) *e = 2;/* 3 digit exponent */
+	else *e = 1;
+	*n = mxns - 1;
+	*m = neg + (*n > 0) + *n + 4 + *e; /* width m for E  format */
+	
+	if (mF <= *m) { /* IFF it needs less space : "F" (Fixpoint) format */
 		*e = 0;
-		if (mxl != mnl && mxl - rt > MAXDIG)
-			rt = mxl - MAXDIG;
-		if (mxl < 0)
-			mxs = 1 + neg;
-		if (rt > 0)
-			rt = 0;
-		if (rt < -MAXDIG)
-			rt = -MAXDIG;
-		*n = -rt;
-		*m = mxs - rt + (rt != 0);
-	}
-	else {
-		*e = 1;
-		*n = mxe - 1;
-		*m = neg + (*n > 0) + *n + 5;
-		if (mxl > 100 || mnl < -99) {
-			*m += 1;
-			*e = 2;
-		}
-	}
+		*n = rt;
+		*m = mF;
+	} /* else : "E" Exponential format -- all done above */
 	if (naflag && *m < print_na_width)
 		*m = print_na_width;
 }
-
+
 #ifdef COMPLEX_DATA
-void formatComplex(complex *x, int l,
-	int *mr, int *nr, int *er,
-	int *mi, int *ni, int *ei)
+void formatComplex(complex *x, int l, int *mr, int *nr, int *er,
+				      int *mi, int *ni, int *ei)
 {
 	int left, right, sleft;
-	int rt, mnl, mxl, mxs, mxe;
-	int i_rt, i_mnl, i_mxl, i_mxs, i_mxe;
+	int rt, mnl, mxl, mxsl, mxns, mF;
+	int i_rt, i_mnl, i_mxl, i_mxsl, i_mxns;
 	int neg, sgn;
 	int i, kpower, nsig;
 	int naflag;
@@ -353,107 +282,86 @@ void formatComplex(complex *x, int l,
 	naflag = 0;
 	neg = 0;
 
-	rt = INT_MAX;
-	mxl = INT_MIN;
-	mnl = INT_MAX;
-	mxs = INT_MIN;
-	mxe = INT_MIN;
-
-	i_rt = INT_MAX;
-	i_mxl = INT_MIN;
-	i_mnl = INT_MAX;
-	i_mxs = INT_MIN;
-	i_mxe = INT_MIN;
+	rt  =  mxl =  mxsl =  mxns = INT_MIN;
+	i_rt= i_mxl= i_mxsl= i_mxns= INT_MIN;
+	i_mnl = mnl = INT_MAX;
 
 	for (i=0; i<l; i++) {
-		if (!FINITE(x[i].r) || !FINITE(x[i].i)) {
-			naflag = 1;
-		}
-		else {
-				/* real part */
+	 if (!FINITE(x[i].r) || !FINITE(x[i].i)) {
+		naflag = 1;
+	 } else {
+	   /* real part */
 
-			scientific(&(x[i].r), &sgn, &kpower, &nsig);
+		scientific(&(x[i].r), &sgn, &kpower, &nsig);
 
-			left = kpower + 1;
-			sleft = sgn + ((left <= 0) ? 1 : left);
-			right = left - nsig;
-			if (sgn) neg = 1;
+		left = kpower + 1;
+		sleft = sgn + ((left <= 0) ? 1 : left); /* >= 1 */
+		right = nsig - left; /* #{digits} right of '.' ( > 0 often)*/
+		if (sgn) neg = 1; /* if any < 0, need extra space for sign */
 
-			if (right < rt) rt = right;		/* digits to right of . */
-			if (left > mxl) mxl = left;		/* max digits to left of . */
-			if (left < mnl) mnl = left;		/* min digits to left of . */
-			if (sleft > mxs) mxs = sleft;		/* max left including sign */
-			if (nsig >= mxe) mxe = nsig;		/* max sig digits */
+		if (right > rt) rt = right;	/* max digits to right of . */
+		if (left > mxl) mxl = left;	/* max digits to left of . */
+		if (left < mnl) mnl = left;	/* min digits to left of . */
+		if (sleft> mxsl) mxsl = sleft;	/* max left including sign(s) */
+		if (nsig > mxns) mxns = nsig;	/* max sig digits */
 
-				/* imaginary part */
-				/* this is always unsigned */
-				/* we explicitly put the sign in */
-				/* when we print */
-
-			scientific(&(x[i].i), &sgn, &kpower, &nsig);
-
-			left = kpower + 1;
-			sleft = ((left <= 0) ? 1 : left);
-			right = left - nsig;
-
-			if (right < i_rt) i_rt = right;		/* digits to right of . */
-			if (left > i_mxl) i_mxl = left;		/* max digits to left of . */
-			if (left < i_mnl) i_mnl = left;		/* min digits to left of . */
-			if (sleft > i_mxs) i_mxs = sleft;	/* max left including sign */
-			if (nsig >= i_mxe) i_mxe = nsig;	/* max sig digits */
-		}
+	  /* imaginary part */
+		/* this is always unsigned */
+		/* we explicitly put the sign in when we print */
+		
+		scientific(&(x[i].i), &sgn, &kpower, &nsig);
+		
+		left = kpower + 1;
+		sleft = ((left <= 0) ? 1 : left);
+		right = nsig - left;
+		
+		if (right > i_rt) i_rt = right;
+		if (left > i_mxl) i_mxl = left;
+		if (left < i_mnl) i_mnl = left;
+		if (sleft> i_mxsl) i_mxsl = sleft;
+		if (nsig > i_mxns) i_mxns = nsig;
+	 }
 	}
 
-		/* overall format for real part */
+/* overall format for real part	  ---  comments see in	formatReal(.) --*/
 
 	if (mnl == INT_MAX) {
-		er = 0;
-		ei = 0;
+		*er = 0; *ei = 0;
 		*mr = print_na_width - 2;
 		*mi = 0;
-		*nr = 0;
-		*ni = 0;
+		*nr = 0; *ni = 0;
 		return;
 	}
 
-	if (mxl < 8 && mnl > -5 && mxl - rt <= MAXDIG) {
+	if (mxl < 0) mxsl = 1 + neg;
+	if (rt < 0) rt = 0;
+	mF = mxsl + rt + (rt != 0);
+
+	if (mxl > 100 || mnl < -99) *er = 2;
+	else *er = 1;
+	*nr = mxns - 1;
+	*mr = neg + (*nr > 0) + *nr + 4 + *er;
+	if (mF <= *mr) { /* IFF it needs less space : "F" (Fixpoint) format */
 		*er = 0;
-		if (mxl != mnl && mxl - rt > MAXDIG) rt = mxl - MAXDIG;
-		if (mxl < 0) mxs = 1 + neg;
-		if (rt > 0) rt = 0;
-		if (rt < -MAXDIG) rt = -MAXDIG;
-		*nr = -rt;
-		*mr = mxs - rt + (rt != 0);
-	}
-	else {
-		*er = 1;
-		*nr = mxe - 1;
-		*mr = neg + (*nr > 0) + *nr + 5;
-		if (mxl > 100 || mnl < -99) {
-			*mr += 1;
-			*er = 2;
-		}
+		*nr = rt;
+		*mr = mF;
 	}
 
-		/* overall format for imaginary part */
 
-	if (i_mxl < 8 && i_mnl > -5 && i_mxl - i_rt <= MAXDIG) {
+/* overall format for imaginary part */
+
+	if (i_mxl < 0) i_mxsl = 1;
+	if (i_rt < 0) i_rt = 0;
+	mF = i_mxsl + i_rt + (i_rt != 0);
+
+	if (i_mxl > 100 || i_mnl < -99) *ei = 2;
+	else *ei = 1;
+	*ni = i_mxns - 1;
+	*mi = (*ni > 0) + *ni + 4 + *ei;
+	if (mF <= *mi) { /* IFF it needs less space : "F" (Fixpoint) format */
 		*ei = 0;
-		if (i_mxl != i_mnl && i_mxl - i_rt > MAXDIG) i_rt = i_mxl - MAXDIG;
-		if (i_mxl < 0) i_mxs = 1;
-		if (i_rt > 0) i_rt = 0;
-		if (i_rt < -MAXDIG) i_rt = -MAXDIG;
-		*ni = -i_rt;
-		*mi = i_mxs - i_rt + (i_rt != 0);
-	}
-	else {
-		*ei = 1;
-		*ni = i_mxe - 1;
-		*mi = (*ni > 0) + *ni + 5;
-		if (i_mxl > 100 || i_mnl < -99) {
-			*mi += 1;
-			*ei = 2;
-		}
+		*ni = i_rt;
+		*mi = mF;
 	}
 }
 #endif

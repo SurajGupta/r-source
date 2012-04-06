@@ -21,7 +21,7 @@
 #include "Graphics.h"
 
 static char szDirName[RBuffLen];
-
+static void R_SetMemory(int, int);
 
         /*--- I n i t i a l i z a t i o n -- C o d e ---*/
 
@@ -47,7 +47,8 @@ int WINAPI WinMain(HANDLE hinstCurrent, HANDLE hinstPrevious,
 LPSTR lpszCmdParam, int nCmdShow)
 {
         int i;
-        char *exe;
+        char *exe, tmp[20], tm1;
+
 
         if (! CheckSystem()) return(FALSE);
 
@@ -67,8 +68,25 @@ LPSTR lpszCmdParam, int nCmdShow)
         *exe = '\0';
         setenv("RHOME",szDirName,1);
         setenv("HOME",szDirName,1);
+
+        /* set up the memory sizes */
+
+      if( lpszCmdParam != NULL ) {
+            *exe = lpszCmdParam[0];
+            while( isspace(exe) )
+                exe++;
+parsemem:   if( exe == '-' ) {
+                tm1 = exe++;
+                
+        }
+        R_SetMemory(100,100);
+        R_SetMemory(10,10);
+           
         strcpy(R_ImageName,szDirName);
-        strcat(R_ImageName,"\\.RData");
+        strcat(R_ImageName,"\\.RData.rmg");
+
+        MessageBox(RFrame, lpszCmdParam,  "R Application", MB_ICONEXCLAMATION | MB_OK);
+                                               
 
         mainloop();
 
@@ -77,8 +95,84 @@ LPSTR lpszCmdParam, int nCmdShow)
         DestroyMenu(RMenuInit);
         DestroyMenu(RMenuConsole);
         DestroyMenu(RMenuEdit);
+        return 0;
 }
 
+static void R_SetMemory(int nsize, int vsize)
+{
+        HKEY hkey;
+        DWORD disp, l1;
+        LONG res;
+        char buff[20];
+        int rnsize=0, rvsize=0;
+
+        if( nsize > 0 ) {
+                res = RegCreateKeyEx( HKEY_USERS, "Sofware\\R\\NSize",0, "", REG_OPTION_NON_VOLATILE,
+                        KEY_ALL_ACCESS, NULL, &hkey, &disp);
+                if( res == ERROR_SUCCESS ) {
+                        if( disp == REG_OPENED_EXISTING_KEY ) {
+                                l1 = 20;
+                                RegQueryValueEx( hkey, "",0, &disp, buff, &l1);
+                                rnsize = atoi(buff);
+                        } 
+                        if( nsize > 1000000 || nsize < rnsize ) {
+                            R_NSize = rnsize;
+                            REprintf("warning: invalid language heap size ignored \n");
+                        }
+                        else {
+                            R_NSize = nsize;
+                            sprintf(buff,"%d",nsize);
+                            res = RegSetValueEx( hkey, NULL, NULL, REG_SZ, buff, lstrlen(buff));
+                        }
+                }
+        }
+        if( vsize > 0 ) {
+                res = RegCreateKeyEx( HKEY_USERS, "Sofware\\R\\VSize",0, "", REG_OPTION_NON_VOLATILE,
+                        KEY_ALL_ACCESS, NULL, &hkey, &disp);
+                if( res == ERROR_SUCCESS ) {
+                    if( disp == REG_OPENED_EXISTING_KEY ) {
+                          l1 = 20;
+                          RegQueryValueEx( hkey, "",0, &disp, buff, &l1);
+                          rvsize = atoi(buff);
+                    }                     
+                    if( vsize > 1000 || vsize < rvsize) {
+                        R_VSize = rvsize;
+                        REprintf("warning: invalid vector heap size ignored \n");
+                    }
+                    else {
+                        R_VSize = vsize;
+                        sprintf(buff,"%d",vsize);
+                        res = RegSetValueEx( hkey, NULL, NULL, REG_SZ, buff, lstrlen(buff));            
+                    }
+                }
+       }
+}
+
+SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+        char *tmp;
+        int ask;
+
+        if(R_BrowseLevel) {
+                warning("can't quit from browser\n");
+                return R_NilValue;
+        }
+        if( !isString(CAR(args)) )
+                errorcall(call,"one of \"yes\", \"no\" or \"ask\" expected.\n");
+        tmp = CHAR(STRING(CAR(args))[0]);
+        if( !strcmp(tmp,"ask") )
+                ask=1;
+        else if( !strcmp(tmp,"no") )
+                ask=2;
+        else if( !strcmp(tmp,"yes") )
+                ask=3;
+        else
+                errorcall(call,"unrecognized value of ask\n");
+        RCleanUp(ask);
+        PostMessage(RFrame, WM_CLOSE, 0, 0);
+        
+        return(R_NilValue);
+}
 void R_StartUp(void)
 {
         R_Init = 1;

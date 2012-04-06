@@ -40,13 +40,12 @@ static int scanchar(void)
 		save = 0;
 		return c;
 	}
-	return (ttyflag) ? cget() : fgetc(fp);
+	return (ttyflag) ? cget() : R_fgetc(fp);
 }
 
 static void unscanchar(int c)
 {
 	save = c;
-	/* ttyflag ? uncget(c) : ungetc(c, fp); */
 }
 
 static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
@@ -56,28 +55,29 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 
 	filled = 1;
 	if(sepchar == 0) {
-		while( (c=scanchar()) == ' ' || c=='\t');
-		if(c=='\n' || c=='\r' || c==EOF ) {
+		while((c = scanchar()) == ' ' || c == '\t')
+			;
+		if(c == '\n' || c == '\r' || c == R_EOF) {
 			filled = c;
 			goto donefill;
 		}
 		if(type == STRSXP && c == '\"' || c == '\'') {
 			quote = c;
-			while ((c = scanchar()) != EOF && c != quote) {
+			while ((c = scanchar()) != R_EOF && c != quote) {
 				if(bufp >= &buffer[MAXELTSIZE - 2])
 					continue;
 				if (c == '\\') {
 					c = scanchar();
-					if(c == EOF) break;
+					if(c == R_EOF) break;
 					else if (c == 'n') c = '\n';
 					else if (c == 'r') c = '\r';
 				}
 				*bufp++ = c;
 			}
-			c=scanchar();
+			c = scanchar();
 			while(c==' ' || c=='\t')
 				c=scanchar();
-			if(c=='\n' || c=='\r' || c==EOF )
+			if(c=='\n' || c=='\r' || c==R_EOF )
 				filled=c;
 			else
 				unscanchar(c);
@@ -87,10 +87,10 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 				if(bufp >= &buffer[MAXELTSIZE - 2])
 					continue;
 				*bufp++ = c;
-			} while (!isspace(c = scanchar()) && c != EOF);
+			} while (!isspace(c = scanchar()) && c != R_EOF);
 			while(c==' ' || c=='\t') 
 				c=scanchar();
-			if(c=='\n' || c=='\r' || c==EOF )
+			if(c=='\n' || c=='\r' || c==R_EOF )
 				filled=c;
 			else
 				unscanchar(c);
@@ -98,13 +98,13 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 	}
 	else {
 		while((c = scanchar()) != sepchar && c!= '\n' && c!='\r'
-			&& c != EOF ) 
+			&& c != R_EOF ) 
 		{
 			/* eat white space */
 			if( type != STRSXP )
 				while(c==' ' || c=='\t') 
 					if((c=scanchar())== sepchar || c=='\n' ||
-					c=='\r' || c==EOF ) {
+					c=='\r' || c==R_EOF ) {
 					filled=c;
 					goto donefill;
 					}
@@ -143,7 +143,7 @@ static void expected(char *what, char *got)
 	int c;
 
 	if(ttyflag) {
-		while((c = scanchar()) != EOF && c != '\n')
+		while((c = scanchar()) != R_EOF && c != '\n')
 			;
 	}
 	else fclose(fp);
@@ -207,10 +207,10 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines, int flush, SEX
 
 	if (ttyflag) REprintf("1: ");
 
-	strip=asLogical(stripwhite);
+	strip = asLogical(stripwhite);
 
 	for(;;) {
-		if (bch == EOF) {
+		if (bch == R_EOF) {
 			if(ttyflag) ClearerrConsole();
 			break;
 		}
@@ -234,8 +234,8 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines, int flush, SEX
 		}
 		bch = fillBuffer(buffer, type, strip);
 		if(nprev == n && strlen(buffer)==0 && (bch =='\n' ||
-			bch == EOF) ) {
-			if( ttyflag || bch == EOF )
+			bch == R_EOF) ) {
+			if( ttyflag || bch == R_EOF )
 				break;
 		}
 		else {
@@ -294,7 +294,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 
 	nc = length(what);
 
-	if(maxitems > 0) blksize = maxitems;
+	if(maxlines > 0) blksize = maxlines;
 	else blksize = SCAN_BLOCKSIZE;
 
 	PROTECT(ans = allocList(nc));
@@ -322,7 +322,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 	a = ans;
 	for(;;) {
 
-		if (bch == EOF) {
+		if (bch == R_EOF) {
 			if(ttyflag) ClearerrConsole();
 			goto done;
 		}
@@ -330,15 +330,10 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 			linesread++;
 			if( colsread != 0 && !badline )
 				badline=linesread;
-#ifdef OLD
-			if(maxlines > 0 && (linesread == maxlines || nc*linesread >= maxitems))
-				goto done;
-#else
 			if(maxitems > 0 && nc*linesread >= maxitems)
 				goto done;
 			if(maxlines > 0 && linesread == maxlines)
 				goto done;
-#endif
 			if ( ttyflag)
 				REprintf("%d: ", n + 1);
 		}
@@ -356,8 +351,8 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 	
 		bch=fillBuffer(buffer, TYPEOF(CAR(a)), strip);
 		if(colsread == 0 && strlen(buffer)==0 && (bch =='\n' ||
-			bch == EOF) ) {
-			if( ttyflag || bch == EOF )
+			bch == R_EOF) ) {
+			if( ttyflag || bch == R_EOF )
 				break;
 		}
 		else {
@@ -372,7 +367,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 				a = ans;
 				colsread = 0;
 				if( flush ) {
-					while(c != '\n' && c != EOF)
+					while(c != '\n' && c != R_EOF)
 						c=scanchar();
 					unscanchar(c);
 				}
@@ -487,7 +482,7 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if ((fp = fopen(filename, "r")) == 0)
 			error("\"scan\" can't open file\n");
 		for (i = 0; i < nskip; i++)
-			while ((c = scanchar()) != '\n' && c != EOF);
+			while ((c = scanchar()) != '\n' && c != R_EOF);
 	}
 	else ttyflag = 1;
 
@@ -554,7 +549,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if ((fp = fopen(filename, "r")) == NULL)
 			error("\"scan\" can't open file\n");
 		for (i = 0; i < nskip; i++)
-			while ((c = scanchar()) != '\n' && c != EOF);
+			while ((c = scanchar()) != '\n' && c != R_EOF);
 	}
 
 	blocksize = SCAN_BLOCKSIZE;
@@ -564,7 +559,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	for(;;) {
 		c = scanchar();
-		if(c == EOF)  {
+		if(c == R_EOF)  {
 			if(nfields != 0) 
 				INTEGER(ans)[nlines] = nfields;
 			else nlines--;
@@ -596,16 +591,16 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 			if(c == '"' || c == '\'') {
 				int quote = c;
 				while((c=scanchar()) != quote) {
-					if(c == EOF || c == '\n') {
+					if(c == R_EOF || c == '\n') {
 						fclose(fp);
 						errorcall(call, "string terminated by newline or EOF\n");
 					}
 				}
 			}
 			else {
-				while(!isspace(c=scanchar()) && c != EOF )
+				while(!isspace(c=scanchar()) && c != R_EOF )
 					;
-				if (c==EOF) c='\n';
+				if (c==R_EOF) c='\n';
 				unscanchar(c);
 			}
 			nfields++;
@@ -741,9 +736,9 @@ SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 	yyprompt("");
 	/* skip white space */
 	while( (c= cget()) == ' ' || c=='\t');
-	if(c != '\n' && c != EOF) {
+	if(c != '\n' && c != R_EOF) {
 		*bufp++ = c;
-		while ((c = cget())!= '\n' && c != EOF ) {
+		while ((c = cget())!= '\n' && c != R_EOF ) {
 			if(bufp >= &buffer[MAXELTSIZE - 2])
 				continue;
 			*bufp++ = c;
@@ -772,7 +767,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 		errorcall(call,"wrong argument\n");
 
 	yyprompt("");
-	while((c=cget()) != '\n' && c != EOF) {
+	while((c=cget()) != '\n' && c != R_EOF) {
 		if(bufp >= &buffer[MAXELTSIZE - 2])
 			continue;
 		*bufp++ = c;

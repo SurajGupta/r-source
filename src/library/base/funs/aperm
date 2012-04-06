@@ -7,5 +7,7 @@ aperm <- function(a, perm, resize=TRUE) {
 		if(!all(sort(perm)==1:length(perm)))
 			stop("perm is not a permutation")
 	}
-	.Internal(aperm(a,perm,resize))
+	r <- .Internal(aperm(a, perm, resize))
+	if(!is.null(dn <- dimnames(a))) dimnames(r) <- dn[perm]
+	r
 }

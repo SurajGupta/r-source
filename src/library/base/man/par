@@ -198,6 +198,7 @@ ARG(ylog @@
 A logical value. If LANG(TRUE) a logarithmic scale is used.
 The default is to use a linear scale.)
 END_ARGUMENTS
+COMMENT(---------------------------------------------------------------------)
 SECTION(Color Specification @@
 Colors can be specified in several different ways.  The simplest way is
 with a character string giving the color name (eg. LANG("red")).
@@ -224,9 +225,11 @@ by three off and LANG("3313") specifies three pixels on followed
 by three off followed by one on and finally three off.
 )
 SEEALSO(
-LANG(LINK(colors)),
-LANG(LINK(gray)),
-LANG(LINK(options)),
-LANG(LINK(rainbow)),
-LANG(LINK(rgb)).
+LANG(LINK(colors)), LANG(LINK(gray)), LANG(LINK(rainbow)), LANG(LINK(rgb)).
+LANG(LINK(options)) for other setup parameters.
+Graphic devices  LANG(LINK(x11)), LANG(LINK(postscript)).
+)
+EXAMPLES(
+op <- par(mfrow=c(2,2)) #-- 2 x 2 pictures on one plot
+par(pty = 's') #- square plotting region, independent of device size
 )

@@ -73,14 +73,24 @@ function (x, ...)
 {
 	if (!is.data.frame(x)) 
 		stop("plot.data.frame applied to non data frame")
-	xm <- data.matrix(x)
-	if (ncol(xm) == 1) {
+	x <- data.matrix(x)
+	if (ncol(x) == 1) {
 		stripplot(x, ...)
 	}
-	else if (ncol(xm) == 2) {
-		plot(xm)
+	else if (ncol(x) == 2) {
+		plot(x, ...)
 	}
 	else {
-		pairs(xm, ...)
+		pairs(x, ...)
 	}
 }
+
+t.data.frame<- function(x)
+{
+	x <- as.matrix(x)
+	NextMethod("t")
+}   
+
+as.data.frame <- function(x, row.names = NULL, optional = F, ...) 
+	UseMethod("as.data.frame") 
+

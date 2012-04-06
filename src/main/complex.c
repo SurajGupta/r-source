@@ -186,68 +186,100 @@ SEXP do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 	int i, n;
 
 	checkArity(op, args);
-	if (!isComplex(x = CAR(args)))
-		errorcall(call, "Non-complex argument to mathematical function\n");
+	x = CAR(args);
 	n = length(x);
-	switch(PRIMVAL(op)) {
-	case 1:	/* Re */
-		y = allocVector(REALSXP, n);
-		for(i=0 ; i<n ; i++) {
-			if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
-				REAL(y)[i] = COMPLEX(x)[i].r;
+	if (isComplex(x)) {
+		switch(PRIMVAL(op)) {
+		case 1:	/* Re */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++) {
+				if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
+					REAL(y)[i] = COMPLEX(x)[i].r;
+				}
+				else {
+					REAL(y)[i] = NA_REAL;
+				}
 			}
-			else {
-				REAL(y)[i] = NA_REAL;
+			break;
+		case 2:	/* Im */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++) {
+				if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
+					REAL(y)[i] = COMPLEX(x)[i].i;
+				}
+				else {
+					REAL(y)[i] = NA_REAL;
+				}
 			}
+			break;
+		case 3:	/* Mod */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++) {
+				if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
+					REAL(y)[i] = hypot(COMPLEX(x)[i].r, COMPLEX(x)[i].i);
+				}
+				else {
+					REAL(y)[i] = NA_REAL;
+				}
+			}
+			break;
+		case 4:	/* Arg */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++) {
+				if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
+					REAL(y)[i] = atan2(COMPLEX(x)[i].i, COMPLEX(x)[i].r);
+				}
+				else {
+					REAL(y)[i] = NA_REAL;
+				}
+			}
+			break;
+		case 5:	/* Conj */
+			y = allocVector(CPLXSXP, n);
+			for(i=0 ; i<n ; i++) {
+				if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
+					COMPLEX(y)[i].r = COMPLEX(x)[i].r;
+					COMPLEX(y)[i].i = -COMPLEX(x)[i].i;
+				}
+				else {
+					COMPLEX(y)[i].r = NA_REAL;
+					COMPLEX(y)[i].i = NA_REAL;
+				}
+			}
+			break;
 		}
-		break;
-	case 2:	/* Im */
-		y = allocVector(REALSXP, n);
-		for(i=0 ; i<n ; i++) {
-			if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
-				REAL(y)[i] = COMPLEX(x)[i].i;
-			}
-			else {
-				REAL(y)[i] = NA_REAL;
-			}
-		}
-		break;
-	case 3:	/* Mod */
-		y = allocVector(REALSXP, n);
-		for(i=0 ; i<n ; i++) {
-			if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
-				REAL(y)[i] = hypot(COMPLEX(x)[i].r, COMPLEX(x)[i].i);
-			}
-			else {
-				REAL(y)[i] = NA_REAL;
-			}
-		}
-		break;
-	case 4:	/* Arg */
-		y = allocVector(REALSXP, n);
-		for(i=0 ; i<n ; i++) {
-			if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
-				REAL(y)[i] = atan2(COMPLEX(x)[i].i, COMPLEX(x)[i].r);
-			}
-			else {
-				REAL(y)[i] = NA_REAL;
-			}
-		}
-		break;
-	case 5:	/* Conj */
-		y = allocVector(CPLXSXP, n);
-		for(i=0 ; i<n ; i++) {
-			if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)) {
-				COMPLEX(y)[i].r = COMPLEX(x)[i].r;
-				COMPLEX(y)[i].i = -COMPLEX(x)[i].i;
-			}
-			else {
-				COMPLEX(y)[i].r = NA_REAL;
-				COMPLEX(y)[i].i = NA_REAL;
-			}
-		}
-		break;
 	}
+	else if(isNumeric(x)) {
+		if(isReal(x)) PROTECT(x);
+		else PROTECT(x = coerceVector(x, REALSXP));
+		switch(PRIMVAL(op)) {
+		case 1:	/* Re */
+		case 5:	/* Conj */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++)
+				REAL(y)[i] = REAL(x)[i];
+			break;
+		case 2:	/* Im */
+		case 4:	/* Arg */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++)
+				if(FINITE(REAL(x)[i]))
+					REAL(y)[i] = 0;
+				else
+					REAL(y)[i] = NA_REAL;
+			break;
+		case 3:	/* Mod */
+			y = allocVector(REALSXP, n);
+			for(i=0 ; i<n ; i++)
+				if(FINITE(REAL(x)[i]))
+					REAL(y)[i] = fabs(REAL(x)[i]);
+				else
+					REAL(y)[i] = NA_REAL;
+			break;
+		}
+		UNPROTECT(1);
+	}
+	else errorcall(call, "non-numeric argument to function\n");
 	PROTECT(x);
 	PROTECT(y);
 	ATTRIB(y) = duplicate(ATTRIB(x));
@@ -613,7 +645,7 @@ SEXP do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return ans;
 }
 
-int cpoly_(double*, double*, int*, double*, double*, int*);
+int F77_SYMBOL(cpoly)(double*, double*, int*, double*, double*, int*);
 
 SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -655,7 +687,7 @@ SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 			REAL(zr)[degree-i] = COMPLEX(z)[i].r;
 			REAL(zi)[degree-i] = COMPLEX(z)[i].i;
 		}
-		cpoly_(REAL(zr), REAL(zi), &degree, REAL(rr), REAL(ri), &fail);
+		F77_SYMBOL(cpoly)(REAL(zr), REAL(zi), &degree, REAL(rr), REAL(ri), &fail);
 		if(fail) errorcall(call, "root finding code failed\n");
 		UNPROTECT(2);
 		r = allocVector(CPLXSXP, degree);

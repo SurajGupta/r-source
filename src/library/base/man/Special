@@ -40,7 +40,7 @@ their logarithms.
 EXAMPLES(
 choose(5,2)
 for(n in 0:10) print(choose(n,k = 0:n))
-PARA
+BLANK
 x <- seq(.1, 4, length=201); dx <- diff(x)[1]
 par(mfrow=c(2,3))
 for(ch in c("", "l","di","tri","tetra","penta")) {
@@ -50,4 +50,5 @@ for(ch in c("", "l","di","tri","tetra","penta")) {
 	abline(h=0,col="lightgray")
 	if(deriv) lines(x[-1], dy, col=2, lty=2)
 }
+par(mfrow=c(2,2))
 )

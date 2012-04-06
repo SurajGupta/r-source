@@ -1,3 +1,4 @@
+#### -*- R -*-
 # Adaptive integration:  Venables and Ripley pp. 105-110
 # This is the basic integrator.
 

@@ -33,7 +33,9 @@ SEXP cons(SEXP car, SEXP cdr)
 	UNPROTECT(2);
 	CAR(e) = car;
 	SETCDR(e, cdr);
+#ifdef oldmem
 	TAG(e) = R_NilValue;
+#endif
 	return e;
 }
 

@@ -2,7 +2,7 @@ predict <- function(fit,...) UseMethod("predict")
 
 predict.default <- function (object, ...) {
                  namelist <- list(...)
-                 names(namelist) <- substitute(...)
+                 names(namelist) <- substitute(list(...))[-1]
                  m <- length(namelist)
                  X <- as.matrix(namelist[[1]])
                  if (m > 1) 

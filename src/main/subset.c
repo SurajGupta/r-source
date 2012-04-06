@@ -108,7 +108,6 @@ static SEXP ExtractSubset(SEXP x, SEXP result, SEXP index, SEXP call)
 			else
 				REAL(result)[i] = NA_REAL;
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			if (0 <= ii && ii < nx && ii != NA_INTEGER) {
 				COMPLEX(result)[i] = COMPLEX(x)[ii];
@@ -118,12 +117,13 @@ static SEXP ExtractSubset(SEXP x, SEXP result, SEXP index, SEXP call)
 				COMPLEX(result)[i].i = NA_REAL;
 			}
 			break;
-#endif
 		case STRSXP:
+		case VECSXP:
+		case EXPRSXP:
 			if (0 <= ii && ii < nx && ii != NA_INTEGER)
-				STRING(result)[i] = STRING(x)[ii];
+				VECTOR(result)[i] = STRING(x)[ii];
 			else
-				STRING(result)[i] = NA_STRING;
+				VECTOR(result)[i] = NA_STRING;
 			break;
 		case LISTSXP:
 		case LANGSXP:
@@ -241,12 +241,10 @@ SEXP matrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 				case REALSXP:
 					REAL(result)[ij] = NA_REAL;
 					break;
-#ifdef COMPLEX_DATA
 				case CPLXSXP:
 					COMPLEX(result)[ij].r = NA_REAL;
 					COMPLEX(result)[ij].i = NA_REAL;
 					break;
-#endif
 				case STRSXP:
 					STRING(result)[i] = NA_STRING;
 					break;
@@ -264,11 +262,9 @@ SEXP matrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 				case REALSXP:
 					REAL(result)[ij] = REAL(x)[iijj];
 					break;
-#ifdef COMPLEX_DATA
 				case CPLXSXP:
 					COMPLEX(result)[ij] = COMPLEX(x)[iijj];
 					break;
-#endif
 				case STRSXP:
 					STRING(result)[ij] = STRING(x)[iijj];
 					break;
@@ -490,7 +486,6 @@ static SEXP arraySubset(SEXP x, SEXP s, SEXP call, int drop)
 			else
 				REAL(result)[i] = NA_REAL;
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			if (ii != NA_INTEGER) {
 				COMPLEX(result)[i] = COMPLEX(x)[ii];
@@ -500,7 +495,6 @@ static SEXP arraySubset(SEXP x, SEXP s, SEXP call, int drop)
 				COMPLEX(result)[i].i = NA_REAL;
 			}
 			break;
-#endif
 		case STRSXP:
 			if (ii != NA_INTEGER)
 				STRING(result)[i] = STRING(x)[ii];
@@ -752,6 +746,10 @@ SEXP do_subset2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		case STRSXP:
 			STRING(ans)[0] = STRING(x)[offset];
 			break;
+		case EXPRSXP:
+			VECTOR(ans)[0] = VECTOR(x)[offset];
+			break;
+			
 		default:
 			UNIMPLEMENTED("do_subset2");
 		}

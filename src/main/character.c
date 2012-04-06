@@ -274,7 +274,8 @@ SEXP do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(!isString(pat) || length(pat) < 1 || !isString(vec))
 		errorcall(call, "invalid argument\n");
 
-	eflags = REG_NOSUB;
+	eflags = 0;
+
 	if(extended_opt) eflags = eflags | REG_EXTENDED;
 	if(igcase_opt) eflags = eflags | REG_ICASE;
 

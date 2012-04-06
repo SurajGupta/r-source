@@ -1,7 +1,0 @@
-rm -f Makefile Makefile.in ROUTINES *.c *.f
-sed 's/F2CLIB=.*/F2CLIB=f2clib.o/' ../appl/Makefile.in > Makefile.in
-sed 's/F2CLIB=.*/F2CLIB=f2clib.o/' ../appl/Makefile > Makefile
-ln ../appl/ROUTINES .
-ln ../appl/*.c .
-ln F2CLIB f2clib.c
-f2c -A ../appl/*.f

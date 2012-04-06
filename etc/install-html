@@ -6,13 +6,16 @@ D2H=../../../../etc/doc2html
 
 # Should work WHEREVER this is called from :
 cd `dirname $0`/../src/library/base/man
+Flist=`ls -A | sed '/CVS/d; /~$/d; /\.orig$/d; /\.bak$/d'`
 
-for i in `ls -A | sed '/CVS/d; /~$/d; /.bak$/d'`
+echo "==>>> Making HTML manual entries for base library" >&2
+for i in $Flist
 do
 	$D2H $i > $HTMLDIR/funs/$i.html
 	echo $i
 done
 
+echo "==>>> Building   $Index  for base library" >&2
 cat > $Index << 'END'
 <HEAD><TITLE>R Function Index</TITLE></HEAD>
 <BODY LINK=#0000EF VLINK=#0000EF>
@@ -21,15 +24,15 @@ cat > $Index << 'END'
 <HR ALIGN=middle>
 END
 
-grep TITLE `ls -Ad * | sed /CVS/d` | sed '
+grep TITLE $Flist | sed '
 s!^\(.*\)TITLE(!\1@!
 s!)$!!
 s! @@ !@!
 s!:!!
 ' | sort -t@ -d -f +0 | awk -F@ '
 BEGIN {k=0 ; printf("<CENTER><TABLE>\n") ; printf("<TR ALIGN=LEFT>\n")}
-{ printf("<TD WIDTH=20%%><A HREF=\"%s.html\">%s</A>\n",$2,$1)
-k=k+1 ; if(k == 5) { printf("<TR ALIGN=LEFT>\n"); k=0 }}
+{ printf("<TD><A HREF=\"%s.html\">%s</A>\n",$2,$1)
+k=k+1 ; if(k == 5) { printf("<TR>\n"); k=0 }}
 END { printf("</TABLE></CENTER>\n") }
 ' >> $Index
 echo '</BODY>' >> $Index

@@ -29,3 +29,7 @@ LANG(LINK(dput)),
 LANG(LINK(dump)),
 LANG(LINK(load)).
 )
+EXAMPLES(
+save(x,y, file="xy.Rdata")
+save(list = ls(), file= "all.Rdata")
+)

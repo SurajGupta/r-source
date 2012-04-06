@@ -10,3 +10,6 @@ of the object.
 SEEALSO(
 LANG(LINK(storage.mode)), LANG(LINK(typeof)).
 )
+EXAMPLES(
+sapply(options(),mode)
+)

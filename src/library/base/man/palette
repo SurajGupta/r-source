@@ -2,16 +2,24 @@ TITLE(Palette @@ Color Palettes)
 USAGE(
 heat.colors(n)
 topo.colors(n)
+terrain.colors(n)
 )
 ALIAS(heat.colors)
 ALIAS(topo.colors)
+ALIAS(terrain.colors)
 ARGUMENTS(
-ARG(n@@the number colors in the palette.)
+ARG(n@@the number of colors in the palette.)
 )
 DESCRIPTION(
-These functions create a palette of colors which can be used as input
-to functions such as LANG(image) and LANG(contour).
+These functions create a palette of LANG(n) colors which can be used as input
+to functions such as LANG(LINK(image)) and LANG(LINK(contour)).
 )
 SEEALSO(
-LANG(LINK(rainbow)), LANG(LINK(rgb)), LANG(LINK(hsv)), LANG(LINK(gray)).
+LANG(LINK(colors)), LANG(LINK(rainbow)), LANG(LINK(rgb)),
+ LANG(LINK(hsv)), LANG(LINK(gray)). 
+)
+EXAMPLES(
+for(n in 1:8) print(heat.colors(n), quote = F)
+cbind(topo.colors(8))
+terrain.colors(6)
 )

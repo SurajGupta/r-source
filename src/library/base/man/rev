@@ -10,6 +10,7 @@ It can be used in combination with
 LANG(sort) to obtain vectors sorted into descending order.
 )
 EXAMPLES(
+x <- c(1:5,5:3)
 # sort into descending order
 rev(sort(x))
 )

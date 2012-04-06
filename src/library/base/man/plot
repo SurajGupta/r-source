@@ -10,9 +10,14 @@ Alternatively, a single plotting structure can
 be provided.)
 ARG(xlim,ylim @@ the ranges to be encompased by the x and y axes.)
 ARG(type @@ what type of plot should be drawn.
-Possible types are LANG("p") for points,
-LANG("l") for lines,
-LANG("b") for both, and
+Possible types are 
+LANG("p") for BOLD(p)oints,
+LANG("l") for BOLD(l)ines,
+LANG("b") for BOLD(b)oth, LANG("o") for both "BOLD(o)verplotted",
+LANG("h") for "BOLD(h)istogram" like vertical lines,
+LANG("s") for BOLD(s)teps,
+LANG("S") for other BOLD(s)teps,
+ and
 LANG("n") for no plotting.)
 ARG(main @@ an overall title for the plot.)
 ARG(xlab @@ a title for the x axis.)
@@ -20,8 +25,14 @@ ARG(ylab @@ a title for the y axis.)
 ARG(DOTS @@ graphical parameters can be given as arguments to LANG(plot).)
 )
 DESCRIPTION(
+Generic function for plotting of R objects.
+For more details about the graphical parameter arguments, see LANG(LINK(par)).
+BLANK	    
 A longer description will go here eventually.
 )
+SEEALSO(
+LANG(LINK(plot.default)), LANG(LINK(points)), LANG(LINK(lines)), LANG(LINK(par)).
+)	
 EXAMPLES(
 plot(cars)
 lines(lowess(cars))

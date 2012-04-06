@@ -34,7 +34,7 @@
  *      February 1997
  */
 
-#include "math.h"
+#include "Fortran.h"
 
 static double cauchy_();
 static double cmod_(double *, double *);
@@ -76,17 +76,12 @@ static double eta;
 static double infin;
 static int nn;
 
-#define TRUE  1
-#define FALSE 0
 
-int cpoly_(double *opr, double *opi, int *degree,
+int F77_SYMBOL(cpoly)(double *opr, double *opi, int *degree,
 	double *zeror, double *zeroi, int *fail)
 {
-	/* System generated locals */
 	int i__1;
 	double d__1, d__2;
-
-	/* Local variables */
 	static double base;
 	static int conv;
 	static double cosr, sinr;
@@ -96,14 +91,11 @@ int cpoly_(double *opr, double *opi, int *degree,
 	static double xx, yy, smalno;
 	static double bnd, xxx;
 	static int cnt1, cnt2;
-
-	/* Parameter adjustments */
 	--zeroi;
 	--zeror;
 	--opi;
 	--opr;
 
-	/* Function Body */
 	mcon_(&eta, &infin, &smalno, &base);
 	are = eta;
 	mre = sqrt(2.0) * 2.0 * eta;
@@ -235,10 +227,7 @@ int cpoly_(double *opr, double *opi, int *degree,
 
 static int noshft_(int l1)
 {
-	/* System generated locals */
 	double d__1, d__2;
-
-	/* Local variables */
 	static int i, j, n;
 	static double t1, t2;
 	static int jj;
@@ -301,10 +290,7 @@ static int noshft_(int l1)
 
 static int fxshft_(int *l2, double *zr, double *zi, int *conv)
 {
-	/* System generated locals */
 	double d__1, d__2;
-
-	/* Local variables */
 	static int pasd, bool, test;
 	static double svsi, svsr;
 	static int i, j, n;
@@ -405,10 +391,7 @@ static int fxshft_(int *l2, double *zr, double *zi, int *conv)
 
 static int vrshft_(int l3, double *zr, double *zi, int *conv)
 {
-	/* System generated locals */
 	int i__1;
-
-	/* Local variables */
 	static int bool, b;
 	static int i, j;
 	static double r1, r2, mp, ms, tp, relstp;
@@ -503,10 +486,7 @@ L20:
 
 static int calct_(int *bool)
 {
-	/* System generated locals */
 	double d__1, d__2;
-
-	/* Local variables */
 	static int n;
 	static double hvi, hvr;
 

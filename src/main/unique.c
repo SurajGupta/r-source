@@ -91,14 +91,28 @@ static int iequal(SEXP x, int i, SEXP y, int j)
 
 static int requal(SEXP x, int i, SEXP y, int j)
 {
-	return (REAL(x)[i] == REAL(y)[j]);
+	if(FINITE(REAL(x)[i]) && FINITE(REAL(y)[j])) {
+		return (REAL(x)[i] == REAL(y)[j]);
+	}
+	else if(!FINITE(REAL(x)[i]) && !FINITE(REAL(y)[j])) {
+		return 1;
+	}
+	return 0;
 }
 
 #ifdef COMPLEX_DATA
 static int cequal(SEXP x, int i, SEXP y, int j)
 {
-	return COMPLEX(x)[i].r == COMPLEX(y)[j].r &&
-		COMPLEX(x)[i].i == COMPLEX(y)[j].i;
+	if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)
+	&& FINITE(COMPLEX(y)[j].r) && FINITE(COMPLEX(y)[j].i)) {
+		return COMPLEX(x)[i].r == COMPLEX(y)[j].r &&
+			COMPLEX(x)[i].i == COMPLEX(y)[j].i;
+	}
+	else if((!FINITE(COMPLEX(x)[i].r) || !FINITE(COMPLEX(x)[i].i))
+	     && (!FINITE(COMPLEX(y)[j].r) || !FINITE(COMPLEX(y)[j].i))) {
+		return 1;
+	}
+	return 0;
 }
 #endif
 

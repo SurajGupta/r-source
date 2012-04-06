@@ -39,15 +39,21 @@
  *	indent: how many tabs should be written at the start of a line.
  *
  *	buff: contains the current string, we attempt to break lines at
- *	CUTOFF, but can handle up to 512 characters.
+ *	cutoff, but can handle up to BUFSIZE characters.
  *
  *	lbreak: often used to indicate whether a line has been broken,
  *	this makes sure that that indenting behaves itself.
  */
+#define BUFSIZE 512
 
-#define CUTOFF 60
+#define MIN_Cutoff 20
+#define DEFAULT_Cutoff 60
+#define MAX_Cutoff (BUFSIZE - 12)
+/* ----- MAX_Cutoff  <  BUFSIZE !! */
 
-static char buff[512];
+static int cutoff = DEFAULT_Cutoff;
+
+static char buff[BUFSIZE];
 static int linenumber;
 static int len;
 static int incurly = 0;
@@ -76,8 +82,21 @@ void deparse2(SEXP, SEXP);
 
 SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	checkArity(op, args);
-	return deparse1(CAR(args), 0);
+	SEXP ca1;
+	int cut0;
+	/*checkArity(op, args);*/
+	if(length(args) < 1) errorcall(call, "too few arguments\n");
+
+	ca1 = CAR(args); args = CDR(args);
+	cutoff = DEFAULT_Cutoff;
+	if(!isNull(CAR(args))) {
+		cut0 = asInteger(CAR(args));
+		if(cut0 == NA_INTEGER|| cut0 < MIN_Cutoff || cut0 > MAX_Cutoff) 
+			warning("invalid 'cutoff' for deparse, used default\n");
+		else
+			cutoff = cut0;
+	}
+	return deparse1(ca1, 0);
 }
 
 	/* The function deparse1 gets a second argument; Short. */
@@ -196,7 +215,7 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static void linebreak(int *lbreak)
 {
-	if (len > 60) {
+	if (len > cutoff) {
 		if (!*lbreak) {
 			*lbreak = 1;
 			indent++;
@@ -265,6 +284,29 @@ static void attr2(SEXP s)
 }
 
 
+static void printcomment(SEXP s)
+{
+	SEXP cmt;
+	int i, ncmt;
+
+	/* look for old-style comments first */
+
+	if(isList(TAG(s)) && !isNull(TAG(s))) {
+		for (s=TAG(s); s != R_NilValue; s = CDR(s)) {
+			print2buff(CHAR(STRING(CAR(s))[0]));
+			writeline();
+		}
+	}
+	else {
+		cmt = getAttrib(s, R_CommentSymbol);
+		ncmt = length(cmt);
+		for(i=0 ; i<ncmt ; i++) {
+			print2buff(CHAR(STRING(cmt)[i]));
+			writeline();
+		}
+	}
+}
+
 	/* This is the recursive part of deparsing. */
 
 void deparse2buff(SEXP s)
@@ -298,37 +340,31 @@ void deparse2buff(SEXP s)
 	case ENVSXP:
 		print2buff("<environment>");
 		break;
+	case EXPRSXP:
+		if(length(s) <= 0) print2buff("NULL");
+		else deparse2buff(VECTOR(s)[0]);
+		break;
 	case LISTSXP:
-		if(isExpressionObject(s)) {
-			deparse2buff(CAR(s));
-		}
-		else {
-			attr1(s);
-			print2buff("list(");
-			for (t=s ; CDR(t) != R_NilValue ; t=CDR(t) ) {
-				if( TAG(t) != R_NilValue ) {
-					deparse2buff(TAG(t));
-					print2buff(" = ");
-				}
-				deparse2buff(CAR(t));
-				print2buff(", ");
-			}
+		attr1(s);
+		print2buff("list(");
+		for (t=s ; CDR(t) != R_NilValue ; t=CDR(t) ) {
 			if( TAG(t) != R_NilValue ) {
 				deparse2buff(TAG(t));
 				print2buff(" = ");
 			}
 			deparse2buff(CAR(t));
-			print2buff(")" );
-			attr2(s);
+			print2buff(", ");
 		}
+		if( TAG(t) != R_NilValue ) {
+			deparse2buff(TAG(t));
+			print2buff(" = ");
+		}
+		deparse2buff(CAR(t));
+		print2buff(")" );
+		attr2(s);
 		break;
 	case LANGSXP:
-		cmnt = TAG(s);
-		if (cmnt != R_NilValue && CAR(s) != install("{"))
-			for (op = TAG(s); op != R_NilValue; op = CDR(op)) {
-				print2buff(CHAR(STRING(CAR(op))[0]));
-				writeline();
-			}
+		printcomment(s);
 		if (TYPEOF(CAR(s)) == SYMSXP) {
 			if ((TYPEOF(SYMVALUE(CAR(s))) == BUILTINSXP) ||
 					(TYPEOF(SYMVALUE(CAR(s))) == SPECIALSXP)) {
@@ -395,12 +431,6 @@ void deparse2buff(SEXP s)
 					while (s != R_NilValue) {
 						deparse2buff(CAR(s));
 						writeline();
-						if ((cmnt = TAG(s)) != R_NilValue)
-							while (cmnt != R_NilValue) {
-								print2buff(CHAR(STRING(CAR(cmnt))[0]));
-								writeline();
-								cmnt = CDR(cmnt);
-							}
 						s = CDR(s);
 					}
 					indent--;
@@ -438,6 +468,7 @@ void deparse2buff(SEXP s)
 					print2buff(")");
 					break;
 				case PP_FUNCTION:
+					printcomment(s);
 					print2buff(CHAR(PRINTNAME(op)));
 					print2buff("(");
 					args2buff(FORMALS(s), 0, 1); 
@@ -587,7 +618,7 @@ void print2buff(char *strng)
 	}
 	tlen = strlen(strng);
 	bufflen = strlen(buff);
-	if (bufflen + tlen > 512) {
+	if (bufflen + tlen > BUFSIZE) {
 		buff[0] = '\0';
 		error("string too long in deparse\n");
 	}
@@ -633,7 +664,7 @@ void vector2buff(SEXP vector)
 			print2buff(strp);
 			if (i < (tlen - 1))
 				print2buff(", ");
-			if (len > CUTOFF)
+			if (len > cutoff)
 				writeline();
 		}
 		print2buff(")");
@@ -654,7 +685,7 @@ void factor2buff(SEXP vector, int ordered)
 		print2buff(strp);
 		if (i < (tlen - 1))
 			print2buff(", ");
-		if (len > CUTOFF)
+		if (len > cutoff)
 			writeline();
 	}
 	print2buff("), levels=1:");

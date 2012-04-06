@@ -1,3 +1,4 @@
+
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
@@ -17,6 +18,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*== see ./printutils.c  for general remarks on Printing and the Encode.. utils.
+ */
 #include "Defn.h"
 #include "Print.h"
 
@@ -65,7 +68,6 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 	default:
 		checkArity(op, args);
 	}
-	/*NOTREACHED*/
 }
 
 SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -78,7 +80,6 @@ SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
 	default:
 		checkArity(op, args);
 	}
-	/*NOTREACHED*/
 }
 
 SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -234,16 +235,12 @@ static printList(SEXP s)
 				else
 					sprintf(ptag, "[[%d]]", i);
 			}
-			Rprintf("%s\n", ptag);
-#ifdef OLD
-			PrintValueRec(CAR(s));
-#else
+			Rprintf("%s\n", tagbuf);
 			if(isObject(CAR(s))) {
 				CADR(newcall) = CAR(s);
 				eval(newcall, R_NilValue);
 			}
 			else PrintValueRec(CAR(s));
-#endif
 			*ptag = '\0';
 			s = CDR(s);
 			i += 1;
@@ -258,13 +255,33 @@ static printList(SEXP s)
 	printAttributes(s);
 }
 
+static void PrintExpression(SEXP s)
+{
+	SEXP u, v;
+	int i, n;
+
+	PROTECT(u = v = allocList(LENGTH(s)+1));
+	TYPEOF(u) = LANGSXP;
+	CAR(u) = install("expression");
+	u = CDR(u);
+	n = LENGTH(s);
+	for(i=0 ; i<n ; i++) {
+		CAR(u) = VECTOR(s)[i];
+		u = CDR(u);
+	}
+	u = deparse1(v, 0);
+	n = LENGTH(u);
+	for (i=0; i<n ; i++)
+		Rprintf("%s\n", CHAR(STRING(u)[i]));
+	UNPROTECT(1);
+}
+
 	/* PrintValueRec - recursively print an SEXP */
 
 void PrintValueRec(SEXP s)
 {
-	int i, taglen;
+	int i;
 	SEXP t;
-	char *ptag;
 
 	switch (TYPEOF(s)) {
 	case NILSXP:
@@ -280,6 +297,9 @@ void PrintValueRec(SEXP s)
 	case CHARSXP:
 		Rprintf("\"%s\"\n", EncodeString(CHAR(s),0,'"'));
 		break;
+	case EXPRSXP:
+		PrintExpression(s);
+		break;
 	case CLOSXP:
 	case LANGSXP:
 		t = deparse1(s, 0);
@@ -293,10 +313,6 @@ void PrintValueRec(SEXP s)
 	case ENVSXP:
 		if (s == R_GlobalEnv) Rprintf("<environment: R_GlobalEnv>\n");
 		else Rprintf("<environment: %p>\n", s);
-		/* don't print out anything more; 
-		if (s != R_GlobalEnv)
-			PrintValueRec(FRAME(s));
-		*/
 		break;
 	case PROMSXP:
 		Rprintf("<promise: %p>\n", s);
@@ -379,9 +395,12 @@ static void printAttributes(SEXP s)
 				if (TAG(a) == R_NamesSymbol)
 					goto nextattr;
 			}
+			if(TAG(a) == R_CommentSymbol)
+				goto nextattr;
 			if (i > 1)
 				Rprintf("\n");
-			Rprintf("attr(%s,\"%s\")\n", tagbuf, EncodeString(CHAR(PRINTNAME(TAG(a))),0,0));
+			sprintf(ptag, "attr(,\"%s\")", EncodeString(CHAR(PRINTNAME(TAG(a))),0,0));
+			Rprintf("%s\n", tagbuf);
 			PrintValueRec(CAR(a));
 		nextattr:
 			*ptag = '\0';
@@ -392,7 +411,8 @@ static void printAttributes(SEXP s)
 
 
 
-/* PrintValueEnv - print S-expression using (possibly) local options */
+	/* Print an S-expression using (possibly) local options */
+
 void PrintValueEnv(SEXP s, SEXP env)
 {
 	SEXP call;
@@ -414,11 +434,14 @@ void PrintValueEnv(SEXP s, SEXP env)
 	UNPROTECT(1);
 }
 
-/* PrintValue - print S-expression using global options */
+
+	/* Print an S-expression using global options */
+
 void PrintValue(SEXP s)
 {
 	PrintValueEnv(s, R_NilValue);
 }
+
 
 void CustomPrintValue(SEXP s)
 {

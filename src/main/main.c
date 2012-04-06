@@ -107,6 +107,7 @@ SEXP	R_RowNamesSymbol;		/* "row.names" */
 SEXP	R_SeedsSymbol;			/* ".Random.seed" */
 SEXP	R_LastvalueSymbol;		/* ".Last.value" */
 SEXP	R_TspSymbol;			/* "tsp" */
+SEXP	R_CommentSymbol;		/* "comment" */
 
 
 			/* Arithmetic Values */
@@ -251,27 +252,27 @@ void mainloop()
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
 
+		/* Initialize the input streams */
+
+	R_SetInput(0);
+
 		/* On initial entry we open the base language */
 		/* library and begin by running the repl on it. */
 		/* If there is an error we pass on to the repl. */
 		/* Perhaps it makes more sense to quit gracefully? */
 
-	R_Console = 0;
 	R_Inputfile = R_OpenLibraryFile("base");
 	if(R_Inputfile == NULL) {
 		suicide("unable to open the base library\n");
 	}
+	R_SetInput(R_FILE);
 	doneit = 0;
 	setjmp(R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
 	if(!doneit) {
 		doneit = 1;
-#ifdef OLD
-		R_Repl(R_GlobalEnv, 0, 0);
-#else
 		R_Repl(R_NilValue, 0, 0);
-#endif
 	}
 
 		/* This is where we try to load a user's */
@@ -282,7 +283,7 @@ void mainloop()
 		/* might have been double clicked on or dropped */
 		/* on the application */
 
-	R_Console = 1;
+	R_SetInput(R_CONSOLE);
 	doneit = 0;
 	setjmp(R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -297,9 +298,9 @@ void mainloop()
 		/* profile file.  If there is an error */
 		/* we drop through to further processing. */
 
-	R_Console = 0;
 	R_Inputfile = R_OpenSysInitFile();
 	if(R_Inputfile != NULL) {
+		R_SetInput(R_FILE);
 		doneit = 0;
 		setjmp(R_Toplevel.cjmpbuf);
 		R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -314,9 +315,9 @@ void mainloop()
 		/* profile file.  If there is an error */
 		/* we drop through to further processing. */
 
-	R_Console = 0;
 	R_Inputfile = R_OpenInitFile();
 	if(R_Inputfile != NULL) {
+		R_SetInput(R_FILE);
 		doneit = 0;
 		setjmp(R_Toplevel.cjmpbuf);
 		R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -332,7 +333,7 @@ void mainloop()
 		/* we try to invoke the .First Function. */
 		/* If there is an error we continue */
 
-	R_Console = 1;
+	R_SetInput(R_CONSOLE);
 	doneit = 0;
 	setjmp(R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -350,9 +351,9 @@ void mainloop()
 	}
 
 		/* Here is the real R read-eval-loop. */
-		/* We handle the console until  end-of-file. */
+		/* We handle the console until end-of-file. */
 
-	R_Console = 1;
+	R_SetInput(R_CONSOLE);
 	setjmp(R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
@@ -373,7 +374,7 @@ void mainloop()
 		UNPROTECT(1);
 	}
 	UNPROTECT(1);
-	RCleanUp(1); /* query save */
+	RCleanUp(1);	/* query save */
 }
 
 int R_BrowseLevel = 0;
@@ -403,12 +404,12 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	RCNTXT *saveToplevelContext;
 	RCNTXT *saveGlobalContext;
-	RCNTXT thiscontext, returncontext;
+	RCNTXT thiscontext, returncontext, *cptr;
 	int savestack;
 	int savebrowselevel;
 	int saveEvalDepth;
 	int pflag = 1;
-	SEXP topExp, tmp;
+	SEXP topExp;
 
 		/* Save the evaluator state information */
 		/* so that it can be restored on exit. */
@@ -420,6 +421,16 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	saveGlobalContext = R_GlobalContext;
 	saveEvalDepth = R_EvalDepth;
 
+	if( !DEBUG(rho) ) {
+		cptr=R_GlobalContext;
+		while (cptr->callflag != CTXT_RETURN) 
+			cptr = cptr->nextcontext;
+		Rprintf("Called from: ");
+		PrintValueRec(cptr->call);
+	}
+	
+	R_ReturnedValue = R_NilValue;
+
 		/* Here we establish two contexts.  The first */
 		/* of these provides a target for return */
 		/* statements which a user might type at the */
@@ -427,16 +438,12 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 		/* acts as a target for error returns. */
 
 	begincontext(&returncontext, CTXT_BROWSER, call, rho, R_NilValue, R_NilValue);
-	if (setjmp(returncontext.cjmpbuf)) {
-		tmp = R_NilValue;		/* R_ReturnedValue */
-	}
-	else {
+	if (!setjmp(returncontext.cjmpbuf)) {
 		begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, rho, R_NilValue, R_NilValue);
 		setjmp(thiscontext.cjmpbuf);
 		R_GlobalContext = R_ToplevelContext = &thiscontext;
 		R_BrowseLevel = savebrowselevel;
 		R_Repl(rho, savestack, R_BrowseLevel);
-		tmp = R_NilValue;
 		endcontext(&thiscontext);
 	}
 	endcontext(&returncontext);
@@ -451,5 +458,5 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	R_GlobalContext = saveGlobalContext;
 	R_EvalDepth = saveEvalDepth;
 	R_BrowseLevel--;
-	return tmp;
+	return R_ReturnedValue;
 }

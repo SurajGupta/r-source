@@ -1,6 +1,6 @@
 TITLE(boxplot.stats @@ Box Plot Statistics)
 USAGE(
-boxplot.stats(x, coef)
+boxplot.stats(x, coef = 1.5)
 )
 ALIAS(boxplot.stats)
 ARGUMENTS(
@@ -32,4 +32,6 @@ LANG(LINK(boxplot)), LANG(LINK(bxp)).
 )
 EXAMPLES(
 boxplot.stats(1:100)
+boxplot.stats(1:100, coef = 3)
+boxplot.stats(1:100, coef = 0)
 )

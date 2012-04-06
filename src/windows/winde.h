@@ -40,7 +40,6 @@ static void doDEKey(WPARAM);
 static void downlightrect();
 static void drawwindow();
 static void drawcol(int);
-static void drawrow(int);
 static void find_coords(int, int, int*, int*);
 static int  findsquare();
 static void handlechar(WPARAM);
@@ -74,12 +73,9 @@ static int nneg;                        /* indicate whether its a negative */
 static int clength;                     /* number of characters currently entered */
 static char buf[30];
 static char *bufp;
-static int bwidth;                      /* width of the border */
-static int hwidth;                      /* width of header  */
 static int text_offset;
 static char digits[] = "123456789.0";
 static int doneSpread=1;
-static int fh, fw;
  
 /* Last Point Coordinates */
 static int xlast = 0;
@@ -88,7 +84,6 @@ static int ylast = 0;
 /* Functions to hide Xlib calls */
  
 static void cleararea(int, int, int, int);
-static void copyarea(int, int, int, int);
 static void drawline(int, int, int, int);
 static void drawrectangle(int, int, int, int);
 static void drawtext(int, int, char*, int);

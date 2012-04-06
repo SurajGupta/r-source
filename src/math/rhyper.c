@@ -238,7 +238,7 @@ double rhyper(double nn1in, double nn2in, double kkin)
 					f = f * (n1 - i + 1) * (k - i + 1)
 					    / (n2 - k + i) / i;
 			} else if (m > ix) {
-				for (i = ix + 1; ix <= m; i++)
+				for (i = ix + 1; i <= m; i++)
 					f = f * i * (n2 - k + i) / (n1 - i)
 					    / (k - i);
 			}

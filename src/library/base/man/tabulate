@@ -11,3 +11,7 @@ used as the basis of the LANG(table) function.
 SEEALSO(
 LANG(LINK(factor)), LANG(LINK(table)).
 )
+EXAMPLES(
+tabulate(c(2,3,5))
+tabulate(c(2,3,5), nb = 10)
+)

@@ -31,9 +31,9 @@ SEEALSO(
 LANG(LINK(x11)), LANG(LINK(macintosh)), LANG(LINK(device)).
 )
 EXAMPLES(
-# open the file "foo" for graphics output
-postscript("foo")
+# open the file "foo.ps" for graphics output
+postscript("foo.ps")
 BLANK
-# produce the desired graph(s)
-plot(x,y)
+plot(xx,yy)# produce the desired graph(s)
+## dev.off()# turn off the postscript device
 )

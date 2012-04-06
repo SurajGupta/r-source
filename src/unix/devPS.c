@@ -72,6 +72,7 @@ static void   PS_Rect(double, double, double, double, int, int);
 static void   PS_Resize(void);
 static void   PS_StartPath(void);
 static double PS_StrWidth(char*);
+static void   PS_MetricInfo(int, double*, double*, double*);
 static void   PS_Text(double, double, char*, double, double, double);
 
 	/* Support Routines */
@@ -151,7 +152,7 @@ int PSDeviceDriver(char **cpars, int ncpars, double *npars, int nnpars)
 		height = pageheight-0.5;
 	xoff = (pagewidth - width)/2.0;
 	yoff = (pageheight - height)/2.0;
-	maxpointsize = 72.0 * ((pageheight>pagewidth)) ? pageheight : pagewidth;
+	maxpointsize = 72.0 * ((pageheight>pagewidth) ? pageheight : pagewidth);
 
 		/*  Page dimensions in points  */
 
@@ -175,6 +176,7 @@ int PSDeviceDriver(char **cpars, int ncpars, double *npars, int nnpars)
 	DevLineTo = PS_LineTo;
 	DevText = PS_Text;
 	DevStrWidth = PS_StrWidth;
+	DevMetricInfo = PS_MetricInfo;
 	DevRect = PS_Rect;
 	DevCircle = PS_Circle;
 	DevPolygon = PS_Polygon;
@@ -395,7 +397,15 @@ static void PS_MoveTo(double x, double y)
 static double PS_StrWidth(char *str)
 {
 	return floor(GP->cex * GP->ps + 0.5)
-		* PostScriptStringWidth(str, &(metrics[GP->font]));
+		* PostScriptStringWidth(str, &(metrics[GP->font-1]));
+}
+
+static void PS_MetricInfo(int c, double *ascent, double *descent, double *width)
+{
+	PostScriptMetricInfo(c, ascent, descent, width, &(metrics[GP->font-1]));
+	*ascent = floor(GP->cex * GP->ps + 0.5) * *ascent;
+	*descent = floor(GP->cex * GP->ps + 0.5) * *descent;
+	*width = floor(GP->cex * GP->ps + 0.5) * *width;
 }
 
 static void PS_LineTo(double x, double y)

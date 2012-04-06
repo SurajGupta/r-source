@@ -13,6 +13,7 @@ OBJS=	garrow.o \
 	glineto.o \
 	glocator.o \
 	gmapping.o  \
+	gmetricinfo.o \
 	gmode.o \
 	gmoveto.o \
 	gmtext.o \
@@ -21,6 +22,7 @@ OBJS=	garrow.o \
 	grect.o \
 	greset.o \
 	grestore.o \
+	gsavepars.o \
 	gsaveplot.o \
 	gscale.o \
 	gsetupaxis.o \

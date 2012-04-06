@@ -22,8 +22,11 @@ function (x, digits=NULL, width=max(0, digits) + 1, format=NULL,
 			width <- -width
 		}
 		pad <- sapply(pmax(0, width - nc), bl.string)
-		## for R <= 0.16 (incompatibility to S):
-		if(is.list(pad)) pad <- ""
+		## for R <= 0.49 (incompatibility to S), pad may be list:
+		if(is.list(pad)) {
+			pad[sapply(pad,length) == 0] <- list("")
+			pad <- unlist(pad)
+		}
 		if (flag == "-") 
 			return(paste(x, pad, sep = ""))
 		else    return(paste(pad, x, sep = ""))

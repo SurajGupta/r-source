@@ -6,12 +6,12 @@ double pythag(double a, double b)
 {
 	double p, r, s, t, tmp, u;
 
-	p = fmax(fabs(a), fabs(b));
+	p = fmax2(fabs(a), fabs(b));
 	if (p != 0.0) {
 		
 		/* r = (fmin(fabs(a), fabs(b))/p)**2 */
 
-		tmp = fmin(fabs(a), fabs(b))/p;
+		tmp = fmin2(fabs(a), fabs(b))/p;
 		r = tmp * tmp;
 		for(;;) {
 			t = 4.0 + r;

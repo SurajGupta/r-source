@@ -230,6 +230,8 @@ SEXP do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return x;
 }
 
+	/* Length of Primitive Objects */
+
 SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP ans;
@@ -239,12 +241,36 @@ SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	ans = allocVector(INTSXP, 1);
 
-	if (isVector(CAR(args)) || isExpression(CAR(args))
-			|| isList(CAR(args)) || isFrame(CAR(args)))
+#ifdef OLD
+	switch(TYPEOF(CAR(args))) {
+	    case NILSXP:
+		INTEGER(ans)[0] = 0;
+		break;
+	    case LGLSXP:
+	    case FACTSXP:
+	    case ORDSXP:
+	    case INTSXP:
+	    case REALSXP:
+	    case CPLXSXP:
+	    case STRSXP:
+	    case EXPRSXP:
+		INTEGER(ans)[0] = LENGTH(CAR(args));
+		break;
+	    case LISTSXP:
+	    case LANGSXP:
 		INTEGER(ans)[0] = length(CAR(args));
-	else
-		INTEGER(ans)[0] = NA_INTEGER;
-		return ans;
+		break;
+	    case ENVSXP:
+		INTEGER(ans)[0] = length(FRAME(CAR(args)));
+		break;
+	    default:
+		INTEGER(ans)[0] = 1;
+		break;
+	}
+#else
+	INTEGER(ans)[0] = length(CAR(args));
+#endif
+	return ans;
 }
 
 SEXP do_nlevels(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -528,9 +554,32 @@ SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	checkArity(op, args);
 	a = CAR(args);
-	ncol = ncols(a);
-	nrow = nrows(a);
-	len = length(a);
+
+	if(isVector(a)) {
+		dims = getAttrib(a, R_DimSymbol);
+		switch(length(dims)) {
+			case 0:
+			case 1:
+				nrow = len = length(a);
+				ncol = 1;
+				break;
+			case 2:
+				ncol = ncols(a);
+				nrow = nrows(a);
+				len = length(a);
+				break;
+			default:
+				goto not_matrix;
+		}
+	}
+	else if(isList(a)) {
+		dims = getAttrib(a, R_DimSymbol);
+		if(length(dims) == 2) {
+			errorcall(call, "can't transpose list matrices (yet)\n");
+		}
+		else goto not_matrix;
+	}
+	else goto not_matrix;
 
 	PROTECT(r = allocVector(TYPEOF(a), len));
 
@@ -573,6 +622,9 @@ SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	UNPROTECT(1);
 	return r;
+
+not_matrix:
+	errorcall(call, "argument is not a matrix\n");
 }
 
 

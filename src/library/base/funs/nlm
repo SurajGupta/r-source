@@ -11,22 +11,20 @@ function(f, p, hessian=FALSE, typsiz=rep(1,length(p)),
 		stepmx, steptl, itnlim))
 }
 
-optimize <-
-function(f, interval, lower=min(interval), upper=max(interval),
+optimize <- function(f, interval, lower=min(interval), upper=max(interval),
 	maximum=FALSE, tol=.Machine$double.eps^0.25, ...)
 {
-	if(maximum) {
-		val <- .Internal(fmin(function(arg) -f(arg, ...), lower, upper, tol))
-		list(maximum=val, objective=-f(val, ...))
-	}
-	else {
-		val <- .Internal(fmin(function(arg) f(arg, ...), lower, upper, tol))
-		list(minimum=val, objective=f(val, ...))
-	}
+ if(maximum) {
+	val <- .Internal(fmin(function(arg) -f(arg, ...), lower, upper, tol))
+	list(maximum=val, objective=-f(val, ...))
+ } else {
+	val <- .Internal(fmin(function(arg) f(arg, ...), lower, upper, tol))
+	list(minimum=val, objective=f(val, ...))
+ }
 }
 
-uniroot <-
-function(f, interval, lower=min(interval), upper=max(interval), tol=.Machine$double.eps^0.25, ...)
+uniroot <- function(f, interval, lower=min(interval), upper=max(interval),
+	tol=.Machine$double.eps^0.25, ...)
 {
 	if(f(interval[1], ...)*f(interval[2], ...) >= 0)
 		stop("signs at end points not of opposite sign")
@@ -34,12 +32,12 @@ function(f, interval, lower=min(interval), upper=max(interval), tol=.Machine$dou
 	list(root=val, f.root=f(val, ...))
 }
 
-deriv <- function(x, ...)
-UseMethod("deriv")
+deriv <- function(x, ...) UseMethod("deriv")
 
 deriv.formula <- function(expr, namevec, function.arg=NULL, tag=".expr") {
-if(length(expr) == 2) .Internal(deriv.default(expr[[2]], namevec, function.arg, tag))
-else stop("invalid formula in deriv")
+	if(length(expr) == 2) 
+		.Internal(deriv.default(expr[[2]], namevec, function.arg, tag))
+	else stop("invalid formula in deriv")
 }
 
 deriv.default <- function(expr, namevec, function.arg=NULL, tag=".expr")

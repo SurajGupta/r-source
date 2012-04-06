@@ -1,8 +1,8 @@
 #include "Mathlib.h"
 
-int I1MACH(int i)
+int F77_SYMBOL(i1mach)(int *i)
 {
-	switch(i) {
+	switch(*i) {
 
 	case  1: return 5;
 	case  2: return 6;
@@ -28,9 +28,4 @@ int I1MACH(int i)
 
 	default: return 0;
 	}
-}
-
-int F77_SYMBOL(i1mach)(int *i)
-{
-	return I1MACH(*i);
 }

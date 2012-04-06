@@ -12,5 +12,7 @@ An even wider variety of colors can be created with LANG(rainbow),
 LANG(rgb) and LANG(hsv).
 )
 SEEALSO(
-LANG(LINK(rainbow)), LANG(LINK(rgb)), LANG(LINK(hsv)).
+LANG(LINK(rainbow)) for a nice example;
+LANG(LINK(rgb)), LANG(LINK(hsv)), LANG(LINK(gray)), 
+and LANG(LINK(heat.colors)), LANG(LINK(topo.colors)) for images.
 )

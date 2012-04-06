@@ -308,28 +308,33 @@ void psx11_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 
 void psx11_Polygon(int n, double *x, double *y, int bg, int fg)
 {
-#ifdef OLD
 	int i;
-	fprintf(psfp, "np\n");
-	fprintf(psfp, "%.2f %.2f m\n",
-		xoffset + xscale * x[0],
-		yoffset + yscale * y[0]);
-	for(i=1 ; i<n ; i++) {
-		fprintf(psfp, "%.2f %.2f l\n",
-			xoffset + xscale * x[i],
-			yoffset + yscale * y[i]);
-	}	
-	fprintf(psfp, "cp f\n");
-#else
 	if(bg != NA_INTEGER) {
 		psx11_SetColor(bg);
-		PostScriptFilledPolygon(psfp, x, y, n);
+		fprintf(psfp, "np\n");
+		fprintf(psfp, "%.2f %.2f m\n",
+			xoffset + xscale * x[0],
+			yoffset + yscale * y[0]);
+		for(i=1 ; i<n ; i++) {
+			fprintf(psfp, "%.2f %.2f l\n",
+				xoffset + xscale * x[i],
+				yoffset + yscale * y[i]);
+		}	
+		fprintf(psfp, "cp f\n");
 	}
-	if(bg != NA_INTEGER) {
+	if(fg != NA_INTEGER) {
 		psx11_SetColor(fg);
-		PostScriptOpenPolygon(psfp, x, y, n);
+		fprintf(psfp, "np\n");
+		fprintf(psfp, "%.2f %.2f m\n",
+			xoffset + xscale * x[0],
+			yoffset + yscale * y[0]);
+		for(i=1 ; i<n ; i++) {
+			fprintf(psfp, "%.2f %.2f l\n",
+				xoffset + xscale * x[i],
+				yoffset + yscale * y[i]);
+		}	
+		fprintf(psfp, "cp o\n");
 	}
-#endif
 }
 
 void psx11_PrintPlot()

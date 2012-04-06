@@ -21,7 +21,7 @@
 	/* Symbolic Differentiation */
 
 	/* note: the code below makes use of "expression" objects */
-	/* maybe it is time for us to introduce mode "expression */
+	/* maybe it is time for us to introduce mode "expression" */
 
 #include "Defn.h"
 
@@ -120,21 +120,21 @@ static SEXP simplify(SEXP fun, SEXP arg1, SEXP arg2)
 			if(isZero(arg1)) {
 				ans = Constant(0.0);
 			}
-                        else if(isUminus(arg1)) {
+			else if(isUminus(arg1)) {
 				ans = CADR(arg1);
 			}
-                        else ans = lang2(MinusSymbol, arg1);
+			else ans = lang2(MinusSymbol, arg1);
 		}
 		else {
-                        if(isZero(arg2)) {
+			if(isZero(arg2)) {
 				ans = arg1;
 			}
-                        else if(isZero(arg1)) {
+			else if(isZero(arg1)) {
 				ans = simplify(MinusSymbol,
 					arg2,
 					R_MissingArg);
 			}
-                        else if(isUminus(arg1)) {
+			else if(isUminus(arg1)) {
 				ans = simplify(MinusSymbol,
 					PP(simplify(PlusSymbol,
 						CADR(arg1),
@@ -142,37 +142,37 @@ static SEXP simplify(SEXP fun, SEXP arg1, SEXP arg2)
 					R_MissingArg);
 				UNPROTECT(1);
 			}
-                        else if(isUminus(arg2)) {
+			else if(isUminus(arg2)) {
 				ans = simplify(PlusSymbol,
 					arg1,
 					CADR(arg2));
 			}
-                        else ans = lang3(MinusSymbol, arg1, arg2);
+			else ans = lang3(MinusSymbol, arg1, arg2);
 		}
 	}
 	else if(fun == TimesSymbol) {
 		if(isZero(arg1) || isZero(arg2)) {
 			ans = Constant(0.0);
 		}
-                else if(isOne(arg1)) {
+		else if(isOne(arg1)) {
 			ans = arg2;
 		}
-                else if(isOne(arg2)) {
+		else if(isOne(arg2)) {
 			ans = arg1;
 		}
-                else if(isUminus(arg1)) {
-                        ans = simplify(MinusSymbol,
+		else if(isUminus(arg1)) {
+			ans = simplify(MinusSymbol,
 				PP(simplify(TimesSymbol, CADR(arg1), arg2)),
 				R_MissingArg);
 			UNPROTECT(1);
 		}
-                else if(isUminus(arg2)) {
-                        ans = simplify(MinusSymbol,
+		else if(isUminus(arg2)) {
+			ans = simplify(MinusSymbol,
 				PP(simplify(TimesSymbol, arg1, CADR(arg2))),
 				R_MissingArg);
 			UNPROTECT(1);
 		}
-                else ans = lang3(TimesSymbol, arg1, arg2);
+		else ans = lang3(TimesSymbol, arg1, arg2);
 	}
 	else if(fun == DivideSymbol) {
 		if(isZero(arg1)) {
@@ -181,20 +181,22 @@ static SEXP simplify(SEXP fun, SEXP arg1, SEXP arg2)
 		else if(isZero(arg2)) {
 			ans = Constant(NA_REAL);
 		}
-                else if(isOne(arg2)) {
+		else if(isOne(arg2)) {
 			ans = arg1;
 		}
-                else if(isUminus(arg1)) {
-                        ans = simplify(MinusSymbol,
+		else if(isUminus(arg1)) {
+			ans = simplify(MinusSymbol,
 				PP(simplify(DivideSymbol, CADR(arg1), arg2)),
 				R_MissingArg);
+			UNPROTECT(1);
 		}
-                else if(isUminus(arg2)) {
-                        ans = simplify(MinusSymbol,
+		else if(isUminus(arg2)) {
+			ans = simplify(MinusSymbol,
 				PP(simplify(DivideSymbol, arg1, CADR(arg2))),
 				R_MissingArg);
+			UNPROTECT(1);
 		}
-                else ans = lang3(DivideSymbol, arg1, arg2);
+		else ans = lang3(DivideSymbol, arg1, arg2);
 	}
 	else if(fun == PowerSymbol) {
 		if(isZero(arg2)) {
@@ -203,13 +205,13 @@ static SEXP simplify(SEXP fun, SEXP arg1, SEXP arg2)
 		else if(isZero(arg1)) {
 			ans = Constant(0.0);
 		}
-                else if(isOne(arg1)) {
+		else if(isOne(arg1)) {
 			ans = Constant(1.0);
 		}
-                else if(isOne(arg2)) {
+		else if(isOne(arg2)) {
 			ans = arg1;
 		}
-                else ans = lang3(PowerSymbol, arg1, arg2);
+		else ans = lang3(PowerSymbol, arg1, arg2);
 	}
 	else if(fun == ExpSymbol) {
 		ans = lang2(ExpSymbol, arg1);
@@ -524,7 +526,8 @@ SEXP do_D(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	checkArity(op, args);
 
-	expr = CAR(args);
+	if(isExpression(CAR(args))) expr = VECTOR(CAR(args))[0];
+	else expr = CAR(args);
 	var = CADR(args);
 	if(!isString(var) || length(var) < 1)
 		errorcall(call, "variable must be a character string\n");
@@ -756,7 +759,8 @@ SEXP do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
 	InitDerivSymbols();
 	PROTECT(exprlist = LCONS(install("{"), R_NilValue));
 
-	PROTECT(expr = CAR(args));
+	if(isExpression(CAR(args))) PROTECT(expr = VECTOR(CAR(args))[0]);
+	else PROTECT(expr = CAR(args));
 	args = CDR(args);
 
 	names = CAR(args);
@@ -871,7 +875,11 @@ SEXP do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
 		CLOENV(funarg) = R_GlobalEnv;
 		UNPROTECT(1);
 	}
-	else funarg = lang2(install("expression"), exprlist);
+	else {
+		funarg = allocVector(EXPRSXP, 1);
+		VECTOR(funarg)[0] = exprlist;
+		/* funarg = lang2(install("expression"), exprlist); */
+	}
 	UNPROTECT(3);
 	vmaxset(vmax);
 	return funarg;

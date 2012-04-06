@@ -1,7 +1,0 @@
-#!/bin/sh
-
-for i in $*
-do
-	doc2ms ../man/$i | nroff -ms | ./help.pretty | sed 's/^/	/' > ../../help/$i
-	echo $i
-done

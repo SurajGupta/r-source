@@ -1,5 +1,5 @@
 ###-*- R -*-
-par(ask=TRUE)	# For source
+par(ask = interactive() && .Device == "X11")	# For source
 
 # Here is some code which illustrates some of the differences between
 # R and S graphics capabilities.  Note that colors are generally specified

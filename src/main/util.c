@@ -189,21 +189,17 @@ int isFrame(SEXP s)
 	return 0;
 }
 
-int isExpression(SEXP s)
+int isEnvironment(SEXP s)
 {
-	return TYPEOF(s) == LANGSXP;
+	if(TYPEOF(s) == NILSXP || TYPEOF(s) == ENVSXP)
+		return 1;
+	else
+		return 0;
 }
 
-int isExpressionObject(SEXP s)
+int isExpression(SEXP s)
 {
-	SEXP class;
-	int i;
-	if(isObject(s)) {
-		class = getAttrib(s, install("expression"));
-		for(i=0 ; i<length(class) ; i++)
-			if(!strcmp(CHAR(STRING(class)[i]), "expression")) return 1;
-	}
-	return 0;
+	return TYPEOF(s) == EXPRSXP;
 }
 
 int isLanguage(SEXP s)
@@ -213,10 +209,21 @@ int isLanguage(SEXP s)
 
 int isVector(SEXP s)
 {
-	if (LGLSXP <= TYPEOF(s) && TYPEOF(s) <= STRSXP)
+	switch(TYPEOF(s)) {
+	    case LGLSXP:
+	    case FACTSXP:
+	    case ORDSXP:
+	    case INTSXP:
+	    case REALSXP:
+	    case CPLXSXP:
+	    case STRSXP:
+	    case EXPRSXP:
 		return 1;
-	else
+		break;
+	    default:
 		return 0;
+		break;
+	}
 }
 
 int isMatrix(SEXP s)
@@ -326,7 +333,6 @@ int nrows(SEXP s)
 		return nrows(CAR(s));
 	}
 	else error("object is not a matrix\n");
-	/*NOTREACHED*/
 }
 
 int ncols(SEXP s)
@@ -341,7 +347,6 @@ int ncols(SEXP s)
 		return length(s);
 	}
 	else error("object is not a matrix\n");
-	/*NOTREACHED*/
 }
 
 int isNumeric(SEXP s)
@@ -457,6 +462,7 @@ TypeTable[] = {
 	{ "character",		STRSXP     },
 	{ "...",		DOTSXP     },
 	{ "any",		ANYSXP     },
+	{ "expression",		EXPRSXP    },
 
 	{ "numeric",		REALSXP    },	/* aliases */
 	{ "unordered",		FACTSXP    },
@@ -564,7 +570,6 @@ static int isMissing(SEXP symbol, SEXP rho)
 		rho = ENCLOS(rho);
 	}
 	return 0;
-	/*NOTREACHED*/
 }
 
 
@@ -651,10 +656,4 @@ int isFree(SEXP val)
 		if (val == t)
 			return 1;
 	return (0);
-}
-
-SEXP do_deprecated(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	errorcall(call, "The function is deprecated.\n");
-	/*NOTREACHED*/
 }

@@ -300,6 +300,7 @@ SEXP do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 			error("attach: all elements must be named\n");
 	PROTECT(s = allocSExp(ENVSXP));
 	setAttrib(s, install("name"), name);
+
 	FRAME(s) = duplicate(CAR(args));
 	for (t = R_GlobalEnv; ENCLOS(t) != R_NilValue && pos > 2; t = ENCLOS(t))
 		pos--;
@@ -313,7 +314,7 @@ SEXP do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 		ENCLOS(s) = x;
 	}
 	UNPROTECT(1);
-	return R_NilValue;
+	return s;
 }
 
 SEXP do_detach(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -351,8 +352,11 @@ SEXP do_search(SEXP call, SEXP op, SEXP args, SEXP env)
 		n++;
 	PROTECT(ans = allocVector(STRSXP, n));
 
+	/* TODO - what should the name of this be? */
+
 	STRING(ans)[0] = mkChar(".GlobalEnv");
-	STRING(ans)[n-1] = mkChar(".SystemEnv");
+	STRING(ans)[n-1] = mkChar("library:base");
+
 	i = 1;
 	for (t = ENCLOS(R_GlobalEnv); t != R_NilValue ; t = ENCLOS(t)) {
 		name = getAttrib(t, install("name"));
@@ -414,51 +418,121 @@ SEXP do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	SEXP ans, env, s;
-	int all, k, pos;
+	SEXP ans, env, envp, s;
+	int all, i, k, pos;
 
 	checkArity(op, args);
 
-	pos = asInteger(CAR(args));
-	if(pos == -1) {
-		env = R_GlobalContext->sysparent;
+	env = CAR(args);
+	if(isNull(env) || !isList(env)) PROTECT(env = CONS(env, R_NilValue));
+	else PROTECT(env);
+	all = asLogical(CADR(args));
+	if(all == NA_LOGICAL) all = 0;
+
+		/* Step 1 : Compute the Vector Size */
+
+	k = 0;
+	for(envp=env ; envp!=R_NilValue ; envp=CDR(envp)) {
+		if(CAR(envp) == R_NilValue) {
+			for (i = 0; i < HSIZE; i++) {
+				for(s=R_SymbolTable[i]; s!=R_NilValue; s=CDR(s)) {
+					if(SYMVALUE(CAR(s)) != R_UnboundValue)
+						k++;
+				}
+			}
+		}
+		else if(isEnvironment(CAR(envp))) {
+			s = FRAME(CAR(envp));
+			while (s != R_NilValue) {
+				if(all || CHAR(PRINTNAME(TAG(s)))[0] != '.')
+					k += 1;
+				s = CDR(s);
+			}
+		}
+		else error("invalid envir= argument\n");
 	}
-	else if(pos == 0) {
-		env = CADR(args);
+
+		/* Step 2 : Allocate and Fill the Result */
+
+	ans = allocVector(STRSXP, k);
+	k = 0;
+	for(envp=env ; envp!=R_NilValue ; envp=CDR(envp)) {
+		if(CAR(envp) == R_NilValue) {
+			for (i = 0; i < HSIZE; i++) {
+				for(s=R_SymbolTable[i]; s!=R_NilValue; s=CDR(s)) {
+					if(SYMVALUE(CAR(s)) != R_UnboundValue)
+						STRING(ans)[k++] = PRINTNAME(CAR(s));
+				}
+			}
+		}
+		else if(isEnvironment(CAR(envp))) {
+			s = FRAME(CAR(envp));
+			while (s != R_NilValue) {
+				if(all || CHAR(PRINTNAME(TAG(s)))[0] != '.') {
+					STRING(ans)[k++] = PRINTNAME(TAG(s));
+				}
+				s = CDR(s);
+			}
+		}
+	}
+	UNPROTECT(1);
+	sortVector(ans);
+	return ans;
+}
+
+SEXP do_libfixup(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP lib, env, p;
+	checkArity(op, args);
+	lib = CAR(args);
+	env = CADR(args);
+	if(TYPEOF(lib) != ENVSXP || !isEnvironment(env))
+		errorcall(call, "invalid arguments\n");
+	p = FRAME(lib);
+	while(p != R_NilValue) {
+		if(TYPEOF(CAR(p)) == CLOSXP)
+		CLOENV(CAR(p)) = env;
+		p = CDR(p);
+	}
+	return lib;
+}
+
+static SEXP pos2env(int pos, SEXP call)
+{
+	SEXP env;
+
+	if(pos == NA_INTEGER || pos < -1 || pos == 0) {
+		errorcall(call, "invalid argument\n");
+	}
+	else if(pos == -1) {
+		env = R_GlobalContext->sysparent;
+		if(R_GlobalEnv != R_NilValue && env == R_NilValue)
+			errorcall(call, "invalid argument\n");
 	}
 	else {
 		for (env = R_GlobalEnv; env != R_NilValue && pos > 1; env = ENCLOS(env))
 			pos--;
 		if(pos != 1)
-			error("invalid pos= argument\n");
+			error("invalid argument\n");
 	}
-	all = asLogical(CADDR(args));
-	if(all == NA_LOGICAL) all = 0;
+	return env;
+}
 
-	if(env == R_NilValue) {
-		ans = FetchBuiltins(0, all);
+SEXP do_pos2env(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP env, envp, pos;
+	int i, npos;
+
+	PROTECT(pos = coerceVector(CAR(args), INTSXP));
+	npos = length(pos);
+	if(npos <= 0)
+		errorcall(call, "invalid \"pos\" argument\n");
+	PROTECT(envp = env = allocList(npos));
+	for(i=0 ; i<npos ; i++) {
+		CAR(envp) = pos2env(INTEGER(pos)[i], call);
+		envp = CDR(envp);
 	}
-	else {
-		if (TYPEOF(env) != ENVSXP)
-			error("invalid envir= argument\n");
-		k = 0;
-		s = FRAME(env);
-		while (s != R_NilValue) {
-			if(all || CHAR(PRINTNAME(TAG(s)))[0] != '.')
-				k += 1;
-			s = CDR(s);
-		}
-		ans = allocVector(STRSXP, k);
-		s = FRAME(env);
-		k = 0;
-		while (s != R_NilValue) {
-			if(all || CHAR(PRINTNAME(TAG(s)))[0] != '.') {
-				STRING(ans)[k] = PRINTNAME(TAG(s));
-				k += 1;
-			}
-			s = CDR(s);
-		}
-	}
-	sortVector(ans);
-	return ans;
+	UNPROTECT(2);
+	if(npos == 1) env = CAR(env);
+	return env;
 }

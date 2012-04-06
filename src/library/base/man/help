@@ -25,13 +25,14 @@ Help on data sets and libraries can be obained with
 the other forms.
 )
 SEEALSO(
+LANG(LINK(help.start)()) which opens the HTML-Version of the R documentation;
 LANG(LINK(data)), LANG(LINK(library)), LANG(LINK(methods)).
 )
 EXAMPLES(
 help(help)
 help("for") # or	?"for"
 ?"+"
-PARA
+BLANK
 ?data(index) #-- a list of all the available datasets
 ?data(women) #-- information about "women" dataset
 ?library(mva)#-- what is available in library(mva)

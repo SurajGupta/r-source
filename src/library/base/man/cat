@@ -12,5 +12,5 @@ LANG(cat) is useful for producing output in user defined functions.
 )
 EXAMPLES(
 # print an informative message
-cat("iteration = ",iter,"\n")
+cat("iteration = ",iter <- iter + 1,"\n")
 )

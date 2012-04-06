@@ -1,0 +1,112 @@
+TITLE(matplot @@ Plot Columns of Matrices)
+USAGE(
+matplot(x, y, type="p", lty=1:5, pch=NULL, col=1:6,
+        xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, ..., add= FALSE)
+matpoints(x, y, lty=1:5, pch=NULL, col=1:6)
+matlines (x, y, lty=1:5, pch=NULL, col=1:6)
+)
+ALIAS(matplot)
+ALIAS(matpoints)
+ALIAS(matlines)
+ARGUMENTS(
+ARG(x,y @@
+vectors or matrices of data for plotting.
+The number of rows should match.
+If one of them are missing, the other is taken as LANG(y) and an LANG(x)
+vector of LANG(1:n) is used.
+Missing values (LANG(NA)s) are allowed.
+)
+ARG(type @@ character string, telling which type of plot
+(LANG("p"), points; LANG("l"), lines; LANG("b"), both; LANG("o"),
+overplotted both; LANG("n"), none; or LANG("h"), high-density) should be done
+for each column of LANG(y).  The first character of LANG(type) defines the
+first plot, the second character the second, etc.
+Characters in LANG(type) are cycled through; e.g., LANG("pl") alternately plots
+points and lines.
+)
+ARG(lty @@ vector of line types.  
+The first element is for the first column, the second element for the
+second column, etc., even if lines are not plotted for all columns.
+Line types will be used cyclically until all plots are drawn.
+)
+ARG(pch @@ character string (length 1 vector) or vector of 1-character
+strings for plotting-characters.
+The first character is the plotting-character for the first plot, the
+second for the second, etc.  The default is the digits (1 through 9, 0)
+then the letters. 
+BLANK
+To mix special plotting symbols (those specified by integers) and plotting
+characters, either use character escapes LANG(pch="Xe002") or figure out
+the numeric equivalent of the ASCII character, LANG(pch=c(88,2)).
+)
+ARG(col @@ vector of colors.  Colors are used cyclically.)
+ARG(xlim, ylim @@ )
+ARG(xlab, ylab @@ )
+ARG(DOTS @@
+Graphical parameters (see LANG(LINK(par))) may also be
+supplied as arguments to this function.
+In addition, the high-level graphics control arguments
+described under LANG(LINK(par)) and the arguments to
+LANG(LINK(title)) may be supplied to this function.)
+ARG(add @@ logical.  If LANG(TRUE), plots are added to current one, using
+LANG(LINK(points)) and LANG(LINK(lines)).)
+ARG(verbose @@ logical.   If LANG(TRUE), write one line of what is done.)
+)
+COMMENT(--------- end of ARGUMENTS --------------------------)
+SECTION(Side-effects @@
+Function LANG(matplot) generates a new plot; LANG(matpoints) and
+LANG(matlines) add to the current one.
+)
+DESCRIPTION(
+Points involving missing values are not plotted.
+PARA
+The first column of LANG(x) is plotted against the first column of LANG(y), the
+second column of LANG(x) against the second column of LANG(y), etc.
+If one matrix has fewer columns, plotting will cycle back
+through the columns again.  (In particular, either LANG(x) or
+LANG(y) may be a vector, against which all columns of the other
+argument will be plotted.)
+PARA
+Because plotting symbols are drawn with lines and because these functions
+may be changing the line style, you should probably specify LANG(lty=1)
+when using plotting symbols.
+)
+SEEALSO(
+LANG(LINK(plot)), LANG(LINK(points)), LANG(LINK(lines)),
+LANG(LINK(matrix)), LANG(LINK(par)).
+)
+EXAMPLES(
+matplot((-4:5)^2, main = 'Quadratic')
+sines <- outer(1:20, 1:4, function(x,y)sin(x/20 * pi*y))
+matplot(sines, type='o', col= rainbow(ncol(sines)))
+x <- 0:100/100
+matplot(x, outer(x, 1:8, function(x,k) sin(k * pi * x)),
+        type='l', col = 1:8, ylim = c(-2,2))
+BLANK
+data(iris)# is data.frame with  'Species' factor
+table(iris $ Species)
+iS <- iris $ Species == "setosa"
+iV <- iris $ Species == "versicolor"
+par(bg = 'bisque')
+matplot(c(1,8), c(0,4.5), type="n",
+     xlab="Length", ylab="Width",
+     main= "Petal and Sepal Dimensions in Iris Blossoms")
+matpoints(iris[iS,c(1,3)], iris[iS,c(2,4)], pch="sS", col = c(1,3))
+matpoints(iris[iV,c(1,3)], iris[iV,c(2,4)], pch="vV", col = c(1,3))
+legend(1,4, c("    Setosa Petals", "    Setosa Sepals",
+              "Versicolor Petals", "Versicolor Sepals"),
+       pch="sSvV", col=rep(c(1,3),2))
+BLANK
+nam.var <- colnames(iris)[-5]
+nam.spec <- as.character(iris[1+50*0:2, "Species" ])
+iris.S <- array(NA, dim = c(50,4,3), dimnames=list(NULL, nam.var,  nam.spec))
+for(i in 1:3) iris.S[,,i] <- data.matrix(iris[1:50+50*(i-1), -5])
+# The example plot is produced by:
+matplot(iris.S[,"Petal.Length",], iris.S[,"Petal.Width",], pch="SCV",
+	col = rainbow(3, start= .8,end= .1),
+        sub= paste(c("S","C","V"), dimnames(iris.S)[[3]],
+            sep = "=", collapse=",  "),
+        main="Fisher's Iris Data")
+)
+COMMENT(KEYWORD(array))
+COMMENT(KEYWORD(aplot))

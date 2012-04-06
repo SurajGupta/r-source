@@ -748,9 +748,9 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 						for(i=0 ; i<length(CADR(u)) ; i++)
 							STRING(CADR(dn))[j++] = STRING(CADR(u))[i];
 					}
-					else {
-						for(i=0 ; i<ncols(CAR(t)) ; i++)
-							STRING(CADR(dn))[j++] = blank;
+					else if( have_cnames ) {
+							for(i=0 ; i<ncols(CAR(t)) ; i++)
+								STRING(CADR(dn))[j++] = blank;
 					}
 				}
 				else {

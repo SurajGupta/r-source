@@ -29,3 +29,11 @@ LANG(ls) returns the names of the functions local variables.
 This is useful in conjunction with
 LANG(browser).
 )
+SEEALSO(
+LANG(LINK(apropos)) for finding objects in the whole search path.
+)
+EXAMPLES(
+.Ob <- 1
+ls(pat="O")
+ls(pat="O", all = T)#- also shows ".[foo]"
+)

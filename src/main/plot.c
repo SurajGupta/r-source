@@ -42,7 +42,7 @@ void NewFrameConfirm()
 	int c;
 	REprintf("Next plot? ");
 	yyprompt("");
-	while((c = cget()) != '\n' && c != EOF)
+	while((c = cget()) != '\n' && c != R_EOF)
 		;
 }
 
@@ -106,154 +106,6 @@ SEXP do_devoff(SEXP call, SEXP op, SEXP args, SEXP env)
 	KillDevice();
 	gsetVar(install(".Device"), R_NilValue, R_NilValue);
 	return R_NilValue;
-}
-
-
-	/* Saving and restoring of "inline" graphical */
-	/* parameters.  These are the ones which can */
-	/* be specified as a arguments to high-level */
-	/* graphics functions */
-
-static double	adjsave;	/* adj */
-static int	annsave;	/* ann */
-static int	btysave;	/* bty */
-static double	cexsave;	/* cex */
-static double	cexmainsave;	/* cex.main */
-static double	cexlabsave;	/* cex.lab */
-static double	cexsubsave;	/* cex.sub */
-static double	cexaxissave;	/* cex.axis */
-static int	colsave;	/* col */
-static int	fgsave;		/* fg */
-static int	bgsave;		/* bg */
-static int	colmainsave;	/* col.main */
-static int	collabsave;	/* col.lab */
-static int	colsubsave;	/* col.sub */
-static int	colaxissave;	/* col.axis */
-static double	crtsave;	/* character rotation */
-static int	fontsave;	/* font */
-static int	fontmainsave;	/* font.main */
-static int	fontlabsave;	/* font.lab */
-static int	fontsubsave;	/* font.sub */
-static int	fontaxissave;	/* font.axis */
-/* static int	csisave;	/* line spacing in inches */
-static int	errsave;	/* error mode */
-static int	labsave[3];	/* axis labelling parameters */
-static int	lassave;	/* label style */
-static int	ltysave;	/* line type */
-static double	lwdsave;	/* line width */
-static int	mgpsave[3];	/* margin position for annotation */
-static double	mkhsave;	/* mark height */
-static int	pchsave;	/* plotting character */
-static double	srtsave;	/* string rotation */
-static double	tcksave;	/* tick mark length */
-static double	xaxpsave[3];	/* x axis parameters */
-static int	xaxssave;	/* x axis calculation style */
-static int	xaxtsave;	/* x axis type */
-static int	xpdsave;	/* clipping control */
-static double	yaxpsave[3];	/* y axis parameters */
-static int	yaxssave;	/* y axis calculation style */
-static int	yaxtsave;	/* y axis type */
-
-static void SavePars()
-{
-	adjsave = GP->adj;
-	annsave = GP->ann;
-	btysave = GP->bty;
-	cexsave = GP->cex;
-	cexlabsave = GP->cexlab;
-	cexmainsave = GP->cexmain;
-	cexsubsave = GP->cexsub;
-	cexaxissave = GP->cexaxis;
-	colsave = GP->col;
-	fgsave = GP->fg;
-	bgsave = GP->bg;
-	collabsave = GP->collab;
-	colmainsave = GP->colmain;
-	colsubsave = GP->colsub;
-	colaxissave = GP->colaxis;
-	crtsave = GP->crt;
-	errsave = GP->err;
-	fontsave = GP->font;
-	fontmainsave = GP->fontmain;
-	fontlabsave = GP->fontlab;
-	fontsubsave = GP->fontsub;
-	fontaxissave = GP->fontaxis;
-	/* csisave = GP->csi; */
-	labsave[0] = GP->lab[0];
-	labsave[1] = GP->lab[1];
-	labsave[2] = GP->lab[2];
-	lassave = GP->las;
-	ltysave = GP->lty;
-	lwdsave = GP->lwd;
-	mgpsave[0] = GP->mgp[0];
-	mgpsave[1] = GP->mgp[1];
-	mgpsave[2] = GP->mgp[2];
-	mkhsave = GP->mkh;
-	pchsave = GP->pch;
-	srtsave = GP->srt;
-	tcksave = GP->tck;
-	xaxpsave[0] = GP->xaxp[0];
-	xaxpsave[1] = GP->xaxp[1];
-	xaxpsave[2] = GP->xaxp[2];
-	xaxssave = GP->xaxs;
-	xaxtsave = GP->xaxt;
-	xpdsave = GP->xpd;
-	yaxpsave[0] = GP->yaxp[0];
-	yaxpsave[1] = GP->yaxp[1];
-	yaxpsave[2] = GP->yaxp[2];
-	yaxssave = GP->yaxs;
-	yaxtsave = GP->yaxt;
-}
-
-static void RestorePars()
-{
-	GP->adj = adjsave;
-	GP->ann = annsave;
-	GP->bty = btysave;
-	GP->cex = cexsave;
-	GP->cexlab = cexlabsave;
-	GP->cexmain = cexmainsave;
-	GP->cexsub = cexsubsave;
-	GP->cexaxis = cexaxissave;
-	GP->col = colsave;
-	GP->fg = fgsave;
-	GP->bg = bgsave;
-	GP->collab = collabsave;
-	GP->colmain = colmainsave;
-	GP->colsub = colsubsave;
-	GP->colaxis = colaxissave;
-	GP->crt = crtsave;
-	GP->err = errsave;
-	GP->font = fontsave;
-	GP->fontmain = fontmainsave;
-	GP->fontlab = fontlabsave;
-	GP->fontsub = fontsubsave;
-	GP->fontaxis = fontaxissave;
-	/* GP->csi = csisave; */
-	GP->lab[0] = labsave[0];
-	GP->lab[1] = labsave[1];
-	GP->lab[2] = labsave[2];
-	GP->las = lassave;
-	GP->lty = ltysave;
-	GP->lwd = lwdsave;
-	GP->mgp[0] = mgpsave[0];
-	GP->mgp[1] = mgpsave[1];
-	GP->mgp[2] = mgpsave[2];
-	GP->mkh = mkhsave;
-	GP->pch = pchsave;
-	GP->srt = srtsave;
-	GP->tck = tcksave;
-	GP->xaxp[0] = xaxpsave[0];
-	GP->xaxp[1] = xaxpsave[1];
-	GP->xaxp[2] = xaxpsave[2];
-	GP->xaxs = xaxssave;
-	GP->xaxt = xaxtsave;
-	GP->xpd = xpdsave;
-	GP->yaxp[0] = yaxpsave[0];
-	GP->yaxp[1] = yaxpsave[1];
-	GP->yaxp[2] = yaxpsave[2];
-	GP->yaxs = yaxssave;
-	GP->yaxt = yaxtsave;
 }
 
 void Specify2(char*, SEXP);
@@ -495,7 +347,7 @@ SEXP do_plot_window(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	args = CDR(args);
 
-	SavePars();
+	GSavePars();
 	ProcessInlinePars(args);
 
 	if(isInteger(xlim)) {
@@ -526,7 +378,7 @@ SEXP do_plot_window(SEXP call, SEXP op, SEXP args, SEXP env)
 	GScale(xmin, xmax, 1);
 	GScale(ymin, ymax, 2);
 	GMapWin2Fig();
-	RestorePars();
+	GRestorePars();
 	return R_NilValue;
 }
 
@@ -572,7 +424,8 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 	internalTypeCheck(call, at = CAR(args), REALSXP);
 	args = CDR(args);
 
-	internalTypeCheck(call, lab = CAR(args), STRSXP);
+	/* internalTypeCheck(call, lab = CAR(args), STRSXP); */
+	lab = CAR(args);
 	if (LENGTH(at) != LENGTH(lab))
 		errorcall(call, "location and label lengths differ\n");
 	n = LENGTH(at);
@@ -581,7 +434,7 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 		/*  Process any optional graphical parameters  */
 
 	R_Visible = 0;
-	SavePars();
+	GSavePars();
 	GP->adj = 0.5;
 	GP->xpd = 1;
 	ProcessInlinePars(args);
@@ -595,13 +448,13 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	if(which == 1 || which == 3) {
 		if(GP->xaxt == 'n') {
-			RestorePars();
+			GRestorePars();
 			return R_NilValue;
 		}
 	}
 	else if(which == 2 || which == 4) {
 		if(GP->yaxt == 'n') {
-			RestorePars();
+			GRestorePars();
 			return R_NilValue;
 		}
 	}
@@ -644,11 +497,16 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 		gap = GStrWidth("m", 2);	/* FIXUP x/y distance */
 		for (i = 0; i < n; i++) {
 			x = XMAP(xt(REAL(at)[i]));
-			labw = GStrWidth(CHAR(STRING(lab)[i]), 2);
-			tnew = x - 0.5 * labw;
-			if (tnew - tlast >= gap) {
-				GMtext(CHAR(STRING(lab)[i]), which, GP->mgp[1], 0, xt(REAL(at)[i]), GP->las);
-				tlast = x + 0.5 *labw;
+			if(isExpression(lab)) {
+				GMMathText(VECTOR(lab)[i], which, GP->mgp[1], 0, xt(REAL(at)[i]), GP->las);
+			}
+			else {
+				labw = GStrWidth(CHAR(STRING(lab)[i]), 2);
+				tnew = x - 0.5 * labw;
+				if (tnew - tlast >= gap) {
+					GMtext(CHAR(STRING(lab)[i]), which, GP->mgp[1], 0, xt(REAL(at)[i]), GP->las);
+					tlast = x + 0.5 *labw;
+				}
 			}
 		}
 		break;
@@ -678,19 +536,24 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 		cwid = GP->cex * fabs(GP->cra[0] / GP->ndc2dev.by);
 		for (i = 0; i < n; i++) {
 			y = YMAP(yt(REAL(at)[i]));
-			labw = GStrWidth(CHAR(STRING(lab)[i]), 2);
-			labw = yInchtoFig(xFigtoInch(labw));
-			tnew = y - 0.5 * labw;
-			if (tnew - tlast >= gap) {
-				GMtext(CHAR(STRING(lab)[i]), which, GP->mgp[1], 0, yt(REAL(at)[i]), GP->las);
-				tlast = y + 0.5 *labw;
+			if(isExpression(lab)) {
+				GMMathText(VECTOR(lab)[i], which, GP->mgp[1], 0, yt(REAL(at)[i]), GP->las);
+			}
+			else {
+				labw = GStrWidth(CHAR(STRING(lab)[i]), 2);
+				labw = yInchtoFig(xFigtoInch(labw));
+				tnew = y - 0.5 * labw;
+				if (tnew - tlast >= gap) {
+					GMtext(CHAR(STRING(lab)[i]), which, GP->mgp[1], 0, yt(REAL(at)[i]), GP->las);
+					tlast = y + 0.5 *labw;
+				}
 			}
 		}
 		break;
 	}
 
 	GMode(0);
-	RestorePars();
+	GRestorePars();
 	return R_NilValue;
 }
 
@@ -751,7 +614,7 @@ SEXP do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 
 		/* Miscellaneous Graphical Parameters */
 
-	SavePars();
+	GSavePars();
 	ProcessInlinePars(args);
 
 	x = REAL(sx);
@@ -879,7 +742,6 @@ SEXP do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 		}
 	}
 
-	GP->lty = ltysave;
 	if (type == 'p' || type == 'b' || type == 'o') {
 		for (i = 0; i < n; i++) {
 			xx = xt(x[i]);
@@ -892,7 +754,7 @@ SEXP do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 		}
 	}
 	GMode(0);
-	RestorePars();
+	GRestorePars();
 	UNPROTECT(5);
 	return R_NilValue;
 }
@@ -932,8 +794,9 @@ SEXP do_segments(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP sx0, sy0, sx1, sy1, col, lty;
 	double *x0, *x1, *y0, *y1;
+	double xx0, yy0, xx1, yy1;
 	int nx0, nx1, ny0, ny1;
-	int i, n, ncol, colsave, nlty, ltysave;
+	int i, n, ncol, nlty;
 
 	GCheckState(); 
 
@@ -952,28 +815,32 @@ SEXP do_segments(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(col = FixupCol(GetPar("col", args)));
 	ncol = LENGTH(col);
 
+	GSavePars();
+
 	x0 = REAL(sx0);
 	y0 = REAL(sy0);
 	x1 = REAL(sx1);
 	y1 = REAL(sy1);
-	colsave = GP->col;
-	ltysave = GP->lty;
+
 	GMode(1);
 	for (i = 0; i < n; i++) {
-		if (FINITE(x0[i%nx0]) && FINITE(y0[i%ny0])
-		    && FINITE(x1[i%nx1]) && FINITE(y1[i%ny1])) {
+		xx0 = xt(x0[i%nx0]);
+		yy0 = yt(y0[i%ny0]);
+		xx1 = xt(x1[i%nx1]);
+		yy1 = yt(y1[i%ny1]);
+		if (FINITE(xx0) && FINITE(yy0) && FINITE(xx1) && FINITE(yy1)) {
 			GP->col = INTEGER(col)[i % ncol];
-			if(GP->col == NA_INTEGER) GP->col = colsave;
+			if(GP->col == NA_INTEGER) GP->col = DP->col;
 			GP->lty = INTEGER(lty)[i % nlty];
 			GStartPath();
-			GMoveTo(XMAP(x0[i % nx0]), YMAP(y0[i % ny0]));
-			GLineTo(XMAP(x1[i % nx1]), YMAP(y1[i % ny1]));
+			GMoveTo(XMAP(xx0), YMAP(yy0));
+			GLineTo(XMAP(xx1), YMAP(yy1));
 			GEndPath();
 		}
 	}
 	GMode(0);
-	GP->col = colsave;
-	GP->lty = ltysave;
+	GRestorePars();
+
 	UNPROTECT(2);
 	return R_NilValue;
 }
@@ -986,7 +853,6 @@ SEXP do_rect(SEXP call, SEXP op, SEXP args, SEXP env)
 	double *xl, *xr, *yb, *yt;
 	int i, n, nxl, nxr, nyb, nyt;
 	int ncol, nlty, nborder;
-	int colsave, ltysave;
 
 	GCheckState(); 
 
@@ -1007,13 +873,13 @@ SEXP do_rect(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(lty = FixupLty(GetPar("lty", args)));
 	nlty = length(lty);
 
+	GSavePars();
+
 	xl = REAL(sxl);
 	xr = REAL(sxr);
 	yb = REAL(syb);
 	yt = REAL(syt);
 
-	ltysave = GP->lty;
-	colsave = GP->col;
 	GMode(1);
 	for (i = 0; i < n; i++) {
 		if (FINITE(xl[i%nxl]) && FINITE(yb[i%nyb])
@@ -1024,8 +890,8 @@ SEXP do_rect(SEXP call, SEXP op, SEXP args, SEXP env)
 					INTEGER(border)[i % nborder]);
 	}
 	GMode(0);
-	GP->col = colsave;
-	GP->lty = ltysave;
+
+	GRestorePars();
 	UNPROTECT(3);
 	return R_NilValue;
 }
@@ -1036,9 +902,9 @@ SEXP do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP sx0, sx1, sy0, sy1, col, lty;
 	double *x0, *x1, *y0, *y1;
-	double hlength, angle;
+	double xx0, yy0, xx1, yy1, hlength, angle;
 	int code, i, n, nx0, nx1, ny0, ny1;
-	int ncol, colsave, nlty, ltysave, xpd;
+	int ncol, nlty, xpd;
 
 	GCheckState(); 
 
@@ -1071,31 +937,33 @@ SEXP do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
 	xpd = asLogical(GetPar("xpd", args));
 	if(xpd == NA_LOGICAL) xpd = GP->xpd;
 
+	GSavePars();
+
 	x0 = REAL(sx0);
 	y0 = REAL(sy0);
 	x1 = REAL(sx1);
 	y1 = REAL(sy1);
 
-	colsave = GP->col;
-	ltysave = GP->lty;
 	GMode(1);
 	for (i = 0; i < n; i++) {
-		if (FINITE(x0[i%nx0]) && FINITE(y0[i%ny0])
-		    && FINITE(x1[i%nx1]) && FINITE(y1[i%ny1])) {
+		xx0 = xt(x0[i%nx0]);
+		yy0 = yt(y0[i%ny0]);
+		xx1 = xt(x1[i%nx1]);
+		yy1 = yt(y1[i%ny1]);
+		if (FINITE(xx0) && FINITE(yy0) && FINITE(xx1) && FINITE(yy1)) {
 			GP->col = INTEGER(col)[i % ncol];
-			if(GP->col == NA_INTEGER) GP->col = colsave;
+			if(GP->col == NA_INTEGER) GP->col = DP->col;
 			if(nlty == 0 || INTEGER(lty)[i % nlty] == NA_INTEGER)
-				GP->lty = ltysave;
+				GP->lty = DP->lty;
 			else
 				GP->lty = INTEGER(lty)[i % nlty];
+			GArrow(XMAP(xx0), YMAP(yy0), XMAP(xx1), YMAP(yy1),
+			       hlength, angle, code);
 		}
-		GArrow(XMAP(x0[i % nx0]), YMAP(y0[i % ny0]),
-		       XMAP(x1[i % nx1]), YMAP(y1[i % ny1]),
-		       hlength, angle, code);
 	}
 	GMode(0);
-	GP->col = colsave;
-	GP->lty = ltysave;
+
+	GRestorePars();
 	UNPROTECT(2);
 	return R_NilValue;
 }
@@ -1105,8 +973,7 @@ SEXP do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP sx, sy, col, border, lty;
-	int colsave, ltysave, xpd, xpdsave;
-	int nx, ny, ncol, nborder, nlty;
+	int nx, ny, ncol, nborder, nlty, xpd;
 	double *work;
 	char *vmax;
 
@@ -1139,20 +1006,18 @@ SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 	xpd = asLogical(GetPar("xpd", args));
 	if(xpd == NA_LOGICAL) xpd = GP->xpd;
 
-	colsave = GP->col;
-	ltysave = GP->lty;
-	xpdsave = GP->xpd;
+	GSavePars();
+
 	GMode(1);
 	vmax = vmaxget();
 	work = (double*)R_alloc(2*nx, sizeof(double));
-	if(INTEGER(lty)[0] == NA_INTEGER) GP->lty = ltysave;
+	if(INTEGER(lty)[0] == NA_INTEGER) GP->lty = DP->lty;
 	else GP->lty = INTEGER(lty)[0];
 	GPolygon(nx, REAL(sx), REAL(sy), INTEGER(col)[0], INTEGER(border)[0], 1, work);
 	vmaxset(vmax);
 	GMode(0);
-	GP->col = colsave;
-	GP->lty = ltysave;
-	GP->xpd = xpdsave;
+
+	GRestorePars();
 	UNPROTECT(3);
 	return R_NilValue;
 }
@@ -1160,9 +1025,8 @@ SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP sx, sy, sxy, txt, adj, cex, col, font;
-	int i, n, ncex, ncol, nfont, ntxt;
-	double adjx, adjy, cexsave;
-	int colsave, fontsave, xpd, xpdsave;
+	int i, n, ncex, ncol, nfont, ntxt, xpd;
+	double adjx, adjy;
 	double *x, *y;
 	double xx, yy;
 
@@ -1180,7 +1044,11 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 	n = LENGTH(sx);
 	args = CDR(args);
 
+#ifdef OLD
 	internalTypeCheck(call, txt = CAR(args), STRSXP);
+#else
+	txt = CAR(args);
+#endif
 	if (LENGTH(txt) <= 0)
 		errorcall(call, "zero length \"text\" specified\n");
 	args = CDR(args);
@@ -1219,11 +1087,7 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 	n = LENGTH(sx);
 	ntxt = LENGTH(txt);
 
-	cexsave = GP->cex;
-	colsave = GP->col;
-	fontsave = GP->font;
-	xpdsave = GP->xpd;
-	GP->xpd = xpd;
+	GSavePars();
 
 	GMode(1);
 	for (i = 0; i < n; i++) {
@@ -1232,21 +1096,22 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 		if (FINITE(xx) && FINITE(yy)) {
 			if (ncol && INTEGER(col)[i % ncol] != NA_INTEGER)
 				GP->col = INTEGER(col)[i % ncol];
-			else GP->col = colsave;
+			else GP->col = DP->col;
 			if(ncex && FINITE(REAL(cex)[i%ncex]))
 				GP->cex = GP->cexbase * REAL(cex)[i % ncex];
 			else GP->cex = GP->cexbase;
 			if (nfont && INTEGER(font)[i % nfont] != NA_INTEGER)
 				GP->font = INTEGER(font)[i % nfont];
-			else GP->font = fontsave;
-			GText(XMAP(xx), YMAP(yy), CHAR(STRING(txt)[i % ntxt]), adjx, adjy, 0.0);
+			else GP->font = DP->font;
+			if(isExpression(txt))
+				GMathText(XMAP(xx), YMAP(yy), VECTOR(txt)[i % ntxt], adjx, adjy, 0.0);
+			else
+				GText(XMAP(xx), YMAP(yy), CHAR(STRING(txt)[i % ntxt]), adjx, adjy, 0.0);
 		}
 	}
 	GMode(0);
-	GP->col = colsave;
-	GP->cex = cexsave;
-	GP->font = fontsave;
-	GP->xpd = xpdsave;
+
+	GRestorePars();
 	UNPROTECT(4);
 	return R_NilValue;
 }
@@ -1256,14 +1121,16 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP adj, cex, col, font, text;
-	double line, at, adjx, adjy, adjsave, cexsave, xpdsave;
-	int colsave, fontsave, side, outer; short int i;
+	double line, at, adjx, adjy;
+	int i, side, outer;
+	int newsave;
 
 	GCheckState(); 
 
 	if(length(args) < 5) errorcall(call, "too few arguments");
 
-	internalTypeCheck(call, text = CAR(args), STRSXP);
+	/* internalTypeCheck(call, text = CAR(args), STRSXP); */
+	text = CAR(args);
 	if (LENGTH(text) <= 0)
 		errorcall(call, "zero length \"text\" specified\n");
 	args = CDR(args);
@@ -1290,11 +1157,8 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 		i = (side % 2) ? 0 : 2;
 		at = 0.5*(GP->usr[i] + GP->usr[i+1]);
 	}
-	adjsave = GP->adj;
-	cexsave = GP->cex;
-	colsave = GP->col;
-	fontsave = GP->font;
-	xpdsave = GP->xpd;
+
+	GSavePars();
 
 	PROTECT(adj = GetPar("adj", args));
 	if(isNull(adj) || (isNumeric(adj) && length(adj) == 0)) {
@@ -1327,14 +1191,16 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GP->adj = adjx;
 	GP->xpd = 1;
+	if(outer) newsave = GP->new;
 	GMode(1);
-	GMtext(CHAR(STRING(text)[0]), side, line, outer, at, 0);
+	if(isExpression(text))
+		GMMathText(VECTOR(text)[0], side, line, outer, at, 0);
+	else
+		GMtext(CHAR(STRING(text)[0]), side, line, outer, at, 0);
 	GMode(0);
-	GP->cex = cexsave;
-	GP->col = colsave;
-	GP->font = fontsave;
-	GP->xpd = xpdsave;
-	GP->adj = adjsave;
+
+	GRestorePars();
+	if(outer) GP->new = DP->new = newsave;
 	UNPROTECT(4);
 	return R_NilValue;
 }
@@ -1343,11 +1209,8 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-	SEXP main, cexmain, colmain, fontmain;
-	SEXP xlab, ylab, cexlab, collab, fontlab;
-	SEXP sub, cexsub, colsub, fontsub;
-	int colsave, fontsave, xpdsave;
-	double cexsave, x, y;
+	SEXP main, xlab, ylab, sub;
+	double x, y;
 
 	GCheckState(); 
 
@@ -1356,35 +1219,27 @@ SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 	main = sub = xlab = ylab = R_NilValue;
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
-		main = STRING(CAR(args))[0];
+		main = CAR(args);
 	args = CDR(args);
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
-		sub = STRING(CAR(args))[0];
+		sub = CAR(args);
+	else
+		
 	args = CDR(args);
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
-		xlab = STRING(CAR(args))[0];
+		xlab = CAR(args);
 	args = CDR(args);
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
-		ylab = STRING(CAR(args))[0];
+		ylab = CAR(args);
 	args = CDR(args);
 
-	PROTECT(cexmain = FixupCex(GetPar("cex.main", args)));
-	PROTECT(colmain = FixupCol(GetPar("col.main", args)));
-	PROTECT(fontmain = FixupFont(GetPar("font.main", args)));
-	PROTECT(cexlab = FixupCex(GetPar("cex.lab", args)));
-	PROTECT(collab = FixupCol(GetPar("col.lab", args)));
-	PROTECT(fontlab = FixupFont(GetPar("font.lab", args)));
-	PROTECT(cexsub = FixupCex(GetPar("cex.sub", args)));
-	PROTECT(colsub = FixupCol(GetPar("col.sub", args)));
-	PROTECT(fontsub = FixupFont(GetPar("font.sub", args)));
+	GSavePars();
+	ProcessInlinePars(args);
 
-	cexsave = GP->cex;
-	colsave = GP->col;
-	fontsave = GP->font;
-	xpdsave = GP->xpd;
+	/* Always work in expanded mode */
 	GP->xpd = 1;
 
 	x = fabs((GP->cra[1] * GP->mex) / GP->fig2dev.bx);
@@ -1392,47 +1247,45 @@ SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GMode(1);
 	if(main != R_NilValue) {
-		if(FINITE(REAL(cexmain)[0]))
-			GP->cex = GP->cexbase * REAL(cexmain)[0];
-		else GP->cex = GP->cexbase * GP->cexmain;
-		GP->col = INTEGER(colmain)[0];
-		if(GP->col == NA_INTEGER) GP->col = GP->colmain;
-		GP->font = INTEGER(fontmain)[0];
-		if(GP->font == NA_INTEGER) GP->font = GP->fontmain;
-		GText(0.5*GP->plt[0]+0.5*GP->plt[1], 0.5*GP->plt[3]+0.5,
-			CHAR(main), 0.5, 0.5, 0.0);
+		GP->cex = GP->cexbase * GP->cexmain;
+		GP->col = GP->colmain;
+		GP->font = GP->fontmain;
+		if(isExpression(main))
+			GMathText(0.5*GP->plt[0]+0.5*GP->plt[1], 0.5*GP->plt[3]+0.5,
+				VECTOR(main)[0], 0.5, 0.5, 0.0);
+		else
+			GText(0.5*GP->plt[0]+0.5*GP->plt[1], 0.5*GP->plt[3]+0.5,
+				CHAR(STRING(main)[0]), 0.5, 0.5, 0.0);
 	}
 	if(sub != R_NilValue) {
-		if(FINITE(REAL(cexsub)[0]))
-			GP->cex = GP->cexbase * REAL(cexsub)[0];
-		else GP->cex = GP->cexbase * GP->cexsub;
-		GP->col = INTEGER(colsub)[0];
-		if(GP->col == NA_INTEGER) GP->col = GP->colsub;
-		GP->font = INTEGER(fontsub)[0];
-		if(GP->font == NA_INTEGER) GP->font = GP->fontsub;
-		if(sub != R_NilValue)
-			GMtext(CHAR(sub), 1, GP->mgp[0]+1.0, 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+		GP->cex = GP->cexbase * GP->cexsub;
+		GP->col = GP->colsub;
+		GP->font = GP->fontsub;
+		if(isExpression(sub))
+			GMMathText(VECTOR(sub)[0], 1, GP->mgp[0]+1.0, 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+		else
+			GMtext(CHAR(STRING(sub)[0]), 1, GP->mgp[0]+1.0, 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
 	}
-	if(xlab != R_NilValue || ylab != R_NilValue) {
-		if(FINITE(REAL(cexlab)[0]))
-			GP->cex = GP->cexbase * REAL(cexlab)[0];
-		else GP->cex = GP->cexbase * GP->cexlab;
-		GP->col = INTEGER(collab)[0];
-		if(GP->col == NA_INTEGER) GP->col = GP->collab;
-		GP->font = INTEGER(fontlab)[0];
-		if(GP->font == NA_INTEGER) GP->font = GP->fontlab;
-		if(xlab != R_NilValue)
-			GMtext(CHAR(xlab), 1, GP->mgp[0], 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
-		if(ylab != R_NilValue)
-			GMtext(CHAR(ylab), 2, GP->mgp[0], 0, 0.5*GP->usr[2]+0.5*GP->usr[3], 0);
+	if(xlab != R_NilValue) {
+		GP->cex = GP->cexbase * GP->cexlab;
+		GP->col = GP->collab;
+		GP->font = GP->fontlab;
+		if(isExpression(xlab))
+			GMMathText(VECTOR(xlab)[0], 1, GP->mgp[0], 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+		else
+			GMtext(CHAR(STRING(xlab)[0]), 1, GP->mgp[0], 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+	}
+	if(ylab != R_NilValue) {
+		GP->cex = GP->cexbase * GP->cexlab;
+		GP->col = GP->collab;
+		GP->font = GP->fontlab;
+		if(isExpression(ylab))
+			GMMathText(VECTOR(ylab)[0], 2, GP->mgp[0], 0, 0.5*GP->usr[2]+0.5*GP->usr[3], 0);
+		else
+			GMtext(CHAR(STRING(ylab)[0]), 2, GP->mgp[0], 0, 0.5*GP->usr[2]+0.5*GP->usr[3], 0);
 	}
 	GMode(0);
-
-	GP->cex = cexsave;
-	GP->col = colsave;
-	GP->font = fontsave;
-	GP->xpd = xpdsave;
-	UNPROTECT(9);
+	GRestorePars();
 	return R_NilValue;
 }
 
@@ -1469,7 +1322,7 @@ SEXP do_abline(SEXP call, SEXP op, SEXP args, SEXP env)
 	nlty = length(lty);
 	args = CDR(args);
 
-	SavePars();
+	GSavePars();
 	ProcessInlinePars(args);
 	
 	nlines = 0;
@@ -1489,7 +1342,7 @@ SEXP do_abline(SEXP call, SEXP op, SEXP args, SEXP env)
 			errorcall(call, "\"a\" and \"b\" must be non-missing\n");
 		GP->col = INTEGER(col)[i % ncol];
 		if(nlty && INTEGER(lty)[i % nlty] != NA_INTEGER) GP->lty = INTEGER(lty)[i % nlty];
-		else GP->lty = ltysave;
+		else GP->lty = DP->lty;
 		GMode(1);
 		GStartPath();
 		GMoveTo(XMAP(GP->usr[0]), YMAP(aa + GP->usr[0] * bb));
@@ -1503,7 +1356,7 @@ SEXP do_abline(SEXP call, SEXP op, SEXP args, SEXP env)
 		for (i = 0; i < LENGTH(h); i++) {
 			GP->col = INTEGER(col)[i % ncol];
 			if(nlty && INTEGER(lty)[i % nlty] != NA_INTEGER) GP->lty = INTEGER(lty)[i % nlty];
-			else GP->lty = ltysave;
+			else GP->lty = DP->lty;
 			aa = yt(REAL(h)[i]);
 			if (FINITE(aa)) {
 				GStartPath();
@@ -1520,7 +1373,7 @@ SEXP do_abline(SEXP call, SEXP op, SEXP args, SEXP env)
 		for (i = 0; i < LENGTH(v); i++) {
 			GP->col = INTEGER(col)[i % ncol];
 			if(nlty && INTEGER(lty)[i % nlty] != NA_INTEGER) GP->lty = INTEGER(lty)[i % nlty];
-			else GP->lty = ltysave;
+			else GP->lty = DP->lty;
 			aa = xt(REAL(v)[i]);
 			if (FINITE(aa)) {
 				GStartPath();
@@ -1533,7 +1386,7 @@ SEXP do_abline(SEXP call, SEXP op, SEXP args, SEXP env)
 		GMode(0);
 	}
 	UNPROTECT(2);
-	RestorePars();
+	GRestorePars();
 	return R_NilValue;
 }
 
@@ -1541,7 +1394,7 @@ SEXP do_box(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	int col, fg;
 	GCheckState(); 
-	SavePars();
+	GSavePars();
 	col = GP->col;
 	fg = GP->fg;
 	GP->col = NA_INTEGER;
@@ -1554,7 +1407,7 @@ SEXP do_box(SEXP call, SEXP op, SEXP args, SEXP env)
 	GMode(1);
 	GBox();
 	GMode(0);
-	RestorePars();
+	GRestorePars();
 	return R_NilValue;
 }
 
@@ -1841,5 +1694,65 @@ SEXP do_printplot(SEXP call, SEXP op, SEXP args, SEXP env)
 	GCheckState(); 
 
 	GPrintPlot();
+	return R_NilValue;
+}
+
+SEXP do_erase(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	SEXP col;
+	int ncol;
+
+	GCheckState();
+	checkArity(op, args);
+
+	PROTECT(col = FixupCol(CAR(args)));
+	ncol = LENGTH(col);
+
+	GSavePars();
+
+	GMode(1);
+	GRect(0.0, 0.0, 1.0, 1.0, INTEGER(col)[0], NA_INTEGER);
+	GMode(0);
+
+	GRestorePars();
+	UNPROTECT(1);
+	return R_NilValue;
+}
+
+	/* text.math(x, y , txt, ...) */
+	/* txt should be an expression object */
+	/* i.e. a last with a class of "expression" */
+
+SEXP do_mathtext(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	int c;
+	double a, d, w;
+	checkArity(op, args);
+	GCheckState();
+
+	GSavePars();
+	GMode(1);
+	GP->cex = GP->cex * GP->cexbase;
+
+		/* Note: 4 = Pixels, 3 = Inches */
+		/* I think inches make the most sense */
+		/* To convert to "moveto" / "lineto" units */
+		/* use "xInchtoFig" and "yInchtoFig" */
+		/* to convert the units */
+
+		/* Basic "pointsize" yardstick */
+
+	GMetricInfo(0, &a, &d, &w, 4);
+	printf("char = \\0 ascent = %.0f descent = %.0f width = %.0f\n", a, d, w);
+
+		/* Metrics for 'a' */
+
+	c = 'a';
+	GMetricInfo(c, &a, &d, &w, 4);
+	printf("char = %c ascent = %.0f descent = %.0f width = %.0f\n", c, a, d, w);
+
+	GMode(0);
+	GRestorePars();
+
 	return R_NilValue;
 }

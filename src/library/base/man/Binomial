@@ -1,7 +1,7 @@
 TITLE(Binomial @@ The Binomial Distribution)
 USAGE(
 dbinom(x, n, p)
-pbinom(x, n, p)
+pbinom(q, n, p)
 qbinom(prob, n, p)
 rbinom(nobs, n, p)
 )
@@ -10,7 +10,7 @@ ALIAS(pbinom)
 ALIAS(qbinom)
 ALIAS(rbinom)
 ARGUMENTS(
-ARG(x @@ vector of quantiles.)
+ARG(x,q @@ vector of quantiles.)
 ARG(prob @@ vector of probabilities.)
 ARG(nobs @@ number of observations to generate.)
 ARG(n @@ number of trials.)
@@ -23,10 +23,9 @@ LANG(pbinom) gives the distribution function LANG(qbinom) gives
 the quantile function and LANG(rbinom) generates random deviates.
 PARA
 The binomial distribution has density
-DEQN(
-p(x) = CHOOSE(n @@ x) SUP(p@@x) SUP((1-p)@@n-x)
-@@ p(x) = Choose(n,x) p^x (1-p)^(n-x))
-for EQN(x = 0, DOTS, n).
+DEQN(p(x) = CHOOSE(n @@ x) SUP(p@@x) SUP((1-p)@@n-x)
+  @@ p(x) = Choose(n,x) p^x (1-p)^(n-x))
+for EQN(x = 0, LDOTS, n).
 )
 EXAMPLES(
 # Compute P(45 < X < 55) for X Binomial(100,0.5)

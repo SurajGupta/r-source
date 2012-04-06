@@ -14,3 +14,11 @@ If LANG(trace) is called the function named is marked and each time it
 is entered the call is printed on the console.
 To stop tracing a function use LANG(untrace).
 )
+SEEALSO(
+LANG(LINK(debug)).
+)
+EXAMPLES(
+trace(names)
+data.frame(x=1:2, y=3:4)
+untrace(names)
+)

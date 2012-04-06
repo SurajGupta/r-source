@@ -1,0 +1,16 @@
+apropos <-
+function (pattern, where = FALSE)
+{
+	## Give all objects which match  _pattern_.
+	## By Kurt Hornik & Martin Mächler, May 1997.
+	x <- character(0)
+	for (i in seq(search())) {
+		ll <- length(li <- ls(pos = i, pattern = pattern))
+		if (ll)
+		if (where)
+			x <- c(x, structure(li, names = rep(i, ll)))
+		else
+			x <- c(x, li)
+	}
+	x
+}

@@ -17,6 +17,7 @@
  */
 
 #include "wincons.h"
+#include "shellapi.h"
 
 #define STRICT
 
@@ -258,7 +259,7 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         wc.lpszClassName = RConsoleClass;
         if( !RegisterClass(&wc) ) return(FALSE);
 
-   wc.style=CS_HREDRAW | CS_VREDRAW;
+        wc.style=CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc= REditWndProc;
         wc.cbClsExtra=0;
         wc.cbWndExtra=0;
@@ -284,11 +285,11 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         if( !RegisterClass(&wc) ) return(FALSE);
 
         wc.style=CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-                  wc.lpfnWndProc = RDEWndProc;
+        wc.lpfnWndProc = RDEWndProc;
         wc.cbClsExtra=0;
         wc.cbWndExtra=0;
         wc.hInstance=hinstCurrent;
-                  wc.hIcon=LoadIcon(NULL, IDI_APPLICATION);
+        wc.hIcon=LoadIcon(NULL, IDI_APPLICATION);
         wc.hCursor=LoadCursor(NULL,IDC_CROSS);
         wc.hbrBackground=GetStockObject(WHITE_BRUSH);
         wc.lpszMenuName=NULL;
@@ -326,7 +327,7 @@ BOOL InitInstance(HINSTANCE hinstCurrent,int nCmdShow)
         RFrame = CreateWindow(
                 RFrameClass,
                 "R",
-                WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_MAXIMIZE,
+                WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_MAXIMIZE | WS_CLIPSIBLINGS,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
@@ -370,6 +371,7 @@ BOOL InitInstance(HINSTANCE hinstCurrent,int nCmdShow)
 
 
         RConsole = CreateConsoleWind(RConsoleFrame, NULL, hinstCurrent);
+        DragAcceptFiles(RConsole, TRUE);
         if( RConsole == NULL) {
                 DestroyWindow(RConsoleFrame);
                 DestroyWindow(RClient);
@@ -411,6 +413,47 @@ HWND CreateConsoleWind(HWND hWndParent, HMENU hMenu, HANDLE hInstance)
         MAKELPARAM(TRUE,0L));
   return(hWnd);
 }
+/* win = 1 ; console
+   win = 2 ; editor
+   win = 3 ; data.entry
+   */
+   
+void R_ProcessDropFiles(HANDLE dropstruct, int win)
+{
+    char dfilename[MAXELTSIZE];
+    int nFiles, len;
+    SEXP expr;
+    FILE *fp;
+
+    nFiles = DragQueryFile(dropstruct, 0XFFFFFFFF, NULL, 0);
+    if( nFiles > 1 )  /* only process one file to be sure we destroy dropstruct */
+        warning("drag/drop: only one file will be processed\n");
+    len = DragQueryFile(dropstruct, 0, NULL, 0);
+    if( len > MAXELTSIZE ) {
+          DragFinish(dropstruct);
+          error("file name to long to process\n");
+     }
+    DragQueryFile(dropstruct, 0, dfilename, MAXELTSIZE);
+    DragFinish(dropstruct);
+    if( !(fp=fopen(dfilename, "rt")) )   
+        error("couldn't find dropped file\n");
+    switch (win) {
+        case 1:
+        PROTECT(expr = parse(fp, -1));
+        Rprintf("Parsing %s \n",dfilename);
+        if( R_ParseError ) 
+            error("drag-drop: an error occurred in parsing");
+        for( expr; expr != R_NilValue ; expr = CDR(expr) )
+            eval(CAR(expr), R_GlobalEnv);
+        UNPROTECT(1);
+        break;
+        case 2:
+                strcpy(REdfilename, dfilename);
+                break;
+        default:
+         Rprintf("ohoh\n");
+    }
+}
 
 
 LRESULT CALLBACK  EdWndProc(HWND hWnd, UINT message, WPARAM wParam,
@@ -419,14 +462,19 @@ LRESULT CALLBACK  EdWndProc(HWND hWnd, UINT message, WPARAM wParam,
         DWORD curPos;
 
         switch(message) {
+                case WM_DROPFILES:
+                        SetFocus(RConsole);
+                        R_ProcessDropFiles((HANDLE) wParam, 1);
+                        yyprompt((char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]));
+                        return 0;
                 case WM_PASTE:
                         RPasteFromClip();
                         return 0;
                 case WM_CHAR:
                         curPos=Edit_GetSel(RConsole);
                         if( LOWORD(curPos) < InStart ) {
-                                SysBeep();
-                                return 0;
+                                RSetCursor(); /*SysBeep();
+                                return 0;*/
                         }
                         switch(wParam) {
                                 case '\b':
@@ -599,22 +647,16 @@ void menuSave()
 LRESULT FAR PASCAL MainWndProc(HWND hWnd,UINT message,WPARAM wParam,
         LPARAM lParam)
 {
-/*        static HWND hWndClient;*/
         HWND hWndChild;
         CLIENTCREATESTRUCT cltcr;
 
-        if(message == WM_COMMAND) {
-        if( GET_WM_COMMAND_CMD(wParam,lParam) == EN_ERRSPACE ||
-                        HIWORD(lParam) == EN_ERRSPACE )
-                RTrimBuffer();
-        }
         switch (message) {
                 case WM_CREATE:
                         cltcr.hWindowMenu = RMenuInitWin;
                         cltcr.idFirstChild = RRR_FIRSTCHILD;
                         RClosing = 0;
                         RClient = CreateWindow("MDICLIENT", NULL,
-                                                WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE,
+                                                WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE |WS_VSCROLL | WS_HSCROLL,
                                                 0, 0, 0, 0, hWnd, (HMENU) 1, RInst, (LPSTR) &cltcr);
                         return 0;
                 case WM_DDE_ACK:
@@ -626,9 +668,6 @@ LRESULT FAR PASCAL MainWndProc(HWND hWnd,UINT message,WPARAM wParam,
                         return 0;
                 case WM_COMMAND:
                         switch(wParam) {
-                                case EN_ERRSPACE:
-                                        RTrimBuffer();
-                                        return(0);
                                 case RRR_ABOUT:
                                         DialogBox(RInst, "AboutBox", hWnd,
                                                 (DLGPROC) About);
@@ -715,7 +754,7 @@ int ReadKBD(char *buf, int bufsize)
         }
 
         if( InFlag == 2) {
-                buf[0]=EOF;
+                buf[0]='\n';
                 buf[1]='\0';
                 return(1);
         }

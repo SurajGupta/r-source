@@ -13,3 +13,12 @@ data <- function(..., list=character(0))
 	}
 	invisible(names)
 }
+
+"load.from.datalib" <-
+function (name)
+{
+	file <- system.file("datalib", name)
+	if (file == "")
+		stop(paste("no data set called", name))
+	eval(parse(file))
+}

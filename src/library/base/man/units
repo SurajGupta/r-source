@@ -12,6 +12,9 @@ for plotting with graphics functions.)
 EXAMPLES(
 # plot labels offset 0.2 inches to the right
 # of plotted symbols in a plot
-plot(x, y)
-text(x+xinch(0.2), y, labs, adj=0)
+data(mtcars)
+attach(mtcars)
+plot(mpg, disp)
+text(mpg + xinch(0.15), disp, rownames(mtcars),adj=0, cex = .6, col='blue')
+detach(mtcars)
 )

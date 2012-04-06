@@ -84,9 +84,6 @@ static SEXP FindTaggedItem(SEXP lst, SEXP tag)
 
 SEXP GetOption(SEXP tag, SEXP rho)
 {
-#ifdef OLD
-	SEXP opt = SYMVALUE(Options());
-#endif
 	SEXP opt = findVar(Options(), rho);
 	if(!isList(opt))
 		error("corrupted options list\n");

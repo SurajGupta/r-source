@@ -1,37 +1,66 @@
 #!/bin/sh
+#
+# install-help [ lib]
+# ------------------- Install all the help files and index for library/_lib_
+#
+lib=$1
+if [ x$lib = x ];then  lib=base ; fi
+#
 # Should work WHEREVER this is called from :
 cd `dirname $0`/..
-RHOME=`pwd`; export RHOME
+##
+Hdir=help/$lib
+LIBdir=src/library/$lib
+MANdir=$LIBdir/man
 
-echo "Manual entries for base library"
-if [ ! -d help/base ]
-then
-	mkdir help/base
-fi
+if [ ! -d $LIBdir ]; then echo "There's no library `pwd`/$LIBdir !"; exit 1; fi
+if [ ! -d $Hdir ]; then mkdir -p $Hdir; fi
+cp /dev/null $Hdir/AnIndex
 
-cp /dev/null help/base/AnIndex
+FILES="`ls -A $MANdir | sed '/CVS/d;/~$/d;/\.bak$/d;/\.orig$/d'`"
 
-FILES="`ls -A src/library/base/man | sed '/CVS/d; /~$/d; /.bak$/d'`"
-
+echo "==>>> Building   $Hdir/AnIndex  for library '$lib'"
 (
 for file in $FILES
 do
-	NAMES=`grep 'ALIAS([A-Za-z.]' src/library/base/man/$file | sed '
-	s/ALIAS(\(.*\))$/\1/'`
+	NAMES=`grep '^ALIAS(' $MANdir/$file| sed 's/ALIAS(\(.*\))$/\1/; s/[\*]/\\\&/g'`
 	for name in $NAMES
 	do
 		echo "$name	$file"
+		#	   ^^^^^ = TAB
 	done
+	(echo "$file:	$NAMES" | tr '\012' ','; echo '')| sed 's/,$//'	 >&2
 done
-#for file in $FILES
-#do
-#	echo "$file	$file"
-#done
-) | sort -d -f >> help/base/AnIndex
+if [ $lib != 'base' ]
+##-- The following is NOT done anymore in 'base':
+##-- 1) Each help file should have  ALIAS(..) for  ALL it's objects
+##-- 2) The  help file name may differ from _ANY_ object (eg 'Special')
+then 
+	for file in $FILES
+	do
+		echo "$file	$file"
+	done
+fi
+) | sort -d -f | uniq >> $Hdir/AnIndex
 
+echo "   ==== Makeing Manual entries for library '$lib' ===="
 for file in $FILES
 do
- ./etc/doc2ms src/library/base/man/$file | nroff -ms 2> /dev/null \
- | ./etc/help.pretty | sed 's/^/	/' >  help/base/$file
- echo $file
+	./etc/doc2ms $MANdir/$file | nroff -ms 2> /dev/null \
+	| ./etc/help.pretty | sed 's/^/	/' >  $Hdir/$file
+	# echo $file
 done
+
+
+
+if [ -f $LIBdir/TITLE ]
+then
+	cat $LIBdir/TITLE >> help/LibIndex
+	cp $LIBdir/TITLE $Hdir/TITLE
+fi
+
+if [ -f $LIBdir/INDEX ]
+then
+	cp $LIBdir/INDEX $Hdir/INDEX
+fi
+

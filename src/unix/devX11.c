@@ -90,6 +90,7 @@ static void   X11_SavePlot(char*);
 static void   X11_StartPath(void);
 static double X11_StrWidth(char*);
 static void   X11_Text(double, double, char*, double, double, double);
+static void   X11_MetricInfo(int, double*, double*, double*);
 
 	/* Support Routines */
 
@@ -510,6 +511,36 @@ static double X11_StrWidth(char *str)
 	return (double)XTextWidth(font, str, strlen(str));
 }
 
+
+	/* Character Metric Information */
+	/* Passing c == 0 gets font information */
+
+static void X11_MetricInfo(int c, double* ascent, double* descent, double* width)
+{
+	int first, last;
+	int size = GP->cex * GP->ps + 0.5;
+
+	SetFont(GP->font, size);
+	first = font->min_char_or_byte2;
+	last = font->max_char_or_byte2;
+
+	if(c == 0) {
+		*ascent = font->ascent;
+		*descent = font->descent;
+		*width = font->max_bounds.width;
+	}
+	else if(first <= c && c <= last) {
+		*ascent = font->per_char[c-first].ascent;
+		*descent = font->per_char[c-first].descent;
+		*width = font->per_char[c-first].width;
+	}
+	else {
+		*ascent = 0;
+		*descent = 0;
+		*width = 0;
+	}
+}
+
 static void X11_Clip(double x0, double x1, double y0, double y1)
 {
 	if (x0 < x1) {
@@ -574,7 +605,7 @@ static void X11_Close(void)
 
 	/* Free Resources Here */
 	for(i=0 ; i<NFONT ; i++)
-		for(j=0 ; j<4 ; j++) {
+		for(j=0 ; j<5 ; j++) {
 			if(fontarray[i][j] != NULL) {
 				XUnloadFont(display, fontarray[i][j]->fid);
 				fontarray[i][j] = NULL;
@@ -635,11 +666,13 @@ static void X11_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 	}
 	if (bg != NA_INTEGER) {
 		SetColor(bg);
-		XFillRectangle(display, window, wgc, (int)x0, (int)y0, (int)(x1 - x0 + 1), (int)(y1 - y0 + 1));
+		XFillRectangle(display, window, wgc, (int)x0, (int)y0,
+			(int)x1 - (int)x0, (int)y1 - (int)y0);
 	}
 	if (fg != NA_INTEGER) {
 		SetColor(fg);
-		XDrawRectangle(display, window, wgc, (int)x0, (int)y0, (int)(x1 - x0 + 1), (int)(y1 - y0 + 1));
+		XDrawRectangle(display, window, wgc, (int)x0, (int)y0,
+			(int)x1 - (int)x0, (int)y1 - (int)y0);
 	}
 	XSync(display, 0);
 	if(hardcopy) {
@@ -652,7 +685,11 @@ static void X11_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 static void X11_Circle(double x, double y, double r, int col, int border)
 {
 	int ir, ix, iy;
+#ifdef OLD
 	ir = ceil(r);
+#else
+	ir = floor(r + 0.5);
+#endif
 	ix = (int)x;
 	iy = (int)y;
 	if(col != NA_INTEGER) {
@@ -841,6 +878,7 @@ int X11DeviceDriver(char **cpars, int ncpars, double *npars, int nnpars)
 	DevHold = X11_Hold;
 	DevSavePlot = X11_SavePlot;
 	DevPrintPlot = X11_PrintPlot;
+	DevMetricInfo = X11_MetricInfo;
 
 	/* Window Dimensions in Pixels */
 

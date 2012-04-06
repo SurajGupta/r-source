@@ -1,7 +1,8 @@
 TITLE(identify @@ Identify Points in a Scatter Plot)
 USAGE(
-identify(x, y, labels=seq(along=x), n=length(x),
-        plot=TRUE, offset=0.5, labpos=FALSE)
+identify(x, y, labels=seq(along=x), 
+         n=length(x), plot=TRUE, offset=0.5, 
+         pos=FALSE, DOTS)
 )
 ALIAS(identify)
 ARGUMENTS(
@@ -16,19 +17,24 @@ ARG(plot @@ if LANG(plot) is LANG(TRUE), the labels are
 printed at the points and if LANG(FALSE) they are omitted.)
 ARG(offset @@ the distance (in character widths) which
 separates the label from identified points.)
-ARG(labpos @@ if LANG(labpos) is LANG(TRUE), a component
+ARG(pos @@ if LANG(pos) is LANG(TRUE), a component
 is added to the return value which indicates where text
 was plotted relative to each identified point (1=below,
 2=left, 3=above and 4=right).)
+ARG(DOTS @@ further arguments to LANG(par(.)).)
 )
 DESCRIPTION(
 This function reads the position of the graphics pointer when
 the (first) mouse button is pressed.  It then searches the coordinates
 given in LANG(x) and LANG(y) for the point closest to the pointer.
 If this point is close to the pointer, its index will be returned
-as part of the value of the call.  If in addition, LANG(plot) is
-LANG(TRUE) the point is labelled with the corresponding element of
-LANG(text).
+as part of the value of the call.  
+PARA
+ITALIC(The following, and the LANG(n) and LANG(offset) arguments are
+BOLD(NOT yet) implented):
+BLANK
+If in addition, LANG(plot) is LANG(TRUE) the point is labelled with the
+corresponding element of LANG(text).
 PARA
 The labels are placed either below, to the left, above or to
 the right of the identified point, depending on where the cursor was.

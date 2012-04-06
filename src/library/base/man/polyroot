@@ -1,0 +1,32 @@
+TITLE(polyroot @@ find zeros of a complex polynomial)
+USAGE(
+polyroot(z)
+)
+ALIAS(polyroot)
+ARGUMENTS(
+ARG(z @@ the vector of polynomial coefficients in decreasing order.)
+)
+DESCRIPTION(
+A polynomial of degree EQN(n - 1),
+DEQN( p(x) = SUB(z@@1) + SUB(z@@2) x + LDOTS + SUB(z@@n) SUP(x @@ n-1)
+   @@ p(x) = z1 + z2*x + LDOTS + z[n] * x^(n-1))
+is given by its coefficient vector LANG(z[1:n]).
+LANG(polyroot) returns the EQN(n-1) complex zeros of EQN(p(x)) using the
+Jenkins-Traub algorithm.
+)
+VALUE(
+A complex vector of length EQN(n-1 =) LANG(length(z) - 1).
+)
+REFERENCES(
+Jenkins and Traub (1972).
+ITALIC(TOMS Algorithm 419).  Comm. ACM BOLD(15), 97-99.
+)
+SEEALSO(
+LANG(LINK(uniroot)) for numerical root finding of arbitray functions;
+LANG(LINK(complex)) and the LANG(zero) example in the demos directory.
+)
+EXAMPLES(
+polyroot(c(1,2,1))
+round(polyroot(choose(8,0:8)), 11) # guess what!
+for(n1 in 1:4) print(polyroot(1:n1), digits = 4)
+)

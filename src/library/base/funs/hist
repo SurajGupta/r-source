@@ -2,7 +2,7 @@
 function (x, breaks, freq = TRUE, col = NULL, border = par("fg"),
 	main = paste("Histogram of" , deparse(substitute(x))),
 	xlim = range(breaks), ylim = range(counts, 0),
-	xlab = deparse(substitute(x)), ylab, ...)
+	xlab = deparse(substitute(x)), ylab, axes=TRUE, ...)
 {
 	if (!is.numeric(x)) 
 		stop("hist: x must be numeric")
@@ -39,8 +39,10 @@ function (x, breaks, freq = TRUE, col = NULL, border = par("fg"),
 	plot.new()
 	plot.window(xlim, ylim, "")
 	title(main = main, xlab = xlab, ylab = ylab, ...)
-	axis(1, ...)
-	axis(2, ...)
+	if(axes) {
+		axis(1, ...)
+		axis(2, ...)
+	}
 	rect(breaks[-length(breaks)], 0, breaks[-1], counts,
 		col = col, border = border)
 	invisible(NULL)

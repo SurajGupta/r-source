@@ -53,12 +53,12 @@
 #define R_CPU		"x86"
 #define R_VENDOR	"IBM"
 #define R_OS		"Windows95"
-#define R_MAJOR		"15"
+#define R_MAJOR		"50"
 #define R_MINOR		"0"
-#define R_STATUS	"Alpha"
+#define R_STATUS	"Beta"
 #define R_STATUS_REV	"0"
-#define R_DAY		"3"
-#define R_MONTH		"Mar"
+#define R_DAY		"8"
+#define R_MONTH		"Apr"
 #define R_YEAR		"1997"
 
 #endif

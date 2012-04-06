@@ -9,6 +9,7 @@ It only accepts character vectors as arguments if you want to operate
 on other objects passing them through LANG(deparse) first will be required.
 )
 SEEALSO(
+LANG(LINK(strwidth)) giving width of strings for plotting;
 LANG(LINK(paste)), LANG(LINK(substr)), LANG(LINK(strsplit))
 )
 EXAMPLES(

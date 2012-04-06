@@ -4,8 +4,16 @@ points(x, y, pch="o", DOTS)
 )
 ALIAS(points)
 DESCRIPTION(
-LANG(points) draws a sequence of points at the specified coordinates.
+LANG(points) is a generic function to draw a sequence of points at the specified coordinates. 
 The specified character(s) are plotted, centred at the coordinates.
 PARA
 Graphical parameters are permitted as arguments to this function.
+)
+SEEALSO(
+LANG(LINK(plot)), LANG(LINK(lines)).
+)	
+EXAMPLES(
+plot(-4:4, -4:4, type = 'n')# setting up coord. system
+points(rnorm(200), rnorm(200), col = 'red')
+points(rnorm(100)/2, rnorm(100)/2, col = 'blue', cex = 1.5)
 )

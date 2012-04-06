@@ -35,23 +35,45 @@ static SEXP *NewAddress;	/* Addresses in this incarnation */
 
 static int VersionId;
 
+static SEXP DataLoad(FILE*);
+static void DataSave(SEXP, FILE*);
 
 	/* I/O Function Pointers */
 
+static void	(*OutInit)(FILE*);
 static void	(*OutInteger)(FILE*, int);
 static void	(*OutReal)(FILE*, double);
 static void	(*OutComplex)(FILE*, complex);
 static void	(*OutString)(FILE*, char*);
 static void	(*OutSpace)(FILE*);
 static void	(*OutNewline)(FILE*);
+static void	(*OutTerm)(FILE*);
 
+static void	(*InInit)(FILE*);
 static int	(*InInteger)(FILE*);
 static double	(*InReal)(FILE*);
 static complex	(*InComplex)(FILE*);
 static char*	(*InString)(FILE*);
+static void	(*InTerm)(FILE*);
 
 
-	/* Functions for Ascii Pickling */
+
+	/*********************************/
+	/*				 */
+	/*   Dummy Placeholder Routine   */
+	/*				 */
+	/*********************************/
+
+static void Dummy(FILE *fp)
+{
+}
+
+
+	/************************************/
+	/*				    */
+	/*   Functions for Ascii Pickling   */
+	/*				    */
+	/************************************/
 
 static void AsciiOutInteger(FILE *fp, int i)
 {
@@ -146,10 +168,10 @@ static char *AsciiInString(FILE *fp)
 {
 	int c, quote;
 	bufp = buf;
-	while ((c = fgetc(fp)) != '"');
-	while ((c = fgetc(fp)) != EOF && c != '"') {
+	while ((c = R_fgetc(fp)) != '"');
+	while ((c = R_fgetc(fp)) != R_EOF && c != '"') {
 		if (c == '\\') {
-			if((c = fgetc(fp)) == EOF) break;
+			if((c = R_fgetc(fp)) == R_EOF) break;
 			switch(c) {
 				case 'n':  c = '\n'; break;
 				case 't':  c = '\t'; break;
@@ -171,7 +193,179 @@ static char *AsciiInString(FILE *fp)
 	return buf;
 }
 
-	/* Functions for Binary Pickling */
+static void AsciiSave(SEXP s, FILE *fp)
+{
+	OutInit = Dummy;
+	OutInteger = AsciiOutInteger;
+	OutReal = AsciiOutReal;
+	OutComplex = AsciiOutComplex;
+	OutString = AsciiOutString;
+	OutSpace = AsciiOutSpace;
+	OutNewline = AsciiOutNewline;
+	OutTerm = Dummy;
+	DataSave(s, fp);
+}
+
+static SEXP AsciiLoad(FILE *fp)
+{
+	VersionId = 0;
+	InInit = Dummy;
+	InInteger = AsciiInInteger;
+	InReal = AsciiInReal;
+	InComplex = AsciiInComplex;
+	InString = AsciiInString;
+	InTerm = Dummy;
+	return DataLoad(fp);
+}
+
+SEXP AsciiLoadOld(FILE *fp, int version)
+{
+	VersionId = version;
+	InInit = Dummy;
+	InInteger = AsciiInInteger;
+	InReal = AsciiInReal;
+	InComplex = AsciiInComplex;
+	InString = AsciiInString;
+	InTerm = Dummy;
+	return DataLoad(fp);
+}
+
+
+#ifdef HAVE_RPC_XDR_H
+
+	/***********************************************/
+	/*					       */
+	/*   Functions for Binary Pickling Using XDR   */
+	/*					       */
+	/***********************************************/
+
+#include <rpc/rpc.h>
+
+XDR xdrs;
+
+static void XdrOutInit(FILE *fp)
+{
+	xdrstdio_create(&xdrs, fp, XDR_ENCODE);
+}
+
+static void XdrOutTerm(FILE *fp)
+{
+	xdr_destroy(&xdrs);
+}
+
+static void XdrInInit(FILE *fp)
+{
+	xdrstdio_create(&xdrs, fp, XDR_DECODE);
+}
+
+static void XdrInTerm(FILE *fp)
+{
+	xdr_destroy(&xdrs);
+}
+
+static void XdrOutInteger(FILE *fp, int i)
+{
+	if (!xdr_int(&xdrs, &i)) {
+		xdr_destroy(&xdrs);
+		error("a write error occured\n");
+	}
+}
+
+static int XdrInInteger(FILE * fp)
+{
+	int i;
+	if (!xdr_int(&xdrs, &i)) {
+		xdr_destroy(&xdrs);
+		error("a read error occured\n");
+	}
+	return i;
+}
+
+static void XdrOutReal(FILE *fp, double x)
+{
+	if (!xdr_double(&xdrs, &x)) {
+		xdr_destroy(&xdrs);
+		error("a write error occured\n");
+	}
+}
+
+static double XdrInReal(FILE * fp)
+{
+	double x;
+	if (!xdr_double(&xdrs, &x)) {
+		xdr_destroy(&xdrs);
+		error("a read error occured\n");
+	}
+	return x;
+}
+
+static void XdrOutComplex(FILE *fp, complex x)
+{
+        if (!xdr_double(&xdrs, &(x.r)) | !xdr_double(&xdrs, &(x.i))) {
+		xdr_destroy(&xdrs);
+                error("a write error occured\n");
+	}
+}
+
+static complex XdrInComplex(FILE * fp)
+{
+	complex x;
+        if (!xdr_double(&xdrs, &(x.r)) | !xdr_double(&xdrs, &(x.i))) {
+		xdr_destroy(&xdrs);
+		error("a read error occured\n");
+	}
+	return x;
+}
+
+static void XdrOutString(FILE *fp, char *s)
+{
+	if(!xdr_string(&xdrs, &s, MAXELTSIZE-1)) {
+		xdr_destroy(&xdrs);
+		error("a write error occured\n");
+	}
+}
+
+static char *XdrInString(FILE *fp)
+{
+	char *bufp = buf;
+	if(!xdr_string(&xdrs, &bufp, MAXELTSIZE-1)) {
+		xdr_destroy(&xdrs);
+		error("a read error occured\n");
+	}
+	return buf;
+}
+
+static void XdrSave(SEXP s, FILE *fp)
+{
+	OutInit = XdrOutInit;
+	OutInteger = XdrOutInteger;
+	OutReal = XdrOutReal;
+	OutComplex = XdrOutComplex;
+	OutString = XdrOutString;
+	OutSpace = Dummy;
+	OutNewline = Dummy;
+	OutTerm = XdrOutTerm;
+	DataSave(s, fp);
+}
+
+static SEXP XdrLoad(FILE *fp)
+{
+	VersionId = 0;
+	InInit = XdrInInit;
+	InInteger = XdrInInteger;
+	InReal = XdrInReal;
+	InComplex = XdrInComplex;
+	InString = XdrInString;
+	InTerm = XdrInTerm;
+	return DataLoad(fp);
+}
+#endif
+
+	/*************************************/
+	/*				     */
+	/*   Functions for Binary Pickling   */
+	/*				     */
+	/*************************************/
 
 static void BinaryOutInteger(FILE *fp, int i)
 {
@@ -215,10 +409,6 @@ static complex BinaryInComplex(FILE * fp)
 	return x;
 }
 
-static void BinaryDummy(FILE *fp)
-{
-}
-
 static void BinaryOutString(FILE *fp, char *s)
 {
 	int n = strlen(s)+1;	/* NULL too */
@@ -230,14 +420,58 @@ static char *BinaryInString(FILE *fp)
 {
 	bufp = buf;
 	do {
-		*bufp = fgetc(fp);
+		*bufp = R_fgetc(fp);
 	}
 	while (*bufp++);
 	return buf;
 }
 
+static void BinarySave(SEXP s, FILE *fp)
+{
+	OutInit = Dummy;
+	OutInteger = BinaryOutInteger;
+	OutReal = BinaryOutReal;
+	OutComplex = BinaryOutComplex;
+	OutString = BinaryOutString;
+	OutSpace = Dummy;
+	OutNewline = Dummy;
+	OutTerm = Dummy;
+	DataSave(s, fp);
+}
 
-void R_WriteMagic(FILE *fp, int number)
+static SEXP BinaryLoad(FILE *fp)
+{
+	VersionId = 0;
+	InInit = Dummy;
+	InInteger = BinaryInInteger;
+	InReal = BinaryInReal;
+	InComplex = BinaryInComplex;
+	InString = BinaryInString;
+	InTerm = Dummy;
+	return DataLoad(fp);
+}
+
+static SEXP BinaryLoadOld(FILE *fp, int version)
+{
+	VersionId = version;
+	InInit = Dummy;
+	InInteger = BinaryInInteger;
+	InReal = BinaryInReal;
+	InComplex = BinaryInComplex;
+	InString = BinaryInString;
+	InTerm = Dummy;
+	return DataLoad(fp);
+}
+
+
+	/*******************************************/
+	/*					   */
+	/*   Magic Numbers for R Save File Types   */
+	/*					   */
+	/*******************************************/
+
+
+static void R_WriteMagic(FILE *fp, int number)
 {
 	unsigned char buf[5];
 	number = abs(number);
@@ -249,7 +483,7 @@ void R_WriteMagic(FILE *fp, int number)
 	fwrite((char*)buf, sizeof(char), 5, fp);
 }
 
-int R_ReadMagic(FILE *fp)
+static int R_ReadMagic(FILE *fp)
 {
 	unsigned char buf[6];
 	int d1, d2, d3, d4, d1234;
@@ -286,6 +520,7 @@ static void ReallocVector(SEXP s, int length)
 		break;
 	case STRSXP:
 	case VECSXP:
+	case EXPRSXP:
 		if (length <= 0) size = 0;
 		else size = 1 + PTR2VEC(length);
 		break;
@@ -362,10 +597,11 @@ static void MarkSave(SEXP s)
 			break;
 		case STRSXP:
 		case VECSXP:
+		case EXPRSXP:
 			NSave++;
 			NVSize += 1 + PTR2VEC(len=LENGTH(s));
 			for (i=0; i < len; i++)
-				MarkSave(STRING(s)[i]);
+				MarkSave(VECTOR(s)[i]);
 			break;
 		case ENVSXP:
 			NSave++;
@@ -438,6 +674,8 @@ static void DataSave(SEXP s, FILE *fp)
 	NVSize = 0;
 	unmarkPhase();
 	MarkSave(s);
+	
+	OutInit(fp);
 
 	OutInteger(fp, NSymbol); OutSpace(fp);
 	OutInteger(fp, NSave); OutSpace(fp);
@@ -564,11 +802,12 @@ static void DataSave(SEXP s, FILE *fp)
 					break;
 				case STRSXP:
 				case VECSXP:
+				case EXPRSXP:
 					l = LENGTH(&R_NHeap[i]);
 					OutInteger(fp, l);
 					OutNewline(fp);
 					for (j = 0; j < l; j++) {
-						OutInteger(fp, NodeToOffset(STRING(&R_NHeap[i])[j]));
+						OutInteger(fp, NodeToOffset(VECTOR(&R_NHeap[i])[j]));
 						if((j+1)%10 == 0 || j==l-1)
 							OutNewline(fp);
 						else
@@ -586,6 +825,8 @@ static void DataSave(SEXP s, FILE *fp)
 
 	OutInteger(fp, NodeToOffset(s));
 	OutNewline(fp);
+
+	OutTerm(fp);
 }
 
 static void RestoreSEXP(SEXP s, FILE *fp)
@@ -658,10 +899,11 @@ static void RestoreSEXP(SEXP s, FILE *fp)
 		break;
 	case STRSXP:
 	case VECSXP:
+	case EXPRSXP:
 		LENGTH(s) = len = InInteger(fp);
 		ReallocVector(s, len);
 		for (j = 0; j < len; j++) {
-			STRING(s)[j] = OffsetToNode(InInteger(fp));
+			VECTOR(s)[j] = OffsetToNode(InInteger(fp));
 		}
 		break;
 	}
@@ -673,6 +915,8 @@ static SEXP DataLoad(FILE *fp)
 	char *vmaxsave;
 
 		/* read in the size information */
+
+	InInit(fp);
 
 	NSymbol = InInteger(fp);
 	NSave = InInteger(fp);
@@ -738,76 +982,63 @@ static SEXP DataLoad(FILE *fp)
 		/* return the "top-level" object */
 		/* this is usually a list */
 
+	InTerm(fp);
+
 	return OffsetToNode(InInteger(fp));
 }
 
-void AsciiSave(SEXP s, FILE *fp)
+void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
 {
-	OutInteger = AsciiOutInteger;
-	OutReal = AsciiOutReal;
-	OutComplex = AsciiOutComplex;
-	OutString = AsciiOutString;
-	OutSpace = AsciiOutSpace;
-	OutNewline = AsciiOutNewline;
-	DataSave(s, fp);
+	if(ascii) {
+		R_WriteMagic(fp, R_MAGIC_ASCII);
+		AsciiSave(obj, fp);
+	}
+	else {
+#ifdef HAVE_RPC_XDR_H
+		R_WriteMagic(fp, R_MAGIC_XDR);
+		XdrSave(obj, fp);
+#else
+		R_WriteMagic(fp, R_MAGIC_BINARY);
+		BinarySave(obj, fp);
+#endif
+	}
 }
 
-void BinarySave(SEXP s, FILE *fp)
+SEXP R_LoadFromFile(FILE *fp)
 {
-	OutInteger = BinaryOutInteger;
-	OutReal = BinaryOutReal;
-	OutComplex = BinaryOutComplex;
-	OutString = BinaryOutString;
-	OutSpace = BinaryDummy;
-	OutNewline = BinaryDummy;
-	DataSave(s, fp);
-}
+	SEXP ans;
 
-
-SEXP AsciiLoad(FILE *fp)
-{
-	VersionId = 0;
-	InInteger = AsciiInInteger;
-	InReal = AsciiInReal;
-	InComplex = AsciiInComplex;
-	InString = AsciiInString;
-	return DataLoad(fp);
-}
-
-
-SEXP AsciiLoadOld(FILE *fp, int version)
-{
-	VersionId = version;
-	InInteger = AsciiInInteger;
-	InReal = AsciiInReal;
-	InComplex = AsciiInComplex;
-	InString = AsciiInString;
-	return DataLoad(fp);
-}
-
-
-SEXP BinaryLoad(FILE *fp)
-{
-	VersionId = 0;
-	InInteger = BinaryInInteger;
-	InReal = BinaryInReal;
-	InComplex = BinaryInComplex;
-	InString = BinaryInString;
-	return DataLoad(fp);
-}
-
-SEXP BinaryLoadOld(FILE *fp, int version)
-{
-	VersionId = version;
-	InInteger = BinaryInInteger;
-	InReal = BinaryInReal;
-	InComplex = BinaryInComplex;
-	InString = BinaryInString;
-	return DataLoad(fp);
+	switch(R_ReadMagic(fp)) {
+#ifdef HAVE_RPC_XDR_H
+	case R_MAGIC_XDR:
+		ans = XdrLoad(fp);
+		break;
+#endif
+	case R_MAGIC_BINARY:
+		ans = BinaryLoad(fp);
+		break;
+	case R_MAGIC_ASCII:
+		ans = AsciiLoad(fp);
+		break;
+	case R_MAGIC_BINARY_VERSION16:
+		ans = BinaryLoadOld(fp, 16);
+		break;
+	case R_MAGIC_ASCII_VERSION16:
+		ans = AsciiLoadOld(fp, 16);
+		break;
+	default:
+		fclose(fp);
+		error("restore file corrupted -- no data loaded\n");
+	}
+	return ans;
 }
 
 
-	/* Save Functions */
+	/***************************************/
+	/*				       */
+	/*   Interpreter Interface Functions   */
+	/*				       */
+	/***************************************/
 
 SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -838,16 +1069,7 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 		CAR(t) = findVar(TAG(t), R_GlobalContext->sysparent);
 	}
 
-	switch (INTEGER(CADDR(args))[0]) {
-	case 0:
-		R_WriteMagic(fp, R_MAGIC_BINARY);
-		BinarySave(s, fp);
-		break;
-	default:
-		R_WriteMagic(fp, R_MAGIC_ASCII);
-		AsciiSave(s, fp);
-		break;
-	}
+	R_SaveToFile(s, fp, INTEGER(CADDR(args))[0]);
 
 	UNPROTECT(1);
 	fclose(fp);
@@ -870,23 +1092,8 @@ SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (!fp)
 		errorcall(call, "unable to open file\n");
 
-	switch(R_ReadMagic(fp)) {
-	case R_MAGIC_BINARY:
-		ans = BinaryLoad(fp);
-		break;
-	case R_MAGIC_ASCII:
-		ans = AsciiLoad(fp);
-		break;
-	case R_MAGIC_BINARY_VERSION16:
-		ans = BinaryLoadOld(fp, 16);
-		break;
-	case R_MAGIC_ASCII_VERSION16:
-		ans = AsciiLoadOld(fp, 16);
-		break;
-	default:
-		fclose(fp);
-		error("restore file corrupted -- no data loaded\n");
-	}
+	ans = R_LoadFromFile(fp);
+
 	fclose(fp);
 
 

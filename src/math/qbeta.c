@@ -38,8 +38,15 @@
 
 /* set the exponent of accu to -2r-2 for r digits of accuracy */
 #define acu 1.0e-32
+
+#ifdef OLD
 #define lower 0.0001
 #define upper 0.9999
+#else
+#define lower 0.0000001
+#define upper 0.9999999
+#endif
+
 #define const1 2.30753
 #define const2 0.27061
 #define const3 0.99229
@@ -64,7 +71,7 @@ double qbeta(double alpha, double p, double q)
 	if (alpha == zero || alpha == one)
 		return alpha;
 
-	beta = exp(lbeta(p, q));
+	beta = lbeta(p, q);
 
 	/* change tail if necessary */
 

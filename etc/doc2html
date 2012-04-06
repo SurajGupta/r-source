@@ -7,6 +7,7 @@ undefine(`format')
 undefine(`include')
 undefine(`substr')
 undefine(`paste')
+define(KEYWORD,`')
 define(COMMENT,`')
 define(TITLE,`
 <HEAD><title>$2</title></HEAD><BODY>
@@ -93,6 +94,8 @@ define(EQN,`<i>$1</i>')
 define(DEQN,`<P align=center>
 <i>$2</i></P>
 <H5 align=center>((Equations will(?) come with HTML 3.x ))</H5>')
+define(DEQTEX,`')
+define(DEQHTML,`<P align=center><i>$1</i></P>')
 END
 # Fix up the input to protect things that m4 is sensitive about.
 sed '

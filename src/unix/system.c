@@ -101,7 +101,7 @@ int RWriteConsole(char *buf, int len)
 
 void ResetConsole()
 {
-	R_Console = 1;
+	R_SetInput(R_CONSOLE);
 	R_Inputfile = stdin;
 }
 
@@ -341,13 +341,9 @@ void R_SaveGlobalEnv(void)
 	FILE *fp = fopen(".RData", "w");
 	if (!fp)
 		error("can't save data -- unable to open ./.Rdata\n");
-	R_WriteMagic(fp, R_MAGIC_BINARY);
-	BinarySave(FRAME(R_GlobalEnv), fp); 
+	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
 	fclose(fp);
 }
-
-SEXP BinaryLoadOld(FILE*, int);
-SEXP AsciiLoadOld(FILE*, int);
 
 void R_RestoreGlobalEnv(void)
 {
@@ -358,24 +354,7 @@ void R_RestoreGlobalEnv(void)
 	}
 	if(!R_Quiet)
 		Rprintf("[Previously saved workspace restored]\n\n");
-
-	switch(R_ReadMagic(fp)) {
-	case R_MAGIC_BINARY:
-		FRAME(R_GlobalEnv) = BinaryLoad(fp);
-		break;
-	case R_MAGIC_ASCII:
-		FRAME(R_GlobalEnv) = AsciiLoad(fp);
-		break;
-	case R_MAGIC_BINARY_VERSION16:	/* Version 0.16 compatibility */
-		FRAME(R_GlobalEnv) = BinaryLoadOld(fp, 16);
-		break;
-	case R_MAGIC_ASCII_VERSION16:	/* Version 0.16 compatibility */
-		FRAME(R_GlobalEnv) = AsciiLoadOld(fp, 16);
-		break;
-	default:
-		fclose(fp);
-		error("workspace file corrupted -- no data loaded\n");
-	}
+	FRAME(R_GlobalEnv) = R_LoadFromFile(fp);
 }
 
 	/*--- P l a t f o r m -- D e p e n d e n t -- F u n c t i o n s ---*/
@@ -488,6 +467,14 @@ SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
         exit(0);
         /*NOTREACHED*/
 }
+
+void suicide(char *s) 
+{  
+        REprintf("Fatal error: %s\n", s);
+        RCleanUp(2);    /* 2 means don't save anything and it's an unrecoverabl
+e abort */
+}
+
 
 	/* Declarations to keep f77 happy */
 

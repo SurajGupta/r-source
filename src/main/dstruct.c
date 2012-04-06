@@ -150,19 +150,18 @@ int length(SEXP s)
 {
 	int i;
 	switch (TYPEOF(s)) {
+	case NILSXP:
+		return 0;
 	case LGLSXP:
 	case FACTSXP:
 	case ORDSXP:
 	case INTSXP:
 	case REALSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
 	case STRSXP:
 	case CHARSXP:
+	case EXPRSXP:
 		return LENGTH(s);
-	case NILSXP:
-		return 0;
 	case LISTSXP:
 	case LANGSXP:
 	case DOTSXP:
@@ -172,7 +171,9 @@ int length(SEXP s)
 			s = CDR(s);
 		}
 		return i;
+	case ENVSXP:
+		return length(FRAME(s));
 	default:
-		return 0;
+		return 1;
 	}
 }

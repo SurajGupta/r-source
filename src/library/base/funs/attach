@@ -1,5 +1,5 @@
-attach <- function(x, pos=2) 
-	.Internal(attach(x, pos, deparse(substitute(x))))
+attach <- function(x, pos=2, name=deparse(substitute(x))) 
+.Internal(attach(x, pos, name))
 
 detach <- function(name, pos=2)
 {
@@ -15,30 +15,19 @@ detach <- function(name, pos=2)
 }
 
 "objects" <-
-function (name, pos = -1, envir = NULL, all.files = FALSE, pattern) 
+function (name, pos = -1, envir=pos.to.env(pos), all.names = FALSE, pattern) 
 {
-        if (!missing(name)) {
-                name <- substitute(name)
-                if (!is.character(name)) 
-                        name <- deparse(name)
-                pos <- match(name, search())
-                if (is.na(pos)) 
-                        stop("invalid name")
-        }
-        else if (!missing(pos)) {
-                if (pos < 1 || pos > length(search())) 
-                        stop("invalid pos value")
-        }
-        else if (!missing(envir)) {
-                pos <- 0
-        }
-        else {
-                pos <- -1
-        }
-        all.files <- .Internal(ls(pos, envir, all.files))
+	if (!missing(name)) {
+		name <- substitute(name)
+		if (!is.character(name)) 
+			name <- deparse(name)
+		pos <- match(name, search())
+		envir <- pos.to.env(pos)
+	}
+	all.names <- .Internal(ls(envir, all.names))
 	if(!missing(pattern))
-		grep(pattern, all.files, value = TRUE)
-	else all.files
+		grep(pattern, all.names, value = TRUE)
+	else all.names
 }
 
 ls <- objects

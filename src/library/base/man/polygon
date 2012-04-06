@@ -18,3 +18,14 @@ given in LANG(x) and LANG(y).
 Note that if neither of LANG(col) or LANG(border) is specified
 then nothing is drawn.
 )
+SEEALSO(
+LANG(LINK(lines)), LANG(LINK(rect)), LANG(LINK(box)), LANG(LINK(abline)).
+)	
+EXAMPLES(
+n <- 100
+xx <- c(0:n, n:0)
+yy <- c(c(0,cumsum(rnorm(n))), rev(c(0,cumsum(rnorm(n)))))
+plot   (xx, yy, type="n", xlab="Time", ylab="Distance")
+polygon(xx, yy, col="gray")
+title("Distance Between Brownian Motions")
+)

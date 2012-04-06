@@ -1,196 +1,93 @@
 
-		  CHANGES IN VERSION R VERSION 0.49 ALPHA
+		  CHANGES IN VERSION R VERSION 0.50
 
-	[ The jump in version number is deliberate and reflects ]
-	[ the fact that there is a major jump in functionality  ]
-	[ in this release bringing us quite a bit closer to an  ]
-	[ evantual version 1.0 release.  The sub 0.50 number is ]
-        [ because we don't know how portable the changes are.   ]
+WARNING!!!
 
+ o  A change in the way that "expressions" are implemented means that
+    saved data images which contain expressions will probably not
+    restore properly.
 
 NEW FEATURES
 
- o  The ``object'' system has been changed substantially.  The
-    behavior of both "UseMethod" and "NextMethod" should match that
-    in S.  Group methods for "Math", "Ops" and "Summary" are
-    available.
+ o  "expressions" are now implemented as a basic type rather than as
+    a class of object.  This change was made as move toward compatibility
+    with S and also to implement mathematical annotation in graphs.
 
- o  Complex arithmetic is now implemented.  Many mathematical
-    functions are now defined for complex arguments (e.g. sqrt,
-    exp, log, sin, cos, tan, asin, acos, atan).  There is no
-    complex gamma function or log gamma function yet.  The summary
-    functions "mean", "sum", "prod", "cumsum" and "cumprod" work
-    correctly when (some of) their arguments are complex.  Other
-    functions such as "solve" are not "complex aware" yet, but do
-    print warning messages about coercion of complex values
-    to real by the dropping of imaginary parts.
-    S and R do not return identical results in all cases:
-	S> atan(tan(1i))
-	[1] 0-1i
-	R> atan(tan(1i))
-	[1] 0+1i
-    [ Is this just a difference on the branch cut boundary? ]
+ o  "eigen" can now handle complex and non-symmetric matrices.
 
- o  The full set of S graphics symbols is now available with pch=0:18.
-    In addition, there is a special set of R plotting symbols which
-    can be obtained with pch=29:25.
-	pch=19  solid circle
-	pch=20	bullet
-	pch=21	circle
-	pch=22	square
-	pch=23	diamond
-	pch=24	triangle point-up
-	pch=25	triangle point down
-    The symbols 21:25 can be colored and filled with different colors.
-    For example, the expression
-	points(x, y, pch=21, col="red", bg="yellow")
-    will plot the points using a symbol consisting of a red circle with
-    a yellow interior.
+ o  Libraries are now attached by loading their code into newly created
+    environment frames on the search path rather than in with the general
+    system code.  This means that libraries can be unloaded as well as
+    loaded.  They can also have .First.lib and .Last.lib functions.
 
- o  There is a new "family" argument to the postscript graphics driver
-    which can be set to any of "AvantGarde", "Bookman", "Courier",
-    "Helvetica", "Helvetica-Narrow", "NewCenturySchoolbook", "Palatino"
-    or "Times".  In addition, setting font=5 will cause the "Symbol"
-    family to be used.  This is still experimental and it is hard to
-    see it being useful without some sort of math capability.
-    [ Such a facility is "on the drawing board". ]
+ o  There is now an experimental function called "delay" which creates
+    a promise to evaluate an expression.  This provides direct access
+    to the lazy evaluation mechanism used by R.
 
- o  The graphics parameter "las" is now implemented and can be used
-    to rotate axis labels.  E.g.  plot(1:10, las=1) .
+ o  >>>>  'make tests'   allows to test--run all the help() examples.
+ 
+ o  New functions   matplot / matpoints / matlines.
 
- o  The hyperbolic and inverse hyperbolic functions cosh, sinh, tanh,
-    acosh, asinh and atanh are now implemented for both real and complex
-    arguments.  (Q: are the underlying functions available on all
-    platforms, or do we need compatibility fixes?)
+ o  cut has 2 new arguments. 'right = TRUE' gives intervals closed on the
+	right, open to the left (as S); 'right = FALSE' allows to reverse
+	this. The code for default label construction has been enhanced,
+	and can be controlled by the new argument 'dig.lab'.
 
- o  "log" has changed so that it will accept an optional "base" argument.
-    "log2" and "log10" are implemented this way.
+ o  legend(.) has 2 new arguments 'cex' (obvious) and 'merge = FALSE'.
+	-> ?legend.
 
- o  "atan" can now either be invoked as atan(x) or atan(x,y).
+ o  deparse  has a 2nd argument allowing for a kind of line width.
 
- o  The behavior of "fft" has been modified to match that of S
-    (i.e.  it returns a complex value.  There is also a function
-    "mvfft" which performs a "vector transform" when passed a matrix
-    (i.e.  it applies the fft to each column, rather than doing a
-    2d spatial transform).
+ o  many help(.) pages have been updated with working examples,
+	and several new ones have been created.
 
- o  A new functon "polyroot" can be used to find the roots of
-    polynomials with (real or) complex coefficients.
+BUG FIXES
 
- o  Vectors and lists are now "stretchy".  This means that the
-    following is legal
-	x <- 1:10
-	x[20] <- 12
-    [ Note that there is a bug in S.  When you try this kind of
-    extension - the "dim" and "dimname" attributes are not dropped,
-    leading to "invisible" elements in the result. ]
+ o  A bug which prevented the "pictex" graphics driver from working
+    has been fixed.
 
- o  Symbolic differention is now available using the functions "D"
-    and "deriv".  The results are slightly difference in appearance
-    from those of S (which tends to put in a few too many parentheses),
-    but should provide identical semantics.  To see the nature of the
-    difference, try the expression
-	D(expression(tan(x)/x^2),"x")
-    in both systems.
-    These functions are implemented as internal code in R (what's the
-    point in having a nice little underlying lisp if you don't use it
-    for obvious list processing applications?).
+ o  Regression diagnostics obtained with "lm.influence" now work when
+    there are weights.	This means they should work for glms.
 
- o  A new function "grep" has been implemented.  It performs regular
-    expression matching based on POSIX 1003.3.  The function uses the
-    "regex" library written by Henry Spencer (the same one that Perl
-    uses).  Grep is now used to provide a pattern matching facility
-    in "objects" and "ls".  In addition, there are functions "sub"
-    and "gsub" which operate the same way as those in "nawk".  Note
-    that "\" must be escaped to get it into a string, so if you want
-    a literal "\" you must type "\\\\" :-(.
+ o  There was a problem in parsing files from statements which were
+    separated from following statements by ";" (e.g. data(iris); iris).
+    This is fixed.
 
- o  A new "methods" function written by Martin Maechler replaces the
-    older less sophisticated one.  This has also been converted to use
-    the new "grep" function.
+ o  Comments are handled better in functions.  The rule is that they
+    are shifted to just before their statements.  Comments after the
+    last statement of a function are lost.
 
- o  A new version of model.frame from Thomas Lumley is included.
+ o  It is now possible to perform complicated mutations of expressions.
+    For example
+	e <- quote(f(x=1,y=2))
+	names(e)[[2]] <- "a"
+    will change the x= argument tag into a=.  In the past this produced
+    odd error messages.
 
- o  Factors and ordered factors are now "objects" with class attributes
-    which match those in S.  This change is primarily so that applications
-    written for S will work in R.  The underlying implementation for
-    factors and ordered factors still uses special underlying types.
+ o  The length function now tries to return a "sensible" value for all
+    the built-in types.	 For example, symbols now have length 1.
 
- o  R will now do conditioning plots as described in the S "Models" book.
-    Some thought is going into "doing trellis".
+ o  "update" should now work in both "lm" and "glm" models.
 
- o  Thomas Lumley's "require" and "provide" functions for library
-    organization added.  (No docs yet).
+ o  The functions Re, Im, Mod, Arg and Conj will now accept real-valued
+    arguments and return the obvious results.
 
- o  There is a new graphical parameter "gamma" which is designed to
-    let users apply a ``gamma'' correction for their graphics
-    displays.  Most monitors produce a color intensity which is
-    related to voltage by the equation
-			intensity = voltage ^ gamma
-    with gamma about 2.5 for most PC monitors.  A typical symptom
-    of this non-linearity is that a colorwheel produced by
-			piechart(rep(1,48), col=48)
-    shows a marked over representation of the red, green and blue
-    and blue primaries.  If this is the case try
-			par(gamma=1/2.5)
-    and redraw the color wheel.  Vary gamma till you have a "nice"
-    spectrum.  This is experimental and feedback would be welcome.
-    (If this is useful we will do the same for postscript).
+ o  Minor graphics cleanup.
 
+ o  A fix for convergence problems in glm from Thomas Lumley included.
 
-BUG FIXES & ENHANCEMENTS
+ o  A new version of qt() should not take infinitely long to get an
+    answer in the large degrees if freedom case.  The underlying code
+    (Hill 1970, CACM) appears to be much faster and more accurate than
+    Splus.
 
- o  The internals of the postscript device drivers have been rewritten
-    in preparation for "doing equations".  The Adobe font metrics
-    are no longer processed during the build process.  The original
-    files are now processed directly by the driver.  The postscript
-    emitted by the drivers should conform to the Adobe 3.0 standard.
+ o  A final Newton step has beed added to give a final "polish" to
+    the quantiles produced by pnorm().	These should be close to full
+    accuracy now.
 
- o  Typos and logic errors in "crossprod" pointed out by Arne Kovac
-    have been fixed.
+ o  A bug in qbeta found by Martin Maechler has been fixed.  This should
+    speed up quantile computation for the F and Beta distributions.
 
- o  "round" now works using IEEE rounding on platforms which support it.
-    E.g.
-	> round(.5 + -3:7)
-	 [1] -2 -2  0  0  2  2  4  4  6  6  8
-
- o  A change to the PostScript graphics device driver change should
-    stop plots from rotating unexpectedly when viewed with ghostview
-    and other postscript viewers.
-
- o  Patches from Kurt Hornik for "structure" and "help" have been applied.
-
- o  "names" applied to 1-d arrays now does the "right thing" i.e. it
-    returns the first component of the "dimnames" attribute rather than
-    NULL.  Subsetting a 1-d array as a vector will produce a "names"
-    attribute on the result.
-    
- o  "atan" will now accept either 1 or 2 arguments ("atan2" still exists).
-
- o  "nchar" and "format" preserve "dim" and "dimname" attributes where
-    possible.
-
- o  There were problems with arguments in "switch".  These have been
-    fixed.  There appears to be a bug in S with the expression
-		z <- switch(1, a=, b=10, 20)
-		mode(z)
-    They appear to return a "missing argument".  We die with an error
-    message.  What is the right thing to do here?
-
- o  Problems deparsing arguments of the form "a"= and a=, have been fixed.
-
- o  The default graphics line width is now 1 rather than 0.
-
- o  "as.is" problem in "read.table" pointed out by Peter Dalgaard fixed.
-
- o  paste(list(character(0),""), 1:2) no longer causes a segfault.
-    "as.character" applied to a list now returns the vector obtained
-    by deparsing each element of the list.
-
- o  "attach" now attaches objects at pos=2 when directed.
-
- o  Memory usage was measured in 1000 byte chunks with the -v flag.
-    This has been changed to 1024 byte chunks.
-
- o  Dependency on the "OSF sprintf bug" has been removed.
+ o  rainbow(.) now allows "start > end" indexing the "color circle".
+    topo.colors(n), terrain.colors(n), heat.colors(n) now also work for n=1,2.
 

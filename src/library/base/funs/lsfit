@@ -47,8 +47,10 @@ lsfit <- function(x, y, wt=NULL, intercept=TRUE, tolerance=1e-07, yname=NULL)
 		if(nwts != nry) stop(paste("Number of weights =", nwts,
 				", should equal", nry, "(number of responses)"))
 		wtmult <- wt^0.5
-		xzero <- as.matrix(x)[wt==0, ]
-		yzero <- as.matrix(y)[wt==0, ]
+		if( any(wt==0) ) {
+			xzero <- as.matrix(x)[wt==0, ]
+			yzero <- as.matrix(y)[wt==0, ]
+		}
 		x <- x*wtmult
 		y <- y*wtmult
 		invmult <- 1/ifelse(wt==0, 1, wtmult)
@@ -78,9 +80,11 @@ lsfit <- function(x, y, wt=NULL, intercept=TRUE, tolerance=1e-07, yname=NULL)
 	resids <- array(NA, dim=dimy)
 	dim(z$residuals) <- c(nry, ncy)
 	if(!is.null(wt)) {
-		if(ncx==1) fitted.zeros <- xzero * z$coefficients
-		else fitted.zeros <- xzero %*% z$coefficients
-		z$residuals[wt==0, ] <- yzero - fitted.zeros
+		if(any(wt==0)) {
+			if(ncx==1) fitted.zeros <- xzero * z$coefficients
+			else fitted.zeros <- xzero %*% z$coefficients
+			z$residuals[wt==0, ] <- yzero - fitted.zeros
+		}
 		z$residuals <- z$residuals*invmult
 	}
 	resids[good, ] <- z$residuals
@@ -150,8 +154,8 @@ ls.diag <- function(ls.out)
 
 	p <- ls.out$qr$rank
 	n <- nrow(resids)
-	hatdiag <- rep(NA, NROW(ls.out$residuals))
-	stats <- matrix(NA, nrow=NROW(ls.out$residuals), ncol=NCOL(resids))
+	hatdiag <- rep(NA, n)
+	stats <- array(NA, dim = dim(resids))
 	colnames(stats) <- yname
 	stdres <- studres <- dfits <- Cooks <- stats
 
@@ -215,18 +219,18 @@ ls.print <- function(ls.out, digits=4, print.it=TRUE)
 		resids <- resids * ls.out$wt^0.5
 	}
 	n <- apply(resids, 2, length)-apply(is.na(resids), 2, sum)
-	p <- ls.out$qr$rank
+	lsqr <- ls.out$qr
+	p <- lsqr$rank
 
 	# calculate total sum sq and df
 
 	if(ls.out$intercept) {
-		if(is.matrix(ls.out$qr$qt))
-			totss <- apply(ls.out$qr$qt[-1, ]^2, 2, sum)
-		else totss <- sum(ls.out$qr$qt[-1]^2)
+		if(is.matrix(lsqr$qt))
+			totss <- apply(lsqr$qt[-1, ]^2, 2, sum)
+		else totss <- sum(lsqr$qt[-1]^2)
 		degfree <- p - 1
-	}
-	else {
-		totss <- apply(as.matrix(ls.out$qr$qt^2), 2, sum)
+	} else {
+		totss <- apply(as.matrix(lsqr$qt^2), 2, sum)
 		degfree <- p
 	}
 
@@ -241,34 +245,35 @@ ls.print <- function(ls.out, digits=4, print.it=TRUE)
 
 	# construct summary
 
+	Ynames <- colnames(resids)
 	summary <- cbind(format(round(resse, digits)), format(round(rsquared,
 		digits)), format(round(fstat, digits)), format(degfree), format(
 		n-p), format(round(pvalue, digits)))
-	dimnames(summary) <- list(colnames(ls.out$residuals), c("Mean Sum Sq",
+	dimnames(summary) <- list(Ynames, c("Mean Sum Sq",
 		"R Squared", "F-value", "Df 1", "Df 2", "Pr(>F)"))
-	mat <- as.matrix(ls.out$qr$qr[1:p, 1:p])
+	mat <- as.matrix(lsqr$qr[1:p, 1:p])
 	mat[row(mat)>col(mat)] <- 0
 	qrinv <- solve(mat)
 
 	# construct coef table
 
-	coef.table <- as.list(1:ncol(ls.out$residuals))
-	if(ncol(ls.out$residuals)==1) coef <- matrix(ls.out$coef, nc=1)
+	m.y <- ncol(resids)
+	coef.table <- as.list(1:m.y)
+	if(m.y==1) coef <- matrix(ls.out$coef, nc=1)
 	else coef <- ls.out$coef
-	for(i in 1:ncol(ls.out$residuals)) {
+	for(i in 1:m.y) {
 		covmat <- (resss[i]/(n[i]-p)) * (qrinv%*%t(qrinv))
 		coef.table[[i]] <- cbind(coef[, i], diag(covmat)^.5,
 			coef[, i]/diag(covmat)^.5,
 			2*(1 - pt(abs(coef[, i]/diag(covmat)^.5), n[i]-p)))
-		dimnames(coef.table[[i]]) <- list(colnames(ls.out$qr$qr),
+		dimnames(coef.table[[i]]) <- list(colnames(lsqr$qr),
 			c("Estimate", "Std.Err", "t-value", "Pr(>|t|)"))
 
-		#print results
+		##-- print results --
 
 		if(print.it) {
-			if(ncol(ls.out$residuals)>1)
-				cat("Response:", colnames(ls.out$residuals)[i],
-				"\n\n")
+			if(m.y>1)
+				cat("Response:", Ynames[i], "\n\n")
 			cat(paste("Residual Standard Error=", format(round(
 				resse[i], digits)), "\nR-Square=", format(round(
 				rsquared[i], digits)), "\nF-statistic (df=",
@@ -279,7 +284,7 @@ ls.print <- function(ls.out, digits=4, print.it=TRUE)
 			cat("\n\n")
 		}
 	}
-	names(coef.table) <- colnames(ls.out$residuals)
+	names(coef.table) <- Ynames
 
 	invisible(list(summary=summary, coef.table=coef.table))
 }

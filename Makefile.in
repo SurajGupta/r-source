@@ -3,10 +3,8 @@ install:
 	cd src; make install
 
 install-help:
-	@echo installing manual entries
-	etc/install-help
-	@echo install library manual entries
-	etc/install-libhelp
+	@echo installing ALL manual entries
+	etc/install-allhelp
 
 install-latex:
 	@echo 'creating latex manual version (in dvi)'
@@ -16,13 +14,14 @@ install-html:
 	@echo 'creating html manual version (in html)'
 	etc/install-html
 
+tests: test-Examples
 test-Examples: etc/Examples-test/All-Ex.out
 
 etc/Examples-test/All-Ex.out: etc/Examples-test/All-Ex.R
 	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
 	@if [ -f $@ ]; then mv $@ $@.bak ; fi
 	@echo Running all help-EXAMPLES
-	(R=`pwd`/bin/R; cd etc/Examples-test ; rm -f .RData; $$R < All-Ex.R > All-Ex.out)
+	(R=`pwd`/bin/R; cd etc/Examples-test ; rm -f .RData; $$R -v 4 < All-Ex.R > All-Ex.out)
 
 etc/Examples-test/All-Ex.R: etc/Examples-test src/library/base/man/*
 	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
@@ -53,6 +52,7 @@ realclean: distclean
 
 distclean:
 	@echo cleaning at top level
+	@-rm -f etc/COMPILE etc/SHLIB
 	@-rm -f bin/R*
 	@-rm -f library/*
 	@-rm -f lib/*.so

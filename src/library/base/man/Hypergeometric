@@ -1,7 +1,7 @@
 TITLE(Hypergeometric @@ The Hypergeometric Distribution)
 USAGE(
 dhyper(x, N1, N2, n)
-phyper(x, N1, N2, n)
+phyper(q, N1, N2, n)
 qhyper(p, N1, N2, n)
 rhyper(nobs, N1, N2, n)
 )
@@ -10,6 +10,7 @@ ALIAS(phyper)
 ALIAS(qhyper)
 ALIAS(rhyper)
 ARGUMENTS(
+ARG(x,q @@ vector of quantiles.)
 ARG(N1 @@ the number of white balls in the population.)
 ARG(N2 @@ the number of black balls in the population.)
 ARG(n @@ the number of balls drawn from the urn.)
@@ -23,9 +24,20 @@ LANG(dhyper) gives the density, LANG(phyper) gives the distribution
 function LANG(qhyper) gives the quantile function and LANG(rhyper)
 generates random deviates.
 PARA
-The hypergeometric distribution has density
+The hypergeometric distribution is used for sampling BOLD(without)
+replacement.
+It has density
 DEQN(p(x) = OVER(CHOOSE(N1 @@ x) CHOOSE(N2 @@ n-x) @@ CHOOSE(N1+N2 @@ n))
-@@
-p(x) = Choose(N1,x) Choose(N2,n-x) / Choose(N1+N2,n))
-for EQN(x = 0, DOTS, n).
+  @@ p(x) = Choose(N1,x) Choose(N2,n-x) / Choose(N1+N2,n))
+for EQN(x = 0, LDOTS, n).
+)
+EXAMPLES(
+N1 <- 10; N2 <- 7; n <- 8
+x <- 0:N1
+rbind(phyper(x, N1, N2, n),
+      dhyper(x, N1, N2, n))
+all(phyper(x, N1, N2, n) == cumsum(dhyper(x, N1, N2, n))) #- FALSE
+# Relative Error -- (much too high  for R ver. 0.49) :
+formatC(signif(( phyper(x, N1, N2, n) / cumsum(dhyper(x, N1, N2, n)) - 1), 2),
+	format='g', dig=2)
 )

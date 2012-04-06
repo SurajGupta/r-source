@@ -2,7 +2,7 @@ TITLE(Geometric @@ The Geometric Distribution)
 USAGE(
 dgeom(x, p)
 pgeom(q, p)
-qgeom(p, p)
+qgeom(prob, p)
 rgeom(n, p)
 )
 ALIAS(dgeom)
@@ -20,7 +20,7 @@ DEQN(
 p(x) = p SUP((1-p)@@x)
 @@
 p(x) = p (1-p)^x,)
-for EQN(x = 0, 1, 2, DOTS @@ x=0,1,2,DOTS)
+for EQN(x = 0, 1, 2, LDOTS @@ x=0,1,2,LDOTS)
 )
 EXAMPLES(
 pp <- sort(c((1:9)/10, 1 - .2^(2:8)))

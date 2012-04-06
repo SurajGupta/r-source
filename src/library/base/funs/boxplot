@@ -33,7 +33,7 @@ boxplot <- function(x, ..., range=1.5, width=NULL, varwidth=FALSE,
 	else groups
 }
 
-boxplot.stats <- function(x, coef)
+boxplot.stats <- function(x, coef = 1.5)
 {
 	nna <- !is.na(x)
 	n <- length(nna)

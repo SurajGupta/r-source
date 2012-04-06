@@ -252,8 +252,11 @@ double snorm(void)
 #define C1		0.398942280401433
 #define C2		0.180025191068563
 #define g(x)		(C1*exp(-x*x/2.0)-C2*(a-fabs(x)))
+
+#ifndef Win32
 #define max(a,b)	(((a)>(b))?(a):(b))
 #define min(a,b)	(((a)<(b))?(a):(b))
+#endif
 
 static double a =  2.216035867166471;
 

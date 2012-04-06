@@ -23,4 +23,4 @@ clean:
 
 realclean:        
 	@echo cleaning in regex
-	@-rm -f *.o *.a
+	@-rm -f Makefile *.o *.a

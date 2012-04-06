@@ -196,12 +196,34 @@ char *R_alloc(long nelem, int eltsize)
 		}
 		R_VMax -= size;
 	}
-	return (char *) R_VMax;
+	return (char*) R_VMax;
 }
+
+/* S COMPATIBILITY */
 
 char *S_alloc(long nelem, int eltsize)
 {
-	return R_alloc(nelem, eltsize);
+	unsigned int i, size;
+	char *p = R_alloc(nelem, eltsize);
+	for(i=0 ; i<size; i++)
+		p[i] = 0;
+	return p;
+}
+
+
+char *S_realloc(char *p, long new, long old, int size)
+{
+	int i, nold;
+	char *q;
+
+	/* shrinking is a no-op */
+	if(new <= old) return p;
+
+	q = R_alloc(new, size);
+	nold = old * size;
+	for(i=0 ; i<nold ; i++)
+		q[i] = p[i];
+	return q;
 }
 
 	/* allocSExp - get SEXPREC from free list; call gc if necessary */
@@ -220,13 +242,17 @@ SEXP allocSExp(SEXPTYPE t)
 	CAR(s) = R_NilValue;
 	CDR(s) = R_NilValue;
 	TAG(s) = R_NilValue;
+	ATTRIB(s) = R_NilValue;
+#ifdef oldmem
 	NAMED(s) = 0;
 	OBJECT(s) = 0;
-	ATTRIB(s) = R_NilValue;
-	TYPEOF(s) = t;
 	LEVELS(s) = 0;
 	DEBUG(s) = 0;
 	TRACE(s) = 0;
+#else
+	*(int *) (&(s)->sxpinfo) = 0;
+#endif
+	TYPEOF(s) = t;
 	return s;
 }
 
@@ -243,21 +269,26 @@ SEXP allocString(int length)
 	/* number of vector cells to allocate */
 	size = 1 + BYTE2VEC(length + 1);
 
+	/* we need to do the gc here so allocSExp doesn't! */
 	if (R_FreeSEXP == NULL || R_VMax - R_VTop < size) {
 		gc();
 		if (R_FreeSEXP == NULL || R_VMax - R_VTop < size)
 			error("memory exhausted\n");
 	}
 
+#ifdef oldmem
 	s = R_FreeSEXP;
 	R_FreeSEXP = CDR(s);
 	TYPEOF(s) = CHARSXP;
-	CHAR(s) = (char *) (R_VTop + 1);
-	LENGTH(s) = length;
 	TAG(s) = R_NilValue;
+	ATTRIB(s) = R_NilValue;
 	NAMED(s) = 0;
 	OBJECT(s) = 0;
-	ATTRIB(s) = R_NilValue;
+#else
+	s = allocSExp(CHARSXP);
+#endif
+	CHAR(s) = (char *) (R_VTop + 1);
+	LENGTH(s) = length;
 	BACKPOINTER(*R_VTop) = s;
 	R_VTop += size;
 	return s;
@@ -307,6 +338,7 @@ SEXP allocVector(SEXPTYPE type, int length)
 		break;
 #endif
 	case STRSXP:
+	case EXPRSXP:
 	case VECSXP:
 		if (length <= 0)
 			size = 0;
@@ -319,15 +351,20 @@ SEXP allocVector(SEXPTYPE type, int length)
 		error("invalid type/length (%d/%d) in vector allocation\n", type, length);
 	}
 
+	/* we need to do the gc here so allocSExp doesn't! */
 	if (R_FreeSEXP == NULL || R_VMax - R_VTop < size) {
 		gc();
 		if (R_FreeSEXP == NULL || R_VMax - R_VTop < size)
 			error("memory exhausted\n");
 	}
 
+#ifdef oldmem
 	s = R_FreeSEXP;
 	R_FreeSEXP = CDR(s);
 	TYPEOF(s) = type;
+#else
+	s = allocSExp(type);
+#endif
 	LENGTH(s) = length;
 	NAMED(s) = 0;
 	OBJECT(s) = 0;
@@ -343,7 +380,7 @@ SEXP allocVector(SEXPTYPE type, int length)
 		/* The following prevents disaster in the case */
 		/* that an uninitialised string vector is marked */
 
-	if (type == STRSXP || type == VECSXP) {
+	if (type == STRSXP || type == EXPRSXP || type == VECSXP) {
 		for (i = 0; i < length; i++)
 			STRING(s)[i] = R_NilValue;
 	}
@@ -358,7 +395,9 @@ SEXP allocList(int n)
 	result = R_NilValue;
 	for (i = 0; i < n; i++) {
 		result = CONS(R_NilValue, result);
+#ifdef oldmem
 		TAG(result) = R_NilValue;
+#endif
 	}
 	return result;
 }
@@ -447,6 +486,7 @@ void markSExp(SEXP s)
 #endif
 			break;
 		case STRSXP:
+		case EXPRSXP:
 		case VECSXP:
 			for (i = 0; i < LENGTH(s); i++)
 				markSExp(STRING(s)[i]);
@@ -502,6 +542,7 @@ void compactPhase(void)
 			break;
 #endif
 		case STRSXP:
+		case EXPRSXP:
 		case VECSXP:
 			size = LENGTH(s) * sizeof(SEXP);
 			break;
@@ -539,8 +580,11 @@ void scanPhase(void)
 		if (!MARK(&R_NHeap[i])) {
 			CDR(&R_NHeap[i]) = R_FreeSEXP;
 			R_FreeSEXP = &R_NHeap[i];
+#ifdef oldmem
 			CAR(&R_NHeap[i]) = R_NilValue;
 			TAG(&R_NHeap[i]) = R_NilValue;
+			ATTRIB(&R_NHeap[i]) = R_NilValue;
+#endif
 			R_Collected = R_Collected + 1;
 		}
 	}

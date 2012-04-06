@@ -15,14 +15,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-/* Reference:
- * Beasley, J. D. and S. G. Springer (1977).
- * Algorithm AS 111: The percentage points of the normal distribution,
- * Applied Statistics, 26, 118-121.
  *
- * This could be improved with a Newton step or two.
+ *  Reference:
+ *  Beasley, J. D. and S. G. Springer (1977).
+ *  Algorithm AS 111: The percentage points of the normal distribution,
+ *  Applied Statistics, 26, 118-121.
+ *
+ *  Polished with a final Newton step.
  */
 
 #include "Mathlib.h"
@@ -70,5 +69,6 @@ double qnorm(double p, double mean, double sd)
 		if (q < zero)
 			val = -val;
 	}
+	val = val - (pnorm(val, 0.0, 1.0) - p) / dnorm(val, 0.0, 1.0);
 	return mean + sd * val;
 }

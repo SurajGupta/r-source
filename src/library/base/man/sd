@@ -9,3 +9,9 @@ LANG(x).
 If LANG(na.rm) is LANG(TRUE) then missing values are removed
 before computation proceeds.
 )
+SEEALSO(
+LANG(LINK(var)) 
+)
+EXAMPLES(
+sd(1:2) ^ 2
+)

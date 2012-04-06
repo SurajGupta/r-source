@@ -23,11 +23,15 @@ It is not possible to coerce objects to mode call
 LANG(as.call) returns its argument if it is a call and
 otherwise terminated with an error message.
 )
+SEEALSO(
+LANG(LINK(expression)), LANG(LINK(function)).
+)
 EXAMPLES(
-# set up a function call to round with argument 10.5
-call("round",10.5)
-round(10.5)
+is.call(call) #-> FALSE: Functions are NOT calls
 BLANK
+# set up a function call to round with argument 10.5
+cl <- call("round",10.5)
+cl
 # such a call can also be evaluated.
-eval(call("round",10.5))# [1] 10
+eval(cl)# [1] 10
 )

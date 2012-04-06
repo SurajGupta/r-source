@@ -18,3 +18,6 @@ SEEALSO(
 LANG(LINK(dput)), LANG(LINK(dget)),
 LANG(LINK(write)).
 )
+EXAMPLES(
+dump(ls(patt='^[xyz]'), "xyz.Rdmped")
+)

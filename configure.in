@@ -21,11 +21,11 @@ host_vendor=$2
 host_os=$3
 
 AC_DEFINE(R_MAJOR, "0")
-AC_DEFINE(R_MINOR, "49")
-AC_DEFINE(R_STATUS, "Beta")
+AC_DEFINE(R_MINOR, "50")
+AC_DEFINE(R_STATUS, "Alpha-1")
 AC_DEFINE(R_STATUS_REV, "0")
-AC_DEFINE(R_DAY, "23")
-AC_DEFINE(R_MONTH, "April")
+AC_DEFINE(R_DAY, "22")
+AC_DEFINE(R_MONTH, "July")
 AC_DEFINE(R_YEAR, "1997")
 AC_DEFINE_UNQUOTED(R_PLATFORM, "${host}")
 AC_DEFINE_UNQUOTED(R_CPU, "${host_cpu}")
@@ -145,17 +145,19 @@ fi
 #  This is set up so we only get one of one of -ltermcap and -ltermlib
 
 AC_CHECK_LIB(m, sin)
-AC_CHECK_LIB(termcap, main)
-if test -z "HAVE_LIBTERMCAP"
-then
-AC_CHECK_LIB(termlib, main)
-fi
+AC_CHECK_LIB(ncurses, main,,
+  AC_CHECK_LIB(termcap, main,,
+    AC_CHECK_LIB(termlib, main)
+))
 AC_CHECK_LIB(readline, main)
-AC_CHECK_LIB(dl, dlopen)
+AC_CHECK_LIB(dl,dlopen)
+
+# AC_CHECK_FUNC(xdrstdio_creat)
+AC_CHECK_FUNCS(strcoll)
 
 if test -z "$FC"
 then
-BLAS="blas.o"
+BLAS="blas.o zblas.o"
 else
 AC_CHECK_LIB(blas, main,
 LIBS="-lblas $LIBS"
@@ -166,7 +168,7 @@ fi
 #  HEADER FILES
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h dlfcn.h dl.h elf.h time.h sys/times.h)
+AC_CHECK_HEADERS(fcntl.h limits.h dlfcn.h dl.h elf.h time.h sys/times.h rpc/xdr.h)
 
 
 #  TYPEDEFS, STRUCTURES, AND COMPILER CHARACTERISTICS
@@ -341,6 +343,19 @@ alpha*osf*)
 
 esac 
 
+for i in `ls src/appl.c|grep '.c$'` `ls src/appl.f|grep '\.f'`
+do
+	rm -f src/appl/$i
+done
+
+if test -z "$FC"
+then
+	ln src/appl.c/*.c src/appl
+else
+	ln src/appl.f/*.f src/appl
+fi
+
+
 AC_SUBST(LDCMD)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(PICFLAGS)
@@ -351,13 +366,10 @@ AC_SUBST(FFLAGS)
 AC_SUBST(FPICFLAGS)
 
 AC_OUTPUT(Makefile
-src/Makefile
-src/GETSYMBOLS
 src/main/Makefile
 src/graphics/Makefile
 src/math/Makefile
 src/appl/Makefile
-src/applc/Makefile
 src/regex/Makefile
 src/unix/Makefile
 src/front/R.sh

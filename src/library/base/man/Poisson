@@ -22,12 +22,9 @@ LANG(ppois) gives the distribution function LANG(qpois) gives the
 quantile function and LANG(rpois) generates random deviates.
 PARA
 The Poisson distribution has density
-DEQN(
-p(x) = OVER(SUP(greeklambda@@x) SUP(e@@-greeklambda) @@ x!)
-@@
-p(x) = lambda^x exp(-lambda)/x!
-)
-for EQN(x = 0, 1, 2, DOTS).
+DEQN(p(x) = OVER(SUP(greeklambda@@x) SUP(e@@-greeklambda) @@ x!)
+  @@ p(x) = lambda^x exp(-lambda)/x!)
+for EQN(x = 0, 1, 2, LDOTS).
 )
 EXAMPLES(
 -log(dpois(0:7, lambda=1) * gamma(1+ 0:7))

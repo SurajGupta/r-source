@@ -93,6 +93,7 @@ typedef unsigned int SEXPTYPE;
 #define DOTSXP		17	/* dot-dot-dot object */
 #define ANYSXP		18	/* make "any" args work */
 #define VECSXP		19	/* generic vectors */
+#define EXPRSXP		20	/* expressions vectors */
 
 typedef struct {
 	double r;
@@ -278,8 +279,9 @@ enum {
 	CTXT_BREAK    = 2,
 	CTXT_LOOP     = 3,	/* break OR next target */
 	CTXT_RETURN   = 4,
-	CTXT_BROWSER  = 5,
-	CTXT_CCODE    = 8
+	CTXT_CCODE    = 8,
+	CTXT_BROWSER  = 12,
+	CTXT_GENERIC  = 16
 };
 
 
@@ -366,6 +368,7 @@ extern SEXP	R_RowNamesSymbol;	/* "row.names" */
 extern SEXP	R_SeedsSymbol;		/* ".Random.seed" */
 extern SEXP	R_TspSymbol;		/* "tsp" */
 extern SEXP	R_LastvalueSymbol;	/* ".Last.value" */
+extern SEXP	R_CommentSymbol;	/* "comment" */
 		/* Missing Values - others from Arith.h */
 extern SEXP	R_NaString;		/* NA_STRING */
 		/* Image Dump/Restore */
@@ -381,10 +384,16 @@ extern FILE*	R_FileRef;		/* the environment file pointer  */
 #define NA_REAL		R_NaReal
 #define NA_STRING	R_NaString
 
+	/* File Handling */
+
+#define R_EOF	65535
+extern int	R_fgetc(FILE*);
+
 	/* MAGIC Numbers for files */
 
 #define R_MAGIC_BINARY 1975
 #define R_MAGIC_ASCII  1976
+#define R_MAGIC_XDR    1977
 
 #define R_MAGIC_BINARY_VERSION16 1971
 #define R_MAGIC_ASCII_VERSION16  1972
@@ -400,12 +409,18 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho);
 
 
 		/* Gui Hooks */
-int cget(void);
-void uncget(int);
+#define	R_CONSOLE	1
+#define	R_FILE		2
+#define R_TEXT		3
+
+void R_SetInput(int);		/* Set the input stream */
+int cget(void);			/* Get a character from input */
+void uncget(int);		/* Unget characters from input */
 
 #include "rfrontend_api.h"
 /* These are defined in rfrontend_api.h */
 /*void writecons(char*, int);
+int ReadKBD(char*, int);
 void WriteConsole(void);
 void ResetConsole(void);
 void FlushConsole(void);
@@ -426,15 +441,11 @@ SEXP append(SEXP, SEXP);
 SEXP applyClosure(SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP applyRelOp(int, int, int);
 SEXP asChar(SEXP);
-SEXP AsciiLoad(FILE *);
-void AsciiSave(SEXP s, FILE *);
 int asInteger(SEXP);
 int asLogical(SEXP);
 double asReal(SEXP);
 SEXP arraySubscript(int, SEXP, SEXP);
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP);
-SEXP BinaryLoad(FILE *);
-void BinarySave(SEXP s, FILE *);
 void checkArity(SEXP, SEXP);
 void CheckFormals(SEXP);
 SEXP classgets(SEXP, SEXP);
@@ -597,9 +608,9 @@ void Rvprintf(const char*, va_list);
 void rsort(double *x, int);
 int Rstrlen(char*);
 void ResetComment();
+SEXP R_LoadFromFile(FILE*);
 void R_SaveGlobalEnv(void);
-int R_ReadMagic(FILE *fp);
-void R_WriteMagic(FILE *fp, int number);
+void R_SaveToFile(SEXP, FILE*, int);
 void scanPhase(void);
 SEXP setAttrib(SEXP, SEXP, SEXP);
 void setIVector(int*, int, int);

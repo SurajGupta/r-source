@@ -102,7 +102,7 @@ expr:		NUM_CONST				{ $$ = $1; }
 	|  	expr LEFT_ASSIGN expr 			{ UNPROTECT(2); $$ = lang3($2, $1, $3); PROTECT($$); }
 	|  	expr RIGHT_ASSIGN expr 			{ UNPROTECT(2); $$ = lang3($2, $3, $1); PROTECT($$); }
 	|	FUNCTION '(' formlist ')' gobble expr %prec LOW
-							{ UNPROTECT(2); $$ = lang3($1, CDR($3), $6); PROTECT($$); }
+							{ addcomment($6); UNPROTECT(2); $$ = lang3($1, CDR($3), $6); PROTECT($$); popCmt();}
 	|	expr '(' sublist ')'			{ if(isString($1)) $1=install(CHAR(STRING($1)[0])); UNPROTECT(2); if(length(CDR($3)) == 1 && CADR($3) == R_MissingArg )
 										$$ = lang1($1);
 									else
@@ -133,11 +133,11 @@ forcond:	'(' SYMBOL IN expr ')' 			{ UNPROTECT(2); $$ = LCONS($2,$4); PROTECT($$
 
 
 exprlist:						{ $$ = newlist(); PROTECT($$); }
-	|	expr					{ UNPROTECT(1); $$ = growlist(newlist(), $1); PROTECT($$);addcomment(CAR($$));}
-	|	exprlist ';' expr			{ UNPROTECT(2); $$ = growlist($1, $3); PROTECT($$); addcomment(CAR($$));}
-	|	exprlist ';'				{ $$ = $1; addcomment(CAR($$)); }
-	|	exprlist '\n' expr			{ UNPROTECT(2); $$ = growlist($1, $3); PROTECT($$);addcomment(CAR($$));}
-	|	exprlist '\n'				{ $$ = $1; addcomment(CAR($$));}
+	|	expr					{ addcomment($1); UNPROTECT(1); $$ = growlist(newlist(), $1); PROTECT($$);}
+	|	exprlist ';' expr			{ addcomment($3); UNPROTECT(2); $$ = growlist($1, $3); PROTECT($$);}
+	|	exprlist ';'				{ $$ = $1; addcomment(CAR($$));}
+	|	exprlist '\n' expr			{ addcomment($3); UNPROTECT(2); $$ = growlist($1, $3); PROTECT($$);}
+	|	exprlist '\n'				{ $$ = $1;}
 	;
 
 sublist:	sub					{ UNPROTECT(1); $$ = firstarg(CAR($1),CADR($1)); PROTECT($$); }
@@ -167,21 +167,6 @@ gobble:	{eatln = 1;}
 
 SEXP tagarg(SEXP arg, SEXP tag)
 {
-#ifdef OLD
-	switch (TYPEOF(tag)) {
-	case NILSXP:
-	case SYMSXP:
-		return lang2(arg, tag);
-	case STRSXP:
-		PROTECT(arg);
-		PROTECT(tag);
-		tag = install(CHAR(STRING(tag)[0]));
-		UNPROTECT(2);
-		return lang2(arg, tag);
-	default:
-		error("incorrect tag type\n");
-	}
-#else
 	switch (TYPEOF(tag)) {
 	case NILSXP:
 	case SYMSXP:
@@ -190,8 +175,6 @@ SEXP tagarg(SEXP arg, SEXP tag)
 	default:
 		error("incorrect tag type\n");
 	}
-#endif
-	/*NOTREACHED*/
 }
 
 /* Lists are created and grown using a special dotted pair. */
@@ -222,27 +205,27 @@ SEXP growlist(SEXP l, SEXP s)
 	return l;
 }
 
-/* Functions to handle comments */
-/* R_CommentSxp is of the same form as an expression list, */
-/* each time a new { is encountered a new element is placed */
-/* in the R_CommentSxp and when a } is encountered it is removed.  */
+
+	/* Comment Handling */
+
+	/* R_CommentSxp is of the same form as an expression list, */
+	/* each time a new { is encountered a new element is placed */
+	/* in the R_CommentSxp and when a } is encountered it is */
+	/* removed. */
 
 extern void ResetComment()
 {
-	R_CommentSxp = newlist();
+	R_CommentSxp = CONS(R_NilValue, R_NilValue);
 }
 
 void pushCmt()
 {
-	R_CommentSxp = growlist(R_CommentSxp, R_NilValue);
+	R_CommentSxp = CONS(R_NilValue, R_CommentSxp);
 }
 
 void popCmt()
 {
-	SEXP tmp;
-
-	for (tmp = CDR(R_CommentSxp); tmp != CAR(R_CommentSxp); tmp = CDR(tmp));
-	CAR(R_CommentSxp) = tmp;
+	R_CommentSxp = CDR(R_CommentSxp);
 }
 
 int isComment(SEXP l)
@@ -255,22 +238,31 @@ int isComment(SEXP l)
 
 void addcomment(SEXP l)
 {
-	SEXP tcmt;
+	SEXP tcmt, cmt;
+	int i, ncmt;
 
-	tcmt = CAR(CAR(R_CommentSxp));
-	if (tcmt == R_NilValue)
+	tcmt = CAR(R_CommentSxp);
+
+		/* Return if there are no comments */
+
+	if (tcmt == R_NilValue || l == R_NilValue)
 		return;
-	if ((isList(l) || isLanguage(l)) && !(l == R_NilValue))
-		if (TAG(l) == R_NilValue)
-			TAG(l) = tcmt;
-		else if (isComment(TAG(l))) {
-			PROTECT(l);
-			TAG(l) = listAppend(TAG(l), tcmt);
-			UNPROTECT(1);
-		}
-		else
-			error("problem in addcomment");
-	CAR(CAR(R_CommentSxp)) = R_NilValue;
+
+		/* Attach the comments as a comment attribute */
+
+	ncmt = length(tcmt);
+	cmt = allocVector(STRSXP, ncmt);
+	for(i=0 ; i<ncmt ; i++) {
+		STRING(cmt)[i] = CAR(tcmt);
+		tcmt = CDR(tcmt);
+	}
+	PROTECT(cmt);
+	setAttrib(l, R_CommentSymbol, cmt);
+	UNPROTECT(1);
+	
+		/* Reset the comment accumulator */
+
+	CAR(R_CommentSxp) = R_NilValue;
 }
 
 SEXP firstarg(SEXP s, SEXP tag)
@@ -304,50 +296,106 @@ SEXP mkTrue(void);
 SEXP mkFalse(void);
 
 
-/* Lexical Analyzer:
- *
- * Basic lexical analysis is performed by the following routines.
- * Input is read a line at a time, and, if the program is in batch
- * mode, each input line is echoed to standard output after it
- * is read.
- *
- * The function yylex() scans the input, breaking it into tokens
- * which are then passed to the parser.  The lexical analyser maintains
- * a symbol table (in a very messy fashion).
- *
- * The fact that if statements need to parse differently depending on
- * whether the statement is being interpreted or part of the body of
- * a function causes the need for ifpop and ifpush. When an if statement is
- * encountered an 'i' is pushed on a stack (provided there are parentheses
- * active). At later points this 'i' needs to be popped off of the if stack.
- */
+/*
+//	Basic File IO:
+//
+//	This code is here because at this particular instant it
+//	seems closely related to cget(), which appears below.
+*/
 
-/* #define BUFSIZE		128	---changed to MAXELTSIZE */
 
-static char buf[MAXELTSIZE];
-static char *bufp;
-static int cnt = 0;
-extern int ReadKBD(char*, int);
+int R_fgetc(FILE *fp)
+{
+	int c = fgetc(fp);
+	return feof(fp) ? R_EOF : c;
+}
+
+
+static char *buf;		/* The input stream buffer */
+static char *bufp;		/* Pointer within current buffer */
+static int cnt = 0;		/* Pointer to character count */
+
+static char buf1[MAXELTSIZE];	/* File or text buffer */
+
+static char buf0[MAXELTSIZE];	/* Console buffer */
+static char *bufp0;		/* Pointer within the console buffer */
+static int cnt0 = 0;		/* Characters in the console buffer */
+
+static current_input;
+
+/*
+//	Set the input stream for the parser
+//	    input = 0	initialize
+//	    input = 1	console
+//	    input = 2	file
+//	    input = 3	text
+*/
+
+void R_SetInput(int input)
+{
+	switch (input) {
+
+	case 0:			/* Initialization / Reset */
+		cnt = cnt0 = 0;
+		buf = buf0;
+		bufp = buf0;
+		break;
+
+	case 1:			/* Restore console values */
+		cnt = cnt0;
+		buf = buf0;
+		bufp = bufp0;
+		R_Console = 1;
+		break;
+
+	case 2:			/* Text or file input */
+	case 3:
+		if(R_Console == 1) {
+			cnt0 = cnt;
+			bufp0 = bufp;
+		}
+		cnt = 0;
+		buf = buf1;
+		bufp = buf1;
+		R_Console = 0;
+		break;
+	}
+	current_input = input;
+}
+
+
+/*
+//	Fetch a single character from the current input stream.
+//	The stream has been set by a call to R_SetInput().
+*/
 
 int cget()
 {
 	if (--cnt < 0) {
-		if (R_ParseText != R_NilValue) {
+		switch(current_input) {
+
+		case 1:
+			if (ReadKBD(buf, MAXELTSIZE) == 0) {
+				ClearerrConsole();
+				return R_EOF;
+			}
+			break;
+
+		case 2:
+			if (fgets(buf, MAXELTSIZE, R_Inputfile) == NULL) {
+				ResetConsole();
+				return R_EOF;
+			}
+			break;
+
+		case 3:
 			if (R_ParseCnt < LENGTH(R_ParseText)) {
 				strcpy(buf, CHAR(STRING(R_ParseText)[(R_ParseCnt)]));
 				strcat(buf, "\n");
 			}
-			else return EOF;
-		}
-		else if (R_Console == 1) {
-			if (ReadKBD(buf, MAXELTSIZE) == 0) {
-				ClearerrConsole();
-				return EOF;
-			}
-		}
-		else if (fgets(buf, MAXELTSIZE, R_Inputfile) == NULL) {
-			ResetConsole();
-			return EOF;
+			else return R_EOF;
+			break;
+
 		}
 		R_ParseCnt++;
 		bufp = buf;
@@ -358,11 +406,40 @@ int cget()
 }
 
 
+/*
+//	Push n characters back onto the input stream.
+//	This is only called when the characters are
+//	currently in the input buffer so pushing back
+//	beyond the start of the buffer is impossible.
+*/
+
 void uncget(int n)
 {
 	cnt += n;
 	bufp -= n;
 }
+
+
+/*
+//	Lexical Analyzer:
+//
+//	Basic lexical analysis is performed by the following
+//	routines.  Input is read a line at a time, and, if the
+//	program is in batch mode, each input line is echoed to
+//	standard output after it is read.
+//
+//	The function yylex() scans the input, breaking it into
+//	tokens which are then passed to the parser.  The lexical
+//	analyser maintains a symbol table (in a very messy fashion).
+//
+//	The fact that if statements need to parse differently
+//	depending on whether the statement is being interpreted or
+//	part of the body of a function causes the need for ifpop
+//	and ifpush. When an if statement is encountered an 'i' is
+//	pushed on a stack (provided there are parentheses active).
+//	At later points this 'i' needs to be popped off of the if
+//	stack.
+*/
 
 static int newline = 0;
 static int reset = 1;
@@ -521,6 +598,7 @@ SEXP mkFloat(char *s)
 SEXP mkComplex(char *s)
 {
 	SEXP t = allocVector(CPLXSXP, 1);
+	COMPLEX(t)[0].r = 0;
 	COMPLEX(t)[0].i = atof(s);
 	return t;
 }
@@ -643,16 +721,18 @@ int yylex()
 	if (c == '#') {
 		p = yytext;
 		*p++ = c;
-		while ((c = cget()) != '\n' && c != EOF)
+		while ((c = cget()) != '\n' && c != R_EOF)
 			*p++ = c;
 		*p = '\0';
-		f = mkString(yytext);
-		f = CONS(f, R_NilValue);
-		CAR(CAR(R_CommentSxp)) = listAppend(CAR(CAR(R_CommentSxp)), f);
+		if(R_CommentSxp != R_NilValue) {
+			f = mkChar(yytext);
+			f = CONS(f, R_NilValue);
+			CAR(R_CommentSxp) = listAppend(CAR(R_CommentSxp), f);
+		}
 	}
 
 
-	if (c == EOF) {
+	if (c == R_EOF) {
 		return EOF;
 	}
 
@@ -660,7 +740,7 @@ int yylex()
 		/* newlines.  The main problem is finding out       */
 		/* whether a newline is followed by an ELSE clause. */
 		/* This is only of importance if we are inside one  */
-		/* of "(", "[", or "{".                             */
+		/* of "(", "[", or "{".			     */
 
 	if (c == '\n') {
 		if (eatln || *parenp == '[' || *parenp == '(') {
@@ -670,18 +750,20 @@ int yylex()
 		if (*parenp == 'i') {
 			prompt();
 			while ((c = cget()) == ' ' || c == '\t');
-			if (c == EOF) {
+			if (c == R_EOF) {
 				error("unexpected end-of-file in parse\n");
 			}
 			if (c == '#') {
 				p = yytext;
 				*p++ = c;
-				while ((c = cget()) != '\n' && c != EOF)
+				while ((c = cget()) != '\n' && c != R_EOF)
 					*p++ = c;
 				*p = '\0';
-				f = mkString(yytext);
-				f = CONS(f, R_NilValue);
-				CAR(CAR(R_CommentSxp)) = listAppend(CAR(CAR(R_CommentSxp)), f);
+				if(R_CommentSxp != R_NilValue) {
+					f = mkChar(yytext);
+					f = CONS(f, R_NilValue);
+					CAR(R_CommentSxp) = listAppend(CAR(R_CommentSxp), f);
+				}
 			}
 			if (c == '\n') {
 				prompt();
@@ -772,7 +854,7 @@ int yylex()
 	if (c == '\"' || c == '\'') {
 		quote = c;
 		p = yytext;
-		while ((c = cget()) != EOF && c != quote) {
+		while ((c = cget()) != R_EOF && c != quote) {
 			if (c == '\n') {
 				uncget(1);
 				return ERROR;
@@ -780,6 +862,15 @@ int yylex()
 			if (c == '\\') {
 				c = cget();
 				switch (c) {
+				case 'a':
+					c = '\a';
+					break;
+				case 'b':
+					c = '\b';
+					break;
+				case 'f':
+					c = '\f';
+					break;
 				case 'n':
 					c = '\n';
 					break;
@@ -788,6 +879,9 @@ int yylex()
 					break;
 				case 't':
 					c = '\t';
+					break;
+				case 'v':
+					c = '\v';
 					break;
 				case '\\':
 					c = '\\';
@@ -806,7 +900,7 @@ int yylex()
 	if (c == '%') {
 		p = yytext;
 		*p++ = c;
-		while ((c = cget()) != EOF && c != '%') {
+		while ((c = cget()) != R_EOF && c != '%') {
 			if (c == '\n') {
 				uncget(1);
 				return ERROR;
@@ -836,12 +930,14 @@ int yylex()
 		p = yytext;
 		do {
 			*p++ = c;
-		} while ((c = cget()) != EOF && (isalnum(c) || c == '.'));
+		} while ((c = cget()) != R_EOF && (isalnum(c) || c == '.'));
 		uncget(1);
 		*p = '\0';
 
-		if ((kw = klookup(yytext)))
+		if ((kw = klookup(yytext))) {
+			if(kw == FUNCTION) pushCmt();
 			return kw;
+		}
 
 		PROTECT(yylval = install(yytext));
 		eatln = 0;
@@ -974,9 +1070,9 @@ int yylex()
 		if (nextchar('*'))
 			c='^';
 		yytext[0] = c;
-                yytext[1] = '\0';
-                yylval = install(yytext);
-                return c;
+		yytext[1] = '\0';
+		yylval = install(yytext);
+		return c;
 	case '+':
 	case '/':
 	case '^':

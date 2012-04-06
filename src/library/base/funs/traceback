@@ -1,1 +1,3 @@
-traceback <- function() as.character(.Traceback)
+traceback <-
+function() unlist(.Traceback)
+

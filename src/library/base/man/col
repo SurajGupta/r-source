@@ -16,8 +16,9 @@ SEEALSO(
 LANG(LINK(row)) to get rows.
 )
 EXAMPLES(
-# extract the diagonal of a matrix
-dx <- x[row(x)==col(x)]
+# extract an off-diagonal of a matrix
+ma <- matrix(1:12, 3,4)
+ma[row(ma)==col(ma) + 1]
 BLANK
 # create an identity 5-by-5 matrix
 x <- matrix(0,nr=5,nc=5)

@@ -37,18 +37,31 @@ double hypot(double x, double y);
 #include <float.h>
 #include <errno.h>
 
-	/* 30 Decimal-place constants computed with bc */
-
-#ifndef M_1_SQRT_2PI
-#define M_1_SQRT_2PI	0.398942280401432677939946059934
-#endif
+/* 30 Decimal-place constants computed with bc  (scale=32; proper round) */
 
 #ifndef M_1_SQRT_2
 #define M_1_SQRT_2	0.707106781186547524400844362105
 #endif
 
 #ifndef M_PI
-#define M_PI		3.141592653589793238462643383276
+#define M_PI		3.141592653589793238462643383279
+#endif
+
+#ifndef M_PI_half
+#define M_PI_half	1.570796326794896619231321691640
+#endif
+
+#ifndef M_SQRT_PI
+#define M_SQRT_PI	1.772453850905516027298167483341
+#endif
+
+#ifndef M_1_SQRT_2PI
+#define M_1_SQRT_2PI	0.398942280401432677939946059934
+#endif
+
+/* log(sqrt(2*pi)) = log(2*pi)/2 : */
+#ifndef M_LN_SQRT_2PI
+#define M_LN_SQRT_2PI	0.918938533204672741780329736406
 #endif
 
 
@@ -64,9 +77,7 @@ extern double sexp(void);
 
 	/* Port Constants */
 
-extern int I1MACH(int);
 extern int F77_SYMBOL(i1mach)(int*);
-extern double D1MACH(int);
 extern double F77_SYMBOL(d1mach)(int*);
 
 	/* Fortran Compatibility */
@@ -109,6 +120,7 @@ extern double pentagamma(double);
 
 extern double dbeta(double, double, double);
 extern double pbeta(double, double, double);
+extern double pbeta_b(double, double, double, double);
 extern double qbeta(double, double, double);
 extern double rbeta(double, double);
 

@@ -12,3 +12,7 @@ of the object.
 SEEALSO(
 LANG(LINK(mode)), LANG(LINK(storage.mode)).
 )
+EXAMPLES(
+typeof(2)
+mode(2)
+)

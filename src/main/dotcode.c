@@ -428,6 +428,59 @@ static SEXP naoktrim(SEXP s, int * len, int *naok, int *dup)
 
 #define MAX_ARGS 65
 
+SEXP do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	char buf[128], *p, *q;
+
+	checkArity(op, args);
+	if(!isString(CAR(args)) || length(CAR(args)) < 1)
+		errorcall(call, "invalid argument");
+
+	p = CHAR(STRING(CAR(args))[0]);
+	q = buf;
+	while ((*q = *p) != '\0') {
+		p++;
+		q++;
+	}
+#ifdef HAVE_F77_UNDERSCORE
+	if(PRIMVAL(op)) {
+		*q++ = '_';
+		*q = '\0';
+#endif
+	}
+
+	return mkString(buf);
+}
+
+SEXP do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+	SEXP ans;
+	FUNC fun;
+	char *sym;
+	int val;
+	checkArity(op, args);
+	sym = CHAR(STRING(CAR(args))[0]);
+
+	val = 1;
+	if (!(fun = HashLookup(sym))){
+#ifdef HAVE_DLFCN_H
+		if(!(fun = findDynProc(sym))) {
+			val = 0;
+		}
+		else {
+			if((1.0*NumberElem)/HASHSIZE > 0.5)
+				HashExpand();
+			HashInstall(sym, fun);
+		}
+#else
+		val = 0;
+#endif
+	}
+	ans = allocVector(LGLSXP, 1);
+	LOGICAL(ans)[0] = val;
+	return ans;
+}
+
 SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	void **cargs;

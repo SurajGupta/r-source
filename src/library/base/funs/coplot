@@ -1,13 +1,13 @@
 "co.intervals" <-
-function (x, number = 6, overlap = 0.5) 
+function (x, number = 6, overlap = 0.5)
 {
-        x <- sort(x[!is.na(x)])
-        n <- length(x)
-        # "from the record"
-        r <- n/(number * (1 - overlap) + overlap)
-        l <- round(1 + 0:(number - 1) * (1 - overlap) * r)
-        u <- round(r + 0:(number - 1) * (1 - overlap) * r)
-        cbind(x[l], x[u])
+	x <- sort(x[!is.na(x)])
+	n <- length(x)
+	## "from the record"
+	r <- n/(number * (1 - overlap) + overlap)
+	l <- round(1 + 0:(number - 1) * (1 - overlap) * r)
+	u <- round(r + 0:(number - 1) * (1 - overlap) * r)
+	cbind(x[l], x[u])
 }
 
 panel.smooth <-
@@ -30,7 +30,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 	bad.formula <- function() stop("invalid conditioning formula")
 	bad.lengths <- function() stop("incompatible variable lengths")
 
-	#  parse and check the formula
+	## parse and check the formula
 
 	formula <- deparen(formula)
 	if (deparse(formula[[1]]) != "~")
@@ -46,15 +46,14 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 		have.b <- TRUE
 		a <- deparen(rhs[[2]])
 		b <- deparen(rhs[[3]])
-	}
-	else {
+	} else {
 		have.b <- FALSE
 		a <- rhs
 	}
 
-	#  evaluate the formulae components to get the data values
+	## evaluate the formulae components to get the data values
 
-	if (missing(data)) 
+	if (missing(data))
 		data <- sys.frame(sys.parent())
 	x.name <- deparse(x)
 	x <- eval(x, data)
@@ -72,7 +71,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 	}
 	else b <- NULL
 
-	#  generate the given value intervals
+	## generate the given value intervals
 
 	bad.givens <- function() stop("invalid given.values")
 	if(missing(given.values)) {
@@ -89,8 +88,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 			}
 			else b.intervals <- co.intervals(b)
 		}
-	}
-	else {
+	} else {
 		if(!is.list(given.values))
 			given.values <- list(given.values)
 		if(length(given.values) != (if(have.b) 2 else 1))
@@ -101,8 +99,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 				a.levels <- match(a.levels, levels(a))
 			else a.levels <- cbind(a.levels, a.levels)
 			a <- codes(a)
-		}
-		else if(is.numeric(a)) {
+		} else if(is.numeric(a)) {
 			if(!is.numeric(a)) bad.givens()
 			if(!is.matrix(a.intervals) || ncol(a.intervals) != 2)
 				a.intervals <- cbind(a.intervals, a.intervals)
@@ -114,8 +111,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 					b.levels <- match(b.levels, levels(b))
 				else b.levels <- cbind(b.levels, b.levels)
 				b <- codes(b)
-			}
-			else if(is.numeric(b)) {
+			} else if(is.numeric(b)) {
 				if(!is.numeric(b)) bad.givens()
 				if(!is.matrix(b.intervals) || ncol(b.intervals) != 2)
 					b.intervals <- cbind(b.intervals, b.intervals)
@@ -126,20 +122,15 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 	if(have.b)
 		if(any(is.na(b.intervals))) bad.givens()
 
-	#  compute the page layout
+	## compute the page layout
 
 	if (have.b) {
 		rows <- nrow(b.intervals)
 		columns <- nrow(b.intervals)
 		nplots <- rows * columns
-		total.rows <- rows + if (show.given) 
-			1
-		else 0
-		total.columns <- columns + if (show.given) 
-			1
-		else 0
-	}
-	else {
+		total.rows <- rows + if (show.given) 1 else 0
+		total.columns <- columns + if (show.given) 1 else 0
+	} else {
 		nplots <- nrow(a.intervals)
 		if (missing(rows)) {
 			if (missing(columns)) {
@@ -148,20 +139,19 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 			}
 			else rows <- ceiling(nplots/columns)
 		}
-		else if (missing(columns)) 
+		else if (missing(columns))
 			columns <- ceiling(nplots/rows)
-		if (rows * columns < nplots) 
+		if (rows * columns < nplots)
 			stop("rows * columns too small")
-		total.rows <- rows + if (show.given) 
-			1
-		else 0
+		total.rows <- rows + if (show.given) 1 else 0
 		total.columns <- columns
 	}
-	#  plot that sucker!
-	if(have.b) oma <- rep(5, 4) else oma <- c(5, 6, 5, 4)
+
+	## Plot that sucker!
+
 	opar <- par(mfrow = c(total.rows, total.columns),
-			oma = oma,
-			mar = if (have.b) rep(0, 4) else c(0.5, 0, 0.5, 0),
+			oma = if(have.b) rep(5, 4) else c(5, 6, 5, 4),
+			mar = if(have.b) rep(0, 4) else c(0.5, 0, 0.5, 0),
 			new = FALSE)
 	on.exit(par(opar))
 	plot.new()
@@ -190,11 +180,11 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 			axis(4)
 #		if (i == total.rows)
 #			axis(1, labels = (j%%2 == 0))
-#		if (i == istart || index + columns > nplots) 
+#		if (i == istart || index + columns > nplots)
 #			axis(3, labels = (j%%2 == 1))
-#		if (j == 1) 
+#		if (j == 1)
 #			axis(2, labels = ((total.rows - i)%%2 == 0))
-#		if (j == columns || index == nplots) 
+#		if (j == columns || index == nplots)
 #			axis(4, labels = ((total.rows - i)%%2 == 1))
 		box()
 	}
@@ -210,8 +200,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 				count <- count + 1
 			}
 		}
-	}
-	else {
+	} else {
 		for (i in 1:nplots) {
 			id <- ((a.intervals[i,1] <= a)
 				& (a <= a.intervals[i,2]))
@@ -241,7 +230,7 @@ function (formula, data, given.values, panel=points, rows, columns, show.given =
 			side=3, at=mean(par("usr")[1:2]), line=3, xpd=T)
 
 		if(have.b) {
-		        nmar <- mar + c(0, 4, 0, 0)
+			nmar <- mar + c(0, 4, 0, 0)
 			par(fig = c(columns/total.columns, 1,
 				0, rows/total.rows), mar=nmar, new=TRUE)
 			plot.new()

@@ -1,7 +1,6 @@
 TITLE(parse @@ Parse Expressions )
 USAGE(
-parse(file="", n=NULL, text=NULL, prompt=NULL,
-        white=FALSE)
+parse(file="", n=NULL, text=NULL, prompt=NULL, white=FALSE)
 )
 ALIAS(parse)
 ARGUMENTS(
@@ -19,12 +18,12 @@ only newlines or semicolons do.)
 DESCRIPTION(
 LANG(parse) returns the parsed but unevaluated expressions
 in a list. Each element of the
-list is of mode expression.
+list is of mode LANG(expression).
 )
 SEEALSO(
-LANG(LINK(scan)), LANG(LINK(source)), LANG(LINK(eval)).
+LANG(LINK(scan)), LANG(LINK(source)), LANG(LINK(eval)), LANG(LINK(deparse)).
 )
 EXAMPLES(
-# parse 5 statements from the file "foo"
-parse(file="foo",n=5)
+# parse  3  statements from the file "xyz.Rdmped"
+parse(file="xyz.Rdmped", n=3)
 )

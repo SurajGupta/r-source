@@ -31,6 +31,35 @@ taken on by anyone.
     to speedup lookups in libraries.
 
 
+ o  3D GRAPHICS
+    We need something like "persp" for plotting surfaces, although it
+    would be nice to have something more sophisticated.  Interesting
+    gadgets to look at include:
+
+    *  "Lab-3d" has some pretty nifty techniques for hidden line
+        removal, but it looks like is done in "image" coordinates.
+        This would be a problem for any device independent system.
+
+    *  "zplot" has a very nice user interface and provides a method
+       of viewing surfaces in 3d.  An efficient set of hidden line
+       and hidden surface routines.
+
+    *  "plotmtv" is more static, but has some interesting contouring
+       ideas.
+
+
+ o  DYNAMIC GRAPHICS
+    Statistics for the video game generation ...  We need to move to
+    an event-based model for this.  See the 3D graphics above plus:
+ 
+    *  X3d looks like it would be worth a look.  It provides very
+       fast response for complex wireframe structures.
+
+    *  XWireframe has some nice little features.
+
+    *  XGobi is nice too.
+
+
  o  MULTIPLE ACTIVE DEVICE DRIVERS.
     The basics of this is actually pretty simple to implement.  The
     hard part is thinking about how to manage display lists.  It would
@@ -43,14 +72,6 @@ taken on by anyone.
     need is access to font metrics for bounding boxes (done now) and
     some time to plow through a couple of appendices of the TeX Book.
     [ Ross and Paul Murrell are working on this ... ]
-
-
- o  DYNAMIC GRAPHICS
-    Statistics for the video game generation ...
-    We need to move to an event-based model for this.
-    X3d looks like it would be worth a look.  It provides very fast
-    response for complex wireframe structures.
-    XGobi is nice too.
 
 
  o  LINEAR MODELLING
@@ -81,5 +102,5 @@ taken on by anyone.
  o  TIME SERIES
     A state-space/structural models package would be nice.
     We have a partial spectrum analysis package.  It needs to be
-    mutivariate though.
+    multivariate though.
 

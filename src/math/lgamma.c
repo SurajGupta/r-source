@@ -19,17 +19,25 @@
 
 #include "Mathlib.h"
 
-int signgam = 0;
+/*----  lgamma(x)  :=  log  | gamma(x) |   ------------*/
 
-/* log(2*pi)/2 and pi */
+int signgam = 0; /* the sign of gamma(x), set in lgamma(.), used by gamma(.) */
 
-static double hl2pi = 0.9189385332046727417803297;
-static double xpi = M_PI;
+static double Gam_pos(double);
+static double lGam_neg(double);
+static double asform(double); /* ASymptotic FORM */
 
- /* Coefficients from Cheney and Hart */
+double lgamma(double x)
+{
+	signgam = 1.0;
+	if (x <= 0.0) return (lGam_neg(x));
+	if (x >  8.0) return (asform(x));
+	return (log(Gam_pos(x)));
+}
 
+/* Coefficients  from Cheney and Hart (??--REF---??) */
+/* Asymptotic form: (not quite, why are the coeff. slightly changed ? */
 #define M 6
-#define N 8
 static double p1[] =
 {
 	0.83333333333333101837e-1,
@@ -39,6 +47,40 @@ static double p1[] =
 	0.83645878922e-3,
 	-.1633436431e-2,
 };
+static double asform(double x)
+{
+  /* Equation 6.1.41 Abramowitz and Stegun -- extended Stirling */
+  /* See also ACM algorithm 291 */
+
+	double log();
+	double nfac, xsq;
+	int i;
+
+	xsq = 1. / (x * x);
+	for (nfac = 0, i = M - 1; i >= 0; i--) {
+		nfac = nfac * xsq + p1[i];
+	}
+	return ((x - .5) * log(x) - x + M_LN_SQRT_2PI + nfac / x);
+}
+
+static double lGam_neg(double x)
+{ /* log |gamma(x)|   for  x <= 0   ### G(-x) = - pi / [ G(x) x  sin(pi x) ] */
+	double sinpx;
+	double log(), sin(), Gam_pos();
+ 
+	x = -x;
+	sinpx = sin(M_PI * x);
+	if (sinpx == 0.0)
+		DOMAIN_ERROR;
+	if (sinpx < 0.0)
+		sinpx = -sinpx;
+	else
+		signgam = -1;
+	return (-log(x * Gam_pos(x) * sinpx / M_PI));
+}
+
+/* Coefficients for rational approximation  gamma(x),  2 <= x <= 3 : */
+#define N 8
 static double p2[] =
 {
 	-.42353689509744089647e5,
@@ -62,66 +104,16 @@ static double q2[] =
 	0.10000000000000000000e1,
 };
 
-static double posarg(double);
-static double negarg(double);
-static double asform(double);
-
-double lgamma(double arg)
-{
-	signgam = 1.0;
-	if (arg <= 0.0)
-		return (negarg(arg));
-	if (arg > 8.0)
-		return (asform(arg));
-	return (log(posarg(arg)));
-}
-
-/* Equation 6.1.41 Abramowitz and Stegun */
-/* See also ACM algorithm 291 */
-
-static double asform(arg)
-double arg;
-{
-	double log();
-	double n, argsq;
-	int i;
-
-	argsq = 1. / (arg * arg);
-	for (n = 0, i = M - 1; i >= 0; i--) {
-		n = n * argsq + p1[i];
-	}
-	return ((arg - .5) * log(arg) - arg + hl2pi + n / arg);
-}
-
-static double negarg(arg)
-double arg;
-{
-	double temp;
-	double log(), sin(), posarg();
-
-	arg = -arg;
-	temp = sin(xpi * arg);
-	if (temp == 0.0)
-		DOMAIN_ERROR;
-	if (temp < 0.0)
-		temp = -temp;
-	else
-		signgam = -1;
-	return (-log(arg * posarg(arg) * temp / xpi));
-}
-
-static double posarg(arg)
-double arg;
+/* gamma(x) for x >= 0 :*/
+static double Gam_pos(double x)
 {
 	double n, d, s;
 	register i;
 
-	if (arg < 2.0)
-		return (posarg(arg + 1.0) / arg);
-	if (arg > 3.0)
-		return ((arg - 1.0) * posarg(arg - 1.0));
-
-	s = arg - 2.;
+	if (x < 2.0) return (Gam_pos(x + 1.0) / x);
+	if (x > 3.0) return ((x - 1.0) * Gam_pos(x - 1.0));
+	/*-- rational approximation for  2 <= x <= 3 */
+	s = x - 2.;
 	for (n = 0, d = 0, i = N - 1; i >= 0; i--) {
 		n = n * s + p2[i];
 		d = d * s + q2[i];

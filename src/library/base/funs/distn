@@ -13,14 +13,10 @@ pnorm <- function(q, mean=0, sd=1) .Internal(pnorm(q, mean, sd))
 qnorm <- function(p, mean=0, sd=1) .Internal(qnorm(p, mean, sd))
 rnorm <- function(n, mean=0, sd=1) .Internal(rnorm(n, mean, sd))
 
-dcauchy <- function(x, location=0, scale=1) .Internal(dcauchy(x, location, scale
-))
-pcauchy <- function(q, location=0, scale=1) .Internal(pcauchy(q, location, scale
-))
-qcauchy <- function(p, location=0, scale=1) .Internal(qcauchy(p, location, scale
-))
-rcauchy <- function(n, location=0, scale=1) .Internal(rcauchy(n, location, scale
-))
+dcauchy <- function(x, location=0, scale=1) .Internal(dcauchy(x, location, scale))
+pcauchy <- function(q, location=0, scale=1) .Internal(pcauchy(q, location, scale))
+qcauchy <- function(p, location=0, scale=1) .Internal(qcauchy(p, location, scale))
+rcauchy <- function(n, location=0, scale=1) .Internal(rcauchy(n, location, scale))
 
 dgamma <- function(x, shape, scale=1) .Internal(dgamma(x, shape, scale))
 pgamma <- function(q, shape, scale=1) .Internal(pgamma(q, shape, scale))
@@ -42,3 +38,49 @@ pweibull <- function(q, shape, scale=1) .Internal(pweibull(q, shape, scale))
 qweibull <- function(p, shape, scale=1) .Internal(qweibull(p, shape, scale))
 rweibull <- function(n, shape, scale=1) .Internal(rweibull(n, shape, scale))
 
+
+##--- Argument names taken from  ../man/Beta :
+dbeta <- function(x, a, b) .Internal(dbeta(x, a, b))
+pbeta <- function(q, a, b) .Internal(pbeta(q, a, b))
+qbeta <- function(p, a, b) .Internal(qbeta(p, a, b))
+rbeta <- function(n, a, b) .Internal(rbeta(n, a, b))
+##--- Argument names taken from  ../man/Binomial :
+dbinom <- function(x, n, p) .Internal(dbinom(x, n, p))
+pbinom <- function(q, n, p) .Internal(pbinom(q, n, p))
+qbinom <- function(prob, n, p) .Internal(qbinom(prob, n, p))
+rbinom <- function(nobs, n, p) .Internal(rbinom(nobs, n, p))
+##--- Argument names taken from  ../man/Chisquare :
+dchisq <- function(x, df) .Internal(dchisq(x, df))
+pchisq <- function(q, df) .Internal(pchisq(q, df))
+qchisq <- function(p, df) .Internal(qchisq(p, df))
+rchisq <- function(n, df) .Internal(rchisq(n, df))
+##--- Argument names taken from  ../man/F :
+df <- function(x, n1, n2) .Internal(df(x, n1, n2))
+pf <- function(q, n1, n2) .Internal(pf(q, n1, n2))
+qf <- function(p, n1, n2) .Internal(qf(p, n1, n2))
+rf <- function(n, n1, n2) .Internal(rf(n, n1, n2))
+##--- Argument names taken from  ../man/Geometric :
+dgeom <- function(x, p) .Internal(dgeom(x, p))
+pgeom <- function(q, p) .Internal(pgeom(q, p))
+qgeom <- function(prob, p) .Internal(qgeom(prob, p))
+rgeom <- function(n, p) .Internal(rgeom(n, p))
+##--- Argument names taken from  ../man/Hypergeometric :
+dhyper <- function(x, N1, N2, n) .Internal(dhyper(x, N1, N2, n))
+phyper <- function(q, N1, N2, n) .Internal(phyper(q, N1, N2, n))
+qhyper <- function(p, N1, N2, n) .Internal(qhyper(p, N1, N2, n))
+rhyper <- function(nobs, N1, N2, n) .Internal(rhyper(nobs, N1, N2, n))
+##--- Argument names taken from  ../man/NegBinomial :
+dnbinom <- function(x, n, p) .Internal(dnbinom(x, n, p))
+pnbinom <- function(q, n, p) .Internal(pnbinom(q, n, p))
+qnbinom <- function(prob, n, p) .Internal(qnbinom(prob, n, p))
+rnbinom <- function(nobs, n, p) .Internal(rnbinom(nobs, n, p))
+##--- Argument names taken from  ../man/Poisson :
+dpois <- function(x, lambda) .Internal(dpois(x, lambda))
+ppois <- function(q, lambda) .Internal(ppois(q, lambda))
+qpois <- function(p, lambda) .Internal(qpois(p, lambda))
+rpois <- function(n, lambda) .Internal(rpois(n, lambda))
+##--- Argument names taken from  ../man/T
+dt <- function(x, df) .Internal(dt(x, df))
+pt <- function(q, df) .Internal(pt(q, df))
+qt <- function(p, df) .Internal(qt(p, df))
+rt <- function(n, df) .Internal(rt(n, df))

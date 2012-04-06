@@ -567,16 +567,20 @@ nnpars)
 	char *pagetype;
 	DevInit = 0;
 
-	if(ncpars != 1 || nnpars != 5)
+	if(ncpars != 3 || nnpars != 3)
 		error("invalid device parameters (pictex)\n");
 
 	filename = cpars[0];
 	width = npars[0];
 	height = npars[1];
 	debug = npars[2];
+#ifdef OLD
 	DP->bg = GP->bg = npars[3];
 	DP->fg = GP->fg = npars[4];
-
+#else
+        DP->bg = GP->bg = str2col(cpars[1]);
+        DP->fg = GP->fg = str2col(cpars[2]);
+#endif
 
 	DevOpen = PicTeX_Open;
 	DevClose = PicTeX_Close;

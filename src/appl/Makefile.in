@@ -2,7 +2,6 @@ CC=@CC@
 CFLAGS=@CFLAGS@ -I../include
 FC=@FC@
 FFLAGS=@FFLAGS@
-F2CLIB=
 AR=@AR@
 RANLIB=@RANLIB@
 BLAS=@BLAS@
@@ -29,6 +28,7 @@ OBJ= \
 	dsvdc.o \
 	dtrsl.o \
 	eigen.o \
+	fortran.o \
 	fft.o \
 	fmin.o \
 	lminfl.o \
@@ -45,8 +45,8 @@ OBJ= \
 
 LIB=		../lib/libappl.a
 
-$(LIB):		$(OBJ) $(F2CLIB)
-		$(AR) cr $(LIB) $(OBJ) $(F2CLIB)
+$(LIB):		$(OBJ)
+		$(AR) cr $(LIB) $(OBJ)
 		$(RANLIB) $(LIB)
 
 clean:
@@ -56,3 +56,5 @@ clean:
 realclean:        
 		@echo cleaning in appl
 		@-rm -f *.o *.a Makefile
+		@-rm -f `(cd ../appl.c ; ls *.c)`
+		@-rm -f `(cd ../appl.f ; ls *.f)`

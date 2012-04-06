@@ -3,11 +3,15 @@ function(z)
 {
 	n <- as.integer(nrow(z$qr$qr))
 	k <- as.integer(z$qr$rank)
+	wts<- z$weights
+	res<-z$residuals
+	if( !is.null(wts) ) 
+		res<-res*sqrt(wts)
 	.Fortran("lminfl",
 		z$qr$qr, n, n, k,
 		z$qr$qraux,
 		z$coefficients,
-		z$residuals,
+		res,
 		hat=double(n),
 		coef=matrix(0,nr=n,nc=k),
 		sigma=double(n),

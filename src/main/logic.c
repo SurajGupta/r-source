@@ -46,6 +46,7 @@ static SEXP lbinary(SEXP call, SEXP op, SEXP args)
 	SEXP x, y, dims, tsp, class, xnames, ynames;
 	int mismatch, nx, ny, xarray, yarray, xts, yts;
 
+	mismatch = 0;
 	x = CAR(args);
 	y = CADR(args);
 
@@ -216,6 +217,10 @@ static SEXP binaryLogic(int code, SEXP s1, SEXP s2)
 	n1 = LENGTH(s1);
 	n2 = LENGTH(s2);
 	n = (n1 > n2) ? n1 : n2;
+	if ( n1 == 0 || n2 == 0 ) {
+		ans = allocVector(LGLSXP, 0);
+		return ans;
+	}
 	ans = allocVector(LGLSXP, n);
 
 	switch (code) {

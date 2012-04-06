@@ -90,6 +90,10 @@ void jump_to_toplevel()
 
 	inError = 1;
 	if (R_Console == 0) fclose(R_Inputfile);
+#ifdef OLD
+#else
+	R_SetInput(0);
+#endif
 	ResetConsole();
 	FlushConsole();
 	R_ParseError = 0;
@@ -125,11 +129,7 @@ void jump_now()
 	R_PPStackTop = 0;
 	if(R_Interactive) longjmp(R_ToplevelContext->cjmpbuf, 0);
 	else REprintf("Execution halted\n");
-}
-void suicide(char *s)
-{
-	REprintf("Fatal error: %s\n", s);
-	RCleanUp(2);	/* 2 means don't save anything and it's an unrecoverable abort */
+	exit(1);
 }
 
 #ifdef Macintosh

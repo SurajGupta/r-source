@@ -18,11 +18,11 @@
 
 #include "wincons.h"
 
+char REdfilename[MAX_PATH];
 static int inFlag=1;
 
 static HWND REditFrame, REditWnd;
 
-static char REdfilename[MAX_PATH];
 HMENU RMenuEdit, RMenuEditWin;
 
 int InitEditor(void) 
@@ -50,7 +50,8 @@ int InitEditor(void)
                         WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL |
                         ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL ,
                         0, 0, (r.right - r.left), (r.bottom - r.top),
-                        REditFrame, (HMENU) RRR_TEDIT, RInst, NULL);        
+                        REditFrame, (HMENU) RRR_TEDIT, RInst, NULL);
+        DragAcceptFiles(REditFrame, TRUE);       
         return 1;
 }
 
@@ -61,7 +62,7 @@ void CloseEd(void) {
 }
 /*Empty the Edit Window */
 
-void EmptyEd(void) {
+static void EmptyEd(void) {
         int nchars;
         char Rbuf[1];
 
@@ -73,7 +74,7 @@ void EmptyEd(void) {
 
 /* Set the contents back to the original supplied argument */
 
-void RefreshEd(void) {
+static void RefreshEd(void) {
     int i;
     char tmp[MAXELTSIZE];
     FILE *fp;
@@ -118,6 +119,18 @@ LRESULT FAR PASCAL REditWndProc(HWND hWnd, UINT message, WPARAM wParam,
                             PostMessage(RClient, WM_MDIACTIVATE, (UINT) REditFrame,0);
                         }
                         break;
+                 case WM_SYSCOMMAND: /* Disable minimizing */
+                        if( (wParam & 0xFFF0) == SC_MINIMIZE ) {
+                            MessageBox(hWnd, "You can't iconify the R Editor",
+                                "R Data Entry", MB_OK | MB_ICONEXCLAMATION);
+                            return 1l;
+                        }
+                        break;
+                case WM_DROPFILES:
+                        R_ProcessDropFiles((HANDLE) wParam, 2);
+                        EmptyEd();
+                        RefreshEd();
+                        return 0;
                 case WM_COMMAND:
                         switch (GET_WM_COMMAND_ID(wParam,lParam)) {
                                 case RRR_QUIT:
@@ -142,6 +155,9 @@ LRESULT FAR PASCAL REditWndProc(HWND hWnd, UINT message, WPARAM wParam,
                                         }
                                         break;
                         }
+                        break;
+                case WM_SIZE:
+                        MoveWindow(REditWnd, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
                         break;
                 case WM_CLOSE:
                 case WM_DESTROY:

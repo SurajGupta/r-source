@@ -11,6 +11,16 @@ depending on whether the element of LANG(test)
 is LANG(TRUE) or LANG(FALSE).
 If LANG(yes) or LANG(no) are too short, their elements are recycled.
 )
-EXAMPLES(
-x <- ifelse(x > 0, sqrt(x), 0)
+SEEALSO(
+LANG(LINK(if)).
 )
+EXAMPLES(
+x <- c(6:-4)
+sqrt(x)#- gives warning
+sqrt(ifelse(x >= 0, x, NA))# no warning
+BLANK
+## Note: the following also gives the warning !
+ifelse(x >= 0, sqrt(x), NA)
+)
+
+

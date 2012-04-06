@@ -21,6 +21,7 @@
 #include <math.h>
 #include "WINcons.h"
 #include "Graphics.h"
+#include "wingdi.h"
 
 
 #define STRICT
@@ -38,21 +39,16 @@
     -CHOOSEFONT (the interactive dialog) has a flag that allows
         only TrueType fonts to be enumerated (should we allow
         only TrueType??)
-        ReSize:
-                -our philosphy is that you lose your current picture on
-                 resize;
 
         MetaFiles:
                 -a means of enabling print (the easy way is bitmaps
-        but I doubt all printers will support this).
-                -as of 6/5/95 I can't get CreateEnhMetaFile to work with
-                BCC so I am using the old Windows style (this is probably
-                better for printing and copying to the clipboard anyway)
-        -perhaps this will allow us to redraw the screen when it is
-                resized
-        -currently every graphics command must be executed twice; once to
-         plot to the screen and once to store it in the meta file (be careful
-         to only use commands that are allowable in metafiles...)
+                but I doubt all printers will support this).
+                -currently every graphics command must be executed twice; once to
+                plot to the screen and once to store it in the meta file (be careful
+                to only use commands that are allowable in metafiles...)
+                -clipping is a real problem with metafiles; the clipping info
+                is in device coords (so when you go to print on a laser printer
+                you need to transform all the clips)
 
 */
 
@@ -62,7 +58,8 @@
 static LOGFONT RGraphLF;
 static HANDLE pFont;
 HWND    RGraphWnd;
-static HANDLE RGMhmf=NULL;
+/* static HANDLE RGMhmf=NULL; */
+static HENHMETAFILE RGMhmf = NULL;
 static HDC        RGMhdc=NULL;
 HMENU RMenuGraph, RMenuGraphWin;
 
@@ -80,7 +77,7 @@ static void CopyGraphToScrap(void);
 static void Win_NewPlot(void);
 static void Win_Close(void);
 static void doGraphicsMenu(HWND, WPARAM, LPARAM);
-static void Win_SetMetaDC(void);
+static void Win_SetMetaDC(HDC);
 
 static void SetLineType(unsigned);
 
@@ -98,11 +95,11 @@ static int fontsize = -1;
 
 
 /* Windows Specific Parameters */
-static int fontindex = -1;
+static int fontindex = 2;
 static char *Rfontname[] = {"Courier New", "Times New", "Arial"};
 static char *Rfacename[] = {"","Bold","Italic","Bold Italic"};
 
-
+static int icount = 0;
 #define SMALLEST 8
 #define LARGEST 24
 
@@ -175,15 +172,15 @@ static void SetLineType(int newlty)
                 DeleteObject( SelectObject(Ihdc, RCurrentPen) );
                 ReleaseDC(RGraphWnd, Ihdc);
           }
-      }            
+      }           
 }
 
 static void SetColor(unsigned col, int object)
 {
     HDC Ihdc;
     COLORREF fcol, fixColor();
-
-    fcol = col >> 8;   /* to account for the different bit patterns in R and Windoze */
+    
+    fcol = RGB(R_RED(col),R_GREEN(col), R_BLUE(col));   /* to account for the different bit patterns in R and Windoze */
     Ihdc = GetDC(RGraphWnd);
     
     switch(object) {
@@ -234,42 +231,54 @@ static double Win_StrWidth(char *str)
     return (double) ext.cx;
 }
 
-static void Win_Circle(double x, double y, double r, int col, int border)
+static void Win_Circle(double x, double y, double r, int bg, int fg)
 {
     int ir, ix, iy;
     HDC thdc;
+    HBRUSH hBrush;
+    HPEN tPen;
 
 
     
     ir=(int) (r+0.5);
     ix=(int) x;
     iy=(int) y;
-    if(col != NA_INTEGER) {
-        SetColor(col, 2);
-        thdc=GetDC(RGraphWnd);
-        Ellipse(thdc, ix-ir,iy+ir,ix+ir,iy-ir);
-        ReleaseDC(RGraphWnd, thdc);
-        if( RGMhdc != NULL )
-                Ellipse(RGMhdc, ix-ir,iy+ir,ix+ir,iy-ir);
+
+    if( fg != NA_INTEGER )
+        SetColor(fg, 1);
+    if( bg != NA_INTEGER ) {
+        SetColor(bg, 2);
+        if( fg == NA_INTEGER )
+                SetColor(bg, 1);
     }
-    if(border != NA_INTEGER) {
-        SetLineType(GP->lty);
-        SetColor(border, 1);
-        thdc=GetDC(RGraphWnd);
-        Arc(thdc, ix-ir,iy+ir,ix+ir,iy-ir, ix, iy+ir, ix, iy+ir);
-        ReleaseDC(RGraphWnd, thdc);
-        if( RGMhdc != NULL )
-                Arc(RGMhdc, ix-ir,iy+ir,ix+ir,iy-ir, ix, iy+ir, ix, iy+ir);
-    }        
+                
+    thdc=GetDC(RGraphWnd);
+    if( bg == NA_INTEGER ) {
+        hBrush = SelectObject(thdc, GetStockObject(NULL_BRUSH));
+        if( fg == NA_INTEGER )
+                tPen = SelectObject(thdc, GetStockObject(NULL_PEN));
+    }
+
+    Ellipse(thdc, ix-ir,iy+ir,ix+ir,iy-ir);
+    if( RGMhdc != NULL )
+         Ellipse(RGMhdc, ix-ir,iy+ir,ix+ir,iy-ir);
+
+    if( bg == NA_INTEGER ) {
+        SelectObject(thdc, hBrush);
+        if( fg == NA_INTEGER )
+                SelectObject(thdc,tPen);
+    }
+    ReleaseDC(RGraphWnd, thdc);
 }
 
-static void Win_Polygon(int n, double *x, double *y)
+static void Win_Polygon(int n, double *x, double *y, int bg, int fg)
 {
         char *vmax, *vmaxget();
         int i;
         POINT *pt;
         HDC thdc;
-
+        HBRUSH hBrush;
+        HPEN tPen;
 
         vmax = vmaxget();
         if((pt=(POINT*)R_alloc(n,sizeof(POINT)))==NULL)
@@ -278,12 +287,30 @@ static void Win_Polygon(int n, double *x, double *y)
             pt[i].x = (int) (x[i]);
             pt[i].y = (int) (y[i]);
         }
-        SetColor(GP->col,2);
+        if( fg != NA_INTEGER )
+                SetColor(fg,1);
+        if( bg != NA_INTEGER ) {
+                SetColor(bg,2);
+                if( fg == NA_INTEGER )
+                        SetColor(bg, 1);
+        }
+
         thdc = GetDC(RGraphWnd);
+        if( bg == NA_INTEGER ) {
+                hBrush = SelectObject(thdc, GetStockObject(NULL_BRUSH));
+                if( fg == NA_INTEGER )
+                        tPen = SelectObject(thdc, GetStockObject(NULL_PEN));
+        }
         Polygon(thdc, pt, n);
-        ReleaseDC(RGraphWnd, thdc);
         if( RGMhdc != NULL )
                 Polygon(RGMhdc, pt, n);
+        if( bg == NA_INTEGER ) {
+                SelectObject(thdc, hBrush);
+                if( fg == NA_INTEGER )
+                        SelectObject(thdc, tPen);
+        }
+        ReleaseDC(RGraphWnd, thdc);
+        vmaxset(vmax);
 }
 
 static void Win_SavePlot(char *name)
@@ -309,7 +336,24 @@ static void Win_EndPath()
 {
 }
 
-
+int CALLBACK PaintMetafile(HDC hdc, HANDLETABLE* lpHTable, ENHMETARECORD* lpEMFR, int nObj,
+LPVOID lpData)
+{
+    double x0, x1, y0, y1;
+    char *x;
+    
+    icount++;
+    if( lpEMFR->iType == EMR_GDICOMMENT ) {
+        x = (char *) &(lpEMFR->dParm[1]);
+        if( x[0]=='R' && x[1]=='_' && x[2]=='C') {
+                sscanf(x+3,"%lf %lf %lf %lf",&x0,&x1,&y0,&y1);
+                Win_Clip(x0,x1,y0,y1);
+        }
+    }
+    else
+        PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
+    return(1);
+}
 
 /*
  *  there cannot be any references to RGraphWnd in this function
@@ -318,80 +362,92 @@ static void Win_EndPath()
 LRESULT FAR PASCAL GraphWndProc(HWND hWnd, UINT message, WPARAM wParam,
         LPARAM lParam)
 {
-        HDC hdc;
-                  PAINTSTRUCT ps;
+        PAINTSTRUCT ps;
+        HENHMETAFILE mfcpy;
+        RECT r1;
 
-                  switch(message) {
-                                         case WM_CREATE:
-                                                break;
-                                         case WM_SIZE:
-                                                if( wParam != SIZE_MINIMIZED ) {
-                                                        /* could do this with a different rect
-                                                         then compare and do a newplot if the
-                                                         rects aren't the same size   */
-
-                                                        GetClientRect(hWnd, &graphicsRect);
-                                                }
-                                                break;
-                                         case WM_LBUTTONDOWN:
-                                                if(LocatorDone==0) {
-                                                        MousePoint = MAKEPOINTS(lParam);
-                                                        LocatorDone=1;
-                                                        return 0;
-                                                }
-                                                break;
-                                         case WM_RBUTTONDOWN:
-                                                if(LocatorDone==0) {
-                                                        LocatorDone=2;
-                                                        return 0;
-                                                }
-                                                break;
-                                         case WM_COMMAND:    /* probably a problem with returning if doMenu does soemthing */
-                                                doGraphicsMenu(hWnd, wParam, lParam);
-                                                break;
-                                         case WM_PAINT:
-                                                hdc=BeginPaint(hWnd, &ps);
-                                                if ( RGMhdc != NULL ) {
-                                                          if( RGMhmf != NULL )
-                                                                DeleteMetaFile(RGMhmf);
-                                                          RGMhmf=CloseMetaFile(RGMhdc);
-                                                          RGMhdc=NULL;
-                                                }
-                                                if ( RGMhmf != NULL ) {
-                                                                PlayMetaFile(hdc, RGMhmf);
-                                                                Win_SetMetaDC();
-                                                                PlayMetaFile(RGMhdc, RGMhmf);
-                                                                DeleteMetaFile(RGMhmf);
-                                                                RGMhmf=NULL;
-                                                }
-                                                EndPaint(hWnd, &ps);
-                                                return 0;
-                                         case WM_SETFOCUS:
-                                                SetFocus(hWnd);
-                                                if (IsWindow(RGraphWnd))
-                                                        SendMessage(RGraphWnd, WM_MDIACTIVATE, (WPARAM) NULL,
-                                                                (LPARAM) RGraphWnd);
-                                                break;
-                                         case WM_MDIACTIVATE:
-                                                if((HWND) lParam == hWnd ) {
-                                                        SendMessage(RClient, WM_MDISETMENU,
-                                                                (WPARAM) RMenuGraph, (LPARAM) RMenuGraphWin);
-                                                                         DrawMenuBar(RFrame);
-                                                }
-                                                return(0);
-                                         case WM_CLOSE:
-                                                ShowWindow(hWnd, SW_MINIMIZE);
-                                                Win_Close();
-                                                return(0);
-                                         case WM_DESTROY:
-                                                                return(0);
-                        }
+        switch(message) {
+             case WM_CREATE:
+                 break;
+             case WM_SIZE:
+                 if( wParam != SIZE_MINIMIZED  ) { /* we must start a new plot because the clipping
+                     cannot be scaled properly */
+                         GetClientRect(hWnd, &r1);
+                         if( r1.bottom != graphicsRect.bottom
+                            || r1.right != graphicsRect.right ) {
+                             graphicsRect = r1;
+                             if( IsWindow(RGraphWnd) )
+                                Win_NewPlot();
+                         }
+                 }
+                 break;
+             case WM_LBUTTONDOWN:
+                icount= -1;
+                 if(LocatorDone==0) {
+                    MousePoint = MAKEPOINTS(lParam);
+                    LocatorDone=1;
+                    return 0;
+                  }
+                  break;
+             case WM_RBUTTONDOWN:
+                 if(LocatorDone==0) {
+                       LocatorDone=2;
+                       return 0;
+                 }
+                 break;
+              case WM_COMMAND:    /* probably a problem with returning if doMenu does soemthing */
+                  doGraphicsMenu(hWnd, wParam, lParam);
+                  break;
+              case WM_PAINT:
+                  if( icount == -1 ) {
+                       icount = 0;
+                   }
+                icount=0;
+                   BeginPaint(hWnd, &ps);
+                   SelectClipRgn(ps.hdc, NULL);
+                   if ( RGMhdc != NULL ) {
+                        if( RGMhmf != NULL )
+                               DeleteEnhMetaFile(RGMhmf);
+                        RGMhmf=CloseEnhMetaFile(RGMhdc);
+                   }
+                   if ( RGMhmf != NULL ) {
+                        if( mfcpy = CopyEnhMetaFile( RGMhmf, NULL) )
+                             EnumEnhMetaFile(ps.hdc, (HMETAFILE) mfcpy,
+                                  (ENHMFENUMPROC) PaintMetafile, NULL, &graphicsRect);
+                        SelectClipRgn(ps.hdc, NULL);
+                        Win_SetMetaDC(ps.hdc);
+                        PlayEnhMetaFile(RGMhdc, RGMhmf, &graphicsRect);
+                        DeleteEnhMetaFile(RGMhmf);
+                        RGMhmf=NULL;
+                   }
+                   EndPaint(hWnd, &ps);
+                   return 0;
+              case WM_SETFOCUS:
+                   SetFocus(hWnd);
+                   break;
+              case WM_MDIACTIVATE:
+                   if((HWND) lParam == hWnd ) {
+                       SendMessage(RClient, WM_MDISETMENU,
+                             (WPARAM) RMenuGraph, (LPARAM) RMenuGraphWin);
+                       DrawMenuBar(RFrame);
+                       InvalidateRect(hWnd,&graphicsRect, TRUE);
+                                                        
+                   }
+                   return(0);
+              case WM_CLOSE:
+                   ShowWindow(hWnd, SW_MINIMIZE);
+                   Win_Close();
+                   return(0);
+              case WM_DESTROY:
+                   return(0);
+      }
   return(DefMDIChildProc(hWnd, message, wParam, lParam));
 }
 
 void doGraphicsMenu(HWND GWnd, WPARAM wParam, LPARAM lParam)
 {
-        HANDLE prhmf;
+        HDC hdc;
+        
         switch (wParam) {
                 case RRR_SETUP:
                         SysBeep();
@@ -401,19 +457,16 @@ void doGraphicsMenu(HWND GWnd, WPARAM wParam, LPARAM lParam)
                 case RRR_PRINT:
                         if ( RGMhdc != NULL ) {
                                 if( RGMhmf != NULL )
-                                        DeleteMetaFile(RGMhmf);
-                                RGMhmf=CloseMetaFile(RGMhdc);
-                                RGMhdc=NULL;
-                                }
-                        prhmf = CopyMetaFile(RGMhmf,NULL);
-                        RPrintGraph(RConsoleFrame, prhmf, RGraphWnd);
-                        DeleteMetaFile(RGMhmf);
-                        if ( RGMhmf != NULL ) {
-                                Win_SetMetaDC();
-                                PlayMetaFile(RGMhdc, RGMhmf);
-                                DeleteMetaFile(RGMhmf);
-                                RGMhmf=NULL;
+                                        DeleteEnhMetaFile(RGMhmf);
+                                RGMhmf=CloseEnhMetaFile(RGMhdc);
                         }
+                        RPrintGraph(RConsoleFrame, CopyEnhMetaFile(RGMhmf,NULL));
+                        hdc = GetDC(RGraphWnd);
+                        Win_SetMetaDC(hdc);
+                        ReleaseDC(RGraphWnd, hdc);
+                        PlayEnhMetaFile(RGMhdc, RGMhmf, &graphicsRect);
+                        DeleteEnhMetaFile(RGMhmf);
+                        RGMhmf=NULL;
                         break;
                 case RRR_COPY:          
                         CopyGraphToScrap();
@@ -421,33 +474,23 @@ void doGraphicsMenu(HWND GWnd, WPARAM wParam, LPARAM lParam)
                 }
 }
 
-static void Win_SetMetaDC(void)
+static void Win_SetMetaDC(HDC Ihdc)
 {
-/* can't get enhanced meta files to work so we'll try the unenhanced ones
         RECT rr;
-        HDC Ihdc;
-        int iMMPerPelX, iMMPerPelY;
+        float iMMPerPelX, iMMPerPelY;
+        float i,j,k,l;
 
-        Ihdc=GetDC(RGraphWnd);
-        iMMPerPelX=(GetDeviceCaps(Ihdc, HORZSIZE)*100)/GetDeviceCaps(Ihdc, HORZRES);
-        iMMPerPelY=(GetDeviceCaps(Ihdc, VERTSIZE)*100)/GetDeviceCaps(Ihdc, VERTRES);
-        rr.left= graphicsRect.left* iMMPerPelX;
-        rr.top = graphicsRect.top* iMMPerPelY;
-        rr.right = graphicsRect.right* iMMPerPelX;
-        rr.bottom = graphicsRect.bottom* iMMPerPelY;
-        RGMhdc = CreateEnhMetaFile(Ihdc, NULL, &rr, NULL);
-        ReleaseDC(RGraphWnd, Ihdc);
-*/
-        RGMhdc=CreateMetaFile(NULL);
-        SelectObject(RGMhdc, RCurrentPen);
-        SelectObject(RGMhdc, RCurrentBrush);
-        SetTextColor(RGMhdc, RTextCol);
-        FillRect(RGMhdc, &graphicsRect, GetStockObject(WHITE_BRUSH));
-}
-
-void InitGraphicsContext(void)
-{
-        GetClientRect(RGraphWnd, &graphicsRect);
+        i = (float) GetDeviceCaps(Ihdc, HORZSIZE);
+        j = (float) GetDeviceCaps(Ihdc, HORZRES);
+        k = (float) GetDeviceCaps(Ihdc, VERTSIZE);
+        l = (float) GetDeviceCaps(Ihdc, VERTRES);
+        iMMPerPelX=(i*100.0)/j; 
+        iMMPerPelY=(k*100.0)/l; 
+        rr.left= floor(graphicsRect.left* iMMPerPelX);
+        rr.top = floor(graphicsRect.top* iMMPerPelY);
+        rr.right = floor(graphicsRect.right* iMMPerPelX);
+        rr.bottom = floor(graphicsRect.bottom* iMMPerPelY);
+        RGMhdc = CreateEnhMetaFile(Ihdc, NULL, &rr, "R metafile");
 }
 
 /* Current Clipping Rectangle */
@@ -493,18 +536,18 @@ static int Win_Open()
         Win_RGSetFont(fontface, 8, -1);
         
         ShowWindow(RGraphWnd, SW_SHOW);
-
-        InitGraphicsContext();
         Win_NewPlot();
+        
         DevInit = 1;
         return 1;
 }
 
 /* Set the Clipping Rectangle */
 static void Win_Clip(double x0, double x1, double y0, double y1)
-{
-    HRGN        hrgn;
+{ 
+    HRGN hrgn;
     HDC devHdc;
+    char x[100];
 
        if(x0 < x1) {
                 Clipxl = x0;
@@ -526,9 +569,12 @@ static void Win_Clip(double x0, double x1, double y0, double y1)
      devHdc = GetDC(RGraphWnd);
      SelectClipRgn(devHdc, hrgn);
      ReleaseDC(RGraphWnd, devHdc);
-     if( RGMhdc != NULL )
-        SelectClipRgn(RGMhdc, hrgn);
+     if( RGMhdc != NULL ) {
+         sprintf(x,"R_C %f %f %f %f",  x0, x1,  y0, y1);
+         GdiComment(RGMhdc, 100,x);
+     }
 }
+
 
 /* Actions on Window Resize */
 static void Win_Resize()
@@ -543,17 +589,17 @@ void Win_NewPlot()
 {
         HDC Nhdc;
 
-        if( RGraphWnd != NULL ) {
-                Nhdc=GetDC(RGraphWnd);
-                FillRect(Nhdc, &graphicsRect, GetStockObject(WHITE_BRUSH));
-                ReleaseDC(RGraphWnd, Nhdc);
-        }
-        /* set up the metafile stuff for a new picture */
+        Nhdc=GetDC(RGraphWnd);
+        FillRect(Nhdc, &graphicsRect, GetStockObject(WHITE_BRUSH));
+
         if( RGMhdc != NULL )
-                CloseMetaFile(RGMhdc);
-        Win_SetMetaDC();
+                DeleteEnhMetaFile(CloseEnhMetaFile(RGMhdc));
+        if( RGMhmf != NULL )
+                DeleteEnhMetaFile(RGMhmf);
+        Win_SetMetaDC(Nhdc);
+        FillRect(RGMhdc, &graphicsRect, GetStockObject(WHITE_BRUSH));
         Win_RGSetFont(fontface, fontsize, -1);
-        RGMhmf=NULL;
+        ReleaseDC(RGraphWnd, Nhdc);
 }
 
 /* Close the Graphics Window */
@@ -571,7 +617,7 @@ static void Win_Close()
         DevInit=0;
         SendMessage(RClient, WM_MDIDESTROY, (WPARAM) (HWND) RGraphWnd, 0);
         if( RGMhdc != NULL )
-                CloseMetaFile(RGMhdc);
+                CloseEnhMetaFile(RGMhdc);
         RGraphWnd=NULL;
         RGMhmf=NULL;
 }
@@ -607,11 +653,12 @@ static void Win_LineTo(double x, double y)
 }
 
 /* Draw a Filled Rectangle */
-static void Win_Rect(double x0, double y0, double x1, double y1, int fill)
+static void Win_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 {
         double tmp;
         HDC thdc;
-        HBRUSH hbrush;
+        HBRUSH hBrush;
+        HPEN tPen;
         
         if( x0 > x1 ) {
                 tmp = x0;
@@ -623,21 +670,32 @@ static void Win_Rect(double x0, double y0, double x1, double y1, int fill)
             y0 = y1;
             y1 = tmp;
         }
-        SetColor(GP->col,1);
-        SetColor(GP->col,2);
+
+        if( bg != NA_INTEGER ) {
+                SetColor(bg,2);
+                if( fg == NA_INTEGER )
+                        SetColor(bg, 1);
+        }
+        if( fg != NA_INTEGER )
+                SetColor(fg, 1);
+                
         thdc = GetDC(RGraphWnd);
-        if (!fill ) 
-            hbrush = SelectObject(thdc, GetStockObject(NULL_BRUSH));
+        if( bg == NA_INTEGER ) {
+                hBrush = SelectObject(thdc, GetStockObject(NULL_BRUSH));
+                if( fg == NA_INTEGER )
+                        tPen = SelectObject(thdc, GetStockObject(NULL_PEN));
+        }
+                       
         Rectangle(thdc,(int) x0,(int) y0,(int) x1,(int) y1);
-        if (!fill )
-                SelectObject(thdc, hbrush);
-        ReleaseDC(RGraphWnd, thdc);
         if( RGMhdc != NULL ) {
-            if ( !fill )
-                hbrush = SelectObject(RGMhdc, GetStockObject(NULL_BRUSH));
             Rectangle(RGMhdc,(int) x0,(int) y0,(int) x1,(int) y1);
-            if ( !fill )
-                SelectObject(RGMhdc, hbrush);
+            
+        if( bg == NA_INTEGER ) {
+                SelectObject(thdc, hBrush);
+                if( fg == NA_INTEGER )
+                        SelectObject(thdc, tPen);
+        }
+        ReleaseDC(RGraphWnd, thdc);
         }
 }
 
@@ -737,41 +795,29 @@ static void Win_Hold(void)
 
 static void CopyGraphToScrap(void)
 {
-        GLOBALHANDLE hGMem;
-        LPMETAFILEPICT lpMFP;
-        HANDLE hmf;
-        HANDLE hdc, hdc1;
+        HDC hdc;
 
-        hGMem=GlobalAlloc(GHND, (DWORD) sizeof(METAFILEPICT));
-        lpMFP=(LPMETAFILEPICT) GlobalLock(hGMem);
-
-        hdc=CreateMetaFile(NULL);
         if( RGMhdc != NULL ) {
                 if( RGMhmf != NULL )
-                        DeleteMetaFile(RGMhmf);
-                RGMhmf=CloseMetaFile(RGMhdc);
+                        DeleteEnhMetaFile(RGMhmf);
+                RGMhmf=CloseEnhMetaFile(RGMhdc);
                 RGMhdc=NULL;
         }
-        PlayMetaFile(hdc, RGMhmf);
-        hmf=CloseMetaFile(hdc);
-        hdc1=GetDC(RGraphWnd);
-
-        lpMFP->mm = GetMapMode(hdc1);
-        lpMFP->xExt = DP->right;
-        lpMFP->yExt = DP->bottom;
-        lpMFP->hMF = hmf;
-
-        ReleaseDC(RGraphWnd, hdc1);
-        GlobalUnlock(hGMem);
-        OpenClipboard(RFrame);
-        EmptyClipboard();
-        SetClipboardData(CF_METAFILEPICT, hGMem);
-        CloseClipboard();
-        Win_SetMetaDC();
-        /*reset the meta display context */
-        PlayMetaFile(RGMhdc, RGMhmf);
-        DeleteMetaFile(RGMhmf);
-        RGMhmf=NULL;
+        if( RGMhmf != NULL ) {
+            if( OpenClipboard(RFrame) ) {
+                EmptyClipboard();
+                SetClipboardData(CF_ENHMETAFILE, CopyEnhMetaFile(RGMhmf, NULL));
+                CloseClipboard();
+            }
+            else
+                MessageBox( RFrame, "Cannot open the clipboard","R Application",
+                MB_ICONEXCLAMATION | MB_OK);
+            hdc = GetDC(RGraphWnd);
+            Win_SetMetaDC(hdc);
+            PlayEnhMetaFile(RGMhdc, RGMhmf, &graphicsRect);
+            DeleteEnhMetaFile(RGMhmf);
+            RGMhmf=NULL;
+        }
 }
 
 /* Device Driver */
@@ -783,7 +829,7 @@ int WinDeviceDriver()
         if( RGraphWnd != NULL )
                 return 1;
         RPenCol = 0;
-        RBrushCol = RRGB(255,255,255);
+        RBrushCol = R_RGB(255,255,255);
         RTextCol = 0;
         
         DevInit = 0;
@@ -855,7 +901,7 @@ int WinDeviceDriver()
          * don't accidentally delete one of them
          */
         RCurrentPen = CreatePen(PS_SOLID, 1, 0);
-        RCurrentBrush = CreateSolidBrush(RRGB(0,255,255));
+        RCurrentBrush = CreateSolidBrush(RGB(255,255,255));
         RCurrentLty = PS_SOLID;
         SelectObject(DDhdc, RCurrentPen);
         SelectObject(DDhdc, RCurrentBrush);

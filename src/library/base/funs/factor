@@ -1,13 +1,15 @@
-factor <-
-function(x, levels=sort(unique(x)), labels, exclude=NA, ordered=FALSE)
+"factor" <-
+function (x, levels = sort(unique(x), na.last = TRUE), labels, exclude = NA, 
+	ordered = FALSE) 
 {
-	if(length(x) == 0) return(character(0))
-	if(length(exclude) > 0) {
-		exclude <- as.vector(exclude, typeof(x))
-		levels <- levels[is.na(match(levels, exclude))]
-	}
-	x <- .Internal(factor(match(x, levels), length(levels), ordered))
-	if(missing(labels)) levels(x) <- levels
+	if (length(x) == 0) 
+		return(character(0))
+	exclude <- as.vector(exclude, typeof(x))
+	levels <- levels[is.na(match(levels, exclude))]
+	x <- .Internal(factor(match(x, levels), length(levels), 
+		ordered))
+	if (missing(labels)) 
+		levels(x) <- levels
 	else levels(x) <- labels
 	x
 }
@@ -23,12 +25,13 @@ function(x, ordered=FALSE)
         x
 }
 ordered <-
-function(x, levels=sort(unique(x)), labels, exclude=NA, ordered=TRUE)
+function(x, levels=sort(unique(x), na.last = TRUE), labels, exclude = NA,
+	ordered=TRUE)
 {
-	if(length(exclude) > 0) {
-		exclude <- as.vector(exclude, typeof(x))
-		levels <- levels[is.na(match(levels, exclude))]
-	}
+	if (length(x) == 0)
+		return(character(0))
+	exclude <- as.vector(exclude, typeof(x))
+	levels <- levels[is.na(match(levels, exclude))]
 	x <- .Internal(factor(match(x, levels), length(levels), ordered))
 	if(missing(labels)) levels(x) <- levels
 	else levels(x) <- labels

@@ -29,3 +29,13 @@ columnar data.
 
 Keyboard entry is terminated by typing a blank line.
 )
+SEEALSO(
+LANG(LINK(read.table)) for more user-friendly reading of data matrices.
+LANG(LINK(write)).
+)
+EXAMPLES(
+system("echo 'TITEL extra line' > ex.data")
+system("echo 2 3 5 7 >> ex.data")
+system("echo 11 13 17 >> ex.data")
+scan("ex.data", skip = 1)
+)

@@ -17,8 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/*
+/* =========
  * Printing:
+ * =========
  *
  * All printing in R is done via the functions Rprintf and REprintf.
  * These routines work exactly like printf(3).  Rprintf writes to
@@ -27,7 +28,10 @@
  * ``standard error'' and is useful for error messages and warnings.
  * It is not redirected by sink().
  *
- * Utilities:
+ *== see ./format.c  for the  format_FOO_  functions which provide
+ *       ~~~~~~~~~~  the  length, width, etc.. that are used here.
+ *
+ * Following UTILITIES:
  *
  * The utilities EncodeLogical, EncodeFactor, EncodeInteger, EncodeReal
  * and EncodeString can be used to convert R objects to a form suitable
@@ -162,6 +166,10 @@ char *EncodeComplex(complex x, int wr, int dr, int er, int wi, int di, int ei)
 }
 #endif
 
+	/* There is a heavy ASCII emphasis here */
+	/* Latin1 types are (rightfully) upset */
+	/* WHAT NEEDS TO CHANGE */
+
 static int hexdigit(unsigned int x)
 {
 	return ((x <= 9)? '0' :  'A'-10) + x;
@@ -189,8 +197,14 @@ int Rstrlen(char *s)
 		case '\n':
 		case '\r':
 		case '\t':
-		case '\v': len += 2; break;
-		default: len += 4; break;
+		case '\v':
+			len += 2; break;
+		default:
+#ifdef OLD
+			len += 4; break;
+#else
+			len += 1; break;
+#endif
 		}
 		p++;
 	}
@@ -207,6 +221,9 @@ char *EncodeString(char *s, int w, int quote)
 		p = CHAR(print_na_string);
 	else    p = s;
 	while(*p) {
+
+		/* ASCII */
+
 		if(isprint(*p)) {
 			switch(*p) {
 			case '\\': *q++ = '\\'; *q++ = '\\'; break;
@@ -215,17 +232,28 @@ char *EncodeString(char *s, int w, int quote)
 			default: *q++ = *p; break;
 			}
 		}
+
+		/* ANSI Escapes */
+
 		else switch(*p) {
-		case '\a': *q++ = '\\'; *q++ = 'a'; break;
-		case '\b': *q++ = '\\'; *q++ = 'b'; break;
-		case '\f': *q++ = '\\'; *q++ = 'f'; break;
-		case '\n': *q++ = '\\'; *q++ = 'n'; break;
-		case '\r': *q++ = '\\'; *q++ = 'r'; break;
-		case '\t': *q++ = '\\'; *q++ = 't'; break;
-		case '\v': *q++ = '\\'; *q++ = 'v'; break;
-		default: *q++ = '0'; *q++ = 'x';
-			*q++ = hexdigit((*p & 0xF0) >> 4);
-			*q++ = hexdigit(*p & 0x0F);
+			case '\a': *q++ = '\\'; *q++ = 'a'; break;
+			case '\b': *q++ = '\\'; *q++ = 'b'; break;
+			case '\f': *q++ = '\\'; *q++ = 'f'; break;
+			case '\n': *q++ = '\\'; *q++ = 'n'; break;
+			case '\r': *q++ = '\\'; *q++ = 'r'; break;
+			case '\t': *q++ = '\\'; *q++ = 't'; break;
+			case '\v': *q++ = '\\'; *q++ = 'v'; break;
+
+		/* Latin1 Swallowed Here */
+
+#ifdef OLD
+			default: *q++ = '0'; *q++ = 'x';
+				*q++ = hexdigit((*p & 0xF0) >> 4);
+				*q++ = hexdigit(*p & 0x0F);
+#else
+			default:
+				*q++ = *p; break;
+#endif
 		}
 		p++;
 	}

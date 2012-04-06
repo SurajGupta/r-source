@@ -1,4 +1,17 @@
 #!/bin/sh
+#-------------- This is still FAR from perfect
+#-------------- One example which fails is the EXAMPLES section which 
+#-------------- is NOT really made 'verbatim' but rather has lines broken.
+#-------------  --->  ?digamma   for example
+#
+# Splus seems to be better here.  Current status of analysis (MMä):
+#
+#	setenv SHOME /usr/local/splus
+#	$SHOME/cmd/help-dbg for $SHOME/splus/.Functions
+# -->
+#	nroff -Ttn300 $SHOME/cmd/help.nr $SHOME/splus/.Functions/.Help/for
+#	groff -Tascii $SHOME/cmd/help.nr $SHOME/splus/.Functions/.Help/for | m
+
 
 (cat << 'END'
 undefine(`eval')
@@ -11,6 +24,7 @@ undefine(`substr')
 undefine(`paste')
 define(INDENT,0.5i)
 define(TAGOFF,1i)
+define(KEYWORD,`')
 define(COMMENT,`')
 define(TITLE,`
 .ND
@@ -122,6 +136,8 @@ define(DEQN,`
 $2
 .DE
 ')
+define(DEQTEX,`')
+define(DEQHTML,`')
 END
 # Fix up the input to protect things that m4 is sensitive about.
 sed '
@@ -136,7 +152,6 @@ s/@@/,/g
 s/ifelse/M4_IFELSE/g
 ' $*) |m4 |sed '
 /^$/d
-/^$/d
 s/^BLANK$//
 s/DOTS/\.\.\./g
 s/M4_unix/unix/g
@@ -147,8 +162,8 @@ s/M4_LQ/`/g
 s/M4_RQ/'\''/g
 s/M4_COMMA/,/g
 s/M4_IFELSE/ifelse/g
-s/^.Internal/\\\&.Internal/
-s/^.C/\\\&.C/
-s/^.Fortran/\\\&.Fortran/
+s/^\.Internal/\\\&.Internal/
+s/^\.C/\\\&.C/
+s/^\.Fortran/\\\&.Fortran/
 s/\\n/\\\\n/g
 '

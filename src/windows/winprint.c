@@ -26,23 +26,60 @@
   line breaking procedure is needed.
   The user should be able to set the font somehow (perhaps we should use
   the same font as is current in the display window).
-
-  RPrintGraph: should only need the Metafile and the size of the PlotWin
-  to do its thing.
+ 
 */
 
 BOOL bPrint;
 HWND hdlgCancel;
 
-void RPrintGraph(HWND hwnd, HANDLE RMhmf, HWND PlotWin)
+/* sizes of the printer P*** and the window W*** needed to translate the clipping region */
+static float PPixelsX, PPixelsY, PMMX, PMMY;
+static float WPixelsX, WPixelsY, WMMX, WMMY;
+
+
+int CALLBACK PrintMetafile(HDC hdc, HANDLETABLE* lpHTable, ENHMETARECORD* lpEMFR, int nObj,
+LPVOID lpData)
 {
-        PRINTDLG pd;
-        DOCINFO di;
-        SIZE p1;
+    double x0, x1, y0, y1;
+    char *x;
+    HRGN hrgn;
+    
+    if( lpEMFR->iType == EMR_GDICOMMENT ) {
+        x = (char *) &(lpEMFR->dParm[1]);
+        if( x[0]=='R' && x[1]=='_' && x[2]=='C') {
+                sscanf(x+3,"%lf %lf %lf %lf",&x0,&x1,&y0,&y1);
+                x0 = x0*PPixelsX*WMMX/(WPixelsX*PMMX);
+                x1 = x1*PPixelsX*WMMX/(WPixelsX*PMMX);
+                y0 = y0*PPixelsY*WMMY/(WPixelsY*PMMY);
+                y1 = y1*PPixelsY*WMMY/(WPixelsY*PMMY);
+                hrgn = CreateRectRgn((int) x0, (int) y0, (int) x1, (int) y1);
+                SelectClipRgn(hdc, hrgn);
+        }
+    }
+    else
+        PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
+    return(1);
+}
+
+BOOL RPrintGraph(HWND hwnd, HENHMETAFILE RMhmf)
+{
+        static PRINTDLG pd;
+        static DOCINFO di = {sizeof(DOCINFO), "", NULL};
         RECT rect;
         int nError;
+        HDC hdc;
+        ENHMETAHEADER emh;
 
+        if( RMhmf == NULL ) /* nothing to print */
+                return FALSE;
 
+                
+        ZeroMemory(&emh, sizeof(ENHMETAHEADER));
+        emh.nSize = sizeof(ENHMETAHEADER);
+        if( GetEnhMetaFileHeader( RMhmf, sizeof(ENHMETAHEADER), &emh) == 0 )
+                return FALSE;
+        
+        
         pd.lStructSize = sizeof(PRINTDLG);
         pd.hDevMode = (HANDLE) NULL;
         pd.hDevNames = (HANDLE) NULL;
@@ -55,6 +92,7 @@ void RPrintGraph(HWND hwnd, HANDLE RMhmf, HWND PlotWin)
         pd.nMaxPage = 0;
         pd.nCopies = 1;
         pd.hInstance = (HANDLE) NULL;
+        pd.lCustData = 0L;
         pd.lpfnPrintHook = (LPPRINTHOOKPROC) NULL;
         pd.lpfnSetupHook = (LPPRINTHOOKPROC) NULL;
         pd.lpPrintTemplateName = (LPSTR) NULL;
@@ -73,9 +111,8 @@ void RPrintGraph(HWND hwnd, HANDLE RMhmf, HWND PlotWin)
 
         EnableWindow(hwnd, FALSE);
 
-        di.cbSize = sizeof(DOCINFO);
-        di.lpszDocName = "Test 1";
-        di.lpszOutput = (LPSTR) NULL;
+
+        
 
         nError = StartDoc(pd.hDC, &di);
         if( nError == SP_ERROR )
@@ -85,12 +122,23 @@ void RPrintGraph(HWND hwnd, HANDLE RMhmf, HWND PlotWin)
         if( nError <= 0 )
                 goto Error;
 
-        SetMapMode(pd.hDC, MM_ISOTROPIC);
-        SetBkMode(pd.hDC, TRANSPARENT);
-        GetClientRect(PlotWin, &rect);
-        SetWindowExtEx(pd.hDC,rect.right,rect.bottom,&p1);
-        SetViewportExtEx(pd.hDC, GetDeviceCaps(pd.hDC, HORZRES), GetDeviceCaps(pd.hDC, VERTRES),NULL);
-        PlayMetaFile(pd.hDC, RMhmf);
+        PPixelsX = (float) GetDeviceCaps( pd.hDC, HORZRES);
+        PPixelsY = (float) GetDeviceCaps(pd.hDC, VERTRES);
+        PMMX = (float) GetDeviceCaps(pd.hDC, HORZSIZE);
+        PMMY = (float) GetDeviceCaps(pd.hDC, VERTSIZE);
+        
+        hdc = GetDC(hwnd);
+        WPixelsX = (float) GetDeviceCaps(hdc,HORZRES);
+        WPixelsY = (float) GetDeviceCaps(hdc, VERTRES);
+        WMMX = (float) GetDeviceCaps(hdc, HORZSIZE);
+        WMMY = (float) GetDeviceCaps(hdc, VERTSIZE);
+        ReleaseDC(hwnd, hdc);
+        
+        rect.top = (int)((float)(emh.rclFrame.top)*PPixelsY / (PMMY*100.0f));
+        rect.left = (int)((float)(emh.rclFrame.left)*PPixelsX / (PMMX*100.0f));
+        rect.right = (int)((float)(emh.rclFrame.right)*PPixelsX / (PMMX*100.0f));
+        rect.bottom = (int)((float)(emh.rclFrame.bottom)*PPixelsY / (PMMY*100.0f));
+        EnumEnhMetaFile(pd.hDC, (HMETAFILE) RMhmf, (ENHMFENUMPROC) PrintMetafile, NULL, &rect);
 
         nError = EndPage(pd.hDC);
         if(nError <= 0 )
@@ -102,12 +150,13 @@ Error:
         EnableWindow(hwnd, TRUE);
         DestroyWindow(hdlgCancel);
         DeleteDC(pd.hDC);
+        return bPrint;
 }
 
 void RPrintText(HWND hwnd, HWND TextWin)
 {
-        PRINTDLG pd;
-        DOCINFO di;
+        static PRINTDLG pd;
+        static DOCINFO di = {sizeof(DOCINFO), "", NULL};
         TEXTMETRIC tm;
         int nError, nTotalLines, ychar, nLinesPerPage, nTotalPages, nPage;
         int nNonColCopy, nColCopy, nLine, nLineNum, nCharsPerLine, nchars;
@@ -125,6 +174,7 @@ void RPrintText(HWND hwnd, HWND TextWin)
         pd.nMaxPage = 0;
         pd.nCopies = 1;
         pd.hInstance = (HANDLE) NULL;
+        pd.lCustData = 0L;
         pd.lpfnPrintHook = (LPPRINTHOOKPROC) NULL;
         pd.lpfnSetupHook = (LPPRINTHOOKPROC) NULL;
         pd.lpPrintTemplateName = (LPSTR) NULL;

@@ -16,3 +16,7 @@ The associated function LANG(gcinfo) sets a flag so that
 automatic collection is either silent (LANG(verbose=FALSE)) or
 prints memory use statistics (LANG(verbose=TRUE)).
 )
+EXAMPLES(
+gc() #- do it now
+gcinfo(TRUE) #-- in the future, show when you do it
+)

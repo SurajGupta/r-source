@@ -15,3 +15,7 @@ probabilities at which to evaluate the inverse distribution.
 SEEALSO(
 LANG(LINK(qqplot)), LANG(LINK(qqnorm)).
 )
+EXAMPLES(
+ppoints(4)
+ppoints(10)
+)

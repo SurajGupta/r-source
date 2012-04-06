@@ -37,5 +37,5 @@ EXAMPLES(
 x <- 1:10
 y <- rnorm(10)
 plot(x, y)
-points(approx(x, y))
+points(approx(x, y), col=1, pch='*')
 )

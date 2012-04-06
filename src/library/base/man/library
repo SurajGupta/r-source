@@ -52,7 +52,8 @@ if it has not been loaded already. It is designed to be used inside
 a library rather than at the command line.
 PARA
 LANG(help(library(name))) prints a list of functions in library "name".
-PARA BOLD(CREATING LIBRARIES)
+PARA 
+BOLD(CREATING LIBRARIES)
 Libraries provide a mechanism for loading optional code and its documentation
 as needed. Libraries are compiled and installed from subdirectories
 of RHOME/src/library; LANG(eda) and LANG(mva) are provided as examples. 

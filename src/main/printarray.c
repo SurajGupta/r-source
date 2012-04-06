@@ -17,6 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*== see ./printutils.c  for general remarks on Printing and the Encode.. utils.
+ *== see ./format.c      for the  format_FOO_  functions used below.
+ */
 #include "Defn.h"
 #include "Print.h"
 

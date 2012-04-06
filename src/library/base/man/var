@@ -1,13 +1,17 @@
 TITLE(var @@ Covariance Matrices)
 USAGE(
-var(x, y=x, na.rm=FALSE, pairwise=FALSE)
+var(x, y=x, na.rm=FALSE, use)
 )
 ALIAS(var)
 ARGUMENTS(
 ARG(x @@ a matrix or vector.)
 ARG(y @@ a matrix or vector.)
-ARG(pairwise @@ logical.)
 ARG(na.rm @@ logical.)
+ARG(use @@ an optional character string giving a
+method for computing covariances in the presence
+of missing values.  This must be one of LANG("all.obs"),
+LANG("complete.obs") or LANG("pairwise.complete.obs"),
+with abbreviation being permited.)
 )
 DESCRIPTION(
 LANG(var) computes the variance of LANG(x) and the
@@ -16,11 +20,16 @@ are vectors. If LANG(x) and LANG(y) are matrices then
 the covariance between the columns of LANG(x) and the
 the columns of LANG(y) are computed.
 PARA
-If LANG(na.rm) is LANG(TRUE) then missing values are
-removed from the vectors before calculation.
-If LANG(pairwise) is LANG(FALSE) (the default),
-missing values in matrices are handled by casewise deletion.
-If LANG(pairwise) is LANG(TRUE), all cases which are
+If LANG(na.rm) is LANG(TRUE) then the complete observations (rows)
+are use to compute the variance.  If LANG(na.rm) is LANG(FALSE)
+and there are missing values, then LANG(var) will fail.
+PARA
+The argument LANG(use) can also be used for describing how
+to handle missing values.
+Specifying LANG(use="all") is equivalent to specifying
+LANG(na.rm=FALSE) and specifying LANG(use="pair") is equivalent to
+LANG(na.rm=TRUE).
+If LANG(use="pair"), then all the observations which are
 complete for a pair of variables is used to compute the
 covariance for that pair of variables.
 This can result in covariance matrices which are not

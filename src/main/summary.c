@@ -35,6 +35,7 @@ static void isum(int *x, int n, double *value)
 			count += 1;
 		}
 		else if (!narm) {
+			count += 1;
 			*value = NA_REAL;
 			return;
 		}
@@ -53,6 +54,7 @@ static double rsum(double *x, int n, double *value)
 			count += 1;
 		}
 		else if (!narm) {
+			count += 1;
 			*value = NA_REAL;
 			return;
 		}
@@ -73,6 +75,7 @@ static double csum(complex *x, int n, complex *value)
 			count += 1;
 		}
 		else if (!narm) {
+			count += 1;
 			value->r = NA_REAL;
 			value->i = NA_REAL;
 			return;
@@ -167,6 +170,7 @@ static double iprod(int *x, int n, double *value)
 			count += 1;
 		}
 		else if (!narm) {
+			count += 1;
 			*value = NA_REAL;
 			return;
 		}
@@ -189,6 +193,7 @@ static double rprod(double *x, int n, double *value)
 			count += 1;
 		}
 		else if (!narm) {
+			count += 1;
 			*value = NA_REAL;
 			return;
 		}
@@ -215,6 +220,7 @@ static double cprod(complex *x, int n, complex *value)
 			s.i = MATH_CHECK(t.r * x[i].i + t.i * x[i].r);
 		}
 		else if (!narm) {
+			count += 1;
 			value->r = NA_REAL;
 			value->i = NA_REAL;
 			return;

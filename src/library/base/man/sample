@@ -16,12 +16,12 @@ If LANG(x) has length 1, sampling takes place from
 LANG(1:x).
 )
 EXAMPLES(
+x <- 1:12
 # a random permutation
 sample(x)
-
 # bootstrap sampling
 sample(x,replace=TRUE)
-
+BLANK
 # 100 Bernoulli trials
-sample(c(0,1), 100)
+sample(c(0,1), 100, replace = TRUE)
 )

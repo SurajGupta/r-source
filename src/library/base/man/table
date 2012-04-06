@@ -9,6 +9,17 @@ to build a contingency table of the counts at each combination
 of factor levels.
 )
 EXAMPLES(
+## Simple frequency distribution
+table(rpois(100,5))
+data(warpbreaks)
+attach(warpbreaks)	 
+## Check the design:
+table(wool,tension)
+data(state)
+table(state.division, state.region)
+BLANK
+data(airquality)
+attach(airquality)
 # simple two-way contingency table
-tab <- table(sex,age)
+table(cut(Temp, quantile(Temp)), Month)
 )

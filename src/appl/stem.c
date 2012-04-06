@@ -23,8 +23,12 @@
 void Rprintf(char*,...);
 void rsort(double*,int);
 
+#ifndef Win32
+
 #define min(x,y)        ((x<y)?x:y)
 #define max(x,y)        ((x<y)?y:x)
+
+#endif
 
 static void stem_print(int close, int dist, int ndigits)
 {

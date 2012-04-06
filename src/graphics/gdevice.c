@@ -50,6 +50,7 @@ void (*DevLinetype)();
 #endif
 void (*DevSavePlot)();
 void (*DevPrintPlot)();
+void (*DevMetricInfo)();
 
 
 
@@ -88,6 +89,7 @@ int SetDevice(char *name, char **cpars, int ncpars, double *npars, int nnpars)
 
 	DevSavePlot = DevNull;
 	DevPrintPlot = DevNull;
+	DevMetricInfo = 0;
 
 	
 #ifdef Macintosh

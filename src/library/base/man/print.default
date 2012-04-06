@@ -22,3 +22,9 @@ printed matrices and arrays.
 SEEALSO(
 LANG(LINK(options)).
 )
+EXAMPLES(
+pi
+print(pi, digits = 16)
+LETTERS[1:16]
+print(letters, quote = FALSE)
+)

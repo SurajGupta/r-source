@@ -48,3 +48,12 @@ col <- function(x, as.factor=FALSE) {
 crossprod <-
 function(x, y=x)
 .Internal(crossprod(x,y))
+
+t <- function(x)
+ UseMethod("t")
+
+t.data.frame<- function(x)
+{
+        x <- as.matrix(x)
+        NextMethod("t")
+}

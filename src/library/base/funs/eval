@@ -2,13 +2,7 @@
 
 eval <-
 function(expr, envir=sys.frame(sys.parent()))
-{
-	if(is.expression(expr))
-		y<-for(i in 1:length(expr))
-			.Internal(eval(expr[[i]],envir))
-	else y<-.Internal(eval(expr, envir))
-	y
-}
+.Internal(eval(expr, envir))
 
 quote <- function(x) substitute(x)
 

@@ -61,6 +61,10 @@ ARG(conf @@ the lower and upper extremes of the notch.)
 ARG(out @@ the values of any data points which lie beyond the
 extremes of the whiskers.)
 )
+SEEALSO(
+LANG(LINK(boxplot.stats)) which does the computation and
+LANG(LINK(bxp)) for the plotting.
+)
 EXAMPLES(
 data(insects)
 boxplot(count~spray, data=insects, col="lightgray")

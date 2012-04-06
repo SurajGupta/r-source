@@ -8,7 +8,7 @@ ARG(n@@the number of colors in the rainbow.)
 ARG(s,v@@the ``saturation'' and ``value'' to be used to
 complete the HSV color descriptions.)
 ARG(start@@the (corrected) hue at which the rainbow begins.)
-ARG(end@@the (corrected) hue at which the rainbow ends.)
+ARG(end @@ the (corrected) hue at which the rainbow ends.)
 )
 DESCRIPTION(
 This function creates a ``rainbow'' of LANG(n) colors.
@@ -31,7 +31,8 @@ The values returned by LANG(rainbow) can be used with a
 LANG(col=) specification in graphics functions or in LANG(par).
 )
 SEEALSO(
-LANG(LINK(rgb)), LANG(LINK(hsv)), LANG(LINK(gray)).
+LANG(LINK(colors)), LANG(LINK(rgb)), LANG(LINK(hsv)), LANG(LINK(gray)),
+LANG(LINK(heat.colors)).
 )
 EXAMPLES(
 # A Color Wheel

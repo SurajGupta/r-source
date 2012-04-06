@@ -1,12 +1,15 @@
 formula <- function(x, ...) UseMethod("formula")
-formula.default <- function(x) {
-	if (!is.null(x$formula))
-		eval(x$formula)
-	switch(typeof(x),
-		NULL = structure(NULL, class="formula"),
-		character = formula(eval(parse(text=x)[[1]])),
-		call = eval(x),
-		stop("invalid formula"))
+formula.default<-function (x)
+{
+        if (!is.null(x$formula))
+                return(eval(x$formula))
+        if (!is.null(x$call$formula))
+                return(eval(x$call$formula))
+        if (!is.null(x$terms))
+                return(x$terms)
+        switch(typeof(x), NULL = structure(NULL, class = "formula"),
+                character = formula(eval(parse(text = x)[[1]])),
+                call = eval(x), stop("invalid formula"))
 }
 formula.formula <- function(x) x
 formula.terms <- function(x) {
@@ -75,7 +78,10 @@ function (x, specials = NULL, abb = NULL, data = NULL, keep.order = FALSE)
 
 coefficients <- function(x, ...)
 UseMethod("coefficients")
+
 coef <- coefficients
+
+coefficients.default <- function(x, ...) x$coefficients
 
 residuals <- function(x, ...) 
 UseMethod("residuals")

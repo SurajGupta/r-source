@@ -49,9 +49,10 @@ static int CountItems(SEXP sxp, int handsoff)
 		else return ncols(sxp);
 	}
 	if(isVector(sxp)) {
-		if(nr && (nr != length(sxp)))
+		if(nr && (nr != length(sxp)) && length(sxp) != 1)
 			BadDimensions();
-		nr = length(sxp);
+		if(length(sxp) != 1)
+			nr = length(sxp);
 		nc += 1;
 		return 1;
 	}
@@ -64,13 +65,21 @@ static int CountItems(SEXP sxp, int handsoff)
 
 static void InsertVector(SEXP sxp, int handsoff)
 {
-	if(NAMED(sxp)) {
-		CAR(rlistp) = duplicate(sxp);
+	SEXP tmp;
+	int i;
+
+	if(NAMED(sxp))
+		sxp = duplicate(sxp);
+	PROTECT(sxp);
+
+	if( length(sxp) == 1 && nr!= 1 ) {
+		tmp=allocVector(TYPEOF(sxp),nr);
+		copyVector(tmp,sxp);
+		sxp=tmp;
 	}
-	else {
-		CAR(rlistp) = sxp;
-		NAMED(sxp) = 1;		/* can't re-use */
-	}
+	UNPROTECT(1);
+	CAR(rlistp) = sxp;
+	NAMED(sxp) = 1;		/* can't re-use */
 	rlistp = CDR(rlistp);
 }
 

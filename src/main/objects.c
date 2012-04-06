@@ -123,6 +123,9 @@ int usemethod(char *generic, SEXP obj, SEXP call, SEXP args, SEXP rho, SEXP *ans
 		/* Get the context which UseMethod was called from. */
 
 	cptr = R_GlobalContext;
+	if(cptr->callflag != CTXT_RETURN || cptr->cloenv != rho)
+		error("UseMethod used in an inappropriate fashion\n");
+#ifdef old
 	while(cptr != NULL) {
 		if(cptr->callflag == CTXT_RETURN && cptr->cloenv == rho)
 			break;
@@ -130,7 +133,7 @@ int usemethod(char *generic, SEXP obj, SEXP call, SEXP args, SEXP rho, SEXP *ans
 	}
 	if(cptr == NULL)
 		error("UseMethod called outside a function\n");
-
+#endif
 		/* Create a new environment without any */
 		/* of the formals to the generic in it. */
 
@@ -173,7 +176,9 @@ int usemethod(char *generic, SEXP obj, SEXP call, SEXP args, SEXP rho, SEXP *ans
 				defineVar(install(".Method"), t, newrho);
 				UNPROTECT(1);
 				PROTECT(t=LCONS(method,matchedarg));
+				R_GlobalContext->callflag=CTXT_GENERIC;
 				*ans = applyMethod(t,sxp,matchedarg,rho,newrho);
+				R_GlobalContext->callflag=CTXT_RETURN;
 				UNPROTECT(4);
 				return 1;
 			}
@@ -189,11 +194,14 @@ int usemethod(char *generic, SEXP obj, SEXP call, SEXP args, SEXP rho, SEXP *ans
 		defineVar(install(".Method"), t, newrho);
 		UNPROTECT(1);
 		PROTECT(t=LCONS(method,matchedarg));
+		R_GlobalContext->callflag=CTXT_GENERIC;
 		*ans = applyMethod(t, sxp, matchedarg, rho, newrho);
+		R_GlobalContext->callflag=CTXT_RETURN;
 		UNPROTECT(4);
 		return 1;
 	}
 	UNPROTECT(3);
+	cptr->callflag = CTXT_RETURN;
 	return 0;
 }
 
@@ -262,6 +270,8 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 	cptr=R_GlobalContext;
+	
+	cptr->callflag = CTXT_GENERIC;
 
 	/* get the env NextMethod was called from */
 	sysp = R_GlobalContext->sysparent;
@@ -272,7 +282,6 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	if(cptr == NULL)
 		error("NextMethod called from outside a closure\n");
-	nargs = length(args);
 
 	/* set up the arglist */
 	s=findFun(CAR(cptr->call), cptr->sysparent);
@@ -332,6 +341,7 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 			errorcall(call, "object not specified\n");
 		class = getAttrib(s, R_ClassSymbol);
 	}
+
 	generic = eval(CAR(args), env);
 	if( generic == R_NilValue ) {
 		generic = dynamicfindVar(install(".Generic"), R_GlobalContext);

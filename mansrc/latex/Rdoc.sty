@@ -1,0 +1,64 @@
+\RequirePackage{amsbsy}%-- AMS boldsymbol: defines '\boldsymbol'
+
+\oddsidemargin 2.35cm
+\evensidemargin 2.35cm
+
+%%old latex: \newcommand{\bold}[1]{\mbox{\boldmath $#1$}}
+%%not used: using \boldsymbol and \mathbf: \newcommand{\bold}[1]{$\mathbf{#1}$}
+
+\newcommand{\SetLmargin}{\setlength{\leftmargin}{0.375in}}
+
+\newlength{\middle}
+\setlength{\middle}{\textwidth}
+\addtolength{\middle}{-2.25in}
+\addtolength{\middle}{-4pt}
+
+\def\href#1#2{\special{html:<a href="#1">}{#2}\special{html:</a>}}
+
+\newenvironment{Header}[2]{%
+\markright{#1}
+%%-- would like to ADD '#1' to ``left mark'' (= 'Chapter 1. Fun...Doc..')...
+\noindent
+\nopagebreak
+\begin{center}
+  \begin{tabular}{c}
+    \hline \rule[-0.275cm]{0cm}{0.8cm}
+    \makebox[1in][l]{\tt #1}
+    \makebox[\middle]{\em #2}
+    \makebox[1in][r]{\tt #1} \\ \hline
+  \end{tabular}
+\end{center}
+\begin{list}{}\SetLmargin}%
+{\end{list}}
+
+\newenvironment{Arguments}[0]{
+\subsubsection*{Arguments}
+\begin{list}{}{\setlength{\leftmargin}{0.75in} \setlength{\labelwidth}{0.5in}}}
+{\end{list}}
+%\begin{list}{}{\setlength{\leftmargin}{0.75in} \setlength{\labelwidth}{0.75in}}}
+
+\newenvironment{Section}[1]{
+\subsubsection*{#1}\begin{list}{}\SetLmargin\item}{\end{list}}
+
+\newenvironment{Description}[0]{
+\subsubsection*{Description}\begin{list}{}\SetLmargin\item}{\end{list}}
+
+\newenvironment{Value}[0]{
+\subsubsection*{Value}\begin{list}{}\SetLmargin\item}{\end{list}}
+
+\newenvironment{Values}[1]{
+\subsubsection*{Value}\begin{list}{}\SetLmargin\item #1\end{list}
+\begin{list}{}{\setlength{\leftmargin}{0.75in} \setlength{\labelwidth}{0.75in}}}
+{\end{list}}
+
+\newenvironment{References}[0]{
+\subsubsection*{References}\begin{list}{}\SetLmargin\item}{\end{list}}
+
+\newenvironment{Note}[0]{
+\subsubsection*{Note}\begin{list}{}\SetLmargin\item}{\end{list}}
+
+\newenvironment{SeeAlso}[0]{
+\subsubsection*{See Also}\begin{list}{}\raggedright\SetLmargin\item}{\end{list}}
+
+\newenvironment{Examples}[0]{
+\subsubsection*{Examples}\begin{list}{}\SetLmargin\item}{\end{list}}

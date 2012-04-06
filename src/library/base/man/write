@@ -16,6 +16,9 @@ The data (usually a matrix) LANG(x) are written to file LANG(file).
 If LANG(x) is a two dimensional matrix you need to transpose it to get the
 columns in LANG(file) the same as those in the internal representation.
 )
+SEEALSO(
+LANG(LINK(scan)) for reading data.
+)
 EXAMPLES(
 # create a 2 by 5 matrix
 x <- matrix(1:10,ncol=5)

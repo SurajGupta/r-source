@@ -1,3 +1,4 @@
+#### -*- R -*-
 data(volcano)
 x <- 10*(1:nrow(volcano))
 y <- 10*(1:ncol(volcano))

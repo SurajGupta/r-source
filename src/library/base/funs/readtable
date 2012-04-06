@@ -50,7 +50,7 @@ function (file, header=FALSE, sep="", row.names, col.names, as.is=FALSE,
 	if (rlabp == 1)
 		col.names <- c("row.names", col.names)
 	names(what) <- col.names
-	data <- scan(file=file, what=what, sep=sep, n=nlines*cols, skip=skip,
+	data <- scan(file=file, what=what, sep=sep, nlines=nlines, skip=skip,
 			na.strings=na.strings, quiet=TRUE)
 
 		#  ok, now we have the data
@@ -73,7 +73,7 @@ function (file, header=FALSE, sep="", row.names, col.names, as.is=FALSE,
 		stop("as.is has the wrong length")
 	for (i in 1:cols) {
 		if (!as.is[i])
-			data[[i]] <- type.convert(data[[i]], na.strings = na.strings)
+			data[[i]] <- type.convert(data[[i]])
 	}
 
 		#  now we determine row names

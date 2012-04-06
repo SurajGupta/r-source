@@ -8,5 +8,5 @@ fix <- function(x) {
 		x <- edit(get(subx))
 	else
 		stop(paste("no object named \"", subx, "\" to edit",sep=""))
-	assign(subx, x, .GlobalEnv)
+	assign(subx, x, env=.GlobalEnv)
 }

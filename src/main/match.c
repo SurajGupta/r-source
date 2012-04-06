@@ -140,13 +140,14 @@ SEXP matchArg(SEXP tag, SEXP * list)
 
 SEXP matchArgs(SEXP formals, SEXP supplied)
 {
-	int i,nargs,seendots;
+	int i, nargs, seendots;
 	SEXP mp, f, a, b, dots, actuals;
 
 	actuals = R_NilValue;
-	for (i = 0; i < length(formals); i++) {
+	for(f=formals ; f!=R_NilValue ; f=CDR(f)) {
 		actuals = CONS(R_MissingArg, actuals);
 		MISSING(actuals) = 1;
+		ARGUSED(f) = 0;
 	}
 
 	for(b = supplied; b != R_NilValue; b=CDR(b)) 
@@ -162,16 +163,20 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 	a = actuals;
 	while (f != R_NilValue) {
 		if (TAG(f) != R_DotsSymbol) {
+			i = 1;
 			for (b = supplied; b != R_NilValue; b = CDR(b)) {
-				if (!ARGUSED(b) && TAG(b) != R_NilValue
-				    && pmatch(TAG(f), TAG(b), 1)) {
-					if (CAR(a) != R_MissingArg)
+				if (TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), 1)) {
+					if (ARGUSED(f) == 2)
 						error("formal argument \"%s\" matched by multiple actual arguments\n", CHAR(PRINTNAME(TAG(f))));
+					if (ARGUSED(b) == 2)
+						error("argument %d matches multiple formal arguments\n", i);
 					CAR(a) = CAR(b);
 					if(CAR(b) != R_MissingArg)
 						MISSING(a) = 0;		/* not missing this arg */
-					ARGUSED(b) = 1;
+					ARGUSED(b) = 2;
+					ARGUSED(f) = 2;
 				}
+				i++;
 			}
 		}
 		f = CDR(f);
@@ -187,22 +192,27 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 	f = formals;
 	a = actuals;
 	while (f != R_NilValue) {
-		if(CAR(a) == R_MissingArg) {
+		if(ARGUSED(f) == 0) {
 			if (TAG(f) == R_DotsSymbol && !seendots) {
 				/* Record where ... value goes */
 				dots = a;
 				seendots = 1;
 			}
 			else {
+				i = 1;
 				for (b = supplied; b != R_NilValue; b = CDR(b)) {
-					if (!ARGUSED(b) && TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), seendots)) {
-						if (CAR(a) != R_MissingArg)
+					if (ARGUSED(b) != 2 && TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), seendots)) {
+						if (ARGUSED(b))
+							error("argument %d matches multiple formal arguments\n", i);
+						if (ARGUSED(f) == 1)
 							error("formal argument \"%s\" matched by multiple actual arguments\n", CHAR(PRINTNAME(TAG(f))));
 						CAR(a) = CAR(b);
 						if(CAR(b) != R_MissingArg)
 							MISSING(a) = 0;         /* not missing this arg */
 						ARGUSED(b) = 1;
+						ARGUSED(f) = 1;
 					}
+					i++;
 				}
 			}
 		}

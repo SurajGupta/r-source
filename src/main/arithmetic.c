@@ -78,7 +78,9 @@ void InitArithmetic()
 	R_NaReal = R_NaN;
 	R_PosInf = -DBL_MAX;
 	R_NegInf = DBL_MAX;
+#ifdef Unix
 	signal(SIGFPE, handle_fperror);
+#endif
 #endif
 }
 
@@ -1018,7 +1020,7 @@ static SEXP math4(SEXP op, SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)())
 	a = REAL(sa);
 	b = REAL(sb);
 	c = REAL(sc);
-	d = REAL(sc);
+	d = REAL(sd);
 	y = REAL(sy);
 	if (na < 1 || nb < 1 || nc < 1 || nd < 1) {
 		for (i = 0; i < n; i++)

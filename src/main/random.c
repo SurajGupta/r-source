@@ -34,8 +34,7 @@ static void Randomize()
 	iz_seed = abs(rand() % 30323);
 }
 
-/* Replaced rho by R_GlobalEnv in the body of the next two functions */
-void GetSeeds(SEXP rho)
+static void GetSeeds()
 {
 	SEXP seeds;
 	seeds = findVar(R_SeedsSymbol, R_GlobalEnv);
@@ -54,7 +53,7 @@ void GetSeeds(SEXP rho)
 	}
 }
 
-void PutSeeds(SEXP rho)
+static void PutSeeds()
 {
 	SEXP seeds;
 	PROTECT(seeds = allocVector(INTSXP, 3));
@@ -128,7 +127,7 @@ SEXP do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else {
 		PROTECT(a = coerceVector(CADR(args), REALSXP));
 		naflag = 0;
-		GetSeeds(rho);
+		GetSeeds();
 		switch (PRIMVAL(op)) {
 			RAND1(0, rchisq);
 			RAND1(1, rexp);
@@ -141,7 +140,7 @@ SEXP do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (naflag)
 			warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
 
-		PutSeeds(rho);
+		PutSeeds();
 		UNPROTECT(1);
 	}
 	UNPROTECT(1);
@@ -210,7 +209,7 @@ SEXP do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		PROTECT(a = coerceVector(CADR(args), REALSXP));
 		PROTECT(b = coerceVector(CADDR(args), REALSXP));
 		naflag = 0;
-		GetSeeds(rho);
+		GetSeeds();
 		switch (PRIMVAL(op)) {
 			RAND2(0, rbeta);
 			RAND2(1, rbinom);
@@ -229,7 +228,7 @@ SEXP do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (naflag)
 			warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
 
-		PutSeeds(rho);
+		PutSeeds();
 		UNPROTECT(2);
 	}
 	UNPROTECT(1);
@@ -305,7 +304,7 @@ SEXP do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 		PROTECT(b = coerceVector(b, REALSXP));
 		PROTECT(c = coerceVector(c, REALSXP));
 		naflag = 0;
-		GetSeeds(rho);
+		GetSeeds();
 		switch (PRIMVAL(op)) {
 			RAND3(0, rhyper);
 		default:
@@ -314,7 +313,7 @@ SEXP do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (naflag)
 			warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
 
-		PutSeeds(rho);
+		PutSeeds();
 		UNPROTECT(3);
 	}
 	UNPROTECT(1);
@@ -346,7 +345,7 @@ SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (!r && k > n)
 		errorcall(call, "can't take a sample larger than the population\n");
 
-	GetSeeds(rho);
+	GetSeeds();
 	PROTECT(y = allocVector(INTSXP, k));
 	if (r) {
 		for (i = 0; i < k; i++)
@@ -363,7 +362,33 @@ SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 			INTEGER(x)[j] = INTEGER(x)[--n];
 		}
 	}
-	PutSeeds(rho);
+	PutSeeds();
 	UNPROTECT(1);
 	return y;
+}
+
+
+/* S COMPATIBILITY */
+
+/* The following entry points provide compatibility with S. */
+/* These entry points should not be used by new R code. */
+
+void seeds_in(long *ignored)
+{
+	GetSeeds();
+}
+
+void seeds_out()
+{
+	PutSeeds();
+}
+
+double unif_rand(void)
+{
+	sunif();
+}
+
+double norm_rand(void)
+{
+	snorm();
 }

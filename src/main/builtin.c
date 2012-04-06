@@ -24,6 +24,17 @@
 char *tilde_expand (char *);
 #endif
 
+SEXP do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP expr, env;
+	checkArity(op, args);
+	expr = CAR(args);
+	env = eval(CADR(args), rho);
+	if(!isEnvironment(env))
+		errorcall(call, "invalid argument\n");
+	return mkPROMISE(expr, env);
+}
+
 SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	RCNTXT *ctxt;
@@ -104,10 +115,8 @@ SEXP do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	checkArity(op, args);
 
-	if (TYPEOF(CAR(args)) == CLOSXP && TYPEOF(CADR(args)) == ENVSXP)
+	if (TYPEOF(CAR(args)) == CLOSXP && isEnvironment(CADR(args)))
 		CLOENV(CAR(args)) = CADR(args);
-	else
-		errorcall(call, "invalid arguments\n");
 	return CAR(args);
 }
 
@@ -288,11 +297,7 @@ SEXP do_makefactor(SEXP call, SEXP op, SEXP args, SEXP rho)
 	ord = asLogical(CADDR(args));
 	if(ord == NA_LOGICAL) ord = 0;
 	nx = LENGTH(x);
-#ifdef OLD
-	y = allocVector(ord ? ORDSXP : FACTSXP, nx);
-#else
 	PROTECT(y = allocVector(ord ? ORDSXP : FACTSXP, nx));
-#endif
 	LEVELS(y) = nl;
 	for (i = 0; i < nx; i++) {
 		j = INTEGER(x)[i];
@@ -301,9 +306,6 @@ SEXP do_makefactor(SEXP call, SEXP op, SEXP args, SEXP rho)
 		else
 			FACTOR(y)[i] = NA_INTEGER;
 	}
-#ifdef OLD
-	UNPROTECT(1);
-#else
 	if(ord) {
 		PROTECT(x = allocVector(STRSXP, 2));
 		STRING(x)[0] = mkChar("ordered");
@@ -315,8 +317,21 @@ SEXP do_makefactor(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	setAttrib(y, R_ClassSymbol, x);
 	UNPROTECT(2);
-#endif
 	return y;
+}
+
+SEXP do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP ans;
+	int i, n;
+	n = length(args);
+	PROTECT(ans = allocVector(EXPRSXP, n));
+	for(i=0 ; i<n ; i++) {
+		VECTOR(ans)[i] = duplicate(CAR(args));
+		args = CDR(args);
+	}
+	UNPROTECT(1);
+	return ans;
 }
 
 SEXP do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -332,15 +347,18 @@ SEXP do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	mode = str2type(CHAR(STRING(s)[0]));
 	if (mode == -1 && streql(CHAR(STRING(s)[0]), "double"))
 		mode = REALSXP;
-	if (CHARSXP < mode && mode <= STRSXP)
+	if ((CHARSXP < mode && mode <= STRSXP) || mode == EXPRSXP)
 		s = allocVector(mode, len);
 	else if (mode == LISTSXP)
 		s = allocList(len);
 	else
 		error("vector: cannot make a vector of the type specified\n");
-	if (mode == INTSXP)
+	if (mode == INTSXP || mode == LGLSXP)
 		for (i = 0; i < len; i++)
 			INTEGER(s)[i] = 0;
+	if (mode == FACTSXP || mode == ORDSXP)
+		for (i = 0; i < len; i++)
+			FACTOR(s)[i] = 1;
 	else if (mode == REALSXP)
 		for (i = 0; i < len; i++)
 			REAL(s)[i] = 0.0;

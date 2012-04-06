@@ -17,15 +17,17 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*== see ./printutils.c  for general remarks on Printing and the Encode.. utils.
+ *   see ./format.c	 for the  format_Foo_  functions.
+ */
 #include "Defn.h"
 #include "Print.h"
+
+SEXP mkChar(char *);
 
 /* do_paste uses two passes to paste the arguments (in CAR(args)) */
 /* together the first pass calculates the width of the paste buffer, */
 /* then it is alloc-ed and the second pass stuffs the information in. */
-
-SEXP mkChar(char *);
-
 SEXP do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP ans, collapse, sep, px, x, tmpchar;
@@ -128,7 +130,10 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP l, nastring, x, y;
 	int i, n, nl, trim;
-	int w, d, e, wi, di, ei;
+	int w, d, e;
+#ifdef COMPLEX_DATA
+	int wi, di, ei;
+#endif
 	char *strp;
 
 	PrintDefaults(env);
@@ -250,25 +255,34 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
 	return y;
 }
 
+/* format.info(obj)  --> 3 integers  (w,d,e) with the formatting information
+ *			w = total width (#{chars}) per item
+ *			d = #{digits} to RIGHT of "."
+ *			e = {0:2}.   0: Fixpoint;  
+ *				   1,2: exponential with 2/3 digit expon.
+ */
 SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+	SEXP l, x;
 	int n, w, d, e;
-	SEXP x, lev;
+#ifdef COMPLEX_DATA
+	int wi, di, ei;
+#endif
 	checkArity(op, args);
 	x = CAR(args);
 	n = LENGTH(x);
 	w = 0;
 	d = 0;
 	e = 0;
-	switch(TYPEOF(CAR(args)))
+	switch(TYPEOF(x))
 	{
 		case LGLSXP:
 			formatLogical(LOGICAL(x), n, &w);
 			break;
 		case FACTSXP:
 		case ORDSXP:
-			lev = getAttrib(x, R_LevelsSymbol);
-                        formatFactor(INTEGER(x), n, &w, lev, LEVELS(x));
+			l = getAttrib(x, R_LevelsSymbol);
+			formatFactor(INTEGER(x), n, &w, l, LEVELS(x));
 			break;
 		case INTSXP:
 			formatInteger(INTEGER(x), n, &w);
@@ -276,22 +290,27 @@ SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 		case REALSXP:
 			formatReal(REAL(x), n, &w, &d, &e);
 			break;
+#ifdef COMPLEX_DATA
 		case CPLXSXP:
-#ifdef NOTYET
+			wi = di = ei = 0;
 			formatComplex(COMPLEX(x), n, &w, &d, &e, &wi, &di, &ei);
-#else
-			errorcall(call, "not working form complex vectors (yet)\n");
-#endif
+			n = -1;/* complex 'code' */
 			break;
+#endif
 		case STRSXP:
 			formatString(STRING(x), n, &w, 0);
 			break;
 		default:
 			errorcall(call, "vector arguments only");
 	}
-	x = allocVector(REALSXP, 3);
-	REAL(x)[0] = w;
-	REAL(x)[1] = d;
-	REAL(x)[2] = e;
+	x = allocVector(INTSXP, (n>=0)?3:6);
+	INTEGER(x)[0] = w;
+	INTEGER(x)[1] = d;
+	INTEGER(x)[2] = e;
+	if(n<0) { /*- complex -*/
+		INTEGER(x)[3] = wi;
+		INTEGER(x)[4] = di;
+		INTEGER(x)[5] = ei;
+	}
 	return x;
 }

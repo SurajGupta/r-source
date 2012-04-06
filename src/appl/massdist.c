@@ -21,7 +21,7 @@
 /* with modifications by Ross Ihaka */
 
 
-#include "math.h"
+#include "Mathlib.h"
 
 int massdist(double *x, int *nx, double *xlow, double *xhigh, double *y, int *ny)
 {
@@ -60,7 +60,6 @@ int massdist(double *x, int *nx, double *xlow, double *xhigh, double *y, int *ny
 /* The following code is from the Venables and Ripley MASS library */
 /* Modifications by Ross Ihaka */
 
-#define PI 3.14159265
 #define DELMAX 100
 
 /* Avoid slow and possibly error-producing undeflows by cutting off at
@@ -81,7 +80,7 @@ void ucv(int *n, double *x, double *h, double *u)
 			if (delta < DELMAX)
 				sum += exp(-delta / 4) - sqrt(8.0) * exp(-delta / 2);
 	}
-	*u = 1 / (2 * nn * hh * sqrt(PI)) + sum / (nn * nn * hh * sqrt(PI));
+	*u = 1 / (2 * nn * hh * M_SQRT_PI) + sum / (nn * nn * hh * M_SQRT_PI);
 }
 
 void bcv(int *n, double *x, double *h, double *u)
@@ -98,7 +97,7 @@ void bcv(int *n, double *x, double *h, double *u)
 			if (delta < DELMAX)
 				sum += exp(-delta / 4) * (delta * delta - 12 * delta + 12);
 		}
-	*u = 1 / (2 * nn * hh * sqrt(PI)) + sum / (64 * nn * nn * hh * sqrt(PI));
+	*u = 1 / (2 * nn * hh * M_SQRT_PI) + sum / (64 * nn * nn * hh * M_SQRT_PI);
 }
 
 void phi4(int *n, double *x, double *h, double *u)
@@ -116,7 +115,7 @@ void phi4(int *n, double *x, double *h, double *u)
 				sum += exp(-delta / 2) * (delta * delta - 6 * delta + 3);
 		}
 	sum = 2 * sum + nn * 3;	/* add in diagonal */
-	*u = sum / (nn * (nn - 1) * pow(hh, 5.0) * sqrt(2 * PI));
+	*u = sum * M_1_SQRT_2PI / (nn * (nn - 1) * pow(hh, 5.0));
 }
 
 void phi6(int *n, double *x, double *h, double *u)
@@ -135,5 +134,5 @@ void phi6(int *n, double *x, double *h, double *u)
 					(delta * delta * delta - 15 * delta * delta + 45 * delta - 15);
 		}
 	sum = 2 * sum - nn * 15;	/* add in diagonal */
-	*u = sum / (nn * (nn - 1) * pow(hh, 7.0) * sqrt(2 * PI));
+	*u = sum * M_1_SQRT_2PI / (nn * (nn - 1) * pow(hh, 7.0));
 }

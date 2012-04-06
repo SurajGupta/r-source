@@ -172,6 +172,8 @@ function(lm.obj, formula, data, weights, subset, na.action)
 	if(!missing(data)) call$data <- substitute(data)
 	if(!missing(subset)) call$subset <- substitute(subset)
 	if(!missing(na.action)) call$na.action <- substitute(na.action)
+	if (!missing(weights))
+		call$weights<-substitute(weights)
 	eval(call, sys.frame(sys.parent()))
 }
 
@@ -408,3 +410,5 @@ effects.lm <- function(z, term) {
 	effects <- yhat1-yhat0
 	tapply(effects,z$model.frame[factors & pattern!=0],mean,na.rm=TRUE)
 }
+
+formula.lm<-function(x)formula(x$terms)

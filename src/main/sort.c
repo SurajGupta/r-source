@@ -73,7 +73,11 @@ static int ccmp(complex x, complex y)
 
 static int scmp(SEXP x, SEXP y)
 {
+#ifdef HAVE_STRCOLL
+	return strcoll(CHAR(x), CHAR(y));
+#else
 	return strcmp(CHAR(x), CHAR(y));
+#endif
 }
 
 void isort(int * x, int n)

@@ -235,12 +235,6 @@ static int Specify(char *what, SEXP value)
 			GP->fig[1] = DP->fig[1] = REAL(value)[1];
 			GP->fig[2] = DP->fig[2] = REAL(value)[2];
 			GP->fig[3] = DP->fig[3] = REAL(value)[3];
-#ifdef OLD
-			GP->oma[0] = DP->oma[0] = yNDCtoChar(REAL(value)[2]) / DP->mex;
-			GP->oma[1] = DP->oma[1] = xNDCtoChar(REAL(value)[0]) / DP->mex;
-			GP->oma[2] = DP->oma[2] = yNDCtoChar(1.0 - REAL(value)[3]) / DP->mex;
-			GP->oma[3] = DP->oma[3] = xNDCtoChar(1.0 - REAL(value)[1]) / DP->mex;
-#endif
 			GReset();
 		}
 		else par_error(what);
