@@ -1457,7 +1457,11 @@ int main () {
 if test "x${r_cv_func_log_works}" = xyes; then
   AC_DEFINE(HAVE_WORKING_LOG, 1,
             [Define if log() is correct for 0/-1.])
+  RMATH_HAVE_WORKING_LOG="# define HAVE_WORKING_LOG 1"
+else
+  RMATH_HAVE_WORKING_LOG="# undef HAVE_WORKING_LOG"
 fi
+AC_SUBST(RMATH_HAVE_WORKING_LOG)
 ])# R_FUNC_LOG
 
 ## R_FUNC_LOG1P
@@ -1890,7 +1894,7 @@ AC_EGREP_CPP([yes],
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TCL_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib /usr/lib64 ; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib ; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tcl[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -1916,7 +1920,7 @@ fi
 AC_DEFUN([_R_PATH_TK_CONFIG],
 [AC_MSG_CHECKING([for tkConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TK_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib /usr/lib64 ; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib ; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tk[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2304,8 +2308,8 @@ LIBS="${FLIBS} ${LIBS}"
 if test "${acx_blas_ok}" = no; then
   if test "x${BLAS_LIBS}" != x; then
     r_save_LIBS="${LIBS}"; LIBS="${BLAS_LIBS} ${LIBS}"
-    AC_MSG_CHECKING([for ${sgemm} in ${BLAS_LIBS}])
-    AC_TRY_LINK([void ${xerbla}(char *srname, int *info){}], ${sgemm}(),
+    AC_MSG_CHECKING([for ${dgemm} in ${BLAS_LIBS}])
+    AC_TRY_LINK([void ${xerbla}(char *srname, int *info){}], ${dgemm}(),
       [acx_blas_ok=yes], [BLAS_LIBS=""])
     AC_MSG_RESULT([${acx_blas_ok}])
     LIBS="${r_save_LIBS}"
@@ -2314,13 +2318,13 @@ fi
 
 ## BLAS linked to by default?  (happens on some supercomputers)
 if test "${acx_blas_ok}" = no; then
-  AC_CHECK_FUNC(${sgemm}, [acx_blas_ok=yes])
+  AC_CHECK_FUNC(${dgemm}, [acx_blas_ok=yes])
 fi
 
 ## BLAS in ATLAS library?  (http://math-atlas.sourceforge.net/)
 if test "${acx_blas_ok}" = no; then
   AC_CHECK_LIB(atlas, ATL_xerbla,
-               [AC_CHECK_LIB(f77blas, ${sgemm},
+               [AC_CHECK_LIB(f77blas, ${dgemm},
                              [acx_blas_ok=yes
                               BLAS_LIBS="-lf77blas -latlas"],
 			     [], [-latlas])])
@@ -2328,7 +2332,7 @@ fi
 
 ## BLAS in PhiPACK libraries?  (requires generic BLAS lib, too)
 if test "${acx_blas_ok}" = no; then
-  AC_CHECK_LIB(blas, ${sgemm},
+  AC_CHECK_LIB(blas, ${dgemm},
 	       [AC_CHECK_LIB(dgemm, $dgemm,
 		             [AC_CHECK_LIB(sgemm, ${sgemm},
 			                   [acx_blas_ok=yes
@@ -2358,10 +2362,10 @@ fi
 ## Not sure whether -lsunmath is required, but it helps anyway
 if test "${acx_blas_ok}" = no; then
   if test "x$GCC" != xyes; then # only works with Sun CC
-     AC_MSG_CHECKING([for ${sgemm} in -lsunperf])
+     AC_MSG_CHECKING([for ${dgemm} in -lsunperf])
      r_save_LIBS="${LIBS}"
      LIBS="-xlic_lib=sunperf -lsunmath ${LIBS}"
-     AC_TRY_LINK_FUNC([${sgemm}], [R_sunperf=yes], [R_sunperf=no])
+     AC_TRY_LINK_FUNC([${dgemm}], [R_sunperf=yes], [R_sunperf=no])
      if test "${R_sunperf}" = yes; then
         BLAS_LIBS="-xlic_lib=sunperf -lsunmath"
 	acx_blas_ok=yes
@@ -2389,8 +2393,8 @@ fi
 
 ## BLAS in IBM ESSL library? (requires generic BLAS lib, too)
 if test "${acx_blas_ok}" = no; then
-  AC_CHECK_LIB(blas, ${sgemm},
-	       [AC_CHECK_LIB(essl, ${sgemm},
+  AC_CHECK_LIB(blas, ${dgemm},
+	       [AC_CHECK_LIB(essl, ${dgemm},
 			     [acx_blas_ok=yes
                               BLAS_LIBS="-lessl -lblas"],
 			     [], [-lblas ${FLIBS}])])
@@ -2398,7 +2402,7 @@ fi
 
 ## Generic BLAS library?
 if test "${acx_blas_ok}" = no; then
-  AC_CHECK_LIB(blas, ${sgemm},
+  AC_CHECK_LIB(blas, ${dgemm},
                [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
 fi
 

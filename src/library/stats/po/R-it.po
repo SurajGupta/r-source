@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-09-16 08:35\n"
+"POT-Creation-Date: 2005-12-12 09:04\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -131,8 +131,8 @@ msgstr "'by' deve essere di tipo list"
 msgid "'FUN' must always return a scalar"
 msgstr "'FUN' deve sempre restituire uno scalare"
 
-msgid "cannot change frequency from %d to %d"
-msgstr "impossibile cambiare la frequenza fa %d a %d"
+msgid "cannot change frequency from %g to %g"
+msgstr "impossibile cambiare la frequenza fa %g a %g"
 
 msgid "'x' must be coefficient matrix/data frame"
 msgstr "'x' deve essere una matrice/data frame di coefficienti"
@@ -686,9 +686,6 @@ msgstr "metodo distanza ambiguo"
 msgid "non-square matrix"
 msgstr "matrice non quadrata"
 
-msgid "'shape' must be strictly positive"
-msgstr "'shape' deve essere strettamente positivo"
-
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[] e prob[] devono essere vettore della stessa lunghezza."
 
@@ -880,6 +877,9 @@ msgstr "'or' deve essere un solo numero tra 0 e Inf"
 msgid "p-values may be incorrect"
 msgstr "i p-value potrebbero essere non corretti"
 
+msgid "'hybrid' is ignored for a 2 x 2 table"
+msgstr ""
+
 msgid "all groups must contain data"
 msgstr "tutti i gruppi devono contenere dati"
 
@@ -1024,7 +1024,7 @@ msgid "algorithm stopped at boundary value"
 msgstr "algoritmo arrestato sui valori della frontiera"
 
 msgid "fitted probabilities numerically 0 or 1 occurred"
-msgstr "probabilità stimare numericamente pari a 0 o 1"
+msgstr "probabilitàstimate numericamente pari a 0 o 1"
 
 msgid "fitted rates numerically 0 occurred"
 msgstr "si è verificato che i tassi stimati sono numericamente pari a 0"
@@ -1391,6 +1391,9 @@ msgstr "'model.tables' non è implementato per risposte multiple"
 msgid "type '%s' is not implemented yet"
 msgstr "tipo '%s' non ancora implementato"
 
+msgid "this fit does not inherit from \"lm\""
+msgstr ""
+
 msgid "'cterms' argument must match terms in model object"
 msgstr "l'argomento 'cterms' deve far coincidre 'terms' nell'oggetto model"
 
@@ -1519,6 +1522,9 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "matrice gradiente singolare per le stime iniziali dei parametri"
 
+msgid "argument 'weights' is currently ignored"
+msgstr ""
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
@@ -1553,9 +1559,9 @@ msgid "read the documentation for 'trace' more carefully"
 msgstr "leggere la documentazione di 'trace' più attentamente"
 
 msgid ""
-"method L-BFGS-B uses 'fact' (and 'pgtol') instead of 'reltol' and 'abstol'"
+"method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr ""
-"il metodo L-BFGS-B usea 'fact' (e 'pgtol') al posto di 'reltol' e 'abstol'"
+"il metodo L-BFGS-B usea 'factr' (e 'pgtol') al posto di 'reltol' e 'abstol'"
 
 msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
 msgstr ""
@@ -1574,9 +1580,8 @@ msgstr "troppi pochi gruppi"
 msgid "use only with \"lm\" objects"
 msgstr "usare solo con oggetti \"lm\""
 
-#, fuzzy
 msgid "'which' must be in 1:6"
-msgstr "'which' deve essere in 1:4"
+msgstr "'which' deve essere in 1:6"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' deve essere in {1,..,%d}"
@@ -2116,18 +2121,3 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 msgstr[1] ""
-
-#~ msgid "p-values may be incorrect due to ties"
-#~ msgstr "i p-value possono essere sbagliati a causa dei ties"
-
-#~ msgid "one-argument anova() not implemented for 'mlm' objects"
-#~ msgstr "anova() con un solo argomento non supportato per oggetti 'mlm'"
-
-#~ msgid "'m' is negative"
-#~ msgstr "'m' è negativo"
-
-#~ msgid "need response in formula"
-#~ msgstr "serve la risposta in formula"
-
-#~ msgid "non-integer counts in a Poisson glm!"
-#~ msgstr "frequenze non interne nel modello glm Poisson!"

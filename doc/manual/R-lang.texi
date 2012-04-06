@@ -291,8 +291,8 @@ an object is of the correct type.
 @subsection Vectors
 
 @cindex vector
-Vectors can be thought of as contiguous cells containing homogeneous
-data.  Cells are accessed through
+Vectors can be thought of as contiguous cells containing data.  Cells
+are accessed through
 @cindex index
 indexing operations such as
 @code{x[5]}.  More details are given in @ref{Indexing}.
@@ -1505,7 +1505,7 @@ supplied (see @ref{Arguments}).
 @findex NaN
 
 @cindex type
-As the elements of a vector or matrix must be of the same type there are
+As the elements of an atomic vector must be of the same type there are
 multiple types of @code{NA} values. There is one case where this is
 particularly important to the user. The default type of @code{NA} is
 @code{logical}, unless coerced to some other type, so the appearance of
@@ -1535,6 +1535,8 @@ string @code{"NA"}.  Programmers who need to specify an explicit string
 @code{NA} should use @samp{as.character(NA)} rather than @code{"NA"}, or
 set elements to @code{NA} using @code{is.na<-}.
 
+There is no @code{NA} value for raw vectors.
+
 
 @node Indexing, Scope of variables, Elementary arithmetic operations, Evaluation of expressions
 @section Indexing
@@ -1544,7 +1546,8 @@ elements or subsets through indexing operations.  In the case of the
 basic vector types one can access the i-th element using @code{x[i]},
 but there is also indexing of lists, matrices, and multi-dimensional
 arrays.  There are several forms of indexing in addition to indexing
-with a single integer.
+with a single integer.  Indexing can be used both to extract part of an
+object and to replace parts of an object (or to add parts).
 
 @R{} has three basic indexing operators, with syntax displayed by the
 following examples
@@ -1637,7 +1640,10 @@ names attribute of @code{x} and the resulting integers are used.  For
 @code{[[} and @code{$} partial matching is used if exact matching fails,
 so @code{x$aa} will match @code{x$aabb} if @code{x} does not a component
 named @code{"aa"} and @code{"aabb"} is the first name which has prefix
-@code{"aa"}.  However, @code{[} requires an exact match.
+@code{"aa"}.  However, @code{[} requires an exact match.  The string
+@code{""} is treated specially: it indicates `no name' and matches no
+element (not even those without a name).  Note that partial matching is
+only used when extracting and not when replacing.
 
 @item
 @strong{Factor}.  The result is identical to @code{x[as.integer(i)]}.

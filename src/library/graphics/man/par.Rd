@@ -1,7 +1,6 @@
 \name{par}
 \alias{par}
 \alias{.Pars}
-\alias{.Pars.readonly}
 \concept{adj}
 \concept{ann}
 \concept{ask}
@@ -64,7 +63,6 @@
 \concept{tck}
 \concept{tcl}
 \concept{tmag}
-\concept{type}
 \concept{usr}
 \concept{xaxp}
 \concept{xaxs}
@@ -109,33 +107,38 @@ par(\dots, no.readonly = FALSE)
 
   \code{par()} (no arguments) or \code{par(no.readonly=TRUE)} is used to
   get \emph{all} the graphical parameters (as a named list).  Their
-  names are currently taken from the variable \code{.Pars}.
-  \code{.Pars.readonly} contains the names of the \code{par} arguments
-  which are \emph{readonly}.
+  names are currently taken from the unexported variable \code{.Pars}.
 
   \emph{\bold{R.O.}} indicates \emph{\bold{read-only arguments}}: These
-  may only be used in queries, i.e., they do \emph{not} set anything.
+  may only be used in queries and cannot be set.  (\code{"cin"},
+  \code{"cra"}, \code{"csi"}, \code{"cxy"} and \code{"din"} are always
+  read-only, and \code{"gamma"} is on most devices.)
 
-  All but these \emph{\bold{R.O.}} and the following
-  \emph{\bold{low-level parameters}} can be set as well in high-level and
-  mid-level plot functions, such as \code{\link{plot}},
-  \code{\link{points}}, \code{\link{lines}}, \code{\link{axis}},
-  \code{\link{title}}, \code{\link{text}}, \code{\link{mtext}}:
+  There are several parameters can only be set by a call to \code{par()}:
   \itemize{
     \item \code{"ask"}
     \item \code{"family"}, \code{"fig"}, \code{"fin"}
     \item \code{"lend"}, \code{"lheight"}, \code{"ljoin"}, \code{"lmitre"}
-    \item \code{"mai"}, \code{"mar"}, \code{"mex"}
-    \item \code{"mfrow"}, \code{"mfcol"}, \code{"mfg"}
+    \item \code{"mai"}, \code{"mar"}, \code{"mex"},
+    \code{"mfcol"}, \code{"mfrow"}, \code{"mfg"}
     \item \code{"new"}
     \item \code{"oma"}, \code{"omd"}, \code{"omi"}
     \item \code{"pin"}, \code{"plt"}, \code{"ps"}, \code{"pty"}
     \item \code{"usr"}
     \item \code{"xlog"}, \code{"ylog"}
   }
-  However, see the comments on \code{bg} and \code{cex}, which may be
-  taken as arguments to certain plot functions rather than as
-  graphical parameters.
+  The remaining parameters can also be set as arguments (often via
+  \code{\dots}) to high-level plot functions such as
+  \code{\link{plot.default}}, \code{\link{plot.window}},
+  \code{\link{points}}, \code{\link{lines}}, \code{\link{abline}},
+  \code{\link{axis}}, \code{\link{title}}, \code{\link{text}},
+  \code{\link{mtext}}, \code{\link{segments}}, \code{\link{symbols}},
+  \code{\link{arrows}}, \code{\link{polygon}}, \code{\link{rect}},
+  \code{\link{box}}, \code{\link{contour}}, \code{\link{filled.contour}}
+  and \code{\link{image}}.  Such settings will be active during the
+  execution of the function, only.  However, see the comments on
+  \code{bg} and \code{cex}, which may be taken as arguments to certain
+  plot functions rather than as graphical parameters.
 }
 
 \value{
@@ -145,9 +148,10 @@ par(\dots, no.readonly = FALSE)
   Use \code{par(no.readonly = TRUE)} for the full list of parameters
   that can be restored.
 
-  When just one parameter is queried, the value is a character string.
-  When two or more parameters are queried, the result is a list of
-  character strings, with the list names giving the parameters.
+  When just one parameter is queried, the value of that parameter
+  is returned as (atomic) vector.  When two or more parameters are
+  queried, their values are returned in a list, with the list names
+  giving the parameters.
 
   Note the inconsistency: setting one parameter returns a list, but
   querying one parameter returns a vector.
@@ -164,8 +168,9 @@ par(\dots, no.readonly = FALSE)
       allows \code{adj = c(x, y)} for different adjustment in x- and y-
       direction.}
     \item{\code{ann}}{If set to \code{FALSE}, high-level plotting
-      functions do not annotate the plots they produce with axis and
-      overall titles.  The default is to do annotation.}
+      functions calling \code{\link{plot.default}} do not annotate the
+      plots they produce with axis titles and overall titles.  The
+      default is to do annotation.}
     \item{\code{ask}}{logical.  If \code{TRUE}, the user is asked for
       input, before a new figure is drawn.}
     \item{\code{bg}}{The color to be used for the background of plots.
@@ -174,7 +179,7 @@ par(\dots, no.readonly = FALSE)
       \code{\link{plot.default}} and \code{\link{points}} have an
       \emph{argument} of this name with a different meaning.}
     \item{\code{bty}}{A character string which determined the type of
-      box which is drawn about plots.  If \code{bty} is one of
+      \code{\link{box}} which is drawn about plots.  If \code{bty} is one of
       \code{"o"}, \code{"l"}, \code{"7"}, \code{"c"}, \code{"u"}, or
       \code{"]"} the resulting box resembles the corresponding upper
       case letter.  A value of \code{"n"} suppresses the box.}
@@ -219,10 +224,11 @@ par(\dots, no.readonly = FALSE)
       outside the plot region are \emph{not} plotted.)
       The degree of error reporting desired.}
     \item{\code{family}}{The name of a font family for drawing text.
-      This name is device-independent and gets mapped by each
-      graphics device to a device-specific font description.
+      The maximum allowed length is 49 bytes.
+      This name gets mapped by each graphics device to device-specific
+      font descriptions.
       The default value is \code{""} which means that the
-      default device font will be used.
+      default device fonts will be used.
       Standard values are \code{"serif"}, \code{"sans"},
       \code{"mono"}, and \code{"symbol"} and the \link{Hershey}
       font families are also available.  Different devices
@@ -230,8 +236,10 @@ par(\dots, no.readonly = FALSE)
       completely.}
     \item{\code{fg}}{The color to be used for the foreground of plots.
       This is the default color used for things like axes and boxes
-      around plots.  A description of how colors are specified is given
-      below.}
+      around plots.  When called from \code{par()} this also sets
+      parameter \code{col} to the same value.
+
+      A description of how colors are specified is given below.}
     \item{\code{fig}}{A numerical vector of the form \code{c(x1, x2, y1,
 	y2)} which gives the (NDC) coordinates of the figure region in
       the display region of the device. If you set this, unlike S, you
@@ -243,20 +251,27 @@ par(\dots, no.readonly = FALSE)
     \item{\code{font}}{An integer which specifies which font to use for
       text.  If possible, device drivers arrange so that 1 corresponds
       to plain text, 2 to bold face, 3 to italic and 4 to bold
-      italic. Also, font 5 is expected to be the symbol font, in Adobe
-      symbol encoding.}
+      italic.  Also, font 5 is expected to be the symbol font, in Adobe
+      symbol encoding.  On some devices font families can be selected by
+      \code{family} to choose different sets of 5 fonts.}
     \item{\code{font.axis}}{The font to be used for axis annotation.}
     \item{\code{font.lab}}{The font to be used for x and y labels.}
     \item{\code{font.main}}{The font to be used for plot main titles.}
     \item{\code{font.sub}}{The font to be used for plot sub-titles.}
     \item{\code{gamma}}{the gamma correction, see argument \code{gamma}
-      to \code{\link{hsv}}.}
+      to \code{\link{hsv}}.  This is only accepted if the current device
+      has support for changing the gamma correction: currently only
+      \code{windows} and \code{quartz} do.  (\code{X11} has support for
+      setting the gamma correction when opening the device, but not for
+      changing it.)}
     \item{\code{lab}}{A numerical vector of the form \code{c(x, y, len)}
-      which modifies the way that axes are annotated.  The values of
+      which modifies the default way that axes are annotated.  The values of
       \code{x} and \code{y} give the (approximate) number of tickmarks
-      on the x and y axes and \code{len} specifies the label size.  The
-      default is \code{c(5, 5, 7)}.
-      \emph{Currently}, \code{len} \emph{is unimplemented}.}
+      on the x and y axes and \code{len} specifies the label length.  The
+      default is \code{c(5, 5, 7)}.  Note that this only affects the way
+      the parameters \code{xaxp} and \code{yaxp} are set when the user
+      coordinate system is set up, and is not consulted when axes are drawn.
+      \code{len} \emph{is unimplemented} in \R.}
     \item{\code{las}}{numeric in \{0,1,2,3\}; the style of axis labels.
       \describe{
 	\item{0:}{always parallel to the axis [\emph{default}],}
@@ -282,10 +297,10 @@ par(\dots, no.readonly = FALSE)
       This can be specified as an integer or string:
       0 and \code{"round"} mean rounded line joins;
       1 and \code{"mitre"} mean mitred line joins;
-      2 and \code{"bevel"} mean bevelled line joins.}  
+      2 and \code{"bevel"} mean bevelled line joins.}
     \item{\code{lmitre}}{The line mitre limit.
       This controls when mitred line joins are automatically
-      converted into bevelled line joins.  The 
+      converted into bevelled line joins.  The
       value must be larger than 1 and the default is 10.  Not all
       devices will honour this setting.
     }
@@ -371,7 +386,14 @@ par(\dots, no.readonly = FALSE)
     \item{\code{plt}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the coordinates of the plot region as fractions of the
       current figure region.}
-    \item{\code{ps}}{integer; the pointsize of text and symbols.}
+    \item{\code{ps}}{integer; the pointsize of text (but not symbols).  Unlike
+      the \code{pointsize} argument of most devices, this does not change
+      the relationship between \code{mar} and \code{mai} (nor \code{oma}
+      and \code{omi}), but it does scale \code{cin} and \code{csi}.
+
+      What is meant by \sQuote{pointsize} is device-specific, but most
+      devices mean a multiple of 1bp, that is 1/72 of an inch.
+    }
     \item{\code{pty}}{A character specifying the type of plot region to
       be used; \code{"s"} generates a square plotting region and
       \code{"m"} generates the maximal plotting region.}
@@ -386,15 +408,19 @@ par(\dots, no.readonly = FALSE)
       smaller of the width or height of the plotting region.
       If \code{tck >= 0.5} it is interpreted as a fraction of the
       relevant side, so if
-      \code{tck=1} grid lines are drawn.  The default setting
+      \code{tck = 1} grid lines are drawn.  The default setting
       (\code{tck = NA}) is to use \code{tcl = -0.5} (see below).}
     \item{\code{tcl}}{The length of tick marks as a fraction of the
       height of a line of text.  The default value is \code{-0.5};
       setting \code{tcl = NA} sets \code{tck = -0.01} which is S' default.}
     \item{\code{tmag}}{A number specifying the enlargement of text of
-      the main title relative to the other annotating text of the plot.}
-    \item{\code{type}}{character;  the default plot type desired, see
-      \code{\link{plot.default}(type=\dots)}, defaulting to \code{"p"}.}
+      the main title relative to the other annotating text of the plot.
+      Defaults to \code{1.2}.}
+    \item{\code{type}}{\strong{Deprecated:} will be removed in \R 2.3.0.
+      character;  the default plot type desired, see
+      \code{\link{plot.default}(type=\dots)}, defaulting to \code{"p"}.
+      \strong{NB:} This is currently used -- the default for
+      \code{\link{plot.default}} does not depend on this par.}
     \item{\code{usr}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the extremes of the user coordinates of the plotting
       region.  When a logarithmic scale is in use (i.e.,
@@ -419,6 +445,12 @@ par(\dots, no.readonly = FALSE)
 	\item{n=3}{gives marks  \eqn{k 10^j} with \eqn{k \in \{1, 2, 5\}}.}
       }
       See \code{\link{axTicks}()} for a pure \R implementation of this.
+
+      This parameter is reset when a user coordinate system is set up,
+      for example by starting a new page or by calling
+      \code{\link{plot.window}} or setting \code{par("usr")}: \code{n}
+      is taken from \code{par("lab")}.  It affects the default behaviour
+      of subsequent calls to \code{\link{axis}} for sides 1 or 3.
     }
     \item{\code{xaxs}}{The style of axis interval calculation to be used
       for the x-axis.  Possible values are \code{"r"}, \code{"i"},
@@ -432,18 +464,18 @@ par(\dots, no.readonly = FALSE)
       Style \code{"s"} (standard) finds an axis with pretty labels
       within which the original data range fits.
       Style \code{"e"} (extended) is like style \code{"s"}, except that
-      it is also ensured that there is room for plotting symbols within
+      it is also ensures that there is room for plotting symbols within
       the bounding box.
       Style \code{"d"} (direct) specifies that the current axis should
       be used on subsequent plots.
       (\emph{Only \code{"r"} and \code{"i"} styles are currently
 	implemented})}
-    \item{\code{xaxt}}{A character which specifies the axis type.
-      Specifying \code{"n"} causes an axis to be set up, but not
-      plotted.  The standard value is \code{"s"}: for compatibility with
-      S values \code{"l"} and \code{"e"} are accepted but are equivalent
-      to \code{"s"}.}
-    \item{\code{xlog}}{logical value (see \code{log} in
+    \item{\code{xaxt}}{A character which specifies the x axis type.
+      Specifying \code{"n"} suppresses plotting of the axis.  The
+      standard value is \code{"s"}: for compatibility with S values
+      \code{"l"} and \code{"t"} are accepted but are equivalent to
+      \code{"s"}: any value other than \code{"n"} implies plotting.}
+    \item{\code{xlog}}{A logical value (see \code{log} in
       \code{\link{plot.default}}).  If \code{TRUE}, a logarithmic scale
       is in use (e.g., after \code{plot(*, log = "x")}).
       For a new device, it defaults to \code{FALSE}, i.e., linear scale.}
@@ -457,9 +489,9 @@ par(\dots, no.readonly = FALSE)
       \code{xaxp} above.}
     \item{\code{yaxs}}{The style of axis interval calculation to be used
       for the y-axis.  See \code{xaxs} above.}
-    \item{\code{yaxt}}{A character which specifies the axis type.
-      Specifying \code{"n"} causes an axis to be set up, but not plotted.}
-    \item{\code{ylog}}{a logical value; see \code{xlog} above.}
+    \item{\code{yaxt}}{A character which specifies the y axis type.
+      Specifying \code{"n"} suppresses plotting.}
+    \item{\code{ylog}}{A logical value; see \code{xlog} above.}
   }
 }
 
@@ -479,12 +511,13 @@ par(\dots, no.readonly = FALSE)
   \emph{transparent}, useful for filled areas (such as the background!),
   and just invisible for things like lines or text.
 
-  The functions \code{rgb}, \code{hsv}, \code{gray} and \code{rainbow}
+  The functions \code{\link{rgb}}, \code{\link{hsv}}, \code{\link{hcl}},
+  \code{\link{gray}} and \code{\link{rainbow}}
   provide additional ways of generating colors.}
 
 \section{Line Type Specification}{
   Line types can either be specified by giving an index into a small
-  built in table of line types (1 = solid, 2 = dashed, etc, see
+  built-in table of line types (1 = solid, 2 = dashed, etc, see
   \code{lty} above) or directly as the lengths of on/off stretches of
   line.  This is done with a string of an even number (up to eight)
   of characters, namely non-zero
@@ -518,8 +551,7 @@ par(\dots, no.readonly = FALSE)
 }
 \seealso{
   \code{\link{plot.default}} for some high-level plotting parameters;
-  \code{\link{colors}}, \code{\link{gray}}, \code{\link{rainbow}},
-  \code{\link{rgb}};
+  \code{\link{colors}};
   \code{\link{options}} for other setup parameters;
   graphic devices \code{\link{x11}}, \code{\link{postscript}} and
   setting up device regions by \code{\link{layout}} and
@@ -544,8 +576,7 @@ plot(1 : 12, log = "y")
 par("ylog") # TRUE
 
 plot(1:2, xaxs = "i") # 'inner axis' w/o extra space
-stopifnot(par("xaxp")[1:2] == 1:2 &&
-          par("usr") [1:2] == 1:2)
+par(c("usr", "xaxp"))
 
 ( nr.prof <-
   c(prof.pilots=16,lawyers=11,farmers=10,salesmen=9,physicians=9,

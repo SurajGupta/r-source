@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-09-21 14:10\n"
+"POT-Creation-Date: 2005-11-06 08:08\n"
 "PO-Revision-Date: 2005-06-02 15:33+0900\n"
 "Last-Translator: Shigeru Mase\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -43,16 +43,17 @@ msgid "'height' must be a vector or a matrix"
 msgstr "'height' はベクトルか行列でなければなりません"
 
 msgid "Cannot use shading lines in bars when log scale is used"
-msgstr ""
+msgstr "対数スケール使用時は、バー中に影線を使うことはできません"
 
 msgid "log scale error: at least one 'height + offset' value <= 0"
-msgstr ""
+msgstr "対数スケールのエラー: 少なくとも一つの 'height + offset' 値が <= 0"
 
 msgid "log scale error: 'xlim' <= 0"
-msgstr ""
+msgstr "対数スケールのエラー: 'xlim' <= 0"
 
 msgid "log scale error: 'ylim' <= 0"
-msgstr ""
+msgstr "対数スケールのエラー: 'ylim' <= 0"
+""
 
 msgid "incorrect number of names"
 msgstr "名前の数が誤りです"
@@ -70,17 +71,16 @@ msgid "invalid boxplot widths"
 msgstr "boxplot の幅が無効です"
 
 msgid "'formula' should specify exactly two variables"
-msgstr ""
+msgstr "'formula' は丁度二つの変数を特定すべきです"
 
 msgid "dependent variable should be a factor"
-msgstr ""
+msgstr "従属変数は因子でなければなりません"
 
-#, fuzzy
 msgid "explanatory variable should be numeric"
-msgstr "'y' 中の変数に数値でないものがあります"
+msgstr "説明変数は数値でなければなりません"
 
 msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
-msgstr ""
+msgstr "y 軸のメモリは累積確率のスケールです、 'ylim' は区間 [0,1] 中になければなりません"
 
 msgid "no 'z' matrix specified"
 msgstr "'z' 行列が指定されていません"
@@ -186,9 +186,6 @@ msgstr "引数は行列の形でなければなりません"
 msgid "'z' must be a matrix"
 msgstr "'z' は行列でなければなりません"
 
-msgid "dimensions of z are not length(x)(+1) times length(y)(+1)"
-msgstr "z の次元が length(x)(+1) × length(y)(+1) ではありません"
-
 msgid "invalid z limits"
 msgstr "無効な z の限界です"
 
@@ -197,6 +194,9 @@ msgstr "分割点の数は色の数よりも一つ多くなければなりませ
 
 msgid "breaks must all be finite"
 msgstr "分割点はすべて有限でなければなりません"
+
+msgid "dimensions of z are not length(x)(+1) times length(y)(+1)"
+msgstr "z の次元が length(x)(+1) × length(y)(+1) ではありません"
 
 msgid "'respect' must be logical or matrix with same dimension as 'mat'"
 msgstr "'respect' は 'mat' と同じ次元の、論理値または行列でなければなりません"
@@ -212,7 +212,7 @@ msgid "invalid title"
 msgstr "無効なタイトルです"
 
 msgid "'legend' is of length 0"
-msgstr ""
+msgstr "'legend' が長さゼロです"
 
 msgid "invalid coordinate lengths"
 msgstr "無効な座標長です"
@@ -314,10 +314,10 @@ msgid "'figs' must specify at least one screen"
 msgstr "'figs' は少なくとも一つのスクリーンを指定しなければなりません"
 
 msgid "a 2-way table has to be specified"
-msgstr ""
+msgstr "二元分類表を指定しなければなりません"
 
 msgid "x axis is on a cumulative probability scale, 'xlim' must be in [0,1]"
-msgstr ""
+msgstr "x 軸の目盛は累積確率です、'xlim' は区間 [0,1] 中になければなりません"
 
 msgid "'x' must be a matrix or a data frame"
 msgstr "'x' は行列かデータフレームでなければなりません"
@@ -371,57 +371,3 @@ msgid "Outlier (%s) in boxplot %d is not drawn"
 msgid_plural "Outliers (%s) in boxplot %d are not drawn"
 msgstr[0] "一つの外れ値 (%s) が boxplot %d から除かれました"
 msgstr[1] "(複数の)外れ値 (%s) が boxplot %d から除かれました"
-
-#~ msgid "'coef' must not be negative"
-#~ msgstr "'coef' は負にはなれません"
-
-#~ msgid "'x' and 'y' lengths differ"
-#~ msgstr "'x' と 'y' の長さが異なります"
-
-#~ msgid "invalid first argument [bad language object]"
-#~ msgstr "最初の引数が無効です [誤った言語オブジェクトです]"
-
-#~ msgid "at least 2 columns needed"
-#~ msgstr "少なくとも二つの列が必要です"
-
-#~ msgid "'x', 'y' and 'z' lengths differ"
-#~ msgstr "'x','y' そして 'z' の長さが異なります"
-
-#~ msgid "%d x value <= 0 omitted from logarithmic plot"
-#~ msgid_plural "%d x values <= 0 omitted from logarithmic plot"
-#~ msgstr[0] "%d 個の正でない x の値が対数プロットから除かれました"
-#~ msgstr[1] "%d 個の正でない x の値が対数プロットから除かれました"
-
-#~ msgid "%d y value <= 0 omitted from logarithmic plot"
-#~ msgid_plural "%d y values <= 0 omitted from logarithmic plot"
-#~ msgstr[0] "%d 個の正でない y の値が対数プロットから除かれました"
-#~ msgstr[1] "%d 個の正でない y の値が対数プロットから除かれました"
-
-#~ msgid "%d z value <= 0 omitted from logarithmic plot"
-#~ msgid_plural "%d z values <= 0 omitted from logarithmic plot"
-#~ msgstr[0] "%d 個の正でない x の値が対数プロットから除かれました"
-#~ msgstr[1] "%d 個の正でない x の値が対数プロットから除かれました"
-
-#~ msgid "incorrect color specification"
-#~ msgstr "不正確な色の指定です"
-
-#~ msgid "extra argument(s)"
-#~ msgstr "余分な引数(複数)"
-
-#~ msgid ","
-#~ msgstr ","
-
-#~ msgid "x must be numeric"
-#~ msgstr "x は数値でなければなりません"
-
-#~ msgid "x value"
-#~ msgstr "個の x の値が"
-
-#~ msgid "s"
-#~ msgstr "(複数)"
-
-#~ msgid "y value"
-#~ msgstr "個の y の値が"
-
-#~ msgid "z value"
-#~ msgstr "個の z の値が"

@@ -39,7 +39,8 @@ points(x, \dots)
     Values \code{pch=26:32} are currently unused, and \code{pch=32:255}
     give the text symbol in a single-byte locale.  In a multi-byte locale
     such as UTF-8, numeric values of \code{pch} greater than or equal to
-    32 specify a Unicode code point.
+    32 specify a Unicode code point (except for the symbol font as
+    selected by \code{\link{par}(font = 5)}).
     
     If \code{pch} is an integer or character \code{NA} or an empty
     character string, the point is omitted from the plot.
@@ -66,7 +67,9 @@ points(x, \dots)
 
   Arguments \code{pch}, \code{col}, \code{bg}, \code{cex} and \code{lwd}
   can be vectors (which will be recycled as needed) giving a value for each
-  point plotted.
+  point plotted.  If lines are to be plotted (e.g. for
+  \code{type = "b"} the first element of \code{lwd} is used.
+
   Points whose \code{x}, \code{y}, \code{pch}, \code{col} or \code{cex}
   value is \code{NA} are omitted from the plot.
 
@@ -101,11 +104,11 @@ par(op)
 
 ##-------- Showing all the extra & some char graphics symbols ------------
 Pex <- 3 ## good for both .Device=="postscript" and "x11"
-ipch <- 1:(np <- 25+11); k <- floor(sqrt(np)); dd <- c(-1,1)/2
-rx <- dd + range(ix <- (ipch-1) \%/\% k)
-ry <- dd + range(iy <- 3 + (k-1)-(ipch-1) \%\% k)
+ipch <- 0:35; np <- length(ipch); k <- floor(sqrt(np)); dd <- c(-1,1)/2
+rx <- dd + range(ix <- ipch \%/\% k)
+ry <- dd + range(iy <- 3 + (k-1)- ipch \%\% k)
 pch <- as.list(ipch)
-pch[25+ 1:11] <- as.list(c("*",".", "o","O","0","+","-",":","|","\%","#"))
+pch[26+ 1:10] <- as.list(c("*",".", "o","O","0","+","-","|","\%","#"))
 plot(rx, ry, type="n", axes = FALSE, xlab = "", ylab = "",
      main = paste("plot symbols :  points (...  pch = *, cex =", Pex,")"))
 abline(v = ix, h = iy, col = "lightgray", lty = "dotted")

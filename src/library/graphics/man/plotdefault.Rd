@@ -11,11 +11,11 @@
      ann = par("ann"), axes = TRUE, frame.plot = axes,
      panel.first = NULL, panel.last = NULL,
      col = par("col"), bg = NA, pch = par("pch"),
-     cex = 1, lty = par("lty"), lab = par("lab"),
+     cex = 1, lty = par("lty"),
      lwd = par("lwd"), asp = NA, \dots)
 }
 \arguments{
-  \item{x,y}{the \code{x} and \code{y} arguments provide the x and y
+  \item{x, y}{the \code{x} and \code{y} arguments provide the x and y
     coordinates for the plot.  Any reasonable way of defining the
     coordinates is acceptable.  See the function \code{\link{xy.coords}}
     for details.}
@@ -35,13 +35,14 @@
 
   \item{main}{a main title for the plot.}
   \item{sub}{a sub title for the plot.}
-  \item{xlab}{a label for the x axis.}
-  \item{ylab}{a label for the y axis.}
+  \item{xlab}{a label for the x axis, defaults to a description of \code{x}.}
+  \item{ylab}{a label for the y axis, defaults to a description of \code{y}.}
 
   \item{ann}{a logical value indicating whether the default annotation
     (title and x and y axis labels) should appear on the plot.}
-  \item{axes}{a logical value indicating whether axes should be drawn on
-    the plot.}
+  \item{axes}{a logical value indicating whether both axes should be drawn on
+    the plot.  Use graphical parameter \code{"xaxt"} or \code{"yaxt"}
+    to suppress just one of the axes.}
   \item{frame.plot}{a logical indicating whether a box should be drawn
     around the plot.}
 
@@ -65,8 +66,6 @@
     as a multiple of \code{\link{par}("cex")}.  \code{NULL} and \code{NA}
     are equivalent to \code{1.0}.}
   \item{lty}{the line type, see \code{\link{par}}.}
-  \item{lab}{the specification for the (approximate) numbers of tick
-    marks on the x and y axes, see \code{\link{par}}.}
   \item{lwd}{the line width, see \code{\link{par}}.}
   \item{asp}{the \eqn{y/x} aspect ratio, see \code{\link{plot.window}}.}
   \item{\dots}{other graphical parameters as in \code{\link{par}}

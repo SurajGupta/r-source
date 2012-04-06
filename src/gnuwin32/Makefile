@@ -53,7 +53,7 @@ endif
 R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion -lmsvcp60 $(LIBEXTRAS)
 dllversion-RESFLAGS =--include-dir ../include
 SOURCES = \
-  console.c dataentry.c dynload.c edit.c editor.c extra.c \
+  console.c dataentry.c dynload.c edit.c editor.c extra.c mkdtemp.c \
   opt.c pager.c preferences.c psignal.c rhome.c rui.c run.c shext.c \
   sys-win32.c system.c
 OBJS = $(SOURCES:.c=.o) e_pow.o
@@ -271,6 +271,12 @@ zgemm.o: ../appl/zgemm.f
 cmplxblas.o: ../modules/lapack/cmplxblas.f
 	$(F77) $(FOPTFLAGS) -c $< -o $@
 
+ifeq ($(strip $(USE_ACML)),YES)
+../../bin/Rblas.dll: blas00.o dllversion.o
+	@$(ECHO) -------- Building $@ --------
+	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L"$(ACML_PATH)" \
+	   -L. $(LIBUNICOWS) -lR -lacml -lg2c
+else
 ifeq ($(strip $(USE_GOTO)),YES)
 libgoto.a:  libgoto.def
 	$(DLLTOOL) $(DLLTOOLFLAGS) --dllname $(GOTO_DLL) --def $< --output-lib $@
@@ -281,12 +287,13 @@ else
 ifeq ($(strip $(USE_ATLAS)),YES)
 ../../bin/Rblas.dll: blas00.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L $(ATLAS_PATH) \
+	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L"$(ATLAS_PATH)" \
 	   -L. $(LIBUNICOWS) -lR -lg2c -lf77blas -latlas
 else
 ../../bin/Rblas.dll: blas.o cmplxblas.o zgemm.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
 	$(DLL) -shared $(DLLFLAGS) -o $@ Rblas.def $^ -L. $(LIBUNICOWS) -lR
+endif
 endif
 endif
 
@@ -572,7 +579,7 @@ crandir:
 	$(CP) CHANGES cran/CHANGES.$(RPREFIX)
 	$(CP) ../../NEWS cran/NEWS.$(RPREFIX)
 	(cd cran;\
-	 $(ECHO) 'cat(md5sum("$(RPREFIX).exe"),"*$(RPREFIX)-win32.exe")' \
+	 $(ECHO) 'cat(md5sum("$(RPREFIX)-win32.exe"),"*$(RPREFIX)-win32.exe")' \
          | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(CP) ../../doc/html/rw-FAQ.html cran
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \

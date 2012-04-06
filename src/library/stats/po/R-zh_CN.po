@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-09-16 08:35\n"
+"POT-Creation-Date: 2005-12-12 09:04\n"
 "PO-Revision-Date: 2005-04-08 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -131,8 +131,8 @@ msgstr "'by' 必需是串列"
 msgid "'FUN' must always return a scalar"
 msgstr "'FUN'必需回覆纯量"
 
-msgid "cannot change frequency from %d to %d"
-msgstr "无法将頻率从%d改到%d"
+msgid "cannot change frequency from %g to %g"
+msgstr "无法将頻率从%g改到%g"
 
 msgid "'x' must be coefficient matrix/data frame"
 msgstr "'x'必需是係數矩阵/数据框"
@@ -665,9 +665,6 @@ msgstr "距离方法不明确"
 msgid "non-square matrix"
 msgstr "非正方形矩阵"
 
-msgid "'shape' must be strictly positive"
-msgstr "'shape'必需是正数"
-
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[]和prob[]必需是长度相等的向量。"
 
@@ -856,6 +853,9 @@ msgstr "'or'必需是在0和Inf之间的一个数值"
 
 msgid "p-values may be incorrect"
 msgstr "p-值可能有错"
+
+msgid "'hybrid' is ignored for a 2 x 2 table"
+msgstr ""
 
 msgid "all groups must contain data"
 msgstr "所有的组都必需包含数据"
@@ -1355,6 +1355,9 @@ msgstr "'model.tables'没有为多反应实现"
 msgid "type '%s' is not implemented yet"
 msgstr "还没有实现'%s'种类"
 
+msgid "this fit does not inherit from \"lm\""
+msgstr ""
+
 msgid "'cterms' argument must match terms in model object"
 msgstr "'cterms'变元必需同模型目标对象里的项相配"
 
@@ -1477,6 +1480,9 @@ msgstr "setVarying : vary的长度必需同参数的长度相符"
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "参数初始估计值里有奇异梯度矩阵"
 
+msgid "argument 'weights' is currently ignored"
+msgstr ""
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr "除非algorithm = \"port\"，上限或下限将略过不用"
 
@@ -1511,8 +1517,8 @@ msgid "read the documentation for 'trace' more carefully"
 msgstr "请小心阅读'trace'说明书"
 
 msgid ""
-"method L-BFGS-B uses 'fact' (and 'pgtol') instead of 'reltol' and 'abstol'"
-msgstr "L-BFGS-B方法用'fact'(和'pgtol') ，而不是'reltol'和'abstol'"
+"method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
+msgstr "L-BFGS-B方法用'factr'(和'pgtol') ，而不是'reltol'和'abstol'"
 
 msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
 msgstr "用Nelder-Mead方法来算1维优化不很可靠，用optimize"
@@ -2042,22 +2048,3 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "参数%s没有在模型公式里出现过"
 msgstr[1] ""
-
-#~ msgid "p-values may be incorrect due to ties"
-#~ msgstr "因为有连结p-值算得可能不准"
-
-#~ msgid "one-argument anova() not implemented for 'mlm' objects"
-#~ msgstr "没有为'mlm'目标对象实现单变元的anova()功能"
-
-#~ msgid "'m' is negative"
-#~ msgstr "'m'是负数"
-
-#~ msgid "need response in formula"
-#~ msgstr "公式里没有反应"
-
-#~ msgid "non-integer counts in a Poisson glm!"
-#~ msgstr "Poisson通用线性模型里不能有负计数!"
-
-#~ msgid "'if 'x' is not a matrix, 'y' must be given"
-#~ msgstr "'如果'x'不是矩阵的话, 必需提供'y'值"
-

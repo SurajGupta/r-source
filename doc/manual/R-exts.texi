@@ -244,7 +244,8 @@ version is a sequence of at least @emph{two} (and usually three)
 non-negative integers separated by single @samp{.} or @samp{-}
 characters.  The canonical form is as shown in the example, and a
 version such as @samp{0.01} or @samp{0.01.0} will be handled as if it
-were @samp{0.1-0}.
+were @samp{0.1-0}.  (Translation packages are allowed names of the form
+@code{Translation-ll}.)
 
 The @samp{License} field should contain an explicit statement or a
 well-known abbreviation (such as @samp{GPL}, @samp{LGPL}, @samp{BSD}, or
@@ -846,12 +847,13 @@ may need to be included in @code{PKG_LIBS}.
 
 @item BLAS_LIBS
 @vindex BLAS_LIBS
-A macro containing the BLAS libraries used when building @R{}.  This
-may need to be included in @code{PKG_LIBS}.  Beware that if it is
-empty then the @R{} executable will contain all the double-precision
-BLAS routines, but no single-precision, complex nor double-complex
-routines.  If @code{BLAS_LIBS} is included, then @code{FLIBS} also needs
-to be, as most BLAS libraries are written in FORTRAN.
+A macro containing the BLAS libraries used when building @R{}.  This may
+need to be included in @code{PKG_LIBS}.  Beware that if it is empty then
+the @R{} executable will contain all the double-precision BLAS routines,
+but no single-precision or complex routines and only some of the
+double-complex routines.  If @code{BLAS_LIBS} is included, then
+@code{FLIBS} also needs to be, as most BLAS libraries are written in
+FORTRAN.
 
 @item LAPACK_LIBS
 @vindex LAPACK_LIBS
@@ -1030,7 +1032,9 @@ It is possible to use the Windows build of @command{g95} from
 @uref{http://www.g95.org} to build F95 sources in a package on Windows.
 See
 @uref{https://stat.ethz.ch/pipermail/r-devel/2005-September/034811.html}
-for a suitable @file{src/Makefile.win}.
+for a suitable @file{src/Makefile.win}.  Probably this would also work
+with the Windows build of @command{gfortran} from
+@uref{http://gcc.gnu.org/wiki/GFortranBinaries}.
 
 
 @node Checking and building packages, Writing package vignettes, Configure and cleanup, Creating R packages
@@ -1053,7 +1057,11 @@ directly.
 
 @findex R CMD check
 Using @code{R CMD check}, the @R{} package checker, one can test whether
-@emph{source} @R{} packages work correctly.  This runs a series of checks.
+@emph{source} @R{} packages work correctly.  It can be run on one or
+more directories, or gzipped package @command{tar}
+archives@footnote{This may require GNU @command{tar}: the command used
+can be set with environment variable @env{TAR}.}  with extension
+@samp{.tar.gz} or @samp{.tgz}.  This runs a series of checks.
 
 @enumerate
 @item
@@ -1089,7 +1097,14 @@ The R files are checked for syntax errors.
 The R files are checked for correct calls to @code{library.dynam} (with
 no extension).  In addition, it is checked whether methods have all
 arguments of the corresponding generic, and whether the final argument
-of replacement functions is called @samp{value}.
+of replacement functions is called @samp{value}.  All foreign function
+calls (@code{.C}, @code{.Fortran}, @code{.Call} and @code{.External}
+calls) are tested to see if they have a @code{PACKAGE} argument, and if
+not, whether the appropriate DLL might be deduced from the namespace of
+the package.  Any other calls are reported.  (The check is generous, and
+users may want to supplement this by examining the output of
+@code{tools::checkFF("mypkg", verbose=TRUE)}, especially if the
+intention were to always use a @code{PACKAGE} argument)
 
 @item
 The Rd files are checked for correct syntax and meta data, including the
@@ -1205,13 +1220,12 @@ you need @env{R_LIBS} set (to find packages in a non-standard library)
 you will need to set it in the environment.
 @end quotation
 
-@quotation
-@strong{Note to Windows users}: @code{R CMD check} and @code{R CMD build}
-work well under Windows NT4/2000/XP but may not work correctly on Windows
-95/98/ME because of problems with some versions of Perl on those limited
-OSes.  Experiences vary.
-To use them you will need to have installed the files for building
-source packages.
+@quotation Note to Windows users
+@code{R CMD check} and @code{R CMD build} work well under Windows
+NT4/2000/XP but may not work correctly on Windows 95/98/ME because of
+problems with some versions of Perl on those limited OSes.  Experiences
+vary.  To use them you will need to have installed the files for
+building source packages (which is the default).
 @end quotation
 
 @node Customizing checking and building,  , Building packages, Checking and building packages
@@ -1367,7 +1381,7 @@ When all the testing is done, upload the @file{.tar.gz} file to
 @end example
 
 @noindent
-and send a message to @url{cran@@r-project.org} about it.  The
+and send a message to @email{cran@@r-project.org} about it.  The
 @acronym{CRAN} maintainers will run these tests before putting a
 submission in the main archive.
 
@@ -2094,7 +2108,7 @@ of which need write permission in the @R{} installation tree.
 This is a rather general mechanism, designed for adding new front-ends
 such as the @pkg{gnomeGUI} package.  If a @file{configure} file is found
 in the top-level directory of the package it is executed, and then if a
-@code{Makefile} is found (often generated by @file{configure}),
+@code{Makefile} is found (often gener\ated by @file{configure}),
 @code{make} is called.  If @code{R CMD INSTALL --clean} is used
 @code{make clean} is called.  No other action is taken.
 
@@ -2130,7 +2144,9 @@ the version of @R{} which has been translated.  So the
 @example
 Package: Translation-it
 Type: Translation
-Version: 2.1.0-1
+Version: 2.2.1-1
+Title: Italian Translations for R 2.2.1
+Description: Italian Translations for R 2.2.1
 Author: The translators
 Maintainer: Some Body <somebody@@some.where.net>
 Licence: GPL Version 2 or later.
@@ -2680,7 +2696,8 @@ fragment of @R{} code or the name of an @R{} object, using
 @code{typewriter} font if possible.  Only percent signs and unpaired
 braces always need to be escaped (by a backslash) inside @code{\code}:
 backslash will need to be escaped if it precedes @samp{%}, @samp{@{} or
-@samp{@}}.
+@samp{@}}.  The only markup interpreted inside @code{\code} is
+@code{\link}.
 
 @item \preformatted@{@var{text}@}
 @findex \preformatted
@@ -3116,9 +3133,11 @@ Normally keeping the source code is a good idea, and in particular it
 avoids comments being moved around in the source.  However, we can make
 use of the ability to re-create a function listing from its parse tree
 to produce a tidy version of the function, with consistent indentation,
-spaces around operators and consistent use of the preferred assignment
-operator @samp{<-}.  This tidied version is much easier to read, not
-least by other users who are used to the standard format.
+spaces around operators.  This tidied version is much easier to read,
+not least by other users who are used to the standard format.  Although
+the deparsing cannot do so, we recommend the consistent use of the
+preferred assignment operator @samp{<-}, rather than @samp{=} for
+assignment.
 
 We can subvert the keeping of source in two ways.
 
@@ -3407,9 +3426,9 @@ specific shared object (or use @code{"base"} for code compiled into
 @R{}).  Its use is highly desirable, as there is no way to avoid two
 package writers using the same symbol name, and such name clashes are
 normally sufficient to cause @R{} to crash.  (If it is not present and
-the call is from a function is defined in a package with a namespace,
-the shared object loaded by the first (if any) @code{useDynLib}
-directive will be used.)
+the call is from the body of a function defined in a package with a
+namespace, the shared object loaded by the first (if any)
+@code{useDynLib} directive will be used.)
 
 For @code{.C} only you can specify an @code{ENCODING} argument: this
 requests that (unless @code{DUP = FALSE}) character vectors be
@@ -7079,7 +7098,7 @@ can take over a function in the base package and make it generic by
 @example
 @group
 foo <- function(object, ...) UseMethod("foo")
-foo.default <- get("foo", pos = NULL, mode = "function")
+foo.default <- base::foo
 @end group
 @end example
 
@@ -7088,15 +7107,7 @@ foo.default <- get("foo", pos = NULL, mode = "function")
 argument list, one can e.g.@: use @code{formals(foo.default) <-
 c(formals(foo.default), alist(... = ))}.)
 
-Note that this cannot be used for functions in another package, as the
-order of packages on the search path cannot be controlled, except that
-all precede the base package.  Where the name of the package is known
-and it is in a namespace another way to access the original form is
-
-@example
-foo.default <- base::foo
-@end example
-
+The same idea can be applied for functions in other packages with namespaces.
 
 @node Linking GUIs and other front-ends to R, R (internal) programming miscellanea, Generic functions and methods, Top
 @chapter Linking GUIs and other front-ends to R
@@ -7512,7 +7523,8 @@ Baier available on CRAN
 (@url{http://cran.r-project.org/other-software.html}) which works with
 @file{Rproxy.dll} (in the R distribution) and @file{R.dll} to support
 transfer of data to and from R and remote execution of R commands, as
-well as embedding of an R graphics window.
+well as embedding of an R graphics window.  The @pkg{rcom} package on
+CRAN provides a (D)COM server in a running @R{} session.
 
 @item
 Another (D)COM server, @code{RDCOMServer}, is available from
@@ -7719,6 +7731,12 @@ attempt to use only threads in the late 1990s failed to work correctly
 under Windows 95, the predominant version of Windows at that time.} to
 use multiple threads.
 
+Note that @R{}'s own front ends use a stack size of 10Mb, whereas MinGW
+executables default to 2Mb, and Visual C++ ones to 1Mb.  The latter
+stack sizes are too small for a number of @R{} applications, so
+general-purpose front-ends should use a larger stack size.
+
+
 @node R (internal) programming miscellanea, R coding standards, Linking GUIs and other front-ends to R, Top
 @appendix R (internal) programming miscellanea
 
@@ -7895,12 +7913,11 @@ dimnames    dimnames<-
 
 @item
 The following few @math{N}-argument functions are ``primitive'' for
-efficiency reasons.  Care is taken in order to treat named arguments
-properly:
+efficiency reasons:
 
 @example
 @group
-:          ~          c           list        unlist
+:          ~          c           list
 call       as.call    expression  substitute
 UseMethod  invisible
 .C         .Fortran   .Call

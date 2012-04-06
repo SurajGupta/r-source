@@ -19,7 +19,7 @@
 \method{as.character}{POSIXt}(x, \dots)
 
 strftime(x, format="", usetz = FALSE, \dots)
-strptime(x, format)
+strptime(x, format, tz = "")
 
 ISOdatetime(year, month, day, hour, min, sec, tz = "")
 ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
@@ -140,7 +140,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   representing the time.
 
   \code{strptime} turns character representations into an object of
-  class \code{"POSIXlt"}.
+  class \code{"POSIXlt"}.  The timezone is used to set the \code{isdst}
+  component.
 
   \code{ISOdatetime} and \code{ISOdate} return an object of class
   \code{"POSIXct"}.
@@ -164,6 +165,9 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 
   OS facilities will probably not print years before 1CE (aka 1AD)
   correctly.
+
+  Remember that in most timezones some times do not occur and some occur
+  twice because of transitions to/from summer time.
 }
 \references{
   International Organization for Standardization (1988, 1997, \dots)

@@ -1,3 +1,4 @@
+postscript("reg-tests-1.ps", encoding = "ISOLatin1.enc")
 
 ## regression test for PR#376
 aggregate(ts(1:20), nfreq=1/3)
@@ -754,7 +755,7 @@ stopifnot(abs(atan2(y, x) - atan(y/x)) < 10 * .Machine$double.eps)
 
 x <- 1:99/100
 stopifnot(Mod(1 - (cos(x) + 1i*sin(x)) / exp(1i*x)) < 10 * .Machine$double.eps)
-## error is about 650* are x=0.01
+## error is about 650* at x=0.01:
 stopifnot(abs(1 - x / acos(cos(x))) < 1000 * .Machine$double.eps)
 stopifnot(abs(1 - x / asin(sin(x))) <= 10 * .Machine$double.eps)
 stopifnot(abs(1 - x / atan(tan(x))) <= 10 *.Machine$double.eps)
@@ -3797,3 +3798,146 @@ z[["y2"]] <- x
 z["y3"] <- list(x)
 z
 ## Not completely supported prior to 2.2.0
+
+
+### end of tests added in 2.2.0 ###
+
+
+## summary.matrix failed on some classed objects
+surv <- structure(c(2.06, 2.13, 0.09, 0.27, 1, 0.36, 3.04, 0.67, 0.35,
+                    0.24, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
+                  .Dim = c(10, 2),
+                  .Dimnames = list(NULL, c("time", "status")),
+                  type = "right", class = "Surv")
+summary(surv)
+## Had infinite recursion (sometimes segfault) on 2.2.0.
+
+## need fuzz even for ">=" :
+set.seed(1)
+stopifnot(all.equal(chisq.test(cbind(1:0, c(7,16)), simulate.p = TRUE)$p.value,
+                    0.3368315842, tol = 1e-6))
+## some i686 platforms gave 0.00049975
+
+
+## PR#8228 image() failed on a matrix with all NAs
+image(z=matrix(NA, 1, 1), x=0:1, y=0:1)
+
+
+## read.fwf(header=TRUE) failed (PR#8226)
+ff <- tempfile()
+cat(file=ff, "A\tB\tC", "123456", "987654", sep="\n")
+z <- read.fwf(ff, width=c(1,2,3), header=TRUE)
+stopifnot(identical(names(z), LETTERS[1:3]))
+unlink(ff)
+## failed in <= 2.2.0
+
+## diag() failed if matrix had NA dimnames
+x <- matrix(1, 2, 2)
+dimnames(x) <- list(c("a", NA), c("a", NA))
+diag(x)
+
+
+## colnames in pivoted decompositions (PR#8258)
+A <- 1:10
+X <- cbind(A,B=A^2, C=A^2-A, D=1)
+qrX <- qr(X)
+oo <- order(qrX$pivot)
+Q <- qr.Q(qrX)
+R <- qr.R(qrX)
+(z <- (Q%*%R)[,oo])
+stopifnot(identical(colnames(X), colnames(z)))
+
+qrX <- qr(X, LAPACK=TRUE)
+oo <- order(qrX$pivot)
+Q <- qr.Q(qrX)
+R <- qr.R(qrX)
+(z <- (Q%*%R)[,oo])
+stopifnot(identical(colnames(X), colnames(z)))
+
+Y <- crossprod(X)
+U <- chol(Y, pivot=TRUE)
+oo <- order(attr(U, "pivot"))
+(z <- t(U[,oo])%*% U[,oo])
+stopifnot(identical(colnames(X), colnames(z)))
+## unpivoted colnames in R <= 2.2.0
+
+
+## Im(-1) (PR#8272)
+stopifnot(all.equal(Im(c(1, 0, -1)), rep(0, 3)))
+## R <= 2.2.0 had Im and Arg the same for non-complex numbers
+
+
+## rounding errors in aggregate.ts
+aggregate(as.ts(c(1,2,3,4,5,6,7,8,9,10)),1/5,mean)
+## failed in 2.2.0
+
+
+## prcomp(tol=1e-6)
+x <- matrix(runif(30),ncol=10)
+s <- prcomp(x, tol=1e-6)
+stopifnot(length(s$sdev) == ncol(s$rotation))
+summary(s)
+## last failed in 2.2.0
+
+
+## mapply did not test type of MoreArgs
+try(mapply(rep,times=1:4, MoreArgs=42))
+## segfaulted in 2.2.0
+
+
+## qbinom had incorrect test for p with log=TRUE
+(z <- qbinom(-Inf, 1, 0.5, log.p = TRUE))
+stopifnot(is.finite(z))
+## was NaN in 2.2.0
+
+
+## t(.) with NULL dimnames
+x <- diag(2)
+dimnames(x) <- list(NULL, NULL)
+stopifnot(identical(x, t(x)),
+          identical(dimnames(x), dimnames(t(array(3, 1, dimnames=list(NULL))))))## dropped the length-2 list till 2.2.0
+
+
+## infinite influence measures (PR#8367)
+occupationalStatus <-
+    structure(as.integer(c(50, 16, 12, 11, 2, 12, 0, 0, 19, 40, 35,
+                           20, 8, 28, 6, 3, 26, 34, 65, 58, 12, 102,
+                           19, 14, 8, 18, 66, 110, 23, 162, 40, 32, 7,
+                           11, 35, 40, 25, 90, 21, 15, 11, 20, 88, 183,
+                           46, 554, 158, 126, 6, 8, 23, 64, 28, 230, 143,
+                           91, 2, 3, 21, 32, 12, 177, 71, 106)
+                         ), .Dim = as.integer(c(8, 8)), .Dimnames =
+              structure(list(origin = c("1", "2", "3", "4", "5", "6", "7", "8"),
+                             destination = c("1", "2", "3", "4", "5", "6", "7",
+                             "8")), .Names = c("origin", "destination")),
+              class = "table")
+Diag <- as.factor(diag(1:8))
+Rscore <- scale(as.numeric(row(occupationalStatus)), scale = FALSE)
+Cscore <- scale(as.numeric(col(occupationalStatus)), scale = FALSE)
+Uniform <- glm(Freq ~ origin + destination + Diag +
+               Rscore:Cscore, family = poisson, data = occupationalStatus)
+Ind <- as.logical(diag(8))
+residuals(Uniform)[Ind] #zero/near-zero
+stopifnot(is.nan(rstandard(Uniform)[Ind]))
+stopifnot(is.nan(rstudent(Uniform)[Ind]))
+stopifnot(is.nan(dffits(Uniform)[Ind]))
+stopifnot(is.nan(covratio(Uniform)[Ind]))
+stopifnot(is.nan(cooks.distance(Uniform)[Ind]))
+# had infinities in 2.2.0 on some platforms
+plot(Uniform)
+##
+
+## alg="port" in nls and bounds (PR#8401)
+x <- runif(200)
+a <- b <- 1
+c <- -0.1
+y <- a+b*x+c*x^2+rnorm(200, sd=0.05)
+plot(x,y)
+curve(a+b*x+c*x^2, add=TRUE)
+nls(y~a+b*x+c*I(x^2), start=c(a=1,b=1,c=0.1), algorithm="port")
+nls(y~a+b*x+c*I(x^2), start=c(a=1,b=1,c=0.1), algorithm="port",
+    lower = c(0,0,0))
+## failed in 2.2.0
+
+
+### end of tests added in 2.2.1 ###

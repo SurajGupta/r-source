@@ -2966,7 +2966,7 @@ and to simulate from the distribution.
 @item Cauchy @tab @code{cauchy} @tab @code{location, scale}
 @item chi-squared @tab @code{chisq} @tab @code{df, ncp}
 @item exponential @tab @code{exp} @tab @code{rate}
-@item F @tab @code{f} @tab @code{df1, df1, ncp}
+@item F @tab @code{f} @tab @code{df1, df2, ncp}
 @item gamma @tab @code{gamma} @tab @code{shape, scale}
 @item geometric @tab @code{geom} @tab @code{prob}
 @item hypergeometric @tab @code{hyper} @tab @code{m, n, k}
@@ -6017,6 +6017,13 @@ between the text and the plotting position.
 @item cex=1.5
 Character expansion.  The value is the desired size of text characters
 (including plotting characters) relative to the default text size.
+
+@item cex.axis
+@itemx cex.lab
+@itemx cex.main
+@itemx cex.sub
+The character expansion to be used for axis annotation, @math{x} and
+@math{y} labels, main and sub-titles, respectively.
 @end table
 
 @node Axes and tick marks, Figure margins, Graphical elements, Graphics parameters
@@ -6393,7 +6400,7 @@ command like
 > library(boot)
 @end example
 
-Users connected to the Internet can use the @code{CRAN.packages()}
+Users connected to the Internet can use the @code{available.packages()}
 function (available through the @code{Packages} menu in the Windows and
 RAqua GUIs) to automatically update and install packages.
 

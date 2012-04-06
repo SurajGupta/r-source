@@ -9,6 +9,9 @@
 opt.conformance <- 0
 Meps <- .Machine $ double.eps
 
+## this uses random inputs, so set the seed
+set.seed(1)
+
 options(rErr.eps = 1e-30)
 rErr <- function(approx, true, eps = .Options$rErr.eps)
 {
@@ -87,7 +90,7 @@ all(abs(1 - x / atan(tan(x))) <  2*Meps)
 
 ## gamma()
 abs(gamma(1/2)^2 - pi) < 4* Meps
-r <- rlnorm(5000)
+r <- rlnorm(5000) # NB random, and next has failed for some seed
 all(abs(rErr(gamma(r+1), r*gamma(r))) < 500 * Meps)
 ## more accurate for integers n <= 50 since R 1.8.0	Sol8: perfect
 n <-   20; all(		 gamma(1:n) == cumprod(c(1,1:(n-1))))# Lnx: up too n=28
@@ -122,8 +125,9 @@ all.equal(digamma(n + 1/2),
 all.equal(psigamma(1, deriv=c(1,3,5)),
           pi^(2*(1:3)) * c(1/6, 1/15, 8/63), tol=32*Meps)
 x <- c(-100,-3:2, -99.9, -7.7, seq(-3,3, length=61), 5.1, 77)
-stopifnot(identical( digamma(x), psigamma(x,0)),
-          identical(trigamma(x), psigamma(x,1)))# TRUE (+ NaN warnings)
+## Intel icc showed a < 1ulp difference in the second.
+stopifnot(all.equal( digamma(x), psigamma(x,0), 2*Meps),
+          all.equal(trigamma(x), psigamma(x,1), 2*Meps))# TRUE (+ NaN warnings)
 
 ## fft():
 ok <- TRUE

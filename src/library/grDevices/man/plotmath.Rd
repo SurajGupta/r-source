@@ -26,6 +26,7 @@
 
   \tabular{ll}{
     \bold{Syntax} \tab \bold{Meaning} \cr
+
     \code{x + y}   \tab x plus y   \cr
     \code{x - y}   \tab x minus y \cr
     \code{x*y}    \tab juxtapose x and y \cr
@@ -82,6 +83,8 @@
     \code{x \%dbldown\% y} \tab x double-down-arrow y \cr
     \code{alpha} -- \code{omega} \tab Greek symbols \cr
     \code{Alpha} -- \code{Omega} \tab uppercase Greek symbols \cr
+    \code{theta1, phi1, sigma1, omega1} \tab cursive Greek symbols\cr
+    \code{Upsilon1} \tab cursive capital upsilon\cr
     \code{infinity}   \tab infinity symbol \cr
     \code{partialdiff} \tab partial differential symbol \cr
     \code{32*degree}   \tab 32 degrees \cr
@@ -114,6 +117,11 @@
     \code{bgroup("(",atop(x,y),")")} \tab use scalable delimiters \cr
     \code{group(lceil, x, rceil)} \tab special delimiters \cr
   }
+
+  Note to TeX users: TeX's \code{\Upsilon} is \code{Upsilon1}, TeX's
+  \code{\varepsilon} is close to \code{epsilon}, and there is no
+  equivalent of TeX's \code{\epsilon}.  TeX's \code{\varpi} is close to
+  \code{omega1}.
 }
 \references{
   Murrell, P. and Ihaka, R. (2000) An approach to providing
@@ -140,7 +148,7 @@ matplot(x, y, type = "l", xaxt = "n",
         xlab = expression(paste("Phase Angle ", phi)),
         col.main = "blue")
 axis(1, at = c(-pi, -pi/2, 0, pi/2, pi),
-     lab = expression(-pi, -pi/2, 0, pi/2, pi))
+     labels = expression(-pi, -pi/2, 0, pi/2, pi))
 
 
 ## How to combine "math" and numeric variables :

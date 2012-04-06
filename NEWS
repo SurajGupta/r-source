@@ -6,6 +6,239 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.2.0 patched
+
+
+USER-VISIBLE CHANGES
+
+    o	options("expressions") has been reduced to 1000: the limit
+	of 5000 introduced in 2.1.0 was liable to give crashes from C
+	stack overflow.
+
+
+NEW FEATURES
+
+    o	Use of 'pch' (e.g. in points) in the symbol font 5 is now
+	interpreted in the single-byte encoding used by that font.
+	Similarly, strwidth now recognizes that font 5 has a different
+	encoding from that of the locale.  (These are likely to affect
+	the answer only in MBCS locales such as UTF-8.)
+
+    o	The URW font metrics have been updated to versions from late
+	2002 which cover more glyphs, including Cyrillic.
+
+    o	New postscript encodings for CP1250 (Windows East European),
+	ISO Latin-7 (8859-13, Latvian, Lithuanian and Maori), Cyrillic
+	(8859-5), KOI8-R, KOI8-U and CP1251.
+
+    o	configure has more support for the Intel and Portland Group
+	compilers on ix86 and x86_64 Linux.
+
+    o	R CMD INSTALL will clean up if interrupted (e.g. by ctrl-C from
+	the keyboard).
+
+    o	There is now a comprehensive French translation of the messages,
+	thanks to Philippe Grosjean.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The undocumented use of atan() with two arguments is deprecated:
+	instead use atan2() (as documented).
+
+    o	The 'vfont' argument of axis() and mtext() is deprecated
+	(it currently warns and does nothing).
+
+    o   The function mauchley.test() is deprecated (was a misspelling)
+	and replaced by mauchly.test()
+
+
+BUG FIXES
+
+    o	The malloc's of AIX and OSF/1 which return NULL for size 0
+	are now catered for in src/main/regex.c.
+
+    o	Names of list elements which are missing are now printed as
+	$<NA> and not $"NA" (which is how the non-missing name "NA" is
+	printed).  (Brought up in discussion of PR#8161.)
+
+    o	help.start() was not linking R.css for use by its front page and
+	immediate links (2.2.0 only).
+
+    o	Indexing by character NA matched the name "NA".
+
+    o	The arith-true test used random inputs and did not set the seed, so
+	it could fail very occasionally.
+
+    o	arima() with 'fixed' supplied and p=0 for the non-seasonal
+	part could give spurious warnings about 'some AR parameters
+	were fixed'.
+
+    o	summary.matrix() could give an infinite recursion on some
+	classed objects (e.g. those of class "Surv").
+
+    o	The 255th character in an 8-bit character set was not handled
+	correctly as a letter on some platforms where C char is
+	signed: for example it was printed as \377 and not allowed in
+	variable names.  (Spotted by Alexey Shipunov in Russian
+	encodings.)
+
+    o	Conversion from POSIXct to POSIXlt is done more accurately
+	around the change of DST in years not supported by the OS
+	(pre-1970 on Windows and some others, and in the far past or
+	future).
+
+    o	chisq.test(cbind(1:0, c(7,16)), simulate.p = TRUE) gave wrong
+	P-values on some platforms. (PR#8224)
+
+    o	pdf() was not writing details of the encoding to the file
+	correctly.  (Spotted by Alexey Shipunov in Russian encodings.)
+
+    o	image() was failing with an error when plotting a matrix
+	of all NA values.  (PR#8228)
+
+	image() could fail if called with add=FALSE (the default) and
+	length(x)=1 for either x or y, as it uses the plot coordinates of
+	the previous plot (if any).
+
+    o	tools::checkMD5sums was not accepting file names with spaces in.
+
+    o	The plot() method for TukeyHSD() needed updating after adding
+	adjusted p-values.  (PR#8229)
+
+    o	read.fwf() did not work for header = TRUE.  (PR#8226)
+
+    o	diag() failed when its argument had NA values in its dimnames.
+
+    o	[g]sub(pcre=TRUE) did not work correctly with \U and \L in a
+	UTF-8 locale, even on the example on the help page.
+
+    o	promptMethods() was failing if the "methods" argument was supplied.
+
+    o	is.loaded() now finds Fortran symbols whether or not the
+	registration mechanism has been used.
+
+    o	ISODateTime() mistakenly corrected non-existent times (when
+	DST was being started) in the current time zone.
+
+    o	Some replacement operations on data frames gave incorrect
+	answers, e.g. DF[3:4, "y"] if column "y" did not exist or was
+	a matrix.
+
+    o	getGraphicsEvent() would cause memory corruption if passed an
+    	empty prompt.
+
+    o	qr() and chol() now pivot the colnames of the result when
+	pivoting is used.  (PR#8258)
+
+    o	example(points) omitted pch=0, although it was valid and
+	said in the text to be illustrated.
+
+    o	plot.default() had an unused 'lab' argument, thereby preventing
+	the 'lab' graphics parameter being passed through '...' .
+
+    o	Although polygon(col = NA) was the stated default, specifying
+	NA was not equivalent to omitting the argument (but col=NULL
+	was equivalent).
+
+    o	Im(-1) was pi. (PR#8272, a side effect from all previous
+	versions of R returning the same value for Im and Arg of
+	non-complex numbers.)
+
+    o	symbols(fg) defaulted to colour 1, not par("col") as documented.
+	It does now defaults to par("col").
+
+    o	par("family") did not check the length of the value (up to 49
+	bytes) and so could segfault.
+
+    o	aggregate.ts() did not allow for rounding in frequencies such
+	as 1/5.
+
+    o	prcomp(tol=) was not dropping the sdev's corresponding to
+	dropped columns.
+
+    o	Subassignment of a vector which increased the length of the
+	vector _and_ had the wrong length of replacement could
+	occasionally segfault.  (This has been there since at least
+	mid 1997.)
+
+    o	The registration of .Fortran symbols was broken: these could
+	only be looked up if there were also .Call symbols registered!
+
+    o	R CMD build was incorrectly rejecting the recommended form of
+	name for a translation package, 'Translation-ll'.  (PR#8314)
+
+    o	numericDeriv() gave nonsense results unless the variables were
+	real, which was not checked.
+
+    o	predict.prcomp() would sometimes give an error when predicting
+	a single observation.  (PR#8324)
+
+    o	mapply() could segfault if MoreArgs was not a list.  (PR#8332)
+
+    o	The arith-true test used identical() on floating-point results,
+	and this allowed a failure when the relative difference was
+	less than .Machine$double.eps but non-zero.
+
+    o	qbinom() was not accepting p = -Inf when log.p = TRUE, although
+	it is a legitimate value.
+
+    o	write.csv[2] only accepted logical constants for 'row.names', and
+	now accepts variables.
+
+    o	Conversion of .Rd files did not correctly match braces
+	enclosing a whole argument, e.g. \eqn{{\bf a}}{a}.
+
+    o	The C function pythag (used if hypot was not available) would
+	infinite-loop on systems with effective optimizing compilers.
+
+    o	Writing long formats (more than 1000 bytes) with connections
+	that use dummy_vfprintf could fail on some systems.  The limit
+	has been changed to 100000 bytes pending a more complete fix in R
+	2.3.0.
+
+    o	Making in src/nmath/standalone without making R was not
+	making Rmath.h.
+
+    o	Both the R front-end and INSTALL could find the attempted
+	temporary directory name already in use on platforms without
+	mktemp (and a genuine Bourne shell /bin/sh, not bash).  Now
+	both the process ID and a timestamp are used to create the
+	directory name.
+
+    o	[dpqr]gamma now return NaN for an invalid 'shape' parameter
+	(rather than throw an error), for consistency with other
+	distribution functions.
+
+    o	t() now longer drops dimnames 'list(NULL,NULL)' or 'list(NULL)'.
+
+    o	Influence measures such as rstandard() and cooks.distance()
+	could return infinite values rather than NaN for a case which
+	was fitted exactly.  Similarly, plot.lm() could fail on such
+	examples.  plot.lm(which = 5)  had to be modified to only plot
+	cases with hat < 1.  (PR#8367)
+
+	lm.influence() was incorrectly reporting 'coefficients' and
+	'sigma' as NaN for cases with hat = 1, and on some platforms
+	not detecting hat = 1 correctly.
+
+    o	Rmath.h for standalone Rmath was not recording HAVE_WORKING_LOG,
+        so R_log was not available on platforms defining it.
+
+    o	HoltWinters() was using a slightly incorrect formula in the C code.
+
+    o	dir.create() could be confused by a trailing slash on the
+	path, and by paths containing drives on Windows.
+
+    o	The search for tcl/tkConfig.sh looked in 'lib' before 'lib64'
+	directories (and not at all in /usr/local/lib64) and so might
+ 	prefer 32- to 64-bit versions if both are available.
+
+    o	nlminb() used an uninitialized variable unless bounds were supplied,
+	and so failed on 64-bit Solaris.
+
+
+
 		CHANGES IN R VERSION 2.2.0
 
 

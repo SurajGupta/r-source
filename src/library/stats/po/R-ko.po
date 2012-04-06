@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-09-16 08:35\n"
+"POT-Creation-Date: 2005-12-12 09:04\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -127,8 +127,8 @@ msgstr "'by'는 list가 아니면 되지 않습니다"
 msgid "'FUN' must always return a scalar"
 msgstr "'FUN'는 항상 sclalar를 돌려주지 않으면 되지 않습니다"
 
-msgid "cannot change frequency from %d to %d"
-msgstr "빈도를 %d로부터 %d까지 변경 할수 없습니다"
+msgid "cannot change frequency from %g to %g"
+msgstr "빈도를 %g로부터 %g까지 변경 할수 없습니다"
 
 msgid "'x' must be coefficient matrix/data frame"
 msgstr "'x' 계수 행렬/데이터 프레임이 아니면 되지 않습니다"
@@ -675,9 +675,6 @@ msgstr "애매한 거리 method입니다"
 msgid "non-square matrix"
 msgstr "non-square 행렬이 아닙니다"
 
-msgid "'shape' must be strictly positive"
-msgstr "'shape' 파라미터는 positive가 아니면 되지 않습니다"
-
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[] 그리고 prob[]는 동일한 길이가 벡터가 아니면 되지 않습니다"
 
@@ -874,6 +871,9 @@ msgstr "'or'는 단일의 수치 또는 0 과 inf 간의 단일의 수가 아니
 
 msgid "p-values may be incorrect"
 msgstr "p 값은 올바르지 않을지도 모릅니다"
+
+msgid "'hybrid' is ignored for a 2 x 2 table"
+msgstr ""
 
 msgid "all groups must contain data"
 msgstr "모든 group는 데이터를 포함하지 않으면 안됩니다"
@@ -1389,6 +1389,9 @@ msgstr "'model.tables'는 다중 응답에 대해서 실제 적용되지 않습�
 msgid "type '%s' is not implemented yet"
 msgstr "유형 '%s'는 실제 적용되지 않습니다"
 
+msgid "this fit does not inherit from \"lm\""
+msgstr ""
+
 msgid "'cterms' argument must match terms in model object"
 msgstr ""
 "'cterms' 파라미터는 모델 오브젝트중의 항에 적합하지 않으면 되지 않습니다"
@@ -1517,6 +1520,9 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "파라미터의 초기 추정값으로 구매 행렬이 특이합니다"
 
+msgid "argument 'weights' is currently ignored"
+msgstr ""
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
@@ -1551,10 +1557,10 @@ msgid "read the documentation for 'trace' more carefully"
 msgstr "'trace'에 대한 해설을 보다 주의 깊게 읽어 주십시오"
 
 msgid ""
-"method L-BFGS-B uses 'fact' (and 'pgtol') instead of 'reltol' and 'abstol'"
+"method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr ""
 "L-BFGS-B method는 'reltol' 그리고 'abstol'대신에 \n"
-"'fact (와 'pgtol')를 사용합니다"
+"'factr' (와 'pgtol')를 사용합니다"
 
 msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
 msgstr ""
@@ -1573,9 +1579,8 @@ msgstr "그룹이 너무 적습니다"
 msgid "use only with \"lm\" objects"
 msgstr "\"lm\" 오브젝트에 대해서만 사용해주십시오"
 
-#, fuzzy
 msgid "'which' must be in 1:6"
-msgstr "'which'는 1:4에서 없으면 되지 않습니다"
+msgstr "'which'는 1:6에서 없으면 되지 않습니다"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
@@ -2106,19 +2111,3 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 "모델식에서 파라미터 %s가 없습니다\n"
 "모델식에서 파라미터(복수) %s가 없습니다"
-
-#~ msgid "p-values may be incorrect due to ties"
-#~ msgstr "p-values는 ties 때문에 정확한 p값을 계산할수가 없습니다"
-
-#~ msgid "one-argument anova() not implemented for 'mlm' objects"
-#~ msgstr ""
-#~ "one-argument anova()는 mlm의 오브젝트에 대해서는 실제 적용되지 않습니다"
-
-#~ msgid "'m' is negative"
-#~ msgstr "'m'은 negative입니다"
-
-#~ msgid "need response in formula"
-#~ msgstr "모델식에 응답이 필요합니다"
-
-#~ msgid "non-integer counts in a Poisson glm!"
-#~ msgstr "포아송 glm에서 정수가 아닌 카운터가 있었습니다!"

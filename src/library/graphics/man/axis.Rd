@@ -13,7 +13,7 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
 \arguments{
   \item{side}{an integer specifying which side of the plot the axis is
     to be drawn on.  The axis is placed as follows: 1=below,
-  2=left, 3=above and 4=right.}
+    2=left, 3=above and 4=right.}
   \item{at}{the points at which tick-marks are to be drawn.  Non-finite
     (infinite, \code{NaN} or \code{NA}) values are omitted.  By default,
     when \code{NULL}, tickmark locations are computed, see Details below.}
@@ -25,19 +25,21 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
   \item{tick}{a logical value specifying whether tickmarks should be
     drawn}.
   \item{line}{the number of lines into the margin which the axis will
-    be drawn.  This overrides the value of the graphical parameter
-    \code{mgp[3]}.  The relative placing of tickmarks and tick labels
-    is unchanged.}
+    be drawn.  If not \code{NA} this overrides the value of the
+    graphical parameter \code{mgp[3]}.  The relative placing of
+    tickmarks and tick labels is unchanged.}
   \item{pos}{the coordinate at which the axis line is to be drawn:
-    this overrides the values of both \code{line} and \code{mgp[3]}.}
+    if not \code{NA} this overrides the values of both \code{line} and
+    \code{mgp[3]}.}
   \item{outer}{a logical value indicating whether the axis should be
     drawn in the outer plot margin, rather than the standard plot
     margin.}
-  \item{font}{font for text.}
-  \item{vfont}{vector font for text.}
+  \item{font}{font for text.  Defaults to \code{par("font")}.}
+  \item{vfont}{vector font for text.  Deprecated: will give a message
+    to use \code{\link{par}(family=)} instead (and do nothing).}
   \item{lty, lwd}{line type, width for the axis line and the tick marks.}
   \item{col}{color for the axis line and the tick marks.  The default
-    \code{NULL} means to use \code{par("fg")}.}
+    \code{NULL} means to use \code{par("fg")}, possibly specified inline.}
   \item{hadj}{adjustment (see \code{\link{par}("adj")} for all labels
     \emph{parallel} (\sQuote{horizontal}) to the reading direction.  If
     this is not a finite value, the default is used (centring for
@@ -52,12 +54,22 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
     If \code{padj} is not a finite value (the default), the value of
     \code{par("las")} determines the adjustment.  For strings plotted
     perpendicular to the axis the default is to centre the string.}
+
   \item{\dots}{other graphical parameters may also be passed as
     arguments to this function, particularly, \code{cex.axis},
     \code{col.axis} and \code{font.axis} for axis annotation, \code{mgp}
     for positioning, \code{tck} or \code{tcl} for tick mark length and
     direction, \code{las} for vertical/horizontal label orientation, or
-    \code{fg} instead of \code{col}, see \code{\link{par}} on these.}
+    \code{fg} instead of \code{col}, see \code{\link{par}} on these.
+
+    Parameters \code{xaxt} (sides 1 and 3) and \code{yaxt} (sides 2 and
+    4) control if the axis is plotted at all.
+
+    Note that \code{xpd} is not accepted as clipping is always to the
+    device region, and that \code{lab} will partial match to argument
+    \code{labels} unless the latter is also supplied.  (Since the
+    default axes has already been set up by \code{\link{plot.window}},
+    \code{lab} will not be acted on by \code{axis}.)}
 }
 \value{
   The numeric locations on the axis scale at which tick marks were drawn
@@ -68,17 +80,17 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
 }
 \details{
   The axis line is drawn from the lowest to the highest value of
-  \code{at}, but will be clipped at the plot region. Only ticks which
+  \code{at}, but will be clipped at the plot region.  Only ticks which
   are drawn from points within the plot region (up to a tolerance for
   rounding error) are plotted, but the ticks and their labels may well
   extend outside the plot region.
 
   When \code{at = NULL}, pretty tick mark locations are computed internally
   (the same way \code{\link{axTicks}(side)} would) from
-  \code{\link{par}("usr", "lab")} and \code{\link{par}("xlog")} (or
-  \code{"ylog"}).  Note that these may change if an on-screen plot is
-  resized (for example, if \code{plot} argument
-  \code{\link[graphics:plot.window]{asp}} is set).
+  \code{\link{par}("xaxp")} or \code{"yaxp"} and
+  \code{\link{par}("xlog")} (or \code{"ylog"}).  Note that these
+  locations may change if an on-screen plot is resized (for example, if
+  \code{plot} argument \code{\link[graphics:plot.window]{asp}} is set).
 
   Several of the graphics parameters affect the way axes are drawn. The
   vertical (for sides 1 and 3) positions of the axis and the tick labels

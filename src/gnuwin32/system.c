@@ -196,7 +196,6 @@ static int
 GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
     int res;
-    char *p;
     char *NormalPrompt =
 	(char *) CHAR(STRING_ELT(GetOption(install("prompt"), R_BaseEnv), 0));
 
@@ -206,9 +205,6 @@ GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
     }
     ConsoleAcceptCmd = !strcmp(prompt, NormalPrompt);
     res = consolereads(RConsole, prompt, buf, len, addtohistory);
-    for (p = buf; *p; p++)
-	if (*p == EOF)
-	    *p = '\001';
     ConsoleAcceptCmd = 0;
     return !res;
 }
@@ -879,12 +875,15 @@ int cmdlineoptions(int ac, char **av)
 		    if(ierr < 0)
 			sprintf(s, _("WARNING: --max-mem-size value is invalid: ignored\n"));
 		    else
-		    sprintf(s, _("WARNING: --max-mem-size=%lu'%c': too large and ignored\n"),
-			    (unsigned long) value,
-			    (ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
+			sprintf(s, _("WARNING: --max-mem-size=%lu'%c': too large and ignored\n"),
+				(unsigned long) value,
+				(ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
 		    R_ShowMessage(s);
-		} else if (value < 10*Mega) {
+		} else if (value < 16*Mega) {
 		    sprintf(s, _("WARNING: max-mem-size =%4.1fM too small and ignored\n"), value/(1024.0 * 1024.0));
+		    R_ShowMessage(s);
+		} else if (value >= 3072*Mega) {
+		    sprintf(s, _("WARNING: max-mem-size =%4.1fM is too large and taken as 3Gb\n"), value/(1024.0 * 1024.0));
 		    R_ShowMessage(s);
 		} else
 		    R_max_memory = value;

@@ -11,17 +11,18 @@ image(x, \dots)
 }
 \arguments{
   \item{x,y}{locations of grid lines at which the values in \code{z} are
-    measured.  These must be in (strictly) ascending order.
-    By default, equally
+    measured.  These must be finite, non-missing and in (strictly)
+    ascending order.  By default, equally
     spaced values from 0 to 1 are used.  If \code{x} is a \code{list},
     its components \code{x$x} and \code{x$y} are used for \code{x}
     and \code{y}, respectively. If the list has component \code{z} this
     is used for \code{z}.}
   \item{z}{a matrix containing the values to be plotted (\code{NA}s are
     allowed).  Note that \code{x} can be used instead of \code{z} for
-    convenience.}
+    convenience.}    
   \item{zlim}{the minimum and maximum \code{z} values for which colors
-    should be plotted.  Each of the given colors will be used to color an
+    should be plotted, defaulting to the range of the finite values of
+    \code{z}. Each of the given colors will be used to color an
     equispaced interval of this range. The \emph{midpoints} of the
     intervals cover the range, so that values just outside the range
     will be plotted.}

@@ -32,9 +32,10 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
 			 ann=par("ann"), axes=TRUE, frame.plot=axes,
 			 panel.first=NULL, panel.last=NULL,
 			 col=par("col"), bg=NA, pch=par("pch"),
-			 cex = 1, lty=par("lty"), lab=par("lab"),
-			 lwd=par("lwd"), asp=NA, ...)
+			 cex = 1, lty=par("lty"), lwd=par("lwd"), asp=NA, ...)
 {
+    localAxis <- function(..., labels=NULL)
+        axis(..., labels=labels) # avoid partial match of lab to labels
     xlabel <- if (!missing(x)) deparse(substitute(x))
     ylabel <- if (!missing(y)) deparse(substitute(y))
     xy <- xy.coords(x, y, xlabel, ylabel, log)
@@ -48,8 +49,8 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
     plot.xy(xy, type, col=col, pch=pch, cex=cex, bg=bg, lty=lty, lwd=lwd, ...)
     panel.last
     if (axes) {
-	axis(1, ...)
-	axis(2, ...)
+	localAxis(1, ...)
+	localAxis(2, ...)
     }
     if (frame.plot)
 	box(...)
@@ -58,13 +59,13 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
     invisible()
 }
 
-plot.factor <- function(x, y, legend.text = NULL, ...) 
+plot.factor <- function(x, y, legend.text = NULL, ...)
 {
     if (missing(y) || is.factor(y)) {
         dargs <- list(...)
-        axisnames <- if (!is.null(dargs$axes)) 
+        axisnames <- if (!is.null(dargs$axes))
             dargs$axes
-        else if (!is.null(dargs$xaxt)) 
+        else if (!is.null(dargs$xaxt))
             dargs$xaxt != "n"
         else TRUE
     }
@@ -78,7 +79,7 @@ plot.factor <- function(x, y, legend.text = NULL, ...)
 	  do.call("spineplot", args)
 	}
     }
-    else if (is.numeric(y)) 
+    else if (is.numeric(y))
         boxplot(y ~ x, ...)
     else NextMethod("plot")
 }
