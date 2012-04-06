@@ -7,7 +7,7 @@
 glm <- function(formula, family=gaussian, data, weights=NULL,
 	subset=NULL, na.action=na.fail, start=NULL, offset=NULL,
 	control=glm.control(epsilon=0.0001, maxit=10, trace=FALSE),
-	model=TRUE, method=glm.fit, x=FALSE, y=TRUE)
+	model=TRUE, method="glm.fit", x=FALSE, y=TRUE)
 {
 	call <- match.call()
 
@@ -21,12 +21,13 @@ glm <- function(formula, family=gaussian, data, weights=NULL,
 
 	mt <- terms(formula)
 	if(missing(data)) data <- sys.frame(sys.parent())
-        mf <- match.call()
-        mf$family <- mf$start <- mf$control <- mf$maxit <- NULL
+	mf <- match.call()
+	mf$family <- mf$start <- mf$control <- mf$maxit <- NULL
 	mf$model <- mf$method <- mf$x <- mf$y <- NULL
-        mf$use.data <- TRUE
-        mf[[1]] <- as.name("model.frame")
-        mf <- eval(mf, sys.frame(sys.parent()))
+	mf[[1]] <- as.name("model.frame")
+	mf <- eval(mf, sys.frame(sys.parent()))
+	if(method == "model.frame")
+		return(mf)
 	X <- model.matrix(mt, mf)
 	Y <- model.response(mf, "numeric")
 	weights <- model.weights(mf)
@@ -42,14 +43,13 @@ glm <- function(formula, family=gaussian, data, weights=NULL,
 
 	# fit model via iterative reweighted least squares
 
-	fit <- method(x=X, y=Y, weights=weights, start=start,
+	fit <- glm.fit(x=X, y=Y, weights=weights, start=start,
 		offset=offset, family=family, control=control)
 
 	# output
 
 	if(model) fit$model <- mf
-	if(x) fit$x <- X
-	else fit$x <- NULL
+	fit$x <- if(x) X else NULL
 	if(!y) fit$y <- NULL
 
 	fit <- c(fit, list(call=call, formula=formula, x=x, terms=mt, data=data,
@@ -65,16 +65,16 @@ glm.control <- function(epsilon = 0.0001, maxit = 10, trace = FALSE)
 		stop("value of epsilon must be > 0")
 	if(maxit <= 0)
 		stop("maximum number of iterations must be > 0")
-	return(list(epsilon = epsilon, maxit = maxit, trace = trace))
+	list(epsilon = epsilon, maxit = maxit, trace = trace)
 }
 
 ## Modified by Thomas Lumley 26 Apr 97
 ## Added boundary checks and step halving
 ## Modified detection of fitted 0/1 in binomial
 
-"glm.fit" <-
+glm.fit <-
 function (x, y, weights = rep(1, nobs), start = NULL, offset = rep(0, nobs),
-family = gaussian(), control = glm.control(), intercept = TRUE) 
+	family = gaussian(), control = glm.control(), intercept = TRUE) 
 {
 	xnames <- dimnames(x)[[2]]
 	ynames <- names(y)
@@ -91,6 +91,8 @@ family = gaussian(), control = glm.control(), intercept = TRUE)
 	dev.resids <- family$dev.resids
 	linkinv <- family$linkinv
 	mu.eta <- family$mu.eta
+	if (!is.function(variance) || !is.function(linkinv) )
+		stop("illegal 'family' argument")
 	valideta<-family$valideta
 	if (is.null(valideta)) valideta<-function(eta) TRUE
 	validmu<-family$validmu
@@ -98,34 +100,31 @@ family = gaussian(), control = glm.control(), intercept = TRUE)
 	eval(family$initialize, sys.frame(sys.nframe()))
 	if (NCOL(y) > 1) 
 		stop("y must be univariate unless binomial")
-	# calculates the first estimate of eta and mu
-	if (is.null(start)) {
+	if (is.null(start)) { # calculate initial estimate of eta and mu:
 	  start<-c(0.5,rep(0,nvars-1))
 	  linkfun <- family$linkfun
-	  if (validmu(mustart)){
+	  if (validmu(mustart)) {
 	    etastart <- linkfun(mustart)
-	    if (valideta(etastart)){
-	      z <- etastart + (y - mustart)/mu.eta(etastart) - offset
-	      w <- ((weights * mu.eta(etastart)^2)/variance(mustart))^0.5
-	      fit <- qr(x * w)
-	      start <- qr.coef(fit, w * z)
-	      start[is.na(start)] <- 0
+	    if (valideta(etastart)) {
+		z <- etastart + (y - mustart)/mu.eta(etastart) - offset
+		w <- ((weights * mu.eta(etastart)^2)/variance(mustart))^0.5
+		fit <- qr(x * w)
+		start <- qr.coef(fit, w * z)
+		start[is.na(start)] <- 0
 	    }
 	  }
-	}
-	  else if (length(start) != nvars) 
-	    stop(paste("Length of start should equal", nvars, "and correspond to initial coefs for", deparse(xnames)))
-	if (NCOL(x) == 1) 
-	  eta <- as.vector(x * start)
-	  else eta <- as.vector(x %*% start)
+	} else if (length(start) != nvars) 
+	    stop(paste("Length of start should equal", nvars,
+		       "and correspond to initial coefs for", deparse(xnames)))
+	eta <- as.vector(if (NCOL(x) == 1) x * start else x %*% start)
 	mu <- linkinv(eta + offset)
 	if (!(validmu(mu) && valideta(eta)))
 	  stop("Can't find valid starting values: please specify with start=")
-	# calculate initial deviance and coefficient
+	## calculate initial deviance and coefficient
 	devold <- sum(dev.resids(y, mu, weights))
 	coefold <- start
 	boundary<-FALSE
-	# do iteration
+	## do iteration
 	for (iter in 1:control$maxit) {
 		mu.eta.val <- mu.eta(eta + offset)
 		if (any(is.na(mu.eta.val))){
@@ -163,8 +162,8 @@ family = gaussian(), control = glm.control(), intercept = TRUE)
 		)
 		# stop if not enough parameters
 		if (nobs < fit$rank) 
-			stop(paste("X matrix has rank", fit$rank, "but only", nobs, "observations"
-			))
+			stop(paste("X matrix has rank", fit$rank,
+				   "but only", nobs, "observations"))
 		# if X matrix was not full rank then columns
 		# were pivoted, hence we need to re-label the names
 		if (fit$rank != nvars) {
@@ -248,7 +247,7 @@ family = gaussian(), control = glm.control(), intercept = TRUE)
 	  warning("Algorithm stopped at boundary value")
 					# calculate residuals
 	residuals <- rep(NA, nobs)
-	## 	residuals[good] <- z - eta
+	##	residuals[good] <- z - eta
 	residuals[good]<-z-eta[good]
 					# name output
 	fit$qr <- as.matrix(fit$qr)
@@ -273,15 +272,15 @@ family = gaussian(), control = glm.control(), intercept = TRUE)
 	nulldf <- nobs - as.numeric(intercept)
 	resdf <- nobs - fit$rank - sum(weights == 0)
 	qr <- list(qr = fit$qr, rank = fit$rank, qraux = fit$qraux)
-	return(list(coefficients = coef, residuals = residuals, fitted.values = mu
-		    , effects = fit$effects, R = Rmat, rank = fit$rank, qr = qr, family = family
-		    , linear.predictors = eta, deviance = dev, null.deviance = nulldev, iter = iter
-		    , weights = w^2, prior.weights = weights, df.residual = resdf, df.null = nulldf
-		    , y = y,converged=conv,boundary=boundary))
-}
+	list(coefficients = coef, residuals = residuals, fitted.values = mu,
+	     effects = fit$effects, R = Rmat, rank = fit$rank, qr = qr,
+	     family = family, linear.predictors = eta, deviance = dev,
+	     null.deviance = nulldev, iter = iter, weights = w^2,
+	     prior.weights = weights, df.residual = resdf, df.null = nulldf,
+	     y = y, converged = conv, boundary = boundary)  
+      }
 
-print.glm <- function (x, digits = max(3, .Options$digits - 3),
-	na.print="", ...)
+print.glm <- function (x, digits= max(3, .Options$digits - 3), na.print="", ...)
 {
 	cat("\nCall: ", deparse(x$call), "\n\n")
 	cat("Coefficients:\n")
@@ -296,16 +295,16 @@ print.glm <- function (x, digits = max(3, .Options$digits - 3),
 
 anova.glm <- function(object, ..., test=NULL, na.action=na.omit)
 {
-	# check for multiple objects
+	## check for multiple objects
 
 	args <- function(...) nargs()
 	if(args(...)) return(anova.glmlist(list(object, ...), test=test))
 
-	# extract variables from model
+	## extract variables from model
 
 	varlist <- attr(object$terms, "variables")
-	if(!is.null(object$x) && !(is.logical(object$x) || 
-		object$x==FALSE)) x <- object$x
+	if(!is.null(object$x) && !(is.logical(object$x) || object$x==FALSE))
+		x <- object$x
 	else {
 		if(is.null(object$model)) {
 			if(is.null(object$data))	
@@ -320,37 +319,35 @@ anova.glm <- function(object, ..., test=NULL, na.action=na.omit)
 	nvars <- max(varseq)
 	resdev <- resdf <- NULL
 
-	# if there is more than one explanatory variable then
-	# recall glm.fit to fit variables sequentially
+	## if there is more than one explanatory variable then
+	## recall glm.fit to fit variables sequentially
 
 	if(nvars > 1) {
-		for(i in 1:(nvars-1)) {
-
-			# explanatory variables up to i are kept in the model
-
-			tempx <- x[, varseq <= i]
-
-			# use method from glm to find residual deviance
-			# and df for each sequential fit
-
-			method <- object$method
-			fit <- method(x=tempx, y=object$y,
-				weights=object$prior.weights,
-				start=object$start,
-				offset=object$offset,
-				family=object$family,
-				control=object$control)
-			resdev <- c(resdev, fit$deviance)
-			resdf <- c(resdf, fit$df.residual)
-		}
+	  method <- object$method
+	  if(!is.function(method))
+		method <- get(method, mode = "function")
+	  for(i in 1:(nvars-1)) {
+		## explanatory variables up to i are kept in the model
+		## use method from glm to find residual deviance
+		## and df for each sequential fit
+		fit <- method(x=x[, varseq <= i],
+			      y=object$y,
+			weights=object$prior.weights,
+			start  =object$start,
+			offset =object$offset,
+			family =object$family,
+			control=object$control)
+		resdev <- c(resdev, fit$deviance)
+		resdf <- c(resdf, fit$df.residual)
+	  }
 	}
 
-	# add values from null and full model
+	## add values from null and full model
 
 	resdf <- c(object$df.null, resdf, object$df.residual)
 	resdev <- c(object$null.deviance, resdev, object$deviance)
 
-	# construct table and title
+	## construct table and title
 
 	table <- cbind(c(NA, -diff(resdf)), c(NA, -diff(resdev)), resdf, resdev)
 	dimnames(table) <- list(c("NULL", attr(object$terms, "term.labels")),
@@ -360,18 +357,18 @@ anova.glm <- function(object, ..., test=NULL, na.action=na.omit)
 		"\n\nResponse: ", as.character(varlist[-1])[1],
 		"\n\nTerms added sequentially (first to last)\n\n", sep="")
 
-	# calculate test statistics if needed
+	## calculate test statistics if needed
 
 	if(!is.null(test))
 		table <- stat.anova(table=table, test=test, scale=sum(
 			object$weights*object$residuals^2)/object$df.residual,
-			df.scale=object$df.residual, n=NROW(x))
-
-	# return output
+			df.scale=object$df.residual, n=NROW(x)
+)
+	## return output
 
 	output <- list(title=title, table=table)
 	class(output) <- "anova.glm"
-	return(output)
+	output
 }
 
 
@@ -432,22 +429,20 @@ anova.glmlist <- function(object, ..., test=NULL)
 stat.anova <- function(table, test, scale, df.scale, n)
 {
 	testnum <- match(test, c("Chisq", "F", "Cp"))
-	cnames <- colnames(table)
-	rnames <- rownames(table)
 	if(is.na(testnum))
 		stop(paste("Test \"", test, "\" not recognised", sep=""))
+	cnames <- colnames(table)
+	rnames <- rownames(table)
 	if(testnum==1) {
 		chisq <- 1-pchisq(abs(table[, "Deviance"]), abs(table[, "Df"]))
 		table <- cbind(table, chisq)
 		dimnames(table) <- list(rnames, c(cnames, "P(>|Chi|)"))
-	}
-	if(testnum==2) {
+	} else if(testnum==2) {
 		Fvalue <- abs((table[, "Deviance"]/table[, "Df"])/scale)
 		pvalue <- 1-pf(Fvalue, abs(table[, "Df"]), abs(df.scale))
 		table <- cbind(table, Fvalue, pvalue)
 		dimnames(table) <- list(rnames, c(cnames, "F", "Pr(>F)"))
-	}
-	if(testnum==3) {
+	} else if(testnum==3) {
 		Cp <- table[, "Resid. Dev"] + 2*scale*(n - table[, "Resid. Df"])
 		table <- cbind(table, Cp)
 		dimnames(table) <- list(rnames, c(cnames, "Cp"))
@@ -459,22 +454,22 @@ stat.anova <- function(table, test, scale, df.scale, n)
 summary.glm <- function(object, dispersion = NULL,
 	correlation = TRUE, na.action=na.omit)
 {
-
-	# calculate dispersion if needed
-
-	if(is.null(dispersion)) {
+	est.disp<-FALSE
+	if(is.null(dispersion))	# calculate dispersion if needed
+	  dispersion <- 
 		if(any(object$family$family == c("poisson", "binomial")))
-			dispersion <- 1
+		  1
 		else {
+			est.disp<-TRUE
 			if(any(object$weights==0))
 				warning(paste("observations with zero weight",
 				"not used for calculating dispersion"))
-			dispersion <- sum(object$weights*object$residuals^2)/
-					object$df.residual
+			sum(object$weights*object$residuals^2)/
+				object$df.residual
 		}
-	}
 
-	# extract x to get column names
+
+	## extract x to get column names
 
 	if(is.null(object$x)) {
 		if(is.null(object$model)) {
@@ -487,58 +482,59 @@ summary.glm <- function(object, dispersion = NULL,
 		object$x <- model.matrix(object$terms, object$model)
 	}
 
-	# calculate scaled and unscaled covariance matrix
+	## calculate scaled and unscaled covariance matrix
 
 	p <- object$rank
 	p1 <- 1:p
+	coef.p <- object$coefficients[p1]
 	covmat.unscaled <- chol2inv(object$qr$qr[p1,p1,drop=FALSE])
-	dimnames(covmat.unscaled) <- list(names(object$coefficients)[p1], names(object$coefficients)[p1])
+	dimnames(covmat.unscaled) <- list(names(coef.p),names(coef.p))
 	covmat <- dispersion*covmat.unscaled
 	dimnames(covmat) <- dimnames(covmat.unscaled)
 
-	# calculate coef table
+	## calculate coef table
 
-	nas <- is.na(object$coefficients)
-	tvalue <- object$coefficients[p1]/diag(covmat)^0.5
-	pvalue <- 2*(1-pt(abs(tvalue), object$df.residual))
-	coef.table <- cbind(object$coefficients[p1], diag(covmat)^0.5, tvalue, pvalue)
-	dimnames(coef.table) <- list(names(object$coefficients)[p1], c("Value", "Std.error",
-				"t value", "P(>|t|)"))
-
-	# return answer
-
-	ans <- list(
-		call=object$call,
-		terms=object$terms,
-		family=object$family,
-		deviance.resid=residuals(object, type = "deviance"),
-		coefficients=coef.table,
-		dispersion=dispersion,
-		df=c(object$rank, object$df.residual),
-		deviance=object$deviance,
-		df.residual=object$df.residual,
-		null.deviance=object$null.deviance,
-		df.null=object$df.null,
-		iter=object$iter,
-		cov.unscaled=covmat.unscaled,
-		cov.scaled=covmat)
-#		cov.scaled=covmat,
-#		nas=nas)
-
-	if(correlation) {
-		ans$correlation <- as.matrix(covmat/(outer(diag(covmat),
-			diag(covmat))^0.5))
+##	nas <- is.na(object$coefficients)
+	tvalue <- coef.p/diag(covmat)^0.5
+	if(est.disp) {
+		pvalue <- 2*pt(-abs(tvalue), object$df.residual)
+		coef.table <- cbind(coef.p, diag(covmat)^0.5, tvalue, pvalue)
+		dimnames(coef.table) <- list(names(coef.p),
+				     c("Value","Std.error","t value","P(>|t|)"))
 	}
+	else {
+		pvalue <- 2*pnorm(-abs(tvalue))
+		coef.table <- cbind(coef.p, diag(covmat)^0.5, tvalue, pvalue)
+		dimnames(coef.table) <- list(names(coef.p),
+				     c("Value","Std.error","z value","P(>|z|)"))
+	}
+
+	## return answer
+
+	ans <- c(object[c("call","terms","family","deviance",
+			  "df.residual","null.deviance","df.null","iter")],
+		 list(deviance.resid=residuals(object, type = "deviance"),
+		      coefficients=coef.table,
+		      dispersion=dispersion,
+		      df=c(object$rank, object$df.residual),
+		      cov.unscaled=covmat.unscaled,
+		      cov.scaled=covmat))
+##		      cov.scaled=covmat,
+##		      nas=nas))
+
+	if(correlation)
+	  ans$correlation <-
+		as.matrix(covmat/(outer(diag(covmat), diag(covmat))^0.5))
 	class(ans) <- "summary.glm"
 	return(ans)
 }
 
 
 print.summary.glm <- function (x, digits = max(3, .Options$digits - 3),
-	na.print="", ...)
+	roundfun=round, na.print="", ...)
 {
-        cat("\nCall:\n")
-        cat(paste(deparse(x$call), sep="\n", collapse="\n"), "\n\n", sep="")
+	cat("\nCall:\n")
+	cat(paste(deparse(x$call), sep="\n", collapse="\n"), "\n\n", sep="")
 	cat("Deviance Residuals: \n")
 	if(x$df.residual > 5) {
 		x$deviance.resid <- quantile(x$deviance.resid)
@@ -546,10 +542,10 @@ print.summary.glm <- function (x, digits = max(3, .Options$digits - 3),
 	}
 	print.default(x$deviance.resid, digits=digits, na = "", print.gap = 2)
 	cat("\nCoefficients:\n")
-	print.default(x$coefficients, digits=digits, print.gap = 2)
+	print.default(roundfun(x$coefficients, digits=digits), print.gap = 2)
 	cat(paste("\n(Dispersion parameter for ", x$family$family,
 		" family taken to be ", x$dispersion,
-		")\n\n    Null deviance: ", x$null.deviance,
+		")\n\n	  Null deviance: ", x$null.deviance,
 		" on ", x$df.null, " degrees of freedom\n\n",
 		"Residual deviance: ", x$deviance,
 		" on ", x$df.residual, " degrees of freedom\n\n",
@@ -622,35 +618,35 @@ residuals.glm <- function(object, type="deviance")
 }
 
 update.glm<-function (glm.obj, formula, data, weights, subset, na.action, 
-        offset, family, x) 
+	offset, family, x) 
 {
-        call <- glm.obj$call
-        if (!missing(formula)) 
-                call$formula <- update.formula(call$formula, 
-                        formula)
-        if (!missing(data)) 
-                call$data <- substitute(data)
-        if (!missing(subset)) 
-                call$subset <- substitute(subset)
-        if (!missing(na.action)) 
-                call$na.action <- substitute(na.action)
-        if (!missing(weights)) 
-                call$weights <- substitute(weights)
-        if (!missing(offset)) 
-                call$offset <- substitute(offset)
-        if (!missing(family)) 
-                call$family <- substitute(family)
-        if (!missing(x)) 
-                call$x <- substitute(x)
-#       notparent <- c("NextMethod", "update", methods(update))
-#       for (i in 1:(1+sys.parent())) {
-#               parent <- sys.call(-i)[[1]]
-#               if (is.null(parent))
+	call <- glm.obj$call
+	if (!missing(formula)) 
+		call$formula <- update.formula(call$formula, 
+			formula)
+	if (!missing(data)) 
+		call$data <- substitute(data)
+	if (!missing(subset)) 
+		call$subset <- substitute(subset)
+	if (!missing(na.action)) 
+		call$na.action <- substitute(na.action)
+	if (!missing(weights)) 
+		call$weights <- substitute(weights)
+	if (!missing(offset)) 
+		call$offset <- substitute(offset)
+	if (!missing(family)) 
+		call$family <- substitute(family)
+	if (!missing(x)) 
+		call$x <- substitute(x)
+#	notparent <- c("NextMethod", "update", methods(update))
+#	for (i in 1:(1+sys.parent())) {
+#		parent <- sys.call(-i)[[1]]
+#		if (is.null(parent))
 #		break	
 #	if (is.na(match(as.character(parent), notparent)))
-#                       break
-#       }	
-#       eval(call, sys.frame(-i))
-        eval(call, sys.frame(sys.parent()))
+#			break
+#	}	
+#	eval(call, sys.frame(-i))
+	eval(call, sys.frame(sys.parent()))
 }
 

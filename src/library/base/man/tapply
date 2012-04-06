@@ -1,0 +1,56 @@
+TITLE(tapply @@ Apply a Function Over a "Ragged" Array)
+USAGE(
+tapply(x, INDEX, FUN = NULL, simplify = TRUE, DOTS)
+)
+ALIAS(tapply)
+ARGUMENTS(
+ARG(x @@ an atomic object, typically a vector.)
+ARG(INDEX @@ list of factors, each of same length as LANG(x).)
+ARG(FUN @@ the function to be applied.
+In the case of functions like LANG(+), LANG(%*%), etc.,
+the function name must be quoted.
+If LANG(FUN) is LANG(NULL),
+tapply returns a vector which can be used to subscript the
+multi-way array LANG(tapply) normally produces.
+)
+ARG(simplify @@ If LANG(FALSE), tapply will always return an array of mode list.
+If LANG(TRUE) (the default), then if LANG(FUN) always returns a
+scalar, the tapply will return an array with the mode of the scalar,
+and if the array would be one dimensional the dimension is removed, to
+make it a vector.
+)
+ARG(DOTS @@ optional arguments to LANG(FUN).)
+)
+VALUE(
+When LANG(FUN) is present, LANG(tapply) calls LANG(FUN) for each cell
+that has any data in it.  If LANG(FUN) returns a single atomic value
+for each cell (e.g. functions LANG(mean) or LANG(var)), then tapply
+returns a multi-way array containing the values. The array has the
+same number of dimensions as LANG(INDEX) has components; the number of
+levels in a dimension is the number of levels (LANG(nlevels(.))) in
+the corresponding component of LANG(INDEX).  This is a vector if LANG(INDEX)
+has only one component.
+PARA
+If LANG(FUN) does not return a single atomic value, tapply returns an array
+of mode LANG("LINK(list)") whose components are the values of the individual
+calls to LANG(FUN), i.e., the result is a list with a LANG(LINK(dim)) attribute.
+)
+SEEALSO(
+LANG(LINK(apply)), LANG(LINK(lapply)) with its version LANG(sapply).
+)
+EXAMPLES(
+groups <- as.factor(rbinom(32,n=5,p=.4))
+tapply(groups, groups, length)#- is almost the same as
+table(groups)
+BLANK
+n <- 17 ; fac <- factor(rep(1:3,len= n), levels=1:5)
+table(fac)
+tapply(1:n, fac, sum)
+tapply(1:n, fac, sum, simplify = F)#- does not yet print okay
+BLANK
+ind <- list(c(1,2,2), c("A","A","B"))
+table(ind)
+tapply(1:3, ind)#-> the split vector
+tapply(1:3, ind, sum)
+)
+

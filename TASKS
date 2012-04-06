@@ -1,16 +1,16 @@
-                           THE R TASK LIST
+			   THE R TASK LIST
 
-             ``Somebody, somebody has to, you see ...''
-                  The Cat in the Hat Comes Back.
+	     ``Somebody, somebody has to, you see ...''
+		  The Cat in the Hat Comes Back.
 
 
 ----------------------------------------------------------------------
 TASK:	Multiple Graphics Device Drivers
 STATUS:	Open
 FROM:	Everyone
-	R needs to have mutiple active device drivers and a means for
-	copying pictures from one device to another. Etc. Etc.
-	[ This is a medium-sized task.  It would be most useful to     ]
+	R needs to have multiple active device drivers and a means for
+	copying pictures from one device to another, etc. etc.
+	[ This is a medium-sized task.	It would be most useful to     ]
 	[ do this in conjunction with moving to an event driven model. ]
 	[ Greg Warnes has written some code which maintains, a device  ]
 	[ "display list".  How much memory this might devour in the    ]
@@ -19,34 +19,14 @@ FROM:	Everyone
 	[ Should each device maintain a complete "par" state, or       ]
 	[ should some parameters (like col, lty, font ...) be global.  ]
 	[ Could a user have any memory of the last values in effect    ]
-	[ for a driver which had been idle for a while.                ]
-
-----------------------------------------------------------------------
-TASK:	Mathlib checks
-STATUS:	Open
-FROM:	R@stat.auckland.ac.nz
-	The numerical libraries and random number generators could
-	do with a real had check.  Grunt work, but necessary.
-
-----------------------------------------------------------------------
-TASK:	List printing
-STATUS:	Closed
-FROM:	R@stat.auckland.ac.nz
-	If an attribute is list valued, its components should print
-	as follows.
-		attr(,fred)$x
-	rather than as
-		attr(,fred)
-		$x
-	[ This problem plus some other formatting problems for    ]
-	[ recursive structures have been fixed.  R printing looks ]
-	[ very much like S now.					  ]
+	[ for a driver which had been idle for a while.		       ]
+	[ This is just about to hit the top of the list.	       ]
 
 ----------------------------------------------------------------------
 TASK:	complex gamma and log gamma function not implemented
 STATUS:	Open
 FROM:	R@stat.auckland.ac.nz
-	[ This is quite low priority.  Complain if you need it.  ]
+	[ This is quite low priority.  Complain if you need it.	 ]
 	[ The Fullerton library has complex gamma function code. ]
 
 ----------------------------------------------------------------------
@@ -54,23 +34,7 @@ TASK:	solution of complex linear systems
 STATUS:	Open
 FROM:	R@stat.auckland.ac.nz
 	[ Really just a matter of grabbing the correct linpack code. ]
-	[ How general do we want to be here ...                      ]
-
-----------------------------------------------------------------------
-TASK:	eigenvalues and eigenvectors for general systems
-STATUS:	Closed
-FROM:	R@stat.auckland.ac.nz
-	[ Really just a matter of grabbing the correct eispack code. ]
-
-----------------------------------------------------------------------
-TASK:	"update" for lm and glm models
-STATUS:	Closed
-FROM:	jlindsey@luc.ac.be
-	First something from 0.12 that I forgot to report:
-	update() for a formula works with lm() but not glm()
-	for which it (still in 0.13) gives
-	"Error in update.formula(call$formula,formula) ..."
-	[ See also Thomas Lumley's problems; added better checking. RG]
+	[ How general do we want to be here ...			     ]
 
 ----------------------------------------------------------------------
 TASK:	"nlm" documentation inaccuracies
@@ -81,7 +45,7 @@ FROM:	jlindsey@luc.ac.be
 	value is fed to nlm, the error message contains msg
 	instead of print.level.
 	[ The documentation looks ok.  The function needs to be ]
-	[ rewritten so that it uses derivative information.     ]
+	[ rewritten so that it uses derivative information.	]
 
 ----------------------------------------------------------------------
 TASK:	"data.entry" problems
@@ -102,13 +66,13 @@ FROM:	p.dalgaard@kubism.ku.dk
 	a data frame is edited it is returned as a list.  This can
 	be cured with judicious use of "data.frame".
 	[ The indicated change has been made, but other changes ]
-	[ are needed.                                           ]
+	[ are needed.						]
 
 ----------------------------------------------------------------------
-TASK:	"x11" printcommand
+TASK:	"x11" printcmd
 STATUS: Open
 FROM:	maechler@stat.math.ethz.ch
-	There is in theory a "printcommand" argument to x11, which
+	There is in theory a "printcmd" argument to x11, which
 	is ignored.  Make it do something.
 
 ----------------------------------------------------------------------
@@ -123,27 +87,8 @@ FROM:	Kurt.Hornik@ci.tuwien.ac.at
 	in combo with the code in gram.y ...
 	I know this is NOT something to quickly fix over the weekend.
 	Please simply put it into your PROJECTS file.
-
-----------------------------------------------------------------------
-TASK:	problem with "glm" with binomial errors
-STATUS:	Closed
-FROM:	p.dalgaard@kubism.ku.dk
-	in glm(,binomial) it's possible that loss of significant
-	digits make expected values 0 or 1 even though there's no
-	divergence of the fit.  (Happened to me with menarche data,
-	infants and grown-ups included)
-	[ Fixes received Thomas Lumley. ]
-
-----------------------------------------------------------------------
-TASK:	Errors in "parse" and "source"
-STATUS:	Closed
-FROM:	plummer@iarc.fr
-	#4) If you put a few lines of comments at the start of a
-	function, then the comments always appear *after* the first
-	line of code.
-	[ This needs a bit of a look.  Comments are a pain.      ]
-	[ Later: Some progress made on this.  We need to look at ]
-	[ preserving comments befor functions.                   ]
+	[ This is actually a syntax error according to the R grammar ]
+	[ but maybe we can do something.			     ]
 
 ----------------------------------------------------------------------
 TASK:	help file ALIAS() and LINK() constructions
@@ -169,9 +114,9 @@ FROM:	maechler@stat.math.ethz.ch
 		character(0)
 		S> paste(rep(" ",0), collapse="...") #anything for collapse
 		[1] ""
-	Again, I think  R  is more logical than S here, but it was decided
+	Again, I think	R  is more logical than S here, but it was decided
 	that in minor cases, compatibility comes first...
-	[ Low priority.  Complain if you really need it. ]
+	[ Low priority.	 Complain if you really need it. ]
 
 ----------------------------------------------------------------------
 TASK:	missing functionality - modelling
@@ -199,18 +144,9 @@ FROM:	Friedrich.Leisch@ci.tuwien.ac.at
 		R 2>errlog
 	I would error messages expect to go to the file errlog
 	instead of the screen.
-	[ We don't have standard error.  This is problematic on ]
-	[ platforms other than Unix.                            
+	[ We don't have standard error.	 This is problematic on ]
+	[ platforms other than Unix.				
 
-
-----------------------------------------------------------------------
-TASK:	deprecated
-STATUS:	Closed
-FROM:	maechler@stat.math.ethz.ch
-	As I mentioned in a recent mail,
-	I just saw that  0.16.1 does not contain  'deprecated' anymore,
-	even though the function still exists.
-	[ I don't think we need deprecated anymore. ]
 
 ----------------------------------------------------------------------
 TASK:	"print.default" fix
@@ -238,7 +174,7 @@ TASK:	task scheduling
 STATUS:	Open
 FROM:	gwhite@cabot.bio.dfo.ca
 	More generally, the range of things that can be done in R would
-	be greater if there was a simple scheduling mechanism.  Is
+	be greater if there was a simple scheduling mechanism.	Is
 	there a way to have a specific function invoked just before the
 	command prompt returns after a function?  Such a function could
 	be used to run save(...) or check for various external cues
@@ -254,19 +190,8 @@ TASK:	Inf numerics
 STATUS:	Open
 FROM:	plummer@iarc.fr
 	Could we have an Inf object in R? I would find it useful.
-	[ Sigh.  I wish we had designed this in. ]
-	[ It will be a pain to ADD.              ]
-
-----------------------------------------------------------------------
-TASK:	Verbose debugging mode
-STATUS:	Closed
-FROM:	plummer@iarc.fr
-	It would be really nice to have a verbose mode for the debug
-	function, which steps through each line automatically while
-	printing each line to the screen. Currently I have to step
-	through each line with the return key just to see where CODA
-	crashes.  This can get very tedious as its a huge program.
-	[ traceback() gets you this information. ]
+	[ Sigh.	 I wish we had designed this in. ]
+	[ It will be a pain to ADD.		 ]
 
 ----------------------------------------------------------------------
 TASK:	Auto-save
@@ -379,7 +304,7 @@ FROM:	<R@stat.auckland.ac.nz>
 Post 0.49 Additions
 ----------------------------------------------------------------------
 TASK:	Name Attributes on Calls
-STATUS: Closed
+STATUS: Closed (almost)
 FROM:	<p.dalgaard@kubism.ku.dk>
 	A call with tagged arguments is something like a list, the tags
 	can be used to access elements, but the names attribute is absent,
@@ -401,32 +326,11 @@ FROM:	<p.dalgaard@kubism.ku.dk>
 
 	[[2]]
 	[1] 2
+
 	[At least under SunOS this is fixed. RG]
-----------------------------------------------------------------------
-TASK:	Coercion to Call is Broken
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	This one is plainly a bug. Meaningless, but...
-	> j<-as.call(list(a=1,b=2))
-	> j
-	Segmentation fault (core dumped)
-	[The problem was with printing a LANG sxp with a tag that wasn't
-	 a comment (actually a list of comments). RG]
 
-----------------------------------------------------------------------
-TASK:	"as.call" problem 
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	Strange... as.call should return its argument if is.call is true?
-	> j<-substitute(list(a=1,b=2))
-	> j
-	list(a = 1, b = 2)
-	> as.call(j)
-	Error in as.call(j) : invalid argument list
-	> is.call(j)
-	[1] TRUE
-	[It does now. RG]
-
+	[However, 'names(j) <- NULL' has no effect in R, but does in S.	 MM]
+	
 ----------------------------------------------------------------------
 TASK:	String NAs Via the Back Door.
 STATUS:	Open
@@ -441,9 +345,14 @@ FROM:	<p.dalgaard@kubism.ku.dk>
 	[1] "NA" "a"  "b" 
 	> ch[1]=="NA"
 	[1] TRUE
-	> ch[1]<-"NA"                 
+	> ch[1]<-"NA"		      
 	> is.na(ch)
 	[1]  TRUE FALSE FALSE
+	[ We need a real NA.  At present there is confusion between    ]
+	[ the string "NA" and the NA value for strings.	 One solution  ]
+	[ would be to use R_NilValue to indicate the missing string    ]
+	[ value, and let NA be just an ordinary string in all cases.   ]
+	[ This would be incompatible with S, but still an improvement. ]
 
 ----------------------------------------------------------------------
 TASK:	Directory Structure
@@ -525,33 +434,19 @@ FROM:	<p.dalgaard@kubism.ku.dk>
 	and settable at run time via e.g. the environment variable R_PATH.
 
 ----------------------------------------------------------------------
-TASK:	Cut is incompatible
-STATUS:	Closed
-FROM:	<bates@stat.wisc.edu>
-	As I recall the S-plus and S "cut" functions return length(breaks)
-	when an element of x is equal to the maximum value of breaks.  The R
-	version of "cut" calls the C function "bincode" which returns an NA
-	for this situation then cut croaks trying to make a factor with the
-	result.
-	I can provide a detailed example if this would help.
-	[ I added bincode2 which does intervals of the form (a,b] like S
-	wants and an option right=TRUE to set these. RG]
-
-
-----------------------------------------------------------------------
 TASK:	Old Unfixed Problems
 STATUS:	Open
 FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	I noticed the following problems (all already reported, but not in
 	TASKS).
 	* TASKS.OLD has
-        Btw, here's another way to produce a segfault with admittedly
-        nonsense code:
-                R> x <- 1:5
-                R> dimnames(x)[1,2] <- NULL
-                Segmentation fault
-        [ Hmmm.  This seems to have gone away.  I get the error     ]
-        [ message "Error: incorrect number of subscripts on array". ]
+	Btw, here's another way to produce a segfault with admittedly
+	nonsense code:
+		R> x <- 1:5
+		R> dimnames(x)[1,2] <- NULL
+		Segmentation fault
+	[ Hmmm.	 This seems to have gone away.	I get the error	    ]
+	[ message "Error: incorrect number of subscripts on array". ]
 	[ Verified by Rossini ...]
 
 	On my Linux system, I still get the segfault.  Perhaps others could
@@ -559,7 +454,7 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	* File permissions in data should be 644.
 	* In src/unix/system.c, one `Rdata' should be `RData' (d -> D).
 	* The documentation for the noncentral chisquare distribution is not
-	quite correct.  (rnchisq does not exist, the existing functions have x,
+	quite correct.	(rnchisq does not exist, the existing functions have x,
 	df and the noncentrality parameter as args, and the density should be
 	   pnchisq(x, df, lambda)
 	   = exp(-lambda / 2)
@@ -578,40 +473,6 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	is turned off again).
 
 ----------------------------------------------------------------------
-TASK:	Incompatibilities
-STATUS: Closed	
-FROM:	<bates@stat.wisc.edu>
-	While bringing up the extended Splines library of classes and methods
-	that Bill and I created, I discovered the problem with "cut".  I will
-	try to go back and resolve that from the sources in a clean way.
-
-	There are two other minor gliches that I encountered.  S-plus has the
-	moral equivalent of
-	 coefficients.default <- function(x, ...) x$coefficients
-	and 
-	 as.data.frame <-
-	   function(x, row.names = NULL, optional = F, ...)
-	   UseMethod("as.data.frame")
-	These would both be helpful to us.  Would you consider adding them or
-	would you prefer that we do the customization ourselves?
-	I think we will end up having to create separate source files for R
-	and S-plus and Sv4 for some of our libraries.  I expect that the
-	majority of the code can go into a "common" file then we might need to
-	either create a sort of "ifdef" statement or put the "ifdef" stuff
-	into other files.
-	[ Added RG]
-
-----------------------------------------------------------------------
-TASK:	"rhyper"
-STATUS:	Closed
-FROM:	E. S. Venkatraman (venkat@biosta.mskcc.org)
-	I reported bugs in "rhyper" and the TASKS.OLD file claims that
-	they have been fixed. But R continues to get stuck (the prompt
-	never comes back) if I use rhyper with N1, N2, n large, for
-	example "rhyper(5,200,250,60)".
-	[ Robert found a typo in the underlying generator.  Fixed. ]
-
-----------------------------------------------------------------------
 TASK:	Multiplatform Support
 STATUS:	Open
 FROM:	<warnes@biostat.washington.edu>
@@ -625,14 +486,14 @@ FROM:	<warnes@biostat.washington.edu>
 	For instance, here the $RHOME directory contains two subdirectories,
 		$RHOME/bin/solaris/
 		$RHOME/bin/sunos4/
-	which each hold the appropriate R.binary file.  
+	which each hold the appropriate R.binary file.	
 	These two modified functions assume that the environment variable $OSTYPE 
 	is appropriately set, as is done automatically by the shell tcsh.  If it 
 	is not set, the directory names collapse to the original values,
 		$RHOME/bin/ and $RHOME/lib/
 	To use them, create the approprate directories and place the correct 
 	binaries therein. ( Note that the makefiles will not do this 
-	automatically!)  Then replace $RHOME/bin/R and $RHOME/cmd/filename with 
+	automatically!)	 Then replace $RHOME/bin/R and $RHOME/cmd/filename with 
 	the modified ones.
 
 ----------------------------------------------------------------------
@@ -650,130 +511,11 @@ FROM:	Friedrich.Leisch@ci.tuwien.ac.at
 	...  
 
 ----------------------------------------------------------------------
-TASK:	Changes to pt().
-STATUS:	Closed
-FROM:	<jlindsey@luc.ac.be>
-	rhyper is probably using the same internal functions as for the
-	Student t (pt) which has the same problem. I think the pbeta function is not
-	calculating efficiently for large values.
-	By the way, would it be possible to eliminate the line (floor) that
-	rounds the degrees of freedom in pt.c? That way, pt can be used in
-	likelihood functions for fitting the Student t distributions.
-
-	What I did was to rewrite pt.c in R without the floor line and use it
-	for building the Student t likelihood function in my nonlinear
-	regression function, gnlr. What I find is that, as nlm searches, it gets
-	slower and slower if the "degrees of freedom" parameter increases over
-	about 8-10.
-	  It seems to me that my son had another example with a comparison
-	with S-Plus. I shall ask him.
-	  Cheers, Jim
-
-
-----------------------------------------------------------------------
-TASK:	Seg Violation in "tapply"
-STATUS:	Closed
-FROM:	<Andreas.Weingessel@ci.tuwien.ac.at>
-	Calling tapply with a NULL as INDEX argument causes a segmentation
-	fault on an i-586-linux machine.
-	So, if for example
-		 y<-list(a=1:10,b=2:5)
-	then
-		tapply(y$a,y$c,mean)
-	causes a segmentation fault. 
-	This seg. fault is produced when a dimension of length integer(0) is
-	assigned to a list with one element and this object is shown
-	afterwards. E.g.:
-	R>  y<-list(a=1:10)
-	R> dim(y) <- integer(length(NULL))
-	R> y
-	Segmentation fault
-	This happens in the code of tapply, when INDEX=NULL in the lines
-	  extent <- integer(length(INDEX))
-	and
-	  dim(ans) <- extent
-
-----------------------------------------------------------------------
 TASK:	Poly
 STATUS:	Open
 FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	PS1.  There was also `poly' function in your snapshot WORK tree
 	... do you already have a final version of that?
-
-----------------------------------------------------------------------
-TASK:	t Distribution
-STATUS:	Open (check - may be closed)
-FROM:	<thomas@biostat.washington.edu>
-	Yes please.  Non-integer degrees of freedom are very useful for
-	approximations as well. For example: Welch's unequal variance t-test,
-	Sattherthwaite approximations in ANOVA, and others.
-	If we can't get non-integer df we at least NEED a warning and preferably a
-	mention in the help file. It seems that qt() and rt() handle non-integer
-	df correctly (a relief, since I've been using them quite a bit) and that
-	the chisq and f distributions are ok too.
-	One simple solution is
-		pt<-function(q,df) 1-0.5*(1-pf(q^2,1,df))
-	using the fact that a t(n) is the square root of an F(1,n).
-
-----------------------------------------------------------------------
-TASK:	Vector Recycling Weirdness
-STATUS:	Closed
-FROM:	<thomas@biostat.washington.edu>
-wompom:~> R
-	R : Copyright 1997, Robert Gentleman and Ross Ihaka
-	Version 0.49 Beta (April 23, 1997)
-	R> f
-	function () 
-	{
-		FALSE & matrix(FALSE, ncol = 1)
-	}
-	R> g
-	function () 
-	FALSE & matrix(FALSE, ncol = 1) 
-	R> f()
-	Warning in FALSE & matrix(FALSE, ncol = 1) : longer object length
-		is not a multiple of shorter object length
-	      [,1]
-	[1,] FALSE
-	R> g()
-	      [,1]
-	[1,] FALSE
-	Is this weird or what?
-	[ I can't remember what fixed this ... ]
-
-----------------------------------------------------------------------
-TASK:	"length" incompatibility
-STATUS:	Closed
-FROM:	<bates@auckland.ac.nz>
-	In converting some S code that messes around with expressions and
-	formulae and such I have found that
-	 > mode((~ foo)[[2]])
-	 [1] "symbol"
-	 > length((~ foo)[[2]])
-	 [1] NA
-	I get a whole lot of code breaking on me because I check for the
-	length of the object before looking at the mode.  I realize that
-	symbols look different in R than in S (not to mention having a
-	different name for the mode) but I'm not sure why the length of a
-	symbol must be missing.  Is this an oversight?
-	[ Symbols have length one now. ]
-
-----------------------------------------------------------------------
-TASK:	Yet another stupid way to cause a segfault:
-STATUS:	Closed
-FROM:	<hornik@ci.tuwien.ac.at>
-	R> x
-	Error: Object "x" not found
-	R> debug(t.test)
-	R> t.test(rnorm(10))
-	debug: choices <- c("two.sided", "greater", "less")
-	Browse[1]> return()
-	NULL
-	R> x
-	Error: Object "x" not found
-	Browse[1]> return()
-	Segmentation fault
-	[ It is now possible to return from browser() ]
 
 ----------------------------------------------------------------------
 TASK:	Naming with Numeric Values and "unlist"
@@ -785,7 +527,7 @@ FROM:	<hornik@ci.tuwien.ac.at>
 	[1] 1 2 3 4 5
 	R> unlist(l)
 	111 112 113 114 115 
-	  1   2   3   4   5 
+	  1   2	  3   4	  5 
 	[ Bug or feature ? ]
 
 ----------------------------------------------------------------------
@@ -794,10 +536,10 @@ STATUS:	Open
 FROM:	<bates@stat.wisc.edu>
 	I could not find the all.names function in R so I created the
 	enclosed.  Comments, criticisms, or changes to a one-liner by creating
-	nested anonymous functions are welcome.  I'll try to work out a
+	nested anonymous functions are welcome.	 I'll try to work out a
 	corresponding all.vars function.
 
-	### $Id: TASKS,v 1.30 1997/07/01 03:45:42 ihaka Exp $
+	### $Id: TASKS,v 1.34 1997/08/10 20:58:55 maechler Exp $
 	### Some replacement functions that are missing in R
 
 	### Determine all the names (symbols) occuring in an object.
@@ -829,7 +571,7 @@ FROM:	<bates@stat.wisc.edu>
 	    if (mode(x) == "call") {
 	      if (x[[1]] == as.name("/")) 
 		return(c(sys.function()(x[[2]]), sys.function()(x[[3]])))
-	      if (x[[1]] == as.name("(")) 	# for R
+	      if (x[[1]] == as.name("("))	# for R
 		return(sys.function()(x[[2]]))
 	    }
 	    if (mode(x) == "(") return(sys.function()(x[[2]])) # for S
@@ -872,7 +614,7 @@ FROM:	<thomas@biostat.washington.edu>
 
 	3. update.lm evaluates its arguments in the wrong frame.
 	It creates a modified version of the original call and evaluates
-	it in sys.frame(sys.parent()).  If update.lm is called directly
+	it in sys.frame(sys.parent()).	If update.lm is called directly
 	this is correct, but if it is called via update() the correct
 	frame is sys.frame(sys.parent(2)). Worse still, if it is called
 	by NextMethod() from another update.foo() the correct frame is
@@ -880,7 +622,7 @@ FROM:	<thomas@biostat.washington.edu>
 
 	My solution (a bit ugly) is to move up the list of enclosing calls
 	checking at each stage to see if the call is NextMethod, update or an
-	update method.  It can be seen at the end of update.glm at the bottom of
+	update method.	It can be seen at the end of update.glm at the bottom of
 	this message, and something of this sort needs to be added to other update
 	methods.
 
@@ -925,39 +667,9 @@ FROM:	<bates@stat.wisc.edu>
 	 - every object can be coerced to a list of the same length 
 	One can imagine that code that messes around with functions and
 	other expressions in R will break fairly quickly when these
-	conditions do not hold.  I don't know how much work would be
+	conditions do not hold.	 I don't know how much work would be
 	involved in patching over these differences between R and S
 	but I suspect it would not be a trivial undertaking.
-
-----------------------------------------------------------------------
-TASK:	Hypergeometric probabilities
-STATUS:	Closed.
-FROM:	<maechler@stat.math.ethz.ch>
-	I think that AS 152 (which has been improved, but is still
-	available as file  ...statlib.../apstat/152 )
-	should be used in place of  phyper.c
-	[ I will look again, but I think my version is better! ]
-	[ Well, at least when the typos are fixed :-)          ] 
-
-----------------------------------------------------------------------
-TASK:	"qt"
-STATUS:	Open
-FROM:	<p.dalgaard@kubism.ku.dk>
-	> Kurt Hornik writes:
-	>  > I found the following 2 problems (no debugging, sorry).
-	>  > 
-	>  > * qt(0.975, 3) never returns.
-	>  > 
-	>  > Can someone please check that?  Happens for me on Debian GNU/Linux/ix86
-	>  > compiled with CFLAGS="-O2 -g".
-	> 
-	> I am having a look at the computations of p-values and quantiles which
-	> depend on the incomplete beta function at  present. ....
-	The original problem seems to be one of loss of accuracy with
-	instruction reordering. Doubling the value of "acu" cures it (I ran it
-	under the debugger and the test value was stuck at about 1.5e-32,
-	being compared to acu=1e-32). This is probably a generic problem with
-	these last-bit-accurate routines.
 
 ----------------------------------------------------------------------
 TASK:	frametools
@@ -1019,67 +731,67 @@ FROM:	<p.dalgaard@kubism.ku.dk>
 	"modify.frame" <-
 	function (dfr, ...) 
 	{
-	        nm <- names(dfr)
-	        e <- substitute(list(...))
-	        if (length(e) < 2) 
-	                return(dfr)
-	        subst.call <- function(e) {
-	                if (length(e) > 1) 
-	                        for (i in 2:length(e)) e[[i]] <- subst.expr(e[[i]])
-	                substitute(e)
-	        }
-	        subst.expr <- function(e) {
-	                if (is.call(e)) 
-	                        subst.call(e)
-	                else match.expr(e)
-	        }
-	        match.expr <- function(e) {
-	                if (is.na(n <- match(as.character(e), nm))) 
-	                        if (is.atomic(e)) 
-	                                e
-	                        else substitute(e)
-	                else substitute(dfr[, n])
-	        }
-	        tags <- names(as.list(e))
-	        for (i in 2:length(e)) {
-	                ee <- subst.expr(e[[i]])
-	                r <- eval(ee)
-	                if (!is.na(tags[i])) {
-	                        if (is.na(n <- match(as.character(tags[i]), 
-	                                nm))) {
-	                                n <- length(nm) + 1
-	                                dfr[[n]] <- numeric(nrow(dfr))
-	                                names(dfr)[n] <- tags[i]
-	                                nm <- names(dfr)
-	                        }
-	                        dfr[[tags[i]]][] <- r
-	                }
-	        }
-	        dfr
+		nm <- names(dfr)
+		e <- substitute(list(...))
+		if (length(e) < 2) 
+			return(dfr)
+		subst.call <- function(e) {
+			if (length(e) > 1) 
+				for (i in 2:length(e)) e[[i]] <- subst.expr(e[[i]])
+			substitute(e)
+		}
+		subst.expr <- function(e) {
+			if (is.call(e)) 
+				subst.call(e)
+			else match.expr(e)
+		}
+		match.expr <- function(e) {
+			if (is.na(n <- match(as.character(e), nm))) 
+				if (is.atomic(e)) 
+					e
+				else substitute(e)
+			else substitute(dfr[, n])
+		}
+		tags <- names(as.list(e))
+		for (i in 2:length(e)) {
+			ee <- subst.expr(e[[i]])
+			r <- eval(ee)
+			if (!is.na(tags[i])) {
+				if (is.na(n <- match(as.character(tags[i]), 
+					nm))) {
+					n <- length(nm) + 1
+					dfr[[n]] <- numeric(nrow(dfr))
+					names(dfr)[n] <- tags[i]
+					nm <- names(dfr)
+				}
+				dfr[[tags[i]]][] <- r
+			}
+		}
+		dfr
 	}
 	"subset.frame" <-
 	function (dfr, expr) 
 	{
-	        nm <- names(dfr)
-	        e <- substitute(expr)
-	        subst.call <- function(e) {
-	                if (length(e) > 1) 
-	                        for (i in 2:length(e)) e[[i]] <- subst.expr(e[[i]])
-	                e
-	        }
-	        subst.expr <- function(e) {
-	                if (is.call(e)) 
-	                        subst.call(e)
-	                else match.expr(e)
-	        }
-	        match.expr <- function(e) {
-	                if (is.na(n <- match(as.character(e), nm))) 
-	                        e
-	                else dfr[, n]
-	        }
-	        r <- eval(subst.expr(e))
-	        r <- r & !is.na(r)
-	        dfr[r, ]
+		nm <- names(dfr)
+		e <- substitute(expr)
+		subst.call <- function(e) {
+			if (length(e) > 1) 
+				for (i in 2:length(e)) e[[i]] <- subst.expr(e[[i]])
+			e
+		}
+		subst.expr <- function(e) {
+			if (is.call(e)) 
+				subst.call(e)
+			else match.expr(e)
+		}
+		match.expr <- function(e) {
+			if (is.na(n <- match(as.character(e), nm))) 
+				e
+			else dfr[, n]
+		}
+		r <- eval(subst.expr(e))
+		r <- r & !is.na(r)
+		dfr[r, ]
 	}
 
 ----------------------------------------------------------------------
@@ -1116,20 +828,10 @@ FROM:	<jlindsey@luc.ac.be>
 	function for stables.
 
 ----------------------------------------------------------------------
-TASK:	Complex Nits
-STATUS:	Open
-FROM:	Paul Gilbert <la-jassine@aix.pacwan.net>
-	Mod, Re, Im, and Conj should work for Real numbers using as.complex
-	complex should be
-	   complex <- function (n = 0, real = numeric(), imaginary = numeric())
-	not 
-	   complex <- function (n = 0, real = numeric(), imag = numeric()) 
-
-----------------------------------------------------------------------
 TASK:	Generic Print
 STATUS:	Open
 FROM:	Paul Gilbert <la-jassine@aix.pacwan.net>
-	I have  always thought that typing the name of an object generated
+	I have	always thought that typing the name of an object generated
 	a call to the print method for the object, however,  (in 0.49)
 	I redefined the generic print method as 
 		print <- function(x, ...)
@@ -1199,11 +901,11 @@ FROM:	<la-jassine@aix.pacwan.net>
 	End = c(5, 1) 
 	Frequency = 1 
 	     [,1] [,2]
-	[1,]    1    6
-	[2,]    2    7
-	[3,]    3    8
-	[4,]    4    9
-	[5,]    5   10
+	[1,]	1    6
+	[2,]	2    7
+	[3,]	3    8
+	[4,]	4    9
+	[5,]	5   10
 	> z == ts(z)
 	Error: invalid time series parameters specified
 
@@ -1211,7 +913,7 @@ FROM:	<la-jassine@aix.pacwan.net>
 	result for matrices as previously and in S. The following seems to work.
 
 	start.default <- function (x) start(ts(x))
-	end.default   <- function (x)   end(ts(x))
+	end.default   <- function (x)	end(ts(x))
 
 	4/ In the function start.ts (and in end.ts) ts[1] in the last line
 	is not defined. Perhaps I am missing something?
@@ -1254,11 +956,11 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	which arguments should the write methods typically allow?
 	What about
 	write.xxx (x,		# object
-		   file =       # filename, default stdout
-                   append =     # obvious
-                   sep =	# obvious
-		   eol =        # end of line char
-                   ...)
+		   file =	# filename, default stdout
+		   append =	# obvious
+		   sep =	# obvious
+		   eol =	# end of line char
+		   ...)
 	???
 	On the other hand, it seems clear that something like
 	write.table() is nice, and what it should do.  But what
@@ -1277,130 +979,6 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 
 
 ----------------------------------------------------------------------
-TASK:	ls.print problem
-STATUS:	Open
-FROM:	<VENKAT@biosta.mskcc.org>
-	ls.print produces error that I don't seem to be able to trace.
-	Output of the commands as follows: (hyeung is a 24x2 matrix of data)
-
-	> summary(hyeung)
-	       x.1             x.2
-	 Min.   : 28.0   Min.   : 10.0
-	 1st Qu.: 72.0   1st Qu.: 87.5
-	 Median : 86.5   Median : 92.5
-	 Mean   : 81.0   Mean   : 82.5
-	 3rd Qu.: 97.0   3rd Qu.:100.0
-	 Max.   :100.0   Max.   :100.0
-	> summary(lsfit(hyeung[,1],hyeung[,2]))
-		  Length Class  Mode
-	coef       2     -none- numeric
-	residuals 24     -none- numeric
-	intercept  1     -none- logical
-	qr         6     -none- list
-	> ls.print(lsfit(hyeung[,1],hyeung[,2]))
-	trace: ls.print(lsfit(hyeung[, 1], hyeung[, 2]))
-	Error: missing value in ``n1 : n2''
-
-	Kurt Hornik found:
-	The problem seems to be that
-
-		ncol(ls.out$residuals)
-
-	gives NULL if ls.out is a vector.  An easy fix is to replace each
-	occurrence of ncol in ls.print() by NCOL.
-
-	A patch is appended below.
-
-	Btw, my help file for NCOL comes up with `.COL' rather than `NCOL'.  Can
-	anyone verify that?
-
-*** src/library/base/funs/lsfit.orig	Tue May 13 07:54:24 1997
---- src/library/base/funs/lsfit	Tue May 13 07:51:19 1997
-*************** ls.print <- function(ls.out, digits=4, p
-*** 256,265 ****
-  
-  	# construct coef table
-  
-! 	coef.table <- as.list(1:ncol(ls.out$residuals))
-! 	if(ncol(ls.out$residuals)==1) coef <- matrix(ls.out$coef, nc=1)
-  	else coef <- ls.out$coef
-! 	for(i in 1:ncol(ls.out$residuals)) {
-  		covmat <- (resss[i]/(n[i]-p)) * (qrinv%*%t(qrinv))
-  		coef.table[[i]] <- cbind(coef[, i], diag(covmat)^.5,
-  			coef[, i]/diag(covmat)^.5,
---- 256,265 ----
-  
-  	# construct coef table
-  
-! 	coef.table <- as.list(1:NCOL(ls.out$residuals))
-! 	if(NCOL(ls.out$residuals)==1) coef <- matrix(ls.out$coef, nc=1)
-  	else coef <- ls.out$coef
-! 	for(i in 1:NCOL(ls.out$residuals)) {
-  		covmat <- (resss[i]/(n[i]-p)) * (qrinv%*%t(qrinv))
-  		coef.table[[i]] <- cbind(coef[, i], diag(covmat)^.5,
-  			coef[, i]/diag(covmat)^.5,
-*************** ls.print <- function(ls.out, digits=4, p
-*** 270,276 ****
-  		#print results
-  
-  		if(print.it) {
-! 			if(ncol(ls.out$residuals)>1)
-  				cat("Response:", colnames(ls.out$residuals)[i],
-  				"\n\n")
-  			cat(paste("Residual Standard Error=", format(round(
---- 270,276 ----
-  		#print results
-  
-  		if(print.it) {
-! 			if(NCOL(ls.out$residuals)>1)
-  				cat("Response:", colnames(ls.out$residuals)[i],
-  				"\n\n")
-  			cat(paste("Residual Standard Error=", format(round(
-
-----------------------------------------------------------------------
-TASK:	ls.print
-STATUS:	Open
-FROM:	<maechler@stat.math.ethz.ch>
-	Yes, I do confirm that the  Help page  (?NCOL) contains  '.COL'.
-	Apply the following patch (to doc2ms) in  $RHOME/etc , and "all is well":
-
---- doc2ms	Tue May 13 10:10:33 1997
-+++ Old/doc2ms	Sun Nov 24 23:41:49 1996
-@@ -122,8 +122,6 @@
- $2
- .DE
- ')
--define(DEQTEX,`')
--define(DEQHTML,`')
- END
- # Fix up the input to protect things that m4 is sensitive about.
- sed '
-@@ -149,8 +147,8 @@
- s/M4_RQ/'\''/g
- s/M4_COMMA/,/g
- s/M4_IFELSE/ifelse/g
--s/^\.Internal/\\\&.Internal/
--s/^\.C/\\\&.C/
--s/^\.Fortran/\\\&.Fortran/
-+s/^.Internal/\\\&.Internal/
-+s/^.C/\\\&.C/
-+s/^.Fortran/\\\&.Fortran/
- s/\\n/\\\\n/g
- '
-----------------------------------------------------------------------
-TASK:	dhyper
-STATUS:	Closed
-FROM:	<VENKAT@biosta.mskcc.org>
-	I get the following incorrect answer
-	   > dhyper(34,410,312,49)
-	   [1] 2.244973e-118
-	when the correct value is
-	   > dhyper(34,410,312,49)          (from S-Plus)
-	   [1] 0.0218911
-	[ Caused by a typo in "math4" (arithmetic.c)    ]
-	[ The 3rd argument was used instead of the 4th. ]
-
-----------------------------------------------------------------------
 TASK:	Comparison with NA and Zero-Length Vectors
 STATUS:	Open
 FROM:	<thomas@biostat.washington.edu> + <maechler@stat.math.ethz.ch>
@@ -1410,7 +988,7 @@ FROM:	<thomas@biostat.washington.edu> + <maechler@stat.math.ethz.ch>
 	Along similar lines, comparison with a length 0 vector
 	returns logical(0) in R but NA in S.
 
-	Martin: Isn't  logical(0)  more  logical than  NA ?
+	Martin: Isn't  logical(0)  more	 logical than  NA ?
 	I agree that it would be best  (convenience)
 	if   'NULL==1' returned the same as 'numeric(0)==1'.
 	At the moment, I don't see why compatibility with S should be
@@ -1450,31 +1028,8 @@ FROM:	<luke@stat.umn.edu>
 ----------------------------------------------------------------------
 May 1.
 ----------------------------------------------------------------------
-TASK:	"eigen"
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	eigen() seems to work for symmetric matrices only. This is out
-	of sync with the help file.
-
-	Paul Gilbert <la-jassine@aix.pacwan.net>:
-	As Peter Dalgaard mentioned, eigen does not yet support
-	non-symmetric matrices.  This is confirmed by looking at
-	eigen.c, which also seems to suggest a different source
-	for the code than is indicated in the help.
-	The help also indicates an optional argument "symmetric"
-	which is not in the code.  As I recall, the Splus version
-	calls two different  C code algorithms for symmetric and
-	non-symmetric matrices. The argument is useful to insure
-	continuity when that is an issue.
-	If you don't  have C or fortran code handy, I have fortran
-	from the LAPACK library which I used before Splus supported
-	non-symmetric matrices. I would have to get someone to send
-	it from work, but I think that is possible.  Please let me
-	know if you want be to try to do this.
-
-----------------------------------------------------------------------
 TASK:	"abline" incompatibility
-STATUS:	Open
+STATUS:	Closed; Fixed uncertain why.... (Aug 6, 97).
 FROM:	<nobu@psrc.isac.co.jp>
 	I found a little different behavior of R with S.
 	at R-0.49:
@@ -1495,39 +1050,6 @@ FROM:	<jlindsey@luc.ac.be>
 	of the last call to lines or plot instead of solid always.
 
 ----------------------------------------------------------------------
-TASK:	Curses for Linux
-STATUS:	Closed
-FROM:	<agebhard@zidsrv.sci.uni-klu.ac.at>
-	When I tried to compile R on a S.u.S.E-4.4 linux box, I ended up with
-	unresolved symbols from libtermcap. So I decided to use the newer libncurses.
-
-	Applying the following patch to configure.in and creating a new
-	configure script with "autoconf  configure.in > configure" solved my problems.
-
-	--- configure.in.orig   Tue May  6 15:05:20 1997
-	+++ configure.in        Tue May  6 15:05:23 1997
-	@@ -142,13 +142,17 @@
- 
-	 #  LIBRARIES
-	 #
-	-#  This is set up so we only get one of one of -ltermcap and -ltermlib
-	+#  This is set up so we only get one of one of -lncurses -ltermcap and -ltermlib
- 
-	 AC_CHECK_LIB(m, sin)
-	+AC_CHECK_LIB(ncurses, main)
-	+if test -z "HAVE_LIBNCURSES"
-	+then
-	 AC_CHECK_LIB(termcap, main)
-	 if test -z "HAVE_LIBTERMCAP"
-	 then
-	 AC_CHECK_LIB(termlib, main)
-	+fi
-	 fi
-	 AC_CHECK_LIB(readline, main)
-	 AC_CHECK_LIB(dl, dlopen)
-	[ Changes made. Needs testing by Linuxers. ]
-
-----------------------------------------------------------------------
 TASK:	"rnorm" change
 STATUS:	Open
 FROM:	Paul Gilbert <la-jassine@aix.pacwan.net>
@@ -1537,7 +1059,7 @@ FROM:	Paul Gilbert <la-jassine@aix.pacwan.net>
 	unchanged.
 	[  I believe I changed the underlying generator.       ]
 	[  I was worried about behavior in the extreme tails.  ]
-	[  Should we change back again?                        ]
+	[  Should we change back again?			       ]
 
 ----------------------------------------------------------------------
 TASK:	"formula" problems
@@ -1547,12 +1069,13 @@ FROM:	 <mikem@stat.cmu.edu>
 	1) If one does, e.g.,  mymod <- lm(y ~ x); formula(mymod)
 	then one does not get back the formula (one gets,
 	Error: invalid formula) 
+	CLOSED (Aug 6, 97, RG).
 	2) if x is of mode numeric, then the model formula
 		mymod <- lm(y ~ x + x^2)
 	is not processed as S would do it.    The model is fit
 	ignoring the x^2 term, however mymod$call includes the x^2
 	term.  This seems to be a bug (or maybe feature) in applying
-	model formulae operators to numeric quantities.  I expect
+	model formulae operators to numeric quantities.	 I expect
 	(from experience with S) that x^2 will be interpreted as
 	a math operator.  Whatever the right thing to do is, it
 	needs to be documented.
@@ -1563,12 +1086,12 @@ STATUS:	Open
 FROM:	<p.dalgaard@kubism.ku.dk>
 	Mike Meyer <mikem@stat.cmu.edu> writes:
 	> Several bugs (no solutions, yet).  These might be well known.
-	> 1) If one does, e.g.,  mymod <- lm(y ~ x); formula(mymod)
+	> 1) If one does, e.g.,	 mymod <- lm(y ~ x); formula(mymod)
 	> then one does not get back the formula (one gets, Error: invalid formula) 
 	Yep. Seems that we need a
 	formula.lm<-function(x)formula(x$terms)
 	> 2) if x is of mode numeric, then the model formula
-	> 	mymod <- lm(y ~ x + x^2)
+	>	mymod <- lm(y ~ x + x^2)
 	> is not processed as S would do it. The model is fit ignoring the x^2 term, 
 	We had that topic a while back. I think it was concluded
 	that it is a feature, because mixing model formulas and
@@ -1584,7 +1107,7 @@ FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 	 > > 
 	 > > 2) if x is of mode numeric, then the model formula
 	 > > mymod <- lm(y ~ x + x^2)
-	 > > is not processed as S would do it.  The model is fit[ted]
+	 > > is not processed as S would do it.	 The model is fit[ted]
 	 > > ignoring the x^2 term...
 	 > 
 	 > We had that topic a while back.  I think it was concluded that
@@ -1594,12 +1117,12 @@ FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 
 	There is an anomaly in the way : and ^ terms are handled in the
 	sense that the logical and useful thing is obvious but does not
-	happen.  Let me give an example.  Suppose a and b are factors, x
+	happen.	 Let me give an example.  Suppose a and b are factors, x
 	and y are not.
 
 	A term such as (a + b + x + y)^2 should be expanded out binomial
 	fashion, coefficients stripped away and the remaining products
-	treated as : products.  Then S copes with terms like a:a, a:b and
+	treated as : products.	Then S copes with terms like a:a, a:b and
 	a:x fine, even x:y is handled by having it generate a column of
 	xy-products, as it should.
 
@@ -1608,14 +1131,14 @@ FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 	a complete anomaly, and one that I don't think would be hard or
 	dangerous for R to rectify.  Indeed it would be very useful to
 	generate a complete second degree regression in three variables
-	using y ~ (1 + x1 + x2 + x3)^2.  As it is now it generates linear
+	using y ~ (1 + x1 + x2 + x3)^2.	 As it is now it generates linear
 	and product terms only and omits the powers.  Go figure.
 
 	 > (I don't have any strong feeling about this, personally.  As
 	 > long as R won't introduce those awful Helmert contrasts as
 	 > default...)
 
-	Ah, the Helmert contrasts b\^ete noir.  For ANOVA the contrast
+	Ah, the Helmert contrasts b\^ete noir.	For ANOVA the contrast
 	matrix used is mostly irrelevant.  For regression models I agree,
 	treatment contrasts would be generally more easily interpreted.
 
@@ -1648,7 +1171,7 @@ FROM:	<p.dalgaard@kubism.ku.dk>
 	> I presume the reason they were used at all is because if you have
 	> equal replication of everything the Helmert contrasts give you a
 	> model matrix with orthogonal columns, so all estimates are
-	> uncorrelated.  Whenever do you get equal replication, though?
+	> uncorrelated.	 Whenever do you get equal replication, though?
 	Hardly ever. Actually, I though that the point was not so much
 	ortogonality, but the successive testing (A=B, A=B=C, A=B=C=D,...).
 	However that is just plainly wrong outside of balanced ANOVA's.
@@ -1661,7 +1184,7 @@ STATUS:	Open
 FROM:	<thomas@biostat.washington.edu>
 	We also need to fix formula.default. At the moment it only
 	looks for x$formula.  Other standard places to keep a
-	formula are x$call$formula and x$terms.  How about
+	formula are x$call$formula and x$terms.	 How about
 
 	formula.default<-function (x)
 	{
@@ -1682,12 +1205,12 @@ FROM:	<thomas@biostat.washington.edu>
 
 ----------------------------------------------------------------------
 TASK:	formula problems
-STATUS:	Open
+STATUS:	Open <Bill's code does work with 0.5a1>
 FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 	Peter Dalgaard writes:
 	 > Bill Venables <wvenable@attunga.stats.adelaide.edu.au> writes:
 	 > > Ah, the Helmert contrasts b\^ete noir.  For ANOVA the contrast
-	 > > matrix used is mostly irrelevant.  For regression models I agree,
+	 > > matrix used is mostly irrelevant.	For regression models I agree,
 	 > > treatment contrasts would be generally more easily interpreted.
 	 > Understatement of the year... Last time I bumped into them, it took me
 	 > and a colleague more than an hour to figure out how to interpret the
@@ -1716,11 +1239,11 @@ FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 	 > And, even in that case, once the first two levels differ, the rest
 	 > of the coefficients lose all meaning.
 
-	Indeed.  That's why I tended to discount that possibility myself.
+	Indeed.	 That's why I tended to discount that possibility myself.
 	Here is a contrast matrix generator I sometimes prefer to use
-	that corresponds to testing A=B, B=C, C=D, ...  Of course the
-	contrasts are not mutually orthogonal.  How it works is left as a
-	little puzzle.  (This function works in S.  I haven't tested it
+	that corresponds to testing A=B, B=C, C=D, ...	Of course the
+	contrasts are not mutually orthogonal.	How it works is left as a
+	little puzzle.	(This function works in S.  I haven't tested it
 	in R, but it should work if lower.tri() is available.)
 
 	contr.sdif <- function(n, contrasts = T)
@@ -1747,114 +1270,35 @@ FROM:	<wvenable@attunga.stats.adelaide.edu.au>
 	  else structure(diag(n), dimnames = list(lab, lab))
 	}
 	> contr.sdif(4)
-	    2-1  3-2   4-3 
+	    2-1	 3-2   4-3 
 	1 -0.75 -0.5 -0.25
 	2  0.25 -0.5 -0.25
-	3  0.25  0.5 -0.25
-	4  0.25  0.5  0.75
-
-----------------------------------------------------------------------
-TASK:	plot line textures
-STATUS:	Closed
-FROM:	<jlindsey@luc.ac.be>
-	When lines are plotted using a lot of points (say 250),
-	all types look solid except the dotted (3) on the screen.
-	Postscript output for the same plot instruction is correct.
-	[ I think we're stuck with this.  Its what X delivers. ]
-
-----------------------------------------------------------------------
-TASK:	solve bug
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	> solve(cbind(c(1,1,1,1),contr.helmert(4)))
-		    [,1]        [,2]          [,3]         [,4]
-	[1,]  0.25000000  0.25000000  2.500000e-01 2.500000e-01
-	[2,] -0.50000000  0.50000000  1.850493e-17 1.850493e-17
-	[3,] -0.16666667 -0.16666667  3.333333e-01 1.117072e-17
-	[4,] -0.08333333 -0.08333333 -8.333333e-02 2.500000e-01
-	> solve(cbind(c(1,1,1,1),contr.helmert(4)))
-	Error: incorrect tag type
-	solve(cbind(c(1,1,1,1),contr.helmert(4)))
-			 ^
-	Error: syntax error
-	[ Already fixed by Robert I think. ]
-
-----------------------------------------------------------------------
-TASK:	memory error?
-STATUS:	Closed?
-FROM:	<thomas@biostat.washington.edu>
-	I have a probably related problem. Sporadically, an attempt to do
-		a[,1,1,drop=F]
-	or similar subsetting on a 3-d matrix causes a segfault at
-	line 83 of attrib.c.  In a previous version this happened
-	reliably when dimensions were lost from multi-d arrays and
-	was due to incorrect handling of the dimnames attributes
-	which crashed attrib.c at that point when the dimnames were
-	accessed.
-	Is the same sort of thing happening again?
-	[ I have been unable to reproduce this. ]
+	3  0.25	 0.5 -0.25
+	4  0.25	 0.5  0.75
 
 ----------------------------------------------------------------------
 TASK:	startup processing
 STATUS:	Open
 FROM:	<mikem@stat.cmu.edu>
-	1) The .RData file (and S .Data area) are cputype dependent.
-	When R is used from different types of machines (say, HP
-	and Sun) that share a common filesystem (say afs or dfs)
-	then loading the wrong type of .RData file can lead to
-	mysterious behaviour.   In my environment, undergraduate
-	students are the most likely to log into different cputypes,
-	and they end up being quite confused.   To solve this
-	problem in S I set up an S_WORK environment variable that
-	set the name of the .Data area, via the front end shell
-	script.  For example, on the HP I use .Data.hp.   I would
-	like to see the same facility in R.  if R_WORK is missing,
-	then use the standard name.  If R_WORK exists, then use
-	that name as the file to save the R session in.  (Maybe
-	S_WORK exists in Splus only to please me, but it is useful :-).
 	2) Again, along the lines of something that S does that is
 	actually useful.  In S you can set the S_FIRST environment
 	variable and have this used as the equivalent of the R
-	.Rprofile file.   Might it be a good idea to allow an
+	.Rprofile file.	  Might it be a good idea to allow an
 	R_FIRST environment variable as well.  That way I could
 	set user specific preferences that apply no matter what
 	directory I have working in.
 
 ----------------------------------------------------------------------
-TASK:	Machine independence
-STATUS:	Closed?
-FROM:	<luke@stat.umn.edu>
-	An alternative that may be worth considering is to make
-	.Rdata machine independent, perhaps by using the xdr routines
-	-- I think these are available on Mac and Windows as well
-	as any unix system that does nfs.
-
-	If a move toward machine-independent representation seems
-	reasonable, it may be worth looking at some of the binary
-	data exchange formats used by nasa and others,
-
-		CDF http://nssdc.gsfc.nasa.gov/cdf/cdf_home.html
-		netCDF http://www.unidata.ucar.edu/packages/netcdf/index.html
-		HDF http://hdf.ncsa.uiuc.edu/
-
-	There may also be something useful in the "Scientific Data Format
-	Information FAQ"
-	(http://www.cv.nrao.edu/fits/traffic/scidataformats/faq.html).
-	[  I have make save and load use the xdr library when it is  ]
-	[  available.  It would be nice to have the xdr code on all  ]
-	[  platforms.  Not too hard ...  ]
-
-----------------------------------------------------------------------
 TASK:	Function Argument Naming
 STATUS:	Open
 FROM:	<maechler@stat.math.ethz.ch>
-	There is a problem with  'default argument evaluation'
+	There is a problem with	 'default argument evaluation'
 	when I use an existing function name as argument name :
 
 	sintest <- function(x, y = 2, sin= sin(pi/4))
 	{
-	  ## Purpose: Test of   "default argument evaluation"
-	  ## -------- Fails for  R-0.49.  Martin Maechler, Date:  9 May 97.
+	  ## Purpose: Test of	"default argument evaluation"
+	  ## -------- Fails for	 R-0.49.  Martin Maechler, Date:  9 May 97.
 	  c(x=x, y=y, sin=sin)
 	}
 
@@ -1864,7 +1308,7 @@ FROM:	<maechler@stat.math.ethz.ch>
 
 	## S-plus 3.4  (being 100% ok):
 	S> sintest(1)
-	  x y       sin 
+	  x y	    sin 
 	  1 2 0.7071068
 	 Warning messages:
 	   looking for function "sin", ignored local non-function in: sintest(1)
@@ -1874,8 +1318,8 @@ FROM:	<maechler@stat.math.ethz.ch>
 
 	sintest2 <- function(x ,y = 2)
 	{
-	  ## Purpose: Test of   "default argument evaluation"
-	  ## -------- Fails for  S-plus 3.4.  Martin Maechler, Date:  9 May 97.
+	  ## Purpose: Test of	"default argument evaluation"
+	  ## -------- Fails for	 S-plus 3.4.  Martin Maechler, Date:  9 May 97.
 	  c(x=x, y=y, sin=sin)
 	}
 
@@ -1947,442 +1391,6 @@ FROM:	<luke@stat.umn.edu>
 	[1] 720
 
 ----------------------------------------------------------------------
-TASK:	plot axis & log
-STATUS:	Open
-FROM:	<kovac@figaro.stats.bris.ac.uk>
-	The following commands crash:
-	> plot(1:4,axes=F,log="x")
-	> axis(1,c(1,2,3,4))
-	zsh: segmentation fault  R
-	Lines 35-37 of axis():
-	35:        else {
-	36:                ind <- (usr[1] <= at & at <= usr[2])
-	37:        }
-	should be replaced by
-		else {
-			if (log)
-				ind <- (10^usr[1] <= at & at <= 10^usr[2])
-			else ind <- (usr[1] <= at & at <= usr[2])
-		}
-	Moreover, there should be a check if length(at) equals zero
-	before calling the internal axis command.
-	But wait, there's more:
-	> plot(1:4,log="x")
-	> plot(1:4)
-	The second call of plot produces an empty plot. The following
-	sequence works:
-	> plot(1:4,log="x")
-	> par(xlog=F)
-	> plot(1:4)        
-	Why does R have the graphical parameters "xlog" and "ylog"?
-	They do not seem to work for me and are not used by S-Plus.
-
-----------------------------------------------------------------------
-TASK:	axis problems
-STATUS:	Open
-FROM:	<kovac@figaro.stats.bris.ac.uk>
-	The commands
-	> plot(1:4,axes=F)
-	> axis(1,c(4,3,2,1))
-	produce the tick-marks but not the labels (except the last
-	one). Sorting the vector at in axis() seems to work, ie
-	should lines 35-40 should read:
-		else {
-			at <- sort(at)
-			if (log)
-				ind <- (10^usr[1] <= at & at <= 10^usr[2])
-			else ind <- (usr[1] <= at & at <= usr[2])
-		}
-
-----------------------------------------------------------------------
-TASK:	axis problems
-STATUS:	Open
-FROM:	<kovac@figaro.stats.bris.ac.uk>
-	Here are another three problems with logarithmic scales:
-	1) segments() does not work with logarithmic scales. I suggest to change
-	lines 962-973 in "plot.c":
-
-	    for (i = 0; i < n; i++) {
-		if (FINITE(xt(x0[i%nx0])) && FINITE(yt(y0[i%ny0]))
-		    && FINITE(xt(x1[i%nx1])) && FINITE(yt(y1[i%ny1]))) {
-		    GP->col = INTEGER(col)[i % ncol];
-		    if(GP->col == NA_INTEGER) GP->col = colsave;
-		    GP->lty = INTEGER(lty)[i % nlty];
-		    GStartPath();
-		    GMoveTo(XMAP(xt(x0[i % nx0])), YMAP(yt(y0[i % ny0])));
-		    GLineTo(XMAP(xt(x1[i % nx1])), YMAP(yt(y1[i % ny1])));
-		    GEndPath();
-		}
-	    }
-
-	2) rect() does not work either. Unfortunately, do_rect() in "plot.c" 
-	overrides the yt() function... What about this (lines 983-1031):
-
-	SEXP do_rect(SEXP call, SEXP op, SEXP args, SEXP env)
-	{
-	    SEXP sxl, sxr, syb, sys, col, lty, border;
-	    double *xl, *xr, *yb, *ys;
-	    int i, n, nxl, nxr, nyb, nys;
-	    int ncol, nlty, nborder;
-	    int colsave, ltysave;
-
-	    GCheckState();
-
-	    if(length(args) < 4) errorcall(call, "too few arguments\n");
-	    xypoints(call, args, &n);
-
-	    sxl = CAR(args); nxl = length(sxl); args = CDR(args);
-	    syb = CAR(args); nyb = length(syb); args = CDR(args);
-	    sxr = CAR(args); nxr = length(sxr); args = CDR(args);
-	    sys = CAR(args); nys = length(sys); args = CDR(args);
-
-	    PROTECT(col = FixupCol(GetPar("col", args)));
-	    ncol = LENGTH(col);
-
-	    PROTECT(border =  FixupCol(GetPar("border", args)));
-	    nborder = LENGTH(border);
-
-	    PROTECT(lty = FixupLty(GetPar("lty", args)));
-	    nlty = length(lty);
-
-	    xl = REAL(sxl);
-	    xr = REAL(sxr);
-	    yb = REAL(syb);
-	    ys = REAL(sys);
-
-	    ltysave = GP->lty;
-	    colsave = GP->col;
-	    GMode(1);
-	    for (i = 0; i < n; i++) {
-		if (FINITE(xt(xl[i%nxl])) && FINITE(yt(yb[i%nyb]))
-		    && FINITE(xt(xr[i%nxr])) && FINITE(yt(ys[i%nys])))
-			GRect(XMAP(xt(xl[i % nxl])), YMAP(yt(yb[i % nyb])),
-			      XMAP(xt(xr[i % nxr])), YMAP(yt(ys[i % nys])),
-			    INTEGER(col)[i % ncol],
-			    INTEGER(border)[i % nborder]);
-	    }
-	    GMode(0);
-	    GP->col = colsave;
-	    GP->lty = ltysave;
-	    UNPROTECT(3);
-	    return R_NilValue;
-	}
-
-	3) The legend() function needs changes as well. I attach my
-	quick hack below, but I think there are better solutions... :-)
-
-	legend <-
-	function (x, y, legend, fill, col = "black", lty, pch, bty = "o", 
-		bg = par("bg"), xjust = 0, yjust = 1, ...) 
-	{
-		xlog <- par("xlog")
-		ylog <- par("ylog")
-		if (xlog) 
-			x <- log10(x)
-		if (ylog) 
-			y <- log10(y)
-		xchar <- xinch(par("cin")[1])
-		ychar <- yinch(par("cin")[2]) * 1.2
-		xbox <- xinch(par("cin")[2] * 0.8)
-		ybox <- yinch(par("cin")[2] * 0.8)
-		yline <- 2 * xchar
-		w <- 2 * xchar + max(strwidth(legend))
-		h <- (length(legend) + 1) * ychar
-		if (missing(y)) {
-			if (is.list(x)) {
-				y <- x$y
-				x <- x$x
-			}
-		}
-		if (!is.numeric(x) || !is.numeric(y)) 
-			stop("non-numeric coordinates")
-		if (length(x) <= 0 || length(x) != length(y)) 
-			stop("differing coordinate lengths")
-		if (length(x) != 1) {
-			x <- mean(x)
-			y <- mean(y)
-			xjust <- 0.5
-			yjust <- 0.5
-		}
-		if (!missing(fill)) {
-			w <- w + xchar + xbox
-		}
-		if (!missing(pch)) {
-			if (is.character(pch) && nchar(pch) > 1) {
-				np <- nchar(pch)
-				pch <- substr(rep(pch[1], np), 1:np, 
-					1:np)
-			}
-			w <- w + 1.5 * xchar
-		}
-		if (!missing(lty)) 
-			w <- w + 3 * xchar
-		x <- x - xjust * w
-		y <- y + (1 - yjust) * h
-		xt <- rep(x, length(legend)) + xchar
-		yt <- y - (1:length(legend)) * ychar
-		if (bty != "n") {
-			if (xlog) {
-				x1 <- 10^x
-				x2 <- 10^(x + w)
-			}
-			else {
-				x1 <- x
-				x2 <- x + w
-			}
-			if (ylog) {
-				y1 <- 10^y
-				y2 <- 10^(y - h)
-			}
-			else {
-				y1 <- y
-				y2 <- y - h
-			}
-			rect(x1, y1, x2, y2, col = bg)
-		}
-		x <- x + xchar
-		if (!missing(fill)) {
-			if (xlog) {
-				x1 <- 10^xt
-				x2 <- 10^(xt + xbox)
-			}
-			else {
-				x1 <- xt
-				x2 <- xt + xbox
-			}
-			if (ylog) {
-				y1 <- 10^(yt - 0.5 * ybox)
-				y2 <- 10^(yt + 0.5 * ybox)
-			}
-			else {
-				y1 <- yt - 0.5 * ybox
-				y2 <- yt + 0.5 * ybox
-			}
-			rect(xt, yt - 0.5 * ybox, xt + xbox, yt + 0.5 * 
-				ybox, col = fill)
-			xt <- xt + xbox + xchar
-		}
-		if (!missing(pch)) {
-			if (xlog) 
-				x1 <- 10^(xt + 0.25 * xchar)
-			else x1 <- xt + 0.25 * xchar
-			if (ylog) 
-				y1 <- 10^yt
-			else y1 <- yt
-			points(x1, y1, pch, col = col)
-			xt <- xt + 1.5 * xchar
-		}
-		if (!missing(lty)) {
-			if (xlog) {
-				x1 <- 10^xt
-				x2 <- 10^(xt + 2 * xchar)
-			}
-			else {
-				x1 <- xt
-				x2 <- xt + 2 * xchar
-			}
-			if (ylog) 
-				y1 <- 10^yt
-			else y1 <- yt
-			segments(x1, y1, x2, y1, lty = lty, col = col)
-			xt <- xt + 3 * xchar
-		}
-		if (xlog) 
-			x1 <- 10^xt
-		else x1 <- xt
-		if (ylog) 
-			y1 <- 10^yt
-		else y1 <- yt
-		text(x1, y1, text = legend, adj = c(0, 0.35))
-	}
-
-----------------------------------------------------------------------
-TASK:	legend (but see below)
-STATUS:	Open
-FROM:	<maechler@stat.math.ethz.ch>
-
-	Arne, thank you for your very useful  bug findings and fixing.
-	Your first two "patches" to  plot.c  are really ok.
-
-	In your
-	>> 3) The legend() function needs changes as well. I attach my
-	>> quick hack below, but I think there are better solutions... :-)
-	>> 
-	>> legend <-
-	>> function (x, y, legend, fill, col = "black", lty, pch, bty = "o", 
-	>>         bg = par("bg"), xjust = 0, yjust = 1, ...) 
-	>> .....
-	there was one typo in the  ``if(!missing(fill))''  clause, you assigned
-	x1,..y2, but then did not use them.
-
-	Below I fixed this and found a way to make the whole  if(xlog) / (ylog)
-	things a little more concise.
-	This is a patch against "plain 0.49" ,  $RHOME/src/library/base/funs/ :
-
---- legend.~1~	Fri Jan 17 03:44:24 1997
-+++ legend	Mon May 12 09:42:25 1997
-@@ -2,13 +2,18 @@
- function(x, y, legend, fill, col="black", lty, pch, bty="o", bg=par("bg"),
- 	xjust=0, yjust=1, ...)
- {
-+	xlog <- par("xlog")
-+	ylog <- par("ylog")
-+	if (xlog) x <- log10(x)
-+	if (ylog) y <- log10(y)
- 	xchar <- xinch(par("cin")[1])
- 	ychar <- yinch(par("cin")[2]) * 1.2
- 	xbox <- xinch(par("cin")[2] * 0.8)
- 	ybox <- yinch(par("cin")[2] * 0.8)
- 	yline <- 2*xchar
- 	w <- 2 * xchar + max(strwidth(legend))
--	h <- (length(legend)+1)*ychar
-+	n.leg <- length(legend)
-+	h <- (n.leg + 1) * ychar
- 	if(missing(y)) {
- 		if(is.list(x)) {
- 			y <- x$y
-@@ -39,23 +44,43 @@
- 		w <- w + 3 * xchar
- 	x <- x - xjust * w
- 	y <- y + (1 - yjust) * h
--	xt <- rep(x, length(legend)) + xchar
--	yt <- y - (1:length(legend)) * ychar
--	if(bty != "n")
--		rect(x, y, x+w, y-h, col=bg)
-+	xt <- rep(x, n.leg) + xchar
-+	yt <- y - (1:n.leg) * ychar
-+	if (bty != "n") {
-+		xx <- c(x,x+w)
-+		if (xlog) xx <- 10^xx
-+		yy <- c(y,y-h)
-+		if (ylog) yy <- 10^yy
-+		rect(xx[1], yy[1], xx[2], yy[2], col = bg)
-+	}
- 	x <- x + xchar
- 	if(!missing(fill)) {
--		rect(xt, yt - 0.5 * ybox,
--			xt + xbox, yt + 0.5 * ybox, col=fill)
-+		xx <- c(xt,xt+xbox)
-+		if (xlog) xx <- 10^xx
-+		yy <- yt + c(-.5,.5) * ybox
-+		if (ylog) yy <- 10^yy
-+		rect(xx[1], yy[1], xx[2], yy[2], col = fill)
- 		xt <- xt + xbox + xchar
- 	}
- 	if(!missing(pch)) {
--		points(xt + 0.25 * xchar, yt, pch, col=col)
-+		x1 <- xt + 0.25 * xchar
-+		if (xlog) x1 <- 10^x1
-+		y1 <- yt
-+		if (ylog) y1 <- 10^y1
-+		points(x1, y1, pch, col = col)
- 		xt <- xt + 1.5 * xchar
- 	}
- 	if(!missing(lty)) {
--		segments(xt, yt, xt + 2 * xchar, yt, lty=lty, col=col)
-+		xx <- c(xt, xt + 2 * xchar)
-+		if (xlog) xx <- 10^xx
-+		y1 <- yt
-+		if (ylog) y1 <- 10^y1
-+		segments(xx[1], y1, xx[2], y1, lty = lty, col = col)
- 		xt <- xt + 3 * xchar
- 	}
--	text(xt, yt, text=legend, adj=c(0, 0.35))
-+	x1 <- xt
-+	y1 <- yt
-+	if (xlog) x1 <- 10^x1
-+	if (ylog) y1 <- 10^y1
-+	text(x1, y1, text = legend, adj = c(0, 0.35))
- }
-----------------------------------------------------------------------
-TASK:	legend cont
-STATUS:	Open
-FROM:	<maechler@stat.math.ethz.ch>
-	This time, I have at least tested it out under quite a few
-	circumstances; the last patch (a few hours ago) would FAIL
-	in many cases!
-
---- legend.~1~	Fri Jan 17 03:44:24 1997
-+++ legend	Mon May 12 12:07:23 1997
-@@ -2,18 +2,23 @@
- function(x, y, legend, fill, col="black", lty, pch, bty="o", bg=par("bg"),
- 	xjust=0, yjust=1, ...)
- {
-+  xlog <- par("xlog")
-+  ylog <- par("ylog")
-+  if (xlog) x <- log10(x)
-+  if (ylog) y <- log10(y)
- 	xchar <- xinch(par("cin")[1])
- 	ychar <- yinch(par("cin")[2]) * 1.2
- 	xbox <- xinch(par("cin")[2] * 0.8)
- 	ybox <- yinch(par("cin")[2] * 0.8)
- 	yline <- 2*xchar
- 	w <- 2 * xchar + max(strwidth(legend))
--	h <- (length(legend)+1)*ychar
-+  n.leg <- length(legend)
-+  h <- (n.leg + 1) * ychar
- 	if(missing(y)) {
- 		if(is.list(x)) {
- 			y <- x$y
- 			x <- x$x
--		}
-+    } else stop("missing y")
- 	}
- 	if(!is.numeric(x) || !is.numeric(y))
- 		stop("non-numeric coordinates")
-@@ -39,23 +44,36 @@
- 		w <- w + 3 * xchar
- 	x <- x - xjust * w
- 	y <- y + (1 - yjust) * h
--	xt <- rep(x, length(legend)) + xchar
--	yt <- y - (1:length(legend)) * ychar
-+  xt <- rep(x, n.leg) + xchar
-+  yt <- y - (1:n.leg) * ychar
- 	if(bty != "n")
- 		rect(x, y, x+w, y-h, col=bg)
- 	x <- x + xchar
- 	if(!missing(fill)) {
--		rect(xt, yt - 0.5 * ybox,
--			xt + xbox, yt + 0.5 * ybox, col=fill)
-+    xx <- cbind(xt, xt + xbox)
-+    if (xlog) xx <- 10^xx
-+    yy <- yt + cbind(rep(-0.5,n.leg), 0.5) * ybox
-+    if (ylog) yy <- 10^yy
-+    rect(xx[,1], yy[,1], xx[,2], yy[,2], col = fill)
- 		xt <- xt + xbox + xchar
- 	}
- 	if(!missing(pch)) {
--		points(xt + 0.25 * xchar, yt, pch, col=col)
-+    x1 <- xt + 0.25 * xchar
-+    if (xlog) x1 <- 10^x1
-+    y1 <- yt
-+    if (ylog) y1 <- 10^y1
-+    points(x1, y1, pch, col = col)
- 		xt <- xt + 1.5 * xchar
- 	}
- 	if(!missing(lty)) {
--		segments(xt, yt, xt + 2 * xchar, yt, lty=lty, col=col)
-+    xx <- cbind(xt, xt + 2 * xchar)
-+    if (xlog) xx <- 10^xx
-+    y1 <- yt
-+    if (ylog) y1 <- 10^y1
-+    segments(xx[,1], y1, xx[,2], y1, lty = lty, col = col)
- 		xt <- xt + 3 * xchar
- 	}
-+  if (xlog) xt <- 10^xt
-+  if (ylog) yt <- 10^yt
- 	text(xt, yt, text=legend, adj=c(0, 0.35))
- }
-----------------------------------------------------------------------
-TASK:	lm.influence and weights
-STATUS: Closed	
-FROM:	<thomas@biostat.washington.edu>
-	lm.influence() doesn't work correctly on weighted models
-	(and thus on glm objects).
-	[Added weights; lm.influence in R returns the differences in 
-	coefs rather than the adjusted coefs which seems more sensible
-	but incompatible ]
-----------------------------------------------------------------------
 TASK:	Adding List Elements by Name
 STATUS:	Open
 FROM:	<p.dalgaard@kubism.ku.dk>
@@ -2410,22 +1418,22 @@ FROM:
 	For example, in R:
 		R> approx(1:10,2:11,xout=5:15,rule=1)
 		$x
-		 [1]  5  6  7  8  9 10 11 12 13 14 15
+		 [1]  5	 6  7  8  9 10 11 12 13 14 15
 		$y
-		 [1]  6  7  8  9 10 11 11 11 11 11 11
+		 [1]  6	 7  8  9 10 11 11 11 11 11 11
 	R> approx(1:10,2:11,xout=5:15,rule=2)
 	Error: NAs in foreign function call (arg 6)
 	but in S-plus:
 	> approx(1:10,2:11,xout=5:15,rule=1)
 		$x:
-		 [1]  5  6  7  8  9 10 11 12 13 14 15
+		 [1]  5	 6  7  8  9 10 11 12 13 14 15
 		$y:
-		 [1]  6  7  8  9 10 11 NA NA NA NA NA
+		 [1]  6	 7  8  9 10 11 NA NA NA NA NA
 		> approx(1:10,2:11,xout=5:15,rule=2)
 		$x:
-		 [1]  5  6  7  8  9 10 11 12 13 14 15
+		 [1]  5	 6  7  8  9 10 11 12 13 14 15
 		$y:
-		 [1]  6  7  8  9 10 11 11 11 11 11 11
+		 [1]  6	 7  8  9 10 11 11 11 11 11 11
 	The reason for this bug can be found in the last lines of the code of
 	approx:
 		if (rule == 1) {
@@ -2449,51 +1457,6 @@ FROM:
 	commands for (rule == 1) and (rule == 2) have to be exchanged.
 
 ----------------------------------------------------------------------
-TASK:	Incorrect warning message
-STATUS:	Closed
-FROM:	<thomas@biostat.washington.edu>
-	R : Copyright 1997, Robert Gentleman and Ross Ihaka
-	Version 0.49 Beta (April 23, 1997)
-		R> f
-		function () 
-		{
-			FALSE & matrix(FALSE, ncol = 1)
-		}
-		R> g
-		function () 
-		FALSE & matrix(FALSE, ncol = 1) 
-		R> f()
-		Warning in FALSE & matrix(FALSE, ncol = 1) : longer object length
-		is not a multiple of shorter object length
-		      [,1]
-		[1,] FALSE
-		R> g()
-		      [,1]
-		[1,] FALSE
-	Is this weird or what?
-	[ Was this a missed initiaization.  I suspect this is fixed ]
-	[ I can't reproduce it now. ]
-
-----------------------------------------------------------------------
-TASK:	Seg violation in "return"
-STATUS: Closed	
-FROM:	<hornik@ci.tuwien.ac.at>
-	R> x
-	Error: Object "x" not found
-	R> debug(t.test)
-	R> t.test(rnorm(10))
-	debug: choices <- c("two.sided", "greater", "less")
-	Browse[1]> return()
-	NULL
-	R> x
-	Error: Object "x" not found
-	Browse[1]> return()
-	Segmentation fault
-	[ there was a seemingly aborted attempt to include contexts for
-	  the browser to return from. Once this was fixed up the problem
-	  was solved ]
-
-----------------------------------------------------------------------
 TASK:	Names and unlisting  (bug/feature)
 STATUS:	Open
 FROM:	hornik@ci.tuwien.ac.at
@@ -2503,7 +1466,7 @@ FROM:	hornik@ci.tuwien.ac.at
 	[1] 1 2 3 4 5
 	R> unlist(l)
 	111 112 113 114 115 
-	  1   2   3   4   5 
+	  1   2	  3   4	  5 
 	I ran into this weekend ...
 
 ----------------------------------------------------------------------
@@ -2512,10 +1475,10 @@ STATUS:	Open
 FROM:	<bates@stat.wisc.edu>
 	I could not find the all.names function in R so I created the
 	enclosed.  Comments, criticisms, or changes to a one-liner by creating
-	nested anonymous functions are welcome.  I'll try to work out a
+	nested anonymous functions are welcome.	 I'll try to work out a
 	corresponding all.vars function.
 
-	### $Id: TASKS,v 1.30 1997/07/01 03:45:42 ihaka Exp $
+	### $Id: TASKS,v 1.34 1997/08/10 20:58:55 maechler Exp $
 	### Some replacement functions that are missing in R
 
 	### Determine all the names (symbols) occuring in an object.
@@ -2545,11 +1508,11 @@ FROM:	<bates@stat.wisc.edu>
 
 	>1> all.names <- function (x) 
 	>2> {
-	>3>   if (mode(x) == "symbol")  return(as.character(x))
-	>4>   if (length(x) == 0)       return(NULL)
-	>5>   if (is.recursive(x))      return(unlist(lapply(as.list(x), all.names)))
+	>3>   if (mode(x) == "symbol")	return(as.character(x))
+	>4>   if (length(x) == 0)	return(NULL)
+	>5>   if (is.recursive(x))	return(unlist(lapply(as.list(x), all.names)))
 	>6>   character(0)
-	>7> }   
+	>7> }	
 
 	1) length(x) is not always defined in R; e.g. it is NOT for functions.
 	   --> Delete line 4  
@@ -2565,7 +1528,7 @@ FROM:	<bates@stat.wisc.edu>
 	them...) and 'args' is now provided which helps my most immediate
 	need.
 
-	In short: I don't think  you can define an  all.names(.)
+	In short: I don't think	 you can define an  all.names(.)
 	function which works with functions arguments, in the
 	current version of R.
 
@@ -2579,7 +1542,7 @@ FROM:	<bates@stat.wisc.edu> + <maechler@stat.math.ethz.ch>
 	the different scoping rules of R and S.
 
 	I attempted to create a recursive anonymous function to be
-	called within another function.  You may want to stop
+	called within another function.	 You may want to stop
 	reading for a bit and consider how that would be done.
 	That is, how do you recursively call a function that has
 	never been assigned a name?
@@ -2591,7 +1554,7 @@ FROM:	<bates@stat.wisc.edu> + <maechler@stat.math.ethz.ch>
 	    if (mode(x) == "call") {
 	      if (x[[1]] == as.name("/")) 
 		return(c(sys.function()(x[[2]]), sys.function()(x[[3]])))
-	      if (x[[1]] == as.name("(")) 	# for R
+	      if (x[[1]] == as.name("("))	# for R
 		return(sys.function()(x[[2]]))
 	    }
 	    if (mode(x) == "(") return(sys.function()(x[[2]])) # for S
@@ -2616,43 +1579,6 @@ FROM:	<thomas@biostat.washington.edu>
 	Error: dim<- length of dims do not match the length of object
 
 ----------------------------------------------------------------------
-TASK:	Updating in lm / glm
-STATUS:	Closed?
-FROM:	<thomas@biostat.washington.edu>
-	Three bugs and 2.5 fixes.
-
-	1. To make update() work with a new formula for glms, change the first
-	line of the glm() function from
-	call <- sys.call(
-	to
-	call<-match.call()
-	(this means that the formula component of the returned call is labelled so
-	that update can find it)
-
-	2. update.lm doesn't do anything with its weights= argument. Add
-		if (!missing(weights))
-			call$weights<-substitute(weights)
-	Similarly, to get update to work properly on glms you need a lot more of
-	these if statements (see update.glm at the end of the message).
-
-	3. update.lm evaluates its arguments in the wrong frame. It creates a
-	modified version of the original call and evaluates it in 
-	sys.frame(sys.parent()).  If update.lm is called directly this is correct,
-	but if it is called via update() the correct frame is
-	sys.frame(sys.parent(2)). Worse still, if it is called by NextMethod()
-	from another update.foo() the correct frame is still higher up the list.
-
-	My solution (a bit ugly) is to move up the list of enclosing calls
-	checking at each stage to see if the call is NextMethod, update or an
-	update method.  It can be seen at the end of update.glm at the bottom of
-	this message, and something of this sort needs to be added to other update
-	methods.
-	[ I've added a new type of context- CTXT_GENERIC, all generic functions
-	 have their context set to this just before the method is applied and
-	 revert to CTXT_RETURN after the method has been applied. This seems
-	 to provide the required result. The other fixes were added in. RG]
-
-----------------------------------------------------------------------
 TASK:	"write" function
 STATUS:	Open?
 FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
@@ -2668,11 +1594,11 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	What about
 
 	write.xxx (x,		# object
-		   file =       # filename, default stdout
-                   append =     # obvious
-                   sep =	# obvious
-		   eol =        # end of line char
-                   ...)
+		   file =	# filename, default stdout
+		   append =	# obvious
+		   sep =	# obvious
+		   eol =	# end of line char
+		   ...)
 
 	???
 
@@ -2691,31 +1617,32 @@ FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
 	The only addition would be a  'write.matrix' which would be 'like'
 	write.data.frame, the only problem being that  'matrix' is not a
 	class (yet).  [Note that in S4, everything has a class; 
-		   I'm voting for matrices to have a class in R  ..]
+		   I'm voting for matrices to have a class in R	 ..]
 	write.default  could 'despatch' to write.matrix if  x  is a matrix.
 
 ----------------------------------------------------------------------
 TASK:	"ls.print" problem
-STATUS:	Open
+STATUS:	Closed, Aug 6, 97 RG. 
+	<summary does what it should as does ls.print now>
 FROM:	<VENKAT@biosta.mskcc.org>
 	ls.print produces error that I don't seem to be able to
-	trace.  Output of the commands as follows: (hyeung is a
+	trace.	Output of the commands as follows: (hyeung is a
 	24x2 matrix of data)
 	-------------------------------------------------
 	> summary(hyeung)
-	       x.1             x.2
-	 Min.   : 28.0   Min.   : 10.0
-	 1st Qu.: 72.0   1st Qu.: 87.5
-	 Median : 86.5   Median : 92.5
-	 Mean   : 81.0   Mean   : 82.5
-	 3rd Qu.: 97.0   3rd Qu.:100.0
-	 Max.   :100.0   Max.   :100.0
+	       x.1	       x.2
+	 Min.	: 28.0	 Min.	: 10.0
+	 1st Qu.: 72.0	 1st Qu.: 87.5
+	 Median : 86.5	 Median : 92.5
+	 Mean	: 81.0	 Mean	: 82.5
+	 3rd Qu.: 97.0	 3rd Qu.:100.0
+	 Max.	:100.0	 Max.	:100.0
 	> summary(lsfit(hyeung[,1],hyeung[,2]))
-		  Length Class  Mode
-	coef       2     -none- numeric
-	residuals 24     -none- numeric
-	intercept  1     -none- logical
-	qr         6     -none- list
+		  Length Class	Mode
+	coef	   2	 -none- numeric
+	residuals 24	 -none- numeric
+	intercept  1	 -none- logical
+	qr	   6	 -none- list
 	> ls.print(lsfit(hyeung[,1],hyeung[,2]))
 	trace: ls.print(lsfit(hyeung[, 1], hyeung[, 2]))
 	Error: missing value in ``n1 : n2''
@@ -2734,7 +1661,7 @@ FROM:	<thomas@biostat.washington.edu>
 	logical(0) in R but NA in S. 
 
 		Martin:
-	Isn't  logical(0)  more  logical than  NA ?
+	Isn't  logical(0)  more	 logical than  NA ?
 	I agree that it would be best  (convenience)
 	if 'NULL==1' returned the same as 'numeric(0)==1'.
 	At the moment, I don't see why compatibility with S  should be
@@ -2770,10 +1697,10 @@ FROM:	<thomas@biostat.washington.edu>
 	Ok, given the above argument, returning NA is logical, too.
 	However, I'd also argue that  
 		logical(0) | TRUE	-> TRUE
-		logical(0) & FALSE      -> FALSE
+		logical(0) & FALSE	-> FALSE
 
 		logical(0) & TRUE	-> logical(0)
-		logical(0) | FALSE      -> logical(0)
+		logical(0) | FALSE	-> logical(0)
 
 	    ThLu> It seems in fact that logical(0) | TRUE causes R to freeze
 	    ThLu> (R0.49, sparc solaris).
@@ -2783,16 +1710,6 @@ FROM:	<thomas@biostat.washington.edu>
 		is not a multiple of shorter object length
 	Floating exception
 	~~~~~~~~~~~~~~~~~~ [and 'core' dump]
-
-----------------------------------------------------------------------
-TASK:	Complex Nits
-STATUS:	Closed
-FROM:	<la-jassine@aix.pacwan.net>
-	Mod, Re, Im, and Conj should work for Real numbers using as.complex
-	complex should be
-	   complex <- function (n = 0, real = numeric(), imaginary = numeric())
-	not 
-	   complex <- function (n = 0, real = numeric(), imag = numeric()) 
 
 ----------------------------------------------------------------------
 TASK:	Misc
@@ -2819,7 +1736,7 @@ FROM:	<la-jassine@aix.pacwan.net>
 TASK:	Method lookup for "print"
 STATUS:	Open
 FROM:	<la-jassine@aix.pacwan.net>
-	I have  always thought that typing the name of an object
+	I have	always thought that typing the name of an object
 	generated a call to the print method for the object, however,
 	(in 0.49) I redefined the generic print method as
 
@@ -2851,9 +1768,9 @@ FROM:	<la-jassine@aix.pacwan.net>
 	explain to me what it does. Thanks.
 
 ----------------------------------------------------------------------
-TASK:
-STATUS:
-FROM:
+TASK:	Time Series Problems
+STATUS:	Open
+FROM:	<la-jassine@aix.pacwan.net>
 	Here are four problems with ts:
 
 	1/  ts matrix subscripting should support drop=F:
@@ -2871,11 +1788,11 @@ FROM:
 	End = c(5, 1) 
 	Frequency = 1 
 	     [,1] [,2]
-	[1,]    1    6
-	[2,]    2    7
-	[3,]    3    8
-	[4,]    4    9
-	[5,]    5   10
+	[1,]	1    6
+	[2,]	2    7
+	[3,]	3    8
+	[4,]	4    9
+	[5,]	5   10
 	> z == ts(z)
 	Error: invalid time series parameters specified
 	> 
@@ -2885,7 +1802,7 @@ FROM:
 	The following seems to work.
 
 		start.default <- function (x) start(ts(x))
-		end.default   <- function (x)   end(ts(x))
+		end.default   <- function (x)	end(ts(x))
 
 
 	4/ In the function start.ts (and in end.ts) ts[1] in the
@@ -2917,73 +1834,6 @@ FROM:	<la-jassine@aix.pacwan.net>
 	I have not been able to isolate the exact circumstances.
 
 ----------------------------------------------------------------------
-TASK:	"eigen" shortfall
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	eigen() seems to work for symmetric matrices only. This is
-	out of sync with the help file.
-	[ Source code adjusted to fit the documentation. ]
-
-----------------------------------------------------------------------
-TASK:	abline + coefficients
-STATUS:	Closed
-FROM:	<nobu@psrc.isac.co.jp>
-	I found a little different behavior of R with S.
-	at R-0.49:
-	    > a
-	    [1] 12 23 22 34 44 54 55 70 78
-	    > plot(a)
-	    > abline(lsfit(seq(1,len=length(a)), a))
-	    Error: no applicable method for "coefficients"
-	at S (from AT&T '92) result draw coefficient line without error.
-	Then I think to need define a function as followed:
-	    coefficients.default <- function(x) x$coef
-	[ Default method already added for Doug Bates. ]
-
-----------------------------------------------------------------------
-TASK:	beta and lbeta error
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	The beta(.)  and  ln(beta(..))  functions are not giving
-	proper results in R-0.49.  This does NOT affect usual
-	beta-distribution calculations, since the internal  beta(.)
-	and lbeta(.) are okay.
-	beta(1,2)
-	[1] -0.6931472
-	exp(beta(1,2))
-	[1] 0.5
-	lbeta(3,4)
-	[1] 3
-	[ Caused by a cut/paste typo in names.c ]
-
-----------------------------------------------------------------------
-TASK:	"pbeta"/"qbeta"
-STATUS:	Open?
-FROM:	<maechler@stat.math.ethz.ch>
-	(When using the new  pbeta(.); this actually DOES seem to matter).
-	For qbeta(.), 
-	I now have an  R- function with quite a bit of diagnostic output,
-	so I can easily see what's going,  AND the function has  
-		lower, upper = 1-lower
-	as extra arguments.
-	I found in a few tests, that "all" problems seem to be gone, when I
-	brutally set  lower = 0 (and therefore  upper = 1).
-	Unfortunately, this is not directly reproducible with the C-version.
-	In any case, this seems to make it unnecessary to use 
-	the  good special formulae for   qt(x, df)  for high 'df'.
-	Let you know more when I see through!
-
-----------------------------------------------------------------------
-TASK:	dhyper.c
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	Line 30 should be changed from
-	if (NR <= 0 || NR <= 0 || n <= 0 || n > N)
-	to                      ^-- typo: "R" should be "B"
-	if (NR < 0 || NB < 0 || n < 0 || n > N)
-	(NR==0 or NB == 0  should not be a DOMAIN_ERROR)
-
-----------------------------------------------------------------------
 TASK:	ISO-latin1 characters 
 STATUS:	Open
 FROM:	<maechler@stat.math.ethz.ch>
@@ -3007,7 +1857,7 @@ FROM:	<maechler@stat.math.ethz.ch>
 	 8-bit clean! -- (else: get it
 	ftp://ftp.stat.math.ethz.ch/U/maechler/R/string-test.R )
 
-	frenchquotes <- "«...»"  ## <<...>>
+	frenchquotes <- "«...»"	 ## <<...>>
 	frenchquotes
 
 	Umlaute <- "äöü ÄÖÜ" # = "a "o "u  "A "O "U
@@ -3033,13 +1883,13 @@ FROM:	<maechler@stat.math.ethz.ch>
 	aa_ function(x) {
 	  x^2
 	  ##- frenchquotes <- "«...»"  ## <<...>>
-	  ##- Umlaute <- "äöü ÄÖÜ" # = "a "o "u  "A "O "U
+	  ##- Umlaute <- "äöü ÄÖÜ" # = "a "o "u	 "A "O "U
 	  ##- A.accents <- "àáâãäåæ ÀÁÂÃÄÅÆ" # `a 'a ^a "a oa ae  `A 'A ^A "A oA AE
 	  ##- EI.accents <- "ÈÉÊËÌÍÎÏ èéêëìíîï"
 	  ##- O.accents <- "ÒÓÔÕÖØòóôõöø"
 	  ##- U.accents <- "ÙÚÛÜÝùúûüý"
 	  ##-
-	  ##- ISO24x <-  "¡¢£¤¥¦§ ¨©ª«¬­®¯" #octal 241..257
+	  ##- ISO24x <-	 "¡¢£¤¥¦§ ¨©ª«¬­®¯" #octal 241..257
 	  ##- ISO26x <- "°±²³´µ¶· ¸¹º»¼½¾¿" #octal 260..277
 	  ##- ISOdiv <- "×÷ Ðð" ##-- OMITTED further: SYNTAX error !!
 	}
@@ -3047,54 +1897,18 @@ FROM:	<maechler@stat.math.ethz.ch>
 
 ----------------------------------------------------------------------
 TASK:	String length problems
-STATUS:	Closed
+STATUS:	Closed ?
 FROM:	<maechler@stat.math.ethz.ch>
 	This is not a  cat(.) but a  string storing/parsing problem:
-	nchar("\n\n")  # gives  2  instead of 3
-	[ Hmmm.  Was this typed to readline I wonder?  There it  ]
+	nchar("\n\n")	 # gives  2  instead of 3
+	[ Hmmm.	 Was this typed to readline I wonder?  There it	 ]
 	[ seems that ^L must be escaped with ^V.  Using the ANSI ]
 	[ \f will now produce a literal formfeed.  Indeed, using ]
 	[ any of the ANSI C escapes will work.			 ]
 
-----------------------------------------------------------------------
-TASK:	Batch Mode Errors
-STATUS:	Closed?
-FROM:	<thomas@biostat.washington.edu> + MM
-	Errors which occur during batch mode execution produce
-	a cascade of error messages.  We now print the first error
-	message and abort.  I don't think it makes much sense to
-	continue execution after an error.  I suppose we could
-	parse the remainder of the input and not execute.  Glim77
-	used to do this.
-
-----------------------------------------------------------------------
-TASK:	lsfit problem (really cbind memory error)
-STATUS:	Closed
-FROM:	<ncv@ap.cc.affrc.go.jp>
-	I would like to report my problem in running R with a large data set.
-	Something has been change in the lsfit() function, especially the
-	parameters "wt" and "yname".
-	Your help is highly appreciated.
-	[ This was an old bug the reason I mention it is because    ]
-	[ in looking at the example code he sent in I noticed that  ]
-	[ it was taking 30Mb to read a 176 x 166 data frame.  A     ]
-	[ little calulation shows that 0.5Mb should have been       ]
-	[ enough!  It seems that Robert and I were working at cross ]
-	[ puposes in scan and read.table.  We ended up allocating   ]
-	[ n x n x p rather than n x p ... ].
-
-----------------------------------------------------------------------
-TASK:	Documentation Nit
-STATUS:	Closed
-FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
-	The documentation for ls/objects has
-		ls(name, pos=2, envir=sys.frame(sys.parent()),
-		   all.names=FALSE, pattern)
-	but the code has
-		ls <-
-		function (name, pos = -1, envir = NULL,
-			  all.files = FALSE, pattern)
-	[ At one time these were equivalent.  Are they still? ]
+	[ However, using the '^L' (emacs C-q C-l) in a	string is still dropped:
+	> "\n\n"
+	[1] "\n\n"
 
 ----------------------------------------------------------------------
 TASK:	Fontend
@@ -3128,140 +1942,6 @@ FROM:
 
 
 ----------------------------------------------------------------------
-TASK:	Martin's Least Favourite ... Part 1.
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	1) print(2^30, digits = 12) #-  exponential form; unnecessarily!
-	 formatC(2^30, digits = 12) #- shows you what you'd want above
-	 ## S-plus is okay here; note that the problem also affects
-	 ##	paste(.)  & format(.) :
-	 options(digits=10)
-	 paste(2^(4*1:8))
-	 S-plus gives
-	[1] "16"         "256"        "4096"       "65536"      "1048576"   
-	[6] "16777216"   "268435456"  "4294967296"
-	 whereas R gives
-	[1] "16"              "256"             "4096"            "65536"          
-	[5] "1048576"         "1.6777216e+07"   "2.68435456e+08"  "4.294967296e+09"
-	[ This was due to overzealous testing in formatReal.  I have   ]
-	[ replaced a hard-coded "8" with the specified "digits" value. ]
-
-
-----------------------------------------------------------------------
-TASK:	Martin's Least Favourite ... Part 2.
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	2) This one has been reported (in slightly different form)
-	   >> Date: Mon, 10 Mar 1997 09:46:37 +0100 (MET)
-	   >> From: Martyn Plummer <plummer@iarc.fr>
-	   >> To: r-testers@stat.math.ethz.ch
-
-	   >> #4) If you put a few lines of comments at the start of a function,
-	   >>     then the comments always appear *after* the first line of code. 
-
-	This is REALLY painful; try, e.g.,
-
-	fcat <- function(..., f.dig= 4, f.wid = f.dig +5, f.flag = ' ', nl = TRUE,
-			 file = "", sep = " ",
-			 fill = FALSE, labels = NULL, append = FALSE)
-	{
-	  ## Purpose: Formatted CAT -- for printing 'tables'
-	  ## ----------------------------------------------------------------------
-	  ## Author: Martin Maechler, Date: 12 May 97
-	  l <- unlist(lapply(list(...), formatC,
-			     wid= f.wid, digits= f.dig, flag= f.flag))
-	  cat(l, if(nl)"\n", file=file, sep=sep, fill=fill,labels=labels, append=append)
-	}
-
-	# and look how it prints:
-	fcat
-
-	Even worse, some comments are silently lost (yes, I know in some
-	sitatuations,  S also loses comments) : 
-
-	ex <- 
-	##
-	## S version 4 likes comments like these.  
-	## ----------- They automagically become  on-line help.
-	## R just swallows them up into /dev/null...
-	##
-	function(a,b)
-	{
-		a + b
-	}
-	[ I have fixed this a bit.  It should be possible to ]
-	[ add the Sv4 behavior                               ]
-
-----------------------------------------------------------------------
-TASK:	rep(.) and aperm(.) lose names(.) and dimnames(.)
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	The following patches fix the problem.
-	For aperm, it's quite important to keep dimnames(.);
-	for rep(.), it's arguable, however S(-plus) does it...
-
-	However, it would probably be better to this in the '.Internal'
-	code for all attributes.
-
-	Patch to be applied in		$RHOME/src/library/base/funs/ 
-
---- rep~	Sun Nov 24 23:42:29 1996
-+++ rep		Tue May 20 18:20:12 1997
-@@ -5,6 +5,7 @@
- 	if (missing(times))
- 		times <- ceiling(length.out/length(x))
- 	r<-.Internal(rep(x,times))
-+	if(!is.null(nm <- names(x))) names(r) <- .Internal(rep(nm, times))
- 	if (!missing(length.out))
- 		return(r[1:length.out])
- 	return(r)
-
---- aperm~	Sun Nov 24 23:42:20 1996
-+++ aperm	Tue May 20 18:20:10 1997
-@@ -7,5 +7,7 @@
- 		if(!all(sort(perm)==1:length(perm)))
- 			stop("perm is not a permutation")
- 	}
--	.Internal(aperm(a,perm,resize))
-+	r <- .Internal(aperm(a, perm, resize))
-+	if(!is.null(dn <- dimnames(a))) dimnames(r) <- dn[perm]
-+	r
- }
-	[ Patch applied, but it might be nice to have this adjustment ]
-	[ in the internal code. ]
-
-----------------------------------------------------------------------
-TASK:	Plot.default
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	A simple example:
-		plot(1:10, 1:10, main = "TITLE", lab = c(10,10,7))
-		 #> Error: invalid subscript type
-	The reason is the call to  axis(1, ...) in  plot.default(.).
-	plot.default has the  ...  arguments in order to pass the many
-	different possible 'par' options to it's own subfunctions.
-	Currently, plot.default has
-	 plot.xy(xy, type, col = col, pch = pch, cex = cex, bg = bg,
-		lty = lty, ...)
-	 axis(1, ...)
-	 axis(2, ...)
-	 box(...)
-	title(main = main, xlab = xlab, ylab = ylab, ...)
-	In order for this to work, all the subfunctions MUST be
-	tolerant to all possible argument specifications.
-	axis(.) is NOT  which leads to the above  Error.
-	A different approach would be to "analyze"  list(...),
-	extract relevant parameters and pass them to the different
-	sub-functions of
-		plot.default(.).
-	[ The problem here is that "axis" has an argument called ]
-	[ "labels" which is matching the "lab=" spec.  Since the ]
-	[ ... is just passed on, the usual matching strategy of  ]
-	[ prefering exact matches fails.  There is an easy fix   ]
-	[ however.  Pass the values down using a pars=list(...)  ]
-	[ (I know it's a horrible undocumented kludge, but ...   ]
-
-----------------------------------------------------------------------
 TASK:	Resetting Graphical Parameters
 STATUS:	Open
 FROM:	<maechler@stat.math.ethz.ch>
@@ -3270,47 +1950,9 @@ FROM:	<maechler@stat.math.ethz.ch>
 		par(reset = TRUE)  
 	  (or similar) for resetting all the graphical parameters to their
 	(device-dependent) default values.
-	[ This will require a little work.  Perhaps the easiest thing   ]
+	[ This will require a little work.  Perhaps the easiest thing	]
 	[ to do is to add a new device driver call "reset".  This would ]
-	[ be best left to the multiple acyive device driver project.    ]
-
-----------------------------------------------------------------------
-TASK:	Overall Titles
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	In S, I can have an "overall" title in a multi-figure plot :
-		par(mfrow=c(2,2), oma = c(0,0,2,0))
-		frame() #- !
-		mtext("Sine Functions", cex=2, outer =T)
-		x_1:100
-		for(i in 1:4) plot(x, sin(i*pi*x/100), main=paste(i),
-			type = 'l', col = 1+i)
-	In R, this doesn't work as it should,  with and without
-	the 'frame()' statement.
-	((where is the bug?  It's not quite clear to me))
-	Is there a way at all to write an "overall" title in this situation ?
-
-	[  The problem was that "mtext" was marking the first plot  ]
-	[  dirty even though nothing was being drawn in it.  Now    ]
-	[  if outer=TRUE, the plot is not marked dirty.             ]
-
-----------------------------------------------------------------------
-TASK:	No Warning in ":"
-STATUS:	Closed
-FROM:	<Friedrich.Leisch@ci.tuwien.ac.at>
-	In R it is possible to write nonsense 
-	R> 0.5:4:3:9:8:5
-	[1] 0.5 1.5 2.5 3.5 4.5
-	and never be warned about it, Splus does the expected thing:
-	Splus> 0.5:4:3:9:8:5
-	[1] 0.5 1.5 2.5 3.5 4.5
-	Warning messages:
-	1: Numerical expression has 4 elements: only the first used in: 0.5:4:3
-	2: Numerical expression has 3 elements: only the first used in: 0.5:4:3:9
-	3: Numerical expression has 9 elements: only the first used in: 0.5:4:3:9:8
-	4: Numerical expression has 8 elements: only the first used in: 0.5:4:3:9:8:5
-	[  But what about a more general ":" which does allow vector ]
-	[  arguments.						     ]
+	[ be best left to the multiple acyive device driver project.	]
 
 ----------------------------------------------------------------------
 TASK:	.Options not working in all cases
@@ -3321,13 +1963,13 @@ FROM:	<maechler@stat.math.ethz.ch>
 	be default in several  print methods (eg print.lm), however,
 	deparse(.) e.g., uses options()$width, and not .Options$width.
 
-	Another problem is that  .Options
+	Another problem is that	 .Options
 	is still not in the documentation (on-line help).
 	Before one could add it there, we'd need ``the specs''.
 
 	I think the (at least my) idea was that
-		options(.)  queries or sets elements in the   .Options  list
-	and all functions -- including the internal ones -- use  .Options.
+		options(.)  queries or sets elements in the   .Options	list
+	and all functions -- including the internal ones -- use	 .Options.
 	As far as I know, this is what S does.
 	Currently, this is NOT the case in R.
 
@@ -3343,8 +1985,8 @@ FROM:	<maechler@stat.math.ethz.ch>
     >> This is not a bug report, rather than some remarks as a
     >> "request for comments":
     >>
-    >> It is clear that  options( foo = bar )
-    >> sets the option and also updates the builtin()  .Options  list :
+    >> It is clear that	 options( foo = bar )
+    >> sets the option and also updates the builtin()  .Options	 list :
     >> 
     >> > options(myopt = pi)
     >> > .Options$my
@@ -3358,229 +2000,9 @@ FROM:	<maechler@stat.math.ethz.ch>
     Ross> will work.  The down side is that such assignments will also work at
     Ross> top level with the changes shadowing the real system options.
 
-    Ross> This also may be ok.  It would have the advantage that options would
+    Ross> This also may be ok.	It would have the advantage that options would
     Ross> then be preserved from session to session.  Is this a good idea or a
     Ross> bad idea?
-
-----------------------------------------------------------------------
-TASK:	Complex inaccuracy
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	> Re(1i)
-	[1] 2.497599e-307
-	rather than 0 whereas Im(as.complex(1)) gives 0 as it should.
-	[ This was an uninitialized variable problem in mkComplex, ]
-	[ which is called by yyparse to create complex numbers.    ]
-
-----------------------------------------------------------------------
-TASK:	"grep" and backreferences
-STATUS:	Closed
-FROM:	<p.dalgaard@kubism.ku.dk>
-	In answer to <thomas@biostat.washington.edu>:
-	I strongly suspect that no number of \s will make it work
-	as long as do_grep() in main/character.c contains this
-	line:
-		eflags = REG_NOSUB;
-	[  We now use EFLAGS = 0; instead.  ]
-
-----------------------------------------------------------------------
-TASK:	New Apropos Function
-STATUS:	Closed
-FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
-	Martin and I have `written' a function apropos() for finding
-	all objects with names matching pattern.  I attach code
-	and documentation.  Perhaps one could include it in the
-	distribution proper.
-	[ Added to base library for Version 0.50. ]
-
-----------------------------------------------------------------------
-TASK:	Random query ...
-STATUS:	Closed
-FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
-	Still trying to port Brian's class TB ...
-	I need to find replacements for seed_in()/seed_out() and
-	unif_rand().  Looks like the first works with
-	GetSeeds()/PutSeeds().  Can anyone help me with the second
-	one?
-	[ Implemented these so they work as described in the S-Plus ]
-	[ programmers manual.  Also added S_realloc at Kurt's       ]
-	[ request. ]
-
-----------------------------------------------------------------------
-TASK:	var / cov
-STATUS:	Closed
-FROM:	<thomas@biostat.washington.edu>
-	var() handles missing values in a very strange way. It is
-	not what the documentation says
-		> var(c(NA,1:10))
-		[1] 0
-		> var(1:10)
-		[1] 9.166667
-		This is because sum() handles NA incorrectly
-		> sum(NA)
-		[1] 0
-		> sum(NA,na.rm=T)
-		[1] 0
-		> sum(NA,na.rm=F)
-		[1] 0
-	Also the documentation gives a pairwise= option to var()
-	which isn't in the function.
-	[ We need a general resolution to this ... ]
-
-----------------------------------------------------------------------
-TASK:	"factor" problem
-STATUS:	Closed
-FROM:	<hornik@ci.tuwien.ac.at>
-	* The documentation for factor() says,
-		If exclude is set to a zero length vector, then
-		any NA values in x are used for form a new level
-		for the factor.  This means that there will be no
-		NA values in the result.
-	Perhaps I don't really understand this, but
-	R> x <- factor(c(1:3, NA), exclude=numeric(0))
-	R> x
-	[1]  1  2  3 NA
-	R> levels(x)
-	[1] "1" "2" "3"
-	[  Fixed.  The main problem was that deep inside match  ]
-	[  we has a test which could be  NaN == NaN which is    ]
-	[  always false.                                        ]
-
-----------------------------------------------------------------------
-TASK:	inaccurate error messages in coerce.c
-STATUS:	Closed
-FROM:	<hornik@ci.tuwien.ac.at>
-	* coerce.c has two error messages of the form
-        error("use \"factor\", \"ordered\", \"cut\" or \"code\" to create factors\n");
-	but there is no function `code'.
-
-----------------------------------------------------------------------
-TASK:	"cat" problem
-STATUS:	Closed
-FROM:	<hornik@ci.tuwien.ac.at>
-	* cat() is a bit inconsistent:
-	R> cat(x, sep = "&")
-	1&2&3&4R> cat(x, sep = "&\n")
-	1&
-	2&
-	3&
-	4
-	R>
-	Actually, a final newline is added whenever sep contains
-	a newline.
-	>From src/main/builtin.c:
-
-        nlsep = 0;
-        for (i = 0; i < LENGTH(sepr); i++)
-                if (strstr(CHAR(STRING(sepr)[i]), "\n")) nlsep = 1;
-
-        ...
-
-        if ((pwidth != INT_MAX) || nlsep)
-                Rprintf("\n");
-
-	I am not sure this is the right thing to do.
-	(In particular, it makes it rather messy to incrementally
-	build data files with `explicit' end-of-line strings (such
-	as "\\") by appending via cat().)
-	[ This is the way S does it! ]
-
-----------------------------------------------------------------------
-TASK:	Return type of ":"
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	which reminds me of bug report  I had sent a while ago,
-	I think in pre-alpha times:
-	In R,  1:n is   double (aka 'real') and not integer.
-
-----------------------------------------------------------------------
-TASK:	Dyn.load utilties
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	In S(plus), I can write functions using code fragments like
-		if(!is.loaded(symbol.C("my_C_fun")))
-			dyn.load("......../my_C_fun.o")
-		r <- .C("my_C_fun",
-			x = x,
-			n = n, 
-			...
-			)
-	which I would like to have in R, too.
-	The S-plus help page on this subject says :
-S+>> Code Availability
-S+>> 
-S+>> DESCRIPTION:
-S+>>        is.loaded returns a logical value  stating  if  the  given
-S+>>        object   is  currently  loaded  into  S-PLUS.  dump.loaded
-S+>>        returns a list of loaded symbols.  The "symbol"  functions
-S+>>        return the symbol that would be associated with a name.
-S+>> 
-S+>> USAGE:
-S+>>        is.loaded(symbol)
-S+>>        dump.loaded()
-S+>>        symbol.C(name)
-S+>>        symbol.For(name)
-S+>>        symbol.S(name)
-S+>> 
-S+>> REQUIRED ARGUMENTS:
-S+>> symbol:    a  symbol,  typically  the  result  of   symbol.C   or
-S+>>        symbol.For.
-S+>> name:     a character string giving the name of a subroutine.
-S+>> 
-S+>> VALUE:
-S+>>        is.loaded returns a logical  value:  it  is  TRUE  if  the
-S+>>        symbol  is  found  in  the  S-PLUS  symbol table and FALSE
-S+>>        otherwise.  symbol.C returns  the  symbol  that  would  be
-S+>>        produced  by  a C function named name.  symbol.For returns
-S+>>        the symbol that would be produced by a Fortran  subroutine
-S+>>        named  name.   symbol.S  returns  the symbol that would be
-S+>>        produced by an old-S  function  named  name.   dump.loaded
-S+>>        returns  a  list  with two components, symbol and address,
-S+>>        giving the names and addresses of all cached symbols (this
-S+>>        is  a  superset  of  all  dyn.loaded functions).  Applying
-S+>>        is.loaded to any symbol in this list should return TRUE.
-S+>> 
-S+>> DETAILS:
-S+>>        These functions  are  mainly  useful  for  writing  S-PLUS
-S+>>        functions  that  will automatically dyn.load code if it is
-S+>>        not loaded already.  The S-PLUS function can be  the  same
-S+>>        whether  the  code  is  statically  loaded  or dynamically
-S+>>        loaded.
-S+>> 
-S+>>        The symbol.S function is only useful for  those  who  have
-S+>>        old-S  (S-PLUS  version 1.x) functions (not macros) and do
-S+>>        not wish to convert them to .Fortran calls.
-S+>> 
-S+>> SEE ALSO:
-S+>>        dyn.load, dyn.load2, LOAD, .Fortran, .S.
-S+>> 
-S+>> EXAMPLES:
-S+>>        if (!is.loaded(symbol.C("mbol")))
-S+>>                       dyn.load("/usr/mabel/mbol.o")
-S+>>        .C("mbol",as.double(x),as.integer(length(x)))
-
-
-----------------------------------------------------------------------
-TASK:	"rep" problem
-STATUS:	Closed
-FROM:	<maechler@stat.math.ethz.ch>
-	rep(1,0) gives  'Error: subscript out of bounds'
-	Here is the new  ../src/library/base/funs/rep   
-                    -------------------------
-	(which contains two patches, the first of which I posted on May 20):
-
-rep <- function(x, times, length.out)
-{
-        if (length(x) == 0)
-                return(x)
-        if (missing(times))
-                times <- ceiling(length.out/length(x))
-        r <- .Internal(rep(x,times))
-        if(!is.null(nm <- names(x))) names(r) <- .Internal(rep(nm, times))
-        if (!missing(length.out))
-                return(r[if(length.out>0) 1:length.out else integer(0)])
-        return(r)
-}
 
 ----------------------------------------------------------------------
 TASK:

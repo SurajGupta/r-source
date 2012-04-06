@@ -457,7 +457,7 @@ void printArray(SEXP x, int quote)
 static int CountColumns(SEXP x)
 {
 	int k =0;
-	while(x != R_NilValue) {
+	while(x != R_NilValue && isList(x) ) {
 		k += ncols(CAR(x));
 		x = CDR(x);
 	}
@@ -477,8 +477,15 @@ void printDataFrame(SEXP x)
 	PROTECT(cl = getAttrib(x, R_NamesSymbol));
 	if(isNull(cl))
 		error("names lost from data frame\n");
-	r = nrows(CAR(x));
-	c = length(x);
+	/* since anything can be a data.frame we need some protection */
+	if( isList(x) ) {
+		r = nrows(CAR(x));
+		c = length(x);
+	}
+	else {
+		r = 0;
+		c = 0;
+	}
 
 		/* Compute the total number of columns. */
 

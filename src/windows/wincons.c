@@ -62,6 +62,7 @@ HWND RFrame, RClient, RConsoleFrame, RConsole;
 char RGraphClass[] = "RGraphClass";
 char REditClass[] = "REditClass";
 char RDEClass[] = "RDEClass";
+int R_VSmb;
 
 
 HMENU RMenuConsole, RMenuInit;
@@ -88,6 +89,7 @@ int WINAPI  WinMain(HINSTANCE, HINSTANCE, PSTR, int);
 
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK CloseEnumProc(HWND, LPARAM);
+BOOL CALLBACK Menu_SetMem(HWND, UINT, WPARAM, LPARAM);
 
 HWND CreateConsoleWind(HWND, HMENU, HANDLE);
 LRESULT CALLBACK _export ConsoleWndProc(HWND,UINT,WPARAM,LPARAM);
@@ -498,6 +500,8 @@ LRESULT CALLBACK  EdWndProc(HWND hWnd, UINT message, WPARAM wParam,
 LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
         LPARAM lParam)
 {
+    char tmp[RBuffLen], *home;
+    
         switch(message) {
                 case WM_CREATE:
                         return(0);
@@ -561,6 +565,15 @@ LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
                                 case RRR_CPASTE:
                                         RSelToClip();
                                         RPasteFromClip();
+                                        return 0;
+                                case RRR_SETMEM:
+                                        DialogBox(RInst, "RMemory", RClient, (DLGPROC) Menu_SetMem);
+                                        return 0;
+                                case RRR_HELP:
+                                        if((home = getenv("RHOME")) == NULL)
+                                                return 0;
+                                        sprintf(tmp,"%s\\html\\index.html",home);
+                                        ShellExecute(NULL,"open",tmp,NULL, home, SW_SHOW);
                                         return 0;
                                 case RRR_PRINT:
                                         RPrintText(RFrame, RConsole);
@@ -1008,4 +1021,52 @@ void RTrimBuffer(void)
         nlines=LOWORD(sel);
         dellines=HIWORD(sel);
         Edit_SetSel(RConsole,nlines-delchars,dellines-delchars);
+}
+
+extern BOOL CALLBACK Menu_SetMem(HWND hDlg, UINT message,
+        WPARAM wParam,LPARAM lParam)
+{
+        char memval[20], *p;
+        int nsize, vsize;
+
+
+        switch (message) {
+                case  WM_INITDIALOG:
+                    sprintf(memval,"%d", (int) R_VSmb);
+                    SetDlgItemText(hDlg, 103, memval);
+                    sprintf(memval,"%d", (int) R_NSize);
+                    SetDlgItemText(hDlg, 102, memval);
+                    SetFocus(GetDlgItem(hDlg, 1));
+                    return FALSE;
+                case WM_COMMAND:
+                    switch (wParam) {
+                       case IDOK:
+                         GetDlgItemText(hDlg, 102, memval, 20);
+                         nsize = strtol(memval, &p, 10);
+                         if (*p ) {
+                              MessageBox(RConsole, "The  VSize value is not valid",
+                                     "R Application", MB_ICONEXCLAMATION | MB_OK);
+                              sprintf(memval,"%d", (int) R_VSmb);
+                              SetDlgItemText(hDlg, 102, memval);
+                              return 1;
+                         }
+                         GetDlgItemText(hDlg, 103, memval, 20);
+                         vsize = strtol(memval, &p, 10);
+                         if (*p ) {
+                              MessageBox(RConsole, "The  NSize value is not valid",
+                                     "R Application", MB_ICONEXCLAMATION | MB_OK);
+                              sprintf(memval,"%d", (int) R_NSize);
+                              SetDlgItemText(hDlg, 103, memval);
+                              return 1;
+                         }
+                         EndDialog(hDlg, TRUE);
+                         R_SetMemory(nsize, vsize);
+                         return TRUE;
+                       case IDCANCEL:
+                          EndDialog(hDlg, FALSE);
+                          return TRUE;
+                  }
+
+          }
+          return FALSE;
 }

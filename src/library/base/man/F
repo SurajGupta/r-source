@@ -32,3 +32,11 @@ f(x) = Gamma((n1 + n2)/2) / (Gamma(n1/2) Gamma(n2/2))
            (1 + (n1/n2) x)^-(n1 + n2)/2)
 for EQN(x GT 0).
 )
+SEEALSO(
+LANG(LINK(dt)) for Student's T distribution which is (almost) equivalent to  
+LANG(*F(DOTS, n2 = 1)).
+)
+EXAMPLES(
+df(1,1,1) == dt(1,1)
+)
+KEYWORD(distribution)

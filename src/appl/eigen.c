@@ -2646,7 +2646,7 @@ static int hqr_(int *nm, int *n, int *low, int *igh,
     double d__1, d__2;
 
     /* Builtin functions */
-    double sqrt(), f77_dsign();
+    double sqrt(), DSIGN();
 
     /* Local variables */
     double norm;
@@ -2821,7 +2821,7 @@ L160:
 	r /= x;
 L170:
 	d__1 = sqrt(p * p + q * q + r * r);
-	s = f77_dsign(&d__1, &p);
+	s = DSIGN(&d__1, &p);
 	if (k == m) {
 	    goto L180;
 	}
@@ -2910,7 +2910,7 @@ L280:
 	goto L320;
     }
 /*     .......... real pair .......... */
-    zz = p + f77_dsign(&zz, &p);
+    zz = p + DSIGN(&zz, &p);
     wr[na] = x + zz;
     wr[en] = wr[na];
     if (zz != 0.) {
@@ -3012,7 +3012,7 @@ static int hqr2_(int *nm, int *n, int *low, int *igh,
     double d__1, d__2, d__3, d__4;
 
     /* Builtin functions */
-    double sqrt(), f77_dsign();
+    double sqrt(), DSIGN();
 
     /* Local variables */
     extern int cdiv_();
@@ -3193,7 +3193,7 @@ L160:
 	r /= x;
 L170:
 	d__1 = sqrt(p * p + q * q + r * r);
-	s = f77_dsign(&d__1, &p);
+	s = DSIGN(&d__1, &p);
 	if (k == m) {
 	    goto L180;
 	}
@@ -3303,7 +3303,7 @@ L280:
 	goto L320;
     }
 /*     .......... real pair .......... */
-    zz = p + f77_dsign(&zz, &p);
+    zz = p + DSIGN(&zz, &p);
     wr[na] = x + zz;
     wr[en] = wr[na];
     if (zz != 0.) {
@@ -4247,7 +4247,7 @@ static int tql1_(int *n, double *d, double *e, int *
     double d__1, d__2;
 
     /* Builtin functions */
-    double f77_dsign();
+    double DSIGN();
 
     /* Local variables */
     double c, f, g, h;
@@ -4359,8 +4359,8 @@ L130:
 	g = d[l];
 	p = (d[l1] - g) / (e[l] * 2.);
 	r = pythag_(&p, &c_b314);
-	d[l] = e[l] / (p + f77_dsign(&r, &p));
-	d[l1] = e[l] * (p + f77_dsign(&r, &p));
+	d[l] = e[l] / (p + DSIGN(&r, &p));
+	d[l1] = e[l] * (p + DSIGN(&r, &p));
 	dl1 = d[l1];
 	h = g - d[l];
 	if (l2 > *n) {
@@ -4448,7 +4448,7 @@ static int tql2_(int *nm, int *n, double *d, double
     double d__1, d__2;
 
     /* Builtin functions */
-    double f77_dsign();
+    double DSIGN();
 
     /* Local variables */
     double c, f, g, h;
@@ -4579,8 +4579,8 @@ L130:
 	g = d[l];
 	p = (d[l1] - g) / (e[l] * 2.);
 	r = pythag_(&p, &c_b314);
-	d[l] = e[l] / (p + f77_dsign(&r, &p));
-	d[l1] = e[l] * (p + f77_dsign(&r, &p));
+	d[l] = e[l] / (p + DSIGN(&r, &p));
+	d[l1] = e[l] * (p + DSIGN(&r, &p));
 	dl1 = d[l1];
 	h = g - d[l];
 	if (l2 > *n) {
@@ -4696,7 +4696,7 @@ static int tqlrat_(int *n, double *d, double *e2,
     double d__1, d__2;
 
     /* Builtin functions */
-    double sqrt(), f77_dsign();
+    double sqrt(), DSIGN();
 
     /* Local variables */
     double b, c, f, g, h;
@@ -4825,7 +4825,7 @@ L130:
 	g = d[l];
 	p = (d[l1] - g) / (s * 2.);
 	r = pythag_(&p, &c_b314);
-	d[l] = s / (p + f77_dsign(&r, &p));
+	d[l] = s / (p + DSIGN(&r, &p));
 	h = g - d[l];
 
 	i__2 = *n;
@@ -4916,7 +4916,7 @@ static int tred1_(int *nm, int *n, double *a,
     double d__1;
 
     /* Builtin functions */
-    double sqrt(), f77_dsign();
+    double sqrt(), DSIGN();
 
     /* Local variables */
     double f, g, h;
@@ -5028,7 +5028,7 @@ L140:
 	e2[i] = scale * scale * h;
 	f = d[l];
 	d__1 = sqrt(h);
-	g = -f77_dsign(&d__1, &f);
+	g = -DSIGN(&d__1, &f);
 	e[i] = scale * g;
 	h -= f * g;
 	d[l] = f - g;
@@ -5119,7 +5119,7 @@ static int tred2_(int *nm, int *n, double *a,
     double d__1;
 
     /* Builtin functions */
-    double sqrt(), f77_dsign();
+    double sqrt(), DSIGN();
 
     /* Local variables */
     double f, g, h;
@@ -5239,7 +5239,7 @@ L140:
 
 	f = d[l];
 	d__1 = sqrt(h);
-	g = -f77_dsign(&d__1, &f);
+	g = -DSIGN(&d__1, &f);
 	e[i] = scale * g;
 	h -= f * g;
 	d[l] = f - g;

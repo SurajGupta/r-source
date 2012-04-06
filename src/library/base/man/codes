@@ -5,11 +5,15 @@ codes(x) <- y
 )
 ALIAS(codes)
 VALUE(
-THis function retrieves the underlying
+This function retrieves the underlying
 integer codes used for the levels of a factor
-and also be used to reset (a subset of) these codes.
+and can also be used to reset (a subset of) these codes.
+)
+SEEALSO(
+LANG(LINK(factor)), LANG(LINK(levels)), LANG(LINK(nlevels)).
 )
 EXAMPLES(
 x <- gl(3,5,15)
 codes(x)[3] <- 2
+all(unique(codes(x)) == 1:nlevels(x))#- should be true for ALL factors
 )

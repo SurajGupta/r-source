@@ -1,6 +1,9 @@
 #!/bin/sh
+# MFOUR="m4 -B 8192"
+MFOUR="m4"
+
 #- (la)TeX characters which are special:
-NonTT='$^%&~_{}#' 
+NonTT='$^%&~_{}#'
 #
 #- '^': NON-special chars -- can be used with TT :
 sedT='[^()'"${NonTT}]*"
@@ -85,7 +88,7 @@ define(DISPLAYSTYLE,`{\displaystyle $1}')
 define(OVER,{{$1} \over {$2}})
 define(SUP,`{{$1}^{$2}}')
 define(SUB,`{{$1}_{$2}}')
-define(CHOOSE,`{\left(\begin{array}{c} $1 \\ $2 \end{array} \right)}')
+define(CHOOSE,`{$1 \choose $2}')
 define(PAREN,`{\left( $1 \right)}')
 define(SP,`')
 define(greekGamma,`\Gamma')
@@ -104,23 +107,27 @@ define(DEQHTML,`')
 END
 # Fix up the input to protect things that m4 is sensitive about.
 #
-# Should add   s/[${NonTT}]/\\\&/g    however only if NOT in verbatim things 
+# Should add   s/[${NonTT}]/\\\&/g    however only if NOT in verbatim things
 # -- just no use with 'sed' -- would need   perl  or such,   alas....
 sed "
 s/LANG(\(${sedT}\))/TT(\1)/g
 s/LANG(\(${sedT}(${sedT})${sedT}\))/TT(\1)/g
 "'
+/^ALIAS/,/^EXAMPLES/s/^ *//
+/^ARGUMENTS/,/^EXAMPLES/s/^ *//
+/^DESCRIPTION/,/^EXAMPLES/s/^ *//
 s/unix/M4_unix/g
 s/#/M4_HASH/g
 s/\\(/M4_LP/g
 s/\\)/M4_RP/g
 s/`/M4_LQ/g
 s/'\''/M4_RQ/g
+s/LDOTS,/LDOTS(),/g
 s/,/M4_COMMA/g
 s/ @@ ?/,/g
 s/@@/,/g
 s/ifelse/M4_IFELSE/g
-' $* ) |m4 |sed '
+' $* ) | $MFOUR |sed '
 /^$/d
 s/^BLANK[	 ]*$//
 s/DOTS/\.\.\./g

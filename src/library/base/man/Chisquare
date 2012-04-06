@@ -22,3 +22,16 @@ SUP(x@@n/2-1) SUP(e@@-x/2)
 @@f(x) = 1 / (2^(n/2) Gamma(n/2))  x^(n/2-1) e^(-x/2))
 for EQN(x GT 0).
 )
+SEEALSO(
+LANG(LINK(dnchisq)), LANG(LINK(dgamma)), LANG(LINK(dexp)).
+)
+EXAMPLES(
+dchisq(1, df=1:3)
+x <- 1:10
+## Chisquare( df = 2) is a special exponential distribution
+dchisq(x, df=2) == dexp(x, 1/2)
+pchisq(x, df=2) == pexp(x, 1/2)#- only approximately
+)
+KEYWORD(distribution)
+
+

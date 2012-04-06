@@ -246,7 +246,7 @@ void mainloop()
 	R_Toplevel.promargs = R_NilValue;
 	R_Toplevel.call = R_NilValue;
 	R_Toplevel.cloenv = R_NilValue;
-	R_Toplevel.sysparent = R_NilValue;
+	R_Toplevel.sysparent = R_NilValue; 
 	R_Toplevel.conexit = R_NilValue;
 	R_Toplevel.cend = NULL;
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -257,13 +257,13 @@ void mainloop()
 	R_SetInput(0);
 
 		/* On initial entry we open the base language */
-		/* library and begin by running the repl on it. */
+		/* package and begin by running the repl on it. */
 		/* If there is an error we pass on to the repl. */
 		/* Perhaps it makes more sense to quit gracefully? */
 
 	R_Inputfile = R_OpenLibraryFile("base");
 	if(R_Inputfile == NULL) {
-		suicide("unable to open the base library\n");
+		suicide("unable to open the base package\n");
 	}
 	R_SetInput(R_FILE);
 	doneit = 0;
@@ -423,7 +423,7 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	if( !DEBUG(rho) ) {
 		cptr=R_GlobalContext;
-		while (cptr->callflag != CTXT_RETURN) 
+		while (cptr->callflag != CTXT_RETURN && cptr->callflag ) 
 			cptr = cptr->nextcontext;
 		Rprintf("Called from: ");
 		PrintValueRec(cptr->call);

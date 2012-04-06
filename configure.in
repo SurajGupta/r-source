@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/include/Defn.h)
 AC_CONFIG_HEADER(src/include/Platform.h)
 
-. config.site
+. ./config.site
 
 AC_CONFIG_AUX_DIR(etc)
 
@@ -22,10 +22,10 @@ host_os=$3
 
 AC_DEFINE(R_MAJOR, "0")
 AC_DEFINE(R_MINOR, "50")
-AC_DEFINE(R_STATUS, "Alpha-1")
+AC_DEFINE(R_STATUS, "Alpha-4")
 AC_DEFINE(R_STATUS_REV, "0")
-AC_DEFINE(R_DAY, "22")
-AC_DEFINE(R_MONTH, "July")
+AC_DEFINE(R_DAY, "10")
+AC_DEFINE(R_MONTH, "September")
 AC_DEFINE(R_YEAR, "1997")
 AC_DEFINE_UNQUOTED(R_PLATFORM, "${host}")
 AC_DEFINE_UNQUOTED(R_CPU, "${host_cpu}")
@@ -338,7 +338,7 @@ alpha*osf*)
 	;;
 
 *solaris*)
-	SHLIBLDFLAGS="-G -z text"
+	SHLIBLDFLAGS="-G"
 	;;
 
 esac 
@@ -375,6 +375,7 @@ src/unix/Makefile
 src/front/R.sh
 etc/SHLIB
 etc/COMPILE
+etc/INSTALL
 demos/dynload/Makefile
 src/library/LIBSETUP
 src/library/LIBCLEAN

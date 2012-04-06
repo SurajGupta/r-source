@@ -1,10 +1,10 @@
 TITLE(ts @@ Time-Series Objects)
 USAGE(
-ts(x, start, end, frequency)
+ts(x, start=1, end, frequency=1, deltat=1, ts.eps = .Options$ts.eps)
 as.ts(x)
 is.ts(x)
 BLANK
-print(ts.obj, calender, ...)
+print(ts.obj, calendar, ...)
 plot(ts.obj, ...)
 )
 ALIAS(ts)
@@ -17,6 +17,11 @@ ARG(x @@ a vector or matrix the observed time-series values.)
 ARG(start @@ the time of the first observation.)
 ARG(end @@ the time of the last observation.)
 ARG(frequency @@ the number of observations per unit of time.)
+ARG(deltat @@ the fraction of the sampling period between successive
+observations; e.g. 1/12 for monthly data.
+Only one of LANG(frequency) or LANG(deltat) should be provided.)
+ARG(ts.eps @@  time series comparison tolerance.  Frequencies are considered
+equal if their absolute difference is less than LANG(ts.eps).)
 )
 DESCRIPTION(
 The function LANG(ts) is used to create time-series objects.
@@ -43,18 +48,21 @@ into a time-series and test whether an object is a time series.
 PARA
 Time series have methods associated with the generic
 LANG(print) and LANG(plot) functions.
-The argument LANG(calender) to the print method
+The argument LANG(calendar) to the print method
 can be used to enable/disable the display of information
 about month-names, quarter-names or year when printing.
 )
 SEEALSO(
 LANG(LINK(frequency)),
-LANG(LINK(end)),
 LANG(LINK(start)),
+LANG(LINK(end)),
 LANG(LINK(time)),
 LANG(LINK(window)).
 )
 EXAMPLES(
-# start date - July 1954
-x <- ts(x, start=c(1954,7), frequency=12)
+ts(1:10, frequency = 4, start=c(1959,2))#- 2nd Quarter of 1959
+print(ts(1:10, freq=7, start=c(12,2)), calendar = T)
+# start date = July 1954:
+gnp <- ts(cumsum(1+round(rnorm(100), 2)), start=c(1954,7), frequency=12)
+plot(gnp)#-> using 'plot.ts' for time-series plot
 )

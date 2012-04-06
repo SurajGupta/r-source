@@ -21,8 +21,7 @@
 #include "Graphics.h"
 
 static char szDirName[RBuffLen];
-static void R_SetMemory(int, int);
-
+static jmp_buf R_Winjbuf;
         /*--- I n i t i a l i z a t i o n -- C o d e ---*/
 
 static BOOL CheckSystem(void)
@@ -40,6 +39,33 @@ static BOOL CheckSystem(void)
   return(TRUE);
 }
 
+static void R_FileAssoc(char *szDirName)
+{
+    HKEY hkey;
+    LONG res;
+    DWORD disp;
+    char t1[RBuffLen+5];
+
+    res = RegCreateKeyEx( HKEY_CLASSES_ROOT, "R\\shell\\Run\\command",0,"",
+        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disp);
+    if( res == ERROR_SUCCESS && disp != REG_OPENED_EXISTING_KEY ) {
+        sprintf(t1,"%s %%1",szDirName);
+        res = RegSetValueEx(hkey, NULL, 0, REG_SZ, t1, lstrlen(t1));
+        RegCloseKey(hkey);
+    }
+
+    res = RegCreateKeyEx( HKEY_CLASSES_ROOT, ".rmg", 0, "", REG_OPTION_NON_VOLATILE,
+                        KEY_ALL_ACCESS, NULL, &hkey, &disp);
+    if( res == ERROR_SUCCESS && disp != REG_OPENED_EXISTING_KEY ) {
+        res = RegSetValueEx(hkey, NULL, 0, REG_SZ, "R",lstrlen("R"));
+        RegCloseKey(hkey);
+    }
+    return;
+}    
+ 
+    
+            
+    
 
 extern HMENU RMenuEdit;
 
@@ -47,7 +73,7 @@ int WINAPI WinMain(HANDLE hinstCurrent, HANDLE hinstPrevious,
 LPSTR lpszCmdParam, int nCmdShow)
 {
         int i;
-        char *exe, tmp[20], tm1;
+        char *exe, *ep, tmp[RBuffLen], tm1;
 
 
         if (! CheckSystem()) return(FALSE);
@@ -64,32 +90,62 @@ LPSTR lpszCmdParam, int nCmdShow)
         i = GetModuleFileName(NULL, szDirName, RBuffLen);
         if (i > RBuffLen || i==0)
                 return FALSE;
+
+        /* do the file association thing if need be */
+        R_FileAssoc(szDirName);
+        
         exe = strrchr(szDirName,'\\');
         *exe = '\0';
         setenv("RHOME",szDirName,1);
         setenv("HOME",szDirName,1);
 
+ 
         /* set up the memory sizes */
-
-      if( lpszCmdParam != NULL ) {
-            *exe = lpszCmdParam[0];
-            while( isspace(exe) )
+      R_ImageName[0] = '\0';
+      if( strlen(lpszCmdParam) != 0 ) {
+            exe = &lpszCmdParam[0];
+parsemem:   while( isspace(*exe) )
                 exe++;
-parsemem:   if( exe == '-' ) {
-                tm1 = exe++;
-                
+            if( *exe == '-' ) {
+                exe++;
+                tm1 = *exe++;
+                i=0;
+                while( !isspace(*exe) ) 
+                    tmp[i++] = *exe++;
+                tmp[i]='\0';
+                i = strtol(tmp, &ep, 10);
+                if( *ep ) {
+                        REprintf("invalid argument passed to R\n");
+                        return FALSE;
+                }
+                if(tm1 == 'n')
+                        R_NSize = i;
+                else if( tm1 == 'v' )
+                        R_VSmb = i;
+                else
+                        REprintf("warning: unkown option\n");
+                if(*exe != '\0')
+                        goto parsemem;
+            }
+            else if( *exe != '\0' )
+                strcpy(R_ImageName, exe);
         }
-        R_SetMemory(100,100);
-        R_SetMemory(10,10);
-           
-        strcpy(R_ImageName,szDirName);
-        strcat(R_ImageName,"\\.RData.rmg");
+        R_VSmb = max(R_VSize/1048576,2);
+        
+        R_SetMemory(R_NSize, R_VSmb);
 
-        MessageBox(RFrame, lpszCmdParam,  "R Application", MB_ICONEXCLAMATION | MB_OK);
-                                               
+        if ( strlen(R_ImageName) == 0 )   {
+                strcpy(R_ImageName,szDirName);
+                strcat(R_ImageName,"\\.RData.rmg");
+        }
 
-        mainloop();
+        
 
+        if( 0 == setjmp( R_Winjbuf )  )                                        
+                mainloop();
+        else
+                EventLoop();    /* run the windows event loop so that everything closes down */
+        
         DestroyMenu(RMenuDE);
         DestroyMenu(RMenuGraph);
         DestroyMenu(RMenuInit);
@@ -98,7 +154,7 @@ parsemem:   if( exe == '-' ) {
         return 0;
 }
 
-static void R_SetMemory(int nsize, int vsize)
+void R_SetMemory(int nsize, int vsize)
 {
         HKEY hkey;
         DWORD disp, l1;
@@ -124,6 +180,7 @@ static void R_SetMemory(int nsize, int vsize)
                             sprintf(buff,"%d",nsize);
                             res = RegSetValueEx( hkey, NULL, NULL, REG_SZ, buff, lstrlen(buff));
                         }
+                        RegCloseKey(hkey);
                 }
         }
         if( vsize > 0 ) {
@@ -136,17 +193,28 @@ static void R_SetMemory(int nsize, int vsize)
                           rvsize = atoi(buff);
                     }                     
                     if( vsize > 1000 || vsize < rvsize) {
-                        R_VSize = rvsize;
+                        R_VSize = rvsize *1048576; /* Mb */
+                        R_VSmb = rvsize;
                         REprintf("warning: invalid vector heap size ignored \n");
                     }
                     else {
-                        R_VSize = vsize;
+                        R_VSize = vsize * 1048576;  /* Mb */
+                        R_VSmb = vsize;
                         sprintf(buff,"%d",vsize);
                         res = RegSetValueEx( hkey, NULL, NULL, REG_SZ, buff, lstrlen(buff));            
                     }
+                    RegCloseKey(hkey);
                 }
        }
 }
+
+
+void suicide(char *s)
+{
+        RCleanUp(2);    /* 2 means don't save anything and it's an unrecoverable abort */
+        longjmp(R_Winjbuf, 1);
+}
+
 
 SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {

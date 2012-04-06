@@ -23,6 +23,9 @@ optimize <- function(f, interval, lower=min(interval), upper=max(interval),
  }
 }
 
+#nice to the English
+optimise <- optimize
+
 uniroot <- function(f, interval, lower=min(interval), upper=max(interval),
 	tol=.Machine$double.eps^0.25, ...)
 {

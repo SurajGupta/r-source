@@ -1,0 +1,30 @@
+TITLE(model.frame @@ Extracting the ``Environment'' of a Model Formula)
+USAGE(
+model.frame(formula, data, na.action, DOTS)
+model.frame.default(formula, data=sys.frame(sys.parent()), 
+		    na.action=na.fail, DOTS)
+)
+ALIAS(model.frame)
+ALIAS(model.frame.default)
+ARGUMENTS(
+  ARG(formula @@ a model formula)
+  ARG(data @@ LANG(data.frame) or LANG(environment) where the objects in
+    formula are.)
+  ARG(na.action @@ how LANG(NA)s are treated.)
+  ARG(DOTS @@ further arguments such as....... )
+)
+DESCRIPTION(
+LANG(model.frame) is a generic function, and LANG(model.frame.default) its
+default method.
+)
+VALUE(
+A LANG(LINK(data.frame)) containing the variables used in LANG(formula).
+)
+SEEALSO(
+LANG(LINK(model.frame.lm)) for the method used in LANG(LINK(lm)).
+)
+EXAMPLES(
+data(cars)
+data.class(model.frame(dist ~ speed, data =cars))
+)
+KEYWORD(models)

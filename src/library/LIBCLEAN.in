@@ -1,17 +1,22 @@
-LIBS=`ls|sed '
-/Makefile/d
+#! /bin/sh
+# ${RHOME}/src/library/LIBCLEAN
+
+RHOME=${RHOME:-`cd ../..; pwd`}
+PKGS=`ls|sed '
 /CVS/d
+/LIBCLEAN/d
 /LIBSETUP/d
+/Makefile/d
 /base/d
 /profile/d
 '`
 
-dir=@LIBSRC@
+src=@LIBSRC@
 
-for lib in ${LIBS}
+for pkg in ${PKGS}
 do
-	if test -d ${lib}/${dir}
-	then
-		(cd ${lib}/${dir}; rm -f *.o *.so)
-	fi
+    if test -d ${pkg}/${src}
+    then
+	(cd ${pkg}/${src}; rm -f *.o *.so)
+    fi
 done

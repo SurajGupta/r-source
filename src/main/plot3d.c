@@ -359,7 +359,7 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GCheckState();
 
-	if(length(args) < 4) errorcall(call, "too few arguments");
+	if(length(args) < 4) errorcall(call, "too few arguments\n");
 
 	x = CAR(args);
 	internalTypeCheck(call, x, REALSXP);

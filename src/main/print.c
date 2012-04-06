@@ -257,13 +257,16 @@ static printList(SEXP s)
 
 static void PrintExpression(SEXP s)
 {
-	SEXP u, v;
+	SEXP u, v, nms;
 	int i, n;
 
 	PROTECT(u = v = allocList(LENGTH(s)+1));
 	TYPEOF(u) = LANGSXP;
 	CAR(u) = install("expression");
 	u = CDR(u);
+#ifdef NEW
+	nms = getAttrib(s, R_NamesSymbol);
+#endif
 	n = LENGTH(s);
 	for(i=0 ; i<n ; i++) {
 		CAR(u) = VECTOR(s)[i];

@@ -54,10 +54,10 @@ The techniques used are as follows; LANG(bw.ucv) uses unbiased
 cross-validation, LANG(bw.bcv) uses biased cross-validation and
 LANG(bw.sj) uses the technique of Sheather and Jones.
 These cross-validation techniques are based on code from the
-Venables and Ripley MASS library.
+Venables and Ripley MASS package.
 PARA
 The generic functions LANG(plot) and LANG(print) have
-methods density objects.
+methods for density objects.
 PARA
 The algorithm used in LANG(density) disperses the mass of the
 empirical distribution function over a regular grid and then
@@ -71,8 +71,9 @@ The underlying structure is a list containing the following components.
 ARG(x @@ the coordinates of the points where the density is estimated.)
 ARG(y @@ the estimated density values.)
 ARG(bw @@ the bandwidth used.)
+ARG(n @@ the sample size LANG(length(x)).)
 ARG(call @@ the call which produced the result.)
-ARG(name @@ the deparsed name of the LANG(x) argument.)
+ARG(data.name @@ the deparsed name of the LANG(x) argument.)
 )
 REFERENCES(
 Silverman, B. W. (1986).
@@ -99,6 +100,7 @@ EXAMPLES(
 # The Old Faithful geyser data
 data(faithful)
 d <- density(faithful$eruptions, bw=0.15)
+d
 plot(d)
 BLANK
 plot(d, type="n")

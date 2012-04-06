@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,235 +23,20 @@
 #include <string.h>
 #include <stdlib.h>
 
-typedef int (*FUNC)();
+typedef int (*DL_FUNC)();
 
-	/* The following code loads in a compatibility module */
-	/* written by Luke Tierney to support S version 4 on */
-	/* Hewlett-Packard machines.  The relevant defines are */
-	/* set up by autoconfigure */
+static SEXP NaokSymbol = NULL;
+static SEXP DupSymbol = NULL;
 
+DL_FUNC R_FindSymbol(char *);
 
-#ifdef HAVE_DLFCN_H
-
-#include <dlfcn.h>
-
-#else
-
-#ifdef HAVE_DL_H
-#include "compat/hp_dlfcn.c"
-#define HAVE_DLFCN_H
-#endif
-
-#endif
-
-#ifdef HAVE_DLFCN_H
-
-	/* This code adds dynamic loading of code to R.  It */
-	/* replaces the original dotcode.c and contains code */
-	/* from that file. This code should work on a system */
-	/* that implements the Solaris dlopen interface */
-	/* standard. Shared libraries are loaded by dlopen */
-	/* and symbols are looked for by dlsym. Unloading of */
-	/* code is not implemented. This code was developed */
-	/* on ELF-Linux. */
-	/* Modifications Copyright (C) 1996 Heiner Schwarte */
-	/* Minor cleanup and bug fix (C) 1996 Ross Ihaka */
-
-
-	/* The dlopen function returns a handle after successfully */
-	/* loading a library. These handles are collected in a list. */
-
-struct voidptrlist{
-	void *ptr;
-	struct voidptrlist *next;
-};
-
-static struct voidptrlist *list=NULL;
-
-static void add_ptr(void *p)
-{
-	struct voidptrlist *tmp;
-	if (p==NULL)
-		return;
-	tmp=(struct voidptrlist *)malloc(sizeof(struct voidptrlist));
-	tmp->ptr=p;
-	tmp->next=list;
-	list=tmp;
-}
-
-
-	/* findDynProc checks whether one of the libraries */
-	/* that have been loaded contains the symbol name and */
-	/* returns a pointer to that symbol upon success. */
-
-
-FUNC findDynProc(char const *name) {
-	struct voidptrlist *tmp;
-	FUNC fcnptr;
-	char buf[MAXIDSIZE+1];
-
-#ifdef HAVE_NO_SYMBOL_UNDERSCORE
-	sprintf(buf, "%s", name);
-#else
-	sprintf(buf, "_%s", name);
-#endif
-
-	for (tmp = list; tmp != NULL; tmp = tmp->next) {
-	    /* The following line is not legal ANSI C. */
-	    /* It is only meant to be used in systems supporting */
-	    /* the dlopen() interface, in which systems data and  */
-	    /* function pointers _are_ the same size and _can_   */
-	    /* be cast without loss of information.              */
-	    fcnptr = (FUNC)dlsym(tmp->ptr, buf);
-	    if (fcnptr != (FUNC)0) return fcnptr;
-	}
-	return (FUNC)0;
-}
-
-
-	/* do_dynload implements the R-Interface for the */
-	/* loading of libraries */
-
-#ifndef RTLD_LAZY
-#define RTLD_LAZY 1
-#endif
-
-SEXP do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-	void *handle;
-	checkArity(op,args);
-	if (!isString(CAR(args)))
-		errorcall(call, "character argument expected\n");
-	handle = dlopen(CHAR(STRING(CAR(args))[0]), RTLD_LAZY);
-	if(!handle) {
-		errorcall(call, (char*)dlerror());
-	}
-	add_ptr(handle);
-	return R_NilValue;
-}
-
-#else
-
-SEXP do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-	error("no dyn.load support in this R version\n");
-}
-
-#endif
-
-
-
-
-#define NIL -1
-
-typedef struct {
-	char *name;
-	FUNC func;
-} CFunTabEntry;
-
-#include "ForeignDecl.h"
-
-static CFunTabEntry CFunTab[] =
-{
-#include "ForeignTab.h"
-	{NULL, NULL}
-};
-#undef F77_SUBROUTINE
-#undef C_FUNCTION
-
-
-	/* HashTable stores name - pointer pairs. Open addressing */
-	/* with linear probing is used. Sometimes the hashtable */
-	/* will be expanded and reorganized. The implementation */
-	/* is entirely elementary.  Possible sizes of the */
-	/* table are 2^p+1 where p is a positive integer. */
-
-static CFunTabEntry *HashTable;
-static int HASHSIZE;
-static int NumberElem;
-
-
-static int HashCode(char *symbol)
-{
-	unsigned int  code=0;
-	char *p = symbol;
-
-	while (*p)
-		code = 8 * code + *p++;
-	return code % HASHSIZE;
-}
-
-
-static void HashInstall(char *name, FUNC func)
-{
-	int key;
-	NumberElem++;
-	key = HashCode(name);
-	while (HashTable[key].name != NULL)
-		key = (key + 1) % HASHSIZE;
-	HashTable[key].name = (char*)malloc(strlen(name)+1);
-	strcpy(HashTable[key].name,name);
-	HashTable[key].func = func;
-}
-
-static void HashExpand()
-{
-	int oldsize;
-	int i;
-	CFunTabEntry *OldTable;
-	oldsize=HASHSIZE;
-	OldTable=HashTable;
-	HASHSIZE=2*HASHSIZE-1;
-	NumberElem=0;
-	HashTable = (CFunTabEntry *) malloc(HASHSIZE * sizeof(CFunTabEntry));
-	for (i = 0; i < HASHSIZE; i++)
-		HashTable[i].name = NULL;
-	for(i=0;i<oldsize;i++) {
-		if(OldTable[i].name!=NULL)
-			HashInstall(OldTable[i].name,OldTable[i].func);
-	}	
-	for(i=0;i<oldsize;i++)
-		free(OldTable[i].name);
-	free(OldTable);
-}
-
-static FUNC HashLookup(char *symbol)
-{
-	int key;
-	key = HashCode(symbol);
-	while (HashTable[key].name != NULL) {
-		if (strcmp(symbol, HashTable[key].name) == 0)
-			return HashTable[key].func;
-		else
-			key = (key + 1) % HASHSIZE;
-	}
-	return (FUNC)0;
-}
-
-
-	/* Initialization of the hashed load table */
-
-static SEXP NaokSymbol;
-static SEXP DupSymbol;
-
+#ifdef OLD
 void InitFunctionHashing()
 {
-	int n;
-	int i, size = 3;
 	NaokSymbol = install("NAOK");
 	DupSymbol = install("DUP");
-	n = sizeof(CFunTab)/sizeof(CFunTabEntry);
-	while(size < n)
-		size = 2*size-1;
-	HASHSIZE = size;	
-	NumberElem = 0;
-	HashTable = (CFunTabEntry*) malloc(HASHSIZE * sizeof(CFunTabEntry));
-	for (i = 0; i < HASHSIZE; i++)
-		HashTable[i].name = NULL;
-	for (i = 0; CFunTab[i].name; i++)
-		HashInstall(CFunTab[i].name, CFunTab[i].func);
-	HashExpand();
 }
+#endif
 
 	/* Convert an R object to a non-moveable C object */
 	/* and return a pointer to it.  This leaves pointers */
@@ -409,6 +195,7 @@ static SEXP naoktrim(SEXP s, int * len, int *naok, int *dup)
 	if(s == R_NilValue) {
 		value = R_NilValue;
 		*naok = 0;
+		*dup = 1;
 		*len = 0;
 	}
 	else if(TAG(s) == NaokSymbol) {
@@ -434,7 +221,7 @@ SEXP do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	checkArity(op, args);
 	if(!isString(CAR(args)) || length(CAR(args)) < 1)
-		errorcall(call, "invalid argument");
+		errorcall(call, "invalid argument\n");
 
 	p = CHAR(STRING(CAR(args))[0]);
 	q = buf;
@@ -455,27 +242,17 @@ SEXP do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP ans;
-	FUNC fun;
+	DL_FUNC fun;
 	char *sym;
 	int val;
 	checkArity(op, args);
+	if(!isString(CAR(args)) || length(CAR(args)) < 1)
+		errorcall(call, "invalid argument\n");
 	sym = CHAR(STRING(CAR(args))[0]);
 
 	val = 1;
-	if (!(fun = HashLookup(sym))){
-#ifdef HAVE_DLFCN_H
-		if(!(fun = findDynProc(sym))) {
-			val = 0;
-		}
-		else {
-			if((1.0*NumberElem)/HASHSIZE > 0.5)
-				HashExpand();
-			HashInstall(sym, fun);
-		}
-#else
+	if (!(fun = R_FindSymbol(sym)))
 		val = 0;
-#endif
-	}
 	ans = allocVector(LGLSXP, 1);
 	LOGICAL(ans)[0] = val;
 	return ans;
@@ -485,10 +262,14 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	void **cargs;
 	int dup, naok, nargs, which;
-	FUNC fun;
+	DL_FUNC fun;
 	SEXP pargs, s;
 	char buf[128], *p, *q, *vmax;
 	
+	if(NaokSymbol == NULL || DupSymbol == NULL) {
+		NaokSymbol = install("NAOK");
+		DupSymbol = install("DUP");
+	}
 	vmax = vmaxget();
 	which = PRIMVAL(op);
 
@@ -527,25 +308,15 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 		p++;
 		q++;
 	}
+
 #ifdef HAVE_F77_UNDERSCORE
 	if (which)
 		*q++ = '_';
 	*q = '\0';
 #endif
-	if (!(fun = HashLookup(buf))){
-#ifdef HAVE_DLFCN_H
-		if(!(fun = findDynProc(buf))) {
-			errorcall(call, "C/Fortran function not in load table\n");
-		}
-		else {
-			if((1.0*NumberElem)/HASHSIZE > 0.5)
-				HashExpand();
-			HashInstall(buf,fun);
-		}
-#else
+
+	if (!(fun = R_FindSymbol(buf)))
 		errorcall(call, "C/Fortran function not in load table\n");
-#endif
-	}
 	
 	switch (nargs) {
 	case 0:

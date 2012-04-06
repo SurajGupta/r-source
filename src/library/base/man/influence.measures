@@ -1,0 +1,66 @@
+TITLE(influence.measures @@ Regression Diagnostics)
+USAGE(
+influence.measures(lm.obj)
+BLANK
+rstandard(lm.obj)
+rstudent(lm.obj)
+dfbetas(lm.obj)
+dffits(lm.obj)
+covratio(lm.obj)
+cooks.distance(lm.obj)
+hat(xmat)
+)
+ALIAS(influence.measures)
+ALIAS(hat)
+ALIAS(rstudent)
+ALIAS(dfbetas)
+ALIAS(dffits)
+ALIAS(covratio)
+ALIAS(cooks.distance)
+ARGUMENTS(
+ARG(lm.obj @@ the results returned by LANG(lm).)
+ARG(xmat @@ the 'X' or design matrix.)
+)
+DESCRIPTION(
+This suite of functions can be used to compute some of the
+regression diagnostics discussed in Belsley, Kuh and Welsch (1980),
+and in Cook and Weisberg (1982).
+PARA
+The primary function is LANG(influence.measures)
+which produces a class LANG('lminf') object tabular display showing the
+DFBETAS for each model variable, DFFITS,
+covariance ratios, Cook's distances and the diagonal
+elements of the hat matrix.
+Cases which are influential with respect to any of these
+measures are marked with an asterisk.
+PARA
+The functions LANG(rstudent), LANG(dfbetas), LANG(dffits)
+LANG(covratio) and LANG(cooks.distance) provide direct
+access to the corresponding diagnostic quantities.
+)
+REFERENCES(
+Belsley, D. A., E. Kuh and R. E. Welsch (1980).
+ITALIC(Regression Diagnostics.)
+New York: Wiley.
+BLANK
+Cook, R. D. and S. Weisberg (1982).
+ITALIC(Residuals and Influence in Regression.)
+London: Chapman and Hall.
+)
+SEEALSO(
+LANG(LINK(lm.influence)).
+)
+EXAMPLES(
+# Analysis of the life-cycle savings data
+# given in Belsley, Kuh and Welsch.
+data(savings)
+lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data=savings)
+summary(inflm.SR <- influence.measures(lm.SR))
+inflm.SR
+which(apply(inflm.SR $ is.inf, 1,any))#-- which observations 'are' influential
+dim(dfb <- dfbetas(lm.SR))#- the 1st columns of influence.measures
+all(dfb == inflm.SR$infmat[,1:5])
+rstudent(lm.SR)
+dffits(lm.SR)
+covratio(lm.SR)
+)

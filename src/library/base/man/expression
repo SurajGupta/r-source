@@ -23,10 +23,10 @@ LANG(as.expression) attempts to coerce its argument
 into an expression object.
 )
 SEEALSO(
-LANG(LINK(call)), LANG(LINK(function)).
+LANG(LINK(call)), LANG(LINK(eval)), LANG(LINK(function)).
 )
 EXAMPLES(
-length(ex1 <- expression(1+ 0:9))
+length(ex1 <- expression(1+ 0:9))# 1
 ex1
-eval(ex1)
+eval(ex1)# 1:10
 )

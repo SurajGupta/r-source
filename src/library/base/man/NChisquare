@@ -1,26 +1,36 @@
 TITLE(NChisquare @@ The Non-Central Chi-Square Distribution)
 USAGE(
-dnchisq(x, df)
-pnchisq(x, df)
-qnchisq(x, df)
-rnchisq(x, df)
+dnchisq(x, df, lambda)
+pnchisq(q, df, lambda)
+qnchisq(p, df, lambda)
+rnchisq(n, df, lambda)
 )
 ALIAS(dnchisq)
 ALIAS(pnchisq)
 ALIAS(qnchisq)
 ALIAS(rnchisq)
 DESCRIPTION(
-These functions provide information about the non-central
-chi-square distribution with LANG(df) degrees of freedom.
-LANG(dnchisq) gives the density, LANG(pnchisq) gives the
-distribution function LANG(qnchisq) gives the quantile
+These functions provide information about the non-central chi-square
+distribution with LANG(df) degrees of freedom and non-centrality
+parameter LANG(lambda).  LANG(dnchisq) gives the density, LANG(pnchisq)
+gives the distribution function LANG(qnchisq) gives the quantile
 function and LANG(rnchisq) generates random deviates.
 PARA
-The non-central chi-square distribution with EQN(n)
-degrees-of-freedom has density
-DEQN(f(x) =
-OVER(1 @@ SUP(2@@n/2) greekGamma (n/2))
-SUP(x@@n/2-1) SUP(e@@-x/2)
-@@f(x) = 1 / (2^(n/2) Gamma(n/2))  x^(n/2-1) e^-x/2)
+The non-central chi-square distribution with EQN(df) degrees of freedom
+and non-centrality parameter EQN(greeklambda) has density
+DEQN(f(x) = SUP(e @@ -\lambda / 2)
+  \sum_{r=0}^\infty \frac{\lambda^r}{2^r r!} \mathrm{pchisq}(x, df + 2r) 
+  @@
+  f(x) = exp(-lambda/2) SUM_{r=0}^infty (lambda^r / 2^r r!)
+  pchisq(x, df + 2r)
+)
 for EQN(x GE 0).
 )
+SEEALSO(
+LANG(LINK(dchisq)), LANG(LINK(dgamma)).
+)
+EXAMPLES(
+pnchisq(1, df=3, lambda=0) == pchisq(1, df=3)
+pnchisq(1, df=3, lambda=0:4)
+)
+KEYWORD(distribution)

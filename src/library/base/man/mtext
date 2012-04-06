@@ -1,28 +1,29 @@
 TITLE( mtext @@ Write text into the margins of a plot )
 USAGE(
-mtext(text=, side=3, line=0, outer=FALSE, at=, ...)
+mtext(text, side=3, line=0, outer=FALSE, at=, ...)
 )
 ALIAS(mtext)
 ARGUMENTS(
-ARG(text @@ character string to be written  )
-ARG(side @@ on which side of the plot (1=bottom, 2=left, 3=top, 4=right))
-ARG(line @@ on which MARgin line, starting at 0 counting outwards  )
-ARG(outer @@ use outer margins if available )
-ARG(at @@ give location in user-coordinates  )
-ARG(... @@ further graphic parameters: LANG(adj), LANG(cex), DOTS )
+ARG(text @@ character string to be written.)
+ARG(side @@ on which side of the plot (1=bottom, 2=left, 3=top, 4=right).)
+ARG(line @@ on which MARgin line, starting at 0 counting outwards.)
+ARG(outer @@ use outer margins if available.)
+ARG(at @@ give location in user-coordinates.)
+ARG(DOTS @@ further graphical parameters, 
+ LANG(adj), LANG(cex), LANG(col), LANG(font).)
 )
 COMMENT( --- mtext is defined via do_mtext(.) in  src/main/plot.c --- )
 DESCRIPTION(
 LANG(text) is written in one of the four margins (LANG(side)) of the plot.
 LANG(line) measures the distance outwardly in character size units.
 PARA
-LANG(...) : The following further graphical parameters are recognized:
-ITEM(adj @@ length = 1 or 2 : adjustment in x- and y )
-ITEM(cex @@ character expansion factor (default = 1))
-ITEM(col @@ color to use)
-ITEM(font @@ font for text)
+The following further graphical parameters are recognized:
+ITEM(adj @@ length = 1 or 2 : adjustment in x- and y- direction.)
+ITEM(cex @@ character expansion factor (default = 1).)
+ITEM(col @@ color to use.)
+ITEM(font @@ font for text.)
 )
-SECTION(Side-effects @@
+SECTION(Side Effects @@
 The given text is written onto the current plot.
 )
 SEEALSO(
@@ -39,4 +40,5 @@ mtext("mtext(.., line= -1, adj = 0)", line = -1, adj =0)
 plot(1:10, exp(1:10), log='y', main="log='y'", xlab="xlab")
 for(s in 1:4) mtext(paste("mtext(..,side=",s,")"), side=s)
 )
+KEYWORD(aplot)
 

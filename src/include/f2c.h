@@ -24,6 +24,8 @@ typedef char logical1;
 typedef char integer1;
 /* typedef long long longint; */ /* system-dependent */
 
+
+
 #define TRUE_ (1)
 #define FALSE_ (0)
 
@@ -151,6 +153,14 @@ struct Namelist {
 	int nvars;
 	};
 typedef struct Namelist Namelist;
+
+/* a whole bunch of stuff to keep watcom's C compiler happy */
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))
 #define dabs(x) (doublereal)abs(x)

@@ -340,7 +340,7 @@ void R_SaveGlobalEnv(void)
 {
 	FILE *fp = fopen(".RData", "w");
 	if (!fp)
-		error("can't save data -- unable to open ./.Rdata\n");
+		error("can't save data -- unable to open ./.RData\n");
 	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
 	fclose(fp);
 }

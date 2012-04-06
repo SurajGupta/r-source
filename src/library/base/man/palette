@@ -1,25 +1,37 @@
-TITLE(Palette @@ Color Palettes)
+TITLE(palette @@ Set or View the Graphics Palette)
 USAGE(
-heat.colors(n)
-topo.colors(n)
-terrain.colors(n)
+palette(value)
 )
-ALIAS(heat.colors)
-ALIAS(topo.colors)
-ALIAS(terrain.colors)
+ALIAS(palette)
 ARGUMENTS(
-ARG(n@@the number of colors in the palette.)
+ARG(value @@ an optional character vector.)
 )
 DESCRIPTION(
-These functions create a palette of LANG(n) colors which can be used as input
-to functions such as LANG(LINK(image)) and LANG(LINK(contour)).
+This function is used to view or manipulate the color
+palette which is used when a LANG(col=) has a numeric index.
+PARA
+If LANG(value) has length 1 it is taken to be the name of
+a built in color palette.  If LANG(value) has length greater
+than 1 it is assumed to contain a description of the colors
+which are to make up the new palette (either by name or
+by RGB levels).
+PARA
+If LANG(value) is omitted or has length 0, no change is made
+the current palette.
+PARA
+Currently, the only built-in palette is LANG("default").
+)
+VALUE(
+The palette which was in effect.  This is invisible unless
+the argument is omitted.
 )
 SEEALSO(
-LANG(LINK(colors)), LANG(LINK(rainbow)), LANG(LINK(rgb)),
- LANG(LINK(hsv)), LANG(LINK(gray)). 
+LANG(LINK(gray)), LANG(LINK(rainbow)), LANG(LINK(terrain.colors)).
 )
 EXAMPLES(
-for(n in 1:8) print(heat.colors(n), quote = F)
-cbind(topo.colors(8))
-terrain.colors(6)
+palette()           # obtain the current palette
+palette(rainbow(6)) # six color rainbow
+palette("default")  # reset back to the default
 )
+KEYWORD(color)
+KEYWORD(graphics)

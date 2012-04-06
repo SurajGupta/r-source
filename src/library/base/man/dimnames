@@ -4,6 +4,7 @@ dimnames(x)
 dimnames(x) <- nlist
 )
 ALIAS(dimnames)
+ALIAS(dimnames<-)
 VALUE(
 This function obtains the list of extent labels of
 the array given as its argument.

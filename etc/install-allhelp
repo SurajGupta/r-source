@@ -1,18 +1,24 @@
 #!/bin/sh
 #
-# Should work WHEREVER this is called from :
-cd `dirname $0`/..
-#RHOME=`pwd`; export RHOME
-LIBS=`ls src/library | sed '
-/Makefile/d
+# ${RHOME}/etc/install-allhelp
+# Should work from anywhere in the R source tree.
+
+# FIXME when the new directory structure is here!
+
+RHOME=`dirname $0`/..		# relative
+RHOME=`cd ${RHOME}; pwd`	# absolute
+PKGS=`cd ${RHOME}/src/library; ls | sed '
+/^\./d
 /CVS/d
 /LIB*/d
+/Makefile/d
 /profile/d'`
 
-if [ ! -d help ]; then mkdir help; fi
-cp /dev/null help/LibIndex
+mkdir -p ${RHOME}/help
+cp /dev/null ${RHOME}/help/LibIndex
 
-for lib in $LIBS
+cd ${RHOME}/src/library
+for pkg in ${PKGS}
 do
-    ./etc/install-help $lib
+    ${RHOME}/etc/install-help ${pkg}
 done

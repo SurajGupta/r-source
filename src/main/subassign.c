@@ -247,6 +247,8 @@ static void SubassignTypeFix(SEXP *x, SEXP *y, int which, int stretch)
 		*x = coerceVector(*x, STRSXP);
 		break;
 
+	case 2001:	/* expression <- symbol    */
+	case 2006:	/* expression <- language  */
 	case 2010:	/* expression <- logical   */
 	case 2011:	/* expression <- factor    */
 	case 2012:	/* expression <- ordered   */
@@ -289,17 +291,11 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	}
 	PROTECT(s);
 
-	ny = length(y);
 	stretch = 1;
 	PROTECT(index = makeSubscript(x, s, &stretch));
 	n = length(index);
 
-	if (n > 0 && ny == 0)
-		errorcall(call, "nothing to replace with\n");
-
-	if (n > 0 && n % ny)
-		warning("number of items to replace is not a multiple of replacement length\n");
-
+#ifndef OLD
 	which = 100 * TYPEOF(x) + TYPEOF(y);
 
 		/* Here we make sure that the LHS has */
@@ -307,6 +303,24 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		/* accept elements from the RHS. */
 
 	SubassignTypeFix(&x, &y, which, stretch);
+#endif
+	ny = length(y);
+
+	if (n > 0 && ny == 0)
+		errorcall(call, "nothing to replace with\n");
+
+	if (n > 0 && n % ny)
+		warning("number of items to replace is not a multiple of replacement length\n");
+
+#ifdef OLD
+	which = 100 * TYPEOF(x) + TYPEOF(y);
+
+		/* Here we make sure that the LHS has */
+		/* been coerced into a form which can */
+		/* accept elements from the RHS. */
+
+	SubassignTypeFix(&x, &y, which, stretch);
+#endif
 
 	PROTECT(x);
 
@@ -439,6 +453,8 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
+	case 2001:
+	case 2006:	/* expression <- language   */
 	case 2010:	/* expression <- logical    */
 	case 2011:	/* expression <- factor     */
 	case 2012:	/* expression <- ordered    */
@@ -470,7 +486,7 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	SEXP sr, sc;
 
 	if (!isMatrix(x))
-		error("incorrect number of subscripts on array\n");
+		error("incorrect number of subscripts on matrix\n");
 
 	nr = nrows(x);
 	ny = LENGTH(y);
@@ -938,7 +954,7 @@ static SEXP listRemove(SEXP x, SEXP s)
 
 SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 {
-	SEXP ax, ay, px, py;
+	SEXP ax, ay, px, py, dims;
 	int i, nsubs, ny;
 
 	nsubs = length(subs);
@@ -952,7 +968,11 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 			x = SimpleListAssign(call, x, subs, y);
 		break;
 	default:
-	  	PROTECT(ax = allocArray(STRSXP, getAttrib(x, R_DimSymbol)));
+		dims = getAttrib(x, R_DimSymbol);
+		if (dims == R_NilValue || LENGTH(dims) != length(subs))
+			error("incorrect number of subscripts\n");
+
+	  	PROTECT(ax = allocArray(STRSXP, dims));
 		for(px=x, i=0 ; px!=R_NilValue ; px = CDR(px))
 			STRING(ax)[i++] = CAR(px);
 		setAttrib(ax, R_DimNamesSymbol, getAttrib(x, R_DimNamesSymbol));
@@ -1111,17 +1131,23 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 	RCNTXT cntxt;
 
 	CAR(args) = eval(CAR(args), rho);
+#ifndef OLD
+	PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
+#endif
 	if(isObject(CAR(args)) && CAR(call) != install("[<-.default")) {
 		/*SetArgsforUseMethod(args); */
 		begincontext(&cntxt,CTXT_RETURN, call, rho, rho, args);
 		if(usemethod("[<-", CAR(args), call, args, rho, &y)) {
 			endcontext(&cntxt);
+			UNPROTECT(1);
 			return y;
 		}
 		endcontext(&cntxt);
 	}
 
+#ifdef OLD
 	PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
+#endif
 	if (NAMED(CAR(args)) == 2) {
 		x = CAR(args) = duplicate(CAR(args));
 	}
@@ -1203,10 +1229,14 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	dims = getAttrib(x, R_DimSymbol);
 	ndims = length(dims);
 	nsubs = length(subs);
+#ifdef OLD
 	if (!isList(x) && !isLanguage(x) && length(y) > 1)
 		error("number of elements supplied larger than number of elements to replace\n");
+#endif
 
 	if (isVector(x)) {
+		if(!isExpression(x) && length(y) > 1)
+			error("number of elements supplied larger than number of elements to replace\n");
 		if (nsubs == 1) {
 			offset = get1index(CAR(subs), getAttrib(x, R_NamesSymbol));
 			if (offset < 0 || offset >= LENGTH(x))
@@ -1311,6 +1341,8 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 			STRING(x)[offset] = STRING(y)[0];
 			break;
 
+		case 2001:	/* expression <- symbol     */
+		case 2006:	/* expression <- language   */
 		case 2020:	/* expression <- expression */
 		case 2010:	/* expression <- logical    */
 		case 2011:	/* expression <- factor     */

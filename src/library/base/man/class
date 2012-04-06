@@ -4,12 +4,10 @@ class(x)
 class(x) <- names
 unclass(x)
 inherits(x, name)
-is.object(x)
 )
 ALIAS(class)
 ALIAS(unclass)
 ALIAS(inherits)
-ALIAS(is.object)
 DESCRIPTION(
 R possesses a simple generic function mechanism
 which can be used for an object-oriented style of programming.
@@ -33,9 +31,6 @@ Correspondingly, LANG(class<-) sets the classes
 which an object inherits from.
 LANG(unclass) returns (a copy of) its argument
 with its class information removed.
-PARA
-LANG(is.object) returns LANG(TRUE) if its argument has a class
-attribute and LANG(FALSE) otherwise.
 LANG(inherits) indicates whether its first argument inherits
 from a class with name equal to its second argument.
 )

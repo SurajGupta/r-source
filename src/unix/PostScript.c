@@ -238,7 +238,7 @@ error:
 	return 0;
 }
 
-double PostScriptStringWidth(char *p, FontMetricInfo *metrics)
+double PostScriptStringWidth(unsigned char *p, FontMetricInfo *metrics)
 {
 	int sum = 0;
 	for( ; *p ; p++) {

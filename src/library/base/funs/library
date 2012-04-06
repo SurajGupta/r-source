@@ -1,65 +1,101 @@
-require <- function(name, quietly=FALSE)
+require <- function(name, quietly = FALSE)
 {
-	name <- substitute(name)#- allowing  "require(eda)"
-	if (!is.character(name)) name <- deparse(name)
-	if(is.na(match(paste("library", name, sep=":"), search()))) {
-		if(!quietly)
-			cat("Autoloading required library:", name, "\n")
-		library0(name, logical = TRUE)
-	} else TRUE
+  name <- as.character(substitute(name)) # allowing "require(eda)"
+  if (is.na(match(paste("package", name, sep=":"), search()))) {
+    if (!quietly)
+      cat("Autoloading required library:", name, "\n")
+    .library(name, logical = TRUE)
+  }
+  else
+    TRUE
 }
 
-##--- The current (0.50: 7/7/97) manpage says: We should also have
-##---  provide()  and  work with  .Libraries  & .Provided
-##     ---------
-
-library <- function(name)
+provide <- function(name) 
 {
-	if(missing(name)) {
-		cat("NAME\tDESCRIPTION\n")
-		system(paste("cat", system.file("help","LibIndex")))
-		invisible(.Libraries)
-	} else {
-		name <- substitute(name)
-		if (!is.character(name)) name <- deparse(name)
-		invisible(library0(name))
-	}
+  if (!exists(".Provided", inherits = TRUE)) 
+    assign(".Provided", character(0), envir = .GlobalEnv)
+  if (missing(name)) 
+    .Provided
+  else {
+    name <- as.character(substitute(name))
+    if (is.na(match(name, .library())) &&
+	is.na(match(name, .Provided))) {
+      assign(".Provided", c(name, .Provided), envir = .GlobalEnv)
+      TRUE
+    }
+    else
+      FALSE
+  }
 }
 
-library0 <- function(chname, logical.return = FALSE)
+library <- function(name, help = NULL, lib.loc = .lib.loc)
 {
-	lib.source <- function (file, env)
-	{
-		exprs <- parse(n = -1, file = file)
-		if (length(exprs) == 0) return(invisible())
-		for (i in exprs)
-			yy <- eval(i, env)
-		invisible()
-	}
-	libname <- paste("library", chname, sep=":")
-	if(is.na(match(libname, search()))) {
-		file <- system.file("library", chname)
-		if(file == "") {
-			txt <- paste("there is no library called '", chname,"'", sep="")
-			if(logical.return) { warning(txt); return(FALSE) 
-			} else stop(txt)
-		}
-		env <- attach(NULL, name=libname)
-		lib.source(file, env)
-		lib.fixup(env, .GlobalEnv)
-		assign(".Libraries", c(chname, .Libraries), env=NULL)
-	}
-	
-	if(logical.return) TRUE else invisible(.Libraries)
+  if (missing(name)) {
+    if (missing(help)) {
+      file <- tempfile("R.")
+      on.exit(unlink(file))
+      first <- TRUE
+      for (lib in lib.loc) {
+	cat(paste(ifelse(first, "", "\n"), "Packages in library `", lib,
+		  "':\n\n", sep = ""),
+	    file = file, append = TRUE)
+	INDEX <- paste(lib, "/help/LibIndex", sep = "")
+	system(paste("cat", INDEX, ">>", file, "2>/dev/null"))
+	first <- FALSE
+      }
+      system(paste("$RHOME/cmd/pager", file))
+      invisible(.library())
+    }
+    else {
+      pkg <- as.character(substitute(help))
+      file <- system.file("help", paste(pkg, "/INDEX", sep = ""))
+      if (file == "")
+	stop(paste("no documentation for package `", pkg, "'", sep = ""))
+      else
+	system(paste("$RHOME/cmd/pager", file))
+    }
+  }
+  else {
+    name <- as.character(substitute(name))
+    invisible(.library(name, lib = lib.loc))
+  }
+}
+
+.library <- function(chname, lib.loc = .lib.loc, logical.return = FALSE)
+{
+  if (missing(chname)) {		# ``substitute'' for old .Libraries
+    s <- search()
+    return(invisible(substring(s[substr(s,1,8) == "package:"], 9)))
+  }
+  lib.source <- function(file, env)
+    {
+      exprs <- parse(n = -1, file = file)
+      if (length(exprs) == 0) return(invisible())
+      for (i in exprs)
+	yy <- eval(i, env)
+      invisible()
+    }
+  libname <- paste("package", chname, sep = ":")
+  if (is.na(match(libname, search()))) {
+    file <- system.file("library", chname, lib = lib.loc)
+    if (file == "") {
+      txt <- paste("there is no package called `", chname, "'", sep= "")
+      if (logical.return) { warning(txt); return(FALSE) } else stop(txt)
+    }
+    env <- attach(NULL, name=libname)
+    lib.source(file, env)
+    lib.fixup(env, .GlobalEnv)
+  }
+  if (logical.return) TRUE else invisible(.library())
 }
 
 library.dynam <- function(name)
 {
-	if (!exists(".Dyn.libs"))
-		assign(".Dyn.libs", character(0), length(search()))
-	if(is.na(match(name, .Dyn.libs))) {
-		.Internal(dyn.load(system.file("lib", name)))
-		assign(".Dyn.libs", c(.Dyn.libs, name), length(search()))
-	}
-	invisible(.Dyn.libs)
+  if (!exists(".Dyn.libs"))
+    assign(".Dyn.libs", character(0), envir = .GlobalEnv)
+  if (is.na(match(name, .Dyn.libs))) {
+    .Internal(dyn.load(system.file("lib", name)))
+    assign(".Dyn.libs", c(.Dyn.libs, name), envir = .GlobalEnv)
+  }
+  invisible(.Dyn.libs)
 }

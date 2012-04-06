@@ -119,6 +119,14 @@ static int maxp;
 	 *  m contains the number of factors and kt contains the number
 	 *  of square factors  */
 
+/* a whole bunch of stuff to keep watcom's C compiler happy */
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 static int max(int i, int j)
 {
 	return (i > j) ? i : j;

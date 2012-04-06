@@ -1,12 +1,19 @@
 .GlobalEnv <- globalenv()
-.SystemEnv <- NULL
-getenv <- function (item) system(paste("echo $", item, sep = ""), intern = TRUE)
+attach(NULL, name="Autoloads")
+.AutoloadEnv <- pos.to.env(2)
 T <- TRUE
 F <- FALSE
+getenv <- function(item) {
+  system(paste("echo $", item, sep = ""), intern = TRUE)
+}
 version <- Version()
 .Machine <- Machine()
-.Libraries <- character(0)
+.lib.loc <- unique(c(unlist(strsplit(getenv("RLIBS"), ":")), getenv("RHOME")))
+date <- function() { system("date", intern = TRUE) }
+unlink <- function(x) {
+  system(paste("rm -rf ", paste(x, collapse = " ")))
+}
 options(na.action="na.omit")
 options(printcmd=getenv("R_PRINTCMD"))
 options(papersize=getenv("R_PAPERSIZE"))
-if(interactive()) x11()
+.First <- function() if(interactive() && getenv("DISPLAY")!="") x11()

@@ -1,39 +1,67 @@
 TITLE(help @@ Online Documentation)
 USAGE(
-help(name)
+help(topic, data, package = .library(), lib.loc = .lib.loc)
+BLANK
 ?name
-BLANK
-help(data=name)
 ?data(name)
-BLANK
-help(library=name)
-?library(name)
+?package(name)
+?library(lib.loc)
 )
 ALIAS(help)
 ALIAS(?)
 ARGUMENTS(
-ARG(name @@ the topic for which documentation is desired.)
+ARG(topic, name @@ A name or character string on which documentation is
+desired.)
+ARG(data  @@ A name or character string specifying a data set on which
+information is sought.)
+ARG(package @@ A name or character vector giving the packages to look
+into for documentation.  By default, all packages in the search path are
+used.)
+ARG(lib.loc @@ A character vector of directory names of R libraries.
+Defaults to all libraries currently known.)
 )
 DESCRIPTION(
 These functions provide online access to documentation. 
-Documentation on a function with name LANG(name) can be
+Documentation on an R entity function with name LANG(name) can be
 printed on-screen with either LANG(help(name)) or LANG(?name).
-In the case of unary and binary operators
-and control-flow special forms, the name may need to be be quoted.
+In the case of unary and binary operators and control-flow special
+forms, the name may need to be be quoted.
 PARA
-Help on data sets and libraries can be obained with
-the other forms.
+LANG(?data(name)) provides information on the (first) data set named
+LANG(name).  Additional arguments may be given to request specific
+information.  E.g., LANG(?data(name, package = PKG)) only looks for
+documentation on data set name in the packages specified by LANG(PKG).
+PARA
+LANG(?package(name)) displays information on package LANG(name),
+typically by listing the most important user-level R objects it
+contains.  Equivalently, one could use LANG(library(help = name)).
+PARA
+LANG(?library(lib.loc)) informs about the libraries specified by
+LANG(lib.loc), usually giving their location and the list of packages
+available in them.  Use LANG(library()) to obtain a list of all
+available packages.
+PARA
+One can abbreviate the forms for obtaining information on data sets,
+packages and libraries, see the examples below.
 )
 SEEALSO(
-LANG(LINK(help.start)()) which opens the HTML-Version of the R documentation;
+LANG(LINK(help.start)()) which opens the HTML version of the R
+documentation; 
 LANG(LINK(data)), LANG(LINK(library)), LANG(LINK(methods)).
 )
 EXAMPLES(
 help(help)
-help("for") # or	?"for"
+help()                       # the same
+help("for")                  # or ?"for"
 ?"+"
 BLANK
-?data(index) #-- a list of all the available datasets
-?data(women) #-- information about "women" dataset
-?library(mva)#-- what is available in library(mva)
+?data(index, package = base) # all data sets in base package
+?data(women)                 # information about data set "women"
+?d(women)                    # the same
+BLANK
+?package(mva)                # what is available in package "mva"
+library(help = mva)          # the same
+BLANK
+?library(getenv("RHOME"))    # list packages in default library
+library()                    # list all available packages
 )

@@ -12,7 +12,7 @@ legend <- function(x, y, legend, fill, col="black", lty, pch,
 	if(is.null(x.intersp)) x.intersp <- min(4, 1.8 + 1.2* Cex^-1.25)
 	if(is.null(y.intersp)) y.intersp <- min(2, 0.2 + Cex^-1.25)
 	##- if(DEBUG) cat('Cex=',formatC(Cex),' ==>  x.intersp=',
-	##- 	       format(x.intersp),'; y.intersp=', format(y.intersp),"\n")
+	##-	       format(x.intersp),'; y.intersp=', format(y.intersp),"\n")
 	xchar<- Cex * xinch(cin[1])
 	ychar<- Cex * yinch(cin[2]) * y.intersp
 	## size of filled boxes:
@@ -93,5 +93,5 @@ legend <- function(x, y, legend, fill, col="black", lty, pch,
 	if (xlog) xt <- 10^xt
 	if (ylog) yt <- 10^yt
 	## adj = (x,y) text-box adjustment
-	text(xt, yt, text= legend, adj= c(0, 0.3*y.intersp), cex= cex)
+	text(xt, yt, labels= legend, adj= c(0, 0.3*y.intersp), cex= cex)
 }

@@ -770,7 +770,7 @@ int yylex()
 				uncget(1);
 				goto again;
 			}
-			if (c == '}') {
+			if (c == '}' || c == ')' || c == ']' ) {
 				while (*parenp == 'i')
 					ifpop();
 				parenp--;
@@ -789,7 +789,7 @@ int yylex()
 				return ELSE;
 			}
 			ifpop();
-		}
+	 	   }
 		else newline = 1;
 		return '\n';
 	}

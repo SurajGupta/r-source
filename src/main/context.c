@@ -329,14 +329,12 @@ SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* first find the context that sys.xxx needs to be evaluated in */
 	cptr=R_GlobalContext;
 	t=cptr->sysparent;
-	while(cptr != NULL) {
+	while(cptr != R_ToplevelContext) {
 		if(cptr->callflag == CTXT_RETURN)
 			if(cptr->cloenv==t)
 				break;
 		cptr = cptr->nextcontext;
 	}
-	if(cptr == NULL )
-		error("failed to match environments\n");
 
 	if( length(args)==1 ) {
 		t=eval(CAR(args),rho);

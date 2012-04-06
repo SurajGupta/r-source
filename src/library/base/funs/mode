@@ -5,7 +5,7 @@ mode <- function(x) {
 	tx <- typeof(x)
 	if (tx == "real" ) return("numeric")
 	if (tx == "integer") return("numeric")
-	if (tx == "closure" || tx == "builtin" ) return("function")
+	if (tx == "closure" || tx == "builtin" || tx == "special") return("function")
 	tx
 }
 "mode<-" <- function(x, value) 
@@ -18,7 +18,7 @@ mode <- function(x) {
 }
 storage.mode <- function(x) {
 	x <- typeof(x)
-	if (x == "closure" || x == "builtin" ) return("function")
+	if (x == "closure" || x == "builtin" || x == "special") return("function")
 	x
 }
 "storage.mode<-" <- get("mode<-", envir=NULL)

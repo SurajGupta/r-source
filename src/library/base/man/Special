@@ -44,11 +44,11 @@ BLANK
 x <- seq(.1, 4, length=201); dx <- diff(x)[1]
 par(mfrow=c(2,3))
 for(ch in c("", "l","di","tri","tetra","penta")) {
-	deriv <- nchar(ch)>=2;  if(deriv) dy <- diff(y) / dx
+	is.deriv <- nchar(ch)>=2;  if(is.deriv) dy <- diff(y) / dx
 	nm <- paste(ch,"gamma",sep=''); y <- get(nm)(x)
-	plot(x, y, type='l', main=nm, col=1)
+	plot(x, y, type='l', main=nm, col='red')
 	abline(h=0,col="lightgray")
-	if(deriv) lines(x[-1], dy, col=2, lty=2)
+	if(is.deriv) lines(x[-1], dy, col='blue', lty=2)
 }
 par(mfrow=c(2,2))
 )

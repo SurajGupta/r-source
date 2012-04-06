@@ -340,7 +340,7 @@ SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 		errorcall(call, "invalid third argument\n");
 	if (n == NA_INTEGER || n < 1)
 		errorcall(call, "invalid first argument\n");
-	if (k == NA_INTEGER || k < 1)
+	if (k == NA_INTEGER || k < 0)
 		errorcall(call, "invalid second argument\n");
 	if (!r && k > n)
 		errorcall(call, "can't take a sample larger than the population\n");
@@ -373,12 +373,12 @@ SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* The following entry points provide compatibility with S. */
 /* These entry points should not be used by new R code. */
 
-void seeds_in(long *ignored)
+void seed_in(long *ignored)
 {
 	GetSeeds();
 }
 
-void seeds_out()
+void seed_out()
 {
 	PutSeeds();
 }

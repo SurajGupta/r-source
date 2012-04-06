@@ -1,0 +1,17 @@
+TITLE(graphics.off @@ Turn Off All Graphics Devices)
+USAGE(
+dev.off()
+graphics.off()
+)
+ALIAS(dev.off)
+ALIAS(graphics.off)
+DESCRIPTION(
+These two functions are symonyms and shutdown the current graphics device.
+PARA
+In the future, with ITALIC(multiple) concurrent devices, things will change
+LDOTS.
+)
+SEEALSO(
+LANG(LINK(Devices)).
+)
+KEYWORD(device)

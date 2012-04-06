@@ -1,0 +1,51 @@
+TITLE(scale @@ Scaling and Centering of Matrices)
+USAGE(
+scale(x, center=TRUE, scale=TRUE)
+)
+ALIAS(scale)
+ARGUMENTS(
+ARG(x @@ a numeric matrix.)
+ARG(center @@ either a logical value
+or a numeric vector of length equal to the
+number of columns of LANG(x).)
+ARG(scale @@ either a logical value
+or a numeric vector of length equal to the
+number of columns of LANG(x).)
+)
+DESCRIPTION(
+The value of LANG(center) determines how column
+centering is performed.
+If LANG(center) is a numeric vector with length
+equal to the number of columns of LANG(x), then
+each column of LANG(x) has the corresponding value
+from LANG(center) subtracted from it.
+If LANG(center) is LANG(TRUE) then centering is
+done by subtracting the column means of LANG(x)
+from their corresponding columns and if LANG(center)
+is LANG(FALSE), no centering is done.
+PARA
+The value of LANG(scale) determines how column
+scaling is performed (after centering).
+If LANG(scale) is a numeric vector with length
+equal to the number of columns of LANG(x), then
+each column of LANG(x) is divided by the corresponding
+value from LANG(scale).
+If LANG(scale) is LANG(TRUE) then scaling is
+done by dividing the (centered) columns of
+LANG(x) by their root-mean-square,
+and if LANG(scale) is LANG(FALSE), no scaling is done.
+PARA
+The root-mean-square for a column is obtained by computing
+the square-root of the sum-of-squares of the non-missing
+values in the column divided by the number of non-missing
+values minus one.
+)
+VALUE(
+The centered, scaled matrix.
+)
+EXAMPLES(
+x <- matrix(1:10, nc=2)
+centered.x <- scale(x, scale=FALSE)
+centered.scaled.x <- scale(x)
+)
+KEYWORD(scaling)

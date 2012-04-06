@@ -280,7 +280,7 @@ static double *fixparam(SEXP p, int *n, SEXP call)
 	int i;
 
 	if(!isNumeric(p))
-		errorcall(call, "numeric parameter expected");
+		errorcall(call, "numeric parameter expected\n");
 
 	if(*n) {
 		if(LENGTH(p) != *n)

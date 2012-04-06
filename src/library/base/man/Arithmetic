@@ -15,6 +15,7 @@ ALIAS(/)
 ALIAS(^)
 ALIAS(%%)
 ALIAS(%/%)
+ALIAS(Arithmetic)
 VALUE(
 These binary operators perform arithmetic on vector objects.
 They return numeric vectors containing the result of the element

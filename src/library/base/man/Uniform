@@ -33,3 +33,4 @@ LANG(LINK(.Random.seed)), LANG(LINK(rnorm)), LDOTS.
 EXAMPLES(
 var(runif(10000))#- ~ = 1/12 = .8333
 )
+KEYWORD(distribution)

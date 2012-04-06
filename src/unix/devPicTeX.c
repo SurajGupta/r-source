@@ -446,6 +446,7 @@ static void PicTeX_EndPath()
 /* Possibly Filled Rectangle */
 static void PicTeX_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 {
+        SetLinetype(GP->lty);
 	PicTeX_MoveTo(x0, y0);
 	PicTeX_LineTo(x1, y0);
 	PicTeX_LineTo(x1, y1);

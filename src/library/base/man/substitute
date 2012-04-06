@@ -1,11 +1,15 @@
 TITLE(substitute @@ Actual Arguments)
 USAGE(
 substitute(arg, env=NULL)
+quote(arg, env=NULL)
 )
 ALIAS(substitute)
+ALIAS(quote)
 DESCRIPTION(
 LANG(substitute) returns the expression which was typed
-as the value of a formal argument.
+as the value of a formal argument.  LANG(quote) is a synonym useful to lisp
+programmers.
+PARA
 The typical use of this is to create informative
 labels for data sets and plots.
 The following example shows a simple use of this facility.

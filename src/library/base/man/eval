@@ -1,18 +1,38 @@
 TITLE(eval @@ Evaluate an (Unevaluated) Expression)
 USAGE(eval(expr, envir=sys.frame(sys.parent())))
 ALIAS(eval)
-VALUE(
-This function evaluates the expression LANG(expr) 
-argument in the environment specified by LANG(envir)
-and returns the compted value.
-If LANG(envir) is not specified, then the environment
-where the call to LANG(eval) is made is used.
+ARGUMENTS(
+  ARG(expr @@ object of mode LANG(LINK(expression)) or an ``unevaluated
+    expression''.)
+  ARG(envir @@ the LANG(LINK(environment)) in which LANG(expr) is to be
+      evaluated. )
+)
+DESCRIPTION(
+This function evaluates the expression LANG(expr) argument in the
+environment specified by LANG(envir) and returns the computed value.  If
+LANG(envir) is not specified, then
+LANG(LINK(sys.frame)(LINK(sys.parent)())), the environment where the
+call to LANG(eval) was made is used.
+This allows you to assign complicated expressions to symbols and then
+evaluate them. If you want to evaluate LANG(expr) in LANG(envir) then
+you must wrap a call to LANG(expression) around it.
 )
 SEEALSO(
-LANG(LINK(expression)), LANG(LINK(environment)).
+LANG(LINK(expression)), LANG(LINK(sys.frame)), LANG(LINK(environment)).
 )
 EXAMPLES(
 eval(2 ^ 2 ^ 3)
 mEx <- expression(2^2^3); mEx; 1 + eval(mEx)
 eval({ xx <- pi; xx^2}) ; xx
+BLANK
+ev <- function() {
+	e1 <- sys.frame(sys.parent())
+	## Evaluate a in e1
+	aa <- eval(expression(a),e1)
+	## evaluate the expression bound to a in e1
+	a <- expression(x+y)
+	list(aa = aa, eval = eval(a, e1))
+}	
+tst.ev <- function(a = 7) { x <- pi; y <- 1; ev() }
+tst.ev()#-> aa : 7,  eval : 4.14
 )

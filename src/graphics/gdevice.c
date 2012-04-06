@@ -97,7 +97,7 @@ int SetDevice(char *name, char **cpars, int ncpars, double *npars, int nnpars)
 		if(MacDeviceDriver(cpars, ncpars, npars, nnpars)) goto have_device;
 #endif
 
-#ifdef Unix
+#ifndef Macintosh
 	if(!strcmp(name, "postscript"))
 		if(PSDeviceDriver(cpars, ncpars, npars, nnpars)) goto have_device;
 #endif

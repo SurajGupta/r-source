@@ -1,36 +1,57 @@
-TITLE(approxfun @@ Linearly Interpolating Functions)
+TITLE(approx[fun] @@ Interpolation Functions)
 USAGE(
-approxfun(x, y, method="linear", rule=1)
+approx   (x, y, xout, method="linear", n=50, rule=1, f=0)
+approxfun(x, y,       method="linear",       rule=1, f=0)
 )
+ALIAS(approx)
 ALIAS(approxfun)
 ARGUMENTS(
 ARG(x,y @@ vectors giving the coordinates of the points to be interpolated.
-Alternatively a single plotting structure can be specified.)
+  Alternatively a single plotting structure can be specified.)
 ARG(xout @@ an optional set of values specifying where
-interpolation is to take place.)
-ARG(method @@ this specifies the interpolation method to be used.
-Currently this is ignored and linear interpolation
-is always used.)
+  interpolation is to take place.)
+ARG(method @@ specifies the interpolation method to be used.
+  Choices are "linear" or "constant".)
+ARG(n @@ If LANG(xout) is not specified, interpolation
+  takes place at LANG(n) equally spaced points spanning the interval
+  LANG([min(x),max(x)]).)
 ARG(rule @@ an integer describing how interpolation is to take
-place outside the interval
-LANG([min(x),max(x)]).
-If LANG(rule) is LANG(1) then LANG(NA)s
-are returned for such points and if it is LANG(2),
-the value at the closest data extreme is used.)
+  place outside the interval
+  LANG([min(x),max(x)]).
+  If LANG(rule) is LANG(1) then LANG(NA)s
+  are returned for such points and if it is LANG(2),
+  the value at the closest data extreme is used.)
+ARG(f @@ For LANG(method="constant") a number between 0 and 1 inclusive,
+  indicating a compromise between left- and right-continuous step
+  functions. If LANG(y0) and LANG(y1) are the values to the left and
+  right of the point then the value is LANG(y0*f+y1*(1-f)) so that
+  LANG(f=0) is right-continuous and LANG(f=1) is left-continuous.) 
 )
 VALUE(
-A function which will perform linear interpolation of the
-given data points.  For a given set of LANG(x)
-values this function will return the corresponding interpolated
-values.  This is often more useful than
-LANG(approx).
+LANG(approx) returns a list with components LANG(x) and LANG(y),
+containing LANG(n) coordinates 
+which interpolate the given data points according to the LANG(method)
+(and LANG(rule)) desired.
+PARA
+The function LANG(approxfun) returns a function performing (linear or constant)
+interpolation of the given data points.  For a given set of LANG(x)
+values, this function will return the corresponding interpolated
+values.  This is often more useful than LANG(approx).
 )
 SEEALSO(
-LANG(LINK(approx)), LANG(LINK(spline)), LANG(LINK(splinefun)).
+LANG(LINK(spline)) and LANG(LINK(splinefun)) for spline interpolation.
 )
 EXAMPLES(
 x <- 1:10
 y <- rnorm(10)
+par(mfrow=c(2,1))
+plot(x, y, main="approx(.) and approxfun(.)")
+points(approx(x, y), col=2, pch='*')
+points(approx(x, y, method="constant"), col=4, pch='*')
+BLANK
 f <- approxfun(x, y)
-curve(f(x), 0, 10)
+curve(f(x), 0, 10, col = 'green')
+points(x,y)
+is.function(fc <- approxfun(x,y, method="const"))# T
+curve(fc(x), 0, 10, col = 'darkblue', add = TRUE)
 )

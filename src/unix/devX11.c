@@ -36,6 +36,7 @@
 static double cex = 1.0;			/* Character expansion */
 static double srt = 0.0;			/* String rotation */
 static int lty = -1;				/* Line type */
+static double lwd = -1.0;
 static int col = -1;				/* Color */
 static int fg;					/* Foreground */
 static int bg;					/* Background */
@@ -102,7 +103,7 @@ static double pixelWidth(void);
 static int SetBaseFont(void);
 static void SetColor(int);
 static void SetFont(int, int);
-static void SetLinetype(int);
+static void SetLinetype(int, double);
 
 
 			/* Pixel Dimensions (Inches) */
@@ -382,26 +383,38 @@ static void FreeColors()
  *	different its not crucial).
  */
 
-static void SetLinetype(int newlty)
+static void SetLinetype(int newlty, double nlwd)
 {
 	unsigned char dashlist[8];
-	int i, ndash;
+	int i, ndash, newlwd;
 
-	if(newlty != lty) {
+	newlwd = nlwd;
+	if(newlwd < 1)
+		newlwd = 1;
+	if(newlty != lty || newlwd != lwd) {
+		lty = newlty;
+		lwd = newlwd;
 		if(newlty == 0) {
-			XSetLineAttributes(display, wgc, 1, LineSolid, CapRound, JoinRound);
-			lty = newlty;
+			XSetLineAttributes(display,
+				wgc,
+				newlwd,
+				LineSolid,
+				CapRound,
+				JoinRound);
 		}
 		else {
-			lty = newlty;
 			ndash = 0;
 			for(i=0 ; i<8 && newlty&15 ; i++) {
 				dashlist[ndash++] = newlty & 15;
 				newlty = newlty>>4;
 			}
 			XSetDashes(display, wgc, 0, dashlist, ndash);
-			XSetLineAttributes(display, wgc, 1,
-				LineOnOffDash, CapButt, JoinRound);
+			XSetLineAttributes(display,
+				wgc,
+				newlwd,
+				LineOnOffDash,
+				CapButt,
+				JoinRound);
 		}
 	}
 }
@@ -499,8 +512,7 @@ static int X11_Open(char *dsp, double w, double h)
 	wgc = XCreateGC(display, window, GCArcMode, &gcv);
 	XSetState(display, wgc, blackpixel, whitepixel, GXcopy, AllPlanes);
 	XSetFont(display, wgc, font->fid);
-	SetLinetype(0);
-
+	SetLinetype(0, 1);
 	return 1;
 }
 
@@ -618,8 +630,9 @@ static void X11_Close(void)
 
 static void X11_StartPath()
 {
+	int lwd;
 	SetColor(GP->col);
-	SetLinetype(GP->lty);
+	SetLinetype(GP->lty, GP->lwd);
 	if(hardcopy) {
 		psx11_SetColor(GP->col);
 		psx11_SetLinetype(GP->lty);
@@ -671,6 +684,7 @@ static void X11_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 	}
 	if (fg != NA_INTEGER) {
 		SetColor(fg);
+		SetLinetype(GP->lty, GP->lwd);
 		XDrawRectangle(display, window, wgc, (int)x0, (int)y0,
 			(int)x1 - (int)x0, (int)y1 - (int)y0);
 	}
@@ -697,7 +711,7 @@ static void X11_Circle(double x, double y, double r, int col, int border)
 		XFillArc(display, window, wgc, ix-ir, iy-ir, 2*ir, 2*ir, 0, 23040);
 	}
 	if(border != NA_INTEGER) {
-		SetLinetype(GP->lty);
+		SetLinetype(GP->lty, GP->lwd);
 		SetColor(border);
 		XDrawArc(display, window, wgc, ix-ir, iy-ir, 2*ir, 2*ir, 0, 23040);
 	}
@@ -729,7 +743,7 @@ static void X11_Polygon(int n, double *x, double *y, int bg, int fg)
 	}
 	if(fg != NA_INTEGER) {
 		SetColor(fg);
-		SetLinetype(GP->lty);
+		SetLinetype(GP->lty, GP->lwd);
 		XDrawLines(display, window, wgc, points, n+1, CoordModeOrigin);
 		XSync(display, 0);
 	}

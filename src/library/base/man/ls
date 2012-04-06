@@ -1,8 +1,8 @@
 TITLE(ls @@ List Objects)
 USAGE(
-ls(name, pos=2, envir=sys.frame(sys.parent()),
+ls(name, pos= -1, envir=pos.to.env(pos),
        all.names=FALSE, pattern)
-objects(name, pos=2, envir=sys.frame(sys.parent()),
+objects(name, pos= -1, envir=pos.to.env(pos),
        all.names=FALSE, pattern)
 )
 ALIAS(ls)
@@ -11,13 +11,14 @@ ARGUMENTS(
 ARG(name @@ the name of an attached object appearing
 in the vector of names returned by LANG(search).)
 ARG(pos @@ the index of an attached object in
-the list returned by LANG(search).)
-ARG(envir @@ an evaluation environment.)
+the list returned by LANG(search).  Defaults to the ITALIC(global) environment.)
+ARG(envir @@ an evaluation environment.  Defaults to the one corresponding
+to LANG(pos).)
 ARG(all.names @@ a logical value.  If LANG(TRUE), all
-object names are returned.  If LANG(FALSE) names
+object names are returned.  If LANG(FALSE), names
 which begin with a ``.'' are omitted.)
-ARG(pattern @@ an optional regular expression.
-Only names matching LANG(pattern) are returned.)
+ARG(pattern @@ an optional regular expression.  Only names
+matching LANG(pattern) are returned.)
 )
 DESCRIPTION(
 LANG(ls) and LANG(objects) return a vector of character strings

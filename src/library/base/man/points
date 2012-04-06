@@ -1,11 +1,35 @@
 TITLE(points @@ Add Points to a Plot)
 USAGE(
 points(x, y, pch="o", DOTS)
+points.default(x, y=NULL, pch=1, col="black", DOTS)
 )
 ALIAS(points)
+ALIAS(points.default)
+ARGUMENTS(
+ARG(x, y @@ coordinate vectors of points to plot.)
+ARG(pch @@ plotting 'character', i.e. symbol to use.  LANG(pch) can
+either be a LANG(LINK(character)) or an integer code for a set of
+graphics symbols.  The full set of S symbols is available with LANG(pch=0:18).
+PARA
+In addition, there is a special set of R plotting symbols which
+can be obtained with LANG(pch=19:25) and can be colored and filled
+with different colors:
+LANG(pch=19): solid circle,
+LANG(pch=20): bullet,
+LANG(pch=21): circle,
+LANG(pch=22): square,
+LANG(pch=23): diamond,
+LANG(pch=24): triangle point-up,
+LANG(pch=25): triangle point down.
+)
+ARG(col @@ color to use. )
+ARG(DOTS @@ Further graphical parameters (see LANG(LINK(par))) may
+also be supplied as arguments.)
+)
 DESCRIPTION(
-LANG(points) is a generic function to draw a sequence of points at the specified coordinates. 
-The specified character(s) are plotted, centred at the coordinates.
+LANG(points) is a generic function to draw a sequence of points at the
+specified coordinates. 
+The specified character(s) are plotted, centered at the coordinates.
 PARA
 Graphical parameters are permitted as arguments to this function.
 )
@@ -16,4 +40,17 @@ EXAMPLES(
 plot(-4:4, -4:4, type = 'n')# setting up coord. system
 points(rnorm(200), rnorm(200), col = 'red')
 points(rnorm(100)/2, rnorm(100)/2, col = 'blue', cex = 1.5)
+BLANK
+## Showing all the graphics symbols
+ipch <- 1:25
+iy <- 3 + 4-(ipch-1) %% 5
+ix <- (ipch-1) %/% 5
+plot(ix, iy, type='n', axes = F, xlab = '', ylab = '',
+     main = 'plot symbols :  points (..  pch = * )')
+abline(v=ix, h=iy, col = "lightgray", lty = "dotted")
+for(i in ipch) { # red symbols with a yellow interior (where available)
+  points(ix[i],      iy[i], pch=i, col="red", bg="yellow", cex = 15)
+  text  (ix[i] - .3, iy[i], i, col="brown", cex = 1.5)
+}
 )
+KEYWORD(aplot)

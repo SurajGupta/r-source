@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,50 +21,36 @@
 #include "Mathlib.h"
 #include "Graphics.h"
 
+/* This file contains support for color and line textures in graphics. */
+
 /*
- *	Internal Color and Linetype Representation
+ *	Color Specification
  *
  *	Colors are stored internally in integers.  Each integer is
- *	broken into four bytes.  The three most significant bytes
+ *	broken into four bytes.  The three least significant bytes
  *	are used to contain levels of red, green and blue.  These
- *	levels are integers in the range [0,255].  The low order byte
- *	is used to index into a color table with col= in function calls.
- *	The fact that RGB specifications and indexes are mutually
- *	exclusive means that either can be used in in a col=
- *	specification.  In addition colors can be named using an
- *	internal table which provides a set of standard color
- *	names eg. "red", "green", ...
+ *	levels are integers in the range [0,255].
  *
- *	Linetypes are stored internally in integers.  An integer
- *	is interpreted as containing a sequence of 8 4-bit integers
- *	which give the lengths of up to 8 on-off line segments.
- *	The lengths are typically interpreted as pixels on a screen
- *	and as "points" in postscript.
- *
- *	Note: On a typical machine the value NA_INTEGER can be used
- *	to indicate an invalid value for both linetype for color.
+ *      Externally, colors are specified either
+ *	a) by name, using a large table of color names,
+ *	b) by RGB values using a string of the form "#rrggbb"
+ *	   where rr, gg and bb are hex integers giving the level
+ *	   of red green and blue,
+ *	c) as an index into a user setable palette of colors.
  */
 
-	/* Fixed Color Table Accessed by Index */
-	/* It provides compatibility with S */
+	/* Default Color Palette */
 
-static int SizeColorTBL;
-
-static struct {
-	char *name;	/* X11 Color Name */
-	char *rgb;	/* #RRGGBB String */
-	unsigned code;	/* Internal R Color Code */
-}
-ColorTBL[] = {
-	{"red",			"#FF0000",	0},
-	{"green",		"#00FF00",	0},
-	{"blue",		"#0000FF",	0},
-	{"cyan",		"#00FFFF",	0},
-	{"magenta",		"#FF00FF",	0},
-	{"yellow",		"#FFFF00",	0},
-	{"white",		"#FFFFFF",	0},
-	{"black",		"#000000",	0},
-	{NULL,			NULL,		0}
+char *DefaultPalette[] = {
+	"black",
+	"red",
+	"green3",
+	"blue",
+	"cyan",
+	"magenta",
+	"yellow",
+	"white",
+	NULL
 };
 
 	/* The Table of Known Color Names */
@@ -73,14 +59,14 @@ ColorTBL[] = {
 	/* to the top of the database to avoid */
 	/* its being known as "gray100" */
 
-static int SizeColorDB;
+static int ColorDataBaseSize;
 
 static struct {
 	char *name;	/* X11 Color Name */
 	char *rgb;	/* #RRGGBB String */
 	unsigned code;	/* Internal R Color Code */
 }
-ColorDB[] = {
+ColorDataBase[] = {
 	{"white",		"#FFFFFF",	0},
 	{"aliceblue",		"#F0F8FF",	0},
 	{"antiquewhite",	"#FAEBD7",	0},
@@ -741,19 +727,11 @@ ColorDB[] = {
 	{NULL,			NULL,		0}
 };
 
-SEXP do_colors(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	SEXP ans;
-	int n;
-	n = 0;
-	while(ColorDB[n].name!=NULL)
-		n++;
-	ans = allocVector(STRSXP, n);
-	n = 0;
-	while(ColorDB[n].name!=NULL)
-		STRING(ans)[n++] = mkChar(ColorDB[n].name);
-	return ans;
-}
+
+#define COLOR_TABLE_SIZE 256
+
+static int ColorTableSize;
+static unsigned int ColorTable[COLOR_TABLE_SIZE];
 
 	/* Hex Digit to Integer Conversion */
 
@@ -778,7 +756,7 @@ static unsigned digithex(int digit)
 
 	/* String Comparison Ignoring Case and Squeezing Out Blanks */
 
-static int ColorNamesMatch(char *s, char *t)
+static int StrMatch(char *s, char *t)
 {
 	for(;;) {
 		if(*s == '\0' && *t == '\0') return 1;
@@ -811,22 +789,23 @@ unsigned int rgb2col(char *rgb)
 unsigned int name2col(char *nm)
 {
 	int i;
-	for(i=0 ; ColorDB[i].name ; i++) {
-		if(ColorNamesMatch(ColorDB[i].name, nm))
-			return ColorDB[i].code;
+	for(i=0 ; ColorDataBase[i].name ; i++) {
+		if(StrMatch(ColorDataBase[i].name, nm))
+			return ColorDataBase[i].code;
 	}
 	error("invalid color name\n");
 }
 
 	/* Index (as string) to Internal Color Code */
 
-unsigned int nstr2col(char *nm)
+unsigned int number2col(char *nm)
 {
 	int index;
-	char *p;
-	index = strtod(nm, &p);
-	if(*p) error("invalid color specification\n");
-	return ColorTBL[(index-1) % SizeColorTBL].code;
+	char *ptr;
+	index = strtod(nm, &ptr);
+	if(*ptr) error("invalid color specification\n");
+	if(index == 0) return DP->bg;
+	else return ColorTable[(index-1) % ColorTableSize];
 }
 
 static char ColBuf[8];
@@ -852,9 +831,9 @@ char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
 char *col2name(unsigned int col)
 {
 	int i;
-	for(i=0 ; ColorDB[i].name ; i++) {
-		if(col == ColorDB[i].code)
-			return ColorDB[i].name;
+	for(i=0 ; ColorDataBase[i].name ; i++) {
+		if(col == ColorDataBase[i].code)
+			return ColorDataBase[i].name;
 	}
 	ColBuf[0] = '#';
 	ColBuf[1] = HexDigits[(col >>  4) & 15];
@@ -870,7 +849,13 @@ char *col2name(unsigned int col)
 unsigned str2col(char *s)
 {
 	if(s[0] == '#') return rgb2col(s);
-	else if(isdigit(s[0])) return nstr2col(s);
+	else if(isdigit(s[0])) return number2col(s);
+	else return name2col(s);
+}
+
+static unsigned char2col(char *s)
+{
+	if(s[0] == '#') return rgb2col(s);
 	else return name2col(s);
 }
 
@@ -885,12 +870,14 @@ unsigned RGBpar(SEXP x, int i)
 	else if(isInteger(x) || isLogical(x)) {
 		if(INTEGER(x)[i] == NA_INTEGER) return NA_INTEGER;
 		index = INTEGER(x)[i] - 1;
-		return ColorTBL[abs(index) % SizeColorTBL].code;
+		if(index < 0) return DP->bg;
+		else return ColorTable[abs(index) % ColorTableSize];
 	}
 	else if(isReal(x)) {
 		if(!FINITE(REAL(x)[i])) return NA_INTEGER;
 		index = REAL(x)[i] - 1;
-		return ColorTBL[abs(index) % SizeColorTBL].code;
+		if(index < 0) return DP->bg;
+		else return ColorTable[abs(index) % ColorTableSize];
 	}
 }
 
@@ -899,13 +886,16 @@ unsigned RGBpar(SEXP x, int i)
 void InitColors()
 {
 	int i;
-	for(i=0 ; ColorTBL[i].name ; i++)
-		ColorTBL[i].code = rgb2col(ColorTBL[i].rgb);
-	SizeColorTBL = i;
 
-	for(i=0 ; ColorDB[i].name ; i++)
-		ColorDB[i].code = rgb2col(ColorDB[i].rgb);
-	SizeColorDB = i;
+	/* Initialize the Color Database */
+	for(i=0 ; ColorDataBase[i].name ; i++)
+		ColorDataBase[i].code = rgb2col(ColorDataBase[i].rgb);
+	ColorDataBaseSize = i;
+
+	/* Install Default Palette */
+	for(i=0 ; DefaultPalette[i] ; i++)
+		ColorTable[i] = str2col(DefaultPalette[i]);
+	ColorTableSize = i;
 }
 
 static unsigned int ScaleColor(double x)
@@ -913,6 +903,56 @@ static unsigned int ScaleColor(double x)
 	if(!FINITE(x) || x < 0.0 || x > 1.0)
 		error("invalid color intensity\n");
 	return (unsigned int)(255*x);
+}
+
+static setpalette(char **palette)
+{
+	int i;
+	for(i=0 ; (i<COLOR_TABLE_SIZE)&&palette[i] ; i++)
+		ColorTable[i] = name2col(palette[i]);
+	ColorTableSize = i;
+}
+
+SEXP do_palette(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP val, ans;
+	unsigned int ncols[COLOR_TABLE_SIZE];
+	int i, n;
+	checkArity(op,args);
+	/* Record the current palette */
+	PROTECT(ans = allocVector(STRSXP, ColorTableSize));
+	for(i=0 ; i<ColorTableSize ; i++)
+		STRING(ans)[i] = mkChar(col2name(ColorTable[i]));
+	val = CAR(args);
+	if(!isString(val)) errorcall(call, "invalid argument type\n");
+	if((n=length(val)) == 1) {
+		if(StrMatch("default", CHAR(STRING(val)[0])))
+			setpalette(DefaultPalette);
+		else errorcall(call, "unknown palette\n");
+	}
+	else if(n > 1) {
+		for(i=0 ; i<n ; i++)
+			ncols[i] = char2col(CHAR(STRING(val)[i]));
+		for(i=0 ; i<n ; i++)
+			ColorTable[i] = ncols[i];
+		ColorTableSize = n;
+	}
+	UNPROTECT(1);
+	return ans;
+}
+
+SEXP do_colors(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP ans;
+	int n;
+	n = 0;
+	while(ColorDataBase[n].name!=NULL)
+		n++;
+	ans = allocVector(STRSXP, n);
+	n = 0;
+	while(ColorDataBase[n].name!=NULL)
+		STRING(ans)[n++] = mkChar(ColorDataBase[n].name);
+	return ans;
 }
 
 SEXP do_hsv(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -983,7 +1023,7 @@ SEXP do_rgb(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(min <= 0) errorcall(call, "invalid argument length\n");
 
 	if(length(n) != 0 && length(n) != max)
-		errorcall(call, "invalid names vector");
+		errorcall(call, "invalid names vector\n");
 
 	PROTECT(c = allocVector(STRSXP, max));
 	for(i=0 ; i<max ; i++) {
@@ -1019,6 +1059,16 @@ SEXP do_gray(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(2);
 	return ans;
 }
+
+/*
+ *	LINE TEXTURE SPECIFICATION
+ *
+ *	Linetypes are stored internally in integers.  An integer
+ *	is interpreted as containing a sequence of 8 4-bit integers
+ *	which give the lengths of up to 8 on-off line segments.
+ *	The lengths are typically interpreted as pixels on a screen
+ *	and as "points" in postscript.
+ */
 
 typedef struct {
 	char *name;

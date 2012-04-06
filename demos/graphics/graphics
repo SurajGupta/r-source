@@ -1,5 +1,5 @@
 ###-*- R -*-
-par(ask = interactive() && .Device == "X11")	# For source
+opar <- par(ask = interactive() && .Device == "X11")	# For source
 
 # Here is some code which illustrates some of the differences between
 # R and S graphics capabilities.  Note that colors are generally specified
@@ -10,7 +10,7 @@ par(ask = interactive() && .Device == "X11")	# For source
 
 
 x <- rnorm(50)
-par(bg="white")
+opar <- c(opar, par(bg="white"))
 plot(x, ann=FALSE, type="n")
 abline(h=0, col=gray(.90))
 lines(x, col="green4", lty="dotted")
@@ -115,7 +115,7 @@ data("volcano")
 x <- 10*1:nrow(volcano)
 y <- 10*1:ncol(volcano)
 l <- pretty(range(volcano), 10)
-opar <- par(bg="lightcyan")
+par(bg="lightcyan")
 pin <- par("pin")
 xdelta <- diff(range(x))
 ydelta <- diff(range(y))
@@ -141,4 +141,6 @@ mtext("10 Meter Contour Spacing", side=3, line=0.35, outer=FALSE,
 par(bg="cornsilk")
 data(quakes)
 coplot(long~lat|depth, data=quakes, pch=21, bg="green3")
+
 par(opar)
+

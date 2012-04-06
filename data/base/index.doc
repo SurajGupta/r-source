@@ -15,9 +15,11 @@ deaths		Death Rates in Virginia (1940)
 discoveries	Yearly Numbers of "Important" Discoveries
 eurodist	Distances between European Cities
 faithful	Old Faithful Geyser Data
+freeny		Freeny's Revenue Data
 insects		The Effect of Insecticides on Insect Counts
 iris		Edgar Anderson's Iris Data
 islands		World Landmass Areas
+longley		Longley's Economic Regression Data
 mtcars		Motor Trend Car Data
 nhtemp		Yearly Average Temperatures in New Haven CT
 phones		The Numbers of Telephones

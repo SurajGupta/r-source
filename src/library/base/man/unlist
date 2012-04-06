@@ -15,5 +15,11 @@ information present in LANG(x).
 If LANG(use.names=FALSE) all naming information is dropped.
 )
 SEEALSO(
-LANG(LINK(c)).
+LANG(LINK(c)), LANG(LINK(as.list)).
+)
+EXAMPLES(
+unlist(unlist(options()))# works for vectors or lists
+l.ex <- list(a = list(1:5, LETTERS[1:5]), b = "Z", c = NA)
+unlist(l.ex, rec = F)
+unlist(l.ex, rec = T)
 )

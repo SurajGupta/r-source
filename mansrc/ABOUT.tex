@@ -1,7 +1,10 @@
 \documentclass[a4paper,11pt]{article}
 \usepackage{alltt}
+
 \addtolength{\textheight}{12mm}%\
 \addtolength{\topmargin}{-9mm} %/ -- still fits on US paper
+\addtolength{\textwidth}{24mm}%/
+\addtolength{\oddsidemargin}{-12mm}
 
 \newenvironment{display}[0]%
  {\begin{list}{}{\setlength{\leftmargin}{30pt}}\item}%
@@ -103,20 +106,20 @@ These are set verbatim in typewriter font.}
 
 \bigskip
 \pagebreak[3]
-\pagebreak[4]%-- at the moment, given the content....
+%%- \pagebreak[4]%-- at the moment, given the content....
 
 \section{Emphasis}
 Within the text of the document it is possible to set
 words in phrases in different styles as follows.
 \begin{center}
 \begin{tabular}{ll}
-{\tt BOLD(\textit{word})}   & set \emph{word} in \textbf{bold} font. \\
-{\tt ITALIC(\textit{word})} & set \emph{word} in \textit{italic} font. \\
-{\tt LANG(\textit{word})}   & set \emph{word} in \texttt{typewriter} font. \\
+\texttt{BOLD(\textit{word})}   & set \emph{word} in \textbf{bold} font. \\
+\texttt{ITALIC(\textit{word})} & set \emph{word} in \textit{italic} font. \\
+\texttt{LANG(\textit{word})}   & set \emph{word} in \texttt{typewriter} font. \\
 \end{tabular}
 \end{center}
 You should use \texttt{BOLD} and \texttt{ITALIC} in plain text for emphasis
-and \texttt{CODE} to make sure that language fragments stand out from the
+and \texttt{LANG} to make sure that language fragments stand out from the
 text.
 
 \section{Sectioning}
@@ -131,11 +134,12 @@ on a line by itself.
 Besides the \texttt{DESCRIPTION(..)}, \texttt{VALUE\textit{[S]}(..)},
 \texttt{REFERENCES(.)} and \texttt{NOTE(.)} sections, you can use further
 by, e.g.,
+\begin{display}
 \begin{alltt}
 SECTION(Warning @@  You must not call this function unless \ldots\ldots
 )
 \end{alltt}
-
+\end{display}
 
 \section{Hyperlinks}
 Currently, this only affects the creation of the \HTML\ pages (used, e.g.,
@@ -147,8 +151,16 @@ One main usage of  `\texttt{LINK}' is in the \texttt{SEEALSO} section of
 the help page, see~\ref{sec:doc-format}, above.
 
 
+
+\section{Miscellaneous}
+Use \texttt{DOTS} for the dots in function argument list ``\texttt{...}'',
+and \texttt{LDOTS} for $\ldots$ (ellipsis dots)
+
+With \texttt{COMMENT}(\dots)\ you can put your own comments regarding the
+help text. This will be completely disregarded, normally. Therefore, you
+can also use it to make part of the `help' invisible.
+
 \bigskip
-\pagebreak[4]%-- at the moment, given the content....
 
 \section{Mathematics}
 These are constructs that you can use for writing formulae:
@@ -177,10 +189,7 @@ DISPLAYSTYLE    & \verb#`{\displaystyle a1}'#   & $ {\displaystyle a1} $ \\
 OVER            & \verb#{{a1} \over {a2}}#      & $ {{a1} \over {a2}} $ \\
 SUP             & \verb#`{{a1}^{a2}}'#  & $ {{a1}^{a2}} $ \\
 SUB             & \verb#`{{a1}_{a2}}'#  & $ {{a1}_{a2}} $ \\
-CHOOSE          & \footnotesize
-                    \verb#`{\left(\begin{array}{c}a1# 
-                        \hspace*{1em} \verb#\\ a2\end{array}\right)}'# 
-                 & $ {\left(\begin{array}{c} a1 \\ a2 \end{array} \right)} $ \\
+CHOOSE          & \verb#`{ a1 \choose a2 }'#    & $ { a1 \choose a2 } $ \\
 PAREN           & \verb#`{\left( a1 \right)}'#  & $ {\left( a1 \right)} $ \\
 SP              & \verb#`'#     & $  $ \\
 \hline
@@ -226,13 +235,4 @@ where, for the \HTML\ and  the ``direct'' ('man' like) on-line help becomes
              for x = 0, 1, 2, ....
 \end{verbatim}
         
-
-\section{Miscellaneous}
-Use \texttt{DOTS} for the dots in function argument list ``\texttt{...}'',
-and \texttt{LDOTS} for $\ldots$ (ellipsis dots)
-
-With \texttt{COMMENT}(\dots)\ you can put your own comments regarding the
-help text. This will be completely disregarded, normally. Therefore, you
-can also use it to make part of the `help' invisible.
-
 \end{document}

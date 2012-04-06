@@ -9,6 +9,7 @@ is.ordered(x)
 is.unordered(x)
 BLANK
 as.factor(x, ordered=FALSE)
+as.ordered(x)
 )
 ALIAS(factor)
 ALIAS(ordered)
@@ -16,6 +17,7 @@ ALIAS(is.factor)
 ALIAS(is.ordered)
 ALIAS(is.unordered)
 ALIAS(as.factor)
+ALIAS(as.ordered)
 VALUE(
 The function LANG(factor) is used to encode a vector as a factor
 (the names category and enumerated type are also used for factors).
@@ -49,7 +51,12 @@ and LANG(FALSE) otherwise.
 PARA
 LANG(as.factor) coerces its argument to a factor.
 It is an abbreviated form of LANG(factor).
+PARA
+LANG(as.ordered(x)) returns LANG(x) if this is ordered, and
+LANG(ordered(x)) otherwise.
 )
 SEEALSO(
-LANG(LINK(gl)), LANG(LINK(levels)), LANG(LINK(nlevels)).
+LANG(LINK(gl)) for construction of ``balanced'' factors;
+LANG(LINK(levels)) and LANG(LINK(nlevels)) for accessing the levels,
+and LANG(LINK(codes)) to get integer codes.
 )

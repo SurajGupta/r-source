@@ -611,13 +611,23 @@ SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	INTEGER(dims)[1] = nrow;
 	setAttrib(r, R_DimSymbol, dims);
 
-	dn = getAttrib(a, R_DimNamesSymbol);
-	if (dn != R_NilValue) {
-		dn = duplicate(dn);
-		dims = CAR(dn);
-		CAR(dn) = CADR(dn);
-		CADR(dn) = dims;
-		setAttrib(r, R_DimNamesSymbol, dn);
+	if(!isNull(dn = getAttrib(a, R_DimNamesSymbol))) {
+		PROTECT(dn = duplicate(dn));
+		switch(length(dn)) {
+		case 1:
+			PROTECT(dims = allocList(2));
+			CADR(dims) = CAR(dn);
+			setAttrib(r, R_DimNamesSymbol, dims);
+			UNPROTECT(1);
+			break;
+		case 2:
+			dims = CAR(dn);
+			CAR(dn) = CADR(dn);
+			CADR(dn) = dims;
+			setAttrib(r, R_DimNamesSymbol, dn);
+			break;
+		}
+		UNPROTECT(1);
 	}
 
 	UNPROTECT(1);

@@ -3,6 +3,5 @@ T <- TRUE
 F <- FALSE
 version <- Version()
 .Machine <- Machine()
-.Libraries <- character(0)
 options(na.action="na.omit")
-if(interactive()) macintosh()
+.First <- function() if(interactive()) macintosh()

@@ -37,6 +37,8 @@ static void BadDimensions()
 
 static int CountItems(SEXP sxp, int handsoff)
 {
+	int lenx;
+
 	if(isNull(sxp))
 		return 0;
 	if(isMatrix(sxp)) {
@@ -49,10 +51,13 @@ static int CountItems(SEXP sxp, int handsoff)
 		else return ncols(sxp);
 	}
 	if(isVector(sxp)) {
-		if(nr && (nr != length(sxp)) && length(sxp) != 1)
+		lenx = length(sxp);
+		if(!nr)
+			nr = lenx;
+		if(lenx != 1 && nr != 1 && lenx != nr )
 			BadDimensions();
-		if(length(sxp) != 1)
-			nr = length(sxp);
+		if( lenx > nr )
+			nr = lenx;
 		nc += 1;
 		return 1;
 	}

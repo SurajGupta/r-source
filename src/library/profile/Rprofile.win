@@ -1,12 +1,11 @@
 .GlobalEnv <- globalenv()
-.SystemEnv <- NULL
 T <- TRUE
 F <- FALSE
-help<-function(...)
-                cat("Sorry, no help is available (yet).\n")
-.First <- function() windows()
-
 version <- Version()
 .Machine <- Machine()
-.Libraries <- character(0)
+help<-function(...)
+                cat("Sorry, no help is available (yet).\n")
 options(na.action="na.omit")
+
+.First <- function() windows()
+

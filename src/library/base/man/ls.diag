@@ -30,7 +30,9 @@ REFERENCES(
 Belsley, Kuh and Welsch.
 )
 SEEALSO(
-LANG(LINK(ls.print)), LANG(LINK(lm)), LANG(LINK(summary.lm)), LANG(LINK(anova)).
+LANG(LINK(hat)) for the hat matrix diagonals,
+LANG(LINK(ls.print)),
+LANG(LINK(lm.influence)), LANG(LINK(summary.lm)), LANG(LINK(anova)).
 )
 EXAMPLES(
 lsD9 <- lsfit(x = as.numeric(gl(2,10,20)), y = weight)

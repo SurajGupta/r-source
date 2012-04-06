@@ -12,44 +12,11 @@ cp $RHOME/src/windows/Platform.h $RHOME/src/include
 
 cd $RHOME/src
 
-ROUTINES="applc/ROUTINES"
+#we take only the C source for windows
 
-sed '
-s/F77_SUBROUTINE(\(.*\))/int \1_();/
-s/C_FUNCTION(\(.*\))/int \1();/
-' ${ROUTINES} > /tmp/ForeignDecl.h
+ln appl.c/*.c appl
 
-if test ! -f include/ForeignDecl.h
-then
-	cp /tmp/ForeignDecl.h include/ForeignDecl.h
-else
-	if diff /tmp/ForeignDecl.h include/ForeignDecl.h
-	then
-	:
-	else
-		cp /tmp/ForeignDecl.h include/ForeignDecl.h
-	fi
-fi
-
-
-sed '
-s/F77_SUBROUTINE(\(.*\))/	"\1_",	\1_,/
-s/C_FUNCTION(\(.*\))/	"\1",	\1,/
-' ${ROUTINES} > /tmp/ForeignTab.h
-
-if test ! -f include/ForeignTab.h
-then
-	cp /tmp/ForeignTab.h include/ForeignTab.h
-else
-	if diff /tmp/ForeignTab.h include/ForeignTab.h
-	then
-	:
-	else
-		cp /tmp/ForeignTab.h include/ForeignTab.h
-	fi
-fi
-rm -f /tmp/ForeignTab.h /tmp/ForeignDecl.h
-
+sh GETSYMBOLS
 
 # Create the library of interpreted functions
 

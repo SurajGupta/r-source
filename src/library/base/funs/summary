@@ -26,7 +26,8 @@ function(object, ..., digits = max(options()$digits - 3, 3))
 		for(i in 1:n) {
 			ii <- object[[i]]
 			ll[i] <- length(ii)
-			sumry[i, 2] <- if(is.object(ii)) class(ii) else "-none-"
+			cls <- class(ii)
+			sumry[i, 2] <- if(length(cls)>0) cls[1] else "-none-"
 			sumry[i, 3] <- mode(ii)
 		}
 		sumry[, 1] <- format(as.integer(ll))

@@ -1,19 +1,61 @@
-postscript <- function(
-	file="Rplots.ps",
-	paper=options("papersize")$papersize,
-	landscape=TRUE,
-	width=0,
-	height=0,
-	family="Helvetica",
-	pointsize=12,
-	bg="white",
-	fg="black",
-	onefile,
-	print.it,
-	append)
+.PostScript.Options <- list(
+	paper="default",
+	horizontal = TRUE,
+	width = 0,
+	height = 0,
+	family = "Helvetica", 
+	pointsize = 12,
+	bg = "white",
+	fg = "black",
+	onefile = TRUE, 
+	print.it = FALSE,
+	append = FALSE) 
+
+ps.options <-
+function(file="Rplots.ps", ..., reset=F)
 {
-	.Internal(device(
-		"postscript",
-		as.character(c(file, paper, family, bg, fg)),
-		c(width, height, landscape, pointsize)))
+	new <- list(...)
+	if(length(new) != length(names(new)))
+		stop("invalid arguments to ps.options")
+	if(reset) rm(.PostScript.Options, envir=.GlobalEnv)
+	old <- get(".PostScript.Options", envir=.GlobalEnv)
+	if(!is.list(old))
+		stop("invalid postscript options")
+	oldnames <- names(old)
+	newnames <- names(new)
+	if(length(new) > 0) {
+		matches <- pmatch(newnames, oldnames)
+		if(any(is.na(matches)))
+			stop("invalid postscript options")
+		else
+			old[oldnames[matches]] <- new
+		assign(".PostScript.Options", old, envir=.GlobalEnv)
+	}
+	if(reset || length(new) > 0) invisible(old)
+	else old
+}
+
+postscript <-
+function (file="Rplots.ps", ...)
+{
+	new <- list(...)
+	if(length(new) != length(names(new)))
+		stop("invalid arguments to postscript (need NAMED args)")
+	old <- get(".PostScript.Options", envir=.GlobalEnv)
+	if(!is.list(old))
+		stop("invalid postscript options")
+	oldnames <- names(old)
+	newnames <- names(new)
+	if(length(new) > 0) {
+		matches <- pmatch(newnames, oldnames)
+		if(any(is.na(matches)))
+			stop("invalid postscript options")
+		else
+			old[oldnames[matches]] <- new
+	}
+	cpars <- old[c("paper", "family", "bg", "fg")]
+	npars <- old[c("width", "height", "horizontal", "pointsize")]
+	cpars <- c(file, as.character(unlist(lapply(cpars, "[", 1))))
+	npars <- as.numeric(unlist(lapply(npars, "[", 1)))
+	.Internal(device("postscript", cpars, npars))
 }

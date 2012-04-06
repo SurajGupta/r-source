@@ -1,0 +1,28 @@
+TITLE(detach @@ Detach R objects from LANG(search) path)
+USAGE(
+detach(name, pos = 2)
+)
+ALIAS(detach)
+ARGUMENTS(
+ARG(name @@ The object to detach.  Defaults to LANG(search()[pos]).)
+ARG(pos @@ Index position in LANG(LINK(search)()) of database to detach.)
+)
+DESCRIPTION(
+Detach a database, i.e., remove it from the LANG(LINK(search)()) patch
+of available R objects. Usually, this either a LANG(LINK(data.frame))
+which has been LANG(LINK(attach))ed or a package which was required
+previously.
+)
+VALUE(
+The attached database is returned invisibly, either as
+LANG(LINK(data.frame)) or as LANG(LINK(list)).  
+)
+SEEALSO(
+LANG(LINK(attach)), LANG(LINK(library)), LANG(LINK(search)),
+LANG(LINK(objects)).
+)
+EXAMPLES(
+require(eda)#package
+detach(package:eda)
+)
+KEYWORD( path )

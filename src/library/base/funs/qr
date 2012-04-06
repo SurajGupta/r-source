@@ -38,7 +38,8 @@ qr.coef <- function(qr, y)
 		y,
 		ny,
 		coef=matrix(0,nr=k,nc=ny),
-		info=integer(1))
+		info=integer(1),
+		NAOK = TRUE)[c("coef","info")]
 	if(z$info != 0) stop("exact singularity in qr.coef")
 	if(k < p) {
 		coef <- matrix(as.double(NA),nr=p,nc=ny)

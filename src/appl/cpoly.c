@@ -39,7 +39,6 @@
 static double cauchy_();
 static double cmod_(double *, double *);
 static double errev_(int *, double *, double *, double *, double *, double *, double *);
-static double pow_di(double *, int *);
 static double scale_();
 static int calct_(int *);
 static int cdivid_(double *, double *,double *, double *, double *, double *);
@@ -717,7 +716,7 @@ static double scale_(int *nn, double *pt, double *eta, double *infin,
 			}
 		}
 		l = (int) (log(sc) / log(*base) + 0.5);
-		return pow_di(base, &l);
+		return POW_DI(base, &l);
 	}
 	else return 1.0;
 }
@@ -774,33 +773,6 @@ static double cmod_(double *r, double *i)
 		return ar * sqrt(d1 * d1 + 1.0);
 	}
 }
-
-static double pow_di(double *ap, int *bp)
-{
-	double pow, x;
-	int n;
-
-	pow = 1;
-	x = *ap;
-	n = *bp;
-
-	if(n != 0) {
-		if(n < 0) {
-			n = -n;
-			x = 1/x;
-                }
-		for(;;) {
-			if(n & 01)
-				pow *= x;
-			if(n >>= 1)
-				x *= x;
-			else
-				break;
-                }
-        }
-	return pow;
-}
-
 
 /*  mcon provides machine constants used in various parts of the
  *  program. the user may either set them directly or use the

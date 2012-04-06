@@ -1,7 +1,6 @@
 TITLE(image @@ Display a color image)
 USAGE(
 image(x, y, z, zlim, col=heat.colors(12), ...)
-BLANK
 )
 ALIAS(image)
 ARGUMENTS(
@@ -29,7 +28,7 @@ LANG(n) giving the number of colors desired.
 )
 NOTE(
 This function is based on an interpreted function
-written by Thomas Lumley (thomas@biostat.washington.edu).
+written by Thomas Lumley, LANG(<thomas@biostat.washington.edu>).
 )
 SEEALSO(
 LANG(LINK(contour)),

@@ -9,6 +9,7 @@ OBJ= \
 	dataentry.o \
 	devX11.o \
 	devPS.o \
+	dynload.o \
 	edit.o \
 	psx11.o \
 	PostScript.o \

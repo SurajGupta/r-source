@@ -9,8 +9,6 @@ function(display="", width=7, height=7, ps=12,
 	orientation <- match(orientation,c("portrait", "landscape", "flexible"))
 	if(is.na(orientation))
 		stop("unknown page orientation in x11")
-	.Internal(
-		device("X11",
-		as.character(c(display[1], paper)),
-		as.double(c(width, height, ps, orientation))))
+	.Internal(device("X11", as.character(c(display[1], paper)),
+				as.double(c(width, height, ps, orientation))))
 }

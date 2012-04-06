@@ -1,16 +1,27 @@
 #!/bin/sh
+#
+# ${RHOME}/cmd/help
 
+# FIXME when the new directory structure is here!
+
+LIBS=${RLIBS:=${RHOME}}
 pager=${PAGER-"more -s"}
-subject=$1
-shift
-for i in $*
-do
-	file=`grep "^$subject	" $RHOME/help/$i/AnIndex`
 
-	if [ ! "x$file" = x ]
+subject=${1}
+shift
+for lib in ${LIBS}
+do
+    for pkg in $*
+    do
+	if [ -f "${lib}/help/${pkg}/AnIndex" ];
 	then
-		file=$i/`echo $file | awk '{printf("%s", $2)}'`
-		exec $pager $RHOME/help/$file
+	    file=`grep "^${subject}	" ${lib}/help/${pkg}/AnIndex`
+	    if [ ! "x${file}" = x ]
+	    then
+		file=${pkg}/`echo ${file} | awk '{printf("%s", $2)}'`
+		exec ${pager} ${lib}/help/${file}
+	    fi
 	fi
-done
-echo "sorry, no help for \"$subject\"."
+    done
+done    
+echo "sorry, no help for \"${subject}\"."

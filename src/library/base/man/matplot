@@ -35,9 +35,11 @@ The first character is the plotting-character for the first plot, the
 second for the second, etc.  The default is the digits (1 through 9, 0)
 then the letters. 
 BLANK
-To mix special plotting symbols (those specified by integers) and plotting
-characters, either use character escapes LANG(pch="Xe002") or figure out
-the numeric equivalent of the ASCII character, LANG(pch=c(88,2)).
+COMMENT( To mix special plotting symbols (those specified by integers) and
+	 plotting characters, either use character escapes LANG(pch="Xe002")
+	 or figure out the numeric equivalent of the ASCII character,
+	 LANG(pch=c(88,2)).
+)
 )
 ARG(col @@ vector of colors.  Colors are used cyclically.)
 ARG(xlim, ylim @@ )
@@ -53,7 +55,7 @@ LANG(LINK(points)) and LANG(LINK(lines)).)
 ARG(verbose @@ logical.   If LANG(TRUE), write one line of what is done.)
 )
 COMMENT(--------- end of ARGUMENTS --------------------------)
-SECTION(Side-effects @@
+SECTION(Side Effects @@
 Function LANG(matplot) generates a new plot; LANG(matpoints) and
 LANG(matlines) add to the current one.
 )
@@ -91,11 +93,11 @@ par(bg = 'bisque')
 matplot(c(1,8), c(0,4.5), type="n",
      xlab="Length", ylab="Width",
      main= "Petal and Sepal Dimensions in Iris Blossoms")
-matpoints(iris[iS,c(1,3)], iris[iS,c(2,4)], pch="sS", col = c(1,3))
-matpoints(iris[iV,c(1,3)], iris[iV,c(2,4)], pch="vV", col = c(1,3))
+matpoints(iris[iS,c(1,3)], iris[iS,c(2,4)], pch="sS", col = c(2,4))
+matpoints(iris[iV,c(1,3)], iris[iV,c(2,4)], pch="vV", col = c(2,4))
 legend(1,4, c("    Setosa Petals", "    Setosa Sepals",
               "Versicolor Petals", "Versicolor Sepals"),
-       pch="sSvV", col=rep(c(1,3),2))
+       pch="sSvV", col=rep(c(2,4),2))
 BLANK
 nam.var <- colnames(iris)[-5]
 nam.spec <- as.character(iris[1+50*0:2, "Species" ])
@@ -108,5 +110,5 @@ matplot(iris.S[,"Petal.Length",], iris.S[,"Petal.Width",], pch="SCV",
             sep = "=", collapse=",  "),
         main="Fisher's Iris Data")
 )
-COMMENT(KEYWORD(array))
-COMMENT(KEYWORD(aplot))
+KEYWORD(array)
+KEYWORD(aplot)

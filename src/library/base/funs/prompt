@@ -1,11 +1,9 @@
-### -*- R -*-
-
 prompt <- function(object, ...) UseMethod("prompt")
 
-## Later, we may want  a data.frame method (as S).
+## Later, we may want  a data.frame method ..
 
-prompt.default <- function(object, filename = paste0(name, ".man"),
-			   force.function = FALSE)
+prompt.default <-
+function(object, filename = paste0(name, ".Rd"), force.function = FALSE)
 {
 	paste0 <- function(...) paste(..., sep = "")
 	is.missing.arg <- function(arg)
@@ -39,8 +37,7 @@ prompt.default <- function(object, filename = paste0(name, ".man"),
 		if(length(s))
 		  file <- c(file, "ARGUMENTS(",
 			    paste0("ARG(", arg.n, " @@",
-				   " ~~Describe ", arg.names, " here~~	)"),
-			    ")")
+				   " ~~Describe ", arg.names, " here~~	)"),")")
 		fn.def <- deparse(fn)
 		if(any(br <- substr(fn.def,1,1) == ")"))
 		  fn.def[br] <- paste(" ", fn.def[br])
@@ -93,7 +90,7 @@ prompt.default <- function(object, filename = paste0(name, ".man"),
 	if(substr(RHOME,1,8) == "/tmp_mnt") RHOME <- substr(RHOME,9,1000)
 	cat("created file named ", filename, " in the current directory.\n",
 	    " Edit the file and move it to the appropriate directory,\n",
-	    paste(RHOME,"src/manual/man/",sep="/") , "dropping the ending '.man'\n"
+	    paste(RHOME,"src/manual/man/",sep="/"),"dropping the ending '.Rd'\n"
 	    )
 	invisible(file)
 }

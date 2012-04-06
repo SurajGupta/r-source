@@ -9,7 +9,7 @@ cp mansrc/latex/Man.tex dvi
 cp mansrc/latex/Rdoc.sty dvi
 cd src/library/base/man
 
-$D2L `ls -A | sort -f| sed '/CVS/d; /~$/d'` > ${DVIDIR}/doc.tex
+$D2L `ls -A | sort -f| sed '/CVS/d;/~$/d;/\.bak$/d;/\.orig$/d'` > ${DVIDIR}/doc.tex
 (cd $DVIDIR;
  latex Man
  if [ -x `which xdvi` ];then xdvi Man & 

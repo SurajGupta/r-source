@@ -2,6 +2,7 @@
 #define PLATFORM_H_
 
 #define Win32 
+#define Windows
 
 /* Floating Point Arithmetic */
 #define HAVE_MATHERR		/* System V */

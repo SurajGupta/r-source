@@ -32,6 +32,9 @@
  *
  *	incurly: keeps track of whether we are inside a curly or not,
  *	this affects the printing of if-then-else.
+ *	
+ *	inlist: keeps track of whether we are inside a list or not,
+ *	this affects the printing of if-then-else.
  *
  *	startline: indicator 0=start of a line (so we can tab out to
  *	the correct place).
@@ -57,6 +60,7 @@ static char buff[BUFSIZE];
 static int linenumber;
 static int len;
 static int incurly = 0;
+static int inlist = 0;
 static int startline = 0;
 static int indent = 0;
 static SEXP strvec;
@@ -79,15 +83,30 @@ void deparse2(SEXP, SEXP);
 	/* and a second time to put them into the string vector for return. */
 	/* Printing this to a file is handled by the calling routine. */
 
+/* DEBUG_ME
+	The code below saves and restores the value of the global
+	variable "cutoff".  This could create a problem if a user
+	interrupts the deparse before there is a chance to restore
+	the value.  One possible fix is to restructure the code
+	with another function which takes a cutoff value as a
+	parameter.  Then "do_deparse" and "deparse1" could each
+	call this deeper function with the appropriate argument.
+
+	I wonder why I didn't just do this? -- it would have been
+	quicker than writing this note.  I guess it needs a bit
+	more thought ...
+*/
+
 
 SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP ca1;
-	int cut0;
+	int savecutoff, cut0;
 	/*checkArity(op, args);*/
 	if(length(args) < 1) errorcall(call, "too few arguments\n");
 
 	ca1 = CAR(args); args = CDR(args);
+	savecutoff = cutoff;
 	cutoff = DEFAULT_Cutoff;
 	if(!isNull(CAR(args))) {
 		cut0 = asInteger(CAR(args));
@@ -96,15 +115,17 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 		else
 			cutoff = cut0;
 	}
-	return deparse1(ca1, 0);
+	ca1 = deparse1(ca1, 0);
+	cutoff = savecutoff;
+	return ca1;
 }
 
-	/* The function deparse1 gets a second argument; Short. */
-	/* If Short is 1 then the returned value is a STRSXP of */
+	/* The function deparse1 gets a second argument; abbrev. */
+	/* If abbrev is 1 then the returned value is a STRSXP of */
 	/* length 1 with at most 10 characters.  This is use for */
 	/* plot labelling etc. */
 
-SEXP deparse1(SEXP call, int Short)
+SEXP deparse1(SEXP call, int abbrev)
 {
 	SEXP svec;
 	int savedigits;
@@ -115,7 +136,7 @@ SEXP deparse1(SEXP call, int Short)
 	PROTECT(svec = allocVector(STRSXP, linenumber));
 	deparse2(call, svec);
 	UNPROTECT(1);
-	if (Short == 1) { 
+	if (abbrev == 1) { 
 		buff[0]='\0';
 		strncat(buff, CHAR(STRING(svec)[0]), 10);
 		if (strlen(CHAR(STRING(svec)[0])) > 10)
@@ -341,12 +362,13 @@ void deparse2buff(SEXP s)
 		print2buff("<environment>");
 		break;
 	case EXPRSXP:
-		if(length(s) <= 0) print2buff("NULL");
+		if(length(s) <= 0) print2buff("expression()");
 		else deparse2buff(VECTOR(s)[0]);
 		break;
 	case LISTSXP:
 		attr1(s);
 		print2buff("list(");
+		inlist++;
 		for (t=s ; CDR(t) != R_NilValue ; t=CDR(t) ) {
 			if( TAG(t) != R_NilValue ) {
 				deparse2buff(TAG(t));
@@ -361,6 +383,7 @@ void deparse2buff(SEXP s)
 		}
 		deparse2buff(CAR(t));
 		print2buff(")" );
+		inlist--;
 		attr2(s);
 		break;
 	case LANGSXP:
@@ -379,7 +402,7 @@ void deparse2buff(SEXP s)
 					/* print the predicate */
 					deparse2buff(CAR(s));
 					print2buff(") ");
-					if (incurly) {
+					if (incurly && !inlist ) {
 						lookahead = curlyahead(CAR(CDR(s)));
 						if (!lookahead) {
 							writeline();
@@ -389,7 +412,7 @@ void deparse2buff(SEXP s)
 					/* need to find out if there is an else */
 					if (length(s) > 2) {
 						deparse2buff(CAR(CDR(s)));
-						if (incurly > 0) {
+						if (incurly && !inlist) {
 							writeline();
 							if (!lookahead)
 								indent--;
@@ -401,7 +424,7 @@ void deparse2buff(SEXP s)
 					}
 					else {
 						deparse2buff(CAR(CDR(s)));
-						if (incurly > 0 && !lookahead)
+						if (incurly && !lookahead && !inlist )
 							indent--;
 					}
 					break;
@@ -458,13 +481,17 @@ void deparse2buff(SEXP s)
 				case PP_RETURN:
 					print2buff(CHAR(PRINTNAME(op)));
 					print2buff("(");
+					inlist++;
 					args2buff(s, 0, 0);
+					inlist--;
 					print2buff(")");
 					break;
 				case PP_FOREIGN:
 					print2buff(CHAR(PRINTNAME(op)));
 					print2buff("(");
+					inlist++;
 					args2buff(s, 1, 0);
+					inlist--;
 					print2buff(")");
 					break;
 				case PP_FUNCTION:

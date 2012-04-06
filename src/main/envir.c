@@ -355,7 +355,7 @@ SEXP do_search(SEXP call, SEXP op, SEXP args, SEXP env)
 	/* TODO - what should the name of this be? */
 
 	STRING(ans)[0] = mkChar(".GlobalEnv");
-	STRING(ans)[n-1] = mkChar("library:base");
+	STRING(ans)[n-1] = mkChar("package:base");
 
 	i = 1;
 	for (t = ENCLOS(R_GlobalEnv); t != R_NilValue ; t = ENCLOS(t)) {

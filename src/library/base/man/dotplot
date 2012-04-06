@@ -1,31 +1,37 @@
 TITLE(dotplot @@ Cleveland Dotcharts)
 USAGE(
-dotplot(x, labels=NULL, groups=NULL, gdata=NULL,
-        color, gcolor, pch=11, gpch=11, cex, DOTS)
+dotplot(x, labels=NULL, groups=NULL, gdata=NULL, cex = par("cex"),
+        pch=21, gpch=21, bg = par("bg"), color = par("fg"), 
+	gcolor = par("fg"), lcolor = "gray", DOTS)
 )
 ALIAS(dotplot)
 ARGUMENTS(
 ARG(x @@ either a vector or matrix of numeric values
 (LANG(NA)s are allowed).
 If LANG(x) is a matrix the overall plot consists of
-juxtaposed dotplots for each row.)
+juxtaposed dotplots for each row.
+)
 ARG(labels @@ a vector of labels for each point.
 For vectors the default is to use LANG(names(x)) and for
-matrices the row labels LANG(dimnames(x)[[1]]).)
-ARG(group @@ an optional factor indicating how the
+matrices the row labels LANG(dimnames(x)[[1]]).
+)
+ARG(groups @@ an optional factor indicating how the
 elements of LANG(x) are grouped.
-If LANG(x) is a matrix, the groups will default
-to the columns of LANG(x).)
+If LANG(x) is a matrix, LANG(groups) will default to the columns of LANG(x).
+)
 ARG(gdata @@ data values for the groups.
 This is typically a summary such as the median or mean
-of each group.)
-ARG(color @@ the color to be used for points an labels.)
-ARG(gcolor @@ the color to be used for group labels and values.)
+of each group.
+)
+ARG(cex @@ the character size to be used.  Setting LANG(cex)
+to a value smaller than one can be a useful way of avoiding label
+overlap.)
 ARG(pch @@ the plotting character or symbol to be used.)
 ARG(gpch @@ the plotting character or symbol to be usea for group values.)
-ARG(cex @@ the character size to be used.  Setting LANG(cex)
-to value smaller than one can be a useful way of avoiding label
-overlap.)
+ARG(bg @@ the background color to be used.)
+ARG(color @@ the color to be used for points an labels.)
+ARG(gcolor @@ the color to be used for group labels and values.)
+ARG(lcolor @@ the color to be used for the horizontal lines.)
 ARG(DOTS @@ graphical parameters can also be specified as arguments.)
 )
 VALUE(

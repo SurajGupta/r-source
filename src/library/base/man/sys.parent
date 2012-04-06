@@ -25,15 +25,15 @@ ARG(which @@ the frame number.)
 ARG(n @@ the number of frame generations to go back.)
 )
 DESCRIPTION(
-These functions provide access to environments (frames in S-speak)
-associated with functions further up the calling stack.
+These functions provide access to LANG(LINK(environment))s (``frames''
+in S-speak) associated with functions further up the calling stack.
 You need access to two different types of environments.
 You need access to the environment where the arguments to a function
-are defined. This is what LANG(sys.parent) does.
-You also need access to the environment where a function is being evaluated
+are defined; this is what LANG(sys.parent) does.
+You also need access to the environment where a function is being evaluated;
 this is what LANG(sys.frame) does.
 PARA
-Often LANG(sys.parent) is the LANG(globalEnv) or the top-level environment.
+Often LANG(sys.parent) is the top-level environment, LANG(LINK(.GlobalEnv)).
 This is given number 1 in the list of frames. Each subsequent function
 evaluation increases the frame stack by 1 and the environment for evaluation
 of that function is returned by LANG(sys.frame) with the appropriate index.
@@ -47,4 +47,7 @@ contexts are not counted nor are they reported. There is no access to
 them. 
 PARA
 LANG(sys.status) has not been implemented yet.
+)
+SEEALSO(
+  LANG(LINK(eval)) for the usage of LANG(sys.frame).
 )

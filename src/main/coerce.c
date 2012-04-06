@@ -364,6 +364,7 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 		break;
 	case 302:		/* is.function */
 		LOGICAL(ans)[0] = (TYPEOF(CAR(args)) == CLOSXP) ||
+				  (TYPEOF(CAR(args)) == SPECIALSXP) ||
 				  (TYPEOF(CAR(args)) == BUILTINSXP);
 		break;
 
@@ -511,9 +512,13 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 
 	/* is this dangerous ??? */
 	/* should we duplicate here */
+
 	if (TYPEOF(v) == LANGSXP && type==LISTSXP) {
 		TYPEOF(v) = LISTSXP;
 		return(v);
+	}
+	if(type == EXPRSXP) {
+		return coerceToExpression(v);
 	}
 
 	if (isList(v) || isLanguage(v))
@@ -573,6 +578,12 @@ SEXP coerceList(SEXP v, SEXPTYPE type)
 		t = v;
 		for ( ; v != R_NilValue; v = CDR(v), i++)
 			STRING(rval)[i] = STRING(deparse1(CAR(v), 0))[0];
+	}
+	else if(type == EXPRSXP) {
+		PROTECT(rval = allocVector(type, 1));
+		VECTOR(rval)[0] = v;
+		UNPROTECT(1);
+		return rval;
 	}
 	else {
 		if (!isVectorizable(v))
@@ -1043,44 +1054,50 @@ static SEXP coerceToExpression(SEXP v)
 	SEXP ans, tmp;
 	int i, n, newtype;
 
-	n = LENGTH(v);
-	PROTECT(ans = allocVector(EXPRSXP, n));
 		/* ATTRIB(ans) = duplicate(ATTRIB(v)); */
-	switch (TYPEOF(v)) {
-	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
-	case INTSXP:
-		if(isFactor(v)) newtype = INTSXP;
-		else newtype = TYPEOF(v);
-		for(i=0 ; i<n ; i++) {
-			tmp = allocVector(newtype, 1);
-			INTEGER(tmp)[0] = INTEGER(v)[i];
-			VECTOR(ans)[i] = tmp;
+	if(isVector(v)) {
+		n = LENGTH(v);
+		PROTECT(ans = allocVector(EXPRSXP, n));
+		switch (TYPEOF(v)) {
+		case LGLSXP:
+		case FACTSXP:
+		case ORDSXP:
+		case INTSXP:
+			if(isFactor(v)) newtype = INTSXP;
+			else newtype = TYPEOF(v);
+			for(i=0 ; i<n ; i++) {
+				tmp = allocVector(newtype, 1);
+				INTEGER(tmp)[0] = INTEGER(v)[i];
+				VECTOR(ans)[i] = tmp;
+			}
+			break;
+		case REALSXP:
+			for(i=0 ; i<n ; i++) {
+				tmp = allocVector(REALSXP, 1);
+				REAL(tmp)[0] = REAL(v)[i];
+				VECTOR(ans)[i] = tmp;
+			}
+			break;
+		case CPLXSXP:
+			for(i=0 ; i<n ; i++) {
+				tmp = allocVector(CPLXSXP, 1);
+				COMPLEX(tmp)[0].r = COMPLEX(v)[i].r;
+				COMPLEX(tmp)[0].i = COMPLEX(v)[i].i;
+				VECTOR(ans)[i] = tmp;
+			}
+			break;
+		case STRSXP:
+			for(i=0 ; i<n ; i++) {
+				tmp = allocVector(STRSXP, 1);
+				STRING(tmp)[0] = STRING(v)[i];
+				VECTOR(ans)[i] = tmp;
+			}
+			break;
 		}
-		break;
-	case REALSXP:
-		for(i=0 ; i<n ; i++) {
-			tmp = allocVector(REALSXP, 1);
-			REAL(tmp)[0] = REAL(v)[i];
-			VECTOR(ans)[i] = tmp;
-		}
-		break;
-	case CPLXSXP:
-		for(i=0 ; i<n ; i++) {
-			tmp = allocVector(CPLXSXP, 1);
-			COMPLEX(tmp)[0].r = COMPLEX(v)[i].r;
-			COMPLEX(tmp)[0].i = COMPLEX(v)[i].i;
-			VECTOR(ans)[i] = tmp;
-		}
-		break;
-	case STRSXP:
-		for(i=0 ; i<n ; i++) {
-			tmp = allocVector(STRSXP, 1);
-			STRING(tmp)[0] = STRING(v)[i];
-			VECTOR(ans)[i] = tmp;
-		}
-		break;
+	}
+	else {
+		PROTECT(ans = allocVector(EXPRSXP, 1));
+		VECTOR(ans)[0] = duplicate(v);
 	}
 	UNPROTECT(1);
 	return ans;

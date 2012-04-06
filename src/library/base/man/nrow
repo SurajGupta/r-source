@@ -1,22 +1,32 @@
-TITLE(nrow @@ The Number of Rows of a Matrix)
-ALIAS(NROW)
+TITLE(nrow, ncol @@ The Number of Rows / Columns of an Array)
 USAGE(
 nrow(x)
+ncol(x)
+NCOL(x)
 NROW(x)
 )
 ALIAS(nrow)
 ALIAS(NROW)
+ALIAS(ncol)
+ALIAS(NCOL)
 ARGUMENTS(
-ARG(x @@ array)
+ARG(x @@ array or data.frame)
 )
 DESCRIPTION(
-LANG(nrow) returns the number of rows present in its argument.
-LANG(NROW) does the same, but dealing a vector as 1-column matrix.
+LANG(nrow) and LANG(ncol) return the number of rows or columns present in LANG(x).
+LANG(NCOL) and LANG(NROW) do the same, but treat a vector as 1-column matrix.
 )
 SEEALSO(
-LANG(LINK(ncol)) and LANG(NCOL).
+LANG(LINK(dim)) which returns ITALIC(all) dimensions;
+LANG(LINK(array)), LANG(LINK(matrix)).
 )
 EXAMPLES(
-nrow(matrix(1:12, 3, 4)) # 3
+ma <- matrix(1:12, 3, 4)
+nrow(ma) # 3
+ncol(ma) # 4
+BLANK
+ncol(array(1:24, dim= 2:4)) # 3, the second dimension
+NCOL(1:12) # 1
 NROW(1:12) # 12
 )
+KEYWORD(array)

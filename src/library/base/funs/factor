@@ -37,3 +37,7 @@ function(x, levels=sort(unique(x), na.last = TRUE), labels, exclude = NA,
 	else levels(x) <- labels
 	x
 }
+
+as.ordered <- function(x) { 
+  if (is.ordered(x)) x else ordered(x)
+}

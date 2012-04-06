@@ -7,7 +7,6 @@ OBJS=	dblcen.o \
 
 eda.so:	$(OBJS)
 	@$(LD) $(SHLIBLDFLAGS) -o $(LIBNAME).so $(OBJS)
-	@mv $(LIBNAME).so ../../../../lib
 
 clean:
 	@rm -f *.o *.so

@@ -181,9 +181,10 @@ static SEXP vectorSubset(SEXP x, SEXP s, SEXP call)
 	if (isFactor(x)) LEVELS(result) = LEVELS(x);
 
 	PROTECT(result = ExtractSubset(x, result, index, call));
-	if (((attrib = getAttrib(x, R_NamesSymbol)) != R_NilValue)
+	if (result != R_NilValue && 
+	    (((attrib = getAttrib(x, R_NamesSymbol)) != R_NilValue)
 	   || ((attrib = getAttrib(x, R_DimNamesSymbol)) != R_NilValue
-	   && (attrib = CAR(attrib)) != R_NilValue)) {
+	   && (attrib = CAR(attrib)) != R_NilValue))) {
 		nattrib = allocVector(TYPEOF(attrib), n);
 		PROTECT(nattrib);
 		nattrib = ExtractSubset(attrib, nattrib, index, call);
@@ -731,6 +732,11 @@ SEXP do_subset2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		UNPROTECT(1);
 		return ans;
 	}
+	if(isExpression(x)) {
+		ans = duplicate(VECTOR(x)[offset]);
+		UNPROTECT(1);
+		return ans;
+	}
 	else {
 		ans = allocVector(TYPEOF(x), 1);
 		switch (TYPEOF(x)) {
@@ -746,10 +752,6 @@ SEXP do_subset2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		case STRSXP:
 			STRING(ans)[0] = STRING(x)[offset];
 			break;
-		case EXPRSXP:
-			VECTOR(ans)[0] = VECTOR(x)[offset];
-			break;
-			
 		default:
 			UNIMPLEMENTED("do_subset2");
 		}

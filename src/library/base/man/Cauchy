@@ -24,3 +24,12 @@ SUP(PAREN( 1 + SUP(PAREN(OVER(x-l @@ s ))@@2) ) @@ -1)
 @@f(x) = 1 / (pi s (1 + ((x-l)/s)^2)))
 for all EQN(x).
 )
+SEEALSO(
+LANG(LINK(dt)) for the T distribution which generalizes 
+LANG(dcauchy(*, l=0,s=1)).
+)
+EXAMPLES(
+dcauchy(-1:4) == 1 / (pi*(1 + (-1:4)^2))
+)
+KEYWORD(distribution)
+

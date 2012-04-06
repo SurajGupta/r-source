@@ -40,7 +40,7 @@ static double Ident(double x)
 void NewFrameConfirm()
 {
 	int c;
-	REprintf("Next plot? ");
+	REprintf("Hit <Return> to see next plot: ");
 	yyprompt("");
 	while((c = cget()) != '\n' && c != R_EOF)
 		;
@@ -412,7 +412,7 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GCheckState(); 
 	if(length(args) < 3)
-		errorcall(call, "too few arguments");
+		errorcall(call, "too few arguments\n");
 
 		/*  Required arguments  */
 
@@ -435,9 +435,10 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	R_Visible = 0;
 	GSavePars();
-	GP->adj = 0.5;
 	GP->xpd = 1;
 	ProcessInlinePars(args);
+	/* GP->lwd = DP->lwd;		/* override inline lwd */
+	GP->adj = 0.5;
 	GP->font = GP->fontaxis;
 	GP->cex = GP->cex * GP->cexbase;
 	col = GP->col;
@@ -875,6 +876,9 @@ SEXP do_rect(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GSavePars();
 
+	if(nlty && INTEGER(lty)[i % nlty] != NA_INTEGER) GP->lty = INTEGER(lty)[i % nlty];
+	else GP->lty = DP->lty;
+
 	xl = REAL(sxl);
 	xr = REAL(sxr);
 	yb = REAL(syb);
@@ -1077,7 +1081,7 @@ SEXP do_text(SEXP call, SEXP op, SEXP args, SEXP env)
 			adjy = REAL(adj)[1];
 		}
 	}
-	else errorcall(call, "invalid adj value");
+	else errorcall(call, "invalid adj value\n");
 
 	xpd = asLogical(GetPar("xpd", args));
 	if(xpd == NA_LOGICAL) xpd = 0;
@@ -1127,7 +1131,7 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	GCheckState(); 
 
-	if(length(args) < 5) errorcall(call, "too few arguments");
+	if(length(args) < 5) errorcall(call, "too few arguments\n");
 
 	/* internalTypeCheck(call, text = CAR(args), STRSXP); */
 	text = CAR(args);
@@ -1148,15 +1152,12 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(outer == NA_INTEGER) outer = 0;
 	args = CDR(args);
 
-	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0) {
+	if (CAR(args) != R_NilValue || LENGTH(CAR(args)) == 0) {
 		at = asReal(CAR(args));
 		if(!FINITE(at)) errorcall(call, "invalid at value\n");
 		args = CDR(args);
 	}
-	else {	/*-- default for at: middle of current side : */
-		i = (side % 2) ? 0 : 2;
-		at = 0.5*(GP->usr[i] + GP->usr[i+1]);
-	}
+	else at = NA_REAL;
 
 	GSavePars();
 
@@ -1175,7 +1176,19 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 			adjy = REAL(adj)[1];
 		}
 	}
-	else errorcall(call, "invalid adj value");
+	else errorcall(call, "invalid adj value\n");
+
+	if(!FINITE(at)) {
+		switch(side % 2) {
+		case 0:
+			at = (1 - adjx) * GP->usr[0] + adjx * GP->usr[1];
+			break;
+		case 1:
+			at = (1 - adjx) * GP->usr[2] + adjx * GP->usr[3];
+			break;
+		}
+	}
+
 
 	/*======= now you should MAKE USE of adjx, adjy !!! =======*/
 
@@ -1210,11 +1223,11 @@ SEXP do_mtext(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP main, xlab, ylab, sub;
-	double x, y;
+	double x, y, adj;
 
 	GCheckState(); 
 
-	if(length(args) < 4) errorcall(call, "too few arguments");
+	if(length(args) < 4) errorcall(call, "too few arguments\n");
 
 	main = sub = xlab = ylab = R_NilValue;
 
@@ -1224,8 +1237,6 @@ SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
 		sub = CAR(args);
-	else
-		
 	args = CDR(args);
 
 	if (CAR(args) != R_NilValue && LENGTH(CAR(args)) > 0)
@@ -1244,6 +1255,7 @@ SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	x = fabs((GP->cra[1] * GP->mex) / GP->fig2dev.bx);
 	y = fabs((GP->asp * GP->cra[1] * GP->mex)/GP->fig2dev.by);
+	adj = GP->adj;
 
 	GMode(1);
 	if(main != R_NilValue) {
@@ -1251,38 +1263,38 @@ SEXP do_title(SEXP call, SEXP op, SEXP args, SEXP env)
 		GP->col = GP->colmain;
 		GP->font = GP->fontmain;
 		if(isExpression(main))
-			GMathText(0.5*GP->plt[0]+0.5*GP->plt[1], 0.5*GP->plt[3]+0.5,
+			GMathText((1-adj)*GP->plt[0]+adj*GP->plt[1], 0.5*GP->plt[3]+0.5,
 				VECTOR(main)[0], 0.5, 0.5, 0.0);
 		else
-			GText(0.5*GP->plt[0]+0.5*GP->plt[1], 0.5*GP->plt[3]+0.5,
-				CHAR(STRING(main)[0]), 0.5, 0.5, 0.0);
+			GText((1-adj)*GP->plt[0]+adj*GP->plt[1], 0.5*GP->plt[3]+0.5,
+				CHAR(STRING(main)[0]), adj, 0.5, 0.0);
 	}
 	if(sub != R_NilValue) {
 		GP->cex = GP->cexbase * GP->cexsub;
 		GP->col = GP->colsub;
 		GP->font = GP->fontsub;
 		if(isExpression(sub))
-			GMMathText(VECTOR(sub)[0], 1, GP->mgp[0]+1.0, 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+			GMMathText(VECTOR(sub)[0], 1, GP->mgp[0]+1.0, 0, (1-adj)*GP->usr[0]+adj*GP->usr[1], 0);
 		else
-			GMtext(CHAR(STRING(sub)[0]), 1, GP->mgp[0]+1.0, 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+			GMtext(CHAR(STRING(sub)[0]), 1, GP->mgp[0]+1.0, 0, (1-adj)*GP->usr[0]+adj*GP->usr[1], 0);
 	}
 	if(xlab != R_NilValue) {
 		GP->cex = GP->cexbase * GP->cexlab;
 		GP->col = GP->collab;
 		GP->font = GP->fontlab;
 		if(isExpression(xlab))
-			GMMathText(VECTOR(xlab)[0], 1, GP->mgp[0], 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+			GMMathText(VECTOR(xlab)[0], 1, GP->mgp[0], 0, (1-adj)*GP->usr[0]+adj*GP->usr[1], 0);
 		else
-			GMtext(CHAR(STRING(xlab)[0]), 1, GP->mgp[0], 0, 0.5*GP->usr[0]+0.5*GP->usr[1], 0);
+			GMtext(CHAR(STRING(xlab)[0]), 1, GP->mgp[0], 0, (1-adj)*GP->usr[0]+adj*GP->usr[1], 0);
 	}
 	if(ylab != R_NilValue) {
 		GP->cex = GP->cexbase * GP->cexlab;
 		GP->col = GP->collab;
 		GP->font = GP->fontlab;
 		if(isExpression(ylab))
-			GMMathText(VECTOR(ylab)[0], 2, GP->mgp[0], 0, 0.5*GP->usr[2]+0.5*GP->usr[3], 0);
+			GMMathText(VECTOR(ylab)[0], 2, GP->mgp[0], 0, (1-adj)*GP->usr[2]+adj*GP->usr[3], 0);
 		else
-			GMtext(CHAR(STRING(ylab)[0]), 2, GP->mgp[0], 0, 0.5*GP->usr[2]+0.5*GP->usr[3], 0);
+			GMtext(CHAR(STRING(ylab)[0]), 2, GP->mgp[0], 0, (1-adj)*GP->usr[2]+adj*GP->usr[3], 0);
 	}
 	GMode(0);
 	GRestorePars();

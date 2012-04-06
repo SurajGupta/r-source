@@ -31,8 +31,6 @@ which an object inherits from.
 LANG(unclass) returns (a copy of) its argument
 with its class information removed.
 PARA
-LANG(is.object) returns LANG(TRUE) if its argument has a class
-attribute and LANG(FALSE) otherwise.
 LANG(inherits) indicates whether its first argument inherits
 from a class with name equal to its second argument.
 PARA

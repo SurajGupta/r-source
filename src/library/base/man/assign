@@ -1,6 +1,6 @@
 TITLE(assign @@ Assign a Value to a Name)
 USAGE(
-assign(x, value, envir=sys.frame(sys.parent()),
+assign(x, value, pos=-1, envir=sys.frame(sys.parent()),
         inherits=FALSE, immediate=TRUE)
 )
 ALIAS(assign)

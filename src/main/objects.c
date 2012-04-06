@@ -366,7 +366,7 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	for(j = 0; j<length(class); j++) {
 		sprintf(buf,"%s.%s",CHAR(STRING(generic)[0]),
 				CHAR(STRING(class)[j]));
-		if(install(buf) == t);
+		if(install(buf) == t)
 			break;
 	}
 

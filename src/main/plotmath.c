@@ -78,6 +78,16 @@ static int operatorAscii(SEXP expr)
 	return result;
 }
 
+static int integralAscii(int section)
+{
+  if (section == 1)
+    return 243;
+  else if (section == 2)
+    return 244;
+  else 
+    return 245;
+}
+
 static int groupOpenAscii()
 {
 	return 40;
@@ -179,6 +189,8 @@ static int greekAscii(SEXP expr)
 			return GreekTable[i].code;
 	return 0;
 }
+
+static int relAscii() { return 61; }
 
 	/* initialisation code for mathematical notation */
 
@@ -302,10 +314,16 @@ static int operatorAtom(SEXP expr)
 	     symbolMatch(expr, "product"));
 }
 
+static int integralOperator(SEXP expr)
+{
+  return symbolAtom(expr) && symbolMatch(expr, "integral");
+}
+
 static int radicalAtom(SEXP expr)
 {
 	return symbolAtom(expr) &&
-	    symbolMatch(expr, "root");
+	    (symbolMatch(expr, "root") || 
+	     symbolMatch(expr, "sqrt"));
 }
 
 static int absAtom(SEXP expr)
@@ -316,6 +334,43 @@ static int absAtom(SEXP expr)
 static int curlyAtom(SEXP expr)
 {
 	return symbolAtom(expr) && symbolMatch(expr, "{");
+}
+
+static int boldAtom(SEXP expr)
+{
+	return symbolAtom(expr) && symbolMatch(expr, "bold");
+}
+
+static int italicAtom(SEXP expr)
+{
+	return symbolAtom(expr) && symbolMatch(expr, "italic");
+}
+
+static int plainAtom(SEXP expr)
+{
+	return symbolAtom(expr) && symbolMatch(expr, "plain");
+}
+
+static int boldItalicAtom(SEXP expr)
+{
+	return symbolAtom(expr) && symbolMatch(expr, "bolditalic");
+}
+
+static int italicExpression(SEXP expr)
+{
+	return formulaExpression(expr) &&
+	       (italicAtom(CAR(expr)) || boldItalicAtom(CAR(expr)));
+}
+
+static int nonItalicExpression(SEXP expr)
+{
+	return formulaExpression(expr) &&
+	       (boldAtom(CAR(expr)) || plainAtom(CAR(expr)));
+}
+
+static int concatenateAtom(SEXP expr)
+{
+	return symbolAtom(expr) && symbolMatch(expr, "paste");
 }
 
 static int greekSymbol(SEXP expr)
@@ -332,6 +387,19 @@ static int greekSymbol(SEXP expr)
 		/* code to determine a font from the */
 		/* nature of the expression */
 
+static int currentFont = 3;
+
+static int getFont() { return currentFont; }
+
+static void setFont(font) { currentFont = font; }
+
+static void boldFont() { setFont(2); }
+static void italicFont() { setFont(3); }
+static void plainFont() { setFont(1); }
+static void boldItalicFont() { setFont(4); }
+  
+static int isItalic() { return (getFont() == 3 || getFont() == 4); }
+  
 static int atomFontFace(SEXP expr)
 {
 	int fontFace = 1;
@@ -347,122 +415,14 @@ static int atomFontFace(SEXP expr)
 #ifdef OLD
 			fontFace = 3;
 #else
-			fontFace = 1;
+			fontFace = getFont();
 #endif
 	}
 	return fontFace;
 }
 
-	/* code to determine the gap between */
-	/* elements of the expression */
-
 	/* a forward declaration */
-
 static double fontHeight();
-
-static int innerExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return fractionAtom(CAR(expr));
-	else
-		return 0;
-}
-
-static int ordAtom(SEXP expr);
-
-static int ordAccentExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return (accentAtom(CAR(expr)) && ordAtom(CADR(expr)));
-	else
-		return 0;
-}
-
-static int ordSuperExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return (superAtom(CAR(expr)) && ordAtom(CADR(expr)));
-	else
-		return 0;
-}
-
-static int ordSubExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return (subAtom(CAR(expr)) && ordAtom(CADR(expr)));
-	else
-		return 0;
-}
-
-static int ordAtom(SEXP expr)
-{
-	return (symbolAtom(expr) ||
-		numberAtom(expr) ||
-		ordAccentExpression(expr) ||
-		ordSuperExpression(expr) ||
-		ordSubExpression(expr));
-}
-
-static int groupExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return groupAtom(CAR(expr));
-	else
-		return 0;
-}
-
-static int operatorExpression(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return operatorAtom(CAR(expr));
-	else
-		return 0;
-}
-
-static double elementGap(SEXP expr1, SEXP expr2)
-{
-	double gap = 0;
-	if ((ordAtom(expr1) && operatorExpression(expr2)) ||
-	    (operatorExpression(expr1) && ordAtom(expr2)) ||
-	    (operatorExpression(expr1) && operatorExpression(expr2)))
-		gap = 0.1;
-	else if ((binAtom(expr1) &&
-		  (ordAtom(expr2) ||
-		   operatorExpression(expr2) ||
-		   groupExpression(expr2) ||
-		   innerExpression(expr2))) ||
-		 ((ordAtom(expr1) ||
-		   operatorExpression(expr1) ||
-		   groupExpression(expr1) ||
-		   innerExpression(expr1)) &&
-		  binAtom(expr2)))
-		gap = 0.2;
-	else if ((relAtom(expr1) &&
-		  (ordAtom(expr2) ||
-		   operatorExpression(expr2) ||
-		   groupExpression(expr2) ||
-		   innerExpression(expr2))) ||
-		 ((ordAtom(expr1) ||
-		   operatorExpression(expr1) ||
-		   groupExpression(expr1) ||
-		   innerExpression(expr1)) &&
-		  relAtom(expr2)))
-		gap = 0.3;
-	else if (groupExpression(expr1) && operatorExpression(expr2))
-		gap = 0.1;
-	else if ((innerExpression(expr1) &&
-		  (ordAtom(expr2) ||
-		   operatorExpression(expr2) ||
-		   groupExpression(expr2) ||
-		   innerExpression(expr2))) ||
-		 ((ordAtom(expr1) ||
-		   operatorExpression(expr1) ||
-		   groupExpression(expr1) ||
-		   innerExpression(expr1)) &&
-		  innerExpression(expr2)))
-		gap = 0.1;
-	return gap * fontHeight();
-}
 
 	/* some forward declarations */
 
@@ -486,6 +446,7 @@ static double bboxWidth(BBOX bbox)
 }
 static BBOX asciiBBox(int ascii);
 static BBOX elementBBox(SEXP expr);
+static void drawElement(SEXP expr);
 
 
 	/* code to determine superscript offsets, etc ... */
@@ -509,6 +470,7 @@ static float CustomRadicalWidth = 0.6;
 static float CustomRadicalSpace = 0.1;
 static float CustomRadicalGap = 0.2;
 static float AbsSpace = 0.2;
+static float OperatorSpace[] = { 0.1, 0.15, 0.2, 0.6, 0.1 };
 
 static double fontHeight()
 {
@@ -588,6 +550,10 @@ static double customRadicalGap()
 static double absSpace()
 {
 	return AbsSpace * fontHeight();
+}
+static double operatorSpace(int i)
+{
+  return OperatorSpace[i] * fontHeight();
 }
 
 
@@ -813,8 +779,119 @@ static double radicalVShift(SEXP body)
 }
 
 
-	/* code to generate bounding boxes */
+static BBOX theOperatorBBox(SEXP operator);
 
+static BBOX operatorLimitBBox(SEXP operator);
+
+static double operatorLowerShift(SEXP operator, SEXP lower)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox;
+  double lowerHeight;
+  double spacing2 = operatorSpace(1);
+  double spacing4 = operatorSpace(3);
+
+  lowerBBox = operatorLimitBBox(lower);
+  lowerHeight = bboxHeight(lowerBBox);
+  if (spacing2 > (spacing4 - lowerHeight))
+    return bboxDepth(opBBox) + spacing2 + lowerHeight;
+  else
+    return bboxDepth(opBBox) + spacing4;
+}
+
+static double operatorUpperShift(SEXP operator, SEXP upper)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX upperBBox;
+  double upperDepth;
+  double spacing1 = operatorSpace(0);
+  double spacing3 = operatorSpace(2);
+
+  upperBBox = operatorLimitBBox(upper);
+  upperDepth = bboxDepth(upperBBox);
+  if (spacing1 > (spacing3 - upperDepth))
+    return bboxHeight(opBBox) + spacing1 + upperDepth;
+  else
+    return bboxHeight(opBBox) + spacing3;
+}
+
+static double operatorLowerHShift(SEXP operator, SEXP lower)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox;
+  double maxWidth = bboxWidth(opBBox);
+
+  lowerBBox = operatorLimitBBox(lower);
+  if (bboxWidth(lowerBBox) < maxWidth)
+    return (maxWidth - bboxWidth(lowerBBox))/2;
+  else
+    return 0;
+}
+
+static double operatorHShift(SEXP operator, SEXP lower)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox;
+  double maxWidth = bboxWidth(opBBox);
+
+  lowerBBox = operatorLimitBBox(lower);
+  if (bboxWidth(lowerBBox) > maxWidth)
+    return (bboxWidth(lowerBBox) - maxWidth)/2;
+  else
+    return 0;
+}
+
+static double operatorLowerHShiftAll(SEXP operator, SEXP lower, SEXP upper)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox, upperBBox;
+  double maxWidth = bboxWidth(opBBox);
+
+  lowerBBox = operatorLimitBBox(lower);
+  upperBBox = operatorLimitBBox(upper);
+  maxWidth = max(maxWidth, max(bboxWidth(lowerBBox), bboxWidth(upperBBox)));
+
+  if (bboxWidth(lowerBBox) < maxWidth)
+    return (maxWidth - bboxWidth(lowerBBox))/2;
+  else
+    return 0;
+}
+
+static double operatorUpperHShiftAll(SEXP operator, SEXP lower, SEXP upper)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox, upperBBox;
+  double maxWidth = bboxWidth(opBBox);
+
+  lowerBBox = operatorLimitBBox(lower);
+  upperBBox = operatorLimitBBox(upper);
+  maxWidth = max(maxWidth, max(bboxWidth(lowerBBox), bboxWidth(upperBBox)));
+
+  if (bboxWidth(upperBBox) < maxWidth)
+    return (maxWidth - bboxWidth(upperBBox))/2;
+  else
+    return 0;
+}
+
+static double operatorHShiftAll(SEXP operator, SEXP lower, SEXP upper)
+{
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX lowerBBox, upperBBox;
+  double maxWidth = bboxWidth(opBBox);
+
+  lowerBBox = operatorLimitBBox(lower);
+  upperBBox = operatorLimitBBox(upper);
+  maxWidth = max(maxWidth, max(bboxWidth(lowerBBox), bboxWidth(upperBBox)));
+
+  if (bboxWidth(opBBox) < maxWidth)
+    return (maxWidth - bboxWidth(opBBox))/2;
+  else
+    return 0;
+}
+
+	/* code to generate bounding boxes and draw formulae */
+
+/* Bounding box basics */
 
 static BBOX makeBBox(double height, double depth, double width)
 {
@@ -858,326 +935,7 @@ static BBOX combineAlignedBBoxes(BBOX bbox1, BBOX bbox2)
 			max(bboxWidth(bbox1), bboxWidth(bbox2)));
 }
 
-static BBOX gapBBox(SEXP element1, SEXP element2)
-{
-	return makeBBox(0, 0, elementGap(element1, element2));
-}
-
-static BBOX smallgapBBox(SEXP element1, SEXP element2)
-{
-	return makeBBox(0, 0, 0.5 * elementGap(element1, element2));
-}
-
-	/* NOTE that i assume that all symbols which have */
-	/* been converted to ascii are in the symbol font */
-
-static BBOX asciiBBox(int ascii)
-{
-	if ((ascii == hatAscii()) || (ascii == tildeAscii()))
-		GP->font = 1;
-	else
-		GP->font = 5;
-	return makeBBoxFromChar(ascii);
-}
-
-static BBOX charBBox(char *str, SEXP expr)
-{
-	BBOX resultBBox = nullBBox();
-	int i;
-
-	GP->font = atomFontFace(expr);
-	for (i = 0; i < strlen(str); i++)
-		resultBBox = combineBBoxes(resultBBox, makeBBoxFromChar(str[i]));
-
-	return resultBBox;
-}
-
-static BBOX symbolBBox(SEXP expr)
-{
-	if (greekSymbol(expr))
-		return asciiBBox(greekAscii(expr));
-	else
-		return charBBox(CHAR(PRINTNAME(expr)), expr);
-}
-
-static BBOX numberBBox(SEXP expr)
-{
-	return charBBox(CHAR(asChar(expr)), expr);
-}
-
-static BBOX stringBBox(SEXP expr)
-{
-	return charBBox(CHAR(STRING(expr)[0]), expr);
-}
-
-static BBOX atomBBox(SEXP expr)
-{
-	if (symbolAtom(expr))
-		return symbolBBox(expr);
-	else if (numberAtom(expr))
-		return numberBBox(expr);
-	else if (stringAtom(expr))
-		return stringBBox(expr);
-}
-
-static BBOX binBBox(SEXP expr)
-{
-	SEXP operator, operand1, operand2;
-	BBOX middleBBox;
-
-	operator = CAR(expr);
-	operand1 = CADR(expr);
-	if(length(expr) == 3) {
-		operand2 = CADDR(expr);
-		if (multiplicationOperator(operator))
-			middleBBox = gapBBox(operand1, operand2);
-		else
-			middleBBox = combineBBoxes(gapBBox(operand1, operator),
-					combineBBoxes(atomBBox(operator),
-					   gapBBox(operator, operand2)));
-
-		return combineBBoxes(elementBBox(operand1),
-				     combineBBoxes(middleBBox,
-						   elementBBox(operand2)));
-	}
-	else if(length(expr) == 2) {
-		middleBBox = combineBBoxes(atomBBox(operator),
-				   smallgapBBox(operator, operand1));
-		return combineBBoxes(middleBBox, elementBBox(operand1));
-	}
-	else error("invalid formula\n");
-}
-
-static BBOX supsubBBox(SEXP body, SEXP superscript, SEXP subscript);
-
-static BBOX superscriptBBox(SEXP superscript)
-{
-	BBOX result;
-	float cexSaved = GP->cex;
-
-	GP->cex = GP->cex * scriptScale;
-	result = elementBBox(superscript);
-	GP->cex = cexSaved;
-
-	return result;
-}
-
-static BBOX supBBox(SEXP expr)
-{
-	BBOX result;
-	SEXP body = CADR(expr);
-	SEXP superscript = CADDR(expr);
-	double supShift;
-	int supsub = 0;
-
-	if (formulaExpression(body))
-		if (subAtom(CAR(body)))
-			supsub = 1;
-
-	if (supsub)
-		return supsubBBox(CADR(body), superscript, (CADDR(body)));
-	else
-		return combineBBoxes(elementBBox(body),
-				  shiftBBox(superscriptBBox(superscript),
-				   superscriptShift(body, superscript)));
-}
-
-static BBOX subscriptBBox(SEXP subscript)
-{
-	BBOX result;
-	float cexSaved = GP->cex;
-
-	GP->cex = GP->cex * scriptScale;
-	result = elementBBox(subscript);
-	GP->cex = cexSaved;
-
-	return result;
-}
-
-static BBOX subBBox(SEXP expr)
-{
-	SEXP body = CADR(expr);
-	SEXP subscript = CADDR(expr);
-
-	return combineBBoxes(elementBBox(body),
-			     shiftBBox(subscriptBBox(subscript),
-				    subscriptShift(body, subscript, 1)));
-}
-
-static BBOX supsubBBox(SEXP body, SEXP superscript, SEXP subscript)
-{
-	double supShift, subShift;
-	supsubShift(body, superscript, subscript, &supShift, &subShift);
-
-	return combineBBoxes(elementBBox(body),
-			     combineAlignedBBoxes(
-		       shiftBBox(superscriptBBox(superscript), supShift),
-			 shiftBBox(subscriptBBox(subscript), subShift)));
-}
-
-static BBOX hatBBox(SEXP body)
-{
-	BBOX bodyBBox = elementBBox(body);
-	return combineAlignedBBoxes(bodyBBox,
-				    makeBBox(bboxHeight(bodyBBox) +
-					     customAccentGap() +
-					     customHatHeight(), 0, 0));
-}
-
-static BBOX barBBox(SEXP body)
-{
-	BBOX bodyBBox = elementBBox(body);
-	return combineAlignedBBoxes(bodyBBox,
-				    makeBBox(bboxHeight(bodyBBox) +
-					     customAccentGap(), 0, 0));
-}
-
-static BBOX accentBBox(SEXP expr)
-{
-	SEXP accent = CAR(expr);
-	SEXP body = CADR(expr);
-
-	if (hatAtom(accent))
-		return hatBBox(body);
-	else if (barAtom(accent))
-		return barBBox(body);
-	else
-		return combineAlignedBBoxes(
-						   elementBBox(body),
-		combineBBoxes(makeBBox(accentHShift(body, accent), 0, 0),
-			      shiftBBox(asciiBBox(accentAscii(accent)),
-					accentVShift(body))));
-}
-
-/* RATIO */
-static BBOX fractionBBox(SEXP expr)
-{
-	SEXP numerator = CADR(expr);
-	SEXP denominator = CADDR(expr);
-	BBOX numBBox, denomBBox;
-	double numHShift, denomHShift;
-	float cexSaved = GP->cex;
-
-#ifdef OLD
-	GP->cex = GP->cex * scriptScale;
-#else
-	GP->cex = GP->cex * ratioScale;
-#endif
-	numBBox = elementBBox(numerator);
-	denomBBox = elementBBox(denominator);
-#ifdef OLD
-	GP->cex = cexSaved;
-#else
-	GP->cex = cexSaved;
-#endif
-	numdenomHShift(numerator, denominator, &numHShift, &denomHShift);
-
-	return combineAlignedBBoxes(
-	     shiftBBox(combineBBoxes(makeBBox(numHShift, 0, 0), numBBox),
-		       numeratorVShift(numerator)),
-	 shiftBBox(combineBBoxes(makeBBox(denomHShift, 0, 0), denomBBox),
-		   -denominatorVShift(denominator)));
-}
-
-static BBOX groupBBox(SEXP expr)
-{
-	return combineBBoxes(asciiBBox(groupOpenAscii()),
-			     combineBBoxes(elementBBox(CADR(expr)),
-					   asciiBBox(groupCloseAscii())));
-}
-
-static BBOX operatorBBox(SEXP expr)
-{
-	return combineBBoxes(asciiBBox(operatorAscii(CAR(expr))),
-			     elementBBox(CADR(expr)));
-}
-
-static BBOX customRadicalBBox(SEXP body)
-{
-	BBOX bodyBBox = elementBBox(body);
-	return combineBBoxes(makeBBox(bboxHeight(bodyBBox) + customRadicalGap(),
-				      0, customRadicalWidth()),
-		      combineBBoxes(makeBBox(0, 0, customRadicalSpace()),
-				    bodyBBox));
-}
-
-static BBOX radicalBBox(SEXP expr)
-{
-	SEXP body = CADR(expr);
-	return customRadicalBBox(body);
-}
-
-static BBOX absBBox(SEXP expr)
-{
-	SEXP body = CADR(expr);
-	return combineBBoxes(makeBBox(0, 0, absSpace()),
-			     combineBBoxes(elementBBox(body),
-					   makeBBox(0, 0, absSpace())));
-}
-
-static BBOX expressionBBox(SEXP expr)
-{
-	int i;
-	int numParams = length(expr) - 1;
-	BBOX resultBBox = elementBBox(CAR(expr));
-
-	expr = CDR(expr);
-	resultBBox = combineBBoxes(resultBBox, asciiBBox(groupOpenAscii()));
-	for (i = 0; i < numParams; i++) {
-		resultBBox = combineBBoxes(resultBBox, elementBBox(CAR(expr)));
-		expr = CDR(expr);
-		if (i < numParams - 1)
-			resultBBox = combineBBoxes(resultBBox,
-				   combineBBoxes(asciiBBox(commaAscii()),
-					       asciiBBox(spaceAscii())));
-	}
-	return combineBBoxes(resultBBox, asciiBBox(groupCloseAscii()));
-}
-
-static BBOX curlyBBox(SEXP expr)
-{
-	return expressionBBox(CADR(expr));
-}
-
-static BBOX formulaBBox(SEXP expr)
-{
-	SEXP head = CAR(expr);
-
-	if (binAtom(head))
-		return binBBox(expr);
-	else if (superAtom(head))
-		return supBBox(expr);
-	else if (subAtom(head))
-		return subBBox(expr);
-	else if (accentAtom(head))
-		return accentBBox(expr);
-	else if (fractionAtom(head))
-		return fractionBBox(expr);
-	else if (groupAtom(head))
-		return groupBBox(expr);
-	else if (operatorAtom(head))
-		return operatorBBox(expr);
-	else if (radicalAtom(head))
-		return radicalBBox(expr);
-	else if (absAtom(head))
-		return absBBox(expr);
-	else if (curlyAtom(head))
-		return curlyBBox(expr);
-	else
-		return expressionBBox(expr);
-}
-
-static BBOX elementBBox(SEXP expr)
-{
-	if (formulaExpression(expr))
-		return formulaBBox(expr);
-	else
-		return atomBBox(expr);
-}
-
-		/*
-		   // code to draw mathematical notation
-		 */
+/* Drawing basics */
 
 static double referenceX;
 static double referenceY;
@@ -1223,14 +981,18 @@ static void moveTo(double x, double y)
 	currentY = y;
 }
 
-static void drawGap(SEXP element1, SEXP element2)
-{
-	moveAcross(elementGap(element1, element2));
-}
+/* code for ascii atoms */
 
-static void drawSmallGap(SEXP element1, SEXP element2)
+	/* NOTE that i assume that all symbols which have */
+	/* been converted to ascii are in the symbol font */
+
+static BBOX asciiBBox(int ascii)
 {
-	moveAcross(0.5 * elementGap(element1, element2));
+	if ((ascii == hatAscii()) || (ascii == tildeAscii()))
+		GP->font = 1;
+	else
+		GP->font = 5;
+	return makeBBoxFromChar(ascii);
 }
 
 static void drawAscii(int ascii)
@@ -1247,11 +1009,35 @@ static void drawAscii(int ascii)
 	moveAcross(GStrWidth(asciiStr, metricUnit));
 }
 
+/* code for character atoms */
+
+static BBOX charBBox(char *str, SEXP expr)
+{
+	BBOX resultBBox = nullBBox();
+	int i;
+
+	GP->font = atomFontFace(expr);
+	for (i = 0; i < strlen(str); i++)
+		resultBBox = combineBBoxes(resultBBox, makeBBoxFromChar(str[i]));
+
+	return resultBBox;
+}
+
 static void drawChar(char *str, SEXP expr)
 {
 	GP->font = atomFontFace(expr);
 	GText(convertedX(), convertedY(), str, 0.0, 0.0, currentAngle);
 	moveAcross(GStrWidth(str, metricUnit));
+}
+
+/* code for symbol atoms */
+
+static BBOX symbolBBox(SEXP expr)
+{
+	if (greekSymbol(expr))
+		return asciiBBox(greekAscii(expr));
+	else
+		return charBBox(CHAR(PRINTNAME(expr)), expr);
 }
 
 static void drawSymbol(SEXP expr)
@@ -1262,14 +1048,40 @@ static void drawSymbol(SEXP expr)
 		drawChar(CHAR(PRINTNAME(expr)), expr);
 }
 
+/* code for numeric atoms */
+
+static BBOX numberBBox(SEXP expr)
+{
+	return charBBox(CHAR(asChar(expr)), expr);
+}
+
 static void drawNumber(SEXP expr)
 {
 	drawChar(CHAR(asChar(expr)), expr);
 }
 
+/* code for string atoms */
+
+static BBOX stringBBox(SEXP expr)
+{
+	return charBBox(CHAR(STRING(expr)[0]), expr);
+}
+
 static void drawString(SEXP expr)
 {
 	drawChar(CHAR(STRING(expr)[0]), expr);
+}
+
+/* code for atoms */
+
+static BBOX atomBBox(SEXP expr)
+{
+	if (symbolAtom(expr))
+		return symbolBBox(expr);
+	else if (numberAtom(expr))
+		return numberBBox(expr);
+	else if (stringAtom(expr))
+		return stringBBox(expr);
 }
 
 static void drawAtom(SEXP expr)
@@ -1282,7 +1094,156 @@ static void drawAtom(SEXP expr)
 		drawString(expr);
 }
 
-static void drawElement(SEXP expr);
+/* code for italic corrections */
+
+static double half_pi = 1.57079632679489661922;
+
+static double italicCorrection(SEXP expr)
+{
+  BBOX exprBBox = elementBBox(expr);
+  return bboxHeight(exprBBox) * tan(half_pi / 6);
+}
+
+	/* correction within expression checks for current font italic */
+
+static BBOX correctionWithinBBox(SEXP expr)
+{
+  if (isItalic() && !nonItalicExpression(expr))
+    return makeBBox(0, 0, italicCorrection(expr));
+  else
+    return nullBBox();
+}
+
+static void drawCorrectionWithin(SEXP expr)
+{
+  if (isItalic() && !nonItalicExpression(expr))
+    moveAcross(italicCorrection(expr));
+}    
+
+	/* correction between expressions checks current font and font */
+	/* of each expression */
+
+static BBOX correctionBetweenBBox(SEXP expr1, SEXP expr2)
+{
+  if (((isItalic() && !nonItalicExpression(expr1)) ||
+       italicExpression(expr1)) &&
+      ((!isItalic() && !italicExpression(expr2)) ||
+       nonItalicExpression(expr2)))
+    return makeBBox(0, 0, italicCorrection(expr1));
+  else
+    return nullBBox();
+}
+
+static void drawCorrectionBetween(SEXP expr1, SEXP expr2)
+{
+  if (((isItalic() && !nonItalicExpression(expr1)) ||
+       italicExpression(expr1)) &&
+      ((!isItalic() && !italicExpression(expr2)) ||
+       nonItalicExpression(expr2)))
+    moveAcross(italicCorrection(expr1));
+}
+
+/* code for gaps */
+
+static int cexGap = 1;
+
+static void setGapCEX()
+{
+  cexGap = GP->cex;
+}
+
+static BBOX gapBBox(double gap)
+{
+  double cexSaved = GP->cex;
+  BBOX theBBox;
+
+  GP->cex = cexGap;
+  theBBox = makeBBox(0, 0, gap * fontHeight());
+  GP->cex = cexSaved;
+
+  return theBBox;
+}
+
+static BBOX smallgapBBox(double gap)
+{
+  double cexSaved = GP->cex;
+  BBOX theBBox;
+
+  GP->cex = cexGap;
+  theBBox = makeBBox(0, 0, 0.5 * gap * fontHeight());
+  GP->cex = cexSaved;
+
+  return theBBox;
+}
+
+static void drawGap(double gap)
+{
+  double cexSaved = GP->cex;
+
+  GP->cex = cexGap;
+  moveAcross(gap * fontHeight());
+  GP->cex = cexSaved;
+}
+
+static void drawSmallGap(double gap)
+{
+  double cexSaved = GP->cex;
+
+  GP->cex = cexGap;
+  moveAcross(0.5 * gap * fontHeight());
+  GP->cex = cexSaved;
+}
+
+/* code for binary operator (+, -, *, /) expressions */
+
+/* NOTE that gaps are specified as proportions of the current font height */
+
+static double binGapBefore(SEXP beforeOperand)
+{
+  return 0.2;
+}
+
+static double binGapBetween(SEXP operand1, SEXP operand2)
+{
+    return 0;
+}
+
+static double binGapAfter(SEXP afterOperand)
+{
+    return 0.2;
+}
+
+static BBOX binBBox(SEXP expr)
+{
+	SEXP operator, operand1, operand2;
+	BBOX middleBBox;
+
+	operator = CAR(expr);
+	operand1 = CADR(expr);
+        setGapCEX();
+	if(length(expr) == 3) {
+		operand2 = CADDR(expr);
+		if (multiplicationOperator(operator))
+			middleBBox = 
+			  correctionBetweenBBox(operand1, operand2);
+		else 
+			middleBBox = 
+                          combineBBoxes(
+                            gapBBox(binGapBefore(operand1)),
+			    combineBBoxes(atomBBox(operator),
+					  gapBBox(binGapAfter(operand2))));
+
+		return combineBBoxes(elementBBox(operand1),
+				     combineBBoxes(middleBBox,
+						   elementBBox(operand2)));
+	}
+	else if(length(expr) == 2) {
+		middleBBox = combineBBoxes(atomBBox(operator),
+				   smallgapBBox(binGapAfter(operand1)));
+		return combineBBoxes(middleBBox, elementBBox(operand1));
+	}
+	else error("invalid formula\n");
+}
 
 static void drawBin(SEXP expr)
 {
@@ -1290,23 +1251,99 @@ static void drawBin(SEXP expr)
 
 	operator = CAR(expr);
 	operand1 = CADR(expr);
+	setGapCEX();
 	if(length(expr) == 3) {
 		operand2 = CADDR(expr);
 		drawElement(operand1);
-		if (multiplicationOperator(operator))
-			drawGap(operand1, operand2);
+		if (multiplicationOperator(operator)) 
+		  drawGap(binGapBetween(operand1, operand2));
 		else {
-			drawGap(operand1, operator);
+			drawGap(binGapBefore(operand1));
 			drawAtom(operator);
-			drawGap(operator, operand2);
+			drawGap(binGapAfter(operand2));
 		}
 		drawElement(operand2);
 	}
 	else {
 		drawAtom(operator);
-		drawSmallGap(operator, operand1);
+		drawSmallGap(binGapAfter(operand1));
 		drawElement(operand1);
 	}
+}
+
+/* code for superscript and subscript expressions */
+
+static BBOX supsubBBox(SEXP body, SEXP superscript, SEXP subscript);
+
+static BBOX superscriptBBox(SEXP superscript)
+{
+	BBOX result;
+	float cexSaved = GP->cex;
+
+	GP->cex = GP->cex * scriptScale;
+	result = elementBBox(superscript);
+	GP->cex = cexSaved;
+
+	return result;
+}
+
+static BBOX supBBox(SEXP expr)
+{
+	BBOX result;
+	SEXP body = CADR(expr);
+	SEXP superscript = CADDR(expr);
+	double supShift;
+	int supsub = 0;
+
+	if (formulaExpression(body))
+		if (subAtom(CAR(body)))
+			supsub = 1;
+
+	if (supsub)
+		return supsubBBox(CADR(body), superscript, (CADDR(body)));
+	else
+		return combineBBoxes(
+			 elementBBox(body),
+			 combineBBoxes(
+			   correctionWithinBBox(body),
+			   shiftBBox(superscriptBBox(superscript),
+				     superscriptShift(body, superscript))));
+}
+
+static BBOX subscriptBBox(SEXP subscript)
+{
+	BBOX result;
+	float cexSaved = GP->cex;
+
+	GP->cex = GP->cex * scriptScale;
+	result = elementBBox(subscript);
+	GP->cex = cexSaved;
+
+	return result;
+}
+
+static BBOX subBBox(SEXP expr)
+{
+	SEXP body = CADR(expr);
+	SEXP subscript = CADDR(expr);
+
+	return combineBBoxes(elementBBox(body),
+		             shiftBBox(subscriptBBox(subscript),
+			               subscriptShift(body, subscript, 1)));
+}
+
+static BBOX supsubBBox(SEXP body, SEXP superscript, SEXP subscript)
+{
+	double supShift, subShift;
+	supsubShift(body, superscript, subscript, &supShift, &subShift);
+
+	return combineBBoxes(
+		 elementBBox(body),
+		 combineAlignedBBoxes(
+		   combineBBoxes(
+		     correctionWithinBBox(body),
+		     shiftBBox(superscriptBBox(superscript), supShift)),
+		   shiftBBox(subscriptBBox(subscript), subShift)));
 }
 
 static void drawScriptElement(SEXP expr)
@@ -1314,14 +1351,6 @@ static void drawScriptElement(SEXP expr)
 	float cexSaved = GP->cex;
 
 	GP->cex = GP->cex * scriptScale;
-	drawElement(expr);
-	GP->cex = cexSaved;
-}
-
-static void drawRatioElement(SEXP expr)
-{
-	float cexSaved = GP->cex;
-	GP->cex = GP->cex * ratioScale;
 	drawElement(expr);
 	GP->cex = cexSaved;
 }
@@ -1343,6 +1372,7 @@ static void drawSuper(SEXP expr)
 		drawSupSub(CADR(body), superscript, CADDR(body));
 	else {
 		drawElement(body);
+		drawCorrectionWithin(body);
 		moveUp(supShift);
 		drawScriptElement(superscript);
 		moveUp(-supShift);
@@ -1372,6 +1402,7 @@ static void drawSupSub(SEXP body, SEXP superscript, SEXP subscript)
 	drawElement(body);
 	savedX = currentX;
 	savedY = currentY;
+	drawCorrectionWithin(body);
 	moveUp(supShift);
 	drawScriptElement(superscript);
 	moveTo(savedX, savedY);
@@ -1379,6 +1410,42 @@ static void drawSupSub(SEXP body, SEXP superscript, SEXP subscript)
 	drawScriptElement(subscript);
 	moveTo(savedX, savedY);
 	moveAcross(max(bboxWidth(supBBox), bboxWidth(subBBox)));
+}
+
+/* code for accented expressions (hat, bar, ...) */
+
+static BBOX hatBBox(SEXP body)
+{
+	BBOX bodyBBox = elementBBox(body);
+	return combineAlignedBBoxes(bodyBBox,
+				    makeBBox(bboxHeight(bodyBBox) +
+					     customAccentGap() +
+					     customHatHeight(), 0, 0));
+}
+
+static BBOX barBBox(SEXP body)
+{
+	BBOX bodyBBox = elementBBox(body);
+	return combineAlignedBBoxes(bodyBBox,
+				    makeBBox(bboxHeight(bodyBBox) +
+					     customAccentGap(), 0, 0));
+}
+
+static BBOX accentBBox(SEXP expr)
+{
+	SEXP accent = CAR(expr);
+	SEXP body = CADR(expr);
+
+	if (hatAtom(accent))
+		return hatBBox(body);
+	else if (barAtom(accent))
+		return barBBox(body);
+	else
+		return combineAlignedBBoxes(
+						   elementBBox(body),
+		combineBBoxes(makeBBox(accentHShift(body, accent), 0, 0),
+			      shiftBBox(asciiBBox(accentAscii(accent)),
+					accentVShift(body))));
 }
 
 static void drawHat(SEXP body)
@@ -1438,6 +1505,45 @@ static void drawAccent(SEXP expr)
 	}
 }
 
+/* code for fraction expressions (over) */
+
+static BBOX fractionBBox(SEXP expr)
+{
+	SEXP numerator = CADR(expr);
+	SEXP denominator = CADDR(expr);
+	BBOX numBBox, denomBBox;
+	double numHShift, denomHShift;
+	float cexSaved = GP->cex;
+
+#ifdef OLD
+	GP->cex = GP->cex * scriptScale;
+#else
+	GP->cex = GP->cex * ratioScale;
+#endif
+	numBBox = elementBBox(numerator);
+	denomBBox = elementBBox(denominator);
+#ifdef OLD
+	GP->cex = cexSaved;
+#else
+	GP->cex = cexSaved;
+#endif
+	numdenomHShift(numerator, denominator, &numHShift, &denomHShift);
+
+	return combineAlignedBBoxes(
+	     shiftBBox(combineBBoxes(makeBBox(numHShift, 0, 0), numBBox),
+		       numeratorVShift(numerator)),
+	 shiftBBox(combineBBoxes(makeBBox(denomHShift, 0, 0), denomBBox),
+		   -denominatorVShift(denominator)));
+}
+
+static void drawRatioElement(SEXP expr)
+{
+	float cexSaved = GP->cex;
+	GP->cex = GP->cex * ratioScale;
+	drawElement(expr);
+	GP->cex = cexSaved;
+}
+
 static void drawFraction(SEXP expr)
 {
 	SEXP numerator = CADR(expr);
@@ -1473,20 +1579,207 @@ static void drawFraction(SEXP expr)
 	moveTo(savedX + fWidth, savedY);
 }
 
+/* code for group expressions (expressions within parentheses) */
+
+static BBOX groupBBox(SEXP expr)
+{
+	return combineBBoxes(
+		 asciiBBox(groupOpenAscii()),
+		 combineBBoxes(
+		   elementBBox(CADR(expr)),
+		   combineBBoxes(correctionWithinBBox(CADR(expr)),
+				 asciiBBox(groupCloseAscii()))));
+}
+
 static void drawGroup(SEXP expr)
 {
 	drawAscii(groupOpenAscii());
 	drawElement(CADR(expr));
+	drawCorrectionWithin(CADR(expr));
 	drawAscii(groupCloseAscii());
+}
+
+/* code for operator expressions (sum, product, integral) */
+
+/* NOTE that gaps are specified as proportions of the current font height */
+
+static double operatorGap(SEXP body)
+{
+    return 0.1;
+}
+
+static double integralTopShift() { return 0.5 * fontHeight(); }
+
+static double integralBottomShift() { return -0.5 * fontHeight(); }
+
+static BBOX theOperatorBBox(SEXP operator)
+{
+  if (integralOperator(operator))
+    return combineAlignedBBoxes(
+	     shiftBBox(asciiBBox(integralAscii(1)), integralTopShift()),
+	     combineAlignedBBoxes(asciiBBox(integralAscii(2)),
+				  shiftBBox(asciiBBox(integralAscii(3)),
+					    integralBottomShift())));	
+  else
+    return asciiBBox(operatorAscii(operator));
+}
+
+static useRelGap = 0;
+  
+static BBOX operatorLimitBBox(SEXP limit)
+{
+  float cexSaved = GP->cex;
+  BBOX limitBBox;
+
+  GP->cex = GP->cex * scriptScale;
+  useRelGap = 0;
+  limitBBox = elementBBox(limit);
+  useRelGap = 1;
+  GP->cex = cexSaved;
+
+  return limitBBox;
+}
+
+static BBOX operatorBBox(SEXP expr)
+{
+  SEXP operator = CAR(expr);
+  SEXP body, lower, upper;
+  BBOX opBBox = theOperatorBBox(operator);
+  BBOX bodyBBox, lowerBBox, upperBBox;
+  setGapCEX();
+
+  if (length(expr) > 1) {
+    body = CADR(expr);
+    bodyBBox = combineBBoxes(opBBox,
+                             combineBBoxes(gapBBox(operatorGap(body)), 
+					   elementBBox(body)));
+    
+    if (length(expr) > 2) {
+      lower = CADDR(expr);
+      lowerBBox = operatorLimitBBox(lower);
+
+      if (length(expr) > 3) {
+	upper = CADDDR(expr);
+	upperBBox = operatorLimitBBox(upper);
+
+	return combineAlignedBBoxes(
+		 combineBBoxes(
+                   makeBBox(operatorHShiftAll(operator, lower, upper), 0, 0),
+		   bodyBBox),
+		 combineAlignedBBoxes(
+                   shiftBBox(
+                     combineBBoxes(
+                       makeBBox(operatorUpperHShiftAll(operator, lower, upper),
+				0, 0),
+		       upperBBox),
+		     operatorUpperShift(operator, upper)),
+		   shiftBBox(
+		     combineBBoxes(
+		       makeBBox(operatorLowerHShiftAll(operator, lower, upper),
+				0, 0),
+		       lowerBBox),
+		     operatorLowerShift(operator, lower))));
+      }
+      else
+	return combineAlignedBBoxes(
+                 combineBBoxes(
+		   makeBBox(operatorHShift(operator, lower), 0, 0),
+		   bodyBBox),
+		 shiftBBox(
+		   combineBBoxes(
+		     makeBBox(operatorLowerHShift(operator, lower), 0, 0),
+		     lowerBBox),
+		   operatorLowerShift(operator, lower)));
+    }
+    else
+      return bodyBBox;
+  }
+  else 
+    error("Invalid Formula\n");
+    
+}
+
+static void drawTheOperator(SEXP operator)
+{
+  if (integralOperator(operator)) {
+    double savedX = currentX;
+    double savedY = currentY;
+    moveUp(integralTopShift());
+    drawAscii(integralAscii(1));
+    moveTo(savedX, savedY);
+    moveUp(integralBottomShift());
+    drawAscii(integralAscii(3));
+    moveTo(savedX, savedY);
+    drawAscii(integralAscii(2));
+  }
+  else
+    drawAscii(operatorAscii(operator));
+}
+    
+static void drawOperatorLimit(SEXP limit)
+{
+  useRelGap = 0;
+  drawScriptElement(limit);
+  useRelGap = 1;
 }
 
 static void drawOperator(SEXP expr)
 {
-	drawAscii(operatorAscii(CAR(expr)));
-	drawElement(CADR(expr));
+  SEXP operator = CAR(expr);
+  SEXP body = CADR(expr);
+  SEXP lower, upper;
+  double savedX = currentX;
+  double savedY = currentY;
+
+  setGapCEX();
+  
+  if (length(expr) > 2) {
+    lower = CADDR(expr);
+
+    if (length(expr) > 3) {
+      upper = CADDDR(expr);
+      moveUp(operatorUpperShift(operator, upper));
+      moveAcross(operatorUpperHShiftAll(operator, lower, upper));
+      drawOperatorLimit(upper);
+      moveTo(savedX, savedY);
+      moveUp(-operatorLowerShift(operator, lower));
+      moveAcross(operatorLowerHShiftAll(operator, lower, upper));
+      drawOperatorLimit(lower);
+      moveTo(savedX, savedY);
+      moveAcross(operatorHShiftAll(operator, lower, upper));
+    }
+
+    else{
+      moveUp(-operatorLowerShift(operator, lower));
+      moveAcross(operatorLowerHShift(operator, lower));
+      drawOperatorLimit(lower);
+      moveTo(savedX, savedY);
+      moveAcross(operatorHShift(operator, lower));
+    }
+  }
+
+  drawTheOperator(operator);
+  drawGap(operatorGap(body));
+  drawElement(body);
 }
 
-		/* to be implemented */
+/* code for radical expressions (root) */
+
+static BBOX customRadicalBBox(SEXP body)
+{
+	BBOX bodyBBox = elementBBox(body);
+	return combineBBoxes(makeBBox(bboxHeight(bodyBBox) + customRadicalGap(),
+				      0, customRadicalWidth()),
+		      combineBBoxes(makeBBox(0, 0, customRadicalSpace()),
+				    bodyBBox));
+}
+
+static BBOX radicalBBox(SEXP expr)
+{
+	SEXP body = CADR(expr);
+	return customRadicalBBox(body);
+}
+
 static void drawCustomRadical(SEXP body)
 {
 	BBOX bodyBBox = elementBBox(body);
@@ -1517,15 +1810,20 @@ static void drawCustomRadical(SEXP body)
 	drawElement(body);
 }
 
-		/* to be implemented */
-static void drawRadicalEx(SEXP body)
-{
-}
-
 static void drawRadical(SEXP expr)
 {
 	SEXP body = CADR(expr);
 	drawCustomRadical(body);
+}
+
+/* code for absolute expressions (abs) */
+
+static BBOX absBBox(SEXP expr)
+{
+	SEXP body = CADR(expr);
+	return combineBBoxes(makeBBox(0, 0, absSpace()),
+			     combineBBoxes(elementBBox(body),
+					   makeBBox(0, 0, absSpace())));
 }
 
 static void drawAbs(SEXP expr)
@@ -1555,23 +1853,61 @@ static void drawAbs(SEXP expr)
 	moveUp(-height);
 }
 
+/* code for general expressions with no special meaning in */
+/* mathematical notation syntax (e.g., f(x)) */
+
+static BBOX expressionBBox(SEXP expr)
+{
+	int i;
+	int numParams = length(expr) - 1;
+	BBOX resultBBox = elementBBox(CAR(expr));
+        SEXP lastTerm;
+
+	lastTerm = CAR(expr);
+	expr = CDR(expr);
+	resultBBox = combineBBoxes(resultBBox, asciiBBox(groupOpenAscii()));
+	for (i = 0; i < numParams; i++) {
+		resultBBox = combineBBoxes(resultBBox, elementBBox(CAR(expr)));
+	        lastTerm = CAR(expr);
+		expr = CDR(expr);
+		if (i < numParams - 1)
+			resultBBox = combineBBoxes(resultBBox,
+				   combineBBoxes(asciiBBox(commaAscii()),
+					       asciiBBox(spaceAscii())));
+	}
+	return combineBBoxes(resultBBox, 
+			     combineBBoxes(correctionWithinBBox(lastTerm),
+					   asciiBBox(groupCloseAscii())));
+}
+
 static void drawExpression(SEXP expr)
 {
 	int i;
 	int numParams = length(expr) - 1;
+	SEXP lastTerm;
 
 	drawElement(CAR(expr));
+	lastTerm = CAR(expr);
 	expr = CDR(expr);
 	drawAscii(groupOpenAscii());
 	for (i = 0; i < numParams; i++) {
 		drawElement(CAR(expr));
+	        lastTerm = CAR(expr);
 		expr = CDR(expr);
 		if (i < numParams - 1) {
 			drawAscii(commaAscii());
 			drawAscii(spaceAscii());
 		}
 	}
+	drawCorrectionWithin(lastTerm);
 	drawAscii(groupCloseAscii());
+}
+
+/* code for curly expressions (i.e., { ... } ) */
+
+static BBOX curlyBBox(SEXP expr)
+{
+	return expressionBBox(CADR(expr));
 }
 
 static void drawFormula(SEXP);
@@ -1579,6 +1915,224 @@ static void drawFormula(SEXP);
 static drawCurly(SEXP expr)
 {
 	drawFormula(CADR(expr));
+}
+
+/* code for relation expressions (i.e. ... == ...) */
+
+static double relGap()
+{
+  if (useRelGap)
+    return 0.3;
+  else
+    return 0.1;
+}
+
+static BBOX relBBox(SEXP expr)
+{
+  SEXP arg1 = CADR(expr);
+  SEXP arg2 = CADDR(expr);
+
+  return combineBBoxes(
+	   elementBBox(arg1),
+	   combineBBoxes(
+			 gapBBox(relGap()),
+			 combineBBoxes(
+				       asciiBBox(relAscii()),
+				       combineBBoxes(
+						     gapBBox(relGap()),
+						     elementBBox(arg2)))));
+}
+
+static void drawRel(SEXP expr)
+{
+  SEXP arg1 = CADR(expr);
+  SEXP arg2 = CADDR(expr);
+
+  drawElement(arg1);
+  drawGap(relGap());
+  drawAscii(relAscii());
+  drawGap(relGap());
+  drawElement(arg2);
+}
+
+/* code for bold expressions */
+
+static BBOX boldBBox(SEXP expr)
+{
+  BBOX result;
+  int savedFont = getFont();
+
+  boldFont();
+  result = elementBBox(CADR(expr));
+  setFont(savedFont);
+
+  return result;
+}
+
+static void drawBold(SEXP expr)
+{
+  int savedFont = getFont();
+
+  boldFont();
+  drawElement(CADR(expr));
+  setFont(savedFont);
+}
+
+/* code for italic expressions */
+
+static BBOX italicBBox(SEXP expr)
+{
+  BBOX result;
+  SEXP body = CADR(expr);
+  int savedFont = getFont();
+
+  italicFont();
+  result = elementBBox(body);
+  setFont(savedFont);
+
+  return result;
+}
+
+static void drawItalic(SEXP expr)
+{
+  SEXP body = CADR(expr);
+  int savedFont = getFont();
+
+  italicFont();
+  drawElement(body);
+  setFont(savedFont);
+}
+
+/* code for plain expressions */
+
+static BBOX plainBBox(SEXP expr)
+{
+  BBOX result = nullBBox();
+  SEXP body = CADR(expr);
+  int savedFont = getFont();
+
+  plainFont();
+  result = elementBBox(CADR(expr));
+  setFont(savedFont);
+
+  return result;
+}
+
+static void drawPlain(SEXP expr)
+{
+  int savedFont = getFont();
+
+  plainFont();
+  drawElement(CADR(expr));
+  setFont(savedFont);
+}
+
+/* code for bolditalic expressions */
+
+static BBOX boldItalicBBox(SEXP expr)
+{
+  BBOX result;
+  int savedFont = getFont();
+
+  boldItalicFont();
+  result = elementBBox(CADR(expr));
+  setFont(savedFont);
+
+  return result;
+}
+
+static void drawBoldItalic(SEXP expr)
+{
+  int savedFont = getFont();
+
+  boldItalicFont();
+  drawElement(CADR(expr));
+  setFont(savedFont);
+}
+
+/* code for concatenating expressions c(...) */
+
+static BBOX concatenateBBox(SEXP expr)
+{
+  SEXP args = CDR(expr);
+  SEXP lastArg;
+  int i;
+  int numArgs = length(args);
+  BBOX result = nullBBox();
+
+  if (numArgs > 0)
+  result = elementBBox(CAR(args));
+  lastArg = CAR(args);
+  args = CDR(args);
+
+  for (i=1; i<numArgs; i++) {
+    result = combineBBoxes(
+	       result, 
+	       combineBBoxes(correctionBetweenBBox(lastArg, CAR(args)),
+			     elementBBox(CAR(args))));
+    lastArg = CAR(args);
+    args = CDR(args);
+  }
+
+  return result;
+}
+
+static void drawConcatenate(SEXP expr)
+{
+  SEXP args = CDR(expr);
+  SEXP lastArg;
+  int i;
+  int numArgs = length(args);
+
+  for (i=0; i<numArgs; i++) {
+    if (i > 0)
+      drawCorrectionBetween(lastArg, CAR(args));
+    drawElement(CAR(args));
+    lastArg = CAR(args);
+    args = CDR(args);
+  }
+}
+
+/* dispatching procedure which determines nature of expression */
+
+static BBOX formulaBBox(SEXP expr)
+{
+	SEXP head = CAR(expr);
+
+	if (binAtom(head))
+		return binBBox(expr);
+	else if (superAtom(head))
+		return supBBox(expr);
+	else if (subAtom(head))
+		return subBBox(expr);
+	else if (accentAtom(head))
+		return accentBBox(expr);
+	else if (fractionAtom(head))
+		return fractionBBox(expr);
+	else if (groupAtom(head))
+		return groupBBox(expr);
+	else if (operatorAtom(head))
+		return operatorBBox(expr);
+	else if (radicalAtom(head))
+		return radicalBBox(expr);
+	else if (absAtom(head))
+		return absBBox(expr);
+	else if (curlyAtom(head))
+		return curlyBBox(expr);
+	else if (relAtom(head))
+	  return relBBox(expr);
+	else if (boldAtom(head))
+	  return boldBBox(expr);
+	else if (italicAtom(head))
+	  return italicBBox(expr);
+	else if (plainAtom(head))
+	  return plainBBox(expr);
+	else if (boldItalicAtom(head))
+	  return boldItalicBBox(expr);
+	else if (concatenateAtom(head))
+		return concatenateBBox(expr);
+	else
+		return expressionBBox(expr);
 }
 
 static void drawFormula(SEXP expr)
@@ -1605,12 +2159,35 @@ static void drawFormula(SEXP expr)
 		drawAbs(expr);
 	else if (curlyAtom(head))
 		drawCurly(expr);
+	else if (relAtom(head))
+	  drawRel(expr);
+	else if (boldAtom(head))
+	  drawBold(expr);
+	else if (italicAtom(head))
+	  drawItalic(expr);
+	else if (plainAtom(head))
+	  drawPlain(expr);
+	else if (boldItalicAtom(head))
+	  drawBoldItalic(expr);
+	else if (concatenateAtom(head))
+		drawConcatenate(expr);
 
 	/* if expression is not a special mathematical notation */
 	/* function then just reconstruct expression */
 
 	else
 		drawExpression(expr);
+}
+
+/* top-level:  dispatch on whether atom (symbol, string, number, ...) */
+/* or formula (some sort of expression) */
+
+static BBOX elementBBox(SEXP expr)
+{
+	if (formulaExpression(expr))
+		return formulaBBox(expr);
+	else
+		return atomBBox(expr);
 }
 
 static void drawElement(SEXP expr)
@@ -1623,8 +2200,6 @@ static void drawElement(SEXP expr)
 
 		/* functions forming the API */
 
-static double half_pi = 1.57079632679489661922;
-
 void GMathText(double x, double y, SEXP expr, double xc, double yc, double rot)
 {
 	BBOX expressionBBox;
@@ -1636,8 +2211,6 @@ void GMathText(double x, double y, SEXP expr, double xc, double yc, double rot)
 
 	referenceX = xFigtoInch(x);
 	referenceY = yFigtoInch(y);
-
-	/* this will change to accomodate justification */
 
 	currentX = referenceX - xc * bboxWidth(expressionBBox);
 	currentY = referenceY - yc * bboxHeight(expressionBBox);

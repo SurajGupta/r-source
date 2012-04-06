@@ -31,3 +31,4 @@ EXAMPLES(
 # Compute P(45 < X < 55) for X Binomial(100,0.5)
 sum(dbinom(46:54, 100, 0.5))
 )
+KEYWORD(distribution)

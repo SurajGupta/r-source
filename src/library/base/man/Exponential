@@ -32,10 +32,13 @@ greeklambda SUP(e@@- greeklambda x)
 for EQN(x GE 0).
 )
 SEEALSO(
-LANG(LINK(exp)).
+LANG(LINK(exp)), LANG(LINK(dchisq)) for the chisquare and
+LANG(LINK(dweibull)) for the Weibull distribution which both generalize the
+exponential.
 )
 EXAMPLES(
 dexp(1) - exp(-1) #-> 0
 r <- rexp(100)
 all(abs(1 - dexp(1, r) / (r*exp(-r))) < 1e-14)
 )
+KEYWORD(distribution)

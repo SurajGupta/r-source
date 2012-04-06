@@ -32,5 +32,5 @@ plot in the file "fig.ps" (attempting to be pretty wysiwyg).
 Both make use of the LANG(paper) and LANG(orientation) arguments.
 )
 SEEALSO(
-LANG(LINK(postscript)), LANG(LINK(macintosh)), LANG(LINK(device)).
+LANG(LINK(postscript)), LANG(LINK(macintosh)), LANG(LINK(Devices)).
 )

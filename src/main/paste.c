@@ -301,7 +301,7 @@ SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 			formatString(STRING(x), n, &w, 0);
 			break;
 		default:
-			errorcall(call, "vector arguments only");
+			errorcall(call, "vector arguments only\n");
 	}
 	x = allocVector(INTSXP, (n>=0)?3:6);
 	INTEGER(x)[0] = w;

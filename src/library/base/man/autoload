@@ -1,0 +1,39 @@
+TITLE(autoload @@ On-demand loading of packages)
+USAGE(
+autoload(name, file)
+)
+ALIAS(autoload)
+ALIAS(.AutoloadEnv)
+ARGUMENTS(
+ARG(name @@ string giving the name of an object)
+ARG(file @@ string giving the name of a package containing the object)
+)
+DESCRIPTION(
+  Creates a promise-to-evaluate a loader function and stores it in the
+  LANG(.AutoloadEnv) environment.  When R attempts to evaluate LANG(name)
+  the package is loaded and LANG(name) is re-evaluated in the
+  new package's environment.  The result is that R behaves as if
+  LANG(file) was loaded but it does not occupy memory.  
+)
+VALUE(
+nothing interesting
+)
+SEEALSO(
+LANG(LINK(delay)), LANG(LINK(library))
+)
+EXAMPLES(
+autoload("line","eda")
+search()
+ls("Autoloads")
+all(ls("Autoloads") == ls(envir = .AutoloadEnv))
+data(cars)
+plot(cars)
+z<-line(cars)
+abline(coef(z))
+search()
+detach("package:eda")
+search()
+z<-line(cars)
+search()
+)
+KEYWORD( path )

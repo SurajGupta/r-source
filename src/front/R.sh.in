@@ -17,10 +17,22 @@ then
 	exec sh $RHOME/etc/COMPILE $*
 fi
 
+if [ "$1" = "INSTALL" ]
+then
+        shift
+        exec sh $RHOME/etc/INSTALL $*
+fi
+
 if [ "$1" = -xxgdb ]
 then
 	shift
 	DEBUGGER=xxgdb
+fi
+
+if [ "$1" = -gdb ]
+then
+	shift
+	DEBUGGER=gdb
 fi
 
 # Default Printer Paper Size
@@ -38,4 +50,9 @@ export R_PAPERSIZE
 R_PRINTCMD=@R_PRINTCMD@
 export R_PRINTCMD
 
-exec $DEBUGGER $RHOME/bin/R.binary $*
+if [ $DEBUGGER ]
+then
+	exec $DEBUGGER $RHOME/bin/R.binary 
+else
+	exec $RHOME/bin/R.binary $*
+fi

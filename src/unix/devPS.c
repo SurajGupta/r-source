@@ -121,6 +121,11 @@ int PSDeviceDriver(char **cpars, int ncpars, double *npars, int nnpars)
 
 		/* Deal with paper and plot size and orientation */
 
+	if(!strcmp(papername, "Default") || !strcmp(papername, "default")) {
+		char *ps = getenv("R_PAPERSIZE");
+		if(ps) strcpy(papername, ps);
+		else strcpy(papername, "a4");
+	}
 	if(!strcmp(papername, "A4") || !strcmp(papername, "a4")) {
 		pagewidth  = 21.0/2.54;
 		pageheight = 29.7/2.54;
@@ -396,8 +401,8 @@ static void PS_MoveTo(double x, double y)
 
 static double PS_StrWidth(char *str)
 {
-	return floor(GP->cex * GP->ps + 0.5)
-		* PostScriptStringWidth(str, &(metrics[GP->font-1]));
+	return floor(GP->cex * GP->ps + 0.5) *
+	 PostScriptStringWidth((unsigned char *)str, &(metrics[GP->font-1]));
 }
 
 static void PS_MetricInfo(int c, double *ascent, double *descent, double *width)
@@ -433,6 +438,7 @@ static void PS_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 	}
 	if(fg != NA_INTEGER) {
 		SetColor(fg);
+		SetLinetype(GP->lty);
 		PostScriptOpenRectangle(psfp, x0, y0, x1, y1);
 	}
 }
@@ -455,7 +461,7 @@ static void PS_Polygon(int n, double *x, double *y, int bg, int fg)
 		SetColor(bg);
 		PostScriptFilledPolygon(psfp, x, y, n);
 	}
-	if(bg != NA_INTEGER) {
+	if(fg != NA_INTEGER) {
 		SetColor(fg);
 		PostScriptOpenPolygon(psfp, x, y, n);
 	}

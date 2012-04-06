@@ -293,6 +293,7 @@ void psx11_Rect(double x0, double y0, double x1, double y1, int bg, int fg)
 	}
 	if(fg != NA_INTEGER) {
 		psx11_SetColor(fg);
+		psx11_SetLinetype(GP->lty);
 		PostScriptOpenRectangle(psfp,
 			xoffset + xscale * x0,
 			yoffset + yscale * y0,

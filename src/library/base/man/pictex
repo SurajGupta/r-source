@@ -1,7 +1,7 @@
-TITLE( pictex @@ A PicTeX Graphics Driver)
+TITLE(pictex @@ A PicTeX Graphics Driver)
 USAGE(
 pictex(file="Rplots.tex", width=5, height=4, debug=FALSE,
-        bg="white", fg="black")
+       bg="white", fg="black")
 )
 ALIAS(pictex)
 ARGUMENTS(
@@ -35,7 +35,7 @@ University of Genoa, Italy.
 (valerio@svpop.com.dist.unige.it).
 )
 SEEALSO(
-LANG(LINK(x11)), LANG(LINK(postscript)).
+LANG(LINK(postscript)), LANG(LINK(Devices)).
 )
 EXAMPLES(
 % LaTeX Example
@@ -54,3 +54,4 @@ BLANK
 \input pictex
 $$ \input Rplots.tex $$
 )
+KEYWORD(device)

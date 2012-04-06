@@ -3,6 +3,7 @@ USAGE(
 lapply(x, fun, DOTS)
 sapply(x, fun, DOTS, simplify = TRUE)
 )
+ALIAS(lapply)
 ALIAS(sapply)
 ARGUMENTS(
 ARG(x @@ list (or vector for LANG(sapply)) to be used.)

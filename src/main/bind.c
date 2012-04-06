@@ -298,68 +298,143 @@ static void complexanswer(SEXP x)
 }
 #endif
 
-static SEXP TagName(SEXP tag, int i)
+/* 
+   TagName can get either a SYMSXP, a STRSXP or a CHARSXP or NILSXP
+   for either tag or base; the first part extracts the CHARSXP needed;
+   the remainer acts on that
+*/
+static SEXP TagName(SEXP tag, SEXP base, int i)
 {
 	SEXP ans;
+
+	switch(TYPEOF(tag)) {
+	case SYMSXP:
+		tag = PRINTNAME(tag);
+		break;
+	case STRSXP:
+		tag = STRING(tag)[0];
+		break;
+	case CHARSXP:
+	case NILSXP:
+		break;
+	default:
+		error("wrong tag argument to TagName\n");
+	}
+	switch(TYPEOF(base)) {
+	case SYMSXP:
+		base = PRINTNAME(base);
+		break;
+	case STRSXP:
+		base = STRING(base)[0];
+		break;
+	case CHARSXP:
+	case NILSXP:
+		break;
+	default:
+		error("wrong base argument to TagName\n");
+	}
+
 	if(i) {
-		ans = allocString(strlen(CHAR(PRINTNAME(tag)))+IndexWidth(i));
-		sprintf(CHAR(ans), "%s%d", CHAR(PRINTNAME(tag)), i);
+		if( base == R_NilValue) {
+			ans = allocString(strlen(CHAR(tag))+IndexWidth(i));
+			sprintf(CHAR(ans), "%s%d", CHAR(tag), i);
+		}
+		else {
+			ans = allocString(strlen(CHAR(base))+
+				strlen(CHAR(tag))+IndexWidth(i)+1);
+			sprintf(CHAR(ans), "%s.%s%d",CHAR(base),CHAR(tag), i);
+		}
 	}
 	else {
-		ans = allocString(strlen(CHAR(PRINTNAME(tag))));
-		strcpy(CHAR(ans), CHAR(PRINTNAME(tag)));
+		if( base == R_NilValue) {
+			ans = allocString(strlen(CHAR(tag)));
+			strcpy(CHAR(ans), CHAR(tag));
+		}
+		else {
+			ans = allocString(strlen(CHAR(tag))+1+strlen(CHAR(base)));
+			sprintf(CHAR(ans), "%s.%s",CHAR(base),CHAR(tag));
+		}
 	}
 	return ans;
 }
 
-static void ExtractNames(SEXP args, int recurse)
+/* 
+   since ExtractNames is done recursively and it contains a check on the 
+   names found there must be some mechanism for saying not to check to them; 
+   hence check
+*/
+static void ExtractNames(SEXP args, int recurse, int check, SEXP base)
 {
 	SEXP blank, s;
-	int i;
+	int i, offset=0;
 
 	PROTECT(blank=mkChar(""));
 
 	while(args != R_NilValue) {
-		if(isNull(CAR(args))) {
-		}
-		else if(isVector(CAR(args))) {
+		if(!isNull(CAR(args))) 
+  		    if(isVector(CAR(args))) {
 			if(!isNull(TAG(args))) {
 				switch(length(CAR(args))) {
 				case 0:
 					break;
 				case 1:
-					STRING(ans_names)[ans_nnames++] = TagName(TAG(args), 0);
+					STRING(ans_names)[ans_nnames++] = TagName(TAG(args),base, offset);
 					break;
 				default:
 					for(i=0 ; i<length(CAR(args)) ; i++)
-						STRING(ans_names)[ans_nnames++] = TagName(TAG(args), i+1);
+						STRING(ans_names)[ans_nnames++] = TagName(TAG(args), base, i+1+offset);
 				}
 			}
 			else {
-				if(isNull(s = getAttrib(CAR(args), R_NamesSymbol))) {
-					for(i=0 ; i<length(CAR(args)) ; i++)
-						STRING(ans_names)[ans_nnames++] = blank;
+				if(base == R_NilValue) {
+					if(isNull(s = getAttrib(CAR(args), R_NamesSymbol))) {
+						for(i=0 ; i<length(CAR(args)) ; i++)
+							STRING(ans_names)[ans_nnames++] = blank;
+					}
+					else {
+						for(i=0 ; i<length(CAR(args)) ; i++)
+							STRING(ans_names)[ans_nnames++] = STRING(s)[i];
+					}
 				}
 				else {
-					for(i=0 ; i<length(CAR(args)) ; i++)
-						STRING(ans_names)[ans_nnames++] = STRING(s)[i];
+					if(isNull(s = getAttrib(CAR(args), R_NamesSymbol))) {
+						for(i=0 ; i<length(CAR(args)) ; i++) 
+							STRING(ans_names)[ans_nnames++] = TagName(base,R_NilValue,i+1+offset);
+					}
+					else {
+						for(i=0 ; i<length(CAR(args)) ; i++) 
+							STRING(ans_names)[ans_nnames++] = TagName(STRING(s)[i],base,offset);
+					}
+					offset+=i;
 				}
 			}
 		}
 		else if(isList(CAR(args))) {
+			base = TAG(args);
 			if(recurse) {
-				ExtractNames(CAR(args), recurse);
+				ExtractNames(CAR(args), recurse, 0, base);
 			}
 			else {
+				i = 1;
 				s = CAR(args);
 				while(s != R_NilValue) {
-					if(!isNull(TAG(s)))
-						STRING(ans_names)[ans_nnames++] = TAG(s);
-					else
-						STRING(ans_names)[ans_nnames++] = blank;
+					if( isNull(base) ) {
+						if(!isNull(TAG(s)))
+							STRING(ans_names)[ans_nnames++] = TagName(TAG(s),base,0);
+						else 
+							STRING(ans_names)[ans_nnames++] = blank;
+					}
+					else {
+						if( !isNull(TAG(s)) )
+							STRING(ans_names)[ans_nnames++] = TagName(TAG(s),base,0);
+						else
+							STRING(ans_names)[ans_nnames++] = TagName(TAG(s),base,i);
+					}
 					s = CDR(s);
+					i++;
 				}
 			}
+			base = R_NilValue;
 		}
 		else {
 			if(!isNull(TAG(args)))
@@ -369,7 +444,7 @@ static void ExtractNames(SEXP args, int recurse)
 		}
 		args = CDR(args);
 	}
-	if(ans_nnames != ans_length) {
+	if( check && ans_nnames != ans_length) {
 		printf("INTERNAL ERROR: ans_nnames = %d    ans_length = %d\n", ans_nnames, ans_length);
 		error("incorrect names vector length\n");
 	}
@@ -385,10 +460,15 @@ static SEXP ExtractOptionals(SEXP ans, int *recurse, int *usenames)
 	u = install("use.names");
 	while(a != R_NilValue && CDR(a) != R_NilValue) {
 		n = TAG(CDR(a));
-		if(n == r || n == u) {
+		if( n != R_NilValue && pmatch(r,n,0) ) {
 			if((v = asLogical(CADR(a))) != NA_INTEGER) {
-				if(n == r) *recurse = v;
-				else *usenames = v;
+				*recurse = v;
+			}
+			CDR(a) = CDDR(a);
+		}
+		else if(n != R_NilValue &&  pmatch(u,n,0) ) {
+			if((v = asLogical(CADR(a))) != NA_INTEGER) {
+				*usenames = v;
 			}
 			CDR(a) = CDDR(a);
 		}
@@ -402,6 +482,8 @@ static SEXP ExtractOptionals(SEXP ans, int *recurse, int *usenames)
 	/* The only real difference is the value of the "recursive" */
 	/* argument which is FALSE by default for "c" and TRUE by */
 	/* default for "unlist". */
+	/* and of course that list takes ... while unlist takes a single
+	   arg, and unlist has two optional args, while list has none */
 
 SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -418,18 +500,23 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 
 		/* First extract the optional arguments */
 		/* Note the resetting of the argument list */
+		/* Only done if the op is 1 (ie. unlist) */
 
 	usenames = 1;
 	recurse = PRIMVAL(op);
 
-	PROTECT(args = ExtractOptionals(ans, &recurse, &usenames));
+	if(length(args) > 1)
+		PROTECT(args = ExtractOptionals(ans, &recurse, &usenames));
+	else
+		PROTECT(args = ans);
+
+	if(PRIMVAL(op)) args = CAR(args);
 
 	if(!isList(args)) {
+		UNPROTECT(1);
 		if(isVector(args)) return args;
 		else errorcall(call, "invalid argument\n");
 	}
-
-	if(PRIMVAL(op)) args = CAR(args);
 
 	ans_flags = 0;
 	ans_length = 0;
@@ -482,6 +569,7 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	PROTECT(ans = allocVector(mode, ans_length));
 	ans_ptr = ans;
+	t = args;
 	ans_length = 0;
 
 	if (mode == LISTSXP) {
@@ -491,7 +579,8 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 				args = CDR(args);
 			}
 		}
-		else listanswer(CAR(args), recurse);
+		else listanswer(args, recurse);
+		ans_length = length(ans);
 	}
 	else if(mode == STRSXP)
 		stringanswer(args);
@@ -507,10 +596,11 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 		LEVELS(ans) = LEVELS(CAR(args));
 		setAttrib(ans, R_LevelsSymbol, getAttrib(CAR(args), R_LevelsSymbol));
 	}
+	args = t;
 	if(ans_nnames && ans_length > 0) {
 		PROTECT(ans_names = allocVector(STRSXP, ans_length));
 		ans_nnames = 0;
-		ExtractNames(args, recurse);
+		ExtractNames(args, recurse, 1, R_NilValue);
 		setAttrib(ans, R_NamesSymbol, ans_names);
 		UNPROTECT(1);
 	}
@@ -627,7 +717,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 
 	n = 0;
 	for (t = args; t != R_NilValue; t = CDR(t)) {
-		if (!isNull(CAR(t))) {
+		if( length(CAR(t)) > 0 ) {
 			dims = getAttrib(CAR(t), R_DimSymbol);
 			if (length(dims) == 2) {
 				if (mrows == 0)
@@ -652,7 +742,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 	warned = 0;
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 		n++;
-		if (!isNull(CAR(t))) {
+		if (length(CAR(t)) > 0 ) {
 			dims = getAttrib(CAR(t), R_DimSymbol);
 			if (length(dims) == 2) {
 				dn = getAttrib(CAR(t), R_DimNamesSymbol);
@@ -683,10 +773,11 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 	n = 0;
 
 	if (mode == STRSXP) {
-		for (t = args; t != R_NilValue; t = CDR(t)) { if (!isNull(CAR(t))) {
+		for (t = args; t != R_NilValue; t = CDR(t)) { 
+			if( length(CAR(t)) > 0 ) {
 				u = CAR(t) = coerceVector(CAR(t), STRSXP);
 				k = LENGTH(u);
-				idx = (!isArray(CAR(t))) ? rows : k;
+				idx = (!isMatrix(CAR(t))) ? rows : k;
 				for (i = 0; i < idx; i++)
 					STRING(result)[n++] = STRING(u)[i % k];
 			}
@@ -695,10 +786,10 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 #ifdef COMPLEX_DATA
 	else if(mode == CPLXSXP) {
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if( length(CAR(t)) > 0 ) {
 				u = CAR(t) = coerceVector(CAR(t), CPLXSXP);
 				k = LENGTH(u);
-				idx = (!isArray(CAR(t))) ? rows : k;
+				idx = (!isMatrix(CAR(t))) ? rows : k;
 				for (i = 0; i < idx; i++)
 					COMPLEX(result)[n++] = COMPLEX(u)[i % k];
 			}
@@ -707,10 +798,10 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 #endif
 	else {
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if( length(CAR(t)) > 0 ) {
 				u = CAR(t);
 				k = LENGTH(u);
-				idx = (!isArray(CAR(t))) ? rows : k;
+				idx = (!isMatrix(CAR(t))) ? rows : k;
 				if (TYPEOF(u) <= INTSXP) {
 					if (mode <= INTSXP) {
 						for (i = 0; i < idx; i++)
@@ -738,7 +829,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode)
 		if(have_cnames) CADR(dn) = allocVector(STRSXP, cols);
 		j = 0;
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if( length(CAR(t))>0) {
 				if (isMatrix(CAR(t))) {
 					u = getAttrib(CAR(t), R_DimNamesSymbol);
 					if(have_rnames && CAR(dn) == R_NilValue
@@ -793,7 +884,7 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 
         n = 0;
         for (t = args; t != R_NilValue; t = CDR(t)) {
-                if (!isNull(CAR(t))) {
+                if (length(CAR(t))>0) {
                         dims = getAttrib(CAR(t), R_DimSymbol);
                         if (length(dims) == 2) {
                                 if (mcols == 0)
@@ -818,7 +909,7 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 	warned = 0;
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 		n++;
-		if (!isNull(CAR(t))) {
+		if (length(CAR(t))>0) {
 			dims = getAttrib(CAR(t), R_DimSymbol);
 			if (length(dims) == 2) {
 				dn = getAttrib(CAR(t), R_DimNamesSymbol);
@@ -849,11 +940,11 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 	n = 0;
 	if (mode == STRSXP) {
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if (length(CAR(t))>0) {
 				CAR(t) = coerceVector(CAR(t), STRSXP);
 				u = CAR(t);
 				k = LENGTH(u);
-				mrows = (isArray(u)) ? nrows(u) : 1;
+				mrows = (isMatrix(u)) ? nrows(u) : 1;
 				for (i = 0; i < mrows; i++)
 					for (j = 0; j < cols; j++)
 						STRING(result)[i + n + (j * rows)] = STRING(u)[(i + j * mrows) % k];
@@ -866,11 +957,11 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 #ifdef COMPLEX_DATA
 	else if (mode == CPLXSXP) {
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if (length(CAR(t))>0) {
 				CAR(t) = coerceVector(CAR(t), CPLXSXP);
 				u = CAR(t);
 				k = LENGTH(u);
-				mrows = (isArray(u)) ? nrows(u) : 1;
+				mrows = (isMatrix(u)) ? nrows(u) : 1;
 				for (i = 0; i < mrows; i++)
 					for (j = 0; j < cols; j++)
 						COMPLEX(result)[i + n + (j * rows)] = COMPLEX(u)[(i + j * mrows) % k];
@@ -882,10 +973,10 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 	}
 #endif
 	for (t = args; t != R_NilValue; t = CDR(t)) {
-		if (!isNull(CAR(t))) {
+		if (length(CAR(t))>0) {
 			u = CAR(t);
 			k = LENGTH(u);
-			mrows = (isArray(u)) ? nrows(u) : 1;
+			mrows = (isMatrix(u)) ? nrows(u) : 1;
 			if (TYPEOF(u) <= INTSXP) {
 				if (mode <= INTSXP) {
 					for (i = 0; i < mrows; i++)
@@ -918,7 +1009,7 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode)
 		if(have_rnames) CAR(dn) = allocVector(STRSXP, rows);
 		j = 0;
 		for (t = args; t != R_NilValue; t = CDR(t)) {
-			if (!isNull(CAR(t))) {
+			if (length(CAR(t))>0) {
 				if (isMatrix(CAR(t))) {
 					u = getAttrib(CAR(t), R_DimNamesSymbol);
 					if(have_cnames && CADR(dn) == R_NilValue

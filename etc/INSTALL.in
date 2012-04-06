@@ -1,0 +1,70 @@
+#! /bin/sh
+
+# ${RHOME}/etc/INSTALL for installing add-on packages
+# Usage:
+#	R INSTALL [-help/+help] [-html/+html] pkg [lib]
+
+# FIXME when the new directory structure is here!
+
+IHELP=y
+IHTML=
+if [ "$1" = "+help" ]; then shift; IHELP=y; fi
+if [ "$1" = "-help" ]; then shift; IHELP=;  fi
+if [ "$1" = "+html" ]; then shift; IHTML=y; fi
+if [ "$1" = "-html" ]; then shift; IHTML=;  fi
+# And obviously, we could play the same game with objs, funs and data
+
+if [ "$1" ]
+then
+    pkg=$1
+    test -d ${pkg} || ( echo "Package \`${pkg}' does not exist"; exit 1 )
+else
+    echo "usage:  R INSTALL <options> pkg [lib]" && exit 1
+fi
+
+lib=${2:-${RHOME}}
+mkdir -p ${lib} || ( echo "Cannot write to \`${lib}'"; exit 1 )
+lib=`cd ${lib}; pwd`
+
+src=@LIBSRC@
+
+cd ${pkg}
+pkg=`basename ${pkg}`
+
+echo "Installing package \`${pkg}' ..."
+
+if test -d ${src}
+then
+    echo "objs"
+    (cd ${src}; make CC="@CC@" CFLAGS="@CFLAGS@ @PICFLAGS@ -I${RHOME}/include" SHLIBLDFLAGS="@SHLIBLDFLAGS@" FC="@FC@" FFLAGS="@FFLAGS@ @FPICFLAGS@")
+    mkdir -p ${lib}/lib
+    cp ${src}/*.so ${lib}/lib
+fi
+
+if test -d funs
+then
+    echo "funs"
+    mkdir -p ${lib}/library
+    cat funs/[a-z]* > ${lib}/library/${pkg}   
+fi
+
+if test -d data
+then
+    echo "data"
+    mkdir -p ${lib}/data/${pkg}
+    cp data/* ${lib}/data/${pkg}
+fi
+
+if [ "$IHELP" ]
+then
+    echo "help"
+    ${RHOME}/etc/install-help ../${pkg} ${lib}
+fi
+
+if [ "$IHTML" ]
+then
+    echo "html"
+    # FIXME
+fi
+
+echo "DONE"

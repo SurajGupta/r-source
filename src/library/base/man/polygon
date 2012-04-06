@@ -19,7 +19,8 @@ Note that if neither of LANG(col) or LANG(border) is specified
 then nothing is drawn.
 )
 SEEALSO(
-LANG(LINK(lines)), LANG(LINK(rect)), LANG(LINK(box)), LANG(LINK(abline)).
+  LANG(LINK(segments)) for even more flexibility,
+  LANG(LINK(lines)), LANG(LINK(rect)), LANG(LINK(box)), LANG(LINK(abline)).
 )	
 EXAMPLES(
 n <- 100
@@ -29,3 +30,4 @@ plot   (xx, yy, type="n", xlab="Time", ylab="Distance")
 polygon(xx, yy, col="gray")
 title("Distance Between Brownian Motions")
 )
+KEYWORD(aplot)

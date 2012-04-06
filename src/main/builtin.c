@@ -322,13 +322,30 @@ SEXP do_makefactor(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	SEXP ans;
-	int i, n;
+	SEXP a, blank, ans, nms;
+	int i, n, named;
+	named = 0;
 	n = length(args);
 	PROTECT(ans = allocVector(EXPRSXP, n));
+	a = args;
 	for(i=0 ; i<n ; i++) {
-		VECTOR(ans)[i] = duplicate(CAR(args));
-		args = CDR(args);
+		VECTOR(ans)[i] = duplicate(CAR(a));
+		if (TAG(a) != R_NilValue) named = 1;
+		a = CDR(a);
+	}
+	if(named) {
+		PROTECT(blank=mkChar(""));
+		PROTECT(nms = allocVector(STRSXP, n));
+		a = args;
+		for(i=0 ; i<n ; i++) {
+			if(TAG(a) != R_NilValue)
+				STRING(nms)[i] = PRINTNAME(TAG(a));
+			else
+				STRING(nms)[i] = blank;
+			a = CDR(a);
+		}
+		setAttrib(ans, R_NamesSymbol, nms);
+		UNPROTECT(2);
 	}
 	UNPROTECT(1);
 	return ans;

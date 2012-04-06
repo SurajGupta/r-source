@@ -1,5 +1,5 @@
-attach <- function(x, pos=2, name=deparse(substitute(x))) 
-.Internal(attach(x, pos, name))
+attach <- function(what, pos=2, name=deparse(substitute(what))) 
+.Internal(attach(what, pos, name))
 
 detach <- function(name, pos=2)
 {
@@ -14,7 +14,7 @@ detach <- function(name, pos=2)
 	.Internal(detach(pos))
 }
 
-"objects" <-
+objects <-
 function (name, pos = -1, envir=pos.to.env(pos), all.names = FALSE, pattern) 
 {
 	if (!missing(name)) {

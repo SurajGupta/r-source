@@ -17,7 +17,7 @@
  */
 
 
-#include "WINcons.h"
+#include "wincons.h"
 #include <commdlg.h>
 
 static char szFilter[RBuffLen + 2];

@@ -23,7 +23,7 @@ apropos("lm")
 apropos("ls")
 apropos("lq")
 BLANK
-# need the `\\'
+# need a DOUBLE backslash `\\' (in case you don't see it anymore)
 apropos("\\[")
 BLANK
 # everything

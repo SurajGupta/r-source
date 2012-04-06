@@ -49,11 +49,15 @@ dbinom <- function(x, n, p) .Internal(dbinom(x, n, p))
 pbinom <- function(q, n, p) .Internal(pbinom(q, n, p))
 qbinom <- function(prob, n, p) .Internal(qbinom(prob, n, p))
 rbinom <- function(nobs, n, p) .Internal(rbinom(nobs, n, p))
-##--- Argument names taken from  ../man/Chisquare :
+##--- Argument names taken from  ../man/[N]Chisquare :
 dchisq <- function(x, df) .Internal(dchisq(x, df))
 pchisq <- function(q, df) .Internal(pchisq(q, df))
 qchisq <- function(p, df) .Internal(qchisq(p, df))
 rchisq <- function(n, df) .Internal(rchisq(n, df))
+dnchisq <- function(x, df, lambda) .Internal(dnchisq(x, df, lambda))
+pnchisq <- function(q, df, lambda) .Internal(pnchisq(q, df, lambda))
+qnchisq <- function(p, df, lambda) .Internal(qnchisq(p, df, lambda))
+rnchisq <- function(n, df, lambda) .Internal(rnchisq(n, df, lambda))
 ##--- Argument names taken from  ../man/F :
 df <- function(x, n1, n2) .Internal(df(x, n1, n2))
 pf <- function(q, n1, n2) .Internal(pf(q, n1, n2))

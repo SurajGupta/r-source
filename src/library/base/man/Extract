@@ -1,13 +1,14 @@
-TITLE(Extract @@ Extract or Replace parts of an Object)
+TITLE(Extract @@ Extract or Replace Parts of an Object)
 USAGE(
 x[i]
 x[i,j, ...]
-x[i,j, ..., drop=T]
+x[i,j, ... , drop=TRUE]
 x[[i]]
 x[[i,j, ...]]
 x$name
 )
 ALIAS(Extract)
+ALIAS(Subscript)
 ALIAS([)
 ALIAS([[)
 ALIAS($)
@@ -28,12 +29,18 @@ When operating on a list the  LANG([[) operator gives the specified
 element of the list while the LANG([) operator returns a list with
 the specified element(s) in it.
 )
+SEEALSO(
+LANG(LINK(list)), LANG(LINK(array)), LANG(LINK(matrix)).
+)
 EXAMPLES(
 x <- 1:12; m <- matrix(1:6,nr=2); li <- list(pi=pi, e = exp(1))
 x[10]   # the tenth element of x
-m[1,]   # the first row of m (which must be a matrix)
+m[1,]   # the first row of matrix m
+m[1, , drop = FALSE]# is a 1-row matrix
 li[[1]] # the first element of list li
 y<-list(1,2,a=4,5)
 y[c(3,4)] # a list containing the third and fourth elements of y
 y$a      #the element of y named a
 )
+KEYWORD(array)
+KEYWORD(list)

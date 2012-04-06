@@ -567,11 +567,19 @@ static void Win_Clip(double x0, double x1, double y0, double y1)
         }
      hrgn = CreateRectRgn((int) Clipxl, (int) Clipyt, (int) Clipxr, (int) Clipyb);
      devHdc = GetDC(RGraphWnd);
+#ifdef old
      SelectClipRgn(devHdc, hrgn);
      ReleaseDC(RGraphWnd, devHdc);
      if( RGMhdc != NULL ) {
          sprintf(x,"R_C %f %f %f %f",  x0, x1,  y0, y1);
          GdiComment(RGMhdc, 100,x);
+     }
+#endif
+     ExtSelectClipRgn(devHdc, NULL, RGN_COPY);
+     IntersectClipRect(devHdc, (int) Clipxl, (int) Clipyt,(int) Clipxr,(int) Clipyb);
+     if( RGMhdc != NULL ) {
+             ExtSelectClipRgn(RGMhdc, NULL, RGN_COPY);
+             IntersectClipRect(RGMhdc, (int) Clipxl, (int) Clipyt,(int) Clipxr,(int) Clipyb);
      }
 }
 

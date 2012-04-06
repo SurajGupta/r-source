@@ -37,7 +37,8 @@ x <- 0:N1
 rbind(phyper(x, N1, N2, n),
       dhyper(x, N1, N2, n))
 all(phyper(x, N1, N2, n) == cumsum(dhyper(x, N1, N2, n))) #- FALSE
-# Relative Error -- (much too high  for R ver. 0.49) :
+# Relative Error :
 formatC(signif(( phyper(x, N1, N2, n) / cumsum(dhyper(x, N1, N2, n)) - 1), 2),
 	format='g', dig=2)
 )
+KEYWORD(distribution)

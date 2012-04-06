@@ -24,3 +24,8 @@ SUP(PAREN( 1 + SUP(e@@(x-a)/b)))@@2).
 @@
 f(x) = 1/b exp((x-a)/b) (1 + exp((x-a)/b))^-2.)
 )
+EXAMPLES(
+x <- 0:4
+paste(dlogis(x, loc = 0)) == paste(exp(x) * (1 + exp(x))^-2)
+)
+KEYWORD(distribution)

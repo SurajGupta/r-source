@@ -1,12 +1,43 @@
 TITLE(title @@ Plot Annotation)
 USAGE(
-title(main="", xlab="", ylab="")
+title(main="", sub="", xlab="", ylab="", ...)
 )
 ALIAS(title)
+ARGUMENTS(
+ARG(main @@ The main title (on top) using font LANG(par('font.main')),
+ color LANG(par('col.main')) and size (character expansion)
+ LANG(par('font.main')).) 
+ARG(sub @@ Sub-title (at bottom) using font LANG(par('font.sub')),
+ color LANG(par('col.sub')) and character expansion LANG(par('font.sub')).) 
+ARG(xlab @@ X axis label using font LANG(par('font.axis')),
+ color LANG(par('col.axis')) and character expansion LANG(par('font.axis')).)
+ARG(ylab @@ Y axis label, same font attributes as LANG(xlab).)
+ARG(DOTS @@ further graphical parameters (from LANG(LINK(par))).)
+)
 DESCRIPTION(
 This function can be used to add labels to a plot.
+Its first four principal arguments can also be used as arguments in
+most high-level plotting functions.
+They must be of type LANG(LINK(character)) or
+LANG(LINK(expression)). In the latter case, quite a bit of
+mathematical notation is available such as sub- and superscripts,
+greek letters, fractions, etc.
+)
+SEEALSO(
+LANG(LINK(mtext)), LANG(LINK(text)).
 )
 EXAMPLES(
 plot(cars, main="")
 title(main="Stopping Distance versus Speed")
+BLANK
+x <- seq(-4,4, len=101)
+y <- cbind(sin(x), cos(x))
+matplot(x, y, type = 'l', xaxt='n',
+	main = expression("sin" * phi * "  and  " * "cos" * phi),
+	ylab = expression("sin" * phi, "cos" * phi), #- only 1st is taken
+	xlab = expression("Phase Angle " * phi),
+	col.main = 'blue')
+axis(1, at=c(-pi,-pi/2,0,pi/2,pi), lab=expression(-pi,-pi/2, 0, pi/2, pi))
+abline(h=0, v=pi/2 *c(-1,1), lty=2, lwd=.1, col = 'gray70')
 )
+KEYWORD(aplot)

@@ -25,15 +25,30 @@
 
 	/* General F2C Macros */
 
+/* a whole bunch of stuff to keep watcom's C compiler happy */
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#endif
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 #define TRUE    (1)
 #define FALSE   (0)
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))
-#define dabs(x) (double)abs(x)
+/* #define dabs(x) (double)abs(x) */
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 #define dmin(a,b) (double)min(a,b)
 #define dmax(a,b) (double)max(a,b)
+
 
 typedef struct {
 	double r;
@@ -41,6 +56,8 @@ typedef struct {
 } complex;
 
 	/* Versions of Fortran Intrinsics */
+
+#ifdef NONSTANDARD_F77LIBS
 
 #define POW_DD	f77_pow_dd
 #define POW_DI	f77_pow_di
@@ -53,6 +70,22 @@ typedef struct {
 #define ZIMAG	f77_dimag
 #define ZREAL	f77_real
 #define ZCNJG	f77_dcnjg
+
+#else
+
+#define POW_DD  pow_dd
+#define POW_DI  pow_di
+#define DABS    dabs
+#define DSIGN   dsign
+#define DLOG10  dlog10
+
+#define ZDIV    zdiv
+#define ZABS    zabs
+#define ZIMAG   dimag
+#define ZREAL   real
+#define ZCNJG   dcnjg
+
+#endif
 
 extern double DSIGN(double*, double*);
 extern double DLOG10(double*);

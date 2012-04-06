@@ -254,6 +254,9 @@ SEXP classgets(SEXP vec, SEXP class)
 			OBJECT(vec) = 0;
 		}
 		else {
+			if(streql(CHAR(STRING(class)[0]), "data.frame") &&
+				!isList(vec) )
+				error("attempt to make non-list a data frame\n");
 			installAttrib(vec, R_ClassSymbol, class);
 			OBJECT(vec) = 1;
 		}
@@ -316,19 +319,34 @@ SEXP do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP namesgets(SEXP vec, SEXP val)
 {
-	int i = 0;
-	SEXP s;
+	int i;
+	SEXP s,rval;
 
 	PROTECT(vec);
 	PROTECT(val);
 
-	val = coerceVector(val, STRSXP);
+	if( isList(val) )
+		if( !isVectorizable(val) )
+			error("incompatible names argument\n");
+		else {
+			rval = allocVector(STRSXP, length(vec));
+			PROTECT(rval);
+			for (i = 0; i < length(vec); i++) {
+				s = coerceVector(CAR(val), STRSXP);
+				STRING(rval)[i] = STRING(s)[0];
+			}
+			UNPROTECT(1);
+			val = rval;
+		}
+	else
+		val = coerceVector(val, STRSXP);
 	UNPROTECT(1);
 	PROTECT(val);
 
 	checkNames(vec, val);
 
 	if (isList(vec) || isLanguage(vec)) {
+		i=0;
 		for (s = vec; s != R_NilValue; s = CDR(s), i++)
 			if (STRING(val)[i] != R_NilValue
 			 && STRING(val)[i] != R_NaString
@@ -384,7 +402,7 @@ SEXP rownamesgets(SEXP vec, SEXP val)
 		UNPROTECT(1);
 		PROTECT(val);
 
-		if (length(CAR(vec)) != length(val))
+		if (nrows(CAR(vec)) != length(val))
 			error("names attribute must be the same length as the vector\n");
 
 	}
@@ -629,15 +647,21 @@ SEXP do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-	SEXP s, t;
+	SEXP obj, name, value;
 
-	if(NAMED(CAR(args)) == 2) CAR(args) = duplicate(CAR(args));
-	t = CADR(args);
+	obj = eval(CAR(args), env);
+	if(NAMED(obj) == 2)
+		PROTECT(duplicate(obj));
+	else
+		PROTECT(obj);
 
-	if (!isString(t))
+	PROTECT(name = eval(CADR(args), env));
+	if (!isString(name))
 		error("attr<- : name must be of mode character\n");
-	s = CAR(args);
 
-	setAttrib(s, t, CAR(CDDR(args)));
-	return s;
+	/* rhs is already evaluated */
+	PROTECT(value = CAR(CDDR(args)));
+	setAttrib(obj, name, value);
+	UNPROTECT(3);
+	return obj;
 }

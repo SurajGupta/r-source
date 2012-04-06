@@ -21,7 +21,7 @@
 #include <windowsx.h>
 #include <env.h>
 
-#include "c:\rjan\include\Defn.h"
+#include "Defn.h"
 
 
 /* Globals */
@@ -35,6 +35,8 @@ extern char REditClass[];
 extern char RDEClass[];
 
 extern char REdfilename[MAX_PATH];
+
+extern int R_VSmb;
 
 extern HMENU RMenuEdit, RMenuDE, RMenuGraph, RMenuConsole, RMenuInit;
 extern HMENU RMenuEditWin, RMenuDEWin, RMenuGraphWin, RMenuConsWin, RMenuInitWin;
@@ -60,6 +62,7 @@ extern int EventLoop(void);
 extern void SysBeep(void);
 extern int Win_ROpenDlg(HWND, char*);
 extern int Win_RSaveDlg(HWND);
+extern void R_SetMemory(int, int);
 
 #define R_printf Rprintf
 
@@ -109,3 +112,5 @@ extern int Win_RSaveDlg(HWND);
 #define RRR_CASC                122
 #define RRR_ARRA                123
 #define RRR_CLOSEALL            124
+#define RRR_SETMEM              125
+#define RRR_HELP                126

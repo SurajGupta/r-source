@@ -1,6 +1,6 @@
 TITLE(get @@ Return a Variable's Value)
 USAGE(
-get(x, envir=NULL, mode="any", inherits=FALSE)
+get(x, pos=-1, envir=NULL, mode="any", inherits=TRUE)
 )
 ALIAS(get)
 ARGUMENTS(

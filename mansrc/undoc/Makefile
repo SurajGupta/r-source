@@ -2,11 +2,11 @@ BASE  = ../../src/library/base/funs
 Names = ../../src/main/names.c
 manDIR= ../../src/library/base/man
 Exe   = ../../bin/R
-Exe = /usr/local/R-alpha/bin/R
+
 
 Targets = UNDOCUMENTED\
 	 DOC_unfun Builtins unBuiltin Built_unfun\
-	 Examples No-Examples
+	 No-Examples #nomore Examples
 SUFFIXES = srt
 %.srt : %
 	sort $< > $@
@@ -19,7 +19,7 @@ all: $(Targets)
 ALL_FUNCTIONS: getFunctions R-funs ${BASE} ${Names}
 	getFunctions ${BASE}  ${Names} > $@
 Builtins: $(Exe)
-	echo 'write(objects(.SystemEnv), "", nc=1)'| $(Exe) \
+	echo 'write(objects(pos=length(search())), "", nc=1)'| $(Exe) \
 	 | sed '1,/write(/d'  > $@
 
 DOCUMENTED: $(manDIR)/*
@@ -45,7 +45,7 @@ diff_A_B: ALL_FUNCTIONS.srt Builtins.srt
 No-Examples: NoEx $(manDIR)/*
 	NoEx $(manDIR) > $@
 
-# All EXAMPLES  as a 'source()able' R - file:
+# All EXAMPLES  as a 'source()able' R-file: ---> now  RHOME/etc/extract-Examples
 Examples: extrAllExamp DOCUMENTED
 	extrAllExamp `sed 's/\*/\\\*/' DOCUMENTED` > $@
 Examples.out: Examples
@@ -53,4 +53,4 @@ Examples.out: Examples
 clean:
 	@rm -f $(Targets) *.srt ALL_FUNCTIONS *DOCUMENTED DOC_* \
 		diff_A_B diff_A_D\
-		Examples.out Examples.ps data mean.out foo .RData 
+		Examples.out Examples.ps data mean.out foo .RData

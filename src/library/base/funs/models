@@ -1,15 +1,15 @@
 formula <- function(x, ...) UseMethod("formula")
 formula.default<-function (x)
 {
-        if (!is.null(x$formula))
-                return(eval(x$formula))
-        if (!is.null(x$call$formula))
-                return(eval(x$call$formula))
-        if (!is.null(x$terms))
-                return(x$terms)
-        switch(typeof(x), NULL = structure(NULL, class = "formula"),
-                character = formula(eval(parse(text = x)[[1]])),
-                call = eval(x), stop("invalid formula"))
+	if (!is.null(x$formula))
+		return(eval(x$formula))
+	if (!is.null(x$call$formula))
+		return(eval(x$call$formula))
+	if (!is.null(x$terms))
+		return(x$terms)
+	switch(typeof(x), NULL = structure(NULL, class = "formula"),
+		character = formula(eval(parse(text = x)[[1]])),
+		call = eval(x), stop("invalid formula"))
 }
 formula.formula <- function(x) x
 formula.terms <- function(x) {
@@ -19,9 +19,9 @@ formula.terms <- function(x) {
 print.formula <- function(x) print.default(unclass(x))
 
 terms <- function(x, ...) UseMethod("terms")
-print.terms <- function(x) print.default(unclass(x))
 terms.default <- function(x) x$terms
 terms.terms <- function(x) x
+print.terms <- function(x) print.default(unclass(x))
 
 delete.response <-
 function (termobj) 
@@ -108,6 +108,14 @@ UseMethod("df.residual")
 
 offset <- function(x) x
 
+variable.names <-
+function(obj, ...)
+UseMethod("variable.names")
+
+case.names <-
+function(obj, ...)
+UseMethod("case.names")
+
 na.action <- function(x, ...)
 UseMethod("na.action")
 
@@ -129,76 +137,65 @@ na.omit <- function(frame)
 
 model.data.frame <- function(...) {
 	cn <- as.character(substitute(list(...))[-1])
-	data.frame(..., col.names=cn, as.is=TRUE)
+	rval<-data.frame(..., col.names=cn, as.is=TRUE)
+	names(rval)<-cn
+	rval
 }
 
-"model.frame" <-
-function (formula, data = sys.frame(sys.parent()), subset = NULL,
-	na.action = eval(as.name(options("na.action")$na.action)), 
-	use.data = TRUE, process.offsets = TRUE, ...) 
-{ 
-        if (!is.null(formula$model) && missing(data)) 
-	  return(formula$model)
+model.frame <- function(x, ...)
+	UseMethod("model.frame")
 
-	if (!missing(data) || is.null(formula$model.frame)) {
-		dotsdata <- if (use.data) 
-			data
-		else sys.frame(sys.parent())
-		newframe <- substitute(list(...))
-		dots <- eval(newframe, dotsdata)
-		if (!is.null(dots)) {
-			real.dots <- !unlist(lapply(dots, is.null))
-			newframe <- as.call(newframe[c(T, real.dots)])
-			dots <- dots[real.dots]
-		}
-		Terms <- terms(formula)
-		frame <- attr(Terms, "variables")
-		name.process <- function(x) paste("(", x, ")", sep = "")
-		if (missing(data) && !is.null(formula$call)) {
-			if (is.null(formula$call$data))
-				data<-environment(NULL)
-			else
-				data <- eval(formula$call$data)
-		}
-		if (!(missing(subset) || exists(as.character(match.call()$subset), inherits = FALSE))) 
-			subset <- eval(match.call()$subset, data)
-		if (is.null(dots)) 
-			rval <- na.action(eval(frame, data)[subset, , drop = FALSE])
-		else {
-			dotnames <- sapply(names(eval(dots, data)), name.process)
-			val <- eval(frame, data)
-			newframe[[1]] <- as.name("model.data.frame")
-			for (i in 1:length(dots)) newframe[[i + 1]] <- dots[[i]]
-			dotsval <- eval(newframe, dotsdata)
-			names(dotsval) <- dotnames
-			if (dim(val)[1] == dim(dotsval)[1]) 
-				newval <- c(val, dotsval)
-			else stop("Mismatched dimensions in model.frame")
-			class(newval) <- "data.frame"
-			rval <- na.action(newval[subset, , drop = FALSE])
-		}
-		attr(rval, "terms") <- Terms
-		offset.pos <- attr(Terms, "offset")
-		if (process.offsets && (length(offset.pos) > 0)) {
-			offset.total <- as.vector(as.matrix(rval[, offset.pos]) %*% rep(1, length(offset.pos
-			)))
-			rval[[offset.pos[1]]] <- offset.total
-			names(rval)[offset.pos[1]] <- "(offset)"
-		}
-		rval
+model.frame.default <-
+function(formula, data = sys.frame(sys.parent()), na.action = na.fail, ...)
+{
+	envir <- sys.frame(sys.parent())
+	if(missing(formula)) {
+		if(!missing(data) && inherits(data, "data.frame") &&
+		length(attr(data, "terms")) > 0)
+			return(data)
+		formula <- as.formula(data)
 	}
-	else formula$model.frame
+	else if(missing(data) && inherits(formula, "data.frame")) {
+		if(length(attr(formula, "terms")))
+			return(formula)
+		data <- formula
+		formula <- as.formula(data)
+	}
+	if(missing(na.action)) {
+		if(!is.null(naa <- attr(data, "na.action")))
+			na.action <- naa
+		else if(!is.null(naa <- options("na.action")[[1]]))
+			na.action <- naa
+	}
+	if(!inherits(formula, "terms"))
+		formula <- terms(formula, data = data)
+	.Internal(model.frame(formula, data,
+		substitute(list(...)), sys.frame(sys.parent()), na.action))
 }
 
 model.weights <- function(x) x$"(weights)"
-
-model.offset <- function(x) x$"(offset)"
-
+model.offset <- function(x) {
+	offsets <- attr(x, "terms")$offset
+	if(length(offsets) > 0) {
+		ans <- 0
+		for(i in offsets) ans <- ans+x[[i]]
+	}
+	else NULL
+}
 model.matrix <- function (formula, data) 
 {
 	t <- terms(formula)
 	if (missing(data)) 
 		data <- eval(attr(t, "variables"), sys.frame(sys.parent()))
+        else {
+                nn <- as.character(attr(t, "variables"))[-1]
+                offset <- attr(t, "offset")
+                if (!is.null(offset)) 
+                        nn[offset] <- "(offset)"
+                if (any(is.na(match(nn, names(data))))) 
+                        stop("invalid model frame in model.matrix")
+                data <- data[, nn, drop = F]
+        }
 	.Internal(model.matrix(t, data))
 }
 

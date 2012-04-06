@@ -1,0 +1,10 @@
+TITLE(license @@ Show the License Terms for R)
+USAGE(license())
+ALIAS(license)
+DESCRIPTION(
+The function just prints a few lines telling about the GNU license
+terms, and how to obtain more details.
+)
+REFERENCES(The full license is in LANG($RHOME/COPYING).)
+EXAMPLES(license())
+KEYWORD(misc)

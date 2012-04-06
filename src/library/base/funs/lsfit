@@ -100,7 +100,7 @@ lsfit <- function(x, y, wt=NULL, intercept=TRUE, tolerance=1e-07, yname=NULL)
 	}
 	z$qr <- as.matrix(z$qr)
 	colnames(z$qr) <- xnames
-	output <- list(coef=z$coefficients, residuals=resids)
+	output <- list(coefficients=z$coefficients, residuals=resids)
 
 	# if X matrix was collinear, then the columns would have been
 	# pivoted hence xnames need to be corrected

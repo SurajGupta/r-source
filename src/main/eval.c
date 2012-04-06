@@ -650,8 +650,7 @@ static char *asym[] = {":=", "<-", "<<-"};
 
 SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	SEXP expr, lhs, rhs, saverhs, tmp;
-	SEXP tmploc, nrho;
+	SEXP expr, lhs, rhs, saverhs, tmp, tmploc, tmpsym;
 	char buf[32];
 
 	expr = CAR(args);
@@ -662,16 +661,15 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	PROTECT(saverhs = rhs = eval(CADR(args), rho));
 
-	/* This new enviroment is for temporary use here and in evalseq */
-
-	PROTECT(nrho = emptyEnv());
-	FRAME(nrho) = tmploc = CONS(R_NilValue, FRAME(rho));
-	ENCLOS(nrho) = ENCLOS(rho);
-	TAG(tmploc) = install("*tmp*");
+	tmpsym = install("*tmp*");
+	defineVar(tmpsym, R_NilValue, rho);
+	tmploc = FRAME(rho);
+	while(tmploc != R_NilValue && TAG(tmploc) != tmpsym)
+		tmploc = CDR(tmploc);
 	
 	/* do a partial evaluation down through the lhs */
 	
-	lhs = evalseq(CADR(expr), nrho, PRIMVAL(op)==1, tmploc);
+	lhs = evalseq(CADR(expr), rho, PRIMVAL(op)==1, tmploc);
 
 	PROTECT(lhs);
 	PROTECT(rhs); /*just to get the loop right */
@@ -684,7 +682,7 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 		CAR(tmploc) = CAR(lhs);
 		PROTECT(rhs = replaceCall(tmp, TAG(tmploc), CDDR(expr), rhs));
 
-		rhs = eval(rhs, nrho);
+		rhs = eval(rhs, rho);
 		UNPROTECT(1);
 		PROTECT(rhs);
 		lhs = CDR(lhs);
@@ -694,9 +692,10 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 	CAR(tmploc) = CAR(lhs);
 	PROTECT(expr = assignCall(install(asym[PRIMVAL(op)]), CDR(lhs),
 				 install(buf), TAG(tmploc), CDDR(expr), rhs));
-	expr = eval(expr, nrho);
+	expr = eval(expr, rho);
 
-	UNPROTECT(5);
+	UNPROTECT(4);
+	unbindVar(tmpsym, rho);
 	return duplicate(saverhs);
 }
 

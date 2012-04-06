@@ -1,10 +1,28 @@
 #!/bin/sh
 
-file=$RHOME/$1/$2
+# ${RHOME}/cmd/filename
 
-if [ -r $file ]
+# FIXME when the new directory structure is here!
+
+PKGS=${3:-"*"}
+LIBS=${4:-${RLIBS}}
+
+for lib in ${LIBS}
+do
+    for pkg in "${PKGS}"
+    do
+	for file in ${lib}/$1/${pkg}/$2 ${lib}/$1/$2
+	do
+	    if [ -r ${file} ]
+	    then
+		echo ${file}
+		break
+	    fi
+	done
+    done
+done    
+
+if [ ! -r ${file} ]
 then
-	echo $file
-else
-	echo
+    echo
 fi

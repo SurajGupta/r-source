@@ -1,32 +1,35 @@
 TITLE(Logic @@ Logical Operators)
 USAGE(
+! x
 x & y
 x && y
 x | y
 x || y
-! x
+xor(x, y)
 )
+ALIAS(!)
 ALIAS(&)
 ALIAS(&&)
 ALIAS(|)
 ALIAS(||)
-ALIAS(!)
+ALIAS(xor)
 ALIAS(Logic)
 DESCRIPTION(
 These operators act on logical vectors.
+PARA
+LANG(!) indicates logical negation (NOT).
+PARA
 LANG(&) and LANG(&&) indicate logical AND and LANG(|) and LANG(||)
-indicate logical OR.
-The shorter form performs elementwise comparisons in
-much the same way as arithmetic operators.
-The longer form evaluates left to right examining only the
-first element of each vector.
+indicate logical OR.  The shorter form performs elementwise comparisons
+in much the same way as arithmetic operators.  The longer form evaluates
+left to right examining only the first element of each vector.
 Evaluation proceeds only until the result is determined.
 The longer form is appropriate for programming control-flow.
 PARA
-LANG(!) indicates logical negation (NOT).
+LANG(xor) indicates elementwise exclusive OR.
 )
 EXAMPLES(
-y <- 1 +  (x <- rpois(50, lambda=1.5)/4 - 1)
+y <- 1 + (x <- rpois(50, lambda=1.5) / 4 - 1)
 x[(x > 0) & (x < 1)]    # all x values between 0 and 1
-if(any(x==0) || any(y==0)) "zero encountered"
+if (any(x == 0) || any(y == 0)) "zero encountered"
 )

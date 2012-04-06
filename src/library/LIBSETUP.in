@@ -1,22 +1,19 @@
-LIBS=`ls|sed '
-/Makefile/d
+#! /bin/sh
+# ${RHOME}/src/library/LIBSETUP
+# Set up packages (by default, all but `base' and `profile')
+
+RHOME=${RHOME:-`cd ../..; pwd`}
+PKGS=`ls|sed '
 /CVS/d
+/LIBCLEAN/d
 /LIBSETUP/d
+/Makefile/d
 /base/d
 /profile/d
 '`
 
-dir=@LIBSRC@
-
-for lib in ${LIBS}
+export RHOME
+for pkg in ${PKGS}
 do
-	if test -d ${lib}/${dir}
-	then
-		(cd ${lib}/${dir}; make CC="@CC@" CFLAGS="-I../../../include @CFLAGS@ @PICFLAGS@" SHLIBLDFLAGS="@SHLIBLDFLAGS@" FC="@FC@" FFLAGS="@FFLAGS@ @FPICFLAGS@")
-	fi
-	if test -d ${lib}/funs
-	then
-		echo ${lib}
-		cat ${lib}/funs/[a-z]* > ../../library/${lib}   
-	fi
+    sh ${RHOME}/etc/INSTALL -help ${pkg}
 done

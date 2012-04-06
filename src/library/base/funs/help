@@ -1,47 +1,48 @@
-help <- function (topic, data, library)
+help <- function (topic, data, package = .library(), lib.loc = .lib.loc)
 {
- if(!missing(topic)) {
-	topic <- substitute(topic)
-	if (is.character(topic) || is.name(topic)) {
-		 if (!is.character(topic)) 
-			topic <- deparse(topic)
-		 if (!is.na(match(topic, c("+", "-", "*", "/", "^", "%%")))) 
-			topic <- "Arithmetic"
-		 else if (!is.na(match(topic, c("<", ">", "<=", ">=", "==", "!=")))) 
-			topic <- "Comparison"
-		 else if (!is.na(match(topic, c("&", "&&", "|", "||", "!")))) 
-			topic <- "Logic"
-		 else if (!is.na(match(topic, c("[", "[[", "$"))))
-			topic <- "Extract"
-		 system(paste("$RHOME/cmd/help", topic,
-			      paste(.Libraries, collapse = " "), "base"))
-	} else {
-		 topic <- as.character(topic)
-		 if (topic[1] == "data") {
-			 file <- system.file("data", paste(topic[2], ".doc", sep = ""))
-			 if (file == "") 
-				stop(paste("no documentation for dataset", topic[2]))
-			 else system(paste("$RHOME/cmd/pager", file))
-		 } else if (topic[1] == "library") {
-			 file <- system.file("help", paste(topic[2], "/INDEX", sep = ""))
-			 if (file == "") 
-				stop(paste("no documentation for dataset", topic[2]))
-			 else system(paste("$RHOME/cmd/pager", file))
-		 }
-		 else stop("unimplemented help feature")
-	}
- } else if(!missing(data)) {
-	topic <- as.character(substitute(data))
-	file <- system.file("data", paste(topic, ".doc", sep = ""))
-	if (file == "") 
-		stop(paste("no documentation for dataset", topic))
-	else system(paste("$RHOME/cmd/pager", file))
- } else if(!missing(library)) {
-	topic <- as.character(substitute(library))
-	file <- system.file("help", paste(topic, "/INDEX", sep = ""))
-	if (file == "") 
-		stop(paste("no documentation for library", topic))
-	else system(paste("$RHOME/cmd/pager", file))
- }
- else system("$RHOME/cmd/help help base")
+  FUN <- function(thing, type.dir, type.name, suffix) {
+    file <- system.file(type.dir, paste(thing, suffix, sep = ""))
+    if (file == "")
+      stop(paste("no documentation for ", type.name, " `", thing, "'",
+		 sep = ""))
+    else
+      system(paste("${RHOME}/cmd/pager", file))
+  }
+  if (!missing(topic)) {
+    topic <- substitute(topic)
+    if (is.character(topic) || is.name(topic)) {
+      if (!is.character(topic)) 
+	topic <- deparse(topic)
+      if (!is.na(match(topic, c("+", "-", "*", "/", "^", "%%")))) 
+	topic <- "Arithmetic"
+      else if (!is.na(match(topic, c("<", ">", "<=", ">=", "==", "!=")))) 
+	topic <- "Comparison"
+      else if (!is.na(match(topic, c("[", "[[", "$"))))
+	topic <- "Extract"
+      else if (!is.na(match(topic, c("&", "&&", "|", "||", "!")))) 
+	topic <- "Logic"
+      system(paste("RLIBS=\"", paste(lib.loc, collapse = " "), "\";",
+		   "export RLIBS;", "${RHOME}/cmd/help", topic,
+		   paste(package, collapse = " ")))
+    } else {
+      topic <- as.character(topic)
+      CHOICES <- c("data", "package", "library")
+      type <- CHOICES[pmatch(as.character(topic[1]), CHOICES)]
+      if (length(type) > 1 || is.na(type) || length(topic) == 1)
+	stop("unimplemented help feature")
+      else
+	switch(type,
+	       data = FUN(topic[2], "data", "data set", ".doc"),
+	       package = FUN(topic[2], "help", "package", "/INDEX"),
+	       library = library(lib = eval(parse(text = topic[2]))))
+    }
+  }
+  else if (!missing(data))
+    FUN(as.character(substitute(data)), "data", "data set", ".doc")
+  else if (!missing(package))
+    FUN(as.character(substitute(package)), "help", "package", "/INDEX")
+  else if (!missing(lib.loc))
+    library(lib = lib.loc)
+  else
+    system("RLIBS=${RHOME}; ${RHOME}/cmd/help help base")
 }

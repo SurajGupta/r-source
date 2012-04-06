@@ -36,7 +36,7 @@ and
 EQN(b GT 0 @@ b > 0).
 )
 SEEALSO(
-LANG(LINK(gamma)).
+LANG(LINK(gamma)), LANG(LINK(dbeta)).
 )
 EXAMPLES(
 -log(dgamma(1:4, shape=1))
@@ -44,3 +44,4 @@ p <- (1:9)/10
 pgamma(qgamma(p,shape=2), shape=2)
 1 - 1/exp(qgamma(p, shape=1))
 )
+KEYWORD(distribution)

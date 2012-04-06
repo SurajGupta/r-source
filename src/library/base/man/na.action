@@ -1,0 +1,26 @@
+TITLE(na.action @@ LANG(NA) Action)
+USAGE(
+na.action(x, DOTS)
+na.action.default(x)
+)
+ALIAS(na.action)
+ALIAS(na.action.default)
+ARGUMENTS(
+ARG(x @@ any object whose LANG(LINK(NA)) action is given.)
+ARG(DOTS @@ further arguments special methods could assume.)
+)
+DESCRIPTION(
+LANG(na.action) is a generic function, and LANG(na.action.default) its
+default method.
+)
+VALUE(
+  The ``NA action'' which should be applied to LANG(x) whenever
+  LANG(NA)s are not desired.
+)
+SEEALSO(
+LANG(LINK(options)("na.action")), LANG(LINK(na.omit)), LANG(LINK(na.fail))
+)
+EXAMPLES(
+na.action(c(1,NA))
+)
+KEYWORD(manip)

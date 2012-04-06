@@ -1,48 +1,21 @@
+
 install:
 	@echo building/installing R
 	cd src; make install
 
-install-help:
-	@echo installing ALL manual entries
-	etc/install-allhelp
-
-install-latex:
-	@echo 'creating latex manual version (in dvi)'
-	etc/install-latex
-
-install-html:
-	@echo 'creating html manual version (in html)'
-	etc/install-html
+install-help install-latex install-html test-Examples:
+	@cd etc; make $@
 
 tests: test-Examples
-test-Examples: etc/Examples-test/All-Ex.out
-
-etc/Examples-test/All-Ex.out: etc/Examples-test/All-Ex.R
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ]; then mv $@ $@.bak ; fi
-	@echo Running all help-EXAMPLES
-	(R=`pwd`/bin/R; cd etc/Examples-test ; rm -f .RData; $$R -v 4 < All-Ex.R > All-Ex.out)
-
-etc/Examples-test/All-Ex.R: etc/Examples-test src/library/base/man/*
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ]; then mv $@ $@.bak ; fi
-	@echo Extracting all help-EXAMPLES into $@
-	etc/extract-Examples > $@
-
-etc/Examples-test:
-	@if [ ! -d $@ ]; then mkdir $@ ; fi
 
 patches:
 	@echo "Patches? Patches?  We don't need no stinking patches!"
 
-clean:
-	@echo cleaning at top level
+clean: acclean
+	@echo 'cleaning at top level'
 	@cd demos/dynload; make clean
-	@rm -f config.cache config.log config.status
-	@rm -f etc/COMPILE etc/SHLIB
-	@rm -f etc/Examples-test/All-Ex.R
-	@echo cleaning the source tree
-	@cd src; make clean
+	@echo "cleaning './etc/ ..'"; cd etc; make clean
+	@echo 'cleaning the source tree'; cd src; make clean
 
 acclean:
 	@echo cleaning configure files
@@ -50,19 +23,15 @@ acclean:
 
 realclean: distclean
 
-distclean:
+distclean: acclean
 	@echo cleaning at top level
-	@-rm -f etc/COMPILE etc/SHLIB
+	@rm -f Makefile
 	@-rm -f bin/R*
 	@-rm -f library/*
 	@-rm -f lib/*.so
-	@-rm -rf help/LibIndex help/[a-z]*
+	@-rm -f help/LibIndex help/[a-z]*/*
 	@-rm -f html/funs/*
-	@rm -fr etc/Examples-test
 	@-rm -f dvi/*
 	@cd demos/dynload; make realclean
-	@echo cleaning the source tree
-	@cd src; make realclean
-	@echo cleaning at top level
-	@rm -f config.cache config.log config.status
-	@rm -f Makefile
+	@echo 'realcleaning ./etc'; cd etc; make realclean
+	@echo 'realcleaning the source tree'; cd src; make realclean

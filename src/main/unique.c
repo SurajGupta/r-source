@@ -338,23 +338,23 @@ SEXP do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 	int n, i;
 
 	checkArity(op, args);
-	type = TYPEOF(CAR(args)) < TYPEOF(CADR(args)) ?
-	    TYPEOF(CADR(args)) : TYPEOF(CAR(args));
 
-	if( CAR(args) == R_NilValue )
-		return allocVector(INTSXP,0);
-
-	if (!isVector(CAR(args)) || !isVector(CADR(args)))
+	if ((!isVector(CAR(args)) && !isNull(CAR(args)))
+	     || (!isVector(CADR(args)) && !isNull(CADR(args))))
 		error("match requires vector arguments\n");
 
+	/* Coerce to a common type */
+	/* Note: type == NILSXP is ok here */
+
+	type = TYPEOF(CAR(args)) < TYPEOF(CADR(args)) ?
+		TYPEOF(CADR(args)) : TYPEOF(CAR(args));
 	x = CAR(args) = coerceVector(CAR(args), type);
 	table = CADR(args) = coerceVector(CADR(args), type);
 	nomatch = asInteger(CAR(CDDR(args)));
-	n = LENGTH(x);
+	n = length(x);
 
 	/* handle zero length arrays */
-	if (n == 0)
-		return allocVector(INTSXP, 0);
+	if (n == 0) return allocVector(INTSXP, 0);
 	if (length(table) == 0) {
 		ans = allocVector(INTSXP, n);
 		for (i = 0; i < n; i++)

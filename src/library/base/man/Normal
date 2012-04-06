@@ -37,3 +37,12 @@ f(x) = 1/(sqrt(2 pi) sigma)
 where EQN(greekmu) is the mean of the distribution
 and EQN(greeksigma) the standard deviation.
 )
+SEEALSO(
+LANG(LINK(dlnorm)) for the ITALIC(Log)normal distribution.
+)
+EXAMPLES(
+dnorm(0) == 1/ sqrt(2*pi)
+dnorm(1) == exp(-1/2)/ sqrt(2*pi)
+dnorm(1) == 1/ sqrt(2*pi*exp(1))
+)
+KEYWORD(distribution)

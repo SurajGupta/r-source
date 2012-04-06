@@ -1,15 +1,26 @@
-TITLE(splinefun @@ Interpolating Splines)
+TITLE(spline[fun] @@ Interpolating Splines)
 USAGE(
-splinefun(x, y, method="fmm")
+splinefun(x, y,                method="fmm")
+spline   (x, y, n=3*length(x), method="fmm", xmin=min(x), xmax=max(x))
 )
 ALIAS(splinefun)
+ALIAS(spline)
 ARGUMENTS(
 ARG(x,y @@ vectors giving the coordinates of the points to be interpolated.
 Alternatively a single plotting structure can be specified.)
-ARG(method @@ this specifies the type of spline to be used.
+ARG(method @@  specifies the type of spline to be used.
 Possible values are LANG("fmm"), LANG("natural") and LANG("periodic").)
+ARG(n @@ interpolation takes place at LANG(n)
+equally spaced points spanning the interval LANG([xmin, xmax]).)
+ARG(xmin @@ left-hand endpoint of the interpolation interval.)
+ARG(xmax @@ right-hand endpoint of the interpolation interval.)
 )
 DESCRIPTION(
+LANG(spline) performs cubic spline interpolation of the given data points.
+It returns a list containing components
+LANG(x), and LANG(y) which give the ordinates where interpolation took
+place and the interpolated values.
+PARA
 LANG(splinefun) returns a function which will perform
 cubic spline interpolation of the given data points.
 This is often more useful than LANG(spline).
@@ -19,7 +30,7 @@ Forsythe, Malcolm and Moler (an exact cubic is fitted through
 the four points at each end of the data, and this is used
 to determine the end conditions).
 Natural splines are used when
-LANG(method="natural") and periodic splines when 
+LANG(method="natural") and periodic splines when
 LANG(method="periodic").
 )
 REFERENCES(
@@ -27,11 +38,20 @@ Forsythe, G. E., M. A. Malcolm and C. B. Moler (1977).
 ITALIC(Computer Methods for Mathematical Computations).
 )
 SEEALSO(
-LANG(LINK(approx)), LANG(LINK(approxfun)), LANG(LINK(spline)).
+LANG(LINK(approx)) and LANG(LINK(approxfun)) for constant and linear
+interpolation.
 )
 EXAMPLES(
 x <- 1:10
 y <- rnorm(10)
+par(mfrow=c(2,1))
+plot(x, y, main = "spline[fun](.) through 10 points")
+lines(spline(x, y))
+lines(spline(x, y, n = 201), col=2)
+BLANK
 f <- splinefun(x, y)
-curve(f(x), 1, 10)
+ls(envir=environment(f))
+splinecoef <- eval(expression(z), envir=environment(f))
+curve(f(x), 1, 10, col = 'green', lwd=1.5)
+points(splinecoef, col = 'purple', cex=2)
 )

@@ -20,7 +20,7 @@ seq <- function(from = 1, to = 1, by = ((to - from)/(length.out - 1)), length.ou
 	else if(length.out < 0)
 		stop("Length cannot be negative")
 	else if(length.out == 0)
-		numeric(0)
+		integer(0)
 	else if(missing(by)) {
 		if(from == to || length.out < 2)
 			by <- 1

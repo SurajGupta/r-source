@@ -751,7 +751,7 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	a=CDR(a);
 
 	data = CAR(a); a=CDR(a);
-	if( data == R_NilValue )
+	if(isNull(data) || isEnvironment(data))
 		framenames = R_NilValue;
 	else if (isFrame(data))
 		framenames = getAttrib(data, R_NamesSymbol);
@@ -780,7 +780,7 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	intercept = 1;
 	parity = 1;
 	response = 0;
-	PROTECT(varlist = lcons(install("model.data.frame"), R_NilValue));
+	PROTECT(varlist = lcons(install("list"), R_NilValue));
 	ExtractVars(CAR(args), 1);
 	UNPROTECT(1);
 	CAR(a) = varlist;
@@ -1130,8 +1130,229 @@ SEXP do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+/*
+ *  model.frame
+ *
+ *  The argument "terms" contains the terms object generated from the
+ *  model formula.  We first evaluate the "variables" attribute of
+ *  "terms" in the "data" environment.  This gives us a list of basic
+ *  variables to be in the model frame.  We do some basic sanity
+ *  checks on these to ensure that resulting object make sense.
+ *
+ *  The argument "dots" gives additional things like "weights", "offsets"
+ *  and "subset" which will also go into the model frame so that they can
+ *  be treated in parallel.
+ *
+ *  Next we subset the data frame according to "subset" and finally apply
+ *  "na.action" to get the final data frame.
+ *
+ *  Note that the "terms" argument is glued to the model frame as an
+ *  attribute.  Code downstream appears to need this.
+ *  Q: Is this really needed, or can we get by with less info?
+ */
+
+/* .Internal(model.frame(formula, data, dots, envir, na.action)) */
+
+static SEXP SubsetSymbol;
+
+static SEXP ProcessDots(SEXP dots, SEXP *subset, char *buf)
+{
+	if(dots == R_NilValue)
+		return dots;
+	if(TAG(dots) == R_NilValue)
+		error("unnamed list element in model.frame.default");
+	CDR(dots) = ProcessDots(CDR(dots), subset, buf);
+	if(TAG(dots) == SubsetSymbol) {
+		*subset = CAR(dots);
+		return CDR(dots);
+	}
+	else {
+		sprintf(buf, "(%s)", CHAR(PRINTNAME(TAG(dots))));
+		TAG(dots) = install(buf);
+		return dots;
+	}
+}
+
+SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	SEXP terms, data, dots, envir, na_action;
+	SEXP ans, row_names, subset, tmp, variables;
+	char buf[256];
+	int i, nr, nc;
+
+	checkArity(op, args);
+	terms = CAR(args); args = CDR(args);
+	data = CAR(args); args = CDR(args);
+	dots = CAR(args); args = CDR(args);
+	envir = CAR(args); args = CDR(args);
+	na_action = CAR(args); args = CDR(args);
+
+		/* Save the row names for later use. */
+
+	PROTECT(row_names = getAttrib(data, R_RowNamesSymbol));
+
+		/* Assemble the base data frame. */
+
+	PROTECT(variables = getAttrib(terms, install("variables")));
+	if(isNull(variables) || !isLanguage(variables))
+		errorcall(call, "invalid terms object\n");
+	if(isList(data)) {
+		tmp = emptyEnv();
+		FRAME(tmp) = data;
+		ENCLOS(tmp) = R_GlobalEnv;
+		data = tmp;
+	}
+	else if(!isEnvironment(data))
+		errorcall(call, "Invalid data argument\n");
+	PROTECT(data);
+	data = eval(variables, data);
+	UNPROTECT(2);
+	PROTECT(data);
+
+		/* Create the names for the variables. */
+		/* To do this construct a call to */
+		/* as.character(substitute(list(...))) */
+		/* and ignore the first element of the */
+		/* resulting character string vector. */
+
+	PROTECT(tmp = lang2(install("substitute"), variables));
+	PROTECT(tmp = lang2(install("as.character"), tmp));
+	tmp = eval(tmp, rho);
+	UNPROTECT(2);
+	PROTECT(tmp);
+	i = 1;
+	ans = data;
+	while(ans != R_NilValue) {
+		TAG(ans) = install(CHAR(STRING(tmp)[i]));
+		ans = CDR(ans);
+		i = i + 1;
+	}
+	UNPROTECT(1);
+
+		/* Sanity checks to ensure that the */
+		/* the answer can become a data frame. */
+		/* Be deeply suspicious here! */
+
+	if(!isList(data))
+		errorcall(call, "variables not in list form\n");
+	nc = 0;
+	if(!isNull(data)) {
+		nr = nrows(CAR(data));
+		for(ans=data ; ans!=R_NilValue ; ans=CDR(ans)) {
+			if(TYPEOF(CAR(ans)) < LGLSXP ||
+					TYPEOF(CAR(ans)) > REALSXP)
+				errorcall(call, "invalid variable type\n");
+			if(nrows(CAR(ans)) != nr)
+				errorcall(call, "variable lengths differ\n");
+			nc++;
+		}
+	}
+
+		/* Evaluate the additional frame components. */
+		/* Things like weights, subset, offset, etc. */
+
+	if(isNull(dots) || !isLanguage(dots))
+		errorcall(call, "invalid dots object\n");
+	if(isList(envir)) {
+		tmp = emptyEnv();
+		FRAME(tmp) = envir;
+		ENCLOS(tmp) = R_GlobalEnv;
+		envir = tmp;
+	}
+	else if(!isEnvironment(envir))
+		errorcall(call, "invalid envir argument\n");
+	PROTECT(envir);
+	dots = eval(dots, envir);
+	UNPROTECT(1);
+	PROTECT(dots);
+
+		/* Glue the data object and the dots objects */
+		/* together, checking that dimensions and */
+		/* types are sensible.  Note that any "subset" */
+		/* component in the dots object is treated */
+		/* specially.  It will be used for subsetting */
+		/* not returned in the data frame. */
+		
+	if(!isList(dots))
+		errorcall(call, "variables not in list form\n");
+	subset = R_NilValue;
+	if(!isNull(dots)) {
+		if(nr == 0) nr = nrows(CAR(dots));
+		for(ans=dots ; ans!=R_NilValue ; ans=CDR(ans)) {
+			if(TYPEOF(CAR(ans)) < LGLSXP ||
+					TYPEOF(CAR(ans)) > REALSXP)
+				errorcall(call, "invalid variable type\n");
+			if(nrows(CAR(ans)) != nr)
+				errorcall(call, "variable lengths differ\n");
+		}
+		SubsetSymbol = install("subset");
+		dots = ProcessDots(dots, &subset, buf);
+		if(!isNull(data)) {
+			ans = data;
+			while(CDR(ans) != R_NilValue)
+				 ans = CDR(ans);
+			CDR(ans) = dots;
+		}
+		else data = dots;
+	}
+	UNPROTECT(2);
+	PROTECT(data);
+	PROTECT(subset);
+
+		/* Glue on the row names. Create some if they */
+		/* don't exist - use as.character(1:nr). */
+
+	DataFrameClass(data);
+	if(length(row_names) == nr) {
+		setAttrib(data, R_RowNamesSymbol, row_names);
+	}
+	else {
+		PROTECT(row_names = allocVector(STRSXP, nr));
+		for(i=0 ; i<nr ; i++) {
+			sprintf(buf, "%d", i+1);
+			STRING(row_names)[i] = mkChar(buf);
+		}
+		setAttrib(data, R_RowNamesSymbol, row_names);
+		UNPROTECT(1);
+	}
+
+		/* Do the subsetting if required. */
+		/* First find the "subset" variable. */
+
+	if(subset != R_NilValue) {
+		PROTECT(tmp = lang4(install("["), data, subset, R_MissingArg));
+		data = eval(tmp, rho);
+		UNPROTECT(1);
+	}
+	UNPROTECT(3);
+	PROTECT(data);
+
+		/* finally, we run na.action on the data frame */
+		/* usually, this will be na.fail which should */
+		/* just be a check and should not use memory */
+
+	if(na_action != R_NilValue) {
+		if(isString(na_action) && length(na_action) > 0)
+			na_action = install(CHAR(STRING(na_action)[0]));
+		PROTECT(na_action);
+		PROTECT(tmp = lang2(na_action, data));
+		ans = eval(tmp, rho);
+		UNPROTECT(2);
+	}
+	else ans = data;
+	UNPROTECT(1);
+	PROTECT(ans);
+
+		/* Finally, tack on a terms attribute */
+
+	setAttrib(ans, install("terms"), terms);
+	UNPROTECT(1);
+	return ans;
+}
+
 	/* Internal code for the ~ operator */
 	/* Just returns the unevaluated call */
+	/* No longer needed??? */
 
 SEXP do_tilde(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1206,6 +1427,7 @@ static void addvar(double *x, int nrx, int ncx, double *c, int nrc, int ncc)
 	}
 }
 
+#ifdef OLD
 SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP v, vars, names, weights, ans;
@@ -1262,6 +1484,7 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(1);
 	return ans;
 }
+#endif
 
 #define BUFSIZE 128
 

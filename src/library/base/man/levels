@@ -4,6 +4,7 @@ levels(x)
 levels(x) <- value
 )
 ALIAS(levels)
+ALIAS(levels<-)
 DESCRIPTION(
 LANG(levels) provides access to the levels attribute of factor.
 The first form prints the levels of the observations
@@ -16,5 +17,5 @@ To find out how many levels a factor has user the function
 LANG(nlevels).
 )
 SEEALSO(
-LANG(LINK(nlevels)).
+LANG(LINK(factor)), LANG(LINK(nlevels)).
 )

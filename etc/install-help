@@ -1,66 +1,82 @@
 #!/bin/sh
 #
-# install-help [ lib]
-# ------------------- Install all the help files and index for library/_lib_
-#
-lib=$1
-if [ x$lib = x ];then  lib=base ; fi
-#
-# Should work WHEREVER this is called from :
-cd `dirname $0`/..
-##
-Hdir=help/$lib
-LIBdir=src/library/$lib
-MANdir=$LIBdir/man
+# ${RHOME}/etc/install-help
+# Usage:  install-help [pkg] [lib]
+# Install all help files, INDEX and TITLE for package pkg in library lib
+# (defaults are ${RHOME}/src/library/base' and `${RHOME}', respectively).
 
-if [ ! -d $LIBdir ]; then echo "There's no library `pwd`/$LIBdir !"; exit 1; fi
-if [ ! -d $Hdir ]; then mkdir -p $Hdir; fi
-cp /dev/null $Hdir/AnIndex
+# FIXME when the new directory structure is here!
 
-FILES="`ls -A $MANdir | sed '/CVS/d;/~$/d;/\.bak$/d;/\.orig$/d'`"
+RHOME=`dirname $0`/..		# relative
+RHOME=`cd ${RHOME}; pwd`	# absolute
 
-echo "==>>> Building   $Hdir/AnIndex  for library '$lib'"
+if [ "$1" ]
+then
+    pkg=$1
+    test -d ${pkg} || ( echo "Package \`${pkg}' does not exist"; exit 1 )    
+else
+    pkg="${RHOME}/src/library/base"
+fi
+pkgname=`basename ${pkg}`
+
+if [ "$2" ]
+then
+    mkdir -p $2 || ( echo "Cannot write to \`$2'"; exit 1 )
+    lib=`cd $2; pwd`
+else
+    lib=${RHOME}
+fi    
+
+cd ${pkg}
+pkg=`basename ${pkg}`
+
+DEST=${lib}/help/${pkg}
+mkdir -p ${DEST} || ( echo "Cannot write to \`${DEST}'"; exit 1 )
+cp /dev/null ${DEST}/AnIndex
+
+FILES="`ls -A man | sed '/CVS/d;/~$/d;/\.bak$/d;/\.orig$/d'`"
+
+echo -n " >>> Building help index for package \`${pkg}' ..."
 (
-for file in $FILES
+for file in ${FILES}
 do
-	NAMES=`grep '^ALIAS(' $MANdir/$file| sed 's/ALIAS(\(.*\))$/\1/; s/[\*]/\\\&/g'`
-	for name in $NAMES
-	do
-		echo "$name	$file"
-		#	   ^^^^^ = TAB
-	done
-	(echo "$file:	$NAMES" | tr '\012' ','; echo '')| sed 's/,$//'	 >&2
+    NAMES=`grep '^ALIAS(' man/${file} | sed 's/ALIAS(\(.*\))$/\1/; s/[\*]/\\\&/g'`
+    for name in ${NAMES}
+    do
+	echo "$name	$file"
+	#	   ^^^^^ = TAB
+    done
+    # (echo "${file}:	${NAMES}" | tr '\012' ','; echo '') | sed 's/,$//' >&2
 done
-if [ $lib != 'base' ]
-##-- The following is NOT done anymore in 'base':
-##-- 1) Each help file should have  ALIAS(..) for  ALL it's objects
-##-- 2) The  help file name may differ from _ANY_ object (eg 'Special')
-then 
-	for file in $FILES
-	do
-		echo "$file	$file"
-	done
+if [ ${pkg} != "base" ]
+## The following is NOT done anymore in "base":
+## 1) Each help file should have  ALIAS(..) for ALL its objects
+## 2) The help file name may differ from _ANY_ object (eg `Special')
+then
+    for file in ${FILES}
+    do
+	echo "${file}	${file}"
+    done
 fi
-) | sort -d -f | uniq >> $Hdir/AnIndex
+) | sort -d -f | uniq >> ${DEST}/AnIndex
+echo " done."
 
-echo "   ==== Makeing Manual entries for library '$lib' ===="
-for file in $FILES
+echo " >>> Building help pages for package \`${pkg}'"
+for file in ${FILES}
 do
-	./etc/doc2ms $MANdir/$file | nroff -ms 2> /dev/null \
-	| ./etc/help.pretty | sed 's/^/	/' >  $Hdir/$file
-	# echo $file
+    ${RHOME}/etc/doc2ms man/${file} \
+	| nroff -ms 2> /dev/null \
+	| ${RHOME}/etc/help.pretty \
+	| sed 's/^/	/' > ${DEST}/${file}
+    echo "  ${file}"
 done
-
-
-
-if [ -f $LIBdir/TITLE ]
+if [ -f INDEX ]
 then
-	cat $LIBdir/TITLE >> help/LibIndex
-	cp $LIBdir/TITLE $Hdir/TITLE
+    cp INDEX ${DEST}/INDEX
+fi
+if [ -f TITLE ]
+then
+    cp TITLE ${DEST}/TITLE
 fi
 
-if [ -f $LIBdir/INDEX ]
-then
-	cp $LIBdir/INDEX $Hdir/INDEX
-fi
-
+(cd ${lib}/help; cat */TITLE > LibIndex 2> /dev/null)

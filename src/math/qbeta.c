@@ -15,36 +15,36 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+ *
 
-/* Reference:
+ * Reference:
  * Cran, G. W., K. J. Martin and G. E. Thomas (1977).
- * Remark AS R19 and Algorithm AS 109,
- * Applied Statistics, 26, 111-114.
+ *	Remark AS R19 and Algorithm AS 109,
+ *	Applied Statistics, 26(1), 111-114.
+ * Remark AS R83 (v.39, 309-310) and the correction (v.40(1) p.236)
+ *	have been incorporated in this version. 
  */
 
 
 #include "Mathlib.h"
 
 #define zero 0.0
-#define half 0.5
-#define one 1.0
-#define two 2.0
-#define three 3.0
-#define four 4.0
-#define five 5.0
-#define six 6.0
-#define nine 9.0
 
 /* set the exponent of accu to -2r-2 for r digits of accuracy */
-#define acu 1.0e-32
-
 #ifdef OLD
+#define acu 1.0e-32
 #define lower 0.0001
 #define upper 0.9999
-#else
-#define lower 0.0000001
-#define upper 0.9999999
+
+#else/*---- NEW ---- -- still fails for p = 1e11, q=.5*/
+
+#define fpu 3e-308
+/* acu_min:  Minimal value for accuracy 'acu' which will depend on (a,p);
+	     acu_min >= fpu ! */
+#define acu_min 1e-300
+#define lower fpu
+#define upper 1-2.22e-16
+
 #endif
 
 #define const1 2.30753
@@ -56,8 +56,9 @@ static volatile double xtrunc;
 
 double qbeta(double alpha, double p, double q)
 {
-	int index;
-	double a, adj, beta, g, h, pp, prev, qq, r, s, sq, t, tx, w, y, yprev;
+	int swap_tail, i_pb, i_inn;
+	double a, adj, logbeta, g, h, pp, prev, qq, r, s, t, tx, w, y, yprev;
+	double acu;
 	volatile double xinbta;
 
 	/* define accuracy and initialize */
@@ -66,67 +67,73 @@ double qbeta(double alpha, double p, double q)
 
 	/* test for admissibility of parameters */
 
-	if (p < zero || q < zero || alpha < 0.0 || alpha > 1.0)
+	if (p < zero || q < zero || alpha < zero || alpha > 1)
 		DOMAIN_ERROR;
-	if (alpha == zero || alpha == one)
+	if (alpha == zero || alpha == 1)
 		return alpha;
 
-	beta = lbeta(p, q);
+	logbeta = lbeta(p, q);
 
-	/* change tail if necessary */
-
-	if (alpha <= half) {
-		a = alpha;
-		pp = p;
-		qq = q;
-		index = 0;
-	} else {
-		a = one - alpha;
-		pp = q;
-		qq = p;
-		index = 1;
+	/* change tail if necessary;  afterwards   0 < a <= 1/2	 */
+	if (alpha <= 0.5) {
+		a = alpha;	pp = p; qq = q; swap_tail = 0;
+	} else { /* change tail, swap  p <-> q :*/
+		a = 1 - alpha; pp = q; qq = p; swap_tail = 1;
 	}
 
 	/* calculate the initial approximation */
 
 	r = sqrt(-log(a * a));
-	y = r - (const1 + const2 * r) / (one + (const3 + const4 * r) * r);
-	if (pp > one && qq > one) {
-		r = (y * y - three) / six;
-		s = one / (pp + pp - one);
-		t = one / (qq + qq - one);
-		h = two / (s + t);
-		w = y * sqrt(h + r) / h - (t - s) * (r + five / six - two / (three * h));
+	y = r - (const1 + const2 * r) / (1 + (const3 + const4 * r) * r);
+	if (pp > 1 && qq > 1) {
+		r = (y * y - 3) / 6;
+		s = 1 / (pp + pp - 1);
+		t = 1 / (qq + qq - 1);
+		h = 2 / (s + t);
+		w = y * sqrt(h + r) / h - (t - s) * (r + 5 / 6 - 2 / (3 * h));
 		xinbta = pp / (pp + qq * exp(w + w));
 	} else {
 		r = qq + qq;
-		t = one / (nine * qq);
-		t = r * pow(one - t + y * sqrt(t), 3.0);
+		t = 1 / (9 * qq);
+		t = r * pow(1 - t + y * sqrt(t), 3);
 		if (t <= zero)
-			xinbta = one - exp((log((one - a) * qq) + beta) / qq);
+			xinbta = 1 - exp((log((1 - a) * qq) + logbeta) / qq);
 		else {
-			t = (four * pp + r - two) / t;
-			if (t <= one)
-				xinbta = exp((log(a * pp) + beta) / pp);
+			t = (4 * pp + r - 2) / t;
+			if (t <= 1)
+				xinbta = exp((log(a * pp) + logbeta) / pp);
 			else
-				xinbta = one - two / (t + one);
+				xinbta = 1 - 2 / (t + 1);
 		}
 	}
 
 	/* solve for x by a modified newton-raphson method, */
 	/* using the function betain */
 
-	r = one - pp;
-	t = one - qq;
+	r = 1 - pp;
+	t = 1 - qq;
 	yprev = zero;
-	sq = one;
-	prev = one;
-	if (xinbta < lower)
-		xinbta = lower;
-	if (xinbta > upper)
-		xinbta = upper;
-	for (;;) {
-		y = pbeta(xinbta, pp, qq);
+	adj = 1;
+	if (xinbta < lower) {
+	  xinbta = lower;
+	}
+	if (xinbta > upper) {
+	  xinbta = upper;
+	}
+	/* Desired accuracy should depend on  (a,p)
+	 * This is from Remark .. on AS 109, adapated.
+	 * However, it's not clear if this is "optimal" for IEEE double prec.
+
+	 * acu = fmax2(acu_min, pow(10., -25. - 5./(pp * pp) - 1./(a * a)));
+
+	 * NEW: 'acu' accuracy NOT for squared adjustment, but simple;
+	 * ---- i.e.,  "new acu" = sqrt(old acu)
+
+	 */
+	acu = fmax2(acu_min, pow(10, -13 - 2.5/(pp * pp) - 0.5/(a * a)));
+
+	for (i_pb=0; i_pb < 1000; i_pb++) {
+		y = pbeta_b(xinbta, pp, qq, logbeta);
 #ifdef HAVE_ISNAN
 		if(!finite(y))
 			DOMAIN_ERROR;
@@ -134,35 +141,34 @@ double qbeta(double alpha, double p, double q)
 		if (errno)
 			DOMAIN_ERROR;
 #endif
-		y = (y - a) * exp(beta + r * log(xinbta) + t * log(one - xinbta));
+		y = (y - a) * 
+			exp(logbeta + r * log(xinbta) + t * log(1 - xinbta));
 		if (y * yprev <= zero)
-			prev = sq;
-		g = one;
-		for (;;) {
-			adj = g * y;
-			sq = adj * adj;
-			if (sq < prev) {
-				tx = xinbta - adj;
-				if (tx >= zero && tx <= one) {
-					if (prev <= acu)
-						goto L10;
-					if (y * y <= acu)
-						goto L10;
-					if (tx != zero && tx != one)
-						break;
-				}
-			}
-			g = g / three;
+			prev = fmax2(fabs(adj),fpu);
+		g = 1;
+		for (i_inn=0; i_inn < 1000;i_inn++) {
+		  adj = g * y;
+		  if (fabs(adj) < prev) {
+		    tx = xinbta - adj; /* trial new x */
+		    if (tx >= zero && tx <= 1) {
+		      if (prev <= acu)	  goto L_converged;
+		      if (fabs(y) <= acu) goto L_converged;
+		      if (tx != zero && tx != 1)
+			break;
+		    }
+		  }
+		  g /= 3;
 		}
 		xtrunc = tx;	/* this prevents trouble with excess FPU */
 				/* precision on some machines. */
 		if (xtrunc == xinbta)
-			goto L10;
+			goto L_converged;
 		xinbta = tx;
 		yprev = y;
 	}
-      L10:
-	if (index)
-		xinbta = one - xinbta;
+	/*-- NOT converged: Iteration count --*/
+      L_converged:
+	if (swap_tail)
+		xinbta = 1 - xinbta;
 	return xinbta;
 }
