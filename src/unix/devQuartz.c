@@ -48,6 +48,212 @@ unsigned char Lat2Mac[] = {
 148, 149,  32, 150, 152, 151, 153, 155, 154, 214, 
 191, 157, 156, 158, 159,  32,  32, 216};
 
+#define MAX_NON_SYMBS 17
+unsigned char NotSymbols[] = {
+ 32, 33, 37, 38, 40, 41, 42, 43, 44, 58, 
+ 60, 61, 62, 91, 93, 95, 123, 125
+};
+
+/* conversion table to use symbol font enoded as
+   unicode under MacOSX and no longer MacRoman
+*/
+unsigned char Lat2Uni[] = { 
+    32, /* space */
+	33, /* exclam */
+    34, /* universal" */
+	35, /* numbersign */
+   154, /* existential */
+	37, /* percent */
+	38, /* ampersand */
+	39, /* suchthat */
+    40, /* parenleft */
+    41, /* parenright */
+   155, /* asteriskmath */
+	 3, /* plus */
+	44, /* comma */
+	60, /* minus */
+	46, /* period */
+	58, /* slash*/
+	48, /* 0 */
+	49, /* 1 */
+	50, /* 2 */
+	51, /* 3 */
+	52, /* 4 */
+	53, /* 5 */
+	54, /* 6 */
+	55, /* 7 */
+	56, /* 8 */
+	57, /* 9 */
+    58, /* colon */
+	59, /* semicolon */
+	60, /* less */
+	62, /* equal */
+	62, /* greater */
+	63, /* question */
+   129, /* congruent */
+    73, /* Alpha */
+	74, /* Beta */
+	93, /* Chi */
+	54, /* Delta */
+	76, /* Epsilon */
+	92, /* Phi */
+	75, /* Gamma */
+	78, /* Eta */
+	80, /* Iota */
+	85, /* theta1 */
+	81, /* Kappa */
+	82, /* Lambda */
+	83, /* Mu */
+	84, /* Nu */
+	86, /* Omicron */
+	87, /* Pi */
+	79, /* Theta */
+	88, /* Rho */
+	89, /* Sigma */
+	90, /* Tau */
+	91, /* Upsilon */
+	45, /* sigma1 */
+	49, /* Omega */
+	93, /* Xi */
+	94, /* Psi */
+	77, /* Zeta */
+	33, /* bracketleft */  /* Miscellaneous Special Characters */
+    92, /* therefore */
+	35, /* bracketright */
+   140, /* perpendicular */
+	32, /* underscore */
+	51, /* radicalex */
+ 95, /* alpha */
+ 96, /* beta */
+114, /* chi */
+ 98, /* delta */
+ 161, /* epsilon */
+ 113, /* phi */
+ 97, /* gamma */
+ 100, /* eta */
+ 102, /* iota */
+ 160, /* phi1 */
+ 103, /* kappa */
+ 104, /* lambda */
+  43, /* mu */
+ 105, /* nu */
+ 107, /* omicron */
+ 47, /* pi */
+ 101, /* theta */
+ 108, /* rho */
+ 109, /* sigma */
+ 111, /* tau */
+ 112, /* upsilon */
+ 159, /* omega1 */
+ 116, /* omega */
+ 106, /* xi */
+ 115, /* psi */
+ 110, /* zeta */
+ 123, /* braceleft */
+ 180, /* bar */
+ 125, /* braceright */
+ 126, /* similar */
+ 32, 32, 32, 32, 
+ 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+ 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+ 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+ 175, /* Upsilon1 */	/* Lone Greek */
+ 118, /* minute */
+  41, /* lessequal */
+ 177, /* fraction */
+  39, /* infinity */
+ 166, /* florin      ??? */
+ 121, /* club */
+ 122, /* diamond */
+ 120, /* heart */
+ 123, /* spade */
+  67, /* arrowboth */
+  64, /* arrowleft */
+  66, /* arrowup */
+  65, /* arrowright */
+  63, /* arrowdown */
+  36, /* degree */
+  40, /* plusminus */
+ 119, /* second */
+  42, /* greaterequal */
+ 155, /* multiply */
+ 124, /* proportional */
+  44, /* partialdiff */
+  20, /* bullet */
+  56, /* divide */
+  38, /* notequal */
+  62, /* equivalence */
+  53, /* approxequal ??? */
+  55, /* ellipsis    ??? */
+ 189, /* arrowvertex ??? */ 
+ 190, /* arrowhorizex ??? */
+ 191, /* carriagereturn */
+ 148, /* aleph */
+ 188, /* Ifraktur */
+ 189, /* Rfraktur */
+ 195, /* weierstrass ??? */
+ 128, /* circlemultiply */
+ 127, /* circleplus */
+ 146, /* emptyset */
+  69, /* intersection */
+  70, /* union */
+ 130, /* propersuperset */
+ 131, /* reflexsuperset */
+ 134, /* notsubset */
+ 132, /* propersubset */
+ 133, /* reflexsubset */
+  68, /* element */
+ 141, /* notelement */
+ 144, /* angle */
+ 162, /* gradient */
+ 186, /* registerserif */
+ 185, /* copyrightserif */
+ 184, /* trademarkserif */
+  87, /* product */
+  51, /* radical */
+  46, /* dotmath */
+  32,
+ 217, /* logicaland ???*/
+ 218, /* logicalor ???*/
+ 139, /* arrowdblboth */
+ 136, /* arrowdblleft */
+ 138, /* arrowdblup */
+ 137, /* arrowdblright */
+ 135, /* arrowdbldown */
+  57, /* lozenge */
+ 225, /* angleleft ???*/
+ 183, /* registersans */
+ 182, /* copyrightsans */
+ 181, /* trademarksans */
+  89, /* summation */
+ 163, /* parenlefttp */
+ 179, /* parenleftex */
+ 164, /* parenleftbt */
+ 149, /* bracketlefttp */
+ 147, /* bracketleftex */
+ 150, /* bracketleftbt */
+ 168, /* bracelefttp */
+ 169, /* braceleftmid */
+ 170, /* braceleftbt */
+ 172, /* braceex */
+  32,
+ 241, /* angleright */
+  48, /* integral */
+  71, /* integraltp */
+ 180, /* integralex */
+  72, /* integralbt */
+ 165, /* parenrighttp */
+ 181, /* parenrightex */
+ 166, /* parenrightbt */
+ 151, /* bracketrighttp */
+ 166, /* bracketrightex */
+ 152, /* bracketrightbt */
+ 172, /* bracerighttp */
+ 173, /* bracerightmid */
+ 174, /* bracerightbt */
+ 255 /* NULL */
+};
+
 unsigned char Mac2Lat[] = { 
 196, 197, 199, 201, 209, 214, 220, 225, 224, 226, 
 228, 227, 229, 231, 233, 232, 234, 235, 237, 236, 
@@ -75,10 +281,18 @@ unsigned char Mac2Lat[] = {
 
 #if HAVE_AQUA
 extern  DL_FUNC ptr_GetQuartzParameters;
+extern  DL_FUNC ptr_FocusOnConsole;
 extern	Rboolean useaqua;
 
-void GetQuartzParameters(double *width, double *height, double *ps, char *family, Rboolean *antialias, Rboolean *autorefresh) {ptr_GetQuartzParameters(width, height, ps, family, antialias, autorefresh);}
+void GetQuartzParameters(double *width, double *height, double *ps, char *family, Rboolean *antialias, Rboolean *autorefresh, int *quartzpos) {ptr_GetQuartzParameters(width, height, ps, family, antialias, autorefresh, quartzpos);}
+void FocusOnConsole(void) {ptr_FocusOnConsole();}
 #endif
+
+#define kQuartzTopRight		1
+#define kQuartzBottomRight  2
+#define kQuartzBottomLeft   3
+#define kQuartzTopLeft		4
+#define kQuartzCenter		5
 
 #define kOnScreen 	0
 #define kOnFilePDF 	1
@@ -122,6 +336,7 @@ typedef struct {
     double	xscale;
     double	yscale;
     int		where;
+	int		QuartzPos;		 /* Window Pos: TopRight=1, BottomRight, BottomLeft, TopLeft=4 */
 }
 QuartzDesc;
 
@@ -135,11 +350,11 @@ static const EventTypeSpec	QuartzEvents[] =
 
 Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh);
+			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos);
 
 Rboolean QuartzDeviceDriver(DevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh);
+			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos);
 
 OSStatus SetCGContext(QuartzDesc *xd);
 
@@ -152,38 +367,46 @@ static void 	Quartz_Activate(NewDevDesc *dd);
 static void 	Quartz_Deactivate(NewDevDesc *dd);
 static void 	Quartz_Size(double *left, double *right,
 		     	 double *bottom, double *top, NewDevDesc *dd);
-static void 	Quartz_NewPage(int fill, double gamma, NewDevDesc *dd);
+static void 	Quartz_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
 static void 	Quartz_Clip(double x0, double x1, double y0, double y1,
-		     	NewDevDesc *dd);
-static double 	Quartz_StrWidth(char *str, int font,
-			     double cex, double ps, NewDevDesc *dd);
+			    NewDevDesc *dd);
+static double 	Quartz_StrWidth(char *str, 
+				R_GE_gcontext *gc,
+				NewDevDesc *dd);
 static void 	Quartz_Text(double x, double y, char *str,
-		     	 double rot, double hadj, int col, double gamma, int font,
-		     	 double cex, double ps, NewDevDesc *dd);
+			    double rot, double hadj, 
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd);
 static void 	Quartz_Rect(double x0, double y0, double x1, double y1,
-		     	 int col, int fill, double gamma, int lty, double lwd,
-		     	 NewDevDesc *dd);
-static void 	Quartz_Circle(double x, double y, double r, int col,
-				 int fill, double gamma, int lty, double lwd, NewDevDesc *dd);
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd);
+static void 	Quartz_Circle(double x, double y, double r, 
+			      R_GE_gcontext *gc,
+			      NewDevDesc *dd);
 static void 	Quartz_Line(double x1, double y1, double x2, double y2,
-		     	 int col, double gamma, int lty, double lwd, NewDevDesc *dd);
-static void 	Quartz_Polyline(int n, double *x, double *y, int col,
-				 double gamma, int lty, double lwd, NewDevDesc *dd);
-static void 	Quartz_Polygon(int n, double *x, double *y, int col, int fill,
-				 double gamma, int lty, double lwd, NewDevDesc *dd);
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd);
+static void 	Quartz_Polyline(int n, double *x, double *y, 
+				R_GE_gcontext *gc,
+				NewDevDesc *dd);
+static void 	Quartz_Polygon(int n, double *x, double *y, 
+			       R_GE_gcontext *gc,
+			       NewDevDesc *dd);
 static Rboolean Quartz_Locator(double *x, double *y, NewDevDesc *dd);
 static void 	Quartz_Mode(int mode, NewDevDesc *dd);
 static void 	Quartz_Hold(NewDevDesc *dd);
-static void 	Quartz_MetricInfo(int c, int font, double cex, double ps,
-			     double* ascent, double* descent, double* width,
-			     NewDevDesc *dd);
+static void 	Quartz_MetricInfo(int c,
+				  R_GE_gcontext *gc,
+				  double* ascent, double* descent, 
+				  double* width,
+				  NewDevDesc *dd);
 
 
 static void Quartz_SetFill(int fill, double gamma,  NewDevDesc *dd);
 static void Quartz_SetStroke(int color, double gamma,  NewDevDesc *dd);
 static void Quartz_SetLineDash(int lty, double lwd, NewDevDesc *dd);
 static void Quartz_SetLineWidth(double lwd,  NewDevDesc *dd);
-static void Quartz_SetFont(int font,  double cex, double ps,  NewDevDesc *dd);
+static void Quartz_SetFont(int style,  double cex, double ps,  NewDevDesc *dd);
 static CGContextRef	GetContext(QuartzDesc *xd);
 
 
@@ -200,6 +423,8 @@ static char *SaveString(SEXP sxp, int offset)
     return s;
 }
 
+
+bool WeAreOnPanther = false;
 
 /*  Quartz Device Driver Parameters:
  *  -----------------		cf with ../unix/X11/devX11.c
@@ -220,6 +445,8 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
     char fontfamily[255];
     double height, width, ps;
     Rboolean  antialias, autorefresh;
+	SInt32 macVer;
+	int quartzpos = 1;
     gcall = call;
     vmax = vmaxget();
     display = SaveString(CAR(args), 0);
@@ -233,7 +460,11 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
     antialias = asLogical(CAR(args));   args = CDR(args);
     autorefresh = asLogical(CAR(args));
 
-
+    if(Gestalt(gestaltSystemVersion, &macVer) == noErr)
+      if (macVer >= 0x1030)
+	    WeAreOnPanther = true;
+	  else
+	    WeAreOnPanther = false;	
 
      R_CheckDeviceAvailable();
     /* Allocate and initialize the device driver data */
@@ -250,11 +481,11 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
     strcpy(fontfamily, family);
 #ifdef HAVE_AQUA
     if(useaqua)
-     GetQuartzParameters(&width, &height, &ps, fontfamily, &antialias, &autorefresh);
+     GetQuartzParameters(&width, &height, &ps, fontfamily, &antialias, &autorefresh, &quartzpos);
 #endif
 
     if (!QuartzDeviceDriver((DevDesc *)dev, display, width, height, ps,
-       fontfamily, antialias, autorefresh)) {
+       fontfamily, antialias, autorefresh, quartzpos)) {
 	 free(dev);
 	 errorcall(call, "unable to start device Quartz\n");
     }
@@ -273,16 +504,16 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
 
 Rboolean QuartzDeviceDriver(DevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh)
+			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos)
 {
 return innerQuartzDeviceDriver((NewDevDesc *)dd, display,
-			 width,  height,  pointsize, family, antialias, autorefresh);
+			 width,  height,  pointsize, family, antialias, autorefresh, quartzpos);
 }
 
 
 Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh)
+			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos)
 {
     QuartzDesc *xd;
     int ps;
@@ -292,6 +523,8 @@ Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 
     if (!(xd = (QuartzDesc *)malloc(sizeof(QuartzDesc))))
 	return 0;
+
+    xd->QuartzPos = quartzpos; /* by default it is Top-Right */
 
     if(!Quartz_Open(dd, xd, display, width, height))
      return(FALSE);
@@ -356,7 +589,7 @@ Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 
     /* There is the place for you to set the default value of the MAC Devices */
     xd->cex = 1.0;
-    xd->resize = 0;
+    xd->resize = true;
     xd->Text_Font = 4; /* initial is monaco */
     xd->fontface = 0;  /* initial is plain text */
     xd->fontsize = 12; /* initial is 12 size */
@@ -380,6 +613,11 @@ Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
     dd->deviceSpecific = (void *) xd;
     dd->displayListOn = TRUE;
 
+#ifdef HAVE_AQUA
+    if(useaqua)
+     FocusOnConsole();
+#endif
+
     return 1;
 }
 
@@ -389,27 +627,38 @@ OSStatus SetCGContext(QuartzDesc *xd)
     OSStatus	err = noErr;
     CGRect    cgRect;
 
-    if(xd->context)
-        CGContextRelease(xd->context);
+	if(xd->context){
+		CGContextRelease(xd->context);
+		xd->context = NULL;
+	}
 
-    if(xd->auxcontext)
-        CGContextRelease(xd->auxcontext);
+	if(xd->auxcontext){	
+		CGContextRelease(xd->auxcontext);
+		xd->auxcontext = NULL;
+	}	
+	if(xd->window)
+		err = CreateCGContextForPort(GetWindowPort(xd->window), &xd->context);
 
-    err = CreateCGContextForPort(GetWindowPort(xd->window), &xd->context);
 
-    /*  Translate to QuickDraw coordinate system */
+    if(xd->window)
+		GetPortBounds(GetWindowPort(xd->window), &rect);
 
-    GetPortBounds(GetWindowPort(xd->window), &rect);
-    CGContextTranslateCTM(xd->context,0, (float)(rect.bottom - rect.top));
+
+    if(xd->context){
+		CGContextTranslateCTM(xd->context,0, (float)(rect.bottom - rect.top));
+
 
 /* Be aware that by performing a negative scale in the following line of
    code, your text will also be flipped
 */
-    CGContextScaleCTM(xd->context, 1, -1);
+		CGContextScaleCTM(xd->context, 1, -1);
+
 
   /* We apply here Antialiasing if necessary */
-    CGContextSetShouldAntialias(xd->context, xd->Antialias);
+		CGContextSetShouldAntialias(xd->context, xd->Antialias);
 
+		
+	}
    return err;
 }
 
@@ -419,8 +668,8 @@ static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
 
 	OSStatus	err;
 	WindowRef 	devWindow =  NULL;
-	Rect		devBounds;
-        Str255		Title;
+	Rect		devBounds, mainRect;
+	Str255		Title;
 	char		buffer[250];
 	int 		devnum = devNumber((DevDesc *)dd);
 
@@ -433,12 +682,51 @@ static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
     dd->startcol = R_RGB(0, 0, 0);
     /* Create a new window with the specified size */
 
-
-	SetRect(&devBounds, 400, 400, 400 + xd->windowWidth, 400 + xd->windowHeight ) ;
-
-        err = CreateNewWindow( kDocumentWindowClass, kWindowStandardHandlerAttribute|kWindowVerticalZoomAttribute | kWindowCollapseBoxAttribute|kWindowResizableAttribute | kWindowCloseBoxAttribute ,
+	SetRect(&devBounds, 0, 0,  xd->windowWidth, xd->windowHeight ) ;
+	
+	err = CreateNewWindow( kDocumentWindowClass, kWindowStandardHandlerAttribute|kWindowVerticalZoomAttribute | kWindowCollapseBoxAttribute|kWindowResizableAttribute | kWindowCloseBoxAttribute ,
 		& devBounds, & devWindow);
+	SetWindowBounds(devWindow,  kWindowContentRgn, &devBounds); 
+	mainRect = (*GetMainDevice()) -> gdRect;
+    switch(xd->QuartzPos){
+		case kQuartzTopRight: /* Top Right */
+			RepositionWindow (devWindow,  NULL, kWindowCascadeOnMainScreen);
+			GetWindowBounds(devWindow, kWindowStructureRgn, &devBounds);
+			devBounds.left = mainRect.right - devBounds.right + 1;
+			devBounds.right = mainRect.right;
+			SetWindowBounds(devWindow, kWindowStructureRgn, &devBounds); 
+		break;
+	
+		case kQuartzBottomRight: /* Bottom Right */
+			GetWindowBounds(devWindow, kWindowStructureRgn, &devBounds);
+			devBounds.left = mainRect.right - devBounds.right + 1;
+			devBounds.right = mainRect.right;
+			devBounds.top = mainRect.bottom - devBounds.bottom + 1;			
+			devBounds.bottom = mainRect.bottom;
+			SetWindowBounds(devWindow, kWindowStructureRgn, &devBounds); 
+		break;
+	
+		case kQuartzBottomLeft: /* Bottom Left */
+			GetWindowBounds(devWindow, kWindowStructureRgn, &devBounds);
+			devBounds.top = mainRect.bottom - devBounds.bottom + 1;			
+			devBounds.bottom = mainRect.bottom;
+			SetWindowBounds(devWindow, kWindowStructureRgn, &devBounds); 
+		break;
+	
+		case kQuartzCenter: /* Center */
+			RepositionWindow (devWindow,  NULL, kWindowCenterOnMainScreen);
+		break;
+	
+		case kQuartzTopLeft: /* TopLeft */
+			RepositionWindow (devWindow,  NULL, kWindowCascadeOnMainScreen);
+		break;
+	
+		default:
+		break; 
+	}
 
+	
+	
 	sprintf(buffer,"Quartz (%d) - Active",devnum+1);
 	CopyCStringToPascal(buffer,Title);
         SetWTitle(devWindow, Title);
@@ -462,21 +750,20 @@ static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
 
 static void 	Quartz_Close(NewDevDesc *dd)
 {
-  QuartzDesc *xd = (QuartzDesc *) dd->deviceSpecific;
+	QuartzDesc *xd = (QuartzDesc *) dd->deviceSpecific;
 
-  if(xd->window)
-   DisposeWindow(xd->window);
+	if(xd->window)
+		DisposeWindow(xd->window);
 
-  if(xd->family)
-   free(xd->family);
+	if(xd->family)
+		free(xd->family);
 
-  if(xd->context)
-   CGContextRelease(xd->context);
-
-  if(xd->auxcontext)
-   CGContextRelease(xd->auxcontext);
-
-  free(xd);
+	if(xd->context)
+		CGContextRelease(xd->context);
+	if(xd->auxcontext)
+		CGContextRelease(xd->auxcontext);
+	
+	free(xd);
 }
 
 static void 	Quartz_Activate(NewDevDesc *dd)
@@ -530,17 +817,15 @@ static void 	Quartz_Size(double *left, double *right,
     *bottom = portRect.bottom;
     *top = 0.0;
 
-    xd->windowWidth = *right - *left;
-    xd->windowHeight = *bottom - *top;
-    SetCGContext(xd);
-
+    if(xd->resize){
+		xd->windowWidth = *right - *left;
+		xd->windowHeight = *bottom - *top;
+		SetCGContext(xd);
+		xd->resize = false;
+	}
     return;
 }
 
-void Quartz_ReSizeWin(NewDevDesc *dd)
-{
-
-}
 
 static CGContextRef     GetContext(QuartzDesc *xd){
 
@@ -561,7 +846,8 @@ static CGContextRef     GetContext(QuartzDesc *xd){
    }
 }
 
-static void 	Quartz_NewPage(int fill, double gamma, NewDevDesc *dd)
+static void 	Quartz_NewPage(R_GE_gcontext *gc,
+			       NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
     CGPoint origin = {0.0, 0.0};
@@ -574,10 +860,10 @@ static void 	Quartz_NewPage(int fill, double gamma, NewDevDesc *dd)
     area.origin = origin;
     area.size = size;
 
-    if(fill == NA_INTEGER)
-      fill = R_RGB(255, 255, 255);
+    if(gc->fill == NA_INTEGER)
+      gc->fill = R_RGB(255, 255, 255);
       
-    Quartz_SetFill(fill, gamma, dd);
+    Quartz_SetFill(gc->fill, gc->gamma, dd);
 
     CGContextFillRect( GetContext(xd), area);
     CGContextFlush( GetContext(xd) );   /* we need to flash it just now */
@@ -590,8 +876,9 @@ static void 	Quartz_Clip(double x0, double x1, double y0, double y1,
  return;
 }
 
-static double 	Quartz_StrWidth(char *str, int font,
-			     double cex, double ps, NewDevDesc *dd)
+static double 	Quartz_StrWidth(char *str, 
+				R_GE_gcontext *gc,
+				NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
     CGPoint position;
@@ -605,7 +892,7 @@ static double 	Quartz_StrWidth(char *str, int font,
 
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextInvisible );
 
-    Quartz_SetFont(font, cex,  ps, dd);
+    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
 
     CGContextShowTextAtPoint( GetContext(xd), 0, 0, str, strlen(str) );
 
@@ -617,8 +904,11 @@ static double 	Quartz_StrWidth(char *str, int font,
 
 
 
+/* This new version of Quartz_SetFont handles correctly the unicode encoding of
+   the Symbol font under Panther
+ */
 
-static void Quartz_SetFont(int font,  double cex, double ps, NewDevDesc *dd)
+static void Quartz_SetFont(int style,  double cex, double ps, NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
     int size = cex * ps + 0.5;
@@ -630,9 +920,13 @@ static void Quartz_SetFont(int font,  double cex, double ps, NewDevDesc *dd)
     GetPort(&savePort);
     SetPortWindowPort(xd->window);
     
-    switch(font){
+    switch(style){
      case 5:
       strcpy(CurrFont,"Symbol");
+	  if(WeAreOnPanther)
+ 	   CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingFontSpecific);
+	  else 
+ 	   CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingMacRoman);
      break;
 
      default:
@@ -640,10 +934,14 @@ static void Quartz_SetFont(int font,  double cex, double ps, NewDevDesc *dd)
             strcpy(CurrFont,xd->family);
         else
             strcpy(CurrFont,"Helvetica");
+		    CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingMacRoman);	
      break;
     }
 
-    CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingMacRoman);
+/* This is needed for test only purposes 
+    if(strcmp(CurrFont,"Symbol")==0)
+     CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingFontSpecific);
+*/
     CopyCStringToPascal(CurrFont,CurrFontName);
     GetFNum(CurrFontName, &CurrFontId);
     TextSize(size);
@@ -652,15 +950,32 @@ static void Quartz_SetFont(int font,  double cex, double ps, NewDevDesc *dd)
 }
 
 
+
+Boolean IsThisASymbol(unsigned char c);
+Boolean IsThisASymbol(unsigned char c){
+ int i;
+ for(i=0; i <  MAX_NON_SYMBS; i++){
+  if(c == NotSymbols[i])
+   return(false);
+  }
+     
+  return(true); 
+}
+
+/* This new version of Quartz_Text handles correctly the symbol font under Panther */
+
+
 static void 	Quartz_Text(double x, double y, char *str,
-		     	 double rot, double hadj, int col, double gamma, int font,
-		     	 double cex, double ps, NewDevDesc *dd)
+			    double rot, double hadj, 
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd)
 {
     int len,i;
     char *buf=NULL;
+	char symbuf;
     unsigned char tmp;
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
-
+	 
     CGContextSaveGState( GetContext(xd) );
     CGContextTranslateCTM( GetContext(xd), x, y );
 
@@ -668,16 +983,28 @@ static void 	Quartz_Text(double x, double y, char *str,
 
     CGContextRotateCTM( GetContext(xd) , (-1.0  + 2*rot/360)  * 3.1416);
 
-    Quartz_SetStroke( col, gamma, dd);
+    Quartz_SetStroke( gc->col, gc->gamma, dd);
 
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextFill );
-    Quartz_SetFill(col, gamma, dd);
-    Quartz_SetFont(font, cex,  ps, dd);
+    Quartz_SetFill(gc->col, gc->gamma, dd);
+    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
     len = strlen(str);
 
-    if(font == 5)
-     CGContextShowTextAtPoint( GetContext(xd), 0, 0, str, strlen(str) );
-    else {
+    if( (gc->fontface == 5) && (len==1) ){
+	   tmp = (unsigned char)str[0];
+       if(tmp>31)
+        symbuf = (char)Lat2Uni[tmp-31-1];
+	   else
+	    symbuf = str[0];
+       if( !IsThisASymbol(tmp) ){
+		 Quartz_SetFont(-1, gc->cex,  gc->ps, dd);
+		 symbuf = str[0];
+       }
+	 if(WeAreOnPanther) 
+      CGContextShowTextAtPoint( GetContext(xd), 0, 0, &symbuf, len );
+	 else
+	  CGContextShowTextAtPoint( GetContext(xd), 0, 0, str, len );
+     } else {
      if( (buf = malloc(len)) != NULL){
       for(i=0;i <len;i++){
         tmp = (unsigned char)str[i];
@@ -694,9 +1021,10 @@ static void 	Quartz_Text(double x, double y, char *str,
 }
 
 
+
 static void 	Quartz_Rect(double x0, double y0, double x1, double y1,
-		     	 int col, int fill, double gamma, int lty, double lwd,
-		     	 NewDevDesc *dd)
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
 	CGRect rect;
@@ -714,13 +1042,13 @@ static void 	Quartz_Rect(double x0, double y0, double x1, double y1,
 
     CGContextSaveGState( GetContext(xd) );
 
-    Quartz_SetLineWidth(lwd, dd);
-    Quartz_SetLineDash(lty, lwd, dd);
+    Quartz_SetLineWidth(gc->lwd, dd);
+    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
 
-    Quartz_SetFill( fill, gamma, dd);
+    Quartz_SetFill( gc->fill, gc->gamma, dd);
     CGContextFillRect( GetContext(xd), rect);
 
-    Quartz_SetStroke( col, gamma, dd);
+    Quartz_SetStroke( gc->col, gc->gamma, dd);
     CGContextStrokeRect( GetContext(xd), rect);
 
     CGContextRestoreGState( GetContext(xd) );
@@ -728,8 +1056,9 @@ static void 	Quartz_Rect(double x0, double y0, double x1, double y1,
 
 }
 
-static void 	Quartz_Circle(double x, double y, double r, int col,
-				 int fill, double gamma, int lty, double lwd, NewDevDesc *dd)
+static void 	Quartz_Circle(double x, double y, double r,
+			      R_GE_gcontext *gc,
+			      NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
 
@@ -738,14 +1067,14 @@ static void 	Quartz_Circle(double x, double y, double r, int col,
 
     CGContextBeginPath( GetContext(xd) );
 
-    Quartz_SetLineWidth(lwd, dd);
-    Quartz_SetLineDash(lty, lwd, dd);
+    Quartz_SetLineWidth(gc->lwd, dd);
+    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
 
     CGContextAddArc( GetContext(xd), (float)x , (float)y, (float)r, 3.141592654 * 2.0, 0.0, 0);
-    Quartz_SetFill( fill, gamma, dd);
+    Quartz_SetFill( gc->fill, gc->gamma, dd);
     CGContextFillPath( GetContext(xd) );
 
-    Quartz_SetStroke( col, gamma, dd);
+    Quartz_SetStroke( gc->col, gc->gamma, dd);
     CGContextAddArc( GetContext(xd), (float)x , (float)y, (float)r, 3.141592654 * 2.0, 0.0, 0);
     CGContextStrokePath( GetContext(xd) );
 
@@ -756,7 +1085,8 @@ static void 	Quartz_Circle(double x, double y, double r, int col,
 
 
 static void 	Quartz_Line(double x1, double y1, double x2, double y2,
-		     	 int col, double gamma, int lty, double lwd, NewDevDesc *dd)
+			    R_GE_gcontext *gc,
+			    NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
     CGPoint lines[ 2 ];
@@ -773,12 +1103,12 @@ static void 	Quartz_Line(double x1, double y1, double x2, double y2,
     lines[1].y = (float)y2;
 
 
-    Quartz_SetLineWidth(lwd,  dd);
-    Quartz_SetLineDash(lty, lwd, dd);
+    Quartz_SetLineWidth(gc->lwd,  dd);
+    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
 
     CGContextAddLines( GetContext(xd), &lines[0], 2 );
 
-    Quartz_SetStroke( col, gamma,  dd);
+    Quartz_SetStroke( gc->col, gc->gamma,  dd);
 
     CGContextStrokePath( GetContext(xd) );
 
@@ -787,8 +1117,9 @@ static void 	Quartz_Line(double x1, double y1, double x2, double y2,
 }
 
 
-static void 	Quartz_Polyline(int n, double *x, double *y, int col,
-				 double gamma, int lty, double lwd, NewDevDesc *dd)
+static void 	Quartz_Polyline(int n, double *x, double *y,
+				R_GE_gcontext *gc,
+				NewDevDesc *dd)
 {
   	CGPoint *lines;
     int	i;
@@ -808,12 +1139,12 @@ static void 	Quartz_Polyline(int n, double *x, double *y, int col,
 
     CGContextSaveGState( GetContext(xd) );
 
-    Quartz_SetLineWidth(lwd,  dd);
-    Quartz_SetLineDash(lty, lwd,  dd);
+    Quartz_SetLineWidth(gc->lwd,  dd);
+    Quartz_SetLineDash(gc->lty, gc->lwd,  dd);
 
     CGContextBeginPath( GetContext(xd) );
     CGContextAddLines( GetContext(xd), &lines[0], n );
-    Quartz_SetStroke( col, gamma, dd);
+    Quartz_SetStroke( gc->col, gc->gamma, dd);
     CGContextStrokePath( GetContext(xd) );
 
     CGContextRestoreGState( GetContext(xd) );
@@ -882,8 +1213,9 @@ static void Quartz_SetFill(int fill, double gamma, NewDevDesc *dd)
 
 }
 
-static void 	Quartz_Polygon(int n, double *x, double *y, int col, int fill,
-				 double gamma, int lty, double lwd, NewDevDesc *dd)
+static void 	Quartz_Polygon(int n, double *x, double *y, 
+			       R_GE_gcontext *gc,
+			       NewDevDesc *dd)
 {
    int	i;
    QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
@@ -894,8 +1226,8 @@ static void 	Quartz_Polygon(int n, double *x, double *y, int col, int fill,
 
 
    CGContextBeginPath( GetContext(xd) );
-   Quartz_SetLineWidth(lwd, dd);
-   Quartz_SetLineDash(lty,  lwd, dd);
+   Quartz_SetLineWidth(gc->lwd, dd);
+   Quartz_SetLineDash(gc->lty,  gc->lwd, dd);
 
 
     lines = (CGPoint *)malloc(sizeof(CGPoint)*(n+1));
@@ -911,11 +1243,11 @@ static void 	Quartz_Polygon(int n, double *x, double *y, int col, int fill,
     lines[n].y = (float)y[0];
 
     CGContextAddLines( GetContext(xd), &lines[0], n+1 );
-    Quartz_SetFill( fill, gamma, dd);
+    Quartz_SetFill( gc->fill, gc->gamma, dd);
     CGContextFillPath( GetContext(xd) );
 
     CGContextAddLines( GetContext(xd), &lines[0], n+1 );
-    Quartz_SetStroke( col, gamma,  dd);
+    Quartz_SetStroke( gc->col, gc->gamma,  dd);
     CGContextStrokePath( GetContext(xd) );
 
     CGContextRestoreGState( GetContext(xd) );
@@ -934,41 +1266,46 @@ static Rboolean Quartz_Locator(double *x, double *y, NewDevDesc *dd)
     GrafPtr savePort;
     Cursor		arrow ;
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
-
+	int useBeep = asLogical(GetOption(install("locatorBell"), 
+						      R_NilValue));
+	
     GetPort(&savePort);
 
     SetPortWindowPort(xd->window);
-    SetCursor( GetQDGlobalsArrow ( & arrow ) ) ;
-
+    SetThemeCursor(kThemeCrossCursor);
 
     while(!mouseClick) {
 	
     
 	gotEvent = WaitNextEvent( everyEvent, &event, 0, nil);
 
+    CGContextFlush( GetContext(xd) );
    
 	if (event.what == mouseDown) {
 	    partCode = FindWindow(event.where, &window);
 	    if ((window == (xd->window)) && (partCode == inContent)) {
-		myPoint = event.where;
-		GlobalToLocal(&myPoint);
-		*x = (double)(myPoint.h);
-		*y = (double)(myPoint.v);
-		mouseClick = true;
+			myPoint = event.where;
+			GlobalToLocal(&myPoint);
+			*x = (double)(myPoint.h);
+			*y = (double)(myPoint.v);
+			if(useBeep)
+			 SysBeep(1);
+			mouseClick = true;
 	    }
-
 	}
 
 	if (event.what == keyDown) {
 	    key = (event.message & charCodeMask);
-	    if (key == 0x0D){
-		SetPort(savePort);
-		return FALSE;
+	    if (key == 0x1b){ /* exits when the esc key is pressed */
+			SetPort(savePort);
+			SetThemeCursor(kThemeIBeamCursor);
+			return FALSE;
 	    }
 	}
     }
 
     SetPort(savePort);
+	SetThemeCursor(kThemeIBeamCursor);
     return TRUE;
 }
 
@@ -985,12 +1322,16 @@ static void 	Quartz_Hold(NewDevDesc *dd)
  return;
 }
 
-#define FixedToFloat(a)	((float)(a) / fixed1)
-#define FloatToFixed(a)	((Fixed)((float) (a) * fixed1))
+#if !defined(FixedToFloat)
+# define FixedToFloat(a)	((float)(a) / fixed1)
+# define FloatToFixed(a)	((Fixed)((float) (a) * fixed1))
+#endif
 
-static void 	Quartz_MetricInfo(int c, int font, double cex, double ps,
-			     double* ascent, double* descent, double* width,
-			     NewDevDesc *dd)
+static void 	Quartz_MetricInfo(int c, 
+				  R_GE_gcontext *gc,
+				  double* ascent, double* descent, 
+				  double* width,
+				  NewDevDesc *dd)
 {
     FMetricRec myFMetric;
     QuartzDesc *xd = (QuartzDesc *) dd-> deviceSpecific;
@@ -998,6 +1339,7 @@ static void 	Quartz_MetricInfo(int c, int font, double cex, double ps,
     CGrafPtr savedPort;
     Rect bounds;
     CGPoint position;
+	unsigned char tmp;
 
     testo[0] = c;
     testo[1] = '\0';
@@ -1006,12 +1348,12 @@ static void 	Quartz_MetricInfo(int c, int font, double cex, double ps,
 
     SetPort(GetWindowPort(xd->window));
 
-    Quartz_SetFont(font, cex,  ps, dd);
+    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
 
     if(c==0){
         FontMetrics(&myFMetric);
-        *ascent = xd->yscale *floor(cex * ps + 0.5) * FixedToFloat(myFMetric.ascent);
-        *descent = xd->yscale*floor(cex * ps + 0.5) * FixedToFloat(myFMetric.descent);
+        *ascent = xd->yscale *floor(gc->cex * gc->ps + 0.5) * FixedToFloat(myFMetric.ascent);
+        *descent = xd->yscale*floor(gc->cex * gc->ps + 0.5) * FixedToFloat(myFMetric.descent);
     } else {
 
     CGContextSaveGState( GetContext(xd) );
@@ -1019,8 +1361,22 @@ static void 	Quartz_MetricInfo(int c, int font, double cex, double ps,
     CGContextScaleCTM( GetContext(xd), -1, 1);
     CGContextRotateCTM( GetContext(xd), -1.0 * 3.1416);
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextInvisible );
-    Quartz_SetFont(font, cex,  ps, dd);
+    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
+	
+	tmp = (unsigned char)c;
+    if( (gc->fontface == 5) ){
+       if( (tmp>31) && IsThisASymbol(tmp))
+        testo[0] = (char)Lat2Uni[tmp-31-1];
+       else	
+		Quartz_SetFont(-1, gc->cex,  gc->ps, dd);
+	 } else {
+        if(tmp>127)
+         testo[0] = (char)Lat2Mac[tmp-127-1];
+     }	 
+
     CGContextShowTextAtPoint( GetContext(xd), 0, 0, testo, 1 );
+    
+	
     position = CGContextGetTextPosition( GetContext(xd) );
     CGContextRestoreGState( GetContext(xd) );
     
@@ -1069,7 +1425,9 @@ OSStatus QuartzEventHandler( EventHandlerCallRef inCallRef, EventRef inEvent, vo
                     Rect portRect;
                     GetWindowPortBounds ( xd->window, & portRect ) ;
                     if( (xd->windowWidth != portRect.right) || (xd->windowHeight != portRect.bottom) ){
+					 xd->resize = true;
                      dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
+					 xd->resize = false;
                      GEplayDisplayList((GEDevDesc*) GetDevice(devnum));      
                     }  
                     err = noErr;

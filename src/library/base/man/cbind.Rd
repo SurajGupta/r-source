@@ -3,6 +3,7 @@
 \alias{rbind}
 \alias{cbind.data.frame}
 \alias{rbind.data.frame}
+\concept{insert}
 \title{Combine R Objects by Rows or Columns}
 \description{
   Take a sequence of vector, matrix or data frames arguments and combine
@@ -24,9 +25,16 @@ rbind(\dots, deparse.level = 1)
   a data frame and the rest are vectors or matrices.  There can be other
   methods; in particular, there is one for time series objects.
 
+  In the matrix case, all the vectors/matrices must be atomic or lists
+  (e.g. not expressions). 
+
+  Data frames can be \code{cbind}-ed with matrices, in which case
+  each matrix forms a single column in the result, unlike calling
+  \code{\link{data.frame}}.
+
   The \code{rbind} data frame method takes the classes of the columns
   from the first
-  data frame.  Factors are have their levels expanded as necessary (in
+  data frame.  Factors have their levels expanded as necessary (in
   the order of the levels of the levelsets of the factors encountered)
   and the result is an ordered factor if and only if all the components
   were ordered factors.  (The last point differs from S-PLUS.)
@@ -96,7 +104,10 @@ rbind(\dots, deparse.level = 1)
   frame.
 }
 \examples{
-cbind(1, 1:7) # the '1' (= shorter vector) is recycled
+m <- cbind(1, 1:7) # the '1' (= shorter vector) is recycled
+m
+m <- cbind(m, 8:14)[, c(1, 3, 2)] # insert a column 
+m
 cbind(1:7, diag(3))# vector is subset -> warning
 
 cbind(0, rbind(1, 1:3))

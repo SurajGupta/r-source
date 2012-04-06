@@ -1,3 +1,4 @@
+
 ## regression test for PR#376
 aggregate(ts(1:20), nfreq=1/3)
 ## Comments: moved from aggregate.Rd
@@ -53,6 +54,12 @@ stopifnot(all.equal(aperm(x, c(2, 1)), t(x)))
 ## append
 stopifnot(append(1:5, 0:1, after=3) == append(1:3, c(0:1, 4:5)))
 ## end of moved from append.Rd
+
+
+## array
+# funny object, but whatever was the point of that?
+utils::str(array(1:3, 0))
+## end of moved from array.Rd
 
 
 ## as.POSIXlt
@@ -209,7 +216,13 @@ zz <- c(-1.30167, -0.4957, -1.46749, 0.46927)
 r <- cor(zz,zz); r - 1
 stopifnot(r <= 1) # fails in R <= 1.3.x, for versions of Linux and Solaris
 ## end of moved from cor.Rd
-
+## Spearman correlations ranked missing values at end <= 1.8.1
+X <- cbind(c(1,3,4,NA),c(1,4,2,NA))
+X1 <- X[-4,]
+stopifnot(all.equal(cor(X,X,method="spearman",use="complete"),
+                    cor(X1,X1,method="spearman",use="complete")))
+stopifnot(all.equal(cov(X,X,method="spearman",use="complete"),
+                    cov(X1,X1,method="spearman",use="complete")))
 
 ## DateTimeClasses
 (dls <- .leap.seconds[-1] - .leap.seconds[-22])
@@ -328,11 +341,18 @@ it <- findInterval(tt, X)
 tt <- c(tt,X)
 eps <- 100 * .Machine$double.eps
 stopifnot(it[c(1,203)] == c(0, 100),
-	  all.equal(N * stepfun::ecdf(X)(tt),
+	  all.equal(N * stats::ecdf(X)(tt),
 		    findInterval(tt, X),  tol = eps),
 	  findInterval(tt,X) ==	 apply( outer(tt, X, ">="), 1, sum)
 	  )
 ## end of moved from findint.Rd
+## NA & Inf's :
+tt[ina <- c(2,3,5,7)] <- NA
+tt[300] <- Inf
+X <- c(-Inf, X, Inf)
+it <- findInterval(tt,X)
+stopifnot(identical(it, as.integer(rowSums(outer(tt, X, ">=")))),
+	  is.na(it[ina]))
 
 
 ## fix
@@ -512,6 +532,21 @@ stopifnot(kronecker(4, M)==4 * M)
 # Block diagonal matrix:
 stopifnot(kronecker(diag(1, 3), M) == diag(1, 3) %x% M)
 ## end of moved from kronecker.Rd
+
+
+## list
+str(pl <- as.pairlist(ps.options()))
+
+## These are all TRUE:
+stopifnot(is.list(pl) && is.pairlist(pl),
+          !is.null(list()),
+          is.null(pairlist()),
+          !is.list(NULL),
+          is.pairlist(pairlist()),
+          is.null(as.pairlist(list())),
+          is.null(as.pairlist(NULL))
+          )
+## end of moved from list.Rd
 
 
 ## log
@@ -1048,8 +1083,8 @@ test
 old <- getOption("contrasts")
 options(contrasts=c("contr.helmert", "contr.poly"))
 DF <- data.frame(x=1:20,y=rnorm(20),z=factor(1:20 <= 10))
-dummy.coef.lm(lm(y ~ z * I(x), data=DF))
-dummy.coef.lm(lm(y ~ z * poly(x,1), data=DF))
+dummy.coef(lm(y ~ z * I(x), data=DF))
+dummy.coef(lm(y ~ z * poly(x,1), data=DF))
 ## failed in 1.3.0.  Second one warns: deficiency of the method.
 options(contrasts=old)
 
@@ -1605,10 +1640,8 @@ stopifnot(!is.na(res))
 
 
 ## ls.str() for function environments:
-library(stepfun)
 Fn <- ecdf(rnorm(50))
 ls.str(envir = environment(Fn))
-detach("package:stepfun")
 ## failed in 1.5.1
 
 
@@ -1711,10 +1744,11 @@ stopifnot(x == res) # can't have rounding error here
 
 
 ## matching NAs on Solaris (MM 2002-08-02)
-x <- as.double(NA)
-identical(x + 0, x)
-stopifnot(match(x + 0, x, 0) == 1)
+# x <- as.double(NA)
+# identical(x + 0, x)
+# stopifnot(match(x + 0, x, 0) == 1)
 ## match failed on Solaris with some compiler settings
+## NA+0 is not guaranteed to be NA: could be NaN
 
 
 ## identical on specials  (BDR 2002-08-02)
@@ -2021,9 +2055,7 @@ str(A.[1, 0, 2 ])
 str(A.[1, 0, 2, drop = FALSE])
 ## both gave errors in 1.6.2
 
-library(stepfun)
 plot(sf <- stepfun(2, 3:4))
-detach("package:stepfun")
 ## failed in 1.6.2
 
 
@@ -2538,14 +2570,17 @@ options(op)# reset to previous
 ## Didn't work before 1.8.0
 
 
-library(mva)
+library(stats)
 ## cmdscale
 ## failed in versions <= 1.4.0 :
 data(eurodist)
 cm1 <- cmdscale(eurodist, k=1, add=TRUE, x.ret = TRUE)
 cmdsE <- cmdscale(eurodist, k=20, add = TRUE, eig = TRUE, x.ret = TRUE)
-stopifnot(identical(cm1$x,  cmdsE$x),
-          identical(cm1$ac, cmdsE$ac))
+# FAILED on Debian testing just prior to 1.9.0!
+#stopifnot(identical(cm1$x,  cmdsE$x),
+#          identical(cm1$ac, cmdsE$ac))
+stopifnot(all.equal(cm1$x,  cmdsE$x),
+          all.equal(cm1$ac, cmdsE$ac))
 ## end of moved from cmdscale.Rd
 
 
@@ -2569,7 +2604,6 @@ update(pc.cr, ~ . + Rape)
 ## end of moved from princomp.Rd
 
 
-library(modreg)
 ## smooth.spline.Rd
 y18 <- c(1:3,5,4,7:3,2*(2:5),rep(10,4))
 xx  <- seq(1,length(y18), len=201)
@@ -2597,7 +2631,7 @@ tsdiag(fit)
 
 
 ## predict.arima
-data(lh, package="ts")
+data(lh)
 predict(arima(lh, order=c(1,0,1)), n.ahead=5)
 predict(arima(lh, order=c(1,1,0)), n.ahead=5)
 predict(arima(lh, order=c(0,2,1)), n.ahead=5)
@@ -2774,3 +2808,191 @@ unlink(tf)
 x <- round(matrix(0, 0, 3))
 stopifnot(identical(dim(x), as.integer(c(0, 3))))
 ## numeric(0) in 1.8.0
+
+
+## PR#5405
+try(stepfun(c(), 1)(2))# > Error
+## segfaults in 1.8.1 and earlier
+
+
+## PR#4955 now allow embedded newlines in quoted fields in read.table
+temp <- tempfile()
+data <- data.frame(a=c("c", "e\nnewline"))
+write.table(data, sep=",", row.names=FALSE, file=temp)
+data2 <- read.csv(temp)
+unlink(temp)
+# attributes get a different order here
+stopifnot(identical(data$a, data2$a))
+## not allowed prior to 1.9.0
+
+
+## scoping problems with model.frame methods
+foo <- c(1,1,0,0,1,1)
+rep <- 1:6
+m <- lm(foo ~ rep, model=FALSE)
+model.matrix(m)
+n <- 1:6
+m <- lm(foo ~ n, model=FALSE)
+model.matrix(m)
+## failed in 1.8.0 because the wrong n or rep was found.
+rm(foo, rep)
+func <- function()
+{
+    foo <- c(1,1,0,0,1,1)
+    rep <- 1:6
+    m <- lm(foo ~ rep, model=FALSE)
+    model.matrix(m)
+}
+func()
+##
+
+
+## broken strptime in glibc (and code used on Windows)
+stopifnot(!is.na(strptime("2003-02-30", format="%Y-%m-%d")))
+stopifnot(is.na(strptime("2003-02-35", format="%Y-%m-%d")))
+# this one is still wrong in glibc
+stopifnot(is.na(strptime("2003-02-40", format="%Y-%m-%d")))
+stopifnot(is.na(strptime("2003-22-20", format="%Y-%m-%d")))
+# and so is this one
+stopifnot(is.na(strptime("2003 22 20", format="%Y %m %d")))
+stopifnot(is.na(ISOdate(year=2003, month=22, day=20)))
+## several after the first gave non-NA values in 1.8.1 on some broken OSes
+
+
+## PR#4582 %*% with NAs
+stopifnot(is.na(NA %*% 0), is.na(0 %*% NA))
+## depended on the BLAS in use.
+
+
+## PR#4688
+reli <- cbind(Si = c(2121, 100, 27, 0),
+              av = c(4700, 216, 67, 0),
+              Nc = c(6234,2461,502,14))
+stopifnot(inherits(try(fisher.test(reli, workspace=2000000)), "try-error"))
+## gave p.value = Inf ; now gives FEXACT error 501
+
+
+## PR#5701
+chisq.test(matrix(23171,2,2), simulate=TRUE)
+## gave infinite loop in 1.8.1 and earlier
+
+
+## as.matrix on an all-logical data frame
+ll <- data.frame(a = rpois(10,1) > 0, b = rpois(10,1) > 0)
+stopifnot(mode(as.matrix(ll)) == "logical")
+lll <- data.frame(a = LETTERS[1:10], b = rpois(10,1) > 0)
+stopifnot(mode(as.matrix(lll)) == "character")
+## both were char before 1.9.0
+
+
+## outer called rep with a non-generic arg
+x <- .leap.seconds[1:6]
+outer(x, x, "<")
+outer(x, x, "-")
+(z <- outer(x, x, "difftime", units="days"))
+stopifnot(class(z) == "difftime")
+## failed in 1.8.1
+
+
+## PR#5900 qbinom when probability is 1
+stopifnot(qbinom(0.95, 10, 1) == 10)
+stopifnot(qbinom(0, 10, 1) == 0)
+# and for prob = 0
+stopifnot(qbinom(0.95, 10, 0) == 0)
+stopifnot(qbinom(0, 10, 0) == 0)
+# and size = 0
+stopifnot(qbinom(0.95, 0, 0.5) == 0)
+## 1.8.1 was programmed to give NaN
+
+
+## base:: and ::: were searching in the wrong places
+stopifnot(inherits(try(base::lm), "try-error"))
+stopifnot(inherits(try(graphics::log), "try-error"))
+## equivalent constructs succeeded in 1.8.1
+
+
+## (PR#6452) princomp prediction without specifying centers should give NAs
+x <- matrix(rnorm(400), ncol=4)
+fit <- princomp(covmat=cov(x))
+stopifnot(is.null(fit$scores))
+stopifnot(is.na(predict(fit, newdata=x[1:10, ])))
+## failed in 1.8.1
+
+
+## (PR#6451) regex functions did not coerce args to character.
+sub(x=NA, pattern="x", replacement="y")
+## failed in 1.8.1
+
+
+## length<- needed a factor method, and so needed to be generic
+aa <- factor(letters)
+length(aa) <- 20
+aa
+stopifnot(is.factor(aa))
+## returned a vector in 1.8.1
+
+
+## spec.pgram() was too
+pAR <- c(2.7607, -3.82, 2.6535, -0.9238)
+N <- 1 + 2^14# 16385
+set.seed(123)
+x <- arima.sim(model = list(ar = pAR), n = N)
+spP <- spec.pgram(x, spans = 41, plot=FALSE)
+spA <- spec.ar(x=list(ar=pAR, order=4, var.pred=1, frequency=1),
+               n.freq = spP$n.used %/% 2, plot=FALSE)
+r <- spP$spec / spA$spec
+stopifnot(abs(mean(r) - 1) < 0.003)
+## was 0.0268 in R 1.8.1
+
+
+## check for a Microsoft bug in timezones ahead of GMT
+stopifnot(!is.na(as.POSIXct("1970-01-01 00:00:00")))
+##
+
+
+## PR#6672, split.default on factors
+x <- c(NA, 1, 2)
+y <- as.factor(x)
+split(x, y)
+split(y, y) # included NAs in 1.8.1
+r1 <- tapply(x, y, length)
+r2 <- tapply(y, y, length)
+stopifnot(r1 == r2)
+##
+
+
+## PR#6652, points.formula with subset and extra arguments.
+roller <-
+    data.frame(weight = c(1.9, 3.1, 3.3, 4.8, 5.3, 6.1, 6.4, 7.6, 9.8, 12.4),
+               depression = c(2, 1, 5, 5, 20, 20, 23, 10, 30, 25))
+plot(depression ~ weight, data=roller, type="n")
+with(roller, points( depression~weight, subset=8:10, col=2))
+with(roller, points( depression~weight, subset=8:10, col=2:4))
+plot(depression ~ weight, data=roller, type="n")
+points(depression~weight, subset=8:10, col=2:4, data=roller)
+## first two gave error in 1.8.1
+
+
+## PR#4558 part 2
+x <- seq(as.POSIXct("2004-03-25"), as.POSIXct("2004-03-31"), by="DSTdays")
+stopifnot(length(x) == 7)
+## was length 6 in the UK time zone.
+
+
+## PR#6702 c/rbind on list matrices
+A <- matrix(as.list(1:4), 2, 2)
+(res <- cbind(A, A))
+stopifnot(typeof(res) == "list")
+(res <- rbind(A, A))
+stopifnot(typeof(res) == "list")
+## were not implemented in 1.8.1
+
+
+## Date objects with NA's
+(t1 <- strptime(c("6. Aug. 1930", "3. Nov. 1925", "28. Mar. 1959",
+                 NA, paste(1:29," Feb. 1960", sep=".")),
+               format = "%d. %b. %Y"))
+stopifnot(6 == length(print(s1 <- summary(t1))),
+          s1== summary(as.POSIXct(t1)),
+          6 == length(print(format(as.Date(s1)))) )
+## gave bizarre "NA's" entry in R 1.8.1 and 1.9.0alpha

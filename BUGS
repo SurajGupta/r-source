@@ -29,11 +29,7 @@ Directory:  Accuracy
 Subject: bug with var(rep(1e30, 3))
 From: Emmanuel Paradis <paradis@isem.univ-montp2.fr>
 Date: Wed, 26 Dec 2001 13:03:31 +0100
-* PR# 2214 *
-Subject: qgamma precision
-From: terra@diku.dk
-Date: Fri, 25 Oct 2002 16:50:17 +0200 (MET DST)
-..good idea; improvement has to work for both lower and upper tail probs.
+..needs a bit of work on src/main/cov.c
 * PR# 2894 *
 Subject: qbeta hang
 From: terra@gnome.org
@@ -41,6 +37,23 @@ Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
 ..R 1.7.1 incorporates the two suggestions of the 2nd followup:
 ..  r = sqrt(-2 * log (a)) and ...(log1p(-a) + log (qq))...
 ..
+* PR# 5727 *
+Subject: Bug in pbinom?
+From: Volkmar Liebscher <liebscher@gsf.de>
+Date: Fri, 12 Dec 2003 11:18:12 +0100
+..(really on of the infamous border case problem of pbeta)
+* PR# 6196 *
+Subject: Accuracy: Correct sums in rowSums(), colSums()
+From: Nick.Efthymiou@Schwab.com
+Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+..no requested patch against the current sources forthcoming.
+..
+..Seems unlikely to be worthwhile for rowSums and not sum!
+* PR# 6743 *
+Subject: Accuracy Bug 1228
+From: "David Heiser" <daheiser@gvn.net>
+Date: Mon, 5 Apr 2004 19:23:35 -0700
+..This is really bug PR#1228 (in category 'Accuracy')
 
 Directory:  Add-ons
 
@@ -174,6 +187,13 @@ Date: Wed, 1 Oct 2003 22:48:23 +0200 (MET DST)
 Subject: misprint  in Leaps $size
 From: paulluo@cs.cmu.edu
 Date: Fri, 3 Oct 2003 22:17:24 +0200 (MET DST)
+* PR# 4525 *
+Subject: Problem in 'methods' package
+From: feferraz@linux.ime.usp.br
+Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
+..DBI is trying to call an unexported function from methods. Maintainer needs to
+..fix or argue that the function 
+..should be exported.
 * PR# 4688 *
 Subject: bug in fisher test---p-value cannot be Inf
 From: kjetil@entelnet.bo
@@ -186,6 +206,31 @@ Date: Wed, 22 Oct 2003 19:10:02 +0200 (MET DST)
 Subject: Segfault in foreign
 From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
 Date: 12 Nov 2003 17:31:24 +0100
+* PR# 5315 *
+Subject: O2 optimization produces wrong code
+From: jean.coursol@math.u-psud.fr
+Date: Tue, 25 Nov 2003 15:51:21 +0100 (CET)
+..report on akima ... known problem
+* PR# 5476 *
+Subject: memory leak
+From: schiessler@agere.com
+Date: Wed,  3 Dec 2003 06:01:57 +0100 (CET)
+..report on R-Excel, it seems.
+* PR# 6005 *
+Subject: [R] lattice: levelplot: error: min not meaningful for factor
+From: Wolfram Fischer <wolfram@fischer-zim.ch>
+Date: Mon, 22 Dec 2003 17:29:49 +0100
+..Dot documented to work, but intended to.
+* PR# 6597 *
+Subject: summary.rpart() in rpart package
+From: "Chen, Feiming" <feiming_chen@spectramarketing.com>
+Date: Tue, 17 Feb 2004 17:07:02 -0600
+..Unreadable, and no response to follow-up.
+* PR# 6701 *
+Subject: lookup.xport in foreign ignoring some datasets
+From: Svetlana Eden <svetlana.eden@vanderbilt.edu>
+Date: Fri, 26 Mar 2004 15:45:18 -0600
+..SAS version*5* is probably not supported.
 
 Directory:  Analyses
 
@@ -203,6 +248,22 @@ Subject: NLME: gls parameter evaluation inconsistency
 From: wb@arb-phys.uni-dortmund.de
 Date: Fri, 24 Oct 2003 14:52:26 +0200 (MET DST)
 ..It's a known problem.
+* PR# 5360 *
+Subject: ks.test
+From: pbtud@yahoo.com
+Date: Thu, 27 Nov 2003 18:43:23 +0100 (CET)
+..Documentation issue
+* PR# 5461 *
+Subject: xtabs or model.frame
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+From: "Francis Hsuan" <francis.hsuan@temple.edu> Add To Address Book 
+Date: Tue, 2 Dec 2003 01:20:08 -0500 (EST)
+Date: Mon, 1 Dec 2003 21:53:06 -0500
+..model.frame() fails on character input: should it coerce to factor?
+* PR# 6720 *
+Subject: optim-Bug
+From: kestler@neuro.informatik.uni-ulm.de
+Date: Tue, 30 Mar 2004 19:21:11 +0200 (CEST)
 
 Directory:  Documentation
 
@@ -227,6 +288,11 @@ Subject: documentation of "scope": possible error + cleanup
 From: htang@hpl.hp.com
 Date: Sat, 15 Nov 2003 00:00:17 +0100 (CET)
 ..Comments on R-lang
+* PR# 6424 *
+Subject: return() undocumented
+From: Scot@Wilcoxon.Org
+Date: Sat, 10 Jan 2004 16:12:16 +0100 (CET)
+..He meant in R-lang
 
 Directory:  Graphics
 
@@ -417,10 +483,21 @@ Date: Wed, 18 Jun 2003 17:31:21 +1200 (NZST)
 Subject: Undefined subroutine &R::Rdconv::fill
 From: michael.t.klinglesmith@intel.com
 Date: Tue, 15 Jul 2003 18:56:23 +0200 (MET DST)
+..This was perl 5.004_4
 * PR# 4314 *
 Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
 From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
 Date: Fri, 26 Sep 2003 20:28:51 +0200
+* PR# 5536 *
+Subject: R 1.8.1 ./configure with "," in working directory
+From: Wolfram Fischer <wolfram@fischer-zim.ch>
+Date: Fri, 5 Dec 2003 10:19:16 +0100
+..Well, so users expect the earth
+* PR# 6482 *
+Subject: Installation
+From: a0108661@unet.univie.ac.at
+Date: Tue, 27 Jan 2004 18:51:04 +0100 (CET)
+..Mandrake RPM installation problem.
 
 Directory:  Language
 
@@ -451,11 +528,6 @@ Date: Mon, 27 Aug 2001 08:44:22 -0400
 Subject: a patch to tapply
 From: Vadim Ogranovich <vograno@arbitrade.com>
 Date: Thu, 29 Nov 2001 14:48:35 -0600
-* PR# 1214 *
-Subject: syntax questtion, maybe a bug
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Date: Thu, 13 Dec 2001 13:46:54 -0500 (EST)
-..Is .2logl meant to be a valid name in R? It is S
 * PR# 1241 *
 Subject:  Problem with "missing" in "local" 
 From: J.C.Rougier@durham.ac.uk
@@ -469,14 +541,6 @@ Subject: completeSubclasses() methods bug
 From: colin@colinsmith.org
 Date: Tue, 2 Sep 2003 22:15:26 +0200 (MET DST)
 ..methods package
-* PR# 4525 *
-Subject: Problem in 'methods' package
-From: feferraz@linux.ime.usp.br
-Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
-* PR# 4561 *
-Subject: Infinite recursion in getGeneric
-From: Saikat DebRoy <saikat@stat.wisc.edu>
-Date: Mon, 13 Oct 2003 12:17:11 -0400
 
 Directory:  Low-level
 
@@ -512,25 +576,18 @@ Subject: Memmory Bugs
 From: "Eric R. Riehl" <eriehl@email.unc.edu>
 Date: Wed, 8 Oct 2003 14:30:57 -0400 (EDT)
 ..about use of enum for messages in errors.c
-* PR# 4582 *
-Subject: NA %*% 0 == 0
-From: hosking@watson.ibm.com
-Date: Tue, 14 Oct 2003 21:44:09 +0200 (MET DST)
-..This is a function of the BLAS in use
+* PR# 6617 *
+Subject: Regular expressions & large strings
+From: Mark White <mjw@celos.net>
+Date: Fri, 27 Feb 2004 11:27:18 +0000
+..Works on my (TSL) OS X and Linux machines
+..Incorrect result confirmed on RH8.0 and segfault on Windows (BDR)
+..The segfault is under a call to regexec: PCRE is not used.
+..If perl=TRUE is included, this works, fast.
 
 Directory:  Macintosh
 
-* PR# 1991 *
-Subject: Mac Save As... bug
-From: Tim Cole <tjc1@cam.ac.uk>
-Date: Sun, 8 Sep 2002 13:47:00 +0100
-* PR# 2813 *
-Subject: Search Engine
-From: leroy@ucsd.edu
-Date: Tue, 22 Apr 2003 06:21:19 +0200 (MET DST)
-..According to Simon Urbanek this is a java security issue.  With RAqua a good
-..alternative is starting HTML 
-..help and then using help.search() or  Help|Search Help on...
+none
 
 Directory:  Misc
 
@@ -707,6 +764,11 @@ Date: Thu, 25 Sep 2003 11:26:09 +0200
 Subject: Redhat 7.2 gcc optimisation 
 From: Paul Murrell <p.murrell@auckland.ac.nz>
 Date: Wed, 08 Oct 2003 15:28:11 +1300
+* PR# 6488 *
+Subject: R fails to build on AFS
+From: Atro.Tossavainen+rproject@helsinki.fi
+Date: Wed, 28 Jan 2004 14:40:27 +0100 (CET)
+..insufficent information: what was the error message?
 
 Directory:  TooMuchAtOnce
 
@@ -743,133 +805,55 @@ Subject: creates directory that can't be deleted
 From: xiaobao_wang@yahoo.com
 Date: Mon, 22 Sep 2003 02:26:31 +0200 (MET DST)
 ..This is a Windows bug.  
+* PR# 6742 *
+Subject: save image as postscript side-effect
+From: martin.noellenburg@stud.uni-karlsruhe.de
+Date: Mon,  5 Apr 2004 17:51:13 +0200 (CEST)
 
 Directory:  incoming
 
-* PR# 4184 *
-Subject: getGenerics is wrong in 1.8.0 alpha
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-From:   "base"  "base"    "base"    "base"  "base" "base" "base"
-From:   "methods"       "base"   "methods" "methods"  "methods"    "methods"
-From:   "methods"
-From:   "base"  "base"    "base"    "base"  "base" "base" "base"
-From:   "methods"       "methods" "methods" "methods"  "methods"
-From:   "methods"    "methods"
-Date: Tue, 16 Sep 2003 12:39:16 +0100 (BST)
-..body<- is fixed. Should Compare and Complex show up as base?
-* PR# 5193 *
-Subject: Need Meds? We Got Them. No prescription needed tr ipedj ihdtv
-From: "Dusty Benton" <5ejucttjbs@msn.com>
-Date: Tue, 18 Nov 03 20:52:42 GMT
-* PR# 5194 *
-Subject: ÀÌÁ¦ºÎÅÍ¶óµµ Áß±¹¾î °øºÎ¸¦ ....²ÇÂ¥ÀÔ´Ï´Ù
-From: Á¤ È­¿µ <whfhddldl@hotmail.com>
-Date: Mon, 10 Nov 2003 21:34:51 +0900
-* PR# 5195 *
-Subject: Get Your Prescription Drugs now online! With No Prescription bfxi
-From: "Carmen Shaw" <w1mbtaydyj@concentric.com>
-Date: Tue, 18 Nov 03 21:38:09 GMT
-* PR# 5196 *
-Subject: (±¤°í)À¯¸ÁÁ÷Á¾ 1À§ '¾Ö¿Ïµ¿¹°°ü¸®»ç' ¹«·á·Î ÃÖ½Å¼öÇè°¡ÀÌµå¸¦ µå¸³´Ï´Ù!@
-From: À¯¸ÁÁ÷¾÷ <yhnbgtf75963@yahoo.co.kr>
-Date: Thu, 20 Nov 2003 00:18:42 +0900
-* PR# 5197 *
-Subject: Re: NXDKFB, problem of "living
-From: "Derick Shaver" <yqyfaf@china.com>
-Date: Wed, 19 Nov 2003 20:09:35 +0400
-* PR# 5198 *
-Subject: (±¤°í)¾Ö¿Ïµ¿¹°°ü¸®»ç´Â Áö±ÝµµÈ£È²/¼öÇèÁ¤º¸,¿¹»ó¹®Á¦Á¤º¸@
-From: °¡³ª´Ù <dfwbcgdfjiodjgd64646@naver.com>
-Date: Thu, 20 Nov 2003 03:00:06 +0900
-* PR# 5199 *
-Subject: Lottery winning update
-From: "info" <info@nationalottery.org>
-Date: 19 Nov 2003 12:48:17 -0000
-* PR# 5200 *
-Subject: Fwd: Any Meds You Want.  Prescribed Online and Shipped to Your Door csci vf kzrrvwd knc
-From: "Courtney Mitchell" <y40ltmnyr@rr.com>
-Date: Wed, 19 Nov 03 13:15:49 GMT
-* PR# 5201 *
-Subject: Ce,payTV for freee srrae fush yhhoa xdk
-From: "Otis Owen" <57abqflz@msn.com>
-Date: Wed, 19 Nov 2003 08:56:11 -0100
-* PR# 5202 *
-Subject: Rgui error
-From: jesusmro@canal21.com
-Date: Wed, 19 Nov 2003 23:46:44 +0100 (CET)
-* PR# 5203 *
-Subject: WINNING NOTIFICATION/FINAL NOTICE
-From: VAN DYKE <coingogame1@netscape.net>
-Date: Thu, 20 Nov 2003 00:13:39 +0100
-* PR# 5204 *
-Subject: Digitäl Cäblë Bööster - önly 49.95 ilg cgorul rrndu
-From: "Constance Masters" <549jeo@yahoo.com>
-Date: Thu, 20 Nov 03 02:12:42 GMT
-* PR# 5205 *
-Subject: US STOCK MARKET - CYPM Acquisition - To Compete With DISNEY & PIXAR...gladys
-From: "Mavis Jacob" <3pswecr@yahoo.com>
-Date: Thu, 20 Nov 2003 00:23:37 -0100
-* PR# 5206 *
-Subject: Postmaster: Email message delivery um  ku rphfwj 
-From: "Carrie Christensen" <qh340o@sprint.com>
-Date: Wed, 19 Nov 03 19:47:30 GMT
-* PR# 5207 *
-Subject: No more run around to fill your medication!volcano
-From: "Louisa Beard" <nyyynfhg@canada.com>
-Date: Wed, 19 Nov 2003 23:13:35 GMT
-* PR# 5208 *
-Subject: Re-energize yourself from the inside out!angstrom
-From: "Bart Clarke" <9coiqy@close2you.net>
-Date: Wed, 19 Nov 2003 23:56:12 GMT
-* PR# 5209 *
-Subject: Drugs  Kill  ;   Water Cures    r-bugs@biostat.ku.dk .
-From: "Medical News" <a171330@io.msp.sc.ti.com>
-Date: Thu, 20 Nov 03 11:41:59 GMT
-* PR# 5210 *
-Subject: Declined Credit Application  
-From: "Leah Clark" <bkekkra@lycos.com>
-Date: Thu, 20 Nov 03 21:17:48 GMT
-* PR# 5211 *
-Subject: Payment Due, account hl vyb stmcfxmfikume
-From: "Angelia Vickers" <cawuyij@msn.com>
-Date: Thu, 20 Nov 03 12:12:02 GMT
-* PR# 5212 *
-Subject: Networkers, Take A look 
-From: <20002aoorcet@excite.com>
-Date: Wed, 19 Nov 2003 21:17:16 -1000
-* PR# 5213 *
-Subject: glm inconsistent behaviour 
-From: finnknudsen@post.tele.dk
-Date: Thu, 20 Nov 2003 16:31:35 +0100 (CET)
-* PR# 5214 *
-Subject: RE:Vi)agra._-1/2 Off NOW_-
-From: "Jason Godwin" <shansen@kcinter.net>
-Date: Thu, 13 Feb 03 04:30:31 GMT
-* PR# 5215 *
-Subject: >>Order Vi)agra. From Home
-From: "Joe Sanchez" <Billy <stowe@cox.net>>
-Date: Sun, 23 Nov 03 21:09:42 GMT
-* PR# 5216 *
-Subject: all countries in.come ops qcyzxj
-From: Skylar Walker <rjnr@bu.ac.th>
-Date: Thu, 20 Nov 2003 13:19:23 -0400
-* PR# 5217 *
-Subject: Fwd: Get all meds here. Any Pills You Want. No prescription hd
-From: "Seymour Bullock" <dvgz73izy@hotmail.com>
-Date: Thu, 20 Nov 03 11:59:51 GMT
-* PR# 5218 *
-Subject: Cable üsers MüST reäd! xv ewvddml 
-From: "Felix Mccollum" <imvrhu@netscape.net>
-Date: Thu, 20 Nov 03 19:05:38 GMT
-* PR# 5219 *
-Subject: McAfee AntiVirus
-From: "McAfee Antivirus" <rjnr@securvita.de>
-Date: Thu, 20 Nov 2003 14:14:40 -0800
-* PR# 5220 *
-Subject: 7 steps to financial freedom  kt kbwvttdgzf
-From: "Mitzi Spears" <adan200wic@yahoo.com>
-Date: Fri, 21 Nov 2003 21:00:53 -0200
-* PR# 5221 *
-Subject:                                 CONTRACT
-From: Mrs.Amina Abu <Msabu66@netscape.net>
-Date: Thu, 20 Nov 2003 12:13:59 -0800
+* PR# 5834 *
+Subject: bug-gdk error
+From: 9busova@st.fmph.uniba.sk
+Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
+..Problem with gnome GUI
+* PR# 6747 *
+Subject: Results of your commands
+From: SYMPA <sympa@ens.fr>
+Date: Wed, 7 Apr 2004 12:34:31 +0200 (CEST)
+* PR# 6748 *
+Subject: Mailman results for Cottage
+From: cottage-request@eg.e-cell.org
+Date: Thu, 08 Apr 2004 12:00:02 +0900
+* PR# 6749 *
+Subject: Macintosh -- changing working directory forces computer to restart
+From: paolillo@indiana.edu
+Date: Thu,  8 Apr 2004 21:24:56 +0200 (CEST)
+* PR# 6750 *
+Subject: Incorrect handling of NA's in cor()
+From: msa@biostat.mgh.harvard.edu
+Date: Fri,  9 Apr 2004 18:45:40 +0200 (CEST)
+* PR# 6751 *
+Subject: Udgllgij powerful stuff. i approve.
+From: "andrew beaudoin" <micahmcmorrisy@email2me.net>
+Date: Sat, 10 Apr 2004 02:12:08 -0800
+* PR# 6752 *
+Subject: We are unable to process your service request - MAR  (KMM48693904V2673L0KM)
+From: "announcements-account@paypal.com" <announcements-account@paypal.com>
+Date: Sat, 10 Apr 2004 08:11:46 -0500
+* PR# 6753 *
+Subject: Valium, Cialis, Phentermine, Xanax, Soma  - All here
+From: "Brad Schultz" <mfokwkvuynted@xtra.co.nz>
+Date: Sat, 10 Apr 2004 13:26:59 -0400
+* PR# 6754 *
+Subject: Re: Sat, 10 Apr 2004 13:07:38 -0500
+From: "My SW Software" <TX@fepg.net>
+Date: Sat, 10 Apr 2004 13:07:38 -0500
+* PR# 6755 *
+Subject: anyhow   
+From: "Mel Doty" <Odu@bellsouth.net>
+Date: Sun, 11 Apr 2004 12:25:58 +0200
+* PR# 6756 *
+Subject: pcauchy precision
+From: terra@gnome.org
+Date: Sun, 11 Apr 2004 19:03:31 +0200 (CEST)

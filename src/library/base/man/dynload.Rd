@@ -163,10 +163,10 @@ symbol.For(name)
   \code{\link{.First.lib}} initialization.
 
 #ifdef unix
-  \code{\link{SHLIB}} for how to create suitable shared objects.
+  \code{\link[utils]{SHLIB}} for how to create suitable shared objects.
 #endif
 #ifdef windows
-  \code{\link{SHLIB}} for how to create suitable DLLs.
+  \code{\link[utils]{SHLIB}} for how to create suitable DLLs.
 #endif
   
   \code{\link{.C}},
@@ -175,6 +175,6 @@ symbol.For(name)
   \code{\link{.Call}}.
 }
 \examples{
-is.loaded(symbol.For("hcass2")) #-> probably TRUE, as mva is loaded
+is.loaded(symbol.For("hcass2")) #-> probably TRUE, as stats is loaded
 }
 \keyword{interface}

@@ -14,17 +14,20 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
     specified file is \code{""}, then input is taken from the keyboard
-    (in this case input can be terminated by a blank line or an EOF
-    signal, \code{Ctrl-D} on Unix and \code{Ctrl-Z} on Windows.).
+    (or \code{stdin} if input is redirected).
+    (In this case input can be terminated by a blank line or an EOF
+    signal, \code{Ctrl-D} on Unix and \code{Ctrl-Z} on Windows.)
 
     Otherwise, the file name is interpreted \emph{relative} to the
     current working directory (given by \code{\link{getwd}()}),
     unless it specifies an \emph{absolute} path.
     Tilde-expansion is performed where supported.
 
-    Alternatively, \code{file} can be a \code{\link{connection}}, which
-    will be opened if necessary, and if so closed at the end of the
-    function call.
+    Alternatively, \code{file} can be a \code{\link{connection}},
+    which will be opened if necessary, and if so closed at the end of
+    the function call.  Whatever mode the connection is opened in,
+    any of LF, CRLF or CR will be accepted as the EOL marker for a line
+    and so will match \code{sep = "\n"}.
 
     \code{file} can also be a complete URL.
   }
@@ -46,8 +49,8 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   \item{sep}{by default, scan expects to read white-space delimited
     input fields.  Alternatively, \code{sep} can be used to specify a
-    character which delimits fields.  A field is always delimited by a
-    newline unless it is quoted.} 
+    character which delimits fields.  A field is always delimited by an
+    end-of-line marker unless it is quoted.}
 
   \item{quote}{the set of quoting characters as a single character
     string.}
@@ -60,7 +63,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{nlines}{the maximum number of lines of data to be read.}
 
   \item{na.strings}{character vector.  Elements of this vector are to be
-    interpeted as missing (\code{\link{NA}}) values.}
+    interpreted as missing (\code{\link{NA}}) values.}
 
   \item{flush}{logical: if \code{TRUE}, \code{scan} will flush to the
     end of the line after reading the last of the fields requested.
@@ -115,7 +118,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   values.
   
   If \code{sep} is the default (\code{""}), the character \code{\\}
-  in a quoted string escapes the following character, so quotes may
+  in a quoted string escapes the following character, so quotes may be
   included in the string by escaping them.
   
   If \code{sep} is non-default, the fields may be quoted in the style of
@@ -172,8 +175,8 @@ cat("TITLE extra line", "2 3 5 7", "11 13 17", file="ex.data", sep="\n")
 pp <- scan("ex.data", skip = 1, quiet= TRUE)
     scan("ex.data", skip = 1)
     scan("ex.data", skip = 1, nlines=1)# only 1 line after the skipped one
-str(scan("ex.data", what = list("","",""))) # flush is F -> read "7"
-str(scan("ex.data", what = list("","",""), flush = TRUE))
+scan("ex.data", what = list("","","")) # flush is F -> read "7"
+scan("ex.data", what = list("","",""), flush = TRUE)
 unlink("ex.data") # tidy up
 }
 \keyword{file}

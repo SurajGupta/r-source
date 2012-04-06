@@ -143,6 +143,7 @@ Boolean OpenBrowsePkg(void)
     
      CreateNewWindow(kDocumentWindowClass,  kWindowStandardHandlerAttribute |
             kWindowStandardDocumentAttributes, &bpBounds, &BrowsePkgWindow);
+	RepositionWindow (BrowsePkgWindow,  NULL, kWindowCenterOnMainScreen);
 
     if(BrowsePkgWindow == NULL)
      return(FALSE);
@@ -439,8 +440,11 @@ static pascal OSStatus bpGetSetItemData(ControlRef browser,
           }       
           CopyCStringToPascal(buf,pascalString);
           text = CFStringCreateWithPascalString(CFAllocatorGetDefault(), pascalString, kCFStringEncodingMacRoman);
-          err = SetDataBrowserItemDataText(itemData, text); 
-          CFRelease(text); 
+          if(text){
+			err = SetDataBrowserItemDataText(itemData, text); 
+          	CFRelease(text);
+			text = NULL; 
+		  }
          }
          
 	 if(property == 10000){

@@ -47,7 +47,7 @@ convolve(x, y, conj = TRUE, type = c("circular", "open", "filter"))
   San Francisco: Holden-Day.
 }
 \seealso{\code{\link{fft}}, \code{\link{nextn}}, and particularly
-  \code{\link[ts]{filter}} (from the \pkg{ts} package) which may be
+  \code{\link[stats]{filter}} (from the \pkg{stats} package) which may be
   more appropriate.
 }
 \examples{
@@ -58,8 +58,7 @@ zapsmall(convolve(x, y[3:5], type="f")) # rather
 x <- rnorm(50)
 y <- rnorm(50)
 # Circular convolution *has* this symmetry:
-all.equal(convolve(x,y, conj = FALSE),
-          rev(convolve(rev(y),x)))
+all.equal(convolve(x,y, conj = FALSE), rev(convolve(rev(y),x)))
 
 n <- length(x <- -20:24)
 y <- (x-10)^2/1000 + rnorm(x)/8

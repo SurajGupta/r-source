@@ -78,6 +78,7 @@ is.unsorted(x, na.rm = FALSE)
   \code{\link{order}}, \code{\link{rank}}.
 }
 \examples{
+require(stats)
 data(swiss)
 x <- swiss$Education[1:25]
 x; sort(x); sort(x, partial = c(10, 15))

@@ -18,7 +18,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         }
         ## which version was this package built under?
         if(!is.na(built <- fields[1, "Built"])) {
-            builtFields <- strsplit(built, ";")[[1]]
+            builtFields <- strsplit(built, ";", fixed=TRUE)[[1]]
             builtunder <- substring(builtFields[1], 3)
             if(nchar(builtunder) &&
                compareVersion(current, builtunder) < 0) {
@@ -43,9 +43,12 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                        "See the Note in ?library"))
     }
 
-    checkNoGenerics <- function(env)
+    checkNoGenerics <- function(env, pkg)
     {
-        if (exists(".noGenerics", envir = env, inherits = FALSE))
+        nenv <- env
+        ns <- .Internal(getRegisteredNamespace(as.name(libraryPkgName(pkg))))
+        if(!is.null(ns)) nenv <- asNamespace(ns)
+        if (exists(".noGenerics", envir = nenv, inherits = FALSE))
             TRUE
         else {
             ## A package will have created a generic
@@ -64,8 +67,11 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         ## ignore generics not defined for the package
         ob <- objects(lib.pos, all = TRUE)
         if(!nogenerics && .isMethodsDispatchOn()) {
-            gen <- methods::getGenerics(lib.pos)
-            gen <- gen[methods::slot(gen, "package") != ".GlobalEnv"]
+            these <- objects(lib.pos, all = TRUE)
+            these <- these[substr(these, 1, 6) == ".__M__"]
+            gen <- gsub(".__M__(.*):([^:]+)", "\\1", these)
+            from <- gsub(".__M__(.*):([^:]+)", "\\2", these)
+            gen <- gen[from != ".GlobalEnv"]
             ob <- ob[!(ob %in% gen)]
         }
         fst <- TRUE
@@ -92,11 +98,11 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     }
 
     libraryPkgName <- function(pkgName, sep = "_")
-	unlist(strsplit(pkgName, sep))[1]
+	unlist(strsplit(pkgName, sep, fixed=TRUE))[1]
 
     libraryPkgVersion <- function(pkgName, sep = "_")
     {
-        splitName <- unlist(strsplit(pkgName, sep))
+        splitName <- unlist(strsplit(pkgName, sep, fixed=TRUE))
 	if (length(splitName) > 1) splitName[2] else NULL
     }
 
@@ -112,16 +118,20 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 	out
     }
 
-    if (is.null(lib.loc)) lib.loc <- .libPaths()
+    runUserHook <- function(pkgname, pkgpath) {
+        hook <- getHook(packageEvent(pkgname, "attach")) # might be list()
+        for(fun in hook) try(fun(pkgname, pkgpath))
+    }
 
     if(!missing(package)) {
+        if (is.null(lib.loc)) lib.loc <- .libPaths()
+        
 	if(!character.only)
 	    package <- as.character(substitute(package))
 
 	if (!missing(version)) {
 	     package <- manglePackageName(package, version)
-        }
-	else {
+        } else {
 	   ## Need to find the proper package to install
 	   pkgDirs <- list.files(lib.loc,
                                  pattern = paste("^", package, sep=""))
@@ -134,15 +144,15 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 		   ## Need to find the highest version available
 		   vers <- unlist(lapply(pkgDirs, libraryPkgVersion))
 		   pos <- libraryMaxVersPos(vers)
-		   if (length(pos) > 0)
-			   package <- pkgDirs[pos]
+		   if (length(pos) > 0) package <- pkgDirs[pos]
                }
            }
         }
 
+        ## NB from this point on `package' is either the original name or
+        ## something like ash_1.0-8
         if(length(package) != 1)
-            stop(paste("argument", sQuote("package"),
-                       "must be of length 1"))
+            stop(paste("argument", sQuote("package"), "must be of length 1"))
 	pkgname <- paste("package", package, sep = ":")
 	newpackage <- is.na(match(pkgname, search()))
 	if(newpackage) {
@@ -151,10 +161,6 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## Only if it is _already_ here do we do cacheMetaData.
             ## The methods package caches all other libs when it is
             ## attached.
-            ## Note for detail: this does _not_ test whether dispatch is
-            ## currently on, but rather whether the package is attached
-            ## (cf .isMethodsDispatchOn).
-            hadMethods <- .isMethodsDispatchOn()
 
             pkgpath <- .find.package(package, lib.loc, quiet = TRUE,
                                      verbose = verbose)
@@ -176,7 +182,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             	stop("This is not a valid package -- no DESCRIPTION exists")
 
             descfields <- read.dcf(descfile, fields =
-                           c("Package", "Depends", "Built"))
+                                   c("Package", "Depends", "Built"))
             testRversion(descfields)
 
             ## Check for inconsistent naming
@@ -214,14 +220,15 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 			else stop("package/namespace load failed")
 		    else {
 			on.exit(do.call("detach", list(name = pkgname)))
-			nogenerics <- checkNoGenerics(env)
+			nogenerics <- checkNoGenerics(env, package)
 			if(warn.conflicts &&
 			   !exists(".conflicts.OK", envir = env, inherits = FALSE))
                             checkConflicts(package, pkgname, pkgpath, nogenerics)
 
-                        if(!nogenerics && hadMethods &&
+                        if(!nogenerics && .isMethodsDispatchOn() &&
                            !identical(pkgname, "package:methods"))
-                            cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
+                            methods::cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
+                        runUserHook(package, pkgpath)
 			on.exit()
 			if (logical.return)
 			    return(TRUE)
@@ -230,7 +237,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 		    }
 		}
 		codeFile <- file.path(which.lib.loc, package, "R",
-				      package)
+				      libraryPkgName(package))
 		## create environment (not attached yet)
 		loadenv <- new.env(hash = TRUE, parent = .GlobalEnv)
 		## save the package name in the environment
@@ -266,14 +273,15 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 			if (logical.return) return(FALSE)
 			else stop(".First.lib failed")
 		}
-		nogenerics <- checkNoGenerics(env)
+		nogenerics <- checkNoGenerics(env, package)
 		if(warn.conflicts &&
 		   !exists(".conflicts.OK", envir = env, inherits = FALSE))
 		    checkConflicts(package, pkgname, pkgpath, nogenerics)
 
-		if(!nogenerics && hadMethods &&
+		if(!nogenerics && .isMethodsDispatchOn() &&
 		   !identical(pkgname, "package:methods"))
-                    cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
+                    methods::cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
+                runUserHook(package, pkgpath)
 		on.exit()
 	    }
 	}
@@ -354,7 +362,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         for(lib in lib.loc) {
             a <- .packages(all.available = TRUE, lib.loc = lib)
             for(i in sort(a)) {
-                title <- package.description(i, lib.loc = lib, field="Title")
+                title <- packageDescription(i, lib.loc = lib, field="Title")
                 if(is.na(title)) title <- ""
                 db <- rbind(db, cbind(i, lib, title))
             }
@@ -486,7 +494,7 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
                                              sep = ""))
                 ## </FIXME>
                 ## else either from prompt or in the source for install
-                ## with saved image ? 
+                ## with saved image ?
             }
         }
         else
@@ -559,7 +567,7 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
         setwd(path.expand(x))
         getwd()
     }
-    
+
     useAttached <- FALSE
     if(is.null(lib.loc)) {
         useAttached <- TRUE

@@ -100,7 +100,7 @@ as.ordered(x)
   Under those circumstances missing values are printed as \code{<NA>}.
 
   \code{is.factor} is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \section{Warning}{
   The interpretation of a factor depends on both the codes and the
@@ -125,9 +125,9 @@ as.ordered(x)
   \code{\link{[.factor}} for subsetting of factors.
 
   \code{\link{gl}} for construction of \dQuote{balanced} factors and
-  \code{\link{C}} for factors with specified contrasts.
+  \code{\link[stats]{C}} for factors with specified contrasts.
   \code{\link{levels}} and \code{\link{nlevels}} for accessing the
-  levels, and \code{\link{codes}} to get integer codes.
+  levels, and \code{\link{unclass}} to get integer codes.
 }
 \examples{
 (ff <- factor(substring("statistics", 1:10, 1:10), levels=letters))

@@ -41,11 +41,12 @@
   \url{http://www.math.yorku.ca/SCS/Papers/asa92.html}
 }
 \seealso{
-  \code{\link[ctest]{chisq.test}},
-  \code{\link{loglin}},
-  \code{\link{mosaicplot}}
+  \code{\link[stats]{chisq.test}},
+  \code{\link[stats]{loglin}},
+  \code{\link[graphics]{mosaicplot}}
 }
 \examples{
+require(graphics)
 data(HairEyeColor)
 ## Full mosaic
 mosaicplot(HairEyeColor)

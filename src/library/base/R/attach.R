@@ -11,7 +11,7 @@ attach <- function(what, pos=2, name=deparse(substitute(what)))
         value <- .Internal(attach(what, pos, name))
     if((length(objects(envir = value, all=TRUE)) > 0)
        && .isMethodsDispatchOn())
-      cacheMetaData(value, TRUE)
+      methods:::cacheMetaData(value, TRUE)
     invisible(value)
 }
 
@@ -34,10 +34,15 @@ detach <- function(name, pos=2, version)
     }
     env <- as.environment(pos)
     packageName <- search()[[pos]]
+    libpath <- attr(env, "path")
+    if(length(grep("^package:", packageName))) {
+        pkgname <- sub("^package:", "", packageName)
+        hook <- getHook(packageEvent(pkgname, "detach")) # might be list()
+        for(fun in rev(hook)) try(fun(pkgname, libpath))
+    }
     if(exists(".Last.lib", mode = "function", where = pos, inherits=FALSE)) {
         .Last.lib <- get(".Last.lib",  mode = "function", pos = pos,
                          inherits=FALSE)
-        libpath <- attr(env, "path")
         if(!is.null(libpath)) try(.Last.lib(libpath))
     }
     .Internal(detach(pos))
@@ -49,12 +54,8 @@ detach <- function(name, pos=2, version)
            packageName %in% paste("package:", get(".required", pkgs, inherits = FALSE),sep=""))
             warning(packageName, " is required by ", pkgs, " (still attached)")
     }
-    if(.isMethodsDispatchOn()) {
-        if("package:methods" %in% search())
-            cacheMetaData(env, FALSE)
-        else
-            .isMethodsDispatchOn(FALSE)
-    }
+    if(.isMethodsDispatchOn())
+            methods:::cacheMetaData(env, FALSE)
 }
 
 ls <- objects <-

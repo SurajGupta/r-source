@@ -13,7 +13,7 @@ Building From Source on Windows
 [Some further details, including how to debug, are given in the rw-FAQ.]
 
 First collect the tools that you need.  There is a `portal' with
-current links at http://www.stats.ox.ac.uk/pub/Rtools/.
+current links at http://www.murdoch-sutherland.com/Rtools/.
 
 
 Collect the tools
@@ -22,9 +22,9 @@ Collect the tools
 You will need suitable versions of at least make, sh, cat, cp, cut,
 diff, echo, egrep, expr, grep, ls, mkdir, mv, rm, sed, touch; we use
 those from the cygwin distribution
-(http://www.cygwin.com/mirrors.html) or (gzip, makeinfo, texindex, tidy)
+(http://www.cygwin.com/mirrors.html) or (gzip, makeinfo, texindex)
 compiled from the sources.  We have packaged a set at
-http://www.stats.ox.ac.uk/pub/Rtools/tools.zip.
+http://www.murdoch-sutherland.com/Rtools/tools.zip.
 
 BEWARE: `Native' ports of make are _not_ suitable (including that at
 the mingw site).  There were also problems with several earlier
@@ -33,14 +33,11 @@ use our tool set, and make sure it is at the front of your path.
 
 To compile this version you need a recent version of the Mingw port of
 gcc from http://sourceforge.net/projects/mingw/.  There will be a
-distribution called something like MinGW-3.1.0-1.exe.  Earlier
-versions may work, but mingw-runtime >= 2.0 and w32api >= 2.0 are
-essential.  The release candidates of gcc-3.3.1 have also been tested.
-
-No earlier Mingw compiler has been tested and support for using the
-Cygwin compiler has been withdrawn.  If you see errors about `-shared'
-not being understood or `__imp_foo' missing, you are not using the
-recommended compiler.
+distribution called something like MinGW-3.1.0-1.exe (which is built
+from gcc-3.2.3).  Earlier versions may work, but mingw-runtime >= 3.0
+and w32api >= 2.0 are essential.  The released versions of gcc-3.3.1
+have also been tested, but the February 2004 release candidates of
+gcc-3.3.3 did not work.
 
 
 The Windows port of perl5, available via
@@ -61,8 +58,9 @@ have successfully used it elsewhere, others have reported problems).
 
 
 All of these need to be installed and in your path, and the
-appropriate environment variables set.  You also need `.' in your path.
-Do not use paths with spaces in: you can always use the short forms.
+appropriate environment variables set.  You also need `.' in your
+path.  Do not use filepaths with spaces in: you can always use the
+short forms (found by dir /x at the Windows command line).
 
 
 Check your path
@@ -78,6 +76,9 @@ zip.exe, unzip.exe, hhc.exe
 
 Do not use spaces nor unnecessary quotes in your PATH variable.
 
+Make sure all of the above are before the Windows system directories
+(especially that containing FIND.EXE).
+
 Do not have our toolset and any other version of cygwin1.dll in your path.
 
 
@@ -92,8 +93,8 @@ Then: untar R-1.x.y.tgz somewhere (with no spaces in the path names),
 	tar zxvf /path/to/R-1.x.y.tgz
 	cd /somewhere/R-1.x.y/src/gnuwin32
 
-BEWARE: do untar the sources, and not use broken tools such as WinZip that
-don't understand about symbolic links.
+BEWARE: do untar the sources rather than use broken tools such as
+WinZip that don't understand about symbolic links.
 
 IMPORTANT: edit MkRules to set the appropriate paths as needed and to
 set the type(s) of help that you want built.  BEWARE: MkRules contains
@@ -113,17 +114,26 @@ Note 2: we have had reports that earlier versions of Norton Anti-Virus
 lock up the machine when windres is run, so you may need to disable
 it. (Norton Anti-Virus 2002 causes no problems.)
 
-Note 3: By default Doug Lea's malloc in the file src/gnuwin32/malloc.c is
-used.  You can opt out of this by commenting the line LEA_MALLOC=YES
-in MkRules, in which case the Windows malloc is used.  The one
-in crtdll.dll is unlikely to be satisfactory: the one in msvcrt.dll
-does work but imposes a considerable performance penalty.
+Note 3: By default Doug Lea's malloc in the file src/gnuwin32/malloc.c
+is used for R's internal memory allocations.  You can opt out of this
+by commenting the line LEA_MALLOC=YES in MkRules, in which case the
+malloc in msvcrt.dll is used.  This does work but imposes a
+considerable performance penalty.
+
+Note 4: You can run a parallel make by e.g.
+
+	make -j2
+
+but this is only likely to be worthwhile on a dual-processor (or
+perhaps a hyperthreaded P4) machine with ample (at least 384Mb) of
+memory.  On a dual AthlonXP it reduced the build time by about 30%
+whereas on a single P4HT it reduced it by 10%.
 
 
 You can test a build by (optionally) building the recommended packages
 (see below) and running `make check'.  You may need to set TMPDIR to
 (the absolute path to) a suitable temporary directory: the default is
-c:/TEMP.  (Use forward slashes.)
+c:/TEMP.  (Use forward slashes and do not use a path including spaces.)
 
 
 Using ATLAS
@@ -134,8 +144,7 @@ BLAS libraries by defining USE_ATLAS=YES in MkRules and specifying the
 path to the libraries in macro ATLAS_PATH.
 
 You will need to build the libraries optimized for your architecture
-under the Cygwin compilers.  (The pre-compiled libraries on that site
-are for Compaq Visual Fortran, and you need to compile for g77.)
+under the Cygwin compilers.
 
 For convenience
 
@@ -146,6 +155,25 @@ configurations.
 
 Prebuilt Rblas.dll for various Pentium and AthlonXP chips are available
 in the windows/contrib/ATLAS area on CRAN.
+
+
+Using K. Goto's BLAS
+--------------------
+
+Another tuned BLAS which is available for some CPUs is by Kazushige
+Goto.  He does not allow redistribution: they are currently available
+via http://www.cs.utexas.edu/users/kgoto/signup_first.html.  To make
+use of this, put the DLL somewhere in your path or in R_HOME/bin, and
+edit MkRules to define USE_GOTO=YES and the name of the DLL (something
+like libgoto_p4_512-r0.9.dll).
+
+Goto's BLAS takes preference over ATLAS, and seems a little faster.
+However, as it is compiled for MSVC, we have been unable to make it
+work for complex arithmetic and so it is only used in for real linear
+algebra.
+
+Mr Goto supplies DLLs for PIII, P4 and Opteron processors: that for
+PIIIs runs on AthlonXP as well.
 
 
 Building bitmap device support
@@ -165,8 +193,9 @@ Building Tcl/Tk support
 -----------------------
 
 The TclTk support package is not built automatically.  Get
-http://www.stats.ox.ac.uk/pub/Rtools/R_Tcl.zip and unzip it at the top
-level of the R sources: it will add a Tcl directory.  Then
+http://www.murdoch-sutherland.com/Rtools/R_Tcl.zip and unzip it at the top
+level of the R sources: it will add directories $RHOME/Tcl, $RHOME/Tcl/bin,
+etc.  Then
 
 	make tcl
 
@@ -222,9 +251,6 @@ To make HTML versions of the manuals (not the Reference Manual) use
 	cd ../../doc/manual
 	make -f Makefile.win html
 
-This makes use of tidy.exe, available via http://tidy.sourceforge.net/,
-with a compiled version included in our tool set.
-
 The fptex distribution of TeX (via www.fptex.org) includes a suitable
 port of pdftex.
 
@@ -257,7 +283,7 @@ all the parts in the sequence:
 	crandir (the CRAN distribution directory)
 
 The parts can be made individually if a full build is not needed, but
-earlier parts must built before later ones.  (The Makefile doesn't
+earlier parts must be built before later ones.  (The Makefile doesn't
 enforce this dependency---some build targets force a lot of
 computation even if all files are up to date.)  The first four targets
 are the default build if just "make" is run.
@@ -276,8 +302,8 @@ Note that as from R 1.7.0 you do need versions >= 2.0 of mingw-runtime
 and w32api and so a later set of cross-compilers than is needed for R
 1.6.x.
 
-You will need Perl, zip and unzip installed, as well as makeinfo >=
-4.2 (part of GNU texinfo) and tidy (via http://tidy.sourceforge.net).
+You will need Perl, zip and unzip installed and makeinfo >= 4.2 
+(part of GNU texinfo).
 
 You also need the R source (R-1.x.y.tgz).
 
@@ -288,9 +314,9 @@ Then: untar R-1.x.y.tgz somewhere, and
 Edit MkRules to set BUILD=CROSS and the appropriate paths (including
 HEADER) as needed.
 
-Edit MkRules to set the type(s) of help that you want built. (You
-will not be able to cross-build .chm or .hlp files,
-so WINHELP is automatically set to NO.)
+Edit MkRules to set the type(s) of help that you want built. (You will
+not be able to cross-build .chm files, so WINHELP is automatically set
+to NO.)
 
 You also need a working copy of this version of R on Linux: set
 R_EXE in MkRules to point to it.

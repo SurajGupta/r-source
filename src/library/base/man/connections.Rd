@@ -23,6 +23,8 @@
 \alias{MacRoman}
 \alias{WinAnsi}
 \alias{native.enc}
+\concept{encoding}
+\concept{compression}
 \title{Functions to Manipulate Connections}
 \description{
   Functions to create, open and close connections.
@@ -45,6 +47,7 @@ socketConnection(host = "localhost", port, server = FALSE,
 
 open(con, \dots)
 \method{open}{connection}(con, open = "r", blocking = TRUE, \dots)
+
 close(con, \dots)
 \method{close}{connection}(con, type = "rw", \dots)
 
@@ -89,13 +92,13 @@ isIncomplete(con)
   \code{unz} reads (only) single files within zip files, in binary mode.
   The description is the full path, with \file{.zip} extension if required.
 
-  All platforms support (gz)file connections and \code{url("file://")}
-  connections.  The other types may be partially implemented or
-  not implemented at all.  (They do work on most Unix
-  platforms, and all but \code{fifo} on Windows.)
+  All platforms support \code{file}, \code{gzfile}, \code{bzfile},
+  \code{unz} and \code{url("file://")} connections.  The other types may
+  be partially implemented or not implemented at all.  (They do work on
+  most Unix platforms, and all but \code{fifo} on Windows.)
 
   Proxies can be specified for \code{url} connections: see
-  \code{\link{download.file}}.
+  \code{\link[utils]{download.file}}.
 
   \code{open}, \code{close} and \code{seek} are generic functions: the
   following applies to the methods relevant to connections.
@@ -193,7 +196,7 @@ isIncomplete(con)
 
   When writing to the clipboard, the output is
   copied to the clipboard only when the connection is closed or flushed.
-  There is a 32Kb limit of the text to be written to the clipboard.
+  There is a 32Kb limit on the text to be written to the clipboard.
 }
 #endif
 \note{
@@ -225,7 +228,7 @@ isIncomplete(con)
   \code{fifo} and \code{socketConnection} are supported by this build of \R.
 
 #ifdef windows
-  To flush output to the console, see \code{\link{flush.console}}.
+  To flush output to the console, see \code{\link[utils]{flush.console}}.
 #endif
 }
 
@@ -243,13 +246,11 @@ close(zz)
 readLines(gzfile("ex.gz"))
 unlink("ex.gz")
 
-if(capabilities("bzip2")) {
-  zz <- bzfile("ex.bz2", "w")  # bzip2-ed file
-  cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = zz, sep = "\n")
-  close(zz)
-  print(readLines(bzfile("ex.bz2")))
-  unlink("ex.bz2")
-}
+zz <- bzfile("ex.bz2", "w")  # bzip2-ed file
+cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = zz, sep = "\n")
+close(zz)
+print(readLines(bzfile("ex.bz2")))
+unlink("ex.bz2")
 
 ## An example of a file open for reading and writing
 Tfile <- file("test1", "w+")

@@ -12,7 +12,7 @@ as.array(x)
 is.array(x)
 }
 \arguments{
-  \item{data}{a vector giving data to fill the array.}
+  \item{data}{a vector (including a list) giving data to fill the array.}
   \item{dim}{the dim attribute for the array to be created, that is a
     vector of length one or more giving the maximal indices in
     each dimension.}
@@ -27,7 +27,9 @@ is.array(x)
   and naming information in \code{dimnames}.  The values in \code{data} are
   taken to be those in the array with the leftmost subscript moving
   fastest.  If there are too few elements in \code{data} to fill the array,
-  then the elements in \code{data} are recycled.
+  then the elements in \code{data} are recycled.  If \code{data} has
+  length zero, \code{NA} of an appropriate type is used for atomic
+  vectors and \code{NULL} for lists.
 
   \code{as.array()} coerces its argument to be an array by attaching a
   \code{\link{dim}} attribute to it.  It also attaches
@@ -38,7 +40,7 @@ is.array(x)
   \code{is.array} returns \code{TRUE} or \code{FALSE} depending on
   whether its argument is an array (i.e., has a \code{dim} attribute)
   or not. It is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -55,8 +57,5 @@ array(1:3, c(2,4)) # recycle 1:3 "2 2/3 times"
 #     [,1] [,2] [,3] [,4]
 #[1,]    1    3    2    1
 #[2,]    2    1    3    2
-
-# funny object:
-str(a0 <- array(1:3, 0))
 }
 \keyword{array}

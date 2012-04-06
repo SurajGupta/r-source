@@ -2,6 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file extra.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 2004	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +29,6 @@
 #include <stdio.h>
 #include "Defn.h"
 #include "Fileio.h"
-#include <io.h>
 #include <direct.h>
 #include <time.h>
 #include <windows.h>
@@ -43,6 +43,7 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
     HANDLE h;
 
     if(!prefix) prefix = "";	/* NULL */
+    if(strlen(tempdir) >= MAX_PATH) error("invalid 'tempdir' in R_tmpnam");
     strcpy(tmp1, tempdir);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
@@ -60,28 +61,6 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
     strcpy(res, tm);
     return res;
 }
-
-
-SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP  path, ans;
-    char *p, dir[MAX_PATH];
-    int res;
-
-    checkArity(op, args);
-    path = CAR(args);
-    if (!isString(path) || length(path) != 1)
-	errorcall(call, "invalid path argument");
-    strcpy(dir, CHAR(STRING_ELT(path, 0)));
-    for(p = dir; *p != '\0'; p++)
-	if(*p == '/') *p = '\\';
-    res = mkdir(dir);
-    PROTECT(ans = allocVector(LGLSXP, 1));
-    LOGICAL(ans)[0] = (res==0);
-    UNPROTECT(1);
-    return (ans);
-}
-
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -105,11 +84,12 @@ static int R_unlink_one(char *dir, char *name, int recursive)
 static int R_unlink(char *names, int recursive)
 {
     int failures = 0;
-    char *p, tmp[MAX_PATH], dir[MAX_PATH];
+    char *p, tmp[MAX_PATH], dir[MAX_PATH+2];
     WIN32_FIND_DATA find_data;
     HANDLE fh;
     struct stat sb;
 
+    if(strlen(names) >= MAX_PATH) error("invalid 'names' in R_unlink");
     strcpy(tmp, names);
     for(p = tmp; *p != '\0'; p++) if(*p == '/') *p = '\\';
     if(stat(tmp, &sb) == 0) {
@@ -151,13 +131,15 @@ SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     fn = CAR(args);
     nfiles = length(fn);
-    if (!isString(fn) || nfiles < 1)
-	errorcall(call, "invalid file name argument");
-    recursive = asLogical(CADR(args));
-    if (recursive == NA_LOGICAL)
-	errorcall(call, "invalid recursive argument");
-    for(i = 0; i < nfiles; i++)
-	failures += R_unlink(CHAR(STRING_ELT(fn, i)), recursive);
+    if (nfiles > 0) {
+    	if (!isString(fn))
+	    errorcall(call, "invalid file name argument");
+	recursive = asLogical(CADR(args));
+    	if (recursive == NA_LOGICAL)
+	    errorcall(call, "invalid recursive argument");
+    	for(i = 0; i < nfiles; i++)
+	    failures += R_unlink(CHAR(STRING_ELT(fn, i)), recursive);
+    }
     PROTECT(ans = allocVector(INTSXP, 1));
     if (!failures)
 	INTEGER(ans)[0] = 0;
@@ -402,13 +384,12 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 
 void internal_shellexec(char * file)
 {
-    char *home, buf[MAX_PATH];
+    char *home;
 
     home = getenv("R_HOME");
     if (home == NULL)
 	error("R_HOME not set");
-    strcpy(buf, file);
-    ShellExecute(NULL, "open", buf, NULL, home, SW_SHOW);
+    ShellExecute(NULL, "open", file, NULL, home, SW_SHOW);
 }
 
 SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -431,6 +412,7 @@ int check_doc_file(char * file)
     home = getenv("R_HOME");
     if (home == NULL)
 	error("R_HOME not set");
+    if(strlen(home) + strlen(file) + 1 >= MAX_PATH) return(1); /* cannot exist */
     strcpy(path, home);
     strcat(path, "/");
     strcat(path, file);
@@ -489,6 +471,67 @@ SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
 #include "Startup.h"
 extern UImode CharacterMode;
 static char msgbuf[256];
+
+SEXP do_winmenunames(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP menuNames;
+    int i, nmenus;
+
+    checkArity(op, args);
+    if (CharacterMode != RGui)
+	errorcall(call, "Menu functions can only be used in the GUI");
+
+    nmenus = numwinmenus();
+
+    PROTECT(menuNames = allocVector(STRSXP, nmenus));
+
+    for (i = 0; i < nmenus; i++) {
+	SET_STRING_ELT(menuNames, i, mkChar(getusermenuname(i)));
+    }
+
+    UNPROTECT(1);
+    return(menuNames);
+}
+
+SEXP do_wingetmenuitems(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP mname, ans, ansnames;
+    menuItems *items;
+    char errmsg[50];
+    int i;
+
+
+    checkArity(op, args);
+    if (CharacterMode != RGui)
+	errorcall(call, "Menu functions can only be used in the GUI");
+
+    mname = CAR(args);
+    if (!isString(mname) || length(mname) != 1)
+	error("invalid 'menuname' argument");
+
+    items = wingetmenuitems(CHAR(STRING_ELT(mname,0)), errmsg);
+    if (items->numItems == 0) {
+	sprintf(msgbuf, "unable to retrieve items for %s (%s)",
+		CHAR(STRING_ELT(mname,0)), errmsg);
+	freemenuitems(items);
+	errorcall(call, msgbuf);
+    }
+
+    PROTECT(ans = allocVector(STRSXP, items->numItems));
+    PROTECT(ansnames = allocVector(STRSXP, items->numItems));
+    for (i = 0; i < items->numItems; i++) {
+	SET_STRING_ELT(ans, i, mkChar(items->mItems[i]->action));
+	SET_STRING_ELT(ansnames, i, mkChar(items->mItems[i]->name));
+    }
+
+    setAttrib(ans, R_NamesSymbol, ansnames);
+
+    freemenuitems(items);
+
+    UNPROTECT(2);
+    return(ans);
+}
+
 
 SEXP do_winmenuadd(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -671,18 +714,17 @@ SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #ifdef LEA_MALLOC
 struct mallinfo {
-  int arena;    /* total space allocated from system */
-  int ordblks;  /* number of non-inuse chunks */
-  int smblks;   /* unused -- always zero */
+  int arena;    /* non-mmapped space allocated from system */
+  int ordblks;  /* number of free chunks */
+  int smblks;   /* number of fastbin blocks */
   int hblks;    /* number of mmapped regions */
-  int hblkhd;   /* total space in mmapped regions */
-  int usmblks;  /* unused -- always zero */
-  int fsmblks;  /* unused -- always zero */
+  int hblkhd;   /* space in mmapped regions */
+  int usmblks;  /* maximum total allocated space */
+  int fsmblks;  /* space available in freed fastbin blocks */
   int uordblks; /* total allocated space */
-  int fordblks; /* total non-inuse space */
+  int fordblks; /* total free space */
   int keepcost; /* top-most, releasable (via malloc_trim) space */
 };
-extern unsigned long max_total_mem;
 extern unsigned int R_max_memory;
 
 struct mallinfo mallinfo();
@@ -702,7 +744,7 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(maxmem == NA_LOGICAL)
 	    REAL(ans)[0] = R_max_memory;
 	else if(maxmem)
-	    REAL(ans)[0] = max_total_mem;
+	    REAL(ans)[0] = mallinfo().usmblks;
 	else
 	    REAL(ans)[0] = mallinfo().uordblks;
 #else
@@ -913,7 +955,7 @@ void InitTempDir()
     if (hasspace)
 	GetShortPathName(tmp, tmp1, MAX_PATH);
     else
-	strcpy(tmp1, tmp);
+	strcpy(tmp1, tmp); /* length must be valid as access has been checked */
     /* now try a random addition */
     srand( (unsigned)time( NULL ) );
     for (n = 0; n < 100; n++) {
@@ -932,7 +974,7 @@ void InitTempDir()
     res = mkdir(tm);
     if(res) {
 	char buff[2000];
-	sprintf(buff, "%s\nDoes %s exist and is it writeable?", 
+	sprintf(buff, "%s\nDoes %s exist and is it writeable?",
 		"Can't mkdir R_TempDir", tmp);
 	R_Suicide(buff);
     }
@@ -1017,7 +1059,7 @@ SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, def, caption, filters;
-    char *temp, *cfilters, list[65520];
+    char *temp, *cfilters, list[65520],*p;
     char path[MAX_PATH], filename[MAX_PATH];
     int multi, filterindex, i, count, lfilters, pathlen;
     checkArity(op, args);
@@ -1027,33 +1069,36 @@ SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     filters = CADDDR(args);
     filterindex = asInteger(CAD4R(args));
     if(length(def) != 1 )
-		errorcall(call, "default must be a character string");
-	strcpy(path, CHAR(STRING_ELT(def, 0)));
-	temp = strchr(path,'/');
-	while (temp) {
-		*temp = '\\';
-		temp = strchr(temp,'/');
-	}
+	errorcall(call, "default must be a character string");
+    p = CHAR(STRING_ELT(def, 0));
+    if(strlen(p) >= MAX_PATH) errorcall(call, "default is overlong");
+    strcpy(path, p);
+    temp = strchr(path,'/');
+    while (temp) {
+	*temp = '\\';
+	temp = strchr(temp,'/');
+    }
     if(length(caption) != 1 )
-		errorcall(call, "caption must be a character string");
-	if(multi == NA_LOGICAL)
-		errorcall(call, "multi must be a logical value");
-	if(filterindex == NA_INTEGER)
-		errorcall(call, "filterindex must be an integer value");
-    lfilters = 1+length(filters);
-    for (i=0; i<length(filters); i++) lfilters += strlen(CHAR(STRING_ELT(filters,i)));
+	errorcall(call, "caption must be a character string");
+    if(multi == NA_LOGICAL)
+	errorcall(call, "multi must be a logical value");
+    if(filterindex == NA_INTEGER)
+	errorcall(call, "filterindex must be an integer value");
+    lfilters = 1 + length(filters);
+    for (i = 0; i < length(filters); i++)
+	lfilters += strlen(CHAR(STRING_ELT(filters,i)));
     cfilters = R_alloc(lfilters, sizeof(char));
     temp = cfilters;
-    for (i=0; i<length(filters)/2; i++) {
-		strcpy(temp,CHAR(STRING_ELT(filters,i)));
-		temp += strlen(temp)+1;
-		strcpy(temp,CHAR(STRING_ELT(filters,i+length(filters)/2)));
-		temp += strlen(temp)+1;
-	}
-	*temp = 0;
+    for (i = 0; i < length(filters)/2; i++) {
+	strcpy(temp,CHAR(STRING_ELT(filters,i)));
+	temp += strlen(temp)+1;
+	strcpy(temp,CHAR(STRING_ELT(filters,i+length(filters)/2)));
+	temp += strlen(temp)+1;
+    }
+    *temp = 0;
 
     askfilenames(CHAR(STRING_ELT(caption, 0)), path,
-    			 multi, cfilters, filterindex,
+		 multi, cfilters, filterindex,
                  list, 65500);  /* list declared larger to protect against overwrites */
     Rwin_fpset();
     count = countFilenames(list);
@@ -1062,25 +1107,25 @@ SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     else PROTECT(ans = allocVector(STRSXP, count-1));
 
     switch (count) {
-	case 0: break;
-	case 1: SET_STRING_ELT(ans, 0, mkChar(list));
-			break;
-	default:
-		strncpy(path,list,sizeof(path));
-		pathlen = strlen(path);
-		if (path[pathlen-1] == '\\') path[--pathlen] = '\0';
+    case 0: break;
+    case 1: SET_STRING_ELT(ans, 0, mkChar(list));
+	break;
+    default:
+	strncpy(path,list,sizeof(path));
+	pathlen = strlen(path);
+	if (path[pathlen-1] == '\\') path[--pathlen] = '\0';
     	temp = list;
     	for (i = 0; i < count-1; i++) {
-			temp += strlen(temp) + 1;
-			if (strchr(temp,':') || *temp == '\\' || *temp == '/')
-				SET_STRING_ELT(ans, i, mkChar(temp));
-			else {
-				strncpy(filename,path,sizeof(filename));
-				filename[pathlen] = '\\';
-				strncpy(filename+pathlen+1,temp,sizeof(filename)-pathlen-1);
-				SET_STRING_ELT(ans, i, mkChar(filename));
-			}
-		}
+	    temp += strlen(temp) + 1;
+	    if (strchr(temp,':') || *temp == '\\' || *temp == '/')
+		SET_STRING_ELT(ans, i, mkChar(temp));
+	    else {
+		strncpy(filename, path, sizeof(filename));
+		filename[pathlen] = '\\';
+		strncpy(filename+pathlen+1, temp, sizeof(filename)-pathlen-1);
+		SET_STRING_ELT(ans, i, mkChar(filename));
+	    }
+	}
     }
     UNPROTECT(1);
     return ans;

@@ -45,6 +45,9 @@ as.list.data.frame <- function(x,...) {
     x
 }
 
+as.list.environment <- function(x, all.names=FALSE, ...)
+    .Internal(env2list(x, all.names))
+
 ##as.vector dispatches internally so no need for a generic
 as.vector <- function(x, mode="any") .Internal(as.vector(x,mode))
 as.matrix <- function(x) UseMethod("as.matrix")
@@ -80,13 +83,3 @@ as.name <- as.symbol
 as.numeric <- as.double
 as.qr <- function(x) stop("you cannot be serious")
 ## as.ts <- function(x) if(is.ts(x)) x else ts(x) # in ts.R
-as.formula <- function(object,env=parent.frame()){
-    if(inherits(object, "formula"))
-           object
-    else{
-        rval<-formula(object,env=NULL)
-        if (is.null(environment(rval)) || !missing(env))
-            environment(rval)<-env
-        rval
-    }
-}

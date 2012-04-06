@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,12 @@
 #include <Print.h> /* for R_print */
 
 #include "apse.h"
+
+#ifdef HAVE_PCRE_PCRE_H
+# include <pcre/pcre.h>
+#else
+# include <pcre.h>
+#endif
 
 #ifndef MAX
 # define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -229,42 +235,56 @@ SEXP do_substrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, t, tok, x;
-    int i, j, len, tlen, ntok;
-    int extended_opt, eflags;
-    char *pt = NULL, *split = "", *bufp;
+    int i, j, len, tlen, ntok, slen;
+    int extended_opt, eflags, fixed, perl;
+    char *buf, *pt = NULL, *split = "", *bufp, *laststart;
     regex_t reg;
     regmatch_t regmatch[1];
+    pcre *re_pcre = NULL;
+    pcre_extra *re_pe = NULL;
+    const unsigned char *tables;
+    int options = 0, erroffset, ovector[30];
+    const char *errorptr;
+    Rboolean usedRegex = FALSE, usedPCRE = FALSE;
 
     checkArity(op, args);
     x = CAR(args);
     tok = CADR(args);
     extended_opt = asLogical(CADDR(args));
+    fixed = asLogical(CADDDR(args));
+    perl = asLogical(CAD4R(args));
 
     if(!isString(x) || !isString(tok))
-	errorcall_return(call,"non-character argument in strsplit()");
+	errorcall_return(call, "non-character argument in strsplit()");
     if(extended_opt == NA_INTEGER) extended_opt = 1;
+    if(perl == NA_INTEGER) perl = 0;
 
     eflags = 0;
     if(extended_opt) eflags = eflags | REG_EXTENDED;
 
     len = LENGTH(x);
     tlen = LENGTH(tok);
+    /* special case split="" for efficiency */
+    if(tlen == 1 && strlen(CHAR(STRING_ELT(tok, 0))) == 0) tlen = 0;
+
     PROTECT(s = allocVector(VECSXP, len));
     for(i = 0; i < len; i++) {
-	if (STRING_ELT(x,i)==NA_STRING){
-	    PROTECT(t=allocVector(STRSXP,1));
-	    SET_STRING_ELT(t,0,NA_STRING);
-	    SET_VECTOR_ELT(s,i,t);
+	if (STRING_ELT(x, i) == NA_STRING){
+	    PROTECT(t = allocVector(STRSXP, 1));
+	    SET_STRING_ELT(t, 0, NA_STRING);
+	    SET_VECTOR_ELT(s, i, t);
 	    UNPROTECT(1);
 	    continue;
 	}
-	AllocBuffer(strlen(CHAR(STRING_ELT(x, i))));
-	strcpy(buff, CHAR(STRING_ELT(x, i)));
+	/* buffer was only used for reading
+	   AllocBuffer(strlen(CHAR(STRING_ELT(x, i))));
+	   strcpy(buff, CHAR(STRING_ELT(x, i))); */
+	buf = CHAR(STRING_ELT(x, i));
 	if(tlen > 0) {
-	    /* NA token doesn't split*/
-	    if (STRING_ELT(tok,i % tlen)==NA_STRING){
-		    PROTECT(t=allocVector(STRSXP,1));
-		    bufp = buff;
+	    /* NA token doesn't split */
+	    if (STRING_ELT(tok,i % tlen) == NA_STRING){
+		    PROTECT(t = allocVector(STRSXP, 1));
+		    bufp = buf;
 		    SET_STRING_ELT(t, 0, mkChar(bufp));
 		    SET_VECTOR_ELT(s, i, t);
 		    UNPROTECT(1);
@@ -272,24 +292,58 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	    /* find out how many splits there will be */
 	    split = CHAR(STRING_ELT(tok, i % tlen));
+	    slen = strlen(split);
 	    ntok = 0;
-	    /* Careful: need to distinguish empty (rm_eo == 0) from
-	       non-empty (rm_eo > 0) matches.  In the former case, the
-	       token extracted is the next character.  Otherwise, it is
-	       everything before the start of the match, which may be
-	       the empty string (not a ``token'' in the strict sense).
-	       */
-	    if(regcomp(&reg, split, eflags))
-		errorcall(call, "invalid split pattern");
-	    bufp = buff;
-	    if(*bufp != '\0') {
-		while(regexec(&reg, bufp, 1, regmatch, eflags) == 0) {
-		    /* Empty matches get the next char, so move by
-		       one. */
-		    bufp += MAX(regmatch[0].rm_eo, 1);
+	    if(fixed) {
+		laststart = buf;
+		for(bufp = buf; bufp-buf < strlen(buf); bufp++) {
+		    if((slen == 1 && *bufp != *split) || 
+		       (slen > 1 && strncmp(bufp, split, slen))) continue;
 		    ntok++;
-		    if (*bufp == '\0')
-			break;
+		    bufp += MAX(slen - 1, 0);
+		    laststart = bufp+1;
+		}
+		bufp = laststart;
+	    } else if(perl) {
+		usedPCRE = TRUE;
+		tables = pcre_maketables();
+		re_pcre = pcre_compile(split, options, 
+				       &errorptr, &erroffset, tables);
+		pcre_free((void *)tables);
+		if (!re_pcre) errorcall(call, "invalid regular expression");
+		re_pe = pcre_study(re_pcre, 0, &errorptr);
+		bufp = buf;
+		if(*bufp != '\0') {
+		    while(pcre_exec(re_pcre, re_pe, bufp, strlen(bufp), 0, 0, 
+				    ovector, 30) >= 0) {
+			/* Empty matches get the next char, so move by
+			   one. */
+			bufp += MAX(ovector[1], 1);
+			ntok++;
+			if (*bufp == '\0')
+			    break;
+		    }
+		}
+	    } else {
+		/* Careful: need to distinguish empty (rm_eo == 0) from
+		   non-empty (rm_eo > 0) matches.  In the former case, the
+		   token extracted is the next character.  Otherwise, it is
+		   everything before the start of the match, which may be
+		   the empty string (not a ``token'' in the strict sense).
+		*/
+		usedRegex = TRUE;
+		if(regcomp(&reg, split, eflags))
+		    errorcall(call, "invalid split pattern");
+		bufp = buf;
+		if(*bufp != '\0') {
+		    while(regexec(&reg, bufp, 1, regmatch, eflags) == 0) {
+			/* Empty matches get the next char, so move by
+			   one. */
+			bufp += MAX(regmatch[0].rm_eo, 1);
+			ntok++;
+			if (*bufp == '\0')
+			    break;
+		    }
 		}
 	    }
 	    if(*bufp == '\0')
@@ -297,36 +351,68 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else
 		PROTECT(t = allocVector(STRSXP, ntok + 1));
 	    /* and fill with the splits */
-	    bufp = buff;
-	    pt = (char *) realloc(pt, (strlen(buff)+1) * sizeof(char));
+	    laststart = bufp = buf;
+	    pt = (char *) realloc(pt, (strlen(buf)+1) * sizeof(char));
 	    for(j = 0; j < ntok; j++) {
-		regexec(&reg, bufp, 1, regmatch, eflags);
-		if(regmatch[0].rm_eo > 0) {
-		    /* Match was non-empty. */
-		    if(regmatch[0].rm_so > 0)
-			strncpy(pt, bufp, regmatch[0].rm_so);
-		    pt[regmatch[0].rm_so] = '\0';
-		    bufp += regmatch[0].rm_eo;
+		if(fixed) {
+		    for(; bufp - buf < strlen(buf); bufp++) {
+			if((slen == 1 && *bufp != *split) || 
+			   (slen > 1 && strncmp(bufp, split, slen))) continue;
+			if(slen) {
+			    strncpy(pt, laststart, bufp - laststart);
+			    pt[bufp - laststart] = '\0';
+			} else {
+			    pt[0] = *bufp; pt[1] ='\0';
+			}
+			bufp += MAX(slen-1, 0);
+			laststart = bufp+1;
+			SET_STRING_ELT(t, j, mkChar(pt));
+			break;
+		    }
+		    bufp = laststart;
+		} else if(perl) {
+		    pcre_exec(re_pcre, re_pe, bufp, strlen(bufp), 0, 0, 
+			      ovector, 30);
+		    if(ovector[1] > 0) {
+			/* Match was non-empty. */
+			if(ovector[0] > 0)
+			    strncpy(pt, bufp, ovector[0]);
+			pt[ovector[0]] = '\0';
+			bufp += ovector[1];
+		    } else {
+			/* Match was empty. */
+			pt[0] = *bufp;
+			pt[1] = '\0';
+			bufp++;			
+		    }
+		    SET_STRING_ELT(t, j, mkChar(pt));
+		} else {
+		    regexec(&reg, bufp, 1, regmatch, eflags);
+		    if(regmatch[0].rm_eo > 0) {
+			/* Match was non-empty. */
+			if(regmatch[0].rm_so > 0)
+			    strncpy(pt, bufp, regmatch[0].rm_so);
+			pt[regmatch[0].rm_so] = '\0';
+			bufp += regmatch[0].rm_eo;
+		    } else {
+			/* Match was empty. */
+			pt[0] = *bufp;
+			pt[1] = '\0';
+			bufp++;
+		    }
+		    SET_STRING_ELT(t, j, mkChar(pt));
 		}
-		else {
-		    /* Match was empty. */
-		    pt[0] = *bufp;
-		    pt[1] = '\0';
-		    bufp++;
-		}
-		SET_STRING_ELT(t, j, mkChar(pt));
 	    }
 	    if(*bufp != '\0')
 		SET_STRING_ELT(t, ntok, mkChar(bufp));
-	    regfree(&reg);
-	}
-	else {
+	} else {
+	    /* split into individual characters */
 	    char bf[2];
-	    ntok = strlen(buff);
+	    ntok = strlen(buf);
 	    PROTECT(t = allocVector(STRSXP, ntok));
-	    bf[1]='\0';
+	    bf[1] = '\0';
 	    for (j = 0; j < ntok; j++) {
-		bf[0]=buff[j];
+		bf[0] = buf[j];
 		SET_STRING_ELT(t, j, mkChar(bf));
 	    }
 	}
@@ -334,10 +420,15 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 	SET_VECTOR_ELT(s, i, t);
     }
 
+    if(usedRegex) regfree(&reg);
+    if(usedPCRE) {
+	(pcre_free)(re_pe);
+	(pcre_free)(re_pcre);
+    }
     if (getAttrib(x, R_NamesSymbol) != R_NilValue)
 	namesgets(s, getAttrib(x, R_NamesSymbol));
     UNPROTECT(1);
-    AllocBuffer(-1);
+    /* AllocBuffer(-1); */
     free(pt);
     return s;
 }
@@ -514,11 +605,20 @@ SEXP do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
 	    SET_STRING_ELT(ans, i, allocString(l));
 	    strcpy(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
 	}
-	p = CHAR(STRING_ELT(ans, i));
+	this = p = CHAR(STRING_ELT(ans, i));
 	while (*p) {
-	    if (!isalnum((int)*p) && *p != '.')
-		*p = '.';
+	    if (!isalnum((int)*p) && *p != '.'
+#ifdef UNDERSCORE_IN_NAMES
+		&& *p != '_'
+#endif
+		) *p = '.';
 	    p++;
+	}
+	/* do we have a reserved word?  If so the name is invalid */
+	if (!isValidName(this)) {
+	    SET_STRING_ELT(ans, i, allocString(strlen(this) + 1));
+	    strcpy(CHAR(STRING_ELT(ans, i)), this);
+	    strcat(CHAR(STRING_ELT(ans, i)), ".");
 	}
     }
     UNPROTECT(1);
@@ -705,10 +805,15 @@ SEXP do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
     if (igcase_opt == NA_INTEGER) igcase_opt = 0;
     if (extended_opt == NA_INTEGER) extended_opt = 1;
 
-    if (!isString(pat) || length(pat) < 1 ||
-	!isString(rep) || length(rep) < 1 ||
-	!isString(vec))
+    if (length(pat) < 1 || length(rep) < 1)
 	errorcall(call, R_MSG_IA);
+
+    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
+    else PROTECT(pat);
+    if (!isString(rep)) PROTECT(rep = coerceVector(rep, STRSXP));
+    else PROTECT(rep);
+    if (!isString(vec)) PROTECT(vec = coerceVector(vec, STRSXP));
+    else PROTECT(vec);
 
     eflags = 0;
     if (extended_opt) eflags = eflags | REG_EXTENDED;
@@ -786,7 +891,7 @@ SEXP do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
     }
     regfree(&reg);
-    UNPROTECT(1);
+    UNPROTECT(4);
     return ans;
 }
 
@@ -806,10 +911,14 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     fixed_opt = asLogical(CAR(args));
     if (fixed_opt == NA_INTEGER) fixed_opt = 0;
 
-    if (!isString(pat) || length(pat) < 1 ||
-	!isString(text) || length(text) < 1 ||
+    if (length(pat) < 1 || length(text) < 1 ||
 	STRING_ELT(pat,0) == NA_STRING)
 	errorcall(call, R_MSG_IA);
+
+    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
+    else PROTECT(pat);
+    if (!isString(text)) PROTECT(text = coerceVector(text, STRSXP));
+    else PROTECT(text);
 
     eflags = extended_opt ? REG_EXTENDED : 0;
 
@@ -840,7 +949,7 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if (!fixed_opt) regfree(&reg);
     setAttrib(ans, install("match.length"), matchlen);
-    UNPROTECT(2);
+    UNPROTECT(4);
     return ans;
 }
 

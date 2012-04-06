@@ -124,6 +124,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 	## <FIXME>
 	## Copied from Rdtools::Rdpp() so that nested conditionals are
 	## handled correctly.  Should really *call* Rdpp() instead.
+	## Known OSdirs are actually ASCII, so this test is OK
 	if (/^#ifdef\s+([A-Za-z0-9]+)/o) {
 	    $skip = $1 ne $main::OSdir;
             $skip_level += $skip;
@@ -569,9 +570,10 @@ sub transform_command {
 sub transform_S3method {
     ## \method{GENERIC}{CLASS}
     ## Note that this markup should really only be used inside \usage.
+    ## NB: \w includes _ as well as [:alnum:], which R now allows in name
     my ($text) = @_;
     my $S3method_RE =
-      "([ \t]*)\\\\(S3)?method\{([a-zA-Z0-9.]+)\}\{([a-zA-Z0-9.]+)\}";
+      "([ \t]*)\\\\(S3)?method\{([\\w.]+)\}\{([\\w.]+)\}";
     while($text =~ /$S3method_RE/) {
 	if($4 eq "default") {
 	    $text =~
@@ -590,7 +592,7 @@ sub transform_S4method {
     ## Note that this markup should really only be used inside \usage.
     my ($text) = @_;
     my $S4method_RE =
-      "([ \t]*)\\\\S4method\{([a-zA-Z0-9.]+)\}\{([a-zA-Z0-9.,]+)\}";
+      "([ \t]*)\\\\S4method\{([\\w.]+)\}\{([\\w.,]+)\}";
     local($Text::Wrap::columns) = 60;
     while($text =~ /$S4method_RE/) {
 	my $pretty = wrap("$1\#\# ", "$1\#\#   ",
@@ -743,6 +745,8 @@ sub text2html {
 	my $argkey = $arg;
 	$argkey =~ s/&lt;/</go;
 	$argkey =~ s/&gt;/>/go;
+	die "\nERROR: command (e.g. \\url) inside \\link\n" 
+	    if $arg =~ normal-bracket;
 	$htmlfile = $main::htmlindex{$argkey};
 	if($htmlfile && !length($opt)){
 	    if($using_chm) {
@@ -762,6 +766,10 @@ sub text2html {
 	    } else {
 		if ($htmlfile =~ s+^$pkgname/html/++) {
 		    # in the same html file
+		    $text =~
+			s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
+		} elsif ($htmlfile =~ s+^$pkgname\_[^/]*/html/++) {
+		    # in the same html file, versioned install
 		    $text =~
 			s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
 		} else {
@@ -795,6 +803,9 @@ sub text2html {
 		    $htmlfile = $pkg."/html/".$topic.$HTML;
 		    if ($htmlfile =~ s+^$pkgname/html/++) {
 			# in the same html file
+			$text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
+		    } elsif ($htmlfile =~ s+^$pkgname\_[^/]*/html/++) {
+			# in the same html file, versioned install
 			$text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
 		    } else {
 			$text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$htmlfile\">$arg<\/a>/s;
@@ -904,6 +915,10 @@ sub code2html {
 		    # in the same html file
 		    $text =~
 			s/\\link(\[.*\])?$id.*$id/<a href=\"$uxfile\">$arg<\/a>/s;
+		} elsif ($uxfile =~ s+^$pkgname\_[^/]*/html/++) {
+		    # in the same html file, versioned install
+		    $text =~
+			s/\\link(\[.*\])?$id.*$id/<a href=\"$uxfile\">$arg<\/a>/s;
 		} else {
 		    $text =~
 			s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$uxfile\">$arg<\/a>/s;
@@ -934,6 +949,10 @@ sub code2html {
 		    $htmlfile = $pkg."/html/".$topic.$HTML;
 		    if ($htmlfile =~ s+^$pkgname/html/++) {
 			# in the same html file
+			$text =~
+			    s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
+		    } elsif ($htmlfile =~ s+^$pkgname\_[^/]*/html/++) {
+			# in the same html file, versioned install
 			$text =~
 			    s/\\link(\[.*\])?$id.*$id/<a href=\"$htmlfile\">$arg<\/a>/s;
 		    } else {
@@ -1159,6 +1178,7 @@ sub html_functionhead
     my ($title, $pkgname, $name) = @_;
 
     my $retval = "<html><head><title>R: $title</title>\n" .
+	"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n" .
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"../../R.css\">\n" .
 	"</head><body>\n\n";
 
@@ -1274,7 +1294,7 @@ sub txt_header {
     my $out = "", $a;
     for($l = 0; $l <= $#letters; $l++){
 	$a = @letters[$l];
-	if($a =~ /[A-Za-z0-9]/) {
+	if($a =~ /[[:alnum:]]/) {
 	    $out .= '_' . $a;
 	} else {
 	    $out .= $a;
@@ -1419,7 +1439,8 @@ sub text2txt {
 	if($ll > 0) {
 	    $descitem = "\n.tide " . $descitem . " \n". text2txt($desc);
 	} else {
-	    warn "missing text for \\item in \\describe\n";
+	    warn "Warning: missing text for item '$descitem' " .
+		"in \\describe\n";
 	    $descitem = "\n.tide " . $descitem . " \n \n"
 	}
 	$text =~ s/\\itemnormal.*$id/$descitem/s;
@@ -2462,7 +2483,8 @@ sub latex_print_block {
 	print $latexout "\\begin\{$env\}\\relax\n";
 	my $thisblock = &text2latex($blocks{$block});
 	print $latexout $thisblock;
-	print $latexout "\n" unless $thisblock =~ /\n$/m;
+	print $latexout "\n" unless
+	    $thisblock =~ /\n$/ || length($thisblock) == 0;
 	print $latexout "\\end\{$env\}\n";
     }
 }
@@ -2524,10 +2546,16 @@ sub latex_print_argblock {
 		$text =~ s/.*$id//s;
 	    }
 	    print $latexout "\\end\{ldescription\}\n";
-	    print $latexout &text2latex($text);
+	    my $thisblock = &text2latex($text);
+	    print $latexout $thisblock;
+	    print $latexout "\n" unless 
+		$thisblock =~ /\n$/ || length($thisblock) == 0;
 	}
 	else{
-	    print $latexout &text2latex($text);
+	    my $thisblock = &text2latex($text);
+	    print $latexout $thisblock;
+	    print $latexout "\n" unless 
+		$thisblock =~ /\n$/ || length($thisblock) == 0;
 	}
 	print $latexout "\\end\{$env\}\n";
     }
@@ -2539,7 +2567,10 @@ sub latex_print_sections {
 
     for($section=0; $section<$max_section; $section++){
 	print $latexout "\\begin\{Section\}\{" . $section_title[$section] . "\}\n";
-	print $latexout &text2latex($section_body[$section]);
+	my $thisblock = &text2latex($section_body[$section]);
+	print $latexout $thisblock;
+	print $latexout "\n" unless
+	    $thisblock =~ /\n$/ || length($thisblock) == 0;
 	print $latexout "\\end\{Section\}\n";
     }
 }

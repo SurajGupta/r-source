@@ -12,7 +12,7 @@
 
   \code{is.matrix} tests if its argument is a (strict) matrix.
   It is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \usage{
 matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE, dimnames = NULL)
@@ -35,13 +35,19 @@ is.matrix(x)
   made to infer it from the length of \code{data} and the other
   parameter.
 
+  If there are too few elements in \code{data} to fill the array,
+  then the elements in \code{data} are recycled.  If \code{data} has
+  length zero, \code{NA} of an appropriate type is used for atomic
+  vectors and \code{NULL} for lists.
+
   \code{is.matrix} returns \code{TRUE} if \code{x} is a matrix (i.e., it
   is \emph{not} a \code{\link{data.frame}} and has a \code{\link{dim}}
   attribute of length 2) and \code{FALSE} otherwise.
 
   \code{as.matrix} is a generic function. The method for data frames
-  will convert any non-numeric column into a character vector using
-  \code{\link{format}} and so return a character matrix. 
+  will convert any non-numeric/complex column into a character
+  vector using \code{\link{format}} and so return a character matrix,
+  except that all-logical data frames will be coerced to a logical matrix.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -55,8 +61,8 @@ is.matrix(x)
 is.matrix(as.matrix(1:10))
 data(warpbreaks)
 !is.matrix(warpbreaks)# data.frame, NOT matrix!
-str(warpbreaks)
-str(as.matrix(warpbreaks))#using as.matrix.data.frame(.) method
+warpbreaks[1:10,]
+as.matrix(warpbreaks[1:10,]) #using as.matrix.data.frame(.) method
 }
 \keyword{array}
 \keyword{algebra}

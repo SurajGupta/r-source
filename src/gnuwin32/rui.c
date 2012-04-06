@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,12 +57,14 @@ static window RFrame;
 rect MDIsize;
 #endif
 extern int ConsoleAcceptCmd, R_is_running;
+extern Rboolean DebugMenuitem;
+
 static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
-    msavehistory, mpaste, mcopy, mcopypaste, mlazy, mconfig,
+    msavehistory, mpaste, mpastecmds, mcopy, mcopypaste, mlazy, mconfig,
     mls, mrm, msearch, mhelp, mmanintro, mmanref, mmandata,
     mmanext, mmanlang, mapropos, mhelpstart, mhelpsearch, mFAQ,
-    mrwFAQ, mpkgl, mpkgi, mpkgil, mpkgb, mpkgu, mpkgbu, mde;
+    mrwFAQ, mpkgl, mpkgi, mpkgil, mpkgb, mpkgu, mpkgbu, mde, mCRAN;
 static int lmanintro, lmanref, lmandata, lmanlang, lmanext;
 static menu m, mman;
 static char cmd[1024];
@@ -214,6 +217,14 @@ static void menupaste(control m)
 /*    show(RConsole); */
 }
 
+static void menupastecmds(control m)
+{
+    if (consolecanpaste(RConsole))
+	consolepastecmds(RConsole);
+    else
+	askok("No text available");
+}
+
 static void menucopypaste(control m)
 {
     if (consolecancopy(RConsole)) {
@@ -286,10 +297,35 @@ static void menulazy(control m)
 /*    show(RConsole); */
 }
 
+static void menuconsolestayontop(control m)
+{
+    BringToTop(RConsole, 2);
+}
+
 static void menukill(control m)
 {
     /*  show(RConsole); */
     UserBreak = TRUE;
+}
+
+static Rboolean isdebuggerpresent()
+{
+    typedef BOOL (*R_CheckDebugger)();
+    R_CheckDebugger entry;
+    entry = (R_CheckDebugger)GetProcAddress((HMODULE)GetModuleHandle("KERNEL32"),
+                                            "IsDebuggerPresent");
+    if (entry == NULL) return(FALSE);
+    else return((Rboolean)entry());
+}
+
+void breaktodebugger()
+{
+    asm("int $3");
+}
+
+static void menudebug(control m)
+{
+    breaktodebugger();
 }
 
 static void menuls(control m)
@@ -374,7 +410,7 @@ static void menuhelp(control m)
 /*    show(RConsole); */
     if (s) {
 	snprintf(cmd, 1024, "help(\"%s\")", s);
-	if (strlen(s) > 256) s[255] = '\0';
+	if (strlen(s) > 255) s[255] = '\0';
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
     }
@@ -414,7 +450,7 @@ static void menuhelpsearch(control m)
     s = askstring("Search help", olds);
     if (s && strlen(s)) {
 	snprintf(cmd, 1024, "help.search(\"%s\")", s);
-	if (strlen(s) > 256) s[255] = '\0';
+	if (strlen(s) > 255) s[255] = '\0';
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
     }
@@ -430,7 +466,7 @@ static void menuapropos(control m)
 /*    show(RConsole); */
     if (s) {
 	snprintf(cmd, 1024, "apropos(\"%s\")", s);
-	if (strlen(s) > 256) s[255] = '\0';
+	if (strlen(s) > 255) s[255] = '\0';
 	strcpy(olds, s);
 	consolecmd(RConsole, cmd);
     }
@@ -466,6 +502,18 @@ static void menuabout(control m)
 /*    show(RConsole); */
 }
 
+static void menuRhome(control m)
+{
+    ShellExecute(NULL, "open", "http://www.r-project.org", NULL, NULL, SW_SHOW);
+}
+
+static void menuCRAN(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "shell.exec(getOption('CRAN'))");
+}
+
+
 /* some menu commands can be issued only if R is waiting for input */
 static void menuact(control m)
 {
@@ -491,6 +539,7 @@ static void menuact(control m)
 	enable(mpkgu);
 	enable(mpkgbu);
 	enable(mde);
+	enable(mCRAN);
     } else {
 	disable(msource);
 	disable(mload);
@@ -508,6 +557,7 @@ static void menuact(control m)
 	disable(mpkgu);
 	disable(mpkgbu);
 	disable(mde);
+	disable(mCRAN);
     }
 
     if (consolecancopy(RConsole)) {
@@ -518,7 +568,14 @@ static void menuact(control m)
 	disable(mcopypaste);
     }
 
-    if (consolecanpaste(RConsole)) enable(mpaste); else disable(mpaste);
+    if (consolecanpaste(RConsole)) {
+	enable(mpaste);
+	enable(mpastecmds);
+    }
+    else {
+	disable(mpaste);
+	disable(mpastecmds);
+    }
 
     draw(RMenuBar);
 }
@@ -570,6 +627,7 @@ void readconsolecfg()
 	done = 0;
 	if (ok == 2) {
 	    if (!strcmp(opt[0], "font")) {
+		if(strlen(opt[1]) > 127) opt[1][127] = '\0';
 		strcpy(fn, opt[1]);
 		fnchanged = 1;
 		done = 1;
@@ -774,37 +832,50 @@ static void dropconsole(control m, char *fn)
     askok("Can only drop .R, .RData and .rda files");
 }
 
-static MenuItem ConsolePopup[] = {
-    {"Copy", menucopy, 0},
-    {"Paste", menupaste, 0},
-    {"Copy and paste", menucopypaste, 0},
+static MenuItem ConsolePopup[] = {	  /* Numbers used below */
+    {"Copy", menucopy, 0},			  /* 0 */
+    {"Paste", menupaste, 0},			  /* 1 */
+    {"Paste commands only", menupastecmds, 0},	  /* 2 */
+    {"Copy and paste", menucopypaste, 0},	  /* 3 */
     {"-", 0, 0},
-    {"Clear window", menuclear, 0},
+    {"Clear window", menuclear, 0},		  /* 5 */
     {"-", 0, 0},
-    {"Select all", menuselectall, 0},
+    {"Select all", menuselectall, 0},		  /* 7 */
     {"-", 0, 0},
-    {"Buffered output", menulazy, 0},
+    {"Buffered output", menulazy, 0},		  /* 9 */
+    {"Stay on top", menuconsolestayontop, 0},	  /* 10 */
     LASTMENUITEM
 };
 
 static void popupact(control m)
 {
     if (consolegetlazy(RConsole))
-	check(ConsolePopup[8].m);
+	check(ConsolePopup[9].m);
     else
-	uncheck(ConsolePopup[8].m);
+	uncheck(ConsolePopup[9].m);
 
     if (consolecancopy(RConsole)) {
 	enable(ConsolePopup[0].m);
-	enable(ConsolePopup[2].m);
+	enable(ConsolePopup[3].m);
     } else {
 	disable(ConsolePopup[0].m);
+	disable(ConsolePopup[3].m);
+    }
+    if (consolecanpaste(RConsole)) {
+	enable(ConsolePopup[1].m);
+	enable(ConsolePopup[2].m);
+    } else {
+	disable(ConsolePopup[1].m);
 	disable(ConsolePopup[2].m);
     }
-    if (consolecanpaste(RConsole))
-	enable(ConsolePopup[1].m);
-    else
-	disable(ConsolePopup[1].m);
+    if (ismdi())
+    	disable(ConsolePopup[10].m);
+    else {
+	if (isTopmost(RConsole))
+	    check(ConsolePopup[10].m);
+	else
+	    uncheck(ConsolePopup[10].m);
+    }
 }
 
 int setupui()
@@ -903,6 +974,7 @@ int setupui()
     MCHECK(newmenu("Edit"));
     MCHECK(mcopy = newmenuitem("Copy", 'C', menucopy));
     MCHECK(mpaste = newmenuitem("Paste", 'V', menupaste));
+    MCHECK(mpastecmds = newmenuitem("Paste commands only", 0, menupastecmds));
     MCHECK(mcopypaste = newmenuitem("Copy and Paste", 'X', menucopypaste));
     MCHECK(newmenuitem("Select all", 0, menuselectall));
     MCHECK(newmenuitem("Clear console", 'L', menuclear));
@@ -913,6 +985,8 @@ int setupui()
 
     MCHECK(newmenu("Misc"));
     MCHECK(newmenuitem("Stop current computation           \tESC", 0, menukill));
+    if (DebugMenuitem || isdebuggerpresent())
+	MCHECK(newmenuitem("Break to debugger", 0, menudebug));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mlazy = newmenuitem("Buffered output", 'W', menulazy));
     MCHECK(newmenuitem("-", 0, NULL));
@@ -973,6 +1047,9 @@ int setupui()
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mapropos = newmenuitem("Apropos...", 0, menuapropos));
     MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(newmenuitem("R Project home page", 0, menuRhome));
+    MCHECK(mCRAN = newmenuitem("CRAN", 0, menuCRAN));
+    MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("About", 0, menuabout));
     consolesetbrk(RConsole, menukill, ESC, 0);
     gl_hist_init(R_HistorySize, 0);
@@ -987,6 +1064,16 @@ RECT *RgetMDIsize()
 {
     GetClientRect(hwndClient, &RframeRect);
     return &RframeRect;
+}
+
+int RgetMDIwidth()
+{
+    return RgetMDIsize()->right;
+}
+
+int RgetMDIheight()
+{
+    return RgetMDIsize()->bottom;
 }
 #endif
 
@@ -1010,13 +1097,6 @@ int DialogSelectFile(char *buf, int len)
 static menu usermenus[10];
 static char usermenunames[10][51];
 
-typedef struct {
-    menuitem m;
-    char *name;
-    char *action;
-}  uitem;
-typedef uitem *Uitem;
-
 static Uitem  umitems[500];
 
 static int nmenus=0, nitems=0;
@@ -1030,6 +1110,82 @@ static void menuuser(control m)
     Rconsolecmd(p);
 }
 
+int numwinmenus(void) {
+    return(nmenus);
+}
+
+char *getusermenuname(int pos) {
+    return(usermenunames[pos]);
+}
+
+menuItems *wingetmenuitems(char *mname, char *errmsg) {
+    menuItems *items;
+    char mitem[102], *p, *q, *r;
+    int i,j=0;
+
+    q = (char *)malloc(100 * sizeof(char));
+    r = (char *)malloc(100 * sizeof(char));
+
+    items = (menuItems *)malloc(sizeof(menuItems));
+    items->mItems = (Uitem *)malloc(500 * sizeof(Uitem));
+
+    if (strlen(mname) > 100) {
+	strcpy(errmsg, "mname is limited to 100 chars");
+	free(items->mItems);
+	free(items);
+	return NULL;
+    }
+
+    strcpy(mitem, mname); strcat(mitem, "/");
+
+    for (i = 0; i < nitems; i++) {
+	p = (char *)strstr(umitems[i]->name, mitem);
+
+	if (p == NULL)
+	    continue;
+	/* the 'mitem' pattern might be showing up */
+	/* as a substring in another valid name.  Make sure */
+	/* this isn't the case */
+	if (strlen(p) != strlen(umitems[i]->name))
+	    continue;
+
+	strcpy(q, p+strlen(mitem));
+	/* Due to the way menu items are stored, it can't be */
+	/* determined if this is say item 'foo' from menu 'Blah/bar' */
+	/* or item 'bar/foo' from menu 'Blah'.  Check this manually */
+	/* by adding the item label to the menu we're looking for. */
+	sprintf(r, "%s%s", mitem, umitems[i]->m->text);
+	if (strcmp(r, p) != 0)
+	    continue;
+
+	items->mItems[j] = (Uitem)malloc(sizeof(uitem));
+	items->mItems[j]->name = (char *)malloc((strlen(q) + 1) * sizeof(char));
+	items->mItems[j]->action = (char *)malloc((strlen(umitems[i]->action) + 1) * sizeof(char));
+
+	strcpy(items->mItems[j]->name, q);
+	strcpy(items->mItems[j]->action, umitems[i]->action);
+	j++;
+    }
+    free(q);
+    free(r);
+
+    items->numItems = j;
+    if (j == 0) sprintf(errmsg, "menu %s does not exist", mname);
+
+    return(items);
+}
+
+void freemenuitems(menuItems *items) {
+    int j;
+
+    for (j = 0; j < items->numItems; j++) {
+	free(items->mItems[j]->name);
+	free(items->mItems[j]->action);
+	free(items->mItems[j]);
+    }
+    free(items->mItems);
+    free(items);
+}
 
 int winaddmenu(char * name, char *errmsg)
 {

@@ -21,8 +21,7 @@ duplicated.matrix <- duplicated.array <-
 	.NotYetUsed("incomparables != FALSE")
     ndim <- length(dim(x))
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-        stop(paste("MARGIN = ", MARGIN, " is invalid for dim = ",
-                   dim(x), sep = ""))
+        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
     temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
     res <- duplicated(as.vector(temp))
     dim(res) <- dim(temp)
@@ -43,7 +42,8 @@ unique.default <- function(x, incomparables = FALSE, ...)
     if(is.factor(x))
 	factor(z, levels = seq(len=nlevels(x)), labels = levels(x),
                ordered = is.ordered(x))
-    else if(inherits(x, "POSIXct")) structure(z, class=class(x))
+    else if(inherits(x, "POSIXct") || inherits(x, "Date"))
+        structure(z, class=class(x))
     else z
 }
 
@@ -61,8 +61,7 @@ unique.matrix <- unique.array <-
 	.NotYetUsed("incomparables != FALSE")
     ndim <- length(dim(x))
     if (length(MARGIN) > 1 || any(MARGIN > ndim))
-        stop(paste("MARGIN = ", MARGIN, " is invalid for dim = ",
-                   dim(x), sep = ""))
+        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
     temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
     args <- rep(alist(a=), ndim)
     names(args) <- NULL

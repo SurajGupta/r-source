@@ -135,6 +135,7 @@ Boolean OpenPackageManager(void)
     
      CreateNewWindow(kDocumentWindowClass,  kWindowStandardHandlerAttribute |
             kWindowStandardDocumentAttributes, &pmBounds, &PackageManagerWindow);
+	RepositionWindow (PackageManagerWindow,  NULL, kWindowCenterOnMainScreen);
 
     if(PackageManagerWindow == NULL)
      return(FALSE);
@@ -421,8 +422,11 @@ static pascal OSStatus pmGetSetItemData(ControlRef browser,
           }       
           CopyCStringToPascal(buf,pascalString);
           text = CFStringCreateWithPascalString(CFAllocatorGetDefault(), pascalString, kCFStringEncodingMacRoman);
-          err = SetDataBrowserItemDataText(itemData, text); 
-          CFRelease(text); 
+          if(text){
+			err = SetDataBrowserItemDataText(itemData, text); 
+			CFRelease(text); 
+			text = NULL;
+		  }
          }
                    
          

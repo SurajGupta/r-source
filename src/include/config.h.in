@@ -11,7 +11,7 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
-/* Define to dummy `main' function (if any) required to link to the Fortran 77
+/* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef F77_DUMMY_MAIN
 
@@ -21,6 +21,9 @@
 
 /* As F77_FUNC, but for C identifiers containing underscores. */
 #undef F77_FUNC_
+
+/* Define if F77 and FC dummy `main' functions are identical. */
+#undef FC_DUMMY_MAIN_EQ_F77
 
 /* Define to 1 if you have the `access' function. */
 #undef HAVE_ACCESS
@@ -181,6 +184,9 @@
 /* Define if you have the JPEG headers and libraries. */
 #undef HAVE_JPEG
 
+/* Define to 1 if you have the <langinfo.h> header file. */
+#undef HAVE_LANGINFO_H
+
 /* Define if external LAPACK is available. */
 #undef HAVE_LAPACK
 
@@ -232,12 +238,12 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the `nl_langinfo' function. */
+#undef HAVE_NL_LANGINFO
+
 /* Define if module-loading does not need an underscore to be prepended to
    external names. */
 #undef HAVE_NO_SYMBOL_UNDERSCORE
-
-/* Define if you have the PCRE headers and libraries. */
-#undef HAVE_PCRE
 
 /* Define to 1 if you have the <pcre.h> header file. */
 #undef HAVE_PCRE_H
@@ -372,6 +378,9 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
 /* Define if calloc(0) returns a null pointer. */
 #undef HAVE_WORKING_CALLOC
 
@@ -384,15 +393,12 @@
 /* Define if log1p() exists and is accurate enough. */
 #undef HAVE_WORKING_LOG1P
 
-/* Define if strptime() exists and does not fail pre-1970. */
+/* Define if strptime() exists, validates and does not fail pre-1970. */
 #undef HAVE_WORKING_STRPTIME
 
 /* Define if you have the X11 headers and libraries, and want the X11 GUI to
    be built. */
 #undef HAVE_X11
-
-/* Define if you have the zlib headers and libraries. */
-#undef HAVE_ZLIB
 
 /* Define if you have IEEE 754 floating point arithmetic. */
 #undef IEEE_754
@@ -467,9 +473,9 @@
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-        STACK_DIRECTION > 0 => grows toward higher addresses
-        STACK_DIRECTION < 0 => grows toward lower addresses
-        STACK_DIRECTION = 0 => direction of growth unknown */
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
 /* Define to 1 if you have the ANSI C header files. */

@@ -134,15 +134,26 @@ double gpAlpha(SEXP gp, int i) {
  * Historical reasons ...
  */
 
-/*
- * Generate a C gpar from an SEXP gpar
- * Assume that index has been checked as valid elsewhere
+/* 
+ * Generate an R_GE_gcontext from a gpar
  */
-void gcontextFromgpar(SEXP gp, int i, LGContext *gc) {
-    gc->font = gpFont(gp, i);
-    gc->fontsize = gpFontSize(gp, i);
+void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc) 
+{
+    /* 
+     * FIXME: Need to pass gpAlpha down.
+     * It's not clear yet whether this needs to be passed as part
+     * of the col/fill or as a separate parameter in 
+     * R_GE_gcontext
+     */
+    gc->col = gpCol(gp, i);
+    gc->fill = gpFill(gp, i);
+    gc->gamma = gpGamma(gp, i);
+    gc->lwd = gpLineWidth(gp, i);
+    gc->lty = gpLineType(gp, i);
     gc->cex = gpCex(gp, i);
+    gc->ps = gpFontSize(gp, i);
     gc->lineheight = gpLineHeight(gp, i);
+    gc->fontface = gpFont(gp, i);
     strcpy(gc->fontfamily, gpFontFamily(gp, i));
 }
 
@@ -191,7 +202,7 @@ SEXP L_setGPsaved(SEXP gpars)
 void initGPar(GEDevDesc *dd)
 {
     NewDevDesc *dev = dd->dev;
-    SEXP gpar, gparnames;
+    SEXP gpar, gparnames, class;
     SEXP gpfill, gpcol, gpgamma, gplty, gplwd, gpcex, gpfs, gplh, gpfont;
     SEXP gpfontfamily, gpalpha;
     SEXP gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
@@ -246,6 +257,9 @@ void initGPar(GEDevDesc *dd)
     PROTECT(gpalpha = allocVector(REALSXP, 1));
     REAL(gpalpha)[0] = 1;
     SET_VECTOR_ELT(gpar, GP_ALPHA, gpalpha);
+    PROTECT(class = allocVector(STRSXP, 1));
+    SET_STRING_ELT(class, 0, mkChar("gpar"));
+    classgets(gpar, class);
     SET_VECTOR_ELT(gsd, GSS_GPAR, gpar);
-    UNPROTECT(13);
+    UNPROTECT(14);
 }

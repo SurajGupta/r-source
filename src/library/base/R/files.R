@@ -57,14 +57,14 @@ file.copy <- function(from, to, overwrite=FALSE)
     if (nt == 1 && file.exists(to) && file.info(to)$isdir)
         to <- file.path(to, basename(from))
     else if (nf > nt) stop("more 'from' files than 'to' files")
-    if(nt > nf) from <- rep(from, length = nt)
+    if(nt > nf) from <- rep(from, length.out = nt)
     if (!overwrite) okay <- !file.exists(to)
-    else okay <- rep(TRUE, length(to))
+    else okay <- rep.int(TRUE, length(to))
     if (any(from[okay] %in% to[okay]))
         stop("file can't be copied both from and to")
-    if (any(okay)) { 
-    	file.create(to[okay])
-    	okay[okay] <- file.append(to[okay], from[okay])
+    if (any(okay)) { ## care: create could fail but append work.
+    	okay[okay] <- file.create(to[okay])
+    	if(any(okay)) okay[okay] <- file.append(to[okay], from[okay])
     }
     okay
 }
@@ -94,6 +94,9 @@ file.access <- function(names, mode = 0)
     res
 }
 
+dir.create <- function(path, showWarnings = TRUE)
+    invisible(.Internal(dir.create(path, showWarnings)))
+
 format.octmode <- function(x, ...)
 {
     if(!inherits(x, "octmode")) stop("calling wrong method")
@@ -106,7 +109,7 @@ format.octmode <- function(x, ...)
         y <- floor(y/8)
         ans0 <- paste(z, ans0, sep="")
     }
-    ans <- rep(as.character(NA), length(x))
+    ans <- rep.int(as.character(NA), length(x))
     ans[!isna] <- ans0
     ans
 }

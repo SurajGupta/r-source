@@ -6,6 +6,8 @@
 @set VERSION @RWVER@
 @set RVERSION @RVER@
 @c %**end of header
+@documentlanguage en
+@documentencoding ISO-8859-1
 
 @finalout
 
@@ -15,7 +17,7 @@
 @end ifinfo
 @ifhtml
 @html
-<p><hr>
+<hr>
 @end html
 @end ifhtml
 @end macro
@@ -31,7 +33,7 @@
 R for Windows FAQ                           @*
 Frequently Asked Questions on R for Windows @*
 Version for @value{VERSION}                 @*
-Brian Ripley                                @*
+B. D. Ripley                                @*
 
 @sp 2
 @end ifinfo
@@ -40,7 +42,7 @@ Brian Ripley                                @*
 @html
 <h2>Version for <tt>@value{VERSION}</tt></h2>
 <address>B. D. Ripley</address>
-<p><p><hr><p>
+<hr>
 @end html
 @end ifhtml
 
@@ -78,7 +80,7 @@ that version.  The main R FAQ can be found at
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@code{1.8.0} or later); the current version is often called something like
+(@code{1.9.0} or later); the current version is often called something like
 @code{@value{VERSION}} (although not officially).
 
 
@@ -97,7 +99,7 @@ The information here applies only to recent versions of R for Windows,
 * There seems to be a limit on the memory it uses!::
 * How can I keep workspaces for different projects in different directories?::
 * How do I print from R?::
-* Can I use R BATCH?::
+* Can I use R CMD BATCH?::
 * Can I use @RWVER@ with ESS and (X)emacs?::
 * What are HOME and working directories?::
 * How do I set environment variables?::
@@ -114,11 +116,10 @@ The information here applies only to recent versions of R for Windows,
 @section Where can I find the latest version?
 
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
-for a list), navigate to the @code{bin/windows/base}
-directory and collect the files you need.  There are two versions of
-the distribution.
+for a list), navigate to the @code{bin/windows/base} directory and
+collect the files you need.  There are two versions of the distribution.
 
-1) @code{@RWVER@.exe} is about 21Mb.  This contains all the components
+1) @code{@RWVER@.exe} is about 20Mb.  This contains all the components
 and allows as complete as installation as you choose.
 
 2) Directory @code{miniR} contains @code{miniR.exe} and eight files
@@ -194,7 +195,7 @@ after having checked the command line.
 @end table
 
 A successful installation has exit code 0: unsuccessful ones may give 1,
-2, 3, 4 or 5.  See the help for Inno Setup 3
+2, 3, 4 or 5.  See the help for Inno Setup 4
 (@uref{http://jrsoftware.org/isinfo.php}) for details.
 
 
@@ -249,30 +250,44 @@ wish.
 Indeed there is.  It is set by the command-line flag
 @option{--max-mem-size} (@pxref{How do I install R for Windows?}) and
 defaults to the smaller of the amount of physical RAM in the machine and
-1Gb.  It can be set to any amount over 10M. (R will not run in less.)
+1Gb.  It can be set to any amount over 16M. (R will not run in less.)
 Be aware though that Windows has (in most versions) a maximum amount of
 user virtual memory of 2Gb, and parts of this can be reserved by
-processes but not used.  Because of the way the memory manager works, it
-is possible that there will be free memory but R will not be able to
-make use of it.
+processes but not used.  The version of the memory manager used from R
+1.9.0 allocates large objects in their own memory areas and so is better
+able to make use of fragmented virtual memory than that used from 1.2.0
+to 1.8.x.
 
 Use @code{?Memory} and @code{?memory.size} for information about memory
 usage.  The limit can be raised by calling @code{memory.limit} within a
 running R session.
 
-We have found that starting R with too large a value of
-@option{--max-mem-size} may fail: the limit seemed to be about 1.7Gb on
-Windows 2000 Professional.
-
 R can be compiled to use a different memory manager which might be better
 at using large amounts of memory, but is substantially slower (making R
 several times slower on some tasks).
+
+If you are running a version of Windows which supports more than 2Gb per
+process, you can let the R executables use it by marking their headers
+suitably.  If you have Visual Studio use
+@smallexample
+editbin /LARGEADDRESSAWARE \path\to\rwxxxx\bin\Rgui.exe
+editbin /LARGEADDRESSAWARE \path\to\rwxxxx\bin\Rterm.exe
+@end smallexample
+and check this by
+@smallexample
+dumpbin /headers \path\to\rwxxxx\bin\Rgui.exe
+dumpbin /headers \path\to\rwxxxx\bin\Rterm.exe
+@end smallexample
+You should see a line like
+@smallexample
+                   Application can handle large (>2GB) addresses
+@end smallexample
 
 
 @node How can I keep workspaces for different projects in different directories?, How do I print from R?, There seems to be a limit on the memory it uses!, Installation and Usage
 @section How can I keep workspaces for different projects in different directories?
 
-Create a separate shortcut for each project: see Q2.3.  All the paths to
+Create a separate shortcut for each project: see Q2.4.  All the paths to
 files used by R are relative to the starting directory, so setting the
 `Start in' field automatically helps separate projects.
 
@@ -282,7 +297,7 @@ file with extension @file{.RData} onto an R shortcut.  In either case,
 the working directory will be set to that containing the file.
 
 
-@node How do I print from R?, Can I use R BATCH?, How can I keep workspaces for different projects in different directories?, Installation and Usage
+@node How do I print from R?, Can I use R CMD BATCH?, How can I keep workspaces for different projects in different directories?, Installation and Usage
 @section How do I print from R?
 
 It depends what you want to print.
@@ -303,11 +318,11 @@ LaTeX installed you can print help files by @code{help(fn_name, offline=TRUE)}.
 @end itemize
 
 
-@node Can I use R BATCH?, Can I use @RWVER@ with ESS and (X)emacs?, How do I print from R?, Installation and Usage
-@section Can I use @code{R BATCH}?
+@node Can I use R CMD BATCH?, Can I use @RWVER@ with ESS and (X)emacs?, How do I print from R?, Installation and Usage
+@section Can I use @code{R CMD BATCH}?
 
-Yes.  The Windows analogue is @code{Rcmd BATCH}: use @code{Rcmd BATCH
---help} for full details.  (Perl is no longer required as from R 1.8.0.)
+Yes: use @code{R CMD BATCH --help} for full details.  (Perl used to be
+required, but is no longer.)
 
 You can set also up a batch file using @code{Rterm.exe}.  A sample
 batch file might contain (as one line)
@@ -318,12 +333,12 @@ path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out 2>&1
 @noindent
 The purpose of @code{2>&1} is to redirect warnings and errors to the
 same file as normal output, and users of Windows 95/98/ME's default
-@code{command.com} `shell' will need to omit it. (That program has no
-means to redirect @file{stderr}, and as from R 1.8.0 @code{Rterm.exe}
-sends warnings and errors to the normal output file on such systems.)
+@code{command.com} `shell' will need to omit it.  (That program has no
+means to redirect @file{stderr}, and @code{Rterm.exe} sends warnings and
+errors to the normal output file on such systems.)
 
 
-@node Can I use @RWVER@ with ESS and (X)emacs?, What are HOME and working directories?, Can I use R BATCH?, Installation and Usage
+@node Can I use @RWVER@ with ESS and (X)emacs?, What are HOME and working directories?, Can I use R CMD BATCH?, Installation and Usage
 @section Can I use @RWVER@ with ESS and (X)emacs?
 
 Yes.  Recent versions of ESS (e.g. 5.1.20) come with support for this
@@ -356,7 +371,8 @@ You can find this from R code by @code{Sys.getenv("R_USER")}.
 @node How do I set environment variables?, R can't find my file, What are HOME and working directories?, Installation and Usage
 @section How do I set environment variables?
 
-Environment variables can be set in R in three different ways.
+Environment variables can be set for @code{RGui.exe} and
+@code{Rterm.exe} in three different ways.
 @enumerate
 @item
 On the command line as name=value pairs.  For example in the shortcut to
@@ -403,9 +419,9 @@ which these options are listed, that is the command line then
 
 How did you specify it?  Backslashes have to be doubled in R character
 strings, so for example one needs
-@code{"d:\\@RWVER@\\library\\xgobi\\scripts\\xgobi.bat"}.
-Make life easier for yourself by using forward slashes as path
-separators: they do work under Windows.
+@code{"d:\\@RWVER@\\library\\xgobi\\scripts\\xgobi.bat"}.  You can make
+life easier for yourself by using forward slashes as path separators:
+they do work under Windows.
 
 Another possible source of grief is spaces in folder names.  We have
 tried to make R work on paths with spaces in, but lots of people writing
@@ -445,7 +461,7 @@ There is a (D)COM server written by Thomas Baier available on CRAN
 transfer of data to and from R and remote execution of R commands, as
 well as embedding of an R graphics window.  An R-Excel interface making
 use of the DCOM server is included in the distribution.  @strong{NOTE:}
-You should ensure that the @code{RWVERSION/bin} directory is in your
+You should ensure that the @code{@RWVER@/bin} directory is in your
 path when using this software, so that the R library DLLs are found.
 
 Another (D)COM server is available from @uref{http://www.omegahat.org/},
@@ -555,7 +571,7 @@ You can install pre-compiled packages either from CRAN or from a local
 There are menu items on the @code{Packages} menu to provide a
 point-and-click interface to package installation.  The packages for
 each minor (1.x) version will be stored in a separate area, so for R
-1.8.? the files are in @code{bin/windows/contrib/1.8}.  You can try
+1.9.? the files are in @code{bin/windows/contrib/1.9}.  You can try
 those compiled for earlier versions, at your own risk.
 
 Note that the pre-compiled versions on CRAN are unsupported: see
@@ -567,10 +583,10 @@ you prefer compiling from source, make sure you installed the
 necessary files from @code{@RWVER@.exe}.  Then read the file
 @file{readme.packages}.  You will need to collect and install several
 tools to use this: you can download them via the portal at
-@uref{http://www.stats.ox.ac.uk/pub/Rtools/}.  Once you have done so,
-just run @code{Rcmd INSTALL pkgname}.  To check the package (including
+@uref{http://www.murdoch-sutherland.com/Rtools/}.  Once you have done so,
+just run @code{R CMD INSTALL pkgname}.  To check the package (including
 running all the examples on its help pages and in its test suite, if
-any) use @code{Rcmd check pkgname}: see the @emph{`Writing R
+any) use @code{R CMD check pkgname}: see the @emph{`Writing R
 Extensions'} manual.
 
 Note that this is rather tricky; please do ensure that you have followed
@@ -612,7 +628,9 @@ package, run at the R prompt.
 
 This is done automatically when installing from the Packages menu or
 by @code{install.packages()}, and when @code{help.start} is run,
-provided you have write permission in @file{@RWVER@}.
+@emph{provided} you have write permission in @file{@RWVER@}.  If you do not
+have sufficient permission, you will get warnings and the packages you
+install will not appear in the list of packages or the search system.
 
 
 @node My functions are not found by the HTML help search system., Loading a package fails., The packages I installed do not appear in the HTML help system, Packages
@@ -621,25 +639,26 @@ provided you have write permission in @file{@RWVER@}.
 The following conditions need to hold for functions in a package you installed.
 
 @itemize @bullet
-@item the package is installed in @file{@RWVER@\library}.
 @item the package contains a @file{CONTENTS} file in its top-level directory.
 @item you updated the indices as described in the answer to Q3.3 after
 installing the package.
 @end itemize
 @noindent
-If those all hold true, this works for us.
+If those hold, this works for us.  Note that if you were unable to
+update the indices (for which you need write permission in the
+@file{@RWVER@} directory), only the functions in packages installed in
+the main library will be found.
 
 If the help search system does not work @emph{at all}, this probably
 indicates that Java support is either not installed or not enabled in
-your browser.  Recent versions of browsers have made Java support
-optional: for example it is optional in Netscape 6/7 and in Opera, and
-may not be installed for IE6 on Windows XP.  You also need JavaScript
-enabled,
+your browser.  The search page contains a link to the appropriate
+section in the `R Installation and Administration' manual.
+
 
 @node Loading a package fails., Package TclTk does not work., My functions are not found by the HTML help search system., Packages
 @section Loading a package fails.
 
-Is the package compiled for this version of R?  Many of the packages
+Is the package compiled for this version of R?   Many of the packages
 need to be compiled for a fairly recent version.
 
 You can tell the version the package was compiled for by looking at the
@@ -647,8 +666,7 @@ You can tell the version the package was compiled for by looking at the
 @code{Version} tab of its DLL (if it has one) in the @file{libs}
 directory.  (Right-click on the DLL in Windows Explorer and select
 @code{Version} tab of the @code{Properties}, or use the
-@code{DLL.version} function inside R.)  If there is no @code{Built:}
-line or version tab, the package was compiled far too long ago.
+@code{DLL.version} function inside R.)
 
 
 @node Package TclTk does not work., Hyperlinks in Compiled HTML do not work., Loading a package fails., Packages
@@ -691,6 +709,8 @@ the package's DLL when it is loaded.  So use @code{update.packages()}
 
 If you put @code{library(foo)} in your @file{.Rprofile} you will need to
 start R with @option{--vanilla} to be able to update package @code{foo}.
+If you set @code{R_DEFAULT_PACKAGES} to include @code{foo}, you will
+need to unset it temporarily.
 
 @newchap{}
 @node Windows Features, Workspaces, Packages, Top
@@ -846,7 +866,8 @@ interchangeable (for the same 1.x.? version of R, at least).
 @node I would like to be able to use Japanese fonts, I don't see characters with accents at the R console, The R Console and Fonts, The R Console and Fonts
 @section I would like to be able to use Japanese fonts
 
-for example, in the console and to annotate graphs.
+for example, in the console and to annotate graphs.  Similar comments
+apply to any non-Western European language.
 
 We believe this is possible by setting suitable fonts in the Rconsole and
 Rdevga configuration files (see Q4.2).  You can specify additional fonts in
@@ -858,6 +879,10 @@ par(font=, font.lab=, font.main=, font.sub=)
 
 Nineteen fonts are specified (as 1 to 19) by default: you can add to these
 (up to 13 more) or replace them.
+
+In addition, the Hershey vector fonts (see @code{?Hershey},
+@code{?Japanese} and @code{demo(Japanese)}) can be used on any graphics
+device to display Japanese characters.
 
 
 @node I don't see characters with accents at the R console, The output to the console seems to be delayed, I would like to be able to use Japanese fonts, The R Console and Fonts
@@ -871,6 +896,12 @@ non-Western European languages.
 Support for these characters within @code{Rterm} depends on the
 environment (the terminal window and shell, including locale settings)
 within which it is run as well as the font used by the terminal window.
+
+If you are using a non-Latin1 language, you do need to ensure that the
+fonts you selected support the language.  For example, it was found by
+one Czech user (under Windows 98) that he had to select @code{Times New
+Roman CE} or @code{Courier} (not @code{Courier New}) to get certain
+Czech characters displayed correctly.
 
 @node The output to the console seems to be delayed, Long lines seem to be truncated., I don't see characters with accents at the R console, The R Console and Fonts
 @section When using Rgui the output to the console seems to be delayed.
@@ -936,13 +967,12 @@ case) did not work.
 
 Fast BLAS (Basic Linear Algebra Subprograms,
 @uref{http://www.netlib.org/blas/faq.html}) routines are used to speed
-up numerical linear algebra.  There is support in the R sources for
-the `tuned' BLAS called ATLAS
-(@uref{http://math-atlas.sourceforge.net}).  The savings can be
-appreciable: on a 366MHz PIIM and a 1000 x 1000 matrix @code{La.svd}
-took 182 sec with the standard BLAS and 59 sec with ATLAS.  Because
-ATLAS is tuned to a particular chip we can't use it generally: the
-optimal routines for a PIII or an Athlon XP are quite different and
+up numerical linear algebra.  There is support in the R sources for the
+`tuned' BLAS called ATLAS (@uref{http://math-atlas.sourceforge.net}).
+The savings can be appreciable: on a 2.6GHz P4 and a 1000 x 1000 matrix
+@code{svd} took 16.2 sec with the standard BLAS and 7.8 sec with ATLAS.
+Because ATLAS is tuned to a particular chip we can't use it generally:
+the optimal routines for a PIII or an Athlon XP are quite different and
 neither will not run at all on a PII.
 
 BLAS support is supplied by the single DLL @file{R_HOME\bin\Rblas.dll},
@@ -957,6 +987,13 @@ libraries are located.  You will need to make the libraries yourself:
 none of the binaries we have seen are compiled for the correct
 compiler.
 
+Even faster hand-coded routines are available as DLLs from Kazushige
+Goto for certain CPUs (Pentium III and 4 and Opteron).  He does not
+allow redistribution: they are currently available @emph{via}
+@uref{http://www.cs.utexas.edu/users/kgoto/signup_first.html} and there
+is support in the R sources to build @file{R_HOME\bin\Rblas.dll} to link
+to one of his DLLs.  On the @code{svd} problem they took 6.8 sec.
+
 
 @node  How do I include compiled C code?, How do I debug code that I have compiled and dyn.load-ed?, Can I use a fast BLAS?, Building from Source
 @section How do I include compiled C code?
@@ -968,10 +1005,10 @@ install the parts of the R system for building R packages (in
 compilers mentioned in the file @file{readme.packages} contained
 therein.  Then you can use
 @example
-...\bin\Rcmd SHLIB foo.c bar.f
+...\bin\R CMD SHLIB foo.c bar.f
 @end example
 @noindent
-to make @code{foo.dll}.  Use @code{...\bin\Rcmd SHLIB --help} for
+to make @code{foo.dll}.  Use @code{...\bin\R CMD SHLIB --help} for
 further options, or see @code{?SHLIB}.
 
 If you want to use Visual C++, Borland C++ or other compilers, see the
@@ -1072,7 +1109,7 @@ as in the example in @emph{`Writing R Extensions'}.  Then build the DLL by
 (@code{gcc})
 
 @example
-...\bin\Rcmd SHLIB X.cc X_main.cc
+...\bin\R CMD SHLIB X.cc X_main.cc
 @end example
 @noindent
 or (VC++, which requires extension @code{.cpp})
@@ -1139,16 +1176,16 @@ If you want output to be updated on the console, call
 
 @ifhtml
 @html
-<p><hr WIDTH="100%">
+<hr WIDTH="100%">
 <address>
-Last edited 2003 September 1 by Professor B. D. Ripley
+Last edited 2004 March 14 by Professor B. D. Ripley
 <code><a href="mailto:ripley@@stats.ox.ac.uk">ripley@@stats.ox.ac.uk</a></code>
 </address>
 @end html
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2003 September 1 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2004 March 14 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

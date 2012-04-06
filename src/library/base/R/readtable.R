@@ -38,25 +38,10 @@ read.table <-
 
     if(skip > 0) readLines(file, skip)
     ## read a few lines to determine header, no of cols.
-#    nlines <- 0
-#    lines <- NULL
-#     while(nlines < 5) {
-#         ## read up to five non-blank and non-comment lines.
-#         line <- readLines(file, 1, ok = TRUE)
-#         if(length(line) == 0) break
-#         if(blank.lines.skip && length(grep("^[ \\t]*$", line))) next
-#         if(length(comment.char) && nchar(comment.char)) {
-#             pattern <- paste("^[ \\t]*", substring(comment.char,1,1),
-#                              sep ="")
-#             if(length(grep(pattern, line))) next
-#         }
-#         lines <- c(lines, line)
-#     }
-
     nlines <- if (nrows < 0) 5 else min(5, (header + nrows))
 
     lines <- .Internal(readTableHead(file, nlines, comment.char,
-                                     blank.lines.skip))
+                                     blank.lines.skip, quote))
     nlines <- length(lines)
     if(!nlines) {
         if(missing(col.names))
@@ -115,12 +100,13 @@ read.table <-
     if(check.names) col.names <- make.names(col.names, unique = TRUE)
     if (rlabp) col.names <- c("row.names", col.names)
 
-    if(length(colClasses) < cols) colClasses <- rep(colClasses, len=cols)
+    if(length(colClasses) < cols)
+        colClasses <- rep(colClasses, length.out=cols)
 
     ##	set up for the scan of the file.
     ##	we read unknown values as character strings and convert later.
 
-    what <- rep(list(""), cols)
+    what <- rep.int(list(""), cols)
     names(what) <- col.names
 
     colClasses[colClasses %in% c("real", "double")] <- "numeric"
@@ -148,11 +134,11 @@ read.table <-
     }
 
     if(is.logical(as.is)) {
-	as.is <- rep(as.is, length=cols)
+	as.is <- rep(as.is, length.out=cols)
     } else if(is.numeric(as.is)) {
 	if(any(as.is < 1 | as.is > cols))
 	    stop("invalid numeric as.is expression")
-	i <- rep(FALSE, cols)
+	i <- rep.int(FALSE, cols)
 	i[as.is] <- TRUE
 	as.is <- i
     } else if(is.character(as.is)) {
@@ -160,7 +146,7 @@ read.table <-
         if(any(i <= 0))
             warning("not all columns named in as.is exist")
         i <- i[i > 0]
-        as.is <- rep(FALSE, cols)
+        as.is <- rep.int(FALSE, cols)
         as.is[i] <- TRUE
     } else if (length(as.is) != cols)
 	stop(paste("as.is has the wrong length",

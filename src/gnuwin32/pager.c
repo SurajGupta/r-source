@@ -2,6 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file pager.c
  *  Copyright (C) 1998--2002  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 2004	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -177,11 +178,38 @@ static void pagerpaste(control m)
     }
 }
 
+static void pagerpastecmds(control m)
+{
+    control c = getdata(m);
+
+    if (CharacterMode != RGui) {
+        R_ShowMessage("No RGui console to paste to");
+        return;
+    }
+    if (!consolecancopy(c)) {
+        R_ShowMessage("No selection");
+        return;
+    } else {
+        consolecopy(c);
+    }
+    if (consolecanpaste(RConsole)) {
+	consolepastecmds(RConsole);
+	show(RConsole);
+    }
+}
+
 static void pagerselectall(control m)
 {
     control c = getdata(m);
 
     consoleselectall(c);
+}
+
+static void pagerstayontop(control m)
+{
+    control c = getdata(m);
+
+    BringToTop(c, 2);
 }
 
 static void pagerconsole(control m)
@@ -252,12 +280,15 @@ static int pageraddfile(char *wtitle, char *filename, int deleteonexit)
     return 1;
 }
 
-static MenuItem PagerPopup[] = {
-    {"Copy", pagercopy, 0},
-    {"Paste to console", pagerpaste, 0},
-    {"Select all", pagerselectall, 0},
-     {"-", 0, 0},
-    {"Close", pagerclose, 0},
+static MenuItem PagerPopup[] = {		   /* Numbers used below */
+    {"Copy", pagercopy, 0},				   /* 0 */
+    {"Paste to console", pagerpaste, 0},		   /* 1 */
+    {"Paste commands to console", pagerpastecmds, 0},	   /* 2 */
+    {"Select all", pagerselectall, 0},			   /* 3 */
+    {"-", 0, 0},
+    {"Stay on top", pagerstayontop, 0},			   /* 5 */
+    {"-", 0, 0},
+    {"Close", pagerclose, 0},				   /* 7 */
     LASTMENUITEM
 };
 
@@ -270,19 +301,33 @@ static void pagermenuact(control m)
         enable(p->mpopcopy);
         if (CharacterMode == RGui) {
 	    enable(p->mpaste);
+	    enable(p->mpastecmds);
 	    enable(p->mpoppaste);
+	    enable(p->mpoppastecmds);
 	}
     } else {
         disable(p->mcopy);
         disable(p->mpopcopy);
         disable(p->mpaste);
+        disable(p->mpastecmds);
         disable(p->mpoppaste);
+        disable(p->mpoppastecmds);
+    }
+    if (ismdi())
+    	disable(PagerPopup[5].m);
+    else {
+    	enable(PagerPopup[5].m);
+    	if (isTopmost(c))
+    	    check(PagerPopup[5].m);
+    	else
+    	    uncheck(PagerPopup[5].m);
     }
 }
 
 
-RECT *RgetMDIsize(); /* in rui.c */
 #define MCHECK(a) if (!(a)) {freeConsoleData(p);del(c);return NULL;}
+RECT *RgetMDIsize(); /* in rui.c */
+
 static pager pagercreate()
 {
     ConsoleData p;
@@ -366,6 +411,11 @@ static pager pagercreate()
 	gsetcursor(bt, ArrowCursor);
         setdata(bt, (void *) c);
         r.x += (btsize + 6) ;
+        MCHECK(bt = newtoolbutton(copy1_image, r, pagerpastecmds));
+        MCHECK(addtooltip(bt, "Paste commands to console"));
+	gsetcursor(bt, ArrowCursor);
+        setdata(bt, (void *) c);
+        r.x += (btsize + 6) ;
         MCHECK(bt = newtoolbutton(print_image, r, pagerprint));
         MCHECK(addtooltip(bt, "Print"));
 	gsetcursor(bt, ArrowCursor);
@@ -381,8 +431,10 @@ static pager pagercreate()
     setdata(m, c);
     setdata(p->mpopcopy = PagerPopup[0].m, c);
     setdata(p->mpoppaste = PagerPopup[1].m, c);
-    setdata(PagerPopup[2].m, c);
-    setdata(PagerPopup[4].m, c);
+    setdata(p->mpoppastecmds = PagerPopup[2].m, c);
+    setdata(PagerPopup[3].m, c);
+    setdata(PagerPopup[5].m, c);
+    setdata(PagerPopup[7].m, c);
     MCHECK(m = newmenubar(pagermenuact));
     setdata(m, c);
     MCHECK(newmenu("File"));
@@ -398,6 +450,8 @@ static pager pagercreate()
     setdata(p->mcopy, c);
     MCHECK(p->mpaste = newmenuitem("Paste to console", 'V', pagerpaste));
     setdata(p->mpaste, c);
+    MCHECK(p->mpastecmds = newmenuitem("Paste commands to console", 0, pagerpastecmds));
+    setdata(p->mpastecmds, c);
     MCHECK(m = newmenuitem("Select all", 'A', pagerselectall));
     setdata(m, c);
     if (!pagerMultiple) {
@@ -476,7 +530,7 @@ pager newpager(char *title, char *filename, char *header, int deleteonexit)
         c = newpagerNwin(wtitle, filename, deleteonexit);
     if (c) {
 	haveusedapager++;
-	BringToTop(c);
+	BringToTop(c, 0);
     }
     return c;
 }

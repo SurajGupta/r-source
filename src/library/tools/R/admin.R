@@ -25,22 +25,25 @@ function(dir, outDir)
                    paste(requiredFields[i], collapse = " ")))
     }
     ## </FIXME>
+    OS <- Sys.getenv("R_OSTYPE")
+    OStype <- if(nchar(OS) && OS == "windows")
+        "i386-pc-mingw32"
+    else
+        R.version$platform
     writeLines(c(formatDL(names(db), db, style = "list"),
                  paste("Built: R ",
                        paste(R.version[c("major", "minor")],
                              collapse = "."),
                        "; ",
-                       if(fileTest("-d", file.path(dir, "src")))
-                           R.version$platform
-                       else
-                           "",
+                       if(fileTest("-d", file.path(dir, "src"))) OStype
+                       else "",
                        "; ",
                        ## Prefer date in ISO 8601 format.
                        ## Could also use
                        ##   format(Sys.time(), "%a %b %d %X %Y")
                        Sys.time(),
-                       "; ",                       
-                       .Platform$OS.type,
+                       "; ",
+                       .OStype(),
                        sep = "")),
                file.path(outDir, "DESCRIPTION"))
     invisible()
@@ -65,7 +68,7 @@ function(dir, outDir)
         ## <NOTE>
         ## I don't think we can give an error here.
         ## It may be the case that Sys.setlocale() fails because the "OS
-        ## reports request cannot be honored" (src/main/platform.c), in 
+        ## reports request cannot be honored" (src/main/platform.c), in
         ## which case we should still proceed ...
         warning("cannot turn off locale-specific sorting via LC_COLLATE")
         ## </NOTE>
@@ -83,13 +86,13 @@ function(dir, outDir)
     codeFiles <- listFilesWithType(codeDir, "code", full.names = FALSE)
 
     collationField <-
-        c(paste("Collate", .Platform$OS.type, sep = "."), "Collate")
+        c(paste("Collate", .OStype(), sep = "."), "Collate")
     if(any(i <- collationField %in% names(db))) {
         ## We have a Collate specification in the DESCRIPTION file:
         ## currently, file paths relative to codeDir, separated by
         ## white space, possibly quoted.  Note that we could have
         ## newlines in DCF entries but do not allow them in file names,
-        ## hence we gsub() them out. 
+        ## hence we gsub() them out.
         collationField <- collationField[i][1]
         codeFilesInCspec <-
             scan(textConnection(gsub("\n", " ", db[collationField])),
@@ -101,7 +104,7 @@ function(dir, outDir)
             out <- paste("\nduplicated files in",
                          sQuote(collationField),
                          "field:")
-            out <- paste(out, 
+            out <- paste(out,
                          paste(" ", badFiles, collapse = "\n"),
                          sep = "\n")
             stop(out)
@@ -138,18 +141,21 @@ function(dir, outDir)
 
     codeFiles <- file.path(codeDir, codeFiles)
 
-    if(!fileTest("-d", outDir)) dir.create(outDir)
+    if(!fileTest("-d", outDir) && !dir.create(outDir))
+        stop("cannot open directory", sQuote(outDir))
     outCodeDir <- file.path(outDir, "R")
-    if(!fileTest("-d", outCodeDir)) dir.create(outCodeDir)
+    if(!fileTest("-d", outCodeDir) && !dir.create(outCodeDir))
+        stop("cannot open directory", sQuote(outCodeDir))
     outFile <- file.path(outCodeDir, db["Package"])
     ## <NOTE>
     ## It may be safer to do
     ##   writeLines(sapply(codeFiles, readLines), outFile)
     ## instead, but this would be much slower ...
-    file.create(outFile)
+    if(!file.create(outFile)) stop("unable to create ", outFile)
     writeLines(paste(".packageName <- \"", db["Package"], "\"", sep=""),
                outFile)
-    file.append(outFile, codeFiles)
+    if(!all(file.append(outFile, codeFiles)))
+        stop("unable to write code files")
     ## </NOTE>
 
     invisible()
@@ -163,20 +169,20 @@ function(dir, outDir)
 {
     if(!fileTest("-d", dir))
         stop(paste("directory", sQuote(dir), "does not exist"))
-    ## <FIXME>
-    ## Should we do any checking on @code{outDir}?
-    ## </FIXME>
+    if(!fileTest("-d", outDir))
+        stop(paste("directory", sQuote(outDir), "does not exist"))
 
     ## If there is an @file{INDEX} file in the package sources, we
     ## install this, and do not build it.
     if(fileTest("-f", file.path(dir, "INDEX")))
-        file.copy(file.path(dir, "INDEX"),
-                  file.path(outDir, "INDEX"),
-                  overwrite = TRUE)
+        if(!file.copy(file.path(dir, "INDEX"),
+                      file.path(outDir, "INDEX"),
+                      overwrite = TRUE))
+            stop("unable to copy INDEX to ", file.path(outDir, "INDEX"))
 
     outMetaDir <- file.path(outDir, "Meta")
-    if(!fileTest("-d", outMetaDir)) dir.create(outMetaDir)
-
+    if(!fileTest("-d", outMetaDir) && !dir.create(outMetaDir))
+         stop("cannot open directory", sQuote(outMetaDir))
     .installPackageRdIndices(dir, outDir)
     .installPackageVignetteIndex(dir, outDir)
     .installPackageDemoIndex(dir, outDir)
@@ -241,43 +247,137 @@ function(dir, outDir)
 .installPackageVignetteIndex <-
 function(dir, outDir)
 {
+    dir <- filePathAsAbsolute(dir)
     vignetteDir <- file.path(dir, "inst", "doc")
-    ## Create a vignette index only if the vignette dir exists
+    ## Create a vignette index only if the vignette dir exists.
     if(!fileTest("-d", vignetteDir))
         return(invisible())
 
     packageName <- basename(dir)
     outVignetteDir <- file.path(outDir, "doc")
-    if(!fileTest("-d", outVignetteDir)) dir.create(outVignetteDir)
+    if(!fileTest("-d", outVignetteDir) && !dir.create(outVignetteDir))
+        stop("cannot open directory", sQuote(outVignetteDir))
 
+    ## If there is an HTML index in the @file{inst/doc} subdirectory of
+    ## the package source directory (@code{dir}), we do not overwrite it
+    ## (similar to top-level @file{INDEX} files).  Installation already
+    ## copies/d this over.
+    hasHtmlIndex <- fileTest("-f", file.path(vignetteDir, "index.html"))
     htmlIndex <- file.path(outDir, "doc", "index.html")
 
-    ## write dummy HTML index if no vignettes are found and exit
-    if(!length(listFilesWithType(vignetteDir, "vignette"))){
-        if(!file.exists(htmlIndex)){
+    ## Write dummy HTML index if no vignettes are found and exit.
+    if(!length(listFilesWithType(vignetteDir, "vignette"))) {
+        if(!hasHtmlIndex)
             .writeVignetteHtmlIndex(packageName, htmlIndex)
-        }
         return(invisible())
     }
 
     vignetteIndex <- .buildVignetteIndex(vignetteDir)
-    if(!file.exists(htmlIndex)){
-        .writeVignetteHtmlIndex(packageName, htmlIndex, vignetteIndex)
+    ## For base package vignettes there is no PDF in @file{vignetteDir}
+    ## but there might/should be one in @file{outVignetteDir}.
+    if(NROW(vignetteIndex) > 0) {
+        vignettePDFs <-
+            sub("$", ".pdf",
+                basename(filePathSansExt(vignetteIndex$File)))
+        ind <- fileTest("-f", file.path(outVignetteDir, vignettePDFs))
+        vignetteIndex$PDF[ind] <- vignettePDFs[ind]
     }
+    if(!hasHtmlIndex)
+        .writeVignetteHtmlIndex(packageName, htmlIndex, vignetteIndex)
 
     .saveRDS(vignetteIndex,
              file = file.path(outDir, "Meta", "vignette.rds"))
 
-    ## <FIXME>
-    ## Compatibility code for BioC vignette tools.
-    ## Remove eventually ...
-    vignetteIndex <-
-        vignetteIndex[vignetteIndex$PDF != "", c("PDF", "Title")]
-    writeLines(formatDL(vignetteIndex, style = "list"),
-               file.path(outVignetteDir, "00Index.dcf"))
-    ## </FIXME>
     invisible()
 }
+
+### * .installPackageVignettes
+
+.installPackageVignettes <-
+function(dir, outDir)
+{
+    dir <- filePathAsAbsolute(dir)
+    vignetteDir <- file.path(dir, "inst", "doc")
+    if(!fileTest("-d", vignetteDir))
+        return(invisible())
+    vignetteFiles <- listFilesWithType(vignetteDir, "vignette")
+    if(!length(vignetteFiles))
+        return(invisible())
+
+    outDir <- filePathAsAbsolute(outDir)
+    outVignetteDir <- file.path(outDir, "doc")
+    if(!fileTest("-d", outVignetteDir) && !dir.create(outVignetteDir))
+        stop("cannot open directory", sQuote(outVignetteDir))
+    ## For the time being, assume that no PDFs are available in
+    ## vignetteDir.
+    vignettePDFs <-
+        file.path(outVignetteDir,
+                  sub("$", ".pdf",
+                      basename(filePathSansExt(vignetteFiles))))
+    upToDate <- fileTest("-nt", vignettePDFs, vignetteFiles)
+    if(all(upToDate))
+        return(invisible())
+
+    ## For the time being, the primary use of this function is to
+    ## install (and build) vignettes in base packages.  Hence, we build
+    ## in a subdir of the current directory rather than a temp dir: this
+    ## allows inspection of problems and automatic cleanup via Make.
+    cwd <- getwd()
+    buildDir <- file.path(cwd, ".vignettes")
+    if(!fileTest("-d", buildDir) && !dir.create(buildDir))
+        stop(paste("cannot create directory", sQuote(buildDir)))
+    on.exit(setwd(cwd))
+    setwd(buildDir)
+
+    ## Argh.  We need to ensure that vignetteDir is in TEXINPUTS and
+    ## BIBINPUTS.
+    envSep <- if(.Platform$OS.type == "windows") ";" else ":"
+    ## (Yes, it would be nice to have envPath() similar to file.path().)
+    texinputs <- Sys.getenv("TEXINPUTS")
+    bibinputs <- Sys.getenv("BIBINPUTS")
+    on.exit(Sys.putenv(TEXINPUTS = texinputs, BIBINPUTS = bibinputs),
+            add = TRUE)
+    Sys.putenv(TEXINPUTS = paste(vignetteDir, Sys.getenv("TEXINPUTS"),
+               sep = envSep),
+               BIBINPUTS = paste(vignetteDir, Sys.getenv("BIBINPUTS"),
+               sep = envSep))
+
+    for(srcfile in vignetteFiles[!upToDate]) {
+        base <- basename(filePathSansExt(srcfile))
+        texfile <- paste(base, ".tex", sep = "")
+        yy <- try(Sweave(srcfile, pdf = TRUE, eps = FALSE, quiet =
+                         TRUE))
+        if(inherits(yy, "try-error"))
+            stop(yy)
+        ## In case of an error, do not clean up: should we point to
+        ## buildDir for possible inspection of results/problems?
+        if(.Platform$OS.type == "windows") {
+            ## may not have texi2dvi
+            res <- system(paste("pdflatex", texfile))
+            if(res) stop(paste("unable to run pdflatex on", sQuote(texfile)))
+            if(length(grep("\\bibdata",
+                           readLines(paste(base, ".aux", sep = ""))))) {
+                res <- system(paste("bibtex", base))
+                if(res) stop(paste("unable to run bibtex on", sQuote(base)))
+                res <- system(paste("pdflatex", texfile))
+                if(res) stop(paste("unable to run pdflatex on", sQuote(texfile)))
+            }
+            res <- system(paste("pdflatex", texfile))
+            if(res) stop(paste("unable to run pdflatex on", sQuote(texfile)))
+        } else
+            texi2dvi(texfile, pdf = TRUE, quiet = TRUE)
+        pdffile <-
+            paste(basename(filePathSansExt(srcfile)), ".pdf", sep = "")
+        if(!file.exists(pdffile))
+            stop(paste("file", sQuote(pdffile), "was not created"))
+        if(!file.copy(pdffile, outVignetteDir, overwrite = TRUE))
+            stop(paste("cannot copy", sQuote(pdffile), "to",
+                       sQuote(outVignetteDir)))
+    }
+    unlink(buildDir, recursive = TRUE)
+    invisible()
+}
+
 
 ### * .installPackageDemoIndex
 
@@ -292,6 +392,23 @@ function(dir, outDir)
     invisible()
 }
 
+### * .installPackageNamespaceInfo
+
+.installPackageNamespaceInfo <-
+function(dir, outDir)
+{
+    dir <- filePathAsAbsolute(dir)
+    nsFile <- file.path(dir, "NAMESPACE")
+    if(!fileTest("-f", nsFile)) return(invisible())
+    nsInfoFilePath <- file.path(outDir, "Meta", "nsInfo.rds")
+    if(fileTest("-nt", nsInfoFilePath, nsFile)) return(invisible())
+    nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
+    outMetaDir <- file.path(outDir, "Meta")
+    if(!fileTest("-d", outMetaDir) && !dir.create(outMetaDir))
+        stop("cannot open directory", sQuote(outMetaDir))
+    .saveRDS(nsInfo, nsInfoFilePath)
+    invisible()
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

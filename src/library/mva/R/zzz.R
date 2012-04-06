@@ -1,4 +1,10 @@
 .noGenerics <- TRUE
+.conflicts.OK <- TRUE
 
-.onUnload <- function(libpath)
-    library.dynam.unload("mva", libpath)
+.onLoad <- .First.lib <- function(lib, pkg)
+{
+    have.stats <- "package:stats" %in% search()
+    if(!have.stats) require("stats")
+    warning("package ", sQuote("mva"), " has been merged into ",
+            sQuote("stats"), call. = FALSE)
+}

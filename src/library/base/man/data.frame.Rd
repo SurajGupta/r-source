@@ -25,7 +25,7 @@ data.frame(\dots, row.names = NULL, check.rows = FALSE, check.names = TRUE)
     (by \code{\link{make.names}}) so that they are.}
 }
 \value{
-  A data frame, a matrix-like stucture whose columns may be of
+  A data frame, a matrix-like structure whose columns may be of
   differing types (numeric, logical, factor and character and so on).
 }
 \details{
@@ -48,7 +48,7 @@ data.frame(\dots, row.names = NULL, check.rows = FALSE, check.names = TRUE)
   If row names are not supplied in the call to \code{data.frame}, the
   row names are taken from the first component that has suitable names,
   for example a named vector or a matrix with rownames or a data frame.
-  (If that component is subsequently recycled the names are discarded,
+  (If that component is subsequently recycled, the names are discarded
   with a warning.)  If \code{row.names} was supplied as \code{NULL} or no
   suitable component was found the row names are the integer sequence
   starting at one.
@@ -69,7 +69,7 @@ data.frame(\dots, row.names = NULL, check.rows = FALSE, check.names = TRUE)
 }
 \seealso{
   \code{\link{I}},
-  \code{\link{plot.data.frame}},
+  \code{\link[graphics]{plot.data.frame}},
   \code{\link{print.data.frame}},
   \code{\link{row.names}},
   \code{\link{[.data.frame}} for subsetting methods,
@@ -80,14 +80,16 @@ data.frame(\dots, row.names = NULL, check.rows = FALSE, check.names = TRUE)
 }
 \examples{
 L3 <- LETTERS[1:3]
-str(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
+(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
 
 ## The same with automatic column names:
-str(     data.frame(cbind(  1,   1:10),     sample(L3, 10, repl=TRUE)))
+data.frame(cbind(  1,   1:10),     sample(L3, 10, repl=TRUE))
+
 is.data.frame(d)
 
 ## do not convert to factor, using I() :
-str(cbind(d, char = I(letters[1:10])), vec.len = 10)
+(dd <- cbind(d, char = I(letters[1:10])))
+rbind(class=sapply(dd, class), mode=sapply(dd, mode))
 
 stopifnot(1:10 == row.names(d))# {coercion}
 

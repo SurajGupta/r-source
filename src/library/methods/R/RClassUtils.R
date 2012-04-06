@@ -288,7 +288,7 @@ completeClassDefinition <-
 }
 
 .mergeSlots <- function(classDef1, classDef2) {
-    
+
 }
 
 
@@ -466,7 +466,10 @@ newBasic <-
                   ## S-Plus on array, unless R allows 0-length .Dim attribute
                "array" = (if(length(list(...)) > 0) array(...) else structure(numeric(), .Dim =0)),
                "matrix" = (if (length(list(...)) > 0) matrix(...) else matrix(0, 0, 0)),
-               "ts" = ts(...),
+#               "ts" = ts(...),
+# break dependence on package stats
+               "ts" = (if(length(list(...))) ts(...)
+               else structure(NA, .Tsp = c(1, 1, 1), class = "ts")),
                   {
                       args <- list(...)
                       if(length(args) == 1 && is(args[[1]], Class)) {
@@ -517,7 +520,8 @@ reconcilePropertiesAndPrototype <-
           ## Look for a data part in the super classes, either an inherited
           ## .Data slot, or a basic class.  Uses the first possibility, warns of conflicts
           for(cl in superClasses) {
-              thisDataPart <-  .validDataPartClass(cl, name)
+              clDef <- getClassDef(cl, where = where)
+              thisDataPart <-  .validDataPartClass(clDef, name)
               if(!is.null(thisDataPart)) {
                   if(is.null(dataPartClass)) {
                       if(!is.na(match(thisDataPart, c("NULL", "environment"))))
@@ -759,7 +763,7 @@ print.classRepresentation <-
 ## bootstrap definition to be used before getClass() works
 possibleExtends <- function(class1, class2)
     .identC(class1, class2) || .identC(class2, "ANY")
- 
+
 
 .possibleExtends <-
   ## Find the information that says whether class1 extends class2,
@@ -886,7 +890,7 @@ completeSubclasses <-
                 ext <- c(ext, exti)
             }
         }
-        else 
+        else
             stop("The ", if(superClassCase) "superClass" else "subClass",
                  " list for class, \"",
                  className, "\", includes an undefined class, \"",
@@ -954,24 +958,40 @@ requireMethods <-
   ## be called, resulting in less helpful error messages or (worse still) silently incorrect
   ## results.
   function(functions, signature,
-           message = paste("No method defined for signature",
-           paste(signature, collapse=", ")))
+           message = "", where = topenv(parent.frame()))
 {
     for(f in functions) {
         method <- getMethod(f, optional = TRUE)
         if(!is.function(method))
-            method <- getGeneric(f)
-        body(method) <- substitute(stop(MESSAGE), list(MESSAGE=message))
+            method <- getGeneric(f, where = where)
+        body(method) <- substitute(stop(methods:::.missingMethod(FF, MESSAGE, if(exists(".Method")).Method else NULL)), list(FF=f, MESSAGE=message))
         environment(method) <- .GlobalEnv
-        setMethod(f, signature, method)
+        setMethod(f, signature, method, where = where)
     }
 }
 
-getSlots <- function(x, complete = TRUE) {
+## Construct an error message for an unsatisfied required method.
+.missingMethod <- function(f, message = "", method) {
+    if(nchar(message)>0)
+        message <- paste("(", message, ")", sep="")
+    message <- paste("for function", f, message)
+    if(is(method, "MethodDefinition")) {
+        target <-  paste(dQuote(method@target), collapse=", ")
+        defined <- paste(dQuote(method@defined), collapse=", ")
+        message <- paste("Required method", message, "not defined for signature",
+                         target)
+        if(!identical(target, defined))
+            message <- paste(message, ", required for signature", defined)
+    }
+    else message <- paste("Required method not defined", message)
+    message
+}
+
+getSlots <- function(x) {
     if(isClassDef(x))
         classDef <- x
     else
-        classDef <- (if(complete) getClass(x) else getClassDef(x))
+        classDef <- getClass(x)
     props <- classDef@slots
     value <- as.character(props)
     names(value) <- names(props)
@@ -1025,7 +1045,7 @@ setDataPart <- function(object, value) {
     }
     else
         ClassDef <- getClass(cl, TRUE)
-    
+
     value <- elNamed(ClassDef@slots, ".Data")
     if(is.null(value)) {
         if(.identC(cl, "structure"))
@@ -1327,29 +1347,43 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
 .requirePackage <- function(package)
     topenv(parent.frame())
 
+.PackageEnvironments <- new.env(hash=TRUE) # caching for required packages
+
 ## real version of .requirePackage
-..requirePackage <- function(package,useNamespace = FALSE) {
-    if(.identC(package, ".GlobalEnv"))
-        return(.GlobalEnv)
-    if(.identC(package, "methods"))
-        return(topenv(parent.frame())) # must have methods available if .requirePackage is called
+..requirePackage <- function(package) {
     value <- package
-    if(is.character(package))
-            value <- trySilent(loadNamespace(package))
+    if(is.character(package)) {
+        if(package %in% loadedNamespaces())
+            value <- getNamespace(package)
+        else {
+            if(identical(package, ".GlobalEnv"))
+                return(.GlobalEnv)
+            if(identical(package, "methods"))
+                return(topenv(parent.frame())) # booting methods
+            if(exists(package, envir = .PackageEnvironments, inherits = FALSE))
+                return(get(package, envir = .PackageEnvironments)) #cached, but only if no namespace
+        }
+    }
     if(is.environment(value))
         return(value)
-    if(exists(".packageName", .GlobalEnv, inherits=TRUE) &&
-       .identC(package, get(".packageName", .GlobalEnv)))
-        return(.GlobalEnv) # kludge for running package code
-    require(package, character.only = TRUE)
-    .asEnvironmentPackage(package)
+    topEnv <- options()$topLevelEnvironment
+    if(is.null(topEnv))
+        topEnv <- .GlobalEnv
+    if(exists(".packageName", topEnv, inherits=TRUE) &&
+       .identC(package, get(".packageName", topEnv)))
+        return(topEnv) # kludge for source'ing package code
+    if(!require(package, character.only = TRUE))
+        stop("Unable to find required package \"", package, "\"")
+    value <- .asEnvironmentPackage(package)
+    assign(package, value, envir = .PackageEnvironments)
+    value
 }
 
 .classDefEnv <- function(classDef) {
-    .requirePackage(classDef@package, TRUE)
+    .requirePackage(classDef@package)
 }
 
-    
+
 .asEnvironmentPackage <- function(package) {
     if(identical(package, ".GlobalEnv"))
         .GlobalEnv

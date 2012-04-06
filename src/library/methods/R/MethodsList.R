@@ -168,7 +168,7 @@ MethodsListSelect <-
              finalDefault = finalDefaultMethod(mlist, f),
              evalArgs = TRUE,
              useInherited = TRUE,  ## supplied when evalArgs is FALSE
-             fdef = getGeneric(f), # MUST BE SAFE FROM RECUSIVE METHOD SELECTION
+             fdef = getGeneric(f, where = env), # MUST BE SAFE FROM RECUSIVE METHOD SELECTION
              resetAllowed = TRUE # FALSE when called from selectMethod, .findNextMethod
  )
 {
@@ -244,7 +244,7 @@ MethodsListSelect <-
             value <- mlist ## no change
         else {
             ## recursive call with NULL function name, to allow search to fail &
-            ## to suppress any reset actions. 
+            ## to suppress any reset actions.
             method <- Recall(NULL, env, selection, finalDefault = finalDefault,
                    evalArgs = evalArgs, useInherited = nextUseInherited, fdef = fdef,
                              )
@@ -306,7 +306,7 @@ MethodsListSelect <-
             if(is.primitive(finalDefault))
                 setPrimitiveMethods(f, finalDefault, "set", fdef, resetMlist)
         }
-            
+
     }
     value
 }
@@ -370,10 +370,12 @@ inheritedSubMethodLists <-
   }
   else {
     ## search in the superclasses, but don't use inherited methods
-    ## There are two cases:  if thisClass is formally defined, use its
+    ## There are two cases:  if thisClass is formally defined & unsealed, use its
     ## superclasses.  Otherwise, look in the subclasses of those classes for
     ## which methods exist.
-    if(isClass(thisClass)) {
+      useSuperClasses <- isClass(thisClass, where = ev)  &&
+           !getClass(thisClass, where = ev)@sealed
+    if(useSuperClasses) {
       ## for consistency, order the available methods by
       ## the ordering of the superclasses of thisClass
       superClasses <- names(getClass(thisClass)@contains)
@@ -393,7 +395,7 @@ inheritedSubMethodLists <-
       for(which in seq(along = classes)) {
         tryClass <- el(classes, which)
         if(isClass(tryClass)) {
-            tryClassDef <- getClass(tryClass) 
+            tryClassDef <- getClass(tryClass)
             if(is(tryClassDef, "classRepresentation")) {
               if(!is.na(match(thisClass, names(tryClassDef@subclasses))))
                 elNamed(value, tryClass) <- el(methods, which)
@@ -549,7 +551,7 @@ function(f, filename = NULL, methods)
     ## 'filename' can be a logical or NA or the name of a file to print
     ## to.  If it 'FALSE', the methods skeleton is returned, to be
     ## included in other printing (typically, the output from 'prompt').
-  
+
     paste0 <- function(...) paste(..., sep = "")
     packageString <- ""
 
@@ -565,7 +567,7 @@ function(f, filename = NULL, methods)
         ## (We want the '`' for LaTeX, as we currently cannot have
         ## \sQuote{} inside a \title.)
     }
-    
+
     object <- linearizeMlist(methods, FALSE)
     methods <- object@methods; n <- length(methods)
     args <- object@arguments
@@ -582,7 +584,7 @@ function(f, filename = NULL, methods)
                    "}")
     }
     text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
-    text <- c("\\section{Methods}{\\describe{", text, "}}")
+    text <- c("\\section{Methods}{\n\\describe{", text, "}}")
     aliasText <- c(paste0("\\alias{", fullName, "}"), aliases)
     if(identical(filename, FALSE))
         return(c(aliasText, text))
@@ -596,12 +598,15 @@ function(f, filename = NULL, methods)
              aliases = aliasText,
              title = paste("\\title{ ~~ Methods for Function", f,
              packageString, "~~}"),
+             description = paste0("\\description{\n ~~ Methods for function",
+             " \\code{", f, "} in package \\pkg{", getPackageName(where),
+             "} ~~\n}"),
              "section{Methods}" = text,
              keywords = c("\\keyword{methods}",
              "\\keyword{ ~~ other possible keyword(s)}"))
 
     if(is.na(filename)) return(Rdtxt)
-    
+
     cat(unlist(Rdtxt), file = filename, sep = "\n")
     invisible(filename)
 }

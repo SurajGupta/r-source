@@ -182,8 +182,10 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
     /* The following ensures that pointers remain protected. */
     dim = getAttrib(x, R_DimSymbol);
 
-    sr = SETCAR(s, arraySubscript(0, CAR(s), dim, getAttrib, x));
-    sc = SETCADR(s, arraySubscript(1, CADR(s), dim, getAttrib, x));
+    sr = SETCAR(s, arraySubscript(0, CAR(s), dim, getAttrib,
+				  (STRING_ELT), x));
+    sc = SETCADR(s, arraySubscript(1, CADR(s), dim, getAttrib,
+				   (STRING_ELT), x));
     nrs = LENGTH(sr);
     ncs = LENGTH(sc);
     PROTECT(sr);
@@ -326,7 +328,8 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
     n = 1;
     r = s;
     for (i = 0; i < k; i++) {
-	SETCAR(r, arraySubscript(i, CAR(r), xdims, getAttrib, x));
+	SETCAR(r, arraySubscript(i, CAR(r), xdims, getAttrib,
+				 (STRING_ELT), x));
 	bound[i] = LENGTH(CAR(r));
 	n *= bound[i];
 	r = CDR(r);
@@ -713,6 +716,19 @@ SEXP do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(nsubs > 1 && nsubs != ndims)
 	errorcall(call, "incorrect number of subscripts");
 
+    /* split out ENVSXP for now */
+    if( TYPEOF(x) == ENVSXP ) {
+      if( nsubs != 1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
+	error("wrong arguments for subsetting an environment");
+      ans = findVarInFrame(x, install(CHAR(STRING_ELT(CAR(subs),
+						      0))));
+      UNPROTECT(1);
+      if(ans == R_UnboundValue )
+        return(R_NilValue);
+      return(ans);
+    }
+    
+    /* back to the regular program */
     if (!(isVector(x) || isList(x) || isLanguage(x)))
 	errorcall(call, R_MSG_ob_nonsub);
 
@@ -949,6 +965,13 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 	    return y;
 	}
 	return R_NilValue;
+    }
+    else if( isEnvironment(x) ){
+      UNPROTECT(2);
+      y = findVarInFrame(x, install(CHAR(input)));
+      if( y != R_UnboundValue )
+	return(y);
+      return R_NilValue;
     }
     UNPROTECT(2);
     return R_NilValue;

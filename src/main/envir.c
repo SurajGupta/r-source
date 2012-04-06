@@ -1638,6 +1638,136 @@ SEXP do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
+static SEXP gfind(char *name, SEXP env, SEXPTYPE mode, SEXP ifnotfound, 
+	     int inherits, SEXP enclos)
+{
+  SEXP rval, t1, R_fcall, var;
+
+  t1 = install(name);
+
+  /* Search for the object - last arg is 1 to get */
+  rval = findVar1mode(t1, env, mode, inherits, 1);
+
+  if (rval == R_UnboundValue) {
+    if( isFunction(ifnotfound) ) {
+      PROTECT(var = mkString(name));
+      PROTECT(R_fcall = LCONS(ifnotfound, LCONS( var, R_NilValue)));
+      rval = eval(R_fcall, enclos);
+      UNPROTECT(2);
+    }
+    else
+      rval = ifnotfound;
+  }
+  
+  /* We need to evaluate if it is a promise */
+  if (TYPEOF(rval) == PROMSXP)
+    rval = eval(rval, env);
+  
+  if (!isNull(rval) && NAMED(rval) == 0)
+    SET_NAMED(rval, 1);
+  return rval;
+}
+
+/* return a vector of length 1 of the input type */
+static SEXP getOneVal(SEXP vec, int i)
+{
+  SEXP ans;
+
+  PROTECT(ans = allocVector(TYPEOF(vec), 1));
+  SET_VECTOR_ELT(ans, 0, duplicate(VECTOR_ELT(vec, i)));
+  UNPROTECT(1);
+  return ans;
+}
+
+/* get multiple values from an environment */
+SEXP do_mget(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, env, x, mode, ifnotfound, ifnfnd;
+    SEXPTYPE gmode;
+    int ginherits = 0, nvals, nmode, nifnfnd, i;
+
+    checkArity(op, args);
+
+    x = CAR(args);
+
+    nvals = length(x);
+
+    /* The first arg is the object name */
+    /* It must be present and a string */
+    if (!isString(x) )
+      errorcall(call, "invalid first argument");
+    for(i=0; i<nvals; i++) 
+      if( isNull(STRING_ELT(x, i)) || !CHAR(STRING_ELT(x, 0))[0] )
+	errorcall(call, "invalid name in position %d", i+1);
+
+    /* FIXME: should we install them all?) */
+
+    env = CADR(args);
+    if( !isEnvironment(env) )
+      errorcall(call, "second argument must be an environment");
+
+    mode = CAR(nthcdr(args, 2));
+    nmode = length(mode);
+    if( !isString(mode) )
+      errorcall(call, "invalid mode argument");
+
+    if( nmode != nvals && nmode != 1 )
+      errorcall(call, "wrong length for mode argument");
+
+    ifnotfound = CAR(nthcdr(args, 3));
+    nifnfnd = length(ifnotfound);
+    if( !isVector(ifnotfound) )
+      errorcall(call, "invalid ifnotfound argument");
+
+    if( nifnfnd != nvals && nifnfnd != 1 )
+      errorcall(call, "wrong length for ifnotfound argument");
+     
+    if (isLogical(CAR(nthcdr(args, 4))))
+	ginherits = LOGICAL(CAR(nthcdr(args, 4)))[0];
+    else
+	errorcall(call,"invalid inherits argument");
+
+    PROTECT(ans = allocVector(VECSXP, nvals));
+
+    /* now for each element of x, we look for it, using the inherits,
+       etc */
+
+    for(i=0; i<nvals; i++) {
+      if (isString(mode)) {
+	if (!strcmp(CHAR(STRING_ELT(CAR(CDDR(args)), i % nmode )),"function"))
+	  gmode = FUNSXP;
+	else
+	  gmode = str2type(CHAR(STRING_ELT(CAR(CDDR(args)), i % nmode )));
+      } 
+      else {
+	errorcall(call,"invalid mode argument");
+	gmode = FUNSXP;/* -Wall */
+      }
+
+      /* is the mode provided one of the real modes */
+      if( gmode < 0 ) 
+	errorcall(call, "invalid mode argument");
+
+
+      if( nifnfnd == 1 ) {
+	if( TYPEOF(ifnotfound) == VECSXP )
+	  PROTECT(ifnfnd = VECTOR_ELT(ifnotfound, 0));
+	else
+	  PROTECT(ifnfnd = ifnotfound);
+      }
+      else
+	PROTECT(ifnfnd = getOneVal(ifnotfound, i));
+
+      SET_VECTOR_ELT(ans, i, gfind(CHAR(STRING_ELT(x,i % nvals)), env, gmode,
+				   ifnfnd, ginherits, rho)); 
+
+      UNPROTECT(1);
+    }
+
+    setAttrib(ans, R_NamesSymbol, duplicate(x));
+    UNPROTECT(1);
+    return(ans);
+}
 
 /*----------------------------------------------------------------------
 
@@ -1984,6 +2114,18 @@ static void FrameNames(SEXP frame, int all, SEXP names, int *indx)
     }
 }
 
+static void FrameValues(SEXP frame, int all, SEXP values, int *indx)
+{
+    while (frame != R_NilValue) {
+	if ((all || CHAR(PRINTNAME(TAG(frame)))[0] != '.') &&
+				      CAR(frame) != R_UnboundValue) {
+	    SET_VECTOR_ELT(values, *indx, duplicate(CAR(frame)));
+	    (*indx)++;
+	}
+	frame = CDR(frame);
+    }
+}
+
 static int HashTableSize(SEXP table, int all)
 {
     int count = 0;
@@ -2000,6 +2142,14 @@ static void HashTableNames(SEXP table, int all, SEXP names, int *indx)
     int i;
     for (i = 0; i < n; i++)
 	FrameNames(VECTOR_ELT(table, i), all, names, indx);
+}
+
+static void HashTableValues(SEXP table, int all, SEXP values, int *indx)
+{
+    int n = length(table);
+    int i;
+    for (i = 0; i < n; i++)
+	FrameValues(VECTOR_ELT(table, i), all, values, indx);
 }
 
 static int BuiltinSize(int all, int intern)
@@ -2043,8 +2193,8 @@ BuiltinNames(int all, int intern, SEXP names, int *indx)
 
 SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, env, envp;
-    int all, i, k, n;
+    SEXP env;
+    int all;
     checkArity(op, args);
 
     if(IS_USER_DATABASE(CAR(args))) {
@@ -2052,52 +2202,111 @@ SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
         return(tb->objects(tb));
     }
 
-    envp = CAR(args);
+    env = CAR(args);
 
-    if (envp == R_BaseNamespace)
-	envp = R_NilValue;
+    if (env == R_BaseNamespace)
+	env = R_NilValue;
 
+    /*
     if (isNull(envp) || !isNewList(envp)) {
 	PROTECT(env = allocVector(VECSXP, 1));
 	SET_VECTOR_ELT(env, 0, envp);
     }
     else
 	PROTECT(env = envp);
-
+    */
     all = asLogical(CADR(args));
     if (all == NA_LOGICAL)
-	all = 0;
+      all = 0;
+
+    return R_lsInternal(env, all);
+}
+
+/* takes a *list* of environments and a boolean indicating whether to get all
+   names */
+SEXP R_lsInternal(SEXP env, Rboolean all)
+{
+  int  k;
+  SEXP ans;
+
+
     /* Step 1 : Compute the Vector Size */
     k = 0;
-    n = length(env);
-    for (i = 0; i < n; i++) {
-	if (VECTOR_ELT(env, i) == R_NilValue)
-	    k += BuiltinSize(all, 0);
-	else if (isEnvironment(VECTOR_ELT(env, i))) {
-	    if (HASHTAB(VECTOR_ELT(env, i)) != R_NilValue)
-		k += HashTableSize(HASHTAB(VECTOR_ELT(env, i)), all);
-	    else
-		k += FrameSize(FRAME(VECTOR_ELT(env, i)), all);
-	}
-	else error("invalid envir= argument");
+    if (env == R_NilValue)
+        k += BuiltinSize(all, 0);
+    else if (isEnvironment(env)) {
+	if (HASHTAB(env) != R_NilValue)
+	    k += HashTableSize(HASHTAB(env), all);
+	else
+	    k += FrameSize(FRAME(env), all);
     }
+    else 
+        error("invalid envir= argument");
+
     /* Step 2 : Allocate and Fill the Result */
-    ans = allocVector(STRSXP, k);
+    PROTECT(ans = allocVector(STRSXP, k));
     k = 0;
-    for (i = 0; i < n; i++) {
-	if (VECTOR_ELT(env, i) == R_NilValue)
-	    BuiltinNames(all, 0, ans, &k);
-	else if (isEnvironment(VECTOR_ELT(env, i))) {
-	    if (HASHTAB(VECTOR_ELT(env, i)) != R_NilValue)
-		HashTableNames(HASHTAB(VECTOR_ELT(env, i)), all, ans, &k);
-	    else
-		FrameNames(FRAME(VECTOR_ELT(env, i)), all, ans, &k);
-	}
+    if (env == R_NilValue)
+       BuiltinNames(all, 0, ans, &k);
+    else if (isEnvironment(env)) {
+        if (HASHTAB(env) != R_NilValue)
+	    HashTableNames(HASHTAB(env), all, ans, &k);
+	else
+	    FrameNames(FRAME(env), all, ans, &k);
     }
+
     UNPROTECT(1);
     sortVector(ans, FALSE);
     return ans;
 }
+
+/* transform an environment into a named list */
+
+SEXP do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP env, ans, names;
+    int k, all;
+
+    checkArity(op, args);
+
+    env = CAR(args);
+    if( !isEnvironment(env) )
+        error("argument must be an environment");
+
+    if( env == R_NilValue )
+      return(R_NilValue);
+
+    all = asLogical(CADR(args));
+    if (all == NA_LOGICAL)
+      all = 0;
+
+    if( HASHTAB(env) != R_NilValue)
+        k = HashTableSize(HASHTAB(env), all);
+    else
+        k = FrameSize(FRAME(env), all);
+
+    PROTECT(names = allocVector(STRSXP, k));
+
+    PROTECT(ans = allocVector(VECSXP, k));
+
+    k = 0;
+    if(HASHTAB(env) != R_NilValue) 
+      HashTableValues(HASHTAB(env), all, ans, &k);
+    else
+      FrameValues(FRAME(env), all, ans, &k);
+
+    k = 0;
+    if(HASHTAB(env) != R_NilValue) 
+        HashTableNames(HASHTAB(env), all, names, &k);
+    else
+        FrameNames(FRAME(env), all, names, &k);
+
+    setAttrib(ans, R_NamesSymbol, names);
+    UNPROTECT(2);
+    return(ans);
+}
+
+  
 
 /*----------------------------------------------------------------------
 

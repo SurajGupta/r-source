@@ -30,7 +30,7 @@ is.name(y)
 }
 \details{
   \code{is.symbol} is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -44,7 +44,8 @@ is.name(y)
 \examples{
 an <- as.name("arrg")
 is.name(an) # TRUE
-str(an)# symbol
+mode(an)   # name
+typeof(an) # symbol
 }
 \keyword{programming}
 \keyword{attribute}

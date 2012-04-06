@@ -79,13 +79,13 @@
 static SEXP gcall;
 #endif
 
-/* EnlargeVector() takes a vector "x" and changes its length to "newlen".  
+/* EnlargeVector() takes a vector "x" and changes its length to "newlen".
    This allows to assign values "past the end" of the vector or list.
-   Note that, unlike S, we only extend as much as is necessary. 
+   Note that, unlike S, we only extend as much as is necessary.
 */
-static SEXP EnlargeVector(SEXP x, int newlen)
+static SEXP EnlargeVector(SEXP x, R_len_t newlen)
 {
-    int i, len;
+    R_len_t i, len;
     SEXP newx, names, newnames;
 
     /* Sanity Checks */
@@ -292,7 +292,7 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level, SEXP call)
 static SEXP DeleteListElements(SEXP x, SEXP which)
 {
     SEXP include, xnew, xnames, xnewnames;
-    int i, ii, len, lenw;
+    R_len_t i, ii, len, lenw;
     len = length(x);
     lenw = length(which);
     /* calculate the length of the result */
@@ -608,8 +608,10 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     /* No GC problems here. */
 
     dim = getAttrib(x, R_DimSymbol);
-    sr = SETCAR(s, arraySubscript(0, CAR(s), dim, getAttrib, x));
-    sc = SETCADR(s, arraySubscript(1, CADR(s), dim, getAttrib, x));
+    sr = SETCAR(s, arraySubscript(0, CAR(s), dim, getAttrib,
+				  (STRING_ELT), x));
+    sc = SETCADR(s, arraySubscript(1, CADR(s), dim, getAttrib,
+				   (STRING_ELT), x));
     nrs = LENGTH(sr);
     ncs = LENGTH(sc);
 
@@ -850,7 +852,8 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     tmp = s;
     for (i = 0; i < k; i++) {
-	SETCAR(tmp, arraySubscript(i, CAR(tmp), dims, getAttrib, x));
+	SETCAR(tmp, arraySubscript(i, CAR(tmp), dims, getAttrib,
+				   (STRING_ELT), x));
 	tmp = CDR(tmp);
     }
 
@@ -1258,7 +1261,7 @@ SEXP do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	errorcall(call, "object is not subsetable");
+	errorcall(call, "object is not subsettable");
 	break;
     }
 
@@ -1358,6 +1361,15 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     dims = getAttrib(x, R_DimSymbol);
     ndims = length(dims);
     nsubs = length(subs);
+
+    /* ENVSXP special case first */
+    if( TYPEOF(x) == ENVSXP) {
+      if( nsubs!=1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
+	error("wrong args for environment subassignment");
+      defineVar(install(CHAR(STRING_ELT(CAR(subs),0))), y, x);
+      UNPROTECT(1);
+      return(x);
+    }
 
     stretch = 0;
     if (isVector(x)) {
@@ -1595,7 +1607,7 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	xtop = x;
 	UNPROTECT(1);
     }
-    else errorcall(call, "object is not subsetable");
+    else errorcall(call, "object is not subsettable");
 
     UNPROTECT(1);
     SET_NAMED(xtop, 0);
@@ -1686,6 +1698,10 @@ SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
 	    SETCAR(x, val);
 	    SET_TAG(x, nlist);
 	}
+    }
+    /* cannot use isEnvironment since we do not want NULL here */
+    else if( TYPEOF(x) == ENVSXP ) {
+      defineVar(nlist, val, x);
     }
     else {
 	int i, imatch, nx;

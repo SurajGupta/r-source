@@ -2,6 +2,10 @@
 \alias{which.min}
 \alias{which.max}
 \title{Where is the Min() or Max() ?}
+\concept{argmin}
+\concept{argmax}
+\concept{index of minimum}
+\concept{index of maximum}
 \description{
   Determines the location, i.e., index of the (first) minimum or maximum
   of a numeric vector.
@@ -37,7 +41,7 @@ which.min(x)
 which.max(x)
 
 ## it *does* work with NA's present:
-data(presidents)
+data(presidents, package="stats")
 presidents[1:30]
 range(presidents, na.rm = TRUE)
 which.min(presidents)# 28

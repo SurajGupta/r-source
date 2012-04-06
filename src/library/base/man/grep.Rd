@@ -31,18 +31,21 @@ regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
       sensitive} and if \code{TRUE}, case is ignored during matching.}
   \item{extended}{if \code{TRUE}, extended regular expression matching
     is used, and if \code{FALSE} basic regular expressions are used.}
-  \item{perl}{logical. Should perl-compatible regexps be used if
-    available?  Has priority over \code{extended}.}
+  \item{perl}{logical. Should perl-compatible regexps be used?
+    Has priority over \code{extended}.}
   \item{value}{if \code{FALSE}, a vector containing the (\code{integer})
     indices of the matches determined by \code{grep} is returned, and if
     \code{TRUE}, a vector containing the matching elements themselves is
     returned.}
   \item{fixed}{logical.  If \code{TRUE}, \code{pattern} is a string to be
-    matched as is.  Overrides all other arguments.} 
+    matched as is.  Overrides all other arguments.}
   \item{replacement}{a replacement for matched pattern in \code{sub} and
     \code{gsub}.}
 }
 \details{
+  Arguments which should be character strings or character vectors are
+  coerced to character if possible.
+
   The two \code{*sub} functions differ only in that \code{sub} replaces
   only the first occurrence of a \code{pattern} whereas \code{gsub}
   replaces all occurrences.
@@ -71,25 +74,28 @@ regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
   is none, with attribute \code{"match.length"} giving the length of the
   matched text (or \eqn{-1} for no match).
 }
-% \note{
-%   \code{perl = TRUE} will only be available if \R was compiled against 
-%   PCRE: this is detected at configure time.  All Unix and Windows system
-%   should have it.
-% }
+\section{Warning}{
+  The standard regular-expression code has been reported to be very slow
+  or give errors when applied to extremely long character strings
+  (tens of thousands of characters or more): the code used when
+  \code{perl=TRUE} seems faster and more reliable for such usages.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole (\code{grep})
 }
 \seealso{
-  \link{regular expression} for the details of the pattern specification.
+  \link{regular expression} (aka \code{\link{regexp}}) for the details
+% the `aka' above is for ESS (and ?reg....) where a space is problematic
+  of the pattern specification.
 
   \code{\link{agrep}} for approximate matching.
-  
+
   \code{\link{tolower}}, \code{\link{toupper}} and \code{\link{chartr}}
   for character translations.
   \code{\link{charmatch}}, \code{\link{pmatch}}, \code{\link{match}}.
-  \code{\link{apropos}} uses regexps and has nice examples.
+  \code{\link[utils]{apropos}} uses regexps and has nice examples.
 }
 \examples{
 grep("[a-z]", letters)
@@ -126,8 +132,7 @@ regexpr("en", txt)
 str = 'Now is the time      '
 sub(' +$', '', str)  ## spaces only
 sub('[[:space:]]+$', '', str) ## white space, POSIX-style
-if(capabilities("PCRE"))
-  sub('\\\\s+$', '', str, perl = TRUE) ## perl-style white space
+sub('\\\\s+$', '', str, perl = TRUE) ## Perl-style white space
 }
 \keyword{character}
 \keyword{utilities}

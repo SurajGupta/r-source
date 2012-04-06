@@ -82,7 +82,7 @@ getNativeSymbolInfo(name, PACKAGE)
   in a similar manner, such as when passing an R function
   to C code that makes callbacks to that function
   at different points in its computation
-  (e.g., \code{\link[nls:nls]{nls}}).
+  (e.g., \code{\link[stats]{nls}}).
   Additionally, we can resolve the symbol just once and
   avoid resolving it repeatedly or using the internal
   cache.
@@ -99,10 +99,9 @@ getNativeSymbolInfo(name, PACKAGE)
 }
 
 \examples{
-library(ctest) # normally loaded
+library(stats) # normally loaded
 getNativeSymbolInfo("dansari")
 
-library(mva)   # normally loaded
 getNativeSymbolInfo(symbol.For("hcass2"))
 }
 \keyword{interface}

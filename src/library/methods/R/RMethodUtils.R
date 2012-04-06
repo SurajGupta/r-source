@@ -122,7 +122,7 @@ makeGeneric <-
 ###--------
       value
   }
-    
+
 
 makeStandardGeneric <-
   ## a utility function that makes a valid function calling standardGeneric for name f
@@ -409,7 +409,7 @@ unRematchDefinition <- function(definition) {
     }
     definition
 }
-    
+
 getGeneric <-
   ## return the definition of the function named f as a generic.
   ##
@@ -538,17 +538,29 @@ getGenerics <-
 
 allGenerics <- getGenerics
 
+## faster version for use outside methods
+.getGenerics <- function(where)
+{
+    if(missing(where)) where <- .envSearch(topenv(parent.frame()))
+    else if(is.environment(where)) where <- list(where)
+    these <- character()
+    for(i in where) these <- c(these, objects(i, all=TRUE))
+    these <- unique(these)
+    these <- these[substr(these, 1, 6) == ".__M__"]
+    gsub(".__M__(.*):([^:]+)", "\\1", these)
+}
+
 is.primitive <-
   function(fdef)
     switch(typeof(fdef),
            "special" = , "builtin" = TRUE,
            FALSE)
-    
+
 
 cacheMetaData <- function(where, attach = TRUE, searchWhere = as.environment(where)) {
     ## a collection of actions performed on attach or detach
     ## to update class and method information.
-    generics <- getGenerics(where)
+    generics <- .getGenerics(where)
     for(f in generics) {
         fdef <- getGeneric(f, FALSE, searchWhere)
         ## silently ignores all generics not visible from searchWhere
@@ -633,14 +645,14 @@ findUnique <- function(what, message, where = topenv(parent.frame()))
             where <- unlist(where)
         if(is.numeric(where))
             where <- search()[where]
-        warning(message, " found on: ", 
+        warning(message, " found on: ",
                 paste(where, collapse = ", "),
                     "; using the first one.")
             where <- where[1]
     }
     where
 }
-    
+
 MethodAddCoerce <- function(method, argName, thisClass, methodClass)
 {
     if(.identC(thisClass, methodClass))
@@ -714,8 +726,8 @@ balanceMethodsList <- function(mlist, args, check = TRUE) {
     mlist@methods <- methods
     mlist
 }
-    
-    
+
+
 sigToEnv <- function(signature, genericSig) {
     value <- new.env()
     classes <- as.character(signature)
@@ -755,7 +767,7 @@ sigToEnv <- function(signature, genericSig) {
     object
 }
 
-    
+
 .getOrMakeMethodsList <- function(f, where, genericFun) {
     allMethods <- getMethodsMetaData(f, where = where)
     if(is.null(allMethods)) {
@@ -870,7 +882,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
         TRUE
     }
 }
-    
+
 .GenericInPrimitiveMethods <- function(mlist, f) {
     methods <- mlist@methods
     for(i in seq(along = methods)) {
@@ -1061,3 +1073,27 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
 
 ## a version of match that avoids the is.factor() junk: faster & safe for bootstrapping
 .matchBasic <- function(x, table, nomatch = NA) .Internal(match(x, table, nomatch))
+
+## match default exprs in the method to those in the generic
+## if the method does not itself specify a default, and the
+## generic does
+matchDefaults <- function(method, generic) {
+    changes <- FALSE
+    margs <- formals(method)
+    gargs <- formals(generic)
+    for(arg in names(margs)) {
+        ##!! weird use of missing() here is required by R's definition
+        ## of a missing arg as a name object with empty ("") name
+        ## This is dangerously kludgy code but seems the only way
+        ## to avoid spurious errors ("xxx missing with no default")
+        marg <- margs[[arg]]
+        garg <- gargs[[arg]]
+        if(missing(marg) && !missing(garg)) {
+            changes <- TRUE
+            margs[[arg]] <- garg
+        }
+    }
+    if(changes)
+        formals(method, envir = environment(method)) <- margs
+    method
+}

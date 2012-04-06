@@ -27,11 +27,11 @@ commandArgs()
 }
 %\author{DTL}
 #ifdef unix
-\seealso{\code{\link{BATCH}}}
+\seealso{\code{\link[utils]{BATCH}}}
 #endif
 \examples{
 commandArgs()
-## Spawn a copy of this  application as it was invoked.
+## Spawn a copy of this application as it was invoked.
 ## system(paste(commandArgs(), collapse=" "))
 }
 \keyword{environment}

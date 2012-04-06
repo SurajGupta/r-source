@@ -23,12 +23,12 @@
 
 #include <Defn.h>
 #include <Fileio.h>
-#include <zlib.h> /* needs to be before Rconnections.h */
+#include <zlib.h>		/* needs to be before Rconnections.h */
 #include <Rconnections.h>
 #include <R_ext/Complex.h>
 #include <R_ext/R-ftp-http.h>
-#include <R_ext/RS.h> /* R_chk_calloc and Free */
-#undef ERROR /* for compilation on Windows */
+#include <R_ext/RS.h>		/* R_chk_calloc and Free */
+#undef ERROR			/* for compilation on Windows */
 
 int R_OutputCon;		/* used in printutils.c */
 
@@ -38,6 +38,12 @@ int R_OutputCon;		/* used in printutils.c */
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
+#endif
+
+#if defined __GNUC__ && __GNUC__ >= 2
+__extension__ typedef long long int _lli_t;
+#else
+typedef long long int _lli_t;
 #endif
 
 /* Win32 does have popen, but it does not work in GUI applications,
@@ -54,7 +60,7 @@ static Rconnection Connections[NCONNECTIONS];
 static SEXP OutTextData;
 
 static int R_SinkNumber;
-static int SinkCons[NSINKS], SinkConsClose[NSINKS];
+static int SinkCons[NSINKS], SinkConsClose[NSINKS], R_SinkSplit[NSINKS];
 
 static void
 pushback(Rconnection con, int newLine, char *line);
@@ -92,6 +98,17 @@ Rconnection getConnection(int n)
     return con;
 
 }
+
+int getActiveSink(int n){
+  if (n>=R_SinkNumber || n<0) 
+    return 0;
+  if (R_SinkSplit[R_SinkNumber-n])
+    return SinkCons[R_SinkNumber-n-1];
+  else
+    return 0;
+}
+
+
 
 /* for use in REvprintf */
 Rconnection getConnection_no_err(int n)
@@ -793,10 +810,16 @@ static void gzfile_close(Rconnection con)
 static int gzfile_fgetc(Rconnection con)
 {
     gzFile fp = ((Rgzfileconn)(con->private))->fp;
+    int c;
 
     /* Looks like eof is signalled one char early */
+    /* -- sometimes! gzgetc may still return EOF */
     if(gzeof(fp)) return R_EOF;
-    return con->encoding[gzgetc(fp)];
+    c = gzgetc(fp);
+    if (c == EOF) 
+	return R_EOF;
+    else
+	return con->encoding[c];
 }
 
 static long gzfile_seek(Rconnection con, int where, int origin, int rw)
@@ -929,7 +952,6 @@ SEXP do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* ------------------- bzipped file connections --------------------- */
 
-#if defined(HAVE_BZLIB) || defined(Unix) || defined(Win32)
 #include <bzlib.h>
 
 static Rboolean bzfile_open(Rconnection con)
@@ -1108,13 +1130,6 @@ SEXP do_bzfile(SEXP call, SEXP op, SEXP args, SEXP env)
 
     return ans;
 }
-#else
-SEXP do_bzfile(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    error("bzfile is not available on this system");
-    return R_NilValue;		/* -Wall */
-}
-#endif
 
 
 /* ------------------- clipboard connections --------------------- */
@@ -2384,7 +2399,7 @@ SEXP do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 #if SIZEOF_LONG == 8
 	    case sizeof(long):
 #elif SIZEOF_LONG_LONG == 8
-	    case sizeof(long long):
+	    case sizeof(_lli_t):
 #endif
 		break;
 	    default:
@@ -2402,7 +2417,7 @@ SEXP do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 #if SIZEOF_LONG == 8
 	    case sizeof(long):
 #elif SIZEOF_LONG_LONG == 8
-	    case sizeof(long long):
+	    case sizeof(_lli_t):
 #endif
 		break;
 	    default:
@@ -2456,8 +2471,8 @@ SEXP do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 			INTEGER(ans)[i] = (int)*((long *)buf);
 			break;
 #elif SIZEOF_LONG_LONG == 8
-		    case sizeof(long long):
-			INTEGER(ans)[i] = (int)*((long long *)buf);
+		    case sizeof(_lli_t):
+			INTEGER(ans)[i] = (int)*((_lli_t *)buf);
 			break;
 #endif
 		    }
@@ -2542,7 +2557,7 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 #if SIZEOF_LONG == 8
 	    case sizeof(long):
 #elif SIZEOF_LONG_LONG == 8
-	    case sizeof(long long):
+	    case sizeof(_lli_t):
 #endif
 		break;
 	    default:
@@ -2589,11 +2604,11 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 		break;
 	    }
 #elif SIZEOF_LONG_LONG == 8
-	    case sizeof(long long):
+	    case sizeof(_lli_t):
 	    {
-		long long ll1;
+		_lli_t ll1;
 		for (i = 0, j = 0; i < len; i++, j += size) {
-		    ll1 = (long long) INTEGER(object)[i];
+		    ll1 = (_lli_t) INTEGER(object)[i];
 		    memcpy(buf + j, &ll1, size);
 		}
 		break;
@@ -2887,7 +2902,8 @@ SEXP do_pushbacklength(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* Switch output to connection number icon, or popd stack if icon < 0
  */
-Rboolean switch_stdout(int icon, int closeOnExit)
+
+Rboolean switch_or_tee_stdout(int icon, int closeOnExit, int tee)
 {
     int toclose;
 
@@ -2900,6 +2916,7 @@ Rboolean switch_stdout(int icon, int closeOnExit)
 	error("cannot switch output to stdin");
     else if(icon == 1 || icon == 2) {
 	R_OutputCon = SinkCons[++R_SinkNumber] = icon;
+	R_SinkSplit[R_SinkNumber] = tee;
 	SinkConsClose[R_SinkNumber] = 0;
     } else if(icon >= 3) {
 	Rconnection con = getConnection(icon); /* checks validity */
@@ -2910,7 +2927,8 @@ Rboolean switch_stdout(int icon, int closeOnExit)
 	}
 	R_OutputCon = SinkCons[++R_SinkNumber] = icon;
 	SinkConsClose[R_SinkNumber] = toclose;
-    } else { /* removing a sink */
+ 	R_SinkSplit[R_SinkNumber] = tee;
+   } else { /* removing a sink */
 	if (R_SinkNumber <= 0) {
 	    warning("no sink to remove");
 	    return FALSE;
@@ -2928,9 +2946,16 @@ Rboolean switch_stdout(int icon, int closeOnExit)
     return TRUE;
 }
 
+/* This is not only used by cat(), but is in a public
+   header, so we need a wrapper */
+
+Rboolean switch_stdout(int icon, int closeOnExit){
+  return switch_or_tee_stdout(icon, closeOnExit, 0);
+}
+
 SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int icon, closeOnExit, errcon;
+  int icon, closeOnExit, errcon, tee;
 
     checkArity(op, args);
     icon = asInteger(CAR(args));
@@ -2939,12 +2964,14 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error("invalid value for closeOnExit");
     errcon = asLogical(CADDR(args));
     if(errcon == NA_LOGICAL) error("invalid value for type");
-
+    tee = asLogical(CADDDR(args));
+    if(tee == NA_LOGICAL) error("invalid value for split");
+    
     if(!errcon) {
 	/* allow space for cat() to use sink() */
 	if(icon >= 0 && R_SinkNumber >= NSINKS - 2)
 	    error("sink stack is full");
-	switch_stdout(icon, closeOnExit);
+	switch_or_tee_stdout(icon, closeOnExit, tee);
     } else {
 	if(icon < 0) R_ErrorCon = 2;
 	else {

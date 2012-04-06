@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2001-3 The R Development Core Team
+ *  Copyright (C) 1998, 2001-4 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,11 @@
 #include <R_ext/Applic.h>		/* machar */
 
 #include <time.h>
+
+#ifdef HAVE_ERRNO_H
+# include <errno.h>
+#endif
+
 
 /* Machine Constants */
 
@@ -392,10 +397,6 @@ SEXP do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
-#if defined(Win32)
-# include <errno.h>
-#endif
-
 #ifdef Win32
 int Rwin_rename(char *from, char *to);  /* in src/gnuwin32/extra.c */
 #endif
@@ -536,7 +537,9 @@ SEXP do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 #endif
 
+#ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
+#endif
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
@@ -558,8 +561,22 @@ static SEXP filename(char *dir, char *file)
 {
     SEXP ans;
     if (dir) {
+#ifdef Win32
+	switch (dir[strlen(dir)-1])
+	{
+	    case '/':
+	    case '\\':
+	    case ':':
+	    	ans = allocString(strlen(dir) + strlen(file));
+	    	sprintf(CHAR(ans), "%s%s", dir, file);
+	    	break;
+	    default:
+#endif
 	ans = allocString(strlen(dir) + strlen(R_FileSep) + strlen(file));
 	sprintf(CHAR(ans), "%s%s%s", dir, R_FileSep, file);
+#ifdef Win32
+    	}
+#endif
     }
     else {
 	ans = allocString(strlen(file));
@@ -587,7 +604,7 @@ static void count_files(char *dnp, int *count,
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 #ifdef HAVE_STAT
 		if(recursive) {
-		    snprintf(p, PATH_MAX, "%s%s%s", dnp, 
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp,
 			     R_FileSep, de->d_name);
 		    stat(p, &sb);
 		    if((sb.st_mode & S_IFDIR) > 0) {
@@ -621,12 +638,12 @@ static void list_files(char *dnp, char *stem, int *count, SEXP ans,
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 #ifdef HAVE_STAT
 		if(recursive) {
-		    snprintf(p, PATH_MAX, "%s%s%s", dnp, 
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp,
 			     R_FileSep, de->d_name);
 		    stat(p, &sb);
 		    if((sb.st_mode & S_IFDIR) > 0) {
 			if(stem)
-			    snprintf(stem2, PATH_MAX, "%s%s%s", stem, 
+			    snprintf(stem2, PATH_MAX, "%s%s%s", stem,
 				     R_FileSep, de->d_name);
 			else
 			    strcpy(stem2, de->d_name);
@@ -672,7 +689,7 @@ SEXP do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     recursive = asLogical(CAR(args));
 #ifndef HAVE_STAT
     if(recursive) {
-	warningcall(call, 
+	warningcall(call,
 		    "`recursive = TRUE' is not supported on this platform");
 	recursive = FALSE;
     }
@@ -869,6 +886,9 @@ SEXP do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+#ifdef HAVE_LANGINFO_H
+# include <langinfo.h>
+#endif
 
 SEXP do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -894,6 +914,9 @@ SEXP do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(p) SET_STRING_ELT(ans, 0, mkChar(p));
     else  SET_STRING_ELT(ans, 0, mkChar(""));
     UNPROTECT(1);
+#ifdef HAVE_NL_LANGINFO
+    utf8locale = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#endif    
     return ans;
 #else
     return R_NilValue;
@@ -1135,18 +1158,10 @@ SEXP do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 
     SET_STRING_ELT(ansnames, i, mkChar("bzip2"));
-#if defined(HAVE_BZLIB) || defined(Unix) || defined(Win32)
-    LOGICAL(ans)[i++] = TRUE;
-#else
-    LOGICAL(ans)[i++] = FALSE;
-#endif
+    LOGICAL(ans)[i++] = TRUE; /* we always have this */
 
     SET_STRING_ELT(ansnames, i, mkChar("PCRE"));
-#if defined(HAVE_PCRE) || defined(Unix) || defined(Win32)
-    LOGICAL(ans)[i++] = TRUE;
-#else
-    LOGICAL(ans)[i++] = FALSE;
-#endif
+    LOGICAL(ans)[i++] = TRUE; /* we always have this */
 
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
@@ -1205,3 +1220,53 @@ SEXP do_sysgetpid(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     return ans;
 }
+
+
+#ifndef Win32
+/* mkdir is defined in <sys/stat.h> */
+SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  path, ans;
+    int res, show;
+
+    checkArity(op, args);
+    path = CAR(args);
+    if (!isString(path) || length(path) != 1)
+	errorcall(call, "invalid path argument");
+    show = asLogical(CADR(args));
+    if(show == NA_LOGICAL) show = 0;
+    res = mkdir(CHAR(STRING_ELT(path, 0)), 0777);
+    if(show && errno == EEXIST)
+	warning("'%s' already exists", CHAR(STRING_ELT(path, 0)));
+    PROTECT(ans = allocVector(LGLSXP, 1));
+    LOGICAL(ans)[0] = (res==0);
+    UNPROTECT(1);
+    return (ans);
+}
+#else
+#include <io.h> /* mkdir is defined here */
+SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  path, ans;
+    char *p, dir[MAX_PATH];
+    int res, show;
+
+    checkArity(op, args);
+    path = CAR(args);
+    if (!isString(path) || length(path) != 1)
+	errorcall(call, "invalid path argument");
+    show = asLogical(CADR(args));
+    if(show == NA_LOGICAL) show = 0;
+    strcpy(dir, CHAR(STRING_ELT(path, 0)));
+    /* need DOS paths on Win 9x */
+    for(p = dir; *p != '\0'; p++)
+	if(*p == '/') *p = '\\';
+    res = mkdir(dir);
+    if(show && errno == EEXIST)
+	warning("'%s' already exists", dir);
+    PROTECT(ans = allocVector(LGLSXP, 1));
+    LOGICAL(ans)[0] = (res==0);
+    UNPROTECT(1);
+    return (ans);
+}
+#endif

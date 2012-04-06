@@ -43,7 +43,7 @@ SEXP do_logic(SEXP call, SEXP op, SEXP args, SEXP env)
 	return lbinary(call, op, args);
     default:
 	error("binary operations require two arguments");
-	return R_NilValue;/* for -Wall */
+	return R_NilValue;	/* for -Wall */
     }
 }
 
@@ -79,15 +79,15 @@ static SEXP lbinary(SEXP call, SEXP op, SEXP args)
 	PROTECT(ynames = getAttrib(y, R_DimNamesSymbol));
     }
     else {
-	nx = length(x);
-	ny = length(y);
-	if(nx > 0 && ny > 0) {
-	    if(nx > ny) mismatch = nx % ny;
-	    else mismatch = ny % nx;
-	}
 	PROTECT(dims = R_NilValue);
 	PROTECT(xnames = getAttrib(x, R_NamesSymbol));
 	PROTECT(ynames = getAttrib(y, R_NamesSymbol));
+    }
+    nx = length(x);
+    ny = length(y);
+    if(nx > 0 && ny > 0) {
+	if(nx > ny) mismatch = nx % ny;
+	else mismatch = ny % nx;
     }
     if (xts || yts) {
 	if (xts && yts) {
@@ -144,13 +144,14 @@ static SEXP lunary(SEXP call, SEXP op, SEXP arg)
     SEXP x, dim, dimnames, names;
     int i, len;
 
+    len = LENGTH(arg);
+    if(len == 0) return(allocVector(LGLSXP, 0));
     if (!isLogical(arg) && !isNumeric(arg))
 	errorcall(call, "invalid argument type");
-    len = LENGTH(arg);
     PROTECT(names = getAttrib(arg, R_NamesSymbol));
     PROTECT(dim = getAttrib(arg, R_DimSymbol));
     PROTECT(dimnames = getAttrib(arg, R_DimNamesSymbol));
-    PROTECT(x = allocVector(LGLSXP, len));
+    PROTECT(x = allocVector(LGLSXP, len));    
     switch(TYPEOF(arg)) {
     case LGLSXP:
 	for (i = 0; i < len; i++)

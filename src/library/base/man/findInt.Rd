@@ -43,14 +43,16 @@ findInterval(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
   all other values in the last interval.
 }
 \value{
-  vector of length \code{length(x)} with values in \code{0:N} where
-  \code{N <- length(vec)}, or values coerced to \code{1:(N-1)} iff
-  \code{all.inside = TRUE} (equivalently coercing all x values
-  \emph{inside} the intervals).
+  vector of length \code{length(x)} with values in \code{0:N} (and
+  \code{NA}) where \code{N <- length(vec)}, or values coerced to
+  \code{1:(N-1)} iff \code{all.inside = TRUE} (equivalently coercing all
+  x values \emph{inside} the intervals).  Note that \code{\link{NA}}s are
+  propagated from \code{x}, and \code{\link{Inf}} values are allowed in
+  both \code{x} and \code{vec}.
 }
 \author{Martin Maechler}
 \seealso{\code{\link{approx}(*, method = "constant")} which is a
-  generalization of \code{findInterval()}, \code{\link[stepfun]{ecdf}} for
+  generalization of \code{findInterval()}, \code{\link[stats]{ecdf}} for
   computing the empirical distribution function which is (up to a factor
   of \eqn{n}) also basically the same as findInterval(.).
 }

@@ -36,15 +36,18 @@ unsplit(value, f)
   method can also be used to split a matrix into a list of matrices,
   and the assignment form likewise, provided they are invoked
   explicitly.
+
+  Any missing values in \code{f} are dropped together with the
+  corresponding values of \code{x}.
 }
 \value{
   The value returned from \code{split} is a list of vectors containing
-  the values for the
-  groups.  The components of the list are named by the factor levels
-  given be \code{f}.  If \code{f} is longer than \code{x} some of these
-  will be of zero length. The assignment forms return their right hand side.
-  \code{unsplit} returns a vector for which \code{split(x, f)} equals
-  \code{value}
+  the values for the groups.  The components of the list are named by
+  the \emph{used} factor levels given by \code{f}.  (If \code{f} is
+  longer than \code{x} then some of the components will be of zero length.)
+
+  The assignment forms return their right hand side. \code{unsplit}
+  returns a vector for which \code{split(x, f)} equals \code{value}
 }
 \seealso{
   \code{\link{cut}}
@@ -55,6 +58,7 @@ unsplit(value, f)
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(stats)
 n <- 10; nn <- 100
 g <- factor(round(n * runif(n * nn)))
 x <- rnorm(n * nn) + sqrt(as.numeric(g))

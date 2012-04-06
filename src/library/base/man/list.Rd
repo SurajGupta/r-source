@@ -7,6 +7,7 @@ pairlist(\dots)
 as.list(x, \dots)
 %as.list.default(x, \dots)
 as.pairlist(x)
+as.list.environment(x, all.names=FALSE, \dots)
 
 is.list(x)
 is.pairlist(x)
@@ -19,6 +20,7 @@ alist(\dots)
 \alias{as.list}
 \alias{as.list.default}
 \alias{as.list.data.frame}
+\alias{as.list.environment}
 \alias{as.pairlist}
 \alias{is.list}
 \alias{is.pairlist}
@@ -28,6 +30,7 @@ alist(\dots)
 \arguments{
   \item{\dots}{objects.}
   \item{x}{object to be coerced or tested.}
+  \item{all.names}{a logical indicating whether to copy all values in as.list.environment}
 }
 \details{
   Most lists in \R internally are \emph{Generic
@@ -55,7 +58,11 @@ alist(\dots)
   whereas \code{is.pairlist} only returns \code{TRUE} in the latter case.
 
   \code{is.list} and \code{is.pairlist} are generic: you can write
-  methods to handle of specific classes of objects, see \link{InternalMethods}.
+  methods to handle specific classes of objects, see \link{InternalMethods}.
+
+  \code{as.list.environment} copies the named values from an environment to a list. The 
+  user can request that all named objects are copied (normally names that begin with a dot 
+  are not). The output is not sorted and no parent environments are searched.
 
   An empty pairlist, \code{pairlist()} is the same as \code{NULL}.  This
   is different from \code{list()}.
@@ -80,18 +87,14 @@ f <- function()x
 # Note the specification of a "..." argument:
 formals(f) <- al <- alist(x=, y=2, \dots=)
 f
-str(al)
+al
 
-str(pl <- as.pairlist(ps.options()))
+##environment->list coercion
 
-## These are all TRUE:
-is.list(pl) && is.pairlist(pl)
-!is.null(list())
-is.null(pairlist())
-!is.list(NULL)
-is.pairlist(pairlist())
-is.null(as.pairlist(list()))
-is.null(as.pairlist(NULL))
+e1 <- new.env()
+e1$a <- 10
+e1$b <- 20
+as.list(e1)
 }
 \keyword{list}
 \keyword{manip}

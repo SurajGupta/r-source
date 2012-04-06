@@ -1,5 +1,3 @@
-##vector <- function(mode = "logical", length = 0).Internal(vector(mode,length))
-
 geterrmessage <- function() .Internal(geterrmessage())
 
 try <- function(expr, silent = FALSE)
@@ -40,15 +38,16 @@ gamma <- function(x).Internal( gamma(x))
 lgamma <- function(x).Internal(lgamma(x))
 digamma <- function(x).Internal(   digamma(x))
 trigamma <- function(x).Internal(  trigamma(x))
-tetragamma <- function(x).Internal(tetragamma(x))
-pentagamma <- function(x).Internal(pentagamma(x))
+psigamma <- function(x, deriv=0) .Internal(psigamma(x, deriv))
+## tetragamma, pentagamma : deprecated in 1.9.0
+
+factorial <- function(x) gamma(x + 1)
+lfactorial <- function(x) lgamma(x + 1)
 
 choose <- function(n,k).Internal(choose(n,k))
 lchoose <- function(n,k).Internal(lchoose(n,k))
 
 ##-- 2nd part --
-D <- function(expr, name) .Internal(D(expr, name))
-
 # Machine <- function().Internal(Machine())
 R.Version <- function().Internal(Version())
 commandArgs <- function() .Internal(commandArgs())
@@ -66,15 +65,6 @@ cbind <- function(..., deparse.level=1) {
 rbind <- function(..., deparse.level=1) {
     if(deparse.level != 1) .NotYetUsed("deparse.level != 1")
     .Internal(rbind(...))
-}
-
-dataentry <- function (data, modes) {
-    if(!is.list(data) || !length(data) || !all(sapply(data, is.vector)))
-        stop("invalid data argument")
-    if(!is.list(modes) ||
-       (length(modes) && !all(sapply(modes, is.character))))
-        stop("invalid modes argument")
-    .Internal(dataentry(data, modes))
 }
 
 deparse <-
@@ -116,8 +106,6 @@ mem.limits <- function(nsize=NA, vsize=NA)
 
 nchar <- function(x).Internal(nchar(x))
 
-plot.window <- function(xlim, ylim, log = "", asp = NA, ...)
-    .Internal(plot.window(xlim, ylim, log, asp, ...))
 polyroot <- function(z).Internal(polyroot(z))
 
 readline <- function(prompt="").Internal(readline(prompt))
@@ -152,6 +140,24 @@ capabilities <- function(what = NULL)
     i <- pmatch(what, nm)
     if(is.na(i)) logical(0) else z[i]
 }
+
+inherits <- function(x, what, which = FALSE)
+	.Internal(inherits(x, what, which))
+
+NextMethod <- function(generic=NULL, object=NULL, ...)
+    .Internal(NextMethod(generic, object,...))
+
+data.class <- function(x) {
+    if (length(cl <- oldClass(x)))
+	cl[1]
+    else {
+	l <- length(dim(x))
+	if (l == 2)	"matrix"
+	else if (l > 0)	"array"
+	else mode(x)
+    }
+}
+
 
 ## base has no S4 generics
 .noGenerics <- TRUE

@@ -15,8 +15,10 @@
 \alias{parseNamespaceFile}
 \alias{registerS3method}
 \alias{setNamespaceInfo}
+\alias{registerS3methods}
 \alias{.__S3MethodsTable__.}
 \alias{.mergeExportMethods}
+\alias{.knownS3Generics}
 \usage{
 asNamespace(ns, base.OK = TRUE)
 getNamespaceInfo(ns, which)
@@ -30,8 +32,10 @@ namespaceImportMethods(self, ns, vars)
 packageHasNamespace(package, package.lib)
 parseNamespaceFile(package, package.lib, mustExist = TRUE)
 registerS3method(genname, class, method, envir = parent.frame())
+registerS3methods(info, package, env)
 setNamespaceInfo(ns, which, val)
 .mergeExportMethods(new, ns)
+.knownS3Generics
 }
 
 \arguments{
@@ -46,7 +50,8 @@ setNamespaceInfo(ns, which, val)
   \item{mustExist}{logical.}
   \item{genname}{character.}
   \item{class}{character.}
-  \item{envir}{environment.}
+  \item{envir, env}{environment.}
+  \item{info}{a 3-column character matrix.}
   \item{which}{character.}
   \item{val}{any object.}
   \item{\dots}{character arguments.}
@@ -54,5 +59,11 @@ setNamespaceInfo(ns, which, val)
 \description{
   Internal name space support functions.  Not intended to be called directly.
 }
+\details{
+  \code{packageHasNamespace} does not indicate if the package has a
+  namespace, rather if it has a \file{NAMESPACE} file, which \code{base}
+  does not.  But then you are not intended to be using it \dots.
+}
+
 \keyword{internal}
 \author{Luke Tierney}

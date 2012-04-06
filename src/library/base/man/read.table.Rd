@@ -168,7 +168,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   to the header must have the comment character in the first non-blank
   column.
 
-  Fields with embedded newlines are not supported (even if quoted).
+  As from \R 1.9.0 quoted fields with embedded newlines are supported
+  except after a comment character.
 }
 \note{
   The columns referred to in \code{as.is} and \code{colClasses} include
@@ -191,7 +192,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   The \emph{R Data Import/Export} manual.
   
   \code{\link{scan}}, \code{\link{type.convert}},
-  \code{\link{read.fwf}} for reading \emph{f}ixed \emph{w}idth
+  \code{\link[utils]{read.fwf}} for reading \emph{f}ixed \emph{w}idth
   \emph{f}ormatted input;
   \code{\link{write.table}};
   \code{\link{data.frame}}.

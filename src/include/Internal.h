@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,6 @@ SEXP do_bringtotop(SEXP, SEXP, SEXP, SEXP);
 SEXP do_chooseFiles(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devga(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dllversion(SEXP, SEXP, SEXP, SEXP);
-SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
 SEXP do_flushconsole(SEXP, SEXP, SEXP, SEXP);
 SEXP do_helpstart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_helpitem(SEXP, SEXP, SEXP, SEXP);
@@ -68,6 +67,8 @@ SEXP do_windialog(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialogstring(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winmenuadd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winmenudel(SEXP, SEXP, SEXP, SEXP);
+SEXP do_winmenunames(SEXP, SEXP, SEXP, SEXP);
+SEXP do_wingetmenuitems(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winver(SEXP, SEXP, SEXP, SEXP);
 SEXP do_writeClipboard(SEXP, SEXP, SEXP, SEXP);
 #endif
@@ -134,11 +135,13 @@ SEXP do_comment(SEXP, SEXP, SEXP, SEXP);
 SEXP do_commentgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_complex(SEXP, SEXP, SEXP, SEXP);
 SEXP do_contour(SEXP, SEXP, SEXP, SEXP);
+SEXP do_contourLines(SEXP, SEXP, SEXP, SEXP);
 SEXP do_countfields(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cum(SEXP, SEXP, SEXP, SEXP);
 SEXP do_compcases(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cov(SEXP, SEXP, SEXP, SEXP);
 SEXP do_D(SEXP, SEXP, SEXP, SEXP);
+SEXP do_D2POSIXlt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dataentry(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dataframe(SEXP, SEXP, SEXP, SEXP);
 SEXP do_date(SEXP, SEXP, SEXP, SEXP);
@@ -165,6 +168,7 @@ SEXP do_dim(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimnames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimnamesgets(SEXP, SEXP, SEXP, SEXP);
+SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dirname(SEXP, SEXP, SEXP, SEXP);
 SEXP do_docall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotcall(SEXP, SEXP, SEXP, SEXP);
@@ -181,6 +185,7 @@ SEXP do_dynunload(SEXP, SEXP, SEXP, SEXP);
 SEXP do_edit(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envir(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envirgets(SEXP, SEXP, SEXP, SEXP);
+SEXP do_env2list(SEXP, SEXP, SEXP, SEXP);
 SEXP do_erase(SEXP, SEXP, SEXP, SEXP);
 SEXP do_External(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Externalgr(SEXP, SEXP, SEXP, SEXP);
@@ -266,6 +271,7 @@ SEXP do_logic(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
 SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
+/* R_lsInternal -> ./Rinternals.h */
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
@@ -280,6 +286,7 @@ SEXP do_memlimits(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memoryprofile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_menu(SEXP, SEXP, SEXP, SEXP);
 SEXP do_merge(SEXP, SEXP, SEXP, SEXP);
+SEXP do_mget(SEXP, SEXP, SEXP, SEXP);
 SEXP do_missing(SEXP, SEXP, SEXP, SEXP);
 SEXP do_modelframe(SEXP, SEXP, SEXP, SEXP);
 SEXP do_modelmatrix(SEXP, SEXP, SEXP, SEXP);
@@ -319,6 +326,7 @@ SEXP do_pmatch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polygon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polyroot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pos2env(SEXP, SEXP, SEXP, SEXP);
+SEXP do_POSIXlt2D(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdefault(SEXP, SEXP, SEXP, SEXP);
@@ -358,6 +366,7 @@ SEXP do_restart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_restoreb(SEXP, SEXP, SEXP, SEXP);
 SEXP do_return(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rgb(SEXP, SEXP, SEXP, SEXP);
+SEXP do_RGB2hsv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Rhome(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rmultinom(SEXP, SEXP, SEXP, SEXP);
 SEXP do_RNGkind(SEXP, SEXP, SEXP, SEXP);

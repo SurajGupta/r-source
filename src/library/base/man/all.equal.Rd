@@ -14,6 +14,8 @@ all.equal(target, current, \dots)
 
 \method{all.equal}{numeric}(target, current,
           tolerance= .Machine$double.eps ^ 0.5, scale=NULL, \dots)
+
+attr.all.equal(target, current, \dots)
 }
 \arguments{
   \item{target}{\R object.}
@@ -34,7 +36,7 @@ all.equal(target, current, \dots)
 }
 \details{
     There are several methods available, most of which are dispatched by
-    the default method, see \code{\link{methods}("all.equal")}.
+    the default method, see \code{\link[utils]{methods}("all.equal")}.
     \code{all.equal.list} and \code{all.equal.language} provide
     comparison of recursive objects.
 
@@ -47,7 +49,9 @@ all.equal(target, current, \dots)
     If \code{scale} is positive, absolute comparisons are after scaling
     (dividing) by \code{scale}.
 
-    For complex arguments, \code{\link{Mod}} of difference is used.
+    For complex arguments, the modulus \code{\link{Mod}} of the difference 
+    is used: \code{all.numeric.numeric} is called so arguments
+    \code{tolerance} and \code{scale} are available.
 
     \code{attr.all.equal} is used for comparing
     \code{\link{attributes}}, returning \code{NULL} or \code{character}.

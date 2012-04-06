@@ -37,7 +37,7 @@ else
 endif
 
 # data
-DSOURCES=$(filter-out $(SPKG)/data/CVS, $(wildcard $(SPKG)/data/*))
+DSOURCES=$(filter-out $(SPKG)/data/CVS $(SPKG)/data/.svn, $(wildcard $(SPKG)/data/*))
 ifeq ($(strip $(DSOURCES)),)
   DATA= 
 else
@@ -56,16 +56,22 @@ endif
 
 # demos
 PKGDEMOS0=$(wildcard $(SPKG)/demo/*)
-PKGDEMOS=$(filter-out $(SPKG)/demo/CVS, $(PKGDEMOS0))
+PKGDEMOS=$(filter-out $(SPKG)/demo/CVS $(SPKG)/demo/.svn, $(PKGDEMOS0))
 
 # exec
-EXECFILES=$(filter-out $(SPKG)/exec/CVS, $(wildcard $(SPKG)/exec/*))
+EXECFILES=$(filter-out $(SPKG)/exec/CVS $(SPKG)/exec/.svn, $(wildcard $(SPKG)/exec/*))
 
-# Others
-INSTFILES=$(filter-out $(SPKG)/inst/CVS, $(wildcard $(SPKG)/inst/*))
+# Others: we will remove CVS and subversion files later.
+INSTFILES=$(wildcard $(SPKG)/inst/*)
 
-all:  $(DPKG)/zzzz frontmatter nmspace Dynlib R $(DPKG)/demo \
-  $(DPKG)/exec $(DPKG)/inst $(DATA) mansrcs indices
+all:  
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg $(DPKG)/zzzz 
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s frontmatter
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s nmspace
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg Dynlib 
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s R
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s $(DPKG)/demo $(DPKG)/exec $(DPKG)/inst $(DATA)
+	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s mansrcs indices
 
 fake: zzzfirst frontmatter nmspacefake R Rfake $(DPKG)/demo \
   $(DPKG)/exec $(DPKG)/inst $(DATA) mansrcs indices
@@ -94,21 +100,28 @@ Rcode0:
 	  | $(SED) '/^\s*$$/d' > ${DPKG}/DESCRIPTION
 
 $(DPKG)/R/$(PKG): $(PKGRFILES)
+ifneq ($(strip $(PKG)),base)
 ifneq ($(strip $(PKGRFILES)),)
 	@$(ECHO) "  installing R files"
 	@$(MKDIR) -p $(DPKG)/R
 ifeq ($(strip $(BUILD)),CROSS)
 	@$(ECHO) ".installPackageCodeFiles('"$(SPKG)"', '"$(DPKG)"')" \
-	  | R_DEFAULT_PACKAGES=tools $(R_EXE) --vanilla --slave > /dev/null
+	  | R_DEFAULT_PACKAGES=tools R_OSTYPE=windows LC_COLLATE=C $(R_EXE) --vanilla --slave > /dev/null
 else
 	@$(ECHO) ".installPackageCodeFiles('"$(SPKG)"', '"$(DPKG)"')" \
 	  | $(RHOME)/bin/rterm.exe --vanilla --slave \
-	    R_DEFAULT_PACKAGES=tools > /dev/null
+	    R_DEFAULT_PACKAGES=tools LC_COLLATE=C > /dev/null
 endif
 ## install halts here if collater failed
-	@sh $(RHOME)/src/gnuwin32/install-save.sh $(SAVE) $(RLIB) $(PKG) $(RHOME)
+	@sh $(RHOME)/src/gnuwin32/install-save.sh $(SAVE) $(RLIB) $(PKG) $(RHOME) $(BUILD) $(R_EXE)
 else
 	@$(ECHO) "  no R files in this package"
+endif
+else
+## .installPackageCodeFiles adds an unwanted .packageName
+	@$(ECHO) "  installing R files"
+	@$(MKDIR) -p $(DPKG)/R
+	@$(CAT) $(PKGRFILES) > $(DPKG)/R/$(PKG)
 endif
 
 $(DPKG)/demo: $(PKGDEMOS)
@@ -131,7 +144,8 @@ $(DPKG)/inst: $(INSTFILES)
 ifneq ($(strip $(INSTFILES)),)
 	@$(ECHO) "  installing inst files"
 	-@$(CP) -r inst/* $(DPKG)
-	@$(RM) -rf $(DPKG)/CVS $(DPKG)/*/CVS
+	@find $(DPKG) -name CVS -type d -prune -exec rm -rf {} \;
+	@find $(DPKG) -name .svn -type d -prune -exec rm -rf {} \;
 endif
 
 
@@ -169,18 +183,39 @@ frontmatter:
 	  exit 27; \
 	fi
 ifeq ($(strip $(BUILD)),CROSS)
-	@(cat DESCRIPTION; $(ECHO); $(ECHO) "Built: R" $(RVER)\;  Win32\;  `date`) \
-	  | $(SED) '/^\s*$$/d' > ${DPKG}/DESCRIPTION
+	@$(ECHO) ".installPackageDescription('.', '"$(DPKG)"')" | \
+	  R_DEFAULT_PACKAGES=tools R_OSTYPE=windows $(R_EXE) --vanilla --slave > /dev/null
 else
 	@$(ECHO) ".installPackageDescription('.', '"$(DPKG)"')" | \
-	  $(RHOME)/bin/rterm.exe --vanilla --slave  R_DEFAULT_PACKAGES=tools> /dev/null
+	  $(RHOME)/bin/rterm.exe --vanilla --slave R_DEFAULT_PACKAGES=tools > /dev/null
 endif
 
 nmspace:
+ifeq ($(strip $(BUILD)),CROSS)
 	@if test -f ${SPKG}/NAMESPACE; then \
-	  $(ECHO) "  installing NAMESPACE file"; \
-	  $(CP) ${SPKG}/NAMESPACE $(DPKG)/NAMESPACE; \
+	  $(ECHO) -n "  installing NAMESPACE file"; \
+	  if test -f ${SPKG}/NAMESPACE.windows ; then \
+	  cat ${SPKG}/NAMESPACE ${SPKG}/NAMESPACE.windows > $(DPKG)/NAMESPACE; \
+	  else \
+	    $(CP) ${SPKG}/NAMESPACE $(DPKG)/NAMESPACE; \
+          fi ; \
+	  $(ECHO) " and metadata"; \
+	  $(ECHO) ".installPackageNamespaceInfo('$(DPKG)', '$(DPKG)')" | \
+	    R_DEFAULT_PACKAGES=tools R_OSTYPE=windows $(R_EXE) --vanilla --slave > /dev/null; \
 	fi
+else
+	@if test -f ${SPKG}/NAMESPACE; then \
+	  $(ECHO) -n "  installing NAMESPACE file"; \
+	  if test -f ${SPKG}/NAMESPACE.windows ; then \
+	  cat ${SPKG}/NAMESPACE ${SPKG}/NAMESPACE.windows > $(DPKG)/NAMESPACE; \
+	  else \
+	    $(CP) ${SPKG}/NAMESPACE $(DPKG)/NAMESPACE; \
+          fi ; \
+	  $(ECHO) " and metadata"; \
+	  $(ECHO) ".installPackageNamespaceInfo('$(DPKG)', '$(DPKG)')" | \
+	    $(RHOME)/bin/rterm.exe R_DEFAULT_PACKAGES=tools --vanilla --slave > /dev/null; \
+	fi
+endif
 nmspacefake:
 	@if test -f ${SPKG}/NAMESPACE; then \
 	  $(ECHO) "  installing NAMESPACE file"; \
@@ -254,10 +289,10 @@ indices:
 	@$(ECHO) "  installing indices"
 ifeq ($(strip $(BUILD)),CROSS)
 	@$(ECHO) ".installPackageIndices('.', '"$(DPKG)"')" | \
-	  R_DEFAULT_PACKAGES=tools $(R_EXE) --vanilla --slave > /dev/null
+	  R_DEFAULT_PACKAGES=tools LC_COLLATE=C R_OSTYPE=windows $(R_EXE) --vanilla --slave > /dev/null
 else
 	@$(ECHO) ".installPackageIndices('.', '"$(DPKG)"')" | \
-	  $(RHOME)/bin/rterm.exe --vanilla --slave R_DEFAULT_PACKAGES=tools > /dev/null
+	  $(RHOME)/bin/rterm.exe --vanilla --slave R_DEFAULT_PACKAGES=tools LC_COLLATE=C > /dev/null
 endif
 # need not have HTML installed when building packages
 	@$(MKDIR) -p $(RHOME)/doc/html/search
@@ -270,9 +305,9 @@ ifneq ($(strip $(PKG)),base)
 	@$(ECHO) "  adding MD5 sums"
 ifeq ($(strip $(BUILD)),CROSS)
 	@$(ECHO) ".installMD5sums('"$(DPKG)"')" | \
-	  R_DEFAULT_PACKAGES=tools $(R_EXE) --vanilla --slave > /dev/null
+	  R_DEFAULT_PACKAGES=tools LC_COLLATE=C R_OSTYPE=windows $(R_EXE) --vanilla --slave > /dev/null
 else
 	@$(ECHO) ".installMD5sums('"$(DPKG)"')" | \
-	  $(RHOME)/bin/rterm.exe --vanilla --slave R_DEFAULT_PACKAGES=tools > /dev/null
+	  $(RHOME)/bin/rterm.exe --vanilla --slave R_DEFAULT_PACKAGES=tools LC_COLLATE=C > /dev/null
 endif
 endif

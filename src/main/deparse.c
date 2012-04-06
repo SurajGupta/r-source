@@ -306,18 +306,6 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (CAR(args));
 }
 
-static Rboolean need_quotes(char *name)
-{
-    char *p;
-    /* check for illegal chars */
-    for (p = name; *p; p++)
-	if(!isalnum((int) *p) && *p != '.') return TRUE;
-    /* name has to start with alpha or ., and not with .[0-9] */
-    if (isalpha((int) name[0])) return FALSE;
-    /* now must start with a . */
-    return isdigit((int) name[1]);
-}
-
 SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, names, o, objs, tval, source;
@@ -352,7 +340,7 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < nobjs; i++) {
 	    obj_name = CHAR(STRING_ELT(names, i));
 	    /* figure out if we need to quote the name */
-	    if(need_quotes(obj_name))
+	    if(!isValidName(obj_name))
 		Rprintf("\"%s\" <-\n", obj_name);
 	    else
 		Rprintf("%s <-\n", obj_name);
@@ -1034,16 +1022,19 @@ static void vector2buff(SEXP vector, LocalParseData *d)
     if (tlen == 0) {
 	switch(TYPEOF(vector)) {
 	case LGLSXP: print2buff("logical(0)", d); break;
-	case INTSXP: print2buff("numeric(0)", d); break;
+	case INTSXP: print2buff("integer(0)", d); break;
 	case REALSXP: print2buff("numeric(0)", d); break;
 	case CPLXSXP: print2buff("complex(0)", d); break;
 	case STRSXP: print2buff("character(0)", d); break;
 	}
     }
     else if (tlen == 1) {
+	if(TYPEOF(vector) == INTSXP) print2buff("as.integer(", d);
 	scalar2buff(vector, d);
+	if(TYPEOF(vector) == INTSXP) print2buff(")", d);
     }
     else {
+	if(TYPEOF(vector) == INTSXP) print2buff("as.integer(", d);
 	print2buff("c(", d);
 	for (i = 0; i < tlen; i++) {
 	    strp = EncodeElement(vector, i, quote);
@@ -1054,6 +1045,7 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 		writeline(d);
 	}
 	print2buff(")", d);
+	if(TYPEOF(vector) == INTSXP) print2buff(")", d);
     }
 
 }
@@ -1098,6 +1090,8 @@ static void args2buff(SEXP arglist, int lineb, int formals, LocalParseData *d)
     Rboolean lbreak = FALSE;
 
     while (arglist != R_NilValue) {
+	if (TYPEOF(arglist) != LISTSXP && TYPEOF(arglist) != LANGSXP)
+            error("badly formed function expression");
 	if (TAG(arglist) != R_NilValue) {
 #if 0
 	    deparse2buff(TAG(arglist));

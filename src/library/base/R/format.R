@@ -52,7 +52,7 @@ format.default <-
                  attributes(r) <- a
              r })
 }
-## NOTE: Currently need non-default format.dist() -> ../../mva/R/dist.R
+## NOTE: Currently need non-default format.dist() -> ../../stats/R/dist.R
 
 
 ## MM: This should also happen in C(.) :
@@ -236,7 +236,7 @@ format.data.frame <- function(x, ..., justify = "none")
                     rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
                 else rval[[i]][1:nr,]
             } else {
-                rval[[i]] <- if(len < nr) c(rval[[i]], rep(NA, nr-len))
+                rval[[i]] <- if(len < nr) c(rval[[i]], rep.int(NA, nr-len))
                 else rval[[i]][1:nr]
             }
         }
@@ -279,7 +279,7 @@ prettyNum <-
     if(big.mark == "" && small.mark == "" && decimal.mark == ".")
         return(x)
     ## else
-    x.sp <- strsplit(x, "\\.")
+    x.sp <- strsplit(x, ".", fixed=TRUE)
     P0 <- function(...) paste(..., sep="")
     revStr <- function(cc)
         sapply(lapply(strsplit(cc,NULL), rev), paste, collapse="")

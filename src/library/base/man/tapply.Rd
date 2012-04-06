@@ -46,13 +46,14 @@ tapply(X, INDEX, FUN = NULL, \dots, simplify = TRUE)
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  the convenience functions \code{\link{by}} and \code{\link{aggregate}}
-  (using \code{tapply});
+  the convenience functions \code{\link{by}} and
+  \code{\link[stats]{aggregate}} (using \code{tapply});
   \code{\link{apply}},
   \code{\link{lapply}} with its versions
   \code{\link{sapply}} and \code{\link{mapply}}.
 }
 \examples{
+require(stats)
 groups <- as.factor(rbinom(32, n = 5, p = .4))
 tapply(groups, groups, length) #- is almost the same as
 table(groups)

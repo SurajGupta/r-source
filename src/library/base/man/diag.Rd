@@ -47,6 +47,7 @@ diag(x) <- value
 \code{\link{upper.tri}}, \code{\link{lower.tri}}, \code{\link{matrix}}.
 }
 \examples{
+require(stats)
 dim(diag(3))
 diag(10,3,4) # guess what?
 all(diag(1:3) == {m <- matrix(0,3,3); diag(m) <- 1:3; m})

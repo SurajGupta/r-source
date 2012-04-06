@@ -69,7 +69,7 @@ x$name <- value
   list is used to replace (part of) one column, recycling the list as
   necessary.  If the columns specified by number are created, the names
   (if any) of the corresponding list elements are used to name the
-  columns.  If the replacment is not selecting rows, list values can
+  columns.  If the replacement is not selecting rows, list values can
   contain \code{NULL} elements which will cause the corresponding
   columns to be deleted.
 
@@ -95,6 +95,11 @@ x$name <- value
 
   When  \code{[} and \code{[[} are used with two indices, the
   column will be coerced as necessary to accommodate the value.
+
+  Note that when the replacement value is an array (including a matrix)
+  it is \emph{not} treated as a series of columns (as
+  \code{\link{data.frame}} and \code{\link{as.data.frame}} do) but
+  inserted as a single column.
 }
 \section{Warning}{
   Although the default for \code{drop} is \code{TRUE}, the default
@@ -125,7 +130,7 @@ sw[, 1:3]    # same
 sw[4:5, 1:3] # select rows and columns
 sw[1]        # a one-column data frame
 sw[, 1, drop = FALSE]  # the same
-sw[, 1]      # a (unamed) vector
+sw[, 1]      # a (unnamed) vector
 sw[[1]]      # the same
 
 sw[1,]       # a one-row data frame

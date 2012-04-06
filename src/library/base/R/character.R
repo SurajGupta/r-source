@@ -1,5 +1,6 @@
-strsplit <- function(x, split, extended = TRUE)
-    .Internal(strsplit(x, as.character(split), as.logical(extended)))
+strsplit <- function(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
+    .Internal(strsplit(x, as.character(split), as.logical(extended),
+                       as.logical(fixed), as.logical(perl)))
 
 substr <- function(x, start, stop)
     .Internal(substr(x, as.integer(start), as.integer(stop)))
@@ -8,7 +9,7 @@ substring <- function(text,first,last=1000000)
 {
     storage.mode(text) <- "character"
     n <- max(lt <- length(text), length(first), length(last))
-    if(lt < n) text <- rep(text, length = n)
+    if(lt && lt < n) text <- rep(text, length.out = n)
     substr(text, first, last)
 }
 
@@ -58,32 +59,9 @@ abbreviate <-
 make.names <- function(names, unique = FALSE)
 {
     names <- .Internal(make.names(as.character(names)))
-    ## append `.' to keyword
-    i <- is.element(names, c("for", "while", "repeat", "if",
-                             "else", "function", "next", "break",
-                             "TRUE", "FALSE", "NULL", "NA", "Inf", "NaN"))
-    if(any(i)) names[i] <- paste(names[i], ".", sep = "")
     if(unique) names <- make.unique(names)
     names
 }
-
-# make.unique <- function (names, sep = ".")
-# {
-#     if (!is.character(names))
-#         stop("names must be a character vector")
-#     cnt <- 1
-#     repeat {
-#         i <- which(duplicated(names))
-#         if (length(i) == 0) break
-#         j <- i[!duplicated(names[i])]
-#         newnames <- paste(names[j], cnt, sep=sep)
-#         ok<- !(newnames %in% names) & !duplicated(newnames)
-#         names[j][ok] <- newnames[ok]
-#         if (identical(i, j) && all(ok)) break
-#         cnt <- cnt + 1
-#       }
-#     names
-# }
 
 make.unique <- function (names, sep = ".") .Internal(make.unique(names, sep))
 

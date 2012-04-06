@@ -4,7 +4,7 @@ function (clName, filename = NULL, type = "class",
 {
     if(is.null(filename))
         filename <- paste(topicName(type, clName), ".Rd", sep = "")
-    
+
     classesInSig <- function(g, where) {
     # given a generic g, obtain list of all classes
     # named among its signatures
@@ -115,7 +115,7 @@ function (clName, filename = NULL, type = "class",
                      where, "; definition(s) on :", paste(whereClass, collapse = ", "))
         }
     }
-    fullName <- topicName("class", clName)
+    fullName <- utils::topicName("class", clName)
     clDef <- getClass(clName)
     .name <- paste0("\\name{", fullName, "}")
     .type <- paste0("\\docType{", type, "}")
@@ -246,17 +246,17 @@ function (clName, filename = NULL, type = "class",
 }
 
 
-.makeCallString <- function (def, name = substitute(def), args = formalArgs(def)) 
+.makeCallString <- function (def, name = substitute(def), args = formalArgs(def))
 {
 #
 # need this for experimentation because the function is not exported
 #
     if (is.character(def)) {
-        if (missing(name)) 
+        if (missing(name))
             name <- def
         def <- getFunction(def)
     }
-    if (is(def, "function")) 
+    if (is(def, "function"))
         paste(name, "(", paste(args, collapse = ", "), ")", sep = "")
     else ""
 }

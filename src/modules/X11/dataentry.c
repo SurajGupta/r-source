@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998--2004  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,6 @@
 
 #include <stdlib.h>
 
-#include "Defn.h"
-#include "Print.h"
-
 /* don't use X11 function prototypes (which tend to ...): */
 #define NeedFunctionPrototypes 0
 #include <X11/X.h>
@@ -36,7 +33,13 @@
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 
+#include "Defn.h"
+#include "Print.h"
+
+
+/* <FIXME> this is wrong  as KeySym is defined nowadays */
 #define KeySym int
+/* </FIXME> */
 #define DEEvent XEvent
 
 typedef enum { UP, DOWN, LEFT, RIGHT } DE_DIRECTION;
@@ -129,7 +132,6 @@ static int bwidth;			/* width of the border */
 static int hwidth;			/* width of header  */
 static int text_offset;
  
-static SEXP inputlist;  /* each element is a vector for that row */
 static SEXP ssNewVector(SEXPTYPE, int);
 static SEXP ssNA_STRING;
 static double ssNA_REAL;
@@ -419,8 +421,7 @@ static void drawwindow(void)
     colmax = colmin + (nwide - 2);
     rowmax = rowmin + (nhigh - 2);
     printlabs();
-    if (inputlist != R_NilValue)
-	for (i = colmin; i <= colmax; i++) drawcol(i);
+    for (i = colmin; i <= colmax; i++) drawcol(i);
 
     /* draw the quit etc boxes */
 
@@ -1268,7 +1269,7 @@ static KeySym GetKey(DEEvent * event)
     char text[1];
     KeySym iokey;
 
-    XLookupString(event, text, 1, &iokey, 0);
+    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
     return iokey;
 }
 
@@ -1277,7 +1278,7 @@ static char GetCharP(DEEvent * event)
     char text[1];
     KeySym iokey;
 
-    XLookupString(event, text, 1, &iokey, 0);
+    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
     return text[0];
 }
 
@@ -1298,7 +1299,7 @@ static void doControl(DEEvent * event)
     KeySym iokey;
 
     (*event).xkey.state = 0;
-    XLookupString(event, text, 1, &iokey, 0);
+    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
     /* one row overlap when scrolling: top line <--> bottom line */
     switch (text[0]) {
 	case 'b':
@@ -1327,7 +1328,7 @@ static void doConfigure(DEEvent * event)
 
 static void RefreshKeyboardMapping(DEEvent * event)
 {
-    XRefreshKeyboardMapping(event);
+    XRefreshKeyboardMapping((XMappingEvent *)event);
 }
 
 /* Initialize/Close Windows */
@@ -1437,7 +1438,7 @@ static Rboolean initwin(void) /* TRUE = Error */
 	return TRUE;
 
     XSetStandardProperties(iodisplay, iowindow, ioname, ioname, None,
-			   ioname, 0, &iohint);
+			   (char **)NULL, 0, &iohint);
 
     winattr.backing_store = Always;
     XChangeWindowAttributes(iodisplay, iowindow, CWBackingStore, &winattr);
@@ -1699,10 +1700,10 @@ static void copycell(void)
 	/* won't have  cell here */
     } else {
 	strcpy(copycontents, "");
-	if (length(inputlist) >= whichcol) {
-	    tmp = CAR(nthcdr(inputlist, whichcol - 1));
+	if (length(work) >= whichcol) {
+	    tmp = VECTOR_ELT(work, whichcol - 1);
 	    if (tmp != R_NilValue &&
-		(i = whichrow - 1) < (int)LEVELS(tmp) ) {
+		(i = whichrow - 1) < LENGTH(tmp) ) {
 		PrintDefaults(R_NilValue);
 		if (TYPEOF(tmp) == REALSXP) {
 		    if (REAL(tmp)[i] != ssNA_REAL)

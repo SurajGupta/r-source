@@ -71,7 +71,7 @@ are number of mailing lists which are used by R users and developers.
 They are
 
 @quotation
-@table @uref
+@table @email
 @item r-announce@@lists.r-project.org
 announcements of new R releases or applications;
 @item r-help@@lists.r-project.org
@@ -86,9 +86,9 @@ To subscribe (or unsubscribe) to these mailing lists send
 message (not in the subject!) to
 
 @quotation
-@uref{r-announce-request@@lists.r-project.org} @*
-@uref{r-help-request@@lists.r-project.org}     @*
-@uref{r-devel-request@@lists.r-project.org}
+@email{r-announce-request@@lists.r-project.org} @*
+@email{r-help-request@@lists.r-project.org}     @*
+@email{r-devel-request@@lists.r-project.org}
 @end quotation
 
 @ifinfo
@@ -127,11 +127,20 @@ University of Toronto, Canada
 @item @uref{http://cran.dk.r-project.org/}
 SunSITE, Denmark
 
+@item @uref{http://cran.fr.r-project.org/}
+INRA, Toulouse, France
+
 @item @uref{http://cran.hu.r-project.org/}
-Semmelweis University, Hungary 
+Semmelweis University, Hungary
+
+@item @uref{http://microarrays.unife.it/CRAN/}
+Universita di Ferrara, Italy
 
 @item @uref{ftp://ftp.u-aizu.ac.jp/pub/lang/R/CRAN/}
 University of Aizu, Japan
+
+@item @uref{http://www.fastmirrors.org/cran/}
+Fastmirrors.org, Slovenia
 
 @item @uref{http://cran.za.r-project.org/}
 Rhodes University, South Africa
@@ -141,6 +150,9 @@ Spanish National Research Network, Madrid, Spain
 
 @item @uref{http://cran.ch.r-project.org/}
 ETH Zurich, Switzerland
+
+@item @uref{http://cran.csie.ntu.edu.tw/}
+National Taiwan University, Taipei, Taiwan
 
 @item @uref{http://cran.uk.r-project.org/}
 University of Bristol, UK

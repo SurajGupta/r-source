@@ -33,6 +33,18 @@
 #include <config.h>
 #endif
 
+#if defined(Win32) && defined(LEA_MALLOC)
+#include <stddef.h>
+extern void *Rm_malloc(size_t n);
+extern void *Rm_calloc(size_t n_elements, size_t element_size);
+extern void Rm_free(void * p);
+extern void *Rm_realloc(void * p, size_t n);
+#define calloc Rm_calloc
+#define malloc Rm_malloc
+#define realloc Rm_realloc
+#define free Rm_free
+#endif
+
 #include <Defn.h>
 #include <Graphics.h> /* display lists */
 #include <Rdevices.h> /* GetDevice */
@@ -181,6 +193,10 @@ void R_SetMaxNSize(R_size_t size)
     if (size >= R_NSize) R_MaxNSize = size;
 }
 
+void R_SetPPSize(unsigned long size)
+{
+    R_PPStackSize = size;
+}
 
 /* Miscellaneous Globals. */
 
@@ -1675,12 +1691,12 @@ SEXP allocString(int length)
 
 /* Allocate a vector object on the heap */
 
-SEXP allocVector(SEXPTYPE type, int length)
+SEXP allocVector(SEXPTYPE type, R_len_t length)
 {
     SEXP s;     /* For the generational collector it would be safer to
 		   work in terms of a VECSEXP here, but that would
 		   require several casts below... */
-    int i;
+    R_len_t i;
     R_size_t size = 0, alloc_size, old_R_VSize;
     int node_class;
 

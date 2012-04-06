@@ -132,7 +132,7 @@ Boolean OpenHelpSearchBrowser(void)
     
      CreateNewWindow(kDocumentWindowClass,  kWindowStandardHandlerAttribute |
             kWindowStandardDocumentAttributes, &hsBounds, &HelpSearchBrowserWindow);
-
+	RepositionWindow (HelpSearchBrowserWindow,  NULL, kWindowCenterOnMainScreen);
     if(HelpSearchBrowserWindow == NULL)
      return(FALSE);
      
@@ -416,8 +416,11 @@ static pascal OSStatus hsGetSetItemData(ControlRef browser,
           }       
           CopyCStringToPascal(buf,pascalString);
           text = CFStringCreateWithPascalString(CFAllocatorGetDefault(), pascalString, kCFStringEncodingMacRoman);
-          err = SetDataBrowserItemDataText(itemData, text); 
-          CFRelease(text); 
+          if(text){
+			err = SetDataBrowserItemDataText(itemData, text); 
+			CFRelease(text); 
+			text = NULL;
+		}
          }
                    
          

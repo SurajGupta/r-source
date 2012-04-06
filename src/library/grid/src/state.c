@@ -35,11 +35,18 @@ int gridRegisterIndex;
  * GSS_GLOBALINDEX 8 = index of this system state in the global list of states
  * GSS_GRIDDEVICE 9 = does this device contain grid output?
  * GSS_PREVLOC 10 = previous location of grid "pen" 
+ * GSS_ENGINEDLON 11 = are we using the graphics engine's display list?
+ * GSS_CURRGROB 12 = current grob being drawn (for determining 
+ *   the list of grobs to search when evaluating a grobwidth/height
+ *   unit via gPath)
+ * GSS_ENGINERECORDING 13 = are we already inside a .Call.graphics call?
+ *   Used by grid.Call.graphics to avoid unnecessary recording on 
+ *   engine display list
 */
 
 SEXP createGridSystemState()
 {
-    return allocVector(VECSXP, 11);
+    return allocVector(VECSXP, 14);
 }
 
 void initDL(GEDevDesc *dd)
@@ -58,9 +65,34 @@ void initDL(GEDevDesc *dd)
     UNPROTECT(2);
 }
 
+/*
+ * This is used to init some bits of the system state
+ * Called when a grahpics engine redraw is about to occur
+ * NOTE that it does not init all of the state, in particular,
+ * the display list is not initialised here (see initDL), 
+ * nor is the ROOT viewport (see initVP),
+ * nor is the current gpar (see initGP)
+ */
+void initOtherState(GEDevDesc* dd)
+{
+    SEXP currloc, prevloc, recording;
+    SEXP state = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
+    currloc = VECTOR_ELT(state, GSS_CURRLOC);
+    REAL(currloc)[0] = 0;
+    REAL(currloc)[1] = 0;    
+    prevloc = VECTOR_ELT(state, GSS_PREVLOC);
+    REAL(prevloc)[0] = 0;
+    REAL(prevloc)[1] = 0;    
+    SET_VECTOR_ELT(state, GSS_CURRGROB, R_NilValue);
+    recording = VECTOR_ELT(state, GSS_ENGINERECORDING);
+    LOGICAL(recording)[0] = FALSE;
+    SET_VECTOR_ELT(state, GSS_ENGINERECORDING, recording);
+}
+
 void fillGridSystemState(SEXP state, GEDevDesc* dd) 
 {
-    SEXP devsize, currloc, prevloc, dlon, griddev;
+    SEXP devsize, currloc, prevloc, dlon, enginedlon, recording;
+    SEXP griddev;
     PROTECT(devsize = allocVector(REALSXP, 2));
     REAL(devsize)[0] = 0;
     REAL(devsize)[1] = 0;
@@ -80,6 +112,13 @@ void fillGridSystemState(SEXP state, GEDevDesc* dd)
     PROTECT(dlon = allocVector(LGLSXP, 1));
     LOGICAL(dlon)[0] = TRUE;
     SET_VECTOR_ELT(state, GSS_DLON, dlon);
+    PROTECT(enginedlon = allocVector(LGLSXP, 1));
+    LOGICAL(enginedlon)[0] = TRUE;
+    SET_VECTOR_ELT(state, GSS_ENGINEDLON, enginedlon);
+    SET_VECTOR_ELT(state, GSS_CURRGROB, R_NilValue);
+    PROTECT(recording = allocVector(LGLSXP, 1));    
+    LOGICAL(recording)[0] = FALSE;
+    SET_VECTOR_ELT(state, GSS_ENGINERECORDING, recording);
     initGPar(dd);
     SET_VECTOR_ELT(state, GSS_GPSAVED, R_NilValue);
     /* Do NOT initialise top-level viewport or grid display list for
@@ -91,7 +130,7 @@ void fillGridSystemState(SEXP state, GEDevDesc* dd)
     PROTECT(griddev = allocVector(LGLSXP, 1));
     LOGICAL(griddev)[0] = FALSE;
     SET_VECTOR_ELT(state, GSS_GRIDDEVICE, griddev);
-    UNPROTECT(5);
+    UNPROTECT(7);
 }
 
 SEXP gridStateElement(GEDevDesc *dd, int elementIndex)
@@ -148,9 +187,9 @@ SEXP gridCallback(GEevent task, GEDevDesc *dd, SEXP data) {
     SEXP gridState;
     GESystemDesc *sd;
     SEXP currentgp;
-    SEXP fillsxp;
     SEXP gsd;
     SEXP devsize;
+    R_GE_gcontext gc;
     switch (task) {
     case GE_InitState:
 	/* Create the initial grid state for a device
@@ -192,58 +231,67 @@ SEXP gridCallback(GEevent task, GEDevDesc *dd, SEXP data) {
 	 * on this device.
 	 */
 	if (LOGICAL(gridStateElement(dd, GSS_GRIDDEVICE))[0]) {
-	    /* The graphics engine is about to replay the display list
-	     * So we "clear" the device and reset the grid graphics state
-	     */
-	    /* There are two main situations in which this occurs:
-	     * (i) a screen is resized
-	     *     In this case, it is ok-ish to do a GENewPage
-	     *     because that has the desired effect and no 
-	     *     undesirable effects because it only happens on
-	     *     a screen device -- a new page is the same as
-	     *     clearing the screen
-	     * (ii) output on one device is copied to another device
-	     *     In this case, a GENewPage is NOT a good thing, however,
-	     *     here we will start with a new device and it will not
-	     *     have any grid output so this section will not get called
-	     *     SO we will not get any unwanted blank pages.
-	     *
-	     * All this is a bit fragile;  ultimately, what would be ideal
-	     * is a dev->clearPage primitive for all devices in addition
-	     * to the dev->newPage primitive
-	     */ 
-	    currentgp = gridStateElement(dd, GSS_GPAR);
-	    fillsxp = gpFillSXP(currentgp);
-	    /*
-	     * Instead of using the current fill, use ".grid.redraw.fill"
-	     * because if the current fill is transparent then the 
-	     * screen will not be cleared on a redraw
-	     * NOTE that this is a temporary fix awaiting a more complete
-	     * and complex fix (requiring changes to base)
-	     *
-	    
-	    fillsxp = getSymbolValue(".grid.redraw.fill");
-
-	     */
-	    /*
-	     * Just fill a rect rather than calling GENewPage
-
-	    if (isNull(fillsxp))
-		fill = NA_INTEGER;
-	    else
-		fill = RGBpar(fillsxp, 0);
-	    GERect(toDeviceX(-.1, GE_NDC, dd), toDeviceY(-.1, GE_NDC, dd),
-		   toDeviceX(1.1, GE_NDC, dd), toDeviceY(1.1, GE_NDC, dd),
-		   NA_INTEGER, fill, gpGamma(currentgp), 
-		   gpLineType(currentgp), gpLineWidth(currentgp), dd);
-
-	    */
-	    if (isNull(fillsxp))
-		GENewPage(NA_INTEGER, gpGamma(currentgp, 0), dd);
-	    else
-		GENewPage(RGBpar(fillsxp, 0), gpGamma(currentgp, 0), dd);
-	    initGPar(dd);
-	    initVP(dd);
+	    if (LOGICAL(gridStateElement(dd, GSS_ENGINEDLON))[0]) {
+		/* The graphics engine is about to replay the display list
+		 * So we "clear" the device and reset the grid graphics state
+		 */
+		/* There are two main situations in which this occurs:
+		 * (i) a screen is resized
+		 *     In this case, it is ok-ish to do a GENewPage
+		 *     because that has the desired effect and no 
+		 *     undesirable effects because it only happens on
+		 *     a screen device -- a new page is the same as
+		 *     clearing the screen
+		 * (ii) output on one device is copied to another device
+		 *     In this case, a GENewPage is NOT a good thing, however,
+		 *     here we will start with a new device and it will not
+		 *     have any grid output so this section will not get called
+		 *     SO we will not get any unwanted blank pages.
+		 *
+		 * All this is a bit fragile;  ultimately, what would be ideal
+		 * is a dev->clearPage primitive for all devices in addition
+		 * to the dev->newPage primitive
+		 */ 
+		currentgp = gridStateElement(dd, GSS_GPAR);
+		gcontextFromgpar(currentgp, 0, &gc);
+		GENewPage(&gc, dd);
+		/*
+		 * Instead of using the current fill, use ".grid.redraw.fill"
+		 * because if the current fill is transparent then the 
+		 * screen will not be cleared on a redraw
+		 * NOTE that this is a temporary fix awaiting a more complete
+		 * and complex fix (requiring changes to base)
+		 *
+		 
+		 fillsxp = getSymbolValue(".grid.redraw.fill");
+		 
+		*/
+		/*
+		 * Just fill a rect rather than calling GENewPage
+		 
+		 if (isNull(fillsxp))
+		 fill = NA_INTEGER;
+		 else
+		 fill = RGBpar(fillsxp, 0);
+		 GERect(toDeviceX(-.1, GE_NDC, dd), toDeviceY(-.1, GE_NDC, dd),
+		 toDeviceX(1.1, GE_NDC, dd), toDeviceY(1.1, GE_NDC, dd),
+		 NA_INTEGER, fill, gpGamma(currentgp), 
+		 gpLineType(currentgp), gpLineWidth(currentgp), dd);
+		 
+		*/
+		initGPar(dd);
+		initVP(dd);
+		initOtherState(dd);
+	    } else {
+		/*
+		 * If we have turned off the graphics engine's display list
+		 * then we have to redraw the scene ourselves
+		 */
+		SEXP fcall;
+		PROTECT(fcall = lang1(install("draw.all")));
+		eval(fcall, R_gridEvalEnv); 
+		UNPROTECT(1);
+	    }
 	}
 	break;
     case GE_CopyState:

@@ -1,10 +1,18 @@
 <html lang="en">
 <head>
 <title>R Installation and Administration</title>
-<meta http-equiv="Content-Type" content="text/html">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta name="description" content="R Installation and Administration">
-<meta name="generator" content="makeinfo 4.3">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
+<meta name="generator" content="makeinfo 4.6">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+--></style>
 </head>
 <body>
 <h1 class="settitle">R Installation and Administration</h1>
@@ -12,30 +20,26 @@
 
 <h2 class="unnumbered">R Installation and Administration</h2>
 
-   <p>This is a guide to installation and administration for R.
+<p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 1.8.1 (2003-11-21).
+   <p>The current version of this document is 1.9.0 (2004-04-12).
 
    ISBN 3-900051-02-X
-
-   </ul>
 
 <a name="Obtaining%20R"></a>
 
 <h2 class="chapter">1 Obtaining R</h2>
 
-   <p>Sources, binaries and documentation for R can be obtained via
+<p>Sources, binaries and documentation for R can be obtained via
 <small>CRAN</small>, the "Comprehensive R Archive Network".  See the file
 <code>RESOURCES</code> in the R distribution for information on
 <small>CRAN</small>.
-
-   </ul>
 
 <a name="Getting%20and%20unpacking%20the%20sources"></a>
 
 <h3 class="section">1.1 Getting and unpacking the sources</h3>
 
-   <p>The simplest way is to download the most recent
+<p>The simplest way is to download the most recent
 <code>R-</code><var>x</var><code>.</code><var>y</var><code>.</code><var>z</var><code>.tgz</code> file, and unpack it with
 
 <pre class="smallexample">     tar xvfz R-<var>x</var>.<var>y</var>.<var>z</var>.tgz
@@ -60,32 +64,61 @@ users, set <code>umask</code> before unpacking so that the files will be
 readable by the target group (e.g., <code>umask 022</code> to be usable by all
 users).
 
+<a name="Getting%20patched%20and%20development%20versions"></a>
+
+<h3 class="section">1.2 Getting patched and development versions</h3>
+
+<p>A patched version of the current release, <code>r-patched</code> and the
+current development version, <code>r-devel</code>, are available as daily
+tarballs and via rsync.  The development version is also available by
+anonymous CVS from <a href="http://anoncvs.r-project.org/">http://anoncvs.r-project.org/</a>.
+
+   <p>The tarballs are available from
+<a href="ftp://ftp.stat.math.ethz.ch/pub/Software/R/">ftp://ftp.stat.math.ethz.ch/pub/Software/R/</a>.  Download either
+<code>R-patched.tar.gz</code> or <code>R-devel.tar.gz</code> (or the
+<code>.tar.bz2</code> versions) and unpack as described in the previous
+section.
+
+   <p>These versions do not contain the current sources for the recommended
+packages, which can be obtained by rsync (see the next section) or from
+CRAN.  Do ensure that you have the correct versions of the recommended
+packages: if the number in the file <code>VERSION</code> is
+<code></code><var>x</var><code>.</code><var>y</var><code>.</code><var>z</var><code></code> you need to download the contents of
+<code>http://cran.r-project.org/src/contrib/</code><var>x</var><code>.</code><var>y</var><code>.</code><var>z</var><code>/Recommended</code>
+to directory <code>src/library/Recommended</code> in the sources you have
+unpacked.  Normally <code>R-patched.tar.gz</code> will have the number of the
+last released version, and <code>R-devel.tar.gz</code> that of the next minor
+(<code></code><var>x</var><code>.</code><var>y</var><code>.0</code>) release.
+
 <a name="Using%20rsync"></a>
 
-<h3 class="section">1.2 Using rsync</h3>
+<h3 class="section">1.3 Using rsync</h3>
 
-   <p>Sources are also available via anonymous rsync.  Use
+<p>Sources are also available via anonymous rsync.  Use
 
-<pre class="smallexample">     rsync -rC rsync.r-project.org::<var>module</var> R
+<pre class="smallexample">     rsync -rC --delete rsync.r-project.org::<var>module</var> R
      </pre>
 
 <p>to create a copy of the source tree specified by <var>module</var> in the
-subdirectory <code>R</code> of the current directory, where <var>module</var>
-specifies one of the four existing flavors of the R sources, and can be
-one of <code>r-release</code> (current released version), <code>r-patched</code>
+subdirectory <code>R</code> of the current directory, where <var>module</var> can
+be one of <code>r-release</code> (current released version), <code>r-patched</code>
 (patched released version), and <code>r-devel</code> (development version). 
-(These flavors are described in the R FAQ,
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/">http://www.ci.tuwien.ac.at/~hornik/R/</a>.)  The rsync trees are
-created directly from the master CVS archive and are updated hourly. 
-The <code>-C</code> option in the <code>rsync</code> command is to cause it to
-skip the CVS directories.  Further information on <code>rsync</code> is
-available at <a href="http://rsync.samba.org/rsync/">http://rsync.samba.org/rsync/</a>.
+The rsync trees are created directly from the master CVS archive and are
+updated hourly.  The <code>-C</code> option in the <code>rsync</code> command
+is to cause it to skip the CVS directories.  Further information on
+<code>rsync</code> is available at <a href="http://rsync.samba.org/rsync/">http://rsync.samba.org/rsync/</a>.
+
+   <p>Note that the sources available via rsync do not include the recommended
+packages, whereas these are included in the tarballs of released
+versions.  To install the appropriate sources for the recommended
+packages, run <code>./tools/rsync-recommended</code> from the top-level of
+the R sources.
 
 <a name="Installing%20R%20under%20Unix"></a>
 
 <h2 class="chapter">2 Installing R under Unix</h2>
 
-   <p>R will configure and build under a number of common Unix platforms
+<p>R will configure and build under a number of common Unix platforms
 including i386-freebsd, <var>cpu</var>-linux-gnu for the i386, alpha, arm,
 hppa, ia64, m68k, powerpc, and sparc CPUs (see e.g. 
 <a href="http://buildd.debian.org/build.php?&amp;pkg=r-base">http://buildd.debian.org/build.php?&amp;pkg=r-base</a>),
@@ -93,19 +126,18 @@ i386-sun-solaris, powerpc-apple-darwin, mips-sgi-irix, alpha-dec-osf4,
 rs6000-ibm-aix, hppa-hp-hpux, and sparc-sun-solaris.
 
    <p>In addition, binary distributions are available for most common Linux
-distributions, and for MacOS X (Darwin) with X11.  See the <small>FAQ</small>
-for current details.  These are installed in platform-specific ways.  So
-for the rest of this chapter we consider only building from the sources.
-
-   </ul>
+distributions, and for Mac OS X (Darwin) with and without X11.  See the
+<small>FAQ</small> for current details.  These are installed in platform-specific
+ways.  So for the rest of this chapter we consider only building from the sources.
 
 <a name="Simple%20compilation"></a>
 
 <h3 class="section">2.1 Simple compilation</h3>
 
-   <p>First review the essential and useful tools and libraries in
+<p>First review the essential and useful tools and libraries in
 <a href="#Essential%20and%20useful%20other%20programs">Essential and useful other programs</a>, and install those you want or
-need.
+need.  Ensure that the environment variable <code>TMPDIR</code> is either
+unset or points to a valid temporary directory.
 
    <p>Choose a place to install the R tree (R is not just a binary, but
 has additional data sets, help files, font metrics etc).  Let us call
@@ -184,7 +216,7 @@ the latest version).
 
 <h3 class="section">2.2 Making the manuals</h3>
 
-   <p>There is a set of manuals that can be built from the sources,
+<p>There is a set of manuals that can be built from the sources,
 
      <dl>
 <dt><code>refman</code>
@@ -224,7 +256,7 @@ are suitable for reading online with Emacs or the standalone GNU Info.
 
 <h3 class="section">2.3 Installation</h3>
 
-   <p>After
+<p>After
 
 <pre class="smallexample">     ./configure
      make
@@ -279,10 +311,10 @@ the sources and throughout the build process.
 
 <h2 class="chapter">3 Installing R under Windows</h2>
 
-   <p>The <code>bin/windows</code> directory of a <small>CRAN</small> site contains
+<p>The <code>bin/windows</code> directory of a <small>CRAN</small> site contains
 binaries for a base distribution and a large number of add-on packages
 from <small>CRAN</small> to run on Windows 95, 98, NT4, 2000, ME and XP (at
-least) on Intel and clones (but not on other platforms).
+least) on Intel x86 and clones (but not on other platforms).
 
    <p>You do need one of those Windows versions: Windows 3.11+win32s will not
 work.
@@ -290,31 +322,29 @@ work.
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>The simplest way is to use <code>rw1081.exe</code> or
+   <p>The simplest way is to use <code>rw1090.exe</code> or
 <code>miniR.exe</code>.  Just double-click on the icon and follow the
 instructions.  If you installed R this way you can uninstall it from the
 Control Panel.
 
-   <p>See the <a href="http://www.stats.ox.ac.uk/pub/R/rw-FAQ.html">R Windows <small>FAQ</small></a> for more details.
-
-   </ul>
+   <p>See the <a href="http://cran.r-project.org/bin/windows/rw-FAQ.html">R Windows <small>FAQ</small></a> for more details.
 
 <a name="Building%20from%20source"></a>
 
 <h3 class="section">3.1 Building from source</h3>
 
-   <p>If you want to build this port from the sources, see the file
+<p>If you want to build this port from the sources, see the file
 <code>src/gnuwin32/INSTALL</code> in the source distribution.  You will need
 to collect, install and test an extensive set of tools: see
-<a href="http://www.stats.ox.ac.uk/pub/Rtools/">http://www.stats.ox.ac.uk/pub/Rtools/</a> for the current locations.
+<a href="http://www.murdoch-sutherland.com/Rtools/">http://www.murdoch-sutherland.com/Rtools/</a> for the current locations.
 
    <p>You may need to compile under a case-honouring file system: we found
 that a <code>samba</code>-mounted file system (which maps all file names to
 lower case) did not work.  Open a commands window at a directory <em>whose
 path does not contain spaces</em>, and run something like
 
-<pre class="smallexample">     tar zxvf R-1.8.1.tgz
-     cd R-1.8.1\src\gnuwin32
+<pre class="smallexample">     tar zxvf R-1.9.0.tgz
+     cd R-1.9.0\src\gnuwin32
      make
      </pre>
 
@@ -324,13 +354,52 @@ disc).
    <p>For further details, including how to make the documentation and how to
 cross-compile, see <code>src/gnuwin32/INSTALL</code>.
 
+<a name="Installing%20R%20under%20Mac%20OS%20X"></a>
+
+<h2 class="chapter">4 Installing R under Mac OS X</h2>
+
+<p>The <code>bin/macosx</code> directory of a <small>CRAN</small> site contains
+binaries for a base distribution and a large number of add-on packages
+from <small>CRAN</small> to run on Mac OS X version 10.2.0 or higher.
+
+   <p>The simplest way is to use <code>R.dmg.sit</code>.  Just double-click on the icon and the
+archive will be expanded as an image di file. Read the <code>ReadMe.txt</code> inside the
+disk image and follow the instructions.
+
+   <p>See the <a href="http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <small>FAQ</small></a> for more details.
+
+<a name="Building%20from%20source%20on%20Mac%20OS%20X"></a>
+
+<h3 class="section">4.1 Building from source on Mac OS X</h3>
+
+<p>If you want to build this port from the sources, you can read the above
+mentioned <a href="http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <small>FAQ</small></a> for full details. You will need to collect and install some tools
+as explained in the document. Than you have to expand the R sources and
+configure R appropriately, for example
+
+<pre class="smallexample">     tar zxvf R-1.9.0.tgz
+     cd R-1.9.0
+     ./configure --with-blas='-framework vecLib' --with-lapack --with-aqua
+     make
+     </pre>
+
+<p>sit back and wait. The last option <code>--with-aqua</code> is needed only if you want a Console GUI. 
+The first two options are strongly recommended.
+
+   <p>R is by default configured and installed as a framework called <code>R.framework</code>. The
+default path for <code>R.framework</code> is <code>/Library/Frameworks</code> but this can be changed
+at configure time specifying the flag <code>--enable-R-framework[=DIR]</code> or at install
+time as
+<pre class="smallexample">     make prefix=/where/you/want/R.framework/to/go install
+     </pre>
+
+<p>the <code>R.framework</code> has not to be specified in the path.
+
 <a name="Add-on%20packages"></a>
 
-<h2 class="chapter">4 Add-on packages</h2>
+<h2 class="chapter">5 Add-on packages</h2>
 
-   </ul>
-
-   <p>This chapter applies to Unix-like and Windows versions of R.
+<p>This chapter applies to Unix-like and Windows versions of R.
 
    <p>It is helpful to use the correct terminology.  A <em>package</em> is
 loaded from a <em>library</em> by the function <code>library()</code>.  Thus a
@@ -341,9 +410,9 @@ setting the environment variable <code>R_LIBS</code> or using the R function
 
 <a name="Installing%20packages"></a>
 
-<h3 class="section">4.1 Installing packages</h3>
+<h3 class="section">5.1 Installing packages</h3>
 
-   <p>Packages may be distributed in source form or compiled binary form. 
+<p>Packages may be distributed in source form or compiled binary form. 
 Installing source packages requires that compilers and tools
 (including Perl 5.004 or later) be installed.  Binary packages
 are platform specific and generally need
@@ -364,10 +433,8 @@ first library in <code>R_LIBS</code> is used if set, otherwise the main
 library <code></code><var>R_HOME</var><code>/library</code> is used.  (<code>R_LIBS</code> is looked
 for in the environment: <code>.Renviron</code> is not read by <code>R CMD</code>.)
 
-   <p>The Windows equivalent is<a rel="footnote" href="#fn-1"><sup>1</sup></a>
-
-<pre class="smallexample">     Rcmd INSTALL -l /path/to/library <var>pkg1</var> <var>pkg2</var> ...
-     </pre>
+   <p>The same command works in Windows if you have the source-code package
+files installed.
 
    <p>Alternatively, packages can be downloaded and installed from within
 R.  First set the option <code>CRAN</code> to your nearest <small>CRAN</small>
@@ -398,9 +465,9 @@ interface to <code>install.packages</code>, <code>update.packages</code> and
 
 <a name="Updating%20packages"></a>
 
-<h3 class="section">4.2 Updating packages</h3>
+<h3 class="section">5.2 Updating packages</h3>
 
-   <p>The command <code>update.packages()</code> is the simplest way to ensure that
+<p>The command <code>update.packages()</code> is the simplest way to ensure that
 all the packages on your system are up to date.  Set the <code>CRAN</code>
 option as in the previous section.  The <code>update.packages()</code>
 downloads the list of available packages and their current versions,
@@ -419,20 +486,13 @@ intended to become the default package manager for future versions of R.
 
 <a name="Removing%20packages"></a>
 
-<h3 class="section">4.3 Removing packages</h3>
+<h3 class="section">5.3 Removing packages</h3>
 
-   <p>Packages can be removed in a number of ways.  From a command prompt they
+<p>Packages can be removed in a number of ways.  From a command prompt they
 can be removed by
 
 <pre class="smallexample">     R CMD REMOVE -l /path/to/library <var>pkg1</var> <var>pkg2</var> ...
      </pre>
-
-<p>(Unix) or
-
-<pre class="smallexample">     Rcmd REMOVE -l /path/to/library <var>pkg1</var> <var>pkg2</var> ...
-     </pre>
-
-<p>(Windows).
 
    <p>From a running R process they can be removed by
 
@@ -451,7 +511,7 @@ in the bundle have to removed individually.
 
 <h2 class="appendix">Appendix A Essential and useful other programs</h2>
 
-   <p>This appendix gives details of programs you will need to build R on
+<p>This appendix gives details of programs you will need to build R on
 Unix-like platforms, or which will be used by R if found by
 <code>configure</code>.
 
@@ -461,13 +521,11 @@ development version.  The latter usually has the same name but with the
 extension <code>-devel</code> or <code>-dev</code>: you need both versions
 installed.
 
-   </ul>
-
 <a name="Essential%20programs"></a>
 
 <h3 class="section">A.1 Essential programs</h3>
 
-   <p>You need a means of compiling C and FORTRAN 77 (see <a href="#Using%20FORTRAN">Using FORTRAN</a>).  Some add-on packages also need a C++ compiler.
+<p>You need a means of compiling C and FORTRAN 77 (see <a href="#Using%20FORTRAN">Using FORTRAN</a>).  Some add-on packages also need a C++ compiler.
 
    <p>Unless you do not want to view graphs on-screen you need <code>X11</code>
 installed, including its headers and client libraries.  (On RedHat Linux
@@ -488,7 +546,7 @@ documentation.
 
 <h3 class="section">A.2 Useful libraries and programs</h3>
 
-   <p>The command-line editing depends on the <code>readline</code> library
+<p>The command-line editing depends on the <code>readline</code> library
 available from any GNU mirror: you will need a fairly recent version.
 
    <p>The bitmapped graphics devices <code>jpeg()</code> and <code>png()</code> need the
@@ -499,17 +557,18 @@ or later) or <code>libpng</code> (version 1.2.3 or later) and <code>zlib</code>
    <p>The <code>bitmap</code> and <code>dev2bitmap</code> devices make use of ghostscript
 (<a href="http://www.cs.wisc.edu/~ghost">http://www.cs.wisc.edu/~ghost</a>).
 
-   <p>If you have them installed (including the appropriate headers),
-<code>zlib</code>, <code>libbz2</code> and PCRE will be used: otherwise versions
-in the R sources will be compiled in.
-
-   </ul>
+   <p>If you have them installed (including the appropriate headers and of
+late enough versions), <code>zlib</code>, <code>libbz2</code> and PCRE will be used
+if specified by <code>--with-zlib</code>, <code>--with-bzlib</code> or
+<code>--with-pcre</code>: otherwise versions in the R sources will be
+compiled in.  As the latter suffice and are tested with R you should
+not need to change this.
 
 <a name="Tcl%2fTk"></a>
 
-<h4 class="subsection">A.2.1 Tcl/Tk</h4>
+<h3 class="subsection">A.2.1 Tcl/Tk</h4>
 
-   <p>The <strong>tcltk</strong> package needs Tcl/Tk installed: the sources are
+<p>The <strong>tcltk</strong> package needs Tcl/Tk installed: the sources are
 available at <a href="http://www.scriptics.com/">http://www.scriptics.com/</a>.  To specify the locations
 of the Tcl/Tk files you may need the configuration options
 
@@ -532,12 +591,12 @@ no longer supported.
 
 <a name="Linear%20algebra"></a>
 
-<h4 class="subsection">A.2.2 Linear algebra</h4>
+<h3 class="subsection">A.2.2 Linear algebra</h4>
 
-   <p>The linear algebra routines in R can make use of enhanced BLAS (Basic
+<p>The linear algebra routines in R can make use of enhanced BLAS (Basic
 Linear Algebra Subprograms, <a href="http://www.netlib.org/blas/faq.html">http://www.netlib.org/blas/faq.html</a>)
 routines.  Some are compiler-system-specific (<code>libsunperf</code> on Sun
-Sparc<a rel="footnote" href="#fn-2"><sup>2</sup></a>, <code>libessl</code> on IBM, <code>vecLib</code> on MacOS
+Sparc<a rel="footnote" href="#fn-1"><sup>1</sup></a>, <code>libessl</code> on IBM, <code>vecLib</code> on Mac OS
 X) but ATLAS (<a href="http://math-atlas.sourceforge.net/">http://math-atlas.sourceforge.net/</a>) is a "tuned"
 BLAS that runs on a wide range of Unix-alike platforms.  If no more
 specific library is found, a <code>libblas</code> library in the library path
@@ -555,27 +614,45 @@ version of ATLAS.  You can use a multi-threaded ATLAS by specifying
 <pre class="smallexample">     --with-blas="-lptf77blas -lpthread -latlas"
      </pre>
 
+   <p>Another tuned BLAS which is available for some processors under Linux is
+by Kazushige Goto, currently available at
+<a href="http://www.cs.utexas.edu/users/flame/goto/">http://www.cs.utexas.edu/users/flame/goto/</a>.  Once this is is
+installed, it can be used by one of
+<pre class="smallexample">     --with-blas=goto
+     --with-blas=-lgoto
+     </pre>
+   Multi-threaded versions of Goto's BLAS are available, so please note the
+<em>caveat</em> in the previous paragraph.
+
+   <p>For Intel processors under Linux, Intel's Math Kernel Library
+<a href="http://www.intel.com/software/products/mkl/">http://www.intel.com/software/products/mkl/</a>
+can be used by
+<pre class="smallexample">     --with-blas="-lmkl -lguide -lpthread"
+     </pre>
+   with the same caveat on multi-threading.  (Thanks to Andy Liaw for the
+information.)
+
    <p>Note that the BLAS library will be used for several add-on packages as
 well as for R itself.  This means that it is better to use a shared
 BLAS library, as most of a static library will be compiled into the R
 executable and each BLAS-using package.  In any case, the BLAS library
-must be usable with dynamically-loadable code.
+must be usable with dynamically-loadable code: this can be a problem
+with ATLAS that is not by default built with position-independent code.
 
    <p>You will need double-precision and double-complex versions of the BLAS,
 but not single-precision nor complex routines.
 
-   <p>Provision is made for using an external LAPACK
-library, principally to cope with BLAS libraries which contain a copy of
-LAPACK (such as <code>libsunperf</code> on Solaris and <code>vecLib</code> on MacOS
-10.2.2).  However, the likely performance gains are thought to be small
-(and may be negative), and the default is not to search for a suitable
-LAPACK library.  You can specify a specific LAPACK library or a search
-for a generic library by the configuration option
-<code>--with-lapack</code>.  The default for <code>--with-lapack</code> is to
-check the BLAS library and then look for an external library
-<code>-llapack</code>.  Sites searching for the fastest possible linear
-algebra may want to build a LAPACK library using the ATLAS-optimized
-subset of LAPACK.  To do so specify something like
+   <p>Provision is made for using an external LAPACK library, principally to
+cope with BLAS libraries which contain a copy of LAPACK (such as
+<code>libsunperf</code> on Solaris and <code>vecLib</code> on Mac OS X 10.2.2). 
+However, the likely performance gains are thought to be small (and may
+be negative), and the default is not to search for a suitable LAPACK
+library.  You can specify a specific LAPACK library or a search for a
+generic library by the configuration option <code>--with-lapack</code>.  The
+default for <code>--with-lapack</code> is to check the BLAS library and then
+look for an external library <code>-llapack</code>.  Sites searching for the
+fastest possible linear algebra may want to build a LAPACK library using
+the ATLAS-optimized subset of LAPACK.  To do so specify something like
 <pre class="smallexample">     --with-lapack="-L/path/to/libs -llapack -lcblas"
      </pre>
 
@@ -601,7 +678,8 @@ is needed so <code>libsunperf</code> can be used.
 
    <p>An ATLAS `tuned' BLAS can also be used on Windows: see
 <code>src/gnuwin32/INSTALL</code> for how to enable this when building from
-source, and <a href="http://www.stats.ox.ac.uk/pub/R/rw-FAQ.html">R Windows <small>FAQ</small></a> for adding pre-compiled support to binary versions.
+source, and <a href="http://cran.r-project.org/bin/windows/rw-FAQ.html">R Windows <small>FAQ</small></a> for adding pre-compiled support to binary versions. 
+Goto's BLAS can also be used when building from source.
 
    <p>Note that under Unix (but not under Windows) if R is compiled
 against a non-default BLAS, then all BLAS-using packages must also be. 
@@ -612,13 +690,11 @@ So if R is re-built after ATLAS is installed, then packages such as
 
 <h2 class="appendix">Appendix B Configuration on Unix</h2>
 
-   </ul>
-
 <a name="Configuration%20options"></a>
 
 <h3 class="section">B.1 Configuration options</h3>
 
-   <p><code>configure</code> has many options: running
+<p><code>configure</code> has many options: running
 
 <pre class="smallexample">     ./configure --help
      </pre>
@@ -656,7 +732,7 @@ an application which embeds R.
 
 <h3 class="section">B.2 Configuration variables</h3>
 
-   <p>If you need or want to set certain configure variables to something
+<p>If you need or want to set certain configure variables to something
 other than their default, you can do that by either editing the file
 <code>config.site</code> (which documents all the variables you might want to
 set) or on the command line as
@@ -704,7 +780,7 @@ option <code>--config-cache</code> (or <code>-C</code>) to enable caching.
 
 <h3 class="section">B.3 Using make</h3>
 
-   <p>To compile R, you will most likely find it easiest to use GNU
+<p>To compile R, you will most likely find it easiest to use GNU
 <code>make</code>.  On Solaris 2.6/7/8 in particular, you need a version of
 GNU <code>make</code> different from 3.77; 3.79.1 works fine, as does the Sun
 <code>make</code>.  The native <code>make</code> is reported to fail on SGI
@@ -725,14 +801,14 @@ GNU <code>make</code> is called <code>gmake</code>, you need to set the variable
 
 <h3 class="section">B.4 Using FORTRAN</h3>
 
-   <p>To compile R, you need a FORTRAN compiler or <code>f2c</code>, the
+<p>To compile R, you need a FORTRAN compiler or <code>f2c</code>, the
 FORTRAN-to-C converter (<a href="http://www.netlib.org/f2c">http://www.netlib.org/f2c</a>).  The default
 is to search for <code>g77</code>, <code>f77</code>, <code>xlf</code>,
 <code>frt</code>, <code>pgf77</code>, <code>fl32</code>, <code>af77</code>,
 <code>fort77</code>, <code>f90</code>, <code>xlf90</code>, <code>pgf90</code>,
 <code>epcf90</code>, <code>f95</code>, <code>fort</code>, <code>xlf95</code>,
 <code>lf95</code>, <code>g95</code>, and <code>fc</code> (in that
-order)<a rel="footnote" href="#fn-3"><sup>3</sup></a>, and
+order)<a rel="footnote" href="#fn-2"><sup>2</sup></a>, and
 then for <code>f2c</code>, and use whichever is found first; if none is
 found, R cannot be compiled.  The search mechanism can be changed
 using the configure variables <code>F77</code> and <code>F2C</code> which specify
@@ -755,11 +831,11 @@ pointer.  This is checked during the configuration process.
 
    <p>Some of the FORTRAN code makes use of <code>COMPLEX*16</code> variables, which
 is a FORTRAN 90 extension.  This is checked for at configure
-time<a rel="footnote" href="#fn-4"><sup>4</sup></a>, but you may need to avoid
-compiler flags<a rel="footnote" href="#fn-5"><sup>5</sup></a> asserting
+time<a rel="footnote" href="#fn-3"><sup>3</sup></a>, but you may need to avoid
+compiler flags<a rel="footnote" href="#fn-4"><sup>4</sup></a> asserting
 FORTRAN 77 compliance.
 
-   <p>For performance reasons<a rel="footnote" href="#fn-6"><sup>6</sup></a> you may want to choose a FORTRAN 90/95 compiler.
+   <p>For performance reasons<a rel="footnote" href="#fn-5"><sup>5</sup></a> you may want to choose a FORTRAN 90/95 compiler.
 
    <p>If you use <code>f2c</code> you may need to ensure that the FORTRAN type
 <code>integer</code> is translated to the C type <code>int</code>.  Normally
@@ -770,7 +846,7 @@ on a 32-bit platform but not on a 64-bit platform.
 
 <h3 class="section">B.5 Compile and load flags</h3>
 
-   <p>A wide range of flags can be set in the file <code>config.site</code> or as
+<p>A wide range of flags can be set in the file <code>config.site</code> or as
 configure variables on the command line.  We have already mentioned
 
      <dl>
@@ -822,7 +898,7 @@ structures are passed.
 
 <h3 class="section">B.6 Building the <small>GNOME</small> interface</h3>
 
-   <p>This interface is experimental and incomplete.  It provides a console
+<p>This interface is experimental and incomplete.  It provides a console
 and two graphics devices named <code>gtk()</code> and <code>gnome()</code>.  The
 console offers a basic command line editing and history mechanism, along
 with tool and button bars that give a point-and-click interface to some
@@ -883,20 +959,18 @@ packages in order to compile the R-GNOME interface.
 
 <h3 class="section">B.7 Platform notes</h3>
 
-   <p>This section provides some notes on building R on different Unix-like
+<p>This section provides some notes on building R on different Unix-like
 platforms.  These notes are based on tests run on one or two systems in
 each case with particular sets of compilers and support libraries. 
 Success in building R depends on the proper installation and functioning
 of support software; your results may differ if you have other versions
 of compilers and support libraries.
 
-   </ul>
-
 <a name="Linux"></a>
 
-<h4 class="subsection">B.7.1 Linux</h4>
+<h3 class="subsection">B.7.1 Linux</h4>
 
-   <p>Linux is the main development platform for R, so compilation from the
+<p>Linux is the main development platform for R, so compilation from the
 sources is normally straightforward.
 
    <p>Remember that some package management systems (such as <small>RPM</small> and
@@ -912,26 +986,28 @@ sometimes problems with missing components such as the Fortran
 compiler.  Searching the <code>R-help</code> archives will normally reveal
 what is needed.
 
-<a name="MacOS%20X"></a>
+   <p>It seems that the <code>gcc</code> compilers normally produce PIC code on
+<code>ix86</code> Linux but do not necessarily do so on 64-bit versions such
+as that for AMD Opteron.  So care can be needed with BLAS libraries and
+when building R as a shared library to ensure that
+position-independent code is used in any static libraries (such as the
+Tcl/Tk libraries, <code>libpng</code>, <code>libjpeg</code> and <code>zlib</code>) which
+might be linked against.  Fortunately these are normally built as shared
+libraries with the exception of the ATLAS BLAS libraries.
 
-<h4 class="subsection">B.7.2 MacOS X</h4>
+<a name="Mac%20OS%20X"></a>
 
-   <p>You can build R as a Unix application on MacOS X.  You will need the
-DevTools, <code>f2c</code> or <code>g77</code>, and the <code>dlcompat</code>
-library.  You will also need to install an X sub-system or configure
-with <code>--without-x</code>.
+<h3 class="subsection">B.7.2 Mac OS X</h4>
 
-   <p><code>f2c</code>, <code>g77</code>, the <code>dlcompat</code> library, and X server
-and support libraries are available from the Fink project
-(<a href="http://fink.sourceforge.net">http://fink.sourceforge.net</a>).  At the time of writing
-<code>f2c</code> and <code>g77</code> were not available as part of the Fink
-binary distribution and needed to be installed directly; for example for
-<code>g77</code> use
+<p>You can build R as a Unix application on Mac OS X.  You will need Apple Developer
+Tools, <code>f2c</code> or <code>g77</code>.  You will also need to install an X sub-system
+or configure with <code>--without-x</code>. The X window manager is part of the
+standard Mac OS X distribution since Mac OS X version 10.3.
 
-<pre class="smallexample">     fink install g77
-     </pre>
+   <p>For more information on how to find these tools please read the
+<a href="http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <small>FAQ</small></a>.
 
-   <p>The <code>vecLib</code> library of MacOS &gt;= 10.2.2 can be used <em>via</em> the
+   <p>The <code>vecLib</code> library of Mac OS X &gt;= 10.2.2 can be used <em>via</em> the
 configuration options
 <pre class="smallexample">     --with-blas="-framework vecLib" --with-lapack
      </pre>
@@ -939,14 +1015,13 @@ configuration options
 <p>to provide higher-performance versions of the BLAS and LAPACK routines. 
 With <code>gcc 3.1</code> that appears to be the only way to build R, as
 the Fortran support routines in <code>libg2c</code> cannot be linked into a
-dynmaic library.  (We have had reports of success with pre-release
-versions of <code>gcc 3.3</code>.)
+dynamic library.  (We have had reports of success with <code>gcc 3.3</code>.)
 
 <a name="Solaris"></a>
 
-<h4 class="subsection">B.7.3 Solaris on Sparc</h4>
+<h3 class="subsection">B.7.3 Solaris on Sparc</h4>
 
-   <p>R has been built successfully on Solaris 8 aka Solaris 2.8 aka SunOS
+<p>R has been built successfully on Solaris 8 aka Solaris 2.8 aka SunOS
 5.8 using <code>gcc</code>/<code>g77</code> and the SunPro WorkShop&nbsp;6 (aka
 Forte 6) compilers and the `Sun ONE Studio 7 Compiler Suite' (aka Forte
 7), and less regularly on Solaris 2.5.1, 2.6, 2.7 and 9.  GNU
@@ -1012,36 +1087,38 @@ compilers we used
    <p>Note that <code>/usr/local/lib/sparcv9</code> will need to be in the
 <code>LD_LIBRARY_PATH</code> during configuration.
 
-   <p>Note that using <code>f95</code> allows the Sun
-performance library <code>libsunperf</code> to be selected: it will not work
-with <code>f77</code>, nor with <code>g77</code>.  <code>libsunperf</code>
-contains both BLAS and LAPACK code, and <code>--with-lapack</code> is
-recommended for 32-bit builds using <code>f95</code>, but not for
-64-bit builds where on our test system it failed in both Forte 6U1 and
-7, albeit in different ways.  Our experience has been that ATLAS's BLAS
-is faster than <code>libsunperf</code>, especially for complex numbers.
+   <p>Note that using <code>f95</code> allows the Sun performance library
+<code>libsunperf</code> to be selected: it will not work with <code>f77</code>,
+nor with <code>g77</code>.  <code>libsunperf</code> contains both BLAS and LAPACK
+code, and <code>--with-lapack</code> is recommended for 32-bit builds using
+<code>f95</code>, but not for 64-bit builds where on our test system it
+failed in both Forte 6U1 and 7, albeit in different ways.  Our
+experience has been that ATLAS's BLAS is faster than <code>libsunperf</code>,
+especially for complex numbers.
 
    <p>Some care is needed to ensure that libraries found by
 <code>configure</code> are compatible with the R executable and modules, as
 the testing process will not detect many of the possible problems.  For
 32-bit builds under <code>cc</code> the flag <code>-dalign</code> is needed for
 some of the Sun libraries: fortunately the equivalent flag for
-<code>gcc</code>, <code>-mno-unaligned-doubles</code>, is the default.  In theory,
-libraries such as <code>libpng</code>, <code>libjpeg</code>, <code>zlib</code> and the
-ATLAS libraries need to be built with a <code>pic</code> or <code>PIC</code> flag,
-which could be a problem if static libraries are used.  In practice this
-seems to give little problem for 32-bit builds.
+<code>gcc</code>, <code>-mno-unaligned-doubles</code>, is the default.  In
+theory, libraries such as <code>libpng</code>, <code>libjpeg</code>, <code>zlib</code> and
+the ATLAS libraries need to be built with a <code>pic</code> or <code>PIC</code>
+flag, which could be a problem if static libraries are used.  In
+practice this seems to give little problem for 32-bit builds.
 
    <p>For a 64-bit build, 64-bit libraries must be used.  As the configuration
 process by default sets <code>LDFLAGS</code> to <code>-L/usr/local/lib</code>,
 you may need to set it to avoid finding 32-bit addons (as in the
-<code>gcc -m64</code> example above).
+<code>gcc -m64</code> example above).  It is possible to build Tcl/Tk as
+64-bit libraries with the configure option <code>--enable-64bit</code>, but
+only with the Forte compiler (and not with <code>gcc</code>) as of Tcl/Tk 8.4.5.
 
 <a name="HP-UX"></a>
 
-<h4 class="subsection">B.7.4 HP-UX</h4>
+<h3 class="subsection">B.7.4 HP-UX</h4>
 
-   <p>R has been built successfully on HP-UX 10.2 and HP-UX 11.0 using both
+<p>R has been built successfully on HP-UX 10.2 and HP-UX 11.0 using both
 native compilers and <code>gcc</code>.  However, 10.2 has not been tested
 since R 1.4.0.  By default, R is configured to use <code>gcc</code> and
 <code>g77</code> on HP-UX (if available).  Some installations of
@@ -1083,7 +1160,7 @@ problems are
 
 <p>and <code>bzip2</code> and <code>pcre</code> are problematic when building
 <code>libR.so</code>, only.  These can be avoided by <code>--without-bzlib</code>
-and <code>--without-pcre</code> respectively.
+and <code>--without-pcre</code> respectively, but these are the defaults.
 
    <p>Some versions of <code>gcc</code> may contain what appears to be a bug at
 the <code>-O2</code> optimization level that causes
@@ -1127,9 +1204,9 @@ LDFLAGS=/opt/fortran90/lib</code>).
 
 <a name="IRIX"></a>
 
-<h4 class="subsection">B.7.5 IRIX</h4>
+<h3 class="subsection">B.7.5 IRIX</h4>
 
-   <p>R has been built successfully on IRIX64 6.5 using
+<p>R has been built successfully on IRIX64 6.5 using
 <code>gcc</code>/<code>f77</code> or <code>cc</code>/<code>f77</code> for 32-bit
 executables and the native compilers for a 64-bit executable.  The
 command
@@ -1147,9 +1224,9 @@ tests.
 
 <a name="Alpha%2fOSF1"></a>
 
-<h4 class="subsection">B.7.6 Alpha/OSF1</h4>
+<h3 class="subsection">B.7.6 Alpha/OSF1</h4>
 
-   <p>R has been built successfully on an Alpha running OSF1 V4.0 using
+<p>R has been built successfully on an Alpha running OSF1 V4.0 using
 <code>gcc</code>/<code>g77</code> and <code>cc</code>/<code>f77</code>.  Mixing
 <code>cc</code> and <code>g77</code> fails to configure.  The
 <code>configure</code> option <code>--without-blas</code> was used since the
@@ -1160,9 +1237,9 @@ these are fatal.
 
 <a name="Alpha%2fFreeBSD"></a>
 
-<h4 class="subsection">B.7.7 Alpha/FreeBSD</h4>
+<h3 class="subsection">B.7.7 Alpha/FreeBSD</h4>
 
-   <p>Attempts to build R on an Alpha with FreeBSD 4.3 have been only
+<p>Attempts to build R on an Alpha with FreeBSD 4.3 have been only
 partly successful.  Configuring with <code>-mieee</code> added to both
 <code>CFLAGS</code> and <code>FFLAGS</code> builds successfully, but tests fail with
 <code>SIGFPE</code>'s.  It would appear that <code>-mieee</code> only defers these
@@ -1171,9 +1248,9 @@ port would be greatly appreciated.
 
 <a name="AIX"></a>
 
-<h4 class="subsection">B.7.8 AIX</h4>
+<h3 class="subsection">B.7.8 AIX</h4>
 
-   <p>On AIX 4.3.3 and AIX 5.1, it was found that the use of "run time
+<p>On AIX 4.3.3 and AIX 5.1, it was found that the use of "run time
 linking" (as opposed to normal AIX style linking) was required.  For
 this, the R main program must be linked to the runtime linker with the
 <code>-brtl</code> linker option, and shareable objects must be enabled for
@@ -1187,8 +1264,8 @@ note that linker flags must be escaped using <code>-Wl,</code> if
 <code>gcc</code> is used for linking: use <code>MAIN_LDFLAGS="-Wl,brtl"</code>
 and <code>SHLIB_LDFLAGS="-Wl,-G"</code> in this case.
 
-   <p>Harald Servat Gelabert &lt;harald@cepba.upc.es&gt; reported success building
-R 1.7.0 under AIX 5.1 with
+   <p>Harald Servat Gelabert &lt;harald at cepba dot upc dot es&gt; reported
+success building R 1.7.0 under AIX 5.1 with
 
 <pre class="smallexample">     CC=xlc
      F77=xlf
@@ -1203,11 +1280,96 @@ R 1.7.0 under AIX 5.1 with
 <p>but was unable to use the X libraries or the native BLAS (ESSL) and so
 used <code>--without-x --without-blas</code>.
 
+<a name="Enabling%20search%20in%20HTML%20help"></a>
+
+<h2 class="chapter">3 Enabling search in HTML help</h2>
+
+<p>There is a search engine available from the front page of the
+<small>HTML</small> help system, the page that is displayed by
+<code>help.start()</code>.  The search engine is written in Java and invoked
+by Javascript code, so the first thing to do is to ensure that both are
+enabled in your favourite browser.  Then try it and see: with most
+browsers you should see
+
+<pre class="smallexample">     Applet SearchEngine started
+     </pre>
+
+<p>displayed in the status bar.  (Internet Explorer shows <code>Applet
+started</code>.) Then click on one of the keywords and after a short delay
+(several seconds) you should see a page of search results.
+
+   <p>If this fails you should double-check that Java is enabled in your
+browser by visiting a page such as
+<a href="http://www.java.com/en/download/help/testvm.jsp">http://www.java.com/en/download/help/testvm.jsp</a> (although that
+will fail for earlier versions of Java such as the Microsoft JVM which
+do work with R).  You can check which version of Java is in use at
+<a href="http://java.sun.com/docs/books/tutorial/applet/practical/properties.html">http://java.sun.com/docs/books/tutorial/applet/practical/properties.html</a>. 
+Java 1.1 is sufficent.
+
+   <p>Many thanks to Marc Schwartz in tracking down many of these issues with
+enabling the Java search engine.
+
+<a name="Java%20Virtual%20Machines%20on%20Linux"></a>
+
+<h3 class="section">C.1 Java Virtual Machines on Linux</h3>
+
+<p>We are aware of problems with certain Java installations.  In
+particular, Sun's Java Run-time Environment <code>j2re 1.4.2_02</code> does
+not work under Linux.  Current browsers of the Mozilla family (including
+Mozilla &gt;= 1.4, Netscape 7.1 and FireFox) are compiled under <code>gcc
+3.x</code> and <em>require</em> the <code>ns610-gcc32</code> version of the Java
+plugin that was introduced with <code>j2re 1.4.2</code>, so the only Java
+version that we know to work is <code>j2re 1.4.2_01</code>.  Marc Schwartz has
+kindly made Linux <code>i586</code> distributions available: see
+
+<pre class="smallexample">     http://www.MedAnalytics.com/INSTALL
+     </pre>
+
+<p>Other Java installations, for example those from Blackdown and IBM, have
+been used.
+
+   <p>Other useful links are for Mozilla,
+<a href="http://plugindoc.mozdev.org/faqs/java.html">http://plugindoc.mozdev.org/faqs/java.html</a> and
+<a href="http://www.mozilla.org/releases/mozilla1.6/installation-extras.html">http://www.mozilla.org/releases/mozilla1.6/installation-extras.html</a>,
+for Konqueror <a href="http://www.konqueror.org/javahowto/">http://www.konqueror.org/javahowto/</a>, for Opera
+<a href="http://www.opera.com/support/search/supsearch.dml?index=459">http://www.opera.com/support/search/supsearch.dml?index=459</a> and
+for Debian GNU/Linux
+<a href="http://www.debian.org/doc/manuals/debian-java-faq/">http://www.debian.org/doc/manuals/debian-java-faq/</a>.
+
+<a name="Java%20Virtual%20Machines%20on%20Unix"></a>
+
+<h3 class="section">C.2 Java Virtual Machines on Unix</h3>
+
+<p>We have much less experience, but we do know that Sun's Run-time
+Environment <code>j2re 1.4.2_03</code> does not work under Solaris, whereas
+<code>j2re 1.4.2_01</code> and earlier do.  Marc Schwartz kindly made Solaris
+distributions of <code>j2re 1.4.2_01</code> available: see
+
+<pre class="smallexample">     http://www.MedAnalytics.com/INSTALL
+     </pre>
+
+   <p>Sun's <code>j2re 1.4.x</code> is said not to work with Mozilla 1.6 under Mac OS X.
+
+<a name="Java%20Virtual%20Machines%20on%20Windows"></a>
+
+<h3 class="section">C.3 Java Virtual Machines on Windows</h3>
+
+<p>We have not seen any problems on Windows provided a Java Virtual Machine
+has been installed and is operational: Sun's current <code>j2re
+1.4.2_04</code> works in Internet Explorer, Netscape 7.1, Mozilla 1.6 and
+Mozilla FireFox 0.8 on Windows XP.  Note that a recent Windows system
+may not have Java installed at all.  For Netscape/Mozilla/FireFox visit
+<a href="http://java.sun.com/getjava/manual.html">http://java.sun.com/getjava/manual.html</a> to install a Sun JVM. 
+Which (if any) JVM is enabled can be set in `Set Program Access and
+Defaults' in Windows XP (SP1 or later), and which JVM is used by browser
+plugins may also be controlled by the Sun Java applet in the Control
+Panel.
+
 <a name="New%20platforms"></a>
 
-<h2 class="appendix">Appendix C New platforms</h2>
+<h2 class="appendix">Appendix D New platforms</h2>
 
-   <p>There are a number of sources of problems when installing R on a new
+<p>There are a number of sources of problems when installing R on a new
 hardware/OS platform.  These include
 
    <p><strong>Floating Point Arithmetic</strong>: R supports the <small>POSIX</small>,
@@ -1262,24 +1424,25 @@ of practice at porting R to new platforms <small class="enddots">....</small>
 <li><code>remove.packages</code>: <a href="#Removing%20packages">Removing packages</a>
 <li><code>rsync</code>: <a href="#Using%20rsync">Using rsync</a>
 <li><code>update.packages</code>: <a href="#Updating%20packages">Updating packages</a>
-   </ul>
+</ul>
 <a name="Concept%20index"></a>
 
 <h2 class="unnumbered">Concept index</h2>
 
 <ul class="index-cp" compact>
 <li>AIX: <a href="#AIX">AIX</a>
-<li>BLAS library: <a href="#Solaris">Solaris</a>, <a href="#MacOS%20X">MacOS X</a>, <a href="#Using%20FORTRAN">Using FORTRAN</a>, <a href="#Linear%20algebra">Linear algebra</a>
+<li>BLAS library: <a href="#Solaris">Solaris</a>, <a href="#Mac%20OS%20X">Mac OS X</a>, <a href="#Using%20FORTRAN">Using FORTRAN</a>, <a href="#Linear%20algebra">Linear algebra</a>
 <li>FORTRAN: <a href="#Using%20FORTRAN">Using FORTRAN</a>
 <li>Help pages: <a href="#Simple%20compilation">Simple compilation</a>
 <li>HP-UX: <a href="#HP-UX">HP-UX</a>
 <li>Installation: <a href="#Installation">Installation</a>
+<li>Installing R under Mac OS X: <a href="#Installing%20R%20under%20Mac%20OS%20X">Installing R under Mac OS X</a>
 <li>Installing under Unix: <a href="#Installing%20R%20under%20Unix">Installing R under Unix</a>
 <li>Installing under Windows: <a href="#Installing%20R%20under%20Windows">Installing R under Windows</a>
 <li>IRIS: <a href="#IRIX">IRIX</a>
-<li>LAPACK library: <a href="#Solaris">Solaris</a>, <a href="#MacOS%20X">MacOS X</a>, <a href="#Linear%20algebra">Linear algebra</a>
+<li>LAPACK library: <a href="#Solaris">Solaris</a>, <a href="#Mac%20OS%20X">Mac OS X</a>, <a href="#Linear%20algebra">Linear algebra</a>
 <li>Linux: <a href="#Linux">Linux</a>, <a href="#Installing%20R%20under%20Unix">Installing R under Unix</a>
-<li>MacOS X: <a href="#MacOS%20X">MacOS X</a>, <a href="#Installing%20R%20under%20Unix">Installing R under Unix</a>
+<li>Mac OS X: <a href="#Mac%20OS%20X">Mac OS X</a>, <a href="#Installing%20R%20under%20Unix">Installing R under Unix</a>
 <li>Manuals: <a href="#Making%20the%20manuals">Making the manuals</a>
 <li>Manuals, installing: <a href="#Installation">Installation</a>
 <li>Obtaining R: <a href="#Obtaining%20R">Obtaining R</a>
@@ -1289,7 +1452,7 @@ of practice at porting R to new platforms <small class="enddots">....</small>
 <li>Packages, updating: <a href="#Updating%20packages">Updating packages</a>
 <li>Solaris: <a href="#Solaris">Solaris</a>
 <li>Sources for R: <a href="#Getting%20and%20unpacking%20the%20sources">Getting and unpacking the sources</a>
-   </ul>
+</ul>
 
 
    <div class="footnote">
@@ -1297,26 +1460,22 @@ of practice at porting R to new platforms <small class="enddots">....</small>
 <h4>Footnotes</h4>
 <ol type="1">
 <li><a name="fn-1"></a>
-<p>if you have the source-code package
-files installed</p>
-
-   <li><a name="fn-2"></a>
 <p>Using the SunPro aka Forte aka Sun ONE <code>cc</code> and
 <code>f95</code> compilers</p>
 
-   <li><a name="fn-3"></a>
+   <li><a name="fn-2"></a>
 <p>On HP-UX <code>fort77</code> is the <small>POSIX</small>
 compliant FORTRAN compiler, and comes second in the search list.</p>
 
-   <li><a name="fn-4"></a>
+   <li><a name="fn-3"></a>
 <p>as well as its equivalence to the <code>Rcomplex</code>
 structure defined in <code>R_ext/Complex.h</code>.</p>
 
-   <li><a name="fn-5"></a>
+   <li><a name="fn-4"></a>
 <p>In particular, avoid <code>g77</code>'s
 <code>-pedantic</code>, which gives confusing error messages.</p>
 
-   <li><a name="fn-6"></a>
+   <li><a name="fn-5"></a>
 <p>e.g., to use an optimized BLAS on
 Sun/Sparc</p>
 

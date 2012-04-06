@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2002 R Core Team
+### Copyright (C) 1998-2004 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -181,13 +181,13 @@ AC_SUBST(R_RD4PDF)
 ## ---------------
 AC_DEFUN([R_PROG_MAKEINFO],
 ## This used to be part of R_PROG_TEXMF, where it really belongs.
-## Unfortunately, AM_PROG_LIBTOOL unconditionally overwrites MAKEINFO
+## Unfortunately, AC_PROG_LIBTOOL unconditionally overwrites MAKEINFO
 ## by makeinfo or missing.  To allow users to pass a MAKEINFO setting to
-## configure, we thus have to run R_PROG_TEXMF before AM_PROG_LIBTOOL,
+## configure, we thus have to run R_PROG_TEXMF before AC_PROG_LIBTOOL,
 ## save the result to something not overwritten (hence MAKEINFO_CMD),
 ## and finally set MAKEINFO according to our needs.
 [AC_REQUIRE([R_PROG_TEXMF])
-AC_REQUIRE([AM_PROG_LIBTOOL])
+AC_REQUIRE([AC_PROG_LIBTOOL])
 if test -n "${MAKEINFO_CMD}"; then
   _R_PROG_MAKEINFO_VERSION
 fi
@@ -627,7 +627,8 @@ fi
 ## In fact, on HP-UX fort77 is the POSIX-compatible native compiler and
 ## f77 is not: hence we need look for fort77 first!
 AC_DEFUN([R_PROG_F77_OR_F2C],
-[if test -n "${F77}" && test -n "${F2C}"; then
+[AC_BEFORE([$0], [AC_PROG_LIBTOOL])
+if test -n "${F77}" && test -n "${F2C}"; then
   warn_F77_and_F2C="both 'F77' and 'F2C' given.
 Using the given Fortran 77 compiler ..."
   AC_MSG_WARN([${warn_F77_and_F2C}])
@@ -725,20 +726,6 @@ for arg in ${FLIBS}; do
   esac
 done
 FLIBS="${flibs}"
-## Versions of g77 up to 3.0.x only have a non-PIC (static) -lg2c which
-## on some platforms means one cannot build dynamically loadable modules
-## containing Fortran code.  (g77 3.1 will have a shared -lg2c too.)  As
-## a workaround, Debian provides -lg2c-pic which holds pic objects only,
-## and we should use in case we can find it ...
-if test "${G77}" = yes; then
-  r_save_LIBS="${LIBS}"
-  flibs=`echo "${FLIBS}" | sed 's/-lg2c/-lg2c-pic/'`
-  LIBS="${flibs} ${LIBS}"
-  AC_LANG_PUSH(C)
-  AC_LINK_IFELSE([AC_LANG_PROGRAM()], [FLIBS="${flibs}"], [])
-  AC_LANG_POP(C)
-  LIBS="${r_save_LIBS}"
-fi
 ])# R_PROG_F77_FLIBS
 
 ## R_PROG_F77_APPEND_UNDERSCORE
@@ -1316,14 +1303,19 @@ AC_SUBST(RMATH_HAVE_WORKING_LOG1P)
 AC_DEFUN([R_FUNC_STRPTIME],
 [AC_CACHE_CHECK([for working strptime], [r_cv_func_strptime_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#if defined(HAVE_GLIBC2) && !defined(__USE_XOPEN)
+#define __USE_XOPEN
+#endif
 #include <time.h>
 int main () {
 #ifdef HAVE_STRPTIME
   struct tm tm;
-  char *p;
+  char *p, *q;
 
   p = strptime("1960-01-01", "%Y-%m-%d", &tm);
-  exit(p == 0);
+  q = strptime("2003-02-40", "%Y-%m-%d", &tm);
+  exit(p == 0 || q);
 #else
   exit(1);
 #endif
@@ -1334,7 +1326,7 @@ int main () {
                [r_cv_func_strptime_works=no])])
 if test "x${r_cv_func_strptime_works}" = xyes; then
   AC_DEFINE(HAVE_WORKING_STRPTIME, 1,
-            [Define if strptime() exists and does not fail pre-1970.])
+            [Define if strptime() exists, validates and does not fail pre-1970.])
 fi
 ])# R_FUNC_STRPTIME
 
@@ -1613,7 +1605,7 @@ AC_EGREP_CPP([yes],
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TCL_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib /usr/lib64 ; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tcl[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -1639,7 +1631,7 @@ fi
 AC_DEFUN([_R_PATH_TK_CONFIG],
 [AC_MSG_CHECKING([for tkConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TK_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib /usr/lib64 ; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tk[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2013,9 +2005,11 @@ if test "${r_cv_prog_f77_append_underscore}" = yes \
   || test -n "${F2C}"; then
   dgemm=dgemm_
   sgemm=sgemm_
+  xerbla=xerbla_
 else
   dgemm=dgemm
   sgemm=sgemm
+  xerbla=xerbla
 fi
 
 acx_blas_save_LIBS="${LIBS}"
@@ -2026,7 +2020,8 @@ if test "${acx_blas_ok}" = no; then
   if test "x${BLAS_LIBS}" != x; then
     r_save_LIBS="${LIBS}"; LIBS="${BLAS_LIBS} ${LIBS}"
     AC_MSG_CHECKING([for ${sgemm} in ${BLAS_LIBS}])
-    AC_TRY_LINK_FUNC(${sgemm}, [acx_blas_ok=yes], [BLAS_LIBS=""])
+    AC_TRY_LINK([void ${xerbla}(char *srname, int *info){}], ${sgemm}(),
+      [acx_blas_ok=yes], [BLAS_LIBS=""])
     AC_MSG_RESULT([${acx_blas_ok}])
     LIBS="${r_save_LIBS}"
   fi
@@ -2245,7 +2240,7 @@ AM_CONDITIONAL(BUILD_XDR, [test "x${r_cv_xdr}" = xno])
 ## R_ZLIB
 ## ------
 ## Try finding zlib library and headers.
-## We check that both are installed, and that the header >= 1.1.4
+## We check that both are installed, and that the header >= 1.2.1
 ## and that gzeof is in the library (which suggests the library
 ## is also recent enough).
 AC_DEFUN([R_ZLIB],
@@ -2264,8 +2259,6 @@ fi
 AC_MSG_CHECKING([whether zlib support needs to be compiled])
 if test "${have_zlib}" = yes; then
   AC_MSG_RESULT([no])
-  AC_DEFINE(HAVE_ZLIB, 1,
-	    [Define if you have the zlib headers and libraries.])
   LIBS="-lz ${LIBS}"
 else
   AC_MSG_RESULT([yes])
@@ -2281,14 +2274,14 @@ AM_CONDITIONAL(USE_MMAP_ZLIB,
 ## Set shell variable r_cv_header_zlib_h to 'yes' if a recent enough
 ## zlib.h is found, and to 'no' otherwise.
 AC_DEFUN([_R_HEADER_ZLIB],
-[AC_CACHE_CHECK([if zlib version >= 1.1.4],
+[AC_CACHE_CHECK([if zlib version >= 1.2.1],
                 [r_cv_header_zlib_h],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <zlib.h>
 int main() {
 #ifdef ZLIB_VERSION
-  exit(strcmp(ZLIB_VERSION, "1.1.4") < 0);
+  exit(strcmp(ZLIB_VERSION, "1.2.1") < 0);
 #else
   exit(1);
 #endif
@@ -2334,18 +2327,35 @@ AC_DEFUN([R_PCRE],
 else
   have_pcre=no
 fi
-if test "${have_pcre}" = yes; then
-  AC_DEFINE(HAVE_PCRE, 1,
-            [Define if you have the PCRE headers and libraries.])
+if test "x${have_pcre}" = xyes; then
+AC_CACHE_CHECK([if PCRE version >= 4.0], [r_have_pcre4],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_PCRE_PCRE_H
+#include <pcre/pcre.h>
+#else
+#ifdef HAVE_PCRE_H
+#include <pcre.h>
+#endif
+#endif
+int main() {
+#ifdef PCRE_MAJOR
+  exit(PCRE_MAJOR<4);
+#else
+  exit(1);
+#endif
+}
+]])], [r_have_pcre4=yes], [r_have_pcre4=no], [r_have_pcre4=no])])
+fi
+if test "x${r_have_pcre4}" = xyes; then
   LIBS="-lpcre ${LIBS}"
 fi
 AC_MSG_CHECKING([whether PCRE support needs to be compiled])
-if test "x${have_pcre}" = xyes; then
+if test "x${r_have_pcre4}" = xyes; then
   AC_MSG_RESULT([no])
 else
   AC_MSG_RESULT([yes])
 fi
-AM_CONDITIONAL(BUILD_PCRE, [test "x${have_pcre}" = xno])
+AM_CONDITIONAL(BUILD_PCRE, [test "x${r_have_pcre4}" != xyes])
 ])# R_PCRE
 
 ## R_BZLIB

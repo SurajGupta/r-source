@@ -1,16 +1,18 @@
 \name{length}
 \alias{length}
 \alias{length<-}
-\title{Length of a Vector or List}
+\alias{length<-.factor}
+\title{Length of an Object}
 \description{
-  Get or set the length of vectors (including lists).
+  Get or set the length of vectors (including lists) and factors, and of
+  any other \R object for which a method has been defined.
 }
 \usage{
 length(x)
 length(x) <- value
 }
 \arguments{
-  \item{x}{a vector or list.}
+  \item{x}{a vector or list or factor.}
   \item{value}{an integer.}
 }
 \value{
@@ -19,7 +21,7 @@ length(x) <- value
   \code{length} returns \code{NA}.
 }
 \details{
-  \code{length} is generic: you can write methods to handle of specific
+  Both functions are generic: you can write methods to handle specific
   classes of objects, see \link{InternalMethods}.
 
   The replacement form can be used to reset the length of a vector.  If

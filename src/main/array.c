@@ -66,39 +66,88 @@ SEXP do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     snc = CADDR(args);
     byrow = asInteger(CADR(CDDR(args)));
 
+    /* R wrapper does as.vector
     if (isVector(vals) || isList(vals)) {
-	if (length(vals) < 0)
-	    errorcall(call, "argument has length zero");
+	if (length(vals) < 0)  (sic! cannot happen)
+	   errorcall(call, "argument has length zero");
     }
-    else errorcall(call, "invalid matrix element type");
+    else errorcall(call, "invalid matrix element type"); */
 
     if (!isNumeric(snr) || !isNumeric(snc))
 	error("non-numeric matrix extent");
 
     lendat = length(vals);
     nr = asInteger(snr);
+    if (nr == NA_INTEGER) /* This is < 0 */
+	error("matrix: invalid nrow value (too large or NA)");
+    if (nr < 0)
+	error("matrix: invalid nrow value (< 0)");
     nc = asInteger(snc);
+    if (nc < 0)
+	error("matrix: invalid ncol value (< 0)");
+    if (nc == NA_INTEGER)
+	error("matrix: invalid ncol value (too large or NA)");
+    if (nc < 0)
+	error("matrix: invalid ncol value (< 0)");
 
-    if (lendat > 1 && (nr * nc) % lendat != 0) {
-	if (((lendat > nr) && (lendat / nr) * nr != lendat) ||
-	    ((lendat < nr) && (nr / lendat) * lendat != nr))
-	    warning("Replacement length not a multiple of the elements to replace in matrix(...)");
-	else if (((lendat > nc) && (lendat / nc) * nc != lendat) ||
-		 ((lendat < nc) && (nc / lendat) * lendat != nc))
-	    warning("Replacement length not a multiple of the elements to replace in matrix(...)");
-    }
+    if(lendat > 0 ) {
+	if (lendat > 1 && (nr * nc) % lendat != 0) {
+	    if (((lendat > nr) && (lendat / nr) * nr != lendat) ||
+		((lendat < nr) && (nr / lendat) * lendat != nr))
+		warning("data length [%d] is not a sub-multiple or multiple of the number of rows [%d] in matrix", lendat, nr);
+	    else if (((lendat > nc) && (lendat / nc) * nc != lendat) ||
+		     ((lendat < nc) && (nc / lendat) * lendat != nc))
+		warning("data length [%d] is not a sub-multiple or multiple of the number of columns [%d] in matrix", lendat, nc);
+	}
 	else if ((lendat > 1) && (nr * nc == 0)){
-	  warning("Replacement length not a multiple of the elements to replace in matrix(...)");
+	    warning("data length exceeds size of matrix");
 	}
-	else if (lendat == 0 && nr * nc > 0){
-	  error("No data to replace in matrix(...)");
-	}
+    }
+
+    if ((double)nr * (double)nc > INT_MAX)
+	error("matrix: too many elements specified");
 
     PROTECT(snr = allocMatrix(TYPEOF(vals), nr, nc));
-    if (isVector(vals))
-	copyMatrix(snr, vals, byrow);
-    else
-	copyListMatrix(snr, vals, byrow);
+    if(lendat) {
+	if (isVector(vals))
+	    copyMatrix(snr, vals, byrow);
+	else
+	    copyListMatrix(snr, vals, byrow);
+    } else if (isVector(vals)) { /* fill with NAs */
+	int i, j;
+	switch(TYPEOF(vals)) {
+	case STRSXP:
+	    for (i = 0; i < nr; i++)
+		for (j = 0; j < nc; j++)
+		    SET_STRING_ELT(snr, i + j * nr, NA_STRING);
+	    break;
+	case LGLSXP:
+	    for (i = 0; i < nr; i++)
+		for (j = 0; j < nc; j++)
+		    LOGICAL(snr)[i + j * nr] = NA_LOGICAL;
+	    break;
+	case INTSXP:
+	    for (i = 0; i < nr; i++)
+		for (j = 0; j < nc; j++)
+		    INTEGER(snr)[i + j * nr] = NA_INTEGER;
+	    break;
+	case REALSXP:
+	    for (i = 0; i < nr; i++)
+		for (j = 0; j < nc; j++)
+		    REAL(snr)[i + j * nr] = NA_REAL;
+	    break;
+	case CPLXSXP:
+	    {
+		Rcomplex na_cmplx;
+		na_cmplx.r = NA_REAL;
+		na_cmplx.i = 0;
+		for (i = 0; i < nr; i++)
+		    for (j = 0; j < nc; j++)
+			COMPLEX(snr)[i + j * nr] = na_cmplx;
+	    }
+	    break;
+	}
+    }
     UNPROTECT(1);
     return snr;
 }
@@ -111,6 +160,8 @@ SEXP allocMatrix(SEXPTYPE mode, int nrow, int ncol)
 
     if (nrow < 0 || ncol < 0)
 	error("negative extents to matrix");
+    if ((double)nrow * (double)ncol > INT_MAX)
+	error("allocMatrix: too many elements specified");
     n = nrow * ncol;
     PROTECT(s = allocVector(mode, n));
     PROTECT(t = allocVector(INTSXP, 2));
@@ -126,10 +177,15 @@ SEXP allocArray(SEXPTYPE mode, SEXP dims)
 {
     SEXP array;
     int i, n;
+    double dn;
 
-    n = 1;
-    for (i = 0; i < LENGTH(dims); i++)
-	n = n * INTEGER(dims)[i];
+    dn = n = 1;
+    for (i = 0; i < LENGTH(dims); i++) {
+	dn *= INTEGER(dims)[i];
+	if(dn > INT_MAX)
+	    error("allocArray: too many elements specified by dims");
+	n *= INTEGER(dims)[i];
+    }
 
     PROTECT(dims = duplicate(dims));
     PROTECT(array = allocVector(mode, n));
@@ -269,6 +325,7 @@ SEXP do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
+    R_len_t len;
 
     if (length(args) != 1)
 	error("incorrect number of args to length");
@@ -278,7 +335,8 @@ SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
       return(ans);
 
     ans = allocVector(INTSXP, 1);
-    INTEGER(ans)[0] = length(CAR(args));
+    len = length(CAR(args));
+    INTEGER(ans)[0] = (len < INT_MAX) ? len : NA_INTEGER;
     return ans;
 }
 
@@ -315,43 +373,63 @@ SEXP do_rowscols(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static void matprod(double *x, int nrx, int ncx,
 		    double *y, int nry, int ncy, double *z)
-{
 #ifdef IEEE_754
+{
     char *transa = "N", *transb = "N";
-    int i;
-    double one = 1.0, zero = 0.0;
-    if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
-        F77_CALL(dgemm)(transa, transb, &nrx, &ncy, &ncx, &one,
-			x, &nrx, y, &nry, &zero, z, &nrx);
-    }
-    else { /* zero-extent operations should return zeroes */
-	for(i = 0; i < nrx*ncy; i++) z[i] = 0;
-    }
-#else
+    int i,  j, k;
+    double one = 1.0, zero = 0.0, sum;
+    Rboolean have_na = FALSE;
 
+    if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
+	/* Don't trust the BLAS to handle NA/NaNs correctly: PR#4582
+	 * The test is only O(n) here
+	 */
+	for (i = 0; i < nrx*ncx; i++)
+	    if (ISNAN(x[i])) {have_na = TRUE; break;}
+	if (!have_na) 
+	    for (i = 0; i < nry*ncy; i++)
+		if (ISNAN(y[i])) {have_na = TRUE; break;}
+	if (have_na) {
+	    for (i = 0; i < nrx; i++)
+		for (k = 0; k < ncy; k++) {
+		    sum = 0.0;
+		    for (j = 0; j < ncx; j++)
+			sum += x[i + j * nrx] * y[j + k * nry];
+		    z[i + k * nrx] = sum;
+		}
+	} else
+	    F77_CALL(dgemm)(transa, transb, &nrx, &ncy, &ncx, &one,
+			    x, &nrx, y, &nry, &zero, z, &nrx);
+    } else /* zero-extent operations should return zeroes */
+	for(i = 0; i < nrx*ncy; i++) z[i] = 0;
+}
+#else
+{
 /* FIXME - What about non-IEEE overflow ??? */
 /* Does it really matter? */
 
     int i, j, k;
     double xij, yjk, sum;
 
-    for (i = 0; i < nrx; i++)
-	for (k = 0; k < ncy; k++) {
-	    z[i + k * nrx] = NA_REAL;
-	    sum = 0.0;
-	    for (j = 0; j < ncx; j++) {
-		xij = x[i + j * nrx];
-		yjk = y[j + k * nry];
-		if (ISNAN(xij) || ISNAN(yjk))
-		    goto next_ik;
-		sum += xij * yjk;
+    if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
+	for (i = 0; i < nrx; i++)
+	    for (k = 0; k < ncy; k++) {
+		z[i + k * nrx] = NA_REAL;
+		sum = 0.0;
+		for (j = 0; j < ncx; j++) {
+		    xij = x[i + j * nrx];
+		    yjk = y[j + k * nry];
+		    if (ISNAN(xij) || ISNAN(yjk)) goto next_ik;
+		    sum += xij * yjk;
+		}
+		z[i + k * nrx] = sum;
+	    next_ik:
+		;
 	    }
-	    z[i + k * nrx] = sum;
-	next_ik:
-	    ;
-	}
-#endif
+    } else /* zero-extent operations should return zeroes */
+	for(i = 0; i < nrx*ncy; i++) z[i] = 0;
 }
+#endif
 
 #ifdef HAVE_DOUBLE_COMPLEX
 /* ZGEMM - perform one of the matrix-matrix operations    */

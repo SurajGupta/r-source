@@ -102,7 +102,9 @@ int main(int ac, char **av)
 }
 
 #ifdef HAVE_AQUA
-/* this should be a global variable as it used in unix/devQuartz.c */
+/*  this should be a global variable as it used in unix/devQuartz.c 
+	and in unix/main.c
+*/
 Rboolean useaqua = FALSE;
 #endif
 
@@ -232,6 +234,9 @@ int Rf_initialize_R(int ac, char **av)
 	    } else if(!strcmp(*av, "--args")) {
 		break;
 	    } else {
+#ifdef HAVE_AQUA
+           if(!strncmp(*av,"-psn",4)) { break; } else
+#endif
 		snprintf(msg, 1024, "WARNING: unknown option %s\n", *av);
 		R_ShowMessage(msg);
 	    }

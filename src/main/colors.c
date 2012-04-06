@@ -2,6 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-2001  Robert Gentleman, Ross Ihaka and the
  *			     R Development Core Team
+ *  Copyright (C) 2003	     The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,9 +14,10 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  A copy of the GNU General Public License is available via WWW at
+ *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
+ *  writing to the Free Software Foundation, Inc., 59 Temple Place,
+ *  Suite 330, Boston, MA  02111-1307  USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -260,5 +262,44 @@ SEXP do_col2RGB(SEXP call, SEXP op, SEXP args, SEXP env)
 	INTEGER(ans)[i3 +2] = R_BLUE(col);
     }
     UNPROTECT(3);
+    return ans;
+}
+
+SEXP do_RGB2hsv(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+/* (r,g,b) -> (h,s,v) conversion */
+    SEXP rgb, dd, ans, names, dmns;
+    int n, i, i3;
+
+    checkArity(op, args);
+
+    PROTECT(rgb = coerceVector(CAR(args),REALSXP)); args = CDR(args);
+    if(!isMatrix(rgb))
+	errorcall(call, "rgb is not a matrix (internally)");
+    dd = getAttrib(rgb, R_DimSymbol);
+    if(INTEGER(dd)[0] != 3)
+	errorcall(call, "rgb must have 3 rows (internally)");
+    n = INTEGER(dd)[1];
+
+    PROTECT(ans = allocMatrix(REALSXP, 3, n));
+    PROTECT(dmns = allocVector(VECSXP, 2));
+    /* row names: */
+    PROTECT(names = allocVector(STRSXP, 3));
+    SET_STRING_ELT(names, 0, mkChar("h"));
+    SET_STRING_ELT(names, 1, mkChar("s"));
+    SET_STRING_ELT(names, 2, mkChar("v"));
+    SET_VECTOR_ELT(dmns, 0, names);
+    /* column names if input has: */
+    if ((dd = getAttrib(rgb, R_DimNamesSymbol)) != R_NilValue &&
+	(names = VECTOR_ELT(dd, 1)) != R_NilValue)
+	SET_VECTOR_ELT(dmns, 1, names);
+    setAttrib(ans, R_DimNamesSymbol, dmns);
+    UNPROTECT(2);/* names, dmns */
+
+    for(i = i3 = 0; i < n; i++, i3 += 3) {
+	rgb2hsv(REAL(rgb)[i3+ 0],  REAL(rgb)[i3+ 1],  REAL(rgb)[i3+ 2],
+		&REAL(ans)[i3+ 0], &REAL(ans)[i3+ 1], &REAL(ans)[i3 +2]);
+    }
+    UNPROTECT(2);
     return ans;
 }

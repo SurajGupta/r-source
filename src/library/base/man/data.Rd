@@ -13,8 +13,8 @@ data(\dots, list = character(0), package = .packages(),
 \arguments{
   \item{\dots}{a sequence of names or literal character strings.}
   \item{list}{a character vector.}
-  \item{package}{a name or character vector giving the packages to look
-    into for data sets.  By default, all packages in the search path are
+  \item{package}{a character vector giving the packages to look
+    in for data sets.  By default, all packages in the search path are
     used, then the \file{data} subdirectory (if present) of the current
     working directory.}
   \item{lib.loc}{a character vector of directory names of \R libraries,
@@ -100,11 +100,12 @@ data(\dots, list = character(0), package = .packages(),
   a metadata specification for the plaintext formats.
 }
 \seealso{
-  \code{\link{help}} for obtaining documentation on data sets,
+  \code{\link[utils]{help}} for obtaining documentation on data sets,
   \code{\link{save}} for \emph{creating} the second (\file{.rda}) kind
   of data, typically the most efficient one.
 }
 \examples{
+require(utils)
 data()                      # list all available data sets
 data(package = "base")      # list the data sets in the base package
 data(USArrests, "VADeaths") # load the data sets 'USArrests' and 'VADeaths'

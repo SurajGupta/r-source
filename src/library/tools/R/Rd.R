@@ -248,8 +248,8 @@ function(contents, packageName, outFile)
 .buildRdIndex <-
 function(contents, type = NULL)
 {
-    ## Build an Rd 'index' containing Rd names and titles, maybe
-    ## subscripted according to the Rd type (\docType).
+    ## Build an Rd 'index' containing Rd "names" (see below) and titles,
+    ## maybe subscripted according to the Rd type (\docType).
 
     keywords <- contents[ , "Keywords"]
 
@@ -268,7 +268,20 @@ function(contents, type = NULL)
     ## Drop all Rd objects marked as 'internal' from the index.
     idx <- is.na(sapply(keywords, function(x) match("internal", x)))
 
-    contents[idx, c("Name", "Title"), drop = FALSE]
+    index <- contents[idx, c("Name", "Title"), drop = FALSE]
+    if(nrow(index)) {
+        ## If a \name is not a valid \alias, replace it by the first alias.
+        aliases <- contents[idx, "Aliases"]
+        bad <- which(!mapply("%in%", index[, 1], aliases))
+        if(any(bad)) {
+            tmp <- sapply(aliases[bad], "[[", 1)
+            tmp[is.na(tmp)] <- ""
+            index[bad, 1] <- tmp
+        }
+        ## and sort it by name
+        index <- index[sort.list(index[,1]), ]
+    }
+    index
 }
 
 ### * Rdindex
@@ -313,7 +326,8 @@ Rd2contents <-
 function(dir, outFile = "")
 {
     ## <NOTE>
-    ## This is based on the Perl code in R_HOME/share/Rd2contents.pl.
+    ## Based on the defunct Perl code in R_HOME/share/Rd2contents.pl
+    ## (now removed).
     ## </NOTE>
 
     if(!fileTest("-d", dir))
@@ -463,7 +477,11 @@ function(txt)
     while((pos <- regexpr(pattern, txt)) != -1) {
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
         if((pos <- delimMatch(txt)) == -1)
-            stop("unmatched \\item name")
+            stop(paste("unmatched \\item name in",
+                       sQuote(paste("\\item{",
+                                    sub("\n.*$", "", txt),
+                                    sep = ""))),
+                 call. = FALSE)
         out <- c(out,
                  substring(txt,
                            pos + 1,
@@ -473,10 +491,13 @@ function(txt)
         ## and tolerate whitespace in between ...
         if((pos <- regexpr("^[[:space:]]*{", txt)) == -1)
             stop(paste("no \\item description for item",
-                       sQuote(out[length(out)])))
+                       sQuote(out[length(out)])),
+                 call. = FALSE)
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
         if((pos <- delimMatch(txt)) == -1)
-            stop("unmatched \\item description")
+            stop(paste("unmatched \\item description for item",
+                       sQuote(out[length(out)])),
+                 call. = FALSE)
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
     out

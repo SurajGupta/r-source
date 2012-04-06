@@ -16,7 +16,7 @@ approxfun(x, y = NULL,       method="linear",
 \arguments{
   \item{x, y}{vectors giving the coordinates of the points to be
     interpolated.  Alternatively a single plotting structure can be
-    specified: see \code{\link{xy.coords}}.}
+    specified: see \code{\link[graphics]{xy.coords}}.}
   \item{xout}{an optional set of values specifying where interpolation
     is to take place.}
   \item{method}{specifies the interpolation method to be used.  Choices
@@ -24,10 +24,10 @@ approxfun(x, y = NULL,       method="linear",
   \item{n}{If \code{xout} is not specified, interpolation takes place at
     \code{n} equally spaced points spanning the interval [\code{min(x)},
     \code{max(x)}].}
-  \item{yleft}{the value to be returned when input \code{x} values
+  \item{yleft}{the value to be returned when input \code{x} values are
     less than \code{min(x)}. The default is defined by the value
     of \code{rule} given below.}
-  \item{yright}{the value to be returned when input \code{x} values
+  \item{yright}{the value to be returned when input \code{x} values are
     greater than \code{max(x)}. The default is defined by the value
     of \code{rule} given below.}
   \item{rule}{an integer describing how interpolation is to take place
@@ -60,14 +60,14 @@ approxfun(x, y = NULL,       method="linear",
   two complete \code{(x, y)} pairs are required.  If there are
   duplicated (tied) \code{x} values and \code{ties} is a function it is
   applied to the \code{y} values for each distinct \code{x} value.
-  Useful functions in this context include \code{\link{mean}},
+  Useful functions in this context include \code{\link[stats]{mean}},
   \code{\link{min}}, and \code{\link{max}}.  If \code{ties="ordered"}
   the \code{x} values are assumed to be already ordered.  The first
   \code{y} value will be used for interpolation to the left and the last
   one for interpolation to the right.
 }
 \seealso{
-  \code{\link{spline}} and \code{\link{splinefun}} for spline
+  \code{\link[stats]{spline}} and \code{\link[stats]{splinefun}} for spline
   interpolation.
 }
 \references{

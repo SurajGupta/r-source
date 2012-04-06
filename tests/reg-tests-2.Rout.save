@@ -1,6 +1,6 @@
 
-R : Copyright 2003, The R Foundation for Statistical Computing
-Version 1.8.1 alpha (2003-11-10), ISBN 3-900051-00-3
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.0 alpha (2004-03-20), ISBN 3-900051-00-3
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -3233,14 +3233,15 @@ Error in "[.data.frame"(x, 1, c("a", "c")) :
 > meth2gen <- function(cl)
 +     noquote(sub(paste("\\.",cl,"$",sep=""),"", methods(class = cl)))
 > meth2gen("data.frame")
- [1] [             [<-           [[            [[<-          aggregate    
- [6] as.data.frame as.list       as.matrix     by            dim          
-[11] dimnames      dimnames<-    duplicated    edit          format       
-[16] formula       is.na         mean          merge         na.exclude   
-[21] na.omit       plot          print         prompt        row.names    
-[26] row.names<-   rowsum        split         split<-       stack        
-[31] str           subset        summary       t             transform    
-[36] unique        unstack      
+ [1] $<-           Math          Ops           Summary       [            
+ [6] [<-           [[            [[<-          aggregate     as.data.frame
+[11] as.list       as.matrix     by            dim           dimnames     
+[16] dimnames<-    duplicated    edit          format        formula      
+[21] head          is.na         mean          merge         na.exclude   
+[26] na.omit       plot          print         prompt        row.names    
+[31] row.names<-   rowsum        split         split<-       stack        
+[36] str           subset        summary       t             tail         
+[41] transform     unique        unstack      
 > meth2gen("dendrogram")
 [1] [[      cut     plot    print   reorder rev     str    
 > ## --> the output may need somewhat frequent updating..
@@ -3324,13 +3325,697 @@ $term.labels
 > 
 > 
 > ## 0-level factors gave nonsensical answers in model.matrix
-> try(model.matrix(~x, data.frame(x=NA), na.action=na.pass))
-Error in "contrasts<-"(`*tmp*`, value = "contr.treatment") : 
-	contrasts can be applied only to factors with 2 or more levels
+> m <- model.frame(~x, data.frame(x=NA), na.action=na.pass)
+> model.matrix(~x, m)
+  (Intercept) xTRUE
+1           1    NA
+attr(,"assign")
+[1] 0 1
+attr(,"contrasts")
+attr(,"contrasts")$x
+[1] "contr.treatment"
+
 > lm.fit <- lm(y ~ x, data.frame(x=1:10, y=1:10))
 > try(predict(lm.fit, data.frame(x=NA)))
-Error in "contrasts<-"(`*tmp*`, value = "contr.treatment") : 
-	contrasts can be applied only to factors with 2 or more levels
-> ## wrong in 1.8.0
+Error: variable 'x' was fitted with numeric but logical was supplied
+> ## wrong answers in 1.8.0, refused to run in 1.8.1
 > 
+> 
+> 
+> ## failure to print data frame containing arrays
+> ## raised by John Fox on R-devel on 2004-01-08
+> y1 <- array(1:10, dim=10)
+> y2 <- array(1:30, dim=c(10,3), dimnames=list(NULL, letters[1:3]))
+> y3 <- array(1:40, dim=c(10,2,2),
++             dimnames=list(NULL, letters[1:2], NULL))
+> data.frame(y=y1)
+    y
+1   1
+2   2
+3   3
+4   4
+5   5
+6   6
+7   7
+8   8
+9   9
+10 10
+> data.frame(y=y2)
+   y.a y.b y.c
+1    1  11  21
+2    2  12  22
+3    3  13  23
+4    4  14  24
+5    5  15  25
+6    6  16  26
+7    7  17  27
+8    8  18  28
+9    9  19  29
+10  10  20  30
+> data.frame(y=y3)
+   y.a.1 y.b.1 y.a.2 y.b.2
+1      1    11    21    31
+2      2    12    22    32
+3      3    13    23    33
+4      4    14    24    34
+5      5    15    25    35
+6      6    16    26    36
+7      7    17    27    37
+8      8    18    28    38
+9      9    19    29    39
+10    10    20    30    40
+> 
+> as.data.frame(y1)
+   y1
+1   1
+2   2
+3   3
+4   4
+5   5
+6   6
+7   7
+8   8
+9   9
+10 10
+> as.data.frame(y2)
+    a  b  c
+1   1 11 21
+2   2 12 22
+3   3 13 23
+4   4 14 24
+5   5 15 25
+6   6 16 26
+7   7 17 27
+8   8 18 28
+9   9 19 29
+10 10 20 30
+> as.data.frame(y3)
+   a.1 b.1 a.2 b.2
+1    1  11  21  31
+2    2  12  22  32
+3    3  13  23  33
+4    4  14  24  34
+5    5  15  25  35
+6    6  16  26  36
+7    7  17  27  37
+8    8  18  28  38
+9    9  19  29  39
+10  10  20  30  40
+> 
+> X <- data.frame(x=1:10)
+> X$y <- y1
+> X
+    x  y
+1   1  1
+2   2  2
+3   3  3
+4   4  4
+5   5  5
+6   6  6
+7   7  7
+8   8  8
+9   9  9
+10 10 10
+> sapply(X, dim)
+$x
+NULL
+
+$y
+[1] 10
+
+> 
+> X$y <- y2
+> X
+    x y.a y.b y.c
+1   1   1  11  21
+2   2   2  12  22
+3   3   3  13  23
+4   4   4  14  24
+5   5   5  15  25
+6   6   6  16  26
+7   7   7  17  27
+8   8   8  18  28
+9   9   9  19  29
+10 10  10  20  30
+> sapply(X, dim)
+$x
+NULL
+
+$y
+[1] 10  3
+
+> 
+> X$y <- y3
+> X
+    x y.a.1 y.b.1 y.a.2 y.b.2
+1   1     1    11    21    31
+2   2     2    12    22    32
+3   3     3    13    23    33
+4   4     4    14    24    34
+5   5     5    15    25    35
+6   6     6    16    26    36
+7   7     7    17    27    37
+8   8     8    18    28    38
+9   9     9    19    29    39
+10 10    10    20    30    40
+> sapply(X, dim)
+$x
+NULL
+
+$y
+[1] 10  2  2
+
+> ## The last one fails in S.
+> 
+> ## test of user hooks
+> for(id in c("A", "B")) {
++     eval(substitute(
++     {
++ setHook(packageEvent("stats4", "onLoad"),
++         function(pkgname, ...) cat("onLoad", sQuote(pkgname), id, "\n"));
++ setHook(packageEvent("stats4", "attach"),
++         function(pkgname, ...) cat("attach", sQuote(pkgname), id, "\n"));
++ setHook(packageEvent("stats4", "detach"),
++         function(pkgname, ...) cat("detach", sQuote(pkgname), id, "\n"));
++ setHook(packageEvent("stats4", "onUnload"),
++         function(pkgname, ...) cat("onUnload", sQuote(pkgname), id, "\n"))
++     },
++                     list(id=id)))
++ }
+> loadNamespace("stats4")
+onLoad 'stats4' A 
+onLoad 'stats4' B 
+<environment: namespace:stats4>
+> library("stats4")
+attach 'stats4' A 
+attach 'stats4' B 
+> detach("package:stats4")
+detach 'stats4' B 
+detach 'stats4' A 
+> unloadNamespace("stats4")
+onUnload 'stats4' B 
+onUnload 'stats4' A 
+> ## Just tests
+> 
+> 
+> ## rep(0-length-vector, length.out > 0)
+> rep(integer(0), length.out=0)
+numeric(0)
+> rep(integer(0), length.out=10)
+ [1] NA NA NA NA NA NA NA NA NA NA
+> typeof(.Last.value)
+[1] "integer"
+> rep(logical(0), length.out=0)
+logical(0)
+> rep(logical(0), length.out=10)
+ [1] NA NA NA NA NA NA NA NA NA NA
+> typeof(.Last.value)
+[1] "logical"
+> rep(numeric(0), length.out=0)
+numeric(0)
+> rep(numeric(0), length.out=10)
+ [1] NA NA NA NA NA NA NA NA NA NA
+> typeof(.Last.value)
+[1] "double"
+> rep(character(0), length.out=0)
+character(0)
+> rep(character(0), length.out=10)
+ [1] NA NA NA NA NA NA NA NA NA NA
+> typeof(.Last.value)
+[1] "character"
+> rep(complex(0), length.out=0)
+complex(0)
+> rep(complex(0), length.out=10)
+ [1] NA NA NA NA NA NA NA NA NA NA
+> typeof(.Last.value)
+[1] "complex"
+> rep(list(), length.out=0)
+list()
+> rep(list(), length.out=10)
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+NULL
+
+[[6]]
+NULL
+
+[[7]]
+NULL
+
+[[8]]
+NULL
+
+[[9]]
+NULL
+
+[[10]]
+NULL
+
+> ## always 0-length before 1.9.0
+> 
+> 
+> ## supplying 0-length data to array and matrix
+> array(numeric(0), c(2, 2))
+     [,1] [,2]
+[1,]   NA   NA
+[2,]   NA   NA
+> array(list(), c(2,2))
+     [,1] [,2]
+[1,] NULL NULL
+[2,] NULL NULL
+> # worked < 1.8.0, error in 1.8.x
+> matrix(character(0), 1, 2)
+     [,1] [,2]
+[1,] NA   NA  
+> matrix(integer(0), 1, 2)
+     [,1] [,2]
+[1,]   NA   NA
+> matrix(logical(0), 1, 2)
+     [,1] [,2]
+[1,]   NA   NA
+> matrix(numeric(0), 1, 2)
+     [,1] [,2]
+[1,]   NA   NA
+> matrix(complex(0), 1, 2)
+     [,1] [,2]
+[1,]   NA   NA
+> matrix(list(), 1, 2)
+     [,1] [,2]
+[1,] NULL NULL
+> ## did not work < 1.9.0
+> 
+> 
+> ## S compatibility change in 1.9.0
+> rep(1:2, each=3, length=12)
+ [1] 1 1 1 2 2 2 1 1 1 2 2 2
+> ## used to pad with NAs.
+> 
+> 
+> ## PR#6510: aov() with error and -1
+> set.seed(1)
+> test.df <- data.frame (y=rnorm(8), a=gl(2,1,8), b=gl(2,3,8),c=gl(2,4,8))
+> aov(y ~ a + b + Error(c), data=test.df)
+
+Call:
+aov(formula = y ~ a + b + Error(c), data = test.df)
+
+Grand Mean: 0.8066534 
+
+Stratum 1: c
+
+Terms:
+                        b
+Sum of Squares  0.3176489
+Deg. of Freedom         1
+
+Estimated effects are balanced
+
+Stratum 2: Within
+
+Terms:
+                       a        b Residuals
+Sum of Squares  1.389453 2.148149  5.048689
+Deg. of Freedom        1        1         4
+
+Residual standard error: 1.123464 
+Estimated effects may be unbalanced
+> aov(y ~ a + b - 1 + Error(c), data=test.df)
+
+Call:
+aov(formula = y ~ a + b - 1 + Error(c), data = test.df)
+
+Stratum 1: c
+
+Terms:
+                       a        b
+Sum of Squares  5.205518 0.317649
+Deg. of Freedom        1        1
+
+1 out of 3 effects not estimable
+Estimated effects may be unbalanced
+
+Stratum 2: Within
+
+Terms:
+                       a        b Residuals
+Sum of Squares  1.389453 2.148149  5.048689
+Deg. of Freedom        1        1         4
+
+Residual standard error: 1.123464 
+1 out of 3 effects not estimable
+Estimated effects may be unbalanced
+> ## wrong assignment to strata labels < 1.9.0
+> ## Note this is unbalanced and not a good example
+> 
+> binom.test(c(800,10))# p-value < epsilon
+
+	Exact binomial test
+
+data:  800 and 810 
+number of successes = 800, number of trials = 810, p-value < 2.2e-16
+alternative hypothesis: true probability of success is not equal to 0.5 
+95 percent confidence interval:
+ 0.9774134 0.9940643 
+sample estimates:
+probability of success 
+             0.9876543 
+
+> 
+> 
+> ## Misleading error messages on integer overflow
+> ## Uwe Ligges, R-devel, 2004-02-19
+> try(numeric(2^31))
+Error in vector("double", length) : vector size specified is too large
+> try(matrix( , 2^31, 1))
+Error in matrix(, 2^31, 1) : matrix: invalid nrow value (too large or NA)
+In addition: Warning message: 
+NAs introduced by coercion 
+> try(matrix( , 2^31/10, 100))
+Error in matrix(, 2^31/10, 100) : matrix: too many elements specified
+> try(array(dim=c(2^31/10, 100)))
+Error in array(dim = c(2^31/10, 100)) : dim specifies too large an array
+> ## reported negative values (really integer NA) for R < 1.9.0
+> 
+> 
+> ## aov with a singular error model
+> rd <- c(16.53, 12.12, 10.04, 15.32, 12.33, 10.1, 17.09, 11.69, 11.81, 14.75,
++         10.72, 8.79, 13.14, 9.79, 8.36, 15.62, 9.64, 8.72, 15.32,
++         11.35, 8.52, 13.27, 9.74, 8.78, 13.16, 10.16, 8.4, 13.08, 9.66,
++         8.16, 12.17, 9.13, 7.43, 13.28, 9.16, 7.92, 118.77, 78.83, 62.2,
++         107.29, 73.79, 58.59, 118.9, 66.35, 53.12, 372.62, 245.39, 223.72,
++         326.03, 232.67, 209.44, 297.55, 239.71, 223.8)
+> sample.df <- data.frame(dep.variable=rd,
++                         subject=factor(rep(paste("subj",1:6, sep=""),each=9)),
++                         f1=factor(rep(rep(c("f1","f2","f3"),each=6),3)),
++                         f2=factor(rep(c("g1","g2","g3"),each=18))
++ )
+> sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f1+f2)), data=sample.df)
+Warning message: 
+Error model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f1 + f2)), data = sample.df) 
+> sample.aov
+
+Call:
+aov(formula = dep.variable ~ f1 * f2 + Error(subject/(f1 + f2)), 
+    data = sample.df)
+
+Grand Mean: 65.07444 
+
+Stratum 1: subject
+
+Terms:
+                       f1        f2     f1:f2
+Sum of Squares   47815.99 312824.49 100370.96
+Deg. of Freedom         1         2         2
+
+2 out of 7 effects not estimable
+Estimated effects may be unbalanced
+
+Stratum 2: subject:f1
+
+Terms:
+                      f1    f1:f2
+Sum of Squares  483.9628 869.6876
+Deg. of Freedom        2        4
+
+Estimated effects may be unbalanced
+
+Stratum 3: Within
+
+Terms:
+                Residuals
+Sum of Squares   29204.13
+Deg. of Freedom        42
+
+Residual standard error: 26.36923 
+> summary(sample.aov)
+
+Error: subject
+      Df Sum Sq Mean Sq
+f1     1  47816   47816
+f2     2 312824  156412
+f1:f2  2 100371   50185
+
+Error: subject:f1
+      Df Sum Sq Mean Sq
+f1     2 483.96  241.98
+f1:f2  4 869.69  217.42
+
+Error: Within
+          Df  Sum Sq Mean Sq F value Pr(>F)
+Residuals 42 29204.1   695.3               
+> sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f2+f1)), data=sample.df)
+Warning message: 
+Error model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), data = sample.df) 
+> sample.aov
+
+Call:
+aov(formula = dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), 
+    data = sample.df)
+
+Grand Mean: 65.07444 
+
+Stratum 1: subject
+
+Terms:
+                       f1        f2     f1:f2
+Sum of Squares   47815.99 312824.49 100370.96
+Deg. of Freedom         1         2         2
+
+2 out of 7 effects not estimable
+Estimated effects may be unbalanced
+
+Stratum 2: subject:f1
+
+Terms:
+                      f1    f1:f2
+Sum of Squares  483.9628 869.6876
+Deg. of Freedom        2        4
+
+Estimated effects may be unbalanced
+
+Stratum 3: Within
+
+Terms:
+                Residuals
+Sum of Squares   29204.13
+Deg. of Freedom        42
+
+Residual standard error: 26.36923 
+> summary(sample.aov)
+
+Error: subject
+      Df Sum Sq Mean Sq
+f1     1  47816   47816
+f2     2 312824  156412
+f1:f2  2 100371   50185
+
+Error: subject:f1
+      Df Sum Sq Mean Sq
+f1     2 483.96  241.98
+f1:f2  4 869.69  217.42
+
+Error: Within
+          Df  Sum Sq Mean Sq F value Pr(>F)
+Residuals 42 29204.1   695.3               
+> ## failed in 1.8.1
+> 
+> 
+> ## PR#6645  stem() with near-constant values
+> stem(rep(1, 100))
+
+  The decimal point is at the |
+
+  1 | 00000000000000000000000000000000000000000000000000000000000000000000+20
+
+> stem(rep(0.1, 10))
+
+  The decimal point is 1 digit(s) to the left of the |
+
+  1 | 0000000000
+
+> stem(c(rep(1, 10), 1+1.e-8))
+
+  The decimal point is 8 digit(s) to the left of the |
+
+  100000000 | 0000000000
+  100000000 | 
+  100000001 | 0
+
+> stem(c(rep(1, 10), 1+1.e-9))
+
+  The decimal point is 8 digit(s) to the left of the |
+
+  100000000 | 00000000001
+
+> stem(c(rep(1, 10), 1+1.e-10), atom=0) # integer-overflow is avoided.
+
+  The decimal point is 8 digit(s) to the left of the |
+
+  100000000 | 00000000000
+
+> ##  had integer overflows in 1.8.1, and silly shifts of decimal point
+> 
+> 
+> ## PR#6633 warnings with vector op matrix, and more
+> set.seed(1)
+> x1 <- rnorm(3)
+> y1 <- rnorm(4)
+> x1 * y1
+[1]  0.5574682  0.1410502  0.1609194 -0.3641637
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 * y1 
+> x1 * as.matrix(y1) # no warning in 1.8.1
+           [,1]
+[1,]  0.5574682
+[2,]  0.1410502
+[3,]  0.1609194
+[4,] -0.3641637
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 * as.matrix(y1) 
+> x1 * matrix(y1,2,2)# ditto
+          [,1]       [,2]
+[1,] 0.5574682  0.1609194
+[2,] 0.1410502 -0.3641637
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 * matrix(y1, 2, 2) 
+> z1 <- x1 > 0
+> z2 <- y1 > 0
+> z1 & z2
+[1]  TRUE  TRUE  TRUE FALSE
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: z1 & z2 
+> z1 & as.matrix(z2) # no warning in 1.8.1
+      [,1]
+[1,]  TRUE
+[2,]  TRUE
+[3,]  TRUE
+[4,] FALSE
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: z1 & as.matrix(z2) 
+> x1 < y1            # no warning in 1.8.1
+[1] FALSE  TRUE FALSE FALSE
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 < y1 
+> x1 < as.matrix(y1) # ditto
+      [,1]
+[1,] FALSE
+[2,]  TRUE
+[3,] FALSE
+[4,] FALSE
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 < as.matrix(y1) 
+> ##
+> 
+> 
+> ## summary method for mle
+> library(stats4)
+onLoad 'stats4' A 
+onLoad 'stats4' B 
+attach 'stats4' A 
+attach 'stats4' B 
+> N <- c(rep(3:6, 3), 7,7, rep(8,6), 9,9, 10,12)# sample from Pois(lam = 7)
+> summary(mle(function(Lam = 1) -sum(dpois(N, Lam))))
+Maximum likelihood estimation
+
+Call:
+mle(minuslogl = function(Lam = 1) -sum(dpois(N, Lam)))
+
+Coefficients:
+    Estimate Std. Error
+Lam 6.063755   2.307546
+
+-2 log L: -5.437059 
+> ## "Coefficients" was "NULL" in 1.9.0's "devel"
+> 
+> 
+> ## PR#6656 terms.formula(simplify = TRUE) was losing offset terms
+> ## successive offsets caused problems
+> df <- data.frame(x=1:4, y=sqrt( 1:4), z=c(2:4,1))
+> fit1 <- glm(y ~ offset(x) + z, data=df)
+> update(fit1, ". ~.")$call
+glm(formula = y ~ z + offset(x), data = df)
+> ## lost offset in 1.7.0 to 1.8.1
+> terms(y ~ offset(x) + offset(log(x)) + z, data=df)
+y ~ offset(x) + offset(log(x)) + z
+attr(,"variables")
+list(y, offset(x), offset(log(x)), z)
+attr(,"offset")
+[1] 2 3
+attr(,"factors")
+               z
+y              0
+offset(x)      0
+offset(log(x)) 0
+z              1
+attr(,"term.labels")
+[1] "z"
+attr(,"order")
+[1] 1
+attr(,"intercept")
+[1] 1
+attr(,"response")
+[1] 1
+attr(,".Environment")
+<environment: R_GlobalEnv>
+> ## failed to remove second offset from formula in 1.8.1
+> terms(y ~ offset(x) + z - z, data=df, simplify = TRUE)
+y ~ offset(x)
+attr(,"variables")
+list(y, offset(x), z)
+attr(,"offset")
+[1] 2
+attr(,"factors")
+numeric(0)
+attr(,"term.labels")
+character(0)
+attr(,"order")
+numeric(0)
+attr(,"intercept")
+[1] 1
+attr(,"response")
+[1] 1
+attr(,".Environment")
+<environment: R_GlobalEnv>
+> ## first fix failed for models with no non-offset terms.
+> 
+> 
+> ## only the first two were wrong up to 1.8.1:
+> 3:4 * 1e-100
+[1] 3e-100 4e-100
+> 8:11* 1e-100
+[1] 8.0e-100 9.0e-100  1.0e-99  1.1e-99
+> 1:2 * 1e-99
+[1] 1e-99 2e-99
+> 1:2 * 1e+99
+[1] 1e+99 2e+99
+> 8:11* 1e+99
+[1]  8.0e+99  9.0e+99 1.0e+100 1.1e+100
+> 3:4 * 1e+100
+[1] 3e+100 4e+100
+> ##
+> 
+> 
+> ## negative subscripts could be mixed with NAs
+> x <- 1:3
+> try(x[-c(1, NA)])
+Error in try(x[-c(1, NA)]) : only 0's may mix with negative subscripts
+> ## worked on some platforms, segfaulted on others in 1.8.1
 > 

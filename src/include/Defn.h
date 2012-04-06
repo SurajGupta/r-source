@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2003  The R Development Core Team.
+ *  Copyright (C) 1998--2004  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #define DEFN_H_
 
 #define COUNTING
+/* allows underscore in syntactic names, as from 1.9.0 */
+#define UNDERSCORE_IN_NAMES 1
 
 #define BYTECODE
 #define NEW_CONDITION_HANDLING
@@ -84,6 +86,7 @@ void R_ProcessEvents(void);
 
 /*  Heap and Pointer Protection Stack Sizes.  */
 
+/* NB: will need a 64-bit type, ULONG64 or size_t, for Win64 */
 typedef unsigned long R_size_t;
 #define R_SIZE_T_MAX ULONG_MAX
 
@@ -525,6 +528,9 @@ extern SEXP	R_HandlerStack;	/* Condition handler stack */
 extern SEXP	R_RestartStack;	/* Stack of available restarts */
 #endif
 
+extern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
+
+
 /* GUI type */
 
 extern char*	R_GUIType	INI_as("unknown");
@@ -811,6 +817,7 @@ void R_SetMaxVSize(R_size_t);
 R_size_t R_GetMaxNSize(void);
 void R_SetMaxNSize(R_size_t);
 R_size_t R_Decode2Long(char *p, int *ierr);
+void R_SetPPSize(unsigned long);
 
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);

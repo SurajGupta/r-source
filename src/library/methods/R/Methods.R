@@ -16,7 +16,8 @@ setGeneric <-
 {
     if(exists(name, "package:base") &&
        typeof(get(name, "package:base")) != "closure") {
-        msg <- paste("\"",name, "\" is a primitive function for which methods are not allowed.", sep="")
+        getGeneric(name) # will fail if this can't have methods
+        msg <- paste("\"",name, "\" is a primitive function;  methods can be defined, but the generic function is implicit, and can't be changed.", sep="")
         if(nargs() == 1)
             warning(msg)
         else
@@ -266,10 +267,10 @@ setMethod <-
              "\" is locked; cannot assign methods for function \"",
              f, "\"")
     hasMethods <- !is.null(fdef)
-    deflt <- NULL
+    deflt <- getFunction(f, generic = FALSE, mustFind = FALSE, where = where)
     ## where to insert the methods in generic
         gwhere <- NULL
-        allWhere <- findFunction(f, where = if(isNamespace(where)) where else .GlobalEnv)
+        allWhere <- findFunction(f, where = where)
         generics <-logical(length(allWhere))
         if(length(allWhere)>0) { # put methods into existing generic
             for(i in seq(along = allWhere)) {
@@ -334,6 +335,7 @@ setMethod <-
                    ## extra classes in method => use "..." to rematch
                    definition <- rematchDefinition(definition, fdef, mnames, fnames, signature)
                }
+               definition <- matchDefaults(definition, fdef) # use generic's defaults if none in method
            },
            builtin = , special = {
              ## the only primitive methods allowed are those equivalent

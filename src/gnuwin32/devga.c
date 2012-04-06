@@ -2,6 +2,7 @@
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -140,7 +141,7 @@ typedef struct {
     menuitem mpng, mbmp, mjpeg50, mjpeg75, mjpeg100;
     menuitem mps, mpdf, mwm, mclpbm, mclpwm, mprint, mclose;
     menuitem mrec, madd, mreplace, mprev, mnext, mclear, msvar, mgvar;
-    menuitem mR, mfit, mfix;
+    menuitem mR, mfit, mfix, grmenustayontop;
     Rboolean recording, replaying, needsave;
     bitmap bm;
   /* PNG and JPEG section */
@@ -168,6 +169,7 @@ typedef struct {
     unsigned int pngtrans; /* what PNG_TRANS get mapped to */
     Rboolean buffered;
     int timeafter, timesince;
+    SEXP psenv;
 } gadesc;
 
 rect getregion(gadesc *xd)
@@ -223,7 +225,7 @@ static void GA_Timer(gadesc *xd)
 
 static void GA_Activate(NewDevDesc *dd);
 static void GA_Circle(double x, double y, double r,
-		      int col, int fill, double gamma, int lty, double lwd,
+		      R_GE_gcontext *gc,
 		      NewDevDesc *dd);
 static void GA_Clip(double x0, double x1, double y0, double y1,
 		     NewDevDesc *dd);
@@ -232,31 +234,34 @@ static void GA_Deactivate(NewDevDesc *dd);
 static void GA_Hold(NewDevDesc *dd);
 static Rboolean GA_Locator(double *x, double *y, NewDevDesc *dd);
 static void GA_Line(double x1, double y1, double x2, double y2,
-		    int col, double gamma, int lty, double lwd,
+		    R_GE_gcontext *gc,
 		    NewDevDesc *dd);
-static void GA_MetricInfo(int c, int font, double cex, double ps,
+static void GA_MetricInfo(int c,
+			  R_GE_gcontext *gc,
 			  double* ascent, double* descent,
 			  double* width, NewDevDesc *dd);
 static void GA_Mode(int mode, NewDevDesc *dd);
-static void GA_NewPage(int fill, double gamma, NewDevDesc *dd);
+static void GA_NewPage(R_GE_gcontext *gc,
+		       NewDevDesc *dd);
 static void GA_Polygon(int n, double *x, double *y,
-		       int col, int fill, double gamma, int lty, double lwd,
+		       R_GE_gcontext *gc,
 		       NewDevDesc *dd);
 static void GA_Polyline(int n, double *x, double *y,
-			int col, double gamma, int lty, double lwd,
+			R_GE_gcontext *gc,
 			NewDevDesc *dd);
 static void GA_Rect(double x0, double y0, double x1, double y1,
-		    int col, int fill, double gamma, int lty, double lwd,
+		    R_GE_gcontext *gc,
 		    NewDevDesc *dd);
 static void GA_Size(double *left, double *right,
 		    double *bottom, double *top,
 		    NewDevDesc *dd);
 static void GA_Resize(NewDevDesc *dd);
-static double GA_StrWidth(char *str, int font,
-			  double cex, double ps, NewDevDesc *dd);
+static double GA_StrWidth(char *str,
+			  R_GE_gcontext *gc,
+			  NewDevDesc *dd);
 static void GA_Text(double x, double y, char *str,
 		    double rot, double hadj,
-		    int col, double gamma, int font, double cex, double ps,
+		    R_GE_gcontext *gc,
 		    NewDevDesc *dd);
 static Rboolean GA_Open(NewDevDesc*, gadesc*, char*, double, double,
 			Rboolean, int, int, double, int, int);
@@ -318,16 +323,18 @@ static void SaveAsWin(NewDevDesc *dd, char *display)
 		       fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
 					GE_INCHES, gdd),
 		       ((gadesc*) dd->deviceSpecific)->basefontsize,
-		       0, 1, White, 1, NA_INTEGER, NA_INTEGER, FALSE))
+		       0, 1, White, 1, NA_INTEGER, NA_INTEGER, FALSE,
+		       R_GlobalEnv))
         PrivateCopyDevice(dd, ndd, display);
 }
 
 
 static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 {
-    SEXP s = findVar(install(".PostScript.Options"), R_GlobalEnv);
+    SEXP s;
     NewDevDesc *ndd = (NewDevDesc *) calloc(1, sizeof(NewDevDesc));
     GEDevDesc* gdd = (GEDevDesc*) GetDevice(devNumber((DevDesc*) dd));
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
     char family[256], encoding[256], paper[256], bg[256], fg[256],
 	**afmpaths = NULL;
 
@@ -341,33 +348,35 @@ static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 	return;
     }
 
+
     ndd->displayList = R_NilValue;
 
-    /* Set default values... */
-    strcpy(family, "Helvetica");
+    /* Set default values and pad with zeroes ... */
+    strncpy(family, "Helvetica", 256);
     strcpy(encoding, "ISOLatin1.enc");
-    strcpy(paper, "default");
-    strcpy(bg, "transparent");
-    strcpy(fg, "black");
+    strncpy(paper, "default", 256);
+    strncpy(bg, "transparent", 256);
+    strncpy(fg, "black", 256);
     /* and then try to get it from .PostScript.Options */
-    if ((s!=R_UnboundValue) && (s!=R_NilValue)) {
+    s = findVar(install(".PostScript.Options"), xd->psenv);
+    if ((s != R_UnboundValue) && (s != R_NilValue)) {
 	SEXP names = getAttrib(s, R_NamesSymbol);
 	int i,done;
 	for (i=0, done=0; (done<4) && (i<length(s)) ; i++) {
 	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
-		strcpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	    if(!strcmp("paper", CHAR(STRING_ELT(names, i)))) {
-		strcpy(paper, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(paper, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
-		strcpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
-		strcpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	}
@@ -387,9 +396,10 @@ static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 
 static void SaveAsPDF(NewDevDesc *dd, char *fn)
 {
-    SEXP s = findVar(install(".PostScript.Options"), R_GlobalEnv);
+    SEXP s;
     NewDevDesc *ndd = (NewDevDesc *) calloc(1, sizeof(NewDevDesc));
     GEDevDesc* gdd = (GEDevDesc*) GetDevice(devNumber((DevDesc*) dd));
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
     char family[256], encoding[256], bg[256], fg[256];
 
     if (!ndd) {
@@ -405,25 +415,26 @@ static void SaveAsPDF(NewDevDesc *dd, char *fn)
     ndd->displayList = R_NilValue;
 
     /* Set default values... */
-    strcpy(family, "Helvetica");
+    s = findVar(install(".PostScript.Options"), xd->psenv);
+    strncpy(family, "Helvetica", 256);
     strcpy(encoding, "ISOLatin1.enc");
-    strcpy(bg, "transparent");
-    strcpy(fg, "black");
+    strncpy(bg, "transparent", 256);
+    strncpy(fg, "black", 256);
     /* and then try to get it from .PostScript.Options */
-    if ((s!=R_UnboundValue) && (s!=R_NilValue)) {
+    if ((s != R_UnboundValue) && (s != R_NilValue)) {
 	SEXP names = getAttrib(s, R_NamesSymbol);
 	int i,done;
-	for (i=0, done=0; (done<4) && (i<length(s)) ; i++) {
+	for (i=0, done=0; (done<3) && (i<length(s)) ; i++) {
 	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
-		strcpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)),255);
 		done += 1;
 	    }
 	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
-		strcpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
-		strcpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		strncpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
 		done += 1;
 	    }
 	}
@@ -525,7 +536,7 @@ static void RFontInit()
 	    strcat(oops, optfile());
 	    strcat(oops, " will be ignored.");
 	    R_ShowMessage(oops);
-	    for (i = 0; i < fontnum; i++) free(fontname);
+	    for (i = 0; i < fontnum; i++) free(fontname[i]);
 	    RStandardFonts();
 	    notdone = 0;
 	}
@@ -825,13 +836,19 @@ static void menuclpbm(control m)
     gsetcursor(xd->gawin, ArrowCursor);
 }
 
+static void menustayontop(control m)
+{
+    NewDevDesc *dd = (NewDevDesc *) getdata(m);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+
+    BringToTop(xd->gawin, 2);
+}
+
 static void menuprint(control m)
 {
     NewDevDesc *dd = (NewDevDesc *) getdata(m);
     SaveAsWin(dd, "win.print:");
 }
-
-
 
 static void menuclose(control m)
 {
@@ -839,6 +856,21 @@ static void menuclose(control m)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     HelpClose(xd->gawin);
+}
+
+static void grpopupact(control m)
+{
+    NewDevDesc *dd = (NewDevDesc *) getdata(m);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+
+    if (ismdi())
+    	disable(xd->grmenustayontop);
+    else {
+    	if (isTopmost(xd->gawin))
+     	    check(xd->grmenustayontop);
+    	else
+    	    uncheck(xd->grmenustayontop);
+    }
 }
 
 /* plot history */
@@ -1257,6 +1289,7 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
 {
     menu  m;
     int   iw, ih;
+    int   cw, ch;
     double dw, dw0, dh, d;
 
     xd->kind = SCREEN;
@@ -1268,20 +1301,29 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
 	dh = (int) (w * user_ypinch);
     else
 	dh = (int) (h / pixelHeight(NULL));
+
+    if (ismdi()) {
+	cw = RgetMDIwidth();
+	ch = RgetMDIheight();
+    } else {
+	cw = devicewidth(NULL);
+	ch = deviceheight(NULL);
+    }
+
     if (resize != 3) {
-	if ((dw / devicewidth(NULL)) > 0.85) {
+	if ((dw / cw) > 0.85) {
 	    d = dh / dw;
-	    dw = 0.85 * devicewidth(NULL);
+	    dw = 0.85 * cw;
 	    dh = d * dw;
 	}
-	if ((dh / deviceheight(NULL)) > 0.85) {
+	if ((dh / ch) > 0.85) {
 	    d = dw / dh;
-	    dh = 0.85 * deviceheight(NULL);
+	    dh = 0.85 * ch;
 	    dw = d * dh;
 	}
     } else {
-	dw = min(dw, 0.85*devicewidth(NULL));
-	dh = min(dh, 0.85*deviceheight(NULL));
+	dw = min(dw, 0.85*cw);
+	dh = min(dh, 0.85*ch);
     }
     iw = dw + 0.5;
     ih = dh + 0.5;
@@ -1290,8 +1332,8 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
 	int grx, gry;
 	grx = (xpos == NA_INTEGER) ? graphicsx : xpos;
 	gry = (ypos == NA_INTEGER) ? graphicsy : ypos;
-	if (grx < 0) grx = devicewidth(NULL)  - iw + grx;
-	if (gry < 0) gry = deviceheight(NULL) - ih + gry;
+	if (grx < 0) grx = cw - iw + grx;
+	if (gry < 0) gry = ch - ih + gry;
 	if (!(xd->gawin = newwindow("R Graphics",
 				    rect(grx, gry, iw, ih),
 				    Document | StandardWindow | Menubar |
@@ -1396,7 +1438,8 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     newmdimenu();
 
     /* Normal popup */
-    MCHECK(xd->grpopup = newpopup(NULL));
+    MCHECK(xd->grpopup = newpopup(grpopupact));
+    setdata(xd->grpopup, (void *) dd);
     MCHECK(m = newmenuitem("Copy as metafile", 0, menuclpwm));
     setdata(m, (void *) dd);
     MCHECK(m = newmenuitem("Copy as bitmap", 0, menuclpbm));
@@ -1406,6 +1449,9 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     setdata(m, (void *) dd);
     MCHECK(m = newmenuitem("Save as postscript...", 0, menups));
     setdata(m, (void *) dd);
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(xd->grmenustayontop = newmenuitem("Stay on top", 0, menustayontop));
+    setdata(xd->grmenustayontop, (void *) dd);
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(m = newmenuitem("Print...", 0, menuprint));
     setdata(m, (void *) dd);
@@ -1440,7 +1486,7 @@ setupScreenDevice(NewDevDesc *dd, gadesc *xd, double w, double h,
     setdata(xd->mfix, (void *) dd);
     show(xd->gawin); /* twice, for a Windows bug */
     show(xd->gawin);
-    BringToTop(xd->gawin);
+    BringToTop(xd->gawin, 0);
     sethit(xd->gawin, devga_sbf);
     setresize(xd->gawin, HelpResize);
     setredraw(xd->gawin, HelpExpose);
@@ -1596,14 +1642,15 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	/* asked for						*/
 	/********************************************************/
 
-static double GA_StrWidth(char *str, int font,
-			      double cex, double ps, NewDevDesc *dd)
+static double GA_StrWidth(char *str,
+			  R_GE_gcontext *gc,
+			  NewDevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
     double a;
-    int   size = cex * ps + 0.5;
+    int   size = gc->cex * gc->ps + 0.5;
 
-    SetFont(font, size, 0.0, dd);
+    SetFont(gc->fontface, size, 0.0, dd);
     a = (double) gstrwidth(xd->gawin, xd->font, str);
     return a;
 }
@@ -1619,15 +1666,16 @@ static double GA_StrWidth(char *str, int font,
 	/* Character Metric Information */
 	/* Passing c == 0 gets font information */
 
-static void GA_MetricInfo(int c, int font, double cex, double ps,
-			      double* ascent, double* descent,
-			      double* width, NewDevDesc *dd)
+static void GA_MetricInfo(int c,
+			  R_GE_gcontext *gc,
+			  double* ascent, double* descent,
+			  double* width, NewDevDesc *dd)
 {
     int   a, d, w;
-    int   size = cex * ps + 0.5;
+    int   size = gc->cex * gc->ps + 0.5;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-    SetFont(font, size, 0.0, dd);
+    SetFont(gc->fontface, size, 0.0, dd);
     gcharmetric(xd->gawin, xd->font, c, &a, &d, &w);
     /* Some Windows systems report that space has height and depth,
        so we have a kludge.  Note that 32 is space in symbol font too */
@@ -1778,7 +1826,8 @@ static void GA_Resize(NewDevDesc *dd)
 	/* (e.g., postscript)					*/
 	/********************************************************/
 
-static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
+static void GA_NewPage(R_GE_gcontext *gc,
+		       NewDevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
@@ -1814,11 +1863,11 @@ static void GA_NewPage(int fill, double gamma, NewDevDesc *dd)
 	    xd->needsave = TRUE;
 #endif
     }
-    xd->bg = fill;
+    xd->bg = gc->fill;
     if (!R_OPAQUE(xd->bg))
 	xd->bgcolor = xd->canvascolor;
     else
-	xd->bgcolor = GArgb(xd->bg, gamma);
+	xd->bgcolor = GArgb(xd->bg, gc->gamma);
     if (xd->kind != SCREEN) {
 	xd->needsave = TRUE;
 	xd->clip = getrect(xd->gawin);
@@ -1935,8 +1984,8 @@ static void GA_Deactivate(NewDevDesc *dd)
 	/********************************************************/
 
 static void GA_Rect(double x0, double y0, double x1, double y1,
-		     int col, int fill, double gamma, int lty, double lwd,
-		     NewDevDesc *dd)
+		    R_GE_gcontext *gc,
+		    NewDevDesc *dd)
 {
     int   tmp;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
@@ -1956,14 +2005,14 @@ static void GA_Rect(double x0, double y0, double x1, double y1,
 	y1 = tmp;
     }
     r = rect((int) x0, (int) y0, (int) x1 - (int) x0, (int) y1 - (int) y0);
-    if (R_OPAQUE(fill)) {
-	SetColor(fill, gamma, dd);
+    if (R_OPAQUE(gc->fill)) {
+	SetColor(gc->fill, gc->gamma, dd);
 	DRAW(gfillrect(_d, xd->fgcolor, r));
 
     }
-    if (R_OPAQUE(col)) {
-	SetColor(col, gamma, dd);
-	SetLinetype(lty, lwd, dd);
+    if (R_OPAQUE(gc->col)) {
+	SetColor(gc->col, gc->gamma, dd);
+	SetLinetype(gc->lty, gc->lwd, dd);
 	DRAW(gdrawrect(_d, xd->lwd, xd->lty, xd->fgcolor, r, 0));
     }
     SH;
@@ -1985,8 +2034,8 @@ static void GA_Rect(double x0, double y0, double x1, double y1,
 	/********************************************************/
 
 static void GA_Circle(double x, double y, double r,
-		       int col, int fill, double gamma, int lty, double lwd,
-		       NewDevDesc *dd)
+		      R_GE_gcontext *gc,
+		      NewDevDesc *dd)
 {
     int   ir, ix, iy;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
@@ -2000,13 +2049,13 @@ static void GA_Circle(double x, double y, double r,
     ix = (int) x;
     iy = (int) y;
     rr = rect(ix - ir, iy - ir, 2 * ir, 2 * ir);
-    if (R_OPAQUE(fill)) {
-	SetColor(fill, gamma, dd);
+    if (R_OPAQUE(gc->fill)) {
+	SetColor(gc->fill, gc->gamma, dd);
 	DRAW(gfillellipse(_d, xd->fgcolor, rr));
     }
-    if (R_OPAQUE(col)) {
-	SetLinetype(lty, lwd, dd);
-	SetColor(col, gamma, dd);
+    if (R_OPAQUE(gc->col)) {
+	SetLinetype(gc->lty, gc->lwd, dd);
+	SetColor(gc->col, gc->gamma, dd);
 	DRAW(gdrawellipse(_d, xd->lwd, xd->fgcolor, rr, 0));
     }
     SH;
@@ -2021,8 +2070,8 @@ static void GA_Circle(double x, double y, double r,
 	/********************************************************/
 
 static void GA_Line(double x1, double y1, double x2, double y2,
-		     int col, double gamma, int lty, double lwd,
-		     NewDevDesc *dd)
+		    R_GE_gcontext *gc,
+		    NewDevDesc *dd)
 {
     int   xx1, yy1, xx2, yy2;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
@@ -2034,9 +2083,9 @@ static void GA_Line(double x1, double y1, double x2, double y2,
     xx2 = (int) x2;
     yy2 = (int) y2;
 
-    if (R_OPAQUE(col)) {
-	SetColor(col, gamma, dd);
-	SetLinetype(lty, lwd, dd);
+    if (R_OPAQUE(gc->col)) {
+	SetColor(gc->col, gc->gamma, dd);
+	SetLinetype(gc->lty, gc->lwd, dd);
 	DRAW(gdrawline(_d, xd->lwd, xd->lty, xd->fgcolor,
 		       pt(xx1, yy1), pt(xx2, yy2), 0));
 	SH;
@@ -2053,8 +2102,8 @@ static void GA_Line(double x1, double y1, double x2, double y2,
 	/********************************************************/
 
 static void GA_Polyline(int n, double *x, double *y,
-			    int col, double gamma, int lty, double lwd,
-			    NewDevDesc *dd)
+			R_GE_gcontext *gc,
+			NewDevDesc *dd)
 {
     char *vmax = vmaxget();
     point *p = (point *) R_alloc(n, sizeof(point));
@@ -2069,9 +2118,9 @@ static void GA_Polyline(int n, double *x, double *y,
 	p[i].x = (int) devx;
 	p[i].y = (int) devy;
     }
-    if (R_OPAQUE(col)) {
-	SetColor(col, gamma, dd);
-	SetLinetype(lty, lwd, dd);
+    if (R_OPAQUE(gc->col)) {
+	SetColor(gc->col, gc->gamma, dd);
+	SetLinetype(gc->lty, gc->lwd, dd);
 	DRAW(gdrawpolyline(_d, xd->lwd, xd->lty, xd->fgcolor, p, n, 0, 0));
     }
     vmaxset(vmax);
@@ -2091,8 +2140,8 @@ static void GA_Polyline(int n, double *x, double *y,
 	/********************************************************/
 
 static void GA_Polygon(int n, double *x, double *y,
-			int col, int fill, double gamma, int lty, double lwd,
-			NewDevDesc *dd)
+		       R_GE_gcontext *gc,
+		       NewDevDesc *dd)
 {
     char *vmax = vmaxget();
     point *points;
@@ -2110,13 +2159,13 @@ static void GA_Polygon(int n, double *x, double *y,
 	points[i].x = (int) (devx);
 	points[i].y = (int) (devy);
     }
-    if (R_OPAQUE(fill)) {
-	SetColor(fill, gamma, dd);
+    if (R_OPAQUE(gc->fill)) {
+	SetColor(gc->fill, gc->gamma, dd);
 	DRAW(gfillpolygon(_d, xd->fgcolor, points, n));
     }
-    if (R_OPAQUE(col)) {
-	SetColor(col, gamma, dd);
-	SetLinetype(lty, lwd, dd);
+    if (R_OPAQUE(gc->col)) {
+	SetColor(gc->col, gc->gamma, dd);
+	SetLinetype(gc->lty, gc->lwd, dd);
 	DRAW(gdrawpolygon(_d, xd->lwd, xd->lty, xd->fgcolor, points, n, 0 ));
     }
     vmaxset(vmax);
@@ -2135,23 +2184,23 @@ static void GA_Polygon(int n, double *x, double *y,
 
 
 static void GA_Text(double x, double y, char *str,
-		     double rot, double hadj,
-		     int col, double gamma, int font, double cex, double ps,
-		     NewDevDesc *dd)
+		    double rot, double hadj,
+		    R_GE_gcontext *gc,
+		    NewDevDesc *dd)
 {
     int   size;
     double pixs, xl, yl, rot1;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-    size = cex * ps + 0.5;
+    size = gc->cex * gc->ps + 0.5;
     pixs = - 1;
     xl = 0.0;
     yl = -pixs;
     rot1 = rot * DEG2RAD;
     x += -xl * cos(rot1) + yl * sin(rot1);
     y -= -xl * sin(rot1) - yl * cos(rot1);
-    SetFont(font, size, rot, dd);
-    SetColor(col, gamma, dd);
+    SetFont(gc->fontface, size, rot, dd);
+    SetColor(gc->col, gc->gamma, dd);
     if (R_OPAQUE(xd->fgcolor)) {
 #ifdef NOCLIPTEXT
 	gsetcliprect(xd->gawin, getrect(xd->gawin));
@@ -2274,7 +2323,8 @@ static void GA_Hold(NewDevDesc *dd)
 Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 			double height, double pointsize,
 			Rboolean recording, int resize, int canvas,
-			double gamma, int xpos, int ypos, Rboolean buffered)
+			double gamma, int xpos, int ypos, Rboolean buffered,
+			SEXP psenv)
 {
     /* if need to bail out with some sort of "error" then */
     /* must free(dd) */
@@ -2395,6 +2445,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
     xd->resize = (resize == 3);
     xd->locator = FALSE;
     xd->buffered = buffered;
+    xd->psenv = psenv;
     {
 	SEXP timeouts = GetOption(install("windowsTimeouts"), R_NilValue);
 	if(isInteger(timeouts)){
@@ -2496,11 +2547,6 @@ void UnLoad_Rbitmap_Dll()
     RbitmapAlreadyLoaded = 0;
 }
 
-static unsigned long privategetpixel(void *d,int i, int j)
-{
-    return ggetpixel((bitmap)d,pt(j,i));
-}
-
 static int png_rows = 0;
 
 static unsigned long privategetpixel2(void *d,int i, int j)
@@ -2520,35 +2566,22 @@ static void SaveAsBitmap(NewDevDesc *dd)
     r = ggetcliprect(xd->gawin);
     gsetcliprect(xd->gawin, r2 = getrect(xd->gawin));
     if(xd->fp) {
-	if (getdepth(xd->gawin) > 8) {
-	    getbitmapdata2(xd->gawin, &data);
-	    if(data) {
-		png_rows = r2.width;
-		if (xd->kind == PNG)
-		    R_SaveAsPng(data, xd->windowWidth, xd->windowHeight,
-				privategetpixel2, 0, xd->fp,
-				R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
-		else if (xd->kind == JPEG)
-		    R_SaveAsJpeg(data, xd->windowWidth, xd->windowHeight,
-				 privategetpixel2, 0, xd->quality, xd->fp) ;
-		else
-		    R_SaveAsBmp(data, xd->windowWidth, xd->windowHeight,
-				privategetpixel2, 0, xd->fp);
-		free(data);
-	    } else
-		warning("processing of the plot ran out of memory");
-	} else {
+	getbitmapdata2(xd->gawin, &data);
+	if(data) {
+	    png_rows = r2.width;
 	    if (xd->kind == PNG)
-		R_SaveAsPng(xd->gawin, xd->windowWidth, xd->windowHeight,
-			    privategetpixel, 0, xd->fp,
+		R_SaveAsPng(data, xd->windowWidth, xd->windowHeight,
+			    privategetpixel2, 0, xd->fp,
 			    R_OPAQUE(xd->bg) ? 0 : xd->pngtrans) ;
 	    else if (xd->kind == JPEG)
-		R_SaveAsJpeg(xd->gawin, xd->windowWidth, xd->windowHeight,
-			     privategetpixel, 0, xd->quality, xd->fp) ;
+		R_SaveAsJpeg(data, xd->windowWidth, xd->windowHeight,
+			     privategetpixel2, 0, xd->quality, xd->fp) ;
 	    else
-		R_SaveAsBmp(xd->gawin, xd->windowWidth, xd->windowHeight,
-			    privategetpixel, 0, xd->fp);
-	}
+		R_SaveAsBmp(data, xd->windowWidth, xd->windowHeight,
+			    privategetpixel2, 0, xd->fp);
+	    free(data);
+	} else
+	    warning("processing of the plot ran out of memory");
 	fclose(xd->fp);
     }
     gsetcliprect(xd->gawin, r);
@@ -2577,18 +2610,14 @@ static void SaveAsPng(NewDevDesc *dd,char *fn)
     }
     r = ggetcliprect(xd->bm);
     gsetcliprect(xd->bm, r2 = getrect(xd->bm));
-    if (getdepth(xd->gawin) > 8) {
-	getbitmapdata2(xd->bm, &data);
-	if(data) {
-	    png_rows = r2.width;
-	    R_SaveAsPng(data, xd->windowWidth, xd->windowHeight,
-			privategetpixel2, 0, fp, 0) ;
-	    free(data);
-	} else
-	    warning("processing of the plot ran out of memory");
+    getbitmapdata2(xd->bm, &data);
+    if(data) {
+	png_rows = r2.width;
+	R_SaveAsPng(data, xd->windowWidth, xd->windowHeight,
+		    privategetpixel2, 0, fp, 0) ;
+	free(data);
     } else
-	R_SaveAsPng(xd->bm, xd->windowWidth, xd->windowHeight,
-		    privategetpixel, 0, fp, 0) ;
+	warning("processing of the plot ran out of memory");
     /* R_OPAQUE(xd->bg) ? 0 : xd->canvascolor) ; */
     gsetcliprect(xd->bm, r);
     fclose(fp);
@@ -2614,18 +2643,14 @@ static void SaveAsJpeg(NewDevDesc *dd,int quality,char *fn)
     }
     r = ggetcliprect(xd->bm);
     gsetcliprect(xd->bm, r2 = getrect(xd->bm));
-    if (getdepth(xd->gawin) > 8) {
-	getbitmapdata2(xd->bm, &data);
-	if(data) {
-	    png_rows = r2.width;
-	    R_SaveAsJpeg(data,xd->windowWidth, xd->windowHeight,
-			 privategetpixel2, 0, quality, fp) ;
-	    free(data);
-	} else
-	    warning("processing of the plot ran out of memory");
+    getbitmapdata2(xd->bm, &data);
+    if(data) {
+	png_rows = r2.width;
+	R_SaveAsJpeg(data,xd->windowWidth, xd->windowHeight,
+		     privategetpixel2, 0, quality, fp) ;
+	free(data);
     } else
-	R_SaveAsJpeg(xd->bm,xd->windowWidth, xd->windowHeight,
-		     privategetpixel, 0, quality, fp) ;
+	warning("processing of the plot ran out of memory");
     gsetcliprect(xd->bm, r);
     fclose(fp);
 }
@@ -2652,18 +2677,15 @@ static void SaveAsBmp(NewDevDesc *dd,char *fn)
     }
     r = ggetcliprect(xd->bm);
     gsetcliprect(xd->bm, r2 = getrect(xd->bm));
-    if (getdepth(xd->gawin) > 8) {
-	getbitmapdata2(xd->bm, &data);
-	if(data) {
-	    png_rows = r2.width;
-	    R_SaveAsBmp(data, xd->windowWidth, xd->windowHeight,
-			privategetpixel2, 0, fp) ;
-	    free(data);
-	} else
-	    warning("processing of the plot ran out of memory");
+
+    getbitmapdata2(xd->bm, &data);
+    if(data) {
+	png_rows = r2.width;
+	R_SaveAsBmp(data, xd->windowWidth, xd->windowHeight,
+		    privategetpixel2, 0, fp) ;
+	free(data);
     } else
-	R_SaveAsBmp(xd->bm, xd->windowWidth, xd->windowHeight,
-		    privategetpixel, 0, fp) ;
+	warning("processing of the plot ran out of memory");
     gsetcliprect(xd->bm, r);
     fclose(fp);
 }
@@ -2673,14 +2695,16 @@ extern UImode CharacterMode;
 
 SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    int dev;
+    int dev, stay;
     GEDevDesc *gdd;
     gadesc *xd;
 
     checkArity(op, args);
     dev = asInteger(CAR(args));
+    stay = asInteger(CADR(args));
+
     if(dev == -1) { /* console */
-	if(CharacterMode == RGui) BringToTop(RConsole);
+	if(CharacterMode == RGui) BringToTop(RConsole, stay);
     } else {
 	if(dev < 1 || dev > R_MaxDevices || dev == NA_INTEGER)
 	    errorcall(call, "invalid value of `which'");
@@ -2688,7 +2712,8 @@ SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(!gdd) errorcall(call, "invalid device");
 	xd = (gadesc *) gdd->dev->deviceSpecific;
 	if(!xd) errorcall(call, "invalid device");
-	BringToTop(xd->gawin);
+	if(stay && ismdi()) error("requires SDI mode");
+	BringToTop(xd->gawin, stay);
     }
     return R_NilValue;
 }

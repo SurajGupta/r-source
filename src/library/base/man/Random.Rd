@@ -113,7 +113,8 @@ set.seed(seed, kind = NULL)
   \code{"Ahrens-Dieter"}, \code{"Box-Muller"}, \code{"Inversion"} (the
   default), or
   \code{"user-supplied"}.  (For inversion, see the reference in
-  \code{\link{qnorm}}.) The Kinderman-Ramage generator used in versions prior
+  \code{\link[stats]{qnorm}}.)
+  The Kinderman-Ramage generator used in versions prior
   to 1.7.1 had several approximation errors and should only be used for
   reproduction of older results.
 
@@ -146,7 +147,8 @@ set.seed(seed, kind = NULL)
   represent the type of normal generator (starting at \code{0}).
 
   In the underlying C, \code{.Random.seed[-1]} is \code{unsigned};
-  therefore in \R \code{.Random.seed[-1]} can be negative.
+  therefore in \R \code{.Random.seed[-1]} can be negative, due to
+  the representation of an unsigned integer by a signed integer.
 
   \code{RNGkind} returns a two-element character vector of the RNG and
   normal kinds in use \emph{before} the call, invisibly if either
@@ -214,12 +216,13 @@ set.seed(seed, kind = NULL)
 }
 \author{of RNGkind: Martin Maechler. Current implementation, B. D. Ripley}
 
-\seealso{\code{\link{runif}}, \code{\link{rnorm}}, \ldots.}
+\seealso{\code{\link[stats]{runif}}, \code{\link[stats]{rnorm}}, \ldots.}
 %	this is ./Uniform.Rd
 \examples{
-runif(1); .Random.seed; runif(1); .Random.seed
+## the default random seed is 626 integers, so only print a few
+runif(1); .Random.seed[1:6]; runif(1); .Random.seed[1:6]
 ## If there is no seed, a "random" new one is created:
-rm(.Random.seed); runif(1); .Random.seed
+rm(.Random.seed); runif(1); .Random.seed[1:6]
 
 RNGkind("Wich")# (partial string matching on 'kind')
 

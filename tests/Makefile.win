@@ -10,8 +10,8 @@ srcdir = .
 
 ## Can't test when cross-building
 RHOME = $(shell ../src/gnuwin32/Rpwd.exe ..)# must be absolute path
-R= $(RHOME)/bin/Rterm --vanilla LC_ALL=C SRCDIR=.
-RDIFF = $(RHOME)/bin/Rcmd Rdiff.sh
+R= $(RHOME)/bin/Rterm --vanilla LC_ALL=C SRCDIR=. R_DEFAULT_PACKAGES=
+RDIFF = $(RHOME)/bin/R CMD Rdiff.sh
 RVAL_IF_DIFF=0
 
 test-src-gct = \
@@ -143,11 +143,11 @@ test-Packages:
 	@for p in $(R_PKGS_BASE); do \
 	  echo ; \
 	  echo "* checking package '$${p}'"; \
-	  R_CHECK_FF_CALLS=yes $(RHOME)/bin/Rcmd check ../src/library/$${p} || echo; \
+	  R_CHECK_FF_CALLS=yes $(RHOME)/bin/R CMD check ../src/library/$${p} || echo; \
 	done
 
 test-Demo:
-	@echo "running demos from base and eda"
+	@echo "running demos from base and stats"
 	@$(MAKE) -f Makefile.win $(test-out-demo) RVAL_IF_DIFF=0
 
 internet.Rout2:

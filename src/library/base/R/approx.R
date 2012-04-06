@@ -46,9 +46,10 @@ approx <- function(x, y = NULL, xout, method = "linear", n = 50,
 	    stop("approx requires n >= 1")
 	xout <- seq(x[1], x[nx], length = n)
     }
-    y <- .C("R_approx", as.double(x), as.double(y), nx, xout = as.double(xout),
-	length(xout), as.integer(method), as.double(yleft), as.double(yright),
-	as.double(f), NAOK = TRUE, PACKAGE = "base")$xout
+    y <- .C("R_approx", as.double(x), as.double(y), as.integer(nx),
+            xout = as.double(xout), as.integer(length(xout)),
+            as.integer(method), as.double(yleft), as.double(yright),
+            as.double(f), NAOK = TRUE, PACKAGE = "base")$xout
     list(x = xout, y = y)
 }
 
@@ -95,27 +96,39 @@ approxfun <- function(x, y = NULL, method = "linear",
     if (missing(yright))
 	yright <- if(rule == 1) NA else y[length(y)]
     rm(o, rule)
-    function(v) .C("R_approx", as.double(x), as.double(y),
-		   n, xout = as.double(v), length(v), as.integer(method),
-		   as.double(yleft), as.double(yright),
+    function(v) .C("R_approx", as.double(x), as.double(y), as.integer(n),
+                   xout = as.double(v), as.integer(length(v)),
+                   as.integer(method), as.double(yleft), as.double(yright),
 		   as.double(f), NAOK = TRUE, PACKAGE = "base")$xout
 }
 
 ### This is a `variant' of  approx( method = "constant" ) :
 findInterval <- function(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
 {
-  ## Purpose: gives back the indices of  x in vec;  vec[] sorted
-  ## -------------------------------------------------------------------------
-  ## Author: Martin Maechler, Date:  4 Jan 2002, 10:16
-  nx <- length(x)
-  if(is.unsorted(vec))
-      stop("`vec' must be sorted non-decreasingly")
-  .C("find_interv_vec",
-     xt = as.double(vec), n = length(vec),
-     x  = as.double(x),  nx = nx,
-     as.logical(rightmost.closed),
-     as.logical(all.inside),
-     index = integer(nx),
-     DUP = FALSE,
-     PACKAGE = "base")$index
+    ## Purpose: gives back the indices of  x in vec;  vec[] sorted
+    ## -------------------------------------------------------------------------
+    ## Author: Martin Maechler, Date:  4 Jan 2002, 10:16
+
+    if(any(is.na(vec)))
+        stop(sQuote("vec")," contains NAs")
+    if(is.unsorted(vec))
+        stop(sQuote("vec")," must be sorted non-decreasingly")
+    ## deal with NA's in x:
+    if(has.na <- any(ix <- is.na(x)))
+        x <- x[!ix]
+    nx <- length(x)
+    index <- integer(nx)
+    .C("find_interv_vec",
+       xt = as.double(vec), n = as.integer(length(vec)),
+       x  = as.double(x),  nx = as.integer(nx),
+       as.logical(rightmost.closed),
+       as.logical(all.inside),
+       index, DUP = FALSE, NAOK = TRUE, # NAOK: 'Inf' only
+       PACKAGE = "base")
+    if(has.na) {
+        ii <- as.integer(ix)
+        ii[ix] <- NA
+        ii[!ix] <- index
+        ii
+    } else index
 }

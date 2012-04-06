@@ -53,12 +53,14 @@ Conj(x)
       coordinates}. If \eqn{z = x + i y} with real \eqn{x} and \eqn{y},
   \code{Mod}\eqn{(z) = \sqrt{x^2 + y^2}}, and for
   \eqn{\phi= Arg(z)}, \eqn{x = \cos(\phi)} and \eqn{y = \sin(\phi)}.
+  They are all generic functions: methods can be defined
+  for them individually or via the \code{\link{Complex}} group generic.
 
   In addition, the elementary trigonometric, logarithmic and exponential
   functions are available for complex values.
 
   \code{is.complex} is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

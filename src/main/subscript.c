@@ -251,13 +251,15 @@ static SEXP negativeSubscript(SEXP s, int ns, int nx)
 {
     SEXP indx;
     int stretch = 0;
-    int i;
+    int i, ix;
     PROTECT(indx = allocVector(INTSXP, nx));
     for (i = 0; i < nx; i++)
 	INTEGER(indx)[i] = 1;
-    for (i = 0; i < ns; i++)
-	if (INTEGER(s)[i] != 0)
-	    INTEGER(indx)[-INTEGER(s)[i] - 1] = 0;
+    for (i = 0; i < ns; i++) {
+	ix = INTEGER(s)[i]; 
+	if (ix != 0 && ix != NA_INTEGER && -ix <= nx)
+	    INTEGER(indx)[-ix - 1] = 0;
+    }
     s = logicalSubscript(indx, nx, nx, &stretch);
     UNPROTECT(1);
     return s;
@@ -285,6 +287,7 @@ static SEXP positiveSubscript(SEXP s, int ns, int nx)
 static SEXP integerSubscript(SEXP s, int ns, int nx, int *stretch)
 {
     int i, ii, min, max, canstretch;
+    Rboolean isna = FALSE;
     canstretch = *stretch;
     *stretch = 0;
     min = 0;
@@ -296,7 +299,7 @@ static SEXP integerSubscript(SEXP s, int ns, int nx, int *stretch)
 		min = ii;
 	    if (ii > max)
 		max = ii;
-	}
+	} else isna = TRUE;
     }
     if (min < -nx)
 	error("subscript out of bounds");
@@ -305,14 +308,17 @@ static SEXP integerSubscript(SEXP s, int ns, int nx, int *stretch)
 	else error("subscript out of bounds");
     }
     if (min < 0) {
-	if (max == 0) return negativeSubscript(s, ns, nx);
+	if (max == 0 && !isna) return negativeSubscript(s, ns, nx);
 	else error("only 0's may mix with negative subscripts");
     }
     else return positiveSubscript(s, ns, nx);
     return R_NilValue;
 }
 
-static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names, int *stretch)
+typedef SEXP (*StringEltGetter)(SEXP x, int i);
+
+static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names,
+			    StringEltGetter strg, int *stretch)
 {
     SEXP indx, indexnames;
     int i, j, nnames, sub, extra;
@@ -332,12 +338,16 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names, int *stretch)
     for (i = 0; i < ns; i++) {
 	sub = 0;
 	if (names != R_NilValue) {
-	    for (j = 0; j < nnames; j++)
-		if (NonNullStringMatch(STRING_ELT(s, i), STRING_ELT(names, j))) {
+	    for (j = 0; j < nnames; j++) {
+	        SEXP names_j = strg(names, j);
+		if (TYPEOF(names_j) != CHARSXP)
+		    error("character vector element does not have type CHARSXP");
+		if (NonNullStringMatch(STRING_ELT(s, i), names_j)) {
 		    sub = j + 1;
 		    SET_STRING_ELT(indexnames, i, R_NilValue);
 		    break;
 		}
+	    }
 	}
 	if (sub == 0) {
 	    for (j = 0 ; j < i ; j++)
@@ -378,7 +388,8 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names, int *stretch)
 
 typedef SEXP AttrGetter(SEXP x, SEXP data);
 
-SEXP arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng, SEXP x)
+SEXP arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
+		    StringEltGetter strg, SEXP x)
 {
     int nd, ns, stretch = 0;
     SEXP dnames, tmp;
@@ -402,7 +413,7 @@ SEXP arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng, SEXP x)
 	if (dnames == R_NilValue)
 	    error("no dimnames attribute for array");
 	dnames = VECTOR_ELT(dnames, dim);
-	return stringSubscript(s, ns, nd, dnames, &stretch);
+	return stringSubscript(s, ns, nd, dnames, strg, &stretch);
     case SYMSXP:
 	if (s == R_MissingArg)
 	    return nullSubscript(nd);
@@ -429,7 +440,7 @@ SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
     if (isVector(x) || isList(x) || isLanguage(x)) {
 	nx = length(x);
 
-	ans = vectorSubscript(nx, s, stretch, getAttrib, x);
+	ans = vectorSubscript(nx, s, stretch, getAttrib, (STRING_ELT), x);
     }
     else error("subscripting on non-vector");
     return ans;
@@ -443,7 +454,7 @@ SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
 */
  
 SEXP vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
-		     SEXP x) 
+		     StringEltGetter strg, SEXP x) 
 {
     int ns;
     SEXP ans=R_NilValue, tmp;
@@ -480,7 +491,7 @@ SEXP vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
     {
 	SEXP names = dng(x, R_NamesSymbol);
 	/* *stretch = 0; */
-	ans = stringSubscript(s, ns, nx, names, stretch);
+	ans = stringSubscript(s, ns, nx, names, strg, stretch);
     }
     break;
     case SYMSXP:

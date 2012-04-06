@@ -1,8 +1,21 @@
 .TraceWithMethods <- function(what, tracer = NULL, exit = NULL, at = numeric(), print = TRUE, signature = NULL, where = .GlobalEnv) {
+    whereF <- NULL
+    def <- NULL
     if(is.function(what)) {
+        def <- what
         fname <- substitute(what)
         if(is.name(fname))
             what <- as.character(fname)
+        else if(is.call(fname) && identical(fname[[1]], as.name("::"))) {
+            whereF <-as.character(fname[[2]])
+            require(whereF, character.only = TRUE)
+            whereF <- as.environment(paste("package", whereF, sep=":"))
+            what <- as.character(fname[[3]])
+        }
+        else if(is.call(fname) && identical(fname[[1]], as.name(":::"))) {
+            whereF <- loadNamespace(as.character(fname[[2]]))
+            what <- as.character(fname[[3]])
+        }
         else
             stop("Argument what should be the name of a function")
     }
@@ -20,12 +33,15 @@
     }
     if(nargs() == 1)
         return(.primTrace(what)) # for back compatibility
+    if(is.null(whereF)) {
         allWhere <- findFunction(what, where = where)
         if(length(allWhere)==0)
             stop("No function definition for \"", what, "\" found")
         whereF <- as.environment(allWhere[[1]])
+    }
+    if(is.null(def))
         def <- getFunction(what, where = whereF)
-        if(!is.null(signature)) {
+    if(!is.null(signature)) {
         whereM <- findMethod(what, signature, where = where)
         if(length(whereM) == 0) {
             def <- selectMethod(what, signature)
@@ -93,7 +109,7 @@
             stop("can't use \"at\" argument unless the function body has the form { ... }")
         for(i in at) {
             if(print)
-                expri <- substitute({if(tracingState()){methods:::.doTracePrint(MSG); TRACE}; EXPR},
+                expri <- substitute({if(tracingState()){methods::.doTracePrint(MSG); TRACE}; EXPR},
                             list(TRACE = tracer, MSG = paste("step",i), EXPR = fBody[[i]]))
             else
                 expri <- substitute({if(tracingState())TRACE; EXPR},
@@ -103,7 +119,7 @@
     }
     else if(!is.null(tracer)){
             if(print)
-                fBody <- substitute({if(tracingState()){methods:::.doTracePrint(MSG); TRACE}; EXPR},
+                fBody <- substitute({if(tracingState()){methods::.doTracePrint(MSG); TRACE}; EXPR},
                             list(TRACE = tracer, MSG = paste("on entry"), EXPR = fBody))
             else
                 fBody <- substitute({if(tracingState())TRACE; EXPR},
@@ -111,7 +127,7 @@
     }
     if(!is.null(exit)) {
         if(print)
-            exit <- substitute(if(tracingState()){methods:::.doTracePrint(MSG); EXPR},
+            exit <- substitute(if(tracingState()){methods::.doTracePrint(MSG); EXPR},
                             list(EXPR = exit, MSG = paste("on exit")))
         else
             exit <- substitute(if(tracingState())EXPR,
@@ -142,10 +158,10 @@
     }
     f
 }
-        
+
 
 .InitTraceFunctions <- function(envir)  {
-    setClass("traceable", representation(original = "PossibleMethod"), contains = "VIRTUAL", 
+    setClass("traceable", representation(original = "PossibleMethod"), contains = "VIRTUAL",
              where = envir); clList <- "traceable"
     ## create the traceable classes
     for(cl in c("function", "MethodDefinition", "MethodWithNext", "genericFunction",
@@ -206,6 +222,8 @@ trySilent <- function(expr) {
     if(warn)
         warning("Assigning over the binding of symbol \"", what,
                 "\" in environment/package \"", pname, "\"")
+    warnOpt <- options(warn= -1) # kill the obsolete warnign from R_LockBinding
+    on.exit(options(warnOpt))
     if(is.function(value)) {
         ## assign in the namespace for the function as well
         fenv <- environment(value)
@@ -231,9 +249,9 @@ trySilent <- function(expr) {
     }
     else
         hasFunction <- FALSE
-    metaName <- mlistMetaName(what)
     if(hasFunction) {
         ## find the generic in the corresponding namespace
+        metaName <- mlistMetaName(fdef)
         where2 <- findFunction(what, where = environment(fdef))[[1]] # must find it?
         unlockBinding(metaName, where)
         unlockBinding(what, where)
@@ -248,6 +266,7 @@ trySilent <- function(expr) {
         lockBinding(what, where2)
     }
     else {
+        metaName <- mlistMetaName(what)
         unlockBinding(metaName, where)
         setMethod(what, signature, method, where = where)
         lockBinding(metaName, where)

@@ -179,8 +179,15 @@
 /* Define if you have the JPEG headers and libraries. */
 #define HAVE_JPEG 1
 
+
+/* Define to 1 if you have the <langinfo.h> header file. */
+/* #undef HAVE_LANGINFO_H */
+
 /* Define if external LAPACK is available. */
 /* #undef HAVE_LAPACK */
+
+/* Define to 1 if you have the `cc_dynamic' library (-lcc_dynamic). */
+/* #undef HAVE_LIBCC_DYNAMIC */
 
 /* Define to 1 if you have the `dl' library (-ldl). */
 /* #undef HAVE_LIBDL */
@@ -227,12 +234,12 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 /* #undef HAVE_NETINET_IN_H */
 
+/* Define to 1 if you have the `nl_langinfo' function. */
+/* #undef HAVE_NL_LANGINFO */
+
 /* Define if module-loading does not need an underscore to be prepended to
    external names. */
 #define HAVE_NO_SYMBOL_UNDERSCORE 1
-
-/* Define if you have the PCRE headers and libraries. */
-#define HAVE_PCRE 1
 
 /* Define to 1 if you have the <pcre.h> header file. */
 /* #undef HAVE_PCRE_H */
@@ -367,6 +374,9 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #define HAVE_VSNPRINTF 1
 
+/* Define to 1 if you have the <wchar.h> header file. */
+#define HAVE_WCHAR_H 1
+
 /* Define if calloc(0) returns a null pointer. */
 #define HAVE_WORKING_CALLOC 1
 
@@ -385,9 +395,6 @@
 /* Define if you have the X11 headers and libraries, and want the X11 GUI to
    be built. */
 /* #undef HAVE_X11 */
-
-/* Define if you have the zlib headers and libraries. */
-/* #undef HAVE_ZLIB */
 
 /* Define if you have IEEE 754 floating point arithmetic. */
 #define IEEE_754 1

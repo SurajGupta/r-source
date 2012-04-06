@@ -1077,8 +1077,199 @@ attributes(terms(y ~ offset(c) + a + b + a:b))[c("offset", "term.labels")]
 
 
 ## 0-level factors gave nonsensical answers in model.matrix
-try(model.matrix(~x, data.frame(x=NA), na.action=na.pass))
+m <- model.frame(~x, data.frame(x=NA), na.action=na.pass)
+model.matrix(~x, m)
 lm.fit <- lm(y ~ x, data.frame(x=1:10, y=1:10))
 try(predict(lm.fit, data.frame(x=NA)))
-## wrong in 1.8.0
+## wrong answers in 1.8.0, refused to run in 1.8.1
 
+
+
+## failure to print data frame containing arrays
+## raised by John Fox on R-devel on 2004-01-08
+y1 <- array(1:10, dim=10)
+y2 <- array(1:30, dim=c(10,3), dimnames=list(NULL, letters[1:3]))
+y3 <- array(1:40, dim=c(10,2,2),
+            dimnames=list(NULL, letters[1:2], NULL))
+data.frame(y=y1)
+data.frame(y=y2)
+data.frame(y=y3)
+
+as.data.frame(y1)
+as.data.frame(y2)
+as.data.frame(y3)
+
+X <- data.frame(x=1:10)
+X$y <- y1
+X
+sapply(X, dim)
+
+X$y <- y2
+X
+sapply(X, dim)
+
+X$y <- y3
+X
+sapply(X, dim)
+## The last one fails in S.
+
+## test of user hooks
+for(id in c("A", "B")) {
+    eval(substitute(
+    {
+setHook(packageEvent("stats4", "onLoad"),
+        function(pkgname, ...) cat("onLoad", sQuote(pkgname), id, "\n"));
+setHook(packageEvent("stats4", "attach"),
+        function(pkgname, ...) cat("attach", sQuote(pkgname), id, "\n"));
+setHook(packageEvent("stats4", "detach"),
+        function(pkgname, ...) cat("detach", sQuote(pkgname), id, "\n"));
+setHook(packageEvent("stats4", "onUnload"),
+        function(pkgname, ...) cat("onUnload", sQuote(pkgname), id, "\n"))
+    },
+                    list(id=id)))
+}
+loadNamespace("stats4")
+library("stats4")
+detach("package:stats4")
+unloadNamespace("stats4")
+## Just tests
+
+
+## rep(0-length-vector, length.out > 0)
+rep(integer(0), length.out=0)
+rep(integer(0), length.out=10)
+typeof(.Last.value)
+rep(logical(0), length.out=0)
+rep(logical(0), length.out=10)
+typeof(.Last.value)
+rep(numeric(0), length.out=0)
+rep(numeric(0), length.out=10)
+typeof(.Last.value)
+rep(character(0), length.out=0)
+rep(character(0), length.out=10)
+typeof(.Last.value)
+rep(complex(0), length.out=0)
+rep(complex(0), length.out=10)
+typeof(.Last.value)
+rep(list(), length.out=0)
+rep(list(), length.out=10)
+## always 0-length before 1.9.0
+
+
+## supplying 0-length data to array and matrix
+array(numeric(0), c(2, 2))
+array(list(), c(2,2))
+# worked < 1.8.0, error in 1.8.x
+matrix(character(0), 1, 2)
+matrix(integer(0), 1, 2)
+matrix(logical(0), 1, 2)
+matrix(numeric(0), 1, 2)
+matrix(complex(0), 1, 2)
+matrix(list(), 1, 2)
+## did not work < 1.9.0
+
+
+## S compatibility change in 1.9.0
+rep(1:2, each=3, length=12)
+## used to pad with NAs.
+
+
+## PR#6510: aov() with error and -1
+set.seed(1)
+test.df <- data.frame (y=rnorm(8), a=gl(2,1,8), b=gl(2,3,8),c=gl(2,4,8))
+aov(y ~ a + b + Error(c), data=test.df)
+aov(y ~ a + b - 1 + Error(c), data=test.df)
+## wrong assignment to strata labels < 1.9.0
+## Note this is unbalanced and not a good example
+
+binom.test(c(800,10))# p-value < epsilon
+
+
+## Misleading error messages on integer overflow
+## Uwe Ligges, R-devel, 2004-02-19
+try(numeric(2^31))
+try(matrix( , 2^31, 1))
+try(matrix( , 2^31/10, 100))
+try(array(dim=c(2^31/10, 100)))
+## reported negative values (really integer NA) for R < 1.9.0
+
+
+## aov with a singular error model
+rd <- c(16.53, 12.12, 10.04, 15.32, 12.33, 10.1, 17.09, 11.69, 11.81, 14.75,
+        10.72, 8.79, 13.14, 9.79, 8.36, 15.62, 9.64, 8.72, 15.32,
+        11.35, 8.52, 13.27, 9.74, 8.78, 13.16, 10.16, 8.4, 13.08, 9.66,
+        8.16, 12.17, 9.13, 7.43, 13.28, 9.16, 7.92, 118.77, 78.83, 62.2,
+        107.29, 73.79, 58.59, 118.9, 66.35, 53.12, 372.62, 245.39, 223.72,
+        326.03, 232.67, 209.44, 297.55, 239.71, 223.8)
+sample.df <- data.frame(dep.variable=rd,
+                        subject=factor(rep(paste("subj",1:6, sep=""),each=9)),
+                        f1=factor(rep(rep(c("f1","f2","f3"),each=6),3)),
+                        f2=factor(rep(c("g1","g2","g3"),each=18))
+)
+sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f1+f2)), data=sample.df)
+sample.aov
+summary(sample.aov)
+sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f2+f1)), data=sample.df)
+sample.aov
+summary(sample.aov)
+## failed in 1.8.1
+
+
+## PR#6645  stem() with near-constant values
+stem(rep(1, 100))
+stem(rep(0.1, 10))
+stem(c(rep(1, 10), 1+1.e-8))
+stem(c(rep(1, 10), 1+1.e-9))
+stem(c(rep(1, 10), 1+1.e-10), atom=0) # integer-overflow is avoided.
+##  had integer overflows in 1.8.1, and silly shifts of decimal point
+
+
+## PR#6633 warnings with vector op matrix, and more
+set.seed(1)
+x1 <- rnorm(3)
+y1 <- rnorm(4)
+x1 * y1
+x1 * as.matrix(y1) # no warning in 1.8.1
+x1 * matrix(y1,2,2)# ditto
+z1 <- x1 > 0
+z2 <- y1 > 0
+z1 & z2
+z1 & as.matrix(z2) # no warning in 1.8.1
+x1 < y1            # no warning in 1.8.1
+x1 < as.matrix(y1) # ditto
+##
+
+
+## summary method for mle
+library(stats4)
+N <- c(rep(3:6, 3), 7,7, rep(8,6), 9,9, 10,12)# sample from Pois(lam = 7)
+summary(mle(function(Lam = 1) -sum(dpois(N, Lam))))
+## "Coefficients" was "NULL" in 1.9.0's "devel"
+
+
+## PR#6656 terms.formula(simplify = TRUE) was losing offset terms
+## successive offsets caused problems
+df <- data.frame(x=1:4, y=sqrt( 1:4), z=c(2:4,1))
+fit1 <- glm(y ~ offset(x) + z, data=df)
+update(fit1, ". ~.")$call
+## lost offset in 1.7.0 to 1.8.1
+terms(y ~ offset(x) + offset(log(x)) + z, data=df)
+## failed to remove second offset from formula in 1.8.1
+terms(y ~ offset(x) + z - z, data=df, simplify = TRUE)
+## first fix failed for models with no non-offset terms.
+
+
+## only the first two were wrong up to 1.8.1:
+3:4 * 1e-100
+8:11* 1e-100
+1:2 * 1e-99
+1:2 * 1e+99
+8:11* 1e+99
+3:4 * 1e+100
+##
+
+
+## negative subscripts could be mixed with NAs
+x <- 1:3
+try(x[-c(1, NA)])
+## worked on some platforms, segfaulted on others in 1.8.1

@@ -80,9 +80,10 @@ extern DL_FUNC 	ptr_R_ReadConsole, ptr_R_WriteConsole, ptr_R_ResetConsole,
                 ptr_R_Busy;
 
 
-DL_FUNC ptr_do_wsbrowser, ptr_GetQuartzParameters, 
+DL_FUNC ptr_do_wsbrowser, ptr_GetQuartzParameters, ptr_FocusOnConsole, 
         ptr_Raqua_Edit, ptr_do_dataentry, ptr_do_browsepkgs, ptr_do_datamanger,
-        ptr_do_packagemanger, ptr_do_flushconsole, ptr_do_hsbrowser, ptr_InitAquaIO;
+        ptr_do_packagemanger, ptr_do_flushconsole, ptr_do_hsbrowser, ptr_InitAquaIO,
+		ptr_RSetConsoleWidth;
 
 
 void R_ProcessEvents(void);
@@ -148,7 +149,9 @@ void R_load_aqua_shlib(void)
     if(!ptr_R_ChooseFile) R_Suicide("Cannot load Raqua_R_ChooseFile");
     ptr_GetQuartzParameters = Rdlsym(handle, "Raqua_GetQuartzParameters");
     if(!ptr_GetQuartzParameters) R_Suicide("Cannot load Raqua_GetQuartzParameters");
-    ptr_Raqua_Edit = Rdlsym(handle, "Raqua_Edit");
+    ptr_FocusOnConsole =  Rdlsym(handle, "Raqua_FocusOnConsole");
+    if(!ptr_FocusOnConsole) R_Suicide("Cannot load Raqua_FocusOnConsole");
+	ptr_Raqua_Edit = Rdlsym(handle, "Raqua_Edit");
     if(!ptr_Raqua_Edit) R_Suicide("Cannot load Raqua_Edit");
     ptr_do_dataentry = Rdlsym(handle, "Raqua_dataentry");
     if(!ptr_do_dataentry) R_Suicide("Cannot load Raqua_dataentry");
@@ -170,6 +173,8 @@ void R_load_aqua_shlib(void)
     if(!ptr_R_Busy) R_Suicide("Cannot load Raqua_Busy");
     ptr_InitAquaIO = Rdlsym(handle, "InitAquaIO");
     if(!ptr_InitAquaIO) R_Suicide("Cannot load InitAquaIO");
+    ptr_RSetConsoleWidth = Rdlsym(handle, "RSetConsoleWidth");
+    if(!ptr_RSetConsoleWidth) R_Suicide("Cannot load RSetConsoleWidth");
 
 #ifdef AQUA_POLLED_EVENTS 
     otherPolledEventHandler = R_PolledEvents;
@@ -183,10 +188,19 @@ SEXP do_wsbrowser(SEXP call, SEXP op, SEXP args, SEXP env)
  return(ptr_do_wsbrowser(call, op, args, env));
 }
 
+#if defined(HAVE_X11)
+extern SEXP X11_do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho); /* from src/unix/X11.c */
+#endif
+extern Rboolean useaqua; /* from src/unix/system.c */
 
 SEXP do_dataentry(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    return(ptr_do_dataentry(call, op, args, env));
+	if(useaqua)
+		return(ptr_do_dataentry(call, op, args, env));
+#if defined(HAVE_X11)
+	else
+	    return(X11_do_dataentry(call, op, args, env));	
+#endif
 }
 
 SEXP do_browsepkgs(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -221,17 +235,29 @@ void InitAquaIO(void){
  ptr_InitAquaIO();
 }
 
+void RSetConsoleWidth(void);
+void RSetConsoleWidth(void){
+ ptr_RSetConsoleWidth();
+}
+
 void R_ProcessEvents(void)
 {
     EventRef theEvent;
     EventRecord	outEvent;
-    EventTargetRef theTarget = GetEventDispatcherTarget();
+    EventTargetRef theTarget;
     bool	conv = false;
 
-   if(CheckEventQueueForUserCancel())
+    if(!useaqua){
+      if (R_interrupts_pending)
+       onintr();
+      return;
+    }
+ 
+    theTarget = GetEventDispatcherTarget();
+    if(CheckEventQueueForUserCancel())
       onintr();
 
-   if(ReceiveNextEvent(0, NULL,kEventDurationNoWait,true,&theEvent)== noErr){       
+    if(ReceiveNextEvent(0, NULL,kEventDurationNoWait,true,&theEvent)== noErr){       
          conv = ConvertEventRefToEventRecord(theEvent, &outEvent);
     
         if(conv && (outEvent.what == kHighLevelEvent))

@@ -12,16 +12,16 @@ detach(name, pos = 2, version)
   }
   \item{pos}{
     Index position in \code{\link{search}()} of database to
-    detach.  When \code{name} is \code{\link{numeric}}, \code{pos = name}
+    detach.  When \code{name} is a number, \code{pos = name}
     is used.
   }
-    \item{version}{A character string denoting a version number of the 
-     package to be loaded.  If no version is given, a suitable default
-     is chosen.}
+  \item{version}{A character string denoting a version number of the
+    package to be loaded.  If no version is given, a suitable default
+    is chosen.}
 }
 \description{
   Detach a database, i.e., remove it from the \code{\link{search}()} path
-  of available \R objects. Usually, this either a \code{\link{data.frame}}
+  of available \R objects. Usually, this is either a \code{\link{data.frame}}
   which has been \code{\link{attach}}ed or a package which was required
   previously.
 }
@@ -52,8 +52,8 @@ library(eda)
 pkg <- "package:eda"
 detach(pos = match(pkg, search()))
 
-## careful: do not do this unless 'lqs' is not already loaded.
-library(lqs)
+## careful: do not do this unless 'splines' is not already loaded.
+library(splines)
 detach(2)# 'pos' used for 'name'
 }
 \keyword{data}

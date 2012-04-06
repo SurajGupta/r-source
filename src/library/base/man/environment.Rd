@@ -18,12 +18,13 @@ environment(fun) <- value
 is.environment(obj)
 .GlobalEnv
 globalenv()
+.BaseNamespaceEnv
 new.env(hash=FALSE, parent=parent.frame())
 parent.env(env)
 parent.env(env) <- value
 }
 \arguments{
-  \item{fun}{a \code{\link{function}}, a \code{\link{formula}}, or
+  \item{fun}{a \code{\link{function}}, a \code{\link[stats]{formula}}, or
     \code{NULL}, which is the default.}
   \item{value}{an environment to associate with the function}
   \item{obj}{an arbitrary \R object.}
@@ -56,8 +57,9 @@ parent.env(env) <- value
   search path, more often known as the user's workspace.  It can also be
   accessed by \code{globalenv()}.
 
-  The variable \code{.BaseNamespaceEnv} is part of some experimental
-  support for name space management.
+  The object \code{.BaseNamespaceEnv} is the namespace environment for
+  the base package.  The environment of the base package itself is
+  represented by \code{NULL}.
 
   The replacement function \code{parent.env<-} is extremely dangerous as
   it can be used to destructively change environments in ways that
@@ -65,7 +67,7 @@ parent.env(env) <- value
   in the near future.
 
   \code{is.environment} is generic: you can write methods to handle
-  of specific classes of objects, see \link{InternalMethods}.
+  specific classes of objects, see \link{InternalMethods}.
 }
 \seealso{
   The \code{envir} argument of \code{\link{eval}}.
@@ -78,9 +80,9 @@ environment(environment)
 
 ls(envir=environment(approxfun(1:2,1:2, method="const")))
 
-is.environment(.GlobalEnv)# TRUE
+is.environment(.GlobalEnv) # TRUE
 
-e1 <- new.env(TRUE, NULL)
+e1 <- new.env(TRUE, NULL)  # these two have parent package:base.
 e2 <- new.env(FALSE, NULL)
 assign("a", 3, env=e2)
 parent.env(e1) <- e2

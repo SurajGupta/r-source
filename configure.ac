@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2003 R Core Team
+### Copyright (C) 1998-2004 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -22,7 +22,7 @@
 ### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
 ### 02111-3307, USA.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.59)
 
 ## We want to get the version number from file 'VERSION' (rather than
 ## specifying the version info in 'configure.ac'.  Hence, we need a bit
@@ -126,12 +126,49 @@ else
 fi],
 [want_R_profiling=yes])
 
+## Allow the user to specify building an R framework (Darwin).
+AC_ARG_ENABLE([R-framework],
+[AC_HELP_STRING([--enable-R-framework@<:@=DIR@:>@],
+                [build R framework (if possible), and specify its
+                 installation prefix @<:@yes, /Library/Frameworks@:>@])],
+[want_R_framework="${enableval}"],
+[want_R_framework=yes])
+## Can only build frameworks on Darwin.
+if test "${want_R_framework}" != no; then
+  case "${host_os}" in
+    darwin*)
+      if test "${want_R_framework}" = yes; then
+        ## If we build a framework and 'prefix' was not given, we need
+        ## to set it to '/Library/Frameworks' rather than '/usr/local'.
+        ## Note that Autoconf sets things up so that by default, prefix
+        ## and exec_prefix are set to 'NONE'.  Let's hope for no change.
+	if test "x${prefix}" = xNONE; then
+          prefix="/Library/Frameworks"
+        fi
+      else
+	prefix="${want_R_framework}"
+	want_R_framework=yes
+      fi
+      ;;
+    *)
+      want_R_framework=no
+      ;;
+  esac
+fi
+AM_CONDITIONAL(WANT_R_FRAMEWORK, [test "x${want_R_framework}" = xyes])
+
 ## Allow the user to specify building R shared libraries.
+## <NOTE>
+## Building a framework implies building R shared libraries, hence the
+## strange default.
+## We might want to warn about the case where '--disable-R-shlib' was
+## given explicitly ...
+## </NOTE>
 AC_ARG_ENABLE([R-shlib],
 [AC_HELP_STRING([--enable-R-shlib],
                 [build R as a shared library @<:@no@:>@])],
 [want_R_shlib="${enableval}"],
-[want_R_shlib=no])
+[want_R_shlib="${want_R_framework}"])
 AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
 if test "${want_R_shlib}" = yes; then
   LIBR="-L\$(R_HOME)/bin -lR"
@@ -204,7 +241,7 @@ fi],
 ## Aqua.
 AC_ARG_WITH([aqua],
 [AC_HELP_STRING([--with-aqua],
-                [use Aqua (if available) (experimental) @<:@no@:>@])],
+                [use Aqua (if available) @<:@no@:>@])],
 [want_aqua=yes])
 
 ## Tcl/Tk.
@@ -245,19 +282,19 @@ AC_ARG_WITH([jpeglib],
 [use_jpeglib=yes])
 AC_ARG_WITH([zlib],
 [AC_HELP_STRING([--with-zlib],
-                [use zlib library (if available) @<:@yes@:>@])],
+                [use system zlib library (if available) @<:@no@:>@])],
 [R_ARG_USE(zlib)],
-[use_zlib=yes])
+[use_zlib=no])
 AC_ARG_WITH([bzlib],
 [AC_HELP_STRING([--with-bzlib],
-                [use bzlib library (if available) @<:@yes@:>@])],
+                [use system bzlib library (if available) @<:@no@:>@])],
 [R_ARG_USE(bzlib)],
-[use_bzlib=yes])
+[use_bzlib=no])
 AC_ARG_WITH([pcre],
 [AC_HELP_STRING([--with-pcre],
-                [use PCRE library (if available) @<:@yes@:>@])],
+                [use system PCRE library (if available) @<:@no@:>@])],
 [R_ARG_USE(pcre)],
-[use_pcre=yes])
+[use_pcre=no])
 
 
 ## <FIXME>
@@ -369,12 +406,6 @@ R_PROG_TEXMF
 ## Unzip && zip
 AC_PATH_PROGS(R_UNZIPCMD, [${UNZIP} unzip], "")
 AC_PATH_PROGS(R_ZIPCMD, [${ZIP} zip], "")
-## Libtool
-AM_DISABLE_STATIC
-AM_PROG_LIBTOOL
-AC_SUBST(LIBTOOL_DEPS)
-## Makeinfo
-R_PROG_MAKEINFO
 ## Browser
 R_PROG_BROWSER
 ## PDF viewer
@@ -388,6 +419,16 @@ R_PROG_CPP_CPPFLAGS
 R_PROG_F77_OR_F2C
 AC_PROG_CXX
 AC_PROG_CXXCPP
+
+## Libtool.
+## (Run this after R_PROG_F77_OR_F2C, as AC_PROG_LIBTOOL checks for a
+## Fortran 77 compiler and sets F77 accordingly.)
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+## Makeinfo
+R_PROG_MAKEINFO
+
 
 ### * Checks for libraries.
 
@@ -469,10 +510,11 @@ AC_HEADER_SYS_WAIT
 ## Some of these are also checked for when Autoconf computes the default
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
-  fpu_control.h grp.h ieee754.h ieeefp.h locale.h netdb.h netinet/in.h \
+  fpu_control.h grp.h ieee754.h ieeefp.h langinfo.h locale.h \
+  netdb.h netinet/in.h \
   pwd.h readline/history.h readline/readline.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
-  sys/times.h sys/utsname.h unistd.h)
+  sys/times.h sys/utsname.h unistd.h wchar.h)
 ## </NOTE>
 ## <NOTE>
 ## These are ANSI C headers but some C code (written to work also
@@ -1047,11 +1089,15 @@ case "${host_os}" in
     ## at this point. S.I.
     ## </FIXME>
     ## </NOTE>
-    if test "x${want_aqua}" = xyes; then
-      LIBR_LDFLAGS="-dynamiclib -install_name /Applications/StartR.app/RAqua.app/Contents/Frameworks/libR.dylib"
-    else
-      LIBR_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libR.dylib"
-    fi
+    ##    if test "x${want_aqua}" = xyes; then
+    ##      LIBR_LDFLAGS="-dynamiclib -install_name /Applications/StartR.app/RAqua.app/Contents/Frameworks/libR.dylib"
+    ##    else
+    ##      LIBR_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libR.dylib"
+    ##     LIBR_LDFLAGS="-dynamiclib"
+   
+    ## LIBR_LDFLAGS="-dynamiclib -install_name ${R_FRAMEWORK_DIR}/Versions/${PACKAGE_VERSION}/Resources/bin/libR.dylib -compatibility_version ${PACKAGE_VERSION}  -current_version ${PACKAGE_VERSION}"
+	LIBR_LDFLAGS="-dynamiclib -install_name libR.dylib -compatibility_version ${PACKAGE_VERSION}  -current_version ${PACKAGE_VERSION}  -headerpad_max_install_names"
+    ##    fi
     ## <FIXME>
     ## We need '-framework Carbon' because currently the Quartz device
     ## driver gets linked to the main binary and hence also the R dylib.
@@ -1115,7 +1161,7 @@ AC_SUBST(LAPACK_LDFLAGS)
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(access chdir expm1 fcntl finite ftruncate getcwd \
   getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo \
-  popen putenv rint setenv strcoll stat strptime symlink \
+  nl_langinfo popen putenv rint setenv strcoll stat strptime symlink \
   system times unsetenv)
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
@@ -1305,7 +1351,6 @@ case "${host_os}" in
     AC_DEFINE(HAVE_INTERNET, 1)
     AC_DEFINE(HAVE_JPEG, 1)
     AC_DEFINE(SUPPORT_LIBXML, 1)
-    AC_DEFINE(HAVE_PCRE, 1)
     AC_DEFINE(HAVE_PNG, 1)
     AC_DEFINE(HAVE_POSIX_SETJMP, 1)
     AC_DEFINE(HAVE_SOCKETS, 1)
@@ -1349,16 +1394,15 @@ AC_CONFIG_FILES(
   src/library/base/Makefile
   src/library/ctest/DESCRIPTION
   src/library/ctest/Makefile
-  src/library/ctest/src/Makefile
   src/library/eda/DESCRIPTION
   src/library/eda/Makefile
-  src/library/eda/src/Makefile
+  src/library/graphics/DESCRIPTION
+  src/library/graphics/Makefile
   src/library/grid/DESCRIPTION
   src/library/grid/Makefile
   src/library/grid/src/Makefile
   src/library/lqs/DESCRIPTION
   src/library/lqs/Makefile
-  src/library/lqs/src/Makefile
   src/library/methods/DESCRIPTION
   src/library/methods/Makefile
   src/library/methods/src/Makefile
@@ -1366,14 +1410,16 @@ AC_CONFIG_FILES(
   src/library/mle/Makefile
   src/library/modreg/DESCRIPTION
   src/library/modreg/Makefile
-  src/library/modreg/src/Makefile
   src/library/mva/DESCRIPTION
   src/library/mva/Makefile
-  src/library/mva/src/Makefile
   src/library/nls/DESCRIPTION
   src/library/nls/Makefile
-  src/library/nls/src/Makefile
   src/library/profile/Makefile
+  src/library/stats/DESCRIPTION
+  src/library/stats/Makefile
+  src/library/stats/src/Makefile
+  src/library/stats4/DESCRIPTION
+  src/library/stats4/Makefile
   src/library/stepfun/DESCRIPTION
   src/library/stepfun/Makefile
   src/library/splines/DESCRIPTION
@@ -1387,12 +1433,14 @@ AC_CONFIG_FILES(
   src/library/tools/src/Makefile
   src/library/ts/DESCRIPTION
   src/library/ts/Makefile
-  src/library/ts/src/Makefile
+  src/library/utils/DESCRIPTION
+  src/library/utils/Makefile
   src/main/Makefile
   src/modules/Makefile
   src/modules/X11/Makefile
   src/modules/aqua/Makefile
-  src/modules/aqua/AquaInstall
+  src/modules/aqua/Info.plist
+  src/modules/aqua/Contents/Info.plist
   src/modules/gnome/Makefile
   src/modules/internet/Makefile
   src/modules/lapack/Makefile
@@ -1475,10 +1523,12 @@ if test "${have_jpeg}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [JPEG], [, ])
 fi
 ## always have these two on Unix.
-R_SH_VAR_ADD(r_capabilities, [bzip2], [, ])
-R_SH_VAR_ADD(r_capabilities, [PCRE], [, ])
+## R_SH_VAR_ADD(r_capabilities, [bzip2], [, ])
+## R_SH_VAR_ADD(r_capabilities, [PCRE], [, ])
 r_options=
-if test "${want_R_shlib}" = yes; then
+if test "${want_R_framework}" = yes; then
+  R_SH_VAR_ADD(r_options, [framework], [, ])
+elif test "${want_R_shlib}" = yes; then
   R_SH_VAR_ADD(r_options, [shared library], [, ])
 fi
 if test "${want_R_profiling}" = yes; then

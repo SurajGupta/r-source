@@ -485,12 +485,14 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 
     /* set up the arglist */
-    /**** FIXME: need test for symbol? */
     s = R_LookupMethod(CAR(cptr->call), env, callenv, defenv);
-    if (TYPEOF(s) == PROMSXP)
+    if (TYPEOF(s) == PROMSXP)  /* looks like R_LookupMethod just did this */
 	s = eval(s, env);
+    if (TYPEOF(s) == SYMSXP && s == R_UnboundValue) 
+	error("No calling generic was found: was a method called directly?");
     if (TYPEOF(s) != CLOSXP){
-	errorcall(R_NilValue, "function is not a closure");
+	errorcall(R_NilValue, "function is not a closure, but of type %d", 
+		  TYPEOF(s));
     }
     /* get formals and actuals; attach the names of the formals to
        the actuals, expanding any ... that occurs */
@@ -1199,7 +1201,9 @@ void R_set_quick_method_check(R_stdGen_ptr_t value)
    to evaluate the default (which would get us into a loop). */
 SEXP R_possible_dispatch(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP fundef, value, mlist; int offset; prim_methods_t current;
+    SEXP fundef, value, mlist=R_NilValue; 
+    int offset; 
+    prim_methods_t current;
     offset = PRIMOFFSET(op);
     if(offset < 0 || offset > curMaxOffset)
 	error("Invalid primitive operation given for dispatch");

@@ -43,10 +43,11 @@ void DeactivatePrefsWindow(void);
 
 void CopyPrefs(RAquaPrefsPointer From, RAquaPrefsPointer To);
 
-void RSetTab(void);
-void RSetFontSize(void);
-void RSetFont(void);
-
+extern void RSetTab(void);
+extern void RSetFontSize(void);
+extern void RSetFont(void);
+extern void RSetConsoleWidth(void);
+extern void RescaleInOut(double prop);
 
 RAquaPrefs DefaultPrefs;
 RAquaPrefs CurrentPrefs, TempPrefs;
@@ -66,20 +67,22 @@ void CallFontPanel(void);
         
 
 /* R Preferences version */                
-#define RAquaPrefsVer	3L
+#define RAquaPrefsVer	5L
+
 
 /* button ID for Preferences panel */
-#define kConsoleFontButton  	1002
-#define kConsoleFontText 	1003
-#define kTabSizeField	    	1005
-#define kOutputColorText 	1007
-#define kInputColorText 	1008
+#define kRFontFacePopUp			1002
+#define kRFontSizePopUp			1003
+#define kRTabSizePopUp	    	1005
+#define kOutputColorText		1007
+#define kInputColorText			1008
 #define kOutputColorButton  	1009
 #define kInputColorButton   	1010
 #define kOutputBackButton   	1011
 #define kInputBackButton    	1012
-#define kBufferingBox    	1013
-#define kBufferSizeSlider       1014
+#define kSaveConsolePosBox		1062
+#define kSetConsoleWidthBox		1063
+
 
 #define	kDeviceFontButton   	3001
 #define kDeviceFontText 	3002
@@ -88,6 +91,7 @@ void CallFontPanel(void);
 #define kHeightField 		3009
 #define kAntiAliasingBox 	3013
 #define kAutoRefreshBox 	3014
+#define kQuartzPosPopUp		3015
 
 #define kCRANmirrorText         4501
 #define kBIOCmirrorText         4502
@@ -96,9 +100,12 @@ void CallFontPanel(void);
 #define kGrabStdoutBox		6000
 #define kGrabStderrBox		6001
 
+#define kDefaultDirText		6009
+#define kDefaultDirButton   6010
+
 #define kApplyPrefsButton	5000
 #define kCancelPrefsButton	5001 
-#define kDefaultPrefsButton 	5002
+#define kDefaultPrefsButton 5002
 #define kSavePrefsButton	5003
 
                 
@@ -109,28 +116,32 @@ void CallFontPanel(void);
 #define kDummyValue		0
 #define kMaxNumTabs		4
 
-ControlID	MainControlID = { kPrefControlsSig, kConsoleFontText };
-ControlID	ConsoleFontTextID = { kPrefControlsSig, kConsoleFontText };
+ControlID	MainControlID = { kPrefControlsSig, kRFontFacePopUp };
+ControlID	RFontFaceID = { kPrefControlsSig, kRFontFacePopUp };
+ControlID	RTabSizeID = { kPrefControlsSig, kRTabSizePopUp };
+ControlID	RFontSizeID = { kPrefControlsSig, kRFontSizePopUp };
 ControlID	DeviceFontTextID = { kPrefControlsSig, kDeviceFontText };
-ControlID	TabSizeID = { kPrefControlsSig, kTabSizeField };
 ControlID	OverrideRDefBoxID = { kPrefControlsSig, kOverrideRDefBox };
 ControlID	WidthID = { kPrefControlsSig, kWidthField };
 ControlID	HeightID = { kPrefControlsSig, kHeightField };
 ControlID	AutoRefreshID = { kPrefControlsSig, kAutoRefreshBox };
 ControlID	AntiAliasingID = { kPrefControlsSig, kAntiAliasingBox };
+ControlID	QuartzPosID = { kPrefControlsSig, kQuartzPosPopUp };
 ControlID	InputColorID = { kPrefControlsSig, kInputColorText };
 ControlID	OutputColorID = { kPrefControlsSig, kOutputColorText };
-ControlID	BufferingID = { kPrefControlsSig, kBufferingBox };
-ControlID	BufferSizeID = { kPrefControlsSig, kBufferSizeSlider };
+ControlID	DefaultDirTextID = { kPrefControlsSig, kDefaultDirText };
 ControlID	CRANmirrorID = { kPrefControlsSig, kCRANmirrorText };
 ControlID	BIOCmirrorID = { kPrefControlsSig, kBIOCmirrorText };
-ControlID       GlobalPackagesID = {kPrefControlsSig, kGlobalPackagesBox };
-ControlID       GrabStdoutID = {kPrefControlsSig, kGrabStdoutBox };
-ControlID       GrabStderrID = {kPrefControlsSig, kGrabStderrBox };
+ControlID   GlobalPackagesID = {kPrefControlsSig, kGlobalPackagesBox };
+ControlID   GrabStdoutID = {kPrefControlsSig, kGrabStdoutBox };
+ControlID   GrabStderrID = {kPrefControlsSig, kGrabStderrBox };
+ControlID   SaveConsolePosID = {kPrefControlsSig, kSaveConsolePosBox };
+ControlID   SetConsoleWidthID = {kPrefControlsSig, kSetConsoleWidthBox};
 
-static	char		DefaultConsoleFontName[] = "Courier";
-static	int		DefaultConsoleFontSize = 14;
-static	int		DefaultTabSize = 10;
+
+static	int		DefaultRFontFace = 4;
+static	int		DefaultRFontSize = 4;
+static	int		DefaultRTabSize = 10;
 static	RGBColor	DefaultFGInputColor = {0xffff, 0x0000, 0x0000};
 static	RGBColor	DefaultBGInputColor = {0xffff, 0xffff, 0xffff};
 static	RGBColor	DefaultFGOutputColor = {0x0000, 0x0000, 0xffff};
@@ -142,18 +153,22 @@ static	double		DefaultDeviceHeight = 5.0;
 static	int		DefaultAntiAlias = 1;
 static	int		DefaultAutoRefresh = 1;
 static	int		DefaultOverrideRDefaults = 0;
-static	int		DefaultBuffering = 1;
-static  int             DefaultBufferSize = 10;
+static  int             DefaultQuartzPos = 1;
 static  char            DefaultCRANmirror[] ="http://cran.r-project.org";
 static  char            DefaultBIOCmirror[] ="http://www.bioconductor.org";
+static  char            DefaultWorkingDir[] ="~/";
 static  int             DefaultGlobalPackages = 0;
 static  int             DefaultGrabStdout = 0;
 static  int             DefaultGrabStderr = 0;
+static  int             DefaultSaveConsolePos = 1;
+static  int             DefaultSetConsoleWidthOnResize = 1;
+static  Rect		BrokenConsoleWindowBounds = {0, 0, 0, 0};
+
+Rect	ConsoleWindowBounds;
 
 ControlRef GrabCRef(WindowRef theWindow,OSType theSig, SInt32 theNum);
 
 		     
-Boolean isConsoleFont = true;
              
 OSStatus MySetFontSelection(void);                              
 OSStatus MyGetFontSelection(EventRef event);
@@ -163,11 +178,10 @@ void RSetPipes(void);
 /* external symbols from aquaconsole.c */                                   
 extern void RSetColors(void);
 extern void consolecmd(char* cmd);
-extern	void	OpenStdoutPipe();
-extern	void	OpenStderrPipe();
-extern	void	CloseStdoutPipe();
-extern	void	CloseStderrPipe();
-
+extern	void	OpenStdoutPipe(void);
+extern	void	OpenStderrPipe(void);
+extern	void	CloseStdoutPipe(void);
+extern	void	CloseStderrPipe(void);
                     
 
 EventTypeSpec	tabControlEvents[] = {
@@ -188,17 +202,22 @@ static pascal OSStatus RPrefsWinHandler(EventHandlerCallRef handlerRef, EventRef
 static pascal OSStatus PrefsTabEventHandlerProc( EventHandlerCallRef inCallRef, EventRef inEvent, void* inUserData );
 static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRef inEvent, void* inUserData );
 
-void SetDefaultPrefs(void);
-void SetUpPrefsWindow(RAquaPrefsPointer Settings);
-void GetDialogPrefs(void);
-void GetRPrefs(void);
-void SaveRPrefs(void);
+void	SetDefaultPrefs(void);
+void	SetUpPrefsWindow(RAquaPrefsPointer Settings);
+void	GetDialogPrefs(void);
+void	GetRPrefs(void);
+void	SaveRPrefs(void);
+void	SaveConsolePosToPrefs(void);
 
-CFStringRef appName, tabsizeKey, fontsizeKey, consolefontKey, devicefontKey;
-CFStringRef outfgKey, outbgKey, infgKey, inbgKey, bufferingKey, bufferSizeKey;
+
+CFStringRef appName, RPrefsVerKey, WorkingDirKey;
+CFStringRef RTabSizeKey, RFontSizeKey, RFontFaceKey, devicefontKey;
+CFStringRef outfgKey, outbgKey, infgKey, inbgKey;
 CFStringRef devWidthKey, devHeightKey, devPSizeKey;
 CFStringRef devAutoRefreshKey, devAntialiasingKey, devOverrideRDefKey;
 CFStringRef CRANmirrorKey, BIOCmirrorKey, GlobalPackagesKey, GrabStderrKey, GrabStdoutKey;
+CFStringRef SaveConsolePosKey, ConsoleBoundsKey, devQuartzPosKey, SetConsoleWidthKey;
+
            
          
              
@@ -207,10 +226,12 @@ void	SetUpPrefSymbols(void);
 
 void	SetUpPrefSymbols(void){
     
-    appName = CFSTR("RAqua");
-    tabsizeKey = CFSTR("Tab Size");
-    fontsizeKey = CFSTR("Font Size");
-    consolefontKey = CFSTR("Console Font");
+    appName = CFSTR("org.r-project.R");
+    RPrefsVerKey = CFSTR("R Preference Version");
+    RTabSizeKey = CFSTR("R Tab Size");
+	WorkingDirKey = CFSTR("Working Directory");
+    RFontSizeKey = CFSTR("R Font Size");
+    RFontFaceKey = CFSTR("R Font Face");
     devicefontKey = CFSTR("Device Font");
     outfgKey = CFSTR("OutFg Color");
     outbgKey = CFSTR("OutBg Color");
@@ -222,13 +243,15 @@ void	SetUpPrefSymbols(void){
     devAutoRefreshKey = CFSTR("Device Autorefresh");
     devAntialiasingKey = CFSTR("Device Antialiasing");
     devOverrideRDefKey = CFSTR("Override R Defaults");
-    bufferingKey = CFSTR("Buffered Output");
-    bufferSizeKey = CFSTR("Output Buffer Size");
+    devQuartzPosKey = CFSTR("Quartz Device Window Positioning");
     CRANmirrorKey = CFSTR("CRAN mirror");
     BIOCmirrorKey = CFSTR("BIOC mirror");
     GlobalPackagesKey = CFSTR("Global Packages");
     GrabStdoutKey = CFSTR("Grab Stdout");
     GrabStderrKey = CFSTR("Grab Stderr");
+    SaveConsolePosKey = CFSTR("Save Console Position");
+	SetConsoleWidthKey = CFSTR("Set Console Width on Resize");
+	ConsoleBoundsKey = CFSTR("Console Window Bounds");
 }
 
 OSStatus InstallPrefsHandlers(void){
@@ -243,12 +266,12 @@ OSStatus InstallPrefsHandlers(void){
 
     err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kCancelPrefsButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
 
+    err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kDefaultDirButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
+
     err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kDefaultPrefsButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
 
     err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kSavePrefsButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
      
-    err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kConsoleFontButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
-
     err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kOutputColorButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
 
     err = InstallControlEventHandler( GrabCRef(RPrefsWindow,kPrefControlsSig,kInputColorButton),  GenContEventHandlerProc , GetEventTypeCount(okcanxControlEvents), okcanxControlEvents, RPrefsWindow, NULL );        
@@ -269,20 +292,27 @@ pascal void RPrefsHandler(WindowRef window)
     ControlID	versionInfoID = {kRAppSignature, kRVersionInfoID};
     ControlRef	versionControl;
     ControlFontStyleRec	controlStyle;
-    
+	EventRef	RPrefsEvent;
+      
     CopyPrefs(&CurrentPrefs,&TempPrefs);
     SetUpPrefsWindow(&TempPrefs);
     SetInitialTabState(window);
-     
+	
+/* We force refresh of the Preference Window */
+    CreateEvent(NULL, kEventClassWindow, kEventWindowUpdate, 0, kEventAttributeNone, &RPrefsEvent);
+    SetEventParameter(RPrefsEvent, kEventParamDirectObject, typeWindowRef, sizeof(typeWindowRef), window);
+    SendEventToEventTarget (RPrefsEvent,GetWindowEventTarget(RPrefsWindow));
+	ReleaseEvent(RPrefsEvent);
+		   
     ShowWindow(window);
 }
 
 
 pascal OSStatus RPrefsWinHandler(EventHandlerCallRef handlerRef, EventRef event, void *userData)
 {
-    OSStatus result = eventNotHandledErr;
-    UInt32	eventKind;
-     UInt32		eventClass;
+	OSStatus result = eventNotHandledErr;
+	UInt32	eventKind;
+	UInt32		eventClass;
      
     eventKind = GetEventKind(event);
     eventClass = GetEventClass(event);
@@ -310,9 +340,9 @@ void SetDefaultPrefs(void)
 {
     DefaultPrefs.prefsTypeVers = RAquaPrefsVer;
 
-    strcpy(DefaultPrefs.ConsoleFontName, DefaultConsoleFontName);
-    DefaultPrefs.ConsoleFontSize = DefaultConsoleFontSize;
-    DefaultPrefs.TabSize = DefaultTabSize;
+    DefaultPrefs.RFontFace = DefaultRFontFace;
+    DefaultPrefs.RFontSize = DefaultRFontSize;
+    DefaultPrefs.RTabSize = DefaultRTabSize;
     DefaultPrefs.FGInputColor = DefaultFGInputColor;
     DefaultPrefs.BGInputColor = DefaultBGInputColor;
     DefaultPrefs.FGOutputColor = DefaultFGOutputColor;
@@ -324,21 +354,23 @@ void SetDefaultPrefs(void)
     DefaultPrefs.AntiAlias = DefaultAntiAlias;
     DefaultPrefs.AutoRefresh = DefaultAutoRefresh;
     DefaultPrefs.OverrideRDefaults = DefaultOverrideRDefaults;
-    DefaultPrefs.Buffering = DefaultBuffering;
-    DefaultPrefs.BufferSize = DefaultBufferSize;
+	DefaultPrefs.QuartzPos = DefaultQuartzPos;
     strcpy(DefaultPrefs.CRANmirror,DefaultCRANmirror);
     strcpy(DefaultPrefs.BIOCmirror,DefaultBIOCmirror);
+    strcpy(DefaultPrefs.WorkingDirectory,DefaultWorkingDir);
     DefaultPrefs.GlobalPackages = DefaultGlobalPackages;
     DefaultPrefs.GrabStdout = DefaultGrabStdout;
     DefaultPrefs.GrabStderr = DefaultGrabStderr;
+    DefaultPrefs.SaveConsolePos = DefaultSaveConsolePos;
+	DefaultPrefs.SetConsoleWidthOnResize = DefaultSetConsoleWidthOnResize;
 }
 
 void CopyPrefs(RAquaPrefsPointer From, RAquaPrefsPointer To)
 {
     To->prefsTypeVers = From->prefsTypeVers;
-    strcpy(To->ConsoleFontName,  From->ConsoleFontName);
-    To->ConsoleFontSize = From->ConsoleFontSize;
-    To->TabSize = From->TabSize;
+    To->RFontFace =  From->RFontFace;
+    To->RFontSize = From->RFontSize;
+    To->RTabSize = From->RTabSize;
     To->FGInputColor = From->FGInputColor;
     To->BGInputColor = From->BGInputColor;
     To->FGOutputColor = From->FGOutputColor;
@@ -350,13 +382,15 @@ void CopyPrefs(RAquaPrefsPointer From, RAquaPrefsPointer To)
     To->AntiAlias = From->AntiAlias;
     To->AutoRefresh = From->AutoRefresh;
     To->OverrideRDefaults = From->OverrideRDefaults;
-    To->Buffering = From->Buffering;
-    To->BufferSize = From->BufferSize;
+    To->QuartzPos = From->QuartzPos;
     strcpy(To->CRANmirror, From->CRANmirror);
     strcpy(To->BIOCmirror, From->BIOCmirror);
+	strcpy(To->WorkingDirectory, From->WorkingDirectory);
     To->GlobalPackages = From->GlobalPackages;
     To->GrabStdout = From->GrabStdout;
     To->GrabStderr = From->GrabStderr;
+	To->SaveConsolePos = From->SaveConsolePos;
+	To->SetConsoleWidthOnResize = From->SetConsoleWidthOnResize;
 }
 
     
@@ -365,13 +399,14 @@ void GetRPrefs(void)
     
     CFNumberRef value;
     CFStringRef text;
-    int 	tabsize, fontsize,pointsize;
+    int 	tabsize, fontsize, fontface,pointsize, quartzpos;
     double	devheight, devwidth;
-    CFDataRef	color;
+    CFDataRef	color, bounds;
     RGBColor    fgout,bgout,fgin,bgin;
-    char consolefont[255], devicefont[255], CRANmirror[255], BIOCmirror[255];
-    int	autorefresh, antialiasing, overrideRdef, buffering, buffersize;
-    int	grabstdout, grabstderr, globalpackages;
+	Rect		consolebounds;
+    char  devicefont[255], CRANmirror[255], BIOCmirror[255], WorkingDir[255];
+    int	autorefresh, antialiasing, overrideRdef;
+    int	grabstdout, grabstderr, globalpackages, saveconsolepos, setconsolewidth;
     
     
     SetUpPrefSymbols();
@@ -379,234 +414,292 @@ void GetRPrefs(void)
     CopyPrefs(&DefaultPrefs,&CurrentPrefs);
 
 /* Tab Size */
-    value = CFPreferencesCopyAppValue(tabsizeKey, appName);   
+    value = CFPreferencesCopyAppValue(RTabSizeKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &tabsize)) tabsize = DefaultPrefs.TabSize;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &tabsize))
+			tabsize = DefaultPrefs.RTabSize;
+		CFRelease(value);
+		value = NULL;
     } else 
-	tabsize = DefaultPrefs.TabSize; /* set default value */
+		tabsize = DefaultPrefs.RTabSize; /* set default value */
 
-    CurrentPrefs.TabSize  = tabsize;
-    if(value)
-     CFRelease(value);
-
+    CurrentPrefs.RTabSize  = tabsize;
+    
+	
 /* Font Size */
-    value = CFPreferencesCopyAppValue(fontsizeKey, appName);   
+    value = CFPreferencesCopyAppValue(RFontSizeKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &fontsize)) fontsize = DefaultPrefs.ConsoleFontSize;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &fontsize))
+			fontsize = DefaultPrefs.RFontSize;
+		CFRelease(value);
+		value = NULL;
     } else 
-	fontsize = DefaultPrefs.ConsoleFontSize; /* set default value */
+		fontsize = DefaultPrefs.RFontSize; /* set default value */
 
-    CurrentPrefs.ConsoleFontSize = fontsize;
-
+    CurrentPrefs.RFontSize  = fontsize;
+    
+	
 /* Console Font Name */
-
-    text = CFPreferencesCopyAppValue(consolefontKey, appName);   
-    if (text) {
-	if (! CFStringGetCString (text, consolefont, 255,  kCFStringEncodingMacRoman)) strcpy(consolefont, DefaultPrefs.ConsoleFontName);
-	CFRelease(text);
-    } else 
-	strcpy(consolefont, DefaultPrefs.ConsoleFontName); /* set default value */
-
-    strcpy(CurrentPrefs.ConsoleFontName, consolefont);
-
-
-/* Device Point Size */
-  value = CFPreferencesCopyAppValue(devPSizeKey, appName);   
+    value = CFPreferencesCopyAppValue(RFontFaceKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &pointsize)) pointsize = DefaultPrefs.DevicePointSize;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &fontface)) 
+			fontface = DefaultPrefs.RFontFace;
+		CFRelease(value);
+		value = NULL;
     } else 
-	pointsize = DefaultPrefs.DevicePointSize; /* set default value */
+		fontface = DefaultPrefs.RFontFace; /* set default value */
+
+    CurrentPrefs.RFontFace  = fontface;
+    
+	
+	
+/* Device Point Size */
+	value = CFPreferencesCopyAppValue(devPSizeKey, appName);   
+    if (value) {
+		if (!CFNumberGetValue(value, kCFNumberIntType, &pointsize)) 
+			pointsize = DefaultPrefs.DevicePointSize;
+		CFRelease(value);
+		value = NULL;
+    } else 
+		pointsize = DefaultPrefs.DevicePointSize; /* set default value */
 
     CurrentPrefs.DevicePointSize = pointsize;
-
+	
+	
+	
 /* Device Font Name */
 
     text = CFPreferencesCopyAppValue(devicefontKey, appName);   
     if (text) {
-	if (! CFStringGetCString (text, devicefont, 255,  kCFStringEncodingMacRoman)) strcpy(devicefont, DefaultPrefs.DeviceFontName);
-	CFRelease(text);
+		if (! CFStringGetCString (text, devicefont, 255,  kCFStringEncodingMacRoman)) 
+			strcpy(devicefont, DefaultPrefs.DeviceFontName);
+		CFRelease(text);
+		text = NULL;
     } else 
-	strcpy(devicefont, DefaultPrefs.DeviceFontName); /* set default value */
+		strcpy(devicefont, DefaultPrefs.DeviceFontName); /* set default value */
 
     strcpy(CurrentPrefs.DeviceFontName, devicefont);
 
-
+	
 /* Device Width */
     value = CFPreferencesCopyAppValue(devWidthKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberDoubleType, &devwidth)) devwidth = DefaultPrefs.DeviceWidth;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberDoubleType, &devwidth))
+			devwidth = DefaultPrefs.DeviceWidth;
+		CFRelease(value);
+		value = NULL;
     } else 
-	devwidth = DefaultPrefs.DeviceWidth; /* set default value */
+		devwidth = DefaultPrefs.DeviceWidth; /* set default value */
 
     CurrentPrefs.DeviceWidth = devwidth;
 
 /* Device Height */
     value = CFPreferencesCopyAppValue(devHeightKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberDoubleType, &devheight)) devheight = DefaultPrefs.DeviceHeight;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberDoubleType, &devheight)) 
+			devheight = DefaultPrefs.DeviceHeight;
+		CFRelease(value);
+		value = NULL;
     } else 
-	devheight = DefaultPrefs.DeviceHeight; /* set default value */
+		devheight = DefaultPrefs.DeviceHeight; /* set default value */
 
     CurrentPrefs.DeviceHeight = devheight;
 
 /* Device AntiAliasing */
     value = CFPreferencesCopyAppValue(devAntialiasingKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &antialiasing)) antialiasing = DefaultPrefs.AntiAlias;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &antialiasing))
+			antialiasing = DefaultPrefs.AntiAlias;
+		CFRelease(value);
+		value = NULL;
     } else 
-	antialiasing = DefaultPrefs.AntiAlias; /* set default value */
+		antialiasing = DefaultPrefs.AntiAlias; /* set default value */
 
     CurrentPrefs.AntiAlias = antialiasing;
 
 /* Device AutoRefresh */
     value = CFPreferencesCopyAppValue(devAutoRefreshKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &autorefresh)) autorefresh = DefaultPrefs.AutoRefresh;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &autorefresh)) 
+			autorefresh = DefaultPrefs.AutoRefresh;
+		CFRelease(value);
+		value = NULL;
     } else 
-	autorefresh = DefaultPrefs.AutoRefresh; /* set default value */
+		autorefresh = DefaultPrefs.AutoRefresh; /* set default value */
 
     CurrentPrefs.AutoRefresh = autorefresh;
+
+/* Quartz Device Window Position */
+    value = CFPreferencesCopyAppValue(devQuartzPosKey, appName);   
+    if (value) {
+		if (!CFNumberGetValue(value, kCFNumberIntType, &quartzpos)) 
+			quartzpos = DefaultPrefs.QuartzPos;
+		CFRelease(value);
+		value = NULL;
+    } else 
+		quartzpos = DefaultPrefs.QuartzPos; /* set default value */
+
+    CurrentPrefs.QuartzPos = quartzpos;
 
 /* Override R Defaults */
     value = CFPreferencesCopyAppValue(devOverrideRDefKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &overrideRdef)) overrideRdef = DefaultPrefs.OverrideRDefaults;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &overrideRdef)) 
+			overrideRdef = DefaultPrefs.OverrideRDefaults;
+		CFRelease(value);
+		value = NULL;
     } else 
-	overrideRdef = DefaultPrefs.OverrideRDefaults; /* set default value */
+		overrideRdef = DefaultPrefs.OverrideRDefaults; /* set default value */
 
     CurrentPrefs.OverrideRDefaults = overrideRdef;
 
-    /* Buffered Text Output */
-    value = CFPreferencesCopyAppValue(bufferingKey, appName);   
-    if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &buffering)) buffering = DefaultPrefs.Buffering;
-	CFRelease(value);
-    } else 
-	buffering = DefaultPrefs.Buffering; /* set default value */
-
-    CurrentPrefs.Buffering = buffering;
-
-    value = CFPreferencesCopyAppValue(bufferSizeKey, appName);   
-    if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &buffersize)) buffersize = DefaultPrefs.BufferSize;
-	CFRelease(value);
-    } else 
-	buffersize = DefaultPrefs.BufferSize; /* set default value */
-
-    CurrentPrefs.BufferSize = buffersize;
 
 /*  Console Out Foreground color */
     color = CFPreferencesCopyAppValue(outfgKey, appName);   
-    if (color) {
-      CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&fgout); 
-    } else {
-     fgout = DefaultPrefs.FGOutputColor;
-     }
-
+    if(color){ 
+		CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&fgout); 
+		CFRelease(color);
+		color = NULL;
+	} else 
+		fgout = DefaultPrefs.FGOutputColor;
+     
     CurrentPrefs.FGOutputColor = fgout;
     
-    if(color)
-     CFRelease(color);
-
 /*  Console Out Background color */
     color = CFPreferencesCopyAppValue(outbgKey, appName);   
-    if (color) {
-      CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&bgout); 
-    } else {
-     bgout = DefaultPrefs.BGOutputColor;
-     }
-
+    if(color){
+		CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&bgout); 
+		CFRelease(color);
+		color = NULL;
+    } else 
+		bgout = DefaultPrefs.BGOutputColor;
+     
     CurrentPrefs.BGOutputColor = bgout;
     
-    
-    if(color)
-     CFRelease(color);
    
 /*  Console In Foreground color */
     color = CFPreferencesCopyAppValue(infgKey, appName);   
-    if (color) {
-      CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&fgin); 
-    } else {
-     fgin = DefaultPrefs.FGInputColor;
-    }
+    if(color){
+		CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&fgin); 
+		CFRelease(color);
+		color = NULL;
+	} else
+		fgin = DefaultPrefs.FGInputColor;
 
     CurrentPrefs.FGInputColor  = fgin;
-    
-    if(color)
-     CFRelease(color);
 
 /*  Console In Background color */
     color = CFPreferencesCopyAppValue(inbgKey, appName);   
-    if (color) {
-      CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&bgin); 
-    } else {
-     bgin = DefaultPrefs.BGInputColor;
-     }
+    if(color){
+		CFDataGetBytes (color, CFRangeMake(0,CFDataGetLength(color)), (UInt8*)&bgin); 
+       CFRelease(color);
+	   color = NULL;
+	} else
+		bgin = DefaultPrefs.BGInputColor;
 
     CurrentPrefs.BGInputColor = bgin;
-
-     if(color)
-       CFRelease(color);
-
    
     /* CRAN mirror */
     text = CFPreferencesCopyAppValue(CRANmirrorKey, appName);   
     if (text) {
-	if (! CFStringGetCString (text, CRANmirror, 255,  kCFStringEncodingMacRoman)) strcpy(CRANmirror, DefaultPrefs.CRANmirror);
-	CFRelease(text);
+		if (! CFStringGetCString (text, CRANmirror, 255,  kCFStringEncodingMacRoman)) 
+			strcpy(CRANmirror, DefaultPrefs.CRANmirror);
+		CFRelease(text);
+		text = NULL;
     } else 
-	strcpy(CRANmirror, DefaultPrefs.CRANmirror); /* set default value */
+		strcpy(CRANmirror, DefaultPrefs.CRANmirror); /* set default value */
 
     strcpy(CurrentPrefs.CRANmirror, CRANmirror);
  
     /* BIOC repository  */
     text = CFPreferencesCopyAppValue(BIOCmirrorKey, appName);   
     if (text) {
-	if (! CFStringGetCString (text, BIOCmirror, 255,  kCFStringEncodingMacRoman)) strcpy(BIOCmirror, DefaultPrefs.BIOCmirror);
-	CFRelease(text);
+		if (! CFStringGetCString (text, BIOCmirror, 255,  kCFStringEncodingMacRoman)) 
+			strcpy(BIOCmirror, DefaultPrefs.BIOCmirror);
+		CFRelease(text);
+		text = NULL;
     } else 
-	strcpy(BIOCmirror, DefaultPrefs.BIOCmirror); /* set default value */
+		strcpy(BIOCmirror, DefaultPrefs.BIOCmirror); /* set default value */
 
     strcpy(CurrentPrefs.BIOCmirror, BIOCmirror);
 
+    /*  Working Directory   */
+    text = CFPreferencesCopyAppValue(WorkingDirKey, appName);   
+    if (text) {
+		if (! CFStringGetCString (text, WorkingDir, 255,  kCFStringEncodingMacRoman)) 
+			strcpy(WorkingDir, DefaultPrefs.WorkingDirectory);
+		CFRelease(text);
+		text = NULL;
+    } else 
+		strcpy(WorkingDir, DefaultPrefs.WorkingDirectory); /* set default value */
+
+    strcpy(CurrentPrefs.WorkingDirectory, WorkingDir);
+
     /* new packages go in root */
     value = CFPreferencesCopyAppValue(GlobalPackagesKey, appName);   
-    if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &globalpackages)) globalpackages = DefaultPrefs.GlobalPackages;
-	CFRelease(value);
+    if(value){
+		if (!CFNumberGetValue(value, kCFNumberIntType, &globalpackages)) 
+			globalpackages = DefaultPrefs.GlobalPackages;
+		CFRelease(value);
+		value = NULL;
     } else 
-	globalpackages = DefaultPrefs.GlobalPackages; /* set default value */
+		globalpackages = DefaultPrefs.GlobalPackages; /* set default value */
 
     CurrentPrefs.GlobalPackages = globalpackages;
 
     value = CFPreferencesCopyAppValue(GrabStdoutKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &grabstdout)) grabstdout = DefaultPrefs.GrabStdout;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &grabstdout)) 
+			grabstdout = DefaultPrefs.GrabStdout;
+		CFRelease(value);
+		value = NULL;
     } else 
-	grabstdout = DefaultPrefs.GrabStdout; /* set default value */
+		grabstdout = DefaultPrefs.GrabStdout; /* set default value */
 
     CurrentPrefs.GrabStdout = grabstdout;
     
     value = CFPreferencesCopyAppValue(GrabStderrKey, appName);   
     if (value) {
-	if (!CFNumberGetValue(value, kCFNumberIntType, &grabstderr)) grabstderr = DefaultPrefs.GrabStderr;
-	CFRelease(value);
+		if (!CFNumberGetValue(value, kCFNumberIntType, &grabstderr)) 
+			grabstderr = DefaultPrefs.GrabStderr;
+		CFRelease(value);
+		value = NULL;
     } else 
-	grabstderr = DefaultPrefs.GrabStderr; /* set default value */
+		grabstderr = DefaultPrefs.GrabStderr; /* set default value */
 
     CurrentPrefs.GrabStderr = grabstderr;
  
-    SetUpPrefsWindow(&CurrentPrefs);
+    value = CFPreferencesCopyAppValue(SaveConsolePosKey, appName);   
+    if (value) {
+		if (!CFNumberGetValue(value, kCFNumberIntType, &saveconsolepos)) 
+			saveconsolepos = DefaultPrefs.SaveConsolePos;
+		CFRelease(value);
+		value = NULL;
+    } else 
+		saveconsolepos = DefaultPrefs.SaveConsolePos; /* set default value */
 
+    CurrentPrefs.SaveConsolePos = saveconsolepos;
+	
+    value = CFPreferencesCopyAppValue(SetConsoleWidthKey, appName);   
+    if (value) {
+		if (!CFNumberGetValue(value, kCFNumberIntType, &setconsolewidth)) 
+			setconsolewidth = DefaultPrefs.SetConsoleWidthOnResize;
+		CFRelease(value);
+		value = NULL;
+    } else 
+		setconsolewidth = DefaultPrefs.SetConsoleWidthOnResize; /* set default value */
+
+    CurrentPrefs.SetConsoleWidthOnResize = setconsolewidth;
+
+	bounds = CFPreferencesCopyAppValue(ConsoleBoundsKey, appName);   
+    if (bounds){
+		CFDataGetBytes (bounds, CFRangeMake(0,CFDataGetLength(bounds)), (UInt8*)&consolebounds); 
+       CFRelease(bounds);
+	   bounds = NULL;
+	} else
+		ConsoleWindowBounds = BrokenConsoleWindowBounds;
+
+    ConsoleWindowBounds = consolebounds;
 }
 
 void SetUpPrefsWindow(RAquaPrefsPointer Settings)
@@ -615,35 +708,55 @@ void SetUpPrefsWindow(RAquaPrefsPointer Settings)
     ControlFontStyleRec	controlStyle;
     CFStringRef	text;
  
-/* Sets the Console Font name and size */
-   GetControlByID(RPrefsWindow, &ConsoleFontTextID, &myControl);
-   text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%s %d pt"), Settings->ConsoleFontName, Settings->ConsoleFontSize );
-   SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-   DrawOneControl(myControl);    
-   CFRelease(text);
-   
+    GetControlByID(RPrefsWindow, &RFontSizeID, &myControl);
+    SetControl32BitValue(myControl, Settings->RFontSize);
+
+    GetControlByID(RPrefsWindow, &RFontFaceID, &myControl);
+    SetControl32BitValue(myControl, Settings->RFontFace);
+
+    GetControlByID(RPrefsWindow, &RTabSizeID, &myControl);
+    SetControl32BitValue(myControl, Settings->RTabSize);   
  
 /* Sets the Device Font name */
    GetControlByID(RPrefsWindow, &DeviceFontTextID, &myControl);
    text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%s %d pt"), Settings->DeviceFontName, Settings->DevicePointSize );
-   SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-   DrawOneControl(myControl);    
-   CFRelease(text);
-  
+   if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		DrawOneControl(myControl);    
+		CFRelease(text);
+		text = NULL;
+	}
+
 /* Sets the CRAN mirror  name */
    GetControlByID(RPrefsWindow, &CRANmirrorID, &myControl);
    text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%s"), Settings->CRANmirror);
-   SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-   DrawOneControl(myControl);    
-   CFRelease(text);
+   if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		DrawOneControl(myControl);    
+		CFRelease(text);
+		text = NULL;
+	}
   
 /* Sets the BioC repository  name */
    GetControlByID(RPrefsWindow, &BIOCmirrorID, &myControl);
    text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%s"), Settings->BIOCmirror);
-   SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-   DrawOneControl(myControl);    
-   CFRelease(text);
-  
+   if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		DrawOneControl(myControl);    
+		CFRelease(text);
+		text = NULL;
+	}
+	
+/* Sets the Working Directory  name */
+   GetControlByID(RPrefsWindow, &DefaultDirTextID, &myControl);
+   text = CFStringCreateWithCString( NULL, Settings->WorkingDirectory, kCFStringEncodingMacRoman);
+   if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		DrawOneControl(myControl);    
+		CFRelease(text);
+		text = NULL;
+	}
+
 /* Sets color font for Output Console */
     GetControlByID(RPrefsWindow, &OutputColorID, &myControl);
     controlStyle.foreColor = Settings->FGOutputColor;
@@ -657,25 +770,24 @@ void SetUpPrefsWindow(RAquaPrefsPointer Settings)
     controlStyle.backColor = Settings->BGInputColor;
     SetControlFontStyle(myControl, &controlStyle);    
     DrawOneControl(myControl);    
-    
-/* Sets Tab Size */
-    GetControlByID(RPrefsWindow, &TabSizeID, &myControl);
-    text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%d"), Settings->TabSize );
-    SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-    CFRelease( text );
- 
+     
 /* Sets Device Width */
     GetControlByID(RPrefsWindow, &WidthID, &myControl);
     text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%f"), Settings->DeviceWidth );
-    SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-    CFRelease( text );
-                         
+    if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		CFRelease( text );
+        text = NULL;
+	}
+	
 /* Sets Device Height */
     GetControlByID(RPrefsWindow, &HeightID, &myControl);
     text = CFStringCreateWithFormat( NULL, NULL, CFSTR("%f"), Settings->DeviceHeight );
-    SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
-    CFRelease( text );
-
+    if(text){
+		SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+		CFRelease( text );
+		text = NULL;
+	}
 
     GetControlByID(RPrefsWindow, &AutoRefreshID, &myControl);
     SetControl32BitValue(myControl, Settings->AutoRefresh);
@@ -683,11 +795,9 @@ void SetUpPrefsWindow(RAquaPrefsPointer Settings)
     GetControlByID(RPrefsWindow, &AntiAliasingID, &myControl);
     SetControl32BitValue(myControl, Settings->AntiAlias);
 
-    GetControlByID(RPrefsWindow, &BufferingID, &myControl);
-    SetControl32BitValue(myControl, Settings->Buffering);
 
-    GetControlByID(RPrefsWindow, &BufferSizeID, &myControl);
-    SetControl32BitValue(myControl, Settings->BufferSize);
+    GetControlByID(RPrefsWindow, &QuartzPosID, &myControl);
+    SetControl32BitValue(myControl, Settings->QuartzPos);
 
     GetControlByID(RPrefsWindow, &OverrideRDefBoxID, &myControl);
     SetControl32BitValue(myControl, Settings->OverrideRDefaults);
@@ -701,26 +811,49 @@ void SetUpPrefsWindow(RAquaPrefsPointer Settings)
     GetControlByID(RPrefsWindow, &GrabStderrID, &myControl);
     SetControl32BitValue(myControl, Settings->GrabStderr);
 
+    GetControlByID(RPrefsWindow, &SaveConsolePosID, &myControl);
+    SetControl32BitValue(myControl, Settings->SaveConsolePos);
+
+    GetControlByID(RPrefsWindow, &SetConsoleWidthID, &myControl);
+    SetControl32BitValue(myControl, Settings->SetConsoleWidthOnResize);
 }
 
 
+void	SaveConsolePosToPrefs(void){
+	CFDataRef	bounds;
+
+	if(CurrentPrefs.SaveConsolePos == 0)
+	 return;
+	 
+	bounds = CFDataCreate (NULL, (UInt8*)&ConsoleWindowBounds, sizeof(ConsoleWindowBounds));
+    if(bounds){
+     CFPreferencesSetAppValue(ConsoleBoundsKey, bounds, appName);
+     CFRelease(bounds);
+	 bounds = NULL;
+    }
+	
+    (void)CFPreferencesAppSynchronize(appName);
+}
 
 void SaveRPrefs(void)
 {
     CFNumberRef value;
     CFStringRef	text;
-    int tabsize, fontsize,pointsize;
+    int tabsize, fontsize, pointsize, quartzpos, fontface;
     double	devwidth, devheight;
-    CFDataRef	color;
+    CFDataRef	color, bounds;
     RGBColor    fgout,bgout,fgin,bgin;
-    char 	consolefont[255], devicefont[255], cran[255], bioc[255];
-    int	autorefresh, antialiasing, overrideRdef, buffering, buffersize;
-    int	grabstdout, grabstderr, globalpackages;
+	char 	 devicefont[255], cran[255], bioc[255], workdir[255];
+    int	autorefresh, antialiasing, overrideRdef;
+	long prefver;
+    int	grabstdout, grabstderr, globalpackages, saveconsolepos, setconsolewidth;
+
 
     
-    tabsize = CurrentPrefs.TabSize;
-    fontsize = CurrentPrefs.ConsoleFontSize;
-    strcpy(consolefont, CurrentPrefs.ConsoleFontName);
+    prefver = CurrentPrefs.prefsTypeVers;
+    tabsize = CurrentPrefs.RTabSize;
+    fontsize = CurrentPrefs.RFontSize;
+    fontface = CurrentPrefs.RFontFace;
     strcpy(devicefont, CurrentPrefs.DeviceFontName);
     
     pointsize = CurrentPrefs.DevicePointSize;
@@ -732,128 +865,204 @@ void SaveRPrefs(void)
     bgin = CurrentPrefs.BGInputColor;
     autorefresh = CurrentPrefs.AutoRefresh;
     antialiasing = CurrentPrefs.AntiAlias;
+	quartzpos = CurrentPrefs.QuartzPos;
     overrideRdef = CurrentPrefs.OverrideRDefaults;
-    buffering = CurrentPrefs.Buffering;
-    buffersize = CurrentPrefs.BufferSize;
     globalpackages = CurrentPrefs.GlobalPackages;
     grabstdout = CurrentPrefs.GrabStdout;
     grabstderr = CurrentPrefs.GrabStderr;
+	saveconsolepos = CurrentPrefs.SaveConsolePos;
+	setconsolewidth = CurrentPrefs.SetConsoleWidthOnResize;
     strcpy(bioc, CurrentPrefs.BIOCmirror);
     strcpy(cran, CurrentPrefs.CRANmirror);
+    strcpy(workdir, CurrentPrefs.WorkingDirectory);
+	
        
+/* Prefs Version */
+    value = CFNumberCreate(NULL, kCFNumberLongType, &prefver); 
+    if(value){
+		CFPreferencesSetAppValue(RPrefsVerKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Tab Size */
     value = CFNumberCreate(NULL, kCFNumberIntType, &tabsize); 
-    CFPreferencesSetAppValue(tabsizeKey, value, appName);
-    CFRelease(value);
-
-
+    if(value){
+		CFPreferencesSetAppValue(RTabSizeKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Font Size */
     value = CFNumberCreate(NULL, kCFNumberIntType, &fontsize); 
-    CFPreferencesSetAppValue(fontsizeKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(RFontSizeKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Console Font Name */
-    text = CFStringCreateWithCString(NULL, consolefont, kCFStringEncodingMacRoman);
-    CFPreferencesSetAppValue(consolefontKey, text, appName);
-    CFRelease(text);
-
-
+    value = CFNumberCreate(NULL, kCFNumberIntType, &fontface); 
+    if(value){
+		CFPreferencesSetAppValue(RFontFaceKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Device Point Size */
     value = CFNumberCreate(NULL, kCFNumberIntType, &pointsize); 
-    CFPreferencesSetAppValue(devPSizeKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(devPSizeKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Device Font Name */
     text = CFStringCreateWithCString(NULL, devicefont, kCFStringEncodingMacRoman);
-    CFPreferencesSetAppValue(devicefontKey, text, appName);
-    CFRelease(text);
-
-
+    if(text){
+		CFPreferencesSetAppValue(devicefontKey, text, appName);
+		CFRelease(text);
+		text = NULL;
+	}
+	
 /* Device Width */
     value = CFNumberCreate(NULL, kCFNumberDoubleType, &devwidth); 
-    CFPreferencesSetAppValue(devWidthKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(devWidthKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Device Height */
     value = CFNumberCreate(NULL, kCFNumberDoubleType, &devheight); 
-    CFPreferencesSetAppValue(devHeightKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(devHeightKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Device Autorefresh */
     value = CFNumberCreate(NULL, kCFNumberIntType, &autorefresh); 
-    CFPreferencesSetAppValue(devAutoRefreshKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(devAutoRefreshKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Device Antialiasing */
     value = CFNumberCreate(NULL, kCFNumberIntType, &antialiasing); 
-    CFPreferencesSetAppValue(devAntialiasingKey, value, appName);
-    CFRelease(value);
-    
+    if(value){
+		CFPreferencesSetAppValue(devAntialiasingKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+		
+/* Quartz Device Window Positioning */
+    value = CFNumberCreate(NULL, kCFNumberIntType, &quartzpos); 
+    if(value){
+		CFPreferencesSetAppValue(devQuartzPosKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
 /* Override R Defaults */
     value = CFNumberCreate(NULL, kCFNumberIntType, &overrideRdef); 
-    CFPreferencesSetAppValue(devOverrideRDefKey, value, appName);
-    CFRelease(value);
-
-/* Buffering */
-    value = CFNumberCreate(NULL, kCFNumberIntType, &buffering); 
-    CFPreferencesSetAppValue(bufferingKey, value, appName);
-    CFRelease(value);
-
-    value = CFNumberCreate(NULL, kCFNumberIntType, &buffersize); 
-    CFPreferencesSetAppValue(bufferSizeKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(devOverrideRDefKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
     /* CRAN */
     text = CFStringCreateWithCString(NULL, cran, kCFStringEncodingMacRoman);
-    CFPreferencesSetAppValue(CRANmirrorKey, text, appName);
-    CFRelease(text);
-
+    if(text){
+		CFPreferencesSetAppValue(CRANmirrorKey, text, appName);
+		CFRelease(text);
+		text = NULL;
+	}
+	
     /* BIOC */
     text = CFStringCreateWithCString(NULL, bioc, kCFStringEncodingMacRoman);
-    CFPreferencesSetAppValue(BIOCmirrorKey, text, appName);
-    CFRelease(text);
+    if(text){
+		CFPreferencesSetAppValue(BIOCmirrorKey, text, appName);
+		CFRelease(text);
+		text = NULL;
+	}
+	
+    /* WorkingDir */
+    text = CFStringCreateWithCString(NULL, workdir, kCFStringEncodingMacRoman);
+    if(text){
+		CFPreferencesSetAppValue(WorkingDirKey, text, appName);
+		CFRelease(text);
+		text = NULL;
+	}
 
     /* global install of packages */
     value = CFNumberCreate(NULL, kCFNumberIntType, &globalpackages); 
-    CFPreferencesSetAppValue(GlobalPackagesKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(GlobalPackagesKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
     value = CFNumberCreate(NULL, kCFNumberIntType, &grabstdout); 
-    CFPreferencesSetAppValue(GrabStdoutKey, value, appName);
-    CFRelease(value);
-    
+    if(value){
+		CFPreferencesSetAppValue(GrabStdoutKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+    }
+	
     value = CFNumberCreate(NULL, kCFNumberIntType, &grabstderr); 
-    CFPreferencesSetAppValue(GrabStderrKey, value, appName);
-    CFRelease(value);
-
+    if(value){
+		CFPreferencesSetAppValue(GrabStderrKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
     /* colors */
     color = CFDataCreate (NULL, (UInt8*)&fgout, sizeof(fgout));
     if(color){
-     CFPreferencesSetAppValue(outfgKey, color, appName);
-     CFRelease(color);
+		CFPreferencesSetAppValue(outfgKey, color, appName);
+		CFRelease(color);
+		color = NULL;
     }
     
     color = CFDataCreate (NULL, (UInt8*)&bgout, sizeof(bgout));
     if(color){
-     CFPreferencesSetAppValue(outbgKey, color, appName);
-     CFRelease(color);
+		CFPreferencesSetAppValue(outbgKey, color, appName);
+		CFRelease(color);
+		color = NULL;
     }
 
     color = CFDataCreate (NULL, (UInt8*)&fgin, sizeof(fgin));
     if(color){
-     CFPreferencesSetAppValue(infgKey, color, appName);
-     CFRelease(color);
+		CFPreferencesSetAppValue(infgKey, color, appName);
+		CFRelease(color);
+		color = NULL;
     }
 
     color = CFDataCreate (NULL, (UInt8*)&bgin, sizeof(bgin));
     if(color){
-     CFPreferencesSetAppValue(inbgKey, color, appName);
-     CFRelease(color);
+		CFPreferencesSetAppValue(inbgKey, color, appName);
+		CFRelease(color);
+		color = NULL;
     }
 
-
-
-    (void)CFPreferencesAppSynchronize(appName);
+    value = CFNumberCreate(NULL, kCFNumberIntType, &saveconsolepos); 
+    if(value){
+		CFPreferencesSetAppValue(SaveConsolePosKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
+    value = CFNumberCreate(NULL, kCFNumberIntType, &setconsolewidth); 
+    if(value){
+		CFPreferencesSetAppValue(SetConsoleWidthKey, value, appName);
+		CFRelease(value);
+		value = NULL;
+	}
+	
+	(void)CFPreferencesAppSynchronize(appName);
 }
 
 // Handler for the prefs tabs
@@ -930,6 +1139,7 @@ static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRe
     ControlFontStyleRec	controlStyle;
     ControlRef	myControl;
     char cran[255],bioc[255],cmd[600];
+	CFStringRef text;
 
      if(FPIsFontPanelVisible())
       return( eventNotHandledErr );
@@ -947,7 +1157,9 @@ static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRe
             RSetTab();
             RSetFontSize();
             RSetFont();
-	    RSetPackagePrefs();
+			RescaleInOut(0.8);
+			RSetConsoleWidth();
+			RSetPackagePrefs();
             RSetPipes();
         break;
         
@@ -955,13 +1167,30 @@ static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRe
             HideWindow(theWindow); 
         break;
       
+        case kDefaultDirButton: 
+			if( DoSelectDirectory(cmd,"Choose a Startup Working Directory") == noErr){
+				strcpy(TempPrefs.WorkingDirectory, cmd);
+				text = CFStringCreateWithCString(NULL, cmd, kCFStringEncodingASCII); 
+				if(text){
+					GetControlByID(RPrefsWindow, &DefaultDirTextID, &myControl);
+					SetControlData(myControl, kControlEditTextPart, kControlStaticTextCFStringTag, sizeof(CFStringRef), &text);
+					controlStyle.flags = kControlUseJustMask;
+					CFRelease(text);
+					text = NULL;
+				}
+				Draw1Control(myControl);    			
+			}
+        break;
+
         case kSavePrefsButton: 
          GetDialogPrefs();
          RSetColors();
          RSetTab();
          RSetFontSize();
          RSetFont();
-	 RSetPackagePrefs();
+		 RescaleInOut(0.8);
+		 RSetConsoleWidth();
+		 RSetPackagePrefs();
          RSetPipes();
          SaveRPrefs();
          HideWindow(theWindow);
@@ -974,11 +1203,6 @@ static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRe
          ShowWindow(RPrefsWindow);
         break;
   
-        case kConsoleFontButton:
-         isConsoleFont = true;
-         CallFontPanel();
-        break;
-
         case kOutputColorButton:
          pickColor(TempPrefs.FGOutputColor, &outColor);
          TempPrefs.FGOutputColor = outColor;
@@ -1020,7 +1244,6 @@ static  OSStatus GenContEventHandlerProc( EventHandlerCallRef inCallRef, EventRe
         break;
         
         case kDeviceFontButton:
-         isConsoleFont = false;
          CallFontPanel();
         break;
         
@@ -1054,18 +1277,13 @@ OSStatus MySetFontSelection(void)
     SInt16      fontID;
      
 
-    if(isConsoleFont)    
-     CopyCStringToPascal(TempPrefs.ConsoleFontName, fontname);
-    else
-      CopyCStringToPascal(TempPrefs.DeviceFontName, fontname);
+	CopyCStringToPascal(TempPrefs.DeviceFontName, fontname);
     
     GetFNum(fontname,&fontID);
 
     fontFamilyInstance.fontStyle = 0;
     fontFamilyInstance.fontFamily = fontID;
-/*    if(isConsoleFont)
-     fprintf(stderr,"\n temp console font=%s, id=%d", TempPrefs.ConsoleFontName, fontID);
-    else
+/*
     fprintf(stderr,"\n temp device font=%s, id=%d", TempPrefs.DeviceFontName, fontID);
   */  
     instance.fontStyle = fontFamilyInstance.fontStyle;
@@ -1074,10 +1292,7 @@ OSStatus MySetFontSelection(void)
     qdInfo.version = kFontSelectionQDStyleVersionZero;
     qdInfo.instance = fontFamilyInstance;
 
-    if(isConsoleFont)
-     qdInfo.size = Long2Fix(TempPrefs.ConsoleFontSize);
-    else
-     qdInfo.size = Long2Fix(TempPrefs.DevicePointSize);
+	qdInfo.size = Long2Fix(TempPrefs.DevicePointSize);
     
     qdInfo.hasColor = false;
 
@@ -1117,25 +1332,25 @@ void GetDialogPrefs(void)
     ControlHandle	controlField;
     CFStringRef		text;
     Size		actualSize;
-  
-    GetControlByID( RPrefsWindow, &TabSizeID, &controlField );
-    GetControlData( controlField, 0, kControlEditTextCFStringTag, 
-                    sizeof(CFStringRef), &text, &actualSize );
-    CurrentPrefs.TabSize = CFStringGetIntValue( text );
-    CFRelease( text );
-    
+      
     GetControlByID( RPrefsWindow, &WidthID, &controlField );
     GetControlData( controlField, 0, kControlEditTextCFStringTag, 
                     sizeof(CFStringRef), &text, &actualSize );
     CurrentPrefs.DeviceWidth = CFStringGetDoubleValue( text );
-    CFRelease( text );
-   
+    if(text){
+		CFRelease( text );
+		text = NULL;
+	}
+	
     GetControlByID( RPrefsWindow, &HeightID, &controlField );
     GetControlData( controlField, 0, kControlEditTextCFStringTag, 
                     sizeof(CFStringRef), &text, &actualSize );
     CurrentPrefs.DeviceHeight = CFStringGetDoubleValue( text );
-    CFRelease( text );
-
+    if(text){
+		CFRelease( text );
+		text = NULL;
+	}
+	
     GetControlByID( RPrefsWindow, &AutoRefreshID, &controlField );
     CurrentPrefs.AutoRefresh = GetControl32BitValue(controlField);
     
@@ -1144,20 +1359,24 @@ void GetDialogPrefs(void)
  
     GetControlByID( RPrefsWindow, &OverrideRDefBoxID, &controlField );
     CurrentPrefs.OverrideRDefaults = GetControl32BitValue(controlField);
-
-    GetControlByID( RPrefsWindow, &BufferingID, &controlField );
-    CurrentPrefs.Buffering = GetControl32BitValue(controlField);
- 
-    GetControlByID( RPrefsWindow, &BufferSizeID, &controlField );
-    CurrentPrefs.BufferSize = GetControl32BitValue(controlField);
     
+    GetControlByID( RPrefsWindow, &RFontFaceID, &controlField );
+    CurrentPrefs.RFontFace = GetControl32BitValue(controlField);
+
+    GetControlByID( RPrefsWindow, &RFontSizeID, &controlField );
+    CurrentPrefs.RFontSize = GetControl32BitValue(controlField);
+
+    GetControlByID( RPrefsWindow, &RTabSizeID, &controlField );
+    CurrentPrefs.RTabSize = GetControl32BitValue(controlField);
+
+    GetControlByID( RPrefsWindow, &QuartzPosID, &controlField );
+    CurrentPrefs.QuartzPos = GetControl32BitValue(controlField);
+
     CurrentPrefs.FGOutputColor = TempPrefs.FGOutputColor;
     CurrentPrefs.BGOutputColor = TempPrefs.BGOutputColor;    
     CurrentPrefs.FGInputColor = TempPrefs.FGInputColor;
     CurrentPrefs.BGInputColor = TempPrefs.BGInputColor;
         
-    strcpy(CurrentPrefs.ConsoleFontName, TempPrefs.ConsoleFontName);
-    CurrentPrefs.ConsoleFontSize = TempPrefs.ConsoleFontSize;
     
     strcpy(CurrentPrefs.DeviceFontName, TempPrefs.DeviceFontName);
     CurrentPrefs.DevicePointSize = TempPrefs.DevicePointSize;
@@ -1168,15 +1387,22 @@ void GetDialogPrefs(void)
     GetControlData( controlField, 0, kControlEditTextCFStringTag, 
                     sizeof(CFStringRef), &text, &actualSize );
     CFStringGetCString(text,CurrentPrefs.CRANmirror, 255,  kCFStringEncodingMacRoman);
-    CFRelease( text );
-
+    if(text){
+		CFRelease(text);
+		text = NULL;
+	}
 
     GetControlByID( RPrefsWindow, &BIOCmirrorID, &controlField );
     GetControlData( controlField, 0, kControlEditTextCFStringTag, 
                     sizeof(CFStringRef), &text, &actualSize );
     CFStringGetCString(text,CurrentPrefs.BIOCmirror, 255,  kCFStringEncodingMacRoman);
-    CFRelease( text );
-
+    if(text){
+		CFRelease(text);
+		text = NULL;
+	}
+	
+	strcpy(CurrentPrefs.WorkingDirectory, TempPrefs.WorkingDirectory);
+  
     GetControlByID( RPrefsWindow, &GlobalPackagesID, &controlField );
     CurrentPrefs.GlobalPackages = GetControl32BitValue(controlField);
  
@@ -1186,6 +1412,11 @@ void GetDialogPrefs(void)
     GetControlByID( RPrefsWindow, &GrabStderrID, &controlField );
     CurrentPrefs.GrabStderr = GetControl32BitValue(controlField);
     
+    GetControlByID( RPrefsWindow, &SaveConsolePosID, &controlField );
+    CurrentPrefs.SaveConsolePos = GetControl32BitValue(controlField);
+
+    GetControlByID( RPrefsWindow, &SetConsoleWidthID, &controlField );
+    CurrentPrefs.SetConsoleWidthOnResize = GetControl32BitValue(controlField);
 }
 
 void pickColor(RGBColor inColour, RGBColor *outColor){

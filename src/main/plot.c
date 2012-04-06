@@ -580,11 +580,18 @@ SEXP do_plot_window(SEXP call, SEXP op, SEXP args, SEXP env)
 	pin2 = GConvertYUnits(1.0, NPC, INCHES, dd);
 	xdelta = fabs(xmax - xmin) / asp;
 	ydelta = fabs(ymax - ymin);
-	xscale = pin1 / xdelta;
-	yscale = pin2 / ydelta;
-	scale = (xscale < yscale) ? xscale : yscale;
-	xadd = .5 * (pin1 / scale - xdelta) * asp;
-	yadd = .5 * (pin2 / scale - ydelta);
+	if(xdelta == 0.0 && ydelta == 0.0) {
+	    /* We really do mean zero: small non-zero values work
+	       Mimic the behaviour of GScale for the x axis. */
+	    xadd = yadd = ((xmin == 0.0) ? 1 : 0.4) * asp;
+	    xadd *= asp;
+	} else {
+	    xscale = pin1 / xdelta;
+	    yscale = pin2 / ydelta;
+	    scale = (xscale < yscale) ? xscale : yscale;
+	    xadd = .5 * (pin1 / scale - xdelta) * asp;
+	    yadd = .5 * (pin2 / scale - ydelta);
+	}
 	GScale(xmin - xadd, xmax + xadd, 1, dd);
 	GScale(ymin - yadd, ymax + yadd, 2, dd);
     }
@@ -822,7 +829,7 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 
     SEXP at, lab, vfont;
     int col, font, lty;
-    int i, n, nint = 0, ntmp, side, *ind, outer;
+    int i, n, nint = 0, ntmp, side, *ind, outer, lineoff = 0;
     int istart, iend, incr;
     Rboolean dolabels, doticks, logflag = FALSE;
     Rboolean create_at, vectorFonts = FALSE;
@@ -892,7 +899,11 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
      * The values in the par value "mgp" are interpreted
      * relative to this value. */
     line = asReal(CAR(args));
-    if (!R_FINITE(line)) line =	 Rf_gpptr(dd)->mgp[2];
+    if (!R_FINITE(line)) {
+	/* Except that here mgp values are not relative to themselves */
+	line = Rf_gpptr(dd)->mgp[2];
+	lineoff = line;
+    }
     args = CDR(args);
 
     /* Optional argument: "pos" */
@@ -901,7 +912,7 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
     /* are interpreted relative to this value. */
 
     pos = asReal(CAR(args));
-    if (!R_FINITE(pos)) pos = NA_REAL;
+    if (!R_FINITE(pos)) pos = NA_REAL; else lineoff = 0;
     args = CDR(args);
 
     /* Optional argument: "outer" */
@@ -1109,12 +1120,12 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 	else Rf_gpptr(dd)->adj = 0.5;
 	if (side == 1) {
 	    axis_lab = - axis_base
-		+ GConvertYUnits(Rf_gpptr(dd)->mgp[1], LINES, NFC, dd)
+		+ GConvertYUnits(Rf_gpptr(dd)->mgp[1]-lineoff, LINES, NFC, dd)
 		+ GConvertY(0.0, NPC, NFC, dd);
 	}
 	else { /* side == 3 */
 	    axis_lab = axis_base
-		+ GConvertYUnits(Rf_gpptr(dd)->mgp[1], LINES, NFC, dd)
+		+ GConvertYUnits(Rf_gpptr(dd)->mgp[1]-lineoff, LINES, NFC, dd)
 		- GConvertY(1.0, NPC, NFC, dd);
 	}
 	axis_lab = GConvertYUnits(axis_lab, NFC, LINES, dd);
@@ -1234,12 +1245,12 @@ SEXP do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
 	else Rf_gpptr(dd)->adj = 0.5;
 	if (side == 2) {
 	    axis_lab = - axis_base
-		+ GConvertXUnits(Rf_gpptr(dd)->mgp[1], LINES, NFC, dd)
+		+ GConvertXUnits(Rf_gpptr(dd)->mgp[1]-lineoff, LINES, NFC, dd)
 		+ GConvertX(0.0, NPC, NFC, dd);
 	}
 	else { /* side == 4 */
 	    axis_lab = axis_base
-		+ GConvertXUnits(Rf_gpptr(dd)->mgp[1], LINES, NFC, dd)
+		+ GConvertXUnits(Rf_gpptr(dd)->mgp[1]-lineoff, LINES, NFC, dd)
 		- GConvertX(1.0, NPC, NFC, dd);
 	}
 	axis_lab = GConvertXUnits(axis_lab, NFC, LINES, dd);

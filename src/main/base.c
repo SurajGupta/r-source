@@ -2,6 +2,10 @@
  * separate from an R graphics engine (separate from R devices)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <Defn.h>
 #include <Graphics.h>
 #include <Rdevices.h>
@@ -159,32 +163,20 @@ void registerBase() {
 /* FIXME: Make this a macro to avoid function call overhead?
  */
 GPar* Rf_gpptr(DevDesc *dd) {
-    if (dd->newDevStruct) 
-	return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-						   baseRegisterIndex))->gp);
-    else
-	return &(dd->gp);
+    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
+					       baseRegisterIndex))->gp);
 }
 
 GPar* Rf_dpptr(DevDesc *dd) {
-    if (dd->newDevStruct) 
-	return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-						   baseRegisterIndex))->dp);
-    else
-	return &(dd->dp);
+    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
+					       baseRegisterIndex))->dp);
 }
 
 GPar* Rf_dpSavedptr(DevDesc *dd) {
-    if (dd->newDevStruct) 
-	return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-						   baseRegisterIndex))->dpSaved);
-    else
-	return &(dd->dpSaved);
+    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
+					       baseRegisterIndex))->dpSaved);
 }
 
 SEXP Rf_displayList(DevDesc *dd) {
-    if (dd->newDevStruct) 
-	return ((GEDevDesc*) dd)->dev->displayList;
-    else
-	return dd->displayList;
+    return ((GEDevDesc*) dd)->dev->displayList;
 }

@@ -1,7 +1,8 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2002  The R Development Core Team
+ *  Copyright (C) 1997--2002  The R Development Core Team
+ *  Copyright (C) 2003	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,9 +14,10 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  A copy of the GNU General Public License is available via WWW at
+ *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
+ *  writing to the Free Software Foundation, Inc., 59 Temple Place,
+ *  Suite 330, Boston, MA  02111-1307  USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -99,11 +101,11 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort, const cha
 
     if(checkNativeType(targetType, TYPEOF(s)) == FALSE) {
      if(!dup) {
-       error("explicit request not to duplicate arguments in call to %s, but argument %d is of the wrong type (%d != %d)", 
+       error("explicit request not to duplicate arguments in call to %s, but argument %d is of the wrong type (%d != %d)",
 	     name, narg + 1, targetType, TYPEOF(s));
-     } 
+     }
 
-     if(targetType != SINGLESXP) 
+     if(targetType != SINGLESXP)
         s = coerceVector(s, targetType);
     }
 
@@ -223,7 +225,7 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort, R_NativePrimitiveArgType typ
     case INTSXP:
 	s = allocVector(type, n);
 	iptr = (int*)p;
-	for(i=0 ; i<n ; i++) 
+	for(i=0 ; i<n ; i++)
             INTEGER(s)[i] = iptr[i];
 	break;
     case REALSXP:
@@ -283,6 +285,8 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort, R_NativePrimitiveArgType typ
     return s;
 }
 
+#define THROW_REGISTRATION_TYPE_ERROR
+
 #ifdef THROW_REGISTRATION_TYPE_ERROR
 static Rboolean
 comparePrimitiveTypes(R_NativePrimitiveArgType type, SEXP s, Rboolean dup)
@@ -309,7 +313,7 @@ static SEXP naokfind(SEXP args, int * len, int *naok, int *dup)
     SEXP s, prev;
     int nargs=0, naokused=0, dupused=0, pkgused=0;
     char *p;
-    
+
     *naok = 0;
     *dup = 1;
     *len = 0;
@@ -338,16 +342,16 @@ static SEXP naokfind(SEXP args, int * len, int *naok, int *dup)
 	    s = CDR(s);
 	    continue;
 	}
-	if(s == args) 
+	if(s == args)
 	    args = s = CDR(s);
-	else 
+	else
 	    SETCDR(prev, s = CDR(s));
     }
     *len = nargs;
     return args;
 }
 
-static void setDLLname(SEXP s, char *DLLName) 
+static void setDLLname(SEXP s, char *DLLName)
 {
     SEXP ss = CAR(s); char *name;
     if(TYPEOF(ss) != STRSXP || length(ss) != 1)
@@ -451,12 +455,18 @@ SEXP do_External(SEXP call, SEXP op, SEXP args, SEXP env)
     strcpy(DLLname, "");
     args = pkgtrim(args);
 
-    if (!(fun=R_FindSymbol(CHAR(STRING_ELT(op, 0)), DLLname, NULL)))
-	errorcall(call, "C function name not in load table");
+    if (!(fun=R_FindSymbol(CHAR(STRING_ELT(op, 0)), DLLname, NULL))) {
+	if(strlen(DLLname))
+	    errorcall(call,
+		      ".External function name not in DLL for package %s", 
+		      DLLname);
+	else
+	    errorcall(call, ".External function name not in load table");
+    }
 
     if(symbol.symbol.external && symbol.symbol.external->numArgs > -1) {
 	if(symbol.symbol.external->numArgs != length(args))
-	    error("Incorrect number of arguments (%d), expecting %d for %s", 
+	    error("Incorrect number of arguments (%d), expecting %d for %s",
 		  length(args), symbol.symbol.external->numArgs, CHAR(STRING_ELT(op, 0)));
     }
     retval = (SEXP)fun(args);
@@ -481,8 +491,13 @@ SEXP do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     strcpy(DLLname, "");
     args = pkgtrim(args);
 
-    if (!(fun=R_FindSymbol(CHAR(STRING_ELT(op, 0)), DLLname, &symbol)))
-        errorcall(call, ".Call function name not in load table");
+    if (!(fun=R_FindSymbol(CHAR(STRING_ELT(op, 0)), DLLname, &symbol))) {
+	if(strlen(DLLname))
+	    errorcall(call, ".Call function name not in DLL for package %s", 
+		      DLLname);
+	else
+	    errorcall(call, ".Call function name not in load table");
+    }
     args = CDR(args);
 
     for(nargs = 0, pargs = args ; pargs != R_NilValue; pargs = CDR(pargs)) {
@@ -493,7 +508,7 @@ SEXP do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if(symbol.symbol.call && symbol.symbol.call->numArgs > -1) {
 	if(symbol.symbol.call->numArgs != nargs)
-	    error("Incorrect number of arguments (%d), expecting %d for %s", 
+	    error("Incorrect number of arguments (%d), expecting %d for %s",
 		  nargs, symbol.symbol.call->numArgs, CHAR(STRING_ELT(op, 0)));
     }
 
@@ -1227,14 +1242,20 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 	q++;
     }
 
-    if (!(fun = R_FindSymbol(buf, DLLname, &symbol)))
-	errorcall(call, "C/Fortran function name not in load table");
+    if (!(fun = R_FindSymbol(buf, DLLname, &symbol))) {
+	if(strlen(DLLname))
+	    errorcall(call, "%s function name not in DLL for package %s",
+		      which ? "Fortran" : "C", DLLname);
+	else
+	    errorcall(call, "%s function name not in load table",
+		      which ? "Fortran" : "C");
+    }
 
     if(symbol.symbol.c && symbol.symbol.c->numArgs > -1) {
 	if(symbol.symbol.c->numArgs != nargs)
-	    error("Incorrect number of arguments (%d), expecting %d for %s", 
+	    error("Incorrect number of arguments (%d), expecting %d for %s",
 		  nargs, symbol.symbol.c->numArgs, buf);
- 
+
         checkTypes = symbol.symbol.c->types;
         argStyles = symbol.symbol.c->styles;
     }
@@ -1252,13 +1273,13 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
                but then we would also want to avoid the conversions.
                Also, in the future, we may just attempt to coerce the value
                to the appropriate type. This is why we pass the checkTypes[nargs]
-               value to RObjToCPtr(). We just have to sort out the ability to 
+               value to RObjToCPtr(). We just have to sort out the ability to
                return the correct value which is complicated by dup, etc. */
   	   error("Wrong type for argument %d in call to %s", nargs+1, buf);
 	}
 #endif
-	cargs[nargs] = RObjToCPtr(CAR(pargs), naok, dup, nargs + 1, 
-				  which, buf, argConverters + nargs, 
+	cargs[nargs] = RObjToCPtr(CAR(pargs), naok, dup, nargs + 1,
+				  which, buf, argConverters + nargs,
 				  checkTypes ? checkTypes[nargs] : 0);
 	nargs++;
     }
@@ -1873,13 +1894,13 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 	    } else if(argConverters[nargs]) {
                 if(argConverters[nargs]->reverse) {
 		    info.argIndex = nargs;
-		    s = argConverters[nargs]->reverse(cargs[nargs], CAR(pargs), 
+		    s = argConverters[nargs]->reverse(cargs[nargs], CAR(pargs),
                                                        &info, argConverters[nargs]);
 		} else
 		    s = R_NilValue;
 		PROTECT(s);
 	    } else {
-		PROTECT(s = CPtrToRObj(cargs[nargs], CAR(pargs), which, 
+		PROTECT(s = CPtrToRObj(cargs[nargs], CAR(pargs), which,
 				       checkTypes ? checkTypes[nargs] : TYPEOF(CAR(pargs))));
 		SET_ATTRIB(s, duplicate(ATTRIB(CAR(pargs))));
 		SET_OBJECT(s, OBJECT(CAR(pargs)));

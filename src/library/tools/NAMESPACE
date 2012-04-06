@@ -1,30 +1,24 @@
 useDynLib(tools)
 
-export(".installMD5sums", "Rdindex", "Rtangle", "RtangleSetup",
-       "RweaveLatex", "RweaveLatexSetup", "Stangle", "Sweave",
-       "SweaveSyntConv", "SweaveSyntaxLatex", "SweaveSyntaxNoweb",
+export(".installMD5sums", "Rdindex",
        "checkDocFiles", "checkDocStyle", "checkFF", "checkMD5sums",
        "checkReplaceFuns", "checkS3methods", "checkTnF", "checkVignettes",
        "codoc", "codocClasses", "codocData", "md5sum", "undoc",
        "filePathAsAbsolute", "filePathSansExt", "fileTest",
        "listFilesWithExts", "listFilesWithType", "delimMatch",
-       "texi2dvi", "buildVignettes", "pkgVignettes")
+       "texi2dvi", "buildVignettes", "pkgVignettes", "pkgDepends",
+       "getDepList", "installFoundDepends", "vignetteDepends")
 
 ## <FIXME>
 ## Documented as internal but called from scripts
 export(".installPackageCodeFiles",
        ".installPackageDescription",
        ".installPackageIndices",
+       ".installPackageNamespaceInfo",
        ".checkDemoIndex",
        ".checkVignetteIndex")
 ## </FIXME>
 
-## <FIXME>
-## Needed by Bioconductor's vExplorer(): will no longer be necessary
-## when Sweave objects are in place
-export("RtangleWritedoc",
-       "RweaveLatexOptions")
-## </FIXME>
 
 S3method("print", "checkDemoIndex")
 S3method("print", "checkDocFiles")
@@ -39,3 +33,4 @@ S3method("print", "codoc")
 S3method("print", "codocClasses")
 S3method("print", "codocData")
 S3method("print", "undoc")
+S3method("print", "checkPackageDepends")

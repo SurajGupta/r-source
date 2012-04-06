@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
- *  Copyright (C) 2003        The R Foundation
+ *  Copyright (C) 2003, 2004  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -204,6 +204,7 @@ FUNTAB R_FunTab[] =
 {"comment",	do_comment,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"comment<-",	do_commentgets,	0,	11,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
 {"get",		do_get,		1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"mget",	do_mget,       	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"exists",	do_get,		0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"assign",	do_assign,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"remove",	do_remove,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -262,8 +263,8 @@ FUNTAB R_FunTab[] =
 {"trigamma",	do_math1,	43,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"tetragamma",	do_math1,	44,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"pentagamma",	do_math1,	45,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-
 {"gammaCody",	do_math1,	46,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+/* see "psigamma" below !*/
 
 /* Mathematical Functions of Two Numeric (+ 1-2 int) Variables */
 
@@ -300,6 +301,9 @@ FUNTAB R_FunTab[] =
 
 {"besselJ",	do_math2,	24,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"besselY",	do_math2,	25,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+
+{"psigamma",	do_math2,	26,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+
 
 /* Mathematical Functions of a Complex Argument */
 
@@ -457,7 +461,7 @@ FUNTAB R_FunTab[] =
 {"nchar",	do_nchar,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"substr",	do_substr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"substrgets",	do_substrgets,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"strsplit",	do_strsplit,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"strsplit",	do_strsplit,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"abbreviate",	do_abbrev,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.names",	do_makenames,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"grep",	do_grep,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
@@ -535,14 +539,15 @@ FUNTAB R_FunTab[] =
 {"win.version", do_winver,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"saveDevga",	do_saveDevga,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"shell.exec",	do_shellexec,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"dir.create",	do_dircreate,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialog",	do_windialog,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialogString", do_windialogstring, 0, 11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"winMenuNames", do_winmenunames, 0,    11,     0,      {PP_FUNCALL, PREC_FN,   0}},
+{"winMenuItems", do_wingetmenuitems, 0, 11, 1, {PP_FUNCALL, PREC_FN, 0}},
 {"winMenuAdd",	do_winmenuadd,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"winMenuDel",	do_winmenudel,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"memory.size",	do_memsize,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"DLL.version",	do_dllversion,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"bringToTop",	do_bringtotop,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"bringToTop",	do_bringtotop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"select.list",	do_selectlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"readClipboard",do_readClipboard,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -619,7 +624,7 @@ FUNTAB R_FunTab[] =
 {"nargs",	do_nargs,	1,	0,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"scan",	do_scan,	0,	11,	16,	{PP_FUNCALL, PREC_FN,	0}},
 {"count.fields",do_countfields,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"readTableHead",do_readtablehead,0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"readTableHead",do_readtablehead,0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"t.default",	do_transpose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"aperm",	do_aperm,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"builtins",	do_builtins,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -632,9 +637,10 @@ FUNTAB R_FunTab[] =
 {"globalenv",	do_globalenv,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment",	do_envir,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment<-",do_envirgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
+{"env2list",	do_env2list,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"reg.finalizer",do_regFinaliz,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"options",	do_options,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"sink",	do_sink,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"sink",	do_sink,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"sink.number",	do_sinknumber,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -669,6 +675,7 @@ FUNTAB R_FunTab[] =
 {"file.choose", do_filechoose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.info",	do_fileinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.access",	do_fileaccess,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"dir.create",	do_dircreate,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempfile",	do_tempfile,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempdir",	do_tempdir,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"R.home",	do_Rhome,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -702,10 +709,10 @@ FUNTAB R_FunTab[] =
 {"XFig",	do_XFig,	0,	111,   11,	{PP_FUNCALL, PREC_FN,	0}},
 {"PDF",		do_PDF,		0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,   13,	{PP_FUNCALL, PREC_FN,	0}},
+{"devga",	do_devga,	0,	111,   14,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #ifdef Unix
-{"X11",		do_X11,		0,	111,	8,	{PP_FUNCALL, PREC_FN,	0}},
+{"X11",		do_X11,		0,	111,	9,	{PP_FUNCALL, PREC_FN,	0}},
 {"gnome",	do_Gnome,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"GTK",		do_GTK,		0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"Quartz",	do_Quartz,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
@@ -725,6 +732,7 @@ FUNTAB R_FunTab[] =
 {"dev.set",	do_devset,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rgb",		do_rgb,		0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"rgb256",	do_rgb,		1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"rgb2hsv",	do_RGB2hsv,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"hsv",		do_hsv,		0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"gray",	do_gray,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"colors",	do_colors,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -751,6 +759,7 @@ FUNTAB R_FunTab[] =
 {"strheight",	do_strheight,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"strwidth",	do_strwidth,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"contour",	do_contour,	0,	11,	12,	{PP_FUNCALL, PREC_FN,	0}},
+{"contourLines",do_contourLines,0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"image",	do_image,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"dend",	do_dend,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"dend.window",	do_dendwindow,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
@@ -798,6 +807,8 @@ FUNTAB R_FunTab[] =
 {"as.POSIXlt",	do_asPOSIXlt,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"format.POSIXlt",do_formatPOSIXlt,0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"strptime",	do_strptime,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"Date2POSIXlt",do_D2POSIXlt,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"POSIXlt2Date",do_POSIXlt2D,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 #ifdef BYTECODE
 {"mkCode",     do_mkcode,       0,      11,     2,      {PP_FUNCALL, PREC_FN, 0}},

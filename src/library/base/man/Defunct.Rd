@@ -38,6 +38,16 @@
 \alias{restart}
 \alias{printNoClass}
 \alias{plot.mts}
+\alias{print.coefmat}
+\alias{codes}
+\alias{codes.factor}
+\alias{codes.ordered}
+\alias{codes<-}
+\alias{anovalist.lm}
+\alias{lm.fit.null}
+\alias{lm.wfit.null}
+\alias{glm.fit.null}
+\alias{print.atomic}
 %
 \description{
   The functions or variables listed here are no longer part of \R as
@@ -107,6 +117,28 @@ plot.mts(x, plot.type = c("multiple", "single"), panel = lines,
          ann = par("ann"),  xlab = "Time", type = "l", main=NULL,
          oma=c(6, 0, 5, 0), \dots)
 % </Removed 1.8.0>
+% Removed in 1.0.0
+print.coefmat(x, digits=max(3, getOption("digits") - 2),
+              signif.stars = getOption("show.signif.stars"),
+              dig.tst = max(1, min(5, digits - 1)),
+              cs.ind = 1:k, tst.ind = k + 1, zap.ind = integer(0),
+              P.values = NULL,
+              has.Pvalue = nc >= 4 && substr(colnames(x)[nc],1,3) == "Pr(",
+              eps.Pvalue = .Machine$double.eps,
+              na.print = "", \dots)
+
+codes(x, \dots)
+codes(x, \dots) <- value
+
+anovalist.lm(object, \dots, test = NULL)
+lm.fit.null(x, y, method = "qr", tol = 1e-07, \dots)
+lm.wfit.null(x, y, w, method = "qr", tol = 1e-07, \dots)
+glm.fit.null(x, y, weights = rep(1, nobs), start = NULL,
+             etastart = NULL, mustart = NULL, offset = rep(0, nobs),
+             family = gaussian(), control = glm.control(),
+             intercept = FALSE)
+print.atomic(x, quote = TRUE, \dots)
+% </Removed 1.9.0>
 }
 \details{
   \code{.Defunct} is the function to which defunct functions are set.
@@ -125,7 +157,8 @@ plot.mts(x, plot.type = c("multiple", "single"), panel = lines,
   package to subsume another.
 
   \code{dotplot} and \code{stripplot} have been renamed to
-  \code{\link{dotchart}} and \code{\link{stripchart}}, respectively.
+  \code{\link[graphics]{dotchart}} and \code{\link[graphics]{stripchart}},
+  respectively.
 
   \code{getenv} has been replaced by \code{\link{Sys.getenv}}.
 
@@ -134,7 +167,7 @@ plot.mts(x, plot.type = c("multiple", "single"), panel = lines,
   \code{source} on a \code{\link{url}} connection.
 
   \code{httpclient} was used by the deprecated \code{"socket"} method
-  of \code{\link{download.file}}.
+  of \code{\link[utils]{download.file}}.
 
   \code{parse.dcf} has been replaced by \code{read.dcf}, which is much
   faster, but has a slightly different interface.
@@ -146,7 +179,7 @@ plot.mts(x, plot.type = c("multiple", "single"), panel = lines,
   some notes on \url{http://developer.r-project.org}.
 
   \code{reshape*}, which were experimental, are replaced by
-  \code{\link{reshape}}. This has a different syntax and allows multiple
+  \code{\link[stats]{reshape}}. This has a different syntax and allows multiple
   time-varying variables.
 
   \code{piechart} is the old name for \code{pie}, but clashed with usage
@@ -170,8 +203,27 @@ plot.mts(x, plot.type = c("multiple", "single"), panel = lines,
   \code{printNoClass} was in package \pkg{methods} and calls directly the
   internal function \code{print.default}.
 
-  \code{plot.mts} has been removed, as \code{\link{plot.ts}} now has the
+  \code{plot.mts} has been removed, as \code{\link[stats]{plot.ts}} now has the
   same functionality.
+
+  \code{print.coefmat} was an older name for \code{\link[stats]{printCoefmat}}
+  with a different default for \code{na.print}.
+
+  \code{codes} was almost always used inappropriately.  To get the
+  internal coding of a factor, use \code{unclass}, \code{as.vector} or
+  \code{as.integer}.  For \emph{ordered} factors, \code{codes} was
+  equivalent to these, but for \emph{unordered} factors it assumed an
+  an alphabetical ordering of the levels in the locale in use.
+
+  \code{anovalist.lm} was replaced by \code{\link[stats]{anova.lmlist}} in
+  \R 1.2.0.
+
+  \code{lm.fit.null} and \code{lm.wfit.null} are superseded by
+  \code{lm.fit} and \code{lm.wfit} which handle null models now.
+  Similarly, \code{glm.fit.null} is superseded by \code{glm.fit}.
+
+  \code{print.atomic} differed from \code{print.default} only in its
+  argument sequence.  It is not a method for \code{print}.
 }
 \seealso{\code{\link{Deprecated}}}
 \keyword{documentation}

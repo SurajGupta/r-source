@@ -34,22 +34,22 @@ fixh: version h/config.h \
 	$(SED) -e 's/"contr.poly")/"contr.poly"), pager="console"/' $< > $@
 
 ../../../bin/check: ../../scripts/check.in
-	$(SED) -e 1d -e "s/R CMD/Rcmd/" -e "s/Rd2dvi /Rd2dvi.sh /" $< > $@
+	$(SED) -e 1d -e "s/Rd2dvi /Rd2dvi.sh /" $< > $@
 
 ../../../bin/build: ../../scripts/build.in
-	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
+	$(SED) -e 1d $< > $@
 
 ../../../bin/Sd2Rd: ../../scripts/Sd2Rd.in
-	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
+	$(SED) -e 1d $< > $@
 
 ../../../bin/Rdconv: ../../scripts/Rdconv.in
-	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ -e "s/R CMD/Rcmd/" $< > $@
+	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ $< > $@
 
 ../../../bin/Rdiff.sh: ../../scripts/Rdiff
 	$(SED) -e 1d -e 's/\$${EGREP}/grep -E/' $< > $@
 
 ../../../bin/Rprof: ../../scripts/Rprof.in
-	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
+	$(SED) -e 1d $< > $@
 
 fixbin: ../../../bin/massage-Examples ../../../bin/build \
 	   ../../../bin/check ../../../bin/Rdconv \
@@ -57,8 +57,13 @@ fixbin: ../../../bin/massage-Examples ../../../bin/build \
 	@$(ECHO) done > fixbin
 
 cp2bin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))
+ifeq ($(strip $(BUILD)),CROSS)
+	@zip -ql bins $^
+	@unzip -oq bins -d  ../../..
+else
 	@zip -q bins $^
 	@unzip -oaq bins -d  ../../..
+endif
 	@$(RM) bins.zip
 
 fixhtml: $(wildcard ./html/*.html) ../../../doc/html/search/SearchEngine.html
@@ -81,7 +86,7 @@ clean:
 distclean: clean
 	$(RM) -f ../../../tools/GV
 
-../../../doc/html/search/SearchEngine.html:../../../doc/KEYWORDS.db
+../../../doc/html/search/SearchEngine.html: ../../../doc/html/search/SearchEngine-head.html ../../../doc/html/search/SearchEngine-foot.html ../../../doc/KEYWORDS.db
 	(cd ../../../doc; \
 	cat html/search/SearchEngine-head.html > html/search/SearchEngine.html; \
 	perl ../tools/keywords2html.pl KEYWORDS.db >> html/search/SearchEngine.html; \

@@ -118,6 +118,7 @@ The current version of this document is @value{VERSION}.
 * Writing your own functions::
 * Statistical models in R::
 * Graphics::
+* Packages::
 * A sample session::
 * Invoking R::
 * The command line editor::
@@ -243,10 +244,11 @@ prefer to think of it of an environment within which many classical and
 modern statistical techniques have been implemented.  Some of these are
 built into the base @R{} environment, but many are supplied as
 @emph{packages}. (Currently the distinction is largely a matter of
-historical accident.)  There are about 8 packages supplied with @R{}
+historical accident.)  There are about 10 packages supplied with @R{}
 (called ``standard'' packages) and many more are available through the
 @acronym{CRAN} family of Internet sites (via
-@uref{http://cran.r-project.org}).
+@uref{http://cran.r-project.org}).  More details on packages are given
+later (@pxref{Packages}).
 
 Most classical statistics and much of the latest methodology is
 available for use with @R{}, but users will need to be prepared to do a
@@ -391,11 +393,13 @@ Either form of quote mark may be used to escape the other, as in the
 string @code{"It's important"}.  Our convention is to use
 double quote marks for preference.
 
-On most @R{} installations help is available in @HTML{} format by running
-@findex help.start
+On most @R{} installations help is available in @HTML{} format by
+running
+
 @example
 > help.start()
 @end example
+@findex help.start
 
 @noindent
 which will launch a Web browser (@code{netscape} on UNIX) that allows
@@ -412,11 +416,11 @@ The @code{help.search} command allows searching for help in various
 ways: try @code{?help.search} for details and examples.
 
 The examples on a help topic can normally be run by
-@findex example
+
 @example
 > example(@var{topic})
 @end example
-
+@findex example
 
 Windows versions of @R{} have other optional help systems: use
 
@@ -437,10 +441,9 @@ variables.  The set of symbols which can be used in @R{} names depends
 on the operating system and country within which @R{} is being run
 (technically on the @emph{locale} in use).  Normally all alphanumeric
 symbols are allowed (and in some countries this includes accented
-letters) plus @samp{@code{.}}@footnote{C programmers should note that
-@samp{@code{_}} is not available, but @samp{@code{.}} is and is often
-used to separate words in @R{} names.}, with the restriction that a name
-cannot start with a digit.
+letters) plus @samp{@code{.}} and @samp{@code{_}}, with the restriction
+that a name must start with @samp{@code{.}} or a letter, and if it
+starts with @samp{@code{.}} the second character must not be a digit.
 
 Elementary commands consist of either @emph{expressions} or
 @emph{assignments}.  If an expression is given as a command, it is
@@ -2835,22 +2838,22 @@ To access data from another package, use the @code{package} argument,
 for example
 
 @example
-data(package="nls")
-data(Puromycin, package="nls")
+data(package="stats")
+data(Puromycin, package="stats")
 @end example
 
 If a package has been attached by @code{library}, its datasets are
 automatically included in the search, so that
 
 @example
-library(nls)
+library(stats) # normally attached
 data()
 data(Puromycin)
 @end example
 
 @noindent
 will list all the datasets in all the currently attached packages (at
-least @pkg{base} and @pkg{nls}) and then load @code{Puromycin} from the
+least @pkg{base} and @pkg{stats}) and then load @code{Puromycin} from the
 first package in which such a dataset is found.
 
 User-contributed packages can be a rich source of datasets.
@@ -3095,12 +3098,11 @@ qqline(x)
 @end example
 
 Finally, we might want a more formal test of agreement with normality
-(or not).  Package @pkg{ctest} provides the Shapiro-Wilk test
+(or not).  Standard package @pkg{stats} provides the Shapiro-Wilk test
 @cindex Shapiro-Wilk test
 @findex shapiro.test
 
 @example
-> library(ctest)
 > shapiro.test(long)
 
          Shapiro-Wilk normality test
@@ -3136,8 +3138,7 @@ sample.)
 So far we have compared a single sample to a normal distribution.  A
 much more common operation is to compare aspects of two samples.  Note
 that in @R{}, all ``classical'' tests including the ones used below are
-in package @pkg{ctest}, which may need to be loaded explicitly using
-@code{library(ctest)} to make the tests available.
+in package @pkg{stats}.
 
 Consider the following sets of data on the latent heat of the fusion of
 ice (@emph{cal/gm}) from Rice (1995, p.490)
@@ -3180,7 +3181,6 @@ an @emph{unpaired} @math{t}-test by
 @findex t.test
 
 @example
-> library(ctest)
 > t.test(A, B)
 
          Welch Two Sample t-test
@@ -3494,7 +3494,7 @@ The function is defined as follows:
     yb1 <- mean(y1);   yb2 <- mean(y2)
     s1  <- var(y1);    s2  <- var(y2)
     s <- ((n1-1)*s1 + (n2-1)*s2)/(n1+n2-2)
-    tst <- (yb1 - yb2)/sqrt(s2*(1/n1 + 1/n2))
+    tst <- (yb1 - yb2)/sqrt(s*(1/n1 + 1/n2))
     tst
   @}
 @end example
@@ -5027,7 +5027,7 @@ SE.  We can superimpose the least squares fit on a new plot:
 > lines(spline(xfit, yfit))
 @end example
 
-The standard package @pkg{nls} provides much more extensive facilities
+The standard package @pkg{stats} provides much more extensive facilities
 for fitting non-linear models by least squares.  The model we have just
 fitted is the Michaelis-Menten model, so we can use
 
@@ -5131,7 +5131,7 @@ regression.  Such regressions are useful for highlighting a trend in
 messy data or for data reduction to give some insight into a large data
 set.
 
-Function @code{loess} is the standard package @pkg{modreg}, together
+Function @code{loess} is the standard package @pkg{stats}, together
 with code for projection pursuit regression.
 @findex loess
 
@@ -5141,10 +5141,10 @@ with code for projection pursuit regression.
 fitting regression models in a way resistant to the influence of extreme
 outliers in the data.  Function @code{lqs}
 @findex lqs
-in the standard package of the same name provides state-of-art
-algorithms for highly-resistant fits.  Less resistant but statistically
-more efficient methods are available in user-contributed packages, for
-example function @code{rlm}
+in the recommended package @pkg{MASS} provides state-of-art algorithms
+for highly-resistant fits.  Less resistant but statistically more
+efficient methods are available in packages, for example function
+@code{rlm}
 @findex rlm
 in package @pkg{MASS}.
 
@@ -5199,7 +5199,7 @@ packages @pkg{rpart} and @pkg{tree}.
 
 @end itemize
 
-@node Graphics, A sample session, Statistical models in R, Top
+@node Graphics, Packages, Statistical models in R, Top
 @chapter Graphical procedures
 
 Graphical facilities are an important and extremely versatile component
@@ -6017,7 +6017,8 @@ Position of the current figure on the page.  Values are the positions of
 the left, right, bottom and top edges respectively, as a percentage of
 the page measured from the bottom left corner.  The example value would
 be for a figure in the bottom right of the page.  Set this parameter for
-arbitrary positioning of figures within a page.
+arbitrary positioning of figures within a page.  If you want to add a
+figure to a current page, use @code{new=TRUE} as well (unlike S).
 
 @item oma=c(2, 0, 3, 0)
 @itemx omi=c(0, 0, 0.8, 0)
@@ -6138,7 +6139,7 @@ meanings are as follows:
 
 @table @code
 @item X11()
-[Unix]
+[UNIX]
 @item windows()
 [Windows]
 @item postscript()
@@ -6202,11 +6203,132 @@ available in the system XGobi by Swayne, Cook and Buja available from
 @noindent
 and these can be accessed from @R{} via the package @pkg{xgobi}.
 
-XGobi currently runs under the X Windows system on either Unix or
+XGobi currently runs under the X Windows system on either UNIX or
 Windows, and @R{} interfaces are available for each.
 
+@node Packages, A sample session, Graphics, Top
+@chapter Packages
+@cindex Packages
 
-@node A sample session, Invoking R, Graphics, Top
+All @R{} functions and datasets are stored in @emph{packages}.  Only
+when a package is loaded are its contents available.  This is done both
+for efficiency (the full list would take more memory and would take
+longer to search than a subset), and to aid package developers, who are
+protected from name clashes with other code.  The process of developing
+packages is described in @ref{Creating R packages, , Creating R
+packages, R-exts, Writing R Extensions}.  Here, we will describe them
+from a user's point of view.
+
+To see which packages are installed at your site, issue the command
+
+@example
+> library()
+@end example 
+
+@noindent
+with no arguments.  To load a particular package (e.g., the @pkg{boot}
+package containing functions from Davison & Hinkley (1997)), use a
+command like
+
+@example
+> library(boot)
+@end example
+
+Users connected to the Internet can use the @code{CRAN.packages()}
+function (available through the @code{Packages} menu in the Windows and
+RAqua GUIs) to automatically update and install packages.
+
+To see which packages are currently loaded, use
+
+@example
+> search()
+@end example
+
+@noindent
+to display the search list.  A few packages may be loaded but not
+available on the search list (@pxref{Namespaces}).
+
+To see a list of all available help topics in an installed package,
+use
+
+@example
+> help.start()
+@end example
+
+@noindent
+to start the @HTML{} help system, and then navigate to the package
+listing in the @code{Reference} section.
+
+@menu
+* Standard packages::       
+* Contributed packages and CRAN::    
+* Namespaces::
+@end menu
+
+@node Standard packages, Contributed packages and CRAN, Packages, Packages
+@section Standard packages
+
+The standard (or @emph{base}) packages are considered part of the @R{}
+source code.  They contain the basic functions that allow @R{} to work,
+and the standard statistical and graphical functions that are described
+in this manual.  They should be automatically available in any @R{}
+installation.  @xref{Which add-on packages exist for R?, , R packages,
+R-FAQ, R FAQ}, for a complete list.
+
+@node Contributed packages and CRAN, Namespaces, Standard packages, Packages
+@section Contributed packages and @acronym{CRAN}
+@cindex CRAN 
+
+There are hundreds of contributed packages for @R{}, written by many
+different authors.  Some of these packages implement specialized
+statistical methods, others give access to data or hardware, and others
+are designed to complement textbooks.  Some (the @emph{recommended}
+packages) are distributed with every binary distribution of @R{}.  Most
+are available for download from @acronym{CRAN}
+(@uref{http://cran.r-project.org/} and its mirrors), and other
+repositories such as Bioconductor (@uref{http://www.bioconductor.org/}).
+The @emph{R FAQ} contains a list that was current at the time of
+release, but the collection of available packages changes frequently.
+
+@node Namespaces, , Contributed packages and CRAN, Packages
+@section Namespaces
+@cindex Namespace
+@findex ::
+@findex :::
+
+Packages can have @emph{namespaces}, and currently all of the base and
+most of the recommended packages do.  Namespaces do three things: they
+allow the package writer to hide functions and data that are meant only
+for internal use, they prevent functions from breaking when a user
+(or other package writer) picks a name that clashes with one in the
+package, and they provide a way to refer to an object within a
+particular package.
+
+For example, @code{t()} is the transpose function in @R{}, but users
+might define their own function named @code{t}.  Namespaces prevent
+the user's definition from taking precedence, and breaking every
+function that tries to transpose a matrix.
+
+There are two operators that work with namespaces.  The double-colon
+operator @code{::} selects definitions from a particular namespace.
+In the example above, the transpose function will always be available
+as @code{base::t}, because it is defined in the @code{base} package.
+Only functions that are exported from the package can be retrieved in
+this way.
+
+The triple-colon operator @code{:::} may be seen in a few places in R 
+code: it acts like the double-colon operator but also allows access to 
+hidden objects.  Users are more likely to use the @code{getAnywhere()}
+function, which searches multiple packages.
+
+Packages are often inter-dependent, and loading one may cause others to
+be automatically loaded.  The colon operators described above will also
+cause automatic loading of the associated package.  When packages with
+namespaces are loaded automatically they are not added to the search
+list.
+
+
+@node A sample session, Invoking R, Packages, Top
 @appendix A sample session
 
 The following session is intended to introduce to you some features of
@@ -6442,15 +6564,17 @@ want to save it.
 @appendix Invoking R
 
 @menu
-* Invoking R under UNIX::       
+* Invoking R from the command line::       
 * Invoking R under Windows::    
+* Invoking R under Mac OS X::    
 @end menu
 
-@node Invoking R under UNIX, Invoking R under Windows, Invoking R, Invoking R
-@appendixsec Invoking R under UNIX
+@node Invoking R from the command line, Invoking R under Windows, Invoking R, Invoking R
+@appendixsec Invoking R from the command line
 
-The command @samp{R} can be used both for starting the main @R{} program
-with a variety of options in the form
+When working in UNIX or at a command line in Windows, 
+the command @samp{R} can be used both for starting the main @R{} program
+in the form
 
 @display
 @code{R} [@var{options}] [@code{<}@var{infile}] [@code{>}@var{outfile}],
@@ -6461,9 +6585,14 @@ or, via the @code{R CMD} interface, as a wrapper to various @R{} tools
 (e.g., for processing files in @R{} documentation format or manipulating
 add-on packages) which are not intended to be called ``directly''.
 
+Under UNIX you do need to ensure that either the environment variable
+@env{TMPDIR} is unset or it points to a valid place to create temporary
+files and directories.
+
 Most options control what happens at the beginning and at the end of an
 @R{} session.  The startup mechanism is as follows (see also the on-line
-help for topic @samp{Startup} for more information).
+help for topic @samp{Startup} for more information, and the section below
+for some Windows-specific details).
 
 @itemize @bullet
 @item
@@ -6558,10 +6687,13 @@ Combine @option{--no-save}, @option{--no-environ}
 @option{--no-site-file}, @option{--no-init-file} and @option{--no-restore}.
 
 @item --no-readline
-Turn off command-line editing via @strong{readline}.  This is useful
+(UNIX only) Turn off command-line editing via @strong{readline}.  This is useful
 when running @R{} from within Emacs using the @acronym{ESS} (``Emacs
 Speaks Statistics'') package.  @xref{The command line editor}, for more
 information.
+
+@item --ess
+(Windows only) Set @code{Rterm} up for use by @code{R-inferior-mode} in @acronym{ESS}.
 
 @item --min-vsize=@var{N}
 @itemx --max-vsize=@var{N}
@@ -6577,6 +6709,18 @@ Specify the amount of memory used for fixed size objects by setting the
 number of ``cons cells'' to @var{N}.  See the previous option for
 details on @var{N}.  A cons cell takes 28 bytes on a 32-bit machine, and
 usually 56 bytes on a 64-bit machine.
+
+@item --max-ppsize=@var{N}
+Specify the maximum size of the pointer protection stack as @var{N}
+locations.  This defaults to 10000, but can be increased to allow 
+large and complicated calculations to be done.  Currently the maximum
+value accepted is 100000.
+
+@item --max-mem-size=@var{N}
+(Windows only) Specify a limit for the amount of memory to be used both
+for @R{} objects and working areas.  This is set by default to the
+smaller of 1024Mb and the amount of physical RAM in the machine, and
+must be at least 16Mb.
 
 @item --quiet
 @itemx --silent
@@ -6594,13 +6738,13 @@ control the printing of diagnostic messages.
 
 @item --debugger=@var{name}
 @itemx -d @var{name}
-Run @R{} through debugger @var{name}.  Note that in this case, further
+(UNIX only) Run @R{} through debugger @var{name}.  Note that in this case, further
 command line options are disregarded, and should instead be given when
 starting the @R{} executable from inside the debugger.
 
 @item --gui=@var{type}
 @itemx -g @var{type}
-Use @var{type} as graphical user interface (note that this also includes
+(UNIX only) Use @var{type} as graphical user interface (note that this also includes
 interactive graphics).  Currently, possible values for @var{type} are
 @samp{X11} (the default), @samp{gnome} provided that @acronym{GNOME}
 support is available, and @samp{none}.
@@ -6632,7 +6776,7 @@ Currently, the following tools are available.
 @item BATCH
 Run @R{} in batch mode.
 @item COMPILE
-Compile files for use with @R{}.
+(UNIX only) Compile files for use with @R{}.
 @item SHLIB
 Build shared library for dynamic loading.
 @item INSTALL
@@ -6644,7 +6788,7 @@ Build add-on packages.
 @item check
 Check add-on packages.
 @item LINK
-Front-end for creating executable programs.
+(UNIX only) Front-end for creating executable programs.
 @item Rprof
 Post-process @R{} profiling files.
 @item Rdconv
@@ -6656,6 +6800,8 @@ Convert Rd format to DVI/PDF.
 Convert Rd format to text.
 @item Sd2Rd
 Convert S documentation to Rd format.
+@item config
+(UNIX only) Obtain configuration information.
 @end table
 
 The first five tools (i.e., @code{BATCH}, @code{COMPILE}, @code{SHLIB},
@@ -6673,78 +6819,33 @@ R CMD @var{command} --help
 to obtain usage information for each of the tools accessible via the
 @code{R CMD} interface.
 
-@node Invoking R under Windows,  , Invoking R under UNIX, Invoking R
+@node Invoking R under Windows, Invoking R under Mac OS X, Invoking R from the command line, Invoking R
 @appendixsec Invoking R under Windows
 
-The startup procedure under Windows is very similar to that under UNIX,
-but necessarily not identical. There are two versions of @R{} for
-Windows, the console-based version (@code{RGui.exe}) and a terminal
-version (@code{Rterm.exe}, principally intended for batch use).
+There are two ways to run @R{} under Windows.  Within a terminal window
+(e.g. @code{cmd.exe} or @code{command.com} or a more capable shell), the
+methods described in the previous section may be used, invoking by
+@code{R.exe} or more directly by @code{Rterm.exe}.  (These are
+principally intended for batch use.)  For interactive use, there is a
+console-based GUI (@code{Rgui.exe}).
 
-Most options control what happens at the beginning and at the end of an
-@R{} session.  The startup mechanism is as follows (see also the on-line
-help for topic @samp{Startup} for more information).  References to the
-`home directory' need to be clarified, as this is not always defined on
-Windows.  If the environment variable @env{R_USER} is defined, that
-gives the home directory. Next, if the environment variable @env{HOME}
-is defined, that gives the home directory. If not, and environment
-variables @env{HOMEDRIVE} and @env{HOMEPATH} are defined (and they
-normally are under Windows NT/2000/XP) these define the home
-directory. Failing all those, the home directory is taken to be the
+The startup procedure under Windows is very similar to that under UNIX,
+but references to the `home directory' need to be clarified, as this is
+not always defined on Windows.  If the environment variable @env{R_USER}
+is defined, that gives the home directory.  Next, if the environment
+variable @env{HOME} is defined, that gives the home directory. If not,
+and environment variables @env{HOMEDRIVE} and @env{HOMEPATH} are defined
+(and they normally are under Windows NT/2000/XP) these define the home
+directory.  Failing all those, the home directory is taken to be the
 starting directory.
 
-@itemize @bullet
-@item
-Unless @option{--no-environ} was given, @R{} searches for user and site
-files to process for setting environment variables.  The name of the
-site file is the one pointed to by the environment variable
-@env{R_ENVIRON}; if this is unset or empty, @file{$R_HOME/etc/Renviron.site}
-is used (if it exists).  The user files searched for
-are @file{.Renviron} in the current or in the user's home directory (in
-that order).  These files should contain lines of the form
-@samp{@var{name}=@var{value}}.  (See @code{help(Startup)} for a
-precise description.)  Variables you might want to set include
-@env{R_PAPERSIZE} (the default paper size) and @env{R_LIBS} (controls
-the list of @R{} library trees searched for add-on packages).
+Environment variables can be supplied as @samp{@var{name}=@var{value}}
+pairs at the end of the command line.
 
-Environment variables can also be supplied as
-@samp{@var{name}=@var{value}} pairs at the end of  the command line.
-
-@item
-Then @R{} searches for the site-wide startup profile unless the command
-line option @option{--no-site-file} was given.  The name of this file is
-taken from the value of the @env{R_PROFILE} environment variable.  If
-that variable is unset, the default @file{$R_HOME/etc/Rprofile.site} is
-used if this exists.
-
-@item
-Then, unless @option{--no-init-file} was given, @R{} searches for a file
-called @file{.Rprofile} in the current directory or in the user's home
-directory (in that order) and sources it.
-
-@item
-It also loads a saved image from @file{.RData} if there is one (unless
-@option{--no-restore} or @option{--no-restore-data} was specified).
-
-@item
-Finally, if a function @code{.First} exists, it is executed.  This
-function (as well as @code{.Last} which is executed at the end of the
-@R{} session) can be defined in the appropriate startup profiles, or
-reside in @file{.RData}.
-@end itemize
-
-In addition, there are options for controlling the memory available to
-the @R{} process (see the on-line help for topic @samp{Memory} for more
-information).  Users will not normally need to use these.  @R{} for
-Windows has an additional flag @option{--max-mem-size} described below,
-which by default does limit the memory usage of an @R{} process.
-
-@R{} for Windows accepts the following command line options.
+The following additional command-line options are available when 
+invoking @code{RGui.exe}.
 
 @table @option
-@item --version
-Print version info and exit.
-
 @item --mdi
 @itemx --sdi
 @itemx --no-mdi
@@ -6752,144 +6853,39 @@ Control whether @code{Rgui} will operate as an MDI program (the default,
 with multiple child windows within one main window) or an SDI application
 (with multiple top-level windows for the console, graphics and pager).
 
-@item --save
-@itemx --no-save
-Control whether data sets should be saved or not at the end of the @R{}
-session.  If neither is given in an interactive session, the user is
-asked for the desired behavior when ending the session with @kbd{q()};
-in batch mode, one of these must be specified.
-
-@item --no-site-file
-Suppress reading of the site-wide startup profile.
-
-@item --no-init-file
-Suppress reading of the directory or user's @file{.Rprofile} file.
-
-@item --no-environ
-Suppress reading of @file{.Renviron}.
-
-@item --restore
-@itemx --no-restore
-@itemx --no-restore-data
-Control whether saved images (file @file{.RData} in the directory where
-@R{} was started) should be restored at startup or not.
-The default is to restore. (@option{--no-restore} implies all the specific
-@option{--no-restore-*} options.)
-
-@item --no-restore-history
-Control whether the history file (normally file @file{.Rhistory} in the
-directory where @R{} was started, but can be set by the environment
-variable @env{R_HISTFILE}) should be restored at startup or not.  The
-default is to restore.
-
-@item --vanilla
-Combine @option{--no-save}, @option{--no-restore},
-@option{--no-site-file}, @option{--no-init-file} and
-@option{--no-environ}.
-
-@item --min-vsize=@var{N}
-@itemx --max-vsize=@var{N}
-Specify the minimum or maximum amount of memory used for variable size
-objects by setting the ``vector heap'' size to @var{N} bytes.  Here,
-@var{N} must either be an integer or an integer ending with @samp{G},
-@samp{M}, @samp{K}, or @samp{k}, meaning `Giga' (2^30), `Mega' (2^20),
-(computer) `Kilo' (2^10), or regular `kilo' (1000).
-
-@item --min-nsize=@var{N}
-@itemx --max-nsize=@var{N}
-Specify the amount of memory used for fixed size objects by setting the
-number of ``cons cells'' to @var{N}.  See the previous option for
-details on @var{N}.  A cons cell takes 28 bytes.
-
-@item --max-mem-size=@var{N}
-Specify a limit for the amount of memory to be used both for @R{}
-objects and working areas (`@code{malloc}-ed' memory).  This is set by
-default to the smaller of 256Mb and the amount of physical RAM in the machine.
-
-
-@item --quiet
-@itemx --silent
-@itemx -q
-Don't print startup message.
-
-@item --slave
-Make @R{} run as quietly as possible.
-
-@item --verbose
-Print more information about progress, and in particular set @R{}'s
-option @code{verbose} to @code{TRUE}.  @R{} code uses this option to
-control the printing of diagnostic messages.
-
-@item --ess
-Set @code{Rterm} up for use by @code{R-inferior-mode} in @acronym{ESS}.
-
-@item --args
-This flag does nothing except cause the rest of the command line to be
-skipped: this can be useful to retrieve values from it with
-@code{commandArgs()}.
+@item --debug
+Enable the ``Break to debugger'' menu item in @code{Rgui}, and trigger
+a break to the debugger during command line processing.
 @end table
 
-The command @code{Rcmd} allows the invocation of various tools which
-are useful in conjunction with @R{}, but not intended to be called
-``directly''.  The general form is
+In Windows with @code{R CMD} you may also specify your own @code{*.bat}
+or @code{*.exe} file instead of one of the built-in commands.  It will
+be run with the following environment variables set appropriately:
+@code{R_HOME}, @code{R_VERSION}, @code{R_CMD}, @code{R_OSTYPE},
+@code{PATH}, @code{PERL5LIB}, and @code{TEXINPUTS}.  For example, if you
+already have @code{latex.exe} on your path, then
 
 @example
-Rcmd @var{command} @var{args}
+R CMD latex.exe mydoc
 @end example
-
-@noindent
-where @var{command} is the name of the tool and @var{args} the arguments
-passed on to it.
-
-Currently, the following tools are available.
-
-@table @code
-@item INSTALL
-Install add-on packages.
-@item REMOVE
-Remove add-on packages.
-@item SHLIB
-Make a DLL for use with @code{dyn.load}.
-@item BATCH
-Run @R{} in batch mode.
-@item build
-Build add-on packages.
-@item check
-Check add-on packages.
-@item Rdconv
-Convert Rd format to various other formats, including @HTML{}, Nroff,
-La@TeX{}, plain text, and S documentation format.
-@item Rd2dvi.sh
-Convert Rd format to DVI/PDF.
-@item Rd2txt
-Convert Rd format to text.
-@item Sd2Rd
-Convert S documentation to Rd format.
-@end table
-
-Use
-
-@example
-Rcmd @var{command} --help
-@end example
-
-@noindent
-to obtain usage information for each of the tools accessible via the
-@code{Rcmd} interface.
-
-You may also specify your own @code{*.bat} or @code{*.exe} file instead of one of the built-in
-commands.  It will be run with the following environment variables set appropriately:
-@code{R_HOME}, @code{R_VERSION}, @code{R_CMD}, @code{R_OSTYPE}, @code{PATH},
-@code{PERL5LIB}, and @code{TEXINPUTS}.  For example, if you already have @code{latex.exe} 
-on your path, then 
-
-@example
-Rcmd latex.exe mydoc
-@end example
-
 @noindent
 will run LaTeX on mydoc.tex, with the path to @R{}'s @code{share/texmf} macros 
 added to @code{TEXINPUTS}.
+
+@node Invoking R under Mac OS X,  , Invoking R under Windows, Invoking R
+@appendixsec Invoking R under Mac OS X
+
+There are two ways to run @R{} under Mac OS X.  Within a Terminal.app window
+by invoking @code{R}. The methods described in the previous sections apply.
+There is also console-based GUI (@code{R.app}) that by default
+is installed in the @code{Applications} folder on your system. It is a standard
+double-clickable Mac OS X application.
+
+The startup procedure under Mac OS X is very similar to that under UNIX.
+The `home directory' is the one inside the R.framework. But the startup
+and current working directory is set as the user's home directory unless
+a different startup directory is given in the Preferences window accessible
+from within the GUI. 
 
 @node The command line editor, Function and variable index, Invoking R, Top
 @appendix The command line editor
@@ -7035,6 +7031,9 @@ This book is often called the ``@emph{Blue Book}''.
 John M.@: Chambers and Trevor J.@: Hastie eds. (1992),
 @emph{Statistical Models in S.} Chapman & Hall, New York.
 This is also called the ``@emph{White Book}''.
+
+A.@: C.@: Davison and D.@: V.@: Hinkley (1997), @emph{Bootstrap Methods
+and Their Applications}, Cambridge University Press. 
 
 Annette J.@: Dobson (1990), @emph{An Introduction to Generalized Linear
 Models}, Chapman and Hall, London.

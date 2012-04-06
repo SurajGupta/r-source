@@ -178,7 +178,7 @@ int L_nullArithmeticMode;
 /* 
  * Evaluate a "null" _value_ dependent on the evaluation context
  */
-static double evaluateNullUnit(double value) {
+static double evaluateNullUnit(double value, double thisCM) {
     double result = value;
     if (!L_nullLayoutMode)
 	switch (L_nullArithmeticMode) {
@@ -189,13 +189,13 @@ static double evaluateNullUnit(double value) {
 	    result = 0;
 	    break;
 	case L_multiplying:
-	    result = 1;
+	    result = 0;
 	    break;
 	case L_maximising:
 	    result = 0;
 	    break;
 	case L_minimising:
-	    result = 1;
+	    result = thisCM;
 	    break;
 	}
     return result;
@@ -262,58 +262,134 @@ double pureNullUnitValue(SEXP unit, int index)
     return result;
 }
 
-int pureNullUnitArithmetic(SEXP unit, int index);
+int pureNullUnitArithmetic(SEXP unit, int index, GEDevDesc *dd);
 
-int pureNullUnit(SEXP unit, int index) {
+int pureNullUnit(SEXP unit, int index, GEDevDesc *dd) {
     int result;
     if (isUnitArithmetic(unit)) 
-	result = pureNullUnitArithmetic(unit, index);
+	result = pureNullUnitArithmetic(unit, index, dd);
     else if (isUnitList(unit)) {
-	result = pureNullUnit(VECTOR_ELT(unit, index), 0);
+	result = pureNullUnit(VECTOR_ELT(unit, index), 0, dd);
     } else {  /* Just a plain unit */
 	/* Special case:  if "grobwidth" or "grobheight" unit
 	 * and width/height(grob) is pure null
 	 */
 	if (unitUnit(unit, index) == L_GROBWIDTH) {
-	    SEXP fn, R_fcall;
-	    SEXP width;
-	    PROTECT(fn = findFun(install("width"), R_gridEvalEnv));
-	    PROTECT(R_fcall = lang2(fn, unitData(unit, index)));
-	    PROTECT(width = eval(R_fcall, R_gridEvalEnv));
-	    result = pureNullUnit(width, 0);
-	    UNPROTECT(3);
+	    SEXP grob, width;
+	    SEXP widthPreFn, widthFn, widthPostFn, findGrobFn;
+	    SEXP R_fcall0, R_fcall1, R_fcall2, R_fcall3;
+	    SEXP savedgpar, savedgrob;
+	    /*
+	     * The data could be a gPath to a grob
+	     * In this case, need to find the grob first, and in order
+	     * to do that correctly, need to call pre/postDraw code 
+	     */
+	    PROTECT(grob = unitData(unit, index));
+	    PROTECT(savedgpar = gridStateElement(dd, GSS_GPAR));
+	    PROTECT(savedgrob = gridStateElement(dd, GSS_CURRGROB));
+	    PROTECT(widthPreFn = findFun(install("preDraw"), 
+					 R_gridEvalEnv));
+	    PROTECT(widthFn = findFun(install("width"), R_gridEvalEnv));
+	    PROTECT(widthPostFn = findFun(install("postDraw"), 
+					  R_gridEvalEnv));
+	    if (inherits(grob, "gPath")) {
+		if (isNull(savedgrob)) {
+		    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
+						 R_gridEvalEnv));
+		    PROTECT(R_fcall0 = lang2(findGrobFn, 
+					     getListElement(grob, "name")));
+		    grob = eval(R_fcall0, R_gridEvalEnv);
+		} else {
+		    PROTECT(findGrobFn =findFun(install("findGrobinChildren"), 
+						R_gridEvalEnv));
+		    PROTECT(R_fcall0 = lang3(findGrobFn, 
+					     getListElement(grob, "name"),
+					     getListElement(savedgrob, 
+							    "children")));
+		    grob = eval(R_fcall0, R_gridEvalEnv);
+		}
+		UNPROTECT(2);
+	    }
+	    PROTECT(R_fcall1 = lang2(widthPreFn, grob));
+	    eval(R_fcall1, R_gridEvalEnv);
+	    PROTECT(R_fcall2 = lang2(widthFn, grob));
+	    PROTECT(width = eval(R_fcall2, R_gridEvalEnv));
+	    result = pureNullUnit(width, 0, dd);
+	    PROTECT(R_fcall3 = lang2(widthPostFn, grob));
+	    eval(R_fcall3, R_gridEvalEnv);
+	    setGridStateElement(dd, GSS_GPAR, savedgpar);
+	    setGridStateElement(dd, GSS_CURRGROB, savedgrob);
+	    UNPROTECT(10);
 	} else if (unitUnit(unit, index) == L_GROBHEIGHT) {
-	    SEXP fn, R_fcall;
-	    SEXP height;
-	    PROTECT(fn = findFun(install("height"), R_gridEvalEnv));
-	    PROTECT(R_fcall = lang2(fn, unitData(unit, index)));
-	    PROTECT(height = eval(R_fcall, R_gridEvalEnv));
-	    result = pureNullUnit(height, 0);
-	    UNPROTECT(3);
+	    SEXP grob, height;
+	    SEXP heightPreFn, heightFn, heightPostFn, findGrobFn;
+	    SEXP R_fcall0, R_fcall1, R_fcall2, R_fcall3;
+	    SEXP savedgpar, savedgrob;
+	    /*
+	     * The data could be a gPath to a grob
+	     * In this case, need to find the grob first, and in order
+	     * to do that correctly, need to call pre/postDraw code 
+	     */
+	    PROTECT(grob = unitData(unit, index));
+	    PROTECT(savedgpar = gridStateElement(dd, GSS_GPAR));
+	    PROTECT(savedgrob = gridStateElement(dd, GSS_CURRGROB));
+	    PROTECT(heightPreFn = findFun(install("preDraw"), 
+					 R_gridEvalEnv));
+	    PROTECT(heightFn = findFun(install("height"), R_gridEvalEnv));
+	    PROTECT(heightPostFn = findFun(install("postDraw"), 
+					  R_gridEvalEnv));
+	    if (inherits(grob, "gPath")) {
+		if (isNull(savedgrob)) {
+		    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
+						 R_gridEvalEnv));
+		    PROTECT(R_fcall0 = lang2(findGrobFn, 
+					     getListElement(grob, "name")));
+		    grob = eval(R_fcall0, R_gridEvalEnv);
+		} else {
+		    PROTECT(findGrobFn =findFun(install("findGrobinChildren"), 
+						R_gridEvalEnv));
+		    PROTECT(R_fcall0 = lang3(findGrobFn, 
+					     getListElement(grob, "name"),
+					     getListElement(savedgrob, 
+							    "children")));
+		    grob = eval(R_fcall0, R_gridEvalEnv);
+		}
+		UNPROTECT(2);
+	    }
+	    PROTECT(R_fcall1 = lang2(heightPreFn, grob));
+	    eval(R_fcall1, R_gridEvalEnv);
+	    PROTECT(R_fcall2 = lang2(heightFn, grob));
+	    PROTECT(height = eval(R_fcall2, R_gridEvalEnv));
+	    result = pureNullUnit(height, 0, dd);
+	    PROTECT(R_fcall3 = lang2(heightPostFn, grob));
+	    eval(R_fcall3, R_gridEvalEnv);
+	    setGridStateElement(dd, GSS_GPAR, savedgpar);
+	    setGridStateElement(dd, GSS_CURRGROB, savedgrob);
+	    UNPROTECT(10);
 	} else
 	    result = unitUnit(unit, index) == L_NULL;
     }
     return result;    
 }
 
-int pureNullUnitArithmetic(SEXP unit, int index) {
+int pureNullUnitArithmetic(SEXP unit, int index, GEDevDesc *dd) {
     /* 
      * Initialised to shut up compiler
      */
     int result = 0;
     if (addOp(unit) || minusOp(unit)) {
-	result = pureNullUnit(arg1(unit), index) &&
-	    pureNullUnit(arg2(unit), index);
+	result = pureNullUnit(arg1(unit), index, dd) &&
+	    pureNullUnit(arg2(unit), index, dd);
     }
     else if (timesOp(unit)) {
-	result = pureNullUnit(arg2(unit), index);
+	result = pureNullUnit(arg2(unit), index, dd);
     }
     else if (minFunc(unit) || maxFunc(unit) || sumFunc(unit)) {
 	int n = unitLength(arg1(unit));
 	int i = 0;
 	result = 1;
 	while (result && i<n) {
-	    result = result && pureNullUnit(arg1(unit), i);
+	    result = result && pureNullUnit(arg1(unit), i, dd);
 	    i += 1;
 	}
     } 
@@ -328,79 +404,122 @@ int pureNullUnitArithmetic(SEXP unit, int index) {
  */
 
 /* NOTE:  this code calls back to R code to perform 
- * set.gpar operations, which will impact on grid global variables
- * BUT that's ok(ish) because it subsequently calls back to R code to perform
- * corresponding unset.gpar operations which will
- * undo the changes to the grid globals
+ * set.gpar operations, which will impact on grid state variables
+ * BUT that's ok(ish) because we save and restore the relevant state
+ * variables in here so that the overall effect is NULL.
  */
 
 double evaluateGrobWidthUnit(SEXP grob, 
-			     double vpwidthCM, double vpheightCM,
+			     double vpheightCM, double vpwidthCM,
 			     GEDevDesc *dd) 
 {
-    SEXP widthPreFn, widthFn, widthPostFn, R_fcall1, R_fcall2, R_fcall3;
-    SEXP width;
+    double vpWidthCM, vpHeightCM;
+    double rotationAngle;
     LViewportContext vpc;
-    LGContext gc;
-    double resultINCHES, result;
-    PROTECT(widthPreFn = findFun(install("width.pre"), R_gridEvalEnv));
+    R_GE_gcontext gc;
+    LTransform transform;
+    SEXP currentvp, currentgp;
+    SEXP widthPreFn, widthFn, widthPostFn, findGrobFn;
+    SEXP R_fcall0, R_fcall1, R_fcall2, R_fcall3;
+    SEXP savedgpar, savedgrob;
+    SEXP width;
+    double result;
+    /* 
+     * Save the current gpar state and restore it at the end
+     */
+    PROTECT(savedgpar = gridStateElement(dd, GSS_GPAR));
+    /*
+     * Save the current grob and restore it at the end
+     */
+    PROTECT(savedgrob = gridStateElement(dd, GSS_CURRGROB));
+    /*
+     * Set up for calling R functions 
+     */
+    PROTECT(widthPreFn = findFun(install("preDraw"), R_gridEvalEnv));
     PROTECT(widthFn = findFun(install("width"), R_gridEvalEnv));
-    PROTECT(widthPostFn = findFun(install("width.post"), R_gridEvalEnv));
-    /* Call width.pre(grob) 
+    PROTECT(widthPostFn = findFun(install("postDraw"), R_gridEvalEnv));
+    /*
+     * If grob is actually a gPath, use it to find an actual grob
+     */
+    if (inherits(grob, "gPath")) {
+	/* 
+	 * If the current grob is NULL then we are at the top level
+	 * and we search the display list, otherwise we search the 
+	 * children of the current grob
+	 *
+	 * NOTE: assume here that only gPath of depth == 1 are valid
+	 */
+	if (isNull(savedgrob)) {
+	    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
+					 R_gridEvalEnv));
+	    PROTECT(R_fcall0 = lang2(findGrobFn, 
+				     getListElement(grob, "name")));
+	    grob = eval(R_fcall0, R_gridEvalEnv);
+	} else {
+	    PROTECT(findGrobFn = findFun(install("findGrobinChildren"), 
+					 R_gridEvalEnv));
+	    PROTECT(R_fcall0 = lang3(findGrobFn, 
+				     getListElement(grob, "name"),
+				     getListElement(savedgrob, "children")));
+	    grob = eval(R_fcall0, R_gridEvalEnv);
+	}
+	UNPROTECT(2);
+    }
+    /* Call preDraw(grob) 
      */
     PROTECT(R_fcall1 = lang2(widthPreFn, grob));
     eval(R_fcall1, R_gridEvalEnv);
+    /* 
+     * The call to preDraw may have pushed viewports and/or
+     * enforced gpar settings, SO we need to re-establish the
+     * current viewport and gpar settings before evaluating the
+     * width unit.
+     * 
+     * NOTE:  we are really relying on the grid state to be coherent
+     * when we do stuff like this (i.e., not to have changed since
+     * we started evaluating the unit [other than the changes we may
+     * have deliberately made above by calling preDraw]).  In other
+     * words we are relying on no other drawing occurring at the 
+     * same time as we are doing this evaluation.  In other other
+     * words, we are relying on there being only ONE process
+     * (i.e., NOT multi-threaded).
+     */
+    currentvp = gridStateElement(dd, GSS_VP);
+    currentgp = gridStateElement(dd, GSS_GPAR);
+    getViewportTransform(currentvp, dd, 
+			 &vpWidthCM, &vpHeightCM, 
+			 transform, &rotationAngle);
+    fillViewportContextFromViewport(currentvp, &vpc);
     /* Call width(grob)
      * to get the unit representing the with
      */
     PROTECT(R_fcall2 = lang2(widthFn, grob));
     PROTECT(width = eval(R_fcall2, R_gridEvalEnv));
-    /* Transform the width
-     * NOTE:  the width.pre function should NOT have done any 
-     * viewport pushing so the viewport context and sizeCM 
-     * should be unchanged
+    /* 
+     * Transform the width
      * NOTE:  We transform into INCHES so can produce final answer in terms
      * of NPC for original context
      */
     /* Special case for "null" units
      */
-    if (pureNullUnit(width, 0)) {
-	result = evaluateNullUnit(pureNullUnitValue(width, 0));
+    if (pureNullUnit(width, 0, dd)) {
+	result = evaluateNullUnit(pureNullUnitValue(width, 0), vpWidthCM);
     } else {
-	/* 
-	 * Get the current gpar settings (they may have been changed in the 
-	 * width.pre call
-	 */
-	gcontextFromgpar(gridStateElement(dd, GSS_GPAR), 0, &gc);
-	/*
-	 * NOTE that the vpc contains garbage.
-	 * This is ok ONLY because of the strict
-	 * restrictions placed on what sort of units can
-	 * be used in a width.details method.
-	 * If those restrictions are lifted, all bets are off ...
-	 */
-	resultINCHES = transformWidthtoINCHES(width, 0, vpc, &gc,
-					      /* These are the current
-					       * viewport widthCM and
-					       * heightCM.
-					       * They are adequate ONLY
-					       * because of the strict
-					       * restrictions placed on
-					       * what sort of units can
-					       * be used in a width.details
-					       * method.
-					       * If those restrictions are
-					       * lifted, all bets are off ...
-					       */
-					      vpwidthCM, vpheightCM,
-					      dd);
-	result = resultINCHES/(vpwidthCM/2.54);
+	gcontextFromgpar(currentgp, 0, &gc);
+	result = transformWidthtoINCHES(width, 0, vpc, &gc,
+					vpWidthCM, vpHeightCM,
+					dd);
     }
-    /* Call width.post(grob)
+    /* Call postDraw(grob)
      */
     PROTECT(R_fcall3 = lang2(widthPostFn, grob));
     eval(R_fcall3, R_gridEvalEnv);
-    UNPROTECT(7);
+    /* 
+     * Restore the saved gpar state and grob
+     */
+    setGridStateElement(dd, GSS_GPAR, savedgpar);
+    setGridStateElement(dd, GSS_CURRGROB, savedgrob);
+    UNPROTECT(9);
     /* Return the transformed width
      */
     return result;
@@ -412,50 +531,110 @@ double evaluateGrobHeightUnit(SEXP grob,
 			     double vpheightCM, double vpwidthCM,
 			     GEDevDesc *dd) 
 {
-    /* FIXME:  I probably want to create a new environment here
-     * rather than use the global environment (?) 
-     * Ditto in three eval()s below.
-     */
-    SEXP heightPreFn, heightFn, heightPostFn, R_fcall1, R_fcall2, R_fcall3;
-    SEXP height;
+    double vpWidthCM, vpHeightCM;
+    double rotationAngle;
     LViewportContext vpc;
-    LGContext gc;
-    double resultINCHES, result;
-    PROTECT(heightPreFn = findFun(install("height.pre"), R_gridEvalEnv));
+    R_GE_gcontext gc;
+    LTransform transform;
+    SEXP currentvp, currentgp;
+    SEXP heightPreFn, heightFn, heightPostFn, findGrobFn;
+    SEXP R_fcall0, R_fcall1, R_fcall2, R_fcall3;
+    SEXP savedgpar, savedgrob;
+    SEXP height;
+    double result;
+    /* 
+     * Save the current gpar state and restore it at the end
+     */
+    PROTECT(savedgpar = gridStateElement(dd, GSS_GPAR));
+    /*
+     * Save the current grob and restore it at the end
+     */
+    PROTECT(savedgrob = gridStateElement(dd, GSS_CURRGROB));
+    PROTECT(heightPreFn = findFun(install("preDraw"), R_gridEvalEnv));
     PROTECT(heightFn = findFun(install("height"), R_gridEvalEnv));
-    PROTECT(heightPostFn = findFun(install("height.post"), R_gridEvalEnv));
-    /* Call height.pre(grob) 
+    PROTECT(heightPostFn = findFun(install("postDraw"), R_gridEvalEnv));
+    /*
+     * If grob is actually a gPath, use it to find an actual grob
+     */
+    if (inherits(grob, "gPath")) {
+	/* 
+	 * If the current grob is NULL then we are at the top level
+	 * and we search the display list, otherwise we search the 
+	 * children of the current grob
+	 *
+	 * NOTE: assume here that only gPath of depth == 1 are valid
+	 */
+	if (isNull(savedgrob)) {
+	    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
+					 R_gridEvalEnv));
+	    PROTECT(R_fcall0 = lang2(findGrobFn, 
+				     getListElement(grob, "name")));
+	    grob = eval(R_fcall0, R_gridEvalEnv);
+	} else {
+	    PROTECT(findGrobFn = findFun(install("findGrobinChildren"), 
+					 R_gridEvalEnv));
+	    PROTECT(R_fcall0 = lang3(findGrobFn, 
+				     getListElement(grob, "name"),
+				     getListElement(savedgrob, "children")));
+	    grob = eval(R_fcall0, R_gridEvalEnv);
+	}
+	UNPROTECT(2);
+    }
+    /* Call preDraw(grob) 
      */
     PROTECT(R_fcall1 = lang2(heightPreFn, grob));
     eval(R_fcall1, R_gridEvalEnv);
+    /* 
+     * The call to preDraw may have pushed viewports and/or
+     * enforced gpar settings, SO we need to re-establish the
+     * current viewport and gpar settings before evaluating the
+     * height unit.
+     * 
+     * NOTE:  we are really relying on the grid state to be coherent
+     * when we do stuff like this (i.e., not to have changed since
+     * we started evaluating the unit [other than the changes we may
+     * have deliberately made above by calling preDraw]).  In other
+     * words we are relying on no other drawing occurring at the 
+     * same time as we are doing this evaluation.  In other other
+     * words, we are relying on there being only ONE process
+     * (i.e., NOT multi-threaded).
+     */
+    currentvp = gridStateElement(dd, GSS_VP);
+    currentgp = gridStateElement(dd, GSS_GPAR);
+    getViewportTransform(currentvp, dd, 
+			 &vpWidthCM, &vpHeightCM, 
+			 transform, &rotationAngle);
+    fillViewportContextFromViewport(currentvp, &vpc);
     /* Call height(grob)
      * to get the unit representing the with
      */
     PROTECT(R_fcall2 = lang2(heightFn, grob));
     PROTECT(height = eval(R_fcall2, R_gridEvalEnv));
-    /* Transform the height
-     * NOTE:  the height.pre function should NOT have done any 
-     * viewport pushing so the viewport context and sizeCM 
-     * should be unchanged
+    /* 
+     * Transform the height
      * NOTE:  We transform into INCHES so can produce final answer in terms
      * of NPC for original context
      */
     /* Special case for "null" units
      */
-    if (pureNullUnit(height, 0)) {
-	result = evaluateNullUnit(pureNullUnitValue(height, 0));
+    if (pureNullUnit(height, 0, dd)) {
+	result = evaluateNullUnit(pureNullUnitValue(height, 0), vpHeightCM);
     } else {
-	gcontextFromgpar(gridStateElement(dd, GSS_GPAR), 0, &gc);
-	resultINCHES = transformHeighttoINCHES(height, 0, vpc, &gc,
-					       vpwidthCM, vpheightCM,
-					       dd);
-	result = resultINCHES/(vpheightCM/2.54);
+	gcontextFromgpar(currentgp, 0, &gc);
+	result = transformHeighttoINCHES(height, 0, vpc, &gc,
+					 vpWidthCM, vpHeightCM,
+					 dd);
     }
-    /* Call height.post(grob)
+    /* Call postDraw(grob)
      */
     PROTECT(R_fcall3 = lang2(heightPostFn, grob));
     eval(R_fcall3, R_gridEvalEnv);
-    UNPROTECT(7);
+    /* 
+     * Restore the saved gpar state and grob
+     */
+    setGridStateElement(dd, GSS_GPAR, savedgpar);
+    setGridStateElement(dd, GSS_CURRGROB, savedgrob);
+    UNPROTECT(9);
     /* Return the transformed height
      */
     return result;
@@ -466,23 +645,28 @@ double evaluateGrobHeightUnit(SEXP grob,
  **************************
  */
     
-/* Map a value from arbitrary units to Normalised Parent Coordinates */
+/* Map a value from arbitrary units to INCHES */
 
+/*
+ * NULL units are a special case
+ * If L_nullLayoutMode = 1 then the value returned is a NULL unit value
+ * Otherwise it is an INCHES value
+ */
 double transform(double value, int unit, SEXP data,
 		 double scalemin, double scalemax,
-		 LGContext *gc,
+		 R_GE_gcontext *gc,
 		 double thisCM, double otherCM,
 		 GEDevDesc *dd)
 {
     double result = value;
     switch (unit) {
     case L_NPC:      
+	result = (result * thisCM)/2.54; /* 2.54 cm per inch */
 	break;
     case L_CM: 
-	result = result/thisCM;
+	result = result/2.54;
 	break;
     case L_INCHES: 
-        result = result/(thisCM/2.54);
 	break;
     /* FIXME:  The following two assume that the pointsize specified
      * by the user is actually the pointsize provided by the
@@ -493,94 +677,74 @@ double transform(double value, int unit, SEXP data,
      * or somesuch.
      */
     case L_CHAR:
-	result = result*gc->fontsize*gc->cex/(72*thisCM/2.54);
-	break;	
     case L_MYCHAR:  /* FIXME: Remove this when I can */
-	result = result*gc->fontsize*gc->cex/(72*thisCM/2.54);
+	result = (result * gc->ps * gc->cex)/72; /* 72 points per inch */
 	break;	
     case L_LINES:
     case L_MYLINES: /* FIXME: Remove this when I can */
-	result = result*gc->fontsize*gc->cex*gc->lineheight/(72*thisCM/2.54);
+	result = (result * gc->ps * gc->cex * gc->lineheight)/72;
 	break;
     case L_SNPC:        
 	if (thisCM <= otherCM)
-	    result = result;
+	    result = (result * thisCM)/2.54;
 	else                     
-	    result = result*(otherCM/thisCM);
+	    result = (result * otherCM)/2.54;
 	break;
     case L_MM:
-	result = result/10/thisCM;
+	result = (result/10)/2.54;
 	break;
 	/* Maybe an opportunity for some constants below here (!) 
 	 */
     case L_POINTS:
-	result = result/72.27*2.54/thisCM;
+	result = result/72.27;
 	break;
     case L_PICAS:
-	result = result*12/72.27*2.54/thisCM;
+	result = (result*12)/72.27;
 	break;
     case L_BIGPOINTS:
-	result = result/72*2.54/thisCM; 
+	result = result/72; 
 	break;
     case L_DIDA:
-	result = result/1157*1238/72.27*2.54/thisCM;
+	result = result/1157*1238/72.27;
 	break;
     case L_CICERO:
-	result = result*12/1157*1238/72.27*2.54/thisCM;
+	result = result*12/1157*1238/72.27;
 	break;
     case L_SCALEDPOINTS:
-	result = result/65536/72.27*2.54/thisCM;
+	result = result/65536/72.27;
 	break;
     case L_STRINGWIDTH:
     case L_MYSTRINGWIDTH: /* FIXME: Remove this when I can */
 	if (isExpression(data))
 	    result = result*
-		fromDeviceWidth(GEExpressionWidth(VECTOR_ELT(data, 0),
-						  gc->font, 
-						  gc->cex, 
-						  gc->fontsize, dd),
-				GE_INCHES, dd)*
-		2.54/thisCM;
+		fromDeviceWidth(GEExpressionWidth(VECTOR_ELT(data, 0), gc, dd),
+				GE_INCHES, dd);
 	else
 	    result = result*
-		fromDeviceWidth(GEStrWidth(CHAR(STRING_ELT(data, 0)), 
-					   gc->fontfamily, 
-					   gc->font, 
-					   gc->lineheight,
-					   gc->cex, 
-					   gc->fontsize, dd),
-				GE_INCHES, dd)*
-		2.54/thisCM;
+		fromDeviceWidth(GEStrWidth(CHAR(STRING_ELT(data, 0)), gc, dd),
+				GE_INCHES, dd);
 	break;
     case L_STRINGHEIGHT:
     case L_MYSTRINGHEIGHT: /* FIXME: Remove this when I can */
 	if (isExpression(data))
 	    result = result*
-		fromDeviceHeight(GEExpressionHeight(VECTOR_ELT(data, 0),
-						    gc->font, 
-						    gc->cex, 
-						    gc->fontsize, dd),
-				 GE_INCHES, dd)*
-		2.54/thisCM;
+		fromDeviceHeight(GEExpressionHeight(VECTOR_ELT(data, 0), 
+						    gc, dd),
+				 GE_INCHES, dd);
 	else
 	    result = result*
 		fromDeviceHeight(GEStrHeight(CHAR(STRING_ELT(data, 0)),
-					     gc->fontfamily, 
-					     gc->font, 
-					     gc->lineheight,
-					     gc->cex, 
-					     gc->fontsize, dd),
-				 GE_INCHES, dd)*
-		2.54/thisCM;
+					     gc, dd),
+				 GE_INCHES, dd);
 	break;
     case L_GROBWIDTH:
-	result = value*evaluateGrobWidthUnit(data, thisCM, otherCM, dd);
+	result = value*evaluateGrobWidthUnit(data, otherCM, thisCM, dd);
 	break;
     case L_GROBHEIGHT:
 	result = value*evaluateGrobHeightUnit(data, thisCM, otherCM, dd);
 	break;
     case L_NULL:
-	result = evaluateNullUnit(result);
+	result = evaluateNullUnit(result, thisCM);
 	break;
     default:
 	error("Illegal unit or unit not yet implemented");
@@ -591,14 +755,14 @@ double transform(double value, int unit, SEXP data,
 /* FIXME:  scales are only linear at the moment */
 double transformLocation(double location, int unit, SEXP data,
 			 double scalemin, double scalemax,
-			 LGContext *gc,
+			 R_GE_gcontext *gc,
 			 double thisCM, double otherCM,
 			 GEDevDesc *dd)
 {
     double result = location;
     switch (unit) {
     case L_NATIVE:       
-	result = (result - scalemin)/(scalemax - scalemin);
+	result = ((result - scalemin)/(scalemax - scalemin))*thisCM/2.54;
 	break;
     default:
 	result = transform(location, unit, data, scalemin, scalemax,
@@ -609,13 +773,13 @@ double transformLocation(double location, int unit, SEXP data,
 
 double transformXArithmetic(SEXP x, int index,
 			    LViewportContext vpc,
-			    LGContext *gc,
+			    R_GE_gcontext *gc,
 			    double widthCM, double heightCM,
 			    GEDevDesc *dd);
 
 double transformX(SEXP x, int index,
 		  LViewportContext vpc,
-		  LGContext *gc,
+		  R_GE_gcontext *gc,
 		  double widthCM, double heightCM,
 		  GEDevDesc *dd)
 {
@@ -643,13 +807,13 @@ double transformX(SEXP x, int index,
 
 double transformYArithmetic(SEXP y, int index,
 			    LViewportContext vpc,
-			    LGContext *gc,
+			    R_GE_gcontext *gc,
 			    double widthCM, double heightCM,
 			    GEDevDesc *dd);
 
 double transformY(SEXP y, int index, 
 		  LViewportContext vpc,
-		  LGContext *gc,
+		  R_GE_gcontext *gc,
 		  double widthCM, double heightCM,
 		  GEDevDesc *dd)
 {
@@ -677,14 +841,14 @@ double transformY(SEXP y, int index,
 
 double transformDimension(double dim, int unit, SEXP data,
 			  double scalemin, double scalemax,
-			  LGContext *gc,
+			  R_GE_gcontext *gc,
 			  double thisCM, double otherCM,
 			  GEDevDesc *dd)
 {
     double result = dim;
     switch (unit) {
     case L_NATIVE:
-	result = (dim)/(scalemax - scalemin);
+	result = ((dim)/(scalemax - scalemin))*thisCM/2.54;
 	break;
     default:
 	result = transform(dim, unit, data, scalemin, scalemax, gc,
@@ -695,13 +859,13 @@ double transformDimension(double dim, int unit, SEXP data,
 
 double transformWidthArithmetic(SEXP width, int index,
 				LViewportContext vpc,
-				LGContext *gc,
+				R_GE_gcontext *gc,
 				double widthCM, double heightCM,
 				GEDevDesc *dd);
 
 double transformWidth(SEXP width, int index, 
 		      LViewportContext vpc,
-		      LGContext *gc,
+		      R_GE_gcontext *gc,
 		      double widthCM, double heightCM,
 		      GEDevDesc *dd)
 {
@@ -729,13 +893,13 @@ double transformWidth(SEXP width, int index,
 
 double transformHeightArithmetic(SEXP height, int index,
 				 LViewportContext vpc,
-				 LGContext *gc,
+				 R_GE_gcontext *gc,
 				 double widthCM, double heightCM,
 				 GEDevDesc *dd);
 
 double transformHeight(SEXP height, int index,
 		       LViewportContext vpc,
-		       LGContext *gc,
+		       R_GE_gcontext *gc,
 		       double widthCM, double heightCM,
 		       GEDevDesc *dd)
 {
@@ -763,7 +927,7 @@ double transformHeight(SEXP height, int index,
 
 double transformXArithmetic(SEXP x, int index,
 			    LViewportContext vpc,
-			    LGContext *gc,
+			    R_GE_gcontext *gc,
 			    double widthCM, double heightCM,
 			    GEDevDesc *dd)
 {
@@ -831,7 +995,7 @@ double transformXArithmetic(SEXP x, int index,
 
 double transformYArithmetic(SEXP y, int index,
 			    LViewportContext vpc,
-			    LGContext *gc,
+			    R_GE_gcontext *gc,
 			    double widthCM, double heightCM,
 			    GEDevDesc *dd)
 {
@@ -899,7 +1063,7 @@ double transformYArithmetic(SEXP y, int index,
 
 double transformWidthArithmetic(SEXP width, int index,
 				LViewportContext vpc,
-				LGContext *gc,
+				R_GE_gcontext *gc,
 				double widthCM, double heightCM,
 				GEDevDesc *dd)
 {
@@ -967,7 +1131,7 @@ double transformWidthArithmetic(SEXP width, int index,
 
 double transformHeightArithmetic(SEXP height, int index,
 				 LViewportContext vpc,
-				 LGContext *gc,
+				 R_GE_gcontext *gc,
 				 double widthCM, double heightCM,
 				 GEDevDesc *dd)
 {
@@ -1047,6 +1211,12 @@ double transformHeightArithmetic(SEXP height, int index,
  * is historical.
  */
 
+/* It is even more inefficient-looking now because I ended up mucking
+ * with transform() to return INCHES (to fix bug if width/heightCM == 0)
+ * and by then there was too much code that called transformXtoINCHES
+ * to be bothered changing calls to it
+ */
+
 /* The difference between transform*toINCHES and transformLocn/Dimn 
  * is that the former are just converting from one coordinate system
  * to INCHES;  the latter are converting from INCHES relative to
@@ -1054,27 +1224,27 @@ double transformHeightArithmetic(SEXP height, int index,
  */
 double transformXtoINCHES(SEXP x, int index, 
 			  LViewportContext vpc, 
-			  LGContext *gc,
+			  R_GE_gcontext *gc,
 			  double widthCM, double heightCM,
 			  GEDevDesc *dd)
 {
     return transformX(x, index, vpc, gc,
-		      widthCM, heightCM, dd)*widthCM/2.54;
+		      widthCM, heightCM, dd);
 }
 
 double transformYtoINCHES(SEXP y, int index, 
 			  LViewportContext vpc,
-			  LGContext *gc,
+			  R_GE_gcontext *gc,
 			  double widthCM, double heightCM,
 			  GEDevDesc *dd)
 {
     return transformY(y, index, vpc, gc,
-		      widthCM, heightCM, dd)*heightCM/2.54;
+		      widthCM, heightCM, dd);
 }
 
 void transformLocn(SEXP x, SEXP y, int index, 
 		   LViewportContext vpc,
-		   LGContext *gc,
+		   R_GE_gcontext *gc,
 		   double widthCM, double heightCM,
 		   GEDevDesc *dd,
 		   LTransform t,
@@ -1096,27 +1266,27 @@ void transformLocn(SEXP x, SEXP y, int index,
 
 double transformWidthtoINCHES(SEXP w, int index,
 			      LViewportContext vpc,
-			      LGContext *gc,
+			      R_GE_gcontext *gc,
 			      double widthCM, double heightCM,
 			      GEDevDesc *dd)
 {
     return transformWidth(w, index, vpc, gc,
-			  widthCM, heightCM, dd)*widthCM/2.54;
+			  widthCM, heightCM, dd);
 }
 
 double transformHeighttoINCHES(SEXP h, int index,
 			       LViewportContext vpc,
-			       LGContext *gc,
+			       R_GE_gcontext *gc,
 			       double widthCM, double heightCM,
 			       GEDevDesc *dd)
 {
     return transformHeight(h, index, vpc, gc,
-			   widthCM, heightCM, dd)*heightCM/2.54;
+			   widthCM, heightCM, dd);
 }
 
 void transformDimn(SEXP w, SEXP h, int index, 
 		   LViewportContext vpc,
-		   LGContext *gc,
+		   R_GE_gcontext *gc,
 		   double widthCM, double heightCM,
 		   GEDevDesc *dd,
 		   double rotationAngle,
@@ -1147,22 +1317,22 @@ void transformDimn(SEXP w, SEXP h, int index,
  */
 
 double transformFromINCHES(double value, int unit, 
-			   LGContext *gc,
+			   R_GE_gcontext *gc,
 			   double thisCM, double otherCM,
 			   GEDevDesc *dd)
 {
     /*      
      * Convert to NPC
      */
-    double result = value/(thisCM/2.54);
+    double result = value;
     switch (unit) {
     case L_NPC:      
+	result = result/(thisCM/2.54);
 	break;
     case L_CM: 
-	result = result*thisCM;
+	result = result*2.54;
 	break;
     case L_INCHES: 
-        result = result*(thisCM/2.54);
 	break;
     /* FIXME:  The following two assume that the pointsize specified
      * by the user is actually the pointsize provided by the
@@ -1173,33 +1343,33 @@ double transformFromINCHES(double value, int unit,
      * or somesuch.
      */
     case L_CHAR:
-	result = result*(72*thisCM/2.54)/(gc->fontsize*gc->cex);
+	result = (result*72)/(gc->ps*gc->cex);
 	break;	
     case L_LINES:
-	result = result*(72*thisCM/2.54)/(gc->fontsize*gc->cex*gc->lineheight);
+	result = (result*72)/(gc->ps*gc->cex*gc->lineheight);
 	break;
     case L_MM:
-	result = result*10*thisCM;
+	result = result*2.54*10;
 	break;
 	/* Maybe an opportunity for some constants below here (!) 
 	 */
     case L_POINTS:
-	result = result*72.27*(thisCM/2.54);
+	result = result*72.27;
 	break;
     case L_PICAS:
-	result = result*12*72.27*(thisCM/2.54);
+	result = result/12*72.27;
 	break;
     case L_BIGPOINTS:
-	result = result*72*(thisCM/2.54); 
+	result = result*72; 
 	break;
     case L_DIDA:
-	result = result/1157*1238*72.27*(thisCM/2.54);
+	result = result/1238*1157*72.27;
 	break;
     case L_CICERO:
-	result = result*12/1157*1238*72.27*(thisCM/2.54);
+	result = result/1238*1157*72.27/12;
 	break;
     case L_SCALEDPOINTS:
-	result = result/65536*72.27*(thisCM/2.54);
+	result = result*65536*72.27;
 	break;
 	/*
 	 * I'm not sure the remaining ones makes any sense.
@@ -1236,7 +1406,7 @@ double transformFromINCHES(double value, int unit,
  */
 double transformXYFromINCHES(double location, int unit, 
 			     double scalemin, double scalemax,
-			     LGContext *gc,
+			     R_GE_gcontext *gc,
 			     double thisCM, double otherCM,
 			     GEDevDesc *dd)
 {
@@ -1254,7 +1424,7 @@ double transformXYFromINCHES(double location, int unit,
 
 double transformWidthHeightFromINCHES(double dimension, int unit, 
 				      double scalemin, double scalemax,
-				      LGContext *gc,
+				      R_GE_gcontext *gc,
 				      double thisCM, double otherCM,
 				      GEDevDesc *dd)
 {

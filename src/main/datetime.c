@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2003  The R Development Core Team.
+ *  Copyright (C) 2000-2004  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@
 
     A particular problem is the setting of the timezone TZ on Unix/Linux.
     POSIX appears to require it, yet many Linux systems do not set it
-    and do not give the correct results/crash strftime if it is not set.
+    and do not give the correct results/crash strftime if it is not set
+    (or even if it is: see the workaround below).
     We use unsetenv() to work around this: that is a BSD construct but
     seems to be available on the affected platforms.
  */
@@ -40,12 +41,12 @@
 #if defined(HAVE_GLIBC2) && !defined(__USE_BSD)
 # define __USE_BSD		/* so that we get unsetenv() */
 # include <stdlib.h>
-# undef __USE_BSD		/* just to make sure */
+# undef __USE_BSD		/* used later */
 #else
 # include <stdlib.h>
 #endif
 
-#if defined(HAVE_GLIBC2) && !defined(__USE_XOPEN)
+#if defined(HAVE_WORKING_STRPTIME) && defined(HAVE_GLIBC2) && !defined(__USE_XOPEN)
 # define __USE_XOPEN		/* so that we get strptime() */
 # include <time.h>
 # undef __USE_XOPEN		/* just to make sure */
@@ -68,7 +69,7 @@ static Rboolean have_broken_mktime(void)
     return TRUE;
 #elif defined(__GLIBC__) && defined(__GLIBC_MINOR__) && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 2
     static int test_result = -1;
-    
+
     if (test_result == -1) {
 	struct tm t;
 	time_t res;
@@ -144,8 +145,27 @@ static int validate_tm (struct tm *tm)
 	if(tm->tm_mon < 0) {tm->tm_mon += 12; tm->tm_year--;}
     }
 
-    if(tm->tm_mday < -1000 || tm->tm_mday > 1000) return -1;
+    /* A limit on the loops of about 3000x round */
+    if(tm->tm_mday < -1000000 || tm->tm_mday > 1000000) return -1;
 
+    if(abs(tm->tm_mday) > 366) {
+	res++;
+	/* first spin back until January */
+	while(tm->tm_mon > 0) {
+	    --tm->tm_mon;
+	    tm->tm_mday += days_in_month[tm->tm_mon] +
+	    ((tm->tm_mon==1 && isleap(1900+tm->tm_year))? 1 : 0);
+	}
+	/* then spin on/back by years */
+	while(tm->tm_mday < 1) {
+	    --tm->tm_year;
+	    tm->tm_mday += 365 + (isleap(1900+tm->tm_year)? 1 : 0);
+	}
+	while(tm->tm_mday >
+	      (tmp = 365 + (isleap(1900+tm->tm_year)? 1 : 0))) {
+	    tm->tm_mday -= tmp; tm->tm_year++;
+	}
+    }
 
     while(tm->tm_mday < 1) {
 	res++;
@@ -241,6 +261,7 @@ static double guess_offset (struct tm *tm)
 static double mktime0 (struct tm *tm, const int local)
 {
     double res;
+    Rboolean OK;
 #ifndef HAVE_POSIX_LEAPSECONDS
     int i;
 #endif
@@ -248,9 +269,14 @@ static double mktime0 (struct tm *tm, const int local)
     if(validate_tm(tm) < 0) return (double)(-1);
     if(!local) return mktime00(tm);
 
-    if(tm->tm_year < 138 &&
-       tm->tm_year >= (have_broken_mktime() ? 70 : 02))
-    {   res = (double) mktime(tm);
+    OK = tm->tm_year < 138 && tm->tm_year >= (have_broken_mktime() ? 70 : 02);
+#ifdef Win32
+    /* Microsoft's mktime regards times before 1970-01-01 00:00:00 GMT as
+       invalid! */
+    if(tm->tm_year == 70 && tm->tm_mon == 0 && tm->tm_mday <= 1) OK = FALSE;
+#endif
+    if(OK) {
+	res = (double) mktime(tm);
 #ifndef HAVE_POSIX_LEAPSECONDS
         for(i = 0; i < 22; i++)
             if(res > leapseconds[i]) res -= 1.0;
@@ -553,6 +579,15 @@ SEXP do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	error("invalid `usetz' argument");
     tz = getAttrib(x, install("tzone"));
 
+    /* workaround for glibc bug in strftime */
+#if defined HAVE_GLIBC2
+#ifdef __USE_BSD
+    tm.tm_zone = NULL;
+#else
+    tm.__tm_zone = NULL;
+#endif
+#endif
+
     /* coerce fields to integer, find length of longest one */
     for(i = 0; i < 9; i++) {
 	nlen[i] = LENGTH(VECTOR_ELT(x, i));
@@ -671,6 +706,7 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	invalid = STRING_ELT(x, i%n) == NA_STRING ||
 	    !strptime(CHAR(STRING_ELT(x, i%n)),
 		      CHAR(STRING_ELT(sformat, i%m)), &tm);
+	/* it seems glibc cannot valid at all consistently */
 	if(!invalid) {
 	    /* Solaris sets missing fields to 0 */
 	    if(tm.tm_mday == 0) tm.tm_mday = NA_INTEGER;
@@ -680,6 +716,7 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	    tm.tm_isdst = -1;
 	    mktime0(&tm, 1); /* set wday, yday, isdst */
 	}
+	invalid = invalid || validate_tm(&tm) != 0;
 	makelt(&tm, ans, i, !invalid);
     }
     setAttrib(ans, R_NamesSymbol, ansnames);
@@ -688,5 +725,111 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 1, mkChar("POSIXlt"));
     classgets(ans, class);
     UNPROTECT(3);
+    return ans;
+}
+
+SEXP do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP x, ans, ansnames, class;
+    int n, i, valid;
+    long day;
+    int y, tmp, mon;
+    struct tm tm;
+
+    checkArity(op, args);
+    PROTECT(x = coerceVector(CAR(args), REALSXP));
+    n = LENGTH(x);
+    PROTECT(ans = allocVector(VECSXP, 9));
+    for(i = 0; i < 9; i++)
+	SET_VECTOR_ELT(ans, i, allocVector(INTSXP, n));
+
+    PROTECT(ansnames = allocVector(STRSXP, 9));
+    for(i = 0; i < 9; i++)
+	SET_STRING_ELT(ansnames, i, mkChar(ltnames[i]));
+
+    for(i = 0; i < n; i++) {
+	if(R_FINITE(REAL(x)[i])) {
+	    day = (long) REAL(x)[i];
+	    tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	    /* weekday: 1970-01-01 was a Thursday */
+	    if ((tm.tm_wday = ((4 + day) % 7)) < 0) tm.tm_wday += 7;
+
+	    /* year & day within year */
+	    y = 1970;
+	    if (day >= 0)
+		for ( ; day >= (tmp = days_in_year(y)); day -= tmp, y++);
+	    else
+		for ( ; day < 0; --y, day += days_in_year(y) );
+
+	    y = tm.tm_year = y - 1900;
+	    tm.tm_yday = day;
+
+	    /* month within year */
+	    for (mon = 0;
+		 day >= (tmp = (days_in_month[mon]) +
+			 ((mon==1 && isleap(y+1900))?1:0));
+		 day -= tmp, mon++);
+	    tm.tm_mon = mon;
+	    tm.tm_mday = day + 1;
+	    tm.tm_isdst = 0; /* no dst in GMT */
+
+	    valid = 1;
+	} else valid = 0;
+	makelt(&tm, ans, i, valid);
+    }
+    setAttrib(ans, R_NamesSymbol, ansnames);
+    PROTECT(class = allocVector(STRSXP, 2));
+    SET_STRING_ELT(class, 0, mkChar("POSIXt"));
+    SET_STRING_ELT(class, 1, mkChar("POSIXlt"));
+    classgets(ans, class);
+    UNPROTECT(4);
+
+    return ans;
+}
+
+SEXP do_POSIXlt2D(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP x, ans, class;
+    int i, n = 0, nlen[9];
+    struct tm tm;
+
+    checkArity(op, args);
+    x = CAR(args);
+    if(!isVectorList(x) || LENGTH(x) != 9)
+	error("invalid `x' argument");
+
+    for(i = 3; i < 6; i++)
+	if((nlen[i] = LENGTH(VECTOR_ELT(x, i))) > n) n = nlen[i];
+    if((nlen[8] = LENGTH(VECTOR_ELT(x, 8))) > n) n = nlen[8];
+    if(n > 0) {
+	for(i = 3; i < 6; i++)
+	    if(nlen[i] == 0)
+		error("zero length component in non-empty POSIXlt structure");
+	if(nlen[8] == 0)
+	    error("zero length component in non-empty POSIXlt structure");
+    }
+    /* coerce fields to integer */
+    for(i = 0; i < 6; i++)
+	SET_VECTOR_ELT(x, i, coerceVector(VECTOR_ELT(x, i), INTSXP));
+    SET_VECTOR_ELT(x, 8, coerceVector(VECTOR_ELT(x, 8), INTSXP));
+
+    PROTECT(ans = allocVector(REALSXP, n));
+    for(i = 0; i < n; i++) {
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_mday  = INTEGER(VECTOR_ELT(x, 3))[i%nlen[3]];
+	tm.tm_mon   = INTEGER(VECTOR_ELT(x, 4))[i%nlen[4]];
+	tm.tm_year  = INTEGER(VECTOR_ELT(x, 5))[i%nlen[5]];
+	/* mktime ignores tm.tm_wday and tm.tm_yday */
+	tm.tm_isdst = 0;
+	if(tm.tm_mday == NA_INTEGER || tm.tm_mon == NA_INTEGER ||
+	   tm.tm_year == NA_INTEGER || validate_tm(&tm) < 0)
+	    REAL(ans)[i] = NA_REAL;
+	else REAL(ans)[i] = mktime00(&tm)/86400;
+    }
+
+    PROTECT(class = allocVector(STRSXP, 1));
+    SET_STRING_ELT(class, 0, mkChar("Date"));
+    classgets(ans, class);
+    UNPROTECT(2);
     return ans;
 }

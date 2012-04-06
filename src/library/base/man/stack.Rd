@@ -49,9 +49,10 @@ unstack(x, \dots)
 }
 \author{Douglas Bates}
 \seealso{
-  \code{\link{lm}}, \code{\link{reshape}}
+  \code{\link[stats]{lm}}, \code{\link[stats]{reshape}}
 }
 \examples{
+require(stats)
 data(PlantGrowth)
 formula(PlantGrowth)         # check the default formula
 pg <- unstack(PlantGrowth)   # unstack according to this formula

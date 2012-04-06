@@ -1,5 +1,5 @@
 #-*- perl -*-
-# Copyright (C) 2000-3  R Development Core Team
+# Copyright (C) 2000-4  R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ use R::Dcf;
 use R::Utils;
 
 
-my $revision = ' $Revision: 1.33 $ ';
+my $revision = ' $Revision: 1.43 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -36,6 +36,7 @@ $version = $1;
 
 my @knownoptions = ("help|h", "version|v", "debug|d", "library|l:s",
 		    "clean|c", "docs:s", "save|s", "no-save",
+		    "with-package-versions",
 		    "use-zip", "use-zip-data", "use-zip-help", 
 		    "auto-zip", "build", "fake");
 		    
@@ -43,6 +44,7 @@ my @knownoptions = ("help|h", "version|v", "debug|d", "library|l:s",
 ##      zip/tarball along with any included directories.
 ##	This needs to be fixed: this file shouldn't do binary builds,
 ##	that's what build.in is for - DJM
+##      No, that is what INSTALL --build is for, pace DJM
 
 my $topLevelFiles = "DESCRIPTION";		    
 			
@@ -54,10 +56,14 @@ my $R_HOME = $ENV{'R_HOME'} ||
 usage() if $opt_help;
 
 my $startdir = cwd();
+my $library;
 if($opt_library){
+    # remove quotes around the library path
+    $opt_library =~ s/^['"]//; $opt_library =~ s/['"]$//; #'"
     chdir($opt_library) ||
 	die "Error: cannot change to directory \`$opt_library'\n";
     $library = cwd();
+    $library = Win32::GetShortPathName($library) if $library =~ / /;
     chdir($startdir);
 } else {
     $library = $R_HOME . "/library";
@@ -69,13 +75,16 @@ if($opt_docs) {
 	$helpflags = "HELP=NO";
     } elsif ($opt_docs eq "normal") {
 	$helpflags = "HELP=YES WINHELP=NO";
-    } elsif ($opt_docs eq "chm") {
+    } elsif ($opt_docs eq "chm"|| ($opt_docs eq "all")) {
 	$helpflags = "HELP=YES WINHELP=CHM";
-    } elsif (($opt_docs eq "winhlp") || ($opt_docs eq "all")) {
-	$helpflags = "HELP=YES WINHELP=BOTH";
     } else {
 	die "ERROR: invalid --docs value `$opt_docs'\n";
     }
+}
+
+if((-e "$R_HOME/doc/html/R.css") && !(-e "$library/R.css")) {
+    printf "installing R.css in $library\n";
+    system("cp $R_HOME/doc/html/R.css $library/R.css");
 }
 
 ## this is the main loop over all packages to be installed
@@ -98,9 +107,9 @@ foreach $pkg (@ARGV){
 	$pkgname =~ s/_[0-9\.-]*$//;
 	my $dir = "R.INSTALL";
 	mkdir($dir, 755);
-	    ## workaround for paths in Cygwin tar
-	    $pkg =~ s+^([A-Za-x]):+/cygdrive/\1+;
-	if(system("tar -zxf $pkg -C $dir")) {
+	## workaround for paths in Cygwin tar
+	$pkg =~ s+^([A-Za-x]):+/cygdrive/\1+;
+	if(system("tar -zxf '$pkg' -C $dir")) {
 	    die "Error: cannot untar the package\n";}
 	$pkg = $dir."/".$pkgname;
 	$istar = 1;
@@ -117,6 +126,7 @@ foreach $pkg (@ARGV){
     die "  *** can't install into source directory ***\n" 
 	if $canonpkg eq $pkgoutdir;
     rmtree($pkgoutdir) if (-d $pkgoutdir);
+    $pkgdir = Win32::GetShortPathName($pkgdir) if $pkgdir =~ / /;
 
     my $makecmd = "pkg";
     $makecmd = "pkgfake" if $opt_fake;
@@ -158,7 +168,12 @@ foreach $pkg (@ARGV){
     $save = "false" if $opt_no_save;
     $save = "true" if $opt_save;
     my $opt = "";
+    my $dpkg = $library. "/" . $pkgname;
+    if($opt_with_package_versions) {
+        $dpkg = $dpkg . "_" . $description->{"Version"};
+    }
     if(!$is_bundle) {
+	$opt = "DPKG=$dpkg";;
         if($opt_auto_zip || $opt_build) {
 	    my $dir = $pkgdir. "/" . $pkgname . "/data";
 	    if(-d $dir && 
@@ -212,6 +227,7 @@ foreach $pkg (@ARGV){
         if($opt_build) {
 	    my $filename = "${pkgname}_" . $description->{"Version"};
 	    chdir($library);
+	    $startdir = Win32::GetShortPathName($startdir) if $startdir =~ / /;
 	    system("rm -f  $startdir/$filename.zip");
 	    system("zip -r9Xq $startdir/$filename.zip $zippkgs");
 	    if ($is_bundle) {
@@ -237,16 +253,14 @@ foreach $pkg (@ARGV){
 	rmtree("R.INSTALL");
     }
     print("\n");
+    if(!$res) {print("\* DONE\n");}
 }
 
-if((-e "$R_HOME/doc/html/R.css") && !(-e "$library/R.css")) {
-    printf "installing R.css in $library\n";
-    system("cp $R_HOME/doc/html/R.css $library/R.css");
-}
+
 
 sub usage {
     print STDERR <<END;
-Usage: Rcmd $name [options] pkgs
+Usage: R CMD $name [options] pkgs
 
 Install the add-on packages specified by pkgs into the default R library
 tree ($R_HOME/library) or the tree specified via \`--library'.  The
@@ -264,6 +278,8 @@ Options:
   -d, --debug		[x] turn on shell and build-help debugging
   -l, --library=LIB	install packages to library tree LIB
       --docs=TYPE	type(s) of documentation to build and install
+      --with-package-versions
+                        allow for multiple versions of the same package
       --use-zip-data	collect data files in zip archive
       --use-zip-help	collect help and examples into zip archives
       --use-zip		combine \`--use-zip-data\' and \`--use-zip-help\'
@@ -271,7 +287,7 @@ Options:
       --build		zip-up the installation. Implies --auto-zip
       --fake		do minimal install for testing purposes
 
-TYPE can be "none" or "normal" or "chm" (the default) or "winhlp" or "all"
+TYPE can be "none" or "normal" or "chm" (the default) or "all"
 
 Report bugs to <r-bugs\@r-project.org>.
 END

@@ -62,10 +62,18 @@
         ## cache metadata for all environments in search path.  The assumption is that
         ## this has not been done, since cacheMetaData is in this package.  library, attach,
         ## and detach functions look for cacheMetaData and call it if it's found.
-        for(i in rev(seq(along = search()))) {            ev <- as.environment(i)
-            if(!exists(".noGenerics", where = ev, inherits = FALSE) &&
+        sch <- rev(search())[-(1:2)]  # skip base and autoloads
+        sch <- sch[! sch %in% paste("package", c("utils", "graphics", "stats"),
+                                    sep=":")]
+        for(i in sch) {
+            nev <- ev <- as.environment(i)
+#            try(nev <- asNamespace(getPackageName(ev)), silent = TRUE)
+            ns <- .Internal(getRegisteredNamespace(as.name(getPackageName(ev))))
+            if(!is.null(ns)) nev <- asNamespace(ns)
+            if(!exists(".noGenerics", where = nev, inherits = FALSE) &&
                !identical(getPackageName(ev), "methods"))
                 cacheMetaData(ev, TRUE, searchWhere = .GlobalEnv)
+
         }
     }
 }
@@ -84,15 +92,21 @@
     }
 }
 
-.onUnload <- function(libpath)
+.onUnload <- function(libpath) {
+    .isMethodsDispatchOn(FALSE)
     library.dynam.unload("methods", libpath)
+}
 
 
 .onAttach <- function(libname, pkgName) {
-    ..First.lib(libname, pkgName)
+#    ..First.lib(libname, pkgName)
     env <- environment(sys.function())
     ## unlock some bindings that must be modifiable to set methods
     unlockBinding(".BasicFunsList", env)
+}
+
+.Last.lib <- function(libpath) {
+    methods:::.onUnload(libpath)
 }
 
 ### The following code is only executed when dumping

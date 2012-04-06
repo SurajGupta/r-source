@@ -9,7 +9,8 @@ list.files(path = ".", pattern = NULL, all.files = FALSE,
            full.names = FALSE, recursive = FALSE)
 }
 \arguments{
-  \item{path}{a character vector of full path names.}
+  \item{path}{a character vector of full path names; the default
+    corresponds to the working directory \code{\link{getwd}()}.}
   \item{pattern}{an optional \link{regular expression}.  Only file names
     which match the regular expression will be returned.}
   \item{all.files}{a logical value. If \code{FALSE}, only the
@@ -41,7 +42,12 @@ list.files(path = ".", pattern = NULL, all.files = FALSE,
   ignored, with a warning.
 }
 \seealso{\code{\link{file.info}}, \code{\link{file.access}}
-  and \code{\link{files}} for many more file handling functions.}
+  and \code{\link{files}} for many more file handling functions and 
+  \code{\link{file.choose}} 
+#ifdef windows
+and \code{\link[utils]{choose.files}}
+#endif
+for interactive selection.}
 \examples{
 list.files(R.home())
 ## Only files starting with a-l or r (*including* uppercase):

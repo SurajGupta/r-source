@@ -24,8 +24,7 @@ function(package, dir, lib.loc = NULL)
         ## Load package into codeEnv.
         if(!isBase)
             .loadPackageQuietly(package, lib.loc)
-        codeEnv <-
-            as.environment(paste("package", package, sep = ":"))
+        codeEnv <- .packageEnv(package)
 
         codeObjs <- ls(envir = codeEnv, all.names = TRUE)
     }
@@ -61,8 +60,9 @@ function(package, dir, lib.loc = NULL)
             ## Collect code in codeFile.
             codeFile <- tempfile("Rcode")
             on.exit(unlink(codeFile))
-            file.create(codeFile)
-            file.append(codeFile, listFilesWithType(codeDir, "code"))
+            if(!file.create(codeFile)) stop("unable to create ", codeFile)
+            if(!all(file.append(codeFile, listFilesWithType(codeDir, "code"))))
+                stop("unable to write code files")
             ## Read code from codeFile into codeEnv.
             yy <- try(.sourceAssignments(codeFile, env = codeEnv))
             if(inherits(yy, "try-error")) {
@@ -117,15 +117,15 @@ function(package, dir, lib.loc = NULL)
         ## </FIXME>
         for(f in files) {
             ## <NOTE>
-            ## Non-standard evaluation for argument 'package' to data().
-            yy <- try(eval(substitute(data(list = f,
-                                           package = packageName,
-                                           lib.loc = libPath,
-                                           envir = dataEnv),
-                                      list(packageName = packageName))))
+            ## Non-standard evaluation for argument 'package' to data()
+            ## gone in R 1.9.0.
+            .tryQuietly(data(list = f, package = packageName,
+                             lib.loc = libPath, envir = dataEnv))
+            ## (We use .tryQuietly() because a .R data file using scan()
+            ## to read in data from some other place may do this without
+            ## 'quiet = TRUE', giving output which R CMD check would
+            ## think to indicate a problem.)
             ## </NOTE>
-            if(inherits(yy, "try-error"))
-                stop(paste("cannot load data set", sQuote(f)))
             new <- ls(envir = dataEnv, all.names = TRUE)
             dataObjs <- c(dataObjs, new)
             rm(list = new, envir = dataEnv)
@@ -172,7 +172,7 @@ function(package, dir, lib.loc = NULL)
                                                  where = topenv(environment(fdef)))
                         if(is.null(fOther))
                             TRUE
-                        else 
+                        else
                             !methods::is(methods::finalDefaultMethod(methods::getMethodsMetaData(f, codeEnv)),
                                          "derivedDefaultMethod")
                     }
@@ -216,7 +216,7 @@ function(package, dir, lib.loc = NULL)
         ## The bad ones:
         S4classes <-
             S4classes[!sapply(S4classes,
-                              function(u) topicName("class", u))
+                              function(u) utils::topicName("class", u))
                       %in% allDocTopics]
         undocThings <-
             c(undocThings, list("S4 classes" = unique(S4classes)))
@@ -234,15 +234,33 @@ function(package, dir, lib.loc = NULL)
             mlist <- methods::getMethodsMetaData(f, codeEnv)
             meths <- methods::linearizeMlist(mlist, FALSE)
             classes <- methods::slot(meths, "classes")
+            ## Don't look for doc on a generated default method.
             default <-
                 as.logical(lapply(classes,
                                   function(x)
                                   identical(all(x == "ANY"), TRUE)))
-            if(any(default)) {
-                ## Don't look for doc on a generated default method.
-                if(methods::is(methods::finalDefaultMethod(mlist),
-                               "derivedDefaultMethod"))
-                    classes <- classes[!default]
+            if(any(default)
+               && methods::is(methods::finalDefaultMethod(mlist),
+                              "derivedDefaultMethod")) {
+                classes <- classes[!default]
+            }
+            ## Exclude methods inherited from the 'appropriate' parent
+            ## environment.
+            makeSigs <- function(cls)
+                unlist(lapply(cls, paste, collapse = "#"))
+            penv <- .Internal(getRegisteredNamespace(as.name(package)))
+            if(is.environment(penv))
+                penv <- parent.env(penv)
+            else
+                penv <- parent.env(codeEnv)
+            mlistFromPenv <- methods::getMethodsMetaData(f, penv)
+            if(!is.null(mlistFromPenv)) {
+                classesFromPenv <-
+                    methods::slot(methods::linearizeMlist(mlistFromPenv),
+                                  "classes")
+                ind <- is.na(match(makeSigs(classes),
+                                   makeSigs(classesFromPenv)))
+                classes <- classes[ind]
             }
             sigs <- sapply(classes, paste, collapse = ",")
             if(length(sigs))
@@ -256,7 +274,7 @@ function(package, dir, lib.loc = NULL)
         ## The bad ones:
         S4methods <-
             S4methods[!sapply(S4methods,
-                              function(u) topicName("method", u))
+                              function(u) utils::topicName("method", u))
                       %in% allDocTopics]
         undocThings <-
             c(undocThings,
@@ -284,9 +302,7 @@ function(x, ...)
 
 codoc <-
 function(package, dir, lib.loc = NULL,
-         use.values = FALSE, use.positions = TRUE,
-         ignore.generic.functions = FALSE,
-         verbose = getOption("verbose"))
+         use.values = NULL, verbose = getOption("verbose"))
 {
     ## <FIXME>
     ## Improvements worth considering:
@@ -301,15 +317,6 @@ function(package, dir, lib.loc = NULL,
     hasNamespace <- FALSE
 
     ## Argument handling.
-    ## <FIXME>
-    ## Remove these arguments for 2.0.
-    if(!missing(use.positions))
-        warning("argument", sQuote("use.positions"),
-                "is deprecated")
-    if(!missing(ignore.generic.functions))
-        warning("argument", sQuote("ignore.generic.functions"),
-                "is deprecated")
-    ## </FIXME>
     if(!missing(package)) {
         if(length(package) != 1)
             stop(paste("argument", sQuote("package"),
@@ -329,8 +336,7 @@ function(package, dir, lib.loc = NULL,
         ## Load package into codeEnv.
         if(!isBase)
             .loadPackageQuietly(package, lib.loc)
-        codeEnv <-
-            as.environment(paste("package", package, sep = ":"))
+        codeEnv <- .packageEnv(package)
 
         objectsInCode <- objects(envir = codeEnv, all.names = TRUE)
 
@@ -365,8 +371,9 @@ function(package, dir, lib.loc = NULL,
         ## Collect code in codeFile.
         codeFile <- tempfile("Rcode")
         on.exit(unlink(codeFile))
-        file.create(codeFile)
-        file.append(codeFile, listFilesWithType(codeDir, "code"))
+        if(!file.create(codeFile)) stop("unable to create ", codeFile)
+        if(!all(file.append(codeFile, listFilesWithType(codeDir, "code"))))
+            stop("unable to write code files")
 
         ## Read code from codeFile into codeEnv.
         codeEnv <- new.env()
@@ -401,15 +408,6 @@ function(package, dir, lib.loc = NULL,
                                  f <- get(f, envir = codeEnv)
                                  is.function(f) && (length(formals(f)) > 0)
                              }) == TRUE]
-    if(ignore.generic.functions) {
-        ## Ignore all generics, whatever name they dispatch on.
-        functionsInCode <-
-            functionsInCode[sapply(functionsInCode,
-                                   .isS3Generic,
-                                   codeEnv,
-                                   FALSE)
-                            == FALSE]
-    }
     ## <FIXME>
     ## Sourcing all R code files in the package is a problem for base,
     ## where this misses the .Primitive functions.  Hence, when checking
@@ -424,7 +422,8 @@ function(package, dir, lib.loc = NULL,
               objectsInBase[sapply(objectsInBase,
                                    .isPrimitive,
                                    NULL)],
-              c(".First.lib", ".Last.lib", ".Random.seed"))
+              c(".First.lib", ".Last.lib", ".Random.seed",
+                ".onLoad", ".onAttach", ".onUnload"))
         objectsInCodeOrNamespace <- objectsInCode
     }
     ## </FIXME>
@@ -462,10 +461,6 @@ function(package, dir, lib.loc = NULL,
         ## Compare the formals of the function in the code named 'fName'
         ## and formals 'ffd' obtained from the documentation.
         ffc <- functionArgsInCode[[fName]]
-        if(identical(use.positions, FALSE)) {
-            ffc <- ffc[sort(names(ffc))]
-            ffd <- ffc[sort(names(ffd))]
-        }
         if(identical(use.values, FALSE)) {
             ffc <- names(ffc)
             ffd <- names(ffd)
@@ -498,7 +493,7 @@ function(package, dir, lib.loc = NULL,
     db <- lapply(db,
                  function(f) paste(Rdpp(f), collapse = "\n"))
     names(db) <- dbNames <- sapply(db, getRdSection, "name")
-    if(isBase) {
+    if(isBase || basename(dir) == "graphics") {
         ind <- dbNames %in% c("Defunct", "Devices")
         db <- db[!ind]
         dbNames <- dbNames[!ind]
@@ -688,9 +683,9 @@ function(x, ...)
     ## E.g., for generic functions with just a default and a formula
     ## method we typically do not have \usage for the generic itself.
     ## (This will change now with the new \method{}{} transformation.)
-    ## Also, earlier versions od codoc() based on extract-usage.pl only
-    ## dealt with the *functions* so all variables would come out as
-    ## 'without usage information' ...
+    ## Also, earlier versions of codoc() based on the defunct Perl code
+    ## in extract-usage.pl (now removed) only dealt with the *functions*
+    ## so all variables would come out as 'without usage information' ...
     ## As we can always access the information via
     ##    attr(codoc("foo"), "codeNotInUsages")
     ## disable reporting this for the time being ...
@@ -805,8 +800,7 @@ function(package, lib.loc = NULL)
     ## Load package into codeEnv.
     if(!isBase)
         .loadPackageQuietly(package, lib.loc)
-    codeEnv <-
-        as.environment(paste("package", package, sep = ":"))
+    codeEnv <- .packageEnv(package)
 
     if(!.isMethodsDispatchOn())
         return(badRdObjects)
@@ -875,7 +869,7 @@ function(package, lib.loc = NULL)
 
     S4classesChecked <- character()
     for(cl in S4classes) {
-        idx <- which(topicName("class", cl) == aliases)
+        idx <- which(utils::topicName("class", cl) == aliases)
         if(length(idx) == 1) {
             ## Add sanity checking later ...
             S4classesChecked <- c(S4classesChecked, cl)
@@ -946,7 +940,7 @@ function(package, lib.loc = NULL)
     if(length(package) != 1)
         stop(paste("argument", sQuote("package"),
                    "must be of length 1"))
-    
+
     dir <- .find.package(package, lib.loc)
     if(!fileTest("-d", file.path(dir, "man")))
        stop(paste("directory", sQuote(dir),
@@ -956,8 +950,7 @@ function(package, lib.loc = NULL)
     ## Load package into codeEnv.
     if(!isBase)
         .loadPackageQuietly(package, lib.loc)
-    codeEnv <-
-        as.environment(paste("package", package, sep = ":"))
+    codeEnv <- .packageEnv(package)
 
     ## Could check here whether the package has any variables or data
     ## sets (and return if not).
@@ -1058,7 +1051,7 @@ function(package, lib.loc = NULL)
         if(!is.data.frame(al)) next
         ## Now we should be ready:
         dataFramesChecked <- c(dataFramesChecked, aliases[i])
-        varNamesInCode <- sort(variable.names(al))
+        varNamesInCode <- sort(names(al))
         if(!identical(varNamesInCode, varNamesInDocs))
             badRdObjects[[dbNames[i]]] <-
                 list(name = aliases[i],
@@ -1146,9 +1139,9 @@ function(package, dir, lib.loc = NULL)
     }
     ind <- sapply(dbKeywords,
                   function(x) any(grep("^ *internal *$", x)))
-    if(isBase)
+    if(isBase || basename(dir) == "graphics")
         ind <- ind | dbNames %in% c("Defunct", "Deprecated", "Devices")
-    if(any(!ind)) {
+    if(any(ind)) {# exclude them
         db <- db[!ind]
         dbNames <- dbNames[!ind]
         dbAliases <- dbAliases[!ind]
@@ -1168,8 +1161,8 @@ function(package, dir, lib.loc = NULL)
                    txt <- gsub(methodRE, "\"\\\\\\1\"", txt)
                    .parseTextAsMuchAsPossible(txt)
                })
-    ind <- sapply(dbUsages,
-                  function(x) !is.null(attr(x, "badLines")))
+    ind <- as.logical(sapply(dbUsages,
+                             function(x) !is.null(attr(x, "badLines"))))
     badLines <- sapply(dbUsages[ind], attr, "badLines")
     dbArgumentNames <- lapply(db, .getRdArgumentNames)
 
@@ -1238,15 +1231,25 @@ function(package, dir, lib.loc = NULL)
             argNamesInArgList[!argNamesInArgList %in% argNamesInUsage]
         if(length(argNamesInArgListMissingInUsage) > 0) {
             usageText <- dbUsageTexts[[docObj]]
+            badArgs <- character()
             ## In the case of 'over-documented' arguments, try to be
-            ## defensive and reduce to arguments that do not match the
-            ## \usage text (modulo word boundaries).
+            ## defensive and reduce to arguments which either are not
+            ## syntactically valid names of do not match the \usage text
+            ## (modulo word boundaries).
+            bad <- regexpr("^[[:alnum:]._]+$",
+                           argNamesInArgListMissingInUsage) == -1
+            if(any(bad)) {
+                badArgs <- argNamesInArgListMissingInUsage[bad]
+                argNamesInArgListMissingInUsage <-
+                    argNamesInArgListMissingInUsage[!bad]
+            }
             bad <- sapply(argNamesInArgListMissingInUsage,
                           function(x)
                           regexpr(paste("\\b", x, "\\b", sep = ""),
                                   usageText) == -1)
             argNamesInArgListMissingInUsage <-
-                argNamesInArgListMissingInUsage[bad]
+                c(badArgs,
+                  argNamesInArgListMissingInUsage[as.logical(bad)])
             ## Note that the fact that we can parse the raw \usage does
             ## not imply that over-documented arguments are a problem:
             ## this works for Rd files documenting e.g. shell utilities
@@ -1363,8 +1366,7 @@ function(package, dir, lib.loc = NULL)
         ## Load package into codeEnv.
         if(!isBase)
             .loadPackageQuietly(package, lib.loc)
-        codeEnv <-
-            as.environment(paste("package", package, sep = ":"))
+        codeEnv <- .packageEnv(package)
 
         objectsInCode <- objects(envir = codeEnv, all.names = TRUE)
 
@@ -1374,10 +1376,8 @@ function(package, dir, lib.loc = NULL)
             ## Determine names of declared S3 methods and associated S3
             ## generics.
             nsS3methodsList <- getNamespaceInfo(package, "S3methods")
-            nsS3generics <-
-                as.character(sapply(nsS3methodsList, "[[", 1))
-            nsS3methods <-
-                as.character(sapply(nsS3methodsList, "[[", 3))
+            nsS3generics <- nsS3methodsList[, 1]
+            nsS3methods <- nsS3methodsList[, 3]
         }
     }
     else {
@@ -1402,8 +1402,9 @@ function(package, dir, lib.loc = NULL)
         ## Collect code into codeFile.
         codeFile <- tempfile("Rcode")
         on.exit(unlink(codeFile))
-        file.create(codeFile)
-        file.append(codeFile, listFilesWithType(codeDir, "code"))
+        if(!file.create(codeFile)) stop("unable to create ", codeFile)
+        if(!all(file.append(codeFile, listFilesWithType(codeDir, "code"))))
+           stop("unable to write code files")
 
         ## Read code from codeFile into codeEnv.
         codeEnv <- new.env()
@@ -1428,10 +1429,8 @@ function(package, dir, lib.loc = NULL)
             ## Determine names of declared S3 methods and associated S3
             ## generics.
             nsS3methodsList <- .getNamespaceS3methodsList(nsInfo)
-            nsS3generics <-
-                as.character(sapply(nsS3methodsList, "[[", 1))
-            nsS3methods <-
-                as.character(sapply(nsS3methodsList, "[[", 3))
+            nsS3generics <- nsS3methodsList[, 1]
+            nsS3methods <- nsS3methodsList[, 3]
         }
 
     }
@@ -1467,7 +1466,7 @@ function(package, dir, lib.loc = NULL)
     allGenerics <-
         c(allGenerics,
           .getInternalS3generics(),
-          c("Math", "Ops", "Summary"))
+          .getS3groupGenerics())
 
     ## Find all methods in the given package for the generic functions
     ## determined above.  Store as a list indexed by the names of the
@@ -1604,20 +1603,23 @@ checkFF <-
 function(package, dir, file, lib.loc = NULL,
          verbose = getOption("verbose"))
 {
-    useSaveImage <- FALSE
-
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
             stop(paste("argument", sQuote("package"),
                        "must be of length 1"))
-        ## Using package installed in @code{dir} ...
         dir <- .find.package(package, lib.loc)
-        file <- file.path(dir, "R", "all.rda")
-        if(file.exists(file))
-            useSaveImage <- TRUE
+        ## Using package installed in @code{dir} ...
+        codeDir <- file.path(dir, "R")
+        if(!fileTest("-d", codeDir))
+            stop(paste("directory", sQuote(dir),
+                       "does not contain R code"))
+        if(basename(dir) != "base")
+            .loadPackageQuietly(package, dirname(dir))
+        codeEnv <- if(packageHasNamespace(package, dirname(dir)))
+            asNamespace(package)
         else
-            file <- file.path(dir, "R", package)
+            .packageEnv(package)
     }
     else if(!missing(dir)) {
         ## Using sources from directory @code{dir} ...
@@ -1631,15 +1633,16 @@ function(package, dir, file, lib.loc = NULL,
                        "does not contain R code"))
         file <- tempfile()
         on.exit(unlink(file))
-        file.create(file)
-        file.append(file, listFilesWithType(codeDir, "code"))
+        if(!file.create(file)) stop("unable to create ", file)
+        if(!all(file.append(file, listFilesWithType(codeDir, "code"))))
+            stop("unable to write code files")
     }
     else if(missing(file)) {
         stop(paste("you must specify ", sQuote("package"), ", ",
                    sQuote("dir"), " or ", sQuote("file"), sep = ""))
     }
 
-    if(!fileTest("-f", file))
+    if(missing(package) && !fileTest("-f", file))
         stop(paste("file", sQuote(file), "does not exist"))
 
     ## <FIXME>
@@ -1681,26 +1684,7 @@ function(package, dir, file, lib.loc = NULL,
         }
     }
 
-    if(useSaveImage) {
-        if(verbose) writeLines("loading saved image ...")
-        codeEnv <- new.env()
-        ## <FIXME>
-        ## If we 'just' load a saved image of the code in a package, the
-        ## packages required by the code are not attached automatically.
-        ## Hence, we repeat the part of the default startup code (the
-        ## copy of 'share/R/firstlib.R') which attempts to take care of
-        ## this via '.required' in the saved image.  Long term, it seems
-        ## that we should always *load* a given package ...
-        .tryQuietly({
-            load(file, envir = codeEnv)
-            if(exists(".required", envir = codeEnv, inherits = FALSE)) {
-                required <- get(".required", envir = codeEnv)
-                for(pkg in required)
-                    require(pkg, quietly = TRUE, character.only = TRUE,
-                            save = FALSE)
-            }
-        })
-        ## </FIXME>
+    if(!missing(package)) {
         exprs <- lapply(ls(envir = codeEnv, all.names = TRUE),
                         function(f) {
                             f <- get(f, envir = codeEnv)
@@ -1779,8 +1763,7 @@ function(package, dir, lib.loc = NULL)
         ## Load package into codeEnv.
         if(!isBase)
             .loadPackageQuietly(package, lib.loc)
-        codeEnv <-
-            as.environment(paste("package", package, sep = ":"))
+        codeEnv <- .packageEnv(package)
 
         objectsInCode <- objects(envir = codeEnv, all.names = TRUE)
 
@@ -1790,10 +1773,8 @@ function(package, dir, lib.loc = NULL)
             ## Determine names of declared S3 methods and associated S3
             ## generics.
             nsS3methodsList <- getNamespaceInfo(package, "S3methods")
-            nsS3generics <-
-                as.character(sapply(nsS3methodsList, "[[", 1))
-            nsS3methods <-
-                as.character(sapply(nsS3methodsList, "[[", 3))
+            nsS3generics <- nsS3methodsList[, 1]
+            nsS3methods <- nsS3methodsList[, 3]
             ## Determine unexported but declared S3 methods.
             S3reg <- nsS3methods[! nsS3methods %in% objectsInCode]
         }
@@ -1816,8 +1797,9 @@ function(package, dir, lib.loc = NULL)
         ## Collect code into codeFile.
         codeFile <- tempfile("Rcode")
         on.exit(unlink(codeFile))
-        file.create(codeFile)
-        file.append(codeFile, listFilesWithType(codeDir, "code"))
+        if(!file.create(codeFile)) stop("unable to create ", codeFile)
+        if(!all(file.append(codeFile, listFilesWithType(codeDir, "code"))))
+            stop("unable to write code files")
 
         ## Read code from codeFile into codeEnv.
         codeEnv <- new.env()
@@ -1842,10 +1824,8 @@ function(package, dir, lib.loc = NULL)
             ## Determine names of declared S3 methods and associated S3
             ## generics.
             nsS3methodsList <- .getNamespaceS3methodsList(nsInfo)
-            nsS3generics <-
-                as.character(sapply(nsS3methodsList, "[[", 1))
-            nsS3methods <-
-                as.character(sapply(nsS3methodsList, "[[", 3))
+            nsS3generics <- nsS3methodsList[, 1]
+            nsS3methods <- nsS3methodsList[, 3]
         }
 
     }
@@ -1858,6 +1838,7 @@ function(package, dir, lib.loc = NULL)
                       == TRUE]
 
     methodsStopList <- .makeS3MethodsStopList(basename(dir))
+    S3groupGenerics <- .getS3groupGenerics()
 
     checkArgs <- function(g, m, env) {
         ## Do the arguments of method m (in codeEnv) 'extend' those of
@@ -1871,8 +1852,10 @@ function(package, dir, lib.loc = NULL)
         ogArgs <- gArgs
         gm <- if(m %in% S3reg) {
             ## See registerS3method() in namespace.R.
-            defenv <- if (typeof(genfun) == "closure") environment(genfun)
-            else .BaseNamespaceEnv
+            defenv <-
+                if (g %in% S3groupGenerics) .BaseNamespaceEnv
+                else if (typeof(genfun) == "closure") environment(genfun)
+                else .BaseNamespaceEnv
             S3Table <- get(".__S3MethodsTable__.", envir = defenv)
             if(!exists(m, envir = S3Table)) {
                 warning(paste("declared S3 method", sQuote(m),
@@ -1921,12 +1904,59 @@ function(package, dir, lib.loc = NULL)
     assign("Summary",
            function(x, ...) UseMethod("Summary"),
            envir = S3groupGenericsEnv)
+    assign("Complex",
+           function(x, ...) UseMethod("Complex"),
+           envir = S3groupGenericsEnv)
 
     ## Now determine the 'bad' methods in the function objects of the
     ## package.
     badMethods <- list()
     envList <- list(codeEnv, S3groupGenericsEnv)
-    if(!isBase) envList <- c(envList, list(as.environment(NULL)))
+    if(!isBase) {
+        ## <FIXME>
+        ## Look for generics in the whole of the former base.
+        ## Maybe eventually change this ...
+        ## (Note that this requires that these packages are already
+        ## attached.)
+        envList <- c(envList,
+                     list(as.environment(NULL)),
+                     list(as.environment("package:graphics")),
+                     list(as.environment("package:stats")),
+                     list(as.environment("package:utils"))
+                     )
+        ## </FIXME>
+        ## If 'package' was given, also use the loaded namespaces and
+        ## attached packages listed in the DESCRIPTION Depends field.
+        ## Not sure if this is the best approach: we could also try to
+        ## determine which namespaces/packages were made available by
+        ## loading the package (which should work at least when run from
+        ## R CMD check), or we could simply attach every package listed
+        ## as a dependency ... or perhaps do both.
+        if(!missing(package)) {
+            db <- try(read.dcf(file.path(dir, "DESCRIPTION"))[1, ],
+                      silent = TRUE)
+            if(inherits(db, "try-error"))
+                stop(paste("package directory", sQuote(dir),
+                           "has no valid DESCRIPTION file"))
+            if(!is.na(depends <- db["Depends"])) {
+                depends <- unlist(strsplit(depends, ","))
+                depends <-
+                    sub("^[[:space:]]*([[:alnum:].]+).*", "\\1", depends)
+                depends <- depends[depends != "R"]
+                ind <- depends %in% loadedNamespaces()
+                if(any(ind)) {
+                    envList <-
+                        c(envList, lapply(depends[ind], getNamespace))
+                    depends <- depends[!ind]
+                }
+                ind <- depends %in% .packages()
+                if(any(ind)) {
+                    envList <-
+                        c(envList, lapply(depends[ind], .packageEnv))
+                }
+            }
+        }
+    }
     for(env in envList) {
         ## Find all available S3 generics.
         objectsInEnv <- if(identical(env, codeEnv)) {
@@ -1970,7 +2000,11 @@ function(package, dir, lib.loc = NULL)
             }
 
             for(m in methods)
-                badMethods <- c(badMethods, checkArgs(g, m, env))
+                ## both all() and all.equal() are generic.
+                badMethods <- if(g == "all") {
+                    m1 <- m[-grep("^all\\.equal", m)]
+                    c(badMethods, if(length(m1)) checkArgs(g, m1, env))
+                } else c(badMethods, checkArgs(g, m, env))
         }
     }
 
@@ -2028,8 +2062,7 @@ function(package, dir, lib.loc = NULL)
             nsS3methodsList <- getNamespaceInfo(package, "S3methods")
         }
         else
-            codeEnv <-
-                as.environment(paste("package", package, sep = ":"))
+            codeEnv <- .packageEnv(package)
     }
 
     else {
@@ -2050,8 +2083,9 @@ function(package, dir, lib.loc = NULL)
         ## Collect code into codeFile.
         codeFile <- tempfile("Rcode")
         on.exit(unlink(codeFile))
-        file.create(codeFile)
-        file.append(codeFile, listFilesWithType(codeDir, "code"))
+        if(!file.create(codeFile)) stop("unable to create ", codeFile)
+        if(!all(file.append(codeFile, listFilesWithType(codeDir, "code"))))
+            stop("unable to write code files")
 
         ## Read code from codeFile into codeEnv.
         codeEnv <- new.env()
@@ -2074,10 +2108,8 @@ function(package, dir, lib.loc = NULL)
     replaceFuns <- character()
 
     if(hasNamespace) {
-        nsS3generics <-
-            as.character(sapply(nsS3methodsList, "[[", 1))
-        nsS3methods <-
-            as.character(sapply(nsS3methodsList, "[[", 3))
+        nsS3generics <- nsS3methodsList[, 1]
+        nsS3methods <- nsS3methodsList[, 3]
         ## S3 replacement methods from namespace registration?
         idx <- grep("<-$", nsS3generics)
         if(any(idx)) replaceFuns <- nsS3methods[idx]
@@ -2108,7 +2140,7 @@ function(package, dir, lib.loc = NULL)
             .checkLastFormalArg(f)
         }) == FALSE]
 
-    if(.isMethodsDispatchOn()) { 
+    if(.isMethodsDispatchOn()) {
         S4generics <- methods::getGenerics(codeEnv)
         ## Assume that the ones with names ending in '<-' are always
         ## replacement functions.
@@ -2273,6 +2305,99 @@ function(x, ...)
     invisible(x)
 }
 
+### * .checkPackageDepends
+
+.checkPackageDepends <-
+function(dir) {
+    
+    if(!fileTest("-d", dir))
+        stop(paste("directory", sQuote(dir), "does not exist"))
+    dir <- filePathAsAbsolute(dir)
+    
+    ## We definitely need a valid DESCRIPTION file.
+    db <- try(read.dcf(file.path(dir, "DESCRIPTION"))[1, ],
+              silent = TRUE)
+    if(inherits(db, "try-error"))
+        stop(paste("package directory", sQuote(dir),
+                   "has no valid DESCRIPTION file"))
+
+    packageName <- basename(dir)
+    ## (Should really use db["Package"], but then we need to check
+    ## whether this is really there ...)
+    if("Depends" %in% names(db)) {
+        depends <- unlist(strsplit(db["Depends"], ","))
+        depends <-
+            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", depends)
+        depends <- depends[depends != "R"]
+    }
+    else
+        depends <- character()
+    if("Suggests" %in% names(db)) {
+        suggests <- unlist(strsplit(db["Suggests"], ","))
+        suggests <-
+            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", suggests)
+    }
+    else
+        suggests <- character()
+
+    badDepends <- list()
+
+    ## Are all packages listed in Depends/Suggests installed?
+    reqs <- unique(c(depends, suggests))
+    reqs <- reqs[!reqs %in%
+                 utils::installed.packages()[ , "Package"]]
+    if(length(reqs))
+        badDepends$requiredButNotInstalled <- reqs
+
+    ## Are all vignette dependencies at least suggested or equal to
+    ## the package name?
+    vignetteDir <- file.path(dir, "inst", "doc")
+    if(fileTest("-d", vignetteDir)
+       && length(listFilesWithType(vignetteDir, "vignette"))) {
+        reqs <- .buildVignetteIndex(dir)$Depends
+        reqs <- reqs[!reqs %in% c(depends, suggests, packageName)]
+        if(length(reqs))
+            badDepends$missingVignetteDepends <- reqs
+    }
+    
+    ## Are all namespace dependencies listed as package dependencies?
+    if(fileTest("-f", file.path(dir, "NAMESPACE"))) {
+        reqs <- .getNamespacePackageDepends(dir)
+        ## <FIXME>
+        ## Not clear whether we want to require *all* namespace package
+        ## dependencies listed in DESCRIPTION, or e.g. just the ones on
+        ## non-base packages.  Do the latter for time being ...
+        basePackageNames <-
+            utils::installed.packages(priority = "base")[, "Package"]
+        reqs <- reqs[!reqs %in% c(depends, basePackageNames)]
+        ## </FIXME>
+        if(length(reqs))
+            badDepends$missingNamespaceDepends <- reqs
+    }
+
+    class(badDepends) <- "checkPackageDepends"
+    badDepends
+}
+
+print.checkPackageDepends <- function(x, ...) {
+    if(length(bad <- x$requiredButNotInstalled)) {
+        writeLines("Packages required but not available:")
+        .prettyPrint(bad)
+        writeLines("")
+    }
+    if(length(bad <- x$missingVignetteDepends)) {
+        writeLines("Vignette dependencies not required:")
+        .prettyPrint(bad)
+        writeLines("")
+    }
+    if(length(bad <- x$missingNamespaceDepends)) {
+        writeLines("Namespace dependencies not required:")
+        .prettyPrint(bad)
+        writeLines("")
+    }
+    invisible(x)
+}
+
 ### * as.alist.call
 
 as.alist.call <-
@@ -2318,7 +2443,8 @@ function(packageName)
 {
     c("<-", "=",
       if(packageName == "base")
-      c("(", "{", "function", "if", "for", "while", "repeat", "?"),
+      c("(", "{", "function", "if", "for", "while", "repeat"),
+      if(packageName == "utils") "?",
       if(packageName == "methods") "@")
 }
 
@@ -2342,6 +2468,12 @@ function(x)
      && (length(x[[2]]) > 1)
      && is.symbol(x[[3]]))
 }
+
+### * .packageEnv
+
+.packageEnv <-
+function(packageName)
+    as.environment(paste("package", packageName, sep = ":"))
 
 ### * .parseTextAsMuchAsPossible
 

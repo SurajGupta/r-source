@@ -19,9 +19,9 @@ OBJECTS_PDF = $(SOURCES_TEXI:.texi=.pdf)
 
 MAKEINFO = makeinfo
 PDFLATEX = pdflatex
-PDFTEX = pdftex
+PDFTEX = TEXINPUTS="../../share/texmf;$$TEXINPUTS"  pdftex
 LATEX = latex
-TEX = tex
+TEX = TEXINPUTS="../../share/texmf;$$TEXINPUTS" tex
 
 MAKEINDEX = makeindex
 TEXINDEX = texindex
@@ -36,7 +36,7 @@ R_RD4DVI = ae
 # set the next to `ae' to omit the hyperlinks
 R_RD4PDF = ae,hyper
 
-R_PKGS_refman = base methods tools grid
+R_PKGS_refman = base graphics grid methods stats tools utils
 refman_TEXINPUTS = $(R_PKGS_refman:=-pkg.tex)
 refman_DEPENDENCIES = version.tex $(top_srcdir)/share/texmf/Rd.sty
 
@@ -57,10 +57,10 @@ all: pdf
 	$(TEX) $<
 
 .texi.html:
-	$(MAKEINFO) --no-split --html $< -o $@ || touch $@
+	$(MAKEINFO) -D UseExternalXrefs --no-split --html $< -o $@ || touch $@
 
 .texi.info:
-	$(MAKEINFO)  -D UseExternalXrefs $<
+	$(MAKEINFO) -D UseExternalXrefs $<
 
 .texi.pdf:
 	$(PDFTEX) $<
@@ -131,10 +131,10 @@ else
 endif
 
 R-admin.dvi: R-admin.texi $(texiincludes) 
-	$(TEX) R-admin.texi
-	$(TEXINDEX) R-admin.cp R-admin.fn R-admin.vr
-	$(TEX) R-admin.texi
-	$(TEX) R-admin.texi
+	TEXINPUTS="../../share/texmf:$$TEXINPUTS" $(TEX) R-admin.texi
+	TEXINPUTS="../../share/texmf:$$TEXINPUTS" $(TEXINDEX) R-admin.cp R-admin.fn R-admin.vr
+	TEXINPUTS="../../share/texmf:$$TEXINPUTS" $(TEX) R-admin.texi
+TEXINPUTS="../../share/texmf:$$TEXINPUTS" 	$(TEX) R-admin.texi
 
 R-data.dvi: R-data.texi $(texiincludes) 
 	$(TEX) R-data.texi

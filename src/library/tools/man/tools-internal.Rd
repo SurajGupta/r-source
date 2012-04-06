@@ -5,23 +5,9 @@
 % \alias{.makeFileExts}
 % \alias{.makeS3MethodsStopList}
 % \alias{.sourceAssignments}
-% \alias{SweaveParseOptions}
-% \alias{SweaveHooks}
-% \alias{RweaveLatexRuncode}
-% \alias{RweaveLatexWritedoc}
-% \alias{RweaveLatexFinish}
-\alias{RweaveLatexOptions}
-% \alias{RweaveChunkPrefix}
-% \alias{RweaveEvalWithOpt}
-% \alias{RtangleRuncode}
-\alias{RtangleWritedoc}
-% \alias{RtangleFinish}
-% \alias{SweaveGetSyntax}
-% \alias{Rdpp}
-% \alias{Rdinfo}
 % \alias{Rdcontents}
 % \alias{Rd2contents}
-\alias{.installPacakgeCodeFiles}
+\alias{.installPackageCodeFiles}
 \alias{.installPackageDescription}
 \alias{.installPackageIndices}
 % \alias{.installPackageRdIndices}
@@ -33,6 +19,7 @@
 % \alias{.buildVignetteIndex}
 % \alias{.buildDemoIndex}
 % \alias{.buildDataIndex}
+\alias{.installPackageNamespaceInfo}
 \alias{.checkVignetteIndex}
 \alias{print.checkVignetteIndex}
 \alias{.checkDemoIndex}
@@ -42,9 +29,6 @@
   Internal tools functions.
 }
 \usage{
-RweaveLatexOptions(options)
-RtangleWritedoc(object, chunk)
-
 % .isS3Generic(fname, envir)
 % .loadPackageQuietly(package, lib.loc)
 % .makeFileExts(type)
@@ -67,6 +51,7 @@ RtangleWritedoc(object, chunk)
 % .installPackageRdIndices(dir, outDir)
 % .installPackageVignetteIndex(dir, outDir)
 % .installPackageDemoIndex(dir, outDir)
+.installPackageNamespaceInfo(dir, outDir)
 .checkDemoIndex(demoDir)
 .checkVignetteIndex(vignetteDir)
 }

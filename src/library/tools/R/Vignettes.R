@@ -15,7 +15,7 @@ function(package, dir, lib.loc = NULL,
     wd <- getwd()
     if(workdir=="tmp"){
         tmpd <- tempfile("Sweave")
-        dir.create(tmpd)
+        if (!dir.create(tmpd)) stop("Unable to create temp directory ",tmpd)
         setwd(tmpd)
     }
     else{
@@ -141,11 +141,11 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
         bf <- sub("\\..[^\\.]*$", "", f)
         bft <- paste(bf, ".tex", sep="")
         pdfs <- c(pdfs, paste(bf, ".pdf", sep=""))
-        
+
         yy <- try(Sweave(f, quiet=quiet))
         if(inherits(yy, "try-error")) stop(yy)
         if(!have.makefile){
-            texi2dvi(file=bft, pdf=TRUE, clean=TRUE, quiet=quiet)
+            texi2dvi(file=bft, pdf=TRUE, clean=FALSE, quiet=quiet)
         }
     }
 
@@ -156,12 +156,45 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
     else {
         f <- list.files()
         f <- f[!(f %in% c(pdfs, origfiles))]
-        unlink(f)
+        file.remove(f)
     }
     invisible(NULL)
 }
 
 ### * .buildVignetteIndex
+
+
+vignetteMetaRE <- function(tag)
+    paste("[[:space:]]*%+[[:space:]]*\\\\Vignette", tag,
+          "\{([^}]*)\}", sep = "")
+
+vignetteInfo <- function(file) {
+    lines <- readLines(file)
+    ## \VignetteIndexEntry
+    vignetteIndexEntryRE <- vignetteMetaRE("IndexEntry")
+    title <- grep(vignetteIndexEntryRE, lines, value = TRUE)
+    title <- c(gsub(vignetteIndexEntryRE, "\\1", title), "")[1]
+    ## \VignetteDepends
+    vignetteDependsRE <- vignetteMetaRE("Depends")
+    depends <- grep(vignetteDependsRE, lines, value = TRUE)
+    depends <- gsub(vignetteDependsRE, "\\1", depends)
+    if(length(depends) > 0)
+        depends <- unlist(strsplit(depends[1], ", *"))
+    ## \VignetteKeyword and old-style \VignetteKeywords
+    vignetteKeywordsRE <- vignetteMetaRE("Keywords")
+    keywords <- grep(vignetteKeywordsRE, lines, value = TRUE)
+    keywords <- gsub(vignetteKeywordsRE, "\\1", keywords)
+    keywords <- if(length(keywords) == 0) {
+        ## No old-style \VignetteKeywords entries found.
+        vignetteKeywordRE <- vignetteMetaRE("Keyword")
+        keywords <- grep(vignetteKeywordRE, lines, value = TRUE)
+        gsub(vignetteKeywordRE, "\\1", keywords)
+    }
+    else
+        unlist(strsplit(keywords[1], ", *"))
+    list(file = file, title = title, depends = depends,
+         keywords = keywords)
+}
 
 .buildVignetteIndex <-
 function(vignetteDir)
@@ -170,38 +203,6 @@ function(vignetteDir)
         stop(paste("directory", sQuote(vignetteDir), "does not exist"))
     vignetteFiles <-
         path.expand(listFilesWithType(vignetteDir, "vignette"))
-
-    vignetteMetaRE <- function(tag)
-        paste("[[:space:]]*%+[[:space:]]*\\\\Vignette", tag,
-              "\{([^}]*)\}", sep = "")
-
-    vignetteInfo <- function(file) {
-        lines <- readLines(file)
-        ## \VignetteIndexEntry
-        vignetteIndexEntryRE <- vignetteMetaRE("IndexEntry")
-        title <- grep(vignetteIndexEntryRE, lines, value = TRUE)
-        title <- c(gsub(vignetteIndexEntryRE, "\\1", title), "")[1]
-        ## \VignetteDepends
-        vignetteDependsRE <- vignetteMetaRE("Depends")
-        depends <- grep(vignetteDependsRE, lines, value = TRUE)
-        depends <- gsub(vignetteDependsRE, "\\1", depends)
-        if(length(depends) > 0)
-            depends <- unlist(strsplit(depends[1], ", *"))
-        ## \VignetteKeyword and old-style \VignetteKeywords
-        vignetteKeywordsRE <- vignetteMetaRE("Keywords")
-        keywords <- grep(vignetteKeywordsRE, lines, value = TRUE)
-        keywords <- gsub(vignetteKeywordsRE, "\\1", keywords)
-        keywords <- if(length(keywords) == 0) {
-            ## No old-style \VignetteKeywords entries found.
-            vignetteKeywordRE <- vignetteMetaRE("Keyword")
-            keywords <- grep(vignetteKeywordRE, lines, value = TRUE)
-            gsub(vignetteKeywordRE, "\\1", keywords)
-        }
-        else
-            unlist(strsplit(keywords[1], ", *"))
-        list(file = file, title = title, depends = depends,
-             keywords = keywords)
-    }
 
     if(length(vignetteFiles) == 0)
         return(data.frame(File = I(character(0)),
@@ -304,10 +305,44 @@ function(x, ...)
     html <- c(html, "</body></html>")
     writeLines(html, con=con)
 }
-                            
-                  
-              
-              
+
+vignetteDepends <- function(vignette, recursive=TRUE, reduce=TRUE,
+                            local=TRUE, lib.loc=NULL) {
+    if (length(vignette) != 1)
+        stop("Argument 'vignette' must be of length 1")
+    if (!file.exists(vignette))
+        stop("File: ", vignette, " not found.")
+
+    vigDeps <- vignetteInfo(vignette)$depends
+
+    depMtrx <- getVigDepMtrx(vigDeps)
+    instPkgs <- utils::installed.packages(lib.loc=lib.loc)
+    getDepList(depMtrx, instPkgs, recursive, local, reduce,
+               lib.loc)
+}
+
+getVigDepMtrx <- function(vigDeps) {
+    ## Taken almost directly out of 'package.dependencies'
+    if (length(vigDeps) > 0) {
+        z <- unlist(strsplit(vigDeps, ",", fixed=TRUE))
+        z <- sub("^[[:space:]]*(.*)", "\\1", z)
+        z <- sub("(.*)[[:space:]]*$", "\\1", z)
+        pat <- "^([^\\([:space:]]+)[[:space:]]*\\(([^\\)]+)\\).*"
+        depMtrx <- cbind(sub(pat, "\\1", z), sub(pat, "\\2",
+                                                 z), NA)
+        noversion <- depMtrx[, 1] == depMtrx[, 2]
+        depMtrx[noversion, 2] <- NA
+        pat <- "[[:space:]]*([[<>=]+)[[:space:]]+(.*)"
+        depMtrx[!noversion, 2:3] <- c(sub(pat, "\\1", depMtrx[!noversion,
+                                                              2]), sub(pat, "\\2", depMtrx[!noversion, 2]))
+        depMtrx
+    }
+    else
+        NA
+}
+
+
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

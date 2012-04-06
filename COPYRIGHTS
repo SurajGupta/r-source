@@ -57,6 +57,7 @@ afm/*l.afm
 	Copyright 1999 by (URW)++ Design & Development
 
 afm/CM_*.afm
+afm/cm*.afm
 
 	are derived from afms which are copyright by the American
 	Mathematical Society, but `the AMS does require that the
@@ -89,8 +90,8 @@ src/library/base/R/expand.grid.R
 src/library/base/R/predict.glm.R
 src/library/base/R/update.R
 src/library/base/*/max.col.R*
-src/library/mva/R/biplot.R
-src/library/mva/R/princomp-add.R
+src/library/stats/R/biplot.R
+src/library/stats/R/princomp-add.R
 src/appl/bandwidths.c
 src/appl/maxcol.c
 
@@ -98,10 +99,10 @@ src/appl/maxcol.c
 
 
 src/appl/interv.c : moved to API from code originally in
-		    src/library/modreg/src/bvalue.f, see the following
-src/library/modreg:
+		    src/library/stats/src/bvalue.f, see the following
+src/library/stats:
 
-	See the file src/library/modreg/COPYRIGHTS for details
+	See the file src/library/stats/COPYRIGHTS.modreg for details
 
       src/loessc.c
       src/loessf.f
@@ -128,11 +129,11 @@ src/unix/rotated.[ch]
 
 
 src/appl/loglin.c
-src/library/ctest/src/chisqsim.c
-src/library/ctest/src/nscor.c
-src/library/ctest/src/prho.c
-src/library/ctest/src/swilk.c
-src/library/mva/src/kmns.f
+src/library/stats/src/chisqsim.c
+src/library/stats/src/nscor.c
+src/library/stats/src/prho.c
+src/library/stats/src/swilk.c
+src/library/stats/src/kmns.f
 src/library/ts/src/starma.c
 src/nmath/pgamma.c
 src/nmath/pnbeta.c
@@ -149,16 +150,15 @@ src/nmath/sunif.c
 src/nmath/stirlerr.c
 src/nmath/dbinom.c
 src/nmath/dpois.c
-  are now partly based on Clive Loader's (1999) work, and are
+  are now partly based on Clive Loader's (1999) work,
   (C) 1999-2000 Lucent Technologies, Bell Laboratories.
 
-src/gnome/devGNOME.c
-src/gnome/devGTK.c
-src/gnome/gdkrotated.c
-src/gnome/gnome-find-dialog.c
-src/gnome/gtkconsole.c
-src/gnome/system-*.c
-src/gnome/terminal*.c
+src/modules/gnome/devGNOME.c
+src/modules/gnome/gdkrotated.c
+src/modules/gnome/gnome-find-dialog.c
+src/modules/gnome/gtkconsole.c
+src/modules/gnome/system-*.c
+src/modules/gnome/terminal*.c
 
 	Copyright (C) 1998-1999	  Lyndon Drake
 		and the R Development Core Team
@@ -219,7 +219,7 @@ src/extra/xdr/*
 
 src/extra/zlib/README, *.c, *.h
 
-  Taken from zlib-1.1.4. (C) 1995-2002 Jean-loup Gailly and Mark Adler
+  Taken from zlib-1.2.1 (C) 1995-2003 Jean-loup Gailly and Mark Adler
   See src/extra/zlib/README for the licence.
 
 
@@ -252,7 +252,7 @@ src/extra/pcre/pcre.c
 src/extra/pcre/pcre.h
 src/extra/pcre/study.c
 
-   Copyright (c) 1997-2001 University of Cambridge
+   Copyright (c) 1997-2003 University of Cambridge
 
 
 src/extra/bzip2/LICENSE

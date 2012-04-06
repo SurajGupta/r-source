@@ -817,34 +817,40 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (v = CDR(varlist), i = 0; v != R_NilValue; v = CDR(v))
 	SET_STRING_ELT(varnames, i++, STRING_ELT(deparse1line(CAR(v), 0), 0));
     
-    /* Step 2b: Remove any offset(s) */
+    /* Step 2b: Find and remove any offset(s) */
 
+    /* first see if any of the variables are offsets */
     for (l = response, k = 0; l < nvar; l++)
 	if (!strncmp(CHAR(STRING_ELT(varnames, l)), "offset(", 7)) k++;
-    SETCAR(a, v = allocVector(INTSXP, k));
     if (k > 0) {
+	Rboolean foundOne = FALSE; /* has there been a non-offset term? */
+	/* allocate the "offsets" attribute */
+	SETCAR(a, v = allocVector(INTSXP, k));
 	for (l = response, k = 0; l < nvar; l++)
 	    if (!strncmp(CHAR(STRING_ELT(varnames, l)), "offset(", 7))
 		INTEGER(v)[k++] = l + 1;
-	call = formula; /* call is to be the previous value */
-	for (l = response, k = 0; l < length(formula)+response; l++) {
-	    SEXP thisterm;
+	SET_TAG(a, install("offset"));
+	a = CDR(a);
+	/* now remove offset terms from the formula */
+	call = formula; /* call is to be the previous term once one is found */
+	while (1) {
+	    SEXP thisterm = foundOne ? CDR(call) : call;
 	    Rboolean have_offset = FALSE;
-	    thisterm = (l > response) ? CDR(call): call;
-	    for (i = 1; i <= nvar; i++) {
+	    if(length(thisterm) == 0) break;
+	    for (i = 1; i <= nvar; i++)
 		if (GetBit(CAR(thisterm), i) &&
 		    !strncmp(CHAR(STRING_ELT(varnames, i-1)), "offset(", 7)) {
 		    have_offset = TRUE;
 		    break;
 		}
-	    }
 	    if (have_offset) {
-		if (l == response) call = formula = CDR(formula);
-		else SETCDR(call, CDR(CDR(call)));
-	    } else if (l > response) call = CDR(call);
+		if (!foundOne) call = formula = CDR(formula);
+		else SETCDR(call, CDR(thisterm));
+	    } else {
+		if (foundOne) call = CDR(call);
+		foundOne = TRUE;
+	    }
 	}
-	SET_TAG(a, install("offset"));
-	a = CDR(a);
     }
     nterm = length(formula);
 
@@ -983,11 +989,13 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
        the framenames joined by + */
 
     if (haveDot && LENGTH(framenames)) {
-	PROTECT(rhs = install(CHAR(STRING_ELT(framenames, 0))));
+	PROTECT_INDEX ind;
+	PROTECT_WITH_INDEX(rhs = install(CHAR(STRING_ELT(framenames, 0))), 
+			   &ind);
 	for (i = 1; i < LENGTH(framenames); i++) {
-	    UNPROTECT(1);
-	    PROTECT(rhs = lang3(plusSymbol, rhs, 
-				install(CHAR(STRING_ELT(framenames, i)))));
+	    REPROTECT(rhs = lang3(plusSymbol, rhs, 
+				  install(CHAR(STRING_ELT(framenames, i)))),
+		      ind);
 	}
 	if (!isNull(CADDR(ans)))
 	    SETCADDR(ans, ExpandDots(CADDR(ans), rhs));
@@ -1383,9 +1391,9 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     PROTECT(ans);
 
-    /* Finally, tack on a terms attribute */
-
-    setAttrib(ans, install("terms"), terms);
+    /* Finally, tack on a terms attribute
+       Now done at R level.
+       setAttrib(ans, install("terms"), terms); */
     UNPROTECT(1);
     return ans;
 }
@@ -1604,6 +1612,8 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    INTEGER(columns)[i] = ncols(var_i);
 	}
 	else if (isLogical(var_i)) {
+	    /* currently this cannot happen as R code turns 
+	       logical into factor when setting contrasts */ 
 	    LOGICAL(ordered)[i] = 0;
 	    INTEGER(nlevs)[i] = 2;
 	    INTEGER(columns)[i] = ncols(var_i);

@@ -32,24 +32,24 @@ static void get_locale_strings(void);
 #include <limits.h>
 #include <string.h>*/
 
+#ifdef HAVE_STRINGS_H
+#include <strings.h>  /* for strncasecmp */
+#endif
+
 #define match_char(ch1, ch2) if (ch1 != ch2) return NULL
 
-#ifndef Macintosh
+/* we guarantee to have strncasecmp in R */
 #if defined __GNUC__ && __GNUC__ >= 2
 # define match_string(cs1, s2) \
-  ({ size_t len = strlen (cs1);						      \
+  (__extension__ ({ size_t len = strlen (cs1);						      \
      int result = strncasecmp ((cs1), (s2), len) == 0;			      \
      if (result) (s2) += len;						      \
-     result; })
+     result; }))
 #else
 /* Oh come on.  Get a reasonable compiler.  */
 # define match_string(cs1, s2) \
   (strncasecmp ((cs1), (s2), strlen (cs1)) ? 0 : ((s2) += strlen (cs1), 1))
 #endif
-#else
-# define match_string(cs1, s2) \
-  (strncmp ((cs1), (s2), strlen (cs1)) ? 0 : ((s2) += strlen (cs1), 1))
-#endif /* mac */
 
 /* We intentionally do not use isdigit() for testing because this will
    lead to problems with the wide character version.  */
@@ -64,7 +64,8 @@ static void get_locale_strings(void);
     do {								      \
       val *= 10;							      \
       val += *rp++ - '0';						      \
-    } while (--__n > 0 && val * 10 <= to && *rp >= '0' && *rp <= '9');	      \
+/*  } while (--__n > 0 && val * 10 <= to && *rp >= '0' && *rp <= '9');*/      \
+    } while (--__n > 0 && *rp >= '0' && *rp <= '9');	      \
     if (val < from || val > to)						      \
       return NULL;							      \
   } while (0)
@@ -75,7 +76,9 @@ static void get_locale_strings(void);
   (*(new_fmt) != '\0'							      \
    && (rp = strptime_internal (rp, (new_fmt), tm, decided)) != NULL)
 
-/* This version: may overwrite these with versions for the locale */
+/* This version: may overwrite these with versions for the locale,
+ * hence the extra length of the fields
+ */
 static char weekday_name[][20] =
 {
     "Sunday", "Monday", "Tuesday", "Wednesday",
@@ -157,11 +160,14 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
     int have_wday, want_xday;
     int have_yday;
     int have_mon, have_mday;
+    int have_uweek, have_wweek;
+    int week_no = 0; /* -Wall */
 
     have_I = is_pm = 0;
     century = -1;
     want_century = 0;
     have_wday = want_xday = have_yday = have_mon = have_mday = 0;
+    have_uweek = have_wweek = 0;
 
     while (*fmt != '\0')
     {
@@ -176,7 +182,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	}
 
 	/* Any character but `%' must be matched by the same character
-	   in the iput string.  */
+	   in the input string.  */
 	if (*fmt != '%')
 	{
 	    match_char (*fmt++, *rp++);
@@ -274,6 +280,8 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	  tm->tm_hour = val;
 	  have_I = 0;
 	  break;
+	case 'l':
+	  /* Match hour in 12-hour clock.  GNU extension.  */
 	case 'I':
 	  /* Match hour in 12-hour clock.  */
 	  get_number (1, 12, 2);
@@ -306,11 +314,12 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	  break;
 	case 'p':
 	  /* Match locale's equivalent of AM/PM.  */
-	  if (!match_string (am_pm[0], rp))
+	  if (!match_string (am_pm[0], rp)) {
 	    if (match_string (am_pm[1], rp))
 	      is_pm = 1;
 	    else
-	      return NULL;
+		return NULL;
+	  }
 	  break;
 	case 'r':
 	  if (!recursive (HERE_T_FMT_AMPM))
@@ -372,8 +381,16 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    while (*rp >= '0' && *rp <= '9');
 	    break;
 	case 'U':
-	case 'V':
+	  get_number (0, 53, 2);
+	  week_no = val;
+	  have_uweek = 1;
+	  break;
 	case 'W':
+	  get_number (0, 53, 2);
+	  week_no = val;
+	  have_wweek = 1;
+	  break;
+	case 'V':
 	    get_number (0, 53, 2);
 	    /* XXX This cannot determine any field in TM without some
 	       information.  */
@@ -435,7 +452,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 		/* Match hour in 12-hour clock using alternate numeric
 		   symbols.  */
 		get_alt_number (1, 12, 2);
-		tm->tm_hour = val - 1;
+		tm->tm_hour = val % 12;
 		have_I = 1;
 		break;
 	    case 'm':
@@ -456,8 +473,16 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 		tm->tm_sec = val;
 		break;
 	    case 'U':
-	    case 'V':
+	      get_alt_number (0, 53, 2);
+	      week_no = val;
+	      have_uweek = 1;
+	      break;
 	    case 'W':
+	      get_alt_number (0, 53, 2);
+	      week_no = val;
+	      have_wweek = 1;
+	      break;
+	    case 'V':
 		get_alt_number (0, 53, 2);
 		/* XXX This cannot determine any field in TM without
 		   further information.  */
@@ -497,19 +522,56 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 
     if (want_xday && !have_wday) {
 	if ( !(have_mon && have_mday) && have_yday)  {
-	    /* we don't have tm_mon and/or tm_mday, compute them */
+	    /* We don't have tm_mon and/or tm_mday, compute them. */
 	    int t_mon = 0;
 	    while (__mon_yday[__isleap(1900 + tm->tm_year)][t_mon] <= tm->tm_yday)
 		t_mon++;
 	    if (!have_mon)
 		tm->tm_mon = t_mon - 1;
 	    if (!have_mday)
-		tm->tm_mday = tm->tm_yday - __mon_yday[__isleap(1900 + tm->tm_year)][t_mon - 1] + 1;
+		tm->tm_mday = (tm->tm_yday - __mon_yday[__isleap(1900 + tm->tm_year)][t_mon - 1] + 1);
 	}
 	day_of_the_week (tm);
     }
+
     if (want_xday && !have_yday)
 	day_of_the_year (tm);
+
+  if ((have_uweek || have_wweek) && have_wday) {
+      int save_wday = tm->tm_wday;
+      int save_mday = tm->tm_mday;
+      int save_mon = tm->tm_mon;
+      int w_offset = have_uweek ? 0 : 1;
+
+      tm->tm_mday = 1;
+      tm->tm_mon = 0;
+      day_of_the_week (tm);
+      if (have_mday)
+	  tm->tm_mday = save_mday;
+      if (have_mon)
+	  tm->tm_mon = save_mon;
+
+      if (!have_yday)
+	  tm->tm_yday = ((7 - (tm->tm_wday - w_offset)) % 7
+			 + (week_no - 1) *7
+			 + save_wday - w_offset);
+
+      if (!have_mday || !have_mon)
+      {
+	  int t_mon = 0;
+	  while (__mon_yday[__isleap(1900 + tm->tm_year)][t_mon]
+		 <= tm->tm_yday)
+	      t_mon++;
+	  if (!have_mon)
+	      tm->tm_mon = t_mon - 1;
+	  if (!have_mday)
+	      tm->tm_mday =
+		  (tm->tm_yday
+		   - __mon_yday[__isleap(1900 + tm->tm_year)][t_mon - 1] + 1);
+      }
+
+      tm->tm_wday = save_wday;
+  }
 
     return (char *) rp;
 }

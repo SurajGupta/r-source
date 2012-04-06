@@ -19,14 +19,11 @@ range(\dots, na.rm = FALSE)
   all the given arguments.
 }
 \details{
-  This is a generic function; currently, it has only a default method
-  (\code{\link{range.default}}).
-
-  It is also a member of the \code{Summary} group of functions, see
-  \code{\link[base]{Methods}}.
+  \code{range} is a generic function: methods can be defined for it
+  directly or via the \code{\link{Summary}} group generic.
 
   If \code{na.rm} is \code{FALSE}, \code{NA}
-  and \code{NaN} values in any of the arguments will cause NA values
+  and \code{NaN} values in any of the arguments will cause \code{NA} values
   to be returned, otherwise \code{NA} values are ignored.
 
   If \code{finite} is \code{TRUE}, the minimum
@@ -47,7 +44,7 @@ range(\dots, na.rm = FALSE)
   \code{\link[base]{Methods}}.
 }
 \examples{
-print(r.x <- range(rnorm(100)))
+(r.x <- range(rnorm(100)))
 diff(r.x) # the SAMPLE range
 
 x <- c(NA, 1:3, -1:1/0); x

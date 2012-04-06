@@ -123,8 +123,30 @@ n <-   20; all(abs(rErr( gamma(1:n), cumprod(c(1,1:(n-1))))) < 100*Meps)
 n <-  120; all(abs(rErr( gamma(1:n), cumprod(c(1,1:(n-1))))) < 1000*Meps)
 n <- 10000;all(abs(rErr(lgamma(1:n),cumsum(log(c(1,1:(n-1)))))) < 100*Meps)
 
-all(is.nan(gamma(0:-4))) # + warn.
+all(is.nan(gamma(0:-47))) # + warn.
 
+## choose() {and lchoose}:
+n51 <- c(196793068630200, 229591913401900, 247959266474052)
+abs(c(n51, rev(n51))- choose(51, 23:28)) <= 2
+all(choose(0:4,2) == c(0,0,1,3,6))
+## 3 to 8 units off and two NaN's in 1.8.1
+
+## psi[gamma](x) and derivatives:
+## psi == digamma:
+gEuler <- 0.577215664901532860606512# = Euler's gamma
+abs(digamma(1) + gEuler) <   32*Meps # i386 Lx: = 2.5*Meps
+all.equal(digamma(1) - digamma(1/2), log(4), tol=32*Meps)# Linux: < 1*Meps!
+n <- 1:12
+all.equal(digamma(n),
+         - gEuler + c(0, cumsum(1/n)[-length(n)]),tol=32*Meps)#i386 Lx: 1.3 Meps
+all.equal(digamma(n + 1/2),
+          - gEuler - log(4) + 2*cumsum(1/(2*n-1)),tol=32*Meps)#i386 Lx: 1.8 Meps
+## higher psigamma:
+all.equal(psigamma(1, deriv=c(1,3,5)),
+          pi^(2*(1:3)) * c(1/6, 1/15, 8/63), tol=32*Meps)
+x <- c(-100,-3:2, -99.9, -7.7, seq(-3,3, length=61), 5.1, 77)
+stopifnot(identical( digamma(x), psigamma(x,0)),
+          identical(trigamma(x), psigamma(x,1)))# TRUE (+ NaN warnings)
 
 ## fft():
 ok <- TRUE

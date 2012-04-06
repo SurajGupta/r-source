@@ -101,7 +101,7 @@ Rterm.exe --no-restore --no-save < infile > outfile 2>&1
 
 (users of Windows 95/98/ME should omit 2>&1) although users will
 probably want to set up simple .bat or .cmd files to run batch
-jobs. You can also use it via Rcmd BATCH: see ?BATCH or Rcmd BATCH
+jobs. You can also use it via R CMD BATCH: see ?BATCH or R CMD BATCH
 --help.
 
 Use with ESS: You can use Rterm.exe to provide inferior R-mode in ESS
@@ -155,13 +155,6 @@ the top-level page, from which you can access a search engine.
 (iv) Latex help files are available for use with help(topic,
 offline=TRUE).  You will need to customize the file
 @RWVER@\bin\helpPRINT.bat: it contains instructions.
-
-(v) Windows .hlp files.  [Only available if building from sources.]
-Set this as the default by options(winhelp=TRUE) or for individual
-help items by help(topic, winhelp=TRUE).  Full text search is
-available from the Search tab.  The conversion to this format is a
-little rough, and tables may be incomplete.  The help on Hershey and
-Japanese fonts has been omitted.
 
 
 

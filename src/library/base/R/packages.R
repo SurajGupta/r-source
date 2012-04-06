@@ -1,212 +1,41 @@
-CRAN.packages <- function(CRAN=getOption("CRAN"), method,
-                          contriburl=contrib.url(CRAN))
-{
-    localcran <- length(grep("^file:", contriburl)) > 0
-    if(localcran)
-        tmpf <- paste(substring(contriburl,6), "PACKAGES", sep="/")
-    else{
-        tmpf <- tempfile()
-        on.exit(unlink(tmpf))
-        download.file(url=paste(contriburl, "PACKAGES", sep="/"),
-                      destfile=tmpf, method=method, cacheOK=FALSE)
-    }
-    read.dcf(file=tmpf, fields=c("Package", "Version",
-                       "Priority", "Bundle", "Depends"))
-}
-
-update.packages <- function(lib.loc=NULL, CRAN=getOption("CRAN"),
-                            contriburl=contrib.url(CRAN),
-                            method, instlib=NULL, ask=TRUE,
-                            available=NULL, destdir=NULL,
-			    installWithVers=FALSE)
-{
-    if(is.null(lib.loc))
-        lib.loc <- .libPaths()
-
-    if(is.null(available))
-        available <- CRAN.packages(contriburl=contriburl, method=method)
-
-    old <- old.packages(lib.loc=lib.loc,
-                        contriburl=contriburl,
-                        method=method,
-                        available=available)
-
-    update <- NULL
-    if(ask & !is.null(old)){
-        for(k in 1:nrow(old)){
-            cat(old[k, "Package"], ":\n",
-                "Version", old[k, "Installed"],
-                "in", old[k, "LibPath"], "\n",
-                "Version", old[k, "CRAN"], "on CRAN")
-            cat("\n")
-            answer <- substr(readline("Update (y/N)?  "), 1, 1)
-            if(answer == "y" | answer == "Y")
-                update <- rbind(update, old[k,])
+compareVersion <- function(a, b){
+    if(is.na(a))
+        return(-1)
+    if(is.na(b))
+        return(1)
+    a <- as.integer(strsplit(a, "[\\.-]")[[1]])
+    b <- as.integer(strsplit(b, "[\\.-]")[[1]])
+    for(k in 1:length(a)){
+        if(k <= length(b)){
+            if(a[k]>b[k])
+                return(1)
+            else if(a[k]<b[k])
+                return(-1)
+        }
+        else{
+            return(1)
         }
     }
+    if(length(b)>length(a))
+        return(-1)
     else
-        update <- old
-
-
-    if(!is.null(update)){
-        if(is.null(instlib))
-            instlib <-  update[,"LibPath"]
-
-        install.packages(update[,"Package"], instlib,
-                         contriburl=contriburl,
-                         method=method,
-                         available=available, destdir=destdir,
-                         installWithVers=installWithVers)
-    }
+        return(0)
 }
 
-old.packages <- function(lib.loc=NULL, CRAN=getOption("CRAN"),
-                         contriburl=contrib.url(CRAN),
-                         method, available=NULL)
+package.dependencies <- function(x, check = FALSE,
+                                 depLevel=c("Depends", "Suggests"))
 {
-    if(is.null(lib.loc))
-        lib.loc <- .libPaths()
+    depLevel <- match.arg(depLevel)
 
-    instp <- installed.packages(lib.loc=lib.loc)
-    if(is.null(available))
-        available <- CRAN.packages(contriburl=contriburl, method=method)
-
-    ## for bundles it is sufficient to install the first package
-    ## contained in the bundle, as this will install the complete bundle
-    ## However, a bundle might be installed in more than one place.
-    for(b in unique(instp[,"Bundle"])){
-        if(!is.na(b))
-            for (w in unique(instp[,"LibPath"])) {
-            ok <- which(instp[,"Bundle"] == b & instp[,"LibPath"] == w)
-            if(length(ok)>1) instp <- instp[-ok[-1],]
-        }
-    }
-
-    ## for packages contained in bundles use bundle names from now on
-    ok <- !is.na(instp[,"Bundle"])
-    instp[ok,"Package"] <- instp[ok,"Bundle"]
-    ok <- !is.na(available[,"Bundle"])
-    available[ok,"Package"] <- available[ok,"Bundle"]
-
-    update <- NULL
-
-    newerVersion <- function(a, b){
-        a <- as.integer(strsplit(a, "[\\.-]")[[1]])
-        b <- as.integer(strsplit(b, "[\\.-]")[[1]])
-        if(any(is.na(a)))
-            return(FALSE)
-        if(any(is.na(b)))
-            return(TRUE)
-        for(k in 1:length(a)){
-            if(k <= length(b)){
-                if(a[k]>b[k])
-                    return(TRUE)
-                else if(a[k]<b[k])
-                    return(FALSE)
-            }
-            else{
-                return(TRUE)
-            }
-        }
-        return(FALSE)
-    }
-
-    for(k in 1:nrow(instp)){
-        ok <- (!(instp[k, "Priority"] %in% "base")) &
-                (available[,"Package"] == instp[k, "Package"])
-        if(any(ok))
-            ok[ok] <- sapply(available[ok, "Version"], newerVersion,
-                             instp[k, "Version"])
-        if(any(ok) && any(package.dependencies(available[ok, ], check=TRUE)))
-        {
-            update <- rbind(update,
-                            c(instp[k, c("Package", "LibPath", "Version")],
-                              available[ok, "Version"]))
-        }
-    }
-    if(!is.null(update))
-        colnames(update) <- c("Package", "LibPath",
-                              "Installed", "CRAN")
-    update
-}
-
-package.contents <- function(pkg, lib.loc=NULL)
-{
-    if(is.null(lib.loc))
-        lib.loc <- .libPaths()
-
-    file <- system.file("CONTENTS", package = pkg, lib.loc = lib.loc)
-    if(file == "") {
-        warning(paste("Cannot find CONTENTS file of package", pkg))
-        return(NA)
-    }
-
-    read.dcf(file=file, fields=c("Entry", "Keywords", "Description"))
-}
-
-
-package.description <- function(pkg, lib.loc=NULL, fields=NULL)
-{
-    if(is.null(lib.loc))
-        lib.loc <- .libPaths()
-
-    file <- system.file("DESCRIPTION", package = pkg, lib.loc = lib.loc)
-    if(file != "") {
-        retval <- read.dcf(file=file, fields=fields)[1,]
-    }
-
-    if((file == "") || (length(retval) == 0)){
-        warning(paste("DESCRIPTION file of package", pkg,
-                      "missing or broken"))
-        if(!is.null(fields)){
-            retval <- rep(NA, length(fields))
-            names(retval) <- fields
-        }
-        else
-            retval <- NA
-    }
-
-    retval
-}
-
-
-installed.packages <- function(lib.loc = NULL, priority = NULL)
-{
-    if(is.null(lib.loc))
-        lib.loc <- .libPaths()
-    pkgFlds <- c("Version", "Priority", "Bundle", "Depends")
-    if(!is.null(priority)) {
-        if(!is.character(priority))
-            stop("`priority' must be character or NULL")
-        if(any(b <- priority == "high"))
-            priority <- c(priority[!b], "recommended","base")
-    }
-    retval <- character()
-    for(lib in lib.loc) {
-        pkgs <- .packages(all.available=TRUE, lib.loc = lib)
-        for(p in pkgs){
-            desc <- package.description(p, lib=lib, fields= pkgFlds)
-            if(!is.null(priority)) # skip if priority does not match
-                if(is.na(pmatch(desc["Priority"], priority))) next
-            retval <- rbind(retval, c(p, lib, desc))
-        }
-    }
-    if (!is.null(retval))
-        colnames(retval) <- c("Package", "LibPath", pkgFlds)
-    retval
-}
-
-package.dependencies <- function(x, check = FALSE)
-{
     if(!is.matrix(x))
         x <- matrix(x, nrow = 1, dimnames = list(NULL, names(x)))
 
     deps <- list()
     for(k in 1:nrow(x)){
-        z <- x[k, "Depends"]
+        z <- x[k, depLevel]
         if(!is.na(z) & z != ""){
             ## split dependencies, remove leading and trailing whitespace
-            z <- unlist(strsplit(z, ","))
+            z <- unlist(strsplit(z, ",", fixed=TRUE))
             z <- sub("^[[:space:]]*(.*)", "\\1", z)
             z <- sub("(.*)[[:space:]]*$", "\\1", z)
 
@@ -229,7 +58,7 @@ package.dependencies <- function(x, check = FALSE)
     }
 
     if(check){
-        z <- rep(TRUE, nrow(x))
+        z <- rep.int(TRUE, nrow(x))
         for(k in 1:nrow(x)){
             ## currently we only check the version of R itself
             if(!is.na(deps[[k]]) &&
@@ -257,32 +86,49 @@ package.dependencies <- function(x, check = FALSE)
     }
 }
 
-remove.packages <- function(pkgs, lib, version) {
-
-    updateIndices <- function(lib) {
-        ## This should eventually be made public, as it could also be
-        ## used by install.packages() && friends.
-        if(lib == .Library) {
-            ## R version of
-            ##   ${R_HOME}/bin/build-help --htmllists
-            ##   cat ${R_HOME}/library/*/CONTENTS \
-            ##     > ${R_HOME}/doc/html/search/index.txt
-            if(exists("link.html.help", mode = "function"))
-                link.html.help()
+packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE)
+{ 
+    retval <- list()
+    if(!is.null(fields)){
+        fields <- as.character(fields)
+        retval[fields] <- NA
+    }
+    
+    file <- system.file("DESCRIPTION", package = pkg, lib.loc = lib.loc)
+    
+    if(file != "") {
+        desc <- as.list(read.dcf(file=file)[1,])
+        if(!is.null(fields)){
+            ok <- names(desc) %in% fields
+            retval[names(desc)[ok]] <- desc[ok]
         }
+        else
+            retval[names(desc)] <- desc
     }
 
-    if(missing(lib) || is.null(lib)) {
-        lib <- .libPaths()[1]
-        warning(paste("argument `lib' is missing: using", lib))
+    if((file == "") || (length(retval) == 0)){
+        warning(paste("DESCRIPTION file of package ", sQuote(pkg),
+                      " missing or broken\n"))
+        return(NA)
     }
 
-    if (!missing(version))
-        pkgs <- manglePackageName(pkgs, version)
-
-    paths <- .find.package(pkgs, lib)
-    unlink(paths, TRUE)
-    for(lib in unique(dirname(paths)))
-        updateIndices(lib)
+    if(drop & length(fields)==1)
+        return(retval[[1]])
+    
+    class(retval) <- "packageDescription"
+    if(!is.null(fields)) attr(retval, "fields") <- fields
+    attr(retval, "file") <- file
+    retval
 }
 
+
+print.packageDescription <- function(x, ...)
+{
+    write.dcf(as.data.frame.list(x))
+    cat("-- File:", attr(x, "file"), "\n")
+    if(!is.null(attr(x, "fields"))){
+        cat("-- Fields read: ")
+        cat(attr(x, "fields"), sep=", ")
+        cat("\n")
+    }
+}

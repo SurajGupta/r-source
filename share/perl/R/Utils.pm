@@ -8,10 +8,11 @@ use Text::Wrap;
 use Text::Tabs;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(R_getenv R_version R_tempfile R_system R_runR
+@EXPORT = qw(R_cwd R_getenv R_version R_tempfile R_system R_runR R_run_R
 	     file_path env_path
 	     list_files list_files_with_exts list_files_with_type
-	     make_file_exts);
+	     make_file_exts
+	     read_lines);
 
 #**********************************************************
 
@@ -135,7 +136,7 @@ sub get_exclude_patterns {
     ## exported.
     ## <NOTE>
     ## Has Unix-style '/' path separators hard-coded.
-    my @exclude_patterns = ("^.Rbuildignore\$", "^.DS_Store\$",
+    my @exclude_patterns = ("^.Rbuildignore\$", "(^|/)\\.DS_Store\$",
 			    "\~\$", "\\.bak\$", "\\.swp\$",
 			    "(^|/)\\.#[^/]*\$", "(^|/)#[^/]*#\$",
 			    "^TITLE\$", "^data/00Index\$",
@@ -199,6 +200,52 @@ sub R_runR
     unlink($Rin);
     unlink($Rout);
     return(@out);
+}
+
+sub R_run_R {
+    ## A variant of R_runR (see above) which returns both exit status
+    ## from the call to R as well as stdout, and maybe eventually also
+    ## stderr separately (currently always redirected to stdout).
+    my ($cmd, $Ropts, $Renv) = @_;
+    my $Rin = R_tempfile("Rin");
+    my $Rout = R_tempfile("Rout");
+    my %result;
+    my $status;
+    my @out;
+
+    R::Vars::error("R_EXE");
+    open(RIN, "> $Rin")
+	or die "Error: cannot write to '$Rin'\n";
+    print RIN "$cmd\n";
+    close(RIN);
+    $status =
+	R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1",
+		 $Renv);
+    @out = &read_lines($Rout);
+    unlink($Rin);
+    unlink($Rout);
+    $result{"status"} = $status;
+    @{$result{"out"}} = @out;
+    %result;
+}
+
+sub read_lines {
+    my ($file) = @_;
+    my @lines;
+    open(FILE, "< $file")
+	or die "Error: cannot open file '$file' for reading\n";
+    chomp(@lines = <FILE>);
+    close(FILE);
+    @lines;
+}
+
+sub R_cwd {
+    my $abspath = Cwd::cwd();
+    if($R::Vars::OSTYPE eq "windows") {
+	# ensure there are no spaces in the paths.
+	Win32::GetShortPathName($abspath) if $abspath =~ / /;
+    }
+    $abspath;
 }
 
 1;

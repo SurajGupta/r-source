@@ -9,7 +9,7 @@ grid.strip <- function(label="whatever", range.full=c(0, 1),
   diff.full <- diff(range.full)
   diff.thumb <- diff(range.thumb)
   if (!is.null(vp))
-    push.viewport(vp)
+    pushViewport(vp)
   grid.rect(gp=gpar(col=NULL, fill=fill))
   grid.rect((range.thumb[1] - range.full[1])/diff.full, 0,
             diff.thumb/diff.full, 1,
@@ -17,11 +17,11 @@ grid.strip <- function(label="whatever", range.full=c(0, 1),
             gp=gpar(col=NULL, fill=thumb))
   grid.text(as.character(label))
   if (!is.null(vp))
-    pop.viewport()
-}  
+    popViewport()
+}
 
-grid.panel <- function(x = runif(10), y = runif(10),
-                   zrange = c(0, 1), zbin = runif(2),
+grid.panel <- function(x = stats::runif(10), y = stats::runif(10),
+                   zrange = c(0, 1), zbin = stats::runif(2),
                    xscale = range(x)+c(-1,1)*.05*diff(range(x)),
                    yscale = range(y)+c(-1,1)*.05*diff(range(y)),
                    axis.left = TRUE, axis.left.label = TRUE,
@@ -30,21 +30,21 @@ grid.panel <- function(x = runif(10), y = runif(10),
                    axis.top = FALSE, axis.top.label = TRUE,
                    vp=NULL) {
   if (!is.null(vp))
-    push.viewport(vp)
+    pushViewport(vp)
   temp.vp <- viewport(layout=grid.layout(2, 1,
                          heights=unit(c(1, 1), c("lines", "null"))))
-  push.viewport(temp.vp)
+  pushViewport(temp.vp)
   strip.vp <- viewport(layout.pos.row=1, layout.pos.col=1,
                         xscale=xscale)
-  push.viewport(strip.vp)
+  pushViewport(strip.vp)
   grid.strip(range.full=zrange, range.thumb=zbin)
   grid.rect()
   if (axis.top)
     grid.xaxis(main=FALSE, label=axis.top.label)
-  pop.viewport()
+  popViewport()
   plot.vp <- viewport(layout.pos.row=2, layout.pos.col=1,
                        xscale=xscale, yscale=yscale)
-  push.viewport(plot.vp)
+  pushViewport(plot.vp)
   grid.grill()
   grid.points(x, y, gp=gpar(col="blue"))
   grid.rect()
@@ -54,21 +54,22 @@ grid.panel <- function(x = runif(10), y = runif(10),
     grid.yaxis(main=FALSE, label=axis.right.label)
   if (axis.bottom)
     grid.xaxis(label=axis.bottom.label)
-  pop.viewport(2)
+  popViewport(2)
   if (!is.null(vp))
-    pop.viewport()
+    popViewport()
   invisible(list(strip.vp = strip.vp, plot.vp = plot.vp))
 }
 
-grid.multipanel <- function(x=runif(90), y=runif(90), z=runif(90),
+grid.multipanel <- function(x=stats::runif(90), y=stats::runif(90),
+                            z=stats::runif(90),
                             nrow=2, ncol=5, nplots=9,
                             newpage=TRUE, vp=NULL) {
   if (newpage)
     grid.newpage()
   if (!is.null(vp))
-    push.viewport(vp)
+    pushViewport(vp)
   temp.vp <- viewport(layout=grid.layout(nrow, ncol))
-  push.viewport(temp.vp)
+  pushViewport(temp.vp)
   xscale <- range(x)+c(-1,1)*.05*diff(range(x))
   yscale <- range(y)+c(-1,1)*.05*diff(range(y))
   breaks <- seq(min(z), max(z), length=nplots + 1)
@@ -94,27 +95,29 @@ grid.multipanel <- function(x=runif(90), y=runif(90), z=runif(90),
   grid.text("NOx (micrograms/J)", unit(-4, "lines"), unit(.5, "npc"),
         gp=gpar(fontsize=20),
         just="centre", rot=90)
-  pop.viewport()
+  popViewport()
   if (!is.null(vp))
-    pop.viewport()
+    popViewport()
 }
 
 grid.show.layout <- function(l, newpage=TRUE,
                          cell.border="blue", cell.fill="light blue",
                          cell.label=TRUE, vp=NULL) {
+  if (!is.layout(l))
+    stop("l must be a layout")
   if (newpage)
     grid.newpage()
   if (!is.null(vp))
-    push.viewport(vp)
+    pushViewport(vp)
   grid.rect(gp=gpar(col=NULL, fill="light grey"))
   vp.mid <- viewport(0.5, 0.5, 0.8, 0.8, layout=l)
-  push.viewport(vp.mid)
+  pushViewport(vp.mid)
   grid.rect(gp=gpar(fill="white"))
   gp.red <- gpar(col="red")
   for (i in 1:l$nrow)
     for (j in 1:l$ncol) {
       vp.inner <- viewport(layout.pos.row=i, layout.pos.col=j)
-      push.viewport(vp.inner)
+      pushViewport(vp.inner)
       grid.rect(gp=gpar(col=cell.border, fill=cell.fill))
       if (cell.label)
         grid.text(paste("(", i, ", ", j, ")", sep=""), gp=gpar(col="blue"))
@@ -124,23 +127,23 @@ grid.show.layout <- function(l, newpage=TRUE,
               x=unit(-.05, "inches"), y=unit(.5, "npc"), rot=0)
       if (i==l$nrow)
         grid.text(as.character(l$widths[j]), gp=gp.red,
-              just=c("centre", "top"), 
+              just=c("centre", "top"),
               x=unit(.5, "npc"), y=unit(-.05, "inches"), rot=0)
       if (j==l$ncol)
         grid.text(as.character(l$heights[i]), gp=gp.red,
-              just=c("left", "centre"), 
+              just=c("left", "centre"),
               x=unit(1, "npc") + unit(.05, "inches"), y=unit(.5, "npc"),
               rot=0)
       if (i==1)
         grid.text(as.character(l$widths[j]), gp=gp.red,
-              just=c("centre", "bottom"), 
+              just=c("centre", "bottom"),
               x=unit(.5, "npc"), y=unit(1, "npc") + unit(.05, "inches"),
-              rot=0) 
-      pop.viewport()
+              rot=0)
+      popViewport()
     }
-  pop.viewport()
+  popViewport()
   if (!is.null(vp))
-    pop.viewport()
+    popViewport()
   # return the viewport used to represent the parent viewport
   invisible(vp.mid)
 }
@@ -152,39 +155,39 @@ grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE, vp=NULL) {
   if ((!is.null(v$layout.pos.row) || !is.null(v$layout.pos.col)) &&
       !is.null(parent.layout)) {
     if (!is.null(vp))
-      push.viewport(vp)
+      pushViewport(vp)
     vp.mid <- grid.show.layout(parent.layout,
                            cell.border="grey", cell.fill="white",
                            cell.label=FALSE, newpage=newpage)
-    push.viewport(vp.mid)
-    push.viewport(v)
+    pushViewport(vp.mid)
+    pushViewport(v)
     gp.red <- gpar(col="red")
     grid.rect(gp=gpar(col="blue", fill="light blue"))
     at <- grid.pretty(v$xscale)
     grid.xaxis(at=c(min(at), max(at)), gp=gp.red)
     at <- grid.pretty(v$yscale)
     grid.yaxis(at=c(min(at), max(at)), gp=gp.red)
-    pop.viewport(2)
+    popViewport(2)
     if (!is.null(vp))
-      pop.viewport()
+      popViewport()
   } else {
     if (newpage)
       grid.newpage()
     if (!is.null(vp))
-      push.viewport(vp)
+      pushViewport(vp)
     grid.rect(gp=gpar(col=NULL, fill="light grey"))
     # generate a viewport within the "top" viewport (vp) to represent the
     # parent viewport of the viewport we are "show"ing (v).
     # This is so that annotations at the edges of the
     # parent viewport will be at least partially visible
     vp.mid <- viewport(0.5, 0.5, 0.8, 0.8)
-    push.viewport(vp.mid)
+    pushViewport(vp.mid)
     grid.rect(gp=gpar(fill="white"))
     x <- v$x
     y <- v$y
     w <- v$width
     h <- v$height
-    push.viewport(v)
+    pushViewport(v)
     grid.rect(gp=gpar(col="blue", fill="light blue"))
     # represent the "native" scale
     gp.red <- gpar(col="red")
@@ -194,25 +197,25 @@ grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE, vp=NULL) {
     grid.yaxis(at=c(min(at), max(at)), gp=gp.red)
     grid.text(as.character(w), gp=gp.red,
           just=c("centre", "bottom"),
-          x=unit(.5, "npc"), y=unit(1, "npc") + unit(.05, "inches"))        
+          x=unit(.5, "npc"), y=unit(1, "npc") + unit(.05, "inches"))
     grid.text(as.character(h), gp=gp.red,
-          just=c("left", "centre"), 
+          just=c("left", "centre"),
           x=unit(1, "npc") + unit(.05, "inches"), y=unit(.5, "npc"))
-    pop.viewport()
+    popViewport()
     # annotate the location and dimensions of the viewport
     grid.lines(unit.c(x, x), unit.c(unit(0, "npc"), y),
            gp=gpar(col="red", lty="dashed"))
     grid.lines(unit.c(unit(0, "npc"), x), unit.c(y, y),
            gp=gpar(col="red", lty="dashed"))
     grid.text(as.character(x), gp=gp.red,
-          just=c("centre", "top"), 
+          just=c("centre", "top"),
           x=x, y=unit(-.05, "inches"))
-    grid.text(as.character(y), gp=gp.red, 
-          just=c("right", "centre"), 
+    grid.text(as.character(y), gp=gp.red,
+          just=c("right", "centre"),
           x=unit(-.05, "inches"), y=y)
-    pop.viewport()
+    popViewport()
     if (!is.null(vp))
-      pop.viewport()
+      popViewport()
   }
 }
 
@@ -253,7 +256,7 @@ function(pch, labels, frame=TRUE,
                             draw=FALSE),
               col=2, row=i, border=text.border, draw=FALSE)
   }
-  if (draw) 
+  if (draw)
     grid.draw(gf)
   gf
 }
@@ -284,39 +287,37 @@ function(pch, labels, frame=TRUE,
                   hgap),
                 heights=unit.pmax(unit(2, "lines"),
                   vgap + unit(rep(1, nkeys), "strheight", as.list(labels))))
-  gf <- grid.frame(layout=legend.layout, vp=vp, gp=gp, draw=FALSE)
+  fg <- frameGrob(layout=legend.layout, vp=vp, gp=gp)
   for (i in 1:nkeys) {
-    grid.place(gf, grid.points(.5, .5, pch=pch[i], draw=FALSE),
-               col=1, row=i, draw=FALSE)
-    grid.place(gf, grid.text(labels[i], x=0, y=.5, just=c("left", "centre"),
-                             draw=FALSE),
-               col=2, row=i, draw=FALSE)
+    fg <- placeGrob(fg, pointsGrob(.5, .5, pch=pch[i]), col=1, row=i)
+    fg <- placeGrob(fg, textGrob(labels[i], x=0, y=.5,
+                                 just=c("left", "centre")),
+                    col=2, row=i)
   }
-  if (draw) 
-    grid.draw(gf)
-  gf
+  if (draw)
+    grid.draw(fg)
+  fg
 }
 
 # Just a wrapper for a sample series of grid commands
 grid.plot.and.legend <- function() {
   grid.newpage()
   top.vp <- viewport(w=0.8, h=0.8)
-  push.viewport(top.vp)
-  x <- runif(10)
-  y1 <- runif(10)
-  y2 <- runif(10)
+  pushViewport(top.vp)
+  x <- stats::runif(10)
+  y1 <- stats::runif(10)
+  y2 <- stats::runif(10)
   pch <- 1:3
   labels <- c("Girls", "Boys", "Other")
-  lf <- grid.frame(draw=TRUE)
-  plot <- grid.collection(grid.rect(draw=FALSE),
-                      grid.points(x, y1, pch=1, draw=FALSE),
-                      grid.points(x, y2, pch=2, draw=FALSE),
-                      grid.xaxis(draw=FALSE),
-                      grid.yaxis(draw=FALSE),
-                      draw=FALSE)
-  grid.pack(lf, plot)
-  grid.pack(lf, grid.legend(pch, labels, draw=FALSE),
-            height=unit(1,"null"), side="right")
+  lf <- frameGrob()
+  plot <- gTree(children=gList(rectGrob(),
+                  pointsGrob(x, y1, pch=1),
+                  pointsGrob(x, y2, pch=2),
+                  xaxisGrob(),
+                  yaxisGrob()))
+  lf <- packGrob(lf, plot)
+  lf <- packGrob(lf, grid.legend(pch, labels, draw=FALSE),
+                 height=unit(1,"null"), side="right")
   grid.draw(lf)
 }
 

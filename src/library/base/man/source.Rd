@@ -38,7 +38,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
 \details{
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows)
-  or CR (as used on Mac).  The final line can be incomplete, that
+  or CR (as used on classic MacOS).  The final line can be incomplete, that
   is missing the final EOL marker.
 
   If \code{\link{options}}("keep.source") is true (the default), the
@@ -53,7 +53,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{demo}} which uses \code{source};
+  \code{\link[utils]{demo}} which uses \code{source};
   \code{\link{eval}}, \code{\link{parse}} and \code{\link{scan}};
   \code{\link{options}("keep.source")}.
 }
