@@ -32,11 +32,6 @@ Date: Wed, 10 Mar 1999 17:21:16 +0100
 
 Directory:  Add-ons
 
-* PR# 122 *
-Subject: [R] possible bug in loglm
-From: D.A.Wooff@durham.ac.uk
-Date: Thu, 18 Feb 1999 17:06:11 +0000 (GMT)
---Problem with running inside function. 
 * PR# 137 *
 Subject: funfits
 From: "Alvaro A. Novo" <novo@uiuc.edu>
@@ -44,7 +39,10 @@ Date: Tue, 9 Mar 1999 22:24:54 -0600
 
 Directory:  Analyses
 
-none
+* PR# 144 *
+Subject: glm throws erroneous(?)'names attribute must be the same length as the vector' 
+From: wagman@enteract.com
+Date: Thu, 18 Mar 1999 08:58:47 +0100
 
 Directory:  Documentation
 
@@ -116,10 +114,6 @@ Date: 28 Feb 1999 21:45:43 +0100
 Subject: plot.formula and pch=
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 25 Mar 1999 21:22:44 +0100
-* PR# 150 *
-Subject: R: error report
-From: Adelchi Azzalini <adelchi.azzalini@jrc.it>
-Date: Fri, 26 Mar 1999 09:39:05 +0000
 * PR# 153 *
 Subject: image + x11
 From: Andreas Weingessel <Andreas.Weingessel@ci.tuwien.ac.at>
@@ -127,11 +121,6 @@ Date: Wed, 31 Mar 1999 14:09:53 +0200
 
 Directory:  In-Out
 
-* PR# 117 *
-Subject: load() -> segfault
-From: "Gregory R. Warnes" <warnes@biostat.washington.edu>
-Date: Mon, 8 Feb 1999 18:10:36 -0800 (PST)
---Fixed-size buffer used to hold unlimited size object. Not good...
 * PR# 125 *
 Subject: scan rejects complex
 From: John.Peters@tip.csiro.au (John Peters)
@@ -150,45 +139,29 @@ From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
 Date: Fri, 15 Jan 1999 11:00:25 +0100 (MET)
 --An incident where the 0.63.2 patches didn't take. So far the only one. 
 --Maybe caused by patching unclean sources?
+* PR# 165 *
+Subject: make check
+From: Martyn Plummer <plummer@iarc.fr>
+Date: Tue, 13 Apr 1999 12:03:42 +0200 (CEST)
 
 Directory:  Language
 
-* PR# 40 *
-Subject:  fac1 : fac2 -- fails {no "cross" anymore in seq.c} 
-From: maechler@stat.math.ethz.ch
-Date: Wed, 16 Sep 1998 08:42:12 +0200
---still there 17feb99
-* PR# 85 *
-Subject:  A bug in data.entry? 
-From: Yusuke Uchiyama <me@naxgul.kais.kyoto-u.ac.jp>
-Date: Wed, 23 Dec 1998 11:03:03 GMT
---still there 17feb99
-* PR# 89 *
-Subject: lapply -- Recall bug
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 6 Jan 1999 15:04:14 +0100
---This is *nasty*.
 * PR# 105 *
 Subject: an old bug resurfaces
 From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
 Date: Fri, 29 Jan 1999 08:28:32 +0100 (MET)
 --Model formulas. Proper fix probably requires extensive rewrite of model formula
 --parser, which would make in non-S-compatible.
-* PR# 113 *
-Subject: cat data types
-From: John Peters <johnp@tip.CSIRO.AU>
-Date: Fri, 5 Feb 1999 18:31:52 +1100 (EDT)
---Cannot cat a name. (Docs fixed to reflect this by Kurt, 22feb99)
 * PR# 118 *
 Subject: Function parsing
 From: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
 Date: Wed, 10 Feb 1999 13:42:01 +0000 (GMT)
 --comment placement.
-* PR# 142 *
-Subject: exists finds objects lots of places!
-From: oncley@ucar.edu
-Date: Thu, 11 Mar 1999 17:34:34 +0100
---No bug; not S compatible; documentation should be clearer
+* PR# 166 *
+Subject: outer fails with group generic operations on factors
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Tue, 13 Apr 1999 18:28:53 +0100 (BST)
+--There is a suggested solution (PD), but not yet implemented (99/05/07)
 
 Directory:  Low-level
 
@@ -196,14 +169,32 @@ Directory:  Low-level
 Subject: S.h compatibility issues
 From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
 Date: Sun, 6 Sep 1998 19:58:47 +0100 (BST)
-* PR# 119 *
-Subject: Problems with warnings from loess under Windows, at least
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Thu, 11 Feb 1999 15:08:41 +0000 (GMT)
-* PR# 140 *
-Subject: rbind dimnames with complex
-From: oncley@ucar.edu
-Date: Thu, 11 Mar 1999 17:15:14 +0100
+--1 is fixed
+--2 R's own RNG entry points are still not public
+--3 is the perennial issue of what is the `public' API -- specific points are
+--fixed
+* PR# 101 *
+Subject: Re: [R] Re: R-0.63.2 for Windows - some comments
+From: Guido Masarotto <guido@hal.stat.unipd.it>
+Date: Fri, 22 Jan 1999 12:40:26 +0100
+--This is really about fixed buffer sizes in printutils.c
+* PR# 135 *
+Subject: summary() of lm() problem
+From: Simon Fear <fears@roycastle.liv.ac.uk>
+Date: Tue, 9 Mar 1999 13:18:37 -0000 
+--lm (?) AND Windows problem;  Win solved (fudged) for 0.63.3
+--
+--Another low-level buffer-size problem
+* PR# 180 *
+Subject: nlm on a function in the Math group
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: Thu, 29 Apr 1999 17:11:00 -0500 (CDT)
+--causes R to core dump
+* PR# 185 *
+Subject: Re: [R] R_problem_buf in the S.h files & lists in .C
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 May 1999 00:32:49 +0200
+--S objects in .C calls (not just lists) are now documented in the help file
 
 Directory:  Misc
 
@@ -229,10 +220,19 @@ Directory:  Startup
 Subject: Restoring large image files
 From: Martyn Plummer <plummer@iarc.fr>
 Date: Fri, 21 Aug 1998 13:29:16 -0000 ()
+--Request to change in error conditions in R_InitialData. Could be done, but
+--at present initial loads are not distinguished from load("file") calls. 
 
 Directory:  System-specific
 
-none
+* PR# 145 *
+Subject: R-0.63.3 package on IRIX 6.5 machine
+From: Jayshree Sarma <jsarma@cs.gmu.edu>
+Date: Tue, 23 Mar 1999 16:54:20 -0500 (EST)
+* PR# 163 *
+Subject: IRIX compile
+From: mtim@farm.ecs.umass.edu
+Date: Sat, 10 Apr 1999 19:35:43 +0200
 
 Directory:  TooMuchAtOnce
 
@@ -240,6 +240,12 @@ Directory:  TooMuchAtOnce
 Subject: 0.62.3 bugs, incompatibilities and problems
 From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
 Date: Mon, 12 Oct 1998 09:43:51 +0200 (MET DST)
+--Of Jims points: (checked in 0.65 April 26 compared to Splus 3.4)
+-- 4. works the same as S
+-- 5. Splus gives NA and the if(class(z)=="repeated") doesn't work in either
+-- 10. seems to work
+-- 7.  seems to do what Jim wants now
+--  
 * PR# 76 *
 Subject: R-0.63.0
 From: Rashid Nassar <rnassar@acpub.duke.edu>
@@ -247,65 +253,11 @@ Date: Fri, 11 Dec 1998 23:20:08 -0500 (EST)
 
 Directory:  Windows
 
-* PR# 46 *
-Subject: keyboard bug in Guido's R62.3
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Thu, 24 Sep 1998 09:55:39 +0200 (MET DST)
-* PR# 47 *
-Subject: q() function in win32 version 0.61.3
-From: normo@ratfish.pbs.dfo.ca
-Date: Thu, 24 Sep 1998 22:04:10 +0200
-* PR# 57 *
-Subject: windows95
-From: christoph.kalinowski@ku-eichstaett.de
-Date: Thu, 29 Oct 1998 11:00:18 +0100
-* PR# 59 *
-Subject: windows nt
-From: christoph.kalinowski@biostat.ku.dk
-Date: Mon, 2 Nov 1998 13:41:52 +0100
-* PR# 101 *
-Subject: Re: [R] Re: R-0.63.2 for Windows - some comments
-From: Guido Masarotto <guido@hal.stat.unipd.it>
-Date: Fri, 22 Jan 1999 12:40:26 +0100
+none
 
 Directory:  incoming
 
-* PR# 127 *
-Subject: history
-From: jmhughes@globalnet.co.uk
-Date: Sat, 27 Feb 1999 21:32:56 +0100
-* PR# 132 *
-Subject: Re: [R] zero-offset matrices
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 02 Mar 1999 16:59:48 +0100
-* PR# 135 *
-Subject: summary() of lm() problem
-From: Simon Fear <fears@roycastle.liv.ac.uk>
-Date: Tue, 9 Mar 1999 13:18:37 -0000 
---lm (?) AND Windows problem;  Win solved for 0.63.3
-* PR# 139 *
-Subject: : for factors
-From: Andreas Weingessel <Andreas.Weingessel@ci.tuwien.ac.at>
-Date: Thu, 11 Mar 1999 09:30:04 +0100
-* PR# 144 *
-Subject: glm throws erroneous(?)'names attribute must be the same length as the vector' 
-From: wagman@enteract.com
-Date: Thu, 18 Mar 1999 08:58:47 +0100
-* PR# 145 *
-Subject: R-0.63.3 package on IRIX 6.5 machine
-From: Jayshree Sarma <jsarma@cs.gmu.edu>
-Date: Tue, 23 Mar 1999 16:54:20 -0500 (EST)
-* PR# 148 *
-Subject: Missing Warning in :
-From: Andreas Weingessel <Andreas.Weingessel@ci.tuwien.ac.at>
-Date: Thu, 25 Mar 1999 13:34:12 +0100
-* PR# 151 *
-Subject: problems with formals and get
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Mon, 29 Mar 1999 09:29:05 +0200 (MET DST)
-* PR# 158 *
-Subject: seg fault with strsplit
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Tue, 6 Apr 1999 09:41:29 +0200 (MET DST)
---buffer overflow known;
---should be fixed "soon" (Apr 7,1999)
+* PR# 174 *
+Subject:  do.call() mangles expressions in arguments 
+From: Peter Dalgaard BSA <pd@biostat.ku.dk>
+Date: Wed, 21 Apr 1999 19:39:53 +0200
