@@ -2,7 +2,7 @@ ansari.test <- function(x, ...) UseMethod("ansari.test")
 
 ansari.test.default <-
 function(x, y, alternative = c("two.sided", "less", "greater"),
-         exact = NULL, conf.int = FALSE, conf.level = 0.95) 
+         exact = NULL, conf.int = FALSE, conf.level = 0.95, ...) 
 {
     alternative <- match.arg(alternative)
     if(conf.int) {
@@ -238,10 +238,10 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                  alternative = alternative,
                  method = "Ansari-Bradley test",
                  data.name = DNAME)
-    if(conf.int) {
-        RVAL$conf.int <- cint
-        RVAL$estimate <- c("ratio of scales" = ESTIMATE)
-    }
+    if(conf.int)
+        RVAL <- c(RVAL,
+                  list(conf.int = cint,
+                       estimate = c("ratio of scales" = ESTIMATE)))
     class(RVAL) <- "htest"
     return(RVAL)
 }
@@ -265,7 +265,7 @@ function(formula, data, subset, na.action, ...)
     DNAME <- paste(names(mf), collapse = " by ")
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
-    g <- as.factor(mf[[-response]])
+    g <- factor(mf[[-response]])
     if(nlevels(g) != 2)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)

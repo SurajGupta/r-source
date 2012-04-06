@@ -4,7 +4,8 @@
 \title{Spectral Decomposition of a Matrix}
 \usage{
 eigen(x, symmetric, only.values = FALSE)
-La.eigen(x, symmetric, only.values = FALSE)
+La.eigen(x, symmetric, only.values = FALSE,
+         method = c("dsyevr", "dsyev"))
 }
 \arguments{
   \item{x}{a matrix whose spectral decomposition is to be computed.}
@@ -15,14 +16,15 @@ La.eigen(x, symmetric, only.values = FALSE)
   \item{only.values}{if \code{TRUE}, only the eigenvalues are computed
     and returned, otherwise both eigenvalues and eigenvectors are
     returned.}
+  \item{method}{The LAPACK routine to use in the real symmetric case.}
 }
 \description{
   Function \code{eigen} computes eigenvalues and eigenvectors by providing an
   interface to the EISPACK routines \code{RS}, \code{RG}, \code{CH}
   and \code{CG}.
 
-  Function \code{La.eigen} uses the LAPACK routines DSYEV, DGEEV, ZHEEV
-  and ZGEEV.
+  Function \code{La.eigen} uses the LAPACK routines DSYEV/DSYEVR,
+  DGEEV, ZHEEV and ZGEEV.
 }
 \details{
   If \code{symmetric} is unspecified, the code attempts to
@@ -31,7 +33,19 @@ La.eigen(x, symmetric, only.values = FALSE)
 
   \code{La.eigen} is preferred to \code{eigen} for new projects, but
   its eigenvectors may differ in sign and (in the asymmetric case) in
-  normalization.
+  normalization. (They may also differ between methods
+  and between platforms.)
+
+  The LAPACK routine DSYEVR is usually substantially
+  faster than DSYEV: see
+  \url{http://www.cs.berkeley.edu/~demmel/DOE2000/Report0100.html}.
+  Most benefits are seen with an optimized BLAS system.
+
+  Computing the eigenvectors is the slow part for large matrices.
+
+  Using \code{method="dsyevr"} requires IEEE 754 arithmetic.  Should
+  this not be supported on your platform, \code{method="dsyev"} is
+  used, with a warning.
 }
 \value{
   The spectral decomposition of \code{x} is returned
@@ -59,8 +73,10 @@ La.eigen(x, symmetric, only.values = FALSE)
   \emph{Matrix Eigensystems Routines -- EISPACK Guide}.
   Springer-Verlag Lecture Notes in Computer Science.
 
-  Anderson. E. and ten others (1995)
-  \emph{LAPACK Users' Guide}. Second Edition. SIAM.
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
 }
 \seealso{
   \code{\link{svd}}, a generalization of \code{eigen}; \code{\link{qr}}, and
@@ -68,6 +84,8 @@ La.eigen(x, symmetric, only.values = FALSE)
 
   To compute the determinant of a matrix, the \code{\link{qr}}
   decomposition is much more efficient: \code{\link{det}}.
+
+  \code{\link{capabilities}} to test for IEEE 754 arithmetic.
 }
 \examples{
 eigen(cbind(c(1,-1),c(-1,1)))
@@ -80,7 +98,8 @@ eigen(print(cbind(c(0,1i), c(-1i,0))))# Hermite ==> real Eigen values
 eigen(cbind( 1,3:1,1:3))
 eigen(cbind(-1,c(1:2,0),0:2)) # complex values
 
-Meps <- .Alias(.Machine$double.eps)
+Meps <- .Machine$double.eps
+set.seed(123, kind="default")  # force a particular seed
 m <- matrix(round(rnorm(25),3), 5,5)
 sm <- m + t(m) #- symmetric matrix
 em <- eigen(sm); V <- em$vect

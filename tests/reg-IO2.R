@@ -41,4 +41,60 @@ try(read.table("foo6", header=TRUE, fill=TRUE))
 read.table("foo6", header=FALSE, fill=TRUE)
 unlink("foo6")
 
+# test of type conversion in 1.4.0 and later.
+cat("A B C D E F\n",
+    "1 1 1.1 1.1+0i NA F abc\n",
+    "2 NA NA NA NA NA NA\n",
+    "3 1 2 3 NA TRUE def\n",
+    sep = "", file = "foo7")
+(res <- read.table("foo7"))
+sapply(res, typeof)
+sapply(res, class)
+(res2 <- read.table("foo7",
+                    colClasses = c("character", rep("numeric", 2),
+                    "complex", "integer", "logical", "character")))
+sapply(res2, typeof)
+sapply(res2, class)
+unlink("foo7")
+
+# should be logical
+type.convert(character(0))
+
+# test of comments in data files
+cat("# a test file",
+    "# line 2",
+    "# line 3",
+    "#line 4",
+    "# line 5",
+    "## now the header",
+    " a b c",
+    "# some more comments",
+    "1 2 3",
+    "4 5 6# this is the second data row of the file",
+    "  # some more comments",
+    "7 8 9",
+    "# trailing comment\n",
+    file= "ex.data", sep="\n")
+read.table("ex.data", header = T)
+unlink("ex.data")
+
+## comment chars in headers
+cat("x1\tx#2\tx3\n1\t2\t2\n2\t3\t3\n", file = "test.dat")
+read.table("test.dat", header=T, comment.char="")
+unlink("test.dat")
+
+cat('#comment\n\n#another\n#\n#\n',
+    'C1\tC2\tC3\n"Panel"\t"Area Examined"\t"# Blemishes"\n',
+    '"1"\t"0.8"\t"3"\n', '"2"\t"0.6"\t"2"\n', '"3"\t"0.8"\t"3"\n',
+    file = "test.dat", sep="")
+read.table("test.dat")
+unlink("test.dat")
+
+cat('%comment\n\n%another\n%\n%\n',
+    'C1\tC2\tC3\n"Panel"\t"Area Examined"\t"% Blemishes"\n',
+    '"1"\t"0.8"\t"3"\n', '"2"\t"0.6"\t"2"\n', '"3"\t"0.8"\t"3"\n',
+    file = "test.dat", sep="")
+read.table("test.dat", comment.char = "%")
+unlink("test.dat")
+
 ## end of tests

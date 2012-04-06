@@ -77,6 +77,9 @@ clean:
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \
 	done
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
+	  rm -f $(INSTFILES); \
+	fi
 distclean: clean
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \

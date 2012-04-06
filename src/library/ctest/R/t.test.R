@@ -2,7 +2,8 @@ t.test <- function(x, ...) UseMethod("t.test")
 
 t.test.default <-
 function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
-         mu=0, paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+         mu = 0, paired = FALSE, var.equal = FALSE, conf.level = 0.95,
+         ...)
 {
     alternative <- match.arg(alternative)
 
@@ -111,7 +112,7 @@ function(formula, data, subset, na.action, ...)
     DNAME <- paste(names(mf), collapse = " by ")
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
-    g <- as.factor(mf[[-response]])
+    g <- factor(mf[[-response]])
     if(nlevels(g) != 2)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)

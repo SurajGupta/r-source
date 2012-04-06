@@ -1,7 +1,11 @@
 \name{diag}
 \title{Matrix Diagonals}
+\synopsis{
+diag(x = 1, nrow, ncol = n)
+diag(x) <- value
+}
 \usage{
-diag(x, nrow, ncol)
+diag(x = 1, nrow, ncol)
 diag(x) <- value
 }
 \alias{diag}

@@ -3,7 +3,7 @@ var.test <- function(x, ...) UseMethod("var.test")
 var.test.default <-
 function(x, y, ratio = 1,
          alternative = c("two.sided", "less", "greater"),
-         conf.level = 0.95)
+         conf.level = 0.95, ...)
 {
     if (!((length(ratio) == 1) && is.finite(ratio) && (ratio > 0)))
         stop("ratio must be a single positive number")
@@ -86,7 +86,7 @@ function(formula, data, subset, na.action, ...)
     DNAME <- paste(names(mf), collapse = " by ")
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
-    g <- as.factor(mf[[-response]])
+    g <- factor(mf[[-response]])
     if(nlevels(g) != 2)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)

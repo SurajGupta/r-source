@@ -645,7 +645,7 @@ static void deparse2buff(SEXP s)
 		    break;
 		case PP_DOLLAR:
 		    deparse2buff(CAR(s));
-		    print2buff("$");
+		    deparse2buff(op);
 		    /*temp fix to handle printing of x$a's */
 		    if( isString(CADR(s)) &&
 			isValidName(CHAR(STRING_ELT(CADR(s), 0))))
@@ -748,6 +748,10 @@ static void deparse2buff(SEXP s)
 	break;
     case EXTPTRSXP:
 	sprintf(tpb, "<pointer: %p>\n", R_ExternalPtrAddr(s));
+	print2buff(tpb);
+	break;
+    case WEAKREFSXP:
+	sprintf(tpb, "<weak reference>\n");
 	print2buff(tpb);
 	break;
     default:

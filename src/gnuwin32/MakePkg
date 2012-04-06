@@ -62,8 +62,8 @@ INSTFILES=$(wildcard $(SPKG)/inst/*)
 # src Makefile?
 SRCMAKE=$(wildcard $(SSPKG)/Makefile.win)
 
-all:  bare  $(DATA) $(DYNLIB)
-bare: $(DPKG)/zzzz $(DPKG)/R/$(PKG) $(DPKG)/demo
+all:  $(DPKG)/zzzz $(DYNLIB) R $(DPKG)/demo $(DATA) mansrcs
+bare: $(DPKG)/zzzz R $(DPKG)/demo
 
 include $(RHOME)/src/gnuwin32/MkRules
 
@@ -75,7 +75,6 @@ else
 endif
 	$(RM) -rf $(SPKG)/chm $(SPKG)/check
 
-#SEDP='/^[	 ]*$$/d;s/$(DLLNAME).so/$(DLLNAME).dll/'
 
 $(DPKG)/R/$(PKG): $(PKGRFILES)
 ifneq ($(strip $(PKGRFILES)),)
@@ -91,6 +90,7 @@ endif
 $(DPKG)/demo: $(PKGDEMOS)
 ifneq ($(strip $(PKGDEMOS)),)
 	@echo "  installing demos"
+	@$(RM) -rf $@
 	@$(MKDIR) -p $@
 	@$(CP) $(PKGDEMOS)   $@
 endif
@@ -116,11 +116,12 @@ endif
 	fi
 ifeq ($(strip $(STAMP)),YES)
 	@echo "  adding build stamp to DESCRIPTION"
-	@echo  "cat('Built: R ', R.version[['major']], '.', R.version[['minor']], ';  Win32;  ', format(Sys.time()), sep='')" | $(RHOME)/bin/Rterm --slave --vanilla >> ${DPKG}/DESCRIPTION
+	@echo "cat('Built: R ', R.version[['major']], '.', R.version[['minor']], ';  Win32;  ', format(Sys.time()), sep='')" | $(RHOME)/bin/Rterm --slave --vanilla >> ${DPKG}/DESCRIPTION
 endif
 
 $(DATA): $(DSOURCES)
 	@echo "  installing data files"
+	@$(RM) -rf $(DATA)
 	@$(MKDIR) -p $(DATA)
 	@$(CP) $^  $@
 
@@ -137,6 +138,25 @@ ifeq ($(strip $(SRCMAKE)),)
 else
 	@$(MAKE) -C $(SSPKG) RHOME=$(RHOME) -f Makefile.win
 endif
+	@echo "  DLL made"
+	@echo
 
 FORCE:
 
+AA=$(wildcard R/Makefile.win)
+ifeq ($(AA),)
+ R: $(DPKG)/R/$(PKG)
+else
+ include R/Makefile.win
+endif
+
+MANMAIN=$(wildcard $(SPKG)/man/*.[Rr]d)
+MANWIN32=$(wildcard $(SPKG)/man/windows/*.[Rr]d) 
+
+mansrcs: $(DPKG)/man/$(PKG).Rd
+
+$(DPKG)/man/$(PKG).Rd: $(MANMAIN) $(MANWIN32)
+	@echo "  installing man source files"
+	@$(RM) -rf $(DPKG)/man
+	@$(MKDIR) -p $(DPKG)/man
+	@$(CAT) $^ > $(DPKG)/man/$(PKG).Rd

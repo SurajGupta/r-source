@@ -44,7 +44,7 @@ all: pdf
 	$(TEX) $<
 
 .texi.html:
-	$(MAKEINFO) --html $< -o $@ || touch $@
+	$(MAKEINFO) --no-split --html $< -o $@ || touch $@
 
 .texi.info:
 	$(MAKEINFO)  -D UseExternalXrefs $<
@@ -124,6 +124,15 @@ refman.pdf: $(pkgsrcs) version.tex ../../share/texmf/Rd.sty \
 	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
 	  cat refman.bot) > refman.tex
 	@$(RM) -f *.aux refman.toc refman.ind
+ifeq ($(strip $(BUILD)),CROSS)
+	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
+	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(MAKEINDEX) refman
+	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
+	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
+	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+else
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@$(MAKEINDEX) refman
@@ -131,7 +140,7 @@ refman.pdf: $(pkgsrcs) version.tex ../../share/texmf/Rd.sty \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
-
+endif
 
 version.tex: ../../bin/Rterm.exe $(top_srcdir)/VERSION
 	@echo "creating $(subdir)/$@"

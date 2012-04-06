@@ -5,7 +5,7 @@
   The method for \code{\link{seq}} for data-time classes.
 }
 \usage{
-\method{seq}{POSIXt}(from, to, by, length.out=NULL, along.with=NULL)
+\method{seq}{POSIXt}(from, to, by, length.out=NULL, along.with=NULL, ...)
 }
 \arguments{
   \item{from}{starting date. Required}
@@ -13,6 +13,7 @@
   \item{by}{increment of the sequence. Optional. See Details.}
   \item{length.out}{integer, optional. desired length of the sequence.}
   \item{along.with}{take the length from the length of this argument.}
+  \item{\dots}{arguments passed to or from other methods.}
 }
 \details{
   \code{by} can be specified in several ways.
@@ -32,7 +33,7 @@
 
 \examples{
 ## first days of years in the (commonly used) 20th century
-seq(ISOdate(1901,1,1), ISOdate(1999,1,1), "years")
+seq(ISOdate(1910,1,1), ISOdate(1999,1,1), "years")
 ## by month
 seq(ISOdate(2000,1,1), by="month", length=12)
 ## quarters

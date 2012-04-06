@@ -56,14 +56,14 @@ nlevels <- function(x) length(levels(x))
 
 codes <- function(x, ...) UseMethod("codes")
 
-codes.factor <- function(x)
+codes.factor <- function(x, ...)
 {
     ## This is the S-plus semantics.
     ## The deeper meaning? Search me...
     rank(levels(x))[x]
 }
 
-codes.ordered <- .Alias(as.integer)
+codes.ordered <- as.integer
 
 "codes<-" <- function(x, value, ...)
 {
@@ -85,13 +85,19 @@ as.vector.factor <- function(x, type="any")
 	as.vector(unclass(x), type)
 }
 
+as.character.factor <- function(x,...)
+{
+    cx <- levels(x)[x]
+    if("NA" %in% levels(x)) cx[is.na(x)] <- "<NA>"
+    cx
+}
 
 print.factor <- function (x, quote=FALSE, ...)
 {
     if(length(x) <= 0)
 	cat("factor(0)\n")
     else
-	print(levels(x)[x], quote=quote, ...)
+	print(as.character(x), quote=quote, ...)
     cat("Levels: ", paste(levels(x), collapse=" "), "\n")
     invisible(x)
 }
@@ -140,14 +146,17 @@ Ops.factor <- function(e1, e2)
 {
     lx <- levels(x)
     cx <- class(x)
-    nas <- is.na(x)
+#    nas <- is.na(x) # unused
     if (is.factor(value))
 	value <- levels(value)[value]
     m <- match(value, lx)
     if (any(is.na(m) & !is.na(value)))
 	warning("invalid factor level, NAs generated")
     class(x) <- NULL
-    x[i] <- m
+    if (missing(i))
+	x[] <- m
+    else
+        x[i] <- m
     attr(x,"levels") <- lx
     class(x) <- cx
     x
@@ -165,8 +174,8 @@ print.ordered <- function (x, quote=FALSE, ...)
     if(length(x) <= 0)
 	cat("ordered(0)\n")
     else
-	print(levels(x)[x], quote=quote)
-    cat("Levels: ",paste(levels(x), collapse=" < "), "\n")
+	print(as.character(x), quote=quote, ...)
+    cat("Levels: ", paste(levels(x), collapse=" < "), "\n")
     invisible(x)
 }
 
@@ -208,4 +217,13 @@ function (e1, e2)
     value <- get(.Generic, mode = "function")(e1, e2)
     value[nas] <- NA
     value
+}
+
+"is.na<-.factor" <- function(x, value)
+{
+    lx <- levels(x)
+    cx <- class(x)
+    class(x) <- NULL
+    x[value] <- NA
+    structure(x, levels = lx, class = cx)
 }

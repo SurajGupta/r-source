@@ -3,7 +3,7 @@ wilcox.test <- function(x, ...) UseMethod("wilcox.test")
 wilcox.test.default <-
 function(x, y = NULL, alternative = c("two.sided", "less", "greater"), 
          mu = 0, paired = FALSE, exact = NULL, correct = TRUE,
-         conf.int = FALSE, conf.level = 0.95) 
+         conf.int = FALSE, conf.level = 0.95, ...)
 {
     alternative <- match.arg(alternative)
     if(!missing(mu) && ((length(mu) > 1) || !is.finite(mu))) 
@@ -96,13 +96,8 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                lci <- diffs[ql+1]
                                c(-Inf, lci)        
                            })
-                attr(cint, "conf.level") <- conf.level    
-                wmean <- n*(n+1)/4
-                if(floor(wmean) != wmean)
-                    ESTIMATE <- mean(c(diffs[floor(wmean)],
-                                       diffs[ceiling(wmean)]))
-                else 
-                    ESTIMATE <- mean(c(diffs[wmean-1], diffs[wmean+1]))
+                attr(cint, "conf.level") <- conf.level
+                ESTIMATE <- median(diffs)
                 names(ESTIMATE) <- "(pseudo)median"
 
             }
@@ -265,12 +260,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                c(-Inf, lci)
                            })
                 attr(cint, "conf.level") <- conf.level
-                wmean <- n.x*n.y/2
-                if(floor(wmean) != wmean)
-                    ESTIMATE <- mean(c(diffs[floor(wmean)],
-                                       diffs[ceiling(wmean)]))
-                else 
-                    ESTIMATE <- mean(c(diffs[wmean-1], diffs[wmean+1]))
+                ESTIMATE <- median(diffs)
                 names(ESTIMATE) <- "difference in location"
             }
         }
@@ -361,10 +351,10 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                  alternative = alternative,
                  method = METHOD, 
                  data.name = DNAME)
-    if(conf.int) {
-        RVAL$conf.int <- cint
-        RVAL$estimate <- ESTIMATE
-    }
+    if(conf.int)
+        RVAL <- c(RVAL,
+                  list(conf.int = cint,
+                       estimate = ESTIMATE))
     class(RVAL) <- "htest"
     return(RVAL)
 }
@@ -388,7 +378,7 @@ function(formula, data, subset, na.action, ...)
     DNAME <- paste(names(mf), collapse = " by ")
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
-    g <- as.factor(mf[[-response]])
+    g <- factor(mf[[-response]])
     if(nlevels(g) != 2)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)

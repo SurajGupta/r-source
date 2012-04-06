@@ -49,6 +49,9 @@
 /*	make sure TARGET_API_MAC_CARBON is #defined
 */
 
+#include "Defn.h"
+
+#define MAC_FILE_SIZE 255
 
 #ifndef TARGET_API_MAC_CARBON
 #define TARGET_API_MAC_CARBON	0
@@ -377,7 +380,8 @@ enum {
 	kMenuEdit,
 	kMenuTools,
 	kMenuWindows,
-	kMenuConfig
+	kMenuConfig,
+	kMenuUser
 };
 
 /*	Apple Menu items
@@ -455,7 +459,7 @@ enum {
 	kLineTo                 = 257,
 	kEditObject             = 258,
 	kError                  = 259,
-	kPreferneces			= 260,
+	kPreferences			= 260,
 	kAbout                  = 261,
 	kHelpObject             = 262,
 	kExampleObject          = 263,
@@ -517,7 +521,8 @@ struct Graphic_Ref
     GWorldPtr offScreen2;
     GWorldPtr offScreen;
     PixMapHandle offPixMapHandle;
-    Ptr devdesc;  
+    Ptr gedevdesc;  
+    Ptr newdevdesc;
     CGrafPtr colorPort;
     GDHandle colorDevice;
 #if TARGET_API_MAC_CARBON
@@ -608,7 +613,7 @@ OSErr			InitializeEvents( void );
 
 /* from WEDemoFiles.c
  */
-OSStatus		ReadTextFile( const FSSpec *, WEReference );  /*Jago */
+OSStatus		ReadTextFile( const FSSpec *, WindowPtr );  /*Jago */
 OSStatus		WriteTextFile( const FSSpec *, WEReference ); /* Jago */
 OSStatus		ReadUnicodeTextFile ( const FSSpec *, WEReference ) ;  /* Jago  */
 OSErr			WritePictFile( const FSSpec *, PicHandle );
@@ -674,7 +679,6 @@ Boolean			DoContent( Point, const EventRecord *, WindowPtr );
 void			DoKey( short, const EventRecord * );
 void			DoUpdate( WindowPtr );
 void			DoActivate( Boolean, WindowPtr );
-//OSErr			CreateWindow( const FSSpec * );
 OSErr 			CreateWindow (const FSSpec * pFileSpec, Boolean editable);
 void			DestroyWindow( WindowPtr );
 void			Resize( Point, WindowPtr );
@@ -739,8 +743,6 @@ void			moveTo(SInt16, SInt16);
 void			lineToWindow(SInt16, SInt16, SInt16);
 void			moveToWindow(SInt16, SInt16, SInt16);
 WindowPtr		CreateGraphicWindow(int wid, int h);
-OSErr			OldnewWindow( const FSSpec* , int);
-//OSStatus 		newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphic );
 OSStatus 		newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphic, Boolean editable );
 Boolean			isTextWindow(WindowPtr window);
 void			LineFromToWindow(SInt16, SInt16, SInt16, SInt16,WindowPtr);
@@ -815,9 +817,11 @@ typedef struct {
     int fontsize;           /* Size in points */
     int usefixed;
     RGBColor rgb[2];	    /* Window-Pict/Pixmap Port ForeColors */
-    int col[2];
+	int color;		        /* color */
+	int fill;	        /* fill color */
     WindowPtr window;
     int	lineType;
+    int lineWidth;
     SInt16 currentDash;
     SInt16 numDashes;
     short dashList[14];

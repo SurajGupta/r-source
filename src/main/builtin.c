@@ -81,7 +81,7 @@ SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    {
 		PROTECT(tmp=allocList(1));
 		SETCAR(tmp, code);
-		ctxt->conexit = listAppend(oldcode,tmp);
+		ctxt->conexit = listAppend(duplicate(oldcode),tmp);
 		UNPROTECT(1);
 	    }
 	}
@@ -147,6 +147,49 @@ SEXP do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	errorcall(call, "replacement object is not an environment");
     return CAR(args);
+}
+
+
+SEXP do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP enclos;
+    int hash;
+
+    checkArity(op, args);
+
+    hash = asInteger(CAR(args));
+    enclos = CADR(args);
+    if( !isEnvironment(enclos) )
+	errorcall(call, "enclos needs to be an environment");
+
+    if( hash )
+	return R_NewHashedEnv(enclos);
+    else
+	return NewEnvironment(R_NilValue, R_NilValue, enclos);
+}
+
+SEXP do_parentenv(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+
+    if( !isEnvironment(CAR(args)) )
+	errorcall(call, "argument is not an environment");
+
+    return( ENCLOS(CAR(args)) );
+}
+
+SEXP do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+
+    if( !isEnvironment(CAR(args)) )
+	errorcall(call, "argument is not an environment");
+    if( !isEnvironment(CADR(args)) )
+	errorcall(call, "parent is not an environment");
+
+    SET_ENCLOS(CAR(args), CADR(args));
+
+    return( CAR(args) );
 }
 
 static void cat_newline(SEXP labels, int *width, int lablen, int ntot)

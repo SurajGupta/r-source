@@ -18,24 +18,32 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __GNOME_TERMINAL_H__
+#define __GNOME_TERMINAL_H__
+
 #include <gnome.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
 #include "gtkconsole.h"
 
-
 #define GLADE_INTERFACE_FILE "%s/share/glade/gnome-interface.glade"
-
-GtkWidget *R_gtk_main_window;
-GtkWidget *R_gtk_terminal_text;
-GtkWidget *R_gtk_terminal_appbar;
-
-gchar *glade_interface_file;
 
 /* functions */
 
 void terminal_set_style(void);
-
 void R_gtk_terminal_new();
 
+/* variables */
+
+#ifdef __GNOME_TERMINAL_C__
+# define extern
+#endif
+
+extern GtkWidget *R_gtk_main_window;
+extern GtkWidget *R_gtk_terminal_text;
+extern GtkWidget *R_gtk_terminal_appbar;
+
+extern gchar *glade_interface_file;
+
+#endif /* __GNOME_TERMINAL_H__ */

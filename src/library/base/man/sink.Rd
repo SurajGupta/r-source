@@ -12,12 +12,13 @@ sink.number(type = c("output", "message"))
   \item{append}{logical. If \code{TRUE}, output will be appended to
     \code{file}; otherwise, it will overwrite the contents of
     \code{file}.}
-  \item{type}{character. Either the output stream of the messages stream.}
+  \item{type}{character. Either the output stream or the messages stream.}
 }
 \description{
   \code{sink} diverts \R output to a connection.
 
   \code{sink.number()} reports how many diversions are in use.
+
   \code{sink.number(type = "message")} reports the number of the
   connection currently being used for error messages.
 }
@@ -35,15 +36,21 @@ sink.number(type = c("output", "message"))
   diversions for normal output, so output reverts to the previous
   diversion (if there was one).  The stack is of up to 21 connections
   (20 diversions).
-  
+
   If \code{file} is a connection if will be opened if necessary.
-  Switching to another file or connection closes and destroys the
-  current sink connection if it is a file connection opened by an
-  earlier call to \code{sink}.
 
   Sink-ing the messages stream should be done only with great care.
   For that stream \code{file} must be an already open connection, and
   there is no stack of connections.
+}
+\value{
+  For \code{sink}.
+
+  For \code{sink.number()} the number (0, 1, 2, \dots) of diversions of
+  output in place.
+
+  For \code{sink.number("message")} the connection number used for
+  messages, 2 if no diversion has been used.
 }
 \section{Warning}{
   Don't use a connection that is open for \code{sink} for any other
@@ -55,7 +62,7 @@ sink.number(type = c("output", "message"))
 \examples{
 sink("sink-examp.txt")
 i <- 1:10
-outer(i,i,"*")
+outer(i, i, "*")
 sink()
 unlink("sink-examp.txt")
 \dontrun{

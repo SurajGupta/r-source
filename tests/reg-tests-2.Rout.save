@@ -1,6 +1,6 @@
 
 R : Copyright 2001, The R Development Core Team
-Version 1.3.0 Patched (2001-08-24)
+Version 1.4.0 Under development (unstable) (2001-11-13)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -455,10 +455,244 @@ $v
 
 > 
 > 
+> ## Make sure  on.exit() keeps being evaluated in the proper env [from PD]:
+> ## A more complete example:
+> g1 <- function(fitted) { on.exit(remove(fitted)); return(function(foo) foo) }
+> g2 <- function(fitted) { on.exit(remove(fitted));        function(foo) foo }
+> f <- function(g) { fitted <- 1; h <- g(fitted); print(fitted)
++                    ls(envir=environment(h)) }
+> f(g1)
+[1] 1
+character(0)
+> f(g2)
+[1] 1
+character(0)
+> 
+> f2 <- function()
++ {
++   g.foo <- g1
++   g.bar <- g2
++   g <- function(x,...) UseMethod("g")
++   fitted <- 1; class(fitted) <- "foo"
++   h <- g(fitted); print(fitted); print(ls(envir=environment(h)))
++   fitted <- 1; class(fitted) <- "bar"
++   h <- g(fitted); print(fitted); print(ls(envir=environment(h)))
++   invisible(NULL)
++ }
+> f2()
+[1] 1
+attr(,"class")
+[1] "foo"
+character(0)
+[1] 1
+attr(,"class")
+[1] "bar"
+character(0)
+> ## The first case in f2() is broken in 1.3.0(-patched).
+> 
+> ## on.exit() consistency check from Luke:
+> g <- function() as.environment(-1)
+> f <- function(x) UseMethod("f")
+> f.foo <- function(x) { on.exit(e <<- g()); NULL }
+> f.bar <- function(x) { on.exit(e <<- g()); return(NULL) }
+> f(structure(1,class = "foo"))
+NULL
+> ls(env = e)# only "x", i.e. *not* the GlobalEnv
+[1] "x"
+> f(structure(1,class = "bar"))
+NULL
+> stopifnot("x" == ls(env = e))# as above; wrongly was .GlobalEnv in R 1.3.x
+> 
+> 
+> ## some tests that R supports logical variables in formulae
+> ## it coerced them to numeric prior to 1.4.0
+> ## they should appear like 2-level factors, following S
+> 
+> oldCon <- options("contrasts")
+> y <- rnorm(10)
+> x <- rep(c(TRUE, FALSE), 5)
+> model.matrix(y ~ x)
+   (Intercept) xTRUE
+1            1     1
+2            1     0
+3            1     1
+4            1     0
+5            1     1
+6            1     0
+7            1     1
+8            1     0
+9            1     1
+10           1     0
+attr(,"assign")
+[1] 0 1
+attr(,"contrasts")
+attr(,"contrasts")$x
+[1] "contr.treatment"
+
+> lm(y ~ x)
+
+Call:
+lm(formula = y ~ x)
+
+Coefficients:
+(Intercept)        xTRUE  
+     0.1230       0.3170  
+
+> DF <- data.frame(x, y)
+> lm(y ~ x, data=DF)
+
+Call:
+lm(formula = y ~ x, data = DF)
+
+Coefficients:
+(Intercept)        xTRUE  
+     0.1230       0.3170  
+
+> options(contrasts=c("contr.helmert", "contr.poly"))
+> model.matrix(y ~ x)
+   (Intercept) x1
+1            1  1
+2            1 -1
+3            1  1
+4            1 -1
+5            1  1
+6            1 -1
+7            1  1
+8            1 -1
+9            1  1
+10           1 -1
+attr(,"assign")
+[1] 0 1
+attr(,"contrasts")
+attr(,"contrasts")$x
+[1] "contr.helmert"
+
+> lm(y ~ x, data=DF)
+
+Call:
+lm(formula = y ~ x, data = DF)
+
+Coefficients:
+(Intercept)           x1  
+     0.2814       0.1585  
+
+> z <- 1:10
+> lm(y ~ x*z)
+
+Call:
+lm(formula = y ~ x * z)
+
+Coefficients:
+(Intercept)           x1            z         x1:z  
+    0.49064     -0.68273     -0.02433      0.15074  
+
+> lm(y ~ x*z - 1)
+
+Call:
+lm(formula = y ~ x * z - 1)
+
+Coefficients:
+  xFALSE     xTRUE         z      x1:z  
+ 1.17337  -0.19209  -0.02433   0.15074  
+
+> options(oldCon)
+> 
+> ## diffinv, Adrian Trapletti, 2001-08-27
+> library(ts)
+> x <- ts(1:10)
+> diffinv(diff(x),xi=x[1])
+Time Series:
+Start = 1 
+End = 10 
+Frequency = 1 
+ [1]  1  2  3  4  5  6  7  8  9 10
+> diffinv(diff(x,lag=1,differences=2),lag=1,differences=2,xi=x[1:2])
+Time Series:
+Start = 1 
+End = 10 
+Frequency = 1 
+ [1]  1  2  3  4  5  6  7  8  9 10
+> ## last had wrong start and end
+> detach("package:ts")
+> 
 > ## PR#1072  (Reading Inf and NaN values)
 > as.numeric(as.character(NaN))
 [1] NaN
 > as.numeric(as.character(Inf))
 [1] Inf
 > ## were NA on Windows at least under 1.3.0.
+> 
+> ## PR#1092 (rowsum dimnames)
+> rowsum(matrix(1:12, 3,4), c("Y","X","Y"))
+  [,1] [,2] [,3] [,4]
+X    2    5    8   11
+Y    4   10   16   22
+> ## rownames were 1,2 in <= 1.3.1.
+> 
+> ## PR#1115 (saving strings with ascii=TRUE)
+> x <- y <- unlist(as.list(
++     parse(text=paste("\"\\",
++           as.character(structure(0:255,class="octmode")),
++              "\"",sep=""))))
+> save(x, ascii=T, file=(fn <- tempfile()))
+> load(fn)
+> all(x==y)
+[1] TRUE
+> unlink(fn)
+> ## 1.3.1 had trouble with \
+> 
+> 
+> ## Some tests of sink() and connections()
+> ## capture all the output to a file.
+> zz <- file("all.Rout", open="wt")
+> sink(zz)
+> sink(zz, type="message")
+> try(log("a"))
+> ## back to the console
+> sink(type="message")
+> sink()
+> try(log("a"))
+Error in log(x) : Non-numeric argument to mathematical function
+> 
+> ## capture all the output to a file.
+> zz <- file("all.Rout", open="wt")
+> sink(zz)
+> sink(zz, type="message")
+> try(log("a"))
+> 
+> ## bail out
+> closeAllConnections()
+> (foo <- showConnections())
+     description class mode text isopen can read can write
+> stopifnot(nrow(foo) == 0)
+> try(log("a"))
+Error in log(x) : Non-numeric argument to mathematical function
+> unlink("all.Rout")
+> ## many of these were untested before 1.4.0.
+> 
+> 
+> ## test mean() works on logical but not factor
+> x <- c(TRUE, FALSE, TRUE, TRUE)
+> mean(x)
+[1] 0.75
+> mean(as.factor(x))
+[1] NA
+Warning message: 
+argument is not numeric or logical: returning NA in: mean.default(as.factor(x)) 
+> ## last had confusing error message in 1.3.1.
+> 
+> 
+> ## Kurt Hornik 2001-Nov-13
+> z <- table(x = 1:2, y = 1:2)
+> z - 1
+   y
+x    1  2
+  1  0 -1
+  2 -1  0
+> unclass(z - 1)
+   y
+x    1  2
+  1  0 -1
+  2 -1  0
+> ## lost object bit prior to 1.4.0, so printed class attribute.
 > 

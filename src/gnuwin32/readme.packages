@@ -12,7 +12,7 @@ current links at http://www.stats.ox.ac.uk/pub/Rtools/.
 
 
 You will need suitable versions of at least make, sh, cat, cp, diff,
-echo, g(awk), mkdir, mv, rm, sed; we have packaged a set at
+echo, mkdir, mv, rm, sed; we have packaged a set at
 http://www.stats.ox.ac.uk/pub/Rtools/tools.zip extracted from the
 cygwin distribution (http://www.cygwin.com/mirrors.html) or (gzip)
 compiled from the sources.
@@ -20,23 +20,17 @@ compiled from the sources.
 BEWARE: `Native' ports of make are _not_ suitable (including that at
 the mingw site).  There were also problems with several earlier
 versions of the cygwin tools and dll.  To avoid frustration, please
-use our tool set.
+use our tool set, and make sure it is at the front of your path.
 
-We recommend that you use a recent snapshot of the mingw port of gcc
-from http://prdownloads.sourceforge.net/mingw/.  For example, at the
-time of writing, Mingw-1.0.1-20010726.tar.gz based on gcc-2.95.3.
-Just unpack this somewhere and put its bin directory in your path.
+We recommend that you use a recent snapshot of the Mingw port of gcc
+from http://sourceforge.net/projects/mingw/.  For example, at the time
+of writing, MinGW-1.1.tar.gz based on gcc-2.95.3.  Just unpack this
+somewhere and put its bin directory in your path, *after* our tools.
 
-You can also use the mingw port of gcc-2.95.2-1 by Mumit Khan linked
-from http://www.mingw.org/, but you *cannot* use earlier versions of
-the mingw compilers, for example gcc-2.95.2 (no -1): the symptom is a
-report that `-shared' is not understood.
-
-It *might* also be possible to use the compilers from the cygwin 1.1 net
-release with the -mno-cygwin -mwin32 flags; the current versions use
-mscrt.dll.  (You will need the cygwin, gcc, mingw32, w32api and
-binutils bundles.  All the recent versions we have tried do not work
-unchanged with -mno-cygwin.)
+No earlier Mingw compiler has been tested and support for using the
+Cygwin compiler has been withdrawn.  If you see errors about `-shared'
+not being understood or `__imp_foo' missing, you are not using the
+recommended compiler.
 
 
 The Windows port of perl5, available via
@@ -47,7 +41,7 @@ If you want to make compiled html (.chm) files you will need the
 Microsoft HTML Help Workshop, currently available for download at
 
 http://msdn.microsoft.com/library/en-us/htmlhelp/html/hwMicrosoftHTMLHelpDownloads.asp
-http://www.microsoft.com/office/ork/xp/appndx/appa06.htm
+and http://www.microsoft.com/office/ork/xp/appndx/appa06.htm
 
 You may need this on the same drive as the other tools. (Although we
 have successfully used it elsewhere, others have reported problems).
@@ -63,9 +57,8 @@ files: for that you need zip and unzip from the Info-ZIP project
 
 
 All of these need to be installed and in your path, and the
-appropriate environment variables set.  Edit MkRules to set BUILD and
-the appropriate paths as needed.  (IMPORTANT: if you use cygwin you
-must edit MkRules and set BUILD=CYGWIN.)
+appropriate environment variables set.  Edit MkRules to set the
+appropriate paths as needed.
 
 BEWARE: if you have Norton Anti-Virus you may need to disable it.
 Some versions lock up the machine when windres is run.
@@ -86,7 +79,7 @@ At this point there are two approaches:
 
 1) Streamlined way
 
-Assuming that ...\rw1031\bin is in your path, use
+Assuming that ...\rw1040\bin is in your path, use
 
 	Rcmd INSTALL package
 
@@ -136,10 +129,7 @@ and the .win equivalents do not.  Such files included in package
 sources are usually designed for use under Unix and are best removed.
 
 BEWARE: references to variables in R.dll are converted to the
-right form by including "globalvar.h" in the C source.  If you use
-your own Makefile.win or set CFLAGS (rather than append to it) you may
-need to include "globalvar.h" explicitly.  (References to exported
-variables may lurk inside the macros of Rinternals.h and Rdefines.h.)
+right form by using the header files.  You must include them.
 
 
 Using zipped help files
@@ -219,8 +209,8 @@ executable to be debugged as the full path to the R front-end.
 
 Extra care is needed when referencing variables (rather than
 functions) exported from R.dll.  These must be declared
-__declspec(dllimport).  A list of the relevant variables is in the
-file `exported-vars'.
+__declspec(dllimport) (as in R's own header files).  A list of the
+relevant variables is in the file `exported-vars'.
 
 
 Using Borland C++
@@ -229,7 +219,7 @@ Using Borland C++
 Borland C++5.5 is available as a free download from
 http://www.borland.com/bcppbuilder/freecompiler/ and as part of C++
 Builder 5.  The following will make convolve.dll from convolve.c (flag
--6 optimizes for a Pentium Pro/II/III, and -u- removes extra underscores)
+-6 optimizes for a Pentium Pro/II/III/4, and -u- removes extra underscores)
 
 bcc32 -u- -6 -O2 -WDE convolve.c
 
@@ -241,7 +231,7 @@ implib R.lib R.def
 and then add R.lib to the bcc32 command line, for example (from
 Venables & Ripley's `S Programming')
 
-bcc32 -u- -6 -O2 -WDE -I\R\rw1031\src\include VCrndR.c R.lib
+bcc32 -u- -6 -O2 -WDE -I\R\rw1040\src\include VCrndR.c R.lib
 
 We believe that when referencing variables (rather than functions)
 exported from R.dll these must be declared __declspec(dllimport) just
@@ -307,7 +297,7 @@ If you have a Unix/Linux box, it will suffice to zip up the Unix
 installation of the package.  Install the package, then
 
 	cd `R RHOME`/library
-	zip -rl /dest/mypkg.zip mypkg
+	zip -r9l /dest/mypkg.zip mypkg
 
 (the -l flag converts to CRLF line endings: it is not necessary but
 users may want to read the information files in a Windows editor).
@@ -353,9 +343,10 @@ Then packages can be made as natively, for example by
 	make STAMP=NO PKGDIR=/mysources RLIB=/R/win/library pkg-mypkg
 	make PKGDIR=/mysources RLIB=/R/win/library pkgcheck-mypkg
 	cd /R/win/library
-	zip -rl /dest/mypkg.zip mypkg
+	zip -r9l /dest/mypkg.zip mypkg
 
-(Rcmd is a Windows executable, so cannot be used.  Notice the STAMP=NO line.)
+(Rcmd is a Windows executable, so cannot be used.  Notice the STAMP=NO
+on the second line.)
 
 
 Feedback

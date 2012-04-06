@@ -14,6 +14,7 @@ diff.default(x, lag=1, differences=1, \dots)
     differenced.}
   \item{lag}{an integer indicating which lag to use.}
   \item{differences}{an integer indicating the order of the difference.}
+  \item{\dots}{further arguments to be passed to or from methods.}
 }
 \details{
   \code{diff} is a generic function with a default method and one for
@@ -22,7 +23,8 @@ diff.default(x, lag=1, differences=1, \dots)
 \value{
   If \code{x} is a vector of length \code{n} and \code{differences=1},
   then the computed result is equal to the successive differences
-  \code{x[(1:n-lag)] - x[(lag:n)]}.
+  \code{x[(1+lag):n] - x[1:(n-lag)]}.
+
   If \code{difference} is larger than one this algorithm is applied
   recursively to \code{x}.
   Note that the returned value is a vector which is shorter than
@@ -31,11 +33,16 @@ diff.default(x, lag=1, differences=1, \dots)
   If \code{x} is a matrix then the difference operations are carried out
   on each column separately.
 }
-\seealso{\code{\link[ts]{diff.ts}} from the \code{ts} package which you
-  may want anyway.}
+\seealso{
+  \code{\link{diff.ts}}.
+}
 \examples{
 diff(1:10, 2)
 diff(1:10, 2, 2)
+x <- cumsum(cumsum(1:10))
+stopifnot(diff(x, lag = 2) == x[(1+2):10] - x[1:(10 - 2)],
+          diff(x, lag = 2) == (3:10)^2,
+          diff(diff(x))    == diff(x, differences = 2))
 }
 \keyword{ts}
 \keyword{arith}

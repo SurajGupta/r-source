@@ -19,6 +19,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <RCarbon.h>
+
 #include <stdio.h>
 
 #include <fp.h> /* Jago */
@@ -52,24 +54,43 @@ extern int GetScreenRes(void);
 
    /* Device Driver Actions */
 
-static void		Mac_Activate(DevDesc *);
-static void		Mac_Circle(double, double, int, double, int, int, DevDesc*);
-static void		Mac_Clip(double, double, double, double, DevDesc*);
-static void		Mac_Close(DevDesc*);
-static Rboolean		Mac_Open(DevDesc *, MacDesc *, char *,double, double);
-static void		Mac_Deactivate(DevDesc *);
-static void		Mac_Hold(DevDesc*);
-static void		Mac_Line(double, double, double, double, int, DevDesc*);
-static Rboolean		Mac_Locator(double*, double*, DevDesc*);
-static void		Mac_Mode(int, DevDesc*);
-static void		Mac_NewPage(DevDesc*);
-static void		Mac_Polygon(int, double*, double*, int, int, int, DevDesc*);
-static void		Mac_Polyline(int, double*, double*, int, DevDesc*);
-static void		Mac_Rect(double, double, double, double, int, int, int, DevDesc*);
-static double		Mac_StrWidth(char*, DevDesc*);
-static void		Mac_Text(double, double, int, char*, double, double, DevDesc*);
-static void		Mac_MetricInfo(int, double*, double*, double*, DevDesc*);
-static void		Mac_Resize(DevDesc* dd);
+static void Mac_Activate(NewDevDesc *dd);
+static void Mac_Circle(double x, double y, double r,
+		       int col, int fill, double gamma, int lty, double lwd,
+		       NewDevDesc *dd);
+static void Mac_Clip(double x0, double x1, double y0, double y1, 
+		     NewDevDesc *dd);
+static void Mac_Close(NewDevDesc *dd);
+static void Mac_Deactivate(NewDevDesc *dd);
+static void Mac_Hold(NewDevDesc *dd);
+static Rboolean Mac_Locator(double *x, double *y, NewDevDesc *dd);
+static void Mac_Line(double x1, double y1, double x2, double y2,
+		     int col, double gamma, int lty, double lwd,
+		     NewDevDesc *dd);
+static void Mac_MetricInfo(int c, int font, double cex, double ps,
+			      double* ascent, double* descent,
+			      double* width, NewDevDesc *dd);
+static void Mac_Mode(int mode, NewDevDesc *dd);
+static void Mac_NewPage(int fill, double gamma, NewDevDesc *dd);
+static void Mac_Polygon(int n, double *x, double *y, 
+			int col, int fill, double gamma, int lty, double lwd,
+			NewDevDesc *dd);
+static void Mac_Polyline(int n, double *x, double *y, 
+			    int col, double gamma, int lty, double lwd,
+			    NewDevDesc *dd);
+static void Mac_Rect(double x0, double y0, double x1, double y1,
+		     int col, int fill, double gamma, int lty, double lwd,
+		     NewDevDesc *dd);
+static void Mac_Size(double *left, double *right,
+		     double *bottom, double *top,
+		     NewDevDesc *dd);
+static double Mac_StrWidth(char *str, int font,
+			      double cex, double ps, NewDevDesc *dd);
+static void Mac_Text(double x, double y, char *str, 
+		     double rot, double hadj, 
+		     int col, double gamma, int font, double cex, double ps,
+		     NewDevDesc *dd);
+static Rboolean		Mac_Open(NewDevDesc *, MacDesc *, char *,double, double);
 
 
 
@@ -88,9 +109,10 @@ extern SInt32	systemVersion ;
 static void	FreeColors(void);
 static double	pixelHeight(void);
 static double	pixelWidth(void);
-static int		SetColor(int, int, DevDesc*);
-static void		SetFont(int, int, DevDesc*);
-static void		SetLinetype(int, double, DevDesc*);
+static int		Mac_SetColor(int, NewDevDesc*);
+static int		Mac_SetFill(int, NewDevDesc*);
+static void		SetFont(int, int, NewDevDesc*);
+static void		SetLinetype(int, double, NewDevDesc*);
 static int		SetBaseFont(MacDesc *xd);
 OSErr 			NewRasterTextRotation(char *str, int face, int size, int color, int xx, 
 					int yy, double rot,  WindowPtr window);
@@ -98,7 +120,7 @@ void			startRecord(WindowPtr window);
 void			stopRecord(WindowPtr window);
 void			CleanUpWindow(WindowPtr window);
 extern void		doActivate(EventRecord*);
-void			DrawLineType(int xx1, int yy1, int xx2, int yy2, DevDesc *dd);
+void			DrawLineType(int xx1, int yy1, int xx2, int yy2, NewDevDesc *dd);
 
    /*****************************************************************************/
    /* Global or external variables                                              */
@@ -129,7 +151,29 @@ extern int			gScreenRes;
    /*              the change  (Indirect method)                                */
    /*****************************************************************************/
 
-static void Mac_Resize(DevDesc* dd)
+
+static void Mac_Size(double *left, double *right,
+		     double *bottom, double *top,
+		     NewDevDesc *dd)
+{
+    MacDesc *xd = (MacDesc *) dd->deviceSpecific;
+    Rect portRect;
+
+    if(WeArePrinting || WeArePasting){
+    	GetPortBounds ( gGReference[isGraphicWindow(xd->window)].activePort, & portRect ) ;
+    }
+    else{
+    	GetWindowPortBounds ( xd->window, & portRect ) ;
+    }
+    
+    *left = 0.0;
+    *right = portRect.right;
+    *bottom = portRect.bottom;
+    *top = 0.0;
+}
+
+
+static void Mac_Resize(NewDevDesc* dd)
 {
     MacDesc	*xd = (MacDesc *)dd->deviceSpecific;
     SInt16 WinIndex;
@@ -145,10 +189,10 @@ static void Mac_Resize(DevDesc* dd)
     }
  
     if (xd->resize) {
- 		dd->dp.left = dd->gp.left = 0.0;
-		dd->dp.right = dd->gp.right = portRect.right;
-		dd->dp.bottom = dd->gp.bottom = portRect.bottom;
-		dd->dp.top = dd->gp.top = 0.0;
+ 		dd->left = 0.0;
+		dd->right = portRect.right;
+		dd->bottom = portRect.bottom;
+		dd->top = 0.0;
 		xd->resize = 0 ;
     }
    
@@ -161,7 +205,7 @@ static void Mac_Resize(DevDesc* dd)
    /* Mac_Open : Open the Window, setup the the MAC devices record              */
    /*****************************************************************************/
 
-static Rboolean Mac_Open(DevDesc *dd, MacDesc *xd, char *dsp,
+static Rboolean Mac_Open(NewDevDesc *dd, MacDesc *xd, char *dsp,
 		    double wid, double hgt)
 {
     SInt16 WinIndex;
@@ -170,12 +214,13 @@ static Rboolean Mac_Open(DevDesc *dd, MacDesc *xd, char *dsp,
 	return FALSE;
     }
     
+    if(gScreenRes <72 || gScreenRes>600)
     gScreenRes = GetScreenRes();
     
     xd->windowWidth = wid;
     xd->windowHeight = hgt;
-    dd->dp.bg = R_RGB(255, 255, 255);
-    dd->dp.fg = R_RGB(0, 0, 0);
+    dd->startfill = R_RGB(255, 255, 255);
+    dd->startcol = R_RGB(0, 0, 0);
     /* Create a new window with the specified size */
     CreateGraphicWindow(gScreenRes * wid, gScreenRes * hgt);
     xd->window = Working_Window;
@@ -183,25 +228,29 @@ static Rboolean Mac_Open(DevDesc *dd, MacDesc *xd, char *dsp,
     SetPortWindowPort(xd->window);
 
     WinIndex = isGraphicWindow(Working_Window);
-    gGReference[WinIndex].devdesc = (Ptr)dd;
+    gGReference[WinIndex].newdevdesc = (Ptr)dd;
+    gGReference[WinIndex].gedevdesc = NULL;
     gGReference[WinIndex].colorPort = nil;
     gGReference[WinIndex].colorDevice = nil;
     gGReference[WinIndex].printPort = nil;
     gGReference[WinIndex].activePort = nil;
     gGReference[WinIndex].MenuIndex = 0;
-    xd->col[1] = xd->col[0] = NA_INTEGER;
-    dd->dp.col = R_RGB(0, 0, 0);
+    xd->color = xd->fill = NA_INTEGER;
+//    dd->col = R_RGB(0, 0, 0);
     xd->resize = false;
     xd->lineType = 0;
+    xd->lineWidth = 1;
     return TRUE;
 }
 
 void Mac_Dev_Kill(WindowPtr window)
 {
     SInt16 WinIndex;
+    GEDevDesc *gedd = nil;
+    
     WinIndex = isGraphicWindow(window);
     
-    if ((WinIndex) && (gGReference[WinIndex].devdesc != nil)){
+    if ((WinIndex) && (gGReference[WinIndex].gedevdesc != nil)){
 		if ((gGReference[WinIndex].colorDevice != nil)
 	    	&& (gGReference[WinIndex].colorPort != nil)) {
 	
@@ -213,7 +262,12 @@ void Mac_Dev_Kill(WindowPtr window)
 	    gGReference[WinIndex].activePort = nil;
 	    
 		}
-	KillDevice((DevDesc *)gGReference[WinIndex].devdesc);
+	gedd = (GEDevDesc*)  gGReference[WinIndex].gedevdesc;	
+	KillDevice( (DevDesc *)gedd );
+
+    gGReference[WinIndex].gedevdesc = nil;
+    gGReference[WinIndex].newdevdesc = nil;
+
     }
 }
 
@@ -226,13 +280,14 @@ void Mac_Dev_Kill(WindowPtr window)
 
 /* It will return the StrWidth of the current font in the current GrafPort */
 
-static double Mac_StrWidth(char *str, DevDesc *dd)
+static double Mac_StrWidth(char *str, int font,
+			      double cex, double ps, NewDevDesc *dd)
 {
     CGrafPtr savedPort,port;
     int width;
     int Stringlen = strlen(str);
     MacDesc *xd = (MacDesc*) dd->deviceSpecific;
-    int size = dd->gp.cex * dd->gp.ps + 0.5;
+    int size = cex * ps + 0.5;
 
     GetPort(&savedPort);
   
@@ -243,7 +298,7 @@ static double Mac_StrWidth(char *str, DevDesc *dd)
      port = GetWindowPort(xd->window);
  
     SetPort(port);
-    SetFont(dd->gp.font, size, dd);
+    SetFont(font, size, dd);
     width = TextWidth(str, 0, Stringlen);
 
     SetPort(savedPort);
@@ -263,8 +318,9 @@ static double Mac_StrWidth(char *str, DevDesc *dd)
    /* selected graphic port                                              */
    /**********************************************************************/
 
-static void Mac_MetricInfo(int c, double* ascent, double* descent,
-            double* width, DevDesc *dd)
+static void Mac_MetricInfo(int c, int font, double cex, double ps,
+			      double* ascent, double* descent,
+			      double* width, NewDevDesc *dd)
 {
     FMetricRec myFMetric;
     MacDesc *xd = (MacDesc *) dd-> deviceSpecific;
@@ -291,18 +347,18 @@ static void Mac_MetricInfo(int c, double* ascent, double* descent,
    /* is clipped to the given rectangle                                  */
    /**********************************************************************/
 
-static void Mac_Clip(double x0, double x1, double y0, double y1, DevDesc *dd)
+static void Mac_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 {
 
 }
 
 
 
-static void Mac_NewPage(DevDesc *dd)
+static void Mac_NewPage(int fill, double gamma, NewDevDesc *dd)
 {
     MacDesc *xd = (MacDesc *)dd->deviceSpecific;
-    Rect 	portRect;		/* Window bounds */
-    CGrafPtr savedPort,port;		/* Pointer to save current graphic port */
+    Rect 	portRect;		
+    CGrafPtr savedPort,port;	
 
     GetPort(&savedPort);
     
@@ -316,11 +372,8 @@ static void Mac_NewPage(DevDesc *dd)
   
     GetPortBounds ( port, & portRect ) ;
  
-    SetColor(dd->dp.bg, 0, dd);
+    Mac_SetFill(fill, dd);
     PaintRect(&portRect);
-
-
-    SetColor(dd->dp.fg, 1, dd);
 
     SetPort(savedPort);
     
@@ -338,7 +391,7 @@ static void Mac_NewPage(DevDesc *dd)
 /* We need a way to tell the internal R that the window had been closed  */
 /* by the GUI interface's control                                        */
 
-static void Mac_Close(DevDesc *dd)
+static void Mac_Close(NewDevDesc *dd)
 {
     MacDesc *xd = (MacDesc *) dd->deviceSpecific;
     SInt16 WinIndex;
@@ -347,7 +400,7 @@ static void Mac_Close(DevDesc *dd)
     if( (WinIndex = isGraphicWindow(xd->window)) == 0)
      return;
      
-    RemWinMenuItem();
+    RemWinMenuItem(xd->window);
     changeGWinPtr(xd->window, Cur_Title);
     DestroyWindow(xd->window);
     free(xd);
@@ -363,7 +416,7 @@ static void Mac_Close(DevDesc *dd)
    /* Updated, Stefano M.Iacus Jan, 2001                                 */
    /**********************************************************************/
 
-static void Mac_Activate(DevDesc *dd)
+static void Mac_Activate(NewDevDesc *dd)
 {
     unsigned char titledString[256], curString[256];
     MenuHandle windowsMenu,my_menu;
@@ -371,10 +424,10 @@ static void Mac_Activate(DevDesc *dd)
     Boolean EqString = FALSE;
     MacDesc *xd = (MacDesc *) dd->deviceSpecific;
     SInt16 WinIndex = isGraphicWindow(xd->window);
-    int devNum = deviceNumber(dd);
+    int devNum = devNumber((DevDesc *)dd);
 
     sprintf((char*)&titledString[1], "Graphics Window %d [Inactive]",
-	    devNum +1);
+	    devNum + 1);
     titledString[0] = strlen((char*)&titledString[1]);
 
     windowsMenu = GetMenuHandle(kMenuWindows);
@@ -411,14 +464,14 @@ static void Mac_Activate(DevDesc *dd)
    /* Updated, Stefano M.Iacus Jan, 2001                                 */
    /**********************************************************************/
 
-static void Mac_Deactivate(DevDesc *dd)
+static void Mac_Deactivate(NewDevDesc *dd)
 {
     unsigned char titledString[256],curString[256];
     int i;
     Boolean EqString;
     MenuHandle windowsMenu;
     MacDesc *xd = (MacDesc*)dd->deviceSpecific;
-    int devNum = deviceNumber(dd);
+    int devNum = devNumber((DevDesc *)dd);
     sprintf((char*)&titledString[1], "Graphics Window %d [Active]",
 	    devNum + 1);
     titledString[0] = strlen((char*)&titledString[1]);
@@ -458,8 +511,14 @@ static void Mac_Deactivate(DevDesc *dd)
    /* locations to DEVICE coordinates using GConvert                     */
   /**********************************************************************/
 
+/* Fixed Dec 2001, Jago. Stefano M. Iacus 
+   Rectangles are now drawn using lty and lwd parameter
+   double code suppressed.
+*/
+
 static void Mac_Rect(double x0, double y0, double x1, double y1,
-		     int coords, int bg, int fg, DevDesc *dd)
+		     int col, int fill, double gamma, int lty, double lwd,
+		     NewDevDesc *dd)
 {
     int tmp;
     Rect myRect;
@@ -469,8 +528,6 @@ static void Mac_Rect(double x0, double y0, double x1, double y1,
 
     GetPort(&savedPort);
 
-    GConvert(&x0, &y0, coords, DEVICE, dd);
-    GConvert(&x1, &y1, coords, DEVICE, dd);
     /* FIXME -- redundancy here */
     /* put the values directly in myRect */
     if (x0 > x1) {
@@ -495,23 +552,22 @@ static void Mac_Rect(double x0, double y0, double x1, double y1,
 
     SetPort(port);
 
-    if (bg != NA_INTEGER){
-	SetColor(bg, 0, dd);
+    
+    SetLinetype(lty, lwd, dd);
+
+
+    if (fill != NA_INTEGER){
+	Mac_SetFill(fill, dd);
 	PaintRect(&myRect);
     }
-    if (fg != NA_INTEGER){
-	SetColor(fg, 0, dd);
-	FrameRect(&myRect);
+    if (col != NA_INTEGER){
+	Mac_SetColor(col, dd);
+	DrawLineType(x0, y0, x1+1, y0, dd);
+	DrawLineType(x1+1, y0, x1+1, y1+1, dd);
+	DrawLineType(x1+1, y1+1, x0, y1+1, dd);
+	DrawLineType(x0, y1+1, x0, y0, dd);
     }
-    /* (2) Draw the rectangle into the backing pixmap */
-    if (bg != NA_INTEGER){
-	SetColor(bg, 1, dd);
-	PaintRect(&myRect);
-    }
-    if (fg != NA_INTEGER){
-	SetColor(fg, 1, dd);
-	FrameRect(&myRect);
-    }
+
     SetPort(savedPort);
 }
 
@@ -530,8 +586,9 @@ static void Mac_Rect(double x0, double y0, double x1, double y1,
    /* coordinates                                                        */
    /**********************************************************************/
 
-static void Mac_Circle(double x, double y, int coords,
-		       double r, int col, int border, DevDesc *dd)
+static void Mac_Circle(double x, double y, double r,
+		       int col, int fill, double gamma, int lty, double lwd,
+		       NewDevDesc *dd)
 {
     int ir, ix, iy;
     Rect myRect;
@@ -544,7 +601,6 @@ static void Mac_Circle(double x, double y, int coords,
  
     ir = floor(r + 0.5);
     if (ir < 2) ir = 2;
-    GConvert(&x, &y, coords, DEVICE, dd);
     ix = (int)x;
     iy = (int)y;
     myRect.top = iy - ir;
@@ -561,26 +617,16 @@ static void Mac_Circle(double x, double y, int coords,
     
     SetPort(port);
   
-    if (col != NA_INTEGER){
-	SetColor(col, 0, dd);
+    if (fill != NA_INTEGER){
+	Mac_SetFill(fill, dd);
 	PaintArc(&myRect, 0, 360);
     }
-    if (border != NA_INTEGER){
-	SetColor(border, 0, dd);
+    if (col != NA_INTEGER){
+	Mac_SetFill(col, dd);
 	FrameArc(&myRect, 0, 360);
     }
 
-    /* Update the backing pixmap */
-    /* Only do this if it makes sense */
 
-    if (col != NA_INTEGER){
-	SetColor(col, 1, dd);
-	PaintArc(&myRect, 0, 360);
-    }
-    if (border != NA_INTEGER){
-	SetColor(border, 1, dd);
-	FrameArc(&myRect, 0, 360);
-    }
     SetPort(savedPort);
 }
 
@@ -592,8 +638,15 @@ static void Mac_Circle(double x, double y, int coords,
    /* DEVICE coordinates using GConvert                                  */
    /**********************************************************************/
 
+/* Fixed Dec 2001, Jago. Stefano M. Iacus 
+   Lines are now drawn using lty and lwd parameter
+   the lwd & lty interaction is not yet under my complete
+   control but still enhanhced.
+*/
+
 static void Mac_Line(double x1, double y1, double x2, double y2,
-		     int coords, DevDesc *dd)
+		     int col, double gamma, int lty, double lwd,
+		     NewDevDesc *dd)
 {
     int		xx1, yy1, xx2, yy2;
     short	dx, dy;
@@ -612,11 +665,10 @@ static void Mac_Line(double x1, double y1, double x2, double y2,
     MacDesc *xd = (MacDesc*)dd->deviceSpecific;
     SInt16 WinIndex;
     CGrafPtr	savedPort,port;
+    short	shiftleft;
 
     GetPort(&savedPort);
 
-    GConvert(&x1, &y1, coords, DEVICE, dd);
-    GConvert(&x2, &y2, coords, DEVICE, dd);
     xx1 = (int)x1;
     yy1 = (int)y1;
     xx2 = (int)x2;
@@ -632,12 +684,16 @@ static void Mac_Line(double x1, double y1, double x2, double y2,
     
     SetPort(port);
    
-    SetColor(dd->gp.col, 0, dd);
-    SetLinetype(dd->gp.lty, 1, dd);
-    /* For some reason SetLineType does not work ! */
-    /* so we have fixed dd->gp.lwd to 1            */
-    /* It was:                                     */
-    /*  SetLinetype(dd->gp.lty, dd->gp.lwd, dd);   */
+    Mac_SetFill(col, dd);
+    SetLinetype(lty, lwd, dd);
+       
+    /* FIXME: lwd and lty are not set correctly */
+       
+    if(lwd > 1 ){
+     shiftleft = ceil(lwd/2) - 1;
+     xx1 = xx1 - shiftleft;
+     xx2 = xx2 - shiftleft;
+    }
        
     if (xd->lineType == 0) {
 	MoveTo(xx1, yy1);
@@ -649,7 +705,7 @@ static void Mac_Line(double x1, double y1, double x2, double y2,
 
    	SetPort(port);
  
-    SetColor(dd->gp.col, 1, dd);
+    Mac_SetColor(col, dd);
     if(xd->lineType == 0){
 	MoveTo(x1, y1);
 	LineTo(x2, y2);
@@ -670,7 +726,9 @@ static void Mac_Line(double x1, double y1, double x2, double y2,
    /* DEVICE coordinates using GConvert                                  */
    /**********************************************************************/
 
-static void Mac_Polyline(int n, double *x, double *y, int coords, DevDesc *dd)
+static void Mac_Polyline(int n, double *x, double *y, 
+			    int col, double gamma, int lty, double lwd,
+			    NewDevDesc *dd)
 {
     int i, startXX, startYY;
     double startX, startY;
@@ -688,7 +746,7 @@ static void Mac_Polyline(int n, double *x, double *y, int coords, DevDesc *dd)
      SetPort(port);
  
     for (i = 1; i < n; i++) 
-	 Mac_Line(x[i - 1], y[i - 1], x[i], y[i], coords, dd);
+	 Mac_Line(x[i - 1], y[i - 1], x[i], y[i], col, gamma, lty, lwd, dd);
 
     SetPort(savedPort);
 }
@@ -705,8 +763,13 @@ static void Mac_Polyline(int n, double *x, double *y, int coords, DevDesc *dd)
    /* DEVICE coordinates using GConvert                                  */
    /**********************************************************************/
 
-static void Mac_Polygon(int n, double *x, double *y, int coords,
-			int bg, int fg, DevDesc *dd)
+/* Fixed Dec 2001, Jago. Stefano M. Iacus 
+   Polygon are now drawn using lty and lwd parameter
+   doubled code suppressed.
+*/
+static void Mac_Polygon(int n, double *x, double *y, 
+			int col, int fill, double gamma, int lty, double lwd,
+			NewDevDesc *dd)
 {
     int i;
     double startX, startY, startXX, startYY;
@@ -728,42 +791,34 @@ static void Mac_Polygon(int n, double *x, double *y, int coords,
     myPolygon = OpenPoly();
     startX = x[0];
     startY = y[0];
-    GConvert(&startX, &startY, coords, DEVICE, dd);
     startXX = (int)startX;
     startYY = (int)startY;
     MoveTo(startXX, startYY);
     for (i = 0; i < n; i++) {
 	startX = x[i];
 	startY = y[i];
-	GConvert(&startX, &startY, coords, DEVICE, dd);
 	startXX = (int)startX;
 	startYY = (int)startY;
 	LineTo(startXX, startYY);
     }
     startX = x[0];
     startY = y[0];
-    GConvert(&startX, &startY, coords, DEVICE, dd);
     startXX = (int)startX;
     startYY = (int)startY;
     LineTo(startXX, startYY);
     ClosePoly();
 
-    if (bg != NA_INTEGER){
-	SetColor(bg, 0, dd);
+    if (fill != NA_INTEGER){
+	Mac_SetFill(fill, dd);
 	PaintPoly(myPolygon);
     }
-    if (fg != NA_INTEGER){
-	SetColor(fg, 0, dd);
-	FramePoly(myPolygon);
-    }
-    if (bg != NA_INTEGER){
-	SetColor(bg, 1, dd);
-	PaintPoly(myPolygon);
-    }
-    if (fg != NA_INTEGER){
-	SetColor(fg, 1, dd);
-	FramePoly(myPolygon);
-    }
+
+    MoveTo(startXX, startYY);
+
+    for (i = 0; i < n-1; i++) 
+	 Mac_Line(x[i], y[i], x[i+1], y[i+1], col, gamma, lty, lwd, dd);
+    Mac_Line(x[n-1], y[n-1], x[0], y[0], col, gamma, lty, lwd, dd);
+       
     KillPoly(myPolygon);
     SetPort(savedPort);
 }
@@ -789,8 +844,10 @@ double deg2rad = 0.01745329251994329576;
    	Jago, April 2001, Stefano M. Iacus
 */
 
-static void Mac_Text(double x, double y, int coords,
-		     char *str, double rot, double hadj, DevDesc *dd)
+static void Mac_Text(double x, double y, char *str, 
+		     double rot, double hadj, 
+		     int col, double gamma, int font, double cex, double ps,
+		     NewDevDesc *dd)
 {
     int Stringlen;
     int xx, yy, x1, y1;
@@ -821,13 +878,13 @@ static void Mac_Text(double x, double y, int coords,
     else
      SetPortWindowPort(xd->window);
 
-    size = dd->gp.cex * dd->gp.ps + 0.5;
-    SetFont(dd->gp.font, size, dd);
+    size = cex * ps + 0.5;
+    SetFont(font, size, dd);
     Stringlen = strlen(str);
-    GConvert(&x, &y, coords, DEVICE, dd);
     if (xc != 0.0 || yc != 0.0){
 	x1 = TextWidth(str, 0, Stringlen);
-	y1 = GConvertYUnits(1, CHARS, DEVICE, dd);
+	y1 = cex * dd->cra[1];
+	/*	y1 = GConvertYUnits(1, CHARS, DEVICE, dd); */
 	x += -xc * x1 * cos(toRadian(rot)) + yc * y1 * sin(toRadian(rot));
 	y -= -xc * x1 * sin(toRadian(rot)) - yc * y1 * cos(toRadian(rot));
     }
@@ -836,16 +893,16 @@ static void Mac_Text(double x, double y, int coords,
 
     MoveTo(xx, yy);
  
-    SetColor(dd->gp.col, 0, dd);
+    Mac_SetFill(col, dd);
    
-    size = dd->gp.cex * dd->gp.ps + 0.5;
-    SetFont(dd->gp.font, size, dd);
+    size = cex * ps + 0.5;
+    SetFont(font, size, dd);
 
-    face = dd->gp.font;           /* Typeface */
+    face = font;           /* Typeface */
 
-    NewRasterTextRotation(str, face, size, dd->gp.col, xx, yy, rot, xd->window);
+    NewRasterTextRotation(str, face, size, col, xx, yy, rot, xd->window);
     
-    SetColor(dd->gp.col, 1, dd);
+    Mac_SetColor(col, dd);
 
     SetPort(savedPort);
 
@@ -858,7 +915,7 @@ static void Mac_Text(double x, double y, int coords,
    /* not all devices will do anythin (e.g., postscript)                 */
    /**********************************************************************/
 
-static Rboolean Mac_Locator(double *x, double *y, DevDesc *dd)
+static Rboolean Mac_Locator(double *x, double *y, NewDevDesc *dd)
 {
     EventRecord event;
     SInt16 key;
@@ -873,13 +930,9 @@ static Rboolean Mac_Locator(double *x, double *y, DevDesc *dd)
 
     GetPort(&savePort);
 
-#if TARGET_API_MAC_CARBON
     SetPortWindowPort(xd->window);
     SetCursor( GetQDGlobalsArrow ( & arrow ) ) ;
-#else
-    SetPort(xd->window);
-    SetCursor(&qd.arrow);
-#endif
+
 
     while(!mouseClick) {
 	gotEvent = WaitNextEvent( everyEvent, &event, 0, nil);
@@ -931,7 +984,7 @@ static Rboolean Mac_Locator(double *x, double *y, DevDesc *dd)
    /**********************************************************************/
 
 /* This routine is called before and after each part of the plot being drawn */
-static void Mac_Mode(int mode, DevDesc *dd)
+static void Mac_Mode(int mode, NewDevDesc *dd)
 {
     MacDesc *xd = (MacDesc*)dd->deviceSpecific;
     if (mode) {
@@ -954,7 +1007,7 @@ static void Mac_Mode(int mode, DevDesc *dd)
    /**********************************************************************/
 
 /* Hold the Picture Onscreen - not needed for Mac                        */
-static void Mac_Hold(DevDesc *dd)
+static void Mac_Hold(NewDevDesc *dd)
 {
 }
 
@@ -1001,8 +1054,19 @@ static void Mac_Hold(DevDesc *dd)
    /*        1 - portrait                                                */
    /*        2 - landscape                                               */
    /*        3 - flexible                                                */
+Rboolean innerMacDeviceDriver(NewDevDesc *dd, char *display,
+			 double width, double height, double pointsize);
 
 Rboolean MacDeviceDriver(DevDesc *dd, char *display,
+			 double width, double height, double pointsize)
+{
+ return innerMacDeviceDriver((NewDevDesc *)dd, display,
+			 width,  height,  pointsize);
+
+}
+
+
+Rboolean innerMacDeviceDriver(NewDevDesc *dd, char *display,
 			 double width, double height, double pointsize)
 {
     MacDesc *xd;
@@ -1013,53 +1077,61 @@ Rboolean MacDeviceDriver(DevDesc *dd, char *display,
 
     Mac_Open(dd, xd, display, width, height);
 
+    if(gScreenRes <72 || gScreenRes>600)
     gScreenRes = GetScreenRes();
     
     ps = pointsize;
     if (ps < 6 || ps > 24) ps = 10;
     ps = 2 * (ps / 2);
-    dd->dp.ps = ps;
-    dd->dp.open       = Mac_Open;
-    dd->dp.close      = Mac_Close;
-    dd->dp.activate   = Mac_Activate;
-    dd->dp.deactivate = Mac_Deactivate;
-    dd->dp.resize     = Mac_Resize;
-    dd->dp.newPage    = Mac_NewPage;
-    dd->dp.clip       = Mac_Clip;
-    dd->dp.strWidth   = Mac_StrWidth;
-    dd->dp.text       = Mac_Text;
-    dd->dp.rect       = Mac_Rect;
-    dd->dp.circle     = Mac_Circle;
-    dd->dp.line       = Mac_Line;
-    dd->dp.polyline   = Mac_Polyline;
-    dd->dp.polygon    = Mac_Polygon;
-    dd->dp.locator    = Mac_Locator;
-    dd->dp.mode       = Mac_Mode;
-    dd->dp.hold       = Mac_Hold;
+    dd->startps = ps;
+    dd->startfont = 1;
+    dd->startlty = LTY_SOLID;
+    dd->startgamma = 1;
 
-    dd->dp.metricInfo = Mac_MetricInfo;
+    dd->newDevStruct = 1;
 
-    dd->dp.left        = 0;
-    dd->dp.right       = gScreenRes * xd->windowWidth;
-    dd->dp.bottom      = gScreenRes * xd->windowHeight;
-    dd->dp.top         = 0;
+    dd->open       = Mac_Open;
+    dd->close      = Mac_Close;
+    dd->activate   = Mac_Activate;
+    dd->deactivate = Mac_Deactivate;
+    dd->size       = Mac_Size;
+    dd->newPage    = Mac_NewPage;
+    dd->clip       = Mac_Clip;
+    dd->strWidth   = Mac_StrWidth;
+    dd->text       = Mac_Text;
+    dd->rect       = Mac_Rect;
+    dd->circle     = Mac_Circle;
+    dd->line       = Mac_Line;
+    dd->polyline   = Mac_Polyline;
+    dd->polygon    = Mac_Polygon;
+    dd->locator    = Mac_Locator;
+    dd->mode       = Mac_Mode;
+    dd->hold       = Mac_Hold;
 
-    dd->dp.xCharOffset = 0.4900;
-    dd->dp.yCharOffset = 0.3333;
-    dd->dp.yLineBias = 0.1;
+    dd->metricInfo = Mac_MetricInfo;
 
-    dd->dp.cra[0] = ps / 2;
-    dd->dp.cra[1] = ps;
+    dd->left        = 0;
+    dd->right       = gScreenRes * xd->windowWidth;
+    dd->bottom      = gScreenRes * xd->windowHeight;
+    dd->top         = 0;
 
-    dd->dp.ipr[0] = 1.0 / gScreenRes;
-    dd->dp.ipr[1] = 1.0 / gScreenRes;
+    dd->xCharOffset = 0.4900;
+    dd->yCharOffset = 0.3333;
+    dd->yLineBias = 0.1;
 
-    dd->dp.canResizePlot = 1;
-    dd->dp.canChangeFont = 0;
-    dd->dp.canRotateText = 1;
-    dd->dp.canResizeText = 1;
-    dd->dp.canClip       = FALSE;
-    dd->dp.canHAdj = 0;
+    dd->cra[0] = ps / 2;
+    dd->cra[1] = ps;
+
+    dd->ipr[0] = 1.0 / gScreenRes;
+    dd->ipr[1] = 1.0 / gScreenRes;
+
+    dd->canResizePlot = TRUE;
+    dd->canChangeFont = TRUE;
+    dd->canRotateText = TRUE;
+    dd->canResizeText = TRUE;
+    dd->canClip       = FALSE;
+    dd->canHAdj = 0;
+    dd->canChangeGamma = FALSE;
 
     /* It is used to set the font that you will be used on the postscript and
        drawing.
@@ -1072,7 +1144,7 @@ Rboolean MacDeviceDriver(DevDesc *dd, char *display,
     xd->fontface = 0;  /* initial is plain text */
     xd->fontsize = 12; /* initial is 12 size */
     dd->deviceSpecific = (void *) xd;
-    dd->displayListOn = 1;
+    dd->displayListOn = TRUE;
     SelectWindow (Console_Window);
     return 1;
 }
@@ -1125,29 +1197,25 @@ void Kill_G_History(SInt16 WinIndex)
 
 void GraResize(WindowPtr window)
 {
-    SInt16 WinIndex;
-    Rect    portRect;
-    GrafPtr	savePort;
-    DevDesc *dd;
-    MacDesc *xd; /* = (MacDesc *) dd-> deviceSpecific; */
+    SInt16 		WinIndex;
+    NewDevDesc  *dd;
+    GEDevDesc  	*gedd;
+    MacDesc		*xd;
+    double 		left, right, bottom, top;
 
+    
     WinIndex = isGraphicWindow(window);
 
-    if (WinIndex && (gGReference[WinIndex].devdesc != nil)) {
-
-	GetPort(&savePort);
-
-#if TARGET_API_MAC_CARBON
-    SetPortWindowPort(window);
-    GetWindowPortBounds(window,&portRect);
-#else
-	SetPort(window);
-#endif
-
-	SetPort(savePort);
-	dd = (DevDesc*)gGReference[WinIndex].devdesc;
-	xd = (MacDesc*)dd->deviceSpecific;
-	xd->resize = true;
+    if (WinIndex && (gGReference[WinIndex].newdevdesc != nil)) {
+	dd = (NewDevDesc*)gGReference[WinIndex].newdevdesc;
+	 gedd = (GEDevDesc*)gGReference[WinIndex].gedevdesc;
+     xd = (MacDesc *)dd->deviceSpecific;
+	 dd->size(&left,&right,&bottom,&top,dd);
+	 dd->left = left;
+	 dd->right = right;
+	 dd->top = top;
+	 dd->bottom = bottom; 
+	 xd->resize=TRUE;
 	gExpose = WinIndex;
     }
 }
@@ -1196,53 +1264,68 @@ void CleanUpWindow(WindowPtr window)
 /* GraphicCopy makes a copy of the current device window into
    the clipboard. This is a very quick and clean routine
    completely rewritten wrt the original one.
-   Jago, April 2001, Stefano M. Iacus
+   Bug fixed: text characters are now copied into the
+   clipbooard.
+   Jago, November 2001, Stefano M. Iacus
 */   
 
 void GraphicCopy(WindowPtr window)
 {
-    Size dataLength;
-    SInt32 errorCode;
-    SInt16 WinIndex;
-    DevDesc *dd;
-    PicHandle WPicHandle=NULL;
-    CGrafPtr savePort, tempPort;
-    Rect portRect;
-    ScrapRef scrap;
-    
-    WinIndex = isGraphicWindow(window);
-    dd = (DevDesc*)gGReference[WinIndex].devdesc;
+    Size 		dataLength;
+    SInt32 		errorCode;
+    SInt16 		WinIndex;
+    NewDevDesc 	*dd;
+    PicHandle 	picHandle=nil;
+    ScrapRef 	scrap;
+ 	Rect		tempRect1;
+	Rect		resizeRect;
+    CGrafPtr    savePort, tempPort;
+    RGBColor	oldColor, newColor;
+   
+   
     GetPort(&savePort);
-    
-    GetWindowPortBounds(window,&portRect);
+ 
+    GetPortBounds(GetWindowPort(window), &tempRect1);
+	 	
+	SetPortWindowPort(window);
+
+	GetForeColor(&oldColor);
+	GetCPixel (tempRect1.right-16,tempRect1.bottom-16,&newColor);
+	
 	tempPort = CreateNewPort();
     
-    WPicHandle = OpenPicture(&portRect);
-    ClipRect(&portRect);
- 	 
- 	gGReference[WinIndex].activePort = tempPort;
- 	WeArePasting = true;
- 	playDisplayList(dd);
- 	WeArePasting = false;
+    SetPort(tempPort);
+    
+		
+	picHandle = OpenPicture(&tempRect1);
+	
+	CopyBits(GetPortBitMapForCopyBits(GetWindowPort(window)), GetPortBitMapForCopyBits(tempPort),  &tempRect1, 
+	   &tempRect1, srcCopy, 0L);
+	
+	SetRect(&resizeRect, tempRect1.right-15, tempRect1.bottom-15, tempRect1.right,tempRect1.bottom);
+	
+    RGBForeColor(&newColor);
+	PaintRect(&resizeRect);
+	RGBForeColor(&oldColor);
  		
 	ClosePicture();
 
     DisposePort(tempPort);
     
     if (ClearCurrentScrap() == noErr) {
-	dataLength = GetHandleSize((Handle) WPicHandle);
-	HLock((Handle)WPicHandle);
+	dataLength = GetHandleSize((Handle) picHandle);
+	HLock((Handle)picHandle);
     errorCode = GetCurrentScrap(&scrap);
     errorCode = PutScrapFlavor (scrap, 'PICT', 0, 
-    GetHandleSize((Handle) WPicHandle), *WPicHandle);
-	HUnlock((Handle)WPicHandle);
+    GetHandleSize((Handle) picHandle), *picHandle);
+	HUnlock((Handle)picHandle);
     }
     
-    KillPicture(WPicHandle);
+    KillPicture(picHandle);
+    
+       SetPort(savePort);
 
-    SetPort(savePort);
 }
-
 
 /* If you call this routine, the default value about TextSize and
    TextFace of  the corresponding Mac Devices will be used
@@ -1280,14 +1363,10 @@ static double pixelHeight(void)
    In this moment, the only thing we can do is reinitialize the GrafPort.
  */
 
-static void SetFont(int face, int size, DevDesc *dd)
+static void SetFont(int face, int size, NewDevDesc *dd)
 {
     int realFace;
-#if TARGET_API_MAC_CARBON
     FMFontFamily postFontId;
-#else
-    short postFontId;
-#endif
     GrafPtr savePort;
     /* you can not chnage the picture which is drawed directly, you can only */
     /* see the effect for the next call */
@@ -1304,23 +1383,17 @@ static void SetFont(int face, int size, DevDesc *dd)
     if (face == 2) realFace = 1;	/* bold */
     if (face == 3) realFace = 2;	/* italic */
     if (face == 4) realFace = 3;	/* bold & italic */
-#if TARGET_API_MAC_CARBON
     if(systemVersion > kMinSystemVersion)
     postFontId = FMGetFontFamilyFromName(PostFont);
     else
      GetFNum(PostFont, &postFontId);
-#else
-    GetFNum(PostFont, &postFontId);
-#endif
+
     if (face == 5){ realFace = 0;	/* plain symbol */
-#if TARGET_API_MAC_CARBON
+
     if(systemVersion > kMinSystemVersion)
     postFontId = FMGetFontFamilyFromName(MacSymbolFont);
     else
      GetFNum(MacSymbolFont, &postFontId);
-#else
-    GetFNum(MacSymbolFont, &postFontId);
-#endif
     }
     TextFont(postFontId);
     TextFace(realFace);
@@ -1329,15 +1402,29 @@ static void SetFont(int face, int size, DevDesc *dd)
 
 }
 
-static int SetColor(int color, int which, DevDesc *dd)
+static int Mac_SetColor(int color, NewDevDesc *dd)
 {
     MacDesc *xd = (MacDesc*)dd->deviceSpecific;
     
-    if (color != xd->col[which]) { 
-	xd->rgb[which].red = R_RED(color) * 255;
-	xd->rgb[which].green = R_GREEN(color) * 255;
-	xd->rgb[which].blue = R_BLUE(color) * 255;
-    RGBForeColor(&(xd->rgb[which]));
+    if (color != xd->color) { 
+	xd->rgb[1].red = R_RED(color) * 255;
+	xd->rgb[1].green = R_GREEN(color) * 255;
+	xd->rgb[1].blue = R_BLUE(color) * 255;
+    RGBForeColor(&(xd->rgb[1]));
+	return 1;
+    }
+    return 0;
+}
+
+static int Mac_SetFill(int fill, NewDevDesc *dd)
+{
+    MacDesc *xd = (MacDesc*)dd->deviceSpecific;
+    
+    if (fill != xd->fill) { 
+	xd->rgb[0].red = R_RED(fill) * 255;
+	xd->rgb[0].green = R_GREEN(fill) * 255;
+	xd->rgb[0].blue = R_BLUE(fill) * 255;
+    RGBForeColor(&(xd->rgb[0]));
 	return 1;
     }
     return 0;
@@ -1387,12 +1474,13 @@ static void FreeColors()
 /* Have not implement yet, you can choose pen pattern in Mac, however, it*/
 /* seem to be not the things you want in here                            */
 
-static void SetLinetype(int newlty, double nlwd, DevDesc *dd)
+static void SetLinetype(int newlty, double nlwd, NewDevDesc *dd)
 {
     /* Much of this code has been lifted straight from the devX11.c source file */
 
     int i;
     int end;
+    int lwd;
     short numDashes;
     MacDesc *xd = (MacDesc *) dd-> deviceSpecific;
     /* If the linetype is 0 then we want to go back to standard, solid lines
@@ -1404,7 +1492,7 @@ static void SetLinetype(int newlty, double nlwd, DevDesc *dd)
        sNumDashes:	the number of segments in the current line type.
     */
 
-    if( newlty != xd->lineType ) {
+
 	xd->lineType = newlty;
 	xd->numDashes = 0;
 	xd->currentDash = 0;
@@ -1426,11 +1514,17 @@ static void SetLinetype(int newlty, double nlwd, DevDesc *dd)
 		xd->numDashes = numDashes * 2;
 	    }
 	}
-    }
-    PenSize(nlwd,nlwd);
+
+    if(nlwd < 1)
+     lwd = 1;
+    else
+     lwd = (int)round(nlwd);
+    xd -> lineWidth = lwd;
+      
+    PenSize(lwd,lwd);
 }
 
-void DrawLineType(int xx1, int yy1, int xx2, int yy2, DevDesc *dd)
+void DrawLineType(int xx1, int yy1, int xx2, int yy2, NewDevDesc *dd)
 {
     short dx, dy;
     short absdx, absdy;
@@ -1447,6 +1541,13 @@ void DrawLineType(int xx1, int yy1, int xx2, int yy2, DevDesc *dd)
     Boolean notFirst = false;
     MacDesc *xd = (MacDesc *) dd->deviceSpecific;
 
+    if(xd->lineType == 0){
+     MoveTo( xx1, yy1 );
+	 LineTo( xx2, yy2);
+	 return;
+    }
+    
+    
     xd->dashStart_x = xx1;
     xd->dashStart_y = yy1;
     startx = xd->dashStart_x;

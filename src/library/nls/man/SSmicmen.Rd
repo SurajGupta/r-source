@@ -1,4 +1,4 @@
-% $Id: SSmicmen.Rd,v 1.3.4.1 2001/08/07 14:05:15 ripley Exp $
+% $Id: SSmicmen.Rd,v 1.4 2001/08/13 19:55:13 ripley Exp $
 \name{SSmicmen}
 \title{Michaelis-Menten Model}
 \usage{

@@ -1,12 +1,21 @@
 \name{TclInterface}
 \title{Low-level Tcl/Tk Interface}
 %
+\alias{TclInterface}
 \alias{.Tcl}
 \alias{.Tcl.callback}
 \alias{.Tcl.args}
 \alias{$.tclvar}
 \alias{$<-.tclvar}
 \alias{tclvar}
+\alias{tclVar}
+\alias{as.character.tclVar}
+\alias{tclvalue}
+\alias{tclvalue<-}
+\alias{tclvalue.default}
+\alias{tclvalue<-.default}
+\alias{tclvalue.tclVar}
+\alias{tclvalue<-.tclVar}
 \alias{.Tk.ID}
 \alias{.Tk.newwin}
 \alias{.Tk.subwin}
@@ -35,19 +44,27 @@
 tkdestroy(win)
 is.tkwin(x)
 
-tclvar$name
-tclvar$name <- value
+tclvar$name           # Deprecated
+tclvar$name <- value  # Deprecated
 
-addTclPath(path)
+tclVar(init="")
+as.character.tclVar(x)
+tclvalue(x)
+tclvalue(x) <- value
+
+addTclPath(path = ".")
 tclRequire(package, warn = TRUE)
 }
 \arguments{
   \item{win}{a window structure}
   \item{x}{an object}
   \item{ID}{a window ID}
+  \item{parent}{a window which becomes the parent of the resulting window}
   \item{path}{path to a directory containing Tcl packages}
   \item{package}{a Tcl package name}
   \item{warn}{logical. Warn if not found?}
+  \item{...}{Additional arguments. See below.}
+  \item{init}{initialization value}
 }
 \details{
   Many of these functions are not intended for general use but are used
@@ -62,17 +79,27 @@ tclRequire(package, warn = TRUE)
   argument. In the rare case one needs an option with no subsequent
   value \code{tag=NULL} can be used. Most values are just converted to
   character mode and inserted in the command string, but window objects
-  are passed using their ID string, and functions are passed via the
+  are passed using their ID string, and callbacks are passed via the
   result of \code{.Tcl.callback}. Tags are converted to option flags
   simply by prepending a \code{-}
 
-  \code{.Tcl.callback} converts \R functions to Tcl command strings.  The
-  argument must be a function closure.  The
-  return value is something of the form \code{\{ R_call 0x408b94d4 \}} in which
-  the hexadecimal number is the memory address of the function.  
-  \code{.Tcl.args} takes special precautions to ensure that the function
-  will exist at that address by assigning the function into the relevant
-  window environment (see below).
+  Callbacks can be either \emph{atomic callbacks} handled by
+  \code{.Tcl.callback} or expressions. An expression is treated as a
+  list of atomic callbacks, with the following exceptions: if an
+  element is a name, it is first evaluated in the callers frame, and
+  likewise if it is an explicit function definition; the \code{break}
+  expression is translated directly to the Tcl counterpart.
+  \code{.Tcl.callback} converts \R functions and unevaluated calls to
+  Tcl command strings.  The argument must be either a function closure
+  or an object of mode \code{"call"} followed by an environment.  The
+  return value in the first case is of the form \code{R_call
+  0x408b94d4} in which the hexadecimal number is the memory address of
+  the function. In the second case it will be of the form
+  \code{R_call_lang 0x8a95904 0x819bfd0}. For expressions, a sequence
+  of similar items is generated, separated by
+  semicolons. \code{.Tcl.args} takes special precautions to ensure
+  that the function will exist at that address by assigning the
+  callback into the relevant window environment (see below).
 
   Tk windows are represented as objects of class \code{tkwin} which are
   lists containing  a \code{ID} field and an \code{env} field which is
@@ -99,7 +126,19 @@ tclRequire(package, warn = TRUE)
   \code{tclvar} is used to access Tcl variables. The Tcl variable name
   is used as if it were a list element name in \code{tclvar}, but in
   reality \code{tclvar} is an object of class \code{tclvar} and \code{$}
-  and  \code{$<-} have special methods for that class.
+  and  \code{$<-} have special methods for that class. NOTE: This interface
+  is deprecated, use the \code{tclVar} object class instead.
+
+  \code{tclVar} creates a new Tcl variable and initializes it to
+  \code{init}. An R object of class \code{tclVar} is created to
+  represent it. Using \code{as.character} on the object returns the Tcl
+  variable name. Accessing the Tcl variable from R is done using the 
+  \code{tclvalue} function, which can also occur on the left sie of
+  assignments. If \code{tclvalue} is passed an argument which is not a
+  \code{tclVar} object, then it will assume that it is a character string
+  explicitly naming global Tcl variable. Tcl variables created by 
+  \code{tclVar}  are  uniquely named and automatically unset by the 
+  garbage collector when the representing object is no longer in use. 
 
   Tcl packages can be loaded with \code{tclRequire}; it may be necessary
   to add the directory where they are found to the Tcl search path with
@@ -130,8 +169,11 @@ f <- function()"HI!"
 .Tcl.callback(f)
 .Tcl.args(text="Push!", command=f) # NB: Different address
 
-tclvar$xyzzy <- 7913 ; .Tcl("set xyzzy")
-.Tcl("set xyzzy 3917") ; tclvar$xyzzy
+xyzzy <- tclVar(7913)
+tclvalue(xyzzy)
+tclvalue(xyzzy) <- "foo"
+as.character(xyzzy)
+tkcmd("set", as.character(xyzzy))
 
 top <- tktoplevel() # a Tk widget, see Tk-widgets
 ls(envir=top$env, all=TRUE)

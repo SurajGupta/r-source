@@ -8,12 +8,12 @@
 
 .GlobalEnv <- globalenv()
 attach(NULL, name = "Autoloads")
-.AutoloadEnv <- pos.to.env(2)
+.AutoloadEnv <- as.environment(2)
 assign(".Autoloaded", NULL, env = .AutoloadEnv)
 T <- TRUE
 F <- FALSE
 R.version <- structure(R.Version(), class = "simple.list")
-version <- .Alias(R.version)            # for S compatibility
+version <- R.version            # for S compatibility
 R.version.string <-
     paste(paste("R version",
                 paste(version[c("major", "minor")], collapse = ".")),
@@ -35,6 +35,5 @@ options(download.info = 2)
 options(encoding = native.enc)
 
 .First <- function() {
-    require("ctest", quietly=TRUE)
+    require("ctest", quietly = TRUE)
 }
-

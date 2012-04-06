@@ -6,26 +6,19 @@
   Produce box-and-whisker plot(s) of the given (grouped) values.
 }
 \usage{
-boxplot(x, \dots)
-boxplot.default(x, \dots, range = 1.5, width = NULL,
-        varwidth = FALSE, notch = FALSE, names, boxwex = 0.8,
-        data = parent.frame(), plot = TRUE,
+\method{boxplot}{default}(x, \dots, range = 1.5, width = NULL, varwidth = FALSE,
+        notch = FALSE, outline = TRUE, names, boxwex = 0.8, plot = TRUE,
         border = par("fg"), col = NULL, log = "", pars = NULL,
         horizontal = FALSE, add = FALSE, at = NULL)
 }
 \arguments{
-  \item{x}{an \R object.}
-  \item{\dots}{methods may have additional arguments.}
-
-  \item{x, \dots}{the data from which the boxplots are to be produced.
-    The data can be specified as separate vectors, each
-    corresponding to a component boxplot, or as a single list
-    containing such vectors.  Alternatively a symbolic specification
-    of the form \code{x ~ g} can be given, indicating that the
-    observations in the vector \code{x} are to be grouped according
-    to the levels of the \code{\link{factor}} \code{g}.  In this
-    case the argument \code{data} can be used to provide values for
-    the variables in the specification. \code{\link{NA}}s are
+  \item{x, \dots}{for specifying data from which the boxplots are to be
+    produced as well as for giving graphical parameters.  The named
+    arguments in this (more precisely, in \code{list(x, ...)}) are
+    treated as graphical parameters in addition to the ones given by
+    argument \code{pars}.  The other arguments specify the data, either
+    as separate vectors, each corresponding to a component boxplot, or
+    as a single list containing such vectors.  \code{\link{NA}}s are
     allowed in the data.}
   \item{range}{this determines how far the plot whiskers extend out
     from the box.  If \code{range} is positive, the whiskers extend
@@ -41,13 +34,12 @@ boxplot.default(x, \dots, range = 1.5, width = NULL,
     each side of the boxes.  If the notches of two plots do not
     overlap then the medians are significantly different at the 5
     percent level.}
+  \item{outline}{if \code{outline} is not true, the boxplot lines are
+    not drawn.}% the argument name is most ugly but S+ compatible
   \item{names}{group labels which will be printed under each boxplot.}
   \item{boxwex}{a scale factor to be applied to all boxes.  When there
     are only a few groups, the appearance of the plot can be improved
     by making the boxes narrower.}
-  \item{data}{\code{\link{data.frame}}, \code{\link{list}}, or
-    \code{\link{environment}} in which variable names are evaluated
-    when \code{x} is a formula.}
   \item{plot}{if \code{TRUE} (the default) then a boxplot is
     produced.  If not, the summaries which the boxplots are based on
     are returned.}
@@ -68,7 +60,7 @@ boxplot.default(x, \dots, range = 1.5, width = NULL,
     defaults to \code{1:n} where \code{n} is the number of boxes.}
 }
 \details{
-  This is a generic function.  It currently has a default method
+  The generic function \code{boxplot} currently has a default method
   (\code{boxplot.default}) and a formula interface
   (\code{\link{boxplot.formula}}).
 }

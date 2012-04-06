@@ -6,7 +6,7 @@ as.integer.default <- function(x,...) .Internal(as.vector(x,"integer"))
 
 as.double <- function(x,...) UseMethod("as.double")
 as.double.default <- function(x,...) .Internal(as.vector(x,"double"))
-as.real <- .Alias(as.double)
+as.real <- as.double
 
 as.complex <- function(x,...) UseMethod("as.complex")
 as.complex.default <- function(x,...) .Internal(as.vector(x, "complex"))
@@ -20,8 +20,6 @@ as.single.default <- function(x,...) {
 # preserve the semantics that for a call with an object argument
 # dispatching is done first on as.character and then on as.vector.
 as.character.default <- function(x,...) .Internal(as.vector(x,"character"))
-## The following just speeds up (the above would be sufficient):
-as.character.factor <- function(x,...) levels(x)[x]
 
 as.expression <- function(x,...) UseMethod("as.expression")
 as.expression.default <- function(x,...) .Internal(as.vector(x,"expression"))
@@ -61,8 +59,8 @@ as.null <- function(x,...) UseMethod("as.null")
 as.null.default <- function(x,...) NULL
 
 as.function <- function(x,...) UseMethod("as.function")
-as.function.default <- function (l, envir = parent.frame(),...)
-if (is.function(l)) l else .Internal(as.function.default(l, envir))
+as.function.default <- function (x, envir = parent.frame(), ...)
+    if (is.function(x)) x else .Internal(as.function.default(x, envir))
 
 as.array <- function(x)
 {
@@ -75,7 +73,7 @@ as.array <- function(x)
 }
 
 as.symbol <- function(x) .Internal(as.vector(x, "symbol"))
-as.name <- .Alias(as.symbol)
+as.name <- as.symbol
 ## would work too: as.name <- function(x) .Internal(as.vector(x, "name"))
 
 ## as.call <- function(x) stop("type call cannot be assigned")

@@ -6,7 +6,7 @@ merge.default <- function(x, y, ...)
 merge.data.frame <-
     function(x, y, by = intersect(names(x), names(y)), by.x = by, by.y = by,
              all = FALSE, all.x = all, all.y = all,
-             sort = TRUE, suffixes = c(".x",".y"))
+             sort = TRUE, suffixes = c(".x",".y"), ...)
 {
     fix.by <- function(by, df)
     {
@@ -96,8 +96,11 @@ merge.data.frame <-
             nm.y[cnm] <- paste(nm.y[cnm], suffixes[2], sep="")
         }
         y <- y[c(m$yi, if(all.x) rep(1:1, nxx), if(all.y) m$y.alone),
-               -by.y, drop=FALSE]
-        if(all.x) y[(lxy+1):(lxy+nxx), ] <- NA
+               -by.y, drop = FALSE]
+        if(all.x)
+            for(i in seq(along = y))
+                ## do it this way to invoke methods for e.g. factor
+                is.na(y[[i]]) <- (lxy+1):(lxy+nxx)
 
         if(has.common.nms) names(y) <- nm.y
         res <- cbind(x, y)
@@ -107,7 +110,7 @@ merge.data.frame <-
                        do.call("order", x[, 1:l.b, drop=FALSE])
             else sort.list(bx[m$xi]),, drop=FALSE]
     }
-                                
+
     row.names(res) <- seq(length=nrow(res))
     res
 }

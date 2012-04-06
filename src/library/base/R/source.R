@@ -1,7 +1,7 @@
 source <-
 function(file, local = FALSE, echo = verbose, print.eval = echo,
          verbose = getOption("verbose"),
-         prompt.echo = getOption("prompt"), 
+         prompt.echo = getOption("prompt"),
          max.deparse.length = 150, chdir = FALSE)
 {
 ##-     if(!(is.character(file) && file.exists(file)))
@@ -89,8 +89,8 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 }
 
 sys.source <-
-    function(file, envir = NULL, chdir = FALSE,
-             keep.source = getOption("keep.source.pkgs"))
+function(file, envir = NULL, chdir = FALSE,
+         keep.source = getOption("keep.source.pkgs"))
 {
     if(!(is.character(file) && file.exists(file)))
 	stop(paste("`", file, "' is not an existing file", sep = ""))
@@ -110,52 +110,44 @@ sys.source <-
     invisible()
 }
 
-demo <- function(topic, device = getOption("device"),
-                 package = .packages(), lib.loc = .lib.loc,
-                 character.only = FALSE)
+demo <-
+function(topic, device = getOption("device"),
+         package = .packages(), lib.loc = NULL,
+         character.only = FALSE, verbose = getOption("verbose"))
 {
-    fQuote <- function(s) paste("`", s, "'", sep = "")
-    
-    paths <- .find.package(package, lib.loc, missing(lib.loc),
-                           quiet = TRUE)
+    sQuote <- function(s) paste("`", s, "'", sep = "")
+
+    paths <- .find.package(package, lib.loc, verbose = verbose)
 
     if(missing(topic)) {
         ## List all available demos.
         ## This code could be made more similar to data().
-        first <- TRUE
-        outFile <- tempfile("Rdemo.")
-        outConn <- file(outFile, open = "w")
+
+        ## Build the demo db.
+        db <- matrix(character(0), nr = 0, nc = 4)
         for(path in paths) {
             INDEX <- file.path(path, "demo", "00Index")
-            if(file.exists(INDEX)) {
-                writeLines(paste(ifelse(first, "", "\n"),
-                                 "Demos in package ",
-                                 fQuote(basename(path)),
-                                 ":\n\n", sep = ""),
-                           outConn)
-                writeLines(readLines(INDEX), outConn)
-                first <- FALSE
-            }
+            if(file.exists(INDEX))
+                db <- rbind(db,
+                            cbind(basename(path),
+                                  dirname(path),
+                                  read.00Index(INDEX)))
         }
-        if(first) {
-            warning("no demo listings found")
-            close(outConn)
-            unlink(outFile)
-        }
-        else {
-            if(missing(package))
-                writeLines(paste("\n",
-                                 "Use `demo(package = ",
-                                 ".packages(all.available = TRUE))'\n",
-                                 "to list the demos in all ",
-                                 "*available* packages.", sep = ""),
-                           outConn)
-            close(outConn)
-            file.show(outFile, delete.file = TRUE, title = "R demos")
-        }
-        return(invisible(character(0)))
+        colnames(db) <- c("Package", "LibPath", "Item", "Title")
+
+        footer <- if(missing(package))
+            paste("Use `demo(package = ",
+                  ".packages(all.available = TRUE))'\n",
+                  "to list the demos in all ",
+                  "*available* packages.", sep = "")
+        else
+            NULL
+        y <- list(type = "demo",
+                  header = NULL, results = db, footer = footer)
+        class(y) <- "packageIQR"
+        return(y)
     }
-            
+
     if(!character.only)
         topic <- as.character(substitute(topic))
     available <- character(0)
@@ -171,14 +163,14 @@ demo <- function(topic, device = getOption("device"),
         }
     }
     if(length(available) == 0)
-        stop(paste("No demo found for topic", fQuote(topic)))
+        stop(paste("No demo found for topic", sQuote(topic)))
     if(length(available) > 1) {
         available <- available[1]
         warning("Demo for topic",
-                fQuote(topic),
+                sQuote(topic),
                 "found more than once,\n",
                 "using the one found in",
-                fQuote(dirname(available[1])))
+                sQuote(dirname(available[1])))
     }
     cat("\n\n",
         "\tdemo(", topic, ")\n",
@@ -190,37 +182,39 @@ demo <- function(topic, device = getOption("device"),
     }
     source(available, echo = TRUE, max.deparse.length = 250)
 }
-                
+
 example <-
-function (topic, package = .packages(), lib.loc = .lib.loc, echo = TRUE,
-	  verbose = getOption("verbose"),
-	  prompt.echo = paste(abbreviate(topic, 6), "> ", sep = ""))
+function(topic, package = .packages(), lib.loc = NULL,
+         echo = TRUE, verbose = getOption("verbose"),
+         prompt.echo = paste(abbreviate(topic, 6), "> ", sep = ""))
 {
+    sQuote <- function(s) paste("`", s, "'", sep = "")
+
     topic <- substitute(topic)
-    if (!is.character(topic))
+    if(!is.character(topic))
 	topic <- deparse(topic)[1]
-    INDICES <- .find.package(package, lib.loc, missing(lib.loc),
-                             quiet = TRUE)
+    INDICES <- .find.package(package, lib.loc, verbose = verbose)
     file <- index.search(topic, INDICES, "AnIndex", "R-ex")
-    if (file == "") {
-	warning(paste("No help file found for `", topic, "'", sep = ""))
+    if(file == "") {
+	warning(paste("No help file found for", sQuote(topic)))
 	return(invisible())
     }
     comp <- strsplit(file, .Platform$file.sep)[[1]]
     pkg <- comp[length(comp) - 2]
     if(length(file) > 1)
-	warning(paste("More than one help file found: using package", pkg))
+	warning(paste("More than one help file found: using package",
+                      sQuote(pkg)))
     lib <- sub(file.path("", pkg, "R-ex", ".*\\.R"), "", file[1])
     ## experimental code
     zfile <- zip.file.extract(file, "Rex.zip")
     if(zfile != file) on.exit(unlink(zfile))
     ## end of experimental code
-    if (!file.exists(zfile)) {
-	warning(paste("`", topic, "' has a help file but no examples file",
-		      sep = ""))
+    if(!file.exists(zfile)) {
+	warning(paste(sQuote(topic),
+                      "has a help file but no examples file"))
 	return(invisible())
     }
-    if (pkg != "base")
+    if(pkg != "base")
 	library(pkg, lib = lib, character.only = TRUE)
     source(zfile, echo = echo, prompt.echo = prompt.echo, verbose =
 	   verbose, max.deparse.length = 250)

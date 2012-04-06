@@ -6,8 +6,8 @@ stepfun(x, y, f = 0, ties = "ordered")
 is.stepfun(x)
 knots(Fn, \dots)
 
-print.stepfun(Fn, digits, \dots)
-summary.stepfun(Fn)
+\method{print}{stepfun}(x, digits= getOption("digits") - 2, \dots)
+\method{summary}{stepfun}(object, \dots)
 }
 \alias{stepfun}
 \alias{is.stepfun}
@@ -16,15 +16,19 @@ summary.stepfun(Fn)
 \alias{knots}
 \alias{knots.stepfun}
 \arguments{
-  \item{x}{numeric vector giving the ``knots'' or jump locations of the
-    step function.}
+  \item{x}{numeric vector giving the knots or jump locations of the step
+    function for \code{stepfun()}.  For the other functions, \code{x} is
+    as \code{object} below.}
   \item{y}{numeric vector one longer than \code{x}, giving the heights of
     the function values \emph{between} the x values.}
   \item{f}{a number between 0 and 1, indicating how interpolation outside
     the given x values should happen.  See  \code{\link{approxfun}}.}
   \item{ties}{Handling of tied \code{x} values. Either a function or
     the string \code{"ordered"}.  See  \code{\link{approxfun}}.}
-  \item{Fn}{an \R object inheriting from \code{"stepfun"}.}
+
+  \item{Fn, object}{an \R object inheriting from \code{"stepfun"}.}
+  \item{digits}{number of significant digits to use, see \code{\link{print}}.}
+  \item{\dots}{potentially further arguments (require by the generic).}
 }
 \description{
   Given the vectors \eqn{(x_1,\ldots, x_n)}{(x[1],\ldots, x[n])} and

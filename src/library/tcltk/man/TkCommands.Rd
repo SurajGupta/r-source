@@ -1,4 +1,5 @@
 \name{TkCommands}
+\alias{TkCommands}
 \alias{tkcmd}
 \alias{tktitle}
 \alias{tktitle<-}
@@ -85,6 +86,14 @@
 \alias{tkplace.forget}
 \alias{tkplace.info}
 \alias{tkplace.slaves}
+\alias{tkgetOpenFile}
+\alias{tkgetSaveFile} 
+\alias{tkmessageBox}  
+\alias{tkfile.tail}
+\alias{tkfile.dir}
+\alias{tkopen}
+\alias{tkclose}
+\alias{tkputs}        
 
 \title{Tk non-widget commands}
 \description{
@@ -202,8 +211,20 @@ tkplace.forget(...)
 tkplace.info(...)
 tkplace.slaves(...)
 
+## Standard dialogs
+tkgetOpenFile(...)
+tkgetSaveFile(...)
+tkmessageBox(...)
+
+## File handling functions
+tkfile.tail(...)
+tkfile.dir(...)
+tkopen(...)
+tkclose(...)
+tkputs(...)
 }
 \arguments{
+  \item{x}{A window object}
   \item{\dots}{Handled via \code{.Tcl.args}}
 }
 \details{

@@ -5,7 +5,7 @@
 \usage{
 spec.pgram(x, spans = NULL, kernel, taper = 0.1,
            pad = 0, fast = TRUE, demean = FALSE, detrend =TRUE,
-           plot = FALSE, na.action, \dots)
+           plot = FALSE, na.action = na.fail, \dots)
 }
 \arguments{
   \item{x}{univariate or multivariate time series.}
@@ -51,7 +51,8 @@ spec.pgram(x, spans = NULL, kernel, taper = 0.1,
   is returned for that frequency.
 }
 \value{
-  A list object of class \code{"spec"} with the following elements.
+  A list object of class \code{"spec"} (see \code{\link{spectrum}})
+  with the following additional components:
   \item{kernel}{The \code{kernel} argument, or the kernel constructed
     from \code{spans}.}
   \item{df}{The distribution of the spectral density estimate can be

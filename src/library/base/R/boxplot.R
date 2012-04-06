@@ -2,8 +2,7 @@ boxplot <- function(x, ...) UseMethod("boxplot")
 
 boxplot.default <-
 function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
-         notch = FALSE, names, boxwex = 0.8,
-	 data = parent.frame(), plot = TRUE,
+         notch = FALSE, outline = TRUE, names, boxwex = 0.8, plot = TRUE,
          border = par("fg"), col = NULL, log = "", pars = NULL,
          horizontal = FALSE, add = FALSE, at = NULL)
 {
@@ -14,20 +13,7 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
 	else
 	    rep(FALSE, length = length(args))
     pars <- c(args[namedargs], pars)
-    groups <-
-	if(is.language(x)) {
-            warning(paste("Using `formula' in boxplot.default --",
-                          "shouldn't boxplot.formula be called?"))
-	    if(inherits(x, "formula") && length(x) == 3) {
-		groups <- eval(x[[3]], data, parent.frame())
-		x <- eval(x[[2]], data, parent.frame())
-		split(x, groups)
-	    }
-	}
-	else {
-	    groups <- args[!namedargs]
-	    if(length(groups) == 1 && is.list(x)) x else groups
-	}
+    groups <- if(is.list(x)) x else args[!namedargs]
     if(0 == (n <- length(groups)))
 	stop("invalid first argument")
     if(length(class(groups)))
@@ -60,26 +46,20 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
     if(plot) {
 	bxp(z, width, varwidth = varwidth, notch = notch, boxwex = boxwex,
             border = border, col = col, log = log, pars = pars,
-            horizontal = horizontal, add = add, at = at)
+            outline = outline, horizontal = horizontal, add = add, at = at)
 	invisible(z)
     }
     else z
 }
 
-boxplot.formula <-
-function(formula, data = NULL, ..., subset, na.action)
+boxplot.formula <- function(formula, data = NULL, ..., subset)
 {
     if(missing(formula) || (length(formula) != 3))
         stop("formula missing or incorrect")
-    ## <FIXME>
-    ## Remove `na.action' in 1.4.
-    if(!missing(na.action))
-        warning("argument `na.action' is deprecated")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
         m$data <- as.data.frame(data)
-    m$... <- m$na.action <- NULL
-    ## </FIXME>
+    m$... <- NULL
     m[[1]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")
@@ -106,10 +86,11 @@ boxplot.stats <- function(x, coef = 1.5, do.conf=TRUE, do.out=TRUE)
 }
 
 bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
-	        notch.frac = 0.5, boxwex = 0.8,
+	        outline = TRUE, notch.frac = 0.5, boxwex = 0.8,
 		border=par("fg"), col=NULL, log="", pars=NULL,
                 frame.plot = axes,
-                horizontal = FALSE, add = FALSE, at = NULL, ...)
+                horizontal = FALSE, add = FALSE, at = NULL, show.names=NULL,
+                ...)
 {
     pars <- c(pars, list(...))
 
@@ -141,8 +122,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
                          lty = "dashed", col = border)
                 segments(stats[c(1, 5)], rep(x - wid/2, 2), stats[c(1, 5)],
                          rep(x + wid/2, 2), col = border)
-                points(out, rep(x, length(out)), col = border)
-
+                do.call("points",c(list(out, rep(x, length(out))), pt.pars))
             }
             else { ## vertical
 
@@ -164,7 +144,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
                          stats[c(2,4)], lty="dashed",col=border)
                 segments(rep(x-wid/2,2),stats[c(1,5)],rep(x+wid/2,2),
                          stats[c(1,5)],col=border)
-                points(rep(x,length(out)), out, col=border)
+                do.call("points",c(list(rep(x,length(out)), out), pt.pars))
             }
 	    if(any(inf <- !is.finite(out))) {
 		## FIXME: should MARK on plot !! (S-plus doesn't either)
@@ -184,8 +164,10 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
     else if(length(at) != n)
         stop(paste("`at' must have same length as `z $ n', i.e.",n))
     ## just for compatibility with S
-    if(is.null(z$out))	 z$out	 <- vector(length=0)
-    if(is.null(z$group)) z$group <- vector(length=0)
+    if(is.null(z$out))
+        z$out <- numeric()
+    if(is.null(z$group) || !outline)
+        z$group <- integer()
     if(is.null(pars$ylim))
 	ylim <- range(z$stats[is.finite(z$stats)],
 		      z$out  [is.finite(z$out)],
@@ -195,6 +177,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 	ylim <- pars$ylim
 	pars$ylim <- NULL
     }
+
     width <-
 	if(!is.null(width)) {
 	    if(length(width) != n | any(is.na(width)) | any(width <= 0))
@@ -207,6 +190,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 
     if(missing(border) || length(border)==0)
 	border <- par("fg")
+    pt.pars <- c(pars[names(pars) %in% c("pch", "cex", "bg")], col = border)
 
     if (!add) {
     	plot.new()
@@ -231,7 +215,8 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
     if(!axes) { axes <- pars$axes; pars$axes <- NULL }
     if(axes) {
         ax.pars <- pars[names(pars) %in% c("xaxt", "yaxt", "las")]
-        if (n > 1)
+        if (is.null(show.names)) show.names <- n > 1
+        if (show.names)
             do.call("axis", c(list(side = 1 + horizontal,
                                    at = at, labels = z$names), ax.pars))
         do.call("axis", c(list(side = 2 - horizontal), ax.pars))

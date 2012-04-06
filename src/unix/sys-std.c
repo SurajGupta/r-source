@@ -173,6 +173,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
 	    tmp->next = it->next;
 	    return(1);
 	}
+	tmp = tmp->next;
     }
 
     return(0);
@@ -463,6 +464,7 @@ void Rstd_Busy(int which)
  */
 
 void R_dot_Last(void);		/* in main.c */
+void R_RunExitFinalizers(void);	/* in memory.c */
 
 void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
@@ -517,8 +519,9 @@ void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     default:
         break;
     }
+    R_RunExitFinalizers();
     CleanEd();
-    KillAllDevices();
+    if(saveact != SA_SUICIDE) KillAllDevices();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
     fpu_setup(FALSE);
@@ -726,5 +729,6 @@ SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     error("Sys.sleep is not implemented on this system");
+    return R_NilValue;		/* -Wall */
 }
-#endif
+#endif /* HAVE_TIMES */

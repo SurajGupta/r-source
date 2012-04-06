@@ -37,7 +37,10 @@
  *	C port by John C. Daub
  */
 
+#include <RCarbon.h>
+
 #include "RIntf.h"
+#include "Fileio.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -121,11 +124,13 @@ void RWrite(char* buf)
 
     buflen = strlen(buf);
 
+#ifndef __MRC__
     if(fileno(stdout)>1){
 	fputs(buf, stdout);
 	fflush(stdout);
     }
     else
+#endif
 	for ( i=0; i < buflen; i++)
 	    WEKey ( buf[i], NULL, GetWindowWE (Console_Window) ) ;
 
@@ -138,6 +143,7 @@ void RnWrite(char* buf, SInt16 len)
     char *buf2=NULL; 
     
     
+#ifndef __MRC__
     if(fileno(stdout)>1){
     buf2 = malloc(len+2);
      if(buf2){
@@ -148,6 +154,7 @@ void RnWrite(char* buf, SInt16 len)
      }
     }
     else
+#endif
 	for ( i=0; i < len; i++)
 	    WEKey ( buf[i], NULL, GetWindowWE (Console_Window) ) ;
     
@@ -310,7 +317,7 @@ void mac_savehistory(char *file)
 
     if (!file || !g_end_Cmd) return;
 
-    fp = fopen(file, "w");
+    fp = R_fopen(file, "w");
     if (!fp) {
     char msg[256];
 	sprintf(msg, "Unable to open history file \"%s\" for writing", file);
@@ -342,7 +349,7 @@ void mac_loadhistory(char *file)
     char buf[1002];
 
     if (!file || *file==NULL) return;
-    fp = fopen(file, "r");
+    fp = R_fopen(file, "r");
     if (!fp) {
  /* REprintf("\nUnable to open history file \"%s\" for reading\n", file);
  */	return;
@@ -423,6 +430,7 @@ void R_WriteConsole1(char *buf, SInt32 buflen)
     stringona = malloc(outlen+2);
     if(stringona){
      strncpy(stringona,buf,outlen);
+
     for ( i=0; i < outlen; i++)
 	 if (buf[i] == '\n') stringona[i]='\r';
     
@@ -512,12 +520,10 @@ void  GWdoErrorAlert(SInt16 errorType)
     {
 	GetIndString(narrativeText,rStringList,errorType + 1);
 	RWrite("No more window");
-//		StandardAlert(kAlertCautionAlert,labelText,narrativeText,&paramRec,&itemHit);
     }
     else
     {
 	Do_StandardAlert(labelText);
-//		StandardAlert(kAlertStopAlert,labelText,0,&paramRec,&itemHit);
 	if (errorType <7)
 	    ExitToShell();
     }
@@ -532,6 +538,8 @@ void do_Down_Array(void)
 {
     WEReference we ;
     SInt32 textLength;
+    char mybuf[40];
+
     if (g_start_Cmd != g_end_Cmd) {
 	we = GetWindowWE ( Console_Window ) ;
 	if (!g_down){
@@ -566,6 +574,7 @@ void do_Up_Array(void)
 {
     WEReference we ;
     SInt32 textLength;
+
     if (g_start_Cmd != g_end_Cmd) {
 
 	we = GetWindowWE ( Console_Window ) ;

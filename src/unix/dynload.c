@@ -32,18 +32,23 @@
 #include <unistd.h>
 #endif
 
-#include "Defn.h"
-#include "R_ext/Rdynpriv.h"
+#include <Defn.h>
+#include <Rdynpriv.h>
 
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
+/* HP-UX 11.0 has dlfcn.h, but according to libtool as of Dec 2001
+   this support is broken. So we force use of shlib even when dlfcn.h
+   is available */
+#ifdef __hpux
+# ifdef HAVE_DL_H
+#  include "hpdlfcn.c"
+#  define HAVE_DYNAMIC_LOADING
+# endif
 #else
-#ifdef HAVE_DL_H
-#include "hpdlfcn.c"
-#define HAVE_DLFCN_H
+# ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>
+#  define HAVE_DYNAMIC_LOADING
+# endif
 #endif
-#endif
-
 
 #include "FFDecl.h"
 
@@ -53,7 +58,7 @@ static CFunTabEntry CFunTab[] =
     {NULL, NULL}
 };
 
-#ifdef HAVE_DLFCN_H
+#ifdef HAVE_DYNAMIC_LOADING
 
 static void *loadLibrary(const char *path, int asLocal, int now);
 static void closeLibrary(void *handle);
@@ -67,10 +72,6 @@ static int computeDLOpenFlag(int asLocal, int now);
 
 void InitFunctionHashing()
 {
-#ifdef DL_SEARCH_PROG
-    baseDLL.handle = dlopen(0, RTLD_NOW);
-#endif
-
     R_osDynSymbol->loadLibrary = loadLibrary;
     R_osDynSymbol->dlsym = R_dlsym;
     R_osDynSymbol->closeLibrary = closeLibrary;
@@ -141,12 +142,6 @@ static void deleteCachedSymbols(DllInfo *dll)
 
 static DL_FUNC getBaseSymbol(const char *name)
 {
-#ifdef DL_SEARCH_PROG
-    DL_FUNC fcnptr;
-
-    fcnptr = R_osDynSymbol->dlsym(&baseDll, name);
-    return(fcnptr);
-#else
     int i;
 
     for(i = 0 ; R_osDynSymbol->CFunTab[i].name ; i++)
@@ -154,7 +149,6 @@ static DL_FUNC getBaseSymbol(const char *name)
 	    return R_osDynSymbol->CFunTab[i].func;
 
     return((DL_FUNC) NULL);
-#endif
 }
 
 
@@ -285,4 +279,4 @@ static void getFullDLLPath(SEXP call, char *buf, char *path)
 #endif
 }
 
-#endif /* end of `ifdef HAVE_DLFCN_H' */
+#endif /* end of `ifdef HAVE_DYNAMIC_LOADING' */

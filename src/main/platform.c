@@ -50,15 +50,11 @@ SEXP do_Platform(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_STRING_ELT(names, 4, mkChar("endian"));
     SET_VECTOR_ELT(value, 0, mkString(R_OSType));
     SET_VECTOR_ELT(value, 1, mkString(R_FileSep));
-    tmp = (char *) malloc(strlen(SHLIB_EXT) + 2);
+    tmp = (char *) malloc(strlen(SHLIB_EXT) + 1);
     if(!tmp) {
 	error("Could not allocate memory");
     }
-#ifndef Macintosh    
-    sprintf(tmp, ".%s", SHLIB_EXT);
-#else    /* Usually DLL under MacOS are called "LibraryLib" without a "." */
     sprintf(tmp, "%s", SHLIB_EXT);
-#endif    
     SET_VECTOR_ELT(value, 2, mkString(tmp));
     SET_VECTOR_ELT(value, 3, mkString(R_GUIType));
 #ifdef WORDS_BIGENDIAN
@@ -189,10 +185,10 @@ static int R_AppendFile(char *file1, char *file2)
     FILE *fp1, *fp2;
     char buf[APPENDBUFSIZE];
     int nchar, status = 0;
-    if((fp1 = R_fopen(R_ExpandFileName(file1), "a")) == NULL) {
+    if((fp1 = R_fopen(R_ExpandFileName(file1), "ab")) == NULL) {
         return 0;
     }
-    if((fp2 = R_fopen(R_ExpandFileName(file2), "r")) == NULL) {
+    if((fp2 = R_fopen(R_ExpandFileName(file2), "rb")) == NULL) {
         fclose(fp1);
         return 0;
     }
@@ -282,6 +278,37 @@ SEXP do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     UNPROTECT(1);
     return ans;
+}
+
+#if defined(Win32) || defined(Macintosh)
+#include <errno.h>
+#endif
+
+SEXP do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    char from[PATH_MAX], to[PATH_MAX], *p;
+    checkArity(op, args);
+    
+    if (TYPEOF(CAR(args)) != STRSXP)
+	error("source must be a string");
+    p = R_ExpandFileName(CHAR(STRING_ELT(CAR(args), 0)));
+    if (strlen(p) >= PATH_MAX - 1)
+	error("expanded source name too long");
+    strncpy(from, p, PATH_MAX - 1);
+
+    if (TYPEOF(CADR(args)) != STRSXP)
+	error("destination must be a string");
+    p = R_ExpandFileName(CHAR(STRING_ELT(CADR(args), 0)));
+    if (strlen(p) >= PATH_MAX - 1)
+	error("expanded destination name too long");
+    strncpy(to, p, PATH_MAX - 1);
+
+#if defined(Win32) || defined(Macintosh)
+    /* rename() on Windows does not overwrite files */
+    if (!unlink(to))
+	if (errno == EACCES) return mkFalse();
+#endif
+    return rename(from, to) == 0 ? mkTrue() : mkFalse();
 }
 
 #ifndef Macintosh
@@ -535,7 +562,11 @@ SEXP do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 #  include <sys/stat.h>
 # else
 #  include <types.h>
-#  include <stat.h>
+#  ifndef __MRC__
+#   include <stat.h>
+#  else
+#   include <mpw_stat.h>
+#  endif
 #  endif /* mac */
 
 # if defined(Unix) && defined(HAVE_PWD_H) && defined(HAVE_GRP_H) \
@@ -734,7 +765,10 @@ SEXP do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
     PROTECT(ans = allocVector(STRSXP, 1));
     if(p) SET_STRING_ELT(ans, 0, mkChar(p));
-    else  SET_STRING_ELT(ans, 0, mkChar(""));
+    else  {
+	SET_STRING_ELT(ans, 0, mkChar(""));
+	warningcall(call, "OS reports request cannot be honored");
+    }
     UNPROTECT(1);
     return ans;
 #else
@@ -831,19 +865,27 @@ SEXP do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i = 0;
     
     checkArity(op, args);
-    PROTECT(ans = allocVector(LGLSXP, 10));
-    PROTECT(ansnames = allocVector(STRSXP, 10));
+    PROTECT(ans = allocVector(LGLSXP, 12));
+    PROTECT(ansnames = allocVector(STRSXP, 12));
 
     SET_STRING_ELT(ansnames, i, mkChar("jpeg"));
 #ifdef HAVE_JPEG
+#ifdef Unix
+    LOGICAL(ans)[i++] = strcmp(R_GUIType, "X11") == 0;
+#else
     LOGICAL(ans)[i++] = TRUE;
+#endif
 #else
     LOGICAL(ans)[i++] = FALSE;
 #endif
 
     SET_STRING_ELT(ansnames, i, mkChar("png"));
 #ifdef HAVE_PNG
+#ifdef Unix
+    LOGICAL(ans)[i++] = strcmp(R_GUIType, "X11") == 0;
+#else
     LOGICAL(ans)[i++] = TRUE;
+#endif
 #else
     LOGICAL(ans)[i++] = FALSE;
 #endif
@@ -856,7 +898,18 @@ SEXP do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 
     SET_STRING_ELT(ansnames, i, mkChar("X11"));
+#ifdef Unix
     LOGICAL(ans)[i++] = strcmp(R_GUIType, "X11") == 0;
+#else
+    LOGICAL(ans)[i++] = FALSE;
+#endif
+
+    SET_STRING_ELT(ansnames, i, mkChar("GNOME"));
+#ifdef Unix
+    LOGICAL(ans)[i++] = strcmp(R_GUIType, "GNOME") == 0;
+#else
+    LOGICAL(ans)[i++] = FALSE;
+#endif
 
     SET_STRING_ELT(ansnames, i, mkChar("libz"));
 #if defined(HAVE_ZLIB)
@@ -912,7 +965,58 @@ SEXP do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 #endif
     i++;
+
+    SET_STRING_ELT(ansnames, i, mkChar("IEEE754"));
+#if defined(IEEE_754)
+    LOGICAL(ans)[i++] = TRUE;
+#else
+    LOGICAL(ans)[i++] = FALSE;
+#endif
+
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
     return ans;
 }
+
+#if defined(HAVE_BSD_NETWORKING) && defined(HAVE_ARPA_INET_H)
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+SEXP do_nsl(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans = R_NilValue;
+    char *name, ip[] = "xxx.xxx.xxx.xxx";
+    struct hostent *hp;
+
+    checkArity(op, args);
+    if(!isString(CAR(args)) || length(CAR(args)) != 1)
+	error("hostname must be a character vector of length 1");
+    name = CHAR(STRING_ELT(CAR(args), 0));
+    
+    hp = gethostbyname(name);
+
+    if(hp == NULL) { /* cannot resolve the address */
+	warning("nsl() was unable to resolve host `%s'", name);
+    } else {
+	if (hp->h_addrtype == AF_INET) {
+	    struct in_addr in;
+	    memcpy(&in.s_addr, *(hp->h_addr_list), sizeof (in.s_addr));
+	    strcpy(ip, inet_ntoa(in));
+	} else {
+	    warningcall(call, "unknown format returned by gethostbyname");
+	}
+	PROTECT(ans = allocVector(STRSXP, 1));
+	SET_STRING_ELT(ans, 0, mkChar(ip));
+	UNPROTECT(1);
+    }
+    return ans;
+}
+#else
+SEXP do_nsl(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    warning("nsl is not supported on this platform");
+    return R_NilValue;
+}
+#endif

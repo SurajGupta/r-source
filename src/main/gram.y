@@ -130,7 +130,7 @@ static int	xxvalue(SEXP, int);
 
 %token		END_OF_INPUT ERROR
 %token		STR_CONST NUM_CONST NULL_CONST SYMBOL FUNCTION
-%token		LEFT_ASSIGN RIGHT_ASSIGN LBB
+%token		LEFT_ASSIGN EQ_ASSIGN RIGHT_ASSIGN LBB
 %token		FOR IN IF ELSE WHILE NEXT BREAK REPEAT
 %token		GT GE LT LE EQ NE AND OR
 
@@ -139,6 +139,7 @@ static int	xxvalue(SEXP, int);
 %right		IF
 %left		ELSE
 %right		LEFT_ASSIGN
+%right		EQ_ASSIGN
 %left		RIGHT_ASSIGN
 %left		'~' TILDE
 %left		OR
@@ -151,17 +152,24 @@ static int	xxvalue(SEXP, int);
 %left		':'
 %left		UMINUS UPLUS
 %right		'^'
-%left		'$'
+%left		'$' '@'
 %nonassoc	'(' '[' LBB
 
 %%
 
 prog	:	END_OF_INPUT			{ return 0; }
 	|	'\n'				{ return xxvalue(NULL,2); }
-	|	expr '\n'			{ return xxvalue($1,3); }
-	|	expr ';'			{ return xxvalue($1,4); }
+	|	expr_or_assign '\n'			{ return xxvalue($1,3); }
+	|	expr_or_assign ';'			{ return xxvalue($1,4); }
 	|	error	 			{ YYABORT; }
 	;
+
+expr_or_assign  :    expr                       { $$ = $1; }
+                |    equal_assign               { $$ = $1; }
+                ;
+
+equal_assign    :    expr EQ_ASSIGN expr_or_assign              { $$ = xxbinary($2,$1,$3); }
+                ;
 
 expr	: 	NUM_CONST			{ $$ = $1; }
 	|	STR_CONST			{ $$ = $1; }
@@ -169,7 +177,7 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	SYMBOL				{ $$ = $1; }
 
 	|	'{' exprlist '}'		{ $$ = xxexprlist($1,$2); }
-	|	'(' expr ')'			{ $$ = xxparen($1,$2); }
+	|	'(' expr_or_assign ')'			{ $$ = xxparen($1,$2); }
 
 	|	'-' expr %prec UMINUS		{ $$ = xxunary($1,$2); }
 	|	'+' expr %prec UMINUS		{ $$ = xxunary($1,$2); }
@@ -186,6 +194,7 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	expr SPECIAL expr		{ $$ = xxbinary($2,$1,$3); }
 	|	expr '%' expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr '~' expr			{ $$ = xxbinary($2,$1,$3); }
+	|	expr '?' expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr LT expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr LE expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr EQ expr			{ $$ = xxbinary($2,$1,$3); }
@@ -197,18 +206,20 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 
 	|	expr LEFT_ASSIGN expr 		{ $$ = xxbinary($2,$1,$3); }
 	|	expr RIGHT_ASSIGN expr 		{ $$ = xxbinary($2,$3,$1); }
-	|	FUNCTION '(' formlist ')' cr expr %prec LOW
+	|	FUNCTION '(' formlist ')' cr expr_or_assign %prec LOW
 						{ $$ = xxdefun($1,$3,$6); }
 	|	expr '(' sublist ')'		{ $$ = xxfuncall($1,$3); }
-	|	IF ifcond expr 			{ $$ = xxif($1,$2,$3); }
-	|	IF ifcond expr ELSE expr	{ $$ = xxifelse($1,$2,$3,$5); }
-	|	FOR forcond expr %prec FOR 	{ $$ = xxfor($1,$2,$3); }
-	|	WHILE cond expr			{ $$ = xxwhile($1,$2,$3); }
-	|	REPEAT expr			{ $$ = xxrepeat($1,$2); }
+	|	IF ifcond expr_or_assign 			{ $$ = xxif($1,$2,$3); }
+	|	IF ifcond expr_or_assign ELSE expr_or_assign	{ $$ = xxifelse($1,$2,$3,$5); }
+	|	FOR forcond expr_or_assign %prec FOR 	{ $$ = xxfor($1,$2,$3); }
+	|	WHILE cond expr_or_assign			{ $$ = xxwhile($1,$2,$3); }
+	|	REPEAT expr_or_assign			{ $$ = xxrepeat($1,$2); }
 	|	expr LBB sublist ']' ']'	{ $$ = xxsubscript($1,$2,$3); }
 	|	expr '[' sublist ']'		{ $$ = xxsubscript($1,$2,$3); }
 	|	expr '$' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
 	|	expr '$' STR_CONST		{ $$ = xxbinary($2,$1,$3); }
+	|	expr '@' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
+	|	expr '@' STR_CONST		{ $$ = xxbinary($2,$1,$3); }
 	|	NEXT				{ $$ = xxnxtbrk($1); }
 	|	BREAK				{ $$ = xxnxtbrk($1); }
 	;
@@ -225,10 +236,10 @@ forcond :	'(' SYMBOL IN expr ')' 		{ $$ = xxforcond($2,$4); }
 
 
 exprlist:					{ $$ = xxexprlist0(); }
-	|	expr				{ $$ = xxexprlist1($1); }
-	|	exprlist ';' expr		{ $$ = xxexprlist2($1,$3); }
+	|	expr_or_assign				{ $$ = xxexprlist1($1); }
+	|	exprlist ';' expr_or_assign	{ $$ = xxexprlist2($1,$3); }
 	|	exprlist ';'			{ $$ = $1; }
-	|	exprlist '\n' expr		{ $$ = xxexprlist2($1,$3); }
+	|	exprlist '\n' expr_or_assign	{ $$ = xxexprlist2($1,$3); }
 	|	exprlist '\n'			{ $$ = $1;}
 	;
 
@@ -238,19 +249,19 @@ sublist	:	sub				{ $$ = xxsublist1($1); }
 
 sub	:					{ $$ = xxsub0(); }
 	|	expr				{ $$ = xxsub1($1); }
-	|	SYMBOL '=' 			{ $$ = xxsymsub0($1); }
-	|	SYMBOL '=' expr			{ $$ = xxsymsub1($1,$3); }
-	|	STR_CONST '=' 			{ $$ = xxsymsub0($1); }
-	|	STR_CONST '=' expr		{ $$ = xxsymsub1($1,$3); }
-	|	NULL_CONST '=' 			{ $$ = xxnullsub0(); }
-	|	NULL_CONST '=' expr		{ $$ = xxnullsub1($3); }
+	|	SYMBOL EQ_ASSIGN 			{ $$ = xxsymsub0($1); }
+	|	SYMBOL EQ_ASSIGN expr			{ $$ = xxsymsub1($1,$3); }
+	|	STR_CONST EQ_ASSIGN 			{ $$ = xxsymsub0($1); }
+	|	STR_CONST EQ_ASSIGN expr		{ $$ = xxsymsub1($1,$3); }
+	|	NULL_CONST EQ_ASSIGN 			{ $$ = xxnullsub0(); }
+	|	NULL_CONST EQ_ASSIGN expr		{ $$ = xxnullsub1($3); }
 	;
 
 formlist:					{ $$ = xxnullformal(); }
 	|	SYMBOL				{ $$ = xxfirstformal0($1); }
-	|	SYMBOL '=' expr			{ $$ = xxfirstformal1($1,$3); }
+	|	SYMBOL EQ_ASSIGN expr			{ $$ = xxfirstformal1($1,$3); }
 	|	formlist ',' SYMBOL		{ $$ = xxaddformal0($1,$3); }
-	|	formlist ',' SYMBOL '=' expr	{ $$ = xxaddformal1($1,$3,$5); }
+	|	formlist ',' SYMBOL EQ_ASSIGN expr	{ $$ = xxaddformal1($1,$3,$5); }
 	;
 
 cr	:					{ EatLines = 1; }
@@ -1771,7 +1782,8 @@ static int token()
 	    yylval = install("==");
 	    return EQ;
 	}
-	return '=';
+	yylval = install("=");
+	return EQ_ASSIGN;
     case ':':
 	if (nextchar('=')) {
 	    yylval = install(":=");
@@ -1813,7 +1825,7 @@ static int token()
     case ']':
 	return c;
     case '?':
-	strcpy(yytext, "help");
+	strcpy(yytext, "?");
 	yylval = install(yytext);
 	return c;
     case '*':
@@ -1828,6 +1840,7 @@ static int token()
     case '^':
     case '~':
     case '$':
+    case '@':
 	yytext[0] = c;
 	yytext[1] = '\0';
 	yylval = install(yytext);
@@ -1947,8 +1960,10 @@ int yylex(void)
     case ':':
     case '~':
     case '$':
+    case '@':
     case LEFT_ASSIGN:
     case RIGHT_ASSIGN:
+    case EQ_ASSIGN:
 	EatLines = 1;
 	break;
 

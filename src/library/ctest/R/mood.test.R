@@ -1,7 +1,7 @@
 mood.test <- function(x, ...) UseMethod("mood.test")
 
 mood.test.default <-
-function(x, y, alternative = c("two.sided", "less", "greater"))
+function(x, y, alternative = c("two.sided", "less", "greater"), ...)
 {
     alternative <- match.arg(alternative)
     DNAME <- paste(deparse(substitute(x)), "and", deparse(substitute(y)))
@@ -48,7 +48,7 @@ function(formula, data, subset, na.action, ...)
     DNAME <- paste(names(mf), collapse = " by ")
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
-    g <- as.factor(mf[[-response]])
+    g <- factor(mf[[-response]])
     if(nlevels(g) != 2)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)

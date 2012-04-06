@@ -13,9 +13,9 @@
 \details{
   If used as \code{R CMD INSTALL pkgs} without explicitly specifying
   \code{lib}, packages are installed into the library tree rooted at the
-  first directory given in \code{\$R\_LIBS} if this is set and non-null,
-  and to the default library tree (which is rooted at
-  \file{\$R\_HOME/library}) otherwise.
+  first directory given in the environment variable \code{R\_LIBS} if
+  this is set and non-null, and to the default library tree (which is
+  rooted at \file{\$R\_HOME/library}) otherwise.
 
   To install into the library tree \code{lib}, use
   \code{R CMD INSTALL -l lib pkgs}.
@@ -44,11 +44,14 @@
   If the option \code{--save} is used, the installation procedure
   creates a binary image of the package code, which is then loaded when
   the package is attached, rather than evaluating the package source at
-  that time.  Having a file \file{INSTALL.R} in the package directory
-  (its contents don't matter) makes this the default behavior for the
-  package (option \code{--no-save} overrides).  You may need
-  \code{--save} if your package requires other packages to evaluate its
-  own source.
+  that time.  Having a file \file{install.R} in the package directory
+  makes this the default behavior for the package (option
+  \code{--no-save} overrides).  You may need  \code{--save} if your
+  package requires other packages to evaluate its own source.  If the
+  file \file{install.R} is non-empty, it should contain R expressions to
+  be executed when the package is attached, after loading the saved
+  image.  Options to be passed to R when creating the save image can be
+  specified via \code{--save=ARGS}.
 
   Use \code{R CMD INSTALL --help} for more usage information.
 }

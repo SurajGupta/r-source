@@ -168,10 +168,14 @@ static void jumpfun(RCNTXT * cptr, int mask, SEXP val)
     R_restore_globals(cptr);
 
     R_ReturnedValue = val;
-    if (cptr != R_ToplevelContext)
-	R_GlobalContext = cptr->nextcontext;
-    else
-	R_GlobalContext = R_ToplevelContext;
+    R_GlobalContext = cptr; /* this used to be set to
+                               cptr->nextcontext for non-toplevel
+                               jumps (with the context set back at the
+                               SETJMP for restarts).  Changing this to
+                               always using cptr as the new global
+                               context should simplify some code and
+                               perhaps allow loops to be handled with
+                               fewer SETJMP's.  LT */
     LONGJMP(cptr->cjmpbuf, mask);
 }
 
@@ -200,10 +204,15 @@ void begincontext(RCNTXT * cptr, int flags,
 
 void endcontext(RCNTXT * cptr)
 {
-    int savevis = R_Visible;
-    if (cptr->cloenv != R_NilValue && cptr->conexit != R_NilValue )
-	eval(cptr->conexit, cptr->cloenv);
-    R_Visible = savevis;
+    if (cptr->cloenv != R_NilValue && cptr->conexit != R_NilValue ) {
+	SEXP s = cptr->conexit;
+	int savevis = R_Visible;
+	cptr->conexit = R_NilValue; /* prevent recursion */
+	PROTECT(s);
+	eval(s, cptr->cloenv);
+	UNPROTECT(1);
+	R_Visible = savevis;
+    }
     R_GlobalContext = cptr->nextcontext;
 }
 
@@ -557,4 +566,59 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
     UNPROTECT(1);
 
     return result;
+}
+
+
+
+/*
+  This is a simple interface for evaluating R expressions
+  from C with a guarantee that one will return to the 
+  point in the code from which the call was made.
+  This uses R_TopleveExec to do this.  It is important
+  in applications that embed R or wish to make general 
+  callbacks to R with error handling.
+
+  It is currently hidden with a data structure definition
+  and C routine visible only here. The R_tryEval() is the
+  only visible aspect. This can be lifted into the header
+  files if necessary. (DTL)
+ */
+typedef struct {
+    SEXP expression;
+    SEXP val;
+    SEXP env;
+} ProtectedEvalData;
+
+static void
+protectedEval(void *d)
+{
+    ProtectedEvalData *data = (ProtectedEvalData *)d;
+    SEXP env = R_GlobalEnv;
+    if(data->env) {
+	env = data->env;
+    }
+    data->val = eval(data->expression, env); 
+    PROTECT(data->val);
+}
+
+SEXP
+R_tryEval(SEXP e, SEXP env, int *ErrorOccurred)
+{
+ Rboolean ok;
+ ProtectedEvalData data;
+
+ data.expression = e;
+ data.val = NULL;
+ data.env = env;
+
+ ok = R_ToplevelExec(protectedEval, &data);
+ if(ErrorOccurred) {
+     *ErrorOccurred = (ok == FALSE);
+ }
+ if(ok == FALSE)
+     data.val = NULL;
+ else
+     UNPROTECT(1);
+
+ return(data.val);
 }

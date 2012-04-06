@@ -13,7 +13,7 @@ LEA_MALLOC=YES
 USE_ATLAS=NO
 ATLAS_PATH=/R/ATLAS/lib/WinNT_PII
 
-PACKAGES = base ctest eda lqs modreg mva nls splines stepfun ts
+PACKAGES = base ctest eda lqs methods modreg mva nls splines stepfun tools ts
 ALLPACKAGES = $(PACKAGES) tcltk
 
 RHOME = $(shell perl pwd.pl ../..)# must be absolute path
@@ -35,7 +35,6 @@ endif
 R-DLLFLAGS = -mwindows
 R-DLLLIBS =-L. $(FLIBS) -lcomctl32 -lversion
 ifeq ($(strip $(USE_ATLAS)),YES)
-R-DLLLIBS +=-L$(ATLAS_PATH) -lcblas -lf77blas -latlas
 FLIBS +=-L$(ATLAS_PATH) -lcblas -lf77blas -latlas
 endif
 SOURCES = $(filter-out malloc.c,$(wildcard *.c *.f))
@@ -53,18 +52,18 @@ extra-CFLAGS+=-DLEA_MALLOC
 OBJS-EXTRA=malloc.o
 endif
 
-.PHONY:  clean veryclean  rlibs fixfiles front-ends
+.PHONY:  clean veryclean  rlibs fixfiles front-ends rmodules
 
 
 # separate as Tcl/Tk headers are needed.
 tcl: 
 	$(MAKE) STAMP=NO pkg-tcltk
 
-CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H
+CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H -DR_DLL_BUILD
 FFLAGS = $(OPTFLAGS)
 
-rbuild: fixfiles rlibs makeMakedeps ../../bin/R.dll libR.a CHTML \
-	 ../include/globalvar.h front-ends COPYRIGHTS rmodules
+rbuild: fixfiles rlibs makeMakedeps ../../bin/R.dll libR.a \
+	 CHTML front-ends COPYRIGHTS rmodules
 
 rpackage: fixed/fixdesc ../../library/R.css
 	$(MAKE) STAMP=NO $(PKGS)
@@ -108,7 +107,7 @@ Rdll: makeMakedeps ../../bin/R.dll
 	$(MKDIR) -p ../../bin
 	$(CP) R.dll ../../bin/
 
-front-ends: libR.a
+front-ends: libRm.a
 	$(MAKE) -C front-ends
 
 R.a: $(OBJS)
@@ -119,6 +118,7 @@ R.a: $(OBJS)
 
 # R.dll exports all global symbols BUT import library (libR.a)
 # only (all functions) + (global vars listed in exported-vars))
+# Only used in the cross-compilation case.
 
 libR.a:  R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def R.exp --output-lib libR.a
@@ -133,7 +133,9 @@ R.exp1: R.a $(MAINLIBS) $(EXTRALIBS) exported-vars
 	$(CAT) exported-vars >> $@
 	$(RM) RDefs
 
-# A version needed for the modules that uses R.dll's malloc/.../free:
+# A version needed for the modules that uses R.dll's malloc/.../free
+# Used in all cases.
+# Also used for front-ends, as import from R.dll seems to fail
 
 libRm.a:  Rm.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def Rm.exp --output-lib libRm.a
@@ -147,11 +149,6 @@ Rm.exp1: R.a $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) exported-vars
 	$(SED) -n '/^........ [T] _/s/^........ [T] _/ /p' RDefs >> $@
 	$(CAT) exported-vars >> $@
 	$(RM) RDefs
-
-
-# avoid building globalvar.h with errors
-../include/globalvar.h: exported-vars
-	perl -n makeimps.pl exported-vars > $@
 
 ../../library/R.css: ../../doc/html/R.css
 	$(CP) $< $@
@@ -181,11 +178,14 @@ ts-HELP = ziponly
 base-ZIPDATA = zip
 ts-ZIPDATA = zip
 
+MASS-HELP = ziponly
+MASS-ZIPDATA = zip
+
 bundle-%:
 	$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
 
-pkg-%:  libR.a #../include/globalvar.h
-	$(MAKE) DLLNM=$($*-DLLNM)  FLIBS="$(FLIBS)" EXTRADOCS=$($*-EXTRADOCS) \
+pkg-%:
+	$(MAKE) DLLNM=$($*-DLLNM)  FLIBS="$(FLIBS)" \
 	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/MakePkg
 	@if test -d $(RLIB)/$*/data ; then \
@@ -203,7 +203,7 @@ endif
 endif
 
 pkgclean-%:
-	$(MAKE) DLLNM=$($*-DLLNM)  EXTRADOCS=$($*-EXTRADOCS) RHOME=$(RHOME) \
+	$(MAKE) DLLNM=$($*-DLLNM) RHOME=$(RHOME) \
 	  -C $(PKGDIR)/$* PKG=$* -f $(RHOME)/src/gnuwin32/MakePkg clean
 
 pkgcheck-%:
@@ -244,9 +244,10 @@ clean: cleanwin $(PKGCLEAN)
 	-$(MAKE) -C ../nmath/standalone -f Makefile.win distclean
 	-$(MAKE) -C ../modules -f Makefile.win clean
 	-$(MAKE) -C ../../tests -f Makefile.win clean
+	$(RM) -f ../library/methods/R/methods
 
 distclean veryclean: clean
-	$(RM) R.exp Rm.exp globalvar.h 
+	$(RM) COPYRIGHTS R.exp Rm.exp 
 	$(RM) -r ../../bin ../../library ../../modules
 	$(RM) ../include/config.h ../include/psignal.h \
 	../include/Rconfig.h ../include/version.h 
@@ -258,9 +259,12 @@ distclean veryclean: clean
 	../../doc/html/rw-FAQ.html ../../doc/html/search/SearchEngine.html
 	$(RM) ../../etc/Rconsole ../../etc/Rdevga ../../etc/Rprofile \
 	../../etc/rgb.txt ../../share/make/tests.mk \
-	../include/FFDecl.h ../include/FFTab.h ../include/Platform.h \
-	../include/globalvar.h ../../tests/*.Rout ../../tests/*.Rout.fail
+	../include/Platform.h ../../tests/*.Rout ../../tests/*.Rout.fail
+	$(MAKE) -C fixed distclean
 	-$(MAKE) -C installer ISdistclean
+	@for pkg in $(ALLPACKAGES); do \
+	  $(RM) ../library/$${pkg}/DESCRIPTION; \
+	done
 
 cleanwin:
 	$(RM) *.o *.exe *.dll *.a *~ \#*\# rw*.zip R.def R.exp1 Rm.exp1\
@@ -293,8 +297,9 @@ pkgtests: $(PKGS-CHK)
 #                          ===== documentation ======
 
 docs manuals:
-	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win clean
-	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win R_PKGS='$(ALLPACKAGES)'
+	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win clean BUILD=$(BUILD)
+	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win \
+	  R_PKGS='$(ALLPACKAGES)' BUILD=$(BUILD)
 	@$(MAKE) ziponly-base
 
 
@@ -352,6 +357,7 @@ bindist: tcl bitmapdll docfiles
 	  -e s/@RVER@/$(RVER)/g readme > $(RPREFIX)/README
 	$(CP) -p rw-faq $(RPREFIX)/rw-FAQ
 	$(CP) -p CHANGES README.Rterm $(RPREFIX)
+	-find $(RPREFIX) -name CVS -exec rm -rf \{\} \;
 # convert docs and batch files to CRLF: might already be on Windows, though.
 ifeq ($(strip $(BUILD)),CROSS)
 	zip -l dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
@@ -361,7 +367,7 @@ else
 	unzip -o dosfiles.zip
 endif
 	$(RM) dosfiles.zip
-	$(RM) $(RPREFIX)b1.zip $(RPREFIX)b2.zip $(RPREFIX)h.zip \
+	$(RM) $(RPREFIX)b.zip $(RPREFIX)m.zip $(RPREFIX)h.zip \
 	   $(RPREFIX)w.zip $(RPREFIX)l.zip $(RPREFIX)ch.zip
 	$(RM) anindex.zip
 	zip -mrX anindex.zip $(RPREFIX)/library/*/help/AnIndex
@@ -381,15 +387,15 @@ endif
 	mkdir -p  $(RPREFIX)/doc/html
 	$(CP) -p ../../doc/html/faq.html ../../doc/html/rw-FAQ.html \
 	  $(RPREFIX)/doc/html
-	zip -rm9X $(RPREFIX)b2.zip $(RPREFIX)/library $(RPREFIX)/doc/html
-	zip -r9X $(RPREFIX)b1.zip $(RPREFIX)
+	zip -rm9X $(RPREFIX)m.zip $(RPREFIX)/library/*/man
+	zip -r9X $(RPREFIX)b.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
 
 
 #taken from ../include/Makefile.in
 SRC_HEADERS = R.h S.h Rdefines.h Rgraphics.h Rinternals.h Rmath.h
 OBJ_HEADERS = Rconfig.h Rversion.h
-GW32_HEADERS = globalvar.h
+GW32_HEADERS =
 
 packagedist:
 	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
@@ -422,7 +428,9 @@ packagedist:
           $(RPREFIX)/bin
 	$(CP) ../../share/make/tests.mk $(RPREFIX)/share/make
 	$(CP) -p graphapp/graphapp.h $(RPREFIX)/src/include
+	$(MAKE) PKGDIR=. pkgclean-windlgs
 	$(CP) -pr windlgs $(RPREFIX)/src/library
+	-find $(RPREFIX) -name CVS -exec rm -rf \{\} \;
 	zip -r9X $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
 

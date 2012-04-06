@@ -34,11 +34,12 @@ all: ../../../bin/Rgui.exe ../../../bin/Rterm.exe \
 graphappmain.o: ../graphapp/graphappmain.c
 	$(CC) -c -o $@ -I../graphapp $(CFLAGS) $^
 
-Rgui-LINKFLAGS=-mwindows
-Rterm-LIBS=-luser32 -L.. -lR
-Rgui-LIBS=-L.. -lR
 rgui-CFLAGS=-DWin32
 rterm-CFLAGS=-DWin32
+Rgui-LINKFLAGS=-mwindows
+
+Rterm-LIBS=-luser32 -L.. -lRm
+Rgui-LIBS=-L.. -lRm
 
 Rgui.exe: graphappmain.o  rgui.o rgico.o
 

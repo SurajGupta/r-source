@@ -183,7 +183,123 @@ format(a, justify="right")
 svd(rbind(1:7))## $v lost dimensions in 1.2.3
 
 
+## Make sure  on.exit() keeps being evaluated in the proper env [from PD]:
+## A more complete example:
+g1 <- function(fitted) { on.exit(remove(fitted)); return(function(foo) foo) }
+g2 <- function(fitted) { on.exit(remove(fitted));        function(foo) foo }
+f <- function(g) { fitted <- 1; h <- g(fitted); print(fitted)
+                   ls(envir=environment(h)) }
+f(g1)
+f(g2)
+
+f2 <- function()
+{
+  g.foo <- g1
+  g.bar <- g2
+  g <- function(x,...) UseMethod("g")
+  fitted <- 1; class(fitted) <- "foo"
+  h <- g(fitted); print(fitted); print(ls(envir=environment(h)))
+  fitted <- 1; class(fitted) <- "bar"
+  h <- g(fitted); print(fitted); print(ls(envir=environment(h)))
+  invisible(NULL)
+}
+f2()
+## The first case in f2() is broken in 1.3.0(-patched).
+
+## on.exit() consistency check from Luke:
+g <- function() as.environment(-1)
+f <- function(x) UseMethod("f")
+f.foo <- function(x) { on.exit(e <<- g()); NULL }
+f.bar <- function(x) { on.exit(e <<- g()); return(NULL) }
+f(structure(1,class = "foo"))
+ls(env = e)# only "x", i.e. *not* the GlobalEnv
+f(structure(1,class = "bar"))
+stopifnot("x" == ls(env = e))# as above; wrongly was .GlobalEnv in R 1.3.x
+
+
+## some tests that R supports logical variables in formulae
+## it coerced them to numeric prior to 1.4.0
+## they should appear like 2-level factors, following S
+
+oldCon <- options("contrasts")
+y <- rnorm(10)
+x <- rep(c(TRUE, FALSE), 5)
+model.matrix(y ~ x)
+lm(y ~ x)
+DF <- data.frame(x, y)
+lm(y ~ x, data=DF)
+options(contrasts=c("contr.helmert", "contr.poly"))
+model.matrix(y ~ x)
+lm(y ~ x, data=DF)
+z <- 1:10
+lm(y ~ x*z)
+lm(y ~ x*z - 1)
+options(oldCon)
+
+## diffinv, Adrian Trapletti, 2001-08-27
+library(ts)
+x <- ts(1:10)
+diffinv(diff(x),xi=x[1])
+diffinv(diff(x,lag=1,differences=2),lag=1,differences=2,xi=x[1:2])
+## last had wrong start and end
+detach("package:ts")
+
 ## PR#1072  (Reading Inf and NaN values)
 as.numeric(as.character(NaN))
 as.numeric(as.character(Inf))
 ## were NA on Windows at least under 1.3.0.
+
+## PR#1092 (rowsum dimnames)
+rowsum(matrix(1:12, 3,4), c("Y","X","Y"))
+## rownames were 1,2 in <= 1.3.1.
+
+## PR#1115 (saving strings with ascii=TRUE)
+x <- y <- unlist(as.list(
+    parse(text=paste("\"\\",
+          as.character(structure(0:255,class="octmode")),
+             "\"",sep=""))))
+save(x, ascii=T, file=(fn <- tempfile()))
+load(fn)
+all(x==y)
+unlink(fn)
+## 1.3.1 had trouble with \
+
+
+## Some tests of sink() and connections()
+## capture all the output to a file.
+zz <- file("all.Rout", open="wt")
+sink(zz)
+sink(zz, type="message")
+try(log("a"))
+## back to the console
+sink(type="message")
+sink()
+try(log("a"))
+
+## capture all the output to a file.
+zz <- file("all.Rout", open="wt")
+sink(zz)
+sink(zz, type="message")
+try(log("a"))
+
+## bail out
+closeAllConnections()
+(foo <- showConnections())
+stopifnot(nrow(foo) == 0)
+try(log("a"))
+unlink("all.Rout")
+## many of these were untested before 1.4.0.
+
+
+## test mean() works on logical but not factor
+x <- c(TRUE, FALSE, TRUE, TRUE)
+mean(x)
+mean(as.factor(x))
+## last had confusing error message in 1.3.1.
+
+
+## Kurt Hornik 2001-Nov-13
+z <- table(x = 1:2, y = 1:2)
+z - 1
+unclass(z - 1)
+## lost object bit prior to 1.4.0, so printed class attribute.

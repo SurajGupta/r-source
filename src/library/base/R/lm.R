@@ -239,8 +239,8 @@ print.lm <- function(x, digits = max(3, getOption("digits") - 3), ...)
 
 summary.lm <- function (object, correlation = FALSE, ...)
 {
-    z <- .Alias(object)
-    Qr <- .Alias(object$qr)
+    z <- object
+    Qr <- object$qr
     if (is.null(z$terms) || is.null(Qr))
 	stop("invalid \'lm\' object:  no terms or qr component")
     n <- NROW(Qr$qr)
@@ -366,7 +366,7 @@ residuals.lm <-
              ...)
 {
     type <- match.arg(type)
-    r <- .Alias(object$residuals)
+    r <- object$residuals
     res <- switch(type,
                   working =, response = r,
                   deviance=,
@@ -389,16 +389,18 @@ weights.default <- function(object, ...)
     else naresid(object$na.action, object$weights)
 }
 
-weights.lm <- .Alias(weights.default)
-df.residual.lm <- function(object, ...) object$df.residual
+weights.lm <- weights.default
+
+
 deviance.lm <- function(object, ...)
     sum(weighted.residuals(object)^2, na.rm=TRUE)
-formula.lm <- function(object, ...)
+
+formula.lm <- function(x, ...)
 {
-    form <- object$formula
+    form <- x$formula
     if( !is.null(form) )
         return(form)
-    formula(object$terms)
+    formula(x$terms)
 }
 
 family.lm <- function(object, ...) { gaussian() }
@@ -415,16 +417,16 @@ model.frame.lm <- function(formula, data, na.action, ...) {
     else formula$model
 }
 
-variable.names.lm <- function(object, full=FALSE)
+variable.names.lm <- function(object, full=FALSE, ...)
 {
     if(full)	dimnames(object$qr$qr)[[2]]
     else	dimnames(object$qr$qr)[[2]][1:object$rank]
 }
 
-case.names.lm <- function(object, full=FALSE)
+case.names.lm <- function(object, full=FALSE, ...)
 {
     w <- weights(object)
-    dn <- .Alias(names(residuals(object)))
+    dn <- names(residuals(object))
     if(full || is.null(w)) dn else dn[w!=0]
 }
 
@@ -710,7 +712,7 @@ predict.lm <-
     else predictor
 }
 
-effects.lm <- function(object, set.sign = FALSE)
+effects.lm <- function(object, set.sign = FALSE, ...)
 {
     eff <- object$effects
     if(set.sign) {

@@ -1,12 +1,13 @@
 \name{data}
 \alias{data}
+\alias{print.packageIQR}
 \title{Data Sets}
 \description{
   Loads specified data sets, or list the available data sets.
 }
 \usage{
 data(\dots, list = character(0), package = .packages(),
-     lib.loc = .lib.loc, verbose = getOption("verbose"))
+     lib.loc = NULL, verbose = getOption("verbose"))
 }
 \arguments{
   \item{\dots}{a sequence of names or character strings.}
@@ -15,15 +16,17 @@ data(\dots, list = character(0), package = .packages(),
     into for data sets.  By default, all packages in the search path are
     used, then the \file{data} directory (if present) of the current
     working directory.} 
-  \item{lib.loc}{a character vector of directory names of \R libraries.
-    Defaults to all libraries currently known.  If the default is used,
-    the loaded packages are searched before the libraries.}
+  \item{lib.loc}{a character vector of directory names of \R libraries,
+    or \code{NULL}.  The default value of \code{NULL} corresponds to all
+    libraries currently known.  If the default is used, the loaded
+    packages are searched before the libraries.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
 }
 \value{
-  \code{data()} returns a character vector of all data sets specified,
-  an empty character vector if none were specified.
+  a character vector of all data sets specified, or information about
+  all available data sets in an object of class \code{"packageIQR"} if
+  none were specified.
 }
 \details{
   Currently, four formats of data files are supported:
@@ -52,7 +55,10 @@ data(\dots, list = character(0), package = .packages(),
   sets.  It looks for a file \file{00Index} in a \file{data} directory
   of each specified package, and uses these files to prepare a listing.
   If there is a \file{data} area but no index a warning is given: such
-  packages are incomplete.
+  packages are incomplete.  The information about available data sets is
+  returned in an object of class \code{"packageIQR"}.  The structure of
+  this class is experimental.  In earlier versions of R, an empty
+  character vector was returned along with listing available data sets.
 
   If \code{lib.loc} is not specified,  the datasets are searched for
   amongst those packages already loaded, followed by the \file{data}

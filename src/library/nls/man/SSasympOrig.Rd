@@ -1,4 +1,4 @@
-% $Id: SSasympOrig.Rd,v 1.2.4.1 2001/08/07 14:05:15 ripley Exp $
+% $Id: SSasympOrig.Rd,v 1.3 2001/08/13 19:55:13 ripley Exp $
 \name{SSasympOrig}
 \title{Asymptotic Regression Model through the Origin}
 \usage{

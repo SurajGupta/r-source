@@ -1,8 +1,91 @@
-r-base (1.3.1-0) unstable; urgency=low
+r-base (1.4.0-0) unstable; urgency=low
 
-  * Test builds for new upstream release
+  * Test builds for the R-1.4.0 release on 2001-12-19
 
- -- Douglas Bates <bates@stat.wisc.edu>  Fri, 24 Aug 2001 12:41:09 -0500
+ -- Douglas Bates <bates@stat.wisc.edu>  Tue, 11 Dec 2001 14:55:01 -0600
+
+r-base (1.3.1-7) unstable; urgency=low
+
+  * (unreleased)
+  * debian/control: Add lib{zvt,gtkxmhtml}-dev to Build-Depends [thanks, Doug]
+  * debian/control: Fixed hppa Build-Depends [thanks, Matthew Wilcox]
+  * debian/rules: Minor cleanup regarding configuration options
+  * debian/control: Changed Priority: from extra to optional
+  * debian/control: Corrected r-doc-html Description [thanks, Doug Bates]
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Tue, 11 Dec 2001 12:46:58 -0600
+
+r-base (1.3.1-6) unstable; urgency=low
+
+  * debian/rules: Also apply s/-lg2c/-lg2c-pic/ on etc/Makeconf
+  * debian/control: Revert to Arch: all for doc packages, no Depends r-base
+  * debian/control: r-base-dev Depends remodelled on r-base Build-Depends
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon,  3 Dec 2001 21:58:40 -0600
+
+r-base (1.3.1-5) unstable; urgency=low
+
+  * debian/rules: Unset CPPFLAGS, LIBS before calling configure to not
+    leave traces of /usr/local. Thanks, Kurt Hornik (Closes: #71917)
+  * debian/rules: More s/-lg2c/-lg2c-pic/ substitution in src/library/
+  * debian/control: Added new package r-mathlib (Closes: #119701)
+  * debian/control: Added new package r-doc-html (R manuals in html format)
+  * debian/rules: Added suitable rules for r-mathlib and r-doc-html
+  * debian/rules: Rewritten/cleaned for DH_COMPAT=3
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 16 Nov 2001 20:43:24 -0600
+
+r-base (1.3.1-4) unstable; urgency=low
+
+  * debian/control: Corrected maintainer email
+  * debian/rules: Do not run 'make check' on arm as it stumbles over the
+    Bessel example; this known misfeature has long been reported upstream
+  * debian/README.Atlas: Updated to reflect autoMAGIC loading of Atlas lib
+    with ldconfig from libc6_2.2.4-5 or later -- thanks, Ben Collins!
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 11 Nov 2001 11:19:10 -0600
+
+r-base (1.3.1-3) unstable; urgency=low
+
+  * New maintainer
+  * debian/rules: Substitute -lg2c-pic for -lg2c in Makeconf [Thanks, Jeff!]
+  * debian/control: Following advice from the Release Manager, let r-doc-pdf
+    and r-base-dev be Arch: any as they Depends: on r-base itself 
+  * debian/rules: configure with tkConfig.sh,tclConfig.sh for 8.3 support
+  * debian/control: Build-Depends on tcl8.3-dev and tk8.3-dev
+  * debian/rules: Let ia64 use gcc-3.0, g77-3.0, g++-3.0
+  * debian/control: Build-Depends adjusted accordingly
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri,  9 Nov 2001 20:17:43 -0600
+
+r-base (1.3.1-2) unstable; urgency=low
+
+  * Non-maintainer upload, coordinated with the maintainer
+  * Fixed local teTeX issue so that pdf manuals are built (Closes: #112184)
+  * debian/*.links: link r-doc-pdf, r-gnome, r-base-dev doc dir to r-base
+  * debian/*.preinst: rm doc dir for r-doc-pdf, r-gnome, r-base-dev 
+  * debian/control: r-base-dev and r-doc-pdf now depend on r-base
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 14 Sep 2001 21:53:24 -0500
+
+r-base (1.3.1-1) unstable; urgency=low
+
+  * Non-maintainer upload, coordinated with the maintainer
+  * Upgraded to new upstream release 1.3.1
+  * src/scripts/R.sh.in: Modified to detect libs from /etc/ld.so.conf so
+    that Atlas is now used automatically when installed, providing very
+    significant performance gains. Thanks for Kurt Hornik for the sed magic. 
+  * debian/control: Build-Depends for f2c on m68k, g77 everywhere else
+  * debian/rules: Use f2c on m68k, g77 everywhere else
+  * debian/rules: Compile with -O on m68k, -O2 everywhere else. Thanks 
+    to Christian Steigies for countless m68k tests and compilations 
+  * debian/r-base.lintian: Added Lintian excpeptions clauses:
+    -- for files not under md5sum creation as their content changes
+    -- for spurious 'extra license' on license() command documentation
+  * debian/rules: Also remove redundant /usr/lib/R/COPYING.LIB, but add
+    soft links for both GPL (to COPYING) and LGPL (to COPYING.LIB)
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Tue,  4 Sep 2001 22:28:49 -0500
 
 r-base (1.3.0-4) unstable; urgency=low
 

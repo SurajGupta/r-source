@@ -55,7 +55,7 @@
 
 #include "Defn.h"
 
-#ifdef STRPTIME_BROKEN
+#ifndef HAVE_WORKING_STRPTIME
 /* Substitute based on glibc code. */
 # include "Rstrptime.h"
 #endif
@@ -66,7 +66,7 @@ static const int days_in_month[12] =
 #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 #define days_in_year(year) (isleap(year) ? 366 : 365)
 
-#ifdef USING_LEAPSECONDS
+#ifndef HAVE_POSIX_LEAPSECONDS
 static const time_t leapseconds[] =
 {  78796800, 94694400,126230400,157766400,189302400,220924800,252460800,
   283996800,315532800,362793600,425865600,489024000,520560000,567993600,
@@ -204,7 +204,7 @@ static double guess_offset (struct tm *tm)
 static double mktime0 (struct tm *tm, const int local)
 {
     double res;
-#ifdef USING_LEAPSECONDS
+#ifndef HAVE_POSIX_LEAPSECONDS
     int i;
 #endif
 
@@ -212,13 +212,13 @@ static double mktime0 (struct tm *tm, const int local)
     if(!local) return mktime00(tm);
 
     if(tm->tm_year < 138 &&
-#ifdef WIN32
+#ifdef Win32
        tm->tm_year >= 70)
 #else
        tm->tm_year > 02)
 #endif
     {   res = (double) mktime(tm);
-#ifdef USING_LEAPSECONDS
+#ifndef HAVE_POSIX_LEAPSECONDS
         for(i = 0; i < 22; i++)
             if(res > leapseconds[i]) res -= 1.0;
 #endif
@@ -239,13 +239,13 @@ static struct tm * localtime0(const double *tp, const int local)
     time_t t;
 
     if(d < 2147483647.0 &&
-#ifdef WIN32
+#ifdef Win32
        d >= 0.0) {
 #else
        d > -2147483647.0) {
 #endif
 	t = (time_t) d;
-#ifdef USING_LEAPSECONDS
+#ifndef HAVE_POSIX_LEAPSECONDS
         for(y = 0; y < 22; y++) if(t > leapseconds[y] + y - 1) t++;
 #endif
 	return local ? localtime(&t) : gmtime(&t);
@@ -301,7 +301,7 @@ SEXP do_systime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     time_t res = time(NULL);
     SEXP ans = allocVector(REALSXP, 1);
-#ifdef USING_LEAPSECONDS
+#ifndef HAVE_POSIX_LEAPSECONDS
     res -= 22;
 #endif
     if(res != (time_t)(-1)) REAL(ans)[0] = (double) res;
@@ -310,7 +310,7 @@ SEXP do_systime(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-#ifdef WIN32
+#ifdef Win32
 #define tzname _tzname
 #else
 # ifdef Macintosh
@@ -344,7 +344,7 @@ static int set_tz(char *tz, char *oldtz)
 #else
     char *p = NULL;
     int settz = 0;
-    
+
     strcpy(oldtz, "");
     p = getenv("TZ");
     if(p) strcpy(oldtz, p);
@@ -605,6 +605,43 @@ SEXP do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
+static void glibc_fix(struct tm *tm, int *invalid)
+{
+    /* set mon and mday which glibc does not always set.
+       Use current year/... if none has been specified.
+
+       Specifying mon but not mday nor yday is invalid.
+    */
+    time_t t = time(NULL);
+    struct tm *tm0;
+    int tmp;
+#ifndef HAVE_POSIX_LEAPSECONDS
+    t -= 22;
+#endif
+    tm0 = localtime(&t);
+    if(tm->tm_year == NA_INTEGER) tm->tm_year = tm0->tm_year;
+    if(tm->tm_yday != NA_INTEGER) {
+	/* since we have yday, let that take precedence over mon/mday */
+	int yday = tm->tm_yday, mon = 0;
+	while(yday > (tmp = days_in_month[mon] +
+		      ((mon==1 && isleap(1900+tm->tm_year))? 1 : 0))) {
+	    yday -= tmp;
+	    mon++;
+	}
+	tm->tm_mon = mon;
+	tm->tm_mday = yday + 1;
+    } else {
+	if(tm->tm_mday == NA_INTEGER) {
+	    if(tm->tm_mon != NA_INTEGER) {
+		*invalid = 1;
+		return;
+	    } else tm->tm_mday = tm0->tm_mday;
+	}
+	if(tm->tm_mon == NA_INTEGER) tm->tm_mon = tm0->tm_mon;
+    }
+}
+
+
 SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, sformat, ans, ansnames, class;
@@ -629,13 +666,17 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
     for(i = 0; i < N; i++) {
-	/* for glibc's sake */
-	tm.tm_sec = tm.tm_min = tm.tm_hour = tm.tm_mon = tm.tm_year = 0; 
-	tm.tm_mday = 1;
+	/* for glibc's sake. That only sets some unspecified fields,
+	   sometimes. */
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_year = tm.tm_mon = tm.tm_mday = tm.tm_yday = NA_INTEGER;
 	invalid = STRING_ELT(x, i%n) == NA_STRING ||
 	    !strptime(CHAR(STRING_ELT(x, i%n)),
 		      CHAR(STRING_ELT(sformat, i%m)), &tm);
 	if(!invalid) {
+	    if(tm.tm_mon == NA_INTEGER || tm.tm_mday == NA_INTEGER
+	       || tm.tm_year == NA_INTEGER)
+		glibc_fix(&tm, &invalid);
 	    tm.tm_isdst = -1;
 	    mktime0(&tm, 1); /* set wday, yday, isdst */
 	}

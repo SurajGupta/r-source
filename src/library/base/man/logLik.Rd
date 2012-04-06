@@ -1,16 +1,25 @@
-% from nls,  logLik.Rd,v 1.1 1999/11/12 13:34:35 bates 
+% from nls,  logLik.Rd,v 1.1 1999/11/12 13:34:35 bates
 \name{logLik}
 \title{Extract Log-Likelihood}
 \usage{
 logLik(object, ...)
+
+\method{as.data.frame}{logLik}(x, row.names = NULL, optional = FALSE)
+%notyet print(logLik(*), ...)
+%notyet   str(logLik(*), ...)
 }
 \alias{logLik}
 \alias{print.logLik}
+\alias{str.logLik}
+\alias{as.data.frame.logLik}
 \arguments{
  \item{object}{any object from which a log-likelihood value, or a
    contribution to a log-likelihood value, can be extracted.}
  \item{\dots}{some methods for this generic function require additional
    arguments.}
+ \item{x}{an object of class \code{logLik}.}
+ \item{row.names, optional}{arguments to the \code{\link{as.data.frame}}
+   method; see its documentation.}
 }
 \description{
   This function is generic; method functions can be written to handle
@@ -18,7 +27,7 @@ logLik(object, ...)
   this function include: \code{lm}, \code{nls} in package \bold{nls},
   and \code{gls}, \code{lme} and others in package \bold{nlme}.
 %   \code{corStruct}, \code{lmList}, \code{lmeStruct}, \code{reStruct}, and
-%   \code{varFunc}. 
+%   \code{varFunc}.
 }
 \value{
   Returns an object, say \code{r}, of class \code{logLik} which is a
@@ -34,5 +43,9 @@ logLik(object, ...)
 \author{Jose Pinheiro and Douglas Bates}
 \examples{
 ## see the method function documentation
+x <- 1:5
+lmx <- lm(x ~ 1)
+logLik(lmx) # using print.logLik() method
+str(logLik(lmx))
 }
 \keyword{models}

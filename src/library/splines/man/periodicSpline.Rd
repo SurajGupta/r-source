@@ -1,11 +1,15 @@
 \name{periodicSpline}
-\title{Create a Periodic Interpolation Spline}
-\usage{
-periodicSpline(obj1, obj2, knots, period, ord)
-}
 \alias{periodicSpline}
 \alias{periodicSpline.default}
 \alias{periodicSpline.formula}
+\title{Create a Periodic Interpolation Spline}
+\description{
+  Create a periodic interpolation spline, either from \code{x} and
+  \code{y} vectors, or from a formula/data.frame combination.
+}
+\usage{
+periodicSpline(obj1, obj2, knots, period = 2*pi, ord = 4)
+}
 \arguments{
  \item{obj1}{either a numeric vector of \code{x} values or a formula.}
  \item{obj2}{if \code{obj1} is numeric this should be a numeric vector
@@ -17,10 +21,6 @@ periodicSpline(obj1, obj2, knots, period, ord)
  \item{ord}{integer giving the order of the spline, at least 2.  Defaults
    to 4.  See \code{\link{splineOrder}} for a definition of the order of
    a spline.}
-}
-\description{
-  Create a periodic interpolation spline, either from \code{x} and
-  \code{y} vectors, or from a formula/data.frame combination.
 }
 \value{
   An object that inherits from class \code{spline}.  The object can be in

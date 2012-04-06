@@ -45,10 +45,12 @@ static char *SaveString(SEXP sxp, int offset)
 
 SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev;
+    GEDevDesc* dd;
     char *display, *vmax;
-    double height, width, ps, xpinch, ypinch;
-    int recording = 0, resize = 1;
+    double height, width, ps, xpinch, ypinch, gamma;
+    int recording = 0, resize = 1, canvas;
+    SEXP sc;
 
     gcall = call;
     vmax = vmaxget();
@@ -73,25 +75,32 @@ SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
     xpinch = asReal(CAR(args));
     args = CDR(args);
     ypinch = asReal(CAR(args));
-
+    args = CDR(args);
+    sc = CAR(args);
+    if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
+	errorcall(call, "invalid value of `canvas'");
+    canvas = RGBpar(sc, 0);
+    args = CDR(args);
+    gamma = asReal(CAR(args));
+    
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
 	/* Allocate and initialize the device driver data */
-	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dd->displayList = R_NilValue;
-	GInit(&dd->dp);
+	dev->displayList = R_NilValue;
 	GAsetunits(xpinch, ypinch);
-	if (!GADeviceDriver(dd, display, width, height, ps, 
-			    (Rboolean)recording, resize)) {
-	    free(dd);
+	if (!GADeviceDriver(dev, display, width, height, ps, 
+			    (Rboolean)recording, resize, canvas, gamma)) {
+	    free(dev);
 	    errorcall(call, "unable to start device devga");
 	}
 	gsetVar(install(".Device"),
 		mkString(display[0] ? display : "windows"), R_NilValue);
-	addDevice(dd);
-	initDisplayList(dd);
+	dd = GEcreateDevDesc(dev);
+	addDevice((DevDesc*) dd);
+	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

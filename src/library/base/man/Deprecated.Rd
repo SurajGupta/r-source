@@ -3,38 +3,46 @@
 \title{Deprecated Functions}
 \alias{Deprecated}
 \alias{.Deprecated}
+\alias{.Alias}
+\alias{reshapeWide}
+\alias{reshapeLong}
 %------ PLEASE: put \alias{.} here for EACH !
-\alias{read.table.url}
-\alias{scan.url}
-\alias{source.url}
-\alias{httpclient}
-\alias{parse.dcf}
 \description{
   These functions are provided for compatibility with older versions of
-  \R only, and may be defunct as soon as of the next release.
+  \R only, and may be defunct as soon as of the next release. 
 }
 \usage{
 .Deprecated(new)
+.Alias(expr)
+reshapeWide(x, i = reshape.i,
+             j = reshape.j,
+             val = reshape.v,
+             jnames = levels(j))
 
-read.table.url(url, method,\dots)
-scan.url(url, file = tempfile(), method, \dots)
-source.url(url, file = tempfile(), method, \dots)
-httpclient(url, port=80, error.is.fatal=TRUE, check.MIME.type=TRUE,
-           file=tempfile(), drop.ctrl.z=TRUE)
-parse.dcf(text = NULL, file = "", fields = NULL, versionfix = FALSE)
+reshapeLong(x,jvars,  ilev = row.names(x),
+             jlev = names(x)[jvars],
+             iname = "reshape.i",
+             jname = "reshape.j",
+             vname = "reshape.v")
 }
 \details{
-  \code{.Deprecated("<new name>")} is called from deprecated functions.
+  \code{.Deprecated("<new name>")} is called from deprecated
+  functions. The original help page for these functions is available at
+  \code{help("oldName-deprecated")} (note the quotes).
 
-  \code{*.url} are replaced by calling \code{read.table}, \code{scan} or
-  \code{source} on a \code{\link{url}} connection.
+  \code{.Alias} provided an unreliable way to create duplicate
+  references to the same object. There is no direct replacement. Where
+  multiple references to a single object are required for semantic
+  reasons consider using environments or external pointers. There are
+  some notes on \url{http://developer.r-project.org}.
 
-  \code{httpclient} is used by the deprecated \code{"socket"} method
-  of \code{\link{download.file}}.
+  \code{reshape*}, which were experimental, are replace by
+  \code{\link{reshape}}. This has a different syntax and allows multiple
+  time-varying variables.  See \code{\link{reshapeLong-deprecated}} and
+  \code{\link{reshapeWide-deprecated}} for the earlier syntax.
 
-  \code{parse.dcf} has been replaced by \code{read.dcf}, which is much
-  faster, but has a slightly different interface.
 }
-\seealso{\code{\link{Defunct}}}
+\seealso{\code{\link{Defunct}},
+  \code{\link{.Alias-deprecated}},\code{\link{reshapeWide-deprecated}}, \code{\link{reshapeLong-deprecated}}}
 \keyword{documentation}
 \keyword{utilities}

@@ -1,4 +1,4 @@
-scale <- function(x, ..., scale = TRUE) UseMethod("scale")
+scale <- function(x, center = TRUE, scale = TRUE) UseMethod("scale")
 
 scale.default <- function(x, center = TRUE, scale = TRUE)
 {

@@ -1,5 +1,5 @@
 count.fields <- function(file, sep = "", quote = "\"'", skip = 0,
-                         blank.lines.skip = TRUE)
+                         blank.lines.skip = TRUE, comment.char = "#")
 {
     if(is.character(file)) {
         file <- file(file)
@@ -7,20 +7,23 @@ count.fields <- function(file, sep = "", quote = "\"'", skip = 0,
     }
     if(!inherits(file, "connection"))
         stop("argument `file' must be a character string or connection")
-    .Internal(count.fields(file, sep, quote, skip, blank.lines.skip))
+    .Internal(count.fields(file, sep, quote, skip, blank.lines.skip,
+                           comment.char))
 }
+
+
+type.convert <- function(x, na.strings = "NA", as.is = FALSE, dec = ".")
+    .Internal(type.convert(x, na.strings, as.is, dec))
 
 read.table <-
     function (file, header = FALSE, sep = "", quote = "\"'", dec = ".",
               row.names, col.names, as.is = FALSE,
-	      na.strings = "NA", skip = 0,
+	      na.strings = "NA", colClasses = NA,
+              nrows = -1, skip = 0,
               check.names = TRUE, fill = !blank.lines.skip,
-              strip.white = FALSE, blank.lines.skip = TRUE)
+              strip.white = FALSE, blank.lines.skip = TRUE,
+              comment.char = "#")
 {
-    type.convert <- function(x, na.strings = "NA",
-                             as.is = FALSE, dec = ".")
-	.Internal(type.convert(x, na.strings, as.is, dec))
-
     if(is.character(file)) {
         file <- file(file, "r")
         on.exit(close(file))
@@ -34,7 +37,20 @@ read.table <-
 
     if(skip > 0) readLines(file, skip)
     ## read a few lines to determine header, no of cols.
-    lines <- readLines(file, 5)
+    nlines <- 0
+    lines <- NULL
+    while(nlines < 5) {
+        ## read up to five non-blank and non-comment lines.
+        line <- readLines(file, 1, ok = TRUE)
+        if(length(line) == 0) break
+        if(blank.lines.skip && length(grep("^[ \\t]*$", line))) next
+        if(length(comment.char) && nchar(comment.char)) {
+            pattern <- paste("^[ \\t]*", substring(comment.char,1,1),
+                             sep ="")
+            if(length(grep(pattern, line))) next
+        }
+        lines <- c(lines, line)
+    }
     nlines <- length(lines)
     if(!nlines) {
         if(missing(col.names))
@@ -50,14 +66,18 @@ read.table <-
     pushBack(c(lines, lines), file)
     first <- scan(file, what = "", sep = sep, quote = quote,
                   nlines = 1, quiet = TRUE, skip = 0,
-                  strip.white = TRUE)
+                  strip.white = TRUE,
+                  blank.lines.skip = blank.lines.skip,
+                  comment.char = comment.char)
     col1 <- if(missing(col.names)) length(first) else length(col.names)
     col <- numeric(nlines - 1)
     for (i in seq(along=col))
         col[i] <- length(scan(file, what = "", sep = sep,
                               quote = quote,
                               nlines = 1, quiet = TRUE, skip = 0,
-                              strip.white = strip.white))
+                              strip.white = strip.white,
+                              blank.lines.skip = blank.lines.skip,
+                              comment.char = comment.char))
     cols <- max(col1, col)
 
     ##	basic column counting and header determination;
@@ -88,21 +108,31 @@ read.table <-
     if(check.names) col.names <- make.names(col.names)
     if (rlabp) col.names <- c("row.names", col.names)
 
+    if(length(colClasses) < cols) colClasses <- rep(colClasses, len=cols)
+
     ##	set up for the scan of the file.
-    ##	we read all values as character strings and convert later.
+    ##	we read unknown values as character strings and convert later.
 
     what <- rep(list(""), cols)
     names(what) <- col.names
-    data <- scan(file = file, what = what, sep = sep, quote = quote, skip = 0,
+
+    colClasses[colClasses %in% c("real", "double")] <- "numeric"
+    known <- colClasses %in%
+                c("logical", "integer", "numeric", "complex", "character")
+    what[known] <- sapply(colClasses[known], do.call, list(0))
+
+    data <- scan(file = file, what = what, sep = sep, quote = quote,
+                 dec = dec, nmax = nrows, skip = 0,
 		 na.strings = na.strings, quiet = TRUE, fill = fill,
                  strip.white = strip.white,
-                 blank.lines.skip = blank.lines.skip, multi.line = FALSE)
+                 blank.lines.skip = blank.lines.skip, multi.line = FALSE,
+                 comment.char = comment.char)
 
     nlines <- length(data[[1]])
 
     ##	now we have the data;
     ##	convert to numeric or factor variables
-    ##	(depending on the specifies value of "as.is").
+    ##	(depending on the specified value of "as.is").
     ##	we do this here so that columns match up
 
     if(cols != length(data)) { # this should never happen
@@ -121,8 +151,13 @@ read.table <-
     } else if (length(as.is) != cols)
 	stop(paste("as.is has the wrong length",
 		   length(as.is),"!= cols =", cols))
-    for (i in 1:cols)
-        data[[i]] <- type.convert(data[[i]], as.is = as.is[i], dec = dec)
+    for (i in 1:cols) {
+#        if(known[i] || as.is[i]) next
+        if(known[i]) next
+        data[[i]] <-
+            if (!is.na(colClasses[i])) as(data[[i]], colClasses[i])
+            else type.convert(data[[i]], as.is = as.is[i], dec = dec)
+    }
 
     ##	now determine row names
 

@@ -1,17 +1,17 @@
 \name{help.search}
 \alias{help.search}
+\alias{print.hsearch}
 \title{Search the Help System}
 \description{
   Allows for searching the help system for documentation matching a
   given regular expression in the (file) name, alias, title, or keyword
   entries (or any combination thereof).  Topics and titles of the
-  matched help entries are nicely displayed; currently, nothing is
-  returned.
+  matched help entries are nicely displayed.
 }
 \usage{
 help.search(pattern, fields = c("alias", "title"),
             apropos, keyword, whatis, ignore.case = TRUE,
-            package = NULL, lib.loc = .lib.loc,
+            package = NULL, lib.loc = NULL,
             help.db = getOption("help.db"),
             verbose = getOption("verbose"),
             rebuild = FALSE)
@@ -39,7 +39,8 @@ help.search(pattern, fields = c("alias", "title"),
     packages in the specified library trees \code{lib.loc} are
     searched.}
   \item{lib.loc}{a character vector describing the location of \R
-    library trees to search through.}
+    library trees to search through, or \code{NULL}.  The default value
+    of \code{NULL} corresponds to all libraries currently known.}
   \item{help.db}{a character string giving the file path to a previously
     built and saved help data base, or \code{NULL}.}
   \item{verbose}{logical; if \code{TRUE}, the search process is traced.}
@@ -62,6 +63,12 @@ help.search(pattern, fields = c("alias", "title"),
 
   Note that currently, the aliases in the matching help files are not
   displayed.
+}
+\value{
+  The results are returned in an object of class \code{"hsearch"}, which
+  has a print method for nicely displaying the results of the query.
+  This mechanism is experimental, and may change in future versions of
+  R.
 }
 \seealso{
   \code{\link{help}};

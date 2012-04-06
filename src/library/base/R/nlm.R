@@ -7,8 +7,9 @@ nlm <- function(f, p, hessian=FALSE, typsize=rep(1,length(p)),
     print.level <- as.integer(print.level)
     if(print.level < 0 || print.level > 2)
 	stop("`print.level' must be in {0,1,2}")
-    msg <- c(9,1,17)[1+print.level]
-    if(!check.analyticals) msg <- msg + 6
+    ## msg is collection of bits, i.e., sum of 2^k (k = 0,..,4):
+    msg <- (1 + c(8,0,16))[1+print.level]
+    if(!check.analyticals) msg <- msg + (2 + 4)
     .Internal(nlm(function(x) f(x, ...), p, hessian, typsize, fscale,
                   msg, ndigit, gradtol, stepmax, steptol, iterlim))
 }
@@ -26,7 +27,7 @@ optimize <- function(f, interval, lower=min(interval), upper=max(interval),
 }
 
 ##nice to the English (or rather the Scots)
-optimise <- .Alias(optimize)
+optimise <- optimize
 
 uniroot <- function(f, interval, lower=min(interval), upper=max(interval),
 		    tol=.Machine$double.eps^0.25, maxiter = 1000, ...)
@@ -48,26 +49,28 @@ uniroot <- function(f, interval, lower=min(interval), upper=max(interval),
 deriv <- function(expr, ...) UseMethod("deriv")
 
 deriv.formula <- function(expr, namevec, function.arg=NULL, tag=".expr",
-                          hessian = FALSE) {
+                          hessian = FALSE, ...)
+{
     if((le <- length(expr)) > 1)
 	.Internal(deriv.default(expr[[le]], namevec, function.arg, tag, hessian))
     else stop("invalid formula in deriv")
 }
 
 deriv.default <- function(expr, namevec, function.arg=NULL, tag=".expr",
-                          hessian = FALSE)
+                          hessian = FALSE, ...)
     .Internal(deriv.default(expr, namevec, function.arg, tag, hessian))
 
 deriv3 <- function(expr, ...) UseMethod("deriv3")
 
 deriv3.formula <- function(expr, namevec, function.arg=NULL, tag=".expr",
-                          hessian = TRUE) {
+                          hessian = TRUE, ...)
+{
     if((le <- length(expr)) > 1)
 	.Internal(deriv.default(expr[[le]], namevec, function.arg, tag, hessian))
     else stop("invalid formula in deriv")
 }
 
 deriv3.default <- function(expr, namevec, function.arg=NULL, tag=".expr",
-                          hessian = TRUE)
+                          hessian = TRUE, ...)
     .Internal(deriv.default(expr, namevec, function.arg, tag, hessian))
 

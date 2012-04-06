@@ -4,11 +4,15 @@ attach <- function(what, pos=2, name=deparse(substitute(what)))
         if (!file.exists(what))
             stop(paste("File", what, " not found.", sep=""))
         name<-paste("file:", what, sep="")
-        .Internal(attach(NULL, pos, name))
-        load(what, envir=pos.to.env(pos))
+        value <- .Internal(attach(NULL, pos, name))
+        load(what, envir=as.environment(pos))
     }
     else
-        .Internal(attach(what, pos, name))
+        value <- .Internal(attach(what, pos, name))
+    if((length(objects(envir = value, all=TRUE)) > 0)
+       && !is.na(match("package:methods", search())))
+      cacheMetaData(value, TRUE)
+    invisible(value)
 }
 
 detach <- function(name, pos=2)
@@ -22,43 +26,48 @@ detach <- function(name, pos=2)
 	if(is.na(pos))
 	    stop("invalid name")
     }
+    env <- as.environment(pos)
     if(exists(".Last.lib", where = pos, inherits=FALSE)) {
         .Last.lib <- get(".Last.lib", pos = pos, inherits=FALSE)
         if(is.function(.Last.lib)) {
-            libpath <- attr(pos.to.env(pos), "path")
+            libpath <- attr(env, "path")
             if(!is.null(libpath)) try(.Last.lib(libpath))
         }
     }
+    if(!is.na(match("package:methods", search())))
+      cacheMetaData(env, FALSE)
     .Internal(detach(pos))
 }
 
-objects <-
-    function (name, pos = -1, envir=pos.to.env(pos), all.names = FALSE, pattern)
+ls <- objects <-
+    function (name, pos = -1, envir = as.environment(pos), all.names = FALSE,
+              pattern)
 {
     if (!missing(name)) {
-	if(!is.numeric(name) || name != (pos <- as.integer(name))) {
-	    name <- substitute(name)
-	    if (!is.character(name))
-		name <- deparse(name)
-	    pos <- match(name, search())
-	}
-	envir <- pos.to.env(pos)
+        nameValue <- try(name)
+        if(identical(class(nameValue), "try-error")) {
+            name <- substitute(name)
+            if (!is.character(name))
+                name <- deparse(name)
+            pos <- name
+        }
+        else
+            pos <- nameValue
     }
     all.names <- .Internal(ls(envir, all.names))
-    if(!missing(pattern)) {
-	if((ll <- length(grep("\\[", pattern))) > 0
-	   && ll != (lr <- length(grep("\\]", pattern)))) {
-	    ## fix forgotten "\\" for simple cases:
-	    if(pattern == "[") {
-		pattern <- "\\["
-		warning("replaced regular expression pattern `[' by `\\\\['")
-	    } else if(length(grep("[^\\\\]\\[<-",pattern)>0)) {
-		pattern <- sub("\\[<-","\\\\\\[<-",pattern)
-		warning("replaced `[<-' by `\\\\[<-' in regular expression pattern")
-	    }
-	}
-	grep(pattern, all.names, value = TRUE)
-    } else all.names
+    if (!missing(pattern)) {
+        if ((ll <- length(grep("\\[", pattern))) > 0 && ll !=
+            (lr <- length(grep("\\]", pattern)))) {
+            if (pattern == "[") {
+                pattern <- "\\["
+                warning("replaced regular expression pattern `[' by `\\\\['")
+            }
+            else if (length(grep("[^\\\\]\\[<-", pattern) > 0)) {
+                pattern <- sub("\\[<-", "\\\\\\[<-", pattern)
+                warning("replaced `[<-' by `\\\\[<-' in regular expression pattern")
+            }
+        }
+        grep(pattern, all.names, value = TRUE)
+    }
+    else all.names
 }
-
-ls <- .Alias(objects)

@@ -16,15 +16,6 @@
    and can do arithmetic on the latter */
 #undef HAVE_DOUBLE_COMPLEX
 
-/* Define if calloc(0) does not return a null pointer. */
-#undef CALLOC_BROKEN
-
-/* Define if finite() is wrong for -Inf/NaN/Inf. */
-#undef FINITE_BROKEN
-
-/* Define if strptime() does not exist or fails pre-1970. */
-#undef STRPTIME_BROKEN
-
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
 
@@ -50,6 +41,12 @@
    GNOME GUI to be built. */
 #undef HAVE_GNOME
 
+/* Define if you have the ISO C99 isfinite() macro in <math.h>. */
+#undef HAVE_ISFINITE_IN_MATH_H
+
+/* Define if you have the ISO C99 isnan() macro in <math.h>. */
+#undef HAVE_ISNAN_IN_MATH_H
+
 /* Define if you have the JPEG headers and libraries. */
 #undef HAVE_JPEG
 
@@ -60,12 +57,28 @@
 /* Define if you have the PNG headers and libraries. */
 #undef HAVE_PNG
 
+/* Define if your system time functions do not count leap seconds, as
+   required by POSIX. */
+#undef HAVE_POSIX_LEAPSECONDS
+
 /* Define if you have POSIX.1 compatible sigsetjmp/siglongjmp. */
 #undef HAVE_POSIX_SETJMP
 
 /* Define if you have the Tcl/Tk headers and libraries and want Tcl/Tk
    support to be built. */
 #undef HAVE_TCLTK
+
+/* Define if calloc(0) returns a null pointer. */
+#undef HAVE_WORKING_CALLOC
+
+/* Define if finite() is correct for -Inf/NaN/Inf. */
+#undef HAVE_WORKING_FINITE
+
+/* Define if log() is correct for 0/-1. */
+#undef HAVE_WORKING_LOG
+
+/* Define if strptime() exists and does not fail pre-1970. */
+#undef HAVE_WORKING_STRPTIME
 
 /* Define if you have the X11 headers and libraries, and want the X11
    GUI to be built. */
@@ -80,8 +93,8 @@
 /* Define if you have IEEE 754 floating point arithmetic. */
 #undef IEEE_754
 
-/* Define if log() is wrong for 0/-1. */
-#undef LOG_BROKEN
+/* Define if you have 32 bit ints. */
+#undef INT_32_BITS
 
 /* Define if your system needs __setfpucw() to control FPU rounding.
    This was used to control floating point precision, rounding and
@@ -123,9 +136,6 @@
 /* Define if your system's rint() is broken.
    Apparently needed on HPUX. */
 #undef USE_BUILTIN_RINT
-
-/* Define if your system time functions count leap seconds. */
-#undef USING_LEAPSECONDS
 
 /* Define on HPUX if not using GCC. */
 #undef _HPUX_SOURCE

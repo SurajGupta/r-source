@@ -92,15 +92,18 @@ FUNTAB R_FunTab[] =
 {"function",	do_function,	0,	0,	-1,	PP_FUNCTION},
 {"as.function.default",do_asfunction,0,	11,	2,	PP_FUNCTION},
 {"<-",		do_set,		1,	100,	-1,	PP_ASSIGN},
+{"=",		do_set,		3,	100,	-1,	PP_ASSIGN},
 {"<<-",		do_set,		2,	100,	-1,	PP_ASSIGN2},
 {"{",		do_begin,	0,	0,	-1,	PP_CURLY},
 {"(",		do_paren,	0,	1,	1,	PP_PAREN},
 {"[",		do_subset,	1,	0,	-1,	PP_SUBSET},
 {"[[",		do_subset2,	2,	0,	2,	PP_SUBSET},
 {"$",		do_subset3,	3,	0,	2,	PP_DOLLAR},
+{"@",		do_AT,		0,	0,	2,	PP_DOLLAR},
 {"[<-",		do_subassign,	0,	0,	3,	PP_SUBASS},
 {"[[<-",	do_subassign2,	1,	100,	3,	PP_SUBASS},
 {"$<-",		do_subassign3,	1,	0,	3,	PP_SUBASS},
+{"@<-",		do_AT_assign,	0,	0,	3,	PP_SUBASS},
 {"switch",	do_switch,	0,	10,	-1,	PP_FUNCALL},
 {"browser",	do_browser,	0,	100,	0,	PP_FUNCALL},
 {"debug",	do_debug,	0,	101,	1,	PP_FUNCALL},
@@ -113,10 +116,10 @@ FUNTAB R_FunTab[] =
 {"delay",	do_delay,	0,	11,	2,	PP_FUNCALL},
 {".Alias",	do_alias,	0,	1,	1,	PP_FUNCALL},
 {".Primitive",	do_primitive,	0,	1,	1,	PP_FUNCALL},
+{"identical",	do_ident,	0,	11,	2,	PP_FUNCALL}, 
 
 
 /* Binary Operators */
-
 {"+",		do_arith,	PLUSOP,	1,	2,	PP_BINARY},
 {"-",		do_arith,	MINUSOP,1,	2,	PP_BINARY},
 {"*",		do_arith,	TIMESOP,1,	2,	PP_BINARY},
@@ -166,6 +169,8 @@ FUNTAB R_FunTab[] =
 {"drop",	do_drop,	0,	11,	1,	PP_FUNCALL},
 {"class",	do_class,	0,	1,	1,	PP_FUNCALL},
 {"class<-",	do_classgets,	0,	1,	2,	PP_FUNCALL},
+{"dataClass",	R_do_data_class,0,	1,	1,	PP_FUNCALL},
+{"objWithClass",R_do_set_class,	0,	1,	2,	PP_FUNCALL},
 {"unclass",	do_unclass,	0,	1,	1,	PP_FUNCALL},
 {"names",	do_names,	0,	11,	1,	PP_FUNCALL},
 {"names<-",	do_namesgets,	0,	11,	2,	PP_FUNCALL},
@@ -180,9 +185,9 @@ FUNTAB R_FunTab[] =
 {"attr<-",	do_attrgets,	0,	0,	3,	PP_FUNCALL},
 {"comment",	do_comment,	0,	11,	1,	PP_FUNCALL},
 {"comment<-",	do_commentgets,	0,	11,	2,	PP_FUNCALL},
-{"get",		do_get,		1,	10,	4,	PP_FUNCALL},
-{"exists",	do_get,		0,	10,	4,	PP_FUNCALL},
-{"assign",	do_assign,	0,	110,	4,	PP_FUNCALL},
+{"get",		do_get,		1,	11,	4,	PP_FUNCALL},
+{"exists",	do_get,		0,	11,	4,	PP_FUNCALL},
+{"assign",	do_assign,	0,	111,	4,	PP_FUNCALL},
 {"remove",	do_remove,	0,	111,	3,	PP_FUNCALL},
 {"duplicated",	do_duplicated,	0,	11,	1,	PP_FUNCALL},
 {"unique",	do_duplicated,	1,	11,	1,	PP_FUNCALL},
@@ -422,6 +427,7 @@ FUNTAB R_FunTab[] =
 {"do.call",	do_docall,	0,	11,	2,	PP_FUNCALL},
 {"as.call",	do_ascall,	0,	1,	1,	PP_FUNCALL},
 {"type.convert",do_typecvt,	1,	11,	4,	PP_FUNCALL},
+{"as.environment", do_as_environment,	0,	1,	1,	PP_FUNCALL},
 
 
 /* String Manipulation */
@@ -517,13 +523,23 @@ FUNTAB R_FunTab[] =
 #ifdef Macintosh
 {"unlink",	do_unlink,	0,	11,	2,	PP_FUNCALL},
 {"help.start",	do_helpstart,	0,	11,	0,	PP_FUNCALL},
-{"show.help.item",do_helpitem,	0,	11,	3,	PP_FUNCALL},
+{"show.help.item", do_helpitem,	0,	11,	3,	PP_FUNCALL},
 {"int.unzip",	do_int_unzip,	0,	11,    -1,	PP_FUNCALL},
 {"dir.create",	do_dircreate,	0,	11,	1,	PP_FUNCALL},
+{"file.edit",	do_fileedit,	0,	11,	1,	PP_FUNCALL},
+{"new.file",	do_newfile,	0,	11,	1,	PP_FUNCALL},
+{"add.menu.cmd",	do_addmenucmd,	0,	11,	2,	PP_FUNCALL},
+{"del.menu.cmd",	do_delmenucmd,	0,	11,	1,	PP_FUNCALL},
+{"get.menu.cmd",	do_getmenucmd,	0,	11,	1,	PP_FUNCALL},
+{"get.num.cmd",	do_getnumcmd,	0,	11,	1,	PP_FUNCALL},
+{"del.num.cmd",	do_delnumcmd,	0,	11,	1,	PP_FUNCALL},
+{"del.usr.cmd",	do_delusrcmd,	0,	11,	0,	PP_FUNCALL},
 #endif
 {"parse",	do_parse,	0,	11,	4,	PP_FUNCALL},
-{"save",	do_save,	0,	111,	3,	PP_FUNCALL},
+{"save",	do_save,	0,	111,	5,	PP_FUNCALL},
+{"saveToConn",	do_saveToConn,	0,	111,	5,	PP_FUNCALL},
 {"load",	do_load,	0,	111,	2,	PP_FUNCALL},
+{"loadFromConn",do_loadFromConn,0,	111,	2,	PP_FUNCALL},
 {"deparse",	do_deparse,	0,	11,	2,	PP_FUNCALL},
 {"dput",	do_dput,	0,	111,	2,	PP_FUNCALL},
 {"dump",	do_dump,	0,	111,	2,	PP_FUNCALL},
@@ -576,8 +592,8 @@ FUNTAB R_FunTab[] =
 {"rank",	do_rank,	0,	11,	1,	PP_FUNCALL},
 {"missing",	do_missing,	1,	0,	1,	PP_FUNCALL},
 {"nargs",	do_nargs,	1,	0,	0,	PP_FUNCALL},
-{"scan",	do_scan,	0,	11,	15,	PP_FUNCALL},
-{"count.fields",do_countfields,	0,	11,	5,	PP_FUNCALL},
+{"scan",	do_scan,	0,	11,	16,	PP_FUNCALL},
+{"count.fields",do_countfields,	0,	11,	6,	PP_FUNCALL},
 {"t.default",	do_transpose,	0,	11,	1,	PP_FUNCALL},
 {"aperm",	do_aperm,	0,	11,	3,	PP_FUNCALL},
 {"builtins",	do_builtins,	0,	11,	1,	PP_FUNCALL},
@@ -589,9 +605,10 @@ FUNTAB R_FunTab[] =
 {"globalenv",	do_globalenv,	0,	1,	0,	PP_FUNCALL},
 {"environment",	do_envir,	0,	11,	1,	PP_FUNCALL},
 {"environment<-",do_envirgets,	0,	1,	2,	PP_FUNCALL},
+{"reg.finalizer",do_regFinaliz,	0,	1,	2,	PP_FUNCALL},
 {"options",	do_options,	0,	11,	1,	PP_FUNCALL},
 {"sink",	do_sink,	0,	111,	3,	PP_FUNCALL},
-{"sink.number",	do_sinknumber,	0,	111,	1,	PP_FUNCALL},
+{"sink.number",	do_sinknumber,	0,	11,	1,	PP_FUNCALL},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	PP_FUNCALL},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL},
 {"lapply",	do_lapply,	0,	10,	2,	PP_FUNCALL},
@@ -601,6 +618,9 @@ FUNTAB R_FunTab[] =
 {"mem.limits",	do_memlimits,	0,	11,	2,	PP_FUNCALL},
 {"merge",	do_merge,	0,	11,	4,	PP_FUNCALL},
 {"capabilities",do_capabilities,0,	11,	0,	PP_FUNCALL},
+{"new.env",	do_newenv,	0,	11,     2,      PP_FUNCALL},
+{"parent.env",  do_parentenv,   0,	11,     1,      PP_FUNCALL},
+{"parent.env<-",do_parentenvgets, 0,	11,     2,      PP_FUNCALL},
 #if 0
 {"visibleflag", do_visibleflag,	0,	1,	0,	PP_FUNCALL},
 #endif
@@ -610,6 +630,7 @@ FUNTAB R_FunTab[] =
 {"file.show",	do_fileshow,	0,	111,	5,	PP_FUNCALL},
 {"file.create",	do_filecreate,	0,	11,	1,	PP_FUNCALL},
 {"file.remove",	do_fileremove,	0,	11,	1,	PP_FUNCALL},
+{"file.rename",	do_filerename,	0,	11,	2,	PP_FUNCALL},
 {"file.append",	do_fileappend,	0,	11,	2,	PP_FUNCALL},
 {"list.files",	do_listfiles,	0,	11,	4,	PP_FUNCALL},
 {"file.exists", do_fileexists,	0,	11,	1,	PP_FUNCALL},
@@ -647,10 +668,10 @@ FUNTAB R_FunTab[] =
 {"XFig",	do_XFig,	0,	111,   11,	PP_FUNCALL},
 {"PDF",		do_PDF,		0,	111,    9,	PP_FUNCALL},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,	5,	PP_FUNCALL},
+{"devga",	do_devga,	0,	111,	10,	PP_FUNCALL},
 #endif
 #ifdef Unix
-{"X11",		do_X11,		0,	111,	7,	PP_FUNCALL},
+{"X11",		do_X11,		0,	111,	8,	PP_FUNCALL},
 {"gnome",	do_Gnome,	0,	111,	4,	PP_FUNCALL},
 {"GTK",		do_GTK,		0,	111,	4,	PP_FUNCALL},
 #endif
@@ -689,6 +710,7 @@ FUNTAB R_FunTab[] =
 {"rect",	do_rect,	0,	111,	6,	PP_FUNCALL},
 {"polygon",	do_polygon,	0,	111,	5,	PP_FUNCALL},
 {"par",		do_par,		0,	11,	1,	PP_FUNCALL},
+{"readonly.pars",do_readonlypars,0,	11,	0,	PP_FUNCALL},   
 {"segments",	do_segments,	0,	111,	6,	PP_FUNCALL},
 {"arrows",	do_arrows,	0,	111,	9,	PP_FUNCALL},
 {"layout",	do_layout,	0,	111,	10,	PP_FUNCALL},
@@ -705,16 +727,19 @@ FUNTAB R_FunTab[] =
 {"dotplot",	do_dotplot,	0,	111,	1,	PP_FUNCALL},
 {"persp",	do_persp,	0,	111,	4,	PP_FUNCALL},
 {"filledcontour",do_filledcontour,0,	111,	5,	PP_FUNCALL},
-{"getDL",	do_getDL,	0,	111,	0,	PP_FUNCALL},
+/* {"getDL",	do_getDL,	0,	111,	0,	PP_FUNCALL},
+{"getGPar",	do_getGPar,	0,	111,	0,	PP_FUNCALL}, */
 {"playDL",	do_playDL,	0,	111,	1,	PP_FUNCALL},
-{"getGPar",	do_getGPar,	0,	111,	0,	PP_FUNCALL},
 {"setGPar",	do_setGPar,	0,	111,	1,	PP_FUNCALL},
+{"getSnapshot",	do_getSnapshot,	0,	111,	0,	PP_FUNCALL},
+{"playSnapshot",do_playSnapshot,0,	111,	1,	PP_FUNCALL},
 {"symbols",	do_symbols,	0,	111,	-1,	PP_FUNCALL},
 
 /* Objects */
 {"inherits",	do_inherits,	0,	11,	3,	PP_FUNCALL},
 {"UseMethod",	do_usemethod,	0,	 0,	-1,	PP_FUNCALL},
 {"NextMethod",	do_nextmethod,	0,	10,	-1,	PP_FUNCALL},
+{"standardGeneric",do_standardGeneric,0, 1,	1,	PP_FUNCALL},
 
 /* Modelling Functionality */
 
@@ -770,7 +795,8 @@ FUNTAB R_FunTab[] =
 {"socketConnection",do_sockconn,0,	11,     6,      PP_FUNCALL},
 {"getAllConnections",do_getallconnections,0,	11,     0,      PP_FUNCALL},
 {"summary.connection",do_sumconnection,0,	11,     1,      PP_FUNCALL},
-{"download", 	do_download,	0,      11,     4,      PP_FUNCALL},
+{"download", 	do_download,	0,      11,     5,      PP_FUNCALL},
+{"nsl", 	do_nsl,		0,      11,     1,      PP_FUNCALL},
 
 
 {"readDCF", 	do_readDCF,	0,      11,     2,      PP_FUNCALL},
@@ -780,6 +806,21 @@ FUNTAB R_FunTab[] =
 {"getRtoCConverterStatus", do_getRtoCConverterStatus, 0, 11, 0, PP_FUNCALL},
 {"setToCConverterActiveStatus", do_setToCConverterActiveStatus, 0, 11, 2, PP_FUNCALL},
 {"removeToCConverterActiveStatus", do_setToCConverterActiveStatus, 1, 11, 1, PP_FUNCALL},
+
+#ifdef ENVIRONMENT_LOCKING
+{"lockEnvironment", 	do_lockEnv,	0,      11,     2,      PP_FUNCALL},
+{"environmentIsLocked",	do_envIsLocked,	0,      11,     1,      PP_FUNCALL},
+#endif
+#ifdef FANCY_BINDINGS
+{"lockBinding", 	do_lockBnd,	0,      11,     2,      PP_FUNCALL},
+{"bindingIsLocked",	do_bndIsLocked,	0,      11,     2,      PP_FUNCALL},
+{"makeActiveBinding", 	do_mkActiveBnd,	0,      11,     3,      PP_FUNCALL},
+{"bindingIsActive",	do_bndIsActive,	0,      11,     2,      PP_FUNCALL},
+{"mkUnbound",		do_mkUnbound,	0,      11,     1,      PP_FUNCALL},
+#endif
+#ifdef EXPERIMENTAL_NAMESPACES
+{"useNamespaceDispatch",do_useNSDisp,	0,      11,     1,      PP_FUNCALL},
+#endif
 
 {NULL,		NULL,		0,	0,	0,	0},
 };
@@ -883,6 +924,11 @@ void InitNames()
     SET_SYMVALUE(R_MissingArg, R_MissingArg);
     SET_PRINTNAME(R_MissingArg, mkChar(""));
     SET_ATTRIB(R_MissingArg, R_NilValue);
+    /* R_RestartToken */
+    R_RestartToken = allocSExp(SYMSXP);
+    SET_SYMVALUE(R_RestartToken, R_RestartToken);
+    SET_PRINTNAME(R_RestartToken, mkChar(""));
+    SET_ATTRIB(R_RestartToken, R_NilValue);
     /* Parser Structures */
     R_CommentSxp = R_NilValue;
     R_ParseText = R_NilValue;

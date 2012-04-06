@@ -3,6 +3,7 @@
 \title{Add Legends to Plots}
 \usage{
 legend(x, y, legend, fill, col = "black", lty, lwd, pch,
+       angle = NULL, density = NULL,
        bty = "o", bg = par("bg"), pt.bg = NA, cex = 1, xjust = 0, yjust = 1,
        x.intersp = 1, y.intersp = 1, adj = 0,
        text.width = NULL, merge = do.lines && has.pch, trace = FALSE,
@@ -31,6 +32,8 @@ legend(x, y, legend, fill, col = "black", lty, lwd, pch,
   \item{pch}{the plotting symbols appearing in the legend, either as
     vector of 1-character strings, or one (multi character)
     string. \emph{Must} be specified for symbol drawing.}
+  \item{angle}{angle of shading lines.}
+  \item{density}{the density of shading lines, if numeric and positive.}
   \item{bty}{the type of box to be drawn around the legend.}
   \item{bg}{the background color for the legend box.}
   \item{pt.bg}{the background color for the \code{\link{points}}.}
@@ -103,7 +106,7 @@ x <- seq(-pi, pi, len = 65)
 plot(x, sin(x), type = "l", ylim = c(-1.2, 1.8), col = 3, lty = 2)
 points(x, cos(x), pch = 3, col = 4)
 lines(x, tan(x), type = "b", lty = 1, pch = 4, col = 6)
-title("legend(..... lty = c(2, -1, 1), pch = c(-1,3,4), merge = TRUE)",
+title("legend(..., lty = c(2, -1, 1), pch = c(-1,3,4), merge = TRUE)",
       cex.main = 1.1)
 legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3,4,6),
        lty = c(2, -1, 1), pch = c(-1, 3, 4), merge = TRUE, bg='gray90')
@@ -144,12 +147,14 @@ str(legend(4.1, 30, ex12, col = 2:3, lty=2:3, lwd=2))
 x <- 0:64/64
 matplot(x, outer(x, 1:7, function(x, k) sin(k * pi * x)),
         type = "o", col = 1:7, ylim = c(-1, 1.5), pch = "*")
+op <- par(bg="antiquewhite1")
 legend(0, 1.5, paste("sin(",1:7,"pi * x)"), col=1:7, lty=1:7, pch = "*",
        ncol = 4, cex=.8)
 legend(.8,1.2, paste("sin(",1:7,"pi * x)"), col=1:7, lty=1:7, pch = "*",cex=.8)
 legend(0, -.1, paste("sin(",1:4,"pi * x)"), col=1:4, lty=1:4, ncol=2, cex=.8)
 legend(0, -.4, paste("sin(",5:7,"pi * x)"), col=5:7,  pch=24, ncol=2, cex=1.5,
        pt.bg="pink")
+par(op)
 
 ## point covering line :
 y <- sin(3*pi*x)

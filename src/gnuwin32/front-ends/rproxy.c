@@ -17,7 +17,7 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: rproxy.c,v 1.7 2001/04/05 09:42:35 ripley Exp $
+ *  $Id: rproxy.c,v 1.10 2001/12/10 09:35:34 ripley Exp $
  */
 
 #define NONAMELESSUNION
@@ -40,8 +40,8 @@
 #define CONNECTOR_DESCRIPTION   "Implements abstract connector interface to R"
 #define CONNECTOR_COPYRIGHT     "(C) 1999-2001, Thomas Baier"
 #define CONNECTOR_LICENSE       "GNU General Public License version 2 or greater"
-#define CONNECTOR_VERSION_MAJOR "0"
-#define CONNECTOR_VERSION_MINOR "99"
+#define CONNECTOR_VERSION_MAJOR "1"
+#define CONNECTOR_VERSION_MINOR "0"
 
 // interpreter information here at the moment until I know better...
 #define INTERPRETER_NAME        "R"
@@ -431,7 +431,7 @@ int SYSCALL R_query_info (R_Proxy_Object_Impl* object,
   return SC_PROXY_OK;
 }
 // 01-01-25 | baier | new parameters
-int R_Proxy_Graphics_Driver (DevDesc* pDD,
+int R_Proxy_Graphics_Driver (NewDevDesc* pDD,
 			     char* pDisplay,
 			     double pWidth,
 			     double pHeight,
@@ -480,12 +480,12 @@ int SYSCALL R_set_graphics_device (struct _SC_Proxy_Object* object,
 
   // add the graphics device to the set of drivers
   {
-    DevDesc* lDD = (DevDesc*) malloc (sizeof (DevDesc));
+    NewDevDesc* lDev = (NewDevDesc*) calloc (1, sizeof (NewDevDesc));
+    GEDevDesc *lDD;
 
     /* Do this for early redraw attempts */
-    lDD->displayList = R_NilValue;
-    GInit(&lDD->dp);
-    R_Proxy_Graphics_Driver (lDD,
+    lDev->displayList = R_NilValue;
+    R_Proxy_Graphics_Driver (lDev,
 			     "ActiveXDevice 1",
 			     100.0,
 			     100.0,
@@ -495,8 +495,9 @@ int SYSCALL R_set_graphics_device (struct _SC_Proxy_Object* object,
 			     device);
     gsetVar(install(".Device"),
 	    mkString("ActiveXDevice 1"), R_NilValue);
-    addDevice(lDD);
-    initDisplayList(lDD);
+    lDD = GEcreateDevDesc(lDev);
+    addDevice((DevDesc*) lDD);
+    GEinitDisplayList(lDD);
   }
   return SC_PROXY_OK;
 }

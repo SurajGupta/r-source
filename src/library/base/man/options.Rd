@@ -89,7 +89,12 @@ getOption(x)
   \item{printcmd}{the command used by \code{\link{postscript}} for
     printing; set by environment variable \code{R_PRINTCMD} when \R is
     started. This should be a command that expects either input to be piped
-    to \file{stdin} or to be given a single filename argument.}
+    to \file{stdin} or to be given a single filename argument.
+#ifdef windows
+    See \code{\link{postscript}} for ways to set this up.
+#endif
+    }
+
 #ifdef unix
   \item{latexcmd, dvipscmd}{character strings giving commands to be used
     in off-line printing of help pages.}
@@ -130,8 +135,8 @@ getOption(x)
     \code{x <- 1:3; x[5] <- 6}.}
 
   \item{echo}{logical.  Only used in non-interactive mode, when it
-    controls whether input is echoed. Command-line options
-    \code{--quiet} and \code{--slave} set this initially to \code{FALSE}.}
+    controls whether input is echoed. Command-line option
+    \code{--slave} sets this initially to \code{FALSE}.}
 
   \item{verbose}{logical.  Should \R report extra information on
     progress? Set to \code{TRUE} by the command-line option
@@ -149,6 +154,11 @@ getOption(x)
     \code{\link{update.packages}}. Defaults to
     \url{http://cran.r-project.org}.}
 
+  \item{download.file.method}{Method to be used for \code{download.file}.
+    Currently download methods \code{"internal"}, \code{"wget"} and
+    \code{"lynx"} are available.  There is no default for this option,
+    when \code{method = "auto"} is chosen: see \code{\link{download.file}}.}
+  
   \item{unzip}{the command used unzipping help files.
 #ifdef windows
     Defaults to "internal" when the internal unzip DLL is used.

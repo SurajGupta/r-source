@@ -1,5 +1,14 @@
 \name{glm}
+\alias{glm}
+\alias{glm.fit}
+\alias{glm.fit.null}
+\alias{weights.glm}
 \title{Fitting Generalized Linear Models}
+\description{
+  \code{glm} is used to fit generalized linear models, specified by
+  giving a symbolic description of the linear predictor and a
+  description of the error distribution.
+}
 \usage{
 glm(formula, family = gaussian, data, weights = NULL, subset = NULL,
     na.action, start = NULL, offset = NULL,
@@ -11,12 +20,8 @@ glm.fit(x, y, weights = rep(1, nrow(x)),
         offset = rep(0, nrow(x)),
         family = gaussian(), control = glm.control(),
         intercept = TRUE)
-weights.glm(object, type = c("prior", "working"), ...)
+\method{weights}{glm}(object, type = c("prior", "working"), \dots)
 }
-\alias{glm}
-\alias{glm.fit}
-\alias{glm.fit.null}
-\alias{weights.glm}
 \arguments{
   \item{formula}{a symbolic description of the model to be fit.
     The details of model specification are given below.}
@@ -62,9 +67,14 @@ weights.glm(object, type = c("prior", "working"), ...)
     The default (and presently only) method \code{glm.fit}
     uses iteratively reweighted least squares (IWLS).}
 
-  \item{x, y}{logical values indicating whether the response
+  \item{x, y}{For \code{glm}:
+    logical values indicating whether the response
     vector and model matrix used in the fitting process
-    should be returned as components of the returned value.}
+    should be returned as components of the returned value.
+
+    For \code{glm.fit}: \code{x} is a design matrix of dimension \code{n
+      * p}, and \code{y} is a vector of observations of length \code{n}.
+  }
 
   \item{contrasts}{an optional list. See the \code{contrasts.arg}
     of \code{model.matrix.default}.}
@@ -74,13 +84,8 @@ weights.glm(object, type = c("prior", "working"), ...)
     extract from the fitted model object.}
 
   \item{intercept}{logical. Should an intercept be included?}
-  
+
   \item{\dots}{further arguments passed to or from other methods.}
-}
-\description{
-  \code{glm} is used to fit generalized linear models, specified by
-  giving a symbolic description of the linear predictor and
-  a description of the error distribution.
 }
 \details{
   A typical predictor has the form \code{response ~ terms} where
@@ -137,7 +142,7 @@ weights.glm(object, type = c("prior", "working"), ...)
     \code{deviance}. The null model will include the offset, and an
     intercept if there is one in the model}
   \item{iter}{the number of iterations of IWLS used.}
-  \item{weights}{the \emph{working} residuals, that is the weights
+  \item{weights}{the \emph{working} weights, that is the weights
     in the final iteration of the IWLS fit.}
   \item{prior.weights}{the case weights initially supplied.}
   \item{df.residual}{the residual degrees of freedom.}
@@ -266,8 +271,12 @@ summary(glm(lot2 ~ log(u), data=clotting, family=Gamma))
 ## these are the same -- example from Jim Lindsey
 y <- rnorm(20)
 y1 <- y[-1]; y2 <- y[-20]
-summary(glm(y1 - y2 ~ 1))
-summary(glm(y1 ~ offset(y2)))
+summary(g1 <- glm(y1 - y2 ~ 1))
+summary(g2 <- glm(y1 ~ offset(y2)))
+Eq <- function(x,y) all.equal(x,y, tol = 1e-12)
+stopifnot(Eq(coef(g1), coef(g2)),
+          Eq(deviance(g1), deviance(g2)),
+          Eq(resid(g1), resid(g2)))
 }
 }
 \keyword{models}

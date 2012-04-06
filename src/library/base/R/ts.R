@@ -56,6 +56,8 @@ ts <- function(data = NA, start = 1, end = numeric(0), frequency = 1,
 		if(ndata < nobs) data[rep(1:ndata, length = nobs), ]
 		else if(ndata > nobs) data[1:nobs, ]
 	    }
+    ## FIXME: The following "attr<-"() calls C tspgets() which uses a
+    ##  	fixed equivalent of ts.eps := 1e-5
     attr(data, "tsp") <- c(start, end, frequency) #-- order is fixed
     if(!is.null(class) && class != "none") attr(data, "class") <- class
     data
@@ -89,6 +91,176 @@ as.ts <- function (x)
     else if(!is.null(xtsp <- tsp(x))) ts(x, xtsp[1], xtsp[2], xtsp[3])
     else ts(x)
 }
+
+.cbind.ts <- function(sers, nmsers, dframe = FALSE, union = TRUE)
+{
+    nulls <- sapply(sers, is.null)
+    sers <- sers[!nulls]
+    nser <- length(sers)
+    if(nser == 0) return(NULL)
+    if(nser == 1)
+        if(dframe) return(as.data.frame(sers[[1]])) else return(sers[[1]])
+    tsser <-  sapply(sers, function(x) length(tsp(x)) > 0)
+    if(!any(tsser))
+        stop("no time series supplied")
+    sers <- lapply(sers, as.ts)
+    nsers <- sapply(sers, NCOL)
+    tsps <- sapply(sers[tsser], tsp)
+    freq <- mean(tsps[3,])
+    if(max(abs(tsps[3,] - freq)) > getOption("ts.eps")) {
+        stop("Not all series have the same frequency")
+    }
+    if(union) {
+        st <- min(tsps[1,])
+        en <- max(tsps[2,])
+    } else {
+        st <- max(tsps[1,])
+        en <- min(tsps[2,])
+        if(st > en) {
+            warning("Non-intersecting series")
+            return(NULL)
+        }
+    }
+    p <- c(st, en, freq)
+    n <- round(freq * (en - st) + 1)
+    if(any(!tsser)) {
+        ln <- lapply(sers[!tsser], NROW)
+        if(any(ln != 1 && ln != n))
+            stop("non-time series not of the correct length")
+        for(i in (1:nser)[!tsser]) {
+            sers[[i]] <- ts(sers[[i]], start=st, end=en, frequency=freq)
+        }
+        tsps <- sapply(sers, tsp)
+    }
+    if(dframe) {
+        x <- vector("list", nser)
+        names(x) <- nmsers
+    } else {
+        ns <- sum(nsers)
+        x <- matrix(, n, ns)
+        cs <- c(0, cumsum(nsers))
+        nm <- character(ns)
+        for(i in 1:nser)
+            if(nsers[i] > 1) {
+                cn <- colnames(sers[[i]])
+                if(is.null(cn)) cn <- 1:nsers[i]
+                nm[(1+cs[i]):cs[i+1]] <- paste(nmsers[i], cn, sep=".")
+            } else nm[cs[i+1]] <- nmsers[i]
+        dimnames(x) <- list(NULL, nm)
+    }
+    for(i in 1:nser) {
+        if(union) {
+            xx <-
+                if(nsers[i] > 1)
+                    rbind(matrix(NA, round(freq * (tsps[1,i] - st)), nsers[i]),
+                          sers[[i]],
+                          matrix(NA, round(freq * (en - tsps[2,i])), nsers[i]))
+                else
+                    c(rep(NA, round(freq * (tsps[1,i] - st))), sers[[i]],
+                      rep(NA, round(freq * (en - tsps[2,i]))))
+        } else {
+            xx <- window(sers[[i]], st, en)
+        }
+        if(dframe) x[[i]] <- structure(xx, tsp=p, class="ts")
+        else x[, (1+cs[i]):cs[i+1]] <- xx
+    }
+    if(dframe) as.data.frame(x)
+    else ts(x, start=st, freq=freq)
+}
+
+Ops.ts <- function(e1, e2)
+{
+    if(missing(e2)) {
+        ## univariate operator
+        NextMethod(.Generic)
+    } else if(any(nchar(.Method) == 0)) {
+        ## one operand is not a ts
+        NextMethod(.Generic)
+    } else {
+        nc1 <- NCOL(e1)
+        nc2 <- NCOL(e2)
+        ## use ts.intersect to align e1 and e2
+        e12 <- .cbind.ts(list(e1, e2),
+                         c(deparse(substitute(e1))[1],
+                           deparse(substitute(e2))[1]),
+                         union = FALSE)
+        e1 <- if(is.matrix(e1)) e12[, 1:nc1, drop = FALSE] else e12[, 1]
+        e2 <- if(is.matrix(e2)) e12[, nc1 + (1:nc2), drop = FALSE]
+        else e12[, nc1 + 1]
+        NextMethod(.Generic)
+    }
+}
+
+cbind.ts <- function(..., deparse.level = 1) {
+    if(deparse.level != 1) .NotYetUsed("deparse.level != 1")
+    makeNames <- function(...) {
+        l <- as.list(substitute(list(...)))[-1]
+        nm <- names(l)
+        fixup <- if(is.null(nm)) seq(along = l) else nm == ""
+        ## <NOTE>
+        dep <- sapply(l[fixup], function(x) deparse(x)[1])
+        ## We could add support for `deparse.level' here by creating dep
+        ## as in list.names() inside table().  But there is a catch: we
+        ## need deparse.level = 2 to get the `usual' deparsing when the
+        ## method is invoked by the generic ...
+        ## </NOTE>
+        if(is.null(nm)) return(dep)
+        if(any(fixup)) nm[fixup] <- dep
+        nm
+    }
+    .cbind.ts(list(...), makeNames(...), dframe = FALSE, union = TRUE)
+}
+
+diff.ts <- function (x, lag = 1, differences = 1, ...)
+{
+    if (lag < 1 | differences < 1)
+        stop("Bad value for lag or differences")
+    if (lag * differences >= NROW(x)) return(x[0])
+    ## <FIXME>
+    ## lag() and its default method are defined in package ts, so we
+    ## need to provide our own implementation.
+    tsLag <- function(x, k = 1) {
+        p <- tsp(x)
+        tsp(x) <- p - (k/p[3]) * c(1, 1, 0)
+        x
+    }
+    r <- x
+    for (i in 1:differences) {
+        r <- r - tsLag(r, -lag)
+    }
+    xtsp <- attr(x, "tsp")
+    if(is.matrix(x)) colnames(r) <- colnames(x)
+    ts(r, end = xtsp[2], freq = xtsp[3])
+}
+
+na.omit.ts <- function(object, ...)
+{
+    tm <- time(object)
+    xfreq <- frequency(object)
+    ## drop initial and final NAs
+    if(is.matrix(object))
+        good <- which(apply(!is.na(object), 1, all))
+    else  good <- which(!is.na(object))
+    if(!length(good)) stop("all times contain an NA")
+    omit <- integer(0)
+    n <- NROW(object)
+    st <- min(good)
+    if(st > 1) omit <- c(omit, 1:(st-1))
+    en <- max(good)
+    if(en < n) omit <- c(omit, (en+1):n)
+    cl <- attr(object, "class")
+    if(length(omit)) {
+        object <- if(is.matrix(object)) object[st:en,] else object[st:en]
+        attr(omit, "class") <- "omit"
+        attr(object, "na.action") <- omit
+        tsp(object) <- c(tm[st], tm[en], xfreq)
+        if(!is.null(cl)) class(object) <- cl
+    }
+    if(any(is.na(object))) stop("time series contains internal NAs")
+    object
+}
+
+is.mts <- function (x) inherits(x, "mts")
 
 start.default <- function(x, ...)
 {
@@ -227,8 +399,8 @@ function (x, y = NULL, type = "l", xlim = NULL, ylim = NULL,
 	  main = NULL, plot.type = c("multiple", "single"),
 	  xy.labels = n <= 150, xy.lines = do.lab, panel=lines, ...)
 {
-    xlabel <- if (!missing(x)) deparse(substitute(x)) else NULL
-    ylabel <- if (!missing(y)) deparse(substitute(y)) else NULL
+    xlabel <- if (!missing(x)) deparse(substitute(x))## else NULL
+    ylabel <- if (!missing(y)) deparse(substitute(y))
     plot.type <- match.arg(plot.type)
     if(plot.type == "multiple" && NCOL(x) > 1) {
 	m <- match.call()
@@ -275,19 +447,20 @@ function (x, y = NULL, type = "l", xlim = NULL, ylim = NULL,
                   type = if(do.lab) "c" else "l")
 	return(invisible())
     }
+    ## Else : no y, only x
     if(missing(ylab)) {
         ylab <- colnames(x)
         if(length(ylab) != 1)
             ylab <- xlabel
     }
-    time.x <- time(x)
-    if(is.null(xlim)) xlim <- range(time.x)
-    if(is.null(ylim)) ylim <- range(x[is.finite(x)])
+    xy <- xy.coords(x,y,log=log)# using this mainly because of the log
+    if(is.null(xlim)) xlim <- range(xy$x)
+    if(is.null(ylim)) ylim <- range(xy$y[is.finite(xy$y)])
     plot.new()
     plot.window(xlim, ylim, log, ...)
     if(is.matrix(x)) {
 	for(i in 1:ncol(x))
-	    lines.default(time.x, x[,i],
+	    lines.default(xy$x, x[,i],
 			  col = col[(i-1) %% length(col) + 1],
 			  lty = lty[(i-1) %% length(lty) + 1],
 			  lwd = lwd[(i-1) %% length(lwd) + 1],
@@ -296,7 +469,7 @@ function (x, y = NULL, type = "l", xlim = NULL, ylim = NULL,
 			  type = type)
     }
     else {
-	lines.default(time.x, x, col = col[1], bg = bg, lty = lty[1],
+	lines.default(xy$x, x, col = col[1], bg = bg, lty = lty[1],
 		      lwd = lwd[1], pch = pch[1], type = type)
     }
     if (ann)

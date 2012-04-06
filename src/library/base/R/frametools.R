@@ -117,6 +117,7 @@ reshapeLong <-
              jname = "reshape.j",
              vname = "reshape.v")
 {
+    .Deprecated("reshape")
     nl <- as.list(1:ncol(x))
     names(nl) <- names(x)
     jvars <- eval(substitute(jvars), nl, parent.frame())
@@ -142,6 +143,7 @@ reshapeWide <-
              val = reshape.v,
              jnames = levels(j))
 {
+    .Deprecated("reshape")
     nl <- as.list(1:ncol(x))
     names(nl) <- names(x)
     ijv <- eval(substitute(c(i,j,val)), nl, parent.frame())
@@ -155,5 +157,6 @@ reshapeWide <-
     names(resp) <- jnames
     if (ncol(xr) == 0) return(resp)
     reduced <- xr[as.numeric(j)==1,,drop=FALSE]
-    cbind(reduced,resp)
+    ireduced <- i[as.numeric(j)==1]
+    cbind(reduced,resp[ireduced,])
 }

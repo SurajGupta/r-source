@@ -67,21 +67,21 @@ void CoercionWarning(int warn)
 	warning("imaginary parts discarded in coercion");
 }
 
-double R_strtod(char *c, char **end)
+double R_strtod(const char *c, char **end)
 {
     double x;
 
     if (strncmp(c, "NA", 2) == 0){
-	x = NA_REAL; *end = c + 2;
+	x = NA_REAL; *end = (char *)c + 2; /* coercion for -Wall */
     }
     else if (strncmp(c, "NaN", 3) == 0) {
-	x = R_NaN; *end = c + 3;
+	x = R_NaN; *end = (char *)c + 3;
     }
     else if (strncmp(c, "Inf", 3) == 0) {
-	x = R_PosInf; *end = c + 3;
+	x = R_PosInf; *end = (char *)c + 3;
     }
     else if (strncmp(c, "-Inf", 4) == 0) {
-	x = R_NegInf; *end = c + 4;
+	x = R_NegInf; *end = (char *)c + 4;
     }
     else
         x = strtod(c, end);
@@ -985,7 +985,7 @@ SEXP do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
 
-    if (DispatchOrEval(call, "as.character", args, rho, &ans, 1))
+    if (DispatchOrEval(call, op, "as.character", args, rho, &ans, 1, 0))
 	return(ans);
 
     /* Method dispatch has failed, we now just */
@@ -1006,7 +1006,7 @@ SEXP do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans;
     int type;
 
-    if (DispatchOrEval(call, "as.vector", args, rho, &ans, 1))
+    if (DispatchOrEval(call, op, "as.vector", args, rho, &ans, 1, 0))
 	return(ans);
 
     /* Method dispatch has failed, we now just */
@@ -1159,6 +1159,11 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     checkArity(op, args);
+
+    if( isObject(CAR(args)) && DispatchOrEval(call, op,
+	       CHAR(PRINTNAME(CAR(call))), args, rho, &ans, 0,1))
+	return(ans);
+
     PROTECT(ans = allocVector(LGLSXP, 1));
     switch (PRIMVAL(op)) {
     case NILSXP:	/* is.null */
@@ -1252,6 +1257,7 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case ANYSXP:
 	case EXPRSXP:
 	case EXTPTRSXP:
+	case WEAKREFSXP:
 	    LOGICAL(ans)[0] = 1;
 	    break;
 	default:
@@ -1328,7 +1334,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, dims, names, x;
     int i, n;
 
-    if (DispatchOrEval(call, "is.na", args, rho, &ans, 1))
+    if (DispatchOrEval(call, op, "is.na", args, rho, &ans, 1, 1))
 	return(ans);
     PROTECT(args = ans);
     checkArity(op, args);
@@ -1428,7 +1434,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, dims, names, x;
     int i, n;
 
-    if (DispatchOrEval(call, "is.nan", args, rho, &ans, 1))
+    if (DispatchOrEval(call, op, "is.nan", args, rho, &ans, 1, 1))
 	return(ans);
 
     PROTECT(args = ans);
@@ -1707,7 +1713,7 @@ SEXP substitute(SEXP lang, SEXP rho)
     case PROMSXP:
 	return substitute(PREXPR(lang), rho);
     case SYMSXP:
-	t = findVarInFrame( rho, lang);
+	t = findVarInFrame3( rho, lang, TRUE);
 	if (t != R_UnboundValue) {
 	    if (TYPEOF(t) == PROMSXP) {
 		do {
@@ -1744,7 +1750,7 @@ SEXP substituteList(SEXP el, SEXP rho)
     if (isNull(el))
 	return el;
     if (CAR(el) == R_DotsSymbol) {
-	h = findVarInFrame(rho, CAR(el));
+	h = findVarInFrame3(rho, CAR(el), TRUE);
 	if (h == R_NilValue)
 	    return substituteList(CDR(el), rho);
 	if (TYPEOF(h) != DOTSXP) {
@@ -1808,4 +1814,75 @@ SEXP do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     return(CAR(args));
+}
+
+/* set the class to value, and return the modified object.  This is
+   NOT a primitive assignment operator , because there is no code in R
+   that changes type in place. See the definition of "class<-" in the methods
+   package for the use of this code. */
+SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
+{
+  int nProtect = 0;
+  if(isNull(value)) {
+    setAttrib(obj, R_ClassSymbol, value);
+    return obj;
+  }
+  if(TYPEOF(value) != STRSXP) {
+    PROTECT(value = coerceVector(duplicate(value), STRSXP));
+    nProtect++;
+  }
+  if(length(value) > 1)
+    setAttrib(obj, R_ClassSymbol, value);
+  else if(length(value) == 0) {
+    UNPROTECT(nProtect); nProtect = 0;
+    error("Invalid replacement object to be a class string");    
+  }
+  else {
+    char *valueString, *classString;
+    SEXP cur_class; SEXPTYPE valueType;
+    valueString = CHAR(asChar(value));
+    PROTECT(cur_class = R_data_class(obj, FALSE)); nProtect++;
+    classString = CHAR(asChar(cur_class));
+     /* If equal to cur. class; leave alone.  This is important in
+	preserving several implicit basic classes. However, it will
+	not always switch from one such to another.  Examples include
+	assigning one syntactic class as a way of converting from
+	another.  Not a good idea, of course, but it should probably
+	be intercepted with an error message.*/
+    if(!strcmp(valueString, classString)) {}
+    /* at this point, the better semantics is to look up the class
+       definition in the metadata table; i.e., the equivalent of
+       if(isClass(valueString)) and set the class directly if so.
+       Until the code for isClass is moved to main, we can't.  The
+       effect is to prevent redefining the basic classes below. */
+    else if(!strcmp("numeric", valueString)) {
+      setAttrib(obj, R_ClassSymbol, R_NilValue);
+      switch(TYPEOF(obj)) {
+      case INTSXP: case REALSXP: break;
+      default: PROTECT(obj = coerceVector(obj, REALSXP));
+	nProtect++;
+      }
+    }
+    else {
+      if(!strcmp("function", valueString))
+	valueType = CLOSXP;
+      else
+	valueType = str2type(valueString);
+      if(valueType != -1) {
+	setAttrib(obj, R_ClassSymbol, R_NilValue);
+	PROTECT(obj = ascommon(call, obj, valueType));
+	nProtect++;
+      }
+      else if(!strcmp("array", valueString) && 
+	      length(getAttrib(obj, R_DimSymbol)) >0) {}
+      else if(!strcmp("matrix", valueString) &&
+	      length(getAttrib(obj, R_DimSymbol)) == 2) {}
+      else { /* set the class but don't do the coercion; that's
+		supposed to be done by an as() method */
+	setAttrib(obj, R_ClassSymbol, value);
+      }
+    }
+  }
+  UNPROTECT(nProtect);
+  return obj;
 }

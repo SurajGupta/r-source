@@ -33,6 +33,8 @@
  *	C port by John C. Daub
  */
 
+#include <RCarbon.h>
+
 #include <Devices.h>
 #include <Dialogs.h>
 #include <Fonts.h>
@@ -286,6 +288,7 @@ void	printLoop(WindowPtr	window)//PMPrintSession printSession, PMPageFormat page
     		PicHandle WPicHandle=NULL;
   						CGrafPtr tempPort;
  						Rect	tempRect;            
+ 	double left, right, top, bottom;           
     CFStringRef	jobName = CFSTR("R Graphics");
 
    if(!printSession)
@@ -388,26 +391,35 @@ void	printLoop(WindowPtr	window)//PMPrintSession printSession, PMPageFormat page
                  (void**) &printingPort);
                 if (status == noErr) {
                        SInt16 WinIndex;
-        				DevDesc *dd;
+        				NewDevDesc *dd;
+						GEDevDesc *gedd;
 						MacDesc *xd;
 						
 						WinIndex = isGraphicWindow(window);
-                       dd = (DevDesc*)gGReference[WinIndex].devdesc;
+                       gedd = (GEDevDesc*)gGReference[WinIndex].gedevdesc;
+                       dd = (NewDevDesc*)gGReference[WinIndex].newdevdesc;
                        xd = (MacDesc*) dd->deviceSpecific;
 					 
                    //  gGReference[WinIndex].printPort = printingPort;
                      gGReference[WinIndex].activePort = printingPort;
                      WeArePrinting = true;
                      xd->resize = true;
-                     dd-> dp.resize(dd);
-                        
-                
- 
-                     playDisplayList(dd);
-                     xd->resize = true;
+                     dd->size(&left,&right,&bottom,&top,dd);
+                     dd->left = left;
+                     dd->right = right;
+                     dd->top = top;
+                     dd->bottom = bottom; 
+                     
+					 xd->resize=TRUE;
+					 GEplayDisplayList(gedd);
+					 
                      WeArePrinting = false;
-                     dd-> dp.resize(dd);  
-    
+                     dd->size(&left,&right,&bottom,&top,dd);
+                     dd->left = left;
+                     dd->right = right;
+                     dd->top = top;
+                     dd->bottom = bottom; 
+                     xd->resize=FALSE;
     	        //	Restore the QD grafport.
                     SetPort(currPort);
                     }

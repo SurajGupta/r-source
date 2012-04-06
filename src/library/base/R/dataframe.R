@@ -1,9 +1,7 @@
 row.names <- function(x) UseMethod("row.names")
 row.names.data.frame <- function(x) attr(x, "row.names")
-row.names.default <- function(x)
-{
-    if(!is.null(dim(x))) rownames(x) else NULL
-}
+row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
+
 "row.names<-" <- function(x, value) UseMethod("row.names<-")
 "row.names<-.data.frame" <- function(x, value) {
     if (!is.data.frame(x))
@@ -78,7 +76,7 @@ as.data.frame.default <- function(x, row.names = NULL, optional = FALSE)
 as.data.frame <- function(x, row.names = NULL, optional = FALSE) {
     if(is.null(x))			# can't assign class to NULL
 	return(as.data.frame(list()))
-    if(is.null(class(x))) class(x) <- data.class(x)
+    if(is.null(attr(x, "class"))) class(x) <- data.class(x)
     UseMethod("as.data.frame", x, row.names, optional)
 }
 as.data.frame.default <- function(x, row.names = NULL, optional = FALSE)
@@ -143,16 +141,16 @@ as.data.frame.ts <- function(x, row.names=NULL, optional=FALSE)
 	as.data.frame.vector(x, row.names, optional)
 }
 
-as.data.frame.factor  <- .Alias(as.data.frame.vector)
-as.data.frame.ordered <- .Alias(as.data.frame.vector)
-as.data.frame.integer <- .Alias(as.data.frame.vector)
-as.data.frame.numeric <- .Alias(as.data.frame.vector)
-as.data.frame.complex <- .Alias(as.data.frame.vector)
+as.data.frame.factor  <- as.data.frame.vector
+as.data.frame.ordered <- as.data.frame.vector
+as.data.frame.integer <- as.data.frame.vector
+as.data.frame.numeric <- as.data.frame.vector
+as.data.frame.complex <- as.data.frame.vector
 
 as.data.frame.character <- function(x, row.names = NULL, optional = FALSE)
     as.data.frame.vector(factor(x), row.names, optional)
 
-as.data.frame.logical <- .Alias(as.data.frame.character)
+as.data.frame.logical <- as.data.frame.vector
 
 as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE)
 {
@@ -252,43 +250,46 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
     if(length(vnames) != n)
 	vnames <- character(n)
     no.vn <- nchar(vnames) == 0
-    value <- vnames <- as.list(vnames)
-    nrows <- numeric(n)
+    vlist <- vnames <- as.list(vnames)
+    nrows <- ncols <- integer(n)
     for(i in 1:n) {
 	xi <- as.data.frame(x[[i]], optional=TRUE)
 	rowsi <- attr(xi, "row.names")
-	nnew <- length(xi)
+	ncols[i] <- length(xi)
 	namesi <- names(xi)
-	if(nnew>1) {
-	    if(length(namesi) == 0) namesi <- 1:nnew
+	if(ncols[i] > 1) {
+	    if(length(namesi) == 0) namesi <- 1:ncols[i]
 	    if(no.vn[i]) vnames[[i]] <- namesi
 	    else vnames[[i]] <- paste(vnames[[i]], namesi, sep=".")
 	}
-	else if(length(namesi) > 0) vnames[[i]] <- namesi
-	else if (no.vn[[i]]) {
-	    tmpname <- deparse(object[[i]])[1]
-	    if( substr(tmpname,1,2) == "I(" ) {
-		ntmpn <- nchar(tmpname)
-		if(substr(tmpname, ntmpn, ntmpn) == ")")
-		    tmpname <- substr(tmpname,3,ntmpn-1)
-	    }
-	    vnames[[i]] <-tmpname
-	}
-	nrows[[i]] <- length(rowsi)
-	if(missing(row.names) && (nrows[[i]] > 0) && (rowsi[[1]] != ""))
+	else {
+            if(length(namesi) > 0) vnames[[i]] <- namesi
+            else if (no.vn[[i]]) {
+                tmpname <- deparse(object[[i]])[1]
+                if( substr(tmpname,1,2) == "I(" ) {
+                    ntmpn <- nchar(tmpname)
+                    if(substr(tmpname, ntmpn, ntmpn) == ")")
+                        tmpname <- substr(tmpname,3,ntmpn-1)
+                }
+                vnames[[i]] <- tmpname
+            }
+        }## ncols[i] <= 1
+	nrows[i] <- length(rowsi)
+	if(missing(row.names) && (nrows[i] > 0) && (rowsi[[1]] != ""))
 	    row.names <- data.row.names(row.names, rowsi, i)
-	value[[i]] <- xi
+	vlist[[i]] <- xi
     }
     nr <- max(nrows)
     for(i in (1:n)[nrows < nr]) {
-	xi <- value[[i]]
-	if(length(xi)==1 && nr%%nrows[[i]]==0 && is.vector(xi[[1]]))
-	    value[[i]] <- list(rep(xi[[1]], length=nr))
+	xi <- vlist[[i]]
+	if(length(xi)==1 && nr%%nrows[i]==0 && is.vector(xi[[1]]))
+	    vlist[[i]] <- list(rep(xi[[1]], length=nr))
 	else stop(paste("arguments imply differing number of rows:",
 			paste(unique(nrows), collapse = ", ")))
     }
-    value <- unlist(value, recursive=FALSE, use.names=FALSE)
-    vnames <- unlist(vnames)
+    value <- unlist(vlist, recursive=FALSE, use.names=FALSE)
+    ## unlist() drops i-th component if it has 0 columns
+    vnames <- unlist(vnames[ncols > 0])
     noname <- nchar(vnames) == 0
     if(any(noname))
 	vnames[noname] <- paste("Var", 1:length(vnames), sep = ".")[noname]
@@ -365,9 +366,7 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
 	jj <- seq(length = n)
 	for(j in jj) {
 	    xj <- x[[j]]
-	    if(length(dim(xj)) != 2)
-		x[[j]] <- xj[i]
-	    else x[[j]] <- xj[i, , drop = drop]
+	    x[[j]] <- if(length(dim(xj)) != 2) xj[i] else xj[i, , drop = drop]
 	}
     }
     if(drop) {
@@ -891,7 +890,7 @@ as.matrix.data.frame <- function (x)
 				  sep = ".")
 	}
 	if(length(levels(xj)) > 0 || !(is.numeric(xj) || is.complex(xj))
-	   || (!is.null(cl <- class(xj)) && # numeric classed objects to format:
+	   || (!is.null(cl <- attr(xj, "class")) && # numeric classed objects to format:
 	       any(cl == c("POSIXct", "POSIXlt"))))
 	    non.numeric <- TRUE
 	if(!is.atomic(xj))

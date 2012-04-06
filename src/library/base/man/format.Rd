@@ -5,7 +5,7 @@ format(x, \dots)
 format.AsIs(x, width = 12, \dots)
 format.data.frame(x, \dots, justify = "none") 
 format.default(x, trim = FALSE, digits = getOption("digits"),
-               nsmall = 0, justify = c("left", "right", "none"))
+               nsmall = 0, justify = c("left", "right", "none"), \dots)
 format.factor(x, \dots)
 format.pval(pv, digits = max(1, getOption("digits") - 2),
             eps = .Machine$double.eps, na.form = "NA")
@@ -35,8 +35,10 @@ format.pval(pv, digits = max(1, getOption("digits") - 2),
     right-justified or left alone.  When justifying, the field width is
     that of the longest string.}
   \item{pv}{a numeric vector.}
+  \item{eps}{a numerical tolerance: see Details.}
   \item{na.form}{character representation of \code{NA}s.}
   \item{width}{the returned vector has elements of at most \code{width}.}
+  \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
   These functions convert their first argument to a vector (or array) of

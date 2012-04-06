@@ -1,7 +1,14 @@
 ## These are tests that require socket and internet functionality, and
 ## a working Internet connection.
+## We attempt to test for those.
 
-if(!capabilities()["http/ftp"]) stop("no internet capabilities")
+if(!capabilities()["http/ftp"]) {
+    warning("no internet capabilities")
+    q()
+}
+
+if(.Platform$OS.type == "unix" &&
+   is.null(nsl("cran.r-project.org"))) q()
 
 # test do_download.
 CRAN.packages()[, 1]

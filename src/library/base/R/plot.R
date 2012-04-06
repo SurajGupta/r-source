@@ -87,7 +87,7 @@ xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
 }
 
 plot <- function(x, ...) {
-    if(is.null(class(x)) && is.function(x)) {
+    if(is.null(attr(x, "class")) && is.function(x)) {
 	if("ylab" %in% names(list(...)))
 	    plot.function(x, ...)
 	else
@@ -97,12 +97,12 @@ plot <- function(x, ...) {
 }
 
 ## xlim = NULL (instead of "missing", since it will be passed to plot.default:
-plot.function <- function(fn, from = 0, to = 1, xlim = NULL, ...) {
+plot.function <- function(x, from = 0, to = 1, xlim = NULL, ...) {
     if(!is.null(xlim)) {
 	if(missing(from)) from <- xlim[1]
 	if(missing(to))	  to   <- xlim[2]
     }
-    curve(fn, from, to, xlim = xlim, ...)
+    curve(x, from, to, xlim = xlim, ...)
 }
 
 ### NOTE: cex = 1 is correct, cex = par("cex") gives *square* of intended!
@@ -193,14 +193,17 @@ function(formula, data = parent.frame(), ..., subset,
     dots <- m$...
     dots <- lapply(dots, eval, data, parent.frame())
     m$ylab <- m$... <- NULL
+    subset.expr <- m$subset
+    m$subset <- NULL
     m[[1]] <- as.name("model.frame")
     m <- as.call(c(as.list(m), list(na.action = NULL)))
     mf <- eval(m, parent.frame())
     if (!missing(subset)) {
-	s <- eval(m$subset, data, parent.frame())
+	s <- eval(subset.expr, data, parent.frame())
 	l <- nrow(mf)
 	dosub <- function(x) if (length(x) == l) x[s] else x
 	dots <- lapply(dots, dosub)
+	mf <- mf[s,]
     }
     response <- attr(attr(mf, "terms"), "response")
     if (response) {
@@ -343,4 +346,4 @@ plot.xy <- function(xy, type, pch = 1, lty = "solid", col = par("fg"),
 
 plot.new <- function() .Internal(plot.new())
 
-frame <- .Alias(plot.new)
+frame <- plot.new

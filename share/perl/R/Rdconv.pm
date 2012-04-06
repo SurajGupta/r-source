@@ -28,7 +28,9 @@ require  Exporter;
 
 use Text::Tabs;
 use FileHandle;
+use R::Utils;
 
+if($main::opt_dosnames) { $HTML = ".htm"; } else { $HTML = ".html"; }
 
 # names of unique text blocks, these may NOT appear MORE THAN ONCE!
 @blocknames = ("name", "title", "usage", "arguments", "format",
@@ -59,7 +61,7 @@ $MAXLOOPS = 1000;
 sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 
     $Rdname = $_[0];
-    open rdfile, "<$Rdname" || die "Rdconv(): Couldn't open '$Rdfile':$!\n";
+    open(rdfile, "<$Rdname") or die "Rdconv(): Couldn't open '$Rdfile': $!\n";
 
     $type = $_[1];
     $debug = $_[2];
@@ -72,14 +74,14 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 	    $Exfile = $chmfile = $_[3];
     } else { # have "," in $type: Multiple types with multiple output files
 	$dirname = $_[3]; # The super-directory , such as  <Rlib>/library/<pkg>
-	die "Rdconv(): '$dirname' is NOT a valid directory:$!\n"
-	  unless -d $dirname;
-	$htmlfile = $dirname ."/html/" .$Rdname.".html" if $type =~ /html/i;
-	$txtfile= $dirname ."/help/" . $Rdname	        if $type =~ /txt/i;
+	die "Rdconv(): '$dirname' is NOT a valid directory: $!\n"
+	    unless -d $dirname;
+	$htmlfile = file_path($dirname, "html", $Rdname.$HTML) if $type =~ /html/i;
+	$txtfile= file_path($dirname, "help", $Rdname)	if $type =~ /txt/i;
 	die "Rdconv(): type 'Sd' must not be used with other types (',')\n"
 	  if $type =~ /Sd/i;
-	$latexfile= $dirname ."/latex/". $Rdname.".tex"	if $type =~ /tex/i;
-	$Exfile	  = $dirname ."/R-ex/" . $Rdname.".R"	if $type =~ /example/i;
+	$latexfile= file_path($dirname, "latex", $Rdname.".tex") if $type =~ /tex/i;
+	$Exfile	  = file_path($dirname, "R-ex" , $Rdname.".R") if $type =~ /example/i;
     }
 
 
@@ -92,7 +94,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
     undef @section_title;
 
     $skipping = 0;
-    #-- remove comments (everything after a %)
+    ## remove comments (everything after a %)
     while(<rdfile>){
 	$_ = expand $_;
 	if (/^#ifdef\s+([A-Za-z0-9]+)/o) {
@@ -108,7 +110,11 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 	    next;
 	}
 	next if $skipping > 0;
-	next if /^\s*%/o;#- completely drop full comment lines
+	next if /^\s*%/o;	# completely drop full comment lines
+	## <FIXME>
+	## Argh.  This is a terrible hack.  Go away!
+	next if /^\\docType/;
+	## </FIXME>
 	my $loopcount = 0;
 	while(checkloop($loopcount++, $_, "\\%") &&
 	      s/^\\%|([^\\])\\%/$1escaped_percent_sign/go){};
@@ -595,8 +601,8 @@ sub text2html {
 		    my ($pkg, $topic) = split(/:/, $opt);
 		    $topic = $arg if $topic eq "";
 		    $opt =~ s/:.*$//o;
-#		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$topic.html";
-		    $htmlfile = mklink($opt, $topic . ".html");
+#		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$topic$HTML";
+		    $htmlfile = mklink($opt, $topic . $HTML);
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a $htmlfile>$arg<\/a>/s;
 		} else {
 		    $text =~ s/\\link(\[.*\])?$id.*$id/$arg/s;
@@ -606,7 +612,7 @@ sub text2html {
 		if($opt ne "") {
 		    my ($pkg, $topic) = split(/:/, $opt);
 		    $topic = $arg if $topic eq "";
-		    $htmlfile = $pkg."/html/".$topic.".html";
+		    $htmlfile = $pkg."/html/".$topic.$HTML;
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$htmlfile\">$arg<\/a>/s;
 		} else {
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/..\/doc\/html\/search\/SearchObject.html?$argkey\">$arg<\/a>/s;
@@ -709,8 +715,16 @@ sub code2html {
 			s/\\link(\[.*\])?$id.*$id/<a $htmlfile>$arg<\/a>/s;
 		}
 	    } else {
-		$text =~
+	     if($main::OSdir eq "mac"){
+	     my $uxfile = $htmlfile;
+		 $uxfile =~ s|:|\/|g;
+		 $text =~
+		    s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$uxfile\">$arg<\/a>/s;
+		    }
+		 else{
+		 	$text =~
 		    s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$htmlfile\">$arg<\/a>/s;
+		 }   
 	    }
 	}
 	else{
@@ -721,8 +735,8 @@ sub code2html {
 		    my ($pkg, $topic) = split(/:/, $opt);
 		    $topic = $arg if $topic eq "";
 		    $opt =~ s/:.*$//o;
-#		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$topic.html";
-		    $htmlfile = mklink($opt, $topic . ".html");
+#		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$topic$HTML";
+		    $htmlfile = mklink($opt, $topic . $HTML);
 #		    print "$htmlfile\n";
        		    $text =~ s/\\link(\[.*\])?$id.*$id/<a $htmlfile>$arg<\/a>/s;
 		} else {
@@ -733,7 +747,7 @@ sub code2html {
 		if($opt ne "") {
 		    my ($pkg, $topic) = split(/:/, $opt);
 		    $topic = $arg if $topic eq "";
-		    $htmlfile = $pkg."/html/".$topic.".html";
+		    $htmlfile = $pkg."/html/".$topic.$HTML;
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$htmlfile\">$arg<\/a>/s;
 		} else {
 		    $text =~ s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/..\/doc\/html\/search\/SearchObject.html?$argkey\">$arg<\/a>/s;
@@ -954,7 +968,7 @@ sub html_functionfoot
 
     if($HTML){
 	$retval .= "\n\n<hr><div align=\"center\">" .
-	    "<a href=\"00Index.$HTML\">[Package Contents]</a></div>\n\n";
+	    "<a href=\"00Index$HTML\">[Package Contents]</a></div>\n\n";
     }
 
     $retval .= "</body></html>\n";

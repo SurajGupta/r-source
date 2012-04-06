@@ -108,7 +108,7 @@ function(x, digits = max(1, getOption("digits") - 3), ...)
     cat("Number of factors:", x$n.vars, "\n")
     if(x$n.vars > 1) {
         cat("Test for independence of all factors:\n")
-        ch <- .Alias(x$statistic)
+        ch <- x$statistic
         cat("\tChisq = ",
             format(round(ch, max(0, digits - log10(ch)))),
             ", df = ",
@@ -122,7 +122,7 @@ function(x, digits = max(1, getOption("digits") - 3), ...)
     invisible(x)
 }
 
-as.data.frame.table <- function(x, row.names = NULL, optional = FALSE)
+as.data.frame.table <- function(x, row.names = NULL, optional = FALSE, ...)
 {
     x <- as.table(x)
     data.frame(do.call("expand.grid", dimnames(x)), Freq = c(x),
@@ -131,11 +131,21 @@ as.data.frame.table <- function(x, row.names = NULL, optional = FALSE)
 
 is.table <- function(x) inherits(x, "table")
 as.table <- function(x, ...) UseMethod("as.table")
-as.table.default <- function(x)
+as.table.default <- function(x, ...)
 {
     if(is.table(x))
         return(x)
-    else if(is.array(x)) {
+    else if(is.array(x) || is.numeric(x)) {
+        x <- as.array(x)
+        if(any(dim(x) == 0))
+            stop("cannot coerce into a table")
+        ## Try providing dimnames where missing.
+        dnx <- dimnames(x)
+        if(is.null(dnx))
+            dnx <- vector("list", length(dim(x)))
+        for(i in which(sapply(dnx, is.null)))
+            dnx[[i]] <- LETTERS[seq(length = dim(x)[i])]
+        dimnames(x) <- dnx
         class(x) <- c("table", class(x))
         return(x)
     }

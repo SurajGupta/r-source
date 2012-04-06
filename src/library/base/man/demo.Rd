@@ -7,8 +7,8 @@
 }
 \usage{
 demo(topic, device = getOption("device"),
-     package = .packages(), lib.loc = .lib.loc,
-     character.only = FALSE)
+     package = .packages(), lib.loc = NULL,
+     character.only = FALSE, verbose = getOption("verbose"))
 }
 \arguments{
   \item{topic}{the topic which should be demonstrated.  If omitted, the
@@ -17,11 +17,21 @@ demo(topic, device = getOption("device"),
   \item{package}{a name or character vector giving the packages to
     look into for data sets.  By default, all packages in the search
     path are used.}
- \item{lib.loc}{a character vector of directory names of \R libraries.
-   Defaults to all libraries currently known.  If the default is used,
-   the loaded packages are searched before the libraries.}
+  \item{lib.loc}{a character vector of directory names of \R libraries,
+    or \code{NULL}.  The default value of \code{NULL} corresponds to all
+    libraries currently known.  If the default is used, the loaded
+    packages are searched before the libraries.}
   \item{character.only}{logical; if \code{TRUE}, use \code{topic} as
     character string instead of name.}
+  \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
+    printed.}
+}
+\details{
+  If no topics are given, \code{demo} lists the available demos.  The
+  corresponding information is returned in an object of class
+  \code{"packageIQR"}.  The structure of this class is experimental.  In
+  earlier versions of R, an empty character vector was returned along
+  with listing available demos.
 }
 \seealso{\code{\link{source}} which is called by \code{demo}.}
 \examples{

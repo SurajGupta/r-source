@@ -1,10 +1,12 @@
-friedman.test <- function(x, ...) UseMethod("friedman.test")
+friedman.test <- function(y, ...) UseMethod("friedman.test")
 
-friedman.test.default <- function(y, groups, blocks) {
+friedman.test.default <-
+function(y, groups, blocks, ...)
+{
     DNAME <- deparse(substitute(y))
     if (is.matrix(y)) {
-        groups <- as.factor(c(col(y)))
-        blocks <- as.factor(c(row(y)))
+        groups <- factor(c(col(y)))
+        blocks <- factor(c(row(y)))
     }
     else {
         if (any(is.na(groups)) || any(is.na(blocks)))
@@ -15,8 +17,8 @@ friedman.test.default <- function(y, groups, blocks) {
                        " and ", deparse(substitute(blocks)), sep = "")
         if (any(table(groups, blocks) != 1))
             stop("Not an unreplicated complete block design")
-        groups <- as.factor(groups)
-        blocks <- as.factor(blocks)
+        groups <- factor(groups)
+        blocks <- factor(blocks)
     }
 
     k <- nlevels(groups)
@@ -42,7 +44,9 @@ friedman.test.default <- function(y, groups, blocks) {
               class = "htest")
 }
 
-friedman.test.formula <- function(formula, data, subset, na.action) {
+friedman.test.formula <-
+function(formula, data, subset, na.action, ...)
+{
     if(missing(formula))
         stop("formula missing")
     ## <FIXME>

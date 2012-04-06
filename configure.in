@@ -66,7 +66,7 @@ if test -r ${f}; then echo "loading build specific script ${f}"; . ${f} ; fi
 config_opts=${ac_configure_args}
 AC_SUBST(config_opts)
 
-## Allow the user to specify support for R-profiling.
+## Allow the user to specify support for R profiling.
 AC_ARG_ENABLE(R-profiling,
   [  --enable-R-profiling    attempt to compile support for Rprof() [yes]],
   [ if test "${enableval}" = no; then
@@ -145,16 +145,19 @@ R_ARG_WITH_EXCLUSIVE(g77, f2c,
   AC_MSG_WARN(${warn_g77_and_f2c})
   use_f2c=false])
 
+## BLAS.
 AC_ARG_WITH(blas,
   [  --with-blas             use specified BLAS library],
   R_ARG_USE(blas),
   use_blas=true)
 
+## Readline.
 AC_ARG_WITH(readline,
   [  --with-readline         use readline library (if available) [yes]],
   R_ARG_USE(readline),
   use_readline=true)
 
+## GNOME.
 AC_ARG_WITH(gnome,
   [  --with-gnome            use GNOME, or specify its prefix [no]],
   [ if test "${withval}" = no; then
@@ -169,6 +172,7 @@ AC_ARG_WITH(gnome,
     fi],
   want_gnome=no)
 
+## Tcl/Tk.
 AC_ARG_WITH(tcltk,
   [  --with-tcltk            use Tcl/Tk, or specify its library dir [yes]],
   [ if test "${withval}" = no; then
@@ -194,7 +198,7 @@ AC_ARG_WITH(tk-config,
 
 ## <FIXME>
 ## Completely disable using libtool for building shlibs until libtool
-## fully supports at least Fortran and C++.
+## fully supports Fortran and C++.
 ## AC_ARG_WITH(libtool,
 ##   [  --with-libtool          use libtool for building shared libraries [yes]],
 ##   use_libtool=${withval},
@@ -222,24 +226,27 @@ AC_PROG_GCC_TRADITIONAL
 : ${CPPFLAGS="-I/usr/local/include"}
 : ${LIBS="-L/usr/local/lib"}
 
-dnl Yes, we already need this at configure time ...
-case "${host}" in
-  *aix*)
+## Yes, we already need this at configure time ...
+case "${host_os}" in
+  aix*)
     AC_AIX
     LIBS="${LIBS} -lc"
     ;;
-  *hpux*)
+  hpux*)
+    ## <FIXME>
+    ## Autoconf 2.50 or better has AC_PROG_CC_STDC which takes care
+    ## of some of this.
     case "${CC}" in
       cc)
         if test `echo ${CFLAGS} | grep -c -e "-A[ae] "` = 0; then
 	  CFLAGS="${CFLAGS} -Aa"
 	fi
-	AC_DEFINE(_HPUX_SOURCE)
-	;;
-      c89)
-	AC_DEFINE(_HPUX_SOURCE)
 	;;
     esac
+    ## On HPUX 11 we need _HPUX_SOURCE also with gcc so that we get the
+    ## ISO C99 fp classification macros ... 
+    AC_DEFINE(_HPUX_SOURCE)
+    ## </FIXME>
     ;;
 esac
 
@@ -252,15 +259,10 @@ AC_PROG_AWK
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_YACC
-
 R_PROG_AR
 R_PROG_ECHO_N
 R_PROG_INSTALL
 AC_PATH_PROG(JAVAC, javac)
-## Libtool
-AM_DISABLE_STATIC
-AM_PROG_LIBTOOL
-AC_SUBST(LIBTOOL_DEPS)
 ## Make
 : ${MAKE=make}
 AC_SUBST(MAKE)
@@ -276,6 +278,12 @@ R_PROG_TEXMF
 ## Unzip && zip
 AC_PATH_PROGS(R_UNZIPCMD, [${UNZIP} unzip], "")
 AC_PATH_PROGS(R_ZIPCMD, [${ZIP} zip], "")
+## Libtool
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+## Makeinfo
+R_PROG_MAKEINFO
 
 ### FORTRAN compiler.
 
@@ -290,6 +298,21 @@ if test -n "${F77}"; then
   FC=${F77}
   AC_PROG_F77
   AC_F77_LIBRARY_LDFLAGS
+  ## Currently g77 on Darwin links against -lcrt1.o, which (unlike
+  ## -lcrt0.o) is not stripped by AC_F77_LIBRARY_LDFLAGS.  This in
+  ## particular causes R_PROG_F77_CC_COMPAT to fail.  Hence, we make
+  ## sure all -lcrt?.o are removed.
+  flibs=
+  for arg in ${FLIBS}; do
+    case "${arg}" in
+      -lcrt?.o)
+        ;;
+      *)
+        flibs="${flibs} ${arg}"
+	;;
+    esac
+  done
+  FLIBS="${flibs}"
   R_PROG_F77_APPEND_UNDERSCORE
   R_PROG_F77_CC_COMPAT
   R_PROG_F77_CC_COMPAT_COMPLEX
@@ -394,6 +417,8 @@ eval "export ${shlibpath_var}"
 
 AC_PROG_CXX
 AC_PROG_CXXCPP
+R_PROG_CXX_M
+R_PROG_CXX_C_O_LO
 
 ### Libraries.
 
@@ -429,10 +454,10 @@ fi
 AC_FUNC_ALLOCA
 AC_FUNC_VFORK
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(access acosh asinh atanh bcopy finite ftruncate getcwd \
-  getgrgid getpwuid getuid hypot isnan matherr memcpy memmove mkfifo \
-  popen putenv rint setenv snprintf strcoll stat strptime system times \
-  unsetenv vsnprintf)
+AC_CHECK_FUNCS(access acosh asinh atanh bcopy bzero finite ftruncate \
+  getcwd getgrgid getpwuid getuid hypot isascii isnan matherr memcpy \
+  memmove mempcpy mkfifo popen putenv rint setenv snprintf strcoll \
+  stat strptime system times unsetenv vsnprintf)
 AC_REPLACE_FUNCS(strdup)
 AC_SEARCH_LIBS(connect, [socket])
 AC_SEARCH_LIBS(gethostbyname, [nsl socket])
@@ -449,17 +474,25 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(dl.h dlfcn.h elf.h errno.h fcntl.h floatingpoint.h \
-  fpu_control.h grp.h ieee754.h ieeefp.h locale.h netdb.h netinet/in.h \
-  pwd.h readline/history.h readline/readline.h rpc/rpc.h rpc/xdr.h \
-  string.h sys/param.h sys/select.h sys/socket.h sys/stat.h \
-  sys/time.h sys/times.h sys/utsname.h unistd.h)
-case "${host}" in
-  *sunos4*)
+AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h errno.h fcntl.h \
+  floatingpoint.h fpu_control.h grp.h ieee754.h ieeefp.h locale.h \
+  netdb.h netinet/in.h pwd.h readline/history.h readline/readline.h \
+  rpc/xdr.h string.h strings.h sys/param.h sys/select.h sys/socket.h \
+  sys/stat.h sys/time.h sys/times.h sys/utsname.h unistd.h)
+## <FIXME>
+## AC_CHECK_HEADERS(libintl.h)
+## src/main/regex.c uses HAVE_LIBINTL_H.
+## But then we want full gettext support and AM_GNU_GETTEXT.
+## </FIXME>
+
+case "${host_os}" in
+  sunos4*)
     AC_DEFINE(SunOS4) ;;
 esac
 R_HEADER_SETJMP
 R_HEADER_GLIBC2
+R_HEADER_MATH_ISFINITE
+R_HEADER_MATH_ISNAN
 
 ### Typedefs.
 
@@ -474,17 +507,25 @@ R_TYPE_SOCKLEN
 AC_C_BIGENDIAN
 AC_C_CONST
 if test "${cross_compiling}" = yes; then
-  AC_MSG_WARN([assuming C longs are 4 byte on ${host}])
+  warn_xcompile_sizeof_int="assuming C ints are 4 byte on ${host}"
+  AC_MSG_WARN([${warn_xcompile_sizeof_int}])
+fi
+AC_CHECK_SIZEOF(int, 4)
+if test "${ac_cv_sizeof_int}" = 4; then
+  AC_DEFINE(INT_32_BITS)
+fi
+if test "${cross_compiling}" = yes; then
+  warn_xcompile_sizeof_long="assuming C longs are 4 byte on ${host}"
+  AC_MSG_WARN([${warn_xcompile_sizeof_long}])
 fi
 AC_CHECK_SIZEOF(long, 4)
 AC_CHECK_SIZEOF(long long, 0)
 AC_CHECK_SIZEOF(long double, 0)
-R_C_IEEE_754
 
 ### Platform-specific overrides for the C, FORTRAN and C++ compilers.
 
-case "${host}" in
-  i[[3456789]]86-*-*)
+case "${host_cpu}" in
+  i*86)
     R_PROG_CC_FLAG(-mieee-fp,
       R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mieee-fp")
     R_PROG_CXX_FLAG(-mieee-fp,
@@ -497,16 +538,11 @@ case "${host}" in
 	#endif ],
       R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -D__NO_MATH_INLINES")
     ;;
-  *aix4.[[2-9]]*)
-    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
-    if test "${GCC}" = yes; then
-      R_PROG_CC_FLAG(-mno-fp-in-toc,
-        R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mno-fp-in-toc")
-    fi
-    R_XTRA_LIBS="${R_XTRA_LIBS} /lib/crt0.o"
-    ;;
-  alpha*osf*)
-    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
+  alpha*)
+    ## <FIXME>
+    ## This was obtained by merging entries for host types alpha*osf*
+    ## and alpha*linux*.  Not clear whether the non-GNU settings are
+    ## specific to OSF only.
     ## <Albrecht.Gebhardt@uni-klu.ac.at>
     if test "${GCC}" = yes; then
       R_PROG_CC_FLAG(-mieee,
@@ -523,23 +559,42 @@ case "${host}" in
       R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -fpe3"
     fi
     ## </Albrecht.Gebhardt@uni-klu.ac.at>
+    ## </FIXME>
     ;;
-  alpha*linux*)
-    R_PROG_CC_FLAG(-mieee,
-      R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mieee"
-      R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -mieee")
+esac
+
+case "${host_os}" in
+  ## <FIXME>
+  ## This used to be
+  ##   aix4.[[2-9]]*)
+  ## What about aix5*?
+  aix4*)
+  ## </FIXME>
+    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
+    if test "${GCC}" = yes; then
+      R_PROG_CC_FLAG(-mno-fp-in-toc,
+        R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mno-fp-in-toc")
+    fi
+    R_XTRA_LIBS="${R_XTRA_LIBS} /lib/crt0.o"
     ;;
-  *hpux*)
+  hpux*)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     AC_DEFINE(USE_BUILTIN_RINT)
+    ## Need -D_HPUX_SOURCE to get the ISO C99 fp classification macros
+    ## (also with gcc).
+    R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -D_HPUX_SOURCE"
     case "${CC}" in
       cc|c89)
-	R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -D_HPUX_SOURCE"
+	## Luke Tierney says we also need '-Wp,-H16000' which tells the
+	## pre-processor to increase the size of an internal table.  It
+	## seems that src/modules/vfonts/g_her_glyph.c contains a line
+	## that is too long for the pre-processor without this flag.
+	R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -Wp,-H16000"
 	;;
     esac
     AC_CHECK_LIB(dld, shl_load, R_XTRA_LIBS="${R_XTRA_LIBS} -ldld")
     ;;
-  *irix*)
+  irix*)
     R_C_OPTIEEE
     if test "${G77}" != yes; then
       R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -OPT:IEEE_NaN_inf=ON"
@@ -548,6 +603,9 @@ case "${host}" in
       R_XTRA_CXXFLAGS="${R_XTRA_CXXFLAGS} -OPT:IEEE_NaN_inf=ON"
     fi
     ;;
+  osf*)
+    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
+    ;;  
 esac
 
 AC_SUBST(CFLAGS)
@@ -607,7 +665,7 @@ AC_SUBST(R_XTRA_LIBS)
 main_ld=${CC}
 shlib_ld=${CC}
 shlib_cxxld=${CXX}
-SHLIB_EXT="so"
+SHLIB_EXT=".so"
 SHLIB_LIBADD=
 
 ## Step 1.  Ask imake.
@@ -621,7 +679,10 @@ if test -n "${XMKMF}"; then
   if test "`which ${cc}`" = "`which ${CC}`"; then
     shlib_ldflags=`${srcdir}/tools/GETMAKEVAL SHLIBLDFLAGS`
     cpicflags=`${srcdir}/tools/GETMAKEVAL PICFLAGS`
+    ## <FIXME>
+    ## This is really stupid.
     fpicflags=${cpicflags}
+    ## </FIXME>
   fi
   cxx=`${srcdir}/tools/GETMAKEVAL CXX`
   cxx=`echo ${cxx} | sed "s/ .*//"`
@@ -645,9 +706,10 @@ if test "${GXX}" = yes; then
 fi
 
 ## Step 3.  Individual platform overrides.
-case "${host}" in
-  *aix4.[[2-9]]*)
+case "${host_os}" in
+  aix*)
     EXPORTFILE="\$(top_builddir)/etc/R.exp"
+    ## All AIX code is PIC.
     cpicflags=
     cxxpicflags=
     fpicflags=
@@ -657,25 +719,29 @@ case "${host}" in
       ${wl}-bexpall ${wl}-bI:\$(R_HOME)/etc/R.exp"
     SHLIB_LIBADD="\$(LIBM)"
     ;;
-  alpha*osf*)
-    cpicflags=
-    cxxpicflags=
-    fpicflags=
-    shlib_ldflags="-shared"
+  darwin*)
+    cpicflags="-fno-common"
+    cxxpicflags="-fno-common"
+    fpicflags="-fno-common"
+    case "${host_os}" in
+      darwin1.[[012]])
+	shlib_ldflags="-bundle -undefined suppress" ;;
+      darwin1.3)
+        shlib_ldflags="-bundle -flat_namespace -undefined suppress" ;;
+      *)
+	shlib_ldflags="-bundle -bundle_loader \$(R_HOME)/bin/R.bin" ;;
+    esac
+    shlib_cxxldflags="${shlib_ldflags}"
     ;;
-  *-*-darwin*)
-    shlib_ldflags="-bundle -undefined suppress"
-    shlib_cxxldflags="-bundle -undefined suppress"
-    ;;
-  *freebsd[[3-4]].*)
+  freebsd[[3-4]].*)
     main_ldflags="-export-dynamic"
     shlib_ldflags="-shared"
     ;;
-  *-*-gnu*)			# GNU Hurd
+  gnu*)				# GNU Hurd
     main_ldflags="-export-dynamic"
     ;;
-  *hpux*)
-    SHLIB_EXT=sl
+  hpux*)
+    SHLIB_EXT=".sl"
     case "${CC}" in
       cc|c89)
         cpicflags="+Z" ;;
@@ -688,19 +754,28 @@ case "${host}" in
     if test "${GCC}" = yes; then
       shlib_ldflags="-shared -fPIC"
     else
+      shlib_ld=ld
       shlib_ldflags="-b"
     fi
     if test "${GXX}" = yes; then
       shlib_cxxldflags="-shared -fPIC"
     fi
     ;;
-  *linux*aout)			# GNU Linux/aout
+  irix*)
+    shlib_ldflags="-shared"
+    shlib_cxxldflags="-shared"
+    ## PIC is default on IRIX.
+    cpicflags=
+    cxxpicflags=
+    fpicflags=
+    ;;
+  linux*aout)			# GNU Linux/aout
     sed '/HAVE_ELF_H/d' confdefs.h > tmp.h ; mv tmp.h confdefs.h
     ;;
-  *linux*)			# GNU Linux/ELF
+  linux*)			# GNU Linux/ELF
     main_ldflags="-export-dynamic"
     ;;
-  *netbsd*)
+  netbsd*)
     if ${CPP} - -dM < /dev/null | grep -q __ELF__; then
       main_ldflags="-export-dynamic"
       shlib_ldflags="-shared"
@@ -708,20 +783,13 @@ case "${host}" in
       shlib_ldflags="-Bshareable"
     fi
     ;;
-  *sgi*)
+  osf*)
+    cpicflags=
+    cxxpicflags=
+    fpicflags=
     shlib_ldflags="-shared"
-    shlib_cxxldflags="-shared"
-    if test "${GCC}" != yes; then
-      cpicflags="-KPIC"
-    fi
-    if test "${G77}" != yes; then
-      fpicflags="-KPIC"
-    fi
-    if test "${GXX}" != yes; then
-      cxxpicflags="-KPIC"
-    fi
     ;;
-  *solaris*)
+  solaris*)
     shlib_ldflags="-G"
     shlib_cxxldflags="-G"
     if test "${GCC}" = yes; then
@@ -743,6 +811,8 @@ case "${host}" in
       if test -n "${ldoutput}"; then
         shlib_cxxldflags="-shared"
       fi
+    else
+      cxxpicflags="-KPIC"
     fi
     ;;
 esac
@@ -752,8 +822,8 @@ esac
 ## fully supports at least Fortran and C++.
 ## ## Step 4.  In case we use libtool ...
 ## if test "${use_libtool}" = yes; then
-##   case "${host}" in
-##     *aix4.[[2-9]]*)
+##   case "${host_os}" in
+##     aix*)
 ##       ## FIXME: AIX needs special care.
 ##       ;;
 ##     *)
@@ -776,10 +846,8 @@ fi
 
 : ${CPICFLAGS=${cpicflags}}
 if test -z "${CPICFLAGS}"; then
-  case "${host}" in
-    *aix4.[[2-9]]*)
-      ;;
-    alpha*osf*)
+  case "${host_os}" in
+    aix*|irix*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine CPICFLAGS.])
@@ -791,10 +859,8 @@ fi
 : ${FPICFLAGS=${fpicflags}}
 if test -z "${FPICFLAGS}" \
     && test -z "${F2C}"; then
-  case "${host}" in
-    *aix4.[[2-9]]*)
-      ;;
-    alpha*osf*)
+  case "${host_os}" in
+    aix*|irix*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine FPICFLAGS.])
@@ -805,10 +871,8 @@ fi
 
 : ${CXXPICFLAGS=${cxxpicflags}}
 if test -z "${CXXPICFLAGS}"; then
-  case "${host}" in
-    *aix4.[[2-9]]*)
-      ;;
-    alpha*osf*)
+  case "${host_os}" in
+    aix*|irix*|osf*)
       ;;
     *)
       warn_cxxpicflags="I could not determine CXXPICFLAGS"
@@ -843,6 +907,19 @@ if test -z "${SHLIB_CXXLDFLAGS}"; then
   AC_MSG_WARN(${warn_shlib_cxxldflags})
 fi
 
+## Step 6.  We may need flags different from SHLIB_LDFLAGS and SHLIB_EXT
+## for building R as a shared library to link against (the SHLIB_* vars
+## just determined are really for loadable modules).  On ELF there is no
+## difference, but e.g. on Mach-O for Darwin there is.
+LIBR_EXT="${SHLIB_EXT}"
+LIBR_LDFLAGS="${SHLIB_LDFLAGS}"
+case "${host_os}" in
+  darwin*)
+    LIBR_EXT=".dylib"
+    LIBR_LDFLAGS="-dynamiclib"
+    ;;
+esac
+
 AC_SUBST(MAIN_LD)
 AC_SUBST(MAIN_LDFLAGS)
 AC_SUBST(CPICFLAGS)
@@ -856,6 +933,8 @@ AC_SUBST(SHLIB_LIBADD)
 AC_SUBST(SHLIB_EXT)
 AC_DEFINE_UNQUOTED(SHLIB_EXT, "${SHLIB_EXT}")
 AC_SUBST(EXPORTFILE)
+AC_SUBST(LIBR_EXT)
+AC_SUBST(LIBR_LDFLAGS)
 
 ### System services.
 
@@ -884,6 +963,9 @@ AC_SUBST(R_GUIS)
 ## Tcl/Tk.
 R_TCLTK
 
+## IEEE 754.
+R_IEEE_754
+
 ## BSD networking.
 R_BSD_NETWORKING
 
@@ -897,7 +979,7 @@ R_XDR
 R_ZLIB
 
 ## POSIX times.
-R_USES_LEAPSECONDS
+R_SYS_POSIX_LEAPSECONDS
 
 ## R profiling.
 if test "${want_R_profiling}" = yes; then
@@ -967,7 +1049,7 @@ AC_SUBST(R_LD_LIBRARY_PATH)
 ### Final cleanups/rewrites.
 
 ## <FIXME>
-## This will no longer be necessary in Autoconf 2.49b or better.
+## This will no longer be necessary in Autoconf 2.50 or better.
 LTLIBOBJS=`echo $LIBOBJS | sed 's/\.o/\.lo/g'`
 AC_SUBST(LTLIBOBJS)
 LTALLOCA=`echo "$ALLOCA" | sed 's/\.o/.lo/g'`
@@ -991,6 +1073,7 @@ AC_OUTPUT(Makeconf
   src/Makefile
   src/appl/Makefile
   src/include/Makefile
+  src/include/R_ext/Makefile
   src/library/Makefile
   src/library/base/DESCRIPTION
   src/library/base/Makefile
@@ -1004,6 +1087,9 @@ AC_OUTPUT(Makeconf
   src/library/lqs/DESCRIPTION
   src/library/lqs/Makefile
   src/library/lqs/src/Makefile
+  src/library/methods/DESCRIPTION
+  src/library/methods/Makefile
+  src/library/methods/src/Makefile
   src/library/modreg/DESCRIPTION
   src/library/modreg/Makefile
   src/library/modreg/src/Makefile
@@ -1021,6 +1107,8 @@ AC_OUTPUT(Makeconf
   src/library/tcltk/DESCRIPTION
   src/library/tcltk/Makefile
   src/library/tcltk/src/Makefile
+  src/library/tools/DESCRIPTION
+  src/library/tools/Makefile
   src/library/ts/DESCRIPTION
   src/library/ts/Makefile
   src/library/ts/src/Makefile
@@ -1047,6 +1135,7 @@ AC_OUTPUT(Makeconf
   src/scripts/check
   src/unix/Makefile
   tests/Makefile
+  tests/Embedding/Makefile
   tests/Examples/Makefile
   tools/Makefile
 )
@@ -1092,6 +1181,15 @@ if test -n "${warn_g77_and_f2c}"; then
 fi
 if test -n "${warn_f2c_flibs}"; then
   AC_MSG_WARN(${warn_f2c_flibs})
+fi
+if test -n "${warn_xcompile_sizeof_int}"; then
+  AC_MSG_WARN(${warn_xcompile_sizeof_int})
+fi
+if test -n "${warn_xcompile_sizeof_long}"; then
+  AC_MSG_WARN(${warn_xcompile_sizeof_long})
+fi
+if test -n "${warn_type_socklen}"; then
+  AC_MSG_WARN(${warn_type_socklen})
 fi
 if test -n "${warn_cxxpicflags}"; then
   AC_MSG_WARN(${warn_cxxpicflags})

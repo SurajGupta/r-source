@@ -16,6 +16,7 @@ lqs.formula <-
     mf <- eval(mf, parent.frame())
     if (method == "model.frame") return(mf)
     mt <- attr(mf, "terms")
+    na.act <- attr(mf, "na.action")
     y <- model.extract(mf, "response")
     x <- model.matrix(mt, mf, contrasts)
     xvars <- as.character(attr(mt, "variables"))[-1]
@@ -33,6 +34,7 @@ lqs.formula <-
     fit$call <- match.call()
     fit$contrasts <- attr(x, "contrasts")
     fit$xlevels <- xlev
+    if(!is.null(na.act)) fit$na.action <- na.act
     if(model) fit$model <- mf
     if(x.ret) fit$x <- x
     if(y.ret) fit$y <- y
@@ -88,19 +90,18 @@ lqs.default <-
     adj <- control$adjust & intercept
     nsamp <- eval(control$nsamp)
     nexact <- choose(n, ps)
-    if(is.character(nsamp) && nsamp == "best")
+    if(is.character(nsamp) && nsamp == "best") {
 	nsamp <- if(nexact < 5000) "exact" else "sample"
-    if(is.numeric(nsamp) && nsamp > nexact) {
+    } else if(is.numeric(nsamp) && nsamp > nexact) {
 	warning(paste("only", nexact, "sets, so all sets will be tried"))
 	nsamp <- "exact"
     }
-    if(nsamp == "exact") {
-	nsamp <- nexact
-	samp <- FALSE
-    } else {
+    samp <- nsamp != "exact"
+    if(samp) {
 	if(nsamp == "sample") nsamp <- min(500*ps, 3000)
-	samp <- TRUE
-    }
+    } else
+	nsamp <- nexact
+
     if(samp && !missing(seed)) {
 	if(exists(".Random.seed", envir=.GlobalEnv))  {
 	    seed.keep <- .Random.seed
@@ -123,11 +124,10 @@ lqs.default <-
     z$fitted.values <- fitted
     z$residuals <- y - fitted
     c1 <- 1/qnorm((n + quantile)/(2*n))
-    if(lts == 1) {
-	s <- sqrt(z$crit/quantile)/sqrt(1 - 2*n*dnorm(1/c1)/(quantile*c1))
-    } else if(lts == 0) {
-	s <- sqrt(z$crit)*c1
-    } else s <- z$crit
+    s <-
+        if(lts == 1)
+            sqrt(z$crit/quantile)/sqrt(1 - 2*n*dnorm(1/c1)/(quantile*c1))
+        else if(lts == 0) sqrt(z$crit)*c1 else z$crit
     res <- z$residual
     ind <- abs(res) <= 2.5*s
     s2 <- sum(res[ind]^2)/(sum(ind) - p)
@@ -170,7 +170,7 @@ print.lqs <- function (x, digits = max(3, getOption("digits") - 3), ...)
 
 predict.lqs <- function (object, newdata, ...)
 {
-    if (missing(newdata)) return(object$fitted.values)
+    if (missing(newdata)) return(fitted(object))
     X <- model.matrix(delete.response(terms(object)), newdata,
 		      contrasts = object$contrasts, xlev = object$xlevels)
     drop(X %*% object$coefficients)

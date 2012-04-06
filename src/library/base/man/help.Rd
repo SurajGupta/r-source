@@ -2,7 +2,7 @@
 \title{Documentation}
 \usage{
 help(topic, offline = FALSE, package = .packages(),
-     lib.loc = .lib.loc, verbose = getOption("verbose"),
+     lib.loc = NULL, verbose = getOption("verbose"),
      try.all.packages = getOption("help.try.all.packages"),
 #ifdef unix
      htmlhelp = getOption("htmlhelp"),
@@ -16,6 +16,7 @@ help(topic, offline = FALSE, package = .packages(),
 #endif
      pager = getOption("pager"))
 ?topic
+type?topic
 }
 \alias{help}
 \alias{?}
@@ -28,15 +29,18 @@ help(topic, offline = FALSE, package = .packages(),
  \item{package}{a name or character vector giving the packages to look
    into for documentation.  By default, all packages in the search path
    are used.}
- \item{lib.loc}{a character vector of directory names of \R libraries.
-   Defaults to all libraries currently known. If the default is used,
-   the loaded packages are searched before the libraries.}
+ \item{lib.loc}{a character vector of directory names of \R libraries,
+   or \code{NULL}.  The default value of \code{NULL} corresponds to all
+   libraries currently known.  If the default is used, the loaded
+   packages are searched before the libraries.}
  \item{verbose}{logical; if \code{TRUE}, the file name is reported.}
  \item{try.all.packages}{logical; see \code{Notes}.}
 #ifdef unix
  \item{htmlhelp}{logical (or \code{NULL}).  If \code{TRUE} (which is the
-     default after \code{\link{help.start}} has been called), the HTML
-     version of the help will be shown in a browser.}
+   default after \code{\link{help.start}} has been called), the HTML
+   version of the help will be shown in the browser specified by
+   \code{options("browser")}. See \code{\link{help.start}} for details
+   of the browsers that are supported. }
 #endif
 #ifdef mac
   \item{htmlhelp}{logical (or \code{NULL}).  If \code{TRUE}, the HTML
@@ -51,6 +55,10 @@ help(topic, offline = FALSE, package = .packages(),
     \code{.hlp} file will be used if one is available.}
 #endif
   \item{pager}{the pager to be used for \code{\link{file.show}}.}
+  \item{type}{the special type of documentation to use for this topic;
+      for example, if the type is \code{class}, documentation is
+      provided for the class with name \code{topic}.  The function
+      \code{topicName} returns the actual name used in this case.}
 }
 \description{
   These functions provide access to documentation.
@@ -89,15 +97,15 @@ help(topic, offline = FALSE, package = .packages(),
 \note{
   Unless \code{lib.loc} is specified explicitly, the loaded packages are
   searched before those in the specified libraries.  This ensures that
-  if a library is loaded from a library not in \code{.lib.loc} then the
-  help from the loaded library is used.  If \code{lib.loc} is specified
-  explicitly, the loaded packages are \emph{not} searched.
+  if a library is loaded from a library not in the known library trees,
+  then the help from the loaded library is used.  If \code{lib.loc} is
+  specified explicitly, the loaded packages are \emph{not} searched.
 
   If this search fails and argument \code{try.all.packages} is
   \code{TRUE} and neither \code{packages} nor \code{lib.loc} is
-  specified, then all the packages in \code{lib.loc} are searched
-  for help on \code{topic} and a list of (any) packages where help
-  may be found is printed (but no help is shown).
+  specified, then all the packages in the known library trees are
+  searched for help on \code{topic} and a list of (any) packages where
+  help may be found is printed (but no help is shown).
   \bold{N.B.} searching all packages can be slow.
 
   The help files can be many small files.  On some file systems it is

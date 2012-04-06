@@ -7,8 +7,9 @@
   Generate regular sequences.
 }
 \synopsis{
+seq(...)
 seq.default(from = 1, to = 1, by = ((to - from)/(length.out - 1)),
-            length.out = NULL, along.with = NULL)
+            length.out = NULL, along.with = NULL, ...)
 }
 \usage{
 from:to

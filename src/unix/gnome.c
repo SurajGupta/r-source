@@ -21,10 +21,10 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "R_ext/Rdynpriv.h"
+#include <Defn.h>
+#include <Rdynpriv.h>
 
-#include "../unix/Runix.h"
+#include "Runix.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -34,16 +34,22 @@
 # endif
 #endif
 
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
+/* HP-UX 11.0 has dlfcn.h, but according to libtool as of Dec 2001
+   this support is broken. So we force use of shlib even when dlfcn.h
+   is available */
+#ifdef __hpux
+# ifdef HAVE_DL_H
+#  include "hpdlfcn.h"
+#  define HAVE_DYNAMIC_LOADING
+# endif
 #else
-#ifdef HAVE_DL_H
-#include "hpdlfcn.c"
-#define HAVE_DLFCN_H
-#endif
+# ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>
+#  define HAVE_DYNAMIC_LOADING
+# endif
 #endif
 
-#if defined(HAVE_GNOME) && defined(HAVE_DLFCN_H)
+#if defined(HAVE_GNOME) && defined(HAVE_DYNAMIC_LOADING)
 
 static DL_FUNC Rdlsym(void *handle, char const *name)
 {
@@ -78,7 +84,7 @@ void R_load_gnome_shlib(void)
 	R_Suicide(buf);
     }
     strcpy(gnome_DLL, p);
-    strcat(gnome_DLL, "/modules/R_gnome.");
+    strcat(gnome_DLL, "/modules/R_gnome");
     strcat(gnome_DLL, SHLIB_EXT); /* from config.h */
     if(stat(gnome_DLL, &sb))
 	R_Suicide("Probably no GNOME support: the shared library was not found");
@@ -122,9 +128,8 @@ void R_load_gnome_shlib(void)
     if(!ptr_R_loadhistory) R_Suicide("Cannot load Rgnome_loadhsitoryr");
     ptr_R_savehistory = Rdlsym(handle, "Rgnome_savehistory");
     if(!ptr_R_savehistory) R_Suicide("Cannot load Rgnome_savehistory");
-/* Uncomment the next two lines to experiment with the gnome() device */
-/*    ptr_GnomeDeviceDriver = Rdlsym(handle, "GnomeDeviceDriver");
-      if(!ptr_GnomeDeviceDriver) R_Suicide("Cannot load GnomeDeviceDriver");*/
+    ptr_GnomeDeviceDriver = Rdlsym(handle, "GnomeDeviceDriver");
+    if(!ptr_GnomeDeviceDriver) R_Suicide("Cannot load GnomeDeviceDriver");
 }
 
 #else

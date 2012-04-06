@@ -1,6 +1,6 @@
 
 R : Copyright 2001, The R Development Core Team
-Version 1.3.0 Under development (unstable) (2001-06-08)
+Version 1.4.0 Under development (unstable) (2001-12-12)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -35,12 +35,14 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+Error in as.environment(x) : invalid "pos" argument
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -92,6 +94,9 @@ Error in as.call(x) : invalid argument list
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+Error in as.environment(x) : invalid "pos" argument
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -100,7 +105,7 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 IS: [1] TRUE
@@ -204,7 +209,10 @@ Error in as.character.octmode(x) : calling wrong method
 [10] "Component 1: Attributes: < target is NULL, current is list >"                  
 [11] "Component 1: target is numeric, current is data.frame"                         
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Attributes: < Component 2: Lengths: 0, 1 >"                                    
+[2] "Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
+[3] "Component 1: Lengths: 0, 1"                                                    
+[4] "Component 1: names for current but not for target"                             
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
  [1] "Names: 1 string mismatches"                                                    
  [2] "Attributes: < Component 2: Lengths: 0, 1 >"                                    
@@ -248,8 +256,20 @@ Error in as.data.frame.default(x) : can't coerce numeric into a data.frame
 [11] "Component 1: target is numeric, current is data.frame"                         
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] "Names: 1 string mismatches"
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+ [1] "Names: 1 string mismatches"                                                    
+ [2] "Attributes: < Component 2: Lengths: 0, 1 >"                                    
+ [3] "Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
+ [4] "Component 1: Modes: numeric, list"                                             
+ [5] "Component 1: Lengths: 0, 1"                                                    
+ [6] "Component 1: names for current but not for target"                             
+ [7] "Component 1: Attributes: < Modes: NULL, list >"                                
+ [8] "Component 1: Attributes: < Lengths: 0, 2 >"                                    
+ [9] "Component 1: Attributes: < names for current but not for target >"             
+[10] "Component 1: Attributes: < target is NULL, current is list >"                  
+[11] "Component 1: target is numeric, current is data.frame"                         
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -307,6 +327,8 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in as.environment(x) : invalid "pos" argument
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -317,9 +339,9 @@ Error in as.table.default(x) : cannot coerce into a table
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -394,12 +416,14 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+[1] FALSE
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 Error in sort(x) : only atomic vectors can be sorted
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -452,6 +476,9 @@ Error in as.call(x) : invalid argument list
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+[1] FALSE
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -460,7 +487,7 @@ Error in as.call(x) : invalid argument list
 Error in sort(x) : only atomic vectors can be sorted
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 [1] TRUE
@@ -609,8 +636,20 @@ Error in as.data.frame.default(x) : can't coerce NULL into a data.frame
 [11] "Component 1: target is NULL, current is data.frame"                            
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] TRUE
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in sort(x) : only atomic vectors can be sorted
+ [1] "Names: 1 string mismatches"                                                    
+ [2] "Attributes: < Component 2: Lengths: 0, 1 >"                                    
+ [3] "Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
+ [4] "Component 1: Modes: NULL, list"                                                
+ [5] "Component 1: Lengths: 0, 1"                                                    
+ [6] "Component 1: names for current but not for target"                             
+ [7] "Component 1: Attributes: < Modes: NULL, list >"                                
+ [8] "Component 1: Attributes: < Lengths: 0, 2 >"                                    
+ [9] "Component 1: Attributes: < names for current but not for target >"             
+[10] "Component 1: Attributes: < target is NULL, current is list >"                  
+[11] "Component 1: target is NULL, current is data.frame"                            
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -668,6 +707,8 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+[1] TRUE
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -677,9 +718,9 @@ Error in sort(x) : only atomic vectors can be sorted
 > f <- as.formula( x );  all.equal(f, as.formula( f ), tol=0)
 [1] TRUE
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -756,12 +797,14 @@ Error in as.complex.default(x) : (list) object cannot be coerced to vector type 
 [1] TRUE
 > is.double(as.double( x ))
 Error in as.double.default(x) : (list) object cannot be coerced to vector type 14
+> is.environment(as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 Error in sort(x) : only atomic vectors can be sorted
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > is.integer(as.integer( x ))
 Error in as.integer.default(x) : (list) object cannot be coerced to vector type 13
 > is.list(as.list( x ))
@@ -814,6 +857,9 @@ Error in as.complex.default(x) : (list) object cannot be coerced to vector type 
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 Error in as.double.default(x) : (list) object cannot be coerced to vector type 14
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -822,7 +868,7 @@ Error in as.double.default(x) : (list) object cannot be coerced to vector type 1
 Error in sort(x) : only atomic vectors can be sorted
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 Error in as.integer.default(x) : (list) object cannot be coerced to vector type 13
@@ -965,8 +1011,19 @@ Error in as.data.frame.default(x) : can't coerce list into a data.frame
 [10] "Component 1: Length mismatch: comparison on first 0 components"                
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] TRUE
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in sort(x) : only atomic vectors can be sorted
+ [1] "Names: 1 string mismatches"                                                    
+ [2] "Attributes: < Component 2: Lengths: 0, 1 >"                                    
+ [3] "Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
+ [4] "Component 1: Lengths: 0, 1"                                                    
+ [5] "Component 1: names for current but not for target"                             
+ [6] "Component 1: Attributes: < Modes: NULL, list >"                                
+ [7] "Component 1: Attributes: < Lengths: 0, 2 >"                                    
+ [8] "Component 1: Attributes: < names for current but not for target >"             
+ [9] "Component 1: Attributes: < target is NULL, current is list >"                  
+[10] "Component 1: Length mismatch: comparison on first 0 components"                
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -1020,6 +1077,8 @@ Error in as.table.default(x) : cannot coerce into a table
 Error in as.double.default(x) : (list) object cannot be coerced to vector type 14
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 Error in as.double.default(x) : (list) object cannot be coerced to vector type 14
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in as.environment(x) : Invalid object for as.environment
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -1030,9 +1089,9 @@ Error in sort(x) : only atomic vectors can be sorted
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(x, envir) : argument must have length at least 1
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 Error in as.integer.default(x) : (list) object cannot be coerced to vector type 13
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1109,12 +1168,14 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+[1] TRUE
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -1142,7 +1203,7 @@ Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 [1] TRUE
 > is.table(as.table( x ))
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -1166,6 +1227,9 @@ Error in as.call(x) : invalid argument list
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+[1] TRUE
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -1174,7 +1238,7 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 IS: [1] TRUE
@@ -1216,7 +1280,7 @@ Error in is.single(x) : type "single" unimplemented in R
 [1] TRUE
 > if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
 + } else   !isall.equal(x, as.table( x ))
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
@@ -1275,7 +1339,9 @@ Error in as.character.octmode(x) : calling wrong method
 [8] "Component 1: Attributes: < target is NULL, current is list >"     
 [9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Attributes: < Component 2: 1 string mismatches >" 
+[2] "Component 1: names for current but not for target"
+[3] "Component 1: NA mismatches: 1"                    
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
 [1] "Names: 1 string mismatches"                                       
 [2] "Attributes: < Component 2: 1 string mismatches >"                 
@@ -1313,8 +1379,18 @@ Error in as.data.frame.default(x) : can't coerce numeric into a data.frame
 [9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] "Names: 1 string mismatches"
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Names: 1 string mismatches"                                       
+[2] "Attributes: < Component 2: 1 string mismatches >"                 
+[3] "Component 1: Modes: numeric, list"                                
+[4] "Component 1: names for current but not for target"                
+[5] "Component 1: Attributes: < Modes: NULL, list >"                   
+[6] "Component 1: Attributes: < Lengths: 0, 2 >"                       
+[7] "Component 1: Attributes: < names for current but not for target >"
+[8] "Component 1: Attributes: < target is NULL, current is list >"     
+[9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -1364,6 +1440,8 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in target[[i]] : object is not subsettable
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -1374,9 +1452,9 @@ Error in as.table.default(x) : cannot coerce into a table
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1425,9 +1503,9 @@ Error in as.qr(x) : you cannot be serious
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 [1] TRUE
 > f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
 Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
@@ -1451,12 +1529,14 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+[1] TRUE
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -1484,7 +1564,7 @@ Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 [1] TRUE
 > is.table(as.table( x ))
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -1508,6 +1588,9 @@ Error in as.call(x) : invalid argument list
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 IS: [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+[1] TRUE
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -1516,7 +1599,7 @@ IS: [1] TRUE
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 [1] TRUE
@@ -1558,7 +1641,7 @@ Error in is.single(x) : type "single" unimplemented in R
 [1] TRUE
 > if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
 + } else   !isall.equal(x, as.table( x ))
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
@@ -1617,7 +1700,9 @@ Error in as.character.octmode(x) : calling wrong method
 [8] "Component 1: Attributes: < target is NULL, current is list >"     
 [9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Attributes: < Component 2: 1 string mismatches >" 
+[2] "Component 1: names for current but not for target"
+[3] "Component 1: NA mismatches: 1"                    
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
 [1] "Names: 1 string mismatches"                                       
 [2] "Attributes: < Component 2: 1 string mismatches >"                 
@@ -1655,8 +1740,18 @@ Error in as.data.frame.default(x) : can't coerce numeric into a data.frame
 [9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] "Names: 1 string mismatches"
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Names: 1 string mismatches"                                       
+[2] "Attributes: < Component 2: 1 string mismatches >"                 
+[3] "Component 1: Modes: numeric, list"                                
+[4] "Component 1: names for current but not for target"                
+[5] "Component 1: Attributes: < Modes: NULL, list >"                   
+[6] "Component 1: Attributes: < Lengths: 0, 2 >"                       
+[7] "Component 1: Attributes: < names for current but not for target >"
+[8] "Component 1: Attributes: < target is NULL, current is list >"     
+[9] "Component 1: target is numeric, current is data.frame"            
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -1706,6 +1801,8 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+[1] TRUE
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -1716,9 +1813,9 @@ Error in as.table.default(x) : cannot coerce into a table
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1767,9 +1864,9 @@ Error in as.qr(x) : you cannot be serious
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 [1] TRUE
 > f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
-Error in as.table.default(x) : cannot coerce into a table
+[1] TRUE
 > f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
 Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
@@ -1793,12 +1890,14 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+Error in as.environment(x) : Package named "1.3" not found in search list
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -1850,6 +1949,9 @@ IS: [1] TRUE
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+Error in as.environment(x) : Package named "1.3" not found in search list
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
@@ -1858,7 +1960,7 @@ IS: [1] TRUE
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 [1] TRUE
@@ -1959,7 +2061,9 @@ Error in as.character.octmode(x) : calling wrong method
 [8] "Component 1: Attributes: < target is NULL, current is list >"     
 [9] "Component 1: target is character, current is data.frame"          
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Attributes: < Component 2: 1 string mismatches >" 
+[2] "Component 1: names for current but not for target"
+[3] "Component 1: NA mismatches: 1"                    
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
 [1] "Names: 1 string mismatches"                                       
 [2] "Attributes: < Component 2: 1 string mismatches >"                 
@@ -1997,8 +2101,18 @@ Error in as.data.frame.default(x) : can't coerce character into a data.frame
 [9] "Component 1: target is character, current is data.frame"          
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] "Names: 1 string mismatches"
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Names: 1 string mismatches"                                       
+[2] "Attributes: < Component 2: 1 string mismatches >"                 
+[3] "Component 1: Modes: character, list"                              
+[4] "Component 1: names for current but not for target"                
+[5] "Component 1: Attributes: < Modes: NULL, list >"                   
+[6] "Component 1: Attributes: < Lengths: 0, 2 >"                       
+[7] "Component 1: Attributes: < names for current but not for target >"
+[8] "Component 1: Attributes: < target is NULL, current is list >"     
+[9] "Component 1: target is character, current is data.frame"          
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -2048,6 +2162,8 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in as.environment(x) : Package named "1.3" not found in search list
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
@@ -2058,9 +2174,9 @@ Error in as.table.default(x) : cannot coerce into a table
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : list argument expected
+Error in as.function.default(x, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -2135,10 +2251,12 @@ Error in as.table.ftable(x) : x must be an `ftable'
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > is.function(as.function( x ))
 [1] TRUE
 > is.integer(as.integer( x ))
@@ -2156,7 +2274,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 > is.numeric(as.numeric( x ))
 [1] TRUE
 > is.ordered(as.ordered( x ))
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > is.pairlist(as.pairlist( x ))
 [1] TRUE
 > is.qr(as.qr( x ))
@@ -2192,12 +2310,15 @@ Error in as.table.default(x) : cannot coerce into a table
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
 > if(is.factor(x)) { cat('IS: ');all.equal(x, as.factor( x ), tol=0)
 + } else   !isall.equal(x, as.factor( x ))
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
 [1] TRUE
@@ -2224,7 +2345,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 [1] TRUE
 > if(is.ordered(x)) { cat('IS: ');all.equal(x, as.ordered( x ), tol=0)
 + } else   !isall.equal(x, as.ordered( x ))
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > if(is.pairlist(x)) { cat('IS: ');all.equal(x, as.pairlist( x ), tol=0)
 + } else   !isall.equal(x, as.pairlist( x ))
 [1] TRUE
@@ -2301,7 +2422,7 @@ Error in as.character.octmode(x) : calling wrong method
 [8] "Component 1: Component 1: names for current but not for target"                
 [9] "Component 1: Component 1: target is numeric, current is list"                  
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
 [1] "Names: 1 string mismatches"                                                    
 [2] "Attributes: < Component 2: 1 string mismatches >"                              
@@ -2339,8 +2460,18 @@ Error in as.data.frame.default(x) : can't coerce list into a data.frame
 [9] "Component 1: Component 1: target is numeric, current is list"                  
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] TRUE
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Names: 1 string mismatches"                                                    
+[2] "Attributes: < Component 2: 1 string mismatches >"                              
+[3] "Component 1: Names: 1 string mismatches"                                       
+[4] "Component 1: Attributes: < Lengths: 0, 2 >"                                    
+[5] "Component 1: Attributes: < names for current but not for target >"             
+[6] "Component 1: Attributes: < Length mismatch: comparison on first 0 components >"
+[7] "Component 1: Component 1: Modes: numeric, list"                                
+[8] "Component 1: Component 1: names for current but not for target"                
+[9] "Component 1: Component 1: target is numeric, current is list"                  
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 Error in ceiling(length.out) : Non-numeric argument to mathematical function
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -2390,12 +2521,14 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in as.environment(x) : Invalid object for as.environment
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
 [1] TRUE
 > f <- as.factor( x );  all.equal(f, as.factor( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > f <- as.formula( x );  all.equal(f, as.formula( f ), tol=0)
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
@@ -2437,7 +2570,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 > f <- as.numeric( x );  all.equal(f, as.numeric( f ), tol=0)
 [1] TRUE
 > f <- as.ordered( x );  all.equal(f, as.ordered( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+Error in unique.default(x) : unique() applies only to vectors
 > f <- as.pairlist( x );  all.equal(f, as.pairlist( f ), tol=0)
 [1] TRUE
 > f <- as.qr( x );  all.equal(f, as.qr( f ), tol=0)
@@ -2478,10 +2611,12 @@ Error in "dimnames<-.data.frame"(*tmp*, value = list(n)) :
 [1] TRUE
 > is.double(as.double( x ))
 [1] TRUE
+> is.environment(as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > is.expression(as.expression( x ))
 [1] TRUE
 > is.factor(as.factor( x ))
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > is.function(as.function( x ))
 [1] TRUE
 > is.integer(as.integer( x ))
@@ -2499,7 +2634,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 > is.numeric(as.numeric( x ))
 [1] TRUE
 > is.ordered(as.ordered( x ))
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > is.pairlist(as.pairlist( x ))
 [1] TRUE
 > is.qr(as.qr( x ))
@@ -2536,12 +2671,15 @@ IS: [1] TRUE
 > if(is.double(x)) { cat('IS: ');all.equal(x, as.double( x ), tol=0)
 + } else   !isall.equal(x, as.double( x ))
 [1] TRUE
+> if(is.environment(x)) { cat('IS: ');all.equal(x, as.environment( x ), tol=0)
++ } else   !isall.equal(x, as.environment( x ))
+Error in as.environment(x) : Invalid object for as.environment
 > if(is.expression(x)) { cat('IS: ');all.equal(x, as.expression( x ), tol=0)
 + } else   !isall.equal(x, as.expression( x ))
 [1] TRUE
 > if(is.factor(x)) { cat('IS: ');all.equal(x, as.factor( x ), tol=0)
 + } else   !isall.equal(x, as.factor( x ))
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
 [1] TRUE
@@ -2570,7 +2708,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 [1] TRUE
 > if(is.ordered(x)) { cat('IS: ');all.equal(x, as.ordered( x ), tol=0)
 + } else   !isall.equal(x, as.ordered( x ))
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > if(is.pairlist(x)) { cat('IS: ');all.equal(x, as.pairlist( x ), tol=0)
 + } else   !isall.equal(x, as.pairlist( x ))
 [1] TRUE
@@ -2640,7 +2778,7 @@ Error in as.character.octmode(x) : calling wrong method
 [5] "Component 1: Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
 [6] "Component 1: Component 1: `current' is not a factor"                                        
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
 [1] "Names: 1 string mismatches"                                                                 
 [2] "Attributes: < Component 2: 1 string mismatches >"                                           
@@ -2668,8 +2806,15 @@ Error in as.data.frame.default(x) : can't coerce data.frame into a data.frame
 [6] "Component 1: Component 1: `current' is not a factor"                                        
 > f <- as.data.frame.list( x );  all.equal(f, as.data.frame.list( f ), tol=0)
 [1] TRUE
+> f <- as.data.frame.logLik( x );  all.equal(f, as.data.frame.logLik( f ), tol=0)
+[1] TRUE
 > f <- as.data.frame.logical( x );  all.equal(f, as.data.frame.logical( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] "Names: 1 string mismatches"                                                                 
+[2] "Attributes: < Component 2: 1 string mismatches >"                                           
+[3] "Component 1: Names: 1 string mismatches"                                                    
+[4] "Component 1: Attributes: < Component 2: Lengths: 0, 1 >"                                    
+[5] "Component 1: Attributes: < Component 2: Lengths (0, 1) differ (string compare on first 0) >"
+[6] "Component 1: Component 1: `current' is not a factor"                                        
 > f <- as.data.frame.matrix( x );  all.equal(f, as.data.frame.matrix( f ), tol=0)
 [1] TRUE
 > f <- as.data.frame.model.matrix( x );  all.equal(f, as.data.frame.model.matrix( f ), tol=0)
@@ -2709,12 +2854,14 @@ Error in as.table.default(x) : cannot coerce into a table
 [1] TRUE
 > f <- as.double.default( x );  all.equal(f, as.double.default( f ), tol=0)
 [1] TRUE
+> f <- as.environment( x );  all.equal(f, as.environment( f ), tol=0)
+Error in as.environment(x) : Invalid object for as.environment
 > f <- as.expression( x );  all.equal(f, as.expression( f ), tol=0)
 [1] TRUE
 > f <- as.expression.default( x );  all.equal(f, as.expression.default( f ), tol=0)
 [1] TRUE
 > f <- as.factor( x );  all.equal(f, as.factor( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > f <- as.formula( x );  all.equal(f, as.formula( f ), tol=0)
 [1] TRUE
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
@@ -2755,7 +2902,7 @@ Error in as.name(x) : invalid type/length (1/1) in vector allocation
 > f <- as.numeric( x );  all.equal(f, as.numeric( f ), tol=0)
 [1] TRUE
 > f <- as.ordered( x );  all.equal(f, as.ordered( f ), tol=0)
-Error in unique(x) : unique() applies only to vectors
+[1] TRUE
 > f <- as.pairlist( x );  all.equal(f, as.pairlist( f ), tol=0)
 [1] TRUE
 > f <- as.qr( x );  all.equal(f, as.qr( f ), tol=0)
@@ -2781,6 +2928,6 @@ Error in ts(x) : ts object must have one or more observations
 > f <- as.vector.factor( x );  all.equal(f, as.vector.factor( f ), tol=0)
 [1] TRUE
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.9 0.11 1.06 0 0 
+Time elapsed:  1.6 0.15 3.79 0 0 
 > 
 > 

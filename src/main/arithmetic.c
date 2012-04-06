@@ -74,12 +74,15 @@ int matherr(struct exception *exc)
 #endif
 
 #ifdef IEEE_754
+#ifndef _AIX
 const double R_Zero_Hack = 0.0;	/* Silence the Sun compiler */
-
+#else
+double R_Zero_Hack = 0.0;
+#endif
 typedef union
 {
-  double value;
-  unsigned int word[2];
+    double value;
+    unsigned int word[2];
 } ieee_double;
 
 /* These variables hw and lw are only used if IEEE_754 is defined.
@@ -156,23 +159,28 @@ int R_IsNaNorNA(double x)
 # endif
 #endif
 #if defined(Win32) && defined(_MSC_VER)
-#include <float.h>
+# include <float.h>
 #endif
 
 int R_finite(double x)
 {
 #ifdef Macintosh
+    /* FIXME: merge with generic isfinite case */
     return isfinite(x);
 #endif
-#ifndef FINITE_BROKEN
+#ifdef HAVE_WORKING_FINITE
     return finite(x);
+#else
+# ifdef HAVE_ISFINITE_IN_MATH_H
+    return isfinite(x);
 # else
 #  ifdef _AIX
-#   include <fp.h>
+#  include <fp.h>
      return FINITE(x);
 #  else
     return (!isnan(x) & (x != R_PosInf) & (x != R_NegInf));
 #  endif
+# endif
 #endif
 }
 
@@ -310,10 +318,10 @@ static double myfmod(double x1, double x2)
 }
 
 
-#ifdef LOG_BROKEN
-double R_log(double x) { return(x > 0 ? log(x) : x < 0 ? R_NaN : R_NegInf); }
-#else
+#ifdef HAVE_WORKING_LOG
 # define R_log	log
+#else
+double R_log(double x) { return(x > 0 ? log(x) : x < 0 ? R_NaN : R_NegInf); }
 #endif
 
 #ifdef POW_DIRTY
@@ -389,7 +397,7 @@ SEXP R_binary(SEXP, SEXP, SEXP, SEXP);
 static SEXP integer_unary(ARITHOP_TYPE, SEXP);
 static SEXP real_unary(ARITHOP_TYPE, SEXP, SEXP);
 static SEXP real_binary(ARITHOP_TYPE, SEXP, SEXP);
-static SEXP integer_binary(ARITHOP_TYPE, SEXP, SEXP);
+static SEXP integer_binary(ARITHOP_TYPE, SEXP, SEXP, SEXP);
 
 #if 0
 static int naflag;
@@ -519,19 +527,26 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
     if (mismatch)
 	warningcall(lcall, "longer object length\n\tis not a multiple of shorter object length");
 
+/* need to preserve object here, as *_binary copies class attributes */
     if (TYPEOF(x) == CPLXSXP || TYPEOF(y) == CPLXSXP) {
+        int xo = OBJECT(x), yo = OBJECT(y);
 	REPROTECT(x = coerceVector(x, CPLXSXP), xpi);
 	REPROTECT(y = coerceVector(y, CPLXSXP), ypi);
+        SET_OBJECT(x, xo);
+	SET_OBJECT(y, yo);
 	x = complex_binary(PRIMVAL(op), x, y);
     }
     else
 	if (TYPEOF(x) == REALSXP || TYPEOF(y) == REALSXP) {
+            int xo = OBJECT(x), yo = OBJECT(y);
 	    REPROTECT(x = coerceVector(x, REALSXP), xpi);
 	    REPROTECT(y = coerceVector(y, REALSXP), ypi);
+	    SET_OBJECT(x, xo);
+	    SET_OBJECT(y, yo);
 	    x = real_binary(PRIMVAL(op), x, y);
 	}
 	else {
-	    x = integer_binary(PRIMVAL(op), x, y);
+	    x = integer_binary(PRIMVAL(op), x, y, lcall);
 	}
 
     PROTECT(x);
@@ -590,6 +605,7 @@ static SEXP integer_unary(ARITHOP_TYPE code, SEXP s1)
 	return s1;
     case MINUSOP:
 	ans = duplicate(s1);
+	SET_TYPEOF(ans, INTSXP);
 	n = LENGTH(s1);
 	for (i = 0; i < n; i++) {
 	    x = INTEGER(s1)[i];
@@ -639,26 +655,68 @@ static SEXP real_unary(ARITHOP_TYPE code, SEXP s1, SEXP lcall)
 	i2 = (++i2 == n2) ? 0 : i2,\
 	++i)
 
-static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
+
+
+/* The tests using integer comparisons are a bit faster than the tests
+   using doubles, but they depend on a two's complement representation
+   (but that is almost universal).  The tests that compare results to
+   double's depend on being able to accurately represent all int's as
+   double's.  Since int's are almost universally 32 bit that should be
+   OK. */
+
+#ifndef INT_32_BITS
+/* configure checks whehter int is 32 bits.  If not this code will
+   need to be rewritten.  Since 32 bit ints are pretty much universal,
+   we can worry about writing alternate code when the need arises.
+   To be safe, we signal a compiler error if int is not 32 bits. */
+# error code requires that int have 32 bits
+#else
+/* Just to be on the safe side, configure ought to check that the
+   mashine uses two's complement. A define like
+#define USES_TWOS_COMPLEMENT (~0 == (unsigned) -1)
+   might work, but at least one compiler (CodeWarrior 6) chokes on it.
+   So for now just assume it is true.
+*/
+#define USES_TWOS_COMPLEMENT 1
+
+#if USES_TWOS_COMPLEMENT
+# define OPPOSITE_SIGNS(x, y) ((x < 0) ^ (y < 0))
+# define GOODISUM(x, y, z) (((x) > 0) ? ((y) < (z)) : ! ((y) < (z)))
+# define GOODIDIFF(x, y, z) (!(OPPOSITE_SIGNS(x, y) && OPPOSITE_SIGNS(x, z)))
+#else
+# define GOODISUM(x, y, z) ((double) (x) + (double) (y) == (z))
+# define GOODIDIFF(x, y, z) ((double) (x) - (double) (y) == (z))
+#endif
+#define GOODIPROD(x, y, z) ((double) (x) * (double) (y) == (z))
+#define INTEGER_OVERFLOW_WARNING "NAs produced by integer overflow"
+#endif
+
+static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
 {
     int i, i1, i2, n, n1, n2;
     int x1, x2;
     SEXP ans;
+    Rboolean naflag = FALSE;
 
     n1 = LENGTH(s1);
     n2 = LENGTH(s2);
-    n = (n1 > n2) ? n1 : n2;
+    /* S4-compatibility change: if n1 or n2 is 0, result is of length 0 */
+    if (n1 == 0 || n2 == 0) n = 0; else n = (n1 > n2) ? n1 : n2;
 
     if (code == DIVOP || code == POWOP)
 	ans = allocVector(REALSXP, n);
     else
 	ans = allocVector(INTSXP, n);
+    if (n1 == 0 || n2 == 0) return(ans);
+    /* note: code below was surely wrong in DIVOP and POWOP cases,
+       since ans was a REALSXP.
+     */
 
-    if (n1 < 1 || n2 < 1) {
+/*    if (n1 < 1 || n2 < 1) {
 	for (i = 0; i < n; i++)
 	    INTEGER(ans)[i] = NA_INTEGER;
 	return ans;
-    }
+	} */
 
     switch (code) {
     case PLUSOP:
@@ -667,9 +725,18 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	    x2 = INTEGER(s2)[i2];
 	    if (x1 == NA_INTEGER || x2 == NA_INTEGER)
 		INTEGER(ans)[i] = NA_INTEGER;
-	    else
-		INTEGER(ans)[i] = x1 + x2;
+	    else {
+		int val = x1 + x2;
+		if (val != NA_INTEGER && GOODISUM(x1, x2, val))
+		    INTEGER(ans)[i] = val;
+		else {
+		    INTEGER(ans)[i] = NA_INTEGER;
+		    naflag = TRUE;
+		}
+	    }
 	}
+	if (naflag)
+	    warningcall(lcall, INTEGER_OVERFLOW_WARNING);
 	break;
     case MINUSOP:
 	mod_iterate(n1, n2, i1, i2) {
@@ -677,9 +744,18 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	    x2 = INTEGER(s2)[i2];
 	    if (x1 == NA_INTEGER || x2 == NA_INTEGER)
 		INTEGER(ans)[i] = NA_INTEGER;
-	    else
-		INTEGER(ans)[i] = x1 - x2;
+	    else {
+		int val = x1 - x2;
+		if (val != NA_INTEGER && GOODIDIFF(x1, x2, val))
+		    INTEGER(ans)[i] = val;
+		else {
+		    naflag = TRUE;
+		    INTEGER(ans)[i] = NA_INTEGER;
+		}
+	    }
 	}
+	if (naflag)
+	    warningcall(lcall, INTEGER_OVERFLOW_WARNING);
 	break;
     case TIMESOP:
 	mod_iterate(n1, n2, i1, i2) {
@@ -687,9 +763,18 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	    x2 = INTEGER(s2)[i2];
 	    if (x1 == NA_INTEGER || x2 == NA_INTEGER)
 		INTEGER(ans)[i] = NA_INTEGER;
-	    else
-		INTEGER(ans)[i] = x1 * x2;
+	    else {
+		int val = x1 * x2;
+		if (val != NA_INTEGER && GOODIPROD(x1, x2, val))
+		    INTEGER(ans)[i] = val;
+		else {
+		    naflag = TRUE;
+		    INTEGER(ans)[i] = NA_INTEGER;
+		}
+	    }
 	}
+	if (naflag)
+	    warningcall(lcall, INTEGER_OVERFLOW_WARNING);
 	break;
     case DIVOP:
 	mod_iterate(n1, n2, i1, i2) {
@@ -698,11 +783,11 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 #ifdef IEEE_754
 	    if (x1 == NA_INTEGER || x2 == NA_INTEGER)
 #else
-	    if (x1 == NA_INTEGER || x2 == NA_INTEGER || x2 == 0)
+		if (x1 == NA_INTEGER || x2 == NA_INTEGER || x2 == 0)
 #endif
-		REAL(ans)[i] = NA_REAL;
-	    else
-		REAL(ans)[i] = (double) x1 / (double) x2;
+		    REAL(ans)[i] = NA_REAL;
+		else
+		    REAL(ans)[i] = (double) x1 / (double) x2;
 	}
 	break;
     case POWOP:
@@ -742,8 +827,9 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	}
 	break;
     }
+    
 
-    /* Copy attributes from longest argument. */
+    /* Copy attributes from longer argument. */
 
     if (n1 > n2)
 	copyMostAttrib(s1, ans);
@@ -768,14 +854,18 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     /* Note: "s1" and "s2" are protected above. */
     n1 = LENGTH(s1);
     n2 = LENGTH(s2);
-    n = (n1 > n2) ? n1 : n2;
+
+    /* S4-compatibility change: if n1 or n2 is 0, result is of length 0 */
+    if (n1 == 0 || n2 == 0) return(allocVector(REALSXP, 0));
+
+    n = (n1 > n2) ? n1 : n2;    
     ans = allocVector(REALSXP, n);
 
-    if (n1 < 1 || n2 < 1) {
-	for (i = 0; i < n; i++)
-	    REAL(ans)[i] = NA_REAL;
-	return ans;
-    }
+/*    if (n1 < 1 || n2 < 1) {
+      for (i = 0; i < n; i++)
+      REAL(ans)[i] = NA_REAL;
+      return ans;
+      } */
 
     switch (code) {
     case PLUSOP:
@@ -873,7 +963,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 		REAL(ans)[i] = NA_REAL;
 	    else {
 		if (x2 == 0)
-		REAL(ans)[i] = 0;
+		    REAL(ans)[i] = 0;
 		else
 		    REAL(ans)[i] = MATH_CHECK(floor(x1 / x2));
 	    }
@@ -881,8 +971,9 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	}
 	break;
     }
+    
 
-    /* Copy attributes from longest argument. */
+    /* Copy attributes from longer argument. */
 
     if (n1 > n2)
 	copyMostAttrib(s1, ans);

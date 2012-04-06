@@ -4,6 +4,80 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+rw1040
+======
+
+If --max-mem-size is given a value greater than 256M, the requested
+maximum memory is reserved (but not allocated) initially.  This will
+enable the memory to be managed more efficiently, but does increase
+the chance that R cannot be started.  There appears to be an effective
+limit of about 1700M, at least under Windows 2000.
+
+memory.limit() can now increase the memory limit of the current session.
+This will not work if the limit is currently reached!
+
+internet2.dll (see changes for rw1030) can be selected by the
+--internet2 flag.
+
+The miniR* distribution has grown to seven floppies, and no attempt is
+now made to confine the zip files to floppy-size.
+
+The background colour of a windows() window (outside the device
+region) is now in the `Application Background' colour of the current
+Windows colour scheme.  (It used to be LightGrey.)
+
+Gamma correction is now applied to the background colour of a graphics
+window.  (It has long been applied to the foreground colours.)  Users
+of LCD screens may want to set something like gamma=2 when launching a
+graphics window.
+
+savePlot() now supports saving to PDF.
+
+There is support for transparency in the devga device (which
+encompasses screen windows, metafiles, printers and the bmp, jpeg and
+png devices).  The default background colour is "transparent" for all
+but the bitmap devices: this means that backgrounds are omitted when
+plotting to/saving to most devices, and the colour that is visible is
+that of the canvas (see below).  The png() device does support
+transparent backgrounds, but this is not accessible through the menus
+nor the savePlot() function.
+
+The canvas colour of a windows() window can now be specified.  This is
+is gamma-corrected, and defaults to "white".
+
+There is a print method for saved plot histories, and individual
+plots can be replayed from the command line by subsetting a
+plot history variable.
+
+The menus use `...' to indicate that they lead to a dialog box.
+
+There is a new menu item  `Edit | Data editor...'  to edit (via fix())
+R objects, especially data frames and matrices.
+
+The console pop-up was checking the wrong item for `Buffered output'.
+
+Plot histories are saved in a different format: those from earlier
+versions of R cannot be played back and will be reported as corrupted.
+
+Installing a package now first removes the data and demo directories
+if they exist.
+
+Building under (repaired) Cygwin -mno-cygwin environments is no longer
+supported.  You probably do need the compiler system recommended for
+rw1031 or later.
+
+globalvar.h is no longer used: the header files now declare imported
+variables.  This make it essential to use the R header files rather
+than copying entries from them.
+
+A bug in some linkers in linking against ATLAS has been circumvented.
+There is now a bigger benefit in using ATLAS: on a PII with a
+1000x1000 matrix, svd took 288 sec and La.svd 182 sec (without ATLAS)
+and 59 sec (with); eigen took 163 sec and La.eigen 53 sec (without)
+and 24 sec (with).
+
+
+
 rw1031
 ======
 

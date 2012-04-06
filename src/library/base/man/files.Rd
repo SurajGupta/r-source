@@ -5,6 +5,7 @@
 file.create(\dots)
 file.exists(\dots)
 file.remove(\dots)
+file.rename(from, to)
 file.append(file1, file2)
 file.copy(from, to, overwrite = FALSE)
 dir.create(path)
@@ -17,6 +18,7 @@ path.expand(path)
 \alias{file.create}
 \alias{file.exists}
 \alias{file.remove}
+\alias{file.rename}
 \alias{dir.create}
 \alias{basename}
 \alias{dirname}
@@ -45,6 +47,13 @@ path.expand(path)
   \code{file.remove} attempts to remove the files named in its
   argument.  It returns a logical vector indicating whether or
   not it succeeded in removing each file.
+
+  \code{file.rename} attempts to rename a file.  It returns a logical
+  value indicating whether the operation succeeded.
+#ifdef windows
+  On Windows rename is not atomic, so it is possible that \code{to} will
+  be deleted but \code{from} will not be renamed.
+#endif
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript

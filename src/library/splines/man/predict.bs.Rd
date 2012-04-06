@@ -6,12 +6,15 @@
   Evaluate a predefined spline basis at given values.
 }
 \usage{
-predict.bs(object, newx, \dots)
-predict.ns(object, newx, \dots)
+\method{predict}{bs}(object, newx, \dots)
 }
+% \synopsis{
+% predict.bs(object, newx, \dots)
+% predict.ns(object, newx, \dots)
+% }
 \arguments{
-  \item{object}{the result of a call to \code{\link{bs}()} or
-    \code{\link{ns}()} having attributes describing \code{knots},
+  \item{object}{the result of a call to \code{\link{bs}} or
+    \code{\link{ns}} having attributes describing \code{knots},
     \code{degree}, etc.}
   \item{newx}{the \code{x} values at which evaluations are required.}
   \item{\dots}{Optional additional arguments.  Presently no additional
@@ -21,8 +24,8 @@ predict.ns(object, newx, \dots)
   An object just like \code{object}, except evaluated at the new values
   of \code{x}.
 
-  These are methods for the generic function \code{\link{predict}()} for
-  objects inheriting from classes \code{bs} or \code{ns}.  See
+  These are methods for the generic function \code{\link{predict}} for
+  objects inheriting from classes \code{"bs"} or \code{"ns"}.  See
   \code{\link{predict}} for the general behavior of this function.
 }
 \seealso{

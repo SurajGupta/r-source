@@ -25,4 +25,4 @@ m<-matrix(1:4,2)
 m
 prop.table(m,1)
 }
-\keyword{ array }%-- one or more ...
+\keyword{ array }

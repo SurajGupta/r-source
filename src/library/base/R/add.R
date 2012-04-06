@@ -1,4 +1,4 @@
-#### copyright (C) 1998 B. D. Ripley
+#### copyright (C) 1998-2001 B. D. Ripley
 add1 <- function(object, scope, ...) UseMethod("add1")
 
 add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
@@ -234,7 +234,7 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     aod
 }
 
-add1.mlm <- function(...)
+add1.mlm <- function(object, scope, ...)
     stop("no add1 method implemented for mlm models")
 
 drop1 <- function(object, scope, ...) UseMethod("drop1")
@@ -357,7 +357,7 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
     aod
 }
 
-drop1.mlm <- function(object, ...)
+drop1.mlm <- function(object, scope, ...)
     stop("drop1 not implemented for mlm models")
 
 drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
@@ -527,6 +527,11 @@ step <- function(object, scope, scale = 0,
         environment(form)<-environment(tt)
         form
     }
+    mydeviance <- function(x, ...)
+    {
+        dev <- deviance(x)
+        if(!is.null(dev)) dev else extractAIC(x, k=0)[2]
+    }
 
     cut.string <- function(string)
     {
@@ -619,7 +624,7 @@ step <- function(object, scope, scale = 0,
 	cat("Start:  AIC=", format(round(bAIC, 2)), "\n",
 	    cut.string(deparse(as.vector(formula(fit)))), "\n\n")
 
-    models[[nm]] <- list(deviance = deviance(fit), df.resid = n - edf,
+    models[[nm]] <- list(deviance = mydeviance(fit), df.resid = n - edf,
 			 change = "", AIC = bAIC)
     if(!is.null(keep)) keep.list[[nm]] <- keep(fit, bAIC)
     usingCp <- FALSE
@@ -682,7 +687,7 @@ step <- function(object, scope, scale = 0,
 	if(bAIC >= AIC) break
 	nm <- nm + 1
 	edf <- models[[nm]] <-
-	    list(deviance = deviance(fit), df.resid = n - edf,
+	    list(deviance = mydeviance(fit), df.resid = n - edf,
 		 change = change, AIC = bAIC)
 	if(!is.null(keep)) keep.list[[nm]] <- keep(fit, bAIC)
     }
@@ -724,7 +729,7 @@ extractAIC.lm <- function(fit, scale = 0, k = 2, ...)
     dev <- if(scale > 0) RSS/scale - n else n * log(RSS/n)
     c(edf, dev + k * edf)
 }
-extractAIC.aov <- .Alias(extractAIC.lm)
+extractAIC.aov <- extractAIC.lm
 
 extractAIC.negbin <- function(fit, scale, k = 2, ...)
 {

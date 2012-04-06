@@ -1,4 +1,4 @@
-### $Id: nls.R,v 1.13 2001/05/29 10:06:34 maechler Exp $
+### $Id: nls.R,v 1.18 2001/11/19 20:18:09 rgentlem Exp $
 ###
 ###            Nonlinear least squares for R
 ###
@@ -441,6 +441,7 @@ nls <-
     mf$start <- mf$control <- mf$algorithm <- mf$trace <- NULL
     mf[[1]] <- as.name("model.frame")
     mf <- as.list(eval(mf, parent.frame()))
+    na.act <- attr(mf, "na.action")
     if (missing(start)) {
         start <- getInitial(formula, mf)
     }
@@ -460,11 +461,12 @@ nls <-
                     data = substitute( data ), call = match.call())
     nls.out$call$control <- ctrl
     nls.out$call$trace <- trace
+    if(!is.null(na.act)) nls.out$na.action <- na.act
     class(nls.out) <- "nls"
     nls.out
 }
 
-coef.nls <- function( x, ... ) x$m$getAllPars()
+coef.nls <- function( object, ... ) object$m$getAllPars()
 
 print.nls <- function(x, ...) {
     cat( "Nonlinear regression model\n" )
@@ -477,18 +479,18 @@ print.nls <- function(x, ...) {
 
 summary.nls <- function (object, ...)
 {
-    z <- .Alias(object)
-    resid <- resid(z)
+    z <- object
+    ## we want the raw values, not the na-adjusted ones.
+    r <- resid <- as.vector(object$m$resid())
     n <- length(resid)
     param <- coef(z)
     pnames <- names(param)
     p <- length(param)
     rdf <- n - p
     p1 <- 1:p
-    r <- resid(z)
-    f <- fitted(z)
+    f <- as.vector(object$m$fitted())
+    w <- z$weights
     R <- z$m$Rmat()
-    w <- weights(z)
     if (!is.null(w)) {
         w <- w^0.5
         resid <- resid * w
@@ -565,7 +567,8 @@ predict.nls <-
 fitted.nls <- function(object, ...)
 {
     val <- as.vector(object$m$fitted())
-
+    if(!is.null(object$na.action))
+        val <- napredict(object$na.action, val)
     lab <- "Fitted values"
     if (!is.null(aux <- attr(object, "units")$y)) {
         lab <- paste(lab, aux)
@@ -574,7 +577,7 @@ fitted.nls <- function(object, ...)
     val
 }
 
-formula.nls <- function(object) object$m$formula()
+formula.nls <- function(x, ...) x$m$formula()
 
 residuals.nls <- function(object, type = c("response", "pearson"), ...)
 {
@@ -583,8 +586,12 @@ residuals.nls <- function(object, type = c("response", "pearson"), ...)
     if (type == "pearson") {
         std <- sqrt(sum(val^2)/(length(val) - length(coef(object))))
         val <- val/std
+        if(!is.null(object$na.action))
+            val <- naresid(object$na.action, val)
         attr(val, "label") <- "Standardized residuals"
     } else {
+        if(!is.null(object$na.action))
+            val <- naresid(object$na.action, val)
         lab <- "Residuals"
         if (!is.null(aux <- attr(object, "units")$y)) {
             lab <- paste(lab, aux)
@@ -596,12 +603,12 @@ residuals.nls <- function(object, type = c("response", "pearson"), ...)
 
 ## logLik & AIC -- generic now in base
 
-logLik.nls <- function(object, REML = FALSE)
+logLik.nls <- function(object, REML = FALSE, ...)
 {
     if (REML)
         stop("Cannot calculate REML log-likelihood for nls objects")
 
-    res <- resid(object)
+    res <- object$m$resid()
     N <- length(res)
     if(is.null(w <- object$weights)) {
         w <- rep(1, N)
@@ -612,8 +619,6 @@ logLik.nls <- function(object, REML = FALSE)
     class(val) <- "logLik"
     val
 }
-
-AIC.nls <- .Alias(AIC.lm) # AIC works via logLik
 
 df.residual.nls <- function(object, ...)
 {

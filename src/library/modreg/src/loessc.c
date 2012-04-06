@@ -21,15 +21,17 @@
 #include <string.h>
 #include <R.h>
 
-/* Much cleaner would be a  loess.h !! */
+/* Forward declarations */
+static
 void loess_workspace(Sint *d, Sint *n, double *span, Sint *degree,
 		     Sint *nonparametric, Sint *drop_square,
 		     Sint *sum_drop_sqr, Sint *setLf);
+static
 void loess_prune(Sint *parameter, Sint *a, 
 		 double *xi, double *vert, double *vval);
+static
 void loess_grow (Sint *parameter, Sint *a, 
 		 double *xi, double *vert, double *vval);
-void loess_free(void);
 
 /* These (and many more) are in ./loessf.f : */
 void F77_SUB(lowesa)();
@@ -47,11 +49,6 @@ void F77_SUB(ehg183a)(char *s, int *nc,int *i,int *n,int *inc);
 void F77_SUB(ehg184a)(char *s, int *nc, double *x, int *n, int *inc);
 
 
-static void warnmsg(char *string)
-{
-  PROBLEM "%s", string WARNING(NULL_ENTRY);
-}
-
 
 #undef min
 #undef max
@@ -63,6 +60,13 @@ static void warnmsg(char *string)
 
 static Sint	*iv, liv, lv, tau;
 static double	*v;
+
+/* these are set in an earlier call to loess_workspace or loess_grow */
+static void loess_free(void)
+{
+    Free(v);
+    Free(iv);
+}
 
 void
 loess_raw(double *y, double *x, double *weights, double *robust, Sint *d,
@@ -113,27 +117,23 @@ loess_raw(double *y, double *x, double *weights, double *robust, Sint *d,
 	F77_SUB(lowesa)(trL, n, d, &tau, &nsing, one_delta, two_delta);
     }
     else if (!strcmp(*surf_stat, "interpolate/exact")) {
-	hat_matrix = Calloc((*n)*(*n), double);
-	LL = Calloc((*n)*(*n), double);
+	hat_matrix = (double *) R_alloc((*n)*(*n), sizeof(double));
+	LL = (double *) R_alloc((*n)*(*n), sizeof(double));
 	F77_SUB(lowesb)(x, y, weights, diagonal, &one, iv, &liv, &lv, v);
 	F77_SUB(lowesl)(iv, &liv, &lv, v, n, x, hat_matrix);
 	F77_SUB(lowesc)(n, hat_matrix, LL, trL, one_delta, two_delta);
 	F77_SUB(lowese)(iv, &liv, &lv, v, n, x, surface);
 	loess_prune(parameter, a, xi, vert, vval);
-	Free(hat_matrix);
-	Free(LL);
     }
     else if (!strcmp(*surf_stat, "direct/exact")) {
-	hat_matrix = Calloc((*n)*(*n), double);
-	LL = Calloc((*n)*(*n), double);
+	hat_matrix = (double *) R_alloc((*n)*(*n), sizeof(double));
+	LL = (double *) R_alloc((*n)*(*n), sizeof(double));
 	F77_SUB(lowesf)(x, y, weights, iv, liv, lv, v, n, x,
 			hat_matrix, &two, surface);
 	F77_SUB(lowesc)(n, hat_matrix, LL, trL, one_delta, two_delta);
 	k = (*n) + 1;
 	for(i = 0; i < (*n); i++)
 	    diagonal[i] = hat_matrix[i * k];
-	Free(hat_matrix);
-	Free(LL);
     }
     loess_free();
 }
@@ -176,6 +176,7 @@ loess_dfitse(double *y, double *x, double *x_evaluate, double *weights,
     }
     loess_free();
 }
+
 void 
 loess_ifit(Sint *parameter, Sint *a, double *xi, double *vert, 
 	   double *vval, Sint *m, double *x_evaluate, double *fit) 
@@ -230,7 +231,7 @@ loess_workspace(Sint *d, Sint *n, double *span, Sint *degree,
 	iv[i + 40] = drop_square[i];
 }
 
-void 
+static void 
 loess_prune(Sint *parameter, Sint *a, double *xi, double *vert,
 	    double *vval)
 {
@@ -265,7 +266,7 @@ loess_prune(Sint *parameter, Sint *a, double *xi, double *vert,
 	vval[i] = v[vv1 + i];
 }
 
-void 
+static void 
 loess_grow(Sint *parameter, Sint *a, double *xi,
 	   double *vert, double *vval)
 {
@@ -316,11 +317,6 @@ loess_grow(Sint *parameter, Sint *a, double *xi,
 		    v+xi1, iv+iv[7]-1, iv+iv[8]-1, iv+iv[9]-1);
 }
 
-void loess_free(void)
-{
-    Free(v);
-    Free(iv);
-}
 
 /* begin ehg's FORTRAN-callable C-codes */
 
@@ -368,7 +364,7 @@ switch(*i){
  case 999:MSG("not yet implemented")
  default: sprintf(msg=msg2,"Assert failed; error code %d\n",*i);
 }
-warnmsg(msg);
+warning(msg);
 }
 #undef MSG
 
@@ -383,7 +379,7 @@ void F77_SUB(ehg183a)(char *s, int *nc,int *i,int *n,int *inc)
 	strcat(mess,num);
     }
     strcat(mess,"\n");
-    warnmsg(mess);
+    warning(mess);
 }
 
 void F77_SUB(ehg184a)(char *s, int *nc, double *x, int *n, int *inc)
@@ -397,5 +393,5 @@ void F77_SUB(ehg184a)(char *s, int *nc, double *x, int *n, int *inc)
 	strcat(mess,num);
     }
     strcat(mess,"\n");
-    warnmsg(mess);
+    warning(mess);
 }

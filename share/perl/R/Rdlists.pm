@@ -27,13 +27,9 @@ require  Exporter;
 
 use Cwd;
 use File::Basename;
+use R::Utils;
 
-if($main::opt_dosnames){
-    $HTML="htm";
-}
-else{
-    $HTML="html";
-}
+if($main::opt_dosnames) { $HTML = ".htm"; } else { $HTML = ".html"; }
 
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
 
@@ -51,19 +47,21 @@ sub buildinit {
 	die("Package $pkg does not exist\n") unless (-d $pkg);
     }
     else{
-	$pkg="$main::R_HOME/src/library/base";
+	$pkg=file_path($main::R_HOME, "src", "library", "base");
     }
 
     chdir $currentdir;
 
     if($lib){
-        mkdir "$lib", $dir_mod || die "Could not create $lib: $!\n";
+	if(! -d $lib) {
+	    mkdir ("$lib", $dir_mod) or die "Could not create $lib: $!\n";
+	}
 	chdir $lib;
 	$lib=cwd();
 	chdir $currentdir;
     }
     else{
-	$lib="$main::R_HOME/library";
+	$lib=file_path($main::R_HOME, "library");
     }
 
     chdir $currentdir;
@@ -74,10 +72,13 @@ sub buildinit {
 	$tmp =~ s+\\+/+g; # need Unix-style path here
     }
     $pkg = basename($tmp);
-#    $pkg = basename(cwd());
 
     chdir "man" or die("There are no man pages in $pkg\n");
-    opendir man, '.';
+    if($main::OSdir eq "mac") {
+	opendir man, ':';
+    } else {
+	opendir man, '.';
+    }
     @mandir = sort(readdir(man));
     closedir man;
 
@@ -86,7 +87,7 @@ sub buildinit {
 	opendir man, $main::OSdir;
 	foreach $file (readdir(man)) {
 	    delete $Rds{$file};
-	    $RdsOS{$file} = $main::OSdir."/".$file;
+	    $RdsOS{$file} = file_path($main::OSdir, $file);
 	}
 	@mandir = sort(values %Rds);
 	push @mandir, sort(values %RdsOS);
@@ -110,10 +111,10 @@ sub read_titles {
     closedir lib;
 
     foreach $pkg (@libs) {
-	if(-d "$lib/$pkg"){
+	if(-d file_path($lib, $pkg)){
 	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
-		if(-r "$lib/$pkg/TITLE"){
-		    open rtitle, "< $lib/$pkg/TITLE";
+		if(-r file_path($lib, $pkg, "TITLE")){
+		    open rtitle, "<" . file_path($lib, $pkg, "TITLE");
 		    $_ = <rtitle>;
 		    /^(\S*)\s*(.*)/;
 		    my $pkgname = $1;
@@ -148,13 +149,13 @@ sub read_htmlindex {
     closedir lib;
 
     foreach $pkg (@libs) {
-	if(-d "$lib/$pkg"){
+	if(-d file_path($lib, $pkg)){
 	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
-		if(-r "$lib/$pkg/help/AnIndex"){
-		    open ranindex, "< $lib/$pkg/help/AnIndex";
+		if(-r file_path($lib, $pkg, "help", "AnIndex")){
+		    open ranindex, "<".file_path($lib, $pkg, "help", "AnIndex");
 		    while(<ranindex>){
 			/^([^\t]*)\s*\t(.*)/;
-			$htmlindex{$1} = "$pkg/html/$2.$HTML";
+			$htmlindex{$1} = file_path($pkg, "html", $2.$HTML);
 		    }
 		    close ranindex;
 		}
@@ -175,10 +176,10 @@ sub read_anindex {
     closedir lib;
 
     foreach $pkg (@libs) {
-	if(-d "$lib/$pkg"){
+	if(-d file_path($lib, $pkg)){
 	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
-		if(-r "$lib/$pkg/help/AnIndex"){
-		    open ranindex, "< $lib/$pkg/help/AnIndex";
+		if(-r file_path($lib, $pkg, "help", "AnIndex")){
+		    open ranindex, "<".file_path($lib, $pkg, "help", "AnIndex");
 		    while(<ranindex>){
 			/^([^\t]*)\s*\t(.*)/;
 			$anindex{$1} = $2;
@@ -202,19 +203,21 @@ sub build_htmlpkglist {
     my %htmltitles = read_titles($lib);
     my $key;
 
-    open(htmlfile, "> $main::R_HOME/doc/html/packages.$HTML") ||
-	die "Could not open $main::R_HOME/doc/html/packages.$HTML";
+    open(htmlfile, ">". file_path($main::R_HOME, "doc", "html", 
+				  "packages".$HTML)) or
+	die "Could not open " . 
+	    file_path($main::R_HOME, "doc", "html", "packages".$HTML);
 
     print htmlfile html_pagehead("Package Index", ".",
-				 "index.$HTML", "Top",
+				 "index$HTML", "Top",
 				 "", "",
-				 "", "");
+				 "", "", "./R.css");
 
     print htmlfile "<table align=\"center\" summary=\"R Package list\">\n";
 
     foreach $key (sort(keys %htmltitles)) {
 	print htmlfile "<tr align=\"left\" valign=\"top\">\n";
-	print htmlfile "<td><a href=\"../../library/$key/html/00Index.$HTML\">";
+	print htmlfile "<td><a href=\"../../library/$key/html/00Index$HTML\">";
 	print htmlfile encodealias($key), "</a></td><td>";
 	print htmlfile $htmltitles{$key}, "</td></tr>\n";
     }
@@ -249,11 +252,11 @@ sub build_index { # lib, dest
     my $chmdir = $_[2];
 
     if(! -d $lib){
-        mkdir "$lib", $dir_mod || die "Could not create directory $lib: $!\n";
+        mkdir("$lib", $dir_mod) or die "Could not create directory $lib: $!\n";
     }
 
     if(! -d "$dest"){
-        mkdir "$dest", $dir_mod || die "Could not create directory $dest: $!\n";
+        mkdir("$dest", $dir_mod) or die "Could not create directory $dest: $!\n";
     }
 
     open title, "<../TITLE";
@@ -262,16 +265,23 @@ sub build_index { # lib, dest
     chomp $title;
     $title =~ s/^\S*\s*(.*)/$1/;
 
-    mkdir "$dest/help", $dir_mod || die "Could not create $dest/help: $!\n";
-    mkdir "$dest/html", $dir_mod || die "Could not create $dest/html: $!\n";
-    my $anindex = "$dest/help/AnIndex";
+    my $tdir = file_path($dest, "help");
+    if(! -d $tdir) {
+	mkdir($tdir, $dir_mod) or die "Could not create " . $tdir.": $!\n";
+    }
+    $tdir = file_path($dest, "html");
+    if(! -d $tdir) {
+	mkdir($tdir, $dir_mod) or die "Could not create " . $tdir.": $!\n";
+    }
+    my $anindex = file_path($dest, "help", "AnIndex");
 
     my %alltitles;
     my $naliases;
     my $nmanfiles;
     my %firstlettersfound;
     my %internal;
-                           
+    my $tfile;
+
     foreach $manfile (@mandir) {
 	if($manfile =~ /\.Rd$/i){
 
@@ -302,8 +312,8 @@ sub build_index { # lib, dest
 		$main::title2file{$rdtitle} = $manfilebase;
 	    }
 
-	    while($text =~ s/\\(alias|name)\{\s*(.*)\s*\}//){
-		$alias = $2;
+	    while($text =~ s/\\alias\{\s*(.*)\s*\}//){
+		$alias = $1;
 		$alias =~ s/\\%/%/g;
 		if ($internal){
 		    $internal{$alias} = 1;
@@ -327,7 +337,7 @@ sub build_index { # lib, dest
 	}
     }
 
-    open anindex, "> ${anindex}" || die "Could not open ${anindex}";
+    open(anindex, "> ${anindex}") or die "Could not open ${anindex}";
     foreach $alias (sort foldorder keys %main::aliasnm) {
 	print anindex "$alias\t$main::aliasnm{$alias}\n";
     }
@@ -335,17 +345,17 @@ sub build_index { # lib, dest
 
 
     open(anindex, "< $anindex");
-    open(htmlfile, "> $dest/html/00Index.$HTML")
-	|| die "Could not open $dest/help/00Index.$HTML";
-    if($main::opt_chm) {
-	open(chmfile, "> $chmdir/00Index.$HTML") ||
-	    die "Could not open $chmdir/00Index.$HTML";
+    $tfile = file_path($dest, "html", "00Index".$HTML);
+    open(htmlfile, "> $tfile") or die "Could not open $tfile";
+    if($main::opt_chm) { # Windows only
+	open(chmfile, "> $chmdir/00Index$HTML") or
+	    die "Could not open $chmdir/00Index$HTML";
     }
 
     print htmlfile html_pagehead("$title", "../../../doc/html",
-				 "../../../doc/html/index.$HTML", "Top",
-				 "../../../doc/html/packages.$HTML",
-				 "Package List");
+				 "../../../doc/html/index$HTML", "Top",
+				 "../../../doc/html/packages$HTML",
+				 "Package List", "", "", "../../R.css");
 
     if($main::opt_chm) {
 	print chmfile chm_pagehead("$title");
@@ -393,10 +403,10 @@ sub build_index { # lib, dest
 	    } else { $current = $alias; $currentfile = $file;}
 
 	    my $title = striptitle($main::alltitles{$alias});
-	    print htmlfile "<tr><td width=\"25%\"><a href=\"$file.$HTML\">" .
+	    print htmlfile "<tr><td width=\"25%\"><a href=\"$file$HTML\">" .
 		encodealias($alias) . "</a></td>\n<td>$title</td></tr>\n";
 	    if($main::opt_chm) {
-		print chmfile "<tr><td width=\"25%\"><a href=\"$file.$HTML\">" .
+		print chmfile "<tr><td width=\"25%\"><a href=\"$file$HTML\">" .
 		    encodealias($alias) . "</a></td>\n<td>$title</td></tr>\n";
 	    }
 	}
@@ -449,10 +459,11 @@ sub html_alphabet
 
 sub html_pagehead
 {
-    my ($title, $top, $up, $uptext, $prev, $prevtext, $next, $nextext) = @_;
+    my ($title, $top, $up, $uptext, $prev, $prevtext, $next, $nextext, 
+	$cssloc) = @_;
 
     my $retval = "<html><head><title>R: $title</title>\n" .
-	"<link rel=\"stylesheet\" type=\"text/css\" href=\"../../R.css\">\n" .
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"$cssloc\">\n" .
 	"</head><body>\n" .
 	"<h1>$title " .
 	"<img class=\"toplogo\" src=\"$top/logo.jpg\" alt=\"[R logo]\"></h1>\n\n" .

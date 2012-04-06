@@ -2,14 +2,15 @@
 \alias{warning}
 \title{Warning Messages}
 \description{
-  Generates a warning message that corresponds to its argument and the
+  Generates a warning message that corresponds to its argument(s) and the
   expression or function from which it was called.
 }
 \usage{
-warning(message)
+warning(\dots)
 }
 \arguments{
-  \item{message}{character string (of length 1) or \code{NULL}.}
+  \item{\dots}{character vectors (which are pasted together with no
+    separator) or \code{NULL}.}
 }
 \details{
   The result \emph{depends} on the value of
@@ -27,7 +28,7 @@ warning(message)
 \seealso{
   \code{\link{stop}} for fatal errors,
   \code{\link{warnings}},
-  and \code{\link{options}(warn=..)}.
+  and \code{\link{options}} with argument \code{warn=}.
 }
 \examples{
 \testonly{eigenval <- 10 ^ -rnorm(1,m=6)

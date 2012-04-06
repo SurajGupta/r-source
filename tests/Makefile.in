@@ -20,6 +20,7 @@ test-src-gct = \
 	demos.R \
 	lm-tests.R \
 	primitive-funs.R \
+	ok-errors.R \
 	method-dispatch.R
 test-src-strict-1 = \
 	$(test-src-gct) \
@@ -41,6 +42,7 @@ test-src-internet = internet.R
 test-src-lapack = lapack.R
 test-src-nafns = nafns.R
 test-src-random = p-r-random-tests.R
+test-src-postscript = ps-tests.R
 
 test-src-reg-1 = \
 	reg-tests-1.R reg-tests-2.R reg-IO.R reg-IO2.R reg-plot.R
@@ -48,7 +50,8 @@ test-src-reg-auto =
 test-src-reg = $(test-src-reg-1) $(test-src-reg-auto)
 
 all-basic-tests = Examples Specific
-all-extra-tests = Internet Lapack Nafns Random Reg FF codoc undoc
+all-extra-tests = Internet Lapack Nafns Postscript Random Reg \
+  DocArgs FF Methods codoc undoc
 
 DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-strict-1) $(test-src-strict-1:.R=.Rout.save) \
@@ -57,11 +60,12 @@ DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-internet) internet.Rout.save \
 	$(test-src-lapack) \
 	$(test-src-nafns) \
+	$(test-src-postscript) ps-tests.Rout.save \
 	$(test-src-random) p-r-random-tests.Rout.save \
 	$(test-src-reg) reg-IO.Rout.save reg-IO2.Rout.save \
 	  reg-plot.Rout.save reg-tests-2.Rout.save \
 	gct-foot.R
-SUBDIRS = Examples
+SUBDIRS = Embedding Examples
 
 R = LC_ALL=C $(top_builddir)/bin/R --vanilla
 RDIFF = $(top_builddir)/bin/Rdiff
@@ -74,12 +78,13 @@ test-out-gct = $(test-src-gct:.R=.Rout-gct)
 test-out-internet = $(test-src-internet:.R=.Rout)
 test-out-lapack = $(test-src-lapack:.R=.Rout)
 test-out-nafns = $(test-src-nafns:.R=.Rout)
+test-out-postscript = $(test-src-postscript:.R=.Rout)
 test-out-random = $(test-src-random:.R=.Rout)
 test-out-reg = $(test-src-reg:.R=.Rout)
 
 test-out = $(test-src:.R=.Rout) $(test-out-gct) \
 	$(test-out-internet) $(test-out-lapack) $(test-out-nafns) \
-	$(test-out-random) $(test-out-reg)
+	$(test-out-random) $(test-out-postscript) $(test-out-reg)
 
 .SUFFIXES:
 .SUFFIXES: .R .Rin .Rout .Rout-gct
@@ -111,8 +116,9 @@ FORCE:
 
 .R.Rout:
 	@rm -f $@ $@.fail
-	@echo "running \`$<'"
-	@$(R) < $< > $@
+	@echo @ECHO_N@ "running code in \`$<' ...@ECHO_C@"
+	@$(R) < $< > $@ || (mv $@ $@.fail && exit 1)
+	@echo "@ECHO_T@ OK"
 	@if [ -f $(srcdir)/$@.save ] ; then \
 	  mv $@ $@.fail; \
 	  echo @ECHO_N@ \
@@ -165,22 +171,77 @@ test-Lapack:
 test-Nafns:
 	@echo "running tests of NA handling functions"
 	@$(MAKE) $(test-out-nafns) RVAL_IF_DIFF=0
+test-Postscript:
+	@echo "running tests of postscript() families"
+	@$(MAKE) $(test-out-postscript) RVAL_IF_DIFF=0
 test-Random:
 	@echo "running tests of random deviate generation"
 	@$(MAKE) $(test-out-random) RVAL_IF_DIFF=1
 test-Reg:
 	@echo "running regression tests"
 	@$(MAKE) $(test-out-reg) RVAL_IF_DIFF=0
+test-DocArgs:
+	@echo "checking whether arguments from usage are documented"
+	@for p in $(R_PKGS); do \
+	  out="package"; \
+	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  out=`(echo "library(tools)"; \
+                echo "checkDocArgs(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d'`; \
+	  if test -n "$${out}"; then \
+	    echo "@ECHO_T@ WARNING"; \
+	    echo; \
+	    echo "$${out}"; \
+	    echo; \
+	  else \
+	    echo "@ECHO_T@ OK"; \
+	  fi; \
+	done
+test-DocStyle:
+	@echo "checking usages for method documentation style"
+	@for p in $(R_PKGS); do \
+	  out="package"; \
+	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  out=`(echo "library(tools)"; \
+	        echo "checkDocStyle(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d'`; \
+	  if test -n "$${out}"; then \
+	    echo "@ECHO_T@ WARNING"; \
+	    echo; \
+	    echo "$${out}"; \
+	    echo; \
+	  else \
+	    echo "@ECHO_T@ OK"; \
+	  fi; \
+	done
 test-FF:
 	@echo "checking foreign function calls"
 	@for p in $(R_PKGS); do \
 	  out="package"; \
 	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
-	  out=`echo "checkFF(package = \"$${p}\")" | \
-	       $(R) -q | grep '^\..*'`; \
+	  out=`(echo "library(tools)"; \
+	        echo "checkFF(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d; /^loading/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
 	    echo "$${out}"; \
+	  else \
+	    echo "@ECHO_T@ OK"; \
+	  fi; \
+	done
+test-Methods:
+	@echo "checking generic/method consistency"
+	@for p in $(R_PKGS); do \
+	  out="package"; \
+	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
+	  out=`(echo "library(tools)"; \
+	        echo "checkMethods(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d'`; \
+	  if test -n "$${out}"; then \
+	    echo "@ECHO_T@ WARNING"; \
+	    echo; \
+	    echo "$${out}"; \
+	    echo; \
 	  else \
 	    echo "@ECHO_T@ OK"; \
 	  fi; \
@@ -190,11 +251,14 @@ test-codoc:
 	@for p in $(R_PKGS); do \
 	  out="package"; \
 	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
-	  out=`echo "codoc(\"$(top_srcdir)/src/library/$${p}\")" | \
-	       $(R) -q | egrep -e '^($$|\\$$| *\\[|Multiple|Error)'`; \
+	  out=`(echo "library(tools)"; \
+	        echo "codoc(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d; /^Using/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
+	    echo; \
 	    echo "$${out}"; \
+	    echo; \
 	  else \
 	    echo "@ECHO_T@ OK"; \
 	  fi; \
@@ -204,7 +268,9 @@ test-undoc:
 	@for p in $(R_PKGS); do \
 	  out="package"; \
 	  echo @ECHO_N@ "$${out} \`$${p}' ...@ECHO_C@"; \
-	  out=`echo "undoc(\"$${p}\")" | $(R) | grep '^ *\\['`; \
+	  out=`(echo "library(tools)"; \
+	        echo "undoc(package = \"$${p}\")") | \
+	       $(R) -q | sed '/^>/d; /^character/d'`; \
 	  if test -n "$${out}"; then \
 	    echo "@ECHO_T@ WARNING"; \
 	    echo "$${out}"; \
@@ -220,10 +286,13 @@ stamp-R: $(top_builddir)/bin/R.bin $(top_builddir)/library/base/R/base
 mostlyclean: clean
 clean:
 	@-(cd Examples; $(MAKE) $@)
+	@-(cd Embedding; $(MAKE) $@)
 	@rm -f stamp-R Makedeps Rplot* Rprof.out *.Rd data dumpdata.R \
 	  reg-plot.ps
+	@rm -rf anRpackage
 distclean: clean
 	@-(cd Examples; $(MAKE) $@)
+	@-(cd Embedding; $(MAKE) $@)
 	@rm -f Makefile $(test-out) $(test-src-auto) .RData
 maintainer-clean: distclean
 

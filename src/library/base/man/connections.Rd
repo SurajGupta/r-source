@@ -1,4 +1,5 @@
 \name{connections}
+\alias{connections}
 \alias{connection}
 \alias{file}
 \alias{pipe}
@@ -36,8 +37,8 @@ socketConnection(host = "localhost", port, server = FALSE,
                  blocking = FALSE, open = "a+",
                  encoding = getOption("encoding"))
 
-\method{open}{connection}(con, open = "r", blocking = TRUE)
-\method{close}{connection}(con, type = "rw")
+\method{open}{connection}(con, open = "r", blocking = TRUE, ...)
+\method{close}{connection}(con, type = "rw", ...)
 
 isOpen(con, rw = "")
 isIncomplete(con)
@@ -65,6 +66,7 @@ isIncomplete(con)
     specified by \code{origin}), or \code{NA}.}
   \item{rw}{character.  Empty or \code{"read"} or \code{"write"},
     partial matches allowed.}
+  \item{\dots}{arguments passed to or from other methods.}
 }
 \details{
   The first six functions create connections.  By default the connection
@@ -92,7 +94,7 @@ isIncomplete(con)
 
   Possible values for the mode \code{open} to open a connection are
   \describe{
-    \item{\code{"r"} or \code{"wt"}}{Open for reading in text mode.}
+    \item{\code{"r"} or \code{"rt"}}{Open for reading in text mode.}
     \item{\code{"w"} or \code{"wt"}}{Open for writing in text mode.}
     \item{\code{"a"} or \code{"at"}}{Open for appending in text mode.}
     \item{\code{"rb"}}{Open for reading in binary mode.}

@@ -19,6 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <RCarbon.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -39,9 +40,6 @@ static char *SaveString(SEXP sxp, int offset)
 }
 
 
-void InitEd(){
-}
-
 
 /*  Macintosh Device Driver Parameters:
  *  -----------------		cf with ../unix/X11/devX11.c
@@ -50,9 +48,16 @@ void InitEd(){
  *  height	= height in inches
  *  ps		= pointsize
  */
+ #include "RIntf.h"
+
+extern WindowPtr    Working_Window;
+extern Graphic_Ref gGReference[MAX_NUM_G_WIN + 1];
+
 SEXP do_Macintosh(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev = NULL;
+    SInt16 		WinIndex;
+    GEDevDesc *dd;
     char *display, *vmax;
     double height, width, ps;
     gcall = call;
@@ -68,18 +73,22 @@ SEXP do_Macintosh(SEXP call, SEXP op, SEXP args, SEXP env)
      R_CheckDeviceAvailable();
     /* Allocate and initialize the device driver data */
      BEGIN_SUSPEND_INTERRUPTS {
-      if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+      if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
 	   return 0;
     /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if (!MacDeviceDriver(dd, width, height, ps)) {
-	 free(dd);
+    dev->displayList = R_NilValue;
+
+    if (!MacDeviceDriver((DevDesc *)dev, width, height, ps)) {
+	 free(dev);
 	 errorcall(call, "unable to start device Macintosh\n");
     }
     gsetVar(install(".Device"), mkString("Macintosh"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    dd = GEcreateDevDesc(dev);
+    addDevice((DevDesc*)dd);
+    GEinitDisplayList(dd);
+    WinIndex = isGraphicWindow(Working_Window);
+    gGReference[WinIndex].gedevdesc = (Ptr)dd;
+
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

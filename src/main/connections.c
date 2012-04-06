@@ -26,6 +26,7 @@
 #include <Rconnections.h>
 #include <R_ext/Complex.h>
 #include <R_ext/R-ftp-http.h>
+#include <R_ext/RS.h>
 
 int R_OutputCon; /* used in printutils.c */
 
@@ -445,7 +446,11 @@ static Rconnection newfile(char *description, char *mode)
 #  include <sys/stat.h>
 # else
 #  include <types.h>
-#  include <stat.h>
+#  ifndef __MRC__
+#   include <stat.h>
+#  else
+#   include <mpw_stat.h>
+#  endif
 # endif /* mac */
 #endif
 
@@ -483,7 +488,6 @@ static void fifo_open(Rconnection con)
     else flags = O_WRONLY;
     if(!con->blocking) flags |= O_NONBLOCK;
     if(con->mode[0] == 'a') flags |= O_APPEND;
-    if(con->mode[0] == 'w') flags |= O_TRUNC;
     fd = open(name, flags);
     if(fd < 0) {
 	if(errno == ENXIO) error("fifo `%s' is not ready", name);
@@ -1992,7 +1996,7 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 	default:
 	    error("That type is unimplemented");
 	}
-	buf = R_alloc(len, size);
+	buf = R_chk_calloc(len, size); /* R_alloc(len, size); */
 	switch(TYPEOF(object)) {
 	case LGLSXP:
 	case INTSXP:
@@ -2074,6 +2078,7 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 	/* write it now */
 	n = con->write(buf, size, len, con);
 	if(n < len) warning("problem writing to connection");
+	Free(buf);
     }
 
     if(!wasopen) con->close(con);
@@ -2086,12 +2091,14 @@ static SEXP readFixedString(Rconnection con, int len)
     int  pos, m;
 
     buf = (char *) R_alloc(len+1, sizeof(char));
-    buf[len] = '\0';
     for(pos = 0; pos < len; pos++) {
 	p = buf + pos;
 	m = con->read(p, sizeof(char), 1, con);
-	if(!m) return R_NilValue;
+	if(!m) {
+	    if(pos == 0) return R_NilValue; else break;
+	}
     }
+    buf[pos] = '\0';
     return mkChar(buf);
 }
 

@@ -436,6 +436,22 @@ static void PrintExpression(SEXP s)
 
  * This is the "dispatching" function for  print.default()
  */
+
+static void PrintEnvir(SEXP rho)
+{
+    if (rho == R_GlobalEnv)
+	Rprintf("<environment: R_GlobalEnv>\n");
+    else if (R_IsPackageEnv(rho))
+	Rprintf("<environment: %s>\n",
+		CHAR(STRING_ELT(R_PackageEnvName(rho), 0)));
+#ifdef EXPERIMENTAL_NAMESPACES
+    else if (R_IsNamespaceEnv(rho))
+	Rprintf("<environment: namespace:%s>\n",
+		CHAR(STRING_ELT(R_NamespaceEnvName(rho), 0)));
+#endif
+    else Rprintf("<environment: %p>\n", rho);
+}
+
 void PrintValueRec(SEXP s,SEXP env)
 {
     int i;
@@ -470,11 +486,10 @@ void PrintValueRec(SEXP s,SEXP env)
 	if (TYPEOF(s) == CLOSXP) t = CLOENV(s);
 	else t = R_GlobalEnv;
 	if (t != R_GlobalEnv)
-	    Rprintf("<environment: %p>\n", t);
+	    PrintEnvir(t);
 	break;
     case ENVSXP:
-	if (s == R_GlobalEnv) Rprintf("<environment: R_GlobalEnv>\n");
-	else Rprintf("<environment: %p>\n", s);
+	PrintEnvir(s);
 	break;
     case PROMSXP:
 	Rprintf("<promise: %p>\n", s);
@@ -535,6 +550,9 @@ void PrintValueRec(SEXP s,SEXP env)
 	break;
     case EXTPTRSXP:
 	Rprintf("<pointer: %p>\n", R_ExternalPtrAddr(s));
+	break;
+    case WEAKREFSXP:
+	Rprintf("<weak reference>\n");
 	break;
     default:
 	UNIMPLEMENTED("PrintValueRec");
@@ -650,12 +668,12 @@ int F77_NAME(dblep0) (char *label, int *nchar, double *data, int *ndata)
     if(nc > 255) {
 	warning("invalid character length in dblepr");
 	nc = 0;
+    } else if(nc > 0) {
+	for (k = 0; k < nc; k++)
+	    Rprintf("%c", label[k]);
+	Rprintf("\n");
     }
-    for (k = 0; k < nc; k++) {
-	Rprintf("%c", label[k]);
-    }
-    Rprintf("\n");
-    printRealVector(data, *ndata, 1);
+    if(*ndata > 0) printRealVector(data, *ndata, 1);
     return(0);
 }
 
@@ -667,12 +685,12 @@ int F77_NAME(intpr0) (char *label, int *nchar, int *data, int *ndata)
     if(nc > 255) {
 	warning("invalid character length in intpr");
 	nc = 0;
+    } else if(nc > 0) {
+	for (k = 0; k < nc; k++)
+	    Rprintf("%c", label[k]);
+	Rprintf("\n");
     }
-    for (k = 0; k < nc; k++) {
-	Rprintf("%c", label[k]);
-    }
-    Rprintf("\n");
-    printIntegerVector(data, *ndata, 1);
+    if(*ndata > 0) printIntegerVector(data, *ndata, 1);
     return(0);
 }
 
@@ -686,15 +704,18 @@ int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 	warning("invalid character length in realpr");
 	nc = 0;
     }
-    ddata = malloc(nd*sizeof(double));
-    if(!ddata) error("memory allocation error in realpr");
-    for (k = 0; k < nd; k++) ddata[k] = (double) data[k];
-    for (k = 0; k < nc; k++) {
-	Rprintf("%c", label[k]);
+    else if(nc > 0) {
+	for (k = 0; k < nc; k++)
+	    Rprintf("%c", label[k]);
+	Rprintf("\n");
     }
-    Rprintf("\n");
-    printRealVector(ddata, nd, 1);
-    free(ddata);
+    if(nd > 0) {
+	ddata = malloc(nd*sizeof(double));
+	if(!ddata) error("memory allocation error in realpr");
+	for (k = 0; k < nd; k++) ddata[k] = (double) data[k];
+	printRealVector(ddata, nd, 1);
+	free(ddata);
+    }
     return(0);
 }
 
@@ -702,6 +723,5 @@ int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 
 void F77_NAME(xerbla)(char *srname, int *info)
 {
-    error("On entry to %6s parameter number %d had an illegal value",
-	  srname, *info);
+    error("LAPACK routine %6s gave error code %d", srname, *info);
 }

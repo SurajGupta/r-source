@@ -1,10 +1,24 @@
 \name{postscript}
+\alias{postscript}
+\alias{ps.options}
+\alias{.PostScript.Options}
+\alias{.ps.prolog}
 \title{PostScript Graphics}
+\description{
+  \code{postscript} starts the graphics device driver for producing
+  PostScript graphics.
+
+  The auxiliary function \code{ps.options} can be used to set and view
+  (if called without arguments) default values for the arguments to
+  \code{postscript}.
+}
 \synopsis{
 postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
            onefile = TRUE, family, \dots)
 ps.options(\dots, reset = FALSE, override.check = FALSE)
 }
+%% The definitive doc is the source :-)
+%% 	../../../main/devices.c  &   ../../../unix/devPS.c
 \usage{
 postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
            onefile = TRUE,
@@ -12,29 +26,13 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
            width, height, horizontal, pointsize,
            pagecentre, print.it, command)
 
-%  paper, horizontal, width, height, family, pointsize, bg, fg)
+% paper, horizontal, width, height, family, pointsize, bg, fg)
 ps.options(paper, horizontal, width, height, family, encoding,
            pointsize, bg, fg,
            onefile = TRUE, print.it = FALSE, append = FALSE,
            reset = FALSE, override.check = FALSE)
 .PostScript.Options
 }
-%% The definitive doc is the source :-)
-%% 	../../../main/devices.c  &   ../../../unix/devPS.c
-\description{
-  \code{postscript} starts the graphics device driver for producing
-  PostScript graphics.
-
-  The auxiliary function \code{ps.options} can be used to set and view
-  (if called without arguments)
-  default values for the arguments to \code{postscript}.  It needs to be
-  called before calling \code{postscript}, and the default values it
-  sets can be overridden by supplying arguments to \code{postscript}.
-}
-\alias{postscript}
-\alias{ps.options}
-\alias{.PostScript.Options}
-\alias{.ps.prolog}
 \arguments{
   \item{file}{a character string giving the name of the file.  If it is
     \code{""}, the output is piped to the command given by
@@ -44,11 +42,10 @@ ps.options(paper, horizontal, width, height, family, encoding,
     by \file{cmd}.
 #endif
 
-    For use with \code{onefile=FALSE} give a
-    \code{printf} format such as \code{"Rplot\%d.ps"} (the default in that
-    case).
+    For use with \code{onefile=FALSE} give a \code{printf} format such
+    as \code{"Rplot\%d.ps"} (the default in that case).
   }
-  \item{\dots}{further options for \code{postscript()} :}
+  \item{\dots}{further options for \code{postscript()}.}
   \item{paper}{the size of paper in the printer.  The choices are
     \code{"a4"}, \code{"letter"}, \code{"legal"} and
     \code{"executive"} (and these can be capitalized).
@@ -59,15 +56,12 @@ ps.options(paper, horizontal, width, height, family, encoding,
     if that is set and to \code{"a4"} if it is unset or empty.}
   \item{horizontal}{the orientation of the printed image, a
     logical. Defaults to true, that is landscape orientation.}
-  \item{width, height}{the width and height of the graphics region in inches.
-    The default is to use the entire page less a 0.25 inch border on
-    each side.}
-  \item{family}{the font family to be used. EITHER a single character string
-    which must be one of \code{"AvantGarde"},
-    \code{"Bookman"}, \code{"Courier"}, \code{"Helvetica"},
-    \code{"Helvetica-Narrow"}, \code{"NewCenturySchoolbook"},
-    \code{"Palatino"} or \code{"Times"}, OR a character vector of length
-    four. }
+  \item{width, height}{the width and height of the graphics region in
+    inches.  The default is to use the entire page less a 0.25 inch
+    border on each side.}
+  \item{family}{the font family to be used.  EITHER a single character
+    string OR a character vector of length
+    four or five.  See the section `Families'.}
   \item{encoding}{the name of an encoding file. Defaults to
 #ifdef unix
 "ISOLatin1.enc"
@@ -101,10 +95,10 @@ ps.options(paper, horizontal, width, height, family, encoding,
     \code{\link{check.options}}.  See the Examples.}
 }
 \details{
-  \code{postscript(..)} opens the file \code{file} and the PostScript
-  commands needed to plot any graphics requested are stored in that file.
-  This file can then be printed on a suitable device to obtain hard
-  copy.
+  \code{postscript} opens the file \code{file} and the PostScript
+  commands needed to plot any graphics requested are stored in that
+  file.  This file can then be printed on a suitable device to obtain
+  hard copy.
 
   A postscript plot can be printed via \code{postscript} in two ways.
   \enumerate{
@@ -122,28 +116,65 @@ ps.options(paper, horizontal, width, height, family, encoding,
   \code{"printcmd"} is empty and will give an error if \code{print.it=TRUE}
   is used.  Suitable commands to spool a PostScript file to a printer
   can be found in \file{RedMon} suite available from
-  \url{http://www.cs.wisc.edu/~ghost/rjl.html}.  The command will be run
-  in a minimized window.
+  \url{http://www.cs.wisc.edu/~ghost/index.html}.  The command will be run
+  in a minimized window.   GSView 4.x provides
+  \code{gsprint.exe} which may be even more convenient (it requires
+  GhostScript version 6.0 or later).
 #endif
 
   The postscript produced by \R is EPS (\emph{Encapsulated PostScript})
-  compatible, and can be included into other documents, e.g. into LaTeX,
-  using \code{\includegraphics{<filename>}}.  For use in this way you will
-  probably want to set \code{horizontal=FALSE, onefile=FALSE, paper="special"}.
+  compatible, and can be included into other documents, e.g., into
+  LaTeX, using \code{\includegraphics{<filename>}}.  For use in this way
+  you will probably want to set \code{horizontal = FALSE, onefile = FALSE,
+    paper = "special"}.
 
   Most of the PostScript prologue used is taken from the \R character
   vector \code{.ps.prolog}.  This is marked in the output, and can be
   changed by changing that vector.  (This is only advisable for
   PostScript experts.)
 
-  If the second form of argument \code{"family"} is used, it should be a
-  set of four paths to Adobe Font Metric files for the regular, bold,
-  italic and bold italic fonts to be used.  If these paths do not
-  contain the file separator, they are taken to refer to files in the
-  \R directory \file{R\_HOME/afm}.  Thus the default Helvetica family
-  can be specified by \code{family = c("hv______.afm",
-    "hvb_____.afm", "hvo_____.afm", "hvbo____.afm")}.
+  As ISOLatin1 encoding is used, \code{-} is set as a minus and not
+  as a hyphen.  Supply a hyphen (character 173) if that is what you
+  need.
 
+  \code{ps.options} needs to be called before calling \code{postscript},
+  and the default values it sets can be overridden by supplying
+  arguments to \code{postscript}.
+}
+
+\section{Families}{
+  The argument \code{family} specifies the font family to be used.
+  In normal use it is one of \code{"AvantGarde"},
+  \code{"Bookman"}, \code{"Courier"}, \code{"Helvetica"},
+  \code{"Helvetica-Narrow"}, \code{"NewCenturySchoolbook"},
+  \code{"Palatino"} or \code{"Times"}, and refers to the standard
+  Adobe PostScript fonts of those names which are included (or cloned)
+  in all common PostScript devices.
+
+  Many PostScript emulators (including those based on
+  \code{ghostscript}) use the URW equivalents of these fonts, which are
+  \code{"URWGothic"}, \code{"URWBookman"}, \code{"NimbusMon"},
+  \code{"NimbusSan"}, \code{"NimbusSanCond"}, \code{"CenturySch"},
+  \code{"URWPalladio"} and \code{"NimbusRom"} respectively.  If your
+  PostScript device is using URW fonts, you will obtain access to more
+  characters and more approriate metrics by using these names.  To make
+  these easier to remember, \code{"URWHelvetica" == "NimbusSan"} and
+  \code{"URWTimes" == "NimbusRom"} are also supported.
+
+  It is also possible to specify \code{family="ComputerModern"}. This
+  is intended to use with the Type 1 versions of the TeX CM fonts.  It
+  will normally be possible to include such output in TeX or LaTeX
+  provided it is processed with \code{dvips -Ppfb -j0} or the equivalent
+  on your system. (\code{-j0} turns off font subsetting.)
+  
+  If the second form of argument \code{"family"} is used, it should be a
+  character vector of four or five paths to Adobe Font Metric files for
+  the regular, bold, italic, bold italic and (optionally) symbol fonts to
+  be used.  If these paths do not contain the file separator, they are
+  taken to refer to files in the \R directory \file{R\_HOME/afm}.  Thus the
+  default Helvetica family can be specified by \code{family =
+    c("hv______.afm",
+    "hvb_____.afm", "hvo_____.afm", "hvbo____.afm", "sy______.afm")}.
   It is the user's responsibility to check that suitable fonts are made
   available, and that they contain the needed characters when
   re-encoded.  The fontnames used are taken from the
@@ -151,11 +182,8 @@ ps.options(paper, horizontal, width, height, family, encoding,
   including the PostScript plot file should either embed the font
   outlines (usually from \code{.pfb} or \code{.pfa} files) or
   use DSC comments to instruct the print spooler to do so.
-
-  As ISOLatin1 encoding is used, \code{-} is set as a minus and not
-  as a hyphen.  Supply a hyphen (character 173) if that is what you need.
-
 }
+
 \section{Encodings}{
   Encodings describe which glyphs are used to display the character codes
   (in the range 0--255).  By default \R uses ISOLatin1 encoding, and
@@ -186,9 +214,13 @@ ps.options(paper, horizontal, width, height, family, encoding,
   0255) in ISOLatin1.
 }
 \seealso{
-    \code{\link{Devices}},
-    {\code{\link{check.options}} which is called from both
-        \code{ps.options} and \code{postscript}}.
+  \code{\link{Devices}},
+  {\code{\link{check.options}} which is called from both
+    \code{ps.options} and \code{postscript}}.
+}
+\author{
+  Support for Computer Modern fonts is based on a contribution by
+  Brian D'Urso \email{durso@hussle.harvard.edu}.
 }
 \examples{
 \dontrun{
@@ -207,6 +239,15 @@ postscript(file=tempfile("R.ps"), print.it=TRUE)
 # produce the desired graph(s)
 dev.off()              # send plot file to the printer
 #endif
+
+# for URW PostScript devices
+postscript("foo.ps", family = "NimbusSan")
+
+## for inclusion in Computer Modern TeX documents, perhaps
+postscript("cm_test.eps", width = 4.0, height = 3.0,
+           horizontal = FALSE, onefile = FALSE, paper = "special",
+           family = "ComputerModern")
+## The resultant postscript file can be used by dvips -Ppfb -j0.
 }
 \testonly{
 xx <- seq(0, 7, length=701)
@@ -223,12 +264,5 @@ ps.options(width=0:12, onefile=0, bg=pi)
 # override the check for 'onefile', but not the others:
 str(ps.options(width=0:12, onefile=1, bg=pi,
                override.check = c(FALSE,TRUE,FALSE)))
-
-\dontrun{###  ---- Use TeX's Computer Modern fonts --- 
-## Only use alphanumeric chars here.
-postscript(family=paste("/myfonts/afm/",
-   c("cmr10", "cmbx10", "cmsl10", "cmbxsl10"), ".afm", sep=""))
-## The resultant postscript file can be used by dvips provided
-## font subsetting is disabled (by flag -j0)
-}}
+}
 \keyword{device}

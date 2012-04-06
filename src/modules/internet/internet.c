@@ -26,6 +26,17 @@
 #include <Rconnections.h>
 #include <R_ext/R-ftp-http.h>
 
+static void *in_R_HTTPOpen(const char *url, const int cacheOK);
+static int   in_R_HTTPRead(void *ctx, char *dest, int len);
+static void  in_R_HTTPClose(void *ctx);
+
+static void *in_R_FTPOpen(const char *url);
+static int   in_R_FTPRead(void *ctx, char *dest, int len);
+static void  in_R_FTPClose(void *ctx);
+
+
+#include <R_ext/Rinternet.h>
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -53,7 +64,7 @@ static void url_open(Rconnection con)
 
     switch(type) {
     case HTTPsh:
-	ctxt = in_R_HTTPOpen(url);
+	ctxt = in_R_HTTPOpen(url, 0);
 	if(ctxt == NULL) error("cannot open URL `%s'", url);
 	((Rurlconn)(con->private))->ctxt = ctxt;
 	break;
@@ -125,7 +136,7 @@ static size_t url_read(void *ptr, size_t size, size_t nitems,
 }
 
 
-Rconnection in_R_newurl(char *description, char *mode)
+static Rconnection in_R_newurl(char *description, char *mode)
 {
     Rconnection new;
 
@@ -185,15 +196,15 @@ typedef struct {
 #include <graphapp/ga.h>
 #endif
 
-/* download(url, destfile, quiet) */
+/* download(url, destfile, quiet, mode, cacheOK) */
 
 #define CPBUFSIZE 65536
 #define IBUFSIZE 4096
-SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
+static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, scmd, sfile, smode;
     char *url, *file, *mode;
-    int quiet, status = 0;
+    int quiet, status = 0, cacheOK;
 #ifdef Win32
     window wprog;
     progressbar pb;
@@ -202,25 +213,28 @@ SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
     checkArity(op, args);
-    scmd = CAR(args);
+    scmd = CAR(args); args = CDR(args);
     if(!isString(scmd) || length(scmd) < 1)
 	error("invalid `url' argument");
     if(length(scmd) > 1)
 	warning("only first element of `url' argument used");
     url = CHAR(STRING_ELT(scmd, 0));
-    sfile = CADR(args);
+    sfile = CAR(args); args = CDR(args);
     if(!isString(sfile) || length(sfile) < 1)
 	error("invalid `destfile' argument");
     if(length(sfile) > 1)
 	warning("only first element of `destfile' argument used");
     file = CHAR(STRING_ELT(sfile, 0));
-    IDquiet = quiet = asLogical(CADDR(args));
+    IDquiet = quiet = asLogical(CAR(args)); args = CDR(args);
     if(quiet == NA_LOGICAL)
 	error("invalid `quiet' argument");
-    smode =  CADDDR(args);
+    smode =  CAR(args); args = CDR(args);
     if(!isString(smode) || length(smode) != 1)
 	error("invalid `mode' argument");
     mode = CHAR(STRING_ELT(smode, 0));
+    cacheOK = asLogical(CAR(args));
+    if(cacheOK == NA_LOGICAL)
+	error("invalid `cacheOK' argument");
 
     if(strncmp(url, "file://", 7) == 0) {
 	FILE *in, *out;
@@ -255,7 +269,7 @@ SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
 	R_FlushConsole();
 #endif
-	ctxt = in_R_HTTPOpen(url);
+	ctxt = in_R_HTTPOpen(url, cacheOK);
 	if(ctxt == NULL) status = 1;
 	else {
 	    if(!quiet) REprintf("opened URL\n", url);
@@ -404,7 +418,7 @@ SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 
 #if defined(SUPPORT_LIBXML) && !defined(USE_WININET)
 
-void *in_R_HTTPOpen(const char *url)
+void *in_R_HTTPOpen(const char *url, int cacheOK)
 {
     inetconn *con;
     void *ctxt;
@@ -415,7 +429,7 @@ void *in_R_HTTPOpen(const char *url)
     if(timeout == NA_INTEGER || timeout <= 0) timeout = 60;
 
     RxmlNanoHTTPTimeout(timeout);
-    ctxt = RxmlNanoHTTPOpen(url, NULL);
+    ctxt = RxmlNanoHTTPOpen(url, NULL, cacheOK);
     if(ctxt != NULL) {
 	int rc = RxmlNanoHTTPReturnCode(ctxt);
 	if(rc != 200) {
@@ -444,12 +458,12 @@ void *in_R_HTTPOpen(const char *url)
     return con;
 }
 
-int in_R_HTTPRead(void *ctx, char *dest, int len)
+static int in_R_HTTPRead(void *ctx, char *dest, int len)
 {
     return RxmlNanoHTTPRead(((inetconn *)ctx)->ctxt, dest, len);
 }
 
-void in_R_HTTPClose(void *ctx)
+static void in_R_HTTPClose(void *ctx)
 {
     if(ctx) {
 	RxmlNanoHTTPClose(((inetconn *)ctx)->ctxt);
@@ -457,7 +471,7 @@ void in_R_HTTPClose(void *ctx)
     }
 }
 
-void *in_R_FTPOpen(const char *url)
+static void *in_R_FTPOpen(const char *url)
 {
     inetconn *con;
     void *ctxt;
@@ -487,12 +501,12 @@ void *in_R_FTPOpen(const char *url)
     return con;
 }
 
-int in_R_FTPRead(void *ctx, char *dest, int len)
+static int in_R_FTPRead(void *ctx, char *dest, int len)
 {
     return RxmlNanoFTPRead(((inetconn *)ctx)->ctxt, dest, len);
 }
 
-void in_R_FTPClose(void *ctx)
+static void in_R_FTPClose(void *ctx)
 {
     if(ctx) {
 	RxmlNanoFTPClose(((inetconn *)ctx)->ctxt);
@@ -532,7 +546,7 @@ InternetCallback(HINTERNET hInternet, DWORD context, DWORD Status,
 }
 #endif /* USE_WININET_ASYNC */
 
-void *in_R_HTTPOpen(const char *url)
+static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 {
     WIctxt  wictxt;
     DWORD status, d1 = 4, d2 = 0, d3 = 100;
@@ -651,7 +665,7 @@ void *in_R_HTTPOpen(const char *url)
     return (void *)wictxt;
 }
 
-int in_R_HTTPRead(void *ctx, char *dest, int len)
+static int in_R_HTTPRead(void *ctx, char *dest, int len)
 {
     DWORD nread;
 
@@ -675,7 +689,7 @@ int in_R_HTTPRead(void *ctx, char *dest, int len)
 }
 
 
-void in_R_HTTPClose(void *ctx)
+static void in_R_HTTPClose(void *ctx)
 {
     InternetCloseHandle(((WIctxt)ctx)->session);
     InternetCloseHandle(((WIctxt)ctx)->hand);
@@ -683,7 +697,7 @@ void in_R_HTTPClose(void *ctx)
     free(ctx);
 }
 
-void *in_R_FTPOpen(const char *url)
+static void *in_R_FTPOpen(const char *url)
 {
     WIctxt  wictxt;
 
@@ -767,43 +781,43 @@ void *in_R_FTPOpen(const char *url)
     return (void *)wictxt;
 }
 
-int in_R_FTPRead(void *ctx, char *dest, int len)
+static int in_R_FTPRead(void *ctx, char *dest, int len)
 {
     return R_HTTPRead(ctx, dest, len);
 }
 
-void in_R_FTPClose(void *ctx)
+static void in_R_FTPClose(void *ctx)
 {
     R_HTTPClose(ctx);
 }
 #endif
 
 #ifndef HAVE_INTERNET
-void *in_R_HTTPOpen(const char *url)
+static void *in_R_HTTPOpen(const char *url, const int cacheOK)
 {
     return NULL;
 }
 
-int in_R_HTTPRead(void *ctx, char *dest, int len)
+static int in_R_HTTPRead(void *ctx, char *dest, int len)
 {
     return -1;
 }
 
-void in_R_HTTPClose(void *ctx)
+static void in_R_HTTPClose(void *ctx)
 {
 }
 
-void *in_R_FTPOpen(const char *url)
+static void *in_R_FTPOpen(const char *url)
 {
     return NULL;
 }
 
-int in_R_FTPRead(void *ctx, char *dest, int len)
+static int in_R_FTPRead(void *ctx, char *dest, int len)
 {
     return -1;
 }
 
-void in_R_FTPClose(void *ctx)
+static void in_R_FTPClose(void *ctx)
 {
 }
 #endif
@@ -833,4 +847,40 @@ void RxmlMessage(int level, const char *format, ...)
     if(strlen(buf) > 0 && *p == '\n') *p = '\0';
     Rprintf(buf);
     Rprintf("\n");
+}
+
+#include "sock.h"
+
+#ifdef USE_WININET
+void R_init_internet2(DllInfo *info)
+#else
+void R_init_internet(DllInfo *info)
+#endif
+{
+    R_InternetRoutines *tmp;
+    tmp = (R_InternetRoutines*) malloc(sizeof(R_InternetRoutines));
+    if(!tmp) {
+	error("Cannot allocate memory for InternetRoutines structure");
+	return;
+    }
+
+    tmp->download = in_do_download;
+    tmp->newurl =  in_R_newurl;
+    tmp->newsock = in_R_newsock;
+
+    tmp->HTTPOpen = in_R_HTTPOpen;
+    tmp->HTTPRead = in_R_HTTPRead;
+    tmp->HTTPClose = in_R_HTTPClose;
+
+    tmp->FTPOpen = in_R_FTPOpen;
+    tmp->FTPRead = in_R_FTPRead;
+    tmp->FTPClose = in_R_FTPClose;
+
+    tmp->sockopen = in_Rsockopen;
+    tmp->socklisten = in_Rsocklisten;
+    tmp->sockconnect = in_Rsockconnect;
+    tmp->sockclose = in_Rsockclose;
+    tmp->sockread = in_Rsockread;
+    tmp->sockwrite = in_Rsockwrite;
+    R_setInternetRoutines(tmp);
 }

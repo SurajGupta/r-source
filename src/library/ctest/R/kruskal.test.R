@@ -1,6 +1,7 @@
 kruskal.test <- function(x, ...) UseMethod("kruskal.test")
 
-kruskal.test.default <- function(x, g)
+kruskal.test.default <-
+function(x, g, ...)
 {
     if (is.list(x)) {
         if (length(x) < 2)
@@ -11,7 +12,7 @@ kruskal.test.default <- function(x, g)
         l <- sapply(x, "length")
         if (any(l == 0))
             stop("all groups must contain data")
-        g <- as.factor(rep(1 : k, l))
+        g <- factor(rep(1 : k, l))
         x <- unlist(x)
     }
     else {
@@ -24,7 +25,7 @@ kruskal.test.default <- function(x, g)
         g <- g[OK]
         if (!all(is.finite(g)))
             stop("all group levels must be finite")
-        g <- as.factor(g)
+        g <- factor(g)
         k <- nlevels(g)
         if (k < 2)
             stop("all observations are in the same group")
@@ -52,7 +53,8 @@ kruskal.test.default <- function(x, g)
     return(RVAL)
 }
 
-kruskal.test.formula <- function(formula, data, subset, na.action)
+kruskal.test.formula <-
+function(formula, data, subset, na.action, ...)
 {
     if(missing(formula) || (length(formula) != 3))
         stop("formula missing or incorrect")

@@ -38,6 +38,7 @@
 #include "Startup.h"
 
 unsigned int R_max_memory = INT_MAX;
+Rboolean UseInternet2 = FALSE;
 
 SA_TYPE SaveAction = SA_DEFAULT;
 SA_TYPE RestoreAction = SA_RESTORE;
@@ -45,7 +46,7 @@ Rboolean LoadSiteFile = TRUE;
 Rboolean LoadInitFile = TRUE;
 Rboolean DebugInitFile = FALSE;
 
-UImode  CharacterMode;
+__declspec(dllexport) UImode  CharacterMode;
 int ConsoleAcceptCmd;
 void closeAllHlpFiles();
 void UnLoad_Unzip_Dll();
@@ -62,7 +63,7 @@ static DWORD mainThreadId;
 
 static char oldtitle[512];
 
-Rboolean UserBreak = FALSE;
+__declspec(dllexport) Rboolean UserBreak = FALSE;
 
 /* callbacks */
 static void (*R_CallBackHook) ();
@@ -351,6 +352,7 @@ void R_Busy(int which)
  */
 
 void R_dot_Last(void);		/* in main.c */
+void R_RunExitFinalizers(void);	/* in memory.c */
 
 
 void R_CleanUp(SA_TYPE saveact, int status, int runLast)
@@ -390,6 +392,7 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     default:
 	break;
     }
+    R_RunExitFinalizers();
     CleanEd();
     closeAllHlpFiles();
     KillAllDevices();
@@ -578,7 +581,7 @@ void R_SetWin32(Rstart Rp)
     /* Process .Renviron or ~/.Renviron, if it exists. 
        Only used here in embedded versions */
     if(!Rp->NoRenviron)
-	process_users_Renviron();
+	process_user_Renviron();
     _controlfp(_MCW_EM, _MCW_EM);
 }
 
@@ -684,7 +687,7 @@ int cmdlineoptions(int ac, char **av)
      * precedence:  command-line, .Renviron, inherited
      */
     if(!Rp->NoRenviron) {
-	process_users_Renviron();
+	process_user_Renviron();
 	Rp->NoRenviron = TRUE;
     }
     env_command_line(&ac, av);
@@ -701,6 +704,8 @@ int cmdlineoptions(int ac, char **av)
 		Rp->R_Interactive = TRUE;
 		Rp->ReadConsole = ThreadedReadConsole;
                 InThreadReadConsole = FileReadConsole;
+	    } else if (!strcmp(*av, "--internet2")) {
+		UseInternet2 = TRUE;
 	    } else if (!strcmp(*av, "--mdi")) {
 		MDIset = 1;
 	    } else if (!strcmp(*av, "--sdi") || !strcmp(*av, "--no-mdi")) {

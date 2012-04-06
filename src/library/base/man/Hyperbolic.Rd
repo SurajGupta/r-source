@@ -28,13 +28,13 @@ arc-cosine, arc-sine, arc-tangent.
 }
 \examples{
 Ceps <- .Machine$double.eps # ``Computer epsilon''
-x <- rnorm(500)
+x <- seq(-3, 3, len=200)
 stopifnot(
- abs(cosh(x) - (exp(x) + exp(-x))/2) < 10*Ceps,
- abs(sinh(x) - (exp(x) - exp(-x))/2) < 10*Ceps,
- Mod(cosh(x) - cos(1i*x))	< 10*Ceps,
- Mod(sinh(x) - sin(1i*x)/1i) 	< 10*Ceps,
- abs(tanh(x)*cosh(x) - sinh(x)) < 10*Ceps
+ abs(cosh(x) - (exp(x) + exp(-x))/2) < 20*Ceps,
+ abs(sinh(x) - (exp(x) - exp(-x))/2) < 20*Ceps,
+ Mod(cosh(x) - cos(1i*x))	< 20*Ceps,
+ Mod(sinh(x) - sin(1i*x)/1i) 	< 20*Ceps,
+ abs(tanh(x)*cosh(x) - sinh(x)) < 20*Ceps
 )
 
 ## Inverse:

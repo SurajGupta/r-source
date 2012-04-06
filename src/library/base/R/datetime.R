@@ -7,7 +7,14 @@ as.POSIXlt <- function(x, tz = "")
 {
     fromchar <- function(x) {
 	xx <- x[1]
-	if(!is.na(strptime(xx, f <- "%Y-%m-%d %H:%M:%S")) ||
+        if(is.na(xx)) {
+            j <- 1
+            while(is.na(xx) && (j <- j+1) <= length(x))
+                xx <- x[j]
+            if(is.na(xx)) f <- "%Y-%m-%d" # all NAs
+        }
+	if(is.na(xx) ||
+           !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M:%S")) ||
 	   !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M:%S")) ||
 	   !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M")) ||
 	   !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M")) ||
@@ -24,6 +31,7 @@ as.POSIXlt <- function(x, tz = "")
     if(inherits(x, "POSIXlt")) return(x)
     if(inherits(x, "date") || inherits(x, "dates")) x <- as.POSIXct(x)
     if(is.character(x)) return(fromchar(x))
+    if(is.factor(x))	return(fromchar(as.character(x)))
     if(!inherits(x, "POSIXct"))
 	stop(paste("Don't know how to convert `", deparse(substitute(x)),
 		   "' to class \"POSIXlt\"", sep=""))
@@ -64,9 +72,10 @@ as.POSIXct.POSIXlt <- function(x, tz = "")
 as.POSIXct.default <- function(x, tz = "")
 {
     if(inherits(x, "POSIXct")) return(x)
-    if(is.character(x)) return(as.POSIXct(as.POSIXlt(x), tz))
+    if(is.character(x) || is.factor(x))
+	return(as.POSIXct(as.POSIXlt(x), tz))
     stop(paste("Don't know how to convert `", deparse(substitute(x)),
-               "' to class \"POSIXct\"", sep=""))
+	       "' to class \"POSIXct\"", sep=""))
 }
 
 format.POSIXlt <- function(x, format = "", usetz = FALSE, ...)
@@ -80,7 +89,7 @@ format.POSIXlt <- function(x, format = "", usetz = FALSE, ...)
     .Internal(format.POSIXlt(x, format, usetz))
 }
 
-strftime <- .Alias(format.POSIXlt)
+strftime <- format.POSIXlt
 
 strptime <- function(x, format)
     .Internal(strptime(x, format))
@@ -149,7 +158,7 @@ summary.POSIXlt <- function(object, digits = 15, ...)
     if (nargs() == 1) stop("unary - is not defined for POSIXt objects")
     if(inherits(e2, "POSIXt")) return(difftime(e1, e2))
     if (inherits(e2, "difftime")) e2 <- unclass(coerceTimeUnit(e2))
-    if(!is.null(class(e2)))
+    if(!is.null(attr(e2, "class")))
         stop("can only subtract numbers from POSIXt objects")
     structure(unclass(as.POSIXct(e1)) - e2, class = c("POSIXt", "POSIXct"))
 }
@@ -222,31 +231,33 @@ function(x, ..., value) {
 
 as.character.POSIXt <- function(x, ...) format(x, ...)
 
-str.POSIXt <- function(x, ...) {
-    cl <- class(x)
+str.POSIXt <- function(object, ...) {
+    cl <- class(object)
     cat("`", cl[min(2, length(cl))],"', format:", sep = "")
-    str(format(x), ...)
+    str(format(object), ...)
 }
 
-as.data.frame.POSIXct <- .Alias(as.data.frame.vector)
+as.data.frame.POSIXct <- as.data.frame.vector
 
 is.na.POSIXlt <- function(x) is.na(as.POSIXct(x))
 
 c.POSIXct <- function(..., recursive=FALSE)
-    structure(c(unlist(lapply(list(...), unclass))), class="POSIXct")
+    structure(c(unlist(lapply(list(...), unclass))),
+              class=c("POSIXt","POSIXct"))
 
 ## we need conversion to POSIXct as POSIXlt objects can be in different tz.
 c.POSIXlt <- function(..., recursive=FALSE)
     as.POSIXlt(do.call("c", lapply(list(...), as.POSIXct)))
 
 ## force absolute comparisons
-all.equal.POSIXct <- function(..., scale=1)
+all.equal.POSIXct <- function(target, current, ..., scale=1)
     NextMethod("all.equal")
 
 
-axis.POSIXct <- function(side, x, format, ...)
+axis.POSIXct <- function(side, x, at, format, ...)
 {
-    x <- as.POSIXct(x)
+    mat <- missing(at)
+    if(!mat) x <- as.POSIXct(at) else x <- as.POSIXct(x)
     range <- par("usr")[if(side %%2) 1:2 else 3:4]
     ## find out the scale involved
     d <- range[2] - range[1]
@@ -292,22 +303,23 @@ axis.POSIXct <- function(side, x, format, ...)
         z <- as.POSIXct(zz)
         if(missing(format)) format <- "%Y"
     }
+    if(!mat) z <- x[is.finite(x)] # override changes
     z <- z[z >= range[1] & z <= range[2]]
     labels <- format(z, format = format)
     axis(side, at = z, labels = labels, ...)
 }
 
-plot.POSIXct <- function(x, y, xlab = "", ...)
+plot.POSIXct <- function(x, y, xlab = "", xaxt = par("xaxt"), ...)
 {
     plot.default(x, y, xaxt = "n", xlab = xlab, ...)
-    axis.POSIXct(1, x)
+    if(xaxt != "n") axis.POSIXct(1, x)
 }
 
-plot.POSIXlt <- function(x, y, xlab = "", ...)
+plot.POSIXlt <- function(x, y, xlab = "",  xaxt = par("xaxt"), ...)
 {
     x <- as.POSIXct(x)
     plot.default(x, y, xaxt = "n", xlab = xlab, ...)
-    axis.POSIXct(1, x)
+    if(xaxt != "n") axis.POSIXct(1, x)
 }
 
 ISOdatetime <- function(year, month, day, hour, min, sec, tz="")
@@ -420,7 +432,7 @@ Ops.POSIXlt <- function(e1, e2)
 ## ----- convenience functions -----
 
 seq.POSIXt <-
-    function(from, to, by, length.out = NULL, along.with = NULL)
+    function(from, to, by, length.out = NULL, along.with = NULL, ...)
 {
     if (missing(from)) stop("`from` must be specified")
     if (!inherits(from, "POSIXt")) stop("`from' must be a POSIXt object")
@@ -500,7 +512,7 @@ seq.POSIXt <-
 }
 
 cut.POSIXt <-
-    function (x, breaks, labels = NULL, start.on.monday = TRUE)
+    function (x, breaks, labels = NULL, start.on.monday = TRUE, ...)
 {
     if(!inherits(x, "POSIXt")) stop("`x' must be a date-time object")
     x <- as.POSIXct(x)

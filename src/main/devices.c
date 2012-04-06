@@ -61,10 +61,11 @@ static char *SaveString(SEXP sxp, int offset)
 
 SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev = NULL;
+    GEDevDesc *dd;
     char *vmax;
     char *file, *paper, *family=NULL, *bg, *fg, *cmd;
-    char *afms[4], *encoding;
+    char *afms[5], *encoding;
     int i, horizontal, onefile, pagecentre, printit;
     double height, width, ps;
     SEXP fam;
@@ -74,14 +75,14 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
     file = SaveString(CAR(args), 0);  args = CDR(args);
     paper = SaveString(CAR(args), 0); args = CDR(args);
 
-    /* `family' can be either one string or a 4-vector of afmpaths. */
+    /* `family' can be either one string or a 5-vector of afmpaths. */
     fam = CAR(args); args = CDR(args);
     if(length(fam) == 1) 
 	family = SaveString(fam, 0);
-    else if(length(fam) == 4) {
+    else if(length(fam) == 5) {
 	if(!isString(fam)) errorcall(call, "invalid `family' parameter");
 	family = "User";
-	for(i = 0; i < 4; i++) afms[i] = SaveString(fam, i);
+	for(i = 0; i < 5; i++) afms[i] = SaveString(fam, i);
     } else 
 	errorcall(call, "invalid `family' parameter");
     
@@ -101,20 +102,20 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
 
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dd->displayList = R_NilValue;
-	GInit(&dd->dp);
-	if(!PSDeviceDriver(dd, file, paper, family, afms, encoding, bg, fg,
+	dev->displayList = R_NilValue;
+	if(!PSDeviceDriver((DevDesc*) dev, file, paper, family, afms, encoding, bg, fg,
 			   width, height, (double)horizontal, ps, onefile,
 			   pagecentre, printit, cmd)) {
-	    free(dd);
+	    free(dev);
 	    errorcall(call, "unable to start device PostScript");
 	}
 	gsetVar(install(".Device"), mkString("postscript"), R_NilValue);
-	addDevice(dd);
-	initDisplayList(dd);
+	dd = GEcreateDevDesc(dev);
+	addDevice((DevDesc*) dd);
+	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -132,7 +133,8 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev;
+    GEDevDesc *dd;
     char *vmax;
     char *file, *bg, *fg;
     double height, width;
@@ -150,18 +152,19 @@ SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
 
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	if (!(dev = (NewDevDesc *) calloc(1,sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dd->displayList = R_NilValue;
-	GInit(&dd->dp);
-	if(!PicTeXDeviceDriver(dd, file, bg, fg, width, height, debug)) {
-	    free(dd);
+	dev->displayList = R_NilValue;
+	if(!PicTeXDeviceDriver((DevDesc*) dev, file, bg, fg, 
+			       width, height, debug)) {
+	    free(dev);
 	    errorcall(call, "unable to start device PicTeX");
 	}
 	gsetVar(install(".Device"), mkString("pictex"), R_NilValue);
-	addDevice(dd);
-	initDisplayList(dd);
+	dd = GEcreateDevDesc(dev);
+	addDevice((DevDesc*) dd);
+	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -186,7 +189,8 @@ SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_XFig(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev = NULL;
+    GEDevDesc *dd;
     char *vmax;
     char *file, *paper, *family, *bg, *fg;
     int horizontal, onefile, pagecentre;
@@ -209,19 +213,19 @@ SEXP do_XFig(SEXP call, SEXP op, SEXP args, SEXP env)
 
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dd->displayList = R_NilValue;
-	GInit(&dd->dp);
-	if(!XFigDeviceDriver(dd, file, paper, family, bg, fg, width, height,
+	dev->displayList = R_NilValue;
+	if(!XFigDeviceDriver((DevDesc*) dev, file, paper, family, bg, fg, width, height,
 			     (double)horizontal, ps, onefile, pagecentre)) {
-	    free(dd);
+	    free(dev);
 	    errorcall(call, "unable to start device xfig");
 	}
 	gsetVar(install(".Device"), mkString("xfig"), R_NilValue);
-	addDevice(dd);
-	initDisplayList(dd);
+	dd = GEcreateDevDesc(dev);
+	addDevice((DevDesc*) dd);
+	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -242,7 +246,8 @@ SEXP do_XFig(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_PDF(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    DevDesc *dd;
+    NewDevDesc *dev = NULL;
+    GEDevDesc *dd;
     char *vmax;
     char *file, *encoding, *family, *bg, *fg;
     double height, width, ps;
@@ -262,19 +267,19 @@ SEXP do_PDF(SEXP call, SEXP op, SEXP args, SEXP env)
 
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dd->displayList = R_NilValue;
-	GInit(&dd->dp);
-	if(!PDFDeviceDriver(dd, file, family, encoding, bg, fg, 
+	dev->displayList = R_NilValue;
+	if(!PDFDeviceDriver((DevDesc*) dev, file, family, encoding, bg, fg, 
 			    width, height, ps, onefile)) {
-	    free(dd);
+	    free(dev);
 	    errorcall(call, "unable to start device pdf");
 	}
 	gsetVar(install(".Device"), mkString("pdf"), R_NilValue);
-	addDevice(dd);
-	initDisplayList(dd);
+	dd = GEcreateDevDesc(dev);
+	addDevice((DevDesc*) dd);
+	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

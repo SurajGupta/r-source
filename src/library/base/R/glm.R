@@ -131,9 +131,15 @@ glm.fit <-
     validmu <- family$validmu
     if (is.null(validmu))
 	validmu <- function(mu) TRUE
-    if(is.null(mustart))
+    if(is.null(mustart)) {
 	## next line calculates mustart and may change y and weights
+        ## and set n.
 	eval(family$initialize)
+    } else {
+        mukeep <- mustart
+	eval(family$initialize)
+        mustart <- mukeep
+    }
     if (NCOL(y) > 1)
 	stop("y must be univariate unless binomial")
     eta <-
@@ -157,7 +163,7 @@ glm.fit <-
     ##------------- THE Iteratively Reweighting L.S. iteration -----------
     for (iter in 1:control$maxit) {
 	good <- weights > 0
-        varmu <- variance(mu)[good]
+	varmu <- variance(mu)[good]
 	if (any(is.na(varmu)))
 	    stop("NAs in V(mu)")
 	if (any(varmu == 0))
@@ -165,7 +171,7 @@ glm.fit <-
 	mu.eta.val <- mu.eta(eta)
 	if (any(is.na(mu.eta.val[good])))
 	    stop("NAs in d(mu)/d(eta)")
-        ## drop observations for which w will be zero
+	## drop observations for which w will be zero
 	good <- (weights > 0) & (mu.eta.val != 0)
 
 	if (all(!good)) {
@@ -254,12 +260,12 @@ glm.fit <-
     if (boundary) warning("Algorithm stopped at boundary value")
     eps <- 10*.Machine$double.eps
     if (family$family == "binomial") {
-        if (any(mu > 1 - eps) || any(mu < eps))
-            warning("fitted probabilities numerically 0 or 1 occurred")
+	if (any(mu > 1 - eps) || any(mu < eps))
+	    warning("fitted probabilities numerically 0 or 1 occurred")
     }
     if (family$family == "poisson") {
-        if (any(mu < eps))
-            warning("fitted rates numerically 0 occurred")
+	if (any(mu < eps))
+	    warning("fitted rates numerically 0 occurred")
     }
     ## If X matrix was not full rank then columns were pivoted,
     ## hence we need to re-label the names ...
@@ -309,6 +315,7 @@ glm.fit <-
 	##Should not be necessary: --pd
 	##if(resdf>0) aic(y, n, mu, weights, dev) + 2*fit$rank else -Inf
 	aic(y, n, mu, weights, dev) + 2*fit$rank
+	##     ^^ is only initialize()d for "binomial" [yuck!]
     list(coefficients = coef, residuals = residuals, fitted.values = mu,
 	 effects = fit$effects, R = Rmat, rank = fit$rank,
 	 qr = fit[c("qr", "rank", "qraux", "pivot", "tol")], family = family,
@@ -380,7 +387,7 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
 	    ## explanatory variables up to i are kept in the model
 	    ## use method from glm to find residual deviance
 	    ## and df for each sequential fit
-	    fit <- method(x=x[, varseq <= i],
+	    fit <- method(x=x[, varseq <= i, drop = FALSE],
 			  y=object$y,
 			  weights=object$prior.weights,
 			  start	 =object$start,
@@ -423,42 +430,42 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
 }
 
 
-anova.glmlist <- function(objects, dispersion=NULL, test=NULL)
+anova.glmlist <- function(object, ..., dispersion=NULL, test=NULL)
 {
 
     ## find responses for all models and remove
     ## any models with a different response
 
-    responses <- as.character(lapply(objects, function(x) {
+    responses <- as.character(lapply(object, function(x) {
 	deparse(formula(x)[[2]])} ))
     sameresp <- responses==responses[1]
     if(!all(sameresp)) {
-	objects <- objects[sameresp]
+	object <- object[sameresp]
 	warning(paste("Models with response", deparse(responses[!sameresp]),
 		      "removed because response differs from",
 		      "model 1"))
     }
 
-    ns <- sapply(objects, function(x) length(x$residuals))
+    ns <- sapply(object, function(x) length(x$residuals))
     if(any(ns != ns[1]))
         stop("models were not all fitted to the same size of dataset")
 
     ## calculate the number of models
 
-    nmodels <- length(objects)
+    nmodels <- length(object)
     if(nmodels==1)
-	return(anova.glm(objects[[1]], dispersion=dispersion, test=test))
+	return(anova.glm(object[[1]], dispersion=dispersion, test=test))
 
     ## extract statistics
 
-    resdf  <- as.numeric(lapply(objects, function(x) x$df.residual))
-    resdev <- as.numeric(lapply(objects, function(x) x$deviance))
+    resdf  <- as.numeric(lapply(object, function(x) x$df.residual))
+    resdev <- as.numeric(lapply(object, function(x) x$deviance))
 
     ## construct table and title
 
     table <- data.frame(resdf, resdev, c(NA, -diff(resdf)),
                         c(NA, -diff(resdev)) )
-    variables <- lapply(objects, function(x)
+    variables <- lapply(object, function(x)
                         paste(deparse(formula(x)), collapse="\n") )
     dimnames(table) <- list(1:nmodels, c("Resid. Df", "Resid. Dev", "Df",
 					 "Deviance"))
@@ -469,7 +476,7 @@ anova.glmlist <- function(objects, dispersion=NULL, test=NULL)
     ## calculate test statistic if needed
 
     if(!is.null(test)) {
-	bigmodel <- objects[[order(resdf)[1]]]
+	bigmodel <- object[[order(resdf)[1]]]
         dispersion <- summary(bigmodel, dispersion=dispersion)$dispersion
         df.dispersion <- if (dispersion == 1) Inf else min(resdf)
 	table <- stat.anova(table = table, test = test,
@@ -507,7 +514,7 @@ stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
 summary.glm <- function(object, dispersion = NULL,
 			correlation = FALSE, ...)
 {
-    Qr <- .Alias(object$qr)
+    Qr <- object$qr
     est.disp <- FALSE
     df.r <- object$df.residual
     if(is.null(dispersion))	# calculate dispersion if needed
@@ -643,15 +650,15 @@ residuals.glm <-
 {
     type <- match.arg(type)
     y <- object$y
-    r <- .Alias(object$residuals)
-    mu	<- .Alias(object$fitted.values)
-    wts <- .Alias(object$prior.weights)
+    r <- object$residuals
+    mu	<- object$fitted.values
+    wts <- object$prior.weights
     res <- switch(type,
                   deviance = if(object$df.res > 0) {
                       d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
                       ifelse(y > mu, d.res, -d.res)
                   } else rep(0, length(mu)),
-                  pearson = (y-mu)/sqrt(object$weights),
+                  pearson = (y-mu)*sqrt(wts)/sqrt(object$family$variance(mu)),
                   working = r,
                   response = y - mu,
                   partial = r + predict(object,type="terms")

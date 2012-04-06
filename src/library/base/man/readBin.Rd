@@ -62,6 +62,9 @@ writeChar(object, con, nchars = nchar(object), eos = "")
   zero-terminated character strings.  \code{readChar} and
   \code{writeChar} allow more flexibility, and can also be used on
   text-mode connections.
+
+  Handling \R's missing and special (\code{Inf}, \code{-Inf} and
+  \code{NaN} values is discussed in the \emph{R Data Import/Export} manual.
 }
 
 \note{
@@ -79,7 +82,7 @@ writeChar(object, con, nchars = nchar(object), eos = "")
   from the file.
 
   If the character length requested for \code{readChar} is longer than
-  the string, \code{nul}-padding is used.
+  the string, as from version 1.4.0 what is available is returned.
 }
 
 \value{
@@ -92,6 +95,8 @@ writeChar(object, con, nchars = nchar(object), eos = "")
   For \code{writeBin} and \code{writeChar}, none.
 }
 \seealso{
+  The \emph{R Data Import/Export} manual.
+
   \code{\link{connections}}, \code{\link{readLines}},
   \code{\link{writeLines}}.
 

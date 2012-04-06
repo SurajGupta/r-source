@@ -109,7 +109,7 @@ drop.terms <- function(termobj, dropx=NULL, keep.response = FALSE)
 }
 
 terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
-			  neg.out = TRUE, keep.order = FALSE)
+			  neg.out = TRUE, keep.order = FALSE, ...)
 {
     fixFormulaObject <- function(object) {
 	tmp <- attr(terms(object), "term.labels")
@@ -149,7 +149,7 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
 
 coef <- function(object, ...) UseMethod("coef")
 coef.default <- function(object, ...) object$coefficients
-coefficients <- .Alias(coef)
+coefficients <- coef
 
 residuals <- function(object, ...) UseMethod("residuals")
 residuals.default <- function(object, ...)
@@ -157,7 +157,7 @@ residuals.default <- function(object, ...)
     if(is.null(object$na.action)) object$residuals
     else naresid(object$na.action, object$residuals)
 }
-resid <- .Alias(residuals)
+resid <- residuals
 
 deviance <- function(object, ...) UseMethod("deviance")
 deviance.default <- function(object, ...) object$deviance
@@ -168,7 +168,7 @@ fitted.default <- function(object, ...)
     if(is.null(object$na.action)) object$fitted
     else napredict(object$na.action, object$fitted)
 }
-fitted.values <- .Alias(fitted)
+fitted.values <- fitted
 
 anova <- function(object, ...)UseMethod("anova")
 
@@ -177,12 +177,13 @@ effects <- function(object, ...)UseMethod("effects")
 weights <- function(object, ...)UseMethod("weights")
 
 df.residual <- function(object, ...)UseMethod("df.residual")
+df.residual.default <- function(object, ...) object$df.residual
 
 variable.names <- function(object, ...) UseMethod("variable.names")
-variable.names.default <- .Alias(colnames)
+variable.names.default <- function(object, ...) colnames(object)
 
 case.names <- function(object, ...) UseMethod("case.names")
-case.names.default <- .Alias(rownames)
+case.names.default <- function(object, ...) rownames(object)
 
 offset <- function(object) object
 ## ?
@@ -213,9 +214,11 @@ model.frame.default <-
     }
     if(missing(data))
 	data <- environment(formula)
-    else if (!is.data.frame(data) && !is.environment(data) && !is.null(class(data)))
+    else if (!is.data.frame(data) && !is.environment(data) && !is.null(attr(data, "class")))
         data <- as.data.frame(data)
-    env<-environment(formula)
+    else if (is.array(data))
+        stop("`data' must been a data.frame, not a matrix or  array")
+    env <- environment(formula)
     if(!inherits(formula, "terms"))
 	formula <- terms(formula, data = data)
     rownames <- attr(data, "row.names")
@@ -271,39 +274,50 @@ model.offset <- function(x) {
 }
 
 model.matrix <- function(object, ...) UseMethod("model.matrix")
-model.matrix.default <- function(formula, data = environment(formula),
-				 contrasts.arg = NULL, xlev = NULL)
+model.matrix.default <- function(object, data = environment(object),
+				 contrasts.arg = NULL, xlev = NULL, ...)
 {
-    t <- terms(formula)
+    t <- terms(object)
     if (is.null(attr(data, "terms")))
-	data <- model.frame(formula, data, xlev=xlev)
+	data <- model.frame(object, data, xlev=xlev)
     else {
 	reorder <- match(as.character(attr(t,"variables"))[-1],names(data))
 	if (any(is.na(reorder)))
 	    stop("model frame and formula mismatch in model.matrix()")
 	data <- data[,reorder, drop=FALSE]
     }
-    contr.funs <- as.character(getOption("contrasts"))
-    isF <- sapply(data, is.factor)[-1]
-    isOF <- sapply(data, is.ordered)
-    namD <- names(data)
-    for(nn in namD[-1][isF]) # drop response
-	if(is.null(attr(data[[nn]], "contrasts")))
-	    contrasts(data[[nn]]) <- contr.funs[1 + isOF[nn]]
-    ## it might be safer to have numerical contrasts:
-    ##	  get(contr.funs[1 + isOF[nn]])(nlevels(data[[nn]]))
-    if (!is.null(contrasts.arg) && is.list(contrasts.arg)) {
-	if (is.null(namC <- names(contrasts.arg)))
-	    stop("invalid contrasts argument")
-	for (nn in namC) {
-	    if (is.na(ni <- match(nn, namD)))
-		warning(paste("Variable", nn, "absent, contrast ignored"))
-	    else contrasts(data[[ni]]) <- contrasts.arg[[nn]]
-	}
+    int <- attr(t, "response")
+    if(length(data)) { # no rhs terms, so skip all this
+        contr.funs <- as.character(getOption("contrasts"))
+        isF <- sapply(data, function(x) is.factor(x) || is.logical(x) )
+        isF[int] <- FALSE
+        isOF <- sapply(data, is.ordered)
+        namD <- names(data)
+        for(nn in namD[isF])            # drop response
+            if(is.null(attr(data[[nn]], "contrasts")))
+                contrasts(data[[nn]]) <- contr.funs[1 + isOF[nn]]
+        ## it might be safer to have numerical contrasts:
+        ##	  get(contr.funs[1 + isOF[nn]])(nlevels(data[[nn]]))
+        if (!is.null(contrasts.arg) && is.list(contrasts.arg)) {
+            if (is.null(namC <- names(contrasts.arg)))
+                stop("invalid contrasts argument")
+            for (nn in namC) {
+                if (is.na(ni <- match(nn, namD)))
+                    warning(paste("Variable", nn, "absent, contrast ignored"))
+                else {
+                    ca <- contrasts.arg[[nn]]
+                    if(is.matrix(ca)) contrasts(data[[ni]], ncol(ca)) <- ca
+                    else contrasts(data[[ni]]) <- contrasts.arg[[nn]]
+                }
+            }
+        }
+    } else { # internal model.matrix needs some variable
+        isF <-  F
+        data <- list(x=rep(0, nrow(data)))
     }
     ans <- .Internal(model.matrix(t, data))
     cons <- if(any(isF))
-	lapply(data[-1][isF], function(x) attr(x,  "contrasts"))
+	lapply(data[isF], function(x) attr(x,  "contrasts"))
     else NULL
     attr(ans, "contrasts") <- cons
     ans

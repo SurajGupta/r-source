@@ -91,8 +91,6 @@ void onsigusr1()
     }
 
 
-    if (R_Inputfile != NULL)
-	fclose(R_Inputfile);
     R_ResetConsole();
     R_FlushConsole();
     R_ClearerrConsole();
@@ -103,7 +101,7 @@ void onsigusr1()
     for (c = R_GlobalContext; c; c = c->nextcontext) {
 	if (IS_RESTART_BIT_SET(c->callflag)) {
 	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	}
     }
 
@@ -130,8 +128,6 @@ void onsigusr2()
     }
 
 
-    if (R_Inputfile != NULL)
-	fclose(R_Inputfile);
     R_ResetConsole();
     R_FlushConsole();
     R_ClearerrConsole();
@@ -383,7 +379,9 @@ void error(const char *format, ...)
     va_start(ap, format);
     Rvsnprintf(buf, BUFSIZE, format, ap);
     va_end(ap);
-    errorcall(R_GlobalContext->call, "%s", buf);
+    /* This can be called before R_GlobalContext is defined, so... */
+    errorcall(R_GlobalContext ?
+	      R_GlobalContext->call : R_NilValue, "%s", buf);
 }
 
 /* Unwind the call stack in an orderly fashion */
@@ -427,8 +425,6 @@ void jump_to_toplevel()
     }
 
     /* reset some stuff--not sure (all) this belongs here */
-    if (R_Inputfile != NULL)
-	fclose(R_Inputfile);
     R_ResetConsole();
     R_FlushConsole();
     R_ClearerrConsole();
@@ -440,7 +436,7 @@ void jump_to_toplevel()
 	    nback++;
 	if (IS_RESTART_BIT_SET(c->callflag)) {
 	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	}
 	if (c->callflag == CTXT_TOPLEVEL)
 	    break;
@@ -482,7 +478,7 @@ void jump_now()
     for (c = R_GlobalContext; c; c = c->nextcontext) {
 	if (IS_RESTART_BIT_SET(c->callflag)) {
 	    inError=0;
-	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	}
 	if (c->callflag == CTXT_TOPLEVEL)
 	    break;
@@ -705,16 +701,13 @@ void R_ReturnOrRestart(SEXP val, SEXP env, Rboolean restart)
     int mask;
     RCNTXT *c;
 
-    if (R_BrowseLevel > 0)
-	mask = CTXT_BROWSER | CTXT_FUNCTION;
-    else
-	mask = CTXT_FUNCTION;
+    mask = CTXT_BROWSER | CTXT_FUNCTION;
 
     for (c = R_GlobalContext; c; c = c->nextcontext) {
 	if (c->callflag & mask && c->cloenv == env)
 	    findcontext(mask, env, val);
 	else if (restart && IS_RESTART_BIT_SET(c->callflag))
-	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	else if (c->callflag == CTXT_TOPLEVEL)
 	    error("No function to return from, jumping to top level");
     }
@@ -727,7 +720,7 @@ void R_JumpToToplevel(Rboolean restart)
     /* Find the target for the jump */
     for (c = R_GlobalContext; c != NULL; c = c->nextcontext) {
 	if (restart && IS_RESTART_BIT_SET(c->callflag))
-	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	else if (c->callflag == CTXT_TOPLEVEL)
 	    break;
     }

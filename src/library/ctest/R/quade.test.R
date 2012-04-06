@@ -1,11 +1,12 @@
-quade.test <- function(x, ...) UseMethod("quade.test")
+quade.test <- function(y, ...) UseMethod("quade.test")
 
-quade.test.default <- function(y, groups, blocks)
+quade.test.default <-
+function(y, groups, blocks, ...)
 {
     DNAME <- deparse(substitute(y))
     if(is.matrix(y)) {
-        groups <- as.factor(c(col(y)))
-        blocks <- as.factor(c(row(y)))
+        groups <- factor(c(col(y)))
+        blocks <- factor(c(row(y)))
     }
     else {
         if(any(is.na(groups)) || any(is.na(blocks))) 
@@ -17,8 +18,8 @@ quade.test.default <- function(y, groups, blocks)
                        deparse(substitute(blocks)), sep = "")
         if(any(table(groups, blocks) != 1))
             stop("Not an unreplicated complete block design")
-        groups <- as.factor(groups)
-        blocks <- as.factor(blocks)
+        groups <- factor(groups)
+        blocks <- factor(blocks)
     }
     k <- nlevels(groups)
     b <- nlevels(blocks)
@@ -55,7 +56,8 @@ quade.test.default <- function(y, groups, blocks)
               class = "htest")
 }
 
-quade.test.formula <- function(formula, data, subset, na.action)
+quade.test.formula <-
+function(formula, data, subset, na.action, ...)
 {
     if(missing(formula))
         stop("formula missing")

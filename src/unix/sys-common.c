@@ -94,6 +94,9 @@ FILE *R_OpenSiteFile(void)
 	    return fp;
 	if ((fp = R_fopen(getenv("RPROFILE"), "r")))
 	    return fp;
+	sprintf(buf, "%s/etc/Rprofile.site", R_Home);
+	if ((fp = R_fopen(buf, "r")))
+	    return fp;
 	sprintf(buf, "%s/etc/Rprofile", R_Home);
 	if ((fp = R_fopen(buf, "r")))
 	    return fp;
@@ -112,54 +115,14 @@ void set_workspace_name(char *fn)
 
 void R_RestoreGlobalEnv(void)
 {
-    FILE *fp;
-    SEXP img, lst;
-    int i;
-
     if(RestoreAction == SA_RESTORE) {
-	if(!(fp = R_fopen(workspace_name, "rb"))) { /* binary file */
-	    /* warning here perhaps */
-	    return;
-	}
-#ifdef OLD
-	FRAME(R_GlobalEnv) = R_LoadFromFile(fp, 1);
-#else
-	PROTECT(img = R_LoadFromFile(fp, 1));
-	switch (TYPEOF(img)) {
-	case LISTSXP:
-	    while (img != R_NilValue) {
-		defineVar(TAG(img), CAR(img), R_GlobalEnv);
-		img = CDR(img);
-	    }
-	    break;
-	case VECSXP:
-	    for (i = 0; i < LENGTH(img); i++) {
-		lst = VECTOR_ELT(img, i);
-		while (lst != R_NilValue) {
-		    defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
-		    lst = CDR(lst);
-		}
-	    }
-	    break;
-	}
-        UNPROTECT(1);
-#endif
-	if(!R_Quiet)
-	    Rprintf("[Previously saved workspace restored]\n\n");
-        fclose(fp);
+	R_RestoreGlobalEnvFromFile(workspace_name, R_Quiet);
     }
 }
 
 void R_SaveGlobalEnv(void)
 {
-    FILE *fp = R_fopen(".RData", "wb"); /* binary file */
-    if (!fp)
-	error("can't save data -- unable to open ./.RData");
-    if (HASHTAB(R_GlobalEnv) != R_NilValue)
-	R_SaveToFile(HASHTAB(R_GlobalEnv), fp, 0);
-    else
-	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
-    fclose(fp);
+    R_SaveGlobalEnvToFile(".RData");
 }
 
 /*
@@ -218,7 +181,10 @@ char *R_HomeDir()
  */
 
 #ifdef Win32
-#include <windows.h>
+# include <windows.h>
+#elif defined(__APPLE__)
+# include <crt_externs.h>
+# define environ (*_NSGetEnviron())
 #else
 extern char ** environ;
 #endif
@@ -659,11 +625,35 @@ static char *findterm(char *s)
 
 static void Putenv(char *a, char *b)
 {
-    char *buf;
+    char *buf, *value, *p, *q, quote='\0';
+    int inquote = 0;
 
     buf = (char *) malloc((strlen(a) + strlen(b) + 2) * sizeof(char));
     if(!buf) R_Suicide("allocation failure in reading Renviron");
-    strcpy(buf, a); strcat(buf, "="); strcat(buf, b);
+    strcpy(buf, a); strcat(buf, "="); 
+    value = buf+strlen(buf);
+
+    /* now process the value */
+    for(p = b, q = value; *p; p++) {
+	/* remove quotes around sections, preserve \ inside quotes */
+	if(!inquote && (*p == '"' || *p == '\'')) {
+	    inquote = 1;
+	    quote = *p;
+	    continue;
+	}
+	if(inquote && *p == quote && *(p-1) != '\\') {
+	    inquote = 0;
+	    continue;
+	}
+	if(!inquote && *p == '\\') {
+	    if(*(p+1) == '\n') p++;
+	    else if(*(p+1) == '\\') *q++ = *p;
+	    continue;
+	}
+	if(inquote && *p == '\\' && *(p+1) == quote) continue;
+	*q++ = *p;
+    }
+    *q = '\0';
     putenv(buf);
     /* no free here: storage remains in use */
 }
@@ -706,26 +696,33 @@ static int process_Renviron(char *filename)
 }
 
 
-/* read R_HOME/etc/Renviron:  Unix only */
-void process_global_Renviron()
+/* try system Renviron: R_HOME/etc/Renviron.  Unix only. */
+void process_system_Renviron()
 {
-    char buf[1024];
+    char buf[PATH_MAX];
     
     strcpy(buf, R_Home);
     strcat(buf, "/etc/Renviron");
-    if(!process_Renviron(buf)) R_ShowMessage("cannot find system Renviron");
+    if(!process_Renviron(buf))
+	R_ShowMessage("cannot find system Renviron");
 }
 
-/* try ./.Renviron, then value of R_ENVIRON, then ~/.Renviron */
-void process_users_Renviron()
+/* try site Renviron: R_ENVIRON, then R_HOME/etc/Renviron.site. */
+void process_site_Renviron ()
+{
+    char buf[PATH_MAX];
+
+    if(process_Renviron(getenv("R_ENVIRON"))) return;
+    sprintf(buf, "%s/etc/Renviron.site", R_Home);
+    process_Renviron(buf);
+}
+
+/* try user Renviron: ./.Renviron, then ~/.Renviron */
+void process_user_Renviron()
 {
     char *s;
     
     if(process_Renviron(".Renviron")) return;
-    if((s = getenv("R_ENVIRON"))) {
-	process_Renviron(s);
-	return;
-    } 
 #ifdef Unix
     s = R_ExpandFileName("~/.Renviron");
 #endif

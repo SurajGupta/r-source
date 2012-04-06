@@ -377,15 +377,21 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names, int *stretch)
     return indx;
 }
 
-/* Array Subscripts.  dim is the dimension (0 to k-1), s is */
-/* the subscript list, x is the array to be subscripted. */
+/* Array Subscripts.  
+    dim is the dimension (0 to k-1)
+    s is the subscript list, 
+    dims is the dimensions of x
+    dng is a function (usually getAttrib) that obtains the dimnames
+    x is the array to be subscripted. 
+*/
 
-SEXP arraySubscript(int dim, SEXP s, SEXP x)
+typedef SEXP AttrGetter(SEXP x, SEXP data);
+
+SEXP arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng, SEXP x)
 {
     int nd, ns, stretch = 0;
-    SEXP dims, dnames, tmp;
+    SEXP dnames, tmp;
     ns = length(s);
-    dims = getAttrib(x, R_DimSymbol);
     nd = INTEGER(dims)[dim];
 
     switch (TYPEOF(s)) {
@@ -401,7 +407,7 @@ SEXP arraySubscript(int dim, SEXP s, SEXP x)
     	UNPROTECT(1);
 	return tmp;
     case STRSXP:
-	dnames = getAttrib(x, R_DimNamesSymbol);
+	dnames = dng(x, R_DimNamesSymbol);
 	if (dnames == R_NilValue)
 	    error("no dimnames attribute for array");
 	dnames = VECTOR_ELT(dnames, dim);
@@ -418,61 +424,86 @@ SEXP arraySubscript(int dim, SEXP s, SEXP x)
 /* Subscript creation.  The first thing we do is check to see */
 /* if there are any user supplied NULL's, these result in */
 /* returning a vector of length 0. */
+/* if stretch is zero on entry then the vector x cannot be
+   "stretched",
+   otherwise, stretch returns the new required length for x
+*/
 
 SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
 {
-    int nx, ns;
-    SEXP ans, tmp;
+    int nx;
+    SEXP ans;
 
     ans = R_NilValue;
     if (isVector(x) || isList(x) || isLanguage(x)) {
 	nx = length(x);
-	ns = length(s);
-	/* special case for simple indices -- does not duplicate */
-	if (ns == 1 && TYPEOF(s) == INTSXP && ATTRIB(s) == R_NilValue) {
-	  int i = INTEGER(s)[0];
-	  if (0 < i && i <= nx) {
-	    *stretch = 0;
-	    return s;
-	  }
-	}
-	PROTECT(s=duplicate(s));
-	SET_ATTRIB(s, R_NilValue);
-	switch (TYPEOF(s)) {
-	case NILSXP:
-	    *stretch = 0;
-	    ans = allocVector(INTSXP, 0);
-	    break;
-	case LGLSXP:
-	    /* *stretch = 0; */
-	    ans = logicalSubscript(s, ns, nx, stretch);
-	    break;
-	case INTSXP:
-	    ans = integerSubscript(s, ns, nx, stretch);
-	    break;
-	case REALSXP:
-	    PROTECT(tmp = coerceVector(s, INTSXP));
-	    ans = integerSubscript(tmp, ns, nx, stretch);
-	    UNPROTECT(1);
-	    break;
-	case STRSXP:
-	    {
-		SEXP names = getAttrib(x, R_NamesSymbol);
-		/* *stretch = 0; */
-		ans = stringSubscript(s, ns, nx, names, stretch);
-	    }
-	    break;
-	case SYMSXP:
-	    *stretch = 0;
-	    if (s == R_MissingArg) {
-		ans = nullSubscript(nx);
-		break;
-	    }
-	default:
-	    error("invalid subscript type");
-	}
-	UNPROTECT(1);
+
+	ans = vectorSubscript(nx, s, stretch, getAttrib, x);
     }
     else error("subscripting on non-vector");
     return ans;
+
 }
+
+/* nx is the length of the object being subscripted,
+   s is the R subscript value,
+   dng gets a given attrib for x, which is the object we are
+   subsetting,
+*/
+ 
+SEXP vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
+		     SEXP x) 
+{
+    int ns;
+    SEXP ans=R_NilValue, tmp;
+
+    ns = length(s);
+    /* special case for simple indices -- does not duplicate */
+    if (ns == 1 && TYPEOF(s) == INTSXP && ATTRIB(s) == R_NilValue) {
+	int i = INTEGER(s)[0];
+	if (0 < i && i <= nx) {
+	    *stretch = 0;
+	    return s;
+	}
+    }
+    PROTECT(s=duplicate(s));
+    SET_ATTRIB(s, R_NilValue);
+    switch (TYPEOF(s)) {
+    case NILSXP:
+	*stretch = 0;
+	ans = allocVector(INTSXP, 0);
+	break;
+    case LGLSXP:
+	/* *stretch = 0; */
+	ans = logicalSubscript(s, ns, nx, stretch);
+	break;
+    case INTSXP:
+	    ans = integerSubscript(s, ns, nx, stretch);
+	    break;
+    case REALSXP:
+	PROTECT(tmp = coerceVector(s, INTSXP));
+	ans = integerSubscript(tmp, ns, nx, stretch);
+	UNPROTECT(1);
+	break;
+    case STRSXP:
+    {
+	SEXP names = dng(x, R_NamesSymbol);
+	/* *stretch = 0; */
+	ans = stringSubscript(s, ns, nx, names, stretch);
+    }
+    break;
+    case SYMSXP:
+	*stretch = 0;
+	if (s == R_MissingArg) {
+	    ans = nullSubscript(nx);
+	    break;
+	}
+    default:
+	error("invalid subscript type");
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
+
+

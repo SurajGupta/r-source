@@ -56,6 +56,10 @@
 
 
 /*            INCLUDE HEADER FILE           */
+
+
+#include <RCarbon.h>
+
 #ifndef __ALIASES__
 #include <Aliases.h>
 #endif
@@ -103,6 +107,7 @@
 #include <Scrap.h>
 #include "Graphics.h"
 #include <Rdevices.h>
+#include "Fileio.h"
 
 /*         DEFINE CONSTANTS        */
 #define eNoSuchFile                      9
@@ -127,10 +132,13 @@ extern OSErr DoSelectDirectory( void );
 extern char *mac_getenv(const char *name);
 
 MenuRef 		HelpMenu=NULL; /* This Handle willtake care of the Help Menu */
-static 	short RHelpMenuItem=-1;
-static 	short RTopicHelpItem=-1;
-static	short RunExampleItem=-1;
+static 	short 	RHelpMenuItem=-1;
+static 	short 	RTopicHelpItem=-1;
+static	short 	RunExampleItem=-1;
 static	short	SearchHelpItem=-1;
+static	short	LinkHtmlHelpItem=-1;
+static  short  	PreferencesItem=-1;
+
 
 //	user structure passed to the NavEventFilter callback
 
@@ -176,8 +184,10 @@ OSStatus DoOpen(void);
 OSErr OldDoOpen(void);
 OSErr DoSource(void);
 OSErr SourceFile(FSSpec  	*myfss);
-int GetTextSize(void);
-int GetScreenRes(void);
+extern int GetTextSize(void);
+extern int GetScreenRes(void);
+Boolean RunningOnCarbonX(void);
+
 
 void consolecmd(char *cmd);
 static pascal void NavEventFilter(NavEventCallbackMessage,NavCBRec *,void *);
@@ -209,11 +219,36 @@ void DoPaste(WindowPtr window);
 extern void DoUpdate (WindowPtr window);
 extern void DoActivate (Boolean isActivating, WindowPtr window);
 extern void Do_About();
+extern SInt32	systemVersion ;
 
 void DoTools(SInt16 menuItem);
+void doUserMenu(SInt16 menuItem);
+
 SavingOption DoWeSaveIt(WindowPtr window);
 
 OSErr MyOpenDocument(FSSpec *documentFSSpec, SFTypeList *typeList);
+OSErr R_EditFile(SEXP call, char *fname, Boolean isanewfile);
+SEXP do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho);
+OSErr R_NewFile(SEXP call, char *fname);
+SEXP do_newfile(SEXP call, SEXP op, SEXP args, SEXP rho);
+
+SEXP do_addmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_delmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_getmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_getnumcmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_delnumcmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_delusrcmd(SEXP call, SEXP op, SEXP args, SEXP rho);
+
+
+Boolean HaveUserMenu = false;
+
+#define MAX_USER_MENUS 100
+
+char *UserMenuCmds[MAX_USER_MENUS+2];
+MenuHandle	UserMenu = NULL;
+
+
+
 
 /*    enum     */
 enum {
@@ -221,6 +256,395 @@ enum {
     kButtonCancel,
     kButtonDontSave
 };
+
+
+/* This function adds a user menu item to the User's menu. 
+   Two paramters only: the menu label and the menu command.
+   If the User's menu is not available, R creates it.
+   If the label passed to the function is the same as one
+   of the already present menu items, then only the
+   command is changed.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+
+SEXP do_addmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	 SEXP ml,mc;
+     char *mlabel, *mcommand, *vm; 
+     Str255	mbuf;
+     SInt16 item;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+     ml = CAR(args); args = CDR(args);
+
+     if (!isString(ml))
+ 	  errorcall(call, "invalid menu label specification");
+
+     /* we get the menu item label */
+ 	 if (!isNull(STRING_ELT(ml, 0)))
+	   mlabel = CHAR(STRING_ELT(ml, 0));
+	 else
+	   errorcall(call,"no menu label specified");
+
+      mc = CAR(args); args = CDR(args);
+
+     if (!isString(mc))
+ 	  errorcall(call, "invalid menu command specification");
+
+	 /* we get the menu command */
+ 	 if (!isNull(STRING_ELT(mc, 0)))
+	   mcommand = CHAR(STRING_ELT(mc, 0));
+	 else
+	   errorcall(call,"no menu command assigned");
+
+    /* we have a menu label and a menu command
+       so we try to add it to the user menu or
+       eventually create the user menu and append
+       the menu item
+    */
+       
+	if( ! HaveUserMenu ){
+	 if( (UserMenu = NewMenu(kMenuUser,"\pUser")) == NULL)
+ 	  errorcall(call,"cannot add user menu !");
+
+	 HaveUserMenu = true; /* we have the user menu */
+	 InsertMenu(UserMenu,0);  /* we add it to the menu bar */
+	}
+	else{
+	 if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    CopyCStringToPascal(mlabel,mbuf);
+    
+    /* If a menu item with specified label exists
+       we don't add the menu, just replace the command
+    */   
+    if( (item = FindMenuItemText(UserMenu, mbuf)) == 0){
+     if(CountMenuItems(UserMenu) > MAX_USER_MENUS - 1)
+      errorcall(call,"two many user menus, cannot add more !"); 
+
+ 	 AppendMenu(UserMenu, mbuf);
+ 	 item = CountMenuItems(UserMenu);
+	}
+	
+	if( UserMenuCmds[item] != NULL )
+	 free( UserMenuCmds[item] );
+	
+	if( (UserMenuCmds[item] = (char *)malloc(  strlen(mcommand) + 1)) == NULL){
+	 DeleteMenuItem(UserMenu, item);
+	 if(item == 1){
+	  DeleteMenu(kMenuUser);
+	  HaveUserMenu = false; 
+	 }
+	 errorcall(call,"not enough memory to add menu");
+	}
+	
+	strcpy(  UserMenuCmds[item], mcommand);  
+
+	vmaxset(vm);
+    return R_NilValue;
+
+
+}
+
+/* This function deletes a user menu item. One paramter
+   only: the menu label.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+   
+SEXP do_delmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+     SEXP ml, ans;
+     char *mlabel, *vm; 
+     Str255	mbuf;
+     SInt16 item,totitems,i;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+     ml = CAR(args); args = CDR(args);
+
+     if (!isString(ml))
+ 	  errorcall(call, "invalid menu label specification");
+
+     /* we get the menu item label */
+ 	 if (!isNull(STRING_ELT(ml, 0)))
+	   mlabel = CHAR(STRING_ELT(ml, 0));
+	 else
+	   errorcall(call,"no menu label specified");
+
+    /* we have a menu label now and we can search
+       the items in the User menu if any
+    */
+       
+	if( ! HaveUserMenu ){
+	 errorcall(call,"there is no user menu !");
+
+	if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    CopyCStringToPascal(mlabel,mbuf);
+
+
+    if( (item = FindMenuItemText(UserMenu, mbuf)) == 0){
+      warningcall(call, "menu match failed");
+      return( R_NilValue );
+     } 
+
+	totitems = CountMenuItems(UserMenu);
+
+    /* first we release some memory */	
+	free(UserMenuCmds[item]);
+	
+	for(i = item; i < totitems; i++)
+	{
+	 UserMenuCmds[i] = UserMenuCmds[i+1];
+	 UserMenuCmds[i+1] = NULL;
+	}
+	UserMenuCmds[i+1] = NULL;
+	
+	DeleteMenuItem(UserMenu,item);
+
+    if( CountMenuItems(UserMenu) == 0){
+     DeleteMenu(kMenuUser);
+     HaveUserMenu = false;
+     }
+	
+    vmaxset(vm);
+	
+    return( R_NilValue );
+}
+
+
+/* This function returns the user command associated
+   to one menu item in the User's menu and its number.
+   One parameter only: the menu label.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+
+
+SEXP do_getmenucmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	 SEXP ml, ans, nms;
+     char *mlabel, *vm; 
+     Str255	mbuf;
+     SInt16 item;
+     int	warn = 0;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+     ml = CAR(args); args = CDR(args);
+
+     if (!isString(ml))
+ 	  errorcall(call, "invalid menu label specification");
+
+     /* we get the menu item label */
+ 	 if (!isNull(STRING_ELT(ml, 0)))
+	   mlabel = CHAR(STRING_ELT(ml, 0));
+	 else
+	   errorcall(call,"no menu label specified");
+
+    /* we have a menu label now and we can search
+       the items in the User menu if any
+    */
+       
+	if( ! HaveUserMenu ){
+	 errorcall(call,"there is no user menu !");
+
+	if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    CopyCStringToPascal(mlabel,mbuf);
+
+
+    if( (item = FindMenuItemText(UserMenu, mbuf)) == 0){
+      warningcall(call, "menu match failed");
+      return( R_NilValue );
+     } 
+
+	
+	PROTECT(nms = allocVector(VECSXP, 1));
+	PROTECT(ans = allocVector(INTSXP, 1));
+	
+    SET_STRING_ELT(nms, 0, mkChar(UserMenuCmds[item]));
+    INTEGER(ans)[0] = item;
+        
+    setAttrib(ans, R_NamesSymbol, nms);
+ 
+    UNPROTECT(2);
+
+
+    vmaxset(vm);
+	
+    return( ans );
+}
+
+
+/* This function deletes thw whole User's menu.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+
+SEXP do_delusrcmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	 SEXP ml, ans;
+     char *vm; 
+     int mnum, totitems;
+     char mlabel[260];
+     Str255 itemtxt;
+     int i;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+         
+	if( ! HaveUserMenu ){
+	 errorcall(call,"there is no user menu !");
+
+	if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    totitems = CountMenuItems(UserMenu);
+ 	
+ 	/* first we release all the memory */	
+	
+	for(i = 1; i <= totitems+1; i++)
+   	  if(UserMenuCmds[i])
+   	   free(UserMenuCmds[i]);
+
+     DeleteMenu(kMenuUser);
+     HaveUserMenu = false;
+	  
+     return( R_NilValue );
+}
+
+
+
+/* This function deletes a user menu item. One paramter
+   only: the menu number.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+
+
+SEXP do_delnumcmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	 SEXP ml, ans;
+     char *vm; 
+     int mnum, totitems;
+     char mlabel[260];
+     Str255 itemtxt;
+     int i;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+     ml = CAR(args); args = CDR(args);
+
+     if (!isInteger(ml))
+ 	  errorcall(call, "invalid menu number specification");
+
+     /* we get the menu item number */
+ 	 if (length(ml) > 0)
+	   mnum = INTEGER(ml)[0];
+	 else
+	   errorcall(call,"no menu number specified");
+
+    /* we have a menu label now and we can search
+       the items in the User menu if any
+    */
+       
+	if( ! HaveUserMenu ){
+	 errorcall(call,"there is no user menu !");
+
+	if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    totitems = CountMenuItems(UserMenu);
+    
+    if ( (mnum > totitems) || (mnum < 1))
+     errorcall(call,"menu number out of range !");
+	
+	
+    /* first we release some memory */	
+	free(UserMenuCmds[mnum]);
+	
+	for(i = mnum; i < totitems; i++)
+	{
+	 UserMenuCmds[i] = UserMenuCmds[i+1];
+	 UserMenuCmds[i+1] = NULL;
+	}
+	UserMenuCmds[i+1] = NULL;
+	
+	DeleteMenuItem(UserMenu,mnum);
+
+    if( CountMenuItems(UserMenu) == 0){
+     DeleteMenu(kMenuUser);
+     HaveUserMenu = false;
+     }
+	
+	vmaxset(vm);
+	
+    return( R_NilValue );
+}
+
+/* This function returns the user command associated
+   to one menu item in the User's menu and its label.
+   One parameter only: the menu number.
+   Added in R 1.4 Nov 2001 Jago, Stefano M. Iacus
+*/
+
+
+SEXP do_getnumcmd(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	 SEXP ml, ans;
+     char *vm; 
+     int mnum, totitems;
+     char mlabel[260];
+     Str255 itemtxt;
+     
+     checkArity(op, args);
+     vm = vmaxget();
+     ml = CAR(args); args = CDR(args);
+
+     if (!isInteger(ml))
+ 	  errorcall(call, "invalid menu number specification");
+
+     /* we get the menu item number */
+ 	 if (length(ml) > 0)
+	   mnum = INTEGER(ml)[0];
+	 else
+	   errorcall(call,"no menu number specified");
+
+    /* we have a menu label now and we can search
+       the items in the User menu if any
+    */
+       
+	if( ! HaveUserMenu ){
+	 errorcall(call,"there is no user menu !");
+
+	if( (UserMenu = GetMenuHandle(kMenuUser)) == NULL)
+      	 errorcall(call,"cannot find user menu !");
+    }
+    
+    totitems = CountMenuItems(UserMenu);
+    
+    if ( (mnum > totitems) || (mnum < 1))
+     errorcall(call,"menu number out of range !");
+	
+	PROTECT(ans = allocVector(STRSXP, 2));
+    SET_STRING_ELT(ans, 0, mkChar(UserMenuCmds[mnum]));
+    GetMenuItemText(UserMenu, mnum, itemtxt);
+    CopyPascalStringToC(itemtxt,mlabel);
+    SET_STRING_ELT(ans, 1, mkChar(mlabel));
+    UNPROTECT(1);
+
+    vmaxset(vm);
+	
+    return( ans );
+}
+
 
 
 /* SetDefaultDirectory
@@ -317,6 +741,7 @@ void PrepareMenus(void)
     Str255		Cur_Title, Menu_Title;
     MenuHandle		windowsMenu=NULL;
     OSStatus		err;
+
 
     /* get a pointer to the frontmost window, if any
      */
@@ -502,7 +927,15 @@ void PrepareMenus(void)
     else
       CheckMenuItem(windowsMenu, kItemAllowInterrupt, false);
       
+   menu = GetMenuHandle(kHMHelpMenuID);
+   EnableMenuItem  (menu, RHelpMenuItem);
+   EnableMenuItem  (menu, RTopicHelpItem);
+   EnableMenuItem  (menu, SearchHelpItem);
+   EnableMenuItem  (menu, RunExampleItem); 
+   EnableMenuItem  (menu, LinkHtmlHelpItem); 
 
+   menu = GetMenuHandle(kMenuApple);
+   EnableMenuCommand(menu, kHICommandPreferences); 
 }
 
 
@@ -634,8 +1067,6 @@ OSStatus DoOpen ( void )
     FSSpec  	myfss;
     SInt16		pathLen;
     Handle		pathName=NULL;
-    FILE		*fp;
-    SEXP 		img, lst;
     int 		i;
     SFTypeList	typeList;
 
@@ -655,32 +1086,7 @@ OSStatus DoOpen ( void )
 /*
    Routine now handles XDR object. Nov 2000 (Stefano M. Iacus)
 */
-    if(!(fp = fopen(InitFile, "rb"))) { /* binary file */
-	warning("File cannot be opened !");
-	/* warning here perhaps */
-	return;
-    }
-    PROTECT(img = R_LoadFromFile(fp, 1));
-    switch (TYPEOF(img)) {
-    case LISTSXP:
-	while (img != R_NilValue) {
-	    defineVar(TAG(img), CAR(img), R_GlobalEnv);
-	    img = CDR(img);
-	}
-	break;
-    case VECSXP:
-	for (i = 0; i < LENGTH(img); i++) {
-	    lst = VECTOR_ELT(img,i);
-	    while (lst != R_NilValue) {
-		defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
-		lst = CDR(lst);
-	    }
-	}
-	break;
-    }
-    UNPROTECT(1);
-    fclose(fp);
-
+    R_RestoreGlobalEnvFromFile(InitFile, TRUE);
 
     return(err);
 
@@ -710,22 +1116,162 @@ OSErr DoOpenText(Boolean editable)
 
     DoNew(editable);
        
-    RemWinMenuItem();
+    RemWinMenuItem(Edit_Windows[Edit_Window-1]);
    
-    err = ReadTextFile(&myfss,
-		       GetWindowWE(Edit_Windows[Edit_Window-1]));
+    err = ReadTextFile(&myfss,Edit_Windows[Edit_Window-1]);
+
     
-    
-//    if(err != noErr)
-//	 REprintf("\n ReadTextFile error: %d\n",err);
-   	
-   	UniqueWinTitle();
-	if(Edit_Window>2)
-    	RepositionWindow(Edit_Windows[Edit_Window - 1], 
-        Edit_Windows[Edit_Window - 2],kWindowCascadeOnParentWindow);
+   	UniqueWinTitle(Edit_Windows[Edit_Window-1]);
 
     SetWindowProxyFSSpec(Edit_Windows[Edit_Window - 1], &myfss);
+    ShowWindow(Edit_Windows[Edit_Window - 1]);
     
+    return err;
+}
+
+
+
+/*
+   do_fileedit: R-internal function. It opens a file and
+   displays it on an editable. This is similar to do_fileshow
+   but the user is allowed to edit files.
+   The routine accepts only one filename per call.
+   New in R 1.4.0 Jago Nov 2001, Stefano M. Iacus.
+*/
+
+SEXP do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP fn;
+    char *f, *vm; 
+    Boolean isanewfile = FALSE;
+    
+    checkArity(op, args);
+    vm = vmaxget();
+    fn = CAR(args); args = CDR(args);
+
+    if (!isString(fn))
+	errorcall(call, "invalid filename specification");
+
+   /* we consider one filename at time */
+	if (!isNull(STRING_ELT(fn, 0)))
+	    f = CHAR(STRING_ELT(fn, 0));
+	else
+	    f = CHAR(R_BlankString);
+
+    if( strlen(f) == 0)
+     isanewfile = TRUE;
+     
+    R_EditFile(call, f, isanewfile);
+    
+    vmaxset(vm);
+    return R_NilValue;
+}
+
+/* This routine is MacOS front-end of do_fileedit
+   that is an R command equivalent to open edit
+   windows.
+   New in R 1.4.0 Jago Nov 2001, Stefano M. Iacus.
+*/
+
+OSErr R_EditFile(SEXP call, char *fname, Boolean isanewfile)
+{
+    FInfo		fileInfo;
+    SFTypeList	typeList;
+    OSErr		err = noErr;
+    FSSpec  	myfss;
+    Str255      fileName;
+    
+    typeList[0] = kTypeText;
+    typeList[1] = ftSimpleTextDocument;
+ 
+    if(strlen(fname) == 0) { 
+     errorcall(call,"no filename specified");
+     return(-1);
+    }
+ 
+    CopyCStringToPascal(fname,fileName);
+ 
+    if( (err =  FSMakeFSSpecFromPath(fileName, &myfss)) != noErr){
+	  errorcall(call,"Cannot find file");
+	  return(err); 								
+	}
+	 
+    DoNew(TRUE);
+       
+    RemWinMenuItem(Edit_Windows[Edit_Window-1]);
+   
+    err = ReadTextFile(&myfss,Edit_Windows[Edit_Window-1]);
+      
+   	UniqueWinTitle(Edit_Windows[Edit_Window-1]);
+
+    SetWindowProxyFSSpec(Edit_Windows[Edit_Window - 1], &myfss);
+    ShowWindow(Edit_Windows[Edit_Window - 1]);
+    return err;
+}
+
+/*
+   do_newfile: R-internal function. It opens a new editable
+   window. If no filename is specified the window will be 
+   called "NewFile".
+   The routine accepts only one filename per call.
+   New in R 1.4.0 Jago Nov 2001, Stefano M. Iacus.
+*/
+
+SEXP do_newfile(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP fn;
+    char *f, *vm; 
+    Boolean isanewfile = FALSE;
+    
+    checkArity(op, args);
+    vm = vmaxget();
+    fn = CAR(args); args = CDR(args);
+
+    if (!isString(fn))
+	errorcall(call, "invalid filename specification");
+
+   /* we consider one filename at time */
+	if (!isNull(STRING_ELT(fn, 0)))
+	    f = CHAR(STRING_ELT(fn, 0));
+	else
+	    f = CHAR(R_BlankString);
+     
+    R_NewFile(call, f);
+    
+    vmaxset(vm);
+    return R_NilValue;
+}
+
+/* This routine is MacOS front-end of do_newfile
+   that is an R command equivalent to open new
+   windows.
+   New in R 1.4.0 Jago Nov 2001, Stefano M. Iacus.
+*/
+
+OSErr R_NewFile(SEXP call, char *fname)
+{
+    OSErr		err = noErr;
+    Str255      winName;
+ 
+    if(strlen(fname) == 0) { 
+     CopyCStringToPascal("NewFile",winName);      
+    }
+    else
+     CopyCStringToPascal(fname,winName);      
+ 
+	 
+    DoNew(TRUE);
+   
+    
+    RemWinMenuItem(Edit_Windows[Edit_Window-1]);
+  
+   	SetWTitle(Edit_Windows[Edit_Window-1], winName);
+   
+    SelectWindow(Edit_Windows[Edit_Window-1]);
+
+   	UniqueWinTitle(Edit_Windows[Edit_Window-1]);
+
+    ShowWindow(Edit_Windows[Edit_Window - 1]);
     return err;
 }
 
@@ -759,17 +1305,16 @@ OSErr DoSource(void)
 OSErr SourceFile(FSSpec  	*myfss)
 {
  	OSErr		err = noErr;
-    char 		sourcefile[FILENAME_MAX];
-    char 		cmd[FILENAME_MAX+25];
+    char 		sourcefile[MAC_FILE_SIZE];
+    char 		cmd[MAC_FILE_SIZE+25];
     SInt16		pathLen;
     Handle		pathName=NULL;
-    FInfo		fileInfo;
 
     if(myfss == NULL)
      return(-1);
      
-    err = FSpGetFInfo(myfss, &fileInfo);
-    if (err != noErr) return err;
+    cmd[0] = '\0';
+     
     FSpGetFullPath(myfss, &pathLen, &pathName);
     HLock((Handle)pathName);
     strncpy(sourcefile, *pathName, pathLen);
@@ -779,7 +1324,8 @@ OSErr SourceFile(FSSpec  	*myfss)
     sprintf(cmd,"source(\"%s\")",sourcefile);
 
     consolecmd(cmd);
-
+    if(pathName)
+     DisposeHandle(pathName);
 
 }
 
@@ -974,8 +1520,7 @@ OSErr DoClose(ClosingOption closing, SavingOption saving, WindowPtr window)
     if ( (win_num=isHelpWindow(window)) ) {
 
 		GetWTitle(Help_Windows[win_num], Cur_Title);
-		//SelectWindow(Help_Windows[win_num]);
-		RemWinMenuItem();
+		RemWinMenuItem(window);
 		adjustHelpPtr(win_num);
 		DestroyWindow(window);
 		return noErr;
@@ -1069,7 +1614,7 @@ furtherstep:
 	}
     else {
 	if ( (win_num=isEditWindow(window)) ) {
-	    RemWinMenuItem();
+	    RemWinMenuItem(window);
 		adjustEditPtr(win_num);
 	}
 	/* destroy the window */
@@ -1152,6 +1697,7 @@ OSErr DoQuit(SavingOption saving)
 {
 	WindowPtr	window;
 	OSErr		err;
+	int 		i;
 
 	/* Close all windows
 	 query the user about contents
@@ -1166,6 +1712,11 @@ OSErr DoQuit(SavingOption saving)
 		}
 	}
 	while (window != nil);
+
+   /* we free some memory */
+    for(i = 0; i< MAX_USER_MENUS; i++)
+     if(UserMenuCmds[i]) 
+      free(UserMenuCmds[i]);
 
 	/* set a flag so we drop out of the event loop
 	*/
@@ -1194,6 +1745,12 @@ void DoHelpChoice(SInt16 menuItem)
 
   if(menuItem == RunExampleItem)
     Do_RunExample();
+  
+  if(menuItem == LinkHtmlHelpItem){
+   	consolecmd("link.html.help()");
+    return;
+   }
+   
   
 }
 
@@ -1254,7 +1811,6 @@ void DoAppleChoice(SInt16 menuItem)
  */
 void DoFileChoice(SInt16 menuItem, WindowPtr window)
 {
-//    WindowPtr	window = FrontWindow();
     OSErr	osError, err;
     EventRecord	myEvent;
     SInt16	WinIndex;
@@ -1274,6 +1830,7 @@ void DoFileChoice(SInt16 menuItem, WindowPtr window)
 	}
 	else
 	    DoNew(true);
+	    ShowWindow(Edit_Windows[Edit_Window - 1]);
 	break;
 
     case kItemShow:
@@ -1287,7 +1844,7 @@ void DoFileChoice(SInt16 menuItem, WindowPtr window)
     case kItemOpen:
 	if (isGraphicWindow(window)){
 	    WinIndex = isGraphicWindow(window);
-	    selectDevice(deviceNumber((DevDesc *)gGReference[WinIndex].devdesc));
+	    selectDevice(deviceNumber((DevDesc *)gGReference[WinIndex].gedevdesc));
 	}
 	else
 	    DoSource();  
@@ -1525,26 +2082,6 @@ void DoPaste(WindowPtr window)
 		DisposeHandle(myHandle);
 }
 
-/* Only resolutions 72, 144, 300 and 600 are allowable */
-int GetScreenRes(void)
-{
-   gScreenRes = atoi(mac_getenv("ScreenRes"));
-
-  if( gScreenRes != 72 && gScreenRes != 144 &&
-      gScreenRes != 300 && gScreenRes != 600)  
-    gScreenRes = 72;
-  return(gScreenRes); 
-}
-
-int GetTextSize(void)
-{
-   gTextSize = atoi(mac_getenv("TextSize"));
-
-  if(gTextSize < 8 || gTextSize > 14)  
-  	 gTextSize = 12;
-  return(gTextSize);
-}
-
 void changeSize(WindowPtr window, SInt16 newSize)
 {
 
@@ -1621,6 +2158,20 @@ void DoTools(SInt16 menuItem)
     HiliteMenu(0);
 }
 
+void doUserMenu(SInt16 menuItem)
+{
+    WindowPtr	window = FrontWindow();
+    OSErr	osError, err;
+    EventRecord	myEvent;
+    SInt16	WinIndex;
+    Boolean	haveCancel;
+
+    consolecmd(UserMenuCmds[menuItem]);
+	
+	
+	HiliteMenu(0);
+}
+
 
 /* DoMenuChoice:
    The main function on RMenus.c, it is used to handle where to dispatch
@@ -1666,6 +2217,10 @@ void DoMenuChoice(SInt32 menuChoice, EventModifiers modifiers, WindowPtr window)
 	doConfigMenu(menuItem);
 	break;
 
+    case kMenuUser:
+	 doUserMenu(menuItem);
+	break;
+
 	case kHMHelpMenuID:  /* the help menu */
 	DoHelpChoice(menuItem);
 	break;
@@ -1676,6 +2231,10 @@ void DoMenuChoice(SInt32 menuChoice, EventModifiers modifiers, WindowPtr window)
 }
 
 
+	
+
+
+
 /* InitializeMenus
  */
 OSErr InitializeMenus(void)
@@ -1683,11 +2242,14 @@ OSErr InitializeMenus(void)
     Handle		menuBar = nil ;
 	MenuRef		menu ;
 	OSErr 		err = noErr;
-#if TARGET_API_MAC_CARBON
 	ItemCount	submenuCount ;
 	ItemCount	itemCount ;
 	SInt32		gestaltResponse ;
-#endif
+    int 		i;
+   /* we clean the list of user menu commands */
+    for(i = 0; i< MAX_USER_MENUS; i++)
+     UserMenuCmds[i] = NULL;
+
 
  	//	get the 'MBAR' resource
 	menuBar = GetNewMBar ( kMenuBarID ) ;
@@ -1716,9 +2278,26 @@ OSErr InitializeMenus(void)
    	    SearchHelpItem=CountMenuItems(HelpMenu);
 		AppendMenu(HelpMenu, "\pRun An Example...");
 		RunExampleItem=CountMenuItems(HelpMenu);
+		AppendMenu(HelpMenu, "\pLink Packages Help");
+		LinkHtmlHelpItem=CountMenuItems(HelpMenu);
 	}
 
-#if TARGET_API_MAC_CARBON
+    /* Appends the Preferences menuitem to the Config menu */
+    /* This is not needed under OS X                       */
+    
+    if( !RunningOnCarbonX()){
+     if( (menu = GetMenuHandle( kMenuConfig )) == NULL) goto cleanup;
+     AppendMenu(menu, "\pPreferences...");
+     PreferencesItem = CountMenuItems(menu);
+     if( (err = SetMenuItemCommandID (menu, PreferencesItem, kHICommandPreferences)) != noErr)
+      goto cleanup;
+    }
+
+
+
+
+
+
 	if ( ( Gestalt ( gestaltMenuMgrAttr, & gestaltResponse ) == noErr ) &&
 		 ( gestaltResponse & gestaltMenuMgrAquaLayoutMask ) )
 	{
@@ -1733,14 +2312,7 @@ OSErr InitializeMenus(void)
 			}
 		}
 	}
-#else
-	//	set up the Apple menu (this is not required under Carbon)
-	if ( ( menu = GetMenuHandle ( kMenuApple ) ) != nil )
-	{
-		AppendResMenu ( menu, kTypeDeskAccessory ) ;
-	}
 
-#endif
 
 
  
@@ -1753,6 +2325,17 @@ cleanup :
 	return err ;
 }
 
+
+
+/* This function assumes that systemVersion is already
+   defined by calling GetSysVersion()
+*/   
+Boolean RunningOnCarbonX(void)
+{
+    UInt32 response;
+    
+    return( systemVersion >= 0x10008000 );
+ }
 
 /* do_Print
 
@@ -1988,47 +2571,7 @@ static pascal void NavEventFilter
 				}
 			}
 			
-			//	intercept clicks in our custom items, if any
-	/*		else if ( cd && ( event -> what == mouseDown ) )
-			{
-				switch ( inPB -> eventData . itemHit - cd -> numItems )
-				{
-					case kItemFormatPopup :
-					{
-						if ( cd -> formatPopup )
-						{
-							switch ( GetControlValue ( cd -> formatPopup ) )
-							{
-								case kItemTextFormat :
-								{
-									cd -> fileType = kTypeText ;
-									break ;
-								}
 
-								case kItemUnicodeTextFormat :
-								{
-									cd -> fileType = kTypeUnicodeText ;
-									break ;
-								}
-							}
-						}
-						break ;
-					}
-
-		     		case kItemStationeryCheckbox :
-					{
-						if ( cd -> stationeryCheckbox )
-						{
-							cd -> isStationery = 1 - cd -> isStationery ;
-							SetControlValue ( cd -> stationeryCheckbox, cd -> isStationery ) ;
-						}
-						break ;
-					}
-						
-				}
-			}
-			break ;
-			*/
 		}
 
 		case kNavCBCustomize :
@@ -2123,3 +2666,5 @@ static OSStatus CreateNavTypeList
 
 	return noErr ;
 }
+
+

@@ -1,10 +1,14 @@
 \name{read.fwf}
-\title{Read Fixed Width Format Files}
-\usage{
-read.fwf(file, widths, sep="\t", as.is = FALSE,
-         skip = 0, row.names, col.names, n = -1)
-}
 \alias{read.fwf}
+\title{Read Fixed Width Format Files}
+\description{
+  Read a ``table'' of \bold{f}ixed \bold{w}idth \bold{f}ormatted data
+  into a \code{\link{data.frame}}.
+}
+\usage{
+read.fwf(file, widths, sep = "\t", as.is = FALSE,
+         skip = 0, row.names, col.names, n = -1, \dots)
+}
 \arguments{
   \item{file}{
     the name of the file which the data are to be read from.
@@ -18,15 +22,14 @@ read.fwf(file, widths, sep="\t", as.is = FALSE,
   \item{sep}{character; the separator used internally; should be a
     character that does not occur in the file.}
   \item{as.is}{see \code{\link{read.table}}.}
-  \item{skip}{number of initial lines to skip; see \code{\link{read.table}}.}
+  \item{skip}{number of initial lines to skip; see
+    \code{\link{read.table}}.}
   \item{row.names}{see \code{\link{read.table}}.}
   \item{col.names}{see \code{\link{read.table}}.}
   \item{n}{the maximum number of records (lines) to be read, defaulting
     to no limit.}
-}
-\description{
-  Read a ``table'' of \bold{f}ixed \bold{w}idth \bold{f}ormatted data
-  into a \code{\link{data.frame}}.
+  \item{\dots}{further arguments to be passed to
+    \code{\link{read.table}}.}
 }
 \value{
   A \code{\link{data.frame}} as produced by \code{\link{read.table}}

@@ -1,6 +1,7 @@
 fligner.test <- function(x, ...) UseMethod("fligner.test")
 
-fligner.test.default <- function(x, g)
+fligner.test.default <-
+function(x, g, ...)
 {
     ## FIXME: This is the same code as in kruskal.test(), and could also
     ## rewrite bartlett.test() accordingly ...
@@ -13,7 +14,7 @@ fligner.test.default <- function(x, g)
         l <- sapply(x, "length")
         if (any(l == 0))
             stop("all groups must contain data")
-        g <- as.factor(rep(1 : k, l))
+        g <- factor(rep(1 : k, l))
         x <- unlist(x)
     }
     else {
@@ -26,7 +27,7 @@ fligner.test.default <- function(x, g)
         g <- g[OK]
         if (!all(is.finite(g)))
             stop("all group levels must be finite")
-        g <- as.factor(g)
+        g <- factor(g)
         k <- nlevels(g)
         if (k < 2)
             stop("all observations are in the same group")
@@ -55,7 +56,8 @@ fligner.test.default <- function(x, g)
     return(RVAL)
 }
 
-fligner.test.formula <- function(formula, data, subset, na.action)
+fligner.test.formula <-
+function(formula, data, subset, na.action, ...)
 {
     if(missing(formula) || (length(formula) != 3))
         stop("formula missing or incorrect")

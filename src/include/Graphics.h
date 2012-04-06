@@ -319,12 +319,16 @@ typedef struct {
 } GPar;
 
 typedef struct {
-	GPar dp;		/* current device default parameters */
-	GPar gp;		/* current device current parameters */
-	GPar dpSaved;		/* saved device default parameters */
-	void *deviceSpecific;	/* pointer to device specific parameters */
-	Rboolean displayListOn;	/* toggle for display list status */
-	SEXP displayList;	/* display list */
+    /* New flag to indicate that this is an "old" device
+     * structure.
+     */
+    int newDevStruct;
+    GPar dp;		/* current device default parameters */
+    GPar gp;		/* current device current parameters */
+    GPar dpSaved;		/* saved device default parameters */
+    void *deviceSpecific;	/* pointer to device specific parameters */
+    Rboolean displayListOn;	/* toggle for display list status */
+    SEXP displayList;	/* display list */
 } DevDesc;
 
 /* For easy reference: Here are the source files of 
@@ -344,15 +348,18 @@ typedef struct {
 #define char2col		Rf_char2col
 #define col2name		Rf_col2name
 #define copyGPar		Rf_copyGPar
+#define curDevice               Rf_curDevice
+#define GetDevice               Rf_GetDevice
 #define GInit			Rf_GInit
 #define name2col		Rf_name2col
+#define nextDevice              Rf_nextDevice
 #define number2col		Rf_number2col
+#define NumDevices              Rf_NumDevices
 #define rgb2col			Rf_rgb2col
 #define RGB2rgb			Rf_RGB2rgb
 #define ScaleColor		Rf_ScaleColor
 #define str2col			Rf_str2col
 #define StrMatch		Rf_StrMatch
-
 
 /* Default the settings for general graphical parameters
  * (i.e., defaults that do not depend on the device type: */
@@ -360,7 +367,17 @@ void GInit(GPar*);
 
 void copyGPar(GPar *, GPar *);
 
+int curDevice(void);
 
+DevDesc* GetDevice(int i);
+
+int nextDevice(int from);
+
+int NumDevices(void);
+
+int deviceNumber(DevDesc *dd);
+
+int devNumber(DevDesc *dd);
 
 		/* Miscellaneous (from graphics.c & colors.c) */
 
@@ -379,5 +396,16 @@ char* RGB2rgb(unsigned int, unsigned int, unsigned int);
 int StrMatch(char *s, char *t);
 
 double R_Log10(double);
+
+#include <R_ext/GraphicsDevice.h>
+#include <R_ext/GraphicsEngine.h>
+#include <R_ext/GraphicsBase.h>
+
+/* FIXME: Make this a macro to avoid function call overhead?
+ */
+GPar* Rf_gpptr(DevDesc *dd);
+GPar* Rf_dpptr(DevDesc *dd);
+GPar* Rf_dpSavedptr(DevDesc *dd);
+SEXP Rf_displayList(DevDesc *dd);
 
 #endif /* GRAPHICS_H_ */

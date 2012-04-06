@@ -14,14 +14,14 @@
 ar(x, aic = TRUE, order.max = NULL,
    method=c("yule-walker", "burg", "ols", "mle", "yw"), na.action,
    series, \dots)
-\method{ar.burg}{default}(x, aic = TRUE, order.max = NULL, na.action, demean = TRUE,
-        series, var.method = 1, \dots)
-\method{ar.yw}{default}(x, aic = TRUE, order.max = NULL, na.action, demean = TRUE,
-      series, \dots)
-ar.mle(x, aic = TRUE, order.max = NULL, na.action, demean = TRUE,
+\method{ar.burg}{default}(x, aic = TRUE, order.max = NULL,
+        na.action = na.fail, demean = TRUE, series, var.method = 1, \dots)
+\method{ar.yw}{default}(x, aic = TRUE, order.max = NULL,
+      na.action = na.fail, demean = TRUE, series, \dots)
+ar.mle(x, aic = TRUE, order.max = NULL, na.action = na.fail, demean = TRUE,
        series, \dots)
 
-predict(ar.obj, newdata, n.ahead = 1, se.fit = TRUE)
+\method{predict}{ar}(object, newdata, n.ahead = 1, se.fit = TRUE, \dots)
 }
 \arguments{
   \item{x}{A univariate or multivariate time series.}
@@ -51,9 +51,9 @@ predict(ar.obj, newdata, n.ahead = 1, se.fit = TRUE)
   \item{var.method}{the method to estimate the innovations variance
     (see Details).}
 
-  \item{...}{additional arguments for specific methods.}
+  \item{\dots}{additional arguments for specific methods.}
 
-  \item{ar.obj}{a fit from \code{ar}.}
+  \item{object}{a fit from \code{ar}.}
 
   \item{newdata}{data to which to apply the prediction.}
 

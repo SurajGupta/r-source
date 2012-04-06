@@ -122,7 +122,7 @@ Some familiarity with @R{} is assumed.  This is not an introduction to
 @R{} but rather a programmers' reference manual.  Other manuals provide
 complementary information: in particular @ref{Preface, , , R-intro, R
 Introduction} provides an introduction to @R{} and @ref{System and
-foreign language interfaces, , , R-ext, Writing R Extensions} details
+foreign language interfaces, , , R-exts, Writing R Extensions} details
 how to extend @R{} using compiled code.
 
 
@@ -188,6 +188,7 @@ arguments
 @c @item BCODESXP @tab byte code
 @c </FIXME>
 @item @code{externalptr} @tab an external pointer object
+@item @code{weakref} @tab a weak reference object
 @end multitable
 @end quotation
 
@@ -1331,6 +1332,9 @@ instance you add @code{c(1, 2, 3)} to a six-element vector then you will
 really add @code{c(1, 2, 3, 1, 2, 3)}.  If the length of the longer
 vector is not a multiple of the shorter one, a warning is given.
 
+As from @R{} 1.4.0, any arithmetic operation involving a zero-length
+vector has a zero-length result.
+
 One exception is that when adding vectors to matrices, a warning is not
 given if the lengths are incompatible.
 @c Is that a bug?
@@ -1527,7 +1531,7 @@ Notice that @code{m[1]} is usually very different from @code{m[1, ]} or
 It is possible to use a matrix of integers as an index.  In this case,
 the number of columns of the matrix should match the number of
 dimensions of the structure, and the result will be a vector with length
-as the number of columns of the matrix.  The following example shows how
+as the number of rows of the matrix.  The following example shows how
 to extract the elements @code{m[1, 1]} and @code{m[2, 2]} in one
 operation.
 
@@ -3325,7 +3329,7 @@ platform-independent way.
 @findex .Call
 @findex .External
 
-See @ref{System and foreign language interfaces, , , R-ext, Writing R
+See @ref{System and foreign language interfaces, , , R-exts, Writing R
 Extensions} for the details of adding functionality to @R{} via compiled
 code.
 
@@ -3345,7 +3349,7 @@ compiled code (primarily compiled @C{} code) to mainipulate @R{} objects.
 
 The @code{.Internal} and @code{.Primitive} interfaces are used to call
 @C{} code compiled into @R{} at build time.
-@xref{.Internal and .Primitive, , , R-ext, Writing R Extensions}.
+@xref{.Internal and .Primitive, , , R-exts, Writing R Extensions}.
 
 
 @node Exception handling, Debugging, System and foreign language interfaces, Top

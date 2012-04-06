@@ -1,17 +1,21 @@
 \name{plot.stepfun}
+\alias{plot.stepfun}
 \title{Plot Step Functions}
+\description{
+  Method of the generic \code{\link{plot}} for \code{\link{stepfun}}
+  objects and utility for plotting piecewise constant functions.
+}
 \usage{
-plot.stepfun(Fn, xval, xlim, xlab = "x", ylab = "f(x)", main = NULL,
+\method{plot}{stepfun}(x, xval, xlim, xlab = "x", ylab = "f(x)", main = NULL,
      add = FALSE, verticals = TRUE, do.points = TRUE,
      pch = par("pch"), col.points=par("col"), cex.points=par("cex"),
      col.hor = par("col"), col.vert= par("col"),
      lty = par("lty"), lwd = par("lwd"), \dots)
 }
-\alias{plot.stepfun}
 \arguments{
-  \item{Fn}{an \R object inheriting from \code{"stepfun"}.}
+  \item{x}{an \R object inheriting from \code{"stepfun"}.}
   \item{xval}{numeric vector of abscissa values at which to evaluate
-    \code{Fn}.  Defaults to \code{\link{knots}(Fn)} restricted to \code{xlim}.}
+    \code{x}.  Defaults to \code{\link{knots}(x)} restricted to \code{xlim}.}
   \item{xlim}{numeric(2); range of \code{x} values to use.}
   \item{xlab,ylab}{labels of x and y axis.}
   \item{main}{main title.}
@@ -28,10 +32,6 @@ plot.stepfun(Fn, xval, xlim, xlab = "x", ylab = "f(x)", main = NULL,
   \item{lty, lwd}{line type and thickness for all lines.}
   \item{\dots}{further arguments of \code{\link{plot}(.)}, or if\code{(add)}
     \code{\link{segments}(.)}.}
-}
-\description{
-  Method of the generic \code{\link{plot}} for \code{\link{stepfun}}
-  objects and utility for plotting piecewise constant functions.
 }
 \value{
   A list with two components

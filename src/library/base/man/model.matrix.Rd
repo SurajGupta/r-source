@@ -1,23 +1,25 @@
 \name{model.matrix}
-\title{Construct Design Matrices}
-\usage{
-model.matrix   (object, \dots)
-model.matrix.default(formula, data, contrasts.arg = NULL, xlev = NULL)
-}
 \alias{model.matrix}
 \alias{model.matrix.default}
 \alias{model.matrix.lm}
 \alias{model.matrix.lm.null}
 \alias{model.matrix.glm.null}
+\title{Construct Design Matrices}
+\usage{
+model.matrix   (object, \dots)
+\method{model.matrix}{default}(object, data = environment(object),
+             contrasts.arg = NULL, xlev = NULL, \dots)
+}
 \arguments{
-  \item{object}{an object of an appropriate class.}
-  \item{formula}{a model formula or terms object.}
+  \item{object}{an object of an appropriate class. For the default
+    method, a model formula or terms object.}
   \item{data}{a data frame created with \code{\link{model.frame}}.}
   \item{contrasts.arg}{A list, whose entries are contrasts suitable for
     input to the \code{\link{contrasts}} function and whose names are
     the names of columns of \code{data} containing \code{\link{factor}}s.}
   \item{xlev}{to be used as argument of \code{\link{model.frame}} if
     \code{data} has no \code{"terms"} attribute.}
+  \item{\dots}{further arguments passed to or from other methods.}
 }
 \description{
   \code{model.matrix} creates a design matrix.

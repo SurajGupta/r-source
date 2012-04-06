@@ -5,7 +5,7 @@
 \title{Compute Tables of Results from an Aov Model Fit.}
 \usage{
 model.tables(x, \dots)
-model.tables.aov(x, type = "effects", se = FALSE, cterms)
+model.tables.aov(x, type = "effects", se = FALSE, cterms, \dots)
 model.tables.aovlist(x, type = "effects", se = FALSE, \dots)
 }
 \alias{model.tables}
@@ -14,12 +14,13 @@ model.tables.aovlist(x, type = "effects", se = FALSE, \dots)
 
 \alias{print.tables.aov}
 \arguments{
- \item{x}{a model object, usually produced by \code{aov}}
- \item{type}{type of table: currently only \code{"effects"} and
-   \code{"means"} are implemented.}
- \item{se}{should standard errors be computed?}
- \item{cterms}{A character vector giving the names of the terms for
-   which tables should be computed. The default is all tables.}
+  \item{x}{a model object, usually produced by \code{aov}}
+  \item{type}{type of table: currently only \code{"effects"} and
+    \code{"means"} are implemented.}
+  \item{se}{should standard errors be computed?}
+  \item{cterms}{A character vector giving the names of the terms for
+    which tables should be computed. The default is all tables.}
+  \item{\dots}{further arguments passed to or from other methods.}
 }
 \description{
  Computes summary tables for model fits, especially complex \code{aov} fits.

@@ -11,8 +11,9 @@
   Fits a cubic smoothing spline to the supplied data.
 }
 \usage{
-smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = 0,
-              cv = FALSE, all.knots = FALSE, df.offset = 0, penalty = 1)
+smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = NULL,
+              cv = FALSE, all.knots = FALSE, df.offset = 0, penalty = 1,
+              control.spar = list())
 }
 \arguments{
  \item{x}{a vector giving the values of the predictor variable, or  a
@@ -22,10 +23,11 @@ smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = 0,
  \item{w}{optional vector of weights}
  \item{df}{the desired equivalent number of degrees of freedom (trace of
    the smoother matrix).}
- \item{spar}{smoothing parameter, typically in \eqn{(0,1]}. The
-   coefficient \eqn{\lambda} of the integral of the squared second
-   derivative in the fit (penalized log likelihood) criterion is a
-   monotone function of \code{spar}, see the details below.}
+ \item{spar}{smoothing parameter, typically (but not necessarily) in
+   \eqn{(0,1]}.  The coefficient \eqn{\lambda} of the integral of the
+   squared second derivative in the fit (penalized log likelihood)
+   criterion is a monotone function of \code{spar}, see the details
+   below.}
  \item{cv}{ordinary (\code{TRUE}) or `generalized' (\code{FALSE})
    cross-validation.}
  \item{all.knots}{if \code{TRUE}, all points in \code{x} are uses as
@@ -34,6 +36,27 @@ smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = 0,
    \code{df.offset} in the GCV criterion.}
  \item{penalty}{the coefficient of the penalty for degrees of freedom
    in the GCV criterion.}
+ \item{control.spar}{optional list with named components controlling the
+   root finding when the smoothing parameter \code{spar} is computed.
+
+   \bold{Note} that this is partly \emph{experimental} and may change
+   with general spar computation improvements!
+
+   \describe{
+     \item{low:}{lower bound for \code{spar}; defaults to -1.5 (used to
+       implicitly default to 0 in R versions earlier than 1.4).}
+     \item{high:}{upper bound for \code{spar}; defaults to +1.5.}
+     \item{tol:}{the absolute precision (\bold{tol}erance) used; defaults
+     to 1e-4 (formerly 1e-3).}
+     \item{eps:}{the relative precision used; defaults to 2e-8 (formerly
+       0.00244).}
+     \item{trace:}{logical indicating if iterations should be traced.}
+     \item{maxit:}{integer giving the maximal number of iterations;
+       defaults to 500.}
+   }
+   Note that \code{spar} is only searched for in the interval
+   \eqn{[low, high]}.
+ }
 }
 \details{
   The \code{x} vector should contain at least ten distinct values.
@@ -53,17 +76,36 @@ smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = 0,
 
   Note that with these definitions, \eqn{f_i = f(x_i)}, and the B-spline
   basis representation \eqn{f = X c} (i.e. \eqn{c} is
-  the vector of spline coefficients), the penalized log likelihood is 
+  the vector of spline coefficients), the penalized log likelihood is
   \eqn{L = (y - f)' W^2 (y - f) + \lambda c' \Sigma c}, and hence
   \eqn{c} is the solution of the (ridge regression)
   \eqn{(X' W^2 X + \lambda \Sigma) c = X' W^2 y}.
- 
 
-  If \code{spar} is missing or 0, the value of \code{df} is used to
-  determine the degree of smoothing. If both are missing, leave-one-out
+  If \code{spar} is missing or \code{NULL}, the value of \code{df} is used to
+  determine the degree of smoothing.  If both are missing, leave-one-out
   cross-validation is used to determine \eqn{\lambda}.
+  Note that from the above relation,
+%%  lam      = r * 256^(3s - 1)
+%%  log(lam) = log(r) + (3s - 1) * log(256)
+%% (log(lam) - log(r)) / log(256)  = 3s - 1
+%% s = [1 +  {log(lam) - log(r)} / {8 log(2)} ] / 3
+%%   = 1/3 + {log(lam) - log(r)} / {24 log(2)}
+%%   = 1/3 - log(r)/{24 log(2)} +  log(lam) / {24 log(2)}
+%%   =               s0         + 0.0601 * log(lam)
+  \code{spar} is \eqn{s = s0 + 0.0601 * \bold{\log}\lambda}{%
+                   spar = s0 + 0.0601 * log(lambda)},
+  which is intentionally \emph{different} from the S-plus implementation
+  of \code{smooth.spline} (where \code{spar} is proportional to
+  \eqn{\lambda}).  In \R's (\eqn{\log \lambda}) scale, it makes more
+  sense to vary \code{spar} linearly.
 
-  The `generalized' cross-validation method will work correctly when
+  Note however that currently the results may be come very unreliable
+  for \code{spar} values smaller than about -1 or -2.  The same may
+  happen for values larger than 2 or so. Don't think of setting
+  \code{spar} or the controls \code{low} and \code{high} outside such a
+  safe range, unless you know what you are doing!
+
+  The ``generalized'' cross-validation method will work correctly when
   there are duplicated points in \code{x}.  However, it is ambiguous what
   leave-one-out cross-validation means with duplicated points, and the
   internal code uses an approximation that involves leaving out groups
@@ -78,12 +120,21 @@ smooth.spline(x, y, w = rep(1, length(x)), df = 5, spar = 0,
   \item{lev}{leverages, the diagonal values of the smoother matrix.}
   \item{cv.crit}{(generalized) cross-validation score.}
   \item{pen.crit}{penalized criterion}
-  \item{df}{equivalent degrees of freedom used.}
-  \item{spar}{the value of \eqn{\lambda} chosen.}
+  \item{crit}{the criterion value minimized in the underlying
+    \code{.Fortran} routine \file{sslvrg}.}
+  \item{df}{equivalent degrees of freedom used.  Note that (currently)
+    this value may become quite unprecise when the true \code{df} is
+    between and 1 and 2.
+  }
+  \item{spar}{the value of \code{spar} computed or given.}
+  \item{lambda}{the value of \eqn{\lambda} corresponding to \code{spar},
+    see the details above.}
+  \item{iparms}{named integer(3) vector where \code{..$ipars["iter"]}
+    gives number of spar computing iterations used.}
   \item{fit}{list for use by \code{predict.smooth.spline}.}
   \item{call}{the matched call.}
 }
-\author{B.D. Ripley}
+\author{B.D. Ripley and Martin Maechler (spar/lambda, etc).}
 \seealso{\code{\link{predict.smooth.spline}}}
 \examples{
 data(cars)
@@ -103,10 +154,33 @@ legend(5,120,c(paste("default [C.V.] => df =",round(cars.spl$df,1)),
                "s( * , df = 10)"), col = c("blue","red"), lty = 1:2,
        bg='bisque')
 detach()
+
+##-- artificial example
+y18 <- c(1:3,5,4,7:3,2*(2:5),rep(10,4))
+xx  <- seq(1,length(y18), len=201)
+(s2  <- smooth.spline(y18)) # GCV
+(s02 <- smooth.spline(y18, spar = 0.2))
+plot(y18, main=deparse(s2$call), col.main=2)
+lines(s2, col = "gray"); lines(predict(s2, xx), col = 2)
+lines(predict(s02, xx), col = 3); mtext(deparse(s02$call), col = 3)
+
+## The following shows the problematic behavior of `spar' searching:
+(s2  <- smooth.spline(y18,          con=list(trace=TRUE,tol=1e-6, low= -1.5)))
+(s2m <- smooth.spline(y18, cv=TRUE, con=list(trace=TRUE,tol=1e-6, low= -1.5)))
+## both above do quite similarly (Df = 8.5 +- 0.2)
+
 \testonly{
-  y2 <- c(1:5,7:3,2*(2:5))
-  smooth.spline(y2)
-  try(smooth.spline(y2, spar = 50)) # error (R 1.2.3) : spar `way too large'
+% not for the user
+  s2. <- smooth.spline(y18, cv=TRUE,con=list(trace=TRUE, tol=1e-6,low= -3,maxit=20))
+  s2. ## Intel-Linux: Df ~= (even! > ) 18 : interpolating -- much smaller PRESS
+     ## {others, e.g. may end quite differently!}
+  lines(predict(s2., xx), col = 4)
+  mtext(deparse(s2.$call,200), side= 1, line= -1, cex= 0.8, col= 4)
+
+  sdf8 <- smooth.spline(y18, df = 8, con=list(trace=TRUE))
+  sdf8 ; sdf8$df - 8
+
+  try(smooth.spline(y18, spar = 50)) #>> error : spar `way too large'
 }
 }
 \keyword{smooth}

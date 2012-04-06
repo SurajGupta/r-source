@@ -1,8 +1,10 @@
 hist <- function(x, ...) UseMethod("hist")
 
 hist.default <-
-    function (x, breaks, freq= NULL, probability = !freq, include.lowest= TRUE,
-              right= TRUE, col = NULL, border = par("fg"),
+    function (x, breaks = "Sturges", freq = NULL,
+              probability = !freq, include.lowest= TRUE,
+              right= TRUE, density = NULL, angle = 45,
+              col = NULL, border = NULL,
               main = paste("Histogram of" , xname),
               xlim = range(breaks), ylim = NULL,
               xlab = xname, ylab,
@@ -23,19 +25,26 @@ hist.default <-
     if(use.br)
         breaks <- sort(breaks)
     else {                              # construct vector of breaks
-        rx <- range(x)
-        nnb <-
-            if(missing(breaks)) 1 + log2(n)
-            else {                      # breaks = `nclass'
-                if (is.na(breaks) | breaks < 2)
-                    stop("invalid number of breaks")
-                breaks
-            }
-        breaks <- pretty (rx, n = nnb, min.n=1)
-
+        if(is.character(breaks)) {
+            breaks <- match.arg(tolower(breaks),
+                                c("sturges", "fd",
+                                  "freedman-diaconis", "scott"))
+            breaks <- switch(breaks,
+                             sturges = nclass.Sturges(x),
+                             "freedman-diaconis" =,
+                             fd = nclass.FD(x),
+                             scott = nclass.scott(x),
+                             stop("Unknown breaks algorithm"))
+        } else if(is.function(breaks)) {
+            breaks <- breaks(x)
+        }
+        if(!is.numeric(breaks) || is.na(breaks) || breaks < 2)
+            stop("invalid number of breaks")
+        breaks <- pretty (range(x), n = breaks, min.n = 1)
         nB <- length(breaks)
         if(nB <= 1) ##-- Impossible !
-            stop(paste("hist.default: pretty() error, breaks=",format(breaks)))
+            stop(paste("hist.default: pretty() error, breaks=",
+                       format(breaks)))
     }
 
     ## Do this *before* adding fuzz or logic breaks down...
@@ -53,7 +62,7 @@ hist.default <-
     ## the boundaries
     diddle <- 1e-7 * max(abs(range(breaks)))
     fuzz <- if(right)
-	c(if(include.lowest)-diddle else diddle,
+	c(if(include.lowest) - diddle else diddle,
 	    rep(diddle, length(breaks) - 1))
     else
 	c(rep(-diddle, length(breaks) - 1),
@@ -79,17 +88,16 @@ hist.default <-
         stop("negative `counts'. Internal Error in C-code for \"bincount\"")
     if (sum(counts) < n)
         stop("some `x' not counted; maybe `breaks' do not span range of `x'")
-    density <- counts/(n*h)
+    dens <- counts/(n*h)
     mids <- 0.5 * (breaks[-1] + breaks[-nB])
     r <- structure(list(breaks = breaks, counts = counts,
-                        intensities = density,
-			density = density, mids = mids,
+                        intensities = dens,
+			density = dens, mids = mids,
                         xname = xname, equidist = equidist),
                    class="histogram")
     if (plot) {
-##-         if(missing(ylim))
-##-             y <- if (freq) .Alias(counts) else .Alias(density)
         plot(r, freq = freq, col = col, border = border,
+             angle = angle, density = density,
              main = main, xlim = xlim, ylim = ylim, xlab = xlab, ylab = ylab,
              axes = axes, labels = labels, ...)
         invisible(r)
@@ -98,7 +106,8 @@ hist.default <-
 }
 
 plot.histogram <-
-    function (x, freq = equidist, col = NULL, border = par("fg"), lty = NULL,
+    function (x, freq = equidist, density = NULL, angle = 45,
+              col = NULL, border = par("fg"),lty = NULL,
               main = paste("Histogram of", x$xname),
               xlim = range(x$breaks), ylim = NULL,
               xlab = x$xname, ylab,
@@ -110,7 +119,7 @@ plot.histogram <-
     if(freq && !equidist)
         warning("the AREAS in the plot are wrong -- rather use `freq=FALSE'!")
 
-    y <- if (freq) x$counts else x$density
+    y <- if (freq) x$counts else x$intensities
     nB <- length(x$breaks)
     if(is.null(y) || 0 == nB) stop("`x' is wrongly structured")
 
@@ -128,7 +137,8 @@ plot.histogram <-
         }
     }
     rect(x$breaks[-nB], 0, x$breaks[-1], y,
-         col = col, border = border, lty = lty)
+         col = col, border = border,
+         angle = angle, density = density, lty = lty)
     if((logl <- is.logical(labels) && labels) || is.character(labels))
         text(x$mids, y,
              labels = if(logl) {
@@ -139,3 +149,18 @@ plot.histogram <-
 }
 
 lines.histogram <- function(x, ...) plot.histogram(x, ..., add = TRUE)
+
+nclass.Sturges <- function(x) ceiling(log2(length(x)) + 1)
+
+nclass.scott <- function(x)
+{
+    h <- 3.5 * sqrt(var(x)) * length(x)^(-1/3)
+    ceiling(diff(range(x))/h)
+}
+
+nclass.FD <- function(x)
+{
+    r <- as.vector(quantile(x, c(0.25, 0.75)))
+    h <- 2 * (r[2] - r[1]) * length(x)^(-1/3)
+    ceiling(diff(range(x))/h)
+}

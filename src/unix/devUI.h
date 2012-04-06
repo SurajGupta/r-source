@@ -1,19 +1,18 @@
-/* Declarations of device  and UI pointers */
+/* Declarations of device and UI pointers. */
 
 #ifdef __SYSTEM__
-#define extern
+# define extern
 #endif
 
-
-       /* for X_COLORTYPE, but don't get the definition of the struct.  */
-#include "../modules/X11/devX11.h"
-#include "Startup.h" /* for SA_TYPE */
+#include "../modules/X11/devX11.h" /* for X_COLORTYPE, but don't get the
+				      definition of the struct.  */
+#include "Startup.h"		/* for SA_TYPE */
 
 typedef Rboolean (*X11DeviceDriverRoutine)(DevDesc*, char*, 
-  				            double, double, double, double,
-				             X_COLORTYPE, int);
+					   double, double, double, double,
+					   X_COLORTYPE, int, int);
 
-X11DeviceDriverRoutine ptr_X11DeviceDriver;
+extern X11DeviceDriverRoutine ptr_X11DeviceDriver;
 
 extern Rboolean (*ptr_R_GetX11Image)(int, void *, int *, int *);
 extern Rboolean (*ptr_GnomeDeviceDriver)(DevDesc*, char*, double, double, double);
@@ -37,18 +36,23 @@ extern void (*ptr_R_loadhistory)(SEXP, SEXP, SEXP, SEXP);
 extern void (*ptr_R_savehistory)(SEXP, SEXP, SEXP, SEXP);
 
 
-extern DevDesc* Rf_addX11Device(char *display, double height, double width, double ps, double gamma, int colormodel, int maxcubesize, char *devname, X11DeviceDriverRoutine deviceDriverRoutine);
+extern DevDesc* 
+Rf_addX11Device(char *display, double height, double width, double ps, 
+		double gamma, int colormodel, int maxcubesize, 
+		int canvascolor, char *devname, 
+		X11DeviceDriverRoutine deviceDriverRoutine);
 
 #ifdef __SYSTEM__
-#undef extern
+# undef extern
 #endif
 
-Rboolean stub_X11DeviceDriver(DevDesc*, char*, double, double, double, double, 
-			      X_COLORTYPE, int);
-Rboolean stub_R_GetX11Image(int, void *, int *, int *);
-Rboolean stub_GnomeDeviceDriver(DevDesc*, char*, double, double, double);
+extern Rboolean stub_X11DeviceDriver(DevDesc*, char*, double, double,
+				     double, double, X_COLORTYPE, int,
+				     int);
+extern Rboolean stub_R_GetX11Image(int, void *, int *, int *);
 
+Rboolean stub_GnomeDeviceDriver(DevDesc*, char*, double, double, double);
 Rboolean stub_GTKDeviceDriver(DevDesc*, char*, double, double, double);
 
-SEXP stub_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
+extern SEXP stub_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
 

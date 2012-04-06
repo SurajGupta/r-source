@@ -12,8 +12,10 @@
 \usage{
 read.table(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
            row.names, col.names, as.is = FALSE, na.strings = "NA",
-           skip = 0, check.names = TRUE, fill = FALSE,
-           strip.white = FALSE, blank.lines.skip = TRUE)
+           colClasses = NA, nrows = -1,
+           skip = 0, check.names = TRUE, fill = !blank.lines.skip,
+           strip.white = FALSE, blank.lines.skip = TRUE,
+           comment.char = "#")
 
 read.csv(file, header = TRUE, sep = ",", quote="\"", dec=".",
          fill = TRUE, \dots)
@@ -75,13 +77,29 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     The default is to use \code{"V"} followed by the column number.}
 
   \item{as.is}{the default behavior of \code{read.table} is to convert
-    non-numeric variables to factors.  The variable \code{as.is}
+    character variables (which are not converted to logical, numeric or
+    complex) to factors.  The variable \code{as.is}
     controls this conversion.  Its value is either a vector of logicals
     (values are recycled if necessary), or a vector of numeric indices
-    which specify which columns should be left as character strings.}
+    which specify which columns should not be converted to factors.
 
-  \item{na.strings}{a vector strings which are to be interpreted as
-    \code{\link{NA}} values.}
+    Note: to suppress all conversions including those of numeric
+    columns, set \code{colClasses = "character"}.
+  }
+
+  \item{na.strings}{a vector of strings which are to be interpreted as
+    \code{\link{NA}} values.  Blank fields are also considered to be
+    missing values.}
+
+  \item{colClasses}{character.  A vector of classes to be assumed for
+    the columns.  Recycled as necessary.  If this is not one of the
+    atomic vector classes (logical, integer, numeric, complex and
+    character), there needs to be an \code{as} method for
+    conversion from \code{"character"} to the specified class, or
+    \code{NA} when \code{\link{type.convert}} is used.}
+
+  \item{nrows}{the maximum number of rows to read in.  Negative values
+    are ignored.}
 
   \item{skip}{the number of lines of the data file to skip before
     beginning to read data.}
@@ -102,6 +120,10 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \item{blank.lines.skip}{logical: if \code{TRUE} blank lines in the
     input are ignored.}
+  
+  \item{comment.char}{character: a character vector of length one
+    containing a single character or an empty string.  Use \code{""} to
+    turn off the interpretation of comments altogether.}
 
   \item{\dots}{Further arguments to \code{read.table}.}
 }
@@ -117,7 +139,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   If \code{row.names} is not specified and the header line has one less
   entry than the number of columns, the first column is taken to be the
   row names.  This allows data frames to be read in from the format in
-  which they are printed.  If  \code{row.names} is specified and does
+  which they are printed.  If \code{row.names} is specified and does
   not refer to the first column, that column is discarded from such files.
 
   The number of data columns is determined by looking at the first five lines
@@ -134,19 +156,28 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   \code{read.delim2} are for reading delimited files, defaulting to the
   TAB character for the delimiter.  Notice that \code{header = TRUE} and
   \code{fill = TRUE} in these variants.
+
+  Comment characters are allowed unless \code{comment.char = ""}, and
+  complete comment lines are allowed provided \item{blank.lines.skip = TRUE}
+  However, comment lines prior to the header must have
+  the comment character in the first non-blank column.
 }
 \note{
-  The implementation of \code{read.table} currently reads everything as
-  character using \code{\link{scan}} and subsequently defines
-  \code{"numeric"} or \code{\link{factor}} variables.
+  The columns referred to in \code{as.is} and \code{colClasses} include
+  the column of row names (if any).
+  
+  Less memory will be used if \code{colClasses} is specified as one of
+  the five atomic vector classes.
 
-  This is quite memory consuming for files of thousands of records and
-  may need larger memory, see \code{\link{Memory}}.
+  Using \code{nrows}, even as a mild over-estimate, will help memory
+  usage.
+
+  Using \code{comment.char = ""} will be appreciably faster.
 }
 \seealso{
-  The `R Data Import/Export' manual.
+  The \emph{R Data Import/Export} manual.
   
-  \code{\link{scan}},
+  \code{\link{scan}}, \code{\link{type.convert}},
   \code{\link{read.fwf}} for reading \emph{f}ixed \emph{w}idth
   \emph{f}ormatted input;
   \code{\link{read.table.url}} for ``reading'' data from the internet;

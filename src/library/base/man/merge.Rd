@@ -13,9 +13,10 @@ merge(x, y, by, by.x, by.y, all = FALSE, all.x = all, all.y = all,
 }
 \synopsis{
 merge(x, y, \dots)
-merge.date.frame(x, y, by = intersect(names(x), names(y)), by.x= by, by.y= by,
+merge.data.frame(x, y, by = intersect(names(x), names(y)),
+                 by.x = by, by.y = by,
                  all = FALSE, all.x = all, all.y = all,
-                 sort = TRUE, suffixes = c(".x",".y"))
+                 sort = TRUE, suffixes = c(".x",".y"), \dots)
 }
 \arguments{
   \item{x, y}{data frames, or objects to be coerced to one}

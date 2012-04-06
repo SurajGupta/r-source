@@ -63,20 +63,42 @@ static int ihash(SEXP x, int indx)
     return scatter((unsigned int) (INTEGER(x)[indx]));
 }
 
+/* We use unions here because Solaris gcc -O2 has trouble with
+   casting + incrementing pointers */
+union foo {
+    double d;
+    unsigned int u[2];
+};
+
 static int rhash(SEXP x, int indx)
 {
     /* There is a problem with signed 0s under IEEE */
     double tmp = (REAL(x)[indx] == 0.0) ? 0.0 : REAL(x)[indx];
-    return scatter(*((unsigned int *) (&tmp)));
+    /* need to use both 32-byte chunks or endianness is an issue */
+    if (sizeof(double) >= sizeof(unsigned int)*2) {
+	union foo tmpu;
+	tmpu.d = tmp;
+	return scatter(tmpu.u[0] + tmpu.u[1]);
+    } else
+	return scatter(*((unsigned int *) (&tmp)));
 }
 
 static int chash(SEXP x, int indx)
 {
     Rcomplex tmp;
+    unsigned int u;
     tmp.r = (COMPLEX(x)[indx].r == 0.0) ? 0.0 : COMPLEX(x)[indx].r;
     tmp.i = (COMPLEX(x)[indx].i == 0.0) ? 0.0 : COMPLEX(x)[indx].i;
-    return scatter((*((unsigned int *)(&tmp.r)) |
-		    (*((unsigned int *)(&tmp.r)))));
+    if (sizeof(double) >= sizeof(unsigned int)*2) {
+	union foo tmpu;
+	tmpu.d = tmp.r;
+	u = tmpu.u[0] ^ tmpu.u[1];
+	tmpu.d = tmp.i;
+	u ^= tmpu.u[0] ^ tmpu.u[1];
+	return scatter(u);
+    } else
+	return scatter((*((unsigned int *)(&tmp.r)) ^
+			(*((unsigned int *)(&tmp.i)))));
 }
 
 static int shash(SEXP x, int indx)
@@ -85,7 +107,7 @@ static int shash(SEXP x, int indx)
     char *p = CHAR(STRING_ELT(x, indx));
     k = 0;
     while (*p++)
-	k = 8 * k + *p;
+	    k = 11 * k + *p; /* was 8 but 11 isn't a power of 2 */
     return scatter(k);
 }
 
@@ -331,9 +353,9 @@ SEXP do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 	|| (!isVector(CADR(args)) && !isNull(CADR(args))))
 	error("match requires vector arguments");
 
-    /* Coerce to a common type; type == NILSXP is ok here.  
+    /* Coerce to a common type; type == NILSXP is ok here.
      * Note that R's match() does only coerce factors (to character).
-     * Hence, coerce to character or to `higher' type 
+     * Hence, coerce to character or to `higher' type
      * (given that we have "Vector" or NULL) */
     if(TYPEOF(CAR(args))  >= STRSXP || TYPEOF(CADR(args)) >= STRSXP)
 	type = STRSXP;
@@ -596,7 +618,7 @@ static SEXP subDots(SEXP rho)
 	t = CAR(a);
 	while (TYPEOF(t) == PROMSXP)
 	    t = PREXPR(t);
-	if( isSymbol(t) || isLanguage(t) ) 
+	if( isSymbol(t) || isLanguage(t) )
 	    SETCAR(b, mkSYMSXP(mkChar(tbuf), R_UnboundValue));
 	else
 	    SETCAR(b, t);

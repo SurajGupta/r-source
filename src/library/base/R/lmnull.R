@@ -61,14 +61,14 @@ print.summary.lm.null <- function (x, digits = max(3, getOption("digits") - 3), 
     invisible(x)
 }
 
-summary.lm.null <- function (z, correlation = FALSE, ...)
+summary.lm.null <- function (object, correlation = FALSE, ...)
 {
-    n <- length(z$fitted.values)
+    n <- length(object$fitted.values)
     p <- 0
-    r <- resid(z)
-    f <- fitted(z)
-    w <- weights(z)
-    if (is.null(z$terms)) {
+    r <- resid(object)
+    f <- fitted(object)
+    w <- weights(object)
+    if (is.null(object$terms)) {
 	stop("invalid \'lm\' object:  no terms component")
     }
     else {
@@ -76,11 +76,11 @@ summary.lm.null <- function (z, correlation = FALSE, ...)
 	mss <- sum(f^2)
     }
     resvar <- rss/(n - p)
-###R <- chol2inv(z$qr$qr[p1, p1, drop = FALSE])
+###R <- chol2inv(object$qr$qr[p1, p1, drop = FALSE])
 ###se <- sqrt(diag(R) * resvar)
-###est <- z$coefficients[z$qr$pivot[p1]]
+###est <- object$coefficients[object$qr$pivot[p1]]
 ###tval <- est/se
-    ans <- z[c("call", "terms")]
+    ans <- object[c("call", "terms")]
     ans$residuals <- r
     ans$coefficients <- NULL
     ans$sigma <- sqrt(resvar)

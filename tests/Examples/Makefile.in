@@ -32,8 +32,8 @@ Makedeps: Makefile
 	    dep="$${p}-Ex.Rout: $${p}-Ex.R"; \
 	    dep="$${dep} \$$(top_builddir)/library/$${p}/R/$${p}"; \
 	    tmp="library/$${p}/libs/$${p}" ; \
-	    if test -f $(top_builddir)/$${tmp}.$(SHLIB_EXT); then \
-	      dep="$${dep} \$$(top_builddir)/$${tmp}.\$$(SHLIB_EXT)"; \
+	    if test -f $(top_builddir)/$${tmp}$(SHLIB_EXT); then \
+	      dep="$${dep} \$$(top_builddir)/$${tmp}\$$(SHLIB_EXT)"; \
 	    fi; \
 	    dep="$${dep} \$$(FORCE)"; \
 	    echo $${dep}; \
@@ -50,8 +50,9 @@ R:
 .R.Rout:
 	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
 	@if [ -f $@ ];     then cp -p $@     $@.bak  ; fi
-	@echo "running code in $< ..."
-	$(R) < $< > $@
+	@echo @ECHO_N@ "running code in \`$<' ...@ECHO_C@"
+	@$(R) < $< > $@ || (mv $@ $@.fail && exit 1)
+	@echo "@ECHO_T@ OK"
 
 $(EX_IN): FORCE
 	@(pkg=`basename $@ -Ex.R`; \
@@ -68,17 +69,18 @@ $(EX_IN): FORCE
 	    OPTS="--txt --example" $(MAKE) R_PKGS="$${pkg}" DOCS); \
 	  f=$${TMPDIR-/tmp}/R$$$$; \
 	  $(PERL) $(top_srcdir)/share/perl/massage-Examples.pl $${pkg} \
-	    $(top_builddir)/library/$${pkg}/R-ex/*.R > $${f}; \
+	    $(top_builddir)/library/$${pkg}/R-ex > $${f}; \
 	  $(top_srcdir)/tools/move-if-change $${f} $@; \
+	  touch $@; \
 	fi)
 FORCE:
 
 $(EX_OUT): Makefile \
   $(top_builddir)/bin/R.bin \
   $(top_builddir)/library/base/R/base \
-  $(top_builddir)/modules/lapack.$(SHLIB_EXT)
+  $(top_builddir)/modules/lapack$(SHLIB_EXT)
 
-base-Ex.Rout: $(top_builddir)/modules/vfonts.$(SHLIB_EXT)
+base-Ex.Rout: $(top_builddir)/modules/vfonts$(SHLIB_EXT)
 
 mostlyclean: clean
 clean:

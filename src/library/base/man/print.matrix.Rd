@@ -13,7 +13,7 @@ print.matrix(x, rowlab=character(0), collab=character(0),
     names respectively.  By default, these are taken from
     \code{\link{dimnames}(x)}.}
   \item{quote}{logical; if \code{TRUE} and \code{x} is of mode
-    \code{"character"}, \emph{quotes} (\code{".."}) are used.}
+    \code{"character"}, \emph{quotes} (\code{"}) are used.} %"
   \item{right}{ if \code{TRUE} and \code{x} is of mode
     \code{"character"}, the output columns are \emph{right}-justified.}
   \item{na.print}{how \code{NA}s are printed.  If this is non-null, its
@@ -35,7 +35,7 @@ print.matrix(x, rowlab=character(0), collab=character(0),
   be changed in the future.
   %%-- ``signed:  Martin Maechler''
 
-  \code{prmatrix} is currently just an \code{.Alias} for
+  \code{prmatrix} is currently just an alias for
   \code{print.matrix}.
 }
 \value{Invisibly returns its argument, \code{x}.}}

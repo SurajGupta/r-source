@@ -6,7 +6,8 @@ str.data.frame(object, \dots)
 str.default(object, max.level = 0, vec.len = 4, digits.d = 3,
     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
     wid = getOption("width"), nest.lev = 0,
-    indent.str = paste(rep(" ", max(0, nest.lev + 1)), collapse = ".."))
+    indent.str = paste(rep(" ", max(0, nest.lev + 1)), collapse = ".."),
+    \dots)
 
  ls.str(pos = 1, pattern, \dots, mode = "any",
         max.level = 1, give.attr = FALSE)
@@ -54,6 +55,16 @@ lsf.str(pos = 1, pattern, \dots)
   \item{nest.lev}{current nesting level in the recursive calls to
     \code{str}.}
   \item{indent.str}{the indentation string to use.}
+  \item{\dots}{potential further arguments (required for Method/Generic reasons).}
+
+%% The following line is swallowed, unfortunately..  fixme??
+  For \code{ls.str} and \code{lsf.str}:
+
+  \item{pos}{integer indicating \code{\link{search}} path position.}
+  \item{pattern}{regular expression passed to \code{\link{ls}}.  Only names
+          matching \code{pattern} are considered.}
+  \item{mode}{character specifying the \code{\link{mode}} of objects to
+    consider.  Passed to \code{\link{exists}} and \code{\link{get}}.}
 }
 \value{
   \code{str} does not return anything, for efficiency reasons.
@@ -88,7 +99,7 @@ str(longch, nchar.max = 52)
 
 lsf.str()#- how do the functions look like which I am using?
 ls.str(mode = "list")#- what are the structured objects I have defined?
-## which base functions have "file" in their name ?  
+## which base functions have "file" in their name ?
 lsf.str(pos = length(search()), pattern = "file")
 \testonly{
  ##-- Some "crazy" objects

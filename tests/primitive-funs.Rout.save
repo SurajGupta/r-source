@@ -1,6 +1,6 @@
 
 R : Copyright 2001, The R Development Core Team
-Version 1.3.0 Under development (unstable) (2001-06-09)
+Version 1.4.0 Under development (unstable) (2001-11-02)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -24,14 +24,14 @@ Type `q()' to quit R.
 > bpos <- match("package:base",search())
 > nn <- ls(pos=bpos)
 > length(nn) # 844 [R 0.62.0, March 25, 1998;  1067 R 0.64.0 March 1999]
-[1] 1416
+[1] 1451
 > 
 > is.primitive <- function (obj) is.function(obj) && is.null(args(obj))
 > is.special <- function(obj) typeof(obj) == "special"
 > 
 > Primf <- nn[sapply(nn, function(N) is.primitive(get(N, pos=bpos)))]
 > length(Primf) ## 195  R 0.62.0, March 25, 1998
-[1] 143
+[1] 151
 > ## 132	R 0.62.2+
 > Real.primitives <-
 +     list(
@@ -39,7 +39,7 @@ Type `q()' to quit R.
 + 	 "return", "function", "quote",
 + 	 "on.exit" ## on.exit(expression, add=F) has two arguments in S-plus !
 + 	 ),
-+ 	 language = c("$", "$<-", "<-", "<<-", "[", "[<-", "[[", "[[<-"),
++ 	 language = c("$", "$<-", "@", "@<-", "<-", "=", "<<-", "[", "[<-", "[[", "[[<-"),
 + 	 arith = c("%%", "%*%", "%/%","*", "+", "-", "/", "^"),
 + 	 logic = c("!",	 "&", "&&",  "|", "||",
 + 	 "<", "<=", "==", ">", ">=", "!="),
@@ -64,7 +64,7 @@ Type `q()' to quit R.
 +            ".External.graphics", ".Call.graphics",
 + 	   ".C", ".Fortran", "symbol.C", "symbol.For",
 + 	   "globalenv", "pos.to.env", "unclass",
-+            "as.character",
++            "as.character", "as.environment",
 + 	   ##maybe ? "gc", "gcinfo",
 + 	   ##
 + 	   "debug", "undebug", "trace", "untrace",
@@ -75,6 +75,7 @@ Type `q()' to quit R.
 + 	 ".Alias",
 + 	 "call", "as.call", "expression", "substitute",
 + 	 "UseMethod", ## ? really ?
++          "standardGeneric",
 + 	 "invisible",
 + 	 ),
 + 
@@ -82,6 +83,7 @@ Type `q()' to quit R.
 + 	 c("environment<-",
 + 	   "length",	"length<-",
 + 	   "class",	"class<-",
++ 	   "dataClass", "objWithClass",
 + 	   "attr", # again
 + 	   "attr<-",
 + 	   "attributes",	"attributes<-",
@@ -112,16 +114,17 @@ Type `q()' to quit R.
 > 
 > Specf <- Primf[iPsp <- sapply(Primf, function(N) is.special(get(N, pos=bpos)))]
 > length(Specf) ## 36 [ R 0.63 ]
-[1] 38
+[1] 41
 > Specf
  [1] "$"            "$<-"          "&&"           ".Internal"    "<-"          
- [6] "<<-"          "UseMethod"    "["            "[<-"          "[["          
-[11] "[[<-"         "as.character" "attr<-"       "break"        "browser"     
-[16] "c"            "call"         "dim"          "dim<-"        "dimnames"    
-[21] "dimnames<-"   "expression"   "for"          "function"     "if"          
-[26] "interactive"  "missing"      "nargs"        "next"         "on.exit"     
-[31] "quote"        "repeat"       "return"       "substitute"   "while"       
-[36] "{"            "||"           "~"           
+ [6] "<<-"          "="            "@"            "@<-"          "UseMethod"   
+[11] "["            "[<-"          "[["           "[[<-"         "as.character"
+[16] "attr<-"       "break"        "browser"      "c"            "call"        
+[21] "dim"          "dim<-"        "dimnames"     "dimnames<-"   "expression"  
+[26] "for"          "function"     "if"           "interactive"  "missing"     
+[31] "nargs"        "next"         "on.exit"      "quote"        "repeat"      
+[36] "return"       "substitute"   "while"        "{"            "||"          
+[41] "~"           
 > ## the non-"special" ones:
 > all("builtin" == sapply(Primf[!iPsp], function(N) typeof(get(N, pos=bpos))))
 [1] TRUE
@@ -131,7 +134,7 @@ Type `q()' to quit R.
 > table(ncpf)
 ncpf
  5  6  7  8  9 10 11 12 13 14 
- 1  1  5  1  8  4  4  2  1  1 
+ 1  1  5  1  8  4  4  2  2  1 
 > prim.f[ncpf <= 6]#  only is.na, is.nan
 [1] "is.na"  "is.nan"
 > 
@@ -145,14 +148,15 @@ ncpf
 [25] "is.real"        "is.recursive"   "is.single"      "is.symbol"     
 > 
 > length(prim.f2 <- prim.f[! p.isis]) # down to 87   [R 0.62.0, March 25, 1998]
-[1] 0
+[1] 1
 > 					# 61  [March 27]
 > 					# 43  [April 17];  38 [April 22]
 > ##-> 0	[May 1, 1998]
 > 
 > prim.f2 # character(0) --- none left! --
-character(0)
+[1] "reg.finalizer"
 > 
 > for(n in prim.f2)
 +     cat(n," <- function(*) .Internal(",n,"(*))\n", sep="")
+reg.finalizer <- function(*) .Internal(reg.finalizer(*))
 > 

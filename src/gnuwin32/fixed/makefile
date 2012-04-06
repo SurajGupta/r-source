@@ -43,7 +43,7 @@ fixh: h/config.h ../FFDecl.h ../FFTab.h \
 	$(SED) -e 's/"contr.poly")/"contr.poly"), pager="console"/' $< > $@
 
 ../../../bin/check: ../../scripts/check.in
-	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
+	$(SED) -e 1d -e "s/R CMD/Rcmd/" -e "s/Rd2dvi /Rd2dvi.sh /" $< > $@
 
 ../../../bin/build: ../../scripts/build.in
 	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
@@ -75,6 +75,7 @@ cp2bin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))
 
 fixhtml: $(wildcard ./html/*.html) ../../../doc/html/search/SearchEngine.html
 	$(CP) -p ./html/*.html ../../../doc/html
+	$(CP) -p ./html/rwin.html ../../../doc/html/index.html
 	$(ECHO) done > fixhtml
 
 fixetc: $(filter-out ./etc/CVS, $(wildcard ./etc/*))
@@ -88,6 +89,9 @@ fixshare: ./share/tests.mk
 
 clean:
 	$(RM) *~ */*~ fixhtml fixh fixbin fixetc fixshare
+
+distclean: clean
+	$(RM) -f ../FFDecl.h ../FFTab.h ../../../tools/GV
 
 ../../../doc/html/search/SearchEngine.html:../../../doc/KEYWORDS.db
 	(cd ../../../doc; \

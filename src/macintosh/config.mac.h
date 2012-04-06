@@ -6,6 +6,7 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+
 /* Define if on AIX 3.
    System headers sometimes define this.
    We just want to avoid a redefinition error message.  */
@@ -24,7 +25,6 @@
 #undef CRAY_STACKSEG_END
 
 /* Define if you have alloca, as a function or macro.  */
-#undef HAVE_ALLOCA
 #ifdef __MRC__
 #define HAVE_ALLOCA 1
 #endif
@@ -92,15 +92,6 @@
    and can do arithmetic on the latter */
 #define HAVE_DOUBLE_COMPLEX 1
 
-/* Define if calloc(0) does not return a null pointer. */
-#undef CALLOC_BROKEN
-
-/* Define if finite() is wrong for -Inf/NaN/Inf. */
-#undef FINITE_BROKEN
-
-/* Define if strptime() does not exist or fails pre-1970. */
-#define STRPTIME_BROKEN 1
-
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
 
@@ -126,6 +117,12 @@
    GNOME GUI to be built. */
 #undef HAVE_GNOME
 
+/* Define if you have the ISO C99 isfinite() macro in <math.h>. */
+#undef HAVE_ISFINITE_IN_MATH_H
+
+/* Define if you have the ISO C99 isnan() macro in <math.h>. */
+#undef HAVE_ISNAN_IN_MATH_H
+
 /* Define if you have the JPEG headers and libraries. */
 #undef HAVE_JPEG
 
@@ -136,12 +133,28 @@
 /* Define if you have the PNG headers and libraries. */
 #undef HAVE_PNG
 
+/* Define if your system time functions do not count leap seconds, as
+   required by POSIX. */
+#define HAVE_POSIX_LEAPSECONDS 1
+
 /* Define if you have POSIX.1 compatible sigsetjmp/siglongjmp. */
 #undef HAVE_POSIX_SETJMP
 
 /* Define if you have the Tcl/Tk headers and libraries and want Tcl/Tk
    support to be built. */
 #undef HAVE_TCLTK
+
+/* Define if calloc(0) returns a null pointer. */
+#define HAVE_WORKING_CALLOC 1
+
+/* Define if finite() is correct for -Inf/NaN/Inf. */
+#define HAVE_WORKING_FINITE 1
+
+/* Define if log() is correct for 0/-1. */
+#define HAVE_WORKING_LOG 1
+
+/* Define if strptime() exists and does not fail pre-1970. */
+#undef HAVE_WORKING_STRPTIME
 
 /* Define if you have the X11 headers and libraries, and want the X11
    GUI to be built. */
@@ -151,13 +164,13 @@
 #define HAVE_XDR 1
 
 /* Define if you have the zlib headers and libraries. */
-#undef HAVE_ZLIB
+#define HAVE_ZLIB 1
 
 /* Define if you have IEEE 754 floating point arithmetic. */
 #define IEEE_754 1
 
-/* Define if log() is wrong for 0/-1. */
-#undef LOG_BROKEN
+/* Define if you have 32 bit ints. */
+#define INT_32_BITS 1
 
 /* Define if your system needs __setfpucw() to control FPU rounding.
    This was used to control floating point precision, rounding and
@@ -200,9 +213,6 @@
    Apparently needed on HPUX. */
 #undef USE_BUILTIN_RINT
 
-/* Define if your system time functions count leap seconds. */
-#undef USING_LEAPSECONDS
-
 /* Define on HPUX if not using GCC. */
 #undef _HPUX_SOURCE
 
@@ -212,6 +222,9 @@
 
 /* Type for socket lengths: socklen_t, sock_t, int? */
 #define SOCKLEN_T int
+
+/* The number of bytes in a int.  */
+#define SIZEOF_INT 4
 
 /* The number of bytes in a long.  */
 #define SIZEOF_LONG 4
@@ -292,9 +305,7 @@
 #undef HAVE_SNPRINTF
 
 /* Define if you have the stat function.  */
-#ifndef __MRC__
 #define HAVE_STAT 1
-#endif
 
 /* Define if you have the strcoll function.  */
 #define HAVE_STRCOLL 1
@@ -396,9 +407,9 @@
 #undef HAVE_SYS_SOCKET_H
 
 /* Define if you have the <sys/stat.h> header file.  */
-#ifndef __MRC__
+//#ifndef __MRC__
 #define HAVE_SYS_STAT_H 1
-#endif
+//#endif
 
 /* Define if you have the <sys/time.h> header file.  */
 #define HAVE_SYS_TIME_H 1

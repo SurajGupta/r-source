@@ -6,7 +6,7 @@ use FileHandle;
 use Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(R_getenv R_version);
+@EXPORT = qw(R_getenv R_version file_path list_files_with_exts);
 
 
 #**********************************************************
@@ -56,6 +56,35 @@ sub text2html {
     s/</&lt;/g;
     $_;
 }
+
+sub file_path {
+    my @args = @_;
+    my $filesep = "/";
+    $filesep = ":" if($main::OSdir eq "mac");
+    join($filesep, @args);
+}
+
+sub list_files_with_exts {
+    my ($dir, $exts) = @_;
+	my @files;
+    $exts = ".*" unless $exts;
+    opendir(DIR, $dir) or die "cannot opendir $dir: $!";
+    if($main::OSdir eq "mac"){
+    @files = grep { /\.$exts$/ && -f "$dir:$_" } readdir(DIR);
+	}
+    else{
+    @files = grep { /$exts$/ && -f "$dir/$_" } readdir(DIR);
+    }
+    closedir(DIR);
+    ## We typically want the paths to the files, see also the R variant
+    ## listFilesWithExts() used in some of the QA tools.
+    my @paths;
+    foreach my $file (@files) {
+	push @paths, &file_path($dir, $file);
+    }
+    @paths;
+}
+
 
 #**********************************************************
 

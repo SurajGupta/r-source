@@ -47,6 +47,9 @@
     here is used to handle event (high or low level event.)
 */
 
+
+#include <RCarbon.h>
+
 #include <AppleEvents.h>
 
 
@@ -66,18 +69,22 @@
 #include "RIntf.h"
 #endif
 
+#ifdef __MRC__
+#include <Debugging.h>
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 #include "Defn.h"
 #include "Graphics.h"
+#include "Fileio.h"
 #include "Startup.h" /* Jago */
 #include <Rdevices.h>
 
 Boolean EventsInit = false;
+extern Boolean RunningOnCarbonX(void);
 
-
-SEXP R_LoadFromFile(FILE*, int);
 
 UInt32 sSleepTime = 0; // sleep time for WaitNextEvent()
 RgnHandle sMouseRgn = nil; // mouse region for WaitNextEvent()
@@ -93,6 +100,7 @@ extern Boolean OnOpenSource;
 
 #define kResumeMask             1       /* bit of message field for resume vs. suspend */
 
+extern void RPrefs(void);
 
 extern Graphic_Ref                 gGReference[MAX_NUM_G_WIN + 1];
 extern SInt16                      gExpose;
@@ -115,6 +123,9 @@ extern RGBColor	                   gTypeColour;
 
 char *StrCalloc(unsigned short size);
 char *StrFree(char *strPtr);
+
+pascal OSStatus REventHandler(EventHandlerCallRef, EventRef, void*);
+static OSStatus HandleWindowCommand(EventRef inEvent);
 
 
 void DoGenKeyDown ( const EventRecord *event, Boolean Console);
@@ -585,6 +596,7 @@ void DoOSEvent ( const EventRecord * event )
     {
 	if ( ( window = FrontWindow( ) ) != nil )
 	{
+	    
 	    DoActivate( (event->message & resumeFlag) != 0, window );
 	}
 	break;
@@ -652,6 +664,11 @@ void DoWindowEvent( const EventRecord *event )
 
     case activateEvt:
     {
+    if(RunningOnCarbonX()){
+    if(window != Console_Window)
+     BringToFront(Console_Window);
+    BringToFront(window); 
+	}
 	DoActivate( ( event->modifiers & activeFlag) != 0, window );
 	break;
     }
@@ -660,7 +677,7 @@ void DoWindowEvent( const EventRecord *event )
 
 
 /* ProcessEvent routine :
-   Desciption :
+   Description :
 
    It is used in the Event  loop, when you call Process Event, it will
    capture  the next  event that  available,  and dispatch  it to  the
@@ -675,38 +692,36 @@ void DoWindowEvent( const EventRecord *event )
     EventRecord event;
     Boolean gotEvent,  haveResize = false;
     WindowPtr windowPtr;
-    DevDesc  *dd;
+    NewDevDesc  *dd;
+    GEDevDesc  *gedd;
+    MacDesc	*xd;
     SInt16 Console_Width, NumofChar;
     GrafPtr savePort;
     RgnHandle cursorRgn;
     Rect portRect ;
     CGrafPtr thePort;
+    double left,right,bottom,top;
   
     gotEvent = WaitNextEvent( everyEvent, &event, sSleepTime, sMouseRgn );
 
-#if ! TARGET_API_MAC_CARBON
-	// give text services a chance to intercept this event
-	// if TSMEvent( ) handles the event, it will set event.what to nullEvent
-	// this call is not needed for Carbon clients
-	TSMEvent ( & event ) ;
-#endif
-
     if (gExpose) {
-	dd = (DevDesc*)gGReference[gExpose].devdesc;
-	dd-> dp.resize(dd);
-	playDisplayList(dd);
+	dd = (NewDevDesc*)gGReference[gExpose].newdevdesc;
+	gedd = (GEDevDesc*)gGReference[gExpose].gedevdesc;
+    xd = (MacDesc *)dd->deviceSpecific;
+	gExpose = false; /* gExpose should be set to false    */
+	                 /* before calling GEplayDisplayList  */
+	                 /* otherwise you'll have an infinite */
+	                 /* loop                              */  
+	GEplayDisplayList(gedd);
+	xd->resize = false;
 	haveResize = true;
-	gExpose = false;
     }
     if (fstart) {
 	GetPortBounds ( GetWindowPort(Console_Window), & portRect ) ;
 	Console_Width = portRect.right - portRect.left ;
 	GetPort(&savePort);
-#if TARGET_API_MAC_CARBON
     SetPortWindowPort(Console_Window);
-#else
-	SetPort(Console_Window);
-#endif
+
 	TextFont(4);
 	TextSize(gTextSize);
 	NumofChar = (int)(((Console_Width - 15) / CharWidth('M')) -0.5) ;
@@ -858,8 +873,6 @@ static pascal OSErr HandleOpenDocument( const AppleEvent *ae,
     FInfo		fileInfo;
     SInt16		pathLen;
     Handle		pathName=NULL;
-    FILE		*fp;
-    SEXP 		img, lst;
 
     docList.descriptorType = typeNull;
     docList.dataHandle = nil;
@@ -887,10 +900,11 @@ static pascal OSErr HandleOpenDocument( const AppleEvent *ae,
         if( OnOpenSource )
         	SourceFile(&fileSpec);
         else {    
-        DoNew( false);
-        RemWinMenuItem();
-        ReadTextFile ( &fileSpec, GetWindowWE ( Edit_Windows[Edit_Window-1] ) );
-        UniqueWinTitle();
+        DoNew(false);
+        RemWinMenuItem(Edit_Windows[Edit_Window-1] );
+        ReadTextFile ( &fileSpec,  Edit_Windows[Edit_Window-1]  );
+        UniqueWinTitle(Edit_Windows[Edit_Window-1] );
+        ShowWindow(Edit_Windows[Edit_Window-1] );
         }
     }else
 	if ((fileInfo.fdType == 'BINA')||(fileInfo.fdType == 'ROBJ')){
@@ -900,31 +914,7 @@ static pascal OSErr HandleOpenDocument( const AppleEvent *ae,
 	    InitFile[pathLen] = '\0';
 	    HUnlock((Handle) pathName);
 
-
-	    if(!(fp = fopen(InitFile, "rb"))) { /* binary file */
-		RWrite("File cannot be opened !");
-		/* warning here perhaps */
-		return;
-	    }
-	    PROTECT(img = R_LoadFromFile(fp, 1));
-	    switch (TYPEOF(img)) {
-	    case LISTSXP:
-		while (img != R_NilValue) {
-		    defineVar(TAG(img), CAR(img), R_GlobalEnv);
-		    img = CDR(img);
-		}
-		break;
-	    case VECSXP:
-		for (i = 0; i < LENGTH(img); i++) {
-		    lst = VECTOR_ELT(img,i);
-		    while (lst != R_NilValue) {
-			defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
-			lst = CDR(lst);
-		    }
-		}
-		break;
-	    }
-	    UNPROTECT(1);
+	    R_RestoreGlobalEnvFromFile(InitFile, TRUE);
 	}
  cleanup:
     return err;
@@ -1018,6 +1008,12 @@ pascal OSErr  HandleDoCommandLine (AppleEvent *theAppleEvent, AppleEvent* reply,
 }
 
 
+const EventTypeSpec events[] = 
+		{ { kEventClassWindow, kEventWindowClose }, 
+          { kEventClassControl, kEventControlHit }, 
+          { kEventClassCommand, kEventCommandProcess}, 
+          { kEventClassCommand, kEventCommandUpdateStatus},
+          { kEventClassCommand, kEventCommandProcess} };
 
 /* InitializeEvents: modified to let R interact with other processes
                      such as UnZip tools, Browsers, etc.
@@ -1058,6 +1054,9 @@ OSErr InitializeEvents( void )
 					NewAEEventHandlerUPP( HandleDoCommandLine ), 0, false )) != noErr )
 	    goto cleanup;
 
+   /* Installs a generic event handler */
+   if ( (  err = InstallEventHandler(GetApplicationEventTarget(), NewEventHandlerUPP(REventHandler), sizeof(events), events, NULL, NULL)) != noErr )
+	    goto cleanup;
 
 
 	gAEIdleUPP = NewAEIdleUPP(idleProc);
@@ -1082,37 +1081,6 @@ void R_startBrowser(char *fileName)
     OpenSelection(&HelpFile);
 }
 
-/*
-**  Alloc memory and init it
-**
-*/
-char *StrCalloc(unsigned short size)
-{
-char *strPtr = NULL;
-
-strPtr = calloc(size, sizeof(char));
-return strPtr;
-}
-
-
-
-/*
-**  Release only non NULL pointers
-**
-*/
-char *StrFree(char *strPtr)
-{
-
-if (strPtr != NULL)
-    {
-    free(strPtr);
-    }
-
-return NULL;
-}
-
-
-
 
 /*
 **  Alloc memory and init it
@@ -1143,5 +1111,62 @@ if (strPtr != NULL)
 return NULL;
 }
 
+pascal OSStatus REventHandler(EventHandlerCallRef x, EventRef inEvent, void *y)
+{
+    OSStatus result = eventNotHandledErr;
+	
+	switch (GetEventClass(inEvent))
+	{
+		case kEventClassCommand:
+		  result = HandleWindowCommand(inEvent);
+	    break;
+		
+		default:
+		break;
+		
+	}
+	   
+    return result;
+}
 
+
+/* This routine is charged to handlcommand events */
+/* Jago August 2001, Stefano M. Iacus             */
+
+
+static OSStatus HandleWindowCommand(EventRef inEvent)
+{
+	HICommand command;
+    OSStatus result = eventNotHandledErr;
+	WindowRef window;
+	
+	GetEventParameter(inEvent, 
+		kEventParamDirectObject, typeHICommand, 
+		NULL, sizeof(command), NULL, &command);
+	
+	window = GetUserFocusWindow();
+#ifdef __MRC__
+	check(command.attributes & kHICommandFromMenu);
+#endif
+	
+	switch (GetEventKind(inEvent))
+	{
+		case kEventCommandProcess:
+		{
+			if (command.commandID == kHICommandPreferences)
+			{
+				result = noErr;
+				
+				RPrefs();
+			}
+		}
+		break;
+		
+		default:
+		break;
+	
+	}
+	
+	return result;
+}
 

@@ -13,14 +13,41 @@
             paste("-",x,sep="")
         else ""
 
-    ## Convert arguments. R functions and windows require special treatment
+    isCallback <- function(x)
+	is.function(x) || is.call(x) || is.expression(x)
+
+    makeAtomicCallback <- function(x, e) {
+	if (is.name(x))
+	    x <- eval(x, e)
+	if (is.call(x)){
+	    if(identical(x[[1]], as.name("break")))
+		return("break")
+	    if(identical(x[[1]], as.name("function")))
+                x <- eval(x, e)
+        }
+	.Tcl.callback(x, e)
+    }
+
+    makeCallback <- function(x, e) {
+	if (is.expression(x))
+	    paste(lapply(x,makeAtomicCallback, e),collapse=";")
+	else
+	    makeAtomicCallback(x, e)
+    }
+
+    ## Convert arguments. Callbacks and windows require special treatment
     ## everything else is converted to strings
     val2string <- function(x) {
         if (is.null(x)) return("")
         if (is.tkwin(x)){current.win <<- x ; return (.Tk.ID(x))}
-        if (is.function(x)){
-            callback <- .Tcl.callback(x)
-            assign(callback, .Alias(x), envir=current.win$env)
+        if (isCallback(x)){
+	    # Jump through some hoops to protect from GC...
+	    e <- parent.frame()
+	    ref <- local({value<-x; envir<-e; environment()})
+            callback <- makeCallback(get("value",envir=ref),
+		                     get("envir",envir=ref))
+	    callback <- paste("{", callback, "}")
+            assign(callback, ref, envir=current.win$env)
             return(callback)
         }
         ## quoting hell...
@@ -84,15 +111,46 @@ tkdestroy  <- function(win) {
 
 is.tkwin <- function(x) inherits(x, "tkwin")
 
-"$.tclvar" <- function(x, name) .Tcl(paste("set", name))
+"$.tclvar" <- function(x, name) {
+	.Deprecated("tclVar and tclvalue")
+	.Tcl(paste("set", name))
+}
 "$<-.tclvar" <- function(x, name, value) {
+    .Deprecated("tclVar and tclvalue<-")
     .Tcl(paste("set ", name, " {", value,"}", sep=""))
     x
 }
 
+tclVar <- function(init="") {
+   n <- evalq(TclVarCount <- TclVarCount + 1, .TkRoot$env)
+   name <- paste("RTcl", n, sep="")
+   l <- list(env=new.env())
+   assign(name,NULL,envir=l$env)
+   reg.finalizer(l$env,function(env)tkcmd("unset",ls(env)))
+   class(l)<-"tclVar"
+   tclvalue(l) <- init
+   l
+}
+
+tclvalue <- function(x) UseMethod("tclvalue")
+"tclvalue<-" <- function(x, value) UseMethod("tclvalue<-")
+
+tclvalue.tclVar <- function(x) tkcmd("set",ls(x$env))
+"tclvalue<-.tclVar" <- function(x, value) {tkcmd("set",ls(x$env), value); x}
+
+tclvalue.default <- function(x) tkcmd("set", as.character(x))
+"tclvalue<-.default" <- function(x, value)
+   {tkcmd("set", as.character(x), value); x}
+
+as.character.tclVar <- function(x) ls(x$env)
+# Actually makes .default and .tclVar methods equivalent, the latter
+# just saves a level of function dispatching
+
+#----
 
 .TkRoot <- .Tk.newwin("")
 tclvar  <- structure(NULL,class="tclvar")
+evalq(TclVarCount <- 0, .TkRoot$env)
 
 
 # ------ Widgets ------
@@ -186,6 +244,20 @@ tkXselection.own    <- function(...) tkcmd("selection", "own", ...)
 tkwait.variable  <- function(...) tkcmd("tkwait", "variable", ...)
 tkwait.visibility<- function(...) tkcmd("tkwait", "visibility", ...)
 tkwait.window    <- function(...) tkcmd("tkwait", "window", ...)
+
+## Standard dialogs
+tkgetOpenFile    <- function(...) tkcmd("tk_getOpenFile", ...)
+tkgetSaveFile    <- function(...) tkcmd("tk_getSaveFile", ...)
+tkmessageBox     <- function(...) tkcmd("tk_messageBox", ...)
+
+
+## File handling functions
+
+tkfile.tail      <- function(...) tkcmd("file", "tail", ...)
+tkfile.dir       <- function(...) tkcmd("file", "dir", ...)
+tkopen           <- function(...) tkcmd("open", ...)
+tkclose          <- function(...) tkcmd("close", ...)
+tkputs           <- function(...) tkcmd("puts", ...)
 
 ## Tkwinfo actually has a bazillion subcommands, but it's rarely
 ## used, so let's be lazy
@@ -361,6 +433,9 @@ tkyposition     <- function(widget, ...) tkcmd(widget, "ypositions", ...)
 tkyview         <- function(widget, ...) tkcmd(widget, "yview", ...)
 tkyview.moveto  <- function(widget, ...)tkcmd(widget, "yview", "moveto", ...)
 tkyview.scroll  <- function(widget, ...)tkcmd(widget, "yview", "scroll", ...)
+
+
+
 
 tkpager <- function(file, header, title, delete.file)
 {

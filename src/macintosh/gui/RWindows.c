@@ -69,6 +69,9 @@
 
 /*    INCLUDE HEADER FILE     */
 
+#include <RCarbon.h>
+
+
 #ifndef __ALIASES__
 #include <Aliases.h>
 #endif
@@ -127,8 +130,8 @@ extern 	Str255	PostFont, UserFont;
 extern	char 	*mac_getenv(const char *name);
 extern SInt32		systemVersion ;
 
-void UniqueWinTitle(void);
-void RemWinMenuItem(void);
+void UniqueWinTitle(WindowPtr window);
+void RemWinMenuItem(WindowPtr window);
 
 
     
@@ -154,7 +157,7 @@ extern WindowPtr     Help_Windows[MAX_NUM_H_WIN + 1];
 // some consts used by DoGrow()
 static void          hideTextRect(Rect*);
 static SInt32        sScrollStep; // how many pixels to scroll (used by ScrollProc)
-extern void          SetTab(void);
+extern void          SetTab(Boolean);
 extern int           R_SetOptionWidth(int w);
 
 void RnWWin(char* buf, SInt16 len, WEReference we );
@@ -479,10 +482,7 @@ WEReference GetWindowWE ( WindowRef window )
       
 //	remember original text rectangle
 
-   /* if(isGraphicWindow(window))
-     hideTextRect(&oldTextRect);
-    else
-    */ CalcTextRect ( window, & oldTextRect ) ;
+    CalcTextRect ( window, & oldTextRect ) ;
 	
 	//	resize the window
 	if ( ! ResizeWindow ( window, hitPt, & sizeConstraints, & newContentRect ) )
@@ -532,11 +532,8 @@ WEReference GetWindowWE ( WindowRef window )
 	partCode = IsWindowInStandardState ( window, & idealSize, nil ) ? inZoomIn : inZoomOut ;
 
 	//	remember original text rectangle
-/*	if(isGraphicWindow(window))
-     hideTextRect(&oldTextRect);
-    else
-  */   CalcTextRect ( window, & oldTextRect ) ;
-//CalcTextRect ( window, & oldTextRect ) ;
+    CalcTextRect ( window, & oldTextRect ) ;
+
 
 	//	zoom the window
 	ZoomWindowIdeal ( window, partCode, & idealSize ) ;
@@ -956,8 +953,10 @@ void DoKey ( SInt16 key, const EventRecord * event )
 
 /* DoUpdate:
 
-   Based on WASTE DEMO. However, when you update a graphic window,
-   you need to do something more than Text window.
+   Fixed on Dec 2001. Update of graphics windows is
+   now implemented correctly, and only one time.
+   Text windows update as before.
+   Jago Dec 2001, Stefano M. Iacus
  */
  
 
@@ -966,17 +965,31 @@ void DoUpdate ( WindowRef window )
 	GrafPtr		savePort ;
 	RgnHandle	updateRgn ;
 	SInt16 		WinIndex;
-    DevDesc *dd;
-  
-#if TARGET_API_MAC_CARBON
+    GEDevDesc *gedd;
+    NewDevDesc *dd;
+    double left,right,top,bottom;
 	Rect		portRect ;
-#endif
 
 	// if we have no windows, there's nothing to update!
 	if ( window == nil )
 	{
 		return ;
 	}
+
+	if( (WinIndex = isGraphicWindow(window)) != 0 ){ 
+     dd = (NewDevDesc *)gGReference[WinIndex].newdevdesc;
+     gedd = (GEDevDesc *)gGReference[WinIndex].gedevdesc;
+	 dd->size(&left,&right,&bottom,&top,dd);
+	 dd->left = left;
+	 dd->right = right;
+	 dd->top = top;
+	 dd->bottom = bottom; 
+   	 BeginUpdate ( window ) ;
+	 EndUpdate ( window ) ;
+
+     GEplayDisplayList(gedd);
+     return;
+    }
 
 	// save the old drawing port
 	GetPort ( & savePort ) ;
@@ -987,42 +1000,25 @@ void DoUpdate ( WindowRef window )
 
 	updateRgn = NewRgn ( ) ;
 
-#if TARGET_API_MAC_CARBON
 	//	set updateRgn to the whole window rectangle
 	//	in the future, when Carbon gives us an API to get the "drawable" region
 	//	of a window, use that!
 	RectRgn ( updateRgn, GetWindowPortBounds ( window, & portRect ) ) ;
-#else
-	//	in a classic, non-Carbon environment, the visRgn of the window
-	//	is set to the region to redraw between BeginUpdate and EndUpdate
-	MacCopyRgn ( window -> visRgn, updateRgn ) ;
-#endif
+
 
 	// erase the update region
-	if(!isGraphicWindow(window))
      EraseRgn ( updateRgn ) ;
 
 	//	draw scroll bars
-	if(!isGraphicWindow(window))
   	 UpdateControls ( window, updateRgn ) ;
 
 	//	draw text
-	if(!isGraphicWindow(window))
 	 WEUpdate ( updateRgn, GetWindowWE ( window ) ) ;
-    else{
-    //    if (QDIsPortBuffered(GetWindowPort(window)))
-    //    QDFlushPortBuffer(GetWindowPort(window), NULL);
- /* This way of refreshing windows is rather slow */
-    WinIndex = isGraphicWindow(window);
-      dd = (DevDesc*)gGReference[WinIndex].devdesc;
-   
-     playDisplayList(dd);
-}
+    
 
-	// tell everything we're done updating
-	EndUpdate ( window ) ;
-	DisposeRgn ( updateRgn ) ;
- 
+	 EndUpdate ( window ) ;
+	 DisposeRgn ( updateRgn ) ;
+
 	// restore the old graphics port
 	SetPort ( savePort ) ;
 }
@@ -1134,9 +1130,11 @@ WindowPtr CreateGraphicWindow (int wid, int h)
 		screenBits.bounds.top +24, screenBits.bounds.right -4,
 		screenBits.bounds.bottom -4);
 	MoveWindow(Working_Window, theWholeScreen.right - wid - 5, theWholeScreen.top + 20, true);
-	ShowWindow(Working_Window);
     if(Current_Window>2)
-      RepositionWindow(FrontWindow(), Graphic_Window[Current_Window-2],kWindowCascadeOnParentWindow);
+      RepositionWindow(Working_Window, Graphic_Window[Current_Window-2],kWindowCascadeOnParentWindow);
+
+	ShowWindow(Working_Window);
+
     }
     else{
 	GWdoErrorAlert(eGWin);
@@ -1154,11 +1152,6 @@ OSErr CreateWindow (const FSSpec * pFileSpec, Boolean editable)
     OSErr   err;
     WindowPtr outWindow=nil;
     
- /*   *outWindow = *Working_Window;
-    err = newWindow (pFileSpec, &Working_Window, 0, editable);
-    if (err)
-     *Working_Window = *outWindow;
-*/
     outWindow = Working_Window;
     err = newWindow (pFileSpec, &Working_Window, 0, editable);
     if (err)
@@ -1202,6 +1195,7 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 
 
 
+    if(graphic==0)
     GetTextSize();
     
     initialWindowBounds.right = (int)(28 + EIGHTY);
@@ -1248,12 +1242,13 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 	
 	case 0:
 	( * hDocument ) -> docType = kTypeText ;
-
-	 err = CreateNewWindow ( kDocumentWindowClass,
-		kWindowCloseBoxAttribute | kWindowVerticalZoomAttribute | kWindowCollapseBoxAttribute | kWindowResizableAttribute, 
+	    err = CreateNewWindow ( kDocumentWindowClass,
+		kWindowCloseBoxAttribute|kWindowVerticalZoomAttribute | kWindowCollapseBoxAttribute | kWindowResizableAttribute, 
 		& initialWindowBounds, & window);
 	break;
 	
+	 
+	 
 	default:
     window = GetNewCWindow ( kWindowTemplateID, nil, ( WindowPtr ) -1L ) ;
     if ( window == nil )
@@ -1261,10 +1256,6 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 	err = memFullErr ;
 	goto cleanup ;
     }
-  /*
-	err = CreateNewWindow ( kDocumentWindowClass,
-		kWindowCloseBoxAttribute | kWindowResizableAttribute, & initialWindowBounds, & window );
-	*/
 	break;
 	}
 	
@@ -1388,7 +1379,7 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 		{
 			case kTypeText :
 			{
-				if ( ( err = ReadTextFile ( pFileSpec, we ) ) != noErr )
+				if ( ( err = ReadTextFile ( pFileSpec, window ) ) != noErr )
 				{
 					goto cleanup ;
 				}
@@ -1449,9 +1440,9 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 
 
 	//	position the window
-	RepositionWindow ( window, FrontWindow ( ), kWindowCascadeOnParentWindow ) ;
 
 	//	finally!  show the document window
+	if(!Have_Console)
 	TransitionWindow ( window, kWindowZoomTransitionEffect, kWindowShowTransitionAction, transitionSrcRect ) ;
 
 	//	copy window ref for caller
@@ -1478,13 +1469,15 @@ OSStatus newWindow ( const FSSpec * pFileSpec, WindowRef * outWindow, int graphi
 	    if(windowsMenu = GetMenuHandle(kMenuWindows))
     	 AppendMenu(windowsMenu, titledString); 
          
-	    SetTab();
+	    SetTab(false);
 	    GetQDGlobalsScreenBits(&screenBits);
 	    SetRect(&theWholeScreen, screenBits.bounds.left +4,
 		    screenBits.bounds.top +24, screenBits.bounds.right -4,
 		    screenBits.bounds.bottom -4);
         GetWindowPortBounds ( window, & portRect ) ;
         MoveWindow(window, theWholeScreen.right - (portRect.right + 5), theWholeScreen.top + 20, true);
+          if(Edit_Window>2)
+         RepositionWindow(Edit_Windows[Edit_Window - 1], Edit_Windows[Edit_Window - 2],kWindowCascadeOnParentWindow);
 	}
     }
     if (graphic){
@@ -1657,12 +1650,9 @@ int R_ShowFiles(int nfile, char **fileName, char **title,
     if (readErr != noErr)
 	return 1;
 	
-	RemWinMenuItem();
+	RemWinMenuItem(Edit_Windows[Edit_Window-1]);
 
     Help_Windows[Help_Window] = Edit_Windows[Edit_Window-1];
-
-    if(Help_Window>1)
-     RepositionWindow ( Help_Windows[Help_Window], Help_Windows[Help_Window-1], kWindowCascadeOnParentWindow ) ;
 
     Edit_Window --;
     Edit_Number --;
@@ -1678,17 +1668,19 @@ int R_ShowFiles(int nfile, char **fileName, char **title,
         name[0] = strlen(fileName[i]);
         strncpy( (char *)(&name[1]),fileName[i], name[0] );
         FSMakeFSSpec(0,0,name,&fsspec);
-        readErr = ReadTextFile ( &fsspec, we );
+        readErr = ReadTextFile ( &fsspec, Help_Windows[Help_Window-1] );
 
 
         if (readErr) {
 	    DoClose(0, savingNo, Help_Windows[Help_Window-1]);
 	    if(readErr == -43)
 		warning("File not found");
+		return;
         }
         
-	UniqueWinTitle();
+	UniqueWinTitle(Help_Windows[Help_Window-1]);
 		
+    ShowWindow(Help_Windows[Help_Window-1]);
 
     }
     // Handle Error about reading
@@ -1700,7 +1692,7 @@ int R_ShowFiles(int nfile, char **fileName, char **title,
 	Jago April 2001, Stefano M. Iacus
 */
 
-void UniqueWinTitle(void)
+void UniqueWinTitle(WindowPtr window)
 {
 	Str255 		pWTitle, ptestString, pcurString;
 	char 		cWTitle[265], ctestString[265];
@@ -1708,8 +1700,10 @@ void UniqueWinTitle(void)
 	Boolean		unique = false, EqString;
 	int    		w_number = 1, i;
     
-	
-    GetWTitle(FrontWindow(), pWTitle);
+	if(!window)
+	 return;
+	 
+    GetWTitle(window, pWTitle);
     windowsMenu = GetMenuHandle(kMenuWindows);
            	
     CopyPascalStringToC(pWTitle, cWTitle);
@@ -1737,7 +1731,7 @@ void UniqueWinTitle(void)
     	  
     	CopyPascalStringToC(ptestString, ctestString);
         AppendMenu(windowsMenu, ptestString); 
-        SetWTitle(FrontWindow(),ptestString);
+        SetWTitle(window,ptestString);
         
 }
 
@@ -1746,14 +1740,14 @@ void UniqueWinTitle(void)
    Jago April 2001, Stefano M. Iacus
 */
    
-void RemWinMenuItem(void)
+void RemWinMenuItem(WindowPtr window)
 {
   Str255		pWTitle, pcurString;
   int			i;
   MenuHandle	windowsMenu = NULL;
   Boolean		EqString;	
   char 			cWTitle[260],ccurString[260];
-  GetWTitle(FrontWindow(),pWTitle);
+  GetWTitle(window,pWTitle);
   CopyPascalStringToC(pWTitle,cWTitle);
   
   windowsMenu = GetMenuHandle(kMenuWindows);

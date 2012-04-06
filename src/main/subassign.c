@@ -224,6 +224,7 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level)
     case 1916:  /* vector     <- character  */
     case 1920:  /* vector     <- expression  */
     case 1922:  /* vector     <- eternal pointer */
+    case 1923:  /* vector     <- weak reference */
     case 1903: case 1907: case 1908: case 1999: /* functions */
 
 	if (level == 1) {
@@ -587,7 +588,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     double ry;
     int nr, ny;
     int nrs, ncs;
-    SEXP sr, sc;
+    SEXP sr, sc, dim;
 
     if (!isMatrix(x))
 	error("incorrect number of subscripts on matrix");
@@ -598,8 +599,9 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     /* Note that "s" has been protected. */
     /* No GC problems here. */
 
-    sr = SETCAR(s, arraySubscript(0, CAR(s), x));
-    sc = SETCADR(s, arraySubscript(1, CADR(s), x));
+    dim = getAttrib(x, R_DimSymbol);
+    sr = SETCAR(s, arraySubscript(0, CAR(s), dim, getAttrib, x));
+    sc = SETCADR(s, arraySubscript(1, CADR(s), dim, getAttrib, x));
     nrs = LENGTH(sr);
     ncs = LENGTH(sc);
 
@@ -824,7 +826,7 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     tmp = s;
     for (i = 0; i < k; i++) {
-	SETCAR(tmp, arraySubscript(i, CAR(tmp), x));
+	SETCAR(tmp, arraySubscript(i, CAR(tmp), dims, getAttrib, x));
 	tmp = CDR(tmp);
     }
 
@@ -1149,7 +1151,7 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* We evaluate the first argument and attempt to dispatch on it. */
     /* If the dispatch fails, we "drop through" to the default code below. */
 
-    if(DispatchOrEval(call, "[<-", args, rho, &ans, 0))
+    if(DispatchOrEval(call, op, "[<-", args, rho, &ans, 0, 0))
       return(ans);
 
     return do_subassign_dflt(call, op, ans, rho);
@@ -1273,7 +1275,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
 
-    if(DispatchOrEval(call, "[[<-", args, rho, &ans, 0))
+    if(DispatchOrEval(call, op, "[[<-", args, rho, &ans, 0, 0))
       return(ans);
 
     return do_subassign2_dflt(call, op, ans, rho);
@@ -1446,6 +1448,7 @@ SEXP do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case 1916:  /* vector     <- character  */
 	case 1920:  /* vector     <- expression */
 	case 1922:  /* vector     <- external pointer */
+	case 1923:  /* vector     <- weak reference */
 	case 1903: case 1907: case 1908: case 1999: /* functions */
 
 	    SET_VECTOR_ELT(x, offset, VECTOR_ELT(y, 0));
@@ -1558,7 +1561,7 @@ SEXP do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     /* replace the second argument with a string */
     SETCADR(args, input);
 
-    if(DispatchOrEval(call, "$<-", args, env, &ans, 0))
+    if(DispatchOrEval(call, op, "$<-", args, env, &ans, 0, 0))
       return(ans);
 
     if (! iS)

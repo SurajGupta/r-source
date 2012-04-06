@@ -24,7 +24,7 @@ writeLines <- function(text, con = stdout(), sep = "\n")
 open <- function(con, ...)
     UseMethod("open")
 
-open.connection <- function(con, open = "r", blocking = TRUE)
+open.connection <- function(con, open = "r", blocking = TRUE, ...)
 {
     if(!inherits(con, "connection")) stop("argument is not a connection")
     invisible(.Internal(open(con, open, blocking)))
@@ -46,7 +46,7 @@ isSeekable <- function(con)
 close <- function(con, ...)
     UseMethod("close")
 
-close.connection <- function (con, type = "rw")
+close.connection <- function (con, type = "rw", ...)
 {
     if(!inherits(con, "connection")) stop("argument is not a connection")
     invisible(.Internal(close(con, type)))
@@ -140,10 +140,17 @@ getConnection <- function(what)
 
 closeAllConnections <- function()
 {
-    sink() # might be on a user connection
+    # first re-divert any diversion of stderr.
+    i <- sink.number(type = "message")
+    if(i > 0) sink(stderr(), type = "message")
+    # now unwind the sink diversion stack.
+    n <- sink.number()
+    if(n > 0) for(i in 1:n) sink()
+    # get all the open connections.
     set <- getAllConnections()
     set <- set[set > 2]
-    for(i in seq(along=set)) close(set[i])
+    # and close all user connections.
+    for(i in seq(along=set)) close(getConnection(set[i]))
     invisible()
 }
 

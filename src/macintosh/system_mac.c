@@ -23,6 +23,12 @@
  *  Implemented in R 1.2.2., Stefano M.Iacus, Feb 2001
  */
  
+#include <RCarbon.h>
+
+#ifdef __MRC__
+#include <CarbonStdCLib.h>
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -50,6 +56,8 @@ int pclose(FILE *fp) {
 #endif
 
 void R_Suicide(char *s);
+void GetSysVersion(void);
+
 
 
 #ifdef HAVE_UNISTD_H
@@ -138,14 +146,17 @@ int mkdir(char *x,int a){ return 0;}
 extern int chdir(char *);
 extern int getcwd(char *,int );
 
-
 #endif
+
+extern SInt32	systemVersion ;
 
 int R_ReadConsole(char *prompt, unsigned char *buf, int len,int addtohistory)
 {
+ #ifndef __MRC__
     if(fileno(stdin) > 1) 
 		return( FileReadConsole(prompt, buf, len, addtohistory) ); 
     else 
+#endif
 		R_ReadConsole1(prompt, buf, len, addtohistory); 
 
     buf[strlen((char *)buf)-1] ='\n';
@@ -183,9 +194,11 @@ FileReadConsole(char *prompt, char *buf, int len, int addhistory)
 
 void R_WriteConsole(char *buf, int len)
 {
+#ifndef __MRC__
     if(fileno(stdout) > 1)
 	 fputs(buf,stdout);
     else
+#endif
      R_WriteConsole1(buf, len);
 }
 
@@ -201,8 +214,10 @@ void R_ResetConsole()
 
 void R_FlushConsole()
 {
+#ifndef __MRC__
     if(fileno(stdin) > 1)
 	fflush(stdin);
+#endif
 }
 
 
@@ -210,8 +225,10 @@ void R_FlushConsole()
 
 void R_ClearerrConsole()
 {
+#ifndef __MRC__
     if(fileno(stdin) > 1)
 	clearerr(stdin);
+#endif
 }
 
 
@@ -261,7 +278,7 @@ FILE *R_OpenInitFile(void)
     if (LoadInitFile) {
 	if ((fp = R_fopen(".Rprofile", "r")))
 	    return fp;
-	sprintf(buf, "%s:.Rprofile", getenv("R_USER"));
+	sprintf(buf, "%s:.Rprofile", R_Home);
 	if ((fp = R_fopen(buf, "r")))
 	    return fp;
     }
@@ -269,7 +286,11 @@ FILE *R_OpenInitFile(void)
 
 }
 
-
+void GetSysVersion(void){
+ Gestalt ( gestaltSystemVersion, & systemVersion ) ;
+ systemVersion = ( systemVersion << 16 ) | 0x8000 ;
+ 
+}
 
 
 
@@ -278,8 +299,8 @@ FILE *R_OpenInitFile(void)
 FILE* R_OpenFile1(char *file)
 {
     FILE*                fp;
-    /* Max file length is 256 characters */
-    fp = fopen(file, "r");
+   
+    fp = R_fopen(file, "r");
 
     return fp;
 }
@@ -290,27 +311,31 @@ FILE *R_OpenLibraryFile(char *file)
 {
     char buf[256];
     FILE *fp;
-#ifdef __MRC__
-    sprintf(buf, ":library:base:R:%s", file);
-#else
     sprintf(buf, "%s:library:base:R:%s", R_Home, file);
-#endif
-    fp = R_fopen(buf, "r");
+	fp = R_fopen(buf, "r");
     return fp;
 }
 
 
-#define MAC_FILE_SIZE FILENAME_MAX
-
 static char R_HomeLocation[MAC_FILE_SIZE];
-static char R_DefHistFile[FILENAME_MAX];
+static char R_DefHistFile[MAC_FILE_SIZE];
 
 void GetHomeLocation(void);
 
+static char curdir[MAC_FILE_SIZE];
+
 void GetHomeLocation(void)
 {
+    R_HomeLocation[0] = '\0';
     getcwd(R_HomeLocation,MAC_FILE_SIZE); 
     R_HomeLocation[strlen(R_HomeLocation)-1]='\0';
+#ifdef __MRC__
+    if( RunningOnCarbonX()) {
+     ConvertHFSPathToUnixPath(R_HomeLocation, (char *)&curdir) ;
+     bsd_chdir(curdir);
+    }
+#endif
+    
 }
 
 char *R_HomeDir()
@@ -397,18 +422,28 @@ int Mac_initialize_R(int ac, char **av)
     char *p, msg[1024], **avv;
     structRstart rstart;
     Rstart Rp = &rstart;
+    OSErr err;
     
+    GetSysVersion();
     GetHomeLocation(); /* should stay here because getenv depends on this */
     if((R_Home = R_HomeDir()) == NULL)
 		R_Suicide("R home directory is not defined");
     
-    if ( Initialize() == noErr ) {
+    
+    if ( (err = Initialize()) == noErr ) {
+        
 	gAppResFileRefNum = CurResFile();
+	
 	doGetPreferences();
+
+#ifndef __MRC__
 	if((fileno(stdin)==0) || (fileno(stdout)==1)){
+#endif
     	DoNew(true);
   		Console_Window = FrontWindow();  
+#ifndef __MRC__
     }
+#endif
     }
     else
 	 return(1);
@@ -446,24 +481,28 @@ int Mac_initialize_R(int ac, char **av)
     R_SetParams(Rp);
     
    
-    if(!Rp->NoRenviron) process_users_Renviron();
+    if(!Rp->NoRenviron) process_user_Renviron();
  
  
     /* On Unix the console is a file; we just use stdio to write on it */
+#ifndef __MRC__
     if(fileno(stdin) > 1){
 	R_Consolefile = stdout;	
 	R_Interactive = FALSE;
 	Rp->R_Interactive = R_Interactive;
     }
     else{
+#endif
     R_Interactive = TRUE;	/* On the Mac we must be interactive */
     Rp->R_Interactive = R_Interactive;
 	R_Consolefile = NULL;	/* We get the input from the GUI console*/
+#ifndef __MRC__
     }
     
     if(fileno(stdout) > 1)
 	R_Outputfile = stdout;	/* We send output to the file specified by the user */
     else
+#endif    
 	R_Outputfile = NULL;	/* We send the output to the GUI console*/
 
   //  R_Sinkfile = NULL;		/* We begin writing to the console. */
@@ -517,8 +556,10 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
 	saveact = SaveAction;
 
+ #ifndef __MRC__
     if(fileno(stdin) > 1) 
 	 R_Interactive = false;
+#endif
     
     if(saveact == SA_SAVEASK) {
 	if(R_Interactive) {
@@ -561,6 +602,7 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     }
     
     
+    R_RunExitFinalizers();
     KillAllDevices();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
@@ -594,41 +636,8 @@ void R_SaveGlobalEnv(void)
 
 void R_RestoreGlobalEnv(void)
 {
-    FILE *fp;
-    SEXP img, lst;
-    int i;
-
     if(RestoreAction == SA_RESTORE) {
-	if(!(fp = R_fopen(".RData", "rb"))){
-	  /*  warning("No workspace to load"); */
-	    return;
-	}
-#ifdef OLD
-	FRAME(R_GlobalEnv) = R_LoadFromFile(fp, 1);
-#else
-	PROTECT(img = R_LoadFromFile(fp, 1));
-	switch (TYPEOF(img)) {
-	case LISTSXP:
-	    while (img != R_NilValue) {
-		defineVar(TAG(img), CAR(img), R_GlobalEnv);
-		img = CDR(img);
-	    }
-	    break;
-	case VECSXP:
-	    for (i = 0; i < LENGTH(img); i++) {
-		lst = VECTOR_ELT(img,i);
-		while (lst != R_NilValue) {
-		    defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
-		    lst = CDR(lst);
-		}
-	    }
-	    break;
-	}
-        UNPROTECT(1);
-#endif
-	if(!R_Quiet)
-	    Rprintf("[Previously saved workspace restored]\n\n");
-        fclose(fp);
+	R_RestoreGlobalEnvFromFile(".RData", R_Quiet);
     }
 }
 
@@ -692,7 +701,7 @@ SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	err = FSpLocationFromFullPath(strlen(temp_path),temp_path,&spec);
     
-	/* try open the file in the R_Home:etc folder */
+	/* try open the file in the R_Home: folder */
 	fp = FSp_fopen(&spec,"r");
 	if (fp == NULL)
 	{ /* Okey, lets try open the file in the preference folder */
@@ -782,7 +791,6 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	Jago April 2001, Stefano M. Iacus
 */
    
-#define MAC_SIZE FILENAME_MAX
 #define MAC_READ_OR_WRITE	0x0 /* fake a UNIX mode */
    
 
@@ -790,7 +798,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 char *Rmac_tmpnam(char * prefix)
 {
     char *tmp, tm[PATH_MAX], tmp1[PATH_MAX], *res;
-    char curFolder[MAC_SIZE], newFolder[MAC_SIZE];
+    char curFolder[MAC_FILE_SIZE], newFolder[MAC_FILE_SIZE];
     unsigned int n, done = 0, pid;
     short 	foundVRefNum,plen;
     long	foundDirID;
@@ -917,13 +925,13 @@ SEXP do_helpstart(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (home == NULL)
 	error("R_HOME not set");
-    sprintf(buf, "%s:doc:html:rmac.html", home);
-    ff = fopen(buf, "r");
+    sprintf(buf, "%s:doc:html:index.html", home);
+    ff = R_fopen(buf, "r");
     if (!ff) {
-	sprintf(buf, "%s:doc:html:rmac.htm", home);
-	ff = fopen(buf, "r");
+	sprintf(buf, "%s:doc:html:index.htm", home);
+	ff = R_fopen(buf, "r");
 	if (!ff) {
-	    sprintf(buf, "%s:doc:html:rmac.htm[l] not found", home);
+	    sprintf(buf, "%s:doc:html:index.htm[l] not found", home);
 	    error(buf);
 	}
     }
@@ -1026,7 +1034,7 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
     item = CHAR(STRING_ELT(CAR(args), 0));
     type = asInteger(CADR(args));
     if (type == 1) {
-	ff = fopen(item, "r");
+	ff = R_fopen(item, "r");
 	if (!ff) {
 	    sprintf(buf, "%s not found", item);
 	    error(buf);
@@ -1069,9 +1077,19 @@ SEXP do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+void InitEd(){
+ DefaultFileName = Rmac_tmpnam("REdit");
+}
+
+void CleanEd()
+{
+    if(EdFileUsed==0) unlink(DefaultFileName);
+}
+
+
 
 /*  This routine has been completely rewritten. This is the unix equivalent to
-    what is found src/unix/edit.c file adn adpted for the Macintosh.
+    what is found src/unix/edit.c file and adpted for the Macintosh.
     For the time beeing the internal editor is used, next step is to allow the 
     user to use an external editor.
     Jago April 2001, Stefano M. Iacus
@@ -1086,8 +1104,6 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     Str255	editname;	
 	OSStatus err;
 
-    DefaultFileName = Rmac_tmpnam(NULL);
-    
     checkArity(op, args);
 
     vmaxsave = vmaxget();
@@ -1133,20 +1149,13 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     DoNew(true);
        
-    RemWinMenuItem();
+    RemWinMenuItem(Edit_Windows[Edit_Window-1]);
    
-    err = ReadTextFile(&tempeditFSS,
-		       GetWindowWE(Edit_Windows[Edit_Window-1]));
-    
-    
-//    if(err != noErr)
-//	 REprintf("\n ReadTextFile error: %d\n",err);
-   	
-   	UniqueWinTitle();
-	if(Edit_Window>2)
-    	RepositionWindow(Edit_Windows[Edit_Window - 1], 
-        Edit_Windows[Edit_Window - 2],kWindowCascadeOnParentWindow);
+    err = ReadTextFile(&tempeditFSS,Edit_Windows[Edit_Window-1]);
 
+   	UniqueWinTitle(Edit_Windows[Edit_Window-1] );
+
+    ShowWindow(Edit_Windows[Edit_Window - 1]);
     finished=false;
     while(!finished)
 	{
@@ -1186,14 +1195,19 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
    (Stefano M. Iacus) Jago Nov-00
 */
 
+#  ifndef __MRC__
+#   include <stat.h>
+#  else
+#   include <mpw_stat.h>
+#  endif
+
 SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  fn, ans;
     char *p, tmp[PATH_MAX], dir[PATH_MAX];
     int i, nfiles, failures = 0;
-#ifndef __MRC__
     struct stat sb;
-#endif
+
 
     checkArity(op, args);
     fn = CAR(args);
@@ -1205,14 +1219,16 @@ SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 	strcpy(tmp, CHAR( STRING_ELT(fn,i) ));
 	for(p = tmp; *p != '\0'; p++)
 	    if(*p == '/') *p = ':';
-#ifndef __MRC__
+
 	if(stat(tmp, &sb) == 0)
 	    /* Is this a directory? */
 	    if(sb.st_mode & S_IFDIR) {
+#ifndef __MRC__
 		if(rmdir(tmp)) failures++;		
+#endif
 		continue;
 	    }
-#endif	    
+//#endif	    
 	/* Regular file (or more) */
 	strcpy(dir, tmp);
 	if ((p = strrchr(dir, ':'))) *(++p) = '\0'; else *dir = '\0';
@@ -1330,7 +1346,11 @@ char **CommandLineArgs = NULL;
 
 #ifdef HAVE_STAT
 #include <types.h>
-#include <stat.h>
+#  ifndef __MRC__
+#   include <stat.h>
+#  else
+#   include <mpw_stat.h>
+#  endif
 
 Rboolean R_FileExists(char *path)
 {
@@ -1347,8 +1367,48 @@ Rboolean R_FileExists(char *path)
 
 FILE *R_fopen(const char *filename, const char *mode)
 {
-    return(filename ? fopen(filename, mode) : NULL );
+#ifdef __MRC__    
+    char	unixPath[400];
+#endif
+    char 	tmpfile[401];
+    int		i,slen;
+    Boolean isAFolder = FALSE;
+    
+    if(!filename)
+     return(NULL);
+
+    if(filename[0] == ':'){
+     strcpy(tmpfile,filename);
+     goto openthisfile;
+    }
+    
+    for(i = 1; i<strlen(filename); i++){
+     if( filename[i] == ':' ){
+     isAFolder = TRUE;
+     break;
+     }
+    }
+    
+    if(!isAFolder && (filename[0] != ':')){
+       tmpfile[0] = ':';
+       tmpfile[1] = '\0';
+       strcat(tmpfile,filename);
+    }else
+      strcpy(tmpfile,filename);
+
+openthisfile:    
+#ifdef __MRC__    
+
+	if(systemVersion >= 0x10008000){ /* On System X we have to take care of */
+	                                 /* Unix <-> HFS path differences       */	
+	 ConvertHFSPathToUnixPath(tmpfile, (char *)&unixPath) ;
+	 return( fopen((const char *)&unixPath,mode) );
+    }
+#endif 
+
+    return(tmpfile ? fopen(tmpfile, mode) : NULL );
 }
+
 
 
 /*
@@ -1778,10 +1838,13 @@ static int process_Renviron(char *filename)
     char *s, *p, sm[BUF_SIZE], *lhs, *rhs, msg[MSG_SIZE+50];
     int errs = 0;
 
-    if (!filename || !(fp = fopen(filename, "r"))) return 0;
+    if (!filename || !(fp = R_fopen(filename, "r"))) return 0;
     sprintf(msg, "\n   File %s contains invalid line(s)", filename);
-
+#ifdef __MRC__
+    while(R_fgets(sm, BUF_SIZE, fp)) {
+#else
     while(fgets(sm, BUF_SIZE, fp)) {
+#endif
 	sm[BUF_SIZE] = '\0';
 	s = rmspace(sm);
 	if(strlen(s) == 0 || s[0] == '#') continue;
@@ -1807,21 +1870,22 @@ static int process_Renviron(char *filename)
 }
 
 
-/* read R_HOME/etc/Renviron:  Unix only */
+/* try .Renviron, then :.Renviron and finally R_HOME:.Renviron
+   They are the same under MacOS but not under MacOSX as for
+   CFM-Carbon applications, the current working directory 
+   is ~user.
+*/
 
-/* try ./.Renviron, then value of R_ENVIRON, then ~/.Renviron */
-void process_users_Renviron()
+void process_user_Renviron()
 {
-    char *s;
+    char s[300];
     
     
-    if(process_Renviron(".Renviron")) return;
-    if((s = getenv("R_ENVIRON"))) {
-	process_Renviron(s);
-	return;
-    } 
-
-    process_Renviron(s);
+    if(process_Renviron(".Renviron"))  return;
+    if(process_Renviron(":.Renviron")) return;
+    sprintf(s,"%s:.Renviron",R_Home);
+    if(process_Renviron(s)) return;
+    
 }
 
 

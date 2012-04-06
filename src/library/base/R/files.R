@@ -24,10 +24,13 @@ file.append <- function(file1, file2)
 file.remove <- function(...)
 .Internal(file.remove(c(...)))
 
+file.rename <- function(from, to)
+.Internal(file.rename(from, to))
+
 list.files <- function(path=".", pattern=NULL,all.files=FALSE,full.names=FALSE)
 .Internal(list.files(path, pattern, all.files, full.names))
 
-dir <- .Alias(list.files)
+dir <- list.files
 
 file.path <- function(..., fsep=.Platform$file.sep)
 paste(..., sep=fsep)
@@ -90,7 +93,7 @@ format.octmode <- function(x, ...)
     ans[!isna] <- ans0
     ans
 }
-as.character.octmode <- .Alias(format.octmode)
+as.character.octmode <- format.octmode
 
 print.octmode <- function(x, ...)
 {
@@ -99,7 +102,8 @@ print.octmode <- function(x, ...)
 }
 
 system.file <-
-function(..., package = "base", lib.loc = .lib.loc, pkg, lib) {
+function(..., package = "base", lib.loc = NULL, pkg, lib)
+{
     if(nargs() == 0)
         return(file.path(.Library, "base"))
     if(!missing(pkg)) {
@@ -112,9 +116,7 @@ function(..., package = "base", lib.loc = .lib.loc, pkg, lib) {
     }
     if(length(package) != 1)
         stop("argument `package' must be of length 1")
-    packagePath <- .find.package(package, lib.loc,
-                                 missing(lib.loc) && missing(lib),
-                                 quiet = TRUE)
+    packagePath <- .find.package(package, lib.loc, quiet = TRUE)
     if(length(packagePath) == 0)
         return("")
     FILES <- file.path(packagePath, ...)
