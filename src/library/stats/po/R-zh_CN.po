@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-03-27 15:42\n"
+"POT-Creation-Date: 2006-05-29 07:58\n"
 "PO-Revision-Date: 2005-04-08 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -785,10 +785,10 @@ msgstr "或是有两个列的矩阵，第一列是成功的计数，第二列是
 
 msgid ""
 "link not available for quasibinomial family, available links are \"logit\", "
-"\", \"\"probit\" and \"cloglog\""
+"\"probit\", \"cloglog\", \"cauchit\" and \"log\""
 msgstr ""
-"quasibinomial分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"logit\", \", "
-"\"\"probit\"和\"cloglog\""
+"quasibinomial分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"logit\", "
+"\"\"probit\", \"cloglog\", \"cauchit\"和\"log\""
 
 msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
 msgstr "quasibinomial分布族中的y必需由0和1组成的向量"
@@ -936,6 +936,10 @@ msgstr "'family'设定得不对"
 
 msgid "invalid 'method':"
 msgstr "'method'有错:"
+
+#, fuzzy
+msgid "'weights' must be a numeric vector"
+msgstr "'y'必需是数值向量"
 
 msgid "negative weights not allowed"
 msgstr "不能有负重量"
@@ -1222,6 +1226,9 @@ msgstr "模型1"
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr "用秩缺乏拟合来进行预测的结果很可能不可靠"
 
+msgid "prediction intervals are only relevant to new data"
+msgstr ""
+
 msgid "'object' has no 'effects' component"
 msgstr "'object'没有'effects'组件"
 
@@ -1422,6 +1429,9 @@ msgstr "变量'%s'不是因子"
 msgid "factor '%s' has new level(s) %s"
 msgstr "因子'%s'有新的层次%s"
 
+msgid "'offset' must be numeric"
+msgstr "'offset'必需为数值"
+
 msgid "model frame and formula mismatch in model.matrix()"
 msgstr "model.matrix()里的模型框和公式不相配"
 
@@ -1498,6 +1508,10 @@ msgstr "setVarying : vary的长度必需同参数的长度相符"
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "参数初始估计值里有奇异梯度矩阵"
 
+#, fuzzy
+msgid "'data' must be a list or an environment"
+msgstr "'newdata'必需是矩阵或是数据框"
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr "除非algorithm = \"port\"，上限或下限将略过不用"
 
@@ -1553,6 +1567,12 @@ msgstr "'which'必需在1:6之间"
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n'必需在{1,..,%d}中"
 
+msgid "hat values (leverages) are all ="
+msgstr ""
+
+msgid "and there are no factor predictors; no plot no. 5"
+msgstr ""
+
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
 msgstr "'n', 'delta', 'sd', 'power',和'sig.level'之中只能有一个取NULL值"
@@ -1591,6 +1611,9 @@ msgstr "'x'和'y'不相配"
 msgid "wrong number of columns in 'x'"
 msgstr "'x'里的列数不对"
 
+msgid "cannot rescale a constant/zero column to unit variance"
+msgstr ""
+
 msgid "PCA applies only to numerical variables"
 msgstr "PCA只适用于数值变量"
 
@@ -1616,6 +1639,9 @@ msgstr "同时提供了'x'和'covmat': 'x'略过不用"
 
 msgid "'princomp' can only be used with more units than variables"
 msgstr "'princomp'只能在单位比变量多的情况下使用"
+
+msgid "cannot use cor=TRUE with a constant variable"
+msgstr ""
 
 msgid "covariance matrix is not non-negative definite"
 msgstr "协方差矩阵不是非负定矩阵"
@@ -2067,3 +2093,10 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "参数%s没有在模型公式里出现过"
 msgstr[1] ""
+
+#~ msgid ""
+#~ "link not available for quasibinomial family, available links are \"logit"
+#~ "\", \", \"\"probit\" and \"cloglog\""
+#~ msgstr ""
+#~ "quasibinomial分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"logit\", \", "
+#~ "\"\"probit\"和\"cloglog\""

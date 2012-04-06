@@ -27,7 +27,7 @@
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.3.0 (2006-04-24).
+   <p>The current version of this document is 2.3.1 (2006-06-01).
 
    <p>ISBN 3-900051-09-7
 
@@ -416,7 +416,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.3.0</code>.
+<code>rincludedir=/usr/local/include/R-2.3.1</code>.
 
    <p>If you have made R as a shared/dynamic library you can install it in
 your system's library directory by
@@ -506,7 +506,7 @@ Windows 64).
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.3.0.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.3.1.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -535,12 +535,12 @@ collect, install and test an extensive set of tools.  See <a href="#The-Windows-
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.3.0.tgz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.3.1.tgz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at a
 directory <em>whose path does not contain spaces</em>.  We will call this
 directory <var>R_HOME</var> below.  Run
 
-     <pre class="example">          tar zxvf R-2.3.0.tgz
+     <pre class="example">          tar zxvf R-2.3.1.tgz
      </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -763,7 +763,7 @@ customizations to that installation.  Then in
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
 installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.3.0.exe</span></samp>, so
+executable with the standard name, <samp><span class="file">R-2.3.1.exe</span></samp>, so
 please rename it to indicate that it is customized.
 
 <p><a name="Cross-building-on-ix86-Linux"></a>
@@ -784,11 +784,11 @@ unpack this somewhere and put its <samp><span class="file">bin</span></samp> dir
 and <samp><span class="command">makeinfo</span></samp> version 4.7 or later (part of GNU
 <code>texinfo</code>).
 
-   <p>You also need the R source (<samp><span class="file">R-2.3.0.tgz</span></samp>).
+   <p>You also need the R source (<samp><span class="file">R-2.3.1.tgz</span></samp>).
 
-   <p>Then: untar <samp><span class="file">R-2.3.0.tgz</span></samp> somewhere, and
+   <p>Then: untar <samp><span class="file">R-2.3.1.tgz</span></samp> somewhere, and
 
-<pre class="example">     cd /somewhere/R-2.3.0/src/gnuwin32
+<pre class="example">     cd /somewhere/R-2.3.1/src/gnuwin32
 </pre>
    <p>Edit <samp><span class="file">MkRules</span></samp> to set <code>BUILD=CROSS</code> and the appropriate
 paths (including <code>HEADER</code>) as needed.
@@ -812,7 +812,7 @@ for testing) use
 
 <pre class="example">     cd installer
      make imagedir
-     zip -r9X R-2.3.0.zip R-2.3.0  # or something similar
+     zip -r9X R-2.3.1.zip R-2.3.1  # or something similar
 </pre>
    <p>We have not found a reliable way to convert base to lazy-loading when
 cross-building, so it is left in the old format.
@@ -842,8 +842,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document. Than you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.3.0.tgz
-     cd R-2.3.0
+<pre class="example">     tar zxvf R-2.3.1.tgz
+     cd R-2.3.1
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -2576,8 +2576,8 @@ port would be greatly appreciated.
 <h3 class="section">C.9 AIX</h3>
 
 <p><a name="index-AIX-56"></a>
-On AIX 4.3.3 and AIX 5.1/2 (and probably latter), it was found that the
-use of &ldquo;run time linking&rdquo; (as opposed to normal AIX style linking) was
+On AIX&nbsp;<!-- /@w -->4.3.3 and AIX&nbsp;<!-- /@w -->5.[123], it was found that the use of
+&ldquo;run time linking&rdquo; (as opposed to normal AIX style linking) was
 required.  For this, the R main program must be linked to the runtime
 linker with the <samp><span class="option">-brtl</span></samp> linker option, and shareable objects must
 be enabled for runtime linking with the <samp><span class="option">-G</span></samp> linker option. 
@@ -2590,6 +2590,8 @@ the <code>dlopen</code> call.
 note that linker flags must be escaped using `<samp><span class="samp">-Wl,</span></samp>' if
 <samp><span class="command">gcc</span></samp> is used for linking: use `<samp><span class="samp">MAIN_LDFLAGS="-Wl,brtl"</span></samp>'
 and `<samp><span class="samp">SHLIB_LDFLAGS="-Wl,-G"</span></samp>' in this case.
+
+   <p>We understand that <samp><span class="option">--enable-R-shlib</span></samp> does not work under AIX.
 
    <p>Tim Hoar &lt;thoar at cgd dot ucar dot edu&gt; reported success building
 R 1.9.0 under AIX 5.1 in 64-bit mode with
@@ -2606,24 +2608,29 @@ R 1.9.0 under AIX 5.1 in 64-bit mode with
    <p class="noindent">and the <code>X11()</code> device worked.  [His system required the
 <samp><span class="file">Makeconf</span></samp> file to be edited to replace <samp><span class="file">/lib/crt0.o</span></samp> by
 <samp><span class="file">/lib/crt0_64.o</span></samp> in <code>R_XTRA_LIBS</code>, but <samp><span class="command">configure</span></samp> now
-tries to detect this.]
-
-   <p>Paul Boutros reported success building R&nbsp;<!-- /@w -->2.0.1 under
-AIX&nbsp;<!-- /@w -->5.2 with <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->3.3.2 using
-
-<pre class="example">     OBJECT_MODE=64
-     MAIN_LDFLAGS=-Wl,-brtl
-     SHLIB_LDFLAGS=-Wl,-G
-</pre>
-   <p class="noindent">(note it is <code>Wl</code> (W ell) not <code>W1</code> (W one)).
-
-   <p>We understand that <samp><span class="option">--enable-R-shlib</span></samp> does not work under AIX.
+tries to detect this.  There are no recent reports of building R with
+the AIX compilers, only <samp><span class="command">gcc</span></samp>.]
 
    <p>Ei-ji Nakama has reported that <samp><span class="file">src/main/regex.c</span></samp> in
 R&nbsp;<!-- /@w -->2.2.0 has to be compiled with <samp><span class="option">-D_LINUX_SOURCE_COMPAT</span></samp>
 in <code>CFLAGS</code> in AIX&nbsp;<!-- /@w -->5.x (and does not work correctly with
 AIX&nbsp;<!-- /@w -->4.x).  We believe that the patch applied since obviates the
 need for this.  He tested R&nbsp;<!-- /@w -->2.2.1&nbsp;<!-- /@w -->beta on AIX&nbsp;<!-- /@w -->5.2.
+
+   <p>Jagat Sheth reported being able to build R 2.3.0 patched on AIX&nbsp;<!-- /@w -->5.2
+using <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.1.0 and
+
+<pre class="example">     CC=/usr/local/bin/gcc
+     F77=/usr/local/bin/gfortran
+     CXX=/usr/local/bin/g++
+     MAIN_LDFLAGS=-Wl,-brtl
+     SHLIB_LDFLAGS=-Wl,-G
+     CFLAGS='-g -O'
+     FFLAGS='-O'
+     CXXFLAGS='-g -O'
+     ./configure --disable-nls
+</pre>
+   <p class="noindent">(note it is <code>Wl</code> (W ell) not <code>W1</code> (W one)).
 
    <p>Pre-release versions of R 2.3.0 have been built on AIX&nbsp;<!-- /@w -->5.3. 
 (This defines the macro `<samp><span class="samp">SOCKLEN_T</span></samp>' and so earlier versions of R
@@ -2895,7 +2902,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.3.0.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.3.1.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -2966,11 +2973,12 @@ this is available from
 <a href="http://www.mingw.org"><code>www.mingw.org</code></a>.  See the notes on
 <a href="http://www.murdoch-sutherland.com/Rtools/"><code>www.murdoch-sutherland.com/Rtools</code></a> for updates.
 
-   <p>In late 2005 there was an installer <code>MinGW-5.0.0.exe</code> in the
-`Proposed' section.  Using this, select the `<samp><span class="samp">Candidate</span></samp>' package and
-add the `<samp><span class="samp">g++</span></samp>' and `<samp><span class="samp">g77</span></samp>' compilers to the `<samp><span class="samp">MinGW base
-tools</span></samp>': components will be downloaded from Sourceforge and unpacked. 
-Note that you do need the `<samp><span class="samp">Candidate</span></samp>' compilers (<code>gcc-3.4.5</code>).
+   <p>There may be an installer in the `Proposed' section, which can be used
+if it gives the `<samp><span class="samp">Candidate</span></samp>' compilers (<code>gcc-3.4.5</code>).  (If
+using this, select the `<samp><span class="samp">Candidate</span></samp>' package and add the `<samp><span class="samp">g++</span></samp>'
+and `<samp><span class="samp">g77</span></samp>' compilers to the `<samp><span class="samp">MinGW base tools</span></samp>': components will
+be downloaded from Sourceforge and unpacked.  Note that
+<samp><span class="file">MinGW-5.0.2.exe</span></samp> uses outdated versions of the components.)
 
    <p>An alternative is to download the components individually, currently
 
@@ -3023,7 +3031,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">F.6 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.3.0.exe</span></samp>) we require
+<p>To make the installer package (<samp><span class="file">R-2.3.1.exe</span></samp>) we require
 Inno Setup 5.1.5 or later from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.
 
    <p>Edit file <samp><span class="file">src/gnuwin32/MkRules</span></samp> and change <code>ISDIR</code> to the

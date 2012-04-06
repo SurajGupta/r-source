@@ -468,6 +468,21 @@ for system datasets that are not intended to be user-accessible via
 @file{R} directory to allow a @file{configure} script to generate
 suitable files,
 
+Only ASCII characters (and the control characters tab, formfeed, LF and
+CR) should be used in code files.  Other characters are accepted in
+comments, but then the comments may not be readable in e.g. a UTF-8
+locale.  Non-ASCII characters in object names will
+normally@footnote{This is true for OSes which implement the @samp{C}
+locale, unless neither lazy-loading nor saving an image are used, in
+which case it would fail if loaded in a @samp{C} locale. (Windows' idea
+of the @samp{C} locale uses the WinAnsi charset.)} fail when the
+package is installed.  Any byte will be allowed@footnote{It is good
+practice to encode them as octal or hex escape sequences.} in a quoted
+character string (but @code{\uxxxx} escapes should not be used), but
+non-ASCII character strings may not be usable in some locales and may
+display incorrectly in others.
+
+
 @findex .First.lib
 @findex .Last.lib
 @findex library.dynam
@@ -884,7 +899,33 @@ provide all the auxiliary routines.]
 
 The macros @code{BLAS_LIBS} and @code{FLIBS} should always be included
 @emph{after} @code{LAPACK_LIBS}.
+
+@item SAFE_FFLAGS
+@vindex SAFE_FFLAGS
+A macro containing flags which are needed to circumvent
+over-optimization of Fortran code: it is typically @samp{-g -O2
+-ffloat-store} on @samp{ix86} platforms using @command{g77} or
+@command{gfortran}.
 @end table
+
+Note that @file{Makevars} should not normally contain targets, as it is
+included before the default @file{Makefile} and @command{make} is called
+without an explicit target.  To circumvent that, use a suitable phony
+target before any actual targets: for example @pkg{fastICA} has
+
+@smallexample
+SLAMC_FFLAGS=$(R_XTRA_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(SAFE_FFLAGS)
+
+all: $(SHLIB)
+
+slamc.o: slamc.f
+        $(F77) $(SLAMC_FFLAGS) -c -o slamc.o slamc.f
+@end smallexample
+
+@noindent
+to ensure that the LAPACK routines find some constants without infinite
+looping.
+
 
 @node Configure example, Using F95 code, Using Makevars, Configure and cleanup
 @subsection Configure example
@@ -925,7 +966,7 @@ if test [ -n "$odbc_lib_path" ] ; then
    AC_SUBST([LIBS],[" -L$@{odbc_lib_path@} $@{LIBS@}"])
 else
   if test [ -n "$@{ODBC_LIBS@}" ] ; then
-     AC_SUBST([LIBS],["-I$@{ODBC_LIBS@} $@{LIBS@}"])
+     AC_SUBST([LIBS],["-L$@{ODBC_LIBS@} $@{LIBS@}"])
   fi
 fi
 
@@ -1141,7 +1182,11 @@ The examples provided by the package's documentation are run.
 @code{\examples} to create executable example code.)
 
 Of course, released packages should be able to run at least their own
-examples.
+examples.  Each example is run in a `clean' environment (so earlier
+examples cannot be assumed to have been run), and with the variables
+@code{T} and @code{F} redefined to generate an error unless they are set
+in the example: @xref{Logical vectors, , Logical vectors, R-intro, An
+Introduction to R}.
 
 @item
 If the package sources contain a @file{tests} directory then the tests
@@ -4801,13 +4846,14 @@ for more information.
 @findex R CMD SHLIB
 
 Under Unix, shared objects for loading into @R{} can be created using
-@code{R CMD SHLIB}.  This accepts as arguments a list of files which
+@command{R CMD SHLIB}.  This accepts as arguments a list of files which
 must be object files (with extension @file{.o}) or C, C++, or FORTRAN
 sources (with extensions @file{.c}, @file{.cc} or @file{.cpp} or
-@file{.C}, and @file{.f}, respectively).  See @kbd{R CMD SHLIB --help},
-or the on-line help for @code{SHLIB}, for usage information.  If
-compiling the source files does not work ``out of the box'', you can
-specify additional flags by setting some of the variables
+@file{.C}, and @file{.f} or @file{.f90} or @file{.f95}, respectively).
+See @kbd{R CMD SHLIB --help}, or the on-line help for @code{SHLIB}, for
+usage information.  If compiling the source files does not work ``out of
+the box'', you can specify additional flags by setting some of the
+variables
 @vindex PKG_CPPFLAGS
 @code{PKG_CPPFLAGS} (for the C preprocessor, typically @samp{-I} flags),
 @vindex PKG_CFLAGS
@@ -4821,17 +4867,19 @@ create the object files directly from the command line).
 @vindex PKG_LIBS
 Similarly, variable @code{PKG_LIBS} in @file{Makevars} can be used for
 additional @samp{-l} and @samp{-L} flags to be passed to the linker when
-building the shared object.  Flags which are set in file
-@file{etc/Makeconf} can be overridden by the environment variable
-@env{MAKEFLAGS} (at least for systems using @acronym{GNU} @code{make}),
-as in (Bourne shell syntax)
+building the shared object.  (On most systems the @code{PKG_*} flags can
+be set in the environment instead of in @file{Makevars}.)
+
+Flags which are set in file @file{etc/Makeconf} can be overridden by the
+environment variable @env{MAKEFLAGS} (at least for systems using
+@acronym{GNU} @code{make}), as in (Bourne shell syntax)
 
 @example
 MAKEFLAGS="CFLAGS=-O3" R CMD SHLIB *.c
 @end example
 
 @noindent
-or by using a @file{Makefile}.
+or by using a @file{Makefile}.  
 
 Note that as @code{R CMD SHLIB} uses Make, it will not remake a shared
 object just because the flags have changed, and if @code{test.c} and
@@ -8391,7 +8439,8 @@ the @pkg{tcltk} package.
 Enbedded @R{} is designed to be run in the main thread, and all the
 testing is done in that context.  There is a potential issue with the
 stack-checking mechanism where threads are involved.  This uses two
-variables declared in the internal headers
+variables declared in @file{Rinterface.h} (if @code{CSTACK_DEFNS} is
+defined) as
 
 @example
 extern uintptr_t R_CStackLimit;	/* C stack limit */
@@ -8399,8 +8448,9 @@ extern uintptr_t R_CStackStart;	/* Initial stack address */
 @end example
 
 @noindent
-Note that @code{uintptr_t} is a C99 type for which a substitute
-@code{unsigned long} is defined in @R{} if needed.
+Note that @code{uintptr_t} is a C99 type for which a substitute is
+defined in @R{}, so your code needs to define @code{HAVE_UINTPTR_T}
+appropriately.
 
 These will be set@footnote{at least on platforms where the values are
 available, that is having @code{getrlimit} and on Linux or having
@@ -8414,7 +8464,9 @@ If you have a choice of stack size, at least 8Mb is recommended.)
 
 You may also want to consider how signals are handled: @R{} sets signal
 handlers for several signals, including @code{SIGINT}, @code{SIGSEGV},
-@code{SIGPIPE}, @code{SIGUSR1} and @code{SIGUSR2}.
+@code{SIGPIPE}, @code{SIGUSR1} and @code{SIGUSR2}, but these can all be
+suppressed by setting the variable @code{R_SignalHandlers} (declared in
+declared in @file{Rinterface.h}) to @code{0}.
 
 
 @node Embedding R under Windows,  , Embedding R under Unix-alikes, Linking GUIs and other front-ends to R
@@ -8820,7 +8872,7 @@ The programming and session management utilities
 @example
 @group
 debug    undebug    trace  untrace
-browser  proc.time
+browser  proc.time  gc.time
 @end group
 @end example
 
@@ -8851,13 +8903,11 @@ efficiency reasons:
 :          ~          c           list
 call       as.call    as.character
 expression  substitute  as.environment
-invisible
+UseMethod  invisible  standardGeneric
 .C         .Fortran   .Call       .External
 .Call.graphics        .External.graphics
-.subset    .subset2
-.primTrace            .primUntrace
-reg.finalizer         gc.time
-UseMethod             standardGeneric
+.subset    .subset2   .primTrace  .primUntrace
+reg.finalizer
 @end group
 @end example
 
@@ -8878,10 +8928,10 @@ list'' in @file{tests/no-segfault.Rin}.
 @appendix R coding standards
 
 @R{} is meant to run on a wide variety of platforms, including Linux and
-most variants of Unix as well as 32-bit Windows versions and on the
-Power Mac.  Therefore, when extending @R{} by either adding to the @R{}
-base distribution or by providing an add-on package, one should not rely
-on features specific to only a few supported platforms, if this can be
+most variants of Unix as well as 32-bit Windows versions and on MacOS X.
+Therefore, when extending @R{} by either adding to the @R{} base
+distribution or by providing an add-on package, one should not rely on
+features specific to only a few supported platforms, if this can be
 avoided.  In particular, although most @R{} developers use @acronym{GNU}
 tools, they should not employ the @acronym{GNU} extensions to standard
 tools.  Whereas some other software packages explicitly rely on e.g.@:
@@ -8893,14 +8943,16 @@ The following tools can ``safely be assumed'' for @R{} extensions.
 
 @itemize @bullet
 @item
-An ISO 9899, also known as ISO C89 or @acronym{ANSI} C compiler.  If you
-do not have access to this C standard, refer to the 2nd edition of Brian
-W. Kernighan & Dennis M. Ritchie, @cite{The C Programming Language}.
-Any extensions, such as @acronym{POSIX} or ISO C99, must be tested for,
-typically using Autoconf (@pxref{Configure and cleanup}).
+As from @R{} 2.3.0 an ISO C99 C compiler.  Note that extensions such as
+@acronym{POSIX} 1003.1 must be tested for, typically using Autoconf
+(@pxref{Configure and cleanup}), unless you are sure they are supported
+on all mainstream @R{} platforms (including Windows and MacOS X).
+Packages will be more portable if written assuming only C89, but this
+should not be done where using C99 features will make for cleaner or
+more robust code.
 
 @item
-A FORTRAN 77 compiler or @command{f2c}, the FORTRAN-to-C converter.
+A FORTRAN 77 compiler (but not FORTRAN 9x).
 
 @item
 A simple @command{make}, considering the features of @command{make} in

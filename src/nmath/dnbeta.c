@@ -73,12 +73,13 @@ double dnbeta(double x, double a, double b, double lambda, int give_log)
     if (!R_FINITE(a) || !R_FINITE(b) || !R_FINITE(lambda))
 	ML_ERR_return_NAN;
 
-    if(x <= 0) return R_D__0;
-
+    if (x < 0 || x > 1) return(R_D__0);
     if(lambda == 0)
 	return dbeta(x, a, b, give_log);
 
-    term =  dbeta(x, a, b, /* log = */ FALSE);
+    term = dbeta(x, a, b, /* log = */ FALSE);
+    if(!R_FINITE(term)) /* in particular, if term = +Inf */
+	return R_D_val(term);
     lambda2 = 0.5 * lambda;
     weight = exp(- lambda2);
     sum	 = weight * term;

@@ -441,10 +441,12 @@ syntax.  It is @emph{case sensitive} as are most UNIX based packages, so
 variables.  The set of symbols which can be used in @R{} names depends
 on the operating system and country within which @R{} is being run
 (technically on the @emph{locale} in use).  Normally all alphanumeric
-symbols are allowed (and in some countries this includes accented
-letters) plus @samp{@code{.}} and @samp{@code{_}}, with the restriction
-that a name must start with @samp{@code{.}} or a letter, and if it
-starts with @samp{@code{.}} the second character must not be a digit.
+symbols are allowed@footnote{For portable @R{} code (including that to
+be used in @R{} packages) only A--Za--z0--9 should be used.} (and in
+some countries this includes accented letters) plus @samp{@code{.}} and
+@samp{@code{_}}, with the restriction that a name must start with
+@samp{@code{.}} or a letter, and if it starts with @samp{@code{.}} the
+second character must not be a digit.
 
 Elementary commands consist of either @emph{expressions} or
 @emph{assignments}.  If an expression is given as a command, it is
@@ -6361,22 +6363,22 @@ Terminate all graphics devices on the list, except the null device.
 @section Dynamic graphics
 @cindex Dynamic graphics
 
-@R{} does not (currently) have a builtin function for dynamic graphics,
-for example to rotate point clouds or to ``brush'' (interactively
-highlight) plots.  However, extensive dynamic graphics facilities are
-available in the system XGobi by Swayne, Cook and Buja available from
+@R{} does not have builtin capabilities for dynamic or
+interactive graphics, e.g. rotating point clouds or to ``brushing''
+(interactively highlighting) points. However, extensive dynamic graphics
+facilities are available in the system GGobi by Swayne, Cook and Buja
+available from
 
 @quotation
-@url{http://www.research.att.com/areas/stat/xgobi/}
+@url{http://www.ggobi.org/}
 @end quotation
 
 @noindent
-and these can be accessed from @R{} via the package @pkg{xgobi}.
-XGobi currently runs under the X Windows system on either UNIX or
-Windows, and @R{} interfaces are available for each.
+and these can be accessed from @R{} via the package @pkg{rggobi}, described at
+@url{http://www.ggobi.org/rggobi}.
 
-A development of XGobi called GGobi is under development: see
-@url{http://www.ggobi.org}.
+Also, package @pkg{rgl} provides ways to interact with 3D plots, for example
+of surfaces.
 
 @node Packages, A sample session, Graphics, Top
 @chapter Packages
@@ -6406,9 +6408,11 @@ command like
 > library(boot)
 @end example
 
-Users connected to the Internet can use the @code{available.packages()}
-function (available through the @code{Packages} menu in the Windows and
-RAqua GUIs) to automatically update and install packages.
+Users connected to the Internet can use the @code{install.packages()}
+and @code{update.packages()} functions (available through the
+@code{Packages} menu in the Windows and RAqua GUIs, @pxref{Installing
+packages, , , R-admin, R Installation and Adminstration}) to install and
+update packages.
 
 To see which packages are currently loaded, use
 
@@ -6417,8 +6421,14 @@ To see which packages are currently loaded, use
 @end example
 
 @noindent
-to display the search list.  A few packages may be loaded but not
-available on the search list (@pxref{Namespaces}).
+to display the search list.  Some packages may be loaded but not
+available on the search list (@pxref{Namespaces}): these will be
+included in the list given by
+
+@example
+> loadedNamespaces()
+@end example
+
 
 To see a list of all available help topics in an installed package,
 use

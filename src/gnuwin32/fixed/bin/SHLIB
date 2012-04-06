@@ -22,9 +22,10 @@ use Cwd;
 use File::Basename;
 use File::Path;
 use Getopt::Long;
+use R::Utils;
 
 
-my $revision = ' $Rev: 37352 $ ';
+my $revision = ' $Rev: 38098 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;

@@ -42,8 +42,8 @@ glm.fit(x, y, weights = rep(1, nobs),
     variables are taken from \code{environment(formula)},
     typically the environment from which \code{glm} is called.}
 
-  \item{weights}{an optional vector of weights to be used
-    in the fitting process.}
+  \item{weights}{an optional vector of weights to be used in the fitting
+    process.  Should be \code{NULL} or a numeric vector.}
 
   \item{subset}{an optional vector specifying a subset of observations
     to be used in the fitting process.}
@@ -63,7 +63,11 @@ glm.fit(x, y, weights = rep(1, nobs),
 
   \item{offset}{this can be used to specify an \emph{a priori}
     known component to be included in the linear predictor
-    during fitting.}
+    during fitting.  This should be \code{NULL} or a numeric vector of
+    length either one or equal to the number of cases.
+    One or more \code{\link{offset}} terms can be included in the
+    formula instead or as well, and if both are specified their sum is
+    used.  See \code{\link{model.offset}}.}
 
   \item{control}{a list of parameters for controlling the fitting
     process.  See the documentation for \code{\link{glm.control}}
@@ -102,8 +106,9 @@ glm.fit(x, y, weights = rep(1, nobs),
   A typical predictor has the form \code{response ~ terms} where
   \code{response} is the (numeric) response vector and \code{terms} is a
   series of terms which specifies a linear predictor for \code{response}.
-  For \code{binomial} models the response can also be specified as a
-  \code{\link{factor}} (when the first level denotes failure and all
+  For \code{binomial} and \code{quasibinomial} families the response can
+  also be specified as a \code{\link{factor}} (when the first level
+  denotes failure and all
   others success) or as a two-column matrix with the columns giving the
   numbers of successes and failures.  A terms specification of the form
   \code{first + second} indicates all the terms in \code{first} together

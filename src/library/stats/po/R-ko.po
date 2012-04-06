@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-03-27 15:42\n"
+"POT-Creation-Date: 2006-05-29 07:58\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -798,13 +798,14 @@ msgid ""
 "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
 msgstr "또는 1열이 성공수, 2열이 실패수인 2열의 행렬입니다"
 
+#, fuzzy
 msgid ""
 "link not available for quasibinomial family, available links are \"logit\", "
-"\", \"\"probit\" and \"cloglog\""
+"\"probit\", \"cloglog\", \"cauchit\" and \"log\""
 msgstr ""
-"은(는) 동일한 2항 패밀리에게 이용 할수 있는 link가 아닙니다. 이용할수 있는 "
-"\"logit\",\n"
-"\"probit\" 그리고 \"cloglog\" 입니다"
+"링크\"%s\"는 2항 패밀리에서 이용 할수 있는 link가 아닙니다. 이용 할수 있는 "
+"link는 \n"
+"\"logit\", \"probit\",\"cloglog\", cauchit\" 그리고 \"log\" 입니다"
 
 msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
 msgstr "동일한 2항 패밀리에 대해서 y는 0과 1의 vector가 아니면 되지 않습니다"
@@ -956,6 +957,10 @@ msgstr "'family'를 확인 할수 없습니다"
 
 msgid "invalid 'method':"
 msgstr "무효인 'method' 입니다:"
+
+#, fuzzy
+msgid "'weights' must be a numeric vector"
+msgstr "'y' 수치 벡터가 아니면 되지 않습니다"
 
 msgid "negative weights not allowed"
 msgstr "negative 중량감은 허용되지 않습니다"
@@ -1254,6 +1259,9 @@ msgstr ""
 "한 예측을 하고 있을\n"
 "가능성이 있습니다"
 
+msgid "prediction intervals are only relevant to new data"
+msgstr ""
+
 msgid "'object' has no 'effects' component"
 msgstr "오브젝트는 효과성분을 가지지 않습니다"
 
@@ -1462,6 +1470,10 @@ msgstr "변수 '%s'는 인자가 아닙니다"
 msgid "factor '%s' has new level(s) %s"
 msgstr "인자 '%s'에는 새로운 레벨(level(s) %s가 있습니다"
 
+#, fuzzy
+msgid "'offset' must be numeric"
+msgstr "'x'는 수치가 아니면 되지 않습니다"
+
 msgid "model frame and formula mismatch in model.matrix()"
 msgstr "model.matrix()로 모델 프레임과 모델식의 편성이 적당하지 않습니다"
 
@@ -1540,6 +1552,10 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "파라미터의 초기 추정값으로 구매 행렬이 특이합니다"
 
+#, fuzzy
+msgid "'data' must be a list or an environment"
+msgstr "'newdata'는 행렬 또는 데이터 프레임이 아니면 되지 않습니다"
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
@@ -1599,6 +1615,12 @@ msgstr "'which'는 1:4에서 없으면 되지 않습니다"
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
 
+msgid "hat values (leverages) are all ="
+msgstr ""
+
+msgid "and there are no factor predictors; no plot no. 5"
+msgstr ""
+
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
 msgstr ""
@@ -1642,6 +1664,9 @@ msgstr "'x' 그리고 'y'가 match 하지 않습니다"
 msgid "wrong number of columns in 'x'"
 msgstr "'x'에서 열수가 잘못되어 있습니다"
 
+msgid "cannot rescale a constant/zero column to unit variance"
+msgstr ""
+
 msgid "PCA applies only to numerical variables"
 msgstr "PCA 는 수치 변수에만 적용 할수 없지 않습니다"
 
@@ -1669,6 +1694,9 @@ msgstr "'x'와 'covmat'의 쌍방이 주어졌습니다. 'x'는 무시됩니다"
 
 msgid "'princomp' can only be used with more units than variables"
 msgstr "'princomp'에서 cases는 변수로부터 많지 않으면 되지 않습니다"
+
+msgid "cannot use cor=TRUE with a constant variable"
+msgstr ""
 
 msgid "covariance matrix is not non-negative definite"
 msgstr "공분산 행렬이 비부치정부호가 아닙니다"
@@ -2132,3 +2160,11 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 "모델식에서 파라미터 %s가 없습니다\n"
 "모델식에서 파라미터(복수) %s가 없습니다"
+
+#~ msgid ""
+#~ "link not available for quasibinomial family, available links are \"logit"
+#~ "\", \", \"\"probit\" and \"cloglog\""
+#~ msgstr ""
+#~ "은(는) 동일한 2항 패밀리에게 이용 할수 있는 link가 아닙니다. 이용할수 있"
+#~ "는 \"logit\",\n"
+#~ "\"probit\" 그리고 \"cloglog\" 입니다"

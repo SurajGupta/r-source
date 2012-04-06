@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.0\n"
+"Project-Id-Version: R 2.3.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-04-18 12:45\n"
-"PO-Revision-Date: 2006-04-18 12:45\n"
+"POT-Creation-Date: 2006-05-29 07:58\n"
+"PO-Revision-Date: 2006-05-29 07:58\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -341,8 +341,11 @@ msgstr "replacing element in non-existent column:"
 msgid "only a single element should be replaced"
 msgstr "only a single element should be replaced"
 
-msgid "names don't match previous names:"
-msgstr "names don't match previous names:"
+msgid "names do not match previous names"
+msgstr "names do not match previous names"
+
+msgid "names do not match previous names:"
+msgstr "names do not match previous names:"
 
 msgid "invalid list argument: all variables should have the same length"
 msgstr "invalid list argument: all variables should have the same length"
@@ -860,8 +863,8 @@ msgstr "‘by’ must match numbers of columns"
 msgid "'by' must match number of columns"
 msgstr "‘by’ must match number of columns"
 
-msgid "'by' must specify column(s)"
-msgstr "‘by’ must specify column(s)"
+msgid "'by' must specify column(s) as numbers, names or logical"
+msgstr "‘by’ must specify column(s) as numbers, names or logical"
 
 msgid "'by' must specify valid column(s)"
 msgstr "‘by’ must specify valid column(s)"

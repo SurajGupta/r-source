@@ -6,6 +6,161 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.3.1
+
+
+NEW FEATURES
+
+    o	In lm() and glm(), offsets are allowed to be length 1 (and
+	if so are replicated to the number of cases).
+
+    o	The \uxxxx notation for Unicode characters in input strings
+	can now be used on any platform which supports MBCS, even if
+	the current locale is not MBCS (provided that the Unicode
+	character is valid in the current character set).
+
+    o	The quasibinomial() family now allows the "cauchit" link. (PR#8851)
+
+    o	edit.data.frame() no longer (silently) coerces character columns
+	to factor.
+
+
+C-LEVEL FACILITIES
+
+    o	The variables controlling stack checking are made available via
+        Rinterface.h to front-ends embedding R: see 'Writing R Extensions'
+
+    o	R_SignalHandlers (defined in Rinterface.h) can be set to 0 to
+        suppress the R signal handlers in front-ends embedding R.
+
+
+INSTALLATION CHANGES
+
+    o	There have been a number of changes to help installation on
+	platforms that no one had beta-tested.
+
+	- Changes related to older header files, e.g. on Redhat 8.0/9.
+
+	- Problems with 'make install' on older (<3) versions of bash
+          on Solaris and elsewhere.
+
+	- AIX 5.2/gcc issues with needing -lm when making modules X11
+          and vfonts.
+
+	- Some versions of Solaris and AIX had a fcntl.h that
+	  redefined 'open' to be 'open64' and thereby broke
+	  compilation of src/main/connections.c and elsewhere.
+
+    o   'make uninstall' works better on a build using a named
+	subarchitecture.
+
+
+BUG FIXES
+
+    o	min(), max(), sum() and prod() gave nonsensical answers with
+	an empty list or raw argument.
+
+    o	sum() on a data frame did not allow multiple arguments.	 (PR#8385)
+
+    o	charmatch() and pmatch() did not specify they applied only to
+	character vectors.  Now they do, and attempt to coerce 'x' and
+	'target' to character before attempting matching.
+
+    o	The Summary() methods for data.frame, Date, POSIXct, POSIXlt
+	and difftime all required an argument which can match 'x',
+	although the generics did not.
+
+    o	regexpr() now accepts 0-length 'text' inputs.
+
+    o	help.search() no longer errors out on a wrongly installed package
+	(with no "hsearch.rds" file).
+
+    o	The LaTeX version of the package reference manual was omitting
+	some topics, and was not sorting the foo-package topic first.
+
+    o	Serializing (e.g. via save()) is better protected against C
+	stack overflow, which will now abort the conversion but no
+	longer crashes the R process on some platforms.
+
+    o	rbind()ing dataframes with a single row could lead to a
+	corrupt data frame (a problem with the fix to PR#8506).
+
+    o	plot(lm(y ~ 1)) now works also for 'which = 5'.
+
+    o	dbeta(0, 1, a, 0) now correctly gives 'a' (limit) instead of 0,
+	and dbeta(0, a, b, ncp) now returns Inf instead of NaN.
+
+    o	demo(Hershey) was failing on the Cyrillic octal codes in locales
+	(e.g. UTF-8) in which these are invalid.
+
+    o	mean() on an integer (or logical) vector was treating NAs as
+	actual values (unless na.rm = TRUE).
+
+    o	mean() on a complex vector was calculated incorrectly in
+        code to improve precision (PR#8842, John Peters).
+
+    o	Graphical parameters bg, cex, col, lty, and lwd were being
+	checked as being of length one even by functions such as
+	title() that ignored them.  (Functions such as lines() and
+	points() allow them to be of length > 1, so they might be
+	passed through ... to other high-level graphical functions
+	which then used to reject them.)
+
+    o	str() now is fast again for large character vectors.
+
+    o	edit() would default the environment of a function to .BaseEnv,
+	instead of to .GlobalEnv.
+
+    o	lm() and glm() coerce their 'weights' and 'offset' values to
+	vector to avoid problems with specifying them as 1D or n x 1
+	arrays.
+
+    o	image() with one or both axes on log scales would give a
+	spurious warning; contour() would give an error.
+
+    o	legend() with log axes would place the title in the wrong place.
+
+    o	edit.data.frame() was not returning factors edited with
+	factor.mode="numeric" to factors.
+
+    o	edit.matrix() tried to set rownames and colnames from the
+	original matrix even if the sizes had been altered, and
+	ignored changes made to the column names.  edit.row.names has
+	a more sensible default (if the rownames are non-NULL).
+
+    o	bindingIsLocked() was returning invalid values of a logical
+	vector on some platforms.
+
+    o	merge.data.frame() did not make the column names unique (by
+	appending elements of 'suffixes') when performing a Cartesian
+	product.  (PR#8676)
+
+    o	rbind.data.frame() matches up the names of columns (which was
+	undocumented), but failed to do so when checking if it was
+	dealing with a factor column.  (PR#8868)
+
+	If rbind() was used on data frames with duplicated names it
+	produced a corrupt data frame.
+
+    o	dt(x, df, ncp= not.0) now longer gives erratic values for
+	|x| < ~1e-12.  (PR#8874)
+
+    o	\code{\linkS4class{.}} now works.
+
+    o	ccf() aligns time series by ts.intersect() rather than
+	ts.union() and so is less likely to need a non-default
+	na.action.  (PR#8893)
+
+    o	optim(method="CG") could return a value that did not
+	correspond to $par for very badly behaved functions on which
+	the second phase of the line search failed.  (PR#8786)
+
+    o	print.ts() could fail on a corrupt time series: it now warns and
+	does the best it can.
+
+
+
+
 		CHANGES IN R VERSION 2.3.0
 
 
@@ -251,7 +406,7 @@ NEW FEATURES
     o	splinefun() returns a function that now also has a 'deriv' argument
 	and can provide up to the 3rd derivative of the interpolating
 	spline, thanks to Berwin Turlach.
-	
+
     o	stopifnot(A) now gives a better error message when A has NAs, and
 	uses "not all TRUE" when A has length >= 2.
 
@@ -971,11 +1126,11 @@ BUG FIXES
     o	uniroot() did not give a warning (as documented) if it failed
 	to converge in 'maxiter' steps.  (PR#8751)
 
-    o	eapply (and as.list.environment) did not work for the base
+    o	eapply() (and as.list.environment()) did not work for the base
 	environment/namespace.  (PR#8761)
 
     o	Added protection in configure against systems for which using
-	xmkmf fails to eport a C or C++ compiler.
+	xmkmf fails to report a C or C++ compiler.
 
     o	expand.grid() was constructing a data frame 'by hand' and so
 	setting integer row.names (which are documented to be
@@ -1068,7 +1223,7 @@ BUG FIXES
 	left margin.  (PR#8681)
 
     o	r <- glm(.....); all.equal(r,r) # now gives TRUE instead of an error
-    
+
     o	plot.acf() with a multiple time series was sometimes
 	miscalculating the 'ylim' value for the plot after the first.
 	(PR#8705)
@@ -1107,7 +1262,8 @@ NEW FEATURES
 	the keyboard).
 
     o	There is now a comprehensive French translation of the messages,
-	thanks to Philippe Grosjean.
+	thanks to Philippe Grosjean, Frederic Lehobey, Jean Thioulouse
+	and Emmanuel Paradis.
 
 
 DEPRECATED & DEFUNCT

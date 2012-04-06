@@ -5,8 +5,9 @@ pmatch(x, table, nomatch = NA, duplicates.ok = FALSE)
 }
 \alias{pmatch}
 \arguments{
-  \item{x}{character vector: the values to be matched.}
-  \item{table}{character vector: the values to be matched against.}
+  \item{x}{the values to be matched: coerced to a character vector.}
+  \item{table}{the values to be matched against: coerced to a character
+    vector.}
   \item{nomatch}{the value to be returned at non-matching or multiply
     partially matching positions.}
   \item{duplicates.ok}{should elements be in \code{table} be used more
@@ -39,6 +40,8 @@ pmatch(x, table, nomatch = NA, duplicates.ok = FALSE)
   \code{duplicates.ok} true, the differences being that it
   differentiates between no match and an ambiguous partial match,  it
   does match empty strings, and it does not allow multiple exact matches.
+
+  \code{NA} values are treated as if they were the string constant \code{"NA"}.
 }
 \value{
   A numeric vector of integers (including \code{NA} if \code{nomatch =

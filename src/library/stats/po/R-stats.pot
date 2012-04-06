@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-03-27 15:42\n"
+"POT-Creation-Date: 2006-05-29 07:58\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -749,7 +749,7 @@ msgstr ""
 msgid "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
 msgstr ""
 
-msgid "link not available for quasibinomial family, available links are \"logit\", \", \"\"probit\" and \"cloglog\""
+msgid "link not available for quasibinomial family, available links are \"logit\", \"probit\", \"cloglog\", \"cauchit\" and \"log\""
 msgstr ""
 
 msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
@@ -885,6 +885,9 @@ msgid "'family' not recognized"
 msgstr ""
 
 msgid "invalid 'method':"
+msgstr ""
+
+msgid "'weights' must be a numeric vector"
 msgstr ""
 
 msgid "negative weights not allowed"
@@ -1166,6 +1169,9 @@ msgstr ""
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr ""
 
+msgid "prediction intervals are only relevant to new data"
+msgstr ""
+
 msgid "'object' has no 'effects' component"
 msgstr ""
 
@@ -1358,6 +1364,9 @@ msgstr ""
 msgid "factor '%s' has new level(s) %s"
 msgstr ""
 
+msgid "'offset' must be numeric"
+msgstr ""
+
 msgid "model frame and formula mismatch in model.matrix()"
 msgstr ""
 
@@ -1433,6 +1442,9 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr ""
 
+msgid "'data' must be a list or an environment"
+msgstr ""
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
@@ -1487,6 +1499,12 @@ msgstr ""
 msgid "'id.n' must be in {1,..,%d}"
 msgstr ""
 
+msgid "hat values (leverages) are all ="
+msgstr ""
+
+msgid "and there are no factor predictors; no plot no. 5"
+msgstr ""
+
 msgid "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
 msgstr ""
 
@@ -1520,6 +1538,9 @@ msgstr ""
 msgid "wrong number of columns in 'x'"
 msgstr ""
 
+msgid "cannot rescale a constant/zero column to unit variance"
+msgstr ""
+
 msgid "PCA applies only to numerical variables"
 msgstr ""
 
@@ -1542,6 +1563,9 @@ msgid "both 'x' and 'covmat' were supplied: 'x' will be ignored"
 msgstr ""
 
 msgid "'princomp' can only be used with more units than variables"
+msgstr ""
+
+msgid "cannot use cor=TRUE with a constant variable"
 msgstr ""
 
 msgid "covariance matrix is not non-negative definite"

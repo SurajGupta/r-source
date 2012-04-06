@@ -4148,7 +4148,7 @@ options(op)
 
 
 ## PR#8718
-a<-matrix(2,2,2)
+a <- matrix(2,2,2)
 apply(a,1,"$","a")
 apply(a,1,sum)
 ## first apply was corrupting apply() code in 2.2.1
@@ -4157,3 +4157,78 @@ apply(a,1,sum)
 ## NULL results in apply()
 apply(as.matrix(1), 1, function(x) NULL)
 ## was error in 2.2.1.
+
+
+## sum on data frames (PR#8385)
+DF <- data.frame(m1=1:2, m2=3:4)
+sum(DF)
+sum(DF=DF)  # needed arg named x
+sum(DF, DF) # failed
+DF[1, 1] <- NA
+stopifnot(is.na(sum(DF)), sum(DF, na.rm=TRUE) == 9)
+## failures < 2.4.0
+
+op <- par(mfrow = c(2,2), mar = .1+c(3,3,2,1), mgp = c(1.5, .6, 0))
+y <- rt(200, df= 3)
+plot(lm(y ~ 1))
+par(op)
+## 4th plot (which = 5: "leverages") failed in 2.2.0 <= R <= 2.3.0
+
+
+## Re-fix PR#8506
+z <- rbind(x = data.frame(a = 1, b = 2), y = data.frame(a = 1, b = 2))
+stopifnot(row.names(z) == c("x", "y"))
+## were NAs (and failed to print) in 2.3.0
+
+dd <- data.frame(x = 3:4)
+stopifnot(identical(rownames(dd), row.names(dd)),
+          identical(rownames(dd), c("1", "2")))
+## one was integer in an intermediate version of "pre 2.4.0"
+
+
+## mean on integer vector ignored NAs
+stopifnot(is.na(mean(NA)))
+## failed in R 2.3.0
+
+
+## title etc failed if passed col etc of length > 1
+plot(1:2)
+title("foo", col=1:3)
+title("foo", cex=1:3)
+title("foo", lty=1:3)
+title("foo", lwd=1:3)
+title("foo", bg=4:7)
+## threw errors in R <= 2.3.0
+
+
+## glm did not allow array offsets
+df1 <- data.frame(u=1:10,
+                  v=rpois(10,10),
+                  z=array(1,10, dimnames=list(1:10)))
+glm(v ~ u+offset(log(z)), data=df1, family=poisson)
+## was error in R <= 2.3.0
+
+
+## invalid values of a logical vector from bindingIsLocked
+## Martin Morgan, R-devel, 2006-05-14
+e <- new.env()
+e$x <- 1
+e$y <- 2
+lockBinding("x", e)
+stopifnot(bindingIsLocked("x", e), bindingIsLocked("x", e)==TRUE,
+          !bindingIsLocked("y", e), bindingIsLocked("y", e)==FALSE)
+## on some systems in R <= 2.3.0, bindingIsLocked("x", e)==TRUE was false
+
+
+## ccf on non-aligned time series
+x <- ts(rnorm(100), start=1)
+y <- ts(rnorm(120), start=3)
+ccf(x, y)
+## needed na.action=na.contiguous in 2.3.0
+
+## merge.data.frame was not making column names unique when
+## doing a Cartesian product.
+DF <- data.frame(col=1:3)
+DF2 <- merge(DF, DF, by=numeric(0))
+stopifnot(identical(names(DF2), c("col.x", "col.y")))
+## both were 'col' in 2.3.0.

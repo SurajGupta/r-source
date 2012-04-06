@@ -43,10 +43,12 @@ merge(x, y, \dots)
   \code{0} specifies the row names.  The rows in the two data frames
   that match on the specified columns are extracted, and joined
   together.  If there is more than one match, all possible matches
-  contribute one row each.\cr
-  If the \code{by.*} vectors are of length 0, the result, \code{r}, is the
+  contribute one row each.
+
+  If \code{by} or both \code{by.x} and \code{by.y} are of length 0 (a
+  length zero vector or \code{NULL}), the result, \code{r}, is the
   \dQuote{Cartesian product} of \code{x} and \code{y}, i.e.,
-  \code{dim(r) = c(nrow(x)*nrow, ncol(x) + ncol(y))}.
+  \code{dim(r) = c(nrow(x)*nrow(y), ncol(x) + ncol(y))}.
 
   If \code{all.x} is true, all the non matching cases of \code{x} are
   appended to the result as well, with \code{NA} filled in the

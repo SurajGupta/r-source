@@ -4,11 +4,11 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ_YEAR 2006
-@set FAQ_DATE @value{FAQ_YEAR}-04-21
+@set FAQ_DATE @value{FAQ_YEAR}-06-01
 @set REL_YEAR 2006
 @set REL_MAJOR 2
 @set REL_MINOR 3
-@set REL_PATCHLEVEL 0
+@set REL_PATCHLEVEL 1
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 
@@ -263,9 +263,12 @@ Stefano Iacus, Ross Ihaka, Friedrich Leisch, Thomas Lumley, Martin
 Maechler, Duncan Murdoch, Paul Murrell, Martyn Plummer, Brian Ripley,
 Duncan Temple Lang, Luke Tierney, and Simon Urbanek.
 
-R has a home page at @url{http://www.R-project.org/}.  It is free
-software distributed under a @acronym{GNU}-style copyleft, and an
-official part of the @acronym{GNU} project (``@acronym{GNU} S'').
+R has a home page at @url{http://www.R-project.org/}.  It is
+@url{http://www.gnu.org/philosophy/free-sw.html, free software}
+distributed under a @acronym{GNU}-style
+@url{http://www.gnu.org/copyleft/copyleft.html, copyleft}, and an
+official part of the @url{http://www.gnu.org/, @acronym{GNU}} project
+(``@acronym{GNU} S'').
 
 @node What machines does R run on?, What is the current version of R?, What is R?, R Basics
 @section What machines does R run on?
@@ -484,21 +487,21 @@ to Mac OS 9.2.2.  This port of R for Macintosh is no longer supported.
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2006-03-27:
+@c Linux binaries as of 2006-05-12:
 @c
 @c debian
-@c   stable  i386   2.2.1  Christian T. Steigies <cts@debian.org>
+@c   stable  i386   2.3.0  Christian T. Steigies <cts@debian.org>
 @c   oldstable
 @c           i386   2.1.1  Christian T. Steigies <cts@debian.org>
 @c mandrake
 @c   10.0    i386   2.0.0  Michele Alzetta <mikalzet@libero.it>
 @c redhat
-@c   fc3     i386   2.2.1  Martyn Plummer <plummer@iarc.fr>
-@c           x86_64 2.2.1  Brian Ripley
-@c   fc4     i386   2.2.1  Martyn Plummer <plummer@iarc.fr>
-@c           x86_64 2.2.1  Martyn Plummer <plummer@iarc.fr>
+@c   fc3     i386   2.3.0  Martyn Plummer <plummer@iarc.fr>
+@c           x86_64 2.3.0  Brian Ripley
+@c   fc4     i386   2.3.0  Martyn Plummer <plummer@iarc.fr>
+@c           x86_64 2.3.0  Martyn Plummer <plummer@iarc.fr>
 @c   fc5     i386   2.2.1  Martyn Plummer <plummer@iarc.fr>
-@c           x86_64 2.2.1  Martyn Plummer <plummer@iarc.fr>
+@c           x86_64 2.3.0  Martyn Plummer <plummer@iarc.fr>
 @c   el3     i386   2.2.1  Matthew P Cox <rhel_cran@hmdc.harvard.edu>
 @c   el4     i386   2.2.1  Matthew P Cox <rhel_cran@hmdc.harvard.edu>
 @c           x86_64 2.2.1  Matthew P Cox <rhel_cran@hmdc.harvard.edu>
@@ -513,10 +516,10 @@ to Mac OS 9.2.2.  This port of R for Macintosh is no longer supported.
 @c           x86_64 2.1.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c   9.3     i586   2.2.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c           x86_64 2.2.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c   10.0    i586   2.2.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c           x86_64 2.2.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c   10.0    i586   2.3.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c           x86_64 2.3.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c vinelinux
-@c   3.2     i386   2.2.1  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
+@c   3.2     i386   2.3.0  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
 
 The @file{bin/linux} directory of a @CRAN{} site contains the following
 packages.
@@ -1848,6 +1851,8 @@ Differential Evolution Optimization.
 @item DICOM
 Import and manipulate medical imaging data using the Digital Imaging and
 Communications in Medicine (DICOM) Standard.
+@item DPpackage
+Semiparametric Bayesian analysis using Dirichlet process priors.
 @item Davies
 Functions for the Davies quantile function and the Generalized Lambda
 distribution.
@@ -1965,6 +1970,10 @@ Functions for computing the NPMLE for censored and truncated data.
 @item JLLprod
 Nonparametric estimation of homothetic and generalized homothetic
 production functions.
+@item JGR
+Java Gui for R.
+@item JavaGD
+Java Graphics Device.
 @item JointGLM
 Joint modeling of mean and dispersion through two interlinked GLM's.
 @item KMsurv
@@ -1995,6 +2004,8 @@ represented as the product of two matrices.
 Functions and datasets from the main package of Venables and Ripley,
 ``Modern Applied Statistics with S''.  Contained in the @file{VR}
 bundle.  @emph{Recommended}.
+@item MBESS
+Methods for the Behavioral, Educational, and Social Sciences.
 @item MCMCpack
 Markov chain Monte Carlo (MCMC) package: functions for posterior
 simulation for a number of statistical models.
@@ -2064,6 +2075,8 @@ Probabilistic weather field forecasts using the Geostatistical Output
 Perturbation method introduced by Gel, Raftery and Gneiting (2004).
 @item QCA
 Qualitative Comparative Analysis for crisp sets.
+@item QCAGUI
+QCA Graphical User Interface.
 @item R.matlab
 Read and write of MAT files together with R-to-Matlab connectivity.
 @item R.oo
@@ -2276,8 +2289,12 @@ A collection of tools for the analysis of habitat selection by animals.
 Adaptive Wavelet transforms for signal denoising.
 @item agce
 Analysis of growth curve experiments.
+@item agsemisc
+Miscellaneous plotting and utility functions.
 @item akima
 Linear or cubic spline interpolation for irregularly gridded data.
+@item allelic
+A fast, unbiased and exact allelic exact test.
 @item alr3
 Methods and data to accompany the textbook ``Applied Linear Regression''
 by S. Weisberg, 2005, Wiley.
@@ -2307,6 +2324,9 @@ Another PLot PACKage: stem.leaf, bagplot, faces, spin3R, @dots{}.
 Mining association rules and frequent itemsets with R.
 @item ash
 David Scott's ASH routines for 1D and 2D density estimation.
+@item aspace
+Estimating centrographic statistics and computational geometries from
+spatial point patterns.
 @item assist
 A suite of functions implementing smoothing splines.
 @item aster
@@ -2325,13 +2345,18 @@ random effects) distributions.
 Bayes Inference for Marketing/Micro-econometrics.
 @item bayesmix
 Bayesian mixture models of univariate Gaussian distributions using JAGS.
-@item baymvb
-Bayesian analysis of multivariate binary data.
+@c <COMMENT>
+@c Moved to the Archive on 2006-04-28 (2.3.0 Error; no response).
+@c @item baymvb
+@c Bayesian analysis of multivariate binary data.
+@c </COMMENT>
 @item betareg
 Beta regression for modeling rates and proportions.
 @item bicreduc
 Reduction algorithm for the NPMLE for the distribution function of
 bivariate interval-censored data.
+@item biglm
+Linear regression for data too large to fit in memory.
 @item bim
 Bayesian interval mapping diagnostics:  functions to interpret QTLCart
 and Bmapqtl samples.
@@ -2462,6 +2487,8 @@ Measures of concordance and reliability.
 @item conf.design
 A series of simple tools for constructing and manipulating confounded
 and fractional factorial designs.
+@item connectedness
+Find disconnected sets for two-way classification.
 @item copula
 Classes of commonly used copulas (including elliptical and Archimedian),
 and methods for density, distribution, random number generators, and
@@ -2492,8 +2519,11 @@ Server-side and client-side tools for @acronym{CRAN} task views.
 Miscellaneous functions by Christian W. Hoffmann.
 @item cyclones
 Cyclone identification.
-@item data.table
-Just like a data frame but without rownames.
+@c <COMMENT>
+@c Moved to Archive on 2006-05-19 as requested by the maintainer.
+@c @item data.table
+@c Just like a data frame but without rownames.
+@c </COMMENT>
 @item date
 Functions for dealing with dates.  The most useful of them accepts a
 vector of input dates in any of the forms @samp{8/30/53},
@@ -2512,6 +2542,8 @@ control, and full keyboard input.
 @item deldir
 Calculates the  Delaunay triangulation and the Dirichlet or Voronoi
 tesselation (with respect to the entire plane) of a planar point set.
+@item delt
+Estimation of multivariate densities with adaptive histograms.
 @item denpro
 Visualization of multivariate density functions and estimates with level 
 set trees and shape trees, and visualization of multivariate data with
@@ -2637,6 +2669,9 @@ Monte Carlo exact tests for log-linear models.
 @item exactRankTests
 Computes exact @math{p}-values and quantiles using an implementation of
 the Streitberg/Roehmel shift algorithm.
+@item exactmaxsel
+Exact methods for maximally selected statistics for binary response
+variables.
 @item fBasics
 The Rmetrics module for ``Markets, basic statistics, and stylized
 facts''.  Rmetrics is an environment and software collection for
@@ -2730,6 +2765,9 @@ Introduction with R'' by S. Wood (2006).
 @item gamlss
 Functions to fit Generalized Additive Models for Location Scale and
 Shape.
+@item gamlss.tr
+A GAMLSS add on for generating and fitting truncated (gamlss.family)
+distributions.
 @item gap
 Genetic analysis package for both population and family data.
 @c Includes @strong{pathmix} for path analysis of pairs of relatives,
@@ -2985,6 +3023,8 @@ Generic functions and standard methods for Trellis-based displays.
 Lazy learning for local regression.
 @item ldDesign
 Design of experiments for detection of linkage disequilibrium,
+@item ldbounds
+Lan-DeMets method for group sequential boundaries.
 @item leaps
 A package which performs an exhaustive search for the best subsets of a
 given set of potential regressors, using a branch-and-bound algorithm,
@@ -3156,6 +3196,8 @@ Estimation of monotone regression and variance functions in
 nonparametric models.
 @item monoProc
 Strictly monotone smoothing procedure.
+@item mprobit
+Multivariate probit model for binary/ordinal response.
 @c <COMMENT>
 @c Moved to the Archive on 2005-07-27 as requested by Witold Eryk Wolski
 @c <W.E.Wolski@ncl.ac.uk> (package now in BioC).
@@ -3177,6 +3219,8 @@ Multiple comparison procedures for the one-way layout.
 @c Multidimensional descriptive statistics: factorial methods and
 @c classification.
 @c </COMMENT>
+@item multilevel
+Analysis of multilevel data by organizational and social psychologists.
 @item multinomRob
 Overdispersed multinomial regression using robust (LQD and tanh)
 estimation.
@@ -3228,6 +3272,11 @@ Tools to create and modify network objects, which can represent a range
 of relational data types.
 @item neural
 RBF and MLP neural networks with graphical user interface.
+@c <COMMENT>
+@c Renamed to allelic on 2006-05-24 as requested by the maintainer.
+@c @item newallelic
+@c A fast, unbiased and exact allelic exact test.
+@c </COMMENT>
 @item nice
 Get or set UNIX priority (niceness) of running R process.
 @item nlme
@@ -3300,6 +3349,8 @@ Multiple imputation for multivariate panel or clustered data.
 Functions and datasets for fitting models to Panel data.
 @item papply
 Parallel apply function using MPI.
+@item partitions
+Additive partitions of integers.
 @item partsm
 Periodic AutoRegressive Time Series Models.
 @item party
@@ -3354,8 +3405,11 @@ Kernel density estimation with global bandwidth selection via
 @item pls
 Partial Least Squares Regression (PLSR) and Principal Component
 Regression (PCR).
-@item pls.pcr
-Multivariate regression by PLS and PCR.
+@c <COMMENT>
+@c Moved to the Archive on 2006-05-09 as requested by the maintainer.
+@c @item pls.pcr
+@c Multivariate regression by PLS and PCR.
+@c </COMMENT>
 @item plsgenomics
 PLS analyses for genomics.
 @c <COMMENT>
@@ -3518,6 +3572,8 @@ the use of the metasim engine to build and run individual based
 population genetics simulations.
 @item roblm
 Robust regression estimators.
+@item robust
+Insightful robust package.
 @item robustbase
 Basic Robust Statistics.
 @item rpart
@@ -3727,6 +3783,8 @@ State SPace models In R.
 @c Density, distribution, quantile and hazard functions of a stable
 @c variate; generalized linear models for the parameters of a stable
 @c distribution.
+@item startupmsg
+Utilities for start-up messages.
 @c <COMMENT>
 @c Merged into foreign.
 @c @item stataread
@@ -4151,9 +4209,13 @@ detect regions with abnormal copy number.
 @item DynDoc
 Functionality to create and interact with dynamic documents, vignettes,
 and other navigable documents.
+@item EBImage
+R image processing toolkit.
 @item EBarrays
 Empirical Bayes tools for the analysis of replicated microarray data
 across multiple conditions.
+@item GEOquery
+Get data from NCBI Gene Expression Omnibus (GEO).
 @item GLAD
 Gain and Loss Analysis of DNA.
 @item GOstats
@@ -4173,6 +4235,8 @@ Currently, implements methods for cell cycle analysis and for inferring
 large sparse graphical Gaussian models.
 @item GeneTraffic
 GeneTraffic R integration functions.
+@item GenomeBase
+Base functions for genome data package manipulation.
 @item GlobalAncova
 Calculates a global test for differential gene expression between
 groups.
@@ -4180,10 +4244,15 @@ groups.
 Graph theoretic Association Tests.
 @item HEM
 Heterogeneous Error Model for analysis of microarray data.
+@item Heatplus
+A heat map displaying covariates and coloring clusters.
 @item Icens
 Functions for computing the NPMLE for censored and truncated data.
 @item KEGGSOAP
 Client-side SOAP access KEGG.
+@item LMGene
+Analysis of microarray data using a linear model and glog data
+transformation.
 @item LPE
 Significance analysis of microarray data with small number of replicates
 using the Local Pooled Error (LPE) method.
@@ -4194,25 +4263,40 @@ Misclassification error estimation with cross-validation.
 @item MLInterfaces
 Uniform interfaces to machine learning code for the exprSet class from
 Bioconductor.
+@item MVCClass
+Model-View-Controller (MVC) classes.
+@item MantelCorr
+Compute Mantel Cluster Correlations.
 @item MeasurementError.cor
 Two-stage measurement error model for correlation estimation with
 smaller bias than the usual sample correlation.
 @item MergeMaid
 Cross-study comparison of gene expression array data.
+@item Mfuzz
+Soft clustering of time series gene expression data.
 @item MiPP
 Misclassification Penalized Posterior Classification.
+@item OCplus
+Operating characteristics plus sample size and local fdr for microarray
+experiments.
 @item OLIN
 Optimized Local Intensity-dependent Normalisation of two-color
 microarrays.
 @item OLINgui
 Graphical user interface for @strong{OLIN}.
+@item OrderedList
+Similarities of ordered gene lists.
 @item PROcess
 Ciphergen SELDI-TOF processing.
 @item RBGL
 An interface between the graph package and the Boost graph libraries,
 allowing for fast manipulation of graph objects in R.
+@item RLMM 
+A genotype calling algorithm for Affymetrix SNP arrays. 
 @item RMAGEML
 Functionality to handle MAGEML documents.
+@item RMAPPER
+Interface to mapper.chip.org.
 @item ROC
 Receiver Operating Characteristic (ROC) approach for identifying genes
 that are differentially expressed in two types of samples.
@@ -4239,8 +4323,12 @@ analysis tools.
 @item SNAData
 Data from the book ``Social Network Analysis'' by Wasserman & Faust,
 1999.
+@item ScISI
+In Silico Interactome.
 @item aCGH
 Classes and functions for Array Comparative Genomic Hybridization data.
+@item adSplit
+Annotation-driven clustering.
 @item affxparser
 Package for parsing Affymetrix files (CDF, CEL, CHP, BPMAP, BAR).
 @item affy
@@ -4251,8 +4339,12 @@ QC Report Generation for affyBatch objects.
 For fitting Probe Level Models.
 @item affycomp
 Graphics toolbox for assessment of Affymetrix expression measures.
+@item affycoretools
+Functions useful for those doing repetitive analyses.
 @item affydata
 Affymetrix data for demonstration purposes.
+@item affyio
+Tools for parsing Affymetrix data files.
 @item affylmGUI
 Graphical User Interface for affy analysis using package @strong{limma}.
 @item affypdnn
@@ -4268,25 +4360,40 @@ databases such as GenBank, LocusLink and PubMed.  Process and store
 query results.  Generate @HTML{} reports of analyses.
 @item apComplex
 Estimate protein complex membership using AP-MS protein data.
+@item applera
+Tools for Applied Biosystems microarrays AB1700 data analysis and
+quality controls.
 @item arrayMagic
 Utilities for quality control and processing for two-color cDNA
 microarray data.
 @item arrayQuality
 Performing print-run and array level quality assessment.
+@item beadarray
+Quality control and low-level analysis of BeadArrays.
 @item bim
 @c CRAN
 Bayesian interval mapping diagnostics:  functions to interpret QTLCart
 and Bmapqtl samples.
 @item bioDist
 A collection of software tools for calculating distance measures.
+@item biocViews
+Categorized views of R package repositories.
 @item biomaRt
 Interface to BioMart databases (e.g., Ensembl)
 @item bridge
 Bayesian Robust Inference for Differential Gene Expression.
+@item cellHTS
+Analysis of cell-based screens.
+@item cghMCR
+Find chromosome regions showing common gains/losses.
 @item clusterStab
 Compute cluster stability scores for microarray data.
+@item codelink
+Manipulation of Codelink Bioarrays data.
 @item convert
 Convert Microarray Data Objects.
+@item copa
+Functions to perform cancer outlier profile analysis.
 @item ctc
 Tools to export and import Tree and Cluster to other programs.
 @item daMA
@@ -4300,8 +4407,8 @@ Metadata and tools to work with E. coli.
 @item edd
 Expression density diagnostics: graphical methods and pattern
 recognition algorithms for distribution shape classification.
-@c @item exprExternal
-@c Implementation of exprSet using externalVectors.
+@item exprExternal
+Implementation of exprSet using externalVectors.
 @item externalVector
 Basic class definitions and generics for external pointer based vector
 objects for R.
@@ -4343,8 +4450,8 @@ Classification using generalized partial least squares for two-group and
 multi-group classification.
 @item graph
 Classes and tools for creating and manipulating graphs within R.
-@c @item gtkWidgets
-@c Widgets built using @strong{RGtk}.
+@item gtkWidgets
+Widgets built using @strong{RGtk}.
 @item hexbin
 Binning functions, in particular hexagonal bins for graphing.
 @item hopach
@@ -4353,7 +4460,7 @@ Hierarchical Ordered Partitioning and Collapsing Hybrid (HOPACH).
 Capabilities for representing and manipulating hypergraphs.
 @item iSPlot
 Link views that are based on the same data set.
-@item ideogram
+@item idiogram
 Plotting genomic data by chromosomal location.
 @item impute
 @c CRAN
@@ -4362,6 +4469,10 @@ Imputation for microarray data (currently KNN only).
 Linear models for microarray data.
 @item limmaGUI
 Graphical User Interface for package @strong{limma}.
+@item logicFS
+Identification of SNP interactions.
+@item maCorrPlot
+Visualize artificial correlation in microarray data.
 @item maDB
 Microarray database and utility functions for microarray analysis.
 @item maSigPro
@@ -4399,11 +4510,10 @@ Exploratory analysis for two-color spotted microarray data.
 @c UCB and UCSF.
 @item matchprobes
 Tools for sequence matching of probes on arrays.
+@item metaArray
+Integration of microarray data for meta-analysis.
 @item mmgmos
 Multi-chip Modified Gamma Model of Oligonucleotide Signal.
-@item msbase
-Basic classes and methods for mass spectrometric mass list
-manipulation.
 @item multtest
 Multiple testing procedures for controlling the family-wise error rate
 (FWER) and the false discovery rate (FDR).  Tests can be based on
@@ -4413,6 +4523,8 @@ permutation procedures are available to estimate adjusted
 @item nnNorm
 Spatial and intensity based normalization of cDNA microarray data based
 on robust neural nets.
+@item nudge
+Normal Uniform Differential Gene Expression detection.
 @item ontoTools
 Graphs and sparse matrices for working with ontologies; formal objects
 for nomenclatures with provenance management.
@@ -4422,6 +4534,10 @@ overlap alignment with affine gap penalty.
 @item pamr
 @c CRAN
 Pam: Prediction Analysis for Microarrays.
+@item panp
+Presence-Absence calls from Negative strand matching Probesets.
+@item pathRender
+Render molecular pathways.
 @item pdmclass
 CLASSification of microarray samples using Penalized Discriminant
 Methods.
@@ -4451,8 +4567,6 @@ install, update, and distribute packages, vignettes, and other files.
 Data sets for RFlowCyt examples.
 @item rflowcyt
 Statistical tools and data structures for analytic flow cytometry.
-@item rhdf5
-Support for large matrix manipulation using the HDF5 storage library.
 @item safe
 Significance Analysis of Function and Expression.
 @item sagenhaft
@@ -4466,11 +4580,17 @@ Discovery Rate (FDR) with both the Significance Analysis of Microarrays
 Very simple high level analysis of Affymetrix data.
 @item simulatorAPMS
 Computationally simulates the AP-MS technology.
+@item sizepower
+Sample size and power calculation in microrarray studies.
+@item snapCGH
+Segmentation, normalization and processing of aCGH data.
 @item splicegear
 A set of tools to work with alternative splicing.
 @item spotSegmentation
 Microarray spot segmentation and gridding for blocks of microarray
 spots.
+@item sscore
+S-score algorithm for Affymetrix oligonucleotide microarrays.
 @item ssize
 Estimate microarry sample size.
 @item stam
@@ -4499,6 +4619,8 @@ interfaces.
 @item xcms
 LC/MS and GC/MS data analysis: framework for processing and
 visualization of chromatographically separated mass spectral data.
+@item y2hStat
+Analysis of Yeast 2-Hybrid data sets.
 @end table
 
 @c These packages will eventually also be made available via @CRAN{}
@@ -4887,6 +5009,7 @@ dir /opt/R/src/unix
 * How can I capture or ignore errors in a long simulation?::  
 * Why are powers of negative numbers wrong?::  
 * How can I save the result of each iteration in a loop into a separate file?::  
+* Why are p-values not displayed when using lmer()?::  
 @end menu
 
 @c @node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellanea, R Miscellanea
@@ -5739,7 +5862,7 @@ R> as.list(quote(-2^2))
 2^2
 @end example
 
-@node How can I save the result of each iteration in a loop into a separate file?,  , Why are powers of negative numbers wrong?, R Miscellanea
+@node How can I save the result of each iteration in a loop into a separate file?, Why are p-values not displayed when using lmer()?, Why are powers of negative numbers wrong?, R Miscellanea
 @section How can I save the result of each iteration in a loop into a separate file?
 
 One way is to use @code{paste()} (or @code{sprintf()}) to concatenate a
@@ -5755,6 +5878,13 @@ for(i in 1:100) @{
   save(list = "some_object", file = fp)
 @}
 @end example
+
+@node Why are p-values not displayed when using lmer()?,  , How can I save the result of each iteration in a loop into a separate file?, R Miscellanea
+@section Why are @math{p}-values not displayed when using lmer()?
+
+Doug Bates has kindly provided an extensive response in a post to the 
+r-help list, which can be reviewed at
+@uref{https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html}.
 
 @node R Programming, R Bugs, R Miscellanea, Top
 @chapter R Programming

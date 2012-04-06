@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-03-27 15:42\n"
+"POT-Creation-Date: 2006-05-29 07:58\n"
 "PO-Revision-Date: 2005-06-02 16:05+0900\n"
 "Last-Translator: Shigeru Mase\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -734,8 +734,9 @@ msgstr "というリンクはポアッソンファミリに対しては利用で
 msgid ""
 "link \"%s\" not available for Poisson family; available links are \"identity"
 "\", \"log\" and \"sqrt\""
-msgstr "リンク '%s' はポアソンファミリには利用できません。利用できるリンクは \"identity"
-"\", \"log\" 及び \"sqrt\" です"
+msgstr ""
+"リンク '%s' はポアソンファミリには利用できません。利用できるリンクは "
+"\"identity\", \"log\" 及び \"sqrt\" です"
 
 msgid "negative values not allowed for the Poisson family"
 msgstr "ポアソンファミリには負の値は許されません"
@@ -784,12 +785,13 @@ msgid ""
 "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
 msgstr "もしくは、第一列が成功数、第二列が失敗数である 2 列の行列です"
 
+#, fuzzy
 msgid ""
 "link not available for quasibinomial family, available links are \"logit\", "
-"\", \"\"probit\" and \"cloglog\""
+"\"probit\", \"cloglog\", \"cauchit\" and \"log\""
 msgstr ""
-"は疑似二項ファミリに利用できるリンクではありません。利用できるリンクは "
-"\"logit\", \"probit\" 及び \"cloglog\" です"
+"リンク\"%s\"は二項ファミリに利用できるリンクではありません。利用できるリンク"
+"は \"logit\", \"probit\", \"cloglog\", \"cauchit\" 及び \"log\" です"
 
 msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
 msgstr "疑似二項ファミリに対しては、y は 0 と 1 のベクトルでなければなりません"
@@ -938,6 +940,10 @@ msgstr "'family' が確認できません"
 
 msgid "invalid 'method':"
 msgstr "無効な 'method' です:"
+
+#, fuzzy
+msgid "'weights' must be a numeric vector"
+msgstr "'y' は数値ベクトルでなければなりません"
 
 msgid "negative weights not allowed"
 msgstr "負の重みは許されません"
@@ -1228,6 +1234,9 @@ msgstr ""
 "ランク落ちした状態での当てはめをしているので誤った予測をしている可能性があり"
 "ます"
 
+msgid "prediction intervals are only relevant to new data"
+msgstr ""
+
 msgid "'object' has no 'effects' component"
 msgstr "オブジェクト('object')は効果('effects')成分を持ちません"
 
@@ -1391,7 +1400,8 @@ msgstr "デザインは均衡していません - seのためにse.contrast()を
 msgid ""
 "Standard error information not returned as design is unbalanced. \n"
 "Standard errors can be obtained through 'se.contrast'."
-msgstr "デザインが均衡していないため標準エラー情報は返されません\n"
+msgstr ""
+"デザインが均衡していないため標準エラー情報は返されません\n"
 "標準エラーは 'se.contrast' を用いて得ることができます"
 
 msgid "SEs for type '%s' are not yet implemented"
@@ -1411,7 +1421,9 @@ msgstr "terms 成分がありません"
 
 msgid ""
 "variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
-msgstr "変数 '%s' はクラス \"%s\" として当てはめられていました、しかしクラス \"%s\" が与えられています"
+msgstr ""
+"変数 '%s' はクラス \"%s\" として当てはめられていました、しかしクラス \"%s\" "
+"が与えられています"
 
 msgid "variables %s were specified with different classes from the fit"
 msgstr "変数 %s は当てはめによるものとは異なったクラスを用いて指定されました"
@@ -1420,13 +1432,17 @@ msgid "'data' must be a data.frame, not a matrix or an array"
 msgstr "'data' は行列や配列ではなく、データフレームでなければなりません"
 
 msgid "'newdata' had %d rows but variable(s) found have %d rows"
-msgstr "'newdata' は %d 個の行を持ちますが、見付かった変数は %d の行数を持ちます："
+msgstr ""
+"'newdata' は %d 個の行を持ちますが、見付かった変数は %d の行数を持ちます："
 
 msgid "variable '%s' is not a factor"
 msgstr "変数 %s は因子ではありません"
 
 msgid "factor '%s' has new level(s) %s"
 msgstr "因子 '%s' には新しい水準 %s があります"
+
+msgid "'offset' must be numeric"
+msgstr "'offset' は数値でなければなりません"
 
 msgid "model frame and formula mismatch in model.matrix()"
 msgstr "model.matrix() でモデルフレームとモデル式の組合せが不適当です"
@@ -1503,6 +1519,10 @@ msgstr "setVarying: 'vary' 長はパラメータの長さに一致しなけれ�
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "パラメータの初期値で勾配行列が特異です"
 
+#, fuzzy
+msgid "'data' must be a list or an environment"
+msgstr "'x' は行列かデータフレームでなければなりません"
+
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr "algorithm = \"port\" でない限り上限もしくは下限は無視されます"
 
@@ -1561,6 +1581,12 @@ msgstr "'which' は 1:6 中になければなりません"
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' は {1,..,%d} 中になければなりません"
 
+msgid "hat values (leverages) are all ="
+msgstr ""
+
+msgid "and there are no factor predictors; no plot no. 5"
+msgstr ""
+
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
 msgstr ""
@@ -1603,6 +1629,9 @@ msgstr "'x' 及び 'y' が合致しません"
 msgid "wrong number of columns in 'x'"
 msgstr "'x' の列数が間違っています"
 
+msgid "cannot rescale a constant/zero column to unit variance"
+msgstr ""
+
 msgid "PCA applies only to numerical variables"
 msgstr "PCA は数値変数にしか適用できません"
 
@@ -1628,6 +1657,9 @@ msgstr "'x' と 'covmat' の双方が与えられました。'x' は無視され
 
 msgid "'princomp' can only be used with more units than variables"
 msgstr "'princomp' では，ケースは変数より多くなければなりません"
+
+msgid "cannot use cor=TRUE with a constant variable"
+msgstr ""
 
 msgid "covariance matrix is not non-negative definite"
 msgstr "共分散行列が非負値定符号ではありません"
@@ -1858,8 +1890,8 @@ msgid "unknown string value for s.window"
 msgstr "s.window に対する未知の文字列です"
 
 msgid "'cutpoints' must be unique in 0 < cuts < 1, but are ="
-msgstr "'cutpoints' は 0 < cuts < 1 中で重複があってはいけませんが、以下の値です："
-""
+msgstr ""
+"'cutpoints' は 0 < cuts < 1 中で重複があってはいけませんが、以下の値です："
 
 msgid "'cutpoints' must be unique, but are ="
 msgstr "'cutpoints' は重複があってはいけませんが、以下の値です"
@@ -2081,3 +2113,10 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "モデル式中にパラメータ %s がありません"
 msgstr[1] "モデル式中にパラメータ(複数) %s がありません"
+
+#~ msgid ""
+#~ "link not available for quasibinomial family, available links are \"logit"
+#~ "\", \", \"\"probit\" and \"cloglog\""
+#~ msgstr ""
+#~ "は疑似二項ファミリに利用できるリンクではありません。利用できるリンクは "
+#~ "\"logit\", \"probit\" 及び \"cloglog\" です"

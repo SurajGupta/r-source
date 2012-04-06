@@ -42,6 +42,8 @@ static SEXP bcEval(SEXP, SEXP);
 static Rboolean bc_profiling = FALSE;
 #endif
 
+static int R_Profiling = 0;
+
 #ifdef R_PROFILING
 
 /* BDR 2000-07-15
@@ -97,7 +99,6 @@ static Rboolean bc_profiling = FALSE;
 #endif /* not Win32 */
 
 static FILE *R_ProfileOutfile = NULL;
-static int R_Profiling = 0;
 
 #ifdef Win32
 HANDLE MainThread;
@@ -376,10 +377,16 @@ SEXP eval(SEXP e, SEXP rho)
 	tmp = PRVALUE(e);
 	break;
     case LANGSXP:
-	if (TYPEOF(CAR(e)) == SYMSXP)
+	if (TYPEOF(CAR(e)) == SYMSXP) {
 	    PROTECT(op = findFun(CAR(e), rho));
-	else
+	    /* findFun will not normally fail, but will if R_BaseEnv 
+	       is not searched */
+	    if(op == R_UnboundValue)
+		error(_("could not find function \"%s\""),
+		      CHAR(PRINTNAME(CAR(e))));
+	} else
 	    PROTECT(op = eval(CAR(e), rho));
+
 	if(TRACE(op) && R_current_trace_state()) {
 	    Rprintf("trace: ");
 	    PrintValue(e);

@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.3.2006-04-21
+Version 2.3.2006-06-01
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -93,6 +93,7 @@ R FAQ
   7.32 How can I capture or ignore errors in a long simulation?
   7.33 Why are powers of negative numbers wrong?
   7.34 How can I save the result of each iteration in a loop into a separate file?
+  7.35 Why are p-values not displayed when using lmer()?
 8 R Programming
   8.1 How should I write summary methods?
   8.2 How can I debug dynamically loaded code?
@@ -221,8 +222,9 @@ Maechler, Duncan Murdoch, Paul Murrell, Martyn Plummer, Brian Ripley,
 Duncan Temple Lang, Luke Tierney, and Simon Urbanek.
 
    R has a home page at `http://www.R-project.org/'.  It is free software
-distributed under a GNU-style copyleft, and an official part of the GNU
-project ("GNU S").
+(http://www.gnu.org/philosophy/free-sw.html) distributed under a GNU-style
+copyleft (http://www.gnu.org/copyleft/copyleft.html), and an official part
+of the GNU (http://www.gnu.org/) project ("GNU S").
 
 2.2 What machines does R run on?
 ================================
@@ -241,7 +243,7 @@ powerpc-apple-darwin, mips-sgi-irix, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.3.0.  Based on this
+The current released version is 2.3.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -1451,6 +1453,9 @@ distributions of R.)
      Import and manipulate medical imaging data using the Digital Imaging
      and Communications in Medicine (DICOM) Standard.
 
+*DPpackage*
+     Semiparametric Bayesian analysis using Dirichlet process priors.
+
 *Davies*
      Functions for the Davies quantile function and the Generalized Lambda
      distribution.
@@ -1605,6 +1610,12 @@ distributions of R.)
      Nonparametric estimation of homothetic and generalized homothetic
      production functions.
 
+*JGR*
+     Java Gui for R.
+
+*JavaGD*
+     Java Graphics Device.
+
 *JointGLM*
      Joint modeling of mean and dispersion through two interlinked GLM's.
 
@@ -1645,6 +1656,9 @@ distributions of R.)
      Functions and datasets from the main package of Venables and Ripley,
      "Modern Applied Statistics with S".  Contained in the `VR' bundle.
      _Recommended_.
+
+*MBESS*
+     Methods for the Behavioral, Educational, and Social Sciences.
 
 *MCMCpack*
      Markov chain Monte Carlo (MCMC) package: functions for posterior
@@ -1730,6 +1744,9 @@ distributions of R.)
 
 *QCA*
      Qualitative Comparative Analysis for crisp sets.
+
+*QCAGUI*
+     QCA Graphical User Interface.
 
 *R.matlab*
      Read and write of MAT files together with R-to-Matlab connectivity.
@@ -2007,8 +2024,14 @@ distributions of R.)
 *agce*
      Analysis of growth curve experiments.
 
+*agsemisc*
+     Miscellaneous plotting and utility functions.
+
 *akima*
      Linear or cubic spline interpolation for irregularly gridded data.
+
+*allelic*
+     A fast, unbiased and exact allelic exact test.
 
 *alr3*
      Methods and data to accompany the textbook "Applied Linear Regression"
@@ -2042,6 +2065,10 @@ distributions of R.)
 *ash*
      David Scott's ASH routines for 1D and 2D density estimation.
 
+*aspace*
+     Estimating centrographic statistics and computational geometries from
+     spatial point patterns.
+
 *assist*
      A suite of functions implementing smoothing splines.
 
@@ -2068,15 +2095,15 @@ distributions of R.)
      Bayesian mixture models of univariate Gaussian distributions using
      JAGS.
 
-*baymvb*
-     Bayesian analysis of multivariate binary data.
-
 *betareg*
      Beta regression for modeling rates and proportions.
 
 *bicreduc*
      Reduction algorithm for the NPMLE for the distribution function of
      bivariate interval-censored data.
+
+*biglm*
+     Linear regression for data too large to fit in memory.
 
 *bim*
      Bayesian interval mapping diagnostics:  functions to interpret QTLCart
@@ -2258,6 +2285,9 @@ distributions of R.)
      A series of simple tools for constructing and manipulating confounded
      and fractional factorial designs.
 
+*connectedness*
+     Find disconnected sets for two-way classification.
+
 *copula*
      Classes of commonly used copulas (including elliptical and
      Archimedian), and methods for density, distribution, random number
@@ -2300,9 +2330,6 @@ distributions of R.)
 *cyclones*
      Cyclone identification.
 
-*data.table*
-     Just like a data frame but without rownames.
-
 *date*
      Functions for dealing with dates.  The most useful of them accepts a
      vector of input dates in any of the forms `8/30/53', `30Aug53', `30
@@ -2324,6 +2351,9 @@ distributions of R.)
 *deldir*
      Calculates the  Delaunay triangulation and the Dirichlet or Voronoi
      tesselation (with respect to the entire plane) of a planar point set.
+
+*delt*
+     Estimation of multivariate densities with adaptive histograms.
 
 *denpro*
      Visualization of multivariate density functions and estimates with
@@ -2494,6 +2524,10 @@ distributions of R.)
      Computes exact p-values and quantiles using an implementation of the
      Streitberg/Roehmel shift algorithm.
 
+*exactmaxsel*
+     Exact methods for maximally selected statistics for binary response
+     variables.
+
 *fBasics*
      The Rmetrics module for "Markets, basic statistics, and stylized
      facts".  Rmetrics is an environment and software collection for
@@ -2620,6 +2654,10 @@ distributions of R.)
 *gamlss*
      Functions to fit Generalized Additive Models for Location Scale and
      Shape.
+
+*gamlss.tr*
+     A GAMLSS add on for generating and fitting truncated (gamlss.family)
+     distributions.
 
 *gap*
      Genetic analysis package for both population and family data.
@@ -2957,6 +2995,9 @@ distributions of R.)
 *ldDesign*
      Design of experiments for detection of linkage disequilibrium,
 
+*ldbounds*
+     Lan-DeMets method for group sequential boundaries.
+
 *leaps*
      A package which performs an exhaustive search for the best subsets of a
      given set of potential regressors, using a branch-and-bound algorithm,
@@ -3179,6 +3220,9 @@ distributions of R.)
 *monoProc*
      Strictly monotone smoothing procedure.
 
+*mprobit*
+     Multivariate probit model for binary/ordinal response.
+
 *msm*
      Functions for fitting continuous-time Markov multi-state models to
      categorical processes observed at arbitrary times, optionally with
@@ -3190,6 +3234,9 @@ distributions of R.)
 
 *multcomp*
      Multiple comparison procedures for the one-way layout.
+
+*multilevel*
+     Analysis of multilevel data by organizational and social psychologists.
 
 *multinomRob*
      Overdispersed multinomial regression using robust (LQD and tanh)
@@ -3331,6 +3378,9 @@ distributions of R.)
 *papply*
      Parallel apply function using MPI.
 
+*partitions*
+     Additive partitions of integers.
+
 *partsm*
      Periodic AutoRegressive Time Series Models.
 
@@ -3397,9 +3447,6 @@ distributions of R.)
 *pls*
      Partial Least Squares Regression (PLSR) and Principal Component
      Regression (PCR).
-
-*pls.pcr*
-     Multivariate regression by PLS and PCR.
 
 *plsgenomics*
      PLS analyses for genomics.
@@ -3610,6 +3657,9 @@ distributions of R.)
 
 *roblm*
      Robust regression estimators.
+
+*robust*
+     Insightful robust package.
 
 *robustbase*
      Basic Robust Statistics.
@@ -3842,6 +3892,9 @@ distributions of R.)
 
 *sspir*
      State SPace models In R.
+
+*startupmsg*
+     Utilities for start-up messages.
 
 *statmod*
      Miscellaneous biostatistical modelling functions.
@@ -4289,9 +4342,15 @@ Bioconductor, with more packages under development.
      Functionality to create and interact with dynamic documents, vignettes,
      and other navigable documents.
 
+*EBImage*
+     R image processing toolkit.
+
 *EBarrays*
      Empirical Bayes tools for the analysis of replicated microarray data
      across multiple conditions.
+
+*GEOquery*
+     Get data from NCBI Gene Expression Omnibus (GEO).
 
 *GLAD*
      Gain and Loss Analysis of DNA.
@@ -4318,6 +4377,9 @@ Bioconductor, with more packages under development.
 *GeneTraffic*
      GeneTraffic R integration functions.
 
+*GenomeBase*
+     Base functions for genome data package manipulation.
+
 *GlobalAncova*
      Calculates a global test for differential gene expression between
      groups.
@@ -4328,11 +4390,18 @@ Bioconductor, with more packages under development.
 *HEM*
      Heterogeneous Error Model for analysis of microarray data.
 
+*Heatplus*
+     A heat map displaying covariates and coloring clusters.
+
 *Icens*
      Functions for computing the NPMLE for censored and truncated data.
 
 *KEGGSOAP*
      Client-side SOAP access KEGG.
+
+*LMGene*
+     Analysis of microarray data using a linear model and glog data
+     transformation.
 
 *LPE*
      Significance analysis of microarray data with small number of
@@ -4348,6 +4417,12 @@ Bioconductor, with more packages under development.
      Uniform interfaces to machine learning code for the exprSet class from
      Bioconductor.
 
+*MVCClass*
+     Model-View-Controller (MVC) classes.
+
+*MantelCorr*
+     Compute Mantel Cluster Correlations.
+
 *MeasurementError.cor*
      Two-stage measurement error model for correlation estimation with
      smaller bias than the usual sample correlation.
@@ -4355,8 +4430,15 @@ Bioconductor, with more packages under development.
 *MergeMaid*
      Cross-study comparison of gene expression array data.
 
+*Mfuzz*
+     Soft clustering of time series gene expression data.
+
 *MiPP*
      Misclassification Penalized Posterior Classification.
+
+*OCplus*
+     Operating characteristics plus sample size and local fdr for microarray
+     experiments.
 
 *OLIN*
      Optimized Local Intensity-dependent Normalisation of two-color
@@ -4365,6 +4447,9 @@ Bioconductor, with more packages under development.
 *OLINgui*
      Graphical user interface for *OLIN*.
 
+*OrderedList*
+     Similarities of ordered gene lists.
+
 *PROcess*
      Ciphergen SELDI-TOF processing.
 
@@ -4372,8 +4457,14 @@ Bioconductor, with more packages under development.
      An interface between the graph package and the Boost graph libraries,
      allowing for fast manipulation of graph objects in R.
 
+*RLMM*
+     A genotype calling algorithm for Affymetrix SNP arrays.
+
 *RMAGEML*
      Functionality to handle MAGEML documents.
+
+*RMAPPER*
+     Interface to mapper.chip.org.
 
 *ROC*
      Receiver Operating Characteristic (ROC) approach for identifying genes
@@ -4412,8 +4503,14 @@ Bioconductor, with more packages under development.
      Data from the book "Social Network Analysis" by Wasserman & Faust,
      1999.
 
+*ScISI*
+     In Silico Interactome.
+
 *aCGH*
      Classes and functions for Array Comparative Genomic Hybridization data.
+
+*adSplit*
+     Annotation-driven clustering.
 
 *affxparser*
      Package for parsing Affymetrix files (CDF, CEL, CHP, BPMAP, BAR).
@@ -4430,8 +4527,14 @@ Bioconductor, with more packages under development.
 *affycomp*
      Graphics toolbox for assessment of Affymetrix expression measures.
 
+*affycoretools*
+     Functions useful for those doing repetitive analyses.
+
 *affydata*
      Affymetrix data for demonstration purposes.
+
+*affyio*
+     Tools for parsing Affymetrix data files.
 
 *affylmGUI*
      Graphical User Interface for affy analysis using package *limma*.
@@ -4454,12 +4557,19 @@ Bioconductor, with more packages under development.
 *apComplex*
      Estimate protein complex membership using AP-MS protein data.
 
+*applera*
+     Tools for Applied Biosystems microarrays AB1700 data analysis and
+     quality controls.
+
 *arrayMagic*
      Utilities for quality control and processing for two-color cDNA
      microarray data.
 
 *arrayQuality*
      Performing print-run and array level quality assessment.
+
+*beadarray*
+     Quality control and low-level analysis of BeadArrays.
 
 *bim*
      Bayesian interval mapping diagnostics:  functions to interpret QTLCart
@@ -4468,17 +4578,32 @@ Bioconductor, with more packages under development.
 *bioDist*
      A collection of software tools for calculating distance measures.
 
+*biocViews*
+     Categorized views of R package repositories.
+
 *biomaRt*
      Interface to BioMart databases (e.g., Ensembl)
 
 *bridge*
      Bayesian Robust Inference for Differential Gene Expression.
 
+*cellHTS*
+     Analysis of cell-based screens.
+
+*cghMCR*
+     Find chromosome regions showing common gains/losses.
+
 *clusterStab*
      Compute cluster stability scores for microarray data.
 
+*codelink*
+     Manipulation of Codelink Bioarrays data.
+
 *convert*
      Convert Microarray Data Objects.
+
+*copa*
+     Functions to perform cancer outlier profile analysis.
 
 *ctc*
      Tools to export and import Tree and Cluster to other programs.
@@ -4497,6 +4622,9 @@ Bioconductor, with more packages under development.
 *edd*
      Expression density diagnostics: graphical methods and pattern
      recognition algorithms for distribution shape classification.
+
+*exprExternal*
+     Implementation of exprSet using externalVectors.
 
 *externalVector*
      Basic class definitions and generics for external pointer based vector
@@ -4553,6 +4681,9 @@ Bioconductor, with more packages under development.
 *graph*
      Classes and tools for creating and manipulating graphs within R.
 
+*gtkWidgets*
+     Widgets built using *RGtk*.
+
 *hexbin*
      Binning functions, in particular hexagonal bins for graphing.
 
@@ -4565,7 +4696,7 @@ Bioconductor, with more packages under development.
 *iSPlot*
      Link views that are based on the same data set.
 
-*ideogram*
+*idiogram*
      Plotting genomic data by chromosomal location.
 
 *impute*
@@ -4576,6 +4707,12 @@ Bioconductor, with more packages under development.
 
 *limmaGUI*
      Graphical User Interface for package *limma*.
+
+*logicFS*
+     Identification of SNP interactions.
+
+*maCorrPlot*
+     Visualize artificial correlation in microarray data.
 
 *maDB*
      Microarray database and utility functions for microarray analysis.
@@ -4605,12 +4742,11 @@ Bioconductor, with more packages under development.
 *matchprobes*
      Tools for sequence matching of probes on arrays.
 
+*metaArray*
+     Integration of microarray data for meta-analysis.
+
 *mmgmos*
      Multi-chip Modified Gamma Model of Oligonucleotide Signal.
-
-*msbase*
-     Basic classes and methods for mass spectrometric mass list
-     manipulation.
 
 *multtest*
      Multiple testing procedures for controlling the family-wise error rate
@@ -4622,6 +4758,9 @@ Bioconductor, with more packages under development.
      Spatial and intensity based normalization of cDNA microarray data based
      on robust neural nets.
 
+*nudge*
+     Normal Uniform Differential Gene Expression detection.
+
 *ontoTools*
      Graphs and sparse matrices for working with ontologies; formal objects
      for nomenclatures with provenance management.
@@ -4632,6 +4771,12 @@ Bioconductor, with more packages under development.
 
 *pamr*
      Pam: Prediction Analysis for Microarrays.
+
+*panp*
+     Presence-Absence calls from Negative strand matching Probesets.
+
+*pathRender*
+     Render molecular pathways.
 
 *pdmclass*
      CLASSification of microarray samples using Penalized Discriminant
@@ -4675,9 +4820,6 @@ Bioconductor, with more packages under development.
 *rflowcyt*
      Statistical tools and data structures for analytic flow cytometry.
 
-*rhdf5*
-     Support for large matrix manipulation using the HDF5 storage library.
-
 *safe*
      Significance Analysis of Function and Expression.
 
@@ -4696,12 +4838,21 @@ Bioconductor, with more packages under development.
 *simulatorAPMS*
      Computationally simulates the AP-MS technology.
 
+*sizepower*
+     Sample size and power calculation in microrarray studies.
+
+*snapCGH*
+     Segmentation, normalization and processing of aCGH data.
+
 *splicegear*
      A set of tools to work with alternative splicing.
 
 *spotSegmentation*
      Microarray spot segmentation and gridding for blocks of microarray
      spots.
+
+*sscore*
+     S-score algorithm for Affymetrix oligonucleotide microarrays.
 
 *ssize*
      Estimate microarry sample size.
@@ -4742,6 +4893,9 @@ Bioconductor, with more packages under development.
 *xcms*
      LC/MS and GC/MS data analysis: framework for processing and
      visualization of chromatographically separated mass spectral data.
+
+*y2hStat*
+     Analysis of Yeast 2-Hybrid data sets.
 
 5.1.5 Other add-on packages
 ---------------------------
@@ -5701,6 +5855,13 @@ the subdirectory `Results' of the current working directory, one can use
        fp <- file.path("Results", paste("result", i, ".rda", sep = ""))
        save(list = "some_object", file = fp)
      }
+
+7.35 Why are p-values not displayed when using lmer()?
+======================================================
+
+Doug Bates has kindly provided an extensive response in a post to the
+r-help list, which can be reviewed at
+`https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html'.
 
 8 R Programming
 ***************

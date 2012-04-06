@@ -882,17 +882,22 @@ rbind.data.frame <- function(..., deparse.level = 1)
     {
 	if(all(clabs == nmi))
 	    NULL
-	else if(all(nii <- match(nmi, clabs, 0)))
-	    nii
-	else stop("names don't match previous names:\n\t",
+	else if(length(nmi) == length(clabs) &&
+                all(nii <- match(nmi, clabs, 0))) {
+            ## we need unique matches here
+	    m <- pmatch(nmi, clabs, 0)
+            if(any(m == 0))
+                stop("names do not match previous names")
+            m
+	} else stop("names do not match previous names:\n\t",
                   paste(nmi[nii == 0], collapse = ", "))
     }
     Make.row.names <- function(nmi, ri, ni, nrow)
     {
 	if(nchar(nmi) > 0) {
-	    if(ni > 1)
-		paste(nmi, ri, sep = ".")
-	    else nmi[ri]
+            if(ni == 0) character(0)  # PR8506
+	    else if(ni > 1) paste(nmi, ri, sep = ".")
+	    else nmi
 	}
 	else if(nrow > 0 && identical(ri, 1:ni))
 	    seq(from = nrow + 1, length = ni)
@@ -951,16 +956,17 @@ rbind.data.frame <- function(..., deparse.level = 1)
 		    has.dim[j] <- length(dim(xj)) == 2
 		}
 	    }
-	    else for(j in 1:nvar)
-                if(facCol[j]) {
-                    xij <- xi[[j]]
-                    if(is.null(pi) || is.na(jj <- pi[[j]])) jj <- j
+	    else for(j in 1:nvar) {
+                xij <- xi[[j]]
+                if(is.null(pi) || is.na(jj <- pi[[j]])) jj <- j
+                if(facCol[jj]) {
                     if(length(lij <- levels(xij)) > 0) {
                         all.levs[[jj]] <- unique(c(all.levs[[jj]], lij))
-                        ordCol[j] <- ordCol[j] & is.ordered(xij)
+                        ordCol[jj] <- ordCol[jj] & is.ordered(xij)
                     } else if(is.character(xij))
                         all.levs[[jj]] <- unique(c(all.levs[[jj]], xij))
                 }
+            }
 	}
 	else if(is.list(xi)) {
 	    ni <- range(sapply(xi, length))
@@ -1217,10 +1223,14 @@ Ops.data.frame <- function(e1, e2 = NULL)
 		nrow=length(rn), dimnames=list(rn,cn))
 }
 
-Summary.data.frame <- function(x, ...)
+Summary.data.frame <- function(..., na.rm)
 {
-    x <- as.matrix(x)
-    if(!is.numeric(x) && !is.complex(x))
-	stop("only defined on a data frame with all numeric or complex variables")
-    NextMethod(.Generic)
+    args <- list(...)
+    args <- lapply(args, function(x) {
+        x <- as.matrix(x)
+        if(!is.numeric(x) && !is.complex(x))
+            stop("only defined on a data frame with all numeric or complex variables")
+        x
+    })
+    do.call(.Generic, c(args, na.rm=na.rm))
 }
