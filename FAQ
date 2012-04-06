@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 1.2-18, 2001-01-13
+Version 1.2-29, 2001-02-25
 Kurt Hornik
 
 
@@ -220,10 +220,9 @@ hppa-hp-hpux, sparc-linux, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-   The current stable Unix/Windows version is 1.2.1, the unstable one is
-1.3.0.  Typically, new features are introduced in the development versions;
-updates of stable versions are for bug fixes mostly.  The version for the
-Mac is pre-alpha.
+   The current stable version is 1.2.2, the unstable one is 1.3.0.
+Typically, new features are introduced in the development versions; updates
+of stable versions are for bug fixes mostly.
 
 2.4 How can R be obtained?
 ==========================
@@ -335,9 +334,13 @@ more details.
 2.5.3 How can R be installed (Macintosh)
 ----------------------------------------
 
-   A binhexed self-extracting archive containing a pre-alpha port of R
-1.1.1 for MacOS has recently been made available by Stefano Iacus
+   A binhexed self-extracting archive containing a binary distribution of R
+for the Mac (to run under MacOS 8.6 to MacOS 9.1 or MacOS X under Classic
+Environment) has been made available by Stefano Iacus
 <stefano.iacus@unimi.it> at `http://www.eco-dip.unimi.it/R/'.
+
+   In the near future, Mac binaries will also be made available in the
+`bin/macos' directory of a CRAN site.
 
 2.6 Are there Unix binaries for R?
 ==================================
@@ -347,8 +350,8 @@ packages for the i386 platform (now part of the Debian distribution and
 maintained by Doug Bates), Red Hat 6.x/7.x packages for the alpha and i386
 platforms and 6.x packages for the sparc platform (maintained by Naoki
 Takebayashi, Martyn Plummer, and Vin Everett, respectively), SuSE 6.4/7.0
-i386 packages by Albrecht Gebhardt, Mandrake 7.1/7.2 i386 packages by
-Michele Alzetta, and Linuxppc 5.0 RPMs by Alex Buerkle.
+i386 packages by Albrecht Gebhardt, Mandrake 7.2 i386 packages by Michele
+Alzetta, and Linuxppc 5.0 RPMs by Alex Buerkle.
 
    The Debian packages can be accessed through APT, the Debian package
 maintenance tool.  Simply add the line
@@ -616,16 +619,16 @@ S Repository (http://lib.stat.cmu.edu/S/) at CMU.
 3.2 What is S-PLUS?
 ===================
 
-   S-PLUS is a value-added version of S sold by Mathsoft, Inc.  Based on
-the S language, S-PLUS provides functionality in a wide variety of areas,
-including robust regression, modern non-parametric regression, time series,
-survival analysis, multivariate analysis, classical statistical tests,
-quality control, and graphics drivers.  Add-on modules add additional
-capabilities for wavelet analysis, spatial statistics, GARCH models, and
-design of experiments.
+   S-PLUS is a value-added version of S sold by Insightful Corporation.
+Based on the S language, S-PLUS provides functionality in a wide variety of
+areas, including robust regression, modern non-parametric regression, time
+series, survival analysis, multivariate analysis, classical statistical
+tests, quality control, and graphics drivers.  Add-on modules add
+additional capabilities for wavelet analysis, spatial statistics, GARCH
+models, and design of experiments.
 
-   See the MathSoft S-PLUS page (http://www.mathsoft.com/splus/) for
-further information.
+   See the Insightful S-PLUS page
+(http://www.insightful.com/products/splus/) for further information.
 
 3.3 What are the differences between R and S?
 =============================================
@@ -1071,6 +1074,9 @@ works, was published in the Journal of Statistical Software
      Data sets and sample analyses from "Probability and Statistics for
      Engineering and the Sciences (5th ed)" by Jay L. Devore, 2000, Duxbury.
 
+*GLMMGibbs*
+     Generalised Linear Mixed Models by Gibbs sampling.
+
 *GenKern*
      Functions for generating and manipulating generalised binned kernel
      density estimates.
@@ -1259,6 +1265,10 @@ works, was published in the Journal of Statistical Software
      additive regression splines (MARS), adaptive back-fitting splines
      (BRUTO), and penalized regression.
 
+*meanscore*
+     Mean Score method for missing covariate data in logistic regression
+     models.
+
 *mgcv*
      Routines for GAMs and other genralized ridge regression problems with
      multiple smoothing parameter selection by GCV or UBRE.
@@ -1284,6 +1294,9 @@ works, was published in the Journal of Statistical Software
 *mvtnorm*
      Multivariate normal and t distributions.
 
+*netCDF*
+     Read data from netCDF files.
+
 *nlme*
      Fit and compare Gaussian linear and nonlinear mixed-effects models.
 
@@ -1294,6 +1307,14 @@ works, was published in the Journal of Statistical Software
 
 *norm*
      Analysis of multivariate normal datasets with missing values.
+
+*odesolve*
+     An interface for the Ordinary Differential Equation (ODE) solver lsoda.
+     ODEs are expressed as R functions.
+
+*optimal*
+     Functions for optimal design of two-stage-studies using the Mean Score
+     method.
 
 *oz*
      Functions for plotting Australia's coastline and state boundaries.
@@ -1395,8 +1416,8 @@ these a try, of course.  This area of CRAN currently contains
      LOCATION and MAPSET.  Wrapper and helper functions are provided for a
      range of R functions to match the interface metadata structures.
 
-*HTML*
-     Functions for exporting R objects as HTML tables.
+*R2HTML*
+     Functions for exporting R objects & graphics in an HTML document.
 
 *RMySQL*
      An interface between R and the MySQL database system.
@@ -1431,9 +1452,6 @@ these a try, of course.  This area of CRAN currently contains
 *multidim*
      Code for correspondence analysis and other multidimensional descriptive
      statistics.
-
-*netCDF*
-     Read data from netCDF files.
 
 *npConfRatio*
      Nonparametric confidence intervals for the ratios of medians.
@@ -1643,7 +1661,7 @@ provides a standard interface between statistical programs and statistical
 processes.  It is intended to provide assistance for interactive
 statistical programming and data analysis.  Languages supported include: S
 dialects (S 3/4, S-PLUS 3.x/4.x/5.x, and R), LispStat dialects (XLispStat,
-ViSta), SAS, Stata, SPSS dialects (SPSS, PSPP) and SCA.
+ViSta), SAS, Stata, SPSS dialects (SPSS, Fiasco) and SCA.
 
    ESS grew out of the need for bug fixes and extensions to S-mode 4.8
 (which was a GNU Emacs interface to S/S-PLUS version 3 only).  The current

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2000  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include <Defn.h>
 #include <Rmath.h>
 #include <Graphics.h>
-#include <Devices.h>
+#include <Rdevices.h>
 #include <Print.h>
 
 #ifndef HAVE_HYPOT
@@ -608,10 +608,9 @@ SEXP labelformat(SEXP labels)
 {
     /* format(labels): i.e. from numbers to strings */
     SEXP ans = R_NilValue;/* -Wall*/
-    int save_digits, i, n, w, d, e, wi, di, ei;
+    int i, n, w, d, e, wi, di, ei;
     char *strp;
     n = length(labels);
-    save_digits = R_print.digits;
     R_print.digits = 7;/* maximally 7 digits -- ``burnt in'';
 			  S-PLUS <= 5.x has about 6 
 			  (but really uses single precision..) */
@@ -1427,7 +1426,6 @@ SEXP do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
     break;
 
     case 'h': /* h[istogram] (bar plot) */
-	dd->gp.col = INTEGER(col)[0];
 	if (dd->gp.ylog)
 	    yold = dd->gp.usr[2];/* DBL_MIN fails.. why ???? */
 	else
@@ -1437,7 +1435,9 @@ SEXP do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 	    xx = x[i];
 	    yy = y[i];
 	    GConvert(&xx, &yy, USER, DEVICE, dd);
-	    if (R_FINITE(xx) && R_FINITE(yy)) {
+	    if (R_FINITE(xx) && R_FINITE(yy)
+		&& (thiscol = INTEGER(col)[i % ncol]) != NA_INTEGER) {
+		dd->gp.col = thiscol;
 		GLine(xx, yold, xx, yy, DEVICE, dd);
 	    }
 	}
@@ -1757,6 +1757,16 @@ SEXP do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
+static void drawPolygon(int n, double *x, double *y, 
+			int lty, int fill, int border, DevDesc *dd)
+{
+    if (lty == NA_INTEGER)
+	dd->gp.lty = dd->dp.lty;
+    else
+	dd->gp.lty = lty;
+    GPolygon(n, x, y, USER, fill, border, dd);
+}
+
 SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* polygon(x, y, col, border, lty, xpd, ...) */
@@ -1823,11 +1833,6 @@ SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 
     GMode(1, dd);
 
-    if (INTEGER(lty)[0] == NA_INTEGER)
-	dd->gp.lty = dd->dp.lty;
-    else
-	dd->gp.lty = INTEGER(lty)[0];
-
     x = REAL(sx);
     y = REAL(sy);
     xold = NA_REAL;
@@ -1842,14 +1847,18 @@ SEXP do_polygon(SEXP call, SEXP op, SEXP args, SEXP env)
 	else if ((R_FINITE(xold) && R_FINITE(yold)) &&
 		 !(R_FINITE(xx) && R_FINITE(yy))) {
 	    if (i-start > 1) {
-		GPolygon(i-start, x+start, y+start, USER,
-			 INTEGER(col)[num%ncol], INTEGER(border)[0], dd);
+		drawPolygon(i-start, x+start, y+start, 
+			    INTEGER(lty)[num%nlty],
+			    INTEGER(col)[num%ncol], 
+			    INTEGER(border)[num%nborder], dd);
 		num++;
 	    }
 	}
 	else if ((R_FINITE(xold) && R_FINITE(yold)) && (i == nx-1)) { /* last */
-	    GPolygon(nx-start, x+start, y+start, USER,
-		     INTEGER(col)[num%ncol], INTEGER(border)[0], dd);
+	    drawPolygon(nx-start, x+start, y+start, 
+			INTEGER(lty)[num%nlty],
+			INTEGER(col)[num%ncol], 
+			INTEGER(border)[num%nborder], dd);
 	    num++;
 	}
 	xold = xx;

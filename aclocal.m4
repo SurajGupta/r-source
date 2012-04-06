@@ -151,13 +151,16 @@ AC_DEFUN([R_PROG_CC_M],
     AC_CACHE_CHECK(
       [whether ${CC} accepts -M for generating dependencies],
       r_cv_prog_cc_m,
-      [ echo "#include <math.h>" > conftest.${ac_ext}
+      [ AC_LANG_SAVE
+	AC_LANG_C
+        echo "#include <math.h>" > conftest.${ac_ext}
 	if test -n "`${CC} -M conftest.${ac_ext} 2>/dev/null \
 		    | grep conftest`"; then
 	  r_cv_prog_cc_m=yes
 	else
 	  r_cv_prog_cc_m=no
 	fi
+	AC_LANG_RESTORE
       ])
     if test "${r_cv_prog_cc_m}" = yes; then
       cat << \EOF > ${depend_rules_frag}
@@ -247,25 +250,40 @@ AC_DEFUN([R_PROG_CXX_FLAG],
       AC_MSG_RESULT(no)
     fi
   ])
-AC_DEFUN([R_PROG_F77_WORKS], [
-    AC_CACHE_CHECK([whether the Fortran 77 compiler (${FC} ${FFLAGS} ${LDFLAGS}) works],
-    r_cv_prog_f77_works, [
-      cat > conftest.f <<EOF    
-      program conftest
-      end
-EOF
-      ${FC} -o conftest ${FFLAGS} ${LDFLAGS} conftest.f ${LIBS} \
-        1>&AC_FD_CC 2>&AC_FD_CC
-      if test ${?} = 0; then
-        r_cv_prog_f77_works=yes
-      else
-        r_cv_prog_f77_works=no
-      fi])
-  rm -rf conftest conftest.* core
-  if test ${r_cv_prog_f77_works} = no; then
-    AC_MSG_WARN([Maybe your Fortran installation is incomplete])
-    AC_MSG_ERROR([Fortran 77 compiler does not work])
-  fi])
+AC_DEFUN([R_PROG_F77_OR_F2C], [
+if test -n "${FC}"; then
+  F77=${FC}
+  AC_MSG_RESULT([defining F77 to be ${F77}])
+elif ${use_f77}; then
+  if test "${with_f77}" = yes; then
+    F77=f77
+  else
+    F77="${with_f77}"
+  fi
+  AC_MSG_RESULT([defining F77 to be ${F77}])
+elif ${use_g77}; then
+  if test "${with_g77}" = yes; then
+    F77=g77
+  else
+    F77="${with_g77}"
+  fi
+  AC_MSG_RESULT([defining F77 to be ${F77}])
+elif ${use_f2c}; then
+  F77=
+  if test "${with_f2c}" = yes; then
+    F2C=f2c
+  else
+    F2C="${with_f2c}"
+  fi
+  AC_MSG_RESULT([defining F2C to be ${F2C}])
+else
+  F77=
+  AC_CHECK_PROGS(F77, [g77 f77 xlf cf77 cft77 pgf77 fl32 af77 fort77 f90 xlf90 pgf90 epcf90 f95 xlf95 lf95 g95 fc])
+  if test -z "${F77}"; then
+    AC_CHECK_PROG(F2C, f2c, f2c, [])
+  fi
+fi
+])
 AC_DEFUN([R_PROG_F77_GNU],
   [ AC_CACHE_CHECK([whether ${F77-f77} is the GNU Fortran compiler],
       r_cv_prog_f77_is_g77,
@@ -418,6 +436,8 @@ AC_DEFUN([R_PROG_F2C_FLIBS],
   AC_REQUIRE([AC_CHECK_LIBM])
   AC_CACHE_VAL(r_cv_f2c_flibs,
     [## This seems to be necessary on some Linux system. -- you bet! -pd
+      AC_LANG_SAVE
+      AC_LANG_C
       cat > conftest.${ac_ext} << EOF
 int MAIN_ () { return 0; }
 int MAIN__ () { return 0; }
@@ -429,6 +449,7 @@ EOF
 	fi
       fi
       AC_DEFINE(HAVE_F77_UNDERSCORE)
+      AC_LANG_RESTORE
       AC_CHECK_LIB(f2c, f_open, flibs=-lf2c, flibs=,
 	[-L. -lconftest ${LIBM}])
       rm -f libconftest*

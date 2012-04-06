@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2000   The R Development Core Team.
+ *  Copyright (C) 1998-2001   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -433,7 +433,8 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	    error("empty `what=' specified");	
     }
 
-    if (maxlines > 0) blksize = maxlines;
+    if (maxitems > 0) blksize = maxitems;
+    else if (maxlines > 0) blksize = maxlines;
     else blksize = SCAN_BLOCKSIZE;
 
     PROTECT(ans = allocVector(VECSXP, nc));
@@ -857,7 +858,7 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(rval = allocVector(REALSXP, length(cvec)));
     for (i = 0; i < len; i++) {
 	tmp = CHAR(STRING_ELT(cvec, i));
-	if (strlen(tmp) == 0 || isNAstring(tmp, 1))
+	if (strlen(tmp) == 0 || isNAstring(tmp, 1) || isBlankString(tmp))
 	    REAL(rval)[i] = NA_REAL;
 	else {
 	    REAL(rval)[i] = Strtod(tmp, &endp);

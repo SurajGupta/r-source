@@ -33,6 +33,16 @@ Date: Tue, 28 Nov 2000 13:24:33 +0800
 
 Directory:  Add-ons
 
+* PR# 824 *
+Subject: trouble with netCDF 
+From: jasont@indigoindustrial.co.nz
+Date: Thu, 25 Jan 2001 12:00:39 +1300
+--Only on a specific sample file: send to maintainer.
+* PR# 496 *
+From: bonneau@epi.roazhon.inra.fr (en148)
+Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
+--base R has no est.variogram function.
+--This appears to be a bug report on sgeostat.
 * PR# 812 *
 Subject: segmentation fault in integrate
 From: Achim Zeileis <zeileis@ci.tuwien.ac.at>
@@ -43,20 +53,10 @@ From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
 Date: Wed, 20 Dec 2000 11:12:47 +0000 (GMT)
 --Partially fixed by dse_2000.12, but still uses "ls" and gives
 --incorrect information
-* PR# 496 *
-From: bonneau@epi.roazhon.inra.fr (en148)
-Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
---base R has no est.variogram function.
---This appears to be a bug report on sgeostat.
 
 Directory:  Analyses
 
-* PR# 653 *
-Subject: bug in spline()?
-From: Ian White <imsw@holyrood.ed.ac.uk>
-Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
---bug in spline: replace by interSpline in package spline?
---address problems are fixed
+none
 
 Directory:  Documentation
 
@@ -64,10 +64,18 @@ none
 
 Directory:  Graphics
 
-* PR# 791 *
-Subject:  par(lab= *) / axis(*) bug 
-From: maechler@stat.math.ethz.ch
-Date: Fri, 22 Dec 2000 10:59:26 +0100
+* PR# 837 *
+Subject: screen doesn't handle redrawing properly
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 01 Feb 2001 14:20:52 -0500
+* PR# 750 *
+Subject: abline() does not obey "xpd" (clipping rules)
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
 * PR# 202 *
 Subject: persp box occlusion bug
 From: wsi@gcal.ac.uk
@@ -75,22 +83,53 @@ Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
 --The persp algorithm does not apply the occlusion rules to the frame, 
 --which is always plotted first. 
 --A bug, but not very simple to fix.
-* PR# 726 *
-Subject: par(las=.)  gives wrong "adj" for mtext()
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Tue, 7 Nov 2000 13:03:58 +0100
-* PR# 660 *
-Subject: identify.default ignores any setting of cex.
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+* PR# 816 *
+Subject: dotplot: character size of labels
+From: RINNER Heinrich <H.RINNER@TIROL.GV.AT>
+Date: Thu, 18 Jan 2001 14:54:32 +0100
+--Suggested fix is incorporated in 1.2.2.
+--
+--There is a deeper problem:  mtext() ignores par(cex=.5) in general.  
+--To see the problem try:  par(cex=.5); mtext("hi")
+--Paul thinks the right fix is to change the argument list for mtext so that
+--cex=par(cex) by default rather than cex=NA by default (plus corresponding
+--internal changes to  do_mtext in plot.c).
+--This needs to be done very carefully because (i) the change suggested above 
+--mayhave side-effects in many other pieces of interpreted code 
+--(ii) do_mtext ignores dd->gp.cexbase unlike, for example, do_plot_xy 
+--and anything to do with cexbase needs extreme care.
+* PR# 791 *
+Subject:  par(lab= *) / axis(*) bug 
+From: maechler@stat.math.ethz.ch
+Date: Fri, 22 Dec 2000 10:59:26 +0100
 * PR# 776 *
 Subject: strwidth does not take font into account
 From: Martyn Plummer <plummer@iarc.fr>
 Date: Tue, 19 Dec 2000 14:56:01 +0100 (CET)
-* PR# 750 *
-Subject: abline() does not obey "xpd" (clipping rules)
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 27 Nov 2000 18:27:11 +0100
+--This needs a substantial redesign.
+* PR# 828 *
+Subject: termplot fails for composite non-factor terms
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+--Neither of the proposed changes actually works in sufficient generality.
+--
+--The easy and unimportant part of this, the labels, is fixed in 1.2.2. Getting
+--the data right is a project for 1.3
+* PR# 820 *
+Subject: interaction.plot
+From: "Mark M. Span" <span@psy.uva.nl>
+Date: Mon, 22 Jan 2001 10:47:39 +0100
+--mtext is unscaled by default.  It is not clear if this should
+--use the par("cex") setting or an inline cex setting such as cex.axis.
+--It might make more sense to use axis rather than mtext, as boxplot does.
+* PR# 831 *
+Subject: screen can't go back to (split) screen with log="y" plot
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 30 Jan 2001 00:39:41 -0500
+* PR# 830 *
+Subject: Disappearing x axis in plot.factor
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 30 Jan 2001 00:27:13 -0500
 
 Directory:  In-Out
 
@@ -98,10 +137,7 @@ none
 
 Directory:  Installation
 
-* PR# 806 *
-Subject: configure error on alpha
-From: Richard Beare <Richard.Beare@cmis.CSIRO.AU>
-Date: Wed, 10 Jan 2001 16:52:58 +1100
+none
 
 Directory:  Language
 
@@ -109,6 +145,11 @@ Directory:  Language
 Subject: match.call problem
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 12 Jan 2001 17:46:15 +0100
+* PR# 669 *
+Subject: Bug(s) w/ rbind.data.frame(); fix also read.table(*, as.is = TRUE) ?
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 25 Sep 2000 10:17:15 +0200
+--status of AsIs columns
 * PR# 412 *
 Subject: anomalies with call objects
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
@@ -117,15 +158,6 @@ Date: 06 Feb 2000 01:18:50 +0100
 Subject: convolution bug
 From: wsimpson@gcal.ac.uk
 Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
-* PR# 809 *
-Subject: changing dimnames of a matrix with rownames/colnames causes
-From: David Meyer <David.Meyer@ci.tuwien.ac.at>
-Date: Wed, 10 Jan 2001 13:20:44 +0100
-* PR# 669 *
-Subject: Bug(s) w/ rbind.data.frame(); fix also read.table(*, as.is = TRUE) ?
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 25 Sep 2000 10:17:15 +0200
---status of AsIs columns
 
 Directory:  Low-level
 
@@ -153,12 +185,18 @@ Date: Tue, 14 Mar 2000 10:32:43 +0100 (MET)
 
 Directory:  System-specific
 
-* PR# 808 *
-Subject: Time zone
-From: Herve Morin <morin@mat.ulaval.ca>
-Date: Wed, 10 Jan 2001 07:24:07 -0500
---This appears to be a complaint about a warning on a beta Mac version
---(but Macs are never mentioned!).  That version is incomplete.
+* PR# 851 *
+Subject: Comments on R-1.2.1 builds
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Fri, 16 Feb 2001 17:44:17 -0700 (MST)
+--These are only warnings: some have been eliminated for 1.2.2.
+--Some are about constructs needed to satisfy other compilers.
+--
+--Also: configure problem with g77 on SGI.
+* PR# 848 *
+Subject: X11 device doesn't handle destroy events correcly
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 13 Feb 2001 17:40:46 -0500
 
 Directory:  TooMuchAtOnce
 

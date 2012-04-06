@@ -20,7 +20,7 @@
 @ifinfo
 This is a guide to extending R.
 
-Copyright 1999, 2000 R Development Core Team
+@Rcopyright{1999}
 
 @ignore
 Permission is granted to process this file through TeX and print the
@@ -42,7 +42,7 @@ notice identical to this one except for the removal of this paragraph
 @vskip 0pt plus 1filll
 @permission{}
 
-Copyright @copyright{} 1999, 2000 R Development Core Team
+@Rcopyright{1999}
 @end titlepage
 
 @ifnothtml
@@ -89,6 +89,19 @@ provided information on the C++ interface) are gratefully acknowledged.
 Packages provide a mechanism for loading optional code and attached
 documentation as needed.  The @R{} distribution provides several
 packages, such as @pkg{eda}, @pkg{mva}, and @pkg{stepfun}.
+
+In the following, we assume that you know the @samp{library()} command,
+including its @samp{lib.loc} argument, and we also assume basic
+knowledge of @code{R CMD INSTALL}.  Otherwise, please look at @R{}'s
+help pages
+
+@smallexample
+?library
+?INSTALL
+@end smallexample
+
+@noindent
+before reading on.
 
 @menu
 * Package structure::           
@@ -702,6 +715,22 @@ abline(a, b, \dots)
 abline(h=, \dots)
 abline(v=, \dots)
 @r{@dots{}}
+@}
+@end smallexample
+
+@findex \method
+Use @code{\method@{@var{generic}@}@{@var{class}@}} to indicate the name
+of a method for the generic function @var{generic} for objects
+inheriting from class @code{"@var{class}"}.  In the printed versions,
+this will come out as @var{generic} (reflecting the understanding that
+methods should not be invoked directly but via method dispatch), but
+@code{codoc()} and other tools always have access to the full name.
+
+For example, @file{print.ts.Rd} contains
+
+@smallexample
+\usage@{
+\method@{print@}@{ts@}(x, calendar, \dots)
 @}
 @end smallexample
 

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2000  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998--2001  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -913,8 +913,9 @@ static void de_drawline(int fromx, int fromy, int tox, int toy)
 static void drawrectangle(int xpos, int ypos, int width, int height,
 			  int lwd, int fore)
 {
+    /* only used on screen, so always fast */
     gdrawrect(de, lwd, 0, (fore==1)? p->ufg: p->bg,
-	      rect(xpos, ypos, width, height));
+	      rect(xpos, ypos, width, height), 1);
 }
 
 static void de_drawtext(int xpos, int ypos, char *text)

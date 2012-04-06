@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998	Robert Gentleman and Ross Ihaka.
- *  Copyright (C) 2000		The R Development Core Team.
+ *  Copyright (C) 2000, 2001	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,10 +78,9 @@ void PrintDefaults(SEXP rho)
 
 SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int  append_, ifile, closeOnExit;
+    int ifile, closeOnExit;
 
     ifile = asInteger(CAR(args));
-    append_ = asLogical(CADR(args));
     closeOnExit = asLogical(CADDR(args));
     if(closeOnExit == NA_LOGICAL)
 	error("invalid value for closeOnExit");
@@ -662,7 +661,7 @@ void CustomPrintValue(SEXP s, SEXP env)
 
 /* xxxpr are mostly for S compatibility (as mentioned in V&R) */
 
-int F77_NAME(dblepr0) (char *label, int *nchar, double *data, int *ndata)
+int F77_NAME(dblep0) (char *label, int *nchar, double *data, int *ndata)
 {
     int k, nc = *nchar;
 
@@ -696,7 +695,7 @@ int F77_NAME(intpr0) (char *label, int *nchar, int *data, int *ndata)
     return(0);
 }
 
-int F77_NAME(realpr0) (char *label, int *nchar, float *data, int *ndata)
+int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 {
     int k, nc = *nchar, nd=*ndata;
     double *ddata;
