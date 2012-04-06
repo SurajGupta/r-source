@@ -1,3 +1,32 @@
+		CHANGES IN R VERSION 0.61.3
+
+NEW FEATURES
+
+    o   find(.) function [on wish of many...]
+
+BUG FIXES
+
+    o   Remove "Alpha" revision from opening blurb. Didn't make sense
+	with our development model
+
+    o   set SHELL=/bin/sh in Makefile and use $(MAKE). Avoid use of 
+	wildcards in $(MANSRC) for non-gnu "make" (notably Solaris).
+
+    o   rhyper gave wrong results in degenerate cases
+
+    o   Using get with pos=length(search()) or envir=NULL was
+	actually actually starting the search in .GlobalEnv.
+
+    o   first=0 (or negative) argument to substr() caused trouble.
+
+    o   1%o%1 would segfault
+
+    o   .Dyn.libs would linger in .RData causing code not to be dyn.loaded.
+	Now removed in .First(), if necessary
+
+    o	system.time() expression could not access local variables in
+	functions.
+
 		CHANGES IN R VERSION 0.61.2
 
 BUG FIXES
