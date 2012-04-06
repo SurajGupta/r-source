@@ -135,14 +135,10 @@
     ## This is a bit dodgy: we need to ensure that callbacks don't get
     ## garbage collected, so we try registering them with the relevant
     ## window, which is assumed to be the last preceding window
-    ## argument during val2string processing if one occurs, or the
-    ## "win" variable of the caller (tkwidget calls) or as a last
-    ## resort .TkRoot. What a mess!
+    ## argument during val2string processing if one occurs,
+    ## or as a last resort .TkRoot. What a mess!
 
-    current.win <-
-        if (exists("win", envir=parent.frame()))
-            get("win", envir=parent.frame())
-        else .TkRoot
+    current.win <- .TkRoot
 
     lapply(val, val2obj)
 }
@@ -263,7 +259,9 @@ as.tclObj <- function(x, drop=FALSE) {
                 logical =
                 .External("RTcl_ObjFromIntVector", as.integer(x), drop,
                           PACKAGE="tcltk"),
-                stop(paste("Cannot handle object of mode ", storage.mode(x))))
+                stop(gettextf("cannot handle object of mode '%s'",
+                              storage.mode(x)), domain = NA)
+                )
     class(z) <- "tclObj"
     z
 }
@@ -282,7 +280,9 @@ evalq(TclVarCount <- 0, .TkRoot$env)
 tkwidget <- function (parent, type, ...) # generic
 {
     win <- .Tk.subwin(parent)
-    tcl(type, .Tk.ID(win), ...)
+    # older version had .Tk.ID(win) here, but this makes for easier
+    # current.win handling
+    tcl(type, win, ...)
     win
 }
 

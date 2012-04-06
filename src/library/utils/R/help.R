@@ -74,40 +74,45 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
 print.help_files_with_topic <-
 function(x, ...)
 {
+    if (.Platform$GUI=="AQUA") {
+        .Internal(aqua.custom.print("help-files", x))
+	return(invisible(x))
+    }
     topic <- attr(x, "topic")
     paths <- as.character(x)
     if(!length(paths)) {
-        writeLines(c(paste("No documentation for", sQuote(topic),
-                           "in specified packages and libraries:"),
-                     paste("you could try",
-                           sQuote(paste("help.search(",
-                                        dQuote(topic), ")",
-                                        sep = "")))))
+        writeLines(c(gettextf("No documentation for '%s' in specified packages and libraries:",
+                              topic),
+                     gettextf("you could try 'help.search(\"%s\")'",
+                              topic)))
         return(invisible(x))
     }
     if(attr(x, "tried_all_packages")) {
         paths <- unique(dirname(dirname(paths)))
-        msg <- paste("Help for topic", sQuote(topic),
-                     "is not in any loaded package but can be found",
-                     "in the following packages:")
+        msg <- gettextf("Help for topic '%s' is not in any loaded package but can be found in the following packages:",
+                     topic)
         writeLines(c(strwrap(msg), "",
                      paste(" ",
-                           formatDL(c("Package", basename(paths)),
-                                    c("Library", dirname(paths)),
+                           formatDL(c(gettext("Package"),
+                                      basename(paths)),
+                                    c(gettext("Library"),
+                                      dirname(paths)),
                                     indent = 22))))
     }
     else {
         if(length(paths) > 1) {
             file <- paths[1]
-            msg <- paste("Help on topic", sQuote(topic),
-                         "was found in the following packages:")
+            msg <- gettextf("Help on topic '%s' was found in the following packages:",
+                            topic)
             paths <- dirname(dirname(paths))
             writeLines(c(strwrap(msg), "",
                          paste(" ",
-                               formatDL(c("Package", basename(paths)),
-                                        c("Library", dirname(paths)),
+                               formatDL(c(gettext("Package"),
+                                          basename(paths)),
+                                        c(gettext("Library"),
+                                          dirname(paths)),
                                         indent = 22)),
-                         "\nUsing the first match ..."))
+                         gettext("\nUsing the first match ...")))
         }
         else
             file <- paths
@@ -116,10 +121,7 @@ function(x, ...)
             if(file.exists(file))
                 .show_help_on_topic_as_HTML(file, topic)
             else
-                stop(paste("No HTML help for ", sQuote(topic),
-                           " is available:\n",
-                           "corresponding file is missing.",
-                           sep = ""))
+                stop(gettextf("No HTML help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
         }
         else if(type == "chm") {
             ## unneeded but harmless under Unix
@@ -137,24 +139,17 @@ function(x, ...)
                           err = integer(1), PACKAGE = "")$err
                 if(err) stop("CHM file could not be displayed")
             } else
-                stop(paste("No CHM help for ", sQuote(topic),
-                           " in package ", sQuote(thispkg),
-                           " is available:\n",
-                           "the CHM file is for the package is missing.",
-                           sep = ""))
+                stop(gettextf("No CHM help for '%s' in package '%s' is available:\nthe CHM file is for the package is missing", topic, thispkg), domain = NA)
         }
         else if(type == "help") {
             zfile <- zip.file.extract(file, "Rhelp.zip")
             if(file.exists(zfile))
                 file.show(zfile,
-                          title = paste("R Help on", sQuote(topic)),
+                          title = gettextf("R Help on '%s'", topic),
                           delete.file = (zfile != file),
                           pager = attr(x, "pager"))
             else
-                stop(paste("No text help for", sQuote(topic),
-                           " is available:\n",
-                           "corresponding file is missing.",
-                           sep = ""))
+                stop(gettextf("No text help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
         }
         else if(type == "latex") {
             ok <- FALSE
@@ -186,10 +181,7 @@ function(x, ...)
                 }
             }
             if(!ok)
-                stop(paste("No offline help for ", sQuote(topic),
-                           " is available:\n",
-                           "corresponding file is missing.",
-                           sep = ""))
+                stop(gettextf("No offline help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
         }
     }
 

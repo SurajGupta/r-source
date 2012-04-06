@@ -17,6 +17,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> OK since this is intended to treat chars as byte streams */
+
 #include <R.h>
 #include "tools.h"
 #include "md5.h"
@@ -29,7 +31,7 @@ SEXP Rmd5(SEXP files)
     FILE *fp;
     unsigned char resblock[16];
 
-    if(!isString(files)) error("argument 'files' must be character");
+    if(!isString(files)) error(_("argument 'files' must be character"));
     PROTECT(ans = allocVector(STRSXP, nfiles));
     for(i = 0; i < nfiles; i++) {
 	path = CHAR(STRING_ELT(files, i));
@@ -43,7 +45,7 @@ SEXP Rmd5(SEXP files)
 	} else {
 	    res = md5_stream(fp, &resblock);
 	    if(res) {
-		warning("md5 failed on file '%s'", path);
+		warning(_("md5 failed on file '%s'"), path);
 		SET_STRING_ELT(ans, i, NA_STRING);
 	    } else {
 		for(j = 0; j < 16; j++)

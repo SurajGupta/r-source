@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> 
+   char here is mainly handled as a whole string.
+   Does handle file names.
+   Chopping final \n is OK in UTF-8.
+ */
+
+
 /* See system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
@@ -33,15 +40,6 @@
 /* HP-UX headers need this before CLK_TCK */
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#endif
-
-#ifdef HAVE_LIBREADLINE
-# ifdef HAVE_READLINE_READLINE_H
-#  include <readline/readline.h>
-# endif
-# ifdef HAVE_READLINE_HISTORY_H
-#  include <readline/history.h>
-# endif
 #endif
 
 extern Rboolean LoadInitFile;
@@ -84,9 +82,34 @@ FILE *R_OpenInitFile(void)
      *   R_ChooseFile is interface-specific
      */
 
+char *R_ExpandFileName_readline(char *s, char *buff);  /* sys-std.c */
 
 static char newFileName[PATH_MAX];
-#ifdef HAVE_LIBREADLINE
+static int HaveHOME=-1;
+static char UserHOME[PATH_MAX];
+
+/* Only interpret inputs of the form ~ and ~/... */
+static char *R_ExpandFileName_unix(char *s, char *buff)
+{
+    char *p;
+
+    if(s[0] != '~') return s;
+    if(strlen(s) > 1 && s[1] != '/') return s;
+    if(HaveHOME < 0) {
+	p = getenv("HOME");
+	if(p && strlen(p) && (strlen(p) < PATH_MAX)) {
+	    strcpy(UserHOME, p);
+	    HaveHOME = 1;
+	} else
+	    HaveHOME = 0;
+    }
+    if(HaveHOME > 0 && (strlen(UserHOME) + strlen(s+1) < PATH_MAX)) {
+	strcpy(buff, UserHOME);
+	strcat(buff, s+1);
+	return buff;
+    } else return s;
+}
+
 /* tilde_expand (in libreadline) mallocs storage for its return value.
    The R entry point does not require that storage to be freed, so we
    copy the value to a static buffer, to void a memory leak in R<=1.6.0.
@@ -98,39 +121,15 @@ static char newFileName[PATH_MAX];
    BDR 10/2002
 */
 
+extern Rboolean UsingReadline;
+
 char *R_ExpandFileName(char *s)
 {
-    char *s2 = tilde_expand(s);
-
-    strncpy(newFileName, s2, PATH_MAX);
-    if(strlen(s2) >= PATH_MAX) newFileName[PATH_MAX-1] = '\0';
-    free(s2);
-    return newFileName;
+#ifdef HAVE_LIBREADLINE
+    if(UsingReadline) return R_ExpandFileName_readline(s, newFileName);
+#endif
+    return R_ExpandFileName_unix(s, newFileName);
 }
-#else /* not HAVE_LIBREADLINE */
-static int HaveHOME=-1;
-static char UserHOME[PATH_MAX];
-char *R_ExpandFileName(char *s)
-{
-    char *p;
-
-    if(s[0] != '~') return s;
-    if(isalpha(s[1])) return s;
-    if(HaveHOME < 0) {
-	p = getenv("HOME");
-	if(p && strlen(p) && (strlen(p) < PATH_MAX)) {
-	    strcpy(UserHOME, p);
-	    HaveHOME = 1;
-	} else
-	    HaveHOME = 0;
-    }
-    if(HaveHOME > 0 && (strlen(UserHOME) + strlen(s+1) < PATH_MAX)) {
-	strcpy(newFileName, UserHOME);
-	strcat(newFileName, s+1);
-	return newFileName;
-    } else return s;
-}
-#endif /* not HAVE_LIBREADLINE */
 
 
 /*
@@ -188,9 +187,11 @@ SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 #else /* not _R_HAVE_TIMING_ */
+void R_setStartTime(void) {}
+
 SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    error("proc.time is not implemented on this system");
+    error(_("proc.time() is not implemented on this system"));
     return R_NilValue;		/* -Wall */
 }
 #endif /* not _R_HAVE_TIMING_ */
@@ -206,7 +207,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     if (!isValidStringF(CAR(args)))
-	errorcall(call, "non-empty character argument expected");
+	errorcall(call, _("non-empty character argument expected"));
     if (isLogical(CADR(args)))
 	read = INTEGER(CADR(args))[0];
     if (read) {
@@ -230,7 +231,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(1);
 	return (rval);
 #else /* not HAVE_POPEN */
-	errorcall(call, "intern=TRUE is not implemented on this platform");
+	errorcall(call, _("intern=TRUE is not implemented on this platform"));
 	return R_NilValue;
 #endif /* not HAVE_POPEN */
     }
@@ -252,23 +253,43 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 void InitTempDir()
 {
     char *tmp, *tm, tmp1[PATH_MAX+10], *p;
-    int len, res;
+    int len;
+#ifndef HAVE_MKDTEMP
+    int res;
+#endif
 
     tmp = getenv("R_SESSION_TMPDIR");
     if (!tmp) {
         /* This looks like it will only be called in the embedded case
            since this is done in the script. Also should test if directory
-           exists rather than just attempting to remove it. */
+           exists rather than just attempting to remove it. 
+	*/
 	char *buf;
 	tm = getenv("TMPDIR");
 	if (!tm) tm = getenv("TMP");
 	if (!tm) tm = getenv("TEMP");
 	if (!tm) tm = "/tmp";
+#ifdef HAVE_MKDTEMP
+	sprintf(tmp1, "%s/RtmpXXXXXX", tm);
+	tmp = mkdtemp(tmp1);
+	if(!tmp) R_Suicide(_("cannot mkdir R_TempDir"));
+#else
 	sprintf(tmp1, "rm -rf %s/Rtmp%u", tm, (unsigned int)getpid());
 	R_system(tmp1);
 	sprintf(tmp1, "%s/Rtmp%u", tm, (unsigned int)getpid());
 	res = mkdir(tmp1, 0755);
-	if(res) R_Suicide("Can't mkdir R_TempDir");
+	if(res) {
+	    /* Try one more time, in case a dir left around from that
+	       process number from another user */
+	    sprintf(tmp1, "rm -rf %s/Rtmp%u-%d", tm, (unsigned int)getpid(), 
+		    rand() % 1000);
+	    R_system(tmp1);
+	    sprintf(tmp1, "%s/Rtmp%u-%d", tm, (unsigned int)getpid(), 
+		    rand() % 1000);
+	    res = mkdir(tmp1, 0755);
+	}
+	if(res) R_Suicide(_("cannot mkdir R_TempDir"));
+#endif
 	tmp = tmp1;
 	buf = (char *) malloc((strlen(tmp) + 20) * sizeof(char));
 	if(buf) {
@@ -280,7 +301,7 @@ void InitTempDir()
 
     len = strlen(tmp) + 1;
     p = (char *) malloc(len);
-    if(!p) R_Suicide("Can't allocate R_TempDir");
+    if(!p) R_Suicide(_("cannot allocate R_TempDir"));
     else {
 	R_TempDir = p;
 	strcpy(R_TempDir, tmp);
@@ -300,7 +321,7 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
         if(!R_FileExists(tm)) { done = 1; break; }
     }
     if(!done)
-	error("cannot find unused tempfile name");
+	error(_("cannot find unused tempfile name"));
     res = (char *) malloc((strlen(tm)+1) * sizeof(char));
     strcpy(res, tm);
     return res;
@@ -362,7 +383,7 @@ SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 #else /* not HAVE_SYS_UTSNAME_H */
 SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    warning("Sys.info is not implemented on this system");
+    warning(_("Sys.info() is not implemented on this system"));
     return R_NilValue;		/* -Wall */
 }
 #endif /* not HAVE_SYS_UTSNAME_H */

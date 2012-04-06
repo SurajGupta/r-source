@@ -19,9 +19,11 @@ function(x, strict = TRUE)
 {
     x <- as.character(x)
     y <- rep.int(list(integer()), length(x))
+    valid_package_version_regexp <-
+        sprintf("^%s$", .standard_regexps()$valid_package_version)
     if(length(x) > 0) {
-        ok <- (regexpr("^([[:digit:]]+[.-]){1,}[[:digit:]]+$", x) > -1)
-        if(!all(ok) && strict) stop("invalid version spec")
+        ok <- (regexpr(valid_package_version_regexp, x) > -1)
+        if(!all(ok) && strict) stop("invalid version specification")
         y[ok] <- lapply(strsplit(x[ok], "[.-]"), as.integer)
     }
     class(y) <- "package_version"
@@ -57,7 +59,7 @@ function(x, base = NULL)
 function(x, base = NULL)
 {
     if(is.null(base)) base <- attr(x, "base")
-    if(!is.numeric(base)) stop("wrong arg")
+    if(!is.numeric(base)) stop("wrong argument")
     lens <- attr(x, "lens")
     y <- vector("list", length = length(x))
     for(i in seq(along = x)) {
@@ -87,12 +89,11 @@ Ops.package_version <-
 function(e1, e2)
 {
     if(nargs() == 1)
-        stop(paste("unary", .Generic,
-                   "not defined for package_version objects"))
+        stop("unary ", .Generic, " not defined for package_version objects")
     boolean <- switch(.Generic, "<" = , ">" = , "==" = , "!=" = ,
         "<=" = , ">=" = TRUE, FALSE)
     if(!boolean)
-        stop(paste(.Generic, "not defined for package_version objects"))
+        stop(.Generic, " not defined for package_version objects")
     if(!is.package_version(e1)) e1 <- as.package_version(e1)
     if(!is.package_version(e2)) e2 <- as.package_version(e2)
     base <- max(unlist(e1), unlist(e2), 0) + 1
@@ -105,7 +106,7 @@ function(x, ...)
 {
     ok <- switch(.Generic, max = , min = TRUE, FALSE)
     if(!ok)
-        stop(paste(.Generic, "not defined for package_version objects"))
+        stop(.Generic, " not defined for package_version objects")
     x <- list(x, ...)
     x$na.rm <- NULL
     x <- do.call("c", lapply(x, as.package_version))

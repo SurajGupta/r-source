@@ -69,21 +69,25 @@ xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
 		y <- rep(y, length.out = nx)
 	}
 	else
-	    stop("x and y lengths differ")
+	    stop("'x' and 'y' lengths differ")
     }
 
     if(length(log) && log != "") {
 	log <- strsplit(log, NULL)[[1]]
 	if("x" %in% log && any(ii <- x <= 0 & !is.na(x))) {
-	    n <- sum(ii)
-	    warning(paste(n, " x value", if(n>1)"s",
-			  " <= 0 omitted from logarithmic plot", sep=""))
+	    n <- as.integer(sum(ii))
+	    warning(sprintf(ngettext(n,
+                            "%d x value <= 0 omitted from logarithmic plot",
+                            "%d x values <= 0 omitted from logarithmic plot"),
+                            n), domain = NA)
 	    x[ii] <- NA
 	}
 	if("y" %in% log && any(ii <- y <= 0 & !is.na(y))) {
-	    n <- sum(ii)
-	    warning(paste(n, " y value", if(n>1)"s",
-			  " <= 0 omitted from logarithmic plot", sep=""))
+	    n <- as.integer(sum(ii))
+	    warning(sprintf(ngettext(n,
+                            "%d y value <= 0 omitted from logarithmic plot",
+                            "%d y values <= 0 omitted from logarithmic plot"),
+                            n), domain = NA)
 	    y[ii] <- NA
 	}
     }
@@ -94,7 +98,7 @@ plot <- function (x, y, ...)
 {
     if (is.null(attr(x, "class")) && is.function(x)) {
 	nms <- names(list(...))
-	## need to pass `y' to plot.function() when positionally matched
+	## need to pass 'y' to plot.function() when positionally matched
 	if(missing(y)) # set to defaults {could use formals(plot.default)}:
 	    y <- { if (!"from" %in% nms) 0 else
 		   if (!"to"   %in% nms) 1 else
@@ -176,7 +180,7 @@ plot.table <-
     xnam <- deparse(substitute(x))
     rnk <- length(dim(x))
     if(rnk == 0)
-	stop("invalid table `x'")
+	stop("invalid table 'x'")
     if(rnk == 1) {
 	dn <- dimnames(x)
 	nx <- dn[[1]]
@@ -285,7 +289,7 @@ function(formula,  data = parent.frame(), ..., subset)
 	varnames <- names(mf)
 	y <- mf[[response]]
 	if (length(varnames) > 2)
-	    stop("cannot handle more than one x coordinate")
+	    stop("cannot handle more than one 'x' coordinate")
 	xn <- varnames[-response]
 	if (length(xn) == 0)
 	    do.call("lines",
@@ -328,7 +332,7 @@ function(formula, data = parent.frame(), ..., subset)
 	varnames <- names(mf)
 	y <- mf[[response]]
 	if (length(varnames) > 2)
-	    stop("cannot handle more than one x coordinate")
+	    stop("cannot handle more than one 'x' coordinate")
 	xn <- varnames[-response]
 	if (length(xn) == 0)
 	    do.call("points",
@@ -360,18 +364,22 @@ frame <- plot.new
 plot.window <- function(xlim, ylim, log = "", asp = NA, ...)
     .Internal(plot.window(xlim, ylim, log, asp, ...))
 
-plot.data.frame <- function (x, ...) {
+plot.data.frame <- function (x, ...)
+{
+    plot2 <- function(x, xlab=names(x)[1], ylab=names(x)[2], ...)
+        plot(x[[1]], x[[2]], xlab=xlab, ylab=ylab, ...)
+
     if(!is.data.frame(x))
-	stop("plot.data.frame applied to non data frame")
-    x <- data.matrix(x)
+	stop("'plot.data.frame' applied to non data frame")
     if(ncol(x) == 1) {
-	stripchart(x, ...)
-    }
-    else if(ncol(x) == 2) {
-	plot(x, ...)
-    }
-    else {
-	pairs(x, ...)
+        x1 <- x[[1]]
+        cl <- class(x1)
+        if(cl %in% c("integer", "numeric"))  stripchart(x1, ...)
+        else plot(x1, ...) # factor, ts, complex ...
+    } else if(ncol(x) == 2) {
+        plot2(x, ...)
+    } else {
+	pairs(data.matrix(x), ...)
     }
 }
 

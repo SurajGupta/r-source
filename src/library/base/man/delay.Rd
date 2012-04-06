@@ -1,7 +1,5 @@
-\name{delay}
-\alias{delay}
-\concept{promise}
-\concept{promises}
+\name{delay-deprecated}
+\alias{delay-deprecated}
 \title{Delay Evaluation}
 \description{
   \code{delay} creates a \emph{promise} to evaluate the given
@@ -29,6 +27,9 @@ delay(x, env = .GlobalEnv)
   When a promise is eventually forced, it is evaluated within the
   environment specified by \code{env} (who contents may have changed in
   the meantime).
+}
+\note{
+  \code{delay} was deprecated in \R 2.1.0 and will be removed in 2.2.0.
 }
 \examples{
 x <- delay({

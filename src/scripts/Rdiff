@@ -19,15 +19,23 @@ case "${ffile}" in
     pattern=${pattern}'|^\[1\] [19][0-9][0-9])'
     ;;
   *)
-    pattern=${pattern}'|^<environment)'
+    pattern=${pattern}'|^<(environment|promise|pointer): )'
     ;;
-esac  
+esac
 
-tmpfile=${TMPDIR-/tmp}/${ffile}-d.${$}
-
-if test ${ffile} = '-' ; then 
+if test ${ffile} = '-' ; then
   ffile=''
+  bfile=''
+else
+  if test -f ${ffile} ; then
+      bfile=`basename "${ffile}"`
+  else
+      echo "no valid file ${ffile}"
+      exit 1
+  fi
 fi
+
+tmpfile=${TMPDIR-/tmp}/${bfile}-d.${$}
 
 sed -e "${script}" ${ffile} | ${EGREP} -v "${pattern}" > ${tmpfile}
 (sed -e "${script}" ${tfile} | \

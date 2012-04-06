@@ -22,7 +22,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
     }
 
     ntab <- length(table)
-    if (length(start) != ntab ) stop("start and table must be same length")
+    if (length(start) != ntab ) stop("'start' and 'table' must be same length")
 
     storage.mode(conf) <- "integer"
     ## NOTE: We make no use of the arguments locmar, nmar, marg, nu, and
@@ -48,11 +48,11 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             ifault = integer(1),
             PACKAGE = "base")
     switch(z$ifault,
-           stop("This should not happen"),
-           stop("This should not happen"),
-           warning("Algorithm did not converge"),
-           stop(paste("Incorrect specification of", sQuote("table"),
-                      "or", sQuote("start"))))
+           stop("this should not happen"),
+           stop("this should not happen"),
+           warning("algorithm did not converge"),
+           stop("incorrect specification of 'table' or 'start'")
+           )
 
     if (print)
         cat(z$nlast, "iterations: deviation", z$dev[z$nlast], "\n")
@@ -123,7 +123,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             dyadic <- cbind(dyadic, terms %% 2)
             terms <- terms %/% 2
         }
-        dyadic <- dyadic[order(apply(dyadic, 1, sum)), ]
+        dyadic <- dyadic[order(rowSums(dyadic)), ]
 
         for (i in 2 : parlen) {
             vars <- which(dyadic[i - 1, ] > 0)

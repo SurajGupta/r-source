@@ -1,5 +1,9 @@
 all.equal <- function(target, current, ...) UseMethod("all.equal")
 
+## NO:  is.*(x) should be like S4  is(x, *) ! -- use  isTRUE(all.equal(*))
+## is.all.equal <- function(target, current, ...)
+##     identical(TRUE, all.equal(target, current, ...))
+
 all.equal.default <- function(target, current, ...)
 {
     ## Really a dispatcher given mode() of args :

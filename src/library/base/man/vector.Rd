@@ -10,7 +10,8 @@ as.vector(x, mode = "any")
 is.vector(x, mode = "any")
 }
 \arguments{
-  \item{mode}{A character string giving an atomic mode, or \code{"any"}.}
+  \item{mode}{A character string giving an atomic mode or \code{"list"},
+    or (not for \code{vector}) \code{"any"}.}
   \item{length}{A non-negative integer specifying the desired length.}
   \item{x}{An object.}
 }
@@ -26,6 +27,9 @@ is.vector(x, mode = "any")
   and \code{FALSE} otherwise.
 }
 \details{
+  The atomic modes are \code{"logical"}, \code{"integer"}, \code{"numeric"},
+  \code{"complex"}, \code{"character"} and \code{"raw"}.
+
   \code{is.vector} returns \code{FALSE} if \code{x} has any attributes
   except names.  (This is incompatible with S.)  On the other hand,
   \code{as.vector} removes \emph{all} attributes including names.
@@ -38,6 +42,12 @@ is.vector(x, mode = "any")
   vector elements are initialized to \code{FALSE}, numeric vector
   elements to \code{0}, character vector elements to \code{""}, raw
   vector elements to \code{nul} bytes and list elements to \code{NULL}.
+}
+\note{
+  \code{as.vector} and \code{is.vector} are quite distinct from the
+  meaning of the formal class \code{"vector"} in the \pkg{methods}
+  package, and hence \code{\link{as}(x, "vector")} and
+  \code{\link{is}(x, "vector")}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

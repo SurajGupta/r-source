@@ -32,7 +32,7 @@ getOption(x)
   \code{options("width")} which is a \emph{list} of length one.
 
   \code{.Options} also always contains the \code{options()} list (as a
-  pairlist) , for S compatibility.  You must use it \dQuote{read only}
+  pairlist), for S compatibility.  You must use it \dQuote{read only}
   however.
 }
 \value{
@@ -104,7 +104,7 @@ getOption(x)
 
     \item{\code{expressions}:}{sets a limit on the number of nested
       expressions that will be evaluated.
-      Valid values are 25\dots100000 with default 500.}
+      Valid values are 25\dots100000 with default 5000.}
 
     \item{\code{keep.source}:}{When \code{TRUE}, the source code for
       functions (newly defined or loaded) is stored in their
@@ -183,9 +183,9 @@ getOption(x)
       \code{warn}.}
 #ifdef windows
 
-	\item{\code{warn.FPU}:}{logical, by default undefined.  If true,
-	  a \link{warning} is produced whenever \link{dyn.load} repairs the
-	  control word damaged by a buggy DLL.}
+    \item{\code{warn.FPU}:}{logical, by default undefined.  If true,
+      a \link{warning} is produced whenever \link{dyn.load} repairs the
+      control word damaged by a buggy DLL.}
 #endif
 
     \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
@@ -197,13 +197,21 @@ getOption(x)
       when it controls whether input is echoed.  Command-line option
       \option{--slave} sets this initially to \code{FALSE}.}
 
+    \item{\code{max.print}:}{integer, defaulting to \code{10000}.
+      \code{\link{print}} or \code{\link{show}} methods can make use of
+      this option, to limit the amount of information that is printed,
+      typically to something in the order \code{max.print} lines.
+
+      This is not yet used in base \R.
+    }
+
     \item{\code{verbose}:}{logical.  Should \R report extra information
       on progress?  Set to \code{TRUE} by the command-line option
       \option{--verbose}.}
 
     \item{\code{device}:}{a character string giving the default device
       for that session.  This defaults to the normal screen device
-      (e.g., \code{x11}, \code{windows} or \code{gtk}) for an
+      (e.g., \code{x11}, \code{windows} or \code{quartz}) for an
       interactive session, and \code{postscript} in batch use or if a
       screen is not available.}
 
@@ -212,17 +220,24 @@ getOption(x)
       \code{\link{X11}} devices.}
 #endif
 
-    \item{\code{CRAN}:}{The URL of the preferred CRAN node for use by
+    \item{\code{repos}:}{The URLs of the repositories for use by
       \code{\link{update.packages}}.  Defaults to
-      \url{http://cran.r-project.org}.}
+      \code{c(CRAN="@CRAN@")}, a value that causes some utilities to
+      prompt for a CRAN mirror.  To avoid this, use something like
+      \code{options(repos=c(CRAN="http://my.local.cran/R"))}.
+    }
 
-    \item{\code{repositories}:}{A function that when evaluated returns a
-      named vector of URLs which can be used to specify the set and
-      order of any online repositories the user would like used in
-      functions such as \code{\link{pkgDepends}}.  The default
-      return value for the function is a vector with two components, one the
-      value of \code{contrib.url(getOption("CRAN"))} and the second
-      \code{contrib.url(getOption("BIOC"))}.}
+    \item{\code{pkgType}:}{The default type of packages to be downloaded
+      and installed -- see \code{\link{install.packages}}.
+#ifdef windows
+      Possible values are \code{"win.binary"} (the default) and
+      \code{"source"}.
+#endif
+#ifdef unix
+      Possible values are \code{"source"} (the default except under the
+      CRAN Mac OS X build) and \code{"mac.binary"}.
+#endif
+    }
 
     \item{\code{download.file.method}:}{Method to be used for
       \code{download.file}.  Currently download methods
@@ -279,19 +294,21 @@ getOption(x)
     \code{continue} \tab \code{"+ "}\cr
     \code{width}  \tab \code{80} \tab
     \code{digits} \tab \code{7}\cr
-    \code{expressions} \tab \code{500} \tab
-    \code{keep.source} \tab \code{TRUE}\cr
+    \code{expressions} \tab \code{5000} \tab
+    \code{keep.source} \tab \code{interactive()}\cr
     \code{show.signif.stars} \tab \code{TRUE} \tab
     \code{show.coef.Pvalues} \tab \code{TRUE}\cr
     \code{na.action} \tab \code{na.omit} \tab
-    \code{ts.eps} \tab \code{1e-5}\cr
-    \code{error} \tab \code{NULL} \tab
-    \code{show.error.messages} \tab \code{TRUE} \cr
-    \code{warn} \tab \code{0}\tab
-    \code{warning.length} \tab \code{1000}\cr
-    \code{echo} \tab \code{TRUE} \tab
-    \code{verbose} \tab \code{FALSE} \cr
-    \code{scipen} \tab \code{0} \tab \code{locatorBell} \tab \code{TRUE}
+    \code{timeout} \tab \code{60}\cr
+    \code{ts.eps} \tab \code{1e-5}\tab
+    \code{error} \tab \code{NULL} \cr
+    \code{show.error.messages} \tab \code{TRUE} \tab
+    \code{warn} \tab \code{0}\cr
+    \code{warning.length} \tab \code{1000}\tab
+    \code{echo} \tab \code{TRUE} \cr
+    \code{verbose} \tab \code{FALSE} \tab
+    \code{scipen} \tab \code{0} \cr
+    \code{locatorBell} \tab \code{TRUE} \tab \tab \cr
   }
   Others are set from environment variables or are platform-dependent.
 }

@@ -4,6 +4,106 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+R 2.1.0
+=======
+
+There is no longer a miniR distribution.
+
+Support for seek() on > 2Gb files has been added.
+
+You will be asked to select a CRAN mirror when downloading/updating
+packages unless options("repos") has already been set in your session,
+e.g. in your .Rprofile file or from the 'Select CRAN mirror' menu
+item.  (In batch use, not having set a mirror will lead to an error.)
+BDR's supplementary collection is now included in the default
+options("repos"): if you want to include it explicitly set something like
+options(repos=c(some_cran_mirror, http://www.stats.ox.ac.uk/pub/RWin"))
+
+There is a new item on the Packages menu to set repositories, e.g.
+CRAN, Bioconductor, Omegahat.  You can modify the list (and its
+defaults): see the rw-FAQ Q2.9.  This supersedes the menu items for
+Bioconductor.
+
+The new (in R 2.0.0) graphics pars "lend", "ljoin" and "lmitre" are
+now implemented for the Windows devices.
+
+`Writing R Extensions' now documents how to interface a front-end
+directly to R.dll, and there are some new convenience functions for
+such front-ends.
+
+R CMD / Rcmd now set HOME if unset, e.g. for use in Rcmd check.
+
+The installer now offers the option (by default unchecked) of a `quick
+launch icon" for R.
+
+par(ask = TRUE) now takes input from the graphics window, rather than
+from the console.
+
+Rcmd REMOVE works more similarly to Unix, setting the default library
+from R_LIBS if the latter is set.
+
+install.packages() can install source packages as well as binary ones.
+
+shQuote() now defaults to type="cmd" on Windows.
+
+R can now be built with Unicode support on Win9x and WinME.  See
+src/gnuwin32/MkRules: this is currently experimental and not needed
+for standard builds.
+
+R can now be built with support for multibyte and variable-width
+character sets, e.g. for Japanese. See README.rw????.  The standard
+installer includes both single-byte and multi-byte builds.
+
+select.list() now looks up the current font size and chooses its
+window size based on that.  It allows multiple preselections if
+multiple=TRUE.
+
+The instructions for compiling packages from source and for
+compiling R itself have been moved to the R Installation and 
+Administration manual; the PDF copy of that manual has been added
+to the Rgui Help | Manuals menu list.
+
+The way the command history works has been changed to be more like
+readline.  All the commands used in a session are kept, but only the
+last R_HISTSIZE (default 512) lines are saved.  The environment variable
+R_HISTSIZE can be changed during the session (by Sys.putenv) as the
+current value is used.
+
+The font list in the Preferences screen has been expanded to include fonts
+used in `East Asian' terminals.
+
+A bug with font changing in Preferences introduced with the script
+editor in R 2.0.0 had been fixed.  This should fix PR#7271,7277,7749.
+
+Line widths on windows() devices (including win.print()) are now
+interpreted as multiples of 1/96" (or the pixel size if it is larger,
+as it may be for a screen device).  This follows the postscript() and
+pdf() drivers.  It is now possible to set lwd < 1 provided this
+corresponds to lines of at least one pixel width.
+
+
+
+R 2.0.1 patched
+===============
+
+We work around reported bugs in Windows XP as to which characters are
+printable by attempting to print all non-control characters when using
+print().
+
+There are now facilities (documented in file src/gnuwin32/INSTALL) to
+add packages when building the R installer, and to rebuild a
+customized installer from the existing binary distribution.
+
+Tcl/Tk could crash Rgui during shutdown by trying to print an error
+message after the console had been shut down.  Such messages are now
+redirected to message boxes.
+
+bug.report() failed to open the internal editor.  We have changed it
+to use file.edit() to edit the report, with the consequence that there
+is no longer a "wait" parameter.
+
+
+
 R 2.0.1
 =======
 

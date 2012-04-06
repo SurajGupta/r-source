@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003 The R Development Core Team
+ *                2003-5 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,21 +63,26 @@ static const R_CallMethodDef callMethods[] = {
     {"L_arrows", (DL_FUNC) &L_arrows, 12}, 
     {"L_polygon", (DL_FUNC) &L_polygon, 3},
     {"L_circle", (DL_FUNC) &L_circle, 3},
-    {"L_rect", (DL_FUNC) &L_rect, 5},
-    {"L_text", (DL_FUNC) &L_text, 6},
+    {"L_rect", (DL_FUNC) &L_rect, 6},
+    {"L_text", (DL_FUNC) &L_text, 7},
     {"L_points", (DL_FUNC) &L_points, 4},
     {"L_pretty", (DL_FUNC) &L_pretty, 1},
     {"L_locator", (DL_FUNC) &L_locator, 0},
     {"L_convert", (DL_FUNC) &L_convert, 4},
     {"L_layoutRegion", (DL_FUNC) &L_layoutRegion, 2},
+    {"validUnits", (DL_FUNC) &validUnits, 1},
+    {"L_getGPar", (DL_FUNC) &L_getGPar, 0},
+    {"L_setGPar", (DL_FUNC) &L_setGPar, 1},
+    {"L_rectBounds", (DL_FUNC) &L_rectBounds, 6},
+    {"L_textBounds", (DL_FUNC) &L_textBounds, 6},
     { NULL, NULL, 0 }
 };
 
 
 void R_init_grid(DllInfo *dll) 
 {
-    R_useDynamicSymbols(dll, FALSE);
     /* No .C, .Fortran, or .External routines => NULL
      */
     R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

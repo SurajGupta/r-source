@@ -878,7 +878,7 @@ dogdrv(int nr, int n, double *x, double f, double *g, double *a, double *p,
 
     Rboolean fstdog, nwtake;
     int i;
-    double fplsp, rnwtln, eta, cln, tmp;
+    double fplsp, rnwtln, eta = 0.0, cln = 0.0, tmp; /* -Wall */
 
     *iretcd = 4;
     fstdog = TRUE;
@@ -2230,10 +2230,10 @@ optdrv(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
  */
     Rboolean mxtake, noupdt;
     int i, iretcd, icscmx;
-    double dltp, epsm, phip0, f, analtl;
+    double dltp = 0., epsm, phip0 = 0., f, analtl;
     double dlpsav = 0., phisav = 0., dltsav = 0.;/* -Wall */
     double amusav = 0., phpsav = 0.;		/* -Wall */
-    double phi, amu, rnf, wrk;
+    double phi = 0., amu = 0., rnf, wrk;
 
     for (i = 0; i < n; ++i)
 	p[i] = 0.;

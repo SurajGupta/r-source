@@ -3,7 +3,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file ga.h
  *  Copyright (C) 1998--1999  Guido Masarotto
- *  Copyright (C) 2004	      The R Foundation
+ *  Copyright (C) 2004-5      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -136,14 +136,17 @@ void  ginvert(drawing d, rect r);
 rgb   ggetpixel(drawing d, point p);
 void  gsetpixel(drawing d, point p, rgb c);
 void  gdrawline(drawing d, int width, int style, rgb c, point p1, point p2,
-		int fast);
-void  gdrawrect(drawing d, int width, int style, rgb c, rect r, int fast);
+		int fast, int lend, int ljoin, float lmitre);
+void  gdrawrect(drawing d, int width, int style, rgb c, rect r, int fast,
+		int lend, int ljoin, float lmitre);
 void  gfillrect(drawing d, rgb fill, rect r);
-void  gdrawellipse(drawing d, int width, rgb border, rect r, int fast);
+void  gdrawellipse(drawing d, int width, rgb border, rect r, int fast,
+		   int lend, int ljoin, float lmitre);
 void  gfillellipse(drawing d, rgb fill, rect r);
 void  gdrawpolyline(drawing d, int width, int style, rgb c,
-                    point *p, int n, int closepath, int fast);
-#define gdrawpolygon(d,w,s,c,p,n,f) gdrawpolyline(d,w,s,c,p,n,1,f)
+                    point *p, int n, int closepath, int fast,
+		    int lend, int ljoin, float lmitre);
+#define gdrawpolygon(d,w,s,c,p,n,f,e,j,m) gdrawpolyline(d,w,s,c,p,n,1,f,e,j,m)
 void  gfillpolygon(drawing d, rgb fill, point *p, int n);
 int   gdrawstr(drawing d, font f, rgb c, point p, char *s);
 void  gdrawstr1(drawing d, font f, rgb c, point p, char *s, double hadj);
@@ -155,6 +158,14 @@ void  gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
 font  gnewfont(drawing d,char *face, int style, int size, double rot);
 int   ghasfixedwidth(font f);
 field newfield_no_border(char *text, rect r);
+int   getcharset(void);
+
+#ifdef SUPPORT_UTF8
+void gwdrawstr(drawing d, font f, rgb c, point p, char *s, double hadj);
+int gwstrwidth(drawing d, font f, char *s);
+void gwcharmetric(drawing d, font f, int c, int *ascent, int *descent,
+		  int *width);
+#endif
 
 /* pixels */
 int   devicewidth(drawing dev);
@@ -200,9 +211,6 @@ void finddialog(textbox t);
 void replacedialog(textbox t);
 int modeless_active();
 
-
-/* cursor.c */
-extern cursor CrossCursor;
 
 /* menus.h */
 void 	remove_menu_item(menuitem obj);

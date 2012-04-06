@@ -19,10 +19,6 @@
 \alias{flush.connection}
 \alias{print.connection}
 \alias{summary.connection}
-\alias{ISOLatin1}
-\alias{MacRoman}
-\alias{WinAnsi}
-\alias{native.enc}
 \concept{encoding}
 \concept{compression}
 \title{Functions to Manipulate Connections}
@@ -60,8 +56,8 @@ isIncomplete(con)
   \item{description}{character. A description of the connection. For
     \code{file} and \code{pipe} this is a path to the file to be opened.
     For \code{url} it is a complete URL, including schemes
-    (\code{http://}, \code{ftp://} or \code{file://}).  \code{file} also
-    accepts complete URLs.
+    (\code{http://}, \code{ftp://} or \code{file://} -- see Details).
+    \code{file} also accepts complete URLs.
   }
   \item{filename}{a filename within a zip file.}
   \item{con}{a connection.}
@@ -70,8 +66,9 @@ isIncomplete(con)
   \item{server}{logical.  Should the socket be a client or a server?}
   \item{open}{character.  A description of how to open the connection
     (if at all). See Details for possible values.}
-  \item{blocking}{logical.  See \sQuote{Blocking} section below.}
-  \item{encoding}{An integer vector of length 256.}
+  \item{blocking}{logical.  See the \sQuote{Blocking} section below.}
+  \item{encoding}{The name of the encoding to be used.  See the
+    \sQuote{Encoding} section below.}
   \item{compression}{integer in 0--9.  The amount of compression to be
     applied when writing, from none to maximal.  The default is a good
     space/time compromise.}
@@ -134,20 +131,36 @@ isIncomplete(con)
   write/append (where implemented).
 
   If for a \code{file} connection the description is \code{""}, the file
-  is immediately opened in \code{"w+"} mode and unlinked from the file
-  system.  This provides a temporary file to write to and then read from.
-  
-  The encoding vector is used to map the input from a file or pipe to
-  the platform's native character set.  Supplied examples are
-  \code{native.enc} as well as \code{MacRoman}, \code{WinAnsi} and
-  \code{ISOLatin1}, whose actual encoding is platform-dependent.  Missing
-  characters are mapped to a space in these encodings.
+  is immediately opened (in \code{"w+"} mode unless \code{open="w+b"} is
+  specified) and unlinked from the file system.  This provides a
+  temporary file to write to and then read from.
+
+  A note on \code{file://} URLs.  The most general form (from RFC1738) is
+  \code{file://host/path/to/file}, but \R only accepts the form with an
+  empty \code{host} field referring to the local machine.
+#ifdef unix
+  This is then \code{file:///path/to/file}, where \code{path/to/file} is
+  relative to \code{/}.  So although the third slash is strictly part of
+  the specification not part of the path, this can be regarded as a way
+  to specify the file \file{/path/to/file}.  It is not possible to
+  specify a relative path using a file URL.
+#endif
+#ifdef windows
+  In this form the path is relative to the root of the filesystem, not a
+  Windows concept.  So this is parsed in \R as \code{file://} plus
+  \code{/path/to/file}, e.g. \code{file:///TEMP/some} (referring to the
+  current drive) or \code{file://d:/R/repos}.  Note that although most
+  browsers will accept these forms, strictly there should be three initial
+  slashes in the second (but not four in the first) and \R does not accept
+  that form.  Also, backslashes are accepted within the path even though
+  RFC1738 does not allow them.
+#endif
 }
 \value{
-  \code{file}, \code{pipe}, \code{fifo}, \code{url}, \code{gzfile} and
-  \code{socketConnection} return a connection object
-  which inherits from class \code{"connection"} and has a first more
-  specific class.
+  \code{file}, \code{pipe}, \code{fifo}, \code{url}, \code{gzfile},
+  \code{bzfile}, \code{unz} and \code{socketConnection} return a
+  connection object which inherits from class \code{"connection"} and
+  has a first more specific class.
 
   \code{isOpen} returns a logical value, whether the connection is
   currently open.
@@ -155,6 +168,35 @@ isIncomplete(con)
   \code{isIncomplete} returns a logical value, whether last read attempt
   was blocked, or for an output text connection whether there is
   unflushed output.
+}
+\section{Encoding}{
+  \strong{Note:} prior to \R 2.1.0 there was a byte-by-byte encoding
+  option applied to input only.  This has been replaced by a more
+  comprehensive scheme.
+
+  The encoding of the input/output stream of a connection in \emph{text}
+  mode can be specified by name, in the same way as it would be given to
+  \code{\link{iconv}}: see that help page for how to find out what names are
+  recognized on your platform.  Additionally, \code{""} and
+  \code{"native.enc"} both mean the \sQuote{native} encoding, that is
+  the internal encoding of the current locale and hence no translation
+  is done.
+#ifdef unix
+  Not all builds of \R support this, and if yours does not, specifying a
+  non-default encoding will give an error when the connection is opened.
+#endif
+
+  Re-encoding only works for connections in text mode.
+
+  Exactly what happens when the requested translation cannot be done is
+  in general undocumented.  Requesting a conversion that is not supported is
+  an error, reported when the connection is opened.  On output the
+  result is likely to be that up to the error, with a warning.  On
+  input, it will most likely be all or some of the input up to the
+  error.
+
+  The encoding for \code{\link{stdin}} when redirected from a file can
+  be set by the command-line flag \code{--encoding}.
 }
 \section{Blocking}{
   The default condition for all but fifo and socket connections is to be in
@@ -186,25 +228,46 @@ isIncomplete(con)
   append to fifos) connects both sides of the fifo to the \R process,
   and provides an similar facility to \code{file()}.
 }
-#ifdef windows
 \section{Clipboard}{
-  Under Windows, \code{file} can also be used with \code{description =
-    "clipboard"} in modes \code{"r"} and \code{"w"} only.
+  \code{file} can also be used with \code{description = "clipboard"}
+#ifdef windows
+  in modes \code{"r"} and \code{"w"} only.
+#endif
+#ifdef unix
+  in mode \code{"r"} only.  It reads the X11 primary selection, which
+  can also be specified as \code{"X11_primary"} and the secondary
+  selection as \code{"X11_secondary"}.
+#endif
   
   When the clipboard is opened for reading, the contents are immediately
   copied to internal storage in the connection.
 
-  When writing to the clipboard, the output is
-  copied to the clipboard only when the connection is closed or flushed.
-  There is a 32Kb limit on the text to be written to the clipboard.
-  This can be raised by using e.g. \code{file("clipboard-128")} on
-  NT-based versions of Windows, to give 128Kb.
-}
+#ifdef windows
+  When writing to the clipboard, the output is copied to the clipboard
+  only when the connection is closed or flushed. There is a 32Kb limit
+  on the text to be written to the clipboard. This can be raised by
+  using e.g. \code{file("clipboard-128")} on NT-based versions of
+  Windows, to give 128Kb.
+
+  At least on NT-based versions of Windows the clipboard works in
+  Unicode wide characters, so encodings are likely not to work
+  as one might expect.
 #endif
+#ifdef unix
+  Unix users wishing to \emph{write} to the primary selection may be
+  able to do so via \code{xclip}
+  (\url{http://people.debian.org/~kims/xclip/}), for example by
+  \code{pipe("xclip -i", "w")}.
+
+  MacOS X users can use \code{pipe("pbpaste")} and
+  \code{pipe("pbcopy", "w")} to read from and write to that system's
+  clipboard.
+#endif
+}
 \note{
   \R's connections are modelled on those in S version 4 (see Chambers,
   1998).  However \R goes well beyond the Svr4 model, for example in
-  output text connections and URL, gzfile, bzfile and socket
+  output text connections and URL, \code{gzfile}, \code{bzfile} and socket
   connections.
 
   The default mode in \R is \code{"r"} except for socket connections.
@@ -318,7 +381,12 @@ con2 <- socketConnection(Sys.info()["nodename"], port = 6011)
 # as non-blocking, may need to loop for input
 readLines(con2)
 while(isIncomplete(con2)) {Sys.sleep(1); readLines(con2)}
-close(con2)}
+close(con2)
+}
+
+\dontrun{ ## examples of use of encodings
+cat(x, file = file("foo", "w", encoding="UTF-8"))
+}
 }
 \keyword{file}
 \keyword{connection}

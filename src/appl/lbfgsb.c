@@ -19,6 +19,8 @@
 /* l-bfgs-b.f -- translated by f2c (version 19991025).
 */
 
+/* <UTF8> all char uses here are ASCII */
+
 /* Exports setulb()
  *         ======
  * called from lbfgsb() in ../main/optim.c */
@@ -577,7 +579,7 @@ static void mainlb(int n, int m, double *x,
     int nfgv, ifun, iter, nint;
     char word[4]; /* allow for terminator */
     double time1, time2;
-    int i, iback, k;
+    int i, iback, k = 0; /* -Wall */
     double gdold;
     int nfree;
     int boxed;

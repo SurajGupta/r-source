@@ -19,6 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is handled as a whole string */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -31,11 +33,11 @@ static int integerOneIndex(int i, int len) {
     if (i > 0)
 	indx = i - 1;
     else if (i == 0 || len < 2)
-	error("attempt to select less than one element");
+	error(_("attempt to select less than one element"));
     else if (len == 2 && i > -3)
 	indx = 2 + i;
     else
-	error("attempt to select more than one element");
+	error(_("attempt to select more than one element"));
     return(indx);
 }
 
@@ -45,9 +47,9 @@ int OneIndex(SEXP x, SEXP s, int len, int partial, SEXP *newname, int pos)
     int i, indx, nx;
 
     if (pos < 0 && length(s) > 1)
-	error("attempt to select more than one element");
+	error(_("attempt to select more than one element"));
     if (pos < 0 && length(s) < 1)
-	error("attempt to select less than one element");
+	error(_("attempt to select less than one element"));
     if(pos < 0) pos = 0;
 
     indx = -1;
@@ -105,7 +107,7 @@ int OneIndex(SEXP x, SEXP s, int len, int partial, SEXP *newname, int pos)
 	*newname = STRING_ELT(s, pos);
 	break;
     default:
-	error("invalid subscript type");
+	error(_("invalid subscript type"));
     }
     return indx;
 }
@@ -121,12 +123,12 @@ int get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
 
     if (pos < 0 && length(s) != 1) {
 	if (length(s) > 1)
-	    error("attempt to select more than one element");
+	    error(_("attempt to select more than one element"));
 	else
-	    error("attempt to select less than one element");
+	    error(_("attempt to select less than one element"));
     } else
 	if(pos >= length(s))
-	    error("internal error in use of recursive indexing");
+	    error(_("internal error in use of recursive indexing"));
     if(pos < 0) pos = 0;
     indx = -1;
     switch (TYPEOF(s)) {
@@ -170,7 +172,7 @@ int get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
 		break;
 	    }
     default:
-	error("invalid subscript type");
+	error(_("invalid subscript type"));
     }
     return indx;
 }
@@ -198,7 +200,7 @@ SEXP mat2indsub(SEXP dims, SEXP s)
 		break;
 	    }
 	    if (INTEGER(s)[i + j * nrs] > INTEGER(dims)[j])
-		error("subscript out of bounds");
+		error(_("subscript out of bounds"));
 	    INTEGER(rvec)[i] += (INTEGER(s)[i+j*nrs] - 1) * tdim;
 	    tdim *= INTEGER(dims)[j];
 	}
@@ -226,7 +228,7 @@ static SEXP logicalSubscript(SEXP s, int ns, int nx, int *stretch)
     SEXP indx;
     canstretch = *stretch;
     if (!canstretch && ns > nx)
-	error("(subscript) logical subscript too long");
+	error(_("(subscript) logical subscript too long"));
     nmax = (ns > nx) ? ns : nx;
     *stretch = (ns > nx) ? ns : 0;
     if (ns == 0)
@@ -302,14 +304,14 @@ static SEXP integerSubscript(SEXP s, int ns, int nx, int *stretch)
 	} else isna = TRUE;
     }
     if (min < -nx)
-	error("subscript out of bounds");
+	error(_("subscript out of bounds"));
     if (max > nx) {
 	if(canstretch) *stretch = max;
-	else error("subscript out of bounds");
+	else error(_("subscript out of bounds"));
     }
     if (min < 0) {
 	if (max == 0 && !isna) return negativeSubscript(s, ns, nx);
-	else error("only 0's may mix with negative subscripts");
+	else error(_("only 0's may be mixed with negative subscripts"));
     }
     else return positiveSubscript(s, ns, nx);
     return R_NilValue;
@@ -373,7 +375,7 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names,
 		for (j = 0; j < nnames; j++) {
 		    SEXP names_j = strg(names, j);
 		    if (!in && TYPEOF(names_j) != CHARSXP)
-			error("character vector element does not have type CHARSXP");
+			error(_("character vector element does not have type CHARSXP"));
 		    if (NonNullStringMatch(STRING_ELT(s, i), names_j)) {
 			sub = j + 1;
 			SET_STRING_ELT(indexnames, i, R_NilValue);
@@ -399,7 +401,7 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names,
 	}
 	if (sub == 0) {
 	    if (!canstretch)
-		error("subscript out of bounds");
+		error(_("subscript out of bounds"));
 	    extra += 1;
 	    sub = extra;
 	    SET_STRING_ELT(indexnames, i, STRING_ELT(s, i));
@@ -450,14 +452,14 @@ int_arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
     case STRSXP:
 	dnames = dng(x, R_DimNamesSymbol);
 	if (dnames == R_NilValue)
-	    error("no dimnames attribute for array");
+	    error(_("no 'dimnames' attribute for array"));
 	dnames = VECTOR_ELT(dnames, dim);
 	return stringSubscript(s, ns, nd, dnames, strg, &stretch, in);
     case SYMSXP:
 	if (s == R_MissingArg)
 	    return nullSubscript(nd);
     default:
-	error("invalid subscript");
+	error(_("invalid subscript"));
     }
     return R_NilValue;
 }
@@ -487,7 +489,7 @@ SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
 
 	ans = vectorSubscript(nx, s, stretch, getAttrib, (STRING_ELT), x);
     }
-    else error("subscripting on non-vector");
+    else error(_("subscripting on non-vector"));
     return ans;
 
 }
@@ -547,7 +549,7 @@ int_vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 	    break;
 	}
     default:
-	error("invalid subscript type");
+	error(_("invalid subscript type"));
     }
     UNPROTECT(1);
     return ans;

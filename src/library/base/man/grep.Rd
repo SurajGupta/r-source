@@ -15,18 +15,23 @@
 }
 \usage{
 grep(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
-     value = FALSE, fixed = FALSE)
+     value = FALSE, fixed = FALSE, useBytes = FALSE)
+
 sub(pattern, replacement, x,
-    ignore.case = FALSE, extended = TRUE, perl = FALSE)
+    ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE)
+
 gsub(pattern, replacement, x,
-     ignore.case = FALSE, extended = TRUE, perl = FALSE)
-regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
+     ignore.case = FALSE, extended = TRUE, perl = FALSE, fixed = FALSE)
+
+regexpr(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE,
+        useBytes = FALSE)
 }
 \arguments{
   \item{pattern}{character string containing a \link{regular expression}
     (or character string for \code{fixed = TRUE}) to be matched
-    in the given character vector.}
-  \item{x, text}{a character vector where matches are sought.}
+    in the given character vector.  Coerced to character if possible.}
+  \item{x, text}{a character vector where matches are sought.
+    Coerced to character if possible.}
   \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
       sensitive} and if \code{TRUE}, case is ignored during matching.}
   \item{extended}{if \code{TRUE}, extended regular expression matching
@@ -38,9 +43,13 @@ regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
     \code{TRUE}, a vector containing the matching elements themselves is
     returned.}
   \item{fixed}{logical.  If \code{TRUE}, \code{pattern} is a string to be
-    matched as is.  Overrides all other arguments.}
+    matched as is.  Overrides all conflicting arguments.}
+  \item{useBytes}{logical.  If \code{TRUE} the matching is done
+    byte-by-byte rather than character-by-character.  See Details.}
   \item{replacement}{a replacement for matched pattern in \code{sub} and
-    \code{gsub}.}
+    \code{gsub}.  Coerced to character if possible.  This can include
+    backreferences \code{"\\1"} to \code{"\\9"} to parenthesized
+    subexpressions of \code{pattern}.}
 }
 \details{
   Arguments which should be character strings or character vectors are
@@ -60,6 +69,11 @@ regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
   \url{ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/}.
   (The exact set of patterns supported may depend on the version of
   PCRE installed on the system in use.)
+
+  \code{useBytes} is only used if \code{fixed = TRUE} or \code{perl = TRUE}.
+  For \code{grep} its main effect is to avoid errors/warnings about
+  invalid inputs, but for \code{regexpr} it changes the interpretation
+  of the output.
 }
 \value{
   For \code{grep} a vector giving either the indices of the elements of
@@ -72,13 +86,30 @@ regexpr(pattern, text,  extended = TRUE, perl = FALSE, fixed = FALSE)
   For \code{regexpr} an integer vector of the same length as \code{text}
   giving the starting position of the first match, or \eqn{-1} if there
   is none, with attribute \code{"match.length"} giving the length of the
-  matched text (or \eqn{-1} for no match).
+  matched text (or \eqn{-1} for no match).  In a multi-byte locale these
+  quantities are in characters rather than bytes unless
+  \code{useBytes = TRUE} is used with \code{fixed = TRUE} or
+  \code{perl = TRUE}.
+
+  If in a multi-byte locale the pattern or replacement is not a valid
+  sequence of bytes, an error is thrown.  An invalid string in \code{x}
+  or \code{text} is a non-match with a warning for \code{grep} or
+  \code{regexpr}, but an error for \code{sub} or \code{gsub}.
 }
 \section{Warning}{
   The standard regular-expression code has been reported to be very slow
-  or give errors when applied to extremely long character strings
+  when applied to extremely long character strings
   (tens of thousands of characters or more): the code used when
-  \code{perl=TRUE} seems faster and more reliable for such usages.
+  \code{perl = TRUE} seems much faster and more reliable for such
+  usages.
+
+  The standard version of \code{gsub} does not substitute correctly
+  repeated word-boundaries (e.g. \code{pattern = "\\b"}).
+  Use \code{perl = TRUE} for such matches.
+
+  The \code{perl = TRUE} option is only implemented for single-byte and
+  UTF-8 encodings, and will warn if used in a non-UTF-8 multi-byte
+  locale (unless \code{useBytes = FALSE}).
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -120,6 +151,9 @@ txt <- c("The", "licenses", "for", "most", "software", "are",
    "free", "for", "all", "its", "users")
 ( i <- grep("[gu]", txt) ) # indices
 stopifnot( txt[i] == grep("[gu]", txt, value = TRUE) )
+
+## Note that in locales such as en_US this includes B as the
+## collation order is aAbBcCdEe ...
 (ot <- sub("[b-e]",".", txt))
 txt[ot != gsub("[b-e]",".", txt)]#- gsub does "global" substitution
 

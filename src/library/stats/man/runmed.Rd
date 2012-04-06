@@ -1,6 +1,7 @@
 \name{runmed}
 \title{Running Medians -- Robust Scatter Plot Smoothing}
 \alias{runmed}
+\encoding{latin1}
 \description{
   Compute running medians of odd span.  This is the \dQuote{most robust}
   scatter plot smoothing possible.  For efficiency (and historical
@@ -66,7 +67,7 @@ runmed(x, k, endrule = c("median", "keep", "constant"),
   }
 }
 \references{
-  Härdle, W. and Steiger, W. (1995)
+  \enc{Härdle}{Haerdle}, W. and Steiger, W. (1995)
   [Algorithm AS 296] Optimal median smoothing,
   \emph{Applied Statistics} \bold{44}, 258--264.
 

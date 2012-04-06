@@ -6,9 +6,39 @@ function(lines)
     ## Preprocess lines with Rd markup according to .Platform$OS.type.
 
     if(!is.character(lines))
-        stop(.wrong_args("lines", "must be a character vector"))
+        stop("argument 'lines' must be a character vector")
 
-    ## Strip Rd comments first.
+    ## Re-encode if necessary (and possible).
+    encoding <-
+        .get_Rd_metadata_from_Rd_lines(lines[!is.na(nchar(lines, "c"))],
+                                       "encoding")
+    if(length(encoding)) {
+        if((Sys.getlocale("LC_CTYPE") != "C")
+           && capabilities("iconv")) {
+            encoding <- encoding[1]     # Just making sure ...
+            if(.is_ASCII(encoding))
+                lines <- utils::iconv(lines, encoding, "")
+        }
+    }
+    else {
+        ## No \encoding meta-data.
+        ## Determine whether we can assume Latin1.
+        if(!all(.is_ISO_8859(lines)))
+            encoding <- NA
+    }
+    if(any(is.na(nchar(lines, "c")))) {
+        ## Ouch, invalid in the current locale.
+        ## (Can only happen in a MBCS locale.)
+        ## Try re-encoding from Latin1.
+        if(capabilities("iconv"))
+            lines <- utils::iconv(lines, "latin1", "")
+        else
+            stop("Found invalid multi-byte character data.", "\n",
+                 "Cannot re-encode because iconv is not available.", "\n",
+                 "Try running R in a single-byte locale.")
+    }
+
+    ## Strip Rd first.
     lines <- .strip_Rd_comments(lines)
 
     ppLineIndices <- grep("^#(endif|ifn?def[[:space:]]+[[:alnum:]]+)",
@@ -18,7 +48,8 @@ function(lines)
     ## What should we do with #ifn?def lines not matching the above?
     ## </NOTE>
     n_of_pp_lines <- length(ppLineIndices)
-    if(n_of_pp_lines == 0) return(lines)
+    if(n_of_pp_lines == 0)
+        return(structure(lines, encoding = encoding))
 
     OS <- .Platform$OS.type
     ppLines <- lines[ppLineIndices]
@@ -64,7 +95,7 @@ function(lines)
         }
     }
 
-    lines[-skipIndices]
+    structure(lines[-skipIndices], encoding = encoding)
 }
 
 ### * .strip_Rd_comments
@@ -94,8 +125,7 @@ function(file)
         on.exit(close(file))
     }
     if(!inherits(file, "connection"))
-        stop(.wrong_args("file",
-                         "must be a character string or connection"))
+        stop("argument 'file' must be a character string or connection")
 
     lines <- Rd_pp(.read_Rd_lines_quietly(file))
 
@@ -106,29 +136,34 @@ function(file)
     ## Could be none or more than one ... argh.
     Rd_type <-
         c(.get_Rd_metadata_from_Rd_lines(lines, "docType"), "")[1]
+    encoding <-
+        c(.get_Rd_metadata_from_Rd_lines(lines, "encoding"), "")[1]
 
     txt <- paste(lines, collapse = "\n")
 
     Rd_name <- .get_Rd_name(txt)
-    if(!length(Rd_name))
-        stop(paste("missing/empty \\name field in ",
-                   sQuote(summary(file)$description), "\n",
-                   "Rd files must have a non-empty \\name.\n",
-                   "See chapter ", sQuote("Writing R documentation"),
-                   " in manual ", sQuote("Writing R Extensions"),
-                   ".", sep = ""))
+    if(!length(Rd_name)) {
+        msg <-
+            c(gettextf("missing/empty \\name field in '%s'",
+                       summary(file)$description),
+              gettext("Rd files must have a non-empty \\name."),
+              gettext("See chapter 'Writing R documentation' in manual 'Writing R Extensions'."))
+        stop(paste(msg, collapse = "\n"), domain = NA)
+    }
 
     Rd_title <- .get_Rd_title(txt)
-    if(!length(Rd_title))
-        stop(paste("missing/empty \\title field in ",
-                   sQuote(summary(file)$description), "\n",
-                   "Rd files must have a non-empty \\title.\n",
-                   "See chapter ", sQuote("Writing R documentation"),
-                   " in manual ", sQuote("Writing R Extensions"),
-                   ".", sep = ""))
+    if(!length(Rd_title)) {
+        msg <-
+            c(gettextf("missing/empty \\title field in '%s'",
+                       summary(file)$description),
+              gettext("Rd files must have a non-empty \\title."),
+              gettext("See chapter 'Writing R documentation' in manual 'Writing R Extensions'."))
+        stop(paste(msg, collapse = "\n"), domain = NA)
+    }
 
     list(name = Rd_name, type = Rd_type, title = Rd_title,
-         aliases = aliases, concepts = concepts, keywords = keywords)
+         aliases = aliases, concepts = concepts, keywords = keywords,
+         encoding = encoding)
 }
 
 ### * Rdcontents
@@ -147,15 +182,17 @@ function(RdFiles)
                           Title = I(character(0)),
                           Aliases = I(list()),
                           Concepts = I(list()),
-                          Keywords = I(list())))
+                          Keywords = I(list()),
+                          Encoding = I(character())))
 
-    contents <- vector("list", length(RdFiles) * 6)
-    dim(contents) <- c(length(RdFiles), 6)
+    entries <- c("Name", "Type", "Title", "Aliases", "Concepts",
+                 "Keywords", "Encoding")
+    contents <- vector("list", length(RdFiles) * length(entries))
+    dim(contents) <- c(length(RdFiles), length(entries))
     for(i in seq(along = RdFiles)) {
         contents[i, ] <- Rdinfo(RdFiles[i])
     }
-    colnames(contents) <-
-        c("Name", "Type", "Title", "Aliases", "Concepts", "Keywords")
+    colnames(contents) <- entries
 
     ## Although R-exts says about the Rd title slot that
     ## <QUOTE>
@@ -174,8 +211,8 @@ function(RdFiles)
     title <- gsub("\\\\\&", "&", title)
     title <- gsub("---", "--", title)
     ## Also remove leading and trailing whitespace.
-    title <- sub("^[[:space:]]*", "", title)
-    title <- sub("[[:space:]]*$", "", title)
+    title <- sub("^[[:space:]]+", "", title)
+    title <- sub("[[:space:]]+$", "", title)
 
     data.frame(File = I(basename(RdFiles)),
                Name = I(unlist(contents[ , "Name"])),
@@ -184,6 +221,7 @@ function(RdFiles)
                Aliases = I(contents[ , "Aliases"]),
                Concepts = I(contents[ , "Concepts"]),
                Keywords = I(contents[ , "Keywords"]),
+               Encoding = I(unlist(contents[ , "Encoding"])),
                row.names = NULL)  # avoid trying to compute row names
 }
 
@@ -313,8 +351,7 @@ function(RdFiles, outFile = "", type = NULL,
         on.exit(close(outFile))
     }
     if(!inherits(outFile, "connection"))
-        stop(.wrong_args("outFile",
-                         "must be a character string or connection"))
+        stop("argument 'outFile' must be a character string or connection")
 
     index <- .build_Rd_index(Rdcontents(RdFiles), type = type)
 
@@ -334,18 +371,19 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         docsDir <- file.path(dir, "man")
         if(!file_test("-d", docsDir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd objects"))
+            stop(gettextf("directory '%s' does not contain Rd objects", dir),
+                 domain = NA)
         docsFiles <- list_files_with_type(docsDir, "docs")
         db <- list()
         for(f in docsFiles) {
-            lines <- .read_Rd_lines_quietly(f)
-            eofPos <- grep("\\eof$", lines)
+            valid_lines <- lines <- .read_Rd_lines_quietly(f)
+            valid_lines[is.na(nchar(lines, "c"))] <- ""
+            eofPos <- grep("\\eof$", valid_lines)
             db <- c(db, split(lines[-eofPos],
                               rep(seq(along = eofPos),
                                   times = diff(c(0, eofPos)))[-eofPos]))
@@ -365,17 +403,17 @@ function(package, dir, lib.loc = NULL)
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         docsDir <- file.path(dir, "man")
         if(!file_test("-d", docsDir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd sources"))
+            stop(gettextf("directory '%s' does not contain Rd sources", dir),
+                 domain = NA)
         docsFiles <- list_files_with_type(docsDir, "docs")
         db <- lapply(docsFiles, .read_Rd_lines_quietly)
         names(db) <- docsFiles
@@ -401,8 +439,7 @@ function(file, text = NULL)
             on.exit(close(file))
         }
         if(!inherits(file, "connection"))
-            stop(.wrong_args("file",
-                             "must be a character string or connection"))
+            stop("argument 'file' must be a character string or connection")
         lines <- Rd_pp(.read_Rd_lines_quietly(file))
     }
 
@@ -410,15 +447,26 @@ function(file, text = NULL)
     ## remove the corresponding lines (assuming that these entries are
     ## all one-liners).  We mostly do this because \alias (see Paren.Rd)
     ## has non-standard syntax.
-    meta <-
-        list(aliases = .get_Rd_metadata_from_Rd_lines(lines, "alias"),
-             concepts = .get_Rd_metadata_from_Rd_lines(lines, "concept"),
-             keywords = .get_Rd_metadata_from_Rd_lines(lines, "keyword"),
-             doc_type = .get_Rd_metadata_from_Rd_lines(lines, "docType"))
+
+    meta <- list(aliases =
+                 .get_Rd_metadata_from_Rd_lines(lines, "alias"),
+                 concepts =
+                 .get_Rd_metadata_from_Rd_lines(lines, "concept"),
+                 keywords =
+                 .get_Rd_metadata_from_Rd_lines(lines, "keyword"),
+                 doc_type =
+                 .get_Rd_metadata_from_Rd_lines(lines, "docType"),
+                 encoding =
+                 .get_Rd_metadata_from_Rd_lines(lines, "encoding"))
+    ## Use NA encoding meta-data to indicate that we re-encoded a file
+    ## not in ISO-8859 as Latin1.
+    if(identical(attr(lines, "encoding"), NA))
+        meta$encoding <- NA
+    ## Remove the meta data lines.
     ## (Use the same regexp as in .get_Rd_metadata_from_Rd_lines().)
     i <- grep(paste("^[[:space:]]*\\\\",
-                    "(alias|concept|keyword|docType)",
-                    "{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*}.*",
+                    "(alias|concept|keyword|docType|encoding)",
+                    "\\{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*\\}.*",
                     sep = ""),
               lines)
     if(any(i)) lines <- lines[-i]
@@ -437,7 +485,7 @@ function(file, text = NULL)
     ## We try to catch \non_function{} here, even though it is at least
     ## deprecated.
     ## </NOTE>
-    pattern <- "(^|\n)[[:space:]]*\\\\([[:alpha:]]|non_function)+{"
+    pattern <- "(^|\n)[[:space:]]*\\\\([[:alpha:]]|non_function)+\\{"
     while((pos <- regexpr(pattern, txt)) != -1) {
         otag <- tag
         start <- substring(txt, 1, pos + attr(pos, "match.length") - 2)
@@ -447,20 +495,19 @@ function(file, text = NULL)
         start <- substring(start, 1, pos - 1)
         pos <- delimMatch(txt)
         if(pos == -1)
-            stop(paste("unterminated section", sQuote(tag)))
+            stop(gettextf("unterminated section '%s'", tag),
+                 domain = NA)
         if(tag == "section") {
             tmp <- substring(txt, 2, attr(pos, "match.length") - 1)
             txt <- substring(txt, pos + attr(pos, "match.length"))
             ## Should 'txt' now really start with an open brace?
             if(substring(txt, 1, 1) != "{")
-                stop(paste("incomplete section",
-                           sQuote(paste("section{", tmp, "}",
-                                        sep = ""))))
+                stop(gettextf("incomplete section 'section{%s}'", tmp),
+                     domain = NA)
             pos <- delimMatch(txt)
             if(pos == -1)
-                stop(paste("unterminated section",
-                           sQuote(paste("section{", tmp, "}",
-                                        sep = ""))))
+                stop(gettextf("unterminated section 'section{%s}'", tmp),
+                     domain = NA)
             tag <- c(tag, tmp)
         }
         if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", start) == -1) {
@@ -502,12 +549,12 @@ function(txt, type, predefined = TRUE)
 
     out <- character()
     if(length(txt) != 1)
-        stop(.wrong_args("txt", "must be a character string"))
+        stop("argument 'txt' must be a character string")
     pattern <- paste("(^|\n)[[:space:]]*\\\\",
                      ifelse(predefined, type,
-                            paste("section{", type, "}",
+                            paste("section\\{", type, "\\}",
                                   sep = "")),
-                     "{",
+                     "\\{",
                      sep = "")
     while((pos <- regexpr(pattern, txt)) != -1) {
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
@@ -517,12 +564,13 @@ function(txt, type, predefined = TRUE)
                 ## \alias entries seem to be special (Paren.Rd).
                 ## The regexp below feels wrong, but is based on what is
                 ## used in Perl's R::Rdlists::build_index(), sort of.
-                pos <- regexpr("{([^\n]*)}(\n|$)", txt)
+                pos <- regexpr("\\{([^\n]*)\\}(\n|$)", txt)
             }
             if(pos == -1)
-                stop(paste("unterminated section", sQuote(type)))
+                stop(gettextf("unterminated section '%s'", type),
+                     domain = NA)
             else {
-                out <- c(out, sub("{([^\n]*)}(\n|$).*", "\\1", txt))
+                out <- c(out, sub("\\{([^\n]*)\\}(\n|$).*", "\\1", txt))
                 txt <- substring(txt, pos + attr(pos, "match.length"))
                 next
             }
@@ -546,15 +594,14 @@ function(txt)
     ## 'txt'.
     out <- character()
     if(length(txt) != 1)
-        stop(.wrong_args("txt", "must be a character string"))
-    pattern <- "(^|\n)[[:space:]]*\\\\item{"
+        stop("argument 'txt' must be a character string")
+    pattern <- "(^|\n)[[:space:]]*\\\\item\\{"
     while((pos <- regexpr(pattern, txt)) != -1) {
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
         if((pos <- delimMatch(txt)) == -1)
-            stop(paste("unmatched \\item name in",
-                       sQuote(paste("\\item{",
-                                    sub("\n.*$", "", txt),
-                                    sep = ""))),
+            stop(gettextf("unmatched \\item name in '\\item{%s'",
+                          sub("\n.*$", "", txt)),
+                 domain = NA,
                  call. = FALSE)
         out <- c(out,
                  substring(txt,
@@ -563,14 +610,16 @@ function(txt)
         txt <- substring(txt, pos + attr(pos, "match.length"))
         ## The next character should really be a '{'.  Let's be nice
         ## and tolerate whitespace in between ...
-        if((pos <- regexpr("^[[:space:]]*{", txt)) == -1)
-            stop(paste("no \\item description for item",
-                       sQuote(out[length(out)])),
+        if((pos <- regexpr("^[[:space:]]*\\{", txt)) == -1)
+            stop(gettextf("no \\item description for item '%s'",
+                          out[length(out)]),
+                 domain = NA,
                  call. = FALSE)
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
         if((pos <- delimMatch(txt)) == -1)
-            stop(paste("unmatched \\item description for item",
-                       sQuote(out[length(out)])),
+            stop(gettextf("unmatched \\item description for item '%s'",
+                          out[length(out)]),
+                 domain = NA,
                  call. = FALSE)
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
@@ -582,7 +631,7 @@ function(txt)
 .get_Rd_metadata_from_Rd_lines <-
 function(lines, kind) {
     pattern <- paste("^[[:space:]]*\\\\", kind,
-                     "{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*}.*",
+                     "\\{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*\\}.*",
                      sep = "")
     lines <- grep(pattern, lines, value = TRUE)
     lines <- sub(pattern, "\\1", lines)
@@ -600,8 +649,8 @@ function(txt)
     if(!length(txt)) return(character())
     txt <- unlist(strsplit(txt, ", *"))
     txt <- gsub("\\\\l?dots", "...", txt)
-    txt <- sub("^[[:space:]]*", "", txt)
-    txt <- sub("[[:space:]]*$", "", txt)
+    txt <- sub("^[[:space:]]+", "", txt)
+    txt <- sub("[[:space:]]+$", "", txt)
     txt
 }
 
@@ -610,9 +659,9 @@ function(txt)
 .get_Rd_name <-
 function(txt)
 {
-    start <- regexpr("\\\\name{[[:space:]]*([^\}]+)[[:space:]]*}", txt)
+    start <- regexpr("\\\\name\\{[[:space:]]*([^\}]+)[[:space:]]*\\}", txt)
     if(start == -1) return(character())
-    Rd_name <- gsub("[[:space:]]*", " ",
+    Rd_name <- gsub("[[:space:]]+", " ",
                     substr(txt,
                            start + 6,
                            start + attr(start, "match.length") - 2))
@@ -624,9 +673,9 @@ function(txt)
 .get_Rd_title <-
 function(txt)
 {
-    start <- regexpr("\\\\title{[[:space:]]*([^\}]+)[[:space:]]*}", txt)
+    start <- regexpr("\\\\title\\{[[:space:]]*([^\}]+)[[:space:]]*\\}", txt)
     if(start == -1) return(character())
-    Rd_title <- gsub("[[:space:]]*", " ",
+    Rd_title <- gsub("[[:space:]]+", " ",
                      substr(txt,
                             start + 7,
                             start + attr(start, "match.length") - 2))
@@ -679,13 +728,14 @@ function(db, FUN, ...)
     db <- lapply(db, function(t) try(FUN(t, ...), silent = TRUE))
     idx <- as.logical(sapply(db, inherits, "try-error"))
     if(any(idx)) {
-        msg <- "Rd syntax errors found"
-        for(i in which(idx))
-            msg <- c(msg,
-                     paste("Syntax error in documentation object ",
-                           sQuote(names(db)[i]), ":", sep = ""),
-                     db[[i]])
-        stop(paste(msg, collapse = "\n"), call. = FALSE)
+	msg <- gettext("Rd syntax errors found")
+	for(i in which(idx))
+	    msg <-
+		c(msg,
+		  gettextf("Syntax error in documentation object '%s':",
+			   names(db)[i]),
+		  db[[i]])
+	stop(paste(msg, collapse = "\n"), call. = FALSE, domain = NA)
     }
     db
 }
@@ -713,10 +763,10 @@ function(db)
             stop("cannot deal with Rd objects with missing/empty names")
         }
         else {
-            stop(paste("missing/empty \\name field in Rd file(s)",
+            stop(paste(gettext("missing/empty \\name field in Rd file(s)"),
                        paste(" ", Rd_paths[idx], collapse = "\n"),
                        sep = "\n"),
-                 call. = FALSE)
+                 call. = FALSE, domain = NA)
         }
     }
     unlist(Rd_names)

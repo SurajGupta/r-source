@@ -105,26 +105,26 @@ The current version of this document is @value{VERSION}.
 @end ifnottex
 
 @menu
-* Preface::                     
-* Introduction and preliminaries::  
-* Simple manipulations numbers and vectors::  
-* Objects::                     
-* Factors::                     
-* Arrays and matrices::         
-* Lists and data frames::       
-* Reading data from files::     
-* Probability distributions::   
-* Loops and conditional execution::  
-* Writing your own functions::  
-* Statistical models in R::     
-* Graphics::                    
-* Packages::                    
-* A sample session::            
-* Invoking R::                  
-* The command-line editor::     
-* Function and variable index::  
-* Concept index::               
-* References::                  
+* Preface::
+* Introduction and preliminaries::
+* Simple manipulations numbers and vectors::
+* Objects::
+* Factors::
+* Arrays and matrices::
+* Lists and data frames::
+* Reading data from files::
+* Probability distributions::
+* Loops and conditional execution::
+* Writing your own functions::
+* Statistical models in R::
+* Graphics::
+* Packages::
+* A sample session::
+* Invoking R::
+* The command-line editor::
+* Function and variable index::
+* Concept index::
+* References::
 @end menu
 
 @node Preface, Introduction and preliminaries, Top, Top
@@ -162,16 +162,16 @@ been digested.
 @chapter Introduction and preliminaries
 
 @menu
-* The R environment::           
-* Related software and documentation::  
-* R and statistics::            
-* R and the window system::     
-* Using R interactively::       
-* Getting help::                
-* R commands; case sensitivity etc::  
-* Recall and correction of previous commands::  
-* Executing commands from or diverting output to a file::  
-* Data permanency and removing objects::  
+* The R environment::
+* Related software and documentation::
+* R and statistics::
+* R and the window system::
+* Using R interactively::
+* Getting help::
+* R commands; case sensitivity etc::
+* Recall and correction of previous commands::
+* Executing commands from or diverting output to a file::
+* Data permanency and removing objects::
 @end menu
 
 @node The R environment, Related software and documentation, Introduction and preliminaries, Introduction and preliminaries
@@ -221,7 +221,7 @@ The evolution of the @Sl{} language is characterized by four books by
 John Chambers and coauthors.  For @R{}, the basic reference is @emph{The
 New @Sl{} Language: A Programming Environment for Data Analysis and
 Graphics} by Richard A.@: Becker, John M.@: Chambers and Allan R.@:
-Wilks.  The new features of the 1991 release of @Sl{} 
+Wilks.  The new features of the 1991 release of @Sl{}
 @c (@Sl{} version 3) JMC says the 1988 version is S3.
 are covered in @emph{Statistical Models in @Sl{}} edited by John M.@:
 Chambers and Trevor J.@: Hastie.  The formal methods and classes of the
@@ -247,7 +247,7 @@ built into the base @R{} environment, but many are supplied as
 @emph{packages}.  There are about 25 packages supplied with @R{} (called
 ``standard'' and ``recommended'' packages) and many more are available
 through the @acronym{CRAN} family of Internet sites (via
-@uref{http://CRAN.R-project.org}) and elsewhere.  More details on
+@url{http://CRAN.R-project.org}) and elsewhere.  More details on
 packages are given later (@pxref{Packages}).
 
 Most classical statistics and much of the latest methodology is
@@ -463,9 +463,9 @@ line is a comment.
 If a command is not complete at the end of a line, @R{} will
 give a different prompt, by default
 
-@smallexample
+@example
 +
-@end smallexample
+@end example
 
 @noindent
 on second and subsequent lines and continue to read input until the
@@ -580,14 +580,14 @@ been conducted in the same directory.
 @cindex Vectors
 
 @menu
-* Vectors and assignment::      
-* Vector arithmetic::           
-* Generating regular sequences::  
-* Logical vectors::             
-* Missing values::              
-* Character vectors::           
-* Index vectors::               
-* Other types of objects::      
+* Vectors and assignment::
+* Vector arithmetic::
+* Generating regular sequences::
+* Logical vectors::
+* Missing values::
+* Character vectors::
+* Index vectors::
+* Other types of objects::
 @end menu
 
 @node Vectors and assignment, Vector arithmetic, Simple manipulations numbers and vectors, Simple manipulations numbers and vectors
@@ -1028,6 +1028,10 @@ generally any expression that evaluates to a vector may have subsets of
 its elements similarly selected by appending an index vector in square
 brackets immediately after the expression.
 
+@c FIXME: Add a forward reference to  subset()  here
+@c FIXME  and  add a paragraph about subset() {which needs to come after
+@c FIXME  data frames ...
+
 Such index vectors can be any of four distinct types.
 
 @enumerate
@@ -1191,10 +1195,10 @@ extend @R{}.  @xref{Writing your own functions}.
 @c intrinsic attribute `mode'.
 
 @menu
-* The intrinsic attributes mode and length::  
-* Changing the length of an object::  
-* Getting and setting attributes::  
-* The class of an object::      
+* The intrinsic attributes mode and length::
+* Changing the length of an object::
+* Getting and setting attributes::
+* The class of an object::
 @end menu
 
 @node The intrinsic attributes mode and length, Changing the length of an object, Objects, Objects
@@ -1464,8 +1468,8 @@ used.
 @end example
 
 @menu
-* The function tapply() and ragged arrays::  
-* Ordered factors::             
+* The function tapply() and ragged arrays::
+* Ordered factors::
 @end menu
 
 @node The function tapply() and ragged arrays, Ordered factors, Factors, Factors
@@ -1585,16 +1589,16 @@ linear models are different.
 @chapter Arrays and matrices
 
 @menu
-* Arrays::                      
-* Array indexing::              
-* Index arrays::                
-* The array() function::        
-* The outer product of two arrays::  
-* Generalized transpose of an array::  
-* Matrix facilities::           
-* Forming partitioned matrices::  
-* The concatenation function c() with arrays::  
-* Frequency tables from factors::  
+* Arrays::
+* Array indexing::
+* Index arrays::
+* The array() function::
+* The outer product of two arrays::
+* Generalized transpose of an array::
+* Matrix facilities::
+* Forming partitioned matrices::
+* The concatenation function c() with arrays::
+* Frequency tables from factors::
 @end menu
 
 @node Arrays, Array indexing, Arrays and matrices, Arrays and matrices
@@ -1825,7 +1829,7 @@ concerning mixed array and vector calculations has to be considered a
 little more carefully.
 
 @menu
-* The recycling rule::          
+* The recycling rule::
 @end menu
 
 @node The recycling rule,  , The array() function, The array() function
@@ -1972,11 +1976,11 @@ number of rows and columns in the matrix @code{A} respectively.
 @findex ncol
 
 @menu
-* Multiplication::              
-* Linear equations and inversion::  
-* Eigenvalues and eigenvectors::  
-* Singular value decomposition and determinants::  
-* Least squares fitting and the QR decomposition::  
+* Multiplication::
+* Linear equations and inversion::
+* Eigenvalues and eigenvectors::
+* Singular value decomposition and determinants::
+* Least squares fitting and the QR decomposition::
 @end menu
 
 @node  Multiplication, Linear equations and inversion, Matrix facilities, Matrix facilities
@@ -2352,9 +2356,9 @@ Extension to higher-way frequency tables is immediate.
 @chapter Lists and data frames
 
 @menu
-* Lists::                       
-* Constructing and modifying lists::  
-* Data frames::                 
+* Lists::
+* Constructing and modifying lists::
+* Data frames::
 @end menu
 
 @node Lists, Constructing and modifying lists, Lists and data frames, Lists and data frames
@@ -2464,7 +2468,7 @@ additional components.  For example
 @end example
 
 @menu
-* Concatenating lists::         
+* Concatenating lists::
 @end menu
 
 @node Concatenating lists,  , Constructing and modifying lists, Constructing and modifying lists
@@ -2516,11 +2520,11 @@ matrix form, and its rows and columns extracted using matrix indexing
 conventions.
 
 @menu
-* Making data frames::          
-* attach() and detach()::       
-* Working with data frames::    
-* Attaching arbitrary lists::   
-* Managing the search path::    
+* Making data frames::
+* attach() and detach()::
+* Working with data frames::
+* Attaching arbitrary lists::
+* Managing the search path::
 @end menu
 
 @node Making data frames, attach() and detach(), Data frames, Data frames
@@ -2603,11 +2607,11 @@ greater than 2 on the search path can be detached by giving their number
 to @code{detach}, but it is much safer to always use a name, for example
 by @code{detach(lentils)} or @code{detach("lentils")}
 
-@quotation
-@strong{Note}: With the current release of @R{} lists and data frames
-can only be attached at position 2 or above.  It is not possible to
-directly assign into an attached list or data frame (thus, to some
-extent they are static).
+@quotation Note
+With the current release of @R{} lists and data frames can only be
+attached at position 2 or above.  It is not possible to directly assign
+into an attached list or data frame (thus, to some extent they are
+static).
 @c This is likely to change in the next year or so.
 @end quotation
 
@@ -2714,10 +2718,10 @@ For more details on importing data into @R{} and also exporting data,
 see the @emph{R Data Import/Export} manual.
 
 @menu
-* The read.table() function::   
-* The scan() function::         
-* Accessing builtin datasets::  
-* Editing data::                
+* The read.table() function::
+* The scan() function::
+* Accessing builtin datasets::
+* Editing data::
 @end menu
 
 @node The read.table() function, The scan() function, Reading data from files, Reading data from files
@@ -2743,7 +2747,7 @@ to be read as a data frame might look as follows.
 
 @quotation
 @cartouche
-@smallexample
+@example
 @r{Input file form with names and row labels:}
 
      Price    Floor     Area   Rooms     Age  Cent.heat
@@ -2753,7 +2757,7 @@ to be read as a data frame might look as follows.
 04   57.50    131.0      690     6       8.8      no
 05   59.75     93.0      900     5       1.9     yes
 ...
-@end smallexample
+@end example
 @end cartouche
 @end quotation
 
@@ -2774,7 +2778,7 @@ the following.
 
 @quotation
 @cartouche
-@smallexample
+@example
 @r{Input file form without row labels:}
 
 Price    Floor     Area   Rooms     Age  Cent.heat
@@ -2784,7 +2788,7 @@ Price    Floor     Area   Rooms     Age  Cent.heat
 57.50    131.0      690     6       8.8      no
 59.75     93.0      900     5       1.9     yes
 ...
-@end smallexample
+@end example
 @end cartouche
 @end quotation
 
@@ -2933,9 +2937,9 @@ to enter new data via the spreadsheet interface.
 @cindex Probability distributions
 
 @menu
-* R as a set of statistical tables::  
-* Examining the distribution of a set of data::  
-* One- and two-sample tests::   
+* R as a set of statistical tables::
+* Examining the distribution of a set of data::
+* One- and two-sample tests::
 @end menu
 
 @node R as a set of statistical tables, Examining the distribution of a set of data, Probability distributions, Probability distributions
@@ -2950,9 +2954,7 @@ and to simulate from the distribution.
 
 @quotation
 @multitable{Distribution namessss}{names, names}{arguments, arguments}
-
-@item Distribution @tab @R{} name @tab additional arguments
-
+@headitem Distribution @tab @R{} name @tab additional arguments
 @item beta @tab @code{beta} @tab @code{shape1, shape2, ncp}
 @item binomial @tab  @code{binom} @tab @code{size, prob}
 @item Cauchy @tab @code{cauchy} @tab @code{location, scale}
@@ -2971,7 +2973,6 @@ and to simulate from the distribution.
 @item uniform @tab @code{unif} @tab @code{min, max}
 @item Weibull @tab @code{weibull} @tab @code{shape, scale}
 @item Wilcoxon @tab @code{wilcox} @tab @code{m, n}
-
 @end multitable
 @end quotation
 
@@ -3334,8 +3335,8 @@ cannot compute correct p-values with ties in: ks.test(A, B)
 @cindex Loops and conditional execution
 
 @menu
-* Grouped expressions::         
-* Control statements::          
+* Grouped expressions::
+* Control statements::
 @end menu
 
 @node Grouped expressions, Control statements, Loops and conditional execution, Loops and conditional execution
@@ -3359,8 +3360,8 @@ parentheses and used a part of an even larger expression, and so on.
 @cindex Control statements
 
 @menu
-* Conditional execution::       
-* Repetitive execution::        
+* Conditional execution::
+* Repetitive execution::
 @end menu
 
 @node Conditional execution, Repetitive execution, Control statements, Control statements
@@ -3508,15 +3509,15 @@ A call to the function then usually takes the form
 anywhere a function call is legitimate.
 
 @menu
-* Simple examples::             
-* Defining new binary operators::  
-* Named arguments and defaults::  
-* The ellipsis argument (...)::  
-* Assignment within functions::  
-* More advanced examples::      
-* Scope::                       
-* Customizing the environment::  
-* Object orientation::          
+* Simple examples::
+* Defining new binary operators::
+* Named arguments and defaults::
+* The ellipsis argument (...)::
+* Assignment within functions::
+* More advanced examples::
+* Scope::
+* Customizing the environment::
+* Object orientation::
 @end menu
 
 @node Simple examples, Defining new binary operators, Writing your own functions, Writing your own functions
@@ -3725,9 +3726,9 @@ in @R{}.  These are discussed further in @ref{Scope}.
 @section More advanced examples
 
 @menu
-* Efficiency factors in block designs::  
-* Dropping all names in a printed array::  
-* Recursive numerical integration::  
+* Efficiency factors in block designs::
+* Dropping all names in a printed array::
+* Recursive numerical integration::
 @end menu
 
 @node Efficiency factors in block designs, Dropping all names in a printed array, More advanced examples, More advanced examples
@@ -4122,14 +4123,14 @@ basic output is minimal, and one needs to ask for the details by calling
 extractor functions.
 
 @menu
-* Formulae for statistical models::  
-* Linear models::               
-* Generic functions for extracting model information::  
-* Analysis of variance and model comparison::  
-* Updating fitted models::      
-* Generalized linear models::   
-* Nonlinear least squares and maximum likelihood models::  
-* Some non-standard models::    
+* Formulae for statistical models::
+* Linear models::
+* Generic functions for extracting model information::
+* Analysis of variance and model comparison::
+* Updating fitted models::
+* Generalized linear models::
+* Nonlinear least squares and maximum likelihood models::
+* Some non-standard models::
 @end menu
 
 @node Formulae for statistical models, Linear models, Statistical models in R, Statistical models in R
@@ -4336,7 +4337,7 @@ implicit.  This is not the case in other contexts, for example in
 specifying nonlinear models.
 
 @menu
-* Contrasts::                   
+* Contrasts::
 @end menu
 
 @node Contrasts,  , Formulae for statistical models, Formulae for statistical models
@@ -4547,7 +4548,7 @@ would typically be used to describe an experiment with mean model
 ``within farms, between blocks'' and ``within blocks''.
 
 @menu
-* ANOVA tables::                
+* ANOVA tables::
 @end menu
 
 @node ANOVA tables,  , Analysis of variance and model comparison, Analysis of variance and model comparison
@@ -4721,8 +4722,8 @@ reference works on the subject for full details, such as McCullagh &
 Nelder (1989) or Dobson (1990).
 
 @menu
-* Families::                    
-* The glm() function::          
+* Families::
+* The glm() function::
 @end menu
 
 @node Families, The glm() function, Generalized linear models, Generalized linear models
@@ -4743,9 +4744,7 @@ shown in the following table:
 
 @quotation
 @multitable @columnfractions 0.25 0.55
-
-@item Family name @tab Link functions
-
+@headitem Family name @tab Link functions
 @item @code{binomial} @tab @code{logit}, @code{probit}, @code{log}, @code{cloglog}
 @item @code{gaussian} @tab @code{identity}, @code{log}, @code{inverse}
 @item @code{Gamma} @tab @code{identity}, @code{inverse}, @code{log}
@@ -4753,7 +4752,6 @@ shown in the following table:
 @item @code{poisson} @tab @code{identity}, @code{log}, @code{sqrt}
 @item @code{quasi} @tab @code{logit}, @code{probit}, @code{cloglog},
 @code{identity}, @code{inverse}, @code{log}, @code{1/mu^2}, @code{sqrt}
-
 @end multitable
 @end quotation
 
@@ -5016,8 +5014,8 @@ try, and convergence depends critically upon the quality of the initial
 guesses.
 
 @menu
-* Least squares::               
-* Maximum likelihood::          
+* Least squares::
+* Maximum likelihood::
 @end menu
 
 @node Least squares, Maximum likelihood, Nonlinear least squares and maximum likelihood models, Nonlinear least squares and maximum likelihood models
@@ -5283,13 +5281,13 @@ it is more powerful but harder to use.  There is a recommended package
 multi-panel plots akin to those in the @emph{Trellis} system in @Sl{}.
 
 @menu
-* High-level plotting commands::  
-* Low-level plotting commands::  
-* Interacting with graphics::   
-* Using graphics parameters::   
-* Graphics parameters::         
-* Device drivers::              
-* Dynamic graphics::            
+* High-level plotting commands::
+* Low-level plotting commands::
+* Interacting with graphics::
+* Using graphics parameters::
+* Graphics parameters::
+* Device drivers::
+* Dynamic graphics::
 @end menu
 
 @node High-level plotting commands, Low-level plotting commands, Graphics, Graphics
@@ -5302,10 +5300,10 @@ otherwise.) High-level plotting commands always start a new plot,
 erasing the current plot if necessary.
 
 @menu
-* The plot() function::         
-* Displaying multivariate data::  
-* Display graphics::            
-* Arguments to high-level plotting functions::  
+* The plot() function::
+* Displaying multivariate data::
+* Display graphics::
+* Arguments to high-level plotting functions::
 @end menu
 
 @node The plot() function, Displaying multivariate data, High-level plotting commands, High-level plotting commands
@@ -5551,9 +5549,9 @@ is @code{1:length(x)}.
 
 @strong{Note}: This function is often used in the sequence
 
-@smallexample
+@example
 > plot(x, y, type="n"); text(x, y, names)
-@end smallexample
+@end example
 
 @noindent
 The graphics parameter @code{type="n"} suppresses the points but sets up
@@ -5627,8 +5625,8 @@ valid input.  In this way functions such as @code{locator()} (see below)
 may be used to specify positions on a plot interactively.
 
 @menu
-* Mathematical annotation::     
-* Hershey vector fonts::        
+* Mathematical annotation::
+* Hershey vector fonts::
 @end menu
 
 @node Mathematical annotation, Hershey vector fonts, Low-level plotting commands, Low-level plotting commands
@@ -5640,18 +5638,18 @@ than a character string in any one of @code{text}, @code{mtext}, @code{axis},
 or @code{title}.   For example, the following code draws the formula for
 the Binomial probability function:
 
-@smallexample
+@example
 > text(x, y, expression(paste(bgroup("(", atop(n, x), ")"), p^x, q^@{n-x@})))
-@end smallexample
+@end example
 
 More information, including a full listing of the features available can
 obtained from within @R{} using the commands:
 
-@smallexample
+@example
 > help(plotmath)
 > example(plotmath)
 > demo(plotmath)
-@end smallexample
+@end example
 
 @node Hershey vector fonts,  , Mathematical annotation, Low-level plotting commands
 @subsection Hershey vector fonts
@@ -5675,12 +5673,12 @@ Hershey fonts provide cyrillic and japanese (Kana and Kanji) characters.
 More information, including tables of Hershey characters can be obtained from
 within @R{} using the commands:
 
-@smallexample
+@example
 > help(Hershey)
 > demo(Hershey)
 > help(Japanese)
 > demo(Japanese)
-@end smallexample
+@end example
 
 @node Interacting with graphics, Using graphics parameters, Low-level plotting commands, Graphics
 @section Interacting with graphics
@@ -5768,8 +5766,8 @@ permanently, affecting all graphics functions which access the current
 device; or temporarily, affecting only a single graphics function call.
 
 @menu
-* The par() function::          
-* Arguments to graphics functions::  
+* The par() function::
+* Arguments to graphics functions::
 @end menu
 
 @node The par() function, Arguments to graphics functions, Using graphics parameters, Using graphics parameters
@@ -5870,10 +5868,10 @@ Note that @code{axes} is @strong{not} a graphics parameter but an
 argument to a few @code{plot} methods: see @code{xaxt} and @code{yaxt}.
 
 @menu
-* Graphical elements::          
-* Axes and tick marks::         
-* Figure margins::              
-* Multiple figure environment::  
+* Graphical elements::
+* Axes and tick marks::
+* Figure margins::
+* Multiple figure environment::
 @end menu
 
 @node Graphical elements, Axes and tick marks, Graphics parameters, Graphics parameters
@@ -6165,7 +6163,7 @@ Produces a PDF file, which can also be included into PDF files.
 Produces a bitmap PNG file. (Not always available: see its help page.)
 @item jpeg()
 @findex jpeg
-Produces a bitmap JPEG file, best used for @code{image} plots. 
+Produces a bitmap JPEG file, best used for @code{image} plots.
 (Not always available: see its help page.)
 @end table
 
@@ -6182,8 +6180,8 @@ been sent to the printer.  (This will happen automatically at the normal
 end of a session.)
 
 @menu
-* PostScript diagrams for typeset documents::  
-* Multiple graphics devices::   
+* PostScript diagrams for typeset documents::
+* Multiple graphics devices::
 @end menu
 
 @node PostScript diagrams for typeset documents, Multiple graphics devices, Device drivers, Device drivers
@@ -6298,7 +6296,7 @@ highlight) plots.  However, extensive dynamic graphics facilities are
 available in the system XGobi by Swayne, Cook and Buja available from
 
 @quotation
-@uref{http://www.research.att.com/areas/stat/xgobi/}
+@url{http://www.research.att.com/areas/stat/xgobi/}
 @end quotation
 
 @noindent
@@ -6307,7 +6305,7 @@ XGobi currently runs under the X Windows system on either UNIX or
 Windows, and @R{} interfaces are available for each.
 
 A development of XGobi called GGobi is under development: see
-@uref{http://www.ggobi.org}.
+@url{http://www.ggobi.org}.
 
 @node Packages, A sample session, Graphics, Top
 @chapter Packages
@@ -6363,9 +6361,9 @@ to start the @HTML{} help system, and then navigate to the package
 listing in the @code{Reference} section.
 
 @menu
-* Standard packages::           
-* Contributed packages and CRAN::  
-* Namespaces::                  
+* Standard packages::
+* Contributed packages and CRAN::
+* Namespaces::
 @end menu
 
 @node Standard packages, Contributed packages and CRAN, Packages, Packages
@@ -6388,8 +6386,8 @@ statistical methods, others give access to data or hardware, and others
 are designed to complement textbooks.  Some (the @emph{recommended}
 packages) are distributed with every binary distribution of @R{}.  Most
 are available for download from @acronym{CRAN}
-(@uref{http://CRAN.R-project.org/} and its mirrors), and other
-repositories such as Bioconductor (@uref{http://www.bioconductor.org/}).
+(@url{http://CRAN.R-project.org/} and its mirrors), and other
+repositories such as Bioconductor (@url{http://www.bioconductor.org/}).
 The @emph{R FAQ} contains a list that was current at the time of
 release, but the collection of available packages changes frequently.
 
@@ -6437,16 +6435,13 @@ list.
 The following session is intended to introduce to you some features of
 the @R{} environment by using them.  Many features of the system will be
 unfamiliar and puzzling at first, but this puzzlement will soon
-disappear.  
+disappear.
 @c This is written for the UNIX user.  Those using Windows will
 @c need to adapt the discussion slightly.
 
 @table @code
 @item
-Login, start your windowing system.  You should also have the file
-@file{morley.tab} in your working directory.  If not, seek the local
-expert (or get it yourself from the @file{datasets/data} subdirectory of the
-default @R{} library tree).  If you have, proceed.
+Login, start your windowing system.
 @item $ R
 Start @R{} as appropriate for your platform.
 
@@ -6536,13 +6531,19 @@ Clean up again.
 @end table
 
 The next section will look at data from the classical experiment of
-Michaelson and Morley to measure the speed of light.
+Michaelson and Morley to measure the speed of light.  This dataset
+is available in the @code{morley} object, but we will read it
+to illustrate the @code{read.table} function.
 
 @table @code
-@item file.show("morley.tab")
+@item filepath <- system.file("data", "morley.tab" , package="datasets")
+@itemx filepath
+Get the path to the data file.
+
+@item file.show(filepath)
 Optional.  Look at the file.
 
-@item mm <- read.table("morley.tab")
+@item mm <- read.table(filepath)
 @itemx mm
 Read in the Michaelson and Morley data as a data frame, and look at it.
 There are five experiments (column @code{Expt}) and each has 20 runs
@@ -6554,7 +6555,7 @@ suitably coded.
 Change @code{Expt} and @code{Run} into factors.
 
 @item attach(mm)
-Make the data frame visible at position 2 (the default).
+Make the data frame visible at position 3 (the default).
 
 @item plot(Expt, Speed, main="Speed of Light Data", xlab="Experiment No.")
 Compare the five experiments with simple boxplots.
@@ -6668,9 +6669,9 @@ want to save it.
 @appendix Invoking R
 
 @menu
-* Invoking R from the command line::  
-* Invoking R under Windows::    
-* Invoking R under Mac OS X::   
+* Invoking R from the command line::
+* Invoking R under Windows::
+* Invoking R under Mac OS X::
 @end menu
 
 @node Invoking R from the command line, Invoking R under Windows, Invoking R, Invoking R
@@ -6749,6 +6750,11 @@ Print short help message to standard output and exit successfully.
 
 @item --version
 Print version information to standard output and exit successfully.
+
+@item --encoding=@var{enc}
+Specify the encoding to be assumed for input from the console or
+@code{stdin}.  This needs to be an encoding known to @code{iconv}: see
+its help page.
 
 @item RHOME
 Print the path to the @R{} ``home directory'' to standard output and
@@ -6890,7 +6896,7 @@ Install add-on packages.
 @item REMOVE
 Remove add-on packages.
 @item build
-Build add-on packages.
+Build (that is, package) add-on packages.
 @item check
 Check add-on packages.
 @item LINK
@@ -6899,7 +6905,7 @@ Check add-on packages.
 Post-process @R{} profiling files.
 @item Rdconv
 Convert Rd format to various other formats, including @HTML{}, Nroff,
-La@TeX{}, plain text, and S documentation format.
+@LaTeX{}, plain text, and S documentation format.
 @item Rd2dvi
 Convert Rd format to DVI/PDF.
 @item Rd2txt
@@ -6963,19 +6969,19 @@ Enable the ``Break to debugger'' menu item in @code{Rgui}, and trigger
 a break to the debugger during command line processing.
 @end table
 
-In Windows with @code{R CMD} you may also specify your own @code{*.bat}
-or @code{*.exe} file instead of one of the built-in commands.  It will
+In Windows with @code{R CMD} you may also specify your own @file{*.bat}
+or @file{*.exe} file instead of one of the built-in commands.  It will
 be run with the following environment variables set appropriately:
-@code{R_HOME}, @code{R_VERSION}, @code{R_CMD}, @code{R_OSTYPE},
-@code{PATH}, @code{PERL5LIB}, and @code{TEXINPUTS}.  For example, if you
-already have @code{latex.exe} on your path, then
+@env{R_HOME}, @env{R_VERSION}, @env{R_CMD}, @env{R_OSTYPE}, @env{PATH},
+@env{PERL5LIB}, and @env{TEXINPUTS}.  For example, if you already have
+@file{latex.exe} on your path, then
 
 @example
 R CMD latex.exe mydoc
 @end example
 @noindent
-will run LaTeX on mydoc.tex, with the path to @R{}'s @code{share/texmf} macros
-added to @code{TEXINPUTS}.
+will run @LaTeX{} on @file{mydoc.tex}, with the path to @R{}'s
+@file{share/texmf} macros added to @env{TEXINPUTS}.
 
 @node Invoking R under Mac OS X,  , Invoking R under Windows, Invoking R
 @appendixsec Invoking R under Mac OS X
@@ -6984,7 +6990,7 @@ There are two ways to run @R{} under Mac OS X.  Within a Terminal.app
 window by invoking @code{R}, the methods described in the previous
 sections apply.  There is also console-based GUI (@code{R.app}) that by
 default is installed in the @code{Applications} folder on your
-system. It is a standard double-clickable Mac OS X application.
+system.  It is a standard double-clickable Mac OS X application.
 
 The startup procedure under Mac OS X is very similar to that under UNIX.
 The `home directory' is the one inside the R.framework, but the startup
@@ -7000,12 +7006,13 @@ accessible from within the GUI.
 When the @acronym{GNU} @strong{readline} library is available at the
 time @R{} is configured for compilation under UNIX, an inbuilt command
 line editor allowing recall, editing and re-submission of prior commands
-is used.  Note: this appendix does @strong{not} apply to the @acronym{GNOME}
-interface under UNIX, only to the standard command-line interface.
+is used.  Note: this appendix does @strong{not} apply to the
+@acronym{GNOME} interface under UNIX, only to the standard command-line
+interface.
 
 It can be disabled (useful for usage with @acronym{ESS} @footnote{The
 `Emacs Speaks Statistics' package; see the @acronym{URL}
-@uref{http://ESS.R-project.org}}) using the startup option
+@url{http://ESS.R-project.org}}) using the startup option
 @option{--no-readline}.
 
 Windows versions of @R{} have somewhat simpler command-line editing: see

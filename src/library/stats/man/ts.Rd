@@ -2,6 +2,7 @@
 \title{Time-Series Objects}
 \alias{ts}
 \alias{as.ts}
+\alias{as.ts.default}
 \alias{is.ts}
 \alias{Ops.ts}
 \alias{cbind.ts}
@@ -17,7 +18,7 @@
 \usage{
 ts(data = NA, start = 1, end = numeric(0), frequency = 1,
    deltat = 1, ts.eps = getOption("ts.eps"), class = , names = )
-as.ts(x)
+as.ts(x, \dots)
 is.ts(x)
 }
 \arguments{
@@ -44,6 +45,7 @@ is.ts(x)
     series: defaults to the colnames of \code{data}, or \code{Series 1},
     \code{Series 2}, \dots.}
   \item{x}{an arbitrary \R object.}
+  \item{\dots}{arguments passed to methods (unused for the default method).}
 }
 \details{
   The function \code{ts} is used to create time-series objects.  These
@@ -71,10 +73,11 @@ is.ts(x)
   (e.g.) \code{print} methods to imply a quarterly and monthly series
   respectively.
 
-  \code{as.ts} will use the \code{\link{tsp}} attribute of the object if
-  it has one to set the start and end times and frequency.
+  \code{as.ts} is generic.  Its default method will use the
+  \code{\link{tsp}} attribute of the object if it has one to set the
+  start and end times and frequency.
 
-  \code{is.ts} tests if an object is a time series. It is generic: you
+  \code{is.ts} tests if an object is a time series.  It is generic: you
   can write methods to handle specific classes of objects,
   see \link{InternalMethods}.
 }

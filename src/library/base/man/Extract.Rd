@@ -21,22 +21,26 @@ x[[i, j, \dots]]
 x$name
 }
 \arguments{
-  \item{x}{object from which to extract elements or in which to replace
-    elements.}
-  \item{i, j, \dots, name}{elements to extract or replace. \code{i, j} are
+  \item{x}{
+    object from which to extract elements or in which to replace elements.
+  }
+  \item{i, j, \dots, name}{
+    indices specifying elements to extract or replace.  \code{i, j} are
     \code{numeric} or \code{character} or empty whereas \code{name} must be
     character or an (unquoted) name.  Numeric values are coerced to
-    integer as by \code{\link{as.integer}}.
-    
+    integer as by \code{\link{as.integer}}.  For \code{[[} and \code{$}
+    character strings are normally partially matched to the names of the
+    object if exact matching does not succeed.
+
     For \code{[}-indexing only: \code{i, j, \dots} can be
-    logical vectors, indicating elements/slices to select. Such vectors
+    logical vectors, indicating elements/slices to select.  Such vectors
     are recycled if necessary to match the corresponding extent.  When
     indexing arrays, \code{i} can be a (single) matrix with as many
     columns as there are dimensions of \code{x}; the result is then a
     vector with elements corresponding to the sets of indices in each
     row of \code{i}.
-    
-    \code{i, j, \dots} can also be negative integers, indicating 
+
+    \code{i, j, \dots} can also be negative integers, indicating
     elements/slices to leave out of the selection.
     }
   \item{drop}{For matrices, and arrays.  If \code{TRUE} the
@@ -56,7 +60,7 @@ x$name
   computed indices, whereas \code{[[} does.  \code{x$name} is equivalent
   to \code{x[["name"]]} if \code{x} is recursive
   (see \code{\link{is.recursive}}) and \code{NULL} otherwise.
-  
+
   The \code{[[} operator requires all relevant subscripts to be supplied.
   With the \code{[} operator an empty index (a comma separated blank)
   indicates that all entries in that dimension are selected.
@@ -85,7 +89,7 @@ x$name
   When \code{$<-} is applied to a \code{NULL} \code{x}, it coerces
   \code{x} to \code{list()}.  This is what happens with \code{[[<-} is
   \code{y} is of length greater than one: if \code{y} has length 1 or 0,
-  \code{x} is coerced to a zero-length vector of the type of \code{value}, 
+  \code{x} is coerced to a zero-length vector of the type of \code{value},
 
   As from \R 1.9.0 both \code{$} and \code{[[} can be applied to
   environments.  Only character arguments are allowed and no partial
@@ -110,7 +114,20 @@ x$name
   there is ambiguity as to whether an element of the rhs should
   be used or not (and \R handled this inconsistently prior to \R 2.0.0),
   this is only allowed if the rhs value is of length one (so the two
-  interpretations would have the same outcome).  
+  interpretations would have the same outcome).
+}
+\section{Argument matching}{
+  Note that these operations do match their index arguments in the standard
+  way: argument names are ignored and positional matching only is used.
+  So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and \strong{not}
+  \code{m[1,2]}.
+
+  This may not be true for methods defined for them; for example it is
+  not for the \code{data.frame} methods described in
+  \code{\link{[.data.frame}}.
+
+  To avoid confusion, do not name index arguments
+  (but \code{drop} must be named).
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

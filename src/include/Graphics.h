@@ -34,12 +34,10 @@
 
 #define COLOR_TABLE_SIZE 1024
 
-#define MAX_LAYOUT_ROWS 15
-#define MAX_LAYOUT_COLS 15
-
-/* NOTE: during replays, call == R_NilValue;
-   ----  the following adds readability: */
-#define GRecording(call)  (call != R_NilValue)
+#define MAX_LAYOUT_ROWS 50
+#define MAX_LAYOUT_COLS 50
+#define MAX_LAYOUT_CELLS 500 /* must be less than 65535, 
+				3 copies, 3bytes each */
 
 typedef unsigned int rcolor;
 
@@ -215,9 +213,9 @@ typedef struct {
     double widths[MAX_LAYOUT_COLS];
     int	cmHeights[MAX_LAYOUT_ROWS];
     int	cmWidths[MAX_LAYOUT_COLS];
-    int	order[MAX_LAYOUT_ROWS][MAX_LAYOUT_COLS];
+    unsigned short order[MAX_LAYOUT_CELLS];
     int	rspct;		/* 0 = none, 1 = full, 2 = see respect */
-    int	respect[MAX_LAYOUT_ROWS][MAX_LAYOUT_COLS];
+    unsigned char respect[MAX_LAYOUT_CELLS];
 
     int	mfind;		/* By row/col indicator */
 
@@ -378,6 +376,10 @@ typedef struct {
 #define StrMatch		Rf_StrMatch
 #define isNAcol                 Rf_isNAcol
 
+/* NOTE: during replays, call == R_NilValue;
+   ----  the following adds readability: */
+Rboolean GRecording(SEXP, DevDesc*);
+
 /* Default the settings for general graphical parameters
  * (i.e., defaults that do not depend on the device type: */
 void GInit(GPar*);
@@ -430,5 +432,25 @@ GPar* Rf_gpptr(DevDesc *dd);
 GPar* Rf_dpptr(DevDesc *dd);
 GPar* Rf_dpSavedptr(DevDesc *dd);
 SEXP Rf_displayList(DevDesc *dd);
+
+/* Graphics events */
+
+/* These give the indices of some known keys */    
+
+typedef enum {knUNKNOWN = -1,
+              knLEFT = 0, knUP, knRIGHT, knDOWN,
+              knF1, knF2, knF3, knF4, knF5, knF6, knF7, knF8, knF9, knF10,
+              knF11, knF12,
+              knPGUP, knPGDN, knEND, knHOME, knINS, knDEL} R_KeyName;
+              
+/* These are the three possible mouse events */
+
+typedef enum {meMouseDown = 0,
+	      meMouseUp,
+	      meMouseMove} R_MouseEvent;
+
+SEXP doMouseEvent(SEXP eventRho, NewDevDesc *dd, R_MouseEvent event, 
+                  int buttons, double x, double y);
+SEXP doKeybd	(SEXP eventRho, NewDevDesc *dd, R_KeyName rkey, char *keyname);
 
 #endif /* GRAPHICS_H_ */

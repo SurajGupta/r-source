@@ -12,14 +12,18 @@
 \details{
   If used as \code{R CMD REMOVE pkgs} without explicitly specifying
   \code{lib}, packages are removed from the library tree rooted at the
-  first directory given in \code{\$R\_LIBS} if this is set and non-null,
-  and to the default library tree (which is rooted at
-  \file{\$R\_HOME/library}) otherwise.
+  first directory given in the environment variable \env{R\_LIBS} if
+  this is set and non-null, and to the default library tree (which is
+  rooted at \file{\$R\_HOME/library}) otherwise.
 
   To remove from the library tree \code{lib}, use
   \code{R CMD REMOVE -l lib pkgs}.
 
   Use \code{R CMD REMOVE --help} for more usage information.  
+}
+\note{
+  Some binary distributions of \R have \code{INSTALL} in a separate
+  bundle, e.g. an \code{R-devel} RPM.
 }
 \seealso{
   \code{\link{INSTALL}}

@@ -42,24 +42,24 @@ arima0 <- function(x, order = c(0, 0, 0),
     method <- match.arg(method)
     x <- as.ts(x)
     if(!is.numeric(x))
-        stop("`x' must be numeric")
+        stop("'x' must be numeric")
     dim(x) <- NULL
     n <- length(x)
 
     if(!missing(order))
         if(!is.numeric(order) || length(order) != 3 || any(order < 0))
-            stop("`order' must be a non-negative numeric vector of length 3")
+            stop("'order' must be a non-negative numeric vector of length 3")
     if(!missing(seasonal))
         if(is.list(seasonal)) {
             if(is.null(seasonal$order))
-                stop("`seasonal' must be a list with component `order'")
+                stop("'seasonal' must be a list with component 'order'")
             if(!is.numeric(seasonal$order) || length(seasonal$order) != 3
                || any(seasonal$order < 0))
-                stop("`seasonal$order' must be a non-negative numeric vector of length 3")
+                stop("'seasonal$order' must be a non-negative numeric vector of length 3")
         } else if(is.numeric(order)) {
             if(length(order) == 3) seasonal <- list(order=seasonal)
-            else ("`seasonal' is of the wrong length")
-        } else stop("`seasonal' must be a list with component `order'")
+            else ("'seasonal' is of the wrong length")
+        } else stop("'seasonal' must be a list with component 'order'")
 
     if(is.null(seasonal$period) || is.na(seasonal$period)
        || seasonal$period == 0) seasonal$period <- frequency(x)
@@ -81,7 +81,7 @@ arima0 <- function(x, order = c(0, 0, 0),
     if(is.null(xreg)) {
         ncxreg <- 0
     } else {
-        if(NROW(xreg) != n) stop("lengths of x and xreg do not match")
+        if(NROW(xreg) != n) stop("lengths of 'x' and 'xreg' do not match")
         ncxreg <- NCOL(xreg)
     }
     class(xreg) <- NULL
@@ -93,7 +93,7 @@ arima0 <- function(x, order = c(0, 0, 0),
     }
 
     if (is.null(fixed)) fixed <- rep(as.numeric(NA), narma + ncxreg)
-    else if(length(fixed) != narma + ncxreg) stop("wrong length for fixed")
+    else if(length(fixed) != narma + ncxreg) stop("wrong length for 'fixed'")
     mask <- is.na(fixed)
     if(!any(mask)) stop("all parameters were fixed")
     if(transform.pars && any(!mask[1:narma])) {
@@ -105,14 +105,14 @@ arima0 <- function(x, order = c(0, 0, 0),
         if(d <- order[2]) xreg <- diff(xreg, 1, d)
         if(d <- seasonal$order[2]) xreg <- diff(xreg, seasonal$period, d)
         xreg <- as.matrix(xreg)
-        if(qr(na.omit(xreg))$rank < ncol(xreg)) stop("xreg is collinear")
+        if(qr(na.omit(xreg))$rank < ncol(xreg)) stop("'xreg' is collinear")
         if(is.null(cn <- colnames(xreg)))
             cn <- paste("xreg", 1:ncxreg, sep = "")
     }
     if(any(is.na(x)) || (ncxreg && any(is.na(xreg))))
         ## only exact recursions handle NAs
         if(method == "ML" && delta >= 0) {
-            warning("NAs present: setting delta to -1")
+            warning("NAs present: setting 'delta' to -1")
             delta <- -1
         }
 
@@ -139,7 +139,7 @@ arima0 <- function(x, order = c(0, 0, 0),
 
     if(!is.null(init)) {
         if(length(init) != length(init0))
-            stop("`init' is of the wrong length")
+            stop("'init' is of the wrong length")
         if(any(ind <- is.na(init))) init[ind] <- init0[ind]
         if(transform.pars) {
             if(any(!mask[1:narma]))
@@ -171,8 +171,7 @@ arima0 <- function(x, order = c(0, 0, 0),
     res <- optim(init[mask], arma0f, method = "BFGS",
                  hessian = TRUE, control = optim.control)
     if((code <- res$convergence) > 0)
-        warning(paste("possible convergence problem: optim gave code=",
-                      code))
+        warning("possible convergence problem: optim gave code=", code)
     coef <- res$par
 
     if(transform.pars) {
@@ -259,7 +258,7 @@ predict.arima0 <-
     xreg <- if(!is.null(xr)) eval.parent(xr) else NULL
     ncxreg <- myNCOL(xreg)
     if(myNCOL(newxreg) != ncxreg)
-        stop("xreg and newxreg have different numbers of columns")
+        stop("'xreg' and 'newxreg' have different numbers of columns")
     class(xreg) <- NULL
     xtsp <- tsp(object$residuals)
     n <- length(data)
@@ -279,12 +278,12 @@ predict.arima0 <-
     if(arma[2] > 0) {
         ma <- coefs[arma[1] + 1:arma[2]]
         if(any(Mod(polyroot(c(1, ma))) < 1))
-            warning("ma part of model is not invertible")
+            warning("MA part of model is not invertible")
     }
     if(arma[4] > 0) {
         ma <- coefs[sum(arma[1:3]) + 1:arma[4]]
         if(any(Mod(polyroot(c(1, ma))) < 1))
-            warning("seasonal ma part of model is not invertible")
+            warning("seasonal MA part of model is not invertible")
     }
     storage.mode(data) <- "double"
     G <- .Call("setup_starma", as.integer(arma), data, n, rep(0, n),

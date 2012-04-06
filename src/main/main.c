@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998-2001   The R Development Core Team
- *  Copyright (C) 2002--2004  The R Foundation
+ *  Copyright (C) 2002--2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
  *  writing to the Free Software Foundation, Inc., 59 Temple Place,
  *  Suite 330, Boston, MA  02111-1307  USA.
  */
+
+/* <UTF8> char here is either ASCII or handled as a whole */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -41,14 +43,15 @@
 # include <langinfo.h>
 #endif
 
-#ifdef HAVE_AQUA
-extern void InitAquaIO(void);			/* from src/modules/aqua/aquaconsole.c */
-extern void RSetConsoleWidth(void);		/* from src/modules/aqua/aquaconsole.c */
-extern Rboolean CocoaGUI;				/* from src/unix/system.c              */
-extern Rboolean useCocoa;				/* from src/unix/system.c              */
+#ifdef ENABLE_NLS
+void nl_Rdummy()
+{
+    /* force this in as packages use it */
+    dgettext("R", "dummy - do not translate");
+}
 #endif
 
-/* The `real' main() program is in ../<SYSTEM>/system.c */
+/* The 'real' main() program is in ../<SYSTEM>/system.c */
 /* e.g. ../unix/system.c */
 
 /* Global Variables:  For convenience, all interpeter global symbols
@@ -63,15 +66,17 @@ extern Rboolean useCocoa;				/* from src/unix/system.c              */
  * in separate platform dependent modules.
  */
 
-void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean visible);
+void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded,
+			     Rboolean visible);
 
 int Rf_ParseBrowser(SEXP, SEXP);
 
-
+ 
 static void onpipe(int);
 
 extern void InitDynload();
 
+AccuracyInfo R_AccuracyInfo; /* This is declared here and declared extern in Defn.h */
 
 	/* Read-Eval-Print Loop [ =: REPL = repl ] with input from a file */
 
@@ -100,7 +105,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
-	    error("syntax error: evaluating expression %d", count);
+	    error(_("syntax error: evaluating expression %d"), count);
 	    break;
 	case PARSE_EOF:
 	    return;
@@ -209,7 +214,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 #ifdef HAVE_SYSTEM
 	    R_system(&(state->buf[1]));
 #else
-	    Rprintf("error: system commands are not supported in this version of R.\n");
+	    REprintf(_("error: system commands are not supported in this version of R.\n"));
 #endif /* HAVE_SYSTEM */
 	    state->buf[0] = '\0';
 	    return(0);
@@ -267,7 +272,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     case PARSE_ERROR:
 
 	    state->prompt_type = 1;
-	    error("syntax error");
+	    error(_("syntax error"));
 	    R_IoBufferWriteReset(&R_ConsoleIob);
 	    return(1);
 
@@ -361,7 +366,7 @@ int R_ReplDLLdo1()
 	prompt_type = 1;
 	break;
     case PARSE_ERROR:
-	error("syntax error");
+	error(_("syntax error"));
 	R_IoBufferWriteReset(&R_ConsoleIob);
 	prompt_type = 1;
 	break;
@@ -417,6 +422,9 @@ void setup_Rmainloop(void)
     volatile SEXP baseEnv;
     SEXP cmd;
     FILE *fp;
+#ifdef ENABLE_NLS
+    char localedir[PATH_MAX+20];
+#endif
 
     InitConnections(); /* needed to get any output at all */
 
@@ -434,14 +442,30 @@ void setup_Rmainloop(void)
 	else setlocale(LC_COLLATE, Rlocale);
 	if((p = getenv("LC_TIME"))) setlocale(LC_TIME, p);
 	else setlocale(LC_TIME, Rlocale);
+	if((p = getenv("LC_MONETARY"))) setlocale(LC_MONETARY, p);
+	else setlocale(LC_MONETARY, Rlocale);
+	/* Windows does not have LC_MESSAGES */
     }
 #else
     setlocale(LC_CTYPE, "");/*- make ISO-latin1 etc. work for LOCALE users */
     setlocale(LC_COLLATE, "");/*- alphabetically sorting */
     setlocale(LC_TIME, "");/*- names and defaults for date-time formats */
-    /* setlocale(LC_MESSAGES,""); */
+    setlocale(LC_MONETARY, "");/*- currency units */
+#ifdef ENABLE_NLS
+    setlocale(LC_MESSAGES,""); /* language for messages */
+#endif
+    /* NB: we do not set LC_NUMERIC */
+#endif
+#ifdef ENABLE_NLS
+    /* This ought to have been done earlier, but be sure */
+    textdomain(PACKAGE);
+    strcpy(localedir, R_Home); strcat(localedir, "/share/locale");
+    bindtextdomain(PACKAGE, localedir);
+    strcpy(localedir, R_Home); strcat(localedir, "/library/base/po");
+    bindtextdomain("R-base", localedir);
 #endif
 #endif
+
 #if defined(Unix) || defined(Win32)
     InitTempDir(); /* must be before InitEd */
 #endif
@@ -455,14 +479,14 @@ void setup_Rmainloop(void)
     InitColors();
     InitGraphics();
     R_Is_Running = 1;
-#ifdef HAVE_AQUA 
-    if( (strcmp(R_GUIType, "AQUA") == 0) && !CocoaGUI && !useCocoa){ 
-		InitAquaIO(); /* must be after InitTempDir() */
-		RSetConsoleWidth();
-	}
-#endif
 #ifdef HAVE_LANGINFO_CODESET
     utf8locale = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#endif
+#ifdef SUPPORT_MBCS
+    mbcslocale = MB_CUR_MAX > 1;
+#endif
+#if defined(Win32) && defined(SUPPORT_UTF8)
+    utf8locale = mbcslocale = TRUE;
 #endif
     /* gc_inhibit_torture = 0; */
 
@@ -509,7 +533,7 @@ void setup_Rmainloop(void)
 
     fp = R_OpenLibraryFile("base");
     if (fp == NULL) {
-	R_Suicide("unable to open the base package\n");
+	R_Suicide(_("unable to open the base package\n"));
     }
 
     doneit = 0;
@@ -546,8 +570,10 @@ void setup_Rmainloop(void)
      */
     if(!R_Quiet) {
 	PrintGreeting();
+#ifndef SUPPORT_UTF8
 	if(utf8locale)
-	    R_ShowMessage("WARNING: UTF-8 locales are not currently supported\n");
+	    R_ShowMessage(_("WARNING: UTF-8 locales are not supported in this build of R\n"));
+#endif
     }
 
     R_LoadProfile(R_OpenSiteFile(), baseEnv);
@@ -575,7 +601,7 @@ void setup_Rmainloop(void)
 	R_InitialData();
     }
     else
-    	R_Suicide("unable to restore saved data in .RData\n");
+    	R_Suicide(_("unable to restore saved data in .RData\n"));
 
     /* Initial Loading is done.
        At this point we try to invoke the .First Function.
@@ -621,6 +647,10 @@ void setup_Rmainloop(void)
 	UNPROTECT(1);
     }
     /* gc_inhibit_torture = 0; */
+    if (R_CollectWarnings) {
+	REprintf(_("During startup - "));
+	PrintWarnings();
+    }
 }
 
 void end_Rmainloop(void)
@@ -660,10 +690,6 @@ void mainloop(void)
 {
     setup_Rmainloop();
     run_Rmainloop();
-    /* NO! Don't do that! It ends up in a longjmp for which the
-       setjmp is inside run_Rmainloop! -pd
-    end_Rmainloop();
-    */
 }
 
 /*this functionality now appears in 3
@@ -829,16 +855,16 @@ SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     int ask=SA_DEFAULT, status, runLast;
 
     if(R_BrowseLevel) {
-	warning("can't quit from browser");
+	warning(_("cannot quit from browser"));
 	return R_NilValue;
     }
     if( !isString(CAR(args)) )
-	errorcall(call,"one of \"yes\", \"no\", \"ask\" or \"default\" expected.");
+	errorcall(call, _("one of \"yes\", \"no\", \"ask\" or \"default\" expected."));
     tmp = CHAR(STRING_ELT(CAR(args), 0));
     if( !strcmp(tmp, "ask") ) {
 	ask = SA_SAVEASK;
 	if(!R_Interactive)
-	    warningcall(call, "save=\"ask\" in non-interactive use: command-line default will be used");
+	    warningcall(call, _("save=\"ask\" in non-interactive use: command-line default will be used"));
     } else if( !strcmp(tmp, "no") )
 	ask = SA_NOSAVE;
     else if( !strcmp(tmp, "yes") )
@@ -846,15 +872,15 @@ SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if( !strcmp(tmp, "default") )
 	ask = SA_DEFAULT;
     else
-	errorcall(call, "unrecognized value of save");
+	errorcall(call, _("unrecognized value of 'save'"));
     status = asInteger(CADR(args));
     if (status == NA_INTEGER) {
-        warningcall(call, "invalid status, 0 assumed");
+        warningcall(call, _("invalid 'status', 0 assumed"));
 	runLast = 0;
     }
     runLast = asLogical(CADDR(args));
     if (runLast == NA_LOGICAL) {
-        warningcall(call, "invalid runLast, FALSE assumed");
+        warningcall(call, _("invalid 'runLast', FALSE assumed"));
 	runLast = 0;
     }
     /* run the .Last function. If it gives an error, will drop back to main
@@ -885,7 +911,7 @@ Rf_addTaskCallback(R_ToplevelCallback cb, void *data,
     R_ToplevelCallbackEl *el;
     el = (R_ToplevelCallbackEl *) malloc(sizeof(R_ToplevelCallbackEl));
     if(!el)
-	error("cannot allocate space for toplevel callback element.");
+	error(_("cannot allocate space for toplevel callback element"));
 
     el->data = data;
     el->cb = cb;
@@ -963,7 +989,7 @@ Rf_removeTaskCallbackByIndex(int id)
     Rboolean status = TRUE;
 
     if(id < 0)
-	error("negative index passed to R_removeTaskCallbackByIndex");
+	error(_("negative index passed to R_removeTaskCallbackByIndex"));
 
     if(Rf_ToplevelTaskHandlers) {
 	if(id == 0) {
@@ -997,7 +1023,7 @@ Rf_removeTaskCallbackByIndex(int id)
 
 /**
   R-level entry point to remove an entry from the
-  list of top-level callbacks. `which' should be an
+  list of top-level callbacks. 'which' should be an
   integer and give us the 0-based index of the element
   to be removed from the list.
 
@@ -1076,7 +1102,7 @@ Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded,
     while(h) {
 	again = (h->cb)(expr, value, succeeded, visible, h->data);
 	if(R_CollectWarnings) {
-	    REprintf("warning messages from top-level task callback `%s'\n", 
+	    REprintf(_("warning messages from top-level task callback '%s'\n"), 
 		     h->name);
 	    PrintWarnings();
 	}
@@ -1136,7 +1162,7 @@ R_taskCallbackRoutine(SEXP expr, SEXP value, Rboolean succeeded,
 	PROTECT(val);
 	if(TYPEOF(val) != LGLSXP) {
               /* It would be nice to identify the function. */
-	    warning("top-level task callback did not return a logical value");
+	    warning(_("top-level task callback did not return a logical value"));
 	}
 	again = asLogical(val);
 	UNPROTECT(1);

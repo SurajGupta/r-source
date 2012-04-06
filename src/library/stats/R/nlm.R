@@ -6,7 +6,7 @@ nlm <- function(f, p, hessian=FALSE, typsize=rep(1,length(p)),
 
     print.level <- as.integer(print.level)
     if(print.level < 0 || print.level > 2)
-	stop("`print.level' must be in {0,1,2}")
+	stop("'print.level' must be in {0,1,2}")
     ## msg is collection of bits, i.e., sum of 2^k (k = 0,..,4):
     msg <- (1 + c(8,0,16))[1+print.level]
     if(!check.analyticals) msg <- msg + (2 + 4)
@@ -39,7 +39,7 @@ uniroot <- function(f, interval, lower=min(interval), upper=max(interval),
     val <- .Internal(zeroin(function(arg) f(arg, ...), lower, upper, tol,
 			    as.integer(maxiter)))
     if((iter <- as.integer(val[2])) < 0) {
-	warning(paste("_NOT_ converged in ",maxiter,"iterations."))
+	warning("_NOT_ converged in ",maxiter, " iterations")
         iter <- -iter
     }
     list(root=val[1], f.root=f(val[1], ...),

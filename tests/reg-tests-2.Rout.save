@@ -1,6 +1,6 @@
 
-R : Copyright 2004, The R Foundation for Statistical Computing
-Version 2.1.0 Under development (unstable) (2004-10-27), ISBN 3-900051-07-0
+R : Copyright 2005, The R Foundation for Statistical Computing
+Version 2.1.0 Under development (unstable) (2005-03-09), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,9 +17,9 @@ Type 'q()' to quit R.
 > ## Regression tests for which the printed output is the issue
 > ### _and_ must work (no Recommended packages, please)
 > 
-> postscript("reg-tests-2.ps")
+> postscript("reg-tests-2.ps", encoding = "ISOLatin1.enc")
 > RNGversion("1.6.2")
-Warning message: 
+Warning message:
 Buggy version of Kinderman-Ramage generator used. in: RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") 
 > 
 > ### moved from various .Rd files
@@ -469,7 +469,7 @@ numeric(0)
 > (ix <- structure(as.integer(x),names= names(x)))
    100 -1e-13    Inf   -Inf    NaN   3.14     NA 
    100      0     NA     NA     NA      3     NA 
-Warning message: 
+Warning message:
 NAs introduced by coercion 
 > ##-   100 -1e-13    Inf   -Inf    NaN   3.14     NA
 > ##-   100      0     NA     NA     NA      3     NA
@@ -1204,14 +1204,14 @@ Apr 1921 10     11
 > 
 > ## PR 883 (cor(x,y) when is.null(y))
 > try(cov(rnorm(10), NULL))
-Error in cov(rnorm(10), NULL) : supply both x and y or a matrix-like x
+Error in cov(rnorm(10), NULL) : supply both 'x' and 'y' or a matrix-like 'x'
 > try(cor(rnorm(10), NULL))
-Error in cor(rnorm(10), NULL) : supply both x and y or a matrix-like x
+Error in cor(rnorm(10), NULL) : supply both 'x' and 'y' or a matrix-like 'x'
 > ## gave the variance and 1 respectively in 1.2.2.
 > try(var(NULL))
-Error in var(NULL) : `x' is empty
+Error in var(NULL) : 'x' is empty
 > try(var(numeric(0)))
-Error in var(numeric(0)) : `x' is empty
+Error in var(numeric(0)) : 'x' is empty
 > ## gave NA in 1.2.2
 > 
 > 
@@ -1472,7 +1472,7 @@ Error in log(x) : Non-numeric argument to mathematical function
 [1] 0.75
 > mean(as.factor(x))
 [1] NA
-Warning message: 
+Warning message:
 argument is not numeric or logical: returning NA in: mean.default(as.factor(x)) 
 > ## last had confusing error message in 1.3.1.
 > 
@@ -1500,10 +1500,9 @@ x    1  2
 > data <- data.frame(weight, group)
 > fit <- lm(cbind(w=weight, w2=weight^2) ~ group, data=data)
 > predict(fit, newdata=data[1:2, ])
-   
-        w       w2
-  1 5.032 25.62702
-  2 5.032 25.62702
+      w       w2
+1 5.032 25.62702
+2 5.032 25.62702
 > ## was 20 rows in R <= 1.4.0
 > 
 > 
@@ -1657,11 +1656,11 @@ Levels: C A B
 > x <- as.integer(2^30)
 > sum(x, x)    # did not warn in 1.4.1
 [1] NA
-Warning message: 
+Warning message:
 Integer overflow in sum(.); use sum(as.numeric(.)) 
 > sum(c(x, x)) # did warn
 [1] NA
-Warning message: 
+Warning message:
 Integer overflow in sum(.); use sum(as.numeric(.)) 
 > (z <- sum(x, x, 0.0)) # was NA in 1.4.1
 [1] 2147483648
@@ -1743,8 +1742,8 @@ Sep 1961  20  30
 +        0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1,
 +        1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0)
 > try(glm(y ~ x, family = poisson(identity)))
-Error: no valid set of coefficients has been found:please supply starting values
-In addition: Warning message: 
+Error: no valid set of coefficients has been found: please supply starting values
+In addition: Warning message:
 NaNs produced in: log(x) 
 > ## failed because start = NULL in 1.4.1
 > ## now gives useful error message
@@ -1759,9 +1758,9 @@ Coefficients:
 Degrees of Freedom: 99 Total (i.e. Null);  98 Residual
 Null Deviance:	    68.01 
 Residual Deviance: 60.66 	AIC: 168.7 
-Warning messages: 
-1: Step size truncated: out of bounds 
-2: Step size truncated: out of bounds 
+Warning messages:
+1: step size truncated: out of bounds 
+2: step size truncated: out of bounds 
 > ## step reduction failed in 1.4.1
 > set.seed(123)
 > y <- rpois(100, pmax(3*x, 0))
@@ -1779,33 +1778,33 @@ Residual Deviance: 228.5 	AIC: 344.7
 There were 27 warnings (use warnings() to see them)
 > warnings()
 Warning messages:
-1: Step size truncated: out of bounds
-2: Step size truncated: out of bounds
-3: Step size truncated: out of bounds
-4: Step size truncated: out of bounds
-5: Step size truncated: out of bounds
-6: Step size truncated: out of bounds
-7: Step size truncated: out of bounds
-8: Step size truncated: out of bounds
-9: Step size truncated: out of bounds
-10: Step size truncated: out of bounds
-11: Step size truncated: out of bounds
-12: Step size truncated: out of bounds
-13: Step size truncated: out of bounds
-14: Step size truncated: out of bounds
-15: Step size truncated: out of bounds
-16: Step size truncated: out of bounds
-17: Step size truncated: out of bounds
-18: Step size truncated: out of bounds
-19: Step size truncated: out of bounds
-20: Step size truncated: out of bounds
-21: Step size truncated: out of bounds
-22: Step size truncated: out of bounds
-23: Step size truncated: out of bounds
-24: Step size truncated: out of bounds
-25: Step size truncated: out of bounds
-26: Algorithm did not converge in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
-27: Algorithm stopped at boundary value in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
+1: step size truncated: out of bounds
+2: step size truncated: out of bounds
+3: step size truncated: out of bounds
+4: step size truncated: out of bounds
+5: step size truncated: out of bounds
+6: step size truncated: out of bounds
+7: step size truncated: out of bounds
+8: step size truncated: out of bounds
+9: step size truncated: out of bounds
+10: step size truncated: out of bounds
+11: step size truncated: out of bounds
+12: step size truncated: out of bounds
+13: step size truncated: out of bounds
+14: step size truncated: out of bounds
+15: step size truncated: out of bounds
+16: step size truncated: out of bounds
+17: step size truncated: out of bounds
+18: step size truncated: out of bounds
+19: step size truncated: out of bounds
+20: step size truncated: out of bounds
+21: step size truncated: out of bounds
+22: step size truncated: out of bounds
+23: step size truncated: out of bounds
+24: step size truncated: out of bounds
+25: step size truncated: out of bounds
+26: algorithm did not converge in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
+27: algorithm stopped at boundary value in: glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,   ...
 > 
 > 
 > ## extending char arrrays
@@ -2225,10 +2224,10 @@ j.f = 1e-14 ;  rel.range =     0 * EPS
 par("usr")[3:4]:     1.784     4.499
 par("yaxp") :            2         4         4
 
-Warning messages: 
-1: relative range of values =  43 * EPS, is small (axis 2). 
-2: relative range of values =  36 * EPS, is small (axis 2). 
-3: relative range of values =  17 * EPS, is small (axis 2). 
+Warning messages:
+1: relative range of values =  43 * EPS, is small (axis 2) 
+2: relative range of values =  36 * EPS, is small (axis 2) 
+3: relative range of values =  17 * EPS, is small (axis 2) 
 > par(mfrow = c(1,1))
 > ## The warnings from inside GScale() will differ in their  relrange() ...
 > ## >> do sloppy testing
@@ -2281,7 +2280,7 @@ print method
 show method
 > 
 > setMethod("print", "bar", function(x, ...){cat("S4 print method\n")})
-Creating a new generic function for "print" in ".GlobalEnv" 
+Creating a new generic function for 'print' in '.GlobalEnv'
 [1] "print"
 > foo
 S4 print method
@@ -2523,7 +2522,7 @@ x3  0.81       -0.97
 13     70
 14     71
 15     72
-Warning message: 
+Warning message:
 drop argument will be ignored in: "[.data.frame"(women, "height", drop = FALSE) 
 > women["height", drop = TRUE]   # ditto
    height
@@ -2542,7 +2541,7 @@ drop argument will be ignored in: "[.data.frame"(women, "height", drop = FALSE)
 13     70
 14     71
 15     72
-Warning message: 
+Warning message:
 drop argument will be ignored in: "[.data.frame"(women, "height", drop = TRUE) 
 > women[,"height", drop = FALSE] # no warning
    height
@@ -2766,7 +2765,7 @@ $df
 $residual.scale
 [1] 0.5234843
 
-Warning message: 
+Warning message:
 prediction from a rank-deficient fit may be misleading in: predict.lm(fit, data.frame(x = x), se = TRUE) 
 > predict(fit, type="terms", se=TRUE)
 $fit
@@ -2966,7 +2965,7 @@ $se.fit
 $residual.scale
 [1] 0.5234843
 
-Warning message: 
+Warning message:
 prediction from a rank-deficient fit may be misleading in: predict.lm(object, newdata, se.fit, scale = residual.scale, type = ifelse(type ==  
 > predict(fit, type="terms", se=TRUE)
 $fit
@@ -3258,7 +3257,8 @@ Error in "[.data.frame"(x, 1, c("a", "c")) :
 [36] str           subset        summary       t             tail         
 [41] transform     unique        unstack      
 > meth2gen("dendrogram")
-[1] [[      cut     labels  plot    print   reorder rev     str    
+[1] [[         cophenetic cut        labels     plot       print      reorder   
+[8] rev        str       
 > ## --> the output may need somewhat frequent updating..
 > 
 > 
@@ -3352,7 +3352,7 @@ attr(,"contrasts")$x
 
 > lm.fit <- lm(y ~ x, data.frame(x=1:10, y=1:10))
 > try(predict(lm.fit, data.frame(x=NA)))
-Error: variable 'x' was fitted with numeric but logical was supplied
+Error: variable 'x' was fitted with class "numeric" but class "logical" was supplied
 > ## wrong answers in 1.8.0, refused to run in 1.8.1
 > 
 > 
@@ -3714,13 +3714,13 @@ probability of success
 > try(numeric(2^31))
 Error in vector("double", length) : vector size specified is too large
 > try(matrix( , 2^31, 1))
-Error in matrix(, 2^31, 1) : matrix: invalid nrow value (too large or NA)
-In addition: Warning message: 
+Error in matrix(, 2^31, 1) : matrix: invalid 'nrow' value (too large or NA)
+In addition: Warning message:
 NAs introduced by coercion 
 > try(matrix( , 2^31/10, 100))
 Error in matrix(, 2^31/10, 100) : matrix: too many elements specified
 > try(array(dim=c(2^31/10, 100)))
-Error in array(dim = c(2^31/10, 100)) : dim specifies too large an array
+Error in array(dim = c(2^31/10, 100)) : 'dim' specifies too large an array
 > ## reported negative values (really integer NA) for R < 1.9.0
 > 
 > 
@@ -3737,8 +3737,8 @@ Error in array(dim = c(2^31/10, 100)) : dim specifies too large an array
 +                         f2=factor(rep(c("g1","g2","g3"),each=18))
 + )
 > sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f1+f2)), data=sample.df)
-Warning message: 
-Error model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f1 + f2)), data = sample.df) 
+Warning message:
+Error() model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f1 + f2)), data = sample.df) 
 > sample.aov
 
 Call:
@@ -3791,8 +3791,8 @@ Error: Within
           Df  Sum Sq Mean Sq F value Pr(>F)
 Residuals 42 29204.1   695.3               
 > sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f2+f1)), data=sample.df)
-Warning message: 
-Error model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), data = sample.df) 
+Warning message:
+Error() model is singular in: aov(dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), data = sample.df) 
 > sample.aov
 
 Call:
@@ -3889,7 +3889,7 @@ Residuals 42 29204.1   695.3
 > y1 <- rnorm(4)
 > x1 * y1
 [1]  0.5574682  0.1410502  0.1609194 -0.3641637
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: x1 * y1 
 > x1 * as.matrix(y1) # no warning in 1.8.1
@@ -3898,21 +3898,21 @@ longer object length
 [2,]  0.1410502
 [3,]  0.1609194
 [4,] -0.3641637
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: x1 * as.matrix(y1) 
 > x1 * matrix(y1,2,2)# ditto
           [,1]       [,2]
 [1,] 0.5574682  0.1609194
 [2,] 0.1410502 -0.3641637
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: x1 * matrix(y1, 2, 2) 
 > z1 <- x1 > 0
 > z2 <- y1 > 0
 > z1 & z2
 [1]  TRUE  TRUE  TRUE FALSE
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: z1 & z2 
 > z1 & as.matrix(z2) # no warning in 1.8.1
@@ -3921,21 +3921,21 @@ longer object length
 [2,]  TRUE
 [3,]  TRUE
 [4,] FALSE
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: z1 & as.matrix(z2) 
 > x1 < y1            # no warning in 1.8.1
 [1] FALSE  TRUE FALSE FALSE
-Warning message: 
+Warning message:
 longer object length
-	is not a multiple of shorter object length in: x1 < y1 
+ 	is not a multiple of shorter object length in: x1 < y1 
 > x1 < as.matrix(y1) # ditto
       [,1]
 [1,] FALSE
 [2,]  TRUE
 [3,] FALSE
 [4,] FALSE
-Warning message: 
+Warning message:
 longer object length
 	is not a multiple of shorter object length in: x1 < as.matrix(y1) 
 > ##
@@ -4032,7 +4032,7 @@ attr(,".Environment")
 > ## negative subscripts could be mixed with NAs
 > x <- 1:3
 > try(x[-c(1, NA)])
-Error in try(x[-c(1, NA)]) : only 0's may mix with negative subscripts
+Error in try(x[-c(1, NA)]) : only 0's may be mixed with negative subscripts
 > ## worked on some platforms, segfaulted on others in 1.8.1
 > 
 > 
@@ -4109,7 +4109,7 @@ quote(b)
 [1] 18
 > readBin(zz, "character", 100)  # is confused by embedded nul.
 [1] "A test string" ""             
-Warning message: 
+Warning message:
 incomplete string at end of file has been discarded 
 > seek(zz, 0, "start")
 [1] 18
@@ -4148,7 +4148,7 @@ Coefficients:
  1.83760728  0.93041126  0.17714205  0.19350695  1.13343277  0.84194402 
           7           8           9          10 
  0.08867482  0.25896653  0.27533143 -0.47793778 
-Warning message: 
+Warning message:
 'newdata' had 2 rows but variable(s) found have 10 rows 
 > ## warns as from 2.0.0
 > 
@@ -4286,4 +4286,233 @@ Warning message:
 3 12 34   5
 > unlink("test.txt")
 > ##
+> 
+> 
+> ## split was not handling lists and raws
+> split(as.list(1:3), c(1,1,2))
+$"1"
+$"1"[[1]]
+[1] 1
+
+$"1"[[2]]
+[1] 2
+
+
+$"2"
+$"2"[[1]]
+[1] 3
+
+
+> (y <- charToRaw("A test string"))
+ [1] 41 20 74 65 73 74 20 73 74 72 69 6e 67
+> (z <- split(y, rep(1:5, times=c(1,1,4,1,6))))
+$"1"
+[1] 41
+
+$"2"
+[1] 20
+
+$"3"
+[1] 74 65 73 74
+
+$"4"
+[1] 20
+
+$"5"
+[1] 73 74 72 69 6e 67
+
+> sapply(z, rawToChar)
+       1        2        3        4        5 
+     "A"      " "   "test"      " " "string" 
+> ## wrong results in 2.0.0
+> 
+> 
+> ## tests of changed S3 implicit classes in 2.1.0
+> foo <- function(x, ...) UseMethod("foo")
+> foo.numeric <- function(x) cat("numeric arg\n")
+> foo(1:10)
+numeric arg
+> foo(pi)
+numeric arg
+> foo(matrix(1:10, 2, 5))
+numeric arg
+> foo.integer <- function(x) cat("integer arg\n")
+> foo.double <- function(x) cat("double arg\n")
+> foo(1:10)
+integer arg
+> foo(pi)
+double arg
+> foo(matrix(1:10, 2, 5))
+integer arg
+> ##
+> 
+> 
+> ## str() interpreted escape sequences prior to 2.1.0
+> x <- "ab\bc\ndef"
+> str(x)
+ chr "ab\bc\ndef"
+> str(x, vec.len=0)# failed in rev 32244
+ chr  ...
+> str(factor(x))
+ Factor w/ 1 level "ab\bc\ndef": 1
+> 
+> x <- c("a", NA, "b")
+> factor(x)
+[1] a    <NA> b   
+Levels: a b
+> factor(x, exclude="")
+[1] a    <NA> b   
+Levels: a b <NA>
+> str(x)
+ chr [1:3] "a" NA "b"
+> str(factor(x))
+ Factor w/ 2 levels "a","b": 1 NA 2
+> str(factor(x, exclude=""))
+ Factor w/ 3 levels "a","b",NA: 1 3 2
+> ##
+> 
+> 
+> ## print.factor(quote=TRUE) was not quoting levels
+> x <- c("a", NA, "b", 'a " test')
+> factor(x)
+[1] a        <NA>     b        a " test
+Levels: a a " test b
+> factor(x, exclude="")
+[1] a        <NA>     b        a " test
+Levels: a a " test b <NA>
+> print(factor(x), quote=TRUE)
+[1] "a"         NA          "b"         "a \" test"
+Levels: "a" "a \" test" "b"
+> print(factor(x, exclude=""), quote=TRUE)
+[1] "a"         NA          "b"         "a \" test"
+Levels: "a" "a \" test" "b" NA
+> ## last two printed levels differently from values in 2.0.1
+> 
+> 
+> ## write.table in marginal cases
+> x <- matrix(, 3, 0)
+> write.table(x) # 3 rows
+"1" 
+"2" 
+"3" 
+> write.table(x, row.names=FALSE)
+
+
+
+> # note: scan and read.table won't read this as they take empty fields as NA
+> ## was 1 row in 2.0.1
+> 
+> 
+> ## More tests of write.table
+> x <- list(a=1, b=1:2, c=3:4, d=5)
+> dim(x) <- c(2,2)
+> x
+     [,1]      [,2]     
+[1,] 1         Integer,2
+[2,] Integer,2 5        
+> write.table(x)
+"V1" "V2"
+"1" 1 c(3, 4)
+"2" c(1, 2) 5
+> 
+> x1 <- data.frame(a=1:2, b=I(matrix(LETTERS[1:4], 2, 2)), c = c("(i)", "(ii)"))
+> x1
+  a b.1 b.2    c
+1 1   A   C  (i)
+2 2   B   D (ii)
+> write.table(x1) # In 2.0.1 had 3 headers, 4 cols
+"a" "b.1" "b.2" "c"
+"1" 1 A C "(i)"
+"2" 2 B D "(ii)"
+> write.table(x1, quote=c(2,3,4))
+"a" "b.1" "b.2" "c"
+"1" 1 "A" "C" "(i)"
+"2" 2 "B" "D" "(ii)"
+> 
+> x2 <- data.frame(a=1:2, b=I(list(a=1, b=2)))
+> x2
+  a b
+a 1 1
+b 2 2
+> write.table(x2)
+"a" "b"
+"a" 1 1
+"b" 2 2
+> 
+> x3 <- seq(as.Date("2005-01-01"), len=6, by="day")
+> x4 <- data.frame(x=1:6, y=x3)
+> dim(x3) <- c(2,3)
+> x3
+[1] "2005-01-01" "2005-01-02" "2005-01-03" "2005-01-04" "2005-01-05"
+[6] "2005-01-06"
+> write.table(x3) # matrix, so loses class
+"V1" "V2" "V3"
+"1" 12784 12786 12788
+"2" 12785 12787 12789
+> x4
+  x          y
+1 1 2005-01-01
+2 2 2005-01-02
+3 3 2005-01-03
+4 4 2005-01-04
+5 5 2005-01-05
+6 6 2005-01-06
+> write.table(x4) # preserves class, does not quote
+"x" "y"
+"1" 1 2005-01-01
+"2" 2 2005-01-02
+"3" 3 2005-01-03
+"4" 4 2005-01-04
+"5" 5 2005-01-05
+"6" 6 2005-01-06
+> ##
+> 
+> 
+> ## Problem with earlier regexp code spotted by KH
+> grep("(.*s){2}", "Arkansas", v = TRUE)
+[1] "Arkansas"
+> grep("(.*s){3}", "Arkansas", v = TRUE)
+character(0)
+> grep("(.*s){3}", state.name, v = TRUE)
+[1] "Massachusetts" "Mississippi"  
+> ## Thought Arkansas had 3 s's.
+> 
+> 
+> ## Replacing part of a non-existent column could create a short column.
+> xx<- data.frame(a=1:4, b=letters[1:4])
+> xx[2:3, "c"] <- 2:3
+> ## gave short column in R < 2.1.0.
+> 
+> 
+> ## add1/drop1 could give misleading results if missing values were involved
+> y <- rnorm(1:20)
+> x <- 1:20; x[10] <- NA
+> x2 <- runif(20); x2[20] <- NA
+> fit <- lm(y ~ x)
+> drop1(fit)
+Single term deletions
+
+Model:
+y ~ x
+       Df Sum of Sq     RSS     AIC
+<none>              20.1913  5.1555
+x       1    1.4798 21.6711  4.4993
+> res <-  try(stats:::drop1.default(fit))
+Error in stats:::drop1.default(fit) : number of rows in use has changed: remove missing values?
+> stopifnot(inherits(res, "try-error"))
+> add1(fit, ~ . +x2)
+Single term additions
+
+Model:
+y ~ x
+       Df Sum of Sq     RSS     AIC
+<none>              17.6049  3.6005
+x2      1    0.0117 17.5931  5.5885
+Warning message:
+using the 18/19 rows from a combined fit in: add1.lm(fit, ~. + x2) 
+> res <-  try(stats:::add1.default(fit, ~ . +x2))
+Error in stats:::add1.default(fit, ~. + x2) : 
+	number of rows in use has changed: remove missing values?
+> stopifnot(inherits(res, "try-error"))
+> ## 2.0.1 ran and gave incorrect answers.
 > 

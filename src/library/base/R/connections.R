@@ -97,7 +97,7 @@ seek.connection <- function(con, where = NA, origin = "start", rw = "", ...)
     origin <- pmatch(origin, c("start", "current", "end"))
     rw <- pmatch(rw, c("read", "write"), 0)
     if(is.na(origin))
-        stop("`origin' must be one of `start', `current` or `end'")
+        stop("'origin' must be one of 'start', 'current' or 'end'")
     .Internal(seek(con, as.double(where), origin, rw))
 }
 
@@ -191,10 +191,6 @@ writeBin <- function(object, con, size = NA, endian = .Platform$endian)
     invisible(.Internal(writeBin(object, con, size, swap)))
 }
 
-## encoding vectors
-native.enc <- 0:255
-# rest in Rprofile.*
-
 readChar <- function(con, nchars)
 {
     if(is.character(con)) {
@@ -204,7 +200,8 @@ readChar <- function(con, nchars)
     .Internal(readChar(con, as.integer(nchars)))
 }
 
-writeChar <- function(object, con, nchars = nchar(object), eos = "")
+writeChar <- function(object, con, nchars = nchar(object, type="chars"),
+                      eos = "")
 {
     if(!is.character(object))
         stop("can only write character objects")

@@ -20,11 +20,13 @@
   U.S.A.
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 #include <Defn.h>
+#include <R_ext/Riconv.h>
 
 /*
   See ../unix/system.txt for a description of some of these functions.
@@ -48,8 +50,8 @@
 #endif
 
 #if HAVE_AQUA
-extern Rboolean useCocoa;
 extern int (*ptr_CocoaSystem)(char*);
+extern	Rboolean useaqua;
 #endif
 
 Rboolean R_FileExists(char *path)
@@ -62,18 +64,18 @@ double R_FileMtime(char *path)
 {
     struct stat sb;
     if (stat(R_ExpandFileName(path), &sb) != 0)
-	error("cannot determine file modification time of %s", path);
+	error(_("cannot determine file modification time of '%s'"), path);
     return sb.st_mtime;
 }
 #else
 Rboolean R_FileExists(char *path)
 {
-    error("file existence is not available on this system");
+    error(_("file existence is not available on this system"));
 }
 
 double R_FileMtime(char *path)
 {
-    error("file modification time is not available on this system");
+    error(_("file modification time is not available on this system"));
     return 0.0; /* not reached */
 }
 #endif
@@ -136,13 +138,13 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     pattern = CAR(args); n1 = length(pattern);
     tempdir = CADR(args); n2 = length(tempdir);
     if (!isString(pattern))
-        errorcall(call, "invalid filename pattern");
+        errorcall(call, _("invalid filename pattern"));
     if (!isString(tempdir))
-        errorcall(call, "invalid tempdir");
+        errorcall(call, _("invalid 'tempdir'"));
     if (n1 < 1)
-	errorcall(call, "no patterns");
+	errorcall(call, _("no 'pattern'"));
     if (n2 < 1)
-	errorcall(call, "no tempdir");
+	errorcall(call, _("no 'tempdir'"));
     slen = (n1 > n2) ? n1 : n2;
     PROTECT(ans = allocVector(STRSXP, slen));
     for(i = 0; i < slen; i++) {
@@ -184,7 +186,7 @@ int R_system(char *command)
     sigaddset(&ss, SIGPROF);
     sigprocmask(SIG_BLOCK, &ss,  NULL);
 #ifdef HAVE_AQUA
-	if(useCocoa)
+	if(useaqua)
 		val = ptr_CocoaSystem(command);
     else
 #endif		
@@ -214,7 +216,7 @@ SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (!isString(CAR(args)))
-	errorcall(call, "wrong type for argument");
+	errorcall(call, _("wrong type for argument"));
 
     i = LENGTH(CAR(args));
     if (i == 0) {
@@ -269,8 +271,8 @@ SEXP do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
 
-    if (!isString(vars =CAR(args)))
-	errorcall(call, "wrong type for argument");
+    if (!isString(vars = CAR(args)))
+	errorcall(call, _("wrong type for argument"));
 
     n = LENGTH(vars);
     PROTECT(ans = allocVector(LGLSXP, n));
@@ -280,7 +282,219 @@ SEXP do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(1);
     return ans;
 #else
-    error("`putenv' is not available on this system");
+    error(_("'putenv' is not available on this system"));
     return R_NilValue; /* -Wall */
 #endif
 }
+
+
+/* Unfortunately glibc and Solaris diff in the const in the iconv decl.
+   libiconv agrees with Solaris here.
+ */
+#ifdef HAVE_ICONV_H
+#define const
+#include <iconv.h>
+#undef const
+#endif
+
+#ifdef Win32
+DL_FUNC ptr_iconv, ptr_iconv_open, ptr_iconv_close, ptr_iconvlist;
+
+static void iconv_Init(void)
+{
+    static int initialized = 0;
+    char dllpath[PATH_MAX];
+    snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", getenv("R_HOME"), 
+	     FILESEP, FILESEP, "iconv", SHLIB_EXT);
+    if(!initialized) {
+	int res = moduleCdynload("iconv", 1, 1);
+	initialized = res ? 1 : -1;
+	if(initialized > 0) {
+	    ptr_iconv = R_FindSymbol("libiconv", "iconv", NULL);
+	    ptr_iconv_open = R_FindSymbol("libiconv_open", "iconv", NULL);
+	    ptr_iconv_close = R_FindSymbol("libiconv_close", "iconv", NULL);
+	    ptr_iconvlist = R_FindSymbol("libiconvlist", "iconv", NULL);
+	    if(!ptr_iconv)
+		error(_("failed to find symbols in iconv.dll"));
+	}
+    }
+    if(initialized < 0)
+	error(_("iconv.dll is not available on this system"));
+}
+#undef iconv
+#undef iconv_open
+#undef iconv_close
+#undef iconvlist
+#define iconv(a,b,c,d,e) ((size_t)(*ptr_iconv)(a,b,c,d,e))
+#define iconv_open(a, b) ((iconv_t)(*ptr_iconv_open)(a,b))
+#define iconv_close(a) ((int)(*ptr_iconv_close)(a))
+#define iconvlist (*ptr_iconvlist)
+#endif
+
+
+#ifdef HAVE_ICONVLIST
+static unsigned int cnt;
+
+static int 
+count_one (unsigned int namescount, char * *names, void *data)
+{
+    cnt += namescount;
+    return 0;
+}
+
+static int 
+write_one (unsigned int namescount, char * *names, void *data)
+{
+  unsigned int i;
+  SEXP ans = (SEXP) data;
+  
+  for (i = 0; i < namescount; i++)
+      SET_STRING_ELT(ans, cnt++, mkChar(names[i]));
+  return 0;
+}
+#endif
+
+#include "RBufferUtils.h"
+
+/* iconv(x, from, to, sub) */
+SEXP do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+#if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
+    SEXP ans, x = CAR(args);
+    iconv_t obj;
+    int i, j;
+    char *inbuf; /* Solaris headers have const char*  here */
+    char *outbuf;
+    char *sub;
+    size_t inb, outb, res;
+    R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
+    
+    checkArity(op, args);
+#ifdef Win32
+    iconv_Init();
+#endif
+    if(isNull(x)) {  /* list locales */
+#ifdef HAVE_ICONVLIST
+	cnt = 0;
+	iconvlist(count_one, NULL);
+	PROTECT(ans = allocVector(STRSXP, cnt));
+	cnt = 0;
+	iconvlist(write_one, (void *)ans);
+#else
+    PROTECT(ans = R_NilValue);
+#endif
+    } else {
+	if(TYPEOF(x) != STRSXP)
+	    errorcall(call, _("'x' must be a character vector"));
+	if(!isString(CADR(args)) || length(CADR(args)) != 1)
+	    errorcall(call, _("invalid 'from' argument"));
+	if(!isString(CADDR(args)) || length(CADDR(args)) != 1)
+	    errorcall(call, _("invalid 'to' argument"));
+	if(!isString(CADDDR(args)) || length(CADDDR(args)) != 1)
+	    errorcall(call, _("invalid 'sub' argument"));
+	if(STRING_ELT(CADDDR(args), 0) == NA_STRING) sub = NULL;
+	else sub = CHAR(STRING_ELT(CADDDR(args), 0));
+
+	obj = iconv_open(CHAR(STRING_ELT(CADDR(args), 0)),
+			 CHAR(STRING_ELT(CADR(args), 0)));
+	if(obj == (iconv_t)(-1))
+	    errorcall(call, _("unsupported conversion"));
+	PROTECT(ans = duplicate(x));
+	R_AllocStringBuffer(0, &cbuff);  /* just default */
+	for(i = 0; i < LENGTH(x); i++) {
+	top_of_loop:
+	    inbuf = CHAR(STRING_ELT(x, i)); inb = strlen(inbuf);
+	    outbuf = cbuff.data; outb = cbuff.bufsize - 1;
+	    /* First initialize output */
+	    iconv (obj, NULL, NULL, &outbuf, &outb);
+        next_char:
+	    /* Then convert input  */
+	    res = iconv(obj, &inbuf , &inb, &outbuf, &outb);
+	    *outbuf = '\0';
+	    /* other possible error conditions are incomplete 
+	       and invalid multibyte chars */
+	    if(res == -1 && errno == E2BIG) {
+		R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
+		goto top_of_loop;
+	    } else if(res == -1 && errno == EILSEQ && sub) {
+		/* it seems this gets thrown for non-convertible input too */
+		if(strcmp(sub, "byte") == 0) {
+		    if(outb < 5) {
+			R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
+			goto top_of_loop;
+		    }
+		    snprintf(outbuf, 5, "<%02x>", (unsigned char)*inbuf);
+		    outbuf += 4; outb -= 4;
+		} else {
+		    if(outb < strlen(sub)) {
+			R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
+			goto top_of_loop;
+		    }
+		    for(j = 0; j < strlen(sub); j++) *outbuf++ = sub[j];
+		    outb -= strlen(sub);
+		}
+		inbuf++; inb--;
+		goto next_char;
+	    }
+	
+	    if(res != -1 && inb == 0)
+		SET_STRING_ELT(ans, i, mkChar(cbuff.data));
+	    else SET_STRING_ELT(ans, i, NA_STRING);
+	}
+	iconv_close(obj);
+	R_FreeStringBuffer(&cbuff);
+    }
+    UNPROTECT(1);
+    return ans;
+#else
+    error(_("'iconv' is not available on this system"));
+    return R_NilValue; /* -Wall */
+#endif
+}
+
+#if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
+void * Riconv_open (char* tocode, char* fromcode)
+{
+#ifdef Win32
+    iconv_Init();
+#ifdef SUPPORT_UTF8
+    if(!strcmp(tocode, ""))  return iconv_open("UTF-8", fromcode);
+    else if(!!strcmp(fromcode, "")) return iconv_open(tocode, "UTF-8");
+    else
+#endif
+	return iconv_open(tocode, fromcode);
+#else
+    return iconv_open(tocode, fromcode);
+#endif
+}
+
+size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft, 
+	       char **outbuf, size_t *outbytesleft)
+{
+    return iconv((iconv_t) cd, inbuf, inbytesleft, outbuf, outbytesleft);
+}
+
+int Riconv_close (void *cd)
+{
+    return iconv_close((iconv_t) cd);
+}
+#else
+void * Riconv_open (char* tocode, char* fromcode)
+{
+    error(_("'iconv' is not available on this system"));
+    return (void *)-1;
+}
+
+size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft, 
+	       char **outbuf, size_t *outbytesleft)
+{
+    error(_("'iconv' is not available on this system"));
+    return 0;
+}
+
+int Riconv_close (void * cd)
+{
+    error(_("'iconv' is not available on this system"));
+    return -1;
+}
+#endif

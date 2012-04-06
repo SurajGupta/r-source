@@ -10,7 +10,8 @@ function(x)
     ## Seems the only way we can do this is 'temporarily' change the
     ## working dir and see where this takes us.
     if(!file.exists(epath <- path.expand(x)))
-        stop(paste("file", sQuote(x), "does not exist"))
+        stop(gettextf("file '%s' does not exist", x),
+             domain = NA)
     cwd <- getwd()
     on.exit(setwd(cwd))
     if(file_test("-d", epath)) {
@@ -54,7 +55,8 @@ function(op, x, y)
            "-ot" = (!is.na(mt.x <- file.info(x)$mtime)
                     & !is.na(mt.y <- file.info(y)$mtime)
                     & (mt.x < mt.y)),
-           stop(paste("test", sQuote(op), "is not available")))
+           stop(gettextf("test '%s' is not available", op),
+                domain = NA))
 }
 
 ### ** list_files_with_exts
@@ -115,7 +117,8 @@ function(dir, type, all.files = FALSE, full.names = TRUE)
     files
 }
 
-### **  extract_Rd_file
+### ** extract_Rd_file
+
 extract_Rd_file <-
 function(file, topic)
 {
@@ -125,11 +128,12 @@ function(file, topic)
         else file(file, "r")
         on.exit(close(file))
     }
-    lines <- readLines(file)
+    valid_lines <- lines <- readLines(file)
+    valid_lines[is.na(nchar(lines, "c"))] <- ""
     patt <- paste("^% --- Source file:.*/", topic, ".Rd ---$", sep="")
-    if(length(top <- grep(patt, lines)) != 1)
+    if(length(top <- grep(patt, valid_lines)) != 1)
         stop("no or more than one match")
-    eofs <- grep("^\\\\eof$", lines)
+    eofs <- grep("^\\\\eof$", valid_lines)
     end <- min(eofs[eofs > top]) - 1
     lines[top:end]
 }
@@ -142,9 +146,9 @@ delimMatch <-
 function(x, delim = c("\{", "\}"), syntax = "Rd")
 {
     if(!is.character(x))
-        stop(.wrong_args("x", "must be a character vector"))
+        stop("argument 'x' must be a character vector")
     if((length(delim) != 2) || any(nchar(delim) != 1))
-        stop(.wrong_args("delim", "must specify two single characters"))
+        stop("argument 'delim' must specify two characters")
     if(syntax != "Rd")
         stop("only Rd syntax is currently supported")
 
@@ -175,7 +179,9 @@ function(file, pdf = FALSE, clean = FALSE,
     yy <- system(paste(shQuote(texi2dvi),
                        quiet, pdf, clean,
                        shQuote(file)))
-    if(yy > 0) stop(paste("running texi2dvi on", file, "failed"))
+    if(yy > 0)
+      stop(gettextf("running texi2dvi on '%s' failed", file),
+           domain = NA)
 }
 
 
@@ -301,6 +307,34 @@ local({
     eval(substitute(function() {out}, list(out=out)), envir=NULL)
 })
 
+### ** .is_ASCII
+
+.is_ASCII <-
+function(x)
+{
+    ## Determine whether the strings in a character vector are ASCII or
+    ## not.
+    as.logical(sapply(as.character(x),
+                      function(txt)
+                      all(charToRaw(txt) <= as.raw(127))))
+}
+
+### ** .is_ISO_8859
+
+.is_ISO_8859 <-
+function(x)
+{
+    ## Determine whether the strings in a character vector could be in
+    ## some ISO 8859 character set or not.
+    raw_ub <- charToRaw("\x7f")
+    raw_lb <- charToRaw("\xa0")
+    as.logical(sapply(as.character(x),
+                      function(txt) {
+                          raw <- charToRaw(txt)
+                          all(raw <= raw_ub | raw >= raw_lb)
+                      }))
+}
+
 ### ** .is_primitive
 
 .is_primitive <-
@@ -308,8 +342,7 @@ function(fname, envir)
 {
     ## Determine whether object named 'fname' found in environment
     ## 'envir' is a primitive function.
-    f <- get(fname, envir = envir, inherits = FALSE)
-    is.function(f) && any(grep("^\\.Primitive", deparse(f)))
+    is.primitive(get(fname, envir = envir, inherits = FALSE))
 }
 
 ### ** .is_S3_generic
@@ -490,10 +523,12 @@ function(dfile)
     ## vector.
     ## </NOTE>
     if(!file_test("-f", dfile))
-        stop(paste("file", sQuote(dfile), "does not exist"))
+        stop(gettextf("file '%s' does not exist", dfile),
+             domain = NA)
     db <- try(read.dcf(dfile)[1, ], silent = TRUE)
     if(inherits(db, "try-error"))
-        stop(paste("file", sQuote(dfile), "is not in valid DCF format"))
+        stop(gettextf("file '%s' is not in valid DCF format", dfile),
+             domain = NA)
     db
 }
 
@@ -531,7 +566,7 @@ function(dir, env)
     con <- tempfile("Rcode")
     on.exit(unlink(con))
     if(!file.create(con))
-        stop(paste("unable to create", con))
+        stop("unable to create ", con)
     if(!all(file.append(con, list_files_with_type(dir, "code"))))
         stop("unable to write code files")
     .source_assignments(con, env)
@@ -572,8 +607,8 @@ function(dir, env)
 function(x)
 {
     ## Strip leading and trailing whitespace.
-    x <- sub("^[[:space:]]*", "", x)
-    x <- sub("[[:space:]]*$", "", x)
+    x <- sub("^[[:space:]]+", "", x)
+    x <- sub("[[:space:]]+$", "", x)
     x
 }
 
@@ -583,18 +618,36 @@ function(x)
 function(expr)
 {
     ## Try to run an expression, suppressing all 'output'.  In case of
-    ## failure, stop with the error message.
+    ## failure, stop with the error message and a "traceback" ...
+
     oop <- options(warn = 1)
     on.exit(options(oop))
-    outConn <- file(open = "w")         # anonymous tempfile
+    outConn <- file(open = "w+")         # anonymous tempfile
     sink(outConn, type = "output")
     sink(outConn, type = "message")
-    yy <- try(expr, silent = TRUE)
-    sink(type = "message")
-    sink(type = "output")
-    close(outConn)
-    if(inherits(yy, "try-error"))
-        stop(yy)
+    yy <- tryCatch(withRestarts(withCallingHandlers(expr, error = {
+        function(e) invokeRestart("grmbl", e, sys.calls())
+    }),
+                                grmbl = function(e, calls) {
+                                    n <- length(sys.calls())
+                                    ## Chop things off as needed ...
+                                    calls <- calls[-seq(length = n - 1)]
+                                    calls <- rev(calls)[-c(1, 2)]
+                                    tb <- lapply(calls, deparse)
+                                    stop(conditionMessage(e),
+                                         "\nCall sequence:\n",
+                                         paste(capture.output(traceback(tb)),
+                                               collapse = "\n"),
+                                         call. = FALSE)
+                                }),
+                   error = function(e) e,
+                   finally = {
+                       sink(type = "message")
+                       sink(type = "output")
+                       close(outConn)
+                   })
+    if(inherits(yy, "error"))
+        stop(yy, call. = FALSE)
     yy
 }
 

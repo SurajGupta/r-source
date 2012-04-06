@@ -59,7 +59,7 @@ dev.off <-
     function(which = dev.cur())
 {
     if(which == 1)
-	stop("Cannot shut down device 1 (the null device)")
+	stop("cannot shut down device 1 (the null device)")
     .Internal(dev.off(as.integer(which)))
     dev.cur()
 }
@@ -67,20 +67,20 @@ dev.off <-
 dev.copy <- function(device, ..., which = dev.next())
 {
     if(!missing(which) & !missing(device))
-	stop("Cannot supply which and device at the same time.")
+	stop("cannot supply which and device at the same time")
     old.device <- dev.cur()
     if(old.device == 1)
-	stop("Cannot copy the null device.")
+	stop("cannot copy the null device")
     if(missing(device)) {
 	if(which == 1)
-	    stop("Cannot copy to the null device.")
+	    stop("cannot copy to the null device")
 	else if(which == dev.cur())
-	    stop("Cannot copy device to itself")
+	    stop("cannot copy device to itself")
 	dev.set(which)
     }
     else {
 	if(!is.function(device))
-	    stop("Argument 'device' should be a function")
+	    stop("'device' should be a function")
 	else device(...)
     }
     .Internal(dev.copy(old.device))
@@ -175,6 +175,10 @@ dev.control <- function(displaylist = c("inhibit", "enable"))
 	.Internal(dev.control(displaylist == "enable"))
     } else stop("argument is missing with no default")
     invisible()
+}
+
+recordGraphics <- function(expr, list, env) {
+  .Internal(recordGraphics(substitute(expr), list, env))
 }
 
 graphics.off <- function ()

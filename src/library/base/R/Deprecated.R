@@ -1,23 +1,35 @@
 ###----- NOTE:	../man/Deprecated.Rd   must be synchronized with this!
 ###		--------------------
 .Deprecated <- function(new, package=NULL) {
-    warning(paste(sQuote(as.character(sys.call(sys.parent())[[1]])),
-		  " is deprecated.\n",
-		  if (!missing(new))
-		  paste("Use", sQuote(new), "instead.\n"),
-		  "See help(\"Deprecated\") ",
-                  if(!is.null(package))
-                  paste("and help(\"", package, "-deprecated\").", sep=""),
-		  sep = ""),
-            call. = FALSE)
+    msg <- gettextf("'%s' is deprecated.\n",
+                    as.character(sys.call(sys.parent())[[1]]))
+    if(!missing(new))
+        msg <- c(msg, gettextf("Use '%s' instead.\n", new))
+    if(!is.null(package))
+        msg <- c(msg,
+                 gettextf("See help(\"Deprecated\") and help(\"%s-deprecated\").", package))
+    else msg <- c(msg, gettext("See help(\"Deprecated\")"))
+    warning(paste(msg, collapse=""), call. = FALSE, domain = NA)
 }
 
 ## consider keeping one (commented) entry here, for easier additions
 
 ## <entry>
-## Deprecated in 1.9.0
-# tetragamma <- function(x) {
-#     .Deprecated("psigamma(*, deriv=2)")
-#     psigamma(x, deriv=2)
-# }
+## Deprecated in 2.1.0
+loadURL <- function (url, envir = parent.frame(), quiet = TRUE, ...)
+{
+    .Deprecated("load(url())")
+    tmp <- tempfile("url")
+    download.file(url, tmp, quiet = quiet, ...)
+    on.exit(unlink(tmp))
+    load(tmp, envir = envir)
+}
+## </entry>
+
+## <entry>
+## Deprecated in 2.1.0
+delay <- function(x, env=.GlobalEnv) {
+    .Deprecated("delayedAssign")
+    .Internal(delay(substitute(x), env))
+}
 ## </entry>

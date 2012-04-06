@@ -18,6 +18,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -27,13 +29,13 @@
 
 /* The global var. R_Expressions is in Defn.h */
 #define R_MIN_EXPRESSIONS_OPT	25
-#define R_MAX_EXPRESSIONS_OPT	100000
+#define R_MAX_EXPRESSIONS_OPT	500000
 
 /* Interface to the (polymorphous!)  options(...)  command.
  *
  * We have two kind of options:
- *   1) those used exclusively from R code, 
- *	typically initialized in Rprofile.  
+ *   1) those used exclusively from R code,
+ *	typically initialized in Rprofile.
 
  *	Their names need not appear here, but may, when we want
  *	to make sure that they are assigned `valid' values only.
@@ -42,7 +44,7 @@
  *	Either accessing and/or setting a global C variable,
  *	or just accessed by e.g.  GetOption(install("pager"), ..)
  *
- * A (complete?!) list of these (2):	
+ * A (complete?!) list of these (2):
  *
  *	"prompt"
  *	"continue"
@@ -108,7 +110,7 @@ SEXP GetOption(SEXP tag, SEXP rho)
 {
     SEXP opt = findVar(Options(), R_NilValue);
     if (!isList(opt))
-	error("corrupted options list");
+	error(_("corrupted options list"));
     opt = FindTaggedItem(opt, tag);
     return CAR(opt);
 }
@@ -118,7 +120,7 @@ int GetOptionWidth(SEXP rho)
     int w;
     w = asInteger(GetOption(install("width"), rho));
     if (w < R_MIN_WIDTH_OPT || w > R_MAX_WIDTH_OPT) {
-	warning("invalid printing width, used 80");
+	warning(_("invalid printing width, used 80"));
 	return 80;
     }
     return w;
@@ -129,7 +131,7 @@ int GetOptionDigits(SEXP rho)
     int d;
     d = asInteger(GetOption(install("digits"), rho));
     if (d < R_MIN_DIGITS_OPT || d > R_MAX_DIGITS_OPT) {
-	warning("invalid printing digits, used 7");
+	warning(_("invalid printing digits, used 7"));
 	return 7;
     }
     return d;
@@ -144,7 +146,7 @@ static SEXP SetOption(SEXP tag, SEXP value)
     SEXP opt, old, t;
     t = opt = SYMVALUE(Options());
     if (!isList(opt))
-	error("corrupted options list");
+	error(_("corrupted options list"));
     opt = FindTaggedItem(opt, tag);
 
     /* The option is being removed. */
@@ -297,7 +299,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
     options = SYMVALUE(Options());
 
     if (args == R_NilValue) {
-	/* This is the zero argument case.  
+	/* This is the zero argument case.
 	   We alloc up a real list and write the system values into it.
 	*/
 	n = length(options);
@@ -314,8 +316,8 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return value;
     }
 
-    /* The arguments to "options" can either be a sequence of 
-       name = value form, or can be a single list.  
+    /* The arguments to "options" can either be a sequence of
+       name = value form, or can be a single list.
        This means that we must code so that both forms will work.
        [ Vomits quietly onto shoes ... ]
        */
@@ -337,8 +339,10 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
     case VECSXP:
 	argnames = getAttrib(args, R_NamesSymbol);
 	if(LENGTH(argnames) != n)
-	    errorcall(call,"list argument has no names or invalid ones");
+	    errorcall(call, _("list argument has no valid names"));
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("options", args);
     }
 
     R_Visible = 0;
@@ -354,6 +358,8 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    argi = VECTOR_ELT(args, i);
 	    namei = EnsureString(STRING_ELT(argnames, i));
 	    break;
+	default: /* already checked, but be safe here */
+	    UNIMPLEMENTED_TYPE("options", args);
 	}
 
 	if (*CHAR(namei)) { /* name = value  ---> assignment */
@@ -361,31 +367,31 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    if (streql(CHAR(namei), "width")) {
 		k = asInteger(argi);
 		if (k < R_MIN_WIDTH_OPT || k > R_MAX_WIDTH_OPT)
-		    errorcall(call, 
-			      "invalid width parameter, allowed %d...%d",
+		    errorcall(call,
+			      _("invalid width parameter, allowed %d...%d"),
 			      R_MIN_WIDTH_OPT, R_MAX_WIDTH_OPT);
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "digits")) {
 		k = asInteger(argi);
 		if (k < R_MIN_DIGITS_OPT || k > R_MAX_DIGITS_OPT)
-		    errorcall(call, 
-			      "invalid digits parameter, allowed %d...%d",
+		    errorcall(call,
+			      _("invalid digits parameter, allowed %d...%d"),
 			      R_MIN_DIGITS_OPT, R_MAX_DIGITS_OPT);
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "expressions")) {
 		k = asInteger(argi);
 		if (k < R_MIN_EXPRESSIONS_OPT || k > R_MAX_EXPRESSIONS_OPT)
-		    errorcall(call, 
-			      "expressions parameter invalid, allowed %d...%d",
+		    errorcall(call,
+			      _("expressions parameter invalid, allowed %d...%d"),
 			      R_MIN_EXPRESSIONS_OPT, R_MAX_EXPRESSIONS_OPT);
 		R_Expressions = k;
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "keep.source")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
-		    errorcall(call, "keep.source parameter invalid");
+		    errorcall(call, _("keep.source parameter invalid"));
 		k = asInteger(argi);
 		R_KeepSource = k;
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
@@ -393,67 +399,67 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    else if (streql(CHAR(namei), "editor")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "invalid editor parameter");
+		    errorcall(call, _("invalid editor parameter"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "continue")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "invalid continue parameter");
+		    errorcall(call, _("invalid continue parameter"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "prompt")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
-		    errorcall(call, "prompt parameter invalid");
+		    errorcall(call, _("prompt parameter invalid"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "contrasts")) {
 		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 2)
-		    errorcall(call, "contrasts parameter invalid");
+		    errorcall(call, _("contrasts parameter invalid"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if (streql(CHAR(namei), "check.bounds")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
-		    errorcall(call, "check.bounds parameter invalid");
+		    errorcall(call, _("check.bounds parameter invalid"));
 		k = asInteger(argi);
 		/* R_CheckBounds = k; */
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else if (streql(CHAR(namei), "warn")) {
 		if (!isNumeric(argi) || length(argi) != 1)
-		    errorcall(call, "warn parameter invalid");
+		    errorcall(call, _("warn parameter invalid"));
                 SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if (streql(CHAR(namei), "warning.length")) {
 		k = asInteger(argi);
 		if (k < 100 || k > 8192)
-		    errorcall(call, "warning.length parameter invalid");
+		    errorcall(call, _("warning.length parameter invalid"));
 		R_WarnLength = k;
                 SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if ( streql(CHAR(namei), "warning.expression") )  {
 		if( !isLanguage(argi) &&  ! isExpression(argi) )
-		    errorcall(call, "warning.expression parameter invalid");
+		    errorcall(call, _("warning.expression parameter invalid"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if ( streql(CHAR(namei), "error") ) {
 	        if(isFunction(argi))
 		  argi = makeErrorCall(argi);
 	        else if( !isLanguage(argi) &&  !isExpression(argi) )
-		    errorcall(call, "error parameter invalid");
+		    errorcall(call, _("error parameter invalid"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 /* handle this here to avoid GetOption during error handling */
 	    else if ( streql(CHAR(namei), "show.error.messages") ) {
 		if( !isLogical(argi) && length(argi) != 1 )
-		    errorcall(call, "show.error.messages parameter invalid");
+		    errorcall(call, _("show.error.messages parameter invalid"));
 		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 		R_ShowErrorMessages = LOGICAL(argi)[0];
 	    }
 	    else if (streql(CHAR(namei), "echo")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
-		    errorcall(call, "echo parameter invalid");
+		    errorcall(call, _("echo parameter invalid"));
 		k = asInteger(argi);
 		/* Should be quicker than checking options(echo)
 		   every time R prompts for input:

@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8>
+   This uses byte-level access, which is generally OK as comparisons
+   are with ASCII chars.
+
+   typeofnext SymbolValue isValidName have been changed to cope.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -31,6 +38,7 @@
 #include "IOStuff.h"		/*-> Defn.h */
 #include "Fileio.h"
 #include "Parse.h"
+
 
 #define yyconst const
 
@@ -68,6 +76,47 @@ static int	EndOfFile = 0;
 static int	xxgetc();
 static int	xxungetc();
 static int 	xxcharcount, xxcharsave;
+
+#ifdef SUPPORT_MBCS
+# include <wchar.h>
+# include <wctype.h>
+
+static int mbcs_get_next(int c, wchar_t *wc)
+{
+    int i, res, clen = 1; char s[9];
+    mbstate_t mb_st;
+
+    s[0] = c;
+    if((unsigned int)c < 0x80) {
+	*wc = (wchar_t) c;
+	return 1;
+    }
+    if(utf8locale) {
+	clen = utf8clen(c);
+	for(i = 1; i < clen; i++) {
+	    s[i] = xxgetc();
+	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char"));
+	}
+	res = mbrtowc(wc, s, clen, NULL);
+	if(res == -1) error(_("invalid multibyte character in mbcs_get_next"));
+    } else {
+	while(clen <= MB_CUR_MAX) {
+	    mbs_init(&mb_st);
+	    res = mbrtowc(wc, s, clen, &mb_st);
+	    if(res >= 0) break;
+	    if(res == -1) 
+		error(_("invalid multibyte character in mbcs_get_next"));
+	    /* so res == -2 */
+	    c = xxgetc();
+	    if(c == R_EOF) error(_("EOF whilst reading MBCS char"));
+	    s[clen++] = c;
+	} /* we've tried enough, so must be complete or invalid by now */
+    }
+    for(i = clen - 1; i > 0; i--) xxungetc(s[i]);
+    return clen;
+}
+
+#endif
 
 /* Handle function source */
 
@@ -284,11 +333,18 @@ cr	:					{ EatLines = 1; }
 /*----------------------------------------------------------------------------*/
 
 static int (*ptr_getc)(void);
-static int (*ptr_ungetc)(int);
+
+/* Private pushback, since file ungetc only guarantees one byte.
+   We need up to one MBCS-worth */
+
+static int pushback[16];
+static unsigned int npush = 0;
 
 static int xxgetc(void)
 {
-    int c = ptr_getc();
+    int c;
+
+    if(npush) c = pushback[--npush]; else  c = ptr_getc();
     if (c == EOF) {
         EndOfFile = 1;
         return R_EOF;
@@ -297,7 +353,7 @@ static int xxgetc(void)
     if ( KeepSource && GenerateCode && FunctionLevel > 0 ) {
 	if(SourcePtr <  FunctionSource + MAXFUNSIZE)
 	    *SourcePtr++ = c;
-	else  error("function is too long to keep source");
+	else  error(_("function is too long to keep source"));
     }
     xxcharcount++;
     return c;
@@ -309,7 +365,9 @@ static int xxungetc(int c)
     if ( KeepSource && GenerateCode && FunctionLevel > 0 )
 	SourcePtr--;
     xxcharcount--;
-    return ptr_ungetc(c);
+    if(npush >= 16) return EOF;
+    pushback[npush++] = c;
+    return c;
 }
 
 static int xxvalue(SEXP v, int k)
@@ -673,7 +731,7 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 		    } else { /* over-long line */
 			char *LongLine = (char *) malloc(nc);
 			if(!LongLine) 
-			    error("unable to allocate space to source line");
+			    error(("unable to allocate space for source line"));
 			strncpy(LongLine, (char *)p0, nc);
 			LongLine[nc] = '\0';
 			SET_STRING_ELT(source, lines++,
@@ -772,7 +830,7 @@ static SEXP TagArg(SEXP arg, SEXP tag)
     case SYMSXP:
 	return lang2(arg, tag);
     default:
-	error("incorrect tag type"); return R_NilValue/* -Wall */;
+	error(_("incorrect tag type")); return R_NilValue/* -Wall */;
     }
 }
 
@@ -939,6 +997,7 @@ static void ParseInit()
     SourcePtr = FunctionSource;
     xxcharcount = 0;
     KeepSource = *LOGICAL(GetOption(install("keep.source"), R_NilValue));
+    npush = 0;
 }
 
 static SEXP R_Parse1(ParseStatus *status)
@@ -970,18 +1029,12 @@ static int file_getc(void)
     return R_fgetc(fp_parse);
 }
 
-static int file_ungetc(int c)
-{
-    return ungetc(c, fp_parse);
-}
-
 SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
     fp_parse = fp;
     ptr_getc = file_getc;
-    ptr_ungetc = file_ungetc;
     R_Parse1(status);
     return R_CurrentExpr;
 }
@@ -993,18 +1046,12 @@ static int buffer_getc()
     return R_IoBufferGetc(iob);
 }
 
-static int buffer_ungetc(int c)
-{
-    return R_IoBufferUngetc(c, iob);
-}
-
 SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
     iob = buffer;
     ptr_getc = buffer_getc;
-    ptr_ungetc = buffer_ungetc;
     R_Parse1(status);
     return R_CurrentExpr;
 }
@@ -1016,18 +1063,12 @@ static int text_getc()
     return R_TextBufferGetc(txtb);
 }
 
-static int text_ungetc(int c)
-{
-    return R_TextBufferUngetc(c, txtb);
-}
-
 SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
 {
     ParseInit();
     GenerateCode = gencode;
     txtb = textb;
     ptr_getc = text_getc;
-    ptr_ungetc = text_ungetc;
     R_Parse1(status);
     return R_CurrentExpr;
 }
@@ -1041,7 +1082,6 @@ SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
     ParseInit();
     GenerateCode = gencode;
     ptr_getc = g_getc;
-    ptr_ungetc = g_ungetc;
     R_Parse1(status);
     return R_CurrentExpr;
 }
@@ -1112,7 +1152,6 @@ SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
     R_ParseError = 1;
     fp_parse = fp;
     ptr_getc = file_getc;
-    ptr_ungetc = file_ungetc;
     return R_Parse(n, status);
 }
 
@@ -1130,18 +1169,12 @@ static int con_getc(void)
     return (last = c);
 }
 
-static int con_ungetc(int c)
-{
-    return Rconn_ungetc(c, con_parse);
-}
-
 SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
 {
     GenerateCode = 1;
     R_ParseError = 1;
     con_parse = con;;
     ptr_getc = con_getc;
-    ptr_ungetc = con_ungetc;
     return R_Parse(n, status);
 }
 
@@ -1154,7 +1187,6 @@ SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
     GenerateCode = 1;
     R_ParseError = 1;
     ptr_getc = text_getc;
-    ptr_ungetc = text_ungetc;
     rval = R_Parse(n, status);
     R_TextBufferFree(&textb);
     return rval;
@@ -1167,7 +1199,6 @@ SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
     GenerateCode = 1;
     R_ParseError = 1;
     ptr_getc = ggetc;
-    ptr_ungetc = gungetc;
     return R_Parse(n, status);
 }
 #endif
@@ -1316,16 +1347,14 @@ static void ifpop(void)
 	*contextp-- = 0;
 }
 
+/* This is only called following ., so we only care if it is 
+   an ANSI digit or not */
 static int typeofnext(void)
 {
     int k, c;
+
     c = xxgetc();
-    if (isdigit(c))
-	k = 1;
-    else if (isalpha(c) || c == '.')
-	k = 2;
-    else
-	k = 3;
+    if (isdigit(c)) k = 1; else k = 2;
     xxungetc(c);
     return k;
 }
@@ -1480,7 +1509,7 @@ static void CheckFormalArgs(SEXP formlist, SEXP new)
 {
     while (formlist != R_NilValue) {
 	if (TAG(formlist) == new) {
-	    error("Repeated formal argument");
+	    error(_("Repeated formal argument"));
 	}
 	formlist = CDR(formlist);
     }
@@ -1491,7 +1520,7 @@ static char yytext[MAXELTSIZE];
 #define DECLARE_YYTEXT_BUFP(bp) char *bp = yytext
 #define YYTEXT_PUSH(c, bp) do { \
     if ((bp) - yytext >= sizeof(yytext) - 1) \
-        error("input buffer overflow"); \
+        error(_("input buffer overflow")); \
 	*(bp)++ = (c); \
 } while(0)
 
@@ -1527,6 +1556,7 @@ static int NumericValue(int c)
     int seenexp = 0;
     DECLARE_YYTEXT_BUFP(yyp);
     YYTEXT_PUSH(c, yyp);
+    /* We don't care about other than ASCII digits */
     while (isdigit(c = xxgetc()) || c == '.' || c == 'e' || c == 'E') {
 	if (c == 'E' || c == 'e') {
 	    if (seenexp)
@@ -1588,6 +1618,63 @@ static int StringValue(int c)
 		else xxungetc(c);
 		c = octal;
 	    }
+	    else if(c == 'x') {
+		int val = 0; int i, ext;
+		for(i = 0; i < 2; i++) {
+		    c = xxgetc();
+		    if(c >= '0' && c <= '9') ext = c - '0';
+		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+		    else {xxungetc(c); break;}
+		    val = 16*val + ext;
+		}
+		c = val;
+	    }
+#ifdef SUPPORT_MBCS
+	    /* Only realy valid in UTF-8, but useful shorthand elsewhere */
+	    else if(mbcslocale && c == 'u') {
+		wint_t val = 0; int i, ext; size_t res;
+		char buff[5]; Rboolean delim = FALSE;
+		if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
+		for(i = 0; i < 4; i++) {
+		    c = xxgetc();
+		    if(c >= '0' && c <= '9') ext = c - '0';
+		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+		    else {xxungetc(c); break;}
+		    val = 16*val + ext;
+		}
+		if(delim)
+		    if((c = xxgetc()) != '}')
+			error(_("invalid \\u{xxxx} sequence"));
+		res = wcrtomb(buff, val, NULL); /* should always be valid */
+		if(res <= 0) error(_("invalid \\uxxxx sequence"));
+		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
+		c = buff[res - 1]; /* pushed below */
+	    }
+#ifndef Win32
+	    else if(mbcslocale && c == 'U') {
+		wint_t val = 0; int i, ext; size_t res;
+		char buff[9]; Rboolean delim = FALSE;
+		if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
+		for(i = 0; i < 8; i++) {
+		    c = xxgetc();
+		    if(c >= '0' && c <= '9') ext = c - '0';
+		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+		    else {xxungetc(c); break;}
+		    val = 16*val + ext;
+		}
+		if(delim)
+		    if((c = xxgetc()) != '}')
+			error(_("invalid \\U{xxxxxxxx} sequence"));
+		res = wcrtomb(buff, val, NULL); /* should always be valid */
+		if(res <= 0) error(("invalid \\Uxxxxxxxx sequence"));
+		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
+		c = buff[res - 1]; /* pushed below */
+	    }
+#endif
+#endif
 	    else {
 		switch (c) {
 		case 'a':
@@ -1617,6 +1704,23 @@ static int StringValue(int c)
 		}
 	    }
 	}
+#ifdef SUPPORT_MBCS
+       else if(mbcslocale) {
+           int i, clen;
+           wchar_t wc = L'\0';
+           clen = utf8locale ? utf8clen(c): mbcs_get_next(c, &wc);
+           for(i = 0; i < clen - 1; i++){
+               YYTEXT_PUSH(c,yyp);
+               c = xxgetc();
+               if (c == R_EOF) break;
+               if (c == '\n') {
+                   xxungetc(c);
+                   c = '\\';
+               }
+           }
+           if (c == R_EOF) break;
+       }
+#endif /* SUPPORT_MBCS */
 	YYTEXT_PUSH(c, yyp);
     }
     YYTEXT_PUSH('\0', yyp);
@@ -1653,30 +1757,43 @@ static int SpecialValue(int c)
 /* return 1 if name is a valid name 0 otherwise */
 int isValidName(char *name)
 {
-    char *p;
-    int c, i;
+    char *p = name;
+    int i;
 
-    p = name;
-    c = *p++;
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) {
+	/* the only way to establish which chars are alpha etc is to
+	   use the wchar variants */
+	int n = strlen(name), used;
+	wchar_t wc;
+	used = Mbrtowc(&wc, p, n, NULL); p += used; n -= used;
+	if(used == 0) return 0;
+	if (wc != L'.' && !iswalpha(wc) ) return 0;
+	if (wc == L'.') {
+	    /* We don't care about other than ASCII digits */
+	    if(isdigit((int)*p)) return 0;
+	    /* Mbrtowc(&wc, p, n, NULL); if(iswdigit(wc)) return 0; */
+	}
+	while((used = Mbrtowc(&wc, p, n, NULL))) {
+	    if (!(iswalnum(wc) || wc == L'.' || wc == L'_')) break;
+	    p += used; n -= used;
+	}
+	if (*p != '\0') return 0;
+    } else
+#endif
+    {
+	int c = *p++;
+	if (c != '.' && !isalpha(c) ) return 0;
+	if (c == '.' && isdigit((int)*p)) return 0;
+	while ( c = *p++, (isalnum(c) || c == '.' || c == '_') ) ;
+	if (c != '\0') return 0;
+    }
 
-    if( c != '.' && !isalpha(c) )
-        return 0;
-
-    if (c == '.' && isdigit((int)*p)) 
-	return 0;
-
-    while ( c = *p++, (isalnum(c) || c == '.' || c == '_') )
-	;
-
-    if (c != '\0') return 0;
-
-    if (strcmp(name, "...") == 0) 
-	return 1;
+    if (strcmp(name, "...") == 0) return 1;
 
     for (i = 0; keywords[i].name != NULL; i++)
-        if (strcmp(keywords[i].name, name) == 0)
-                return 0;
-    
+        if (strcmp(keywords[i].name, name) == 0) return 0;
+
     return 1;
 }
 
@@ -1685,16 +1802,34 @@ static int SymbolValue(int c)
 {
     int kw;
     DECLARE_YYTEXT_BUFP(yyp);
-    do {
-	YYTEXT_PUSH(c, yyp);
-    }
-    while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.' || c == '_'));
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) {
+	wchar_t wc; int i, clen;
+	clen = utf8locale ? utf8clen(c) : mbcs_get_next(c, &wc);
+	while(1) {
+	    /* at this point we have seen one char, so push its bytes 
+	       and get one more */
+	    for(i = 0; i < clen; i++) {
+	        YYTEXT_PUSH(c, yyp);
+	        c = xxgetc();
+            }
+	    if(c == R_EOF) break;
+	    if(c == '.' || c == '_') continue;
+	    clen = mbcs_get_next(c, &wc);
+	    if(!iswalnum(wc)) break;
+	}
+    } else
+#endif
+	do {
+	    YYTEXT_PUSH(c, yyp);
+	} while ((c = xxgetc()) != R_EOF && 
+		 (isalnum(c) || c == '.' || c == '_'));
     xxungetc(c);
     YYTEXT_PUSH('\0', yyp);
     if ((kw = KeywordLookup(yytext))) {
 	if ( kw == FUNCTION ) {
 	    if (FunctionLevel >= MAXNEST)
-		error("functions nested too deeply in source code");
+		error(_("functions nested too deeply in source code"));
 	    if ( FunctionLevel++ == 0 && GenerateCode) {
 		strcpy((char *)FunctionSource, "function");
 		SourcePtr = FunctionSource + 8;
@@ -1715,7 +1850,11 @@ static int SymbolValue(int c)
 
 static int token()
 {
-    int c, kw;
+    int c;
+#ifdef SUPPORT_MBCS
+    wchar_t wc;
+#endif
+
     if (SavedToken) {
 	c = SavedToken;
 	yylval = SavedLval;
@@ -1733,15 +1872,13 @@ static int token()
     /* so we need to decide which it is and jump to  */
     /* the correct spot. */
 
-    if (c == '.') {
-	kw = typeofnext();
-	if (kw >= 2) goto symbol;
-    }
+    if (c == '.' && typeofnext() >= 2) goto symbol;
 
     /* literal numbers */
 
-    if (c == '.' || isdigit(c))
-	return NumericValue(c);
+    if (c == '.') return NumericValue(c);
+    /* We don't care about other than ASCII digits */
+    if (isdigit(c)) return NumericValue(c);
 
     /* literal strings */
 
@@ -1759,9 +1896,15 @@ static int token()
 	return QuotedSymbolValue(c);
  symbol:
 
-    if (c == '.' || isalpha(c))
-	return SymbolValue(c);
-
+    if (c == '.') return SymbolValue(c);
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) {
+	mbcs_get_next(c, &wc);
+	if (iswalpha(wc)) return SymbolValue(c);
+    } else
+#endif
+	if (isalpha(c)) return SymbolValue(c);
+ 
     /* compound tokens */
 
     switch (c) {

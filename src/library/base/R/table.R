@@ -85,14 +85,19 @@ function (x, digits = getOption("digits"), quote = FALSE, na.print = "",
     if(is.integer(x) && zero.print != "0" && any(i0 <- !ina & x == 0))
 	## MM thinks this should be an option for many more print methods...
 	xx[i0] <- sub("0", zero.print, xx[i0])
-    print(xx, quote = quote, ...)
+    ## Numbers get right-justified by format(), irrespective of 'justify'.
+    ## We need to keep column headers aligned.
+    if (is.numeric(x) || is.complex(x))
+        print(xx, quote = quote, right = TRUE, ...)
+    else
+        print(xx, quote = quote, ...)
     invisible(x)
 }
 
 summary.table <- function(object, ...)
 {
     if(!inherits(object, "table"))
-	stop("object must inherit from class table")
+	stop("'object' must inherit from class \"table\"")
     n.cases <- sum(object)
     n.vars <- length(dim(object))
     y <- list(n.vars = n.vars,
@@ -120,7 +125,7 @@ print.summary.table <-
 function(x, digits = max(1, getOption("digits") - 3), ...)
 {
     if(!inherits(x, "summary.table"))
-	stop(paste("x must inherit from class", sQuote("summary.table")))
+	stop("'x' must inherit from class \"summary.table\"")
     if(!is.null(x$call)) {
 	cat("Call: "); print(x$call)
     }
@@ -139,11 +144,15 @@ function(x, digits = max(1, getOption("digits") - 3), ...)
     invisible(x)
 }
 
-as.data.frame.table <- function(x, row.names = NULL, optional = FALSE, ...)
+as.data.frame.table <- function(x, row.names = NULL, optional = FALSE,
+                                responseName = "Freq", ...)
 {
     x <- as.table(x)
-    data.frame(do.call("expand.grid", dimnames(x)), Freq = c(x),
-	       row.names = row.names)
+    ex <- quote(data.frame(do.call("expand.grid", dimnames(x)),
+                           Freq = c(x),
+                           row.names = row.names))
+    names(ex)[3] <- responseName
+    eval(ex)
 }
 
 is.table <- function(x) inherits(x, "table")
@@ -180,7 +189,7 @@ prop.table <- function(x, margin = NULL)
 
 margin.table <- function(x, margin = NULL)
 {
-    if(!is.array(x)) stop("x is not an array")
+    if(!is.array(x)) stop("'x' is not an array")
     if (length(margin)) {
 	z <- apply(x, margin, sum)
 	dim(z) <- dim(x)[margin]

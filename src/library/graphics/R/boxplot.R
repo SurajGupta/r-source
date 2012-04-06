@@ -57,7 +57,7 @@ boxplot.formula <-
     function(formula, data = NULL, ..., subset, na.action = NULL)
 {
     if(missing(formula) || (length(formula) != 3))
-        stop("formula missing or incorrect")
+        stop("'formula' missing or incorrect")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
         m$data <- as.data.frame(data)
@@ -75,7 +75,7 @@ boxplot.stats <- function(x, coef = 1.5, do.conf=TRUE, do.out=TRUE)
     n <- sum(nna)                       # including +/- Inf
     stats <- stats::fivenum(x, na.rm = TRUE)
     iqr <- diff(stats[c(2, 4)])
-    if(coef < 0) stop(paste(sQuote("coef"), "must not be negative"))
+    if(coef < 0) stop("'coef' must not be negative")
     if(coef == 0)
 	do.out <- FALSE
     else {                              # coef > 0
@@ -147,11 +147,11 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 
 	    if(any(inf <- !is.finite(out))) {
 		## FIXME: should MARK on plot !! (S-plus doesn't either)
-		warning(paste("Outlier (",
-			      paste(unique(out[inf]),collapse=", "),
-			      ") in ", paste(x,c("st","nd","rd","th")
-					     [pmin(4,x)], sep=""),
-			      " boxplot are NOT drawn", sep=""))
+                warning(sprintf(ngettext(length(unique(out[inf])),
+                                 "Outlier (%s) in boxplot %d is not drawn",
+                                 "Outliers (%s) in boxplot %d are not drawn"),
+                                paste(unique(out[inf]), collapse=", "), x),
+                        domain = NA)
 	    }
 	}
     } ## bplt
@@ -161,9 +161,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
     if(is.null(at))
 	at <- 1:n
     else if(length(at) != n)
-	stop(paste(sQuote("at"), " must have same length as ",
-		   sQuote("z $ n"), ", i.e. ", n,
-		   sep = ""))
+	stop("'at' must have same length as 'z$n', i.e. ", n)
     ## just for compatibility with S
     if(is.null(z$out))
 	z$out <- numeric()
@@ -192,8 +190,8 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
     }
     xlog <- (par("ylog") && horizontal) || (par("xlog") && !horizontal)
 
-    pcycle <- function(p, def1, def2=NULL)
-	rep(if(!is.null(p)) p else if(!is.null(def1)) def1 else def2,
+    pcycle <- function(p, def1, def2=NULL)# or rather NA {to be rep()ed}?
+	rep(if(length(p)) p else if(length(def1)) def1 else def2,
             length.out = n)
     boxlty    <- pcycle(pars$boxlty,	pars$lty, par("lty"))
     boxlwd    <- pcycle(pars$boxlwd,	pars$lwd, par("lwd"))
@@ -203,7 +201,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
         if(n <= 1) 1 else
         quantile(diff(sort(if(xlog) log(at) else at)), 0.10) })
     medlty    <- pcycle(pars$medlty,	pars$lty, par("lty"))
-    medlwd    <- pcycle(pars$medlwd,	pars$lwd, par("lwd"))
+    medlwd    <- pcycle(pars$medlwd,	3*pars$lwd, 3*par("lwd"))
     medpch    <- pcycle(pars$medpch,	as.integer(NA))# NA when that works
     medcex    <- pcycle(pars$medcex,	pars$cex, par("cex"))
     medcol    <- pcycle(pars$medcol,	border)

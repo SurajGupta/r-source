@@ -477,7 +477,7 @@ summary.nls <- function (object, ...)
         f <- f * w
         excl <- w == 0
         if (any(excl)) {
-            warning(paste(sum(excl), "rows with zero weights not counted"))
+            warning(sum(excl), " rows with zero weights not counted")
             r <- r[!excl]
             f <- f[!excl]
             rdf <- rdf - sum(excl)
@@ -588,7 +588,7 @@ residuals.nls <- function(object, type = c("response", "pearson"), ...)
 logLik.nls <- function(object, REML = FALSE, ...)
 {
     if (REML)
-        stop("Cannot calculate REML log-likelihood for nls objects")
+        stop("cannot calculate REML log-likelihood for \"nls\" objects")
 
     res <- object$m$resid()
     N <- length(res)
@@ -618,7 +618,7 @@ anova.nls <- function(object, ...)
 {
     if(length(list(object, ...)) > 1)
 	return(anovalist.nls(object, ...))
-    stop("Anova is only defined for sequences of nls objects")
+    stop("anova is only defined for sequences of \"nls\" objects")
 }
 
 anovalist.nls <- function (object, ..., test = NULL)
@@ -629,14 +629,14 @@ anovalist.nls <- function (object, ..., test = NULL)
     sameresp <- responses == responses[1]
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
-	warning(paste("Models with response",
-		      deparse(responses[!sameresp]),
-		      "removed because response differs from", "model 1"))
+	warning("models with response ",
+                deparse(responses[!sameresp]),
+                " removed because response differs from model 1")
     }
     ## calculate the number of models
     nmodels <- length(objects)
     if (nmodels == 1)
-        stop("Anova is only defined for sequences of nls objects")
+        stop("'anova' is only defined for sequences of \"nls\" objects")
 
     models <- as.character(lapply(objects, function(x) formula(x)))
 

@@ -1,9 +1,9 @@
 dataentry <- function (data, modes) {
     if(!is.list(data) || !length(data) || !all(sapply(data, is.vector)))
-        stop("invalid data argument")
+        stop("invalid 'data' argument")
     if(!is.list(modes) ||
        (length(modes) && !all(sapply(modes, is.character))))
-        stop("invalid modes argument")
+        stop("invalid 'modes' argument")
     .Internal(dataentry(data, modes))
 }
 
@@ -32,7 +32,7 @@ edit.data.frame <-
     is.vector.unclass <- function(x) is.vector(unclass(x))
     if (length(name) > 0 && !all(sapply(name, is.vector.unclass)
                                  | sapply(name, is.factor)))
-        stop("Can only handle vector and factor elements")
+        stop("can only handle vector and factor elements")
 
     factor.mode <- match.arg(factor.mode)
 
@@ -79,7 +79,8 @@ edit.data.frame <-
             o <- as.integer(out[[i]])
             ok <- is.na(o) | (o > 0 & o <= length(a$levels))
             if (any(!ok)) {
-                warning(paste("invalid factor levels in", names(out)[i]))
+                warning(gettextf("invalid factor levels in '%s'", names(out)[i]),
+                        domain = NA)
                 o[!ok] <- NA
             }
 	    attributes(o) <- a
@@ -87,7 +88,8 @@ edit.data.frame <-
             o <- out[[i]]
             if (any(new <- is.na(match(o, c(a$levels, NA))))) {
                 new <- unique(o[new])
-                warning(paste("added factor levels in", names(out)[i]))
+                warning(gettextf("added factor levels in '%s'", names(out)[i]),
+                        domain = NA)
                 o <- factor(o, levels=c(a$levels, new), ordered=is.ordered(o))
             } else {
                 o <- match(o, a$levels)

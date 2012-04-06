@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,10 @@
 * writing this note.  I guess it needs a bit more thought ...
 */
 
+/* <UTF8> char here is either ASCII or handled as a whole.
+   E.g. backquotify should work.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -137,13 +141,6 @@ static void vec2buff(SEXP, LocalParseData *);
 static void linebreak(Rboolean *lbreak, LocalParseData *);
 static void deparse2(SEXP, SEXP, LocalParseData *);
 
-/*
-  Perhaps we can consolidate all the AllocBuffers into a single
-  routine across the files that provide something like this:
-    character.c,
-    saveload.c & scan.c (are identical modulo variable names.)
-    deparse.c, printutils.c (identical and merged)
- */
 void R_AllocStringBuffer(int blen, DeparseBuffer *buf)
 {
     if(blen >= 0) {
@@ -158,7 +155,7 @@ void R_AllocStringBuffer(int blen, DeparseBuffer *buf)
 	buf->bufsize = blen;
 	if(!buf->data) {
 		buf->bufsize = 0;
-		error("Could not allocate memory for Encodebuf");
+		error(_("could not allocate memory in C function 'R_AllocStringBuffer'"));
 	}
     } else {
 	if(buf->bufsize == buf->defaultSize) return;
@@ -170,8 +167,11 @@ void R_AllocStringBuffer(int blen, DeparseBuffer *buf)
 
 void R_FreeStringBuffer(DeparseBuffer *buf)
 {
-	if (buf->data != NULL)
-		free(buf->data);
+    if (buf->data != NULL) {
+	free(buf->data);
+	buf->bufsize = 0;
+	buf->data = NULL;
+    }
 }
 
 SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -181,14 +181,14 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
 
-    if(length(args) < 1) errorcall(call, "too few arguments");
+    if(length(args) < 1) errorcall(call, _("too few arguments"));
 
     ca1 = CAR(args); args = CDR(args);
     cut0 = DEFAULT_Cutoff;
     if(!isNull(CAR(args))) {
 	cut0 = asInteger(CAR(args));
 	if(cut0 == NA_INTEGER|| cut0 < MIN_Cutoff || cut0 > MAX_Cutoff) {
-	    warning("invalid `cutoff' for deparse, using default");
+	    warning(_("invalid 'cutoff' for deparse, using default"));
 	    cut0 = DEFAULT_Cutoff;
 	}
     }
@@ -257,7 +257,7 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
     R_print.digits = savedigits;
     R_FreeStringBuffer(buffer);
     if ((opts & WARNINCOMPLETE) && !localData.sourceable)
-    	warning("deparse may be incomplete");
+    	warning(_("deparse may be incomplete"));
     return svec;
 }
 
@@ -308,7 +308,7 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 	con = getConnection(ifile);
 	wasopen = con->isopen;
 	if(!wasopen)
-	    if(!con->open(con)) error("cannot open the connection");
+	    if(!con->open(con)) error(_("cannot open the connection"));
     }/* else: "Stdout" */
     for (i = 0; i < LENGTH(tval); i++)
 	if (ifile == 1)
@@ -317,7 +317,7 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    res = Rconn_printf(con, "%s\n", CHAR(STRING_ELT(tval, i)));
 	    if(!havewarned &&
 	       res < strlen(CHAR(STRING_ELT(tval, i))) + 1)
-		warningcall(call, "wrote too few characters");
+		warningcall(call, _("wrote too few characters"));
 	}
     if (!wasopen) con->close(con);
     return (CAR(args));
@@ -337,13 +337,13 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     names = CAR(args);
     file = CADR(args);
     if(!isString(names))
-	errorcall(call, "character arguments expected");
+	errorcall(call, _("character arguments expected"));
     nobjs = length(names);
     if(nobjs < 1 || length(file) < 1)
-	errorcall(call, "zero length argument");
+	errorcall(call, _("zero length argument"));
     source = CADDR(args);
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
-	error("bad environment");
+	error(_("bad environment"));
     opts = FORSOURCING;
     if (!isNull(CADDDR(args)))
     	opts = asInteger(CADDDR(args));
@@ -356,7 +356,7 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SET_TAG(o, install(CHAR(STRING_ELT(names, j))));
 	SETCAR(o, findVar(TAG(o), source));
 	if (CAR(o) == R_UnboundValue)
-	    error("Object \"%s\" not found", CHAR(PRINTNAME(TAG(o))));
+	    error(_("Object \"%s\" not found"), CHAR(PRINTNAME(TAG(o))));
     }
     o = objs;
     if(INTEGER(file)[0] == 1) {
@@ -378,18 +378,18 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	con = getConnection(INTEGER(file)[0]);
 	wasopen = con->isopen;
 	if (!wasopen)
-	    if(!con->open(con)) error("cannot open the connection");
+	    if(!con->open(con)) error(_("cannot open the connection"));
 	for (i = 0; i < nobjs; i++) {
 	    res = Rconn_printf(con, "\"%s\" <-\n", CHAR(STRING_ELT(names, i)));
 	    if(!havewarned &&
 	       res < strlen(CHAR(STRING_ELT(names, i))) + 4)
-		warningcall(call, "wrote too few characters");
+		warningcall(call, _("wrote too few characters"));
 	    tval = deparse1(CAR(o), 0, opts);
 	    for (j = 0; j < LENGTH(tval); j++) {
 		res = Rconn_printf(con, "%s\n", CHAR(STRING_ELT(tval, j)));
 		if(!havewarned &&
 		   res < strlen(CHAR(STRING_ELT(tval, j))) + 1)
-		    warningcall(call, "wrote too few characters");
+		    warningcall(call, _("wrote too few characters"));
 	    }
 	    o = CDR(o);
 	}
@@ -594,11 +594,20 @@ static char * backquotify(char *s)
     if (isValidName(s) || *s == '\0') return s;
 
     *t++ = '`';
-    while ( *s ) {
-	if ( *s  == '`' || *s == '\\' )
-	    *t++ = '\\';
-	*t++ = *s++;
-    }
+#ifdef SUPPORT_MBCS
+    if(mbcslocale && !utf8locale) {
+	mbstate_t mb_st; int j, used;
+	mbs_init(&mb_st);
+	while( (used = Mbrtowc(NULL, s, MB_CUR_MAX, &mb_st)) ) {
+	    if ( *s  == '`' || *s == '\\' ) *t++ = '\\';
+	    for(j = 0; j < used; j++) *t++ = *s++;
+	}
+    } else
+#endif
+	while ( *s ) {
+	    if ( *s  == '`' || *s == '\\' ) *t++ = '\\';
+	    *t++ = *s++;
+	}
     *t++ = '`';
     *t = '\0';
     return buf;
@@ -644,18 +653,12 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	break;
     case PROMSXP:
 	if(d->opts & DELAYPROMISES) {
-	    print2buff("delay(", d);
+	    d->sourceable = FALSE;
+	    print2buff("<promise: ", d);
 	    d->opts &= ~QUOTEEXPRESSIONS; /* don't want delay(quote()) */
 	    deparse2buff(PREXPR(s), d);
 	    d->opts = localOpts;
-	    if(PRENV(s) == R_GlobalEnv) { /* default env for delay */
-	    } else if (PRENV(s) == R_NilValue) {
-		print2buff(", NULL", d);
-	    } else {
-		d->sourceable = FALSE;
-		print2buff(", <environment>", d);
-	    }
-	    print2buff(")", d);
+	    print2buff(">", d);
 	} else {
 	    PROTECT(s = eval(s, NULL)); /* eval uses env of promise */
 	    deparse2buff(s, d);
@@ -1077,7 +1080,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	break;
     default:
     	d->sourceable = FALSE;
-	UNIMPLEMENTED("deparse2buff");
+	UNIMPLEMENTED_TYPE("deparse2buff", s);
     }
 }
 
@@ -1141,6 +1144,7 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 	case CPLXSXP: print2buff("complex(0)", d); break;
 	case STRSXP: print2buff("character(0)", d); break;
 	case RAWSXP: print2buff("raw(0)", d); break;
+	default: UNIMPLEMENTED_TYPE("vector2buff", vector);
 	}
     }
     else if (tlen == 1) {
@@ -1209,7 +1213,7 @@ static void args2buff(SEXP arglist, int lineb, int formals, LocalParseData *d)
 
     while (arglist != R_NilValue) {
 	if (TYPEOF(arglist) != LISTSXP && TYPEOF(arglist) != LANGSXP)
-            error("badly formed function expression");
+            error(_("badly formed function expression"));
 	if (TAG(arglist) != R_NilValue) {
 #if 0
 	    deparse2buff(TAG(arglist));

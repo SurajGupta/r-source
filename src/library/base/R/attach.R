@@ -1,12 +1,13 @@
 attach <- function(what, pos=2, name=deparse(substitute(what)))
 {
     if(pos == 1) {
-        warning("*** pos=1 is not possible; setting pos=2 for now.\n",
-                "*** Note that pos=1 will give an error in the future")
+        warning("*** 'pos=1' is not possible; setting 'pos=2' for now.\n",
+                "*** Note that 'pos=1' will give an error in the future")
         pos <- 2
     }
     if (is.character(what) && (length(what)==1)){
-        if (!file.exists(what)) stop("File ", what, " not found.")
+        if (!file.exists(what))
+            stop(gettextf("file '%s' not found", what), domain = NA)
         name <- paste("file:", what, sep="")
         value <- .Internal(attach(NULL, pos, name))
         load(what, envir=as.environment(pos))
@@ -50,6 +51,11 @@ detach <- function(name, pos=2, version)
         if(!is.null(libpath)) try(.Last.lib(libpath))
     }
     .Internal(detach(pos))
+    ## note: here the code internally assumes the separator is "/" even
+    ## on Windows.
+    if(length(grep("^package:", packageName)))
+        .Call("R_lazyLoadDBflush",
+              paste(libpath, "/R/", pkgname, ".rdb", sep=""), PACKAGE="base")
     ## Check for detaching a  package required by another package (not
     ## by .GlobalEnv because detach() can't currently fix up the
     ## .required there)
@@ -84,14 +90,11 @@ ls <- objects <-
             ll != length(grep("]", pattern, fixed=TRUE))) {
             if (pattern == "[") {
                 pattern <- "\\["
-                warning(paste("replaced regular expression pattern",
-                              sQuote("["), "by", sQuote("\\\\[")))
+                warning("replaced regular expression pattern '[' by  '\\\\['")
             }
             else if (length(grep("[^\\\\]\\[<-", pattern) > 0)) {
                 pattern <- sub("\\[<-", "\\\\\\[<-", pattern)
-                warning(paste("replaced", sQuote("[<-"),
-                              "by", sQuote("\\\\[<-"),
-                              "in regular expression pattern"))
+                warning("replaced '[<-' by '\\\\[<-' in regular expression pattern")
             }
         }
         grep(pattern, all.names, value = TRUE)

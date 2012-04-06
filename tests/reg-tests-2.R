@@ -1,7 +1,7 @@
 ## Regression tests for which the printed output is the issue
 ### _and_ must work (no Recommended packages, please)
 
-postscript("reg-tests-2.ps")
+postscript("reg-tests-2.ps", encoding = "ISOLatin1.enc")
 RNGversion("1.6.2")
 
 ### moved from various .Rd files
@@ -1406,3 +1406,109 @@ read.fwf("test.txt", width=c(2,2,3), skip=1)      # 1 line short
 read.fwf("test.txt", width=c(2,2,3), skip=0)
 unlink("test.txt")
 ##
+
+
+## split was not handling lists and raws
+split(as.list(1:3), c(1,1,2))
+(y <- charToRaw("A test string"))
+(z <- split(y, rep(1:5, times=c(1,1,4,1,6))))
+sapply(z, rawToChar)
+## wrong results in 2.0.0
+
+
+## tests of changed S3 implicit classes in 2.1.0
+foo <- function(x, ...) UseMethod("foo")
+foo.numeric <- function(x) cat("numeric arg\n")
+foo(1:10)
+foo(pi)
+foo(matrix(1:10, 2, 5))
+foo.integer <- function(x) cat("integer arg\n")
+foo.double <- function(x) cat("double arg\n")
+foo(1:10)
+foo(pi)
+foo(matrix(1:10, 2, 5))
+##
+
+
+## str() interpreted escape sequences prior to 2.1.0
+x <- "ab\bc\ndef"
+str(x)
+str(x, vec.len=0)# failed in rev 32244
+str(factor(x))
+
+x <- c("a", NA, "b")
+factor(x)
+factor(x, exclude="")
+str(x)
+str(factor(x))
+str(factor(x, exclude=""))
+##
+
+
+## print.factor(quote=TRUE) was not quoting levels
+x <- c("a", NA, "b", 'a " test')
+factor(x)
+factor(x, exclude="")
+print(factor(x), quote=TRUE)
+print(factor(x, exclude=""), quote=TRUE)
+## last two printed levels differently from values in 2.0.1
+
+
+## write.table in marginal cases
+x <- matrix(, 3, 0)
+write.table(x) # 3 rows
+write.table(x, row.names=FALSE)
+# note: scan and read.table won't read this as they take empty fields as NA
+## was 1 row in 2.0.1
+
+
+## More tests of write.table
+x <- list(a=1, b=1:2, c=3:4, d=5)
+dim(x) <- c(2,2)
+x
+write.table(x)
+
+x1 <- data.frame(a=1:2, b=I(matrix(LETTERS[1:4], 2, 2)), c = c("(i)", "(ii)"))
+x1
+write.table(x1) # In 2.0.1 had 3 headers, 4 cols
+write.table(x1, quote=c(2,3,4))
+
+x2 <- data.frame(a=1:2, b=I(list(a=1, b=2)))
+x2
+write.table(x2)
+
+x3 <- seq(as.Date("2005-01-01"), len=6, by="day")
+x4 <- data.frame(x=1:6, y=x3)
+dim(x3) <- c(2,3)
+x3
+write.table(x3) # matrix, so loses class
+x4
+write.table(x4) # preserves class, does not quote
+##
+
+
+## Problem with earlier regexp code spotted by KH
+grep("(.*s){2}", "Arkansas", v = TRUE)
+grep("(.*s){3}", "Arkansas", v = TRUE)
+grep("(.*s){3}", state.name, v = TRUE)
+## Thought Arkansas had 3 s's.
+
+
+## Replacing part of a non-existent column could create a short column.
+xx<- data.frame(a=1:4, b=letters[1:4])
+xx[2:3, "c"] <- 2:3
+## gave short column in R < 2.1.0.
+
+
+## add1/drop1 could give misleading results if missing values were involved
+y <- rnorm(1:20)
+x <- 1:20; x[10] <- NA
+x2 <- runif(20); x2[20] <- NA
+fit <- lm(y ~ x)
+drop1(fit)
+res <-  try(stats:::drop1.default(fit))
+stopifnot(inherits(res, "try-error"))
+add1(fit, ~ . +x2)
+res <-  try(stats:::add1.default(fit, ~ . +x2))
+stopifnot(inherits(res, "try-error"))
+## 2.0.1 ran and gave incorrect answers.

@@ -1,4 +1,6 @@
 \name{conditions}
+\alias{conditions}
+\alias{condition}
 \alias{computeRestarts}
 \alias{conditionCall}
 \alias{conditionMessage}
@@ -12,6 +14,7 @@
 \alias{simpleCondition}
 \alias{simpleError}
 \alias{simpleWarning}
+\alias{simpleMessage}
 \alias{tryCatch}
 \alias{withCallingHandlers}
 \alias{withRestarts}
@@ -41,6 +44,7 @@ signalCondition(cond)
 simpleCondition(message, call = NULL)
 simpleError    (message, call = NULL)
 simpleWarning  (message, call = NULL)
+simpleMessage  (message, call = NULL)
 
 \method{as.character}{condition}(x, \dots)
 \method{as.character}{error}(x, \dots)
@@ -96,9 +100,10 @@ restartFormals(r)
    from the abstract subclasses \code{error} and \code{warning}.
    The class \code{simpleError} is the class used by \code{stop}
    and all internal error signals.  Similarly, \code{simpleWarning}
-   is used by \code{warning}.  The constructors by the same names take
-   a string describing the condition as argument and an optional call.
-   The functions \code{conditionMessage} and \code{conditionCall} ae
+   is used by \code{warning}, and \code{simpleMessage} is used by
+   \code{message}.  The constructors by the same names take a string
+   describing the condition as argument and an optional call.  The
+   functions \code{conditionMessage} and \code{conditionCall} are
    generic functions that return the message and call of a condition.
 
    Conditions are signaled by \code{signalCondition}.  In addition,

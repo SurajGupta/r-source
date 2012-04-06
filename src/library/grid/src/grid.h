@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003 The R Development Core Team
+ *                2003-6 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,20 @@
 #include <Rgraphics.h>  
 #include <Rmath.h>
 
+#include <R_ext/Constants.h>
 #include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
 
-/* All lattice type names are prefixed with an "L" 
- * All lattice global variable names are prefixe with an "L_" 
+#include <Rinternals.h>
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#define _(String) dgettext ("grid", String)
+#else
+#define _(String) (String)
+#endif
+
+/* All grid type names are prefixed with an "L" 
+ * All grid global variable names are prefixed with an "L_" 
  */
 
 /* This information is stored with R's graphics engine so that 
@@ -116,10 +125,11 @@
 #define GP_LINEEND 11
 #define GP_LINEJOIN 12
 #define GP_LINEMITRE 13
+#define GP_LEX 14
 /* 
  * Keep fontface at the end because it is never used in C code
  */
-#define GP_FONTFACE 14
+#define GP_FONTFACE 15
 
 typedef double LTransform[3][3];
 
@@ -201,8 +211,8 @@ typedef struct {
     SEXP y;
     SEXP width;
     SEXP height;
-    LJustification hjust;
-    LJustification vjust;
+    double hjust;
+    double vjust;
 } LViewportLocation;
 
 /* Components of a viewport which provide coordinate information
@@ -267,8 +277,8 @@ SEXP L_arrows(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn,
 	      SEXP angle, SEXP length, SEXP ends, SEXP type);
 SEXP L_polygon(SEXP x, SEXP y, SEXP index);
 SEXP L_circle(SEXP x, SEXP y, SEXP r);
-SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP just); 
-SEXP L_text(SEXP label, SEXP x, SEXP y, SEXP just, 
+SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust); 
+SEXP L_text(SEXP label, SEXP x, SEXP y, SEXP hjust, SEXP vjust, 
 	    SEXP rot, SEXP checkOverlap);
 SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size);
 SEXP L_pretty(SEXP scale);
@@ -386,13 +396,13 @@ double transformWidthHeightFromINCHES(double value, int unit,
 				      GEDevDesc *dd);
 
 /* From just.c */
-double justifyX(double x, double width, int hjust);
+double justifyX(double x, double width, double hjust);
 
-double justifyY(double y, double height, int vjust);
+double justifyY(double y, double height, double vjust);
 
 double convertJust(int vjust);
 
-void justification(double width, double height, int hjust, int vjust,
+void justification(double width, double height, double hjust, double vjust,
 		   double *hadj, double *vadj);
 
 /* From util.c */
@@ -463,6 +473,8 @@ SEXP viewportWidth(SEXP vp);
 
 SEXP viewportHeight(SEXP vp);
 
+SEXP viewportgpar(SEXP vp);
+
 char* viewportFontFamily(SEXP vp);
 
 int viewportFont(SEXP vp);
@@ -483,9 +495,13 @@ double viewportYScaleMin(SEXP vp);
 
 double viewportYScaleMax(SEXP vp);
 
-int viewportHJust(SEXP v);
+double viewportHJust(SEXP v);
 
-int viewportVJust(SEXP vp);
+double viewportVJust(SEXP vp);
+
+SEXP viewportLayoutPosRow(SEXP vp);
+
+SEXP viewportLayoutPosCol(SEXP vp);
 
 SEXP viewportLayout(SEXP vp);
 
@@ -523,6 +539,8 @@ void calcViewportTransform(SEXP vp, SEXP parent, Rboolean incremental,
 void initVP(GEDevDesc *dd);
 
 /* From layout.c */
+Rboolean checkPosRowPosCol(SEXP viewport, SEXP parent);
+
 void calcViewportLayout(SEXP viewport,
 			double parentWidthCM,
 			double parentHeightCM,
@@ -559,4 +577,15 @@ void getViewportTransform(SEXP currentvp,
 			  double *vpWidthCM, double *vpHeightCM,
 			  LTransform transform, double *rotationAngle);
 
+SEXP L_rectBounds(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust);
 
+SEXP L_textBounds(SEXP label, SEXP x, SEXP y, 
+		  SEXP hjust, SEXP vjust, SEXP rot);
+
+/* From unit.c */
+SEXP validUnits(SEXP units);
+
+/* From gpar.c */
+SEXP L_getGPar(void);
+SEXP L_setGPar(SEXP gpars);
+    

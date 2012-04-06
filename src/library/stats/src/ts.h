@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-3   The R Development Core Team.
+ *  Copyright (C) 2001-4   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #ifndef R_TS_H
 #define R_TS_H
 #include <Rinternals.h>
+#include "stats.h"
 
 void acf(double *x, int *n, int *nser, int *nlag, int *correlation,
 	 double *acf);
@@ -89,6 +90,8 @@ SEXP KalmanLike(SEXP sy, SEXP sZ, SEXP sa, SEXP sP, SEXP sT, SEXP sV,
 		SEXP sh, SEXP sPn, SEXP sUP, SEXP op);
 SEXP KalmanFore(SEXP nahead, SEXP sZ, SEXP sa0, SEXP sP0, SEXP sT,
 		SEXP sV, SEXP sh);
+SEXP KalmanSmooth(SEXP sy, SEXP sZ, SEXP sa, SEXP sP, SEXP sT,
+		  SEXP sV, SEXP sh, SEXP sPn, SEXP sUP);
 SEXP ARIMA_undoPars(SEXP sin, SEXP sarma);
 SEXP ARIMA_transPars(SEXP sin, SEXP sarma, SEXP strans);
 SEXP ARIMA_Invtrans(SEXP in, SEXP sarma);
@@ -98,4 +101,5 @@ SEXP ARIMA_Like(SEXP sy, SEXP sPhi, SEXP sTheta, SEXP sDelta, SEXP sa,
 SEXP ARIMA_CSS(SEXP sy, SEXP sarma, SEXP sPhi, SEXP sTheta, SEXP sncond,
 	       SEXP giveResid);
 SEXP TSconv(SEXP a, SEXP b);
+SEXP getQ0(SEXP sPhi, SEXP sTheta);
 #endif

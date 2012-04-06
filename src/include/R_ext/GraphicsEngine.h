@@ -19,6 +19,25 @@
 
 /* Used by third-party graphics devices */
 
+/*
+ * The current graphics engine (including graphics device) API version
+ * MUST be integer
+ * 
+ * This number should be bumped whenever there are changes to 
+ * GraphicsEngine.h or GraphicsDevice.h so that add-on packages
+ * that compile against these headers (graphics systems such as
+ * graphics and grid;  graphics devices such as gtkDevice, RSvgDevice)
+ * can detect any version mismatch.
+ *
+ * Version 1:  Introduction of the version number.
+ */
+
+#define R_GE_version 1
+
+int R_GE_getVersion();
+
+void R_GE_checkVersionOrDie(int version);
+
 /* The graphics engine will only accept locations and dimensions 
  * in native device coordinates, but it provides the following functions
  * for converting between a couple of simple alternative coordinate 
@@ -127,6 +146,13 @@ struct _GEDevDesc {
      * Display list stuff should come here from NewDevDesc struct.
      */
     Rboolean dirty;  /* Has the device received any output? */
+    Rboolean recordGraphics; /* Should a graphics call be stored
+			      * on the display list?
+			      * Set to FALSE by do_recordGraphics,
+			      * do_dotcallgr, and do_Externalgr 
+			      * so that nested calls are not
+			      * recorded on the display list
+			      */
     /* 
      * Stuff about the device that only graphics systems see.
      * The graphics engine has no idea what is in here.
@@ -340,9 +366,12 @@ GEDevDesc* GEcurrentDevice();
 Rboolean GEdeviceDirty(GEDevDesc *dd);
 void GEdirtyDevice(GEDevDesc *dd);
 Rboolean GEcheckState(GEDevDesc *dd);
+Rboolean GErecording(SEXP call, GEDevDesc *dd);
 void GErecordGraphicOperation(SEXP op, SEXP args, GEDevDesc *dd);
 void GEinitDisplayList(GEDevDesc *dd);
 void GEplayDisplayList(GEDevDesc *dd);
 void GEcopyDisplayList(int fromDevice);
 SEXP GEcreateSnapshot(GEDevDesc *dd);
 void GEplaySnapshot(SEXP snapshot, GEDevDesc* dd);
+void GEonExit();
+void GEnullDevice();

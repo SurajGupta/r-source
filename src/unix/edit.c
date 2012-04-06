@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2000, 2003  The R Development Core Team
+ *  Copyright (C) 1998, 2000, 2003-4  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/* <UTF8> char here is handled as a whole string, but note that
+   fprintf is used */
+
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -36,11 +40,11 @@
 int Rgui_Edit(char *filename, char *title, int modal);
 #endif
 
-#ifdef HAVE_AQUA
-extern  DL_FUNC ptr_Raqua_Edit;
-extern  Rboolean useCocoa;
-int Raqua_Edit(char *filename) {ptr_Raqua_Edit(filename);}
+#ifdef Unix
+#define R_INTERFACE_PTRS 1
+#include <Rinterface.h> /* for editor ptr */
 #endif
+
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>		/* for unlink() */
@@ -91,7 +95,7 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     char *title;
 #endif
 
-    checkArity(op, args);
+	checkArity(op, args);
 
     vmaxsave = vmaxget();
 
@@ -102,7 +106,7 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     fn = CAR(args); args = CDR(args);
     if (!isString(fn))
-	error("invalid argument to edit()");
+	error(_("invalid argument to edit()"));
 
     if (LENGTH(STRING_ELT(fn, 0)) > 0) {
 	filename = R_alloc(strlen(CHAR(STRING_ELT(fn, 0))), sizeof(char));
@@ -113,7 +117,7 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (x != R_NilValue) {
 
 	if((fp=R_fopen(R_ExpandFileName(filename), "w")) == NULL)
-	    errorcall(call, "unable to open file");
+	    errorcall(call, _("unable to open file"));
 	if (LENGTH(STRING_ELT(fn, 0)) == 0) EdFileUsed++;
 	if (TYPEOF(x) != CLOSXP || isNull(t = getAttrib(x, R_SourceSymbol)))
 	    t = deparse1(x, 0, FORSOURCING); /* deparse for sourcing, not for display */
@@ -123,14 +127,14 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     ti = CAR(args); args = CDR(args);
     ed = CAR(args);
-    if (!isString(ed)) errorcall(call, "argument `editor' type not valid");
+    if (!isString(ed)) errorcall(call, _("argument 'editor' type not valid"));
     cmd = CHAR(STRING_ELT(ed, 0));
-    if (strlen(cmd) == 0) errorcall(call, "argument `editor' is not set");
+    if (strlen(cmd) == 0) errorcall(call, _("argument 'editor' is not set"));
     editcmd = R_alloc(strlen(cmd) + strlen(filename) + 6, sizeof(char));
 #ifdef Win32
     if (!strcmp(cmd,"internal")) {
 	if (!isString(ti))
-	    error("title must be a string");
+	    error(_("'title' must be a string"));
 	if (LENGTH(STRING_ELT(ti, 0)) > 0) {
 	    title = R_alloc(strlen(CHAR(STRING_ELT(ti, 0)))+1, sizeof(char));
 	    strcpy(title, CHAR(STRING_ELT(ti, 0)));
@@ -142,40 +146,35 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else {
 	/* Quote path if necessary */
-	if(cmd[0] != '"' && strchr(cmd, ' '))
+	if(cmd[0] != '"' && Rf_strchr(cmd, ' '))
 	    sprintf(editcmd, "\"%s\" \"%s\"", cmd, filename);
 	else
 	    sprintf(editcmd, "%s \"%s\"", cmd, filename);
 	rc = runcmd(editcmd, 1, 1, "");
 	if (rc == NOLAUNCH)
-	    errorcall(call, "unable to run editor %s", cmd);
+	    errorcall(call, _("unable to run editor '%s'"), cmd);
 	if (rc != 0)
-	    warningcall(call, "editor ran but returned error status");
+	    warningcall(call, _("editor ran but returned error status"));
     }
 #else
-# if defined(HAVE_AQUA)
-    if (!strcmp(R_GUIType,"AQUA") || useCocoa)	
-      rc = Raqua_Edit(filename);
+    if (ptr_R_EditFile)
+        rc = ptr_R_EditFile(filename);
     else {
-      sprintf(editcmd, "%s %s", cmd, filename);
-      rc = R_system(editcmd);
+        sprintf(editcmd, "%s %s", cmd, filename);
+        rc = R_system(editcmd);
     }
-# else
-    sprintf(editcmd, "%s %s", cmd, filename);
-    rc = R_system(editcmd);
-# endif
     if (rc != 0)
-	errorcall(call, "problem with running editor %s", cmd);
+	errorcall(call, _("problem with running editor %s"), cmd);
 #endif
 
     if((fp = R_fopen(R_ExpandFileName(filename), "r")) == NULL)
-	errorcall(call, "unable to open file to read");
+	errorcall(call, _("unable to open file to read"));
     R_ParseCnt = 0;
     x = PROTECT(R_ParseFile(fp, -1, &status));
     fclose(fp);
     if (status != PARSE_OK)
 	errorcall(call,
-		  "An error occurred on line %d\n use a command like\n x <- edit()\n to recover", R_ParseError);
+		  _("an error occurred on line %d\n use a command like\n x <- edit()\n to recover"), R_ParseError);
     R_ResetConsole();
     {   /* can't just eval(x) here */
 	int j, n;

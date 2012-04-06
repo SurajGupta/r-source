@@ -3,6 +3,7 @@
 \alias{slot<-}
 \alias{@<-}
 \alias{slotNames}
+\alias{.slotNames}
 \title{ The Slots in an Object from a Formal Class }
 \description{
   These functions return or set information about the individual slots
@@ -17,6 +18,12 @@ slot(object, name, check = TRUE) <- value
 
 slotNames(x)
 }
+%% .slotNames(x)
+%%
+%% NOTA BENE: We shouldn't advertize .slotNames() --
+%% - - - - -  rather  slotNames() should be changed {and getSlots() too}
+%%   such that it doesn't special-case class representations!
+%%
 \arguments{
   \item{object}{ An object from a formally defined class.}
   \item{name}{ The character-string name of the slot. The name must be a
@@ -29,9 +36,8 @@ slotNames(x)
   \item{check}{If \code{TRUE}, check the assigned value for validity
     as the value of this slot.  You should never set this to
     \code{FALSE} in normal use, since the result can create invalid objects.
-    }
-    
   }
+}
 \details{
   The \code{"@"} operator and the \code{slot} function extract or
   replace the formally defined slots for the object.  The operator
@@ -44,8 +50,8 @@ slotNames(x)
   expression that evaluates to a valid slot in the class definition.
   Generally, the only reason to use the functional form rather than
   the simpler operator is \emph{because} the slot name has to be computed.
-  
-  The definition of the class contains the names of all slots diretly
+
+  The definition of the class contains the names of all slots directly
   and indirectly defined.  Each slot has a name and an associated
   class.  Extracting a slot returns an object from that class.  Setting
   a slot first coerces the value to the specified slot and then stores
@@ -54,6 +60,10 @@ slotNames(x)
   Unlike attributes, slots are not partially matched, and asking for (or
   trying to set) a slot with an invalid name for that class generates an
   error.
+
+  Note that currently, \code{slotNames()} behaves particularly for class
+  representation objects -- this is considered bogous and likely to be
+  changed.
 }
 \references{
   The R package \pkg{methods} implements, with a few exceptions, the
@@ -66,7 +76,7 @@ slotNames(x)
   details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page 
+  discussion of details and ongoing development, see the web page
   \url{http://developer.r-project.org/methodsPackage.html} and the
   pointers from that page.
 }
@@ -77,11 +87,24 @@ slotNames(x)
   \code{\link{getClass}}
 }
 \examples{
-\dontrun{
-slot(myTrack, "x")
-slot(myTrack, "y") <- log(slot(myTrack, "x"))
+\dontshow{if(isClass("track")) removeClass("track")}
 
-slotNames("track")
-}}
+setClass("track", representation(x="numeric", y="numeric"))
+myTrack <- new("track", x = -4:4, y = exp(-4:4))
+slot(myTrack, "x")
+slot(myTrack, "y") <- log(slot(myTrack, "y"))
+str(myTrack)
+
+slotNames("track") # is the same as
+slotNames(myTrack)
+
+%% Don't do this --- this is a bug
+% ## sophisticated:
+% clDef <- getClass(class(myTrack))
+% slotNames(clDef) # "x" and "y" -- as for myTrack
+% .slotNames(clDef)# the slots of the class definition object itself
+
+\dontshow{removeClass("track")##  should not be needed... see ./setClass.Rd}
+}
 \keyword{programming}
 \keyword{classes}

@@ -1,0 +1,30 @@
+#-*- Makefile -*-
+
+Rsharedir = ../share
+Rlocaledir = $(Rsharedir)/locale
+
+CATALOGS = de.gmo en.gmo en_GB.gmo it.gmo ja.gmo pt_BR.gmo ru.gmo zh_CN.gmo
+# no use on Windows en@quot.gmo
+RGUI-CATALOGS = $(wildcard RGui-*.gmo)
+
+all:
+	@mkdir -p $(Rsharedir)
+	@catalogs='$(CATALOGS)'; \
+	for cat in $$catalogs; do \
+	  lang=`echo $$cat | sed -e 's/\.gmo$$//'`; \
+	  dir=$(Rlocaledir)/$$lang/LC_MESSAGES; \
+	  mkdir -p $$dir; \
+	  cp -p $$cat $$dir/R.mo; \
+	  echo "installing $$cat as $$dir/R.mo"; \
+	done
+	@catalogs='$(RGUI-CATALOGS)'; \
+	for cat in $$catalogs; do \
+	  lang=`echo $$cat | sed -e 's/\.gmo$$//' -e 's/^RGui-//'`; \
+	  dir=$(Rlocaledir)/$$lang/LC_MESSAGES; \
+	  mkdir -p $$dir; \
+	  cp -p $$cat $$dir/RGui.mo; \
+	  echo "installing $$cat as $$dir/RGui.mo"; \
+	done
+
+clean:
+	rm -rf $(Rlocaledir)

@@ -124,10 +124,25 @@ typedef struct {
      */
     Rboolean displayListOn;     /* toggle for display list status */
     SEXP displayList;           /* display list */
+    SEXP DLlastElt;
     SEXP savedSnapshot;         /* The last value of the display list
 				 * just prior to when the display list
 				 * was last initialised
 				 */
+
+    /********************************************************				 
+     * Event handling entries
+     ********************************************************/
+     
+    /* These determine whether getGraphicsEvent will try to set an event handler */
+    
+    Rboolean canGenMouseDown; /* can the device generate mousedown events */
+    Rboolean canGenMouseMove; /* can the device generate mousemove events */
+    Rboolean canGenMouseUp;   /* can the device generate mouseup events */
+    Rboolean canGenKeybd;     /* can the device generate keyboard events */
+    
+    Rboolean gettingEvent;    /* This is set while getGraphicsEvent is actively looking for events */
+    
     /********************************************************
      * Device procedures.
      ********************************************************/
@@ -411,6 +426,27 @@ typedef struct {
      *   font, cex, ps, col, gamma
      */
     void (*text)();
+    /*
+     * device_onExit is called by GEonExit when the user has aborted
+     * some operation, and so an R_ProcessEvents call may not return normally.
+     * It need not be set to any value; if null, it will not be called.
+     * 
+     * An example is ...
+     *
+     * static void X11_onExit(NewDevDesc *dd);
+    */    
+    void (*onExit)();
+    /*
+     * device_getEvent is called by do_getGraphicsEvent to get a modal
+     * graphics event.  It should call R_ProcessEvents() until one
+     * of the event handlers sets eventResult to a non-null value,
+     * and then return it
+     * An example is ...
+     *
+     * static SEXP GA_getEvent(SEXP eventRho, char *prompt);
+     */
+    SEXP (*getEvent)();
+    
 } NewDevDesc;
 
 	/********************************************************/

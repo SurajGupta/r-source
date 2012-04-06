@@ -1,3 +1,5 @@
+strtrim <- function(x, width) .Internal(strtrim(x, width))
+
 strwrap <-
 function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
          prefix = "", simplify = TRUE) {
@@ -15,7 +17,7 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
         for(j in seq(along = z[[i]])) {
             ## Format paragraph j in x[i].
             words <- z[[i]][[j]]
-            nc <- nchar(words)
+            nc <- nchar(words, type="w")
 
             ## Remove extra white space unless after a period which
             ## hopefully ends a sentence.
@@ -40,7 +42,7 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
             lens <- cumsum(nc + 1)
 
             first <- TRUE
-            maxLength <- width - nchar(prefix) - indent
+            maxLength <- width - nchar(prefix, type="w") - indent
 
             ## Recursively build a sequence of lower and upper indices
             ## such that the words in line k are the ones in the k-th
@@ -101,17 +103,17 @@ function(x, y, style = c("table", "list"),
             y <- x[[2]]; x <- x[[1]]
         }
         else
-            stop("incorrect value for x")
+            stop("incorrect value for 'x'")
     }
     else if(is.matrix(x)) {
         if(NCOL(x) == 2) {
             y <- x[, 2]; x <- x[, 1]
         }
         else
-            stop("incorrect value for x")
+            stop("incorrect value for 'x'")
     }
     else if(length(x) != length(y))
-        stop("x and y must have the same length")
+        stop("'x' and 'y' must have the same length")
     x <- as.character(x)
     if(length(x) == 0) return(x)
     y <- as.character(y)
@@ -121,12 +123,12 @@ function(x, y, style = c("table", "list"),
     if(is.null(indent))
         indent <- switch(style, table = width / 3, list = width / 9)
     if(indent > 0.5 * width)
-        stop("incorrect values of indent and width")
+        stop("incorrect values of 'indent' and 'width'")
 
     indentString <- paste(rep.int(" ", indent), collapse = "")
 
     if(style == "table") {
-        i <- (nchar(x) > indent - 3)
+        i <- (nchar(x, type="w") > indent - 3)
         if(any(i))
             x[i] <- paste(x[i], "\n", indentString, sep = "")
         i <- !i

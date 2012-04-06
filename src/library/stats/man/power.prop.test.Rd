@@ -1,5 +1,6 @@
 \name{power.prop.test}
 \alias{power.prop.test}
+\encoding{latin1}
 \title{Power calculations two sample test for of proportions}
 \description{
   Compute power of test, or determine parameters to obtain target power.
@@ -36,7 +37,9 @@ power.prop.test(n = NULL, p1 = NULL, p2 = NULL, sig.level = 0.05,
   (including the computed one) augmented with \code{method} and
   \code{note} elements. 
 }
-\author{Peter Dalgaard.  Based on previous work by Claus Ekstrøm}
+\author{Peter Dalgaard.  Based on previous work by Claus
+  \enc{Ekstrøm}{Ekstrom}}
+
 \note{
   \code{uniroot} is used to solve power equation for unknowns, so
   you may see errors from it, notably about inability to bracket the

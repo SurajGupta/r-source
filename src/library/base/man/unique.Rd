@@ -15,7 +15,7 @@ unique(x, incomparables = FALSE, \dots)
 \method{unique}{array}(x, incomparables = FALSE, MARGIN = 1, \dots)
 }
 \arguments{
-  \item{x}{an atomic vector or a data frame or an array.}
+  \item{x}{a vector or a data frame or an array or \code{NULL}.}
   \item{incomparables}{a vector of values that cannot be compared.
     Currently, \code{FALSE} is the only possible value, meaning that all
     values can be compared.}
@@ -36,6 +36,11 @@ unique(x, incomparables = FALSE, \dots)
   An object of the same type of \code{x}. but if
   an element is equal to one with a smaller index, it is removed.
   Dimensions of arrays are not dropped.
+}
+\section{Warning}{
+  Using this for lists is potentially slow, especially if the elements
+  are not atomic vectors (see \code{\link{vector}}) or differ only
+  in their attributes.  In the worst case it is \eqn{O(n^2)}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

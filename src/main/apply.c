@@ -36,10 +36,10 @@ SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     X = CAR(args);
     FUN = CADR(args);
     if (!isSymbol(X) || !isSymbol(FUN))
-	errorcall(call, "arguments must be symbolic");
+	errorcall(call, _("arguments must be symbolic"));
     n = length(eval(X, rho));
     if (n == NA_INTEGER)
-	errorcall(call, "invalid length");
+	errorcall(call, _("invalid length"));
     args = CDR(args);
 
     /* Build call: FUN(X[[<ind>]], ...) */
@@ -50,7 +50,7 @@ SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
        since the computation of one may destroy the other */
 
 
-    ind = allocVector(INTSXP, 1);
+    PROTECT(ind = allocVector(INTSXP, 1));
     PROTECT(tmp = LCONS(R_Bracket2Symbol, LCONS(X, LCONS(ind, R_NilValue))));
     PROTECT(R_fcall = LCONS(FUN, LCONS(tmp, LCONS(R_DotsSymbol, R_NilValue))));
 
@@ -59,7 +59,7 @@ SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 	INTEGER(ind)[0] = i + 1;
 	SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
     }
-    UNPROTECT(3);
+    UNPROTECT(4);
     return ans;
 }
 
@@ -75,7 +75,7 @@ SEXP do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     X = CAR(args); args = CDR(args);
     if(!isMatrix(X))
-	errorcall(call, "First arg is not a matrix");
+	errorcall(call, _("first argument is not a matrix"));
     Xd = getAttrib(X, R_DimSymbol);
     nr = INTEGER(Xd)[0];
     nc = INTEGER(Xd)[1];
@@ -113,7 +113,7 @@ SEXP do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
 		RAW(X1)[j] = RAW(X)[j + inr];
 	    break;
 	default:
-	    error("unsupported type of array in apply");
+	    UNIMPLEMENTED_TYPE("apply", X);
 	}
 	/* careful: we have altered X1 and might have FUN = function(x) x */
 	SET_VECTOR_ELT(ans, i, duplicate(eval(R_fcall, rho)));

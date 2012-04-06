@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998--2005  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/* <UTF8> 
+   Used XTextWidth and XDrawText, so need to use fontsets
+
+   Also needed input context.
+*/
+
+/* The version for R 2.1.0 is partly based on patches by 
+   Eiji Nakama <nakama@ki.rim.or.jp> for use with Japanese fonts. */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -40,6 +49,11 @@
 #include "Defn.h"
 #include "Print.h"
 
+#ifdef SUPPORT_MBCS
+/* This only uses a FontSet in a MBCS */
+# define USE_FONTSET 1
+#endif
+
 #ifndef HAVE_KEYSYM
 #define KeySym int
 #endif
@@ -54,7 +68,7 @@ typedef enum {UNKNOWNN, NUMERIC, CHARACTER} CellType;
 SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
 
 /* Local Function Definitions */
- 
+
 static void advancerect(DE_DIRECTION);
 static int  CheckControl(DEEvent*);
 static int  CheckShift(DEEvent*);
@@ -74,7 +88,7 @@ static void drawcol(int);
 static void drawrow(int);
 static void find_coords(int, int, int*, int*);
 static int  findcell(void);
-static char GetCharP(DEEvent*);
+static char *GetCharP(DEEvent*);
 static KeySym GetKey(DEEvent*);
 static void handlechar(char*);
 static void highlightrect(void);
@@ -89,7 +103,7 @@ static void printrect(int, int);
 static void printstring(char*, int, int, int, int);
 static void printelt(SEXP, int, int, int);
 static void RefreshKeyboardMapping(DEEvent*);
- 
+
 /* Functions to hide Xlib calls */
 static void bell(void);
 static void cleararea(int, int, int, int);
@@ -113,9 +127,9 @@ static SEXP ssNA_STRING;
 static double ssNA_REAL;
 
 /* Global variables needed for the graphics */
- 
+
 static int box_w;                       /* width of a box */
-static int boxw[100];
+static int boxw[100];                   /* widths of cells */
 static int box_h;                       /* height of a box */
 static int windowWidth;                 /* current width of the window */
 static int fullwindowWidth;
@@ -130,12 +144,12 @@ static int ndecimal;                    /* count decimal points */
 static int ne;                          /* count exponents */
 static int nneg;			/* indicate whether its a negative */
 static int clength;                     /* number of characters currently entered */
-static char buf[30];
+static char buf[201];			/* boosted to allow for MBCS */
 static char *bufp;
 static int bwidth;			/* width of the border */
 static int hwidth;			/* width of header  */
 static int text_offset;
- 
+
 static SEXP ssNewVector(SEXPTYPE, int);
 static SEXP ssNA_STRING;
 static double ssNA_REAL;
@@ -146,25 +160,33 @@ static Rboolean newcol, CellModified;
 static int nboxchars;
 static int xmaxused, ymaxused;
 static int box_coords[6];
-static char copycontents[30] = "";
+static char copycontents[sizeof(buf)+1] ;
 static int labdigs=4;
 static char labform[6];
 
 
 /* Xwindows Globals */
- 
+
 static Display          *iodisplay;
 static Window           iowindow, menuwindow, menupanes[4];
 static GC               iogc;
 static XSizeHints       iohint;
-static char             *font_name="9x15";
 static XFontStruct      *font_info;
+static char             *font_name="9x15";
+#ifdef USE_FONTSET
+static XFontSet         font_set;
+static XFontStruct	**fs_list;
+static int		font_set_cnt;
+static char             *fontset_name="-*-fixed-medium-r-normal--13-";
+static XIM		ioim;
+static XIC		ioic;
+#endif
 
 #define mouseDown 	ButtonPress
 #define keyDown		KeyPress
 #define activateEvt	MapNotify
 #define updateEvt	Expose
-  
+
 #ifndef max
 #define max(a, b) (((a)>(b))?(a):(b))
 #endif
@@ -178,12 +200,12 @@ static XFontStruct      *font_info;
 
   The data are stored in a list `work', with unused columns having
   NULL entries.  The names for the list are in `names', which should
-  have a name for all displayable columns (up to xmaxused). 
+  have a name for all displayable columns (up to xmaxused).
   The *used* lengths of the columns are in `lens': this needs only be
   set for non-NULL columns.
 
-  If the list was originally length(0), that should work with 
-  0 pre-defined rows.  (It used to have 1 pre-defined numeric column.)
+  If the list was originally length(0), that should work with
+  0 pre-defined cols.  (It used to have 1 pre-defined numeric column.)
 
   All row and col numbers are 1-based.
 
@@ -199,13 +221,11 @@ static XFontStruct      *font_info;
 
    The vectors are created too long and if they need to be increased
    this is done by using the next higher power of 2. They start 100
-   long. To cut them to the correct length for return you need to know
-   the largest row number that was assigned to. LEVELS (sxpinfo.gp) is
-   used to keep track of this, separately for each vector. Vectors are
-   initialized to NA when they are created so that NA is returned for
-   any cell that was not set by the user.  So that coercion back and
-   forth maintains values of ssNA_REAL and ssNA_STRING I have set
-   ssNA_STRING to be coerceVector(ssNA_REAL), very weird but easy.
+   long.  Vectors are initialized to NA when they are created so that
+   NA is returned for any cell that was not set by the user.  So that
+   coercion back and forth maintains values of ssNA_REAL and
+   ssNA_STRING I have set ssNA_STRING to be coerceVector(ssNA_REAL),
+   very weird but easy.
 
    In Macintosh we needed to call the main event loop to get
    events. This ensures that the spreadsheet interacts well with the
@@ -239,7 +259,6 @@ static SEXP ssNewVector(SEXPTYPE type, int vlen)
 	    REAL(tvec)[j] = ssNA_REAL;
 	else if (type == STRSXP)
 	    SET_STRING_ELT(tvec, j, STRING_ELT(ssNA_STRING, 0));
-    SETLEVELS(tvec, 0);
     return (tvec);
 }
 
@@ -312,7 +331,7 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, "invalid type for value");
 	else {
 	    if (TYPEOF(VECTOR_ELT(work, i)) != type)
-		SET_VECTOR_ELT(work, i, 
+		SET_VECTOR_ELT(work, i,
 			       coerceVector(VECTOR_ELT(work, i), type));
 	}
     }
@@ -375,7 +394,7 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     }
 
-    setAttrib(work2, R_NamesSymbol, names);    
+    setAttrib(work2, R_NamesSymbol, names);
     UNPROTECT(nprotect);
     return work2;
 }
@@ -714,7 +733,7 @@ static void drawelt(int whichrow, int whichcol)
     } else {
 	if (xmaxused >= whichcol + colmin - 1) {
 	    tmp = VECTOR_ELT(work, whichcol + colmin - 2);
-	    if (!isNull(tmp) && (i = rowmin + whichrow - 2) < 
+	    if (!isNull(tmp) && (i = rowmin + whichrow - 2) <
 		INTEGER(lens)[whichcol + colmin - 2] )
 		printelt(tmp, i, whichrow, whichcol);
 	} else
@@ -883,7 +902,7 @@ static void closerect(void)
 		if (newcol & warn) {
 		    /* change mode to character */
 		    SET_VECTOR_ELT(work, wcol - 1, coerceVector(cvec, STRSXP));
-		    SET_STRING_ELT(VECTOR_ELT(work, wcol - 1), wrow - 1, 
+		    SET_STRING_ELT(VECTOR_ELT(work, wcol - 1), wrow - 1,
 				   mkChar(buf));
 		}
 	    } else {
@@ -953,12 +972,21 @@ static void clearrect(void)
    should get this far */
 
 /* --- Not true! E.g. ESC ends up in here... */
+#ifdef USE_FONTSET
+#include <wchar.h>
+#include <wctype.h>
+#endif
 
+/* <FIXME> This is not correct for stateful MBCSs, but that's hard to 
+   do as we get a char at a time */
 static void handlechar(char *text)
 {
-    int c = text[0];
+    int i, c = text[0];
+#ifdef USE_FONTSET
+    wchar_t wc;
+#endif
 
-    if ( c == '\033' ) {
+    if ( c == '\033' ) { /* ESC */
 	CellModified = FALSE;
 	clength = 0;
         bufp = buf;
@@ -983,43 +1011,59 @@ static void handlechar(char *text)
 	highlightrect();
     }
 
-    if (currentexp == 1)	/* we are parsing a number */
-	switch (c) {
-	case '-':
-	    if (nneg == 0)
-		nneg++;
-	    else
-		goto donehc;
+    if (currentexp == 1) {	/* we are parsing a number */
+#ifdef USE_FONTSET
+	mbrtowc(&wc, text, MB_CUR_MAX, NULL);
+	switch (wc) {
+	case L'-':
+	    if (nneg == 0) nneg++; else goto donehc;
 	    break;
 	case '.':
-	    if (ndecimal == 0)
-		ndecimal++;
-	    else
-		goto donehc;
+	    if (ndecimal == 0) ndecimal++; else goto donehc;
+	    break;
+	case L'e':
+	case L'E':
+	    if (ne == 0) {
+		nneg = ndecimal = 0;	/* might have decimal in exponent */
+		ne++;
+	    } else goto donehc;
+	    break;
+	default:
+	    if (!iswdigit(wc)) goto donehc;
+	    break;
+	}
+#else
+	switch (c) {
+	case '-':
+	    if (nneg == 0) nneg++; else goto donehc;
+	    break;
+	case '.':
+	    if (ndecimal == 0) ndecimal++; else goto donehc;
 	    break;
 	case 'e':
 	case 'E':
 	    if (ne == 0) {
 		nneg = ndecimal = 0;	/* might have decimal in exponent */
 		ne++;
-	    }
-	    else
-		goto donehc;
+	    } else goto donehc;
 	    break;
 	default:
-	    if (!isdigit((int)text[0]))
-		goto donehc;
+	    if (!isdigit(c)) goto donehc;
 	    break;
 	}
+#endif
+    }
     if (currentexp == 3) {
-	if (isspace(c))
-	    goto donehc;
-	if (clength == 0) {
-	    if (c != '.' && !isalpha(c))
-		goto donehc;
-	    else if (c != '.' && !isalnum(c))
-		goto donehc;
-	}
+#ifdef USE_FONTSET
+	mbrtowc(&wc, text, MB_CUR_MAX , NULL);
+	if (iswspace(wc)) goto donehc;
+	if (clength == 0 && wc != '.' && !iswalpha(wc)) goto donehc;
+	else if (wc != '.' && !iswalnum(wc)) goto donehc;
+#else
+	if (isspace(c)) goto donehc;
+	if (clength == 0  && c != '.' && !isalpha(c)) goto donehc;
+	else if (c != '.' && !isalnum(c)) goto donehc;
+#endif
     }
 
     if (clength++ > 29) {
@@ -1028,7 +1072,7 @@ static void handlechar(char *text)
 	goto donehc;
     }
 
-    *bufp++ = text[0];
+    for(i = 0; i < strlen(text); i++) *bufp++ = text[i];
     printstring(buf, clength, crow, ccol, 1);
     return;
 
@@ -1065,7 +1109,7 @@ static int checkquit(int xw)
 /* when a buttonpress event happens find the square that is being
    pointed to if the pointer is in the header we need to see if the
    quit button was pressed and if so quit. This is done by having
-   findcell return an int which is zero if we should quit and one
+   findcell return an int which is one if we should quit and zero
    otherwise */
 
 static int findcell(void)
@@ -1090,7 +1134,7 @@ static int findcell(void)
 	    else if (i == 3) pastecell(crow, ccol);
 	    return 0;
 	}
-	    
+
 
 	/* see if it is in the row labels */
 	if (xw < bwidth + boxw[0]) {
@@ -1127,7 +1171,7 @@ static int findcell(void)
     }
     if (keys & Button2Mask) { /* Paste */
 	int row, col = 0;
-	
+
 	if (yw < hwidth + bwidth || xw < bwidth + boxw[0]) return 0;
 
 	/* translate to box coordinates */
@@ -1192,14 +1236,14 @@ static int doMouseDown(DEEvent * event)
 static void doSpreadKey(int key, DEEvent * event)
 {
     KeySym iokey;
-    char text[1];
+    char *text;
 
     iokey = GetKey(event);
-    text[0] = GetCharP(event);
+    text = GetCharP(event);
 
     if (CheckControl(event))
 	doControl(event);
-    else if ((iokey == XK_Return)  || (iokey == XK_KP_Enter) || 
+    else if ((iokey == XK_Return)  || (iokey == XK_KP_Enter) ||
 	     (iokey == XK_Linefeed)|| (iokey == XK_Down))
 	advancerect(DOWN);
     else if (iokey == XK_Left)
@@ -1273,17 +1317,27 @@ static KeySym GetKey(DEEvent * event)
     char text[1];
     KeySym iokey;
 
-    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
+    XLookupString((XKeyEvent *)event, text, 1, &iokey, NULL);
     return iokey;
 }
 
-static char GetCharP(DEEvent * event)
+static char *GetCharP(DEEvent * event)
 {
-    char text[1];
+    static char text[8];
     KeySym iokey;
 
-    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
-    return text[0];
+#ifdef USE_FONTSET
+    if(mbcslocale) {
+#ifdef HAVE_XUTF8LOOKUPSTRING
+	Xutf8LookupString(ioic, (XKeyEvent *)event, text, 8, &iokey, NULL);
+#else
+	XmbLookupString(ioic, (XKeyEvent *)event, text, 8, &iokey, NULL);
+#endif
+	/* FIXME check the return code */
+    } else
+#endif
+	XLookupString((XKeyEvent *)event, text, 8, &iokey, NULL);
+    return text;
 }
 
 static int CheckControl(DEEvent * event)
@@ -1303,7 +1357,7 @@ static void doControl(DEEvent * event)
     KeySym iokey;
 
     (*event).xkey.state = 0;
-    XLookupString((XKeyEvent *)event, text, 1, &iokey, 0);
+    XLookupString((XKeyEvent *)event, text, 1, &iokey, NULL);
     /* one row overlap when scrolling: top line <--> bottom line */
     switch (text[0]) {
 	case 'b':
@@ -1340,6 +1394,12 @@ static void RefreshKeyboardMapping(DEEvent * event)
 void closewin(void)
 {
     XFreeGC(iodisplay, iogc);
+#ifdef USE_FONTSET
+    if(mbcslocale) {
+	XDestroyIC(ioic);
+	XCloseIM(ioim);
+    }
+#endif
     XDestroyWindow(iodisplay, iowindow);
     XCloseDisplay(iodisplay);
 }
@@ -1371,17 +1431,47 @@ static Rboolean initwin(void) /* TRUE = Error */
     XEvent ioevent;
     XSetWindowAttributes winattr;
     XWindowAttributes attribs;
+    XWMHints hints;
 
-    if ((iodisplay = XOpenDisplay(NULL)) == NULL) 
+    strcpy(copycontents, "");
+
+#ifdef USE_FONTSET
+    if (!XSupportsLocale ()) 
+	warning("locale not supported by Xlib: some X ops will operate in C locale");
+    if (!XSetLocaleModifiers ("")) warning("X cannot set locale modifiers");
+#endif
+
+    if ((iodisplay = XOpenDisplay(NULL)) == NULL) {
+	warning("unable to open display");
 	return TRUE;
+    }
     XSetErrorHandler(R_X11Err);
     XSetIOErrorHandler(R_X11IOErr);
 
     /* Get Font Loaded if we can */
 
-    font_info = XLoadQueryFont(iodisplay, font_name);
-    if (font_info == NULL) 
-	return TRUE; /* ERROR */
+#ifdef USE_FONTSET
+    if(mbcslocale) {
+	int  missing_charset_count;
+	char **missing_charset_list;
+	char *def_string;
+	font_set = XCreateFontSet(iodisplay, fontset_name, 
+				  &missing_charset_list, 
+				  &missing_charset_count, &def_string);
+	if (missing_charset_count) XFreeStringList(missing_charset_list);
+	if (font_set == NULL) {
+	    warning("unable to create fontset %s", fontset_name);
+	    return TRUE; /* ERROR */
+	}
+    } else
+#endif
+    {
+	font_info = XLoadQueryFont(iodisplay, font_name);
+	if (font_info == NULL) {
+	    warning("unable to losd font %s", font_name);
+	    return TRUE; /* ERROR */
+	}
+    }
 
     /* find out how wide the input boxes should be and set up the
        window size defaults */
@@ -1392,9 +1482,21 @@ static Rboolean initwin(void) /* TRUE = Error */
     twidth = textwidth(digits, strlen(digits));
     if (nboxchars > 0) twidth = (twidth * nboxchars)/10;
     box_w = twidth + 4;
-    box_h = font_info->max_bounds.ascent
-	+ font_info->max_bounds.descent + 4;
-    text_offset = 2 + font_info->max_bounds.descent;
+#ifdef USE_FONTSET
+    if(mbcslocale) {
+	XFontSetExtents *extent = XExtentsOfFontSet(font_set);
+	char **ml;
+	box_h = (extent->max_logical_extent.height)
+	    + (extent->max_logical_extent.height / 5) + 4;
+	font_set_cnt = XFontsOfFontSet(font_set, &fs_list, &ml);
+	text_offset = 2 + fs_list[0]->max_bounds.descent;
+    } else
+#endif
+    {
+	box_h = font_info->max_bounds.ascent
+	    + font_info->max_bounds.descent + 4;
+	text_offset = 2 + font_info->max_bounds.descent;
+    }
     windowHeight = 26 * box_h + hwidth + 2;
     /* this used to presume 4 chars sufficed for row numbering */
     labdigs = max(3, 1+floor(log10((double)ymaxused)));
@@ -1427,19 +1529,23 @@ static Rboolean initwin(void) /* TRUE = Error */
     iohint.width = windowWidth;
     iohint.height = windowHeight;
     iohint.flags = PPosition | PSize;
+    hints.flags = InputHint;
+    hints.input = True;
     root = DefaultRootWindow(iodisplay);
 
     if ((iowindow = XCreateSimpleWindow(
-	iodisplay,
-	root,
-	iohint.x,
-	iohint.y,
-	iohint.width,
-	iohint.height,
-	bwidth,
-	ioblack,
-	iowhite)) == 0)
+	     iodisplay,
+	     root,
+	     iohint.x,
+	     iohint.y,
+	     iohint.width,
+	     iohint.height,
+	     bwidth,
+	     ioblack,
+	     iowhite)) == 0) {
+	warning("unable to open window for data editor");
 	return TRUE;
+    }
 
     XSetStandardProperties(iodisplay, iowindow, ioname, ioname, None,
 			   (char **)NULL, 0, &iohint);
@@ -1452,10 +1558,34 @@ static Rboolean initwin(void) /* TRUE = Error */
     _XA_WM_PROTOCOLS = XInternAtom(iodisplay, "WM_PROTOCOLS", 0);
     protocol = XInternAtom(iodisplay, "WM_DELETE_WINDOW", 0);
     XSetWMProtocols(iodisplay, iowindow, &protocol, 1);
+    XSetWMHints(iodisplay, iowindow, &hints);
+#ifdef USE_FONTSET
+    if(mbcslocale) {
+	ioim = XOpenIM(iodisplay, NULL, NULL, NULL);
+	if(!ioim) {
+	    XDestroyWindow(iodisplay, iowindow);
+	    XCloseDisplay(iodisplay);
+	    error("unable to open X Input Method");
+	}
 
+	ioic = XCreateIC(ioim, 
+			 XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+			 XNClientWindow, iowindow,
+			 NULL);
+	if(!ioic) {
+	    XCloseIM(ioim);
+	    XDestroyWindow(iodisplay, iowindow);
+	    XCloseDisplay(iodisplay);
+	    error("unable to open X Input Context");
+	}
+    }
+#endif
 
     iogc = XCreateGC(iodisplay, iowindow, 0, 0);
-    XSetFont(iodisplay, iogc, font_info->fid);
+#ifdef USE_FONTSET
+    if(!mbcslocale)
+#endif
+	XSetFont(iodisplay, iogc, font_info->fid);
     XSetBackground(iodisplay, iogc, iowhite);
     XSetForeground(iodisplay, iogc, BlackPixel(iodisplay,
 					       DefaultScreen(iodisplay)));
@@ -1465,7 +1595,6 @@ static Rboolean initwin(void) /* TRUE = Error */
 		 ButtonPressMask | KeyPressMask
 		 | ExposureMask | StructureNotifyMask);
     XMapRaised(iodisplay, iowindow);
-
 
     /* now set up the menu-window, for now use the same text
        dimensions as above */
@@ -1563,8 +1692,18 @@ static void drawrectangle(int xpos, int ypos, int width, int height,
 
 static void drawtext(int xpos, int ypos, char *text, int len)
 {
-    XDrawImageString(iodisplay, iowindow, iogc, xpos,
-		     ypos, text, len);
+#ifdef USE_FONTSET
+    if(mbcslocale)
+#ifdef HAVE_XUTF8DRAWIMAGESTRING
+	Xutf8DrawImageString(iodisplay, iowindow, font_set, iogc, xpos, ypos,
+			     text, len);
+#else
+	XmbDrawImageString(iodisplay, iowindow, font_set, iogc, xpos, ypos,
+			   text, len);
+#endif
+    else
+#endif
+	XDrawImageString(iodisplay, iowindow, iogc, xpos, ypos, text, len);
     Rsync();
 }
 
@@ -1575,10 +1714,15 @@ static void Rsync()
 
 static int textwidth(char *text, int nchar)
 {
-    int t1;
-
-    t1 = XTextWidth(font_info, text, nchar);
-    return t1;
+#ifdef USE_FONTSET
+    if(mbcslocale)
+#ifdef HAVE_XUTF8TEXTESCAPEMENT
+	return Xutf8TextEscapement(font_set, text, nchar);
+#else
+	return XmbTextEscapement(font_set, text, nchar);
+#endif
+#endif
+    return XTextWidth(font_info, text, nchar);
 }
 
 /* Menus */
@@ -1648,19 +1792,19 @@ void popupmenu(int x_pos, int y_pos, int col, int row)
 		    bell();
 		    break;
 		case 1:
-		    if (isNull(tvec)) 
-			SET_VECTOR_ELT(work, popupcol - 1, 
+		    if (isNull(tvec))
+			SET_VECTOR_ELT(work, popupcol - 1,
 				       ssNewVector(REALSXP, 100));
 		    else
 			SET_VECTOR_ELT(work, popupcol - 1,
 				       coerceVector(tvec, REALSXP));
 		    goto done;
 		case 2:
-		    if (isNull(tvec)) 
-			SET_VECTOR_ELT(work, popupcol - 1, 
+		    if (isNull(tvec))
+			SET_VECTOR_ELT(work, popupcol - 1,
 				       ssNewVector(STRSXP, 100));
 		    else
-			SET_VECTOR_ELT(work, popupcol - 1, 
+			SET_VECTOR_ELT(work, popupcol - 1,
 				       coerceVector(tvec, STRSXP));
 		    goto done;
 		case 3:
@@ -1699,7 +1843,7 @@ static void copycell(void)
 {
     int i, whichrow = crow + colmin - 1, whichcol = ccol + colmin -1;
     SEXP tmp;
-    
+
     if (whichrow == 0) {
 	/* won't have  cell here */
     } else {

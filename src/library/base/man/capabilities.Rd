@@ -18,11 +18,10 @@ capabilities(what = NULL)
     \item{png}{Is the \code{\link{png}} function operational?}
     \item{tcltk}{Is the \pkg{tcltk} package operational?}
     \item{X11}{(Unix)  Are the \code{X11} graphics device and the
-      X11-based data editor available?}
-    \item{GNOME}{(Unix)  Is the GNOME GUI in use?  This is deprecated,
-      and will be removed from \R 2.1.0.  Use \code{.Platform$GUI} instead.}
-    \item{libz}{Is \code{\link{gzfile}} available?  From \R 1.5.0 this
-      will always be true, and is deprecated.}
+      X11-based data editor available?  As from \R 2.1.0 this loads the
+      X11 module if not already loaded, and checks that the default
+      display can be contacted unless a \code{X11} device has already
+      been used.}
     \item{http/ftp}{Are \code{\link{url}} and the internal method for
       \code{\link{download.file}} available?}
     \item{sockets}{Are \code{\link{make.socket}} and related functions
@@ -40,13 +39,10 @@ capabilities(what = NULL)
       }
     \item{IEEE754}{Does this platform have IEEE 754 arithmetic?  Note
       that this is more correctly known by the international standard
-      IEC 60559, and will always be true from \R version 2.0.0.}
-    \item{bzip2}{Is \code{\link{bzfile}} available?  From \R 1.7.0 this
-      will always be true, and is deprecated.}
-    \item{PCRE}{Is the Perl-Compatible Regular Expression library
-      available?  This is needed for the \code{perl = TRUE} option to
-      \code{\link{grep}} are related function.  From \R 1.7.0 this
-      will always be true, and is deprecated.}
+      IEC 60559, and will always be true from \R version 2.0.0.  It is
+      now deprecated and will be removed in due course.}
+    \item{iconv}{is internationalization conversion via
+      \code{\link{iconv}} supported?}
 }
 \seealso{\code{\link{.Platform}}}
 

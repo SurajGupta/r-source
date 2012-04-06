@@ -41,7 +41,7 @@ else
 endif
 
 # data
-DSOURCES=$(filter-out $(SPKG)/data/CVS $(SPKG)/data/.svn $(SPKG)/data/datalist, $(wildcard $(SPKG)/data/*))
+DSOURCES=$(filter-out $(SPKG)/data/CVS $(SPKG)/data/.svn, $(wildcard $(SPKG)/data/*))
 ifeq ($(strip $(DSOURCES)),)
   DATA= 
 else
@@ -232,8 +232,14 @@ srcDynlib:
 ifeq ($(strip $(SRCMAKE)),)
 ifneq ($(strip $(LOBJS)),)
 	@$(ECHO) "  making DLL ..."
-	@$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
-	  -f $(RHOME)/src/gnuwin32/MakeDll DLLNAME=$(DLLNAME)
+	@makefiles="-f $(RHOME)/src/gnuwin32/MakeDll" ; \
+	if test -r "${HOME}/.R/Makevars.win"; then \
+	  makefiles="$${makefiles} -f ${HOME}/.R/Makevars.win"; \
+	elif test -r "${HOME}/.R/Makevars"; then \
+	  makefiles="$${makefiles} -f \"${HOME}/.R/Makevars\""; \
+	fi; \
+	$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
+	  $${makefiles} DLLNAME=$(DLLNAME)
 	@$(ECHO) "  ... DLL made"
 endif
 else

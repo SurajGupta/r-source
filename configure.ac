@@ -38,8 +38,17 @@ AC_CONFIG_AUX_DIR([tools])
 
 ### * Information on the package.
 
-## Automake initialization.
-AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+dnl ## Automake initialization.
+dnl Not needed, and possibly resulting in non-portable configure scripts
+dnl with hard-wired Automake API numbers (aclocal-1.x) ...
+dnl AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+dnl Nevertheless, we need to provide PACKAGE and VERSION ...
+PACKAGE=[${PACKAGE_NAME}]
+AC_DEFINE_UNQUOTED(PACKAGE, "${PACKAGE}", [Name of package])
+AC_SUBST(PACKAGE)
+VERSION=[${PACKAGE_VERSION}]
+AC_DEFINE_UNQUOTED(VERSION, "${VERSION}", [Version number of package])
+AC_SUBST(VERSION)
 
 ## Autoheader initialization.
 AH_TOP([#ifndef _CONFIG_H
@@ -83,10 +92,19 @@ if test -r "${cfile}"; then
   echo "loading site script '${cfile}'"
   . "${cfile}"
 fi
-cfile="${HOME}/.Rconf"
+cfile="${HOME}/.Rconfig"
 if test -r "${cfile}"; then
   echo "loading user script '${cfile}'"
   . "${cfile}"
+## <FIXME>
+## Remove support for ~/.Rconf eventually.
+else
+  cfile="${HOME}/.Rconf"
+  if test -r "${cfile}"; then
+    echo "loading user script '${cfile}'"
+    . "${cfile}"
+  fi
+## </FIXME>
 fi
 cfile="./config.site"
 if test -r "${cfile}"; then
@@ -96,8 +114,6 @@ fi
 
 ## We provide these defaults so that headers and libraries in
 ## '/usr/local' are found (by the native tools, mostly).
-## We do it here because AC_ARG_WITH(gnome) may add to CPPFLAGS and
-## LDFLAGS.
 if test -f "/sw/etc/fink.conf"; then
   : ${CPPFLAGS="-I/sw/include -I/usr/local/include"}
   : ${LDFLAGS="-L/sw/lib -L/usr/local/lib"}
@@ -169,13 +185,7 @@ AC_ARG_ENABLE([R-shlib],
                 [build R as a shared library @<:@no@:>@])],
 [want_R_shlib="${enableval}"],
 [want_R_shlib="${want_R_framework}"])
-AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
-if test "${want_R_shlib}" = yes; then
-  LIBR="-L\$(R_HOME)/lib -lR"
-else
-  LIBR=
-fi
-AC_SUBST(LIBR)
+## processed after GNOME, which can set this.
 
 ## Enable maintainer-specific portions of Makefiles.
 AC_ARG_ENABLE([maintainer-mode],
@@ -205,6 +215,12 @@ AC_ARG_ENABLE([linux-lfs],
 [want_linux_lfs="${enableval}"],
 [want_linux_lfs=no])
 
+AC_ARG_ENABLE([mbcs],
+[AC_HELP_STRING([--enable-mbcs],
+                [Enable support for UTF-8 and other MBCS locales @<:@yes@:>@])],
+[want_mbcs_support="${enableval}"],
+[want_mbcs_support=yes])
+
 
 ### ** Optional packages.
 
@@ -228,22 +244,6 @@ AC_ARG_WITH([readline],
                 [use readline library (if available) @<:@yes@:>@])],
 [R_ARG_USE(readline)],
 [use_readline=yes])
-
-## GNOME.
-AC_ARG_WITH([gnome],
-[AC_HELP_STRING([--with-gnome],
-                [use GNOME, or specify its prefix @<:@no@:>@])],
-[if test "${withval}" = no; then
-  want_gnome=no
-elif test "${withval}" = yes; then
-  want_gnome=yes
-else
-  want_gnome=yes
-  CPPFLAGS="${CPPFLAGS} -I${withval}/include"
-  LDFLAGS="${LDFLAGS} -L${withval}/lib"
-  gnome_prefix="${withval}/lib"
-fi],
-[want_gnome=no])
 
 ## Aqua.
 AC_ARG_WITH([aqua],
@@ -303,6 +303,14 @@ AC_ARG_WITH([pcre],
 [R_ARG_USE(pcre)],
 [use_pcre=no])
 
+## needs to come after GNOME
+AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
+if test "${want_R_shlib}" = yes; then
+  LIBR="-L\$(R_HOME)/lib -lR"
+else
+  LIBR=
+fi
+AC_SUBST(LIBR)
 
 ## <FIXME>
 ## Completely disable using libtool for building shlibs until libtool
@@ -394,6 +402,11 @@ AC_MSG_RESULT([${BUILDDIR_IS_SRCDIR}])
 
 ### * Checks for programs.
 
+R_MISSING_PROG(ACLOCAL, aclocal)
+R_MISSING_PROG(AUTOCONF, autoconf)
+R_MISSING_PROG(AUTOMAKE, automake)
+R_MISSING_PROG(AUTOHEADER, autoheader)
+R_MISSING_PROG(MAKEINFO, makeinfo)
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_LN_S
@@ -491,12 +504,15 @@ AC_SUBST(LIBM)
 ## AC_CHECK_LIBM computes LIBM but does not add to LIBS, hence we do
 ## the following as well.
 AC_CHECK_LIB(m, sin)
-AC_CHECK_LIB(ncurses, main, [],
-             AC_CHECK_LIB(termcap, main, [],
-                          AC_CHECK_LIB(termlib, main)))
 case "${host_os}" in
-  darwin*)
+  darwin[[123456]].*)
+    ## MacOS <= 10.2 doesn't have dlcompat
     AM_CONDITIONAL(BUILD_DLFCN_DARWIN, true)
+    AC_CHECK_LIB(cc_dynamic, main)
+    ;;
+  darwin*)
+    ## MacOS 10.3 and 10.4 do
+    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
     ## SI says we want '-lcc_dynamic' on Darwin, although currently
     ## http://developer.apple.com /documentation/MacOSX/ has nothing
     ## official.
@@ -510,9 +526,31 @@ esac
 
 ## Readline.
 if test "${use_readline}" = yes; then
+  AC_CHECK_HEADERS(readline/history.h readline/readline.h)
+  r_save_LIBS="${LIBS}"
+  LIBS=
+  ## don't use the cached value as we need to rebuild LIBS
+  unset ac_cv_lib_readline_rl_callback_read_char
   AC_CHECK_LIB(readline, rl_callback_read_char)
   use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
+  if test "${use_readline}" = no; then
+    ## only need ncurses if libreadline is not statically linked against it
+    unset ac_cv_lib_readline_rl_callback_read_char
+    AC_CHECK_LIB(ncurses, main, [],
+                 AC_CHECK_LIB(termcap, main, [],
+                              AC_CHECK_LIB(termlib, main)))
+    AC_CHECK_LIB(readline, rl_callback_read_char)
+    use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
+  fi
+  ## the NetBSD version as used in MacOS X does not have this
+  AC_CHECK_FUNCS(history_truncate_file)
+  READLINE_LIBS="${LIBS}"
+  LIBS="${r_save_LIBS}"
+  if test "${use_readline}" = no; then
+    AC_MSG_ERROR([--with-readline=yes (default) and headers/libs are not available])
+  fi
 fi
+AC_SUBST(READLINE_LIBS)
 
 ### * Checks for header files.
 
@@ -525,10 +563,9 @@ AC_HEADER_SYS_WAIT
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
   fpu_control.h grp.h ieee754.h ieeefp.h limits.h locale.h \
-  netdb.h netinet/in.h \
-  pwd.h readline/history.h readline/readline.h strings.h \
+  netdb.h netinet/in.h pwd.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
-  sys/times.h sys/utsname.h unistd.h wchar.h)
+  sys/times.h sys/utsname.h unistd.h)
 ## </NOTE>
 ## <NOTE>
 ## These are ANSI C headers but some C code (written to work also
@@ -621,10 +658,10 @@ R_PROG_CXX_MAKEFRAG
 ### ** Platform-specific overrides for the C, Fortran 77 and C++ compilers.
 
 case "${host_cpu}" in
-  i*86)
+  i*86|x86_64)
     R_PROG_CC_FLAG_D__NO_MATH_INLINES
     ## We used to add -mieee-fp here, but it seems it is really a
-    ## gcc linker flag for old Linuxen adding -lieee to a non-shared link.
+    ## linker flag for old Linuxen adding -lieee to a non-shared link.
     ;;
   alpha*)
     ## <NOTE>
@@ -684,6 +721,9 @@ case "${host_os}" in
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ;;
   darwin*)
+    ## This is needed for Apple's dlsym included in >= 10.3 
+    ## and so we've changed dlfcn-darwin.c for 2.1.0
+    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ## Need '-no-cpp-precomp' say J de Leeuw <deleeuw@stat.ucla.edu> and
     ## http://fink.sourceforge.net/doc/porting/basics.php.
     R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-no-cpp-precomp])
@@ -853,11 +893,9 @@ case "${host_os}" in
     if test "${G77}" = yes; then
       fpicflags="-fno-common"
     fi
-    ## <FIXME>
-    ## Needed because currently the Quartz device driver gets linked to
-    ## the main binary.  Change once the driver is modularized.
-    main_ldflags="-framework Carbon"
-    ## </FIXME>
+    ## Used to need this for GUI and quartz device, but neither are in
+    ## R or libR.dylib any longer (2.1.0).
+    ## main_ldflags="-framework Carbon"
     ## Want '-mdynamic-no-pic' for GCC 3, says Jan de Leeuw.
     if test "${GCC}" = yes; then
       ## <FIXME>
@@ -1094,32 +1132,8 @@ case "${host_os}" in
   darwin*)
     DYLIB_EXT=".dylib"
     dylib_ldflags="-dynamiclib"
-    ## <NOTE>
-    ## Earlier versions had '-flat_namespace -undefined suppress' in
-    ## LIBR_LDFLAGS ... not clear whether needed or in fact wanted.
-    ##
-    ## When running AQUA this has to be a fixed place, not under /usr/local
-    ## <FIXME>
-    ## I'm using want_aqua instead of use_aqua as the latter is not yet
-    ## at this point. S.I.
-    ## </FIXME>
-    ## </NOTE>
-    ##    if test "x${want_aqua}" = xyes; then
-    ##      LIBR_LDFLAGS="-dynamiclib -install_name /Applications/StartR.app/RAqua.app/Contents/Frameworks/libR.dylib"
-    ##    else
-    ##      LIBR_LDFLAGS="-dynamiclib -install_name \$(Rexeclibdir)/libR.dylib"
-    ##     LIBR_LDFLAGS="-dynamiclib"
-   
-    ## LIBR_LDFLAGS="-dynamiclib -install_name ${R_FRAMEWORK_DIR}/Versions/${PACKAGE_VERSION}/Resources/bin/libR.dylib -compatibility_version ${PACKAGE_VERSION}  -current_version ${PACKAGE_VERSION}"
     MAJR_VERSION=`echo "${PACKAGE_VERSION}" | sed  -e "s/[[\.]][[1-9]]$/.0/"` 
     LIBR_LDFLAGS="-dynamiclib -install_name libR.dylib -compatibility_version ${MAJR_VERSION}  -current_version ${PACKAGE_VERSION}  -headerpad_max_install_names"
-    ##    fi
-    ## <FIXME>
-    ## We need '-framework Carbon' because currently the Quartz device
-    ## driver gets linked to the main binary and hence also the R dylib.
-    ## Change once the driver is modularized.
-    R_SH_VAR_ADD(LIBR_LDFLAGS, [-framework Carbon])
-    ## </FIXME>
     RLAPACK_LDFLAGS="-install_name \$(Rexeclibdir)/libRlapack.dylib"
     ;;
   hpux*)
@@ -1172,20 +1186,39 @@ AC_SUBST(LIBR_LDFLAGS)
 AC_SUBST(RLAPACK_LDFLAGS)
 AC_SUBST(LAPACK_LDFLAGS)
 
+### Now we have found all the flags, we need to use them to test appropriately.
+### We don't currently have any C++ tests, but future-proof.
+### In principle we should do this before testing for C-Fortran compatibility.
+
+CFLAGS_KEEP=${CFLAGS}
+FFLAGS_KEEP=${FFLAGS}
+CXXFLAGS_KEEP=${CXXFLAGS}
+if test "${want_R_shlib}" = yes; then
+  CFLAGS="${CFLAGS} ${CPICFLAGS} ${R_XTRA_CFLAGS}"
+  FFLAGS="${FFLAGS} ${FPICFLAGS} ${R_XTRA_FFLAGS}"
+  CXXFLAGS="${CXXFLAGS} ${CXXPICFLAGS} ${R_XTRA_CXXFLAGS}"
+else
+  CFLAGS="${CFLAGS} ${R_XTRA_CFLAGS}"
+  FFLAGS="${FFLAGS} ${R_XTRA_FFLAGS}"
+  CXXFLAGS="${CXXFLAGS} ${R_XTRA_CXXFLAGS}"
+fi
+
 ### * Checks for library functions.
 
 AC_CHECK_TYPES([off_t])
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(access chdir expm1 fcntl finite fseeko ftello ftruncate getcwd \
-  getgrgid getpwuid getuid hypot isascii log1p matherr mkfifo \
-  popen putenv rint setenv strcoll stat strptime symlink \
-  system times unsetenv)
+AC_CHECK_DECLS([alloca], , , [#include <alloca.h>])
+AC_CHECK_FUNCS(access chdir expm1 fcntl finite fseeko ftello ftruncate \
+  getcwd getgrgid getpwuid getuid hypot isascii log1p \
+  matherr mkdtemp mkfifo popen putenv realpath rint \
+  setenv strcoll stat strptime symlink system times unsetenv)
 ## isfinite and isnan are in math.h but might be macros
 AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
 ## might report corresponding HAVE_FOO conditionals.
 ## </NOTE>
+
 
 if test $ac_cv_type_off_t=yes -a $ac_cv_func_fseeko=yes -a $ac_cv_func_ftello=yes; then
    AC_DEFINE(HAVE_OFF_T, 1,
@@ -1198,9 +1231,6 @@ R_IEEE_754
 ## check whether nl_langinfo(CODESET) is in langinfo.h
 ## defines HAVE_LANGINFO_CODESET if it's there
 AM_LANGINFO_CODESET
-
-## check if X11 typedefs KeySym
-R_HAVE_KEYSYM
 
 ## Used to build src/include/Rmath.h.
 ## <NOTE>
@@ -1265,27 +1295,26 @@ AM_CONDITIONAL(USE_EXTERNAL_LAPACK, [test "${acx_lapack_ok}" = "yes"])
 
 ### * Checks for system services.
 
-AC_SUBST(R_GUIS)
+AC_SUBST(R_MODULES)
+
+## UTF-8 locales - support for MBCS and specifically UTF-8
+R_MBCS
+
+## iconv headers and function.
+R_ICONV
 
 ## X11.
 R_X11
 if test "${use_X11}" = yes; then
-  R_GUIS=X11
+  R_MODULES=X11
 else
-  R_GUIS=
+  R_MODULES=
 fi
-
-## GNOME.
-R_GNOME
-if test "${use_gnome}" = yes; then
-  R_SH_VAR_ADD(R_GUIS, [gnome]);
-fi
+## check if X11 typedefs KeySym
+R_TYPE_KEYSYM
 
 ## Aqua
 R_AQUA
-if test "${use_aqua}" = yes; then
-  R_SH_VAR_ADD(R_GUIS, [aqua]);
-fi
 AM_CONDITIONAL(BUILD_AQUA, [test "x${use_aqua}" = xyes])
 AC_SUBST(use_aqua)
 
@@ -1372,9 +1401,14 @@ LIBS="${LIBS1} ${LIBS2}"
 ## On Linux, do not add the ld.so system directories '/lib' and
 ## '/usr/lib', so that the entries from '/etc/ld.so.conf' are not
 ## shadowed (otherwise, e.g. optimized ATLAS libs would not be used).
+## On OS X (Darwin) /usr/X11R6/lib shadows OpenGL framework and is not
+## needed in DYLD_LIBRARY_PATH.
 case "${host_os}" in
-  linux*)
+  linux* | solaris*)
     r_ld_library_defaults="/usr/lib:/lib"
+    ;;
+  darwin*)
+    r_ld_library_defaults="/usr/X11R6/lib"
     ;;
   *)
     r_ld_library_defaults=
@@ -1415,6 +1449,12 @@ fi
 AM_CONDITIONAL(USE_RECOMMENDED_PACKAGES,
                [test "x${use_recommended_packages}" = xyes])
 
+# i18n support.  To update to a new version of gettext, run:
+# gettextize -f -c --intl
+AM_GNU_GETTEXT_VERSION(0.14.1)
+AM_GNU_GETTEXT(, , [../extra/intl])
+
+
 ### * Win32 overrides
 case "${host_os}" in
   mingw*)
@@ -1438,7 +1478,6 @@ AC_CONFIG_HEADERS([src/include/config.h])
 AC_CONFIG_FILES(
 [Makeconf
   Makefile
-  afm/Makefile
   doc/Makefile
   doc/html/Makefile
   doc/html/search/Makefile
@@ -1447,11 +1486,13 @@ AC_CONFIG_FILES(
   etc/Makeconf
   etc/Renviron
   m4/Makefile
+  po/Makefile.in 
   share/Makefile
   src/Makefile
   src/appl/Makefile
   src/extra/Makefile
   src/extra/bzip2/Makefile
+  src/extra/intl/Makefile
   src/extra/pcre/Makefile
   src/extra/xdr/Makefile
   src/extra/zlib/Makefile
@@ -1468,6 +1509,7 @@ AC_CONFIG_FILES(
   src/library/graphics/Makefile
   src/library/grDevices/DESCRIPTION
   src/library/grDevices/Makefile
+  src/library/grDevices/src/Makefile
   src/library/grid/DESCRIPTION
   src/library/grid/Makefile
   src/library/grid/src/Makefile
@@ -1494,10 +1536,6 @@ AC_CONFIG_FILES(
   src/main/Makefile
   src/modules/Makefile
   src/modules/X11/Makefile
-  src/modules/aqua/Makefile
-  src/modules/aqua/Info.plist
-  src/modules/aqua/Contents/Info.plist
-  src/modules/gnome/Makefile
   src/modules/internet/Makefile
   src/modules/lapack/Makefile
   src/modules/vfonts/Makefile
@@ -1526,6 +1564,11 @@ AC_CONFIG_FILES(
 AC_CONFIG_COMMANDS([stamp-h],
 [test -f src/include/stamp-h || echo timestamp > src/include/stamp-h])
 
+### now reset flags
+CFLAGS=${CFLAGS_KEEP}
+FFLAGS=${FFLAGS_KEEP}
+CXXFLAGS=${CXXFLAGS_KEEP}
+
 AC_OUTPUT
 
 ## Summarize configure results.
@@ -1541,7 +1584,7 @@ else
   r_f77_compiler="${F2C} ${F2CFLAGS}"
 fi
 r_interfaces=
-for item in X11 gnome aqua tcltk; do
+for item in X11 aqua tcltk; do
   if eval "test \${use_${item}} = yes"; then
     R_SH_VAR_ADD(r_interfaces, [${item}], [, ])
   fi
@@ -1578,9 +1621,15 @@ fi
 if test "${have_jpeg}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [JPEG], [, ])
 fi
-## always have these two on Unix.
-## R_SH_VAR_ADD(r_capabilities, [bzip2], [, ])
-## R_SH_VAR_ADD(r_capabilities, [PCRE], [, ])
+if test "${r_cv_iconv_latin1}" = yes; then
+  R_SH_VAR_ADD(r_capabilities, [iconv], [, ])
+fi
+if test "${want_mbcs_support}" = yes; then
+  R_SH_VAR_ADD(r_capabilities, [MBCS], [, ])
+fi
+if test "${USE_NLS}" = yes; then
+  R_SH_VAR_ADD(r_capabilities, [NLS], [, ])
+fi
 r_options=
 if test "${want_R_framework}" = yes; then
   R_SH_VAR_ADD(r_options, [framework], [, ])

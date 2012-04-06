@@ -11,7 +11,7 @@ function(package, dir, lib.loc = NULL)
     ## </NOTE>
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         is_base <- package == "base"
@@ -19,7 +19,7 @@ function(package, dir, lib.loc = NULL)
         all_doc_topics <- if(!file_test("-f", helpIndex))
             character()
         else {
-            ## Find all documented topics from the help index.            
+            ## Find all documented topics from the help index.
             sort(scan(file = helpIndex, what = list("", ""), sep = "\t",
                       quiet = TRUE, na.strings = character())[[1]])
             ## <NOTE>
@@ -44,14 +44,14 @@ function(package, dir, lib.loc = NULL)
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
-        is_base <- basename(dir) == "base"        
+        is_base <- basename(dir) == "base"
         docs_dir <- file.path(dir, "man")
         if(!file_test("-d", docs_dir))
             all_doc_topics <- character()
@@ -64,7 +64,8 @@ function(package, dir, lib.loc = NULL)
                                   .read_Rd_lines_quietly(f),
                                   value = TRUE))
             }
-            all_doc_topics <- gsub("\\\\alias{(.*)}.*", "\\1", aliases)
+            all_doc_topics <-
+                gsub("\\\\alias\\{(.*)\\}.*", "\\1", aliases)
             all_doc_topics <- gsub("\\\\%", "%", all_doc_topics)
             all_doc_topics <- gsub(" ", "", all_doc_topics)
             all_doc_topics <- sort(unique(all_doc_topics))
@@ -145,7 +146,7 @@ function(package, dir, lib.loc = NULL)
 
     ## Undocumented objects?
     if((length(code_objs) == 0) && (length(data_objs) == 0))
-        warning("Neither code nor data objects found")
+        warning("neither code nor data objects found")
 
     if(!is_base) {
         ## Code objects in add-on packages with names starting with a
@@ -333,17 +334,19 @@ function(package, dir, lib.loc = NULL,
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         docs_dir <- file.path(dir, "man")
         if(!file_test("-d", docs_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd sources"))
+            stop(gettextf("directory '%s' does not contain Rd sources",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         ## Load package into code_env.
@@ -371,21 +374,23 @@ function(package, dir, lib.loc = NULL,
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         docs_dir <- file.path(dir, "man")
         if(!file_test("-d", docs_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd sources"))
+            stop(gettextf("directory '%s' does not contain Rd sources",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
@@ -529,8 +534,7 @@ function(package, dir, lib.loc = NULL,
     else
         Rd_db(dir = dir)
 
-    db <- lapply(db,
-                 function(f) paste(Rd_pp(f), collapse = "\n"))
+    db <- lapply(db, function(f) paste(Rd_pp(f), collapse = "\n"))
     names(db) <- db_names <- .get_Rd_names_from_Rd_db(db)
     if(is_base) {
         ind <- db_names %in% c("base-defunct")
@@ -547,7 +551,7 @@ function(package, dir, lib.loc = NULL,
     db_usages <- lapply(db_usage_texts, .parse_usage_as_much_as_possible)
     ind <- sapply(db_usages,
                   function(x) !is.null(attr(x, "bad_lines")))
-    bad_lines <- sapply(db_usages[ind], attr, "bad_lines")
+    bad_lines <- lapply(db_usages[ind], attr, "bad_lines")
 
     ## <FIXME>
     ## Currently, there is no useful markup for S3 Ops group methods
@@ -745,11 +749,14 @@ function(x, ...)
         attr(x, "functions_in_usages_not_in_code")
     if(length(functions_in_usages_not_in_code) > 0) {
         for(fname in names(functions_in_usages_not_in_code)) {
+            ## <FIXME>
+            ## Use message() eventually ...
             writeLines(paste("Functions/methods with usage in",
                              "documentation object", sQuote(fname),
                              "but not in code:"))
             .pretty_print(unique(functions_in_usages_not_in_code[[fname]]))
             writeLines("")
+            ## </FIXME>
         }
     }
 
@@ -806,14 +813,15 @@ function(package, lib.loc = NULL)
 
     ## Argument handling.
     if(length(package) != 1)
-        stop(.wrong_args("package", "must be of length 1"))
+        stop("argument 'package' must be of length 1")
     dir <- .find.package(package, lib.loc)
     if(!file_test("-d", file.path(dir, "R")))
-        stop(paste("directory", sQuote(dir),
-                   "does not contain R code"))
+        stop(gettextf("directory '%s' does not contain R code", dir),
+             domain = NA)
     if(!file_test("-d", file.path(dir, "man")))
-        stop(paste("directory", sQuote(dir),
-                   "does not contain Rd sources"))
+        stop(gettextf("directory '%s' does not contain Rd sources",
+                      dir),
+             domain = NA)
     is_base <- basename(dir) == "base"
 
     ## Load package into code_env.
@@ -829,7 +837,7 @@ function(package, lib.loc = NULL)
 
     ## Build Rd data base.
     db <- Rd_db(package, lib.loc = dirname(dir))
-    db <- lapply(db, Rd_pp)
+    db <- lapply(db, function(f) Rd_pp(f))
 
     ## Need some heuristics now.  When does an Rd object document just
     ## one S4 class so that we can compare (at least) the slot names?
@@ -871,10 +879,10 @@ function(package, lib.loc = NULL)
         txt <- unlist(sapply(txt, get_Rd_items))
         if(!length(txt)) return(character())
         ## And now strip enclosing '\code{...}:'
-        txt <- gsub("\\\\code\{(.*)\}:?", "\\1", as.character(txt))
+        txt <- gsub("\\\\code\\{(.*)\\}:?", "\\1", as.character(txt))
         txt <- unlist(strsplit(txt, ", *"))
-        txt <- sub("^[[:space:]]*", "", txt)
-        txt <- sub("[[:space:]]*$", "", txt)
+        txt <- sub("^[[:space:]]+", "", txt)
+        txt <- sub("[[:space:]]+$", "", txt)
         txt
     }
 
@@ -949,12 +957,12 @@ function(package, lib.loc = NULL)
 
     ## Argument handling.
     if(length(package) != 1)
-        stop(.wrong_args("package", "must be of length 1"))
+        stop("argument 'package' must be of length 1")
 
     dir <- .find.package(package, lib.loc)
     if(!file_test("-d", file.path(dir, "man")))
-       stop(paste("directory", sQuote(dir),
-                  "does not contain Rd sources"))
+       stop(gettextf("directory '%s' does not contain Rd sources", dir),
+            domain = NA)
     is_base <- basename(dir) == "base"
     has_namespace <- !is_base && packageHasNamespace(package, dirname(dir))
 
@@ -969,7 +977,7 @@ function(package, lib.loc = NULL)
 
     ## Build Rd data base.
     db <- Rd_db(package, lib.loc = dirname(dir))
-    db <- lapply(db, Rd_pp)
+    db <- lapply(db, function(f) Rd_pp(f))
 
     ## Need some heuristics now.  When does an Rd object document a
     ## data.frame (could add support for other classes later) variable
@@ -1006,10 +1014,14 @@ function(package, lib.loc = NULL)
         txt <- unlist(sapply(txt, get_Rd_items))
         if(!length(txt)) return(character())
         txt <- gsub("(.*):$", "\\1", as.character(txt))
-        txt <- gsub("\\\\code\{(.*)\}:?", "\\1", txt)
+        txt <- gsub("\\\\code\\{(.*)\\}:?", "\\1", txt)
+        ## Argh.  Of course, variable names can have a '_', which needs
+        ## to be escaped if not in \code{}, and the prompt() default is
+        ## not to put variable names inside \code{}.
+        txt <- gsub("\\\\_", "_", txt)
         txt <- unlist(strsplit(txt, ", *"))
-        txt <- sub("^[[:space:]]*", "", txt)
-        txt <- sub("[[:space:]]*$", "", txt)
+        txt <- sub("^[[:space:]]+", "", txt)
+        txt <- sub("[[:space:]]+$", "", txt)
         txt
     }
 
@@ -1104,32 +1116,33 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
     }
 
     docs_dir <- file.path(dir, "man")
     if(!file_test("-d", docs_dir))
-        stop(paste("directory", sQuote(dir),
-                   "does not contain Rd sources"))
+        stop(gettextf("directory '%s' does not contain Rd sources",
+                      dir),
+             domain = NA)
 
     db <- if(!missing(package))
         Rd_db(package, lib.loc = dirname(dir))
     else
         Rd_db(dir = dir)
 
-    db <- lapply(db, Rd_pp)
+    db <- lapply(db, function(f) Rd_pp(f))
     ## Do vectorized computations for metadata first.
     db_aliases <- lapply(db, .get_Rd_metadata_from_Rd_lines, "alias")
     dbKeywords <- lapply(db, .get_Rd_metadata_from_Rd_lines, "keyword")
@@ -1149,7 +1162,7 @@ function(package, dir, lib.loc = NULL)
     db_usages <- lapply(db_usage_texts, .parse_usage_as_much_as_possible)
     ind <- as.logical(sapply(db_usages,
                              function(x) !is.null(attr(x, "bad_lines"))))
-    bad_lines <- sapply(db_usages[ind], attr, "bad_lines")
+    bad_lines <- lapply(db_usages[ind], attr, "bad_lines")
 
     dbArgumentNames <-
         .apply_Rd_filter_to_Rd_db(db, .get_Rd_argument_names)
@@ -1324,6 +1337,13 @@ function(x, ...)
 
         writeLines("")
     }
+
+    if(identical(Sys.getenv("_R_CHECK_WARN_BAD_USAGE_LINES_"), "TRUE")
+       && length(bad_lines <- attr(x, "bad_lines"))) {
+        writeLines(paste("Bad \\usage lines found:\n"))
+        print(bad_lines)
+    }
+
     invisible(x)
 }
 
@@ -1337,17 +1357,19 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in 'dir' ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         docs_dir <- file.path(dir, "man")
         if(!file_test("-d", docs_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd sources"))
+            stop(gettextf("directory '%s' does not contain Rd sources",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         ## Load package into code_env.
@@ -1369,21 +1391,23 @@ function(package, dir, lib.loc = NULL)
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         docs_dir <- file.path(dir, "man")
         if(!file_test("-d", docs_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain Rd sources"))
+            stop(gettextf("directory '%s' does not contain Rd sources",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
@@ -1461,8 +1485,8 @@ function(package, dir, lib.loc = NULL)
         ## the generic function ... hence substr().
         name <- paste(g, ".", sep = "")
         methods <-
-            functions_in_code[substr(functions_in_code, 1, nchar(name))
-                              == name]
+            functions_in_code[substr(functions_in_code, 1,
+                                     nchar(name, type="c")) == name]
         ## </FIXME>
         methods <- methods %w/o% methods_stop_list
         if(has_namespace) {
@@ -1478,8 +1502,7 @@ function(package, dir, lib.loc = NULL)
     else
         Rd_db(dir = dir)
 
-    db <- lapply(db,
-                 function(f) paste(Rd_pp(f), collapse = "\n"))
+    db <- lapply(db, function(f) paste(Rd_pp(f), collapse = "\n"))
     names(db) <- db_names <- .get_Rd_names_from_Rd_db(db)
 
     db_usage_texts <-
@@ -1487,7 +1510,7 @@ function(package, dir, lib.loc = NULL)
     db_usages <- lapply(db_usage_texts, .parse_usage_as_much_as_possible)
     ind <- sapply(db_usages,
                   function(x) !is.null(attr(x, "bad_lines")))
-    bad_lines <- sapply(db_usages[ind], attr, "bad_lines")
+    bad_lines <- lapply(db_usages[ind], attr, "bad_lines")
 
     bad_doc_objects <- list()
 
@@ -1576,13 +1599,14 @@ function(package, dir, file, lib.loc = NULL,
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         if(basename(dir) != "base")
             .load_package_quietly(package, lib.loc)
         code_env <- if(packageHasNamespace(package, dirname(dir))) {
@@ -1594,13 +1618,15 @@ function(package, dir, file, lib.loc = NULL,
     else if(!missing(dir)) {
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         file <- tempfile()
         on.exit(unlink(file))
         if(!file.create(file)) stop("unable to create ", file)
@@ -1608,12 +1634,12 @@ function(package, dir, file, lib.loc = NULL,
             stop("unable to write code files")
     }
     else if(missing(file)) {
-        stop(paste("you must specify ", sQuote("package"), ", ",
-                   sQuote("dir"), " or ", sQuote("file"), sep = ""))
+        stop("you must specify 'package', 'dir' or 'file'")
     }
 
     if(missing(package) && !file_test("-f", file))
-        stop(paste("file", sQuote(file), "does not exist"))
+        stop(gettextf("file '%s' does not exist", file),
+             domain = NA)
 
     ## <FIXME>
     ## Should there really be a 'verbose' argument?
@@ -1679,7 +1705,8 @@ function(package, dir, file, lib.loc = NULL,
     else {
         exprs <- try(parse(file = file, n = -1))
         if(inherits(exprs, "try-error"))
-            stop(paste("parse error in file", sQuote(file)))
+            stop(gettextf("parse error in file '%s'", file),
+                 domain = NA)
     }
     for(i in seq(along = exprs)) find_bad_exprs(exprs[[i]])
     class(bad_exprs) <- "checkFF"
@@ -1720,13 +1747,14 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         ## Load package into code_env.
@@ -1750,17 +1778,18 @@ function(package, dir, lib.loc = NULL)
     }
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
@@ -1821,8 +1850,9 @@ function(package, dir, lib.loc = NULL)
                 else .BaseNamespaceEnv
             S3Table <- get(".__S3MethodsTable__.", envir = defenv)
             if(!exists(m, envir = S3Table)) {
-                warning(paste("declared S3 method", sQuote(m),
-                              "not found"),
+                warning(gettextf("declared S3 method '%s' not found",
+                                 m),
+                        domain = NA,
                         call. = FALSE)
                 return(NULL)
             } else get(m, envir = S3Table)
@@ -1949,8 +1979,8 @@ function(package, dir, lib.loc = NULL)
             ## of the generic function ... hence substr().
             name <- paste(g, ".", sep = "")
             methods <-
-                functions_in_code[substr(functions_in_code, 1, nchar(name))
-                                  == name]
+                functions_in_code[substr(functions_in_code, 1,
+                                         nchar(name, type="c")) == name]
             ## </FIXME>
             methods <- methods %w/o% methods_stop_list
             if(has_namespace) {
@@ -1998,13 +2028,14 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         ## Load package into code_env.
@@ -2025,17 +2056,18 @@ function(package, dir, lib.loc = NULL)
 
     else {
         if(missing(dir))
-            stop(paste("you must specify", sQuote("package"),
-                       "or", sQuote("dir")))
+            stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
-            stop(paste("directory", sQuote(dir),
-                       "does not contain R code"))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
@@ -2142,7 +2174,7 @@ function(package, dir, file, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(.wrong_args("package", "must be of length 1"))
+            stop("argument 'package' must be of length 1")
         ## Using package installed in @code{dir} ...
         dir <- .find.package(package, lib.loc)
         if(file.exists(file.path(dir, "R", "all.rda"))) {
@@ -2160,7 +2192,8 @@ function(package, dir, file, lib.loc = NULL)
     else if(!missing(dir)) {
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(paste("directory", sQuote(dir), "does not exist"))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
         else
             dir <- file_path_as_absolute(dir)
         code_dir <- file.path(dir, "R")
@@ -2172,13 +2205,13 @@ function(package, dir, file, lib.loc = NULL)
     }
     else if(!missing(file)) {
         if(!file_test("-f", file))
-            stop(paste("file", sQuote(file), "does not exist"))
+            stop(gettext("file '%s' does not exist", file),
+                 domain = NA)
         else
             code_files <- file
     }
     else
-        stop(paste("you must specify ", sQuote("package"), ", ",
-                   sQuote("dir"), " or ", sQuote("file"), sep = ""))
+        stop("you must specify 'package', 'dir' or 'file'")
 
     find_TnF_in_code <- function(file, txt) {
         ## If 'txt' is given, it contains the extracted examples from
@@ -2201,13 +2234,15 @@ function(package, dir, file, lib.loc = NULL)
         if(missing(txt)) {
             exprs <- try(parse(file = file, n = -1))
             if(inherits(exprs, "try-error"))
-                stop(paste("parse error in file", sQuote(file)))
+                stop(gettextf("parse error in file '%s'", file),
+                     domain = NA)
         }
         else {
             exprs <- try(parse(text = txt))
             if(inherits(exprs, "try-error"))
-                stop(paste("parse error in examples from file",
-                           sQuote(file)))
+                stop(gettextf("parse error in examples from file '%s'",
+                              file),
+                     domain = NA)
         }
         for(i in seq(along = exprs))
             find_bad_exprs(exprs[[i]], NULL)
@@ -2261,7 +2296,7 @@ function(x, ...)
 function(package)
 {
     if(length(package) != 1)
-        stop(.wrong_args("package", "must be of length 1"))
+        stop("argument 'package' must be of length 1")
     dir <- .find.package(package)
 
     ## We definitely need a valid DESCRIPTION file.
@@ -2299,7 +2334,11 @@ function(package)
 
     ## Are all packages listed in Depends/Suggests/Imports installed?
     ## Need to treat specially the former stub packages.
-    reqs <- unique(c(depends, suggests, imports))
+    reqs <- unique(c(depends,
+                     imports,
+                     if(!identical(as.logical(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")),
+                                   FALSE))
+                     suggests))
     reqs <- reqs %w/o% utils::installed.packages()[ , "Package"]
     m <- reqs %in% standard_package_names$stubs
     if(length(reqs[!m]))
@@ -2312,8 +2351,12 @@ function(package)
     vignette_dir <- file.path(dir, "doc")
     if(file_test("-d", vignette_dir)
        && length(list_files_with_type(vignette_dir, "vignette"))) {
-        reqs <- .build_vignette_index(dir)$Depends
-        reqs <- reqs %w/o% c(depends, suggests, package_name)
+        reqs <- unlist(.build_vignette_index(vignette_dir)$Depends)
+        ## For the time being, ignore base packages missing from the
+        ## DESCRIPTION dependencies even if explicitly given as vignette
+        ## dependencies.
+        reqs <- reqs %w/o% c(depends, suggests, package_name,
+                             standard_package_names$base)
         if(length(reqs))
             bad_depends$missing_vignette_depends <- reqs
     }
@@ -2387,14 +2430,12 @@ check_Rd_files_in_package <-
 function(package, lib.loc = NULL)
 {
     if(length(package) != 1)
-        stop(.wrong_args("package", "must be of length 1"))
+        stop("argument 'package' must be of length 1")
     ## (Actually, Rd_db() would check on this too ...)
     db <- Rd_db(package, lib.loc)
     if(is.null(names(db)))
-        stop(paste("Package Rd sources were installed ",
-                   "without preserving Rd file names.\n",
-                   "Please reinstall using a current version of R.",
-                   sep = ""))
+        stop("Package Rd sources were installed without preserving Rd file names.\n",
+             "Please reinstall using a current version of R.")
     .check_Rd_files_in_Rd_db(db)
 }
 
@@ -2404,7 +2445,8 @@ check_Rd_files_in_man_dir <-
 function(dir)
 {
     if(!file_test("-d", dir))
-        stop(paste("directory", sQuote(dir), "does not exist"))
+        stop(gettextf("directory '%s' does not exist", dir),
+             domain = NA)
     dir <- file_path_as_absolute(dir)
     ## Argh.  We cannot call Rd_db() directly, because this works on
     ## the top-level package source directory ...
@@ -2427,10 +2469,14 @@ function(db)
     unique_tags <-
         c("name", "title", "description", "usage", "arguments",
           "format", "details", "value", "references", "source",
-          "seealso", "examples", "note", "author", "synopsis")
+          "seealso", "examples", "note", "author", "synopsis",
+          "docType", "encoding")
 
     files_with_surely_bad_Rd <- list()
     files_with_likely_bad_Rd <- list()
+    files_with_unknown_encoding <- NULL
+    files_with_non_ASCII_meta_data <- NULL
+    files_with_non_ASCII_section_titles <- NULL
     files_with_missing_mandatory_tags <- NULL
     files_with_duplicated_unique_tags <- NULL
     files_with_bad_name <- files_with_bad_title <- NULL
@@ -2444,6 +2490,26 @@ function(db)
         }
         if(length(x$rest))
             files_with_likely_bad_Rd[[f]] <- x$rest
+        if(length(x$meta$encoding) && is.na(x$meta$encoding))
+            files_with_unknown_encoding <-
+                c(files_with_unknown_encoding, f)
+        for(tag in c("aliases", "doc_type", "encoding")) {
+            if(any(ind <- !.is_ASCII(x$meta[[tag]])))
+                files_with_non_ASCII_meta_data <-
+                    rbind(files_with_non_ASCII_meta_data,
+                          cbind(f, tag, x$meta[[tag]][ind]))
+        }
+        ## Non-ASCII user-defined section titles.
+        ## <NOTE>
+        ## Rd_parse() re-encodes these if necessary (and possible), but
+        ## we should still be able to catch the non-ASCII ones provided
+        ## that the native encoding extends ASCII.
+        user_defined_section_titles <- sapply(x$data$tags, "[", 2)
+        if(any(ind <- !.is_ASCII(user_defined_section_titles)))
+            files_with_non_ASCII_section_titles <-
+                rbind(files_with_non_ASCII_section_titles,
+                      cbind(f, user_defined_section_titles[ind]))
+        ## </NOTE>
         tags <- sapply(x$data$tags, "[[", 1)
         ## Let's not worry about named sections for the time being ...
         bad_tags <- c(mandatory_tags %w/o% tags,
@@ -2459,13 +2525,7 @@ function(db)
                 rbind(files_with_missing_mandatory_tags,
                       cbind(f, bad_tags))
         ind <- which(tags == "name")[1]
-        if(is.na(ind) ||
-           ## Using LaTeX special characters (# $ % & ~ _ ^ \ { })
-           ## causes the creation of PDF bookmarks to fail.
-           (regexpr(paste("(^[[:space:]]*$)|",
-                          "(#|\\\$|\%|&|~|_|\\\^|\\\\|\{|\})",
-                          sep = ""),
-                    x$data$vals[[ind]]) != -1))
+        if(is.na(ind))
             files_with_bad_name <- c(files_with_bad_name, f)
         ind <- which(tags == "title")[1]
         if(is.na(ind) ||
@@ -2485,6 +2545,9 @@ function(db)
 
     val <- list(files_with_surely_bad_Rd,
                 files_with_likely_bad_Rd,
+                files_with_unknown_encoding,
+                files_with_non_ASCII_meta_data,
+                files_with_non_ASCII_section_titles,
                 files_with_missing_mandatory_tags,
                 files_with_duplicated_unique_tags,
                 files_with_bad_name,
@@ -2493,6 +2556,9 @@ function(db)
     names(val) <-
         c("files_with_surely_bad_Rd",
           "files_with_likely_bad_Rd",
+          "files_with_unknown_encoding",
+          "files_with_non_ASCII_meta_data",
+          "files_with_non_ASCII_section_titles",
           "files_with_missing_mandatory_tags",
           "files_with_duplicated_unique_tags",
           "files_with_bad_name",
@@ -2535,7 +2601,7 @@ function(x, ...)
                                        sQuote(tags[ind]))
                 tags[!ind] <- "Preceding all sections"
                 vals <- as.character(bad[[i]])
-                long <- nchar(vals) >= 128  # Why 128?  Why not?
+                long <- nchar(vals, type="c") >= 128  # Why 128?  Why not?
                 vals <- paste(sapply(substr(vals, 1, 127), deparse, 128),
                               ifelse(long, " [truncated]", ""), sep = "")
                 writeLines(c(paste(tags, vals, sep = c(":\n", "\n")), ""))
@@ -2543,15 +2609,45 @@ function(x, ...)
         }
     }
 
+    if(length(x$files_with_unknown_encoding)) {
+        writeLines(c("Rd files with unknown encoding:",
+                     paste(" ", x$files_with_unknown_encoding),
+                     ""))
+    }
+
+    if(length(x$files_with_non_ASCII_meta_data)) {
+        writeLines("Rd files with invalid non-ASCII meta data:")
+        bad <- x$files_with_non_ASCII_meta_data
+        ## Reinstate the Rd markup tags for better intelligibility.
+        bad[ , 2] <- sub("aliases", "\\\\alias", bad[ , 2])
+        bad[ , 2] <- sub("doc_type", "\\\\docType", bad[ , 2])
+        bad[ , 2] <- sub("encoding", "\\\\encoding", bad[ , 2])
+        ind <- split(seq(length = NROW(bad)), bad[, 1])
+        for(i in seq(along = ind)) {
+            writeLines(c(paste(" ", paste(names(ind)[i], ":", sep = "")),
+                         paste("   ",
+                               apply(bad[ind[[i]], -1, drop = FALSE],
+                                     1, paste, collapse = " "))))
+        }
+        writeLines("")
+    }
+
+    if(length(x$files_with_non_ASCII_section_titles)) {
+        writeLines("Rd files with non-ASCII section titles:")
+        bad <- x$files_with_non_ASCII_section_titles
+        bad <- split(bad[, 2], bad[, 1])
+        for(i in seq(along = bad)) {
+            writeLines(c(paste(" ", paste(names(bad)[i], ":", sep = "")),
+                         strwrap(bad[[i]], indent = 4, exdent = 6),
+                         ""))
+        }
+    }
+
     if(length(x$files_with_bad_name)) {
-        writeLines(c(paste("Rd files with missing or empty or invalid ",
+        writeLines(c(paste("Rd files with missing or empty ",
                            sQuote("\\name"), ":", sep = ""),
-                     paste(" ", x$files_with_bad_name)))
-        msg <- paste("Note that the \\name must not contain the LaTeX",
-                     "special characters (# $ % & ~ _ ^ \\ { }),",
-                     "as these cause the creation",
-                     "of PDF bookmarks to fail.")
-        writeLines(c(strwrap(msg), ""))
+                     paste(" ", x$files_with_bad_name),
+                     ""))
     }
 
     if(length(x$files_with_bad_title)) {
@@ -2616,14 +2712,54 @@ function(dfile)
 
     standard_package_names <- .get_standard_package_names()
 
-    .valid_package_name_regexp <- "[[:alpha:]][[:alnum:].]*"
-    .valid_package_version_regexp <-
-        "([[:digit:]]+[.-]){1,}[[:digit:]]+"
+    valid_package_name_regexp <-
+        .standard_regexps()$valid_package_name
+    valid_package_version_regexp <-
+        .standard_regexps()$valid_package_version
 
     is_base_package <-
         !is.na(priority <- db["Priority"]) && priority == "base"
 
     out <- list()                       # For the time being ...
+
+    ## Check encoding-related things first.
+
+    ## All field tags must be ASCII.
+    if(any(ind <- !.is_ASCII(names(db))))
+        out$fields_with_non_ASCII_tags <- names(db)[ind]
+    ## For all fields used by the R package management system, values
+    ## must be ASCII we well (so that the RPM works in a C locale).
+    ASCII_fields <- c("Package", "Version", "Depends", "Suggests",
+                      "Imports", "Priority", "Encoding")
+    ASCII_fields <- ASCII_fields[ASCII_fields %in% names(db)]
+    if(any(ind <- !.is_ASCII(db[ASCII_fields])))
+        out$fields_with_non_ASCII_values <- ASCII_fields[ind]
+
+    ## Determine encoding and re-encode if necessary and possible.
+    if("Encoding" %in% names(db)) {
+        encoding <- db["Encoding"]
+        if((Sys.getlocale("LC_CTYPE") != "C")
+           && capabilities("iconv"))
+            db <- utils::iconv(db, encoding, "")
+    }
+    else if(!all(.is_ISO_8859(db))) {
+        ## No valid Encoding meta-data.
+        ## Determine whether we can assume Latin1.
+        out$missing_encoding <- TRUE
+    }
+
+    if(any(is.na(nchar(db, "c")))) {
+        ## Ouch, invalid in the current locale.
+        ## (Can only happen in a MBCS locale.)
+        ## Try re-encoding from Latin1.
+        if(capabilities("iconv"))
+            db <- utils::iconv(db, "latin1", "")
+        else
+            stop("Found invalid multi-byte character data.", "\n",
+                 "Cannot re-encode because iconv is not available.", "\n",
+                 "Try running R in a single-byte locale.")
+
+    }
 
     ## Mandatory entries in DESCRIPTION:
     ##   Package, Version, License, Description, Title, Author,
@@ -2636,8 +2772,7 @@ function(dfile)
     val <- package_name <- db["Package"]
     if(!is.na(val)) {
         tmp <- character()
-        if(regexpr(paste("^", .valid_package_name_regexp, "$",
-                         sep = ""),
+        if(regexpr(sprintf("^%s$", valid_package_name_regexp),
                    val) == -1)
             tmp <- c(tmp, "Malformed package name")
         ## <FIXME>
@@ -2665,8 +2800,7 @@ function(dfile)
     }
     if(!is.na(val <- db["Version"])
        && !is_base_package
-       && (regexpr(paste("^", .valid_package_version_regexp, "$",
-                         sep = ""),
+       && (regexpr(sprintf("^%s$", valid_package_version_regexp),
                    val) == -1))
         out$bad_version <- val
     if(!is.na(val <- db["Maintainer"])
@@ -2685,7 +2819,7 @@ function(dfile)
         bad_dep_entry <- bad_dep_op <- bad_dep_version <- character()
         dep_regexp <-
             paste("^[[:space:]]*",
-                  paste("(", .valid_package_name_regexp, ")", sep = ""),
+                  paste("(", valid_package_name_regexp, ")", sep = ""),
                   "([[:space:]]*\\(([^) ]+)[[:space:]]+([^) ]+)\\))?",
                   "[[:space:]]*$",
                   sep = "")
@@ -2699,9 +2833,8 @@ function(dfile)
                 ## If not just a valid package name ...
                 if(!sub(dep_regexp, "\\3", dep) %in% c("<=", ">="))
                     bad_dep_op <- c(bad_dep_op, dep)
-                else if(regexpr(paste("^",
-                                      .valid_package_version_regexp,
-                                      "$", sep = ""),
+                else if(regexpr(sprintf("^%s$",
+                                        valid_package_version_regexp),
                                 sub(dep_regexp, "\\4", dep)) == -1)
                     bad_dep_version <- c(bad_dep_version, dep)
             }
@@ -2730,6 +2863,18 @@ function(dfile)
 print.check_package_description <-
 function(x, ...)
 {
+    if(length(x$missing_encoding))
+        writeLines(c("Unknown encoding", ""))
+    if(length(x$fields_with_non_ASCII_tags)) {
+        writeLines("Fields with non-ASCII tags:")
+        .pretty_print(x$fields_with_non_ASCII_tags)
+        writeLines(c("All field tags must be ASCII.", ""))
+    }
+    if(length(x$fields_with_non_ASCII_values)) {
+        writeLines("Fields with non-ASCII values:")
+        .pretty_print(x$fields_with_non_ASCII_values)
+        writeLines(c("These fields must have ASCII values.", ""))
+    }
     if(length(x$missing_required_fields)) {
         writeLines("Required fields missing:")
         .pretty_print(x$missing_required_fields)
@@ -2800,6 +2945,79 @@ function(x, ...)
                                    "manual.")),
                      ""))
 
+    invisible(x)
+}
+
+### * .check_make_vars
+
+.check_make_vars <-
+function(dir)
+{
+
+    bad_flags <- list()
+    class(bad_flags) <- "check_make_vars"
+
+    paths <- file.path(dir, c("Makevars.in", "Makevars"))
+    paths <- paths[file_test("-f", paths)]
+    if(!length(paths)) return(bad_flags)
+    mfile <- paths[1]
+
+    lines <-
+        try(system(sprintf("%s -f %s -f %s",
+                           Sys.getenv("MAKE"),
+                           shQuote(mfile),
+                           shQuote(file.path(R.home(), "share",
+                                             "make", "check.mk"))),
+                   intern = TRUE,
+                   if(identical(.Platform$OS.type, "unix"))
+                   ignore.stderr = TRUE),
+            silent = TRUE)
+    if(!length(lines) || inherits(lines, "try-error"))
+        return(bad_flags)
+
+    ## Try to be careful ...
+    lines <- lines[regexpr("^PKG_[A-Z]*FLAGS: ", lines) > -1]
+    names <- sub(":.*", "", lines)
+    lines <- sub("^PKG_[A-Z]*FLAGS: ", "", lines)
+    flags <- strsplit(lines, "[[:space:]]+")
+    ## Bad flags:
+    ##   -O*
+    ##      (BDR: for example Sun Fortran compilers used to accept -O
+    ##      but not -O2, and VC++ accepts -Ox (literal x) but not -O.)
+    ##   -Wall -pedantic -ansi -traditional -std* -f* -m* [GCC]
+    ##   -x [Solaris]
+    ##   -q [AIX]
+    ## It is hard to think of anything apart from -I* and -D* that is
+    ## safe for general use ...
+    bad_flags_regexp <-
+        sprintf("^-(%s)$",
+                paste(c("O.*",
+                        "Wall", "ansi", "pedantic", "traditiona",
+                        "f.*", "m.*", "std.*",
+                        "x",
+                        "q"),
+                      collapse = "|"))
+    for(i in seq(along = lines)) {
+        bad <- grep(bad_flags_regexp, flags[[i]], value = TRUE)
+        if(length(bad))
+            bad_flags <- c(bad_flags,
+                           structure(list(bad), names = names[i]))
+    }
+
+    class(bad_flags) <- "check_make_vars"
+    bad_flags
+}
+
+print.check_make_vars <-
+function(x, ...)
+{
+    if(length(x) > 0) {
+        for(i in seq(along = x)) {
+            writeLines(c(sprintf("Non-portable flags in variable '%s':",
+                                 names(x)[i]),
+                         sprintf("  %s", paste(x[[i]], collapse = " "))))
+        }
+    }
     invisible(x)
 }
 
@@ -2922,6 +3140,10 @@ function(txt)
     txt <- gsub("\\\\%", "%", txt)
     txt <- gsub(.S3_method_markup_regexp, "\"\\\\\\1\"", txt)
     txt <- gsub(.S4_method_markup_regexp, "\"\\\\\\1\"", txt)
+    ## Transform <<see below>> style markup so that we can catch and
+    ## throw it, rather than "basically ignore" it by putting it in the
+    ## bad_lines attribute.
+    txt <- gsub("(<<?see below>>?)", "`\\1`", txt)
     .parse_text_as_much_as_possible(txt)
 }
 
@@ -2942,21 +3164,32 @@ function(x)
     ## Note how we deal with S3 replacement methods found.
     ## These come out named "\method{GENERIC}{CLASS}<-" which we
     ## need to turn into 'GENERIC<-.CLASS'.
-    sub("\\\\(S3)?method{([._[:alnum:]]*)}{([._[:alnum:]]*)}(<-)?",
-        "\\2\\4.\\3",
+    sub(sprintf("%s(<-)?", .S3_method_markup_regexp),
+        "\\3\\5.\\4",
         x)
 }
 
 ### * .S3_method_markup_regexp
 
+## For matching \(S3)?method{GENERIC}{CLASS}.
+## GENERIC can be a syntactically valid name, or one of $ [ [[.
+## Support for S3 Ops group generics may be added eventually, provided
+## we also enhance Rdconv accordingly.
+## See also .functions_with_no_useful_S3_method_markup.
+
 .S3_method_markup_regexp <-
-    "(\\\\(S3)?method{([._[:alnum:]]*)}{([._[:alnum:]]*)})"
+    sprintf("(\\\\(S3)?method\\{(%s)\\}\\{(%s)\\})",
+            "[._[:alnum:]]*|\\$|\\[\\[?",
+            "[._[:alnum:]]*")
 
 ### * .S4_method_markup_regexp
 
-.S4_method_markup_regexp <-
-    "(\\\\S4method{([._[:alnum:]]*)}{([._[:alnum:],]*)})"
+## For matching \S4method{GENERIC}{SIGLIST}.
 
+.S4_method_markup_regexp <-
+    sprintf("(\\\\S4method\\{(%s)\\}\\{(%s)\\})",
+            "[._[:alnum:]]*",
+            "[._[:alnum:],]*")
 
 ### Local variables: ***
 ### mode: outline-minor ***

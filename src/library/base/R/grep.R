@@ -1,6 +1,6 @@
 grep <-
 function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
-         value = FALSE, fixed = FALSE)
+         value = FALSE, fixed = FALSE, useBytes = FALSE)
 {
   ## behaves like == for NA pattern
   if (is.na(pattern)){
@@ -11,44 +11,47 @@ function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
   }
 
   if(perl)
-    .Internal(grep.perl(pattern, x, ignore.case, value))
+    .Internal(grep.perl(pattern, x, ignore.case, value, useBytes))
   else
-    .Internal(grep(pattern, x, ignore.case, extended, value, fixed))
+    .Internal(grep(pattern, x, ignore.case, extended, value, fixed, useBytes))
 }
 
 sub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
-         perl = FALSE)
+         perl = FALSE, fixed = FALSE)
 {
-  if (is.na(pattern))
-    return(rep.int(as.character(NA), length(x)))
+    if (is.na(pattern))
+        return(rep.int(as.character(NA), length(x)))
 
     if(perl)
         .Internal(sub.perl(pattern, replacement, x, ignore.case))
     else
-        .Internal(sub(pattern, replacement, x, ignore.case, extended))
+        .Internal(sub(pattern, replacement, x, ignore.case,
+                      extended, fixed))
 }
 
 gsub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
-         perl = FALSE)
+         perl = FALSE, fixed = FALSE)
 {
   if (is.na(pattern))
-    return(rep.int(as.character(NA), length(x)))
+      return(rep.int(as.character(NA), length(x)))
 
   if(perl)
         .Internal(gsub.perl(pattern, replacement, x, ignore.case))
     else
-        .Internal(gsub(pattern, replacement, x, ignore.case, extended))
+        .Internal(gsub(pattern, replacement, x, ignore.case,
+                       extended, fixed))
 }
 
 regexpr <-
-function(pattern, text, extended = TRUE, perl = FALSE, fixed = FALSE)
+function(pattern, text, extended = TRUE, perl = FALSE,
+         fixed = FALSE, useBytes = FALSE)
 {
     if(perl)
-        .Internal(regexpr.perl(pattern, text))
+        .Internal(regexpr.perl(pattern, text, useBytes))
     else
-        .Internal(regexpr(pattern, text, extended, fixed))
+        .Internal(regexpr(pattern, text, extended, fixed, useBytes))
 }
 
 agrep <-
@@ -66,11 +69,11 @@ function(pattern, x, ignore.case = FALSE, value = FALSE,
     if(!is.character(pattern)
        || (length(pattern) < 1)
        || ((n <- nchar(pattern)) == 0))
-        stop("pattern must be a non-empty character string")
+        stop("'pattern' must be a non-empty character string")
 
     if(!is.list(max.distance)) {
         if(!is.numeric(max.distance) || (max.distance < 0))
-            stop("max.distance must be non-negative")
+            stop("'max.distance' must be non-negative")
         if(max.distance < 1)            # transform percentages
             max.distance <- ceiling(n * max.distance)
         max.insertions <- max.deletions <- max.substitutions <-
@@ -87,7 +90,7 @@ function(pattern, x, ignore.case = FALSE, value = FALSE,
         ## sanity checks
         comps <- unlist(max.distance)
         if(!all(is.numeric(comps)) || any(comps < 0))
-            stop("max.distance components must be non-negative")
+            stop("'max.distance' components must be non-negative")
         ## extract restrictions
         if(is.null(max.distance$all))
             max.distance$all <- 0.1

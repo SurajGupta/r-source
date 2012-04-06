@@ -9,7 +9,8 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
        xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1,
        adj = c(0, 0.5), text.width = NULL, text.col = par("col"),
        merge = do.lines && has.pch, trace = FALSE,
-       plot = TRUE, ncol = 1, horiz = FALSE)
+       plot = TRUE, ncol = 1, horiz = FALSE, title = NULL,
+       inset = 0)
 }
 \description{
   This function can be used to add legends to plots.  Note that a call
@@ -18,7 +19,7 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
 }
 \arguments{
   \item{x, y}{the x and y co-ordinates to be used to position the legend.
-    They can be specified in any way which is accepted by
+    They can be specified by keyword or in any way which is accepted by
     \code{\link{xy.coords}}: See Details.}
   \item{legend}{a vector of text values or an \code{\link{expression}}
     of length \eqn{\ge 1}{>= 1}, or a \code{\link{call}} (as resulting
@@ -52,8 +53,8 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
   \item{x.intersp}{character interspacing factor for horizontal (x) spacing.}
   \item{y.intersp}{the same for vertical (y) line distances.}
   \item{adj}{numeric of length 1 or 2; the string adjustment for legend
-      text.  Useful for y-adjustment when \code{labels} are
-      \link{plotmath} expressions.}
+    text.  Useful for y-adjustment when \code{labels} are
+    \link{plotmath} expressions.}
   \item{text.width}{the width of the legend text in x (\code{"user"})
     coordinates.
     Defaults to the proper value computed by \code{\link{strwidth}(legend)}.}
@@ -66,9 +67,14 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
     sizes are returned.}
   \item{ncol}{the number of columns in which to set the legend items
     (default is 1, a vertical legend).}
-  \item{horiz}{logical; if \code{TRUE}, set the legend horizontally rather than
-     vertically (specifying \code{horiz} overrides the \code{ncol}
-     specification).}
+  \item{horiz}{logical; if \code{TRUE}, set the legend horizontally
+    rather than vertically (specifying \code{horiz} overrides the \code{ncol}
+    specification).}
+  \item{title}{a text value giving a title to be placed at the top of the
+    legend.}
+  \item{inset}{inset distance(s) from the margins as a fraction of the
+    plot region when legend is placed by keyword.}
+
 }
 \details{
   Arguments \code{x, y, legend} are interpreted in a non-standard way to
@@ -83,6 +89,17 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
   legend.  If it gives the coordinates of two points, these specify
   opposite corners of the rectangle (either pair of corners, in any
   order).
+
+  The location may also be specified by setting \code{x} to a single
+  keyword from the list \code{"bottomright"}, \code{"bottom"},
+  \code{"bottomleft"}, \code{"left"}, \code{"topleft"},
+  \code{"top"}, \code{"topright"}, \code{"right"} and
+  \code{"center"}. This places the legend on the inside of the plot
+  frame at the given location. Partial argument matching is used.  The
+  optional \code{inset} argument specifies how far the legend is inset
+  from the plot margins.  If a single value is given, it is used for
+  both margins; if two values are given, the first is used for \code{x}-
+  distance, the second for \code{y}-distance.
 
   \dQuote{Attribute} arguments such as \code{col}, \code{pch}, \code{lty},
   etc, are recycled if necessary.  \code{merge} is not.
@@ -146,9 +163,10 @@ legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3,4,6), text.col= "green4",
 x <- 1:5; y1 <- 1/x; y2 <- 2/x
 plot(rep(x, 2), c(y1, y2), type="n", xlab="x", ylab="y")
 lines(x, y1); lines(x, y2, lty=2)
-temp <- legend(5, 2, legend = c(" ", " "),
+temp <- legend("topright", legend = c(" ", " "),
                text.width = strwidth("1,000,000"),
-               lty = 1:2, xjust = 1, yjust = 1)
+               lty = 1:2, xjust = 1, yjust = 1,
+               title = "Line Types")
 text(temp$rect$left + temp$rect$w, temp$text$y,
      c("1,000", "1,000,000"), pos=2)
 
@@ -215,5 +233,17 @@ y <- sin(3*pi*x)
 plot(x, y, type="l", col="blue", main = "points with bg & legend(*, pt.bg)")
 points(x, y, pch=21, bg="white")
 legend(.4,1, "sin(c x)", pch=21, pt.bg="white", lty=1, col = "blue")
+
+## legends with titles at different locations
+plot(x, y, type='n')
+legend("bottomright", "(x,y)", pch=1, title="bottomright")
+legend("bottom", "(x,y)", pch=1, title="bottom")
+legend("bottomleft", "(x,y)", pch=1, title="bottomleft")
+legend("left", "(x,y)", pch=1, title="left")
+legend("topleft", "(x,y)", pch=1, title="topleft")
+legend("top", "(x,y)", pch=1, title="top")
+legend("topright", "(x,y)", pch=1, title="topright")
+legend("right", "(x,y)", pch=1, title="right")
+legend("center", "(x,y)", pch=1, title="center")
 }
 \keyword{aplot}

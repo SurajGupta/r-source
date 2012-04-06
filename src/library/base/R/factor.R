@@ -14,8 +14,8 @@ factor <- function (x, levels = sort(unique.default(x), na.last = TRUE),
 	else if(nl == 1)
 	    paste(labels, seq(along = levels), sep = "")
 	else
-	    stop(paste("invalid labels; length", nl,
-		       "should be 1 or",length(levels)))
+	    stop(gettextf("invalid labels; length %d should be 1 or %d",
+                          nl, length(levels)), domain = NA)
     class(f) <- c(if(ordered)"ordered", "factor")
     f
 }
@@ -79,13 +79,14 @@ print.factor <- function (x, quote = FALSE, max.levels = NULL,
         print(as.character(x), quote = quote, ...)
     maxl <- if(is.null(max.levels)) TRUE else max.levels
     if (maxl) {
-        n <- length(lev <- levels(x))
+        n <- length(lev <- encodeString(levels(x), quote=ifelse(quote, '"', '')))
         colsep <- if(ord) " < " else " "
         T0 <- "Levels: "
         if(is.logical(maxl))
             maxl <- { ## smart default
-                width <- width - (nchar(T0) + 3 + 1 + 3)# 3='...', 3=#lev, 1=extra
-                lenl <- cumsum(nchar(lev) + nchar(colsep))# + ifelse(quote,2,0))
+                width <- width - (nchar(T0, type="w") + 3 + 1 + 3)
+                                        # 3='...', 3=#lev, 1=extra
+                lenl <- cumsum(nchar(lev, type="w") + nchar(colsep, type="w"))
                 if(n <= 1 || lenl[n] <= width) n
                 else max(1, which(lenl > width)[1] - 1)
             }
@@ -99,16 +100,16 @@ print.factor <- function (x, quote = FALSE, max.levels = NULL,
 
 
 Math.factor <- function(x, ...) {
-    stop(paste('"',.Generic,'"', " not meaningful for factors", sep=""))
+    stop(.Generic, " not meaningful for factors")
 }
 Summary.factor <- function(x, ...) {
-    stop(paste('"',.Generic,'"', " not meaningful for factors", sep=""))
+    stop(.Generic, " not meaningful for factors")
 }
 Ops.factor <- function(e1, e2)
 {
     ok <- switch(.Generic, "=="=, "!="=TRUE, FALSE)
     if(!ok) {
-	warning('"',.Generic,'"', " not meaningful for factors")
+	warning(.Generic, " not meaningful for factors")
 	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
     }
     nas <- is.na(e1) | is.na(e2)
@@ -122,7 +123,7 @@ Ops.factor <- function(e1, e2)
     }
     if (all(nchar(.Method)) && (length(l1) != length(l2) ||
 				!all(sort(l2) == sort(l1))))
-	stop("Level sets of factors are different")
+	stop("level sets of factors are different")
     value <- NextMethod(.Generic)
     value[nas] <- NA
     value
@@ -172,7 +173,8 @@ function (e1, e2)
 		 "<" = , ">" = , "<=" = , ">=" = ,"=="=, "!=" =TRUE,
 		 FALSE)
     if(!ok) {
-	warning('"',.Generic,'"', " not meaningful for ordered factors")
+	warning(sprintf("'%s' is not meaningful for ordered factors",
+                        .Generic))
 	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
     }
     if (.Generic %in% c("==", "!="))
@@ -189,7 +191,7 @@ function (e1, e2)
 	ord2 <- TRUE
     }
     if (all(nchar(.Method)) && (length(l1) != length(l2) || !all(l2 == l1)))
-	stop("Level sets of factors are different")
+	stop("level sets of factors are different")
     if (ord1 && ord2) {
 	e1 <- as.integer(e1) # was codes, but same thing for ordered factor.
 	e2 <- as.integer(e2)

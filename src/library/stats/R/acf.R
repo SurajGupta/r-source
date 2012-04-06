@@ -15,13 +15,13 @@ acf <-
     x.freq <- frequency(x)
     x <- as.matrix(x)
     if(!is.numeric(x))
-        stop("`x' must be numeric")
+        stop("'x' must be numeric")
     sampleT <- nrow(x)
     nser <- ncol(x)
     if (is.null(lag.max))
         lag.max <- floor(10 * (log10(sampleT) - log10(nser)))
     lag.max <- min(lag.max, sampleT - 1)
-    if (lag.max < 1) stop("lag.max must be at least 1")
+    if (lag.max < 1) stop("'lag.max' must be at least 1")
     if(demean) x <- sweep(x, 2, colMeans(x, na.rm = TRUE))
     lag <- matrix(1, nser, nser)
     lag[lower.tri(lag)] <- -1
@@ -47,17 +47,17 @@ pacf.default <- function(x, lag.max = NULL, plot = TRUE,
 {
     series <- deparse(substitute(x))
     x <- drop(na.action(as.ts(x)))  # use univariate code for a single series
-    if(!is.numeric(x)) stop("`x' must be numeric")
+    if(!is.numeric(x)) stop("'x' must be numeric")
     x.freq <- frequency(x)
     sampleT <- NROW(x)
     if (is.null(lag.max))
         lag.max <- if(is.matrix(x)) floor(10 * (log10(sampleT) - log10(ncol(x))))
         else floor(10 * (log10(sampleT)))
     lag.max <- min(lag.max, sampleT - 1)
-    if (lag.max < 1) stop("lag.max must be at least 1")
+    if (lag.max < 1) stop("'lag.max' must be at least 1")
 
     if(is.matrix(x)) {
-        if(any(is.na(x))) stop("NAs in x")
+        if(any(is.na(x))) stop("NAs in 'x'")
         nser <- ncol(x)
         x <- sweep(x, 2, colMeans(x))
         lag <- matrix(1, nser, nser)
@@ -142,7 +142,7 @@ plot.acf <-
     }
 
     for (I in 1:Npgs) for (J in 1:Npgs) {
-        ## Page [ I , J ] : Now do   nr x nr  `panels' on this page
+        ## Page [ I , J ] : Now do   nr x nr  'panels' on this page
         iind <- (I-1)*nr + 1:nr
         jind <- (J-1)*nr + 1:nr
         if(verbose)

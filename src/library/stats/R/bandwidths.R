@@ -23,7 +23,7 @@ bw.SJ <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax,
                   method = c("ste", "dpi"))
 {
     if((n <- length(x)) < 2) stop("need at least 2 data points")
-    if(!is.numeric(x)) stop("invalid x")
+    if(!is.numeric(x)) stop("invalid 'x'")
     storage.mode(x) <- "double"
     method <- match.arg(method)
 
@@ -72,7 +72,7 @@ bw.SJ <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax,
             stop("sample is too sparse to find alph2")
         if (fSD(lower, cnt, alph2, c1, n, d) *
             fSD(upper, cnt, alph2, c1, n, d) > 0)
-            stop("No solution in the specified range of bandwidths")
+            stop("no solution in the specified range of bandwidths")
         res <- uniroot(fSD, c(lower, upper), tol=0.1*lower,
                        x=cnt, alph2=alph2, c1=c1, n=n, d=d)$root
     }
@@ -83,7 +83,7 @@ bw.SJ <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax,
 bw.ucv <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax)
 {
     if((n <- length(x)) < 2) stop("need at least 2 data points")
-    if(!is.numeric(x)) stop("invalid x")
+    if(!is.numeric(x)) stop("invalid 'x'")
 
     fucv <- function(h, x, n, d)
         .C("band_ucv_bin",
@@ -116,7 +116,7 @@ bw.ucv <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax)
 bw.bcv <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax)
 {
     if((n <- length(x)) < 2) stop("need at least 2 data points")
-    if(!is.numeric(x)) stop("invalid x")
+    if(!is.numeric(x)) stop("invalid 'x'")
 
     fbcv <- function(h, x, n, d)
         .C("band_bcv_bin",

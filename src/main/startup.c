@@ -20,6 +20,8 @@
   U.S.A.
  */
 
+/* <UTF8> char here is handled as a whole string */
+
 /*
   See ../unix/system.txt for a description of some of these functions
   Formally part of ../unix/sys-common.c
@@ -63,7 +65,7 @@ FILE *R_OpenLibraryFile(char *file)
 char *R_LibraryFileName(char *file, char *buf, size_t bsize)
 {
     if (snprintf(buf, bsize, "%s/library/base/R/%s", R_Home, file) < 0)
-	error("R_LibraryFileName: buffer too small");
+	error(_("R_LibraryFileName: buffer too small"));
     return buf;
 }     
      

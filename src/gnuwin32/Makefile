@@ -6,6 +6,7 @@ all:
 	@$(MAKE) --no-print-directory rbuild
 	@$(MAKE) --no-print-directory rpackage
 	@$(MAKE) --no-print-directory htmldocs
+	@$(MAKE) --no-print-directory  -C ../../po -f Makefile.win
 
 ## must be absolute and space-free paths
 ifneq ($(strip $(BUILD)),CROSS)
@@ -45,16 +46,19 @@ R-DLLFLAGS = -mwindows
 else
 R-DLLFLAGS = -mwindows
 endif
-R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion
+
+## we may not need msvcp60, but no harm to include it.
+R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion -lmsvcp60 $(LIBEXTRAS)
 dllversion-RESFLAGS =--include-dir ../include
 SOURCES = \
-  console.c dataentry.c devga.c dodevga.c dynload.c edit.c editor.c extra.c \
+  console.c dataentry.c dynload.c edit.c editor.c extra.c \
   opt.c pager.c preferences.c psignal.c rhome.c rui.c run.c shext.c \
   sys-win32.c system.c
 OBJS = $(SOURCES:.c=.o) e_pow.o
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
 EXTRALIBS = graphapp/ga.a getline/gl.a ../extra/xdr/libxdr.a \
-   ../extra/zlib/libz.a ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a
+   ../extra/zlib/libz.a ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
+   ../extra/intl/libintl.a
 
 R_PKGS0 = $(filter-out base tools, $(R_PKGS_BASE))
 PKGCLEAN = $(foreach i,$(R_PKGS_BASE),pkgclean-$i)
@@ -83,7 +87,6 @@ rbuild:
 	@$(MAKE) --no-print-directory fixfiles
 	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
 	@$(MAKE) --no-print-directory -C ../scripts -f Makefile.win
-	@$(MAKE) --no-print-directory makeMakedeps
 	@$(MAKE) --no-print-directory libRblas.a
 	@$(MAKE) --no-print-directory ../../bin/R.dll
 	@$(MAKE) --no-print-directory libR.a
@@ -136,6 +139,7 @@ endif
 	@for pkg in $(R_PKGS0); do \
 	  R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-$${pkg} || exit 1; \
 	done
+	@$(CP) ../library/datasets/data/morley.tab ../../library/datasets/data
 
 rpackageindices:
 ifeq ($(strip $(HELP)),YES)
@@ -150,16 +154,20 @@ endif
 
 
 rlibs:
+	$(MAKE) --no-print-directory -C ../extra/intl -f Makefile.win
 	$(MAKE) --no-print-directory -C ../appl  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../main  OPTFLAGS='$(OPTFLAGS_M)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ./graphapp
 	$(MAKE) --no-print-directory -C ./getline
-	$(MAKE) --no-print-directory -C ../extra/xdr -f Makefile.win
+	@for ex in pcre bzip2 zlib xdr; do \
+	  $(MAKE) --no-print-directory -C ../extra/$${ex} -f Makefile.win || exit 1; \
+	done
 
 rmodules:
 	$(MAKE) --no-print-directory -C ../modules \
 	  OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(CP) unicode/iconv.dll ../../modules/
 
 COPYRIGHTS: $(RHOME)/COPYRIGHTS COPYRIGHTS.win
 	cat $^ > $@
@@ -180,10 +188,16 @@ Rdll: makeMakedeps libRblas.a ../../bin/R.dll
 
 ../../bin/R.dll: FORCE
 	@$(MAKE) --no-print-directory fixfiles
+	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
 	@$(MAKE) --no-print-directory rlibs
+	@$(MAKE) --no-print-directory makeMakedeps
 	@$(MAKE) --no-print-directory R.dll
 	@$(MKDIR) -p ../../bin
 	$(CP) R.dll ../../bin/
+	@$(MKDIR) -p ./../modules/
+ifdef USE_UNICOWS
+	$(CP) unicode/opencow.dll ../../bin/
+endif
 
 FORCE:
 
@@ -192,6 +206,7 @@ front-ends: libR.a
 
 R.a: $(OBJS)
 	@$(ECHO) -------- Building $@ --------
+	@$(RM) R.a
 	$(AR) cr R.a $^
 	$(RANLIB) R.a
 
@@ -238,7 +253,7 @@ Rblas-clean:
 	$(RM) ../../bin/Rblas.dll blas00.o blas00.d blas.o cmplxblas.o \
 	  zgemm.o blasGoto.o libgoto.a
 
-Rblas-DLLLIBS=-L. -lR
+Rblas-DLLLIBS=-L. $(LIBUNICOWS) -lR
 
 libRblas.a:  Rblas.def
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname Rblas.dll \
@@ -259,17 +274,17 @@ libgoto.a:  libgoto.def
 	$(DLLTOOL) $(DLLTOOLFLAGS) --dllname $(GOTO_DLL) --def $< --output-lib $@
 ../../bin/Rblas.dll: blas00.o blasGoto.o cmplxblas.o zgemm.o dllversion.o libgoto.a
 	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L. -lR -lg2c -lgoto
+	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L. $(LIBUNICOWS) -lR -lg2c -lgoto
 else
 ifeq ($(strip $(USE_ATLAS)),YES)
 ../../bin/Rblas.dll: blas00.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
 	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L $(ATLAS_PATH) \
-	   -L. -lR -lg2c -lf77blas -latlas
+	   -L. $(LIBUNICOWS) -lR -lg2c -lf77blas -latlas
 else
 ../../bin/Rblas.dll: blas.o cmplxblas.o zgemm.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ Rblas.def $^ -L. -lR
+	$(DLL) -shared $(DLLFLAGS) -o $@ Rblas.def $^ -L. $(LIBUNICOWS) -lR
 endif
 endif
 
@@ -399,8 +414,9 @@ clean: cleanwin $(PKGCLEAN)
 
 distclean veryclean: clean clean-recommended
 	$(RM) -r ../../bin ../../include ../../lib ../../library ../../modules
-	$(RM) ../include/config.h ../include/psignal.h \
-	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h
+	$(RM) ../include/config.h ../include/iconv.h ../include/psignal.h \
+	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h \
+	../include/libintl.h
 	$(RM) ../library/*/src/*.o ../library/*/src/*.a
 	$(RM) ../library/*/src/*.d ../library/*/src/Makedeps
 	$(RM) ../library/*/src/*.dll
@@ -423,9 +439,11 @@ distclean veryclean: clean clean-recommended
 	  $(RM) ../library/$${pkg}/DESCRIPTION; \
 	done
 	$(RM) rw-FAQ fixed/html/rw-FAQ.html
-	$(RM) -r cran/*.html cran/ReadMe cran/README* cran/*.exe cran/md5sum.txt \
-	  cran/mini
+	$(RM) -r cran/*.html cran/*.htm cran/ReadMe cran/README* cran/*.exe \
+		cran/md5sum.txt cran/*.$(RPREFIX) cran/mini
 	$(RM) -r .vignettes # it gets left behind sometimes
+	$(RM) ../../FAQ ../../RESOURCES ../../doc/html/resources.html # not in SVN sources
+	$(RM) -r ../../share/locale
 	$(RM) XINSTALL # from cross-building
 	$(RM) Rpwd.exe # do this last of all
 
@@ -441,6 +459,7 @@ cleanwin:
 	$(MAKE) -C ../extra/pcre -f Makefile.win distclean
 	$(MAKE) -C ../extra/bzip2 -f Makefile.win clean
 	$(MAKE) -C ../extra/zlib -f Makefile.win distclean
+	$(MAKE) -C ../extra/intl -f Makefile.win clean
 	$(MAKE) -C bitmap clean
 	-$(MAKE) -C installer clean
 
@@ -496,9 +515,10 @@ bitmapdll:
 
 CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER)$(RVER-PAT)/Recommended
 
+## Use -c her eto avoid re-downloading the same versions of files
 rsync-recommended:
 	@(cd ../library; \
-	rsync -rvCt --delete --exclude=Makefile.in --exclude=.cvsignore \
+	rsync -rcvC --delete --exclude=Makefile.in --exclude=.cvsignore \
 	  --include=*.tar.gz --exclude=*.tgz --exclude=".svn" $(CRANREC) . ); \
 	$(RM) ../library/Recommended/*.tgz; \
 	(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
@@ -540,23 +560,24 @@ else
 	done
 endif
 
+EXTRA_PKGS=
 rinstaller:
-	$(MAKE) -C installer
-	$(MAKE) -C installer clean
+	@$(MAKE) -C installer EXTRA_PKGS='$(EXTRA_PKGS)'
+	@$(MAKE) -C installer clean
 
 crandir:
-	$(MKDIR) -p cran/mini
+#	$(MKDIR) -p cran/mini
 	$(CP) installer/rw*.exe cran
 	$(CP) CHANGES cran/CHANGES.$(RPREFIX)
 	$(CP) ../../NEWS cran/NEWS.$(RPREFIX)
 	(cd cran;\
 	 $(ECHO) 'cat(md5sum("$(RPREFIX).exe"),"*$(RPREFIX).exe")' \
          | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
-	$(CP) installer/mini*.* cran/mini
+#	$(CP) installer/mini*.* cran/mini
 	$(CP) ../../doc/html/rw-FAQ.html cran
-	(cd cran/mini;\
+#	(cd cran/mini;\
 	 $(ECHO) 'fn <- dir(pattern="mini*"); cat(paste(md5sum(fn)," *",fn,sep=""),sep="\n")' \
-	 | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
+#	 | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" README > cran/README.$(RPREFIX)
@@ -576,13 +597,28 @@ crandir:
 	  -e "s/@DATE@/$(DATE)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g \
-	  -e "s/@DATE@/$(DATE)/g" \
-	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/mini.in > cran/mini/index.html
+#	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+#	  -e s/@RVER@/$(RVER)/g \
+#	  -e "s/@DATE@/$(DATE)/g" \
+#	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/mini.in > cran/mini/index.html
+
+rbuild-no-mbcs:
+	@$(MAKE) --no-print-directory fixfiles
+	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
+	@$(MAKE) --no-print-directory -C ../scripts -f Makefile.win
+	@$(SED) -e '/SUPPORT_MBCS/d' fixed/h/config.h > ../include/config.h
+	@$(MAKE) --no-print-directory libRblas.a
+	@$(MAKE) --no-print-directory ../../bin/R.dll
+	@mv ../../bin/R.dll ../../bin/Rnombcs.dll
+	@$(RM) ../include/config.h ../include/Rconfig.h
 
 distribution:
-	$(MAKE) all
+	@$(MAKE) Rpwd.exe
+	@$(MAKE) rbuild-no-mbcs
+	@$(MAKE) rbuild
+	@$(MAKE) rpackage
+	@$(MAKE) htmldocs
+	@$(MAKE) -C ../../po -f Makefile.win
 	$(MAKE) bitmapdll
 	$(MAKE) recommended
 	$(MAKE) vignettes

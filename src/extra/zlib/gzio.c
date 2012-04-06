@@ -5,7 +5,7 @@
  * Compile this file with -DNO_GZCOMPRESS to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.3 2004/03/15 09:15:23 ripley Exp $ */
+/* @(#) $Id$ */
 
 #include <stdio.h>
 
@@ -16,8 +16,13 @@
 #define f_seek fseeko
 #define f_tell ftello
 #else
+#ifdef Win32
+#define f_seek fseeko64
+#define f_tell ftello64
+#else
 #define f_seek fseek
 #define f_tell ftell
+#endif
 #endif
 
 
@@ -463,6 +468,10 @@ int ZEXPORT gzread (file, buf, len)
                 s->z_eof = 1;
                 if (ferror(s->file)) {
                     s->z_err = Z_ERRNO;
+                    break;
+                }
+                if (feof(s->file)) {        /* avoid error for empty file */
+                    s->z_err = Z_STREAM_END;
                     break;
                 }
             }

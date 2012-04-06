@@ -18,6 +18,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -70,7 +73,7 @@ SEXP mkCLOSXP(SEXP formals, SEXP body, SEXP rho)
     if(isList(formals))
 	SET_FORMALS(c, formals);
     else
-        error("invalid formal arguments for \"function\"");
+        error(_("invalid formal arguments for \"function\""));
 #else
     SET_FORMALS(c, formals);
 #endif
@@ -82,8 +85,8 @@ SEXP mkCLOSXP(SEXP formals, SEXP body, SEXP rho)
        )
 	SET_BODY(c, body);
     else
-        error("invalid body argument for \"function\"\n"
-	      "Should NEVER happen; please bug.report() [mkCLOSXP]\n");
+        error(_("invalid body argument for \"function\"\n\
+Should NEVER happen; please bug.report() [mkCLOSXP]"));
 
     if(rho == R_NilValue)
 	SET_CLOENV(c, R_GlobalEnv);

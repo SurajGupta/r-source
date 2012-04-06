@@ -17,7 +17,7 @@ pkstwo(Sint *n, double *x, double *tol)
  * Compute
  *   \sum_{k=-\infty}^\infty (-1)^k e^{-2 k^2 x^2}
  *   = 1 + 2 \sum_{k=1}^\infty (-1)^k e^{-2 k^2 x^2}
- *   = \sqrt{2\pi/x} \sum_{k=1}^\infty \exp(-(2k-1)^2\pi^2/(8x^2))
+ *   = \frac{\sqrt{2\pi}}{x} \sum_{k=1}^\infty \exp(-(2k-1)^2\pi^2/(8x^2))
  *
  * See e.g. J. Durbin (1973), Distribution Theory for Tests Based on the
  * Sample Distribution Function.  SIAM.
@@ -77,9 +77,6 @@ psmirnov2x(double *x, Sint *m, Sint *n)
     nd = (double) (*n);
     q = floor(*x * md * nd - 1e-7) / (md * nd);
     u = (double *) R_alloc(*n + 1, sizeof(double));
-
-    /* not needed, as R_alloc does not return if it fails 
-    if(!u) error("allocation error in psmirnov2x()."); */
 
     for(j = 0; j <= *n; j++) {
 	u[j] = ((j / nd) > q) ? 0 : 1;

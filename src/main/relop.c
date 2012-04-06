@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  R Development Core Team
+ *  Copyright (C) 1997--2005  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/* <UTF8> char here is handled as a whole.
+   Collation is locale-specific if strcoll exists and works.
+ */
+
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -63,8 +68,8 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	if (nx > 0 && ny > 0)
 	    mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
 	if (mismatch)
-	    warningcall(call, "longer object length\n"
-			"\tis not a multiple of shorter object length");
+	    warningcall(call, _("longer object length\n\
+ \tis not a multiple of shorter object length"));
 	UNPROTECT(2);
 	return ans;
     }
@@ -92,12 +97,12 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	    return allocVector(LGLSXP,0);
 	}
 	errorcall(call,
-		  "comparison (%d) is possible only for atomic and list types",
+		  _("comparison (%d) is possible only for atomic and list types"),
 		  PRIMVAL(op));
     }
 
     if (TYPEOF(x) == EXPRSXP || TYPEOF(y) == EXPRSXP)
-	errorcall(call, "comparison is not allowed for expressions");
+	errorcall(call, _("comparison is not allowed for expressions"));
 
     /* ELSE :  x and y are both atomic or list */
 
@@ -117,7 +122,7 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     if (xarray || yarray) {
 	if (xarray && yarray) {
 	    if (!conformable(x, y))
-		errorcall(call, "non-conformable arrays");
+		errorcall(call, _("non-conformable arrays"));
 	    PROTECT(dims = getAttrib(x, R_DimSymbol));
 	}
 	else if (xarray) {
@@ -137,7 +142,7 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     if (xts || yts) {
 	if (xts && yts) {
 	    if (!tsConform(x, y))
-		errorcall(call, "Non-conformable time-series");
+		errorcall(call, _("non-conformable time series"));
 	    PROTECT(tsp = getAttrib(x, R_TspSymbol));
 	    PROTECT(class = getAttrib(x, R_ClassSymbol));
 	}
@@ -155,8 +160,7 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	}
     }
     if (mismatch)
-	warningcall(call, "longer object length\n"
-		    "\tis not a multiple of shorter object length");
+	warningcall(call, _("longer object length\n\tis not a multiple of shorter object length"));
 
     if (isString(x) || isString(y)) {
 	REPROTECT(x = coerceVector(x, STRSXP), xpi);
@@ -187,7 +191,7 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	REPROTECT(x = coerceVector(x, RAWSXP), xpi);
 	REPROTECT(y = coerceVector(y, RAWSXP), ypi);
 	x = raw_relop(PRIMVAL(op), x, y);
-    } else errorcall(call, "comparison of these types is not implemented");
+    } else errorcall(call, _("comparison of these types is not implemented"));
 
 
     PROTECT(x);
@@ -388,7 +392,7 @@ static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2, SEXP call)
     SEXP ans;
 
     if (code != EQOP && code != NEOP) {
-	errorcall(call, "illegal comparison with complex values");
+	errorcall(call, _("invalid comparison with complex values"));
     }
 
     n1 = LENGTH(s1);
@@ -428,10 +432,17 @@ static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2, SEXP call)
     UNPROTECT(2);
     return ans;
 }
-#ifdef HAVE_STRCOLL
-#define STRCMP strcoll
+
+#if defined(Win32) && defined(SUPPORT_UTF8)
+#define STRCOLL Rstrcoll
 #else
-#define STRCMP strcmp
+
+#ifdef HAVE_STRCOLL
+#define STRCOLL strcoll
+#else
+#define STRCOLL strcmp
+#endif
+
 #endif
 
 static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
@@ -479,7 +490,7 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+	    if (STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
 		       CHAR(STRING_ELT(s2, i % n2))) < 0)
 		LOGICAL(ans)[i] = 1;
 	    else
@@ -492,7 +503,7 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+	    if (STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
 		       CHAR(STRING_ELT(s2, i % n2))) > 0)
 		LOGICAL(ans)[i] = 1;
 	    else
@@ -505,7 +516,7 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+	    if (STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
 		       CHAR(STRING_ELT(s2, i % n2))) <= 0)
 		LOGICAL(ans)[i] = 1;
 	    else
@@ -518,7 +529,7 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		(STRING_ELT(s2, i % n2) == NA_STRING))
 		LOGICAL(ans)[i] = NA_LOGICAL;
  	    else
-	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+	    if (STRCOLL(CHAR(STRING_ELT(s1, i % n1)),
 		       CHAR(STRING_ELT(s2, i % n2))) >= 0)
 		LOGICAL(ans)[i] = 1;
 	    else

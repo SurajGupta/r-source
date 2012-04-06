@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/* The version for R 2.1.0 is partly based on patches by 
+   Eiji Nakama <nakama@ki.rim.or.jp> for use in Japanese. 
+
+   <MBCS> all the strings manipulated here like display and fonts specs 
+   are probably ASCII, or at least start with ASCII in the part searched.
+*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -47,6 +54,12 @@
 #include <R_ext/Memory.h>	/* vmaxget */
 #include "Rdevices.h"
 
+#ifdef SUPPORT_MBCS
+/* This uses fontsets only in mbcslocales */
+# define USE_FONTSET 1
+#endif
+
+
 #define R_X11_DEVICE 1
 #include "devX11.h"
 
@@ -54,9 +67,6 @@
 
 #define CURSOR		XC_crosshair		/* Default cursor */
 #define MM_PER_INCH	25.4			/* mm -> inch conversion */
-
-#define IS_100DPI ((int) (1./pixelHeight() + 0.5) == 100)
-
 
 #define X_BELL_VOLUME 0 /* integer between -100 and 100 for the volume
                             of the bell in locator. */
@@ -134,7 +144,7 @@ static Rboolean newX11_Locator(double *x, double *y, NewDevDesc *dd);
 static void newX11_Line(double x1, double y1, double x2, double y2,
 			R_GE_gcontext *gc,
 			NewDevDesc *dd);
-static void newX11_MetricInfo(int c, 
+static void newX11_MetricInfo(int c,
 			      R_GE_gcontext *gc,
 			      double* ascent, double* descent,
 			      double* width, NewDevDesc *dd);
@@ -157,7 +167,7 @@ static void newX11_Rect(double x0, double y0, double x1, double y1,
 static void newX11_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     NewDevDesc *dd);
-static double newX11_StrWidth(char *str, 
+static double newX11_StrWidth(char *str,
 			      R_GE_gcontext *gc,
 			      NewDevDesc *dd);
 static void newX11_Text(double x, double y, char *str,
@@ -171,7 +181,7 @@ static void newX11_Text(double x, double y, char *str,
 
 	/* Support Routines */
 
-static XFontStruct *RLoadFont(newX11Desc*, char*, int, int);
+static void *RLoadFont(newX11Desc*, char*, int, int);
 static double pixelHeight(void);
 static double pixelWidth(void);
 static int SetBaseFont(newX11Desc*);
@@ -280,7 +290,7 @@ static void SetupGrayScale()
 	d--;
     if (!res) {
 	/* Can't find a sensible grayscale, so revert to monochrome */
-	warning("can't set grayscale: reverting to monochrome");
+	warning(_("cannot set grayscale: reverting to monochrome"));
 	model = MONOCHROME;
 	SetupMonochrome();
     }
@@ -363,7 +373,7 @@ static void SetupPseudoColor()
 		break;
 	}
 	if (PaletteSize == 0) {
-	    warning("X11 driver unable to obtain color cube\n  reverting to monochrome");
+	    warning(_("X11 driver unable to obtain color cube\n  reverting to monochrome"));
 	    model = MONOCHROME;
 	    SetupMonochrome();
 	}
@@ -408,8 +418,8 @@ static unsigned int GetPseudoColor2Pixel(int r, int g, int b)
     XPalette[PaletteSize].blue	= pow(b / 255.0, BlueGamma) * 0xffff;
     if (PaletteSize == 256 ||
 	XAllocColor(display, colormap, &XPalette[PaletteSize]) == 0) {
-	error("Error: X11 cannot allocate additional graphics colors.\n"
-	      "Consider using X11 with colortype=\"pseudo.cube\" or \"gray\".");
+	error(_("Error: X11 cannot allocate additional graphics colors.\n\
+Consider using X11 with colortype=\"pseudo.cube\" or \"gray\"."));
     }
     RPalette[PaletteSize].red = r;
     RPalette[PaletteSize].green = g;
@@ -627,7 +637,7 @@ static void R_ProcessEvents(void *data)
 }
 
 static char *fontname = "-adobe-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*";
-static char *symbolname	 = "-adobe-symbol-*-*-*-*-%d-*-*-*-*-*-*-*";
+static char *symbolname	 = "-adobe-symbol-medium-r-*-*-%d-*-*-*-*-*-*-*";
 
 static char *slant[]  = {"r", "o"};
 static char *weight[] = {"medium", "bold"};
@@ -640,9 +650,9 @@ static unsigned int adobe_sizes = 0x0403165D;
 #define CLRFONTS 16 /* Number to free when cache runs full */
 
 typedef struct {
-    char family[500]; 
-    int face, size;	 
-    XFontStruct *font;
+    char family[500];
+    int face, size;
+    R_XFont *font;
 } cacheentry;
 
 static cacheentry fontcache[MAXFONTS];
@@ -652,29 +662,93 @@ static int force_nonscalable = 0; /* for testing */
 #define ADOBE_SIZE(I) ((I) > 7 && (I) < 35 && (adobe_sizes & (1<<((I)-8))))
 #define SMALLEST 2
 
-static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
+
+static R_XFont *R_XLoadQueryFont(Display *display, char *name)
 {
-    int pixelsize, i;
+    R_XFont *tmp;
+    tmp = (R_XFont *) malloc(sizeof(R_XFont));
+    tmp->type = One_Font;
+    tmp->font = XLoadQueryFont(display, name);
+    if(tmp->font) 
+	return tmp; 
+    else {
+	free(tmp);
+	return NULL;
+    }
+}
+
+static void R_XFreeFont(Display *display, R_XFont *font)
+{
+    if(font->type == Font_Set) XFreeFontSet(display, font->fontset);
+    else XFreeFont(display, font->font);
+    free(font);
+}
+
+
+/*
+ * Can't load Symbolfont to XFontSet!!
+ */
+#ifdef USE_FONTSET
+static R_XFont *R_XLoadQueryFontSet(Display *display,
+				    const char *fontset_name)
+{
+    R_XFont *tmp = (R_XFont *) malloc(sizeof(R_XFont));
+    XFontSet fontset;
+    int  /*i,*/ missing_charset_count;
+    char **missing_charset_list, *def_string;
+  
+    fontset = XCreateFontSet(display, fontset_name, &missing_charset_list,
+			     &missing_charset_count, &def_string);
+    if(!fontset) {
+	free(tmp);
+	return NULL;	
+    }
+    if (missing_charset_count) {
+	/* for(i = 0; i < missing_charset_count; i++)
+	   warning("font for charset %s is lacking.", missing_charset_list[i]);*/
+	XFreeStringList(missing_charset_list);
+    }
+    tmp->type = Font_Set;
+    tmp->fontset = fontset;
+    return tmp;
+}
+#endif
+
+static void *RLoadFont(newX11Desc *xd, char* family, int face, int size)
+{
+    int pixelsize, i, dpi;
     cacheentry *f;
-    char buf[128];
-    XFontStruct *tmp;
+    char buf[BUFSIZ];
+#ifdef USE_FONTSET
+    char buf1[BUFSIZ];
+#endif
+    R_XFont *tmp = NULL;
+
+#ifdef DEBUG_X11
+    printf("trying face %d size %d\n", face, size);
+#endif
 
     if (size < SMALLEST) size = SMALLEST;
     face--;
 
+    dpi = (1./pixelHeight() + 0.5);
+    if(dpi < 80) {
+	/* use pointsize as pixel size */
+    } else if(abs(dpi - 100) < 5) {
     /* Here's a 1st class fudge: make sure that the Adobe design sizes
        8, 10, 11, 12, 14, 17, 18, 20, 24, 25, 34 can be obtained via
        an integer "size" at 100 dpi, namely 6, 7, 8, 9, 10, 12, 13,
        14, 17, 18, 24 points. It's almost y = x * 100/72, but not
        quite. The constants were found using lm(). --pd */
-    if (IS_100DPI) size = R_rint(size * 1.43 - 0.4);
+ 	size = R_rint(size * 1.43 - 0.4);
+    } else size = R_rint(size * dpi/72);
 
     /* search fontcache */
     for ( i = nfonts ; i-- ; ) {
 	f = &fontcache[i];
-	if ( strcmp(f->family, family) == 0 && 
-	     f->face == face && 
-	     f->size == size ) 
+	if ( strcmp(f->family, family) == 0 &&
+	     f->face == face &&
+	     f->size == size )
 	    return f->font;
     }
 
@@ -682,20 +756,34 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
        actually allocated font*/
     pixelsize = size;
 
-    /* 
+    /*
      * The symbol font face is a historical oddity
-     * Always use a standard font for font face 4
+     * Always use a standard font for font face 5
      */
-    if (face == 4)
-	sprintf(buf, xd->symbolfamily,  pixelsize);
+    if (face == SYMBOL_FONTFACE - 1) /* NB: face-- above */
+        sprintf(buf, xd->symbolfamily,  pixelsize);
     else
-	sprintf(buf, family,
-		weight[face & 1],
-		slant[(face & 2)>>1 ],	pixelsize);
+#ifdef USE_FONTSET
+      if (mbcslocale && *slant[(face & 2) >> 1] == 'o') {
+        sprintf(buf, family, weight[face & 1], slant[(face & 2) >> 1],
+		pixelsize);
+        sprintf(buf1, family, weight[face & 1], "i",  pixelsize);
+	strcat(buf,",");
+	strcat(buf,buf1);
+      } else
+#endif
+	sprintf(buf, family, weight[face & 1], slant[(face & 2) >> 1],
+		pixelsize);
 #ifdef DEBUG_X11
     Rprintf("loading:\n%s\n",buf);
 #endif
-    tmp = XLoadQueryFont(display, buf);
+    if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
+      tmp = R_XLoadQueryFont(display, buf);
+#ifdef USE_FONTSET
+    else
+      tmp = R_XLoadQueryFontSet(display, buf);
+#endif
+
 #ifdef DEBUG_X11
     if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
 #endif
@@ -714,11 +802,18 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
 	   If we can't find a "fixed" font then something is seriously
 	   wrong */
 	if ( ADOBE_SIZE(pixelsize) ) {
-	    tmp = XLoadQueryFont(display, "fixed");
+#ifdef USE_FONTSET
+	    if(mbcslocale)
+		tmp = (void*) R_XLoadQueryFontSet(display,
+                   "-*-fixed-medium-r-*--13-*-*-*-*-*-*-*");
+	    else
+#endif
+		tmp = (void*) R_XLoadQueryFont(display, "fixed");
+
 	    if (tmp)
 		return tmp;
 	    else
-		error("Could not find any X11 fonts\nCheck that the Font Path is correct.");
+		error(_("could not find any X11 fonts\nCheck that the Font Path is correct."));
 	}
 
 	if ( pixelsize < 8 )
@@ -731,16 +826,21 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
 	    pixelsize = 34;
 
 
-	if (face == 4)
+	if (face == SYMBOL_FONTFACE - 1)
 	    sprintf(buf, symbolname, pixelsize);
 	else
 	    sprintf(buf, fontname,
 		    weight[face & 1],
-		    slant[(face & 2)>>1 ],  pixelsize);
+		    slant[(face & 2) >> 1 ],  pixelsize);
 #ifdef DEBUG_X11
 	Rprintf("loading:\n%s\n",buf);
 #endif
-	tmp = XLoadQueryFont(display, buf);
+	if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
+	    tmp = R_XLoadQueryFont(display, buf);
+#ifdef USE_FONTSET
+	else
+	    tmp = R_XLoadQueryFontSet(display, buf);
+#endif
 #ifdef DEBUG_X11
 	if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
 #endif
@@ -753,16 +853,22 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
 	else
 	    sprintf(buf, fontname,
 		    weight[face & 1],
-		    slant[(face & 2)>>1 ],  24);
+		    slant[(face & 2) >> 1 ],  24);
 #ifdef DEBUG_X11
 	Rprintf("loading:\n%s\n",buf);
 #endif
-	tmp = XLoadQueryFont(display, buf);
+
+	if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
+	    tmp = R_XLoadQueryFont(display, buf);
+#ifdef USE_FONTSET
+	else
+	    tmp = R_XLoadQueryFontSet(display, buf);
+#endif
+
 #ifdef DEBUG_X11
 	if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
 #endif
     }
-
 
     if (tmp){
 	f = &fontcache[nfonts++];
@@ -771,13 +877,13 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
 	f->size = size;
 	f->font = tmp;
 	if (fabs( (pixelsize - size)/(double)size ) > 0.1)
-	    warning("X11 used font size %d when %d was requested",
+	    warning(_("X11 used font size %d when %d was requested"),
 		    pixelsize, size);
     }
     if (nfonts == MAXFONTS) /* make room in the font cache */
     {
 	for (i = 0 ; i < CLRFONTS ; i++)
-	    XFreeFont(display, fontcache[i].font);
+	      R_XFreeFont(display, fontcache[i].font);
 	for (i = CLRFONTS ; i < MAXFONTS ; i++)
 	    fontcache[i - CLRFONTS] = fontcache[i];
 	nfonts -= CLRFONTS;
@@ -785,15 +891,24 @@ static XFontStruct *RLoadFont(newX11Desc *xd, char* family, int face, int size)
     return tmp;
 }
 
+/* This should never be used for a Symbol face */
 static int SetBaseFont(newX11Desc *xd)
 {
     xd->fontface = xd->basefontface;
+    if (xd->fontface < 1 || xd->fontface > 5) xd->fontface = 1;
     xd->fontsize = xd->basefontsize;
     xd->usefixed = 0;
     xd->font = RLoadFont(xd, xd->fontfamily, xd->fontface, xd->fontsize);
     if (!xd->font) {
 	xd->usefixed = 1;
-	xd->font = xd->fixedfont = XLoadQueryFont(display, "fixed");
+#ifdef USE_FONTSET
+	if(mbcslocale)
+	    xd->font = xd->fixedfont =
+		R_XLoadQueryFontSet(display,
+				    "-*-fixed-medium-r-*--13-*-*-*-*-*-*-*");
+	else
+#endif
+	    xd->font = xd->fixedfont = R_XLoadQueryFont(display, "fixed");
 	if (!xd->fixedfont)
 	    return 0;
     }
@@ -803,24 +918,25 @@ static int SetBaseFont(newX11Desc *xd)
 static void SetFont(char* family, int face, int size, NewDevDesc *dd)
 {
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
-    XFontStruct *tmp;
+    R_XFont *tmp;
 
     if (face < 1 || face > 5) face = 1;
 
-    if (!xd->usefixed && 
-	(size != xd->fontsize	|| 
+    if (!xd->usefixed &&
+	(size != xd->fontsize	||
 	 face != xd->fontface ||
 	 strcmp(family, xd->fontfamily) != 0)) {
-	
+
 	tmp = RLoadFont(xd, family, face, size);
 	if(tmp) {
 	    xd->font = tmp;
 	    strcpy(xd->fontfamily, family);
 	    xd->fontface = face;
 	    xd->fontsize = size;
-	    XSetFont(display, xd->wgc, xd->font->fid);
+            /* if (xd->font == One_Font)
+	       XSetFont(display, xd->wgc, (xd->font->font)->fid);*/
 	} else
-	    error("X11 font at size %d could not be loaded", size);
+	    error(_("X11 font at size %d could not be loaded"), size);
     }
 }
 
@@ -848,12 +964,12 @@ static int gcToX11lend(R_GE_lineend lend) {
         newend = CapProjecting;
 	break;
     default:
-        error("Invalid line end");
+        error(_("invalid line end"));
     }
     return newend;
 }
 
-static int gcToX11ljoin(R_GE_lineend ljoin) {
+static int gcToX11ljoin(R_GE_linejoin ljoin) {
     int newjoin = JoinRound; /* -Wall */
     switch (ljoin) {
     case GE_ROUND_JOIN:
@@ -866,7 +982,7 @@ static int gcToX11ljoin(R_GE_lineend ljoin) {
         newjoin = JoinBevel;
 	break;
     default:
-        error("Invalid line join");
+        error(_("invalid line join"));
     }
     return newjoin;
 }
@@ -935,7 +1051,7 @@ static int R_X11Err(Display *dsp, XErrorEvent *event)
 {
     char buff[1000];
     XGetErrorText(dsp, event->error_code, buff, 1000);
-    warning("X11 protocol error: %s", buff);
+    warning(_("X11 protocol error: %s"), buff);
     return 0;
 }
 
@@ -943,7 +1059,7 @@ static int R_X11IOErr(Display *dsp)
 {
     int fd = ConnectionNumber(display);
     /*
-    while (nfonts--)  XFreeFont(display, fontcache[nfonts].font);
+    while (nfonts--)  R_XFreeFont(display, fontcache[nfonts].font);
     nfonts = 0;
     */
     removeInputHandler(&R_InputHandlers,
@@ -952,7 +1068,7 @@ static int R_X11IOErr(Display *dsp)
     XCloseDisplay(display);
     displayOpen = FALSE;
     */
-    error("X11 fatal IO error: please save work and shut down R");
+    error(_("X11 fatal IO error: please save work and shut down R"));
     return 0; /* but should never get here */
 }
 
@@ -973,18 +1089,25 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     /* Indicates whether the display is created within this particular call: */
     Rboolean DisplayOpened = FALSE;
 
+#ifdef USE_FONTSET
+    if (!XSupportsLocale ())
+	warning(_("locale not supported by Xlib: some X ops will operate in C locale"));
+    if (!XSetLocaleModifiers ("")) warning(_("X cannot set locale modifiers"));
+#endif
+
     if (!strncmp(dsp, "png::", 5)) {
 	char buf[PATH_MAX]; /* allow for pageno formats */
 	FILE *fp;
 #ifndef HAVE_PNG
-	warning("No png support in this version of R");
+	warning(_("no png support in this version of R"));
 	return FALSE;
 #else
-	if(strlen(dsp+5) >= PATH_MAX) error("filename too long in png() call");
+	if(strlen(dsp+5) >= PATH_MAX)
+	    error(_("filename too long in png() call"));
 	strcpy(xd->filename, dsp+5);
 	snprintf(buf, PATH_MAX, dsp+5, 1); /* page 1 to start */
 	if (!(fp = R_fopen(R_ExpandFileName(buf), "w"))) {
-	    warning("could not open PNG file `%s'", buf);
+	    warning(_("could not open PNG file '%s'"), buf);
 	    return FALSE;
 	}
 	xd->fp = fp;
@@ -997,16 +1120,17 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	char buf[PATH_MAX]; /* allow for pageno formats */
 	FILE *fp;
 #ifndef HAVE_JPEG
-	warning("No jpeg support in this version of R");
+	warning(_("no jpeg support in this version of R"));
 	return FALSE;
 #else
 	p = strchr(dsp+6, ':'); *p='\0';
 	xd->quality = atoi(dsp+6);
-	if(strlen(p+1) >= PATH_MAX) error("filename too long in jpeg() call");
+	if(strlen(p+1) >= PATH_MAX)
+	    error(_("filename too long in jpeg() call"));
 	strcpy(xd->filename, p+1);
 	snprintf(buf, PATH_MAX, p+1, 1); /* page 1 to start */
 	if (!(fp = R_fopen(R_ExpandFileName(buf), "w"))) {
-	    warning("could not open JPEG file `%s'", buf);
+	    warning(_("could not open JPEG file '%s'"), buf);
 	    return FALSE;
 	}
 	xd->fp = fp;
@@ -1027,7 +1151,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 
     if (!displayOpen) {
 	if ((display = XOpenDisplay(p)) == NULL) {
-	    warning("unable to open connection to X11 display`%s'", p);
+	    warning(_("unable to open connection to X11 display '%s'"), p);
 	    return FALSE;
 	}
 	DisplayOpened = TRUE;
@@ -1053,7 +1177,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     xd->col = R_RGB(0, 0, 0);
     xd->canvas = canvascolor;
     if(type == JPEG && !R_OPAQUE(xd->canvas)) {
-	warning("jpeg() does not support transparency: using white bg");
+	warning(_("jpeg() does not support transparency: using white bg"));
 	xd->canvas = 0xffffff;
     }
     if(type > WINDOW) xd->fill = xd->canvas;
@@ -1084,7 +1208,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 		DefaultVisual(display, screen),
 		CWEventMask | CWBackPixel | CWBorderPixel | CWBackingStore,
 		&attributes)) == 0) {
-		warning("unable to create X11 window");
+		warning(_("unable to create X11 window"));
 		return FALSE;
 	    }
 
@@ -1130,7 +1254,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	if ((xd->window = XCreatePixmap(
 	    display, rootwin,
 	    iw, ih, DefaultDepth(display, screen))) == 0) {
-	    warning("unable to create pixmap");
+	    warning(_("unable to create pixmap"));
 	    return FALSE;
 	}
 	/* Save the NewDevDesc* with the window for event dispatching */
@@ -1144,7 +1268,8 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     gcv.arc_mode = ArcChord;
     xd->wgc = XCreateGC(display, xd->window, GCArcMode, &gcv);
     XSetState(display, xd->wgc, blackpixel, whitepixel, GXcopy, AllPlanes);
-    XSetFont(display, xd->wgc, xd->font->fid);
+    /* if ( xd->font->type == One_Font )
+       XSetFont(display, xd->wgc, (xd->font->font)->fid);*/
 
     /* ensure that line drawing is set up at the first */
     /* graphics call */
@@ -1163,7 +1288,7 @@ static char *SaveFontSpec(SEXP sxp, int offset)
 {
     char *s;
     if(!isString(sxp) || length(sxp) <= offset)
-	error("Invalid font specification");
+	error(_("invalid font specification"));
     s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
     strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
@@ -1174,8 +1299,8 @@ static char *SaveFontSpec(SEXP sxp, int offset)
  * and convert it into an X11-specific font description using
  * the X11 font database (see src/library/graphics/R/unix/x11.R)
  *
- * IF gcontext fontfamily is empty ("") 
- * OR IF can't find gcontext fontfamily in font database 
+ * IF gcontext fontfamily is empty ("")
+ * OR IF can't find gcontext fontfamily in font database
  * THEN return xd->basefontfamily (the family set up when the
  *   device was created)
  */
@@ -1202,7 +1327,7 @@ static char* translateFontFamily(char* family, newX11Desc* xd) {
 	    }
 	}
 	if (!found)
-	    warning("Font family not found in X11 font database");
+	    warning(_("font family not found in X11 font database"));
     }
     UNPROTECT(4);
     return result;
@@ -1215,9 +1340,24 @@ static double newX11_StrWidth(char *str,
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
 
     int size = gc->cex * gc->ps + 0.5;
-    SetFont(translateFontFamily(gc->fontfamily, xd),
-	    gc->fontface, size, dd);
-    return (double)XTextWidth(xd->font, str, strlen(str));
+    SetFont(translateFontFamily(gc->fontfamily, xd), gc->fontface, size, dd);
+
+#ifdef USE_FONTSET
+    if (xd->font->type == One_Font)
+	return (double) XTextWidth(xd->font->font, str, strlen(str));
+    else  {
+#ifdef HAVE_XUTF8TEXTESCAPEMENT
+	if(utf8locale)
+	    return (double) Xutf8TextEscapement(xd->font->fontset,
+						str, strlen(str));
+	else
+#endif
+	    return (double) XmbTextEscapement(xd->font->fontset,
+					      str, strlen(str));
+    }
+#else
+    return (double) XTextWidth(xd->font->font, str, strlen(str));
+#endif
 }
 
 
@@ -1229,30 +1369,93 @@ static void newX11_MetricInfo(int c,
 			      double* ascent, double* descent,
 			      double* width, NewDevDesc *dd)
 {
-    int first, last;
-    int size = gc->cex * gc->ps + 0.5;
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
+    int first = 0, last = 0;
+    int size = gc->cex * gc->ps + 0.5;
+    XFontStruct *f = NULL;
 
-    SetFont(translateFontFamily(gc->fontfamily, xd),
-	    gc->fontface, size, dd);
-    first = xd->font->min_char_or_byte2;
-    last = xd->font->max_char_or_byte2;
+    SetFont(translateFontFamily(gc->fontfamily, xd), gc->fontface, size, dd);
+
+#ifdef USE_FONTSET
+    *ascent = 0; *descent = 0; *width = 0; /* fallback position */
+    if (xd->font) {
+	if (xd->font->type != One_Font) {
+	    char **ml; XFontStruct **fs_list;
+#ifdef DEBUG_X11
+	    int i, cnt = XFontsOfFontSet(xd->font->fontset, &fs_list, &ml);
+
+	    for (i = 0; i < cnt; i++) printf("%s\n", ml[i]);
+	    printf("--- end of fontlist ---\n\n");
+#else
+	    XFontsOfFontSet(xd->font->fontset, &fs_list, &ml);
+#endif
+	    
+	    f = fs_list[0];
+	} else f = xd->font->font;
+	first = f->min_char_or_byte2;
+	last = f->max_char_or_byte2;
+    } else return;
 
     if (c == 0) {
-	*ascent = xd->font->ascent;
-	*descent = xd->font->descent;
-	*width = xd->font->max_bounds.width;
+        *ascent = f->ascent;
+        *descent = f->descent;
+        *width = f->max_bounds.width;
+	return;
     }
-    else if (first <= c && c <= last) {
-	*ascent = xd->font->per_char[c-first].ascent;
-	*descent = xd->font->per_char[c-first].descent;
-	*width = xd->font->per_char[c-first].width;
+
+    if (xd->font->type != One_Font) {
+	char buf[10];
+	wchar_t wc[2] = L" ";XRectangle ink, log;
+
+	wc[0] = (unsigned int) c;
+	wcstombs(buf, wc, 10);
+#ifdef HAVE_XUTF8TEXTEXTENTS
+	if(utf8locale)
+	    Xutf8TextExtents(xd->font->fontset, buf, strlen(buf), &ink, &log);
+	else
+#endif
+	    XmbTextExtents(xd->font->fontset, buf, strlen(buf), &ink, &log);
+	/* Rprintf("%d %d %d %d\n", ink.x, ink.y, ink.width, ink.height);
+	   Rprintf("%d %d %d %d\n", log.x, log.y, log.width, log.height); */
+	*ascent = -ink.y;
+	*descent = ink.y + ink.height;
+	*width = log.width;
+	/* Rprintf("%d %lc w=%f a=%f d=%f\n", c, wc[0],
+	            *width, *ascent, *descent);*/
+    } else { /* symbol font */
+	if(first <= c && c <= last) {
+	    *ascent = f->per_char[c-first].ascent;
+	    *descent = f->per_char[c-first].descent;
+	    *width = f->per_char[c-first].width;
+	}
     }
-    else {
+#else
+    f = xd->font->font;
+    first = f->min_char_or_byte2;
+    last = f->max_char_or_byte2;
+    if (c == 0) {
+	*ascent = f->ascent;
+	*descent = f->descent;
+	*width = f->max_bounds.width;
+    } else if (first <= c && c <= last) {
+    /* It seems that per_char could be NULL
+       http://www.ac3.edu.au/SGI_Developer/books/XLib_PG/sgi_html/ch06.html 
+    */
+	if(f->per_char) {
+	    *ascent = f->per_char[c-first].ascent;
+	    *descent = f->per_char[c-first].descent;
+	    *width = f->per_char[c-first].width;
+	} else {
+	    *ascent = f->max_bounds.ascent;
+	    *descent = f->max_bounds.descent;
+	    *width = f->max_bounds.width;
+	}
+    } else {
 	*ascent = 0;
 	*descent = 0;
 	*width = 0;
     }
+#endif
 }
 
 static void newX11_Clip(double x0, double x1, double y0, double y1,
@@ -1311,14 +1514,14 @@ static void newX11_NewPage(R_GE_gcontext *gc,
 		snprintf(buf, PATH_MAX, xd->filename, xd->npages);
 		xd->fp = R_fopen(R_ExpandFileName(buf), "w");
 		if (!xd->fp)
-		    error("could not open PNG file `%s'", buf);
+		    error(_("could not open PNG file '%s'"), buf);
 	    }
 	    if (xd->type == JPEG) {
 		char buf[PATH_MAX];
 		snprintf(buf, PATH_MAX, xd->filename, xd->npages);
 		xd->fp = R_fopen(R_ExpandFileName(buf), "w");
 		if (!xd->fp)
-		    error("could not open JPEG file `%s'", buf);
+		    error(_("could not open JPEG file '%s'"), buf);
 	    }
 	    /* error("attempt to draw second page on pixmap device");*/
 	}
@@ -1407,7 +1610,7 @@ static void X11_Close_bitmap(newX11Desc *xd)
 	unsigned int pngtrans = PNG_TRANS;
 	if(model == TRUECOLOR) {
 	    int i, r, g, b;
-	    /* some `truecolor' displays distort colours */
+	    /* some 'truecolor' displays distort colours */
 	    i = GetX11Pixel(R_RED(PNG_TRANS),
 			    R_GREEN(PNG_TRANS),
 			    R_BLUE(PNG_TRANS));
@@ -1449,7 +1652,8 @@ static void newX11_Close(NewDevDesc *dd)
     if (numX11Devices == 0)  {
       int fd = ConnectionNumber(display);
 	/* Free Resources Here */
-	while (nfonts--)  XFreeFont(display, fontcache[nfonts].font);
+	while (nfonts--)
+	      R_XFreeFont(display, fontcache[nfonts].font);
 	nfonts = 0;
         if(xd->handleOwnEvents == FALSE)
 	    removeInputHandler(&R_InputHandlers,
@@ -1660,13 +1864,12 @@ static void newX11_Text(double x, double y,
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
 
     size = gc->cex * gc->ps + 0.5;
-    SetFont(translateFontFamily(gc->fontfamily, xd),
-	    gc->fontface, size, dd);
+    SetFont(translateFontFamily(gc->fontfamily, xd), gc->fontface, size, dd);
     if (R_OPAQUE(gc->col)) {
 	SetColor(gc->col, dd);
 	len = strlen(str);
-	XRotDrawString(display, xd->font, rot, xd->window, xd->wgc,
-		       (int)x, (int)y, str);
+	XRfRotDrawString(display, xd->font, rot, xd->window,
+			 xd->wgc, (int)x, (int)y, str);
 #ifdef XSYNC
 	if (xd->type == WINDOW) XSync(display, 0);
 #endif
@@ -1695,7 +1898,7 @@ static Rboolean newX11_Locator(double *x, double *y, NewDevDesc *dd)
 	    ddEvent = (NewDevDesc *) temp;
 	    if (ddEvent == dd) {
 		if (event.xbutton.button == Button1) {
-		    int useBeep = asLogical(GetOption(install("locatorBell"), 
+		    int useBeep = asLogical(GetOption(install("locatorBell"),
 						      R_NilValue));
 		    *x = event.xbutton.x;
 		    *y = event.xbutton.y;
@@ -1750,9 +1953,9 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
 			    double pointsize,
 			    double gamma_fac,
 			    X_COLORTYPE colormodel,
-			    int maxcube, 
-			    int bgcolor, 
-			    int canvascolor, 
+			    int maxcube,
+			    int bgcolor,
+			    int canvascolor,
 			    SEXP sfonts,
 			    int res)
 {
@@ -1781,14 +1984,14 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
     /*	Start the Device Driver and Hardcopy.  */
 
     if (!newX11_Open((NewDevDesc*)(dd), xd, disp_name, width, height,
-		     gamma_fac, colormodel, maxcube, bgcolor, 
+		     gamma_fac, colormodel, maxcube, bgcolor,
 		     canvascolor, res)) {
 	free(xd);
 	return FALSE;
     }
 
     Rf_setNewX11DeviceData((NewDevDesc*)(dd), gamma_fac, xd);
-    xd->fill = 0xffffffff; /* this is needed to ensure that the 
+    xd->fill = 0xffffffff; /* this is needed to ensure that the
 			      first newpage does set whitecolor
 			      if par("bg") is not transparent */
 
@@ -1843,10 +2046,37 @@ Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd)
     /* Nominal Character Sizes in Pixels */
 
     SetBaseFont(xd);
-    dd->cra[0] = xd->font->max_bounds.rbearing -
-	xd->font->min_bounds.lbearing;
-    dd->cra[1] = xd->font->max_bounds.ascent +
-	xd->font->max_bounds.descent;
+    {
+	XFontStruct *f;
+#ifdef USE_FONTSET
+	/* Use fudge size of M, not the max of the first font or the 
+	   whole fontset which may have very wide characters if it contains
+	   a comprehensive ISO 10646 font.
+	 */
+	if(xd->font->type == Font_Set) {
+	    char buf[10];
+	    XRectangle ink, log;
+	    
+	    wcstombs(buf, L"M", 10);
+#ifdef HAVE_XUTF8TEXTEXTENTS
+	    if(utf8locale)
+		Xutf8TextExtents(xd->font->fontset, buf, strlen(buf), &ink, &log);
+	    else
+#endif
+		XmbTextExtents(xd->font->fontset, buf, strlen(buf), &ink, &log);
+	    dd->cra[0] = 2+log.width; /* fudge to allow some space */
+	    dd->cra[1] = 2+log.height;/* M has no descenders */
+	} else
+#endif
+	{
+	    f = xd->font->font;
+	    dd->cra[0] = f->max_bounds.rbearing - f->min_bounds.lbearing;
+	    dd->cra[1] = f->max_bounds.ascent + f->max_bounds.descent;
+	}
+#ifdef DEBUG_X11
+	printf("cra = %f %f\n", dd->cra[0], dd->cra[1]);
+#endif
+    }
 
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
@@ -1999,7 +2229,7 @@ Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel,
     return(TRUE);
 }
 
-typedef Rboolean (*X11DeviceDriverRoutine)(DevDesc*, char*, 
+typedef Rboolean (*X11DeviceDriverRoutine)(DevDesc*, char*,
 					   double, double, double, double,
 					   X_COLORTYPE, int, int);
 
@@ -2011,14 +2241,14 @@ static char *SaveString(SEXP sxp, int offset)
 {
     char *s;
     if(!isString(sxp) || length(sxp) <= offset)
-	errorcall(gcall, "invalid string argument");
+	errorcall(gcall, _("invalid string argument"));
     s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
     strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
 }
 
-static DevDesc* 
-Rf_addX11Device(char *display, double width, double height, double ps, 
+static DevDesc*
+Rf_addX11Device(char *display, double width, double height, double ps,
 		double gamma, int colormodel, int maxcubesize,
 		int bgcolor, int canvascolor, char *devname, SEXP sfonts,
 		int res)
@@ -2038,21 +2268,21 @@ Rf_addX11Device(char *display, double width, double height, double ps,
 	 */
 	dev->savedSnapshot = R_NilValue;
 	/* Took out the GInit because MOST of it is setting up
-	 * R base graphics parameters.  
+	 * R base graphics parameters.
 	 * This is supposed to happen via addDevice now.
 	 */
-	if (!newX11DeviceDriver((DevDesc*)(dev), display, width, height, 
-				ps, gamma, colormodel, maxcubesize, 
+	if (!newX11DeviceDriver((DevDesc*)(dev), display, width, height,
+				ps, gamma, colormodel, maxcubesize,
 				bgcolor, canvascolor, sfonts, res)) {
 	    free(dev);
-	    errorcall(gcall, "unable to start device %s", devname);
+	    errorcall(gcall, _("unable to start device %s"), devname);
        	}
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
-    
+
     return((DevDesc*) dd);
 }
 
@@ -2072,14 +2302,14 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     width = asReal(CAR(args));	args = CDR(args);
     height = asReal(CAR(args)); args = CDR(args);
     if (width <= 0 || height <= 0)
-	errorcall(call, "invalid width or height");
+	errorcall(call, _("invalid width or height"));
     ps = asReal(CAR(args)); args = CDR(args);
     gamma = asReal(CAR(args)); args = CDR(args);
     if (gamma < 0 || gamma > 100)
-	errorcall(call, "invalid gamma value");
+	errorcall(call, _("invalid gamma value"));
 
     if (!isValidString(CAR(args)))
-	error("invalid colortype passed to X11 driver");
+	error(_("invalid colortype passed to X11 driver"));
     cname = CHAR(STRING_ELT(CAR(args), 0));
     if (strcmp(cname, "mono") == 0)
 	colormodel = 0;
@@ -2092,8 +2322,8 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     else if (strcmp(cname, "true") == 0)
 	colormodel = 4;
     else {
-	warningcall(call, 
-		    "unknown X11 color/colour model -- using monochrome");
+	warningcall(call,
+		    _("unknown X11 color/colour model -- using monochrome"));
 	colormodel = 0;
     }
     args = CDR(args);
@@ -2103,17 +2333,17 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     args = CDR(args);
     sc = CAR(args);
     if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
-	errorcall(call, "invalid value of `bg'");
+	errorcall(call, _("invalid value of 'bg'"));
     bgcolor = RGBpar(sc, 0);
     args = CDR(args);
     sc = CAR(args);
     if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
-	errorcall(call, "invalid value of `canvas'");
+	errorcall(call, _("invalid value of 'canvas'"));
     canvascolor = RGBpar(sc, 0);
     args = CDR(args);
     sfonts = CAR(args);
     if (!isString(sfonts) || LENGTH(sfonts) != 2)
-	errorcall(call, "invalid value of `fonts'");
+	errorcall(call, _("invalid value of 'fonts'"));
     args = CDR(args);
     res = asInteger(CAR(args));
 
@@ -2122,7 +2352,7 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     else if (!strncmp(display, "jpeg::", 6)) devname = "JPEG";
     else if (!strcmp(display, "XImage")) devname = "XImage";
 
-    Rf_addX11Device(display, width, height, ps, gamma, colormodel, 
+    Rf_addX11Device(display, width, height, ps, gamma, colormodel,
 		    maxcubesize, bgcolor, canvascolor, devname, sfonts, res);
     vmaxset(vmax);
     return R_NilValue;
@@ -2130,16 +2360,90 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 
 extern SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
 
+static int in_R_X11_access(void)
+{
+    char *p;
+
+    if (displayOpen) return TRUE;
+    if(!(p = getenv("DISPLAY"))) return FALSE;
+    if ((display = XOpenDisplay(NULL)) == NULL) {
+	return FALSE;
+    } else {
+	XCloseDisplay(display);
+	return TRUE;
+    }
+}
+
+static Rboolean in_R_X11readclp(Rclpconn this, char *type)
+{
+    Window clpwin;
+    Atom sel = XA_PRIMARY, pty, pty_type;
+    XEvent evt;
+    unsigned char *buffer;
+    unsigned long pty_size, pty_items;
+    int pty_format, ret;
+    Rboolean res = TRUE;
+  
+    if (!displayOpen) {
+	if ((display = XOpenDisplay(NULL)) == NULL) {
+	    warning(_("unable to contact X11 display"));
+	    return FALSE;
+	}
+    }
+    if(strcmp(type, "X11_secondary") == 0) sel = XA_SECONDARY;
+
+    pty = XInternAtom(display, "RCLIP_READ", False);
+
+    clpwin = XCreateSimpleWindow(display, DefaultRootWindow(display), 
+				 0, 0, 1, 1, 0, 0, 0);
+    /* send a selection request */
+    ret = XConvertSelection(display, sel, XA_STRING, pty, clpwin, CurrentTime);
+
+    /* wait for the response */
+    while(1) {
+	XNextEvent(display, &evt);	
+	if (evt.type == SelectionNotify) break;
+    }
+    
+    /* find the size and format of the data in the selection */
+    XGetWindowProperty(display, clpwin, pty, 0, 0, False, AnyPropertyType, 
+		       &pty_type, &pty_format, &pty_items, &pty_size, &buffer);
+    XFree(buffer);
+    if (pty_format != 8) { /* bytes */
+	warning(_("clipboard cannot be opened or contains no text"));
+	res = FALSE;
+    } else { /* read the property */
+	XGetWindowProperty(display, clpwin, pty, 0, (long)pty_size, False,
+			   AnyPropertyType, &pty_type, &pty_format, 
+			   &pty_items, &pty_size, &buffer);
+	this->buff = (char *)malloc(pty_items + 1);
+	this->last = this->len = pty_items;
+	if(this->buff) {
+	    /* property always ends in 'extra' zero byte */
+	    memcpy(this->buff, buffer, pty_items + 1);
+	} else {
+	    warning(_("memory allocation to copy clipboard failed"));
+	    res = FALSE;
+	}
+    }
+    XDeleteProperty(display, clpwin, pty);
+    XFree(buffer);
+    if (!displayOpen) XCloseDisplay(display);
+    return res;
+}
+
 void R_init_R_X11(DllInfo *info)
 {
     R_X11Routines *tmp;
     tmp = (R_X11Routines*) malloc(sizeof(R_X11Routines));
     if(!tmp) {
-	error("Cannot allocate memory for X11Routines structure");
+	error(_("cannot allocate memory for X11Routines structure"));
 	return;
     }
     tmp->X11 = in_do_X11;
     tmp->de = RX11_dataentry;
     tmp->image = in_R_GetX11Image;
-    R_setX11Routines(tmp);
+    tmp->access = in_R_X11_access;
+    tmp->readclp = in_R_X11readclp;
+     R_setX11Routines(tmp);
 }

@@ -27,6 +27,8 @@
  *  previous anarchy.
  */
 
+/* <UTF8> byte-level access is ok */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -161,18 +163,6 @@ int R_IoBufferGetc(IoBuffer *iob)
     return *(iob->read_ptr)++;
 }
 
-/* Push a character back onto an IoBuffer */
-/* (Only one character of pushback is guaranteed) */
-
-int R_IoBufferUngetc(int c, IoBuffer *iob)
-{
-    if (iob->read_offset == 0) return EOF;
-    --(iob->read_offset);
-    --(iob->read_ptr);
-    *(iob->read_ptr) = c;
-    return c;
-}
-
 	/* Initialization code for text buffers */
 
 static void transferChars(unsigned char *p, char *q)
@@ -246,8 +236,4 @@ int R_TextBufferGetc(TextBuffer *txtb)
     return *txtb->bufp++;
 }
 
-int R_TextBufferUngetc(int c, TextBuffer *txtb)
-{
-    return (*--txtb->bufp = c);
-}
 

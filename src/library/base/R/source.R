@@ -2,7 +2,8 @@ source <-
 function(file, local = FALSE, echo = verbose, print.eval = echo,
 	 verbose = getOption("verbose"),
 	 prompt.echo = getOption("prompt"),
-	 max.deparse.length = 150, chdir = FALSE)
+	 max.deparse.length = 150, chdir = FALSE,
+         encoding = getOption("encoding"))
 {
     eval.with.vis <-
 	function (expr, envir = parent.frame(),
@@ -13,23 +14,50 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
     envir <- if (local) parent.frame() else .GlobalEnv
     if (!missing(echo)) {
 	if (!is.logical(echo))
-	    stop("echo must be logical")
+	    stop("'echo' must be logical")
 	if (!echo && verbose) {
-	    warning(paste("verbose is TRUE, echo not; ... coercing",
-			  sQuote("echo <- TRUE")))
+	    warning("'verbose' is TRUE, 'echo' not; ... coercing 'echo <- TRUE'")
 	    echo <- TRUE
 	}
     }
     if (verbose) {
-	cat(sQuote("envir"), "chosen:")
+	cat("'envir' chosen:")
 	print(envir)
     }
-    Ne <- length(exprs <- parse(n = -1, file = file))
+    if(is.character(file)) {
+        if(capabilities("iconv")) {
+            if(identical(encoding, "unknown")) {
+                enc <- utils::localeToCharset()
+                encoding <- enc[length(enc)]
+            } else enc <- encoding
+            if(length(enc) > 1) {
+                encoding <- NA
+                owarn <- options("warn"); options(warn = 2)
+                for(e in enc) {
+                    if(is.na(e)) next;
+                    zz <- file(file, encoding = e)
+                    res <- try(readLines(zz), silent = TRUE)
+                    close(zz)
+                    if(!inherits(res, "try-error")) { encoding <- e; break }
+                }
+                options(owarn)
+            }
+            if(is.na(encoding))
+                stop("unable to find a plausible encoding")
+            if(verbose) cat("encoding =", dQuote(encoding), "chosen\n")
+        }
+        if(file == "") file <- stdin()
+        else {
+	    file <- file(file, "r", encoding = encoding)
+	    on.exit(close(file))
+	}
+    }
+    Ne <- length(exprs <- .Internal(parse(file, n = -1, NULL, "?")))
     if (verbose)
 	cat("--> parsed", Ne, "expressions; now eval(.)ing them:\n")
     if (Ne == 0)
 	return(invisible())
-    if (chdir && (path <- dirname(file)) != ".") {
+    if (chdir && is.character(file) && (path <- dirname(file)) != ".") {
 	owd <- getwd()
 	on.exit(setwd(owd))
 	setwd(path)
@@ -49,10 +77,11 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	ei <- exprs[i]
 	if (echo) {
 	    # drop "expression("
-	    dep <- substr(paste(deparse(ei, control = c("showAttributes","useSource")), 
+	    dep <- substr(paste(deparse(ei, control = c("showAttributes","useSource")),
 	    		  collapse = "\n"), 12, 1e+06)
 	    # -1: drop ")"
-	    nd <- nchar(dep) - 1
+            ## We really do want chars here as \n\t may be embedded.
+	    nd <- nchar(dep, "chars") - 1
 	    do.trunc <- nd > max.deparse.length
 	    dep <- substr(dep, 1, if (do.trunc) max.deparse.length else nd)
 	    cat("\n", prompt.echo, dep, if (do.trunc)
@@ -77,7 +106,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	if (print.eval && yy$visible)
 	    print(yy$value)
 	if (verbose)
-	    cat(" .. after ", sQuote(deparse(ei, 
+	    cat(" .. after ", sQuote(deparse(ei,
 	    	control = c("showAttributes","useSource"))), "\n", sep = "")
     }
     invisible(yy)
@@ -88,7 +117,7 @@ function(file, envir = NULL, chdir = FALSE,
 	 keep.source = getOption("keep.source.pkgs"))
 {
     if(!(is.character(file) && file.exists(file)))
-	stop(paste(sQuote(file), "is not an existing file"))
+	stop(gettextf("'%s' is not an existing file", file))
     oop <- options(keep.source = as.logical(keep.source),
 		   topLevelEnvironment = as.environment(envir))
     on.exit(options(oop))

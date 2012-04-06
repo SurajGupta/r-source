@@ -74,7 +74,11 @@ ps.options(paper, horizontal, width, height, family, encoding,
 #endif
     in the \file{R\_HOME/afm} directory, which is used
     if the path does not contain a path separator.  An extension
-    \code{".enc"} can be omitted.}
+    \code{".enc"} can be omitted.
+#ifdef unix
+    In a UTF-8 locale only \code{"ISOLatin1.enc"} is allowed.
+#endif
+  }
   \item{pointsize}{the default point size to be used.}
   \item{bg}{the default background color to be used.
     If \code{"transparent"} (or an equivalent specification), no
@@ -154,6 +158,10 @@ ps.options(paper, horizontal, width, height, family, encoding,
   device is created via \code{fonts};  the font family names for this
   argument are device-independent R graphics font family names (see the
   documentation for \code{postscriptFonts}).
+
+  Line widths as controlled by \code{par(lwd=)} are in multiples of
+  1/96 inch.  Multiples less than 1 are allowed.  \code{pch="."} with
+  \code{cex = 1} corresponds to a square of side 1/72 inch.
 }
 
 \section{Families}{
@@ -245,6 +253,10 @@ ps.options(paper, horizontal, width, height, family, encoding,
   as minus (its value in Adobe ISOLatin1) even though it is hyphen in
   the other encodings.  Hyphen is available as character 173 (octal
   0255) in ISOLatin1.
+
+  Computer Modern fonts are encoded rather differently and should be
+  used with \code{encoding = "TeXtext.enc"}, taking care that the
+  symbols \code{< > \\ _ \{ \}} are not available in those fonts.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -287,7 +299,7 @@ postscript("foo.ps", family = "NimbusSan")
 ## for inclusion in Computer Modern TeX documents, perhaps
 postscript("cm_test.eps", width = 4.0, height = 3.0,
            horizontal = FALSE, onefile = FALSE, paper = "special",
-           family = "ComputerModern")
+           family = "ComputerModern", encoding = "TeXtext.enc")
 ## The resultant postscript file can be used by dvips -Ppfb -j0.
 
 ## To test out encodings, you can use
@@ -305,7 +317,7 @@ TestChars <- function(encoding="ISOLatin1", family="URWHelvetica")
     }
     dev.off()
 }
-## there will be many warnings. We use URW to get a complete enough
+## there will be many warnings.  We use URW to get a complete enough
 ## set of font metrics.
 TestChars()
 TestChars("ISOLatin2")

@@ -28,11 +28,11 @@ function(formula, data, weights, subset, na.action, model = FALSE,
     names(nmx) <- nmx
     drop.square <- match(nmx, nmx[drop.square], 0) > 0
     parametric <- match(nmx, nmx[parametric], 0) > 0
-    if(!match(degree, 0:2, 0)) stop("degree must be 0, 1 or 2")
+    if(!match(degree, 0:2, 0)) stop("'degree' must be 0, 1 or 2")
     iterations <- if(family=="gaussian") 1 else control$iterations
     if(!missing(enp.target))
 	if(!missing(span))
-	    warning("both span and enp.target specified: span will be used")
+	    warning("both 'span' and 'enp.target' specified: 'span' will be used")
 	else {				# White book p.321
 	    tau <- switch(degree+1, 1, D+1, (D+1)*(D+2)/2) - sum(drop.square)
 	    span <- 1.2 * tau/enp.target
@@ -75,8 +75,8 @@ simpleLoess <-
     D <- NCOL(x)
     if(D > 4) stop("only 1-4 predictors are allowed")
     N <- NROW(x)
-    if(!N || !D)	stop("invalid `x'")
-    if(!length(y))	stop("invalid `y'")
+    if(!N || !D)	stop("invalid 'x'")
+    if(!length(y))	stop("invalid 'y'")
     x <- as.matrix(x)
     max.kd <-  max(N, 200)
     robust <- rep(1, N)
@@ -95,10 +95,10 @@ simpleLoess <-
     x <- x[, order.parametric]
     order.drop.sqr <- (2 - drop.square)[order.parametric]
     if(degree==1 && sum.drop.sqr)
-	stop("Specified the square of a factor predictor to be dropped when degree = 1")
+	stop("specified the square of a factor predictor to be dropped when degree = 1")
     if(D == 1 && sum.drop.sqr)
-	stop("Specified the square of a predictor to be dropped with only one numeric predictor")
-    if(sum.parametric == D) stop("Specified parametric for all predictors")
+	stop("specified the square of a predictor to be dropped with only one numeric predictor")
+    if(sum.parametric == D) stop("specified parametric for all predictors")
 
     if(iterations)
     for(j in 1:iterations) {
@@ -215,7 +215,7 @@ simpleLoess <-
 predict.loess <- function(object, newdata = NULL, se = FALSE, ...)
 {
     if(!inherits(object, "loess"))
-	stop("First argument must be a loess object")
+	stop("first argument must be a \"loess\" object")
     if(is.null(newdata) & (se == FALSE)) return(fitted(object))
 
     if(is.null(newdata)) newx <- object$x
@@ -224,7 +224,7 @@ predict.loess <- function(object, newdata = NULL, se = FALSE, ...)
 				  "variables"))[-1]
 	newx <- if(length(vars) > 1 || NCOL(newdata) > 1) {
 	    if(any(!match(vars, colnames(newdata), FALSE)))
-		stop("newdata does not contain the variables needed")
+		stop("'newdata' does not contain the variables needed")
 	    as.matrix(newdata[, vars, drop=FALSE])
 	} else as.matrix(newdata)
     }
@@ -406,7 +406,8 @@ scatter.smooth <-
     function(x, y, span = 2/3, degree = 1,
 	     family = c("symmetric", "gaussian"),
 	     xlab = deparse(substitute(x)), ylab = deparse(substitute(y)),
-	     ylim = range(y, prediction$y), evaluation = 50, ...)
+	     ylim = range(y, prediction$y, na.rm = TRUE),
+             evaluation = 50, ...)
 {
     if(inherits(x, "formula")) {
 	if(length(x) < 3) stop("need response in formula")
@@ -425,12 +426,13 @@ loess.smooth <-
   function(x, y, span = 2/3, degree = 1, family = c("symmetric", "gaussian"),
 	   evaluation = 50, ...)
 {
-    notna <- x[!(is.na(x) | is.na(y))]
-    new.x <- seq(min(notna), max(notna), length = evaluation)
+    notna <- !(is.na(x) | is.na(y))
+    new.x <- seq(min(x[notna]), max(x[notna]), length = evaluation)
 
     control <- loess.control(...)
     ##	x <- matrix(x, ncol = 1)
     ##	n <- length(y)
+    x <- x[notna]; y <- y[notna]
     w <- rep(1, length(y))
     family <- match.arg(family)
     iterations <- if(family == "gaussian") 1 else control$iterations
@@ -468,8 +470,9 @@ anova.loess <- function(object, ...)
     ## calculate the number of models
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
-	warning(paste("Models with response", deparse(responses[!sameresp]),
-		      "removed because response differs from", "model 1"))
+	warning("models with response ",
+                sQuote(deparse(responses[!sameresp])),
+                "removed because response differs from model 1")
     }
     nmodels <- length(objects)
     if(nmodels <= 1) stop("no models to compare")

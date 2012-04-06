@@ -18,6 +18,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -83,13 +85,13 @@ void CoercionWarning(int warn)
    WarningMessage(R_NilValue, WARNING_....);
 */
     if (warn & WARN_NA)
-	warning("NAs introduced by coercion");
+	warning(_("NAs introduced by coercion"));
     if (warn & WARN_INACC)
-	warning("inaccurate integer conversion in coercion");
+	warning(_("inaccurate integer conversion in coercion"));
     if (warn & WARN_IMAG)
-	warning("imaginary parts discarded in coercion");
+	warning(_("imaginary parts discarded in coercion"));
     if (warn & WARN_RAW)
-	warning("out-of-range values treated as 0 in coercion to raw");
+	warning(_("out-of-range values treated as 0 in coercion to raw"));
 }
 
 double R_strtod(const char *c, char **end)
@@ -389,7 +391,8 @@ SEXP VectorToPairList(SEXP x)
 	    SET_TAG(xptr, install(CHAR(STRING_ELT(xnames, i))));
 	xptr = CDR(xptr);
     }
-    copyMostAttrib(x, xnew);
+    if (len>0)       /* can't set attributes on NULL */
+	copyMostAttrib(x, xnew);
     UNPROTECT(3);
     return xnew;
 }
@@ -399,7 +402,7 @@ static SEXP coerceToSymbol(SEXP v)
     SEXP ans = R_NilValue;
     int warn = 0;
     if (length(v) <= 0)
-	error("Invalid data of mode \"%s\" (too short)",
+	error(_("invalid data of mode \"%s\" (too short)"),
 	      CHAR(type2str(TYPEOF(v))));
     PROTECT(v);
     switch(TYPEOF(v)) {
@@ -421,6 +424,8 @@ static SEXP coerceToSymbol(SEXP v)
     case RAWSXP:
 	ans = StringFromRaw(RAW(v)[0], &warn);
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToSymbol", v);
     }
     if (warn) CoercionWarning(warn);/*2000/10/23*/
     ans = install(CHAR(ans));
@@ -455,6 +460,8 @@ static SEXP coerceToLogical(SEXP v)
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = LogicalFromInteger((int)RAW(v)[i], &warn);
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToLogical", v);
     }
     if (warn) CoercionWarning(warn);
     UNPROTECT(1);
@@ -488,6 +495,8 @@ static SEXP coerceToInteger(SEXP v)
 	for (i = 0; i < n; i++)
 	    INTEGER(ans)[i] = (int)RAW(v)[i];
 	    break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToInteger", v);
     }
     if (warn) CoercionWarning(warn);
     UNPROTECT(1);
@@ -521,6 +530,8 @@ static SEXP coerceToReal(SEXP v)
 	for (i = 0; i < n; i++)
 	    REAL(ans)[i] = RealFromInteger((int)RAW(v)[i], &warn);
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToReal", v);
     }
     if (warn) CoercionWarning(warn);
     UNPROTECT(1);
@@ -554,6 +565,8 @@ static SEXP coerceToComplex(SEXP v)
 	for (i = 0; i < n; i++)
 	    COMPLEX(ans)[i] = ComplexFromInteger((int)RAW(v)[i], &warn);
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToComplex", v);
     }
     if (warn) CoercionWarning(warn);
     UNPROTECT(1);
@@ -618,6 +631,8 @@ static SEXP coerceToRaw(SEXP v)
 	    RAW(ans)[i] = (Rbyte) tmp;
 	}
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToRaw", v);
     }
     if (warn) CoercionWarning(warn);
     UNPROTECT(1);
@@ -657,6 +672,8 @@ static SEXP coerceToString(SEXP v)
 	for (i = 0; i < n; i++)
 	    SET_STRING_ELT(ans, i, StringFromRaw(RAW(v)[i], &warn));
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("coerceToString", v);
     }
     if (warn) CoercionWarning(warn);/*2000/10/23*/
     UNPROTECT(1);
@@ -695,6 +712,8 @@ static SEXP coerceToExpression(SEXP v)
 	    for (i = 0; i < n; i++)
 		SET_VECTOR_ELT(ans, i, ScalarRaw(RAW(v)[i]));
 	    break;
+	default:
+	    UNIMPLEMENTED_TYPE("coerceToExpression", v);
 	}
     }
     else {/* not used either */
@@ -745,7 +764,7 @@ static SEXP coerceToVectorList(SEXP v)
 	}
 	break;
     default:
-	UNIMPLEMENTED("coerceToVectorList");
+	UNIMPLEMENTED_TYPE("coerceToVectorList", v);
     }
     tmp = getAttrib(v, R_NamesSymbol);
     if (tmp != R_NilValue)
@@ -793,7 +812,7 @@ static SEXP coerceToPairList(SEXP v)
 	    SETCAR(ansp, VECTOR_ELT(v, i));
 	    break;
 	default:
-	    UNIMPLEMENTED("coerceToPairList");
+	    UNIMPLEMENTED_TYPE("coerceToPairList", v);
 	}
 	ansp = CDR(ansp);
     }
@@ -857,11 +876,11 @@ static SEXP coercePairList(SEXP v, SEXPTYPE type)
 		RAW(rval)[i] = (Rbyte) asInteger(CAR(vp));
 	    break;
 	default:
-	    UNIMPLEMENTED("coercePairList");
+	    UNIMPLEMENTED_TYPE("coercePairList", v);
 	}
     }
     else
-	error("pairlist object cannot be coerced to %s",
+	error(_("'pairlist' object cannot be coerced to '%s'"),
 	      CHAR(type2str(type)));
 
     /* If any tags are non-null then we */
@@ -943,11 +962,11 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 		RAW(rval)[i] = (Rbyte) asInteger(VECTOR_ELT(v, i));
 	    break;
 	default:
-	    UNIMPLEMENTED("coerceVectorList");
+	    UNIMPLEMENTED_TYPE("coerceVectorList", v);
 	}
     }
     else
-	error("(list) object cannot be coerced to %s",
+	error(_("(list) object cannot be coerced to '%s'"),
 	      CHAR(type2str(type)));
 
     names = getAttrib(v, R_NamesSymbol);
@@ -1029,7 +1048,7 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	ans = coerceVectorList(v, type);
 	break;
     case ENVSXP:
-	error("environments cannot be coerced to other types");
+	error(_("environments cannot be coerced to other types"));
 	break;
     case LGLSXP:
     case INTSXP:
@@ -1039,7 +1058,7 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
     case RAWSXP:
 
 #define COERCE_ERROR						\
-	error("cannot coerce type %s to %s vector",		\
+	error(_("cannot coerce type %s to %s vector"),		\
 	      CHAR(type2str(TYPEOF(v))), CHAR(type2str(type)))
 
 	switch (type) {
@@ -1159,7 +1178,7 @@ SEXP ascommon(SEXP call, SEXP u, SEXPTYPE type)
     }
     else if (isSymbol(u) && type == SYMSXP)
 	return u;
-    else errorcall(call, "cannot coerce to vector");
+    else errorcall(call, _("cannot coerce to vector"));
     return u;/* -Wall */
 }
 
@@ -1250,15 +1269,15 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     arglist = CAR(args);
     if (!isNewList(arglist))
-	errorcall(call, "list argument expected");
+	errorcall(call, _("list argument expected"));
 
     envir = CADR(args);
     if (!isNull(envir) && !isEnvironment(envir))
-	errorcall(call, "invalid environment");
+	errorcall(call, _("invalid environment"));
 
     n = length(arglist);
     if (n < 1)
-	errorcall(call, "argument must have length at least 1");
+	errorcall(call, _("argument must have length at least 1"));
     names = getAttrib(arglist, R_NamesSymbol);
     PROTECT(pargs = args = allocList(n - 1));
     for (i = 0; i < n - 1; i++) {
@@ -1289,7 +1308,7 @@ SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
     case VECSXP:
     case EXPRSXP:
 	if(0 == (n = length(args)))
-	    errorcall(call,"illegal length 0 argument");
+	    errorcall(call, _("invalid length 0 argument"));
 	names = getAttrib(args, R_NamesSymbol);
 	PROTECT(ap = ans = allocList(n));
 	for (i = 0; i < n; i++) {
@@ -1304,7 +1323,7 @@ SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	ans = duplicate(args);
 	break;
     default:
-	errorcall(call, "invalid argument list");
+	errorcall(call, _("invalid argument list"));
 	ans = R_NilValue;
     }
     SET_TYPEOF(ans, LANGSXP);
@@ -1448,9 +1467,9 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
 
     case 999:		/* is.single */
-	errorcall(call, "type \"single\" unimplemented in R");
+	errorcall(call, _("type \"single\" unimplemented in R"));
     default:
-	errorcall(call, "unimplemented predicate");
+	errorcall(call, _("unimplemented predicate"));
     }
     UNPROTECT(1);
     return (ans);
@@ -1586,7 +1605,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    LOGICAL(ans)[i] = 0;
 	break;
     default:
-	warningcall(call, "is.na" R_MSG_list_vec2);
+	warningcall(call, _("%s() applied to non-(list or vector)"), "is.na");
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
     }
@@ -1684,7 +1703,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	warningcall(call, "is.nan" R_MSG_list_vec2);
+	warningcall(call, _("%s() applied to non-(list or vector)"), "is.nan");
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
     }
@@ -1836,29 +1855,38 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     fun = CAR(args);
     args = CADR(args);
 
-    if (!isString(fun) || length(fun) <= 0 || CHAR(STRING_ELT(fun, 0)) == '\0')
-	errorcall_return(call, R_MSG_A1_char);
+    /* must be a string or a function */
+    if( isString(fun) ) {
+	if( length(fun) != 1 || CHAR(STRING_ELT(fun,0)) == '\0')
+	    errorcall_return(call, _("first argument must be a character string or a function"))
+    } else if (!isFunction(fun) )
+	    errorcall_return(call, _("first argument must be a character string or a function"))
 
     if (!isNull(args) && !isNewList(args))
 	errorcall_return(call, R_MSG_A2_list);
+
     n = length(args);
     names = getAttrib(args, R_NamesSymbol);
 
     PROTECT(c = call = allocList(n + 1));
     SET_TYPEOF(c, LANGSXP);
-    SETCAR(c, install(CHAR(STRING_ELT(fun, 0))));
+    if( isString(fun) )
+        SETCAR(c, install(CHAR(STRING_ELT(fun, 0))));
+    else
+        SETCAR(c, fun);
     c = CDR(c);
     for (i = 0; i < n; i++) {
 #ifndef NEW
-	SETCAR(c, VECTOR_ELT(args, i));
+        SETCAR(c, VECTOR_ELT(args, i));
 #else
-	SETCAR(c, mkPROMISE(VECTOR_ELT(args, i), rho));
-	SET_PRVALUE(CAR(c), VECTOR_ELT(args, i));
+        SETCAR(c, mkPROMISE(VECTOR_ELT(args, i), rho));
+        SET_PRVALUE(CAR(c), VECTOR_ELT(args, i)); */
 #endif
-	if (ItemName(names, i) != R_NilValue)
-	    SET_TAG(c, install(CHAR(ItemName(names, i))));
-	c = CDR(c);
+        if (ItemName(names, i) != R_NilValue)
+            SET_TAG(c, install(CHAR(ItemName(names, i))));
+        c = CDR(c);
     }
+
     cptr = R_GlobalContext;
     while (cptr->nextcontext != NULL) {
         if (cptr->callflag & CTXT_FUNCTION ) {
@@ -1869,7 +1897,7 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( cptr->cloenv == rho )
     	call = eval(call, cptr->sysparent);
     else
-        error("do.call: couldn't find parent environment");
+        error(_("do.call: could not find parent environment"));
     UNPROTECT(1);
     return call;
 }
@@ -1900,7 +1928,7 @@ SEXP substitute(SEXP lang, SEXP rho)
 		return t;
 	    }
 	    else if (TYPEOF(t) == DOTSXP) {
-		error("... used in an incorrect context");
+		error(_("... used in an incorrect context"));
 	    }
 	    if (rho != R_GlobalEnv)
 		return t;
@@ -1931,7 +1959,7 @@ SEXP substituteList(SEXP el, SEXP rho)
 		return el;
 	    if (h == R_MissingArg)
 		return substituteList(CDR(el), rho);
-	    error("... used in an incorrect context");
+	    error(_("... used in an incorrect context"));
 	}
 	PROTECT(h = substituteList(h, R_NilValue));
 	PROTECT(t = substituteList(CDR(el), rho));
@@ -1969,7 +1997,7 @@ SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (TYPEOF(env) == LISTSXP)
 	env = NewEnvironment(R_NilValue, duplicate(env), R_NilValue);
     if (TYPEOF(env) != ENVSXP)
-	errorcall(call, "invalid environment specified");
+	errorcall(call, _("invalid environment specified"));
 
     PROTECT(env);
     PROTECT(t = duplicate(args));
@@ -2018,14 +2046,14 @@ static int class2type(char *s)
        this type.
     */
     int i; char *si;
-    for(i=0; ; i++) {
+    for(i = 0; ; i++) {
 	si = classTable[i].s;
 	if(!si)
 	    return -1;
 	if(!strcmp(s, si))
 	    return i;
     }
-    return -1;
+    /* cannot get here return -1; */
 }
 
 /* set the class to value, and return the modified object.  This is
@@ -2047,7 +2075,7 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 	setAttrib(obj, R_ClassSymbol, value);
     else if(length(value) == 0) {
 	UNPROTECT(nProtect); nProtect = 0;
-	error("Invalid replacement object to be a class string");
+	error(_("invalid replacement object to be a class string"));
     }
     else {
 	char *valueString, *classString; int whichType;
@@ -2065,7 +2093,7 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 		nProtect++;
 	    }
 	    else if(valueType != TYPEOF(obj))
-		error("\"%s\" can only be set as the class if the object has this type; found \"%s\"",
+		error(_("\"%s\" can only be set as the class if the object has this type; found \"%s\""),
 		      valueString, CHAR(type2str(TYPEOF(obj))));
 	    /* else, leave alone */
 	}
@@ -2081,13 +2109,13 @@ SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 	 * R_data_class */
 	else if(!strcmp("matrix", valueString)) {
 	    if(length(getAttrib(obj, R_DimSymbol)) != 2)
-	        error("Invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)",
+	        error(_("invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)"),
 		 length(getAttrib(obj, R_DimSymbol)));
 	    setAttrib(obj, R_ClassSymbol, R_NilValue);
 	}
 	else if(!strcmp("array", valueString)) {
 	    if(length(getAttrib(obj, R_DimSymbol))<= 0)
-	        error("Can't set class to \"array\" unless the dimension attribute has length > 0");
+	        error(_("cannot set class to \"array\" unless the dimension attribute has length > 0"));
 	    setAttrib(obj, R_ClassSymbol, R_NilValue);
 	}
 	else { /* set the class but don't do the coercion; that's

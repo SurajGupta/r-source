@@ -20,7 +20,8 @@ validGP <- function(gpars) {
   # Check a (non-NULL) gpar is not of length 0
   check.length <- function(gparname) {
     if (length(gpars[[gparname]]) == 0)
-      stop(paste("gpar element", gparname, "must not be length 0"))
+      stop(gettextf("gpar element '%s' must not be length 0", gparname),
+           domain = NA)
   }
   # Check a gpar is numeric and not NULL
   numnotnull <- function(gparname) {
@@ -38,6 +39,10 @@ validGP <- function(gpars) {
   numnotnull("lineheight")
   numnotnull("cex")
   numnotnull("lwd")
+  numnotnull("lex")
+  # gamma deprecated
+  if ("gamma" %in% names(gpars))
+    warning("'gamma' gpar is deprecated")
   numnotnull("gamma")
   numnotnull("alpha")
   # col and fill are converted in C code
@@ -64,13 +69,13 @@ validGP <- function(gpars) {
   numnotnull("linemitre")
   if (!is.na(match("linemitre", names(gpars)))) {
     if (any(gpars$linemitre < 1))
-      stop("Invalid linemitre value")
-  }    
+      stop("Invalid 'linemitre' value")
+  }
   # alpha should be 0 to 1
   if (!is.na(match("alpha", names(gpars)))) {
     if (any(gpars$alpha < 0 || gpars$alpha > 1))
-      stop("Invalid alpha value")
-  }    
+      stop("Invalid 'alpha' value")
+  }
   # font should be integer and not NULL
   if (!is.na(match("font", names(gpars)))) {
     if (is.null(gpars$font))
@@ -94,7 +99,7 @@ validGP <- function(gpars) {
   # Illegal to specify both font and fontface
   if (!is.na(match("fontface", names(gpars)))) {
     if (!is.na(match("font", names(gpars))))
-      stop("Must specify only one of font and fontface")
+      stop("Must specify only one of 'font' and 'fontface'")
     if (is.null(gpars$fontface))
       gpars$font <- NULL
     else {
@@ -129,6 +134,7 @@ validGP <- function(gpars) {
 .grid.gpar.names <- c("fill", "col", "gamma", "lty", "lwd", "cex",
                       "fontsize", "lineheight", "font", "fontfamily",
                       "alpha", "lineend", "linejoin", "linemitre",
+                      "lex",
                       # Keep fontface at the end because it is never
                       # used in C code (it gets mapped to font)
                       "fontface")
@@ -137,6 +143,9 @@ set.gpar <- function(gp) {
   if (!is.gpar(gp))
     stop("Argument must be a 'gpar' object")
   temp <- grid.Call("L_getGPar")
+  # gamma deprecated
+  if ("gamma" %in% names(gp))
+      warning("'gamma' gpar is deprecated")
   # Special case "cex" (make it cumulative)
   if (match("cex", names(gp), nomatch=0))
     tempcex <- temp$cex * gp$cex
@@ -147,21 +156,31 @@ set.gpar <- function(gp) {
     tempalpha <- temp$alpha * gp$alpha
   else
     tempalpha <- temp$alpha
+  # Special case "lex" (make it cumulative)
+  if (match("lex", names(gp), nomatch=0))
+    templex <- temp$lex * gp$lex
+  else
+    templex <- temp$lex
   # All other gpars
   temp[names(gp)] <- gp
   temp$cex <- tempcex
   temp$alpha <- tempalpha
+  temp$lex <- templex
   # Do this as a .Call.graphics to get it onto the base display list
   grid.Call.graphics("L_setGPar", temp)
 }
 
 get.gpar <- function(names=NULL) {
   if (is.null(names))
-    result <- grid.Call("L_getGPar")
+    # drop gamma
+    result <- grid.Call("L_getGPar")[-3]
   else {
     if (!is.character(names) ||
         !all(names %in% .grid.gpar.names))
-      stop("Must specify only valid gpar names")
+      stop("Must specify only valid 'gpar' names")
+    # gamma deprecated
+    if ("gamma" %in% names)
+      warning("'gamma' gpar is deprecated")
     result <- grid.Call("L_getGPar")[names]
   }
   class(result) <- "gpar"

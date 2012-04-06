@@ -6,7 +6,8 @@ showDefault <-
 
     cl <- classLabel(class(object))
     clDef <- getClass(class(object))
-    if(!is.null(clDef) && is.na(match(clDef@className, .BasicClasses)) && !extends(clDef, "oldClass")) {
+    if(!is.null(clDef) && is.na(match(clDef@className, .BasicClasses)) &&
+       !extends(clDef, "oldClass")) {
         cat("An object of class ", cl, "\n", sep="")
         slots <- slotNames(clDef)
         if(!is.na(match(".Data", slots))) {
@@ -24,7 +25,8 @@ showDefault <-
             cat("\n")
         }
     }
-    else if(isClass(clDef) && extends(clDef, "oldClass") && length(slotNames(clDef)) > 0) {
+    else if(isClass(clDef) && extends(clDef, "oldClass") &&
+            length(slotNames(clDef)) > 0) {
         ## print the old-style object
         cat("An object of class ", cl, "\n", sep="")
         for( cl2 in rev(extends(clDef)))
@@ -112,7 +114,7 @@ classLabel <- function(Class) {
             className <- Class@className
             packageName <- Class@package
         }
-        else stop("invalid call to classLabel: expected a name or a class definition, got an object of class ", classLabel(class(Class)))
+        else stop(gettextf("invalid call to 'classLabel': expected a name or a class definition, got an object of class \"%s\"", classLabel(class(Class))), domain = NA)
     }
 ### TODO:  implement a test for the class NOT directly visible OR multiple versions
 ### and include the from... phrase in this case

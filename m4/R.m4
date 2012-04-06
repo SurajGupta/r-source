@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2004 R Core Team
+### Copyright (C) 1998-2005 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -48,6 +48,25 @@ if test -z "${[$1]}"; then
 else
   $1="${[$1]}${separator}$2"
 fi])# R_SH_VAR_ADD
+
+## R_MISSING_PROG(NAME, PROGRAM)
+## -----------------------------
+## Simplified variant of AM_MISSING_PROG.
+## Set NAME to PROGRAM if this is found and works (in the sense of
+## properly implementing --version, or to an appropriate invocation
+## if the missing script otherwise.
+AC_DEFUN([R_MISSING_PROG],
+[AC_MSG_CHECKING([for working $2])
+if ($2 --version) < /dev/null > /dev/null 2>&1; then
+  $1=$2
+  AC_MSG_RESULT([found])
+else
+  $1="\$(SHELL) \$(top_srcdir)/tools/missing $2"
+  AC_MSG_RESULT([missing])
+fi
+AC_SUBST($1)
+])# R_MISSING_PROG
+
 
 ### * Programs
 
@@ -202,11 +221,13 @@ fi
 
 ## _R_PROG_MAKEINFO_VERSION
 ## ------------------------
-## Building the R Texinfo manuals requires Makeinfo v4.5 or better.
+## Building the R Texinfo manuals requires Makeinfo v4.7 or better.
 ## Set shell variable r_cv_prog_makeinfo_v4 to 'yes' if a recent
 ## enough Makeinfo is found, and to 'no' otherwise.
+## If you change the minimum version here, also change it in
+## doc/manual/Makefile.in and doc/manual/R-admin.texi.
 AC_DEFUN([_R_PROG_MAKEINFO_VERSION],
-[AC_CACHE_CHECK([whether makeinfo version is at least 4.5],
+[AC_CACHE_CHECK([whether makeinfo version is at least 4.7],
                 [r_cv_prog_makeinfo_v4],
 [makeinfo_version=`${MAKEINFO_CMD} --version | \
   grep "^makeinfo" | sed 's/[[^)]]*) \(.*\)/\1/'`
@@ -216,7 +237,7 @@ if test -z "${makeinfo_version_maj}" \
      || test -z "${makeinfo_version_min}"; then
   r_cv_prog_makeinfo_v4=no
 elif test ${makeinfo_version_maj} -lt 4 \
-     || test ${makeinfo_version_min} -lt 5; then
+     || test ${makeinfo_version_min} -lt 7; then
   r_cv_prog_makeinfo_v4=no
 else
   r_cv_prog_makeinfo_v4=yes
@@ -227,7 +248,7 @@ fi])
 ## --------------
 AC_DEFUN([R_PROG_BROWSER],
 [if test -z "${R_BROWSER}"; then
-  AC_PATH_PROGS(R_BROWSER, [netscape mozilla galeon kfmclient opera gnome-moz-remote open])
+  AC_PATH_PROGS(R_BROWSER, [firefox mozilla netscape galeon kfmclient opera gnome-moz-remote open])
 fi
 if test -z "${R_BROWSER}"; then
   warn_browser="I could not determine a browser"
@@ -474,6 +495,32 @@ if test "${r_cv_c_optieee}" = yes; then
 fi
 ])# R_C_OPTIEEE
 
+## R_C_INLINE
+## ----------
+## modified version of AC_C_INLINE to use R_INLINE not inline
+AC_DEFUN([R_C_INLINE],
+[AC_REQUIRE([AC_PROG_CC_STDC])dnl
+AC_CACHE_CHECK([for inline], r_cv_c_inline,
+[r_cv_c_inline=""
+for ac_kw in inline __inline__ __inline; do
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[#ifndef __cplusplus
+static $ac_kw int static_foo () {return 0; }
+$ac_kw int foo () {return 0; }
+#endif
+])],
+                    [r_cv_c_inline=$ac_kw; break])
+done
+])
+case $r_cv_c_inline in
+  no) AC_DEFINE(R_INLINE,,
+                [Define as `inline', or `__inline__' or `__inline' 
+                 if that's what the C compiler calls it,
+                 or to nothing if it is not supported.]) ;;
+  *)  AC_DEFINE_UNQUOTED(R_INLINE, $r_cv_c_inline) ;;
+esac
+])# R_C_INLINE
+
 ### * C++ compiler and its characteristics.
 
 ## R_PROG_CXX_M
@@ -690,6 +737,7 @@ AM_CONDITIONAL(USING_G77, [test "x${ac_cv_f77_compiler_gnu}" = xyes])
 ## Run AC_F77_LIBRARY_LDFLAGS, and fix some known problems with FLIBS.
 AC_DEFUN([R_PROG_F77_FLIBS],
 [AC_BEFORE([$0], [AC_F77_LIBRARY_LDFLAGS])
+##
 ## Currently (Autoconf 2.50 or better, it seems) FLIBS also contains all
 ## elements of LIBS when AC_F77_LIBRARY_LDFLAGS is run.  This is because
 ## _AC_PROG_F77_V_OUTPUT() uses 'eval $ac_link' for obtaining verbose
@@ -701,6 +749,12 @@ AC_DEFUN([R_PROG_F77_FLIBS],
 r_save_LIBS="${LIBS}"
 LIBS=
 AC_F77_LIBRARY_LDFLAGS
+if test -z "${MAIN_LD}" ; then
+  LIBS=
+  R_C_LIBRARY_LDFLAGS
+else
+  CLIBS=
+fi
 LIBS="${r_save_LIBS}"
 ## Currently g77 on Darwin links against '-lcrt1.o' (and for GCC 3.1 or
 ## better also against '-lcrtbegin.o'), which (unlike '-lcrt0.o') are
@@ -727,20 +781,75 @@ LIBS="${r_save_LIBS}"
 ## One possible solution is to change AC_F77_LIBRARY_LDFLAGS() to remove
 ## double quotes for ifc, as it already does for the Cray cft90.  As we
 ## prefer not to overload Autoconf code, we try to fix things here ...
+##
+## As of 2.1.0 we try to tidy this up a bit.
+## 1) -lfrtbegin and -lgfortranbegin are used by g77/gfortran only for a 
+## Fortran main program, which we do not have.
+## 2) g77 also tends to duplicate paths via ../../.., so we canonicalize
+## paths and remove duplicates.
+## 3) We do not need -L/lib etc, nor those in LDFLAGS
+## 4) We exclude path with CC will include when linking.
+##
+## First try to fathom out what -Lfoo commands are unnecessary.
+case "${host_os}" in
+  linux*)
+    r_libpath_default="/usr/lib64 /lib64 /usr/lib /lib"
+    ;;
+  solaris*)
+    r_libpath_default="/usr/lib /lib"
+    ;;
+  *)
+    r_libpath_default=
+    ;;
+esac
+r_extra_libs=
+for arg in ${LDFLAGS} ${CLIBS}; do
+  case "${arg}" in
+    -L*)
+      lib=`echo ${arg} | sed "s/^-L//"`
+      test -d "${lib}" || continue
+      ## Canonicalize (/usr/lib/gcc-lib/i686-linux/3.4.3/../../..).
+      lib=`cd "${lib}" && ${GETWD}`
+      r_extra_libs="${r_extra_libs} $lib"
+      ;;
+  esac
+done
+
 flibs=
 if test "${GCC}" = yes; then
   linker_option="-Wl,"
 else
   linker_option=
 fi
+r_save_flibs=""
 for arg in ${FLIBS}; do
   case "${arg}" in
-    -lcrt*.o)
+    ## this is not for a Fortran main program
+    -lcrt*.o | -lfrtbegin | -lgfortranbegin)
       ;;
     -[[a-zA-Z]]/*\" | -[[a-zA-Z]]*\\) # ifc
       ;;
     -l:*)
       flibs="${flibs} ${linker_option}${arg}"
+      ;;
+    -L*)
+      lib=`echo ${arg} | sed "s/^-L//"`
+      ## Do not add non-existent directories.
+      test -d "${lib}" || continue
+      ## Canonicalize (/usr/lib/gcc-lib/i686-linux/3.4.3/../../..).
+      lib=`cd "${lib}" && ${GETWD}`
+      r_want_lib=true
+      ## Do not add something twice nor default paths nor those in LDFLAGS
+      for dir in ${r_save_flibs} ${r_libpath_default} ${r_extra_libs}; do
+        if test "${dir}" = "${lib}"; then
+           r_want_lib=false
+           break
+        fi
+      done
+      if test x"${r_want_lib}" = xtrue; then
+        flibs="${flibs} -L${lib}"
+	r_save_flibs="${r_save_flibs} ${lib}"
+      fi
       ;;
     *)
       flibs="${flibs} ${arg}"
@@ -1377,6 +1486,38 @@ if test "x${r_cv_func_strptime_works}" = xyes; then
 fi
 ])# R_FUNC_STRPTIME
 
+## R_FUNC_FTELL
+## ------------
+AC_DEFUN([R_FUNC_FTELL],
+[AC_CACHE_CHECK([whether ftell works correctly on files opened for append],
+                [r_cv_working_ftell],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <stdio.h>
+
+main() {
+    FILE *fp;
+    int pos;
+    
+    fp = fopen("testit", "wb");
+    fwrite("0123456789\n", 11, 1, fp);
+    fclose(fp);
+    fp = fopen("testit", "ab");
+    pos = ftell(fp);
+    fclose(fp);
+    unlink("testit");
+    exit(pos != 11);
+}
+]])],
+              [r_cv_working_ftell=yes],
+              [r_cv_working_ftell=no],
+              [r_cv_working_ftell=no])])
+if test "x${r_cv_working_ftell}" = xyes; then
+  AC_DEFINE(HAVE_WORKING_FTELL, 1,
+            [Define if your ftell works correctly on files opened for append.])
+fi
+])# R_FUNC_FTELL
+
 ### * Headers
 
 ## R_HEADER_SETJMP
@@ -1420,6 +1561,8 @@ if test "${r_cv_header_glibc2}" = yes; then
 fi
 ])# R_HEADER_GLIBC2
 
+### * Types
+
 ## R_TYPE_SOCKLEN
 ## --------------
 AC_DEFUN([R_TYPE_SOCKLEN],
@@ -1456,6 +1599,25 @@ AC_DEFINE_UNQUOTED(SOCKLEN_T, ${r_cv_type_socklen},
                    [Type for socket lengths: socklen_t, sock_t, int?])
 ])# R_TYPE_SOCKLEN
 
+## R_HAVE_KEYSYM
+## -------------
+## Check whether X11/X.h has KeySym typedef-ed.
+AC_DEFUN([R_TYPE_KEYSYM],
+[AC_REQUIRE([R_X11])
+if test "${use_X11}" = yes; then
+  r_save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} ${X_CFLAGS}"
+  AC_CHECK_TYPE([KeySym],
+                r_cv_type_keysym=yes,
+                r_cv_type_keysym=no,
+		[#include <X11/X.h>])
+  CFLAGS="${r_save_CFLAGS}"
+  if test "${r_cv_type_keysym}" = yes; then
+    AC_DEFINE(HAVE_KEYSYM, 1,
+              [Define if you have KeySym defined in X11.])
+  fi
+fi])# R_TYPE_KEYSYM
+
 ### * System services
 
 ## R_X11
@@ -1469,34 +1631,24 @@ if test -z "${no_x}"; then
   AC_DEFINE(HAVE_X11, 1,
             [Define if you have the X11 headers and libraries, and want
              the X11 GUI to be built.])
+  r_save_LIBS=${LIBS}
+  if test "$want_utf8_support" == yes ; then
+    LIBS="${LIBS} ${X_LIBS}"
+    AC_CHECK_FUNCS(Xutf8DrawString Xutf8DrawImageString Xutf8LookupString \
+                   Xutf8TextEscapement Xutf8TextExtents \
+                   XmbDrawString XmbDrawImageString XmbLookupString \
+                   XmbTextEscapement XmbTextExtents)
+    LIBS=${r_save_LIBS}
+  fi
 else
   use_X11="no"
-fi])# R_X11
-
-## R_GNOME
-## -------
-AC_DEFUN([R_GNOME], 
-[if test ${want_gnome} = yes; then
-  GNOME_INIT_HOOK([], [cont])
-  if test "${GNOMEUI_LIBS}"; then
-    AM_PATH_LIBGLADE([use_gnome="yes"
-                      GNOME_IF_FILES="gnome-interface.glade"],
-                     [warn_libglade_version="GNOME support requires libglade version >= 0.3"
-                      AC_MSG_WARN([${warn_libglade_version}])],
-                     [gnome])
+  if test "x${with_x}" != "xno"; then
+    AC_MSG_ERROR(
+      [--with-x=yes (default) and X11 headers/libs are not available])
   fi
 fi
-if test "${use_gnome}" != yes; then
-  use_gnome="no"
-  GNOME_IF_FILES=
-else
-  AC_DEFINE(HAVE_GNOME, 1,
-            [Define if you have the GNOME headers and libraries,
-             and want the GNOME GUI to be built.])
-fi
-AC_SUBST(HAVE_GNOME)
-AC_SUBST(GNOME_IF_FILES)
-])# R_GNOME
+  AC_MSG_RESULT([using X11 ... ${use_X11}])
+])# R_X11
 
 ## R_AQUA
 ## ------
@@ -1909,7 +2061,7 @@ if test -z "${TCLTK_LIBS}"; then
     ## Part 2.  Try finding the tk library.
     if test -n "${TK_CONFIG}"; then
       . ${TK_CONFIG}
-      TCLTK_LIBS="${TCLTK_LIBS} ${TK_LIB_SPEC} ${TK_LIBS}"
+      TCLTK_LIBS="${TCLTK_LIBS} ${TK_LIB_SPEC} ${TK_XLIBSW}"
     else
       AC_CHECK_LIB(tk, Tk_Init, , , [${TCLTK_LIBS}])
       if test "${ac_cv_lib_tk_Tk_Init}" = no; then
@@ -2483,84 +2635,11 @@ for pkg in ${recommended_pkgs}; do
   fi
 done])
 use_recommended_packages=${r_cv_misc_recommended_packages}
-])# R_RECOMMENDED_PACKAGES
-
-## R_HAVE_KEYSYM
-## -------------
-## check in X11 has KeySym typedef-ed
-AC_DEFUN([R_HAVE_KEYSYM],
-[
-  AC_CACHE_CHECK([for KeySym], r_cv_have_keysym,
-    [AC_TRY_LINK([#include <X11/X.h>],
-      [KeySym iokey;],
-      r_cv_have_keysym=yes,
-      r_cv_have_keysym=no)
-    ])
-  if test $r_cv_have_keysym = yes; then
-    AC_DEFINE(HAVE_KEYSYM, 1,
-      [Define if you have KeySym defined in X11.])
-  fi
-])# R_HAVE_KEYSYM
-
-## R_C_INLINE
-## ----------
-## modified version of AC_C_INLINE to use R_INLINE not inline
-AC_DEFUN([R_C_INLINE],
-[AC_REQUIRE([AC_PROG_CC_STDC])dnl
-AC_CACHE_CHECK([for inline], r_cv_c_inline,
-[r_cv_c_inline=""
-for ac_kw in inline __inline__ __inline; do
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[#ifndef __cplusplus
-static $ac_kw int static_foo () {return 0; }
-$ac_kw int foo () {return 0; }
-#endif
-])],
-                    [r_cv_c_inline=$ac_kw; break])
-done
-])
-case $r_cv_c_inline in
-  no) AC_DEFINE(R_INLINE,,
-                [Define as `inline', or `__inline__' or `__inline' 
-                 if that's what the C compiler calls it,
-                 or to nothing if it is not supported.]) ;;
-  *)  AC_DEFINE_UNQUOTED(R_INLINE, $r_cv_c_inline) ;;
-esac
-])# R_C_INLINE
-
-## R_FUNC_FTELL
-## ------------
-## See if your system time functions do not count leap seconds, as
-## required by POSIX.
-AC_DEFUN([R_FUNC_FTELL],
-[AC_CACHE_CHECK([whether ftell works correctly on files opened for append],
-                [r_cv_working_ftell],
-[AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <stdlib.h>
-#include <stdio.h>
-
-main() {
-    FILE *fp;
-    int pos;
-    
-    fp = fopen("testit", "wb");
-    fwrite("0123456789\n", 11, 1, fp);
-    fclose(fp);
-    fp = fopen("testit", "ab");
-    pos = ftell(fp);
-    fclose(fp);
-    unlink("testit");
-    exit(pos != 11);
-}
-]])],
-              [r_cv_working_ftell=yes],
-              [r_cv_working_ftell=no],
-              [r_cv_working_ftell=no])])
-if test "x${r_cv_working_ftell}" = xyes; then
-  AC_DEFINE(HAVE_WORKING_FTELL, 1,
-            [Define if your ftell works correctly on files opened for append.])
+if test "x${r_cv_misc_recommended_packages}" = xno; then
+  AC_MSG_ERROR([Some of the recommended packages are missing
+  Use --without-recommended-packages if this was intentional])
 fi
-])# R_FUNC_FTELL
+])# R_RECOMMENDED_PACKAGES
 
 ## R_SIZE_MAX
 ## ----------
@@ -2625,6 +2704,132 @@ AC_DEFUN([R_LARGE_FILES],
     ;;
 esac
 ])# R_LARGE_FILES
+
+
+## R_ICONV
+## -------
+## Look for iconv, possibly in libiconv.
+## Need to include <iconv.h> as this may define iconv as a macro.
+## libiconv, e.g. on MacOS X, has iconv as a macro and needs -liconv.
+AC_DEFUN([R_ICONV],
+[AC_CHECK_HEADERS(iconv.h)
+## need to ignore cache for this as it may set LIBS
+unset ac_cv_func_iconv
+AC_CACHE_CHECK(for iconv, ac_cv_func_iconv, [
+  ac_cv_func_iconv="no"
+  AC_TRY_LINK([#include <stdlib.h>
+#ifdef HAVE_ICONV_H
+#include <iconv.h>
+#endif],
+      [iconv_t cd = iconv_open("","");
+       iconv(cd,NULL,NULL,NULL,NULL);
+       iconv_close(cd);],
+      ac_cv_func_iconv=yes)
+  if test "$ac_cv_func_iconv" != yes; then
+    r_save_LIBS="$LIBS"
+    LIBS="$LIBS -liconv"
+    AC_TRY_LINK([#include <stdlib.h>
+#ifdef HAVE_ICONV_H
+#include <iconv.h>
+#endif],
+        [iconv_t cd = iconv_open("","");
+         iconv(cd,NULL,NULL,NULL,NULL);
+         iconv_close(cd);],
+        ac_cv_func_iconv="in libiconv")
+      if test "$ac_cv_func_iconv" = no; then 
+        LIBS="$r_save_LIBS"
+      fi
+  fi
+])
+if test "$ac_cv_func_iconv" != no; then
+  AC_DEFINE(HAVE_ICONV, 1, [Define if you have the `iconv' function.])
+
+  AC_CACHE_CHECK([whether iconv() accepts "UTF-8" and "latin1"],
+  [r_cv_iconv_latin1],
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <stdlib.h>
+#ifdef HAVE_ICONV_H
+#include <iconv.h>
+#endif
+
+int main () {
+  iconv_t cd;
+  cd = iconv_open("latin1","UTF-8");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("UTF-8","latin1");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("","latin1");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("","UTF-8");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("latin1", "");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("UTF-8","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  exit(0);
+}
+  ]])], [r_cv_iconv_latin1=yes], [r_cv_iconv_latin1=no], 
+    [r_cv_iconv_latin1=no])])
+
+  if test "$r_cv_iconv_latin1" = yes; then
+    AC_DEFINE(ICONV_LATIN1, 1,
+	      [Define if `iconv' accepts "UTF-8" and "latin1".])
+  fi
+fi
+## if the iconv we are using was in libiconv we have already included -liconv
+AC_CACHE_CHECK(for iconvlist, ac_cv_func_iconvlist, [
+  ac_cv_func_iconvlist="no"
+  AC_TRY_LINK([#include <stdlib.h>
+#ifdef HAVE_ICONV_H
+#include <iconv.h>
+#endif
+static int count_one (unsigned int namescount, char * *names, void *data) 
+{return 0;}],
+    [iconvlist(count_one, NULL);],
+      ac_cv_func_iconvlist=yes)
+   ])
+if test "$ac_cv_func_iconvlist" = yes; then
+  AC_DEFINE(HAVE_ICONVLIST, 1, [Define if you have the `iconvlist' function.])
+fi
+])# R_ICONV
+
+
+## R_MBCS
+## -------------
+## locales - support for MBCS and specifically UTF-8
+AC_DEFUN([R_MBCS],
+[
+if test "$want_mbcs_support" = yes ; then
+## Wide character support -- need to include headers in case of macros?
+AC_CHECK_HEADERS(wchar.h wctype.h)
+AC_CHECK_FUNCS(mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
+               wcswidth wctrans wcwidth)
+AC_CHECK_DECLS([wcwidth, wcswidth], , , [#include <wchar.h>])
+## can manage without wc[s]width
+for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
+               wctrans
+do
+this=`echo "ac_cv_func_$ac_func"`
+if test "x$this" = xno; then
+  want_mbcs_support=no
+fi
+done
+fi
+if test "x${want_mbcs_support}" = xyes; then
+AC_DEFINE(SUPPORT_UTF8, 1, [Define this to enable support for UTF-8 locales.])
+AC_SUBST(SUPPORT_UTF8)
+AC_DEFINE(SUPPORT_MBCS, 1, [Define this to enable support for MBCS locales.])
+AC_SUBST(SUPPORT_MBCS)
+fi
+])# R_MBCS
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

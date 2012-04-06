@@ -58,13 +58,13 @@ B. D. Ripley                                @*
 @node Top, Introduction, (dir), (dir)
 
 @menu
-* Introduction::
-* Installation and Usage::
-* Packages::
-* Windows Features::
-* Workspaces::
-* The R Console and Fonts::
-* Building from Source::
+* Introduction::                
+* Installation and Usage::      
+* Packages::                    
+* Windows Features::            
+* Workspaces::                  
+* The R Console and Fonts::     
+* Building from Source::        
 @end menu
 
 
@@ -80,7 +80,7 @@ that version.  The main R FAQ can be found at
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@code{2.0.0} or later); the current version is often called something like
+(@code{2.1.0} or later); the current version is often called something like
 @code{@value{VERSION}} (although not officially).
 
 
@@ -90,25 +90,28 @@ The information here applies only to recent versions of R for Windows,
 @chapter Installation and Usage
 
 @menu
-* Where can I find the latest version?::
-* How do I install R for Windows?::
-* Can I customize the installation?::
-* How do I run it?::
-* How do I UNinstall R?::
-* What's the best way to upgrade?::
-* There seems to be a limit on the memory it uses!::
-* How can I keep workspaces for different projects in different directories?::
-* How do I print from R?::
-* Can I use R CMD BATCH?::
-* Can I use @RWVER@ with ESS and (X)emacs?::
-* What are HOME and working directories?::
-* How do I set environment variables?::
-* R can't find my file::
-* Does R use the Registry?::
-* Does R support automation?::
-* The internet download functions fail.::
-* Entering certain characters crashes Rgui.::
-* Other strange crashes.::
+* Where can I find the latest version?::  
+* How do I install R for Windows?::  
+* I want to run R in Chinese/Japanese/Korean::  
+* How do I check an installation?::  
+* Can I customize the installation?::  
+* How do I run it?::            
+* Can I run R from a CD or USB drive?::  
+* How do I UNinstall R?::       
+* What's the best way to upgrade?::  
+* There seems to be a limit on the memory it uses!::  
+* How can I keep workspaces for different projects in different directories?::  
+* How do I print from R?::      
+* Can I use R CMD BATCH?::      
+* Can I use @RWVER@ with ESS and (X)emacs?::  
+* What are HOME and working directories?::  
+* How do I set environment variables?::  
+* R can't find my file::        
+* Does R use the Registry?::    
+* Does R support automation?::  
+* The internet download functions fail.::  
+* Entering certain characters crashes Rgui.::  
+* Other strange crashes.::      
 @end menu
 
 
@@ -117,27 +120,26 @@ The information here applies only to recent versions of R for Windows,
 
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @code{bin/windows/base} directory and
-collect the files you need.  There are two versions of the distribution
-of the current release.
+collect the files you need.  The current release is distributed as an
+installer @code{@RWVER@.exe} of about 25Mb.  This contains all the
+components and allows as complete as installation as you choose.
 
-1) @code{@RWVER@.exe} is about 23Mb.  This contains all the components
-and allows as complete as installation as you choose.
+@c 2) Directory @code{miniR} contains @code{miniR.exe} and eight files
+@c @code{miniR-?.bin}.  You can put @code{miniR.exe} and @code{miniR-1.bin}
+@c on one floppy and the remaining @code{miniR-?.bin} on a floppy each.
+@c This is a small installation, containing the text versions of the help
+@c files and the @emph{An Introduction to R} and @emph{Data Import/Export}
+@c manuals in PDF.  There is no support for @code{tcltk} nor @code{iconv}
+@c in this version, and no documentation for packages @code{grid} or
+@c @code{survival}.
 
-2) Directory @code{miniR} contains @code{miniR.exe} and seven files
-@code{miniR-?.bin}.  You can put @code{miniR.exe} and @code{miniR-1.bin}
-on one floppy and the remaining @code{miniR-?.bin} on a floppy each.
-This is a small installation, containing the text versions of the help
-files and the @emph{An Introduction to R} and @emph{Data Import/Export}
-manuals in PDF.  There is no support for @code{tcltk} in this version,
-and no documentation for packages @code{grid} or @code{survival}.
-
-There are also links on that page to the @code{r-patched} and 
+There are also links on that page to the @code{r-patched} and
 @code{r-devel} releases.  These are frequently updated builds of development
 versions of R.  The @code{r-patched} build includes bug fixes to the
 current release, and @code{r-devel} contains changes that will eventually
 make it into the next major @code{x.y.0} release.
 
-@node How do I install R for Windows?, Can I customize the installation?, Where can I find the latest version?, Installation and Usage
+@node How do I install R for Windows?, I want to run R in Chinese/Japanese/Korean, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
 
 You need Windows 95/98/ME/NT4/2000/XP/2003 Server: Windows 3.11+win32s
@@ -150,10 +152,10 @@ If you want to build packages from sources, we recommend that you choose
 an installation path not containing spaces.  (Using a path with spaces
 in will probably work, but is little-tested.)
 
-To install use @code{@RWVER@.exe} or @code{miniR.exe}.  Just
-double-click on the icon and follow the instructions.  If you installed
-R this way you can uninstall it from the Control Panel or Start Menu
-(unless you supressed making a group for R).
+To install use @code{@RWVER@.exe}.  Just double-click on the icon and
+follow the instructions.  If you installed R this way you can uninstall
+it from the Control Panel or Start Menu (unless you supressed making a
+group for R).
 
 Choose a working directory for R.  If you installed manually, make a
 shortcut to @code{@RWVER@\bin\Rgui.exe} on your desktop or somewhere on
@@ -165,7 +167,54 @@ field (@emph{after} any final double quote), for example @code{--sdi
 --max-mem-size=1Gb}.  You can also set environment variables at the end
 of the Target field, for example @code{R_LIBS=p:/myRlib}.
 
-@node Can I customize the installation?, How do I run it?, How do I install R for Windows?, Installation and Usage
+
+@node I want to run R in Chinese/Japanese/Korean, How do I check an installation?, How do I install R for Windows?, Installation and Usage
+@section I want to run R in Chinese/Japanese/Korean
+
+As from R 2.1.0 this is possible by installing R with support for `East
+Asian' languages (with a suitable version of Windows -- Western
+installations of Windows XP do not by default have such support). You
+will need @file{msvcp60.dll} installed: it is part of modern versions of
+Windows, and is often installed by other programs.  So if it is not
+found automatically it is worth searching your machine and copying it
+from another program's directory to R's @file{bin} directory.
+
+In such locales @file{Rterm.exe} should be used for batch use only, but
+@file{RGui.exe} will support single- and double-width characters.
+
+It will be necessary to select suitable fonts in @file{Rconsole} and
+@file{Rdevga} (see @code{?Rconsole} or the comments in the files: the
+system versions are in the @file{etc} folder); in the latter you can
+replace @code{Arial} by @code{Arial Unicode MS}, and we tried
+@code{FixedSys} and @code{MS Mincho} in @file{Rconsole}.  (Note that
+@file{Rdevga} only applies to Windows graphics devices and not, say, to
+@code{pdf}.)
+
+You do need to ensure that R is running in a suitable locale: use
+@code{Sys.getlocale()} to find out, and @code{Sys.setlocale(,
+"langname")} to set it if necessary.  (CJK users may be used to their
+language characters always being available, which is that case for
+so-called `Unicode' Windows applications.  However, R has to run on
+Windows 9x and is not therefore `Unicode'.)  You can find suitable
+locale names from
+@uref{http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/html/_crt_language_and_country_strings.asp}:
+beware that @code{"Chinese"} is Traditional Chinese (code page 950,
+Big5) and @code{"chs"} is needed for Simplified Chinese (code page 936,
+GB2312).
+
+@node How do I check an installation?, Can I customize the installation?, I want to run R in Chinese/Japanese/Korean, Installation and Usage
+@section How do I check an installation is not corrupt?
+
+Run the program @file{bin\md5check.exe}.
+@c (not in the mini-installer).
+This compares checksums on all the installed files with those put into
+the installer, and will report any changed or missing files.
+
+Users who installed `East Asian' support will see a report that
+@file{R.dll} has changed, which is correct as it will have been replaced
+by a version with support for those languages.
+
+@node Can I customize the installation?, How do I run it?, How do I check an installation?, Installation and Usage
 @section Can I customize the installation?
 
 The normal way to customize the installation is by selecting components
@@ -183,10 +232,10 @@ set the default installation directory
 @item /GROUP="folder name"
 set the default Start-menu group name
 @item /COMPONENTS="comma separated list of component names"
-set the initial list of components.  This is only useful with
-@code{@RWVER@.exe}, which has components @code{main}, @code{chtml},
-@code{html}, @code{latex}, @code{manuals},  @code{refman},
-@code{libdocs}, @code{devel}, @code{tcl} and @code{Rd}.
+set the initial list of components.  @code{@RWVER@.exe} has components
+@code{main}, @code{chtml}, @code{html}, @code{latex}, @code{manuals},
+@code{refman}, @code{libdocs}, @code{devel}, @code{tcl}, @code{mbcs},
+@code{Rd} and @code{trans}.
 @end table
 
 @noindent
@@ -203,11 +252,14 @@ after having checked the command line.
 @end table
 
 A successful installation has exit code 0: unsuccessful ones may give 1,
-2, 3, 4 or 5.  See the help for Inno Setup 4
+2, 3, 4 or 5.  See the help for Inno Setup
 (@uref{http://jrsoftware.org/isinfo.php}) for details.
 
+We have some facilities for building a customized installer, in
+particular to add packages to the installer.  See the `R Installation
+and Administration' manual in the subsection `Building the installers'
 
-@node How do I run it?, How do I UNinstall R?, Can I customize the installation?, Installation and Usage
+@node How do I run it?, Can I run R from a CD or USB drive?, Can I customize the installation?, Installation and Usage
 @section How do I run it?
 
 Just double-click on the shortcut you prepared at installation.
@@ -222,8 +274,26 @@ for example an `MS-DOS window' (Windows 9x/ME), a `Command Prompt'
 Target field of a shortcut, and the starting directory will be the
 currect working directory of the shell.)
 
+@node Can I run R from a CD or USB drive?, How do I UNinstall R?, How do I run it?, Installation and Usage
+@section Can I run R from a CD or USB drive?
 
-@node How do I UNinstall R?, What's the best way to upgrade?, How do I run it?, Installation and Usage
+Yes, with care.  A basic R installation is relocatable, so you can burn
+an image on the R installation on your hard disc or install directly
+onto a removable storage device such as a Zip drive on USB drive.  (If
+you have installed packages into a private library, their absolute paths
+will appear in the HTML packages list.)
+
+Running R does need access to a writable temporary directory and to a
+home directory, and in the last resort these are taken to be the current
+directory.  This should be no problem on a properly configured NT-based
+version of Windows, but otherwise does mean that it may not be possible
+to run R without creating a shortcut in a writable folder.
+
+R 2.0.x ran more slowly from a slow storage medium but this is no longer
+true as from 2.1.0.
+
+
+@node How do I UNinstall R?, What's the best way to upgrade?, Can I run R from a CD or USB drive?, Installation and Usage
 @section How do I UNinstall R?
 
 Normally you can do this from the R group on the Start Menu or from the
@@ -233,7 +303,7 @@ in the top-level installation directory.  (There should be a separate
 uninstall item in the R group for each installed version of R.)
 
 Uninstalling R only removes files from the initial installation, not
-(for example) packages you have installed.
+(for example) packages you have installed or updated.
 
 If all else fails, you can just delete the whole directory in which R
 was installed.
@@ -251,7 +321,7 @@ old installation.  Different versions of R are quite deliberately
 installed in parallel folders so you can keep old versions around if you
 wish.
 
-Upgrading from R 1.x.y to R 2.0.0 is special as all the packages
+Upgrading from R 1.x.y to R 2.x.y is special as all the packages
 need to be reinstalled.  Rather than copy them across, make a note of
 their names and re-install them from CRAN.
 
@@ -560,14 +630,15 @@ that is causing the error.
 
 
 @menu
-* Can I install packages into libraries in this version?::
-* I don't have permission to write to the @RWVER@\library directory::
-* The packages I installed do not appear in the HTML help system::
-* My functions are not found by the HTML help search system.::
-* Loading a package fails.::
-* Package TclTk does not work.::
-* Hyperlinks in Compiled HTML do not work.::
-* update.packages() fails::
+* Can I install packages into libraries in this version?::  
+* I don't have permission to write to the @RWVER@\library directory::  
+* The packages I installed do not appear in the HTML help system::  
+* My functions are not found by the HTML help search system.::  
+* Loading a package fails.::    
+* Package TclTk does not work.::  
+* Hyperlinks in HTML do not work.::  
+* update.packages() fails::     
+* How do I add to the list of repositories?::  
 @end menu
 
 
@@ -584,7 +655,7 @@ You can install pre-compiled packages either from CRAN or from a local
 There are menu items on the @code{Packages} menu to provide a
 point-and-click interface to package installation.  The packages for
 each minor (2.x) version will be stored in a separate area, so for R
-2.0.? the files are in @code{bin/windows/contrib/2.0}.  You can try
+2.1.? the files are in @code{bin/windows/contrib/2.1}.  You can try
 those compiled for earlier versions, at your own risk.
 
 Note that the pre-compiled versions on CRAN are unsupported: see
@@ -592,10 +663,11 @@ Note that the pre-compiled versions on CRAN are unsupported: see
 gives the locations of a few other precompiled packages.
 
 If there is not a pre-compiled version or that is not up-to-date or
-you prefer compiling from source, make sure you installed the
-necessary files from @code{@RWVER@.exe}.  Then read the file
-@file{README.packages}.  You will need to collect and install several
-tools to use this: you can download them via the portal at
+you prefer compiling from source, read the `R Installation and
+Administration' manual section on `Add-on Packages'.  You need to make
+sure you installed the necessary files from @code{@RWVER@.exe}, and
+you will need to collect and install several tools: you can download
+them via the portal at
 @uref{http://www.murdoch-sutherland.com/Rtools/}.  Once you have done so,
 just run @code{R CMD INSTALL pkgname}.  To check the package (including
 running all the examples on its help pages and in its test suite, if
@@ -618,9 +690,9 @@ Suppose your packages are installed in @code{p:\myRlib}.  Then you can
 EITHER
 
 @example
-set the environment variable R_LIBS to p:\myRlib
+set the environment variable R_LIBS to p:\myRlib before starting R
 @end example
-@noindent
+
 OR use a package by, e.g.
 
 @example
@@ -682,7 +754,7 @@ tab of the @code{Properties}, or use the @code{DLL.version} function
 inside R.)
 
 
-@node Package TclTk does not work., Hyperlinks in Compiled HTML do not work., Loading a package fails., Packages
+@node Package TclTk does not work., Hyperlinks in HTML do not work., Loading a package fails., Packages
 @section Package TclTk does not work.
 
 For package @code{tcltk} to work (try @code{demo(tkdensity)} or
@@ -694,8 +766,7 @@ If the message is
 Tcl/Tk support files were not installed
 @end smallexample
 the optional files were not installed, and you need to go back to the
-installer and install them.  (Note: package @code{tcltk} is not part of
-the @code{miniR} installer.)
+installer and install them.
 
 Alternatively, if you have the environment variable @code{MY_TCLTK} set
 to a non-empty value, it is assumed that you want to use a different
@@ -706,14 +777,22 @@ you do need 8.4.x and not 8.3.x.  (If you build R from the sources
 yourself you can configure it to use 8.3.x.)
 
 
-@node  Hyperlinks in Compiled HTML do not work., update.packages() fails, Package TclTk does not work., Packages
-@section Hyperlinks in Compiled HTML sometimes do not work.
+@node  Hyperlinks in HTML do not work., update.packages() fails, Package TclTk does not work., Packages
+@section Hyperlinks in HTML sometimes do not work.
 
 They may well not work between packages installed in different
 libraries.  This is solved under Unix using symbolic links which Windows
 does not implement.
 
-@node update.packages() fails,  , Hyperlinks in Compiled HTML do not work., Packages
+With HTML, @code{help.start()} fixes up links to the most of the
+standard packages if it has write permission in the main library tree.
+Not even these work for Compiled HTML help.
+
+Currently links to the @code{base}, @code{datasets}, @code{utils},
+@code{grDevices}, @code{graphics} and @code{stats} packages are fixed.
+
+
+@node update.packages() fails, How do I add to the list of repositories?, Hyperlinks in HTML do not work., Packages
 @section @code{update.packages()} fails
 
 You may not be able to update a package which is in use: Windows `locks'
@@ -725,15 +804,26 @@ start R with @option{--vanilla} to be able to update package @code{foo}.
 If you set @code{R_DEFAULT_PACKAGES} to include @code{foo}, you will
 need to unset it temporarily.
 
+
+@node How do I add to the list of repositories?,  , update.packages() fails, Packages
+@section How do I add to the list of repositories?
+
+as shown in the @code{Select repositories...} item on the
+@code{Packages} menu?
+
+This read from the tab-delimited file @file{R_HOME/etc/repositories},
+which you can edit, or put a modified copy at @file{.R/repositories}
+in your HOME directory (@pxref{What are HOME and working directories?}).
+
 @newchap{}
 @node Windows Features, Workspaces, Packages, Top
 @chapter Windows Features
 
 @menu
-* What should I expect to behave differently from the Unix version::
-* I hear about some nifty features.::
-* Circles appear as ovals on screen::
-* How do I move focus to a graphics window or the console?::
+* What should I expect to behave differently from the Unix version::  
+* I hear about some nifty features.::  
+* Circles appear as ovals on screen::  
+* How do I move focus to a graphics window or the console?::  
 @end menu
 
 
@@ -835,9 +925,9 @@ act on it).
 
 
 @menu
-* My workspace gets saved in a strange place.  How do I stop this?::
-* How do I store my workspace in a different place?::
-* Can I load workspaces saved under Unix/GNU-Linux or MacOS?::
+* My workspace gets saved in a strange place.  How do I stop this?::  
+* How do I store my workspace in a different place?::  
+* Can I load workspaces saved under Unix/GNU-Linux or MacOS?::  
 @end menu
 
 
@@ -872,10 +962,10 @@ interchangeable (for the same 2.x.? version of R, at least).
 
 
 @menu
-* I would like to be able to use Japanese fonts::
-* I don't see characters with accents at the R console::
-* The output to the console seems to be delayed::
-* Long lines seem to be truncated.::
+* I would like to be able to use Japanese fonts::  
+* I don't see characters with accents at the R console::  
+* The output to the console seems to be delayed::  
+* Long lines seem to be truncated.::  
 @end menu
 
 
@@ -885,8 +975,8 @@ interchangeable (for the same 2.x.? version of R, at least).
 for example, in the console and to annotate graphs.  Similar comments
 apply to any non-Western European language.
 
-We believe this is possible by setting suitable fonts in the Rconsole
-and Rdevga configuration files (see Q4.2 and the next Q).  You can
+We believe this is possible by setting suitable fonts in the @file{Rconsole}
+and @file{Rdevga} configuration files (see Q4.2 and the next Q).  You can
 specify additional fonts in Rdevga, and use them by
 
 @example
@@ -951,14 +1041,14 @@ horizontally. (The @key{left/right arrow} keys work in the pager too.)
 @chapter Building from Source
 
 @menu
-* How can I compile R from source?::
-* Can I use a fast BLAS?::
-* How do I include compiled C code?::
-* How do I debug code that I have compiled and dyn.load-ed?::
-* How do I include C++ code?::
-* The output from my C code disappears.::
-* The output from my Fortran code disappears.::
-* The console freezes when my compiled code is running::
+* How can I compile R from source?::  
+* Can I use a fast BLAS?::      
+* How do I include compiled C code?::  
+* How do I debug code that I have compiled and dyn.load-ed?::  
+* How do I include C++ code?::  
+* The output from my C code disappears.::  
+* The output from my Fortran code disappears.::  
+* The console freezes when my compiled code is running::  
 @end menu
 
 
@@ -974,10 +1064,10 @@ cd R-@value{RVERSION}
 cd src\gnuwin32
 @end example
 @noindent
-Now read the @file{INSTALL} file and set up all the tools needed.  Then
-you can just use @code{make all bitmapdll recommended vignettes}, sit
-back and wait.  (A complete build takes about 20 minutes on a 2.6GHz P4
-with a fast local disc.)
+Now read the `R Installation and Administration' manual and set up all
+the tools needed.  Then you can just use @code{make all bitmapdll
+recommended vignettes}, sit back and wait.  (A complete build takes
+about 20 minutes on a 2.6GHz P4 with a fast local disc.)
 
 You may need to compile under a case-honouring file system: we found
 that a @code{samba}-mounted file system (which maps all file names to lower
@@ -1023,8 +1113,8 @@ We strongly encourage you to do this @emph{via} building an R package:
 see the @emph{`Writing R Extensions'} manual.  In any event you should
 install the parts of the R system for building R packages (in
 @code{@RWVER@.exe}), and get and install the tools (including Perl) and
-compilers mentioned in the file @file{README.packages} contained
-therein.  Then you can use
+compilers mentioned in the @emph{`R Installation and Administration'} 
+manual.  Then you can use
 @example
 ...\bin\R CMD SHLIB foo.c bar.f
 @end example
@@ -1220,14 +1310,14 @@ If you want output to be updated on the console, call
 @html
 <hr WIDTH="100%">
 <address>
-Last edited 2004 Nov 05 by Professor B. D. Ripley
+Last edited 2005 Apr 12 by Professor B. D. Ripley
 <code><a href="mailto:ripley@@stats.ox.ac.uk">ripley@@stats.ox.ac.uk</a></code>
 </address>
 @end html
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2004 Nov 05 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2004 Apr 12 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

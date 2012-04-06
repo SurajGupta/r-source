@@ -17,6 +17,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -24,7 +27,7 @@
 
 /* Implementation of identical(x, y) */
 
-static Rboolean compute_identical(SEXP x, SEXP y);
+Rboolean compute_identical(SEXP x, SEXP y);
 static Rboolean neWithNaN(double x,  double y);
 
 SEXP do_identical(SEXP x, SEXP y)
@@ -46,8 +49,9 @@ SEXP do_ident(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* do the two objects compute as identical? */
-static Rboolean compute_identical(SEXP x, SEXP y)
+Rboolean compute_identical(SEXP x, SEXP y)
 {
+
     if(x == y)
 	return TRUE;
     if(TYPEOF(x) != TYPEOF(y))

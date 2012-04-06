@@ -5,10 +5,10 @@
 validDetails.move.to <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y))
-    stop("x and y must be units")
+    stop("'x' and 'y' must be units")
   # Make sure that x and y are of length 1
   if (unit.length(x$x) > 1 | unit.length(x$y) > 1)
-    stop("x and y must have length 1")
+    stop("'x' and 'y' must have length 1")
   x
 }
 
@@ -40,10 +40,10 @@ grid.move.to <- function(x=0, y=0,
 validDetails.line.to <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y))
-    stop("x and y must be units")
+    stop("'x' and 'y' must be units")
   # Make sure that x and y are of length 1
   if (unit.length(x$x) > 1 | unit.length(x$y) > 1)
-    stop("x and y must have length 1")
+    stop("'x' and 'y' must have length 1")
   x
 }
 
@@ -78,12 +78,28 @@ grid.line.to <- function(x=1, y=1,
 validDetails.lines <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y))
-    stop("x and y must be units")
+    stop("'x' and 'y' must be units")
   x
 }
 
 drawDetails.lines <- function(x, recording=TRUE) {
   grid.Call.graphics("L_lines", x$x, x$y)
+}
+
+widthDetails.lines <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
+}
+
+heightDetails.lines <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 linesGrob <- function(x=unit(c(0, 1), "npc", units.per.obs),
@@ -117,12 +133,32 @@ grid.lines <- function(x=unit(c(0, 1), "npc", units.per.obs),
 validDetails.segments <- function(x) {
   if (!is.unit(x$x0) || !is.unit(x$x1) ||
       !is.unit(x$y0) || !is.unit(x$y1))
-    stop("x0, y0, x1, and y1 must be units")
+    stop("'x0', 'y0', 'x1', and 'y1' must be units")
   x
 }
 
 drawDetails.segments <- function(x, recording=TRUE) {
   grid.Call.graphics("L_segments", x$x0, x$y0, x$x1, x$y1)
+}
+
+widthDetails.segments <- function(x) {
+  bounds <- grid.Call("L_locnBounds",
+                      unit.c(x$x0, x$x1),
+                      unit.c(x$y0, x$y1))
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
+}
+
+heightDetails.segments <- function(x) {
+  bounds <- grid.Call("L_locnBounds",
+                      unit.c(x$x0, x$x1),
+                      unit.c(x$y0, x$y1))
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 # Specify "units.per.obs=TRUE" to give a unit or units per (x, y) pair
@@ -163,20 +199,20 @@ grid.segments <- function(x0=unit(0, "npc"), y0=unit(0, "npc"),
 validDetails.arrows <- function(x) {
   if ((!is.null(x$x) && !is.unit(x$x)) ||
       (!is.null(x$y) && !is.unit(x$y)))
-    stop("x and y must be units or NULL")
+    stop("'x' and 'y' must be units or NULL")
   if (!is.unit(x$length))
-    stop("Length must be a unit object")
+    stop("'length' must be a unit object")
   x$ends <- as.integer(match(x$ends, c("first", "last", "both")))
   x$type <- as.integer(match(x$type, c("open", "closed")))
   if (any(is.na(x$ends)) || any(is.na(x$type)))
-    stop("Invalid ends or type argument")
+    stop("Invalid 'ends' or 'type' argument")
   x
 }
 
 drawDetails.arrows <- function(x, recording=TRUE) {
   if (is.null(x$x)) { # y should be null too
     if (!is.null(x$y))
-      stop("Corrupt arrows object")
+      stop("Corrupt 'arrows' object")
     lineThing <- getGrob(x, childNames(x))
     # This could be done via method dispatch, but that really
     # seemed like overkill
@@ -240,6 +276,36 @@ drawDetails.arrows <- function(x, recording=TRUE) {
                      x$angle, x$length, x$ends, x$type)
 }
 
+widthDetails.arrows <- function(x) {
+  if (is.null(x$x)) { # y should be null too
+    if (!is.null(x$y))
+      stop("Corrupt 'arrows' object")
+    lineThing <- getGrob(x, childNames(x))
+    widthDetails(lineThing)
+  } else {
+    bounds <- grid.Call("L_locnBounds", x$x, x$y)
+    if (is.null(bounds))
+      unit(0, "inches")
+    else
+      unit(bounds[2] - bounds[1], "inches")
+  }
+}
+
+heightDetails.arrows <- function(x) {
+  if (is.null(x$x)) { # y should be null too
+    if (!is.null(x$y))
+      stop("Corrupt 'arrows' object")
+    lineThing <- getGrob(x, childNames(x))
+    heightDetails(lineThing)
+  } else {
+    bounds <- grid.Call("L_locnBounds", x$x, x$y)
+    if (is.null(bounds))
+      unit(0, "inches")
+    else
+      unit(bounds[4] - bounds[3], "inches")
+  }
+}
+
 arrowsGrob <- function(x=c(0.25, 0.75), y=0.5,
                         default.units="npc",
                         grob=NULL,
@@ -264,7 +330,7 @@ arrowsGrob <- function(x=c(0.25, 0.75), y=0.5,
     if (!(inherits(grob, "lines") ||
           inherits(grob, "segments") ||
           inherits(grob, "line.to")))
-      stop("The grob argument must be a line.to, lines, or segments grob")
+      stop("The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob")
     x <- y <- NULL
   }
   gTree(x=x, y=y, children=if (is.null(grob)) NULL else gList(grob),
@@ -296,17 +362,17 @@ grid.arrows <- function(x=c(0.25, 0.75), y=0.5,
 validDetails.polygon <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y))
-    stop("x and y must be units")
+    stop("'x' and 'y' must be units")
   if (!is.null(x$id) && !is.null(x$id.lengths))
-    stop("It is invalid to specify both id and id.lenths")
+    stop("It is invalid to specify both 'id' and 'id.lengths")
   if (unit.length(x$x) != unit.length(x$y))
-    stop("x and y must be same length")
+    stop("'x' and 'y' must be same length")
   if (!is.null(x$id) && (length(x$id) != unit.length(x$x)))
-    stop("x and y and id must all be same length")
+    stop("'x' and 'y' and 'id' must all be same length")
   if (!is.null(x$id))
     x$id <- as.integer(x$id)
   if (!is.null(x$id.lengths) && (sum(x$id.lengths) != unit.length(x$x)))
-    stop("x and y and id.lengths must specify same overall length")
+    stop("'x' and 'y' and 'id.lengths' must specify same overall length")
   if (!is.null(x$id.lengths))
     x$id.lengths <- as.integer(x$id.lengths)
   x
@@ -332,6 +398,22 @@ drawDetails.polygon <- function(x, recording=TRUE) {
     }
     grid.Call.graphics("L_polygon", x$x, x$y, index)
   }
+}
+
+widthDetails.polygon <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
+}
+
+heightDetails.polygon <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 polygonGrob <- function(x=c(0, 0.5, 1, 0.5), y=c(0.5, 1, 0.5, 0),
@@ -367,12 +449,28 @@ validDetails.circle <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y) ||
       !is.unit(x$r))
-    stop("x, y, and r must be units")
+    stop("'x', 'y', and 'r' must be units")
   x
 }
 
 drawDetails.circle <- function(x, recording=TRUE) {
   grid.Call.graphics("L_circle", x$x, x$y, x$r)
+}
+
+widthDetails.circle <- function(x) {
+  bounds <- grid.Call("L_circleBounds", x$x, x$y, x$r)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
+}
+
+heightDetails.circle <- function(x) {
+  bounds <- grid.Call("L_circleBounds", x$x, x$y, x$r)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 circleGrob <- function(x=0.5, y=0.5, r=0.5,
@@ -406,27 +504,45 @@ validDetails.rect <- function(x) {
       !is.unit(x$y) ||
       !is.unit(x$width) ||
       !is.unit(x$height))
-    stop("x, y, width, and height must be units")
+    stop("'x', 'y', 'width', and 'height' must be units")
   valid.just(x$just)
+  if (!is.null(x$hjust))
+    x$hjust <- as.numeric(x$hjust)
+  if (!is.null(x$vjust))
+    x$vjust <- as.numeric(x$vjust)
   x
 }
 
 drawDetails.rect <- function(x, recording=TRUE) {
   grid.Call.graphics("L_rect", x$x, x$y, x$width, x$height,
-                     valid.just(x$just))
+                     resolveHJust(x$just, x$hjust),
+                     resolveVJust(x$just, x$vjust))
 }
 
 widthDetails.rect <- function(x) {
-  absolute.size(x$width)
+  bounds <- grid.Call("L_rectBounds", x$x, x$y, x$width, x$height,
+                      resolveHJust(x$just, x$hjust),
+                      resolveVJust(x$just, x$vjust))
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
 }
 
 heightDetails.rect <- function(x) {
-  absolute.size(x$height)
+  bounds <- grid.Call("L_rectBounds", x$x, x$y, x$width, x$height,
+                      resolveHJust(x$just, x$hjust),
+                      resolveVJust(x$just, x$vjust))
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 rectGrob <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
                      width=unit(1, "npc"), height=unit(1, "npc"),
-                     just="centre", default.units="npc",
+                     just="centre", hjust=NULL, vjust=NULL,
+                     default.units="npc",
                      name=NULL, gp=gpar(), vp=NULL) {
   if (!is.unit(x))
     x <- unit(x, default.units)
@@ -437,14 +553,17 @@ rectGrob <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
   if (!is.unit(height))
     height <- unit(height, default.units)
   grob(x=x, y=y, width=width, height=height, just=just,
+       hjust=hjust, vjust=vjust,
        name=name, gp=gp, vp=vp, cl="rect")
 }
 
 grid.rect <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
                       width=unit(1, "npc"), height=unit(1, "npc"),
-                      just="centre", default.units="npc",
+                     just="centre", hjust=NULL, vjust=NULL,
+                     default.units="npc",
                       name=NULL, gp=gpar(), draw=TRUE, vp=NULL) {
   rg <- rectGrob(x=x, y=y, width=width, height=height, just=just,
+                 hjust=hjust, vjust=vjust,
                  default.units=default.units,
                  name=name, gp=gp, vp=vp)
   if (draw)
@@ -456,50 +575,73 @@ grid.rect <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
 # TEXT primitive
 ######################################
 validDetails.text <- function(x) {
-  if (!is.expression(x$label))
+  if (!is.language(x$label))
     x$label <- as.character(x$label)
   if (!is.unit(x$x) ||
       !is.unit(x$y))
-    stop("x and y must be units")
+    stop("'x' and 'y' must be units")
   x$rot <- as.numeric(x$rot)
-  if (!all(is.finite(x$rot)))
-    stop("Invalid rot value")
+  if (!all(is.finite(x$rot)) || length(x$rot) == 0)
+    stop("Invalid 'rot' value")
   valid.just(x$just)
+  if (!is.null(x$hjust))
+    x$hjust <- as.numeric(x$hjust)
+  if (!is.null(x$vjust))
+    x$vjust <- as.numeric(x$vjust)
   x$check.overlap <- as.logical(x$check.overlap)
   x
 }
 
 drawDetails.text <- function(x, recording=TRUE) {
   grid.Call.graphics("L_text", x$label, x$x, x$y,
-                     valid.just(x$just), x$rot, x$check.overlap)
+                     resolveHJust(x$just, x$hjust),
+                     resolveVJust(x$just, x$vjust),
+                     x$rot, x$check.overlap)
 }
 
 widthDetails.text <- function(x) {
-  unit(1, "strwidth", data=x$label)
+  bounds <- grid.Call("L_textBounds", x$label, x$x, x$y,
+                      resolveHJust(x$just, x$hjust),
+                      resolveVJust(x$just, x$vjust),
+                      x$rot)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
 }
 
 heightDetails.text <- function(x) {
-  unit(1, "strheight", data=x$label)
+  bounds <- grid.Call("L_textBounds", x$label, x$x, x$y,
+                      resolveHJust(x$just, x$hjust),
+                      resolveVJust(x$just, x$vjust),
+                      x$rot)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 textGrob <- function(label, x=unit(0.5, "npc"), y=unit(0.5, "npc"),
-                     just="centre", rot=0, check.overlap=FALSE,
+                     just="centre", hjust=NULL, vjust=NULL,
+                     rot=0, check.overlap=FALSE,
                      default.units="npc",
                      name=NULL, gp=gpar(), vp=NULL) {
   if (!is.unit(x))
     x <- unit(x, default.units)
   if (!is.unit(y))
     y <- unit(y, default.units)
-  grob(label=label, x=x, y=y,
-       just=just, rot=rot, check.overlap=check.overlap,
+  grob(label=label, x=x, y=y, just=just, hjust=hjust, vjust=vjust,
+       rot=rot, check.overlap=check.overlap,
        name=name, gp=gp, vp=vp, cl="text")
 }
 
 grid.text <- function(label, x=unit(0.5, "npc"), y=unit(0.5, "npc"),
-                      just="centre", rot=0, check.overlap=FALSE,
+                      just="centre", hjust=NULL, vjust=NULL,
+                      rot=0, check.overlap=FALSE,
                       default.units="npc",
                       name=NULL, gp=gpar(), draw=TRUE, vp=NULL) {
-  tg <- textGrob(label=label, x=x, y=y, just=just, rot=rot,
+  tg <- textGrob(label=label, x=x, y=y, just=just,
+                 hjust=hjust, vjust=vjust, rot=rot,
                  check.overlap=check.overlap,
                  default.units=default.units,
                  name=name, gp=gp, vp=vp)
@@ -513,7 +655,7 @@ grid.text <- function(label, x=unit(0.5, "npc"), y=unit(0.5, "npc"),
 ######################################
 valid.pch <- function(pch) {
   if (length(pch) == 0)
-    stop("zero-length pch")
+    stop("zero-length 'pch'")
   if (is.null(pch))
     pch <- as.integer(1)
   else if (!is.character(pch))
@@ -525,15 +667,32 @@ validDetails.points <- function(x) {
   if (!is.unit(x$x) ||
       !is.unit(x$y) ||
       !is.unit(x$size))
-    stop("x, y and size must be units")
+    stop("'x', 'y' and 'size' must be units")
   if (unit.length(x$x) != unit.length(x$y))
-    stop("x and y must be unit objects and have the same length")
+    stop("'x' and 'y' must be unit objects and have the same length")
   x$pch <- valid.pch(x$pch)
   x
 }
 
 drawDetails.points <- function(x, recording=TRUE) {
   grid.Call.graphics("L_points", x$x, x$y, x$pch, x$size)
+}
+
+# FIXME:  does not take into account the size of the symbols
+widthDetails.points <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[2] - bounds[1], "inches")
+}
+
+heightDetails.points <- function(x) {
+  bounds <- grid.Call("L_locnBounds", x$x, x$y)
+  if (is.null(bounds))
+    unit(0, "inches")
+  else
+    unit(bounds[4] - bounds[3], "inches")
 }
 
 pointsGrob <- function(x=runif(10),

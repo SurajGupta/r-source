@@ -9,7 +9,7 @@ hat <- function(x, intercept = TRUE)
 	n <- nrow(x)
 	x <- qr(x)
     }
-    apply(qr.qy(x, diag(1, nrow = n, ncol = x$rank))^2, 1, sum)
+    rowSums(qr.qy(x, diag(1, nrow = n, ncol = x$rank))^2)
 }
 
 weighted.residuals <- function(obj, drop0 = TRUE)
@@ -198,7 +198,7 @@ influence.measures <- function(model)
 	## Returns a matrix  of logicals structured like the argument
 	k <- ncol(infmat) - 4
 	if(n <= k)
-	    stop("Too few cases, n < k")
+	    stop("too few cases, n < k")
 	absmat <- abs(infmat)
 	result <- cbind(absmat[, 1:k] > 1, # |dfbetas| > 1
 			absmat[, k + 1] > 3 * sqrt(k/(n - k)), # |dffit| > ..

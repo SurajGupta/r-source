@@ -3,7 +3,7 @@ link.html.help <- function(verbose=FALSE, lib.loc=.libPaths())
     if(!file.exists(file.path(R.home(), "doc", "html", "search")))
        return(invisible(NULL))
     if(verbose) {
-        cat("updating HTML package descriptions\n")
+        cat(gettext("updating HTML package descriptions\n"))
         flush.console()
     }
     make.packages.html(lib.loc)
@@ -134,7 +134,7 @@ fixup.package.URLs <- function(pkg, force = FALSE)
         page <- readLines(f)
         out <- try(file(f, open = "w"), silent = TRUE)
         if(inherits(out, "try-error")) {
-            warning("cannot update", sQuote(f))
+            warning(gettextf("cannot update '%s'", f), domain = NA)
             next
         }
         page <- gsub(olddoc, doc, page)

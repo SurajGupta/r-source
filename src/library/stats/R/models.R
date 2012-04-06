@@ -75,6 +75,9 @@ terms.default <- function(x, ...) {
 terms.terms <- function(x, ...) x
 print.terms <- function(x, ...) print.default(unclass(x))
 
+## moved from base/R/labels.R
+labels.terms <- function(object, ...) attr(object, "term.labels")
+
 ### do this `by hand' as previous approach was vulnerable to re-ordering.
 delete.response <- function (termobj)
 {
@@ -223,14 +226,15 @@ offset <- function(object) object
     if(!identical(old, new)) {
         wrong <- old != new
         if(sum(wrong) == 1)
-            stop(paste("variable", sQuote(names(old)[wrong]),
-                       "was fitted with", old[wrong], "but",
-                       new[wrong], "was supplied"), call.=FALSE)
+            stop(gettextf(
+    "variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied",
+                          names(old)[wrong], old[wrong], new[wrong]),
+                 call. = FALSE, domain = NA)
         else
-            stop(paste("variables",
-                       paste(sQuote(names(old)[wrong]), collapse=", "),
-                       "were specified differently from the fit"),
-                 call.=FALSE)
+            stop(gettextf(
+    "variables %s were specified with different classes from the fit",
+                 paste(sQuote(names(old)[wrong]), collapse=", ")),
+                 call. = FALSE, domain = NA)
     }
 }
 
@@ -300,7 +304,7 @@ model.frame.default <-
              && !is.null(attr(data, "class")))
         data <- as.data.frame(data)
     else if (is.array(data))
-        stop("`data' must be a data.frame, not a matrix or  array")
+        stop("'data' must be a data.frame, not a matrix or an array")
     if(!inherits(formula, "terms"))
 	formula <- terms(formula, data = data)
     env <- environment(formula)
@@ -319,9 +323,9 @@ model.frame.default <-
         ## need to do this before subsetting and na.action
         nr2 <- max(sapply(variables, NROW))
         if(nr2 != nr)
-            warning(paste("'newdata' had", nr,
-                          "rows but variable(s) found have",
-                          nr2, "rows"), call.=FALSE)
+            warning(gettextf(
+                   "'newdata' had %d rows but variable(s) found have %d rows",
+                             nr, nr2), call.=FALSE)
     }
     if(is.null(attr(formula, "predvars"))) {
         for (i in seq(along = varnames))
@@ -340,11 +344,14 @@ model.frame.default <-
 	    if(!is.null(xl <- xlev[[nm]])) {
 		xi <- data[[nm]]
 		if(is.null(nxl <- levels(xi)))
-		    warning(paste("variable", nm, "is not a factor"))
+		    warning(gettextf("variable '%s' is not a factor", nm),
+                            domain = NA)
 		else {
 		    xi <- xi[, drop = TRUE] # drop unused levels
 		    if(any(m <- is.na(match(nxl, xl))))
-			stop(paste("factor", nm, "has new level(s)", nxl[m]))
+			stop(gettextf("factor '%s' has new level(s) %s",
+                                      nm, paste(nxl[m], collapse=", ")),
+                             domain = NA)
 		    data[[nm]] <- factor(xi, levels=xl)
 		}
 	    }
@@ -403,10 +410,11 @@ model.matrix.default <- function(object, data = environment(object),
         ##	  get(contr.funs[1 + isOF[nn]])(nlevels(data[[nn]]))
         if (!is.null(contrasts.arg) && is.list(contrasts.arg)) {
             if (is.null(namC <- names(contrasts.arg)))
-                stop("invalid contrasts argument")
+                stop("invalid 'contrasts.arg' argument")
             for (nn in namC) {
                 if (is.na(ni <- match(nn, namD)))
-                    warning(paste("Variable", nn, "absent, contrast ignored"))
+                    warning(gettextf("variable '%s' is absent, its contrast will be ignored", nn),
+                            domain = NA)
                 else {
                     ca <- contrasts.arg[[nn]]
                     if(is.matrix(ca)) contrasts(data[[ni]], ncol(ca)) <- ca
@@ -442,7 +450,7 @@ model.response <- function (data, type = "any")
 			dimnames(v) <- list(rows, dn[[2]])
 	    }
 	    return(v)
-	} else stop("invalid data argument")
+	} else stop("invalid 'data' argument")
     } else return(NULL)
 }
 

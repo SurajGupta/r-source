@@ -178,6 +178,7 @@ double  Rlog1p(double);
 #define M_LN_SQRT_PId2	0.225791352644727432363097614947	/* log(sqrt(pi/2)) */
 #endif
 
+
 #ifdef MATHLIB_STANDALONE
  #undef FALSE
  #undef TRUE
@@ -185,7 +186,6 @@ double  Rlog1p(double);
 #else
 # include <R_ext/Boolean.h>
 #endif
-
 
 
 #ifndef MATHLIB_STANDALONE
@@ -233,6 +233,10 @@ double  Rlog1p(double);
 #define lbeta		Rf_lbeta
 #define lchoose		Rf_lchoose
 #define lgammafn	Rf_lgammafn
+#define lgamma1p	Rf_lgamma1p
+#define log1pmx		Rf_log1pmx
+#define logspace_add	Rf_logspace_add
+#define logspace_sub	Rf_logspace_sub
 #define pbeta		Rf_pbeta
 #define pbeta_raw	Rf_pbeta_raw
 #define pbinom		Rf_pbinom
@@ -366,6 +370,11 @@ double	dgamma(double, double, double, int);
 double	pgamma(double, double, double, int, int);
 double	qgamma(double, double, double, int, int);
 double	rgamma(double, double);
+
+double  log1pmx(double);
+double  lgamma1p(double);
+double  logspace_add(double, double);
+double  logspace_sub(double, double);
 
 	/* Beta Distribution */
 
@@ -558,6 +567,19 @@ double	fround(double, double);
 double	fsign(double, double);
 double	ftrunc(double);
 
+double  log1pmx(double); /* Accurate log(1+x) - x, {care for small x} */
+double  lgamma1p(double);/* accurate log(gamma(x+1)), small x (0 < x < 0.5) */
+
+/* Compute the log of a sum or difference from logs of terms, i.e.,
+ *
+ *     log (exp (logx) + exp (logy))
+ * or  log (exp (logx) - exp (logy))
+ *
+ * without causing overflows or throwing away too much accuracy:
+ */
+double  logspace_add(double logx, double logy);
+double  logspace_sub(double logx, double logy);
+
 
 
 
@@ -581,7 +603,15 @@ double	gamma_cody(double);
 #ifdef MATHLIB_STANDALONE
 #ifndef MATHLIB_PRIVATE_H
 
-# define ISNAN(x) (isnan(x)!=0)
+/* If isnan is a macro, as C99 specifies, the C++
+   math header will undefine it. This happens on OS X */
+#ifdef __cplusplus
+  int R_isnancpp(double); /* in mlutils.c */
+#  define ISNAN(x)     R_isnancpp(x)
+#else
+#  define ISNAN(x)     (isnan(x)!=0)
+#endif
+
 
 /* We don't have config information available to do anything else */
 #define R_FINITE(x)    R_finite(x)

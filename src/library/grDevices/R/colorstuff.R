@@ -45,6 +45,22 @@ hsv <- function(h=1, s=1, v=1, gamma=1, alpha) {
   result
 }
 
+hcl <-
+function (h = 0, c = 35, l = 85, alpha, fixup = TRUE)
+{
+    if (missing(alpha)) {
+        alphaspec <- FALSE
+        alpha <- 1
+    }
+    else {
+        alphaspec <- TRUE
+    }
+    result <- .Internal(hcl(h, c, l, alpha, fixup))
+    if (!alphaspec)
+        result <- substr(result, 1, 7)
+    result
+}
+
 rgb2hsv <- function(r, g = NULL, b = NULL, gamma = 1, maxColorValue = 255)
 {
     rgb <-
@@ -61,7 +77,7 @@ rgb2hsv <- function(r, g = NULL, b = NULL, gamma = 1, maxColorValue = 255)
     if(gamma != 1)# revert gamma corrected hsv values
         rgb <- rgb ^ (1/gamma)
     if(any(0 > rgb) || any(rgb > 1))
-        stop("rgb values must be in [0,maxColorValue]")
+        stop("rgb values must be in [0, maxColorValue]")
 
     .Internal(rgb2hsv(rgb))
 }
@@ -72,14 +88,14 @@ palette <- function(value)
     else invisible(.Internal(palette(value)))
 }
 
-## A quick little ``rainbow'' function -- improved by MM
+## A quick little ''rainbow'' function -- improved by MM
 ## doc in	../man/palettes.Rd
 rainbow <-
     function (n, s = 1, v = 1, start = 0, end = max(1,n - 1)/n, gamma = 1)
 {
     if ((n <- as.integer(n[1])) > 0) {
 	if(start == end || any(c(start,end) < 0)|| any(c(start,end) > 1))
-	    stop("`start' and `end' must be distinct and in [0,1].")
+	    stop("'start' and 'end' must be distinct and in [0, 1].")
 	hsv(h = seq(start, ifelse(start > end, 1, 0) + end, length= n) %% 1,
 	    s, v, gamma)
     } else character(0)
@@ -139,3 +155,8 @@ cm.colors <- function (n)
 	  hsv(h = 10/12, s= seq(0, 0.5, length = l2)[-1], v = 1))
     } else character(0)
 }
+
+gray.colors <-
+function(n, start = 0.3, end = 0.9, gamma = 2.2)
+    gray(seq(from = start^gamma, to = end^gamma, length = n)^(1/gamma))
+grey.colors <- gray.colors

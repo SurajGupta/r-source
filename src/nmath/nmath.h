@@ -49,6 +49,14 @@
 void R_CheckUserInterrupt(void);
 #define calloc R_chk_calloc
 #define free R_chk_free
+
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#define _(String) gettext (String)
+#else
+#define _(String) (String)
+#endif
+
 #else
 /* Mathlib standalone */
 
@@ -67,6 +75,7 @@ int R_finite(double);
 #define ML_NEGINF	((-1.0) / 0.0)
 #define ML_NAN		(0.0 / 0.0)
 
+#define _(String) String
 #endif /* standalone */
 
 #define ML_ERROR(x)	/* nothing */
@@ -102,7 +111,6 @@ int R_finite(double);
 #define bd0       	Rf_bd0
 #define chebyshev_eval	Rf_chebyshev_eval
 #define chebyshev_init	Rf_chebyshev_init
-#define fastchoose	Rf_fastchoose
 #define i1mach		Rf_i1mach
 #define gammalims	Rf_gammalims
 #define lfastchoose	Rf_lfastchoose
@@ -120,7 +128,6 @@ void	gammalims(double*, double*);
 double	lgammacor(double); /* log(gamma) correction */
 double  stirlerr(double);  /* Stirling expansion "error" */
 
-double	fastchoose(double, double);
 double	lfastchoose(double, double);
 
 double  bd0(double, double);
@@ -131,6 +138,10 @@ double	dpois_raw (double, double, int);
 double  pnchisq_raw(double, double, double, double, double, int);
 
 int	i1mach(int);
+
+/* From toms708.c */
+void bratio(double a, double b, double x, double y, 
+	    double *w, double *w1, int *ierr);
 
 
 #endif /* MATHLIB_PRIVATE_H */

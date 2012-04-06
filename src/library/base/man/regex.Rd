@@ -160,10 +160,10 @@
   substring previously matched by the Nth parenthesized subexpression of
   the regular expression.
 
-  The current code attempts to support traditional usage by assuming
+  Before \R 2.1.0 \R attempted to support traditional usage by assuming
   that \code{\{} is not special if it would be the start of an invalid
   interval specification.  (POSIX allows this behaviour as an extension but
-  we advise users not to rely on it.)
+  we no longer support it.)
 }
 \section{Basic Regular Expressions}{
   This section covers the regular expressions allowed if
@@ -271,13 +271,15 @@
   and recursive patterns are not covered here.
 }
 \author{
-  This help page is based on the documentation of GNU grep 2.4.2, from
-  which the C code used by \R has been taken, the \code{pcre} man
+  This help page is based on the documentation of GNU grep 2.4.2 (from
+  which the C code used by \R used to be taken) the \code{pcre} man
   page from PCRE 3.9 and the \code{pcrepattern} man page from PCRE 4.4.
 }
 \seealso{
   \code{\link{grep}}, \code{\link{apropos}}, \code{\link{browseEnv}},
   \code{\link{help.search}}, \code{\link{list.files}},
   \code{\link{ls}} and \code{\link{strsplit}}.
+  
+  \url{http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html}
 }
 \keyword{character}

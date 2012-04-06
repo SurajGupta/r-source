@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file console.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
- *  Copyright (C) 2004	      The R Foundation
+ *  Copyright (C) 2004-5      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,12 @@
 #include <config.h>
 #endif
 
+#include "win-nls.h"
+#include <R_ext/Boolean.h>
+extern Rboolean mbcslocale;
+
+/* Use of strchr here is MBCS-safe */
+
 #ifdef Win32
 #define USE_MDI 1
 extern void R_ProcessEvents(void);
@@ -31,6 +37,7 @@ extern void R_ProcessEvents(void);
 #include <windows.h>
 #include <string.h>
 #include <ctype.h>
+#include <wchar.h>
 #include "graphapp/ga.h"
 #ifdef USE_MDI
 #include "graphapp/stdimg.h"
@@ -41,7 +48,86 @@ extern void R_ProcessEvents(void);
 #include "getline/getline.h"
 #include "Startup.h" /* for UImode */
 
+extern char *alloca(size_t);
+
 extern UImode  CharacterMode;
+
+#ifdef SUPPORT_MBCS
+#define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
+static int wcwidth(wchar_t ucs)
+{
+  return 1 +
+    (ucs >= 0x1100 &&
+     (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
+      ucs == 0x2329 || ucs == 0x232a ||
+      (ucs >= 0x2e80 && ucs <= 0xa4cf &&
+       ucs != 0x303f) ||                  /* CJK ... Yi */
+      (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
+      (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
+      (ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
+      (ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
+      (ucs >= 0xffe0 && ucs <= 0xffe6) /* ||
+      (ucs >= 0x20000 && ucs <= 0x2fffd) ||
+      (ucs >= 0x30000 && ucs <= 0x3fffd)*/));
+}
+
+static mbstate_t mb_st; /* use for char transpose as well */
+
+/* This is input from the keyboard, so we do not do validity checks.
+   OTOH, we do allow stateful encodings, assuming the state is reset
+   at the beginning of each line */
+
+int mb_char_len(char *buf, int clength)
+{
+    int i, mb_len = 0;
+
+    mbs_init(&mb_st);
+    for(i = 0; i <= clength; i += mb_len)
+	mb_len = mbrtowc(NULL, buf+i, MB_CUR_MAX, &mb_st);
+    return mb_len;
+}
+
+int mbswidth(char *buf)
+{
+    char *p =buf;
+    int res = 0, used;
+    wchar_t wc;
+
+    mbs_init(&mb_st);
+    while(*p) {
+	used = mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
+	if(used < 0) return -1;
+	p += used;
+	res += wcwidth(wc);
+    }
+    return res;
+}
+#else
+int inline mb_char_len(char *buf, int clength)
+{
+    return 1;
+}
+#endif
+
+void setCURCOL(ConsoleData p)
+{
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) {
+	char *P = LINE(NUMLINES - 1) + prompt_len;
+	int w0 = 0, used;
+	wchar_t wc;
+	mbs_init(&mb_st);
+	while (P < LINE(NUMLINES - 1) + prompt_len + cur_byte) {
+	    used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+	    if(used <= 0) break;
+	    w0 += wcwidth(wc);
+	    P += used;
+	}
+	CURCOL = w0 + prompt_wid;
+    } else
+#endif
+	CURCOL = cur_byte + prompt_wid;
+}
 
 
 /* xbuf */
@@ -278,43 +364,80 @@ newconsoledata(font f, int rows, int cols, int bufbytes, int buflines,
     return (p);
 }
 
+/* Here fch and lch are columns, and we have to cope with both MBCS
+   and double-width chars. */
+
 static void writelineHelper(ConsoleData p, int fch, int lch,
 			    rgb fgr, rgb bgr, int j, int len, char *s)
 {
     rect  r;
-    char  chf, chl, ch;
-    int   last;
+    int last;
+    char ch, chf, chl;
+#ifdef SUPPORT_MBCS
+    int i, used, w0;
+    char *buff, *P = s, *q;
+    wchar_t wc;
+    Rboolean leftedge;
+#endif
 
+    /* This is right, since columns are of fixed size */
     r = rect(BORDERX + fch * FW, BORDERY + j * FH, (lch - fch + 1) * FW, FH);
     gfillrect(p->bm, bgr, r);
 
-    if (len > fch) {
-	/* Some of the string is visible:
-	   we don't know the string length, so modify it in place */
-	if (FC && (fch == 0)) {
-	    chf = s[0];
-	    s[0] = '$';
+    if (len > FC+fch) {
+	/* Some of the string is visible: */
+#ifdef SUPPORT_MBCS
+	if(mbcslocale) {
+	    q = buff = alloca(strlen(s) + 1); /* overkill */
+
+	    leftedge = FC && (fch == 0);
+	    if(leftedge) fch++;
+	    mbs_init(&mb_st);
+	    for (w0 = -FC; w0 < fch && *P; ) { /* should have enough ... */
+		P += mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w0 += wcwidth(wc);
+	    }
+	    /* Now we have got to on or just after the left edge.
+	       Possibly have a widechar hanging over.
+	       If so, fill with blanks.
+	    */
+	    if(w0 > fch) for(i = 0; i < w0 - fch; i++) *q++ = ' ';
+
+	    if (leftedge) *q++ = '$';
+
+	    while (w0 < lch) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		if(used <= 0) break;
+		w0 += wcwidth(wc);
+		if(w0 > lch) break; /* char straddling the right edge
+				       is not displayed */
+		for(j = 0; j < used; j++) *q++ = *P++;
+	    }
+	    *q = 0;
+	    if((len > FC+COLS) && (lch == COLS - 1)) *q++ = '$';
+	    else {
+		used = mbrtowc(NULL, P, MB_CUR_MAX, &mb_st);
+		for(j = 0; j < used; j++) *q++ = *P++;
+	    }
+	    *q = '\0';
+	    gdrawstr(p->bm, p->f, fgr, pt(r.x, r.y), buff);
 	} else
-	    chf = '\0';
-	if ((len > COLS) && (lch == COLS - 1)) {
-	    chl = s[lch];
-	    s[lch] = '$';
-	} else
-	    chl = '\0';
-	last = lch + 1;
-	if (len > last) {
-	    ch = s[last];
-	    s[last] = '\0';
-	} else
-	    ch = '\0';
-	gdrawstr(p->bm, p->f, fgr, pt(r.x, r.y), &s[fch]);
-	/* restore the string */
-	if (ch)
-	    s[last] = ch;
-	if (chl)
-	    s[lch] = chl;
-	if (chf)
-	    s[fch] = chf;
+#endif
+	{
+	    /* we don't know the string length, so modify it in place */
+	    if (FC && (fch == 0)) {chf = s[FC]; s[FC] = '$';} else chf = '\0';
+	    if ((len > FC+COLS) && (lch == COLS - 1)) {
+		chl = s[FC+lch]; s[FC+lch] = '$';
+	    }
+	    else chl = '\0';
+	    last = FC + lch + 1;
+	    if (len > last) {ch = s[last]; s[last] = '\0';} else ch = '\0';
+	    gdrawstr(p->bm, p->f, fgr, pt(r.x, r.y), &s[FC+fch]);
+	    /* restore the string */
+	    if (ch) s[last] = ch;
+	    if (chl) s[FC+lch] = chl;
+	    if (chf) s[FC] = chf;
+	}
     }
 }
 
@@ -326,15 +449,23 @@ static int writeline(ConsoleData p, int i, int j)
     char *s;
     int   insel, len, col1, d;
     int   c1, c2, c3, x0, y0, x1, y1;
+#ifdef SUPPORT_MBCS
+    rect r;
+#endif
 
-    if ((i < 0) || (i >= NUMLINES)) FRETURN(0);
-    s = VLINE(i);
-    len = strlen(s);
+    if ((i < 0) || (i >= NUMLINES)) return 0;
+    s = LINE(i);
+#ifdef SUPPORT_MBCS
+    if(mbcslocale)
+	len = mbswidth(s);
+    else
+#endif
+	len = strlen(s);
     col1 = COLS - 1;
     insel = p->sel ? ((i - p->my0) * (i - p->my1)) : 1;
     if (insel < 0) {
 	WLHELPER(0, col1, White, DarkBlue);
-	FRETURN(len);
+	return len;
     }
     if ((USER(i) >= 0) && (USER(i) < FC + COLS)) {
 	if (USER(i) <= FC)
@@ -348,10 +479,32 @@ static int writeline(ConsoleData p, int i, int j)
 	WLHELPER(0, col1, pagerhighlight, p->bg);
     } else
 	WLHELPER(0, col1, p->fg, p->bg);
-    if ((p->r >= 0) && (p->c >= FC) && (p->c < FC + COLS) &&
-	(i == NUMLINES - 1))
-	WLHELPER(p->c - FC, p->c - FC, p->bg, p->ufg);
-    if (insel != 0) FRETURN(len);
+    /* This is the cursor, and it may need to be variable-width */
+    if ((p->r >= 0) && (CURCOL >= FC) && (CURCOL < FC + COLS) &&
+	(i == NUMLINES - 1)) {
+#ifdef SUPPORT_MBCS
+	if(mbcslocale) { /* determine the width of the current char */
+	    int w0, used = 0, ii;
+	    wchar_t wc;
+	    char *P = s, nn[10];
+	    mbs_init(&mb_st);
+	    for (w0 = 0; w0 <= CURCOL; ) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w0 += wcwidth(wc);
+		P += used;
+	    }
+	    w0 = wcwidth(wc); P -= used;
+	    r = rect(BORDERX + (CURCOL - FC) * FW, BORDERY + j * FH,
+		     w0 * FW, FH);
+	    gfillrect(p->bm, p->ufg, r);
+	    for(ii = 0; ii < used; ii++) nn[ii] = P[ii];
+	    nn[used] = '\0';
+	    gdrawstr(p->bm, p->f, p->bg, pt(r.x, r.y), nn);
+	} else
+#endif
+	    WLHELPER(CURCOL - FC, CURCOL - FC, p->bg, p->ufg);
+    }
+    if (insel != 0) return len;
     c1 = (p->my0 < p->my1);
     c2 = (p->my0 == p->my1);
     c3 = (p->mx0 < p->mx1);
@@ -363,12 +516,42 @@ static int writeline(ConsoleData p, int i, int j)
 	x1 = p->mx0; y1 = p->my0;
     }
     if (i == y0) {
-	if (FC + COLS < x0) FRETURN(len);
+	if (FC + COLS < x0) return len;
+#ifdef SUPPORT_MBCS
+	if(mbcslocale) {
+	    int w0, used = 0, w1=1;
+	    wchar_t wc;
+	    char *P = s;
+	    mbs_init(&mb_st);
+	    for (w0 = 0; w0 < x0; ) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w1 = wcwidth(wc);
+		w0 += w1;
+		P += used;
+	    }
+	    if(w0 > x0) x0 = w0 - w1;
+	}
+#endif
 	c1 = (x0 > FC) ? (x0 - FC) : 0;
     } else
 	c1 = 0;
     if (i == y1) {
-	if (FC > x1) FRETURN(len);
+	if (FC > x1) return len;
+#ifdef SUPPORT_MBCS
+	if(mbcslocale) {
+	    int w0, used = 0, wl = 1;
+	    wchar_t wc;
+	    char *P = s;
+	    mbs_init(&mb_st);
+	    for (w0 = 0; w0 <= x1; ) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		wl = wcwidth(wc);
+		w0 += wl;
+		P += used;
+	    }
+	    x1 = w0-1;
+	}
+#endif
 	c2 = (x1 > FC + COLS) ? (COLS - 1) : (x1 - FC);
     } else
 	c2 = COLS - 1;
@@ -377,13 +560,16 @@ static int writeline(ConsoleData p, int i, int j)
 }
 
 void drawconsole(control c, rect r)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int i, ll, wd, maxwd = 0;
 
     ll = min(NUMLINES, ROWS);
-    if(!BM) FVOIDRETURN;     /* This is a workaround for PR#1711.  BM should never be null here */
+    if(!BM) return;;     /* This is a workaround for PR#1711.
+			    BM should never be null here */
     gfillrect(BM, p->bg, getrect(BM));
-    if(!ll) FVOIDRETURN;
+    if(!ll) return;;
     for (i = 0; i < ll; i++) {
 	wd = WRITELINE(NEWFV + i, i);
 	if(wd > maxwd) maxwd = wd;
@@ -392,27 +578,29 @@ FBEGIN
     FV = NEWFV;
     p->needredraw = 0;
 /* always display scrollbar if FC > 0 */
-    if(maxwd < COLS - 1) maxwd = COLS -1;
+    if(maxwd < COLS - 1) maxwd = COLS - 1;
     maxwd += FC;
-    gchangescrollbar(c, HWINSB, FC, maxwd, COLS,
+    gchangescrollbar(c, HWINSB, FC, maxwd-FC, COLS,
                      p->kind == CONSOLE || NUMLINES > ROWS);
     gchangescrollbar(c, VWINSB, FV, NUMLINES - 1 , ROWS, p->kind == CONSOLE);
-FVOIDEND
+}
 
 void setfirstvisible(control c, int fv)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int  ds, rw, ww;
 
-    if (NUMLINES <= ROWS) FVOIDRETURN;
+    if (NUMLINES <= ROWS) return;;
     if (fv < 0) fv = 0;
     else if (fv > NUMLINES - ROWS) fv = NUMLINES - ROWS;
     if (fv < 0) fv = 0;
     ds = fv - FV;
-    if ((ds == 0) && !p->needredraw) FVOIDRETURN;
+    if ((ds == 0) && !p->needredraw) return;;
     if (abs(ds) > 1) {
         NEWFV = fv;
         REDRAW;
-        FVOIDRETURN;
+        return;;
     }
     if (p->needredraw) {
         ww = min(NUMLINES, ROWS) - 1;
@@ -420,7 +608,7 @@ FBEGIN
         writeline(p, rw, ww);
         if (ds == 0) {
 	    RSHOW(RLINE(ww));
- 	    FVOIDRETURN;
+ 	    return;;
         }
     }
     if (ds == 1) {
@@ -438,16 +626,23 @@ FBEGIN
     NEWFV = fv;
     p->needredraw = 0;
     gchangescrollbar(c, VWINSB, fv, NUMLINES - 1 , ROWS, p->kind == CONSOLE);
-FVOIDEND
+}
 
 void setfirstcol(control c, int newcol)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int i, ml, li, ll;
 
     ll = (NUMLINES < ROWS) ? NUMLINES : ROWS;
     if (newcol > 0) {
 	for (i = 0, ml = 0; i < ll; i++) {
- 	    li = strlen(LINE(NEWFV + i));
+#ifdef SUPPORT_MBCS
+	    if(mbcslocale)
+		li = mbswidth(LINE(NEWFV + i));
+	    else
+#endif
+		li = strlen(LINE(NEWFV + i));
 	    ml = (ml < li) ? li : ml;
 	}
 	ml = ml - COLS;
@@ -457,10 +652,12 @@ FBEGIN
     if (newcol < 0) newcol = 0;
     FC = newcol;
     REDRAW;
-FVOIDEND
+}
 
 void console_mousedrag(control c, int button, point pt)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     pt.x -= BORDERX;
     pt.y -= BORDERY;
     if (button & LeftButton) {
@@ -468,7 +665,7 @@ FBEGIN
 	r=((pt.y > 32000) ? 0 : ((pt.y > HEIGHT) ? HEIGHT : pt.y))/FH;
 	s=((pt.x > 32000) ? 0 : ((pt.x > WIDTH) ? WIDTH : pt.x))/FW;
 	if ((r < 0) || (r > ROWS) || (s < 0) || (s > COLS))
- 	    FVOIDRETURN;
+ 	    return;;
 	p->my1 = FV + r;
 	p->mx1 = FC + s;
 	p->needredraw = 1;
@@ -480,15 +677,19 @@ FBEGIN
 	else if (pt.x >= COLS*FW) setfirstcol(c, FC+3);
 	else REDRAW;
     }
-FVOIDEND
+}
 
 void console_mouserep(control c, int button, point pt)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     if ((button & LeftButton) && (p->sel)) console_mousedrag(c, button,pt);
-FVOIDEND
+}
 
 void console_mousedown(control c, int button, point pt)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     pt.x -= BORDERX;
     pt.y -= BORDERY;
     if (p->sel) {
@@ -500,22 +701,27 @@ FBEGIN
 	p->my0 = FV + pt.y/FH;
 	p->mx0 = FC + pt.x/FW;
     }
-FVOIDEND
+}
 
 void consoletogglelazy(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     if (p->kind == PAGER) return;
     p->lazyupdate = (p->lazyupdate + 1) % 2;
-FVOIDEND
+}
 
 int consolegetlazy(control c)
-FBEGIN
-FEND(p->lazyupdate)
+{
+    ConsoleData p = getdata(c);
+    return p->lazyupdate;
+}
+
 
 void consoleflush(control c)
-FBEGIN
-  REDRAW;
-FVOIDEND
+{
+    REDRAW;
+}
 
 
 /* These are the getline keys ^A ^E ^B ^F ^N ^P ^K ^H ^D ^U ^T ^O,
@@ -539,19 +745,23 @@ FVOIDEND
 /* free ^G ^Q ^R ^S, perhaps ^I ^J */
 
 static void storekey(control c,int k)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     if (p->kind == PAGER) return;
     if (k == BKSP) k = BACKCHAR;
     if (p->numkeys >= NKEYS) {
 	gabeep();
-	FVOIDRETURN;
+	return;;
      }
      p->kbuf[(p->firstkey + p->numkeys) % NKEYS] = k;
      p->numkeys++;
-FVOIDEND
+}
 
 void consolecmd(control c, char *cmd)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     char *ch;
     int i;
     if (p->sel) {
@@ -567,9 +777,10 @@ FBEGIN
     if (p->r > -1) {
       ch = &(p->lbuf->s[p->lbuf->ns - 1][prompt_len]);
       for (; *ch; ch++) storekey(c, *ch);
-      for (i = max_pos; i > cur_pos; i--) storekey(c, CHARLEFT);
+      /* <FIXME> This needs to go back in bytes, not chars */
+      for (i = max_byte; i > cur_byte; i--) storekey(c, CHARLEFT);
     }
-FVOIDEND
+}
 
 static int CleanTranscript(char *tscpt, char *cmds)
 {
@@ -627,7 +838,9 @@ void consolenewline(control c)
 
 /* the following four routines are system dependent */
 void consolepaste(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     HGLOBAL hglb;
     char *pc, *new = NULL;
     if (p->sel) {
@@ -635,7 +848,7 @@ FBEGIN
 	p->needredraw = 1;
 	REDRAW;
      }
-    if (p->kind == PAGER) FVOIDRETURN;
+    if (p->kind == PAGER) return;;
     if ( OpenClipboard(NULL) &&
          (hglb = GetClipboardData(CF_TEXT)) &&
          (pc = (char *)GlobalLock(hglb)))
@@ -654,15 +867,17 @@ FBEGIN
            strcat(p->clp, pc);
         }
         else {
-           R_ShowMessage("Not enough memory");
+           R_ShowMessage(G_("Not enough memory"));
         }
         GlobalUnlock(hglb);
     }
     CloseClipboard();
-FVOIDEND
+}
 
 void consolepastecmds(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     HGLOBAL hglb;
     char *pc, *new = NULL;
     if (p->sel) {
@@ -670,13 +885,14 @@ FBEGIN
 	p->needredraw = 1;
 	REDRAW;
      }
-    if (p->kind == PAGER) FVOIDRETURN;
+    if (p->kind == PAGER) return;;
     if ( OpenClipboard(NULL) &&
          (hglb = GetClipboardData(CF_TEXT)) &&
          (pc = (char *)GlobalLock(hglb)))
     {
         if (p->clp) {
-	    new = realloc((void *)p->clp, strlen(p->clp) + CleanTranscript(pc, 0));
+	    new = realloc((void *)p->clp, strlen(p->clp) +
+			  CleanTranscript(pc, 0));
         }
         else {
 	    new = malloc(CleanTranscript(pc, 0)) ;
@@ -691,61 +907,118 @@ FBEGIN
 	    CleanTranscript(pc, new);
         }
         else {
-	    R_ShowMessage("Not enough memory");
+	    R_ShowMessage(G_("Not enough memory"));
         }
         GlobalUnlock(hglb);
     }
     CloseClipboard();
-FVOIDEND
+}
 
+/* This works with columns, not chars or bytes */
 static void consoletoclipboardHelper(control c, int x0, int y0, int x1, int y1)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     HGLOBAL hglb;
     int ll, i, j;
-    char ch, *s;
+    char *s;
 
-    i = y0; j = x0; ll = 1;
-    while ((i < y1) || ((i == y1) && (j <= x1))) {
-	if (LINE(i)[j]) {
-	    ll += 1;
-	    j += 1;
+#ifdef SUPPORT_MBCS
+    int w0 = 0 /* -Wall */, used=0, x00, x11=100000;
+    wchar_t wc;
+    char *P;
+    if(mbcslocale) {
+
+	i = y0; x00 = x0; ll = 1; /* terminator */
+	while (i <= y1) {
+	    P = LINE(i);
+	    mbs_init(&mb_st);
+	    for (w0 = 0; w0 < x00 && *P; ) {
+		P += mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w0 += wcwidth(wc);
+	    }
+	    x00 = 0;
+	    if(i == y1) x11 = x1+1; /* cols are 0-based */
+	    while (w0 < x11 && *P) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		ll += used;
+		P += used;
+		w0 += wcwidth(wc);
+	    }
+	    if(w0 < x11) ll += 2;  /* \r\n */
+	    i++;
 	}
-	else {
-	    ll += 2;
-	    i += 1;
-	    j = 0;
+    } else
+#endif
+    {
+	i = y0; j = x0; ll = 1; /* terminator */
+	while ((i < y1) || ((i == y1) && (j <= x1))) {
+	    if (LINE(i)[j]) {
+		ll++;
+		j++;
+	    }
+	    else {
+		ll += 2;
+		i++;
+		j = 0;
+	    }
 	}
     }
+
     if (!(hglb = GlobalAlloc(GHND, ll))){
-        R_ShowMessage("Insufficient memory: text not moved to the clipboard");
-        FVOIDRETURN;
+        R_ShowMessage(G_("Insufficient memory: text not copied to the clipboard"));
+        return;
     }
     if (!(s = (char *)GlobalLock(hglb))){
-        R_ShowMessage("Insufficient memory: text not moved to the clipboard");
-        FVOIDRETURN;
+        R_ShowMessage(G_("Insufficient memory: text not copied to the clipboard"));
+        return;
     }
-    i = y0; j = x0;
-    while ((i < y1) || ((i == y1) && (j <= x1))) {
-	ch = LINE(i)[j];
-	if (ch) {
- 	    *s++ = ch;
-	    j += 1;
-	} else {
-	    *s++ = '\r'; *s++ = '\n';
-	    i += 1;
-	    j = 0;
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) {
+	i = y0; x00 = x0; x11=100000;
+	while (i <= y1) {
+	    P = LINE(i);
+	    mbs_init(&mb_st);
+	    for (w0 = 0; w0 < x00 && *P; ) {
+		P += mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w0 += wcwidth(wc);
+	    }
+	    x00 = 0;
+	    if(i == y1) x11 = x1+1;
+	    while (w0 < x11 && *P) {
+		used = mbrtowc(&wc, P, MB_CUR_MAX, &mb_st);
+		w0 += wcwidth(wc);
+		for(j = 0; j < used; j++) *s++ = *P++;
+	    }
+	    if(w0 < x11) *s++ = '\r'; *s++ = '\n';
+	    i++;
+	}
+    } else
+#endif
+    {
+	i = y0; j = x0;
+	while ((i < y1) || ((i == y1) && (j <= x1))) {
+	    char ch = LINE(i)[j];
+	    if (ch) {
+		*s++ = ch;
+		j++;
+	    } else {
+		*s++ = '\r'; *s++ = '\n';
+		i++;
+		j = 0;
+	    }
 	}
     }
     *s = '\0';
     GlobalUnlock(hglb);
     if (!OpenClipboard(NULL) || !EmptyClipboard()) {
-        R_ShowMessage("Unable to open the clipboard");
+        R_ShowMessage(G_("Unable to open the clipboard"));
         GlobalFree(hglb);
-        FVOIDRETURN;
+        return;;
     }
     SetClipboardData(CF_TEXT, hglb);
     CloseClipboard();
-FVOIDEND
+}
 
 /* end of system dependent part */
 
@@ -756,11 +1029,16 @@ int consolecanpaste(control c)
 
 
 int consolecancopy(control c)
-FBEGIN
-FEND(p->sel)
+{
+    ConsoleData p = getdata(c);
+    return p->sel;
+}
+
 
 void consolecopy(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     if (p->sel) {
 	int len, c1, c2, c3;
 	int x0, y0, x1, y1;
@@ -789,10 +1067,12 @@ FBEGIN
 	p->sel = 0;
 	REDRAW;
     }
-FVOIDEND
+}
 
 void consoleselectall(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
    if (NUMLINES) {
        p->sel = 1;
        p->my0 = p->mx0 = 0;
@@ -800,10 +1080,12 @@ FBEGIN
        p->mx1 = strlen(LINE(p->my1));
        REDRAW;
     }
-FVOIDEND
+}
 
 void console_normalkeyin(control c, int k)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int st;
 
     st = ggetkeystate();
@@ -862,10 +1144,12 @@ FBEGIN
 	return;
     }
     storekey(c, k);
-FVOIDEND
+}
 
 void console_ctrlkeyin(control c, int key)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int st;
 
     st = ggetkeystate();
@@ -937,11 +1221,13 @@ FBEGIN
 	p->needredraw = 1;
 	REDRAW;
     }
-FVOIDEND
+}
 
 static Rboolean incomplete = FALSE;
 int consolewrites(control c, char *s)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     char buf[1001];
     if(p->input) {
         int i, len = strlen(LINE(NUMLINES - 1));
@@ -972,7 +1258,8 @@ FBEGIN
         if (p->newfv < 0) p->newfv = 0;
     }
     if(p->input) REDRAW;
-FEND(0)
+    return 0;
+}
 
 void freeConsoleData(ConsoleData p)
 {
@@ -997,7 +1284,6 @@ static char consolegetc(control c)
     char ch;
 
     p = getdata(c);
-    p->c = cur_pos + prompt_len;
     while((p->numkeys == 0) && (!p->clp))
     {
 	if (!peekevent()) WaitMessage();
@@ -1006,6 +1292,7 @@ static char consolegetc(control c)
     if (p->sel) {
 	p->sel = 0;
 	p->needredraw = 1;
+	setCURCOL(p); /* Needed? */
 	REDRAW;
     }
     if (!p->already && p->clp)
@@ -1025,25 +1312,31 @@ static char consolegetc(control c)
 }
 
 static void consoleunputc(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     p->numkeys += 1;
     if (p->firstkey > 0) p->firstkey -= 1;
     else p->firstkey = NKEYS - 1 ;
-FVOIDEND
+}
 
+/* This scrolls as far left as possible */
 static void checkvisible(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int newfc;
 
-    p->c = cur_pos+prompt_len;
     setfirstvisible(c, NUMLINES-ROWS);
     newfc = 0;
-    while ((p->c <= newfc) || (p->c > newfc+COLS-2)) newfc += 5;
+    while ((CURCOL <= newfc) || (CURCOL > newfc+COLS-2)) newfc += 5;
     if (newfc != FC) setfirstcol(c, newfc);
-FVOIDEND
+}
 
 static void draweditline(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+    setCURCOL(p);
     checkvisible(c);
     if (p->needredraw) {
         REDRAW;
@@ -1051,20 +1344,30 @@ FBEGIN
 	WRITELINE(NUMLINES - 1, p->r);
 	RSHOW(RLINE(p->r));
     }
-FVOIDEND
+}
 
+/* Here multibyte characters will be entered as individual bytes */
 int consolereads(control c, char *prompt, char *buf, int len, int addtohistory)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     char cur_char;
     char *cur_line;
     char *aLine;
     int ns0 = NUMLINES;
+    int mb_len;
 
     /* print the prompt */
     xbufadds(p->lbuf, prompt, 1);
-    if (!xbufmakeroom(p->lbuf, len + 1)) FRETURN(1);
+    if (!xbufmakeroom(p->lbuf, len + 1)) return 1;
     aLine = LINE(NUMLINES - 1);
     prompt_len = strlen(aLine);
+#ifdef SUPPORT_MBCS
+    if(mbcslocale) 
+	prompt_wid = mbswidth(aLine);
+    else
+#endif
+	prompt_wid = prompt_len;
     if (NUMLINES > ROWS) {
 	p->r = ROWS - 1;
 	p->newfv = NUMLINES - ROWS;
@@ -1072,10 +1375,10 @@ FBEGIN
 	p->r = NUMLINES - 1;
 	p->newfv = 0;
     }
-    p->c = prompt_len;
+    CURCOL = prompt_wid;
     p->fc = 0;
-    cur_pos = 0;
-    max_pos = 0;
+    cur_byte = 0;
+    max_byte = 0;
     cur_line = &aLine[prompt_len];
     cur_line[0] = '\0';
     REDRAW;
@@ -1095,118 +1398,136 @@ FBEGIN
 		p->r = NUMLINES - 1;
 		p->newfv = 0;
 	    }
-	    USER(NUMLINES - 1) = prompt_len;
+	    USER(NUMLINES - 1) = prompt_wid;
 	    p->needredraw = 1;
 	}
-        if(chtype && (max_pos < len - 2)) {
+        if(chtype && (max_byte < len - 2)) { /* not a control char */
 	    int i;
 	    if(!p->overwrite) {
-		for(i = max_pos; i > cur_pos; i--) {
+		for(i = max_byte; i > cur_byte; i--) {
 		    cur_line[i] = cur_line[i - 1];
 		}
 	    }
-	    cur_line[cur_pos] = cur_char;
-	    if(!p->overwrite || cur_pos == max_pos) {
-		max_pos += 1;
-		cur_line[max_pos] = '\0';
+	    cur_line[cur_byte] = cur_char;
+	    if(!p->overwrite || cur_byte == max_byte) {
+		max_byte += 1;
+		cur_line[max_byte] = '\0';
 	    }
-	    cur_pos += 1;
-	    draweditline(c);
-	} else {
+	    cur_byte++;
+	} else { /* a control char */
 	    /* do normal editing commands */
 	    int i;
 	    switch(cur_char) {
 	    case BEGINLINE:
-		cur_pos = 0;
+		cur_byte = 0;
 		break;
 	    case CHARLEFT:
-		if(cur_pos > 0) {
-		    cur_pos -= 1;
+		if(cur_byte > 0) {
+		    cur_byte -= mb_char_len(cur_line, cur_byte-1);
 		}
 		break;
 	    case ENDLINE:
-		cur_pos = max_pos;
+		cur_byte = max_byte;
 		break;
 	    case CHARRIGHT:
-		if(cur_pos < max_pos) {
-		    cur_pos += 1;
+		if(cur_byte < max_byte) {
+		    cur_byte += mb_char_len(cur_line, cur_byte);
 		}
 		break;
 	    case KILLRESTOFLINE:
-		max_pos = cur_pos;
-		cur_line[max_pos]='\0';
+		max_byte = cur_byte;
+		cur_line[max_byte]='\0';
 		break;
 	    case KILLLINE:
-		max_pos = cur_pos = 0;
-		cur_line[max_pos]='\0';
+		max_byte = cur_byte = 0;
+		cur_line[max_byte]='\0';
 		break;
 	    case PREVHISTORY:
 		strcpy(cur_line, gl_hist_prev());
-		cur_pos = max_pos = strlen(cur_line);
+		cur_byte = max_byte = strlen(cur_line);
 		break;
 	    case NEXTHISTORY:
 		strcpy(cur_line, gl_hist_next());
-		cur_pos = max_pos = strlen(cur_line);
+		cur_byte = max_byte = strlen(cur_line);
 		break;
 	    case BACKCHAR:
-		if(cur_pos > 0) {
-		    cur_pos -= 1;
-		    for(i = cur_pos; i < max_pos; i++)
-			cur_line[i] = cur_line[i + 1];
-		    max_pos -= 1;
+		if(cur_byte > 0) {
+		    mb_len = mb_char_len(cur_line, cur_byte-1);
+		    cur_byte -= mb_len;
+		    for(i = cur_byte; i <= max_byte - mb_len; i++)
+		        cur_line[i] = cur_line[i + mb_len];
+		    max_byte -= mb_len;
 		}
 		break;
 	    case DELETECHAR:
-		if(max_pos == 0) break;
-		if(cur_pos < max_pos) {
-		    for(i = cur_pos; i < max_pos; i++)
-			cur_line[i] = cur_line[i + 1];
-		    max_pos -= 1;
+		if(max_byte == 0) break;
+		if(cur_byte < max_byte) {
+		    mb_len = mb_char_len(cur_line, cur_byte);
+		    for(i = cur_byte; i <= max_byte - mb_len; i++)
+			cur_line[i] = cur_line[i + mb_len];
+		    max_byte -= mb_len;
 		}
 		break;
 	    case CHARTRANS:
-		if(cur_pos < 1) break;
-		if(cur_pos >= max_pos) break;
- 		cur_char = cur_line[cur_pos];
-		cur_line[cur_pos] = cur_line[cur_pos-1];
-		cur_line[cur_pos-1] = cur_char;
+		if(cur_byte < 1) break;
+		if(cur_byte >= max_byte) break;
+		{
+		    int j, l_len = mb_char_len(cur_line, cur_byte-1), r_len;
+		    /* we should not reset the state here */
+#ifdef SUPPORT_MBCS
+		    if(mbcslocale)
+			r_len = mbrtowc(NULL, cur_line+cur_byte, MB_CUR_MAX,
+					&mb_st);
+		    else
+#endif
+			r_len = 1;
+		    for (i = 0; i < r_len; i++)
+			for(j = 0; j < l_len; j++) {
+			    cur_char = cur_line[cur_byte+i-j];
+			    cur_line[cur_byte+i-j] = cur_line[cur_byte+i-j-1];
+			    cur_line[cur_byte+i-j-1] = cur_char;
+			}
+		    cur_byte += r_len - l_len;
+		}
 		break;
-	    default:
+	    default:   /* An unknown control char */
 		if (chtype || (cur_char=='\n') || (cur_char==EOFKEY)) {
 		    if (chtype) {
-			if (cur_pos == max_pos) {
+			if (cur_byte == max_byte) {
 			    consoleunputc(c);
 			} else {
 			    gabeep();
 			    break;
 			}
 		    }
-		    cur_line[max_pos] = '\n';
-		    cur_line[max_pos + 1] = '\0';
+		    cur_line[max_byte] = '\n';
+		    cur_line[max_byte + 1] = '\0';
 		    strcpy(buf, cur_line);
 		    p->r = -1;
-		    cur_line[max_pos] = '\0';
-		    if (max_pos && addtohistory)  gl_histadd(cur_line);
+		    cur_line[max_byte] = '\0';
+		    if (max_byte && addtohistory)  gl_histadd(cur_line);
 		    xbuffixl(p->lbuf);
 		    consolewrites(c, "\n");
 		    REDRAW;
-		    FRETURN(cur_char == EOFKEY);
+		    return cur_char == EOFKEY;
 		}
 		break;
 	    }
-	    draweditline(c);
 	}
+	draweditline(c);
     }
-FVOIDEND
+}
 
 void console_sbf(control c, int pos)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     if (pos < 0) {
 	pos = -pos - 1 ;
 	if (FC != pos) setfirstcol(c, pos);
     } else
         if (FV != pos) setfirstvisible(c, pos);
-FVOIDEND
+}
 
 void Rconsolesetwidth(int);
 int setWidthOnResize = 0;
@@ -1219,13 +1540,15 @@ int consolecols(console c)
 }
 
 void consoleresize(console c, rect r)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     int rr, pcols = COLS;
 
     if (((WIDTH  == r.width) &&
 	 (HEIGHT == r.height)) ||
 	(r.width == 0) || (r.height == 0) ) /* minimize */
-        FVOIDRETURN;
+        return;;
 /*
  *  set first visible to keep the bottom line on a console,
  *  the middle line on a pager
@@ -1243,10 +1566,10 @@ FBEGIN
     del(BM);
     BM = newbitmap(r.width, r.height, 2);
     if (!BM) {
-       R_ShowMessage("Insufficient memory. Please close the console");
+       R_ShowMessage(G_("Insufficient memory. Please close the console"));
        return ;
     }
-    if(!p->lbuf) FVOIDRETURN;    /* don't implement resize if no content
+    if(!p->lbuf) return;;    /* don't implement resize if no content
 				   yet in pager */
     if (p->r >= 0) {
         if (NUMLINES > ROWS) {
@@ -1259,14 +1582,16 @@ FBEGIN
     setfirstvisible(c, rr);
     if (setWidthOnResize && p->kind == CONSOLE && COLS != pcols)
         Rconsolesetwidth(COLS);
-FVOIDEND
+}
 
 void consolesetbrk(console c, actionfn fn, char ch, char mod)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     p->chbrk = ch;
     p->modbrk = mod;
     p->fbrk = fn;
-FVOIDEND
+}
 
 font consolefn = NULL;
 char fontname[LF_FACESIZE+1];
@@ -1294,18 +1619,18 @@ setconsoleoptions(char *fnname,int fnsty, int fnpoints,
        consolefn = gnewfont(NULL, fnname, fnsty, fnpoints, 0.0);
     if (!consolefn) {
        sprintf(msg,
-	       "Font %s-%d-%d  not found.\nUsing system fixed font.",
+	       G_("Font %s-%d-%d  not found.\nUsing system fixed font"),
                fontname, fontsty | FixedWidth, pointsize);
        R_ShowMessage(msg);
        consolefn = FixedFont;
     }
-    if (!ghasfixedwidth(consolefn)) {
+/*    if (!ghasfixedwidth(consolefn)) {
        sprintf(msg,
 	       "Font %s-%d-%d has variable width.\nUsing system fixed font.",
                fontname, fontsty, pointsize);
        R_ShowMessage(msg);
        consolefn = FixedFont;
-    }
+       } */
     consoler = rows;
     consolec = cols;
     consolex = consx;
@@ -1323,7 +1648,9 @@ setconsoleoptions(char *fnname,int fnsty, int fnpoints,
 }
 
 void consoleprint(console c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
 
     printer lpr;
     int cc, rr, fh, cl, cp, clinp, i;
@@ -1333,7 +1660,7 @@ FBEGIN
     char *s = "", lc = '\0', msg[LF_FACESIZE + 128], title[60];
     char buf[1024];
     cursor cur;
-    if (!(lpr = newprinter(0.0, 0.0, ""))) FVOIDRETURN;
+    if (!(lpr = newprinter(0.0, 0.0, ""))) return;;
     show(c);
 /*
  * If possible, we avoid to use FixedFont for printer since it hasn't the
@@ -1343,7 +1670,7 @@ FBEGIN
 		 fontsty, pointsize, 0.0);
     if (!f) {
 	/* Should not happen but....*/
-	sprintf(msg, "Font %s-%d-%d  not found.\nUsing system fixed font.",
+	sprintf(msg, G_("Font %s-%d-%d  not found.\nUsing system fixed font"),
 		strcmp(fontname, "FixedFont") ? fontname : "Courier New",
 		fontsty, pointsize);
 	R_ShowMessage(msg);
@@ -1431,21 +1758,23 @@ FBEGIN
     if (f != FixedFont) del(f);
     del(lpr);
     setcursor(cur);
-FVOIDEND
+}
 
 void consolesavefile(console c, int pager)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     char *fn;
     cursor cur;
     FILE *fp;
     int x0, y0, x1, y1, cl;
     char *s, buf[1024];
 
-    setuserfilter("Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0");
+    setuserfilter(G_("Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0"));
     if(p->sel)
-        fn = askfilesave("Save selection to", "lastsave.txt");
+        fn = askfilesave(G_("Save selection to"), "lastsave.txt");
     else
-        fn = askfilesave("Save console contents to", "lastsave.txt");
+        fn = askfilesave(G_("Save console contents to"), "lastsave.txt");
     show(c);
     if (fn) {
 	fp = fopen(fn, "wt");
@@ -1495,7 +1824,7 @@ FBEGIN
 	fclose(fp);
 	setcursor(cur);
     }
-FVOIDEND
+}
 
 
 console newconsole(char *name, int flags)
@@ -1543,40 +1872,42 @@ void  consolehelp()
 {
     char s[4096];
 
-    strcpy(s,"Scrolling.\n");
-    strcat(s,"  Keyboard: PgUp, PgDown, Ctrl+Arrows, Ctrl+Home, Ctrl+End,\n");
-    strcat(s,"  Mouse: use the scrollbar(s).\n\n");
-    strcat(s,"Editing.\n");
-    strcat(s,"  Moving the cursor: \n");
-    strcat(s,"     Left arrow or Ctrl+B: move backward one character;\n");
-    strcat(s,"     Right arrow or Ctrl+F: move forward one character;\n");
-    strcat(s,"     Home or Ctrl+A: go to beginning of line;\n");
-    strcat(s,"     End or Ctrl+E: go to end of line;\n");
-    strcat(s,"  History: Up and Down Arrows, Ctrl+P, Ctrl+N\n");
-    strcat(s,"  Deleting:\n");
-    strcat(s,"     Del or Ctrl+D: delete current character;\n");
-    strcat(s,"     Backspace: delete preceding character;\n");
-    strcat(s,"     Ctrl+Del or Ctrl+K: delete text from current character to end of line.\n");
-    strcat(s,"     Ctrl+U: delete all text from current line.\n");
-    strcat(s,"  Copy and paste.\n");
-    strcat(s,"     Use the mouse (with the left button held down) to mark (select) text.\n");
-    strcat(s,"     Use Shift+Del (or Ctrl+C) to copy the marked text to the clipboard and\n");
-    strcat(s,"     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard (if any)  \n");
-    strcat(s,"     to the console, Ctrl+X first copy then paste\n");
-    strcat(s,"  Misc:\n");
-    strcat(s,"     Ctrl+L: Clear the console.\n");
-    strcat(s,"     Ctrl+O: Toggle overwrite mode: initially off.\n");
-    strcat(s,"     Ctrl+T: Interchange current char with one to the left.\n");
-    strcat(s,"\nNote: Console is updated only when some input is required.\n");
-    strcat(s,"  Use Ctrl+W to toggle this feature off/on.\n\n");
-    strcat(s,"Use ESC to stop the interpreter.\n\n");
-    strcat(s,"Standard Windows hotkeys can be used to switch to the\n");
-    strcat(s,"graphics device (Ctrl+Tab or Ctrl+F6 in MDI, Alt+Tab in SDI)");
+    strcpy(s,G_("Scrolling.\n"));
+    strcat(s,G_("  Keyboard: PgUp, PgDown, Ctrl+Arrows, Ctrl+Home, Ctrl+End,\n"));
+    strcat(s,G_("  Mouse: use the scrollbar(s).\n\n"));
+    strcat(s,G_("Editing.\n"));
+    strcat(s,G_("  Moving the cursor: \n"));
+    strcat(s,G_("     Left arrow or Ctrl+B: move backward one character;\n"));
+    strcat(s,G_("     Right arrow or Ctrl+F: move forward one character;\n"));
+    strcat(s,G_("     Home or Ctrl+A: go to beginning of line;\n"));
+    strcat(s,G_("     End or Ctrl+E: go to end of line;\n"));
+    strcat(s,G_("  History: Up and Down Arrows, Ctrl+P, Ctrl+N\n"));
+    strcat(s,G_("  Deleting:\n"));
+    strcat(s,G_("     Del or Ctrl+D: delete current character;\n"));
+    strcat(s,G_("     Backspace: delete preceding character;\n"));
+    strcat(s,G_("     Ctrl+Del or Ctrl+K: delete text from current character to end of line.\n"));
+    strcat(s,G_("     Ctrl+U: delete all text from current line.\n"));
+    strcat(s,G_("  Copy and paste.\n"));
+    strcat(s,G_("     Use the mouse (with the left button held down) to mark (select) text.\n"));
+    strcat(s,G_("     Use Shift+Del (or Ctrl+C) to copy the marked text to the clipboard and\n"));
+    strcat(s,G_("     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard (if any)  \n"));
+    strcat(s,G_("     to the console, Ctrl+X first copy then paste\n"));
+    strcat(s,G_("  Misc:\n"));
+    strcat(s,G_("     Ctrl+L: Clear the console.\n"));
+    strcat(s,G_("     Ctrl+O: Toggle overwrite mode: initially off.\n"));
+    strcat(s,G_("     Ctrl+T: Interchange current char with one to the left.\n"));
+    strcat(s,G_("\nNote: Console is updated only when some input is required.\n"));
+    strcat(s,G_("  Use Ctrl+W to toggle this feature off/on.\n\n"));
+    strcat(s,G_("Use ESC to stop the interpreter.\n\n"));
+    strcat(s,G_("Standard Windows hotkeys can be used to switch to the\n"));
+    strcat(s,G_("graphics device (Ctrl+Tab or Ctrl+F6 in MDI, Alt+Tab in SDI)"));
     askok(s);
 }
 
 void consoleclear(control c)
-FBEGIN
+{
+    ConsoleData p = getdata(c);
+
     xbuf l = p->lbuf;
     int oldshift = l->shift;
 
@@ -1586,4 +1917,4 @@ FBEGIN
     NEWFV = 0;
     p->r = 0;
     REDRAW;
-FVOIDEND
+}

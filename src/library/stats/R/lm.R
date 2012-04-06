@@ -18,20 +18,22 @@ lm <- function (formula, data, subset, weights, na.action,
     if (method == "model.frame")
 	return(mf)
     else if (method != "qr")
-	warning("method = ", method, " is not supported. Using \"qr\".")
+	warning(gettextf("method = '%s' is not supported. Using 'qr'", method),
+                domain = NA)
     mt <- attr(mf, "terms") # allow model.frame to update it
     y <- model.response(mf, "numeric")
     w <- model.weights(mf)
     offset <- model.offset(mf)
     if(!is.null(offset) && length(offset) != NROW(y))
-	stop("Number of offsets is ", length(offset),
-             ", should equal ", NROW(y), " (number of observations)")
+	stop(gettextf("number of offsets is %d, should equal %d (number of observations)",
+                     length(offset), NROW(y)), domain = NA)
 
     if (is.empty.model(mt)) {
 	x <- NULL
-	z <- list(coefficients = numeric(0), residuals = y,
+	z <- list(coefficients = if (is.matrix(y)) 
+                    matrix(,0,3) else numeric(0), residuals = y,
 		  fitted.values = 0 * y, weights = w, rank = 0,
-		  df.residual = length(y))
+		  df.residual = if (is.matrix(y)) nrow(y) else length(y))
         if(!is.null(offset)) z$fitted.values <- offset
     }
     else {
@@ -60,7 +62,7 @@ lm <- function (formula, data, subset, weights, na.action,
 lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
                     singular.ok = TRUE, ...)
 {
-    if (is.null(n <- nrow(x))) stop("`x' must be a matrix")
+    if (is.null(n <- nrow(x))) stop("'x' must be a matrix")
     if(n == 0) stop("0 (non-NA) cases")
     p <- ncol(x)
     if (p == 0) {
@@ -78,9 +80,10 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     if (NROW(y) != n)
 	stop("incompatible dimensions")
     if(method != "qr")
-	warning("method = ",method, " is not supported. Using \"qr\".")
+	warning(gettextf("method = '%s' is not supported. Using 'qr'", method),
+                domain = NA)
     if(length(list(...)))
-	warning("Extra arguments ", paste(names(list(...)), sep=", "),
+	warning("extra arguments ", paste(names(list(...)), sep=", "),
                 " are just disregarded.")
     storage.mode(x) <- "double"
     storage.mode(y) <- "double"
@@ -137,9 +140,10 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     if (any(w < 0 | is.na(w)))
 	stop("missing or negative weights not allowed")
     if(method != "qr")
-	warning("method = ",method, " is not supported. Using \"qr\".")
+	warning(gettextf("method = '%s' is not supported. Using 'qr'", method),
+                domain = NA)
     if(length(list(...)))
-	warning("Extra arguments ", paste(names(list(...)), sep=", "),
+	warning("extra arguments ", paste(names(list(...)), sep=", "),
                 " are just disregarded.")
     x.asgn <- attr(x, "assign")# save
     zero.weights <- any(w == 0)
@@ -267,11 +271,11 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
     }
     Qr <- object$qr
     if (is.null(z$terms) || is.null(Qr))
-	stop("invalid \'lm\' object:  no terms nor qr component")
+	stop("invalid \'lm\' object:  no 'terms' nor 'qr' component")
     n <- NROW(Qr$qr)
     rdf <- n - p
-    if(rdf != z$df.residual)
-        warning("inconsistent residual degrees of freedom. -- please report!")
+    if(is.na(z$df.residual) || rdf != z$df.residual)
+        warning("residual degrees of freedom in object suggest this is not an \"lm\" fit")
     p1 <- 1:p
     ## do not want missing values substituted here
     r <- z$residuals
@@ -511,7 +515,7 @@ anova.lmlist <- function (object, ..., scale = 0, test = "F")
     sameresp <- responses == responses[1]
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
-	warning("Models with response ",
+	warning("models with response ",
                 deparse(responses[!sameresp]),
                 " removed because response differs from ", "model 1")
     }
@@ -718,7 +722,7 @@ predict.lm <-
 effects.lm <- function(object, set.sign = FALSE, ...)
 {
     eff <- object$effects
-    if(is.null(eff)) stop("object has no effects component")
+    if(is.null(eff)) stop("'object' has no 'effects' component")
     if(set.sign) {
 	dd <- coef(object)
 	if(is.matrix(eff)) {
@@ -749,7 +753,7 @@ predict.mlm <-
 {
     if(missing(newdata)) return(object$fitted)
     if(se.fit)
-	stop("The 'se.fit' argument is not yet implemented for mlm objects")
+	stop("the 'se.fit' argument is not yet implemented for \"mlm\" objects")
     if(missing(newdata)) {
         X <- model.matrix(object)
         offset <- object$offset
@@ -770,4 +774,12 @@ predict.mlm <-
     pred <- X[, piv, drop = FALSE] %*% object$coefficients[piv,]
     if ( !is.null(offset) ) pred <- pred + offset
     if(inherits(object, "mlm")) pred else pred[, 1]
+}
+
+## from base/R/labels.R
+labels.lm <- function(object, ...)
+{
+    tl <- attr(object$terms, "term.labels")
+    asgn <- object$assign[object$qr$pivot[1:object$rank]]
+    tl[unique(asgn)]
 }

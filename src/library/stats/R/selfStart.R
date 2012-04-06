@@ -42,8 +42,11 @@ selfStart.formula <-
     if (is.null(template)) {		# create a template if not given
         nm <- all.vars(model)
         if (any(msng <- is.na(match(parameters, nm)))) {
-            stop(paste("Parameter(s)", parameters[msng],
-                       "do not occur in the model formula"))
+            stop(sprintf(ngettext(sum(msng),
+                       "parameter %s does not occur in the model formula",
+                       "parameters %s do not occur in the model formula"),
+                         paste(sQuote(parameters[msng]), collapse=", ")),
+                 domain = NA)
         }
         template <- function() {}
         argNams <- c( nm[ is.na( match(nm, parameters) ) ], parameters )
@@ -76,7 +79,7 @@ getInitial.formula <-
     #obj <- object                       # kluge to create a copy inside this
     #object[[1]] <- as.name("~")	 # function. match.call() is misbehaving
     switch (length(object),
-            stop("argument \"object\" has an impossible length"),
+            stop("argument 'object' has an impossible length"),
         {				# one-sided formula
 	    func <- get(as.character(object[[2]][[1]]))
 	    getInitial(func, data,
@@ -101,19 +104,20 @@ getInitial.default <-
     function(object, data, mCall, LHS = NULL, ...)
 {
     if (is.function(object) && !is.null(attr(object, "initial"))) {
-        stop(paste("old-style self-starting model functions\n",
-                   "are no longer supported.\n",
-                   "New selfStart functions are available.\n",
-                   "Use\n",
-                   "  SSfpl instead of fpl,\n",
-                   "  SSfol instead of first.order.log,\n",
-                   "  SSbiexp instead of biexp,\n",
-                   "  SSlogis instead of logistic.\n",
-                   "If writing your own selfStart model, see\n",
-                   "  \"help(selfStart)\"\n",
-                   "for the new form of the \"initial\" attribute.", sep="" ))
+        stop("old-style self-starting model functions\n",
+             "are no longer supported.\n",
+             "New selfStart functions are available.\n",
+             "Use\n",
+             "  SSfpl instead of fpl,\n",
+             "  SSfol instead of first.order.log,\n",
+             "  SSbiexp instead of biexp,\n",
+             "  SSlogis instead of logistic.\n",
+             "If writing your own selfStart model, see\n",
+             "  \"help(selfStart)\"\n",
+             "for the new form of the \"initial\" attribute.", domain = NA)
     }
-    stop(paste("No getInitial method found for", data.class(object), "objects"))
+    stop(gettextf("no 'getInitial' method found for \"%s\" objects",
+                  data.class(object)), domain = NA)
 }
 
 sortedXyData <-

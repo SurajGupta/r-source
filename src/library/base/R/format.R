@@ -17,7 +17,7 @@ format.default <-
 {
     f.char <- function(x, justify) {
 	if(length(x) <= 1) return(x)
-	nc <- nchar(x)
+	nc <- nchar(x, type="w")
         nc[is.na(nc)] <- 2
 	w <- max(nc)
 	sp <- substring(paste(rep.int(" ", w), collapse=""), 1, w-nc)
@@ -71,7 +71,7 @@ format.char <- function(x, width = NULL, flag = "-")
 	return(format(x))		# Left justified; width= max.width
 
     at <- attributes(x)
-    nc <- nchar(x)			#-- string lengths
+    nc <- nchar(x, type="w")	       	#-- string widths
     nc[is.na(nc)] <- 2
     if(is.null(width)) width <- max(nc)
     else if(width<0) { flag <- "-"; width <- -width }
@@ -112,7 +112,7 @@ format.pval <- function(pv, digits = max(1, getOption("digits")-2),
     if(any(is0)) {
 	digits <- max(1,digits-2)
 	if(any(!is0)) {
-	    nc <- max(nchar(rr))
+	    nc <- max(nchar(rr, type="w"))
 	    if(digits > 1 && digits+6 > nc)
 		digits <- max(1, nc - 7)
 	    sep <- if(digits==1 && nc <= 6) "" else " "
@@ -145,10 +145,10 @@ formatC <- function (x, digits = NULL, width = NULL,
 	if(mode=="real") mode <- "double"
 	storage.mode(x) <- mode
     }
-    else stop("\"mode\" must be \"double\" (\"real\") or \"integer\"")
+    else stop("'mode\' must be \"double\" (\"real\") or \"integer\"")
     if (mode == "character" || (!is.null(format) && format == "s")) {
 	if (mode != "character") {
-	    warning('formatC: Coercing argument to "character" for format="s"')
+	    warning('coercing argument to "character" for format="s"')
 	    x <- as.character(x)
 	}
 	return(format.char(x, width=width, flag=flag))
@@ -162,7 +162,7 @@ formatC <- function (x, digits = NULL, width = NULL,
 	else if (format == "d") {
 	    if (mode != "integer") mode <- storage.mode(x) <- "integer"
 	}
-	else stop('"format" must be in {"f","e","E","g","G", "fg", "s"}')
+	else stop('\'format\' must be one of {"f","e","E","g","G", "fg", "s"}')
     }
     some.special <- !all(Ok <- is.finite(x))
     if (some.special) {
@@ -186,11 +186,16 @@ formatC <- function (x, digits = NULL, width = NULL,
 			 2 + pmax(xEx,0)
 		     } else {# format == "fg"
 			 pmax(xEx, digits,digits+(-xEx)+1) +
-			     ifelse(flag!="",nchar(flag),0) + 1
+			     ifelse(flag != "", nchar(flag), 0) + 1
 		     }
 	     } else # format == "g" or "e":
 	     rep.int(digits+8, n)
 	     )
+    ## sanity check for flags added 2.1.0
+    flag <- as.character(flag)
+    nf <- strsplit(flag, "")[[1]]
+    if(!all(nf %in% c("0", "+", "-", " ", "#")))
+       stop("'flag' can contain only '0+- #'")
     r <- .C("str_signif",
 	    x = x,
 	    n = n,

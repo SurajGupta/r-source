@@ -20,6 +20,8 @@
  *      Interfaces to POSIX date and time functions.
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 /*
     These use POSIX functions that are not available on all platforms,
     and where they are they may be partially or incorrectly implemented.
@@ -386,7 +388,7 @@ static int set_tz(char *tz, char *oldtz)
     setenv("TZ", tz, 1);
     settz = 1;
 # else
-    warning("cannot set timezones on this system");
+    warning(_("cannot set timezones on this system"));
 # endif
 #endif
     tzset();
@@ -453,7 +455,7 @@ SEXP do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     PROTECT(x = coerceVector(CAR(args), REALSXP));
     if(!isString((stz = CADR(args))) || LENGTH(stz) != 1)
-	error("invalid `tz' value");
+	error(_("invalid 'tz' value"));
     tz = CHAR(STRING_ELT(stz, 0));
     if(strcmp(tz, "GMT") == 0  || strcmp(tz, "UTC") == 0) isgmt = 1;
     if(!isgmt && strlen(tz) > 0) settz = set_tz(tz, oldtz);
@@ -511,9 +513,9 @@ SEXP do_asPOSIXct(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     x = CAR(args);
     if(!isVectorList(x) || LENGTH(x) != 9)
-	error("invalid `x' argument");
+	error(_("invalid 'x' argument"));
     if(!isString((stz = CADR(args))) || LENGTH(stz) != 1)
-	error("invalid `tz' value");
+	error(_("invalid 'tz' value"));
 
     tz = CHAR(STRING_ELT(stz, 0));
     if(strcmp(tz, "GMT") == 0  || strcmp(tz, "UTC") == 0) isgmt = 1;
@@ -525,9 +527,9 @@ SEXP do_asPOSIXct(SEXP call, SEXP op, SEXP args, SEXP env)
     if(n > 0) {
 	for(i = 0; i < 6; i++)
 	    if(nlen[i] == 0)
-		error("zero length component in non-empty POSIXlt structure");
+		error(_("zero length component in non-empty POSIXlt structure"));
 	if(nlen[8] == 0)
-	    error("zero length component in non-empty POSIXlt structure");
+	    error(_("zero length component in non-empty POSIXlt structure"));
     }
     /* coerce fields to integer */
     for(i = 0; i < 6; i++)
@@ -570,23 +572,19 @@ SEXP do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     x = CAR(args);
     if(!isVectorList(x) || LENGTH(x) != 9)
-	error("invalid `x' argument");
+	error(_("invalid 'x' argument"));
     if(!isString((sformat = CADR(args))) || LENGTH(sformat) == 0)
-	error("invalid `format' argument");
+	error(_("invalid 'format' argument"));
     m = LENGTH(sformat);
     UseTZ = asLogical(CADDR(args));
     if(UseTZ == NA_LOGICAL)
-	error("invalid `usetz' argument");
+	error(_("invalid 'usetz' argument"));
     tz = getAttrib(x, install("tzone"));
 
-    /* workaround for glibc bug in strftime */
-#if defined HAVE_GLIBC2
-#ifdef __USE_BSD
-    tm.tm_zone = NULL;
-#else
-    tm.__tm_zone = NULL;
-#endif
-#endif
+    /* workaround for glibc & MacOS X bugs in strftime: they have
+       undocumented and non-POSIX/C99 time zone components 
+     */
+    memset(&tm, 0, sizeof(tm));
 
     /* coerce fields to integer, find length of longest one */
     for(i = 0; i < 9; i++) {
@@ -683,9 +681,9 @@ SEXP do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     if(!isString((x= CAR(args))))
-	error("invalid `x' argument");
+	error(_("invalid 'x' argument"));
     if(!isString((sformat = CADR(args))) || LENGTH(sformat) == 0)
-	error("invalid `format' argument");
+	error(_("invalid 'format' argument"));
     n = LENGTH(x); m = LENGTH(sformat);
     if(n > 0) N = (m > n)?m:n; else N = 0;
 
@@ -798,7 +796,7 @@ SEXP do_POSIXlt2D(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     x = CAR(args);
     if(!isVectorList(x) || LENGTH(x) != 9)
-	error("invalid `x' argument");
+	error(_("invalid 'x' argument"));
 
     for(i = 3; i < 6; i++)
 	if((nlen[i] = LENGTH(VECTOR_ELT(x, i))) > n) n = nlen[i];
@@ -806,9 +804,9 @@ SEXP do_POSIXlt2D(SEXP call, SEXP op, SEXP args, SEXP env)
     if(n > 0) {
 	for(i = 3; i < 6; i++)
 	    if(nlen[i] == 0)
-		error("zero length component in non-empty POSIXlt structure");
+		error(_("zero length component in non-empty POSIXlt structure"));
 	if(nlen[8] == 0)
-	    error("zero length component in non-empty POSIXlt structure");
+	    error(_("zero length component in non-empty POSIXlt structure"));
     }
     /* coerce fields to integer */
     for(i = 0; i < 6; i++)

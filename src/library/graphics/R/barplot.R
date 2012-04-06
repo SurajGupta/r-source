@@ -32,11 +32,10 @@ function(height, width = 1, space = NULL, names.arg = NULL,
     } else if (is.matrix(height)) {
         ## In the matrix case, we use "colors" by default.
         if(is.null(col))
-            col <- grey(seq(0.3 ^ 2.2, 0.9 ^ 2.2,
-                            length = nrow(height)) ^ (1/2.2))
+            col <- grey.colors(nrow(height))
     }
     else
-	stop(paste(sQuote("height"), "must be a vector or a matrix"))
+	stop("'height' must be a vector or a matrix")
 
     if(is.logical(legend.text))
 	legend.text <-

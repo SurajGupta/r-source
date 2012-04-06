@@ -13,7 +13,7 @@ tempdir()
 \arguments{
   \item{pattern}{a non-empty character vector giving the initial part
     of the name.}
-  \item{tmpdir}{a non-empty character vector giving the directory name}  
+  \item{tmpdir}{a non-empty character vector giving the directory name}
 }
 \value{
   For \code{tempfile} a character vector giving the names of possible
@@ -21,11 +21,15 @@ tempdir()
   \code{tempfile}.
 
   For \code{tempdir}, the path of the per-session temporary directory.
+#ifdef windows
+
+  Both will use backslash as the path separator.
+#endif
 }
 \details{
   If \code{pattern} has length greater than one then the result is of the
   same length giving a temporary file name for each component of
-  \code{pattern}. 
+  \code{pattern}.
 
   The names are very likely to be unique among calls to \code{tempfile}
   in an \R session and across simultaneous \R sessions.  The filenames are
@@ -39,7 +43,7 @@ tempdir()
   otherwise \code{"/tmp"}.
 #endif
 #ifdef windows
-  By default, \code{tempdir()} gives a subdirectory of the first found
+  \code{tempdir()} gives a subdirectory of the first found
   of the environment variables \env{TMP}, \env{TEMP} and \env{R\_USER}
   (see \code{\link{Rconsole}}) which points to a writeable directory.
   If the path to the directory contains a space in any of the
@@ -55,5 +59,7 @@ tempdir()
 \seealso{\code{\link{unlink}} for deleting files.}
 \examples{
 tempfile(c("ab", "a b c"))   # give file name with spaces in!
+
+tempdir() # working on all platforms with quite platform dependent result
 }
 \keyword{file}

@@ -21,28 +21,30 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
 	if(corr) cutpoints <- c(0, cutpoints, 1)
 	if(any(duplicated(cutpoints)) ||
 	   (corr && (any(cutpoints > 1) || any(cutpoints < 0)) ))
-	    stop(paste("'cutpoints' must be unique",
-		       if(corr)"in 0 < cuts < 1", ", but are =",
-		       paste(format(cutpoints), collapse="|")))
+	    stop(if(corr) gettext("'cutpoints' must be unique in 0 < cuts < 1, but are = ")
+                 else gettext("'cutpoints' must be unique, but are = "),
+                 paste(format(cutpoints), collapse="|"), domain = NA)
 	nc <- length(cutpoints)
 	minc <- cutpoints[1]
 	maxc <- cutpoints[nc]
-	range.msg <- paste("'x' must be between",
-			   if(corr) "-1" else format(minc),
-			   " and", if(corr) "1" else format(maxc)," !")
+	range.msg <- if(corr) gettext("'x' must be between -1 and 1")
+        else gettextf("'x' must be between %s and %s",
+                      format(minc), format(maxc))
 	if(corr) x <- abs(x)
 	else
-	    if(any(x < minc - eps, na.rm=TRUE)) stop(range.msg)
-	if (   any(x > maxc + eps, na.rm=TRUE)) stop(range.msg)
+	    if(any(x < minc - eps, na.rm=TRUE)) stop(range.msg, domain = NA)
+	if (   any(x > maxc + eps, na.rm=TRUE)) stop(range.msg, domain = NA)
 
 	ns <- length(symbols)
 	symbols <- as.character(symbols)
 	if(any(duplicated(symbols)))
-	    stop(paste("'symbols' must be unique, but are =",
-		       paste(symbols, collapse="|")))
+	    stop("'symbols' must be unique, but are = ",
+                 paste(symbols, collapse="|"), domain = NA)
 	if(nc != ns+1)
-	    stop(paste("number of cutpoints must be  ONE",
-		       if(corr)"LESS" else "MORE", "than number of symbols"))
+            if(corr)
+                stop("number of 'cutpoints' must be one less than number of symbols")
+            else
+                stop("number of 'cutpoints' must be one more than number of symbols")
 
 	iS <- cut(x, breaks=cutpoints, include.lowest=TRUE, labels= FALSE)
 	if(any(ii <- is.na(iS))) {
@@ -51,12 +53,12 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
 	}
     }
     else if(!is.logical(x))
-	stop("`x' must be numeric or logical")
+	stop("'x' must be numeric or logical")
     else  { ## logical x : no need for cut(points)
 	if(missing(symbols))		# different default
 	    symbols <- c(".","|")
 	else if(length(symbols) != 2)
-	    stop("must have 2 `symbols' for logical `x' argument")
+	    stop("must have 2 'symbols' for logical 'x' argument")
 	iS <- x + 1 # F = 1,  T = 2
     }
     if(has.na) {
@@ -89,12 +91,12 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
 	}
 	else if(is.null(abbr.colnames) || is.null(dimnames(ans)[[2]]))
 	    dimnames(ans)[[2]] <- rep("", dim(ans)[2])
-	else if(!is.logical(abbr.colnames)) stop("invalid `abbr.colnames'")
+	else if(!is.logical(abbr.colnames)) stop("invalid 'abbr.colnames'")
     }
     if(legend) {
 	legend <- c(rbind(sapply(cutpoints,format),
-			  c(paste("`",symbols,"'",sep=""),"")),
-		    if(has.na) paste("	    ## NA: `",na,"'",sep=""))
+			  c(sQuote(symbols),"")),
+		    if(has.na) paste("	    ## NA:", sQuote(na)))
 	attr(ans,"legend") <- paste(legend[-2*(ns+1)], collapse=" ")
     }
     noquote(ans)

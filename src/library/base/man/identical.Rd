@@ -1,6 +1,6 @@
 \name{identical}
 \alias{identical}
-\title{ Test Objects for Exact Equality }
+\title{Test Objects for Exact Equality}
 \description{
   The safe and reliable way to test two objects for being
   \emph{exactly} equal.  It returns \code{TRUE} in this case,
@@ -28,15 +28,10 @@ identical(x, y)
   the result is also \code{NA}.  In either case, the expression
   \code{if(x == y)....} won't work as expected.
 
-  The function \code{all.equal} is also sometimes used to test equality
-  this way, but it was intended for something different.  First, it
-  tries to allow for \dQuote{reasonable} differences in numeric results.
-  Second, it returns a descriptive character vector instead of
-  \code{FALSE} when the objects do not match.  Therefore, it is not the
-  right function to use for reliable testing either.  (If you \emph{do} want
-  to allow for numeric fuzziness in comparing objects, you can combine
-  \code{all.equal} and \code{identical}, as shown in the examples
-  below.)
+  The function \code{all.equal} is also
+  sometimes used to test equality this way, but was intended for
+  something different:  It allows for \dQuote{reasonable}
+  differences in numeric results.
 
   The computations in \code{identical} are also reliable and usually
   fast.  There should never be an error.  The only known way to kill
@@ -65,6 +60,7 @@ identical(x, y)
 \seealso{
   \code{\link{all.equal}} for descriptions of how two objects differ;
   \link{Comparison} for operators that generate elementwise comparisons.
+  \code{\link{isTRUE}} is a simple wrapper based on \code{identical}.
 }
 \examples{
 identical(1, NULL) ## FALSE -- don't try this with ==
@@ -72,10 +68,12 @@ identical(1, 1.)   ## TRUE in R (both are stored as doubles)
 identical(1, as.integer(1)) ## FALSE, stored as different types
 
 x <- 1.0; y <- 0.99999999999
-## how to test for object equality allowing for numeric fuzz
-identical(all.equal(x, y), TRUE)
+## how to test for object equality allowing for numeric fuzz :
+(E <- all.equal(x,y))
+isTRUE(E) # which is simply defined to just use
+identical(TRUE, E)
 ## If all.equal thinks the objects are different, it returns a
-## character string, and this expression evaluates to FALSE
+## character string, and the above expression evaluates to FALSE
 
 # even for unusual R objects :
 identical(.GlobalEnv, environment())

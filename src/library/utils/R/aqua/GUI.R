@@ -1,23 +1,23 @@
-browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source"), 
-    contriburl = NULL, global = FALSE) 
+browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source"),
+    contriburl = NULL, global = FALSE)
 {
-    if (.Platform$GUI != "AQUA") 
-        stop("This function is intended to work with the Aqua GUI")
+    if (.Platform$GUI != "AQUA")
+        stop("this function is intended to work with the Aqua GUI")
     where <- match.arg(where)
     type <- match.arg(type)
     x <- installed.packages()
     i.pkgs <- as.character(x[, 1])
     i.vers <- as.character(x[, 3])
         if (is.null(contriburl)) {
-        if (type == "binary") 
+        if (type == "binary")
             contriburl <- contrib.url(getOption(where), type = "mac.binary")
         else contriburl <- contrib.url(getOption(where), type = "source")
-        label <- switch(where, CRAN = paste("CRAN (", type, ") @", 
-            getOption(where)), BIOC = paste("BioC (", type, ") @", 
+        label <- switch(where, CRAN = paste("CRAN (", type, ") @",
+            getOption(where)), BIOC = paste("BioC (", type, ") @",
             getOption(where)))
     }
     else label <- paste("(", type, ") @", contriburl)
-    if (type == "binary") 
+    if (type == "binary")
         y <- CRAN.binaries(contriburl = contriburl)
     else y <- CRAN.packages(contriburl = contriburl)
     c.pkgs <- as.character(y[, 1])
@@ -25,12 +25,12 @@ browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source")
 
     idx <- match(i.pkgs, c.pkgs)
     vers2 <- character(length(c.pkgs))
-    xx <- idx[which(!is.na(idx))]    
+    xx <- idx[which(!is.na(idx))]
     vers2[xx] <- i.vers[which(!is.na(idx))]
     i.vers <- vers2
-    
+
     want.update <- rep(FALSE, length(i.vers))
-    inst <- .Internal(pkgbrowser(c.pkgs, c.vers, i.vers, label, 
+    inst <- .Internal(pkgbrowser(c.pkgs, c.vers, i.vers, label,
         want.update))
     ui.pkgs <- c.pkgs[inst]
     idx2 <- which(c.vers[inst] == i.vers[inst])
@@ -38,31 +38,31 @@ browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source")
         cat(paste(ui.pkgs[idx2], collapse = ""), " already up to date, not reinstalled\n")
         ui.pkgs <- ui.pkgs[-idx2]
     }
-    if (global) 
+    if (global)
         locn <- file.path(R.home(), "library")
     else locn <- .libPaths()[1]
     if (length(ui.pkgs) > 0) {
         if (missing(contriburl)) {
-            switch(type, source = install.packages(ui.pkgs, CRAN = getOption(where), 
-                lib = .libPaths()[1]), binary = install.binaries(ui.pkgs, 
+            switch(type, source = install.packages(ui.pkgs, repos = getOption(where),
+                lib = .libPaths()[1]), binary = install.binaries(ui.pkgs,
                 CRAN = getOption(where), lib = .libPaths()[1]))
         }
         else {
-            switch(type, source = install.packages(ui.pkgs, CRAN = getOption(where), 
-                contriburl = contriburl, lib = .libPaths()[1]), 
-                binary = install.binaries(ui.pkgs, CRAN = getOption(where), 
+            switch(type, source = install.packages(ui.pkgs, repos = getOption(where),
+                contriburl = contriburl, lib = .libPaths()[1]),
+                binary = install.binaries(ui.pkgs, CRAN = getOption(where),
                   contriburl = contriburl, lib = .libPaths()[1]))
         }
     }
 }
- 
-	
+
+
     browse.update.pkgs <- function(where = c("CRAN", "BIOC"),
                                    type = c("binary", "source"),
                                    in.place = TRUE)
    {
      if (.Platform$GUI!="AQUA")
-       stop("This function is intended to work with the Aqua GUI")
+       stop("this function is intended to work with the Aqua GUI")
        where <- match.arg(where)
        type <- match.arg(type)
 
@@ -118,7 +118,7 @@ browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source")
     data.manager <- function()
     {
      if (.Platform$GUI!="AQUA")
-       stop("This function is intended to work with the Aqua GUI")
+       stop("this function is intended to work with the Aqua GUI")
         data(package = .packages(all.available = TRUE)) -> x
         x$results[,3] -> dt
         x$results[,1] -> pkg
@@ -142,7 +142,7 @@ browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source")
     package.manager <- function()
     {
      if (.Platform$GUI!="AQUA")
-       stop("This function is intended to work with the Aqua GUI")
+       stop("this function is intended to work with the Aqua GUI")
         .packages() -> loaded.pkgs
         library() -> x
         x <- x$results[x$results[,1] != "base",]
@@ -170,7 +170,7 @@ browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source")
 
     }
 
-flush.console <- function() {if (.Platform$GUI=="AQUA") .Internal(flush.console())}
+# flush.console <- function() {if (.Platform$GUI=="AQUA") .Internal(flush.console())}
 
 print.hsearch <- function(x,...)
   {
@@ -201,7 +201,7 @@ print.hsearch <- function(x,...)
 
 Rapp.updates <- function() {
   if (.Platform$GUI!="AQUA")
-       stop("This function is intended to work with the Aqua GUI")
+       stop("this function is intended to work with the Aqua GUI")
  readLines("http://cran.r-project.org/bin/macosx/VERSION") -> cran.ver
 
  strsplit(cran.ver,"\\.") -> ver
@@ -235,7 +235,7 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
                              method, available=NULL, destdir=NULL,
                              installWithVers=FALSE)
   {
-    
+
     link.html.help<-function(...,verbose=FALSE)
       {
         html<-getOption("htmlhelp")
@@ -245,9 +245,9 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
     untar<-function(what, where)
       {
         xcode <- system(paste("tar zxf", what, "-C", where), intern=FALSE)
-        if (xcode) warning("tar returned non-zero exit code: ",xcode)
+        if (xcode) warning("'tar' returned non-zero exit code: ",xcode)
       }
-    
+
     ## edited from windows download.packages
     download.binaries <- function(pkgs, destdir, available=NULL,
                                   CRAN=getOption("CRAN"),
@@ -255,19 +255,19 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
                                   method)
       {
         dirTest <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
-        
-        if(!dirTest(destdir)) stop("destdir is not a directory")
+
+        if(!dirTest(destdir)) stop("'destdir' is not a directory")
         localcran <- length(grep("^file:", contriburl)) > 0
         if(is.null(available))
           available <- CRAN.packages(contriburl=contriburl, method=method)
-        
+
         retval <- NULL
         for(p in unique(pkgs))
           {
             ok <- (available[,"Package"] == p) | (available[,"Bundle"] == p)
             ok <- ok & !is.na(ok)
             if(!any(ok))
-              warning(paste("No package \"", p, "\" on CRAN.", sep=""))
+              warning(gettextf("no package '%s' on CRAN", p), domain = NA)
             else{
               fn <- paste(p, "_", available[ok, "Version"], ".tgz", sep="")
               ##fn<-paste(p,".tgz",sep="")
@@ -278,27 +278,29 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
               else{
                 url <- paste(contriburl, fn, sep="/")
                 destfile <- file.path(destdir, fn)
-                
+
                 if(download.file(url, destfile, method, mode="wb") == 0)
                   retval <- rbind(retval, c(p, destfile))
                 else
-                  warning(paste("Download of package", p, "failed"))
+                  warning(gettextf("Download of package '%s' failed", p),
+                          domain = NA)
               }
                 }
           }
-        
+
         retval
       }
-    
+
     unpackPkg <- function(pkg, pkgname, lib, installWithVers=FALSE)
       {
-        
+
         ## Create a temporary directory and unpack the zip to it
         ## then get the real package & version name, copying the
         ## dir over to the appropriate install dir.
             tmpDir <- tempfile(, lib)
             if (!dir.create(tmpDir))
-              stop('Unable to create temp directory ', tmpDir)
+                stop(gettextf("Unable to create temporary directory '%s'", tmpd),
+                     domain = NA)
             cDir <- getwd()
             on.exit(setwd(cDir), add = TRUE)
             res <- untar(pkg, tmpDir)
@@ -307,17 +309,17 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
             if(!is.na(res) && res)
               cat("package ", pkgname,
                   " successfully unpacked and MD5 sums checked\n")
-            
+
             ## Check to see if this is a bundle or a single package
             if (file.exists("DESCRIPTION")) {
               ## Bundle
               conts <- read.dcf("DESCRIPTION",fields="Contains")[1,]
               if (is.na(conts))
-                stop("Malformed bundle DESCRIPTION file, no Contains field")
+                stop("malformed bundle DESCRIPTION file, no Contains field")
               else
                 pkgs <- strsplit(conts," ")[[1]]
             } else pkgs <- pkgname
-            
+
             for (curPkg in pkgs) {
               desc <- read.dcf(file.path(curPkg, "DESCRIPTION"),
                                c("Package", "Version"))
@@ -325,7 +327,7 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
                 instPath <- file.path(lib, paste(desc[1,1], desc[1,2], sep="_"))
               }
               else instPath <- file.path(lib, desc[1,1])
-              
+
               ## If the package is already installed w/ this
               ## instName, remove it.  If it isn't there, the unlink call will
               ## still return success.
@@ -337,19 +339,19 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
               } else {
                 ## !! Can't revert to old 'zip.unpack' as it would
                 ## !! potentially leave cruft from a bundle in there
-                stop("Can not remove prior installation of package")
+                stop("cannot remove prior installation of package")
               }
             }
             setwd(cDir)
             unlink(tmpDir, recursive=TRUE)
           }
-    
+
     if(!length(pkgs)) return(invisible())
     if(missing(lib) || is.null(lib)) {
-      lib <- .libPaths()[1]
-      if(length(.libPaths()) > 1)
-        warning(paste("argument", sQuote("lib"),
-                      "is missing: using", lib))
+        lib <- .libPaths()[1]
+        if(length(.libPaths()) > 1)
+            warning(gettextf("argument 'lib' is missing: using %s", lib),
+                    immediate. = TRUE, domain = NA)
     }
     pkgnames <- basename(pkgs)
     pkgnames <- sub("\\.tgz$", "", pkgnames)
@@ -369,14 +371,15 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
       if (is.null(destdir)){
         tmpd <- tempfile("Rinstdir")
         if (!dir.create(tmpd))
-          stop('Unable to create temp directory ', tmpd)
+            stop(gettextf("Unable to create temporary directory '%s'", tmpd),
+                 domain = NA)
       } else tmpd <- destdir
     }
 
     foundpkgs <- download.binaries(pkgs, destdir=tmpd,
                                    available=available,
                                    contriburl=contriburl, method=method)
-    
+
     if(!is.null(foundpkgs))
       {
         update <- cbind(pkgs, lib)
@@ -416,7 +419,7 @@ install.from.file <- function(pkg = file.choose(), binary=FALSE)
     if (binary){
       install.binaries(CRAN=NULL, pkg=pkg, lib=.libPaths()[1])
     }
-    
+
     lib <- .libPaths()[1]
     cmd <- paste(file.path(R.home(), "bin", "R"), "CMD INSTALL")
     cmd <- paste(cmd, "-l", lib)
@@ -444,11 +447,11 @@ CRAN.binaries <- function(CRAN=getOption("CRAN"), method,
   }
 
 main.help.url <- function () {
-    .Script("sh", "help-links.sh", paste(tempdir(), 	paste(.libPaths(), 
+    .Script("sh", "help-links.sh", paste(tempdir(), 	paste(.libPaths(),
         collapse = " ")))
     make.packages.html()
     tmpdir <- paste("file://", tempdir(), "/.R", sep = "")
     url <- paste(tmpdir,"/doc/html/index.html", sep = "")
 	options(main.help.url=url)
 }
- 
+

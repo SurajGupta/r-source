@@ -21,24 +21,21 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Rdevices.h"
-#include "devUI.h"
+#include <Defn.h> /* for checkArity */
+#define R_INTERFACE_PTRS 1
+#include <Rinterface.h>
 
-SEXP stub_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error("the data entry editor has not been loaded");
-    return R_NilValue;
-}
 
 SEXP do_loadhistory(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     ptr_R_loadhistory(call, op, args, rho);
     return R_NilValue;
 }
 
 SEXP do_savehistory(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     ptr_R_savehistory(call, op, args, rho);
     return R_NilValue;
 }

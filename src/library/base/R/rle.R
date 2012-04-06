@@ -1,6 +1,7 @@
-rle <- function(x) {
+rle <- function(x)
+{
     if (!is.vector(x))
-        stop("x must be a vector")
+        stop("'x' must be a vector")
     n <- length(x)
     if (n == 0)
         return(list(lengths = integer(0), values = x))
@@ -24,7 +25,7 @@ inverse.rle <- function(x, ...)
 {
     if(is.null(le <- x$lengths) ||
        is.null(v  <- x$values) || length(le) != length(v))
-        stop("invalid `rle' structure")
+        stop("invalid 'rle' structure")
     rep(v, le)
 }
 

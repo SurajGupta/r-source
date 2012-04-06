@@ -14,9 +14,14 @@ applyEdit <- function(x, edit) {
     x
   } else {
     if (!is.gEdit(edit))
-      stop("Invalid edit information")
+      stop("Invalid 'edit' information")
     # Intended to handle whether edit has gPath spec or not
-    do.call("editGrob", c(list(x), edit))
+    newx <- do.call("editGrob", c(list(x), edit))
+    # If edit was specified for non-existent child, newx will be NULL
+    if (is.null(newx))
+      x
+    else
+      newx
   }
 }
 
@@ -24,7 +29,7 @@ applyEdit <- function(x, edit) {
 gEditList <- function(...) {
   edits <- list(...)
   if (!all(sapply(edits, is.gEdit)))
-    stop("gEditList can only contain gEdit objects")
+    stop("'gEditList' can only contain 'gEdit' objects")
   class(edits) <- "gEditList"
   edits
 }
@@ -41,11 +46,11 @@ applyEdits <- function(x, edits) {
       applyEdit(x, edits)
     else {
       if (!inherits(edits, "gEditList"))
-        stop("Invalid edit information")
-      for (i in edits) 
+        stop("Invalid 'edit' information")
+      for (i in edits)
         x <- applyEdits(x, i)
       x
     }
-  } 
+  }
 }
 

@@ -1,14 +1,6 @@
-packageStatus <- function(lib.loc = NULL,
-                           repositories = getOption("repositories")())
+packageStatus <- function(lib.loc = NULL, repositories = NULL, method,
+                          type = getOption("pkgType"))
 {
-    .checkRversion <- function(x) {
-        if(is.na(xx <- x["Depends"])) return(TRUE)
-        xx <- tools:::.split_dependencies(xx)
-        if(length(z <- xx[["R"]]) > 1)
-            eval(parse(text=paste("currentR", z$op, "z$version")))
-        else TRUE
-    }
-
     newestVersion <- function(x)
     {
         vers <- package_version(x)
@@ -20,13 +12,7 @@ packageStatus <- function(lib.loc = NULL,
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
     if(is.null(repositories))
-        repositories <- contrib.url(c(CRAN = getOption("CRAN"),
-                                      BIOC = getOption("BIOC")))
-
-    FIELDS <- c("Package", "Version","Priority", "Bundle", "Depends",
-                "Built", "Status", "Contains")
-    FIELDS1 <- c(FIELDS, "LibPath")
-    FIELDS2 <- c(FIELDS, "Repository")
+        repositories <- contrib.url(getOption("repos"), type = type)
 
     ## convert character matrices to dataframes
     char2df <- function(x)
@@ -34,53 +20,15 @@ packageStatus <- function(lib.loc = NULL,
         y <- list()
         for(k in 1:ncol(x)) y[[k]] <- x[,k]
         attr(y, "names") <- colnames(x)
-        attr(y, "row.names") <- 1:nrow(x)
+        attr(y, "row.names") <- y[[1]]
         class(y) <- "data.frame"
         y
     }
 
-    y <- NULL
-    for(lib in lib.loc)
-    {
-        pkgs <- .packages(all.available=TRUE, lib.loc = lib)
-        for(p in pkgs){
-            desc <- unlist(packageDescription(p, lib=lib, fields=FIELDS))
-            desc["Package"] <-
-                ifelse(is.na(desc["Bundle"]),
-                       desc["Package"],
-                       paste(desc["Bundle"], desc["Package"], sep=":"))
-            y <- rbind(y, c(desc, lib))
-        }
-    }
+    y <- char2df(installed.packages(lib.loc = lib.loc))
+    y[, "Status"] <- "ok"
 
-    y[,"Status"] <- "ok"
-    y <- char2df(y)
-    names(y) <- FIELDS1
-
-    if(length(repositories) > 0) {
-        currentR <- getRversion()
-        repositories <- unique(as.character(repositories))
-        z <- matrix("", nrow = 0, ncol = length(FIELDS2))
-        colnames(z) <- FIELDS2
-        for(rep in repositories){
-            z1 <- try(read.dcf(paste(rep, "PACKAGES", sep = "/"),
-                               fields = FIELDS2), silent = TRUE)
-            if(inherits(z1, "try-error")) {
-                cat("Warning: unable to access index for repository",
-                    rep, "\n")
-                repositories <- repositories[repositories != rep]
-                next
-            }
-
-            ## ignore packages which don't fit our version of R
-            z1 <- z1[apply(z1, 1, .checkRversion),,drop=FALSE]
-            if(length(z1)==0) next
-
-            z1[,"Repository"] <- rep
-            z <- rbind(z[,FIELDS2], z1[,FIELDS2])
-        }
-    }
-
+    z <- available.packages(repositories, method)
     ## only consider the newest version of each package
     ## in the first repository where it appears
     ztab <- table(z[,"Package"])
@@ -91,16 +39,14 @@ packageStatus <- function(lib.loc = NULL,
         z <- z[-zrow[-znewest],]
     }
 
-    z[,"Status"] <- "not installed"
+    z <- cbind(z, Status = "not installed")
     z[z[,"Package"] %in% y$Package, "Status"] <- "installed"
     ## Careful: bundles can be partially installed!
-    ## z[!is.na(z[,"Bundle"]) & (z[,"Bundle"] %in% y$Bundle), "Status"] <- "installed"
     bundles <- which(!is.na(z[,"Bundle"]))
     for(bundle in bundles) {
         contains <- z[bundle, "Contains"]
         contains <- strsplit(contains, "[[:space:]]+")[[1]]
-        if(all(paste(z[bundle, "Bundle"], contains, sep=":") %in% y$Package))
-           z[bundle, "Status"] <- "installed"
+        if(all(contains %in% y$Package)) z[bundle, "Status"] <- "installed"
     }
 
     z <- char2df(z)
@@ -119,10 +65,10 @@ packageStatus <- function(lib.loc = NULL,
         }
     }
 
-    y$LibPath <- factor(as.character(y$LibPath), levels=lib.loc)
-    y$Status <- as.factor(y$Status)
-    z$Repository <- factor(as.character(z$Repository), levels=repositories)
-    z$Status <- as.factor(z$Status)
+    y$LibPath <- factor(y$LibPath, levels=lib.loc)
+    y$Status <- factor(y$Status, levels=c("ok", "upgrade", "unavailable"))
+    z$Repository <- factor(z$Repository, levels=repositories)
+    z$Status <- factor(z$Status, levels=c("installed", "not installed"))
 
     retval <- list(inst=y, avail=z)
     class(retval) <- "packageStatus"
@@ -137,8 +83,10 @@ summary.packageStatus <- function(object, ...)
         ok <- (object$inst$LibPath==k)
         cat("\n*** Library ", k, "\n", sep="")
         if(any(ok)){
-            print(tapply(object$inst$Package[ok],
-                         object$inst$Status[ok],
+            i <- object$inst
+            Package <- ifelse(is.na(i$Bundle), i$Package,
+                              paste(i$Bundle, i$Package, sep=":"))
+            print(tapply(Package[ok], i$Status[ok],
                          function(x) sort(as.character(x))))
         }
     }
@@ -161,7 +109,7 @@ print.packageStatus <- function(x, ...)
     cat("Number of installed packages:\n")
     print(table(x$inst$LibPath, x$inst$Status))
 
-    cat("\nNumber of available packages (each package counted only once):\n")
+    cat("\nNumber of available packages (each package/bundle counted only once):\n")
     print(table(x$avail$Repository, x$avail$Status))
     invisible(x)
 }
@@ -202,7 +150,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
             haveasked <- c(haveasked, tmpstring)
             cat("\n")
             cat(pkg, ":\n")
-            askprint(object$inst[k,c("Version","LibPath")])
+            askprint(object$inst[k,c("Version", "LibPath")])
             askprint(object$avail[pkg, c("Version", "Repository")])
             answer <- substr(readline("Update (y/N)?  "), 1, 1)
             if(answer == "y" | answer == "Y")
@@ -213,7 +161,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
         }
     } else {
         pkgs <- ifelse(is.na(object$inst[ ,"Bundle"]),
-                          object$inst[ ,"Package"], object$inst[ ,"Bundle"])
+                       object$inst[ ,"Package"], object$inst[ ,"Bundle"])
         update <- cbind(pkgs, as.character(object$inst[ , "LibPath"]),
                         as.character(object$avail[pkgs, "Repository"]))
         update <- update[old, , drop=FALSE]
@@ -226,8 +174,3 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
         }
     }
 }
-
-
-
-
-

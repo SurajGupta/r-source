@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-4   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole.
+   Metric info is requested on widechar if found.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -29,6 +33,21 @@
 #include <Rdevices.h>
 #include <R_ext/Applic.h>	/* pretty0() */
 #include <Rmath.h>
+
+#ifdef SUPPORT_MBCS
+# include <wchar.h>
+#endif
+
+int R_GE_getVersion()
+{
+  return R_GE_version;
+}
+
+void R_GE_checkVersionOrDie(int version)
+{
+  if (version != R_GE_version)
+    error(_("Graphics API version mismatch"));
+}
 
 /* A note on memory management ...
  * Here (with GEDevDesc's) I have continued the deplorable tradition of
@@ -65,12 +84,13 @@ GEDevDesc* GEcreateDevDesc(NewDevDesc* dev)
      */
     int i;
     if (!dd)
-	error("Not enough memory to allocate device (in addDevice)");
+	error(_("not enough memory to allocate device (in addDevice)"));
     for (i=0; i<MAX_GRAPHICS_SYSTEMS; i++)
 	dd->gesd[i] = NULL;
     dd->newDevStruct = 1;
     dd->dev = dev;
     dd->dirty = FALSE;
+    dd->recordGraphics = TRUE;
     return dd;
 }
 
@@ -81,7 +101,7 @@ GEDevDesc* GEcreateDevDesc(NewDevDesc* dev)
 
 static void unregisterOne(GEDevDesc *dd, int systemNumber) {
     if (dd->gesd[systemNumber] != NULL) {
-	(dd->gesd[systemNumber]->callback)(GE_FinaliseState, dd, 
+	(dd->gesd[systemNumber]->callback)(GE_FinaliseState, dd,
 					   R_NilValue);
 	free(dd->gesd[systemNumber]);
 	dd->gesd[systemNumber] = NULL;
@@ -125,7 +145,7 @@ static void registerOne(GEDevDesc *dd, int systemNumber, GEcallback cb) {
     dd->gesd[systemNumber] =
 	(GESystemDesc*) calloc(1, sizeof(GESystemDesc));
     if (dd->gesd[systemNumber] == NULL)
-	error("unable to allocate memory (in GEregister)");
+	error(_("unable to allocate memory (in GEregister)"));
     cb(GE_InitState, dd, R_NilValue);
     dd->gesd[systemNumber]->callback = cb;
 }
@@ -163,9 +183,9 @@ void GEregisterSystem(GEcallback cb, int *systemRegisterIndex) {
      */
     DevDesc *dd;
     if (numGraphicsSystems + 1 == MAX_GRAPHICS_SYSTEMS)
-	error("Too many graphics systems registered");
+	error(_("too many graphics systems registered"));
     /* Set the system register index so that, if there are existing
-     * devices, it will know where to put the system-specific 
+     * devices, it will know where to put the system-specific
      * information in those devices
      */
     *systemRegisterIndex = numGraphicsSystems;
@@ -191,7 +211,7 @@ void GEregisterSystem(GEcallback cb, int *systemRegisterIndex) {
     registeredSystems[numGraphicsSystems] =
 	(GESystemDesc*) calloc(1, sizeof(GESystemDesc));
     if (registeredSystems[numGraphicsSystems] == NULL)
-	error("unable to allocate memory (in GEregister)");
+	error(_("unable to allocate memory (in GEregister)"));
     registeredSystems[numGraphicsSystems]->callback = cb;
     numGraphicsSystems += 1;
 }
@@ -213,7 +233,7 @@ void GEunregisterSystem(int registerIndex)
     /* safety check if called before Ginit() */
     if(registerIndex < 0) return;
     if (numGraphicsSystems == 0)
-	error("No graphics system to unregister");
+	error(_("no graphics system to unregister"));
     /* Run through the existing devices and remove the information
      * from any GEDevDesc's
      */
@@ -270,7 +290,7 @@ SEXP GEHandleEvent(GEevent event, NewDevDesc *dev, SEXP data)
     DevDesc* dd = GetDevice(devNumber((DevDesc*) dev));
     for (i=0; i<numGraphicsSystems; i++)
 	if (registeredSystems[i] != NULL)
-	    (registeredSystems[i]->callback)(event, (GEDevDesc*) dd, 
+	    (registeredSystems[i]->callback)(event, (GEDevDesc*) dd,
 					     data);
     return R_NilValue;
 }
@@ -437,7 +457,7 @@ double toDeviceHeight(double value, GEUnit from, GEDevDesc *dd)
 }
 
 /****************************************************************
- * Code for converting line ends and joins from SEXP to internal 
+ * Code for converting line ends and joins from SEXP to internal
  * representation
  ****************************************************************
  */
@@ -465,12 +485,12 @@ R_GE_lineend LENDpar(SEXP value, int ind)
 	    if(!strcmp(CHAR(STRING_ELT(value, ind)), lineend[i].name))
 		return lineend[i].end;
 	}
-	error("invalid line end"); /*NOTREACHED, for -Wall : */ return 0;
+	error(_("invalid line end")); /*NOTREACHED, for -Wall : */ return 0;
     }
     else if(isInteger(value)) {
 	code = INTEGER(value)[ind];
 	if(code == NA_INTEGER || code < 0)
-	    error("invalid line end");
+	    error(_("invalid line end"));
 	if (code > 0)
 	    code = (code-1) % nlineend + 1;
 	return lineend[code].end;
@@ -478,14 +498,14 @@ R_GE_lineend LENDpar(SEXP value, int ind)
     else if(isReal(value)) {
 	rcode = REAL(value)[ind];
 	if(!R_FINITE(rcode) || rcode < 0)
-	    error("invalid line end");
+	    error(_("invalid line end"));
 	code = rcode;
 	if (code > 0)
 	    code = (code-1) % nlineend + 1;
 	return lineend[code].end;
     }
     else {
-	error("invalid line end"); /*NOTREACHED, for -Wall : */ return 0;
+	error(_("invalid line end")); /*NOTREACHED, for -Wall : */ return 0;
     }
 }
 
@@ -499,7 +519,7 @@ SEXP LENDget(R_GE_lineend lend)
 	    return mkString(lineend[i].name);
     }
 
-    error("invalid line end");
+    error(_("invalid line end"));
     /*
      * Should never get here
      */
@@ -530,12 +550,12 @@ R_GE_linejoin LJOINpar(SEXP value, int ind)
 	    if(!strcmp(CHAR(STRING_ELT(value, ind)), linejoin[i].name))
 		return linejoin[i].join;
 	}
-	error("invalid line join"); /*NOTREACHED, for -Wall : */ return 0;
+	error(_("invalid line join")); /*NOTREACHED, for -Wall : */ return 0;
     }
     else if(isInteger(value)) {
 	code = INTEGER(value)[ind];
 	if(code == NA_INTEGER || code < 0)
-	    error("invalid line join");
+	    error(_("invalid line join"));
 	if (code > 0)
 	    code = (code-1) % nlinejoin + 1;
 	return linejoin[code].join;
@@ -543,14 +563,14 @@ R_GE_linejoin LJOINpar(SEXP value, int ind)
     else if(isReal(value)) {
 	rcode = REAL(value)[ind];
 	if(!R_FINITE(rcode) || rcode < 0)
-	    error("invalid line join");
+	    error(_("invalid line join"));
 	code = rcode;
 	if (code > 0)
 	    code = (code-1) % nlinejoin + 1;
 	return linejoin[code].join;
     }
     else {
-	error("invalid line join"); /*NOTREACHED, for -Wall : */ return 0;
+	error(_("invalid line join")); /*NOTREACHED, for -Wall : */ return 0;
     }
 }
 
@@ -564,7 +584,7 @@ SEXP LJOINget(R_GE_linejoin ljoin)
 	    return mkString(linejoin[i].name);
     }
 
-    error("invalid line join");
+    error(_("invalid line join"));
     /*
      * Should never get here
      */
@@ -621,14 +641,14 @@ static void getClipRectToDevice(double *x1, double *y1, double *x2, double *y2,
 void GESetClip(double x1, double y1, double x2, double y2, GEDevDesc *dd)
 {
     dd->dev->clip(x1, x2, y1, y2, dd->dev);
-    /* 
+    /*
      * Record the current clip rect settings so that calls to
      * getClipRect get the up-to-date values.
      */
     dd->dev->clipLeft = fmin2(x1, x2);
     dd->dev->clipRight = fmax2(x1, x2);
     dd->dev->clipTop = fmax2(y1, y2);
-    dd->dev->clipBottom = fmin2(y1, y2); 
+    dd->dev->clipBottom = fmin2(y1, y2);
 }
 
 /****************************************************************
@@ -798,7 +818,7 @@ static void CScliplines(int n, double *x, double *y,
     xx = (double *) R_alloc(n, sizeof(double));
     yy = (double *) R_alloc(n, sizeof(double));
     if (xx == NULL || yy == NULL)
-	error("out of memory while clipping polyline");
+	error(_("out of memory while clipping polyline"));
 
     xx[0] = x1 = x[0];
     yy[0] = y1 = y[0];
@@ -1058,7 +1078,7 @@ static void clipPolygon(int n, double *x, double *y,
 {
     double *xc = NULL, *yc = NULL;
     /* if bg not specified then draw as polyline rather than polygon
-     * to avoid drawing line along border of clipping region 
+     * to avoid drawing line along border of clipping region
      * If bg was NA then it has been converted to fully transparent */
     if (R_TRANSPARENT(gc->fill)) {
 	int i;
@@ -1093,7 +1113,7 @@ void GEPolygon(int n, double *x, double *y,
 	       R_GE_gcontext *gc,
 	       GEDevDesc *dd)
 {
-    /* 
+    /*
      * Save (and reset below) the heap pointer to clean up
      * after any R_alloc's done by functions I call.
      */
@@ -1102,7 +1122,7 @@ void GEPolygon(int n, double *x, double *y,
 	/* "transparent" border */
 	gc->col = R_TRANWHITE;
     if (dd->dev->canClip) {
-	/* 
+	/*
 	 * If the device can clip, then we just clip to the device
 	 * boundary and let the device do clipping within that.
 	 * We do this to avoid problems where writing WAY off the
@@ -1202,7 +1222,7 @@ void GECircle(double x, double y, double radius,
     double *xc, *yc;
     int result;
 
-    /* 
+    /*
      * If the device can clip, then we just clip to the device
      * boundary and let the device do clipping within that.
      * We do this to avoid problems where writing WAY off the
@@ -1215,7 +1235,7 @@ void GECircle(double x, double y, double radius,
 
     switch (result) {
     case -2: /* No clipping;  draw all of circle */
-	/* 
+	/*
 	 * If we did the clipping, then the circle is entirely
 	 * within the current clipping rect.
 	 *
@@ -1226,7 +1246,7 @@ void GECircle(double x, double y, double radius,
 	dd->dev->circle(x, y, radius, gc, dd->dev);
 	break;
     case -1: /* Total clipping; draw nothing */
-	/* 
+	/*
 	 * If we did the clipping, then the circle is entirely outside
 	 * the current clipping rect, so there is nothing to draw.
 	 *
@@ -1241,7 +1261,7 @@ void GECircle(double x, double y, double radius,
 	 * intersects the current clipping rect and we need to
 	 * convert to a poly[line|gon] and draw that.
 	 *
-	 * If the device can clip then we just determined that the 
+	 * If the device can clip then we just determined that the
 	 * circle intersects the device boundary.  We assume that the
 	 * circle is not so big that other parts may be WAY off the
 	 * device and just draw a circle.
@@ -1321,7 +1341,7 @@ void GERect(double x0, double y0, double x1, double y1,
     double *xc, *yc;
     int result;
 
-    /* 
+    /*
      * For clipping logic, see comments in GECircle
      */
     result = clipRectCode(x0, y0, x1, y1, dd->dev->canClip, dd);
@@ -1447,43 +1467,43 @@ typedef struct {
 static VFontTab
 VFontTable[] = {
     { "HersheySerif",	          1, 7 },
-    /* 
-       HersheySerif 
-       HersheySerif-Italic 
-       HersheySerif-Bold 
-       HersheySerif-BoldItalic 
-       HersheyCyrillic 
-       HersheyCyrillic-Oblique 
-       HersheyEUC 
+    /*
+       HersheySerif
+       HersheySerif-Italic
+       HersheySerif-Bold
+       HersheySerif-BoldItalic
+       HersheyCyrillic
+       HersheyCyrillic-Oblique
+       HersheyEUC
     */
     { "HersheySans",	          1, 4 },
-    /* 
-       HersheySans 
-       HersheySans-Oblique 
-       HersheySans-Bold 
-       HersheySans-BoldOblique 
+    /*
+       HersheySans
+       HersheySans-Oblique
+       HersheySans-Bold
+       HersheySans-BoldOblique
     */
     { "HersheyScript",	          1, 4 },
     /*
-      HersheyScript 
-      HersheyScript 
-      HersheyScript-Bold 
+      HersheyScript
+      HersheyScript
       HersheyScript-Bold
-    */ 
+      HersheyScript-Bold
+    */
     { "HersheyGothicEnglish",	  1, 1 },
     { "HersheyGothicGerman",	  1, 1 },
     { "HersheyGothicItalian",	  1, 1 },
     { "HersheySymbol",	          1, 4 },
     /*
-      HersheySerifSymbol 
-      HersheySerifSymbol-Oblique 
-      HersheySerifSymbol-Bold 
-      HersheySerifSymbol-BoldOblique 
-    */    
+      HersheySerifSymbol
+      HersheySerifSymbol-Oblique
+      HersheySerifSymbol-Bold
+      HersheySerifSymbol-BoldOblique
+    */
     { "HersheySansSymbol",        1, 2 },
     /*
-      HersheySansSymbol 
-      HersheySansSymbol-Oblique 
+      HersheySansSymbol
+      HersheySansSymbol-Oblique
     */
 
     { NULL,		          0, 0 },
@@ -1501,7 +1521,7 @@ static int VFontFamilyCode(char *fontfamily)
 
 static int VFontFaceCode(int familycode, int fontface) {
     int face = fontface;
-    /* 
+    /*
      * R's "font" par has historically made 2=bold and 3=italic
      * These must be switched to correspond to Hershey fontfaces
      */
@@ -1515,7 +1535,7 @@ static int VFontFaceCode(int familycode, int fontface) {
      */
     if (!(face >= VFontTable[familycode].minface &&
 	  face <= VFontTable[familycode].maxface)) {
-	/* 
+	/*
 	 * Silently convert standard faces to closest match
 	 */
 	switch (face) {
@@ -1523,33 +1543,33 @@ static int VFontFaceCode(int familycode, int fontface) {
 	     * italic becomes plain (gothic only)
 	     */
 	case 2:
-	    /* 
+	    /*
 	     * bold becomes plain
 	     */
-	case 3: 
+	case 3:
 	    face = 1;
 	    break;
-	    /* 
+	    /*
 	     * bold-italic becomes italic for gothic fonts
-	     * and bold for sans symbol font 
+	     * and bold for sans symbol font
 	     */
-	case 4: 
+	case 4:
 	    if (familycode == 7)
 		face = 2;
 	    else
 		face = 1;
 	    break;
 	default:
-	    /* 
+	    /*
 	     * Other font faces just too wacky so throw an error
 	     */
-	    error("Font face %d not supported for font family %s",
+	    error(_("font face %d not supported for font family '%s'"),
 		  fontface, VFontTable[familycode].name);
 	}
     }
     return face;
 }
-    
+
 /****************************************************************
  * GEText
  ****************************************************************
@@ -1561,7 +1581,7 @@ void GEText(double x, double y, char *str,
 	    R_GE_gcontext *gc,
 	    GEDevDesc *dd)
 {
-    /* 
+    /*
      * If the fontfamily is a Hershey font family, call R_GE_VText
      */
     int vfontcode = VFontFamilyCode(gc->fontfamily);
@@ -1603,14 +1623,14 @@ void GEText(double x, double y, char *str,
 		    if (!R_FINITE(yc))
 			yc = 0.5;
 		    yoff = (1 - yc)*(n - 1) - i;
-		    /* cra is based on the font pointsize at the 
+		    /* cra is based on the font pointsize at the
 		     * time the device was created.
 		     * Adjust for potentially different current pointsize.
 		     * This is a crude calculation that might be better
 		     * performed using a device call that responds with
 		     * the current font pointsize in device coordinates.
 		     */
-		    yoff = fromDeviceHeight(yoff * gc->lineheight * 
+		    yoff = fromDeviceHeight(yoff * gc->lineheight *
 					    gc->cex * dd->dev->cra[1] *
 					    gc->ps/dd->dev->startps,
 					    GE_INCHES, dd);
@@ -1636,41 +1656,68 @@ void GEText(double x, double y, char *str,
 			/* Otherwise use GEStrHeight and fiddle yc */
 			double h, d, w;
 			GEMetricInfo(0, gc, &h, &d, &w, dd);
-			if (n>1 || (h==0 && d==0 && w==0)) {
-			    height = fromDeviceHeight(GEStrHeight(sbuf, gc, 
+			if (n > 1 || (h == 0 && d == 0 && w == 0)) {
+			    height = fromDeviceHeight(GEStrHeight(sbuf, gc,
 								  dd),
 						      GE_INCHES, dd);
 			    yc = dd->dev->yCharOffset;
 			} else {
 			    double maxHeight = 0.0;
 			    double maxDepth = 0.0;
-			    char *ss;
+			    char *ss = sbuf;
 			    int charNum = 0;
-			    for (ss=sbuf; *ss; ss++) {
-				GEMetricInfo((unsigned char) *ss, gc,
-					     &h, &d, &w, dd);
-				h = fromDeviceHeight(h, GE_INCHES, dd);
-				d = fromDeviceHeight(d, GE_INCHES, dd);
-				/* Set maxHeight and maxDepth from height
-				   and depth of first char.
-				   Must NOT set to 0 in case there is
-				   only 1 char and it has negative
-				   height or depth
-				*/
-				if (charNum++ == 0) {
-				    maxHeight = h;
-				    maxDepth = d;
-				} else {
-				    if (h > maxHeight) maxHeight = h;
-				    if (d > maxDepth) maxDepth = d;
+#ifdef SUPPORT_MBCS
+			    if(mbcslocale && !utf8strIsASCII(ss)) {
+				int n = strlen(ss), used;
+				wchar_t wc;
+				mbstate_t mb_st;
+				mbs_init(&mb_st);
+				while ((used=mbrtowc(&wc, ss, n, &mb_st)) > 0) {
+				    GEMetricInfo((int)wc, gc, &h, &d, &w, dd);
+				    h = fromDeviceHeight(h, GE_INCHES, dd);
+				    d = fromDeviceHeight(d, GE_INCHES, dd);
+				    /* Set maxHeight and maxDepth from height
+				       and depth of first char.
+				       Must NOT set to 0 in case there is
+				       only 1 char and it has negative
+				       height or depth
+				    */
+				    if (charNum++ == 0) {
+					maxHeight = h;
+					maxDepth = d;
+				    } else {
+					if (h > maxHeight) maxHeight = h;
+					if (d > maxDepth) maxDepth = d;
+				    }
+				    ss += used; n -=used;
 				}
-			    }
+			    } else
+#endif
+				for (ss = sbuf; *ss; ss++) {
+				    GEMetricInfo((unsigned char) *ss, gc,
+						 &h, &d, &w, dd);
+				    h = fromDeviceHeight(h, GE_INCHES, dd);
+				    d = fromDeviceHeight(d, GE_INCHES, dd);
+				    /* Set maxHeight and maxDepth from height
+				       and depth of first char.
+				       Must NOT set to 0 in case there is
+				       only 1 char and it has negative
+				       height or depth
+				    */
+				    if (charNum++ == 0) {
+					maxHeight = h;
+					maxDepth = d;
+				    } else {
+					if (h > maxHeight) maxHeight = h;
+					if (d > maxDepth) maxDepth = d;
+				    }
+				}
+
 			    height = maxHeight - maxDepth;
 			    yc = 0.5;
 			}
 		    } else {
-			height = fromDeviceHeight(GEStrHeight(sbuf, gc,
-							      dd),
+			height = fromDeviceHeight(GEStrHeight(sbuf, gc, dd),
 						  GE_INCHES, dd);
 		    }
 		    if (dd->dev->canHAdj == 2) hadj = xc;
@@ -1718,7 +1765,7 @@ void GEText(double x, double y, char *str,
 void GEMode(int mode, GEDevDesc *dd)
 {
     if (NoDevices())
-	error("No graphics device is active");
+	error(_("no graphics device is active"));
     dd->dev->mode(mode, dd->dev);
 }
 
@@ -1747,23 +1794,51 @@ void GESymbol(double x, double y, int pch, double size,
 {
     double r, xc, yc;
     double xx[4], yy[4];
-    char str[2];
+    char str[16];
 
     /* Special cases for plotting pch="." or pch=<character>
      */
-    if(' ' <= pch && pch <= 255) {
+    if(pch == NA_INTEGER) /* do nothing */;
+#ifdef SUPPORT_MBCS
+    else if(' ' <= pch && (mbcslocale || pch <= 255)) {
+#else
+    else if(' ' <= pch && pch <= 255) {
+#endif
 	if (pch == '.') {
-	    /* 
+	    /*
 	     * NOTE:  we are *filling* a rect with the current
 	     * colour (we are not drawing the border AND we are
 	     * not using the current fill colour)
 	     */
 	    gc->fill = gc->col;
 	    gc->col = R_TRANWHITE;
-	    GERect(x-.5, y-.5, x+.5, y+.5, gc, dd);
+	    /* 
+	       The idea here is to use a 0.01" square, but to be of
+	       at least one device unit in each direction, 
+	       assuming that corresponds to pixels. That may be odd if
+	       pixels are not square, but only on low resolution 
+	       devices where we can do nothing better.
+
+	       For this option only, size is cex (see engine.c).
+	       
+	       Prior to 2.1.0 the offsets were always 0.5.
+	    */
+	    xc = size * fabs(toDeviceWidth(0.005, GE_INCHES, dd));
+	    yc = size * fabs(toDeviceHeight(0.005, GE_INCHES, dd));
+	    if(size == 1 && xc < 0.5) xc = 0.5;
+	    if(size == 1 && yc < 0.5) yc = 0.5;
+	    GERect(x-xc, y-yc, x+xc, y+yc, gc, dd);
 	} else {
-	    str[0] = pch;
-	    str[1] = '\0';
+#ifdef SUPPORT_MBCS
+	    if(mbcslocale) {
+		int cnt = wcrtomb(str, pch, NULL);
+		str[cnt] = 0;
+	    } else
+#endif
+	    {
+		str[0] = pch;
+		str[1] = '\0';
+	    }
 	    GEText(x, y, str, NA_REAL, NA_REAL, 0., gc, dd);
 	}
     }
@@ -2021,6 +2096,8 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[2] = x-xc; yy[2] = y+yc;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    break;
+	default:
+	    warning(_("unimplemented pch value '%d'"), pch);
 	}
     }
 }
@@ -2043,11 +2120,11 @@ void GEPretty(double *lo, double *up, int *ndiv)
 #endif
 
     if(*ndiv <= 0)
-	error("invalid axis extents [GEPretty(.,.,n=%d)", *ndiv);
+	error(_("invalid axis extents [GEPretty(.,.,n=%d)"), *ndiv);
     if(*lo == R_PosInf || *up == R_PosInf ||
        *lo == R_NegInf || *up == R_NegInf ||
        !R_FINITE(*up - *lo)) {
-	error("Infinite axis extents [GEPretty(%g,%g,%d)]", *lo, *up, *ndiv);
+	error(_("infinite axis extents [GEPretty(%g,%g,%d)]"), *lo, *up, *ndiv);
 	return;/*-Wall*/
     }
 
@@ -2085,9 +2162,9 @@ void GEPretty(double *lo, double *up, int *ndiv)
 
 #ifdef DEBUG_PLOT
     if(*lo < x1)
-	warning(" .. GEPretty(.): new *lo = %g < %g = x1", *lo, x1);
+	warning(_(" .. GEPretty(.): new *lo = %g < %g = x1"), *lo, x1);
     if(*up > x2)
-	warning(" .. GEPretty(.): new *up = %g > %g = x2", *up, x2);
+	warning(_(" .. GEPretty(.): new *up = %g > %g = x2"), *up, x2);
 #endif
 }
 
@@ -2095,12 +2172,16 @@ void GEPretty(double *lo, double *up, int *ndiv)
  * GEMetricInfo
  ****************************************************************
  */
-void GEMetricInfo(int c, 
+/*
+  We need to decide what c is.  In an 8-bit locale it is char,
+  otherwise it had better be wchar_t.  Something like uint32 would be better.
+ */
+void GEMetricInfo(int c,
 		  R_GE_gcontext *gc,
 		  double *ascent, double *descent, double *width,
 		  GEDevDesc *dd)
 {
-    /* 
+    /*
      * If the fontfamily is a Hershey font family, call R_GE_VText
      */
     int vfontcode = VFontFamilyCode(gc->fontfamily);
@@ -2112,19 +2193,24 @@ void GEMetricInfo(int c,
 	*ascent= 0;
 	*descent = 0;
 	*width = 0;
-    } else 
-	dd->dev->metricInfo(c & 0xFF, gc, ascent, descent, width, dd->dev);
+    } else
+#ifdef SUPPORT_MBCS
+	if(mbcslocale)
+	    dd->dev->metricInfo(c, gc, ascent, descent, width, dd->dev);
+	else
+#endif
+	    dd->dev->metricInfo(c & 0xFF, gc, ascent, descent, width, dd->dev);
 }
 
 /****************************************************************
  * GEStrWidth
  ****************************************************************
  */
-double GEStrWidth(char *str, 
+double GEStrWidth(char *str,
 		  R_GE_gcontext *gc,
 		  GEDevDesc *dd)
 {
-    /* 
+    /*
      * If the fontfamily is a Hershey font family, call R_GE_VStrWidth
      */
     int vfontcode = VFontFamilyCode(gc->fontfamily);
@@ -2166,11 +2252,11 @@ double GEStrWidth(char *str,
  * GEStrHeight
  ****************************************************************
  */
-double GEStrHeight(char *str, 
+double GEStrHeight(char *str,
 		   R_GE_gcontext *gc,
 		   GEDevDesc *dd)
 {
-    /* 
+    /*
      * If the fontfamily is a Hershey font family, call R_GE_VStrHeight
      */
     int vfontcode = VFontFamilyCode(gc->fontfamily);
@@ -2188,19 +2274,19 @@ double GEStrHeight(char *str,
 	for(s = str; *s ; s++)
 	    if (*s == '\n')
 		n++;
-	/* cra is based on the font pointsize at the 
+	/* cra is based on the font pointsize at the
 	 * time the device was created.
 	 * Adjust for potentially different current pointsize
 	 * This is a crude calculation that might be better
 	 * performed using a device call that responds with
 	 * the current font pointsize in device coordinates.
 	 */
-	h = n * gc->lineheight * gc->cex * dd->dev->cra[1] * 
+	h = n * gc->lineheight * gc->cex * dd->dev->cra[1] *
 	    gc->ps/dd->dev->startps;
 	/* Add in the ascent of the font, if available */
 	GEMetricInfo('M', gc, &asc, &dsc, &wid, dd);
 	if ((asc == 0.0) && (dsc == 0.0) && (wid == 0.0))
-	    asc = gc->lineheight * gc->cex * dd->dev->cra[1] * 
+	    asc = gc->lineheight * gc->cex * dd->dev->cra[1] *
 		gc->ps/dd->dev->startps;
 	h += asc;
 	return h;
@@ -2220,7 +2306,7 @@ void GENewPage(R_GE_gcontext *gc, GEDevDesc *dd)
 /****************************************************************
  * GEdeviceDirty
  ****************************************************************
- * 
+ *
  * Has the device received output from any graphics system?
  */
 
@@ -2246,7 +2332,7 @@ void GEdirtyDevice(GEDevDesc *dd)
  * GEcheckState
  ****************************************************************
  *
- * Check whether all registered graphics systems are in a 
+ * Check whether all registered graphics systems are in a
  * "valid" state.
  */
 
@@ -2256,10 +2342,20 @@ Rboolean GEcheckState(GEDevDesc *dd)
     Rboolean result = TRUE;
     for (i=0; i<numGraphicsSystems; i++)
 	if (dd->gesd[i] != NULL)
-	    if (!LOGICAL((dd->gesd[i]->callback)(GE_CheckPlot, dd, 
+	    if (!LOGICAL((dd->gesd[i]->callback)(GE_CheckPlot, dd,
 						 R_NilValue))[0])
 		result = FALSE;
     return result;
+}
+
+/****************************************************************
+ * GErecording
+ ****************************************************************
+ */
+
+Rboolean GErecording(SEXP call, GEDevDesc *dd)
+{
+    return (call != R_NilValue && dd->recordGraphics);
 }
 
 /****************************************************************
@@ -2269,14 +2365,17 @@ Rboolean GEcheckState(GEDevDesc *dd)
 
 void GErecordGraphicOperation(SEXP op, SEXP args, GEDevDesc *dd)
 {
-    SEXP lastOperation = lastElt(dd->dev->displayList);
+    SEXP lastOperation = dd->dev->DLlastElt;
     if (dd->dev->displayListOn) {
-	SEXP newOperation = CONS(op, args);
-	if (lastOperation == R_NilValue)
+	SEXP newOperation = list2(op, args);
+	if (lastOperation == R_NilValue) {
 	    dd->dev->displayList = CONS(newOperation,
 						       R_NilValue);
-	else
+	    dd->dev->DLlastElt = dd->dev->displayList;
+	} else {
 	    SETCDR(lastOperation, CONS(newOperation, R_NilValue));
+	    dd->dev->DLlastElt = CDR(lastOperation);
+	}
     }
 }
 
@@ -2292,13 +2391,13 @@ void GEinitDisplayList(GEDevDesc *dd)
      * can maintain a plot history
      */
     dd->dev->savedSnapshot = GEcreateSnapshot(dd);
-    /* Get each graphics system to save state required for 
+    /* Get each graphics system to save state required for
      * replaying the display list
      */
     for (i=0; i<numGraphicsSystems; i++)
 	if (dd->gesd[i] != NULL)
 	    (dd->gesd[i]->callback)(GE_SaveState, dd, R_NilValue);
-    dd->dev->displayList = R_NilValue;
+    dd->dev->displayList = dd->dev->DLlastElt = R_NilValue;
 }
 
 /****************************************************************
@@ -2310,7 +2409,7 @@ void GEplayDisplayList(GEDevDesc *dd)
 {
     int i, savedDevice, plotok;
     SEXP theList;
-    /* Get each graphics system to restore state required for 
+    /* Get each graphics system to restore state required for
      * replaying the display list
      */
     for (i=0; i<numGraphicsSystems; i++)
@@ -2326,13 +2425,13 @@ void GEplayDisplayList(GEDevDesc *dd)
 	while (theList != R_NilValue && plotok) {
 	    SEXP theOperation = CAR(theList);
 	    SEXP op = CAR(theOperation);
-	    SEXP args = CDR(theOperation);
+	    SEXP args = CADR(theOperation);
 	    PRIMFUN(op) (R_NilValue, op, args, R_NilValue);
 	    /* Check with each graphics system that the plotting went ok
 	     */
 	    if (!GEcheckState(dd)) {
 		plotok = 0;
-		warning("Display list redraw incomplete");
+		warning(_("Display list redraw incomplete"));
 	    }
 	    theList = CDR(theList);
 	}
@@ -2367,15 +2466,16 @@ void GEcopyDisplayList(int fromDevice)
     DevDesc* fromDev = GetDevice(fromDevice);
     int i;
     tmp = Rf_displayList(fromDev);
-    if(!isNull(tmp)) 
+    if(!isNull(tmp))
 	tmp = duplicate(tmp);
     dd->dev->displayList = tmp;
+    dd->dev->DLlastElt = lastElt(dd->dev->displayList);
     /* Get each registered graphics system to copy system state
      * information from the "from" device to the current device
      */
-    for (i=0; i<numGraphicsSystems; i++) 
+    for (i=0; i<numGraphicsSystems; i++)
 	if (dd->gesd[i] != NULL)
-	    (dd->gesd[i]->callback)(GE_CopyState, (GEDevDesc*) fromDev, 
+	    (dd->gesd[i]->callback)(GE_CopyState, (GEDevDesc*) fromDev,
 				    R_NilValue);
     GEplayDisplayList(dd);
     if (!dd->dev->displayListOn)
@@ -2388,7 +2488,7 @@ void GEcopyDisplayList(int fromDevice)
  */
 
 /* Create a recording of the current display,
- * including enough information from each registered 
+ * including enough information from each registered
  * graphics system to be able to recreate the display
  * The structure created is an SEXP which nicely hides the
  * internals, because noone should be looking in there anyway
@@ -2401,7 +2501,7 @@ SEXP GEcreateSnapshot(GEDevDesc *dd)
     int i;
     SEXP snapshot, tmp;
     SEXP state;
-    /* Create a list with one spot for the display list 
+    /* Create a list with one spot for the display list
      * and one spot each for the registered graphics systems
      * to put their graphics state
      */
@@ -2437,15 +2537,15 @@ SEXP GEcreateSnapshot(GEDevDesc *dd)
  *
  * The graphics engine assumes that it is getting a snapshot
  * that was created in THE CURRENT R SESSION
- * (Thus, it can assume that registered graphics systems are 
- *  in the same order as they were when the snapshot was 
+ * (Thus, it can assume that registered graphics systems are
+ *  in the same order as they were when the snapshot was
  *  created -- in patricular, state information will be sent
  *  to the appropriate graphics system)
  *
- * It is possible to save a snapshot to an R variable 
+ * It is possible to save a snapshot to an R variable
  * (and therefore save and reload it between sessions and
  *  even possibly into a different R version),
- * BUT this is strongly discouraged 
+ * BUT this is strongly discouraged
  * (in the documentation for recordPlot() and replayPlot()
  *  and in the documentation for the Rgui interface on Windows)
  */
@@ -2456,18 +2556,121 @@ void GEplaySnapshot(SEXP snapshot, GEDevDesc* dd)
      * as were registered when the snapshot was taken.
      */
     int i, numSystems = LENGTH(snapshot) - 1;
-    /* Reset the snapshot state information in each registered 
+    /* Reset the snapshot state information in each registered
      * graphics system
      */
-    for (i=0; i<numSystems; i++) 
+    for (i=0; i<numSystems; i++)
 	if (dd->gesd[i] != NULL)
-	    (dd->gesd[i]->callback)(GE_RestoreSnapshotState, dd, 
+	    (dd->gesd[i]->callback)(GE_RestoreSnapshotState, dd,
 				    VECTOR_ELT(snapshot, i + 1));
     /* Replay the display list
      */
     dd->dev->displayList = duplicate(VECTOR_ELT(snapshot, 0));
+    dd->dev->DLlastElt = lastElt(dd->dev->displayList);
     GEplayDisplayList(dd);
     if (!dd->dev->displayListOn)
 	GEinitDisplayList(dd);
 }
 
+/****************************************************************
+ * do_recordGraphics
+ *
+ * A ".Primitive" R function
+ *
+ ****************************************************************
+ */
+
+SEXP do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP x, xptr, evalenv, retval;
+    GEDevDesc *dd = GEcurrentDevice();
+    Rboolean record = dd->recordGraphics;
+    /*
+     * This function can be run under three conditions:
+     *
+     *   (i) a top-level call to do_recordGraphics.
+     *       In this case, call != R_NilValue and
+     *       dd->recordGraphics = TRUE
+     *       [so GErecording() returns TRUE]
+     *
+     *   (ii) a nested call to do_recordGraphics.
+     *        In this case, call != R_NilValue but
+     *        dd->recordGraphics = FALSE
+     *        [so GErecording() returns FALSE]
+     *
+     *   (iii) a replay of the display list
+     *         In this case, call == R_NilValue and
+     *         dd->recordGraphics = FALSE
+     *         [so GErecording() returns FALSE]
+     */
+    /*
+     * First arg is an expression, second arg is a list, third arg is an env
+     */
+    SEXP code = CAR(args);
+    SEXP list = CADR(args);
+    SEXP parentenv = CADDR(args);
+    if (!isLanguage(code))
+      errorcall(call, _("'expr' argument must be an expression"));
+    if (TYPEOF(list) != VECSXP)
+      errorcall(call, _("'list' argument must be a list"));
+    if (!isEnvironment(parentenv))
+      errorcall(call, _("'env' argument must be an environment"));
+    /*
+     * This conversion of list to env taken from do_eval
+     */
+    PROTECT(x = VectorToPairList(list));
+    for (xptr = x ; xptr != R_NilValue ; xptr = CDR(xptr))
+	SET_NAMED(CAR(xptr) , 2);
+    /*
+     * The environment passed in as the third arg is used as
+     * the parent of the new evaluation environment.
+     */
+    PROTECT(evalenv = NewEnvironment(R_NilValue, x, parentenv));
+    dd->recordGraphics = FALSE;
+    PROTECT(retval = eval(code, evalenv));
+    /*
+     * If there is an error or user-interrupt in the above
+     * evaluation, dd->recordGraphics is set to TRUE
+     * on all graphics devices (see GEonExit(); called in errors.c)
+     */
+    dd->recordGraphics = record;
+    if (GErecording(call, dd)) {
+	if (!GEcheckState(dd))
+	    error(_("invalid graphics state"));
+	GErecordGraphicOperation(op, args, dd);
+    }
+    UNPROTECT(3);
+    return retval;
+}
+
+/****************************************************************
+ * GEonExit
+ *
+ * Reset some important graphics state on an error/interrupt
+ ****************************************************************
+ */
+
+void GEonExit()
+{
+  /*
+   * Run through all devices and turn graphics recording back on
+   * in case an error occurred in the middle of a do_recordGraphics
+   * call.
+   * Awkward cos device code still in graphics.c
+   * Can be cleaned up when device code moved here.
+   */
+    int i, devNum;
+    GEDevDesc *gd;
+    NewDevDesc *dd;
+    i = 1;
+    if (!NoDevices()) {
+	devNum = curDevice();
+	while (i++ < NumDevices()) {
+  	    gd = (GEDevDesc*) GetDevice(devNum);
+  	    gd->recordGraphics = TRUE;
+  	    dd = gd->dev;
+  	    if (dd->onExit) dd->onExit(dd);
+	    devNum = nextDevice(devNum);
+	}
+    }
+}

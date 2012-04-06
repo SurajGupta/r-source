@@ -17,6 +17,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole.
+   Tests for ':' are OK.
+ */
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -48,10 +53,10 @@ SEXP do_readDCF(SEXP call, SEXP op, SEXP args, SEXP env)
     file = CAR(args);
     con = getConnection(asInteger(file));
     if(!con->canread)
-        error("cannot read from this connection");
+        error(_("cannot read from this connection"));
     wasopen = con->isopen;
     if(!wasopen)
-	if(!con->open(con)) error("cannot open the connection");
+	if(!con->open(con)) error(_("cannot open the connection"));
 
     PROTECT(what = coerceVector(CADR(args), STRSXP));
     nwhat = LENGTH(what);
@@ -59,11 +64,11 @@ SEXP do_readDCF(SEXP call, SEXP op, SEXP args, SEXP env)
 
     line = (char *) malloc(MAXELTSIZE);
     if(!line)
-	error("Could not allocate memory for read.dcf");
+	error(_("could not allocate memory for 'read.dcf'"));
     buflen = 100;
     buf = (char *) malloc(buflen);
     if(!buf)
-	error("Could not allocate memory for read.dcf");
+	error(_("could not allocate memory for 'read.dcf'"));
     nret = 20;
     /* it is easier if we first have a record per column */
     PROTECT (retval = allocMatrixNA(STRSXP, LENGTH(what), nret));
@@ -104,7 +109,7 @@ SEXP do_readDCF(SEXP call, SEXP op, SEXP args, SEXP env)
 		if(buflen < need) {
 		    buf = (char *) realloc(buf, need);
 		    if(!buf)
-			error("Could not allocate memory for read.dcf");
+			error(_("could not allocate memory for 'read.dcf'"));
 		    buflen = need;
 		}
 		strcpy(buf,CHAR(STRING_ELT(retval, lastm+nwhat*k)));
@@ -116,7 +121,7 @@ SEXP do_readDCF(SEXP call, SEXP op, SEXP args, SEXP env)
 		if(regexec(&regline, line, 1, regmatch, 0)==0){
 		    for(m=0; m<nwhat; m++){
 			whatlen = strlen(CHAR(STRING_ELT(what, m)));
-			if(line[whatlen]==':' &&
+			   if(strlen(line) > whatlen && line[whatlen]==':' &&
 			   strncmp(CHAR(STRING_ELT(what, m)),
 				   line, whatlen) == 0){
 			    SET_STRING_ELT(retval, m+nwhat*k,
@@ -153,11 +158,11 @@ SEXP do_readDCF(SEXP call, SEXP op, SEXP args, SEXP env)
 			if(buflen < need){
 			    buf = (char *) realloc(buf, need);
 			    if(!buf)
-				error("Could not allocate memory for read.dcf");
+				error(_("could not allocate memory for 'read.dcf'"));
 			    buflen = need;
 			}
-			strncpy(buf, line, strchr(line, ':')-line);
-			buf[strchr(line, ':')-line] = '\0';
+			strncpy(buf, line, Rf_strchr(line, ':')-line);
+			buf[Rf_strchr(line, ':')-line] = '\0';
 			SET_STRING_ELT(what, nwhat, mkChar(buf));
 			nwhat++;
 			/* lastm uses C indexing, hence nwhat-1 */

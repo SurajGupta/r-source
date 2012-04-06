@@ -20,6 +20,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -91,7 +93,10 @@ FUNTAB R_FunTab[] =
 {"next",	do_break, CTXT_NEXT,	0,	-1,	{PP_NEXT,    PREC_FN,	  0}},
 {"return",	do_return,	0,	0,	-1,	{PP_RETURN,  PREC_FN,	  0}},
 {"stop",	do_stop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
-{"warning",	do_warning,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"warning",	do_warning,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	  0}},
+{"gettext",	do_gettext,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"ngettext",	do_ngettext,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	  0}},
+{"bindtextdomain",do_bindtextdomain,0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 #ifdef NEW_CONDITION_HANDLING
 {".addCondHands",do_addCondHands,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	  0}},
 {".resetCondHands",do_resetCondHands,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -132,6 +137,7 @@ FUNTAB R_FunTab[] =
 {"on.exit",	do_onexit,	0,	100,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {"Recall",	do_recall,	0,	10,	-1,	{PP_FUNCALL, PREC_FN,	  0}},
 {"delay",	do_delay,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"delayedAssign",do_delayed,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	  0}},
 /*{".Alias",	do_alias,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	  0}},*/
 {".Primitive",	do_primitive,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {"identical",	do_ident,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -261,8 +267,8 @@ FUNTAB R_FunTab[] =
 
 {"digamma",	do_math1,	42,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"trigamma",	do_math1,	43,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"tetragamma",	do_math1,	44,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"pentagamma",	do_math1,	45,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+/* {"tetragamma",	do_math1,	44,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"pentagamma",	do_math1,	45,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},*/
 {"gammaCody",	do_math1,	46,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 /* see "psigamma" below !*/
 
@@ -458,23 +464,23 @@ FUNTAB R_FunTab[] =
 
 /* String Manipulation */
 
-{"nchar",	do_nchar,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"nchar",	do_nchar,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"substr",	do_substr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"substrgets",	do_substrgets,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"strsplit",	do_strsplit,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"abbreviate",	do_abbrev,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.names",	do_makenames,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"grep",	do_grep,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"sub",		do_gsub,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"gsub",	do_gsub,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"regexpr",	do_regexpr,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"grep.perl",	do_pgrep,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"grep",	do_grep,	1,	11,	7,	{PP_FUNCALL, PREC_FN,	0}},
+{"sub",		do_gsub,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"gsub",	do_gsub,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"regexpr",	do_regexpr,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"grep.perl",	do_pgrep,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"sub.perl",    do_pgsub,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"gsub.perl",	do_pgsub,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"regexpr.perl",do_pregexpr,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"regexpr.perl",do_pregexpr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"agrep",	do_agrep,	1,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
-{"tolower",	do_tolower,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"toupper",	do_toupper,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"tolower",	do_tolower,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"toupper",	do_tolower,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"chartr",	do_chartr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"sprintf",	do_sprintf,	1,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.unique",	do_makeunique,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -484,6 +490,9 @@ FUNTAB R_FunTab[] =
 {"intToBits",	do_intToBits,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rawToBits",	do_rawToBits,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"packBits",	do_packBits,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"encodeString",do_encodeString,1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"iconv",	do_iconv,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"strtrim",	do_strtrim,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Type Checking (typically implemented in ./coerce.c ) */
 
@@ -542,7 +551,6 @@ FUNTAB R_FunTab[] =
 {"show.help.item",do_helpitem,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"win.version", do_winver,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"saveDevga",	do_saveDevga,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"shell.exec",	do_shellexec,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialog",	do_windialog,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialogString", do_windialogstring, 0, 11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -553,7 +561,7 @@ FUNTAB R_FunTab[] =
 {"memory.size",	do_memsize,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"DLL.version",	do_dllversion,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"bringToTop",	do_bringtotop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"select.list",	do_selectlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"readClipboard",do_readClipboard,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"chooseFiles", do_chooseFiles, 0,  	11, 	5,  	{PP_FUNCALL, PREC_FN,   0}},
@@ -569,6 +577,8 @@ FUNTAB R_FunTab[] =
 {"package.manager",	do_packagemanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"hsbrowser",	do_hsbrowser,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"aqua.custom.print", do_aqua_custom_print, 0, 11, 2,   {PP_FUNCALL, PREC_FN,   0}},
 #endif
 {"parse",	do_parse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"save",	do_save,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -589,7 +599,7 @@ FUNTAB R_FunTab[] =
 {"print.default",do_printdefault,0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 {"prmatrix", 	do_prmatrix, 	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"invisible",	do_invisible,	0,	101,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"gc",		do_gc,		0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"gc",		do_gc,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"gcinfo",	do_gcinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gctorture",	do_gctorture,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"memory.profile",do_memoryprofile, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -605,6 +615,7 @@ FUNTAB R_FunTab[] =
 {".Call",       do_dotcall,     0,      1,      -1,     {PP_FOREIGN, PREC_FN,	0}},
 {".External.graphics", do_Externalgr, 0, 1,	-1,	{PP_FOREIGN, PREC_FN,	0}},
 {".Call.graphics", do_dotcallgr, 0,	1,	-1,	{PP_FOREIGN, PREC_FN,	0}},
+{"recordGraphics", do_recordGraphics, 0, 11,     3,      {PP_FOREIGN, PREC_FN,	0}},
 {"dyn.load",	do_dynload,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"dyn.unload",	do_dynunload,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"ls",		do_ls,		1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -631,7 +642,7 @@ FUNTAB R_FunTab[] =
 {"rank",	do_rank,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"missing",	do_missing,	1,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"nargs",	do_nargs,	1,	0,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"scan",	do_scan,	0,	11,	16,	{PP_FUNCALL, PREC_FN,	0}},
+{"scan",	do_scan,	0,	11,	17,	{PP_FUNCALL, PREC_FN,	0}},
 {"count.fields",do_countfields,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"readTableHead",do_readtablehead,0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"t.default",	do_transpose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -671,6 +682,7 @@ FUNTAB R_FunTab[] =
 #if 0
 {"visibleflag", do_visibleflag,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
+{"l10n_info", 	do_l10n_info,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Functions To Interact with the Operating System */
 
@@ -680,13 +692,14 @@ FUNTAB R_FunTab[] =
 {"file.remove",	do_fileremove,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.rename",	do_filerename,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.append",	do_fileappend,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"codeFiles.append",do_fileappend,1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.symlink",do_filesymlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"list.files",	do_listfiles,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.exists", do_fileexists,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.choose", do_filechoose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.info",	do_fileinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.access",	do_fileaccess,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"dir.create",	do_dircreate,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"dir.create",	do_dircreate,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempfile",	do_tempfile,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempdir",	do_tempdir,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"R.home",	do_Rhome,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -706,6 +719,7 @@ FUNTAB R_FunTab[] =
 {"localeconv",	do_localeconv,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"path.expand",	do_pathexpand,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"getpid",	do_sysgetpid,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"normalizePath",do_normalizepath,0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Complex Valued Functions */
 {"fft",		do_fft,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -715,17 +729,8 @@ FUNTAB R_FunTab[] =
 
 /* Device Drivers */
 
-{"PS",		do_PS,		0,	111,   17,	{PP_FUNCALL, PREC_FN,	0}},
-{"PicTeX",	do_PicTeX,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"XFig",	do_XFig,	0,	111,   11,	{PP_FUNCALL, PREC_FN,	0}},
-{"PDF",		do_PDF,		0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
-{"Type1FontInUse", do_Type1FontInUse, 0, 111,   1,      {PP_FUNCALL, PREC_FN,	0}},
-#ifdef Win32
-{"devga",	do_devga,	0,	111,   15,	{PP_FUNCALL, PREC_FN,	0}},
-#endif
 #ifdef Unix
 {"X11",		do_X11,		0,	111,	11,	{PP_FUNCALL, PREC_FN,	0}},
-{"Quartz",	do_Quartz,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 
 /* Graphics */
@@ -744,6 +749,7 @@ FUNTAB R_FunTab[] =
 {"rgb256",	do_rgb,		1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"rgb2hsv",	do_RGB2hsv,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"hsv",		do_hsv,		0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"hcl",		do_hcl,		0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"gray",	do_gray,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"colors",	do_colors,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"col2rgb",	do_col2RGB,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -785,6 +791,7 @@ FUNTAB R_FunTab[] =
 {"getSnapshot",	do_getSnapshot,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"playSnapshot",do_playSnapshot,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"symbols",	do_symbols,	0,	111,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"getGraphicsEvent",do_getGraphicsEvent,0,  11, 5,      {PP_FUNCALL, PREC_FN,   0}},
 
 /* Objects */
 {"inherits",	do_inherits,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -889,8 +896,9 @@ FUNTAB R_FunTab[] =
 {"unregisterNamespace",do_unregNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getRegisteredNamespace",do_getRegNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getNamespaceRegistry",do_getNSRegistry, 0, 11, 0,     {PP_FUNCALL, PREC_FN,	0}},
-{"importIntoEnv",do_importIntoEnv, 0, 11, 4,     {PP_FUNCALL, PREC_FN,	0}},
+{"importIntoEnv",do_importIntoEnv, 0, 	11, 	4,	{PP_FUNCALL, PREC_FN,	0}},
 
+{"write.table",	do_writetable,	0,    111,     11,	{PP_FUNCALL, PREC_FN,	0}},
 
 {NULL,		NULL,		0,	0,	0,	{0,	PREC_FN,	0}},
 };
@@ -904,7 +912,7 @@ SEXP do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
     name = CAR(args);
     if (!isString(name) || length(name) < 1 ||
 	STRING_ELT(name, 0) == R_NilValue)
-	errorcall(call, "string argument required");
+	errorcall(call, _("string argument required"));
     for (i = 0; R_FunTab[i].name; i++)
 	if (strcmp(CHAR(STRING_ELT(name, 0)), R_FunTab[i].name) == 0) {
 	    if ((R_FunTab[i].eval % 100 )/10)
@@ -912,7 +920,7 @@ SEXP do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else
 		return mkPRIMSXP(i, R_FunTab[i].eval % 10);
 	}
-    errorcall(call, "no such primitive function");
+    errorcall(call, _("no such primitive function"));
     return(R_NilValue);		/* -Wall */
 }
 
@@ -1025,9 +1033,9 @@ SEXP install(char const *name)
     int i, hashcode;
 
     if (*name == '\0')
-	error("attempt to use zero-length variable name");
+	error(_("attempt to use zero-length variable name"));
     if (strlen(name) > MAXIDSIZE)
-	error("symbol print-name too long");
+	error(_("symbol print-name too long"));
     strcpy(buf, name);
     hashcode = R_Newhashpjw(buf);
     i = hashcode % HSIZE;
@@ -1049,22 +1057,25 @@ SEXP install(char const *name)
 SEXP do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, fun;
-    int save = R_PPStackTop;
+    int save = R_PPStackTop, flag;
     checkArity(op, args);
     s = CAR(args);
     if (!isPairList(s))
-	errorcall(call, "invalid .Internal() argument");
+	errorcall(call, _("invalid .Internal() argument"));
     fun = CAR(s);
     if (!isSymbol(fun))
-	errorcall(call, "invalid internal function");
+	errorcall(call, _("invalid internal function"));
     if (INTERNAL(fun) == R_NilValue)
-	errorcall(call, "no internal function \"%s\"", CHAR(PRINTNAME(fun)));
+	errorcall(call, _("no internal function \"%s\""),
+		  CHAR(PRINTNAME(fun)));
     args = CDR(s);
     if (TYPEOF(INTERNAL(fun)) == BUILTINSXP)
 	args = evalList(args, env);
     PROTECT(args);
-    R_Visible = 1 - PRIMPRINT(INTERNAL(fun));
+    flag = PRIMPRINT(INTERNAL(fun));
+    R_Visible = 1 - flag;
     args = PRIMFUN(INTERNAL(fun)) (s, INTERNAL(fun), args, env);
+    if (flag) R_Visible = 0;
     UNPROTECT(1);
     if (save != R_PPStackTop) {
 	REprintf("stack imbalance in internal %s, %d then %d",

@@ -61,10 +61,10 @@ assign("cleanEx",
            RNGkind("default", "default")
 	   set.seed(1)
    	   options(warn = 1)
-	   assign("T", delay(stop("T used instead of TRUE")),
-		  pos = .CheckExEnv)
-	   assign("F", delay(stop("F used instead of FALSE")),
-		  pos = .CheckExEnv)
+	   delayedAssign("T", stop("T used instead of TRUE"),
+		  assign.env = .CheckExEnv)
+	   delayedAssign("F", stop("F used instead of FALSE"),
+		  assign.env = .CheckExEnv)
 	   sch <- search()
 	   newitems <- sch[! sch %in% .oldSearch]
 	   for(item in rev(newitems))
@@ -80,6 +80,7 @@ assign("ptime", proc.time(), env = .CheckExEnv)
 grDevices::postscript("$PKG-Examples.ps")
 assign("par.postscript", graphics::par(no.readonly = TRUE), env = .CheckExEnv)
 options(contrasts = c(unordered = "contr.treatment", ordered = "contr.poly"))
+options(warn = 1)    
 _EOF_
 
 if($PKG eq "tcltk") {

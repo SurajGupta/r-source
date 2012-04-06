@@ -1,5 +1,5 @@
 #-*- perl -*-
-# Copyright (C) 2001-3 R Development Core Team
+# Copyright (C) 2001-4 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ my $fn, $component, $mini, $path;
 my $startdir=cwd();
 my $RVER;
 my $RW=$ARGV[0];
+my $SRCDIR=$ARGV[1];
+$SRCDIR =~ s+/+\\+g; # need DOS-style paths
 my $iconpars="WorkingDir: \"{app}\"" ;
 ## add to the target command line as in the next example
 # my $iconpars="Parameters: \"--sdi\"; WorkingDir: \"{app}\"" ;
@@ -60,7 +62,7 @@ AppVersion=${RVER}
 DefaultDirName={pf}\\R\\${RW}
 DefaultGroupName=R
 AllowNoIcons=yes
-LicenseFile=${RW}\\COPYING
+LicenseFile=${SRCDIR}\\COPYING
 DisableReadyPage=yes
 DisableStartupPrompt=yes
 OutputDir=.
@@ -74,6 +76,7 @@ my $lines2=<<END;
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; MinVersion: 4,4
+Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescription: "Additional icons:"; MinVersion: 4,4; Flags: unchecked 
 Name: "associate"; Description: "&Associate R with .RData files"; GroupDescription: "Registry entries:"; MinVersion: 4,4
 Name: "DCOM"; Description: "&Register R path for use by the (D)COM server"; GroupDescription: "Registry entries:"; MinVersion: 4,4
 
@@ -81,6 +84,8 @@ Name: "DCOM"; Description: "&Register R path for use by the (D)COM server"; Grou
 Name: "{group}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; $iconpars
 Name: "{group}\\Uninstall R $RVER"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 4,4; Tasks: desktopicon; $iconpars
+Name: "{userappdata}\\Microsoft\\Internet Explorer\\Quick Launch\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; Tasks: quicklaunchicon; $iconpars
+
 
 [Registry] 
 Root: HKLM; Subkey: "Software\\R-core"; Flags: uninsdeletekeyifempty; Tasks: DCOM
@@ -106,18 +111,21 @@ Name: "{group}\\R $RVER Help"; Filename: "{app}\\doc\\html\\Rwin.html"; Componen
 Name: "user"; Description: "User installation"
 Name: "compact"; Description: "Minimal user installation"
 Name: "full"; Description: "Full installation"
+Name: "CJK"; Description: "Chinese/Japanese/Korean installation";
 Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
 [Components]
-Name: "main"; Description: "Main Files"; Types: user compact full custom; Flags: fixed
-Name: "chtml"; Description: "Compiled HTML Help Files"; Types: user full custom
-Name: "html"; Description: "HTML Help Files"; Types: user full custom
+Name: "main"; Description: "Main Files"; Types: user compact full CJK custom; Flags: fixed
+Name: "chtml"; Description: "Compiled HTML Help Files"; Types: user full CJK custom
+Name: "html"; Description: "HTML Help Files"; Types: user full CJK custom
+Name: "manuals"; Description: "On-line (PDF) Manuals"; Types: user full CJK custom
+Name: "devel"; Description: "Source Package Installation Files"; Types: user full CJK custom
+Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full CJK custom
+Name: "libdocs"; Description: "Docs for Packages grid and survival"; Types: user full CJK custom
+Name: "trans"; Description: "Message Translations"; Types: user full CJK custom
+Name: "mbcs"; Description: "Version for East Asian languages"; Types: CJK custom
 Name: "latex"; Description: "Latex Help Files"; Types: full custom
-Name: "manuals"; Description: "On-line (PDF) Manuals"; Types: user full custom
 Name: "refman"; Description: "PDF Reference Manual"; Types: full custom
-Name: "libdocs"; Description: "Docs for Packages grid and survival"; Types: user full custom
-Name: "devel"; Description: "Source Package Installation Files"; Types: user full custom
-Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full custom
 Name: "Rd"; Description: "Source Files for Help Pages"; Types: full custom
 
 [Files]
@@ -153,7 +161,7 @@ my %develfiles=("doc\\html\\logo.jpg" => 1,
 		"bin\\Rdiff.sh" => 1,
 		"bin\\Sd2Rd" => 1);
 		
-$path="${RW}";chdir($path);
+$path="${SRCDIR}";chdir($path);
 find(\&listFiles, ".");
 
 close insfile;
@@ -163,6 +171,7 @@ sub listFiles {
     $fn = $File::Find::name;
     $fn =~ s+^./++;
     my $mini = 1;
+    my $newname = "";
     if (!(-d $_)) {
 	$fn =~ s+/+\\+g;
 	$dir = $fn;
@@ -181,7 +190,7 @@ sub listFiles {
 	} elsif ($_ eq "doc\\html\\logo.jpg") {
 	    $component = "html devel";
 	    $mini = 0;
-	} elsif ($_ eq "doc\\html\\faq.html"
+	} elsif ($_ eq "doc\\manual\\R-FAQ.html"
 		 || $_ eq "doc\\html\\rw-FAQ.html"
 		 || $_ eq "share\\texmf\\Sweave.sty") {
 	    $component = "main";
@@ -237,11 +246,23 @@ sub listFiles {
 		 || $_ eq "library\\survival\\survival.ps.gz") {
 	    $component = "libdocs";
 	    $mini = 0;
+	} elsif ($_ eq "modules\\iconv.dll") {
+	    $component = "main";
+	    $mini = 0;
+	} elsif (m/^share\\locale/ 
+		 || m/^library\\[^\\]*\\po/) { # needs iconv
+	    $component = "trans";
+	    $mini = 0;
+	} elsif ($_ eq "bin\\Rmbcs.dll") {
+	    $component = "mbcs";
+	    $mini = 0;
+	    $newname = "R.dll";
 	} else {
 	    $component = "main";
 	}
 
 	$lines="Source: \"$path\\$fn\"; DestDir: \"{app}$dir\"; Flags: ignoreversion; Components: $component\n";
+	$lines="Source: \"$path\\$fn\"; DestDir: \"{app}$dir\"; DestName: \"$newname\"; Flags: ignoreversion; Components: $component\n" if $newname ne "";
 
 	print insfile $lines;
 	if ($mini) {

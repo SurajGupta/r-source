@@ -25,8 +25,18 @@
   add \code{cpp} flags and to add libraries to the link step) and for
   details of some of its quirks.
 }
+\note{
+  Some binary distributions of \R have \code{SHLIB} in a separate
+  bundle, e.g. an \code{R-devel} RPM.
+}
 \seealso{
-  \code{\link{COMPILE}}, \code{\link{dyn.load}}, \code{\link{library.dynam}}.
+  \code{\link{COMPILE}},
+  \code{\link{dyn.load}},
+  \code{\link{library.dynam}}.
+
+  The section on \dQuote{Customizing compilation under Unix} in
+  \dQuote{R Administration and Installation}
+  (see the \file{doc/manual} subdirectory of the \R source tree).  
 
   The \sQuote{Writing R Extensions} manual.
 }

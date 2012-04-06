@@ -6,11 +6,11 @@
 }
 \usage{
 scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
-     quote = if (sep=="\n") "" else "'\"", dec = ".",
+     quote = if(identical(sep, "\n")) "" else "'\"", dec = ".",
      skip = 0, nlines = 0, na.strings = "NA",
      flush = FALSE, fill = FALSE, strip.white = FALSE,
      quiet = FALSE, blank.lines.skip = TRUE, multi.line = TRUE,
-     comment.char = "")
+     comment.char = "", allowEscapes = TRUE)
 }
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
@@ -31,6 +31,10 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     and so will match \code{sep = "\n"}.
 
     \code{file} can also be a complete URL.
+
+    To read a data file not in the current encoding (for example a
+    Latin-1 file in a UTF-8 locale or conversely) use a
+    \code{\link{file}} connection setting the \code{encoding} argument.
   }
 
   \item{what}{the type of \code{what} gives the type of data to be read.
@@ -52,12 +56,21 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{sep}{by default, scan expects to read white-space delimited
     input fields.  Alternatively, \code{sep} can be used to specify a
     character which delimits fields.  A field is always delimited by an
-    end-of-line marker unless it is quoted.}
+    end-of-line marker unless it is quoted.
+
+    If specified this should be the empty character string (the default)
+    or \code{NULL} or a character string containing just one single-byte
+    character.
+  }
 
   \item{quote}{the set of quoting characters as a single character
-    string.}
+    string or \code{NULL}.  In a multibyte locale the quoting characters
+    must be ASCII (single-byte).}
 
-  \item{dec}{decimal point character.}
+  \item{dec}{decimal point character.  This should be a character string
+    containing just one single-byte character.  (\code{NULL} and a
+    zero-length character vector are also accepted, and taken as the
+    default.)}
 
   \item{skip}{the number of  lines of the input file to skip before
     beginning to read data values.}
@@ -103,6 +116,11 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{comment.char}{character: a character vector of length one
     containing a single character or an empty string.  Use \code{""} to
     turn off the interpretation of comments altogether (the default).}
+
+  \item{allowEscapes}{logical.  Should C-style escapes such as
+    \code{\n} be processed (the default) or read verbatim?   Note that if
+    not within quotes these could be interpreted as a delimiter (but not
+    as a comment character).}
 }
 \details{
   The value of \code{what} can be a list of types, in which case
@@ -111,8 +129,13 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   columnar data.  If any of the types is \code{NULL}, the corresponding
   field is skipped (but a \code{NULL} component appears in the result).
 
-  The type of \code{what} or its components can be one of the five
-  atomic types or \code{NULL},
+  The type of \code{what} or its components can be one of the six
+  atomic vector types or \code{NULL} (see \code{\link{is.atomic}}).
+
+  \sQuote{White space} is defined for the purposes of this function as
+  one or more contiguous characters from the set space, horizontal tab,
+  carriage return and line feed.  It does not include form feed,
+  vertical tab or other non-ASCII space characters.
 
   Empty numeric fields are always regarded as missing values.
   Empty character fields are scanned as empty character vectors, unless
@@ -141,8 +164,14 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   If \code{comment.char} occurs (except inside a quoted character
   field), it signals that the rest of the line
   should be regarded as a comment and be discarded.  Lines beginning
-  with a comment character (possibly after white space) are treated
-  as blank lines.
+  with a comment character (possibly after white space with the default
+  separator) are treated as blank lines.
+
+  As from \R 2.1.0, \code{scan} attempts to share storage with
+  character strings that have already been read in the call.
+  If an upper bound on the number of character strings cannot be deduced
+  from \code{nmax} or \code{n}, sharing is used for the first 10000
+  unique strings which are read in.
 }
 \value{
   if \code{what} is a list, a list of the same length and same names (as
@@ -160,6 +189,9 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   copies.)  If you can, specify either \code{n} or \code{nmax} whenever
   inputting a large vector, and \code{nmax} or \code{nlines} when
   inputting a large list.
+
+  Using \code{scan} on an open connection to read partial lines can lose
+  chars: use an explicit separator to avoid this.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

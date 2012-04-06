@@ -26,10 +26,10 @@ runmed <- function(x, k, endrule = c("median","keep","constant"),
     n <- length(x)
     k <- as.integer(k)
     if(k%%2 == 0)
-        warning("k must be odd!  Changing k to ",
+        warning("'k' must be odd!  Changing 'k' to ",
                 k <- as.integer(1+ 2*(k %/% 2)))
     if (k > n)
-        warning("k is bigger than n!  Changing k to ",
+        warning("'k' is bigger than 'n'!  Changing 'k' to ",
                 k <- as.integer(1+ 2*((n - 1)%/% 2)))
     algorithm <-
         if(missing(algorithm)) { ## use efficient default
@@ -110,7 +110,7 @@ smoothEnds <- function(y, k = 3)
 
     k <- as.integer(k)
     if (k < 0 || k%%2 == 0)
-        stop("bandwidth `k' must be >= 1 and odd!")
+        stop("bandwidth 'k' must be >= 1 and odd!")
     k <- k %/% 2
     if (k < 1) return(y)
     ## else: k >= 1: do something

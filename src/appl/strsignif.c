@@ -37,7 +37,7 @@
  *  BDR 2001-10-30 use R_alloc not Calloc as memory was not
  *  reclaimed on error (and there are many error exits).
  *
- *	type	"double" or "integer" (R - numeric `mode').
+ *	type	"double" or "integer" (R - numeric 'mode').
  *
  *	width	The total field width; width < 0 means to left justify
  *		the number in this field (equivalent to flag = "-").
@@ -62,6 +62,8 @@
  *	  New (Feb.98): if flag has more than one character, all are passed..
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -77,6 +79,13 @@
 #include <R_ext/Memory.h>	/* R_alloc */
 #include <R_ext/Applic.h>
 #include <Rmath.h>		/* fround */
+
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#define _(String) gettext (String)
+#else
+#define _(String) (String)
+#endif
 
 /*
    The declaration for x is unusual for a .C() but is managed by
@@ -97,7 +106,7 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
     char *form = R_alloc(len_flag+4 + strlen(*format), sizeof(char));
 
     if (wid == 0)
-	error(".C(..): Width cannot be zero");
+	error(_(".C(..): Width cannot be zero"));
 
     if (strcmp("d", *format) == 0) {
 	if (len_flag == 0)
@@ -111,7 +120,7 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
 	    for (i=0; i < nn; i++)
 		sprintf(result[i], form, wid, ((int *)x)[i]);
 	else
-	    error(".C(..): `type' must be \"integer\" for  \"d\"-format");
+	    error(_(".C(..): 'type' must be \"integer\" for  \"d\"-format"));
     }
     else { /* --- floating point --- */
 	if (len_flag == 0)
@@ -131,9 +140,9 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
 	else
 	    strcat(form, *format);
 #ifdef DEBUG
-	fprintf(stderr, "strsignif.c: form=«%s», wid=%d, dig=%d\n",
+	fprintf(stderr, "strsignif.c: form='%s', wid=%d, dig=%d\n",
 		form, wid, dig);
-	if(do_fg) fprintf(stderr, "\t\"fg\": f0=«%s».", f0);
+	if(do_fg) fprintf(stderr, "\t\"fg\": f0='%s'.", f0);
 #endif
 	if (strcmp("double", *type) == 0) {
 	    if(do_fg) /* do smart "f" : */
@@ -203,6 +212,6 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
 #endif
 		}
 	} else
-	    error(".C(..): `type' must be \"real\" for this format");
+	    error(_(".C(..): 'type' must be \"real\" for this format"));
     }
 }

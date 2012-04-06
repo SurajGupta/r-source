@@ -1,24 +1,24 @@
 #! @PERL@
 #-*- perl -*-
 
-# Copyright (C) 2000-2004 R Development Core Team
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the GNU
-# General Public License for more details.
-#
-# A copy of the GNU General Public License is available via WWW at
-# http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+## Copyright (C) 2000-2005 R Development Core Team
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+## General Public License for more details.
+##
+## A copy of the GNU General Public License is available via WWW at
+## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
+## writing to the Free Software Foundation, Inc., 59 Temple Place,
+## Suite 330, Boston, MA  02111-1307  USA.
 
-# Send any bug reports to r-bugs@r-project.org
+## Send any bug reports to r-bugs@r-project.org
 
 use Cwd;
 use File::Basename;
@@ -32,7 +32,6 @@ use R::Logfile;
 use R::Rdtools;
 use R::Utils;
 use R::Vars;
-use Text::DelimMatch;
 use Text::Wrap;
 
 ## Don't buffer output.
@@ -45,7 +44,7 @@ $revision =~ / ([\d\.]*) /;
 $version = $1;
 ($name = $0) =~ s|.*/||;
 
-## Options
+### Options
 my $opt_clean = 1;
 my $opt_examples = 1;
 my $opt_tests = 1;
@@ -54,6 +53,10 @@ my $opt_use_gct = 0;
 my $opt_codoc = 1;
 my $opt_install = 1;
 my $opt_vignettes = 1;
+my $opt_use_valgrind = 0;
+my $opt_rcfile = "";		# Only set this if $ENV{"HOME"} is set.
+$opt_rcfile = &file_path($ENV{"HOME"}, ".R", "check.conf")
+    if defined($ENV{"HOME"});
 
 my $WINDOWS = ($R::Vars::OSTYPE eq "windows");
 
@@ -63,7 +66,8 @@ my @known_options = ("help|h", "version|v", "outdir|o:s", "library|l:s",
 		    "no-clean", "no-examples", "no-tests", "no-latex",
 		    "use-gct" => \$opt_use_gct, "no-codoc",
 		    "install=s" => \$opt_install, "no-install",
-		     "no-vignettes");
+		     "no-vignettes", "use-valgrind" => \$opt_use_valgrind,
+		     "rcfile=s" => \$opt_rcfile);
 GetOptions(@known_options) or usage();
 
 R_version("R add-on package checker", $version) if $opt_version;
@@ -84,15 +88,57 @@ if($opt_install eq "fake") {
 $opt_install = 0 if($opt_install eq "no");
 
 my $opt_ff_calls = 1;
-## The neverending story ... for the time being, allow to turn this off
-## by setting the environment variable R_CHECK_FF_CALLS to a Perl 'null'
-## value.
-if(defined($ENV{"R_CHECK_FF_CALLS"})) {
-    $opt_ff_calls = $ENV{"R_CHECK_FF_CALLS"};
+## The neverending story ...
+## For the time being, allow to turn this off by setting the environment
+## variable _R_CHECK_FF_CALLS_ to a Perl 'null' value.
+if(defined($ENV{"_R_CHECK_FF_CALLS_"})) {
+    $opt_ff_calls = $ENV{"_R_CHECK_FF_CALLS_"};
 }
 
 ## Use system default unless explicitly specified otherwise.
 $ENV{"R_DEFAULT_PACKAGES"} = "";
+
+### Configurable variables
+my $R_check_use_install_log =
+    &R_getenv("_R_CHECK_USE_INSTALL_LOG_", "FALSE");
+my $R_check_subdirs_nocase =
+    &R_getenv("_R_CHECK_SUBDIRS_NOCASE_", "FALSE");
+my $R_check_all_non_ISO_C =
+    &R_getenv("_R_CHECK_ALL_NON_ISO_C_", "FALSE");
+my $R_check_weave_vignettes =
+    &R_getenv("_R_CHECK_WEAVE_VIGNETTES_", "TRUE");
+
+## Maybe move basic configuration (and documentation) to
+##   &file_path($R::Vars::R_HOME, "etc", "check.conf")
+## eventually ...
+for my $file ($opt_rcfile) {
+    if(-r $file) {
+	open(FILE, "< $file")
+	    or die "Error: cannot open file '$file' for reading\n";
+	my @lines = <FILE>;
+	close(FILE);
+	eval("@lines");
+	die "Error: failed to eval config file '$file'\n$@\n" if ($@);
+	## <NOTE>
+	## We prefer the above to the usual recommendation
+	## 	unless ($return = do($file)) {
+	## 	    warn "couldn't parse $file: $@" if $@;
+	## 	    warn "couldn't do $file: $!"    unless defined $return;
+	## 	    warn "couldn't run $file"       unless $return;
+	##  }
+	## as do(FILE) cannot see lexicals in the enclosing scope.
+	## </NOTE>
+    }
+}
+
+$R_check_use_install_log =
+    &config_val_to_logical($R_check_use_install_log);
+$R_check_subdirs_nocase =
+    &config_val_to_logical($R_check_subdirs_nocase);
+$R_check_all_non_ISO_C =
+    &config_val_to_logical($R_check_all_non_ISO_C);
+$R_check_weave_vignettes =
+    &config_val_to_logical($R_check_weave_vignettes);
 
 my $startdir = R_cwd();
 $opt_outdir = $startdir unless $opt_outdir;
@@ -111,6 +157,8 @@ if($opt_library) {
 
     chdir($startdir);
 }
+
+my $tar = R_getenv("TAR", "tar");
 
 my $R_opts = "--vanilla";
 
@@ -141,16 +189,22 @@ if($opt_latex) {
 foreach my $pkg (@ARGV) {
     ## $pkg should be the path to the package (bundle) root source
     ## directory, either absolute or relative to $startdir.
+    ## As from 2.1.0 it can also be a tarball
+
     ## $pkgdir is the corresponding absolute path.
     ## $pkgname is the name of the package (bundle).
     chdir($startdir);
-    $pkg =~ s/\/$//;
-    (-d $pkg) or die "Error: package dir '$pkg' does not exist\n";
-    chdir($pkg)
-	or die "Error: cannot change to directory '$pkg'\n";
-    my $pkgdir = R_cwd();
-    my $pkgname = basename($pkgdir);
-    chdir($startdir);
+    $pkg =~ s+/$++;  # strip any trailing '/'
+    my $pkgname = basename($pkg);
+
+    ## is this a tar archive?
+    my $istar = 0;
+    if($pkgname =~ /\.tar\.gz$/ || $pkgname =~ /\.tgz$/) {
+	$pkgname =~ s/\.tar\.gz$//;
+	$pkgname =~ s/\.tgz$//;
+	$pkgname =~ s/_[0-9\.-]*$//;
+	$istar = 1;
+    }
 
     my $pkgoutdir = &file_path($outdir, "$pkgname.Rcheck");
     rmtree($pkgoutdir) if ($opt_clean && (-d $pkgoutdir)) ;
@@ -159,8 +213,32 @@ foreach my $pkg (@ARGV) {
 	  or die("Error: cannot create directory '$pkgoutdir'\n");
     }
 
+    if($istar) {
+	my $dir = &file_path("$pkgoutdir", "00_pkg_src");
+	mkdir($dir, 0755)
+	  or die("Error: cannot create directory '$dir'\n");
+	if($WINDOWS) {
+	    ## workaround for paths in Cygwin tar
+	    $pkg =~ s+^([A-Za-x]):+/cygdrive/\1+;
+	}
+	if(system("$tar -zxf '$pkg' -C $dir")) {
+	    die "Error: cannot untar $pkg\n";}
+	$pkg = &file_path($dir, $pkgname);
+    }
+
+    $pkg =~ s/\/$//;
+    (-d $pkg) or die "Error: package dir '$pkg' does not exist\n";
+    chdir($pkg)
+	or die "Error: cannot change to directory '$pkg'\n";
+    my $pkgdir = R_cwd();
+    ## my $pkgname = basename($pkgdir);
+    chdir($startdir);
+
     $log = new R::Logfile(&file_path($pkgoutdir, "00check.log"));
     $log->message("using log directory '$pkgoutdir'");
+    my @out = R_runR("cat(R.version.string, '\n', sep='')", 
+		     "--slave --vanilla");
+    $log->message("using @out");
 
     if(!$opt_library) {
 	$library = $pkgoutdir;
@@ -172,6 +250,9 @@ foreach my $pkg (@ARGV) {
 
     my $description;
     my $is_base_pkg = 0;
+    my $is_bundle = 0;
+    my $package_or_bundle = "package";
+    my $package_or_bundle_name;
     ## Package sources from the R distribution are special.  They have a
     ## 'DESCRIPTION.in' file (instead of 'DESCRIPTION'), with Version
     ## field containing '@VERSION@' for substitution by configure.  We
@@ -202,18 +283,69 @@ foreach my $pkg (@ARGV) {
 	    $log->result("NO");
 	    exit(1);
 	}
+	if($description->{"Type"}) { # standard packages do not have this
+	    $log->checking("extension type");
+	    $log->result($description->{"Type"});
+	    if($description->{"Type"} ne "Package") {
+		$log->print("Only Type = Package extensions can be checked.\n");
+		exit(0);
+	    }
+	}
+
+	if($description->{"Bundle"}) {
+	    $is_bundle = 1;
+	    $log->message("looks like '${pkgname}' is a package bundle");
+	    $package_or_bundle = "bundle";
+	    $package_or_bundle_name = $description->{"Bundle"};
+	}
+	else {
+	    $package_or_bundle_name = $description->{"Package"};
+	}
+	$log->message("this is $package_or_bundle " .
+		      "'$package_or_bundle_name' " .
+		      "version '$description->{\"Version\"}'");
 	## <NOTE>
 	## This check should be adequate, but would not catch a manually
 	## installed package, nor one installed prior to 1.4.0.
 	## </NOTE>
-	$log->checking("if this is a source package");
-	if(!defined($description->{"Built"})) {
-	    $log->result("OK")
-	} else {
+	$log->checking("if this is a source $package_or_bundle");
+	if(defined($description->{"Built"})) {
 	    $log->error();
 	    $log->print("Only *source* packages can be checked.\n");
 	    exit(1);
 	}
+	elsif($opt_install !~ /^check/) {
+	    ## Check for package/bundle 'src' subdirectories with object
+	    ## files (but not if installation was already performed).
+	    my $any;
+	    my $pat = "(a|o|[ls][ao]|sl|obj)"; # Object file extensions.
+	    my @dirs;
+	    if($in_bundle) {
+		foreach my $ppkg (split(/\s+/,
+					description->{"Contains"})) {
+		    push(@dirs, &file_path($ppkg, "src"));
+		}
+	    }
+	    else {
+		@dirs = ("src");
+	    }
+	    foreach my $dir (@dirs) {
+		if((-d &file_path($pkgdir, $dir))
+		   && &list_files_with_exts(&file_path($pkgdir, $dir),
+					    $pat)) {
+		    $log->warning() unless $any;
+		    $any++;
+		    $dir = &file_path($pkgname, $dir);
+		    $log->print("Subdirectory '$dir' " .
+				"contains object files.\n");
+		}
+	    }
+	    $log->result("OK") unless $any;	    
+	}
+	else {
+	    $log->result("OK");
+	}
+	    
 	## Option '--no-install' turns off installation and the tests
 	## which require the package to be installed.  When testing
 	## recommended packages bundled with R we can skip installation,
@@ -235,7 +367,7 @@ foreach my $pkg (@ARGV) {
 	    else {
 		my $use_install_log =
 		    (($opt_install =~ /^check/) ||
-		     $ENV{"R_CHECK_USE_INSTALL_LOG"} ||
+		     $R_check_use_install_log ||
 		     !(-t STDIN && -t STDOUT));
 		my $INSTALL_opts = "";
 		$INSTALL_opts = "--fake" if($opt_install eq "fake");
@@ -268,7 +400,8 @@ foreach my $pkg (@ARGV) {
 		else {
 		    ## Case B. All output from installation redirected,
 		    ## or already available in the log file.
-		    $log->checking("whether package '$pkgname' " .
+		    $log->checking("whether $package_or_bundle " .
+				   "'$package_or_bundle_name' " .
 				   "can be installed");
 		    my $out = &file_path($pkgoutdir, "00install.out");
 		    my $install_error;
@@ -313,12 +446,20 @@ foreach my $pkg (@ARGV) {
 			"found by readLines";
 		    @lines = grep(!/$warn_re/, @lines);
 		    ## Package writers cannot really do anything about
-		    ## non ISO C code in *system* headers.  Hence, try
-		    ## to ignore these by default, but make it possible
-		    ## to get all ISO C warnings via an environment
-		    ## variable.
-		    @lines = grep(!/^ *\/.*: warning: .*ISO C/, @lines)
-			if(!$ENV{"R_CHECK_ALL_NON_ISO_C"});
+		    ## non ISO C code in *system* headers.  Also, GCC
+		    ## 3.4 or better warns about function pointers
+		    ## casts which are "needed" for dlsym(), but it
+		    ## seems that all systems which have dlsym() also
+		    ## support the cast.  Hence, try to ignore these by
+		    ## default, but make it possible to get all ISO C
+		    ## warnings via an environment variable.
+		    if(!$R_check_all_non_ISO_C) {
+			@lines = grep(!/^ *\/.*: warning: .*ISO C/,
+				      @lines);
+			$warn_re = "warning: *ISO C forbids.*" .
+			    "function pointer";
+			@lines = grep(!/$warn_re/, @lines);
+		    }
 		    if(scalar(@lines) > 0) {
 			$log->warning();
 			$log->print("Found the following " .
@@ -334,10 +475,7 @@ foreach my $pkg (@ARGV) {
 
     }
 
-    my $is_bundle = 0;
-    if($description->{"Contains"}) {
-	$log->message("looks like '${pkgname}' is a package bundle");
-	$is_bundle = 1;
+    if($is_bundle) {
 	my @bundlepkgs = split(/\s+/, $description->{"Contains"});
 	foreach my $ppkg (@bundlepkgs) {
 	    $log->message("checking '$ppkg' in bundle '$pkgname'");
@@ -350,7 +488,6 @@ foreach my $pkg (@ARGV) {
 	}
     }
     else {
-	$is_bundle = 0;
 	chdir($startdir);
 	check_pkg($pkgdir, $pkgoutdir, $startdir, $library,
 		  $is_bundle, $description, $log, $is_base_pkg);
@@ -613,64 +750,14 @@ sub check_pkg {
     ## Check DESCRIPTION meta-information.
 
     ## If we just installed the package (via R CMD INSTALL), we already
-    ## validated the package DESCRIPTION metadata.  Otherwise, let us be
-    ## defensive about this ...
+    ## validated most of the package DESCRIPTION metadata.  Otherwise,
+    ## let us be defensive about this ...
 
-    if(!$opt_install || ($opt_install eq "skip") || $is_base_pkg) {
-	my ($dfile, $dir);
-	if($is_base_pkg) {
-	    $dfile = "DESCRIPTION.in";
-	}
-	elsif(!$in_bundle) {
-	    $dfile = "DESCRIPTION";
-	}
-	else {
-	    ## Bundles are a bit tricky, as their package (DESCRIPTION)
-	    ## metadata come from merging the bundle DESCRIPTION file
-	    ## with the package DESCRIPTION.in one.  Hence, we
-	    ## concatenate these files to a temporary one.
-	    $log->checking("for file 'DESCRIPTION.in'");
-	    if(-r "DESCRIPTION.in") {
-		$log->result("OK");
-	    }
-	    else {
-		$log->result("NO");
-		exit(1);
-	    }
-	    ## Checking metadata currently also includes verifying that
-	    ## the package name and "directory name" are the same.
-	    $dir = &file_path(${R::Vars::TMPDIR}, "check$$");
-	    mkdir($dir, 0755)
-		or die ("Error: cannot create directory '$dir'\n");
-	    $dir = &file_path($dir, $pkgname);
-	    mkdir($dir, 0755)
-		or die ("Error: cannot create directory '$dir'\n");
-	    $dfile = &file_path($dir, "DESCRIPTION");
-	    my $fh = new IO::File($dfile, "w")
-		or die "Error: cannot open file '$dpath' for writing\n";
-	    my @lines = (&read_lines(&file_path(dirname($pkgdir),
-						"DESCRIPTION")),
-			 &read_lines("DESCRIPTION.in"));
-	    @lines = grep(!/^\s*$/, @lines); # Remove blank lines.
-	    $fh->print(join("\n", @lines), "\n");
-	    $fh->close();
-	}
-
-	$log->checking("DESCRIPTION meta-information");
-    
-	my $Rcmd = "tools:::.check_package_description(\"$dfile\")";
-	my @out = R_runR($Rcmd, "${R_opts} --quiet",
-			 "R_DEFAULT_PACKAGES=NULL");
-	rmtree(dirname($dir)) if($in_bundle);
-	@out = grep(!/^\>/, @out);
-	if(scalar(@out) > 0) {
-	    $log->error();
-	    $log->print(join("\n", @out) . "\n");
-	    exit(1);
-	}
-	
-	$log->result("OK");
-    }
+    my $full =
+	!$opt_install || ($opt_install eq "skip") || $is_base_pkg;
+    &R::Utils::check_package_description($pkgdir, $pkgname, $log,
+					 $in_bundle, $is_base_pkg,
+					 $full);
     
     ## Check package dependencies.
 
@@ -784,7 +871,7 @@ sub check_pkg {
 
     $log->checking("package subdirectories");
     my $any;
-    if($ENV{"R_CHECK_SUBDIRS_NOCASE"}) {
+    if($R_check_subdirs_nocase) {
 	## Argh.  We often get submissions where 'R' comes out as 'r',
 	## or 'man' comes out as 'MAN'.  Maybe we should warn about this
 	## unconditionally ...
@@ -831,8 +918,8 @@ sub check_pkg {
 	## subdirectories?
 	if((-d "inst")) {
 	    my @R_system_subdirs =
-		("Meta", "R", "data", "demo", "exec", "man", "help",
-		 "html", "latex", "R-ex");
+		("Meta", "R", "data", "demo", "exec", "libs",
+		 "man", "help", "html", "latex", "R-ex");
 	    my @bad_dirs = ();
 	    foreach my $dir (@R_system_subdirs) {
 		push(@bad_dirs, $dir)
@@ -942,6 +1029,7 @@ sub check_pkg {
 	   "of the 'Writing R Extensions' manual.\n");
 
 	my $Rcmd = "options(warn=1)\n";
+	$Rcmd .= "options(expressions=1000)\n";
 	if($opt_install) {
 	    $Rcmd .= "tools::checkS3methods(package = \"${pkgname}\")\n";
 	}
@@ -1192,18 +1280,18 @@ sub check_pkg {
 	}
     }
 
-    ## Check C sources/headers for CRLF line endings.
+    ## Check C/C++/Fortran sources/headers for CRLF line endings.
 
     ## <FIXME>
     ## Does ISO C really require LF line endings?  (Reference?)
-    ## We definitely know that Solaris cc will not accept CRLF or CR
-    ## line endings.
+    ## We definitely know that some versions of Solaris cc and f77
+    ## will not accept CRLF or CR line endings.
     ## Note that we currently only check the CRLF part.
     ## </FIXME>
 
     if(!$is_base_pkg && (-d "src")) {
-	$log->checking("for CRLF line endings in C sources/headers");
-	my @src_files = &list_files_with_exts("src", "[ch]");
+	$log->checking("for CRLF line endings in C/C++/Fortran sources/headers");
+	my @src_files = &list_files_with_exts("src", "(c|h|f|cc|cpp)");
 	my @bad_files = ();
 	foreach my $file (@src_files) {
 	    open(FILE, "< $file")
@@ -1220,19 +1308,40 @@ sub check_pkg {
 	}
 	if(scalar(@bad_files) > 0) {
 	    $log->warning();
-	    $log->print("Found the following C sources/headers with " .
+	    $log->print("Found the following sources/headers with " .
 			"CRLF line endings:\n");
 	    $log->print("  " . join("\n  ", @bad_files) . "\n");
-	    $log->print("ISO C requires LF line endings.\n");
+	    $log->print("Some Unix compilers require LF line endings.\n");
 	}
 	else {
 	    $log->result("OK");
 	}
     }
 
+    ## Check src/Makevars[.in] for portable compilation flags.
+
+    if((-f &file_path("src", "Makevars.in"))
+       || (-f &file_path("src", "Makevars"))) {
+	$log->checking("for portable compilation flags in Makevars");
+	my $Rcmd = "tools:::.check_make_vars(\"src\")\n";
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
+	}
+	else {
+	    $log->result("OK");
+	}
+    }
+    
+
     chdir($pkgoutdir);
 
     ## Run the examples.
+    ## This setting applies to vignettes below too.
+    ${R_opts} = ${R_opts}." -d valgrind" if $opt_use_valgrind;
 
     if($opt_examples && (-d &file_path($library, $pkgname, "R-ex"))) {
 	$log->creating("${pkgname}-Ex.R");
@@ -1295,9 +1404,8 @@ sub check_pkg {
 			 &shell_quote_file_path(${R::Vars::R_EXE}),
 			 "${R_opts}",
 			 "> ${pkgname}-Ex.Rout 2>&1"));
-	}
-	else {
-            $cmd = join(" ",
+	} else {
+	    $cmd = join(" ",
 			(&shell_quote_file_path(${R::Vars::R_EXE}),
 			 "${R_opts}",
 			 "< ${pkgname}-Ex.R",
@@ -1308,10 +1416,6 @@ sub check_pkg {
 	    $log->print("Running examples in ${pkgname}-Ex.R failed.\n");
 	    ## Try to spot the offending example right away.
 	    my $txt = join("\n", &read_lines("${pkgname}-Ex.Rout"));
-	    #open(FILE, "< ${pkgname}-Ex.Rout");
-	    #my @lines = <FILE>;
-	    #close(FILE);
-	    #my $txt = join("", @lines);
 	    ## Look for the header section anchored by a subsequent call
 	    ## to flush(): needs to be kept in sync with the code in
 	    ## massage-Examples.pl.  Should perhaps also be more
@@ -1327,24 +1431,44 @@ sub check_pkg {
 	## Look at the output from running the examples.  For the time
 	## being, report warnings about use of deprecated functions, as
 	## the next release will make them defunct and hence using them
-	## an error.
+	## an error.  Also warn about loading defunct base package stubs, 
+	## as load special-casing for these will be removed eventually.
 	my @lines = &read_lines("${pkgname}-Ex.Rout");
-	#open(FILE, "< ${pkgname}-Ex.Rout");
-	#my @lines = <FILE>;
-	#close(FILE);
-	@lines = grep(/^Warning: .*is deprecated.$/, @lines);
-	if(scalar(@lines) > 0) {
+	my $any;
+	my @bad_lines;
+	@bad_lines = grep(/^Warning: .*is deprecated.$/, @lines);
+	if(scalar(@bad_lines) > 0) {
 	    $log->warning();
+	    $any++;
 	    $log->print("Found the following significant warnings:\n");
-	    $log->print("  " . join("\n  ", @lines) . "\n");
+	    $log->print("  " . join("\n  ", @bad_lines) . "\n");
 	    $log->print(wrap("", "",
 			     ("Deprecated functions may be defunct as",
 			      "soon as of the next release of R.\n",
 			      "See ?Deprecated.\n")));
 	}
-	else {
-	    $log->result("OK");
+	@bad_lines = grep(/^Warning: package '.*' has been merged into/,
+			  @lines);
+	## Could make this more precise by looking for an exact match
+	## for one of the defunct stubs, but we currently do not get
+	## R_PKGS_STUBS from 'share/make/vars.mk'.
+	if(scalar(@bad_lines) > 0) {
+	    if($any) {
+		$log->print("\nAdditional significant warnings:\n");
+	    }
+	    else {
+		$log->warning();
+		$any++;
+		$log->print("Found the following significant " .
+			    "warnings:\n");
+	    }
+	    $log->print("  " . join("\n  ", @bad_lines) . "\n");
+	    $log->print(wrap("", "",
+			     ("Support for loading defunct former base",
+			      "packages may be removed as soon as of",
+			      "the next release of R.\n")));
 	}
+	$log->result("OK") unless($any);
     }
 
     ## Run the package-specific tests.
@@ -1399,6 +1523,7 @@ sub check_pkg {
             }
             print MAKEVARS "\n";
 	    print MAKEVARS "USE_GCT = $opt_use_gct\n";
+	    print MAKEVARS "R_OPTS = -d valgrind\n" if $opt_use_valgrind;
             close(MAKEVARS);
             $makevars = " -f Makevars";
         }
@@ -1452,14 +1577,19 @@ sub check_pkg {
 	    if(!$is_base_pkg && $opt_install) {
 		$Rcmd .= "checkVignettes(package = \"${pkgname}\", " .
 		         "lib.loc = \"${library}\", " .
-		         "workdir = \"src\")\n";
+		         "workdir = \"src\"";
 	    }
 	    else {
-		$Rcmd .= "checkVignettes(dir = \"${pkgdir}\")\n";
+		$Rcmd .= "checkVignettes(dir = \"${pkgdir}\"";
 	    }
+	    $Rcmd .= ", weave = FALSE" if(!$R_check_weave_vignettes);
+	    $Rcmd .= ")\n";
 	    my @out = R_runR($Rcmd, "${R_opts} --quiet");
 	    ## Vignette could redefine the prompt, e.g. to 'R>' ...
-	    @out = grep(!/^[[:alnum:]]*\>/, @out);
+	    @out = grep(!/^[[:alnum:]]*\>/, @out);	    
+	    ## Or to "empty".  As empty lines in the output will most
+	    ## likely not indicate a problem ...
+	    @out = grep(!/^[[:space:]]*$/, @out);
 	    if(scalar(@out) > 0) {
 		$log->warning() unless($any);
 		$any++;
@@ -1569,15 +1699,17 @@ sub check_pkg {
 
 sub usage {
     print STDERR <<END;
-Usage: R CMD $name [options] pkgdirs
+Usage: R CMD $name [options] pkgs
 
-Check R packages from package sources in the directories specified by
-pkgdirs.  A variety of diagnostic checks on directory structure, index
-and control files are performed.  The package is installed into the log
+Check R packages from package sources, which can be directories or 
+gzipped package 'tar' archives with extension '.tar.gz' or '.tgz'.
+
+A variety of diagnostic checks on directory structure, index and
+control files are performed.  The package is installed into the log
 directory (which includes the translation of all Rd files into several
 formats), and the Rd files are tested by LaTeX (if available).  All
-examples and tests provided by the package are tested to see if they run
-successfully.
+examples and tests provided by the package are tested to see if they
+run successfully.
 
 Options:
   -h, --help            print short help message and exit
@@ -1595,7 +1727,9 @@ Options:
       --no-vignettes    do not check vignettes in Sweave format
       --no-latex        do not run LaTeX on help files
       --use-gct         use 'gctorture(TRUE)' when running examples/tests
-
+      --use-valgrind    use 'valgrind' when running examples/tests/vignettes
+      --rcfile=FILE     read configuration values from FILE
+      
 By default, all test sections are turned on.
 
 Email bug reports to <r-bugs\@r-project.org>.

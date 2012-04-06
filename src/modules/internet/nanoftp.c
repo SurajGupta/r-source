@@ -17,6 +17,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> the only interpretation of char is ASCII 
+   <MBCS> only does strchr on ASCII strings, unless user@passwd in URLs
+   can be non-ASCII.
+ */
 
 /* based on libxml2-2.4.10:
  * nanoftp.c: basic FTP client support
@@ -26,6 +30,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#define _(String) gettext (String)
+#else
+#define _(String) (String)
 #endif
 
 /* we have a substitute snprintf */
@@ -358,9 +369,9 @@ RxmlNanoFTPScanProxy(const char *URL) {
 	proxyPort = 0;
 	}*/
     if (URL == NULL)
-	RxmlMessage(0, "Removing FTP proxy info");
+	RxmlMessage(0, _("removing FTP proxy info"));
     else
-	RxmlMessage(1, "Using FTP proxy %s", URL);
+	RxmlMessage(1, _("using FTP proxy '%s'"), URL);
     if (URL == NULL) return;
     buf[indx] = 0;
     while (*cur != 0) {
@@ -792,7 +803,7 @@ RxmlNanoFTPConnect(void *ctx) {
     else
 	hp = gethostbyname(ctxt->hostname);
     if (hp == NULL) {
-	RxmlMessage(1, "cannot resolve host");
+	RxmlMessage(1, _("cannot resolve host"));
         return(-1);
     }
     
@@ -822,7 +833,7 @@ RxmlNanoFTPConnect(void *ctx) {
                 sizeof(struct sockaddr_in)) < 0) {
         closesocket(ctxt->controlFd); ctxt->controlFd = -1;
         ctxt->controlFd = -1;
-	RxmlMessage(1, "Failed to connect to server");
+	RxmlMessage(1, _("failed to connect to server"));
 	return(-1);
     }
 
@@ -833,7 +844,7 @@ RxmlNanoFTPConnect(void *ctx) {
     if (res != 2) {
         closesocket(ctxt->controlFd); ctxt->controlFd = -1;
         ctxt->controlFd = -1;
-	RxmlMessage(1, "Failed to get response from server");
+	RxmlMessage(1, _("failed to get response from server"));
 	return(-1);
     }
 
@@ -1123,7 +1134,7 @@ RxmlNanoFTPGetConnection(void *ctx) {
 
     ctxt->dataFd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (ctxt->dataFd < 0) {
-        RxmlMessage(2, "RxmlNanoFTPGetConnection: failed to create socket");
+        RxmlMessage(2, _("RxmlNanoFTPGetConnection: failed to create socket"));
 	return(-1);
     }
     dataAddrLen = sizeof(dataAddr);
@@ -1158,7 +1169,7 @@ RxmlNanoFTPGetConnection(void *ctx) {
 	while (((*cur < '0') || (*cur > '9')) && *cur != '\0') cur++;
 	if (sscanf(cur, "%u,%u,%u,%u,%u,%u", &temp[0], &temp[1], &temp[2],
 	            &temp[3], &temp[4], &temp[5]) != 6) {
-	    RxmlMessage(1,"Invalid answer to PASV");
+	    RxmlMessage(1, "Invalid answer to PASV");
 	    if (ctxt->dataFd != -1) {
 		closesocket(ctxt->dataFd); ctxt->dataFd = -1;
 	    }
@@ -1168,7 +1179,7 @@ RxmlNanoFTPGetConnection(void *ctx) {
 	memcpy(&dataAddr.sin_addr, &ad[0], 4);
 	memcpy(&dataAddr.sin_port, &ad[4], 2);
 	if (connect(ctxt->dataFd, (struct sockaddr *) &dataAddr, dataAddrLen) < 0) {
-	    RxmlMessage(2, "Failed to create a data connection");
+	    RxmlMessage(2, _("failed to create a data connection"));
 	    closesocket(ctxt->dataFd); ctxt->dataFd = -1;
 	    return (-1);
 	}
@@ -1176,14 +1187,14 @@ RxmlNanoFTPGetConnection(void *ctx) {
         getsockname(ctxt->dataFd, (struct sockaddr *) &dataAddr, &dataAddrLen);
 	dataAddr.sin_port = 0;
 	if (bind(ctxt->dataFd, (struct sockaddr *) &dataAddr, dataAddrLen) < 0) {
-	    RxmlMessage(2, "Failed to bind a port");
+	    RxmlMessage(2, _("failed to bind a port"));
 	    closesocket(ctxt->dataFd); ctxt->dataFd = -1;
 	    return (-1);
 	}
         getsockname(ctxt->dataFd, (struct sockaddr *) &dataAddr, &dataAddrLen);
 
 	if (listen(ctxt->dataFd, 1) < 0) {
-	    RxmlMessage(2, "Could not listen on port %d",
+	    RxmlMessage(2, _("could not listen on port %d"),
 			ntohs(dataAddr.sin_port));
 	    closesocket(ctxt->dataFd); ctxt->dataFd = -1;
 	    return (-1);

@@ -16,7 +16,7 @@ xyz.coords <- function(x, y, z, xlab=NULL, ylab=NULL, zlab=NULL,
 		y <- eval(rhs[[3]], environment(x), pf)
 		x <- eval(rhs[[2]], environment(x), pf)
 	    }
-	    else stop("invalid first argument [bad language]")
+	    else stop("invalid first argument [bad language object]")
 	}
 	else if(is.matrix(x) || is.data.frame(x)) {
 	    x <- data.matrix(x)
@@ -90,26 +90,34 @@ xyz.coords <- function(x, y, z, xlab=NULL, ylab=NULL, zlab=NULL,
 	    if(yl < ml) y <- rep(y, length.out = ml)
 	    if(zl < ml) z <- rep(z, length.out = ml)
 	}
-	else stop("x, y and z lengths differ")
+	else stop("'x', 'y' and 'z' lengths differ")
     }
 
     ## log
     if(length(log) && log != "") {
 	log <- strsplit(log, NULL)[[1]]
-	o.msg <- " <= 0 omitted from logarithmic plot"
 	if("x" %in% log && any(ii <- x <= 0 & !is.na(x))) {
 	    n <- sum(ii)
-	    warning(paste(n, " x value", if(n>1)"s", o.msg, sep=""))
+            warning(sprintf(ngettext(n,
+                                     "%d x value <= 0 omitted from logarithmic plot",
+                                     "%d x values <= 0 omitted from logarithmic plot"),
+                            n), domain = NA)
 	    x[ii] <- NA
 	}
 	if("y" %in% log && any(ii <- y <= 0 & !is.na(y))) {
 	    n <- sum(ii)
-	    warning(paste(n, " y value", if(n>1)"s", o.msg, sep=""))
+            warning(sprintf(ngettext(n,
+                                     "%d y value <= 0 omitted from logarithmic plot",
+                                     "%d y values <= 0 omitted from logarithmic plot"),
+                            n), domain = NA)
 	    y[ii] <- NA
 	}
 	if("z" %in% log && any(ii <- z <= 0 & !is.na(z))) {
 	    n <- sum(ii)
-	    warning(paste(n, " z value", if(n>1)"s", o.msg, sep=""))
+            warning(sprintf(ngettext(n,
+                                     "%d z value <= 0 omitted from logarithmic plot",
+                                     "%d z values <= 0 omitted from logarithmic plot"),
+                            n), domain = NA)
 	    z[ii] <- NA
 	}
     }

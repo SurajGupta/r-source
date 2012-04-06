@@ -4,7 +4,7 @@
 \description{Utility for installing add-on packages.}
 \usage{R CMD INSTALL [options] [-l lib] pkgs}
 \arguments{
-  \item{pkgs}{A list with the path names of the packages to be
+  \item{pkgs}{A space-separated list with the path names of the packages to be
     installed.}
   \item{lib}{the path name of the \R library tree to install to.}
   \item{options}{a space-separated list of options through which in
@@ -24,9 +24,11 @@
   \code{R CMD INSTALL -l lib pkgs}.
 
   Both \code{lib} and the elements of \code{pkgs} may be absolute or
-  relative path names. \code{pkgs} can also contain name of package
-  archive files of the form \file{pkg\_version.tar.gz} as obtained from
-  CRAN, these are then extracted in a temporary directory.
+  relative path names of directories.  \code{pkgs} may also contain
+  names of package/bundle archive files of the form
+  \file{pkg\_version.tar.gz} as obtained from CRAN: these are then
+  extracted in a temporary directory.  Finally, binary package/bundle
+  archive files (as created by \code{R CMD build --binary} can be supplied.
   
   Some package sources contain a \file{configure} script that can be
   passed arguments or variables via the option \option{--configure-args}
@@ -60,7 +62,7 @@
   Options \option{--lazy}, \option{--no-lazy}, \option{--lazy-data} and
   \option{--no-lazy-data} control where the \R objects and the datasets
   are made available for lazy loading.  (These options are overridden by
-  any values set in the DESCRIPTION file.)  The default is
+  any values set in the \file{DESCRIPTION} file.)  The default is
   \option{--no-lazy --no-lazy-data} except that lazy-loading is used for
   package with more than 25kB of \R code and no saved image.
 
@@ -89,13 +91,21 @@
   image, followed by the R code in file \file{install.R}, if any.)
 
 }
+
+\note{
+  Some binary distributions of \R have \code{INSTALL} in a separate
+  bundle, e.g. an \code{R-devel} RPM.
+}
+
 \seealso{
   \code{\link{REMOVE}} and \code{\link{library}} for information on
   using several library trees;
   \code{\link{update.packages}} for automatic update of packages using
   the internet;
+  the section on \dQuote{Add-on packages} in \dQuote{R Installation and
+    Administration} and
   the chapter on \dQuote{Creating R packages} in \dQuote{Writing \R
-    Extensions} (see the \file{doc/manual} subdirectory of the \R source
-  tree).
+    Extensions}
+  (see the \file{doc/manual} subdirectory of the \R source tree).
 }
 \keyword{utilities}

@@ -257,7 +257,7 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 
 /* Under the generational allocator the data for vector nodes comes
    immediately after the node structure, so the data address is a
-   known ofset from the node SEXP. */
+   known offset from the node SEXP. */
 #define DATAPTR(x)	(((SEXPREC_ALIGN *) (x)) + 1)
 #define CHAR(x)		((char *) DATAPTR(x))
 #define LOGICAL(x)	((int *) DATAPTR(x))
@@ -489,6 +489,7 @@ SEXP Rf_dimgets(SEXP, SEXP);
 SEXP Rf_dimnamesgets(SEXP, SEXP);
 SEXP Rf_DropDims(SEXP);
 SEXP Rf_duplicate(SEXP);
+SEXP Rf_duplicated(SEXP);
 SEXP Rf_elt(SEXP, int);
 SEXP Rf_emptyEnv(void);
 SEXP Rf_eval(SEXP, SEXP);
@@ -563,7 +564,9 @@ SEXP Rf_list4(SEXP, SEXP, SEXP, SEXP);
 SEXP Rf_listAppend(SEXP, SEXP);
 SEXP R_lsInternal(SEXP, Rboolean);
 SEXP Rf_makeSubscript(SEXP, SEXP, int *);
+SEXP Rf_match(SEXP, SEXP, int);
 SEXP Rf_matchArg(SEXP, SEXP*);
+SEXP Rf_matchArgExact(SEXP, SEXP*);
 SEXP Rf_matchArgs(SEXP, SEXP);
 SEXP Rf_matchPar(char*, SEXP*);
 SEXP Rf_mkChar(const char*);
@@ -637,6 +640,7 @@ SEXP (VECTOR_ELT)(SEXP x, int i);
 SEXP (SET_VECTOR_ELT)(SEXP x, int i, SEXP v);
 int *(LOGICAL)(SEXP x);
 int *(INTEGER)(SEXP x);
+Rbyte *(RAW)(SEXP x);
 double *(REAL)(SEXP x);
 Rcomplex *(COMPLEX)(SEXP x);
 SEXP *(STRING_PTR)(SEXP x);
@@ -709,6 +713,7 @@ SEXP (PRVALUE)(SEXP x);
 int (PRSEEN)(SEXP x);
 void (SET_PRENV)(SEXP x, SEXP v);
 void (SET_PRVALUE)(SEXP x, SEXP v);
+void (SET_PRCODE)(SEXP x, SEXP v);
 void (SET_PRSEEN)(SEXP x, int v);
 
 /* Hashing Macros */
@@ -913,6 +918,7 @@ int R_system(char *);
 #define dimnamesgets		Rf_dimnamesgets
 #define DropDims                Rf_DropDims
 #define duplicate		Rf_duplicate
+#define duplicated		Rf_duplicated
 #define elt			Rf_elt
 #define emptyEnv		Rf_emptyEnv
 #define EnsureString		Rf_EnsureString
@@ -993,7 +999,9 @@ int R_system(char *);
 #define LogicalFromReal		Rf_LogicalFromReal
 #define LogicalFromString	Rf_LogicalFromString
 #define makeSubscript		Rf_makeSubscript
+#define match			Rf_match
 #define matchArg		Rf_matchArg
+#define matchArgExact		Rf_matchArgExact
 #define matchArgs		Rf_matchArgs
 #define matchPar		Rf_matchPar
 #define mkChar			Rf_mkChar

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  The R Development Core Team.
+ *  Copyright (C) 1997--2005  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -30,6 +32,16 @@ extern void R_ProcessEvents(void);
 /* -> Errormsg.h */
 #include <Startup.h> /* rather cleanup ..*/
 #include <Rconnections.h>
+#include <R_ext/GraphicsDevice.h>
+#include <R_ext/GraphicsEngine.h> /* for GEonExit */
+#include <Rmath.h> /* for imax2 */
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+#if !HAVE_DECL_ALLOCA
+extern char *alloca(size_t);
+#endif
 
 #ifndef min
 #define min(a, b) (a<b?a:b)
@@ -46,6 +58,7 @@ in the error handling.
 static int inError = 0;
 static int inWarning = 0;
 static int inPrintWarnings = 0;
+static int immediateWarning = 0;
 
 static void try_jump_to_restart(void);
 static void jump_to_top_ex(Rboolean, Rboolean, Rboolean, Rboolean, Rboolean);
@@ -109,7 +122,7 @@ void onsigusr1()
 {
     if (R_interrupts_suspended) {
 	/**** ought to save signal and handle after suspend */
-	REprintf("interrupts suspended; signal ignored");
+	REprintf(_("interrupts suspended; signal ignored"));
 	return;
     }
 
@@ -144,7 +157,7 @@ void onsigusr2()
 
     if (R_interrupts_suspended) {
 	/**** ought to save signal and handle after suspend */
-	REprintf("interrupts suspended; signal ignored");
+	REprintf(_("interrupts suspended; signal ignored"));
 	return;
     }
 
@@ -218,7 +231,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     s = GetOption(install("warning.expression"), R_NilValue);
     if( s!= R_NilValue ) {
 	if( !isLanguage(s) &&  ! isExpression(s) )
-	    error("invalid option \"warning.expression\"");
+	    error(_("invalid option \"warning.expression\""));
 	cptr = R_GlobalContext;
 	while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->callflag )
 	    cptr = cptr->nextcontext;
@@ -234,6 +247,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     if(w < 0 || inWarning || inError)  {/* ignore if w<0 or already in here*/
 	return;
     }
+    if( w == 0 && immediateWarning ) w = 1;
 
     /* set up a context which will restore inWarning if there is an exit */
     begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
@@ -245,16 +259,16 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     if(w >= 2) { /* make it an error */
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
 	inWarning = 0; /* PR#1570 */
-	errorcall(call, "(converted from warning) %s", buf);
+	errorcall(call, _("(converted from warning) %s"), buf);
     }
     else if(w == 1) {	/* print as they happen */
 	if( call != R_NilValue ) {
 	    dcall = CHAR(STRING_ELT(deparse1(call, 0, SIMPLEDEPARSE), 0));
-	    REprintf("Warning in %s : ", dcall);
+	    REprintf(_("Warning in %s : "), dcall);
 	    if (strlen(dcall) > LONGCALL) REprintf("\n	 ");
 	}
 	else
-	    REprintf("Warning: ");
+	    REprintf(_("Warning: "));
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength), format, ap);
 	REprintf("%s\n", buf);
     }
@@ -310,7 +324,7 @@ static void cleanup_PrintWarnings(void *data)
     if (R_CollectWarnings) {
 	R_CollectWarnings = 0;
 	R_Warnings = R_NilValue;
-	REprintf("Lost warning messages\n");
+	REprintf(_("Lost warning messages\n"));
     }
     inPrintWarnings = 0;
 }
@@ -318,6 +332,7 @@ static void cleanup_PrintWarnings(void *data)
 void PrintWarnings(void)
 {
     int i;
+    char *header;
     SEXP names, s, t;
     RCNTXT cntxt;
 
@@ -327,7 +342,7 @@ void PrintWarnings(void)
 	if (R_CollectWarnings) {
 	    R_CollectWarnings = 0;
 	    R_Warnings = R_NilValue;
-	    REprintf("Lost warning messages\n");
+	    REprintf(_("Lost warning messages\n"));
 	}
 	return;
     }
@@ -339,8 +354,10 @@ void PrintWarnings(void)
     cntxt.cend = &cleanup_PrintWarnings;
 
     inPrintWarnings = 1;
+    header = ngettext("Warning message:\n", "Warning messages:\n", 
+		      R_CollectWarnings);
     if( R_CollectWarnings == 1 ) {
-	REprintf("Warning message: \n");
+	REprintf(header);
 	names = CAR(ATTRIB(R_Warnings));
 	if( VECTOR_ELT(R_Warnings, 0) == R_NilValue )
 	   REprintf("%s \n", CHAR(STRING_ELT(names, 0)));
@@ -349,7 +366,7 @@ void PrintWarnings(void)
 		CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, 0), 0, SIMPLEDEPARSE), 0)));
     }
     else if( R_CollectWarnings <= 10 ) {
-	REprintf("Warning messages: \n");
+	REprintf(header);
 	names = CAR(ATTRIB(R_Warnings));
 	for(i=0; i<R_CollectWarnings; i++) {
 	    if( STRING_ELT(R_Warnings, i) == R_NilValue )
@@ -361,10 +378,10 @@ void PrintWarnings(void)
     }
     else {
 	if (R_CollectWarnings < 50)
-	    REprintf("There were %d warnings (use warnings() to see them)\n",
+	    REprintf(_("There were %d warnings (use warnings() to see them)\n"),
 		     R_CollectWarnings);
 	else
-	    REprintf("There were 50 or more warnings (use warnings() to see the first 50)\n");
+	    REprintf(_("There were 50 or more warnings (use warnings() to see the first 50)\n"));
     }
     /* now truncate and install last.warning */
     PROTECT(s = allocVector(VECSXP, R_CollectWarnings));
@@ -407,7 +424,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	/* fail-safe handler for recursive errors */
 	if(inError == 3) {
 	     /* Can REprintf generate an error? If so we should guard for it */
-	    REprintf("Error during wrapup: ");
+	    REprintf(_("Error during wrapup: "));
 	    /* this does NOT try to print the call since that could
                cause a cascade of error calls */
 	    Rvsnprintf(errbuf, sizeof(errbuf), format, ap);
@@ -416,7 +433,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	if (R_Warnings != R_NilValue) {
 	    R_CollectWarnings = 0;
 	    R_Warnings = R_NilValue;
-	    REprintf("Lost warning messages\n");
+	    REprintf(_("Lost warning messages\n"));
 	}
 	jump_to_top_ex(FALSE, FALSE, FALSE, FALSE, FALSE);
     }
@@ -430,7 +447,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
     inError = 1;
 
     if(call != R_NilValue) {
-	char *head = "Error in ";
+	char *head = _("Error in ");
 	char *mid = " : ";
 	char *tail = "\n\t";/* <- TAB */
 	int len = strlen(head) + strlen(mid) + strlen(tail);
@@ -441,10 +458,10 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	    if (strlen(dcall) > LONGCALL) strcat(errbuf, tail);
 	}
 	else
-	    sprintf(errbuf, "Error: ");
+	    sprintf(errbuf, _("Error: "));
     }
     else
-	sprintf(errbuf, "Error: ");
+	sprintf(errbuf, _("Error: "));
 
     p = errbuf + strlen(errbuf);
     Rvsnprintf(p, min(BUFSIZE, R_WarnLength) - strlen(errbuf), format, ap);
@@ -453,7 +470,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
     if (R_ShowErrorMessages) REprintf("%s", errbuf);
 
     if( R_ShowErrorMessages && R_CollectWarnings ) {
-	REprintf("In addition: ");
+	REprintf(_("In addition: "));
 	PrintWarnings();
     }
 
@@ -587,7 +604,7 @@ static void jump_to_top_ex(Rboolean traceback,
 	haveHandler = ( s != R_NilValue );
 	if (haveHandler) {
 	    if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
-		REprintf("invalid option \"error\"\n");
+		REprintf(_("invalid option \"error\"\n"));
 	    else {
 		inError = 3;
 		if (isLanguage(s))
@@ -615,6 +632,11 @@ static void jump_to_top_ex(Rboolean traceback,
 	R_ClearerrConsole();
 	R_ParseError = 0;
     }
+
+    /*
+     * Reset graphics state
+     */
+    GEonExit();
 
     /* WARNING: If oldInError > 0 ABSOLUTELY NO ALLOCATION can be
        triggered after this point except whatever happens in writing
@@ -658,7 +680,7 @@ static void jump_to_top_ex(Rboolean traceback,
     R_run_onexits(R_ToplevelContext);
 
     if ( !R_Interactive && !haveHandler ) {
-	REprintf("Execution halted\n");
+	REprintf(_("Execution halted\n"));
 	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
     }
 
@@ -677,6 +699,177 @@ void jump_to_toplevel()
        done after arriving at the jump target.  Now ignores
        try/browser frames--it really is a jump to toplevel */
     jump_to_top_ex(FALSE, FALSE, TRUE, TRUE, TRUE);
+}
+
+/* #define DEBUG_GETTEXT 1 */
+
+/* gettext(domain, string) */
+SEXP do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+#ifdef ENABLE_NLS
+    char *domain = "", *buf;
+    SEXP ans, string = CADR(args);
+    int i, n = LENGTH(string);
+    
+    checkArity(op, args);
+    if(isNull(string) || !n) return string;
+
+    if(!isString(string)) errorcall(call, _("invalid 'string' value"));
+
+    if(isNull(CAR(args))) {
+	RCNTXT *cptr;
+	SEXP rho = R_NilValue;
+	for (cptr = R_GlobalContext->nextcontext;
+	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	     cptr = cptr->nextcontext)
+	    if (cptr->callflag & CTXT_FUNCTION) {
+		rho = cptr->cloenv;
+		break;
+	    }
+	while(rho != R_NilValue) {
+	    if (rho == R_GlobalEnv) break;
+	    else if (R_IsNamespaceEnv(rho)) {
+		domain = CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0));
+		break;
+	    }
+	    rho = CDR(rho);
+	}
+	if(strlen(domain)) {
+	    buf = alloca(strlen(domain)+3);
+	    sprintf(buf, "R-%s", domain);
+	    domain = buf;
+	}
+    } else if(isString(CAR(args)))
+	domain = CHAR(STRING_ELT(CAR(args),0));
+    else errorcall(call, _("invalid 'domain' value"));
+
+    if(strlen(domain)) {
+	PROTECT(ans = allocVector(STRSXP, n));
+	for(i = 0; i < n; i++) {
+	    int ihead = 0, itail = 0;
+	    char *this = CHAR(STRING_ELT(string, i)), 
+		*tmp, *head = NULL, *tail = NULL, *p, *tr;
+	    tmp = alloca(strlen(this) + 1);
+	    strcpy(tmp, this);
+	    /* strip leading and trailing white spaces and 
+	       add back after translation */
+	    for(p = tmp;
+		*p && (*p == ' ' || *p == '\t' || *p == '\n'); 
+		p++, ihead++) ;
+	    if(ihead > 0) {
+		head = alloca(ihead + 1);
+		strncpy(head, tmp, ihead);
+		head[ihead] = '\0';
+		tmp += ihead;
+		}
+	    if(strlen(tmp))
+		for(p = tmp+strlen(tmp)-1; 
+		    p >= tmp && (*p == ' ' || *p == '\t' || *p == '\n');
+		    p--, itail++) ;
+	    if(itail > 0) {
+		tail = alloca(itail + 1);
+		strcpy(tail, tmp+strlen(tmp)-itail);
+		tmp[strlen(tmp)-itail] = '\0';
+		}
+	    if(strlen(tmp)) {
+#ifdef DEBUG_GETTEXT
+		REprintf("translating '%s' in domain '%s'\n", tmp, domain);
+#endif
+		tr = dgettext(domain, tmp);
+		tmp = alloca(strlen(tr) + ihead + itail + 1);
+		tmp[0] ='\0';
+		if(ihead > 0) strcat(tmp, head);
+		strcat(tmp, tr);
+		if(itail > 0) strcat(tmp, tail);
+	    } else tmp = this;
+	    SET_STRING_ELT(ans, i, mkChar(tmp));
+	}
+	UNPROTECT(1);
+	return ans;
+    } else return CADR(args);
+#else
+    return CADR(args);
+#endif
+}
+
+/* ngettext(n, msg1, msg2, domain) */
+SEXP do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    char *domain = "", *buf;
+    SEXP ans, sdom = CADDDR(args), msg1 = CADR(args), msg2 = CADDR(args);
+    int n = asInteger(CAR(args));
+    
+    checkArity(op, args);
+    if(n == NA_INTEGER || n < 0) error(_("invalid 'n'"));
+    if(!isString(msg1) || LENGTH(msg1) != 1)
+	error(_("'msg1' must be a character string"));
+    if(!isString(msg2) || LENGTH(msg2) != 1)
+	error(_("'msg2' must be a character string"));
+
+#ifdef ENABLE_NLS
+    if(isNull(sdom)) {
+	RCNTXT *cptr;
+	SEXP rho = R_NilValue;
+	for (cptr = R_GlobalContext->nextcontext;
+	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	     cptr = cptr->nextcontext)
+	    if (cptr->callflag & CTXT_FUNCTION) {
+		rho = cptr->cloenv;
+		break;
+	    }
+	while(rho != R_NilValue) {
+	    if (rho == R_GlobalEnv) break;
+	    else if (R_IsNamespaceEnv(rho)) {
+		domain = CHAR(STRING_ELT(R_NamespaceEnvSpec(rho), 0));
+		break;
+	    }
+	    rho = CDR(rho);
+	}
+	if(strlen(domain)) {
+	    buf = alloca(strlen(domain)+3);
+	    sprintf(buf, "R-%s", domain);
+	    domain = buf;
+	}
+    } else if(isString(sdom))
+	domain = CHAR(STRING_ELT(sdom,0));
+    else errorcall(call, _("invalid 'domain' value"));
+
+    if(strlen(domain)) {
+	char *fmt = dngettext(domain,
+			      CHAR(STRING_ELT(msg1, 0)),
+			      CHAR(STRING_ELT(msg2, 0)),
+			      n);
+	PROTECT(ans = allocVector(STRSXP, 1));
+	SET_STRING_ELT(ans, 0, mkChar(fmt));
+	UNPROTECT(1);
+	return ans;
+    } else
+#endif
+	return n == 1 ? msg1 : msg2;
+}
+
+
+/* bindtextdomain(domain, dirname) */
+SEXP do_bindtextdomain(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+#ifdef ENABLE_NLS
+    char *res;
+    
+    checkArity(op, args);
+    if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1) 
+	errorcall(call, _("invalid 'domain' value"));
+    if(isNull(CADR(args))) {
+	res = bindtextdomain(CHAR(STRING_ELT(CAR(args),0)), NULL);
+    } else {
+	if(!isString(CADR(args)) || LENGTH(CADR(args)) != 1) 
+	    errorcall(call, _("invalid 'dirname' value"));
+	res = bindtextdomain(CHAR(STRING_ELT(CAR(args),0)),
+			     CHAR(STRING_ELT(CADR(args),0)));
+    }
+    if(res) return mkString(res);
+    /* else this failed */
+#endif
+    return R_NilValue;
 }
 
 static SEXP findCall(void)
@@ -698,14 +891,14 @@ SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(asLogical(CAR(args))) /* find context -> "Error in ..:" */
 	c_call = findCall();
     else
-	c_call = R_NilValue;
-
+	c_call = R_NilValue;    
+    
     args = CDR(args);
 
     if (CAR(args) != R_NilValue) { /* message */
       SETCAR(args, coerceVector(CAR(args), STRSXP));
       if(!isValidString(CAR(args)))
-	  errorcall(c_call, " [invalid string in stop(.)]");
+	  errorcall(c_call, _(" [invalid string in stop(.)]"));
       errorcall(c_call, "%s", CHAR(STRING_ELT(CAR(args), 0)));
     }
     else
@@ -723,15 +916,21 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 	c_call = R_NilValue;
 
     args = CDR(args);
+    if(asLogical(CAR(args))) { /* immediate = TRUE */
+	immediateWarning = 1;
+    } else 
+	immediateWarning = 0;
+    args = CDR(args);
     if (CAR(args) != R_NilValue) {
 	SETCAR(args, coerceVector(CAR(args), STRSXP));
 	if(!isValidString(CAR(args)))
-	    warningcall(c_call, " [invalid string in warning(.)]");
+	    warningcall(c_call, _(" [invalid string in warning(.)]"));
 	else
 	    warningcall(c_call, "%s", CHAR(STRING_ELT(CAR(args), 0)));
     }
     else
 	warningcall(c_call, "");
+    immediateWarning = 0; /* reset to internal calls */
 
     /* need to set R_Visible since it may have been changed by a callback */
     R_Visible = 0;
@@ -741,13 +940,13 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* Error recovery for incorrect argument count error. */
 void WrongArgCount(const char *s)
 {
-    error("incorrect number of arguments to \"%s\"", s);
+    error(_("incorrect number of arguments to \"%s\""), s);
 }
 
 
 void UNIMPLEMENTED(const char *s)
 {
-    error("Unimplemented feature in %s", s);
+    error(_("unimplemented feature in %s"), s);
 }
 
 /* ERROR_.. codes in Errormsg.h */
@@ -756,14 +955,14 @@ static struct {
     const char* const format;
 }
 const ErrorDB[] = {
-    { ERROR_NUMARGS,		"invalid number of arguments"		},
-    { ERROR_ARGTYPE,		"invalid argument type"			},
+    { ERROR_NUMARGS,		N_("invalid number of arguments")	},
+    { ERROR_ARGTYPE,		N_("invalid argument type")		},
 
-    { ERROR_TSVEC_MISMATCH,	"time-series/vector length mismatch"	},
-    { ERROR_INCOMPAT_ARGS,	"incompatible arguments"		},
+    { ERROR_TSVEC_MISMATCH,	N_("time-series/vector length mismatch")},
+    { ERROR_INCOMPAT_ARGS,	N_("incompatible arguments")		},
 
-    { ERROR_UNIMPLEMENTED,	"unimplemented feature in %s"		},
-    { ERROR_UNKNOWN,		"unknown error (report this!)"		}
+    { ERROR_UNIMPLEMENTED,	N_("unimplemented feature in %s")	},
+    { ERROR_UNKNOWN,		N_("unknown error (report this!)")	}
 };
 
 static struct {
@@ -771,11 +970,11 @@ static struct {
     char* format;
 }
 WarningDB[] = {
-    { WARNING_coerce_NA,	"NAs introduced by coercion"		},
-    { WARNING_coerce_INACC,	"inaccurate integer conversion in coercion" },
-    { WARNING_coerce_IMAG,	"imaginary parts discarded in coercion" },
+    { WARNING_coerce_NA,	N_("NAs introduced by coercion")	},
+    { WARNING_coerce_INACC,	N_("inaccurate integer conversion in coercion")},
+    { WARNING_coerce_IMAG,	N_("imaginary parts discarded in coercion") },
 
-    { WARNING_UNKNOWN,		"unknown warning (report this!)"	},
+    { WARNING_UNKNOWN,		N_("unknown warning (report this!)")	},
 };
 
 
@@ -793,7 +992,7 @@ void ErrorMessage(SEXP call, int which_error, ...)
     }
 
     va_start(ap, which_error);
-    Rvsnprintf(buf, BUFSIZE, ErrorDB[i].format, ap);
+    Rvsnprintf(buf, BUFSIZE, _(ErrorDB[i].format), ap);
     va_end(ap);
     errorcall(call, "%s", buf);
 }
@@ -812,7 +1011,7 @@ void WarningMessage(SEXP call, R_WARNING which_warn, ...)
     }
 
     va_start(ap, which_warn);
-    Rvsnprintf(buf, BUFSIZE, WarningDB[i].format, ap);
+    Rvsnprintf(buf, BUFSIZE, _(WarningDB[i].format), ap);
     va_end(ap);
     warningcall(call, "%s", buf);
 }
@@ -853,7 +1052,7 @@ void R_ReturnOrRestart(SEXP val, SEXP env, Rboolean restart)
 	else if (restart && IS_RESTART_BIT_SET(c->callflag))
 	    findcontext(CTXT_RESTART, c->cloenv, R_RestartToken);
 	else if (c->callflag == CTXT_TOPLEVEL)
-	    error("No function to return from, jumping to top level");
+	    error(_("No function to return from, jumping to top level"));
     }
 }
 
@@ -869,7 +1068,7 @@ void R_JumpToToplevel(Rboolean restart)
 	    break;
     }
     if (c != R_ToplevelContext)
-	warning("top level inconsistency?");
+	warning(_("top level inconsistency?"));
 
     /* Run onexit/cend code for everything above the target. */
     R_run_onexits(c);
@@ -888,7 +1087,7 @@ void R_SetErrmessage(char *s)
 void R_PrintDeferredWarnings(void)
 {
     if( R_ShowErrorMessages && R_CollectWarnings ) {
-        REprintf("In addition: ");
+        REprintf(_("In addition: "));
         PrintWarnings();
     }
 }
@@ -969,7 +1168,7 @@ SEXP do_addCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (TYPEOF(classes) != STRSXP || TYPEOF(handlers) != VECSXP ||
 	LENGTH(classes) != LENGTH(handlers))
-	error("bad handler data");
+	error(_("bad handler data"));
 
     n = LENGTH(handlers);
     oldstack = R_HandlerStack;
@@ -1117,7 +1316,7 @@ SEXP do_signalCondition(SEXP call, SEXP op, SEXP args, SEXP rho)
 		char *msgstr = NULL;
 		if (TYPEOF(msg) == STRSXP && LENGTH(msg) > 0)
 		    msgstr = CHAR(STRING_ELT(msg, 0));
-		else error("error message not a strring");
+		else error(_("error message not a string"));
 		errorcall_dflt(ecall, "%s", msgstr);
 	    }
 	    else {
@@ -1191,7 +1390,7 @@ void R_InsertRestartHandlers(RCNTXT *cptr, Rboolean browser)
 	if (IS_RESTART_BIT_SET(cptr->callflag))
 	    return;
 	else
-	    error("handler or restart stack mismatch in old restart");
+	    error(_("handler or restart stack mismatch in old restart"));
     }
 
     /**** need more here to keep recursive errors in browser? */
@@ -1217,7 +1416,7 @@ SEXP do_dfltWarn(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     if (TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
-	error("bad error message");
+	error(_("bad error message"));
     msg = CHAR(STRING_ELT(CAR(args), 0));
     ecall = CADR(args);
 
@@ -1233,7 +1432,7 @@ SEXP do_dfltStop(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     if (TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
-	error("bad error message");
+	error(_("bad error message"));
     msg = CHAR(STRING_ELT(CAR(args), 0));
     ecall = CADR(args);
 
@@ -1275,7 +1474,7 @@ SEXP do_getRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
 #define CHECK_RESTART(r) do { \
     SEXP __r__ = (r); \
     if (TYPEOF(__r__) != VECSXP || LENGTH(__r__) < 2) \
-	error("bad restart"); \
+	error(_("bad restart")); \
 } while (0)
 
 SEXP do_addRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1307,7 +1506,7 @@ static void invokeRestart(SEXP r, SEXP arglist)
 		}
 		else findcontext(CTXT_FUNCTION, exit, arglist);
 	    }
-	error("restart not on stack");
+	error(_("restart not on stack"));
     }
 }
 
@@ -1325,7 +1524,7 @@ SEXP do_addTryHandlers(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (R_GlobalContext == R_ToplevelContext ||
 	! R_GlobalContext->callflag & CTXT_FUNCTION)
-	errorcall(call, "not in a try context");
+	errorcall(call, _("not in a try context"));
     SET_RESTART_BIT_ON(R_GlobalContext->callflag);
 #ifdef NEW_CONDITION_HANDLING
     R_InsertRestartHandlers(R_GlobalContext, FALSE);

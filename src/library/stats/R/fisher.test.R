@@ -9,30 +9,30 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
         x <- as.matrix(x)
     if(is.matrix(x)) {
         if(any(dim(x) < 2))
-            stop("x must have at least 2 rows and columns")
+            stop("'x' must have at least 2 rows and columns")
         if(!is.numeric(x) || any(x < 0) || any(is.na(x)))
-            stop("all entries of x must be nonnegative and finite")
+            stop("all entries of 'x' must be nonnegative and finite")
         if(!is.integer(x)) {
             xo <- x
             x <- round(x)
             if(any(x > .Machine$integer.max))
-                stop(sQuote("x")," has entries too large to be integer")
+                stop("'x' has entries too large to be integer")
             if(!identical(TRUE, (ax <- all.equal(xo, x))))
-                warning(sQuote("x")," has been rounded to integer: ", ax)
+                warning("'x' has been rounded to integer: ", ax)
             storage.mode(x) <- "integer"
         }
     }
     else {
         if(is.null(y))
-            stop("if x is not a matrix, y must be given")
+            stop("if 'x' is not a matrix, 'y' must be given")
         if(length(x) != length(y))
-            stop("x and y must have the same length")
+            stop("'x' and 'y' must have the same length")
         DNAME <- paste(DNAME, "and", deparse(substitute(y)))
         OK <- complete.cases(x, y)
         x <- factor(x[OK])
         y <- factor(y[OK])
         if((nlevels(x) < 2) || (nlevels(y) < 2))
-            stop("x and y must have at least 2 levels")
+            stop("'x' and 'y' must have at least 2 levels")
         x <- table(x, y)
     }
     ## x is integer
@@ -48,13 +48,12 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
         alternative <- char.expand(alternative,
                                    c("two.sided", "less", "greater"))
         if(length(alternative) > 1 || is.na(alternative))
-            stop(paste("alternative must be \"two.sided\",",
-                       "\"less\" or \"greater\""))
+            stop("alternative must be \"two.sided\", \"less\" or \"greater\"")
         if(!((length(conf.level) == 1) && is.finite(conf.level) &&
              (conf.level > 0) && (conf.level < 1)))
-            stop("conf.level must be a single number between 0 and 1")
+            stop("'conf.level' must be a single number between 0 and 1")
         if(!missing(or) && (length(or) > 1 || is.na(or) || or < 0))
-            stop("or must be a single number between 0 and Inf")
+            stop("'or' must be a single number between 0 and Inf")
     }
 
     PVAL <- NULL

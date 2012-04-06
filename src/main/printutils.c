@@ -18,6 +18,16 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8>
+
+   char here is either ASCII or handled as a whole, apart from Rstrlen
+   and EncodeString.
+
+   Octal representation of strings replaced by \u+6hex (can that be
+   improved?).
+*/
+
+
 /* =========
  * Printing:
  * =========
@@ -211,8 +221,11 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei)
     return buffer->data;
 }
 
-
-/* strlen() using escaped rather than literal form, 
+#ifdef SUPPORT_MBCS
+#include <wchar.h>
+#include <wctype.h>
+#endif
+/* strlen() using escaped rather than literal form,
    and allows for embedded nuls */
 int Rstrlen(SEXP s, int quote)
 {
@@ -222,43 +235,63 @@ int Rstrlen(SEXP s, int quote)
     len = 0;
     p = CHAR(s);
     for (i = 0; i < LENGTH(s); i++) {
-	if(isprint((int)*p)) {
-	    switch(*p) {
-	    case '\\':
-#ifdef ESCquote
-	    case '\'':
-#endif
-		 len += 2; break;
-#ifdef ESC_BARE_QUOTE
-	    case '\"': len += 2; break;
-#else
-	    case '\"': len += quote ? 2 : 1; break;
-#endif
-	    default: len += 1; break;
+
+	/* ASCII */
+	if((unsigned char) *p < 0x80) {
+	    if(isprint((int)*p)) {
+		switch(*p) {
+		case '\\':
+		    len += 2; break;
+		case '\'':
+		case '"':
+		    len += (quote == *p)? 2 : 1; break;
+		default:
+		    len++; break;
+		}
+	    } else switch(*p) {
+	    case '\a':
+	    case '\b':
+	    case '\f':
+	    case '\n':
+	    case '\r':
+	    case '\t':
+	    case '\v':
+	    case '\0':
+		len += 2; break;
+	    default:
+		/* print in octal */
+		len += 4; break;
 	    }
-	} else switch(*p) {
-	case '\a':
-	case '\b':
-	case '\f':
-	case '\n':
-	case '\r':
-	case '\t':
-	case '\v':
-	case '\0':
-	    len += 2; break;
-	default: /* print in octal */
-	    len += 5; break;
+	    p++;
+#ifdef SUPPORT_MBCS
+	} else if(mbcslocale) { /* beginning of multibyte char */
+	    int res; wchar_t wc;
+	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
+	    if(res > 0) {
+		len += iswprint((int)wc) ? 1 : (wc > 0xffff ? 10 : 6);
+		i += (res - 1);
+		p += res;
+	    } else {
+		p++; len +=4;
+	    }
+#endif
+	} else { /* 8 bit char */
+#ifdef Win32 /* It seems Windows does not know what is printable! */
+	    len++;
+#else
+	    len += isprint((int)*p) ? 1 : 4;
+#endif
+	    p++;
 	}
-	p++;
     }
     return len;
 }
 
 /* Here w appears to be the minimum field width */
-char *EncodeString(SEXP s, int w, int quote, int right)
+char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 {
-    int b, i, j, cnt;
-    char *p, *q, buf[5];
+    int b, b0, i, j, cnt;
+    char *p, *q, buf[11];
 
     if (s == NA_STRING) {
 	p = quote ? CHAR(R_print.na_string) : CHAR(R_print.na_string_noquote);
@@ -271,56 +304,84 @@ char *EncodeString(SEXP s, int w, int quote, int right)
 	cnt = LENGTH(s);
     }
 
-    R_AllocStringBuffer((i+2 >= w)?(i+2):w, buffer); /* +2 allows for quotes */
+    R_AllocStringBuffer(imax2(i+2, w), buffer); /* +2 allows for quotes */
     q = buffer->data;
-    if(right) { /* Right justifying */
-	b = w - i - (quote ? 2 : 0);
-	for(i=0 ; i<b ; i++) *q++ = ' ';
+    b = w - i - (quote ? 2 : 0); /* total amount of padding */
+    if(b > 0 && justify != Rprt_adj_left) {
+	b0 = (justify == Rprt_adj_centre) ? b/2 : b;
+	for(i = 0 ; i < b0 ; i++) *q++ = ' ';
+	b -= b0;
     }
     if(quote) *q++ = quote;
     for (i = 0; i < cnt; i++) {
 
 	/* ASCII */
+	if((unsigned char) *p < 0x80) {
+	    if(*p != '\t' && isprint((int)*p)) { /* Windows has \t as printable */
+		switch(*p) {
+		case '\\': *q++ = '\\'; *q++ = '\\'; break;
+		case '\'':
+		case '"':
+		    if(quote == *p)  *q++ = '\\'; *q++ = *p; break;
+		default: *q++ = *p; break;
+		}
+	    } else switch(*p) {
+	    /* ANSI Escapes */
+	    case '\a': *q++ = '\\'; *q++ = 'a'; break;
+	    case '\b': *q++ = '\\'; *q++ = 'b'; break;
+	    case '\f': *q++ = '\\'; *q++ = 'f'; break;
+	    case '\n': *q++ = '\\'; *q++ = 'n'; break;
+	    case '\r': *q++ = '\\'; *q++ = 'r'; break;
+	    case '\t': *q++ = '\\'; *q++ = 't'; break;
+	    case '\v': *q++ = '\\'; *q++ = 'v'; break;
+	    case '\0': *q++ = '\\'; *q++ = '0'; break;
 
-	if(isprint((int)*p)) {
-	    switch(*p) {
-	    case '\\': *q++ = '\\'; *q++ = '\\'; break;
-#ifdef ESCquote
-	    case '\'': *q++ = '\\'; *q++ = '\''; break;
-#endif
-#ifdef ESC_BARE_QUOTE
-	    case '\"': *q++ = '\"'; break;
-#else
-	    case '\"': if(quote) *q++ = '\\'; *q++ = '\"'; break;
-#endif
-	    default: *q++ = *p; break;
+	    default:
+		/* print in octal */
+		snprintf(buf, 5, "\\%03o", (unsigned char) *p);
+		for(j = 0; j < 4; j++) *q++ = buf[j];
+		break;
 	    }
+	    p++;
+#ifdef SUPPORT_MBCS
+	} else if(mbcslocale) { /* beginning of multibyte char */
+	    int j, res; wchar_t wc;
+	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
+	    if(res > 0) {
+		if(iswprint(wc)) {
+		    for(j = 0; j < res; j++) *q++ = *p++;
+		} else {
+#ifndef Win32
+		    if(wc > 0xffff)
+			snprintf(buf, 11, "\\U%08x", (unsigned int) wc);
+		    else
+#endif
+			snprintf(buf, 11, "\\u%04x", (unsigned int) wc);
+		    for(j = 0; j < strlen(buf); j++) *q++ = buf[j];
+		    p += res;
+		}
+		i += (res - 1);
+	    } else {
+		snprintf(q, 5, "<%02x>", *((unsigned char *)p));
+		q += 4; p++;
+	    }
+#endif
+	} else {  /* 8 bit char */
+#ifdef Win32 /* It seems Windows does not know what is printable! */
+	    *q++ = *p++;
+#else
+	    if(!isprint((int)*p)) {
+		/* print in octal */
+		snprintf(buf, 5, "\\%03o", (unsigned char) *p);
+		for(j = 0; j < 4; j++) *q++ = buf[j];
+		p++;
+	    } else *q++ = *p++;
+#endif
 	}
-
-	/* ANSI Escapes */
-
-	else switch(*p) {
-	case '\a': *q++ = '\\'; *q++ = 'a'; break;
-	case '\b': *q++ = '\\'; *q++ = 'b'; break;
-	case '\f': *q++ = '\\'; *q++ = 'f'; break;
-	case '\n': *q++ = '\\'; *q++ = 'n'; break;
-	case '\r': *q++ = '\\'; *q++ = 'r'; break;
-	case '\t': *q++ = '\\'; *q++ = 't'; break;
-	case '\v': *q++ = '\\'; *q++ = 'v'; break;
-	case '\0': *q++ = '\\'; *q++ = '0'; break;
-
-	default: /* print in octal */
-	    snprintf(buf, 5, "\\%03o", (unsigned char) *p);
-	    for(j = 0; j < 4; j++) *q++ = buf[j];
-	    break;
-	}
-	p++;
     }
     if(quote) *q++ = quote;
-    if(!right) { /* Left justifying */
-	*q = '\0';
-	b = w - strlen(buffer->data);
-	for(i=0 ; i<b ; i++) *q++ = ' ';
+    if(b > 0 && justify != Rprt_adj_right) {
+	for(i = 0 ; i < b ; i++) *q++ = ' ';
     }
     *q = '\0';
     return buffer->data;
@@ -356,6 +417,8 @@ char *EncodeElement(SEXP x, int indx, int quote)
     case RAWSXP:
 	EncodeRaw(RAW(x)[indx]);
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("EncodeElement", x);
     }
     return buffer->data;
 }
@@ -424,15 +487,15 @@ void Rvprintf(const char *format, va_list arg)
 	R_CheckUserInterrupt();
 	printcount = 0 ;
     }
-    
+
     do{
       con = getConnection(con_num);
       con->vfprintf(con, format, arg);
       con->fflush(con);
       con_num = getActiveSink(i++);
     } while(con_num>0);
-    
-    
+
+
 }
 
 /*

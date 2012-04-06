@@ -16,6 +16,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
+/* <UTF8> Only does ASCII char comparisons */
+
 /* Functions for dynamically allocating arrays
 
    The Array structure contains pointers to arrays which are allocated
@@ -33,7 +35,7 @@
 static void assert(int bool)
 {
     if(!bool)
-	error("assert failed in src/library/ts/src/carray.c");
+	error(("assert failed in src/library/ts/src/carray.c"));
 }
 
 static Array init_array()

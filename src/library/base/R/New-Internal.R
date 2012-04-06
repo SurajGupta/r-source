@@ -72,9 +72,12 @@ rbind <- function(..., deparse.level=1) {
 .deparseOpts <- function(control) {
     opts <- pmatch(as.character(control), c("keepInteger", "quoteExpressions",
       "showAttributes", "useSource", "warnIncomplete", "all", "delayPromises"))
-    if (any(is.na(opts))) stop(paste("deparse options ",
-                               paste('"',control[is.na(opts)],'"', sep=""),
-     			       collapse=" "), " not recognized", call. = FALSE)
+    if (any(is.na(opts)))
+        stop(sprintf(ngettext(as.integer(sum(is.na(opts))),
+                              "deparse option %s is not recognized",
+                              "deparse options %s are not recognized"),
+                     paste(sQuote(control[is.na(opts)]), collapse=", ")),
+             call. = FALSE, domain = NA)
     if (any(opts == 6)) {
 	if (length(opts) != 1)
 	    stop("all can not be used with other deparse options",
@@ -91,15 +94,22 @@ deparse <- function(expr, width.cutoff = 60,
     .Internal(deparse(expr, width.cutoff, backtick, opts))
 }
 
-do.call <- function(what,args).Internal(do.call(what,args))
+do.call <- function(what,args,quote=FALSE) {
+	enquote <- function(x) as.call(list(as.name("quote"), x))
+	if( !is.list(args) )
+	   stop("second argument must be a list")
+	if( quote ) args = lapply(args, enquote)
+	.Internal(do.call(what,args))
+}
+
 drop <- function(x).Internal(drop(x))
 format.info <- function(x, nsmall=0).Internal(format.info(x, nsmall))
-gc <- function(verbose = getOption("verbose"))
+gc <- function(verbose = getOption("verbose"),  reset=FALSE)
 {
-    res <-.Internal(gc(verbose))/c(1, 1, 10, 10, 1, 1, rep(10,4))
-    res <- matrix(res, 2, 5,
+    res <-.Internal(gc(verbose,reset))/c(1, 1, 10, 10, 1, 1, rep(10,4),rep(1,2),rep(10,2))
+    res <- matrix(res, 2, 7,
                   dimnames = list(c("Ncells","Vcells"),
-                  c("used", "(Mb)", "gc trigger", "(Mb)", "limit (Mb)")))
+                  c("used", "(Mb)", "gc trigger", "(Mb)", "limit (Mb)","max used", "(Mb)")))
     if(all(is.na(res[, 5]))) res[, -5] else res
 }
 gcinfo <- function(verbose).Internal(gcinfo(verbose))
@@ -122,7 +132,8 @@ mem.limits <- function(nsize=NA, vsize=NA)
               names=c("nsize", "vsize"))
 }
 
-nchar <- function(x).Internal(nchar(x))
+nchar <- function(x, type = c( "bytes", "chars", "width"))
+    .Internal(nchar(x, match.arg(type)))
 
 polyroot <- function(z).Internal(polyroot(z))
 
@@ -178,6 +189,20 @@ data.class <- function(x) {
 
 is.numeric.factor <- function(x) FALSE
 is.integer.factor <- function(x) FALSE
+
+encodeString <- function(x, w = 0, quote = "", na = TRUE,
+                         justify = c("left", "right", "centre"))
+{
+    at <- attributes(x)
+    x <- as.character(x) # we want e.g. NULL to work
+    attributes(x) <- at  # preserve names, dim etc
+    oldClass(x) <- NULL  # but not class
+    justify <- match(match.arg(justify), c("left", "right", "centre")) - 1
+    .Internal(encodeString(x, w, quote, justify, na))
+}
+
+l10n_info <- function() .Internal(l10n_info())
+
 
 ## base has no S4 generics
 .noGenerics <- TRUE

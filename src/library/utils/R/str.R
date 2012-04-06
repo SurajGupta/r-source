@@ -5,7 +5,7 @@ str.data.frame <- function(object, ...)
 {
     ## Method to 'str' for  'data.frame' objects
     if(! is.data.frame(object)) {
-	warning("str.data.frame(.) called with non-data.frame. Coercing one.")
+	warning("str.data.frame() called with non-data.frame -- coercing to one.")
 	object <- data.frame(object)
     }
 
@@ -42,9 +42,15 @@ str.default <-
     oo <- options(digits = digits.d); on.exit(options(oo))
     le <- length(object)
     P0 <- function(...) paste(..., sep="")
-    pasteCh <- function(x)
-	sapply(x, function(a) if(is.na(a)) "NA" else P0('"',a,'"'),
-	       USE.NAMES = FALSE)
+    maybe_truncate <- function(x, e.x = x, Sep = "\"", ch = "| __truncated__")
+    {
+	trimmed <- strtrim(e.x, nchar.max)
+	ii <- trimmed != e.x
+	ii[is.na(ii)] <- FALSE
+	if(any(ii)) x[ii] <- P0(trimmed[ii], Sep, ch)
+	x
+    }
+
     ## le.str: not used for arrays:
     le.str <-
 	if(is.na(le)) " __no length(.)__ "
@@ -56,10 +62,11 @@ str.default <-
     std.attr <- "names"
 
     #NOT yet:if(has.class <- !is.null(cl <- class(object)))
-    if(has.class <- !is.null(cl <- attr(object, "class")))# S3 or S4 class
-	S4 <- !is.null(attr(cl, "package"))## <<<'kludge' FIXME!
-	##or length(methods::getSlots(cl)) > 0
-
+    if(has.class <- !is.null(cl <- attr(object, "class"))) { # S3 or S4 class
+	## FIXME: a kludge
+	S4 <- !is.null(attr(cl, "package")) || cl == "classRepresentation"
+	## better, but needs 'methods':	  length(methods::getSlots(cl)) > 0
+    }
     mod <- ""; char.like <- FALSE
     if(give.attr) a <- attributes(object)#-- save for later...
 
@@ -69,7 +76,7 @@ str.default <-
     } else if (is.null(object))
 	cat(" NULL\n")
     else if(has.class && S4) {
-        a <- sapply(slotNames(object), slot, object=object)
+	a <- sapply(.slotNames(object), slot, object=object, simplify = FALSE)
 	cat("Formal class", " '", paste(cl, collapse = "', '"),
 	    "' [package \"", attr(cl,"package"), "\"] with ",
 	    length(a)," slots\n", sep="")
@@ -101,7 +108,7 @@ str.default <-
 	    if (is.na(max.level) || nest.lev < max.level) {
 		nam.ob <-
 		    if(is.null(nam.ob <- names(object))) rep.int("", le)
-		    else { max.ncnam <- max(nchar(nam.ob))
+		    else { max.ncnam <- max(nchar(nam.ob, type="w"))
 			   format.char(nam.ob, width = max.ncnam, flag = '-')
 		       }
 		for(i in 1:le) {
@@ -186,42 +193,46 @@ str.default <-
 	} else if (is.factor(object)) {
 	    nl <- length(lev.att <- levels(object))
 	    if(!is.character(lev.att)) {# should not happen..
-		warning(paste(sQuote("object"),
-			      "does not have valid levels()!"))
+		warning("'object' does not have valid levels()")
 		nl <- 0
-	    }
+	    } else lev.att <- encodeString(lev.att, na = FALSE, quote = '"')
 	    ord <- is.ordered(object)
 	    object <- unclass(object)
 	    if(nl) {
-		lenl <- cumsum(3 + nchar(lev.att))# level space
+		## as from 2.1.0, quotes are included ==> '-2':
+		lenl <- cumsum(3 + (nchar(lev.att, type="w") - 2))# level space
 		ml <- if(nl <= 1 || lenl[nl] <= 13)
 		    nl else which(lenl > 13)[1]
-		if((d <- lenl[ml] - if(ml>1)18 else 14) >= 3)# truncate last
-		    lev.att[ml] <-
-			P0(substring(lev.att[ml],1, nchar(lev.att[ml])-d), "..")
+		lev.att <- maybe_truncate(lev.att[1:ml])
+##		if((d <- lenl[ml] - if(ml>1)18 else 14) >= 3)# truncate last
+##		    lev.att[ml] <-
+##			P0(substring(lev.att[ml],1, nchar(lev.att[ml])-d), "..")
 	    }
 	    else # nl == 0
 		ml <- length(lev.att <- "")
 
 	    lsep <- if(ord) "<" else ","
 	    str1 <- P0(if(ord)" Ord.f" else " F",
-		       "actor w/ ", nl, " level",if(nl != 1) "s",
+		       "actor w/ ", nl, " level", if(nl != 1) "s",
 		       if(nl) " ",
-		       if(nl) P0(pasteCh(lev.att[1:ml]), collapse = lsep),
-		       if(ml < nl) P0(lsep,".."), ":")
+		       if(nl) P0(lev.att, collapse = lsep),
+		       if(ml < nl) P0(lsep, ".."), ":")
 
 	    std.attr <- c("levels", "class")
-	} else if (typeof(object) %in% c("externalptr", "weakref")) {
-            ## Careful here, we don't want to change pointer objects
-            if(has.class)
-                cat("Class", if(length(cl) > 1) "es",
+	} else if(typeof(object) %in%
+		  c("externalptr", "weakref", "environment")) {
+	    ## Careful here, we don't want to change pointer objects
+	    if(has.class)
+		cat("Class", if(length(cl) > 1) "es",
 		" '", paste(cl, collapse = "', '"), "' ", sep="")
-            le <- v.len <- 0
-            str1 <- paste("<", typeof(object), ">", sep="")
-            has.class <- TRUE # fake for later
+	    le <- v.len <- 0
+	    str1 <- paste("<", typeof(object), ">", sep="")
+	    if(typeof(object) == "environment")
+		str1 <- paste("length", length(object), str1)
+	    has.class <- TRUE # fake for later
 	    std.attr <- "class"
-            ## ideally we would figure out if as.character has a
-            ## suitable method and use that.
+	    ## ideally we would figure out if as.character has a
+	    ## suitable method and use that.
 	} else if(has.class) {
 	    cat("Class", if(length(cl) > 1) "es",
 		" '", paste(cl, collapse = "', '"), "' ", sep="")
@@ -262,7 +273,7 @@ str.default <-
 	    mod <- mode(object)
 	    give.mode <- FALSE
 	    if (any(mod == c("call", "language", "(", "symbol"))
-                || is.environment(object)) {
+		|| is.environment(object)) {
 		##give.mode <- !is.vector(object)# then it has not yet been done
 		if(mod == "(") give.mode <- TRUE
 		typ <- typeof(object)
@@ -323,23 +334,22 @@ str.default <-
 	}
 
 	## Not sure, this is ever triggered:
-	if(is.na(le)) { warning("'str.default': 'le' is NA !!"); le <- 0}
+	if(is.na(le)) { warning("'str.default': 'le' is NA"); le <- 0}
 
 	if(char.like) {
+	    en_object <- encodeString(object)
 	    v.len <-
 		if(missing(vec.len))
-		    max(1,sum(cumsum(3 + if(le>0) nchar(object) else 0) <
-			      wid - (4 + 5*nest.lev + nchar(str1))))
+		    max(1,sum(cumsum(3 + if(le>0) nchar(en_object, type="w") else 0) <
+			      wid - (4 + 5*nest.lev + nchar(str1, type="w"))))
 	    ## `5*ne..' above is fudge factor
 		else round(v.len)
 	    ile <- min(le, v.len)
-	    if(ile >= 1) { # have LONG char ?!
-		nc <- nchar(object[1:ile])
-		if(any((ii <- nc > nchar.max)))
-		    object[ii] <- P0(substr(object[ii], 1, nchar.max),
-				     "| __truncated__")
-	    }
-	    formObj <- function(x) P0(pasteCh(x), collapse=" ")
+	    if(ile >= 1)  # truncate if LONG char:
+		object <- maybe_truncate(encodeString(object,
+						      quote= '"', na= FALSE))
+					#en_object[1:ile]
+	    formObj <- function(x) paste(as.character(x), collapse=" ")
 	}
 	else {
 	    if(!exists("format.fun", inherits=TRUE)) #-- define one --

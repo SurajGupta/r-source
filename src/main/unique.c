@@ -19,6 +19,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is either ASCII or handled as a whole or as 
+   a leading portion for partial matching 
+*/
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -42,12 +47,17 @@ struct _HashData {
 };
 
 
-/* Integer keys are hashed via a random number generator */
-/* based on Knuth's recommendations.  The high order K bits */
-/* are used as the hash code. */
+/* 
+   Integer keys are hashed via a random number generator
+   based on Knuth's recommendations.  The high order K bits
+   are used as the hash code.
+   
+   NB: lots of this code relies on M being a power of two and
+   on silent integer overflow mod 2^32.  It also relies on M < 31.
 
-/* WARNING / FIXME : this doesn't work if K = 0 so some */
-/* fixes/warnings probably need to be installed somewhere. (RG) */
+   <FIXME>  Integer keys are wasteful for logical and raw vectors, 
+   but the tables are small in that case.
+*/
 
 static int scatter(unsigned int key, HashData *d)
 {
@@ -157,15 +167,19 @@ static int cequal(SEXP x, int i, SEXP y, int j)
 
 static int sequal(SEXP x, int i, SEXP y, int j)
 {
-    if (STRING_ELT(x, i) != NA_STRING && STRING_ELT(y, j) != NA_STRING)
-	return !strcmp(CHAR(STRING_ELT(x, i)), CHAR(STRING_ELT(y, j)));
-    else
-	return STRING_ELT(x, i) == STRING_ELT(y, j);
+    /* Two strings which have the same address must be the same, 
+       so avoid looking at the contents */
+    if (STRING_ELT(x, i) == STRING_ELT(y, j)) return 1;
+    /* Then if either is NA the other cannot be */
+    if (STRING_ELT(x, i) == NA_STRING || STRING_ELT(y, j) == NA_STRING) 
+	return 0;
+    /* Finally look at the contents if necessary */
+    return !strcmp(CHAR(STRING_ELT(x, i)), CHAR(STRING_ELT(y, j)));
 }
 
 static int rawhash(SEXP x, int indx, HashData *d)
 {
-    return scatter((unsigned int) (RAW(x)[indx]), d);
+    return RAW(x)[indx];
 }
 
 static int rawequal(SEXP x, int i, SEXP y, int j)
@@ -173,13 +187,88 @@ static int rawequal(SEXP x, int i, SEXP y, int j)
     return (RAW(x)[i] == RAW(y)[j]);
 }
 
-/* Choose M to be the smallest power of 2 */
-/* not less than 4*n and set K = log2(M) */
+static int vhash(SEXP x, int indx, HashData *d)
+{
+    int i;
+    unsigned int key;
+    SEXP this = VECTOR_ELT(x, indx);
+    
+    key = OBJECT(this) + 2*TYPEOF(this) + 100*length(this);
+    /* maybe we should also look at attributes, but that slows us down */
+    switch (TYPEOF(this)) {
+    case LGLSXP:
+	/* This is not too clever: pack into 32-bits and then scatter? */
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= lhash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    case INTSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= ihash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    case REALSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= rhash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    case CPLXSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= chash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    case STRSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= shash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    case RAWSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= scatter(rawhash(this, i, d), d);
+	    key *= 97;
+	}
+	break;
+    case VECSXP:
+	for(i = 0; i < LENGTH(this); i++) {
+	    key ^= vhash(this, i, d);
+	    key *= 97;
+	}
+	break;
+    default:
+	break;
+    }
+    return scatter(key, d);
+}
+
+Rboolean compute_identical(SEXP x, SEXP y); /* from identical.c */
+
+static int vequal(SEXP x, int i, SEXP y, int j)
+{
+    return compute_identical(VECTOR_ELT(x, i), VECTOR_ELT(y, j));
+}
+
+/*
+  Choose M to be the smallest power of 2
+  not less than 2*n and set K = log2(M).
+  Need K >= 1 and hence M >= 2, and 2^M <= 2^31 -1, hence n <= 2^29.
+
+  Dec 2004: modified from 4*n to 2*n, since in the worst case we have
+  a 50% full table, and that is still rather efficient -- see
+  R. Sedgewick (1998) Algorithms in C++ 3rd edition p.606.
+*/
 static void MKsetup(int n, HashData *d)
 {
-    int n4 = 4 * n;
-    d->M = 1;
-    d->K = 0;
+    int n4 = 2 * n;
+
+    if(n < 0 || n > 536870912) /* protect against overflow to -ve */
+	error(_("length %d is too large for hashing"), n);
+    d->M = 2;
+    d->K = 1;
     while (d->M < n4) {
 	d->M *= 2;
 	d->K += 1;
@@ -217,8 +306,16 @@ static void HashTableSetup(SEXP x, HashData *d)
     case RAWSXP:
 	d->hash = rawhash;
 	d->equal = rawequal;
-	MKsetup(256, d);
+	d->M = 256;
+	d->K = 8; /* unused */
 	break;
+    case VECSXP:
+	d->hash = vhash;
+	d->equal = vequal;
+	MKsetup(LENGTH(x), d);
+	break;
+    default:
+	UNIMPLEMENTED_TYPE("HashTableSetup", x);
     }
     d->HashTable = allocVector(INTSXP, d->M);
 }
@@ -249,6 +346,9 @@ SEXP duplicated(SEXP x)
     int i, n;
     HashData data;
 
+    if (!isVector(x)) 
+	error(_("'duplicated' applies only to vectors"));
+
     n = LENGTH(x);
     HashTableSetup(x, &data);
     PROTECT(data.HashTable);
@@ -266,8 +366,9 @@ SEXP duplicated(SEXP x)
     return ans;
 }
 
-/* .Internal(duplicated(x)) [op=0]  and
-   .Internal(unique(x))	    [op=1] :
+/* .Internal(duplicated(x))       [op=0]
+   .Internal(unique(x))	          [op=1]
+   .Internal(duplicated.list(x)) [op=2]
 */
 SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -276,20 +377,21 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     x = CAR(args);
-    /* handle zero length vectors */
-    if (length(x) == 0)
-	return(allocVector(PRIMVAL(op) == 0 ? LGLSXP : TYPEOF(x), 0));
+    /* handle zero length vectors, and NULL */
+    if ((n = length(x)) == 0)
+	return(allocVector(PRIMVAL(op) != 1 ? LGLSXP : TYPEOF(x), 0));
 
-    if (!(isVectorAtomic(x)))
-	error("%s() applies only to vectors",
+    if (!isVector(x)) {
+	PrintValue(x);
+	error(_("%s() applies only to vectors"),
 	      (PRIMVAL(op) == 0 ? "duplicated" : "unique"));
+    }
 
     dup = duplicated(x);
     if (PRIMVAL(op) == 0) /* "duplicated()" : */
 	return dup;
     /*	ELSE
 	use the results of "duplicated" to get "unique" */
-    n = LENGTH(x);
 
     /* count unique entries */
     k = 0;
@@ -332,6 +434,8 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if (LOGICAL(dup)[i] == 0)
 		RAW(ans)[k++] = RAW(x)[i];
 	break;
+    default:
+	UNIMPLEMENTED_TYPE("duplicated", x);
     }
     return ans;
 }
@@ -381,20 +485,23 @@ static SEXP HashLookup(SEXP table, SEXP x, HashData *d)
 
 SEXP do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+#ifdef NOTMOVED
     SEXP x, table;
     SEXPTYPE type;
+#endif
     int nomatch;
 
     checkArity(op, args);
 
     if ((!isVector(CAR(args)) && !isNull(CAR(args)))
 	|| (!isVector(CADR(args)) && !isNull(CADR(args))))
-	error("match requires vector arguments");
+	error(_("'match' requires vector arguments"));
 
     /* Coerce to a common type; type == NILSXP is ok here.
      * Note that R's match() does only coerce factors (to character).
      * Hence, coerce to character or to `higher' type
      * (given that we have "Vector" or NULL) */
+#ifdef NOTMOVED
     if(TYPEOF(CAR(args))  >= STRSXP || TYPEOF(CADR(args)) >= STRSXP)
 	type = STRSXP;
     else type = TYPEOF(CAR(args)) < TYPEOF(CADR(args)) ?
@@ -403,20 +510,40 @@ SEXP do_match(SEXP call, SEXP op, SEXP args, SEXP env)
     table = SETCADR(args, coerceVector(CADR(args), type));
     nomatch = asInteger(CAR(CDDR(args)));
     return match(table, x, nomatch);
+#else
+    nomatch = asInteger(CAR(CDDR(args)));
+    return match(CADR(args), CAR(args), nomatch);
+#endif
 }
 
-SEXP match(SEXP table, SEXP x, int nmatch)
+SEXP match(SEXP itable, SEXP ix, int nmatch)
 {
-    SEXP ans;
+    SEXP ans, x, table;
+    SEXPTYPE type;
     HashData data;
-    int i, n = length(x);
+    int i, n = length(ix);
+
+    /* Coerce to a common type; type == NILSXP is ok here.
+     * Note that R's match() does only coerce factors (to character).
+     * Hence, coerce to character or to `higher' type
+     * (given that we have "Vector" or NULL) */
+    if(TYPEOF(ix)  >= STRSXP || TYPEOF(itable) >= STRSXP)
+        type = STRSXP;
+    else type = TYPEOF(ix) < TYPEOF(itable) ?
+             TYPEOF(itable) : TYPEOF(ix);
+    PROTECT(x = coerceVector(ix, type));
+    PROTECT(table = coerceVector(itable, type));
 
     /* handle zero length arguments */
-    if (n == 0) return allocVector(INTSXP, 0);
+    if (n == 0) {
+	UNPROTECT(2);
+	return allocVector(INTSXP, 0);
+    }
     if (length(table) == 0) {
 	ans = allocVector(INTSXP, n);
 	for (i = 0; i < n; i++)
 	    INTEGER(ans)[i] = nmatch;
+	UNPROTECT(2);
 	return ans;
     }
     data.nomatch = nmatch;
@@ -424,7 +551,7 @@ SEXP match(SEXP table, SEXP x, int nmatch)
     PROTECT(data.HashTable);
     DoHashing(table, &data);
     ans = HashLookup(table, x, &data);
-    UNPROTECT(1);
+    UNPROTECT(3);
     return ans;
 }
 
@@ -454,10 +581,10 @@ SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
     n_target = LENGTH(target);
     dups_ok = asLogical(CADDR(args));
     if (dups_ok == NA_LOGICAL)
-	errorcall(call, "invalid \"duplicates.ok\" argument");
+	errorcall(call, _("invalid 'duplicates.ok' argument"));
 
     if (!isString(input) || !isString(target))
-	errorcall(call, "argument is not of mode character");
+	errorcall(call, _("argument is not of mode character"));
 
     used = (int *) R_alloc(n_target, sizeof(int));
     for (j = 0; j < n_target; j++) used[j] = 0;
@@ -523,7 +650,7 @@ SEXP do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
     n_target = LENGTH(target);
 
     if (!isString(input) || !isString(target))
-	errorcall(call, "argument is not of mode character");
+	errorcall(call, _("argument is not of mode character"));
 
     ans = allocVector(INTSXP, n_input);
 
@@ -611,7 +738,7 @@ static SEXP subDots(SEXP rho)
     dots = findVar(R_DotsSymbol, rho);
 
     if (dots == R_UnboundValue)
-	error("... used in a situation where it doesn't exist");
+	error(_("... used in a situation where it doesn't exist"));
 
     if (dots == R_MissingArg)
 	return dots;
@@ -650,7 +777,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (TYPEOF(funcall) != LANGSXP) {
 	b = deparse1(funcall, 1, SIMPLEDEPARSE);
-	errorcall(call, "%s is not a valid call", CHAR(STRING_ELT(b, 0)));
+	errorcall(call, _("'%s' is not a valid call"), CHAR(STRING_ELT(b, 0)));
     }
 
     /* Get the function definition */
@@ -707,7 +834,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (TYPEOF(b) != CLOSXP) {
 	b = deparse1(b, 1, SIMPLEDEPARSE);
-	errorcall(call, "%s is not a function", CHAR(STRING_ELT(b, 0)));
+	errorcall(call, _("'%s' is not a function"), CHAR(STRING_ELT(b, 0)));
     }
 
     /* Do we expand ... ? */
@@ -715,7 +842,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
     expdots = asLogical(CAR(CDDR(args)));
     if (expdots == NA_LOGICAL) {
 	b = deparse1(CADDR(args), 1, SIMPLEDEPARSE);
-	errorcall(call, "%s is not a logical", CHAR(STRING_ELT(b, 0)));
+	errorcall(call, _("'%s' is not a logical"), CHAR(STRING_ELT(b, 0)));
     }
 
     /* Get the formals and match the actual args */
@@ -851,7 +978,7 @@ SEXP Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	}
 	break;
     default:
-	error("non-numeric matrix in rowsum: this can't happen");
+	error(_("non-numeric matrix in rowsum(): this cannot happen"));
     }
 
     UNPROTECT(2); /*HashTable, matches*/
@@ -882,7 +1009,7 @@ SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
     for(i=0; i<p;i++){
 	xcol=VECTOR_ELT(x,i);
 	if (!isNumeric(xcol))
-	    error("non-numeric dataframe in rowsum");
+	    error(_("non-numeric data frame in rowsum"));
 	switch(TYPEOF(xcol)){
 	case REALSXP:
 	    PROTECT(col=allocVector(REALSXP,ng));
@@ -907,7 +1034,7 @@ SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	    break;
 
 	default:
-	    error("this can't happen");
+	    error(_("this cannot happen"));
 	}
     }
     namesgets(ans,getAttrib(x,R_NamesSymbol));
@@ -962,11 +1089,12 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     names = CAR(args);
-    if(!isString(names)) errorcall(call, "names must be a character vector");
+    if(!isString(names))
+	errorcall(call, _("'names' must be a character vector"));
     n = LENGTH(names);
     sep = CADR(args);
     if(!isString(sep) || LENGTH(sep) != 1)
-	errorcall(call, "sep must be a character string");
+	errorcall(call, _("'sep' must be a character string"));
     csep = CHAR(STRING_ELT(sep, 0));
     PROTECT(ans = allocVector(STRSXP, n));
     for(i = 0; i < n; i++) {
@@ -1005,8 +1133,14 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
-/* use hashing to improve object.size. Here we want equal CHARSXPs, 
-   not equal contents. */
+/* Use hashing to improve object.size. Here we want equal CHARSXPs, 
+   not equal contents.  This only uses the bottom 32 bits of the pointer, 
+   but for now that's almost certainly OK */
+
+static int cshash(SEXP x, int indx, HashData *d)
+{
+    return scatter((unsigned int) STRING_ELT(x, indx), d);
+}
 
 static int csequal(SEXP x, int i, SEXP y, int j)
 {
@@ -1015,7 +1149,7 @@ static int csequal(SEXP x, int i, SEXP y, int j)
 
 static void HashTableSetup1(SEXP x, HashData *d)
 {
-    d->hash = shash;
+    d->hash = cshash;
     d->equal = csequal;
     MKsetup(LENGTH(x), d);
     d->HashTable = allocVector(INTSXP, d->M);
@@ -1029,7 +1163,7 @@ SEXP csduplicated(SEXP x)
     HashData data;
 
     if(TYPEOF(x) != STRSXP)
-	error("csduplicated not called on a STRSXP");
+	error(_("csduplicated not called on a STRSXP"));
     n = LENGTH(x);
     HashTableSetup1(x, &data);
     PROTECT(data.HashTable);

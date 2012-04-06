@@ -74,9 +74,15 @@ casefold <- function(x, upper = FALSE)
 
 sQuote <- function(x) {
     if(length(x) == 0) return(character())
-    paste("'", x, "'", sep = "")
+    if(l10n_info()$"UTF-8")
+        paste("\xe2\x80\x98", x, "\xe2\x80\x99", sep = "")
+    else
+        paste("'", x, "'", sep = "")
 }
 dQuote <- function(x) {
     if(length(x) == 0) return(character())
-    paste("\"", x, "\"", sep = "")
+    if(l10n_info()$"UTF-8")
+        paste("\xe2\x80\x9c", x, "\xe2\x80\x9d", sep = "")
+    else
+        paste("\"", x, "\"", sep = "")
 }

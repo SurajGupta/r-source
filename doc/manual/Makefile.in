@@ -64,7 +64,7 @@ all: Makefile R docs
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
-R: Makefile @MAINTAINER_MODE_TRUE@ maintainer-build
+R: Makefile
 
 docs: html
 
@@ -77,7 +77,7 @@ docs: html
 
 .texi.html:
 	@if test "$(MAKEINFO)" = false; then \
-	  echo "'makeinfo' v4.5 or later needed to make HTML docs but missing on your system." ; \
+	  echo "'makeinfo' v4.7 or later needed to make HTML docs but missing on your system." ; \
 	  echo "file $@ will be missing"; \
 	else \
 	  echo "creating doc/manual/$@"; \
@@ -86,10 +86,10 @@ docs: html
 
 .texi.info:
 	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4.5 or later needed but missing on your system."; \
+	  echo "ERROR: 'makeinfo' v4.7 or later needed but missing on your system."; \
 	  exit 1; \
 	fi
-	$(MAKEINFO) -D UseExternalXrefs -I$(srcdir) $<
+	$(MAKEINFO) --enable-encoding -D UseExternalXrefs -I$(srcdir) $<
 
 .texi.pdf:
 	@if test "$(PDFTEX)" = false; then \
@@ -107,7 +107,7 @@ R-admin.html: $(srcdir)/R-admin.texi
 	  cp "$(top_srcdir)/doc/html/R-admin.html" R-admin.html ; \
 	else \
 	  if test "$(MAKEINFO)" = false; then \
-	    echo "'makeinfo' v4.5 or later needed to make HTML docs but missing on your system." ; \
+	    echo "'makeinfo' v4.7 or later needed to make HTML docs but missing on your system." ; \
 	    echo "file $@ will be missing"; \
 	  else \
 	    echo "creating doc/manual/$@"; \
@@ -349,7 +349,7 @@ install-images-pdf:
 	@-for f in $(srcdir)/images/*.pdf; do \
 	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"/images; \
 	done
-## if there is no makeinfo >= 4.5 then there are no html pages
+## if there is no makeinfo >= 4.7 then there are no html pages
 install-html:
 	@for f in $(OBJECTS_HTML); do \
 	  if test -f $${f} ; then \
@@ -417,36 +417,6 @@ distclean: clean
 	-@rm -f Makefile
 maintainer-clean: distclean
 
-maintainer-build: \
-  $(top_srcdir)/FAQ \
-  $(top_srcdir)/RESOURCES \
-  $(top_srcdir)/doc/html/faq.html \
-  $(top_srcdir)/doc/html/resources.html
-$(top_srcdir)/FAQ: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-FAQ.texi
-	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
-	  exit 1; \
-	fi
-	$(TEXI2TEXT) $(srcdir)/R-FAQ.texi -o $@
-$(top_srcdir)/doc/html/faq.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-FAQ.texi
-	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
-	  exit 1; \
-	fi
-	$(TEXI2HTML) --number-sections $(srcdir)/R-FAQ.texi -o $@
-$(top_srcdir)/RESOURCES: @MAINTAINER_MODE_TRUE@ $(srcdir)/resources.texi
-	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
-	  exit 1; \
-	fi
-	$(TEXI2TEXT) $(srcdir)/resources.texi -o $@
-$(top_srcdir)/doc/html/resources.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/resources.texi
-	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
-	  exit 1; \
-	fi
-	$(TEXI2HTML) --no-headers $(srcdir)/resources.texi -o $@
-
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \
 	  test -f $(distdir)/$${f} \
@@ -459,10 +429,31 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	done
 	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
+	  echo "ERROR: 'makeinfo' v4.7 or later needed but missing on your system."; \
 	  exit 1; \
 	fi
 #	$(distdir)/doc/html has already been created
-	$(TEXI2HTML) --no-headers --number-sections \
+	@$(TEXI2HTML) --no-headers --number-sections \
 	  $(srcdir)/R-admin.texi -I$(srcdir) \
 	  -o $(distdir)/../html/R-admin.html
+#	front-matter files
+#	@$(TEXI2TEXT) $(srcdir)/resources.texi -o $(distdir)/../../RESOURCES
+#	@$(TEXI2TEXT) $(srcdir)/R-FAQ.texi -o $(distdir)/../../FAQ
+#	@$(TEXI2HTML) --no-headers $(srcdir)/resources.texi \
+#	  -o $(distdir)/../html/resources.html
+
+front-matter: ${top_builddir}/RESOURCES ${top_builddir}/FAQ
+
+${top_builddir}/RESOURCES: $(srcdir)/resources.texi
+	@echo "creating RESOURCES"
+	@$(TEXI2TEXT) $(srcdir)/resources.texi -o ${top_builddir}/RESOURCES
+
+${top_builddir}/FAQ: $(srcdir)/R-FAQ.texi
+	@echo "creating FAQ"
+	@$(TEXI2TEXT) $(srcdir)/R-FAQ.texi -o ${top_builddir}/FAQ
+
+html-non-svn: ../html/resources.html
+
+../html/resources.html: $(srcdir)/resources.texi
+	@echo "creating doc/html/resources.html"
+	@$(TEXI2HTML) --no-headers $(srcdir)/resources.texi -o $@

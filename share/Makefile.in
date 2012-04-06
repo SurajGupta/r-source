@@ -14,11 +14,9 @@ distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in
 
 ## subdirectories of R_HOME/share
-SUBDIRS_WITH_NO_BUILD = R glade licenses make perl sh texmf
+SUBDIRS_WITH_NO_BUILD = R licenses make perl sh texmf
 ## subdirectories of R_HOME/share/perl
 SUBDIRS_SHARE_PERL = R Text
-
-GNOME_IF_FILES = @GNOME_IF_FILES@
 
 all: Makefile R
 
@@ -37,9 +35,6 @@ install: install-message installdirs install-sources
 installdirs:
 	@$(MKINSTALLDIRS) "$(rhome)/share"
 	@$(MKINSTALLDIRS) "$(rhome)/share/R"
-	@if test -n "$(GNOME_IF_FILES)"; then \
-	  $(MKINSTALLDIRS) "$(rhome)/share/glade"; \
-	fi
 	@$(MKINSTALLDIRS) "$(rhome)/share/licenses"
 	@$(MKINSTALLDIRS) "$(rhome)/share/make"
 	@$(MKINSTALLDIRS) "$(rhome)/share/perl"
@@ -54,11 +49,6 @@ install-sources: installdirs
 	@for f in $(srcdir)/R/*.R; do \
 	  $(INSTALL_DATA) $${f} "$(rhome)/share/R"; \
 	done
-	@if test -n "$(GNOME_IF_FILES)"; then \
-	  for f in $(srcdir)/glade/*.glade; do \
-	    $(INSTALL_DATA) $${f} "$(rhome)/share/glade"; \
-	  done; \
-	fi
 	@for f in $(srcdir)/licenses/*; do \
 	  $(INSTALL_DATA) $${f} "$(rhome)/share/licenses"; \
 	done
@@ -89,6 +79,7 @@ uninstall:
 ## we cannot remove make/vars.mk until distclean as etc/Makeconf includes it.
 mostlyclean:
 clean:
+	@rm -rf locale
 
 distclean:
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \

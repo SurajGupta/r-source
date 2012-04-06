@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2004  The R Development Core Team.
+ *  Copyright (C) 1998--2005  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -469,7 +469,7 @@ LibExtern Rboolean R_interrupts_suspended INI_as(FALSE);
 LibExtern int R_interrupts_pending INI_as(0);
 
 /* R Home Directory */
-extern char*	R_Home;		    /* Root of the R tree */
+LibExtern char*	R_Home;		    /* Root of the R tree */
 
 /* Memory Management */
 extern R_size_t	R_NSize		INI_as(R_NSIZE);/* Size of cons cell heap */
@@ -496,7 +496,7 @@ LibExtern int	R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
 extern int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
 
-extern int	R_Expressions	INI_as(500);	/* options(expressions) */
+extern int	R_Expressions	INI_as(5000);	/* options(expressions) */
 extern Rboolean	R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
 extern int	R_UseNamespaceDispatch INI_as(TRUE);
 extern int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
@@ -511,7 +511,8 @@ extern Rboolean	R_Verbose	INI_as(FALSE);	/* Be verbose */
 extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
 extern int	R_ErrorCon	INI_as(2);	/* Error connection */
-extern char*	R_TempDir	INI_as(NULL);	/* Name of per-session dir */
+LibExtern char*	R_TempDir	INI_as(NULL);	/* Name of per-session dir */
+extern char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
 
 /* Objects Used In Parsing  */
 extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
@@ -526,6 +527,7 @@ extern int	R_DirtyImage	INI_as(0);	/* Current image dirty */
 LibExtern char*	R_HistoryFile;	/* Name of the history file */
 LibExtern int	R_HistorySize;	/* Size of the history file */
 LibExtern int	R_RestoreHistory;	/* restore the history file? */
+extern void 	R_setupHistory();
 
 /* Warnings/Errors */
 extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
@@ -536,7 +538,8 @@ extern SEXP	R_HandlerStack;	/* Condition handler stack */
 extern SEXP	R_RestartStack;	/* Stack of available restarts */
 #endif
 
-extern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
+LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
+LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
 
 /* Initialization of the R environment when it is embedded */
 extern int Rf_initEmbeddedR(int argc, char **argv);
@@ -591,7 +594,6 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define deparse1line		Rf_deparse1line
 # define DispatchGroup		Rf_DispatchGroup
 # define DispatchOrEval		Rf_DispatchOrEval
-# define duplicated		Rf_duplicated
 # define dynamicfindVar		Rf_dynamicfindVar
 # define EncodeRaw              Rf_EncodeRaw
 # define EncodeString           Rf_EncodeString
@@ -628,7 +630,7 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define mainloop		Rf_mainloop
 # define ParseBrowser	Rf_ParseBrowser
 # define mat2indsub		Rf_mat2indsub
-# define match			Rf_match
+# define Mbrtowc		Rf_mbrtowc
 # define mkCLOSXP		Rf_mkCLOSXP
 # define mkComplex              Rf_mkComplex
 # define mkFalse		Rf_mkFalse
@@ -682,7 +684,6 @@ void	R_ResetConsole(void);
 void	R_FlushConsole(void);
 void	R_ClearerrConsole(void);
 void	R_Busy(int);
-int	R_ShowFile(char*, char*);
 int	R_ShowFiles(int, char **, char **, char *, Rboolean, char *);
 int     R_EditFiles(int, char **, char **, char *);
 int	R_ChooseFile(int, char*, int);
@@ -795,7 +796,8 @@ void process_user_Renviron();
 SEXP promiseArgs(SEXP, SEXP);
 void Rcons_vprintf(const char *, va_list);
 void RemoveClass(SEXP, char *);
-SEXP R_data_class(SEXP , int);
+SEXP R_data_class(SEXP , Rboolean);
+SEXP R_data_class2(SEXP);
 SEXP R_LoadFromFile(FILE*, int);
 SEXP R_NewHashedEnv(SEXP);
 extern int R_Newhashpjw(char*);
@@ -859,9 +861,82 @@ void yyprompt(char *format, ...);
 int yywrap(void);
 
 /* ../../main/printutils.c : */
+typedef enum {
+    Rprt_adj_left = 0,
+    Rprt_adj_right = 1,
+    Rprt_adj_centre = 2
+} Rprt_adj;
+
 int	Rstrlen(SEXP, int);
 char *EncodeRaw(Rbyte);
-char *EncodeString(SEXP, int, int, int);
+char *EncodeString(SEXP, int, int, Rprt_adj);
+
+
+#if defined(HAVE_WCHAR_H) && defined(SUPPORT_MBCS)
+#include <wchar.h>
+#endif
+
+/* main/util.c */
+void UNIMPLEMENTED_TYPE(char *s, SEXP x);
+void UNIMPLEMENTED_TYPEt(char *s, SEXPTYPE t);
+Rboolean utf8strIsASCII(char *str);
+#ifdef SUPPORT_MBCS
+int utf8clen(char c);
+#define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
+size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps);
+void mbcsToLatin1(char *in, char *out);
+Rboolean mbcsValid(char *str);
+char *Rf_strchr(const char *s, int c);
+char *Rf_strrchr(const char *s, int c);
+#else
+#define Rf_strchr(s, c) strchr(s, c)
+#define Rf_strrchr(s, c) strrchr(s, c)
+#endif
+#ifdef Win32
+void R_fixslash(char *s);
+void R_fixbackslash(char *s);
+#endif
+#if defined(Win32) && defined(SUPPORT_UTF8)
+#define mbrtowc(a,b,c,d) Rmbrtowc(a,b)
+#define wcrtomb(a,b,c) Rwcrtomb(a,b)
+#define mbstowcs(a,b,c) Rmbstowcs(a,b,c)
+#define wcstombs(a,b,c) Rwcstombs(a,b,c)
+size_t Rmbrtowc(wchar_t *wc, const char *s);
+size_t Rwcrtomb(char *s, const wchar_t wc);
+size_t Rmbstowcs(wchar_t *wc, const char *s, size_t n);
+size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
+#endif
+
+/* used in relop.c and sort.c */
+#if defined(Win32) && defined(SUPPORT_UTF8)
+#define STRCOLL Rstrcoll
+#else
+
+#ifdef HAVE_STRCOLL
+#define STRCOLL strcoll
+#else
+#define STRCOLL strcmp
+#endif
+
+#endif
+
+/* Localization */
+
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#ifdef Win32
+#define _(String) libintl_gettext (String)
+#undef gettext /* needed for graphapp */
+#else
+#define _(String) gettext (String)
+#endif
+#define gettext_noop(String) String
+#define N_(String) gettext_noop (String)
+#else /* not NLS */
+#define _(String) (String)
+#define N_(String) String
+#endif
+
 
 /* Macros for suspending interrupts */
 #define BEGIN_SUSPEND_INTERRUPTS do { \
@@ -871,6 +946,14 @@ char *EncodeString(SEXP, int, int, int);
     if (R_interrupts_pending && ! R_interrupts_suspended) \
         onintr(); \
 } while(0)
+
+/* structure for caching machine accuracy values */
+typedef struct {
+    int ibeta, it, irnd, ngrd, machep, negep, iexp, minexp, maxexp;
+    double eps, epsneg, xmin, xmax;
+} AccuracyInfo;
+
+extern AccuracyInfo R_AccuracyInfo;
 
 #endif /* DEFN_H_ */
 /*

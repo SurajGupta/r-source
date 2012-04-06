@@ -27,7 +27,7 @@ load <- function (file, envir = parent.frame())
             close(con)
             on.exit()
         }
-        else stop("the input does not start with a magic number compatible with  loading from a connection")
+        else stop("the input does not start with a magic number compatible with loading from a connection")
         .Internal(load(file, envir))
     }
     else .Internal(loadFromConn(con, envir))
@@ -51,8 +51,8 @@ save <- function(..., list = character(0),
         invisible(.Internal(save(list, file, ascii, version, envir)))
     else {
         if (is.character(file)) {
-            if (file == "") stop("`file' must be non-empty string")
-            if (compress && capabilities("libz")) con <- gzfile(file, "wb")
+            if (file == "") stop("'file' must be non-empty string")
+            if (compress) con <- gzfile(file, "wb")
             else con <- file(file, "wb")
             on.exit(close(con))
         }
@@ -100,7 +100,7 @@ save.image <- function (file = ".RData", version = NULL, ascii = FALSE,
     if (safe)
         if (! file.rename(outfile, file)) {
             on.exit()
-            stop(paste("image could not be renamed and is left in", outfile))
+            stop("image could not be renamed and is left in ", outfile)
         }
     on.exit()
 }
@@ -109,7 +109,7 @@ sys.load.image <- function(name, quiet) {
     if (file.exists(name)) {
         load(name, envir = .GlobalEnv)
         if (! quiet)
-	    cat("[Previously saved workspace restored]\n\n")
+	    cat(gettext("[Previously saved workspace restored]\n\n"))
     }
 }
 
@@ -119,12 +119,4 @@ sys.save.image <- function(name)
     ## connection.
     closeAllConnections()
     save.image(name)
-}
-
-loadURL <- function (url, envir = parent.frame(), quiet = TRUE, ...)
-{
-    tmp <- tempfile("url")
-    download.file(url, tmp, quiet = quiet, ...)
-    on.exit(unlink(tmp))
-    load(tmp, envir = envir)
 }

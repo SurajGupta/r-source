@@ -19,6 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is handled as a whole string */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -297,7 +299,7 @@ do_setToCConverterActiveStatus(SEXP call, SEXP op, SEXP args, SEXP env)
 	el = R_getToCConverterByIndex(asInteger(id) - 1);
     }
     if(el == NULL) {
-	error("no R-to-C converter found corresponding to identifier");
+	error(_("no R-to-C converter found corresponding to identifier"));
     }
 
     PROTECT(status = allocVector(LGLSXP, 1));

@@ -608,7 +608,7 @@ X <- X[, colSums(X) <= 3]
 X <- rbind(X, 3:3 - colSums(X))
 for(p in list(c(1,2,5), 1:3, 3:1, 2:0, 0:2, c(1,2,1), c(0,0,1))) {
   px <- apply(X, 2, function(x) dmultinom(x, prob = p))
-  stopifnot(identical(TRUE, all.equal(sum(px), 1)))
+  stopifnot(all.equal(sum(px), 1))
 }
 ## end of moved from Multinom.Rd
 
@@ -931,9 +931,10 @@ a1
 a2 <- glm(ncases/(ncases+ncontrols) ~ agegp + tobgp * alcgp,
 	  data = esoph, family = binomial(), weights=ncases+ncontrols)$aic
 a2
-stopifnot(a1 == a2)
+stopifnot(all.equal(a1, a2))
 ## Comments:
 # both should be 236.9645
+# changed to use all.equal rather than == in 2.1.0 -pd
 
 ## Follow up: example from Lindsey, purportedly of inaccuracy in aic
 y <- matrix(c(2, 0, 7, 3, 0, 9), ncol=2)
@@ -3352,11 +3353,257 @@ foo[2] <- NA
 foo
 ## segfaulted in 2.0.0
 
-## closing a graphics window could segfault in Windows
-if(.Platform$OS.type == "windows") {
-    windows(record = TRUE)
-    plot(1)
-    dev.off()
-    gc()
+
+## incorrect arg matching in sum min max prod any all
+## Pat Burns, R-devel 2004-11-19
+stopifnot(identical(sum(1:4, NA, n = 78, na.rm = TRUE), 88))
+## was 11 in 2.0.1
+
+
+## segfault from text, P Ehlers, R-devel 2004-11-24
+plot(1:10)
+loc <- list(5, 6)
+try(text(loc, labels = "a"))
+## segfaulted in 2.0.1
+
+
+## automatic row.names can be number-like, MM, 2004-11-26
+d0 <- data.frame(x=1:3, y=pi*2:0)
+row.names(d0)[3] <- c("01.00")
+write.table(d0, (tf <- tempfile()))
+d <- read.table(tf)
+## gave error ("duplicate row.names") in 2.0.1
+stopifnot(all.equal(d,d0))
+unlink(tf)
+
+
+## seq() should be more consistent in returning "integer"
+stopifnot(typeof(seq(length=0)) == "integer",
+          identical(seq(length=0), seq(along=0[0])),
+          identical(seq(length=3), 1:3),
+          identical(seq(length=3), seq(along=1:3)))
+
+
+## labels.lm was broken (PR#7417)
+# part of example(lm)
+ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+group <- gl(2,10,20, labels=c("Ctl","Trt"))
+weight <- c(ctl, trt)
+lm.D9 <- lm(weight ~ group)
+stopifnot(labels(lm.D9) == "group")
+## failed in 2.0.1, giving length 0
+
+
+## sprintf had no length check (PR#7554)
+a <- matrix (ncol=100, nrow=100, data=c(1,2,3,4,5))
+a.serial <- serialize(a, NULL, ascii=TRUE)
+try(sprintf('foo: %s\n', a.serial))
+## seqfaulted in 2.0.1
+
+
+## all/any did not coerce as the Blue Book described.
+for(x in c("F", "FALSE", "T", "TRUE", "NA")) {
+    print(all(x))
+    print(any(x))
 }
-## segfaulted in 2.0.0
+all(list())
+any(list())
+## all failed in 2.0.1 with 'incorrect argument type'
+
+
+##---- named dimnames of  %*% and crossprod() -- matrices and 1-d arrays:
+tst1 <- function(m) {
+    stopifnot(identical(t(m) %*%  (m), crossprod(m)))
+    stopifnot(identical(m    %*% t(m), crossprod(t(m))))
+}
+tst2 <- function(x, y=x) {
+    stopifnot(identical(t(x) %*% (y),(crossprod(x,y) ->  C)))
+    stopifnot(identical(t(y) %*% (x),(crossprod(y,x) -> tC)))
+    stopifnot(identical(tC, t(C)))
+}
+
+{m1 <- array(1:2,1:2); dimnames(m1) <- list(D1="A", D2=c("a","b")); m1}
+tst1(m1)
+m2 <- m1; names(dimnames(m2)) <- c("", "d2"); tst1(m2)
+m3 <- m1; names(dimnames(m3)) <- c("", "")  ; tst1(m3)
+m4 <- m1; names(dimnames(m4)) <- NULL       ; tst1(m4)
+
+tst2(m1,m2)
+tst2(m1,m3)
+tst2(m1,m4)
+tst2(m2,m3)
+tst2(m2,m4)
+tst2(m3,m4)
+
+## 2) Now the 'same' with 1-d arrays:
+a1 <- m1; dim(a1) <- length(a1); dimnames(a1) <- dimnames(m1)[2]; a1 # named dn
+a2 <- a1; names(dimnames(a2)) <- NULL ; a2 # unnamed dn
+a3 <- a1; dimnames(a3) <- NULL ; a3 # no dn
+stopifnot(identical(dimnames(t(a1))[2], dimnames(a1)))
+## in version <= 2.0.1,  t(.) was loosing names of dimnames()
+tst1(a1)# failed in 2.0.1 ("twice")
+tst1(a2)# failed in 2.0.1
+tst1(a3)# ok
+## these all three failed in (2.0.1) for more than one reason:
+tst2(a1,a2)
+tst2(a1,a3)
+tst2(a2,a3)
+## end {testing named dimnames for %*% and crossprod()}
+
+
+## -- coercing as.data.frame(NULL) to a pairlist didn't work
+y<-1:10
+eval(quote(y), as.data.frame(NULL))
+## NULL as the second argument of eval should be treated
+## like a list or data frame
+eval(quote(y), NULL)
+## end
+
+
+## data frame with nothing to replace
+A <- matrix(1:4, 2, 2)
+A[is.na(A)] <- 0
+A <- as.data.frame(A)
+A[is.na(A)] <- 0
+## last not accepted prior to 2.1.0
+
+
+## scan on partial lines on an open connection
+cat("TITLE extra line", "235 335 535 735", "115 135 175",
+    file="ex.data", sep="\n")
+cn.x <- file("ex.data", open="r")
+res <- scan(cn.x, skip=1, n=2)
+res <- c(res, scan(cn.x, n=2))
+res <- c(res, scan(cn.x, n=2))
+res <- c(res, scan(cn.x, n=2))
+close(cn.x, sep=" ")
+unlink("ex.data")
+stopifnot(identical(res, c(235, 335, 535, 735, 115, 135, 175)))
+## dropped some first chars < 2.1.0
+
+
+## PR#7686 formatC does not pick up on incorrect 'flag' inputs
+try(formatC(1, flag="s"))
+## segfaulted in 2.0.1
+
+
+## PR#7695 contrasts needed coercion to double
+c <- matrix(c(0,1,2), nrow=3)
+storage.mode(c) <- "integer"
+f <- factor(1:3)
+contrasts(f, 1) <- c
+x <- model.matrix(~f)
+stopifnot(x == c(1,1,1,0,1,2))
+## gave machine-dependendent silly numbers in 2.0.1
+
+
+## extreme (de-normalized) axis range
+x <- 2^-seq(67, 1067, length=20)
+plot(x^.9, x, type="l", log="xy") # still warning and ugly labels because
+                                 ## e.g., 10^-323 |==> 9.881313e-324 numerically
+## gave error "log - axis(), 'at' creation, _LARGE_ range..." in 2.0.1
+
+
+## torture test of scan() with allowEscape=TRUE
+tf <- tempfile()
+x <- c('ABC', '"123"', "a'b")
+cat(shQuote(x, "cmd"), sep="\n", file=tf)
+(x2 <- scan(tf, ""))
+unlink(tf)
+stopifnot(identical(x, x2))
+## At one point pre-2.1.0 got confused
+
+
+## se.contrast failed in 2.0.1 with some effectively one-stratum designs.
+old <- getOption("contrasts")
+options(contrasts = c("contr.helmert", "contr.poly"))
+Lab <- factor(rep(c("1","2","3"), each=12))
+Material <- factor(rep(c("A","B","C","D"),each=3,times=3))
+Measurement <- c(12.20,12.28,12.16,15.51,15.02,15.29,18.14,18.08,18.21,
+                 18.54,18.36,18.45,12.59,12.30,12.67,14.98,15.46,15.22,
+                 18.54,18.31,18.60,19.21,18.77,18.69,12.72,12.78,12.66,
+                 15.33,15.19,15.24,18.00,18.15,17.93,18.88,18.12,18.03)
+testdata <- data.frame(Lab, Material, Measurement)
+(test.aov <- aov(Measurement ~ Material + Error(Lab/Material),
+                 data = testdata))
+eff.aovlist(test.aov)
+(res <- se.contrast(test.aov,
+                    list(Material=="A", Material=="B",
+                         Material=="C", Material=="D"),
+                    coef = c(1, 1, -1, -1), data = testdata))
+## failed in 2.0.1 as a matrix was 1 x 1.
+
+## 2.0.1 also failed to check for orthogonal contrasts
+## in calculating the efficiencies (which are 1 here).
+options(contrasts = c("contr.treatment", "contr.poly"))
+(test2.aov <- aov(Measurement ~ Material + Error(Lab/Material),
+                  data = testdata))
+(res2 <- se.contrast(test2.aov,
+                     list(Material=="A", Material=="B",
+                          Material=="C", Material=="D"),
+                     coef = c(1, 1, -1, -1), data = testdata))
+stopifnot(all.equal(res, res2))
+
+## related checks on eff.aovlist
+example(eff.aovlist) # helmert contrasts
+eff1 <- eff.aovlist(fit)
+fit <- aov(Yield ~ A * B * C + Error(Block), data = aovdat)
+eff2 <- eff.aovlist(fit)
+stopifnot(all.equal(eff1, eff2)) # will have rounding-error differences
+options(contrasts = old)
+## Were different in earlier versions
+
+
+## parts of PR#7742 and other examples
+sub('^','v_', 1:3, perl=TRUE)
+## 2.0.1 did not coerce to character (nor was it documented to).
+x <- LETTERS[1:3]
+stopifnot(identical(paste('v_', x, sep=""),
+                    sub('^','v_', x, perl = TRUE)))
+## 2.0.1 added random chars at the end
+stopifnot(identical(paste('v_', x, sep=""), sub('^','v_', x)))
+## 2.0.1 did not substitute at all
+(x <- gsub("\\b", "|", "The quick brown fox", perl = TRUE))
+stopifnot(identical(x, "|The| |quick| |brown| |fox|"))
+## checked against sed: 2.0.1 infinite-looped.
+(x <- gsub("\\b", "|", "The quick brown fox"))
+stopifnot(identical(x, "|The| |quick| |brown| |fox|"))
+## 2.0.1 gave wrong answer
+## Another boundary case,
+(x <- gsub("\\b", "|", " The quick "))
+stopifnot(identical(x, " |The| |quick| "))
+(x <- gsub("\\b", "|", " The quick ", perl = TRUE))
+stopifnot(identical(x, " |The| |quick| "))
+## and some from a comment in the GNU sed code
+x <- gsub("a*", "x", "baaaac")
+stopifnot(identical(x, "xbxcx"))
+x <- gsub("a*", "x", "baaaac", perl = TRUE)
+stopifnot(identical(x, "xbxcx"))
+## earlier versions got "bxc" or "xbxxcx"
+(x <- gsub("^12", "x", "1212")) # was "xx"
+stopifnot(identical(x, "x12"))
+(x <- gsub("^12", "x", "1212", perl = TRUE)) # was "xx"
+stopifnot(identical(x, "x12"))
+## various fixes in 2.1.0
+
+## length(0) "dist":
+(d01. <- dist(matrix(0., 0,1)))
+## failed in 2.0.1 and earlier
+
+
+## Wish of PR#7775
+x <- matrix(0, nrow=0, ncol=2)
+colSums(x); rowSums(x)
+x <- matrix(0, nrow=2, ncol=0)
+colSums(x); rowSums(x)
+## not allowed in 2.0.1
+
+## PR#7781
+stopifnot(is.finite(tan(1+1000i)))
+##
+
+## infinite recursion in 2.0.1 (and R-beta 2005-04-11):
+summary(data.frame(mat = I(matrix(1:8, 2))))
+summary(data.frame(x = gl(2,2), I(matrix(1:8, 4))))
+##

@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2003 Ross Ihaka and the R Development Core team.
+ *  Copyright (C) 1998-2005 Ross Ihaka and the R Development Core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ double bessel_j(double x, double alpha)
     alpha -= (nb-1);
 #ifdef MATHLIB_STANDALONE
     bj = (double *) calloc(nb, sizeof(double));
-    if (!bj) MATHLIB_ERROR("%s", "bessel_j allocation error");
+    if (!bj) MATHLIB_ERROR("%s", _("bessel_j allocation error"));
 #else
     vmax = vmaxget();
     bj = (double *) R_alloc(nb, sizeof(double));
@@ -68,10 +68,10 @@ double bessel_j(double x, double alpha)
     J_bessel(&x, &alpha, &nb, bj, &ncalc);
     if(ncalc != nb) {/* error input */
       if(ncalc < 0)
-	MATHLIB_WARNING4("bessel_j(%g): ncalc (=%ld) != nb (=%ld); alpha=%g. Arg. out of range?\n",
+	MATHLIB_WARNING4(_("bessel_j(%g): ncalc (=%ld) != nb (=%ld); alpha=%g. Arg. out of range?\n"),
 			 x, ncalc, nb, alpha);
       else
-	MATHLIB_WARNING2("bessel_j(%g,nu=%g): precision lost in result\n",
+	MATHLIB_WARNING2(_("bessel_j(%g,nu=%g): precision lost in result\n"),
 			 x, alpha+nb-1);
     }
     x = bj[nb-1];
@@ -428,7 +428,7 @@ L190:
 		cc = bb;
 		bb = aa;
 		aa = en * bb / *x - cc;
-		m = 2 - m;
+		m = m ? 0 : 2; /* m = 2 - m failed on gcc4-20041019 */
 		if (m != 0) {
 		    em -= 1.;
 		    alp2em = em + em + nu;
@@ -463,7 +463,7 @@ L190:
 		    if (n == 1)
 			goto L240;
 
-		    m = 2 - m;
+		    m = m ? 0 : 2; /* m = 2 - m failed on gcc4-20041019 */
 		    if (m != 0) {
 			em -= 1.;
 			alp2em = em + em + nu;
@@ -483,7 +483,7 @@ L190:
 	    for (n = n-1; n >= 2; n--) {
 		en -= 2.;
 		b[n] = en * b[n + 1] / *x - b[n + 2];
-		m = 2 - m;
+		m = m ? 0 : 2; /* m = 2 - m failed on gcc4-20041019 */
 		if (m != 0) {
 		    em -= 1.;
 		    alp2em = em + em + nu;
@@ -509,7 +509,8 @@ L250:
 	    /* ---------------------------------------------------
 	       Normalize.  Divide all b[N] by sum.
 	       ---------------------------------------------------*/
-	    if (nu + 1. != 1.)
+/*	    if (nu + 1. != 1.) poor test */
+	    if(fabs(nu) > 1e-15)
 		sum *= (gamma_cody(nu) * pow(.5* *x, -nu));
 
 	    aa = enmten_BESS;

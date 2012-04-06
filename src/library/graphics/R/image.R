@@ -16,13 +16,13 @@ image.default <- function (x = seq(0, 1, len = nrow(z)),
 		z <- x$z; y <- x$y; x <- x$x
 	    } else {
 		if(is.null(dim(x)))
-		   stop("argument must be matrix alike")
+		   stop("argument must be matrix-like")
 		z <- x
 		x <- seq(0, 1, len = nrow(z))
 	    }
 	    if (missing(xlab)) xlab <- ""
 	    if (missing(ylab)) ylab <- ""
-	} else stop("no `z' matrix specified")
+	} else stop("no 'z' matrix specified")
     } else if (is.list(x)) {
 	xn <- deparse(substitute(x))
 	if (missing(xlab)) xlab <- paste(xn, "x", sep = "$")
@@ -36,9 +36,9 @@ image.default <- function (x = seq(0, 1, len = nrow(z)),
 	    ylab <- if (missing(y)) "" else deparse(substitute(y))
     }
     if (any(diff(x) <= 0) || any(diff(y) <= 0))
-	stop("increasing x and y values expected")
+	stop("increasing 'x' and 'y' values expected")
     if (!is.matrix(z))
-        stop("`z' must be a matrix")
+        stop("'z' must be a matrix")
     if (length(x) > 1 && length(x) == nrow(z)) { # midpoints
         dx <- 0.5*diff(x)
         x <- c(x[1] - dx[1], x[-length(x)]+dx,
@@ -66,15 +66,14 @@ image.default <- function (x = seq(0, 1, len = nrow(z)),
               else floor((nc - 1e-5) * z + 1e-7)
         zi[zi < 0 | zi >= nc] <- NA
     } else {
-        if (length(breaks) != length(col) + 1)
-            stop("must have one more break than colour")
-        if (any(!is.finite(breaks)))
-            stop("breaks must all be finite")
-    zi <- .C("bincode",
-             as.double(z), length(z), as.double(breaks), length(breaks),
-             code = integer(length(z)), as.logical(TRUE), as.logical(TRUE),
-             nok = TRUE,
-             NAOK = TRUE, DUP = FALSE, PACKAGE = "base") $code - 1
+	if (length(breaks) != length(col) + 1)
+	    stop("must have one more break than colour")
+	if (any(!is.finite(breaks)))
+	    stop("breaks must all be finite")
+	zi <- .C("bincode",
+		 as.double(z), length(z), as.double(breaks), length(breaks),
+		 code = integer(length(z)), (TRUE), (TRUE), nok = TRUE,
+		 NAOK = TRUE, DUP = FALSE, PACKAGE = "base") $code - 1
     }
     if (!add)
 	plot(0, 0, xlim = xlim, ylim = ylim, type = "n", xaxs = xaxs,

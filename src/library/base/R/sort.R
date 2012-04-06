@@ -2,20 +2,20 @@ sort <- function(x, partial = NULL, na.last = NA, decreasing = FALSE,
                  method = c("shell", "quick"), index.return = FALSE)
 {
     if(isfact <- is.factor(x)) {
-        if(index.return) stop("index.return only for non-factors")
+        if(index.return) stop("'index.return' only for non-factors")
 	lev <- levels(x)
 	nlev <- nlevels(x)
  	isord <- is.ordered(x)
         x <- c(x)
     } else
     if(!is.atomic(x))
-        stop("`x' must be atomic")
+        stop("'x' must be atomic")
     if(has.na <- any(ina <- is.na(x))) {
         nas <- x[ina]
         x <-  x[!ina]
     }
     if(index.return && !is.na(na.last))
-        stop("index.return only for na.last = NA")
+        stop("'index.return' only for 'na.last = NA'")
     if(!is.null(partial)) {
         if(index.return || decreasing || isfact || !missing(method))
 	    stop("unsupported options for partial sorting")
@@ -65,7 +65,7 @@ order <- function(..., na.last = TRUE, decreasing = FALSE)
     else{ ## remove nas
         z <- list(...)
         if(any(diff(sapply(z, length)) != 0))
-            stop("Argument lengths differ")
+            stop("argument lengths differ")
         ans <- sapply(z, is.na)
         ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
         if(all(!ok)) return(integer(0))
@@ -81,7 +81,7 @@ sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
 {
     method <- match.arg(method)
     if(!is.atomic(x))
-        stop("`x' must be atomic")
+        stop("'x' must be atomic")
     if(!is.null(partial))
         .NotYetUsed("partial != NULL")
     if(method == "quick") {
@@ -89,10 +89,10 @@ sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
         if(is.numeric(x))
             return(sort(x, na.last = na.last, decreasing = decreasing,
                         method = "quick", index.return = TRUE)$ix)
-        else stop("method=\"quick\" is only for numeric x")
+        else stop("method=\"quick\" is only for numeric 'x'")
     }
     if(method == "radix") {
-        if(!is.integer(x)) stop("method=\"radix\" is only for integer x")
+        if(!is.integer(x)) stop("method=\"radix\" is only for integer 'x'")
         if(is.na(na.last))
             return(.Internal(radixsort(x[!is.na(x)], TRUE, decreasing)))
         else

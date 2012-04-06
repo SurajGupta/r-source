@@ -19,6 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* <UTF8> char here is handled as a whole string */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -84,7 +86,7 @@ SEXP getAttrib(SEXP vec, SEXP name)
 		    SET_STRING_ELT(s, i, PRINTNAME(TAG(vec)));
 		}
 		else
-		    error("getAttrib: invalid type for TAG");
+		    error(_("getAttrib: invalid type for TAG"));
 	    }
 	    UNPROTECT(1);
 	    if (any) {
@@ -124,7 +126,7 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 	return removeAttrib(vec, name);
 
     if (vec == R_NilValue)
-	error("attempt to set an attribute on NULL");
+	error(_("attempt to set an attribute on NULL"));
 
     PROTECT(vec);
     PROTECT(name);
@@ -213,7 +215,7 @@ static SEXP installAttrib(SEXP vec, SEXP name, SEXP val)
 {
     SEXP s, t;
     if (vec == R_NilValue)
-	error("attempt to set an attribute on NULL");
+	error(_("attempt to set an attribute on NULL"));
     PROTECT(vec);
     PROTECT(name);
     PROTECT(val);
@@ -259,11 +261,11 @@ static void checkNames(SEXP x, SEXP s)
 {
     if (isVector(x) || isList(x) || isLanguage(x)) {
 	if (!isVector(s) && !isList(s))
-	    error("invalid type for names: must be vector");
+	    error(_("invalid type for 'names': must be vector"));
 	if (length(x) != length(s))
-	    error("names attribute [%d] must be the same length as the vector [%d]", length(s), length(x));
+	    error(_("'names' attribute [%d] must be the same length as the vector [%d]"), length(s), length(x));
     }
-    else error("names applied to non-vector");
+    else error(_("names() applied to a non-vector"));
 }
 
 
@@ -271,7 +273,7 @@ static void checkNames(SEXP x, SEXP s)
 
 static void badtsp()
 {
-    error("invalid time series parameters specified");
+    error(_("invalid time series parameters specified"));
 }
 
 SEXP tspgets(SEXP vec, SEXP val)
@@ -280,7 +282,7 @@ SEXP tspgets(SEXP vec, SEXP val)
     int n;
 
     if (!isNumeric(val) || length(val) != 3)
-	error("tsp attribute must be numeric of length three");
+	error(_("'tsp' attribute must be numeric of length three"));
 
     if (isReal(val)) {
 	start = REAL(val)[0];
@@ -297,7 +299,7 @@ SEXP tspgets(SEXP vec, SEXP val)
     }
     if (frequency <= 0) badtsp();
     n = nrows(vec);
-    if (n == 0) error("cannot assign `tsp' to zero-length vector");
+    if (n == 0) error(_("cannot assign 'tsp' to zero-length vector"));
 
     /* FIXME:  1.e-5 should rather be == option('ts.eps') !! */
     if (fabs(end - start - (n - 1)/frequency) > 1.e-5)
@@ -325,7 +327,7 @@ static SEXP commentgets(SEXP vec, SEXP comment)
 	}
 	return R_NilValue;
     }
-    error("attempt to set invalid comment attribute");
+    error(_("attempt to set invalid 'comment' attribute"));
     return R_NilValue;/*- just for -Wall */
 }
 
@@ -361,7 +363,7 @@ SEXP classgets(SEXP vec, SEXP class)
 	}
 	return R_NilValue;
     }
-    error("attempt to set invalid class attribute");
+    error(_("attempt to set invalid 'class' attribute"));
     return R_NilValue;/*- just for -Wall */
 }
 
@@ -412,7 +414,7 @@ static SEXP lang2str(SEXP obj, SEXPTYPE t)
 
  */
 
-SEXP R_data_class(SEXP obj, int singleString)
+SEXP R_data_class(SEXP obj, Rboolean singleString)
 {
     SEXP class, value; int n;
     class = getAttrib(obj, R_ClassSymbol);
@@ -455,6 +457,68 @@ SEXP R_data_class(SEXP obj, int singleString)
     PROTECT(value = allocVector(STRSXP, 1));
     SET_STRING_ELT(value, 0, class);
     UNPROTECT(2);
+    return value;
+}
+
+/* Version for S3-dispatch */
+SEXP R_data_class2 (SEXP obj)
+{
+    SEXP class, class0 = R_NilValue, value, dim;
+    SEXPTYPE t;
+    int n;
+
+    class = getAttrib(obj, R_ClassSymbol);
+    n = length(class);
+    if(n > 0) return(class);
+    dim = getAttrib(obj, R_DimSymbol);
+    n = length(dim);
+    if(n > 0) {
+	if(n == 2)
+	    class0 = mkChar("matrix");
+	else
+	    class0 = mkChar("array");
+    }
+    PROTECT(class0);
+    switch(t = TYPEOF(obj)) {
+    case CLOSXP: case SPECIALSXP: case BUILTINSXP:
+	class = mkChar("function");
+	break;
+    case INTSXP:
+    case REALSXP:
+	if(isNull(class0)) {
+	    PROTECT(value = allocVector(STRSXP, 2));
+	    SET_STRING_ELT(value, 0, type2str(t));
+	    SET_STRING_ELT(value, 1, mkChar("numeric"));
+	    UNPROTECT(2);
+	}
+	else {
+	    PROTECT(value = allocVector(STRSXP, 3));
+	    SET_STRING_ELT(value, 0, class0);	
+	    SET_STRING_ELT(value, 1, type2str(t));
+	    SET_STRING_ELT(value, 2, mkChar("numeric"));
+	    UNPROTECT(2);
+	}
+	return value;
+	break;
+    case SYMSXP:
+	class = mkChar("name");
+	break;
+    case LANGSXP:
+	class = lang2str(obj, t);
+	break;
+    default:
+	class = type2str(t);
+    }
+    PROTECT(class);
+    if(isNull(class0)) {
+	PROTECT(value = allocVector(STRSXP, 1));
+	SET_STRING_ELT(value, 0, class);
+    } else {
+	PROTECT(value = allocVector(STRSXP, 2));
+	SET_STRING_ELT(value, 0, class0);	
+	SET_STRING_ELT(value, 1, class);	
+    }
+    UNPROTECT(3);
     return value;
 }
 
@@ -501,7 +565,7 @@ SEXP namesgets(SEXP vec, SEXP val)
 
     if (isList(val)) {
 	if (!isVectorizable(val))
-	    error("incompatible names argument");
+	    error(_("incompatible 'names' argument"));
 	else {
 	    rval = allocVector(STRSXP, length(vec));
 	    PROTECT(rval);
@@ -553,7 +617,7 @@ SEXP namesgets(SEXP vec, SEXP val)
     else if (isVector(vec))
 	installAttrib(vec, R_NamesSymbol, val);
     else
-	error("invalid type to set names attribute");
+	error(_("invalid type to set 'names' attribute"));
     UNPROTECT(2);
     return vec;
 }
@@ -619,14 +683,14 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
     PROTECT(val);
 
     if (!isArray(vec) && !isList(vec))
-	error("dimnames applied to non-array");
+	error(_("'dimnames' applied to non-array"));
     /* This is probably overkill, but you never know; */
     /* there may be old pair-lists out there */
     if (!isPairList(val) && !isNewList(val))
-	error("dimnames must be a list");
+	error(_("'dimnames' must be a list"));
     dims = getAttrib(vec, R_DimSymbol);
     if ((k = LENGTH(dims)) != length(val))
-	error("length of dimnames [%d] must match that of dims [%d]", 
+	error(_("length of 'dimnames' [%d] must match that of 'dims' [%d]"), 
 	      length(val), k);
     /* Old list to new list */
     if (isList(val)) {
@@ -643,9 +707,10 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	SEXP this = VECTOR_ELT(val, i);
 	if (this != R_NilValue) {   
 	    if (!isVector(this))
-		error("invalid type for dimname (must be a vector)");
+		error(_("invalid type for 'dimnames' (must be a vector)"));
 	    if (INTEGER(dims)[i] != LENGTH(this) && LENGTH(this) != 0)
-		error("length of dimnames [%d] not equal to array extent",i+1);
+		error(_("length of 'dimnames' [%d] not equal to array extent"),
+		      i+1);
 	    SET_VECTOR_ELT(val, i, dimnamesgets1(this));
 	}
     }
@@ -704,10 +769,10 @@ SEXP dimgets(SEXP vec, SEXP val)
     PROTECT(vec);
     PROTECT(val);
     if (!isVector(vec) && !isList(vec))
-	error("dim<- : invalid first argument");
+	error(_("dim<- : invalid first argument"));
 
     if (!isVector(val) && !isList(val))
-	error("dim<- : invalid second argument");
+	error(_("dim<- : invalid second argument"));
     val = coerceVector(val, INTSXP);
     UNPROTECT(1);
     PROTECT(val);
@@ -715,12 +780,12 @@ SEXP dimgets(SEXP vec, SEXP val)
     len = length(vec);
     ndim = length(val);
     if (ndim == 0)
-	error("dim: Length-0 dimension vector is invalid");
+	error(_("dim: length-0 dimension vector is invalid"));
     total = 1;
     for (i = 0; i < ndim; i++)
 	total *= INTEGER(val)[i];
     if (total != len)
-	error("dim<- : dims [product %d] do not match the length of object [%d]", total, len);
+	error(_("dim<- : dims [product %d] do not match the length of object [%d]"), total, len);
     removeAttrib(vec, R_DimNamesSymbol);
     installAttrib(vec, R_DimSymbol, val);
     UNPROTECT(2);
@@ -797,7 +862,7 @@ SEXP do_attributesgets(SEXP call, SEXP op, SEXP args, SEXP env)
     else PROTECT(object);
 
     if (!isNewList(attrs))
-	errorcall(call, "attributes must be in a list");
+	errorcall(call, _("attributes must be in a list"));
 
     /* Empty the existing attribute list */
 
@@ -821,11 +886,11 @@ SEXP do_attributesgets(SEXP call, SEXP op, SEXP args, SEXP env)
     if (nattrs > 0) {
 	names = getAttrib(attrs, R_NamesSymbol);
 	if (names == R_NilValue)
-	    errorcall(call, "attributes must be named");
+	    errorcall(call, _("attributes must be named"));
 	for (i = 0; i < nattrs; i++) {
 	    if (STRING_ELT(names, i) == R_NilValue ||
 		CHAR(STRING_ELT(names, i))[0] == '\0') {
-		errorcall(call, "all attributes must have names [%d]",i);
+		errorcall(call, _("all attributes must have names [%d does not]"), i+1);
 	    }
 	    if (!strcmp(CHAR(STRING_ELT(names, i)), "dim"))
 		setAttrib(object, R_DimSymbol, VECTOR_ELT(attrs, i));
@@ -868,9 +933,9 @@ SEXP do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
     t = CADR(args);
 
     if (!isString(t))
-	error("attribute name must be of mode character");
+	error(_("attribute 'name' must be of mode character"));
     if (length(t) != 1)
-	error("exactly one attribute name must be given");
+	error(_("exactly one attribute 'name' must be given"));
 
     str = CHAR(STRING_ELT(t, 0));
     n = strlen(str);
@@ -938,7 +1003,7 @@ SEXP do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(name = eval(CADR(args), env));
     if (!isValidString(name))
-	errorcall(call, "name must be non-null character");
+	errorcall(call, _("'name' must be non-null character"));
 
     /* no eval(.), RHS is already evaluated: */
     /* now it's a promise so we should eval it -RG- */
@@ -1044,7 +1109,7 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
   */
     SEXP value = NULL; int nprotect = 0;
     if(!(isSymbol(name) || (isString(name) && LENGTH(name) == 1)))
-	error("invalid type or length for slot name");
+	error(_("invalid type or length for slot name"));
     if(!s_dot_Data)
 	init_slot_handling();
     if(isString(name)) name = install(CHAR(STRING_ELT(name, 0)));
@@ -1058,7 +1123,7 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 	    SET_STRING_ELT(input, 0, PRINTNAME(name));
 	    classString = GET_CLASS(obj);
 	    if(isNull(classString))
-		error("Can't get a slot (\"%s\") from an object of type \"%s\"",
+		error(_("cannot get a slot (\"%s\") from an object of type \"%s\""),
 		      CHAR(asChar(input)), CHAR(type2str(TYPEOF(obj))));
 	}
 	else classString = R_NilValue; /* make sure it is initialized */
@@ -1066,7 +1131,7 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 	   implies that there is no slot of this name.  Or somebody
 	   screwed up by using atttr(..) <- NULL */
 	
-	error("No slot of name \"%s\" for this object of class \"%s\"",
+	error(_("no slot of name \"%s\" for this object of class \"%s\""),
 	      CHAR(asChar(input)), CHAR(asChar(classString)));
     }
     else if(value == pseudo_NULL)
@@ -1083,7 +1148,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     if(TYPEOF(name) == CHARSXP)
 	name = install(CHAR(name));
     if(!isSymbol(name) ) 
-	error("invalid type or length for slot name");
+	error(_("invalid type or length for slot name"));
 			
     if(!s_dot_Data)		/* initialize */
 	init_slot_handling();
@@ -1163,12 +1228,12 @@ SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP  nlist, object, ans, class;
 
     if(!isMethodsDispatchOn()) 
-	error("formal classes cannot be used without the methods package");
+	error(_("formal classes cannot be used without the methods package"));
     nlist = CADR(args);
     /* Do some checks here -- repeated in R_do_slot, but on repeat the
      * test expression should kick out on the first element. */
     if(!(isSymbol(nlist) || (isString(nlist) && LENGTH(nlist) == 1)))
-	error("invalid type or length for slot name");
+	error(_("invalid type or length for slot name"));
     if(isString(nlist)) nlist = install(CHAR(STRING_ELT(nlist, 0)));
     PROTECT(object = eval(CAR(args), env));
     /* do some testing here where we can give a better error message */
@@ -1187,14 +1252,14 @@ SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 	quick = has_class_definition(class_name);
 	if(!quick &&
 	   (findVar(class_name, env) == R_UnboundValue))
-	    error("Trying to get slot \"%s\" from an object whose class (\"%s\") is not defined ",
+	    error(_("trying to get slot \"%s\" from an object whose class (\"%s\") is not defined "),
 		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(class, 0)));
     }
     else if(length(class) == 0)
-	    error("Trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots",
+	    error(_("trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots"),
 		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(R_data_class(object, FALSE), 0)));
     else
-	    error("Trying to get slot \"%s\" from an object with S3 class c(\"%s\", \"%s\", ...) (not a formally defined class)",
+	    error(_("trying to get slot \"%s\" from an object with S3 class c(\"%s\", \"%s\", ...) (not a formally defined class)"),
 		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(class, 0)), 
 		  CHAR(STRING_ELT(class, 1)));
     ans = R_do_slot(object, nlist);
@@ -1212,7 +1277,7 @@ SEXP do_AT_assign(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(object = eval(CAR(args), env));
     nlist = CADR(args);
     if(!(isSymbol(nlist) || isString(nlist)))
-	errorcall_return(call, "invalid slot type");
+	errorcall_return(call, _("invalid slot type"));
     /* The code for "$<-" claims that the RHS is already evaluated, but
        this is not quite right.  It can, at the least, be a promise
        for the "@" case. */

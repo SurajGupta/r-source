@@ -4,11 +4,12 @@
 source(file, local = FALSE, echo = verbose, print.eval = echo,
        verbose = getOption("verbose"),
        prompt.echo = getOption("prompt"),
-       max.deparse.length = 150, chdir = FALSE)
+       max.deparse.length = 150, chdir = FALSE,
+       encoding = getOption("encoding"))
 }
 \alias{source}
 \arguments{
-  \item{file}{a connection or a character string giving the name
+  \item{file}{a connection or a character string giving the pathname
     of the file or URL to read from.}
   \item{local}{if \code{local} is \code{FALSE}, the statements scanned
     are evaluated in the user's workspace (the global environment),
@@ -26,15 +27,19 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   \item{max.deparse.length}{integer; is used only if \code{echo} is
     \code{TRUE} and gives the maximal length of the \dQuote{echo} of a
     single expression.}
-  \item{chdir}{logical; if \code{TRUE}, the R working directory is
-    changed to the directory containing \code{file} for evaluating.}
+  \item{chdir}{logical; if \code{TRUE} and \code{file} is a pathname,
+    the \R working directory is temporarily changed to the directory
+    containing \code{file} for evaluating.}
+  \item{encoding}{character string.  The encoding to be assumed for the
+    when \code{file} is a character string: see \code{\link{file}}.  A
+    possible value is \code{"unknown"}: see the Details.}
 }
 \description{
   \code{source} causes \R to accept its input from the named file (the
-  name must be quoted). Input is read from that file until the end of
-  the file is reached.   \code{\link{parse}} is used to scan the
-  expressions in, they are then evaluated sequentially in the chosen
-  environment.
+  name must be quoted) or connection.  Input is read and
+  \code{\link{parse}}d by from that file until the end of the file is
+  reached, then the parsed expressions are evaluated sequentially in the
+  chosen environment.
 }
 \details{
   All versions of \R accept input from a connection with end of line
@@ -47,6 +52,12 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   This imposes a limit of 128K chars on the function size and a nesting
   limit of 265.  Use \code{option(keep.source = FALSE)} when these
   limits might take effect: if exceeded they generate an error.
+
+  This paragraph applies if \code{file} is a filename (rather than a
+  connection). If \code{encoding = "unknown"}, an attempt is made to
+  guess the encoding.  The result of \code{\link{localeToCharset}} is
+  used a guide.  If \code{encoding} has two or more elements, they are
+  tried in turn.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

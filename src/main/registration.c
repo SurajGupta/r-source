@@ -244,6 +244,7 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(R_getVarsFromFrame, 3),
     CALLDEF(R_lazyLoadDBinsertValue, 5),
     CALLDEF(R_lazyLoadDBfetch, 4),
+    CALLDEF(R_lazyLoadDBflush, 1),
 
 #ifdef BYTECODE
     CALLDEF(R_getbcprofcounts, 0),
@@ -255,11 +256,11 @@ static R_CallMethodDef callMethods [] = {
 };
 
 
-#define EXTDEF(name)  {#name, (DL_FUNC) &name, -1}
+#define EXTDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 static R_ExternalMethodDef externalMethods [] = {
-    EXTDEF(call_dqags),
-    EXTDEF(call_dqagi),
+    EXTDEF(call_dqags, 7),
+    EXTDEF(call_dqagi, 7),
     {NULL, NULL, 0}
 };
 
