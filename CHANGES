@@ -1,4 +1,143 @@
 
+		CHANGES IN VERSION R VERSION 0.60
+
+R is about to become an official part of the GNU project.
+To quote RMS (Richard Stallman)
+
+		``I hereby dub R GNU software!''
+
+
+NEW FEATURES
+
+    o	There has been a major change in directory structure
+	masterminded by Kurt Hornik.
+	library(.) now attaches ``package''s which are better
+	integrated, see "?library".  Packages may be available from outside
+	the RHOME path via the .lib.loc variable.
+
+    o	The documentation format (of files in src/library/<package>/man/ )
+	has changed to a more easily parsable LaTeX like format.
+	The doc files now all end in `.Rd'.
+	etc/Rman2Rd  can be used to translate old-style documentation to
+	the new one.
+	The translation to *roff, LaTeX and HTML is now done using
+	etc/Rdconv, written in Perl by Fritz Leisch.
+
+	The HTML online help produced has now links which work.
+	The manual (in doc/manual/) now includes a section on the
+	documentation format and on mathematical text in graphs.
+
+	etc/ further contains `Sd2Rd' for (partial) translation of S `.d'
+	documentation to Rd, and
+	`Rd2txt' and `Rd2dvi' for easy previewing of single Rd files.
+
+    o	The use of "names" on one dimensional arrays will now produce
+	sensible results.  This means that for most purposes,
+	one dimensional arrays can be treated like vectors.
+
+    o	We have a applied a patch from mward@wolf.hip.berkeley.edu
+	which should substantially improve the speed of (vector)
+	arithmetic.
+
+    o	The modeling formula handler has been expanded so that it
+	accepts y ~ 0 + x as a "through the origin" specification.
+	models with no parameters are now acceptable.
+
+    o	"cov", "cor" and "var" now produce a matrix result if either
+	of their x or y arguments is a matrix.	Dimnames are propagated
+	in a sensible fashion.
+
+    o   New chisq.test(.) and prop.test() from Kurt Hornik.
+
+    o   New read.fwf(.) for reading fixed width format (KH).
+
+    o   New str(.) [alternative to summary(.) for programmers] (MM).
+
+    o   New example data sets "esoph", "infert" and "anscombe" (TL),
+	"iris3" (KH) and "stackloss" (MM).
+
+    o   source(.) has several new arguments, notably ``echo = FALSE''.
+	This is applied in the new function  demo(.) which runs all the
+	code in demos/ (but dynload).
+
+    o   strheight(.) is new, accompanying strwidth(.).
+	Both now work for mathematical expressions (Paul Murrell).
+
+    o   The LaTeX version of the manual (-> doc/manual/) now has an index.
+
+    o   EVERY *.Rd file in src/library/base/man/ has now at least one \keyword
+
+    o	New package (`library(.)') "stepfun" for step functions, incl.
+	empirical distributions.
+
+
+BUG FIXES
+
+    o   Regular expression matching is now done with system versions
+	of the regexp library.  This should fix compilation problems
+	on some platforms.
+
+    o	"approx" and "approxfun", have had some minor adjustments.
+	which fix the interpretation of the rule= argument.  The
+	code for piecewise constant case is now internal C code
+	that than interpreted.	This should boost performance in
+	this case.
+
+    o	There has been a minor fixup of "model.frame" to ensure that
+	subsets, weights, etc are handled properly.
+
+    o	Model fitting of the form
+
+		 lm(y~., data=df)
+		glm(y~., data=df)
+
+	will now work.	The RHS of the model will consist of an
+	additive model containing all (non-respose) variabels in the
+	given data frame.
+
+    o	The following type of assignment to data frame subsets
+
+		z <- data.frame(x=rnorm(10),y=rnorm(10),z=rnorm(10))
+		z[,1:2] <- matrix(1:20,nc=2)
+
+	was producing incorrect results.  The solution was to wrap
+	an implicit "as.data.frame" around the RHS.
+
+    o	"[.data.frame" no longer has a default drop=TRUE argument.
+	This means that subsetting a data frame with "[" will always
+	yield a data frame.
+
+    o	There was a swap of coordinates internally in "mtext" which
+	meant that labels were coming out in the wrong place.  Fixed.
+
+    o	Syntax errors in parse(text="...") would cause R to terminate
+	with a segmentation violation.	This no longer happens, although
+	the result is still not perfect (the parse() returns).
+	This will be fixed by a future parse rewrite.
+
+    o   rainbow, topo.colors, etc., now also work with n in {1,2};
+	don't return duplicate neighbor colors anymore.
+
+    o   legend has new `text.width' argument and now also works with
+	mathematical expressions as text.
+
+    o   hist() now works better, has a `plot = TRUE' argument, and returns
+	something useful.
+
+    o   barplot() improved for `names', now returns vector of midpoints.
+
+    o   lm(), lm.fit, lm.wfit (was `lm.w.fit'):  Made more compatible.
+	Dealing with (close to) collinear situations is still not flexible
+	enough.
+
+    o   internal postcript() improved (missing lines in boxplot(.)).
+
+    o   Improvement to many (even most ?) documentation (.Rd) files.
+
+    o   Numerous other fixes of minor things ...
+
+
+
 		  CHANGES IN VERSION R VERSION 0.50
 
 WARNING!!!
@@ -47,8 +186,8 @@ NEW FEATURES
  o  many help(.) pages have been updated with working examples,
 	and several new ones have been created.
 
- o  influence.measures() and ...  now allow to get at the usual
-    regression diagnostics. 
+ o  influence.measures() and lm.influence now allow to get at the usual
+    regression diagnostics.
 
 BUG FIXES
 

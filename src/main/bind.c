@@ -460,13 +460,13 @@ static SEXP ExtractOptionals(SEXP ans, int *recurse, int *usenames)
 	u = install("use.names");
 	while(a != R_NilValue && CDR(a) != R_NilValue) {
 		n = TAG(CDR(a));
-		if( n != R_NilValue && pmatch(r,n,0) ) {
+		if( n != R_NilValue && pmatch(r, n, 1) ) {
 			if((v = asLogical(CADR(a))) != NA_INTEGER) {
 				*recurse = v;
 			}
 			CDR(a) = CDDR(a);
 		}
-		else if(n != R_NilValue &&  pmatch(u,n,0) ) {
+		else if(n != R_NilValue &&  pmatch(u, n, 1) ) {
 			if((v = asLogical(CADR(a))) != NA_INTEGER) {
 				*usenames = v;
 			}
@@ -492,8 +492,11 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	checkArity(op, args);
 
-	if(DispatchOrEval(call, op, args, env, &ans, 1))
+	if(DispatchOrEval(call, op, args, env, &ans, 1)) {
+		R_Visible = 1;
 		return(ans);
+	}
+	R_Visible = 1;
 
 		/* Method dispatch has failed */
 		/* run the generic code */

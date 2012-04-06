@@ -19,6 +19,7 @@
  
 #include "Defn.h"
 #include "Mathlib.h"
+#include "Fileio.h"
 
 	/* Static Globals */
 
@@ -193,7 +194,7 @@ static char *AsciiInString(FILE *fp)
 	return buf;
 }
 
-static void AsciiSave(SEXP s, FILE *fp)
+void AsciiSave(SEXP s, FILE *fp)
 {
 	OutInit = Dummy;
 	OutInteger = AsciiOutInteger;
@@ -206,7 +207,7 @@ static void AsciiSave(SEXP s, FILE *fp)
 	DataSave(s, fp);
 }
 
-static SEXP AsciiLoad(FILE *fp)
+SEXP AsciiLoad(FILE *fp)
 {
 	VersionId = 0;
 	InInit = Dummy;
@@ -426,7 +427,7 @@ static char *BinaryInString(FILE *fp)
 	return buf;
 }
 
-static void BinarySave(SEXP s, FILE *fp)
+void BinarySave(SEXP s, FILE *fp)
 {
 	OutInit = Dummy;
 	OutInteger = BinaryOutInteger;
@@ -439,7 +440,7 @@ static void BinarySave(SEXP s, FILE *fp)
 	DataSave(s, fp);
 }
 
-static SEXP BinaryLoad(FILE *fp)
+SEXP BinaryLoad(FILE *fp)
 {
 	VersionId = 0;
 	InInit = Dummy;
@@ -451,7 +452,7 @@ static SEXP BinaryLoad(FILE *fp)
 	return DataLoad(fp);
 }
 
-static SEXP BinaryLoadOld(FILE *fp, int version)
+SEXP BinaryLoadOld(FILE *fp, int version)
 {
 	VersionId = version;
 	InInit = Dummy;
@@ -471,7 +472,7 @@ static SEXP BinaryLoadOld(FILE *fp, int version)
 	/*******************************************/
 
 
-static void R_WriteMagic(FILE *fp, int number)
+void R_WriteMagic(FILE *fp, int number)
 {
 	unsigned char buf[5];
 	number = abs(number);
@@ -483,7 +484,7 @@ static void R_WriteMagic(FILE *fp, int number)
 	fwrite((char*)buf, sizeof(char), 5, fp);
 }
 
-static int R_ReadMagic(FILE *fp)
+int R_ReadMagic(FILE *fp)
 {
 	unsigned char buf[6];
 	int d1, d2, d3, d4, d1234;
@@ -1056,7 +1057,7 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (TYPEOF(CADDR(args)) != LGLSXP)
 		errorcall(call, "third argument must be a logical vector\n");
 
-	fp = fopen(CHAR(STRING(CADR(args))[0]), "wb");
+	fp = R_fopen(CHAR(STRING(CADR(args))[0]), "wb");
 	if (!fp)
 		errorcall(call, "unable to open file\n");
 
@@ -1088,7 +1089,7 @@ SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 		errorcall(call, "first argument must be a string\n");
 	i = INTEGER(CADR(args))[0];
 
-	fp = fopen(CHAR(STRING(CAR(args))[0]), "rb");
+	fp = R_fopen(CHAR(STRING(CAR(args))[0]), "rb");
 	if (!fp)
 		errorcall(call, "unable to open file\n");
 

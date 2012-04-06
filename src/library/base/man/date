@@ -1,4 +1,0 @@
-TITLE(date @@ Print the System Date and Time)
-USAGE(date())
-ALIAS(date)
-DESCRIPTION(Returns a character string of the current date and time.)

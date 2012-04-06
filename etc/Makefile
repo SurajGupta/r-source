@@ -1,51 +1,62 @@
-## These are used for 'tests' dependencies: 
-R	= ../bin/R
-Rbinary = ../bin/R.binary 
-Rbase   = ../library/base
+## ${RHOME}/etc/Makefile
 
-install-help: help-files
-install-latex: latex-files
-install-html: html-files
-test-Examples: Examples-test/All-Ex.Rout
+TESTS   = ../tests
+Ex_Tests = $(TESTS)/Examples
+CleanMe1 = SHLIB COMPILE INSTALL REMOVE
+CleanMe2 = Rdconv Rdindex Rman2Rd Sd2Rd
+CleanMe3 = build-help build-htmlpkglist help.pretty html2dos
+CleanMe  = $(CleanMe1) $(CleanMe2) $(CleanMe3)
 
-##-- Here I only do 'base';  
-##--  with 'help', should do it for ALL libraries
-##--  with 'html' / 'latex' we don't yet have anything -- ANYWAY ! ---
-help-INDEX: ../help/base/AnIndex 
-../help/base/AnIndex : ../src/library/base/man/*
-##	install-base-Index...
+MANSRC = ../src/library/*/man/*.Rd
+MANbaseDIR = ../src/library/base/man
 
-help-files: help-INDEX
-	@echo installing ALL manual entries
-	./install-allhelp
+##--------------------------------- TARGETS ------------------------------
+DVI = ../doc/manual/Man.dvi
+
+build-help: stamp-help
+build-html: stamp-html
+build-latex: stamp-latex $(DVI)
+build-docs: stamp-docs $(DVI)
+tests: test-Examples
+
+test-Examples: $(Ex_Tests)
+	@cp -p Makefile-test-Ex $(Ex_Tests)/Makefile
+	-(cd $(Ex_Tests); make $@)
+
+stamp-help: $(MANSRC)
+	@echo "Building ALL help pages"
+	./build-allhelp
 	@touch $@
 
-latex-files: help-INDEX
-	@echo 'creating latex manual version (in dvi)'
-	./install-latex
+stamp-html: $(MANSRC)
+	@echo "Building R Base Reference Manual (in HTML)"
+	./build-allhtml
 	@touch $@
 
-html-files: help-INDEX
-	@echo 'creating html manual version (in html)'
-	./install-html
+#stamp-latex: $(MANbaseDIR)/*.Rd
+stamp-latex: $(MANSRC)
+	@echo "Building R Base Reference Manual (in LaTeX/dvi)"
+	./build-alllatex
 	@touch $@
 
-Examples-test/All-Ex.Rout: Examples-test/All-Ex.R $(Rbinary) $(Rbase)
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ]; then mv $@ $@.bak ; fi
-	@echo Running all help-EXAMPLES
-	(cd Examples-test;rm -f .RData; ../$(R) -v 4 < All-Ex.R)> $@
+stamp-docs: $(MANSRC)
+	@echo "Building ALL documentation (help, HTML, LaTeX)"
+	./build-alldocs
+	@touch $@
+	@touch stamp-help
+	@touch stamp-html
+	@touch stamp-latex
 
-Examples-test/All-Ex.R: help-INDEX
-	@if [ ! -d `dirname $@` ]; then mkdir `dirname $@` ; fi
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ]; then mv $@ $@.bak ; fi
-	@echo Extracting all help-EXAMPLES into $@
-	./extract-Examples > $@
+../doc/manual/Man.dvi: stamp-latex
+	(cd ../doc/manual; make Man.dvi)
+
+$(Ex_Tests):
+	@if [ ! -d $@ ]; then mkdir -p $@ ; fi
 
 clean:
-	@rm -f COMPILE INSTALL SHLIB
-	@rm -f Examples-test/All-Ex.R
+	@rm -f $(CleanMe1)
+	@-(cd $(Ex_Tests) && make $@)
 
-realclean: clean
-	@rm -fr Examples-test
+distclean realclean:
+	@rm -fr $(Ex_Tests) $(CleanMe)
+	@rm -f stamp-*

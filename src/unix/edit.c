@@ -19,6 +19,9 @@
 
 #include "Defn.h"
 #include "Print.h"
+#include "Fileio.h"
+#include "IOSupport.h"
+#include "Parse.h"
 #include <stdio.h>
 
 /*
@@ -47,7 +50,7 @@ void InitEd()
 
 SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	int i;
+	int i, status;
 	SEXP x, fn, envir, ed;
 	char *filename, *editcmd, *vmaxsave;
 	FILE *fp;
@@ -72,7 +75,7 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else filename = DefaultFileName;
 
 	if (x != R_NilValue) {
-		if((fp=fopen(filename, "w")) == NULL)
+		if((fp=R_fopen(filename, "w")) == NULL)
 			errorcall(call, "unable to open file\n");
 		x = deparse1(x, 0);
 		for (i=0; i<LENGTH(x); i++)
@@ -87,23 +90,19 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	sprintf(editcmd, "%s %s", CHAR(STRING(ed)[0]), filename);
 	system(editcmd);
 
-	if((fp=fopen(filename, "r")) == NULL)
+	if((fp=R_fopen(filename, "r")) == NULL)
 		errorcall(call, "unable to open file to read\n");
 	R_ParseCnt = 0;
-#ifdef OLD
-	x = parse(fp, 1);
-#else
-	x = parse(fp, 0);
-#endif
-	fclose(fp);
-	if (R_ParseError)
+	x = R_ParseFile(fp, -1, &status);
+	if (status != PARSE_OK)
 		errorcall(call, "An error occurred on line %d\n use a command like\n x <- vi()\n to recover\n", R_ParseError);
-	ResetConsole();
-	x = eval(CAR(x), R_GlobalEnv);
+	else
+		fclose(fp);
+	R_ResetConsole();
+	x = eval(x, R_GlobalEnv);
 	if (TYPEOF(x) == CLOSXP && envir != R_NilValue)
 		CLOENV(x) = envir;
 	UNPROTECT(1);
 	vmaxset(vmaxsave);
 	return (x);
 }
-

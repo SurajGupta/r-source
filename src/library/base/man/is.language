@@ -1,7 +1,0 @@
-TITLE(is.language @@ Is an Object a Language Object?)
-USAGE(is.language(x))
-ALIAS(is.language)
-DESCRIPTION(
-LANG(is.language) returns LANG(TRUE) if LANG(x) is either a variable name
-or an expression.
-)

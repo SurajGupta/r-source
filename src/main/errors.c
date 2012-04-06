@@ -89,15 +89,12 @@ void jump_to_toplevel()
 	int nback=0;
 
 	inError = 1;
-	if (R_Console == 0) fclose(R_Inputfile);
-#ifdef OLD
-#else
-	R_SetInput(0);
-#endif
-	ResetConsole();
-	FlushConsole();
+	if (R_Console == 0 && R_Inputfile != NULL)
+		fclose(R_Inputfile);
+	R_ResetConsole();
+	R_FlushConsole();
+	R_ClearerrConsole();
 	R_ParseError = 0;
-	ResetComment();
 	vmaxset(NULL);
 	if (R_GlobalContext->cend != NULL)
 		(R_GlobalContext->cend) ();
@@ -123,7 +120,7 @@ void jump_to_toplevel()
 	jump_now();
 }
 
-void jump_now()
+static void jump_now()
 {
 	inError=0;
 	R_PPStackTop = 0;

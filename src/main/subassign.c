@@ -498,6 +498,11 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	sc = CADR(s) = arraySubscript(1, CADR(s), x);
 	nrs = LENGTH(sr);
 	ncs = LENGTH(sc);
+	
+	/* <TSL> 21Oct97*/
+	if (length(y)==0)
+		error("Replacement length is zero\n");
+	/* </TSL>  */
 
 	if ((length(sr) * length(sc)) % length(y))
 		error("no of items to replace is not a multiple of replacement length\n");
@@ -1023,8 +1028,18 @@ static SEXP frameAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	nrs = LENGTH(sr);
 	ncs = LENGTH(sc);
 
-	if(isList(y) || isFrame(y)) PROTECT(y);
-	else PROTECT(y = CONS(y, R_NilValue));
+	/* FIXME - if y is a matrix then convert it to data frame */
+
+	if(isList(y) || isFrame(y))
+		PROTECT(y);
+	else {
+		SEXP tmp;
+		PROTECT(y);
+		PROTECT(tmp = lang2(install("as.data.frame"), y));
+		y = eval(tmp, R_NilValue);
+		UNPROTECT(2);
+		PROTECT(y);
+	}
 	ncy = length(y);
 
 	PROTECT(ss = allocList(2));

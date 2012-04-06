@@ -10,12 +10,6 @@ Some of these we re thinking about doing ourselves, but others could be
 taken on by anyone.
 
 
- o  DOCUMENTATION
-    Switch to a comletely SGML based set of documentation, with ways of
-    producing HTML, LaTeX and Plain Text.  On Windows and the Mac use
-    HTML to provide a manual.
-
-
  o  WINDOWS 3/95/NT PORT.
     Robert has this in hand and is nearly done.
 
@@ -104,3 +98,7 @@ taken on by anyone.
     We have a partial spectrum analysis package.  It needs to be
     multivariate though.
 
+
+ o  MAPPING
+    We have the Becker/Wilks sources for constructing map data bases.
+    All we really need is the drawing code.

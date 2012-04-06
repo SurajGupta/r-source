@@ -50,6 +50,10 @@
 #endif
 #endif
 
+/* regex library; if you have memmove */
+#define HAVE_MEMMOVE 1
+
+
 #define R_PLATFORM	"Windows"
 #define R_CPU		"x86"
 #define R_VENDOR	"IBM"
@@ -58,8 +62,8 @@
 #define R_MINOR		"0"
 #define R_STATUS	"Beta"
 #define R_STATUS_REV	"0"
-#define R_DAY		"8"
-#define R_MONTH		"Apr"
+#define R_DAY		"1"
+#define R_MONTH		"Sept"
 #define R_YEAR		"1997"
 
 #endif

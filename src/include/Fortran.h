@@ -38,6 +38,9 @@
 #ifdef max
 #undef max
 #endif
+#ifdef huge
+#undef huge
+#endif
 
 #define TRUE    (1)
 #define FALSE   (0)

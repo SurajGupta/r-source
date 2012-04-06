@@ -18,13 +18,40 @@
  */
 
 #include "Defn.h"
-
-#ifdef HAVE_LIBREADLINE
-char *tilde_expand (char *);
-#endif
+#include "Fileio.h"
 
 /* The size of vector initially allocated by scan */
-#define SCAN_BLOCKSIZE 1000
+#define SCAN_BLOCKSIZE		1000
+/* The size of the console buffer */
+#define CONSOLE_BUFFER_SIZE	1024
+
+static char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
+static char *ConsoleBufp;
+static char  ConsoleBufCnt;
+static char  ConsolePrompt[32];
+
+static void InitConsoleGetchar()
+{
+	ConsoleBufCnt = 0;
+	ConsolePrompt[0] = '\0';
+}
+
+static int ConsoleGetchar()
+{
+	if (--ConsoleBufCnt < 0) {
+		if (R_ReadConsole(ConsolePrompt, ConsoleBuf,
+				CONSOLE_BUFFER_SIZE, 0) == 0) {
+			R_ClearerrConsole();
+			return R_EOF;
+		}
+		R_ParseCnt++;
+		ConsoleBufp = ConsoleBuf;
+		ConsoleBufCnt = strlen(ConsoleBuf);
+		ConsoleBufCnt--;
+	}
+	return *ConsoleBufp++;
+}
+
 
 static int save = 0;
 static int sepchar = 0;
@@ -40,7 +67,7 @@ static int scanchar(void)
 		save = 0;
 		return c;
 	}
-	return (ttyflag) ? cget() : R_fgetc(fp);
+	return (ttyflag) ? ConsoleGetchar() : R_fgetc(fp);
 }
 
 static void unscanchar(int c)
@@ -205,13 +232,13 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines, int flush, SEX
 
 	nprev = 0; n = 0; linesread = 0; bch=1;
 
-	if (ttyflag) REprintf("1: ");
+	if (ttyflag) sprintf(ConsolePrompt, "1: ");
 
 	strip = asLogical(stripwhite);
 
 	for(;;) {
 		if (bch == R_EOF) {
-			if(ttyflag) ClearerrConsole();
+			if(ttyflag) R_ClearerrConsole();
 			break;
 		}
 		else if (bch == '\n') {
@@ -219,7 +246,7 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines, int flush, SEX
 			if (linesread == maxlines)
 				break;
 			if (ttyflag) {
-				REprintf("%d: ", n + 1);
+				sprintf(ConsolePrompt, "%d: ", n + 1);
 			}
 			nprev = n;
 		}
@@ -315,7 +342,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 	badline = 0;
 	bch = 1;
 
-	if (ttyflag) REprintf("1: ");
+	if (ttyflag) sprintf(ConsolePrompt, "1: ");
 
 	strip=asLogical(stripwhite);
 
@@ -323,7 +350,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 	for(;;) {
 
 		if (bch == R_EOF) {
-			if(ttyflag) ClearerrConsole();
+			if(ttyflag) R_ClearerrConsole();
 			goto done;
 		}
 		else if (bch == '\n') {
@@ -335,7 +362,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 			if(maxlines > 0 && linesread == maxlines)
 				goto done;
 			if ( ttyflag)
-				REprintf("%d: ", n + 1);
+				sprintf(ConsolePrompt, "%d: ", n + 1);
 		}
 		if (n == blksize && colsread == 0 ) {
 			b = ans;
@@ -472,14 +499,10 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	else errorcall(call, "\"scan\" file name required\n");
 
-	yyprompt("");
-
 	if (filename) {
 		ttyflag = 0;
-#ifdef HAVE_LIBREADLINE
-		filename = tilde_expand (filename);
-#endif
-		if ((fp = fopen(filename, "r")) == 0)
+		filename = R_ExpandFileName(filename);
+		if ((fp = R_fopen(filename, "r")) == NULL)
 			error("\"scan\" can't open file\n");
 		for (i = 0; i < nskip; i++)
 			while ((c = scanchar()) != '\n' && c != R_EOF);
@@ -543,10 +566,8 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	if (filename) {
 		ttyflag = 0;
-#ifdef HAVE_LIBREADLINE
-		filename = tilde_expand (filename);
-#endif
-		if ((fp = fopen(filename, "r")) == NULL)
+		filename = R_ExpandFileName(filename);
+		if ((fp = R_fopen(filename, "r")) == NULL)
 			error("\"scan\" can't open file\n");
 		for (i = 0; i < nskip; i++)
 			while ((c = scanchar()) != '\n' && c != R_EOF);
@@ -733,12 +754,11 @@ SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	checkArity(op,args);
 
-	yyprompt("");
 	/* skip white space */
-	while( (c= cget()) == ' ' || c=='\t');
+	while( (c= ConsoleGetchar()) == ' ' || c=='\t');
 	if(c != '\n' && c != R_EOF) {
 		*bufp++ = c;
-		while ((c = cget())!= '\n' && c != R_EOF ) {
+		while ((c = ConsoleGetchar())!= '\n' && c != R_EOF ) {
 			if(bufp >= &buffer[MAXELTSIZE - 2])
 				continue;
 			*bufp++ = c;
@@ -766,8 +786,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(!isString(CAR(args)))
 		errorcall(call,"wrong argument\n");
 
-	yyprompt("");
-	while((c=cget()) != '\n' && c != R_EOF) {
+	while((c=ConsoleGetchar()) != '\n' && c != R_EOF) {
 		if(bufp >= &buffer[MAXELTSIZE - 2])
 			continue;
 		*bufp++ = c;

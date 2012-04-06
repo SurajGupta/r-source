@@ -3,10 +3,10 @@ all:
 	@cd profile; make
 
 libs:
-	@echo building application libraries
+	@echo Building application libraries..
 	@sh LIBSETUP
 
 clean:
+	@echo Cleaning in library..
 	@sh LIBCLEAN
-	@rm LIBSETUP LIBCLEAN
-	@echo cleaning in library
+	@rm LIBCLEAN

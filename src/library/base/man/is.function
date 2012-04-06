@@ -1,7 +1,0 @@
-TITLE(is.function @@ Is an Object of Type Function?)
-USAGE(is.function(x))
-ALIAS(is.function)
-DESCRIPTION(
-LANG(is.function) returns LANG(TRUE) if LANG(x) is a function
-and LANG(FALSE) otherwise.
-)

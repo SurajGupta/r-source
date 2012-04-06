@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997 Robert Gentleman, Ross Ihaka and the R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,6 +48,18 @@ static int nterm;		/* # of model terms */
 static SEXP varlist;		/* variables in the model */
 static SEXP framenames;		/* variables names for specified frame */
 
+
+static int isZeroOne(SEXP x)
+{
+	if(!isNumeric(x)) return 0;
+	return (asReal(x) == 0.0 || asReal(x) == 1.0);
+}
+
+static int isZero(SEXP x)
+{
+	if(!isNumeric(x)) return 0;
+	return asReal(x) == 0.0;
+}
 
 static int isOne(SEXP x)
 {
@@ -98,7 +111,7 @@ static int InstallVar(SEXP var)
 
 		/* Check that variable is legitimate */
 
-	if (!isSymbol(var) && !isLanguage(var) && !isOne(var))
+	if (!isSymbol(var) && !isLanguage(var) && !isZeroOne(var))
 		error("invalid term in model formula\n");
 
 		/* Lookup/Install it */
@@ -156,7 +169,7 @@ static void ExtractVars(SEXP formula, int checkonly)
 	int len, i;
 	SEXP v;
 
-	if (isNull(formula) || isOne(formula))
+	if (isNull(formula) || isZeroOne(formula))
 		return;
 	if (isSymbol(formula)) {
 		if (!checkonly) {
@@ -549,6 +562,11 @@ static SEXP EncodeVars(SEXP formula)
 		else intercept = 0;
 		return R_NilValue;
 	}
+	else if(isZero(formula)) {
+		if(parity) intercept = 0;
+		else intercept = 1;
+		return R_NilValue;
+	}
 	if (isSymbol(formula)) {
 		if( formula == dotSymbol && framenames != R_NilValue ) {
 			r = R_NilValue;
@@ -731,9 +749,8 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	inSymbol = install("%in%");
 	identSymbol = install("I");
 
-		/* This is a rough guess about whether we */
-		/* have a formula.  It needs to be beefed */
-		/* up.  Shouldn't we be checking for ~ here? */
+		/* Do we have a model formula? */
+		/* Check for unary or binary ~ */
 
 	if (!isLanguage(CAR(args)) || 
 		CAR(CAR(args)) != tildeSymbol ||
@@ -742,38 +759,48 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	PROTECT(ans = duplicate(CAR(args)));
 
-	specials=CADR(args);
-	a=CDDR(args);
+		/* The formula will be returned */
+
+	specials = CADR(args);
+	a = CDDR(args);
 
 		/* abb = is unimplemented */
+		/* FIXME: in any case it should be handled */
+		/* in a separate "abbreviation expansion" */
+		/* made before entry to this function. */
 
 	abb = CAR(a);
 	a=CDR(a);
 
-	data = CAR(a); a=CDR(a);
+		/* We use data to get the value to */
+		/* substitute for "." in formulae */
+
+	data = CAR(a);
+	a = CDR(a);
 	if(isNull(data) || isEnvironment(data))
 		framenames = R_NilValue;
 	else if (isFrame(data))
 		framenames = getAttrib(data, R_NamesSymbol);
 	else
 		errorcall(call,"data argument is of the wrong type\n");
-
 	if( framenames != R_NilValue )
 		if( length(CAR(args))== 3 )
 			CheckRHS(CADR(CAR(args)));
+
+		/* Preserve term order? */
 
 	keepOrder = asLogical(CAR(a));
 	if(keepOrder == NA_LOGICAL)
 		keepOrder = 0;
 
-	if( specials==R_NilValue )
+	if(specials == R_NilValue)
 		ATTRIB(ans) = a = allocList(7);
 	else
 		ATTRIB(ans) = a = allocList(8);
 
 		/* Step 1: Determine the ``variables'' in the model */
 		/* Here we create an expression of the form */
-		/* data.frame(...).  You can evaluate it to get */
+		/* list(...).  You can evaluate it to get */
 		/* the model variables or use substitute and then */
 		/* pull the result apart to get the variable names. */
 
@@ -792,6 +819,16 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 		/* Step 2: Recode the model terms in binary form */
 		/* and at the same time, expand the model formula. */
+
+		/* FIXME: this includes specials in the model */
+		/* There perhaps needs to be a an extra pass */
+		/* through the model to delete any terms which */
+		/* contain specials.  Actually, specials should */
+		/* only enter additively so this should also be */
+		/* checked and abort forced if not. */
+
+		/* FIXME: this is also the point where nesting */
+		/* needs to be taken care of. */
 
 	PROTECT(formula = EncodeVars(CAR(args)));
 	nterm = length(formula);
@@ -889,11 +926,11 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	TAG(a) = install("term.labels");
 	a = CDR(a);
 
-	/* if there are specials stick them in here */
+		/* If there are specials stick them in here */
 
 	if(specials != R_NilValue) {
 		i = length(specials);
-		PROTECT(v=allocList(i));
+		PROTECT(v = allocList(i));
 		for( j=0, t=v ; j<i ; j++, t=CDR(t) ) {
 			TAG(t) = install(CHAR(STRING(specials)[j]));
 			n = strlen(CHAR(STRING(specials)[j]));
@@ -901,16 +938,16 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 			k = 0;
 			for(l=0 ; l<nvar ; l++) {
 				if(!strncmp(CHAR(STRING(varnames)[l]),
-					CHAR(STRING(specials)[j]), n))
-					if(CHAR(STRING(varnames)[l])[n] == '(') {
+				            CHAR(STRING(specials)[j]), n))
+					if(CHAR(STRING(varnames)[l])[n] == '(')
 						k++;
-					}
 			}
 			if(k > 0) {
 				CAR(t) = allocVector(INTSXP, k);
 				k = 0;
 				for(l=0 ; l<nvar ; l++) {
-					if(!strncmp(CHAR(STRING(varnames)[l]), CHAR(STRING(specials)[j]), n))
+					if(!strncmp(CHAR(STRING(varnames)[l]),
+						    CHAR(STRING(specials)[j]), n))
 						if(CHAR(STRING(varnames)[l])[n] == '('){
 							INTEGER(CAR(t))[k++] = l+1;
 						}
@@ -933,11 +970,13 @@ SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	TAG(a) = install("order");
 	a = CDR(a);
 
-	CAR(a) = (intercept ? mkTrue() : mkFalse());
+	CAR(a) = allocVector(INTSXP, 1);
+	INTEGER(CAR(a))[0] = (intercept != 0);
 	TAG(a) = install("intercept");
 	a = CDR(a);
 
-	CAR(a) = (response ? mkTrue() : mkFalse());
+	CAR(a) = allocVector(INTSXP, 1);
+	INTEGER(CAR(a))[0] = (response != 0);
 	TAG(a) = install("response");
 	a = CDR(a);
 
@@ -1155,22 +1194,16 @@ SEXP do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static SEXP SubsetSymbol;
 
-static SEXP ProcessDots(SEXP dots, SEXP *subset, char *buf)
+static SEXP ProcessDots(SEXP dots, char *buf)
 {
 	if(dots == R_NilValue)
 		return dots;
 	if(TAG(dots) == R_NilValue)
 		error("unnamed list element in model.frame.default");
-	CDR(dots) = ProcessDots(CDR(dots), subset, buf);
-	if(TAG(dots) == SubsetSymbol) {
-		*subset = CAR(dots);
-		return CDR(dots);
-	}
-	else {
-		sprintf(buf, "(%s)", CHAR(PRINTNAME(TAG(dots))));
-		TAG(dots) = install(buf);
-		return dots;
-	}
+	CDR(dots) = ProcessDots(CDR(dots), buf);
+	sprintf(buf, "(%s)", CHAR(PRINTNAME(TAG(dots))));
+	TAG(dots) = install(buf);
+	return dots;
 }
 
 SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1182,30 +1215,30 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	checkArity(op, args);
 	terms = CAR(args); args = CDR(args);
-	data = CAR(args); args = CDR(args);
-	dots = CAR(args); args = CDR(args);
 	envir = CAR(args); args = CDR(args);
+	dots = CAR(args); args = CDR(args);
+	subset = CAR(args); args = CDR(args);
 	na_action = CAR(args); args = CDR(args);
 
 		/* Save the row names for later use. */
 
-	PROTECT(row_names = getAttrib(data, R_RowNamesSymbol));
+	PROTECT(row_names = getAttrib(envir, R_RowNamesSymbol));
 
 		/* Assemble the base data frame. */
 
 	PROTECT(variables = getAttrib(terms, install("variables")));
 	if(isNull(variables) || !isLanguage(variables))
 		errorcall(call, "invalid terms object\n");
-	if(isList(data)) {
+	if(isList(envir)) {
 		tmp = emptyEnv();
-		FRAME(tmp) = data;
+		FRAME(tmp) = envir;
 		ENCLOS(tmp) = R_GlobalEnv;
-		data = tmp;
+		envir = tmp;
 	}
-	else if(!isEnvironment(data))
+	else if(!isEnvironment(envir))
 		errorcall(call, "Invalid data argument\n");
-	PROTECT(data);
-	data = eval(variables, data);
+	PROTECT(envir);
+	data = eval(variables, envir);
 	UNPROTECT(2);
 	PROTECT(data);
 
@@ -1253,17 +1286,7 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	if(isNull(dots) || !isLanguage(dots))
 		errorcall(call, "invalid dots object\n");
-	if(isList(envir)) {
-		tmp = emptyEnv();
-		FRAME(tmp) = envir;
-		ENCLOS(tmp) = R_GlobalEnv;
-		envir = tmp;
-	}
-	else if(!isEnvironment(envir))
-		errorcall(call, "invalid envir argument\n");
-	PROTECT(envir);
 	dots = eval(dots, envir);
-	UNPROTECT(1);
 	PROTECT(dots);
 
 		/* Glue the data object and the dots objects */
@@ -1275,7 +1298,7 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 		
 	if(!isList(dots))
 		errorcall(call, "variables not in list form\n");
-	subset = R_NilValue;
+
 	if(!isNull(dots)) {
 		if(nr == 0) nr = nrows(CAR(dots));
 		for(ans=dots ; ans!=R_NilValue ; ans=CDR(ans)) {
@@ -1285,8 +1308,7 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 			if(nrows(CAR(ans)) != nr)
 				errorcall(call, "variable lengths differ\n");
 		}
-		SubsetSymbol = install("subset");
-		dots = ProcessDots(dots, &subset, buf);
+		dots = ProcessDots(dots, buf);
 		if(!isNull(data)) {
 			ans = data;
 			while(CDR(ans) != R_NilValue)
@@ -1317,7 +1339,6 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 
 		/* Do the subsetting if required. */
-		/* First find the "subset" variable. */
 
 	if(subset != R_NilValue) {
 		PROTECT(tmp = lang4(install("["), data, subset, R_MissingArg));
@@ -1427,65 +1448,6 @@ static void addvar(double *x, int nrx, int ncx, double *c, int nrc, int ncc)
 	}
 }
 
-#ifdef OLD
-SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	SEXP v, vars, names, weights, ans;
-	int i;
-
-	checkArity(op, args);
-	vars = CAR(args);
-	if(!isList(vars))
-		errorcall(call, "invalid variable list\n");
-	args = CDR(args);
-
-	names = CAR(args);
-	if(!isString(names) || length(names) != length(vars))
-		errorcall(call, "invalid names argument\n");
-	args = CDR(args);
-
-	ans = vars;
-	if(NAMED(vars))
-		ans = duplicate(vars);
-	PROTECT(ans);
-	for(v=ans, i=0; v!=R_NilValue ; v=CDR(v), i++) {
-		switch(TYPEOF(CAR(v))) {
-			case LGLSXP:
-			case INTSXP:
-			case REALSXP:
-				CAR(v) = coerceVector(CAR(v), REALSXP);
-				break;
-			case FACTSXP:
-			case ORDSXP:
-				break;
-			default:
-				errorcall(call, "invalid variable type\n");
-		}
-		TAG(v) = install(CHAR(STRING(names)[i]));
-	}
-
-	weights = CAR(args);
-	if(weights != R_NilValue) {
-		switch(TYPEOF(weights)) {
-			case LGLSXP:
-			case INTSXP:
-			case REALSXP:
-				weights = CAR(args) = coerceVector(weights, REALSXP);
-				break;
-			default:
-				errorcall(call, "weights must be numeric\n");
-		}
-		v=ans;
-		while(CDR(v) != R_NilValue)
-			v = CDR(v);
-		CDR(v) = CONS(weights, R_NilValue);
-		TAG(CDR(v)) = install(".weights");
-	}
-	UNPROTECT(1);
-	return ans;
-}
-#endif
-
 #define BUFSIZE 128
 
 static char *AppendString(char *buf, char *str)
@@ -1507,6 +1469,7 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP expr, factors, terms, v, vars, vnames, assign, xnames, tnames;
 	SEXP count, contrast, contr1, contr2, nlevels, ordered, columns, x;
+	SEXP variable, var_i;
 	int fik, first, i, j, k, kk, ll, n, nc, nterms, nvar;
 	int intercept, jstart, jnext, response, index;
 	char buf[BUFSIZE], *bufp;
@@ -1562,50 +1525,54 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(length(vars) == 0)
 		errorcall(call, "don't know how many cases\n");
 	n = nrows(CAR(vars));
-	if(response) v = CDR(vars);
-	else v = vars;
-	while(v != R_NilValue) {
-		if(TYPEOF(CAR(v)) < LGLSXP || TYPEOF(CAR(v)) > REALSXP)
-			errorcall(call, "invalid variable type\n");
-		if(nrows(CAR(v)) != n)
-			errorcall(call, "variable lengths differ\n");
-		v = CDR(v);
-	}
 
-		/* Determine whether factors are ordered */
-		/* determine the number of levels. */
+		/* VECTOR ME */
+		/* We want random access to the variables */
+		/* so we transfer the variables to a generic */
+		/* vector as we type check them.  When we */
+		/* switch to generic vectors this transfer */
+		/* can be taken out */
 
+		/* This section of the code checks the */
+		/* types of the variables in the model */
+		/* frame.  Note that it should really */
+		/* only check the variables if they appear */
+		/* in a term in the model. */
+
+	PROTECT(variable = allocVector(VECSXP, nvar));
 	PROTECT(nlevels = allocVector(INTSXP, nvar));
 	PROTECT(ordered = allocVector(LGLSXP, nvar));
 	PROTECT(columns = allocVector(INTSXP, nvar));
 
-	if(response) {
-		LOGICAL(ordered)[0] = 0;
-		INTEGER(nlevels)[0] = 0;
-		INTEGER(columns)[0] = 0;
-		v = CDR(vars); i = 1;
-	}
-	else {
-		v = vars; i = 0;
-	}
-	while(v != R_NilValue && i<nvar) {
-		if(isOrdered(CAR(v))) {
+	v = vars;
+	for(i=0 ; i<nvar ; i++) {
+		var_i = VECTOR(variable)[i] = CAR(v);
+		if(nrows(var_i) != n)
+			errorcall(call, "variable lengths differ\n");
+		if(i == response - 1) {
+			LOGICAL(ordered)[0] = 0;
+			INTEGER(nlevels)[0] = 0;
+			INTEGER(columns)[0] = 0;
+		}
+		else if(isOrdered(var_i)) {
 			LOGICAL(ordered)[i] = 1;
-			INTEGER(nlevels)[i] = LEVELS(CAR(v));
-			INTEGER(columns)[i] = ncols(CAR(v));
+			INTEGER(nlevels)[i] = LEVELS(var_i);
+			INTEGER(columns)[i] = ncols(var_i);
 		}
-		else if(isUnordered(CAR(v))) {
+		else if(isUnordered(var_i)) {
 			LOGICAL(ordered)[i] = 0;
-			INTEGER(nlevels)[i] = LEVELS(CAR(v));
-			INTEGER(columns)[i] = ncols(CAR(v));
+			INTEGER(nlevels)[i] = LEVELS(var_i);
+			INTEGER(columns)[i] = ncols(var_i);
 		}
-		else {
-			CAR(v) = coerceVector(CAR(v), REALSXP);
+		else if(isNumeric(var_i)) {
+			VECTOR(variable)[i] = coerceVector(var_i, REALSXP);
+			var_i = VECTOR(variable)[i];
 			LOGICAL(ordered)[i] = 0;
 			INTEGER(nlevels)[i] = 0;
-			INTEGER(columns)[i] = ncols(CAR(v));
+			INTEGER(columns)[i] = ncols(var_i);
 		}
-		v = CDR(v); i += 1;
+		else errorcall(call, "invalid variable type\n");
+		v = CDR(v);
 	}
 
 		/* If there is no intercept we look through the */
@@ -1616,7 +1583,8 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(!intercept) {
 		for(j=0 ; j<nterms ; j++) {
 			for(i=response ; i<nvar ; i++) {
-				if(INTEGER(nlevels)[i] > 1 && INTEGER(factors)[i+j*nvar] == 1) {
+				if(INTEGER(nlevels)[i] > 1
+				&& INTEGER(factors)[i+j*nvar] == 1) {
 					INTEGER(factors)[i+j*nvar] = 2;
 					goto alldone;
 				}
@@ -1633,34 +1601,32 @@ alldone:
 		/* The calls have the following form: */
 		/* (contrast.type nlevels contrasts) */
 
-	PROTECT(contr1 = allocVector(STRSXP, nvar));
-	PROTECT(contr2 = allocVector(STRSXP, nvar));
+	PROTECT(contr1 = allocVector(VECSXP, nvar));
+	PROTECT(contr2 = allocVector(VECSXP, nvar));
 	PROTECT(expr = allocList(3));
 	TYPEOF(expr) = LANGSXP;
 	CAR(expr) = install("contrasts");
 	CADDR(expr) = allocVector(LGLSXP, 1);
-	if(response) v = CDR(vars);
-	else v = vars;
-	for(i=response ; i<nvar ; i++) {
-		k = 0;
-		for(j=0 ; j<nterms ; j++) {
-			if(INTEGER(factors)[i+j*nvar] == 1)
-				k |= 1;
-			if(INTEGER(factors)[i+j*nvar] == 2)
-				k |= 2;
-		}
+
+	for(i=0 ; i<nvar ; i++) {
 		if(INTEGER(nlevels)[i]) {
-			CADR(expr) = CAR(v);
+			k = 0;
+			for(j=0 ; j<nterms ; j++) {
+				if(INTEGER(factors)[i+j*nvar] == 1)
+					k |= 1;
+				else if(INTEGER(factors)[i+j*nvar] == 2)
+					k |= 2;
+			}
+			CADR(expr) = VECTOR(variable)[i];
 			if(k & 1) {
 				LOGICAL(CADDR(expr))[0] = 1;
-				STRING(contr1)[i] = eval(expr, rho);
+				VECTOR(contr1)[i] = eval(expr, rho);
 			}
 			if(k & 2) {
 				LOGICAL(CADDR(expr))[0] = 0;
-				STRING(contr2)[i] = eval(expr, rho);
+				VECTOR(contr2)[i] = eval(expr, rho);
 			}
 		}
-		v = CDR(v);
 	}
 
 
@@ -1673,15 +1639,15 @@ alldone:
 	if(intercept) nc = 1; else nc = 0;
 	for(j=0 ; j<nterms ; j++) {
 		k = 1;
-		for(i=response ; i<nvar ; i++) {
+		for(i=0 ; i<nvar ; i++) {
 			if(INTEGER(factors)[i+j*nvar]) {
 				if(INTEGER(nlevels)[i]) {
 					switch(INTEGER(factors)[i+j*nvar]) {
 					case 1:
-						k *= ncols(STRING(contr1)[i]);
+						k *= ncols(VECTOR(contr1)[i]);
 						break;
 					case 2:
-						k *= ncols(STRING(contr2)[i]);
+						k *= ncols(VECTOR(contr2)[i]);
 						break;
 					}
 				}
@@ -1704,10 +1670,6 @@ alldone:
 	
 
 		/* Create column labels for the matrix columns. */
-		/* This isn't the right way to do this.  We should */
-		/* have factor names postfixed by the factor level */
-		/* for each term, or juxtopositions of these if */
-		/* the term is an interaction. */
 
 	PROTECT(xnames = allocVector(STRSXP, nc));
 	tnames = getAttrib(factors, R_DimNamesSymbol);
@@ -1721,27 +1683,24 @@ alldone:
 	k = 0;
 	if(intercept) STRING(xnames)[k++] = mkChar("(Intercept)");
 
-#define NEW
-#ifdef NEW
 	for(j=0 ; j<nterms ; j++) {
 		for(kk=0 ; kk<INTEGER(count)[j] ; kk++) {
 			first = 1;
 			index = kk;
-			if(response) v = CDR(vars);
-			else v = vars;
 			bufp = &buf[0];
-			for(i=response ; i<nvar ; i++) {
+			for(i=0 ; i<nvar ; i++) {
+				var_i = VECTOR(variable)[i];
 				if(ll = INTEGER(factors)[i+j*nvar]) {
 					if(!first) bufp = AppendString(bufp, ".");
 					first = 0;
-					if(isFactor(CAR(v))) {
+					if(isFactor(var_i)) {
 						if(ll == 1) {
-							x = CADR(getAttrib(STRING(contr1)[i], R_DimNamesSymbol));
-							ll = ncols(STRING(contr1)[i]);
+							x = CADR(getAttrib(VECTOR(contr1)[i], R_DimNamesSymbol));
+							ll = ncols(VECTOR(contr1)[i]);
 						}
 						else {
-							x = CADR(getAttrib(STRING(contr2)[i], R_DimNamesSymbol));
-							ll = ncols(STRING(contr2)[i]);
+							x = CADR(getAttrib(VECTOR(contr2)[i], R_DimNamesSymbol));
+							ll = ncols(VECTOR(contr2)[i]);
 						}
 						bufp = AppendString(bufp, CHAR(STRING(vnames)[i]));
 						if(x == R_NilValue)
@@ -1750,8 +1709,8 @@ alldone:
 							bufp = AppendString(bufp, CHAR(STRING(x)[index%ll]));
 					}
 					else {
-						x = CADR(getAttrib(CAR(v), R_DimNamesSymbol));
-						ll = ncols(CAR(v));
+						x = CADR(getAttrib(var_i, R_DimNamesSymbol));
+						ll = ncols(var_i);
 						bufp = AppendString(bufp, CHAR(STRING(vnames)[i]));
 						if(ll > 1) {
 							if(x == R_NilValue)
@@ -1762,25 +1721,10 @@ alldone:
 					}
 					index = index/ll;
 				}
-				v = CDR(v);
 			}
 			STRING(xnames)[k++] = mkChar(buf);
 		}
 	}
-#else
-	for(j=0 ; j<nterms ; j++) {
-		if(INTEGER(count)[j] >= 1) {
-			for(i=0 ; i<INTEGER(count)[j] ; i++) {
-				buf = Rsprintf("%s%d",CHAR(STRING(tnames)[j]),i+1);
-				STRING(xnames)[k++] = mkChar(buf);
-			}
-		}
-		else {
-			buf = Rsprintf("%s",CHAR(STRING(tnames)[j]));
-			STRING(xnames)[k++] = mkChar(buf);
-		}
-	}
-#endif
 
 		/* Allocate and compute the design matrix. */
 
@@ -1794,44 +1738,42 @@ alldone:
 		}
 	}
 	
-		/* b) Now loop over the variables. */
+		/* b) Now loop over the model terms */
 
 	for(k=0 ; k<nterms ; k++) {
-		if(response) v = CDR(vars);
-		else v = vars;
-		for(i=response ; i<nvar ; i++) {
+		for(i=0 ; i<nvar ; i++) {
+			var_i = VECTOR(variable)[i];
 			fik = INTEGER(factors)[i+k*nvar];
 			if(fik) {
 				switch(fik) {
 				case 1:
-					contrast = STRING(contr1)[i];
+					contrast = VECTOR(contr1)[i];
 					break;
 				case 2:
-					contrast = STRING(contr2)[i];
+					contrast = VECTOR(contr2)[i];
 					break;
 				}
 				if(jnext == jstart) {
 					if(INTEGER(nlevels)[i] > 0) {
-						firstfactor(&REAL(x)[jstart*n], n, jnext-jstart, REAL(contrast), nrows(contrast), ncols(contrast), INTEGER(CAR(v)));
+						firstfactor(&REAL(x)[jstart*n], n, jnext-jstart, REAL(contrast), nrows(contrast), ncols(contrast), INTEGER(var_i));
 						jnext = jnext+ncols(contrast);
 					}
 					else {
-						firstvar(&REAL(x)[jstart*n], n, jnext-jstart, REAL(CAR(v)), n, ncols(CAR(v)));
-						jnext = jnext+ncols(CAR(v));
+						firstvar(&REAL(x)[jstart*n], n, jnext-jstart, REAL(var_i), n, ncols(var_i));
+						jnext = jnext+ncols(var_i);
 					}
 				}
 				else {
 					if(INTEGER(nlevels)[i] > 0) {
-						addfactor(&REAL(x)[jstart*n], n, jnext-jstart, REAL(contrast), nrows(contrast), ncols(contrast), INTEGER(CAR(v)));
+						addfactor(&REAL(x)[jstart*n], n, jnext-jstart, REAL(contrast), nrows(contrast), ncols(contrast), INTEGER(var_i));
 						jnext = jnext+(jnext-jstart)*(ncols(contrast)-1);
 					}
 					else {
-						addvar(&REAL(x)[jstart*n], n, jnext-jstart, REAL(CAR(v)), n, ncols(CAR(v)));
-						jnext = jnext+(jnext-jstart)*(ncols(CAR(v))-1);
+						addvar(&REAL(x)[jstart*n], n, jnext-jstart, REAL(var_i), n, ncols(var_i));
+						jnext = jnext+(jnext-jstart)*(ncols(var_i)-1);
 					}
 				}
 			}
-			v = CDR(v);
 		}
 		jstart = jnext;
 	}
@@ -1839,6 +1781,6 @@ alldone:
 	CADR(tnames) = xnames;
 	setAttrib(x, R_DimNamesSymbol, tnames);
 	setAttrib(x, install("assign"), assign);
-	UNPROTECT(12);
+	UNPROTECT(13);
 	return x;
 }

@@ -19,19 +19,33 @@
 
 #include "wincons.h"
 #include "Graphics.h"
+#include "Fileio.h"
 
 static char szDirName[RBuffLen];
 static jmp_buf R_Winjbuf;
+float R_WinVersion;
         /*--- I n i t i a l i z a t i o n -- C o d e ---*/
 
 static BOOL CheckSystem(void)
 {
-  DWORD vinfo = GetVersion();
+    OSVERSIONINFO osvi;
+    DWORD vinfo;
 
-  if (! ((LOBYTE(LOWORD(vinfo)) > 3) ||
-         (LOBYTE(LOWORD(vinfo)) == 3 && HIBYTE(LOWORD(vinfo)) >= 10))) {
-    MessageBox((HWND) NULL,
-               "R requires Windows 3.1 or higher",
+#ifdef OLD
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+    if (!GetVersionEx(&osvi))
+        return(FALSE);
+    R_WinVersion = (int) osvi.dwMajorVersion;
+    R_WinVersion += (int) osvi.dwMinorVersion/10;
+#else
+        vinfo=GetVersion();
+        R_WinVersion = (int) LOBYTE(LOWORD(vinfo));
+        R_WinVersion += ((int) HIBYTE(LOWORD(vinfo)))/100.0;        
+#endif
+    if (R_WinVersion < 3.09 ) {
+        sprintf(szDirName,"R requires Windows 3.1 or higher \n You have %f",R_WinVersion);
+        MessageBox((HWND) NULL,
+               szDirName,
                NULL,
                MB_ICONHAND);
     return(FALSE);
@@ -68,16 +82,21 @@ static void R_FileAssoc(char *szDirName)
     
 
 extern HMENU RMenuEdit;
+typedef int (*MYPROC)(int);
 
 int WINAPI WinMain(HANDLE hinstCurrent, HANDLE hinstPrevious, 
 LPSTR lpszCmdParam, int nCmdShow)
 {
         int i;
         char *exe, *ep, tmp[RBuffLen], tm1;
-
-
+        HINSTANCE hinstLib;
+        MYPROC ProcAdd;
+        DWORD erno;
+          
         if (! CheckSystem()) return(FALSE);
 
+        if( erno = GetLastError() )
+                SetLastError(0);
         /* Create the Windows */
         if( !hinstPrevious )
                 if( !InitApplication(hinstCurrent) )
@@ -92,7 +111,10 @@ LPSTR lpszCmdParam, int nCmdShow)
                 return FALSE;
 
         /* do the file association thing if need be */
-        R_FileAssoc(szDirName);
+        if( R_WinVersion >= 4.0 )
+                R_FileAssoc(szDirName);
+
+        erno = GetLastError();
         
         exe = strrchr(szDirName,'\\');
         *exe = '\0';
@@ -139,8 +161,20 @@ parsemem:   while( isspace(*exe) )
                 strcat(R_ImageName,"\\.RData.rmg");
         }
 
+        /* test dll's 
         
+        hinstLib = LoadLibrary("eda");
+        if( hinstLib != NULL) {
+                ProcAdd = (MYPROC) GetProcAddress(hinstLib, "tukeyline_");
+                if( ProcAdd != NULL)
+                        i=3;
+        }
 
+        FreeLibrary(hinstLib);
+ */              
+
+        erno = GetLastError();
+        
         if( 0 == setjmp( R_Winjbuf )  )                                        
                 mainloop();
         else
@@ -281,7 +315,7 @@ void dump_image(char* fname, int jump)
                 DWORD Clust, FreeClust, SectPerClust, BytesPerSect;
                 char    tstr[2];
 
-        fp = fopen(fname, "wb");
+        fp = R_fopen(fname, "wb");
         if( !fp )
                 error("can't save data -- unable to open file\n");
 
@@ -319,7 +353,7 @@ void RBusy(int which)
 
 void R_SaveGlobalEnv(void)
 {
-        FILE *fp = fopen(R_ImageName, "w");
+        FILE *fp = R_fopen(R_ImageName, "w");
         if (!fp)
                 error("can't save data -- unable to open %s\n",R_ImageName);
         R_WriteMagic(fp, R_MAGIC_BINARY);
@@ -329,7 +363,7 @@ void R_SaveGlobalEnv(void)
 
 void R_RestoreGlobalEnv(void)
 {                       
-        FILE *fp = fopen(R_ImageName,"r");
+        FILE *fp = R_fopen(R_ImageName,"r");
         if (!fp) {      
                 /* warning here perhaps */
                 return;

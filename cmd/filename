@@ -2,27 +2,8 @@
 
 # ${RHOME}/cmd/filename
 
-# FIXME when the new directory structure is here!
-
-PKGS=${3:-"*"}
-LIBS=${4:-${RLIBS}}
-
-for lib in ${LIBS}
+for f in $*
 do
-    for pkg in "${PKGS}"
-    do
-	for file in ${lib}/$1/${pkg}/$2 ${lib}/$1/$2
-	do
-	    if [ -r ${file} ]
-	    then
-		echo ${file}
-		break
-	    fi
-	done
-    done
+    if [ -r ${f} ]; then echo ${f}; exit 0; fi
 done    
-
-if [ ! -r ${file} ]
-then
-    echo
-fi
+echo

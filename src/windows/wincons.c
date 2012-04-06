@@ -18,8 +18,11 @@
 
 #include "wincons.h"
 #include "shellapi.h"
+#include "Fileio.h"
 
 #define STRICT
+
+
 
 
 /*    General Comments
@@ -116,6 +119,7 @@ static WNDPROC lpfnOldEd;
 /* some DDE stuff */
 HWND hWndServerDDE;
 
+
 #pragma argsused
 
 
@@ -128,7 +132,7 @@ void RCleanUp(int ask)
     
         if( R_DirtyImage ) {
              if( ask == 1)  /* query save */
-                save = MessageBox(RInst, "Do you want to save the image?","R Save",
+                save = MessageBox(RFrame, "Do you want to save the image?","R Save",
                         MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_APPLMODAL);
              else if (ask == 3)  /* save without query */
                 save = IDYES;
@@ -144,7 +148,8 @@ void RCleanUp(int ask)
                 dump_image(RFName,0);
              }
              R_DirtyImage = 0; /*hack to allow WM_CLOSE to check for a dirty image */
-        } 
+        }
+        KillDevice(); 
         PostMessage(RFrame, WM_CLOSE, 0, 0);
 }
 
@@ -307,11 +312,11 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         RMenuConsole=LoadMenu(hinstCurrent, "RMenuConsole");
         RMenuConsWin=GetSubMenu(RMenuConsole, 2);
         
-        RMenuGraph=LoadMenu(RInst, "RMenuGraph");
+        RMenuGraph=LoadMenu(hinstCurrent, "RMenuGraph");
         RMenuGraphWin=GetSubMenu(RMenuGraph, 1);
-        RMenuEdit = LoadMenu(RInst, "RMenuTEd");
+        RMenuEdit = LoadMenu(hinstCurrent, "RMenuTEd");
         RMenuEditWin = GetSubMenu(RMenuEdit, 1);
-        RMenuDE=LoadMenu(RInst, "RMenuDE");
+        RMenuDE=LoadMenu(hinstCurrent, "RMenuDE");
         RMenuDEWin=GetSubMenu(RMenuDE, 1);
       
         hWndServerDDE=NULL;
@@ -437,7 +442,7 @@ void R_ProcessDropFiles(HANDLE dropstruct, int win)
      }
     DragQueryFile(dropstruct, 0, dfilename, MAXELTSIZE);
     DragFinish(dropstruct);
-    if( !(fp=fopen(dfilename, "rt")) )   
+    if( !(fp=R_fopen(dfilename, "rt")) )   
         error("couldn't find dropped file\n");
     switch (win) {
         case 1:
@@ -609,7 +614,7 @@ void menuLoad(void)
         FILE *fp;
         SEXP expr;
 
-        if(!(fp=fopen(RFName,"r")))
+        if(!(fp=R_fopen(RFName,"r")))
                 error("load: couldn't open requested file\n");
         Rprintf("\n");
         PROTECT(expr=parse(fp, -1));
@@ -628,7 +633,7 @@ void menuOpen(void)
     
         if(!R_Quiet)
                 Rprintf("restore(\"%s\")\n", RFName);
-        fp = fopen(RFName, "rb");
+        fp = R_fopen(RFName, "rb");
         if (!fp)
                 error("unable to open file\n");
         
@@ -835,7 +840,7 @@ int RFrontEnd_WriteStdOutput(char *buf, int buflen)
 
 void ResetConsole()
 {
-        R_Console = 1;
+        R_SetInput(R_CONSOLE);
         R_Inputfile = stdin;
 }             
                           
@@ -865,7 +870,7 @@ FILE *R_OpenLibraryFile(char *file)
         if((home = getenv("RHOME")) == NULL)
                 return NULL;
         sprintf(buf, "%s/library/%s", home, file);
-        fp = fopen(buf,"rt");
+        fp = R_fopen(buf,"rt");
         return fp;
 }
 
@@ -875,7 +880,7 @@ FILE *R_OpenSysInitFile(void)
         FILE *fp;
 
         sprintf(buf, "%s/library/Rprofile", getenv("RHOME"));
-        fp = fopen(buf, "r");
+        fp = R_fopen(buf, "r");
         return fp;
 }
 
@@ -886,11 +891,11 @@ FILE *R_OpenInitFile(void)
 
         fp = NULL;
 
-        if(fp = fopen(".Rprofile", "r"))
+        if(fp = R_fopen(".Rprofile", "r"))
                 return fp;
 
         sprintf(buf, "%s/.Rprofile", getenv("HOME"));
-        if(fp = fopen(buf, "r"))
+        if(fp = R_fopen(buf, "r"))
                 return fp;
 
         return fp;

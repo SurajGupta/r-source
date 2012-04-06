@@ -1,9 +1,0 @@
-TITLE(t @@ Matrix Transpose)
-USAGE(
-t(x)
-)
-ALIAS(t)
-DESCRIPTION(
-Given a matrix LANG(x) as argument, LANG(t) returns the matrix
-transpose of LANG(x).
-)

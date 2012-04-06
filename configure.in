@@ -21,11 +21,11 @@ host_vendor=$2
 host_os=$3
 
 AC_DEFINE(R_MAJOR, "0")
-AC_DEFINE(R_MINOR, "50")
-AC_DEFINE(R_STATUS, "Alpha-4")
+AC_DEFINE(R_MINOR, "60")
+AC_DEFINE(R_STATUS, "Alpha")
 AC_DEFINE(R_STATUS_REV, "0")
-AC_DEFINE(R_DAY, "10")
-AC_DEFINE(R_MONTH, "September")
+AC_DEFINE(R_DAY, "2")
+AC_DEFINE(R_MONTH, "December")
 AC_DEFINE(R_YEAR, "1997")
 AC_DEFINE_UNQUOTED(R_PLATFORM, "${host}")
 AC_DEFINE_UNQUOTED(R_CPU, "${host_cpu}")
@@ -48,7 +48,7 @@ fi
 case $host in
 *hpux*) LIBS="-L/lib/pa1.1 $LIBS"
 	case ${CC} in
-	c89) CFLAGS="-Ae ${CFLAGS}" ;;
+	c89) CFLAGS="-D_HPUX_SOURCE ${CFLAGS}" ;;
 	esac
 esac
 
@@ -68,7 +68,8 @@ fi
 #  Yacc et al:  Note that bison does not do the job.
 #  You must use byacc if you don't have a genuine yacc.
 
-AC_PROG_YACC
+# AC_PROG_YACC
+AC_CHECK_PROGS(YACC, byacc yacc)
 AC_PROG_RANLIB
 AC_CHECK_PROG(AR, ar, ar)
 
@@ -122,11 +123,16 @@ if test -z "$R_PRINTCMD"
 then
 AC_CHECK_PROGS(R_PRINTCMD, lpr lp)
 fi
+
 if test -z "$R_PAPERSIZE"
 then
 R_PAPERSIZE=a4
 fi
 AC_SUBST(R_PAPERSIZE)
+
+# SAVE MODE
+
+AC_SUBST(R_BATCHSAVE)
 
 
 #  X11 LOCATIONS
@@ -181,8 +187,10 @@ AC_C_CONST
 AC_TYPE_SIGNAL
 AC_FUNC_VFORK
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(strtod strtol isnan matherr times)
+AC_CHECK_FUNCS(strtod strtol isnan finite matherr times)
 AC_CHECK_FUNCS(rint)
+AC_CHECK_FUNCS(asinh acosh atanh)
+AC_CHECK_FUNCS(regcomp)
 AC_CHECK_FUNCS(memmove memcpy bcopy)
 
 
@@ -355,6 +363,24 @@ else
 	ln src/appl.f/*.f src/appl
 fi
 
+AC_PATH_PROG(PERL, perl)
+
+if test -n "$PERL"
+then
+    AC_MSG_CHECKING(whether perl is perl 5)
+    PERL_VERSION_NUMBER=`perl -v | sed -n 's/^.*perl.*version \(.\).*/\1/p'`
+    if test $PERL_VERSION_NUMBER -ge 5
+    then
+        NO_PERL5=""
+        AC_MSG_RESULT(yes)
+    else
+        NO_PERL5="true"
+        AC_MSG_RESULT(no)
+    fi
+else
+    NO_PERL5="true"
+fi
+
 
 AC_SUBST(LDCMD)
 AC_SUBST(DLLFLAGS)
@@ -364,6 +390,8 @@ AC_SUBST(SHLIBLDFLAGS)
 AC_SUBST(BLAS)
 AC_SUBST(FFLAGS)
 AC_SUBST(FPICFLAGS)
+AC_SUBST(PERL)
+AC_SUBST(NO_PERL5)
 
 AC_OUTPUT(Makefile
 src/main/Makefile
@@ -376,7 +404,22 @@ src/front/R.sh
 etc/SHLIB
 etc/COMPILE
 etc/INSTALL
+etc/REMOVE
+etc/Rdconv
+etc/Rdindex
+etc/Rman2Rd
+etc/Sd2Rd
+etc/build-help
+etc/build-htmlpkglist
+etc/help.pretty
+etc/html2dos
 demos/dynload/Makefile
-src/library/LIBSETUP
 src/library/LIBCLEAN
+cmd/fwf2table
+)
+
+AC_OUTPUT_COMMANDS(
+(cd etc; chmod +x INSTALL REMOVE Rdconv Rdindex Rman2Rd Sd2Rd \
+         build-help build-htmlpkglist help.pretty html2dos)
+(cd cmd; chmod +x fwf2table)
 )

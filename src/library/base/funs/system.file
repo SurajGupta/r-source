@@ -1,6 +1,0 @@
-system.file <- function(dir, name, lib.loc = .lib.loc) {
-  system(paste("RLIBS=\"", paste(lib.loc, collapse = " "), "\";",
-	       "export RLIBS;",
-	       "${RHOME}/cmd/filename", dir, name),
-	 intern = TRUE)
-}

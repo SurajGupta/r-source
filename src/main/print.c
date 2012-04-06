@@ -22,6 +22,7 @@
  */
 #include "Defn.h"
 #include "Print.h"
+#include "Fileio.h"
 
 static void printAttributes(SEXP);
 void PrintValueRec(SEXP);
@@ -60,7 +61,7 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case 1:
 		if(TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
 			errorcall(call, "invalid file name\n");
-		if( !(fp=fopen(CHAR(STRING(CAR(args))[0]), "w")))
+		if( !(fp=R_fopen(CHAR(STRING(CAR(args))[0]), "w")))
 			errorcall(call, "unable to open file\n");
 		R_Sinkfile = fp;
 		R_Outputfile = fp;
@@ -167,7 +168,8 @@ static printList(SEXP s)
 	SEXP dims, t, newcall;
 	char *pbuf, *ptag;
 
-	if((dims = getAttrib(s, R_DimSymbol)) != R_NilValue) {
+	if((dims = getAttrib(s, R_DimSymbol)) != R_NilValue
+	  && length(dims) > 1) {
 		PROTECT(dims);
 		PROTECT(t = allocArray(STRSXP, dims));
 		setAttrib(t, R_DimNamesSymbol, getAttrib(s, R_DimNamesSymbol));
@@ -213,6 +215,7 @@ static printList(SEXP s)
 			printMatrix(t, 0, dims, 0);
 		else
 			printArray(t, 0);
+		UNPROTECT(2);
 	}
 	else {
 		i = 1;
@@ -428,7 +431,7 @@ void PrintValueEnv(SEXP s, SEXP env)
 
 	if(isObject(s)) {
 		PROTECT(call = lang2(install("print"), s));
-		eval(call, R_NilValue);
+		eval(call, env);
 		UNPROTECT(1);
 	}
 	else {

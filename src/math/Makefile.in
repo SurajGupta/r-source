@@ -5,7 +5,7 @@ RANLIB=@RANLIB@
 
 OBJ=	\
 	fsquare.o fcube.o \
-	fint.o fmax.o fmin.o imin.o imax.o fsign.o \
+	fint.o fmax.o fmin2.o imin.o imax.o fsign.o \
 	round.o prec.o sign.o \
 	i1mach.o d1mach.o \
 	beta.o gamma.o lbeta.o lgamma.o choose.o \

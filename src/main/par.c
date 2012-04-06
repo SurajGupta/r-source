@@ -85,6 +85,8 @@ static void BoundsCheck(double x, double a, double b, char *s)
 		par_error(s);
 }
 
+/* Do NOT forget to update  ../library/base/R/par  if you  ADD a NEW  par !! */
+
 static int Specify(char *what, SEXP value)
 {
 	double x;
@@ -312,7 +314,7 @@ static int Specify(char *what, SEXP value)
 		nonnegIntCheck(INTEGER(value)[0], what);
 		DP->lab[0] = GP->lab[0] = INTEGER(value)[0];
 		DP->lab[1] = GP->lab[1] = INTEGER(value)[1];
-		DP->lab[2] = GP->lab[2] = INTEGER(value)[1];
+		DP->lab[2] = GP->lab[2] = INTEGER(value)[2];
 	}
 	else if (streql(what, "las")) {
 		lengthCheck(what, value, 1);
@@ -722,6 +724,8 @@ static int Specify(char *what, SEXP value)
 	}
 	/* else errorcall(gcall, "parameter \"%s\" is not setable\n", what); */
 }
+
+/* Do NOT forget to update  ../library/base/R/par if you  ADD a NEW  par !! */
 
 static SEXP Query(char *what, GPar *gp)
 {

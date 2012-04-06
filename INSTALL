@@ -18,19 +18,24 @@ this place RHOME.  Untar the source code.  This should create
 directories src, etc, cmd, help and doc.  Issue the following
 commands:
 
-	configure
+	./configure
 	make
-	make install-help
+	make help
 
 You can also build a LaTeX version of the manual entries with
 
-	make install-latex
+	make latex
 
-and an html version of the manual with
+and an HTML version of the manual with
 
-	make install-html
+	make html
 
 These are not fully supported yet.
+
+To build help pages and LaTeX and HTML versions of the manual in one
+step, do
+
+	make docs
 
 If these commands execute successfully, the R binary will be copied
 to the $RHOME/bin directory.  In addition, a shell script font-end

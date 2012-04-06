@@ -19,7 +19,8 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "PostScript.h"
+#include "PS.h"
+#include "Fileio.h"
 
 	/*  PostScript Graphics Utilities			  */
 	/*  This file contains all those utilities used to draw   */
@@ -199,7 +200,7 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
 	int mode;
 	FILE *fp;
 
-	if(!(fp = fopen(fontname, "r"))) return 0;
+	if(!(fp = R_fopen(fontname, "r"))) return 0;
 
 	mode = 0;
 	while(fgets(buf, BUFSIZE, fp)) {
@@ -290,8 +291,8 @@ void PostScriptFileHeader(
 	double top)
 {
 	fprintf(fp, "%%!PS-Adobe-3.0\n");
-	fprintf(fp, "%%%%DocumentFonts: %s %s %s\n", font[0], font[1], font[2]);
-	fprintf(fp, "%%%%+ %s %s\n", font[3], font[4]);
+	fprintf(fp, "%%%%DocumentFonts: %s %s %s\n", font[2], font[4], font[6]);
+	fprintf(fp, "%%%%+ %s %s\n", font[8], font[10]);
 	fprintf(fp, "%%%%DocumentMedia: %s %.0f %.0f 0 ()\n",
 		papername, paperwidth, paperheight);
 	fprintf(fp, "%%%%Title: R Graphics Output\n");
@@ -338,11 +339,11 @@ void PostScriptFileHeader(
 	fprintf(fp, "       closepath clip newpath } def\n");
 	fprintf(fp, "/rgb { setrgbcolor } def\n");
 	fprintf(fp, "/s   { scalefont setfont } def\n");
-	fprintf(fp, "/R   { /%s findfont } def\n", font[0]);
-	fprintf(fp, "/B   { /%s findfont } def\n", font[1]);
-	fprintf(fp, "/I   { /%s findfont } def\n", font[2]);
-	fprintf(fp, "/BI  { /%s findfont } def\n", font[3]);
-	fprintf(fp, "/S   { /%s findfont } def\n", font[4]);
+	fprintf(fp, "/R   { /%s findfont } def\n", font[2]);
+	fprintf(fp, "/B   { /%s findfont } def\n", font[4]);
+	fprintf(fp, "/I   { /%s findfont } def\n", font[6]);
+	fprintf(fp, "/BI  { /%s findfont } def\n", font[8]);
+	fprintf(fp, "/S   { /%s findfont } def\n", font[10]);
 	fprintf(fp, "%%%%EndProlog\n");
 }
 

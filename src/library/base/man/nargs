@@ -1,8 +1,0 @@
-TITLE(nargs @@ The Number of Arguments to a Function)
-USAGE(nargs())
-ALIAS(nargs)
-DESCRIPTION(
-When used inside a function body,
-LANG(nargs) returns the number of
-arguments supplied to that function.
-)

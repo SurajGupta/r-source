@@ -18,43 +18,89 @@
  */
 
 #include "Mathlib.h"
+#include "Errormsg.h"
 #include <stdio.h>
 
-/* Linear Interpolation */
+/* Linear and Step Function Interpolation */
 /* Assumes that ordinates are in ascending order */
 /* The right interval is found by bisection */
-/* Linear interpolation then takes place on that interval*/
+/* Linear/constant interpolation then takes place on that interval*/
 
-static double approx1(double v, double *x, double *y, int n, double ylow, double yhigh)
+extern double R_NaReal;
+static double ylow;
+static double yhigh;
+double f1;
+double f2;
+
+static double approx1(double v, double *x, double *y, int n, int method)
 {
 	int i, j, ij;
 	
 	i = 0;
-	j = n-1;
+	j = n - 1;
 	
-	/* Handle out-of-domain points */
+		/* handle out-of-domain points */
+
 	if(v < x[i]) return ylow;
 	if(v > x[j]) return yhigh;
 	
-	/* Find the right interval by bisection */
-	while(i < j-1) {
-		ij = (i+j)/2;
-		if(v < x[ij])
-			j = ij;
-		else
-			i = ij;
+		/* find the correct interval by bisection */
+
+	while(i < j - 1) {
+		ij = (i + j)/2;
+		if(v < x[ij]) j = ij;
+		else i = ij;
 	}
 	
-	/* Linear interpolation */
-	return (x[i] == x[j]) ? y[i] : y[i]+(y[j]-y[i])*((v-x[i])/(x[j]-x[i]));
+		/* interpolation */
+
+	if(v == x[i]) return y[i];
+	if(v == x[j]) return y[j];
+
+	if(method == 1) {
+		return (x[i] == x[j]) ?
+			y[i] :
+			y[i] + (y[j] - y[i]) * ((v - x[i])/(x[j] - x[i]));
+	}
+	else {
+		return (x[i] == x[j]) ?
+			y[i] :
+			y[i] * f1 + y[j] * f2;
+	}
 }
 
-/* R Frontend for Linear Interpolation */
-int approx(double *x, double *y, int *nxy, double *xout, int *nout, double *low, double *high)
+	/* R Frontend for Linear and Constant Interpolation */
+
+int approx(double *x, double *y, int *nxy, double *xout, int *nout, int *method, double *yleft, double *yright, double *f)
 {
 	int i;
 
-	for(i=0 ; i<*nout ; i++)
-		xout[i] = approx1(xout[i], x, y, *nxy, *low, *high);
+		/* check interpolation method */
+
+	switch(*method) {
+	    case 1:
+		break;
+	    case 2:
+		if(!FINITE(*f) || *f < 0 || *f > 1)
+			error("invalid f value in approx\n");
+		f2 = *f;
+		f1 = 1 - *f;
+		break;
+	    default:
+		error("invalid interpolation method in approx\n");
+		break;
+	}
+
+	for(i=0 ; i<*nxy ; i++)
+		if(x[i] == R_NaReal || y[i] == R_NaReal)
+			error("attempt interpolate NA values in approx\n");
+
+	ylow = *yleft;
+	yhigh = *yright;
+
+	for(i=0 ; i<*nout ; i++) {
+		if(xout[i] !=  R_NaReal)
+			xout[i] = approx1(xout[i], x, y, *nxy, *method);
+	}
 	return 0;
 }

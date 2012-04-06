@@ -5,6 +5,11 @@
 RHOME=R_HOME_DIR
 export RHOME
 
+if [ "$1" = "RHOME" ]
+then
+	echo $RHOME; exit 0
+fi
+    
 if [ "$1" = "SHLIB" ]
 then
 	shift
@@ -21,6 +26,12 @@ if [ "$1" = "INSTALL" ]
 then
         shift
         exec sh $RHOME/etc/INSTALL $*
+fi
+
+if [ "$1" = "REMOVE" ]
+then
+        shift
+        exec sh $RHOME/etc/REMOVE $*
 fi
 
 if [ "$1" = -xxgdb ]
@@ -54,5 +65,5 @@ if [ $DEBUGGER ]
 then
 	exec $DEBUGGER $RHOME/bin/R.binary 
 else
-	exec $RHOME/bin/R.binary $*
+	exec $RHOME/bin/R.binary @R_BATCHSAVE@ $*
 fi

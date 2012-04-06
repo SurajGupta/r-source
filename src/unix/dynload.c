@@ -66,8 +66,8 @@ typedef struct {
         char *name;
         DL_FUNC func;
 } CFunTabEntry;  
-#include "ForeignDecl.h"
-#include "ForeignDecl.h"
+#include "FFDecl.h"
+#include "FFDecl.h"
 
 	/* This provides a table of built-in C and Fortran functions */
 	/* We include this table, even when we have dlopen and friends */
@@ -75,7 +75,7 @@ typedef struct {
 
 static CFunTabEntry CFunTab[] =
 {
-#include "ForeignTab.h"
+#include "FFTab.h"
         {NULL, NULL}
 };      
 
@@ -98,15 +98,15 @@ static CFunTabEntry CFunTab[] =
 #define RTLD_LAZY 1
 #endif
 
+#ifdef DL_SEARCH_PROG
 static void *dlhandle;
+#endif
 
 void InitFunctionHashing()
 {
-#ifdef OLD
-        NaokSymbol = install("NAOK");
-        DupSymbol = install("DUP");
-#endif
+#ifdef DL_SEARCH_PROG
 	dlhandle = dlopen(0, RTLD_LAZY);
+#endif
 }
 
 
@@ -205,8 +205,13 @@ DL_FUNC R_FindSymbol(char const *name)
 		fcnptr = (DL_FUNC)dlsym(LoadedDLL[i].handle, buf);
 		if (fcnptr != (DL_FUNC)0) return fcnptr;
 	}
+#ifdef DL_SEARCH_PROG
 	fcnptr = (DL_FUNC)dlsym(dlhandle, buf);
-	if (fcnptr != (DL_FUNC)0) return fcnptr;
+#else
+	for(i=0 ; CFunTab[i].name ; i++)
+		if(!strcmp(name, CFunTab[i].name))
+			return CFunTab[i].func;
+#endif
 	return (DL_FUNC)0;
 }
 
@@ -214,7 +219,7 @@ DL_FUNC R_FindSymbol(char const *name)
 static GetFullDLLPath(SEXP call, char *buf, char *path)
 {
 	if(path[0] != '/') {
-		if(!getwd(buf))
+		if(!getcwd(buf, MAXPATHLEN))
 			errorcall(call, "can't get working directory!\n");
 		strcat(buf, "/");
 		strcat(buf, path);

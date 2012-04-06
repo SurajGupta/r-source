@@ -860,8 +860,8 @@ SEXP do_subsetdf2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(args = EvalArgs(args, rho, 0));
 	ExtractDropArg(args, &drop);
 	frame = frameSubset(CAR(args), CDR(args), call, drop);
+	UNPROTECT(1);
 	if(isFrame(frame))
 		return CAR(frame);
-	UNPROTECT(1);
 	return frame;
 }

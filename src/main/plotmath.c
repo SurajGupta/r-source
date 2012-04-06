@@ -23,6 +23,10 @@
 #include "Mathlib.h"
 #include "Graphics.h"
 #include "Defn.h"
+#ifdef max
+#undef max
+#endif
+#ifdef Unix
 
 		/* return maximum of two doubles */
 
@@ -298,7 +302,7 @@ static int accentAtom(SEXP expr)
 static int fractionAtom(SEXP expr)
 {
 	return symbolAtom(expr) &&
-	    symbolMatch(expr, "over");
+	    (symbolMatch(expr, "over") || symbolMatch(expr, "frac"));
 }
 
 static int groupAtom(SEXP expr)
@@ -1624,7 +1628,7 @@ static BBOX theOperatorBBox(SEXP operator)
     return asciiBBox(operatorAscii(operator));
 }
 
-static useRelGap = 0;
+static useRelGap = 1;
   
 static BBOX operatorLimitBBox(SEXP limit)
 {
@@ -2198,6 +2202,51 @@ static void drawElement(SEXP expr)
 		drawAtom(expr);
 }
 
+        /* calculate width of expression */
+        /* BBOXes are in INCHES (see metricUnit) */
+double GExpressionWidth(SEXP expr, int units)
+{
+        BBOX exprBBox = elementBBox(expr);
+        double w  = exprBBox.width;
+        switch(units) {
+                case 1: /* user == world */
+                        w = ((exprBBox.width / GP->ipr[0]) / GP->fig2dev.bx) / GP->win2fig.bx;
+                        break;
+                case 2: /* figure */
+                        w = (exprBBox.width / GP->ipr[0]) / GP->fig2dev.bx;
+                        break;
+                case 3: /* inches */
+                        w = exprBBox.width;
+                        break;
+                case 4: /* rasters */
+                        w = exprBBox.width / GP->ipr[0];
+                        break;
+        }
+        return w;
+}
+
+#define ABS(a)  ((a)>=0 ? (a) : -(a))
+
+double GExpressionHeight(SEXP expr, int units)
+{
+        BBOX exprBBox = elementBBox(expr);
+        double h = exprBBox.height + exprBBox.depth;
+        switch(units) {
+                case 1: /* user == world */
+                        h = ((h / GP->ipr[1]) / ABS(GP->fig2dev.by)) / GP->win2fig.by;
+                        break;
+                case 2: /* figure */
+                        h = (h / GP->ipr[1]) / ABS(GP->fig2dev.by);
+                        break;
+                case 3: /* inches */
+                        break;
+                case 4: /* rasters */
+                        h = h / GP->ipr[1];
+                        break;
+        }
+        return h;
+}
+
 		/* functions forming the API */
 
 void GMathText(double x, double y, SEXP expr, double xc, double yc, double rot)
@@ -2341,3 +2390,16 @@ void GMMathText(SEXP str, int side, double line, int outer, double at, int las)
 		GMathText(x, y, str, xadj, yadj, a);
 	}
 }
+
+#else
+
+void GMMathText(SEXP str, int side, double line, int outer, double at, int las)
+{
+	error("Can't print math under Windows ... yet\n");
+}
+
+void GMathText(double x, double y, SEXP expr, double xc, double yc, double rot)
+{
+	error("Can't print math under Windows ... yet\n");
+}
+#endif

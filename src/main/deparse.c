@@ -20,6 +20,7 @@
 #include "Defn.h"
 #include "Print.h"
 #include "names.h"
+#include "Fileio.h"
 
 /*
  *	Global Variables:
@@ -167,7 +168,7 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	fp = NULL;
 	if (strlen(CHAR(STRING(CADR(args))[0])) > 0) {
-		fp = fopen(CHAR(STRING(CADR(args))[0]), "w");
+		fp = R_fopen(CHAR(STRING(CADR(args))[0]), "w");
 		if (!fp)
 			errorcall(call, "unable to open file\n");
 	}
@@ -216,7 +217,7 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 		}
 	}
 	else {
-		if(!(fp = fopen(CHAR(STRING(CADR(args))[0]), "w")))
+		if(!(fp = R_fopen(CHAR(STRING(CADR(args))[0]), "w")))
 			errorcall(call, "unable to open file\n");
 		for (i = 0; i < nobjs; i++) {
 			fprintf(fp, "\"%s\" <-\n", CHAR(STRING(names)[i]));
@@ -330,7 +331,7 @@ static void printcomment(SEXP s)
 
 	/* This is the recursive part of deparsing. */
 
-void deparse2buff(SEXP s)
+static void deparse2buff(SEXP s)
 {
 	int fop, lookahead, lbreak = 0;
 	SEXP op, cmnt, t;
@@ -624,7 +625,7 @@ void deparse2buff(SEXP s)
    otherwise we are counting lines so don't do anything
  */
 
-void writeline()
+static void writeline()
 {
 	if (strvec != R_NilValue)
 		STRING(strvec)[linenumber] = mkChar(buff);
@@ -635,7 +636,7 @@ void writeline()
 	startline = 0;
 }
 
-void print2buff(char *strng)
+static void print2buff(char *strng)
 {
 	int tlen, bufflen;
 
@@ -653,14 +654,14 @@ void print2buff(char *strng)
 	len += tlen;
 }
 
-void scalar2buff(SEXP inscalar)
+static void scalar2buff(SEXP inscalar)
 {
 	char *strp;
 	strp = EncodeElement(inscalar, 0, '"');
 	print2buff(strp);
 }
 
-void vector2buff(SEXP vector)
+static void vector2buff(SEXP vector)
 {
 	int tlen, i, quote;
 	char *strp;
@@ -699,7 +700,7 @@ void vector2buff(SEXP vector)
 
 }
 
-void factor2buff(SEXP vector, int ordered)
+static void factor2buff(SEXP vector, int ordered)
 {
 	int tlen, i;
 	char *strp;

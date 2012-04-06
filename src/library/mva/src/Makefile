@@ -5,11 +5,10 @@ OBJS=	dblcen.o \
 	dist.o \
 	hclust.o
 
-eda.so:	$(OBJS)
-	@$(LD) $(SHLIBLDFLAGS) -o $(LIBNAME).so $(OBJS)
+$(LIBNAME).so:	$(OBJS)
+	$(LD) $(SHLIBLDFLAGS) -o $@ $(OBJS)
 
 clean:
 	@rm -f *.o *.so
-
-realclean:
-	@rm -f Makefile *.o *.so
+realclean: clean
+	@rm -f Makefile

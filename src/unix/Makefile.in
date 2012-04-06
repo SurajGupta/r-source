@@ -11,6 +11,7 @@ OBJ= \
 	devPS.o \
 	dynload.o \
 	edit.o \
+	fileio.o \
 	psx11.o \
 	PostScript.o \
 	devPicTeX.o \
@@ -25,6 +26,9 @@ $(LIB):		$(OBJ)
 
 dataentry.o:	dataentry.h dataentry.c ../include/Defn.h
 		$(CC) $(CFLAGS) $(X_CFLAGS) -c dataentry.c
+
+fileio.o:	fileio.c ../include/Fileio.h
+		$(CC) $(CFLAGS) -c fileio.c
 
 rotated.o:	rotated.c rotated.h
 		$(CC) $(CFLAGS) $(X_CFLAGS) -c rotated.c
