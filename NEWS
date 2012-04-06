@@ -6,6 +6,121 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 1.6.2
+
+
+BUG FIXES
+
+    o	plot.stepfun() now obeys a `ylim=.' specification.
+
+    o	removeClass() does a better job of removing inheritance
+	information.
+
+    o	setIs() will not allow mismatched representations between two
+	classes (without an explicit coerce method).
+
+    o	The code underlying polygon drawing contained a memory leak.
+	This showed up in persp, but did not affect other graphics
+	functions.  It is now possible to draw big DEMs.
+
+    o	logLik.nls() gave wrong df. (PR#2295)
+
+    o	rbind() with a mixture of data frames and matrices treated the
+	matrices as vectors. (PR#2266)
+
+    o	stripchart(method="stack") was not handling missing values. (PR#2018)
+
+    o	Arithmetic functions such as log() lost the object bit from
+	classed objects if coercion was needed. (PR#2315)
+
+    o	exp_rand would go into an infinite loop if unif_rand returned 0.
+
+    o	formatC(x, format="fg") could return exponential format if
+	rounding pushed x over a positive power of 10. (PR#2299)
+
+    o	attr(x, foo) used partial matching for `foo' (even though not
+	documented to do so), and failed to find `foo' if there were
+	two or more partial matches before the exact match in the list
+	of attributes.
+
+    o	Rdconv now creates direct HTML hyperlinks when linking to
+	documentation in the same package.  The code now ensures that
+	links which can be resolved within the package are so resolved,
+	even when there are possible resolutions in other packages.
+
+    o	If readBin(what=character()) is used incorrectly on a file which
+	does not contain C-style character strings, warnings (usually
+	many) are now given.
+
+    o	Building libR.so with the zlib in the R sources was not
+	finding the local zlib headers.
+
+    o	system(intern=TRUE) has an undocumented line length limit of
+	119 chars both on Unix and Windows.  The limit is now 8096 and
+	documented.  On Unix (only) every 120th character used to be
+	discarded.
+
+    o	plot.POSIX[cl]t were not passing graphics parameters on to
+	axis.POSIXct.
+
+    o	On some HP-UX systems, installed scripts were not executable
+	when using the BSD-compatible install system program found by
+	configure.  We now always use install-sh on HP-UX. (PR#2091)
+
+    o	c() was converting NA names to "NA": now proper NA strings are
+	used wherever possible. (PR#2358)
+
+    o	A typo was causing segfaults when using data.entry under SuSE.
+
+    o	mostattributes<-() was failing to copy across dimnames when
+	one component was NULL, affecting pmax() and pmin() when the
+	first argument was a matrix.  (root cause of PR#2357)
+
+    o	The pdf() device now initialises graphical parameters
+	properly.  (PR#2281)
+
+    o	Checks in the C code prevent possible memory faults when
+	standardGeneric is called invalidly.
+
+    o	Macros NEW_OBJECT (aka NEW) and MAKE_CLASS added; required by
+	the .Call interface to generate arbitrary objects.
+
+    o	Problem that prevented package tcltk from working with Tcl/Tk
+	8.4 (crash on initialization) resolved.	 (Notice that binaries
+	may still require an older Tcl/Tk, for example on Windows).
+
+    o	type.convert() was not getting the levels right if passed a
+	character vector containing <NA>s, and `na.strings' did not
+	contain "NA".  This affected read.table().
+
+    o	Internal match function did not check for nor handle 0-length
+	vectors.  (The R function match() did.)	 This could cause
+	type.convert() to segfault.
+
+    o	The line length limit in output text connections has been
+	raised to 8095 chars.
+
+    o	Sweave now uses anonymous file rather than text connections
+	to avoid the limits of the latter (see previous item).
+
+    o	parsing did not work on connections when pushback was used (as
+	it had never been implemented).	 (PR#2396)
+
+    o	max.col() only found NAs in the first column (typo).
+
+    o	Added a workaround for recent versions of glibc (e.g. RedHat 8.0)
+	with inconsistent mktime/localtime functions which caused
+	conversion to/from POSIXct times prior to 1970-01-01 to be
+	inconsistent.  On such platforms this is a run-time test to
+	allow e.g. R compiled on RH7.2 to run on RH8.0.
+
+    o	Clipping was not being reset properly between plots on the gtk()
+	device (the default under the GNOME interface). (PR#2366)
+
+    o	axis(*, fg= cc) now works (again) the same as axis(*, col = cc).
+
+
+
 		CHANGES IN R VERSION 1.6.1
 
 
@@ -74,7 +189,7 @@ BUG FIXES
 	set, as documented.  Previously it was read unless R_ENVIRON
 	pointed to an actual file.
 
-    o	Startup.Rd described the proceesing under Unix-alikes but
+    o	Startup.Rd described the processing under Unix-alikes but
 	incorrectly implied it happened that way on the Windows and
 	MacOS ports.  Neither use Renviron.site, for example.
 
@@ -99,7 +214,7 @@ BUG FIXES
 
     o	as.POSIXct.dates had a sign error for the origin (PR#2222)
 
-    o	The claim that pie charts should be avoiden (in pie.Rd) is now
+    o	The claim that pie charts should be avoided (in pie.Rd) is now
 	supported by a quote from Cleveland (1985).
 
     o	The vsnprintf() functions supplied for systems that don't
@@ -109,15 +224,19 @@ BUG FIXES
     o	pretty() values close to 0 in some cases which are now 0 (PR#1032
 	and D.Brahm's mails).
 
+    o	factor.scope() was giving an error rather than a reasonable
+	default in some cases when it was called incorrectly (e.g. via
+	incorrect formula in add1()).
+
 
 BUILD ISSUES
 
-    o   Toplevel Makefile was missing dependency of "docs" on "R" (causing
-        parallel makes to go wrong)
+    o	Toplevel Makefile was missing dependency of "docs" on "R" (causing
+	parallel makes to go wrong)
 
-    o   When building with recommended packages those were installed
-        into the first path in R_LIBS, if the environment variable was
-        present.
+    o	When building with recommended packages those were installed
+	into the first path in R_LIBS, if the environment variable was
+	present.
 
 
 
@@ -630,7 +749,7 @@ BUG FIXES
    o	cbind(NULL) {and similar} gave an error instead of NULL.
 
    o	the complex version of solve(a,b) now also works if b is a
-        vector
+	vector
 
 
 		CHANGES IN R VERSION 1.5.1

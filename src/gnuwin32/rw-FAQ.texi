@@ -119,8 +119,12 @@ the distribution.
 1) @code{@RWVER@.exe} is about 19Mb and gives a complete installation.
 
 2) Directory @code{miniR} contains @code{miniR.exe} and eight files
-@code{miniR-?.bin}.  You can put  @code{miniR.exe} and @code{miniR-1.bin}
+@code{miniR-?.bin}.  You can put @code{miniR.exe} and @code{miniR-1.bin}
 on one floppy and the remaining @code{miniR-?.bin} on a floppy each.
+This is a small installation, containing the text and compiled HTML
+versions of the help files and the @emph{An Introduction to R} and
+@emph{Data Import/Export} manuals in PDF.
+
 
 
 @node How do I install R for Windows?, How do I run it?, Where can I find the latest version?, Installation and Usage
@@ -134,15 +138,10 @@ If you want to build packages from sources, we recommend that you choose
 an installation path not containing spaces.  (Using a path with spaces
 in will probably work, but is little-tested.)
 
-The simplest way is to use @code{@RWVER@.exe} or @code{miniR.exe}.  Just
-double-click on the icon and follow the instructions.  If you installed
-R this way you can uninstall it from the Control Panel or Start Menu
-(unless you supressed making a group for R).
-
-For a manual installation, choose a location and unzip the zip files
-(with a tool that preserves long file names and the directory structure:
-we recommend the INFO-ZIP project's @code{unzip}).  All the files will
-unpack into a directory @code{@RWVER@}.
+To use @code{@RWVER@.exe} or @code{miniR.exe}.  Just double-click on the
+icon and follow the instructions.  If you installed R this way you can
+uninstall it from the Control Panel or Start Menu (unless you supressed
+making a group for R).
 
 Choose a working directory for R.  If you installed manually, make a
 shortcut to @code{@RWVER@\bin\Rgui.exe} on your desktop or somewhere on
@@ -176,7 +175,9 @@ currect working directory of the shell.)
 Normally you can do this from the R group on the Start Menu or from the
 @code{Add/Remove Programs} in the Control Panel.  If it does not appear
 there or if you want to remove an old version, run @file{unins000.exe} in
-the top-level installation directory.
+the top-level installation directory.  (As from version 1.6.2 there will
+be a separate uninstall item in the R group for each installed version
+of R.)
 
 Uninstalling R only removes files from the initial installation, not for
 example packages you have installed.
@@ -465,7 +466,7 @@ Note that the pre-compiled versions on CRAN are unsupported: see
 If there is not a pre-compiled version or that is not up-to-date or
 you prefer compiling from source, make sure you installed the
 necessary files from @code{@RWVER@.exe}.  Then read the file
-@file{README.packages}.  You will need to collect and install several
+@file{readme.packages}.  You will need to collect and install several
 tools to use this: you can download them via the portal at
 @uref{http://www.stats.ox.ac.uk/pub/Rtools/}.  Once you have done so,
 just run @code{Rcmd INSTALL pkgname}.  To check the package (including
@@ -533,8 +534,8 @@ If those all hold true, this works for us.
 If the help search system does not work @emph{at all}, this probably
 indicates that Java support is either not installed or not enabled in
 your browser.  Recent versions of browsers have made Java support
-optional: for example it is optional in Netscape 6.x and Opera, and may
-not be installed for IE6 on Windows XP.
+optional: for example it is optional in Netscape 6/7 and in Opera, and
+may not be installed for IE6 on Windows XP.
 
 @node Loading a package fails., Package TclTk does not work., My functions are not found by the HTML help search system., Packages
 @section Loading a package fails.
@@ -564,14 +565,15 @@ it.  (Most of the installers that ActiveTcl uses will put the @file{bin}
 directory containing the Tcl and Tk DLLs in your path, but you should
 check.  From R, run @code{Sys.getenv("PATH")} to do so.)  Note that you
 do need 8.3.x and not 8.4.0: follow the links to 8.4.0 and you will find
-8.3.x available there.
+8.3.x available there.  (If you build R from the sources yourself you
+can configure it to use 8.4.0.)
 
-You then need to set the environment variable
-@code{TCL_LIBRARY}(@pxref{How do I set environment variables?}), to
-something like @code{c:/Program Files/Tcl/lib/tcl8.3}.  (The startup
-code for the package will warn you if this is unset.  NB: do not quote
-the path, even if as here it contains spaces. If you forget, you can set
-the variable inside R by something like
+You then need to set the environment variable @code{TCL_LIBRARY}
+(@pxref{How do I set environment variables?}), to something like
+@code{c:/Program Files/Tcl/lib/tcl8.3}.  (The startup code for the
+package will warn you if this is unset.  NB: do not quote the path, even
+if as here it contains spaces. If you forget, you can set the variable
+inside R by something like
 @smallexample
     Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
 @end smallexample
@@ -641,7 +643,7 @@ of @code{shell()}.
 @node I hear about some nifty features., Circles appear as ovals on screen, What should I expect to behave differently from the Unix version, Windows Features
 @section I hear about some nifty features: please tell me about them!
 
-You have read the @code{README}? There are file menus on the R console,
+You have read the @code{README.@RWVER@}? There are file menus on the R console,
 pager and graphics windows.  You can source and save from those menus,
 and copy the graphics to @code{png}, @code{jpeg}, @code{bmp},
 @code{postscript}, @code{PDF} or @code{metafile}.  There are right-click
@@ -651,7 +653,7 @@ buttons giving shortcuts to frequent operations.
 If you resize the R console the @code{options(width=)} is automatically
 set to the console width (unless disabled in the configuration file).
 
-The graphics has a history mechanism.  As the README says:
+The graphics has a history mechanism.  As @code{README.@RWVER@} says:
 
 @quotation
 `The History menu allows the recording of plots.  When plots have been
@@ -1047,14 +1049,14 @@ If you want output to be updated on the console, call
 @html
 <p><hr WIDTH="100%">
 <address>
-Last edited 2002 June 01 by Professor B. D. Ripley
+Last edited 2002 December 24 by Professor B. D. Ripley
 <code><a href="mailto:ripley@@stats.ox.ac.uk">ripley@@stats.ox.ac.uk</a></code>
 </address>
 @end html
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2002 July 26 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2002 December 24 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

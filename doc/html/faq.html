@@ -18,7 +18,7 @@ Up:<a rel=up href="#dir">(dir)</a>
 <h2>R FAQ</h2>
 
 <h2>Frequently Asked Questions on R</h2>
-<h2>Version 1.6-12, 2002-10-31</h2>
+<h2>Version 1.6-24, 2003-01-08</h2>
 <h2>ISBN 3-901167-51-X</h2>
 <address>Kurt Hornik</address>
 <p><p><hr><p>
@@ -65,7 +65,7 @@ Up:<a rel=up href="#Introduction">Introduction</a>
 
 <h3>1.1 Legalese</h3>
 
-<p>This document is copyright &copy; 1998-2002 by Kurt
+<p>This document is copyright &copy; 1998-2003 by Kurt
 Hornik.
 
 <p>This document is free software; you can redistribute it and/or modify it
@@ -123,7 +123,7 @@ Up:<a rel=up href="#Introduction">Introduction</a>
 <h3>1.3 Citing this document</h3>
 
 <p>In publications, please refer to this <small>FAQ</small> as Hornik
-(2002), "The R <small>FAQ</small>", and give the above,
+(2003), "The R <small>FAQ</small>", and give the above,
 <em>official</em> <small>URL</small> and the ISBN 3-901167-51-X.
 
 <p><hr>
@@ -259,7 +259,7 @@ Up:<a rel=up href="#R%20Basics">R Basics</a>
 
 <h3>2.3 What is the current version of R?</h3>
 
-<p>The current released version is 1.6.1.  Based on this
+<p>The current released version is 1.6.2.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, working towards the next patch (`r-patched') and minor or
 eventually major (`r-devel') releases of R, respectively.  Version
@@ -443,7 +443,7 @@ Up:<a rel=up href="#R%20Basics">R Basics</a>
 <p>The <code>bin/linux</code> directory of a <small>CRAN</small> site contains Debian
 stable/testing packages for the i386 platform (now part of the Debian
 distribution and maintained by Dirk Eddelbuettel), Red Hat 6.x i386,
-7.x/8.0 i386 and 7.x alpha packages (maintained by Stephen Eglen, Martyn
+7.x/8.x i386 and 7.x alpha packages (maintained by Stephen Eglen, Martyn
 Plummer and Naoki Takebayashi, respectively), SuSE 7.3/8.0/8.1 i386
 packages by Detlef Steuer, and Mandrake 8.1/8.2/9.0 i386 packages by
 Michele Alzetta.
@@ -1254,11 +1254,6 @@ variable is not evaluated.  Since the local frame is initialized with
 the actual arguments or the default expressions, this is usually
 equivalent to S, until assignment takes place.
 
-<li>In R, <code>eval(EXPR, sys.parent())</code> does not work.  Instead, one
-should use either <code>eval(EXPR, sys.frame(sys.parent())),</code> which also
-works in S, or <code>eval(EXPR, parent.frame())</code>, which is more
-efficient but does not work in S.
-
 <li>In S, the index variable in a <code>for()</code> loop is local to the inside
 of the loop.  In R it is local to the environment where the <code>for()</code>
 statement is executed.
@@ -1279,6 +1274,10 @@ subsequently modified; in R it doesn't.
 
 <li>From R version 1.3.0, <code>data.frame</code> strips <code>I()</code> when creating
 (column) names.
+
+<li>In R, the string <code>"NA"</code> is not treated as a missing value in a
+character variable.  Use <code>as.character(NA)</code> to create a missing
+character value.
 
 </ul>
 
@@ -1476,6 +1475,10 @@ the book "Kernel Smoothing" by M. P. Wand and M. C. Jones, 1995.
 <dd>Functions and datasets from the main package of Venables and Ripley,
 "Modern Applied Statistics with S".  Contained in the <code>VR</code>
 bundle.  <em>Recommended</em>. 
+<br><dt><strong>MPV</strong>
+<dd>Data sets from the book "Introduction to Linear Regression Analysis"
+by D. C. Montgomery, E. A. Peck, and C. G. Vining, 2001, John Wiley and
+Sons. 
 <br><dt><strong>Matrix</strong>
 <dd>A Matrix package. 
 <br><dt><strong>NISTnls</strong>
@@ -1508,6 +1511,9 @@ quantitative finance.
 <br><dt><strong>RSQLite</strong>
 <dd>Database Interface R driver for SQLite.  Embeds the SQLite database
 engine in R. 
+<br><dt><strong>RSvgDevice</strong>
+<dd>A graphics device for R that uses the new w3.org <small>XML</small> standard for
+Scalable Vector Graphics. 
 <br><dt><strong>RadioSonde</strong>
 <dd>A collection of programs for reading and plotting SKEW-T,log p diagrams
 and wind profiles for data collected by radiosondes (the typical weather
@@ -1551,10 +1557,14 @@ VAriance Stabilization for regression) methods for selecting regression
 transformations. 
 <br><dt><strong>adapt</strong>
 <dd>Adaptive quadrature in up to 20 dimensions. 
+<br><dt><strong>ade4</strong>
+<dd>Multivariate data analysis and graphical display. 
 <br><dt><strong>agce</strong>
 <dd>Analysis of growth curve experiments. 
 <br><dt><strong>akima</strong>
 <dd>Linear or cubic spline interpolation for irregularly gridded data. 
+<br><dt><strong>amap</strong>
+<dd>Another Multidimensional Analysis Package. 
 <br><dt><strong>ape</strong>
 <dd>Analyses of Phylogenetics and Evolution, providing functions for reading
 and plotting phylogenetic trees in parenthetic format (standard Newick
@@ -1701,6 +1711,12 @@ approach to GLMs for dependent data.
 <dd>Generalized estimating equations solver for parameters in mean, scale,
 and correlation structures, through mean link, scale link, and
 correlation link.  Can also handle clustered categorical responses. 
+<br><dt><strong>genetics</strong>
+<dd>Classes and methods for handling genetic data.  Includes classes to
+represent genotypes and haplotypes at single markers up to multiple
+markers on multiple chromosomes, and functions for allele frequencies,
+flagging homo/heterozygotes, flagging carriers of certain alleles,
+computing disequlibrium, testing Hardy-Weinberg equilibrium, <small>...</small>
 <br><dt><strong>geoR</strong>
 <dd>Functions to perform geostatistical data analysis including model-based
 methods. 
@@ -1711,6 +1727,11 @@ methods.
 <br><dt><strong>gllm</strong>
 <dd>Routines for log-linear models of incomplete contingency tables,
 including some latent class models via EM and Fisher scoring approaches. 
+<br><dt><strong>gpclib</strong>
+<dd>General polygon clipping routines for R based on Alan Murta's C
+library. 
+<br><dt><strong>grasper</strong>
+<dd>Generalized Regression Analysis and Spatial Predictions for R. 
 <br><dt><strong>gregmisc</strong>
 <dd>Miscellaneous functions written/maintained by Gregory R. Warnes. 
 <br><dt><strong>grid</strong>
@@ -1791,12 +1812,19 @@ models.
 <dd>Routines for GAMs and other genralized ridge regression problems with
 multiple smoothing parameter selection by GCV or UBRE. 
 <em>Recommended</em>. 
+<br><dt><strong>mimR</strong>
+<dd>An R interface to MIM for graphical modeling in R. 
 <br><dt><strong>mlbench</strong>
 <dd>A collection of artificial and real-world machine learning benchmark
 problems, including the Boston housing data. 
 <br><dt><strong>moc</strong>
 <dd>Fits a variety of mixtures models for multivariate observations with
 user-difined distributions and curves. 
+<br><dt><strong>msm</strong>
+<dd>Functions for fitting continuous-time Markov multi-state models to
+categorical processes observed at arbitrary times, optionally with
+misclassified responses, and covariates on transition or
+misclassification rates. 
 <br><dt><strong>muhaz</strong>
 <dd>Hazard function estimation in survival analysis. 
 <br><dt><strong>multcomp</strong>
@@ -1854,6 +1882,10 @@ types of tissue.
 <br><dt><strong>pixmap</strong>
 <dd>Functions for import, export, plotting and other manipulations of
 bitmapped images. 
+<br><dt><strong>polspline</strong>
+<dd>Routines for the polynomial spline fitting routines hazard regression,
+hazard estimation with flexible tails, logspline, lspec, polyclass, and
+polymars, by C. Kooperberg and co-authors. 
 <br><dt><strong>polynom</strong>
 <dd>A collection of functions to implement a class for univariate polynomial
 manipulations. 
@@ -1861,8 +1893,6 @@ manipulations.
 <dd>Fits a principal curve to a matrix of points in arbitrary dimension. 
 <br><dt><strong>pspline</strong>
 <dd>Smoothing splines with penalties on order m derivatives. 
-<br><dt><strong>ptproc</strong>
-<dd>Tools for analyzing multi-dimensional point process models. 
 <br><dt><strong>qtl</strong>
 <dd>Analysis of experimental crosses to identify QTLs. 
 <br><dt><strong>quadprog</strong>
@@ -1964,6 +1994,9 @@ Three-Stage Least Squares (3SLS).
 <br><dt><strong>twostage</strong>
 <dd>Functions for optimal design of two-stage-studies using the Mean Score
 method. 
+<br><dt><strong>vcd</strong>
+<dd>Functions and data sets based on the book "Visualizing Categorical
+Data" by Michael Friendly. 
 <br><dt><strong>vegan</strong>
 <dd>Various help functions for vegetation scientists and community
 ecologists. 
@@ -2036,18 +2069,44 @@ such as Java and C++.
 <br><dt><strong>REmbeddedPostgres</strong>
 <dd>Allows R functions and objects to be used to implement SQL functions --
 per-record, aggregate and trigger functions. 
+<br><dt><strong>REventLoop</strong>
+<dd>An abstract event loop mechanism that is toolkit independent and can be
+used to to replace the R event loop. 
+<br><dt><strong>RGdkPixbuf</strong>
+<dd>S language functions to access the facilities in the GdkPixbuf library
+for manipulating images. 
 <br><dt><strong>RGnumeric</strong>
 <dd>A plugin for the Gnumeric spreadsheet that allows R functions to be
 called from cells within the sheet, automatic recalculation, etc. 
+<br><dt><strong>RGtk</strong>
+<dd>Facilities in the S language for programming graphical interfaces using
+Gtk, the Gnome GUI toolkit. 
 <br><dt><strong>RGtkBindingGenerator</strong>
 <dd>A meta-package which generates C and R code to provide bindings to a
 Gtk-based library. 
+<br><dt><strong>RGtkExtra</strong>
+<dd>A collection of S functions that provide an interface to the widgets in
+the gtk+extra library such as the GtkSheet data-grid display, icon list,
+file list and directory tree. 
+<br><dt><strong>RGtkGlade</strong>
+<dd>S language bindings providing an interface to Glade, the interactive
+Gnome GUI creator. 
+<br><dt><strong>RGtkHTML</strong>
+<dd>A collection of S functions that provide an interface to creating and
+controlling an <small>HTML</small> widget which can be used to display <small>HTML</small>
+documents from files or content generated dynamically in S. 
 <br><dt><strong>RGtkViewers</strong>
 <dd>A collection of tools for viewing different S objects, databases, class
 and widget hierarchies, S source file contents, etc. 
 <br><dt><strong>RJavaDevice</strong>
-<dd>A graphics device for R that uses Java components and graphics
+<dd>A graphics device for R that uses Java components and graphics. 
 <small>API</small>s. 
+<br><dt><strong>RObjectTables</strong>
+<dd>The C and S code allows one to define R objects to be used as elements
+of the search path with their own semantics and facilities for reading
+and writing variables.  The objects implement a simple interface via R
+functions (either methods or closures) and can access external data,
+e.g., in other applications, languages, formats, <small>...</small>
 <br><dt><strong>RSMethods</strong>
 <dd>An implementation of S version 4 methods and classes for R, consistent
 with the basic material in "Programming with Data" by John
@@ -2061,7 +2120,7 @@ to call Python functionality.
 <br><dt><strong>RXLisp</strong>
 <dd>An interface to call XLisp-Stat functions from within R. 
 <br><dt><strong>SASXML</strong>
-<dd>Example for reading XML files in SAS 8.2 manner. 
+<dd>Example for reading <small>XML</small> files in SAS 8.2 manner. 
 <br><dt><strong>SJava</strong>
 <dd>An interface from R to Java to create and call Java objects and
 methods. 
@@ -2070,8 +2129,14 @@ methods.
 that can work in both R and <small>S-PLUS</small>. 
 <br><dt><strong>SNetscape</strong>
 <dd>Plugin for Netscape and JavaScript. 
+<br><dt><strong>SWinRegistry</strong>
+<dd>Provides access from within R to read and write the Windows registry. 
+<br><dt><strong>SWinTypeLibs</strong>
+<dd>Provides ways to extract type information from type libraries and/or
+DCOM objects that describes the methods, properties, etc. of an
+interface. 
 <br><dt><strong>SXalan</strong>
-<dd>Process XML documents using XSL functions implemented in R and
+<dd>Process <small>XML</small> documents using <small>XSL</small> functions implemented in R and
 dynamically substituting output from R. 
 <br><dt><strong>Slcc</strong>
 <dd>Parses C source code, allowing one to analyze and automatically generate
@@ -2079,8 +2144,8 @@ interfaces from S to that code, including the table of S-accessible
 native symbols, parameter count and type information, S constructors
 from C objects, call graphs, etc. 
 <br><dt><strong>Sxslt</strong>
-<dd>An extension module for libxslt, the XML-XSL document translator, that
-allows XSL functions to be implemented via R functions. 
+<dd>An extension module for libxslt, the <small>XML</small>-<small>XSL</small> document translator,
+that allows <small>XSL</small> functions to be implemented via R functions. 
 </dl>
 
 <p>The <a href="http://www.bioconductor.org">Bioconductor Project</a> produces an
