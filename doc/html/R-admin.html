@@ -27,7 +27,7 @@
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.4.0 (2006-10-03).
+   <p>The current version of this document is 2.4.1 (2006-12-18).
 
    <p>ISBN 3-900051-09-7
 
@@ -101,13 +101,16 @@ Subversion repository.  If you have a Subversion client (see
 <a href="http://subversion.tigris.org/"><code>subversion.tigris.org</code></a>), you
 can check out and update the current r-devel from
 <a href="https://svn.r-project.org/R/trunk/">https://svn.r-project.org/R/trunk/</a> and the current r-patched from
-`<samp><span class="samp">https://svn.r-project.org/R/branches/R-</span><var>x</var><span class="samp">-</span><var>y</var><span class="samp">-patches/</span></samp>'
+`<samp><span class="samp">https://svn.r-project.org/R/branches/R-</span><var>x</var><span class="samp">-</span><var>y</var><span class="samp">-branch/</span></samp>'
 (where <var>x</var> and <var>y</var> are the major and minor number of the current
 released version of R).  E.g., use
 
 <pre class="example">     svn checkout https://svn.r-project.org/R/trunk/ <var>path</var>
 </pre>
-   <p class="noindent">to check out r-devel into directory <var>path</var>.
+   <p class="noindent">to check out `<samp><span class="samp">r-devel</span></samp>' into directory <var>path</var>.  The alpha, beta
+and RC versions of an upcoming <var>x.y.0</var> release are available from
+`<samp><span class="samp">https://svn.r-project.org/R/branches/R-</span><var>x</var><span class="samp">-</span><var>y</var><span class="samp">-branch/</span></samp>' in
+the four-week period prior to the release.
 
    <p>Note that `<samp><span class="samp">https:</span></samp>' is required, and that the SSL certificate for
 the Subversion server of the R project is
@@ -164,17 +167,17 @@ CPUs,
 <!-- Actually, see http://packages.debian.org/unstable/math/r-base-core as -->
 <!-- the build daemon is not used for all platforms; note also that Debian -->
 <!-- has x86_64 <=> amd, ix86 <=> i386. -->
-`<samp><span class="samp">powerpc-apple-darwin</span></samp>' and `<samp><span class="samp">sparc-sun-solaris</span></samp>', as well as
-probably (it is tested less frequently on these platforms)
-`<samp><span class="samp">i386-*-freebsd</span></samp>', `<samp><span class="samp">i386-*-netbsd</span></samp>',
+`<samp><span class="samp">powerpc-apple-darwin</span></samp>', `<samp><span class="samp">i386-apple-darwin</span></samp>' and
+`<samp><span class="samp">sparc-sun-solaris</span></samp>', as well as probably (it is tested less
+frequently on these platforms) `<samp><span class="samp">i386-*-freebsd</span></samp>',
+`<samp><span class="samp">x86_64-*-freebsd</span></samp>', `<samp><span class="samp">i386-*-netbsd</span></samp>',
 `<samp><span class="samp">i386-*-openbsd</span></samp>', `<samp><span class="samp">i386-sun-solaris</span></samp>',
-`<samp><span class="samp">mips-sgi-irix</span></samp>', `<samp><span class="samp">alpha-dec-osf*</span></samp>',
-`<samp><span class="samp">rs6000-ibm-aix</span></samp>', and `<samp><span class="samp">hppa-hp-hpux</span></samp>'.
+`<samp><span class="samp">mips-sgi-irix</span></samp>' and `<samp><span class="samp">alpha-dec-osf*</span></samp>'.
 
    <p><a name="index-Linux-5"></a><a name="index-Mac-OS-X-6"></a>In addition, binary distributions are available for some common Linux
-distributions and for Mac OS X (on PowerPC).  See the <acronym>FAQ</acronym> for
-current details.  These are installed in platform-specific ways, so for
-the rest of this chapter we consider only building from the sources.
+distributions and for Mac OS X.  See the <acronym>FAQ</acronym> for current
+details.  These are installed in platform-specific ways, so for the rest
+of this chapter we consider only building from the sources.
 
 <p><a name="Simple-compilation"></a>
 
@@ -419,7 +422,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.4.0</code>.
+<code>rincludedir=/usr/local/include/R-2.4.1</code>.
 
    <p>If you have made R as a shared/dynamic library you can install it in
 your system's library directory by
@@ -482,11 +485,11 @@ names from other systems are the use of <samp><span class="file">sparcv9</span><
 (and one build can be done without `<samp><span class="samp">r_arch</span></samp>').  The space savings
 can be considerable: on `<samp><span class="samp">x86_64</span></samp>' Linux a basic install (without
 debugging symbols) took 63Mb, and adding a 32-bit build added 6Mb.  If
-you have installed multiple build you can select which build to run by
+you have installed multiple builds you can select which build to run by
 
 <pre class="example">     R --arch=<var>name</var>
 </pre>
-   <p class="noindent">and running `<samp><span class="samp">R</span></samp>' will run the last build that was installed.
+   <p class="noindent">and just running `<samp><span class="samp">R</span></samp>' will run the last build that was installed.
 
    <p><code>R CMD INSTALL</code> will detect if more that one build is installed and
 try to install packages with the appropriate library objects for each. 
@@ -494,7 +497,7 @@ This will not be done if the package has an executable <code>configure</code>
 script or a <samp><span class="file">src/Makefile</span></samp> file.  In such cases you can install for
 extra builds by
 
-<pre class="example">     R --arch=<var>name</var> CMD INSTALL --libs-only <var>pkg(s)</var>
+<pre class="example">     R --arch=<var>name</var> CMD INSTALL --libs-only `<samp><span class="samp">pkg(s)</span></samp>'
 </pre>
    <p><a name="Installing-R-under-Windows"></a>
 
@@ -510,7 +513,7 @@ Windows 64).
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.4.0.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.4.1.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -539,12 +542,12 @@ collect, install and test an extensive set of tools.  See <a href="#The-Windows-
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.4.0.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.4.1.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at a
 directory <em>whose path does not contain spaces</em>.  We will call this
 directory <var>R_HOME</var> below.  Run
 
-     <pre class="example">          tar zxvf R-2.4.0.tar.gz
+     <pre class="example">          tar zxvf R-2.4.1.tar.gz
      </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -775,12 +778,12 @@ customizations to that installation.  Then in
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
 installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.4.0.exe</span></samp>, so
+executable with the standard name, <samp><span class="file">R-2.4.1.exe</span></samp>, so
 please rename it to indicate that it is customized.
 
    <p>The defaults for the startup parameters may also be customized.  For example
 
-<pre class="example">     make rinstaller MDISDI=1
+<pre class="example">     make myR IMAGEDIR=rootdir MDISDI=1
 </pre>
    <p class="noindent">will create an installer that defaults to installing R to run in SDI
 mode.  See <samp><span class="file">src/gnuwin32/installer/Makefile</span></samp> for the names and
@@ -815,28 +818,32 @@ but those who need it will know what to do with it.
    <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
 for suggesting WiX and building a prototype installer.
 
-<p><a name="Cross-building-on-ix86-Linux"></a>
-<a name="Cross_002dbuilding-on-ix86-Linux"></a>
+<p><a name="Cross-building-on-Linux"></a>
+<a name="Cross_002dbuilding-on-Linux"></a>
 
-<h4 class="subsection">3.1.9 Cross-building on ix86 Linux</h4>
+<h4 class="subsection">3.1.9 Cross-building on Linux</h4>
 
-<p>It is possible to cross-build R or packages on `<samp><span class="samp">ix86</span></samp>' Linux,
-and the `<samp><span class="samp">ix86</span></samp>' cross-compilers have also been used successfully
-on `<samp><span class="samp">x86_64</span></samp>' Linux.
+<p>It is possible to cross-build R or packages on (at least)
+`<samp><span class="samp">ix86</span></samp>' and `<samp><span class="samp">x86_64</span></samp>' Linux, and the `<samp><span class="samp">ix86</span></samp>'
+cross-compilers have also been used successfully on `<samp><span class="samp">x86_64</span></samp>'
+Linux..
 
-   <p>You will need i386-mingw32 cross-compilers installed and in your path. 
+   <p>You will need suitable cross-compilers installed and in your path. 
 There is currently a complete set of tools at
 <a href="http://www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2"><code>www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2</code></a> (Just
-unpack this somewhere and put its <samp><span class="file">bin</span></samp> directory in your path.)
+unpack this somewhere and put its <samp><span class="file">bin</span></samp> directory in your path.) 
+It is also straightforward to build a set of cross-compilers via the
+scripts available at
+<a href="http://sourceforge.net/forum/forum.php?forum_id=632611">http://sourceforge.net/forum/forum.php?forum_id=632611</a>.
 
    <p>You will need Perl, <samp><span class="command">zip</span></samp> and <samp><span class="command">unzip</span></samp> installed and
 <samp><span class="command">makeinfo</span></samp> version 4.7 or later (part of GNU <code>texinfo</code>).
 
-   <p>You also need the R source (<samp><span class="file">R-2.4.0.tar.gz</span></samp>).
+   <p>You also need the R source (<samp><span class="file">R-2.4.1.tar.gz</span></samp>).
 
-   <p>Then: untar <samp><span class="file">R-2.4.0.tar.gz</span></samp> somewhere, and
+   <p>Then: untar <samp><span class="file">R-2.4.1.tar.gz</span></samp> somewhere, and
 
-<pre class="example">     cd /somewhere/R-2.4.0/src/gnuwin32
+<pre class="example">     cd /somewhere/R-2.4.1/src/gnuwin32
 </pre>
    <p>Edit <samp><span class="file">MkRules</span></samp> to set <code>BUILD=CROSS</code> and the appropriate
 paths (including <code>HEADER</code>) as needed.
@@ -850,20 +857,33 @@ uncomment and set <code>R_EXE</code> in <samp><span class="file">MkRules</span><
 
    <p>Then run <code>make</code> (and parallel make works reliably, unlike on Windows).
 
-   <p>Packages can be made in the same way as natively: see <a href="#Add_002don-packages">Add-on packages</a>.
+   <p>Packages can be made in the same way as natively: see <a href="#Customizing-package-compilation-under-Windows">Customizing package compilation under Windows</a>, via the <samp><span class="file">Makefiles</span></samp> but not
+via `<samp><span class="samp">R CMD INSTALL</span></samp>'.  So care is needed where packages have
+dependencies: Linux versions of the dependencies must be installed in
+a library in the search path.  So for example to cross-build the
+<strong>MCMCpack</strong> package we used
 
-   <p>(It is possible to cross-build the installers using WINE, which we
-leave as an exercise for the reader.)
+<pre class="example">     # MCMCpack depends on coda, so point to the library containing it
+     export R_LIBS=/R/library
+     make PKGDIR=/mysources pkg-MCMCpack
+     make PKGDIR=/mysources lazyload-MCMCpack
+     cd ../../library
+     zip -r9X /dest/MCMCpack_0.7-4.zip MCMCpack
+</pre>
+   <p class="noindent">Even so, packages which depend on others that need to run compiled
+code to load may not work (<strong>methods</strong> is a special exception).
 
    <p>To distribute a cross-build (or just to transfer it to a Windows machine
 for testing) use
 
 <pre class="example">     cd installer
      make imagedir
-     zip -r9X R-2.4.0.zip R-2.4.0  # or something similar
+     zip -r9X R-2.4.1.zip R-2.4.1  # or something similar
 </pre>
    <p>We have not found a reliable way to convert base to lazy-loading when
-cross-building, so it is left in the old format.
+cross-building, so it is left in the old format.  Note too that
+<samp><span class="file">.chm</span></samp> help files (the default for a vanilla binary installation)
+will not be made when cross-building.
 
    <p>Also based on this facility is
 <a href="http://cran.r-project.org/doc/contrib/Makefile-rcb"><samp><span class="file">Makefile-rcb</span></samp></a> by J. Yan and A. J. Rossini.  For details, see the
@@ -877,12 +897,12 @@ Makefile itself, or
 <p><a name="index-Mac-OS-X-20"></a>
 The <samp><span class="file">bin/macosx</span></samp> directory of a <acronym>CRAN</acronym> site contains
 binaries for MacOS X for a base distribution and a large number of
-add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.3.0 or
+add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.4.4 or
 higher.
 
-   <p>The simplest way is to use <samp><span class="file">R.dmg</span></samp>.  Just double-click on the
-icon and the disk image file will be mounted. Read the
-<samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
+   <p>The simplest way is to use <samp><span class="file">R-2.4.1.dmg</span></samp>.  Just
+double-click on the icon and the disk image file will be mounted. Read
+the <samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
 
    <p>See the <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <acronym>FAQ</acronym></a> for more details.
 
@@ -895,8 +915,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document. Than you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.4.0.tar.gz
-     cd R-2.4.0
+<pre class="example">     tar zxvf R-2.4.1.tar.gz
+     cd R-2.4.1
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -945,6 +965,11 @@ do, the final default is <samp><span class="file">/tmp</span></samp> on Unix-ali
 periodically from <samp><span class="file">/tmp</span></samp>, for example by a <samp><span class="command">cron</span></samp> job
 running <samp><span class="command">tmpwatch</span></samp>.  Set <samp><span class="env">TMPDIR</span></samp> to another directory
 before running long-running jobs on such a system.
+
+   <p>Note that <samp><span class="env">TMPDIR</span></samp> will be used to execute <samp><span class="command">configure</span></samp>
+scripts when installing packages, so if <code>/tmp</code> has been mounted as
+`<samp><span class="samp">noexec</span></samp>', <samp><span class="env">TMPDIR</span></samp> needs to be set to a directory from which
+execution is allowed.
 
 <p><a name="Add-on-packages"></a>
 <a name="Add_002don-packages"></a>
@@ -1128,7 +1153,7 @@ originals.
 <li><code>zipdata-foo</code> to compress the data files.  This is recommended if
 you have either many small data files (as in package <strong>Devore5</strong>) or a
 few large data files. 
-<li><code>pkgcheck-foo</code> to check the package (like <code>R CMD CHECK foo</code>). 
+<li><code>pkgcheck-foo</code> to check the package (like <code>R CMD check foo</code>). 
 </ul>
 
    <p>Using this approach allows variables to be set during the build, e.g.
@@ -1501,18 +1526,20 @@ installed.
 <p>You need a means of compiling C and FORTRAN 77 (see <a href="#Using-FORTRAN">Using FORTRAN</a>).  Some add-on packages also need a C++ compiler.  Your C
 compiler should be <acronym>IEC</acronym>&nbsp;<!-- /@w -->60059<a rel="footnote" href="#fn-6" name="fnd-6"><sup>6</sup></a>, POSIX 1003.1 and C99-compliant if at all
 possible.  R tries to choose suitable flags for the C compilers it
-knows about, but you may have to set <code>CFLAGS</code> suitably.  For recent
-versions of <samp><span class="command">gcc</span></samp> with <code>glibc</code> this means including
-<samp><span class="option">-std=gnu99</span></samp> in <code>CFLAGS</code> (<samp><span class="option">-std=c99</span></samp> excludes POSIX
-functionality).
+knows about, but you may have to set <code>CC</code> or <code>CFLAGS</code> suitably. 
+For recent versions of <samp><span class="command">gcc</span></samp> with <code>glibc</code> this means including
+<samp><span class="option">-std=gnu99</span></samp> (<samp><span class="option">-std=c99</span></samp> excludes POSIX functionality). 
+If the compiler is detected as <samp><span class="command">gcc</span></samp>,  <code>-std=gnu99</code> will be
+appended to <code>CC</code> unless it conflicts with a setting of <code>CFLAGS</code>.
 
    <p>Unless you do not want to view graphs on-screen you need `<samp><span class="samp">X11</span></samp>'
-installed, including its headers and client libraries.  (On Fedora Core
-Linux this means the `<samp><span class="samp">xorg-x11-devel</span></samp>' and `<samp><span class="samp">xorg-x11-libs</span></samp>'
-RPMs, for example.  Older Linuxen used `<samp><span class="samp">XFree86-</span></samp>'.  Some Debian
-derivatives apparently also require `<samp><span class="samp">libxt-dev</span></samp>'.)  If you really do
-not want these you will need to explicitly configure R without X11,
-using <samp><span class="option">--with-x=no</span></samp>.
+installed, including its headers and client libraries.  (On Fedora
+Core 3 and SuSE 9.x Linux this meant the `<samp><span class="samp">xorg-x11-devel</span></samp>' and
+`<samp><span class="samp">xorg-x11-libs</span></samp>' RPMs.  On Fedora Core 5 and 6 it means (at least)
+`<samp><span class="samp">libX11</span></samp>', `<samp><span class="samp">libX11-devel</span></samp>', `<samp><span class="samp">libXt</span></samp>' and
+`<samp><span class="samp">libXt-devel</span></samp>'.  On Debian we recommend the meta-package
+`<samp><span class="samp">xorg-dev</span></samp>'.)  If you really do not want these you will need to
+explicitly configure R without X11, using <samp><span class="option">--with-x=no</span></samp>.
 
    <p>The command-line editing depends on the <code>readline</code> library
 available from any <acronym>GNU</acronym> mirror: you will need a fairly recent
@@ -2078,8 +2105,8 @@ On most platforms using <samp><span class="command">gcc</span></samp>, having `<
 <code>CFLAGS</code> and <code>FFLAGS</code> produces worthwhile performance gains. 
 On systems using the GNU linker (especially those using R as a shared
 library), it is likely that including `<samp><span class="samp">-Wl,-O1</span></samp>' in <code>LDFLAGS</code>
-is worthwhile, and on upcoming systems<a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a>
-`<samp><span class="samp">'-Wl,-O1,-Bdirect,--hash-style=both'</span></samp>' is recommended at
+is worthwhile, and on recent systems<a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a>
+`<samp><span class="samp">'-Bdirect,--hash-style=both,-Wl,-O1'</span></samp>' is recommended at
 <a href="http://lwn.net/Articles/192624/">http://lwn.net/Articles/192624/</a>
 
 <p><a name="Making-manuals"></a>
@@ -2392,10 +2419,11 @@ libraries.
 libraries in <samp><span class="file">/usr/local/lib64</span></samp>.  To build a 32-bit version of R
 on `<samp><span class="samp">x86_64</span></samp>' with Fedora Core 5 we used
 
-<pre class="example">     CFLAGS="-m32 -O2 -g -Wall -pedantic -std=gnu99"
+<pre class="example">     CC="gcc -m32"
      CXXFLAGS="-m32 -O2 -g"
      FFLAGS="-m32 -O2 -g"
-     LDFLAGS="-m32 -L/usr/local/lib"
+     FCFLAGS="-m32 -O2 -g"
+     LDFLAGS="-L/usr/local/lib"
      LIBnn=lib
 </pre>
    <p class="noindent">Fedora Core 3 also needed
@@ -2452,9 +2480,10 @@ optimization.  For `<samp><span class="samp">x86_64</span></samp>' he used
      CXX=icc
      ICC_LIBS=/opt/compilers/intel/cce/9.0/lib
      IFC_LIBS=/opt/compilers/intel/fce/9.0/lib
-     LDFLAGS="-L$ICC_LIBS -L$IFC_LIBS -L/usr/local/lib"
+     LDFLAGS="-L$ICC_LIBS -L$IFC_LIBS -L/usr/local/lib64"
 </pre>
-   <p class="noindent">R will add `<samp><span class="samp">-mp</span></samp>' in <code>R_XTRA_{C,F,CXX}FLAGS</code> to maintain
+   <p class="noindent"><samp><span class="command">configure</span></samp> will add `<samp><span class="samp">-c99</span></samp>' to <code>CC</code> for C99-compliance. 
+R will add `<samp><span class="samp">-mp</span></samp>' in <code>R_XTRA_{C,F,CXX}FLAGS</code> to maintain
 correct <acronym>IEC</acronym>&nbsp;<!-- /@w -->60559 arithmetic.  The flag <samp><span class="option">-wd188</span></samp>
 suppresses a large number of warnings about the enumeration type
 `<samp><span class="samp">Rboolean</span></samp>'.  Because the Intel C compiler sets `<samp><span class="samp">__GNUC__</span></samp>'
@@ -2497,7 +2526,8 @@ You can build R as a Unix application on Mac OS X using the Apple
 Developer Tools and <samp><span class="command">g77</span></samp> or <samp><span class="command">gfortran</span></samp>.  You will also
 need to install an X sub-system or configure with
 <samp><span class="option">--without-x</span></samp>. The X window manager is part of the standard Mac
-OS X distribution since Mac OS X version 10.3 (Panther).
+OS X distribution since Mac OS X version 10.3 (Panther), but it is
+typically not pre-installed.
 
    <p>For more information on how to find these tools please read the
 <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <acronym>FAQ</acronym></a>.
@@ -2564,7 +2594,7 @@ yourself.
 this disables <acronym>IEEE</acronym> arithmetic and <samp><span class="command">make check</span></samp> will
 fail.  The maximal set of optimization options known to work on Sparc is
 
-<pre class="example">     -xlibmil -xO5 -dalign -xc99
+<pre class="example">     -xlibmil -xO5 -dalign
 </pre>
    <p class="noindent">(`<samp><span class="samp">x86</span></samp>' versions do not need `<samp><span class="samp">-dalign</span></samp>', and some do not
 support it.)
@@ -2578,10 +2608,10 @@ the compiler correctly.
 
    <p>To compile for a 64-bit target on Sparc Solaris (which needs an
 UltraSparc chip and for support to be enabled in the OS) with the Forte
-7 compilers we used <samp><span class="option">--without-blas</span></samp> and
+7 compilers we used
 
-<pre class="example">     CC="cc -xarch=v9"
-     CFLAGS="-xO5 -xlibmil -dalign -xc99"
+<pre class="example">     CC="cc -xarch=v9 -xc99"
+     CFLAGS="-xO5 -xlibmil -dalign"
      F77="f95 -xarch=v9"
      FFLAGS="-xO5 -xlibmil -dalign"
      CXX="CC -xarch=v9"
@@ -2599,9 +2629,10 @@ UltraSparc chip and for support to be enabled in the OS) with the Forte
      FC="gfortran -m64"
      LDFLAGS="-L/usr/local/lib/sparcv9 -L/usr/local/lib"
 </pre>
-   <p class="noindent">replacing `<samp><span class="samp">g77</span></samp>' with `<samp><span class="samp">gfortran</span></samp>' for <samp><span class="command">gcc</span></samp> 4.0.x.  Note
+   <p class="noindent">replacing `<samp><span class="samp">g77</span></samp>' with `<samp><span class="samp">gfortran</span></samp>' for <samp><span class="command">gcc</span></samp> 4.x.y.  Note
 that <samp><span class="file">/usr/local/lib/sparcv9</span></samp> may need to be in the
-<samp><span class="env">LD_LIBRARY_PATH</span></samp> during configuration.
+<samp><span class="env">LD_LIBRARY_PATH</span></samp> during configuration.  (<samp><span class="command">configure</span></samp> will
+append <code>-std=gnu99</code> to <code>CC</code>.)
 
    <p>Solaris on Sparc CPUs need `<samp><span class="samp">PIC</span></samp>' and not `<samp><span class="samp">pic</span></samp>' versions of
 <samp><span class="env">CPICFLAGS</span></samp> and <samp><span class="env">FPICFLAGS</span></samp> since the `<samp><span class="samp">pic</span></samp>' version only
@@ -3080,7 +3111,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.4.0.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.4.1.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -3208,8 +3239,8 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">E.6 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.4.0.exe</span></samp>) we require
-Inno Setup 5.1.5 or later from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.
+<p>To make the installer package (<samp><span class="file">R-2.4.1.exe</span></samp>) we require
+Inno Setup 5.1.7 or later from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.
 
    <p>Edit file <samp><span class="file">src/gnuwin32/MkRules</span></samp> and change <code>ISDIR</code> to the
 location where Inno Setup was installed.

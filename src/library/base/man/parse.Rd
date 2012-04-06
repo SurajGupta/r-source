@@ -3,7 +3,7 @@
 \title{Parse Expressions}
 \description{
   \code{parse} returns the parsed but unevaluated expressions in a
-  list.  Each element of the list is of mode \code{expression}.
+  list.
 }
 \usage{
 parse(file = "", n = NULL, text = NULL, prompt = "?")
@@ -13,10 +13,12 @@ parse(file = "", n = NULL, text = NULL, prompt = "?")
     file or a URL to read the expressions from.
     If \code{file} is \code{""} and \code{text} is missing or \code{NULL}
     then input is taken from the console.}
-  \item{n}{the maximum number of expressions to parse.  If \code{n} is
-    \code{NULL} or negative the input is parsed in its entirety.}
+  \item{n}{integer (or coerced to integer).  The maximum number of
+    expressions to parse.  If \code{n} is \code{NULL} or negative or
+    \code{NA} the input is parsed in its entirety.}
   \item{text}{character vector.  The text to parse.  Elements are treated
-    as if they were lines of a file.}
+    as if they were lines of a file.  Other \R objects will be coerced
+    to character (without method dispatch) if possible.}
   \item{prompt}{the prompt to print when parsing from the keyboard.
     \code{NULL} means to use \R's prompt, \code{getOption("prompt")}.}
 }
@@ -30,13 +32,17 @@ parse(file = "", n = NULL, text = NULL, prompt = "?")
   \code{\link{deparse}}.
 }
 \details{
+  If \code{text} has length greater than zero (after coercion) it is used in
+  preference to \code{file}.
+  
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows)
   or CR (as used on classic MacOS).  The final line can be incomplete,
   that is missing the final EOL marker.
 
   See \code{\link{source}} for the limits on the size of functions
-  that can be parsed (by default).
+  that can be parsed (by default).  There is also a limit of 8192 bytes
+  on the size of strings which can be parsed.
 
   When input is taken from the console, \code{n = NULL} is equivalent to
   \code{n = 1}, and \code{n < 0} will read until an EOF character is read.

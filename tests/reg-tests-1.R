@@ -4494,3 +4494,57 @@ test <- 1:10
 try(test[2:4] <- ls) # fails
 stopifnot(!exists("*tmp*", where=1))
 ## was true < 2.4.0
+
+
+## merge on zero-row data frames
+L3 <- LETTERS[1:3]
+d <- data.frame(cbind(x=1, y=1), fac=sample(L3, 1, repl=TRUE))
+e <- d[-1,]
+merge(d, e, by.x = "x", by.y = "x", all.x = TRUE)
+## not allowed <= 2.4.0
+
+
+## PR#9313
+library(stats4)
+g <- function(x, y) -cos(x) + abs(y)
+fit1 <- mle(g, start = list(x = 0, y = 7))
+fit2 <- mle(g, start = list(y = 7, x = 0))
+stopifnot(all.equal(coef(fit1), coef(fit2)))
+## Found different solutions in 2.4.0, as names were not remapped in fit2
+
+
+## PR#9446
+rbind( data.frame(x=1), list(x=2) )
+## was error in 2.4.0 as list gave double row names.
+
+
+## extreme case
+bs <- boxplot.stats(c(1,Inf,Inf,Inf))
+## gave an error in 2.4.0
+
+
+## t.test with one group of size one
+x <- c(23,25,29,27,30,30)
+t.test(x=x[1], y=x[-1], var.equal=TRUE)
+t.test(y=x[1], x=x[-1], var.equal=TRUE)
+## failed in 2.4.0
+
+
+## corrupted "ts" objects
+structure(1:3, class="ts")
+## failed in print method < 2.4.1
+
+
+## PR#9399
+x1 <- "x2"
+x2 <- pi
+rm(x1) # removes x1, not x2
+stopifnot(!exists("x1", .GlobalEnv), exists("x2", .GlobalEnv))
+rm("x2")
+# incorrectly documented <= 2.4.0
+a <- b <- c <- 1
+z <- try(rm(c("a", "b")))
+stopifnot(inherits(z, "try-error"))
+## removed 'a', 'b' and 'c' in 2.4.0
+
+### end of tests added in 2.4.1 ###

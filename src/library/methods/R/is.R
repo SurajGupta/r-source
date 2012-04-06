@@ -116,39 +116,34 @@ setIs <-
         obj <- extensionObject
     ## revise the superclass/subclass info in the stored class definition
     .validExtends(class1, class2, classDef,  classDef2, obj@simple)
-    if(!classDef@sealed) {
-        where1 <- findClass(class1, where)[[1]]
-        if(!bindingIsLocked(m1, where1)) {
-            ## the direct contains information
-            elNamed(classDef@contains, class2) <- obj
-            if(doComplete)
-                classDef@contains <- completeExtends(classDef, class2, obj, where = where)
-            assignClassDef(class1, classDef, where1)
-        }
+    where2 <- findClass(classDef2, where)
+    if(length(where2) > 0) {
+        where2 <- where2[[1]]
+        elNamed(classDef2@subclasses, class1) <- obj
+        if(doComplete)
+          classDef2@subclasses <- completeSubclasses(classDef2, class1, obj, where)
+        assignClassDef(class2, classDef2, where2, TRUE)
+        .removePreviousCoerce(class1, class2, where, prevIs)
     }
-    if(!classDef2@sealed) {
-        where2 <- findClass(classDef2)
-        if(length(where2) > 0) {
-          where2 <- where2[[1]]
-          if(!bindingIsLocked(m2, where2)) {
-            elNamed(classDef2@subclasses, class1) <- obj
-            if(doComplete)
-                classDef2@subclasses <- completeSubclasses(classDef2, class1, obj, where)
-            assignClassDef(class2, classDef2, where2)
-          }
-          .removePreviousCoerce(class1, class2, where, prevIs)
-        }
-        else
-          stop(gettextf("Unable to find package environment for class \"%s\" to revise subclass information", class2))
+    else
+      stop(gettextf("Unable to find package environment for class \"%s\" to revise subclass information", class2))
+    where1 <- findClass(class1, where)[[1]]
+    ## the direct contains information
+    elNamed(classDef@contains, class2) <- obj
+    if(doComplete) {
+      classDef@contains <- completeExtends(classDef, class2, obj, where = where)
+      if(!is(classDef, "ClassUnionRepresentation")) #unions are handled in assignClassDef
+        .checkSubclasses(class1, classDef, class2, classDef2, where1)
     }
+    assignClassDef(class1, classDef, where1, TRUE)
     invisible(classDef)
-}
+ }
 
 .validExtends <- function(class1, class2, classDef1,  classDef2, slotTests) {
     .msg <- function(class1, class2) gettextf("class \"%s\" cannot extend class \"%s\"", class1, class2)
     if((is.null(classDef1) || is.null(classDef2)) &&
        !(isVirtualClass(class1) && isVirtualClass(class2)))
-        stop(.msg(class2, class2), ": ",
+        stop(.msg(class1, class2), ": ",
              gettext("Both classes must be defined"),
              domain = NA)
     if(slotTests) {
@@ -158,7 +153,7 @@ setIs <-
             slots1 <- classDef1@slots
             n1 <- names(slots1)
             if(any(is.na(match(n2, n1))))
-                stop(.msg(class2, class2), ": ",
+                stop(.msg(class1, class2), ": ",
                      gettextf("class \"%s\" is missing slots from class \"%s\" (%s), and no coerce method was supplied",
                               class1, class2,
                               paste(n2[is.na(match(n2, n1))], collapse = ", ")),

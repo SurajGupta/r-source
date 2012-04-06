@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-09-26 14:33\n"
+"POT-Creation-Date: 2006-12-11 10:41\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -897,9 +897,6 @@ msgstr "'by'는 column(s)를 지정하지 않으면 되지 않습니다"
 msgid "'by' must specify valid column(s)"
 msgstr "'by'는 유효한 colums(s)를 지정하지 않으면 되지 않습니다"
 
-msgid "no rows to match"
-msgstr "match 해야 할 행이 없습니다"
-
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' 그리고 'by.y'는 다른 열수를 지정하고 있습니다"
 
@@ -1176,6 +1173,10 @@ msgstr "'x'는 벡터가 아니면 되지 않습니다"
 msgid "invalid 'rle' structure"
 msgstr "무효인 'rle' 구조입니다"
 
+#, fuzzy
+msgid "... must contain names or character strings"
+msgstr "'file' NULL, connection, 또는 문자열이 아니면 되지 않습니다"
+
 msgid "incorrect length for 'group'"
 msgstr "'group'에 대한 정확하지 않는 길이입니다"
 
@@ -1306,6 +1307,12 @@ msgid "all"
 msgstr ""
 
 msgid "TRUE"
+msgstr ""
+
+msgid "adding class \"ts\": this is deprecated"
+msgstr ""
+
+msgid "conversion to factor is deprecated"
 msgstr ""
 
 msgid "incorrect value for 'x'"
@@ -1458,6 +1465,9 @@ msgid_plural "Warning messages:\n"
 msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
+
+#~ msgid "no rows to match"
+#~ msgstr "match 해야 할 행이 없습니다"
 
 #, fuzzy
 #~ msgid "rows are empty: giving up"

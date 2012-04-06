@@ -1812,7 +1812,7 @@ try(prod(raw()))
 
 r <- hist(rnorm(100), plot = FALSE, breaks = 12,
           ## arguments which don't make sense for plot=FALSE - give a warning:
-          right = FALSE, col = "blue")
+          xlab = "N(0,1)", col = "blue")
 ## gave no warning in 2.3.0 and earlier
 
 
@@ -1988,3 +1988,23 @@ format(matrix(1:16, 4), big.mark = ",")
 
 
 ### end of tests added in 2.4.0 ###
+
+
+## Platform-specific behaviour in lowess reported to R-help
+## 2006-10-12 by Frank Harrell
+x <- c(0,7,8,14,15,120,242)
+y <- c(122,128,130,158,110,110,92)
+lowess(x, y, iter=0)
+lowess(x, y)
+## MAD of iterated residuals was zero, and result depended on the platform.
+
+
+## PR#9263: problems with R_Visible
+a <- list(b=5)
+a[[(t<-'b')]]
+x <- matrix(5:-6, 3)
+x[2, invisible(3)]
+## both invisible in 2.4.0
+
+
+### end of tests added in 2.4.1 ###

@@ -4942,6 +4942,7 @@ typedef struct {
      */
     short colAlpha[256];
     short fillAlpha[256];
+    Rboolean usedAlpha;
 
     /*
      * What version of PDF are we trying to work with?
@@ -5297,7 +5298,8 @@ PDFDeviceDriver(NewDevDesc* dd, char *file, char *paper,
     /*
      * Initialise all alphas to -1
      */
-    for (i=0; i<256; i++) {
+    pd->usedAlpha = FALSE;
+    for (i = 0; i < 256; i++) {
 	pd->colAlpha[i] = -1;
 	pd->fillAlpha[i] = -1;
     }
@@ -5530,12 +5532,12 @@ static int fillAlphaIndex(int alpha, PDFDesc *pd) {
  * Does the version support alpha transparency?
  * As from R 2.4.0 bump the version number so it does.
  */
-static int alphaVersion(PDFDesc *pd) {
+static void alphaVersion(PDFDesc *pd) {
     if(pd->versionMajor == 1 && pd->versionMinor < 4) {
 	pd->versionMinor  = 4;
 	warning(_("increasing the PDF version to 1.4"));
     }
-    return 1;
+    pd->usedAlpha = TRUE;
 }
 
 /*
@@ -5552,7 +5554,8 @@ static void PDF_SetLineColor(int color, NewDevDesc *dd)
 
     if(color != pd->current.col) {
 	unsigned int alpha = R_ALPHA(color);
-	if (0 < alpha && alpha < 255 && alphaVersion(pd)) {
+	if (0 < alpha && alpha < 255) alphaVersion(pd);
+	if (pd->usedAlpha) {
 	    /*
 	     * Apply graphics state parameter dictionary
 	     * to set alpha
@@ -5572,7 +5575,8 @@ static void PDF_SetFill(int color, NewDevDesc *dd)
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     if(color != pd->current.fill) {
 	unsigned int alpha = R_ALPHA(color);
-	if (0 < alpha && alpha < 255 && alphaVersion(pd)) {
+	if (0 < alpha && alpha < 255) alphaVersion(pd);
+	if (pd->usedAlpha) {
 	    /*
 	     * Apply graphics state parameter dictionary
 	     * to set alpha
@@ -6143,6 +6147,8 @@ static void PDF_endpage(PDFDesc *pd)
 	    here - pd->startstream);
 }
 
+#define R_VIS(col) (R_ALPHA(col) > 0)
+
 static void PDF_NewPage(R_GE_gcontext *gc,
 			NewDevDesc *dd)
 {
@@ -6189,7 +6195,7 @@ static void PDF_NewPage(R_GE_gcontext *gc,
      */
     fprintf(pd->pdffp, "q\n");
     PDF_Invalidate(dd);
-    if(R_OPAQUE(gc->fill)) {
+    if(R_VIS(gc->fill)) {
 	PDF_SetFill(gc->fill, dd);
 	fprintf(pd->pdffp, "0 0 %.2f %.2f re f\n",
 		72.0 * pd->width, 72.0 * pd->height);
@@ -6220,28 +6226,20 @@ static void PDF_Rect(double x0, double y0, double x1, double y1,
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int code;
 
-    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
+    code = 2 * (R_VIS(gc->fill)) + (R_VIS(gc->col));
+    if (code) {
 	if(pd->inText) textoff(pd);
-	PDF_SetFill(gc->fill, dd);
-	PDF_SetLineColor(gc->col, dd);
-	PDF_SetLineStyle(gc, dd);
-	fprintf(pd->pdffp, "%.2f %.2f %.2f %.2f re B\n", x0, y0, x1-x0, y1-y0);
-    } else {
-	code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
-	if (code) {
-	    if(pd->inText) textoff(pd);
-	    if(code & 2)
-		PDF_SetFill(gc->fill, dd);
-	    if(code & 1) {
-		PDF_SetLineColor(gc->col, dd);
-		PDF_SetLineStyle(gc, dd);
-	    }
-	    fprintf(pd->pdffp, "%.2f %.2f %.2f %.2f re", x0, y0, x1-x0, y1-y0);
-	    switch(code){
-	    case 1: fprintf(pd->pdffp, " S\n"); break;
-	    case 2: fprintf(pd->pdffp, " f\n"); break;
-	    case 3: fprintf(pd->pdffp, " B\n"); break;
-	    }
+	if(code & 2)
+	    PDF_SetFill(gc->fill, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(gc->col, dd);
+	    PDF_SetLineStyle(gc, dd);
+	}
+	fprintf(pd->pdffp, "%.2f %.2f %.2f %.2f re", x0, y0, x1-x0, y1-y0);
+	switch(code){
+	case 1: fprintf(pd->pdffp, " S\n"); break;
+	case 2: fprintf(pd->pdffp, " f\n"); break;
+	case 3: fprintf(pd->pdffp, " B\n"); break;
 	}
     }
 }
@@ -6255,42 +6253,23 @@ static void PDF_Circle(double x, double y, double r,
     int code, tr;
     double xx, yy, a;
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
-	PDF_SetFill(gc->fill, dd);
-	PDF_SetLineColor(gc->col, dd);
-	PDF_SetLineStyle(gc, dd);
-	/*
-	 * Due to possible bug in Acrobat Reader for rendering
-	 * semi-transparent text, only ever draw Bezier curves
-	 * regardless of circle size.
-	 */
-	{
-	    double s = 0.55 * r;
-	    if(pd->inText) textoff(pd);
-	    fprintf(pd->pdffp, "  %.2f %.2f m\n", x - r, y);
-	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n",
-		    x - r, y + s, x - s, y + r, x, y + r);
-	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n",
-		    x + s, y + r, x + r, y + s, x + r, y);
-	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n",
-		    x + r, y - s, x + s, y - r, x, y - r);
-	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n",
-		    x - s, y - r, x - r, y - s, x - r, y);
-	    fprintf(pd->pdffp, "B\n");
+    code = 2 * (R_VIS(gc->fill)) + (R_VIS(gc->col));
+    if (code) {
+	if(code & 2)
+	    PDF_SetFill(gc->fill, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(gc->col, dd);
+	    PDF_SetLineStyle(gc, dd);
 	}
-    } else {
-	code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
-	if (code) {
-	    if(code & 2)
-		PDF_SetFill(gc->fill, dd);
-	    if(code & 1) {
-		PDF_SetLineColor(gc->col, dd);
-		PDF_SetLineStyle(gc, dd);
-	    }
-	    if(r > 10) { /* somewhat arbitrary, use font up to 20pt */
+    }
+    if (code) {
+	if (semiTransparent(gc->col) || semiTransparent(gc->fill) || r > 10) {
+	    /*
+	     * Due to possible bug in Acrobat Reader for rendering
+	     * semi-transparent text, only ever draw Bezier curves
+	     * regardless of circle size.  Otherwise use use font up to 20pt
+	     */
+	    {
 		/* Use four Bezier curves, hand-fitted to quadrants */
 		double s = 0.55 * r;
 		if(pd->inText) textoff(pd);
@@ -6308,23 +6287,23 @@ static void PDF_Circle(double x, double y, double r,
 		case 2: fprintf(pd->pdffp, "f\n"); break;
 		case 3: fprintf(pd->pdffp, "B\n"); break;
 		}
-	    } else {
-		/* Use char 108 in Dingbats, which is a solid disc
-		   afm is C 108 ; WX 791 ; N a71 ; B 35 -14 757 708 ;
-		   so diameter = 0.722 * size
-		   centre = (0.396, 0.347) * size
-		*/
-		a = 2./0.722 * r;
-		xx = x - 0.396*a;
-		yy = y - 0.347*a;
-		tr = (R_OPAQUE(gc->fill)) +
-		    2 * (R_OPAQUE(gc->col)) - 1;
-		if(!pd->inText) texton(pd);
-		fprintf(pd->pdffp,
-			"/F1 1 Tf %d Tr %.2f 0 0 %.2f %.2f %.2f Tm",
-			tr, a, a, xx, yy);
-		fprintf(pd->pdffp, " (l) Tj 0 Tr\n");
 	    }
+	} else {
+	    /* Use char 108 in Dingbats, which is a solid disc
+	       afm is C 108 ; WX 791 ; N a71 ; B 35 -14 757 708 ;
+	       so diameter = 0.722 * size
+	       centre = (0.396, 0.347) * size
+	    */
+	    a = 2./0.722 * r;
+	    xx = x - 0.396*a;
+	    yy = y - 0.347*a;
+	    tr = (R_OPAQUE(gc->fill)) +
+		2 * (R_OPAQUE(gc->col)) - 1;
+	    if(!pd->inText) texton(pd);
+	    fprintf(pd->pdffp,
+		    "/F1 1 Tf %d Tr %.2f 0 0 %.2f %.2f %.2f Tm",
+		    tr, a, a, xx, yy);
+	    fprintf(pd->pdffp, " (l) Tj 0 Tr\n");
 	}
     }
 }
@@ -6349,14 +6328,15 @@ static void PDF_Polygon(int n, double *x, double *y,
     double xx, yy;
     int i, code;
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
+    code = 2 * (R_VIS(gc->fill)) + (R_VIS(gc->col));
+    if (code) {
 	if(pd->inText) textoff(pd);
-	PDF_SetFill(gc->fill, dd);
-	PDF_SetLineColor(gc->col, dd);
-	PDF_SetLineStyle(gc, dd);
+	if(code & 2)
+	    PDF_SetFill(gc->fill, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(gc->col, dd);
+	    PDF_SetLineStyle(gc, dd);
+	}
 	xx = x[0];
 	yy = y[0];
 	fprintf(pd->pdffp, "  %.2f %.2f m\n", xx, yy);
@@ -6365,30 +6345,10 @@ static void PDF_Polygon(int n, double *x, double *y,
 	    yy = y[i];
 	    fprintf(pd->pdffp, "  %.2f %.2f l\n", xx, yy);
 	}
-	fprintf(pd->pdffp, "b\n");
-    } else {
-	code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
-	if (code) {
-	    if(pd->inText) textoff(pd);
-	    if(code & 2)
-		PDF_SetFill(gc->fill, dd);
-	    if(code & 1) {
-		PDF_SetLineColor(gc->col, dd);
-		PDF_SetLineStyle(gc, dd);
-	    }
-	    xx = x[0];
-	    yy = y[0];
-	    fprintf(pd->pdffp, "  %.2f %.2f m\n", xx, yy);
-	    for(i = 1 ; i < n ; i++) {
-		xx = x[i];
-		yy = y[i];
-		fprintf(pd->pdffp, "  %.2f %.2f l\n", xx, yy);
-	    }
-	    switch(code){
-	    case 1: fprintf(pd->pdffp, "s\n"); break;
-	    case 2: fprintf(pd->pdffp, "h f\n"); break;
-	    case 3: fprintf(pd->pdffp, "b\n"); break;
-	    }
+	switch(code){
+	case 1: fprintf(pd->pdffp, "s\n"); break;
+	case 2: fprintf(pd->pdffp, "h f\n"); break;
+	case 3: fprintf(pd->pdffp, "b\n"); break;
 	}
     }
 }
@@ -6401,11 +6361,8 @@ static void PDF_Polyline(int n, double *x, double *y,
     double xx, yy;
     int i;
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
-	if(pd->inText) textoff(pd);
+    if(pd->inText) textoff(pd);
+    if(R_VIS(gc->col)) {
 	PDF_SetLineColor(gc->col, dd);
 	PDF_SetLineStyle(gc, dd);
 	xx = x[0];
@@ -6417,21 +6374,6 @@ static void PDF_Polyline(int n, double *x, double *y,
 	    fprintf(pd->pdffp, "%.2f %.2f l\n", xx, yy);
 	}
 	fprintf(pd->pdffp, "S\n");
-    } else {
-	if(pd->inText) textoff(pd);
-	if(R_OPAQUE(gc->col)) {
-	    PDF_SetLineColor(gc->col, dd);
-	    PDF_SetLineStyle(gc, dd);
-	    xx = x[0];
-	    yy = y[0];
-	    fprintf(pd->pdffp, "%.2f %.2f m\n", xx, yy);
-	    for(i = 1 ; i < n ; i++) {
-		xx = x[i];
-		yy = y[i];
-		fprintf(pd->pdffp, "%.2f %.2f l\n", xx, yy);
-	    }
-	    fprintf(pd->pdffp, "S\n");
-	}
     }
 }
 
@@ -6522,6 +6464,8 @@ static void PDFSimpleText(double x, double y, char *str,
     double a, b, rot1;
     char *str1 = str;
 
+    if(!R_VIS(gc->col)) return;
+
     if(face < 1 || face > 5) {
 	warning(_("attempt to use invalid font %d replaced by font 1"), face);
 	face = 1;
@@ -6567,6 +6511,8 @@ static void PDF_Text(double x, double y, char *str,
     double a, b, rot1;
     char *str1 = str;
     char *buff;
+
+    if(!R_VIS(gc->col)) return;
 
     if(face < 1 || face > 5) {
 	warning(_("attempt to use invalid font %d replaced by font 1"), face);

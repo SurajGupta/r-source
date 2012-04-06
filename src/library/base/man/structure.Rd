@@ -11,7 +11,29 @@ structure(.Data, \dots)
     form, which will be attached to data.}
 }
 \description{
-  \code{structure} returns the given object with its attributes set.
+  \code{structure} returns the given object with further 
+  \link{attributes} set.
+}
+\details{
+  Adding a \code{\link{tsp}} attribute will ensure that the object
+  returned inherits from class \code{"ts"}, and adding a
+  \code{\link{levels}} attribute ensures that the returned object is a
+  factor.  These conversions are deprecated: they give a warning and
+  will be removed in \R 2.5.0.
+
+  For historical reasons (these names are used when deparsing),
+  attributes \code{".Dim"}, \code{".Dimnames"},
+  \code{".Names"}, \code{".Tsp"} and \code{".Label"} are renammed to
+  \code{"dim"}, \code{"dimnames"}, \code{"names"}, \code{"tsp"} and
+  \code{"levels"}.
+
+  It is possible to give the same tag more than once, in which case the
+  last value assigned wins.  As with other ways of assigning attributes,
+  using \code{tag=NULL} removes attribute \code{tag} from \code{.Data} if
+  it is present.
+}
+\seealso{
+  \code{\link{attributes}}, \code{\link{attr}}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

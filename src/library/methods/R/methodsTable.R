@@ -1,5 +1,3 @@
-options(error=traceback, warn = 1)
-
 ### merge version called from namespace imports code.  Hope to avoid using generic
 .mergeMethodsTable2 <- function(table, newtable, envir, metaname) {
     old <- objects(table, all=TRUE)
@@ -138,7 +136,7 @@ options(error=traceback, warn = 1)
     ## also Called from cacheMethod (from as(),
   ## as<-())
   fenv <- environment(fdef)
-  if(!exists(".AllMTable", envir = fenv, inherits = TRUE))
+  if(!exists(".AllMTable", envir = fenv, inherits = FALSE))
     .setupMethodsTables(fdef)
   sig <- .matchSigLength(sig, fdef, fenv, TRUE)
   label <- .sigLabel(sig)
@@ -407,15 +405,31 @@ options(error=traceback, warn = 1)
     mlist <- generic@default
   else
     mlist <- get(".Methods", envir = env, inherits = FALSE)
-  if(initialize || !exists(".SigLength", envir = env, inherits = FALSE))
-    assign(".SigLength", 1, envir = env)
-  ## check that groups of generics agree on .SigLength; otherwise
-  ## labels won't match
+  if(initialize || !exists(".SigLength", envir = env, inherits = FALSE)) {
+      nsig <- 1
+      ## check that groups of generics agree on .SigLength; otherwise
+      ## labels won't match
+     for(gp in generic@group) {
+         gpDef <- getGeneric(gp)
+         if(is(gpDef, "genericFunction")) {
+             .getMethodsTable(gpDef) # force initialization
+             nsig <- max(nsig, get(".SigLength", envir = environment(gpDef)))
+         }
+     }
+      assign(".SigLength", nsig, envir = env)
+  }
   argSyms <- lapply(generic@signature, as.name)
   assign(".SigArgs", argSyms, envir = env)
   mtable <- .mlistAddToTable(generic, mlist)
   assign(".MTable", mtable, envir = env)
   .resetInheritedMethods(env, mtable)
+  if(is(generic, "groupGenericFunction")) {
+      for(gp in generic@groupMembers) {
+          gpDef <- getGeneric(gp)
+          if(is(gpDef, "genericFunction"))
+              .getMethodsTable(gpDef) # force initialization w. group methods
+      }
+  }
 }
 
 .updateMethodsInTable <- function(generic, where, attach) {

@@ -791,7 +791,7 @@ static void AdjustHeapSize(R_size_t size_needed)
     if (vect_occup > 1.0 && VNeeded < R_MaxVSize)
 	R_VSize = VNeeded;
     if (vect_occup > R_VGrowFrac) {
-	R_size_t change = R_VGrowIncrMin + R_VGrowIncrFrac * R_NSize;
+	R_size_t change = R_VGrowIncrMin + R_VGrowIncrFrac * R_VSize;
 	if (R_MaxVSize - R_VSize >= change)
 	    R_VSize += change;
     }
@@ -1472,8 +1472,9 @@ SEXP attribute_hidden do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
     /*- now return the [used , gc trigger size] for cells and heap */
     PROTECT(value = allocVector(INTSXP, 14));
     INTEGER(value)[0] = onsize - R_Collected;
-    INTEGER(value)[1] = R_VSize - VHEAP_FREE();
-    /* carefully here: we can't report large sizes in R's integer */
+    /* careful here: we can't report large sizes in R's integer */
+    INTEGER(value)[1] = (R_VSize - VHEAP_FREE() < INT_MAX) ? 
+	R_VSize - VHEAP_FREE() : NA_INTEGER;  /* Overflows at 2Gb free */
     INTEGER(value)[4] = (R_NSize < INT_MAX) ? R_NSize : NA_INTEGER;
     INTEGER(value)[5] = (R_VSize < INT_MAX) ? R_VSize : NA_INTEGER;
     /* next four are in 0.1Mb, rounded up */
@@ -2143,7 +2144,7 @@ static void R_gc_internal(R_size_t size_needed)
     } END_SUSPEND_INTERRUPTS;
 
     if (gc_reporting) {
-	REprintf("\n%d cons cells free (%d%%)\n",
+	REprintf("\n%lu cons cells free (%d%%)\n",
 		 R_Collected, (100 * R_Collected / R_NSize));
 	vcells = VHEAP_FREE();
 	vfrac = (100.0 * vcells) / R_VSize;

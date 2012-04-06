@@ -309,6 +309,7 @@ removeClass <-  function(Class, where = topenv(parent.frame())) {
     "\") has defined subclasses that should also be removed: (",
                 paste(as.character(subclasses[found]), collapse = ", "), ")")
     }
+    .removeSuperclassBackRefs(Class, classDef, classWhere)
     .uncacheClass(Class, classDef)
     .undefineMethod("initialize", Class, classWhere)
     what <- classMetaName(Class)

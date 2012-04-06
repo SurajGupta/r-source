@@ -1177,7 +1177,7 @@ SEXP attribute_hidden do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(INTSXP, 1));
     INTEGER(ans)[0] = ncon;
     PROTECT(class = allocVector(STRSXP, 2));
-    SET_STRING_ELT(class, 0, mkChar("file"));
+    SET_STRING_ELT(class, 0, mkChar("gzfile"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
     UNPROTECT(2);
@@ -2740,7 +2740,7 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!strcmp(what, "character")) {
 	SEXP onechar;
 	PROTECT(ans = allocVector(STRSXP, n));
-	for(i = 0, m = i+1; i < n; i++) {
+	for(i = 0, m = 0; i < n; i++) {
 	    onechar = isRaw ? rawOneString(bytes, nbytes, &np) 
 		: readOneString(con);
 	    if(onechar != R_NilValue) {

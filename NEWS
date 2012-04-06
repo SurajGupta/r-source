@@ -6,6 +6,222 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.4.1
+
+
+INSTALLATION
+
+    o	The extraction of info from Subversion for an SVN checkout now
+	also works for svn >= 1.4.0.  However, on Windows the 'Last
+	Changed Date' will be in the local timezone, and not in GMT as
+	previously.
+
+    o	configure uses code borrowed from autoconf 2.60 to try harder to
+	ensure that a C99-compliant compiler is used.  (It does so by
+	appending to CC.)  This avoids problems with systems such as FC5
+	which override CFLAGS and thereby lose flags such as -std=gnu99.
+
+
+NEW FEATURES
+
+    o	rainbow(), heat.colors(), terrain.colors(), topo.colors() and
+	cm.colors() all gain an 'alpha' argument to be passed to hsv().
+
+    o	dput() will give an incorrect representation of the row names
+	of a data frame with integer row names.  This is now corrected
+	when the object is recreated.
+
+
+C-LEVEL FACILITIES
+
+    o	Using STRICT_R_HEADERS applies to more reported clashes with
+	Windows headers, including Calloc and Realloc.  These and
+	Free need to be prefixed by R_ when STRICT_R_HEADERS is defined.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The previously undocumented behaviour of structure() in adding a
+	class when specifying "tsp" or "levels" attributes is now
+	deprecated (with a warning).
+
+
+BUG FIXES
+
+    o	Fixed warning() to use .dfltWarn intead of .dfltStop for default
+	handling (PR#9274).
+
+    o	R would slow down when the product of the length of a vector and
+	the length of a character vector used to subset it exceeded 2^31.
+	(PR#9280)
+
+    o	merge() now allows zero-row data frames.
+
+    o	add1.lm() had been broken by other changes for weighted fits.
+
+    o	axis.POSIXct() would sometimes give the wrong labels.
+
+    o	Help for a method call would fail. (PR#9291)
+
+    o	gzfile() returned an object of class "file" not "gzfile". (PR#9271)
+
+    o	load()ing from a connection had a logic bug in when it closed
+	the connection. (PR#9271)
+
+    o	The lowess() algorithm is unstable if the MAD of the residuals
+	becomes (effectively) zero: R now terminates the iterations at
+	that point.  (This may result in quite different answers.)
+
+	The 'delta' argument was incorrectly documented.  (PR#9264)
+
+    o	abbreviate() would only work for strings of up to 8191 bytes,
+	but this was not checked.  Now longer strings are errors.
+
+    o	Drawing X11 rotated text was buggy for VERY small (negative)
+	angle of rotation.  Reported by Ben Bolker. (PR#9301)
+
+    o	The X11 data editor would crash in an MBCS locale if R was
+	compiled with FC's CFLAGS that add buffer overflow and
+	stack-smashing detection.
+
+    o	rect() was not accepting border=NA in some cases involving
+	cross-hatching.
+
+    o	Fixes to S4 group generics to ensure that the correct number of
+	active arguments are in the signature of the group and all
+	members.  Also a fix to keep the 'groupMembers' slot up to date.
+
+    o	S4 group generic "Logic" (with '&', '|', but not '!') has been
+	created, following the green book (apart from '!').
+
+    o	removeClass() now takes care to remove any subclass references
+	to the deleted class.
+
+    o	mle() (in stats4) might not have worked as intended when the
+	order of parameters in 'start' differed from that in the
+	log-likelihood.	 (PR#9313)
+
+    o	dotchart() now properly restores par() settings after itself.
+
+    o	system() on Mac OS X was blocking arbitrary signals during the
+	call although only SIGPROF was meant to be blocked.
+
+    o	methods cached via callNextMethod() and (sometimes) as() were
+	being cached as directly specified although in fact they were
+	inherited.  Caused problems in later search for inherited methods.
+
+    o	str() works properly for method definitions and other S4-classed
+	function objects.
+
+    o	JAVA_LIBS are now set correctly on MacOS X.
+
+    o	Fix null-termination issue suspected of causing crash with Fedora
+	Extra RPMS (PR#9339, Justin Harrington, analysis and fix from Bill
+	Dunlap).
+
+    o	Namespaces restored via a saved session silently failed to cache
+	their methods because the methods package was not yet
+	attached.  Fixed by attaching methods before restoring data.
+
+    o	rbind()ing a list to a data frame generated invalid row names,
+	which were an error in 2.4.0. (PR#9346)
+
+    o	boxplot.stats(x) now returns the correct minimum instead of an
+	error for x <- c(1,Inf,Inf,Inf), and hence boxplot(x) "works".
+
+    o	promptClass() now uses \linkS4class{<ClassName>} instead of
+	of \link{<ClassName>-class}.
+
+    o	gc() no longer reports nonsense values for the number of used
+	Vcells if the true value exceeds 2^31 (and hence over 16Gb of
+	heap is in use): it now reports NA. (PR#9345)
+
+    o	rapply() now detects more user errors in supplying arguments. (PR#9349)
+
+    o	boxplot() was ignoring argument 'boxfill'. (PR#9352)
+
+    o	plot.lm(which = 6, id.n = 0) did not work. (PR#9333)
+
+    o	.deparseOpts("delayPromises") was not matching the C code,
+	returning 64 rather than 32.
+
+    o	bxp() could use partial matching on 'pars' when finding
+	defaults for some of its parameters, e.g. a setting of 'cex.axis'
+	in 'pars' or inline was used to set a default for 'outcex'.
+
+    o	acf() now allows lag.max = 0 except when type="partial", and
+	forces the lag 0 autocorrelation to 1. (PR#9360)
+
+    o	hist(*, include.lowest=., right=., plot=FALSE) does not warn
+	anymore, (PR#9356) and more.
+
+    o	Some bugs in caching superclass/subclass relations and in
+	removing those relations on detach and on removeClass() have
+	been fixed.
+
+    o	readBin() could return one too many strings if 'n' was an
+	over-estimate. (PR#9361)
+
+    o	A request for an opaque colour in the pdf() device after a
+	translucent one did not set the transparency back to opaque in
+	2.4.0.
+
+	Semi-transparent background colours were not being plotted on
+	the pdf() device.
+
+    o	plot.lm(which=5) in the case of constant leverage re-ordered
+	the factor levels but not the residuals, so the labelling by
+	factor level was often incorrect.
+
+    o	packBits() was not accepting a logical argument. (PR#9374)
+
+    o	make install was omitting doc/FAQ and doc/RESOURCES.
+
+    o	A two-sample t.test(x, y, var.equal=TRUE) did not allow one of the
+	groups to be of size one.
+
+    o	The "ts" method for print() failed on some corrupted objects
+	of class "ts", e.g. those without a "tsp" attribute.
+
+    o	structure() reordered the "class" value given if there was a
+	"tsp" value specified.
+
+    o	pairs() now does pass appropriate parts of '...' to the
+	'diag.panel' argument. (PR#9384)
+
+    o	plot.lm() was using an incorrect estimate of dispersion for
+	some GLMs (including family=binomial and family=poisson).
+	(PR#9316)
+
+    o	Subsetting operators were setting R_Visible too early, so
+	assignments in arguments could make the result invisible.
+	(PR#9263)
+
+    o   The tk-GUI was displaying a warning due to an extra comma in
+        the list of manuals (PR#9396)
+    
+    o	packageDescription() now gives an explicit error on a corrupt
+	DESCRIPTION file.
+
+    o   There was a scoping issue with tcltk callbacks given as
+        unevaluated expressions. This has only been partially fixed, a
+        complete fix probably requires redesign.
+
+    o	trace() had its return value documented incorrectly and was
+	sometimes visible when it should not have been.
+	
+    o	pchisq() would sometimes use the wrong tail when calculating
+	non-central probabilities with lower.tail = FALSE. (PR#9406)
+	
+    o	rm() could remove the wrong objects when passed an expression.
+	(PR#9399)  Now only names are allowed in the '...' argument,
+	and the incorrect documentation of what happened with
+	character objects is corrected.
+
+    o	url() was not supporting 'encoding' except on file:// URLs.
+
+
+
 		CHANGES IN R VERSION 2.4.0
 
 

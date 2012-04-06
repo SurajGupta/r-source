@@ -100,6 +100,7 @@ static Rboolean url_open(Rconnection con)
     if(strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
     else con->text = TRUE;
     con->save = -1000;
+    set_iconv(con);
     return TRUE;
 }
 
@@ -937,9 +938,7 @@ void RxmlMessage(int level, const char *format, ...)
 }
 
 #include "sock.h"
-#ifdef Win32
-# define STRICT_R_HEADERS
-#endif
+#define STRICT_R_HEADERS
 #include <R_ext/RS.h> /* for Calloc */
 
 void
@@ -953,7 +952,7 @@ R_init_internet(DllInfo *info)
 #endif
 {
     R_InternetRoutines *tmp;
-    tmp = Calloc(1, R_InternetRoutines);
+    tmp = R_Calloc(1, R_InternetRoutines);
 
     tmp->download = in_do_download;
     tmp->newurl =  in_R_newurl;

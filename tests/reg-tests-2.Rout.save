@@ -1,6 +1,6 @@
 
-R version 2.4.0 beta (2005-09-25 r39509)
-Copyright (C)  The R Foundation for Statistical Computing
+R version 2.5.0 Under development (unstable) (2006-11-28 r40035)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -4042,7 +4042,7 @@ quote(b)
 > seek(zz, 0, "start")
 [1] 18
 > readBin(zz, "character", 100)  # is confused by embedded nul.
-[1] "A test string" ""             
+[1] "A test string"
 Warning message:
 incomplete string at end of file has been discarded 
 > seek(zz, 0, "start")
@@ -5179,9 +5179,9 @@ Error in prod(..., na.rm = na.rm) : invalid 'type' (raw) of argument
 > 
 > r <- hist(rnorm(100), plot = FALSE, breaks = 12,
 +           ## arguments which don't make sense for plot=FALSE - give a warning:
-+           right = FALSE, col = "blue")
++           xlab = "N(0,1)", col = "blue")
 Warning message:
-arguments 'right', 'col' are not made use of in: hist.default(rnorm(100), plot = FALSE, breaks = 12, right = FALSE,  
+arguments 'col', 'xlab' are not made use of in: hist.default(rnorm(100), plot = FALSE, breaks = 12, xlab = "N(0,1)",  
 > ## gave no warning in 2.3.0 and earlier
 > 
 > 
@@ -5571,4 +5571,38 @@ Residual standard error: 1.735 on 44 degrees of freedom
 > 
 > 
 > ### end of tests added in 2.4.0 ###
+> 
+> 
+> ## Platform-specific behaviour in lowess reported to R-help
+> ## 2006-10-12 by Frank Harrell
+> x <- c(0,7,8,14,15,120,242)
+> y <- c(122,128,130,158,110,110,92)
+> lowess(x, y, iter=0)
+$x
+[1]   0   7   8  14  15 120 242
+
+$y
+[1] 121.95735 128.00000 131.06649 136.93673 126.76467 109.99903  92.00003
+
+> lowess(x, y)
+$x
+[1]   0   7   8  14  15 120 242
+
+$y
+[1] 122 128 128 158 110 110  92
+
+> ## MAD of iterated residuals was zero, and result depended on the platform.
+> 
+> 
+> ## PR#9263: problems with R_Visible
+> a <- list(b=5)
+> a[[(t<-'b')]]
+[1] 5
+> x <- matrix(5:-6, 3)
+> x[2, invisible(3)]
+[1] -2
+> ## both invisible in 2.4.0
+> 
+> 
+> ### end of tests added in 2.4.1 ###
 > 

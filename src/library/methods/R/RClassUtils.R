@@ -412,7 +412,7 @@ isVirtualClass <-
 
 assignClassDef <-
   ## assign the definition of the class to the specially named object
-  function(Class, def, where = .GlobalEnv) {
+  function(Class, def, where = .GlobalEnv, force = FALSE) {
       if(!is(def,"classRepresentation"))
           stop(gettextf("trying to assign an object of class \"%s\" as the definition of class \"%s\": must supply a \"classRepresentation\" object",
                         class(def), Class), domain = NA)
@@ -420,8 +420,18 @@ assignClassDef <-
       if(!.identC(Class, clName))
           stop(gettextf("assigning as \"%s\" a class representation with internal name \"%s\"",
                         Class, def@className), domain = NA)
-      .cacheClass(clName, def)
-      assign(classMetaName(Class), def, where)
+      where <- as.environment(where)
+      mname <- classMetaName(Class)
+      if(exists(mname, envir = where, inherits = FALSE) && bindingIsLocked(mname, where)) {
+          if(force)
+            .assignOverBinding(mname, def, where, FALSE)
+          else
+            stop(gettextf("Class \"%s\" has a locked definition in package \"%s\"",
+                          Class, getPackageName(where)))
+      }
+      else
+          assign(mname, def, where)
+      .cacheClass(clName, def, is(def, "ClassUnionRepresentation"))
   }
 
 
@@ -1445,13 +1455,13 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
 
 ## bootstrap version:  all classes and methods must be in the version of the methods
 ## package being built in the toplevel environment: MUST avoid require("methods") !
-.requirePackage <- function(package)
+.requirePackage <- function(package, mustFind = TRUE)
     topenv(parent.frame())
 
 .PackageEnvironments <- new.env(hash=TRUE) # caching for required packages
 
 ## real version of .requirePackage
-..requirePackage <- function(package) {
+..requirePackage <- function(package, mustFind = TRUE) {
     value <- package
     if(is.character(package)) {
         if(package %in% loadedNamespaces())
@@ -1473,9 +1483,13 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
     if(exists(".packageName", topEnv, inherits=TRUE) &&
        .identC(package, get(".packageName", topEnv)))
         return(topEnv) # kludge for source'ing package code
-    if(!require(package, character.only = TRUE))
-        stop(gettextf("unable to find required package \"%s\"", package),
-             domain = NA)
+    if(!require(package, character.only = TRUE)) {
+        if(mustFind)
+          stop(gettextf("unable to find required package \"%s\"", package),
+               domain = NA)
+        else
+          return(NULL)
+    }
     value <- .asEnvironmentPackage(package)
     assign(package, value, envir = .PackageEnvironments)
     value
@@ -1576,7 +1590,9 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
 ## See .cacheGeneric, etc. for analogous computations for generics
 .classTable <- new.env(TRUE, baseenv())
 
-.cacheClass <- function(name, def) {
+.cacheClass <- function(name, def, doSubclasses = FALSE) {
+    if(!identical(doSubclasses, FALSE))
+      .recacheSubclasses(def@className, def, doSubclasses)
     if(exists(name, envir = .classTable, inherits = FALSE)) {
         newpkg <- def@package
         prev <- get(name, envir = .classTable)
@@ -1616,7 +1632,7 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
           return(remove(list = name, envir = .classTable))
         else if(length(prev) == 1)
           prev <- prev[[1]]
-        assign(name, prev, envir  = .ClassTable)
+        assign(name, prev, envir  = .classTable)
     }
 }
 
@@ -1645,7 +1661,12 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
       NULL
 }
 
-.scanUnionClass <- function(class, def) {
+### insert superclass information into all the subclasses of this
+### class.  Used to incorporate inheritance information from
+### ClassUnions
+.recacheSubclasses <- function(class, def, subclasses) {
+    if(identical(subclasses, TRUE))
+      subclasses <- class
     subs <- def@subclasses
     subNames <- names(subs)
     for(i in seq(along = subs)) {
@@ -1653,12 +1674,110 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
         subDef <- getClassDef(what)
         if(is.null(subDef))
           warning(
-           gettextf("Undefined member, \"%s\", of union \"%s\" (not added during attach)",
+           gettextf("Undefined subclass, \"%s\", of class \"%s\"; definition not updated",
                     what, def@className))
-        else {
+        else if(match(what, subclasses, 0) > 0)
+          next # would like warning, but seems to occur often
+          #warning(
+             #gettextf("Apparent loop in subclasses: \"%s\" found twice; ignored this time", what))
+        else if(is.na(match(what, names(subDef@contains)))) {
+            subclasses <- c(subclasses, what)
             subDef@contains[[class]] <- subs[[i]]
-            .cacheClass(what, subDef)
+            .cacheClass(what, subDef, subclasses)
         }
     }
 }
 
+## alternative to .recacheSubclasses, only needed for non-unions
+## Inferior in that nonlocal subclasses will not be updated, hence the
+## warning when the subclass is not in where
+.checkSubclasses <- function(class, def, class2, def2, where) {
+    where <- as.environment(where)
+   subs <- def@subclasses
+    subNames <- names(subs)
+    extDefs <- def2@subclasses
+    for(i in seq(along = subs)) {
+        what <- subNames[[i]]
+        if(.identC(what, class2))
+          next # catch recursive relations
+        cname <- classMetaName(what)
+        if(exists(cname, envir = where, inherits = FALSE))
+          subDef <- get(cname, where)
+        else {
+          warning(
+             gettextf("Subclass \"%s\" of class \"%s\" is not local and cannot be updated for new inheritance information; consider setClassUnion()",
+                      what, class))
+          next
+        }
+        extension <- extDefs[[what]]
+        if(is.null(extension)) # not possible if the setIs behaved?
+          warning(
+              gettextf("No definition of inheritance from \"%s\" to \"%s\", though the relation was implied by the setIs() from \"%s\"",
+                       what, def2@className, class))
+        else if(is.na(match(class2, names(subDef@contains)))) {
+            subDef@contains[[class2]] <- extension
+            assignClassDef(what, subDef, where, TRUE)
+        }
+    }
+}
+
+.removeSuperclassBackRefs <- function(Class, classDef, classWhere) {
+    if(length(classDef@contains)>0) {
+        superclasses <- names(classDef@contains)
+        for(what in superclasses) {
+            superWhere <- findClass(what, classWhere)
+            if(length(superWhere)>0) {
+                superWhere <- superWhere[[1]]
+                .removeSubClass(what, Class, superWhere)
+            }
+            else
+              warning(gettextf("Couldn't find superclass \"%s\" to clean up when removing subclass references to class \"%s\"",
+                               what, Class))
+        }
+    }
+}
+      
+    
+## remove subclass from the known subclasses of class
+## both in the package environment and in the cache
+.removeSubClass <- function(class, subclass, where) {
+    mname <- classMetaName(class)
+    where <- as.environment(where)
+    if(exists(mname, envir = where, inherits = FALSE)) {
+        cdef <- get(mname, envir = where)
+        newdef <- .deleteSubClass(cdef, subclass)
+        if(!is.null(newdef))
+          assignClassDef(class, newdef,  where, TRUE)
+        else { # check the cache 
+            cdef <- .getClassFromCache(cdef@className, where)
+            if(is.null(cdef)) {}
+            else {
+                newdef <- .deleteSubClass(cdef, subclass)
+                if(!is.null(newdef))
+                  .cacheClass(class, newdef)
+            }
+        }
+        sig <- signature(from=subclass, to=class)
+        if(existsMethod("coerce", sig))
+          .removeCachedMethod("coerce", sig)
+        if(existsMethod("coerce<-", sig))
+          .removeCachedMethod("coerce<-", sig)
+        .uncacheClass(class, cdef)
+    }
+    else
+      warning(gettextf("No class \"%s\" found as expected in removing subclass \"%s\"",
+                       class, subclass))
+}
+
+.deleteSubClass <- function(cdef, subclass) {
+        subclasses <- cdef@subclasses
+        ii <- match(subclass, names(subclasses), 0)
+        ## the subclass may not be there, e.g., if an error occured in
+        ## setClass, or (in 2.4.0) if class is sealed
+        if(ii > 0) {
+            cdef@subclasses <- subclasses[-ii]
+            cdef
+        }
+        else
+          NULL
+    }

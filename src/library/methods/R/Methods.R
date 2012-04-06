@@ -81,6 +81,16 @@ setGeneric <-
     }
     if(doUncache)
       .uncacheGeneric(name, oldDef)
+    groups = fdef@group
+    for(group in groups) { # add as member of group generic(s) if not there
+        gdef <- getGeneric(group)
+        if(is(gdef, "groupGenericFunction") &&
+           is.na(match(fdef@generic, as.character(gdef@groupMembers)))) {
+            gwhere <- .genEnv(group, where)
+            gdef@groupMembers <- c(gdef@groupMembers, list(fdef@generic))
+            assign(group, gdef, gwhere)
+        }
+    }
     assign(name, fdef, where)
     .cacheGeneric(name, fdef)
     if(!.UsingMethodsTables() &&
@@ -265,10 +275,18 @@ getMethodsForDispatch <- function(f, fdef)
 cacheMethod <-
   ## cache the given definition in the method metadata for f
   ## Support function:  DON'T USE DIRECTLY (does no checking)
-  function(f, sig, def, args = names(sig), fdef) {
+  function(f, sig, def, args = names(sig), fdef, inherited = FALSE) {
     ev <- environment(fdef)
-    if(.UsingMethodsTables())
-      .cacheMethodInTable(fdef, sig, def, .getMethodsTable(fdef, ev))
+    if(.UsingMethodsTables()) {
+        .cacheMethodInTable(fdef, sig, def,
+                            .getMethodsTable(fdef, ev, inherited = inherited))
+        ## if this is not an inherited method, update the inherited table as well
+        ## TODO:  in this case, should uncache inherited methods, though the callin
+        ##  function will normally have done this.
+        if(!inherited)
+          .cacheMethodInTable(fdef, sig, def,
+                              .getMethodsTable(fdef, ev, inherited = TRUE))
+    }
     else {
       methods <- get(".Methods", envir = ev)
       methods <- insertMethod(methods, sig, args, def, TRUE)
@@ -279,6 +297,9 @@ cacheMethod <-
       methods
     }
   }
+
+.removeCachedMethod <- function(f, sig, fdef = getGeneric(f))
+    cacheMethod(f, sig, NULL, names(sig), fdef)
 
 
 setMethod <-
@@ -764,7 +785,7 @@ showMethods <-
              showEmpty, printTo = stdout())
 {
     if(missing(showEmpty))
-      showEmpty <- !missing(f)
+	showEmpty <- !missing(f)
     if(identical(printTo, FALSE)) {
         tmp <- tempfile()
         on.exit(unlink(tmp))

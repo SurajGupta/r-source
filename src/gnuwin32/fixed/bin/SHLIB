@@ -24,7 +24,7 @@ use File::Path;
 use R::Utils;
 
 
-my $revision = ' $Rev: 38099 $ ';
+my $revision = ' $Rev: 40038 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -84,7 +84,7 @@ if (-r "$HOME/.R/Makevars.win32") {
     $makefiles="$makefiles -f \"$HOME/.R/Makevars\"";
 }
 
-system("make $makefiles RHOME=$R_HOME $debug DLLNAME=$dllname CSOURCES='$csrcs' CFSOURCES='$srcs' CXXSOURCES='$cxx' RCOBJ= PKG_LIBS='$pkg_libs'");
+system("make $makefiles RHOME=$R_HOME $debug DLLNAME=$dllname CSOURCES='$csrcs' CFSOURCES='$srcs' CXXSOURCES='$cxx' RCOBJ= PKG_LIBS2='$pkg_libs'");
 
 
 sub usage {
