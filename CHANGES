@@ -1,4 +1,50 @@
+		CHANGES IN R VERSION 0.61.2
 
+BUG FIXES
+
+    o   Output of correlation matrix in summary.glm() no longer default
+
+    o   Docs for predict.lm
+
+    o   Subset and transform functions (to make life with dataframes
+	easier) copied from 0.62.
+
+    o   (copy from 0.62) check.names argument to data.frame,
+	default rownames 1:n
+
+    o   Axes were labeled strangely for extreme extents.  This should be
+	much better thanks to a fix to GPretty(.) in graphics/graphics.c
+
+    o   pretty(999) resulted in an infinite loop due to integer overflow.
+	pretty(.) now sometimes returns different results than before.
+
+    o   pi:6  now works as in S.
+
+    o	[.data.frame caused segfault if called with non-dataframe argument
+
+    o	hist() now is more compatible to S, has a new `labels' argument,
+	and should work ok for non-equidistant breaks.
+
+    o   lgamma(-1e7) segfaulted.
+
+    o   formatC(pi,dig=20,wid=2) segfaulted.
+
+    o   quantile(..., pr = c(1,2,5)/1000)  gave all names as "0%".
+
+    o   In 0.61.1, model.matrix was fixed to pay attention to the names of
+	the names of its data arg, but the data arg was defaulting to an
+	unnamed list, so  model.matrix(~x)  failed...
+
+    o   Indexing with [[]] and a zero-length vector segfaulted.
+
+    o   Coercion of factors as in S-plus
+
+    o   dyn.load statement in demos/dynload/zero.R fixed
+
+    o   Factors could get allocated without the OBJECT bit, which
+	nearly drove Kurt mad trying to write plot.factor...
+
+    o   Fixed confidence limit problem in t.test
 
 		CHANGES IN R VERSION 0.61.1
 
@@ -112,8 +158,8 @@ NEW FEATURES
 
 BUG FIXES
 
-    o	A file was closed multiple times if an error message occured
-	after sourcing a file.  In some versions of Linux this caused
+    o	A file was closed multiple times if an error message occurred
+	after sourcing a file.	In some versions of Linux this caused
 	a core dump.
 
     o   The inclusion <readline/history.h> was causing problems with
@@ -215,7 +261,7 @@ BUG FIXES
 		glm(y~., data=df)
 
 	will now work.	The RHS of the model will consist of an
-	additive model containing all (non-respose) variabels in the
+	additive model containing all (non-response) variables in the
 	given data frame.
 
     o	The following type of assignment to data frame subsets
@@ -253,7 +299,7 @@ BUG FIXES
 	Dealing with (close to) collinear situations is still not flexible
 	enough.
 
-    o   internal postcript() improved (missing lines in boxplot(.)).
+    o	internal postscript() improved (missing lines in boxplot(.)).
 
     o   Improvement to many (even most ?) documentation (.Rd) files.
 
@@ -354,7 +400,7 @@ BUG FIXES
     (Hill 1970, CACM) appears to be much faster and more accurate than
     Splus.
 
- o  A final Newton step has beed added to give a final "polish" to
+ o  A final Newton step has been added to give a final "polish" to
     the quantiles produced by pnorm().	These should be close to full
     accuracy now.
 
