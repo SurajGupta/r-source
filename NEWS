@@ -6,6 +6,206 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.5.1
+
+
+NEW FEATURES
+
+    o	density(1:20, bw = "SJ") now works as bw.SJ() now tries a larger
+	search interval than the default (lower, upper) if it does not
+	find a solution within the latter.
+
+    o	The output of library() (no arguments) is now sorted by library
+	trees in the order of .libPaths() and not alphabetically.
+
+    o	R_LIBS_USER and R_LIBS_SITE feature possible expansion of
+    	specifiers for R version specific information as part of the
+    	startup process.
+
+    o	C-level warning calls now print a more informative context,
+	as C-level errors have for a while.
+
+    o	There is a new option "rl_word_breaks" to control the way the
+	input line is tokenized in the readline-based terminal
+	interface for object- and file-name completion.
+	This allows it to be tuned for people who use their space bar
+	vs those who do not.  The default now allows filename-completion
+	with +-* in the filenames.
+
+    o	If the srcfile argument to parse() is not NULL, it will be added
+    	to the result as a "srcfile" attribute.
+
+    o	It is no longer possible to interrupt lazy-loading (which was
+	only at all likely when lazy-loading environments), which
+	would leave the object being loaded in an unusable state.
+	This is a temporary measure: error-recovery when evaluating
+	promises will be tackled more comprehensively in 2.6.0.
+
+
+INSTALLATION
+
+    o	'make check' will work with --without-iconv, to accommodate
+	building on AIX where the system iconv conflicts with
+	libiconv and is not compatible with R's requirements.
+
+    o	There is support for 'DESTDIR': see the R-admin manual.
+
+    o	The texinfo manuals are now converted to HTML with a style
+	sheet: in recent versions of makeinfo the markup such as @file
+	was being lost in the HTML rendering.
+
+    o	The use of inlining has been tweaked to avoid warnings from
+	gcc >= 4.2.0 when compiling in C99 mode (which is the default
+	from configure).
+
+
+BUG FIXES
+
+    o	as.dendrogram() failed on objects of class "dendrogram".
+
+    o	plot(type ="s") (or "S") with many (hundreds of thousands)
+	of points could overflow the stack.  (PR#9629)
+
+    o	Coercing an S4 classed object to "matrix" (or other basic class)
+	failed to unset the S4 bit.
+
+    o	The 'useS4' argument of print.default() had been broken by an
+	unrelated change prior to 2.4.1.  This allowed print() and
+	show() to bounce badly constructed S4 objects between
+	themselves indefinitely.
+
+    o	Prediction of the seasonal component in HoltWinters() was one
+	step out at one point in the calculations.
+
+	decompose() incorrectly computed the 'random' component for a
+	multiplicative fit.
+
+    o	Wildcards work again in unlink() on Unix-alikes (they did not
+	in 2.5.0).
+
+    o	When qr() used pivoting, the coefficient names in qr.coef() were
+	not pivoted to match.  (PR#9623)
+
+    o	UseMethod() could crash R if the first argument was not a
+	character string.
+
+    o	R and Rscript on Unix-alikes were not accepting spaces in -e
+	arguments (even if quoted).
+
+    o	Hexadecimal integer constants (e.g. 0x10L) were not being parsed
+	correctly on platforms where the C function atof did not
+	accept hexadecimal prefixes (as required by C99, but not
+	implemented in MinGW as used by R on Windows).  (PR#9648)
+
+    o	libRlapack.dylib on Mac OS X had no version information and
+	sometimes an invalid identification name.
+
+    o	Rd conversion of \usage treated '\\' as a single backslash in
+	all but latex: it now acts consistently with the other
+	verbatim-like environments (it was never 'verbatim' despite
+	the documentation).
+
+	\code{\.} is now rendered as '\.' in all formats, as
+	documented (it was not the case for latex conversion).
+
+	codoc() (and checkDocStyle() and checkDocUsage()) now apply
+	the same transformations to \usage as Rd conversion does,
+	so {, % and \\ in strings in usages will now be related
+	correctly to the help files.
+
+    o	rbind() failed if the only data frame had 0 rows. (PR#9657)
+
+    o	<a data.frame>[i, j] could sometimes select the wrong column
+	when j is numeric if there are duplicate column names.
+
+    o	sample(x, size, replace=TRUE, prob) had a memory leak if
+	10000 < size <= 100000.
+
+    o	x <- cbind(1:2); rownames(x) <- factor(c("A",NA))  now longer
+	segfaults.
+
+    o	R CMD BATCH no longer assumes Sys.unsetenv() is supported (it
+	is not on older Solaris systems).
+
+    o	median() returned a logical result when it was 'NA': it now
+	returns an NA of appropriate type (e.g. integer or double).
+
+    o	grep(fixed = TRUE, perl = TRUE) ignored 'fixed', although it
+	was documented to ignore 'perl'
+	Same for [g]regexpr and [g]sub.
+
+    o	getNamespaceExports("base") works again.
+
+    o	runmed(c(), 1) no longer segfaults.
+
+    o	qr.coef(QR, b) failed for an LAPACK-produced QR if b was
+	integer or for an over-determined system.
+
+	qr.solve() for an under-determined system produces a
+	solution with 0 and not NA for columns which are unused.
+
+    o	segments() was not handling full transparency correctly in PDF.
+	(PR#9694)
+
+	Nor was arrows().
+
+    o	callGeneric() inside a method with extra arguments {and hence
+	currently defined via .local()} now works.
+
+    o	[g]sub(fixed=TRUE, useBytes=FALSE) could substitute in the
+	wrong place in an MBCS locale.
+
+	gregexpr() could give incorrect answers in MBCS locales for
+	perl = TRUE or fixed = TRUE (unless useBytes = TRUE).
+
+    o   The legacy quartz() device no longer crashes in locator()
+	if the user attempts to close the window.
+
+    o	"CGGStackRestore: gstack underflow" warning is no longer shown
+	in legacy quartz() device.
+
+    o	formatC() now limits 'digits' to 50 to avoid problems in
+	C-level sprintf in some OSes.
+
+    o	seq.int(x, y, by=z) gave 'x' (and not an error) if
+	0 > (y-x)/z > -1.
+
+    o	promptClass() now lists methods, including those for generics in
+	other attached packages.
+
+    o	Connection-related functions such as readBin() no longer crash
+	when supplied with a non-connection object.
+
+    o	as.character.srcref() didn't handle bad srcref objects cleanly.
+
+    o	predict.nls() no longer requires 'newdata' to contain exactly
+	the variable names needed to fit the model: variables used on
+	the LHS only are no longer required and further variables are
+	allowed.
+
+    o	plot.hclust() had a 'out by one' error, and ignored the last
+	object when computing the window region (and could overrun
+	arrays).
+
+    o	deriv() was creating results with double (and not integer) dims.
+
+    o	The unserialize code (e.g. as called by load()) looked for a
+	function findPackageEnv() to set a saved package environment.
+	This was missing, but is now supplied.
+
+    o	[cr]bind could segfault when creating a list matrix result.
+	(Reported by Martin Morgan.)
+
+    o	besselI(x, nu, exp=TRUE) and besselY(x, nu) could give wrong
+	answers for nu < 0. (Reported by Hiroyuki Kawakatsu.)
+
+    o   [g]sub could confuse a trailing byte '\' for a backreference
+	in MBCSs where '\' can occur as a trailing byte (not UTF-8 nor
+	EUC-JP, but SJIS and the CJK character sets used on Windows).
+	(PR#9751) 
+
+
+
 		CHANGES IN R VERSION 2.5.0
 
 
@@ -430,6 +630,9 @@ NEW FEATURES
     o	There have been numerous performance improvements to the data
 	editor on both Windows and X11.	 In particular, resizing the
 	window works much better on X11.
+
+    o	Packages graphics and grid no longer require grDevices, as
+	they might be used only with third-party devices.
 
 
 DEPRECATED & DEFUNCT

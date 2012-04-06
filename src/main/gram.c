@@ -2658,7 +2658,7 @@ static SEXP makeSrcref(YYLTYPE *lloc, SEXP srcfile)
     return val;
 }
 
-static SEXP attachSrcrefs(SEXP val)
+static SEXP attachSrcrefs(SEXP val, SEXP srcfile)
 {
     SEXP t, srval;
     int n;
@@ -2669,6 +2669,7 @@ static SEXP attachSrcrefs(SEXP val)
     for (n = 0 ; n < LENGTH(srval) ; n++, t = CDR(t))
     	SET_VECTOR_ELT(srval, n, CAR(t));
     setAttrib(val, R_SrcrefSymbol, srval);
+    setAttrib(val, R_SrcfileSymbol, srcfile);
     UNPROTECT(1);
     SrcRefs = NULL;
     return val;
@@ -3158,7 +3159,7 @@ static SEXP xxexprlist(SEXP a1, SEXP a2)
 	SETCAR(a2, a1);
 	if (SrcFile) {
 	    PROTECT(prevSrcrefs = getAttrib(a2, R_SrcrefSymbol));
-	    PROTECT(ans = attachSrcrefs(a2));
+	    PROTECT(ans = attachSrcrefs(a2, SrcFile));
 	    REPROTECT(SrcRefs = prevSrcrefs, srindex);
 	    /* SrcRefs got NAMED by being an attribute... */
 	    SET_NAMED(SrcRefs, 0);
@@ -3509,7 +3510,7 @@ finish:
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
     if (SrcFile) {
-    	rval = attachSrcrefs(rval);
+    	rval = attachSrcrefs(rval, SrcFile);
         SrcFile = NULL;    
     }
     R_PPStackTop = savestack;
@@ -3655,7 +3656,7 @@ finish:
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
     if (SrcFile) {
-    	rval = attachSrcrefs(rval);
+    	rval = attachSrcrefs(rval, SrcFile);
         SrcFile = NULL;    
     }	
     R_PPStackTop = savestack;
@@ -3835,7 +3836,6 @@ static int KeywordLookup(char *s)
 
 static SEXP mkFloat(char *s)
 {
-    SEXP t = R_NilValue;
     double f;
     if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
 	double ret = 0; char *p = s + 2;
@@ -3847,11 +3847,23 @@ static SEXP mkFloat(char *s)
 	}	
 	f = ret;
     } else f = atof(s);
-    if(GenerateCode) {
-        t = allocVector(REALSXP, 1);
-        REAL(t)[0] = f;
-    }
-    return t;
+    return ScalarReal(f);
+}
+
+static SEXP mkInt(char *s)
+{
+    double f;
+    if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
+	double ret = 0; char *p = s + 2;
+	for(; p; p++) {
+	    if('0' <= *p && *p <= '9') ret = 16*ret + (*p -'0');
+	    else if('a' <= *p && *p <= 'f') ret = 16*ret + (*p -'a' + 10);
+	    else if('A' <= *p && *p <= 'F') ret = 16*ret + (*p -'A' + 10);
+	    else break;
+	}	
+	f = ret;
+    } else f = atof(s);
+    return ScalarInteger((int) f);
 }
 
 static SEXP mkComplex(char *s)
@@ -3993,42 +4005,38 @@ static int NumericValue(int c)
 	last = c;
     }
     YYTEXT_PUSH('\0', yyp);
-    if(1 || GenerateCode) {
-        /* Make certain that things are okay. */
-        if(c == 'L') {
-            double a = atof(yytext);
-            int b = (int) atof(yytext); 
-            /* We are asked to create an integer via the L, so we check that the 
-               double and int values are the same. If not, this is a problem and we
-               will not lose information and so use the numeric value.
-             */
-            if(a != (double) b) {
-                if(GenerateCode) {
-                    if(seendot == 1 && seenexp == 0)
-                        warning(_("integer literal %sL contains decimal; using numeric value"), yytext);
-                    else 
-                        warning(_("non-integer value %s qualified with L; using numeric value"), yytext);
-		}
-                asNumeric = 1;
-                seenexp = 1;
-            }
-        }
-
-	if(c == 'i') {
-	    yylval = GenerateCode ? mkComplex(yytext) : R_NilValue;
-	} else if(c == 'L' && asNumeric == 0) {
-	    if(GenerateCode && seendot == 1 && seenexp == 0) 
-		warning(_("integer literal %sL contains unnecessary decimal point"), yytext);
-	    yylval = GenerateCode ? ScalarInteger((int) atof(yytext)) : R_NilValue;
+    /* Make certain that things are okay. */
+    if(c == 'L') {
+	double a = atof(yytext);
+	int b = (int) atof(yytext); 
+	/* We are asked to create an integer via the L, so we check that the 
+	   double and int values are the same. If not, this is a problem and we
+	   will not lose information and so use the numeric value.
+	*/
+	if(a != (double) b) {
+	    if(GenerateCode) {
+		if(seendot == 1 && seenexp == 0)
+		    warning(_("integer literal %sL contains decimal; using numeric value"), yytext);
+		else 
+		    warning(_("non-integer value %s qualified with L; using numeric value"), yytext);
+	    }
+	    asNumeric = 1;
+	    seenexp = 1;
 	}
-	else {
-            if(c != 'L')
-                xxungetc(c);
-	    yylval = GenerateCode ? mkFloat(yytext) : R_NilValue;
-	}
-    } else
-	yylval = R_NilValue;
-
+    }
+    
+    if(c == 'i') {
+	yylval = GenerateCode ? mkComplex(yytext) : R_NilValue;
+    } else if(c == 'L' && asNumeric == 0) {
+	if(GenerateCode && seendot == 1 && seenexp == 0) 
+	    warning(_("integer literal %sL contains unnecessary decimal point"), yytext);
+	yylval = GenerateCode ? mkInt(yytext) : R_NilValue;
+    }
+    else {
+	if(c != 'L')
+	    xxungetc(c);
+	yylval = GenerateCode ? mkFloat(yytext) : R_NilValue;
+    }
 
     PROTECT(yylval);
     return NUM_CONST;
@@ -4192,16 +4200,10 @@ static int StringValue(int c)
 		case ' ':
 		case '\n':
 		    break;
-		case '%':
-		    if(GenerateCode && R_WarnEscapes) {
-			have_warned++;
-			warning(_("'\\%%%%' is an unrecognized escape in a character string"));
-		    }
-		    break;
 		default:
 		    if(GenerateCode && R_WarnEscapes) {
 			have_warned++;
-			warning(_("'\\%c' is an unrecognized escape in a character string"), c);
+			warningcall(R_NilValue, _("'\\%c' is an unrecognized escape in a character string"), c);
 		    }
 		    break;
 		}
@@ -4225,7 +4227,6 @@ static int StringValue(int c)
            if (c == R_EOF) break;
        }
 #endif /* SUPPORT_MBCS */
-	if(c == '%') *ct++ = c;
 	YYTEXT_PUSH(c, yyp);
     }
     YYTEXT_PUSH('\0', yyp);
@@ -4233,12 +4234,14 @@ static int StringValue(int c)
     if(have_warned) {
 	*ct = '\0';
 #ifdef ENABLE_NLS
-	warning(ngettext("unrecognized escape removed from \"%s\"",
-			 "unrecognized escapes removed from \"%s\"",
-			 have_warned),
-		currtext);
+	warningcall(R_NilValue,
+		    ngettext("unrecognized escape removed from \"%s\"",
+			     "unrecognized escapes removed from \"%s\"",
+			     have_warned),
+		    currtext);
 #else
-	warning("unrecognized escape(s) removed from \"%s\"", currtext);
+	warningcall(R_NilValue,
+		    "unrecognized escape(s) removed from \"%s\"", currtext);
 #endif
     }
     return STR_CONST;

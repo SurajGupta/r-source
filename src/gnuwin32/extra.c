@@ -85,17 +85,8 @@ static int R_unlink(char *names, int recursive)
 		GetShortPathName(dir, tmp, MAX_PATH);
 		if(rmdir(tmp)) failures++;
 	    } else failures++; /* don't try to delete dirs */
-	} else {/* Regular file (or several) */
-	    strcpy(dir, tmp);
-	    if ((p = Rf_strrchr(dir, '\\'))) *(++p) = '\0'; else *dir = '\0';
-	    /* check for wildcard matches */
-	    fh = FindFirstFile(tmp, &find_data);
-	    if (fh != INVALID_HANDLE_VALUE) {
-		failures += R_unlink_one(dir, find_data.cFileName, 0);
-		while(FindNextFile(fh, &find_data))
-		    failures += R_unlink_one(dir, find_data.cFileName, 0);
-		FindClose(fh);
-	    }
+	} else {/* Regular file */
+	    failures += R_unlink_one("", names, 0);
 	}
     }
     return failures;
@@ -791,7 +782,7 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
     wselect = newwindow(haveTitle ? CHAR(STRING_ELT(CADDDR(args), 0)):
 			(multiple ? _("Select one or more") : _("Select one")),
 			rect(0, 0, xmax, ymax),
-			Titlebar | Centered | Modal);
+			Titlebar | Centered | Modal | Floating);
     setbackground(wselect, dialog_bg());
     if(multiple)
 	f_list = newmultilist(clist, rect(10, 10, xmax-25, ylist), NULL);
@@ -857,7 +848,11 @@ int Rwin_rename(char *from, char *to)
 
 void R_CleanTempDir()
 {
-    if(Sys_TempDir) R_unlink(Sys_TempDir, 1);
+    if(Sys_TempDir) {
+	/* Windows cannot delete the current working directory */
+	SetCurrentDirectory(R_HomeDir());
+	R_unlink(Sys_TempDir, 1);
+    }
 }
 
 SEXP do_getClipboardFormats(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1397,6 +1392,88 @@ Rboolean winNewFrameConfirm(void)
     gadesc *xd = gdd->dev->deviceSpecific;
     return xd->newFrameConfirm();
 }
+
+/* 
+   Replacement for MSVCRT's access.
+   Coded looking at tcl's tclWinFile.c
+*/
+
+extern int GA_isNT;
+
+int winAccess(const char *path, int mode)
+{
+    DWORD attr = GetFileAttributes(path);
+    
+    if(attr == 0xffffffff) return -1;
+    if(mode == F_OK) return 0;
+
+    if(mode & X_OK)
+	if(!(attr & FILE_ATTRIBUTE_DIRECTORY)) { /* Directory, so OK */
+	    /* Look at extension for executables */
+	    char *p = strrchr(path, '.');
+	    if(p == NULL || 
+	       !((stricmp(p, ".exe") == 0) || (stricmp(p, ".com") == 0) ||
+		 (stricmp(p, ".bat") == 0) || (stricmp(p, ".cmd") == 0)) )
+		return -1;
+	}
+    if(GA_isNT) {
+	/* Now look for file security info, which is NT only */
+	SECURITY_DESCRIPTOR *sdPtr = NULL;
+	unsigned long size = 0;
+	GENERIC_MAPPING genMap;
+	HANDLE hToken = NULL;
+	DWORD desiredAccess = 0;
+	DWORD grantedAccess = 0;
+	BOOL accessYesNo = FALSE;
+	PRIVILEGE_SET privSet;
+	DWORD privSetSize = sizeof(PRIVILEGE_SET);
+	int error;
+
+	/* get size */
+	GetFileSecurity(path, 
+			OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
+			| DACL_SECURITY_INFORMATION, 0, 0, &size);
+	error = GetLastError();
+	if (error != ERROR_INSUFFICIENT_BUFFER) return -1;
+	sdPtr = (SECURITY_DESCRIPTOR *) alloca(size);
+	if(!GetFileSecurity(path, 
+			    OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
+			    | DACL_SECURITY_INFORMATION, sdPtr, size, &size))
+	    return -1;
+	/*
+	 * Perform security impersonation of the user and open the
+	 * resulting thread token.
+	 */
+	if(!ImpersonateSelf(SecurityImpersonation)) return -1;
+	if(!OpenThreadToken(GetCurrentThread (),
+			    TOKEN_DUPLICATE | TOKEN_QUERY, FALSE,
+			    &hToken)) return -1;
+	if (mode & R_OK) desiredAccess |= FILE_GENERIC_READ;
+	if (mode & W_OK) desiredAccess |= FILE_GENERIC_WRITE;
+	if (mode & X_OK) desiredAccess |= FILE_GENERIC_EXECUTE;
+
+	memset(&genMap, 0x0, sizeof (GENERIC_MAPPING));
+	genMap.GenericRead = FILE_GENERIC_READ;
+	genMap.GenericWrite = FILE_GENERIC_WRITE;
+	genMap.GenericExecute = FILE_GENERIC_EXECUTE;
+	genMap.GenericAll = FILE_ALL_ACCESS;
+	if(!AccessCheck(sdPtr, hToken, desiredAccess, &genMap, &privSet,
+			&privSetSize, &grantedAccess, &accessYesNo)) {
+	    CloseHandle(hToken);
+	    return -1;
+	}
+	CloseHandle(hToken);
+	if (!accessYesNo) return -1;
+
+	if ((mode & W_OK)
+	    && !(attr & FILE_ATTRIBUTE_DIRECTORY)
+	    && (attr & FILE_ATTRIBUTE_READONLY)) return -1;
+    } else {
+	if((mode & W_OK) && (attr & FILE_ATTRIBUTE_READONLY)) return -1;
+    }
+    return 0;
+}
+
 
 
 /* UTF-8 support ----------------------------------------------- */

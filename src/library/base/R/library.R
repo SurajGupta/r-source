@@ -493,10 +493,12 @@ print.libraryIQR <-
 function(x, ...)
 {
     db <- x$results
-    ## Split according to LibPath.
+    ## Split according to LibPath, preserving order of libraries.
+    libs <- db[, "LibPath"]
+    libs <- factor(libs, levels=unique(libs))
     out <- if(nrow(db) == 0)
         NULL
-    else lapply(split(1 : nrow(db), db[, "LibPath"]),
+    else lapply(split(1 : nrow(db), libs),
                 function(ind) db[ind, c("Package", "Title"),
                                  drop = FALSE])
     outFile <- tempfile("RlibraryIQR")
@@ -1018,4 +1020,27 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
         nss <- names(pkgInfo$Imports)
         for(ns in nss) loadNamespace(ns, lib.loc)
     }
+}
+
+.expand_R_libs_env_var <-
+function(x)
+{
+    v <- paste(R.version[c("major", "minor")], collapse = ".")
+
+    expand <- function(x, spec, expansion)
+        gsub(paste("(^|[^%])(%%)*%", spec, sep = ""),
+             sprintf("\\1\\2%s", expansion), x)
+    
+    ## %V => version x.y.z
+    x <- expand(x, "V", v)
+    ## %v => version x.y
+    x <- expand(x, "v", sub("\\.[^.]*$", "", v))
+    ## %p => platform
+    x <- expand(x, "p", R.version$platform)
+    ## %a => arch
+    x <- expand(x, "a", R.version$arch)
+    ## %o => os
+    x <- expand(x, "o", R.version$os)
+
+    gsub("%%", "%", x)
 }

@@ -119,7 +119,7 @@ libnn=lib
 case "${host_os}" in
   linux*)
     case "${host_cpu}" in
-      x86_64|mips64|ppc64|sparc64|s390x)
+      x86_64|mips64|ppc64|powerpc64|sparc64|s390x)
         libnn=lib64
       ;;
     esac
@@ -296,7 +296,7 @@ AC_ARG_ENABLE([mbcs],
 ## BLAS.
 AC_ARG_WITH([blas],
 [AC_HELP_STRING([--with-blas],
-                [use BLAS library, or specify it @<:@no@:>@])],
+                [use system BLAS library (if available), or specify it @<:@no@:>@])],
 [R_ARG_USE(blas)],
 [use_blas=unset])
 # default is "no" except on MacOS X
@@ -304,15 +304,14 @@ AC_ARG_WITH([blas],
 ## LAPACK.
 AC_ARG_WITH([lapack],
 [AC_HELP_STRING([--with-lapack],
-                [use LAPACK library, or specify it @<:@no@:>@])],
+                [use system LAPACK library (if available), or specify it @<:@no@:>@])],
 [R_ARG_USE(lapack)],
 [use_lapack=unset])
 # default is "no" except on MacOS X
 
 ## Readline.
 AC_ARG_WITH([readline],
-[AC_HELP_STRING([--with-readline],
-                [use readline library (if available) @<:@yes@:>@])],
+[AC_HELP_STRING([--with-readline], [use readline library @<:@yes@:>@])],
 [R_ARG_USE(readline)],
 [use_readline=yes])
 
@@ -330,7 +329,7 @@ fi],
 ## Tcl/Tk.
 AC_ARG_WITH([tcltk],
 [AC_HELP_STRING([--with-tcltk],
-                [use Tcl/Tk, or specify its library dir @<:@yes@:>@])],
+                [use Tcl/Tk (if available), or specify its library dir @<:@yes@:>@])],
 [if test "${withval}" = no; then
   want_tcltk=no
 elif test "${withval}" = yes; then
@@ -400,15 +399,14 @@ AM_CONDITIONAL(USE_LIBTOOL, [test "x${use_libtool}" = xyes])
 ## Recommended R packages.
 AC_ARG_WITH([recommended-packages],
 [AC_HELP_STRING([--with-recommended-packages],
-                [use/install recommended R packages (if available)
-                 @<:@yes@:>@])],
+                [use/install recommended R packages @<:@yes@:>@])],
 [R_ARG_USE(recommended_packages)],
 [use_recommended_packages=yes])
 
 ## Iconv.
 AC_ARG_WITH([iconv],
 [AC_HELP_STRING([--with-iconv],
-                [use iconv library (if available) @<:@yes@:>@])],
+                [use iconv library @<:@yes@:>@])],
 [R_ARG_USE(iconv)],
 [use_iconv=yes])
 
@@ -1114,7 +1112,7 @@ if test "${GCC}" = yes; then
 ## has 32k and so can use -fpic.
 ## However, although the gcc docs do not mention it, it seems s390/s390x
 ## also supports and needs -fPIC
-    sparc*|ppc64|s390*)
+    sparc*|ppc64|powerpc64|s390*)
       cpicflags="-fPIC"
       ;;
     *)
@@ -1125,7 +1123,7 @@ if test "${GCC}" = yes; then
 fi
 if test "${G77}" = yes; then
   case "${host_cpu}" in
-    sparc*|ppc64|s390*)
+    sparc*|ppc64|powerpc64|s390*)
       fpicflags="-fPIC"
       ;;
     *)
@@ -1135,7 +1133,7 @@ if test "${G77}" = yes; then
 fi
 if test "${GXX}" = yes; then
   case "${host_cpu}" in
-    sparc*|ppc64|s390*)
+    sparc*|ppc64|powerpc64|s390*)
       cxxpicflags="-fPIC"
       ;;
     *)
@@ -1856,7 +1854,7 @@ AC_SUBST(R_MODULES)
 if test "${use_iconv}" = yes; then
   R_ICONV
   if test "$r_cv_iconv_latin1" != yes; then
-    AC_MSG_ERROR([--with-iconv=yes (default) and suitable iconv is not available])
+    AC_MSG_ERROR([--with-iconv=yes (default) and a suitable iconv is not available])
   fi
 else
     AC_MSG_WARN([--with-iconv=no is deprecated and will be withdrawn shortly])
@@ -2004,7 +2002,7 @@ AC_SUBST(SHLIB_FCLDFLAGS)
 ## use this to pick out gfortran (even though it is unreliable).
 if test "${ac_cv_fc_compiler_gnu}" = yes; then
   case "${host_cpu}" in
-    sparc*|ppc64|s390*)
+    sparc*|ppc64|powerpc64|s390*)
       fcpicflags="-fPIC"
       ;;
     *)

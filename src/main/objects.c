@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 2002-3	      The R Foundation
- *  Copyright (C) 1999-2006   The R Development Core Team.
+ *  Copyright (C) 1999-2007   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -100,10 +100,12 @@ static SEXP applyMethod(SEXP call, SEXP op, SEXP args, SEXP rho, SEXP newrho)
     SEXP ans;
     if (TYPEOF(op) == SPECIALSXP) {
 	int save = R_PPStackTop, flag = PRIMPRINT(op);
+	char *vmax = vmaxget();
 	R_Visible = flag != 1;
 	ans = PRIMFUN(op) (call, op, args, rho);
 	if (flag < 2) R_Visible = flag != 1;
 	check_stack_balance(op, save);
+	vmaxset(vmax);
     }
     /* In other places we add a context to builtins when profiling,
        but we have not bothered here (as there seem to be no primitives 
@@ -112,12 +114,14 @@ static SEXP applyMethod(SEXP call, SEXP op, SEXP args, SEXP rho, SEXP newrho)
      */
     else if (TYPEOF(op) == BUILTINSXP) {
 	int save = R_PPStackTop, flag = PRIMPRINT(op);
+	char *vmax = vmaxget();
 	PROTECT(args = evalList(args, rho, op));
 	R_Visible = flag != 1;
 	ans = PRIMFUN(op) (call, op, args, rho);
 	if (flag < 2) R_Visible = flag != 1;
 	UNPROTECT(1);
 	check_stack_balance(op, save);
+	vmaxset(vmax);
     }
     else if (TYPEOF(op) == CLOSXP) {
 	ans = applyClosure(call, op, args, rho, newrho);
@@ -344,6 +348,8 @@ SEXP attribute_hidden do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(generic = eval(CAR(args), env));
     else 
 	errorcall(call, _("there must be a first argument"));
+    if(!isString(generic) || length(generic) != 1)
+	errorcall(call, _("first argument must be a character string"));
     /* We need to find the generic to find out where it is defined.
        This is set up to avoid getting caught by things like
  

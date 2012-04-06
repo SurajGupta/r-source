@@ -849,14 +849,56 @@ SEXP attribute_hidden do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* This could be faster for plen > 1, but uses in R are for small strings */
-static int fgrep_one(char *pat, char *target, int useBytes)
+static int fgrep_one(char *pat, char *target, int useBytes, int *next)
+{
+    int i = -1, plen=strlen(pat), len=strlen(target);
+    char *p;
+
+    if(plen == 0) {
+	if (next != NULL) *next = 1;
+	return 0;
+    }
+    if(plen == 1) {
+    /* a single byte is a common case */
+	for(i = 0, p = target; *p; p++, i++)
+	    if(*p == pat[0]) {
+		if (next != NULL) *next = i + 1;
+		return i;
+	    }
+	return -1;
+    }
+#ifdef SUPPORT_MBCS
+    if(!useBytes && mbcslocale) { /* skip along by chars */
+	mbstate_t mb_st;
+	int ib, used;
+	mbs_init(&mb_st);
+	for(ib = 0, i = 0; ib <= len-plen; i++) {
+	    if(strncmp(pat, target+ib, plen) == 0) {
+		if (next != NULL) *next = ib + plen;
+		return i;
+	    }
+	    used = Mbrtowc(NULL,  target+ib, MB_CUR_MAX, &mb_st);
+	    if(used <= 0) break;
+	    ib += used;
+	}
+    } else
+#endif
+	for(i = 0; i <= len-plen; i++)
+	    if(strncmp(pat, target+i, plen) == 0) {
+		if (next != NULL) *next = i + plen;
+		return i;
+	    }
+    return -1;
+}
+
+static int fgrep_one_bytes(char *pat, char *target, int useBytes)
 {
     int i = -1, plen=strlen(pat), len=strlen(target);
     char *p;
 
     if(plen == 0) return 0;
     if(plen == 1) {
-    /* a single char is a common case */
+    /* a single byte is a common case */
 	for(i = 0, p = target; *p; p++, i++)
 	    if(*p == pat[0]) return i;
 	return -1;
@@ -867,7 +909,7 @@ static int fgrep_one(char *pat, char *target, int useBytes)
 	int ib, used;
 	mbs_init(&mb_st);
 	for(ib = 0, i = 0; ib <= len-plen; i++) {
-	    if(strncmp(pat, target+ib, plen) == 0) return i;
+	    if(strncmp(pat, target+ib, plen) == 0) return ib;
 	    used = Mbrtowc(NULL,  target+ib, MB_CUR_MAX, &mb_st);
 	    if(used <= 0) break;
 	    ib += used;
@@ -942,8 +984,8 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 		    continue;
 		}
 #endif
-		if (fixed_opt) LOGICAL(ind)[i] =
-				   fgrep_one(cpat, s, useBytes) >= 0;
+		if (fixed_opt)
+		    LOGICAL(ind)[i] = fgrep_one(cpat, s, useBytes, NULL) >= 0;
 		else if(regexec(&reg, s, 0, NULL, 0) == 0)
 		    LOGICAL(ind)[i] = 1;
 	    }
@@ -984,8 +1026,24 @@ static int length_adj(char *repl, regmatch_t *regmatch, int nsubexpr)
 {
     int k, n;
     char *p = repl;
+#ifdef  SUPPORT_MBCS
+    mbstate_t mb_st;
+    mbs_init(&mb_st);
+#endif
+
     n = strlen(repl) - (regmatch[0].rm_eo - regmatch[0].rm_so);
     while (*p) {
+#ifdef  SUPPORT_MBCS
+	if(mbcslocale) {
+	    /* skip over multibyte chars, since they could have
+	       an embedded \ */
+	    int clen;
+	    if((clen = Mbrtowc(NULL, p, MB_CUR_MAX, &mb_st)) > 1) {
+		p += clen;
+		continue;
+	    }
+	}
+#endif
 	if (*p == '\\') {
 	    if ('1' <= p[1] && p[1] <= '9') {
 		k = p[1] - '0';
@@ -1013,7 +1071,23 @@ static char *string_adj(char *target, char *orig, char *repl,
 {
     int i, k;
     char *p = repl, *t = target;
+#ifdef  SUPPORT_MBCS
+    mbstate_t mb_st;
+    mbs_init(&mb_st);
+#endif
+
     while (*p) {
+#ifdef  SUPPORT_MBCS
+	if(mbcslocale) {
+	    /* skip over multibyte chars, since they could have
+	       an embedded \ */
+	    int clen;
+	    if((clen = Mbrtowc(NULL, p, MB_CUR_MAX, &mb_st)) > 1) {
+		for (i = 0; i < clen; i++) *t++ = *p++;
+		continue;
+	    }
+	}
+#endif
 	if (*p == '\\') {
 	    if ('1' <= p[1] && p[1] <= '9') {
 		k = p[1] - '0';
@@ -1118,7 +1192,7 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	    errorcall(call, ("input string %d is invalid in this locale"), i+1);
 #endif
 	if(fixed_opt) {
-	    st = fgrep_one(spat, s, useBytes);
+	    st = fgrep_one_bytes(spat, s, useBytes);
 	    if(st < 0)
 		SET_STRING_ELT(ans, i, STRING_ELT(vec, i));
 	    else if (STRING_ELT(rep, 0) == NA_STRING)
@@ -1129,10 +1203,10 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 		    do {
 			nr++;
 			s += st+patlen;
-		    } while((st = fgrep_one(spat, s, useBytes)) >= 0);
+		    } while((st = fgrep_one_bytes(spat, s, useBytes)) >= 0);
 		    /* and reset */
 		    s = translateChar(STRING_ELT(vec, i));
-		    st = fgrep_one(spat, s, useBytes);
+		    st = fgrep_one_bytes(spat, s, useBytes);
 		} else nr = 1;
 		SET_STRING_ELT(ans, i, allocString(ns + nr*(replen - patlen)));
 		u = CHAR(STRING_ELT(ans, i)); *u ='\0';
@@ -1140,7 +1214,7 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 		    nr = strlen(u);
 		    strncat(u, s, st); u[nr+st] = '\0'; s += st+patlen;
 		    strcat(u, t);
-		} while(global && (st = fgrep_one(spat, s, useBytes)) >= 0);
+		} while(global && (st = fgrep_one_bytes(spat, s, useBytes)) >= 0);
 		strcat(u, s);
 	    }
 	} else {
@@ -1258,7 +1332,7 @@ SEXP attribute_hidden do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 #endif
 	    if (fixed_opt) {
-		st = fgrep_one(spat, s, useBytes);
+		st = fgrep_one(spat, s, useBytes, NULL);
 		INTEGER(ans)[i] = (st > -1)?(st+1):-1;
 #ifdef SUPPORT_MBCS
 		if(!useBytes && mbcslocale) {
@@ -1404,7 +1478,7 @@ static SEXP gregexpr_Regexc(const regex_t *reg, const char *string,
 
 static SEXP gregexpr_fixed(char *pattern, char *string, int useBytes)
 {
-    int patlen, matchIndex, st, foundAll, foundAny, curpos, j, ansSize;
+    int patlen, matchIndex, st, foundAll, foundAny, curpos, j, ansSize, nb;
     SEXP ans, matchlen;         /* return vect and its attribute */
     SEXP matchbuf, matchlenbuf; /* buffers for storing multiple matches */
     int bufsize = 1024;         /* starting size for buffers */
@@ -1417,7 +1491,7 @@ static SEXP gregexpr_fixed(char *pattern, char *string, int useBytes)
 #endif
         patlen = strlen(pattern);
     foundAll = curpos = st = foundAny = 0;
-    st = fgrep_one(pattern, string, useBytes);
+    st = fgrep_one(pattern, string, useBytes, &nb);
     matchIndex = -1;
     if (st < 0) {
         INTEGER(matchbuf)[0] = -1;
@@ -1428,9 +1502,9 @@ static SEXP gregexpr_fixed(char *pattern, char *string, int useBytes)
         INTEGER(matchbuf)[matchIndex] = st + 1; /* index from one */
         INTEGER(matchlenbuf)[matchIndex] = patlen;
         while(!foundAll) {
-            string += st + patlen;
+            string += nb;
             curpos += st + patlen;
-            st = fgrep_one(pattern, string, useBytes);
+            st = fgrep_one(pattern, string, useBytes, &nb);
             if (st >= 0) {
                 if ((matchIndex + 1) == bufsize) {
                     /* Reallocate match buffers */

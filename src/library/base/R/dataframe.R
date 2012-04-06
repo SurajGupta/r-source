@@ -510,7 +510,9 @@ data.frame <-
         x <- x[j]
         cols <- names(x)  # also needed for 'drop'
         if(any(is.na(cols))) stop("undefined columns selected")
-        sxx <- match(cols, names(xx))
+        ## sxx <- match(cols, names(xx)) fails with duplicate names
+        nxx <- structure(seq_along(xx), names=names(xx))
+        sxx <- match(nxx[j], seq_along(xx))
     } else sxx <- seq_along(x)
 
     rows <- NULL # placeholder: only create row names when needed
@@ -973,17 +975,14 @@ rbind.data.frame <- function(..., deparse.level = 1)
 {
     match.names <- function(clabs, nmi)
     {
-	if(all(clabs == nmi))
-	    NULL
-	else if(length(nmi) == length(clabs) &&
-                all(nii <- match(nmi, clabs, 0L))) {
+	if(identical(clabs, nmi)) NULL
+	else if(length(nmi) == length(clabs) && all(match(nmi, clabs, 0L))) {
             ## we need unique matches here
 	    m <- pmatch(nmi, clabs, 0L)
             if(any(m == 0L))
                 stop("names do not match previous names")
             m
-	} else stop("names do not match previous names:\n\t",
-                  paste(nmi[nii == 0L], collapse = ", "))
+	} else stop("names do not match previous names")
     }
     Make.row.names <- function(nmi, ri, ni, nrow)
     {
@@ -1105,6 +1104,10 @@ rbind.data.frame <- function(..., deparse.level = 1)
     if(is.null(value)) { # this happens if there has been no data frame
 	value <- list()
 	value[pseq] <- list(logical(nrow)) # OK for coercion except to raw.
+        all.levs <- vector("list", nvar)
+        has.dim <- logical(nvar)
+        facCol <- logical(nvar)
+        ordCol <- logical(nvar)
     }
     names(value) <- clabs
     for(j in pseq)

@@ -1505,6 +1505,7 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
     double *x, *y, xold, yold, xx, yy, thiscex, thislwd;
     int i, n, npch, ncex, ncol, nbg, /*nlty,*/ nlwd,
 	type=0, start=0, thispch, thiscol;
+    char *vmax = NULL /* -Wall */;
 
     SEXP originalArgs = args;
     DevDesc *dd = CurrentDevice();
@@ -1653,8 +1654,15 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
     {
 	double *xtemp, *ytemp;
 	int n0 = 0;
-	xtemp = (double *) alloca(2*n*sizeof(double));
-	ytemp = (double *) alloca(2*n*sizeof(double));
+	if(n <= 1000) {
+	    xtemp = (double *) alloca(2*n*sizeof(double));
+	    ytemp = (double *) alloca(2*n*sizeof(double));
+	    R_CheckStack();
+	} else {
+	    vmax = vmaxget();
+	    xtemp = (double *) R_alloc(2*n, sizeof(double));
+	    ytemp = (double *) R_alloc(2*n, sizeof(double));
+	}
 	Rf_gpptr(dd)->col = INTEGER(col)[0];
 	xold = NA_REAL;
 	yold = NA_REAL;
@@ -1676,6 +1684,7 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 	    yold = yy;
 	}
 	if(n0 > 0) GPolyline(n0, xtemp, ytemp, DEVICE, dd);
+	if(n > 1000) vmaxset(vmax);
     }
     break;
 
@@ -1683,8 +1692,15 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
     {
 	double *xtemp, *ytemp;
 	int n0 = 0;
-	xtemp = (double *) alloca(2*n*sizeof(double));
-	ytemp = (double *) alloca(2*n*sizeof(double));
+	if(n < 1000) {
+	    xtemp = (double *) alloca(2*n*sizeof(double));
+	    ytemp = (double *) alloca(2*n*sizeof(double));
+	    R_CheckStack();
+	} else {
+	    vmax = vmaxget();
+	    xtemp = (double *) R_alloc(2*n, sizeof(double));
+	    ytemp = (double *) R_alloc(2*n, sizeof(double));
+	}
 	Rf_gpptr(dd)->col = INTEGER(col)[0];
 	xold = NA_REAL;
 	yold = NA_REAL;
@@ -1706,6 +1722,7 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 	    yold = yy;
 	}
 	if(n0 > 0) GPolyline(n0, xtemp, ytemp, DEVICE, dd);
+	if(n > 1000) vmaxset(vmax);
     }
     break;
 
@@ -1846,11 +1863,13 @@ SEXP attribute_hidden do_segments(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (R_FINITE(xx[0]) && R_FINITE(yy[0]) &&
 	    R_FINITE(xx[1]) && R_FINITE(yy[1]))
 	{
-	    Rf_gpptr(dd)->col = INTEGER(col)[i % ncol];
-	    /* NA color should be ok */
-	    Rf_gpptr(dd)->lty = INTEGER(lty)[i % nlty];
-	    Rf_gpptr(dd)->lwd = REAL(lwd)[i % nlwd];
-	    GLine(xx[0], yy[0], xx[1], yy[1], DEVICE, dd);
+	    int thiscol = INTEGER(col)[i % ncol];
+	    if(!R_TRANSPARENT(thiscol)) {
+		Rf_gpptr(dd)->col = thiscol;
+		Rf_gpptr(dd)->lty = INTEGER(lty)[i % nlty];
+		Rf_gpptr(dd)->lwd = REAL(lwd)[i % nlwd];
+		GLine(xx[0], yy[0], xx[1], yy[1], DEVICE, dd);
+	    }
 	}
     }
     GMode(0, dd);
@@ -1945,7 +1964,7 @@ SEXP attribute_hidden do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
     double xx0, yy0, xx1, yy1;
     double hlength, angle;
     int code;
-    int nx0, nx1, ny0, ny1, i, n, ncol, nlty, nlwd;
+    int nx0, nx1, ny0, ny1, i, n, ncol, nlty, nlwd, thiscol;
     SEXP originalArgs = args;
     DevDesc *dd = CurrentDevice();
 
@@ -2002,8 +2021,9 @@ SEXP attribute_hidden do_arrows(SEXP call, SEXP op, SEXP args, SEXP env)
 	yy1 = y1[i%ny1];
 	GConvert(&xx0, &yy0, USER, DEVICE, dd);
 	GConvert(&xx1, &yy1, USER, DEVICE, dd);
-	if (R_FINITE(xx0) && R_FINITE(yy0) && R_FINITE(xx1) && R_FINITE(yy1)) {
-	    Rf_gpptr(dd)->col = INTEGER(col)[i % ncol];
+	if (R_FINITE(xx0) && R_FINITE(yy0) && R_FINITE(xx1) && R_FINITE(yy1)
+	    && !R_TRANSPARENT(thiscol = INTEGER(col)[i % ncol])) {
+	    Rf_gpptr(dd)->col = thiscol;
 	    Rf_gpptr(dd)->lty = INTEGER(lty)[i % nlty];
 	    Rf_gpptr(dd)->lwd = REAL(lwd)[i % nlwd];
 	    GArrow(xx0, yy0, xx1, yy1, DEVICE,
@@ -3584,8 +3604,9 @@ SEXP attribute_hidden do_dendwindow(SEXP call, SEXP op, SEXP args, SEXP env)
     Rf_gpptr(dd)->cex = Rf_gpptr(dd)->cexbase * Rf_gpptr(dd)->cex;
     dnd_offset = GStrWidth("m", INCHES, dd);
     vmax = vmaxget();
-    y =  (double*)R_alloc(n, sizeof(double));
-    ll = (double*)R_alloc(n, sizeof(double));
+    /* n is the number of merges, so the points are labelled 1 ... n+1 */
+    y =  (double*)R_alloc(n+1, sizeof(double));
+    ll = (double*)R_alloc(n+1, sizeof(double));
     dnd_lptr = &(INTEGER(merge)[0]);
     dnd_rptr = &(INTEGER(merge)[n]);
     ymax = ymin = REAL(height)[0];
@@ -3597,7 +3618,7 @@ SEXP attribute_hidden do_dendwindow(SEXP call, SEXP op, SEXP args, SEXP env)
 	    ymin = m;
     }
     pin = Rf_gpptr(dd)->pin[1];
-    for (i = 0; i < n; i++) {
+    for (i = 0; i <= n; i++) {
 	str = STRING_ELT(llabels, i);
 	ll[i] = (str == NA_STRING) ? 0.0 :
 	    GStrWidth(translateChar(str), INCHES, dd) + dnd_offset;
@@ -3617,7 +3638,7 @@ SEXP attribute_hidden do_dendwindow(SEXP call, SEXP op, SEXP args, SEXP env)
 	/* determine the most extreme label depth */
 	/* assuming that we are using the full plot */
 	/* window for the tree itself */
-	for (i = 0; i < n; i++) {
+	for (i = 0; i <= n; i++) {
 	    tmp = ((ymax - y[i]) / yrange) * pin + ll[i];
 	    if (tmp > yval) {
 		yval = tmp;
@@ -3627,7 +3648,7 @@ SEXP attribute_hidden do_dendwindow(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     else {
 	yrange = ymax;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i <= n; i++) {
 	    tmp = pin + ll[i];
 	    if (tmp > yval) {
 		yval = tmp;

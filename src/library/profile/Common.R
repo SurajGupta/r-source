@@ -45,6 +45,12 @@ local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
        options(defaultPackages = dp)
     })
 
+## Expand R_LIBS_* environment variables.
+Sys.setenv(R_LIBS_SITE =
+           .expand_R_libs_env_var(Sys.getenv("R_LIBS_SITE")))
+Sys.setenv(R_LIBS_USER =
+           .expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))
+
 .First.sys <- function()
 {
     for(pkg in getOption("defaultPackages")) {
@@ -74,5 +80,6 @@ if(Sys.getenv("R_BATCH") != "") {
         print(proc.time())
     }
     ## avoid passing on to spawned R processes
-    Sys.unsetenv("R_BATCH")
+    ## A system has been reported without Sys.unsetenv, so try this
+    try(Sys.setenv(R_BATCH=""))
 }

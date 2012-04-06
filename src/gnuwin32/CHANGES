@@ -5,7 +5,79 @@
 	*        affect all versions of R.		 *
 	*						 *
 	*	       2.5 SERIES NEWS			 *
+	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.5.1
+
+GUI CHANGES
+
+    o	Within Rgui, completion can be turned on or off from the 'Misc'
+	menu, and if completion is on, file name completion can be
+	turned off (or back on again).
+
+	The list of possible completions is removed once any further
+	key is pressed.
+
+    o	The "Paste commands only" context menu is slightly better at
+	recognizing and removing prompts, e.g. from example() output
+	or debug sessions.
+
+    o	Using a modal widget from Rterm (e.g. select.list) is now far
+	likely to be forced to the front.
+
+
+OTHERS
+
+    o	file.access() has been rewritten using Win32 functions and
+	should be more reliable, particularly on NT-based versions of
+	Windows.  (PR#7234)
+
+    o	The version number of the installer now includes the SVN
+	revision number (which is handy for R-patched and R-devel
+	daily builds).
+
+
+BUG FIXES
+
+    o	unlink() was not accepting wildcards.
+
+    o	Since Windows will not unlink the current working directory,
+	we change working directories before clearing the session
+	temporary directory.
+
+    o	The PDF version of the 'R Internals' manual was missing its
+	indices.
+
+    o	Rcmd BATCH did not accept input file paths with spaces in
+	2.5.0.  (PR#9652)
+
+    o	R_LIBS_SITE and R_LIBS_USER did not accept paths on network
+	shares (starting \\).  (Rcmd INSTALL will not work with
+	libraries on network shares, however.)
+
+    o	path.expand() and other uses of '~' (e.g. filepaths) now take
+	the value of the home directory from the environmental
+	variable R_USER and not from the pre-2.0.0 definition of
+	'home'.  This means that if HOME is unset, the value defaults
+	to the personal directory and not %HOMEDRIVE%HOMEDIR.
+
+    o	The setting of R_TEXOPTS has been moved from MkRules to
+	doc/manual/Makefile.win.  This avoids error messages if 'latex'
+	is not in the path.
+
+    o	Rcmd INSTALL now sets up lazloading earlier if explicitly
+	requested in the DESCRIPTION file.  This is needed for
+	packages that use 'methods' and need to load themselves to
+	process their data.
+
+    o	winMenuDel() was not automatically deleting sub-menus when a
+	user menu was deleted.  (PR#9702)
+
+    o	Rcnd INSTALL --docs=txt etc works (for a single type, except
+	'chm' which is equivalent to 'all' nowadays).
+
 
 
 		CHANGES IN R VERSION 2.5.0

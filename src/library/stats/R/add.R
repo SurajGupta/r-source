@@ -20,9 +20,9 @@ add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
     for(i in seq(ns)) {
 	tt <- scope[i]
 	if(trace > 1) {
-            message("trying +", tt)
+	    cat("trying +", tt, "\n", sep='')
 	    utils::flush.console()
-        }
+	}
 	nfit <- update(object, as.formula(paste("~ . +", tt)),
                        evaluate = FALSE)
         nfit <- eval.parent(nfit)
@@ -303,7 +303,7 @@ drop1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
     for(i in seq(ns)) {
 	tt <- scope[i]
 	if(trace > 1) {
-            message("trying -", tt)
+	    cat("trying -", tt, "\n", sep='')
 	    utils::flush.console()
         }
         nfit <- update(object, as.formula(paste("~ . -", tt)),
@@ -503,16 +503,16 @@ add.scope <- function(terms1, terms2)
 {
     terms1 <- terms(terms1)
     terms2 <- terms(terms2)
-    factor.scope(attr(terms1, "factor"),
-		 list(add = attr(terms2, "factor")))$add
+    factor.scope(attr(terms1, "factors"),
+		 list(add = attr(terms2, "factors")))$add
 }
 
 drop.scope <- function(terms1, terms2)
 {
     terms1 <- terms(terms1)
     f2 <- if(missing(terms2)) numeric(0)
-    else attr(terms(terms2), "factor")
-    factor.scope(attr(terms1, "factor"), list(drop = f2))$drop
+    else attr(terms(terms2), "factors")
+    factor.scope(attr(terms1, "factors"), list(drop = f2))$drop
 }
 
 factor.scope <- function(factor, scope)
@@ -683,8 +683,8 @@ step <- function(object, scope, scale = 0,
     nm <- 1
     Terms <- fit$terms
     if(trace)
-	message("Start:  AIC=", format(round(bAIC, 2)), "\n",
-                cut.string(deparse(as.vector(formula(fit)))), "\n")
+	cat("Start:  AIC=", format(round(bAIC, 2)), "\n",
+	    cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
 
     models[[nm]] <- list(deviance = mydeviance(fit), df.resid = n - edf,
 			 change = "", AIC = bAIC)
@@ -743,8 +743,8 @@ step <- function(object, scope, scale = 0,
 	edf <- bAIC[1]
 	bAIC <- bAIC[2]
 	if(trace)
-	    message("\nStep:  AIC=", format(round(bAIC, 2)), "\n",
-                    cut.string(deparse(as.vector(formula(fit)))), "\n")
+	    cat("\nStep:  AIC=", format(round(bAIC, 2)), "\n",
+		cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
         ## add a tolerance as dropping 0-df terms might increase AIC slightly
 	if(bAIC >= AIC + 1e-7) break
 	nm <- nm + 1

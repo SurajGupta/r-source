@@ -356,6 +356,7 @@ newconsoledata(font f, int rows, int cols, int bufbytes, int buflines,
     p->overwrite = 0;
     p->lazyupdate = 1;
     p->needredraw = 0;
+    p->wipe_completion = 0;
     p->my0 = p->my1 = -1;
     p->mx0 = 5;
     p->mx1 = 14;
@@ -570,7 +571,7 @@ static int writeline(ConsoleData p, int i, int j)
     return len;
 }
 
-void drawconsole(control c, rect r)
+void drawconsole(control c, rect r) /* r is unused here */
 {
     ConsoleData p = getdata(c);
 
@@ -759,10 +760,31 @@ void consoleflush(control c)
 
 /* free ^G ^Q ^R ^S, perhaps ^J */
 
+static void checkpointpos(xbuf p, int save)
+{
+    static int ns, av;
+    static char *free;
+    if(save) {
+	ns = p->ns;
+	av = p->av;
+	free = p->free;
+    } else {
+	p->ns = ns;
+	p->av = av;
+	p->free = free;
+    }
+}
+
 static void storekey(control c,int k)
 {
     ConsoleData p = getdata(c);
 
+    if (p->wipe_completion) {
+	p->wipe_completion = 0;
+	checkpointpos(p->lbuf, 0);
+	p->needredraw = 1;
+	REDRAW;
+    }
     if (p->kind == PAGER) return;
     if (k == BKSP) k = BACKCHAR;
     if (k == TABKEY) {
@@ -778,16 +800,21 @@ static void storekey(control c,int k)
 }
 
 
-
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
 
 static int rcompgen_available = -1;
 
+void set_rcompgen_available(int x)
+{
+    rcompgen_available = x;
+}
+    
+
 static void performCompletion(control c)
 {
     ConsoleData p = getdata(c);
-    int i, alen, max_show = 10, cursor_position = p->c - prompt_wid;
+    int i, alen, alen2, max_show = 10, cursor_position = p->c - prompt_wid;
     char *partial_line = LINE(NUMLINES - 1) + prompt_wid;
     char *additional_text;
     char *pline, *cmd;
@@ -860,11 +887,14 @@ static void performCompletion(control c)
 #define POSSIBLE 1
 
     alen = length(VECTOR_ELT(ans, POSSIBLE));
+    additional_text = CHAR(STRING_ELT( VECTOR_ELT(ans, ADDITION), 0 ));
+    alen2 = strlen(additional_text);
     if (alen) {
         /* make a copy of the current string first */
 	char *buf1, *p1 = LINE(NUMLINES - 1);
+	checkpointpos(p->lbuf, 1);
 	buf1 = alloca(strlen(p1) + 1);
-	sprintf(buf1,"%s\n", p1);
+	sprintf(buf1,"%s\n", p1); 
 	consolewrites(c, buf1);
 
 	for (i = 0; i < min(alen, max_show); i++) {
@@ -873,11 +903,11 @@ static void performCompletion(control c)
 	}
 	if (alen > max_show)
 	    consolewrites(c, "\n[...truncated]\n");
+	p->wipe_completion = 1;
     }
-    additional_text = CHAR(STRING_ELT( VECTOR_ELT(ans, ADDITION), 0 ));
-    alen = strlen(additional_text);
-    if (alen) 
-	for (i = 0; i < alen; i++) storekey(c, additional_text[i]);
+
+    if (alen2) 
+	for (i = 0; i < alen2; i++) storekey(c, additional_text[i]);
     return;
 }
 
@@ -911,19 +941,22 @@ static int CleanTranscript(char *tscpt, char *cmds)
      * Filter R commands out of a string that contains
      * prompts, commands, and output.
      * Uses a simple algorithm that just looks for '>'
-     * prompts and '+' continuation -- won't work when
-     * other prompts are used (e.g., as in a debugging
-     * session.)
+     * prompts and '+' continuation following a simple prompt prefix.
      * Always return the length of the string required
      * to hold the filtered commands.
      * If cmds is a non-null pointer, write the commands
      * to cmds & terminate with null.
      */
     int incommand = 0, startofline = 1, len = 0;
+    char nonprefix[] = ">+ \t\n\r";
     while (*tscpt) {
 	if (startofline) {
+	    /* skip initial whitespace */
 	    while (*tscpt==' ' || *tscpt=='\t')
 		tscpt++;
+	    /* skip over the prompt prefix */
+	    while (*tscpt && !strchr(nonprefix, *tscpt))
+	    	tscpt++;
 	    if (*tscpt=='>' || (incommand && *tscpt=='+')) {
 		tscpt++;
 		if (*tscpt==' ' || *tscpt=='\t') tscpt++;

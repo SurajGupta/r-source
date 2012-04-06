@@ -2580,8 +2580,8 @@ somehow to make the components of a list or data frame temporarily
 visible as variables under their component name, without the need to
 quote the list name explicitly each time.
 
-The @code{attach()} function, as well as having a directory name as its
-argument, may also have a data frame.  Thus suppose @code{lentils} is a
+The @code{attach()} function takes a `database' such as a list or data
+frame as its argument.  Thus suppose @code{lentils} is a
 data frame with three variables @code{lentils$u}, @code{lentils$v},
 @code{lentils$w}.  The attach
 
@@ -2628,11 +2628,10 @@ to @code{detach}, but it is much safer to always use a name, for example
 by @code{detach(lentils)} or @code{detach("lentils")}
 
 @quotation Note
-With the current release of @R{} lists and data frames can only be
-attached at position 2 or above.  It is not possible to directly assign
-into an attached list or data frame (thus, to some extent they are
-static).
-@c This is likely to change in the next year or so.
+In @R{} lists and data frames can only be attached at position 2 or
+above, and what is attached is a @emph{copy} of the original object.
+You can alter the attached values @emph{via} @code{assign}, but the
+original list or data frame is unchanged.
 @end quotation
 
 @node Working with data frames, Attaching arbitrary lists, attach() and detach(), Data frames
@@ -6903,7 +6902,7 @@ Implies @option{--no-save} unless @option{--save} has been set.
 
 @item -e @var{expression}
 Use @var{expression} as an input line.  One or more @option{-e} options
-can be used, but not together with @option{-e} or @option{--file}.
+can be used, but not together with @option{-f} or @option{--file}.
 Implies @option{--no-save} unless @option{--save} has been set.  (There
 is a limit of 10,000 bytes on the total length of expressions used in
 this way.)
@@ -6942,8 +6941,10 @@ value accepted is 100000.
 @item --max-mem-size=@var{N}
 (Windows only) Specify a limit for the amount of memory to be used both
 for @R{} objects and working areas.  This is set by default to the
-smaller of 1024Mb and the amount of physical RAM in the machine, and
-must be at least 16Mb.
+smaller of 1.5Gb@footnote{2.5Gb on versions of Windows that support 3Gb
+per process and have the support enabled: see the @file{rw-FAQ} Q2.9.}
+and the amount of physical RAM in the machine, and must be between 32Mb
+and 3Gb.
 
 @item --quiet
 @itemx --silent
@@ -6962,9 +6963,11 @@ control the printing of diagnostic messages.
 
 @item --debugger=@var{name}
 @itemx -d @var{name}
-(UNIX only) Run @R{} through debugger @var{name}.  Note that in this
-case, further command line options are disregarded, and should instead
-be given when starting the @R{} executable from inside the debugger.
+(UNIX only) Run @R{} through debugger @var{name}.  For most debuggers
+(the exceptions are @command{valgrind} and recent versions of
+@command{gdb}), further command line options are disregarded, and should
+instead be given when starting the @R{} executable from inside the
+debugger.
 
 @item --gui=@var{type}
 @itemx -g @var{type}

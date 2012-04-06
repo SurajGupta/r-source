@@ -18,6 +18,13 @@ path.expand(path)
   \code{readline} installed.
 }
 #endif
+#ifdef windows
+\details{
+  The definition of \sQuote{home} is in the \file{rw-FAQ} Q2.14: it is
+  taken from the \env{R\_USER} environment variable when
+  \code{path.expand} is first called.
+}
+#endif
 \seealso{
   \code{\link{basename}}
 }

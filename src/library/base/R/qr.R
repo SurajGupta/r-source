@@ -47,7 +47,7 @@ qr.coef <- function(qr, y)
     im <- is.matrix(y)
     if (!im) y <- as.matrix(y)
     ny <- ncol(y)
-    if (p==0) return( if (im) matrix(0,p,ny) else numeric(0) )
+    if (p == 0) return( if (im) matrix(0,p,ny) else numeric(0) )
     if(is.complex(qr$qr)) {
 	if(!is.complex(y)) y[] <- as.complex(y)
 	coef <- matrix(NA_complex_, nr=p, nc=ny)
@@ -57,11 +57,13 @@ qr.coef <- function(qr, y)
     ## else {not complex} :
     a <- attr(qr, "useLAPACK")
     if(!is.null(a) && is.logical(a) && a) {
-	coef <- matrix(NA_real_, nr=p, nc=ny)
-	coef[qr$pivot,] <- .Call("qr_coef_real", qr, y, PACKAGE = "base")
+        if(!is.double(y)) storage.mode(y) <- "double"
+	coef <- matrix(NA_real_, nrow = p, ncol = ny)
+	coef[qr$pivot,] <-
+            .Call("qr_coef_real", qr, y, PACKAGE = "base")[seq_len(p)]
 	return(if(im) coef else c(coef))
     }
-    if (k==0) return( if (im) matrix(NA,p,ny) else rep.int(NA,p))
+    if (k == 0) return( if (im) matrix(NA,p,ny) else rep.int(NA,p))
 
     storage.mode(y) <- "double"
     if( nrow(y) != n )
@@ -83,9 +85,11 @@ qr.coef <- function(qr, y)
     else coef <- z$coef
 
     if(!is.null(nam <- colnames(qr$qr)))
-	rownames(coef) <- nam
+        if(k < p) rownames(coef)[qr$pivot] <- nam
+        else rownames(coef) <- nam
+
     if(im && !is.null(nam <- colnames(y)))
-       colnames(coef) <- nam
+        colnames(coef) <- nam
 
     if(im) coef else drop(coef)
 }

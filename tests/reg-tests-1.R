@@ -270,7 +270,7 @@ stopifnot(
 em <- eigen(sm, symmetric = FALSE); V2 <- em$vect
 print(lam2 <- em$values) # ordered decreasingly in ABSolute value !
 print(i <- rev(order(lam2)))
-stopifnot(abs(lam - lam2[i]) < 60 * Meps)
+stopifnot(abs(lam - lam2[i]) < 100 * Meps) # comparing two solns
 
 zapsmall(Diag <- t(V2) %*% V2)
 stopifnot( abs(1- diag(Diag)) < 60*Meps)
@@ -4699,3 +4699,59 @@ x <- c(0.006, 0.002, 0.024, 0.02, 0.034, 0.09, 0.074, 0.072, 0.122,
 result <- density(x, n = 20, from = -1, to = 1)
 stopifnot(result$y >= 0)
 ## slightly negative < 2.5.0
+
+
+## bw.SJ() used too small search interval in rare cases:
+bw.SJ(1:20) # error: "no solution in the specified range of bandwidths" in < 2.5.1
+## this is not ok when called as  density(1:20, bw = "SJ")
+
+
+## hexadecimal integer constants failed on some platforms (PR#9648)
+stopifnot(identical(0x10L, 16L))
+## first was 0L on Windows in 2.5.0
+
+
+## rbind failed if the only data frame had 0 rows (PR#9657)
+A <- data.frame(foo=character(0), bar=character(0))
+rbind(A, c(foo="a", bar="b"))
+## failed in 2.5.0
+
+
+## factor() with NA in dimnames():
+x <- matrix(1:2, 2)
+rownames(x) <- factor(c("A", NA))
+## segfaulted <= 2.5.0
+
+
+## return value of median.
+z <- median(integer(0))
+stopifnot(identical(z, NA_integer_))
+z <- median(numeric(0))
+stopifnot(identical(z, NA_real_))
+## returned logical NA in 2.5.0
+
+
+## seq.int on small reversed 'by'
+stopifnot(inherits(try(seq.int(1.2, 1, by=1)), "try-error"))
+## was '1.2' in 2.5.0
+
+
+## subassignment on pairlists: Uwe Ligges on R-help, 2007-05-29
+Call <- call("round", 10.5)
+try({Call[] <- NULL; Call})
+## seqgfaulted in 2.5.0
+
+
+## Bessel bugs for nu < 0:
+x <- seq(0., 3, length = 101)
+nu <- -0.4
+stopifnot(all.equal(besselI(x,nu, TRUE),
+		    exp(-x)*besselI(x,nu, FALSE), tol = 1e-13))
+## wrong in 2.5.0
+stopifnot(all.equal(besselY(seq(0.5, 3, 0.5), nu),
+		    c(0.309568577942, 0.568866844337, 0.626095631907,
+		      0.544013906248, 0.366321150943, 0.141533189246),
+		    tol = 1e-11))
+## wrong numbers in 2.5.0
+
+### end of tests added in 2.5.1 ###
