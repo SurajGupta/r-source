@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #include "Defn.h"
 #include "Mathlib.h"
 #include "Fileio.h"
@@ -95,7 +95,11 @@ static int AsciiInInteger(FILE *fp)
 
 static void AsciiOutReal(FILE *fp, double x)
 {
-	if(!FINITE(x)) fprintf(fp, "NA");
+	if(!FINITE(x)) {
+		if(ISNAN(x)) fprintf(fp, "NA");
+		else if (x < 0) fprintf(fp, "-Inf");
+		else fprintf(fp, "Inf");
+	}
 	else fprintf(fp, "%g", x);
 }
 
@@ -104,13 +108,16 @@ static double AsciiInReal(FILE *fp)
 	double x;
 	fscanf(fp, "%s", buf);
 	if(strcmp(buf, "NA") == 0) x = NA_REAL;
+	else if(strcmp(buf, "Inf") == 0) x = R_PosInf;
+	else if(strcmp(buf, "-Inf") == 0) x = R_NegInf;
 	else sscanf(buf, "%lg", &x);
 	return x;
 }
 
 static void AsciiOutComplex(FILE *fp, complex x)
 {
-	if(!FINITE(x.r) || !FINITE(x.i)) fprintf(fp, "NA NA");
+	if(ISNAN(x.r) || ISNAN(x.i))
+		fprintf(fp, "NA NA");
 	else fprintf(fp, "%g %g", x.r, x.i);
 }
 
@@ -119,9 +126,14 @@ static complex AsciiInComplex(FILE *fp)
 	complex x;
 	fscanf(fp, "%s", buf);
 	if(strcmp(buf, "NA") == 0) x.r = NA_REAL;
+	else if(strcmp(buf, "Inf") == 0) x.r = R_PosInf;
+	else if(strcmp(buf, "-Inf") == 0) x.r = R_NegInf;
 	else sscanf(buf, "%lg", &x.r);
+
 	fscanf(fp, "%s", buf);
 	if(strcmp(buf, "NA") == 0) x.i = NA_REAL;
+	else if(strcmp(buf, "Inf") == 0) x.i = R_PosInf;
+	else if(strcmp(buf, "-Inf") == 0) x.i = R_NegInf;
 	else sscanf(buf, "%lg", &x.i);
 	return x;
 }
@@ -167,7 +179,7 @@ static void AsciiOutString(FILE *fp, char *s)
 
 static char *AsciiInString(FILE *fp)
 {
-	int c, quote;
+	int c;
 	bufp = buf;
 	while ((c = R_fgetc(fp)) != '"');
 	while ((c = R_fgetc(fp)) != R_EOF && c != '"') {
@@ -506,8 +518,6 @@ static void ReallocVector(SEXP s, int length)
 		break;
 	case LGLSXP:
 	case INTSXP:
-	case FACTSXP:
-	case ORDSXP:
 		if (length <= 0) size = 0;
 		else size = 1 + INT2VEC(length);
 		break;
@@ -526,7 +536,7 @@ static void ReallocVector(SEXP s, int length)
 		else size = 1 + PTR2VEC(length);
 		break;
 	default:
-		error("invalid type in ReallocVector\n");
+		error("invalid type in ReallocVector\n"); size=0;
 	}
 	if (R_VMax - R_VTop < size)
 		error("restore memory exhausted (should not happen)\n");
@@ -582,8 +592,6 @@ static void MarkSave(SEXP s)
 			NVSize += 1 + BYTE2VEC(LENGTH(s) + 1);
 			break;
 		case LGLSXP:
-		case FACTSXP:
-		case ORDSXP:
 		case INTSXP:
 			NSave++;
 			NVSize += 1 + INT2VEC(LENGTH(s));
@@ -640,7 +648,7 @@ static SEXP OffsetToNode(int offset)
 	if(offset == -2) return R_GlobalEnv;
 	if(offset == -3) return R_UnboundValue;
 	if(offset == -4) return R_MissingArg;
-	
+
 		/* binary search for offset */
 
 	l = 0;
@@ -656,13 +664,12 @@ static SEXP OffsetToNode(int offset)
 	if(offset == OldOffset[m]) return NewAddress[m];
 
 	error("unresolved node during restore\n");
+	return R_NilValue;/* for -Wall */
 }
 
 static void DataSave(SEXP s, FILE *fp)
 {
 	int i, j, k, l, n;
-	char *strp;
-	SEXP t;
 
 		/* compute the storage requirements */
 		/* and write these to the save file */
@@ -675,7 +682,7 @@ static void DataSave(SEXP s, FILE *fp)
 	NVSize = 0;
 	unmarkPhase();
 	MarkSave(s);
-	
+
 	OutInit(fp);
 
 	OutInteger(fp, NSymbol); OutSpace(fp);
@@ -788,8 +795,6 @@ static void DataSave(SEXP s, FILE *fp)
 					break;
 				case INTSXP:
 				case LGLSXP:
-				case FACTSXP:
-				case ORDSXP:
 					l = LENGTH(&R_NHeap[i]);
 					OutInteger(fp, l);
 					OutNewline(fp);
@@ -832,8 +837,8 @@ static void DataSave(SEXP s, FILE *fp)
 
 static void RestoreSEXP(SEXP s, FILE *fp)
 {
-	unsigned int i, j, k, l;
-	int len, t1;
+	unsigned int j;
+	int len;
 
 	TYPEOF(s) = InInteger(fp);
 
@@ -853,6 +858,10 @@ static void RestoreSEXP(SEXP s, FILE *fp)
 			error("restore compatibility error - no version %d compatibility\n", VersionId);
 		}
 	}
+
+	/* Map old factors to new ...  (0.61->0.62) */
+	if (TYPEOF(s) == 11 || TYPEOF(s) == 12)
+		TYPEOF(s) = 13;
 
 	OBJECT(s) = InInteger(fp);
 	LEVELS(s) = InInteger(fp);
@@ -890,8 +899,6 @@ static void RestoreSEXP(SEXP s, FILE *fp)
 			COMPLEX(s)[j] = InComplex(fp);
 		break;
 	case INTSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case LGLSXP:
 		LENGTH(s) = len = InInteger(fp);;
 		ReallocVector(s, len);
@@ -912,7 +919,7 @@ static void RestoreSEXP(SEXP s, FILE *fp)
 
 static SEXP DataLoad(FILE *fp)
 {
-	int i, j, k;
+	int i, j;
 	char *vmaxsave;
 
 		/* read in the size information */
@@ -1007,31 +1014,24 @@ void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
 
 SEXP R_LoadFromFile(FILE *fp)
 {
-	SEXP ans;
-
 	switch(R_ReadMagic(fp)) {
 #ifdef HAVE_RPC_XDR_H
 	case R_MAGIC_XDR:
-		ans = XdrLoad(fp);
-		break;
+		return(XdrLoad(fp));
 #endif
 	case R_MAGIC_BINARY:
-		ans = BinaryLoad(fp);
-		break;
+		return(BinaryLoad(fp));
 	case R_MAGIC_ASCII:
-		ans = AsciiLoad(fp);
-		break;
+		return(AsciiLoad(fp));
 	case R_MAGIC_BINARY_VERSION16:
-		ans = BinaryLoadOld(fp, 16);
-		break;
+		return(BinaryLoadOld(fp, 16));
 	case R_MAGIC_ASCII_VERSION16:
-		ans = AsciiLoadOld(fp, 16);
-		break;
+		return(AsciiLoadOld(fp, 16));
 	default:
 		fclose(fp);
 		error("restore file corrupted -- no data loaded\n");
+		return(R_NilValue);/* for -Wall */
 	}
-	return ans;
 }
 
 

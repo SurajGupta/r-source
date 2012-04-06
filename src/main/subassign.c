@@ -1,6 +1,6 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1995--1998  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,60 +19,51 @@
 
 #include "Defn.h"
 
-	/* The following table shows the codes which have been */
-	/* assigned to the type combinations in assignments of */
-	/* the form  "x[s] <- y".  Here the type of y is given */
+static SEXP gcall;
+
+	/* The following table shows the codes which have been	*/
+	/* assigned to the type combinations in assignments of	*/
+	/* the form  "x[s] <- y".  Here the type of y is given	*/
 	/* across the top of the table and the type of x at the */
-	/* side. */
+	/* side.  (Note: the lack of 11 and 12 indices here is	*/
+	/* due to the removal of built-in factors).		*/
 
-	/*---------------------------------------------------*/
-	/*       LGL FACT  ORD  INT REAL CPLX  STR EXPR LANG */
-	/* LGL  1010 1011 1012 1013 1014 1015 1016 1020 1006 */
-	/* FACT 1110 1111 1112 1113 1114 1115 1116 1120 1106 */
-	/* ORD  1210 1211 1212 1213 1214 1215 1216 1220 1206 */
-	/* INT  1310 1311 1312 1313 1314 1315 1316 1320 1306 */
-	/* REAL 1410 1411 1412 1413 1414 1415 1416 1420 1406 */
-	/* CPLX 1510 1511 1512 1513 1514 1515 1516 1520 1506 */
-	/* STR  1610 1611 1612 1613 1614 1615 1616 1620 1606 */
-	/* EXPR 2010 2011 2012 2013 2014 2015 2016 2020 2006 */
-	/* LANG  610  611  612  613  614  615  616  620  606 */
-	/*---------------------------------------------------*/
+		/*-----------------------------------------*/
+		/* x \ y LGL  INT REAL CPLX  STR EXPR LANG */
+		/* LGL	1010 1013 1014 1015 1016 1020 1006 */
+		/* INT	1310 1313 1314 1315 1316 1320 1306 */
+		/* REAL 1410 1413 1414 1415 1416 1420 1406 */
+		/* CPLX 1510 1513 1514 1515 1516 1520 1506 */
+		/* STR	1610 1613 1614 1615 1616 1620 1606 */
+		/* EXPR 2010 2013 2014 2015 2016 2020 2006 */
+		/* LANG	 610  613  614	615  616  620  606 */
+		/*-----------------------------------------*/
 
-	/* The following table (which is laid out as described */
+	/* The following table (which is laid out as described	*/
 	/* above) contains "*" for those combinations where the */
-	/* assignment has been implemented.  Some assignments */
+	/* assignment has been implemented.  Some assignments	*/
 	/* do not make a great deal of sense and we have chosen */
-	/* to leave them unimplemented, although the addition */
-	/* of new assignment combinations represents no great */
+	/* to leave them unimplemented, although the addition	*/
+	/* of new assignment combinations represents no great	*/
 	/* difficulty. */
 
-	/*--------------------------------------------------*/
-	/*      LGL FACT  ORD  INT REAL CPLX  STR EXPR LANG */
-	/* LGL    *    ?    ?    *    *    *    *    *      */
-	/* FACT   ?    *                        *    *      */
-	/* ORD    ?         *                   *    *      */
-	/* INT    *              *    *    *    *    *      */
-	/* REAL   *              *    *    *    *    *      */
-	/* CPLX   *              *    *    *    *    *      */
-	/* STR    *    *    *    *    *    *    *    *      */
-	/* EXPR                                      *    * */
-	/* LANG                                             */
-	/*--------------------------------------------------*/
+		/*----------------------------------------*/
+		/*	LGL  INT REAL CPLX  STR EXPR LANG */
+		/* LGL	  *    *    *	 *    *	   *	  */
+		/* INT	  *    *    *	 *    *	   *	  */
+		/* REAL	  *    *    *	 *    *	   *	  */
+		/* CPLX	  *    *    *	 *    *	   *	  */
+		/* STR	  *    *    *	 *    *	   *	  */
+		/* EXPR				   *	* */
+		/* LANG					  */
+		/*----------------------------------------*/
 
-	/* The question marks in this table indicate combinations */
-	/* which should probably be implemented, but which as yet */
-	/* have not been.  The reason for the LGL row and column */
-	/* are because we want to allow any assignment of the form */
-	/* "x[s] <- NA" (col) and because the interpreted "ifelse" */
-	/* requires assignment into a logical object. */
+	/* The reason for the LGL row and column are because we	 */
+	/* want to allow any assignment of the form "x[s] <- NA" */
+	/* (col) and because the interpreted "ifelse" requires	 */
+	/* assignment into a logical object.			 */
 
-
-static void CompatibleFactorsCheck(SEXP x, SEXP y)
-{
-	if(!factorsConform(x,y))
-		error("incompatible factors in subset assignment\n");
-}
-
+#ifdef NotUsed
 static void SetArgsforUseMethod(SEXP x)
 {
 	char buf[4];
@@ -92,6 +83,7 @@ static void SetArgsforUseMethod(SEXP x)
 		}
 	}
 }
+#endif /*not used*/
 
 static int R_BoundChecking = 0;
 
@@ -120,10 +112,6 @@ static SEXP EnlargeVector(SEXP x, int nnew)
 		PROTECT(x);
 		PROTECT(newx = allocVector(TYPEOF(x), nnew));
 		switch(TYPEOF(x)) {
-			case FACTSXP:
-			case ORDSXP:
-				LEVELS(newx) = LEVELS(x);
-				/* drop through here */
 			case LGLSXP:
 			case INTSXP:
 				for(i=0 ; i<n ; i++)
@@ -182,86 +170,76 @@ static SEXP EnlargeVector(SEXP x, int nnew)
 		return newx;
 	}
 	else error("attempt to enlarge non-vector\n");
+	return R_NilValue;
 }
 
 static void SubassignTypeFix(SEXP *x, SEXP *y, int which, int stretch)
 {
 	switch(which) {
 
-	case 1010:	/* logical   <- logical   */
-	case 1310:	/* integer   <- logical   */
-	case 1410:	/* real      <- logical   */
-	case 1510:	/* complex   <- logical   */
-	case 1313:	/* integer   <- integer   */
-	case 1413:	/* real      <- integer   */
-	case 1513:	/* complex   <- integer   */
-	case 1414:	/* real      <- real      */
-	case 1514:	/* complex   <- real      */
-	case 1515:	/* complex   <- complex   */
-	case 1616:	/* character <- character */
-	case 2020:	/* character <- character */
+	case 1010:	/* logical    <- logical    */
+	case 1310:	/* integer    <- logical    */
+	case 1410:	/* real	      <- logical    */
+	case 1510:	/* complex    <- logical    */
+	case 1313:	/* integer    <- integer    */
+	case 1413:	/* real	      <- integer    */
+	case 1513:	/* complex    <- integer    */
+	case 1414:	/* real	      <- real	    */
+	case 1514:	/* complex    <- real	    */
+	case 1515:	/* complex    <- complex    */
+	case 1616:	/* character  <- character  */
+	case 2020:	/* expression <- expression */
 
 		break;
 
-	case 1111:	/* factor    <- factor    */
-	case 1212:	/* ordered   <- ordered   */
-
-		CompatibleFactorsCheck(*x, *y);
-		break;
-
-	case 1013:	/* logical   <- integer   */
+	case 1013:	/* logical   <- integer	  */
 
 		*x = coerceVector(*x, INTSXP);
 		break;
 
-	case 1014:	/* logical   <- real      */
-	case 1314:	/* integer   <- real      */
+	case 1014:	/* logical   <- real	  */
+	case 1314:	/* integer   <- real	  */
 
 		*x = coerceVector(*x, REALSXP);
 		break;
 
-	case 1015:	/* logical   <- complex   */
-	case 1315:	/* integer   <- complex   */
-	case 1415:	/* real      <- complex   */
+	case 1015:	/* logical   <- complex	  */
+	case 1315:	/* integer   <- complex	  */
+	case 1415:	/* real	     <- complex	  */
 
 		*x = coerceVector(*x, CPLXSXP);
 		break;
 
-	case 1610:	/* character <- logical   */
-	case 1611:	/* character <- factor    */
-	case 1612:	/* character <- ordered   */
-	case 1613:	/* character <- integer   */
-	case 1614:	/* character <- real      */
-	case 1615:	/* character <- complex   */
+	case 1610:	/* character <- logical	  */
+	case 1613:	/* character <- integer	  */
+	case 1614:	/* character <- real	  */
+	case 1615:	/* character <- complex	  */
 
 		*y = coerceVector(*y, STRSXP);
 		break;
 
 	case 1016:	/* logical   <- character */
-	case 1116:	/* factor    <- character */
-	case 1216:	/* ordered   <- character */
 	case 1316:	/* integer   <- character */
-	case 1416:	/* real      <- character */
+	case 1416:	/* real	     <- character */
 	case 1516:	/* complex   <- character */
 
 		*x = coerceVector(*x, STRSXP);
 		break;
 
-	case 2001:	/* expression <- symbol    */
+	case 2001:	/* expression <- symbol	   */
 	case 2006:	/* expression <- language  */
 	case 2010:	/* expression <- logical   */
-	case 2011:	/* expression <- factor    */
-	case 2012:	/* expression <- ordered   */
 	case 2013:	/* expression <- integer   */
-	case 2014:	/* expression <- real      */
+	case 2014:	/* expression <- real	   */
 	case 2015:	/* expression <- complex   */
 	case 2016:	/* expression <- character */
 
-		*y = coerceVector(*y, EXPRSXP);
+		/* Note : no coercion is needed here, */
+		/* we just insert the rhs into the lhs. */
 		break;
 
 	default:
-		error("incompatible types in subset assignment\n");
+		errorcall(gcall, "incompatible types\n");
 
 	}
 
@@ -276,7 +254,7 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	double ry;
 
 		/* Check to see if we have special matrix */
-		/* subscripting.  If we do, make a real */
+		/* subscripting.  If so, we make a real */
 		/* subscript vector. */
 
 	if(isNull(x) && isNull(y)) {
@@ -295,7 +273,6 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	PROTECT(index = makeSubscript(x, s, &stretch));
 	n = length(index);
 
-#ifndef OLD
 	which = 100 * TYPEOF(x) + TYPEOF(y);
 
 		/* Here we make sure that the LHS has */
@@ -303,7 +280,6 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		/* accept elements from the RHS. */
 
 	SubassignTypeFix(&x, &y, which, stretch);
-#endif
 	ny = length(y);
 
 	if (n > 0 && ny == 0)
@@ -311,16 +287,6 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 	if (n > 0 && n % ny)
 		warning("number of items to replace is not a multiple of replacement length\n");
-
-#ifdef OLD
-	which = 100 * TYPEOF(x) + TYPEOF(y);
-
-		/* Here we make sure that the LHS has */
-		/* been coerced into a form which can */
-		/* accept elements from the RHS. */
-
-	SubassignTypeFix(&x, &y, which, stretch);
-#endif
 
 	PROTECT(x);
 
@@ -339,12 +305,10 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 	switch(which) {
 
-	case 1010:	/* logical   <- logical   */
-	case 1310:	/* integer   <- logical   */
-	case 1111:	/* factor    <- factor    */
-	case 1212:	/* ordered   <- ordered   */
-	case 1013:	/* logical   <- integer   */
-	case 1313:	/* integer   <- integer   */
+	case 1010:	/* logical   <- logical	  */
+	case 1310:	/* integer   <- logical	  */
+	case 1013:	/* logical   <- integer	  */
+	case 1313:	/* integer   <- integer	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
@@ -354,8 +318,8 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1410:	/* real      <- logical   */
-	case 1413:	/* real      <- integer   */
+	case 1410:	/* real	     <- logical	  */
+	case 1413:	/* real	     <- integer	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
@@ -369,9 +333,9 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1014:	/* logical   <- real      */
-	case 1314:	/* integer   <- real      */
-	case 1414:	/* real      <- real      */
+	case 1014:	/* logical   <- real	  */
+	case 1314:	/* integer   <- real	  */
+	case 1414:	/* real	     <- real	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
@@ -381,8 +345,8 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1510:	/* complex   <- logical   */
-	case 1513:	/* complex   <- integer   */
+	case 1510:	/* complex   <- logical	  */
+	case 1513:	/* complex   <- integer	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
@@ -400,14 +364,14 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1514:	/* complex   <- real      */
+	case 1514:	/* complex   <- real	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
 			if(ii == NA_INTEGER) continue;
 			ii = ii - 1;
 			ry = REAL(y)[i % ny];
-			if(!FINITE(ry)) {
+			if(ISNA(ry)) {
 				COMPLEX(x)[ii].r = NA_REAL;
 				COMPLEX(x)[ii].i = NA_REAL;
 			}
@@ -418,10 +382,10 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1015:	/* logical   <- complex   */
-	case 1315:	/* integer   <- complex   */
-	case 1415:	/* real      <- complex   */
-	case 1515:	/* complex   <- complex   */
+	case 1015:	/* logical   <- complex	  */
+	case 1315:	/* integer   <- complex	  */
+	case 1415:	/* real	     <- complex	  */
+	case 1515:	/* complex   <- complex	  */
 
 		for (i=0; i<n; i++) {
 			ii = INTEGER(index)[i];
@@ -431,18 +395,14 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1610:	/* character <- logical   */
-	case 1611:	/* character <- factor    */
-	case 1612:	/* character <- ordered   */
-	case 1613:	/* character <- integer   */
-	case 1614:	/* character <- real      */
-	case 1615:	/* character <- complex   */
+	case 1610:	/* character <- logical	  */
+	case 1613:	/* character <- integer	  */
+	case 1614:	/* character <- real	  */
+	case 1615:	/* character <- complex	  */
 	case 1616:	/* character <- character */
 	case 1016:	/* logical   <- character */
-	case 1116:	/* factor    <- character */
-	case 1216:	/* ordered   <- character */
 	case 1316:	/* integer   <- character */
-	case 1416:	/* real      <- character */
+	case 1416:	/* real	     <- character */
 	case 1516:	/* complex   <- character */
 
 		for (i=0; i<n; i++) {
@@ -456,10 +416,8 @@ static SEXP vectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	case 2001:
 	case 2006:	/* expression <- language   */
 	case 2010:	/* expression <- logical    */
-	case 2011:	/* expression <- factor     */
-	case 2012:	/* expression <- ordered    */
 	case 2013:	/* expression <- integer    */
-	case 2014:	/* expression <- real       */
+	case 2014:	/* expression <- real	    */
 	case 2015:	/* expression <- complex    */
 	case 2016:	/* expression <- character  */
 	case 2020:	/* expression <- expression */
@@ -498,7 +456,7 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	sc = CADR(s) = arraySubscript(1, CADR(s), x);
 	nrs = LENGTH(sr);
 	ncs = LENGTH(sc);
-	
+
 	/* <TSL> 21Oct97*/
 	if (length(y)==0)
 		error("Replacement length is zero\n");
@@ -529,12 +487,10 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	k = 0;
 	switch(which) {
 
-	case 1010:	/* logical   <- logical   */
-	case 1310:	/* integer   <- logical   */
-	case 1111:	/* factor    <- factor    */
-	case 1212:	/* ordered   <- ordered   */
-	case 1013:	/* logical   <- integer   */
-	case 1313:	/* integer   <- integer   */
+	case 1010:	/* logical   <- logical	  */
+	case 1310:	/* integer   <- logical	  */
+	case 1013:	/* logical   <- integer	  */
+	case 1313:	/* integer   <- integer	  */
 
 		for (j = 0; j < ncs; j++) {
 			jj = INTEGER(sc)[j];
@@ -551,8 +507,8 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1410:	/* real      <- logical   */
-	case 1413:	/* real      <- integer   */
+	case 1410:	/* real	     <- logical	  */
+	case 1413:	/* real	     <- integer	  */
 
 		for (j = 0; j < ncs; j++) {
 			jj = INTEGER(sc)[j];
@@ -573,9 +529,9 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1014:	/* logical   <- real      */
-	case 1314:	/* integer   <- real      */
-	case 1414:	/* real      <- real      */
+	case 1014:	/* logical   <- real	  */
+	case 1314:	/* integer   <- real	  */
+	case 1414:	/* real	     <- real	  */
 
 		for (j = 0; j < ncs; j++) {
 			jj = INTEGER(sc)[j];
@@ -592,8 +548,8 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1510:	/* complex   <- logical   */
-	case 1513:	/* complex   <- integer   */
+	case 1510:	/* complex   <- logical	  */
+	case 1513:	/* complex   <- integer	  */
 
 		for (j=0; j<ncs ; j++) {
 			jj = INTEGER(sc)[j];
@@ -618,8 +574,8 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1514:	/* complex   <- real      */
-	
+	case 1514:	/* complex   <- real	  */
+
 		for (j=0; j<ncs ; j++) {
 			jj = INTEGER(sc)[j];
 			if(jj == NA_INTEGER) continue;
@@ -630,7 +586,7 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 				ii = ii - 1;
 				ij = ii + jj * nr;
 				ry = REAL(y)[k];
-				if(!FINITE(ry)) {
+				if(ISNA(ry)) {
 					COMPLEX(x)[ij].r = NA_REAL;
 					COMPLEX(x)[ij].i = NA_REAL;
 				}
@@ -643,10 +599,10 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1015:	/* logical   <- complex   */
-	case 1315:	/* integer   <- complex   */
-	case 1415:	/* real      <- complex   */
-	case 1515:	/* complex   <- complex   */
+	case 1015:	/* logical   <- complex	  */
+	case 1315:	/* integer   <- complex	  */
+	case 1415:	/* real	     <- complex	  */
+	case 1515:	/* complex   <- complex	  */
 
 		for (j = 0; j < ncs; j++) {
 			jj = INTEGER(sc)[j];
@@ -663,18 +619,14 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		}
 		break;
 
-	case 1610:	/* character <- logical   */
-	case 1611:	/* character <- factor    */
-	case 1612:	/* character <- ordered   */
-	case 1613:	/* character <- integer   */
-	case 1614:	/* character <- real      */
-	case 1615:	/* character <- complex   */
+	case 1610:	/* character <- logical	  */
+	case 1613:	/* character <- integer	  */
+	case 1614:	/* character <- real	  */
+	case 1615:	/* character <- complex	  */
 	case 1616:	/* character <- character */
 	case 1016:	/* logical   <- character */
-	case 1116:	/* factor    <- character */
-	case 1216:	/* ordered   <- character */
 	case 1316:	/* integer   <- character */
-	case 1416:	/* real      <- character */
+	case 1416:	/* real	     <- character */
 	case 1516:	/* complex   <- character */
 
 		for (j = 0; j < ncs; j++) {
@@ -700,7 +652,7 @@ static SEXP matrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 {
-	int i, j, ii, iy, jj, k, n, ny, which;
+	int i, j, ii, iy, jj, k=0, n, ny, which;
 	int **subs, *index, *bound, *offset;
 	SEXP dims, tmp;
 	double ry;
@@ -770,18 +722,16 @@ static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 		switch (which) {
 
-		case 1010:	/* logical   <- logical   */
-		case 1310:	/* integer   <- logical   */
-		case 1111:	/* factor    <- factor    */
-		case 1212:	/* ordered   <- ordered   */
-		case 1013:	/* logical   <- integer   */
-		case 1313:	/* integer   <- integer   */
+		case 1010:	/* logical   <- logical	  */
+		case 1310:	/* integer   <- logical	  */
+		case 1013:	/* logical   <- integer	  */
+		case 1313:	/* integer   <- integer	  */
 
 			INTEGER(x)[ii] = INTEGER(y)[i % ny];
 			break;
 
-		case 1410:	/* real      <- logical   */
-		case 1413:	/* real      <- integer   */
+		case 1410:	/* real	     <- logical	  */
+		case 1413:	/* real	     <- integer	  */
 
 			iy = INTEGER(y)[i % ny];
 			if(iy == NA_INTEGER)
@@ -790,15 +740,15 @@ static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 				REAL(x)[ii] = iy;
 			break;
 
-		case 1014:	/* logical   <- real      */
-		case 1314:	/* integer   <- real      */
-		case 1414:	/* real      <- real      */
+		case 1014:	/* logical   <- real	  */
+		case 1314:	/* integer   <- real	  */
+		case 1414:	/* real	     <- real	  */
 
 			REAL(x)[ii] = REAL(y)[i % ny];
 			break;
 
-		case 1510:	/* complex   <- logical   */
-		case 1513:	/* complex   <- integer   */
+		case 1510:	/* complex   <- logical	  */
+		case 1513:	/* complex   <- integer	  */
 
 			iy = INTEGER(y)[i % ny];
 			if(iy == NA_INTEGER) {
@@ -811,10 +761,10 @@ static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 			}
 			break;
 
-		case 1514:	/* complex   <- real      */
+		case 1514:	/* complex   <- real	  */
 
 			ry = REAL(y)[i % ny];
-			if(!FINITE(ry)) {
+			if(ISNA(ry)) {
 				COMPLEX(x)[ii].r = NA_REAL;
 				COMPLEX(x)[ii].i = NA_REAL;
 			}
@@ -824,26 +774,22 @@ static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 			}
 			break;
 
-		case 1015:	/* logical   <- complex   */
-		case 1315:	/* integer   <- complex   */
-		case 1415:	/* real      <- complex   */
-		case 1515:	/* complex   <- complex   */
+		case 1015:	/* logical   <- complex	  */
+		case 1315:	/* integer   <- complex	  */
+		case 1415:	/* real	     <- complex	  */
+		case 1515:	/* complex   <- complex	  */
 
 			COMPLEX(x)[ii] = COMPLEX(y)[i % ny];
 			break;
 
-		case 1610:	/* character <- logical   */
-		case 1611:	/* character <- factor    */
-		case 1612:	/* character <- ordered   */
-		case 1613:	/* character <- integer   */
-		case 1614:	/* character <- real      */
-		case 1615:	/* character <- complex   */
+		case 1610:	/* character <- logical	  */
+		case 1613:	/* character <- integer	  */
+		case 1614:	/* character <- real	  */
+		case 1615:	/* character <- complex	  */
 		case 1616:	/* character <- character */
 		case 1016:	/* logical   <- character */
-		case 1116:	/* factor    <- character */
-		case 1216:	/* ordered   <- character */
 		case 1316:	/* integer   <- character */
-		case 1416:	/* real      <- character */
+		case 1416:	/* real	     <- character */
 		case 1516:	/* complex   <- character */
 
 			STRING(x)[ii] = STRING(y)[i % ny];
@@ -866,7 +812,7 @@ static SEXP arrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 {
-	SEXP index, yi, yp;
+	SEXP index, xi, yi, yp;
 	int i, ii, n, nx, ny, stretch=1;
 
 	if (length(s) > 1)
@@ -884,6 +830,7 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		yi = allocList(length(y));
 		for(yp=yi ; yp!=R_NilValue ; yp=CDR(yp)) {
 			CAR(yp) = CAR(y);
+			TAG(yp) = TAG(y);
 			NAMED(CAR(yp)) = ny | NAMED(CAR(y));
 			y = CDR(y);
 		}
@@ -911,10 +858,13 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		ii = INTEGER(index)[i];
 		if(ii == NA_INTEGER) continue;
 		ii = ii - 1;
-		yi = CAR(nthcdr(y, i % ny));
-		if(NAMED(y) || NAMED(yi)) yi = duplicate(yi);
-		else NAMED(yi) = 1;
-		CAR(nthcdr(x, ii % nx)) = yi;
+		yi = nthcdr(y, i % ny);
+		xi = nthcdr(x, ii % nx);
+		if(NAMED(y) || NAMED(CAR(yi))) CAR(yi) = duplicate(CAR(yi));
+		else NAMED(CAR(yi)) = 1;
+		CAR(xi) = CAR(yi);
+		if(TAG(yi) != R_NilValue)
+			TAG(xi) = TAG(yi);
 	}
 	UNPROTECT(3);
 	return x;
@@ -977,7 +927,7 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 		if (dims == R_NilValue || LENGTH(dims) != length(subs))
 			error("incorrect number of subscripts\n");
 
-	  	PROTECT(ax = allocArray(STRSXP, dims));
+		PROTECT(ax = allocArray(STRSXP, dims));
 		for(px=x, i=0 ; px!=R_NilValue ; px = CDR(px))
 			STRING(ax)[i++] = CAR(px);
 		setAttrib(ax, R_DimNamesSymbol, getAttrib(x, R_DimNamesSymbol));
@@ -1002,72 +952,9 @@ SEXP listAssign1(SEXP call, SEXP x, SEXP subs, SEXP y)
 	return x;
 }
 
-static SEXP frameAssign(SEXP call, SEXP x, SEXP s, SEXP y)
-{
-	int i, j, ii, jj, ij, k;
-	int nr, nc, ncy;
-	int nrs, ncs;
-	SEXP sr, sc, ss, xp, yp;
-
-	nr = length(CAR(x));
-	nc = length(x);
-
-		/* s has been protected. */
-		/* No GC problems here. */
-
-	if (length(s) == 1) {
-		PROTECT(sr = frameSubscript(0, R_NilValue, x));
-		PROTECT(sc = frameSubscript(1, CAR(s), x));
-	}
-	else if (length(s) == 2) {
-		PROTECT(sr = frameSubscript(0, CAR(s), x));
-		PROTECT(sc = frameSubscript(1, CADR(s), x)); 
-	}
-	else error("incorrect number of subscripts on data frame\n");
-
-	nrs = LENGTH(sr);
-	ncs = LENGTH(sc);
-
-	/* FIXME - if y is a matrix then convert it to data frame */
-
-	if(isList(y) || isFrame(y))
-		PROTECT(y);
-	else {
-		SEXP tmp;
-		PROTECT(y);
-		PROTECT(tmp = lang2(install("as.data.frame"), y));
-		y = eval(tmp, R_NilValue);
-		UNPROTECT(2);
-		PROTECT(y);
-	}
-	ncy = length(y);
-
-	PROTECT(ss = allocList(2));
-
-	for(i=0 ; i<ncs ; i++) {
-		ii = INTEGER(sc)[i]-1;
-	 	xp = nthcdr(x, ii%nc);
-		yp = nthcdr(y, ii%ncy);
-
-		if ((length(sr) * length(sc)) % length(CAR(yp)))
-			error("no of items to replace is not a multiple of replacement length\n");
-
-		if(isMatrix(CAR(xp))) {
-			CAR(ss) = sr;
-			CADR(ss) = arraySubscript(1,  R_MissingArg, CAR(xp));
-			CAR(xp) = matrixAssign(call, CAR(xp), ss, CAR(yp));
-		}
-		else {
-			CAR(xp) = vectorAssign(call, CAR(xp), sr, CAR(yp));
-		}
-	}
-	UNPROTECT(4);
-	return x;
-}
-
-/*  This is a special version of EvalArgs.  */
-/*  We don't want to evaluate the last argument  */
-/*  It has already been evaluated by applydefine  */
+	/* This is a special version of EvalArgs.  We don't */
+	/* want to evaluate the last argument It has already */
+	/* been evaluated by applydefine.  */
 
 static SEXP EvalSubassignArgs(SEXP el, SEXP rho)
 {
@@ -1078,7 +965,7 @@ static SEXP EvalSubassignArgs(SEXP el, SEXP rho)
 	while(CDR(el) != R_NilValue) {
 
 		/* If we have a ... symbol, we look to see what it */
-		/* is bound to.  If its binding is Null (i.e. zero length) */
+		/* is bound to.	 If its binding is Null (i.e. zero length) */
 		/* we just ignore it and return the cdr with all its */
 		/* expressions evaluated; if it is bound to a ... list */
 		/* of promises, we force all the promises and then splice */
@@ -1113,7 +1000,16 @@ static SEXP EvalSubassignArgs(SEXP el, SEXP rho)
 		}
 		el = CDR(el);
 	}
-	CDR(tail) = CONS(CAR(el), R_NilValue);
+
+	/* Danger Will Robinson!!! This is obscure code!!! */
+	/* The calling code may have wrapped the last value */
+	/* in a promise.  If this is the case, we must unwrap */
+	/* it here or we will be assigning a promise into the result!!! */
+
+	if (TYPEOF(CAR(el)) == PROMSXP)
+		CDR(tail) = CONS(PREXPR(CAR(el)), R_NilValue);
+	else
+		CDR(tail) = CONS(CAR(el), R_NilValue);
 	UNPROTECT(1);
 	return CDR(ans);
 }
@@ -1129,11 +1025,12 @@ static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 	CDR(p) = R_NilValue;
 }
 
+
 	/* The [<- operator.  x is the vector that is */
-	/* to be assigned into, y is the vector  that */
+	/* to be assigned into, y is the vector	 that */
 	/* is going to provide the new values and s is */
 	/* the vector of subscripts that are going to */
-	/* be replaced.  On entry (CAR(args)) and the last */
+	/* be replaced.	 On entry (CAR(args)) and the last */
 	/* argument have been evaluated been the remainder */
 	/* of args have not. */
 	/* If this was called directly the CAR(args) and the last */
@@ -1142,34 +1039,40 @@ static void SubAssignArgs(SEXP args, SEXP *x, SEXP *s, SEXP *y)
 SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP subs, x, y;
-	int i, nsubs;
+	int nsubs;
 	RCNTXT cntxt;
 
+		/* This code performs an internal version */
+		/* of method dispatch.	We evaluate the first */
+		/* argument and attempt to dispatch on it. */
+		/* If the dispatch fails, we "drop through" */
+		/* to the default code below. */
+
+	gcall = call;
 	CAR(args) = eval(CAR(args), rho);
-#ifndef OLD
-	PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
-#endif
 	if(isObject(CAR(args)) && CAR(call) != install("[<-.default")) {
 		/*SetArgsforUseMethod(args); */
+		CDR(args) = promiseArgs(CDR(args), rho);
 		begincontext(&cntxt,CTXT_RETURN, call, rho, rho, args);
 		if(usemethod("[<-", CAR(args), call, args, rho, &y)) {
 			endcontext(&cntxt);
-			UNPROTECT(1);
 			return y;
 		}
 		endcontext(&cntxt);
 	}
-
-#ifdef OLD
 	PROTECT(CDR(args) = EvalSubassignArgs(CDR(args), rho));
-#endif
+
+		/* If there are multiple references to an */
+		/* object we must duplicate it so that only */
+		/* the local version is mutated. */
+
 	if (NAMED(CAR(args)) == 2) {
 		x = CAR(args) = duplicate(CAR(args));
 	}
 	SubAssignArgs(args, &x, &subs, &y);
 
 		/* We can't modify an object which is named in */
-		/* another environment.  NAMED(x)==2 indicates */
+		/* another environment.	 NAMED(x)==2 indicates */
 		/* that x was obtained through a promise evaluation */
 		/* and hence it may be bound to a symbol elsewhere. */
 		/* This will duplicate more often than necessary, */
@@ -1194,7 +1097,7 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else if(isList(x) || isLanguage(x)) {
 		x = listAssign1(call, x, subs, y);
 	}
-	else error("type error in subset assignment\n");
+	else errorcall(call, "object is not subsetable\n");
 
 		/* Note the setting of NAMED(x) to zero here. */
 		/* This means that the following assignment will */
@@ -1217,13 +1120,15 @@ SEXP do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	SEXP dims, index, names, subs, x, y, obj;
+	SEXP dims, index, names, subs, x, y;
 	int i, ndims, nsubs, offset, which;
 	RCNTXT cntxt;
 
+	gcall = call;
 	CAR(args) = eval(CAR(args), rho);
 	if(isObject(CAR(args)) && CAR(call) != install("[[<-.default") ) {
 		/*SetArgsforUseMethod(args);*/
+		CDR(args) = promiseArgs(CDR(args), rho);
 		begincontext(&cntxt,CTXT_RETURN, call, rho, rho, args);
 		if(usemethod("[[<-", CAR(args), call, args, rho, &y)) {
 			endcontext(&cntxt);
@@ -1244,10 +1149,6 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	dims = getAttrib(x, R_DimSymbol);
 	ndims = length(dims);
 	nsubs = length(subs);
-#ifdef OLD
-	if (!isList(x) && !isLanguage(x) && length(y) > 1)
-		error("number of elements supplied larger than number of elements to replace\n");
-#endif
 
 	if (isVector(x)) {
 		if(!isExpression(x) && length(y) > 1)
@@ -1280,18 +1181,16 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 		switch (which) {
 
-		case 1010:	/* logical   <- logical   */
-		case 1310:	/* integer   <- logical   */
-		case 1111:	/* factor    <- factor    */
-		case 1212:	/* ordered   <- ordered   */
-		case 1013:	/* logical   <- integer   */
-		case 1313:	/* integer   <- integer   */
+		case 1010:	/* logical   <- logical	  */
+		case 1310:	/* integer   <- logical	  */
+		case 1013:	/* logical   <- integer	  */
+		case 1313:	/* integer   <- integer	  */
 
 			INTEGER(x)[offset] = INTEGER(y)[0];
 			break;
 
-		case 1410:	/* real      <- logical   */
-		case 1413:	/* real      <- integer   */
+		case 1410:	/* real	     <- logical	  */
+		case 1413:	/* real	     <- integer	  */
 
 			if(INTEGER(y)[0] == NA_INTEGER)
 				REAL(x)[offset] = NA_REAL;
@@ -1299,15 +1198,15 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 				REAL(x)[offset] = INTEGER(y)[0];
 			break;
 
-		case 1014:	/* logical   <- real      */
-		case 1314:	/* integer   <- real      */
-		case 1414:	/* real      <- real      */
+		case 1014:	/* logical   <- real	  */
+		case 1314:	/* integer   <- real	  */
+		case 1414:	/* real	     <- real	  */
 
 			REAL(x)[offset] = REAL(y)[0];
 			break;
 
-		case 1510:	/* complex   <- logical   */
-		case 1513:	/* complex   <- integer   */
+		case 1510:	/* complex   <- logical	  */
+		case 1513:	/* complex   <- integer	  */
 
 			if(INTEGER(y)[0] == NA_INTEGER) {
 				COMPLEX(x)[offset].r = NA_REAL;
@@ -1319,9 +1218,9 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 			}
 			break;
 
-		case 1514:	/* complex   <- real      */
+		case 1514:	/* complex   <- real	  */
 
-			if(!FINITE(REAL(y)[0])) {
+			if(ISNA(REAL(y)[0])) {
 				COMPLEX(x)[offset].r = NA_REAL;
 				COMPLEX(x)[offset].i = NA_REAL;
 			}
@@ -1331,41 +1230,39 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 			}
 			break;
 
-		case 1015:	/* logical   <- complex   */
-		case 1315:	/* integer   <- complex   */
-		case 1415:	/* real      <- complex   */
-		case 1515:	/* complex   <- complex   */
+		case 1015:	/* logical   <- complex	  */
+		case 1315:	/* integer   <- complex	  */
+		case 1415:	/* real	     <- complex	  */
+		case 1515:	/* complex   <- complex	  */
 
 			COMPLEX(x)[offset] = COMPLEX(y)[0];
 			break;
 
-		case 1610:	/* character <- logical   */
-		case 1611:	/* character <- factor    */
-		case 1612:	/* character <- ordered   */
-		case 1613:	/* character <- integer   */
-		case 1614:	/* character <- real      */
-		case 1615:	/* character <- complex   */
+		case 1610:	/* character <- logical	  */
+		case 1613:	/* character <- integer	  */
+		case 1614:	/* character <- real	  */
+		case 1615:	/* character <- complex	  */
 		case 1616:	/* character <- character */
 		case 1016:	/* logical   <- character */
-		case 1116:	/* factor    <- character */
-		case 1216:	/* ordered   <- character */
 		case 1316:	/* integer   <- character */
-		case 1416:	/* real      <- character */
+		case 1416:	/* real	     <- character */
 		case 1516:	/* complex   <- character */
 
 			STRING(x)[offset] = STRING(y)[0];
 			break;
 
-		case 2001:	/* expression <- symbol     */
+		case 2001:	/* expression <- symbol	    */
 		case 2006:	/* expression <- language   */
-		case 2020:	/* expression <- expression */
 		case 2010:	/* expression <- logical    */
-		case 2011:	/* expression <- factor     */
-		case 2012:	/* expression <- ordered    */
 		case 2013:	/* expression <- integer    */
-		case 2014:	/* expression <- real       */
+		case 2014:	/* expression <- real	    */
 		case 2015:	/* expression <- complex    */
 		case 2016:	/* expression <- character  */
+
+			VECTOR(x)[offset] = y;
+			break;
+
+		case 2020:	/* expression <- expression */
 
 			VECTOR(x)[offset] = VECTOR(y)[0];
 			break;
@@ -1407,7 +1304,7 @@ SEXP do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
 		}
 		UNPROTECT(1);
 	}
-	else error("type error in subset assignment\n");
+	else errorcall(gcall, "object is not subsetable\n");
 
 	UNPROTECT(1);
 	NAMED(x) = 0;
@@ -1420,12 +1317,13 @@ SEXP do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	checkArity(op, args);
 
+	gcall = call;
 	PROTECT(x = eval(CAR(args), env));
 
 	if (!isList(x) && !isLanguage(x))
 		error("$ used on non-list\n");
 
-	/* Note: rhs is already evaluated by evaluator */ 
+	/* Note: rhs is already evaluated by evaluator */
 	val = CADDR(args);
 	if(NAMED(val)) val = duplicate(val);
 	PROTECT(val);
@@ -1462,47 +1360,6 @@ SEXP do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
 		TAG(x) = nlist;
 	}
 	UNPROTECT(2);
-	FrameClassFix(x);
 	NAMED(x) = 0;
-	return x;
-}
- 
-	/* Data Frame Subsetting Methods */
-
-SEXP do_subassigndf(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	SEXP subs, x, y; 
-	PROTECT(args = EvalArgs(args, rho, 0));
-	SubAssignArgs(args, &x, &subs, &y);
-	switch(length(subs)) {
-		case 1:
-			FrameClassFix(x = listAssign1(call, x, subs, y));
-			break;
-		case 2:
-			x = frameAssign(call, x, subs, y);
-			break;
-		default:
-			errorcall(call, "invalid number of subscripts\n");
-	}
-	UNPROTECT(1);
-	return x;
-}
-
-SEXP do_subassigndf2(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	SEXP subs, x, y; 
-	PROTECT(args = EvalArgs(args, rho, 0));
-	SubAssignArgs(args, &x, &subs, &y);
-	switch(length(subs)) {
-		case 1:
-			FrameClassFix(x = listAssign1(call, x, subs, y));
-			break;
-		case 2:
-			x = frameAssign(call, x, subs, y);
-			break;
-		default:
-			errorcall(call, "invalid number of subscripts\n");
-	}
-	UNPROTECT(1);
 	return x;
 }

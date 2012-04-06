@@ -1,45 +1,41 @@
 \name{density}
 \title{Kernel Density Estimation}
 \usage{
-density(x, n=512, kernel="gaussian", bw, adjust=1, width,
-        from, to, cut=3)
-
-bw.ucv(x, samples=100)
-bw.bcv(x, samples=100)
-bw.sj(x, samples=100)
+density(x, bw, adjust = 1, kernel="gaussian", window = kernel,
+        n = 512, width, from, to, cut = 3, na.rm = FALSE)
 
 print(dobj)
 plot(dobj, \dots)
 }
 \alias{density}
-\alias{bw.ucv}
-\alias{bw.bcv}
-\alias{bw.sj}
 \alias{print.density}
 \alias{plot.density}
 \arguments{
 \item{x}{the values for which the estimate is to be computed.}
 \item{n}{the number of equally spaced points at which the density
-is to be estimated.  This is rounded up to the next power of 2,
-with a minimum value of 512.}
-\item{kernel}{a character string giving the smoothing kernel to be used.
-This must be one of \code{"gaussian"}, \code{"rectangular"}, \code{"triangular"},
-or \code{"cosine"}, and may be abbrevited to a single letter.}
+  is to be estimated.  This is rounded up to the next power of 2,
+  with a minimum value of 512.}
+\item{kernel,window}{a character string giving the smoothing kernel to be used.
+  This must be one of \code{"gaussian"}, \code{"rectangular"},
+  \code{"triangular"}, or \code{"cosine"}, and may be abbrevited to a
+  single letter.}
 \item{bw}{the smoothing bandwith to be used.  This is the standard
-deviation of the smoothing kernel.  It defaults to 1.06 times the
-minimum of the standard deviation and the interquartile range divided by
-1.34 times the sample size to the negative one fifth power.
-The specified value of \code{bw} is multiplied by \code{adjust}.}
+  deviation of the smoothing kernel.  It defaults to 1.06 times the
+  minimum of the standard deviation and the interquartile range divided by
+  1.34 times the sample size to the negative one fifth power.
+  The specified value of \code{bw} is multiplied by \code{adjust}.}
 \item{adjust}{the bandwith used is actually \code{adjust*bw}.
-This makes it easy to specify values like ``half the default'' bandwidth.}
+  This makes it easy to specify values like ``half the default'' bandwidth.}
 \item{width}{this exists for compatibility with S.}
 \item{from,to}{the left and right-most points of the grid at which the
-density is to be estimated.}
+  density is to be estimated.}
 \item{cut}{by default, the values of \code{left} and \code{right} are
-\code{cut} bandwiths beyond the extremes of the data.}
-\item{samples}{the sample size to take in the bandwidth
-selection functions. If \code{samples} is non-positive, the entire
-data set is used.}
+  \code{cut} bandwiths beyond the extremes of the data.}
+%%-\item{samples}{the sample size to take in the bandwidth
+%%-selection functions. If \code{samples} is non-positive, the entire
+%%-data set is used.}
+\item{na.rm}{logical; if \code{TRUE}, missing values are eliminated from
+  \code{x} in advance to further computation.}
 \item{dobj}{a ``density'' object.}
 \item{\dots}{plotting parameters.}
 }
@@ -47,15 +43,6 @@ data set is used.}
 The function \code{density} computes kernel density estimates
 with the given kernel and bandwidth
 (which is the standard deviation of the kernel).
-
-The functions \code{bw.ucv}, \code{bw.bcv} and \code{bw.sj}
-provide automated ways of selecting a bandwith for density
-estimates (assuming a Gaussian kernel).
-The techniques used are as follows; \code{bw.ucv} uses unbiased
-cross-validation, \code{bw.bcv} uses biased cross-validation and
-\code{bw.sj} uses the technique of Sheather and Jones.
-These cross-validation techniques are based on code from the
-Venables and Ripley MASS package.
 
 The generic functions \code{plot} and \code{print} have
 methods for density objects.
@@ -105,6 +92,15 @@ plot(d)
 
 plot(d, type="n")
 polygon(d, col="wheat")
+
+## Missing values:
+x <- xx <- faithful$eruptions
+x[i.out <- sample(length(x), 10)] <- NA
+doR <- density(x, bw=0.15, na.rm = TRUE)
+doN <- density(x, bw=0.15, na.rm = FALSE)
+lines(doR, col="blue")
+lines(doN, col="red")
+points(xx[i.out], rep(.01,10))
 }
 \keyword{dplot}
 \keyword{distribution}

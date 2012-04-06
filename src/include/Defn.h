@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,9 @@
 #ifndef DEFN_H_
 #define DEFN_H_
 
-#define COMPLEX_DATA
+#define NEW_FACTORS
+#define NEW_DATAFRAMES
+
 #define COUNTING
 
 #include "Platform.h"
@@ -88,8 +90,10 @@ typedef unsigned int SEXPTYPE;
 #define BUILTINSXP	8	/* builtin non-special forms */
 #define CHARSXP		9	/* "scalar" string type (internal only)*/
 #define LGLSXP		10	/* logical vectors */
+#ifdef OLD
 #define FACTSXP		11	/* unordered factors */
 #define ORDSXP		12	/* ordered factors */
+#endif
 #define INTSXP		13	/* integer vectors */
 #define REALSXP		14	/* real variables */
 #define CPLXSXP		15	/* complex variables */
@@ -266,7 +270,7 @@ typedef struct {
 typedef struct RCNTXT {
 	struct RCNTXT *nextcontext;	/* The next context up the chain */
 	int callflag;			/* The context "type" */
-	jmp_buf cjmpbuf;		/* C stack and register information */
+	sigjmp_buf cjmpbuf;		/* C stack and register information */
 	int cstacktop;			/* Top of the pointer protection stack */
 	SEXP promargs;			/* Promises supplied to closure */
 	SEXP sysparent;			/* environment the closure was called from*/
@@ -326,6 +330,7 @@ extern int	R_PPStackSize;		/* The stack size (elements) */
 extern int	R_PPStackTop;		/* The top of the stack */
 extern SEXP*	R_PPStack;		/* The pointer protection stack */
 		/* Evaluation Environment */
+extern SEXP	R_Call;			/* The current call */
 extern SEXP	R_GlobalEnv;		/* The "global" environment */
 extern SEXP	R_CurrentExpr;		/* Currently evaluating expression */
 extern SEXP	R_ReturnedValue;	/* Slot for return-ing values */
@@ -341,7 +346,8 @@ extern int	R_BrowseLevel;		/* how deep the browser is */
 		/* File Input/Output */
 extern int	R_Interactive;		/* Non-zero during interactive use */
 extern int	R_Quiet;		/* Be as quiet as possible */
-/* extern int	R_Console;		/* Console active flag */
+extern int	R_Slave;		/* Run as a slave process */
+/* extern int	R_Console; */		/* Console active flag */
 extern FILE*	R_Inputfile;		/* Current input flag */
 extern FILE*	R_Consolefile;		/* Console output file */
 extern FILE*	R_Outputfile;		/* Output file */
@@ -405,7 +411,7 @@ extern int	R_fgetc(FILE*);
 	/* Other Stuff */
 
 void hsv2rgb(double h, double s, double v, double *r, double *g, double *b);
-void GCircle(double x, double y, double radius, int col, int border);
+/* void GCircle(double x, double y, double radius, int col, int border); */
 void call_R(char *func, long nargs, void **arguments, char **modes, long *lengths, char **names, long nres, char **results);
 void printRealVector(double * x, int n, int index);
 int StringFalse(char *name);
@@ -428,6 +434,19 @@ void	R_StartUp(void);
 		/* Defined in main.c */
 
 char	*R_PromptString(int, int);
+
+		/* C Memory Management Interface */
+
+void Init_C_alloc(void);
+void Reset_C_alloc(void);
+char *C_alloc(long, int);
+void C_free(char *);
+
+		/* Missing Value Test */
+		/* Special NaN */
+
+int R_IsNA(double);
+int R_IsNaN(double);
 
 		/* Internally Used Functions */
 
@@ -459,9 +478,10 @@ int conformable(SEXP, SEXP);
 SEXP cons(SEXP, SEXP);
 void copyListMatrix(SEXP, SEXP, int);
 void copyMatrix(SEXP, SEXP, int);
+void copyMostAttrib(SEXP, SEXP);
 void copyVector(SEXP, SEXP);
 SEXP CreateTag(SEXP);
-void CustomPrintValue(SEXP);
+void CustomPrintValue(SEXP,SEXP);
 void DataFrameClass(SEXP);
 void defineVar(SEXP, SEXP, SEXP);
 SEXP deparse1(SEXP,int);
@@ -484,16 +504,11 @@ SEXP evalList(SEXP, SEXP);
 SEXP evalListKeepMissing(SEXP, SEXP);
 SEXP extendEnv(SEXP, SEXP, SEXP);
 int factorsConform(SEXP, SEXP);
-void findcontext(int, SEXP);
+void findcontext(int, SEXP, SEXP);
 SEXP findVar(SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 SEXP findVarInFrame(SEXP, SEXP);
 SEXP findFun(SEXP, SEXP);
-SEXP FixupCex(SEXP);
-SEXP FixupCol(SEXP);
-SEXP FixupFont(SEXP);
-SEXP FixupLty(SEXP);
-SEXP FixupPch(SEXP);
 void FrameClassFix(SEXP);
 int framedepth(RCNTXT*);
 SEXP frameSubscript(int, SEXP, SEXP);
@@ -525,10 +540,12 @@ void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 int isArray(SEXP);
 int isComplex(SEXP);
 char *R_ExpandFileName(char*);
+int isEnvironment(SEXP);
 int isExpression(SEXP);
 int isExpressionObject(SEXP);
 int isFactor(SEXP);
 int isFrame(SEXP);
+int isFinite(double);
 int isFunction(SEXP);
 int isInteger(SEXP);
 int isLanguage(SEXP);
@@ -549,7 +566,6 @@ int isUserBinop(SEXP);
 int isVector(SEXP);
 int isVectorizable(SEXP);
 void jump_to_toplevel(void);
-void KillDevice(void);
 SEXP lang1(SEXP);
 SEXP lang2(SEXP, SEXP);
 SEXP lang3(SEXP, SEXP, SEXP);
@@ -585,6 +601,7 @@ SEXP mkTrue(void);
 SEXP namesgets(SEXP, SEXP);
 int ncols(SEXP);
 int nrows(SEXP);
+int nlevels(SEXP);
 SEXP nthcdr(SEXP, int);
 void onintr();
 FILE* R_OpenLibraryFile();
@@ -594,18 +611,18 @@ void PrintDefaults(SEXP);
 void PrintGreeting(void);
 void PrintValue(SEXP);
 void PrintValueEnv(SEXP, SEXP);
+void PrintValueRec(SEXP, SEXP);
 SEXP promiseArgs(SEXP, SEXP);
 void protect(SEXP);
 char *R_alloc(long, int);
 void REvprintf(const char*, va_list);
 void REprintf(char*, ...);
-void R_RestoreGlobalEnv(void);
-int restore_image(char*);
-unsigned int RGBpar(SEXP, int);
-SEXP rownamesgets(SEXP,SEXP);
 void Rprintf(char*, ...);
 char *Rsprintf(char*, ...);
 void Rvprintf(const char*, va_list);
+void R_RestoreGlobalEnv(void);
+int restore_image(char*);
+SEXP rownamesgets(SEXP,SEXP);
 void rsort(double *x, int);
 int Rstrlen(char*);
 SEXP R_LoadFromFile(FILE*);
@@ -625,10 +642,10 @@ int StringTrue(char*);
 int StrToInternal(char*);
 void R_Suicide(char*);
 void SymbolShortcuts(void);
-SEXP syscall(int,RCNTXT*);
-int sysparent(int,RCNTXT*);
-SEXP sysframe(int,RCNTXT*);
-SEXP sysfunction(int,RCNTXT*);
+SEXP R_syscall(int,RCNTXT*);
+int R_sysparent(int,RCNTXT*);
+SEXP R_sysframe(int,RCNTXT*);
+SEXP R_sysfunction(int,RCNTXT*);
 int tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2str(SEXPTYPE);

@@ -1,14 +1,13 @@
 ## ${RHOME}/etc/Makefile
 
-TESTS   = ../tests
-Ex_Tests = $(TESTS)/Examples
-CleanMe1 = SHLIB COMPILE INSTALL REMOVE
+include ../Makeconf
+
+
+CleanMe1 = SHLIB INSTALL REMOVE
 CleanMe2 = Rdconv Rdindex Rman2Rd Sd2Rd
-CleanMe3 = build-help build-htmlpkglist help.pretty html2dos
+CleanMe3 = build-help help.pretty html2dos
 CleanMe  = $(CleanMe1) $(CleanMe2) $(CleanMe3)
 
-### The following line was confusing Solaris "make". If your "make" is
-### confused now, you may want to try re-enabling it...
 #MANSRC = ../src/library/*/man/*.Rd
 MANbaseDIR = ../src/library/base/man
 MANdest= ../doc/manual
@@ -18,13 +17,9 @@ DVI = $(MANdest)/Man.dvi
 
 build-help: stamp-help
 build-html: stamp-html
-build-latex: stamp-latex $(DVI)
-build-docs: stamp-docs $(DVI)
-tests: test-Examples
-
-test-Examples: $(Ex_Tests)
-	@cp -p Makefile-test-Ex $(Ex_Tests)/Makefile
-	-(cd $(Ex_Tests); $(MAKE) $@)
+build-latex: stamp-latex
+build-docs: stamp-docs
+build-dvi:  $(DVI)
 
 stamp-help: $(MANSRC)
 	@echo "Building ALL help pages"
@@ -53,16 +48,26 @@ stamp-docs: $(MANSRC)
 $(DVI): stamp-latex
 	-(cd $(MANdest); $(MAKE) Man.dvi)
 
-$(Ex_Tests):
-	@if [ ! -d $@ ]; then mkdir -p $@ ; fi
-
 clean:
 	-(cd $(MANdest); $(MAKE) $@)
-	@-(cd $(Ex_Tests) && $(MAKE) $@)
 
 moreclean: clean
 	@rm -f $(CleanMe1)
 
 distclean realclean:
-	@rm -fr $(CleanMe) $(Ex_Tests)
+	@rm -fr $(CleanMe)
 	@rm -f stamp-*
+
+
+install:
+	$(INSTALL) -d $(rhome)/etc
+	for f in COMPILE INSTALL REMOVE SHLIB Rd2dvi Rd2txt \
+	   Rdconv Rdindex Rman2Rd Sd2Rd build-help help.pretty; \
+		do $(INSTALL) $$f $(rhome)/etc; \
+	done
+	for f in buildlib.pl html-layout.pl Makeconf Rdconvlib.pl; \
+		do $(INSTALL_DATA) $$f $(rhome)/etc; \
+	done
+	for f in Rd2txt Rdconv Rdindex Sd2Rd; \
+		do $(INSTALL_PROGRAM) $$f $(bindir); \
+	done

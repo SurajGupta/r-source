@@ -37,26 +37,27 @@ extern double	R_NegInf;		/* IEEE -Inf or -DBL_MAX */
 extern int   	R_NaInt;		/* NA_INTEGER etc */
 extern double	R_NaReal;		/* NA_REAL */
 
-#ifdef HAVE_ISNAN
-
-#define DOMAIN_ERROR {return R_NaN;}
-#define POS_RANGE_ERROR {return R_PosInf;}
-#define NEG_RANGE_ERROR {return R_NegInf;}
-#define MATH_CHECK(call) (R_tmp=call,finite(R_tmp)?R_tmp:R_NaN)
-#ifdef Macintosh
-#define FINITE(x) isfinite(x)
-#else
-#define FINITE(x) finite(x)
+#ifdef Win32
+extern int isnan(double);
+extern int finite(double);
 #endif
 
+#ifdef IEEE_754
+
+#define MATH_CHECK(call)	(call)
+#define FINITE(x)		finite(x)
+#define ISNAN(x)		((x)!=(x))/* True, *both* for NA & NaN */
+#define ISNA(x)			R_IsNA(x) /* --> ../main/arithmetic.c */
+
 #else
 
-#define DOMAIN_ERROR {errno=EDOM;return R_NaN;}
-#define POS_RANGE_ERROR {errno=ERANGE;return R_PosInf;}
-#define NEG_RANGE_ERROR {errno=ERANGE;return R_NegInf;}
-#define MATH_CHECK(call) (errno=0,R_tmp=call,(errno==0)?R_tmp:R_NaN)
-#define FINITE(x) ((x)!=NA_REAL)
-
+#define MATH_CHECK(call)	(errno=0,R_tmp=call,(errno==0)?R_tmp:R_NaN)
+#define FINITE(x)		((x)!=R_NaReal)
+#define ISNAN(x)		((x)!=R_NaReal)/* ?? rather not -- FIXME!! */
+#define ISNA(x)			((x)!=R_NaReal)/* ?? rather not -- FIXME!! */
+/* never used. in HP-UX' c89 "NAN" is for a double const. :
+ * #define NAN(x)			ISNAN(x)
+ */
 #endif
 
 #endif

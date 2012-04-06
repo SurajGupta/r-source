@@ -35,9 +35,9 @@ static int icmp(int x, int y)
 
 static int rcmp(double x, double y)
 {
-	if (!FINITE(x))
+	if (ISNAN(x))
 		return 1;
-	if (!FINITE(y))
+	if (ISNAN(y))
 		return -1;
 	if (x < y)
 		return -1;
@@ -46,30 +46,28 @@ static int rcmp(double x, double y)
 	return 0;
 }
 
-#ifdef COMPLEX_DATA
 static int ccmp(complex x, complex y)
 {
-	if (!FINITE(x.r))		/* compare real parts */
+	if (ISNAN(x.r))		/* compare real parts */
 		return 1;
-	if (!FINITE(y.r))
+	if (ISNAN(y.r))
 		return -1;
 	if (x.r < y.r)
 		return -1;
 	if (x.r > y.r)
 		return 1;
 
-	if (!FINITE(x.i))		/* compare complex parts */
+	if (ISNAN(x.i))		/* compare complex parts */
 		return 1;
-	if (!FINITE(y.i))
+	if (ISNAN(y.i))
 		return -1;
 	if (x.i < y.i)
 		return -1;
 	if (x.i > y.i)
 		return 1;
 
-	return 0;			/* equal */
+	return 0;		/* equal */
 }
-#endif
 
 static int scmp(SEXP x, SEXP y)
 {
@@ -134,7 +132,6 @@ void rsort(double *x, int n)
 	} while (h != 1);
 }
 
-#ifdef COMPLEX_DATA
 void csort(complex *x, int n)
 {
 	int i, j, h;
@@ -161,7 +158,6 @@ void csort(complex *x, int n)
 		}
 	} while (h != 1);
 }
-#endif
 
 
 void ssort(SEXP *x, int n)
@@ -202,19 +198,15 @@ void sortVector(SEXP s)
 	if (n >= 2)
 		switch (TYPEOF(s)) {
 		case LGLSXP:
-		case FACTSXP:
-		case ORDSXP:
 		case INTSXP:
 			isort(INTEGER(s), n);
 			break;
 		case REALSXP:
 			rsort(REAL(s), n);
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			csort(COMPLEX(s), n);
 			break;
-#endif
 		case STRSXP:
 			ssort(STRING(s), n);
 			break;
@@ -296,7 +288,6 @@ void rFind(double * x, int n, int k)
 	}
 }
 
-#ifdef COMPLEX_DATA
 void cFind(complex *x, int n, int k)
 {
 	int L, R, i, j;
@@ -327,7 +318,6 @@ void cFind(complex *x, int n, int k)
 			R = j;
 	}
 }
-#endif
 
 
 void sFind(SEXP * x, int n, int k)
@@ -365,19 +355,15 @@ void find(SEXP x, int k)
 {
 	switch (TYPEOF(x)) {
 	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case INTSXP:
 		iFind(INTEGER(x), LENGTH(x), k);
 		break;
 	case REALSXP:
 		rFind(REAL(x), LENGTH(x), k);
 		break;
-#ifdef COMPLEX
 	case CPLXSXP:
 		cFind(COMPLEX(x), LENGTH(x), k);
 		break;
-#endif
 	case STRSXP:
 		sFind(STRING(x), LENGTH(x), k);
 		break;
@@ -413,23 +399,19 @@ SEXP do_psort(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static int equal(int i, int j, SEXP x)
 {
-	int c;
+	int c=-1;
 
 	switch (TYPEOF(x)) {
 	case LGLSXP:
 	case INTSXP:
-	case FACTSXP:
-	case ORDSXP:
 		c = icmp(INTEGER(x)[i], INTEGER(x)[j]);
 		break;
 	case REALSXP:
 		c = rcmp(REAL(x)[i], REAL(x)[j]);
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		c = ccmp(COMPLEX(x)[i], COMPLEX(x)[j]);
 		break;
-#endif
 	case STRSXP:
 		c = scmp(STRING(x)[i], STRING(x)[j]);
 		break;
@@ -441,23 +423,19 @@ static int equal(int i, int j, SEXP x)
 
 static int greater(int i, int j, SEXP x)
 {
-	int c;
+	int c=-1;
 
 	switch (TYPEOF(x)) {
 	case LGLSXP:
 	case INTSXP:
-	case FACTSXP:
-	case ORDSXP:
 		c = icmp(INTEGER(x)[i], INTEGER(x)[j]);
 		break;
 	case REALSXP:
 		c = rcmp(REAL(x)[i], REAL(x)[j]);
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		c = ccmp(COMPLEX(x)[i], COMPLEX(x)[j]);
 		break;
-#endif
 	case STRSXP:
 		c = scmp(STRING(x)[i], STRING(x)[j]);
 		break;
@@ -470,25 +448,21 @@ static int greater(int i, int j, SEXP x)
 static int listgreater(int i, int j, SEXP key)
 {
 	SEXP x;
-	int c;
+	int c=-1;
 
 	while (key != R_NilValue) {
 		x = CAR(key);
 		switch (TYPEOF(x)) {
 		case LGLSXP:
 		case INTSXP:
-		case FACTSXP:
-		case ORDSXP:
 			c = icmp(INTEGER(x)[i], INTEGER(x)[j]);
 			break;
 		case REALSXP:
 			c = rcmp(REAL(x)[i], REAL(x)[j]);
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			c = ccmp(COMPLEX(x)[i], COMPLEX(x)[j]);
 			break;
-#endif
 		case STRSXP:
 			c = scmp(STRING(x)[i], STRING(x)[j]);
 			break;
@@ -542,6 +516,7 @@ SEXP do_order(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	if (isVector(CAR(args)))
 		n = LENGTH(CAR(args));
+	else    n = -1; /* for -Wall;  will have error below */
 	for (ap = args; ap != R_NilValue; ap = CDR(ap)) {
 		if (!isVector(CAR(ap)))
 			errorcall(call, "Argument %d is not a vector\n", ++narg);

@@ -1,7 +1,7 @@
 \name{data}
 \title{Data Sets}
 \usage{
-data(..., list = character(0), package = .packages(),
+data(\dots, list = character(0), package = c(.packages(),.Autoloaded),
      lib.loc = .lib.loc)
 }
 \alias{data}
@@ -15,11 +15,23 @@ data(..., list = character(0), package = .packages(),
   Defaults to all libraries currently known.}}
 \description{
 \code{data} loads or lists available data sets.
-
 The data sets to be loaded can be specified as a sequence of \code{name}s
 or character strings, or as the character vector \code{list}, or as both.
 
 If no data sets are specified, the available data sets are displayed.
+
+Currently, four formats of data files are supported:
+\enumerate{
+  \item files ending \code{".RData"} or \code{".rda"} are
+  \code{\link{load}()ed}. 
+  \item files ending \code{".R"} are \code{\link{source}()d} in.
+  \item files ending \code{".tab"} or \code{".txt"} are read using
+    \code{\link{read.table}(\dots, header = TRUE)}, and hence result in
+    a \code{\link{data.frame}}.
+  \item files ending \code{".csv"} are read using
+    \code{\link{read.table}(\dots, header = TRUE, sep=";")},
+    and also result in a \code{\link{data.frame}}.
+}
 }
 \value{
 A character vector of all data sets specified for loading.
@@ -33,5 +45,5 @@ data(package = base)         # list the data sets in the base package
 data(crimes, "deaths")       # load the data sets `crimes' and `deaths'
 help(crimes)                 # give information on data set `crimes'
 }
-\keyword{datasets}
 \keyword{documentation}
+\keyword{datasets}

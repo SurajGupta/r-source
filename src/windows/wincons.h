@@ -19,10 +19,13 @@
 
 #include <windows.h>
 #include <windowsx.h>
-#include <env.h>
+/*#include <env.h>*/
 
-#include "Defn.h"
+#include "c:\april\include\Defn.h"
 
+#define DllExport __declspec(dllexport)
+
+DllExport void rsort(double*, int);
 
 /* Globals */
 
@@ -36,7 +39,6 @@ extern char RDEClass[];
 
 extern char REdfilename[MAX_PATH];
 
-extern int R_VSmb;
 extern float R_WinVersion;
 
 extern HMENU RMenuEdit, RMenuDE, RMenuGraph, RMenuConsole, RMenuInit;
@@ -45,7 +47,6 @@ extern HMENU RMenuEditWin, RMenuDEWin, RMenuGraphWin, RMenuConsWin, RMenuInitWin
 
 /* R Functions */
 
-extern void     (*DevHold)();
 extern void     dump_image(char* , int);
 extern BOOL FAR PASCAL  About(HWND, WORD, WPARAM, LPARAM);
 extern BOOL     RPrintGraph(HWND, HANDLE);
@@ -66,9 +67,12 @@ BOOL             InitInstance(HINSTANCE,int);
 
 extern int EventLoop(void);
 extern void SysBeep(void);
-extern int Win_ROpenDlg(HWND, char*);
+extern int Win_ROpenDlg(HWND, int);
 extern int Win_RSaveDlg(HWND);
 extern void R_SetMemory(int, int);
+
+extern void sysdata(void);
+extern void userdata(void);
 
 #define R_printf Rprintf
 
@@ -120,3 +124,15 @@ extern void R_SetMemory(int, int);
 #define RRR_CLOSEALL            124
 #define RRR_SETMEM              125
 #define RRR_HELP                126
+#define RRR_DATA                127
+#define RRR_SYSDATA             128
+
+#define RDG_FILE                200
+#define RDG_DIR                 201
+#define RDG_ASISF               202
+#define RDG_ASIST               203
+#define RDG_HEADF               204
+#define RDG_HEADT               205
+#define RDG_SEP                 206
+#define RDG_NASTRINGS           207
+#define RDG_SKIP                208

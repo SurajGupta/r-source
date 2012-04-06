@@ -8,7 +8,6 @@ ordered(x, levels = sort(unique(x), na.last = TRUE), labels,
 
 is.factor(x)
 is.ordered(x)
-is.unordered(x)
 
 as.factor(x, ordered = FALSE)
 as.ordered(x)
@@ -17,7 +16,6 @@ as.ordered(x)
 \alias{ordered}
 \alias{is.factor}
 \alias{is.ordered}
-\alias{is.unordered}
 \alias{as.factor}
 \alias{as.ordered}
 \value{
@@ -38,13 +36,17 @@ as.ordered(x)
   level for the factor.  \emph{This means that there will be no
   \code{NA} values in the result}.
 
+  \code{factor} applied to a factor is a no-op, except if there are 
+  empty levels. In that case, a factor with the reduced level set
+  set is returned.
+
   \code{labels} is a vector of character strings used to label the
   levels of the factor.  The default is to use the encoded factor levels.
 
   \code{is.factor} returns \code{TRUE} or \code{FALSE} depending on
   whether its argument is of type factor or not.  Correspondingly,
-  \code{is.ordered} (\code{is.unordered}) returns \code{TRUE} when its
-  argument is ordered (unordered) and \code{FALSE} otherwise.
+  \code{is.ordered} returns \code{TRUE} when its
+  argument is ordered and \code{FALSE} otherwise.
 
   \code{as.factor} coerces its argument to a factor.
   It is an abbreviated form of \code{factor}.
@@ -61,6 +63,8 @@ as.ordered(x)
 ff <- factor(substring("statistics",1:10,1:10), levels=letters)
 ff
 codes(ff)
+factor(ff)
+factor(factor(letters[7:10])[2:3]) # excercise indexing and reduction
 }
 \keyword{category}
 \keyword{NA}

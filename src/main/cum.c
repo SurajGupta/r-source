@@ -1,6 +1,7 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997--1998  Robert Gentleman, Ross Ihaka and the R core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,8 +27,10 @@ static SEXP cumsum(SEXP x, SEXP s)
 
 	sum = 0.0;
 	for( i=0 ; i<length(x) ; i++) {
-		if(REAL(x)[i] == R_NaReal )
+#ifndef IEEE_754
+		if(ISNAN(REAL(x)[i]))
 			break;
+#endif
 		sum += REAL(x)[i];
 		REAL(s)[i] = sum;
 	}
@@ -42,8 +45,10 @@ static SEXP ccumsum(SEXP x, SEXP s)
 	sum.r = 0;
 	sum.i = 0;
 	for(i=0 ; i<length(x) ; i++) {
-		if(!FINITE(COMPLEX(x)[i].r) || !FINITE(COMPLEX(x)[i].i))
+#ifndef IEEE_754
+		if(ISNAN(COMPLEX(x)[i].r) || ISNAN(COMPLEX(x)[i].i))
 			break;
+#endif
 		sum.r += COMPLEX(x)[i].r;
 		sum.i += COMPLEX(x)[i].i;
 		COMPLEX(s)[i].r = sum.r;
@@ -59,8 +64,10 @@ static SEXP cumprod(SEXP x, SEXP s)
 
 	prod = 1.0;
 	for( i=0 ; i<length(x) ; i++) {
-		if(REAL(x)[i] == R_NaReal )
+#ifndef IEEE_754
+		if(ISNAN(REAL(x)[i]))
 			break;
+#endif
 		prod *= REAL(x)[i];
 		REAL(s)[i] = prod;
 	}
@@ -75,8 +82,10 @@ static SEXP ccumprod(SEXP x, SEXP s)
 	prod.r = 1;
 	prod.i = 0;
 	for(i=0 ; i<length(x) ; i++) {
-		if(!FINITE(COMPLEX(x)[i].r) || !FINITE(COMPLEX(x)[i].i))
+#ifndef IEEE_754
+		if(ISNAN(COMPLEX(x)[i].r) || ISNAN(COMPLEX(x)[i].i))
 			break;
+#endif
 		tmp.r = prod.r;
 		tmp.i = prod.i;
 		prod.r = COMPLEX(x)[i].r * tmp.r - COMPLEX(x)[i].i * tmp.i;
@@ -94,14 +103,19 @@ static SEXP cummax(SEXP x, SEXP s)
 
 	max = REAL(x)[0];
 	for( i=0 ; i<length(x) ; i++ ) {
-		if(REAL(x)[i] == R_NaReal )
+		if(ISNAN(REAL(x)[i]) || ISNAN(max))
+#ifdef IEEE_754
+			max = max + REAL(x)[i];  /* propagate NA and NaN */
+#else
 			break;
-		max = (max > REAL(x)[i]) ? max : REAL(x)[i];
+#endif
+		else
+			max = (max > REAL(x)[i]) ? max : REAL(x)[i];
 		REAL(s)[i] = max;
 	}
 	return s;
 }
-	
+
 static SEXP cummin(SEXP x, SEXP s)
 {
 	int i;
@@ -109,9 +123,14 @@ static SEXP cummin(SEXP x, SEXP s)
 
 	min = REAL(x)[0];
 	for( i=0 ; i<length(x) ; i++ ) {
-		if(REAL(x)[i] == R_NaReal )
+		if(ISNAN(REAL(x)[i]) || ISNAN(min))
+#ifdef IEEE_754
+			min = min + REAL(x)[i];  /* propagate NA and NaN */
+#else
 			break;
-		min = (min < REAL(x)[i]) ? min : REAL(x)[i];
+#endif
+		else
+			min = (min < REAL(x)[i]) ? min : REAL(x)[i];
 		REAL(s)[i] = min;
 	}
 	return s;
@@ -148,8 +167,7 @@ SEXP do_cum(SEXP call, SEXP op, SEXP args, SEXP env)
 		default:
 			errorcall(call,"unknown cumxxx function\n");
 		}
-	}
-	else {
+	} else { /* Non-Complex:  here, (sh|c)ould differentiate  real / int */
 		PROTECT(t = coerceVector(CAR(args), REALSXP));
 		s=allocVector(REALSXP, LENGTH(t));
 		for( i=0 ; i<length(t) ; i++)
@@ -172,4 +190,6 @@ SEXP do_cum(SEXP call, SEXP op, SEXP args, SEXP env)
 			errorcall(call,"Unknown cum function\n");
 		}
 	}
+	return R_NilValue;/* for -Wall */
+
 }

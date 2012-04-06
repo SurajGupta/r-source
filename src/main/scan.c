@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,11 +30,13 @@ static char *ConsoleBufp;
 static int  ConsoleBufCnt;
 static char  ConsolePrompt[32];
 
+#ifdef NOT_used
 static void InitConsoleGetchar()
 {
 	ConsoleBufCnt = 0;
 	ConsolePrompt[0] = '\0';
 }
+#endif
 
 static int ConsoleGetchar()
 {
@@ -88,7 +90,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 			filled = c;
 			goto donefill;
 		}
-		if(type == STRSXP && c == '\"' || c == '\'') {
+		if(type == STRSXP && (c == '\"' || c == '\'')) {
 			quote = c;
 			while ((c = scanchar()) != R_EOF && c != quote) {
 				if(bufp >= &buffer[MAXELTSIZE - 2])
@@ -115,7 +117,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 					continue;
 				*bufp++ = c;
 			} while (!isspace(c = scanchar()) && c != R_EOF);
-			while(c==' ' || c=='\t') 
+			while(c==' ' || c=='\t')
 				c=scanchar();
 			if(c=='\n' || c=='\r' || c==R_EOF )
 				filled=c;
@@ -125,11 +127,11 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 	}
 	else {
 		while((c = scanchar()) != sepchar && c!= '\n' && c!='\r'
-			&& c != R_EOF ) 
+			&& c != R_EOF )
 		{
 			/* eat white space */
 			if( type != STRSXP )
-				while(c==' ' || c=='\t') 
+				while(c==' ' || c=='\t')
 					if((c=scanchar())== sepchar || c=='\n' ||
 					c=='\r' || c==R_EOF ) {
 					filled=c;
@@ -139,7 +141,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 				continue;
 			if( !strip || bufp != &buffer[0] || !isspace(c) )
 				*bufp++ = c;
-		} 
+		}
 		filled=c;
 	}
 donefill:
@@ -147,7 +149,7 @@ donefill:
 	if( strip ) {
 		while( isspace(*--bufp) )
 			;
-		*bufp++;
+		bufp++;
 	}
 
 
@@ -159,7 +161,7 @@ static int isNAstring(char *buf)
 {
 	int i;
 
-	for(i=0; i<length(NAstrings) ; i++ ) 
+	for(i=0; i<length(NAstrings) ; i++ )
 		if (!strcmp(CHAR(STRING(NAstrings)[i]),buf))
 			return 1;
 	return 0;
@@ -177,7 +179,7 @@ static void expected(char *what, char *got)
 	error("\"scan\" expected %s got \"%s\"\n", what, got);
 }
 
-static SEXP extractItem(char *buffer, SEXP ans, int i)
+static void extractItem(char *buffer, SEXP ans, int i)
 {
 	char *endp;
 
@@ -188,10 +190,6 @@ static SEXP extractItem(char *buffer, SEXP ans, int i)
 			else
 				LOGICAL(ans)[i] = StringTrue(buffer);
 			break;
-		case FACTSXP:
-		case ORDSXP:
-			if(!ttyflag) fclose(fp);
-			error("can't scan factors (yet)\n");
 		case INTSXP:
 			if (isNAstring(buffer))
 				INTEGER(ans)[i] = NA_INTEGER;
@@ -314,7 +312,7 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines, int flush, SEX
 
 static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP stripwhite)
 {
-	SEXP a, ans, b, bns, new, old, w;
+	SEXP a, ans, b, new, old, w;
 	char buffer[MAXELTSIZE];
 	int blksize, c, i, j, n, nc, linesread, colsread, strip, bch;
 	int badline;
@@ -375,7 +373,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 				b = CDR(b);
 			}
 		}
-	
+
 		bch=fillBuffer(buffer, TYPEOF(CAR(a)), strip);
 		if(colsread == 0 && strlen(buffer)==0 && (bch =='\n' ||
 			bch == R_EOF) ) {
@@ -386,7 +384,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 			extractItem(buffer, CAR(a), n);
 			a = CDR(a);
 			colsread++;
-			if( length(stripwhite) == length(what) ) 
+			if( length(stripwhite) == length(what) )
 				strip=LOGICAL(stripwhite)[colsread];
 			/* increment n and reset i after filling a row */
 			if( colsread == nc ) {
@@ -405,7 +403,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush, SEXP str
 	}
 
 done:
-	if( badline ) 
+	if( badline )
 		warning("line %d did not have %d elements\n",badline,nc);
 
 	if( colsread != 0 ) {
@@ -442,7 +440,7 @@ done:
 				REAL(new)[j] = REAL(old)[j];
 			break;
 		case STRSXP:
-			for (j = 0; j < n; j++) 
+			for (j = 0; j < n; j++)
 				STRING(new)[j] = STRING(old)[j];
 			break;
 		}
@@ -456,7 +454,7 @@ done:
 SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP ans, file, sep, what, stripwhite;
-	int i, c, nlines, nmax, nskip, type, flush;
+	int i, c, nlines, nmax, nskip, flush;
 	char *filename;
 
 	checkArity(op, args);
@@ -467,7 +465,7 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	nskip = asInteger(CAR(args)); args = CDR(args);
 	nlines = asInteger(CAR(args)); args = CDR(args);
 	NAstrings = CAR(args); args = CDR(args);
-	flush = asLogical(CAR(args)); args = CDR(args); 
+	flush = asLogical(CAR(args)); args = CDR(args);
 	stripwhite = CAR(args); args = CDR(args);
 	quiet = asLogical(CAR(args));
 	if(quiet == NA_LOGICAL) quiet = 0;
@@ -513,8 +511,6 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	switch (TYPEOF(what)) {
 	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case INTSXP:
 	case REALSXP:
 	case STRSXP:
@@ -543,7 +539,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	file = CAR(args); args = CDR(args);
 	sep = CAR(args); args = CDR(args);
-	nskip = asInteger(CAR(args)); 
+	nskip = asInteger(CAR(args));
 
 	if (nskip < 0 || nskip == NA_INTEGER) nskip = 0;
 
@@ -558,7 +554,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (strlen(filename) == 0)
 			filename = NULL;
 	}
-	else 
+	else
 		filename = NULL;
 
 	if(filename == NULL)
@@ -581,7 +577,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(;;) {
 		c = scanchar();
 		if(c == R_EOF)  {
-			if(nfields != 0) 
+			if(nfields != 0)
 				INTEGER(ans)[nlines] = nfields;
 			else nlines--;
 			goto donecf;
@@ -659,7 +655,7 @@ donecf:
 
 SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-        SEXP cvec, a, b, rval, dup, levs, dims, names;
+        SEXP cvec, a, rval, dup, levs, dims, names;
         int i, j, len, numeric, asIs;
 	char *endp, *tmp;
 
@@ -709,27 +705,26 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 			rval = cvec;
 		}
 		else {
-			PROTECT(rval = allocVector(FACTSXP,length(cvec)));
+			PROTECT(rval = allocVector(INTSXP,length(cvec)));
 			PROTECT(dup = duplicated(cvec));
 			j = 0;
 			for( i=0 ; i<len ; i++ )
 				if (LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING(cvec)[i])) )
 					j++;
-			LEVELS(rval) = j;
 			PROTECT(levs = allocVector(STRSXP,j));
 			j=0;
-			for( i=0 ; i<len ; i++ ) 
+			for( i=0 ; i<len ; i++ )
 				if(LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING(cvec)[i])) )
 					STRING(levs)[j++] = STRING(cvec)[i];
-	
+
 			/* put the levels in lexicographic order */
 
 			sortVector(levs);
-	
-			PROTECT(a=match(levs, cvec, NA_INTEGER));	
-			for (i = 0; i < len; i++) 
-				FACTOR(rval)[i]=INTEGER(a)[i];
-	
+
+			PROTECT(a=match(levs, cvec, NA_INTEGER));
+			for (i = 0; i < len; i++)
+				INTEGER(rval)[i]=INTEGER(a)[i];
+
 			setAttrib(rval, R_LevelsSymbol, levs);
 			PROTECT(a = allocVector(STRSXP, 1));
 			STRING(a)[0] = mkChar("factor");
@@ -748,7 +743,7 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	int c,first;
+	int c;
 	char buffer[MAXELTSIZE], *bufp = buffer;
 	SEXP ans;
 
@@ -795,7 +790,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 	bufp=buffer;
 	while(isspace(*bufp)) bufp++;
 	first=LENGTH(CAR(args))+1;
-	if(isdigit(*bufp)) 
+	if(isdigit(*bufp))
 		first=strtod(buffer,NULL);
 	else {
 		for(j=0 ; j< LENGTH(CAR(args)) ; j++ ) {

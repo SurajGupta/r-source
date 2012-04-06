@@ -69,7 +69,7 @@ void error(const char *format, ...)
 {
 	va_list(ap);
 
-	if( inError ) 
+	if( inError )
 		jump_now();
 	REprintf("Error: ");
 	va_start(ap, format);
@@ -109,7 +109,7 @@ void jump_to_toplevel()
 
 	PROTECT(s=allocList(nback));
 	t=s;
-	for( c = R_GlobalContext; c; c = c->nextcontext) 
+	for( c = R_GlobalContext; c; c = c->nextcontext)
 		if(c->callflag == CTXT_RETURN) {
 			CAR(t) = deparse1(c->call,0);
 			t=CDR(t);
@@ -124,7 +124,7 @@ static void jump_now()
 {
 	inError=0;
 	R_PPStackTop = 0;
-	if(R_Interactive) longjmp(R_ToplevelContext->cjmpbuf, 0);
+	if(R_Interactive) siglongjmp(R_ToplevelContext->cjmpbuf, 0);
 	else REprintf("Execution halted\n");
 	exit(1);
 }
@@ -149,7 +149,7 @@ void isintrpt()
 }
 #endif
 
-SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
+void do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	CAR(args) = coerceVector(CAR(args), STRSXP);
 	if (length(CAR(args)) <= 0)
@@ -185,7 +185,6 @@ ErrorDB[] = {
 
 	{ ERROR_TSVEC_MISMATCH,		"time-series/vector length mismatch\n"},
 	{ ERROR_INCOMPAT_ARGS,		"incompatible arguments\n"            },
-	{ ERROR_INCOMPAT_FACTORS,	"incompatible factors\n",             },
 
 	{ ERROR_UNIMPLEMENTED,		"unimplemented feature in %s\n",      },
 	{ ERROR_UNKNOWN,		"unknown error (report this!)\n",     }
@@ -201,7 +200,7 @@ void  ErrorMessage(SEXP call, int which_error, ...)
 		dcall = CHAR(STRING(deparse1(call, 0))[0]);
 		REprintf("Error in %s : ", dcall);
 	}
-	else REprintf("Error: ", dcall);
+        else REprintf("Error: ", dcall);/*-- dcall = ??? */
 	i = 0;
 	while(ErrorDB[i].index != ERROR_UNKNOWN) {
 		if(ErrorDB[i].index == which_error)
@@ -232,7 +231,7 @@ void  WarningMessage(SEXP call, int which_warn, ...)
                 dcall = CHAR(STRING(deparse1(call, 0))[0]);
                 REprintf("Warning in %s : ", dcall);
         }
-        else REprintf("Warning: ", dcall);
+        else REprintf("Warning: ", dcall);/*-- dcall = ??? */
         i = 0;
         while(WarningDB[i].index != WARNING_UNKNOWN) {
                 if(WarningDB[i].index == which_warn)

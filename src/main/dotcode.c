@@ -52,8 +52,6 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg)
 
 	switch(TYPEOF(s)) {
 	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case INTSXP:
 		n = LENGTH(s);
 		iptr = INTEGER(s);
@@ -82,7 +80,6 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg)
 		}
 		return (void*)rptr;
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		n = LENGTH(s);
 		zptr = COMPLEX(s);
@@ -97,7 +94,6 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg)
 		}
 		return (void*)zptr;
 		break;
-#endif
 	case STRSXP:
 		if(!dup)
 			error("character variables must be duplicated in .C/.Fortran\n");
@@ -136,8 +132,6 @@ static SEXP CPtrToRObj(void *p, int n, SEXPTYPE type)
 
 	switch(type) {
 		case LGLSXP:
-		case FACTSXP:
-		case ORDSXP:
 		case INTSXP:
 			s = allocVector(type, n);
 			iptr = (int*)p;
@@ -152,7 +146,6 @@ static SEXP CPtrToRObj(void *p, int n, SEXPTYPE type)
 				REAL(s)[i] = rptr[i];
 			}
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			s = allocVector(type, n);
 			zptr = (complex*)p;
@@ -160,7 +153,6 @@ static SEXP CPtrToRObj(void *p, int n, SEXPTYPE type)
 				COMPLEX(s)[i] = zptr[i];
 			}
 			break;
-#endif
 		case STRSXP:
 			PROTECT(s = allocVector(type, n));
 			cptr = (char**)p;
@@ -265,7 +257,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 	DL_FUNC fun;
 	SEXP pargs, s;
 	char buf[128], *p, *q, *vmax;
-	
+
 	if(NaokSymbol == NULL || DupSymbol == NULL) {
 		NaokSymbol = install("NAOK");
 		DupSymbol = install("DUP");
@@ -280,7 +272,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 		/* The following code modifies the argument list */
 		/* We know this is ok because do_dotcode is entered */
 		/* with its arguments evaluated. */
-	
+
 	args = naoktrim(CDR(args), &nargs, &naok, &dup);
 	if(naok == NA_LOGICAL)
 		errorcall(call, "invalid naok value\n");
@@ -288,7 +280,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(nargs > MAX_ARGS)
 		errorcall(call, "too many arguments in foreign function call\n");
 	cargs = (void**)R_alloc(nargs, sizeof(void*));
-	
+
 		/* Convert the arguments for use in foreign */
 		/* function calls.  Note that we copy twice */
 		/* once here, on the way into the call, and */
@@ -299,9 +291,9 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 		cargs[nargs] = RObjToCPtr(CAR(pargs), naok, dup, nargs+1);
 		nargs++;
 	}
-	
+
 	/* make up load symbol & look it up */
-	
+
 	p = CHAR(STRING(op)[0]);
 	q = buf;
 	while ((*q = *p) != '\0') {
@@ -317,7 +309,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	if (!(fun = R_FindSymbol(buf)))
 		errorcall(call, "C/Fortran function not in load table\n");
-	
+
 	switch (nargs) {
 	case 0:
 		/* Silicon graphics C chokes if there is */
@@ -936,9 +928,7 @@ static struct {
 	{"logical",	LGLSXP},
 	{"integer",	INTSXP},
 	{"double",	REALSXP},
-#ifdef COMPLEX_DATA
 	{"complex",	CPLXSXP},
-#endif
 	{"character",	STRSXP},
 	{"list",	LISTSXP},
 	{NULL,		0}
@@ -953,6 +943,7 @@ static int string2type(char *s)
 		}
 	}
 	error("type \"%s\" not supported in interlanguage calls\n", s);
+	return 1;/* for -Wall */
 }
 
 void call_R(char *func, long nargs, void **arguments, char **modes,
@@ -987,13 +978,11 @@ void call_R(char *func, long nargs, void **arguments, char **modes,
 			REAL(CAR(pcall)) = (double*)(arguments[i]);
 			LENGTH(CAR(pcall)) = lengths[i];
 			break;
-#ifdef COMPLEX_DATA
 		case CPLXSXP:
 			CAR(pcall) = allocSExp(CPLXSXP);
 			COMPLEX(CAR(pcall)) = (complex*)(arguments[i]);
 			LENGTH(CAR(pcall)) = lengths[i];
 			break;
-#endif
 		case STRSXP:
 			n = lengths[i];
 			CAR(pcall) = allocVector(STRSXP, n);
@@ -1025,9 +1014,7 @@ void call_R(char *func, long nargs, void **arguments, char **modes,
 	case LGLSXP:
 	case INTSXP:
 	case REALSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
 	case STRSXP:
 		if(nres > 0)
 			results[0] = RObjToCPtr(s, 1, 1, 0);

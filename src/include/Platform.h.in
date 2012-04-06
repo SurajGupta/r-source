@@ -8,6 +8,15 @@
 #undef HAVE_ISNAN		/* IEEE Arith indicator */
 #undef HAVE_FINITE
 
+#undef HAVE_IEEEFP_H		/* "-Wall" */
+#undef HAVE_IEEE754_H		/* Linux */
+
+#ifdef HAVE_ISNAN
+#ifdef HAVE_FINITE
+#define IEEE_754
+#endif
+#endif
+
 /* Signal Handler Type */
 #define RETSIGTYPE int
 
@@ -61,6 +70,7 @@
 
 /* GNU Readline Library */
 #undef HAVE_LIBREADLINE
+#undef HAVE_READLINE_HISTORY_H
 
 #undef HAVE_LOCALE_H
 
@@ -74,6 +84,9 @@
 #define HAVE_NO_SYMBOL_UNDERSCORE
 #endif
 #endif
+
+/* Printing Command */
+#define R_PRINTCMD	""
 
 #define R_PLATFORM	"UNKNOWN"
 #define R_CPU		"UNKNOWN"

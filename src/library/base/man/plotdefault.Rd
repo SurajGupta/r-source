@@ -46,9 +46,11 @@ plot.default(x, y=NULL, type = "p", col = par("fg"), bg = NA,
   \item{ylab}{a label for the y axis.}
   \item{cex}{a numerical value giving the amount by which plotting text
     and symbols should be scaled relative to the default}
-  \item{lty}{the line type}
-  \item{lwd}{the line width (is this used at all ???)}
-  \item{\dots}{graphical parameters may also be passed as arguments.}
+  \item{lty}{the line type, see \code{\link{par}.}
+  \item{lwd}{the line width \bold{not yet supported for postscript}.}
+  \item{\dots}{graphical parameters as in \code{\link{par}(\dots)} may
+    also be passed as arguments.  Additionally, \code{asp}, the
+    \eqn{y/x} aspect ratio, see \code{\link{plot.window}}.}
 }
 \value{
   This function is invoked for its side effect of drawing a scatter plot
@@ -60,7 +62,7 @@ plot.default(x, y=NULL, type = "p", col = par("fg"), bg = NA,
   Monterey, CA: Wadsworth.
 }
 \seealso{
-  \code{\link{plot}}, \code{\link{xy.coords}}.
+  \code{\link{plot}}, \code{\link{plot.window}}, \code{\link{xy.coords}}.
 }
 \examples{
 data(cars)
@@ -72,4 +74,19 @@ plot(Speed, Distance,
      panel.first = lines(lowess(Speed, Distance), lty = "dashed"),
      pch = 0, cex = 1.2, col = "blue")
 }
+
+##--- Log-Log Plot  with  custom axes
+lx <- seq(1,5, length=41)
+yl <- expression(e^{-frac(1,2) * {log[10](x)}^2})
+y <- exp(-.5*lx^2)
+op <- par(mfrow=c(2,1), mar=par("mar")+c(0,1,0,0))
+plot(10^lx, y, log="xy", type="l", col="purple",
+     main="Log-Log plot", ylab=yl, xlab="x")
+plot(10^lx, y, log="xy", type="o", pch='.', col="forestgreen",
+     main="Log-Log plot with custom axes", ylab=yl, xlab="x",
+     axes = FALSE, frame.plot = TRUE)
+axis(1, at = my.at <- 10^(1:5), labels = formatC(my.at, format="fg"))
+at.y <- 10^(-5:-1)
+axis(2, at = at.y, labels = formatC(at.y, format="fg"), col.axis="red")
+par(op)
 \keyword{hplot}

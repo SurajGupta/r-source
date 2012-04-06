@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,14 +44,15 @@ int get1index(SEXP s, SEXP names, int pok)
 		if( pok && k < 0 ) { /*partial match*/
 			len=strlen(CHAR(STRING(s)[0]));
 			for(i = 0; i < length(names); i++) {
-				if(!strncmp(CHAR(STRING(names)[i]),CHAR(STRING(s)[0]), len))
+			        if(!strncmp(CHAR(STRING(names)[i]),CHAR(STRING(s)[0]), len)) {
 					if(k == -1 )
 						k = i;
 					else
 						k = -2;
+				}
 			}
 		}
-			
+
 	}
 	else if (isSymbol(s)) {
 		k = -1;
@@ -117,17 +118,17 @@ static SEXP logicalSubscript(SEXP s, int ns, int nx)
 	int count, i;
 	SEXP index;
 
-	if (ns != nx)
-		error("invalid subscript type\n");
+	if (ns > nx)
+		error("subscript (\%d) out of bounds, should be at most %d\n",ns,nx);
 	count = 0;
 	for (i = 0; i < nx; i++)
-		if (LOGICAL(s)[i])
+		if (LOGICAL(s)[i%ns])
 			count++;
 	index = allocVector(INTSXP, count);
 	count = 0;
 	for (i = 0; i < nx; i++)
-		if (LOGICAL(s)[i]) {
-			if (LOGICAL(s)[i] == NA_LOGICAL)
+		if (LOGICAL(s)[i%ns]) {
+			if (LOGICAL(s)[i%ns] == NA_LOGICAL)
 				INTEGER(index)[count++] = NA_INTEGER;
 			else
 				INTEGER(index)[count++] = i + 1;
@@ -201,7 +202,7 @@ static SEXP integerSubscript(SEXP s, int ns, int nx, int *stretch)
 		else error("only 0's may mix with negative subscripts\n");
 	}
 	else return positiveSubscript(s, ns, nx);
-	/*NOTREACHED*/
+	return R_NilValue;/*NOTREACHED*/
 }
 
 static SEXP stringSubscript(SEXP s, int ns, SEXP names)
@@ -264,7 +265,7 @@ SEXP arraySubscript(int dim, SEXP s, SEXP x)
 	default:
 		error("invalid subscript\n");
 	}
-	/*NOTREACHED*/
+	return R_NilValue;/*NOTREACHED*/
 }
 
 
@@ -297,7 +298,7 @@ SEXP frameSubscript(int dim, SEXP s, SEXP x)
 	default:
 		error("invalid subscript\n");
 	}
-	/*NOTREACHED*/
+	return R_NilValue;/*NOTREACHED*/
 }
 
 	/* Subscript creation.  The first thing we do is check to see */
@@ -319,8 +320,6 @@ SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
 		case LGLSXP:
 			*stretch = 0;
 			return logicalSubscript(s, ns, nx);
-		case FACTSXP:
-		case ORDSXP:
 		case INTSXP:
 			return integerSubscript(s, ns, nx, stretch);
 		case REALSXP:
@@ -342,5 +341,5 @@ SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
 		}
 	}
 	else error("subscripting on non-vector\n");
-	/*NOTREACHED*/
+	return x;/*NOTREACHED*/
 }

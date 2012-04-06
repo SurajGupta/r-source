@@ -1,9 +1,10 @@
 \name{legend}
 \title{Add Legends to Plots}
 \usage{
-legend(x, y, legend, fill, col= "black", lty, pch, bty = "o",
+legend(x, y, legend, fill, col = "black", lty, pch, bty = "o",
        bg = par("bg"), cex = 1, xjust = 0, yjust = 1,
-       x.intersp = NULL, y.intersp = NULL, text.width = NULL, merge = FALSE)
+       x.intersp = NULL, y.intersp = NULL, text.width = NULL,
+       merge = FALSE)
 }
 \alias{legend}
 \arguments{
@@ -74,7 +75,7 @@ legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3,4,6),
        lty = c(2, -1, 1), pch = c(-1, 3, 4), merge = TRUE, bg='gray90')
 
 ##-- Math expressions:
-plot (x, sin(x), type="l", col = 2,xlab=expression(phi),ylab=expression(f(phi)))
+plot(x, sin(x), type="l", col = 2,xlab=expression(phi),ylab=expression(f(phi)))
 abline(h=-1:1, v=pi/2*(-6:6), col="gray90")
 lines(x, cos(x), col = 3, lty = 2)
 ex.cs1 <- expression(plain(sin) * phi,  paste("cos", phi))# 2 ways
@@ -86,6 +87,6 @@ abline(v = mean(x),   col=2, lty=2, lwd=2)
 abline(v = median(x), col=3, lty=3, lwd=2)
 ex12 <- expression(bar(x) == sum(over(x[i], n), i==1, n),
     		   hat(x) == median(x[i], i==1,n))
-legend(4,30, ex12, col = 2:3, lty=2:3) # lwd = 2 does not yet work
+legend(4,30, ex12, col = 2:3, lty=2:3) # lwd = 2 does not yet work in PS
 }
 \keyword{aplot}

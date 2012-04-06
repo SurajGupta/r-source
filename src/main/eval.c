@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -72,8 +72,6 @@ SEXP eval(SEXP e, SEXP rho)
 	case NILSXP:
 	case LISTSXP:
 	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case INTSXP:
 	case REALSXP:
 	case STRSXP:
@@ -201,11 +199,11 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 	nargs = length(arglist);
 
 	/*set up a context with the call in it so error has access to it */
-	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist); 
+	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist);
 
-	actuals = matchArgs(formals,arglist);
-
+	PROTECT(actuals = matchArgs(formals, arglist));
 	PROTECT(newrho = extendEnv(savedrho, formals, actuals));
+
 	/* Use default code for unbound formals */
 	f = formals;
 	a = actuals;
@@ -218,11 +216,12 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 		a = CDR(a);
 	}
 
-	/* fix up any extras that were supplied by usemethod */
+	/* Fix up any extras that were supplied by usemethod. */
+
 	if( suppliedenv != R_NilValue ) {
 		for( tmp=FRAME(suppliedenv); tmp!=R_NilValue ; tmp=CDR(tmp) ){
-			for( a=actuals; a!=R_NilValue; a=CDR(a) ) 
-				if( TAG(a) == TAG(tmp) ) 
+			for( a=actuals; a!=R_NilValue; a=CDR(a) )
+				if( TAG(a) == TAG(tmp) )
 					break;
 			if(a == R_NilValue) {
 				FRAME(newrho) = CONS(CAR(tmp), FRAME(newrho));
@@ -232,42 +231,50 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 	}
 	NARGS(newrho) = nargs;
 
-	/*end the previous context and start up a new one with the correct env*/
+	/* Terminate the previous context and start */
+	/* a new one with the correct environment. */
 
 	endcontext(&cntxt);
-	/* 
-	   if we have a generic function we need to use the sysparent of the 
-	   generic as the sysparent of the method because the method is a 
-	   straight substitution of the generic 
-	*/
-	if( R_GlobalContext->callflag == CTXT_GENERIC )
-	begincontext(&cntxt, CTXT_RETURN, call, newrho, R_GlobalContext->sysparent, arglist);
-	else
-		begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist); 
 
-	/* Default value */
+	/* If we have a generic function we need to use the */
+	/* sysparent of the generic as the sysparent of the */
+	/* method because the method is a straight substitution */
+	/* of the generic. */
+
+	if( R_GlobalContext->callflag == CTXT_GENERIC )
+		begincontext(&cntxt, CTXT_RETURN, call,
+			newrho, R_GlobalContext->sysparent, arglist);
+	else
+		begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist);
+
+	/* The default return value */
+
 	tmp = R_NilValue;
 
-	/* debugging */
+	/* Debugging */
+
 	DEBUG(newrho) = DEBUG(op);
 	if( DEBUG(op) ) {
 		Rprintf("debugging in: ");
-		PrintValueRec(call);
+		PrintValueRec(call,rho);
 	}
-		
-	if (setjmp(cntxt.cjmpbuf)) {
+
+	/* Set a longjmp target which will catch any */
+	/* explicit returns from the function body. */
+
+	if (sigsetjmp(cntxt.cjmpbuf, 1)) {
 		tmp = R_ReturnedValue;
 	}
 	else {
 		tmp = eval(body, newrho);
 	}
+
 	endcontext(&cntxt);
 	if( DEBUG(op) ) {
 		Rprintf("exiting from: ");
-		PrintValueRec(call);
+		PrintValueRec(call,rho);
 	}
-	UNPROTECT(1);
-
+	UNPROTECT(2);
 	return (tmp);
 }
 
@@ -319,6 +326,7 @@ static SEXP replaceCall(SEXP fun, SEXP val, SEXP args, SEXP rhs)
 		args = CDR(args);
 	}
 	CAR(ptmp) = rhs;
+	TAG(ptmp) = install("value");
 	TYPEOF(tmp) = LANGSXP;
 	return tmp;
 }
@@ -387,10 +395,10 @@ SEXP do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 			do_browser(call,op,args,rho);
 		}
 		begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue, R_NilValue, R_NilValue);
-		if ((tmp = setjmp(cntxt.cjmpbuf)))
+		if ((tmp = sigsetjmp(cntxt.cjmpbuf, 1))) {
 			if (tmp == CTXT_BREAK) break;	/* break */
 			else continue;			/* next  */
-		else {
+		} else {
 			if (isVector(v)) {
 				UNPROTECT(1);
 				PROTECT(v = allocVector(TYPEOF(val), 1));
@@ -467,12 +475,12 @@ SEXP do_while(SEXP call, SEXP op, SEXP args, SEXP rho)
 			PrintValue(CAR(args));
 			do_browser(call,op,args,rho);
 		}
-			
+
 		begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue, R_NilValue, R_NilValue);
-		if ((cond = setjmp(cntxt.cjmpbuf)))
+		if ((cond = sigsetjmp(cntxt.cjmpbuf, 1))) {
 			if (cond == CTXT_BREAK) break;	/* break */
 			else continue;			/* next  */
-		else {
+		} else {
 			PROTECT(t = eval(CAR(CDR(args)), rho));
 			s = eval(CAR(args), rho);
 			UNPROTECT(1);
@@ -507,10 +515,10 @@ SEXP do_repeat(SEXP call, SEXP op, SEXP args, SEXP rho)
 		}
 
 		begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue, R_NilValue,R_NilValue);
-		if ((cond = setjmp(cntxt.cjmpbuf)))
+		if ((cond = sigsetjmp(cntxt.cjmpbuf, 1))) {
 			if (cond == CTXT_BREAK) break;	/*break */
 			else continue;			/* next */
-		else {
+		} else {
 			t = eval(CAR(args), rho);
 			endcontext(&cntxt);
 		}
@@ -523,8 +531,8 @@ SEXP do_repeat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_break(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	findcontext(PRIMVAL(op), R_NilValue);
-	/*NOTREACHED*/
+	findcontext(PRIMVAL(op), rho, R_NilValue);
+	return R_NilValue;
 }
 
 
@@ -542,7 +550,7 @@ SEXP do_begin(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (args == R_NilValue) {
 		s = R_NilValue;
 	}
-	else { 
+	else {
 		while (args != R_NilValue) {
 			if( DEBUG(rho) ) {
 				Rprintf("debug: ");
@@ -550,8 +558,8 @@ SEXP do_begin(SEXP call, SEXP op, SEXP args, SEXP rho)
 				do_browser(call,op,args,rho);
 			}
 			s = eval(CAR(args), rho);
-			args = CDR(args); 
-		} 
+			args = CDR(args);
+		}
 	}
 	return s;
 }
@@ -592,9 +600,10 @@ SEXP do_return(SEXP call, SEXP op, SEXP args, SEXP rho)
 		break;
 	}
 	if( R_BrowseLevel )
-		findcontext(CTXT_BROWSER, v);
+		findcontext(CTXT_BROWSER, rho, v);
 	else
-		findcontext(CTXT_RETURN, v);
+		findcontext(CTXT_RETURN, rho, v);
+	return R_NilValue;/*NOTREACHED*/
 }
 
 
@@ -654,7 +663,7 @@ static SEXP evalseq(SEXP expr, SEXP rho, int forcelocal, SEXP tmploc)
 		return CONS(nval, val);
 	}
 	else error("invalid (Non-language) left side of assignment\n");
-	/*NOTREACHED*/
+	return R_NilValue;/*NOTREACHED*/
 }
 
 	/* Main entry point for complex assignments */
@@ -682,9 +691,9 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 	tmploc = FRAME(rho);
 	while(tmploc != R_NilValue && TAG(tmploc) != tmpsym)
 		tmploc = CDR(tmploc);
-	
+
 	/* do a partial evaluation down through the lhs */
-	
+
 	lhs = evalseq(CADR(expr), rho, PRIMVAL(op)==1, tmploc);
 
 	PROTECT(lhs);
@@ -716,6 +725,14 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+SEXP do_alias(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+	checkArity(op,args);
+	NAMED(CAR(args)) = 0;
+	return CAR(args);
+}
+
+
 	/*  do_set - assignment in its various forms  */
 
 SEXP do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -730,7 +747,7 @@ SEXP do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case 1:						/* <- */
 		if (isSymbol(CAR(args))) {
 			s = eval(CADR(args), rho);
-			if (NAMED(s)) 
+			if (NAMED(s))
 				s = duplicate(s);
 			PROTECT(s);
 			R_Visible = 0;
@@ -765,6 +782,7 @@ SEXP do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
 		UNIMPLEMENTED("do_set");
 
 	}
+	return R_NilValue;/*NOTREACHED*/
 }
 
 	/*  evalList  -  evaluate each expression in el  */
@@ -978,7 +996,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (nback > 0 )
 			nback -= framedepth(R_GlobalContext);
 		nback = -nback;
-		PROTECT(env = sysframe(nback,R_GlobalContext));
+		PROTECT(env = R_sysframe(nback,R_GlobalContext));
 		break;
 	default:
 		errorcall(call, "invalid second argument\n");
@@ -1047,8 +1065,8 @@ SEXP EvalArgs(SEXP el, SEXP rho, int dropmissing)
 	 * existing ugly hacks at large in the world.  */
 
 int DispatchOrEval(SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *ans, int dropmissing)
-{  
-	SEXP x;      
+{
+	SEXP x;
 	char *pt, buf[128];
 	RCNTXT cntxt;
 
@@ -1058,7 +1076,7 @@ int DispatchOrEval(SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *ans, int dropm
 	PROTECT(x = eval(CAR(args),rho));
 
 	pt = strrchr(CHAR(PRINTNAME(CAR(call))), '.');
-		
+
 	if( isObject(x) && (pt == NULL || strcmp(pt,".default")) ) {
 		PROTECT(args = promiseArgs(args, rho));
 		PRVALUE(CAR(args)) = x;
@@ -1092,11 +1110,11 @@ static SEXP dominates(SEXP cclass, SEXP newobj)
 	SEXP t;
 
 	t = getAttrib(newobj, R_ClassSymbol);
-	if( cclass == R_NilValue ) 
+	if( cclass == R_NilValue )
 		return t;
 	return cclass;
 }
-	
+
 int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *ans)
 {
 	int i, j, nargs, whichclass, set;
@@ -1118,7 +1136,7 @@ int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *an
 	if( nargs == 1 && !isObject(CAR(args)) )
 		return 0;
 
-	if(!isObject(CAR(args)) && !isObject(CADR(args))) 
+	if(!isObject(CAR(args)) && !isObject(CADR(args)))
 		return 0;
 
 	class = getAttrib(CAR(args), R_ClassSymbol);
@@ -1129,7 +1147,7 @@ int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *an
 
         j = length(class);
 	sxp = R_NilValue;
-/** Need to interleave looking for group and generic methods 
+/** Need to interleave looking for group and generic methods
  * eg if class(x) is "foo" "bar" then x>3 should invoke "Ops.foo" rather
  * than ">.bar"  **/
         for(whichclass=0 ; whichclass<j ; whichclass++) {
@@ -1150,9 +1168,9 @@ int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *an
 	      }
        if( !isFunction(sxp) )  /* no generic or group method so use default*/
 	 return 0;
-	
+
 	/* we either have a group method or a class method */
-	
+
 	PROTECT(newrho = allocSExp(ENVSXP));
 	PROTECT(m = allocVector(STRSXP,nargs));
 	s=args;
@@ -1181,11 +1199,11 @@ int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho, SEXP *an
 	defineVar(install(".Group"), gr, newrho);
 	set=length(class)-whichclass;
 	PROTECT(t = allocVector(STRSXP, set));
-	for(j=0 ; j<set ; j++ ) 
+	for(j=0 ; j<set ; j++ )
 		STRING(t)[j] = duplicate(STRING(class)[whichclass++]);
 	defineVar(install(".Class"), t, newrho);
 	UNPROTECT(1);
-	
+
 	PROTECT(t = LCONS(meth,CDR(call)));
 
 	/* the arguments have been evaluated; since we are passing them

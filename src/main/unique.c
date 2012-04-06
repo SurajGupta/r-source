@@ -63,7 +63,6 @@ static int rhash(SEXP x, int index)
 	return scatter(*((unsigned int *) (&tmp)));
 }
 
-#ifdef COMPLEX_DATA
 static int chash(SEXP x, int index)
 {
 	complex tmp;
@@ -72,7 +71,6 @@ static int chash(SEXP x, int index)
 	return scatter((*((unsigned int *)(&tmp.r)) |
 		(*((unsigned int *)(&tmp.r)))));
 }
-#endif
 
 static int shash(SEXP x, int index)
 {
@@ -91,30 +89,28 @@ static int iequal(SEXP x, int i, SEXP y, int j)
 
 static int requal(SEXP x, int i, SEXP y, int j)
 {
-	if(FINITE(REAL(x)[i]) && FINITE(REAL(y)[j])) {
+	if(!ISNAN(REAL(x)[i]) && !ISNAN(REAL(y)[j])) {
 		return (REAL(x)[i] == REAL(y)[j]);
 	}
-	else if(!FINITE(REAL(x)[i]) && !FINITE(REAL(y)[j])) {
+	else if(ISNAN(REAL(x)[i]) && ISNAN(REAL(y)[j])) {
 		return 1;
 	}
 	return 0;
 }
 
-#ifdef COMPLEX_DATA
 static int cequal(SEXP x, int i, SEXP y, int j)
 {
-	if(FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i)
-	&& FINITE(COMPLEX(y)[j].r) && FINITE(COMPLEX(y)[j].i)) {
+	if(!ISNAN(COMPLEX(x)[i].r) && !ISNAN(COMPLEX(x)[i].i)
+	&& !ISNAN(COMPLEX(y)[j].r) && !ISNAN(COMPLEX(y)[j].i)) {
 		return COMPLEX(x)[i].r == COMPLEX(y)[j].r &&
 			COMPLEX(x)[i].i == COMPLEX(y)[j].i;
 	}
-	else if((!FINITE(COMPLEX(x)[i].r) || !FINITE(COMPLEX(x)[i].i))
-	     && (!FINITE(COMPLEX(y)[j].r) || !FINITE(COMPLEX(y)[j].i))) {
+	else if((ISNAN(COMPLEX(x)[i].r) || ISNAN(COMPLEX(x)[i].i))
+	     && (ISNAN(COMPLEX(y)[j].r) || ISNAN(COMPLEX(y)[j].i))) {
 		return 1;
 	}
 	return 0;
 }
-#endif
 
 static int sequal(SEXP x, int i, SEXP y, int j)
 {
@@ -142,12 +138,6 @@ void HashTableSetup(SEXP x)
 		equal = iequal;
 		MKsetup(3);
 		break;
-	case FACTSXP:
-	case ORDSXP:
-		hash = ihash;
-		equal = iequal;
-		MKsetup(LEVELS(x) + 1);
-		break;
 	case INTSXP:
 		hash = ihash;
 		equal = iequal;
@@ -158,13 +148,11 @@ void HashTableSetup(SEXP x)
 		equal = requal;
 		MKsetup(LENGTH(x));
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		hash = chash;
 		equal = cequal;
 		MKsetup(LENGTH(x));
 		break;
-#endif
 	case STRSXP:
 		hash = shash;
 		equal = sequal;
@@ -223,7 +211,7 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	checkArity(op, args);
 	x = CAR(args);
-	if (!isVector(x))
+	if (!(isVector(x) || isNull(x)))
 		error("duplicated applies only to vectors\n");
 
 	/* handle zero length vectors */
@@ -254,10 +242,6 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	k = 0;
 	switch (TYPEOF(x)) {
-	case FACTSXP:
-	case ORDSXP:
-		LEVELS(ans) = LEVELS(x);
-		setAttrib(ans, R_LevelsSymbol, getAttrib(x, R_LevelsSymbol));
 	case LGLSXP:
 	case INTSXP:
 		for (i = 0; i < n; i++)
@@ -269,7 +253,6 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 			if (LOGICAL(dup)[i] == 0)
 				REAL(ans)[k++] = REAL(x)[i];
 		break;
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
 		for (i = 0; i < n; i++)
 			if (LOGICAL(dup)[i] == 0) {
@@ -278,7 +261,6 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 				k++;
 			}
 		break;
-#endif
 	case STRSXP:
 		for (i = 0; i < n; i++)
 			if (LOGICAL(dup)[i] == 0)
@@ -383,19 +365,22 @@ SEXP match(SEXP table, SEXP x, int nmatch)
 	return ans;
 }
 
-		/* Partial Matching of Strings */
-		/* Loosely based on Therneau's charmatch */
+	/* Partial Matching of Strings */
+	/* Fully S Compatible version. */
 
 SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 	SEXP ans, input, target;
-	int i, j, k, match, n_input, n_target, perfect, temp;
+	int i, j, k, match, n_input, n_target, perfect, temp, dups_ok;
 	checkArity(op, args);
 
 	input = CAR(args);
 	n_input = LENGTH(input);
 	target = CADR(args);
 	n_target = LENGTH(target);
+	dups_ok = asLogical(CADDR(args));
+	if (dups_ok == NA_LOGICAL)
+		errorcall(call, "invalid \"duplicates.ok\" argument\n");
 
 	if (!isString(input) || !isString(target))
 		errorcall(call, "argument is not of mode character\n");
@@ -404,13 +389,67 @@ SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	for (i = 0; i < n_input; i++) {
 		temp = strlen(CHAR(STRING(input)[i]));
+		match = 0;
+		perfect = 0;
+		if (temp) {
+			for (j = 0; j < n_target; j++) {
+				k = strncmp(CHAR(STRING(input)[i]),
+					    CHAR(STRING(target)[j]), temp);
+				if (k == 0) {
+					if (strlen(CHAR(STRING(target)[j])) == temp) {
+						if (perfect == 1) {
+							if(!dups_ok)
+								match = 0;
+						}
+						else {
+							perfect = 1;
+							match = j + 1;
+						}
+					}
+					else if (perfect == 0) {
+						if (match == 0)
+							match = j + 1;
+						else if(!dups_ok)
+							match = 0;
+					}
+				}
+			}
+		}
+		INTEGER(ans)[i] = match;
+	}
+	return ans;
+}
+
+
+	/* Partial Matching of Strings */
+	/* Based on Therneau's charmatch. */
+
+SEXP do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
+{ 
+	SEXP ans, input, target;
+	int i, j, k, match, n_input, n_target, perfect, temp;
+	checkArity(op, args);
+ 
+	input = CAR(args);
+	n_input = LENGTH(input);
+	target = CADR(args);
+	n_target = LENGTH(target);  
+ 
+	if (!isString(input) || !isString(target))
+		errorcall(call, "argument is not of mode character\n");
+
+	ans = allocVector(INTSXP, n_input);
+ 
+	for (i = 0; i < n_input; i++) {
+		temp = strlen(CHAR(STRING(input)[i]));
 		match = NA_INTEGER;
 		perfect = 0;
 		for (j = 0; j < n_target; j++) {
-			k = strncmp(CHAR(STRING(input)[i]), CHAR(STRING(target)[j]), temp);
+			k = strncmp(CHAR(STRING(input)[i]),
+				    CHAR(STRING(target)[j]), temp);
 			if (k == 0) {
 				if (strlen(CHAR(STRING(target)[j])) == temp) {
-					if (perfect == 1)
+					if (perfect == 1)  
 						match = 0;
 					else {
 						perfect = 1;
@@ -430,10 +469,10 @@ SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	return ans;
 }
 
-/* 
-   matching the supplied arguments to the formal arguments;
-   returned value is a list with all components named
-*/
+
+	/* Functions for matching the supplied arguments to the */
+	/* formal arguments of functions.  The returned value */
+	/* is a list with all components named. */
 
 #define ARGUSED(x) LEVELS(x)
 
@@ -472,8 +511,9 @@ static SEXP ExpandDots(SEXP s, int expdots)
 
 SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-        SEXP formals, actuals, rlist;
-	SEXP f, b, rval;
+	SEXP formals, actuals, rlist;
+	SEXP f, b, rval, sysp;
+	RCNTXT *cptr;
 	int expdots;
 
 	checkArity(op,args);
@@ -488,10 +528,23 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 		/* Get the function definition */
 
 	if(TYPEOF(CAR(args)) == NILSXP) {
-		if( TYPEOF(CAR(f)) == SYMSXP )
-			PROTECT(b = findFun(CAR(f), env));
+		/* get the env that the function containing matchcall was
+		   called from */
+		cptr = R_GlobalContext;
+		sysp = R_GlobalContext->sysparent;
+		while(cptr != NULL) {
+			if(cptr->callflag == CTXT_RETURN && cptr->cloenv == sysp)
+				break;
+			cptr = cptr->nextcontext;
+		}
+		if( cptr == NULL )
+			sysp = R_GlobalEnv;
 		else
-			PROTECT(b = eval(CAR(f), env));
+			sysp = cptr->sysparent;
+		if( TYPEOF(CAR(f)) == SYMSXP )
+			PROTECT(b = findFun(CAR(f), sysp));
+		else
+			PROTECT(b = eval(CAR(f), sysp));
 	}
 	else PROTECT(b = CAR(args));
 

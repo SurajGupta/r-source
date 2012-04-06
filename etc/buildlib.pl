@@ -23,6 +23,17 @@
 use Cwd;
 use File::Basename;
 
+if($opt_dosnames){
+    $HTML="htm";
+}
+else{
+    $HTML="html";
+}
+
+
+
+require "$RHOME/etc/html-layout.pl";
+
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
 
 # determine of pkg and lib directory are accessible; chdir to pkg man dir
@@ -104,15 +115,49 @@ sub read_titles {
     %tit;
 }
 
-### Read all aliases into an hash array with the (relative) paths to
-### the corresponding html files
+### Read the titles of all installed functions into an hash array
+
+sub read_functiontitles {
+
+    my $lib = $_[0];
+
+    my %tit;
+    my $pkg;
+
+    opendir lib, $lib;
+    my @libs = readdir(lib);
+    closedir lib;
+
+    foreach $pkg (@libs) {
+	if(-d "$lib/$pkg"){
+	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
+		if(-r "$lib/$pkg/TITLE"){
+		    open rtitle, "< $lib/$pkg/help/00Titles";
+		    while(<rtitle>){
+			/^(\S*)\s*(.*)/;
+			my $alias = $1;
+			$tit{$alias} = $2 . " ($pkg)";
+		    }
+		    close rtitle;
+		}
+	    }
+	}
+    }
+
+    close titles;
+    %tit;
+}
+
+
+### Read all aliases into two hash arrays with basenames ant
+### (relative) html-paths.
+
 
 sub read_htmlindex {
 
     my $lib = $_[0];
 
-    my %hi;
-    my $pkg;
+    my $pkg, %htmlindex;
 
     opendir lib, $lib;
     my @libs = readdir(lib);
@@ -125,19 +170,46 @@ sub read_htmlindex {
 		    open ranindex, "< $lib/$pkg/help/AnIndex";
 		    while(<ranindex>){
 			/^(\S*)\s*(.*)/;
-			$hi{$1} = "../../$pkg/html/$2.html";
+			$htmlindex{$1} = "$pkg/html/$2.$HTML";
 		    }
 		    close ranindex;
 		}
 	    }
 	}
     }
+    %htmlindex;
+}
 
-    %hi;
+sub read_anindex {
+
+    my $lib = $_[0];
+
+    my $pkg, %anindex;
+
+    opendir lib, $lib;
+    my @libs = readdir(lib);
+    closedir lib;
+
+    foreach $pkg (@libs) {
+	if(-d "$lib/$pkg"){
+	    if(! ( ($pkg =~ /^CVS$/) || ($pkg =~ /^\.+$/))){
+		if(-r "$lib/$pkg/help/AnIndex"){
+		    open ranindex, "< $lib/$pkg/help/AnIndex";
+		    while(<ranindex>){
+			/^(\S*)\s*(.*)/;
+			$anindex{$1} = $2;
+		    }
+		    close ranindex;
+		}
+	    }
+	}
+    }
+    %anindex;
 }
 
 
-### Build $RHOME/library/index.html from the $pkg/TITLE files
+
+### Build $RHOME/doc/html/packages.html from the $pkg/TITLE files
 
 sub build_htmlpkglist {
 
@@ -146,26 +218,20 @@ sub build_htmlpkglist {
     my %htmltitles = read_titles($lib);
     my $key;
 
-    open(htmlfile, ">$lib/index.html");
+    open(htmlfile, ">$RHOME/doc/html/packages.$HTML");
 
-    print htmlfile "<HEAD><TITLE>R Function Index</TITLE></HEAD>\n";
-    print htmlfile "<BODY LINK=#0000EF VLINK=#0000EF>\n";
-    print htmlfile "<A HREF =\"../html/index.html\">[top]</A>\n";
-    print htmlfile "<HR ALIGN=middle>\n";
-    print htmlfile "<H2><CENTER>";
-    print htmlfile "R Function Index";
-    print htmlfile "</CENTER></H2>\n";
-    print htmlfile "<HR ALIGN=middle>\n";
-    print htmlfile "<P>";
-    print htmlfile "The following packages are currently installed:\n";
-    print htmlfile "<P><TABLE>\n";
+    print htmlfile html_pagehead("Package Index", ".",
+				 "index.$HTML", "Top",
+				 "", "",
+				 "function.$HTML", "Functions");
+
+    print htmlfile "<P><TABLE align=center>\n";
 
     foreach $key (sort(keys %htmltitles)) {
 	print htmlfile "<TR ALIGN=LEFT VALIGN=TOP>\n";
-	print htmlfile "<TD><A HREF=\"$key/html/00Index.html\">";
+	print htmlfile "<TD><A HREF=\"../../library/$key/html/00Index.$HTML\">";
 	print htmlfile "$key</A><TD>";
 	print htmlfile $htmltitles{$key};
-
     }
 
     print htmlfile "</TABLE>\n";
@@ -173,6 +239,168 @@ sub build_htmlpkglist {
 
     close htmlfile;
 }
+
+
+
+sub build_index {
+
+    if(! -d $lib){
+        mkdir "$lib", $dir_mod || die "Could not create directory $lib: $!\n";
+    }
+
+    if(! -d "$dest"){
+        mkdir "$dest", $dir_mod || die "Could not create directory $dest: $!\n";
+    }
+
+    system("/bin/cp ../TITLE $dest/TITLE");
+    open title, "<../TITLE";
+    $title = <title>;
+    close title;
+    $title =~ s/^\S*\s*(.*)/$1/;
+
+    mkdir "$dest/help", $dir_mod || die "Could not create $dest/help: $!\n";
+    mkdir "$dest/html", $dir_mod || die "Could not create $dest/html: $!\n";
+
+    $anindex = "$lib/$pkg/help/AnIndex";
+    open(anindex, ">${anindex}.in");
+    
+    my %alltitles;
+    my $naliases;
+    my $nmanfiles;
+
+    foreach $manfile (@mandir) {
+	if($manfile =~ /\.Rd$/i){
+
+	    my $rdname = basename($manfile, (".Rd", ".rd"));
+	    
+	    if($opt_dosnames){
+		$manfilebase = "x" . $nmanfiles++;
+	    }
+	    else{
+		$manfilebase = $rdname;
+	    }
+
+	    open(rdfile, "<$manfile");
+	    undef $text;
+	    while(<rdfile>){ $text .= $_;}
+	    close rdfile;
+	    $text =~ /\\title\{\s*([^\}]+)\s*\}/s;
+	    my $rdtitle = $1;
+	    $rdtitle =~ s/\n/ /sg;
+
+	    print anindex "$rdname\t$manfilebase\n";
+	    $alltitles{$rdname} = $rdtitle;
+	    $naliases++;
+
+	    while($text =~ s/\\alias\{\s*(.*)\s*\}//){
+		$alias = $1;
+		$alias =~ s/\\%/%/g;
+		print anindex "$alias\t$manfilebase\n";
+		$alltitles{$alias} = $rdtitle;
+		$naliases++;
+	    }
+	}
+    }
+
+    close anindex;
+    
+    system("sort -f -d ${anindex}.in | uniq > ${anindex}");
+    unlink ("$anindex.in");
+
+    open(anindex, "<$anindex");
+    open(titleindex, ">$lib/$pkg/help/00Titles");
+    open(htmlfile, ">$lib/$pkg/html/00Index.$HTML");
+
+    print htmlfile html_pagehead("$title", "../../../doc/html",
+				 "../../../doc/html/index.$HTML", "Top",
+				 "../../../doc/html/packages.$HTML",
+				 "Package List");
+
+
+    if($naliases>100){
+       print htmlfile html_alphabet();
+   }
+    
+    print htmlfile "\n<p>\n<table width=100%>\n";
+
+    my $firstletter = "";
+    while(<anindex>){
+	($alias, $file) = split;
+	$aliasfirst = uc substr($alias, 0, 1);
+	if(($aliasfirst ne $firstletter) &&
+	   ($aliasfirst =~ /[A-Z]/) &&
+	   ($naliases>100)){
+	    print htmlfile "</table>\n";
+	    print htmlfile "<a name=\"$aliasfirst\">\n";
+	    print htmlfile html_title2("-- $aliasfirst --");
+	    print htmlfile "<table width=100%>\n";
+	    $firstletter = $aliasfirst;
+	}
+	print titleindex "$alias\t$alltitles{$alias}\n";
+	print htmlfile "<TR><TD width=25%><A HREF=\"$file.$HTML\">" .
+	    "$alias</A></TD>\n<TD>$alltitles{$alias}</TD></TR>\n";
+    }
+    
+    print htmlfile "</TABLE>\n";
+    print htmlfile "</BODY>\n";
+
+    close titleindex;
+    close htmlfile;
+    close anindex;
+
+    build_htmlpkglist($lib);
+}
+
+
+sub build_htmlfctlist {
+
+    my $lib = $_[0];
+    
+    my %htmltitles = read_functiontitles($lib);
+    my $key;
+
+    open(htmlfile, ">$RHOME/doc/html/function.$HTML");
+
+    print htmlfile html_pagehead("All Installed Functions", ".",
+				 "index.$HTML", "Top",
+				 "packages.$HTML", "Packages");
+
+    print htmlfile html_alphabet();
+
+    print htmlfile html_title2("-- Operators, Global Variables, ... --");
+    print htmlfile "\n<p>\n<table width=100%>\n";
+    foreach $alias (sort(keys %htmltitles)) {
+	print htmlfile "<TR><TD width=25%>" .
+	    "<A HREF=\"../../library/$htmlindex{$alias}\">" .
+	    "$alias</A></TD>\n<TD>$htmltitles{$alias}</TD></TR>\n"
+		unless $alias =~ /^[a-z]/;
+    }
+    print htmlfile "\n</table>\n<p>\n<table width=100%>\n";
+    
+    my $firstletter = "";
+    foreach $alias (sort(keys %htmltitles)) {
+	$aliasfirst = substr($alias, 0, 1);
+	if($aliasfirst =~ /[a-z]/){
+	    if($aliasfirst ne $firstletter){
+		print htmlfile "</table>\n";
+		print htmlfile "<a name=\"" . uc $aliasfirst . "\">\n";
+		print htmlfile html_title2("-- " . uc $aliasfirst . " --");
+		print htmlfile "<table width=100%>\n";
+		$firstletter = $aliasfirst;
+	    }
+	    print htmlfile "<TR><TD width=25%>" .
+		"<A HREF=\"../../library/$htmlindex{$alias}\">" .
+		    "$alias</A></TD>\n<TD>$htmltitles{$alias}</TD></TR>\n";
+	}
+    }
+    
+    print htmlfile "</TABLE>\n";
+    print htmlfile "</BODY>\n";
+    
+    close htmlfile;
+}
+
+
 
 
 1;

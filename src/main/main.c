@@ -19,7 +19,7 @@
 
 #include "Defn.h"
 #include "Graphics.h"
-#include "IOSupport.h"
+#include "IOStuff.h"
 #include "Parse.h"
 
 /*--- The `real'  main() program is in	../<SYSTEM>/system.c,
@@ -57,6 +57,7 @@ SEXP*	R_PPStack;			/* The pointer protection stack */
 
 			/* Evaluation Environment */
 
+SEXP	R_Call;				/* The current call */
 SEXP	R_GlobalEnv;			/* The "global" environment */
 SEXP	R_CurrentExpr;			/* Currently evaluating expression */
 SEXP	R_ReturnedValue;		/* Slot for return-ing values */
@@ -73,6 +74,7 @@ int	R_EvalCount = 0;		/* Evaluation count */
 
 int	R_Interactive = 1;		/* Interactive? */
 int	R_Quiet = 0;			/* Be Quiet */
+int	R_Slave = 0;			/* Run as a slave process */
 int	R_Console;			/* Console active flag */
 IoBuffer R_ConsoleIob;			/* Console IO Buffer */
 FILE*	R_Inputfile = NULL;		/* Current input flag */
@@ -153,6 +155,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 	int status;
 
 	for(;;) {
+		Reset_C_alloc();
 		R_PPStackTop = savestack;
 		R_CurrentExpr = R_Parse1File(fp, 1, &status);
 		switch(status) {
@@ -186,17 +189,23 @@ static char BrowsePrompt[20];
 
 char *R_PromptString(int browselevel, int type)
 {
-	if(type == 1) {
-		if(browselevel) {
-			sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
-			return BrowsePrompt;
-		}
-		return (char*)CHAR(STRING(GetOption(install("prompt"),
-				R_NilValue))[0]);
+	if (R_Slave) {
+		BrowsePrompt[0] = '\0';
+		return BrowsePrompt;
 	}
 	else {
-		return (char*)CHAR(STRING(GetOption(install("continue"),
-			R_NilValue))[0]);
+		if(type == 1) {
+			if(browselevel) {
+				sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
+				return BrowsePrompt;
+			}
+			return (char*)CHAR(STRING(GetOption(install("prompt"),
+					R_NilValue))[0]);
+		}
+		else {
+			return (char*)CHAR(STRING(GetOption(install("continue"),
+				R_NilValue))[0]);
+		}
 	}
 }
 
@@ -216,13 +225,15 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 				buf, 1024, 1) == 0) return;
 			bufp = buf;
 		}
-		while(c = *bufp++) {
+		while((c = *bufp++)) {
 			R_IoBufferPutc(c, &R_ConsoleIob);
 			if(c == ';' || c == '\n') {
 				prompt = (c == '\n');
 				break;
 			}
 		}
+		if(browselevel)
+			Reset_C_alloc();
 		R_PPStackTop = savestack;
 		R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &status);
 
@@ -288,10 +299,25 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
 #ifndef Macintosh
 FILE* R_OpenSysInitFile(void);
+FILE* R_OpenSiteFile(void);
 FILE* R_OpenInitFile(void);
 #endif
 
 static int doneit;
+
+static void R_LoadProfile(FILE *fp) {
+  if (fp != NULL) {
+    R_Inputfile = fp;
+    doneit = 0;
+    sigsetjmp(R_Toplevel.cjmpbuf, 1);
+    R_GlobalContext = R_ToplevelContext = &R_Toplevel;
+    signal(SIGINT, onintr);
+    if(!doneit) {
+      doneit = 1;
+      R_ReplFile(R_Inputfile, R_NilValue, 0, 0);
+    }
+  }
+}
 
 void mainloop()
 {
@@ -309,7 +335,7 @@ void mainloop()
 #ifdef HAVE_LOCALE_H
 	setlocale(LC_CTYPE,"");/*- make ISO-latin1 etc. work LOCALE users */
 	setlocale(LC_COLLATE,"");/*- alphabetically sorting */
-	setlocale(LC_MESSAGES,"");
+	/* setlocale(LC_MESSAGES,""); */
 #endif
 	InitMemory();
 	InitNames();
@@ -319,6 +345,8 @@ void mainloop()
 	InitEd();
 	InitArithmetic();
 	InitColors();
+	InitGraphics();
+	Init_C_alloc();
 
 
 		/* Initialize the global context for error handling. */
@@ -347,7 +375,7 @@ void mainloop()
 	}
 
 	doneit = 0;
-	setjmp(R_Toplevel.cjmpbuf);
+	sigsetjmp(R_Toplevel.cjmpbuf, 1);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
 	if(!doneit) {
@@ -364,7 +392,7 @@ void mainloop()
 		/* on the application */
 
 	doneit = 0;
-	setjmp(R_Toplevel.cjmpbuf);
+	sigsetjmp(R_Toplevel.cjmpbuf, 1);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
 	if(!doneit) {
@@ -373,37 +401,12 @@ void mainloop()
 	}
 
 #ifndef Macintosh
-		/* This is where we source the system-wide */
-		/* profile file.  If there is an error */
-		/* we drop through to further processing. */
-
-	R_Inputfile = R_OpenSysInitFile();
-	if(R_Inputfile != NULL) {
-		doneit = 0;
-		setjmp(R_Toplevel.cjmpbuf);
-		R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-		signal(SIGINT, onintr);
-		if(!doneit) {
-			doneit = 1;
-			R_ReplFile(R_Inputfile, R_NilValue, 0, 0);
-		}
-	}
-
-		/* This is where we source the user's */
-		/* profile file.  If there is an error */
-		/* we drop through to further processing. */
-
-	R_Inputfile = R_OpenInitFile();
-	if(R_Inputfile != NULL) {
-		doneit = 0;
-		setjmp(R_Toplevel.cjmpbuf);
-		R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-		signal(SIGINT, onintr);
-		if(!doneit) {
-			doneit = 1;
-			R_ReplFile(R_Inputfile, R_NilValue, 0, 0);
-		}
-	}
+	/* This is where we source the system-wide, the site's and the
+	   user's profile (in that order).  If there is an error, we
+	   drop through to further processing. */
+	R_LoadProfile(R_OpenSysInitFile());
+	R_LoadProfile(R_OpenSiteFile());
+	R_LoadProfile(R_OpenInitFile());
 #endif
 
 		/* Initial Loading is done.  At this point */
@@ -411,7 +414,7 @@ void mainloop()
 		/* If there is an error we continue */
 
 	doneit = 0;
-	setjmp(R_Toplevel.cjmpbuf);
+	sigsetjmp(R_Toplevel.cjmpbuf, 1);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
 	if(!doneit) {
@@ -430,7 +433,7 @@ void mainloop()
 		/* We handle the console until end-of-file. */
 
 	R_IoBufferInit(&R_ConsoleIob);
-	setjmp(R_Toplevel.cjmpbuf);
+	sigsetjmp(R_Toplevel.cjmpbuf, 1);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 	signal(SIGINT, onintr);
 	R_ReplConsole(R_GlobalEnv, 0, 0);
@@ -501,7 +504,7 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 		while (cptr->callflag != CTXT_RETURN && cptr->callflag )
 			cptr = cptr->nextcontext;
 		Rprintf("Called from: ");
-		PrintValueRec(cptr->call);
+		PrintValueRec(cptr->call,rho);
 	}
 
 	R_ReturnedValue = R_NilValue;
@@ -513,9 +516,9 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 		/* acts as a target for error returns. */
 
 	begincontext(&returncontext, CTXT_BROWSER, call, rho, R_NilValue, R_NilValue);
-	if (!setjmp(returncontext.cjmpbuf)) {
+	if (!sigsetjmp(returncontext.cjmpbuf, 1)) {
 		begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, rho, R_NilValue, R_NilValue);
-		setjmp(thiscontext.cjmpbuf);
+		sigsetjmp(thiscontext.cjmpbuf, 1);
 		R_GlobalContext = R_ToplevelContext = &thiscontext;
 		R_BrowseLevel = savebrowselevel;
 		R_ReplConsole(rho, savestack, R_BrowseLevel);

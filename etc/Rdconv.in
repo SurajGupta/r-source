@@ -31,8 +31,8 @@ if($ENV{"RHOME"}){
     $RHOME=$ENV{"RHOME"};
 }
 else{
-    chdir(dirname($0) . "/..");
-    $RHOME=getcwd();
+    $RHOME = `R RHOME`;
+    $RHOME =~ s/(.*)\n*/$1/;
 }
 
 chdir($cwd);
@@ -54,6 +54,10 @@ if($opt_type =~ /nroff/i){
     open(nroffout, "| cat");
 }
 
+if($opt_type =~ /Sd/i){
+    open(Sdout, "| cat");
+}
+
 if($opt_type =~ /latex/i){
     open(latexout, "| cat");
 }
@@ -64,9 +68,9 @@ Rdconv($ARGV[0],$opt_type,$opt_debug);
 
 sub usage {
 
-    print "Rdconv version $VERSION\n";
+    print "Rdconv\n";
     print "Usage: Rdconv [--debug/-d] [--help/-h]";
-    print " [--type/-t html|nroff|latex|examp] file\n\n";
+    print " [--type/-t html|nroff|Sd|latex|examp] file\n\n";
 
     exit 0;
 }

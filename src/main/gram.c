@@ -61,7 +61,7 @@
  */
 
 #include "Defn.h"
-#include "IOSupport.h"
+#include "IOStuff.h"
 #include "Parse.h"
 
 	/* Useful defines so editors don't get confused ... */
@@ -473,7 +473,7 @@ static const short yycheck[] = {     0,
     45,    46,    47
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/lib/bison.simple"
+#line 3 "/usr/local/pkg/bison/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -666,7 +666,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/lib/bison.simple"
+#line 196 "/usr/local/pkg/bison/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -1264,7 +1264,7 @@ case 73:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/lib/bison.simple"
+#line 498 "/usr/local/pkg/bison/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1977,6 +1977,17 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
 int R_fgetc(FILE *fp)
 {
 	int c = fgetc(fp);
+	/* get rid of  CR in CRLF line termination */
+	if ( c == '\r' )
+	{	
+		c = fgetc(fp);
+		/* retain CR's with no following linefeed */
+		if ( c != '\n' )
+		{
+			ungetc(c,fp);
+			return('\r');
+		}
+	}
 	return feof(fp) ? R_EOF : c;
 }
 
@@ -2293,8 +2304,6 @@ SEXP R_ParseVector(SEXP text, int n, int *status)
 	}
 }
 
-static int prompt_type;
-
 static char *Prompt(SEXP prompt, int type)
 {
 	if(type == 1) {
@@ -2474,6 +2483,8 @@ keywords[] = {
 	{ "TRUE",	NUM_CONST	},
 	{ "FALSE",	NUM_CONST	},
 	{ "GLOBAL.ENV",	NUM_CONST	},
+	{ "Inf",	NUM_CONST	},
+	{ "NaN",	NUM_CONST	},
 	{ "function",	FUNCTION	},
 	{ "while",	WHILE		},
 	{ "repeat",	REPEAT		},
@@ -2512,6 +2523,15 @@ static int KeywordLookup(char *s)
 					break;
 				case 4:
 					PROTECT(yylval = R_GlobalEnv);
+					break;
+				case 5:
+					PROTECT(yylval = allocVector(REALSXP, 1));
+					REAL(yylval)[0] = R_PosInf;
+					break;
+				case 6:
+					PROTECT(yylval = allocVector(REALSXP, 1));
+					REAL(yylval)[0] = R_NaN;
+					break;
 				}
 				break;
 			case FUNCTION:
@@ -2589,8 +2609,6 @@ int yyerror(char *s)
 
 static void CheckFormalArgs(SEXP formlist, SEXP new)
 {
-	int i;
-
 	while( formlist != R_NilValue ) {
 		if(TAG(formlist) == new ) {
 			error("Repeated formal argument.\n");
@@ -2759,7 +2777,6 @@ static int SymbolValue(int c)
 static int token()
 {
 	int c, kw;
-	char *p;
 
 	if(SavedToken) {
 		c = SavedToken;
@@ -2769,8 +2786,6 @@ static int token()
 		return c;
 	}
 		
-    again:
-
 	c = SkipSpace();
 
 	if (c == '#') c = SkipComment();

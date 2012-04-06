@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -49,14 +49,14 @@ static double F77_SYMBOL(fcn1)(double *x)
 		if(length(s) != 1) goto badvalue;
 		if(INTEGER(s)[0] == NA_INTEGER) {
 			REprintf("warning: NA replaced by maximum positive value\n");
-			return  DBL_MAX;
+			return	DBL_MAX;
 		}
 		else return INTEGER(s)[0];
 		break;
 	case REALSXP:
 		if(length(s) != 1) goto badvalue;
 		if(!FINITE(REAL(s)[0])) {
-			REprintf("warning: NA replaced by maximum positive value\n");
+			REprintf("warning: NA/Inf replaced by maximum positive value\n");
 			return DBL_MAX;
 		}
 		else return REAL(s)[0];
@@ -66,6 +66,7 @@ static double F77_SYMBOL(fcn1)(double *x)
 	}
 badvalue:
 	error("invalid function value in optimizer\n");
+	return 0;/* for -Wall */
 }
 
 	/* fmin(f, xmin, xmax tol) */
@@ -74,7 +75,7 @@ extern double F77_SYMBOL(fmin)();
 
 SEXP do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	double ans, xmin, xmax, tol;
+	double xmin, xmax, tol;
 	SEXP v;
 
 	checkArity(op, args);
@@ -136,14 +137,14 @@ static double F77_SYMBOL(fcn2)(double *x)
 		if(length(s) != 1) goto badvalue;
 		if(INTEGER(s)[0] == NA_INTEGER) {
 			REprintf("warning: NA replaced by maximum positive value\n");
-			return  DBL_MAX;
+			return	DBL_MAX;
 		}
 		else return INTEGER(s)[0];
 		break;
 	case REALSXP:
 		if(length(s) != 1) goto badvalue;
 		if(!FINITE(REAL(s)[0])) {
-			REprintf("warning: NA replaced by maximum positive value\n");
+			REprintf("warning: NA/Inf replaced by maximum positive value\n");
 			return DBL_MAX;
 		}
 		else return REAL(s)[0];
@@ -153,6 +154,8 @@ static double F77_SYMBOL(fcn2)(double *x)
 	}
 badvalue:
 	error("invalid function value in optimizer\n");
+	return 0;/* for -Wall */
+
 }
 
 	/* zeroin(f, xmin, xmax tol) */
@@ -161,7 +164,7 @@ extern double F77_SYMBOL(zeroin)();
 
 SEXP do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-	double ans, xmin, xmax, tol;
+	double xmin, xmax, tol;
 	SEXP v;
 
 	checkArity(op, args);
@@ -210,17 +213,20 @@ SEXP do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* General Nonlinear Optimization */
 
 	/* These are unevaluated calls to R functions supplied */
-	/* by the user.  When the optimizer needs a value the */
+	/* by the user.	 When the optimizer needs a value the */
 	/* functions below insert the function argument and then */
 	/* evaluate the call. */
 
 static SEXP R_fcall;	/* function */
+static SEXP R_env;	/* where to evaluate the calls */
+
+#ifdef NOT_yet_used
 static SEXP R_gcall;	/* gradient */
 static SEXP R_hcall;	/* hessian */
-static SEXP R_env;	/* where to evaluate the calls */
 
 static int have_gradient;
 static int have_hessian;
+#endif
 
 
 
@@ -248,7 +254,7 @@ static int F77_SYMBOL(fcn)(int *n, double *x, double *f)
 	case REALSXP:
 		if(length(s) != 1) goto badvalue;
 		if(!FINITE(REAL(s)[0])) {
-			REprintf("warning: NA replaced by maximum positive value\n");
+			REprintf("warning: NA/Inf replaced by maximum positive value\n");
 			*f = DBL_MAX;
 		}
 		else *f = REAL(s)[0];
@@ -259,18 +265,21 @@ static int F77_SYMBOL(fcn)(int *n, double *x, double *f)
 	return 0;
 badvalue:
 	error("invalid function value in optimizer\n");
+	return 0;/* for -Wall */
 }
 
 
 static int F77_SYMBOL(d1fcn)(int *n, double *x, double *g)
 {
 	error("optimization using analytic gradients not implemented (yet)\n");
+	return 0;/* for -Wall */
 }
 
 
 static int F77_SYMBOL(d2fcn)(int *n, double *x, double *g)
 {
 	error("optimization using analytic Hessians not implemented (yet)\n");
+	return 0;/* for -Wall */
 }
 
 
@@ -287,7 +296,7 @@ static double *fixparam(SEXP p, int *n, SEXP call)
 			errorcall(call, "conflicting parameter lengths\n");
 	}
 	else {
-		if(LENGTH(p) <= 0) 
+		if(LENGTH(p) <= 0)
 			errorcall(call, "invalid parameter length\n");
 		*n = LENGTH(p);
 	}
@@ -324,7 +333,7 @@ static void invalid_na(SEXP call)
 
 	/* Fatal errors - we don't deliver an answer */
 
-static int opterror(int nerr)
+static void opterror(int nerr)
 {
 	switch(nerr) {
 	case -1:
@@ -351,7 +360,7 @@ static int opterror(int nerr)
 
 	/* Warnings - we return a value, but print a warning */
 
-static optcode(int code)
+static void optcode(int code)
 {
 	switch(code) {
 	case 1:
@@ -393,6 +402,7 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 	int iagflg, iahflg;
 	int want_hessian;
 	char *vmax;
+	int itncnt;
 
 	checkArity(op, args);
 	PrintDefaults(rho);
@@ -423,7 +433,7 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	typsiz = fixparam(CAR(args), &n, call);
 	args = CDR(args);
-	
+
 		/* expected function size */
 
 	fscale = asReal(CAR(args));
@@ -472,9 +482,9 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
  *   Dennis + Schnabel Minimizer
  *
  *    SUBROUTINE OPTIF9(NR,N,X,FCN,D1FCN,D2FCN,TYPSIZ,FSCALE,
- *   +     METHOD,IEXP,MSG,NDIGIT,ITNLIM,IAGFLG,IAHFLG,IPR,
- *   +     DLT,GRADTL,STEPMX,STEPTL,
- *   +     XPLS,FPLS,GPLS,ITRMCD,A,WRK)
+ *   +	   METHOD,IEXP,MSG,NDIGIT,ITNLIM,IAGFLG,IAHFLG,IPR,
+ *   +	   DLT,GRADTL,STEPMX,STEPTL,
+ *   +	   XPLS,FPLS,GPLS,ITRMCD,A,WRK)
  */
 
 		/* Note: I have figured out what msg does. */
@@ -492,13 +502,13 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 		F77_SYMBOL(d2fcn), typsiz, &fscale,
 		&method, &iexp, &msg, &ndigit, &itnlim, &iagflg, &iahflg, &ipr,
 		&dlt, &gradtl, &stepmx, &steptl,
-		xpls, &fpls, gpls, &code, a, wrk);
+		xpls, &fpls, gpls, &code, a, wrk, &itncnt);
 
 	if(msg < 0) opterror(msg);
 	if(code != 0 && (omsg&8) == 0) optcode(code);
 
 	if(want_hessian) {
-		PROTECT(v = value = allocList(5));
+		PROTECT(v = value = allocList(6));
 		F77_SYMBOL(fdhess)(&n, xpls, &fpls, F77_SYMBOL(fcn), a, &n,
 			&wrk[0], &wrk[n], &ndigit, typsiz);
 		for(i=0 ; i<n ; i++)
@@ -506,40 +516,40 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 				a[i+j*n] = a[j+i*n];
 	}
 	else {
-		PROTECT(v = value = allocList(4));
+		PROTECT(v = value = allocList(5));
 	}
 
 	CAR(v) = allocVector(REALSXP, 1);
 	REAL(CAR(v))[0] = fpls;
-	TAG(v) = install("minimum");
-	v = CDR(v);
+	TAG(v) = install("minimum"); v = CDR(v);
 
 	CAR(v) = allocVector(REALSXP, n);
 	for(i=0 ; i<n ; i++)
 		REAL(CAR(v))[i] = xpls[i];
-	TAG(v) = install("estimate");
-	v = CDR(v);
+	TAG(v) = install("estimate"); v = CDR(v);
 
 	CAR(v) = allocVector(REALSXP, n);
 	for(i=0 ; i<n ; i++)
 		REAL(CAR(v))[i] = gpls[i];
-	TAG(v) = install("gradient");
-	v = CDR(v);
+	TAG(v) = install("gradient"); v = CDR(v);
 
 	if(want_hessian) {
 		CAR(v) = allocMatrix(REALSXP, n, n);
 		for(i=0 ; i<n*n ; i++)
 			REAL(CAR(v))[i] = a[i];
-		TAG(v) = install("hessian");
-		v = CDR(v);
+		TAG(v) = install("hessian"); v = CDR(v);
 	}
 
 	CAR(v) = allocVector(INTSXP, 1);
 	INTEGER(CAR(v))[0] = code;
-	TAG(v) = install("code");
-	v = CDR(v);
+	TAG(v) = install("code"); v = CDR(v);
 
-	vmaxset(vmax); 
+	/* added by Jim K Lindsey */
+	CAR(v) = allocVector(INTSXP, 1);
+	INTEGER(CAR(v))[0] = itncnt;
+	TAG(v) = install("iterations"); v = CDR(v);
+
+	vmaxset(vmax);
 	UNPROTECT(2);
 	return value;
 }
@@ -557,9 +567,9 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
  *	x(n)	 --> iterate x[k]
  *	f	    --> function value at x[k]
  *	g(n)	 --> gradient at x[k]
- *	a(n,n)       --> hessian at x[k]
+ *	a(n,n)	     --> hessian at x[k]
  *	p(n)	 --> step taken
- *	itncnt       --> iteration number k
+ *	itncnt	     --> iteration number k
  *	iflg	 --> flag controlling info to print
  *	ipr	  --> device to which to send output
  */
@@ -567,8 +577,6 @@ SEXP do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 int F77_SYMBOL(result)(int *nr, int *n, double *x, double *f, double *g,
 	double *a, double *p, int *itncnt, int *iflg, int *ipr)
 {
-	static int i, j;
-
 		/* Print iteration number */
 
 	Rprintf("iteration = %d\n", *itncnt);

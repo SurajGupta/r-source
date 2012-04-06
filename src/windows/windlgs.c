@@ -23,6 +23,8 @@
 static char szFilter[RBuffLen + 2];
 static char szImgFilter[] = "R Image File(*.RMG)|*.rmg";
 static char szOpenFilter[] = "Text Files (*.TXT)|*.txt|All Files(*.*)|*.*";
+static char szDataFilter[] = "Data Files (*.DAT)|*.dat|All Files(*.*)|*.*";
+static char szSysDatFilter[] = "R Data Files (*.R)|*.R| Tables (*.tab)|*.tab| All Files(*.*)|*.*";
 static char szDirName[RBuffLen];
 extern char RFName[RBuffLen];
 
@@ -53,15 +55,38 @@ static void ofninit()
         ofn.lpfnHook = NULL;
         ofn.lpTemplateName = NULL;
 }
-    
 
-int Win_ROpenDlg(HWND hwnd, char *iname)
+/* which = 1 ==> Open
+   which = 2 ==> Load
+   which = 3 ==> read.table
+   which = 4 ==> open a system data file
+   */
+   
+
+int Win_ROpenDlg(HWND hwnd, int which)
 {
         int i, n;
         char title[512];
 
-        strcpy(szFilter, szOpenFilter);
-        sprintf(title,"R %s File",iname);
+        switch (which) {
+            case 1:
+                strcpy(szFilter, szImgFilter);
+                sprintf(title, "R Open File");
+                break;
+            case 2:
+                strcpy(szFilter, szOpenFilter);
+                sprintf(title, "R Load File");
+                break;
+            case 3:
+                strcpy(szFilter, szOpenFilter);
+                sprintf(title, "R read.table");
+                break;
+            case 4:
+                strcpy(szFilter, szSysDatFilter);
+                sprintf(title, "R read sys data");
+                break;
+        }
+
         n = strlen(szFilter);
         for (i = 0; i < n; i++)
                 if (szFilter[i] == '|')
@@ -112,6 +137,39 @@ int Win_RSaveDlg(HWND hwnd)
         ofn.lpstrInitialDir = szDirName;
         ofn.Flags = OFN_OVERWRITEPROMPT;
         ofn.lpstrTitle = "R Save Image";
+
+        return (int) GetSaveFileName(&ofn);
+}
+
+int Win_RDataDlg(HWND hwnd, char* datadirname)
+{
+        int i, n;
+
+        strcpy(szFilter, szDataFilter);
+
+        n = strlen(szFilter);
+        for (i = 0; i < n; i++)
+                if (szFilter[i] == '|')
+                        szFilter[i] = '\0';
+        szFilter[n] = '\0';
+        szFilter[n + 1] = '\0';
+
+        if( strlen(datadirname) == 0 )
+                if (! GetCurrentDirectory(sizeof(szDirName), szDirName))
+                        return 0;
+        else
+                strcpy(szDirName,datadirname);
+
+        ofninit();
+        
+       
+        ofn.lpstrFilter = szFilter;
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFile = RFName;
+        ofn.nMaxFile = RBuffLen;
+        ofn.lpstrInitialDir = szDirName;
+        ofn.Flags = OFN_OVERWRITEPROMPT;
+        ofn.lpstrTitle = "R Read Data";
 
         return (int) GetSaveFileName(&ofn);
 }

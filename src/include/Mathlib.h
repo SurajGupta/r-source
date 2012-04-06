@@ -1,214 +1,339 @@
-/*
- *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-#ifndef MATHLIB_H_
-#define MATHLIB_H_
+#ifndef MATHLIB_H
+#define MATHLIB_H
 
 #include "Arith.h"
 
-#ifdef Macintosh
-#include <fp.h>
-double hypot(double x, double y);
-#else
+#include <errno.h>
+#include <float.h>
+#include <limits.h>
 #include <math.h>
+#include <stdlib.h>
+
+/* 30 Decimal-place constants computed with bc -l (scale=32; proper round) */
+
+#ifndef M_SQRT_2
+#define M_SQRT_2	1.4142135623730950488016887242097
+#define M_1_SQRT_2	0.707106781186547524400844362105	/* 1/sqrt(2) */
+#define M_SQRT_32	5.656854249492380195206754896838	/* sqrt(32) */
 #endif
 
-/* SGI math.h conflict */
-#undef qexp
-
-#include <stdlib.h>
-#include <limits.h>
-#include <float.h>
-#include <errno.h>
-
-/* 30 Decimal-place constants computed with bc  (scale=32; proper round) */
-
-#ifndef M_1_SQRT_2
-#define M_1_SQRT_2	0.707106781186547524400844362105
+#ifndef M_LN_2
+#define M_LN_2		0.693147180559945309417232121458176568
+#define M_LOG10_2	0.301029995663981195213738894724493027
 #endif
 
 #ifndef M_PI
-#define M_PI		3.141592653589793238462643383279
+#define M_PI		3.141592653589793238462643383279502884197169399375
 #endif
-
 #ifndef M_PI_half
 #define M_PI_half	1.570796326794896619231321691640
 #endif
 
 #ifndef M_SQRT_PI
+/* sqrt(pi),  1/sqrt(2pi),  sqrt(2/pi) : */
 #define M_SQRT_PI	1.772453850905516027298167483341
-#endif
-
-#ifndef M_1_SQRT_2PI
 #define M_1_SQRT_2PI	0.398942280401432677939946059934
+#define M_SQRT_2dPI	0.79788456080286535587989211986876
 #endif
 
+
+#ifndef M_LN_SQRT_PI
+/* log(sqrt(pi)) = log(pi)/2 : */
+#define M_LN_SQRT_PI	0.5723649429247000870717136756765293558
 /* log(sqrt(2*pi)) = log(2*pi)/2 : */
-#ifndef M_LN_SQRT_2PI
-#define M_LN_SQRT_2PI	0.918938533204672741780329736406
+#define M_LN_SQRT_2PI	0.91893853320467274178032973640562
+/* log(sqrt(pi/2)) = log(pi/2)/2 : */
+#define M_LN_SQRT_PId2	0.225791352644727432363097614947441
 #endif
 
 
-#ifndef	HAVE_RINT
-double rint(double);
+
+#define MATHLIB_ERROR(x)   { printf("%s\n",x); exit(1); }
+#define MATHLIB_WARNING(x) { printf("%s\n",x); }
+
+#define ME_NONE		0
+#define ME_DOMAIN	1
+#define ME_RANGE	2
+#define ME_NOCONV	3
+#define ME_PRECISION	4
+#define ME_UNDERFLOW	5
+
+#undef ML_PRECISION_WARNINGS
+
+#ifdef IEEE_754
+#ifdef HAVE_IEEE754_H
+#include <ieee754.h> /* newer Linuxen */
+#else
+#ifdef HAVE_IEEEFP_H
+#include <ieeefp.h> /* others [Solaris 2.5.x], .. */
+#endif
 #endif
 
-	/* Random Number Generation */
+extern double m_zero;
+extern double m_one;
+extern double m_tiny;
+#define ML_ERROR(x)	/* nothing */
+#define ML_POSINF	(m_one / m_zero)
+#define ML_NEGINF	((-m_one) / m_zero)
+#define ML_NAN		(m_zero / m_zero)
+#define ML_UNDERFLOW	(m_tiny * m_tiny)
+#define ML_VALID(x)	(!isnan(x))
+#else
+#define ML_ERROR(x)	ml_error(x)
+#define ML_POSINF	DBL_MAX
+#define ML_NEGINF	(-DBL_MAX)
+#define ML_NAN		(-DBL_MAX)
+#define ML_UNDERFLOW	0
+#define ML_VALID(x)	(errno == 0)
+#endif
 
-extern double snorm(void);
-extern double sunif(void);
-extern double sexp(void);
+	/* Splus Compatibility */
 
-	/* Port Constants */
+#define snorm	norm_rand
+#define sunif	unif_rand
+#define sexp	exp_rand
 
-extern int F77_SYMBOL(i1mach)(int*);
-extern double F77_SYMBOL(d1mach)(int*);
+	/* Undo SGI Madness */
 
-	/* Fortran Compatibility */
+#ifdef ftrunc
+#undef ftrunc
+#endif
+#ifdef qexp
+#undef qexp
+#endif
 
-extern double fint(double);
-extern double fmax2(double, double);
-extern double fmin2(double, double);
-extern double fmod(double, double);
-extern double fsign(double, double);
-extern double fsquare(double);
-extern double fcube(double);
-extern int imax2(int, int);
-extern int imin2(int, int);
+	/* Name Hiding to Avoid Clashes with Fortran */
 
-	/* Utilities */
+#ifdef HIDE_NAMES
+#define d1mach	c_d1mach
+#define i1mach	c_i1mach
+#endif
 
-extern double rround(double, double);
-extern double prec(double, double);
-extern double sign(double);
-extern double trunc(double);
+#define	rround	fround
+#define	prec	fprec
+#define	trunc	ftrunc
+/* NO!  fsign(.) has 2 arguments;  sign(.) has 1..
+ #define	sign	fsign
+*/
 
+	/* Machine Characteristics */
 
-	/* Mathematical Special Functions */
+double	d1mach(int);
+double	d1mach_(int*);
+int	i1mach(int);
+int	i1mach_(int*);
 
-extern double beta(double, double);
-extern double lbeta(double, double);
-extern double gamma(double);
-extern double lgamma(double);
-extern double lfastchoose(double, double);
-extern double fastchoose(double, double);
-extern double choose(double, double);
-extern double lchoose(double, double);
-extern void dpsifn(double, int, int, int, double*, int*, int*);
-extern double digamma(double);
-extern double trigamma(double);
-extern double tetragamma(double);
-extern double pentagamma(double);
+	/* General Support Functions */
 
-	/* Distributions */
+int	imax2(int, int);
+int	imin2(int, int);
+double	sign(double);
+double	fmax2(double, double);
+double	fmin2(double, double);
+double	fmod(double, double);
+double	fprec(double, double);
+double	fround(double, double);
+double	ftrunc(double);
+double	fsign(double, double);
+double	fsquare(double);
+double	fcube(double);
 
-extern double dbeta(double, double, double);
-extern double pbeta(double, double, double);
-extern double pbeta_b(double, double, double, double);
-extern double qbeta(double, double, double);
-extern double rbeta(double, double);
+	/* Random Number Generators */
 
-extern double dbinom(double, double, double);
-extern double pbinom(double, double, double);
-extern double qbinom(double, double, double);
-extern double rbinom(double, double);
+double	snorm(void);
+double	sunif(void);
+double	sexp(void);
 
-extern double dcauchy(double, double, double);
-extern double pcauchy(double, double, double);
-extern double qcauchy(double, double, double);
-extern double rcauchy(double, double);
+	/* Chebyshev Series */
 
-extern double dchisq(double, double);
-extern double pchisq(double, double);
-extern double qchisq(double, double);
-extern double rchisq(double);
+int	chebyshev_init(double*, int, double);
+double	chebyshev_eval(double, double *, int);
 
-extern double dexp(double, double);
-extern double pexp(double, double);
-extern double qexp(double, double);
-extern double rexp(double);
+	/* Gamma and Related Functions */
 
-extern double df(double, double, double);
-extern double pf(double, double, double);
-extern double qf(double, double, double);
-extern double rf(double, double);
+double	logrelerr(double);
+void	gammalims(double*, double*);
+double	lgammacor(double);
+double	gamma(double);
+double	lgamma(double);
+void	dpsifn(double, int, int, int, double*, int*, int*);
+double	digamma(double);
+double	trigamma(double);
+double	tetragamma(double);
+double	pentagamma(double);
 
-extern double dgamma(double, double, double);
-extern double pgamma(double, double, double);
-extern double qgamma(double, double, double);
-extern double rgamma(double, double);
+double	choose(double, double);
+double	lchoose(double, double);
+double	fastchoose(double, double);
+double	lfastchoose(double, double);
 
-extern double dgeom(double, double);
-extern double pgeom(double, double);
-extern double qgeom(double, double);
-extern double rgeom(double);
+	/* Beta and Related Functions */
 
-extern double dhyper(double, double, double, double);
-extern double phyper(double, double, double, double);
-extern double qhyper(double, double, double, double);
-extern double rhyper(double, double, double);
+double	beta(double, double);
+double	lbeta(double, double);
 
-extern double dlnorm(double, double, double);
-extern double plnorm(double, double, double);
-extern double qlnorm(double, double, double);
-extern double rlnorm(double, double);
+	/* Normal Distribution */
 
-extern double dlogis(double, double, double);
-extern double plogis(double, double, double);
-extern double qlogis(double, double, double);
-extern double rlogis(double, double);
+double	dnorm(double, double, double);
+double	pnorm(double, double, double);
+double	qnorm(double, double, double);
+double	rnorm(double, double);
 
-extern double dnbinom(double, double, double);
-extern double pnbinom(double, double, double);
-extern double qnbinom(double, double, double);
-extern double rnbinom(double, double);
+	/* Uniform Distribution */
 
-extern double dnchisq(double, double, double);
-extern double pnchisq(double, double, double);
-extern double qnchisq(double, double, double);
-extern double rnchisq(double, double);
+double	dunif(double, double, double);
+double	punif(double, double, double);
+double	qunif(double, double, double);
+double	runif(double, double);
 
-extern double dnorm(double, double, double);
-extern double pnorm(double, double, double);
-extern double qnorm(double, double, double);
-extern double rnorm(double, double);
+	/* Gamma Distribution */
 
-extern double dpois(double, double);
-extern double ppois(double, double);
-extern double qpois(double, double);
-extern double rpois(double);
+double	dgamma(double, double, double);
+double	pgamma(double, double, double);
+double	qgamma(double, double, double);
+double	rgamma(double, double);
 
-extern double dt(double, double);
-extern double pt(double, double);
-extern double qt(double, double);
-extern double rt(double);
+	/* Beta Distribution */
 
-extern double dunif(double, double, double);
-extern double punif(double, double, double);
-extern double qunif(double, double, double);
-extern double runif(double, double);
+double	dbeta(double, double, double);
+double	pbeta(double, double, double);
+double	pbeta_raw(double, double, double);
+double	qbeta(double, double, double);
+double	rbeta(double, double);
 
-extern double dweibull(double, double, double);
-extern double pweibull(double, double, double);
-extern double qweibull(double, double, double);
-extern double rweibull(double, double);
+	/* Lognormal Distribution */
 
-extern int errno;
+double	dlnorm(double, double, double);
+double	plnorm(double, double, double);
+double	qlnorm(double, double, double);
+double	rlnorm(double, double);
+
+	/* Chi-squared Distribution */
+
+double	dchisq(double, double);
+double	pchisq(double, double);
+double	qchisq(double, double);
+double	rchisq(double);
+
+	/* Non-central Chi-squared Distribution */
+
+double	dnchisq(double, double, double);
+double	pnchisq(double, double, double);
+double	qnchisq(double, double, double);
+double	rnchisq(double, double);
+
+	/* F Distibution */
+
+double	df(double, double, double);
+double	pf(double, double, double);
+double	qf(double, double, double);
+double	rf(double, double);
+
+	/* Student t Distibution */
+
+double	dt(double, double);
+double	pt(double, double);
+double	qt(double, double);
+double	rt(double);
+
+	/* Binomial Distribution */
+
+double	dbinom(double, double, double);
+double	pbinom(double, double, double);
+double	qbinom(double, double, double);
+double	rbinom(double, double);
+
+	/* Cauchy Distribution */
+
+double	dcauchy(double, double, double);
+double	pcauchy(double, double, double);
+double	qcauchy(double, double, double);
+double	rcauchy(double, double);
+
+	/* Exponential Distribution */
+
+double	dexp(double, double);
+double	pexp(double, double);
+double	qexp(double, double);
+double	rexp(double);
+
+	/* Geometric Distribution */
+
+double	dgeom(double, double);
+double	pgeom(double, double);
+double	qgeom(double, double);
+double	rgeom(double);
+
+	/* Hypergeometric Distibution */
+
+double	dhyper(double, double, double, double);
+double	phyper(double, double, double, double);
+double	qhyper(double, double, double, double);
+double	rhyper(double, double, double);
+
+	/* Negative Binomial Distribution */
+
+double	dnbinom(double, double, double);
+double	pnbinom(double, double, double);
+double	qnbinom(double, double, double);
+double	rnbinom(double, double);
+
+	/* Poisson Distribution */
+
+double	dpois(double, double);
+double	ppois(double, double);
+double	qpois(double, double);
+double	rpois(double);
+
+	/* Weibull Distribution */
+
+double	dweibull(double, double, double);
+double	pweibull(double, double, double);
+double	qweibull(double, double, double);
+double	rweibull(double, double);
+
+	/* Logistic Distribution */
+
+double	dlogis(double, double, double);
+double	plogis(double, double, double);
+double	qlogis(double, double, double);
+double	rlogis(double, double);
+
+	/* Non-central Beta Distribution */
+
+double	dnbeta(double, double, double, double);
+double	pnbeta(double, double, double, double);
+double	qnbeta(double, double, double, double);
+double	rnbeta(double, double, double);
+
+	/* Non-central F Distribution */
+
+double	dnf(double, double, double, double);
+double	pnf(double, double, double, double);
+double	qnf(double, double, double, double);
+double	rnf(double, double, double);
+
+	/* Non-central Student t Distribution */
+
+double	dnt(double, double, double);
+double	pnt(double, double, double);
+double	qnt(double, double, double);
+double	rnt(double, double);
+
+	/* Studentized Range Distribution */
+
+double	dtukey(double, double, double, double);
+double	ptukey(double, double, double, double);
+double	qtukey(double, double, double, double);
+double	rtukey(double, double, double);
+
+	/* Wilcoxon Distribution */
+
+#define WILCOX_MMAX 50
+#define WILCOX_NMAX 50
+double dwilcox(double, double, double);
+double pwilcox(double, double, double);
+double qwilcox(double, double, double);
+double rwilcox(double, double);
 
 #endif

@@ -154,7 +154,7 @@ SEXP dynamicfindVar(SEXP symbol, RCNTXT *cptr)
 	}
 	return(R_UnboundValue);
 }
-		
+
 
 /* findFun - search for a function in an environment */
 /* This is a specially modified version of findVar which */
@@ -327,15 +327,16 @@ SEXP do_detach(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	for (t = R_GlobalEnv; ENCLOS(t) != R_NilValue && pos > 2; t = ENCLOS(t))
 		pos--;
-	if (pos != 2)
+	if (pos != 2) {
 		error("detach: invalid pos= given\n");
+		s = t;	/* for -Wall */
+	}
 	else {
 		PROTECT(s = ENCLOS(t));
 		x = ENCLOS(s);
 		ENCLOS(t) = x;
 	}
 	R_Visible = 0;
-	FrameClassFix(FRAME(s));
 	UNPROTECT(1);
 	return FRAME(s);
 }
@@ -418,8 +419,10 @@ SEXP do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+ /* ls(envir, all.names) */
+
 	SEXP ans, env, envp, s;
-	int all, i, k, pos;
+	int all, i, k;
 
 	checkArity(op, args);
 
@@ -503,6 +506,7 @@ static SEXP pos2env(int pos, SEXP call)
 
 	if(pos == NA_INTEGER || pos < -1 || pos == 0) {
 		errorcall(call, "invalid argument\n");
+		env=call;/* just for -Wall */
 	}
 	else if(pos == -1) {
 		env = R_GlobalContext->sysparent;

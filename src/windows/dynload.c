@@ -67,8 +67,7 @@ typedef struct {
         char *name;
         DL_FUNC func;
 } CFunTabEntry;  
-#include "ForeignDecl.h"
-#include "ForeignDecl.h"
+#include "FFDecl.h"
 
         /* This provides a table of built-in C and Fortran functions */
         /* We include this table, even when we have dlopen and friends */
@@ -76,7 +75,7 @@ typedef struct {
 
 static CFunTabEntry CFunTab[] =
 {
-#include "ForeignTab.h"
+#include "FFTab.h"
         {NULL, NULL}
 };      
 
@@ -164,7 +163,7 @@ static AddDLL(char *path)
 
 DL_FUNC R_FindSymbol(char const *name)
 {
-        char buf[MAXIDSIZE+1];
+        char buf[MAXIDSIZE+1], buf2[MAXIDSIZE+1];
         DL_FUNC fcnptr;
         int i;
 
@@ -174,7 +173,7 @@ DL_FUNC R_FindSymbol(char const *name)
 #else
         sprintf(buf, "_%s", name);
 #endif
-        sprintf(buf, "%s_",name);
+
         for (i=0 ; i<CountDLL ; i++) {
                 fcnptr = (DL_FUNC)GetProcAddress(LoadedDLL[i].dlh, buf);
                 if (fcnptr != NULL) return fcnptr;
@@ -186,7 +185,7 @@ DL_FUNC R_FindSymbol(char const *name)
 }
 
 
-static GetFullDLLPath(SEXP call, char *buf, char *path)
+static void GetFullDLLPath(SEXP call, char *buf, char *path)
 {
         if(path[1] != ':') {
                 if(!getcwd(buf,MAX_PATH))

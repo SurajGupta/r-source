@@ -19,6 +19,10 @@
 #include "wincons.h"
 #include "shellapi.h"
 #include "Fileio.h"
+#include "Graphics.h"
+
+#include "IOStuff.h"
+#include "Parse.h"
 
 #define STRICT
 
@@ -65,21 +69,22 @@ HWND RFrame, RClient, RConsoleFrame, RConsole;
 char RGraphClass[] = "RGraphClass";
 char REditClass[] = "REditClass";
 char RDEClass[] = "RDEClass";
-int R_VSmb;
 
 
-HMENU RMenuConsole, RMenuInit;
-HMENU RMenuConsWin, RMenuInitWin;
+HMENU RMenuConsole, RMenuConsWin;
 HANDLE hAccel;
 static HANDLE RPasteText;
 static LPSTR RPasteP;
 static int RPasteLen;
 
-/* InStart locates the position in the text buffer of the end of the
-last statement executed. Anything from here to the end can be modified.
-   InFlag is used to see when a carriage return is pressed and hence
-a statement should be sent to the grammar.
+/*
+    InStart locates the position in the text buffer of the end of the
+    last statement executed. Anything from here to the end can be modified.
+
+    InFlag is used to see when a carriage return is pressed and hence
+    a statement should be sent to the grammar.
 */
+
 static int InStart;
 static int InFlag;
 static int RClosing;
@@ -122,18 +127,21 @@ HWND hWndServerDDE;
 
 #pragma argsused
 
+int mbquery(void) {
+    int save;
 
-void RKillDevice(void) {
+    save = MessageBox(RFrame, "Do you want to save the image?","R Save",
+                        MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_APPLMODAL);
+    return (save);
 }
-
-void RCleanUp(int ask)
+    
+void R_CleanUp(int ask)
 {
     int save=IDYES;
     
         if( R_DirtyImage ) {
              if( ask == 1)  /* query save */
-                save = MessageBox(RFrame, "Do you want to save the image?","R Save",
-                        MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_ICONQUESTION | MB_APPLMODAL);
+                save = mbquery();
              else if (ask == 3)  /* save without query */
                 save = IDYES;
              else /* don't save */
@@ -143,13 +151,13 @@ void RCleanUp(int ask)
                 jump_to_toplevel();
              }
              if( save == IDYES ) {
+                strcpy(RFName, R_ImageName);
                 if( !Win_RSaveDlg(RClient) )
                         error("cannot save requested file\n");
                 dump_image(RFName,0);
              }
              R_DirtyImage = 0; /*hack to allow WM_CLOSE to check for a dirty image */
         }
-        KillDevice(); 
         PostMessage(RFrame, WM_CLOSE, 0, 0);
 }
 
@@ -238,11 +246,9 @@ errcd: MessageBox( RFrame, "Cannot configure for this machine.","R Application",
 BOOL InitApplication(HINSTANCE hinstCurrent)
 {
         WNDCLASS wc;
+		DWORD errno;
 
-        DevHold=RKillDevice;
-
-
-        wc.style=CS_HREDRAW | CS_VREDRAW | WS_MAXIMIZE;
+        wc.style=CS_HREDRAW | CS_VREDRAW ;
         wc.lpfnWndProc = MainWndProc;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
@@ -250,9 +256,12 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
         wc.hCursor = LoadCursor(NULL,IDC_ARROW);
         wc.hbrBackground = GetStockObject(WHITE_BRUSH);
-        wc.lpszMenuName = NULL;
+        wc.lpszMenuName = "Foo";
         wc.lpszClassName = RFrameClass;
-        if( !RegisterClass(&wc) ) return(FALSE);
+        if( !RegisterClass(&wc) ) {
+			errno = GetLastError();
+			return(FALSE);
+		}
 
         wc.style=CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc= ConsoleWndProc;
@@ -282,7 +291,7 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         wc.style=CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
         wc.lpfnWndProc = GraphWndProc;
         wc.cbClsExtra=0;
-        wc.cbWndExtra=0;
+        wc.cbWndExtra=sizeof(DevDesc*);
         wc.hInstance=hinstCurrent;
         wc.hIcon=LoadIcon(NULL, IDI_APPLICATION);
         wc.hCursor=LoadCursor(NULL,IDC_CROSS);
@@ -307,10 +316,8 @@ BOOL InitApplication(HINSTANCE hinstCurrent)
         /* set up the menu handles */
         hAccel=LoadAccelerators(hinstCurrent, "MdiAccel");
 
-        RMenuInit=LoadMenu(hinstCurrent, "RMenuInit");
-        RMenuInitWin=GetSubMenu(RMenuInit, 2);
         RMenuConsole=LoadMenu(hinstCurrent, "RMenuConsole");
-        RMenuConsWin=GetSubMenu(RMenuConsole, 2);
+        RMenuConsWin=GetSubMenu(RMenuConsole, 3);
         
         RMenuGraph=LoadMenu(hinstCurrent, "RMenuGraph");
         RMenuGraphWin=GetSubMenu(RMenuGraph, 1);
@@ -339,7 +346,7 @@ BOOL InitInstance(HINSTANCE hinstCurrent,int nCmdShow)
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
-                NULL, RMenuInit, hinstCurrent, NULL);
+                NULL, RMenuConsole, hinstCurrent, NULL);
 
         if( RFrame == NULL )
                 return FALSE;
@@ -363,7 +370,7 @@ BOOL InitInstance(HINSTANCE hinstCurrent,int nCmdShow)
         mdicreate.hOwner = hinstCurrent;
         mdicreate.x = CW_USEDEFAULT;
         mdicreate.y = CW_USEDEFAULT;
-        mdicreate.cx = (r.right-r.left)*.8;
+        mdicreate.cx = (int)(r.right-r.left)*.8;
         mdicreate.cy = CW_USEDEFAULT;
         mdicreate.style = 0;
         mdicreate.lParam = NULL;
@@ -428,7 +435,7 @@ HWND CreateConsoleWind(HWND hWndParent, HMENU hMenu, HANDLE hInstance)
 void R_ProcessDropFiles(HANDLE dropstruct, int win)
 {
     char dfilename[MAXELTSIZE];
-    int nFiles, len;
+    int nFiles, len, status;
     SEXP expr;
     FILE *fp;
 
@@ -446,12 +453,11 @@ void R_ProcessDropFiles(HANDLE dropstruct, int win)
         error("couldn't find dropped file\n");
     switch (win) {
         case 1:
-        PROTECT(expr = parse(fp, -1));
+        PROTECT(expr = R_ParseFile(fp, -1, &status));
         Rprintf("Parsing %s \n",dfilename);
-        if( R_ParseError ) 
+        if( status == PARSE_ERROR ) 
             error("drag-drop: an error occurred in parsing");
-        for( expr; expr != R_NilValue ; expr = CDR(expr) )
-            eval(CAR(expr), R_GlobalEnv);
+        eval(expr, R_GlobalEnv);
         UNPROTECT(1);
         break;
         case 2:
@@ -467,12 +473,14 @@ LRESULT CALLBACK  EdWndProc(HWND hWnd, UINT message, WPARAM wParam,
         LPARAM lParam)
 {
         DWORD curPos;
+        char *p;
 
         switch(message) {
                 case WM_DROPFILES:
                         SetFocus(RConsole);
                         R_ProcessDropFiles((HANDLE) wParam, 1);
-                        yyprompt((char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]));
+                        p=(char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]);
+                        R_WriteConsole(p,strlen(p));
                         return 0;
                 case WM_PASTE:
                         RPasteFromClip();
@@ -506,6 +514,7 @@ LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
         LPARAM lParam)
 {
     char tmp[RBuffLen], *home;
+    int save;
     
         switch(message) {
                 case WM_CREATE:
@@ -530,9 +539,19 @@ LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
                       break; 
                 case WM_COMMAND:
                         switch (GET_WM_COMMAND_ID(wParam,lParam)) {
+                                case RRR_NEW:
+                                        save=mbquery();
+                                        if (save == IDYES) {
+                                            if( !Win_RSaveDlg(RClient) )
+                                                error("cannot save requested file\n");
+                                            dump_image(RFName, 0);
+                                        }
+                                        R_GlobalEnv=emptyEnv();
+                                        jump_to_toplevel();
+                                        return 0;
                                 case RRR_OPEN:
                                         RFName[0]='\0';
-                                        if( Win_ROpenDlg(RClient,"Open") )
+                                        if( Win_ROpenDlg(RClient,1) )
                                                 menuOpen();
                                         return 0;
                                 case RRR_SAVE:
@@ -540,7 +559,7 @@ LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
                                         menuSave();
                                         return 0;
                                 case RRR_LOAD:
-                                        if( Win_ROpenDlg(RClient,"Load") )
+                                        if( Win_ROpenDlg(RClient,2) )
                                                 menuLoad();
                                         return 0;
                                 case RRR_UNDO:
@@ -594,6 +613,13 @@ LRESULT CALLBACK ConsoleWndProc(HWND hWnd,UINT message,WPARAM wParam,
                                                         return 0;
                                         }
                                         break;
+                                case RRR_DATA:
+                                        RFName[0]='\0';                                       
+                                        userdata();
+                                        return 0;
+                                case RRR_SYSDATA:
+                                        sysdata();
+                                        return 0;
                         }
                    break;
                 case WM_MDIACTIVATE:
@@ -613,23 +639,25 @@ void menuLoad(void)
 {
         FILE *fp;
         SEXP expr;
+        int status;
 
         if(!(fp=R_fopen(RFName,"r")))
                 error("load: couldn't open requested file\n");
         Rprintf("\n");
-        PROTECT(expr=parse(fp, -1));
-        if( R_ParseError )
+        PROTECT(expr=R_ParseFile(fp, -1, &status));
+        if( status == PARSE_ERROR )
                 error("load: an error occurred in parsing\n");
-        for( expr; expr!=R_NilValue ; expr=CDR(expr) )
-                eval(CAR(expr),R_GlobalEnv);
+        eval(expr, R_GlobalEnv);
         UNPROTECT(1);
-        yyprompt((char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]));
+        expr = STRING(GetOption(install("prompt"), R_NilValue))[0];
+        R_WriteConsole(CHAR(expr), strlen(CHAR(expr)));
 }
 
 /*open a saved image to replace the current image */
 void menuOpen(void)
 {
     FILE *fp;
+    char *p;
     
         if(!R_Quiet)
                 Rprintf("restore(\"%s\")\n", RFName);
@@ -650,6 +678,8 @@ void menuOpen(void)
                 error("workspace file corrupted -- no data loaded\n");
         }
         fclose(fp);
+        p = ((char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]));
+        R_WriteConsole(p, strlen(p));
 }
 
 
@@ -661,7 +691,7 @@ void menuSave()
         dump_image(RFName,0);
 }
 
-#pragma argsused
+
 LRESULT FAR PASCAL MainWndProc(HWND hWnd,UINT message,WPARAM wParam,
         LPARAM lParam)
 {
@@ -670,7 +700,7 @@ LRESULT FAR PASCAL MainWndProc(HWND hWnd,UINT message,WPARAM wParam,
 
         switch (message) {
                 case WM_CREATE:
-                        cltcr.hWindowMenu = RMenuInitWin;
+                        cltcr.hWindowMenu = RMenuConsWin;
                         cltcr.idFirstChild = RRR_FIRSTCHILD;
                         RClosing = 0;
                         RClient = CreateWindow("MDICLIENT", NULL,
@@ -710,7 +740,7 @@ LRESULT FAR PASCAL MainWndProc(HWND hWnd,UINT message,WPARAM wParam,
                         break;
                 case WM_CLOSE:
                         if( R_DirtyImage )
-                                RCleanUp(1);
+                                R_CleanUp(1);
                         RClosing = 1;
                         SendMessage(hWnd, WM_COMMAND, RRR_CLOSEALL, 0);
                         
@@ -754,12 +784,21 @@ LPARAM lParam;
         return FALSE;
 }
 
-int ReadKBD(char *buf, int bufsize)
+        /*************************************************************/
+        /* This function print the given prompt at the console       */
+        /* and then transfers up to bufsize characters into the      */
+        /* buffer pointed to by buf. The last two characters should  */
+        /* be set to \n\0. If hist is non-zero then the line is      */
+        /* added to any command line history-haha                    */                   
+
+int R_ReadConsole(char *prompt, char *buf, int bufsize, int hist)
 {
         int n,j,nchar,lineno,lineind;
         char readbuf[256],*rbufp;
 
         InFlag=0;
+        R_WriteConsole(prompt, strlen(prompt));
+        
         do {
                 EventLoop();
         }
@@ -794,13 +833,13 @@ int ReadKBD(char *buf, int bufsize)
                 /* write a new line to the edit window */
                 readbuf[0]='\n';
                 readbuf[1]='\0';
-                RFrontEnd_WriteStdOutput(&readbuf[0],1);
+                R_WriteConsole(&readbuf[0],1);
                 InStart= Edit_GetTextLength(RConsole);
                 return (nchar+1);
         }
 }
 
-int RFrontEnd_WriteStdOutput(char *buf, int buflen)
+void R_WriteConsole(char *buf, int buflen)
 {
         int sstart, ssend, slen;
         char IObuf[255],*bufp;
@@ -834,29 +873,31 @@ int RFrontEnd_WriteStdOutput(char *buf, int buflen)
                         Edit_ReplaceSel(RConsole, IObuf);
                         InStart+=slen;
         }
-        RSetCursor();
-        return(slen);
+        /*RSetCursor();*/
+        return;
 }
 
-void ResetConsole()
+void R_ResetConsole(void)
 {
+#ifdef OLD
         R_SetInput(R_CONSOLE);
         R_Inputfile = stdin;
+#endif
 }             
                           
         /* This is stdio support to ensure that console file buffers */
         /* are flushed. */
         
-void FlushConsole()
+void R_FlushConsole(void)
 {
-        if (R_Console == 1)
+        if (R_CONSOLE == 1)
                 fflush(stdin);
 }
 
 
-void ClearerrConsole()
+void R_ClearerrConsole(void)
 {
-        if (R_Console == 1)
+        if (R_CONSOLE == 1)
                 clearerr(stdin);
 }
 
@@ -864,23 +905,28 @@ void ClearerrConsole()
 
 FILE *R_OpenLibraryFile(char *file)
 {
-        char buf[256], *home;
+        char buf[256], buf2[256];
         FILE *fp;
 
-        if((home = getenv("RHOME")) == NULL)
+        /*if((home = getenv("RHOME")) == NULL)*/
+		GetEnvironmentVariable("RHOME",buf,256);
+		if( strlen(buf) == 0 )
                 return NULL;
-        sprintf(buf, "%s/library/%s", home, file);
-        fp = R_fopen(buf,"rt");
+        sprintf(buf2, "%s/library/base/R/%s", buf, file);
+        fp = R_fopen(buf2,"rt");
         return fp;
 }
 
 FILE *R_OpenSysInitFile(void)
 {
-        char buf[256];
+        char buf[256],buf2[256];
         FILE *fp;
 
-        sprintf(buf, "%s/library/Rprofile", getenv("RHOME"));
-        fp = R_fopen(buf, "r");
+		GetEnvironmentVariable("RHOME",buf, 256);
+		if( strlen(buf) == 0 )
+			return NULL;
+        sprintf(buf2, "%s/library/base/R/Rprofile",buf);
+        fp = R_fopen(buf2, "r");
         return fp;
 }
 
@@ -1037,26 +1083,30 @@ extern BOOL CALLBACK Menu_SetMem(HWND hDlg, UINT message,
 
         switch (message) {
                 case  WM_INITDIALOG:
-                    sprintf(memval,"%d", (int) R_VSmb);
-                    SetDlgItemText(hDlg, 103, memval);
-                    sprintf(memval,"%d", (int) R_NSize);
+                    sprintf(memval,"%d", (int) ((R_VSize*sizeof(VECREC))+1048575)/1048576);
                     SetDlgItemText(hDlg, 102, memval);
+                    sprintf(memval,"%d", (int) R_NSize);
+                    SetDlgItemText(hDlg, 103, memval);
                     SetFocus(GetDlgItem(hDlg, 1));
                     return FALSE;
                 case WM_COMMAND:
                     switch (wParam) {
                        case IDOK:
                          GetDlgItemText(hDlg, 102, memval, 20);
-                         nsize = strtol(memval, &p, 10);
+                         vsize = strtol(memval, &p, 10);
                          if (*p ) {
                               MessageBox(RConsole, "The  VSize value is not valid",
                                      "R Application", MB_ICONEXCLAMATION | MB_OK);
-                              sprintf(memval,"%d", (int) R_VSmb);
+                              sprintf(memval,"%d", (int)((R_VSize*sizeof(VECREC))+1048575)/1048576);
                               SetDlgItemText(hDlg, 102, memval);
                               return 1;
                          }
+						 if (vsize == ((R_VSize*sizeof(VECREC))+1048575)/1048576)
+							 vsize = R_VSize*sizeof(VECREC);
+						 else
+							 vsize = vsize * 1048576;
                          GetDlgItemText(hDlg, 103, memval, 20);
-                         vsize = strtol(memval, &p, 10);
+                         nsize = strtol(memval, &p, 10);
                          if (*p ) {
                               MessageBox(RConsole, "The  NSize value is not valid",
                                      "R Application", MB_ICONEXCLAMATION | MB_OK);

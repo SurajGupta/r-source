@@ -1,6 +1,7 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997--1998  Robert Gentleman, Ross Ihaka and the R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -211,8 +212,6 @@ int isVector(SEXP s)
 {
 	switch(TYPEOF(s)) {
 	    case LGLSXP:
-	    case FACTSXP:
-	    case ORDSXP:
 	    case INTSXP:
 	    case REALSXP:
 	    case CPLXSXP:
@@ -265,31 +264,6 @@ int tsConform(SEXP x, SEXP y)
 	return 0;
 }
 
-int factorsConform(SEXP x, SEXP y)
-{
-        SEXP xlevels, ylevels;
-        int i, n;
-
-        if((isUnordered(x) && isUnordered(y)) || (isOrdered(x) && isOrdered(y)))
- {
-                if(LEVELS(x) == LEVELS(y)) {
-                        xlevels = getAttrib(x, R_LevelsSymbol);
-                        ylevels = getAttrib(y, R_LevelsSymbol);
-                        if(xlevels == R_NilValue && ylevels == R_NilValue)
-                                return 1;
-                        if(xlevels != R_NilValue && ylevels != R_NilValue) {
-                                n = LEVELS(x);
-                                for(i=0 ; i<n ; i++)
-                                        if(strcmp(CHAR(STRING(xlevels)[i]),
-                                            CHAR(STRING(ylevels)[i])))
-                                                return 0;
-                                return 1;
-                        }
-                }
-        }
-	return 0;
-}
-
 /* check to see if a list can be made into a vector */
 /* it must have every elt being a vector of length 1 */
 
@@ -333,6 +307,7 @@ int nrows(SEXP s)
 		return nrows(CAR(s));
 	}
 	else error("object is not a matrix\n");
+	return -1;
 }
 
 int ncols(SEXP s)
@@ -347,7 +322,16 @@ int ncols(SEXP s)
 		return length(s);
 	}
 	else error("object is not a matrix\n");
+	return -1;/*NOTREACHED*/
 }
+
+int nlevels(SEXP f)
+{
+	if(!isFactor(f))
+		return 0;
+	return LENGTH(getAttrib(f, R_LevelsSymbol));
+}
+
 
 int isNumeric(SEXP s)
 {
@@ -384,26 +368,28 @@ int isReal(SEXP s)
 	return (TYPEOF(s) == REALSXP);
 }
 
-#ifdef COMPLEX_DATA
 int isComplex(SEXP s)
 {
 	return (TYPEOF(s) == CPLXSXP);
 }
-#endif
 
 int isUnordered(SEXP s)
 {
-	return (TYPEOF(s) == FACTSXP);
+	return (isInteger(s)
+                && inherits(s, "factor")
+		&& !inherits(s, "ordered"));
 }
 
 int isOrdered(SEXP s)
 {
-	return (TYPEOF(s) == ORDSXP);
+	return (isInteger(s)
+                && inherits(s, "factor")
+		&& inherits(s, "ordered"));
 }
 
 int isFactor(SEXP s)
 {
-	return (TYPEOF(s) == FACTSXP || TYPEOF(s) == ORDSXP);
+	return (isInteger(s) && inherits(s, "factor"));
 }
 
 int isObject(SEXP s)
@@ -431,7 +417,7 @@ int isFinite(double x)
 {
 	return FINITE(x);
 }
- 
+
 double realNA()
 {
 	return NA_REAL;
@@ -454,10 +440,8 @@ TypeTable[] = {
 	{ "builtin",		BUILTINSXP },
 	{ "char",		CHARSXP    },
 	{ "logical",		LGLSXP     },
-	{ "factor",		FACTSXP    },
-	{ "ordered",		ORDSXP     },
 	{ "integer",		INTSXP     },
-	{ "real",		REALSXP    },
+	{ "double",		REALSXP    },/*- was "real", for R <= 0.61.x */
 	{ "complex",		CPLXSXP    },
 	{ "character",		STRSXP     },
 	{ "...",		DOTSXP     },
@@ -465,7 +449,7 @@ TypeTable[] = {
 	{ "expression",		EXPRSXP    },
 
 	{ "numeric",		REALSXP    },	/* aliases */
-	{ "unordered",		FACTSXP    },
+	{ "name",		SYMSXP	   },
 
 	{ (char *)0,            -1         }
 };
@@ -477,16 +461,9 @@ SEXPTYPE str2type(char *s)
 
 	for (i=0; TypeTable[i].str ; i++) {
 		if (!strcmp(s, TypeTable[i].str))
-#ifdef COMPLEX_DATA
 			return TypeTable[i].type;
-#else
-			if (TypeTable[i].type == CPLXSXP)
-				error("no complex data in this R version\n");
-			else
-				return TypeTable[i].type;
-#endif
 	}
-	return -1;
+	/*NOTREACHED :*/ return TypeTable[0].type;
 }
 
 SEXP type2str(SEXPTYPE t)
@@ -498,6 +475,7 @@ SEXP type2str(SEXPTYPE t)
 			return mkChar(TypeTable[i].str);
 	}
 	UNIMPLEMENTED("type2str");
+	return R_NilValue;/* for -Wall */
 }
 
 /* function to test whether a string is a true value */
@@ -541,6 +519,7 @@ SEXP nthcdr(SEXP s, int n)
 		return s;
 	}
 	else error("\"nthcdr\" need a list to CDR down\n");
+	return R_NilValue;/* for -Wall */
 }
 
 /* mfindVarInFrame - look up symbol in a single environment frame */

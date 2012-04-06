@@ -1,5 +1,7 @@
 \name{hclust}
 \title{Hierarchical Clustering}
+\alias{hclust}
+\alias{plot.hclust}
 \description{
 This function performs a hierarchical cluster analysis
 using a set of dissimilarities for the \eqn{n} objects being
@@ -37,7 +39,7 @@ observation sequence number.
 \usage{
 hclust(d, method="complete")
 
-plot.hclust(hclust.obj, hang=0.1, \dots)
+plot.hclust(hclust.obj, labels, hang=0.1, \dots)
 }
 \arguments{
 \item{d}{a dissimilarity structure as produced by \code{dist}.}
@@ -50,6 +52,9 @@ be (an unambiguous abbreviation of) one of
 \item{hang}{The fraction of the plot height which labels should hang
 below the rest of the plot.
 A negative value will cause the labels to hang down from 0.}
+\item{labels}{A character vector of of labels for the leaves of the
+  tree. By default the row names or row numbers of the original data are
+  used. If \code{labels=FALSE} no labels at all are plotted.}
 }
 \value{
 An object of class \bold{hclust} which describes the
@@ -111,10 +116,8 @@ contributed to STATLIB by F. Murtagh.}
 library(mva)
 data(crimes)
 hc <- hclust(dist(crimes), "ave")
-# create space for labels
-mar <- mar.save <- par("mar")
-mar[1] <- mar[1] + 4
-par(mar=mar)
 plot(hc, hang=-1)
-par(mar=mar.save)
+plot(hc)
 }
+\keyword{multivariate}
+\keyword{cluster}

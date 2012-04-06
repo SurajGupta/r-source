@@ -344,6 +344,7 @@ void PostScriptFileHeader(
 	fprintf(fp, "/I   { /%s findfont } def\n", font[6]);
 	fprintf(fp, "/BI  { /%s findfont } def\n", font[8]);
 	fprintf(fp, "/S   { /%s findfont } def\n", font[10]);
+	fprintf(fp, "1 setlinecap 1 setlinejoin\n");
 	fprintf(fp, "%%%%EndProlog\n");
 }
 
@@ -387,12 +388,12 @@ void PostScriptSetColor(FILE *fp, double r, double g, double b)
 	fprintf(fp,"%.4f %.4f %.4f rgb\n", r, g, b);
 }
 
-void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty)
+void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
 {
 	int i;
 	fprintf(fp,"[");
 	for(i=0 ; i<nlty ; i++)
-		fprintf(fp," %d", lty[i]);
+		fprintf(fp," %.2f", lty[i] * lwd);
 	fprintf(fp,"] 0 setdash\n");
 }
 
@@ -438,6 +439,7 @@ void PostScriptOpenCircle(FILE *fp, double x, double y, double r)
 	fprintf(fp, "%.2f %.2f %.2f co\n", x, y, r);
 }
 
+#ifdef GONE
 void PostScriptFilledPolygon(FILE *fp, double *x, double *y, int nxy)
 {
 	int i;
@@ -447,7 +449,9 @@ void PostScriptFilledPolygon(FILE *fp, double *x, double *y, int nxy)
 		fprintf(fp, "  %.2f %.2f l\n", x[i], y[i]);
 	fprintf(fp, "cp f\n");
 }
+#endif
 
+#ifdef GONE
 void PostScriptOpenPolygon(FILE *fp, double *x, double *y, int nxy)
 {
 	int i;
@@ -457,6 +461,19 @@ void PostScriptOpenPolygon(FILE *fp, double *x, double *y, int nxy)
 		fprintf(fp, "%.2f %.2f l\n", x[i], y[i]);
 	fprintf(fp, "cp o\n");
 }
+#endif
+
+#ifdef GONE
+void PostScriptPolyline(FILE *fp, double *x, double *y, int nxy)
+{
+	int i;
+	fprintf(fp, "np\n");
+	fprintf(fp, "%.2f %.2f m\n", x[0], y[0]);
+	for(i=1 ; i<nxy ; i++)
+		fprintf(fp, "%.2f %.2f l\n", x[i], y[i]);
+	fprintf(fp, "o\n");
+}
+#endif
 
 static void PostScriptWriteString(FILE *fp, char *str)
 {

@@ -3,11 +3,11 @@ all:
 	@cd profile; $(MAKE)
 
 libs:
-	@echo Building application libraries..
+	@echo Building application packages..
 	@sh LIBSETUP
 
 clean:
-	@echo Cleaning in library..
+	@echo Cleaning in src/library
 	@sh LIBCLEAN
+
 realclean: clean
-	@rm LIBCLEAN

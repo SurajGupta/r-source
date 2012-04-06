@@ -1,7 +1,6 @@
-
 /*
- *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,14 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/*== see ./printutils.c	 for general remarks on Printing and the Encode.. utils.
+/*== see ./printutils.c for general remarks on Printing and the Encode.. utils.
  */
 #include "Defn.h"
 #include "Print.h"
 #include "Fileio.h"
 
-static void printAttributes(SEXP);
-void PrintValueRec(SEXP);
+static void printAttributes(SEXP, SEXP);
+void PrintValueRec(SEXP, SEXP);
 
 int R_print_width;
 SEXP print_na_string;
@@ -52,23 +51,19 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	FILE *fp;
 
-	switch (length(args)) {
-	case 0:
+	if(isNull(CAR(args))) {
 		if(R_Sinkfile) fclose(R_Sinkfile);
 		R_Sinkfile = NULL;
 		R_Outputfile = R_Consolefile;
-		return R_NilValue;
-	case 1:
+	} else {
 		if(TYPEOF(CAR(args)) != STRSXP || LENGTH(CAR(args)) != 1)
 			errorcall(call, "invalid file name\n");
 		if( !(fp=R_fopen(CHAR(STRING(CAR(args))[0]), "w")))
 			errorcall(call, "unable to open file\n");
 		R_Sinkfile = fp;
 		R_Outputfile = fp;
-		return R_NilValue;
-	default:
-		checkArity(op, args);
 	}
+	return R_NilValue;
 }
 
 SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -80,6 +75,7 @@ SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
 		return CAR(args);
 	default:
 		checkArity(op, args);
+		return call;/* never used, just for -Wall */
 	}
 }
 
@@ -101,7 +97,7 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	PROTECT(oldnames = getAttrib(x,R_DimNamesSymbol));
 	/* fix up the dimnames */
-	if( length(rowlab) || length(collab) || rowlab==R_NilValue ||
+	if(length(rowlab) || length(collab) || rowlab==R_NilValue ||
 			collab==R_NilValue ) {
 		a = oldnames;
 		if( a == R_NilValue )
@@ -114,7 +110,7 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 		setAttrib(x,R_DimNamesSymbol,a);
 		UNPROTECT(1);
 	}
-	printMatrix(x, 0, getAttrib(x,R_DimSymbol),quote);
+	printMatrix(x, 0, getAttrib(x,R_DimSymbol), quote, right);
 	setAttrib(x,R_DimNamesSymbol, oldnames);
 	UNPROTECT(1);
 	return x;
@@ -123,6 +119,13 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+  /* .Internal(print.default(x, digits, quote, na.print, print.gap)) */
+  /*
+   * Should now also dispatch to e.g.,	print.matrix(..)
+   * The 'digits' must be "stored" here, since print.matrix (aka prmatrix)
+   * does NOT accept a digits argument...
+   *
+   */
 	SEXP x, naprint;
 
 	checkArity(op, args);
@@ -158,11 +161,11 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 			errorcall(call, "invalid gap parameter\n");
 	}
 
-	CustomPrintValue(x);
+	CustomPrintValue(x,rho);
 	return x;
 }
 
-static printList(SEXP s)
+static void printList(SEXP s,SEXP env)
 {
 	int i, taglen;
 	SEXP dims, t, newcall;
@@ -182,19 +185,13 @@ static printList(SEXP s)
 				case LGLSXP:
 					pbuf = Rsprintf("Logical,%d", LENGTH(CAR(s)));
 					break;
-				case FACTSXP:
-				case ORDSXP:
-					pbuf = Rsprintf("Factor,%d", LENGTH(CAR(s)));
-					break;
 				case INTSXP:
 				case REALSXP:
 					pbuf = Rsprintf("Numeric,%d", LENGTH(CAR(s)));
 					break;
-#ifdef COMPLEX_DATA
 				case CPLXSXP:
 					pbuf = Rsprintf("Complex,%d", LENGTH(CAR(s)));
 					break;
-#endif
 				case STRSXP:
 					pbuf = Rsprintf("Character,%d", LENGTH(CAR(s)));
 					break;
@@ -212,7 +209,7 @@ static printList(SEXP s)
 			s = CDR(s);
 		}
 		if (LENGTH(dims) == 2)
-			printMatrix(t, 0, dims, 0);
+			printMatrix(t, 0, dims, 0, 0);
 		else
 			printArray(t, 0);
 		UNPROTECT(2);
@@ -241,50 +238,59 @@ static printList(SEXP s)
 			Rprintf("%s\n", tagbuf);
 			if(isObject(CAR(s))) {
 				CADR(newcall) = CAR(s);
-				eval(newcall, R_NilValue);
+				eval(newcall, env);
 			}
-			else PrintValueRec(CAR(s));
+			else PrintValueRec(CAR(s),env);
 			*ptag = '\0';
 			s = CDR(s);
 			i += 1;
 		}
 		if (s != R_NilValue) {
 			Rprintf("\n. \n\n");
-			PrintValueRec(s);
+			PrintValueRec(s,env);
 		}
 		Rprintf("\n");
 		UNPROTECT(1);
 	}
-	printAttributes(s);
+	printAttributes(s,env);
 }
 
 static void PrintExpression(SEXP s)
 {
-	SEXP u, v, nms;
+	SEXP u;
 	int i, n;
 
+#ifdef OLD
 	PROTECT(u = v = allocList(LENGTH(s)+1));
 	TYPEOF(u) = LANGSXP;
 	CAR(u) = install("expression");
 	u = CDR(u);
-#ifdef NEW
 	nms = getAttrib(s, R_NamesSymbol);
-#endif
 	n = LENGTH(s);
 	for(i=0 ; i<n ; i++) {
 		CAR(u) = VECTOR(s)[i];
+		if(nms != R_NilValue && length(STRING(nms)[i]) != 0)
+			TAG(u) = install(CHAR(STRING(nms)[i]));
 		u = CDR(u);
 	}
 	u = deparse1(v, 0);
+#else
+	u = deparse1(s, 0);
+#endif
 	n = LENGTH(u);
 	for (i=0; i<n ; i++)
 		Rprintf("%s\n", CHAR(STRING(u)[i]));
+#ifdef OLD
 	UNPROTECT(1);
+#endif
 }
 
-	/* PrintValueRec - recursively print an SEXP */
+	/* PrintValueRec - recursively print an SEXP
+	 *
+	 * This is the "dispatching" function for  print.default()
+	 */
 
-void PrintValueRec(SEXP s)
+void PrintValueRec(SEXP s,SEXP env)
 {
 	int i;
 	SEXP t;
@@ -298,7 +304,7 @@ void PrintValueRec(SEXP s)
 		break;
 	case SPECIALSXP:
 	case BUILTINSXP:
-		Rprintf("<primitive: %s>\n", PRIMNAME(s));
+		Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
 		break;
 	case CHARSXP:
 		Rprintf("\"%s\"\n", EncodeString(CHAR(s),0,'"', adj_left));
@@ -327,17 +333,13 @@ void PrintValueRec(SEXP s)
 		Rprintf("<...>\n");
 		break;
 	case LISTSXP:
-		printList(s);
+		printList(s,env);
 		break;
 	case LGLSXP:
-	case FACTSXP:
-	case ORDSXP:
 	case INTSXP:
 	case REALSXP:
 	case STRSXP:
-#ifdef COMPLEX_DATA
 	case CPLXSXP:
-#endif
 		PROTECT(t = getAttrib(s, R_DimSymbol));
 		if (TYPEOF(t) == INTSXP) {
 			if (LENGTH(t) == 1) {
@@ -349,7 +351,7 @@ void PrintValueRec(SEXP s)
 				UNPROTECT(1);
 			}
 			else if (LENGTH(t) == 2)
-				printMatrix(s, 0, t, print_quote);
+				printMatrix(s, 0, t, print_quote, 0);
 			else
 				printArray(s, print_quote);
 		}
@@ -366,10 +368,10 @@ void PrintValueRec(SEXP s)
 	default:
 		UNIMPLEMENTED("PrintValueRec");
 	}
-	printAttributes(s);
+	printAttributes(s,env);
 }
 
-static void printAttributes(SEXP s)
+static void printAttributes(SEXP s,SEXP env)
 {
 	SEXP a;
 	SEXP R_LevelsSymbol;
@@ -407,7 +409,7 @@ static void printAttributes(SEXP s)
 				Rprintf("\n");
 			sprintf(ptag, "attr(,\"%s\")", EncodeString(CHAR(PRINTNAME(TAG(a))),0,0, adj_left));
 			Rprintf("%s\n", tagbuf);
-			PrintValueRec(CAR(a));
+			PrintValueRec(CAR(a),env);
 		nextattr:
 			*ptag = '\0';
 			a = CDR(a);
@@ -435,7 +437,7 @@ void PrintValueEnv(SEXP s, SEXP env)
 		UNPROTECT(1);
 	}
 	else {
-		PrintValueRec(s);
+		PrintValueRec(s,env);
 	}
 	UNPROTECT(1);
 }
@@ -449,8 +451,8 @@ void PrintValue(SEXP s)
 }
 
 
-void CustomPrintValue(SEXP s)
+void CustomPrintValue(SEXP s, SEXP env)
 {
 	tagbuf[0] = '\0';
-	PrintValueRec(s);
+	PrintValueRec(s,env);
 }
