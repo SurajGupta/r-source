@@ -3599,11 +3599,68 @@ x <- matrix(0, nrow=2, ncol=0)
 colSums(x); rowSums(x)
 ## not allowed in 2.0.1
 
+
 ## PR#7781
 stopifnot(is.finite(tan(1+1000i)))
 ##
+
 
 ## infinite recursion in 2.0.1 (and R-beta 2005-04-11):
 summary(data.frame(mat = I(matrix(1:8, 2))))
 summary(data.frame(x = gl(2,2), I(matrix(1:8, 4))))
 ##
+
+### fixes for 2.1.1 ###
+
+## PR#7792: predict.glm dropped names
+nm <- names(predict(glm(y ~ x, family=binomial,
+                        data=data.frame(y=c(1, 0, 1, 0), x=c(1, 1, 0, 0))),
+                    newdata=data.frame(x=c(0, 0.5, 1)), type="response"))
+stopifnot(identical(nm, as.character(1:3)))
+## no names in 2.1.0
+
+
+## PR#7808: as.data.frame: Error in "names<-.default"
+x1 <- array(1:9, c(3, 3, 3))
+FUN <- function(x1, x2, x3, x4) cbind(x1[, 1, 1:2], x1[, 2, 1:2])[, 1]
+as.data.frame(FUN(x1[1:3,,], x2 = c("a", "b"),
+                  x3 = c("a", "b"), x4 = c("a", "b")))
+## failed in 2.1.0
+
+## PR#7797 citation() chops "Roeland "
+stopifnot(as.personList("Roeland Lastname")[[1]]$name[1] == "Roeland")
+## was empty in 2.1.0.
+
+## runmed()'s Turlach algorithm seg.faulted in rare cases:
+t2 <- c(-2,-7,5,2,-3, 0,1,3,2,-1,2,1,2,1,1,1,-2,4, 1,1,1, 32)
+rS <- runmed(t2, k=21, algorithm= "Stuetzle")
+rT <- runmed(t2, k=21, algorithm= "Turlach")
+stopifnot(identical(rS, rT))
+## seg.fault in 2.1.0
+
+## duplicated and unique on a list
+x <- list(1, 2, 3, 2)
+duplicated(x)
+unique(x)
+## unique failed in 2.1.0
+
+## prog.aovlist on data with row.names
+N <- c(0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,1,1,0,0)
+P <- c(1,1,0,0,0,1,0,1,1,1,0,0,0,1,0,1,1,0,0,1,0,1,1,0)
+K <- c(1,0,0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,0,1,1,1,0,1,0)
+yield <- c(49.5,62.8,46.8,57.0,59.8,58.5,55.5,56.0,62.8,55.8,69.5,
+	   55.0, 62.0,48.8,45.5,44.2,52.0,51.5,49.8,48.8,57.2,59.0,53.2,56.0)
+npk <- data.frame(block=gl(6,4), N=factor(N), P=factor(P),
+		  K=factor(K), yield=yield)
+row.names(npk) <- letters[2:25]
+npk.aovE <- aov(yield ~  N*P*K + Error(block), npk)
+pr <- proj(npk.aovE)
+## failed in 2.1.0
+
+## PR#7894: Reversing axis in a log plot
+x <- 1:3
+plot(x, exp(x), log = "y", ylim = c(30,1))
+## gave error (and warning) in  log - axis(), 'at' creation
+
+### end of tests added in 2.1.0 patched ###
+

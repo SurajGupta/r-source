@@ -4,6 +4,50 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+R 2.1.1
+=======
+
+The installer allows a choice of languages.  Note that uninstallation
+will happen in the language chosen for installation.
+
+A menu item has been added for RSiteSearch().
+
+localeToCharset() was failing on some unknown (to the maintainers)
+locales such as
+
+	LC_CTYPE=Chinese_People's Republic of China.936
+
+and that affected example().
+
+Translation of the filters in file load/save dialog spaces was being
+handled incorrectly by gettext, and is now not attempted.
+
+Attempting to plot repeatedly to the same metafile sometimes crashed
+R.  (PR#7821: it is unclear why Windows does not allow this.)
+
+Using the mouse scroll wheel in the data editor sometimes caused
+it to scroll out of range and crash or display garbage.
+
+The support for mitred lines encountered a Windows problem with a
+dramatic slowdown if more than 1000 or so segments were plotted in a
+polyline.  We now plot in bunches of 1000, which is less accurate but
+works around the Windows problem.
+
+There is a workaround for the Windows-specific problems that
+Sys.putenv(TZ="GMT") was not recognized by the OS and that Windows
+believes that there is such a thing as "GMT Standard Time".
+
+Inno Setup >= 5.1.2 is now required to build the installer.
+
+For some operations on windows() and related devices the first text
+drawn could be improperly sized. (PR#7860).
+
+R would crash when ESC was pressed during locator(). (PR#7873).
+
+seek() was not always reporting the correct position on files > 2Gb. (PR#7879)
+
+
+
 R 2.1.0
 =======
 

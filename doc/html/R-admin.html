@@ -26,7 +26,7 @@
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.1.0 (2005-04-18).
+   <p>The current version of this document is 2.1.1 (2005-06-20).
 
    <p>ISBN 3-900051-09-7
 
@@ -143,16 +143,16 @@ A suitable incantation from the top level of the R sources using
 
 <p><a name="index-Installing-under-Unix_002dalikes-3"></a>
 R will configure and build under a number of common Unix and
-Unix-alike platforms including i386-*-freebsd, <var>cpu</var>-*-linux-gnu for
-the i386, alpha, amd64, arm, hppa, ia64, m68k, powerpc, and sparc CPUs
-(see e.g. <a href="http://buildd.debian.org/build.php?&amp;pkg=r-base">http://buildd.debian.org/build.php?&amp;pkg=r-base</a>),
+Unix-alike platforms including<var>cpu</var>-*-linux-gnu for the alpha,
+amd64, arm, hppa, ix86, ia64, m68k, powerpc, and sparc CPUs (see e.g. 
+<a href="http://buildd.debian.org/build.php?&amp;pkg=r-base">http://buildd.debian.org/build.php?&amp;pkg=r-base</a>),
 powerpc-apple-darwin and sparc-sun-solaris, as well as probably (it is
-tested less frequently on these) i386-*-netbsd, i386-*-openbsd,
-i386-sun-solaris, mips-sgi-irix, alpha-dec-osf*, rs6000-ibm-aix and
-hppa-hp-hpux.
+tested less frequently on these) i386-*-freebsd, i386-*-netbsd,
+i386-*-openbsd, i386-sun-solaris, mips-sgi-irix, alpha-dec-osf*,
+rs6000-ibm-aix and hppa-hp-hpux.
 
    <p><a name="index-Linux-4"></a><a name="index-Mac-OS-X-5"></a>In addition, binary distributions are available for some common Linux
-distributions and for Mac OS X.  See the <acronym>FAQ</acronym> for current
+distributions and for Mac OS X (on PowerPC).  See the <acronym>FAQ</acronym> for current
 details.  These are installed in platform-specific ways, so for the rest
 of this chapter we consider only building from the sources.
 
@@ -329,7 +329,11 @@ e.g. for printing.
 <h3 class="section">2.3 Installation</h3>
 
 <p><a name="index-Installation-12"></a>
-After
+To ensure that the installed tree is usable by the right group of users,
+set <code>umask</code> appropriately (perhaps to <span class="samp">022</span>) before unpacking
+the sources and throughout the build process.
+
+   <p>After
 
    <p><a name="index-configure-13"></a>
 <pre class="example">     ./configure
@@ -344,9 +348,9 @@ to your system by typing
    <p class="noindent">This will install to the following directories:
 
      <dl>
-<dt><var>prefix</var><span class="file">/bin</span><dd>the front-end shell script
-<br><dt><var>prefix</var><span class="file">/man/man1</span><dd>the man page
-<br><dt><var>prefix</var><span class="file">/lib/R</span><dd>all the rest (libraries, on-line help system, <small class="dots">...</small>)
+<dt><var>prefix</var><span class="file">/bin or </span><var>bindir</var><dd>the front-end shell script
+<br><dt><var>prefix</var><span class="file">/man/man1 or </span><var>mandir</var><span class="file">/man1</span><dd>the man page
+<br><dt><var>prefix</var><span class="file">/lib/R or </span><var>libdir</var><span class="file">/R</span><dd>all the rest (libraries, on-line help system, <small class="dots">...</small>)
 </dl>
 
 <p class="noindent">where <var>prefix</var> is determined during configuration (typically
@@ -360,14 +364,16 @@ the option <span class="option">--prefix</span>, as in
 <span class="file">/where/you/want/R/to/go/bin</span>, and so on.  The prefix of the
 installation directories can be seen in the status message that is
 displayed at the end of <span class="command">configure</span>.  You can install into
-another directory by using
+another directory tree by using
 
 <pre class="example">     make prefix=/path/to/here install
 </pre>
    <p class="noindent">at least with GNU <span class="command">make</span>.
 
    <p>More precise control is available at configure time via options: see
-<span class="command">configure --help</span> for details.
+<span class="command">configure --help</span> for details.  (However, most of them are
+currently ignored, but <code>bindir</code>, <code>libdir</code> and <code>mandir</code>
+are supported.)
 
    <p><a name="index-Manuals_002c-installing-15"></a>
 To install DVI, info and PDF versions of the manuals, use one or more of
@@ -376,9 +382,24 @@ To install DVI, info and PDF versions of the manuals, use one or more of
      make install-info
      make install-pdf
 </pre>
-   <p class="noindent">To ensure that the installed tree is usable by the right group of users,
-set <code>umask</code> appropriately (perhaps to <span class="samp">022</span>) before unpacking
-the sources and throughout the build process.
+   <p class="noindent">Once again, it is optional to specify <code>prefix</code>. For info, the
+setting used is that of <code>infodir</code> (default
+<var>prefix</var><code>/info</code>, set by configure option <span class="option">--infodir</span>).
+
+<p><a name="Uninstallation"></a>
+
+<h3 class="section">2.4 Uninstallation</h3>
+
+<p>You can uninstall R by
+
+<pre class="example">     make uninstall
+</pre>
+   <p class="noindent">specifying <code>prefix</code> etc in the same way as specified for
+installation.
+
+   <p>This will also uninstall any installed manuals.  There are specific
+targets to uninstall DVI, info and PDF manuals in
+<span class="file">doc/manual/Makefile</span>.
 
 <p><a name="Installing-R-under-Windows"></a>
 
@@ -396,7 +417,7 @@ work.
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <span class="file">rw2010.exe</span>. 
+   <p>Installation is <em>via</em> the installer <span class="file">rw2011.exe</span>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.
 
@@ -423,11 +444,11 @@ to collect, install and test an extensive set of tools.  See
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <span class="file">R-2.1.0.tgz</span> from
+<li>Get the R source code <span class="file">R-2.1.1.tgz</span> from
 <acronym>CRAN</acronym>.  Open a commands window (or another shell) at a
 directory <em>whose path does not contain spaces</em>.  We will call this
 directory <var>R_HOME</var> below.  Run
-     <pre class="example">          tar zxvf R-2.1.0.tgz
+     <pre class="example">          tar zxvf R-2.1.1.tgz
      </pre>
      <p>to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <code>tar</code> to extract the sources rather than broken tools such as
@@ -449,8 +470,8 @@ You will need files <span class="file">libpng-1.2.8.tar.gz</span> and
 
      <li>You need to obtain copies of the recommended packages from
 <acronym>CRAN</acronym>.  Put the <span class="file">.tar.gz</span> files in
-<var>R_HOME</var><span class="file">/src/library/Recommended</span>.  If you have <code>rsync</code> and an
-Internet connection, you can do this automatically using
+<var>R_HOME</var><span class="file">/src/library/Recommended</span>.  If you have <code>rsync</code>
+and an Internet connection, you can do this automatically using
      <pre class="example">          make rsync-recommended
      </pre>
      <li>Optionally, you can install an ATLAS
@@ -460,11 +481,13 @@ and AthlonXP chips are available in the <span class="file">windows/contrib/ATLAS
 area on <acronym>CRAN</acronym>.
 
      <p>Another tuned BLAS which is available for some CPUs is by Kazushige
-Goto.  He does not allow redistribution: his builds are currently available
-via <a href="http://www.cs.utexas.edu/users/kgoto/signup_first.html">http://www.cs.utexas.edu/users/kgoto/signup_first.html</a>.  To
-make use of this, put the <span class="file">DLL</span> somewhere in your path or in
-<var>R_HOME</var><span class="file">/bin</span>, and edit <var>R_HOME</var><span class="file">/src/gnuwin32/MkRules</span> to
-define <code>USE_GOTO=YES</code> and the name of the <span class="file">DLL</span> (something like
+Goto.  He does not allow redistribution: his builds are currently
+available via
+<a href="http://www.cs.utexas.edu/users/kgoto/signup_first.html">http://www.cs.utexas.edu/users/kgoto/signup_first.html</a>.  To make
+use of this, put the <span class="file">DLL</span> somewhere in your path or in
+<var>R_HOME</var><span class="file">/bin</span>, and edit
+<var>R_HOME</var><span class="file">/src/gnuwin32/MkRules</span> to define <code>USE_GOTO=YES</code>
+and the name of the <span class="file">DLL</span> (something like
 <span class="file">libgoto_p4_512-r0.9.dll</span>).
 
      <p>Goto's BLAS takes preference over ATLAS, and seems a little faster. 
@@ -529,13 +552,12 @@ sometimes stop and have to be restarted.
 
 <p><a name="index-Rbitmap_002edll-17"></a>
 The file <var>R_HOME</var><span class="file">/bin/Rbitmap.dll</span> is not built automatically. 
-Working in the directory <var>R_HOME</var><span class="file">/src/gnuwin32/bitmap</span>, install
-the <code>libpng</code> and <code>jpeg</code> sources in sub-directories. 
-The <code>libpng</code> sub-directory must be named <span class="file">libpng</span>
-(as required by the <code>libpng</code> documentation).  The
-<code>jpeg</code> sub-directory for version 6b is named <span class="file">jpeg-6b</span>Ã; if you use
-a different version, edit <span class="file">Makefile</span> and change the definition
-of <code>JPEGDIR</code>.
+Working in the directory <var>R_HOME</var><span class="file">/src/gnuwin32/bitmap</span>,
+install the <code>libpng</code> and <code>jpeg</code> sources in sub-directories. 
+The <code>libpng</code> sub-directory must be named <span class="file">libpng</span> (as required
+by the <code>libpng</code> documentation).  The <code>jpeg</code> sub-directory for
+version 6b is named <span class="file">jpeg-6b</span>; if you use a different version, edit
+<span class="file">Makefile</span> and change the definition of <code>JPEGDIR</code>.
 
    <p>Example:
 <pre class="example">     &gt; tar xzvf libpng-1.2.8.tar.gz
@@ -553,11 +575,11 @@ should build <span class="file">Rbitmap.dll</span> and install it in <var>R_HOME
 <p>This version of R can be built with support for some multibyte
 character sets such those used in Chinese, Japanese and Korean.
 
-   <p>Define <code>SUPPORT_MBCS</code> in config.h to enable support in the R engine for
-multi-byte character sets.  This is only useful if you have an `East
-Asian' version of Windows, as only those versions have multi-byte
-locales.  We have only tested this under Windows XP, but it is
-expected to work under Windows 95/98/ME as well as NT-based versions
+   <p>Define <code>SUPPORT_MBCS</code> in config.h to enable support in the R
+engine for multi-byte character sets.  This is only useful if you have
+an `East Asian' version of Windows, as only those versions have
+multi-byte locales.  We have only tested this under Windows XP, but it
+is expected to work under Windows 95/98/ME as well as NT-based versions
 of Windows.
 
    <p>This also enables support for multi-byte locales in the RGui console,
@@ -656,9 +678,10 @@ distribution is given in file <span class="file">installer/INSTALL</span>.
 <h4 class="subsection">3.1.9 Checking the build</h4>
 
 <p>You can test a build by (optionally) building the recommended packages
-(see below) and running <code>make check</code>.  You may need to set <code>TMPDIR</code> to
-the absolute path to a suitable temporary directory: the default is
-<span class="file">c:/TEMP</span>.  (Use forward slashes and do not use a path including spaces.)
+(see below) and running <code>make check</code>.  You may need to set
+<code>TMPDIR</code> to the absolute path to a suitable temporary directory:
+the default is <span class="file">c:/TEMP</span>.  (Use forward slashes and do not use a
+path including spaces.)
 
 <p><a name="Cross_002dbuilding-on-ix86-Linux"></a>
 
@@ -681,8 +704,8 @@ and <code>makeinfo</code> version 4.7 or later (part of GNU <code>texinfo</code>
    <p>Edit <span class="file">MkRules</span> to set <code>BUILD=CROSS</code> and the appropriate
 paths (including <code>HEADER</code>) as needed.
 
-   <p>Edit <span class="file">MkRules</span> to set the type(s) of help that you want built. (You will
-not be able to cross-build <span class="file">.chm</span> files, so <code>WINHELP</code> is
+   <p>Edit <span class="file">MkRules</span> to set the type(s) of help that you want built. (You
+will not be able to cross-build <span class="file">.chm</span> files, so <code>WINHELP</code> is
 automatically set to <code>NO</code>.)
 
    <p>You also need a working copy of <em>this version</em> of R on Linux:
@@ -710,8 +733,9 @@ when cross-building, so it is left in the old format.
 
 <p><a name="index-Mac-OS-X-18"></a>
 The <span class="file">bin/macosx</span> directory of a <acronym>CRAN</acronym> site contains
-binaries for a base distribution and a large number of add-on packages
-from <acronym>CRAN</acronym> to run on Mac OS X version 10.2.0 or higher.
+binaries for MacOS X (at the time of writing only for PowerPC) for a
+base distribution and a large number of add-on packages from
+<acronym>CRAN</acronym> to run on Mac OS X version 10.2.0 or higher.
 
    <p>The simplest way is to use <span class="file">R.dmg.sit</span>.  Just double-click on the
 icon and the archive will be expanded as an image di file. Read the
@@ -728,8 +752,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document. Than you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.1.0.tgz
-     cd R-2.1.0
+<pre class="example">     tar zxvf R-2.1.1.tgz
+     cd R-2.1.1
      ./configure --with-blas='-framework vecLib' --with-lapack --with-aqua
      make
 </pre>
@@ -796,11 +820,7 @@ and toolset (see <a href="#The-Windows-toolset">The Windows toolset</a>) install
 
    <p><a name="index-install_002epackages-21"></a>Alternatively, packages can be downloaded and installed from within
 R.  First set the option <code>CRAN</code> to your nearest <acronym>CRAN</acronym>
-mirror, for example
-
-<pre class="example">     &gt; options(CRAN = "http://cran.us.r-project.org/")
-</pre>
-   <p class="noindent">(You can also supply this as the <code>repos</code> argument.)  Then download
+mirror using <span class="command">choooseCRANmirror()</span>.  Then download
 and install packages <strong>pkg1</strong> and <strong>pkg2</strong> by
 
 <pre class="example">     &gt; install.packages(c("pkg1", "pkg2"))
@@ -810,15 +830,15 @@ in the library search path is used.  If you want to fetch a package and
 all those it depends on that are not already installed, use e.g.
 <pre class="example">     &gt; install.packages("Rcmdr", dependencies = TRUE)
 </pre>
-   <p>What <code>install.packages</code> does is different on Unix and Windows.  On
-Unix-alikes (include MacOS X) it consults the list of available
-<em>source</em> packages on <acronym>CRAN</acronym> (or other repository/ies),
-downloads the latest version of the package sources, and installs them
-(via <code>R CMD INSTALL</code>).  On Windows it looks (by default) at the
-list of <em>binary</em> versions of packages available for your version of
-R and downloads the latest versions (if any), although optionally it
-will also download and install a source package by setting the
-<code>type</code> argument.
+   <p>What <code>install.packages</code> does by default is different on Unix and
+Windows.  On Unix-alikes (include MacOS X unless running from the `AQUA'
+console) it consults the list of available <em>source</em> packages on
+<acronym>CRAN</acronym> (or other repository/ies), downloads the latest version
+of the package sources, and installs them (via <code>R CMD INSTALL</code>). 
+On Windows it looks (by default) at the list of <em>binary</em> versions
+of packages available for your version of R and downloads the latest
+versions (if any), although optionally it will also download and install
+a source package by setting the <code>type</code> argument.
 
    <p><code>install.packages</code> can install a source package from a local
 <span class="file">.tar.gz</span> file by setting argument <code>repos</code> to <code>NULL</code>.
@@ -831,8 +851,8 @@ interface to <code>install.packages</code>, <code>update.packages</code> and
 
    <p>As from R 2.1.0, <code>install.packages</code> can look in several
 repositories, specified as a character vector by the argument
-<code>repos</code>: these can include a <acronym>CRAN</acronym> mirror, Bioconductor, Omegahat,
-local archives, local files, <small class="dots">...</small>).
+<code>repos</code>: these can include a <acronym>CRAN</acronym> mirror, Bioconductor,
+Omegahat, local archives, local files, <small class="dots">...</small>).
 
    <p><a name="index-install_002ebinaries-22"></a>On Mac OS X <code>install.packages</code> works as it does on other Unix-like
 systems, but there is an additional function <code>install.binaries</code>
@@ -888,21 +908,22 @@ of <code>$HOME</code>.)  For the record, the order of precedence is (last wins)
      <li><span class="file">src/Makefile.win</span> if present causes all of the above to be ignored. 
 </ul>
 
-   <p><strong>Beware</strong>: files <span class="file">src/Makefile</span> or <span class="file">src/Makevars</span> will be used
-if they exist and the <span class="file">.win</span> equivalents do not.  Such files
-included in package sources are usually designed for use under Unix
-and are best removed.
+   <p><strong>Beware</strong>: files <span class="file">src/Makefile</span> or <span class="file">src/Makevars</span> will
+be used if they exist and the <span class="file">.win</span> equivalents do not.  Such
+files included in package sources are usually designed for use under
+Unix and are best removed.
 
    <p><strong>Beware</strong>: references to variables in <span class="file">R.dll</span> are converted to the
 right form by using the header files.  You must include them.
 
-   <p>For additional control, <var>R_HOME</var><span class="file">/src/gnuwin32/Makefile</span> contains
-additional make targets corresponding to various options to <code>R
-CMD INSTALL</code>.  These assume that package <code>foo</code>source code has
-been installed in directory <var>R_HOME</var><span class="file">/src/library/foo</span>. Then
-<code>make pkg-foo</code> is similar to <code>R CMD INSTALL foo</code> (but the
-latter would require <var>R_HOME</var><span class="file">/src/library</span> to be the current
-directory).  Other targets are
+   <p>For additional control, <var>R_HOME</var><span class="file">/src/gnuwin32/Makefile</span>
+contains additional make targets corresponding to various options to
+<code>R CMD INSTALL</code>.  These assume that package <code>foo</code>'s source
+code has been installed in directory
+<var>R_HOME</var><span class="file">/src/library/foo</span>. Then <code>make pkg-foo</code> is similar
+to <code>R CMD INSTALL foo</code> (but the latter would require
+<var>R_HOME</var><span class="file">/src/library</span> to be the current directory).  Other
+targets are
      <ul>
 <li><code>ziponly-foo</code>, to use zip to compress the help files after building
 the package. 
@@ -929,8 +950,8 @@ few large data files.
 where the package should be installed. 
 </ul>
    For a complete list of variables, see the <span class="file">M*</span> files in
-<var>R_HOME</var><span class="file">/src/gnuwin32</span>.  The <code>PKG_*</code> files are those typically
-included in <span class="file">Makevars</span> files.
+<var>R_HOME</var><span class="file">/src/gnuwin32</span>.  The <code>PKG_*</code> flags are those
+typically included in <span class="file">Makevars</span> files.
 
 <p><a name="Customizing-compilation-under-Unix"></a>
 
@@ -1147,7 +1168,8 @@ to select the language for messages.)  The code tries hard to map locale
 names to languages, even on Windows.
 
    <p>Note that you should not expect to be able to change the language once R
-is running.
+is running, and so <code>LC_MESSAGES</code> is not supported by
+<code>Sys.setlocale</code>.
 
    <p>Messages are divided into <em>domains</em>, and translations may be
 available for some or all messages in a domain.  R makes use of the
@@ -1215,7 +1237,7 @@ installed.
 
    <p>Unless you do not want to view graphs on-screen you need <span class="samp">X11</span>
 installed, including its headers and client libraries.  (On Fedora Core
-2 Linux this means the <span class="samp">xorg-x11-devel</span> and <span class="samp">xorg-x11-libs</span>
+Linux this means the <span class="samp">xorg-x11-devel</span> and <span class="samp">xorg-x11-libs</span>
 RPMs, for example.  Older Linuxen used <span class="samp">XFree86-</span>.)  If you
 really do not want these you will need to explicitly configure
 R without X11, using <span class="option">--with-x=no</span>.
@@ -1318,12 +1340,10 @@ the environment variable <span class="env">BLAS_LIBS</span> can be set, for exam
 <span class="file">config.site</span>.)
 
    <p>For systems with multiple processors it is possible to use a
-multi-threaded version of ATLAS.  (Prior to R 1.8.0 this was not
-supported since <code>SIGINT</code> signals sent to the process and handled by
-the wrong thread could result in segfaults.)  A remaining issue is that
-R profiling, which uses the <code>SIGPROF</code> signal, may cause
-problems.  You may want to disable profiling if you use a multi-threaded
-version of ATLAS.  You can use a multi-threaded ATLAS by specifying
+multi-threaded version of ATLAS.  An issue is that R profiling, which
+uses the <code>SIGPROF</code> signal, may cause problems, and you may want to
+disable profiling if you use a multi-threaded version of ATLAS.  You can
+use a multi-threaded ATLAS by specifying
 
 <pre class="example">     --with-blas="-lptf77blas -lpthread -latlas"
 </pre>
@@ -1335,9 +1355,13 @@ installed, it can be used by one of
 <pre class="example">     --with-blas=goto
      --with-blas=-lgoto
 </pre>
-   <p>Multi-threaded versions of Goto's BLAS are available, so please note the
-<em>caveat</em> in the previous paragraph.
+   <p>Multi-threaded versions of Goto's BLAS are available (and indeed,
+version 0.99-3 seems only to be available in a multithreaded version),
+so please note the <em>caveat</em> in the previous paragraph.  These are
+likely to require
 
+<pre class="example">     --with-blas="-lgoto -lpthread"
+</pre>
    <p>For Intel processors under Linux, Intel's Math Kernel Library
 <a href="http://www.intel.com/software/products/mkl/">http://www.intel.com/software/products/mkl/</a>
 can be used by
@@ -1360,15 +1384,16 @@ but not single-precision nor complex routines.
 
    <p><a name="index-LAPACK-library-38"></a>Provision is made for using an external LAPACK library, principally to
 cope with BLAS libraries which contain a copy of LAPACK (such as
-<code>libsunperf</code> on Solaris and <code>vecLib</code> on Mac OS X). 
-However, the likely performance gains are thought to be small (and may
-be negative), and the default is not to search for a suitable LAPACK
-library.  You can specify a specific LAPACK library or a search for a
-generic library by the configuration option <span class="option">--with-lapack</span>.  The
-default for <span class="option">--with-lapack</span> is to check the BLAS library and then
-look for an external library <code>-llapack</code>.  Sites searching for the
-fastest possible linear algebra may want to build a LAPACK library using
-the ATLAS-optimized subset of LAPACK.  To do so specify something like
+<code>libsunperf</code> on Solaris and <code>vecLib</code> on Mac OS X).  However,
+the likely performance gains are thought to be small (and may be
+negative), and the default is not to search for a suitable LAPACK
+library, this is definitely <strong>not</strong> recommended.  You can specify a
+specific LAPACK library or a search for a generic library by the
+configuration option <span class="option">--with-lapack</span>.  The default for
+<span class="option">--with-lapack</span> is to check the BLAS library and then look for an
+external library <code>-llapack</code>.  Sites searching for the fastest
+possible linear algebra may want to build a LAPACK library using the
+ATLAS-optimized subset of LAPACK.  To do so specify something like
 
 <pre class="example">     --with-lapack="-L/path/to/libs -llapack -lcblas"
 </pre>
@@ -1389,7 +1414,8 @@ resulted in error messages such as
 potential problems are incomplete versions of the libraries: for example
 <code>libsunperf</code> from Sun Forte 6.x was missing the entry point for
 <code>DLANGE</code> and <code>vecLib</code> has omitted the BLAS routine
-<code>LSAME</code>.
+<code>LSAME</code>.  For problems compiling LAPACK using recent versions of
+<span class="samp">gcc</span> on <span class="samp">ix86</span> Linux, see <a href="#New-platforms">New platforms</a>.
 
    <p>As with all libraries, you need to ensure that they and R were
 compiled with compatible compilers and flags.  For example, this means
@@ -1632,25 +1658,17 @@ on a 32-bit platform but not on a 64-bit platform.
 
 <h4 class="subsection">B.5.1 Using gfortran</h4>
 
-<p><span class="command">gfortran</span> is the F95 compiler that is part of <code>gcc
-4.x.y</code>.<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a>  At least on <code>ix86</code> and <code>x86_64</code>
-Linux and MacOS X there is a problem with using the dynamic version of
-the Fortran runtime <code>libgfortran</code>: if this is loaded redirection of
-C <span class="file">stdin</span> (which R uses in many of its scripts) becomes
-non-functional.  A workaround is to use the static version of
-<code>libgfortran</code> if possible.<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a>  One way to do so is to set <code>FLIBS</code>
-<em>before</em> configuration, for example (and only an example)
-<pre class="example">     FLIBS=/usr/local/lib/libgfortran.a
-</pre>
-   <p>on the <span class="command">configure</span> command-line.
-
-   <p>It may be possible to work around this by setting the environment
-variable <span class="env">GFORTRAN_STDIN_UNIT</span> to <code>-1</code>, but versions before 10
-April 2005 had a bug causing the setting to be ignored.
-
-   <p>Note: loading a package linked against the dynamic version of
-<code>libgfortran</code> is sufficient to cause the problem, so it is
-essential to ensure that <em>all</em> occurrences are static.
+<p><span class="command">gfortran</span> is the F95 compiler that is part of <code>gcc 4.0.0</code>. 
+At least on <code>ix86</code> and <code>x86_64</code> Linux and MacOS X there is a
+problem with using the dynamic version of the Fortran runtime
+<code>libgfortran</code>: if this is loaded redirection of C <span class="file">stdin</span>
+(which R uses in many of its scripts) becomes non-functional.  A
+workaround is to set the environment variable <span class="env">GFORTRAN_STDIN_UNIT</span>
+to <code>-1</code>, but versions before 10 April 2005 had a bug causing the
+setting to be ignored.  This problem has been fixed for <code>gcc 4.0.1</code>
+and the workaround will become unnecessary.  The version of
+<span class="command">gfortran</span> shipping with Fedora Core 4 seems to have the
+workaround in place.
 
 <p><a name="Compile-and-load-flags"></a>
 
@@ -1759,13 +1777,15 @@ this was really an alias for the linker flag <span class="option">-lieee</span>.
 are needed for a modern Linux (e.g. using <code>glibc</code> 2.2 or 2.3) but
 could conceivably be needed on an older version.
 
-   <p>Several Linux distributions have shipped versions of the currently
-unreleased <code>gcc 4.0.0</code> and its Fortran compiler <span class="command">gfortran</span>
-(see the separate comments).  Some versions of <code>gcc4</code> such as that
-in Fedora Core 3 produce incorrect code, and those of April 2005 were
-unable to compile some parts of R with full optimization.  In our
-experiments <code>gcc 3.4.3</code> always produced faster and more reliable
-code.
+   <p>Several Linux distributions have shipped unreleased versions of
+<code>gcc 4.0.0</code> and its Fortran compiler <span class="command">gfortran</span> (see the
+separate comments).  Some versions of <code>gcc4</code> (such as that in
+Fedora Core 3) produce incorrect code.  In our experiments <code>gcc
+3.4.x</code> always produced faster and more reliable code.
+
+   <p>For some comments on building on an Itanium (<code>ia64</code>) Linux system
+with <span class="command">gcc</span> and Intel compilers see
+<a href="http://www.nakama.ne.jp/memo/ia64_linux/">http://www.nakama.ne.jp/memo/ia64_linux/</a>.
 
 <p><a name="Mac-OS-X"></a>
 
@@ -1773,10 +1793,10 @@ code.
 
 <p><a name="index-Mac-OS-X-45"></a>
 You can build R as a Unix application on Mac OS X using the Apple
-Developer Tools and <span class="command">f2c</span> or <span class="command">g77</span>.  You will also
-need to install an X sub-system or configure with
-<span class="option">--without-x</span>. The X window manager is part of the standard Mac
-OS X distribution since Mac OS X version 10.3 (Panther).
+Developer Tools and <span class="command">f2c</span> or <span class="command">g77</span> or
+<span class="command">gfortran</span>.  You will also need to install an X sub-system or
+configure with <span class="option">--without-x</span>. The X window manager is part of the
+standard Mac OS X distribution since Mac OS X version 10.3 (Panther).
 
    <p>For more information on how to find these tools please read the
 <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <acronym>FAQ</acronym></a>.
@@ -2255,8 +2275,6 @@ Environment <code>j2re 1.4.2_03</code> does not work under Solaris, whereas
 <code>jre 1.5.0</code> and <code>j2re 1.4.2_01</code> (available from
 <a href="http://java.sun.com/products/archive/">http://java.sun.com/products/archive/</a>) do.
 
-   <p>See <a href="http://www.MedAnalytics.com/INSTALL">http://www.MedAnalytics.com/INSTALL</a> for more information.
-
 <p><a name="Java-Virtual-Machines-on-Windows"></a>
 
 <h3 class="section">D.3 Java Virtual Machines on Windows</h3>
@@ -2320,7 +2338,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<span class="file">rw2010.exe</span> will also need the following:
+<span class="file">rw2011.exe</span> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -2387,13 +2405,35 @@ this is available from
 
 <h3 class="section">E.3 The MinGW compilers</h3>
 
-<p>You need a recent version of the Mingw port of <code>gcc</code> from
-<a href="http://sourceforge.net/projects/mingw/">http://sourceforge.net/projects/mingw/</a>.  There will be a
-distribution called something like <span class="file">MinGW-3.2.0-rc-3.exe</span> (which is
-built from <code>gcc-3.4.2</code>).  See the notes on
+<p>You need a recent version of the MinGW port of <code>gcc</code> from
+<a href="http://sourceforge.net/projects/mingw/">http://sourceforge.net/projects/mingw/</a>.  See the notes on
 <a href="http://www.murdoch-sutherland.com/Rtools">http://www.murdoch-sutherland.com/Rtools</a> for updates.
 
-<p><a name="The-Microsoft-HTML-Help-Workshop"></a>
+   <p>The most recent installer is called <span class="file">MinGW-4.1.0.exe</span>, which
+downloads components for SourgeForge. We suggest you select the core
+packages and the candidate compilers (<code>gcc-3.4.4</code>), and then at the
+next screen select just <code>gcc-core</code>, <code>gcc-g++</code> and
+<code>gcc-g77</code> (and no compilers in the code list).  The screen showing
+confirmation of the selections will then look like:
+
+<pre class="example">     Selected components:
+           The minimal set of packages required to build C/C++
+              Install a Current version of CORE files
+           The full set of compilers packages
+              Install a Candidate version of Compilers files
+     
+     Additional tasks:
+           Current
+              Install Current Version Files
+                 Current/runtime
+                 Current/w32api
+                 Current/binutils
+           Candidate
+                 Candidate/gcc-core
+                 Candidate/gcc-g++
+                 Candidate/gcc-g77
+</pre>
+   <p><a name="The-Microsoft-HTML-Help-Workshop"></a>
 
 <h3 class="section">E.4 The Microsoft <acronym>HTML</acronym> Help Workshop</h3>
 
@@ -2426,9 +2466,9 @@ make <span class="file">refman.pdf</span> and set the environment variables <cod
 
 <h3 class="section">E.6 The Inno Setup installer</h3>
 
-<p>To make the install package (<span class="file">rw2010.exe</span>) in the
-current Windows style we require Inno Setup 4.1.5 or later (preferably
-5.0.6 or later) from <a href="http://jrsoftware.org">http://jrsoftware.org</a>.
+<p>To make the install package (<span class="file">rw2011.exe</span>) in the
+current Windows style we require Inno Setup 5.1.2 or later from
+<a href="http://jrsoftware.org">http://jrsoftware.org</a>.
 
 <p><a name="New-platforms"></a>
 
@@ -2470,13 +2510,13 @@ Once you know the recipe you can modify the file <span class="file">config.site<
 (following the instructions therein) so that the build will use these
 options.
 
-   <p>It seems that <span class="samp">gcc 3.4.x</span> on <span class="samp">ix86</span> Linux defeats attempts by
-the LAPACK code to avoid computations entirely in extended-precision
-registers, so file <span class="file">src/modules/lapack/dlamc.f</span> may need to
-compiled without optimization.  If configure detects <acronym>GNU</acronym>
-Fortran it adds flag <span class="option">-ffloat-store</span> which suffices, but it is
-possible that <span class="file">src/modules/lapack/Makefile</span> will need to be edited
-to remove optimization on other platforms.
+   <p>It seems that <span class="samp">gcc 3.4.x</span> and later on <span class="samp">ix86</span> Linux defeat
+attempts by the LAPACK code to avoid computations entirely in
+extended-precision registers, so file <span class="file">src/modules/lapack/dlamc.f</span>
+may need to be compiled without optimization.  If configure detects
+<acronym>GNU</acronym> Fortran it adds flag <span class="option">-ffloat-store</span> which
+suffices, but it is possible that <span class="file">src/modules/lapack/Makefile</span>
+will need to be edited to remove optimization on other platforms.
 
    <p>If you do manage to get R running on a new platform please let us
 know about it so we can modify the configuration procedures to include
@@ -2576,14 +2616,6 @@ structure defined in <span class="file">R_ext/Complex.h</span>.</p>
 
    <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> e.g., to use an optimized BLAS on
 Sun/Sparc</p>
-
-   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> unreleased at the time of writing (April 2005) but
-already part of several Linux distributions. <span class="command">gfortran</span> has also
-been available separately.</p>
-
-   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> On some platforms,
-e.g. <code>x86_64</code>,  this will not have been compiled with PIC flags and
-so it will not be possible.</p>
 
    <p><hr></div>
 

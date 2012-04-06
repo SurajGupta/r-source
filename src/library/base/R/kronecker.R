@@ -1,4 +1,4 @@
-"kronecker" <-
+kronecker <-
 function (X, Y, FUN = "*", make.dimnames = FALSE, ...)
 {
     X <- as.array(X)
@@ -20,7 +20,6 @@ function (X, Y, FUN = "*", make.dimnames = FALSE, ...)
     dim(opobj) <- dX * dY
 
     if (make.dimnames && !(is.null(dnx) && is.null(dny))) {
-
         if (is.null(dnx))
             dnx <- rep.int(list(NULL), length(dX))
         else if (ld < 0)

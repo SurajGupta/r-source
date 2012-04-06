@@ -1512,3 +1512,80 @@ add1(fit, ~ . +x2)
 res <-  try(stats:::add1.default(fit, ~ . +x2))
 stopifnot(inherits(res, "try-error"))
 ## 2.0.1 ran and gave incorrect answers.
+
+
+## (PR#7789) escaped quotes in the first five lines for read.table
+tf <- tempfile()
+x <- c("6 'TV2  Shortland Street'",
+       "2 'I don\\\'t watch TV at 7'",
+       "1 'I\\\'m not bothered, whatever that looks good'",
+       "2 'I channel surf'")
+writeLines(x, tf)
+read.table(tf)
+x <- c("6 'TV2  Shortland Street'",
+       "2 'I don''t watch TV at 7'",
+       "1 'I''m not bothered, whatever that looks good'",
+       "2 'I channel surf'")
+writeLines(x, tf)
+read.table(tf, sep=" ")
+unlink(tf)
+## mangled in 2.0.1
+
+
+## (PR#7802) printCoefmat(signif.legend =FALSE) failed
+set.seed(123)
+cmat <- cbind(rnorm(3, 10), sqrt(rchisq(3, 12)))
+cmat <- cbind(cmat, cmat[,1]/cmat[,2])
+cmat <- cbind(cmat, 2*pnorm(-cmat[,3]))
+colnames(cmat) <- c("Estimate", "Std.Err", "Z value", "Pr(>z)")
+printCoefmat(cmat, signif.stars = TRUE)
+printCoefmat(cmat, signif.stars = TRUE, signif.legend = FALSE)
+# no stars, so no legend
+printCoefmat(cmat, signif.stars = FALSE)
+printCoefmat(cmat, signif.stars = TRUE, signif.legend = TRUE)
+## did not work in 2.1.0
+
+
+## PR#7824 subscripting an array by a matrix
+x <- matrix(1:6, ncol=2)
+x[rbind(c(1,1), c(2,2))]
+x[rbind(c(1,1), c(2,2), c(0,1))]
+x[rbind(c(1,1), c(2,2), c(0,0))]
+x[rbind(c(1,1), c(2,2), c(0,2))]
+x[rbind(c(1,1), c(2,2), c(0,3))]
+x[rbind(c(1,1), c(2,2), c(1,0))]
+x[rbind(c(1,1), c(2,2), c(2,0))]
+x[rbind(c(1,1), c(2,2), c(3,0))]
+x[rbind(c(1,0), c(0,2), c(3,0))]
+x[rbind(c(1,0), c(0,0), c(3,0))]
+x[rbind(c(1,1), c(2,2), c(1,2))]
+x[rbind(c(1,1), c(2,NA), c(1,2))]
+x[rbind(c(1,0), c(2,NA), c(1,2))]
+try(x[rbind(c(1,1), c(2,2), c(-1,2))])
+try(x[rbind(c(1,1), c(2,2), c(-2,2))])
+try(x[rbind(c(1,1), c(2,2), c(-3,2))])
+try(x[rbind(c(1,1), c(2,2), c(-4,2))])
+try(x[rbind(c(1,1), c(2,2), c(-1,-1))])
+try(x[rbind(c(1,1,1), c(2,2,2))])
+
+# verify that range checks are applied to negative indices
+x <- matrix(1:6, ncol=3)
+try(x[rbind(c(1,1), c(2,2), c(-3,3))])
+try(x[rbind(c(1,1), c(2,2), c(-4,3))])
+## generally allowed in 2.1.0.
+
+## Branch cuts in complex inverse trig functions
+atan(2)
+atan(2+0i)
+tan(atan(2+0i))
+atan(1.0001+0i)
+atan(0.9999+0i)
+## previously not as in Abramowitz & Stegun.
+
+
+## printing RAW matrices/arrays was not implemented
+s <- sapply(0:7, function(i) rawShift(charToRaw("my text"),i))
+s
+dim(s) <- c(7,4,2)
+s
+## empty < 2.1.1

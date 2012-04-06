@@ -138,6 +138,9 @@ void set_iconv(Rconnection con)
 	/* initialize state, and prepare any initial bytes */
 	Riconv(tmp, NULL, NULL, &ob, &onb);
 	con->navail = 50-onb; con->inavail = 0;
+	/* libiconv can handle BOM marks on Windows Unicode files, but
+	   glibc's iconv cannot. Aargh ... */
+	if(streql(con->encname, "UCS-2LE")) con->inavail = -2;
     }
     if(con->canwrite) {
 	size_t onb = 25;
@@ -229,14 +232,20 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 int dummy_fgetc(Rconnection con)
 {
     int c;
+    Rboolean checkBOM = FALSE;
 
     if(con->inconv) {
 	if(con->navail <= 0) {
 	    unsigned int i, inew = 0;
-	    char *p = con->iconvbuff + con->inavail, *ib, *ob;
+	    char *p, *ib, *ob;
 	    size_t inb, onb, res;
 
 	    if(con->EOF_signalled) return R_EOF;
+	    if(con->inavail == -2) {
+		con->inavail = 0;
+		checkBOM = TRUE;
+	    }
+	    p = con->iconvbuff + con->inavail;
 	    for(i = con->inavail; i < 25; i++) {
 		c = con->fgetc_internal(con);
 		if(c == R_EOF){ con->EOF_signalled = TRUE; break; }
@@ -245,6 +254,12 @@ int dummy_fgetc(Rconnection con)
 		inew++;
 	    }
 	    if(inew == 0) return R_EOF;
+	    if(checkBOM && con->inavail >= 2 &&
+	       ((int)con->iconvbuff[0] & 0xff) == 255 &&
+	       ((int)con->iconvbuff[1] & 0xff) == 254) {
+		con->inavail -= 2;
+		memmove(con->iconvbuff, con->iconvbuff+2, con->inavail);
+	    }
 	    ib = con->iconvbuff; inb = con->inavail;
 	    ob = con->oconvbuff; onb = 50;
 	    res = Riconv(con->inconv, &ib, &inb, &ob, &onb);
@@ -434,7 +449,11 @@ static double file_seek(Rconnection con, double where, int origin, int rw)
 #if defined(HAVE_OFF_T) && defined(__USE_LARGEFILE)
     off_t pos = f_tell(fp);
 #else
+#ifdef Win32
+    off64_t pos = f_tell(fp);
+#else
     long pos = f_tell(fp);
+#endif
 #endif
     int whence = SEEK_SET;
 
@@ -468,7 +487,15 @@ static void file_truncate(Rconnection con)
     Rfileconn this = con->private;
     FILE *fp = this->fp;
     int fd = fileno(fp);
+#ifdef HAVE_OFF_T
+    off_t size = lseek(fd, 0, SEEK_CUR);
+#else
+#ifdef Win32
+    __int64 size = lseek64(fd, 0, SEEK_CUR);
+#else
     int size = lseek(fd, 0, SEEK_CUR);
+#endif
+#endif
 
     if(!con->isopen || !con->canwrite)
 	error(_("can only truncate connections open for writing"));
@@ -476,9 +503,6 @@ static void file_truncate(Rconnection con)
     if(!this->last_was_write) this->rpos = f_tell(this->fp);
 #ifdef HAVE_FTRUNCATE
     if(ftruncate(fd, size))
-	error(_("file truncation failed"));
-#elif defined(Win32)
-    if(chsize(fd, size))
 	error(_("file truncation failed"));
 #else
     error(_("file truncation unavailable on this platform"));
@@ -2310,7 +2334,8 @@ int Rconn_printf(Rconnection con, const char *format, ...)
     va_list(ap);
 
     va_start(ap, format);
-    res = con->vfprintf(con, format, ap);
+    /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
+    res = (con->vfprintf)(con, format, ap);
     va_end(ap);
     return res;
 }
@@ -2408,7 +2433,8 @@ static void writecon(Rconnection con, char *format, ...)
 {
     va_list(ap);
     va_start(ap, format);
-    con->vfprintf(con, format, ap);
+    /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
+    (con->vfprintf)(con, format, ap);
     va_end(ap);
 }
 
@@ -3139,6 +3165,21 @@ SEXP do_pushbacklength(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
+SEXP do_clearpushback(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    int i, j;
+    Rconnection con = NULL;
+
+    i = asInteger(CAR(args));
+    if(i == NA_INTEGER || !(con = Connections[i]))
+	error(_("invalid connection"));
+
+    if(con->nPushBack > 0) {
+	for(j = 0; j < con->nPushBack; j++) free(con->PushBack[j]);
+	free(con->PushBack);
+    }
+    return R_NilValue;
+}
 
 /* ------------------- sink functions  --------------------- */
 

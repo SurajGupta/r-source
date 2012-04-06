@@ -1337,8 +1337,11 @@ static void IfPush(void)
     if (*contextp==LBRACE ||
 	*contextp=='['    ||
 	*contextp=='('    ||
-	*contextp == 'i')
-	    *++contextp = 'i';
+	*contextp == 'i') {
+	if(contextp - contextstack >=50) error("contextstack overflow");
+	*++contextp = 'i';
+    }
+    
 }
 
 static void ifpop(void)
@@ -1648,7 +1651,7 @@ static int StringValue(int c)
 		    if((c = xxgetc()) != '}')
 			error(_("invalid \\u{xxxx} sequence"));
 		res = wcrtomb(buff, val, NULL); /* should always be valid */
-		if(res <= 0) error(_("invalid \\uxxxx sequence"));
+		if((int)res <= 0) error(_("invalid \\uxxxx sequence"));
 		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
 		c = buff[res - 1]; /* pushed below */
 	    }
@@ -1669,7 +1672,7 @@ static int StringValue(int c)
 		    if((c = xxgetc()) != '}')
 			error(_("invalid \\U{xxxxxxxx} sequence"));
 		res = wcrtomb(buff, val, NULL); /* should always be valid */
-		if(res <= 0) error(("invalid \\Uxxxxxxxx sequence"));
+		if((int)res <= 0) error(("invalid \\Uxxxxxxxx sequence"));
 		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
 		c = buff[res - 1]; /* pushed below */
 	    }
@@ -2194,20 +2197,24 @@ int yylex(void)
 	/* Handle brackets, braces and parentheses */
 
     case LBB:
+	if(contextp - contextstack >=49) error("contextstack overflow");
 	*++contextp = '[';
 	*++contextp = '[';
 	break;
 
     case '[':
+	if(contextp - contextstack >=50) error("contextstack overflow");
 	*++contextp = tok;
 	break;
 
     case LBRACE:
+	if(contextp - contextstack >=50) error("contextstack overflow");
 	*++contextp = tok;
 	EatLines = 1;
 	break;
 
     case '(':
+	if(contextp - contextstack >=50) error("contextstack overflow");
 	*++contextp = tok;
 	break;
 

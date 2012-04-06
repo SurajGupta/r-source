@@ -505,12 +505,12 @@ static void RFontInit()
 static int SetBaseFont(gadesc *xd)
 {
     xd->fontface = 1;
-    xd->fontsize = xd->basefontsize;
+    xd->fontsize = MulDiv(xd->basefontsize, xd->wanteddpi, xd->truedpi);
     xd->fontangle = 0.0;
     xd->usefixed = FALSE;
     xd->fontfamily[0] = '\0';
     xd->font = gnewfont(xd->gawin, fontname[0], fontstyle[0],
-			MulDiv(xd->fontsize, xd->wanteddpi, xd->truedpi), 0.0);
+			xd->fontsize, 0.0);
     if (!xd->font) {
 	xd->usefixed= TRUE;
 	xd->font = xd->fixedfont = FixedFont;
@@ -1280,7 +1280,7 @@ static void CHelpKeyIn(control w, int key)
     }
 }
 
-extern Rboolean UserBreak;
+__declspec(dllimport) extern int UserBreak;
 
 static void NHelpKeyIn(control w, int key)
 {
@@ -2004,6 +2004,8 @@ static void GA_NewPage(R_GE_gcontext *gc,
 	    del(xd->gawin);
 	    snprintf(buf, 600, xd->filename, xd->npage);
 	    xd->gawin = newmetafile(buf, xd->w, xd->h);
+	    if(!xd->gawin)
+		error(_("metafile '%s' could not be created"), buf);
 	}
     }
     if ((xd->kind == PNG || xd->kind == JPEG || xd->kind == BMP)
@@ -2085,7 +2087,7 @@ static void GA_Close(NewDevDesc *dd)
 	deleteGraphMenus(devNumber((DevDesc*) dd) + 1);
     } else if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) {
       SaveAsBitmap(dd, xd->res_dpi);
-    }
+    } 
     del(xd->font);
     del(xd->gawin);
 /*
@@ -2403,9 +2405,29 @@ static void GA_Text(double x, double y, char *str,
 	/* not all devices will do anything (e.g., postscript)	*/
 	/********************************************************/
 
+static void donelocator(void *data)
+{
+    gadesc *xd;
+    xd = (gadesc *)data;
+    addto(xd->gawin);
+    gchangemenubar(xd->mbar);
+    if (xd->stoploc) {
+      hide(xd->stoploc);
+      show(xd->gawin);
+    }
+    gsetcursor(xd->gawin, ArrowCursor);
+    gchangepopup(xd->gawin, xd->grpopup);
+    addto(xd->gawin);
+    setstatus(_("R Graphics"));
+    xd->locator = FALSE;
+}
+
+static void GA_onExit(NewDevDesc *dd);
+
 static Rboolean GA_Locator(double *x, double *y, NewDevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
+    RCNTXT cntxt;
 
     if (xd->kind != SCREEN)
 	return FALSE;
@@ -2421,22 +2443,29 @@ static Rboolean GA_Locator(double *x, double *y, NewDevDesc *dd)
     gchangepopup(xd->gawin, xd->locpopup);
     gsetcursor(xd->gawin, CrossCursor);
     setstatus(G_("Locator is active"));
+
+    /* set up a context which will clean up if there's an error */
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_NilValue, R_NilValue,
+	         R_NilValue, R_NilValue);
+    cntxt.cend = &donelocator;
+    cntxt.cenddata = xd;
+    xd->cntxt = &cntxt;
+    
+    /* and an exit handler in case the window gets closed */
+    dd->onExit = GA_onExit;
+    
     while (!xd->clicked) {
 	if(xd->buffered) SHOW;
         WaitMessage();
 	R_ProcessEvents();
     }
-    addto(xd->gawin);
-    gchangemenubar(xd->mbar);
-    if (xd->stoploc) {
-      hide(xd->stoploc);
-      show(xd->gawin);
-    }
-    gsetcursor(xd->gawin, ArrowCursor);
-    gchangepopup(xd->gawin, xd->grpopup);
-    addto(xd->gawin);
-    setstatus(_("R Graphics"));
-    xd->locator = FALSE;
+    
+    dd->onExit = NULL;
+    xd->cntxt = NULL;
+    
+    endcontext(&cntxt);
+    donelocator((void *)xd);
+    
     if (xd->clicked == 1) {
 	*x = xd->px;
 	*y = xd->py;
@@ -2566,6 +2595,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
     dd->hold = GA_Hold;
     dd->metricInfo = GA_MetricInfo;
     xd->newFrameConfirm = GA_NewFrameConfirm;
+    xd->cntxt = NULL;
 
     /* set graphics parameters that must be set by device driver */
     /* Window Dimensions in Pixels */
@@ -2962,6 +2992,9 @@ static void GA_onExit(NewDevDesc *dd)
     xd->confirmation = FALSE;
     dd->gettingEvent = FALSE;
     xd->eventRho = NULL;
+    
+    if (xd->cntxt) endcontext(xd->cntxt);
+    if (xd->locator) donelocator((void *)xd);
     
     addto(xd->gawin);
     gchangemenubar(xd->mbar);

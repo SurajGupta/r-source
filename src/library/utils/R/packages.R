@@ -110,7 +110,7 @@ update.packages <- function(lib.loc = NULL, repos = CRAN,
 
     if(is.null(old)) return(invisible())
     if(is.character(ask) && ask == "graphics") {
-        if(.Platform$OS.type == "unix"
+        if(.Platform$OS.type == "unix" && .Platform$GUI != "AQUA"
            && capabilities("tcltk") && capabilities("X11")) {
             k <- tcltk::tk_select.list(old[,1], old[,1], multiple = TRUE,
                                        title = "Packages to be updated")
@@ -132,7 +132,7 @@ update.packages <- function(lib.loc = NULL, repos = CRAN,
                          contriburl = contriburl,
                          method = method,
                          available = available, destdir = destdir,
-                         installWithVers = installWithVers, type)
+                         installWithVers = installWithVers, type = type)
     }
 }
 
@@ -283,7 +283,8 @@ installed.packages <- function(lib.loc = NULL, priority = NULL)
         # this excludes packages without DESCRIPTION files
         pkgs <- .packages(all.available = TRUE, lib.loc = lib)
         for(p in pkgs){
-            desc <- packageDescription(p, lib = lib, fields = pkgFlds)
+            desc <- packageDescription(p, lib = lib, fields = pkgFlds,
+                                       encoding = NA)
             ## this gives NA if the package has no Version field
             if (is.logical(desc)) {
                 desc <- rep(as.character(NA), length(pkgFlds))
@@ -460,7 +461,7 @@ setRepositories <- function(graphics=TRUE)
     a <- read.delim(p, header=TRUE,
                     colClasses=c(rep("character", 3), rep("logical", 4)))
     thisType <- a[[getOption("pkgType")]]
-    a <- a[thisType, 1:4]
+    a <- a[thisType, 1:3]
     repos <- getOption("repos")
     ## Now look for CRAN and any others in getOptions("repos")
     if("CRAN" %in% row.names(a) && !is.na(CRAN <- repos["CRAN"]))

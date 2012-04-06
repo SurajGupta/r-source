@@ -145,8 +145,8 @@ fi],
 ## Allow the user to specify building an R framework (Darwin).
 AC_ARG_ENABLE([R-framework],
 [AC_HELP_STRING([--enable-R-framework@<:@=DIR@:>@],
-                [build R framework (if possible), and specify its
-                 installation prefix @<:@yes, /Library/Frameworks@:>@])],
+                [MacOS X only: build R framework (if possible), and specify
+                 its installation prefix @<:@yes, /Library/Frameworks@:>@])],
 [want_R_framework="${enableval}"],
 [want_R_framework=yes])
 ## Can only build frameworks on Darwin.
@@ -182,7 +182,7 @@ AM_CONDITIONAL(WANT_R_FRAMEWORK, [test "x${want_R_framework}" = xyes])
 ## </NOTE>
 AC_ARG_ENABLE([R-shlib],
 [AC_HELP_STRING([--enable-R-shlib],
-                [build R as a shared library @<:@no@:>@])],
+                [build the shared/dynamic library 'libR' @<:@no@:>@])],
 [want_R_shlib="${enableval}"],
 [want_R_shlib="${want_R_framework}"])
 ## processed after GNOME, which can set this.
@@ -211,13 +211,13 @@ fi
 
 AC_ARG_ENABLE([linux-lfs],
 [AC_HELP_STRING([--enable-linux-lfs],
-                [Enable support for > 2GB files on Linux @<:@no@:>@])],
+                [enable support for > 2GB files on Linux @<:@no@:>@])],
 [want_linux_lfs="${enableval}"],
 [want_linux_lfs=no])
 
 AC_ARG_ENABLE([mbcs],
 [AC_HELP_STRING([--enable-mbcs],
-                [Enable support for UTF-8 and other MBCS locales @<:@yes@:>@])],
+                [enable support for UTF-8 and other MBCS locales @<:@yes@:>@])],
 [want_mbcs_support="${enableval}"],
 [want_mbcs_support=yes])
 
@@ -248,7 +248,7 @@ AC_ARG_WITH([readline],
 ## Aqua.
 AC_ARG_WITH([aqua],
 [AC_HELP_STRING([--with-aqua],
-                [use Aqua (if available) @<:@no@:>@])],
+                [MacOS X only: use Aqua (if available) @<:@no@:>@])],
 [want_aqua=yes])
 
 ## Tcl/Tk.
@@ -466,14 +466,27 @@ R_PROG_MAKEINFO
 ## Make sure that non-standard directories specified via '-L' are really
 ## searched in the tests.
 ## Note: earlier versions used LIBS rather than LDFLAGS.
-for arg in ${LDFLAGS}; do
-  case "${arg}" in
-    -L*)
-      lib=`echo ${arg} | sed "s/^-L//"`
-      R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
-      ;;
-  esac
-done
+case "${host_os}" in
+  darwin*)
+    ## Darwin provides a full path in the ID of each library such 
+    ## that the linker can add library's path to the binary at link time.
+    ## This allows the dyld to find libraries even without xx_LIBRARY_PATH.
+    ## No paths should be added to R_LD_LIBRARY_PATH (which in turn
+    ## changes DYLD_LIBRARY_PATH), because they override the system
+    ## look-up sequence. Such automatic override has proven to break things
+    ## like system frameworks (e.g. ImageIO or OpenGL framework).
+    ;;
+  *)
+    for arg in ${LDFLAGS}; do
+      case "${arg}" in
+        -L*)
+	  lib=`echo ${arg} | sed "s/^-L//"`
+	  R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+	  ;;
+      esac
+    done
+    ;;
+esac
 ## </FIXME>
 
 ## Record name of environment variable which tells the dynamic linker
@@ -1288,7 +1301,7 @@ if test "${use_lapack}" = "yes"; then
   R_LAPACK_LIBS
 fi
 if test "${acx_lapack_ok}" != "yes"; then
-  LAPACK_LIBS="-L\${R_HOME}/lib -lRlapack"
+  LAPACK_LIBS="-L\$(R_HOME)/lib -lRlapack"
 fi
 AC_SUBST(LAPACK_LIBS)
 AM_CONDITIONAL(USE_EXTERNAL_LAPACK, [test "${acx_lapack_ok}" = "yes"])
@@ -1420,6 +1433,8 @@ for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
     -L*)
       lib=`echo ${arg} | sed "s/^-L//"`
       r_want_lib=true
+      ## don't add anything for Darwin
+      case "${host_os}" in darwin*) r_want_lib=false ;; esac
       ## Do not add non-existent directories.
       test -d "${lib}" || continue
       ## Canonicalize (/usr/lib/gcc-lib/i486-linux/3.3.4/../../..).

@@ -440,7 +440,7 @@ distclean veryclean: clean clean-recommended
 	done
 	$(RM) rw-FAQ fixed/html/rw-FAQ.html
 	$(RM) -r cran/*.html cran/*.htm cran/ReadMe cran/README* cran/*.exe \
-		cran/md5sum.txt cran/*.$(RPREFIX) cran/mini
+		cran/md5sum.txt cran/*.$(RPREFIX) 
 	$(RM) -r .vignettes # it gets left behind sometimes
 	$(RM) ../../FAQ ../../RESOURCES ../../doc/html/resources.html # not in SVN sources
 	$(RM) -r ../../share/locale
@@ -504,7 +504,7 @@ vignettes:
 ## ===================== Maintainer targets ========================
 
 RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
-RVER-PAT = $(shell if test "`cut -f2 -d' ' ../../VERSION`" = "Patched"; then echo "-patched"; else echo ""; fi)
+RVER-PAT = $(shell version=`cut -d' ' -f1 ../../VERSION | sed -n 1p`; if test "`cut -f2 -d' ' ../../VERSION`" = "Patched"; then version=`echo $${version} | sed 's/\.[0-9]*$$//'`; echo "$${version}-patched"; else echo "$${version}"; fi)
 
 
 docfiles:
@@ -513,9 +513,9 @@ docfiles:
 bitmapdll:
 	$(MAKE) -C bitmap
 
-CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER)$(RVER-PAT)/Recommended
+CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER-PAT)/Recommended
 
-## Use -c her eto avoid re-downloading the same versions of files
+## Use -c here to avoid re-downloading the same versions of files
 rsync-recommended:
 	@(cd ../library; \
 	rsync -rcvC --delete --exclude=Makefile.in --exclude=.cvsignore \
@@ -566,18 +566,13 @@ rinstaller:
 	@$(MAKE) -C installer clean
 
 crandir:
-#	$(MKDIR) -p cran/mini
 	$(CP) installer/rw*.exe cran
 	$(CP) CHANGES cran/CHANGES.$(RPREFIX)
 	$(CP) ../../NEWS cran/NEWS.$(RPREFIX)
 	(cd cran;\
 	 $(ECHO) 'cat(md5sum("$(RPREFIX).exe"),"*$(RPREFIX).exe")' \
          | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
-#	$(CP) installer/mini*.* cran/mini
 	$(CP) ../../doc/html/rw-FAQ.html cran
-#	(cd cran/mini;\
-	 $(ECHO) 'fn <- dir(pattern="mini*"); cat(paste(md5sum(fn)," *",fn,sep=""),sep="\n")' \
-#	 | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" README > cran/README.$(RPREFIX)
@@ -597,10 +592,6 @@ crandir:
 	  -e "s/@DATE@/$(DATE)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
-#	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-#	  -e s/@RVER@/$(RVER)/g \
-#	  -e "s/@DATE@/$(DATE)/g" \
-#	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/mini.in > cran/mini/index.html
 
 rbuild-no-mbcs:
 	@$(MAKE) --no-print-directory fixfiles

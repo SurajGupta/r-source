@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.0\n"
+"Project-Id-Version: R 2.1.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-04-09 17:42\n"
-"PO-Revision-Date: 2005-04-09 17:42\n"
+"POT-Creation-Date: 2005-06-09 12:02\n"
+"PO-Revision-Date: 2005-06-09 12:02\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -330,6 +330,10 @@ msgstr "‘iconvlist’ is not available on this system"
 msgid "no package '%s' was found"
 msgstr "no package ‘%s’ was found"
 
+msgid "'DESCRIPTION' file has 'Encoding' field and re-encoding is not possible"
+msgstr ""
+"‘DESCRIPTION’ file has ‘Encoding’ field and re-encoding is not possible"
+
 msgid "DESCRIPTION file of package '%d' is missing or broken"
 msgstr "DESCRIPTION file of package ‘%d’ is missing or broken"
 
@@ -565,6 +569,9 @@ msgstr "select.list() cannot be used non-interactively"
 msgid "Enter zero or more numbers separated by space"
 msgstr "Enter zero or more numbers separated by space"
 
+msgid "Invalid input, please try again"
+msgstr "Invalid input, please try again"
+
 msgid "'subject' missing"
 msgstr "‘subject’ missing"
 
@@ -624,8 +631,8 @@ msgstr "fixing URLs in non-standard libraries"
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr "If nothing happens, you should open ‘%s’ yourself"
 
-msgid "unable to create temp directory '%s'"
-msgstr "unable to create temp directory ‘%s’"
+msgid "unable to create temporary directory '%s'"
+msgstr "unable to create temporary directory ‘%s’"
 
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr "package ‘%s’ successfully unpacked and MD5 sums checked"
@@ -639,8 +646,8 @@ msgstr "bundle ‘%s’ successfully unpacked and MD5 sums checked"
 msgid "failed to create '%s'"
 msgstr "failed to create ‘%s’"
 
-msgid "unable to move temp installation '%d' to '%s'"
-msgstr "unable to move temp installation ‘%d’ to ‘%s’"
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr "unable to move temporary installation ‘%s’ to ‘%s’"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "cannot remove prior installation of package ‘%s’"
@@ -674,6 +681,9 @@ msgstr "Download of package ‘%s’ failed"
 
 msgid "cannot remove prior installation of package"
 msgstr "cannot remove prior installation of package"
+
+msgid "'tar' returned non-zero exit code %d"
+msgstr "‘tar’ returned non-zero exit code %d"
 
 msgid "object %s not found"
 msgid_plural "objects %s not found"

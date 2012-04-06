@@ -86,10 +86,11 @@ x$name
   argument.  It is translated to a string and that string is used to
   locate the correct component of the first argument.
 
-  When \code{$<-} is applied to a \code{NULL} \code{x}, it coerces
-  \code{x} to \code{list()}.  This is what happens with \code{[[<-} is
-  \code{y} is of length greater than one: if \code{y} has length 1 or 0,
-  \code{x} is coerced to a zero-length vector of the type of \code{value},
+  When \code{$<-} is applied to a \code{NULL} \code{x}, it first coerces
+  \code{x} to \code{list()}.  This is what also happens with \code{[[<-}
+  if the replacement value \code{value} is of length greater than one:
+  if \code{value} has length 1 or 0, \code{x} is first coerced to a
+  zero-length vector of the type of \code{value}.
 
   As from \R 1.9.0 both \code{$} and \code{[[} can be applied to
   environments.  Only character arguments are allowed and no partial
@@ -102,6 +103,11 @@ x$name
   are those of \code{assign(i, value, env=x, inherits=FALSE)}.  Such an
   assignment will either create a new binding or change the existing
   binding in \code{x}.
+
+  Negative indices are not allowed in index matrices. \code{NA} and zero
+  values are allowed: rows of an index matrix containing a zero are
+  ignored, whereas rows containing an \code{NA} produce an \code{NA} in
+  the result.
 }
 \section{NAs in indexing}{
   When subscripting, a numerical, logical or character \code{NA} picks
@@ -117,10 +123,10 @@ x$name
   interpretations would have the same outcome).
 }
 \section{Argument matching}{
-  Note that these operations do match their index arguments in the standard
-  way: argument names are ignored and positional matching only is used.
-  So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and \strong{not}
-  \code{m[1,2]}.
+  Note that these operations do not match their index arguments in the
+  standard way: argument names are ignored and positional matching only is
+  used. So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and
+  \strong{not} \code{m[1,2]}.
 
   This may not be true for methods defined for them; for example it is
   not for the \code{data.frame} methods described in
