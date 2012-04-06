@@ -6,6 +6,124 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.6.1
+
+
+NEW FEATURES
+
+    o	The "data.frame" and "factor" methods for [[ now support
+	the 'exact' argument introduced in 2.6.0.
+
+    o	plot.lm() gains a new argument 'cex.caption' to allow the
+	size of the captions to be controlled.
+
+    o	A series of changes make the CHARSXP cache introduced in 2.6.0
+	faster (and in some cases many times faster) in sessions with
+	a large number (e.g. a million) of unique character strings,
+	and also if there are many empty strings.
+
+    o	embedFonts(), bitmap() and dev2bitmap() explicitly turn off
+	auto-rotation in Ghostscript when generating PDF.
+
+    o	The canonical architecture is no longer checked when loading
+	packages using a non-empty sub-architecture, since it is
+	possible to (e.g.) build packages for i386-pc-linux-gnu on both
+	that architecture and on x86_64-unknown-linux-gnu.
+
+    o	Deparsing will (if option warnIncomplete is set) warn on
+	strings longer than the parser limit (8192 bytes).
+
+    o	url() now uses the UserAgent header in http transactions in
+	the same way as download.file() (making use of option
+	"HTTPUserAgent").
+
+
+BUG FIXES
+
+    o	iconv() is again able to translate character strings with
+	embedded nuls (such as those in UCS-2).
+
+    o	new.packages() and update.packages() failed when called on an
+	empty library, since old.packages() threw an error.
+	old.packages() now returns NULL (as documented) in that case.
+
+    o	Builds on Mac OS X 10.4 or higher now allocate enough space
+	in the binary headers to relocate dependent libraries into the
+	framework.
+
+    o	R CMD build now computes the exclusion list on the copy it
+	makes: this avoids problems if the original sources contain
+	symbolic links (which are resolved in the copy).  Thanks to
+	Michael Lawrence for diagnosis and patch.
+
+    o	object.size() had slightly too low a size for objects of type "S4".
+
+    o	symbol() in plotmath expressions was only accepting valid
+	character strings, which made it impossible to specify symbols
+	such as aleph (obtained by symbol("\300")) in a UTF-8 locale.
+
+    o   An event handling issue caused autorepeat functions to
+	misbehave with tcltk (notably scrollbars).
+
+    o	plot(sin, -5, 5) gives ylab 'sin(x)' again, where it resulted
+	in 'x(x)' in 2.6.0.  Further,  plot(sin)  again plots from
+	[0,1] also in cases where a previously used coordinate system
+	differs.
+
+    o	curve() with unspecified 'from', 'to' and 'xlim' now reuses the
+	previous x limits, and not slightly larger ones.
+
+    o	It was intended that R code filenames in packages should start
+	with an ASCII letter or digits (and R CMD INSTALL uses that),
+	but the test used in R CMD build ([A-Za-z0-9]) was
+	locale-specific (and excluded t to y in Estonian, for
+	example).  (PR#10351)
+
+    o	'R CMD build' could misbehave when faced with files with CRLF
+	line endings *and* no line ending on the final line of the
+	file, removing the last byte of the file.
+
+    o	DF[i, j] failed in 2.6.0 if j was a logical vector selecting a
+	single column.
+
+    o	Unix x11() would fail if a valid 'display' was specified but
+	DISPLAY was unset. (PR#10379)
+
+    o	postscript() was not always ignoring .Postscript.Options in
+	the workspace (where it should not have occurred).
+
+    o	help.search() would give an error if it found a badly
+	installed package, even if 'package' was not specified.
+
+    o	tclServiceMode() (package tcltk) now works under Unix-alikes.
+	(Although documented, it used only to work under Windows.)
+
+    o	As Mac OS X 10.5.0 comes with incompatible /bin/sh shell, we
+	force SHELL=/bin/bash (which is ok) in that case. [Only for
+	2.6.x: another solution is used in 2.7.0.]
+
+    o	Deliberately using malformed source attributes no longer
+	causes deparsing/printing of functions to crash R. (PR#10437)
+
+    o	R CMD check and R CMD INSTALL now work with (some) directory
+	names containing spaces.
+
+    o	choose(n, k) gave incorrect values for negative n and small k.
+
+    o	plot.ts(x,y) could use wrong default labels; fixed thanks to
+	Antonio, Fabio di Narzo.
+
+    o	reshape() got column names out of sync with contents in some
+	cases; found by Antonio, Fabio Di Narzo.
+
+    o	ar(x) for short 'x' (i.e. length <= 10) could fail because the
+	default 'order.max' was >= length(x) which is non-sensical.
+
+    o	Keyboard events in getGraphicsEvent() could cause stack
+	imbalance errors (PR#10453)
+
+
+
 		CHANGES IN R VERSION 2.6.0
 
 
@@ -100,6 +218,7 @@ NEW FEATURES
 
     o	duplicated() and unique() and their methods in base gain an
 	additional argument 'fromLast'.
+
     o	fifo() no longer has a default 'description' argument.
 
 	fifo("") is now implemented, and works in the same way as file("").
@@ -214,9 +333,6 @@ NEW FEATURES
     o	setRepositories() has a new argument 'ind' to allow selections
 	to be made programmatically.
 
-    o	showMethods() has a "smart" default for 'inherited' such that
-	showMethods(<genfun>, incl = TRUE)  becomes a useful short cut.
-
     o	sprintf() no longer has a output string length limit.
 
     o	storage.mode<- is now primitive, and hence makes fewer copies
@@ -318,7 +434,7 @@ NEW FEATURES
         written by Seth Falcon.
 
     o	The internal equivalents of as.complex, as.double, as.integer
-	and as.logical used to handle length-1 arguments now accept
+	and as.logical used to handle length=1 arguments now accept
 	character strings (rather than report that this is
 	'unimplemented').
 
@@ -416,6 +532,9 @@ METHODS PACKAGE
     o	It is now possible to use setGeneric(useAsDefault = FALSE) to
 	define a new generic with the name of a primitive function
 	(but having no connection with the primitive).
+
+    o	showMethods() has a "smart" default for 'inherited' such that
+	showMethods(<genfun>, incl = TRUE)  becomes a useful short cut.
 
 
 DEPRECATED & DEFUNCT
@@ -527,10 +646,10 @@ C-LEVEL FACILITIES
     o	asLogical, asInteger, asReal and asComplex now accept STRSXP
 	and CHARSXP arguments, and asChar accepts CHARSXP.
 
-    o	New R_GE_str2col() exported via R_ext/GraphicsEngine.h for
-        external device developers.
+    o	New entry point R_GE_str2col listed in R_ext/GraphicsEngine.h
+	for external graphics device developers.
 
-    o   doKeybd and doMouseevent are now exported in GraphicsDevice.h.
+    o	doKeybd and doMouseevent are now exported in GraphicsDevice.h.
 
     o	R_alloc now has first argument of type 'size_t' to support
 	64-bit platforms (e.g. Win64) with a 32-bit 'long' type.
@@ -721,7 +840,7 @@ BUG FIXES
 	PR#9902 by John Brzustowski.
 
     o	de.restore() gave a spurious warning for matrices (Ben Bolker)
-    
+
     o	plot(fn, xlim=c(a,b)) would not set "from" and "to" properly
 	when plotting a function.  The argument lists to curve() and
 	plot.function() have been modified slightly as part of the
@@ -742,13 +861,13 @@ BUG FIXES
 	assumed that attached environments named "package:foo" were
 	package environments, although misguided users could use such
 	a name in attach().
-	
+
     o	spline() and splinefun() with method = "periodic" could return
     	incorrect results when length(x) was 2 or 3.
-    	
+
     o	getS3method() could fail if the method name contained a regexp
     	metacharacter such as "+".
-    	
+
     o	help(<a character vector>) now uses the name and not the
 	value of the vector unless it has length exactly one, so
 	e.g. help(letters) now gives help on 'letters'.

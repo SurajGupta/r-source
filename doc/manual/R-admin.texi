@@ -293,7 +293,8 @@ make
 @noindent
 (See @ref{Using make} if your make is not called @samp{make}.)
 
-Then check the built system works correctly, by
+Then check the built system works correctly@footnote{This needs Perl to
+be available.}, by
 
 @example
 make check
@@ -528,7 +529,7 @@ the man page
 @item @file{@var{prefix}/@var{LIBnn}/R} or @file{@var{libdir}/R}
 all the rest (libraries, on-line help system, @dots{}).  Here
 @var{LIBnn} is usually @samp{lib}, but may be @samp{lib64} on some
-64-bit Linux systems.
+64-bit Linux systems.  This is known as the @R{} home directory.
 @end table
 
 @noindent
@@ -569,7 +570,7 @@ where @var{eprefix} is the prefix used for installing
 architecture-dependent files, defaults to @var{prefix}, and can be set
 via the configure option @option{--exec-prefix}.
 
-All of @code{bindir} and @code{mandir} and @code{libdir} can also be
+Each of @code{bindir}, @code{mandir} and @code{libdir} can also be
 specified on the @command{make install} command line (at least for GNU
 @command{make}).
 
@@ -580,6 +581,16 @@ The @command{configure} or @command{make} variables @code{rdocdir} and
 @code{rincludedir}: note that as the headers are not installed into a
 subdirectory you probably want something like
 @code{rincludedir=/usr/local/include/R-@value{VERSIONno}}.
+
+If you want the @R{} home to be something other than
+@file{@var{libdir}/R}, use @option{rhome}: for example
+
+@example
+make install rhome=/usr/local/lib64/R-2.6.0
+@end example
+
+@noindent
+will use a version-specific @R{} home on a Linux 64-bit system.
 
 If you have made @R{} as a shared/dynamic library you can install it in
 your system's library directory by
@@ -612,7 +623,9 @@ make install-pdf
 @end example
 
 @noindent
-Once again, it is optional to specify @code{prefix}.  
+Once again, it is optional to specify @code{prefix}, @code{libdir} or
+@code{rhome} (the DVI and PDF manuals are installed under the @R{} home
+directory).
 
 More precise control is possible.  For info, the setting used is that of
 @code{infodir} (default @samp{@var{prefix}/info}, set by configure
@@ -653,20 +666,21 @@ share all but the executables and dynamic objects.  Examples include
 builds under Solaris for different chips (in particular, 32- and 64-bit
 builds), 64- and 32- bit builds on @cputype{x86_64} Linux and different
 CPUs (@cputype{ppc}, @cputype{ppc64}, @cputype{i386} and
-@cputype{x86_64}) under MacOS 10.4.
+@cputype{x86_64}) under Mac OS >= 10.4.
 
 @R{} supports the idea of architecture-specific builds, specified by
 adding @samp{r_arch=@var{name}} to the @command{configure} line.  Here
 @var{name} can be anything non-empty, and is used to name subdirectories
 of @file{lib}, @file{etc}, @file{include} and @file{libs}.  Example
-names from other systems are the use of @file{sparcv9} on Solaris and
-@file{32} by @code{gcc} on @cputype{x86_64} Linux.
+names from other systems are the use of @file{sparcv9} on Sparc Solaris
+and @file{32} by @code{gcc} on @cputype{x86_64} Linux.
 
 If you have two or more such builds you can install them over each other
-(and one build can be done without @samp{r_arch}).  The space savings
-can be considerable: on @cputype{x86_64} Linux a basic install (without
-debugging symbols) took 63Mb, and adding a 32-bit build added 6Mb.  If
-you have installed multiple builds you can select which build to run by
+(and for 32/64-bit builds on one architecture, one build can be done
+without @samp{r_arch}).  The space savings can be considerable: on
+@cputype{x86_64} Linux a basic install (without debugging symbols) took
+63Mb, and adding a 32-bit build added 6Mb.  If you have installed
+multiple builds you can select which build to run by
 
 @example
 R --arch=@var{name}
@@ -682,9 +696,13 @@ script or a @file{src/Makefile} file.  In such cases you can install for
 extra builds by
 
 @example
-R --arch=@var{name} CMD INSTALL --libs-only @samp{pkg(s)}
+R --arch=@var{name} CMD INSTALL --libs-only @var{pkg(s)}
 @end example
 
+If you want to mix sub-architectures compiled on different platforms
+(for example @cputype{x86_64} Linux and @cputype{i686} Linux), it is
+wise to use explicit names for each, and you may also need to set
+@option{libdir} to ensure that they install into the same place.
 
 @node Installing R under Windows, Installing R under Mac OS X, Installing R under Unix-alikes, Top
 @chapter Installing R under Windows
@@ -694,7 +712,7 @@ The @file{bin/windows} directory of a @acronym{CRAN} site contains
 binaries for a base distribution and a large number of add-on packages
 from @acronym{CRAN} to run on Windows 95, 98, NT4, 2000, ME, XP, 2003
 Server and Vista (at least) on Intel x86 and clones (including
-AMD64/EM64T chips and Windows 64).
+AMD64/EM64T chips and Windows x64).
 
 Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
@@ -802,19 +820,23 @@ to delete that in ATLAS by
 ar d /path/to/libf77blas.a xerbla.o
 @end example
 
-Another possibility is to use AMD's AMD Core Math Library (ACML)
-@url{http://www.amd.com/acml, @code{www.amd.com/@/acml}}.  To use the
-Cygwin-compiled version (Cygwin itself is not needed, at least
-currently), install @file{acml-3-6-0-win32-g77.exe} (or later) and edit
-@file{@var{R_HOME}/@/src/@/gnuwin32/MkRules} to define
-@code{USE_ACML=YES} and set @code{ACML_PATH} to the path to
-@file{libacml.a}.  If you also set @code{USE_ACML_LAPACK=YES}, ACML will
-be used to provide the LAPACK library for R itself and any packages
-using @code{LAPACK_LIBS} built under that setting.
+There used to be support for AMD's AMD Core Math Library (ACML) and
+Kazushige Goto's BLAS, but neither is currently available for use with
+the current compilers used.
 
-There used to be support for Kazushige Goto's BLAS, but this is no
-longer available in binary form for Windows, and it seems that it will
-in future only to be offered via a source-code licence.
+@c Another possibility is to use AMD's AMD Core Math Library (ACML)
+@c @url{http://www.amd.com/acml, @code{www.amd.com/@/acml}}.  To use the
+@c Cygwin-compiled version (Cygwin itself is not needed, at least
+@c currently), install @file{acml-3-6-0-win32-g77.exe} (or later) and edit
+@c @file{@var{R_HOME}/@/src/@/gnuwin32/MkRules} to define
+@c @code{USE_ACML=YES} and set @code{ACML_PATH} to the path to
+@c @file{libacml.a}.  If you also set @code{USE_ACML_LAPACK=YES}, ACML will
+@c be used to provide the LAPACK library for R itself and any packages
+@c using @code{LAPACK_LIBS} built under that setting.
+
+@c There used to be support for Kazushige Goto's BLAS, but this is no
+@c longer available in binary form for Windows, and it seems that it will
+@c in future only to be offered via a source-code licence.
 
 @end itemize
 
@@ -1194,7 +1216,7 @@ the @file{Makefile-rcb} file itself, or
 @cindex Mac OS X
 
 The @file{bin/macosx} directory of a @acronym{CRAN} site contains
-binaries for MacOS X for a base distribution and a large number of
+binaries for Mac OS X for a base distribution and a large number of
 add-on packages from @acronym{CRAN} to run on Mac OS X version 10.4.4 or
 higher.
 
@@ -1214,8 +1236,8 @@ for Mac OS X @acronym{FAQ}} for more details.
 
 If you want to build this port from the sources, you can read the above
 mentioned @url{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R
-for Mac OS X @acronym{FAQ}} for full details. You will need to collect
-and install some tools as explained in the document. Than you have to
+for Mac OS X @acronym{FAQ}} for full details.  You will need to collect
+and install some tools as explained in the document.  Then you have to
 expand the @R{} sources and configure @R{} appropriately, for example
 
 @example
@@ -1245,6 +1267,10 @@ make prefix=/where/you/want/R.framework/to/go install
 
 @noindent
 the @file{R.framework} has not to be specified in the path.
+
+Note that building the @file{R.app} GUI console is a separate project:
+see the FAQ for details.
+
 
 @node Running R, Add-on packages, Installing R under Mac OS X, Top
 @chapter Running R
@@ -1838,8 +1864,10 @@ to make this easier for users. See
 @code{developer.apple.com/@/documentation/@/MacOSX/@/Conceptual/@/BPInternational/}}
 
 @noindent
-for how users can set their locales. As with Windows, end users will
-generally only see lists of languages/territories.
+for how users can set their locales.  As with Windows, end users will
+generally only see lists of languages/territories.  Users of @R{} in a
+terminal may need to set the locale to something like @samp{en_GB.UTF-8}
+if it defaults to @samp{C}.
 
 Internally Mac OS X uses a form similar to Linux but without
 specifying the encoding (which is @code{UTF-8}).  It is based on ICU
@@ -1938,7 +1966,7 @@ has long been true for UltraSparc and more recently for MIPS, PPC and
 Pentium/'Core' supporting EM64T).  Many OSes running on such CPUs offer
 the choice of building a 32-bit or a 64-bit version of R (and details
 are given below under specific OSes).  For most a 32-bit version is the
-default, but for some (e.g., @cputype{x86_64}) 64-bit is.
+default, but for some (e.g., @cputype{x86_64} Linux) 64-bit is.
 
 All current versions of @R{} use 32-bit integers and
 @acronym{IEC}@tie{}60559@footnote{also known as @acronym{IEC}@tie{}559
@@ -1976,8 +2004,8 @@ Windows.)  64-bit builds have much larger limits.
 Because the pointers are larger, @R{}'s basic structure (the cons cell)
 is larger (normally twice the size).  This means that @R{} objects take
 more space and more time to manipulate, especially during garbage
-collection. So 64-bit versions of @R{} will typically run slower than
-32-bit versions. (On Sparc Solaris the difference was 15-20%, on
+collection.  So 64-bit versions of @R{} will typically run slower than
+32-bit versions.  (On Sparc Solaris the difference was 15-20%, on
 @cputype{x86_64} around 10%.)
 
 @end itemize
@@ -2006,7 +2034,9 @@ currently (mid-2007) that is not imminent.@footnote{It is likely that
 commercial 64-bit compilers could be used, but those we have looked at
 do not work in the same way as the MinGW compilers so extensive changes
 to the build system would be needed.  Also, end users would need to have
-the same compilers to install extension packages.}
+the same compilers to install extension packages.  There is an
+experimental version of MinGW for 64-bit Windows, but it is not yet good
+enough to build a working @R{}.}
 
 
 @node The standalone Rmath library, Essential and useful other programs under Unix, Choosing between 32- and 64-bit builds, Top
@@ -2266,16 +2296,17 @@ and @command{make check} (and other checks) are likely to fail.
 
 You will need Perl version 5.8.0 or later, available via
 @url{http://www.perl.com/CPAN/, @code{www.perl.com/CPAN}}, to build any
-of the on-line documentation.
+of the on-line documentation, which includes the examples needed for
+regression testing.
 
-You will not be able to build the manuals unless you have
+You will not be able to build most of the manuals unless you have
 @command{makeinfo} version 4.7 or later installed, and if not some of
 the @HTML{} manuals will be linked to @acronym{CRAN}.  (Version 4.6 is
 known to create incorrect @HTML{} files.)  To make DVI or PDF versions
 of the manuals you will also need @file{texinfo.tex} installed (which is
 part of the GNU @samp{texinfo} distribution but is often made part of
-the TeX package in re-distributions) as well as @command{texi2dvi} (part of
-the GNU @pkg{texinfo} distribution).
+the TeX package in re-distributions) as well as @command{texi2dvi} (part
+of the GNU @pkg{texinfo} distribution).
 
 
 @cindex Vignettes
@@ -2346,9 +2377,9 @@ or use the configure variables @code{TCLTK_LIBS} and
 the Tcl and Tk libraries and for finding the @file{tcl.h} and
 @file{tk.h} headers, respectively.  If you have both 32- and 64-bit
 versions of Tcl/Tk installed, setting the paths to the correct config
-files will most likely be necessary to avoid confusion between them.
+files may be necessary to avoid confusion between them.
 
-Versions of Tcl/Tk from 8.3 to 8.4.13 have been used successfully: 8.0 is
+Versions of Tcl/Tk from 8.3 to 8.4.16 have been used successfully: 8.0 is
 no longer supported.
 
 @node Java support,  , Tcl/Tk, Useful libraries and programs
@@ -2395,8 +2426,8 @@ JAVA_LIBS = -L$(JAVA_HOME)/lib/amd64/server -L$(JAVA_HOME)/lib/amd64
 @end example
 
 @noindent
-where @samp{JAVA_LIBS} contains flags necessary to link JNI
-programs. Some of the above variables can be queried using @code{R CMD config}.
+where @samp{JAVA_LIBS} contains flags necessary to link JNI programs.
+Some of the above variables can be queried using @code{R CMD config}.
 
 
 @node Linear algebra,  , Useful libraries and programs, Essential and useful other programs under Unix
@@ -2540,28 +2571,28 @@ Solaris 10 there is the AMD Core Math Library (ACML)
 @noindent
 if the appropriate library directory (such as
 @enindex LD_LIBRRARY_PATH
-@file{/opt/acml3.6.1/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
-For other compilers, see the ACML documentation.  Although the
-documentation is unclear, 32-bit versions of ACML do run on other
-@cputype{ia32} chips such as AthlonMP and P4.  There is a multithreaded
-Linux version of ACML available for @command{gfortran} which needs
-@command{gcc} >= 4.2.0 (or possibly some RedHat versions of 4.1.1 or
-4.1.2).  To make use of this you will need something like
+@file{/opt/acml4.0.0/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
+For other compilers, see the ACML documentation.  There is a
+multithreaded Linux version of ACML available for @command{gfortran}
+which needs @command{gcc} >= 4.2.0 (or some RedHat versions of 4.1.1).
+To make use of this you will need something like
 
 @example
---with-blas="-L/opt/acml3.6.1/gfortran64_mp/lib -lacml_mp"
+--with-blas="-L/opt/acml4.0.0/gfortran64_mp/lib -lacml_mp"
 @end example
 
-See @pxref{Shared BLAS} for an alternative way to use ACML.
+See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
+way to use ACML.
 
 ACML can be used on Windows when building from source.
 
 @node Goto BLAS, MKL, ACML, BLAS
 @subsubsection Goto BLAS
 
-Another tuned BLAS which is available for some processors@footnote{}
-under Linux, FreeBSD and MacOS X is by Kazushige Goto.  This has been
-made available in several formats, and is currently (June 2007)
+Kazushige Goto has written another tuned BLAS which is available for
+several processors and OSes.
+
+This has been made available in several formats, but is currently
 available only as source code.  For @emph{academic use only} (after
 registering) it can be obtained via
 @url{http://www.tacc.utexas.edu/resources/software/software.php,
@@ -2578,14 +2609,13 @@ necessary to set @code{GOTO_NUM_THREADS=1} or @code{OMP_NUM_THREADS=1}
 (to disable multiple threads) in the environment when using a
 multi-threaded Goto BLAS, but others run happily with multiple threads.
 
-Note that currently (June 2007) a multi-threaded Goto BLAS will be built
+Note that currently (Nov 2007) a multi-threaded Goto BLAS will be built
 by default if and only if the building is on a multi-processor system
 (counting multiple cores and hyperthreading), and at run time the
 default number of threads is the number of CPUs detected.
 
-
-See @pxref{Shared BLAS} for an alternative way to use the latest
-versions of the Goto BLAS.
+See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
+way to use recent versions of the Goto BLAS.
 
 
 @node MKL, Shared BLAS, Goto BLAS, BLAS
@@ -2605,6 +2635,9 @@ This is multi-threaded, but the number of threads defaults to 1 (and can
 be increased by setting @code{OMP_NUM_THREADS}).
 (Thanks to Andy Liaw for the information.)
 
+See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
+way to use MKL.
+
 
 @node Shared BLAS,  , MKL, BLAS
 @subsubsection Shared BLAS
@@ -2614,10 +2647,9 @@ as well as for @R{} itself.  This means that it is better to use a
 shared/dynamic BLAS library, as most of a static library will be
 compiled into the @R{} executable and each BLAS-using package.
 
-@R{} 2.4.0 and later offer the option of compiling the BLAS into a
-dynamic library @code{libRblas} stored in @file{@var{R_HOME}/lib} and
-linking both @R{} itself and all the add-on packages against that
-library.
+@R{} offers the option of compiling the BLAS into a dynamic library
+@code{libRblas} stored in @file{@var{R_HOME}/lib} and linking both @R{}
+itself and all the add-on packages against that library.
 
 This is the default on most platforms unless an external BLAS is
 specified and found: for the latter it can be used by specifying the
@@ -2655,7 +2687,7 @@ For example, just
 
 @example
 mv @var{R_HOME}/lib/libRblas.so @var{R_HOME}/lib/libRblas.so.keep
-ln -s /opt/acml3.6.1/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
+ln -s /opt/acml4.0.0/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
 @end example
 
 will change the BLAS in use to multithreaded ACML.  A similar link
@@ -3497,11 +3529,11 @@ The resulting build of @R{} was not quite as fast as that built with
 @cindex Mac OS X
 
 You can build @R{} as a Unix application on Mac OS X using the Apple
-Developer Tools and @command{g77} or @command{gfortran}.  You will also
-need to install an X sub-system or configure with
-@option{--without-x}. The X window manager is part of the standard Mac
+Developer Tools (`Xcode') and @command{g77} or @command{gfortran}.  You
+will also need to install an X sub-system or configure with
+@option{--without-x}.  The X window manager is part of the standard Mac
 OS X distribution since Mac OS X version 10.3 (Panther), but it is
-typically not pre-installed.
+typically not pre-installed prior to 10.5 (Leopard).
 
 For more information on how to find these tools please read the
 @url{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac
@@ -3518,8 +3550,8 @@ device for the commmand-line version of R and the behaviour of the
 
 @cindex BLAS library
 @cindex LAPACK library
-The @code{vecLib} library of Mac OS X >= 10.2.2 can be used @emph{via} the
-(default) configuration options
+The @code{vecLib} library can be used @emph{via} the (default)
+configuration options
 
 @example
 --with-blas="-framework vecLib" --with-lapack
@@ -3536,6 +3568,18 @@ routines.  Building @R{} without these options @emph{via}
 @noindent
 used not to work with earlier versions of @command{gcc}, but can be done
 with @command{gcc}@tie{}3.3 and later.
+
+64-bit builds are supported as from @R{} 2.7.0 on 10.5 (Leopard) only.
+
+For @R{} 2.6.1 (and patched) on 10.5 (Leopard) only, use
+
+@example
+CONFIG_SHELL=/bin/bash ./configure
+@end example
+
+@noindent
+since @R{} is built with @samp{SHELL=/bin/bash} to avoid some settings
+used for @file{/bin/sh} (in particular @samp{xpg_echo} is set).
 
 
 @node Solaris, HP-UX, Mac OS X, Platform notes
@@ -3806,17 +3850,46 @@ alignment of doubles (which @command{gcc} generated by default, but
 @section HP-UX
 @cindex HP-UX
 
-The reports on HP-UX here predate @R{} 2.0.0.
+% R-help 2007 Nov 1/2, and follow up to BDR Nov 6.
+Fan Long built @R{} 2.6.0 on HP-UX 11.23 on @cputype{ia64} using the
+native compilers via
 
-@R{} has been built successfully on HP-UX 10.2 and HP-UX 11.0 using both
-native compilers and @command{gcc}.  However, 10.2 has not been tested
-since @R{} 1.4.0.  By default, @R{} is configured to use @command{gcc} and
-@command{g77} on HP-UX (if available).  Some installations of
-@command{g77} only install a static version of the @command{g2c} library
-that cannot be linked into a shared library since its files have not
-been compiled with the appropriate flag for producing position
-independent code (@acronym{PIC}).  This will result in @command{make}
-failing with a linker error similar to
+@example
+CC=cc
+CFLAGS="+z +DD64"
+CXX=aCC
+CXXFLAGS="-b -lxnet +z +DD64"
+FC=f90
+FCFLAGS=+DD64
+F77=f90
+FFLAGS=+DD64 
+LDFLAGS="-L/usr/lib/hpux64 -L/opt/fortran90/lib"
+@end example
+
+@noindent
+Here @samp{+z} selects PIC code and @code{+DD64} a 64-bit build.
+
+He found that @file{stdbool.h} was detected but was non-standard, so
+@samp{HAVE_STDBOOL_H} had to be undefined in
+@file{src/include/config.h}.  In addition, the compiler objected to
+
+@example
+  static const pthread_once_t fresh_once = @{PTHREAD_ONCE_INIT@};
+@end example
+
+@noindent
+(line 362 of @file{src/extra/intl/lock.c}) and needed the braces removed.
+
+The remaining reports on HP-UX here predate @R{} 2.0.0.
+
+@R{} has been built successfully on HP-UX 11.0 using both native
+compilers and @command{gcc}. By default, @R{} is configured to use
+@command{gcc} and @command{g77} on HP-UX (if available).  Some
+installations of @command{g77} only install a static version of the
+@command{g2c} library that cannot be linked into a shared library since
+its files have not been compiled with the appropriate flag for producing
+position independent code (@acronym{PIC}).  This will result in
+@command{make} failing with a linker error similar to
 
 @example
 ld: CODE_ONE_SYM fixup to non-code subspace in file foo.o -
@@ -3872,19 +3945,6 @@ the @option{-O2} optimization level that causes
 which will cause @command{make check} to fail.  If this is the case, you
 should use @code{CFLAGS} to specify @option{-O} as the optimization
 level to use.
-
-Some systems running HP-UX 11.0 may have a @command{gcc} that was
-installed under HP-UX 10.2.  Between versions 10.2 and 11.0 HP-UX
-changed its support functions for @acronym{IEEE} arithmetic from the
-recommended functions of the @acronym{IEEE} standard to the ones
-specified in the C9x draft standard.  In particular, this means that
-@code{finite} has been replaced by @code{isfinite}.  A @command{gcc}
-configured for HP-UX 10.2 run on 11.0 will not find @code{isfinite}, and
-as a result @command{configure} does not recognize the machine as fully
-supporting @acronym{IEEE} arithmetic and so will not complete.  The best
-solution is to install a properly configured @command{gcc}.  An
-alternative work-around is to add @option{-DIEEE_754} to the
-@code{CFLAGS} variable.
 
 You can configure @R{} to use both the native @command{cc} and
 @command{fort77} with
@@ -4261,7 +4321,8 @@ details.)
 There are known problems with one of the compilers sets in this toolset
 on Windows Vista: see the workaround below. (With that workaround it has
 been used on both 32- and 64-bit versions of Vista: the recommended
-@command{gcc 4.2.1} does not need the workaround.)
+@command{gcc 4.2.1} does not need the workaround, and it may indeed be
+harmful.)
 
 We have found that the build process for @R{} is quite sensitive to
 the choice of tools: please follow our instructions @strong{exactly},
@@ -4336,7 +4397,8 @@ c:\Rtools\MinGW\libexec\gcc\mingw\3.4.5
 @end example
 
 @noindent
-to the path.
+to the path.  (Do @strong{not} do this when using the recommended
+@command{gcc 4.2.1} compilers.)
 
 Edit @file{@var{R_HOME}/src/gnuwin32/MkRules} to set the appropriate
 paths as needed and to set the type(s) of help that you want built.
@@ -4402,7 +4464,8 @@ will not be needed (but it will be needed for installing packages by
 
 The @samp{MiKTeX} (@url{http://www.miktex.org, @code{www.miktex.org}})
 distribution of @LaTeX{} includes a suitable port of @code{pdftex}.  The
-`basic' version of @samp{MiKTeX} suffices, but it will install the 15Mb
+`basic' version of @samp{MiKTeX} almost suffices (the @pkg{grid}
+vignettes need @file{fancyvrb.sty}), but it will install the 15Mb
 @samp{lm} package if allowed to (although that is not actually used).
 The @file{Rtools.exe} installer does @emph{not} include any version of
 @LaTeX{}.

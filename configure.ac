@@ -90,6 +90,15 @@ case "${host_os}" in
 esac
 AC_SUBST(R_OSTYPE)
 
+case "${host_os}" in
+  darwin9*) ## test for bad /bin/sh on Leopard
+    if test `echo '\eof'` != '\eof'; then
+      AC_MSG_RESULT([Note: forcing SHELL=/bin/bash, because ${SHELL} is incompatible])
+      SHELL=/bin/bash
+    fi
+    ;;
+esac
+
 ### ** Defaults.
 
 cfile="${srcdir}/config.site"
@@ -1251,7 +1260,7 @@ case "${host_os}" in
 	## needs -lgfortran because the sharing is a one-way street
         ## dylib_undefined_allowed=yes
 	AC_MSG_CHECKING([whether linker supports dynamic lookup])
-	shlib_ldflags="-dynamiclib -Wl,-macosx_version_min -Wl,10.3 -undefined dynamic_lookup -single_module -multiply_defined suppress"
+	shlib_ldflags="-dynamiclib -Wl,-headerpad_max_install_names -Wl,-macosx_version_min -Wl,10.4 -undefined dynamic_lookup -single_module -multiply_defined suppress"
 	AC_CACHE_VAL([r_cv_has_dynlookup],[
 [cat > conftest.c <<EOF
   void dummy() { }

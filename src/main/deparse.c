@@ -124,6 +124,7 @@ typedef struct {
     int backtick;
     int opts;
     int sourceable;
+    int longstring;
 } LocalParseData;
 
 static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
@@ -190,7 +191,7 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
 	    {0, 0, 0, 0, /*startline = */TRUE, 0,
 	     NULL,
 	     /*DeparseBuffer=*/{NULL, 0, BUFSIZE},
-	     DEFAULT_Cutoff, FALSE, 0, TRUE};
+	     DEFAULT_Cutoff, FALSE, 0, TRUE, FALSE};
     localData.cutoff = cutoff;
     localData.backtick = backtick;
     localData.opts = opts;
@@ -221,6 +222,8 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
     R_print.digits = savedigits;
     if ((opts & WARNINCOMPLETE) && !localData.sourceable)
     	warning(_("deparse may be incomplete"));
+    if ((opts & WARNINCOMPLETE) && localData.longstring)
+    	warning(_("deparse may be not be source()able in R < 2.7.0"));
     /* somewhere lower down might have allocated ... */
     R_FreeStringBuffer(&(localData.buffer));
     return svec;
@@ -625,8 +628,13 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	}
 	break;
     case CHARSXP:
-	print2buff(translateChar(s), d);
+    {
+	const char *ts = translateChar(s);
+	/* versions of R < 2.7.0 cannot parse strings longer than 8192 chars */
+	if(strlen(ts) >= 8192) d->longstring = TRUE;
+	print2buff(ts, d);
 	break;
+    }
     case SPECIALSXP:
     case BUILTINSXP:
 	print2buff(".Primitive(\"", d);
@@ -650,7 +658,8 @@ static void deparse2buff(SEXP s, LocalParseData *d)
     case CLOSXP:
         if (localOpts & SHOWATTRIBUTES) attr1(s, d);
         if ((d->opts & USESOURCE) && 
-	    (n = length(t = getAttrib(s, R_SourceSymbol))) > 0) {
+	    (n = length(t = getAttrib(s, R_SourceSymbol))) > 0 
+	    && isString(t)) {
     	    for(i = 0 ; i < n ; i++) {
 	    	print2buff(translateChar(STRING_ELT(t, i)), d);
 	    	writeline(d);
@@ -856,7 +865,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    break;
 		case PP_FUNCTION:
 		    printcomment(s, d);
-		    if (!(d->opts & USESOURCE) || isNull(CADDR(s))) {
+		    if (!(d->opts & USESOURCE) || !isString(CADDR(s))) {
 		    	print2buff(CHAR(PRINTNAME(op)), d); /* ASCII */
 		    	print2buff("(", d);
 		    	args2buff(FORMALS(s), 0, 1, d);
@@ -1234,6 +1243,11 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 		int w, d, e;
 		formatReal(&REAL(vector)[i], 1, &w, &d, &e, 0);
 		strp = EncodeReal2(REAL(vector)[i], w, d, e);
+	    } else if (TYPEOF(vector) == STRSXP) {
+		const char *ts = translateChar(STRING_ELT(vector, i));
+		/* versions of R < 2.7.0 cannot parse strings longer than 8192 chars */
+		if(strlen(ts) >= 8192) d->longstring = TRUE;
+		strp = EncodeElement(vector, i, quote, '.');
 	    } else
 		strp = EncodeElement(vector, i, quote, '.');
 	    print2buff(strp, d);

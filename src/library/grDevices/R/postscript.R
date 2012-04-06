@@ -38,7 +38,7 @@ check.options <-
 	} else stop(gettextf("cannot reset non-existent '%s'", name.opt),
                     domain = NA)
     }
-    old <- get(name.opt, envir=envir)
+    old <- get(name.opt, envir=envir, inherits=FALSE)
     if(!is.list(old))
 	stop(gettextf("invalid options in '%s'", name.opt), domain = NA)
     oldnames <- names(old)
@@ -551,7 +551,7 @@ matchFont <- function(font, encoding) {
 #      Also, we want the run-time locale not the install-time locale.
 
 initPSandPDFfonts <- function() {
-    if(exists(".PostScript.Options", envir = .PSenv)) return()
+    if(exists(".PostScript.Options", envir = .PSenv, inherits=FALSE)) return()
 
 assign(".PostScript.Options",
     list(paper	= "default",
@@ -854,6 +854,8 @@ embedFonts <- function(file, # The ps or pdf file to convert
         stop("Invalid output format")
     }
     gsexe <- Sys.getenv("R_GSCMD")
+    if(.Platform$OS.type == "windows" && !nzchar(gsexe))
+        gsexe <- Sys.getenv("GSC")
     if(is.null(gsexe) || !nzchar(gsexe)) {
         gsexe <- switch(.Platform$OS.type,
                         unix = "gs",
@@ -866,10 +868,10 @@ embedFonts <- function(file, # The ps or pdf file to convert
         fontpaths <- paste("-sFONTPATH=",
                            paste(fontpaths, collapse=.Platform$path.sep),
                            sep="")
-    cmd <- paste(gsexe, " -dNOPAUSE -dBATCH -q -sDEVICE=", format,
+    cmd <- paste(gsexe, " -dNOPAUSE -dBATCH -q -dAutoRotatePages=/None -sDEVICE=", format,
                  " -sOutputFile=", tmpfile, " ", fontpaths, " ",
                  options, " ", file, sep = "")
-    ret <- system(cmd, invisible = TRUE)
+    ret <- system(cmd)
     if(ret != 0)
         stop(gettextf("status %d in running command '%s'", ret, cmd),
              domain = NA)

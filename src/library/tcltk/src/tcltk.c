@@ -1,3 +1,21 @@
+/*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 2000--2007  The R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
+ */
 
 #include "tcltk.h" /* declarations of our `public' interface */
 #ifndef Win32
@@ -661,19 +679,32 @@ SEXP dotTclcallback(SEXP args)
 static void (* OldHandler)(void);
 static int OldTimeout;
 static int Tcl_loaded = 0;
+static int Tcl_lock = 0; /* reentrancy guard */
 
-static void TclHandler(void)
+static void TclSpinLoop(void *data)
 {
     while (Tcl_DoOneEvent(TCL_DONT_WAIT))
 	;
+}
+
+static void TclHandler(void)
+{
+    if (!Tcl_lock && Tcl_GetServiceMode() != TCL_SERVICE_NONE) {
+	Tcl_lock = 1;
+	(void) R_ToplevelExec(TclSpinLoop, NULL);
+	Tcl_lock = 0;
+    }
     /* Tcl_ServiceAll is not enough here, for reasons that escape me */
     OldHandler();
 }
 
 static int Gtk_TclHandler(void)
 {
-    while (Tcl_DoOneEvent(TCL_DONT_WAIT))
-	;
+    if (!Tcl_lock && Tcl_GetServiceMode() != TCL_SERVICE_NONE) {
+	Tcl_lock = 1;
+	(void) R_ToplevelExec(TclSpinLoop, NULL);
+	Tcl_lock = 0;
+    }
     return 1;
 }
 
@@ -804,14 +835,13 @@ void tcltk_init(void)
 		      (ClientData) NULL,
 		      (Tcl_CmdDeleteProc *) NULL);
 
-#ifdef Win32
-    Tcl_SetServiceMode(TCL_SERVICE_ALL);
-#else
+#ifndef Win32
     addTcl(); /* notice: this sets R_wait_usec.... */
     timeout.sec = 0;
     timeout.usec = R_wait_usec;
     Tcl_CreateEventSource(RTcl_setupProc, RTcl_checkProc, 0);
 #endif
+    Tcl_SetServiceMode(TCL_SERVICE_ALL);
 
 /*** We may want to revive this at some point ***/
 

@@ -5,6 +5,33 @@
 
 \name{plotmath}
 \alias{plotmath}
+\alias{symbol}
+\alias{plain}
+\alias{bold}
+\alias{italic}
+\alias{bolditalic}
+\alias{hat}
+\alias{bar}
+\alias{dot}
+\alias{ring}
+\alias{widehat}
+\alias{widetilde}
+\alias{displaystyle}
+\alias{textstyle}
+\alias{scriptstyle}
+\alias{scriptscriptstyle}
+\alias{underline}
+\alias{phantom}
+\alias{over}
+\alias{frac}
+\alias{atop}
+\alias{integral}
+\alias{inf}
+\alias{sup}
+\alias{group}
+\alias{bgroup}
+
+
 \title{Mathematical Annotation in R}
 \description{
   If the \code{text} argument to one of the text-drawing functions
@@ -129,11 +156,11 @@
     \code{group(lceil, x, rceil)} \tab special delimiters \cr
   }
 
-  The symbol font uses Adobe Symbol encoding so, for example, a
-  Greek lower case mu can be obtained either by the special
-  symbol \code{mu} or by \code{symbol("m")}.  This provides
-  access to symbols that have no special symbol name, for example,
-  the universal, or forall, symbol is \code{symbol("\\042")}.
+  The symbol font uses Adobe Symbol encoding so, for example, a lower
+  case mu can be obtained either by the special symbol \code{mu} or by
+  \code{symbol("m")}.  This provides access to symbols that have no
+  special symbol name, for example, the universal, or forall, symbol is
+  \code{symbol("\\042")}, and \emph{aleph} is \code{symbol("\\300")}.
 
   Note to TeX users: TeX's \code{\Upsilon} is \code{Upsilon1}, TeX's
   \code{\varepsilon} is close to \code{epsilon}, and there is no
@@ -151,6 +178,14 @@
   mathematical annotation in plots.
   \emph{Journal of Computational and Graphical Statistics},
   \bold{9}, 582--599.
+
+  The symbol codes can be found in octal in the Adobe reference manuals,
+  e.g. for Postscript
+  \url{http://www.adobe.com/products/postscript/pdfs/PLRM.pdf}
+  or PDF
+  \url{http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf}
+  and in decimal, octal and hex at
+  \url{http://www.stat.auckland.ac.nz/~paul/R/CM/AdobeSym.html}.
 }
 \seealso{
   \code{demo(plotmath)},

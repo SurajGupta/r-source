@@ -34,12 +34,12 @@ Sys.glob(paths, dirmark = FALSE)
   POSIX 1003.2 standard (see
   \url{http://www.opengroup.org/onlinepubs/009695399/functions/glob.html})
   but some OSes will go beyond this (in particular some BSD-based OSes also
-  do tilde expansion, see  \code{\link{path.expand}}).
+  do tilde expansion, see \code{\link{path.expand}}).
 
-  All systems should interpret \code{*} (match one of more characters),
+  All systems should interpret \code{*} (match zero or more characters),
   \code{?} (match a single character) and \code{[} (begin a character
   class or range).  If a filename starts with \code{.} this must be
-  matched explicitly.  Normally paths ending in \code{/} will be
+  matched explicitly.  By default paths ending in \code{/} will be
   accepted and matched only to directories.
 
   The rest of these details are indicative (and based on the POSIX
@@ -50,12 +50,12 @@ Sys.glob(paths, dirmark = FALSE)
   a single character against any of the characters specified.  The class
   cannot be empty, so \code{]} can be included provided it is first.  If
   the first character is \code{!}, the character class matches a single
-  character which is none of the \emph{none} of the specified
-  characters.
+  character which is \emph{none} of the specified characters.
   
   Character classes can include ranges such as \code{[A-Z]}: include
   \code{-} as a character by having it first or last in a class.  (The
-  interpretation of ranges should be locale-specific.)
+  interpretation of ranges should be locale-specific, so the example is
+  not a good idea in an Estonian locale.)
 
   One can remove the special meaning of \code{?}, \code{*}  and
   \code{[} by preceding them by a backslash (except within a
@@ -66,7 +66,7 @@ Sys.glob(paths, dirmark = FALSE)
   emulation that works in bytes (and not in characters): it may not work
   correctly in CJK locales.
 
-  Wildcards are \code{*} (match one of more characters), \code{?} (match
+  Wildcards are \code{*} (match zero or more characters) and \code{?} (match
   a single character). If a filename starts with \code{.} this must be
   matched explicitly.
 
@@ -75,8 +75,8 @@ Sys.glob(paths, dirmark = FALSE)
   which matches a single character against any of the characters
   specified.  The class cannot be empty, so \code{]} can be included
   provided it is first.  If the first character is \code{!}, the
-  character class matches a single character which is none of the
-  \emph{none} of the specified characters.
+  character class matches a single character which is \emph{none} of the
+  specified characters.
   
   Character classes can include ranges such as \code{[A-Z]}: include
   \code{-} as a character by having it first or last in a class.  (In the
@@ -84,7 +84,9 @@ Sys.glob(paths, dirmark = FALSE)
 
   One can remove the special meaning of \code{?}, \code{*}  and
   \code{[} by preceding them by a backslash (except within a
-  character class).
+  character class).  Note that on Windows \code{?} and \code{*} are not
+  valid in file names, so this is mainly for consistency with other
+  platforms.
 
   File paths in Windows are interpreted with separator \code{\\} or
   \code{/}.  Paths with a drive but relative (such as \code{c:foo\\bar})
@@ -94,14 +96,14 @@ Sys.glob(paths, dirmark = FALSE)
 \value{
   A character vector of matched file paths.  The order is
   system-specific (but in the order of the elements of \code{paths}): it
-  is normally collated in the current locale or in byte (ASCII) order.
+  is normally collated in either the current locale or in byte (ASCII) order.
 
   Directory errors are normally ignored, so the matches are to
   accessible file paths (but not necessarily accessible files).
 #ifdef unix
   
-  On platforms which do not have the \code{glob} system call,
-  \code{paths} is returned unchanged.
+  On platforms which do not have the \code{glob} system call (nor, as for
+  R under Windows, an emulation), \code{paths} is returned unchanged.
 #endif
 }
 \seealso{

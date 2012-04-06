@@ -41,7 +41,7 @@ is.numeric(x)
   \code{"\link{Date}"} and \code{"\link{POSIXt}"} (in all three cases
   the result is false).  Methods for \code{is.numeric} should only
   return true if the base type of the class is \code{double} or
-  \code{integer} \emph{and} and values can reasonably be regarded as
+  \code{integer} \emph{and} values can reasonably be regarded as
   numeric (e.g. arithmetic on them makes sense).
 }
 \value{
@@ -60,6 +60,25 @@ is.numeric(x)
 
   To ensure that \code{as.numeric}, \code{as.double} and \code{as.real}
   remain identical, S4 methods can only be set for \code{as.numeric}.
+}
+%% keep next the same in double.Rd & numeric.Rd
+\section{Note on names}{
+  It is a historical anomaly that \R has three names for its
+  floating-point vectors, \code{\link{double}}, \code{\link{numeric}}
+  and \code{\link{real}}.
+
+  \code{double} is the name of the \link{type}.
+  \code{numeric} is the name of the \link{mode} and also of the implicit
+  \link{class}.  As an S4 formal class, use \code{"numeric"} (there is a
+  deprecated formal class \code{"double"}).
+
+  \code{real} is deprecated and should not be used in new code.
+
+  The potential confusion is that \R has used \emph{\link{mode}}
+  \code{"numeric"} to mean \sQuote{double or integer}, which conflicts
+  with the S4 usage.  Thus \code{is.numeric} tests the mode, not the
+  class, but \code{as.numeric} (which is identical to \code{as.double})
+  coerces to the class.
 }
 \seealso{
   \code{\link{double}}, \code{\link{integer}}, \code{\link{storage.mode}}.

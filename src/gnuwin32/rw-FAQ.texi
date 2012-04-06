@@ -251,11 +251,10 @@ If you want to set up another project, make a new shortcut or use the
 existing one and change the `Start in' field of the Properties.
 
 You may if you prefer run R from the command line of any shell you use,
-for example an `MS-DOS window' (Windows 9x/ME), a `Command Prompt'
-(NT-based versions) or a port of a Unix shell such as @command{tcsh} or
-@command{bash}. (The command line can be anything you would put in the
-Target field of a shortcut, and the starting directory will be the
-current working directory of the shell.)
+for example a `Command Prompt' or a port of a Unix shell such as
+@command{tcsh} or @command{bash}. (The command line can be anything you
+would put in the Target field of a shortcut, and the starting directory
+will be the current working directory of the shell.)
 
 @node Can I run R from a CD or USB drive?, How do I UNinstall R?, How do I run it?, Installation and Usage
 @section Can I run R from a CD or USB drive?
@@ -268,9 +267,9 @@ will appear in the HTML packages list.)
 
 Running R does need access to a writable temporary directory and to a
 home directory, and in the last resort these are taken to be the current
-directory.  This should be no problem on a properly configured NT-based
-version of Windows, but otherwise does mean that it may not be possible
-to run R without creating a shortcut in a writable folder.
+directory.  This should be no problem on a properly configured version
+of Windows, but otherwise does mean that it may not be possible to run R
+without creating a shortcut in a writable folder.
 
 
 @node How do I UNinstall R?, What's the best way to upgrade?, Can I run R from a CD or USB drive?, Installation and Usage
@@ -322,12 +321,8 @@ Use @code{?Memory} and @code{?memory.size} for information about memory
 usage.  The limit can be raised by calling @code{memory.limit} within a
 running R session.
 
-R can be compiled to use a different memory manager which might be better
-at using large amounts of memory, but is substantially slower (making R
-several times slower on some tasks).
-
 The executables @file{Rgui.exe} and @file{Rterm.exe} support up to 3Gb
-per process under suitably enabled versions of Windows (see
+per process under suitably enabled versions of 32-bit Windows (see
 @uref{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}
 and @uref{http://msdn2.microsoft.com/en-us/library/aa366778.aspx}: where
 this is supported it may need to be specifically enabled).  On such
@@ -458,15 +453,11 @@ See @code{?Startup} for more details of environment files.
 
 @item
 For all applications via Windows.  How you set an environment variable
-is system specific: in Windows 9x you can set them in
-@file{autoexec.bat} or in an MS-DOS window from which you launch
-@command{Rgui} / @command{Rterm}.  Under Windows NT/2000/XP/2003 you can
-use the control panel or the properties of `My Computer'.  Under Windows
-ME you can use the System Configuration Utility (under Programs,
-Accessories, System Tools on the Start menu).  Under Vista, go to `User
-Accounts' in the Control Panel, and select your account and then `Change
-my environment variables'.  You may have to log out or reboot for such
-changes to take effect.
+is system specific: under Windows 2000/XP/2003 you can use `System' in
+the control panel or the properties of `My Computer' (under the
+`Advanced' tab).  Under Vista, go to `User Accounts' in the Control
+Panel, and select your account and then `Change my environment
+variables'.
 @end enumerate
 
 The order of precedence for environmental variables is the order in
@@ -1034,12 +1025,12 @@ OR use a package by, e.g.@:
 library(mypkg, lib.loc="p:/myRlib")
 @end example
 
-You can also have you a personal library, which defaults to the
-directory @file{R\win-library\@var{x.y}} of your home directory for
-versions @var{x.y.z} of R.  This location can be changed by setting
-the environment variable @env{R_LIBS_USER}, and can be found from inside
-R by running @code{Sys.getenv("R_LIBS_USER")}.  This will only be
-used if it exists so you may need to create it: you can use
+You can also have a personal library, which defaults to the directory
+@file{R\win-library\@var{x.y}} of your home directory for versions
+@var{x.y.z} of R.  This location can be changed by setting the
+environment variable @env{R_LIBS_USER}, and can be found from inside R
+by running @code{Sys.getenv("R_LIBS_USER")}.  This will only be used if
+it exists so you may need to create it: you can use
 
 @example
 dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)
@@ -1128,10 +1119,10 @@ installer and install them.
 Alternatively, if you have the environment variable @env{MY_TCLTK} set
 to a non-empty value, it is assumed that you want to use a different
 Tcl/Tk 8.4.x installation, and that this is set up correctly (with the
-DLLs in your path and @env{TCL_LIBRARY} set).  In that case you do not
-need the Tcl/Tk support files installed (but they can be).  Note that
-you do need 8.4.x and not 8.5.x.  (If you build R from the sources
-yourself you can configure it to use 8.5.x.)
+DLLs in your path and @env{TCL_LIBRARY} set if needed).  In that case
+you do not need the Tcl/Tk support files installed (but they can be).
+Note that you do need 8.4.x and not 8.5.x.  (If you build R from the
+sources yourself you can configure it to use 8.5.x.)
 
 
 @node  Hyperlinks in HTML do not work., update.packages() fails, Package TclTk does not work., Packages
@@ -1325,9 +1316,7 @@ library(rcompgen)
 @end example
 
 @noindent
-which also explains how the various types of completion work.  (Note
-that comtrary to the documentation in @code{rcompgen 0.1-10}, file
-completion is turned on by default on Windows.)
+which also explains how the various types of completion work.
 
 This feature is quite similar to the completion available in the
 @code{readline}-based command line interface on Unix-alikes: the MacOS X
@@ -1456,11 +1445,11 @@ some of the more common chips are available on CRAN in directory
 Installation and Administration Manual} for how to build an ATLAS
 @file{Rblas.dll} tuned to your system using the R sources.
 
-An alternative for those building from sources is to use AMD's Core Math
-Library (ACML) @url{http://www.amd.com/acml} (see the @emph{R
-Installation and Administration Manual} for details).  This does seem to
-run on a wide range of CPUs at speeds comparable to ATLAS, but the
-license conditions mean we cannot redistribute it.
+@c An alternative for those building from sources is to use AMD's Core Math
+@c Library (ACML) @url{http://www.amd.com/acml} (see the @emph{R
+@c Installation and Administration Manual} for details).  This does seem to
+@c run on a wide range of CPUs at speeds comparable to ATLAS, but the
+@c license conditions mean we cannot redistribute it.
 
 
 @node  How do I include compiled C code?, How do I debug code that I have compiled and dyn.load-ed?, Can I use a fast BLAS?, Building from Source

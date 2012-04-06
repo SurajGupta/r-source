@@ -531,7 +531,10 @@ data.frame <-
                 rows <- attr(xx, "row.names")
                 i <- pmatch(i, rows, duplicates.ok = TRUE)
             }
-            xj <- .subset2(xx, j)
+            ## need to figure which col was selected:
+            ## cannot use .subset2 directly as that may
+            ## use recursive selection for a logical index.
+            xj <- .subset2(.subset(xx, j), 1L)
             return(if(length(dim(xj)) != 2L) xj[i] else xj[i, , drop = FALSE])
         }
         if(any(is.na(cols))) stop("undefined columns selected")
@@ -584,20 +587,21 @@ data.frame <-
     x
 }
 
-"[[.data.frame" <- function(x, ...)
+"[[.data.frame" <- function(x, ..., exact=NA)
 {
     ## use in-line functions to refer to the 1st and 2nd ... arguments
     ## explicitly. Also will check for wrong number or empty args
-    if(nargs() < 3)
-	(function(x, i)
+    na <- nargs() - !missing(exact)
+    if(na < 3)
+	(function(x, i, exact)
 	  if(is.matrix(i)) as.matrix(x)[[i]]
- 	  else .subset2(x, i))(x, ...)
+ 	  else .subset2(x, i, exact=exact))(x, ..., exact=exact)
     else {
-        col <- .subset2(x, ..2)
+        col <- .subset2(x, ..2, exact=exact)
         i <- if(is.character(..1))
             pmatch(..1, row.names(x), duplicates.ok = TRUE)
         else ..1
-        .subset2(col, i)
+        .subset2(col, i, exact=exact)
     }
 }
 

@@ -37,7 +37,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 42671 $ ';
+my $revision = ' $Rev: 43268 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -77,7 +77,7 @@ my $gzip = R_getenv("R_GZIPCMD", "gzip");
 ## The tar.exe in Rtools has --force-local by default, but this 
 ## enables people to use Cygwin or MSYS tar. 
 my $tar_default = "tar";
-$tar_defualt = "tar --force-local" if $WINDOWS;
+$tar_default = "tar --force-local" if $WINDOWS;
 my $tar = R_getenv("TAR", $tar_default);
 my $libdir = R_tempfile("Rinst");
 
@@ -171,6 +171,24 @@ foreach my $pkg (@ARGV) {
     $log->message("removing junk files");
     find(\&unlink_junk_files, $pkgdir);
 
+       chdir(dirname($pkgdir));
+       my $filename = "${intname}_" . $description->{"Version"} . ".tar";
+    my $filepath = &file_path($startdir, $filename);
+    R_system(join(" ",
+                 ("$tar -chf",
+                  &shell_quote_file_path($filepath),
+                  "$pkgname")));
+    my $tmpdir = R_tempfile("Rbuild");
+    rmtree($tmpdir) if(-d $tmpdir);
+    mkdir("$tmpdir", 0755)
+       or die "Error: cannot create directory '$tmpdir'\n";
+    chdir($tmpdir);
+    ## was xhf, but there are no symbolic links here and that is invalid
+    ## on FreeBSD, see http://www.freebsd.org/cgi/man.cgi?query=tar&apropos=0&sektion=0&manpath=FreeBSD+5.4-RELEASE+and+Ports&format=html
+    R_system(join(" ",
+                 ("$tar -xf",
+                  &shell_quote_file_path($filepath))));
+
     my $exclude = R_tempfile("Rbuild-exclude");
     open(EXCLUDE, "> $exclude")
 	or die "Error: cannot open file '$exclude' for writing\n";
@@ -182,7 +200,7 @@ foreach my $pkg (@ARGV) {
     if(-f &file_path($pkgdir, ".Rbuildignore")) {
 	open(RBUILDIGNORE, &file_path($pkgdir, ".Rbuildignore"));
 	while(<RBUILDIGNORE>) {
-	    chop;
+	    chomp;
 	    push(@exclude_patterns, $_) if $_;
 	}
 	close(RBUILDIGNORE);
@@ -226,26 +244,8 @@ foreach my $pkg (@ARGV) {
 	    }
 	}
     }
-    chdir(dirname($pkgdir));
     find(\&find_exclude_files, "$pkgname");
     close(EXCLUDE);
-
-    my $filename = "${intname}_" . $description->{"Version"} . ".tar";
-    my $filepath = &file_path($startdir, $filename);
-    R_system(join(" ",
-		  ("$tar chf",
-		   &shell_quote_file_path($filepath),
-		   "$pkgname")));
-    my $tmpdir = R_tempfile("Rbuild");
-    rmtree($tmpdir) if(-d $tmpdir);
-    mkdir("$tmpdir", 0755)
-	or die "Error: cannot create directory '$tmpdir'\n";
-    chdir($tmpdir);
-    ## was xhf, but there are no symbolic links here and that is invalid
-    ## on FreeBSD, see http://www.freebsd.org/cgi/man.cgi?query=tar&apropos=0&sektion=0&manpath=FreeBSD+5.4-RELEASE+and+Ports&format=html
-    R_system(join(" ",
-		  ("$tar xf",
-		   &shell_quote_file_path($filepath))));
 
     ## Remove exclude files.
     open(EXCLUDE, "< $exclude");
@@ -261,10 +261,13 @@ foreach my $pkg (@ARGV) {
 	    or die "Error: cannot rename directory to '$intname'\n";
 	$pkgname = $intname;
     }
-    ## Fix up man, R and demo directories (in each package for a bundle)
+    ## Fix up man, R, demo inst/doc directories (in each package for a bundle)
     sub find_invalid_files {
 	my ($dpath) = @_;
 	my $Rcmd = "tools:::.check_package_subdirs(\"$dpath\", TRUE)\n";
+	## We don't run this in the C locale, as we only require
+	## certain filenames to start with ASCII letters/digits, and not
+	## to be entirely ASCII.
 	my @out = R_runR($Rcmd, "--vanilla --slave",
 			 "R_DEFAULT_PACKAGES=NULL");
 	@out = grep(!/^\>/, @out);
@@ -383,7 +386,7 @@ foreach my $pkg (@ARGV) {
 	    chdir("$libdir");
 	    copy(&file_path($pkgdir, "DESCRIPTION"), "DESCRIPTION");
 	    R_system(join(" ",
-			  ("$tar chf ",
+			  ("$tar -chf ",
 			   &shell_quote_file_path($filepath),
 			   @bundlepkgs, "DESCRIPTION")));
 	    R_system(join(" ",
@@ -403,7 +406,7 @@ foreach my $pkg (@ARGV) {
     } else {
 	$log->message("building '$filename.gz'");
 	R_system(join(" ",
-		      ("$tar chf",
+		      ("$tar -chf",
 		       &shell_quote_file_path($filepath),
 		       "$pkgname")));
 	R_system(join(" ",
@@ -650,7 +653,7 @@ sub fix_nonLF_in_source_files {
 		or die "Error: cannot open '$file.tmp' for writing\n";
             binmode(FILE); binmode(TFILE);	# for Windows
 	    while(<FILE>) {
-		chop;
+		chomp;
 		$has_nonLF = 1 if $_ =~ /\r/;
 		$_ =~ s/\r$//;
 		# any remaining CRs are internal and so line endings.
@@ -686,7 +689,7 @@ sub fix_nonLF_in_make_files {
 		or die "Error: cannot open '$file.tmp' for writing\n";
             binmode(FILE); binmode(TFILE);	# for Windows
 	    while(<FILE>) {
-		chop;
+		chomp;
 		$has_nonLF = 1 if $_ =~ /\r/;
 		$_ =~ s/\r$//;
 		# any remaining CRs are internal and so line endings.

@@ -20,7 +20,7 @@
 use Getopt::Long;
 use R::Utils;
 
-my $revision = ' $Rev: 42314 $ ';
+my $revision = ' $Rev: 43268 $ ';
 my $version;
 my $name;
 
@@ -72,7 +72,7 @@ sub doS3 {
   $output = "";
 
   foreach $_ (@lines) {
-    chop;
+    chomp;
     &substitute unless /^\./;
     my @word = split;
 

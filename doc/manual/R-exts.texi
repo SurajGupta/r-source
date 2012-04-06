@@ -259,22 +259,29 @@ the following standardized form.  Alternatives are indicated via
 vertical bars.  Individual specifications must be one of
 @itemize @bullet
 @item
-One of the ``standard'' abbreviations
+One of the ``standard'' short specifications
 @example
 GPL-2 GPL-3 LGPL-2 LGPL-2.1 LGPL-3 Artistic-1.0 Artistic-2.0
 @end example
 as made available via @url{http://@/www.r-project.org/@/Licenses/} and
-shipped in @file{share/licenses} in the R sources, or @samp{BSD} (see
-@url{http://@/www.opensource.org/@/licenses/@/bsd-license.php}).
+contained in subdirectory @file{share/licenses} of the R source or home
+directory.
 @item
-The full names (with commas removed) or abbrevations of open source
-licenses as approved by the Open Source Initiative (see
-@url{http://@/www.opensource.org/@/licenses/@/alphabetical}), possibly
-followed by a version restriction of the form @samp{(@var{op} @var{v})}
-with @var{op} one of the comparison operators @samp{<}, @samp{<=},
-@samp{>}, @samp{>=}, @samp{==}, or @samp{!=} and @var{v} a numeric
-version specification (strings of non-negative integers separated by
-@samp{.}), possibly combined via @samp{,} (see below for an example).
+The names of abbreviations of free or open software licenses as
+contained the the license data base in file
+@file{share/licenses/license.db} in the R source or home directory,
+possibly (for versioned licenses) followed by a version restriction of
+the form @samp{(@var{op} @var{v})} with @var{op} one of the comparison
+operators @samp{<}, @samp{<=}, @samp{>}, @samp{>=}, @samp{==}, or
+@samp{!=} and @var{v} a numeric version specification (strings of
+non-negative integers separated by @samp{.}), possibly combined via
+@samp{,} (see below for an example).  For versioned licenses, one can
+also specify the name followed by the version, or combine an existing
+abbreviation and the version with a @samp{-}.  Further free (see
+@url{http://@/www.fsf.org/@/licenses/@/license-list.html}) or open
+software (see
+@url{http://@/www.opensource.org/@/licenses/@/bsd-license.php}) licenses
+will be added to this data base if necessary.
 @item
 One of the strings @samp{file LICENSE} or @samp{file LICENCE} referring
 to a file named @file{LICENSE} or @file{LICENCE} in the package (source
@@ -287,7 +294,7 @@ Examples for standardized specifications include
 @example
 License: GPL-2
 License: GPL (>= 2) | BSD
-License: LGPL (>= 2.0, < 3) | Eclipse Public License
+License: LGPL (>= 2.0, < 3) | Mozilla Public License
 License: GPL-2 | file LICENCE
 @end example
 Please note in particular that ``Public domain'' is not a valid license.
@@ -464,15 +471,15 @@ vignettes}).
 @cindex Package subdirectories
 
 The @file{R} subdirectory contains @R{} code files, only.  The code
-files to be installed must start with a (lower or upper case) letter or
-digit and have one of the extensions @file{.R}, @file{.S}, @file{.q},
-@file{.r}, or @file{.s}.  We recommend using @file{.R}, as this
-extension seems to be not used by any other software.  It should be
-possible to read in the files using @code{source()}, so @R{} objects
-must be created by assignments.  Note that there need be no connection
-between the name of the file and the R objects created by it.  The @R{}
-code files should only create @R{} objects and not call functions with
-side effects such as @code{require} and @code{options}.
+files to be installed must start with an @acronym{ASCII} (lower or upper
+case) letter or digit and have one of the extensions @file{.R},
+@file{.S}, @file{.q}, @file{.r}, or @file{.s}.  We recommend using
+@file{.R}, as this extension seems to be not used by any other software.
+It should be possible to read in the files using @code{source()}, so
+@R{} objects must be created by assignments.  Note that there need be no
+connection between the name of the file and the R objects created by it.
+The @R{} code files should only create @R{} objects and not call
+functions with side effects such as @code{require} and @code{options}.
 
 Two exceptions are allowed: if the @file{R} subdirectory contains a file
 @file{sysdata.rda} (a saved image of @R{} objects) this will be
@@ -519,13 +526,13 @@ call @code{library.dynam.unload} to unload compiled code.
 
 The @file{man} subdirectory should contain (only) documentation files
 for the objects in the package in @dfn{R documentation} (Rd) format.
-The documentation files to be installed must start with a (lower or
-upper case @acronym{ASCII}) letter or digit and have the extension
-@file{.Rd} (the default) or @file{.rd}.  Further, the names must be
-valid in @samp{file://} URLs, which means@footnote{More precisely, they
-can contain the English alphanumeric characters and the symbols @samp{$
-- _ . + ! ' ( ) , ; @ = &}.}  they must be entirely @acronym{ASCII} and
-not contain @samp{%}.  @xref{Writing R documentation files}, for more
+The documentation filenames must start with an @acronym{ASCII} (lower or
+upper case) letter or digit and have the extension @file{.Rd} (the
+default) or @file{.rd}.  Further, the names must be valid in
+@samp{file://} URLs, which means@footnote{More precisely, they can
+contain the English alphanumeric characters and the symbols @samp{$ - _
+. + ! ' ( ) , ; @ = &}.}  they must be entirely @acronym{ASCII} and not
+contain @samp{%}.  @xref{Writing R documentation files}, for more
 information.  Note that all user-level objects in a package should be
 documented; if a package @var{pkg} contains user-level objects which are
 for ``internal'' use only, it should provide a file
@@ -966,7 +973,7 @@ slamc.o: slamc.f
 
 @noindent
 to ensure that the LAPACK routines find some constants without infinite
-looping.  The Windows equivalent would be
+looping.  The Windows equivalent is
 
 @smallexample
 slamc.o: slamc.f
@@ -988,9 +995,8 @@ after:
 @end smallexample
 
 @noindent
-On Windows, one can do is to add dependencies to the @samp{all}
-target (which is what will get called), e.g.@: (based on package
-@pkg{rcom})
+On Windows, one can add dependencies to the @samp{all} target (which is
+what will get called), e.g.@: (based on package @pkg{rcom})
 
 @smallexample
 all: ../inst/tst/bin/rcom_test.exe extraclean
@@ -1512,8 +1518,8 @@ documents are automatically created.  Documents in @file{inst/doc} can
 be in arbitrary format, however we strongly recommend to provide them in
 PDF format, such that users on all platforms can easily read them.  To
 ensure that they can be accessed from a browser, the file names should
-start with an @acronym{ASCII} letter and be entirely in @acronym{ASCII}
-letters or digits or minus or underscore.
+start with an @acronym{ASCII} letter and be comprised entirely of
+@acronym{ASCII} letters or digits or minus or underscore.
 
 A special case are documents in Sweave format, which we call
 @emph{package vignettes}.  Sweave allows the integration of @LaTeX{}
@@ -1713,8 +1719,8 @@ export(f, g)
 
 @noindent
 specifies that the variables @code{f} and @code{g} are to be exported.
-(Note that variable names may be quoted, and non-standard names such as
-@code{[<-.fractions} must be.)
+(Note that variable names may be quoted, and reserved words and
+non-standard names such as @code{[<-.fractions} must be.)
 
 For packages with many variables to export it may be more convenient to
 specify the names to export with a regular expression using
@@ -1796,6 +1802,9 @@ defined in a package that does not use a name space should be exported,
 and the package defining and exporting the methods should be attached to
 the search path if the methods are to be found.
 
+(Note that function and class names may be quoted, and reserved words
+and non-standard names such as @code{[<-} and @code{function} must
+be.)
 
 @node Load hooks, An example, Registering S3 methods, Package name spaces
 @subsection Load hooks
@@ -2347,7 +2356,7 @@ locale via an environment variable.  The default is equivalent setting
 
 @noindent
 which is appropriate for a system based on @code{glibc}, except if the
-current locale in UTF-8 and @samp{iconv} is available, when the
+current locale is UTF-8 and @samp{iconv} is available, when the
 package code is translated to UTF-8 for syntax checking.
 
 
@@ -4977,6 +4986,7 @@ $7 = 5
 * Registering native routines::  
 * Creating shared objects::     
 * Interfacing C++ code::        
+* Fortran I/O::                 
 * Handling R objects in C::     
 * Interface functions .Call and .External::  
 * Evaluating R expressions from C::  
@@ -5003,7 +5013,8 @@ vector.
 The function @code{system.time}
 @findex system.time
 is available for timing (although the information available may be
-limited on non-Unix-like platforms).
+limited on non-Unix-like platforms: these days only on the obsolete
+Windows 9x/ME).
 
 @node Interface functions .C and .Fortran, dyn.load and dyn.unload, Operating system access, System and foreign language interfaces
 @section Interface functions @code{.C} and @code{.Fortran}
@@ -5569,7 +5580,7 @@ not libraries) supplied to @code{R CMD SHLIB} will be exported from the
 DLL.  An example is @file{stats-win.def} for the @pkg{stats} package.
 
 
-@node Interfacing C++ code, Handling R objects in C, Creating shared objects, System and foreign language interfaces
+@node Interfacing C++ code, Fortran I/O, Creating shared objects, System and foreign language interfaces
 @section Interfacing C++ code
 @cindex Interfacing C++ code
 @cindex C++ code, interfacing
@@ -5693,7 +5704,27 @@ some @R{} headers as they in turn include C header files that may cause
 conflicts---if this happens, define @samp{NO_C_HEADERS} before including
 the @R{} headers, and include the appropriate headers yourself.
 
-@node Handling R objects in C, Interface functions .Call and .External, Interfacing C++ code, System and foreign language interfaces
+@node Fortran I/O, Handling R objects in C, Interfacing C++ code, System and foreign language interfaces
+@section Fortran I/O
+
+We have already warned against the use of C++ iostreams not least
+because output is not guaranteed to appear on the @R{} console, and
+this warning applies equally to Fortran output to units @code{*} and
+@code{6}. @xref{Printing from FORTRAN}, which describes workarounds.
+
+In the past most Fortran compilers implemented I/O on top of the C I/O
+system and so the two interworked successfully.  This was true of
+@command{g77}, but it is less true of @command{gfortran} as used in
+@code{gcc 4.y.x}.  In particular, any package that makes use of
+Fortran I/O will when compiled on Windows interfere with C I/O: when
+the Fortran I/O is initialized (typically when the package is loaded)
+the C @code{stdout} and @code{stderr} are switched to LF line endings.
+The @command{gfortran} I/O system assumes that it has exclusive access
+to @code{stdin}/@code{stdout}/@code{stderr} and so should be avoided
+if at all possible.  Function @code{La_Init} in file
+@file{src/main/lapack.c} shows how to mitigate the worst effects.
+
+@node Handling R objects in C, Interface functions .Call and .External, Fortran I/O, System and foreign language interfaces
 @section Handling R objects in C
 @cindex Handling R objects in C
 
@@ -7439,7 +7470,7 @@ from @code{SET_STRING_ELT} and @code{SET_VECTOR_ELT} which are always
 functions.)
 
 As from @R{} 2.4.0 the accessor functions check that they are being used
-on an appropriate type of @code{SEXP}.  By default an certain amount of
+on an appropriate type of @code{SEXP}.  By default a certain amount of
 misuse is allowed where the internal representation is the same: for
 example @code{LOGICAL} can be used on a @code{INTSXP} and
 @code{SET_VECTOR_ELT} on a @code{STRSXP}.  Strict checking can be
@@ -7450,7 +7481,7 @@ variable @samp{DEFS} on a Unix-alike).
 If efficiency is essential, the macro versions of the accessors can be 
 obtained by defining @samp{USE_RINTERNALS} before including
 @file{Rinternals.h}.  If you find it necessary to do so, please do test
-that your code compiled without @samp{USE_RINTERNALS} defined as this
+that your code compiled without @samp{USE_RINTERNALS} defined, as this
 provides a stricter test that the accessors have been used correctly.
 
 @node Character encoding issues,  , Vector accessor functions, System and foreign language interfaces
@@ -8786,7 +8817,7 @@ to read the seeds).
 
 The header files which @R{} installs are in directory
 @file{@var{R_INCLUDE_DIR}} (default @file{@var{R_HOME}/include}).  This
-currently contains
+currently includes
 
 @quotation
 @multitable @columnfractions 0.30 0.55
@@ -8799,25 +8830,26 @@ above
 @item @file{Rmath.h} @tab standalone math library
 @item @file{Rversion.h} @tab @R{} version information
 @item @file{Rinterface.h} @tab for add-on front-ends (Unix-alikes only)
-@item @file{R_ext/RStartup.h} @tab ditto
-@item @file{R_ext/eventloop.h} @tab for add-on front-ends and for packages that need to
-share in the @R{} event loops (on all platforms)
+@item @file{Rembedded.h} @tab for add-on front-ends
 @item @file{R_ext/Applic.h} @tab optimization and integration
 @item @file{R_ext/BLAS.h} @tab C definitions for BLAS routines
+@item @file{R_ext/Callbacks.h} @tab C (and R function) top-level task
+handlers
+@item @file{R_ext/GetX11Image.h} @tab X11Image interface used by package
+@pkg{trkplot}
 @item @file{R_ext/Lapack.h} @tab C definitions for some LAPACK routines
 @item @file{R_ext/Linpack.h} @tab C definitions for some LINPACK
 routines, not all of which are included in @R{}
-@item @file{R_ext/GetX11Image.h} @tab X11Image interface used by package
-@pkg{trkplot}
 @item @file{R_ext/Parse.h} @tab a small part of @R{}'s parse interface
-@item @file{R_ext/Callbacks.h} @tab C (and R function) top-level task
-handlers
 @item @file{R_ext/RConvertors.h}
 @item @file{R_ext/Rdynload.h} @tab needed to register compiled code in
 packages
 @item @file{R_ext/R-ftp-http.h} @tab interface to internal method of
 @code{download.file}
 @item @file{R_ext/Riconv.h} @tab interface to @code{iconv}
+@item @file{R_ext/RStartup.h} @tab for add-on front-ends
+@item @file{R_ext/eventloop.h} @tab for add-on front-ends and for
+packages that need to share in the @R{} event loops (on all platforms)
 @end multitable
 @end quotation
 
@@ -8846,6 +8878,9 @@ The following headers are included by @file{R.h}:
 The graphics systems are exposed in headers @file{Rdevices.h} (for
 writing graphics devices), @file{Rgraphics.h} and
 @file{R_ext/Graphics@{Base,Device,Engine@}.h}.
+Some entry points from the @pkg{stats}
+package are in @file{R_ext/stats_package.h} (currently related to the
+internals of @samp{nls} and @samp{nlminb}).
 
 
 @node Generic functions and methods, Linking GUIs and other front-ends to R, The R API, Top
@@ -9026,10 +9061,10 @@ There are a number of ways to build front-ends to @R{}: we take this to
 mean a GUI or other application that has the ability to submit commands
 to @R{} and perhaps to receive results back (not necessarily in a text
 format).  There are other routes besides those described here, for
-example @samp{Rserve} (see @url{http://www.rosuda.org/Rserve}) and
-connections to Java in @samp{SJava} (see
-@url{http://www.omegahat.org/RSJava/} and @samp{JRI}, part of the
-@pkg{rJava} package on CRAN).
+example the package @pkg{Rserve} (from CRAN, see also
+@url{http://www.rforge.net/Rserve/}) and connections to Java in
+@samp{SJava} (see @url{http://www.omegahat.org/RSJava/} and @samp{JRI},
+part of the @pkg{rJava} package on CRAN).
 
 @menu
 * Embedding R under Unix-alikes::  
@@ -9081,7 +9116,7 @@ Setting @env{R_HOME} and checking it is valid, as well as the path
 @item
 Setting @env{LD_LIBRARY_PATH} to include the directories used in linking
 @R{}.  This is recorded as the default setting of
-@env{R_LD_LIBRARY_PATH} in the shell script.
+@env{R_LD_LIBRARY_PATH} in the shell script @file{R_HOME/etc/ldpaths}.
 
 @item
 Processing some of the arguments, for example to run @R{} under a
@@ -9103,7 +9138,8 @@ first for executables in @file{@var{R_HOME}/bin}.)  If you do not want
 to run your front-end in this way, you need to ensure that @env{R_HOME}
 is set and @env{LD_LIBRARY_PATH} is suitable.  (The latter might well
 be, but modern Unix/Linux systems do not normally include
-@file{/usr/local/lib}, and @R{} does look there for system components.)
+@file{/usr/local/lib} (@file{/usr/local/lib64} on some architectures),
+and @R{} does look there for system components.)
 
 The other senses in which this example is too simple are that all the
 internal defaults are used and that control is handed over to the
