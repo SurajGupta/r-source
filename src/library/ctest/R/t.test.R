@@ -32,7 +32,7 @@ t.test <- function(x, y=NULL, alternative = c("two.sided", "less", "greater"),
 	y <- NULL
     }
     nx <- length(x)
-    if(nx <= 2) stop("not enough x observations")
+    if(nx < 2) stop("not enough x observations")
     mx <- mean(x)
     vx <- var(x)
     estimate <- mx
@@ -44,7 +44,7 @@ t.test <- function(x, y=NULL, alternative = c("two.sided", "less", "greater"),
 	names(estimate) <- ifelse(paired,"mean of the differences","mean of x")
     } else {
 	ny <- length(y)
-	if(ny <= 2) stop("not enough y observations")
+	if(ny < 2) stop("not enough y observations")
 	my <- mean(y)
 	vy <- var(y)
 	method <- paste(if(!var.equal)"Welch", "Two Sample t-test")
@@ -54,30 +54,29 @@ t.test <- function(x, y=NULL, alternative = c("two.sided", "less", "greater"),
 	    df <- nx+ny-2
 	    v <- ((nx-1)*vx + (ny-1)*vy)/df
 	    stderr <- sqrt(v*(1/nx+1/ny))
-	    tstat <- (mx-my-mu)/stderr
 	} else {
 	    stderrx <- sqrt(vx/nx)
 	    stderry <- sqrt(vy/ny)
 	    stderr <- sqrt(stderrx^2 + stderry^2)
 	    df <- stderr^4/(stderrx^4/(nx-1) + stderry^4/(ny-1))
-	    tstat <- (mx - my - mu)/stderr
 	}
+        tstat <- (mx - my - mu)/stderr
     }
     if (alternative == "less") {
 	pval <- pt(tstat, df)
-	cint <- c(NA, tstat * stderr + qt(conf.level, df) * stderr)
+	cint <- c(NA, tstat + qt(conf.level, df) )
     }
     else if (alternative == "greater") {
-	pval <- 1 - pt(tstat, df)
-	cint <- c(tstat * stderr - qt(conf.level, df) * stderr, NA)
+	pval <- pt(tstat, df, lower = FALSE)
+	cint <- c(tstat - qt(conf.level, df), NA)
     }
     else {
 	pval <- 2 * pt(-abs(tstat), df)
 	alpha <- 1 - conf.level
-	cint <- c(tstat * stderr - qt((1 - alpha/2), df) * stderr,
-		  tstat * stderr + qt((1 - alpha/2), df) * stderr)
+        cint <- qt(1 - alpha/2, df)
+	cint <- tstat + c(-cint, cint)
     }
-    cint <- cint+mu
+    cint <- mu + cint * stderr
     names(tstat) <- "t"
     names(df) <- "df"
     names(mu) <- if(paired || !is.null(y)) "difference in means" else "mean"

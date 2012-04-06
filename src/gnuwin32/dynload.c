@@ -56,13 +56,13 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
 #include <string.h>
 #include <stdlib.h>
+#include <Defn.h>
+#include <Rmath.h>
 #include <direct.h>
 #include <windows.h>
 
@@ -101,7 +101,7 @@ void InitFunctionHashing()
 }
 
 
-#define MAX_NUM_DLLS    30
+#define MAX_NUM_DLLS	100
 
 static int CountDLL = 0;
 
@@ -128,11 +128,13 @@ static int DeleteDLL(char *path)
     return 0;
 found:
 #ifdef CACHE_DLL_SYM
-    for(i = 0; i < nCPFun; i++)
+    for(i = nCPFun - 1; i >= 0; i--)
 	if(!strcmp(CPFun[i].pkg, LoadedDLL[loc].name)) {
-	    strcpy(CPFun[i].pkg, CPFun[nCPFun].pkg);
-	    strcpy(CPFun[i].name, CPFun[nCPFun].name);
-	    CPFun[i].func = CPFun[nCPFun--].func;
+	    if(i < nCPFun - 1) {
+		strcpy(CPFun[i].name, CPFun[--nCPFun].name);
+		strcpy(CPFun[i].pkg, CPFun[nCPFun].pkg);
+		CPFun[i].func = CPFun[nCPFun].func;
+	    } else nCPFun--;
 	}
 #endif
     free(LoadedDLL[loc].name);
@@ -216,6 +218,7 @@ static int AddDLL(char *path, int asLocal, int now)
     LoadedDLL[CountDLL].name = name;
     LoadedDLL[CountDLL].dlh = tdlh;
     CountDLL++;
+
     return 1;
 }
 
@@ -233,8 +236,8 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 
 #ifdef CACHE_DLL_SYM
     for (i = 0; i < nCPFun; i++)
-	if (!strcmp(pkg, CPFun[i].pkg) && 
-	    !strcmp(name, CPFun[i].name))
+	if (!strcmp(name, CPFun[i].name) && 
+	    (all || !strcmp(pkg, CPFun[i].pkg)))
 	    return CPFun[i].func;
 #endif
 
@@ -246,7 +249,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 	    if (fcnptr != (DL_FUNC) NULL) {
 #ifdef CACHE_DLL_SYM
 		if(strlen(pkg) <= 20 && strlen(name) <= 20 && nCPFun < 100) {
-		    strcpy(CPFun[nCPFun].pkg, pkg);
+		    strcpy(CPFun[nCPFun].pkg, LoadedDLL[i].name);
 		    strcpy(CPFun[nCPFun].name, name);
 		    CPFun[nCPFun++].func = fcnptr;
 		}
@@ -296,6 +299,8 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 
 static void GetFullDLLPath(SEXP call, char *buf, char *path)
 {
+    char *p;
+
     if ((path[0] != '/') && (path[0] != '\\') && (path[1] != ':')) {
 	if (!getcwd(buf, MAX_PATH))
 	    errorcall(call, "can't get working directory!");
@@ -303,6 +308,8 @@ static void GetFullDLLPath(SEXP call, char *buf, char *path)
 	strcat(buf, path);
     } else
 	strcpy(buf, path);
+    /* fix slashes to allow inconsistent usage later */
+    for (p = buf; *p; p++) if (*p == '\\') *p = '/';
 }
 
         /* do_dynload implements the R-Interface for the */
@@ -315,7 +322,7 @@ SEXP do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (!isString(CAR(args)) || length(CAR(args)) != 1)
 	errorcall(call, "character argument expected");
-    GetFullDLLPath(call, buf, CHAR(STRING(CAR(args))[0]));
+    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
     DeleteDLL(buf);
     if (!AddDLL(buf,LOGICAL(CADR(args))[0],LOGICAL(CADDR(args))[0]))
 	errorcall(call, "unable to load shared library \"%s\":\n  %s",
@@ -330,7 +337,7 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (!isString(CAR(args)) || length(CAR(args)) != 1)
 	errorcall(call, "character argument expected");
-    GetFullDLLPath(call, buf, CHAR(STRING(CAR(args))[0]));
+    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
     if (!DeleteDLL(buf))
 	errorcall(call, "dynamic library \"%s\" was not loaded", buf);
     return R_NilValue;

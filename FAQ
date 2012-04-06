@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 1.1-8, 2000-08-14
+Version 1.2-2, 2000-12-13
 Kurt Hornik
 
 
@@ -54,7 +54,7 @@ Table of Contents
   6.2 Should I run R from within Emacs?
   6.3 Debugging R from within Emacs
 
-7 R Miscellania
+7 R Miscellanea
   7.1 Why does R run out of memory?
   7.2 Why does sourcing a correct file fail?
   7.3 How can I set components of a list to NULL?
@@ -70,11 +70,14 @@ Table of Contents
   7.13 How do I convert factors to numeric?
   7.14 Are Trellis displays implemented in R?
   7.15 What are the enclosing and parent environments?
+  7.16 How can I substitute into a plot label?
+  7.17 What are valid names?
 
 8 R Programming
   8.1 How should I write summary methods?
   8.2 How can I debug dynamically loaded code?
   8.3 How can I inspect R objects when debugging?
+  8.4 How can I change compilation flags?
 
 9 R Bugs
   9.1 What is a bug?
@@ -171,7 +174,7 @@ differences between R and S?::, for further details.
    The core of R is an interpreted computer language which allows branching
 and looping as well as modular programming using functions.  Most of the
 user-visible functions in R are written in R.  It is possible for the user
-to interface to procedures written in the C, C++, or Fortran languages for
+to interface to procedures written in the C, C++, or FORTRAN languages for
 efficiency.  The R distribution contains functionality for a large number
 of statistical procedures.  Among these are: linear and generalized linear
 models, nonlinear regression models, time series analysis, classical
@@ -182,10 +185,10 @@ modules ("add-on packages") are available for a variety of specific
 purposes (*note R Add-On Packages::).
 
    R was initially written by Ross Ihaka <Ross.Ihaka@r-project.org> and
-Robert Gentleman <Robert.Gentleman@r-project.org>, who are Senior Lecturers
-at the Department of Statistics of the University of Auckland in Auckland,
-New Zealand.  In addition, a large group of individuals has contributed to
-R by sending code and bug reports.
+Robert Gentleman <Robert.Gentleman@r-project.org> at the Department of
+Statistics of the University of Auckland in Auckland, New Zealand.  In
+addition, a large group of individuals has contributed to R by sending code
+and bug reports.
 
    Since mid-1997 there has been a core group (the "R Core Team") who can
 modify the R source code CVS archive.  The group currently consists of Doug
@@ -204,17 +207,17 @@ project ("GNU S").
 systems.
 
    The current version of R will configure and build under a number of
-common Unix platforms including i386-freebsd, i386-linux, ppc-linux,
-mips-sgi-irix, alpha-linux, alpha-dec-osf4, rs6000-ibm-aix, hppa-hp-hpux,
-sparc-linux, and sparc-sun-solaris.
+common Unix platforms including i386-freebsd, i386-linux, ix86-sun-solaris,
+ppc-linux, mips-sgi-irix, alpha-linux, alpha-dec-osf4, rs6000-ibm-aix,
+hppa-hp-hpux, sparc-linux, and sparc-sun-solaris.
 
    If you know about other platforms, please drop us a note.
 
 2.3 What is the current version of R?
 =====================================
 
-   The current stable Unix/Windows version is 1.1.1, the unstable one is
-1.2.0.  Typically, new features are introduced in the development versions;
+   The current stable Unix/Windows version is 1.2.0, the unstable one is
+1.3.0.  Typically, new features are introduced in the development versions;
 updates of stable versions are for bug fixes mostly.  The version for the
 Mac is pre-alpha.
 
@@ -311,10 +314,10 @@ install-dvi', `make install-info' and `make install-pdf', respectively.
 2.5.2 How can R be installed (Windows)
 --------------------------------------
 
-   The `bin/windows/windows-NT' directory of a CRAN site contains the
-latest binary distributions of R for 32 bit versions of MS Windows (i.e.,
-95, 98 or NT), as well as binary distributions for a large number of add-on
-packages from CRAN.  The Windows version of R was created by Robert
+   The `bin/windows' directory of a CRAN site contains binaries for a base
+distribution and a large number of add-on packages from CRAN to run on
+Windows 95, 98, NT4, 2000 and ME (at least) on Intel and clones (but not on
+other platforms).  The Windows version of R was created by Robert
 Gentleman, and is now being developed and maintained by Guido Masarotto
 <Guido.Masarotto@r-project.org> and Brian D. Ripley
 <Brian.Ripley@r-project.org>.
@@ -328,18 +331,31 @@ more details.
 2.5.3 How can R be installed (Macintosh)
 ----------------------------------------
 
-   The Power Macintosh port is temporarily on hold, and currently no binary
-distribution is available.  We hope that this will change soon.
+   A binhexed self-extracting archive containing a pre-alpha port of R
+1.1.1 for MacOS has recently been made available by Stefano Iacus
+<stefano.iacus@unimi.it> at `http://www.eco-dip.unimi.it/R/'.
 
 2.6 Are there Unix binaries for R?
 ==================================
 
    The `bin/linux' directory of a CRAN site contains Debian 2.2/2.3
 packages for the i386 platform (now part of the Debian distribution and
-maintained by Doug Bates), Red Hat 6.x packages for the alpha, i386 and
-sparc platforms (maintained by Naoki Takebayashi, Martyn Plummer, and Vin
-Everett, respectively), SuSE 5.3/6.4 i386 packages by Albrecht Gebhardt,
-and Linuxppc 5.0 RPMs by Alex Buerkle.
+maintained by Doug Bates), Red Hat 6.x packages for the alpha and sparc
+platforms and 6.x/7.x packages for the i386 platform (maintained by Naoki
+Takebayashi, Vin Everett, and Martyn Plummer, respectively), SuSE
+5.3/6.4/7.0 i386 packages by Albrecht Gebhardt, Mandrake 7.1 i386 packages
+by Michele Alzetta, and Linuxppc 5.0 RPMs by Alex Buerkle.
+
+   The Debian packages can be accessed through APT, the Debian package
+maintenance tool.  Simply add the line
+
+     deb http://cran.r-project.org/bin/linux/debian DISTRIBUTION main
+
+(where DISTRIBUTION is either `stable' or `unstable'; feel free to use a
+CRAN mirror instead of the master) to the file `/etc/apt/sources.list'.
+Once you have added that line the programs `apt-get', `apt-cache', and
+`dselect' (using the apt access method) will automatically detect and
+install updates of the R packages.
 
    The `bin/osf' directory of a CRAN site contains RPMs by Albrecht
 Gebhardt for alpha systems running Digital Unix 4.0.
@@ -372,10 +388,12 @@ available for web browsing at `http://stat.ethz.ch/R/manual/'.
      creating R add-on packages, writing R documentation, R's system and
      foreign language interfaces, and the R API.
 
-Furthermore, the "R Language Definition" manual (`R-lang') is currently
-being written, and will be available in R version 1.2.  This is the
-"Kernighan & Ritchie of R", explaining evaluation, parsing, object oriented
-programming, computing on the language, and so forth.
+   * "R Data Import/Export" (`R-data') is a guide to importing and
+     exporting data to and from R.
+
+   * "The R Language Definition" (`R-lang'), a first version of the
+     "Kernighan & Ritchie of R", explains evaluation, parsing, object
+     oriented programming, computing on the language, and so forth.
 
    In addition to material written specifically for R, documentation for
 S/S-PLUS (see *Note R and S::) can be used in combination with this FAQ
@@ -405,6 +423,7 @@ analysis software systems.  See
      A. Krause and M. Olsen (1997), "The Basics of S and S-PLUS", Springer.
 
    The book
+
      J. C. Pinheiro and D. M. Bates (2000), "Mixed-Effects Models in S and
      S-PLUS", Springer, ISBN 0-387-98957-0
 
@@ -412,8 +431,26 @@ provides a comprehensive guide to the use of the *nlme* package for linear
 and nonlinear mixed-effects models.  This has a home page at
 `http://nlme.stat.wisc.edu/MEMSS/'.
 
+   As an example of how R can be used in teaching an advanced introductory
+statistics course, see
+
+     D. Nolan and T. Speed (2000), "Stat Labs: Mathematical Statistics
+     Through Applications", Springer Texts in Statistics, ISBN 0-387-98974-9
+
+This integrates theory of statistics with the practice of statistics
+through a collection of case studies ("labs"), and uses R to analyze the
+data.  More information can be found at
+`http://www.stat.Berkeley.EDU/users/statlabs/'.
+
    Last, but not least, Ross' and Robert's experience in designing and
-implementing R is described in:
+implementing R is described in Ihaka & Gentleman (1996), "R: A Language for
+Data Analysis and Graphics", _Journal of Computational and Graphical
+Statistics_, *5*, 299-314.  *Note Citing R::.
+
+2.8 Citing R
+============
+
+   To cite R in publications, use
 
      @article{,
        author =    {Ross Ihaka and Robert Gentleman},
@@ -424,13 +461,6 @@ implementing R is described in:
        number =    3,
        pages =     {299--314}
      }
-
-2.8 Citing R
-============
-
-   To cite R in publications, use the above Ihaka & Gentleman (1996), "R: A
-Language for Data Analysis and Graphics", _Journal of Computational and
-Graphical Statistics_, *5*, 299-314.
 
 2.9 What mailing lists exist for R?
 ===================================
@@ -521,7 +551,7 @@ Tracking system.
 <wwwadmin@cran.r-project.org>.
 
      *Note:*  It is very important that you indicate the copyright
-     (license) information (GPL, BSD, Artistic, ...) in your submission.
+     (license) information (GPL, BSD, Artistic, ...)  in your submission.
 
    Please always use the URL of the master site when referring to CRAN.
 
@@ -749,11 +779,9 @@ optimizer supports this.
 state.  A simple example (taken from Abelson and Sussman) is obtained by
 typing `demo(scoping)' at the R prompt.  Further information is provided in
 the standard R reference "R: A Language for Data Analysis and Graphics"
-(*note What documentation exists for R?::) and a paper on "Lexical Scope
-and Statistical Computing" by Robert Gentleman and Ross Ihaka which can be
-obtained from the `doc/misc' directory of a CRAN site and will appear in the
-_Journal of Computational and Graphical Statistics_ around the beginning of
-2000.
+(*note What documentation exists for R?::) and in Robert Gentleman and Ross
+Ihaka (2000), "Lexical Scope and Statistical Computing", _Journal of
+Computational and Graphical Statistics_, *9*, 491-508.
 
    Lexical scoping also implies a further major difference.  Whereas S
 stores all objects as separate files in a directory somewhere (usually
@@ -851,10 +879,12 @@ the same time being as compatible as possible with S.
      use `TRUE' and `FALSE'.
 
    * In R, `dyn.load()' can only load _shared libraries_, as created for
-     example by `R SHLIB'.
+     example by `R CMD SHLIB'.
 
-   * In R, `attach()' currently only works for lists and data frames (not
-     for directories).  Also, you cannot attach at position 1.
+   * In R, `attach()' currently only works for lists and data frames, but
+     not for directories.  (In fact, `attach()' also works for R data files
+     created with `save()', which is analogous to attaching directories in
+     S.)  Also, you cannot attach at position 1.
 
    * Categories do not exist in R, and never will as they are deprecated now
      in S.  Use factors instead.
@@ -912,7 +942,9 @@ the same time being as compatible as possible with S.
      equivalent to S, until assignment takes place.
 
    * In R, `eval(EXPR, sys.parent())' does not work.  Instead, one should
-     use `eval(EXPR, sys.frame(sys.parent())),' which also works in S.
+     use either `eval(EXPR, sys.frame(sys.parent())),' which also works in
+     S, or `eval(EXPR, parent.frame())', which is more efficient but does
+     not work in S.
 
    * In S, the index variable in a `for()' loop is local to the inside of
      the loop.  In R it is local to the environment where the `for()'
@@ -920,6 +952,17 @@ the same time being as compatible as possible with S.
 
    * In S, `tapply(simplify=TRUE)' returns a vector where R returns a
      one-dimensional array (which can have named dimnames).
+
+   * In S(-PLUS) the C locale is used, whereas in R the current operating
+     system locale is used for determining which characters are
+     alphanumeric and how they are sorted.  This affects the set of valid
+     names for R objects (for example accented chars may be allowed in R)
+     and ordering in sorts and comparisons (such as whether `"aA" < "Bb"' is
+     true or false).  From version 1.2.0 the locale can be (re-)set in R by
+     the `Sys.setlocale()' function.
+
+   * In S, `missing(ARG)' remains `TRUE' if ARG is subsequently modified;
+     in R it doesn't.
 
 
    There are also differences which are not intentional, and result from
@@ -941,19 +984,20 @@ handling of line types, more convenient color handling (via palettes),
 gamma correction for color, and, most importantly, mathematical annotation
 in plot texts, via input expressions reminiscent of TeX constructs.  See
 the help page for `plotmath', which features an impressive on-line example.
-The paper "An Approach to Providing Mathematical Annotation in Plots" by
-Paul Murrell and Ross Ihaka, which will soon appear in the _Journal of
-Computational and Graphical Statistics_, has more details on this.
+More details can be found in Paul Murrell and Ross Ihaka (2000), "An
+Approach to Providing Mathematical Annotation in Plots", _Journal of
+Computational and Graphical Statistics_, *9*, 582-599.
 
 4 R Web Interfaces
 ******************
 
-   *Rcgi* is a CGI WWW interface to R by Mark J. Ray <h089@mth.uea.ac.uk>.
-Recent versions have the ability to use "embedded code": you can mix user
-input and code, allowing the HTML author to do anything from load in data
-sets to enter most of the commands for users without writing CGI scripts.
-Graphical output is possible in PostScript or GIF formats and the executed
-code is presented to the user for revision.
+   *Rcgi* is a CGI WWW interface to R by Mark J. Ray
+<mjr@stats.mth.uea.ac.uk>.  Recent versions have the ability to use
+"embedded code": you can mix user input and code, allowing the HTML author
+to do anything from load in data sets to enter most of the commands for
+users without writing CGI scripts.  Graphical output is possible in
+PostScript or GIF formats and the executed code is presented to the user
+for revision.
 
    Demo and download are available from
 `http://www.mth.uea.ac.uk/~h089/Rcgi/'.
@@ -1041,27 +1085,41 @@ works, was published in the Journal of Statistical Software
      A set of test nonlinear least squares examples from NIST, the U.S.
      National Institute for Standards and Technology.
 
+*PHYLOGR*
+     Manipulation and analysis of phylogenetically simulated data sets (as
+     obtained from PDSIMUL in package PDAP) and phylogenetically-based
+     analyses using GLS.
+
 *RODBC*
-     ODBC support and a back end database.
+     An ODBC database interface.
+
+*RPgSQL*
+     Provides methods for accessing data stored in PostgreSQL tables.
 
 *RmSQL*
      An interface between R and the mSQL database system.
+
+*Rstreams*
+     Binary file stream support functions.
 
 *SASmixed*
      Data sets and sample linear mixed effects analyses corresponding to the
      examples in "SAS System for Mixed Models" by R. C. Littell, G. A.
      Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
 
+*XML*
+     Facilities for reading XML documents and DTDs.
+
 *acepack*
-     ace (Alternating Conditional Expectations) and avas (Additivity and
-     VAriance Stabilization for regression) for selecting regression
+     ACE (Alternating Conditional Expectations) and AVAS (Additivity and
+     VAriance Stabilization for regression) methods for selecting regression
      transformations.
 
 *akima*
      Linear or cubic spline interpolation for irregularly gridded data.
 
 *ash*
-     Programs for 1D and 2D density estimation.
+     David Scott's ASH routines for 1D and 2D density estimation.
 
 *bindata*
      Generation of correlated artificial binary data.
@@ -1099,27 +1157,51 @@ works, was published in the Journal of Statistical Software
      Output analysis and diagnostics for Markov Chain Monte Carlo (MCMC)
      simulations.
 
+*conf.design*
+     A series of simple tools for constructing and manipulating confounded
+     and fractional factorial designs.
+
 *date*
      Functions for dealing with dates.  The most useful of them accepts a
      vector of input dates in any of the forms `8/30/53', `30Aug53', `30
      August 1953', ..., `August 30 53', or any mixture of these.
+
+*dse*
+     Dynamic System Estimation, a multivariate time series package.
+     Contains *dse1* (DSE kernel plus ARMA and state space models), *dse2*
+     (DSE extensions), *syskern* (functions for writing code that is
+     operating system and R/S independent), and *tframe* (functions for
+     writing code that is independent of the representation of time).
 
 *e1071*
      Miscellaneous functions used at the Department of Statistics at TU Wien
      (E1071), including moments, short-time Fourier transforms, Independent
      Component Analysis, and simulation of a Wiener process.
 
+*ellipse*
+     Package for drawing ellipses and ellipse-like confidence regions.
+
 *fdim*
      Functions for calculating fractal dimension.
+
+*foreign*
+     Functions for reading and writing data stored by statistical software
+     like Minitab, SAS, SPSS, Stata, etc.
 
 *fracdiff*
      Maximum likelihood estimation of the parameters of a fractionally
      differenced ARIMA(p,d,q) model (Haslett and Raftery, Applied
      Statistics, 1989).
 
+*gafit*
+     Genetic algorithm for curve fitting.
+
 *gee*
      An implementation of the Liang/Zeger generalized estimating equation
      approach to GLMs for dependent data.
+
+*gld*
+     Basic functions for the generalised (Tukey) lambda distribution.
 
 *gss*
      A comprehensive package for structural multivariate function estimation
@@ -1166,6 +1248,10 @@ works, was published in the Journal of Statistical Software
      additive regression splines (MARS), adaptive back-fitting splines
      (BRUTO), and penalized regression.
 
+*mgcv*
+     Routines for GAMs and other genralized ridge regression problems with
+     multiple smoothing parameter selection by GCV or UBRE.
+
 *mlbench*
      A collection of artificial and real-world machine learning benchmark
      problems, including the Boston housing data.
@@ -1177,6 +1263,9 @@ works, was published in the Journal of Statistical Software
 *multiv*
      Functions for hierarchical clustering, partitioning, bond energy
      algorithm, Sammon mapping, PCA and correspondence analysis.
+
+*mvtnorm*
+     Multivariate normal and t distributions.
 
 *nlme*
      Fit and compare Gaussian linear and nonlinear mixed-effects models.
@@ -1213,14 +1302,17 @@ works, was published in the Journal of Statistical Software
      For solving quadratic programming problems.
 
 *quantreg*
-     Compute regression quantiles and some related rank statistics.
+     Quantile  regression and related methods.
 
 *rmeta*
      Functions for simple fixed and random effects meta-analysis for
      two-sample comparison of binary outcomes.
 
 *rpart*
-     Recursive Partitioning.
+     Recursive PARTitioning and regression trees.
+
+*scatterplot3d*
+     Plots a three dimensional (3D) point cloud perspectively.
 
 *sgeostat*
      An object-oriented framework for geostatistical modeling.
@@ -1230,17 +1322,24 @@ works, was published in the Journal of Statistical Software
      Analysis:  The Kernel Approach with S-PLUS Illustrations" by A. W.
      Bowman and A. Azzalini (1997), Oxford University Press.
 
+*sn*
+     Functions for manipulating skew-normal probability distributions and
+     for fitting them to data, in the scalar and the multivariate case.
+
 *spatial*
      Functions for kriging and point pattern analysis from "Modern Applied
      Statistics with S-PLUS" by W. Venables and B. Ripley.  Contained in
      the `VR' bundle.
 
-*stataread*
-     Read and write Stata v6 `.dta' files.
+*splancs*
+     Spatial and space-time point pattern analysis functions.
 
 *survival5*
      Functions for survival analysis, version 5 (suggests *date*), the main
      new feature being penalized (partial) likelihood.
+
+*tensor*
+     Tensor product of arrays.
 
 *tree*
      Classification and regression trees.
@@ -1249,7 +1348,7 @@ works, was published in the Journal of Statistical Software
      A constrained two-dimensional Delaunay triangulation package.
 
 *tseries*
-     Additional code for time series analysis.
+     Package for time series analysis with emphasis on non-linear modelling.
 
 *wavethresh*
      Software to perform 1-d and 2-d wavelet statistics and transforms.
@@ -1260,31 +1359,33 @@ works, was published in the Journal of Statistical Software
 *xgobi*
      Interface to the XGobi and XGvis programs for graphical data analysis.
 
+*xtable*
+     Export data to LaTeX and HTML tables.
+
 *zmatrix*
      Matrices with numeric indices starting at zero rather than one.
 
-See CRAN `src/contrib/INDEX' for more information.
+See CRAN `src/contrib/PACKAGES' for more information.
 
    There is also a CRAN `src/contrib/Devel' directory which contains
 packages still "under development" or depending on features only present in
 the current development versions of R.  Volunteers are invited to give
 these a try, of course.  This area of CRAN currently contains
 
+*GRASS*
+     Interface between the GRASS geographical information system and R,
+     based on starting R from within the GRASS environment and chosen
+     LOCATION and MAPSET.  Wrapper and helper functions are provided for a
+     range of R functions to match the interface metadata structures.
+
 *HTML*
      Functions for exporting R objects as HTML tables.
-
-*Java*
-     An interface from R to Java to create and call Java objects and
-     methods.
 
 *RMySQL*
      An interface between R and the MySQL database system.
 
-*RPgSQL*
-     An interface between R and the PostgreSQL database system.
-
-*Rstreams*
-     Binary file stream support functions.
+*StatDataML*
+     Read and write StatDataML.
 
 *cmprsk*
      Estimation, testing and regression modeling of subdistribution
@@ -1296,15 +1397,13 @@ these a try, of course.  This area of CRAN currently contains
 *dopt*
      Finding D-optimal experimental designs.
 
-*dse*
-     Multivariate time series.
+*dseplus*
+     Extensions to *dse*, the Dynamic Systems Estimation multivariate time
+     series package.  Contains PADI, juice and monitoring extensions.
 
 *exactDistr*
-     Exact distributions for rank tests.
-
-*foreign*
-     Functions for reading data stored by statistical software like Minitab,
-     SAS, SPSS, etc.
+     Exact distributions for rank tests by means of an implementation of the
+     Streitberg/Roehmel shift algorithm.
 
 *funfits*
      An integrated set of functions for fitting curves and surfaces
@@ -1320,15 +1419,31 @@ these a try, of course.  This area of CRAN currently contains
 *netCDF*
      Read data from netCDF files.
 
-*syskern*
-     Functions for writing code that is OS and R/S independent.
+*npConfRatio*
+     Nonparametric confidence intervals for the ratios of medians.
 
-*tframe*
-     Functions for writing code that is independent of the representation of
-     time.
+*regexp*
+     Simple regular expression interface.
 
 *timeslab*
      Time series routines.
+
+   Directory `src/contrib/Omegahat' contains yet unreleased packages from
+the Omegahat Project for Statistical Computing (http://www.omegahat.org).
+Currently, there are
+
+*Java*
+     An interface from R to Java to create and call Java objects and
+     methods.
+
+*RSMethods*
+     An implementation of S version 4 methods and classes for R, consistent
+     with the basic material in "Programming with data" by John M.
+     Chambers, 1998, Springer NY.
+
+*RSPerl*
+     An interface from R to an embedded, persistent Perl interpreter,
+     allowing one to call arbitrary Perl subroutines, classes and methods.
 
    Jim Lindsey <jlindsey@luc.ac.be> has written a collection of R packages
 for nonlinear regression and repeated measurements, consisting of *event*
@@ -1355,13 +1470,13 @@ named `PKG_VERSION.tar.gz', which may in fact be "bundles" containing more
 than one package.  Provided that `tar' and `gzip' are available on your
 system, type
 
-     $ R INSTALL /path/to/PKG_VERSION.tar.gz
+     $ R CMD INSTALL /path/to/PKG_VERSION.tar.gz
 
 at the shell prompt to install to the default R directory tree (the
 `library' subdirectory of `R_HOME').  To install to another tree (e.g.,
 your private one), use
 
-     $ R INSTALL -l LIB /path/to/PKG_VERSION.tar.gz
+     $ R CMD INSTALL -l LIB /path/to/PKG_VERSION.tar.gz
 
 where LIB gives the path to the library tree to install to.
 
@@ -1438,11 +1553,11 @@ at the R prompt.
    To remove the packages PKG_1, ..., PKG_N from the default library or the
 library LIB, do
 
-     $ R REMOVE PKG_1 ... PKG_N
+     $ R CMD REMOVE PKG_1 ... PKG_N
 
 or
 
-     $ R REMOVE -l LIB PKG_1 ... PKG_N
+     $ R CMD REMOVE -l LIB PKG_1 ... PKG_N
 
 respectively.
 
@@ -1478,7 +1593,7 @@ are not there yet.
    The R Developer Page (http://developer.r-project.org/) acts as an
 intermediate repository for more or less finalized ideas and plans for the
 R statistical system.  It contains (pointers to) TODO lists, RFCs, various
-other writeups, ideas lists, and CVS miscellania.
+other writeups, ideas lists, and CVS miscellanea.
 
    Many (more) of the packages available at the Statlib S Repository might
 be worth porting to R.
@@ -1553,9 +1668,7 @@ well as to allow for the retrieval of past versions of the code.
 also be used for error recovery through the use of the transcript mode.
 
    To specify command line arguments for the inferior R process, use `C-u
-M-x R' for starting R.  This prompts you for the arguments; in particular,
-you can increase the memory size this way (*note Why does R run out of
-memory?::).
+M-x R' for starting R.
 
 6.3 Debugging R from within Emacs
 =================================
@@ -1594,63 +1707,24 @@ as follows:
      dir /opt/R/src/nmath
      dir /opt/R/src/unix
 
-7 R Miscellania
+7 R Miscellanea
 ***************
 
 7.1 Why does R run out of memory?
 =================================
 
-   R (currently) uses a _static_ memory model.  This means that when it
-starts up, it asks the operating system to reserve a fixed amount of memory
-for it.  The size of this chunk cannot be changed subsequently.  Hence, it
-can happen that not enough memory was allocated, e.g., when trying to read
-large data sets into R.
-
-   In these cases, you should restart R with more memory available, using
-the command line options `--nsize' and `--vsize'.  To understand these
-options, one needs to know that R maintains separate areas for fixed and
-variable sized objects.  The first of these is allocated as an array of
-"cons cells" (Lisp programmers will know what they are, others may think of
-them as the building blocks of the language itself, parse trees, etc.), and
-the second are thrown on a "heap".  The `--nsize' option can be used to
-specify the number of cons cells which R is to use (the default is 250000),
-and the `--vsize' option to specify the size of the vector heap in bytes
-(the default is 6 MB).  Both options must either be integers or integers
-ending with `M', `K', or `k' meaning `Mega' (2^20), (computer) `Kilo'
-(2^10), or regular `kilo' (1000).
-
-   E.g., to read in a table of 5000 observations on 40 numeric variables,
-`R --vsize=6M' should do (which currently is the default).
-
-   Note that the information on where to find vectors and strings on the
-heap is stored using cons cells.  Thus, it may also be necessary to
-allocate more space for cons cells in order to perform computations with
-very "large" variable-size objects.
-
-   You can find out the current memory consumption (the proportion of heap
-and cons cells used) by typing `gc()' at the R prompt.  This may help you
-in finding out whether to increase `--vsize' or `--nsize'.  Note that
-following `gcinfo(TRUE)', automatic garbage collection always prints memory
-use statistics.
-
-   As of version 0.62.3, R will tell you whether you ran out of cons or
-heap memory.
-
-   The defaults for `--nsize' and `--vsize' can be changed by setting the
-environment variables `R_NSIZE' and `R_VSIZE' respectively, perhaps most
-conveniently on Unix in the R environment file (`~/.Renviron' by default).
-
-   When using `read.table()', the memory requirements are in fact higher
-than anticipated, because the file is first read in as one long string
-which is then split again.  Use `scan()' if possible in case you run out of
-memory when reading in a large table.
+   Versions of R prior to 1.2.0 used a _static_ memory model.  At startup,
+R asked the operating system to reserve a fixed amount of memory for it.
+The size of this chunk could not be changed subsequently.  Hence, it could
+happen that not enough memory was allocated, e.g., when trying to read
+large data sets into R.  In such cases, it was necessary to restart R with
+more memory available, as controlled by the command line options `--nsize'
+and `--vsize'.
 
    R version 1.2.0 introduces a new "generational" garbage collector, which
-will increase the memory available to R as needed.  The interface for
-controlling the generational collector is still experimental and in flux.
-Currently, the command line arguments and environment variables described
-above can be used to supply minimal values for the sizes of the node and
-vector heaps.
+will increase the memory available to R as needed.  Hence, user
+intervention is no longer necessary for ensuring that enough memory is
+available.
 
 7.2 Why does sourcing a correct file fail?
 ==========================================
@@ -1915,6 +1989,62 @@ and S is to say that in S the enclosing environment is _always_ the global
 workspace, but in R the enclosing environment is wherever the function was
 created.
 
+7.16 How can I substitute into a plot label?
+============================================
+
+   Often, it is desired to use the value of an R object in a plot label,
+e.g., a title.  This is easily accomplished using `paste()' if the label is
+a simple character string, but not always obvious in case the label is an
+expression (for refined mathematical annotation).  In such a case, either
+use `parse()' on your pasted character string or use `substitute()' on an
+expression.  For example, if `ahat' is an estimator of your parameter a of
+interest, use
+
+     title(substitute(hat(a) == ahat, list(ahat = ahat)))
+
+(note that it is `==' and not `=').  There are more worked examples in the
+mailing list achives.
+
+7.17 What are valid names?
+==========================
+
+   When creating data frames using `data.frame' or `read.table', R by
+default ensures that the variable names are syntactically valid.  (The
+argument `check.names' to these functions controls whether variable names
+are checked and adjusted by `make.names' if needed.)
+
+   To understand what names are "valid", one needs to take into account
+that the term "name" is used in several different (but related) ways in the
+language:
+
+  1. A _syntactic name_ is a string the parser interprets as this type of
+     expression.  It consists of letters, numbers, and the dot character
+     and starts with a letter or the dot.
+
+  2. An _object name_ is a string associated with an object that is
+     assigned in an expression either by having the object name on the left
+     of an assignment operation or as an argument to the `assign' function.
+     It is usually a syntactic name as well, but can be any non-empty
+     string if it is quoted (and it is always quoted in the call to
+     `assign').
+
+  3. An _argument name_ is what appears to the left of the equals sign when
+     supplying an argument in a function call (for example, `f(trim=.5)').
+     Argument names are also usually syntactic names, but again can be
+     anything if they are quoted.
+
+  4. An _element name_ is a string that identifies a piece of an object (a
+     component of a list, for example.)  When it is used on the right of
+     the `$' operator, it must be a syntactic name, or quoted.  Otherwise,
+     element names can be any strings.  (When an object is used as a
+     database, as in a call to `eval' or `attach', the element names become
+     object names.)
+
+  5. Finally, a _file name_ is a string identifying a file in the operating
+     system for reading, writing, etc.  It really has nothing much to do
+     with names in the language, but it is traditional to call these
+     strings file "names".
+
 8 R Programming
 ***************
 
@@ -1947,6 +2077,18 @@ code, send an interrupt, and then set the required breakpoints.
 
    See section "Inspecting R objects when debugging" in `Writing R
 Extensions'.
+
+8.4 How can I change compilation flags?
+=======================================
+
+   Suppose you have C code file for dynloading into R, but you want to use
+`R CMD SHLIB' with compilation flags other than the default ones (which
+were determined when R was built).  You could change the file
+``R_HOME'/etc/Makeconf' to reflect your preferences.  If you are a Bourne
+shell user, you can also pass the desired flags to Make (which is used for
+controlling compilation) via the Make variable `MAKEFLAGS', as in
+
+     MAKEFLAGS="CFLAGS=-O3" R CMD SHLIB *.c
 
 9 R Bugs
 ********
@@ -2043,7 +2185,7 @@ This ensures that the site profile and saved data files are not read.
    On Unix systems a bug report can be generated using the function
 `bug.report()'.  This automatically includes the version information and
 sends the bug to the correct address.  Alternatively the bug report can be
-emailed to <r-bugs@lists.r-project.org> or submitted to the Web page at
+emailed to <r-bugs@r-project.org> or submitted to the Web page at
 `http://bugs.r-project.org/'.
 
    Bug reports on contributed packages should perhaps be sent to the

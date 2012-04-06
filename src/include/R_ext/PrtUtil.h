@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998, 1999   Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1998-2000    Robert Gentleman, Ross Ihaka
  *                             and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 #ifndef PRTUTIL_H_
 #define PRTUTIL_H_
 
-#include <stdarg.h>
 #include "R_ext/Complex.h"
+#include "R_ext/Print.h"
 
 #ifndef R_NO_REMAP
 #define formatLogical      Rf_formatLogical
@@ -49,6 +49,10 @@
 #define Rprt_adj_right 1
 #define Rprt_adj_left  0
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* Computation of printing formats */
 void formatLogical(int*,int,int*);
 void formatInteger(int*,int,int*);
@@ -66,14 +70,14 @@ char *EncodeString(char*, int, int, int);
 /* Printing */
 void VectorIndex(int, int);
 
-void printIntegerVector(int *x,	   int n, int index);
-void printRealVector   (double *x, int n, int index);
-void printComplexVector(Rcomplex *x,int n, int index);
+void printLogicalVector(int *x,	   int n, int indx);
+void printIntegerVector(int *x,	   int n, int indx);
+void printRealVector   (double *x, int n, int indx);
+void printComplexVector(Rcomplex *x,int n, int indx);
 
 char *Rsprintf(char*, ...);
-void Rprintf(char*, ...);
-void REprintf(char*, ...);
-void Rvprintf(const char*, va_list);
-void REvprintf(const char*, va_list);
-
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* PRTUTIL_H_ */

@@ -4,52 +4,15 @@
 : ${R_HOME=R_HOME_DIR}
 export R_HOME
 
-: ${R_LD_LIBRARY_PATH=@R_LD_LIBRARY_PATH@}
-if test -z "${LD_LIBRARY_PATH}"; then
-  LD_LIBRARY_PATH="${R_LD_LIBRARY_PATH}"
+## NOTE:
+## We must set this here rather than in the main binary.
+: ${R_LD_LIBRARY_PATH=${R_HOME}/bin:@R_LD_LIBRARY_PATH@}
+if test -z "${@shlibpath_var@}"; then
+  @shlibpath_var@="${R_LD_LIBRARY_PATH}"
 else
-  LD_LIBRARY_PATH="${R_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+  @shlibpath_var@="${R_LD_LIBRARY_PATH}:${@shlibpath_var@}"
 fi
-export LD_LIBRARY_PATH
-
-R_binary="R.bin"
-
-# Default printer paper size
-# Choose one of the following:
-# R_PAPERSIZE="a4"
-# R_PAPERSIZE="letter"
-# R_PAPERSIZE="none"
-: ${R_PAPERSIZE=@R_PAPERSIZE@}
-export R_PAPERSIZE
-
-# Default print command
-# Choose one of the following:
-# R_PRINTCMD="lpr"
-# R_PRINTCMD="lp"
-# R_PRINTCMD=""
-: ${R_PRINTCMD=@R_PRINTCMD@}
-export R_PRINTCMD
-
-# Default TeXMF stuff
-R_LATEXCMD=${R_LATEXCMD:-${LATEX:-@LATEX@}}
-R_DVIPSCMD=${R_DVIPSCMD:-${DVIPS:-@DVIPS@}}
-R_MAKEINDEXCMD=${R_MAKEINDEX:-${MAKEINDEX:-@MAKEINDEX@}}
-export R_LATEXCMD R_DVIPSCMD R_MAKEINDEXCMD
-: ${R_RD4DVI=@R_RD4DVI@}
-: ${R_RD4PDF=@R_RD4PDF@}
-export R_RD4DVI R_RD4PDF
-
-# Default zip/unzip commands
-: ${R_UNZIPCMD=@R_UNZIPCMD@}
-: ${R_ZIPCMD=@R_ZIPCMD@}
-export R_UNZIPCMD R_ZIPCMD
-
-EDITOR=${EDITOR-${VISUAL-vi}}
-export EDITOR
-
-# Default environment file -- used if there's none in current
-: ${R_ENVIRON="${HOME}/.Renviron"}
-use_r_environ=true
+export @shlibpath_var@
 
 usage="
 Usage: R [options] [< infile] [> outfile]
@@ -68,12 +31,16 @@ Options:
   --no-site-file        Don't read the site-wide Rprofile
   --no-init-file        Don't read the .Rprofile or ~/.Rprofile files
   --restore             Do restore previously saved data sets at startup
-  --no-restore          Don't restore them
+  --no-restore-data     Don't restore previously saved data sets
+  --no-restore-history  Don't restore the R history file
+  --no-restore          Don't restore anything
   --vanilla		Combine --no-save, --no-restore, --no-site-file,
-			--no-init-file, and --no-environ
+			--no-init-file and --no-environ
   --no-readline         Don't use readline for command-line editing
-  --vsize=N             Set vector heap size to N bytes; \`4M' = 4 MegaB
-  --nsize=N             Set number of cons cells to N
+  --min-vsize=N         Set vector heap min to N bytes; \`4M' = 4 MegaB
+  --max-vsize=N         Set vector heap max to N bytes;
+  --min-nsize=N         Set min number of cons cells to N
+  --max-nsize=N         Set max number of cons cells to N
   -q, --quiet           Don't print startup message
   --silent              Same as --quiet
   --slave               Make R run as quietly as possible
@@ -90,6 +57,8 @@ Commands:
   REMOVE		Remove add-on packages
   build			Build add-on packages
   check			Check add-on packages
+  LINK			Front-end for creating executable programs
+  Rprof			Post-process R profiling files
   Rdconv		Convert Rd format to various other formats
   Rd2dvi		Convert Rd format to DVI/PDF
   Rd2txt		Convert Rd format to pretty text
@@ -102,19 +71,28 @@ can also be invoked without the \`CMD' option.
 Please use \`R CMD command --help' to obtain further information about
 the usage of \`command'.
 
-Report bugs to <R-bugs@lists.r-project.org>."
+Report bugs to <r-bugs@r-project.org>."
 
-# Argument loop
+version="R REPLACE_BY_VERSION.
+Copyright (C) REPLACE_BY_YEAR R Development Core Team
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under the terms of the GNU
+General Public License.  For more information about these matters,
+see http://www.gnu.org/copyleft/gpl.html."
+
+### Argument loop
 args=
 debugger=
 while test -n "${1}"; do
   case ${1} in
     RHOME|--print-home)
-      echo ${R_HOME}; exit 0 ;;
+      echo "${R_HOME}"; exit 0 ;;
     BATCH|COMPILE|INSTALL|REMOVE|SHLIB)
-      cmd="${1}"; shift; exec sh "${R_HOME}/bin/${cmd}" "${@}" ;;
+      exec sh "${R_HOME}/bin/Rcmd" "${@}" ;;
     CMD)
-      shift; PATH="${R_HOME}/bin:${PATH}" exec "${@}" ;;
+      shift;
+      exec sh "${R_HOME}/bin/Rcmd" "${@}" ;;
     --gnome)
       echo "option \`${1}' is defunct, use \`--gui=gnome'"
       exit 1
@@ -129,38 +107,25 @@ while test -n "${1}"; do
       ;;
     --debugger=*)
       debugger=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
-    --no-environ)
-      use_r_environ=false ;;
-    --vanilla)
-      args="${args} ${1}"
-      use_r_environ=false ;;
     -h|--help)
       echo "${usage}"; exit 0 ;;
     --version)
-      exec ${R_HOME}/bin/${R_binary} --version ;;
+      echo "${version}"; exit 0 ;;
     *)
       args="${args} ${1}" ;;
   esac
   shift
 done
 
-# R_HOME may have moved, so check (or you get "GUI X11 is not supported")
+## R_HOME may have moved, so check
+## (or you get "GUI X11 is not supported")
 if [ ! -x ${R_HOME} ]; then
   echo "R_HOME = \`${R_HOME}' not found"
   exit 1
 fi
 
-# Startup
-if ${use_r_environ}; then # use the one in current dir, or default
-  if test -r ./.Renviron; then
-    . ./.Renviron
-    export `sed 's/^ *#.*//; s/^\(.*\)=.*/\1/' ./.Renviron`
-  elif test -r ${R_ENVIRON}; then
-    . ${R_ENVIRON}
-    export `sed 's/^ *#.*//; s/^\(.*\)=.*/\1/' ${R_ENVIRON}`
-  fi
-fi
-
+## Startup
+R_binary="R.bin"
 if test -z "${debugger}"; then
   exec ${R_HOME}/bin/${R_binary} @R_BATCHSAVE@ ${args}
 else

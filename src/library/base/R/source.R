@@ -11,7 +11,7 @@ source <-
 		  parent.frame())
 	.Internal(eval.with.vis(expr, envir, enclos))
     envir <- if (local)
-	sys.frame(sys.parent())
+	parent.frame()
     else .GlobalEnv
     if (!missing(echo)) {
 	if (!is.logical(echo))
@@ -120,8 +120,10 @@ demo <- function(topic, device = getOption("device")) {
 		   scoping	= c("language", "scoping.R",	""),
 		   is.things	= c("language", "is-things.R",	""),
 		   tkttest	= c("tcltk",	"tkttest.R",	""),
+		   tkfaq	= c("tcltk",	"tkfaq.R",	""),
 		   tkdensity	= c("tcltk",	"tkdensity.R",	"G"),
-		   dyn.load	= c("dynload",	"zero.R",	"")
+		   tkfilefind	= c("tcltk",	"tkfilefind.R",	""),
+		   tkcanvas	= c("tcltk",	"tkcanvas.R",	"")
 		   )
     dimnames(Topics)[[1]] <- c("dir", "file", "flag")
     topic.names <- dimnames(Topics)[[2]]

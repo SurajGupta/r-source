@@ -29,28 +29,52 @@
 #define R_MIN_EXPRESSIONS_OPT	25
 #define R_MAX_EXPRESSIONS_OPT	100000
 
-/*
- *  "prompt"
- *  "continue"
- *  "editor"
- *  "expressions"
- *  "width"
- *  "digits"
- *  "contrasts"
+/* Interface to the (polymorphous!)  options(...)  command.
  *
- *  "echo"
- *  "error"
- *  "free"
- *  "keep"
- *  "length"
- *  "memory"
- *  "object.size"
- *  "pager"
- *  "reference"
- *  "scrap"
- *  "show"
- *  "ts.eps"
- *  "warn"
+ * We have two kind of options:
+ *   1) those used exclusively from R code, 
+ *	typically initialized in Rprofile.  
+
+ *	Their names need not appear here, but may, when we want
+ *	to make sure that they are assigned `valid' values only.
+ *
+ *   2) Those used (and sometimes set) from C code;
+ *	Either accessing and/or setting a global C variable,
+ *	or just accessed by e.g.  GetOption(install("pager"), ..)
+ *
+ * A (complete?!) list of these (2):	
+ *
+ *	"prompt"
+ *	"continue"
+ *	"editor"
+ *	"expressions"
+ *	"width"
+ *	"digits"
+ *	"contrasts"
+ *	"echo"
+ *	"verbose"
+ *	"keep.source"
+ *	"keep.source.pkgs"
+
+ *	"de.cellwidth"		../unix/X11/ & ../gnuwin32/dataentry.c
+ *	"device"
+ *	"pager"
+ *	"paper.size"		./devPS.c
+
+ *	"check.bounds"
+ *	"error"
+ *	"error.messages"
+ *	"show.error.messages"
+ *	"warn"
+ *	"warning.expression"
+
+ *
+ * S additionally/instead has (and one might think about some)
+ * "free",	"keep"
+ * "length",	"memory"
+ * "object.size"
+ * "reference", "show"
+ * "scrap"
  */
 
 static SEXP Options(void)
@@ -115,7 +139,7 @@ static SEXP SetOption(SEXP tag, SEXP value)
 	for ( ; t != R_NilValue ; t = CDR(t))
 	    if (TAG(CDR(t)) == tag) {
 		old = CAR(t);
-		CDR(t)=CDDR(t);
+		SETCDR(t, CDDR(t));
 		return old;
 	    }
 	return R_NilValue;
@@ -126,13 +150,13 @@ static SEXP SetOption(SEXP tag, SEXP value)
 	while (CDR(t) != R_NilValue)
 	    t = CDR(t);
 	PROTECT(value);
-	CDR(t) = allocList(1);
+	SETCDR(t, allocList(1));
 	UNPROTECT(1);
 	opt = CDR(t);
-	TAG(opt) = tag;
+	SET_TAG(opt, tag);
     }
     old = CAR(opt);
-    CAR(opt) = value;
+    SETCAR(opt, value);
     return old;
 }
 
@@ -172,100 +196,75 @@ void InitOptions(void)
 
     PROTECT(v = val = allocList(13));
 
-    TAG(v) = install("prompt");
-    CAR(v) = mkString("> ");
+    SET_TAG(v, install("prompt"));
+    SETCAR(v, mkString("> "));
     v = CDR(v);
 
-    TAG(v) = install("continue");
-    CAR(v) = mkString("+ ");
+    SET_TAG(v, install("continue"));
+    SETCAR(v, mkString("+ "));
     v = CDR(v);
 
-    TAG(v) = install("editor");
-    CAR(v) = mkString("vi");
+    SET_TAG(v, install("editor"));
+    SETCAR(v, mkString("vi"));
     v = CDR(v);
 
-    TAG(v) = install("expressions");
-    CAR(v) = ScalarInteger(R_Expressions);
+    SET_TAG(v, install("expressions"));
+    SETCAR(v, ScalarInteger(R_Expressions));
     v = CDR(v);
 
-    TAG(v) = install("width");
-    CAR(v) = ScalarInteger(80);
+    SET_TAG(v, install("width"));
+    SETCAR(v, ScalarInteger(80));
     v = CDR(v);
 
-    TAG(v) = install("digits");
-    CAR(v) = ScalarInteger(7);
+    SET_TAG(v, install("digits"));
+    SETCAR(v, ScalarInteger(7));
     v = CDR(v);
 
-    TAG(v) = install("contrasts");
-    CAR(v) = allocVector(STRSXP, 2);
-    STRING(CAR(v))[0] = mkChar("contr.treatment");
-    STRING(CAR(v))[1] = mkChar("contr.poly");
+    SET_TAG(v, install("contrasts"));
+    SETCAR(v, allocVector(STRSXP, 2));
+    SET_STRING_ELT(CAR(v), 0, mkChar("contr.treatment"));
+    SET_STRING_ELT(CAR(v), 1, mkChar("contr.poly"));
     PROTECT(t = allocVector(STRSXP, 2));
-    STRING(t)[0] = mkChar("unordered");
-    STRING(t)[1] = mkChar("ordered");
+    SET_STRING_ELT(t, 0, mkChar("unordered"));
+    SET_STRING_ELT(t, 1, mkChar("ordered"));
     namesgets(CAR(v), t);
     v = CDR(v);
 
-    TAG(v) = install("verbose");
-    CAR(v) = allocVector(LGLSXP, 1);
-    LOGICAL(CAR(v))[0] = R_Verbose;
-    v = CDR(v);
-
-    TAG(v) = install("echo");
-    CAR(v) = allocVector(LGLSXP, 1);
+    SET_TAG(v, install("echo"));
+    SETCAR(v, allocVector(LGLSXP, 1));
     LOGICAL(CAR(v))[0] = !R_Slave;
     v = CDR(v);
 
-    TAG(v) = install("check.bounds");
-    CAR(v) = allocVector(LGLSXP, 1);
+    SET_TAG(v, install("verbose"));
+    SETCAR(v, allocVector(LGLSXP, 1));
+    LOGICAL(CAR(v))[0] = R_Verbose;
+    v = CDR(v);
+
+    SET_TAG(v, install("check.bounds"));
+    SETCAR(v, allocVector(LGLSXP, 1));
     LOGICAL(CAR(v))[0] = 0;	/* no checking */
     v = CDR(v);
 
     p = getenv("R_KEEP_PKG_SOURCE");
     R_KeepSource = (p && (strcmp(p, "yes") == 0)) ? 1 : 0;
 
-    TAG(v) = install("keep.source");
-    CAR(v) = allocVector(LGLSXP, 1);
+    SET_TAG(v, install("keep.source"));
+    SETCAR(v, allocVector(LGLSXP, 1));
     LOGICAL(CAR(v))[0] = R_KeepSource;
     v = CDR(v);
 
-    TAG(v) = install("keep.source.pkgs");
-    CAR(v) = allocVector(LGLSXP, 1);
+    SET_TAG(v, install("keep.source.pkgs"));
+    SETCAR(v, allocVector(LGLSXP, 1));
     LOGICAL(CAR(v))[0] = R_KeepSource;
     v = CDR(v);
 
-    TAG(v) = install("error.messages");
-    CAR(v) = allocVector(LGLSXP, 1);
+    SET_TAG(v, install("error.messages"));
+    SETCAR(v, allocVector(LGLSXP, 1));
     LOGICAL(CAR(v))[0] = 1;
 
-    SYMVALUE(install(".Options")) = val;
+    SET_SYMVALUE(install(".Options"), val);
     UNPROTECT(2);
 }
-
-#if 0
-/* FIXME : This functionality should be universal */
-/* See also in bind.c. */
-
-/* static */ SEXP EnsureString(SEXP s)
-{
-    switch(TYPEOF(s)) {
-    case SYMSXP:
-	s = PRINTNAME(s);
-	break;
-    case STRSXP:
-	s = STRING(s)[0];
-	break;
-    case CHARSXP:
-	break;
-    case NILSXP:
-	s = R_BlankString;
-	break;
-    default:
-	error("invalid tag in name extraction");
-    }
-    return s;
-}
-#endif
 
 SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -280,28 +279,27 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     options = SYMVALUE(Options());
 
-    /* This is the zero argument case.  We alloc up a real list and
-       write the system values into it.
-       */
-
     if (args == R_NilValue) {
+	/* This is the zero argument case.  
+	   We alloc up a real list and write the system values into it.
+	*/
 	n = length(options);
 	PROTECT(value = allocVector(VECSXP, n));
 	PROTECT(names = allocVector(STRSXP, n));
 	i = 0;
 	while (options != R_NilValue) {
-	    VECTOR(names)[i] = PRINTNAME(TAG(options));
-	    VECTOR(value)[i] = duplicate(CAR(options));
-	    i = i + 1; options = CDR(options);
+	    SET_VECTOR_ELT(names, i, PRINTNAME(TAG(options)));
+	    SET_VECTOR_ELT(value, i, duplicate(CAR(options)));
+	    options = CDR(options); i++;
 	}
 	setAttrib(value, R_NamesSymbol, names);
 	UNPROTECT(2);
 	return value;
     }
 
-    /* The arguments to "options" can either be a sequence of name =
-       value form, or can be a single list.  This means that we must
-       code so that both forms will work.
+    /* The arguments to "options" can either be a sequence of 
+       name = value form, or can be a single list.  
+       This means that we must code so that both forms will work.
        [ Vomits quietly onto shoes ... ]
        */
 
@@ -325,7 +323,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     R_Visible = 0;
-    for (i = 0 ; i < n ; i++) {
+    for (i = 0 ; i < n ; i++) { /* i-th argument */
 
 	switch (TYPEOF(args)) {
 	case LISTSXP:
@@ -334,82 +332,95 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    args = CDR(args);
 	    break;
 	case VECSXP:
-	    argi = VECTOR(args)[i];
-	    namei = EnsureString(STRING(argnames)[i]);
+	    argi = VECTOR_ELT(args, i);
+	    namei = EnsureString(STRING_ELT(argnames, i));
 	    break;
 	}
 
-	if (*CHAR(namei)) {
+	if (*CHAR(namei)) { /* name = value  ---> assignment */
 	    tag = install(CHAR(namei));
 	    if (streql(CHAR(namei), "width")) {
 		k = asInteger(argi);
 		if (k < R_MIN_WIDTH_OPT || k > R_MAX_WIDTH_OPT)
-		    errorcall(call, "invalid width parameter");
-		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
+		    errorcall(call, 
+			      "invalid width parameter, allowed %d...%d",
+			      R_MIN_WIDTH_OPT, R_MAX_WIDTH_OPT);
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "digits")) {
 		k = asInteger(argi);
 		if (k < R_MIN_DIGITS_OPT || k > R_MAX_DIGITS_OPT)
-		    errorcall(call, "invalid digits parameter");
-		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
+		    errorcall(call, 
+			      "invalid digits parameter, allowed %d...%d",
+			      R_MIN_DIGITS_OPT, R_MAX_DIGITS_OPT);
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "expressions")) {
 		k = asInteger(argi);
 		if (k < R_MIN_EXPRESSIONS_OPT || k > R_MAX_EXPRESSIONS_OPT)
-		    errorcall(call, "expressions parameter invalid");
+		    errorcall(call, 
+			      "expressions parameter invalid, allowed %d...%d",
+			      R_MIN_EXPRESSIONS_OPT, R_MAX_EXPRESSIONS_OPT);
 		R_Expressions = k;
-		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "keep.source")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
 		    errorcall(call, "keep.source parameter invalid");
 		k = asInteger(argi);
 		R_KeepSource = k;
-		VECTOR(value)[i] = SetOption(tag, ScalarLogical(k));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else if (streql(CHAR(namei), "editor")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "invalid editor parameter");
-		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "continue")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "invalid continue parameter");
-		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "prompt")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "prompt parameter invalid");
-		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarString(s)));
 	    }
 	    else if (streql(CHAR(namei), "contrasts")) {
 		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 2)
 		    errorcall(call, "contrasts parameter invalid");
-		VECTOR(value)[i] = SetOption(tag, argi);
+		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
+	    }
+	    else if (streql(CHAR(namei), "check.bounds")) {
+		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
+		    errorcall(call, "check.bounds parameter invalid");
+		k = asInteger(argi);
+		/* R_CheckBounds = k; */
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else if (streql(CHAR(namei), "warn")) {
 		if (!isNumeric(argi) || length(argi) != 1)
 		    errorcall(call, "warn parameter invalid");
-                VECTOR(value)[i] = SetOption(tag, argi);
+                SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if ( streql(CHAR(namei), "warning.expression") )  {
 		if( !isLanguage(argi) &&  ! isExpression(argi) )
 		    errorcall(call, "warning.expression parameter invalid");
-		VECTOR(value)[i] = SetOption(tag, argi);
+		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 	    else if ( streql(CHAR(namei), "error") ) {
 		if( !isLanguage(argi) &&  !isExpression(argi) )
 		    errorcall(call, "error parameter invalid");
-		VECTOR(value)[i] = SetOption(tag, argi);
+		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 	    }
 /* handle this here to avoid GetOption during error handling */
 	    else if ( streql(CHAR(namei), "show.error.messages") ) {
 		if( !isLogical(argi) && length(argi) != 1 )
 		    errorcall(call, "show.error.messages parameter invalid");
-		VECTOR(value)[i] = SetOption(tag, argi);
+		SET_VECTOR_ELT(value, i, SetOption(tag, argi));
 		R_ShowErrorMessages = LOGICAL(argi)[0];
 	    }
 	    else if (streql(CHAR(namei), "echo")) {
@@ -420,22 +431,22 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		   every time R prompts for input:
 		   */
 		R_Slave = !k;
-		VECTOR(value)[i] = SetOption(tag, ScalarLogical(k));
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else {
-		VECTOR(value)[i] = SetOption(tag, duplicate(argi));
+		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));
 	    }
-	    STRING(names)[i] = namei;
+	    SET_STRING_ELT(names, i, namei);
 	}
-	else {
+	else { /* querying arg */
 	    if (!isString(argi) || LENGTH(argi) <= 0)
 		errorcall(call, R_MSG_IA);
-	    VECTOR(value)[i] = duplicate(CAR(FindTaggedItem(options,
-				     install(CHAR(STRING(argi)[0])))));
-	    STRING(names)[i] = STRING(argi)[0];
+	    SET_VECTOR_ELT(value, i, duplicate(CAR(FindTaggedItem(options,
+				     install(CHAR(STRING_ELT(argi, 0)))))));
+	    SET_STRING_ELT(names, i, STRING_ELT(argi, 0));
 	    R_Visible = 1;
 	}
-    }
+    } /* for() */
     setAttrib(value, R_NamesSymbol, names);
     UNPROTECT(2);
     return value;

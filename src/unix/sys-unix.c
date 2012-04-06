@@ -19,30 +19,31 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-         /* See system.txt for a description of functions */
+/* See system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include "Defn.h"
 #include "Fileio.h"
+#include "Runix.h"
 
 /* HP-UX headers need this before CLK_TCK */
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif
 
 #ifdef HAVE_LIBREADLINE
-#ifdef HAVE_READLINE_READLINE_H
-#include <readline/readline.h>
-#endif
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
+# ifdef HAVE_READLINE_READLINE_H
+#  include <readline/readline.h>
+# endif
+# ifdef HAVE_READLINE_HISTORY_H
+#  include <readline/history.h>
+# endif
 #endif
 
-extern int LoadInitFile;
+extern Rboolean LoadInitFile;
 
 /*
  *  4) INITIALIZATION AND TERMINATION ACTIONS
@@ -84,35 +85,36 @@ FILE *R_OpenInitFile(void)
 
 
 #ifdef HAVE_LIBREADLINE
-  char *tilde_expand(char*);
+char *tilde_expand(char*);
 
-  char *R_ExpandFileName(char *s)
-  {
-      return( tilde_expand(s) );
-  }
+char *R_ExpandFileName(char *s)
+{
+    return( tilde_expand(s) );
+}
 #else
-  static int HaveHOME=-1;
-  static char UserHOME[PATH_MAX];
-  static char newFileName[PATH_MAX];
-  char *R_ExpandFileName(char *s)
-  {
-      char *p;
-
-      if(s[0] != '~') return s;
-      if(HaveHOME < 0) {
-	  p = getenv("HOME");
-	  if(p && strlen(p)) {
-	      strcpy(UserHOME, p);
-	      HaveHOME = 1;
-	  } else
-	      HaveHOME = 0;
-      }
-      if(HaveHOME > 0){
-	  strcpy(newFileName, UserHOME);
-	  strcat(newFileName, s+1);
-	  return newFileName;
-      } else return s;
-  }
+static int HaveHOME=-1;
+static char UserHOME[PATH_MAX];
+static char newFileName[PATH_MAX];
+char *R_ExpandFileName(char *s)
+{
+    char *p;
+    
+    if(s[0] != '~') return s;
+    if(isalpha(s[1])) return s;
+    if(HaveHOME < 0) {
+	p = getenv("HOME");
+	if(p && strlen(p)) {
+	    strcpy(UserHOME, p);
+	    HaveHOME = 1;
+	} else
+	    HaveHOME = 0;
+    }
+    if(HaveHOME > 0) {
+	strcpy(newFileName, UserHOME);
+	strcat(newFileName, s+1);
+	return newFileName;
+    } else return s;
+}
 #endif
 
 
@@ -126,6 +128,7 @@ SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #ifdef HAVE_TIMES
+#include <time.h>
 #include <sys/times.h>
 #ifndef CLK_TCK
 /* this is in ticks/second, generally 60 on BSD style Unix, 100? on SysV */
@@ -139,22 +142,31 @@ SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 static clock_t StartTime;
 static struct tms timeinfo;
 
-void R_setStartTime()
+void R_setStartTime(void)
 {
     StartTime = times(&timeinfo);
 }
 
-SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
+void R_getProcTime(double *data)
 {
-    SEXP ans;
     double elapsed;
     elapsed = (times(&timeinfo) - StartTime) / (double)CLK_TCK;
-    ans = allocVector(REALSXP, 5);
-    REAL(ans)[0] = timeinfo.tms_utime / (double)CLK_TCK;
-    REAL(ans)[1] = timeinfo.tms_stime / (double)CLK_TCK;
-    REAL(ans)[2] = elapsed;
-    REAL(ans)[3] = timeinfo.tms_cutime / (double)CLK_TCK;
-    REAL(ans)[4] = timeinfo.tms_cstime / (double)CLK_TCK;
+    data[0] = timeinfo.tms_utime / (double)CLK_TCK;
+    data[1] = timeinfo.tms_stime / (double)CLK_TCK;
+    data[2] = elapsed;
+    data[3] = timeinfo.tms_cutime / (double)CLK_TCK;
+    data[4] = timeinfo.tms_cstime / (double)CLK_TCK;
+}
+
+double R_getClockIncrement(void)
+{
+  return 1.0 / (double) CLK_TCK;
+}
+
+SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP ans = allocVector(REALSXP, 5);
+    R_getProcTime(REAL(ans));
     return ans;
 }
 #endif /* HAVE_TIMES */
@@ -175,7 +187,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (read) {
 #ifdef HAVE_POPEN
 	PROTECT(tlist);
-	fp = popen(CHAR(STRING(CAR(args))[0]), x);
+	fp = popen(CHAR(STRING_ELT(CAR(args), 0)), x);
 	for (i = 0; fgets(buf, 120, fp); i++) {
 	    read = strlen(buf);
 	    buf[read - 1] = '\0';
@@ -186,7 +198,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	pclose(fp);
 	rval = allocVector(STRSXP, i);;
 	for (j = (i - 1); j >= 0; j--) {
-	    STRING(rval)[j] = CAR(tlist);
+	    SET_STRING_ELT(rval, j, CAR(tlist));
 	    tlist = CDR(tlist);
 	}
 	UNPROTECT(1);
@@ -199,17 +211,18 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     else {
 	tlist = allocVector(INTSXP, 1);
 	fflush(stdout);
-	INTEGER(tlist)[0] = system(CHAR(STRING(CAR(args))[0]));
+	INTEGER(tlist)[0] = system(CHAR(STRING_ELT(CAR(args), 0)));
 	R_Visible = 0;
 	return tlist;
     }
 }
 
-static char * Runix_tmpnam(char * prefix)
+char * Runix_tmpnam(char * prefix)
 {
     char *tmp, tm[PATH_MAX], tmp1[PATH_MAX], *res;
     unsigned int n, done = 0, pid;
 
+    if(!prefix) prefix = "";	/* NULL */
     tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
     if(tmp) strcpy(tmp1, tmp);
@@ -217,8 +230,8 @@ static char * Runix_tmpnam(char * prefix)
     pid = (unsigned int) getpid();
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
-        sprintf(tm, "%s/%sR%xS%x", tmp1, prefix, pid, rand());
-        if (!R_FileExists(tm)) { done = 1; break; }
+	sprintf(tm, "%s/%sR%xS%x", tmp1, prefix, pid, rand());
+        if(!R_FileExists(tm)) { done = 1; break; }
     }
     if(!done)
 	error("cannot find unused tempfile name");
@@ -238,15 +251,75 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "invalid file name argument");
     PROTECT(ans = allocVector(STRSXP, slen));
     for(i = 0; i < slen; i++) {
-	tn = CHAR(STRING(CAR(args))[i]);
+	tn = CHAR(STRING_ELT(CAR(args), i));
 	/* try to get a new file name */
 	tm = Runix_tmpnam(tn);
-	STRING(ans)[i] = mkChar(tm);
+	SET_STRING_ELT(ans, i, mkChar(tm));
 	free(tm);
     }
     UNPROTECT(1);
     return (ans);
 }
+
+
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+
+SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, ansnames;
+    struct utsname name;
+    char *login;
+
+    checkArity(op, args);
+    PROTECT(ans = allocVector(STRSXP, 7));
+    if(uname(&name) == -1) {
+	UNPROTECT(1);
+	return R_NilValue;
+    }
+    SET_STRING_ELT(ans, 0, mkChar(name.sysname));
+    SET_STRING_ELT(ans, 1, mkChar(name.release));
+    SET_STRING_ELT(ans, 2, mkChar(name.version));
+    SET_STRING_ELT(ans, 3, mkChar(name.nodename));
+    SET_STRING_ELT(ans, 4, mkChar(name.machine));
+    login = getlogin();
+    SET_STRING_ELT(ans, 5, login ? mkChar(login) : mkChar("unknown"));
+#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID) && defined(HAVE_GETUID)
+    {
+	struct passwd *stpwd;
+	stpwd = getpwuid(getuid());
+	SET_STRING_ELT(ans, 6, stpwd ? mkChar(stpwd->pw_name) : mkChar("unknown"));
+    }
+#else
+    SET_STRING_ELT(ans, 6, mkChar("unknown"));
+#endif
+    PROTECT(ansnames = allocVector(STRSXP, 7));
+    SET_STRING_ELT(ansnames, 0, mkChar("sysname"));
+    SET_STRING_ELT(ansnames, 1, mkChar("release"));
+    SET_STRING_ELT(ansnames, 2, mkChar("version"));
+    SET_STRING_ELT(ansnames, 3, mkChar("nodename"));
+    SET_STRING_ELT(ansnames, 4, mkChar("machine"));
+    SET_STRING_ELT(ansnames, 5, mkChar("login"));
+    SET_STRING_ELT(ansnames, 6, mkChar("user"));
+    setAttrib(ans, R_NamesSymbol, ansnames);
+    UNPROTECT(2);
+    return ans;
+}
+#else
+SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    warning("Sys,info is not implemented on this system");
+    return R_NilValue; /* -Wall */
+}
+#endif
 
 /*
  *  helpers for start-up code
@@ -264,7 +337,7 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 #endif
 
-void fpu_setup(int start)
+void fpu_setup(Rboolean start)
 {
     if (start) {
 #ifdef __FreeBSD__

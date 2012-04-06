@@ -36,6 +36,10 @@
 #include "console.h"
 #include "consolestructs.h"
 #include "rui.h"
+#include "getline/getline.h"
+#include "Startup.h" /* for UImode */
+
+extern UImode  CharacterMode;
 
 
 /* xbuf */
@@ -44,25 +48,25 @@ xbuf newxbuf(xlong dim, xint ms, xint shift)
 {
     xbuf  p;
 
-    p = (xbuf) winmalloc(sizeof(struct structXBUF));
+    p = (xbuf) malloc(sizeof(struct structXBUF));
     if (!p)
 	return NULL;
-    p->b = (char *) winmalloc(dim + 1);
+    p->b = (char *) malloc(dim + 1);
     if (!p->b) {
-	winfree(p);
+	free(p);
 	return NULL;
     }
-    p->user = (int *) winmalloc(ms * sizeof(int));
+    p->user = (int *) malloc(ms * sizeof(int));
     if (!p->user) {
-	winfree(p->b);
-	winfree(p);
+	free(p->b);
+	free(p);
 	return NULL;
     }
-    p->s = (char **) winmalloc(ms * sizeof(char *));
+    p->s = (char **) malloc(ms * sizeof(char *));
     if (!p->s) {
-	winfree(p->b);
-	winfree(p->user);
-	winfree(p);
+	free(p->b);
+	free(p->user);
+	free(p);
 	return NULL;
     }
     p->ns = 1;
@@ -77,13 +81,43 @@ xbuf newxbuf(xlong dim, xint ms, xint shift)
     return p;
 }
 
+/* reallocate increased buffer sizes and update pointers */
+void xbufgrow(xbuf p, xlong dim, xint ms)
+{
+    void *ret, *ret2;
+    int i, change;
+    
+    if(dim > p->dim) {
+	ret = realloc(p->b, dim + 1);
+	if(ret) {
+	    change = (unsigned long) ret - (unsigned long) p->b;
+	    p->b = (char *) ret;
+	    p->av += change;
+	    p->free += change;
+	    for (i = 0; i < p->ns; i++)  p->s[i] += change;
+	    p->dim = dim;
+	}
+    }
+    if(ms > p->ms) {
+	ret = realloc(p->s, ms * sizeof(char *));
+	if(ret) {
+	    ret2 = realloc(p->user, ms * sizeof(int));
+	    if(ret2) {
+		p->s = (char **) ret;
+		p->user = (int *) ret2;
+		p->ms = ms;
+	    }
+	}
+    }
+}
+
 void xbufdel(xbuf p) 
 {
    if (!p) return;
-   winfree(p->s);
-   winfree(p->b);
-   winfree(p->user);
-   winfree(p);
+   free(p->s);
+   free(p->b);
+   free(p->user);
+   free(p);
 }
 
 static void xbufshift(xbuf p)
@@ -186,39 +220,33 @@ static void xbuffixl(xbuf p)
 rgb consolebg = White, consolefg = Black, consoleuser = Red,
     pagerhighlight = Red;
 
+extern int R_HistorySize;  /* from Defn.h */
+
 ConsoleData
-newconsoledata(font f, int rows, int cols,
+newconsoledata(font f, int rows, int cols, int bufbytes, int buflines,
 	       rgb fg, rgb ufg, rgb bg, int kind)
 {
     ConsoleData p;
 
     initapp(0, 0);
-    p = (ConsoleData) winmalloc(sizeof(struct structConsoleData));
+    p = (ConsoleData) malloc(sizeof(struct structConsoleData));
     if (!p)
 	return NULL;
     p->kind = kind;
     if (kind == CONSOLE) {
-	p->lbuf = newxbuf(DIMLBUF, MLBUF, SLBUF);
+	p->lbuf = newxbuf(bufbytes, buflines, SLBUF);
 	if (!p->lbuf) {
-	    winfree(p);
+	    free(p);
 	    return NULL;
 	}
-	p->history = newxbuf(DIMHIST, MHIST, SHIST);
-	if (!p->history) {
-	    xbufdel(p->lbuf);
-	    winfree(p);
-	    return NULL;
-	}
-	p->kbuf = winmalloc(NKEYS * sizeof(char));
+	p->kbuf = malloc(NKEYS * sizeof(char));
 	if (!p->kbuf) {
 	    xbufdel(p->lbuf);
-	    xbufdel(p->history);
-	    winfree(p);
+	    free(p);
 	    return NULL;
 	}
     } else {
 	p->lbuf = NULL;
-	p->history = NULL;
 	p->kbuf = NULL;
     }
     p->bm = NULL;
@@ -237,12 +265,14 @@ newconsoledata(font f, int rows, int cols,
     p->firstkey = p->numkeys = 0;
     p->clp = NULL;
     p->r = -1;
+    p->overwrite = 0;
     p->lazyupdate = 1;
     p->needredraw = 0;
     p->my0 = p->my1 = -1;
     p->mx0 = 5;
     p->mx1 = 14;
     p->sel = 0;
+    p->input = 0;
     return (p);
 }
 
@@ -257,6 +287,8 @@ static void writelineHelper(ConsoleData p, int fch, int lch,
     gfillrect(p->bm, bgr, r);
 
     if (len > fch) {
+	/* Some of the string is visible:
+	   we don't know the string length, so modify it in place */
 	if (FC && (fch == 0)) {
 	    chf = s[0];
 	    s[0] = '$';
@@ -274,6 +306,7 @@ static void writelineHelper(ConsoleData p, int fch, int lch,
 	} else
 	    ch = '\0';
 	gdrawstr(p->bm, p->f, fgr, pt(r.x, r.y), &s[fch]);
+	/* restore the string */
 	if (ch)
 	    s[last] = ch;
 	if (chl)
@@ -285,14 +318,14 @@ static void writelineHelper(ConsoleData p, int fch, int lch,
 
 #define WLHELPER(a, b, c, d) writelineHelper(p, a, b, c, d, j, len, s)
 
+/* write line i of the buffer at row j on bitmap */
 static int writeline(ConsoleData p, int i, int j)
 {
     char *s;
     int   insel, len, col1, d;
     int   c1, c2, c3, x0, y0, x1, y1;
 
-    if ((i < 0) || (i >= NUMLINES))
-	FRETURN(0);
+    if ((i < 0) || (i >= NUMLINES)) FRETURN(0);
     s = VLINE(i);
     len = strlen(s);
     col1 = COLS - 1;
@@ -343,7 +376,6 @@ static int writeline(ConsoleData p, int i, int j)
 
 void drawconsole(control c, rect r)
 FBEGIN
-PBEGIN
     int i, ll, wd, maxwd = 0;
 
     ll = min(NUMLINES, ROWS);
@@ -362,7 +394,6 @@ PBEGIN
     gchangescrollbar(c, HWINSB, FC, maxwd, COLS,
                      p->kind == CONSOLE || NUMLINES > ROWS);
     gchangescrollbar(c, VWINSB, FV, NUMLINES - 1 , ROWS, p->kind == CONSOLE);
-PEND
 FVOIDEND
 
 void setfirstvisible(control c, int fv)
@@ -385,13 +416,10 @@ FBEGIN
         rw = FV + ww;
         writeline(p, rw, ww);
         if (ds == 0) {
-	    PBEGIN;
 	    RSHOW(RLINE(ww));
-	    PEND;
  	    FVOIDRETURN;
         }
     }
-    PBEGIN
     if (ds == 1) {
         gscroll(BM, pt(0, -FH), RMLINES(0, ROWS - 1));
         gfillrect(BM, p->bg, RLINE(ROWS - 1));
@@ -403,7 +431,6 @@ FBEGIN
 	WRITELINE(fv, 0);
     }
     RSHOW(getrect(c));
-    PEND
     FV = fv;
     NEWFV = fv;
     p->needredraw = 0;
@@ -487,16 +514,21 @@ FBEGIN
   REDRAW;
 FVOIDEND
 
+
+/* These are the getline keys ^A ^E ^B ^F ^N ^P ^K ^H ^D ^U ^T ^O */
 #define BEGINLINE 1
-#define ENDLINE   2
-#define CHARLEFT 3
-#define CHARRIGHT 4
-#define NEXTHISTORY 5
-#define PREVHISTORY 6
-#define KILLRESTOFLINE 7
+#define ENDLINE   5
+#define CHARLEFT 2
+#define CHARRIGHT 6
+#define NEXTHISTORY 14
+#define PREVHISTORY 16
+#define KILLRESTOFLINE 11
 #define BACKCHAR  8
-#define DELETECHAR 22 /* ^I is printable in some systems */
+#define DELETECHAR 4
 #define KILLLINE 21
+#define CHARTRANS 20
+#define OVERWRITE 15
+/* free ^G ^Q ^R ^S */
 
 static void storekey(control c,int k)
 FBEGIN
@@ -547,10 +579,10 @@ FBEGIN
          (pc = (char *)GlobalLock(hglb)))
     {
         if (p->clp) {
-           new = winrealloc((void *)p->clp, strlen(p->clp) + strlen(pc) + 1);
+           new = realloc((void *)p->clp, strlen(p->clp) + strlen(pc) + 1);
         }
         else {
-           new = winmalloc(strlen(pc) + 1) ;
+           new = malloc(strlen(pc) + 1) ;
            if (new) new[0] = '\0';
            p->already = p->numkeys;
            p->pclp = 0;
@@ -641,7 +673,7 @@ FBEGIN
 	if (p->my1 >= NUMLINES) p->my1 = NUMLINES - 1;
 	if (p->my1 < 0) p->my1 = 0;
 	len = strlen(LINE(p->my1));
-	if (p->mx1 >= len) p->mx1 = len - 1;
+	if (p->mx1 >= len) p->mx1 = len/* - 1*/;
 	if (p->mx1 < 0) p->mx1 = 0;
 	c1 = (p->my0 < p->my1);
 	c2 = (p->my0 == p->my1);
@@ -683,42 +715,16 @@ FBEGIN
     }
     if (st == CtrlKey)
 	switch (k + 'A' - 1) {
-	case 'A':
-	    k = BEGINLINE;
-	    break;
-	case 'B':
-	    k = CHARLEFT;
-	    break;
+	    /* most are stored as themselves */
 	case 'C':
 	    consolecopy(c);
 	    st = -1;
-	    break;
-	case 'D':
-	    k = DELETECHAR;
-	    break;
-	case 'E':
-	    k = ENDLINE;
-	    break;
-	case 'F':
-	    k = CHARRIGHT;
-	    break;
-	case 'K':
-	    k = KILLRESTOFLINE;
-	    break;
-	case 'N':
-	    k = NEXTHISTORY;
-	    break;
-	case 'P':
-	    k = PREVHISTORY;
-	    break;
-	case 'U':
-	    k = KILLLINE;
 	    break;
 	case 'V':
 	case 'Y':
 	    if(p->kind == PAGER) {
 		consolecopy(c); 
-		consolepaste(RConsole);
+		if (CharacterMode == RGui) consolepaste(RConsole);
 	    }
 	    else consolepaste(c);
 	    st = -1;
@@ -732,6 +738,14 @@ FBEGIN
 	    consoletogglelazy(c);
 	    st = -1;
 	    break;
+	case 'L':
+	    consoleclear(c);
+	    st = -1;
+	    break;
+	case 'O':
+	    p->overwrite = !p->overwrite;
+	    st = -1;
+	    break;
 	}
     if (p->sel) {
 	p->sel = 0;
@@ -739,7 +753,7 @@ FBEGIN
 	REDRAW;
     }
     if (st == -1) return;
-    storekey(c,k);
+    storekey(c, k);
 FVOIDEND
 
 void console_ctrlkeyin(control c, int key)
@@ -819,6 +833,16 @@ FVOIDEND
 
 int consolewrites(control c, char *s)
 FBEGIN
+    char buf[1001];
+    if(p->input) {
+        int i, len = strlen(LINE(NUMLINES - 1));
+	/* save the input line */
+	strncpy(buf, LINE(NUMLINES - 1), 1000);
+	buf[1000] = '\0';
+	/* now zap it */
+	for(i = 0; i < len; i++) xbufaddc(p->lbuf, '\b');
+	USER(NUMLINES - 1) = -1;
+    }
     xbufadds(p->lbuf, s, 0);
     FC = 0;
     if (strchr(s, '\n')) p->needredraw = 1;
@@ -826,7 +850,12 @@ FBEGIN
         setfirstvisible(c, NUMLINES - ROWS);
     else {
         p->newfv = NUMLINES - ROWS;
-       if (p->newfv < 0) p->newfv = 0;
+        if (p->newfv < 0) p->newfv = 0;
+    }
+    if(p->input) {
+        if (!strchr(s, '\n')) xbufaddc(p->lbuf, '\n');
+	xbufadds(p->lbuf, buf, 1);
+	REDRAW;
     }
 FEND(0)
 
@@ -836,10 +865,9 @@ void freeConsoleData(ConsoleData p)
     if (p->bm) del(p->bm);
     if (p->kind == CONSOLE) {
         if (p->lbuf) xbufdel(p->lbuf);
-	if (p->history) xbufdel(p->history);
-	if (p->kbuf) winfree(p->kbuf);
+	if (p->kbuf) free(p->kbuf);
     }
-    winfree(p);
+    free(p);
 }
 
 static void delconsole(control c)
@@ -870,12 +898,10 @@ static char consolegetc(control c)
     {
 	ch = p->clp[p->pclp++];
 	if (!(p->clp[p->pclp])) {
-	    winfree(p->clp);
+	    free(p->clp);
 	    p->clp = NULL;
 	}
-    }
-    else
-    {
+    } else {
           ch = p->kbuf[p->firstkey];
           p->firstkey = (p->firstkey + 1) % NKEYS;
           p->numkeys--;
@@ -907,12 +933,9 @@ FBEGIN
     checkvisible(c);
     if (p->needredraw) {
         REDRAW;
-    }
-    else {
-        PBEGIN
-          WRITELINE(NUMLINES - 1, p->r);
-          RSHOW(RLINE(p->r));
-        PEND
+    } else {
+	WRITELINE(NUMLINES - 1, p->r);
+	RSHOW(RLINE(p->r));
     }
 FVOIDEND
 
@@ -920,19 +943,18 @@ int consolereads(control c, char *prompt, char *buf, int len, int addtohistory)
 FBEGIN
     char cur_char;
     char *cur_line;
-    int  hentry;
     char *aLine;
+    int ns0 = NUMLINES;
 
     /* print the prompt */
     xbufadds(p->lbuf, prompt, 1);
     if (!xbufmakeroom(p->lbuf, len + 1)) FRETURN(1);
-    aLine = p->lbuf->s[p->lbuf->ns - 1];
+    aLine = LINE(NUMLINES - 1);
     prompt_len = strlen(aLine);
     if (NUMLINES > ROWS) {
 	p->r = ROWS - 1;
 	p->newfv = NUMLINES - ROWS;
-    }
-    else {
+    } else {
 	p->r = NUMLINES - 1;
 	p->newfv = 0;
     }
@@ -942,22 +964,39 @@ FBEGIN
     max_pos = 0;
     cur_line = &aLine[prompt_len];
     cur_line[0] = '\0';
-    hentry=-1;
     REDRAW;
     for(;;) {
 	char chtype;
+	p->input = 1;
 	cur_char = consolegetc(c);
-	chtype = isprint(cur_char) ||
-	    ((unsigned char)cur_char > 0x7f);
-	if(chtype && (max_pos < len - 2)) {
+	p->input = 0;
+	chtype = isprint(cur_char) || ((unsigned char)cur_char > 0x7f);
+	if(NUMLINES != ns0) { /* we scrolled, e.g. cleared screen */
+            cur_line = LINE(NUMLINES - 1) + prompt_len;
+	    ns0 = NUMLINES;
+	    if (NUMLINES > ROWS) {
+		p->r = ROWS - 1;
+		p->newfv = NUMLINES - ROWS;
+	    } else {
+		p->r = NUMLINES - 1;
+		p->newfv = 0;
+	    }
+	    USER(NUMLINES - 1) = prompt_len;
+	    p->needredraw = 1;
+	}
+        if(chtype && (max_pos < len - 2)) {
 	    int i;
-	    for(i = max_pos; i > cur_pos; i--) {
-		cur_line[i] = cur_line[i - 1];
+	    if(!p->overwrite) {
+		for(i = max_pos; i > cur_pos; i--) {
+		    cur_line[i] = cur_line[i - 1];
+		}
 	    }
 	    cur_line[cur_pos] = cur_char;
+	    if(!p->overwrite || cur_pos == max_pos) {
+		max_pos += 1;
+		cur_line[max_pos] = '\0';
+	    }
 	    cur_pos += 1;
-	    max_pos += 1;
-	    cur_line[max_pos] = '\0';
 	    draweditline(c);
 	} else {
 	    /* do normal editing commands */
@@ -988,24 +1027,11 @@ FBEGIN
 		cur_line[max_pos]='\0';
 		break;
 	    case PREVHISTORY:
-		hentry += 1;
-		if(hentry < NHISTORY) {
-		    if (hentry == 0) strcpy(buf, cur_line);
-		    strcpy(cur_line, HISTORY(hentry));
-		    cur_pos = max_pos = strlen(cur_line);
-		}
-		else
-		    hentry -= 1;
+		strcpy(cur_line, gl_hist_prev());
+		cur_pos = max_pos = strlen(cur_line);
 		break;
 	    case NEXTHISTORY:
-		if(hentry > 0) {
-		    hentry -= 1;
-		    strcpy(cur_line, HISTORY(hentry));
-		}
-		else if (hentry == 0) {
-		    hentry =- 1;
-		    strcpy(cur_line, buf);
-		}
+		strcpy(cur_line, gl_hist_next());
 		cur_pos = max_pos = strlen(cur_line);
 		break;
 	    case BACKCHAR:
@@ -1024,6 +1050,12 @@ FBEGIN
 		    max_pos -= 1;
 		}
 		break;
+	    case CHARTRANS:
+		if(cur_pos < 2) break;
+		cur_char = cur_line[cur_pos];
+		cur_line[cur_pos] = cur_line[cur_pos-1];
+		cur_line[cur_pos-1] = cur_char;
+		break;
 	    default:
 		if (chtype || (cur_char=='\n')) {
 		    if (chtype) {
@@ -1039,10 +1071,7 @@ FBEGIN
 		    strcpy(buf, cur_line);
 		    p->r = -1;
 		    cur_line[max_pos] = '\0';
-		    if (max_pos && addtohistory) {
-			xbufadds(p->history, "\n", 0);
-			xbufadds(p->history, cur_line, 0);
-		    }
+		    if (max_pos && addtohistory)  gl_histadd(cur_line);
 		    xbuffixl(p->lbuf);
 		    consolewrites(c, "\n");
 		    REDRAW;
@@ -1053,37 +1082,6 @@ FBEGIN
 	    draweditline(c);
 	}
     }
-FVOIDEND
-
-void savehistory(control c, char *s)
-FBEGIN
-    FILE *fp;
-    int i;
-
-    if (!s || !NHISTORY) return;
-    fp = fopen(s, "w");
-    if (!fp) {
-       char msg[256];
-       sprintf(msg, "Unable to open `%s'", s);
-       R_ShowMessage(msg);
-       FVOIDRETURN;
-    }
-    for (i = NHISTORY - 1; i >= 0; i--) {
-       fprintf(fp, "%s\n", HISTORY(i));
-    }
-    fclose(fp);
-FVOIDEND
-
-void readhistory(control c, char *s)
-FBEGIN
-    FILE *fp;
-    int c;
-
-    if (!s || !(fp = fopen(s, "r"))) FVOIDRETURN;
-    while ((c = getc(fp)) != EOF) xbufaddc(p->history, c);
-    /* remove blank line started by final \n */
-    p->history->ns--;
-    fclose(fp);
 FVOIDEND
 
 void console_sbf(control c, int pos)
@@ -1161,11 +1159,13 @@ int fontsty, pointsize;
 int consoler = 25, consolec = 80;
 int pagerrow = 25, pagercol = 80;
 int pagerMultiple = 1, haveusedapager = 0;
+int consolebufb = DIMLBUF, consolebufl = MLBUF;
 
 void
 setconsoleoptions(char *fnname,int fnsty, int fnpoints,
                   int rows, int cols, rgb nfg, rgb nufg, rgb nbg, rgb high,
-		  int pgr, int pgc, int multiplewindows, int widthonresize)
+		  int pgr, int pgc, int multiplewindows, int widthonresize,
+		  int bufbytes, int buflines)
 {
     char msg[LF_FACESIZE + 128];
     strncpy(fontname, fnname, LF_FACESIZE);
@@ -1200,78 +1200,185 @@ setconsoleoptions(char *fnname,int fnsty, int fnpoints,
     pagercol = pgc;
     pagerMultiple = multiplewindows;
     setWidthOnResize = widthonresize;
+    consolebufb = bufbytes;
+    consolebufl = buflines;
 }
 
 void consoleprint(console c)
 FBEGIN
-   printer lpr;
-   int cc, rr, fh, cl, cp, clinp, i;
-   int top, left;
-   font f;
-   char *s = "", lc = '\0', msg[LF_FACESIZE + 128], title[60];
-   cursor cur;
-   if (!(lpr = newprinter(0.0, 0.0))) FVOIDRETURN;
-   show(c);
+    
+    printer lpr;
+    int cc, rr, fh, cl, cp, clinp, i;
+    int top, left;
+    int x0, y0, x1, y1;
+    font f;
+    char *s = "", lc = '\0', msg[LF_FACESIZE + 128], title[60];
+    char buf[1024];
+    cursor cur;
+    if (!(lpr = newprinter(0.0, 0.0))) FVOIDRETURN;
+    show(c);
 /*
  * If possible, we avoid to use FixedFont for printer since it hasn't the
  * right size
-*/
-   f = gnewfont(lpr, strcmp(fontname, "FixedFont") ? fontname : "Courier New",
-         fontsty, pointsize, 0.0);
-   if (!f) {
-     /* Should not happen but....*/
-       sprintf(msg, "Font %s-%d-%d  not found.\nUsing system fixed font.",
-	       strcmp(fontname, "FixedFont") ? fontname : "Courier New",
-	       fontsty, pointsize);
-       R_ShowMessage(msg);
-       f = FixedFont;
-   }
-   top = devicepixelsy(lpr) / 5;
-   left = devicepixelsx(lpr) / 5;
-   fh = fontheight(f);
-   rr = getheight(lpr) - top;
-   cc = getwidth(lpr) - 2*left;
-   cl = 0;
-   clinp = rr;
-   cp = 1;
-   strncpy(title,gettext(c), 59);
-   if (strlen(gettext(c)) > 59) strcpy(&title[57], "...");
-   cur = currentcursor();
-   setcursor(WatchCursor);
-   while ((cl < NUMLINES) || (*s)) {
-     if (clinp + fh >= rr) {
-       if (cp > 1) nextpage(lpr);
-       gdrawstr(lpr, f, Black, pt(left, top), title);
-       sprintf(msg, "Pag.%d", cp++);
-       gdrawstr(lpr, f, Black, pt(cc - gstrwidth(lpr, f, msg) - 1, top), msg);
-       clinp = top + 2 * fh;
-     }
-     if (!*s) {
-        if (cl < NUMLINES)
-           s = LINE(cl++);
-        else
-           break;
-     }
-     if (!*s) {
-       clinp += fh;
-     }
-     else {
-       for (i = strlen(s); i > 0; i--) {
-         lc = s[i];
-         s[i] = '\0';
-         if (gstrwidth(lpr, f, s) < cc) break;
-         s[i] = lc;
-       }
-       gdrawstr(lpr, f, Black, pt(left, clinp), s);
-       clinp += fh;
-       s[i] = lc;
-       s = &s[i];
-     }
-   }
-   if (f != FixedFont) del(f);
-   del(lpr);
-   setcursor(cur);
+ */
+    f = gnewfont(lpr, strcmp(fontname, "FixedFont") ? fontname : "Courier New",
+		 fontsty, pointsize, 0.0);
+    if (!f) {
+	/* Should not happen but....*/
+	sprintf(msg, "Font %s-%d-%d  not found.\nUsing system fixed font.",
+		strcmp(fontname, "FixedFont") ? fontname : "Courier New",
+		fontsty, pointsize);
+	R_ShowMessage(msg);
+	f = FixedFont;
+    }
+    top = devicepixelsy(lpr) / 5;
+    left = devicepixelsx(lpr) / 5;
+    fh = fontheight(f);
+    rr = getheight(lpr) - top;
+    cc = getwidth(lpr) - 2*left;
+    strncpy(title, gettext(c), 59);
+    if (strlen(gettext(c)) > 59) strcpy(&title[56], "...");
+    cur = currentcursor();
+    setcursor(WatchCursor);
+
+    /* Look for a selection */
+    if (p->sel) {
+	int len, c1, c2, c3;
+	if (p->my0 >= NUMLINES) p->my0 = NUMLINES - 1;
+	if (p->my0 < 0) p->my0 = 0;
+	len = strlen(LINE(p->my0));
+	if (p->mx0 >= len) p->mx0 = len - 1;
+	if (p->mx0 < 0) p->mx0 = 0;
+	if (p->my1 >= NUMLINES) p->my1 = NUMLINES - 1;
+	if (p->my1 < 0) p->my1 = 0;
+	len = strlen(LINE(p->my1));
+	if (p->mx1 >= len) p->mx1 = len - 1;
+	if (p->mx1 < 0) p->mx1 = 0;
+	c1 = (p->my0 < p->my1);
+	c2 = (p->my0 == p->my1);
+	c3 = (p->mx0 < p->mx1);
+	if (c1 || (c2 && c3)) {
+	    x0 = p->mx0; y0 = p->my0;
+	    x1 = p->mx1; y1 = p->my1;
+	}
+	else {
+	    x0 = p->mx1; y0 = p->my1;
+	    x1 = p->mx0; y1 = p->my0;
+	}
+    } else {
+	x0 = y0 = 0;
+	y1 = NUMLINES - 1;
+	x1 = strlen(LINE(y1));
+    }
+
+    cl = y0; /* current line */
+    clinp = rr;
+    cp = 1; /* current page */
+
+    /* s is possible continuation line */
+    while ((cl <= y1) || (*s)) {
+	if (clinp + fh >= rr) {
+	    if (cp > 1) nextpage(lpr);
+	    gdrawstr(lpr, f, Black, pt(left, top), title);
+	    sprintf(msg, "Page %d", cp++);
+	    gdrawstr(lpr, f, Black, 
+                     pt(cc - gstrwidth(lpr, f, msg) - 1, top), 
+		     msg);
+	    clinp = top + 2 * fh;
+	}
+	if (!*s) {
+            if (cl == y0) s = LINE(cl++) + x0;
+	    else if (cl < y1) s = LINE(cl++);
+	    else if (cl == y1) {
+		s = strncpy(buf, LINE(cl++), 1023);
+		s[min(x1, 1023) + 1] = '\0';
+	    } else break;
+	}
+	if (!*s) {
+	    clinp += fh;
+	} else {
+	    for (i = strlen(s); i > 0; i--) {
+		lc = s[i];
+		s[i] = '\0';
+		if (gstrwidth(lpr, f, s) < cc) break;
+		s[i] = lc;
+	    }
+	    gdrawstr(lpr, f, Black, pt(left, clinp), s);
+	    clinp += fh;
+	    s[i] = lc;
+	    s = s + i;
+	}
+    }
+
+    if (f != FixedFont) del(f);
+    del(lpr);
+    setcursor(cur);
 FVOIDEND
+
+void consolesavefile(console c)
+FBEGIN
+    char *fn;
+    cursor cur;
+    FILE *fp;
+    int x0, y0, x1, y1, cl;
+    char *s, buf[1024];
+
+    setuserfilter("Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0");
+    if(p->sel) 
+        fn = askfilesave("Save selection to", "lastsave.txt");
+    else
+        fn = askfilesave("Save console contents to", "lastsave.txt");
+    show(c);
+    if (fn) {
+	fp = fopen(fn, "wt");
+	if (!fp) return;
+	cur = currentcursor();
+	setcursor(WatchCursor);
+
+	/* Look for a selection */
+	if (p->sel) {
+	    int len, c1, c2, c3;
+	    if (p->my0 >= NUMLINES) p->my0 = NUMLINES - 1;
+	    if (p->my0 < 0) p->my0 = 0;
+	    len = strlen(LINE(p->my0));
+	    if (p->mx0 >= len) p->mx0 = len - 1;
+	    if (p->mx0 < 0) p->mx0 = 0;
+	    if (p->my1 >= NUMLINES) p->my1 = NUMLINES - 1;
+	    if (p->my1 < 0) p->my1 = 0;
+	    len = strlen(LINE(p->my1));
+	    if (p->mx1 >= len) p->mx1 = len - 1;
+	    if (p->mx1 < 0) p->mx1 = 0;
+	    c1 = (p->my0 < p->my1);
+	    c2 = (p->my0 == p->my1);
+	    c3 = (p->mx0 < p->mx1);
+	    if (c1 || (c2 && c3)) {
+		x0 = p->mx0; y0 = p->my0;
+		x1 = p->mx1; y1 = p->my1;
+	    }
+	    else {
+		x0 = p->mx1; y0 = p->my1;
+		x1 = p->mx0; y1 = p->my0;
+	    }
+	} else {
+	    x0 = y0 = 0;
+	    y1 = NUMLINES - 1;
+	    x1 = strlen(LINE(y1));
+	}
+
+	for (cl = y0; cl <= y1; cl++) {
+	    if (cl == y0) s = LINE(cl) + x0;
+	    else if (cl < y1) s = LINE(cl);
+	    else if (cl == y1) {
+		s = strncpy(buf, LINE(cl), 1023);
+		s[min(x1, 1023) + 1] = '\0';
+	    } else break;
+	    fputs(s, fp); fputc('\n', fp);
+	}
+	fclose(fp);
+	setcursor(cur);
+    }
+FVOIDEND
+
 
 console newconsole(char *name, int flags)
 {
@@ -1279,9 +1386,9 @@ console newconsole(char *name, int flags)
     ConsoleData p;
 
     p = newconsoledata((consolefn) ? consolefn : FixedFont,
-                     consoler, consolec,
-                     consolefg, consoleuser, consolebg,
-                     CONSOLE);
+		       consoler, consolec, consolebufb, consolebufl,
+		       consolefg, consoleuser, consolebg,
+		       CONSOLE);
     if (!p) return NULL;
     c = (console) newwindow(name, rect(0, 0, WIDTH, HEIGHT),
 			    flags | TrackMouse | VScrollbar | HScrollbar);
@@ -1336,9 +1443,13 @@ void  consolehelp()
     strcat(s,"  Copy and paste.\n");
     strcat(s,"     Use the mouse (with the left button held down) to mark (select) text.\n");
     strcat(s,"     Use Shift+Del (or Ctrl+C) to copy the marked text to the clipboard and\n");
-    strcat(s,"     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard (if any)\n");
-    strcat(s,"     to the console, Ctrl+X first copy then paste\n\n");
-    strcat(s,"Note: Console is updated only when some input is required.\n");
+    strcat(s,"     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard (if any)  \n");
+    strcat(s,"     to the console, Ctrl+X first copy then paste\n");
+    strcat(s,"  Misc:\n");
+    strcat(s,"     Ctrl+L: Clear the console.\n");
+    strcat(s,"     Ctrl+O: Toggle overwrite mode: initially off.\n");
+    strcat(s,"     Ctrl+T: Interchange current char with one to the left.\n");
+    strcat(s,"\nNote: Console is updated only when some input is required.\n");
     strcat(s,"  Use Ctrl+W to toggle this feature off/on.\n\n");
     strcat(s,"Use ESC to stop the interpreter.\n\n");
     strcat(s,"Standard Windows hotkeys can be used to switch to the\n");
@@ -1346,3 +1457,15 @@ void  consolehelp()
     askok(s);
 }
 
+void consoleclear(control c)
+FBEGIN
+    xbuf l = p->lbuf;
+    int oldshift = l->shift;
+
+    l->shift = (l->ns - 1);
+    xbufshift(l);
+    l->shift = oldshift;
+    NEWFV = 0;
+    p->r = 0;
+    REDRAW;
+FVOIDEND

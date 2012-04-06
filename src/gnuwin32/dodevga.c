@@ -21,9 +21,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Graphics.h"
+#include <Defn.h>
+#include <Graphics.h>
+#include <Devices.h>
 #include "devga.h"
 
 /* Return a non-relocatable copy of a string */
@@ -36,25 +36,19 @@ static char *SaveString(SEXP sxp, int offset)
 
     if (!isString(sxp) || length(sxp) <= offset)
 	errorcall(gcall, "invalid string argument");
-    s = R_alloc(strlen(CHAR(STRING(sxp)[offset])) + 1, sizeof(char));
-    strcpy(s, CHAR(STRING(sxp)[offset]));
+    s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset))) + 1, sizeof(char));
+    strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
 }
 
 /* This is Guido's devga device. */
 
-/*  X11 Device Driver Parameters:
- *  -----------------		--> ../unix/devX11.c
- *  display	= display
- *  width	= width in inches
- *  height	= height in inches
- *  ps		= pointsize
- */
 SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     DevDesc *dd;
     char *display, *vmax;
     double height, width, ps;
+    int recording = 0, resize = 1;
 
     gcall = call;
     vmax = vmaxget();
@@ -68,20 +62,32 @@ SEXP do_devga(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "invalid width or height");
     ps = asReal(CAR(args));
     args = CDR(args);
-    /* Allocate and initialize the device driver data */
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if (!GADeviceDriver(dd, display, width, height, ps)) {
-	free(dd);
-	errorcall(call, "unable to start device devga");
-    }
-    gsetVar(install(".Device"),
-	    mkString(display[0] ? display : "windows"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    recording = asLogical(CAR(args));
+    if (recording == NA_LOGICAL)
+	errorcall(call, "invalid value of `recording'");
+    args = CDR(args);
+    resize = asInteger(CAR(args));
+    if (resize == NA_INTEGER)
+	errorcall(call, "invalid value of `resize'");
+
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	/* Allocate and initialize the device driver data */
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if (!GADeviceDriver(dd, display, width, height, ps, 
+			    (Rboolean)recording, resize)) {
+	    free(dd);
+	    errorcall(call, "unable to start device devga");
+	}
+	gsetVar(install(".Device"),
+		mkString(display[0] ? display : "windows"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }

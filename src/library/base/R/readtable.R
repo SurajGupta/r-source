@@ -1,44 +1,88 @@
-count.fields <- function(file, sep = "", quote = "\"'", skip = 0)
-    .Internal(count.fields(file, sep, quote, skip))
-
+count.fields <- function(file, sep = "", quote = "\"'", skip = 0,
+                         blank.lines.skip = TRUE)
+{
+    if(is.character(file)) {
+        file <- file(file)
+        on.exit(close(file))
+    }
+    if(!inherits(file, "connection"))
+        stop("argument `file' must be a character string or connection")
+    .Internal(count.fields(file, sep, quote, skip, blank.lines.skip))
+}
 
 read.table <-
-    function (file, header=FALSE, sep="", quote="\"'", dec=".",
-              row.names, col.names, as.is=FALSE,
-	      na.strings="NA", skip=0,
-              check.names = TRUE, strip.white = FALSE)
+    function (file, header = FALSE, sep = "", quote = "\"'", dec = ".",
+              row.names, col.names, as.is = FALSE,
+	      na.strings = "NA", skip = 0,
+              check.names = TRUE, fill = !blank.lines.skip,
+              strip.white = FALSE, blank.lines.skip = TRUE)
 {
     type.convert <- function(x, na.strings = "NA",
                              as.is = FALSE, dec = ".")
 	.Internal(type.convert(x, na.strings, as.is, dec))
 
+    if(is.character(file)) {
+        file <- file(file, "r")
+        on.exit(close(file))
+    }
+    if(!inherits(file, "connection"))
+        stop("argument `file' must be a character string or connection")
+
+    if(isSeekable(file)) {
+        if(skip > 0) readLines(file, skip)
+        row.lens <- count.fields(file, sep, quote, 0, blank.lines.skip)
+        seek(file, 0)
+        if(skip > 0) readLines(file, skip)
+        tfile <- file
+    } else {
+        warning("readLines on a non-seekable connection can be resource-intensive")
+        if(skip > 0) readLines(file, skip)
+        whole <- readLines(file)
+        tfile <- textConnection(whole)
+        row.lens <- count.fields(tfile, sep, quote, 0, blank.lines.skip)
+        close(tfile)
+        tfile <- textConnection(whole)
+        on.exit(close(tfile), add = TRUE)
+    }
+
     ##	basic column counting and header determination;
     ##	rlabp (logical) := it looks like we have column names
 
-    row.lens <- count.fields(file, sep, quote, skip)
     nlines <- length(row.lens)
-    rlabp <- nlines > 1 && (row.lens[2] - row.lens[1]) == 1
+    rlabp <- nlines > 1 && (max(row.lens[-1]) - row.lens[1]) == 1
     if(rlabp && missing(header))
 	header <- TRUE
 
     if (header) { # read in the header
-	col.names <- scan(file, what="", sep=sep, quote=quote, nlines=1,
-			  quiet=TRUE, skip=skip, strip.white=TRUE)
-	skip <- skip + 1
+        colnm <- scan(tfile, what = "", sep = sep, quote = quote, nlines = 1,
+                      quiet = TRUE, skip = 0, strip.white = TRUE)
 	row.lens <- row.lens[-1]
 	nlines <- nlines - 1
+        if(missing(col.names)) col.names <- colnm
     } else if (missing(col.names))
-	col.names <- paste("V", 1:row.lens[1], sep="")
+	col.names <- paste("V", 1:max(row.lens), sep = "")
 
     if(check.names) col.names <- make.names(col.names)
 
-    ##	check that all rows have equal lengths
+    ##	check that all rows have equal lengths unless fill == TRUE
 
-    cols <- unique(row.lens)
-    if (length(cols) != 1) {
-	cat("\nrow.lens=\n"); print(row.lens)
-	stop("all rows must have the same length.")
+    if ( !fill ) {
+        cols <- unique(row.lens)
+        if (length(cols) != 1) {
+            cat("\nrow.lens=\n"); print(row.lens)
+            stop("all rows must have the same length.")
+        }
+    } else {
+        cols <- max(row.lens)
+        if (header) {
+            if (cols > length(col.names) + rlabp) {
+                cat("\nrow.lens=\n"); print(row.lens)
+                stop("Some rows have more fields than header implies")
+            }
+            cols <- length(col.names) + rlabp
+        }
     }
+
 
     ##	set up for the scan of the file.
     ##	we read all values as character strings and convert later.
@@ -47,10 +91,17 @@ read.table <-
     if (rlabp)
 	col.names <- c("row.names", col.names)
     names(what) <- col.names
-    data <- scan(file=file, what=what, sep=sep, quote=quote, skip=skip,
-		 na.strings=na.strings, quiet=TRUE,
-                 strip.white=strip.white)
+    data <- scan(file = tfile, what = what, sep = sep, quote = quote, skip = 0,
+		 na.strings = na.strings, quiet = TRUE, fill = fill,
+                 strip.white = strip.white,
+                 blank.lines.skip = blank.lines.skip)
 
+    if(!blank.lines.skip && row.lens[nlines] == 0) {
+        ## we had a blank last line
+        for (i in 1:cols)
+            data[[i]] <- data[[i]][-nlines]
+        nlines <- nlines - 1
+    }
     ##	now we have the data;
     ##	convert to numeric or factor variables
     ##	(depending on the specifies value of "as.is").
@@ -107,8 +158,26 @@ read.table <-
 }
 
 read.csv <-
-    function (file, header = TRUE, sep = ",", quote="\"", dec=".", ...)
-    read.table(file, header, sep, quote, dec, ...)
+    function (file, header = TRUE, sep = ",", quote="\"", dec=".",
+              fill = TRUE, ...)
+    read.table(file = file, header = header, sep = sep,
+               quote = quote, dec = dec, fill = fill, ...)
+
 read.csv2 <-
-    function (file, header = TRUE, sep = ";", quote="\"", dec=",", ...)
-    read.table(file, header, sep, quote, dec, ...)
+    function (file, header = TRUE, sep = ";", quote="\"", dec=",",
+              fill = TRUE, ...)
+    read.table(file = file, header = header, sep = sep,
+               quote = quote, dec = dec, fill = fill, ...)
+
+read.delim <-
+    function (file, header = TRUE, sep = "\t", quote="\"", dec=".",
+              fill = TRUE, ...)
+    read.table(file = file, header = header, sep = sep,
+               quote = quote, dec = dec, fill = fill, ...)
+
+read.delim2 <-
+    function (file, header = TRUE, sep = "\t", quote="\"", dec=",",
+              fill = TRUE, ...)
+    read.table(file = file, header = header, sep = sep,
+               quote = quote, dec = dec, fill = fill, ...)
+

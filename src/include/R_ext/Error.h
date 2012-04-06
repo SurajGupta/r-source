@@ -26,9 +26,17 @@
 #define warning Rf_warning
 #endif
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 void	error(const char *, ...);
 void	warning(const char *, ...);
 void	WrongArgCount(char *);
 void	UNIMPLEMENTED(char *);
 
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* _R_ERROR_H_ */

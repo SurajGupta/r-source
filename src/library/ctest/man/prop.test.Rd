@@ -1,7 +1,8 @@
 \name{prop.test}
 \title{Test for Equal or Given Proportions}
 \usage{
-prop.test(x, n = NULL, p = NULL, c("two.sided", "less", "greater"),
+prop.test(x, n = NULL, p = NULL,
+          alternative = c("two.sided", "less", "greater"),
           conf.level = 0.95, correct = TRUE)
 }
 \alias{prop.test}
@@ -69,9 +70,9 @@ prop.test(x, n = NULL, p = NULL, c("two.sided", "less", "greater"),
 \value{
   A list with class \code{"htest"} containing the following
   components:
-  \item{statistic}{the value of Pearson's chi-square test statistic.}
+  \item{statistic}{the value of Pearson's chi-squared test statistic.}
   \item{parameter}{the degrees of freedom of the approximate
-    chi-square distribution of the test statistic.}
+    chi-squared distribution of the test statistic.}
   \item{p.value}{the p-value of the test.}
   \item{estimate}{a vector with the sample proportions \code{x/n}.}
   \item{conf.int}{a confidence interval for the true proportion if

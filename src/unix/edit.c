@@ -19,7 +19,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include "Defn.h"
@@ -27,13 +27,16 @@
 #include "Fileio.h"
 #include "IOStuff.h"
 #include "Parse.h"
+
+#include "Runix.h"
+
 #include <stdio.h>
 #ifdef Win32
-#  include "run.h"
+# include "run.h"
 #endif
 
 #ifdef HAVE_UNISTD_H
-#  include <unistd.h>  /* for unlink() */
+# include <unistd.h>		/* for unlink() */
 #endif
 
 /*
@@ -62,7 +65,7 @@ void InitEd()
     char * Rwin32_tmpnam(char *);
     DefaultFileName = Rwin32_tmpnam("Redit");
 #else
-    DefaultFileName = tmpnam(NULL);
+    DefaultFileName = Runix_tmpnam(NULL);
 #endif
 }
 
@@ -75,7 +78,7 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int   i, rc, status;
     SEXP  x, fn, envir, ed, t;
-    char *filename, *editcmd, *vmaxsave;
+    char *filename, *editcmd, *vmaxsave, *cmd;
     FILE *fp;
 
     checkArity(op, args);
@@ -91,9 +94,9 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isString(fn))
 	error("invalid argument to edit()");
 
-    if (LENGTH(STRING(fn)[0]) > 0) {
-	filename = R_alloc(strlen(CHAR(STRING(fn)[0])), sizeof(char));
-	strcpy(filename, CHAR(STRING(fn)[0]));
+    if (LENGTH(STRING_ELT(fn, 0)) > 0) {
+	filename = R_alloc(strlen(CHAR(STRING_ELT(fn, 0))), sizeof(char));
+	strcpy(filename, CHAR(STRING_ELT(fn, 0)));
     }
     else filename = DefaultFileName;
 
@@ -101,29 +104,35 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	if((fp=R_fopen(R_ExpandFileName(filename), "w")) == NULL)
 	    errorcall(call, "unable to open file");
-	if (LENGTH(STRING(fn)[0]) == 0) EdFileUsed++;
+	if (LENGTH(STRING_ELT(fn, 0)) == 0) EdFileUsed++;
 	if (TYPEOF(x) != CLOSXP || isNull(t = getAttrib(x, R_SourceSymbol)))
 	    t = deparse1(x, 0);
 	for (i = 0; i < LENGTH(t); i++)
-	    fprintf(fp, "%s\n", CHAR(STRING(t)[i]));
+	    fprintf(fp, "%s\n", CHAR(STRING_ELT(t, i)));
 	fclose(fp);
     }
 
     ed = CAR(CDDR(args));
-    if (!isString(ed))
-	error("editor type not valid");
-    editcmd = R_alloc(strlen(CHAR(STRING(ed)[0]))+strlen(filename)+2,
-		      sizeof(char));
+    if (!isString(ed)) errorcall(call, "argument `editor' type not valid");
+    cmd = CHAR(STRING_ELT(ed, 0));
+    if (strlen(cmd) == 0) errorcall(call, "argument `editor' is not set");
+    editcmd = R_alloc(strlen(cmd) + strlen(filename) + 6, sizeof(char));
 #ifdef Win32
-    sprintf(editcmd, "%s \"%s\"", CHAR(STRING(ed)[0]), filename);
+/* Quote path if necessary */
+    if(cmd[0] != '"' && strchr(cmd, ' '))
+	sprintf(editcmd, "\"%s\" \"%s\"", cmd, filename);
+    else
+	sprintf(editcmd, "%s \"%s\"", cmd, filename);
     rc = runcmd(editcmd, 1, 1, "");
     if (rc == NOLAUNCH)
-	errorcall(call, "unable to run editor");
+	errorcall(call, "unable to run editor %s", cmd);
     if (rc != 0)
 	warningcall(call, "editor ran but returned error status");
 #else
-    sprintf(editcmd, "%s %s", CHAR(STRING(ed)[0]), filename);
+    sprintf(editcmd, "%s %s", cmd, filename);
     rc = system(editcmd);
+    if (rc != 0)
+	errorcall(call, "problem with running editor %s", cmd);
 #endif
 
     if((fp = R_fopen(R_ExpandFileName(filename), "r")) == NULL)
@@ -136,16 +145,16 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 		  "An error occurred on line %d\n use a command like\n x <- edit()\n to recover", R_ParseError);
     R_ResetConsole();
     {   /* can't just eval(x) here */
-	int i, n;
+	int j, n;
 	SEXP tmp = R_NilValue;
 
 	n = LENGTH(x);
-	for (i = 0 ; i < n ; i++)
-	    tmp = eval(VECTOR(x)[i], R_GlobalEnv);
+	for (j = 0 ; j < n ; j++)
+	    tmp = eval(VECTOR_ELT(x, j), R_GlobalEnv);
 	x = tmp;
     }
     if (TYPEOF(x) == CLOSXP && envir != R_NilValue)
-	CLOENV(x) = envir;
+	SET_CLOENV(x, envir);
     UNPROTECT(2);
     vmaxset(vmaxsave);
     return (x);

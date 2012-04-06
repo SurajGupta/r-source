@@ -2,11 +2,22 @@ binom.test <-
 function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
          conf.level = 0.95)
 {
-    if((length(n) > 1) || is.na(n) || (n < 1) || (n != round(n)))
-        stop("n must be a positive integer")
-    if((length(x) > 1) || is.na(x) ||
-       (x < 0) || (x > n) || (x != round(x)))
-        stop("x must be an integer between 0 and n")
+    if(any(is.na(x) || (x < 0) || (x != round(x))))
+        stop("x must be nonnegative and integer")
+    if(length(x) == 2) {
+        ## x gives successes and failures
+        n <- sum(x)
+        x <- x[1]
+    }
+    else if(length(x) == 1) {
+        ## x gives successes, n gives trials
+        if((length(n) > 1) || is.na(n) || (n < 1) || (n != round(n))
+           || (x > n))
+            stop("n must be a positive integer >= x")
+    }
+    else
+        stop("incorrect length of x")
+
     if(!missing(p) && (length(p) > 1 || is.na(p) || p < 0 || p > 1))
         stop ("p must be a single number between 0 and 1")
     alternative <- match.arg(alternative)
@@ -19,7 +30,7 @@ function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
 
     PVAL <- switch(alternative,
                    less = pbinom(x, n, p),
-                   greater = 1 - pbinom(x - 1, n, p),
+                   greater = pbinom(x - 1, n, p, lower = FALSE),
                    two.sided = {
                        if(p == 0)
                            (x == 0)
@@ -30,17 +41,19 @@ function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
                            ##   d <- dbinom(0 : n, n, p)
                            ##   sum(d[d <= dbinom(x, n, p)])
                            ## a bit more efficiently ...
+                           ## Note that we need a little fuzz.
+                           relErr <- 1 + 10 ^ (-7) 
                            d <- dbinom(x, n, p)
                            if(x / n < p) {
                                i <- seq(from = x + 1, to = n)
-                               y <- sum(dbinom(i, n, p) <= d)
+                               y <- sum(dbinom(i, n, p) <= d * relErr)
                                pbinom(x, n, p) +
-                                   (1 - pbinom(n - y, n, p))
+                                   pbinom(n - y, n, p, lower = FALSE)
                            } else {
                                i <- seq(from = 0, to = x - 1)
-                               y <- sum(dbinom(i, n, p) <= d)
+                               y <- sum(dbinom(i, n, p) <= d * relErr)
                                pbinom(y - 1, n, p) +
-                                   (1 - pbinom(x - 1, n, p))
+                                   pbinom(x - 1, n, p, lower = FALSE)
                            }
                        }
                    })
@@ -49,7 +62,7 @@ function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
         if(x == 0)                      # No solution
             0
         else
-            uniroot(function(p) 1 - pbinom(x - 1, n, p) - alpha,
+            uniroot(function(p) pbinom(x - 1, n, p, lower = FALSE) - alpha,
                     c(0, 1))$root
     }
     ## Determine p s.t. Prob(B(n,p) <= x) = alpha

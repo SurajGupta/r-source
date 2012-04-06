@@ -22,8 +22,11 @@
 #ifndef MATHLIB_PRIVATE_H
 #define MATHLIB_PRIVATE_H
 
+#include <Rconfig.h>
+#define MATHLIB_PRIVATE
 #include "R_ext/Mathlib.h"
-#include "Rconfig.h"
+#undef  MATHLIB_PRIVATE
+#include "R_ext/RS.h"
 
 #ifndef MATHLIB_STANDALONE
 /* Mathlib in R */
@@ -38,7 +41,7 @@
 #include "R_ext/Arith.h"
 #define ML_POSINF	R_PosInf
 #define ML_NEGINF	R_NegInf
-#define ML_NAN		R_NaReal
+#define ML_NAN		R_NaN
 
 #ifdef IEEE_754
 #define ML_ERROR(x)	/* nothing */
@@ -111,6 +114,41 @@ void ml_error(int n);
 /* Wilcoxon Signed Rank Distribution */
 
 #define SIGNRANK_MAX 50
+
+/* Formerly private part of Mathlib.h */
+
+/* always remap internal functions */
+#define bd0       	Rf_bd0
+#define chebyshev_eval	Rf_chebyshev_eval
+#define chebyshev_init	Rf_chebyshev_init
+#define fastchoose	Rf_fastchoose
+#define i1mach		Rf_i1mach
+#define gammalims	Rf_gammalims
+#define lfastchoose	Rf_lfastchoose
+#define lgammacor	Rf_lgammacor
+#define stirlerr       	Rf_stirlerr
+
+	/* Chebyshev Series */
+
+int	chebyshev_init(double*, int, double);
+double	chebyshev_eval(double, double *, int);
+
+	/* Gamma and Related Functions */
+
+void	gammalims(double*, double*);
+double	lgammacor(double); /* log(gamma) correction */
+double  stirlerr(double);  /* Stirling expansion "error" */
+
+double	fastchoose(double, double);
+double	lfastchoose(double, double);
+
+double  bd0(double, double);
+
+/* Consider adding these two to the API (Rmath.h): */
+double	dbinom_raw(double, double, double, double, int);
+double	dpois_raw (double, double, int);
+
+int	i1mach(int);
 
 
 #endif /* MATHLIB_PRIVATE_H */

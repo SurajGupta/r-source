@@ -24,6 +24,10 @@
 
 	/*-- Error Message Strings --- 1st step to i18n --- --*/
 
+/*-- FIXME: Rather use and extend the ErrorDB[] and WarningDB[] in
+ *-- =====  ../main/errors.c ! (MM, who did the following in
+ *				the first place ...) */
+
 #ifdef IEEE_754
 # define R_MSG_NA		"NaNs produced"
 #else
@@ -51,25 +55,37 @@
 #define R_MSG_list_vec	"applies only to lists and vectors"
 #define R_MSG_list_vec2	"() applied to non-(list or vector)"
 
+/*---- Packaged Error & Warning Messages ---- 
+ *---- ================================= ----*/
 
-	/*-- Packaged Error Messages ---> Handling & I18n ... */
+/* ---> Handling & I18n 
+ * via ErrorMessage() and WarningMessage() in ../../main/errors.c */
 
-/* Argument list length and type errors */
+typedef enum {
+    /* Argument list length and type errors */
 
-#define ERROR_NUMARGS		1
-#define ERROR_ARGTYPE		2
-#define ERROR_INCOMPAT_ARGS	3
+    ERROR_NUMARGS = 1,
+    ERROR_ARGTYPE = 2,
+    ERROR_INCOMPAT_ARGS = 3,
 
-/* General type and length incompatibilities */
+    /* General type and length incompatibilities */
 
-#define ERROR_TSVEC_MISMATCH	100
+    ERROR_TSVEC_MISMATCH = 100,
 
-#define ERROR_UNIMPLEMENTED	9998
-#define ERROR_UNKNOWN		9999
+    ERROR_UNIMPLEMENTED	= 9998,
+    ERROR_UNKNOWN = 9999
+} R_ERROR;
 
 
-	/*-- Packaged Warning Messages --*/
+typedef enum {
 
-#define WARNING_UNKNOWN		9999
+    WARNING_coerce_NA	= 101,
+    WARNING_coerce_INACC= 102,
+    WARNING_coerce_IMAG = 103,
+
+    WARNING_UNKNOWN = 9999
+} R_WARNING;
+
 
 #endif
+

@@ -6,30 +6,35 @@ srcdir = .
 top_srcdir = ../..
 subdir = doc/manual
 
-SOURCES_TEXI = R-FAQ.texi R-exts.texi R-intro.texi
+SOURCES_TEXI = R-FAQ.texi R-data.texi R-exts.texi R-intro.texi R-lang.texi
 
 OBJECTS_DVI = $(SOURCES_TEXI:.texi=.dvi)
+OBJECTS_HTML = $(SOURCES_TEXI:.texi=.html)
 OBJECTS_INFO = $(SOURCES_TEXI:.texi=.info)
 OBJECTS_PDF = $(SOURCES_TEXI:.texi=.pdf)
-
-R_PAPERSIZE = a4
-# set the next to `ae' to omit the hyperlinks
-R_RD4PDF = ae,hyper
 
 MAKEINFO = makeinfo
 PDFLATEX = pdflatex
 PDFTEX = pdftex
+LATEX = latex
+TEX = tex
+
 MAKEINDEX = makeindex
 TEXINDEX = texindex
 RHOME=$(shell cd ../..; pwd)
-R_PKGS=base ctest eda lqs modreg mva nls splines stepfun ts
+R_PKGS=base ctest eda lqs modreg mva nls splines stepfun tcltk ts
+
+R_PAPERSIZE = a4
+R_RD4DVI = ae
+# set the next to `ae' to omit the hyperlinks
+R_RD4PDF = ae,hyper
 
 pkgsrcs = $(R_PKGS:=-pkg.tex)
 
-texiincludes = version.texi $(srcdir)/R-defs.texi
+texiincludes = version.texi R-defs.texi
 
 .SUFFIXES:
-.SUFFIXES: .dvi .info .texi .pdf
+.SUFFIXES: .dvi .html .info .texi .pdf
 
 all: pdf
 
@@ -39,36 +44,90 @@ pkg2tex.pl: $(top_srcdir)/tools/pkg2tex.in
 Rdnewer.pl: $(top_srcdir)/tools/Rdnewer.in
 	@sed -e 1d  $^ > $@
 
-.texi.pdf:
-	$(PDFTEX) $<
-	$(PDFTEX) $<
+.texi.dvi:
+	$(TEX) $<
+	$(TEX) $<
+
+.texi.html:
+	$(MAKEINFO) --html $< -o $@ || touch $@
 
 .texi.info:
 	$(MAKEINFO)  -D UseExternalXrefs $<
 
+.texi.pdf:
+	$(PDFTEX) $<
+	$(PDFTEX) $<
+
+
+dvi: refman.dvi $(OBJECTS_DVI)
+
+refman.dvi: $(pkgsrcs) version.tex Rd.sty refman.top refman.bot
+	@echo "DVI/LaTeX documentation: reference index ..."
+	@$(RM) -f *.aux refman.toc refman.ind
+	@(opt="$${R_PAPERSIZE:-$(R_PAPERSIZE)}paper"; \
+	  echo "\\documentclass[$${opt}]{book}"; \
+	  opt="$${R_RD4DVI:-$(R_RD4DVI)}"; \
+	  echo "\\usepackage[$${opt}]{Rd}"; \
+	  cat refman.top; \
+	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
+	  cat refman.bot) > refman.tex
+	@$(LATEX) '\nonstopmode\input{refman.tex}'
+	@-$(MAKEINDEX) refman
+	@$(LATEX) '\nonstopmode\input{refman.tex}'
+
+R-data.dvi: R-data.texi $(texiincludes) 
+	$(TEX) R-data.texi
+	$(TEXINDEX) R-data.cp R-data.fn R-data.vr
+	$(TEX) R-data.texi
+	$(TEX) R-data.texi
+
+R-exts.dvi: R-exts.texi $(texiincludes) 
+	$(TEX) R-exts.texi
+	$(TEXINDEX) R-exts.cp R-exts.fn R-exts.vr
+	$(TEX) R-exts.texi
+	$(TEX) R-exts.texi
+
+R-intro.dvi: R-intro.texi $(texiincludes) 
+	$(TEX) R-intro.texi
+	$(TEXINDEX) R-intro.cp R-intro.fn R-intro.vr
+	$(TEX) R-intro.texi
+	$(TEX) R-intro.texi
+
+html: $(OBJECTS_HTML)
+R-data.html: $(texiincludes)
+R-exts.html: $(texiincludes)
+R-intro.html: $(texiincludes)
+R-lang.html: $(texiincludes)
+
 info: $(OBJECTS_INFO)
-R-exts.info: version.texi
-R-intro.info: version.texi
+R-data.info: $(texiincludes)
+R-exts.info: $(texiincludes)
+R-intro.info: $(texiincludes)
+R-lang.info: $(texiincludes)
 
 pdf: refman.pdf $(OBJECTS_PDF)
 
-refman.tex: refman.top $(srcdir)/refman.bot
-	@echo "creating $@"
+refman.pdf: $(pkgsrcs) version.tex Rd.sty refman.top refman.bot
+	@echo " PDF/LaTeX documentation: reference index ..."
 	@(opt="$${R_PAPERSIZE:-$(R_PAPERSIZE)}paper"; \
 	  echo "\\documentclass[$${opt}]{book}"; \
 	  opt="$${R_RD4PDF:-$(R_RD4PDF)}"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
-	  cat $(srcdir)/refman.top; \
+	  cat refman.top; \
 	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
-	  cat $(srcdir)/refman.bot) > $@
+	  cat refman.bot) > refman.tex
+	@$(RM) -f *.aux refman.toc refman.ind
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(MAKEINDEX) refman
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
+
 
 version.tex: ../../bin/Rterm.exe $(top_srcdir)/VERSION
 	@echo "creating $(subdir)/$@"
 	@(v=`cat $(top_srcdir)/VERSION`; \
-	  y=`cut -d/ -f1 < $(top_srcdir)/date-stamp`; \
-	  m=`cut -d/ -f2 < $(top_srcdir)/date-stamp`; \
-	  d=`cut -d/ -f3 < $(top_srcdir)/date-stamp`; \
-	  echo "$${v} ($${m} $${d}, $${y})") > $@
+	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
+	  echo "$${v}") > $@
 
 %-pkg.tex: FORCE Rdnewer.pl pkg2tex.pl
 	@if perl Rdnewer.pl \
@@ -79,19 +138,23 @@ version.tex: ../../bin/Rterm.exe $(top_srcdir)/VERSION
 	fi
 FORCE:
 
-refman.pdf: refman.tex version.tex $(pkgsrcs) $(srcdir)/Rd.sty
-	@echo " PDF/LaTeX documentation: reference index ..."
-	@$(RM) -f *.aux refman.toc refman.ind
-	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
-	@$(MAKEINDEX) refman
-	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
-	@$(PDFLATEX) '\nonstopmode\input{refman.tex}'
+R-data.pdf: R-data.texi $(texiincludes) 
+	$(PDFTEX) R-data.texi
+	$(TEXINDEX) R-data.cp R-data.fn R-data.vr
+	$(PDFTEX) R-data.texi
+	$(PDFTEX) R-data.texi
 
 R-exts.pdf: R-exts.texi $(texiincludes) 
 	$(PDFTEX) R-exts.texi
 	$(TEXINDEX) R-exts.cp R-exts.fn R-exts.vr
 	$(PDFTEX) R-exts.texi
 	$(PDFTEX) R-exts.texi
+
+R-lang.pdf: R-lang.texi $(texiincludes) 
+	$(PDFTEX) R-lang.texi
+	$(TEXINDEX) R-lang.cp R-lang.fn R-lang.vr
+	$(PDFTEX) R-lang.texi
+	$(PDFTEX) R-lang.texi
 
 R-intro.pdf: R-intro.texi $(texiincludes) 
 	$(PDFTEX) R-intro.texi
@@ -102,7 +165,7 @@ R-intro.pdf: R-intro.texi $(texiincludes)
 version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	@echo "creating $(subdir)/$@"
 	@(v=`sed 's/\([^ ]*\).*/\1/' $(top_srcdir)/VERSION`; \
-	  v="$${v} (`sed 's|/| |g' $(top_srcdir)/date-stamp`)"; \
+	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
 	  echo "@set VERSION $${v}" > $@)
 
 
@@ -114,6 +177,6 @@ clean:
 	  *.out *.pg *.pgs *.tmp *.tp *.vr *.vrs \
 	  version.tex version.texi refman.tex *-pkg.tex 
 distclean: clean
-	@-rm -f pkg2tex.pl Rdnewer.pl *.pdf *.info*
+	@-rm -f pkg2tex.pl Rdnewer.pl *.pdf *.dvi *.info* *.html
 maintainer-clean: distclean
 

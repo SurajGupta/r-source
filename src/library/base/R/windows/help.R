@@ -6,7 +6,8 @@ help <-
              lib.loc = .lib.loc, verbose = getOption("verbose"),
              try.all.packages = getOption("help.try.all.packages"),
              chmhelp = getOption("chmhelp"), htmlhelp = getOption("htmlhelp"),
-             winhelp = getOption("winhelp"))
+             winhelp = getOption("winhelp"),
+             pager = getOption("pager"))
 {
     chmhelp <- is.logical(chmhelp) && chmhelp
     htmlhelp <- is.logical(htmlhelp) && htmlhelp
@@ -49,6 +50,7 @@ help <-
                         stop("Compiled HTML is not installed")
                     if(!is.loaded(symbol.C("Rchtml")))
                         dyn.load(chm.dll)
+                    topic <- sub("(.*/help/)([^/]*)$", "\\2", file)
                     wfile <- sub("/help/([^/]*)$", "", file)
                     thispkg <- sub(".*/([^/]*)$", "\\1", wfile)
                     hlpfile <- paste(wfile, "/chtml/", thispkg, ".chm",
@@ -106,7 +108,7 @@ help <-
                 if(file.exists(zfile))
                     file.show(zfile,
                               header = paste("Help for `", topic, "'", sep=""),
-                              delete.file = (zfile!=file))
+                              delete.file = (zfile!=file), pager = pager)
                 else
                     stop(paste("The help file for `", topic, "' is missing",
                                sep = ""))
@@ -125,7 +127,7 @@ help <-
                         "paper]{article}",
                         "\n",
                         "\\usepackage[",
-                        if(nchar(opt <- getenv("R_RD4DVI"))) opt else "ae",
+                        if(nchar(opt <- Sys.getenv("R_RD4DVI"))) opt else "ae",
                         "]{Rd}",
                         "\n",
                         "\\InputIfFileExists{Rhelp.cfg}{}{}\n",

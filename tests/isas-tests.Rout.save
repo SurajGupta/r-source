@@ -1,18 +1,19 @@
 
 R : Copyright 2000, The R Development Core Team
-Version 1.1.0 Under development (unstable) (June 7, 2000)
+Version 1.2.0 Under development (unstable) (2000-12-09)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-Type	"?license" or "?licence" for distribution details.
+Type `license()' or `licence()' for distribution details.
 
 R is a collaborative project with many contributors.
-Type	"?contributors" for a list.
+Type `contributors()' for more information.
 
-Type	"demo()" for some demos, "help()" for on-line help, or
-    	"help.start()" for a HTML browser interface to help.
-Type	"q()" to quit R.
+Type `demo()' for some demos, `help()' for on-line help, or
+`help.start()' for a HTML browser interface to help.
+Type `q()' to quit R.
 
+Loading required package: ctest 
 > .proctime00 <- proc.time()
 > 
 > isall.equal <- function(x,y)
@@ -40,7 +41,7 @@ Error in as.call(x) : invalid argument list
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(l, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -67,6 +68,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 Error in as.symbol(x) : Invalid data of mode "integer" (too short)
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > is.vector(as.vector( x ))
@@ -98,7 +101,7 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(l, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 IS: [1] TRUE
@@ -138,20 +141,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 Error in as.symbol(x) : Invalid data of mode "integer" (too short)
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : invalid argument list
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -167,6 +194,12 @@ Error in as.call(x) : invalid argument list
 [6] "Component x: Attributes: < names for current but not for target >"
 [7] "Component x: Attributes: < target is NULL, current is list >"     
 [8] "Component x: target is numeric, current is data.frame"            
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                                                            
+[2] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
+[3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
+[4] "Components not in target: f"                                                           
+[5] "Components not in current: x"                                                          
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -212,6 +245,8 @@ Error in 1:nrows : NA/NaN argument
 [3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
 [4] "Components not in target: f"                                                           
 [5] "Components not in current: x"                                                          
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
  [1] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
  [2] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
@@ -243,9 +278,9 @@ Error in 1:nrows : NA/NaN argument
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-Error in as.function.default(l, envir) : argument must have length at least 1
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -262,6 +297,9 @@ Error in as.function.default(l, envir) : argument must have length at least 1
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
 [1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
+Error in as.matrix.data.frame(as.data.frame(unclass(x))) : 
+	length of dimnames[2] not equal to array extent
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
 > f <- as.matrix.default( x );  all.equal(f, as.matrix.default( f ), tol=0)
@@ -291,6 +329,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 Error in as.symbol(x) : Invalid data of mode "integer" (too short)
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 Error in ts(x) : ts object must have one or more observations
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -345,6 +389,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/0) in vector allocation
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > is.vector(as.vector( x ))
@@ -417,20 +463,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/0) in vector allocation
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 [1] FALSE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 Error in as.array(x) : attempt to set an attribute on NULL
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : invalid argument list
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -446,6 +516,12 @@ Error in as.call(x) : invalid argument list
 [6] "Component x: Attributes: < names for current but not for target >"
 [7] "Component x: Attributes: < target is NULL, current is list >"     
 [8] "Component x: target is NULL, current is data.frame"               
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                                                            
+[2] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
+[3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
+[4] "Components not in target: f"                                                           
+[5] "Components not in current: x"                                                          
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -491,6 +567,8 @@ Error in 1:nrows : NA/NaN argument
 [3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
 [4] "Components not in target: f"                                                           
 [5] "Components not in current: x"                                                          
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
  [1] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
  [2] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
@@ -541,6 +619,8 @@ Error in as.function.default(l, envir) : argument must have length at least 1
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
 Error in array(x, c(length(x), 1), if (!is.null(names(x))) list(names(x),  : 
 	attempt to set an attribute on NULL
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
+Error in X[[j]] : subscript out of bounds
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
 > f <- as.matrix.default( x );  all.equal(f, as.matrix.default( f ), tol=0)
@@ -571,6 +651,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 Error in as.symbol(x) : invalid type/length (1/0) in vector allocation
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 Error in ts(x) : ts object must have one or more observations
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -625,6 +711,8 @@ Error in structure(.Internal(as.vector(x, "double")), Csingle = TRUE) :
 	(list) object cannot be coerced to vector type 14
 > is.symbol(as.symbol( x ))
 Error in as.symbol(x) : (list) object cannot be coerced to vector type 1
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > is.vector(as.vector( x ))
@@ -696,20 +784,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 Error in as.symbol(x) : (list) object cannot be coerced to vector type 1
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : illegal length 0 argument
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 Error in as.complex.default(x) : (list) object cannot be coerced to vector type 15
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -724,6 +836,12 @@ Error in as.complex.default(x) : (list) object cannot be coerced to vector type 
 [5] "Component x: Attributes: < names for current but not for target >"
 [6] "Component x: Attributes: < target is NULL, current is list >"     
 [7] "Component x: Length mismatch: comparison on first 0 components"   
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                                                            
+[2] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
+[3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
+[4] "Components not in target: f"                                                           
+[5] "Components not in current: x"                                                          
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -769,6 +887,8 @@ Error in 1:nrows : NA/NaN argument
 [3] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
 [4] "Components not in target: f"                                                           
 [5] "Components not in current: x"                                                          
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: Lengths: 0, 1 >"                                    
 [2] "Attributes: < Component row.names: Lengths (0, 1) differ (string compare on first 0) >"
@@ -818,6 +938,8 @@ Error in as.logical.default(x) : (list) object cannot be coerced to vector type 
 Error in as.logical.default(x) : (list) object cannot be coerced to vector type 10
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
 [1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
+Error in X[[j]] : subscript out of bounds
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
 > f <- as.matrix.default( x );  all.equal(f, as.matrix.default( f ), tol=0)
@@ -849,6 +971,12 @@ Error in structure(.Internal(as.vector(x, "double")), Csingle = TRUE) :
 	(list) object cannot be coerced to vector type 14
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 Error in as.symbol(x) : (list) object cannot be coerced to vector type 1
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 Error in ts(x) : ts object must have one or more observations
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -875,7 +1003,7 @@ Error in as.call(x) : invalid argument list
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -902,6 +1030,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 [1] TRUE
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -933,7 +1063,7 @@ Error in as.call(x) : invalid argument list
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 IS: [1] TRUE
@@ -973,20 +1103,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 [1] TRUE
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : invalid argument list
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -1001,6 +1155,11 @@ Error in as.call(x) : invalid argument list
 [5] "Component x: Attributes: < names for current but not for target >"
 [6] "Component x: Attributes: < target is NULL, current is list >"     
 [7] "Component x: target is numeric, current is data.frame"            
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                              
+[2] "Attributes: < Component row.names: 1 string mismatches >"
+[3] "Components not in target: f"                             
+[4] "Components not in current: x"                            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -1041,6 +1200,8 @@ Error in 1:nrows : NA/NaN argument
 [2] "Attributes: < Component row.names: 1 string mismatches >"
 [3] "Components not in target: f"                             
 [4] "Components not in current: x"                            
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: 1 string mismatches >"         
 [2] "Component x: Modes: numeric, list"                                
@@ -1069,9 +1230,9 @@ Error in 1:nrows : NA/NaN argument
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1087,6 +1248,8 @@ Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  :
 > f <- as.logical.default( x );  all.equal(f, as.logical.default( f ), tol=0)
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
+[1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
 [1] TRUE
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
@@ -1117,6 +1280,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 [1] TRUE
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 [1] TRUE
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -1143,7 +1312,7 @@ Error in as.call(x) : invalid argument list
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -1170,6 +1339,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 [1] TRUE
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -1201,7 +1372,7 @@ IS: [1] TRUE
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 [1] TRUE
@@ -1241,20 +1412,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 [1] TRUE
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : invalid argument list
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -1269,6 +1464,11 @@ Error in as.call(x) : invalid argument list
 [5] "Component x: Attributes: < names for current but not for target >"
 [6] "Component x: Attributes: < target is NULL, current is list >"     
 [7] "Component x: target is numeric, current is data.frame"            
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                              
+[2] "Attributes: < Component row.names: 1 string mismatches >"
+[3] "Components not in target: f"                             
+[4] "Components not in current: x"                            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -1309,6 +1509,8 @@ Error in 1:nrows : NA/NaN argument
 [2] "Attributes: < Component row.names: 1 string mismatches >"
 [3] "Components not in target: f"                             
 [4] "Components not in current: x"                            
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: 1 string mismatches >"         
 [2] "Component x: Modes: numeric, list"                                
@@ -1337,9 +1539,9 @@ Error in 1:nrows : NA/NaN argument
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1355,6 +1557,8 @@ Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  :
 > f <- as.logical.default( x );  all.equal(f, as.logical.default( f ), tol=0)
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
+[1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
 [1] TRUE
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
@@ -1385,6 +1589,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 [1] TRUE
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 [1] TRUE
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -1411,7 +1621,7 @@ Error in as.call(x) : invalid argument list
 > is.factor(as.factor( x ))
 [1] TRUE
 > is.function(as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > is.integer(as.integer( x ))
 [1] TRUE
 > is.list(as.list( x ))
@@ -1438,6 +1648,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 [1] TRUE
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -1469,7 +1681,7 @@ IS: [1] TRUE
 [1] TRUE
 > if(is.function(x)) { cat('IS: ');all.equal(x, as.function( x ), tol=0)
 + } else   !isall.equal(x, as.function( x ))
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > if(is.integer(x)) { cat('IS: ');all.equal(x, as.integer( x ), tol=0)
 + } else   !isall.equal(x, as.integer( x ))
 [1] TRUE
@@ -1509,20 +1721,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 [1] TRUE
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in fromchar(x) : character string is not in a standard unambiguous format
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in fromchar(x) : character string is not in a standard unambiguous format
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in fromchar(x) : character string is not in a standard unambiguous format
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 Error in as.call(x) : invalid argument list
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -1537,6 +1773,11 @@ Error in as.call(x) : invalid argument list
 [5] "Component x: Attributes: < names for current but not for target >"
 [6] "Component x: Attributes: < target is NULL, current is list >"     
 [7] "Component x: target is character, current is data.frame"          
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                              
+[2] "Attributes: < Component row.names: 1 string mismatches >"
+[3] "Components not in target: f"                             
+[4] "Components not in current: x"                            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -1577,6 +1818,8 @@ Error in 1:nrows : NA/NaN argument
 [2] "Attributes: < Component row.names: 1 string mismatches >"
 [3] "Components not in target: f"                             
 [4] "Components not in current: x"                            
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: 1 string mismatches >"         
 [2] "Component x: Modes: character, list"                              
@@ -1605,9 +1848,9 @@ Error in 1:nrows : NA/NaN argument
 Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  : 
 	invalid formula
 > f <- as.function( x );  all.equal(f, as.function( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.function.default( x );  all.equal(f, as.function.default( f ), tol=0)
-[1] TRUE
+Error in as.function.default(l, envir) : list argument expected
 > f <- as.integer( x );  all.equal(f, as.integer( f ), tol=0)
 [1] TRUE
 > f <- as.integer.default( x );  all.equal(f, as.integer.default( f ), tol=0)
@@ -1623,6 +1866,8 @@ Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  :
 > f <- as.logical.default( x );  all.equal(f, as.logical.default( f ), tol=0)
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
+[1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
 [1] TRUE
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
@@ -1653,6 +1898,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 [1] TRUE
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 [1] TRUE
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -1706,6 +1957,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 [1] TRUE
 > is.vector(as.vector( x ))
@@ -1777,20 +2030,44 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 [1] TRUE
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 IS: [1] TRUE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 [1] TRUE
 > f <- as.call( x );  all.equal(f, as.call( f ), tol=0)
 [1] TRUE
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -1804,6 +2081,11 @@ IS: [1] TRUE
 [4] "Component x: Attributes: < Length mismatch: comparison on first 0 components >"
 [5] "Component x: Components not in target: x"                                      
 [6] "Component x: Components not in current: a"                                     
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                              
+[2] "Attributes: < Component row.names: 1 string mismatches >"
+[3] "Components not in target: f"                             
+[4] "Components not in current: x"                            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -1844,6 +2126,8 @@ Error in 1:nrows : NA/NaN argument
 [2] "Attributes: < Component row.names: 1 string mismatches >"
 [3] "Components not in target: f"                             
 [4] "Components not in current: x"                            
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: 1 string mismatches >"                      
 [2] "Component x: Names: 1 string mismatches"                                       
@@ -1890,6 +2174,8 @@ Error in switch(mode(x), "NULL" = structure(NULL, class = "formula"),  :
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
 [1] TRUE
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in 1:p : NA/NaN argument
 > f <- as.matrix.default( x );  all.equal(f, as.matrix.default( f ), tol=0)
@@ -1919,6 +2205,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 [1] TRUE
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -1973,6 +2265,8 @@ Error in as.qr(x) : you cannot be serious
 Error in is.single(as.single(x)) : type "single" unimplemented in R
 > is.symbol(as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> is.table(as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > is.ts(as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > is.vector(as.vector( x ))
@@ -2047,12 +2341,28 @@ Error in is.single(x) : type "single" unimplemented in R
 > if(is.symbol(x)) { cat('IS: ');all.equal(x, as.symbol( x ), tol=0)
 + } else   !isall.equal(x, as.symbol( x ))
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> if(is.table(x)) { cat('IS: ');all.equal(x, as.table( x ), tol=0)
++ } else   !isall.equal(x, as.table( x ))
+Error in as.table.default(x) : cannot coerce into a table
 > if(is.ts(x)) { cat('IS: ');all.equal(x, as.ts( x ), tol=0)
 + } else   !isall.equal(x, as.ts( x ))
 Error in ts(x) : ts object must have one or more observations
 > if(is.vector(x)) { cat('IS: ');all.equal(x, as.vector( x ), tol=0)
 + } else   !isall.equal(x, as.vector( x ))
 [1] FALSE
+> f <- as.POSIXct( x );  all.equal(f, as.POSIXct( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXct.POSIXlt( x );  all.equal(f, as.POSIXct.POSIXlt( f ), tol=0)
+Error in structure(.Internal(as.POSIXct(x, tz)), class = "POSIXct") : 
+	invalid `x' argument
+> f <- as.POSIXct.date( x );  all.equal(f, as.POSIXct.date( f ), tol=0)
+Error in as.POSIXct.date(x) : `x' is not a "dates" object
+> f <- as.POSIXct.dates( x );  all.equal(f, as.POSIXct.dates( f ), tol=0)
+Error in as.POSIXct.dates(x) : `x' is not a "dates" object
+> f <- as.POSIXct.default( x );  all.equal(f, as.POSIXct.default( f ), tol=0)
+Error in as.POSIXct.default(x) : Don't know how to convert `x' to class "POSIXct"
+> f <- as.POSIXlt( x );  all.equal(f, as.POSIXlt( f ), tol=0)
+Error in as.POSIXlt(x) : Don't know how to convert `x' to class "POSIXlt"
 > f <- as.array( x );  all.equal(f, as.array( f ), tol=0)
 Error in dimnames<-.data.frame(*tmp*, value = list(n)) : 
 	invalid dimnames given for data frame
@@ -2060,8 +2370,16 @@ Error in dimnames<-.data.frame(*tmp*, value = list(n)) :
 [1] TRUE
 > f <- as.character( x );  all.equal(f, as.character( f ), tol=0)
 [1] TRUE
+> f <- as.character.POSIXct( x );  all.equal(f, as.character.POSIXct( f ), tol=0)
+[1] TRUE
+> f <- as.character.POSIXlt( x );  all.equal(f, as.character.POSIXlt( f ), tol=0)
+[1] TRUE
 > f <- as.character.default( x );  all.equal(f, as.character.default( f ), tol=0)
 [1] TRUE
+> f <- as.character.factor( x );  all.equal(f, as.character.factor( f ), tol=0)
+[1] TRUE
+> f <- as.character.octmode( x );  all.equal(f, as.character.octmode( f ), tol=0)
+Error in as.character.octmode(x) : calling wrong method
 > f <- as.complex( x );  all.equal(f, as.complex( f ), tol=0)
 [1] TRUE
 > f <- as.complex.default( x );  all.equal(f, as.complex.default( f ), tol=0)
@@ -2072,6 +2390,11 @@ Error in dimnames<-.data.frame(*tmp*, value = list(n)) :
 [1] "Component x: Names: 1 string mismatches"          
 [2] "Component x: Components not in target: x"         
 [3] "Component x: Components not in current: factor(x)"
+> f <- as.data.frame.POSIXct( x );  all.equal(f, as.data.frame.POSIXct( f ), tol=0)
+[1] "Names: 1 string mismatches"                              
+[2] "Attributes: < Component row.names: 1 string mismatches >"
+[3] "Components not in target: f"                             
+[4] "Components not in current: x"                            
 > f <- as.data.frame.character( x );  all.equal(f, as.data.frame.character( f ), tol=0)
 Error in unique(x) : unique() applies only to vectors
 > f <- as.data.frame.complex( x );  all.equal(f, as.data.frame.complex( f ), tol=0)
@@ -2112,6 +2435,8 @@ Error in unique(x) : unique() applies only to vectors
 [2] "Attributes: < Component row.names: 1 string mismatches >"
 [3] "Components not in target: f"                             
 [4] "Components not in current: x"                            
+> f <- as.data.frame.table( x );  all.equal(f, as.data.frame.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
 > f <- as.data.frame.ts( x );  all.equal(f, as.data.frame.ts( f ), tol=0)
 [1] "Attributes: < Component row.names: 1 string mismatches >"                                           
 [2] "Component x: Names: 1 string mismatches"                                                            
@@ -2156,6 +2481,9 @@ Error in unique(x) : unique() applies only to vectors
 [1] TRUE
 > f <- as.matrix( x );  all.equal(f, as.matrix( f ), tol=0)
 Error in as.matrix.data.frame(x) : length of dimnames[2] not equal to array extent
+> f <- as.matrix.POSIXlt( x );  all.equal(f, as.matrix.POSIXlt( f ), tol=0)
+Error in as.matrix.data.frame(as.data.frame(unclass(x))) : 
+	length of dimnames[2] not equal to array extent
 > f <- as.matrix.data.frame( x );  all.equal(f, as.matrix.data.frame( f ), tol=0)
 Error in as.matrix.data.frame(x) : length of dimnames[2] not equal to array extent
 > f <- as.matrix.default( x );  all.equal(f, as.matrix.default( f ), tol=0)
@@ -2185,6 +2513,12 @@ Error in as.qr(x) : you cannot be serious
 [1] TRUE
 > f <- as.symbol( x );  all.equal(f, as.symbol( f ), tol=0)
 Error in as.symbol(x) : invalid type/length (1/1) in vector allocation
+> f <- as.table( x );  all.equal(f, as.table( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.default( x );  all.equal(f, as.table.default( f ), tol=0)
+Error in as.table.default(x) : cannot coerce into a table
+> f <- as.table.ftable( x );  all.equal(f, as.table.ftable( f ), tol=0)
+Error in as.table.ftable(x) : x must be an `ftable'
 > f <- as.ts( x );  all.equal(f, as.ts( f ), tol=0)
 Error in ts(x) : ts object must have one or more observations
 > f <- as.vector( x );  all.equal(f, as.vector( f ), tol=0)
@@ -2192,6 +2526,6 @@ Error in ts(x) : ts object must have one or more observations
 > f <- as.vector.factor( x );  all.equal(f, as.vector.factor( f ), tol=0)
 [1] TRUE
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  1.76 0.04 1.8 0 0 
+Time elapsed:  2 0.12 2.14 0 0 
 > 
 > 

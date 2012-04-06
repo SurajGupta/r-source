@@ -9,10 +9,10 @@ Platform()
 \description{
   \code{.Platform} is a list with functions and variables as
   components.  This provides means to write OS portable \R
-  code. 
+  code.
 }
 \details{
-  Currently, \code{.Platform <- Platform()} when \R starts up. 
+  Currently, \code{.Platform <- Platform()} when \R starts up.
 }
 \value{
   \code{.Platform} is list with at least the following components:
@@ -29,9 +29,16 @@ Platform()
   \item{GUI}{character, giving the type of GUI in use, or
     \code{"unknown"} if no GUI can be assumed.
   }
+  \item{endian}{character, \code{"big"} or \code{"little"}, giving the
+    endianness of the processor in use.
+  }
 }
-\seealso{\code{\link{system}} for invoking platform-specific system commands.}
+\seealso{
+  \code{\link{Sys.info}} which gives more details about the OS,
+  \code{\link{system}} for invoking platform-specific system commands.
+}
 \examples{
+## Note: this can be done in a system-independent way by file.info()$isdir
 if(.Platform$OS.type == "unix") {
    system.test <- function(...) { system(paste("test", ...)) == 0 }
    dir.exists <- function(dir) sapply(dir, function(d)system.test("-d", d))

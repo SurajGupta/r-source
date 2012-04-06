@@ -24,6 +24,9 @@
  *	------------------------------=#----	Martin Maechler, ETH Zurich
  */
 #include "nmath.h"
+static void J_bessel(double *x, double *alpha, long *nb,
+		     double *b, long *ncalc);
+
 
 double bessel_j(double x, double alpha)
 {
@@ -54,8 +57,8 @@ double bessel_j(double x, double alpha)
     return x;
 }
 
-void J_bessel(double *x, double *alpha, long *nb,
-	      double *b, long *ncalc)
+static void J_bessel(double *x, double *alpha, long *nb,
+		     double *b, long *ncalc)
 {
 
 /* ---------------------------------------------------------------------
@@ -228,8 +231,6 @@ void J_bessel(double *x, double *alpha, long *nb,
 	    1.21645100408832e17,2.43290200817664e18,5.109094217170944e19,
 	    1.12400072777760768e21,2.585201673888497664e22,
 	    6.2044840173323943936e23 };
-
-    extern double gamma_cody(double);
 
     /* Local variables */
     long nend, intx, nbmx, i, j, k, l, m, n, nstart;

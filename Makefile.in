@@ -10,13 +10,15 @@ top_builddir = .
 include $(top_builddir)/Makeconf
 
 distdir = $(PACKAGE)-$(VERSION)
-INSTFILES = COPYING COPYRIGHTS FAQ MIRROR-SITES NEWS RESOURCES 
+INSTFILES = AUTHORS COPYING COPYRIGHTS FAQ MIRROR-SITES NEWS \
+	RESOURCES THANKS
 DISTFILES = $(INSTFILES) \
-	BUGS INSTALL ONEWS README VERSION Y2K \
+	BUGS ChangeLog INSTALL ONEWS README VERSION Y2K \
 	Makeconf.in Makefile.in \
-	aclocal.m4 config.site configure configure.in \
+	acconfig.h acinclude.m4 aclocal.m4 \
+	config.site configure configure.in \
 	date-stamp
-SUBDIRS = src afm demos doc etc tests tools
+SUBDIRS = src afm demos doc etc share tests tools
 
 GZIP = --best
 
@@ -31,50 +33,75 @@ Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
 
 config.status: $(srcdir)/configure
 	@$(SHELL) ./config.status --recheck
-$(srcdir)/configure: $(srcdir)/configure.in $(srcdir)/aclocal.m4
-	@cd $(srcdir) && autoconf
+$(srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(srcdir)/aclocal.m4
+	@cd $(srcdir) && $(AUTOCONF)
+$(srcdir)/aclocal.m4: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(srcdir)/acinclude.m4
+	@cd $(srcdir) && $(ACLOCAL)
 
-R:
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status --recheck
+
+R: Makefile
 	@if [ "$(srcdir)" != "." ]; then \
 	  for f in $(INSTFILES); do \
 	    $(INSTALL_DATA) $(srcdir)/$${f} $(top_builddir); \
 	  done; \
 	fi
-	@for d in tools afm doc etc src demos; do \
+	@for d in tools afm doc etc share src demos; do \
 	  (cd $${d} && $(MAKE) R) || exit 1; \
 	done
 	@if [ ! -f src/library/stamp-docs ]; then \
 	  echo "you should \`make docs' now ..."; \
 	fi
 
-docs help html latex examples:: FORCE
+docs: FORCE
+	-@(cd doc && $(MAKE) $@)
+	-@(cd src/library && $(MAKE) $@)
+help html latex examples: FORCE
 	-@(cd src/library && $(MAKE) $@)
 FORCE:
 
 install: installdirs
-	@for d in afm demos doc etc; do \
+	@for d in afm demos doc etc share; do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
 	@for f in $(INSTFILES); do \
 	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome); \
 	done
+## FIXME:
+## This is really ugly, but should disappear anyway when we convert to
+## Automake.
 	@echo "installing executables ..."
 	@$(INSTALL_PROGRAM) bin/R.bin $(rhome)/bin
 	@sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" < bin/R > $(rhome)/bin/R
 	@sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" < bin/R > $(bindir)/R
 	@chmod 755 $(bindir)/R $(rhome)/bin/R
-	@for f in `ls bin/*.$(SHLIBEXT)`; do \
-	  $(INSTALL_PROGRAM) $${f} $(rhome)/bin; \
-	done
-	@if test -f gnome/R_gnome.$(SHLIBEXT); then \
-	  $(INSTALL_PROGRAM) gnome/R_gnome.$(SHLIBEXT) $(rhome)/gnome; \
-	fi
 	@for f in `find bin -type f -print \
 	             | grep -v '^bin/R$$' \
-	             | grep -v '^bin/R_' \
-	             | grep -v '^bin/R.bin'`; do \
-	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
+	             | grep -v '^bin/R.bin' \
+	             | grep -v '^bin/libR' \
+	             | grep -v '^bin/R_'`; do \
+	  $(INSTALL_SCRIPT) $${f} $(Rexecbindir); \
 	done
+	@echo "installing shlibs ..."
+## FIXME:
+## Add bin/*.la when using libtool for shlibs
+## Note: if there are no shared libraries, the ls call may generate an error.
+	@-for f in `ls bin/*.$(SHLIB_EXT) 2> /dev/null`; do \
+	  $(INSTALL_PROGRAM) $${f} $(Rexeclibdir); \
+	done
+## </FIXME>
+@USE_LIBTOOL_TRUE@	@$(LIBTOOL) --quiet --mode=finish $(Rexeclibdir)
+## FIMXE:
+## Add gnome/*.la when using libtool for shlibs
+	@if test -f gnome/R_gnome.$(SHLIB_EXT); then \
+	  $(MKINSTALLDIRS) $(rhome)/gnome; \
+	  for f in `ls gnome/*.$(SHLIB_EXT)`; do \
+	    $(INSTALL_PROGRAM) $${f} $(rhome)/gnome; \
+	  done; \
+	fi
+## </FIXME>
 	@echo "installing headers ..."
 	@for f in include/*.h; do \
 	  $(INSTALL_DATA) $${f} $(rhome)/include; \
@@ -82,14 +109,15 @@ install: installdirs
 	@for f in include/R_ext/*.h; do \
 	  $(INSTALL_DATA) $${f} $(rhome)/include/R_ext; \
 	done
-	@echo "installing library ..."
+## </FIXME>
+	@echo "installing packages ..."
 	@cp -r library $(rhome) || \
 	  (cd library; \
 	    $(TAR) cf - [a-z]* | (cd $(rhome)/library; $(TAR) xof -))
 	@echo "  building help index ..."
 	@(cd $(rhome)/library; cat */TITLE > LibIndex 2> /dev/null)
 	@echo "  building HTML index ..."
-	@$(rhome)/bin/build-help --rhome $(rhome) --htmllists
+	@$(rhome)/bin/R CMD build-help --rhome $(rhome) --htmllists
 installdirs:
 	@$(MKINSTALLDIRS) $(bindir)
 	@$(MKINSTALLDIRS) $(rhome)/bin
@@ -106,8 +134,8 @@ uninstall:
 	@(cd $(rhome)/library; \
 	  cat */TITLE > LibIndex 2> /dev/null || echo "" > LibIndex)
 	@echo "  rebuilding HTML index ..."
-	@if test -x $(rhome)/bin/build-help; then \
-	  $(rhome)/bin/build-help --rhome $(rhome) --htmllists; \
+	@if test -x $(rhome)/bin/R -a -f $(rhome)/bin/build-help; then \
+	  $(rhome)/bin/R CMD build-help --rhome $(rhome) --htmllists; \
 	fi
 	@echo "uninstalling headers ..."
 	@rm -rf $(rhome)/include
@@ -118,7 +146,7 @@ uninstall:
 	@for f in $(INSTFILES); do \
 	  rm -f $(rhome)/$${f}; \
 	done
-	@for d in afm demos doc etc; do \
+	@for d in afm demos doc etc share; do \
 	  (cd $${d} && $(MAKE) $@); \
 	done
 
@@ -136,7 +164,7 @@ distclean: clean
 	done
 	@rm -rf bin include library gnome
 	@rm -f Makeconf Makefile Makefile.bak Makefrag.* \
-	  config.cache config.log config.status
+	  config.cache config.log config.status libtool
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use; it"
 	@echo "deletes files that may need special rules to rebuild"

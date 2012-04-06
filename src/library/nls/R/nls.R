@@ -1,4 +1,4 @@
-### $Id: nls.R,v 1.5.6.1 2000/06/21 08:40:30 ripley Exp $
+### $Id: nls.R,v 1.8 2000/10/03 15:28:21 maechler Exp $
 ###
 ###            Nonlinear least squares for R
 ###
@@ -24,13 +24,6 @@
 
 .First.lib <- function(lib, pkg) library.dynam( "nls", pkg, lib )
 
-newEnv <- function(enclos) {
-    if (missing(enclos))
-        eval.parent(quote((function() environment())()))
-    else
-        eval(quote((function() environment())()), envir = enclos)
-}
-
 numericDeriv <- function(expr, theta, rho = parent.frame()) {
     val <- .Call("numeric_deriv", expr, theta, rho, PACKAGE="nls")
     valDim <- dim(val)
@@ -46,7 +39,7 @@ numericDeriv <- function(expr, theta, rho = parent.frame()) {
 
 nlsModel.plinear <- function( form, data, start ) {
     thisEnv <- environment()
-    env <- newEnv()
+    env <- new.env()
     for( i in names( data ) ) {
         assign( i, data[[i]], envir = env )
     }
@@ -224,7 +217,7 @@ nlsModel.plinear <- function( form, data, start ) {
            },
            predict = function(newdata = list(), qr = FALSE)
            {
-               Env <- newEnv()
+               Env <- new.env()
                for (i in objects(envir = env)) {
                    assign(i, get(i, envir = env), envir = Env)
                }
@@ -242,7 +235,7 @@ nlsModel.plinear <- function( form, data, start ) {
 
 nlsModel <- function( form, data, start ) {
     thisEnv <- environment()
-    env <- newEnv()
+    env <- new.env()
     for( i in names( data ) ) {
         assign( i, data[[i]], envir = env )
     }
@@ -383,7 +376,7 @@ nlsModel <- function( form, data, start ) {
            Rmat = function() qr.R( QR ),
            predict = function(newdata = list(), qr = FALSE)
            {
-               Env <- newEnv()
+               Env <- new.env()
                for (i in objects(envir = env)) {
                    assign(i, get(i, envir = env), envir = Env)
                }
@@ -420,8 +413,7 @@ nls <-
     ## then it is probably a variable
     ## This may fail if evaluation of formula[[2]] fails
     varIndex <- sapply(varNames, function(varName, data, respLength)
-                       {
-                           length(eval(as.name(varName), data)) %% respLength == 0
+                       { length(eval(as.name(varName), data)) %% respLength == 0
                        }, data, length(eval(formula[[2]], data)))
 
     mf$formula <-                         # replace RHS by linear model formula
@@ -429,7 +421,7 @@ nls <-
 
     mf$start <- mf$control <- mf$algorithm <- mf$trace <- NULL
     mf[[1]] <- as.name("model.frame")
-    mf <- as.list(eval(mf, sys.frame(sys.parent())))
+    mf <- as.list(eval(mf, parent.frame()))
     for(var in varNames[!varIndex])
       mf[[var]] <- eval(as.name(var), data)
 

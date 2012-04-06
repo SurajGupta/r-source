@@ -10,13 +10,13 @@
 optim(par, fn, gr = NULL,
       method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN"),
       lower = -Inf, upper = +Inf,
-      control = list(), hessian = FALSE), \dots)
+      control = list(), hessian = FALSE, \dots)
 }
 \arguments{
  \item{par}{Initial values for the parameters to be optimized over.}
- \item{fn}{A function to be minimized, with first argument the vector of
-   parameters over which minimization is to take place. It should return
-   a scalar result.}
+ \item{fn}{A function to be minimized (or maximized), with first
+   argument the vector of parameters over which minimization is to take
+   place. It should return a scalar result.}
  \item{gr}{A function to return the gradient. Not needed for the
    \code{"Nelder-Mead"} and \code{"SANN"} method. If it is \code{NULL}
    and it is needed, a
@@ -56,6 +56,9 @@ optim(par, fn, gr = NULL,
   method. If non-trivial bounds are supplied, this method will be
   selected, with a warning.
 
+  Nocedal and Wright (1999) is a comprehansive reference for the
+  previous three methods.
+  
   Method \code{"SANN"} is a variant of simulated annealing
   given in Belisle (1992). Simulated-annealing belongs to the class of
   stochastic global optimization methods. It uses only function values
@@ -81,8 +84,11 @@ optim(par, fn, gr = NULL,
   The \code{control} argument is a list that can supply any of the
   following components:
   \describe{
-    \item{\code{trace}}{Logical. If true, tracing information on the
-      progress of the optimization is produced.}
+    \item{\code{trace}}{Integer. If positive, tracing information on the
+      progress of the optimization is produced. Higher values may
+      produce more tracing information: for method \code{"L-BFGS-B"}
+      there are six levels of tracing.  (To understand exactly what
+      these do see the source code: higher levels give more detail.)}
     \item{\code{fnscale}}{An overall scaling to be applied to the value
       of \code{fn} and \code{gr} during optimization. If negative,
       turns the problem into a maximization problem. Optimization is
@@ -110,7 +116,7 @@ optim(par, fn, gr = NULL,
       factor (default 1.0), \code{beta} the contraction factor (0.5) and
       \code{gamma} the expansion factor (2.0).}
     \item{\code{REPORT}}{The frequency of reports for the \code{"BFGS"}
-      method in \code{control$trace} is positive.
+      and \code{"L-BFGS-B"} methods if \code{control$trace} is positive.
       Defaults to every 10 iterations.}
     \item{\code{type}}{for the conjugate-gradients method. Takes value
       \code{1} for the Fletcher--Reeves update, \code{2} for
@@ -176,6 +182,9 @@ optim(par, fn, gr = NULL,
 
   Nelder, J. A. and Mead, R. (1965) A simplex algorithm for function
   minimization. \emph{Computer Journal} \bold{7}, 308--313.
+
+  Nocedal, J. and Wright, S. J. (1999) \emph{Numerical Optimization}.
+  Springer.
 }
 \note{
   The code for methods \code{"Nelder-Mead"}, \code{"BFGS"} and

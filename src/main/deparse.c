@@ -49,7 +49,7 @@
  *  inlist:	 keeps track of whether we are inside a list or not,
  *		 this affects the printing of if-then-else.
  *
- *  startline:	 indicator 0=start of a line (so we can tab out to
+ *  startline:	 indicator TRUE=start of a line (so we can tab out to
  *		 the correct place).
  *
  *  indent:	 how many tabs should be written at the start of
@@ -77,10 +77,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Print.h"
-#include "names.h"
-#include "Fileio.h"
+#include <Defn.h>
+#include <Print.h>
+#include <Fileio.h>
 
 #define BUFSIZE 512
 
@@ -97,7 +96,7 @@ static int linenumber;
 static int len;
 static int incurly = 0;
 static int inlist = 0;
-static int startline = 0;
+static Rboolean startline = TRUE;
 static int indent = 0;
 static SEXP strvec;
 
@@ -115,18 +114,18 @@ static void deparse2(SEXP, SEXP);
 
 static char *buff=NULL;
 
-static void AllocBuffer(int len)
+static void AllocBuffer(int blen)
 {
     static int bufsize = 0;
-    if(len*sizeof(char) < bufsize) return;
-    len = (len+1)*sizeof(char);
-    if(len < BUFSIZE) len = BUFSIZE;
+    if(blen*sizeof(char) < bufsize) return;
+    blen = (blen+1)*sizeof(char);
+    if(blen < BUFSIZE) blen = BUFSIZE;
     if(buff == NULL){
-	buff = (char *) malloc(len);
+	buff = (char *) malloc(blen);
 	buff[0] = '\0';
     } else
-	buff = (char *) realloc(buff, len);
-    bufsize = len;
+	buff = (char *) realloc(buff, blen);
+    bufsize = blen;
     if(!buff) {
 	bufsize = 0;
 	error("Could not allocate memory for Encodebuf");
@@ -147,7 +146,7 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isNull(CAR(args))) {
 	cut0 = asInteger(CAR(args));
 	if(cut0 == NA_INTEGER|| cut0 < MIN_Cutoff || cut0 > MAX_Cutoff)
-	    warning("invalid 'cutoff' for deparse, used default");
+	    warning("invalid `cutoff' for deparse, using default");
 	else
 	    cutoff = cut0;
     }
@@ -156,10 +155,10 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ca1;
 }
 
-SEXP deparse1(SEXP call, int abbrev)
+SEXP deparse1(SEXP call, Rboolean abbrev)
 {
-/* Argument  abbrev ("logical"):
-	If abbrev is 1(TRUE), then the returned value
+/* Arg. abbrev:
+	If abbrev is TRUE, then the returned value
 	is a STRSXP of length 1 with at most 10 characters.
 	This is used for plot labelling etc.
 */
@@ -175,11 +174,11 @@ SEXP deparse1(SEXP call, int abbrev)
     PROTECT(svec = allocVector(STRSXP, linenumber));
     deparse2(call, svec);
     UNPROTECT(1);
-    if (abbrev == 1) {
+    if (abbrev) {
 	AllocBuffer(0);
 	buff[0] = '\0';
-	strncat(buff, CHAR(STRING(svec)[0]), 10);
-	if (strlen(CHAR(STRING(svec)[0])) > 10)
+	strncat(buff, CHAR(STRING_ELT(svec, 0)), 10);
+	if (strlen(CHAR(STRING_ELT(svec, 0))) > 10)
 	    strcat(buff, "...");
 	svec = mkString(buff);
     }
@@ -191,7 +190,7 @@ SEXP deparse1(SEXP call, int abbrev)
 /* This is needed in terms.formula, where we must be able */
 /* to deparse a term label into a single line of text so */
 /* that it can be reparsed correctly */
-SEXP deparse1line(SEXP call, int abbrev)
+SEXP deparse1line(SEXP call, Rboolean abbrev)
 {
    int savecutoff;
    SEXP temp;
@@ -203,12 +202,14 @@ SEXP deparse1line(SEXP call, int abbrev)
    return(temp);
 }
 
+#include "Rconnections.h"
 
 SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    FILE *fp;
-    SEXP file, saveenv, tval;
-    int i;
+    SEXP saveenv, tval;
+    int i, ifile;
+    Rboolean wasopen;
+    Rconnection con = (Rconnection) 1; /* stdout */
 
     checkArity(op, args);
 
@@ -216,30 +217,27 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
     saveenv = R_NilValue;	/* -Wall */
     if (TYPEOF(tval) == CLOSXP) {
 	PROTECT(saveenv = CLOENV(tval));
-	CLOENV(tval) = R_GlobalEnv;
+	SET_CLOENV(tval, R_GlobalEnv);
     }
     tval = deparse1(tval, 0);
     if (TYPEOF(CAR(args)) == CLOSXP) {
-	CLOENV(CAR(args)) = saveenv;
+	SET_CLOENV(CAR(args), saveenv);
 	UNPROTECT(1);
     }
-    file = CADR(args);
-    if (!isValidString(file))
-	errorcall(call, "file name must be a valid character string");
+    ifile = asInteger(CADR(args));
 
-    fp = NULL;
-    if (strlen(CHAR(STRING(file)[0])) > 0) {
-	fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "w");
-	if (!fp)
-	    errorcall(call, "unable to open file");
+    wasopen = 1;
+    if (ifile != 1) {
+	con = getConnection(ifile);
+	wasopen = con->isopen;
+	if(!wasopen) con->open(con);
     }/* else: "Stdout" */
     for (i = 0; i < LENGTH(tval); i++)
-	if (fp == NULL)
-	    Rprintf("%s\n", CHAR(STRING(tval)[i]));
+	if (ifile == 1)
+	    Rprintf("%s\n", CHAR(STRING_ELT(tval, i)));
 	else
-	    fprintf(fp, "%s\n", CHAR(STRING(tval)[i]));
-    if (fp != NULL)
-	fclose(fp);
+	    Rconn_printf(con, "%s\n", CHAR(STRING_ELT(tval, i)));
+    if (!wasopen) con->close(con);
     return (CAR(args));
 }
 
@@ -247,54 +245,54 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, names, o, objs, tval;
     int i, j, nobjs;
-    FILE *fp;
+    Rboolean wasopen;
+    Rconnection con;
 
     checkArity(op, args);
 
     names = CAR(args);
     file = CADR(args);
-    if(!isString(names) || !isString(file))
+    if(!isString(names))
 	errorcall(call, "character arguments expected");
     nobjs = length(names);
     if(nobjs < 1 || length(file) < 1)
 	errorcall(call, "zero length argument");
 
-    fp = NULL;
-
     PROTECT(o = objs = allocList(nobjs));
 
     for(i = 0 ; i < nobjs ; i++) {
-	CAR(o) = eval(install(CHAR(STRING(names)[i])), rho);
+	SETCAR(o, eval(install(CHAR(STRING_ELT(names, i))), rho));
 	o = CDR(o);
     }
 
     o = objs;
-    if(strlen(CHAR(STRING(file)[0])) == 0) {
+    if(INTEGER(file)[0] == 1) {
 	for (i = 0; i < nobjs; i++) {
-	    Rprintf("\"%s\" <-\n", CHAR(STRING(names)[i]));
-	    if (TYPEOF(CAR(o)) != CLOSXP || 
+	    Rprintf("\"%s\" <-\n", CHAR(STRING_ELT(names, i)));
+	    if (TYPEOF(CAR(o)) != CLOSXP ||
 		isNull(tval = getAttrib(CAR(o), R_SourceSymbol)))
 	    tval = deparse1(CAR(o), 0);
 	    for (j = 0; j<LENGTH(tval); j++) {
-		Rprintf("%s\n", CHAR(STRING(tval)[j]));
+		Rprintf("%s\n", CHAR(STRING_ELT(tval, j)));
 	    }
 	    o = CDR(o);
 	}
     }
     else {
-	if(!(fp = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])), "w")))
-	    errorcall(call, "unable to open file");
+	con = getConnection(INTEGER(file)[0]);
+	wasopen = con->isopen;
+	if (!wasopen) con->open(con);
 	for (i = 0; i < nobjs; i++) {
-	    fprintf(fp, "\"%s\" <-\n", CHAR(STRING(names)[i]));
-	    if (TYPEOF(CAR(o)) != CLOSXP || 
+	    Rconn_printf(con, "\"%s\" <-\n", CHAR(STRING_ELT(names, i)));
+	    if (TYPEOF(CAR(o)) != CLOSXP ||
 		isNull(tval = getAttrib(CAR(o), R_SourceSymbol)))
 	    tval = deparse1(CAR(o), 0);
 	    for (j = 0; j<LENGTH(tval); j++) {
-		fprintf(fp, "%s\n", CHAR(STRING(tval)[j]));
+		Rconn_printf(con, "%s\n", CHAR(STRING_ELT(tval, j)));
 	    }
 	    o = CDR(o);
 	}
-	fclose(fp);
+	if (!wasopen) con->close(con);
     }
 
     UNPROTECT(1);
@@ -302,11 +300,11 @@ SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     return names;
 }
 
-static void linebreak(int *lbreak)
+static void linebreak(Rboolean *lbreak)
 {
     if (len > cutoff) {
 	if (!*lbreak) {
-	    *lbreak = 1;
+	    *lbreak = TRUE;
 	    indent++;
 	}
 	writeline();
@@ -323,16 +321,16 @@ static void deparse2(SEXP what, SEXP svec)
 }
 
 
-/* curlyahead looks at s to see if it is a list with */
-/* the first op being a curly. You need this kind of */
-/* lookahead info to print if statements correctly.  */
-
-static int curlyahead(SEXP s)
+/* curlyahead looks at s to see if it is a list with
+   the first op being a curly.  You need this kind of
+   lookahead info to print if statements correctly.  */
+static Rboolean
+curlyahead(SEXP s)
 {
     if (isList(s) || isLanguage(s))
 	if (TYPEOF(CAR(s)) == SYMSXP && CAR(s) == install("{"))
-	    return 1;
-    return 0;
+	    return TRUE;
+    return FALSE;
 }
 
 static void attr1(SEXP s)
@@ -381,7 +379,7 @@ static void printcomment(SEXP s)
 
     if(isList(TAG(s)) && !isNull(TAG(s))) {
 	for (s = TAG(s); s != R_NilValue; s = CDR(s)) {
-	    print2buff(CHAR(STRING(CAR(s))[0]));
+	    print2buff(CHAR(STRING_ELT(CAR(s), 0)));
 	    writeline();
 	}
     }
@@ -389,7 +387,7 @@ static void printcomment(SEXP s)
 	cmt = getAttrib(s, R_CommentSymbol);
 	ncmt = length(cmt);
 	for(i = 0 ; i < ncmt ; i++) {
-	    print2buff(CHAR(STRING(cmt)[i]));
+	    print2buff(CHAR(STRING_ELT(cmt, i)));
 	    writeline();
 	}
     }
@@ -399,7 +397,8 @@ static void printcomment(SEXP s)
 
 static void deparse2buff(SEXP s)
 {
-    int fop, lookahead = 0, lbreak = 0;
+    PPinfo fop;
+    Rboolean lookahead = FALSE, lbreak = FALSE;
     SEXP op, t;
     char tpb[120];
 
@@ -643,8 +642,8 @@ static void deparse2buff(SEXP s)
 		    print2buff("$");
 		    /*temp fix to handle printing of x$a's */
 		    if( isString(CADR(s)) &&
-			isValidName(CHAR(STRING(CADR(s))[0])))
-			deparse2buff(STRING(CADR(s))[0]);
+			isValidName(CHAR(STRING_ELT(CADR(s), 0))))
+			deparse2buff(STRING_ELT(CADR(s), 0));
 		    else
 			deparse2buff(CADR(s));
 		    break;
@@ -657,7 +656,7 @@ static void deparse2buff(SEXP s)
 		    deparse2buff(CADR(s));
 		    if (lbreak) {
 			indent--;
-			lbreak = 0;
+			lbreak = FALSE;
 		    }
 		    break;
 		case PP_BINARY2:	/* no space between op and args */
@@ -698,7 +697,7 @@ static void deparse2buff(SEXP s)
 		    deparse2buff(CADR(s));
 		    if (lbreak) {
 			indent--;
-			lbreak = 0;
+			lbreak = FALSE;
 		    }
 		    break;
 		}
@@ -733,6 +732,10 @@ static void deparse2buff(SEXP s)
 	vector2buff(s);
 	attr2(s);
 	break;
+    case EXTPTRSXP:
+	sprintf(tpb, "<pointer: %p>\n", R_ExternalPtrAddr(s));
+	print2buff(tpb);
+	break;
     default:
 	UNIMPLEMENTED("deparse2buff");
     }
@@ -745,20 +748,20 @@ static void deparse2buff(SEXP s)
 static void writeline()
 {
     if (strvec != R_NilValue)
-	STRING(strvec)[linenumber] = mkChar(buff);
+	SET_STRING_ELT(strvec, linenumber, mkChar(buff));
     linenumber++;
     /* reset */
     len = 0;
     buff[0] = '\0';
-    startline = 0;
+    startline = TRUE;
 }
 
 static void print2buff(char *strng)
 {
     int tlen, bufflen;
 
-    if (startline == 0) {
-	startline = 1;
+    if (startline) {
+	startline = FALSE;
 	printtab2buff(indent);	/*if at the start of a line tab over */
     }
     tlen = strlen(strng);
@@ -824,9 +827,9 @@ static void vector2buff(SEXP vector)
 static void vec2buff(SEXP v)
 {
     SEXP nv;
-    int i, lbreak, n;
+    int i, n;
+    Rboolean lbreak = FALSE;
 
-    lbreak = 0;
     n = length(v);
     nv = getAttrib(v, R_NamesSymbol);
     if (length(nv) == 0) nv = R_NilValue;
@@ -835,18 +838,18 @@ static void vec2buff(SEXP v)
 	if (i > 0)
 	    print2buff(", ");
 	linebreak(&lbreak);
-	if (!isNull(nv) && !isNull(STRING(nv)[i])
-	    && *CHAR(STRING(nv)[i])) {
-	    if( isValidName(CHAR(STRING(nv)[i])) )
-		deparse2buff(STRING(nv)[i]);
+	if (!isNull(nv) && !isNull(STRING_ELT(nv, i))
+	    && *CHAR(STRING_ELT(nv, i))) {
+	    if( isValidName(CHAR(STRING_ELT(nv, i))) )
+		deparse2buff(STRING_ELT(nv, i));
 	    else {
 		print2buff("\"");
-		deparse2buff(STRING(nv)[i]);
+		deparse2buff(STRING_ELT(nv, i));
 		print2buff("\"");
 	    }
 	    print2buff(" = ");
 	}
-	deparse2buff(VECTOR(v)[i]);
+	deparse2buff(VECTOR_ELT(v, i));
     }
     if (lbreak)
 	indent--;
@@ -854,7 +857,7 @@ static void vec2buff(SEXP v)
 
 static void args2buff(SEXP arglist, int lineb, int formals)
 {
-    int lbreak = 0;
+    Rboolean lbreak = FALSE;
 
     while (arglist != R_NilValue) {
 	if (TAG(arglist) != R_NilValue) {

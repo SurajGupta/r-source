@@ -56,17 +56,23 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include <string.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
+#include <Defn.h>
+#include <Rmath.h>
+
+#ifndef HAVE_NO_SYMBOL_UNDERSCORE
+# ifdef HAVE_ELF_H
+#  define HAVE_NO_SYMBOL_UNDERSCORE
+# endif
+#endif
 
 /* DL_FUNC is in Defn.h */
 typedef struct {
@@ -101,10 +107,10 @@ static CFunTabEntry CFunTab[] =
 
 #ifdef HAVE_DLFCN_H
 #ifndef RTLD_LAZY
-#define RTLD_LAZY 1
+# define RTLD_LAZY 1
 #endif
 #ifndef RTLD_NOW
-#define RTLD_NOW  2
+# define RTLD_NOW  2
 #endif
 
 #undef CACHE_DLL_SYM
@@ -158,11 +164,13 @@ static int DeleteDLL(char *path)
     return 0;
 found:
 #ifdef CACHE_DLL_SYM
-    for(i = 0; i < nCPFun; i++)
+    for(i = nCPFun - 1; i >= 0; i--)
 	if(!strcmp(CPFun[i].pkg, LoadedDLL[loc].name)) {
-	    strcpy(CPFun[i].pkg, CPFun[nCPFun].pkg);
-	    strcpy(CPFun[i].name, CPFun[nCPFun].name);
-	    CPFun[i].func = CPFun[nCPFun--].func;
+	    if(i < nCPFun - 1) {
+		strcpy(CPFun[i].name, CPFun[--nCPFun].name);
+		strcpy(CPFun[i].pkg, CPFun[nCPFun].pkg);
+		CPFun[i].func = CPFun[nCPFun].func;
+	    } else nCPFun--;
 	}
 #endif
     free(LoadedDLL[loc].name);
@@ -337,8 +345,8 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 
 #ifdef CACHE_DLL_SYM
     for (i = 0; i < nCPFun; i++)
-	if (!strcmp(pkg, CPFun[i].pkg) && 
-	    !strcmp(name, CPFun[i].name))
+	if (!strcmp(name, CPFun[i].name) && 
+	    (all || !strcmp(pkg, CPFun[i].pkg)))
 	    return CPFun[i].func;
 #endif
 
@@ -357,7 +365,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 	    if (fcnptr != (DL_FUNC) NULL) {
 #ifdef CACHE_DLL_SYM
 		if(strlen(pkg) <= 20 && strlen(name) <= 20 && nCPFun < 100) {
-		    strcpy(CPFun[nCPFun].pkg, pkg);
+		    strcpy(CPFun[nCPFun].pkg, LoadedDLL[i].name);
 		    strcpy(CPFun[nCPFun].name, name);
 		    CPFun[nCPFun++].func = fcnptr;
 		}
@@ -418,7 +426,7 @@ SEXP do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
 	errorcall(call, "character argument expected");
-    GetFullDLLPath(call, buf, CHAR(STRING(CAR(args))[0]));
+    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
     DeleteDLL(buf);
     if(!AddDLL(buf,LOGICAL(CADR(args))[0],LOGICAL(CADDR(args))[0]))
 	errorcall(call, "unable to load shared library \"%s\":\n  %s",
@@ -432,7 +440,7 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
 	errorcall(call, "character argument expected");
-    GetFullDLLPath(call, buf, CHAR(STRING(CAR(args))[0]));
+    GetFullDLLPath(call, buf, CHAR(STRING_ELT(CAR(args), 0)));
     if(!DeleteDLL(buf))
 	errorcall(call, "shared library \"%s\" was not loaded", buf);
     return R_NilValue;
@@ -443,9 +451,10 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
 #include <sys/types.h>
 #include <sys/stat.h>
 
-extern DL_FUNC ptr_X11DeviceDriver, ptr_dataentry;
+extern DL_FUNC ptr_X11DeviceDriver, ptr_dataentry, ptr_R_GetX11Image,
+    ptr_R_loadhistory, ptr_R_savehistory;
 
-void R_load_X11_shlib()
+void R_load_X11_shlib(void)
 {
     char X11_DLL[PATH_MAX], buf[1000], *p;
     void *handle;
@@ -458,7 +467,7 @@ void R_load_X11_shlib()
     }
     strcpy(X11_DLL, p);
     strcat(X11_DLL, "/bin/R_X11.");
-    strcat(X11_DLL, SHLIBEXT); /* from config.h */
+    strcat(X11_DLL, SHLIB_EXT); /* from config.h */
     if(stat(X11_DLL, &sb))
 	R_Suicide("Probably no X11 support: the shared library was not found");
 /* cannot use computeDLOpenFlag as warnings will crash R at this stage */
@@ -475,6 +484,8 @@ void R_load_X11_shlib()
     if(!ptr_X11DeviceDriver) R_Suicide("Cannot load X11DeviceDriver");
     ptr_dataentry = R_dlsym(handle, "RX11_dataentry");
     if(!ptr_dataentry) R_Suicide("Cannot load do_dataentry");
+    ptr_R_GetX11Image = R_dlsym(handle, "R_GetX11Image");
+    if(!ptr_R_GetX11Image) R_Suicide("Cannot load R_GetX11Image");
 }
 
 extern DL_FUNC ptr_R_Suicide, ptr_R_ShowMessage, ptr_R_ReadConsole,
@@ -484,7 +495,7 @@ extern DL_FUNC ptr_R_Suicide, ptr_R_ShowMessage, ptr_R_ReadConsole,
     ptr_GnomeDeviceDriver, ptr_GTKDeviceDriver;
 
 
-void R_load_gnome_shlib()
+void R_load_gnome_shlib(void)
 {
     char gnome_DLL[PATH_MAX], buf[1000], *p;
     void *handle;
@@ -497,7 +508,7 @@ void R_load_gnome_shlib()
     }
     strcpy(gnome_DLL, p);
     strcat(gnome_DLL, "/gnome/R_gnome.");
-    strcat(gnome_DLL, SHLIBEXT); /* from config.h */
+    strcat(gnome_DLL, SHLIB_EXT); /* from config.h */
     if(stat(gnome_DLL, &sb))
 	R_Suicide("Probably no GNOME support: the shared library was not found");
 /* cannot use computeDLOpenFlag as warnings will crash R at this stage */
@@ -536,6 +547,10 @@ void R_load_gnome_shlib()
     if(!ptr_gnome_start) R_Suicide("Cannot load gnome_start");
     ptr_GTKDeviceDriver = R_dlsym(handle, "GTKDeviceDriver");
     if(!ptr_GTKDeviceDriver) R_Suicide("Cannot load GTKDeviceDriver");
+    ptr_R_loadhistory = R_dlsym(handle, "Rgnome_loadhistory");
+    if(!ptr_R_loadhistory) R_Suicide("Cannot load Rgnome_loadhsitoryr");
+    ptr_R_savehistory = R_dlsym(handle, "Rgnome_savehistory");
+    if(!ptr_R_savehistory) R_Suicide("Cannot load Rgnome_savehsitoryr");
 /* Uncomment the next two lines to experiment with the gnome() device */
 /*    ptr_GnomeDeviceDriver = R_dlsym(handle, "GnomeDeviceDriver");
       if(!ptr_GnomeDeviceDriver) R_Suicide("Cannot load GnomeDeviceDriver");*/

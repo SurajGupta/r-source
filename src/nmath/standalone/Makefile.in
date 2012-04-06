@@ -1,7 +1,7 @@
 #
 # ${R_HOME}/src/nmath/standalone/Makefile
 
-VPATH = @srcdir@:@srcdir@/..
+VPATH = @srcdir@
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 
@@ -10,13 +10,13 @@ subdir = src/nmath/standalone
 
 include $(top_builddir)/Makeconf
 
-SOURCES = \
+SOURCES_NMATH = \
 	mlutils.c \
 	d1mach.c i1mach.c \
 	fmax2.c fmin2.c fmod.c fprec.c fround.c ftrunc.c \
-	sign.c fsign.c fsquare.c fcube.c \
+	sign.c fsign.c \
 	imax2.c imin2.c \
-	chebyshev.c log1p.c lgammacor.c gammalims.c \
+	chebyshev.c log1p.c lgammacor.c gammalims.c stirlerr.c bd0.c \
 	gamma.c lgamma.c gamma_cody.c beta.c lbeta.c polygamma.c \
 	bessel_i.c bessel_j.c bessel_k.c bessel_y.c \
 	choose.c \
@@ -44,59 +44,87 @@ SOURCES = \
 	ptukey.c qtukey.c \
 	wilcox.c \
 	signrank.c
+SOURCES = $(SOURCES_NMATH) std_unif.c
 DEPENDS = $(SOURCES:.c=.d)
-OBJECTS = sunif.o $(SOURCES:.c=.o)
+OBJECTS = $(SOURCES:.c=.o)
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in test.c sunif.c
 
-LIB = libRmath.a
-SHLIB = libRmath.$(SHLIBEXT)
+Rexeclibdir_LIBRARIES = libRmath.a
+libRmath_a_SOURCES = $(SOURCES)
+libRmath_a_OBJECTS = $(OBJECTS)
+
+## FIXME:
+## Change to `libRmath.la' when using libtool for shlibs.
+## Remove when using automake ...
+libRmath_la = libRmath.$(SHLIB_EXT)
+## </FIXME>
+Rexeclibdir_LTLIBRARIES = $(libRmath_la)
+libRmath_la_SOURCES = $(SOURCES)
+libRmath_la_OBJECTS = $(OBJECTS:.o=.lo)
+libRmath_la_LDFLAGS =
+
+CLEANFILES = Makedeps *.d *.o *.lo test $(SOURCES)
+DISTCLEANFILES = Makefile $(Rexeclibdir_LIBRARIES) $(Rexeclibdir_LTLIBRARIES)
 
 DEFS = -DHAVE_CONFIG_H -DMATHLIB_STANDALONE
-ALL_CFLAGS = $(R_XTRA_CFLAGS) $(SH_CFLAGS) $(CFLAGS)
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) -I$(srcdir)/.. $(CPPFLAGS) $(DEFS)
 
+.SUFFIXES:
+.SUFFIXES: .c .d .o .lo
 
-all: Makefile Makedeps archive shared
-archive: Makefile ../../include/Rconfig.h
+all: Makefile static shared
+
+Copy:
+	@echo "Copying source files"
+	@if test ! -f std_unif.c; then \
+	  $(LN_S) $(srcdir)/sunif.c std_unif.c; \
+	fi
+	@for f in $(SOURCES_NMATH); do \
+	  if test ! -f $${f}; then \
+	    $(LN_S) $(srcdir)/../$${f} .; \
+	  fi; \
+	done
+
+static: Makefile ../../include/Rconfig.h
+	@$(MAKE) Copy
 	@$(MAKE) Makedeps
-	$(RM) *.o
-	@$(MAKE) $(LIB)
+	@$(MAKE) $(Rexeclibdir_LIBRARIES)
 
 shared: Makefile ../../include/Rconfig.h
+	@$(MAKE) Copy
 	@$(MAKE) Makedeps
-	$(RM) *.o
-	@SH_CFLAGS=$(CPICFLAGS) $(MAKE) $(SHLIB)
+	@$(MAKE) $(Rexeclibdir_LTLIBRARIES)
 
 ../../include/Rconfig.h:
-	(cd ../../include; $(MAKE) Rconfig.h)
+	(cd $(@D); $(MAKE) $(@F))
 
-Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
 Makedeps: Makefile ../../include/Rconfig.h $(DEPENDS)
 	@cat $(DEPENDS) >> Makefile
+	@cat $(DEPENDS) | sed s/\.o:/.lo:/>> Makefile
 	@touch $@
 
+libRmath.a: $(libRmath_a_OBJECTS)
+	$(AR) cr $@ $(libRmath_a_OBJECTS)
+	$(RANLIB) $@
 
-$(LIB): $(OBJECTS)
-	$(AR) cr $(LIB) $(OBJECTS)
-	$(RANLIB) $(LIB)
-
-$(SHLIB): $(OBJECTS)
-	$(SHLIBLD) $(SHLIBLDFLAGS) $(LDFLAGS) -o $@ $(OBJECTS)
+$(libRmath_la): $(libRmath_la_OBJECTS)
+	$(SHLIB_LINK) -o $@ $(libRmath_la_LDFLAGS) $(libRmath_la_OBJECTS)
 
 test: $(srcdir)/test.c
 	$(CC) -o $@ $(ALL_CPPFLAGS) $(ALL_CFLAGS) $< -L. -lRmath -lm
 
 mostlyclean: clean
 clean:
-	@echo "cleaning in $(subdir)"
-	@-rm -f Makedeps *.d *.o test
+	@-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 distclean: clean
-	@-rm -f Makefile $(LIB) $(SHLIB)
+	@-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)

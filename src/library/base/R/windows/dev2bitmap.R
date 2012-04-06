@@ -4,7 +4,7 @@ dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
     if(missing(file)) stop("`file' is missing with no default")
     if(!is.character(file) || nchar(file) == 0)
         stop("`file' is must be a non-empty character string")
-    gsexe <- getenv("R_GSCMD")
+    gsexe <- Sys.getenv("R_GSCMD")
     if(is.null(gsexe) || nchar(gsexe) == 0) gsexe <- "gswin32c.exe"
     gshelp <- system(paste(gsexe, "-help"), intern=TRUE, invisible=TRUE)
     st <- grep("^Available", gshelp)
@@ -18,6 +18,10 @@ dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
     if(missing(pointsize)) pointsize <- 1.5*min(width, height)
     tmp <- tempfile("Rbit")
     on.exit(unlink(tmp))
+    din <- par("din"); w <- din[1]; h <- din[2]
+    if(missing(width) && !missing(height)) width <- w/h * height
+    if(missing(height) && !missing(width)) height <- h/w * width
+
     current.device <- dev.cur()
     dev.off(dev.copy(device = postscript, file=tmp, width=width,
                      height=height,
@@ -38,7 +42,7 @@ bitmap <- function(file, type="png256", height=6, width=6, res=72,
     if(missing(file)) stop("`file' is missing with no default")
     if(!is.character(file) || nchar(file) == 0)
         stop("`file' is must be a non-empty character string")
-    gsexe <- getenv("R_GSCMD")
+    gsexe <- Sys.getenv("R_GSCMD")
     if(is.null(gsexe) || nchar(gsexe) == 0) gsexe <- "gswin32c.exe"
     gshelp <- system(paste(gsexe, "-help"), intern=TRUE, invisible=TRUE)
     st <- grep("^Available", gshelp)

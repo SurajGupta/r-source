@@ -16,50 +16,23 @@ include $(top_builddir)/Makeconf
 
 SOURCES_C = \
 	Rsock.c \
-	S_compat.c \
 	approx.c \
-	bakslv.c \
-	binning.c \
-	chisqsim.c \
-	chull.c \
-	cpoly.c \
-	cumsum.c \
+	bakslv.c binning.c \
+	chisqsim.c chull.c cpoly.c cumsum.c \
 	distance.c \
-	fft.c \
-	fmin.c \
-	fortran.c \
-	lbfgsb.c \
-	loglin.c \
-	lowess.c \
-	machar.c \
-	maxcol.c \
-	massdist.c \
+	fft.c fmin.c fortran.c \
+	lbfgsb.c loglin.c lowess.c \
+	machar.c maxcol.c massdist.c \
 	pretty.c \
 	rowsum.c \
-	sock.c \
-	splines.c \
-	stem.c \
-	strsignif.c \
+	sock.c splines.c stem.c strsignif.c \
 	tabulate.c \
 	uncmin.c \
 	zeroin.c
 SOURCES_F = \
-	ch2inv.f \
-	chol.f \
-	dpbfa.f \
-	dpbsl.f \
-	dpoco.f \
-	dpodi.f \
-	dpofa.f \
-	dposl.f \
-	dqrdc.f \
-	dqrdc2.f \
-	dqrls.f \
-	dqrsl.f \
-	dqrutl.f \
-	dsvdc.f \
-	dtrco.f \
-	dtrsl.f \
+	ch2inv.f chol.f \
+	dpbfa.f dpbsl.f dpoco.f dpodi.f dpofa.f dposl.f dqrdc.f \
+	dqrdc2.f dqrls.f dqrsl.f dqrutl.f dsvdc.f dtrco.f dtrsl.f \
 	eigen.f \
 	lminfl.f
 DEPENDS = $(SOURCES_C:.c=.d)
@@ -73,15 +46,20 @@ DISTFILES = COPYRIGHT COPYRIGHT.ftn README ROUTINES lowess.doc \
 	$(SOURCES_C) \
 	$(SOURCES_F) \
 	blas.f \
-	zblas.f \
-	zhico.f \
-	zhifa.f \
-	zhisl.f \
-	zsico.f \
-	zsifa.f \
-	zsisl.f
+	zblas.f zhico.f zhifa.f zhisl.f zsico.f zsifa.f zsisl.f
 
-LIB = libappl.a
+noinst_LIBRARIES = libappl.a
+libappl_a_SOURCES = $(SOURCES)
+libappl_a_OBJECTS = $(OBJECTS)
+
+## FIXME:
+## We most likely will not want a seperate shared library.
+## If we have a final decision, remove libappl.la target.
+## </FIXME>
+noinst_LTLIBRARIES = libappl.la
+libappl_la_SOURCES = $(SOURCES)
+libappl_la_OBJECTS = $(OBJECTS:.o=.lo)
+@USE_LIBTOOL_TRUE@libappl_la_LDFLAGS = -avoid-version -rpath $(Rexeclibdir)
 
 all: Makefile Makedeps R
 
@@ -96,16 +74,22 @@ Makedeps: Makefile $(DEPENDS)
 
 R: Makefile
 	@$(MAKE) Makedeps
-	@$(MAKE) $(LIB)
+	@$(MAKE) $(noinst_LIBRARIES) 
+	@@WANT_R_SHLIB_TRUE@$(MAKE) stamp-lo
 
-$(LIB):	$(OBJECTS)
-	$(AR) cr $(LIB) $(OBJECTS)
-	$(RANLIB) $(LIB)
+libappl.a: $(libappl_a_OBJECTS)
+	$(AR) cr $@ $(libappl_a_OBJECTS)
+	$(RANLIB) $@
+
+stamp-lo: $(libappl_la_OBJECTS)
+	@touch $@
+libappl.la: stamp-lo
+	$(SHLIB_LINK) -o $@ $(libappl_la_LDFLAGS) $(libappl_la_OBJECTS)
 
 mostlyclean: clean
 clean:
-	@echo "cleaning in $(subdir)"
-	@-rm -f Makedeps *.d *.o *.a
+	@-rm -rf .libs _libs
+	@-rm -f Makedeps *.d *.o *.a *.lo *.la stamp-lo
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean

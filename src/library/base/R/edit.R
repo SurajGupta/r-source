@@ -14,7 +14,7 @@ edit.data.frame <-
              edit.row.names =  any(row.names(name) != 1:nrow(name)), ...)
 {
     if (.Platform$OS.type == "unix")
-        if(.Platform$GUI == "unknown" || getenv("DISPLAY")=="" )
+        if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY")=="" )
             return (edit.default(name, ...))
 
     is.vector.unclass <- function(x) is.vector(unclass(x))
@@ -38,7 +38,7 @@ edit.data.frame <-
         which(sapply(name, is.factor))
     else
         numeric(0)
-    
+
     modes <- lapply(datalist, mode)
     if (edit.row.names) {
         datalist <- c(list(row.names=row.names(name)), datalist)
@@ -56,8 +56,8 @@ edit.data.frame <-
             rn <- c(rn, paste("row", (ln+1):maxlength, sep=""))
     }
     for (i in factors) {
+        if(mode(out[[i]]) == "numeric") next # user might have switched mode
         a <- attrlist[[i]]
-        ## This should work even if the user changed the mode
         if (factor.mode == "numeric") {
             o <- as.integer(out[[i]])
             ok <- is.na(o) | (o > 0 & o <= length(a$levels))
@@ -84,14 +84,14 @@ edit.data.frame <-
             warning("edited row names contain duplicates and will be ignored")
         else row.names(out) <- rn
     }
-    as.data.frame(out)
+    as.data.frame(out) # will convert cols swicthed to char into factors
 }
 
 edit.matrix <-
     function(name, edit.row.names = any(rownames(name) != 1:nrow(name)), ...)
 {
     if (.Platform$OS.type == "unix")
-        if(.Platform$GUI == "unknown" || getenv("DISPLAY")=="" )
+        if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY")=="" )
             return (edit.default(name, ...))
     if(!is.matrix(name) ||
        !(mode(name) == "numeric" || mode(name) == "character")
@@ -108,7 +108,7 @@ edit.matrix <-
         modes <- c(list(row.names="character"), modes)
     }
     out <- .Internal(dataentry(datalist, modes))
-       lengths <- sapply(out, length)
+    lengths <- sapply(out, length)
     maxlength <- max(lengths)
     if (edit.row.names) rn <- out[[1]]
     for (i in which(lengths != maxlength))

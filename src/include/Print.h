@@ -65,11 +65,18 @@ void printArray(SEXP, SEXP, int, SEXP);
 void printMatrix(SEXP, int, SEXP, int, int, SEXP, SEXP, char*, char*);
 void printNamedVector(SEXP, SEXP, int, char*);
 void printVector(SEXP, int, int);
+
+/* Utilities for S compatibility and debuggging */
+int F77_SYMBOL(dblepr0)(char *, int *, double *, int *);
+int F77_SYMBOL(intpr0) (char *, int *, int *, int *);
+int F77_SYMBOL(realpr0)(char *, int *, float *, int *);
+void R_PV(SEXP s);
+
 /* Offset for rowlabels if there are named dimnames */
 #define R_MIN_LBLOFF 2
 
 #define R_MIN_WIDTH_OPT		10
-#define R_MAX_WIDTH_OPT		200
+#define R_MAX_WIDTH_OPT		10000
 #define R_MIN_DIGITS_OPT	1
 #define R_MAX_DIGITS_OPT	22
 

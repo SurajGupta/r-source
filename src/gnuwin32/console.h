@@ -25,7 +25,8 @@ typedef window dataeditor;
 void
 setconsoleoptions(char *fnname,int fnsty, int fnpoints,
 		  int rows, int cols, rgb nfg, rgb nufg, rgb nbg, rgb high,
-		  int pgr, int pgc, int multiplewindows, int widthonresize);
+		  int pgr, int pgc, int multiplewindows, int widthonresize,
+		  int bufbytes, int buflines);
 pager newpager(char *title, char *filename, char *header, int unlinkonexit);
 console newconsole(char *name, int flags);
 int  consolereads(console c, char *prompt, char *buf, int len,
@@ -43,9 +44,9 @@ void consoletogglelazy(console c);
 int  consolegetlazy(console c);
 void consoleflush(console c);
 void consoleprint(console c);
+void consolesavefile(console c);
 void drawconsole(control c, rect r);
-void savehistory(control c, char *s);
-void readhistory(control c, char *s);
+void consoleclear(control c);
 
 extern int setWidthOnResize;
 int consolecols(console c);

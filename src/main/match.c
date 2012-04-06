@@ -16,8 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *
+
+
  *  Matching and Partial Matching for Strings
  *
  *  In theory all string matching code should be placed in this file
@@ -45,34 +45,33 @@
 #include "Defn.h"
 
 
-int NonNullStringMatch(SEXP s, SEXP t)
+Rboolean NonNullStringMatch(SEXP s, SEXP t)
 {
     if (CHAR(s)[0] && CHAR(t)[0] && strcmp(CHAR(s), CHAR(t)) == 0)
-	return 1;
+	return TRUE;
     else
-	return 0;
+	return FALSE;
 }
 
-static int psmatch(char *f, char *t, int exact)
+Rboolean psmatch(char *f, char *t, Rboolean exact)
 {
-    if (exact) {
-	return !strcmp(f, t);
+    if (exact)
+	return (Rboolean)!strcmp(f, t);
+    /* else */
+    while (*f || *t) {
+	if (*t == '\0') return TRUE;
+	if (*f == '\0') return FALSE;
+	if (*t != *f)   return FALSE;
+	t++;
+	f++;
     }
-    else {
-	while (*f || *t) {
-	    if (*t == '\0') return 1;
-	    if (*f == '\0') return 0;
-	    if (*t != *f)   return 0;
-	    t++;
-	    f++;
-	}
-	return 1;
-    }
+    return TRUE;
 }
+
 
 /* Matching formals and arguments */
 
-int pmatch(SEXP formal, SEXP tag, int exact)
+Rboolean pmatch(SEXP formal, SEXP tag, Rboolean exact)
 {
     char *f, *t;
     switch (TYPEOF(formal)) {
@@ -83,7 +82,7 @@ int pmatch(SEXP formal, SEXP tag, int exact)
 	f = CHAR(formal);
 	break;
     case STRSXP:
-	f = CHAR(STRING(formal)[0]);
+	f = CHAR(STRING_ELT(formal, 0));
 	break;
     default:
 	goto fail;
@@ -96,7 +95,7 @@ int pmatch(SEXP formal, SEXP tag, int exact)
 	t = CHAR(tag);
 	break;
     case STRSXP:
-	t = CHAR(STRING(tag)[0]);
+	t = CHAR(STRING_ELT(tag, 0));
 	break;
     default:
 	goto fail;
@@ -104,7 +103,7 @@ int pmatch(SEXP formal, SEXP tag, int exact)
     return psmatch(f, t, exact);
  fail:
     error("invalid partial string match");
-    return 0;/* for -Wall */
+    return FALSE;/* for -Wall */
 }
 
 
@@ -114,16 +113,30 @@ int pmatch(SEXP formal, SEXP tag, int exact)
 
 SEXP matchPar(char *tag, SEXP * list)
 {
-    SEXP *l, s;
-
-    for (l = list; *l != R_NilValue; l = &CDR(*l))
-	if (TAG(*l) != R_NilValue &&
-	    psmatch(tag, CHAR(PRINTNAME(TAG(*l))), 0)) {
-	    s = *l;
-	    *l = CDR(*l);
-	    return CAR(s);
-	}
+  if (*list == R_NilValue)
     return R_MissingArg;
+  else if (TAG(*list) != R_NilValue &&
+	   psmatch(tag, CHAR(PRINTNAME(TAG(*list))), 0)) {
+    SEXP s = *list;
+    *list = CDR(*list);
+    return CAR(s);
+  }
+  else {
+    SEXP last = *list;
+    SEXP next = CDR(*list);
+    while (next != R_NilValue) {
+      if (TAG(next) != R_NilValue &&
+	  psmatch(tag, CHAR(PRINTNAME(TAG(next))), 0)) {
+	SETCDR(last, CDR(next));
+	return CAR(next);
+      }
+      else {
+	last = next;
+	next = CDR(next);
+      }
+    }
+    return R_MissingArg;
+  }
 }
 
 
@@ -141,6 +154,7 @@ SEXP matchArg(SEXP tag, SEXP * list)
 /* return the matched arguments in actuals. */
 
 #define ARGUSED(x) LEVELS(x)
+#define SET_ARGUSED(x,v) SETLEVELS(x,v)
 
 
 /* We need to leave supplied unchanged in case we call UseMethod */
@@ -153,12 +167,12 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
     actuals = R_NilValue;
     for (f = formals ; f != R_NilValue ; f = CDR(f)) {
 	actuals = CONS(R_MissingArg, actuals);
-	MISSING(actuals) = 1;
-	ARGUSED(f) = 0;
+	SET_MISSING(actuals, 1);
+	SET_ARGUSED(f, 0);
     }
 
     for(b = supplied; b != R_NilValue; b=CDR(b))
-	ARGUSED(b) = 0;
+	SET_ARGUSED(b, 0);
 
     PROTECT(actuals);
 
@@ -177,11 +191,11 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 			error("formal argument \"%s\" matched by multiple actual arguments", CHAR(PRINTNAME(TAG(f))));
 		    if (ARGUSED(b) == 2)
 			error("argument %d matches multiple formal arguments", i);
-		    CAR(a) = CAR(b);
+		    SETCAR(a, CAR(b));
 		    if(CAR(b) != R_MissingArg)
-			MISSING(a) = 0;		/* not missing this arg */
-		    ARGUSED(b) = 2;
-		    ARGUSED(f) = 2;
+			SET_MISSING(a, 0);	/* not missing this arg */
+		    SET_ARGUSED(b, 2);
+		    SET_ARGUSED(f, 2);
 		}
 		i++;
 	    }
@@ -214,11 +228,11 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 			    error("argument %d matches multiple formal arguments", i);
 			if (ARGUSED(f) == 1)
 			    error("formal argument \"%s\" matched by multiple actual arguments", CHAR(PRINTNAME(TAG(f))));
-			CAR(a) = CAR(b);
+			SETCAR(a, CAR(b));
 			if (CAR(b) != R_MissingArg)
-			    MISSING(a) = 0;	    /* not missing this arg */
-			ARGUSED(b) = 1;
-			ARGUSED(f) = 1;
+			    SET_MISSING(a, 0);       /* not missing this arg */
+			SET_ARGUSED(b, 1);
+			SET_ARGUSED(f, 1);
 		    }
 		    i++;
 		}
@@ -263,10 +277,10 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 	}
 	else {
 	    /* We have a positional match */
-	    CAR(a) = CAR(b);
+	    SETCAR(a, CAR(b));
 	    if(CAR(b) != R_MissingArg)
-		MISSING(a) = 0;
-	    ARGUSED(b) = 1;
+		SET_MISSING(a, 0);
+	    SET_ARGUSED(b, 1);
 	    b = CDR(b);
 	    f = CDR(f);
 	    a = CDR(a);
@@ -275,22 +289,22 @@ SEXP matchArgs(SEXP formals, SEXP supplied)
 
     if (dots != R_NilValue) {
 	/* Gobble up all unused actuals */
-	MISSING(dots) = 0;
+	SET_MISSING(dots, 0);
 	i=0;
 	for(a=supplied; a!=R_NilValue ; a=CDR(a) )
 	    if(!ARGUSED(a)) i++;
 
 	if (i) {
 	    a = allocList(i);
-	    TYPEOF(a) = DOTSXP;
+	    SET_TYPEOF(a, DOTSXP);
 	    f=a;
 	    for(b=supplied;b!=R_NilValue;b=CDR(b))
 		if(!ARGUSED(b)) {
-		    CAR(f)=CAR(b);
-		    TAG(f)=TAG(b);
+		    SETCAR(f, CAR(b));
+		    SET_TAG(f, TAG(b));
 		    f=CDR(f);
 		}
-	    CAR(dots)=a;
+	    SETCAR(dots, a);
 	}
     }
     else {

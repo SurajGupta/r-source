@@ -22,9 +22,10 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Graphics.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Graphics.h>
+#include <Devices.h>
 
 /* Return a non-relocatable copy of a string */
 
@@ -34,8 +35,8 @@ static char *SaveString(SEXP sxp, int offset)
     char *s;
     if(!isString(sxp) || length(sxp) <= offset)
 	errorcall(gcall, "invalid string argument");
-    s = R_alloc(strlen(CHAR(STRING(sxp)[offset]))+1, sizeof(char));
-    strcpy(s, CHAR(STRING(sxp)[offset]));
+    s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
+    strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
 }
 
@@ -73,7 +74,7 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (!isValidString(CAR(args)))
 	error("invalid colortype passed to X11 driver");
-    cname = CHAR(STRING(CAR(args))[0]);
+    cname = CHAR(STRING_ELT(CAR(args), 0));
     if (strcmp(cname, "mono") == 0)
 	colormodel = 0;
     else if (strcmp(cname, "gray") == 0 || strcmp(cname, "grey") == 0)
@@ -96,21 +97,25 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     devname = "X11";
     if (!strncmp(display, "png::", 5)) devname = "PNG";
     else if (!strncmp(display, "jpeg::", 6)) devname = "JPEG";
+    else if (!strcmp(display, "XImage")) devname = "XImage";
 
-    /* Allocate and initialize the device driver data */
-    if (!(dd = (DevDesc*)malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if (!ptr_X11DeviceDriver(dd, display, width, height, ps, gamma, colormodel,
-			     maxcubesize)) {
-	free(dd);
-	errorcall(call, "unable to start device %s", devname);
-    }
-    gsetVar(install(".Device"), mkString(devname), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	/* Allocate and initialize the device driver data */
+	if (!(dd = (DevDesc*)malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if (!ptr_X11DeviceDriver(dd, display, width, height, ps, gamma,
+				 colormodel, maxcubesize)) {
+	    free(dd);
+	    errorcall(call, "unable to start device %s", devname);
+	}
+	gsetVar(install(".Device"), mkString(devname), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }
@@ -128,19 +133,23 @@ SEXP do_GTK(SEXP call, SEXP op, SEXP args, SEXP env)
     if (width <= 0 || height <= 0)
 	errorcall(call, "invalid width or height");
     ps = asReal(CAR(args));
-    /* Allocate and initialize the device driver data */
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if (!ptr_GTKDeviceDriver(dd, display, width, height, ps)) {
-	free(dd);
-	errorcall(call, "unable to start device gtk");
-    }
-    gsetVar(install(".Device"), mkString("GTK"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	/* Allocate and initialize the device driver data */
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if (!ptr_GTKDeviceDriver(dd, display, width, height, ps)) {
+	    free(dd);
+	    errorcall(call, "unable to start device gtk");
+	}
+	gsetVar(install(".Device"), mkString("GTK"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }
@@ -158,19 +167,23 @@ SEXP do_Gnome(SEXP call, SEXP op, SEXP args, SEXP env)
     if (width <= 0 || height <= 0)
 	errorcall(call, "invalid width or height");
     ps = asReal(CAR(args));
-    /* Allocate and initialize the device driver data */
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if (!ptr_GnomeDeviceDriver(dd, display, width, height, ps)) {
-	free(dd);
-	errorcall(call, "unable to start device gtk");
-    }
-    gsetVar(install(".Device"), mkString("gnome"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	/* Allocate and initialize the device driver data */
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if (!ptr_GnomeDeviceDriver(dd, display, width, height, ps)) {
+	    free(dd);
+	    errorcall(call, "unable to start device gtk");
+	}
+	gsetVar(install(".Device"), mkString("gnome"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }

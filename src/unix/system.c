@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997-2000   Robert Gentleman, Ross Ihaka
- *                            and the R Development Core Team
+ *			      and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,22 +19,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-         /* See system.txt for a description of functions */
+	 /* See system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
-#include "Defn.h"
-#include "Fileio.h"
-#include "Graphics.h"		/* KillAllDevices() [nothing else?] */
-
-#define __SYSTEM__
-#include "devUI.h"
-#undef __SYSTEM__
-
-#include "Startup.h"
-#include "Runix.h"
 
 /* necessary for some (older, i.e., ~ <= 1997) Linuxen, and apparently
    also some AIX systems.
@@ -47,16 +36,22 @@
 
 #include <unistd.h> /* isatty() */
 
-void fpu_setup(int);     /* in sys-unix.c */
+#include "Defn.h"
+#include "Fileio.h"
+#include "Devices.h"		/* KillAllDevices() [nothing else?] */
 
+#define __SYSTEM__
+#include "devUI.h" /* includes Startup.h */
+#undef __SYSTEM__
 
-int UsingReadline = 1;
-int SaveAction = SA_SAVEASK;
-int RestoreAction = SA_RESTORE;
-int LoadSiteFile = True;
-int LoadInitFile = True;
-int DebugInitFile = False;
+#include "Runix.h"
 
+SA_TYPE SaveAction = SA_SAVEASK;
+SA_TYPE	RestoreAction = SA_RESTORE;
+Rboolean UsingReadline = TRUE;
+Rboolean LoadSiteFile = TRUE;
+Rboolean LoadInitFile = TRUE;
+Rboolean DebugInitFile = FALSE;
 
 /* call pointers to allow interface switching */
 
@@ -65,27 +60,40 @@ void R_ShowMessage(char *s) { ptr_R_ShowMessage(s); }
 int R_ReadConsole(char *prompt, unsigned char *buf, int len, int addtohistory)
 { return ptr_R_ReadConsole(prompt, buf, len, addtohistory); }
 void R_WriteConsole(char *buf, int len) {ptr_R_WriteConsole(buf, len);}
-void R_ResetConsole() { ptr_R_ResetConsole(); }
-void R_FlushConsole() { ptr_R_FlushConsole(); }
-void R_ClearerrConsole() { ptr_R_ClearerrConsole(); }
+void R_ResetConsole(void) { ptr_R_ResetConsole(); }
+void R_FlushConsole(void) { ptr_R_FlushConsole(); }
+void R_ClearerrConsole(void) { ptr_R_ClearerrConsole(); }
 void R_Busy(int which) { ptr_R_Busy(which); }
-void R_CleanUp(int saveact, int status, int runLast)
+void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 { ptr_R_CleanUp(saveact, status, runLast); }
 int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
-		int del, char *pager)
+		Rboolean del, char *pager)
 { return ptr_R_ShowFiles(nfile, file, headers, wtitle, del, pager); }
 int R_ChooseFile(int new, char *buf, int len)
 { return ptr_R_ChooseFile(new, buf, len); }
+
 void (*ptr_gnome_start)(int ac, char **av, Rstart Rp);
 
-void R_setStartTime(); /* in sys-unix.c */
-void R_load_X11_shlib(); /* in dynload.c */
-void R_load_gnome_shlib(); /* in dynload.c */
+void R_setStartTime(void); /* in sys-unix.c */
+void R_load_X11_shlib(void); /* in dynload.c */
+void R_load_gnome_shlib(void); /* in dynload.c */
+
+int Rf_initialize_R(int ac, char **av);
 
 
 int main(int ac, char **av)
 {
-    int i, ioff = 1, j, value, ierr, useX11 = 1, usegnome = 0;
+    Rf_initialize_R(ac, av);
+
+    mainloop();
+    /*++++++  in ../main/main.c */
+    return 0;
+}
+
+int Rf_initialize_R(int ac, char **av)
+{
+    int i, ioff = 1, j, value, ierr;
+    Rboolean useX11 = TRUE, usegnome = FALSE;
     char *p, msg[1024], **avv;
     structRstart rstart;
     Rstart Rp = &rstart;
@@ -101,12 +109,19 @@ int main(int ac, char **av)
     ptr_R_CleanUp = Rstd_CleanUp;
     ptr_R_ShowFiles = Rstd_ShowFiles;
     ptr_R_ChooseFile = Rstd_ChooseFile;
+    ptr_R_loadhistory = Rstd_loadhistory;
+    ptr_R_savehistory = Rstd_savehistory;
+
+    if((R_Home = R_HomeDir()) == NULL)
+	R_Suicide("R home directory is not defined");
+
+    process_global_Renviron();
 
 #ifdef HAVE_TIMES
     R_setStartTime();
 #endif
     R_DefParams(Rp);
-    R_SizeFromEnv(Rp);
+/*    R_SizeFromEnv(Rp); */
     /* Store the command line arguments before they are processed
        by the R option handler. These are stored in Rp and then moved
        to the global variable CommandLineArgs in R_SetParams.
@@ -128,11 +143,11 @@ int main(int ac, char **av)
 		}
 	    }
 	    if(!strcmp(p, "none"))
-		useX11 = 0;
+		useX11 = FALSE;
 	    else if(!strcmp(p, "gnome") || !strcmp(p, "GNOME"))
-		usegnome = 1;
+		usegnome = TRUE;
 	    else if(!strcmp(p, "X11") || !strcmp(p, "x11"))
-		useX11 = 1;
+		useX11 = TRUE;
 	    else {
 #ifdef HAVE_X11
 		sprintf(msg, "WARNING: unknown gui `%s', using X11\n", p);
@@ -154,6 +169,7 @@ int main(int ac, char **av)
     ptr_GTKDeviceDriver = stub_GTKDeviceDriver;
     ptr_X11DeviceDriver = stub_X11DeviceDriver;
     ptr_dataentry = stub_dataentry;
+    ptr_R_GetX11Image = stub_R_GetX11Image;
 #ifdef HAVE_X11
     if(useX11) {
 	if(!usegnome) {
@@ -188,6 +204,7 @@ int main(int ac, char **av)
 	}
     }
     R_SetParams(Rp);
+    if(!Rp->NoRenviron) process_users_Renviron();
 
     /* On Unix the console is a file; we just use stdio to write on it */
 
@@ -195,9 +212,6 @@ int main(int ac, char **av)
     R_Consolefile = stdout;
     R_Outputfile = stdout;
     R_Sinkfile = NULL;
-    if((R_Home = R_HomeDir()) == NULL) {
-	R_Suicide("R home directory is not defined");
-    }
 /*
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.
@@ -215,13 +229,64 @@ int main(int ac, char **av)
 	else
 	    R_HistorySize = value;
     }
-    Rstd_read_history(R_HistoryFile);
+    if (R_RestoreHistory)
+	Rstd_read_history(R_HistoryFile);
     fpu_setup(1);
 
+ return(0);
+}
 
-    mainloop();
-    /*++++++  in ../main/main.c */
-    return 0;
+
+/*
+  It would be better to enclose this routine within a conditional
+    #ifdef R_EMBEDDED
+      Rf_initEmbeddedR() {
+	...
+      }
+    #endif
+
+    However, we would then have to recompile this file, libunix.a
+    and then link libR.so. Until we have this sorted out in the
+    Makefiles, we compile this unconditionally.
+*/
+
+
+/*
+ This is the routine that can be called to initialize the R environment
+ when it is embedded within another application (by loading libR.so).
+
+ The arguments are the command line arguments that would be passed to
+ the regular standalone R, including the first value identifying the
+ name of the `application' being run.  This can be used to indicate in
+ which application R is embedded and used by R code (e.g. in the
+ Rprofile) to determine how to initialize itself. These are accessible
+ via the R function commandArgs().
+
+ We have to sort out how to recompile this file when building libR.so,
+ having already compiled for the standalone build. However, since on
+ most platforms we will have to recompile all the files with the
+ position independent code (PIC) flag, this is a larger issue.
+
+
+ The return value indicates whether the initialization was successful
+ (Currently there is a possibility to do a long jump within the
+ initialization code so that will we never return here.)
+
+ Example:
+	 0) name of executable
+	 1) don't load the X11 graphics library
+	 2) don't show the banner at startup.
+
+
+    char *argv[]= {"REmbeddedPostgres", "--gui=none", "--silent"};
+    initEmbedded(sizeof(argv)/sizeof(argv[0]), argv);
+*/
+
+int Rf_initEmbeddedR(int argc, char **argv)
+{
+    Rf_initialize_R(argc, argv);
+    setup_Rmainloop();
+    return(1);
 }
 
 

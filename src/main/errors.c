@@ -23,11 +23,25 @@
 #endif
 
 #include "Defn.h"
+/* -> Errormsg.h */
+#include "Startup.h" /* rather cleanup ..*/
+
 /* limit on call length at which errorcall/warningcall is split over
    two lines */
 #define LONGCALL 30
 
-static void jump_now();
+/* This is now non-static so that other applications that link or load libR.so
+   can override it by defining their own version and hence by-pass the longjmp
+   back into the standard R event loop.
+ */
+void jump_now();
+/*
+  Method that resets the global state of the evaluator in the event
+  of an error. Was in jump_now(), but is now a separate method so that
+  we can call it without invoking the longjmp. This is needed when embedding
+  R in other applications.
+*/
+void Rf_resetStack(int topLevel);
 
 /*
 Different values of inError are used to indicate different places
@@ -96,7 +110,6 @@ void onsigusr1()
 	}
     }
 	R_CleanUp(SA_SAVE, 2, 1); /* quit, save,  .Last, status=2 */
-
 }
 
 
@@ -181,7 +194,7 @@ void warningcall(SEXP call, char *format, ...)
     else if(w==1) {	/* print as they happen */
 	va_list(ap);
 	if( call != R_NilValue ) {
-	    dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	    dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	    REprintf("Warning in %s : ", dcall);
 	    if (strlen(dcall) > LONGCALL) REprintf("\n	 ");
 	}
@@ -199,11 +212,11 @@ void warningcall(SEXP call, char *format, ...)
 	    setupwarnings();
 	if( R_CollectWarnings > 49 )
 	    return;
-	VECTOR(R_Warnings)[R_CollectWarnings] = call;
+	SET_VECTOR_ELT(R_Warnings, R_CollectWarnings, call);
 	slen = vsprintf(buf, format, ap);
 	va_end(ap);
 	names = CAR(ATTRIB(R_Warnings));
-	STRING(names)[R_CollectWarnings++] = mkChar(buf);
+	SET_STRING_ELT(names, R_CollectWarnings++, mkChar(buf));
     }
     /* else:  w <= -1 */
     inWarning = 0;
@@ -218,21 +231,21 @@ void PrintWarnings(void)
     if( R_CollectWarnings == 1 ) {
 	REprintf("Warning message: \n");
 	names = CAR(ATTRIB(R_Warnings));
-	if( VECTOR(R_Warnings)[0] == R_NilValue )
-	   REprintf("%s \n", CHAR(STRING(names)[0]));
+	if( VECTOR_ELT(R_Warnings, 0) == R_NilValue )
+	   REprintf("%s \n", CHAR(STRING_ELT(names, 0)));
 	else
-	   REprintf("%s in: %s \n", CHAR(STRING(names)[0]),
-		CHAR(STRING(deparse1(VECTOR(R_Warnings)[0],0))[0]));
+	   REprintf("%s in: %s \n", CHAR(STRING_ELT(names, 0)),
+		CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, 0),0), 0)));
     }
     else if( R_CollectWarnings <= 10 ) {
 	REprintf("Warning messages: \n");
 	names = CAR(ATTRIB(R_Warnings));
 	for(i=0; i<R_CollectWarnings; i++) {
-	    if( STRING(R_Warnings)[i] == R_NilValue )
-	       REprintf("%d: %s \n",i+1, CHAR(STRING(names)[i]));
+	    if( STRING_ELT(R_Warnings, i) == R_NilValue )
+	       REprintf("%d: %s \n",i+1, CHAR(STRING_ELT(names, i)));
 	    else
-	       REprintf("%d: %s in: %s \n", i+1, CHAR(STRING(names)[i]),
-		   CHAR(STRING(deparse1(VECTOR(R_Warnings)[i], 0))[0]));
+	       REprintf("%d: %s in: %s \n", i+1, CHAR(STRING_ELT(names, i)),
+		   CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings,i), 0), 0)));
 	}
     }
     else {
@@ -247,8 +260,8 @@ void PrintWarnings(void)
     PROTECT(t = allocVector(STRSXP, R_CollectWarnings));
     names = CAR(ATTRIB(R_Warnings));
     for(i=0; i<R_CollectWarnings; i++) {
-	VECTOR(s)[i] = VECTOR(R_Warnings)[i];
-	VECTOR(t)[i] = VECTOR(names)[i];
+	SET_VECTOR_ELT(s, i, VECTOR_ELT(R_Warnings, i));
+	SET_VECTOR_ELT(t, i, VECTOR_ELT(names, i));
     }
     setAttrib(s, R_NamesSymbol, t);
     defineVar(install("last.warning"), s, R_GlobalEnv);
@@ -275,7 +288,7 @@ void errorcall(SEXP call, char *format,...)
 
     if(call != R_NilValue) {
 	inError = 1;
-	dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	sprintf(errbuf, "Error in %s : ", dcall);
 	if (strlen(dcall) > LONGCALL) strcat(errbuf, "\n	");/* <- TAB */
     }
@@ -298,7 +311,7 @@ SEXP do_geterrmessage(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     PROTECT(res = allocVector(STRSXP, 1));
-    STRING(res)[0] = mkChar(errbuf);
+    SET_STRING_ELT(res, 0, mkChar(errbuf));
     UNPROTECT(1);
     return res;
 }
@@ -318,7 +331,7 @@ void error(const char *format, ...)
 
 /* Unwind the call stack in an orderly fashion */
 /* calling the code installed by on.exit along the way */
-/* and finally longjmping to the top repl loop */
+/* and finally longjmping to the innermost TOPLEVEL context */
 
 void jump_to_toplevel()
 {
@@ -343,17 +356,14 @@ void jump_to_toplevel()
 	if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
 	    REprintf("invalid option \"error\"\n");
 	else {
-	    c = R_GlobalContext;
-	    while ( !(c->callflag & CTXT_FUNCTION) && c->callflag )
-		c = c->nextcontext;
 	    inError = 3;
 	    if (isLanguage(s))
-		eval(s, c->cloenv);
+		eval(s, R_GlobalEnv);
 	    else /* expression */
 	    {
 		int i, n = LENGTH(s);
 		for (i = 0 ; i < n ; i++)
-		    eval(VECTOR(s)[i], c->cloenv);
+		    eval(VECTOR_ELT(s, i), R_GlobalEnv);
 	    }
 	    inError = 1;
 	}
@@ -377,18 +387,24 @@ void jump_to_toplevel()
 		inError=0;
 		findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
 	}
+	if (c->callflag == CTXT_TOPLEVEL)
+	    break;
     }
     if ( !R_Interactive && !haveHandler && inError ) {
 	REprintf("Execution halted\n");
 	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
     }
+#ifdef OLD
     if (R_Sinkfile) R_Outputfile = R_Sinkfile;
     else R_Outputfile = R_Consolefile;
+#endif
+    R_OutputCon = R_SinkCon;
+
     PROTECT(s = allocList(nback));
     t = s;
     for (c = R_GlobalContext ; c ; c = c->nextcontext)
 	if (c->callflag & CTXT_FUNCTION ) {
-	    CAR(t) = deparse1(c->call, 0);
+	    SETCAR(t, deparse1(c->call, 0));
 	    t = CDR(t);
 	}
     setVar(install(".Traceback"), s, R_GlobalEnv);
@@ -402,8 +418,22 @@ void jump_to_toplevel()
    could result in an infinite-loop condition. All you can do
    is reset things and exit.
 */
-static void jump_now()
+void jump_now()
 {
+  Rf_resetStack(0);
+  LONGJMP(R_ToplevelContext->cjmpbuf, 0);
+}
+
+
+/*
+ The topLevelReset argument controls whether the R_GlobalContext is 
+ reset to its initial condition.
+ In regular stand-alone R, this is not needed (see jump_now() above).
+ But when R is embedded in an application, this must be set or otherwise
+ subsequent errors get caught in an infinite loop when iterating over
+ the contexts in the error handling routine jump_to_toplevel() above.
+*/
+void Rf_resetStack(int topLevelReset) {
     if( inError == 2 )
 	REprintf("Lost warning messages\n");
     inError=0;
@@ -411,7 +441,9 @@ static void jump_now()
     R_PPStackTop = 0;
     R_Warnings = R_NilValue;
     R_CollectWarnings = 0;
-    LONGJMP(R_ToplevelContext->cjmpbuf, 0);
+    if(topLevelReset) {
+        R_GlobalContext = R_ToplevelContext;
+    }
 }
 
 #ifdef OLD_Macintosh
@@ -434,8 +466,9 @@ void isintrpt()
 }
 #endif
 
-void do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+/* error(.) : really doesn't return anything; but all do_foo() must be SEXP */
     RCNTXT *cptr;
     SEXP c_call;
 
@@ -451,13 +484,14 @@ void do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CDR(args);
 
     if (CAR(args) != R_NilValue) { /* message */
-      CAR(args) = coerceVector(CAR(args), STRSXP);
+      SETCAR(args, coerceVector(CAR(args), STRSXP));
       if(!isValidString(CAR(args)))
 	  errorcall(c_call, " [invalid string in stop(.)]");
-      errorcall(c_call, "%s", CHAR(STRING(CAR(args))[0]));
+      errorcall(c_call, "%s", CHAR(STRING_ELT(CAR(args), 0)));
     }
     else
       errorcall(c_call, "");
+    /* never called: */return c_call;
 }
 
 SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -468,11 +502,11 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
     while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->nextcontext != NULL)
 	cptr = cptr->nextcontext;
     if (CAR(args) != R_NilValue) {
-	CAR(args) = coerceVector(CAR(args), STRSXP);
+	SETCAR(args, coerceVector(CAR(args), STRSXP));
 	if(!isValidString(CAR(args)))
 	    warningcall(cptr->call, " [invalid string in warning(.)]");
 	else
-	    warningcall(cptr->call,"%s", CHAR(STRING(CAR(args))[0]));
+	    warningcall(cptr->call,"%s", CHAR(STRING_ELT(CAR(args), 0)));
     }
     else
 	warningcall(cptr->call,"");
@@ -486,27 +520,41 @@ void WrongArgCount(char *s)
 }
 
 
-void  UNIMPLEMENTED(char *s)
+void UNIMPLEMENTED(char *s)
 {
     error("Unimplemented feature in %s", s);
 }
 
+/* ERROR_.. codes in Errormsg.h */
 static struct {
-    int	index;
-    char*	format;
+    R_WARNING code;
+    char* format;
 }
 ErrorDB[] = {
-    { ERROR_NUMARGS,		"invalid number of arguments\n"	      },
-    { ERROR_ARGTYPE,		"invalid argument type\n"	      },
+    { ERROR_NUMARGS,		"invalid number of arguments"		},
+    { ERROR_ARGTYPE,		"invalid argument type"			},
 
-    { ERROR_TSVEC_MISMATCH,	"time-series/vector length mismatch\n"},
-    { ERROR_INCOMPAT_ARGS,	"incompatible arguments\n"	      },
+    { ERROR_TSVEC_MISMATCH,	"time-series/vector length mismatch"	},
+    { ERROR_INCOMPAT_ARGS,	"incompatible arguments"		},
 
-    { ERROR_UNIMPLEMENTED,	"unimplemented feature in %s\n",      },
-    { ERROR_UNKNOWN,		"unknown error (report this!)\n",     }
+    { ERROR_UNIMPLEMENTED,	"unimplemented feature in %s"		},
+    { ERROR_UNKNOWN,		"unknown error (report this!)"		}
 };
 
-void  ErrorMessage(SEXP call, int which_error, ...)
+static struct {
+    R_WARNING code;
+    char* format;
+}
+WarningDB[] = {
+    { WARNING_coerce_NA,	"NAs introduced by coercion"		},
+    { WARNING_coerce_INACC,	"inaccurate integer conversion in coercion" },
+    { WARNING_coerce_IMAG,	"imaginary parts discarded in coercion" },
+
+    { WARNING_UNKNOWN,		"unknown warning (report this!)"	},
+};
+
+
+void ErrorMessage(SEXP call, int which_error, ...)
 {
     int i;
     va_list(ap);
@@ -514,15 +562,15 @@ void  ErrorMessage(SEXP call, int which_error, ...)
     if (inError)
 	jump_now();
     if (call != R_NilValue) {
-	dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	REprintf("Error in %s : ", dcall);
 	if (strlen(dcall) > LONGCALL) REprintf("\n   ");
     }
     else
 	REprintf("Error: ");	/* -- dcall = ??? */
     i = 0;
-    while(ErrorDB[i].index != ERROR_UNKNOWN) {
-	if (ErrorDB[i].index == which_error)
+    while(ErrorDB[i].code != ERROR_UNKNOWN) {
+	if (ErrorDB[i].code == which_error)
 	    break;
 	i++;
     }
@@ -532,15 +580,7 @@ void  ErrorMessage(SEXP call, int which_error, ...)
     jump_to_toplevel();
 }
 
-static struct {
-    int	    index;
-    char*   format;
-}
-WarningDB[] = {
-    { WARNING_UNKNOWN,		"unknown warning (report this!)\n", }
-};
-
-void  WarningMessage(SEXP call, int which_warn, ...)
+void WarningMessage(SEXP call, R_WARNING which_warn, ...)
 {
     int i;
     va_list(ap);
@@ -548,14 +588,14 @@ void  WarningMessage(SEXP call, int which_warn, ...)
     if (inError)
 	jump_now();
     if (call != R_NilValue) {
-	dcall = CHAR(STRING(deparse1(call, 0))[0]);
+	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
 	REprintf("Warning in %s : ", dcall);
     }
     else
 	REprintf("Warning: ");	/* -- dcall = ??? */
     i = 0;
-    while(WarningDB[i].index != WARNING_UNKNOWN) {
-	if (WarningDB[i].index == which_warn)
+    while(WarningDB[i].code != WARNING_UNKNOWN) {
+	if (WarningDB[i].code == which_warn)
 	    break;
 	i++;
     }

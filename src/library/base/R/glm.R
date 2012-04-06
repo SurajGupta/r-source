@@ -20,14 +20,14 @@ glm <- function(formula, family=gaussian, data=list(), weights=NULL,
 
     ## extract x, y, etc from the model formula and frame
     mt <- terms(formula, data=data)
-    if(missing(data)) data <- sys.frame(sys.parent())
+    if(missing(data)) data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
     mf$family <- mf$start <- mf$control <- mf$maxit <- NULL
     mf$model <- mf$method <- mf$x <- mf$y <- mf$contrasts <- NULL
     mf$... <- NULL
-    ##	      mf$drop.unused.levels <- TRUE
+    mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    mf <- eval(mf, sys.frame(sys.parent()))
+    mf <- eval(mf, parent.frame())
     switch(method,
 	   "model.frame" = return(mf),
 	   "glm.fit"= 1,
@@ -108,7 +108,7 @@ glm.fit <-
 	## oops, you'd want glm.fit.null, then
 	cc <- match.call()
 	cc[[1]] <- as.name("glm.fit.null")
-	return(eval(cc, sys.frame(sys.parent())))
+	return(eval(cc, parent.frame()))
     }
     ## define weights and offset if needed
     if (is.null(weights))
@@ -131,7 +131,7 @@ glm.fit <-
 	validmu <- function(mu) TRUE
     if(is.null(mustart))
 	## next line calculates mustart and may change y and weights
-	eval(family$initialize, sys.frame(sys.nframe()))
+	eval(family$initialize)
     if (NCOL(y) > 1)
 	stop("y must be univariate unless binomial")
     eta <-
@@ -420,55 +420,61 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
 }
 
 
-anova.glmlist <- function(object, dispersion=NULL, test=NULL, ...)
+anova.glmlist <- function(objects, dispersion=NULL, test=NULL)
 {
 
     ## find responses for all models and remove
     ## any models with a different response
 
-    responses <- as.character(lapply(object, function(x) {
+    responses <- as.character(lapply(objects, function(x) {
 	deparse(formula(x)[[2]])} ))
     sameresp <- responses==responses[1]
     if(!all(sameresp)) {
-	object <- object[sameresp]
+	objects <- objects[sameresp]
 	warning(paste("Models with response", deparse(responses[!sameresp]),
 		      "removed because response differs from",
 		      "model 1"))
     }
 
+    ns <- sapply(objects, function(x) length(x$residuals))
+    if(any(ns != ns[1]))
+        stop("models were not all fitted to the same size of dataset")
+
     ## calculate the number of models
 
-    nmodels <- length(object)
+    nmodels <- length(objects)
     if(nmodels==1)
-	return(anova.glm(object[[1]], test=test, ...))
+	return(anova.glm(objects[[1]], dispersion=dispersion, test=test))
 
     ## extract statistics
 
-    resdf  <- as.numeric(lapply(object, function(x) x$df.residual))
-    resdev <- as.numeric(lapply(object, function(x) x$deviance))
+    resdf  <- as.numeric(lapply(objects, function(x) x$df.residual))
+    resdev <- as.numeric(lapply(objects, function(x) x$deviance))
 
     ## construct table and title
 
     table <- data.frame(resdf, resdev, c(NA, -diff(resdf)),
                         c(NA, -diff(resdev)) )
-    variables <- as.character(lapply(object, function(x) {
-	deparse(formula(x)[[3]])} ))
-    dimnames(table) <- list(variables, c("Resid. Df", "Resid. Dev", "Df",
+    variables <- lapply(objects, function(x)
+                        paste(deparse(formula(x)), collapse="\n") )
+    dimnames(table) <- list(1:nmodels, c("Resid. Df", "Resid. Dev", "Df",
 					 "Deviance"))
-    title <- paste("Analysis of Deviance Table \n\nResponse: ", responses[1],
-		   "\n\n", sep="")
+    title <- "Analysis of Deviance Table\n"
+    topnote <- paste("Model ", format(1:nmodels),": ",
+		     variables, sep="", collapse="\n")
 
     ## calculate test statistic if needed
 
     if(!is.null(test)) {
-	bigmodel <- object[[order(resdf)[1]]]
+	bigmodel <- objects[[order(resdf)[1]]]
         dispersion <- summary(bigmodel, dispersion=dispersion)$dispersion
         df.dispersion <- if (dispersion == 1) Inf else min(resdf)
-	table <- stat.anova(table=table, test=test,
-			    scale=dispersion, df.scale=df.dispersion,
-			    n=length(bigmodel$residuals))
+	table <- stat.anova(table = table, test = test,
+			    scale = dispersion, df.scale = df.dispersion,
+			    n = length(bigmodel$residuals))
     }
-    structure(table, heading = title, class = c("anova", "data.frame"))
+    structure(table, heading = c(title, topnote),
+              class = c("anova", "data.frame"))
 }
 
 
@@ -484,6 +490,7 @@ stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
 	   },
 	   "F" = {
 	       Fvalue <- abs((table[, dev.col]/table[, "Df"])/scale)
+               Fvalue[table[, "Df"] == 0] <- NA
 	       cbind(table, F = Fvalue,
 		     "Pr(>F)" = pf(Fvalue, abs(table[, "Df"]),
                      abs(df.scale), lower.tail=FALSE))
@@ -653,7 +660,9 @@ model.frame.glm <-
 	fcall <- formula$call
 	fcall$method <- "model.frame"
 	fcall[[1]] <- as.name("glm")
-	eval(fcall, sys.frame(sys.parent()))
+	env<-environment(fcall$formula)
+	if (is.null(env)) env<-parent.frame()
+        eval(fcall, env)
     }
     else formula$model
 }

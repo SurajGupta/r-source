@@ -1,11 +1,11 @@
 include MkRules
 
 HELP = YES
-WINHELP = BOTH # NO, CHM, BOTH
+WINHELP = BOTH# NO, CHM, BOTH
 
 PACKAGES = base ctest eda lqs modreg mva nls splines stepfun ts
 ALLPACKAGES = $(PACKAGES) tcltk
-RPREFIX = rw1011
+RPREFIX = rw1020
 
 RHOME = $(shell perl pwd.pl ../..)# must be absolute path
 RLIB = $(RHOME)/library
@@ -13,41 +13,50 @@ PKGDIR = $(RHOME)/src/library
 PKGD = $(shell perl pwd.pl $(PKGDIR))# must be absolute path
 
 ifdef DEBUG
- OPTFLAGS = -g -O2 -Wall
- DLLFLAGS =
+ OPTFLAGS=-g -O2 -Wall
+ DLLFLAGS=
 else
- OPTFLAGS = -O2 -Wall -pedantic
- DLLFLAGS = -s
+ OPTFLAGS=-O2 -Wall -pedantic
+ DLLFLAGS=-s
 endif
 
-R-DLLFLAGS =  $(STRIPFLAG) -mwindows
+R-DLLFLAGS = -mwindows
 R-DLLLIBS = -L. $(FLIBS) -lwsock32 -lcomctl32 -lversion
-SOURCES = $(wildcard *.c *.f)
+SOURCES = $(filter-out malloc.c,$(wildcard *.c *.f))
 OBJS = $(foreach i, $(SOURCES), $(basename $i).o)
 MAINLIBS = libmain.a libappl.a libmath.a
 EXTRALIBS = ga.a gl.a xdr.a em.a
 
-LIBFILES = $(foreach i, $(ALLPACKAGES), ../../library/$i)
-PKGS = $(foreach i, $(PACKAGES), pkg-$i)
-PKGCLEAN = $(foreach i, $(ALLPACKAGES), pkgclean-$i)
+LIBFILES = $(foreach i, $(ALLPACKAGES), ../../library/$i) ../../library/R.css
+PKGS = $(foreach i,$(PACKAGES),pkg-$i)
+PKGCLEAN = $(foreach i,$(ALLPACKAGES),pkgclean-$i)
+
+LEA_MALLOC=YES
+# flags to ensure that Doug Lea's malloc is used:
+ifdef LEA_MALLOC
+extra-CFLAGS+=-DLEA_MALLOC
+OBJS-EXTRA=malloc.o
+endif
 
 .PHONY:  clean veryclean  rlibs fixfiles front-ends
 
-all: rbuild rdemo rpackage
+all: rbuild rpackage rdocs
 
-CFLAGS = $(OPTFLAGS) -I../include -I../include/R_ext -I. -DHAVE_CONFIG_H
+# separate as Tcl/Tk headers are needed.
+tcl: 
+	$(MAKE) STAMP=NO pkg-tcltk
+
+CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H
 FFLAGS = $(OPTFLAGS)
 
 rbuild: fixfiles makeMakedeps rlibs ../../bin/R.dll libR.a CHTML \
 	../include/globalvar.h front-ends COPYRIGHTS
 
-rpackage: fixed/fixdesc $(PKGS) ../../library/R.css
+rpackage: fixed/fixdesc ../../library/R.css
+	$(MAKE) STAMP=NO $(PKGS)
 
 rinstaller:
 	$(MAKE) -C installer PREFIX=$(RPREFIX)
-
-rdemo:  libR.a
-	make -C ../../demos/dynload -f $(RHOME)/src/gnuwin32/MkDyndemo
 
 rlibs:
 	$(MAKE) -C ../appl  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
@@ -70,11 +79,18 @@ fixfiles:
 	$(RM) ../../unzip/*.h
 
 fixed/fixdesc:
-	sh fixed/GETDESC $(PACKAGES)
+	sh fixed/GETDESC $(ALLPACKAGES)
 
 dllversion.o: ../include/Rversion.h
 
-R.dll: R.a $(MAINLIBS) $(EXTRALIBS) dllversion.o
+R1.a: R.a $(OBJS-EXTRA)
+	$(CP) R.a R1.a
+	$(AR) cr R1.a $(OBJS-EXTRA)
+	$(RANLIB) R1.a
+
+R.dll: R1.a $(MAINLIBS) $(EXTRALIBS) dllversion.o
+
+Rdll: makeMakedeps ../../bin/R.dll
 
 ../../bin/R.dll: fixfiles rlibs R.dll
 	$(MKDIR) -p ../../bin
@@ -95,7 +111,6 @@ R.a: $(OBJS)
 libR.a:  R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def R.exp --output-lib libR.a
 
-# This fails on djtools make:
 R.exp: R.exp1
 	(diff R.exp R.exp1 > /dev/null) || $(CP) R.exp1 R.exp
 
@@ -110,14 +125,11 @@ R.exp1: R.a $(MAINLIBS) $(EXTRALIBS) exported-vars
 ../include/globalvar.h: exported-vars
 	perl -n makeimps.pl exported-vars > $@
 
-tcl:
-	sh fixed/GETDESC tcltk
-	$(MAKE) pkg-tcltk
-
-
 ../../library/R.css: ../../doc/html/R.css
 	$(CP) $< $@
 
+rdocs:
+	@$(MAKE) -C ../../doc/manual -f Makefile.win html
 
 #                          ===== Packages ======
 
@@ -177,8 +189,6 @@ zipdata-%:
 	(cd $(RLIB)/$*/data; ls -1 > filelist; \
 	  zip -rmq9X Rdata * -x filelist 00Index)
 
-bootstrap-DLLNM=boott
-
 
 #                          ===== cleaning ======
 
@@ -188,15 +198,18 @@ clean: cleanwin $(PKGCLEAN)
 	-$(MAKE) -C ../nmath/standalone -f Makefile.win distclean
 
 distclean veryclean: clean
-	$(RM) -rf R.exp ../../bin ../../library
+	$(RM) -rf R.exp globalvar.h ../../bin ../../library
+	$(RM) -f ../include/config.h ../include/psignal.h \
+	../include/Rconfig.h ../include/version.h 
 	$(RM) -f ../library/*/src/*.o ../library/*/src/*.a
 	$(RM) -f ../library/*/src/*.dll
 	$(RM) -rf ../library/*/check
 	$(RM) -f ../../doc/html/search/index.txt \
-	../../doc/html/function.html ../../doc/html/packages.html \
-	../../demos/dynload/zero.def ../../demos/dynload/zero.dll \
-	../../demos/dynload/zero.o \
-	../../etc/Rconsole ../etc/Rdevga ../etc/Rprofile ../../etc/rgb.txt \
+	../../doc/html/function.html ../../doc/html/function-head.html \
+	../../doc/html/packages.html ../../doc/html/rwin.html \
+	../../doc/html/rw-FAQ.html ../../doc/html/search/SearchEngine.html
+	$(RM) -f ../../etc/Rconsole ../../etc/Rdevga ../../etc/Rprofile \
+	../../etc/rgb.txt ../../etc/Makeconf-tests \
 	../include/FFDecl.h ../include/FFTab.h ../include/Platform.h \
 	../include/globalvar.h ../../tests/*.Rout ../../tests/*.Rout.fail
 
@@ -216,8 +229,8 @@ cleanwin:
 
 #                          ===== testing ======
 
-check: all test
-test: test-Specific pkgtests
+# tests
+check test: test-Specific pkgtests
 
 test-Specific:
 	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests clean
@@ -225,15 +238,6 @@ test-Specific:
 
 PKGS-CHK = $(foreach i, $(PACKAGES), pkgcheck-$i)
 pkgtests: $(PKGS-CHK)
-
-pkgcheck-base:
-	@$(ECHO) -------- Testing package base --------
-	@(cd ../../library/base/R-ex; unzip -oq Rex)
-	-@mkdir -p ../library/base/check
-	-@$(MAKE) -C ../library/base/check \
-	  PKG=base RHOME=$(RHOME) RLIB=$(RLIB) \
-	  -f ../../../gnuwin32/check/PkgCheck
-	@(cd ../../library/base/R-ex; rm -f *.R)
 
 
 #                          ===== documentation ======
@@ -257,8 +261,10 @@ INSTALL: INSTALL.in ../../VERSION
 FAQs: rw-faq fixed/r/rw-FAQ.html
 
 fixed/r/rw-FAQ.html: rw-FAQ.texi ../../VERSION
-	$(SED) $(SEDVER) $< | \
-	  makeinfo --html --no-headers --number-sections -o $@
+	@$(SED) $(SEDVER) $< > tmp.texi
+	makeinfo --html --no-headers --number-sections -o tmp.html tmp.texi
+	-tidy tmp.html > $@ 2> nul
+	@$(RM) tmp.texi tmp.html
 
 rw-faq: rw-FAQ.texi ../../VERSION
 	$(SED) $(SEDVER) $< | \
@@ -273,8 +279,10 @@ bindist: docfiles
 	$(CP) -pr ../../bin ../../afm ../../demos  ../../unzip $(RPREFIX)
 	$(MKDIR) $(RPREFIX)/library
 	$(CP) -pr $(LIBFILES) $(RPREFIX)/library
-	$(RM) $(RPREFIX)/demos/dynload/*.o $(RPREFIX)/demos/dynload/*.def
 	$(RM) $(RPREFIX)/*/Makefile.in
+	(cd $(RPREFIX)/bin; $(RM) Rcmd.exe INSTALL REMOVE SHLIB build check \
+	   massage-Examples.sh Rd2dvi.sh Rd2txt Rdconv Rdiff.sh Rdindex \
+           extract-usage Sd2Rd)
 	$(MKDIR) $(RPREFIX)/etc
 	$(CP) -p ../../etc/Rprofile $(RPREFIX)/etc/Rprofile
 	$(CP) -p ../../etc/Rconsole $(RPREFIX)/etc/Rconsole
@@ -283,14 +291,21 @@ bindist: docfiles
 	$(MKDIR) $(RPREFIX)/doc $(RPREFIX)/doc/manual
 	$(CP) -pr ../../doc/html $(RPREFIX)/doc
 	$(CP) -p ../../doc/manual/Rd.sty $(RPREFIX)/doc/manual
-	$(CP) -p ../../COPYING COPYRIGHTS ../../FAQ ../../NEWS \
-		../../Y2K $(RPREFIX)
+	$(CP) -p ../../doc/manual/*.html $(RPREFIX)/doc/manual
+	$(CP) -p ../../AUTHORS ../../COPYING COPYRIGHTS ../../FAQ ../../NEWS \
+		../../THANKS ../../Y2K $(RPREFIX)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g readme > $(RPREFIX)/README
 	$(CP) -p rw-faq $(RPREFIX)/rw-FAQ
 	$(CP) -p CHANGES README.Rterm $(RPREFIX)
-	zip dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
+# convert docs and batch files to CRLF: might already be on Windows, though.
+ifeq ($(strip $(BUILD)),CROSS)
+	zip -l dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
 	unzip -ao dosfiles.zip
+else
+	zip dosfiles.zip $(RPREFIX)/* $(RPREFIX)/bin/*.bat
+	unzip -o dosfiles.zip
+endif
 	$(RM) dosfiles.zip
 	$(RM) -f $(RPREFIX)b1.zip $(RPREFIX)b2.zip $(RPREFIX)h.zip \
 	   $(RPREFIX)w.zip $(RPREFIX)l.zip $(RPREFIX)ch.zip
@@ -299,8 +314,12 @@ bindist: docfiles
 	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help
 	unzip anindex.zip
 	$(RM) anindex.zip
-	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
-	-zip -rm9X $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml  $(RPREFIX)/bin/Rchtml.dll
+	$(RM) $(RPREFIX)/doc/manual/R-FAQ.html
+	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html \
+          $(RPREFIX)/doc/manual/*.html \
+	  $(RPREFIX)/library/*/html $(RPREFIX)/library/R.css
+	-zip -rm9X $(RPREFIX)ch.zip $(RPREFIX)/library/*/chtml \
+	  $(RPREFIX)/bin/Rchtml.dll
 	$(RM) $(RPREFIX)/library/*/winhlp/*.GID
 	-zip -rm9X $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
 	zip -rm9X $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
@@ -309,37 +328,22 @@ bindist: docfiles
 	zip -r9X $(RPREFIX)b1.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
 
-## currently unused
-srcdist:
-	$(RM) -r ../src src
-	$(MKDIR) ../src
-	$(MKDIR)  ../src/gnuwin32
-	$(CP)  -pr ./* ../src/gnuwin32
-	$(RM) -r ../src/gnuwin32/old ../src/gnuwin32/*.zip
-	$(RM) -r ../src/gnuwin32/installer/unzip
-	$(RM) -r ../src/gnuwin32/bitmap/jpeg-6b
-	$(RM) -r ../src/gnuwin32/bitmap/libpng
-	$(RM) -r ../src/gnuwin32/bitmap/zlib
-	$(RM) -f ../src/gnuwin32/unzip/*.dll
-	$(MAKE) -k -C ../src/gnuwin32 cleanwin
-	mv ../src .
-	$(RM) $(RPREFIX)s.zip
-	zip -rX  $(RPREFIX)s.zip src
-	$(RM) -r src
-
 
 #taken from ../include/Makefile.in
-SRC_HEADERS = R.h S.h Rdefines.h Rinternals.h S_compat.h
+SRC_HEADERS = R.h S.h Rdefines.h Rgraphics.h Rinternals.h Rmath.h
 OBJ_HEADERS = Rconfig.h Rversion.h
-GW32_HEADERS = globalvar.h # psignal.h
+GW32_HEADERS = globalvar.h
 
 packagedist:
 	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
-	$(MKDIR) $(RPREFIX) $(RPREFIX)/etc $(RPREFIX)/src \
-	  $(RPREFIX)/src/include $(RPREFIX)/src/library \
+	$(MKDIR) $(RPREFIX) $(RPREFIX)/bin \
+	  $(RPREFIX)/doc $(RPREFIX)/doc/html $(RPREFIX)/doc/manual \
+	  $(RPREFIX)/src $(RPREFIX)/src/include $(RPREFIX)/src/library \
 	  $(RPREFIX)/src/gnuwin32 $(RPREFIX)/src/gnuwin32/fixed
-	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll \
-	  maketitle pwd.pl $(RPREFIX)/src/gnuwin32
+	$(CP) ../../doc/html/logo.jpg $(RPREFIX)/doc/html
+	$(CP) -p ../../doc/manual/Rd.sty $(RPREFIX)/doc/manual
+	$(CP) -p exported-vars R.exp MkRules MakePkg MakeDll \
+	  maketitle pwd.pl makeDllRes.pl $(RPREFIX)/src/gnuwin32
 	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
 	$(CP) fixed/dobundle.pl $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
@@ -349,15 +353,21 @@ packagedist:
 	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS) $(GW32_HEADERS), \
 	  ../include/$i) $(RPREFIX)/src/include
 	$(CP) -pr ../include/R_ext $(RPREFIX)/src/include
-	$(CP) readme.packages $(RPREFIX)
-	$(CP) ../../etc/Rdconvlib.pl ../../etc/buildlib.pl \
-	   ../../etc/html-layout.pl $(RPREFIX)/etc
+	$(SED) -e 3,5d readme.packages > $(RPREFIX)/readme.packages
+	$(MKDIR) $(RPREFIX)/share
+	$(CP) -r ../../share/perl $(RPREFIX)/share
+	$(CP) ../../bin/INSTALL ../../bin/REMOVE ../../bin/SHLIB \
+	  ../../bin/build ../../bin/check ../../bin/massage-Examples.sh \
+	  ../../bin/Rd2dvi.sh ../../bin/Rd2txt ../../bin/Rdconv \
+	  ../../bin/Rdindex ../../bin/Rdiff.sh ../../bin/Sd2Rd \
+	  ../../bin/Rcmd.exe \
+          $(RPREFIX)/bin
 	$(CP) -p graphapp/graphapp.h $(RPREFIX)/src/include
 	$(CP) -pr windlgs $(RPREFIX)/src/library
 	zip -rX $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
 
-docsdist:
+docsdist: docs
 	$(RM) -rf $(RPREFIX)
 	$(RM) -f $(RPREFIX)d1.zip $(RPREFIX)d2.zip
 	$(MKDIR) $(RPREFIX) $(RPREFIX)/doc $(RPREFIX)/doc/manual

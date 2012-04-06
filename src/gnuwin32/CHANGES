@@ -4,6 +4,202 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+rw1020
+======
+
+This version has been compiled against msvcrt.dll not crtdll.dll.
+This gives small speed increases and generally more accurate results.
+Packages compiled against crtdll.dll will still work (as far as we are
+aware), but for best results should be re-compiled.  (A few packages
+need to be re-compiled for 1.2.0 on all platforms, and any that used
+malloc directly need to be recompiled on this one.)
+
+
+This release has a number of changes to bring its behaviour closer to that 
+of Unix versions of R.
+
+-   The default font for graphics on windows(), win.printer() and
+    win.metafile() devices is now Arial: the font numbers for the
+    Times New Roman and Arial families have been interchanged.
+
+-   The history is only saved when the workspace is (to be compatible with
+    Unix versions of R) and whether it is restored is controlled by
+    option --no-restore-history (implied by --no-restore and --vanilla):
+    the default remains to restore.
+
+-   Environment variables R_HISTFILE and R_HISTSIZE can be set to specify
+    the name of the commands history file (default .Rhistory)
+    and its maximum size (in lines, default 512).
+
+-   More locale support is now enabled where supported by the version of
+    Windows in use.  It means that sorting and comparison of character
+    strings will be locale-specific.  You may not want this (the sort
+    order in `English_United Kingdom' is aAbB..., for example) and
+    setting Sys.setlocale("LC_COLLATE", "C") should give the previous
+    behaviour.  Further, users of Windows 9x/ME should be able to use
+    their native character set for the names of R objects (as NT/2000
+    users always have: this is caused by the change to msvcrt.dll).
+    (For the benefit of those used to Unix, LC_ALL can be set in the
+    environment, although this is not usually supported by Windows,
+    and setting individual LC_* such as LC_COLLATE will also work.)
+
+-   It is possible to make DVI and HTML versions of the manuals: 
+    see file INSTALL in the source distribution.
+
+-   New utility Rcmd.exe to emulate R CMD : see below.
+
+-   unlink() now works the same way on Windows and Unix.  Thus on
+    Windows it no longer deletes empty directories, but has a new
+    argument recursive=TRUE to delete directories (empty or not).
+
+-   The startup code looks for .Renviron, a file pointed to by
+    environment variable R_ENVIRON and then .Renviron in the home
+    directory.  This file can contain lines of the forms NAME=value
+    and NAME=${NAME1-value} to take the value of NAME1 if set (and not
+    empty), otherwise `value'.
+
+-   make check no longer makes R, just runs the tests (as make test
+    always has).  Tests are run in the C locale.
+
+
+Gui changes
+-----------
+
+-   There are new console menu items `Load History' on the File menu and
+    `Clear console' on the Edit menu. (The current line is not cleared.)
+
+-   The menu items `Load/Save Image' are now called `Load/Save Workspace'.
+
+-   The Print menu item on the File menu of a console or pager now prints
+    the selection if there is one, and the whole (saved) contents otherwise.
+
+-   There is a new `Save to File' item on the File menu of a console or
+    pager which saves the selection if there is one, and the whole
+    (saved) contents otherwise.
+
+-   The Rgui console now uses the same history mechanism as Rterm. The
+    history limit is now just on the number of lines (rather than on the
+    number of lines and the total size).  The mechanism has been altered
+    so that Rterm records repeated lines (as Rgui always did).
+
+-   There are some additional command-line editing commands in Rgui: see
+    the Help | Console information screen.  (There is also one
+    addition, ^W, in Rterm: see README.rterm.)
+
+-   Selection works slightly differently: if the selection extends beyond
+    the last character on the line the (invisible) CRLF is made part of
+    the selection, but not if only up to the last character is selected.
+
+-   The data editor is no longer modal (which seems not to have worked
+    properly in the GraphApp toolkit) and this allows its popups to be
+    modal.
+
+-   The size of the console scroll buffer can be set in file Rconsole,
+    and resized (upwards) via the GUI preferences editor.
+
+-   The GUI console copes much better with receiving output (e.g. from
+    tcltk interactive functions) during input.
+
+
+
+New utilities for preparing packages
+------------------------------------
+
+    There are several new utilities in the rw1020sp.zip distribution.
+
+    The utilities Rd2dvi.sh Rd2txt Rdconv Rdindex Sd2Rd are no longer
+    batch files but accessed through a new front-end Rcmd.exe, so if this
+    is in your path (otherwise use ...\rw1020\bin\Rcmd) you can use
+
+	Rcmd Rd2dvi.sh [options] files
+	Rcmd Rd2txt              file
+	Rcmd Rdconv    [options] file
+	Rcmd Rdindex   [options] files
+	Rcmd Sd2Rd     [options] file
+
+    There are new utilities INSTALL, REMOVE, SHLIB which can be used
+    to install a source package, remove a package and make a DLL, and
+    implementations of the Unix R utilities BATCH, build and
+    check. Invoke these by
+
+	Rcmd INSTALL [options] pkgdir(s)
+	Rcmd REMOVE  [options] pkg(s)
+	Rcmd SHLIB   [options] file(s)
+	Rcmd build   [options] pkgdir(s)
+	Rcmd check   [options] pkgdir(s)
+	Rcmd BATCH   [options] infile [outfile]
+
+    Use option --help with any of these for fuller details.
+
+
+The default for options("papersize") is set according to the locale,
+and so might be set to "letter" under US or Canadian versions of
+Windows.
+
+Rterm in interactive use sets the title of the window it is running
+in, and unsets it when it terminates.
+
+The Windows memory manager proved to be (far) too slow to work with
+the new generational garbage collector, so it has been replaced.  The
+current memory manager rarely releases memory back to Windows (but
+reuses memory very efficiently) so total memory usage will often grow
+slowly over the course of a session.  Memory used for transient large
+objects will normally be returned at garbage collection.  (Once memory
+usage has gone over the 256Mb of address space that is initially
+reserved, it is unlikely to be reduced much, but the allocated memory
+will be reused.)  You can compile R to use the Windows memory manager
+if you need to.
+
+New function memory.size() showing the amount of memory currently in
+use or the maximum that has been used.
+
+New command-line option --max-mem-size to set the maximum memory
+allocation: it has a minimum allowed value of 10M.  This is intended
+to catch attempts to allocate excessive amounts of memory which may
+cause other processes to run out of resources.  The default is the
+smaller of the amount of physical RAM in the machine and 256Mb.
+
+DLLs for packages (including standard packages supplied with R)
+automatically gain version information when compiled under this
+version.  (Use the Version tab on the Properties dialog box to see it,
+or the new function DLL.version() within R.)
+
+Windows (.hlp) help files now have hyperlinks to other objects within
+the same package.
+
+The windows() graphics device has a new argument `record' to set the
+initial state of the recording flag, and this defaults to the setting
+of the option "graphics.record" (and that defaults to FALSE).
+
+The windows() graphics device has new options for what happens when it
+is resized, which can be set from the command line of from the menu.
+See ?windows for details.
+
+New function bringToTop() to bring a graphics window to the top of the
+windows stack (useful from menu actions, ...).
+
+If the options setting for a pager or editor (or the editor argument
+to edit.default) is a path containing a space, it is automatically
+quoted if not already quoted.
+
+The range of allowed text sizes in a windows/win.print device has been
+increased, so smaller values of cex will work.  (The smallest allowed
+text size is 2pt not 8pt.)
+
+Interactive use of Rterm.exe on Windows 2000 systems is now possible 
+(including under ESS).
+
+Better rendering of wide (lwd > 1) and dashed (lty != "solid") lines
+on the windows/win.print device.
+
+The installer rwinst.exe when first asked to install a package tries
+to find a current installation of R, first from R_HOME if set in the
+environment, then from the PATH (it looks for ...\rw1020\bin).
+
+make pkgcheck-foo will unzip zipped example files if needed.
+
+
+
 rw1011
 ======
 
@@ -30,7 +226,7 @@ Characters using the AltGr key now work in interactive use of Rterm.
 Ctrl+V now works as described in a pager (pasting to the console).
 
 Other versions of Tcl/Tk may be used by setting TCL_VERSION in 
-MkRules (but only 8.31 has been tested).
+MkRules (but only 8.31 and 8.32 have been tested).
 
 A file Makevars.win in the src directory of a package will be used in
 preference to a file Makevars.

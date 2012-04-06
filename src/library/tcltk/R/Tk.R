@@ -18,10 +18,15 @@
         if (is.tkwin(x)){current.win <<- x ; return (.Tk.ID(x))}
         if (is.function(x)){
             callback <- .Tcl.callback(x)
-            assign(callback, .Alias(x), envir=current.win)
+            assign(callback, .Alias(x), envir=current.win$env)
             return(callback)
         }
-        paste("{", x, "}", sep="", collapse=" ")
+        ## quoting hell...
+        x <- gsub("\\\\", "\\\\\\\\", as.character(x))
+        x <- gsub("\"","\\\\\"", as.character(x))
+        x <- gsub("\\[","\\\\[", as.character(x))
+        x <- gsub("\\\$","\\\\\$", as.character(x))
+        paste("\"", x, "\"", sep = "", collapse = " ")
     }
 
     val <- list(...)
@@ -49,29 +54,30 @@
     paste(as.vector(rbind(nm, val)), collapse=" ")
 }
 
-.Tk.ID <- function(win) get("ID", envir = win)
+.Tk.ID <- function(win) win$ID
 
 .Tk.newwin <- function(ID){
-    win <- evalq(new.env(), .TkWin)
-    assign("ID", ID, envir=win)
+    win <- list(ID=ID, env=evalq(new.env(),.GlobalEnv))
+    evalq(num.subwin <- 0, win$env)
     class(win) <- "tkwin"
     win
 }
 
 .Tk.subwin <- function(parent) {
-    ID <- evalq({
-        num.subwin<-num.subwin+1
-        paste(ID, num.subwin, sep=".")
-    }, parent)
+    ID <- paste(parent$ID,evalq(num.subwin<-num.subwin+1, parent$env),
+                sep=".")
     win<-.Tk.newwin(ID)
-    assign(ID, win, envir=parent)
-    assign("parent", parent, envir=win)
+    assign(ID, win, envir=parent$env)
+    assign("parent", parent, envir=win$env)
     win
 }
 
 tkdestroy  <- function(win) {
     tkcmd("destroy", win)
-    rm(list=.Tk.ID(win), envir=get("parent", envir=win))
+    ID <- .Tk.ID(win)
+    env <- get("parent", envir=win$env)$env
+    if (exists(ID, envir=env, inherits=FALSE))
+        rm(list=ID, envir=env)
 }
 
 is.tkwin <- function(x) inherits(x, "tkwin")
@@ -83,7 +89,6 @@ is.tkwin <- function(x) inherits(x, "tkwin")
 }
 
 
-.TkWin  <- local({num.subwin<-0 ; environment()})
 .TkRoot <- .Tk.newwin("")
 tclvar  <- structure(NULL,class="tclvar")
 
@@ -111,9 +116,18 @@ tkradiobutton <- function(parent, ...) tkwidget(parent, "radiobutton", ...)
 tkscale       <- function(parent, ...) tkwidget(parent, "scale", ...)
 tkscrollbar   <- function(parent, ...) tkwidget(parent, "scrollbar", ...)
 tktext        <- function(parent, ...) tkwidget(parent, "text", ...)
-tktoplevel    <- function(parent=.TkRoot,...) tkwidget(parent,"toplevel",...)
 
-
+tktoplevel    <- function(parent=.TkRoot,...) {
+    w <- tkwidget(parent,"toplevel",...)
+    ID <- .Tk.ID(w)
+    tkbind(w, "<Destroy>",
+           function() {
+               if (exists(ID, envir=parent$env, inherits=FALSE))
+                   rm(list=ID, envir=parent$env)
+               tkbind(w, "<Destroy>","")
+           })
+    w
+}
 ### ------ Window & Geometry managers, widget commands &c ------
 
 
@@ -174,7 +188,7 @@ tkwait.window    <- function(...) tkcmd("tkwait", "window", ...)
 ## Tkwinfo actually has a bazillion subcommands, but it's rarely
 ## used, so let's be lazy
 
-tkwinfo <- function(...) tkcmd("raise", ...)
+tkwinfo <- function(...) tkcmd("winfo", ...)
 
 ## Not so with tkwm.
 
@@ -237,50 +251,68 @@ tkplace.slaves    <- function(...) tkcmd("place", "slaves", ...)
 
 
 
-### Widgets commands 
+### Widgets commands
 
-tkactivate  <- function(widget, ...) tkcmd(widget, "activate", ...)
-tkadd       <- function(widget, ...) tkcmd(widget, "add", ...)
-tkbbox      <- function(widget, ...) tkcmd(widget, "box", ...)
-tkcompare   <- function(widget, ...) tkcmd(widget, "compare", ...)
-tkconfigure <- function(widget, ...) tkcmd(widget, "configure", ...)
-tkconfigure.entry<-function(widget, ...) tkcmd(widget, "entryconfigure", ...)
-tkcget      <- function(widget, ...) tkcmd(widget, "cget", ...)
-tkcget.entry<- function(widget, ...) tkcmd(widget, "entrycget", ...)
-tkcoords    <- function(widget, ...) tkcmd(widget, "coords", ...)
-tkcurselection<-function(widget,...) tkcmd(widget, "curselection", ...)
-tkdebug     <- function(widget, ...) tkcmd(widget, "debug", ...)
-tkdelete    <- function(widget, ...) tkcmd(widget, "delete", ...)
-tkdelta     <- function(widget, ...) tkcmd(widget, "delta", ...)
-tkdeselect  <- function(widget, ...) tkcmd(widget, "deselect", ...)
-tkdlineinfo <- function(widget, ...) tkcmd(widget, "dlineinfo", ...)
-tkdump      <- function(widget, ...) tkcmd(widget, "dump", ...)
-tkflash     <- function(widget, ...) tkcmd(widget, "flash", ...)
-tkfraction  <- function(widget, ...) tkcmd(widget, "fraction", ...)
-tkget       <- function(widget, ...) tkcmd(widget, "get", ...)
-tkicursor   <- function(widget, ...) tkcmd(widget, "icursor", ...)
-tkidentify  <- function(widget, ...) tkcmd(widget, "identify", ...)
+tkactivate      <- function(widget, ...) tkcmd(widget, "activate", ...)
+tkadd           <- function(widget, ...) tkcmd(widget, "add", ...)
+tkaddtag        <- function(widget, ...) tkcmd(widget, "addtag", ...)
+tkbbox          <- function(widget, ...) tkcmd(widget, "bbox", ...)
+tkcanvasx       <- function(widget, ...) tkcmd(widget, "canvasx", ...)
+tkcanvasy       <- function(widget, ...) tkcmd(widget, "canvasy", ...)
+tkcompare       <- function(widget, ...) tkcmd(widget, "compare", ...)
+tkconfigure     <- function(widget, ...) tkcmd(widget, "configure", ...)
+tkcoords        <- function(widget, ...) tkcmd(widget, "coords", ...)
+tkcreate        <- function(widget, ...) tkcmd(widget, "create", ...)
+tkcget          <- function(widget, ...) tkcmd(widget, "cget", ...)
+tkcoords        <- function(widget, ...) tkcmd(widget, "coords", ...)
+tkcurselection  <- function(widget, ...) tkcmd(widget, "curselection", ...)
+tkdchars        <- function(widget, ...) tkcmd(widget, "dchars", ...)
+tkdebug         <- function(widget, ...) tkcmd(widget, "debug", ...)
+tkdelete        <- function(widget, ...) tkcmd(widget, "delete", ...)
+tkdelta         <- function(widget, ...) tkcmd(widget, "delta", ...)
+tkdeselect      <- function(widget, ...) tkcmd(widget, "deselect", ...)
+tkdlineinfo     <- function(widget, ...) tkcmd(widget, "dlineinfo", ...)
+tkdtag          <- function(widget, ...) tkcmd(widget, "dtag", ...)
+tkdump          <- function(widget, ...) tkcmd(widget, "dump", ...)
+tkentryconfigure<- function(widget, ...) tkcmd(widget, "entryconfigure", ...)
+tkentrycget     <- function(widget, ...) tkcmd(widget, "entrycget", ...)
+tkfind          <- function(widget, ...) tkcmd(widget, "find", ...)
+tkflash         <- function(widget, ...) tkcmd(widget, "flash", ...)
+tkfraction      <- function(widget, ...) tkcmd(widget, "fraction", ...)
+tkget           <- function(widget, ...) tkcmd(widget, "get", ...)
+tkgettags       <- function(widget, ...) tkcmd(widget, "gettags", ...)
+tkicursor       <- function(widget, ...) tkcmd(widget, "icursor", ...)
+tkidentify      <- function(widget, ...) tkcmd(widget, "identify", ...)
 tkimage.cget     <- function(widget, ...) tkcmd(widget,"image","cget",...)
 tkimage.configure<- function(widget, ...) tkcmd(widget,"image","configure",...)
 tkimage.create   <- function(widget, ...) tkcmd(widget,"image","create",...)
 tkimage.names    <- function(widget, ...) tkcmd(widget,"image","names",...)
-tkindex     <- function(widget, ...) tkcmd(widget, "index", ...)
-tkinsert    <- function(widget, ...) tkcmd(widget, "insert", ...)
-tkinvoke    <- function(widget, ...) tkcmd(widget, "invoke", ...)
+tkindex         <- function(widget, ...) tkcmd(widget, "index", ...)
+tkinsert        <- function(widget, ...) tkcmd(widget, "insert", ...)
+tkinvoke        <- function(widget, ...) tkcmd(widget, "invoke", ...)
+tkitembind      <- function(widget, ...) tkcmd(widget, "bind", ...)
+tkitemcget      <- function(widget, ...) tkcmd(widget, "itemcget", ...)
+tkitemconfigure <- function(widget, ...) tkcmd(widget, "itemconfigure", ...)
+tkitemfocus     <- function(widget, ...) tkcmd(widget, "focus", ...)
+tkitemlower     <- function(widget, ...) tkcmd(widget, "lower", ...)
+tkitemraise     <- function(widget, ...) tkcmd(widget, "raise", ...)
+tkitemscale     <- function(widget, ...) tkcmd(widget, "scale", ...)
 tkmark.gravity  <- function(widget, ...) tkcmd(widget, "mark", "gravity", ...)
 tkmark.names    <- function(widget, ...) tkcmd(widget, "mark", "names", ...)
 tkmark.next     <- function(widget, ...) tkcmd(widget, "mark", "next", ...)
 tkmark.previous <- function(widget, ...) tkcmd(widget, "mark", "previous", ...)
 tkmark.set      <- function(widget, ...) tkcmd(widget, "mark", "set", ...)
 tkmark.unset    <- function(widget, ...) tkcmd(widget, "mark", "unset", ...)
-tknearest   <- function(widget, ...) tkcmd(widget, "nearest", ...)
-tkpost      <- function(widget, ...) tkcmd(widget, "post", ...)
-tkpostcascade<-function(widget, ...) tkcmd(widget, "postcascade", ...)
-tkscan.mark <- function(widget, ...) tkcmd(widget, "scan", "mark", ...)
-tkscan.dragto<-function(widget, ...) tkcmd(widget, "scan", "dragto", ...)
-tksearch    <- function(widget, ...) tkcmd(widget, "search", ...)
-tksee       <- function(widget, ...) tkcmd(widget, "see", ...)
-tkselect    <- function(widget, ...) tkcmd(widget, "select", ...)
+tkmove          <- function(widget, ...) tkcmd(widget, "move", ...)
+tknearest       <- function(widget, ...) tkcmd(widget, "nearest", ...)
+tkpost          <- function(widget, ...) tkcmd(widget, "post", ...)
+tkpostcascade   <- function(widget, ...) tkcmd(widget, "postcascade", ...)
+tkpostscript    <- function(widget, ...) tkcmd(widget, "postscript", ...)
+tkscan.mark     <- function(widget, ...) tkcmd(widget, "scan", "mark", ...)
+tkscan.dragto   <- function(widget, ...) tkcmd(widget, "scan", "dragto", ...)
+tksearch        <- function(widget, ...) tkcmd(widget, "search", ...)
+tksee           <- function(widget, ...) tkcmd(widget, "see", ...)
+tkselect        <- function(widget, ...) tkcmd(widget, "select", ...)
 tkselection.adjust   <- function(widget, ...)
     tkcmd(widget, "selection", "adjust", ...)
 tkselection.anchor   <- function(widget, ...)
@@ -299,10 +331,10 @@ tkselection.set      <- function(widget, ...)
     tkcmd(widget, "selection", "set", ...)
 tkselection.to    <- function(widget,...)
     tkcmd(widget, "selection", "to", ...)
-tkset       <- function(widget, ...) tkcmd(widget, "set", ...)
-tksize      <- function(widget, ...) tkcmd(widget, "size", ...)
-tktoggle    <- function(widget, ...) tkcmd(widget, "toggle", ...)
-tktag.add   <- function(widget, ...) tkcmd(widget, "tag", "add", ...)
+tkset           <- function(widget, ...) tkcmd(widget, "set", ...)
+tksize          <- function(widget, ...) tkcmd(widget, "size", ...)
+tktoggle        <- function(widget, ...) tkcmd(widget, "toggle", ...)
+tktag.add       <- function(widget, ...) tkcmd(widget, "tag", "add", ...)
 tktag.bind      <- function(widget, ...) tkcmd(widget, "tag", "bind", ...)
 tktag.cget      <- function(widget, ...) tkcmd(widget, "tag", "cget", ...)
 tktag.configure <- function(widget, ...) tkcmd(widget, "tag", "configure", ...)
@@ -314,21 +346,46 @@ tktag.prevrange <- function(widget, ...) tkcmd(widget, "tag", "prevrange", ...)
 tktag.raise     <- function(widget, ...) tkcmd(widget, "tag", "raise", ...)
 tktag.ranges    <- function(widget, ...) tkcmd(widget, "tag", "ranges", ...)
 tktag.remove    <- function(widget, ...) tkcmd(widget, "tag", "remove", ...)
-tktype      <- function(widget, ...) tkcmd(widget, "type", ...)
-tkunpost    <- function(widget, ...) tkcmd(widget, "unpost", ...)
+tktype          <- function(widget, ...) tkcmd(widget, "type", ...)
+tkunpost        <- function(widget, ...) tkcmd(widget, "unpost", ...)
 tkwindow.cget     <-function(widget, ...)tkcmd(widget, "window", "cget", ...)
 tkwindow.configure<-function(widget, ...)tkcmd(widget,"window","configure",...)
 tkwindow.create   <-function(widget, ...)tkcmd(widget, "window", "create", ...)
 tkwindow.names    <-function(widget, ...)tkcmd(widget, "window", "names", ...)
-tkxview     <- function(widget, ...) tkcmd(widget, "xview", ...)
-tkxview.moveto<-function(widget, ...)tkcmd(widget, "xview", "moveto", ...)
-tkxview.scroll<-function(widget, ...)tkcmd(widget, "xview", "scroll", ...)
-tkyposition <- function(widget, ...) tkcmd(widget, "ypositions", ...)
-tkyview     <- function(widget, ...) tkcmd(widget, "yview", ...)
-tkyview.moveto<-function(widget, ...)tkcmd(widget, "yview", "moveto", ...)
-tkyview.scroll<-function(widget, ...)tkcmd(widget, "yview", "scroll", ...)
+tkxview         <- function(widget, ...) tkcmd(widget, "xview", ...)
+tkxview.moveto  <- function(widget, ...)tkcmd(widget, "xview", "moveto", ...)
+tkxview.scroll  <-function(widget, ...)tkcmd(widget, "xview", "scroll", ...)
+tkyposition     <- function(widget, ...) tkcmd(widget, "ypositions", ...)
+tkyview         <- function(widget, ...) tkcmd(widget, "yview", ...)
+tkyview.moveto  <- function(widget, ...)tkcmd(widget, "yview", "moveto", ...)
+tkyview.scroll  <- function(widget, ...)tkcmd(widget, "yview", "scroll", ...)
 
+tkpager <- function(file, header, title, delete.file)
+{
+    for ( i in seq(along=file) ){
+        zfile <- file[[i]]
+        tt <- tktoplevel()
+        tkwm.title(tt, if (length(title))
+                   title[(i-1) %% length(title)+1] else "")
+        txt <- tktext(tt, bg="grey90", font="courier")
+        scr <- tkscrollbar(tt, repeatinterval=5,
+                           command=function(...)tkyview(txt,...))
+	tkconfigure(txt,yscrollcommand=function(...)tkset(scr,...))
+        tkpack(txt, side="left", fill="both", expand=TRUE)
+        tkpack(scr, side="right", fill="y")
 
+        chn <- tkcmd("open", zfile)
+        tkinsert(txt, "end", header[[i]])
+        tkinsert(txt, "end", gsub("_\b","",tkcmd("read", chn)))
+        tkcmd("close", chn)
+
+        tkconfigure(txt, state="disabled")
+        tkmark.set(txt,"insert","0.0")
+        tkfocus(txt)
+
+        if (delete.file) tkcmd("file", "delete", zfile)
+    }
+}
 
 
 

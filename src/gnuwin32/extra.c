@@ -82,10 +82,10 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "invalid file name argument");
     PROTECT(ans = allocVector(STRSXP, slen));
     for(i = 0; i < slen; i++) {
-	tn = CHAR(STRING(CAR(args))[i]);
+	tn = CHAR(STRING_ELT(CAR(args), i));
 	/* try to get a new file name */
 	tm = Rwin32_tmpnam(tn);
-	STRING(ans)[i] = mkChar(tm);
+	SET_STRING_ELT(ans, i, mkChar(tm));
 	free(tm);
     }
     UNPROTECT(1);
@@ -102,7 +102,7 @@ SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
     path = CAR(args);
     if (!isString(path) || length(path) != 1)
 	errorcall(call, "invalid path argument");
-    strcpy(dir, CHAR(STRING(path)[0]));
+    strcpy(dir, CHAR(STRING_ELT(path, 0)));
     for(p = dir; *p != '\0'; p++)
 	if(*p == '/') *p = '\\';
     res = mkdir(dir);
@@ -113,49 +113,81 @@ SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
+
+static int R_unlink(char *names, int recursive);
+
+static int R_unlink_one(char *dir, char *name, int recursive)
+{
+    char tmp[MAX_PATH];
+
+    if(strcmp(name, ".") == 0) return 0;
+    if(strcmp(name, "..") == 0) return 0;
+    if(strlen(dir)) {
+	strcpy(tmp, dir); 
+	if(*(dir + strlen(dir) - 1) != '\\') strcat(tmp, "\\");
+	strcat(tmp, name);
+    } else strcpy(tmp, name);
+    return (recursive ? R_unlink(tmp, 1): unlink(tmp)) !=0;
+}
+
+static int R_unlink(char *names, int recursive)
+{
+    int failures = 0;
+    char *p, tmp[MAX_PATH], dir[MAX_PATH];
+    WIN32_FIND_DATA find_data;
+    HANDLE fh;
+    struct stat sb;
+
+    strcpy(tmp, names);
+    for(p = tmp; *p != '\0'; p++) if(*p == '/') *p = '\\';
+    if(stat(tmp, &sb) == 0) {
+	/* Is this a directory? */
+	if(sb.st_mode & _S_IFDIR) {
+	    if(recursive) {
+		strcpy(dir, tmp); strcat(tmp, "\\*");
+		fh = FindFirstFile(tmp, &find_data);
+		if (fh != INVALID_HANDLE_VALUE) {
+		    failures += R_unlink_one(dir, find_data.cFileName, 1);
+		    while(FindNextFile(fh, &find_data))
+			failures += R_unlink_one(dir, find_data.cFileName, 1);
+		    FindClose(fh);
+		}
+		if(rmdir(dir)) failures++;
+	    } else failures++; /* don't try to delete dirs */
+	} else {/* Regular file (or several) */
+	    strcpy(dir, tmp);
+	    if ((p = strrchr(dir, '\\'))) *(++p) = '\0'; else *dir = '\0';
+	    /* check for wildcard matches */
+	    fh = FindFirstFile(tmp, &find_data);
+	    if (fh != INVALID_HANDLE_VALUE) {
+		failures += R_unlink_one(dir, find_data.cFileName, 0);
+		while(FindNextFile(fh, &find_data))
+		    failures += R_unlink_one(dir, find_data.cFileName, 0);
+		FindClose(fh);
+	    }
+	}
+    }
+    return failures;
+}
+
 
 SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  fn, ans;
-    char *p, tmp[MAX_PATH], dir[MAX_PATH];
-    WIN32_FIND_DATA find_data;
-    HANDLE fh;
-    int i, nfiles, failures = 0;
-    struct stat sb;
+    int i, nfiles, failures = 0, recursive;
 
     checkArity(op, args);
     fn = CAR(args);
     nfiles = length(fn);
     if (!isString(fn) || nfiles < 1)
 	errorcall(call, "invalid file name argument");
-    for(i = 0; i < nfiles; i++) {
-	strcpy(tmp, CHAR(STRING(fn)[i]));
-	for(p = tmp; *p != '\0'; p++)
-	    if(*p == '/') *p = '\\';
-	if(stat(tmp, &sb) == 0)
-	    /* Is this a directory? */
-	    if(sb.st_mode & _S_IFDIR) {
-		if(rmdir(tmp)) failures++;
-		continue;
-	    }
-	/* Regular file (or more) */
-	strcpy(dir, tmp);
-	if ((p = strrchr(dir, '\\'))) *(++p) = '\0'; else *dir = '\0';
-	/* check for wildcard matches */
-	fh = FindFirstFile(tmp, &find_data);
-	if (fh != INVALID_HANDLE_VALUE) {
-	    strcpy(tmp, dir); strcat(tmp, find_data.cFileName);
-	    failures += (unlink(tmp) !=0);
-	    while(FindNextFile(fh, &find_data)) {
-		strcpy(tmp, dir); strcat(tmp, find_data.cFileName);
-		failures += (unlink(tmp) !=0);
-	    }
-	    FindClose(fh);
-	} /* else  failures++;*/
-    }
+    recursive = asLogical(CADR(args));
+    if (recursive == NA_LOGICAL)
+	errorcall(call, "invalid recursive argument");
+    for(i = 0; i < nfiles; i++)
+	failures += R_unlink(CHAR(STRING_ELT(fn, i)), recursive);
     PROTECT(ans = allocVector(INTSXP, 1));
     if (!failures)
 	INTEGER(ans)[0] = 0;
@@ -209,7 +241,7 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (!isString(CAR(args)))
 	errorcall(call, "invalid topic argument");
-    item = CHAR(STRING(CAR(args))[0]);
+    item = CHAR(STRING_ELT(CAR(args), 0));
     type = asInteger(CADR(args));
     if (type == 1) {
 	ff = fopen(item, "r");
@@ -225,7 +257,7 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
     } else if (type == 2) {
 	if (!isString(CADDR(args)))
 	    errorcall(call, "invalid hlpfile argument");
-	hfile = CHAR(STRING(CADDR(args))[0]);
+	hfile = CHAR(STRING_ELT(CADDR(args), 0));
 	if (!WinHelp((HWND) 0, hfile, HELP_KEY, (DWORD) item))
 	    warning("WinHelp call failed");
 	else {
@@ -237,7 +269,7 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
     } else if (type == 3) {
 	if (!isString(CADDR(args)))
 	    warningcall(call, "invalid hlpfile argument");
-	hfile = CHAR(STRING(CADDR(args))[0]);
+	hfile = CHAR(STRING_ELT(CADDR(args), 0));
 	if (!WinHelp((HWND) 0, hfile, HELP_QUIT, (DWORD) 0))
 	    error("WinHelp call failed");
     } else
@@ -323,7 +355,7 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 
     PROTECT(ans = allocVector(STRSXP, 1));
-    STRING(ans)[0] = mkChar(ver);
+    SET_STRING_ELT(ans, 0, mkChar(ver));
     UNPROTECT(1);
     return (ans);
 }
@@ -347,7 +379,7 @@ SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
     file = CAR(args);
     if (!isString(file) || length(file) != 1)
 	errorcall(call, "invalid file argument");
-    internal_shellexec(CHAR(STRING(file)[0]));
+    internal_shellexec(CHAR(STRING_ELT(file, 0)));
     return R_NilValue;
 }
 
@@ -372,20 +404,20 @@ SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
     int res=YES;
 
     checkArity(op, args);
-    type = CHAR(STRING(CAR(args))[0]);
+    type = CHAR(STRING_ELT(CAR(args), 0));
     message = CADR(args);
     if(!isString(message) || length(message) != 1)
 	error("invalid `message' argument");
     if (strcmp(type, "ok")  == 0) {
-	askok(CHAR(STRING(message)[0]));
+	askok(CHAR(STRING_ELT(message, 0)));
 	res = 10;
     } else if (strcmp(type, "okcancel")  == 0) {
-	res = askokcancel(CHAR(STRING(message)[0]));
+	res = askokcancel(CHAR(STRING_ELT(message, 0)));
 	if(res == YES) res = 2;
     } else if (strcmp(type, "yesno")  == 0) {
-	res = askyesno(CHAR(STRING(message)[0]));
+	res = askyesno(CHAR(STRING_ELT(message, 0)));
     } else if (strcmp(type, "yesnocancel")  == 0) {
-	res = askyesnocancel(CHAR(STRING(message)[0]));
+	res = askyesnocancel(CHAR(STRING_ELT(message, 0)));
     } else
 	errorcall(call, "unknown type");
     ans = allocVector(INTSXP, 1);
@@ -405,10 +437,10 @@ SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
     def = CADR(args);
     if(!isString(def) || length(def) != 1)
 	error("invalid `default' argument");
-    string = askstring(CHAR(STRING(message)[0]), CHAR(STRING(def)[0]));
+    string = askstring(CHAR(STRING_ELT(message, 0)), CHAR(STRING_ELT(def, 0)));
     if (string) {
 	ans = allocVector(STRSXP, 1);
-	STRING(ans)[0] = mkChar(string);
+	SET_STRING_ELT(ans, 0, mkChar(string));
 	return (ans);
     } else
 	return (R_NilValue);
@@ -432,7 +464,7 @@ SEXP do_winmenuadd(SEXP call, SEXP op, SEXP args, SEXP env)
 	error("invalid `menuname' argument");
     sitem = CADR(args);
     if (isNull(sitem)) { /* add a menu */
-	res = winaddmenu (CHAR(STRING(smenu)[0]), errmsg);
+	res = winaddmenu (CHAR(STRING_ELT(smenu, 0)), errmsg);
 	if (res > 0) {
 	    sprintf(msgbuf, "unable to add menu (%s)", errmsg);
 	    errorcall(call, msgbuf);
@@ -441,9 +473,9 @@ SEXP do_winmenuadd(SEXP call, SEXP op, SEXP args, SEXP env)
     } else { /* add an item */
 	if(!isString(sitem) || length(sitem) != 1)
 	    error("invalid `itemname' argument");
-	res = winaddmenuitem (CHAR(STRING(sitem)[0]),
-			      CHAR(STRING(smenu)[0]),
-			      CHAR(STRING(CADDR(args))[0]),
+	res = winaddmenuitem (CHAR(STRING_ELT(sitem, 0)),
+			      CHAR(STRING_ELT(smenu, 0)),
+			      CHAR(STRING_ELT(CADDR(args), 0)),
 			      errmsg);
 	if (res > 0) {
 	    sprintf(msgbuf, "unable to add menu item (%s)", errmsg);
@@ -467,14 +499,14 @@ SEXP do_winmenudel(SEXP call, SEXP op, SEXP args, SEXP env)
 	error("invalid `menuname' argument");
     sitem = CADR(args);
     if (isNull(sitem)) { /* delete a menu */
-	res = windelmenu (CHAR(STRING(smenu)[0]), errmsg);
-	if (res > 0)
+	res = windelmenu (CHAR(STRING_ELT(smenu, 0)), errmsg);
+	if (res > 0) 
 	    errorcall(call, "menu does not exist");
     } else { /* delete an item */
 	if(!isString(sitem) || length(sitem) != 1)
 	    error("invalid `itemname' argument");
-	res = windelmenuitem (CHAR(STRING(sitem)[0]),
-			      CHAR(STRING(smenu)[0]), errmsg);
+	res = windelmenuitem (CHAR(STRING_ELT(sitem, 0)),
+			      CHAR(STRING_ELT(smenu, 0)), errmsg);
 	if (res > 0) {
 	    sprintf(msgbuf, "unable to delete menu item (%s)", errmsg);
 	    errorcall(call, msgbuf);
@@ -490,21 +522,200 @@ void Rwin_fpset()
     _controlfp(_MCW_EM, _MCW_EM);
 }
 
-#include "console.h"  /* for savehistory */
-#include "getline/getline.h"  /* for gl_savehistory */
+#include "getline/getline.h"  /* for gl_load/savehistory */
 SEXP do_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP sfile;
-
+    
     checkArity(op, args);
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
 	errorcall(call, "invalid file argument");
-    if (CharacterMode == RGui)
-	savehistory(RConsole, CHAR(STRING(sfile)[0]));
-    else if (CharacterMode == RTerm)
-	gl_savehistory(CHAR(STRING(sfile)[0]));
+    if (CharacterMode == RGui || (R_Interactive && CharacterMode == RTerm))
+	gl_savehistory(CHAR(STRING_ELT(sfile, 0)));
     else
 	errorcall(call, "savehistory can only be used in Rgui and Rterm");
     return R_NilValue;
 }
+
+SEXP do_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP sfile;
+    
+    checkArity(op, args);
+    sfile = CAR(args);
+    if (!isString(sfile) || LENGTH(sfile) < 1)
+	errorcall(call, "invalid file argument");
+    if (CharacterMode == RGui || (R_Interactive && CharacterMode == RTerm))
+	gl_loadhistory(CHAR(STRING_ELT(sfile, 0)));
+    else
+	errorcall(call, "savehistory can only be used in Rgui and Rterm");
+    return R_NilValue;
+}
+
+#include <lmcons.h>
+
+SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, ansnames;
+    OSVERSIONINFO verinfo;
+    char isNT[8]="??", ver[256], 
+	name[MAX_COMPUTERNAME_LENGTH + 1], user[UNLEN+1];
+    DWORD namelen = MAX_COMPUTERNAME_LENGTH + 1, userlen = UNLEN+1;
+
+    checkArity(op, args);
+    PROTECT(ans = allocVector(STRSXP, 7));
+    verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+    GetVersionEx(&verinfo);
+    switch(verinfo.dwPlatformId) {
+    case VER_PLATFORM_WIN32_NT:
+	strcpy(isNT, "NT");
+	break;
+    case VER_PLATFORM_WIN32_WINDOWS:
+	strcpy(isNT, "9x");
+	break;
+    case VER_PLATFORM_WIN32s:
+	strcpy(isNT, "win32s");
+	break;
+    default:
+	sprintf(isNT, "ID=%d", (int)verinfo.dwPlatformId);
+	break;
+    }
+
+    SET_STRING_ELT(ans, 0, mkChar("Windows"));
+    sprintf(ver, "%s %d.%d", isNT,
+	    (int)verinfo.dwMajorVersion, (int)verinfo.dwMinorVersion);
+    SET_STRING_ELT(ans, 1, mkChar(ver));
+    sprintf(ver, "(build %d) %s", LOWORD(verinfo.dwBuildNumber), 
+	    verinfo.szCSDVersion);
+    SET_STRING_ELT(ans, 2, mkChar(ver));
+    GetComputerName(name, &namelen);
+    SET_STRING_ELT(ans, 3, mkChar(name));
+    SET_STRING_ELT(ans, 4, mkChar("x86"));
+    GetUserName(user, &userlen);
+    SET_STRING_ELT(ans, 5, mkChar(user));
+    SET_STRING_ELT(ans, 6, STRING_ELT(ans, 5));
+    PROTECT(ansnames = allocVector(STRSXP, 7));
+    SET_STRING_ELT(ansnames, 0, mkChar("sysname"));
+    SET_STRING_ELT(ansnames, 1, mkChar("release"));
+    SET_STRING_ELT(ansnames, 2, mkChar("version"));
+    SET_STRING_ELT(ansnames, 3, mkChar("nodename"));
+    SET_STRING_ELT(ansnames, 4, mkChar("machine"));
+    SET_STRING_ELT(ansnames, 5, mkChar("login"));
+    SET_STRING_ELT(ansnames, 6, mkChar("user"));
+    setAttrib(ans, R_NamesSymbol, ansnames);
+    UNPROTECT(2);
+    return ans;
+}
+
+void R_ProcessEvents(void); /* from system.c */
+
+SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+{    DWORD mtime;
+    int ntime;
+    double time;
+    
+    checkArity(op, args);
+    time = asReal(CAR(args));
+    if (ISNAN(time) || time < 0)
+	errorcall(call, "invalid time value");
+    ntime = 1000*(time) + 0.5;
+    while (ntime > 0) {
+	mtime = min(500, ntime);
+	ntime -= mtime;
+	Sleep(mtime);
+	R_ProcessEvents();
+    }
+    return R_NilValue;
+}
+
+#ifdef LEA_MALLOC
+struct mallinfo {
+  int arena;    /* total space allocated from system */
+  int ordblks;  /* number of non-inuse chunks */
+  int smblks;   /* unused -- always zero */
+  int hblks;    /* number of mmapped regions */
+  int hblkhd;   /* total space in mmapped regions */
+  int usmblks;  /* unused -- always zero */
+  int fsmblks;  /* unused -- always zero */
+  int uordblks; /* total allocated space */
+  int fordblks; /* total non-inuse space */
+  int keepcost; /* top-most, releasable (via malloc_trim) space */
+};
+extern unsigned long max_total_mem;
+
+struct mallinfo mallinfo();
+#endif
+
+SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans;
+    int maxmem;
+    
+    checkArity(op, args);
+    maxmem = asLogical(CAR(args));
+    if(maxmem == NA_LOGICAL)
+	errorcall(call, "invalid `max' argument");
+    PROTECT(ans = allocVector(INTSXP, 1));
+#ifdef LEA_MALLOC
+    if(maxmem) {
+	INTEGER(ans)[0] = max_total_mem;
+    } else {
+	INTEGER(ans)[0] = mallinfo().uordblks;
+    }
+#else
+    INTEGER(ans)[0] = NA_INTEGER;
+#endif
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP do_dllversion(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP path=R_NilValue, ans;
+    char *dll;
+    DWORD dwVerInfoSize;
+    DWORD dwVerHnd;
+    
+    checkArity(op, args);
+    path = CAR(args);
+    if(!isString(path) || LENGTH(path) != 1)
+	errorcall(call, "invalid `path' argument");
+    dll = CHAR(STRING_ELT(path, 0));
+    dwVerInfoSize = GetFileVersionInfoSize(dll, &dwVerHnd);
+    PROTECT(ans = allocVector(STRSXP, 2));
+    SET_STRING_ELT(ans, 0, mkChar(""));
+    SET_STRING_ELT(ans, 1, mkChar(""));
+    if (dwVerInfoSize) {
+	BOOL  fRet;
+	LPSTR lpstrVffInfo;
+	LPSTR lszVer = NULL;
+	UINT  cchVer = 0;
+
+	lpstrVffInfo = (LPSTR) malloc(dwVerInfoSize);
+	if (GetFileVersionInfo(dll, 0L, dwVerInfoSize, lpstrVffInfo))
+	{
+	    
+	    fRet = VerQueryValue(lpstrVffInfo,
+				 TEXT("\\StringFileInfo\\040904E4\\FileVersion"),
+				 (LPVOID)&lszVer, &cchVer);
+	    if(fRet) SET_STRING_ELT(ans, 0, mkChar(lszVer));
+
+	    fRet = VerQueryValue(lpstrVffInfo,
+				 TEXT("\\StringFileInfo\\040904E4\\R Version"),
+				 (LPVOID)&lszVer, &cchVer);
+	    if(fRet) SET_STRING_ELT(ans, 1, mkChar(lszVer));
+	    else {
+		fRet = VerQueryValue(lpstrVffInfo,
+				     TEXT("\\StringFileInfo\\040904E4\\Compiled under R Version"),
+				     (LPVOID)&lszVer, &cchVer);
+		if(fRet) SET_STRING_ELT(ans, 1, mkChar(lszVer));
+	    }
+	    
+	} else ans = R_NilValue;
+	free(lpstrVffInfo);
+    } else ans = R_NilValue;
+    UNPROTECT(1);
+    return ans;
+}
+

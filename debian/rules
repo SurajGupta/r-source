@@ -11,7 +11,7 @@ debtmp		:= $(debbase)/tmp
 debdoc		:= $(debtmp)/usr/share/doc/$(package)
 
 # edd 10 Feb 98	See section 4.1 of Policy Manual
-arch		:= $(shell dpkg --print-architecture)-linux
+arch		:= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 # Uncomment this to turn on verbose mode. 
 #export DH_VERBOSE=1
@@ -29,11 +29,12 @@ build-stamp:
 	LIBS='-L/usr/lib/atlas'\
 	CFLAGS='-Wall -O2' FFLAGS='-Wall -O2'\
 	PATH=${PATH}:/usr/bin/X11\   # so /usr/bin/X11/imake is found
-	SHLIBLDFLAGS='-shared -lc' ./configure --prefix=/usr		 \
+	SHLIB_LDFLAGS='-shared -lc' ./configure --prefix=/usr		 \
 					--with-g77			 \
 					--with-tcltk			 \
 					--mandir=$(debtmp)/usr/share/man \
 					--with-gnome			 \
+                                        --enable-R-profiling             \
 					--host $(arch)
 	make 
 	make help

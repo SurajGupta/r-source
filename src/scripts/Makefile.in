@@ -10,15 +10,17 @@ subdir = src/scripts
 
 include $(top_builddir)/Makeconf
 
-SCRIPTS_S = BATCH Rdiff Rd2dvi Rd2txt build filename help help.links \
-	maketitle massage-Examples pager
+SCRIPTS_S = BATCH LINK Rcmd Rdiff Rd2dvi Rd2txt filename help \
+	help.links maketitle massage-Examples pager
 SCRIPTS_B_IN = COMPILE.in INSTALL.in REMOVE.in Rd2contents.in \
-	Rdconv.in Rdindex.in SHLIB.in Sd2Rd.in \
-	build-help.in check.in
+	Rdconv.in Rdindex.in Rprof.in SHLIB.in Sd2Rd.in \
+	build-help.in build.in check.in extract-usage.in
 SCRIPTS_B = $(SCRIPTS_B_IN:.in=)
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in $(SCRIPTS_S) $(SCRIPTS_B_IN) R.sh.in
+
+Rexecbin_SCRIPTS = $(SCRIPTS_S) $(SCRIPTS_B) $(top_builddir)/libtool R.fe
 
 .SUFFIXES:
 .SUFFIXES: .in
@@ -31,25 +33,50 @@ DISTFILES = Makefile.in $(SCRIPTS_S) $(SCRIPTS_B_IN) R.sh.in
 all: Makefile R
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+	@cd $(top_builddir) && \
+	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
+	  $(SHELL) ./config.status
+	@(for f in $(SCRIPTS_B); do \
+	    echo "$${f}: $(srcdir)/$${f}.in"; \
+	  done) >> $@
 
-R: $(SCRIPTS_B) R.sh
+R: $(SCRIPTS_B) R.fe
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
-	@sed "s@R_HOME_DIR*@`cd $(top_builddir); pwd`@" < R.sh \
-	  > $(top_builddir)/bin/R
-	@chmod +x $(top_builddir)/bin/R
 	@for f in $(SCRIPTS_S); do \
 	  $(INSTALL_SCRIPT) $(srcdir)/$${f} $(top_builddir)/bin; \
 	done
 	@for f in $(SCRIPTS_B); do \
 	  $(INSTALL_SCRIPT) $${f} $(top_builddir)/bin; \
 	done
+	@$(INSTALL_SCRIPT) $(top_builddir)/libtool $(top_builddir)/bin
+	@$(INSTALL_SCRIPT) R.fe $(top_builddir)/bin/R
 
 $(SCRIPTS_B): $(top_builddir)/config.status
+
+# NOTE: the front-end shell script now (2000-08-02) also contains the
+# version information.  As we keep this information outside configure
+# (as otherwise developers would have to reconfigure and hence rebuild
+# every day), we now first create `R.sh' from `R.sh.in' via configure,
+# and then use sed to create the front end (`R.fe') which gets installed
+# as `R'.
+R.sh: $(srcdir)/R.sh.in $(top_builddir)/config.status
+R.fe: R.sh $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
+	@echo "creating $(subdir)/$@"
+	@(v=`cat $(top_srcdir)/VERSION`; \
+	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
+	  y=`cut -d/ -f1 < $(top_srcdir)/date-stamp`; \
+	  sed "s@R_HOME_DIR*@`cd $(top_builddir); pwd`@; \
+	       s@REPLACE_BY_VERSION@$${v}@; \
+	       s@REPLACE_BY_YEAR@$${y}@" < R.sh > $@)
+	@chmod +x $@
+
+$(top_builddir)/libtool:
+	@(cd $(@D); $(MAKE) $(@F))
 
 mostlyclean: clean
 clean:
 distclean:
-	@rm -f Makefile R.sh $(SCRIPTS_B)
+	@rm -f Makefile R.fe R.sh $(SCRIPTS_B)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)
@@ -58,3 +85,6 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
+
+## Automagically generated dependencies:
+

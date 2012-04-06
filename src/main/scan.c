@@ -22,8 +22,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Fileio.h"
+#include <Defn.h>
+#include <Fileio.h>
+#include <Rconnections.h>
 
 /* The size of vector initially allocated by scan */
 #define SCAN_BLOCKSIZE		1000
@@ -31,10 +32,24 @@
 #define CONSOLE_BUFFER_SIZE	1024
 #define CONSOLE_PROMPT_SIZE	32
 
-static char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
-static char *ConsoleBufp;
+static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
+static unsigned char *ConsoleBufp;
 static int  ConsoleBufCnt;
-static char  ConsolePrompt[CONSOLE_PROMPT_SIZE];
+static unsigned char  ConsolePrompt[CONSOLE_PROMPT_SIZE];
+
+
+static int save = 0;
+static int sepchar = 0;
+static int decchar = '.';
+static char *quoteset;
+static char *quotesave = NULL;
+static Rconnection con;
+static Rboolean wasopen;
+static int ttyflag;
+static int quiet;
+static SEXP NAstrings;
+
+static char convbuf[100];
 
 #ifdef NOT_used
 static void InitConsoleGetchar()
@@ -59,18 +74,6 @@ static int ConsoleGetchar()
     }
     return *ConsoleBufp++;
 }
-
-static int save = 0;
-static int sepchar = 0;
-static int decchar = '.';
-static char *quoteset;
-static char *quotesave = NULL;
-static FILE *fp;
-static int ttyflag;
-static int quiet;
-static SEXP NAstrings;
-
-static char convbuf[100];
 
 static double Strtod (const char *nptr, char **endptr) 
 {
@@ -132,7 +135,7 @@ static int scanchar(void)
 	save = 0;
 	return c;
     }
-    return (ttyflag) ? ConsoleGetchar() : R_fgetc(fp);
+    return (ttyflag) ? ConsoleGetchar() : Rconn_fgetc(con);
 }
 
 static void unscanchar(int c)
@@ -150,6 +153,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 
     filled = 1;
     if (sepchar == 0) {
+	/* skip all white space */
 	while ((c = scanchar()) == ' ' || c == '\t')
 	    ;
 	if (c == '\n' || c == '\r' || c == R_EOF) {
@@ -171,13 +175,13 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 	    }
 	    c = scanchar();
 	    while (c==' ' || c=='\t')
-		c=scanchar();
+		c = scanchar();
 	    if (c=='\n' || c=='\r' || c==R_EOF)
-		filled=c;
+		filled = c;
 	    else
 		unscanchar(c);
 	}
-	else {
+	else { /* not a char string */
 	    do {
 		if (bufp >= &buffer[MAXELTSIZE - 2])
 		    continue;
@@ -186,12 +190,12 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 	    while (c==' ' || c=='\t')
 		c=scanchar();
 	    if (c=='\n' || c=='\r' || c==R_EOF)
-		filled=c;
+		filled = c;
 	    else
 		unscanchar(c);
 	}
     }
-    else {
+    else { /* have separator */
 	while ((c = scanchar()) != sepchar && c!= '\n' && c!='\r'
 	      && c != R_EOF)
 	    {
@@ -200,7 +204,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 		    while (c==' ' || c=='\t')
 			if ((c=scanchar())== sepchar || c=='\n' ||
 			   c=='\r' || c==R_EOF) {
-			    filled=c;
+			    filled = c;
 			    goto donefill;
 			}
 		/* CSV style quoted string handling */
@@ -219,7 +223,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 			goto inquote; /* FIXME: Ick! Clean up logic */
 		    }
 		    if (c==sepchar || c=='\n' || c=='\r' || c==R_EOF){
-			filled=c;
+			filled = c;
 			goto donefill;
 		    }
 		    else {
@@ -232,7 +236,7 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 		if (!strip || bufp != &buffer[0] || !isspace(c))
 		    *bufp++ = c;
 	    }
-	filled=c;
+	filled = c;
     }
  donefill:
     if (strip) {
@@ -244,12 +248,16 @@ static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
     return filled;
 }
 
-static int isNAstring(char *buf)
+/* If mode = 0 use for numeric fields where "" is NA
+   If mode = 1 use for character fields where "" is verbatim unless
+   na.strings includes "" */
+static int isNAstring(char *buf, int mode)
 {
     int i;
+
+    if(!mode && strlen(buf) == 0) return 1;
     for (i = 0; i < length(NAstrings); i++)
-	if (!strcmp(CHAR(STRING(NAstrings)[i]),buf))
-	    return 1;
+	if (!strcmp(CHAR(STRING_ELT(NAstrings, i)),buf)) return 1;
     return 0;
 }
 
@@ -261,7 +269,7 @@ static void expected(char *what, char *got)
 	    ;
     }
     else
-	fclose(fp);
+	if(!wasopen) con->close(con);
     error("\"scan\" expected %s, got \"%s\"", what, got);
 }
 
@@ -270,13 +278,13 @@ static void extractItem(char *buffer, SEXP ans, int i)
     char *endp;
     switch(TYPEOF(ans)) {
     case LGLSXP:
-	if (isNAstring(buffer))
+	if (isNAstring(buffer, 0))
 	    LOGICAL(ans)[i] = NA_INTEGER;
 	else
 	    LOGICAL(ans)[i] = StringTrue(buffer);
 	break;
     case INTSXP:
-	if (isNAstring(buffer))
+	if (isNAstring(buffer, 0))
 	    INTEGER(ans)[i] = NA_INTEGER;
 	else {
 	    INTEGER(ans)[i] = strtol(buffer, &endp, 10);
@@ -285,7 +293,7 @@ static void extractItem(char *buffer, SEXP ans, int i)
 	}
 	break;
     case REALSXP:
-	if (isNAstring(buffer))
+	if (isNAstring(buffer, 0))
 	    REAL(ans)[i] = NA_REAL;
 	else {
 	    REAL(ans)[i] = Strtod(buffer, &endp);
@@ -294,7 +302,7 @@ static void extractItem(char *buffer, SEXP ans, int i)
 	}
 	break;
     case CPLXSXP:
-	if (isNAstring(buffer))
+	if (isNAstring(buffer, 0))
 	    COMPLEX(ans)[i].r = COMPLEX(ans)[i].i = NA_REAL;
 	else {
 	    COMPLEX(ans)[i] = strtoc(buffer, &endp);
@@ -303,16 +311,16 @@ static void extractItem(char *buffer, SEXP ans, int i)
 	}
 	break;
     case STRSXP:
-	if (isNAstring(buffer))
-	    STRING(ans)[i]= NA_STRING;
+	if (isNAstring(buffer, 1))
+	    SET_STRING_ELT(ans, i, NA_STRING);
 	else
-	    STRING(ans)[i] = mkChar(buffer);
+	    SET_STRING_ELT(ans, i, mkChar(buffer));
 	break;
     }
 }
 
 static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
-		       int flush, SEXP stripwhite)
+		       int flush, SEXP stripwhite, int blskip)
 {
     SEXP ans, bns;
     int blocksize, c, i, n, linesread, nprev,strip, bch;
@@ -353,8 +361,8 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
 	    copyVector(ans, bns);
 	}
 	bch = fillBuffer(buffer, type, strip);
-	if (nprev == n && strlen(buffer)==0 && (bch =='\n' ||
-					       bch == R_EOF)) {
+	if (nprev == n && strlen(buffer)==0 &&
+	    ((blskip && bch =='\n') || bch == R_EOF)) {
 	    if (ttyflag || bch == R_EOF)
 		break;
 	}
@@ -402,7 +410,7 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
 	break;
     case STRSXP:
 	for (i = 0; i < n; i++)
-	    STRING(bns)[i] = STRING(ans)[i];
+	    SET_STRING_ELT(bns, i, STRING_ELT(ans, i));
 	break;
     }
     UNPROTECT(1);
@@ -411,7 +419,7 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
 
 
 static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
-		      SEXP stripwhite)
+		      int fill, SEXP stripwhite, int blskip)
 {
     SEXP ans, new, old;
     char buffer[MAXELTSIZE];
@@ -425,11 +433,11 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 
     PROTECT(ans = allocVector(VECSXP, nc));
     for (i = 0; i < nc; i++) {
-	if (!isVector(VECTOR(what)[i])) {
-	    if (!ttyflag) fclose(fp);
+	if (!isVector(VECTOR_ELT(what, i))) {
+	    if (!ttyflag & !wasopen) con->close(con);
 	    error("\"scan\": invalid \"what=\" specified");
 	}
-	VECTOR(ans)[i] = allocVector(TYPEOF(VECTOR(what)[i]), blksize);
+	SET_VECTOR_ELT(ans, i, allocVector(TYPEOF(VECTOR_ELT(what, i)), blksize));
     }
     setAttrib(ans, R_NamesSymbol, getAttrib(what, R_NamesSymbol));
 
@@ -450,8 +458,18 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	}
 	else if (bch == '\n') {
 	    linesread++;
-	    if (colsread != 0 && !badline)
-		badline = linesread;
+	    if (colsread != 0) {
+		if (fill) {
+		    buffer[0] = '\0';
+		    for (ii = colsread; ii < nc; ii++) {
+			extractItem(buffer, VECTOR_ELT(ans, ii), n);
+		    }
+		    n++;
+		    ii = 0;
+		    colsread = 0;
+		} else if (!badline)
+		    badline = linesread;
+	    }
 	    if (maxitems > 0 && linesread >= maxitems)
 		goto done;
 	    if (maxlines > 0 && linesread == maxlines)
@@ -462,22 +480,22 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	if (n == blksize && colsread == 0) {
 	    blksize = 2 * blksize;
 	    for (i = 0; i < nc; i++) {
-		old = VECTOR(ans)[i];
+		old = VECTOR_ELT(ans, i);
 		new = allocVector(TYPEOF(old), blksize);
 		copyVector(new, old);
-		VECTOR(ans)[i] = new;
+		SET_VECTOR_ELT(ans, i, new);
 	    }
 	}
 
-	bch = fillBuffer(buffer, TYPEOF(VECTOR(ans)[ii]), strip);
+	bch = fillBuffer(buffer, TYPEOF(VECTOR_ELT(ans, ii)), strip);
 	if (colsread == 0 &&
 	    strlen(buffer) == 0 &&
-	    (bch =='\n' || bch == R_EOF)) {
+	    ((blskip && bch =='\n') || bch == R_EOF)) {
 	    if (ttyflag || bch == R_EOF)
 		break;
 	}
 	else {
-	    extractItem(buffer, VECTOR(ans)[ii], n);
+	    extractItem(buffer, VECTOR_ELT(ans, ii), n);
 	    ii++;
 	    colsread++;
 	    if (length(stripwhite) == length(what))
@@ -502,10 +520,11 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	warning("line %d did not have %d elements", badline, nc);
 
     if (colsread != 0) {
-	warning("number of items read is not a multiple of the number of columns");
+	if (!fill) 
+	    warning("number of items read is not a multiple of the number of columns");
 	buffer[0] = '\0';	/* this is an NA */
 	for (ii = colsread; ii < nc; ii++) {
-	    extractItem(buffer, VECTOR(ans)[ii], n);
+	    extractItem(buffer, VECTOR_ELT(ans, ii), n);
 	}
 	n++;
     }
@@ -513,7 +532,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     if (ttyflag) ConsolePrompt[0] = '\0';
 
     for (i = 0; i < nc; i++) {
-	old = VECTOR(ans)[i];
+	old = VECTOR_ELT(ans, i);
 	new = allocVector(TYPEOF(old), n);
 	switch (TYPEOF(old)) {
 	case LGLSXP:
@@ -531,40 +550,19 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	    break;
 	case STRSXP:
 	    for (j = 0; j < n; j++)
-		STRING(new)[j] = STRING(old)[j];
+		SET_STRING_ELT(new, j, STRING_ELT(old, j));
 	    break;
 	}
-	VECTOR(ans)[i] = new;
+	SET_VECTOR_ELT(ans, i, new);
     }
     UNPROTECT(1);
     return ans;
 }
 
-/* FIXME: These two macros are used only two times each. Silly. --pd */
-
-#define scan_sep_check				\
-    if (isString(sep) || isNull(sep)) {		\
-	if (length(sep) == 0)			\
-	    sepchar = 0;			\
-	else					\
-	    sepchar = CHAR(STRING(sep)[0])[0];	\
-    }						\
-    else					\
-	errorcall(call, "invalid sep value");
-
-#define scan_file						\
-	ttyflag = 0;						\
-	filename = R_ExpandFileName(filename);			\
-	if ((fp = R_fopen(filename, "r")) == NULL)		\
-	    errorcall(call, "can't open file %s", filename);	\
-	for (i = 0; i < nskip; i++)				\
-	    while ((c = scanchar()) != '\n' && c != R_EOF);
-
 SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep, what, stripwhite, dec, quotes;
-    int i, c, nlines, nmax, nskip, flush;
-    char *filename;
+    int i, c, nlines, nmax, nskip, flush, fill, blskip;
 
     checkArity(op, args);
 
@@ -578,9 +576,12 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     nlines = asInteger(CAR(args)); args = CDR(args);
     NAstrings = CAR(args);	   args = CDR(args);
     flush = asLogical(CAR(args));  args = CDR(args);
+    fill  = asLogical(CAR(args));  args = CDR(args);
     stripwhite = CAR(args);	   args = CDR(args);
-    quiet = asLogical(CAR(args)); 
+    quiet = asLogical(CAR(args));  args = CDR(args);
+    blskip = asLogical(CAR(args));
     if (quiet == NA_LOGICAL)			quiet = 0;
+    if (blskip == NA_LOGICAL)			blskip = 1;
     if (nskip < 0 || nskip == NA_INTEGER)	nskip = 0;
     if (nlines < 0 || nlines == NA_INTEGER)	nlines = 0;
     if (nmax < 0 || nmax == NA_INTEGER)		nmax = 0;
@@ -592,20 +593,23 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (TYPEOF(NAstrings) != STRSXP)
 	errorcall(call, "invalid na.strings value");
 
-    scan_sep_check
+    if (isString(sep) || isNull(sep)) {
+	if (length(sep) == 0) sepchar = 0;
+	else sepchar = CHAR(STRING_ELT(sep, 0))[0];
+    } else errorcall(call, "invalid sep value");
 
     if (isString(dec) || isNull(dec)) {		
 	if (length(dec) == 0)
 	    decchar = '.';	
 	else		
-	    decchar = CHAR(STRING(dec)[0])[0];
+	    decchar = CHAR(STRING_ELT(dec, 0))[0];
     }						
     else					
 	errorcall(call, "invalid decimal separator");
 
     if (isString(quotes)) {
 	/* This appears to be necessary to protect quoteset against GC */
-	quoteset = CHAR(STRING(quotes)[0]);
+	quoteset = CHAR(STRING_ELT(quotes, 0));
 	quotesave = realloc(quotesave, strlen(quoteset) + 1);
 	if (!quotesave)
 	    errorcall(call, "out of memory");
@@ -617,19 +621,20 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, "invalid quote symbol set");
 
 
-    filename = NULL;
-    if (isValidString(file)) {
-	filename = CHAR(STRING(file)[0]);
-	if (strlen(filename) == 0)/* file == "" */
-	    filename = NULL;
+    i = asInteger(file);
+    if(i == 0) {
+	ttyflag = 1;
+    } else {
+	con = getConnection(i);
+	ttyflag = 0;
+	wasopen = con->isopen; 
+	if(!wasopen) {
+	    strcpy(con->mode, "r");
+	    con->open(con);
+	}
+	for (i = 0; i < nskip; i++)
+	    while ((c = scanchar()) != '\n' && c != R_EOF);
     }
-    else
-	errorcall(call, "invalid file name");
-
-    if (filename) {
-	scan_file
-    }
-    else ttyflag = 1;
 
     ans = R_NilValue;		/* -Wall */
     save = 0;
@@ -640,19 +645,20 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     case REALSXP:
     case CPLXSXP:
     case STRSXP:
-	ans = scanVector(TYPEOF(what), nmax, nlines, flush, stripwhite);
+	ans = scanVector(TYPEOF(what), nmax, nlines, flush, stripwhite, 
+			 blskip);
 	break;
 
     case VECSXP:
-	ans = scanFrame(what, nmax, nlines, flush, stripwhite);
+	ans = scanFrame(what, nmax, nlines, flush, fill, stripwhite, blskip);
 	break;
     default:
-	if (!ttyflag)
-	    fclose(fp);
+	if (!ttyflag && !wasopen)
+	    con->close(con);
 	errorcall(call, "invalid \"what=\" specified");
     }
-    if (!ttyflag)
-	fclose(fp);
+    if (!ttyflag && !wasopen)
+	con->close(con);
     return ans;
 }
 
@@ -660,23 +666,27 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep,  bns, quotes;
     int nfields, nskip, i, c, inquote, quote = 0;
-    int blocksize, nlines;
-    char *filename = "";	/* -Wall */
+    int blocksize, nlines, blskip;
 
     checkArity(op, args);
 
     file = CAR(args);	args = CDR(args);
     sep = CAR(args);	args = CDR(args);
     quotes = CAR(args);	 args = CDR(args);
-    nskip = asInteger(CAR(args));
+    nskip = asInteger(CAR(args));  args = CDR(args);
+    blskip = asLogical(CAR(args));
 
     if (nskip < 0 || nskip == NA_INTEGER) nskip = 0;
+    if (blskip == NA_LOGICAL) blskip = 1;
 
-    scan_sep_check
+    if (isString(sep) || isNull(sep)) {
+	if (length(sep) == 0) sepchar = 0;
+	else sepchar = CHAR(STRING_ELT(sep, 0))[0];
+    } else errorcall(call, "invalid sep value");
 
     if (isString(quotes)) {
 	/* This appears to be necessary to protect quoteset against GC */
-	quoteset = CHAR(STRING(quotes)[0]);
+	quoteset = CHAR(STRING_ELT(quotes, 0));
 	quotesave = realloc(quotesave, strlen(quoteset) + 1);
 	if (!quotesave)
 	    errorcall(call, "out of memory");
@@ -687,21 +697,25 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	errorcall(call, "invalid quote symbol set");
 
-
-    if (isValidStringF(file)) {
-	filename = CHAR(STRING(file)[0]);
-    }
-    else
-	errorcall(call, "invalid file name");
-
-    if (filename) {
-	scan_file
+    i = asInteger(file);
+    if(i == 0) {
+	ttyflag = 1;
+    } else {
+	con = getConnection(i);
+	ttyflag = 0;
+	wasopen = con->isopen; 
+	if(!wasopen) {
+	    strcpy(con->mode, "r");
+	    con->open(con);
+	}
+	for (i = 0; i < nskip; i++)
+	    while ((c = scanchar()) != '\n' && c != R_EOF);
     }
 
     blocksize = SCAN_BLOCKSIZE;
     PROTECT(ans = allocVector(INTSXP, blocksize));
-    nlines=0;
-    nfields=0;
+    nlines = 0;
+    nfields = 0;
     inquote = 0;
 
     save = 0;
@@ -715,7 +729,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    goto donecf;
 	}
 	else if (c == '\n') {
-	    if (nfields) {
+	    if (nfields || !blskip) {
 		INTEGER(ans)[nlines] = nfields;
 		nlines++;
 		nfields = 0;
@@ -735,7 +749,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    if (nfields == 0)
 		nfields++;
 	    if (inquote && (c == R_EOF || c == '\n')) {
-		fclose(fp);
+		if(!wasopen) con->close(con);
 		errorcall(call, "string terminated by newline or EOF");
 	    }
 	    if (inquote && c == quote)
@@ -752,7 +766,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		quote = c;
 		while ((c=scanchar()) != quote) {
 		    if (c == R_EOF || c == '\n') {
-			fclose(fp);
+			if(!wasopen) con->close(con);
 			errorcall(call, "string terminated by newline or EOF");
 		    }
 		}
@@ -760,7 +774,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    else {
 		while (!isspace(c=scanchar()) && c != R_EOF)
 		    ;
-		if (c==R_EOF) c='\n';
+		if (c == R_EOF) c='\n';
 		unscanchar(c);
 	    }
 	    nfields++;
@@ -768,7 +782,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     }
  donecf:
-    fclose(fp);
+    if(!wasopen) con->close(con);
 
     if (nlines < 0) {
 	UNPROTECT(1);
@@ -785,8 +799,6 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     return bns;
 }
-#undef scan_sep_check
-#undef scan_file
 
 /* frame.convert(char, na.strings, as.is) */
 
@@ -820,7 +832,7 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (length(dec) == 0)
 	    decchar = '.';	
 	else		
-	    decchar = CHAR(STRING(dec)[0])[0];
+	    decchar = CHAR(STRING_ELT(dec, 0))[0];
     }
 
     cvec = CAR(args);
@@ -838,8 +850,8 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(rval = allocVector(REALSXP, length(cvec)));
     for (i = 0; i < len; i++) {
-	tmp = CHAR(STRING(cvec)[i]);
-	if (isNAstring(tmp) || strlen(tmp) == 0)
+	tmp = CHAR(STRING_ELT(cvec, i));
+	if (strlen(tmp) == 0 || isNAstring(tmp, 1))
 	    REAL(rval)[i] = NA_REAL;
 	else {
 	    REAL(rval)[i] = Strtod(tmp, &endp);
@@ -858,25 +870,25 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    PROTECT(dup = duplicated(cvec));
 	    j = 0;
 	    for (i = 0; i < len; i++)
-		if (LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING(cvec)[i])))
+		if (LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING_ELT(cvec, i)), 1))
 		    j++;
 	    PROTECT(levs = allocVector(STRSXP,j));
 	    j = 0;
 	    for (i = 0; i < len; i++)
-		if (LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING(cvec)[i])))
-		    STRING(levs)[j++] = STRING(cvec)[i];
+		if (LOGICAL(dup)[i] == 0 && !isNAstring(CHAR(STRING_ELT(cvec, i)), 1))
+		    SET_STRING_ELT(levs, j++, STRING_ELT(cvec, i));
 
 	    /* put the levels in lexicographic order */
 
 	    sortVector(levs);
 
-	    PROTECT(a=match(levs, cvec, NA_INTEGER));
+	    PROTECT(a = match(levs, cvec, NA_INTEGER));
 	    for (i = 0; i < len; i++)
 		INTEGER(rval)[i] = INTEGER(a)[i];
 
 	    setAttrib(rval, R_LevelsSymbol, levs);
 	    PROTECT(a = allocVector(STRSXP, 1));
-	    STRING(a)[0] = mkChar("factor");
+	    SET_STRING_ELT(a, 0, mkChar("factor"));
 	    setAttrib(rval, R_ClassSymbol, a);
 	    UNPROTECT(5);
 	}
@@ -904,7 +916,7 @@ SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
     else {
 	PROTECT(prompt = coerceVector(prompt, STRSXP));
 	if(length(prompt) > 0)
-	    strncpy(ConsolePrompt, CHAR(*STRING(prompt)),
+	    strncpy(ConsolePrompt, CHAR(STRING_ELT(prompt, 0)),
 		CONSOLE_PROMPT_SIZE - 1);
     }
 
@@ -925,7 +937,7 @@ SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
     ConsolePrompt[0] = '\0';
 
     PROTECT(ans = allocVector(STRSXP,1));
-    STRING(ans)[0] = mkChar(buffer);
+    SET_STRING_ELT(ans, 0, mkChar(buffer));
     UNPROTECT(2);
     return ans;
 }
@@ -960,7 +972,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else {
 	for (j = 0; j < LENGTH(CAR(args)); j++) {
-	    if (streql(CHAR(STRING(CAR(args))[j]), buffer)) {
+	    if (streql(CHAR(STRING_ELT(CAR(args), j)), buffer)) {
 		first = j + 1;
 		break;
 	    }

@@ -55,11 +55,11 @@ pairs.formula <- function(formula, data = NULL, subset, na.action, ...)
     if (missing(na.action))
         na.action <- getOption("na.action")
     m <- match.call(expand.dots = FALSE)
-    if (is.matrix(eval(m$data, sys.frame(sys.parent()))))
+    if (is.matrix(eval(m$data, parent.frame())))
         m$data <- as.data.frame(data)
     m$... <- NULL
     m[[1]] <- as.name("model.frame")
-    mf <- eval(m, sys.frame(sys.parent()))
+    mf <- eval(m, parent.frame())
     pairs(mf, ...)
 }
 
@@ -70,8 +70,8 @@ pairs.formula <- function(formula, data = NULL, subset, na.action, ...)
 #################################################
 
 pairs.default <-
-function (x, labels, panel = points, main = NULL, oma = NULL,
-          font.main = par("font.main"), cex.main = par("cex.main"), ...,
+function (x, labels, panel = points, ..., main = NULL, oma = NULL,
+          font.main = par("font.main"), cex.main = par("cex.main"),
           lower.panel = panel, upper.panel = panel,
           diag.panel = NULL, text.panel = textPanel,
           label.pos = 0.5 + has.diag/3,

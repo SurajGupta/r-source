@@ -1,22 +1,27 @@
 formula <- function(x, ...) UseMethod("formula")
-formula.default <- function (x, ...)
+formula.default <- function (x,env=parent.frame(), ...)
 {
     if (!is.null(x$formula))		eval(x$formula)
     else if (!is.null(x$call$formula))	eval(x$call$formula)
     else if (!is.null(x$terms))		x$terms
     else if (!is.null(attr(x, "formula"))) attr(x, "formula")
-    else switch(mode(x),
+    else {form<-switch(mode(x),
 		NULL = structure(NULL, class = "formula"),
 		character = formula(eval(parse(text = x)[[1]])),
 		call = eval(x), stop("invalid formula"))
+        environment(form)<-env
+        form
+    }
 }
 formula.formula <- function(x, ...) x
 formula.terms <- function(x, ...) {
+    env<- environment(x)
     attributes(x) <- list(class="formula")
+    environment(x) <- env
     x
 }
 
-formula.data.frame<- function (x, ...)
+formula.data.frame <- function (x, ...)
 {
     nm <- sapply(names(x), as.name)
     lhs <- nm[1]
@@ -28,7 +33,9 @@ formula.data.frame<- function (x, ...)
        lhs <- NULL
     }
     ff <- parse(text = paste(lhs, paste(rhs, collapse = "+"), sep = "~"))
-    eval(ff)
+    ff<-eval(ff)
+    environment(ff)<-parent.frame()
+    ff
 }
 
 print.formula <- function(x, ...) {
@@ -38,13 +45,21 @@ print.formula <- function(x, ...) {
 
 "[.formula" <- function(x,i) {
     ans <- NextMethod("[")
-    if(as.character(ans[[1]]) == "~")
+    if(as.character(ans[[1]]) == "~"){
 	class(ans) <- "formula"
+        environment(ans)<-environment(x)
+    }
     ans
 }
 
 terms <- function(x, ...) UseMethod("terms")
-terms.default <- function(x, ...) x$terms
+terms.default <- function(x, ...) {
+    v <- x$terms
+    if(is.null(v))
+        stop("no terms component")
+    return(v)
+}
+
 terms.terms <- function(x, ...) x
 print.terms <- function(x, ...) print.default(unclass(x))
 #delete.response <- function (termobj)
@@ -56,9 +71,9 @@ print.terms <- function(x, ...) print.default(unclass(x))
 
 delete.response <- function (termobj)
 {
-    f<-formula(termobj)
+    f <- formula(termobj)
     if (length(f) == 3)
-        f[[2]]<-NULL
+        f[[2]] <- NULL
     tt <- terms(f, specials = names(attr(termobj, "specials")))
     attr(tt, "intercept") <- attr(termobj, "intercept")
     tt
@@ -69,22 +84,26 @@ reformulate <- function (termlabels, response=NULL)
     termtext <- paste(termlabels, collapse="+")
     if (is.null(response)) {
 	termtext <- paste("~", termtext, collapse="")
-	eval(parse(text=termtext)[[1]])
+	rval<-eval(parse(text=termtext)[[1]])
+        environment(rval)<-parent.frame()
+        rval
     } else {
 	termtext <- paste("response", "~", termtext, collapse="")
 	termobj <- eval(parse(text=termtext)[[1]])
 	termobj[[2]] <- response
+        environment(termobj)<-parent.frame()
 	termobj
     }
 }
 
-drop.terms <-function(termobj, dropx=NULL, keep.response=FALSE)
+drop.terms <- function(termobj, dropx=NULL, keep.response = FALSE)
 {
     if (is.null(dropx))
 	termobj
     else {
 	newformula <- reformulate(attr(termobj, "term.labels")[-dropx],
 				  if (keep.response) termobj[[2]] else NULL)
+        environment(newformula)<-environment(termobj)
 	terms(newformula, specials=names(attr(termobj, "specials")))
     }
 }
@@ -98,7 +117,9 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
 	lhs <- if(length(form) == 2) NULL else deparse(form[[2]])
 	rhs <- if(length(tmp)) paste(tmp, collapse = " + ") else "1"
 	if(!attr(terms(object), "intercept")) rhs <- paste(rhs, "- 1")
-	formula(paste(lhs, "~", rhs))
+	ff <- formula(paste(lhs, "~", rhs))
+        environment(ff) <- environment(form)
+        ff
     }
     if (!is.null(data) && !is.environment(data) && !is.data.frame(data))
 	data <- as.data.frame(data)
@@ -107,6 +128,7 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
     ## need to fix up . in formulae in R
     terms <- fixFormulaObject(tmp)
     attributes(terms) <- attributes(tmp)
+    environment(terms) <- environment(x)
     offsets <- attr(terms, "specials")$offset
     if (!is.null(offsets)) {
 	names <- dimnames(attr(terms, "factors"))[[1]][offsets]
@@ -120,6 +142,8 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
 	}
     }
     attr(terms, "specials")$offset <- NULL
+    if( !inherits(terms, "formula") )
+        class(terms) <- c(class(terms), "formula")
     terms
 }
 
@@ -146,10 +170,10 @@ weights <- function(object, ...)UseMethod("weights")
 
 df.residual <- function(object, ...)UseMethod("df.residual")
 
-variable.names <-function(object, ...) UseMethod("variable.names")
+variable.names <- function(object, ...) UseMethod("variable.names")
 variable.names.default <- .Alias(colnames)
 
-case.names <-function(object, ...) UseMethod("case.names")
+case.names <- function(object, ...) UseMethod("case.names")
 case.names.default <- .Alias(rownames)
 
 offset <- function(object) object
@@ -166,27 +190,27 @@ na.fail.default <- function(object)
 }
 
 na.omit <- function(object, ...)UseMethod("na.omit")
+
 na.omit.default <- function(object)
 {
     ## only handle vectors and matrices
-    if(!is.atomic(object)) return(object)
+    if (!is.atomic(object)) return(object)
     d <- dim(object)
-    if(length(d) > 2) return(object)
-    if(length(d)){
-        omit <- seq(along=object)[is.na(object)]
+    if (length(d) > 2) return(object)
+    omit <- seq(along=object)[is.na(object)]
+    if (length(omit) == 0) return(object)
+    if (length(d)){
         omit <- unique(((omit-1) %% d[1]) + 1)
         nm <- rownames(object)
         object <- object[-omit, , drop=FALSE]
     } else {
-	omit <- seq(along=object)[is.na(object)]
         nm <- names(object)
         object <- object[-omit]
     }
     if (any(omit)) {
-	temp <- seq(omit)[omit]
-	names(temp) <- nm[omit]
-	attr(temp, "class") <- "omit"
-	attr(object, "na.action") <- temp
+	names(omit) <- nm[omit]
+	attr(omit, "class") <- "omit"
+	attr(object, "na.action") <- omit
     }
     object
 }
@@ -243,23 +267,24 @@ model.frame.default <-
 	    na.action <- naa
     }
     if(missing(data))
-	data <- sys.frame(sys.parent())
+	data <- environment(formula)
     else if (!is.data.frame(data) && !is.environment(data) && !is.null(class(data)))
-        data<-as.data.frame(data)
+        data <- as.data.frame(data)
+    env<-environment(formula)
     if(!inherits(formula, "terms"))
 	formula <- terms(formula, data = data)
     rownames <- attr(data, "row.names")
     varnames <- as.character(attr(formula, "variables")[-1])
-    variables <- eval(attr(formula, "variables"), data, sys.frame(sys.parent()))
-    extranames <- as.character(substitute(list(...))[-1])
+    variables <- eval(attr(formula, "variables"), data, env)
+    extranames <- names(substitute(list(...))[-1])
     extras <- substitute(list(...))
-    extras <- eval(extras, data, sys.frame(sys.parent()))
+    extras <- eval(extras, data, env)
     ##if(length(extras)) { # remove NULL args
     ##    keep <- !sapply(extras, is.null)
     ##    extras <- extras[keep]
     ##    extranames <- extranames[keep]
     ##}
-    subset <- eval(substitute(subset), data, sys.frame(sys.parent()))
+    subset <- eval(substitute(subset), data, env)
     data <- .Internal(model.frame(formula, rownames, variables, varnames,
 				  extras, extranames, subset, na.action))
     ## fix up the levels
@@ -301,7 +326,7 @@ model.offset <- function(x) {
 }
 
 model.matrix <- function(object, ...) UseMethod("model.matrix")
-model.matrix.default <- function(formula, data = sys.frame(sys.parent()),
+model.matrix.default <- function(formula, data = environment(formula),
 				 contrasts.arg = NULL, xlev = NULL)
 {
     t <- terms(formula)
@@ -383,7 +408,7 @@ model.extract <- function (frame, component)
 preplot <- function(object, ...) UseMethod("preplot")
 update <- function(object, ...) UseMethod("update")
 
-is.empty.model<-function (x)
+is.empty.model <- function (x)
 {
     tt <- terms(x)
     (length(attr(tt, "factors")) == 0) & (attr(tt, "intercept")==0)

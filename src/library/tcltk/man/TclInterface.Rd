@@ -14,6 +14,8 @@
 \alias{tkdestroy}
 \alias{.TkWin}
 \alias{.TkRoot}
+\alias{addTclPath}
+\alias{tclRequire}
 \description{
   These functions and variables provide the basic glue between \R and the
   Tcl interpreter and Tk GUI toolkit. Tk
@@ -35,11 +37,17 @@ is.tkwin(x)
 
 tclvar$name
 tclvar$name <- value
+
+addTclPath(path)
+tclRequire(package, warn = TRUE)
 }
 \arguments{
   \item{win}{a window structure}
   \item{x}{an object}
   \item{ID}{a window ID}
+  \item{path}{path to a directory containing Tcl packages}
+  \item{package}{a Tcl package name}
+  \item{warn}{logical. Warn if not found?}
 }
 \details{
   Many of these functions are not intended for general use but are used
@@ -66,15 +74,18 @@ tclvar$name <- value
   will exist at that address by assigning the function into the relevant
   window environment (see below).
 
-  Tk windows are represented as \R environments, all of which are
-  enclosed in the \code{.TkWin} environment.  They contain initially just
-  an \code{ID} variable identical to the Tk window name, a
-  \code{parent} variable and a \code{num.subwin} variable (possibly
-  inherited from \code{.TkWin}).  If the window obtains subwindows and
-  callbacks, they are added as variables to the environment.
-  \code{.TkRoot} is the top window with ID "."; this window is not
-  displayed in order to avoid ill effects of closing it via window
-  manager controls.  \code{.Tk.ID} extracts the \code{ID} of a window,
+  Tk windows are represented as objects of class \code{tkwin} which are
+  lists containing  a \code{ID} field and an \code{env} field which is
+  an \R environments, enclosed in the global environment.  The value of
+  the \code{ID} field is identical to the Tk window name. The \code{env}
+  environment contains a \code{parent} variable and a \code{num.subwin}
+  variable.  If the   window obtains subwindows and  callbacks, they are
+  added as variables to the environment.   \code{.TkRoot} is the top
+  window with ID "."; this window is not  displayed in order to avoid
+  ill effects of closing it via window  manager controls. The
+  \code{parent} variable is undefined for \code{.TkRoot}.
+
+  \code{.Tk.ID} extracts the \code{ID} of a window,
   \code{.Tk.newwin} creates a new window environment with a given ID and
   \code{.Tk.subwin} creates a new window which is a subwindow of a given
   parent window.
@@ -90,12 +101,18 @@ tclvar$name <- value
   reality \code{tclvar} is an object of class \code{tclvar} and \code{$}
   and  \code{$<-} have special methods for that class.
 
+  Tcl packages can be loaded with \code{tclRequire}; it may be necessary
+  to add the directory where they are found to the Tcl search path with
+  \code{addTclPath}.
+  
 }
 \note{ Strings containing unbalanced braces are currently not handled
   well in many circumstances.
 }
-\seealso{\code{\link{TkWidgets}}, \code{\link{TkCommands},
-    \code{\link{TkWidgetcmds}} 
+\seealso{
+  \code{\link{TkWidgets}},
+  \code{\link{TkCommands}},
+  \code{\link{TkWidgetcmds}}.
 }
 \examples{
 \dontrun{
@@ -110,8 +127,9 @@ tclvar$xyzzy <- 7913 ; .Tcl("set xyzzy")
 .Tcl("set xyzzy 3917") ; tclvar$xyzzy
 
 top <- tktoplevel() # a Tk widget, see Tk-widgets
-ls(envir=top, all=TRUE)
-ls(envir=.TkRoot, all=TRUE)# .Tcl.args put a callback ref in here
+ls(envir=top$env, all=TRUE)
+ls(envir=.TkRoot$env, all=TRUE)# .Tcl.args put a callback ref in here
 }
 }
 \keyword{ misc }
+

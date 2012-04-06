@@ -10,13 +10,14 @@ subdir = src/nmath
 
 include $(top_builddir)/Makeconf
 
+## NOTE: Keep these in sync with ./standalone/Makefile.in and *.win !
 SOURCES = \
 	mlutils.c \
 	d1mach.c i1mach.c \
 	fmax2.c fmin2.c fmod.c fprec.c fround.c ftrunc.c \
-	sign.c fsign.c fsquare.c fcube.c \
+	sign.c fsign.c \
 	imax2.c imin2.c \
-	chebyshev.c log1p.c lgammacor.c gammalims.c \
+	chebyshev.c log1p.c lgammacor.c gammalims.c stirlerr.c bd0.c \
 	gamma.c lgamma.c gamma_cody.c beta.c lbeta.c polygamma.c \
 	bessel_i.c bessel_j.c bessel_k.c bessel_y.c \
 	choose.c \
@@ -53,7 +54,18 @@ DISTFILES = Makefile.in Makefile.win $(SOURCES) $(HEADERS)
 
 SUBDIRS = standalone
 
-LIB = libmath.a
+noinst_LIBRARIES = libnmath.a
+libnmath_a_SOURCES = $(SOURCES)
+libnmath_a_OBJECTS = $(OBJECTS)
+
+## FIXME:
+## We most likely will not want a seperate shared library.
+## If we have a final decision, remove libnmath.la target.
+## </FIXME>
+noinst_LTLIBRARIES = libnmath.la
+libnmath_la_SOURCES = $(SOURCES)
+libnmath_la_OBJECTS = $(OBJECTS:.o=.lo)
+@USE_LIBTOOL_TRUE@libnmath_la_LDFLAGS = -avoid-version -rpath $(Rexeclibdir)
 
 all: Makefile Makedeps R
 
@@ -68,20 +80,26 @@ Makedeps: Makefile $(DEPENDS)
 
 R: Makefile
 	@$(MAKE) Makedeps
-	@$(MAKE) $(LIB)
+	@$(MAKE) $(noinst_LIBRARIES)
+	@@WANT_R_SHLIB_TRUE@$(MAKE) stamp-lo
 
-$(LIB): $(OBJECTS)
-	$(AR) cr $(LIB) $(OBJECTS)
-	$(RANLIB) $(LIB)
+libnmath.a: $(libnmath_a_OBJECTS)
+	$(AR) cr $@ $(libnmath_a_OBJECTS)
+	$(RANLIB) $@
+
+stamp-lo: $(libnmath_la_OBJECTS)
+	@touch $@
+libnmath.la: stamp-lo
+	$(SHLIB_LINK) -o $@  $(libnmath_la_LDFLAGS) $(libnmath_la_OBJECTS)
 
 mostlyclean: clean
 clean:
-	@echo "cleaning in $(subdir)"
-	@-rm -f Makedeps *.d *.o *.a
 	@(cd standalone; $(MAKE) clean)
+	@-rm -rf .libs _libs
+	@-rm -f Makedeps *.d *.o *.a *.lo *.la stamp-lo
 distclean: clean
-	@-rm -f Makefile
 	@(cd standalone; $(MAKE) distclean)
+	@-rm -f Makefile
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)

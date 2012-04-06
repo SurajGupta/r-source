@@ -1,31 +1,36 @@
 as.logical <- function(x,...) UseMethod("as.logical")
-as.logical.default<-function(x) .Internal(as.vector(x,"logical"))
+as.logical.default<-function(x,...) .Internal(as.vector(x,"logical"))
 
 as.integer <- function(x,...) UseMethod("as.integer")
-as.integer.default <- function(x) .Internal(as.vector(x,"integer"))
+as.integer.default <- function(x,...) .Internal(as.vector(x,"integer"))
 
 as.double <- function(x,...) UseMethod("as.double")
-as.double.default <- function(x) .Internal(as.vector(x,"double"))
+as.double.default <- function(x,...) .Internal(as.vector(x,"double"))
 as.real <- .Alias(as.double)
 
 as.complex <- function(x,...) UseMethod("as.complex")
-as.complex.default <- function(x) .Internal(as.vector(x, "complex"))
+as.complex.default <- function(x,...) .Internal(as.vector(x, "complex"))
 
 as.single <- function(x,...) UseMethod("as.single")
-as.single.default <- function(x) {
+as.single.default <- function(x,...) {
     structure(.Internal(as.vector(x,"double")), Csingle=TRUE)
 }
-as.character<- function(x,...) UseMethod("as.character")
-as.character.default <- function(x) .Internal(as.vector(x,"character"))
+
+# as.character is now internal.  The default method remains here to
+# preserve the semantics that for a call with an object argument
+# dispatching is done first on as.character and then on as.vector.
+as.character.default <- function(x,...) .Internal(as.vector(x,"character"))
+## The following just speeds up (the above would be sufficient):
+as.character.factor <- function(x,...) levels(x)[x]
 
 as.expression <- function(x,...) UseMethod("as.expression")
-as.expression.default <- function(x) .Internal(as.vector(x,"expression"))
+as.expression.default <- function(x,...) .Internal(as.vector(x,"expression"))
 
 as.list <- function(x,...) UseMethod("as.list")
-as.list.default <- function (x)
+as.list.default <- function (x,...)
 {
     if (is.function(x))
-	return(c(formals(x), body(x)))
+	return(c(formals(x), list(body(x))))
     if (is.expression(x)) {
 	n <- length(x)
 	l <- vector("list", n)
@@ -36,7 +41,7 @@ as.list.default <- function (x)
     .Internal(as.vector(x, "list"))
 }
 ## FIXME:  Really the above  as.vector(x, "list")  should work for data.frames!
-as.list.data.frame <- function(x) {
+as.list.data.frame <- function(x,...) {
     x <- unclass(x)
     attr(x,"row.names") <- NULL
     x
@@ -53,10 +58,10 @@ as.matrix.default <- function(x) {
 	      if(!is.null(names(x))) list(names(x), NULL) else NULL)
 }
 as.null <- function(x,...) UseMethod("as.null")
-as.null.default <- function(x) NULL
+as.null.default <- function(x,...) NULL
 
 as.function <- function(x,...) UseMethod("as.function")
-as.function.default <- function (l, envir = sys.frame(sys.parent()))
+as.function.default <- function (l, envir = parent.frame(),...)
 if (is.function(l)) l else .Internal(as.function.default(l, envir))
 
 as.array <- function(x)
@@ -77,5 +82,13 @@ as.name <- .Alias(as.symbol)
 as.numeric <- as.double
 as.qr <- function(x) stop("you cannot be serious")
 ## as.ts <- function(x) if(is.ts(x)) x else ts(x) # in ts.R
-as.formula <- function(object)
-    if(inherits(object, "formula")) object else formula(object)
+as.formula <- function(object,env=parent.frame()){
+    if(inherits(object, "formula"))
+           object
+    else{
+        rval<-formula(object,env=NULL)
+        if (is.null(environment(rval)) || !missing(env))
+            environment(rval)<-env
+        rval
+    }
+}

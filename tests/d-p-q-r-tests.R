@@ -86,7 +86,7 @@ for(sh in round(rlnorm(30),2)) {
     for(sig in round(rlnorm(30),2)) {
 	tst <- all.equal((d1 <- dgamma(	 x,   shape = sh, scale = sig)),
 			 (d2 <- dgamma(x/sig, shape = sh, scale = 1) / sig),
-			 tol = 1e-15)
+			 tol = 1e-14)## __ad interim__ was 1e-15
 	if(!(is.logical(tst) && tst))
 	    cat("ERROR: dgamma() doesn't scale:",tst,"\n",
 		"  x =", formatC(x),"\n	 shape,scale=",formatC(c(sh, sig)),"\n")
@@ -100,21 +100,40 @@ pgamma(1,Inf,Inf) == 0
 all(is.nan(c(pgamma(Inf,1,Inf), pgamma(Inf,Inf,1), pgamma(Inf,Inf,Inf))))
 pgamma(Inf,1,xMax) == 1 && pgamma(xMax,1,Inf) == 0
 
+##--- Beta (need more):
+
+## big a & b (PR #643)
+summary(a <- rlnorm(20, 5.5))
+summary(b <- rlnorm(20, 6.5))
+pab <- expand.grid(seq(0,1,by=.1), a, b)
+p <- pab[,1]; a <- pab[,2]; b <- pab[,3]
+all.equal(dbeta(p,a,b), exp(pab <- dbeta(p,a,b, log = TRUE)), tol = 1e-11)
+sample(pab, 50)
+
+
 ##--- Normal (& Lognormal) :
+
+qnorm(0) == -Inf && qnorm(-Inf, log = TRUE) == -Inf
+qnorm(1) ==  Inf && qnorm(0, log = TRUE) == Inf
+
+is.nan(qnorm(1.1)) &&
+is.nan(qnorm(-.1)) # + warn
 
 ## 3 Test data from Wichura (1988) :
 all.equal(qnorm(c( 0.25,  .001,	 1e-20)),
 	  c(-0.6744897501960817, -3.090232306167814, -9.262340089798408),
 	  tol = 1e-15)
+# extreme tail -- available on log scale only:
+all.equal(qnorm(-1e5, log = TRUE), -447.1974945)
 
 z <- rnorm(1000); all.equal(pnorm(z),  1 - pnorm(-z), tol= 1e-15)
 z <- c(-Inf,Inf,NA,NaN, rt(1000, df=2))
-zsml <- z > -37.5 || !is.finite(z)
+z.ok <- z > -37.5 | !is.finite(z)
 for(df in 1:10) if(!is.logical(all.equal(pt(z, df), 1 - pt(-z,df), tol= 1e-15)))
     cat("ERROR -- df = ", df, "\n")
 All.eq(pz <- pnorm(z), 1 - pnorm(z, lower=FALSE))
 All.eq(pz,		 pnorm(-z, lower=FALSE))
-All.eq(log(pz[zsml]),  pnorm(z[zsml], log=TRUE))
+All.eq(log(pz[z.ok]),  pnorm(z[z.ok], log=TRUE))
 y <- seq(-70,0, by = 10)
 cbind(y, "log(pnorm(y))"= log(pnorm(y)), "pnorm(y, log=T)"= pnorm(y, log=TRUE))
 

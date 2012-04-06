@@ -4,7 +4,7 @@ function(x, which = 1:4,
          "Scale-Location plot", "Cook's distance plot"),
          panel = points,
          sub.caption = deparse(x$call), main = "",
-         ask = interactive() && one.fig && length(which) > 1
+         ask = interactive() && nb.fig < length(which)
          	&& .Device != "postscript",
          ...,
          id.n = 3, labels.id = names(residuals(x)), cex.id = 0.75)
@@ -50,6 +50,7 @@ function(x, which = 1:4,
             text(x - if(adj.x) strwidth(" ")*cex.id else 0, y, labels.id[ind],
                  cex = cex.id, xpd = TRUE, adj = if(adj.x) 1)
     }
+    nb.fig <- prod(par("mfcol"))
     one.fig <- prod(par("mfcol")) == 1
     if (ask) {
 	op <- par(ask = TRUE)

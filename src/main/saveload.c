@@ -19,15 +19,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define USE_NEW_SAVE_FORMAT
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Fileio.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Fileio.h>
 
 #define R_MAGIC_ASCII_V1   1001
 #define R_MAGIC_BINARY_V1  1002
@@ -46,13 +44,12 @@ static int NTotal;		/* NSymbol + NSave */
 static int NVSize;		/* Number of vector cells */
 
 static int *OldOffset;		/* Offsets in previous incarnation */
-static SEXP *NewAddress;	/* Addresses in this incarnation */
+static SEXP NewAddress;		/* Addresses in this incarnation */
 
 static int VersionId;
 static int DLstartup;		/* Allows different error action on startup */
 
 static SEXP DataLoad(FILE*);
-static void DataSave(SEXP, FILE*);
 
 static void AllocBuffer(int len)
 {
@@ -73,7 +70,6 @@ static void AllocBuffer(int len)
 	bufsize = MAXELTSIZE;
     }
 }
-
 
 /* ----- I / O -- F u n c t i o n -- P o i n t e r s ----- */
 
@@ -113,16 +109,12 @@ static void DummyTerm(FILE *fp)
 {
 }
 
+/* ----- O l d - s t y l e  (p r e 1. 0)  R e s t o r e ----- */
+
+/* This section is only used to load old-style workspaces / objects */
+
 
 /* ----- L o w l e v e l -- A s c i i -- I / O ----- */
-
-static void AsciiOutInteger(FILE *fp, int i)
-{
-    if (i == NA_INTEGER)
-	fprintf(fp, "NA");
-    else
-	fprintf(fp, "%d", i);
-}
 
 static int AsciiInInteger(FILE *fp)
 {
@@ -134,20 +126,6 @@ static int AsciiInInteger(FILE *fp)
 	sscanf(smbuf, "%d", &x);
 	return x;
     }
-}
-
-static void AsciiOutReal(FILE *fp, double x)
-{
-    if (!R_FINITE(x)) {
-	if (ISNAN(x))
-	    fprintf(fp, "NA");
-	else if (x < 0)
-	    fprintf(fp, "-Inf");
-	else
-	    fprintf(fp, "Inf");
-    }
-    else fprintf(fp, "%.16g", x);
-    /* 16: full precision; 17 gives 999, 000 &c */
 }
 
 static double AsciiInReal(FILE *fp)
@@ -163,14 +141,6 @@ static double AsciiInReal(FILE *fp)
     else
 	sscanf(smbuf, "%lg", &x);
     return x;
-}
-
-static void AsciiOutComplex(FILE *fp, Rcomplex x)
-{
-    if (ISNAN(x.r) || ISNAN(x.i))
-	fprintf(fp, "NA NA");
-    else
-	fprintf(fp, "%g %g", x.r, x.i);
 }
 
 static Rcomplex AsciiInComplex(FILE *fp)
@@ -198,44 +168,6 @@ static Rcomplex AsciiInComplex(FILE *fp)
     return x;
 }
 
-static void AsciiOutSpace(FILE *fp, int nspace)
-{
-	fputc(' ', fp);
-}
-
-static void AsciiOutNewline(FILE *fp)
-{
-	fputc('\n', fp);
-}
-
-/* FIXME : To make saved files completely portable, the output */
-/* representation of strings should be completely ascii.  This */
-/* includes control characters and non-ascii characters. */
-/* This could be done with \ooo escapes. */
-
-static void AsciiOutString(FILE *fp, char *s)
-{
-    char *p = s;
-    fputc('\"', fp);
-    while (*p) {
-	switch(*p) {
-	case '\n': fputc('\\', fp); fputc('n', fp); break;
-	case '\t': fputc('\\', fp); fputc('t', fp); break;
-	case '\v': fputc('\\', fp); fputc('v', fp); break;
-	case '\b': fputc('\\', fp); fputc('b', fp); break;
-	case '\r': fputc('\\', fp); fputc('r', fp); break;
-	case '\f': fputc('\\', fp); fputc('f', fp); break;
-	case '\a': fputc('\\', fp); fputc('a', fp); break;
-	case '\\': fputc('\\', fp); fputc('\\', fp); break;
-	case '\?': fputc('\\', fp); fputc('\?', fp); break;
-	case '\'': fputc('\\', fp); fputc('\'', fp); break;
-	case '\"': fputc('\\', fp); fputc('\"', fp); break;
-	default:   fputc(*p, fp); break;
-	}
-	p++;
-    }
-    fputc('\"', fp);
-}
 
 static char *AsciiInString(FILE *fp)
 {
@@ -264,19 +196,6 @@ static char *AsciiInString(FILE *fp)
     }
     *bufp = '\0';
     return buf;
-}
-
-static void AsciiSave(SEXP s, FILE *fp)
-{
-    OutInit = DummyInit;
-    OutInteger = AsciiOutInteger;
-    OutReal = AsciiOutReal;
-    OutComplex = AsciiOutComplex;
-    OutString = AsciiOutString;
-    OutSpace = AsciiOutSpace;
-    OutNewline = AsciiOutNewline;
-    OutTerm = DummyTerm;
-    DataSave(s, fp);
 }
 
 static SEXP AsciiLoad(FILE *fp)
@@ -311,16 +230,6 @@ static SEXP AsciiLoadOld(FILE *fp, int version)
 
 XDR xdrs;
 
-static void XdrOutInit(FILE *fp)
-{
-    xdrstdio_create(&xdrs, fp, XDR_ENCODE);
-}
-
-static void XdrOutTerm(FILE *fp)
-{
-    xdr_destroy(&xdrs);
-}
-
 static void XdrInInit(FILE *fp)
 {
     xdrstdio_create(&xdrs, fp, XDR_DECODE);
@@ -329,14 +238,6 @@ static void XdrInInit(FILE *fp)
 static void XdrInTerm(FILE *fp)
 {
     xdr_destroy(&xdrs);
-}
-
-static void XdrOutInteger(FILE *fp, int i)
-{
-    if (!xdr_int(&xdrs, &i)) {
-	xdr_destroy(&xdrs);
-	error("a I write error occured");
-    }
 }
 
 static int XdrInInteger(FILE * fp)
@@ -349,14 +250,6 @@ static int XdrInInteger(FILE * fp)
     return i;
 }
 
-static void XdrOutReal(FILE *fp, double x)
-{
-    if (!xdr_double(&xdrs, &x)) {
-	xdr_destroy(&xdrs);
-	error("a R write error occured");
-    }
-}
-
 static double XdrInReal(FILE * fp)
 {
     double x;
@@ -365,14 +258,6 @@ static double XdrInReal(FILE * fp)
 	error("a R read error occured");
     }
     return x;
-}
-
-static void XdrOutComplex(FILE *fp, Rcomplex x)
-{
-    if (!xdr_double(&xdrs, &(x.r)) || !xdr_double(&xdrs, &(x.i))) {
-	xdr_destroy(&xdrs);
-	error("a C write error occured");
-    }
 }
 
 static Rcomplex XdrInComplex(FILE * fp)
@@ -385,14 +270,6 @@ static Rcomplex XdrInComplex(FILE * fp)
     return x;
 }
 
-static void XdrOutString(FILE *fp, char *s)
-{
-    if (!xdr_string(&xdrs, &s, strlen(s))) {
-	xdr_destroy(&xdrs);
-	error("a S write error occured");
-    }
-}
-
 static char *XdrInString(FILE *fp)
 {
     char *bufp = buf;
@@ -401,19 +278,6 @@ static char *XdrInString(FILE *fp)
 	error("a S read error occured");
     }
     return buf;
-}
-
-static void XdrSave(SEXP s, FILE *fp)
-{
-    OutInit = XdrOutInit;
-    OutInteger = XdrOutInteger;
-    OutReal = XdrOutReal;
-    OutComplex = XdrOutComplex;
-    OutString = XdrOutString;
-    OutSpace = DummyOutSpace;
-    OutNewline = DummyOutNewline;
-    OutTerm = XdrOutTerm;
-    DataSave(s, fp);
 }
 
 static SEXP XdrLoad(FILE *fp)
@@ -490,179 +354,6 @@ static SEXP BinaryLoadOld(FILE *fp, int version)
     return DataLoad(fp);
 }
 
-#ifndef HAVE_RPC_XDR_H
-static void BinaryOutInteger(FILE *fp, int i)
-{
-    if (fwrite(&i, sizeof(int), 1, fp) != 1)
-	error("a write error occured");
-}
-
-static void BinaryOutReal(FILE *fp, double x)
-{
-    if (fwrite(&x, sizeof(double), 1, fp) != 1)
-	error("a write error occured");
-}
-
-static void BinaryOutComplex(FILE *fp, Rcomplex x)
-{
-	if (fwrite(&x, sizeof(Rcomplex), 1, fp) != 1)
-		error("a write error occured");
-}
-
-static void BinaryOutString(FILE *fp, char *s)
-{
-    int n = strlen(s) + 1;	/* NULL too */
-    if (fwrite(s, sizeof(char), n, fp) != n)
-	error("a write error occured");
-}
-
-static void BinarySave(SEXP s, FILE *fp)
-{
-    OutInit = DummyInit;
-    OutInteger = BinaryOutInteger;
-    OutReal = BinaryOutReal;
-    OutComplex = BinaryOutComplex;
-    OutString = BinaryOutString;
-    OutSpace = DummyOutSpace;
-    OutNewline = DummyOutNewline;
-    OutTerm = DummyTerm;
-    DataSave(s, fp);
-}
-#endif /* HAVE_RPC_XDR_H */
-
-
-static void ReallocVector(SEXP s, int length)
-{
-    long size;
-    switch (TYPEOF(s)) {
-    case CHARSXP:
-	size = 1 + BYTE2VEC(length + 1);
-	break;
-    case LGLSXP:
-    case INTSXP:
-	if (length <= 0) size = 0;
-	else size = 1 + INT2VEC(length);
-	break;
-    case REALSXP:
-	if (length <= 0) size = 0;
-	else size = 1 + FLOAT2VEC(length);
-	break;
-    case CPLXSXP:
-	if (length <= 0) size = 0;
-	else size = 1 + COMPLEX2VEC(length);
-	break;
-    case STRSXP:
-    case VECSXP:
-    case EXPRSXP:
-	if (length <= 0) size = 0;
-	else size = 1 + PTR2VEC(length);
-	break;
-    default:
-	error("invalid type in ReallocVector"); size=0;
-    }
-    if (R_VMax - R_VTop < size)
-	error("restore memory exhausted (should not happen)");
-
-    LENGTH(s) = length;
-    if (size > 0) {
-	CHAR(s) = (char *) (R_VTop + 1);
-	BACKPOINTER(*R_VTop) = s;
-	R_VTop += size;
-    }
-    else CHAR(s) = (char*)0;
-}
-
-static void ReallocString(SEXP s, int length)
-{
-    long size = 1 + BYTE2VEC(length + 1);
-    if (R_VMax - R_VTop < size)
-	error("restore memory exhausted (should not happen)");
-    if (TYPEOF(s) != CHARSXP)
-	error("ReallocString: type conflict");
-    CHAR(s) = (char*)(R_VTop + 1);
-    LENGTH(s) = length;
-    TAG(s) = R_NilValue;
-    NAMED(s) = 0;
-    ATTRIB(s) = R_NilValue;
-    BACKPOINTER(*R_VTop) = s;
-    R_VTop += size;
-}
-
-static void MarkSave(SEXP s)
-{
-    int i, len;
-
-    if (s == R_NilValue
-       || s == R_GlobalEnv
-       || s == R_UnboundValue
-       || s == R_MissingArg) return;
-
-    if (s && !MARK(s)) {
-	MARK(s) = 1;
-	if (ATTRIB(s) != R_NilValue)
-	    MarkSave(ATTRIB(s));
-
-	switch (TYPEOF(s)) {
-	case BUILTINSXP:
-	case SPECIALSXP:
-	    NSave++;
-	    break;
-	case SYMSXP:
-	    NSymbol++;
-	    break;
-	case CHARSXP:
-	    NSave++;
-	    NVSize += 1 + BYTE2VEC(LENGTH(s) + 1);
-	    break;
-	case LGLSXP:
-	case INTSXP:
-	    NSave++;
-	    NVSize += 1 + INT2VEC(LENGTH(s));
-	    break;
-	case REALSXP:
-	    NSave++;
-	    NVSize += 1 + FLOAT2VEC(LENGTH(s));
-	    break;
-	case CPLXSXP:
-	    NSave++;
-	    NVSize += 1 + COMPLEX2VEC(LENGTH(s));
-	    break;
-	case STRSXP:
-	case VECSXP:
-	case EXPRSXP:
-	    NSave++;
-	    NVSize += 1 + PTR2VEC(len=LENGTH(s));
-	    for (i=0; i < len; i++)
-		MarkSave(VECTOR(s)[i]);
-	    break;
-	case ENVSXP:
-	    NSave++;
-	    MarkSave(FRAME(s));
-	    MarkSave(ENCLOS(s));
-	    break;
-	case CLOSXP:
-	case PROMSXP:
-	case LISTSXP:
-	case LANGSXP:
-	case DOTSXP:
-	    NSave++;
-	    MarkSave(TAG(s));
-	    MarkSave(CAR(s));
-	    MarkSave(CDR(s));
-	    break;
-	}
-    }
-}
-
-static int NodeToOffset(SEXP s)
-{
-    if (s == R_NilValue) return -1;
-    if (s == R_GlobalEnv) return -2;
-    if (s == R_UnboundValue) return -3;
-    if (s == R_MissingArg) return -4;
-    return s - R_NHeap;;
-}
-
 static SEXP OffsetToNode(int offset)
 {
     int l, m, r;
@@ -684,193 +375,15 @@ static SEXP OffsetToNode(int offset)
 	    l = m + 1;
     }
     while (offset != OldOffset[m] && l <= r);
-    if (offset == OldOffset[m]) return NewAddress[m];
+    if (offset == OldOffset[m]) return VECTOR_ELT(NewAddress, m);
 
     /* Not supposed to happen: */
     warning("unresolved node during restore");
     return R_NilValue;
 }
 
-static void DataSave(SEXP s, FILE *fp)
+static unsigned int FixupType(unsigned int type)
 {
-  BEGIN_SUSPEND_INTERRUPTS {
-    int i, j, k, l, n;
-
-    /* compute the storage requirements */
-    /* and write these to the save file */
-    /* NSymbol = # of symbols written */
-    /* NSave = # of symbols written */
-    /* NVSize = # of vector cells written */
-
-    NSave = 0;
-    NSymbol = 0;
-    NVSize = 0;
-    unmarkPhase();
-    MarkSave(s);
-
-    OutInit(fp);
-
-    OutInteger(fp, NSymbol); OutSpace(fp, 1);
-    OutInteger(fp, NSave); OutSpace(fp, 1);
-    OutInteger(fp, NVSize); OutNewline(fp);
-
-    /* write out any required symbols */
-
-    k = 0; n = 0;
-    for (i = 0; i < R_NSize; i++) {
-	if (MARK(&R_NHeap[i])) {
-	    if (TYPEOF(&R_NHeap[i]) == SYMSXP) {
-		OutInteger(fp, n);
-		OutSpace(fp, 1);
-		OutInteger(fp, NodeToOffset(&R_NHeap[i]));
-		OutSpace(fp, 1);
-		OutString(fp, CHAR(PRINTNAME(&R_NHeap[i])));
-		OutNewline(fp);
-		k++;
-	    }
-	    n++;
-	}
-    }
-    if (k != NSymbol || n != NSymbol+NSave)
-	error("symbol count conflict");
-
-    /* write out the forwarding address table */
-
-    k = 0; n = 0;
-    for (i = 0; i < R_NSize; i++) {
-	if (MARK(&R_NHeap[i])) {
-	    if (TYPEOF(&R_NHeap[i]) != SYMSXP) {
-		OutInteger(fp, n);
-		OutSpace(fp, 1);
-		OutInteger(fp, NodeToOffset(&R_NHeap[i]));
-		OutNewline(fp);
-		k++;
-	    }
-	    n++;
-	}
-    }
-    if (k != NSave || n != NSymbol+NSave)
-	error("node count conflict");
-
-    k = 0; n = 0;
-    for (i = 0; i < R_NSize; i++) {
-	if (MARK(&R_NHeap[i])) {
-	    if (TYPEOF(&R_NHeap[i]) != SYMSXP) {
-
-		OutInteger(fp, n);
-		OutSpace(fp, 1);
-		OutInteger(fp, TYPEOF(&R_NHeap[i]));
-		OutSpace(fp, 1);
-		OutInteger(fp, OBJECT(&R_NHeap[i]));
-		OutSpace(fp, 1);
-		OutInteger(fp,	LEVELS(&R_NHeap[i]));
-		OutSpace(fp, 1);
-		OutInteger(fp,	NodeToOffset(ATTRIB(&R_NHeap[i])));
-		OutSpace(fp, 1);
-
-		switch (TYPEOF(&R_NHeap[i])) {
-		case LISTSXP:
-		case LANGSXP:
-		case CLOSXP:
-		case PROMSXP:
-		case ENVSXP:
-		    OutInteger(fp, NodeToOffset(CAR(&R_NHeap[i])));
-		    OutSpace(fp, 1);
-		    OutInteger(fp, NodeToOffset(CDR(&R_NHeap[i])));
-		    OutSpace(fp, 1);
-		    OutInteger(fp, NodeToOffset(TAG(&R_NHeap[i])));
-		    OutNewline(fp);
-		    break;
-		case SPECIALSXP:
-		case BUILTINSXP:
-		    OutInteger(fp, strlen(PRIMNAME(&R_NHeap[i])));
-		    OutSpace(fp, 1);
-		    OutString(fp, PRIMNAME(&R_NHeap[i]));
-		    OutNewline(fp);
-		    break;
-		case CHARSXP:
-		    OutInteger(fp, LENGTH(&R_NHeap[i]));
-		    OutSpace(fp, 1);
-		    OutString(fp, CHAR(&R_NHeap[i]));
-		    OutNewline(fp);
-		    break;
-		case REALSXP:
-		    l = LENGTH(&R_NHeap[i]);
-		    OutInteger(fp, l);
-		    OutNewline(fp);
-		    for (j = 0; j < l; j++) {
-			OutReal(fp, REAL(&R_NHeap[i])[j]);
-			if ((j + 1) % 10 == 0 || j == l - 1)
-			    OutNewline(fp);
-			else
-			    OutSpace(fp, 1);
-		    }
-		    break;
-		case CPLXSXP:
-		    l = LENGTH(&R_NHeap[i]);
-		    OutInteger(fp, l);
-		    OutNewline(fp);
-		    for (j = 0; j < l; j++) {
-			OutComplex(fp, COMPLEX(&R_NHeap[i])[j]);
-			if ((j + 1) % 10 == 0 || j == l - 1)
-			    OutNewline(fp);
-			else
-			    OutSpace(fp, 1);
-		    }
-		    break;
-		case INTSXP:
-		case LGLSXP:
-		    l = LENGTH(&R_NHeap[i]);
-		    OutInteger(fp, l);
-		    OutNewline(fp);
-		    for (j = 0; j < l; j++) {
-			OutInteger(fp, INTEGER(&R_NHeap[i])[j]);
-			if ((j + 1) % 10 == 0 || j == l - 1)
-			    OutNewline(fp);
-			else
-			    OutSpace(fp, 1);
-		    }
-		    break;
-		case STRSXP:
-		case VECSXP:
-		case EXPRSXP:
-		    l = LENGTH(&R_NHeap[i]);
-		    OutInteger(fp, l);
-		    OutNewline(fp);
-		    for (j = 0; j < l; j++) {
-			OutInteger(fp, NodeToOffset(VECTOR(&R_NHeap[i])[j]));
-			if ((j + 1) % 10 == 0 || j == l - 1)
-			    OutNewline(fp);
-			else
-			    OutSpace(fp, 1);
-		    }
-		}
-		k++;
-	    }
-	    n++;
-	}
-    }
-    if (k != NSave) error("node count conflict");
-
-    /* write out the offset of the list */
-
-    OutInteger(fp, NodeToOffset(s));
-    OutNewline(fp);
-
-    OutTerm(fp);
-
-    /* unmark again to preserver the invariant */
-    unmarkPhase();
-  } END_SUSPEND_INTERRUPTS;
-}
-
-static void RestoreSEXP(SEXP s, FILE *fp)
-{
-    unsigned int j;
-    int len;
-
-    TYPEOF(s) = InInteger(fp);
-
     if (VersionId) {
 	switch(VersionId) {
 
@@ -879,81 +392,178 @@ static void RestoreSEXP(SEXP s, FILE *fp)
 	    /* we really introduced complex values */
 	    /* and found that numeric/complex numbers */
 	    /* had to be contiguous.  Hence this switch */
-	    if (TYPEOF(s) == STRSXP)
-		TYPEOF(s) = CPLXSXP;
-	    else if (TYPEOF(s) == CPLXSXP)
-		TYPEOF(s) = STRSXP;
+	    if (type == STRSXP)
+		type = CPLXSXP;
+	    else if (type == CPLXSXP)
+		type = STRSXP;
 	    break;
 
 	default:
-	    error("restore compatibility error - no version %d compatibility", VersionId);
+	    error("restore compatibility error - no version %d compatibility",
+		  VersionId);
 	}
     }
 
     /* Map old factors to new ...  (0.61->0.62) */
-    if (TYPEOF(s) == 11 || TYPEOF(s) == 12)
-	TYPEOF(s) = 13;
+    if (type == 11 || type == 12)
+	type = 13;
 
-    OBJECT(s) = InInteger(fp);
-    LEVELS(s) = InInteger(fp);
-    ATTRIB(s) = OffsetToNode(InInteger(fp));
+    return type;
+}
+
+static void RemakeNextSEXP(FILE *fp)
+{
+    unsigned int j, idx, type;
+    int len;
+    SEXP s = R_NilValue;	/* -Wall */
+
+    idx = InInteger(fp),
+    type = FixupType(InInteger(fp));
+
+    /* skip over OBJECT, LEVELS, and ATTRIB */
+    /* OBJECT(s) = */ InInteger(fp);
+    /* LEVELS(s) = */ InInteger(fp);
+    /* ATTRIB(s) = */ InInteger(fp);
+    switch (type) {
+    case LISTSXP:
+    case LANGSXP:
+    case CLOSXP:
+    case PROMSXP:
+    case ENVSXP:
+	s = allocSExp(type);
+	/* skip over CAR, CDR, and TAG */
+	/* CAR(s) = */ InInteger(fp);
+	/* CDR(s) = */ InInteger(fp);
+	/* TAG(s) = */ InInteger(fp);
+	break;
+    case SPECIALSXP:
+    case BUILTINSXP:
+	s = allocSExp(type);
+	/* skip over length and name fields */
+	/* length = */ InInteger(fp);
+	AllocBuffer(MAXELTSIZE - 1);
+	/* name = */ InString(fp);
+	break;
+    case CHARSXP:
+	len = InInteger(fp);
+	s = allocString(len);
+	AllocBuffer(len);
+	/* skip over the string */
+	/* string = */ InString(fp);
+	break;
+    case REALSXP:
+        len = InInteger(fp);
+	s = allocVector(type, len);
+	/* skip over the vector content */
+	for (j = 0; j < len; j++)
+	    /*REAL(s)[j] = */ InReal(fp);
+	break;
+    case CPLXSXP:
+	len = InInteger(fp);
+	s = allocVector(type, len);
+	/* skip over the vector content */
+	for (j = 0; j < len; j++)
+	    /* COMPLEX(s)[j] = */ InComplex(fp);
+	break;
+    case INTSXP:
+    case LGLSXP:
+	len = InInteger(fp);;
+	s = allocVector(type, len);
+	/* skip over the vector content */
+	for (j = 0; j < len; j++)
+	    /* INTEGER(s)[j] = */ InInteger(fp);
+	break;
+    case STRSXP:
+    case VECSXP:
+    case EXPRSXP:
+	len = InInteger(fp);
+	s = allocVector(type, len);
+	/* skip over the vector content */
+	for (j = 0; j < len; j++) {
+	    /* VECTOR(s)[j] = */ InInteger(fp);
+	}
+	break;
+    default: error("bad SEXP type in data file");
+    }
+
+    /* install the new SEXP */
+    SET_VECTOR_ELT(NewAddress, idx, s);
+}
+
+static void RestoreSEXP(SEXP s, FILE *fp)
+{
+    unsigned int j, type;
+    int len;
+
+    type = FixupType(InInteger(fp));
+    if (type != TYPEOF(s))
+      error("mismatch on types");
+
+    SET_OBJECT(s, InInteger(fp));
+    SETLEVELS(s, InInteger(fp));
+    SET_ATTRIB(s, OffsetToNode(InInteger(fp)));
     switch (TYPEOF(s)) {
     case LISTSXP:
     case LANGSXP:
     case CLOSXP:
     case PROMSXP:
     case ENVSXP:
-	CAR(s) = OffsetToNode(InInteger(fp));
-	CDR(s) = OffsetToNode(InInteger(fp));
-	TAG(s) = OffsetToNode(InInteger(fp));
+	SETCAR(s, OffsetToNode(InInteger(fp)));
+	SETCDR(s, OffsetToNode(InInteger(fp)));
+	SET_TAG(s, OffsetToNode(InInteger(fp)));
 	break;
     case SPECIALSXP:
     case BUILTINSXP:
 	len = InInteger(fp);
 	AllocBuffer(MAXELTSIZE - 1);
-	PRIMOFFSET(s) = StrToInternal(InString(fp));
+	SET_PRIMOFFSET(s, StrToInternal(InString(fp)));
 	break;
     case CHARSXP:
-	LENGTH(s) = len = InInteger(fp);
-	ReallocString(s, len);
+	len = InInteger(fp);
 	AllocBuffer(len);
 	strcpy(CHAR(s), InString(fp));
 	break;
     case REALSXP:
-	LENGTH(s) = len = InInteger(fp);
-	ReallocVector(s, len);
+	len = InInteger(fp);
 	for (j = 0; j < len; j++)
 	    REAL(s)[j] = InReal(fp);
 	break;
     case CPLXSXP:
-	LENGTH(s) = len = InInteger(fp);
-	ReallocVector(s, len);
+	len = InInteger(fp);
 	for (j = 0; j < len; j++)
 	    COMPLEX(s)[j] = InComplex(fp);
 	break;
     case INTSXP:
     case LGLSXP:
-	LENGTH(s) = len = InInteger(fp);;
-	ReallocVector(s, len);
+	len = InInteger(fp);;
 	for (j = 0; j < len; j++)
 	    INTEGER(s)[j] = InInteger(fp);
 	break;
     case STRSXP:
     case VECSXP:
     case EXPRSXP:
-	LENGTH(s) = len = InInteger(fp);
-	ReallocVector(s, len);
+	len = InInteger(fp);
 	for (j = 0; j < len; j++) {
-	    VECTOR(s)[j] = OffsetToNode(InInteger(fp));
+	    SET_VECTOR_ELT(s, j, OffsetToNode(InInteger(fp)));
 	}
 	break;
+    default: error("bad SEXP type in data file");
     }
 }
 
+static void RestoreError(char *msg)
+{
+    if(DLstartup)
+	R_Suicide(msg);
+    else
+	error(msg);
+}
+  
 static SEXP DataLoad(FILE *fp)
 {
-    int i, j, vsmall, nsmall;
-    char *vmaxsave, msg[512], s[256];;
+    int i, j;
+    char *vmaxsave;
+    fpos_t savepos;
 
     /* read in the size information */
 
@@ -970,10 +580,10 @@ static SEXP DataLoad(FILE *fp)
 
     vmaxsave = vmaxget();
     OldOffset = (int*)R_alloc(NSymbol+NSave, sizeof(int));
-    NewAddress = (SEXP*)R_alloc(NSymbol+NSave, sizeof(SEXP));
+    PROTECT(NewAddress = allocVector(VECSXP, NSymbol+NSave));
     for (i = 0 ; i < NTotal ; i++) {
 	OldOffset[i] = 0;
-	NewAddress[i] = R_NilValue;
+	SET_VECTOR_ELT(NewAddress, i, R_NilValue);
     }
 
     /* read in the required symbols */
@@ -984,59 +594,44 @@ static SEXP DataLoad(FILE *fp)
 	j = InInteger(fp);
 	OldOffset[j] = InInteger(fp);
 	AllocBuffer(MAXELTSIZE - 1);
-	NewAddress[j] = install(InString(fp));
+	SET_VECTOR_ELT(NewAddress, j, install(InString(fp)));
     }
-
-    /* symbols are all installed */
-    /* gc() and check space */
-
-    R_gc();
-
-    /* a gc after this point will be a disaster */
-    /* because nothing will have been protected */
-
-    if(DLstartup) {
-	vsmall = NVSize - ((VECREC *)vmaxget() - R_VTop) ;
-	nsmall = NSave - R_Collected;
-	msg[0] = '\0';
-	if(vsmall > 0) {
-	    sprintf(s, "vector heap is too small to restore data -- need about %dM\n", (int)ceil((16.*(R_VSize + vsmall))/Mega));
-	    strcat(msg, s);
-	}
-	if (nsmall > 0) {
-	    sprintf(s, "cons heap is too small to restore data -- need about %dk\n", (int)ceil((R_NSize + nsmall)/1000.));
-		    strcat(msg, s);
-	}
-	if(vsmall > 0 || nsmall > 0)
-	   R_Suicide(msg);
-    } else {
-	if ((VECREC *)vmaxget() - R_VTop < NVSize)
-	    error("vector heap is too small to restore data");
-
-	if (R_Collected < NSave)
-	    error("cons heap is too small to restore data");
-    }
-
 
     /* build the full forwarding table */
-    /* allocating SEXPs from the free list */
 
     for (i = 0 ; i < NSave ; i++) {
 	j = InInteger(fp);
 	OldOffset[j] = InInteger(fp);
-	NewAddress[j] = R_FreeSEXP;
-	R_FreeSEXP = CDR(R_FreeSEXP);
     }
 
-    /* restore the saved nodes */
+
+    /* save the file position */
+    if (fgetpos(fp, &savepos))
+	RestoreError("can't save file position while restoring data");
+
+
+    /* first pass: allocate nodes */
+
+    for (i = 0 ; i < NSave ; i++) {
+        RemakeNextSEXP(fp);
+    }
+
+
+    /* restore the file position */
+    if (fsetpos(fp, &savepos))
+	RestoreError("can't restore file position while restoring data");
+
+
+    /* second pass: restore the contents of the nodes */
 
     for (i = 0 ; i < NSave ;  i++) {
-	RestoreSEXP(NewAddress[InInteger(fp)], fp);
+	RestoreSEXP(VECTOR_ELT(NewAddress, InInteger(fp)), fp);
     }
 
     /* restore the heap */
 
     vmaxset(vmaxsave);
+    UNPROTECT(1);
 
     /* clean the string buffer */
     AllocBuffer(-1);
@@ -1062,7 +657,7 @@ static SEXP ConvertAttributes(SEXP attrs)
     SEXP ap = attrs;
     while (ap != R_NilValue) {
 	if (TYPEOF(CAR(ap)) == LISTSXP)
-	    CAR(ap) = ConvertPairToVector(CAR(ap));
+	    SETCAR(ap, ConvertPairToVector(CAR(ap)));
 	ap = CDR(ap);
     }
     return attrs;
@@ -1092,7 +687,7 @@ static SEXP ConvertPairToVector(SEXP obj)
 	PROTECT(obj = PairToVectorList(obj));
 	n = length(obj);
 	for (i = 0; i < n; i++)
-	    VECTOR(obj)[i] = ConvertPairToVector(VECTOR(obj)[i]);
+	    SET_VECTOR_ELT(obj, i, ConvertPairToVector(VECTOR_ELT(obj, i)));
 	UNPROTECT(1);
 	break;
     case VECSXP:
@@ -1100,11 +695,10 @@ static SEXP ConvertPairToVector(SEXP obj)
     default:
 	;
     }
-    ATTRIB(obj) = ConvertAttributes(ATTRIB(obj));
+    SET_ATTRIB(obj, ConvertAttributes(ATTRIB(obj)));
     return obj;
 }
 
-#ifdef USE_NEW_SAVE_FORMAT
 
 /* ----- V e r s i o n -- O n e -- S a v e / R e s t o r e ----- */
 
@@ -1219,11 +813,15 @@ static void NewMakeLists (SEXP obj, SEXP *sym_list, SEXP *env_list)
 	NewMakeLists(CAR(obj), sym_list, env_list);
 	NewMakeLists(CDR(obj), sym_list, env_list);
 	break;
+    case EXTPTRSXP:
+	NewMakeLists(EXTPTR_PROT(obj), sym_list, env_list);
+	NewMakeLists(EXTPTR_TAG(obj), sym_list, env_list);
+	break;
     case VECSXP:
     case EXPRSXP:
 	length = LENGTH(obj);
 	for (count = 0; count < length; ++count)
-	    NewMakeLists(VECTOR(obj)[count], sym_list, env_list);
+	    NewMakeLists(VECTOR_ELT(obj, count), sym_list, env_list);
 	break;
     }
     NewMakeLists(ATTRIB(obj), sym_list, env_list);
@@ -1232,13 +830,18 @@ static void NewMakeLists (SEXP obj, SEXP *sym_list, SEXP *env_list)
 /* e.g., OutVec(fp, obj, INTEGER, OutInteger) */
 #define OutVec(fp, obj, accessor, outfunc)	 			\
 	do { 								\
-		int count;						\
-		for (count = 0; count < LENGTH(obj); ++count) {		\
+		int cnt;						\
+		for (cnt = 0; cnt < LENGTH(obj); ++cnt) {		\
 			OutSpace(fp, 1);			       	\
-			outfunc(fp, accessor(obj)[count]);		\
+			outfunc(fp, accessor(obj, cnt));		\
                         OutNewline(fp);                                 \
 		}							\
 	} while (0)
+
+#define LOGICAL_ELT(x,__i__)	LOGICAL(x)[__i__]
+#define INTEGER_ELT(x,__i__)	INTEGER(x)[__i__]
+#define REAL_ELT(x,__i__)	REAL(x)[__i__]
+#define COMPLEX_ELT(x,__i__)	COMPLEX(x)[__i__]
 
 /* Simply outputs the string associated with a CHARSXP, one day this
  * will handle null characters in CHARSXPs and not just blindly call
@@ -1266,22 +869,22 @@ static void NewWriteVec (SEXP s, SEXP sym_list, SEXP env_list, FILE *fp)
 	break;
     case LGLSXP:
     case INTSXP:
-	OutVec(fp, s, INTEGER, OutInteger);
+	OutVec(fp, s, INTEGER_ELT, OutInteger);
 	break;
     case REALSXP:
-	OutVec(fp, s, REAL, OutReal);
+	OutVec(fp, s, REAL_ELT, OutReal);
 	break;
     case CPLXSXP:
-	OutVec(fp, s, COMPLEX, OutComplex);
+	OutVec(fp, s, COMPLEX_ELT, OutComplex);
 	break;
     case STRSXP:
-	OutVec(fp, s, STRING, OutCHARSXP);
+	OutVec(fp, s, STRING_ELT, OutCHARSXP);
 	break;
     case VECSXP:
     case EXPRSXP:
 	for (count = 0; count < LENGTH(s); ++count) {
 	    /* OutSpace(fp, 1); */
-	    NewWriteItem(VECTOR(s)[count], sym_list, env_list, fp);
+	    NewWriteItem(VECTOR_ELT(s, count), sym_list, env_list, fp);
 	    OutNewline(fp);
 	}
 	break;
@@ -1324,6 +927,10 @@ static void NewWriteItem (SEXP s, SEXP sym_list, SEXP env_list, FILE *fp)
 	    NewWriteItem(TAG(s), sym_list, env_list, fp);
 	    NewWriteItem(CAR(s), sym_list, env_list, fp);
 	    NewWriteItem(CDR(s), sym_list, env_list, fp);
+	    break;
+	case EXTPTRSXP:
+	    NewWriteItem(EXTPTR_PROT(s), sym_list, env_list, fp);
+	    NewWriteItem(EXTPTR_TAG(s), sym_list, env_list, fp);
 	    break;
 	case SPECIALSXP:
 	case BUILTINSXP:
@@ -1380,10 +987,17 @@ static void NewDataSave (SEXP s, FILE *fp)
 
 #define InVec(fp, obj, accessor, infunc, length)			\
 	do {								\
-		int count;						\
-		for (count = 0; count < length; ++count)		\
-			accessor(obj)[count] = infunc(fp);		\
+		int cnt;						\
+		for (cnt = 0; cnt < length; ++cnt)		\
+			accessor(obj, cnt, infunc(fp));		\
 	} while (0)
+
+
+
+#define SET_LOGICAL_ELT(x,__i__,v)	(LOGICAL_ELT(x,__i__)=(v))
+#define SET_INTEGER_ELT(x,__i__,v)	(INTEGER_ELT(x,__i__)=(v))
+#define SET_REAL_ELT(x,__i__,v)		(REAL_ELT(x,__i__)=(v))
+#define SET_COMPLEX_ELT(x,__i__,v)	(COMPLEX_ELT(x,__i__)=(v))
 
 static SEXP InCHARSXP (FILE *fp)
 {
@@ -1414,21 +1028,21 @@ static SEXP NewReadVec(SEXPTYPE type, SEXP sym_table, SEXP env_table, FILE *fp)
 	break;
     case LGLSXP:
     case INTSXP:
-	InVec(fp, my_vec, INTEGER, InInteger, length);
+	InVec(fp, my_vec, SET_INTEGER_ELT, InInteger, length);
 	break;
     case REALSXP:
-	InVec(fp, my_vec, REAL, InReal, length);
+	InVec(fp, my_vec, SET_REAL_ELT, InReal, length);
 	break;
     case CPLXSXP:
-	InVec(fp, my_vec, COMPLEX, InComplex, length);
+	InVec(fp, my_vec, SET_COMPLEX_ELT, InComplex, length);
 	break;
     case STRSXP:
-	InVec(fp, my_vec, STRING, InCHARSXP, length);
+	InVec(fp, my_vec, SET_STRING_ELT, InCHARSXP, length);
 	break;
     case VECSXP:
     case EXPRSXP:
 	for (count = 0; count < length; ++count)
-	    VECTOR(my_vec)[count] = NewReadItem(sym_table, env_table, fp);
+	    SET_VECTOR_ELT(my_vec, count, NewReadItem(sym_table, env_table, fp));
 	break;
     default:
 	error("NewReadVec called with non-vector type");
@@ -1452,11 +1066,11 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp)
     switch (type) {
     case SYMSXP:
 	pos = InInteger(fp);
-	PROTECT(s = pos ? VECTOR(sym_table)[pos - 1] : R_NilValue);
+	PROTECT(s = pos ? VECTOR_ELT(sym_table, pos - 1) : R_NilValue);
 	break;
     case ENVSXP:
 	pos = InInteger(fp);
-	PROTECT(s = pos ? VECTOR(env_table)[pos - 1] : R_NilValue);
+	PROTECT(s = pos ? VECTOR_ELT(env_table, pos - 1) : R_NilValue);
 	break;
     case LISTSXP:
     case LANGSXP:
@@ -1464,9 +1078,16 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp)
     case PROMSXP:
     case DOTSXP:
 	PROTECT(s = allocSExp(type));
-	TAG(s) = NewReadItem(sym_table, env_table, fp);
-	CAR(s) = NewReadItem(sym_table, env_table, fp);
-	CDR(s) = NewReadItem(sym_table, env_table, fp);
+	SET_TAG(s, NewReadItem(sym_table, env_table, fp));
+	SETCAR(s, NewReadItem(sym_table, env_table, fp));
+	SETCDR(s, NewReadItem(sym_table, env_table, fp));
+	/*UNPROTECT(1);*/
+	break;
+    case EXTPTRSXP:
+	PROTECT(s = allocSExp(type));
+	R_SetExternalPtrAddr(s, NULL);
+	R_SetExternalPtrProtected(s, NewReadItem(sym_table, env_table, fp));
+	R_SetExternalPtrTag(s, NewReadItem(sym_table, env_table, fp));
 	/*UNPROTECT(1);*/
 	break;
     case SPECIALSXP:
@@ -1487,9 +1108,9 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp)
     default:
 	error("NewReadItem: unknown type %i", type);
     }
-    LEVELS(s) = levs;
-    OBJECT(s) = objf;
-    ATTRIB(s) = NewReadItem(sym_table, env_table, fp);
+    SETLEVELS(s, levs);
+    SET_OBJECT(s, objf);
+    SET_ATTRIB(s, NewReadItem(sym_table, env_table, fp));
     UNPROTECT(1); /* s */
     return s;
 }
@@ -1511,18 +1132,18 @@ static SEXP NewDataLoad (FILE *fp)
 
     /* Read back and install symbols */
     for (count = 0; count < sym_count; ++count) {
-	VECTOR(sym_table)[count] = install(InString(fp));
+	SET_VECTOR_ELT(sym_table, count, install(InString(fp)));
     }
     /* Allocate the environments */
     for (count = 0; count < env_count; ++count)
-	VECTOR(env_table)[count] = allocSExp(ENVSXP);
+	SET_VECTOR_ELT(env_table, count, allocSExp(ENVSXP));
 
     /* Now fill them in  */
     for (count = 0; count < env_count; ++count) {
-	obj = VECTOR(env_table)[count];
-	ENCLOS(obj) = NewReadItem(sym_table, env_table, fp);
-	FRAME(obj) = NewReadItem(sym_table, env_table, fp);
-	TAG(obj) = NewReadItem(sym_table, env_table, fp);
+	obj = VECTOR_ELT(env_table, count);
+	SET_ENCLOS(obj, NewReadItem(sym_table, env_table, fp));
+	SET_FRAME(obj, NewReadItem(sym_table, env_table, fp));
+	SET_TAG(obj, NewReadItem(sym_table, env_table, fp));
     }
 
     /* Read the actual object back */
@@ -1943,7 +1564,6 @@ static SEXP NewXdrLoad(FILE *fp)
     return NewDataLoad(fp);
 }
 #endif /* HAVE_RPC_XDR_H */
-#endif /* USE_NEW_SAVE_FORMAT */
 
 
 /* ----- F i l e -- M a g i c -- N u m b e r s ----- */
@@ -1996,34 +1616,19 @@ static int R_ReadMagic(FILE *fp)
 
 /* ----- E x t e r n a l -- I n t e r f a c e s ----- */
 
-void R_SaveToFile(SEXP obj, FILE *fp, int ascii, int oldstyle)
+void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
 {
-    if (!oldstyle) {
-	if (ascii) {
-	    R_WriteMagic(fp, R_MAGIC_ASCII_V1);
-	    NewAsciiSave(obj, fp);
-	} else {
-#ifdef HAVE_RPC_XDR_H
-	    R_WriteMagic(fp, R_MAGIC_XDR_V1);
-	    NewXdrSave(obj, fp);
-#else
-	    R_WriteMagic(fp, R_MAGIC_BINARY_V1);
-	    NewBinarySave(obj, fp);
-#endif
-	}
+    if (ascii) {
+	R_WriteMagic(fp, R_MAGIC_ASCII_V1);
+	NewAsciiSave(obj, fp);
     } else {
-	if (ascii) {
-	    R_WriteMagic(fp, R_MAGIC_ASCII);
-	    AsciiSave(obj, fp);
-	} else {
 #ifdef HAVE_RPC_XDR_H
-	    R_WriteMagic(fp, R_MAGIC_XDR);
-	    XdrSave(obj, fp);
+	R_WriteMagic(fp, R_MAGIC_XDR_V1);
+	NewXdrSave(obj, fp);
 #else
-	    R_WriteMagic(fp, R_MAGIC_BINARY);
-	    BinarySave(obj, fp);
+	R_WriteMagic(fp, R_MAGIC_BINARY_V1);
+	NewBinarySave(obj, fp);
 #endif
-	}
     }
 }
 
@@ -2043,7 +1648,6 @@ SEXP R_LoadFromFile(FILE *fp, int startup)
 	return(BinaryLoadOld(fp, 16));
     case R_MAGIC_ASCII_VERSION16:
 	return(AsciiLoadOld(fp, 16));
-#ifdef USE_NEW_SAVE_FORMAT
     case R_MAGIC_ASCII_V1:
 	return(NewAsciiLoad(fp));
     case R_MAGIC_BINARY_V1:
@@ -2051,7 +1655,6 @@ SEXP R_LoadFromFile(FILE *fp, int startup)
 #ifdef HAVE_RPC_XDR_H
     case R_MAGIC_XDR_V1:
 	return(NewXdrLoad(fp));
-#endif
 #endif
     default:
 	fclose(fp);
@@ -2077,10 +1680,8 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "`file' must be non-empty string");
     if (TYPEOF(CADDR(args)) != LGLSXP)
 	errorcall(call, "`ascii' must be logical");
-    if (TYPEOF(CADDDR(args)) != LGLSXP)
-	errorcall(call, "`oldstyle' must be logical");
 
-    fp = R_fopen(R_ExpandFileName(CHAR(STRING(CADR(args))[0])), "wb");
+    fp = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(CADR(args), 0))), "wb");
     if (!fp)
 	errorcall(call, "unable to open file");
 
@@ -2089,20 +1690,20 @@ SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
     t = s;
     for (j = 0; j < len; j++, t = CDR(t)) {
-	TAG(t) = install(CHAR(STRING(CAR(args))[j]));
-	CAR(t) = findVar(TAG(t), R_GlobalContext->sysparent);
+	SET_TAG(t, install(CHAR(STRING_ELT(CAR(args), j))));
+	SETCAR(t, findVar(TAG(t), R_GlobalContext->sysparent));
 	if (CAR(t) == R_UnboundValue)
 	    error("Object \"%s\" not found", CHAR(PRINTNAME(TAG(t))));
     }
 
-    R_SaveToFile(s, fp, INTEGER(CADDR(args))[0], INTEGER(CADDDR(args))[0]);
+    R_SaveToFile(s, fp, INTEGER(CADDR(args))[0]);
 
     UNPROTECT(1);
     fclose(fp);
     return R_NilValue;
 }
 
-void R_LoadSavedData(FILE *fp, SEXP aenv)
+static void R_LoadSavedData(FILE *fp, SEXP aenv)
 {
     SEXP a, ans;
     ans = R_LoadFromFile(fp, 0);
@@ -2159,7 +1760,7 @@ SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 	error("invalid envir argument");
 
     /* Process the saved file to obtain a list of saved objects. */
-    fp = R_fopen(R_ExpandFileName(CHAR(STRING(fname)[0])), "rb");
+    fp = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(fname, 0))), "rb");
     if (!fp)
 	errorcall(call, "unable to open file");
     R_LoadSavedData(fp, aenv);

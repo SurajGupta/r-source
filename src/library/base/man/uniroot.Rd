@@ -1,5 +1,5 @@
 \name{uniroot}
-\title{One Dimensional Root Finding}
+\title{One Dimensional Root (Zero) Finding}
 \usage{
 uniroot(f, interval, lower = min(interval), upper = max(interval),
         tol = .Machine$double.eps^0.25, maxiter = 1000, \dots)
@@ -17,8 +17,8 @@ uniroot(f, interval, lower = min(interval), upper = max(interval),
 }
 \description{
   The function \code{uniroot} searches the interval from \code{lower}
-  to \code{upper} for a zero of the function \code{f} with respect to
-  its first argument.
+  to \code{upper} for a root (i.e. zero) of the function \code{f} with
+  respect to its first argument.
 }
 \details{
   Either \code{interval} or both \code{lower} and \code{upper} must be
@@ -50,5 +50,13 @@ str(uniroot(function(x) x*(x^2-1) + .5, low = -2, up = 2, tol = 0.0001),
     dig = 10)
 str(uniroot(function(x) x*(x^2-1) + .5, low = -2, up =2 , tol = 1e-10 ),
     dig = 10)
+
+## Find the smallest value x for which exp(x) > 0 (numerically):
+r <- uniroot(function(x) 1e80*exp(x) -1e-300,,-1000,0, tol=1e-20)
+str(r, digits= 15)##> around -745.1332191
+
+exp(r$r)	# = 0, but not for r$r * 0.999...
+minexp <- r$r * (1 - .Machine$double.eps)
+exp(minexp)	# typically denormalized
 }
 \keyword{optimize}

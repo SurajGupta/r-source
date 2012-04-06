@@ -1,22 +1,21 @@
 \name{exists}
 \title{Is an Object Defined?}
 \usage{
-exists(x, where = NULL, envir = sys.frame(sys.parent()),
+exists(x, where = NULL, envir = parent.frame(),
        frame = NULL, mode = "any", inherits = TRUE)
 }
 \alias{exists}
 \arguments{
   \item{x}{a variable name (given as a character string).}
-  \item{where, envir, frame}{an environment to be searched.
-    By default this is the
-    environment where the call to \code{envir} takes place.}
-  \item{mode}{the type of interest for the object.}
+  \item{where, envir, frame}{an environment to be searched.  By default
+    this is the environment where the call to \code{envir} takes place.}
+  \item{mode}{the mode of interest for the object.}
   \item{inherits}{should the enclosing frames of the environment be inspected.}
 }
 \description{
   Search for an \R object of the given name on the search path.
 }
-\details{    
+\details{
   This function looks to see if the name \code{x} has a value bound to it.
   If \code{inherits} is \code{TRUE} and a value is not found for \code{x},
   then the parent frames of \code{envir} are searched until the name
@@ -26,11 +25,9 @@ exists(x, where = NULL, envir = sys.frame(sys.parent()),
   If \code{mode} is specified then only objects of that mode are sought.
   The function returns \code{TRUE} if the variable is encountered and
   \code{FALSE} if not.
-}
-\section{Warning}{
-  Up to and including this release \code{mode} is interpreted as the
-  value of \code{\link{typeof}(x)}.  This will change from \R 1.2.0 to
-  the value of \code{mode(x)}, for compatibility with S.
+
+  The \code{mode} includes collections such as \code{"numeric"} and
+  \code{"function"}: any member of the collection will suffice.
 }
 \seealso{
   \code{\link{get}}.

@@ -4,13 +4,12 @@
 ##	either as .C() or .Fortran() in R
 ##	or     by e.g. mva.so or modreg.so when that one is loaded.
 ##
-## This is the basis (source) of the `FFTab.h' and `FFDecl.h' files in
-## `../include' which are included by  `../unix/dynload.c'.
+## This is the basis (source) of the `FFTab.h' and `FFDecl.h' files
+## which are included by `dynload.c'.
 ##
 C_FUNCTION(R_approx)
 F77_SUBROUTINE(ch2inv)
 F77_SUBROUTINE(chol)
-F77_SUBROUTINE(dbksl)
 C_FUNCTION(bakslv)
 C_FUNCTION(bincode)
 C_FUNCTION(bincode2)
@@ -33,7 +32,6 @@ F77_SUBROUTINE(dpofa)
 F77_SUBROUTINE(dposl)
 F77_SUBROUTINE(dqrcf)
 F77_SUBROUTINE(dqrdc)
-F77_SUBROUTINE(dqrdca)
 F77_SUBROUTINE(dqrdc2)
 F77_SUBROUTINE(dqrls)
 F77_SUBROUTINE(dqrsl)

@@ -41,6 +41,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef HAVE_PNG
+#include "png.h"
+#include <setjmp.h>
+#endif
+
 /* 8 bits red, green and blue channel */
 #define DECLARESHIFTS int RSHIFT=(bgr)?0:16, GSHIFT=8, BSHIFT=(bgr)?16:0
 #define GETRED(col)    (((col) >> RSHIFT) & 0xFFUL)
@@ -48,13 +53,9 @@
 #define GETBLUE(col)   (((col) >> BSHIFT) & 0xFFUL)
 
 void R_ShowMessage(char *msg);
-#include "Error.h"
+#include "R_ext/Error.h"
 
 #ifdef HAVE_PNG
-
-#include "png.h"
-#include <setjmp.h>
-
 /* 
  * Try to save the content of the device 'd' in 'filename' as png.
  * If numbers of colors is less than 256 we use a 'palette' png.
@@ -231,6 +232,7 @@ int R_SaveAsPng(void  *d, int width, int height,
 #ifdef HAVE_JPEG
 
 #include <jpeglib.h>
+#include <setjmp.h>
 
 /* Here's the extended error handler struct */
 

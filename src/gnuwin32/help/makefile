@@ -1,38 +1,39 @@
 # default target builds indices
-DOS= # -dosnames   # for file-name mapping
+DOS=# -dosnames   # for file-name mapping
 PERL=perl
 CAT=cat
 CP=cp
 RM=rm
+MKDIR=mkdir
 
 RHOME=$(shell cd ../../..; perl src/gnuwin32/pwd.pl)# must be absolute path
 PKGDIR=../../library
 RLIB=$(RHOME)/library
 
 indices:
-	$(PERL) build.help ${DOS} -htmllists
+	PERL5LIB=$(RHOME)/share/perl $(PERL) build.help ${DOS} -htmllists
 
-pkg-% help-%: 
-	$(PERL) build.help ${DOS} -txt -html -example -latex $(PKGDIR)/$* $(RLIB)
+pkg-% help-%:
+	PERL5LIB=$(RHOME)/share/perl $(PERL) build.help ${DOS} -txt -html -example -latex $(PKGDIR)/$* $(RLIB)
 
-chm-%: 
-	$(PERL) build.help ${DOS} -chm $(PKGDIR)/$* $(RLIB)
+chm-%:
+	PERL5LIB=$(RHOME)/share/perl $(PERL) build.help ${DOS} -chm $(PKGDIR)/$* $(RLIB)
 # hhc always gives an error code
 	$(MAKE) -C $(PKGDIR)/$*/chm -f $(RHOME)/src/gnuwin32/help/Makefile $*.chm
-	mkdir -p $(RLIB)/$*/chtml
+	$(MKDIR) -p $(RLIB)/$*/chtml
 	$(CP) $(PKGDIR)/$*/chm/$*.chm $(RLIB)/$*/chtml
 
 winhlp-%: chm-%
 	$(MAKE) -C $(PKGDIR)/$*/chm -f $(RHOME)/src/gnuwin32/help/Makefile $*.hlp
-	mkdir -p $(RLIB)/$*/winhlp
+	$(MKDIR) -p $(RLIB)/$*/winhlp
 	$(CP) $(PKGDIR)/$*/chm/$*.cnt $(PKGDIR)/$*/chm/$*.hlp $(RLIB)/$*/winhlp
 
 # need not have HTML installed when building packages
 contents-%:
 	$(PERL) Rd2contents $(PKGDIR)/$* $(RLIB)/$*/CONTENTS
-	@mkdir -p $(RHOME)/doc/html/search
+	@$(MKDIR) -p $(RHOME)/doc/html/search
 	$(CAT) $(RHOME)/library/*/CONTENTS > $(RHOME)/doc/html/search/index.txt
-	$(PERL) build.help ${DOS} -htmllists
+	PERL5LIB=$(RHOME)/share/perl $(PERL) build.help ${DOS} -htmllists
 
 ziphelp-%:
 	$(MAKE) -C $(RLIB)/$* -f $(RHOME)/src/gnuwin32/help/Makefile ZIPFLAGS=jqX  PKG=$* zipit
@@ -46,7 +47,7 @@ winhelp-%:
 
 latex-%:
 	$(MAKE) -C $(RLIB)/$* -f $(RHOME)/src/gnuwin32/help/Makefile PKG=$* unzipit
-	$(PERL) build.help ${DOS} -latex $(PKGDIR)/$*
+	PERL5LIB=$(RHOME)/share/perl $(PERL) build.help ${DOS} -latex $(PKGDIR)/$*
 
 clean:
 	$(RM) -fr *~ *.o *.obj *.dll *.def *.a
@@ -54,14 +55,17 @@ clean:
 # to be run from src/library/pkg/chm
 
 HTM = $(filter-out 00Index.html, $(wildcard *.html))
-%.chm: $(HTM) logo.jpg
+%.chm: $(HTM) Rchm.css logo.jpg
 	-hhc $*.hhp
 
 %.hlp: %.rtf logo.bmp
 	hcrtf /x $*.hpj
 
 %.rtf: $(HTM)
-	perl $(RHOME)/src/gnuwin32/help/html-to-rtf.pl $*.hhp
+	perl $(RHOME)/share/perl/hhw-to-rtf.pl $*.hhp
+
+Rchm.css: $(RHOME)/src/gnuwin32/help/Rchm.css
+	$(CP) $^ $@
 
 logo.jpg: $(RHOME)/doc/html/logo.jpg
 	$(CP) $^ $@

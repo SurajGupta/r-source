@@ -27,8 +27,8 @@
 #include <config.h>
 #endif
 
-#include "Linpack.h"
-#include "Applic.h"
+#include "R_ext/Linpack.h"
+#include "R_ext/Applic.h"
 
 void bakslv(double *t, int *ldt, int *n,
 	    double *b, int *ldb, int *nb,
@@ -96,12 +96,10 @@ void bakslv(double *t, int *ldt, int *n,
     nn = *ldb;
 
     for (j = 0; j < p; ++j) {/* for each right-hand side */
-       F77_SYMBOL(dcopy)(n, &b[j * nn], &c__1,
-			    &x[j * nn], &c__1);
-       F77_SYMBOL(dtrsl)(t, ldt, n, &x[j * nn], job, info);
+       F77_CALL(dcopy)(n, &b[j * nn], &c__1, &x[j * nn], &c__1);
+       F77_CALL(dtrsl)(t, ldt, n, &x[j * nn], job, info);
        if (*info != 0) {
 	 return;
        }
     }
 }
-

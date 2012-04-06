@@ -40,6 +40,12 @@ all: Makefile DESCRIPTION
 	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/data; \
 	  done; \
 	fi
+	@if test -d $(srcdir)/exec; then \
+	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/exec; \
+	  for f in `ls -d $(srcdir)/exec/* | sed '/CVS/d'`; do \
+	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/exec; \
+	  done; \
+	fi
 	@if test -d src -a @use_tcltk@ = yes; then \
 	  (cd src && $(MAKE)) || exit 1; \
 	fi
@@ -67,7 +73,7 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for d in R data man src; do \
+	@for d in R data exec man src; do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); $(TAR) -c -f - --exclude=CVS $${d}) \
 	        | (cd $(distdir); $(TAR) -x -f -)) \

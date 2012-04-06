@@ -22,52 +22,81 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
+#include <Defn.h>
+#include <Rmath.h>
 
-static SEXP integer_relop(int code, SEXP s1, SEXP s2);
-static SEXP real_relop(int code, SEXP s1, SEXP s2);
-static SEXP complex_relop(int code, SEXP s1, SEXP s2);
-static SEXP string_relop(int code, SEXP s1, SEXP s2);
+static SEXP integer_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
+static SEXP real_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
+static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
+static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 
-static SEXP rcall;
+static SEXP rcall;/* global, for error messages */
 
 SEXP do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP x, y, class=R_NilValue, dims, tsp=R_NilValue, xnames, ynames, ans;
-    int mismatch, nx, ny, xarray, yarray, xts, yts;
+    SEXP ans;
 
     if (DispatchGroup("Ops", call, op, args, env, &ans))
 	return ans;
 
-    x = CAR(args);
-    y = CADR(args);
+    return do_relop_dflt(call, op, CAR(args), CADR(args));
+}
 
-    if (isSymbol(x)) {
-	PROTECT(x);
-	x = allocVector(STRSXP, 1);
-	STRING(x)[0] = PRINTNAME(CAR(args));
-	CAR(args) = x;
+SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
+{
+    SEXP class=R_NilValue, dims, tsp=R_NilValue, xnames, ynames;
+    int nx, ny, xarray, yarray, xts, yts;
+    Rboolean mismatch, iS;
+    PROTECT_INDEX xpi, ypi;
+
+    PROTECT_WITH_INDEX(x, &xpi);
+    PROTECT_WITH_INDEX(y, &ypi);
+
+    /* pre-test to handle the most common case quickly */
+    if (ATTRIB(x) == R_NilValue && ATTRIB(y) == R_NilValue &&
+	TYPEOF(x) == REALSXP && TYPEOF(y) == REALSXP &&
+	LENGTH(x) > 0 && LENGTH(y) > 0) {
+	SEXP ans = real_relop(PRIMVAL(op), x, y);      
+	UNPROTECT(2);
+	return ans;
+    }
+
+    if ((iS = isSymbol(x)) || TYPEOF(x) == LANGSXP) {
+	SEXP tmp = allocVector(STRSXP, 1);
+	PROTECT(tmp);
+	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(x) : deparse1(x, 0));
+	REPROTECT(x = tmp, xpi);
 	UNPROTECT(1);
     }
-    if (isSymbol(y)) {
-	PROTECT(y);
-	y = allocVector(STRSXP, 1);
-	STRING(y)[0] = PRINTNAME(CADR(args));
-	CADR(args) = y;
+    if ((iS = isSymbol(y)) || TYPEOF(y) == LANGSXP) {
+	SEXP tmp = allocVector(STRSXP, 1);
+	PROTECT(tmp);
+	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(y) : deparse1(y, 0));
+	REPROTECT(y = tmp, ypi);
 	UNPROTECT(1);
     }
 
-    if (!isVector(x) || !isVector(y))
+    /* FIXME (?): S does
+    if (!isVectorAtomic(x) || !isVectorAtomic(y)) { */
+    if (!isVector(x) || !isVector(y)) {
+	if (isNull(x) || isNull(y)) {
+	    UNPROTECT(2);
+	    return allocVector(LGLSXP,0);
+	}
 	errorcall(call,
-		  "comparison (%d) is possible only for vector types",
+		  "comparison (%d) is possible only for atomic types",
 		  PRIMVAL(op));
+    }
 
-    if (LENGTH(x) <= 0 || LENGTH(y) <= 0)
+    /* ELSE :  x and y are both atomic */
+
+    if (LENGTH(x) <= 0 || LENGTH(y) <= 0) {
+	UNPROTECT(2);
 	return allocVector(LGLSXP,0);
+    }
 
     rcall = call;
-    mismatch = 0;
+    mismatch = FALSE;
     xarray = isArray(x);
     yarray = isArray(y);
     xts = isTs(x);
@@ -90,10 +119,8 @@ SEXP do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
     else {
 	nx = length(x);
 	ny = length(y);
-	if (nx > 0 && ny > 0) {
-	    if (nx > ny) mismatch = nx % ny;
-	    else mismatch = ny % nx;
-	}
+	if (nx > 0 && ny > 0)
+	    mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
 	PROTECT(dims = R_NilValue);
 	PROTECT(xnames = getAttrib(x, R_NamesSymbol));
 	PROTECT(ynames = getAttrib(y, R_NamesSymbol));
@@ -118,21 +145,23 @@ SEXP do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 	    PROTECT(class = getAttrib(y, R_ClassSymbol));
 	}
     }
-    if (mismatch) warningcall(call, "longer object length\n\tis not a multiple of shorter object length");
+    if (mismatch)
+	warningcall(call, "longer object length\n"
+		    "\tis not a multiple of shorter object length");
 
     if (isString(x) || isString(y)) {
-	x = CAR(args) = coerceVector(x, STRSXP);
-	y = CADR(args) = coerceVector(y, STRSXP);
+	REPROTECT(x = coerceVector(x, STRSXP), xpi);
+	REPROTECT(y = coerceVector(y, STRSXP), ypi);
 	x = string_relop(PRIMVAL(op), x, y);
     }
     else if (isComplex(x) || isComplex(y)) {
-	x = CAR(args) = coerceVector(x, CPLXSXP);
-	y = CADR(args) = coerceVector(y, CPLXSXP);
+	REPROTECT(x = coerceVector(x, CPLXSXP), xpi);
+	REPROTECT(y = coerceVector(y, CPLXSXP), ypi);
 	x = complex_relop(PRIMVAL(op), x, y);
     }
     else if (TYPEOF(x) == REALSXP || TYPEOF(y) == REALSXP) {
-	x = CAR(args) = coerceVector(x, REALSXP);
-	y = CADR(args) = coerceVector(y, REALSXP);
+	REPROTECT(x = coerceVector(x, REALSXP), xpi);
+	REPROTECT(y = coerceVector(y, REALSXP), ypi);
 	x = real_relop(PRIMVAL(op), x, y);
     }
     else {
@@ -159,11 +188,11 @@ SEXP do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(2);
     }
 
-    UNPROTECT(4);
+    UNPROTECT(6);
     return x;
 }
 
-static SEXP integer_relop(int code, SEXP s1, SEXP s2)
+static SEXP integer_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, n, n1, n2;
     int x1, x2;
@@ -242,7 +271,7 @@ static SEXP integer_relop(int code, SEXP s1, SEXP s2)
     return ans;
 }
 
-static SEXP real_relop(int code, SEXP s1, SEXP s2)
+static SEXP real_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, n, n1, n2;
     double x1, x2;
@@ -321,7 +350,7 @@ static SEXP real_relop(int code, SEXP s1, SEXP s2)
     return ans;
 }
 
-static SEXP complex_relop(int code, SEXP s1, SEXP s2)
+static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, n, n1, n2;
     Rcomplex x1, x2;
@@ -361,6 +390,9 @@ static SEXP complex_relop(int code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = (x1.r != x2.r || x1.i != x2.i);
 	}
 	break;
+    default:
+	/* never happens (-Wall) */
+	break;
     }
     UNPROTECT(2);
     return ans;
@@ -373,7 +405,7 @@ static SEXP complex_relop(int code, SEXP s1, SEXP s2)
 
 
 
-static SEXP string_relop(int code, SEXP s1, SEXP s2)
+static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, n, n1, n2;
     SEXP ans;
@@ -388,8 +420,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
     switch (code) {
     case EQOP:
 	for (i = 0; i < n; i++) {
-	    if (strcmp(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) == 0)
+	    if (strcmp(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) == 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
@@ -397,8 +429,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
 	break;
     case NEOP:
 	for (i = 0; i < n; i++) {
-	    if (streql(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) != 0)
+	    if (streql(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) != 0)
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -406,8 +438,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
 	break;
     case LTOP:
 	for (i = 0; i < n; i++) {
-	    if (STRCMP(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) < 0)
+	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) < 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
@@ -415,8 +447,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
 	break;
     case GTOP:
 	for (i = 0; i < n; i++) {
-	    if (STRCMP(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) > 0)
+	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) > 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
@@ -424,8 +456,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
 	break;
     case LEOP:
 	for (i = 0; i < n; i++) {
-	    if (STRCMP(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) <= 0)
+	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) <= 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
@@ -433,8 +465,8 @@ static SEXP string_relop(int code, SEXP s1, SEXP s2)
 	break;
     case GEOP:
 	for (i = 0; i < n; i++) {
-	    if (STRCMP(CHAR(STRING(s1)[i % n1]),
-		       CHAR(STRING(s2)[i % n2])) >= 0)
+	    if (STRCMP(CHAR(STRING_ELT(s1, i % n1)),
+		       CHAR(STRING_ELT(s2, i % n2))) >= 0)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;

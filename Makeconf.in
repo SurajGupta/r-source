@@ -2,9 +2,14 @@ PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
 AR = @AR@
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
 AWK = @AWK@
 BITMAP_LIBS = @BITMAP_LIBS@
 BLAS = @BLAS@
+BLAS_LIBS = @BLAS_LIBS@
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPICFLAGS = @CPICFLAGS@
@@ -31,27 +36,33 @@ LIBGLADE_CFLAGS = @LIBGLADE_CFLAGS@
 LIBGLADE_LIBS = @LIBGLADE_LIBS@
 LIBPATHS = @LIBPATHS@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 MAIN_CFLAGS = @MAIN_CFLAGS@
 MAIN_FFLAGS = @MAIN_FFLAGS@
-MAINLD = @MAINLD@
-MAINLDFLAGS = @MAINLDFLAGS@
+MAIN_LD = @MAIN_LD@
+MAIN_LDFLAGS = @MAIN_LDFLAGS@
+@USE_LIBTOOL_FALSE@MAIN_LINK = $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
+@USE_LIBTOOL_TRUE@MAIN_LINK = $(LIBTOOL) --mode=link $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
 MAKEINDEX = @MAKEINDEX@
 MKINSTALLDIRS = $(top_srcdir)/tools/mkinstalldirs
+PERL = @PERL@
 R_GUIS = @R_GUIS@
 # fixme: tcltk needs to be optional
 R_PKGS = base ctest eda lqs modreg mva nls splines stepfun ts tcltk
 R_XTRA_CFLAGS = @R_XTRA_CFLAGS@
-R_XTRA_CPPFLAGS = -I. -I$(top_builddir)/src/include -I$(top_srcdir)/src/include -I$(top_srcdir)/src/include/R_ext
+R_XTRA_CPPFLAGS = -I. -I$(top_builddir)/src/include -I$(top_srcdir)/src/include
 R_XTRA_FFLAGS = @R_XTRA_FFLAGS@
 R_XTRA_LIBS = @R_XTRA_LIBS@
 RANLIB = @RANLIB@
 SHELL = /bin/sh
-SHLIBEXT = @SHLIBEXT@
+SHLIB_EXT = @SHLIB_EXT@
 SHLIB_CFLAGS = @SHLIB_CFLAGS@
 SHLIB_FFLAGS = @SHLIB_FFLAGS@
-SHLIBLD = @SHLIBLD@
-SHLIBLDFLAGS = @SHLIBLDFLAGS@
+SHLIB_LD = @SHLIB_LD@
+SHLIB_LDFLAGS = @SHLIB_LDFLAGS@
+@USE_LIBTOOL_FALSE@SHLIB_LINK = $(SHLIB_LD) $(SHLIB_LDFLAGS) $(LDFLAGS)
+@USE_LIBTOOL_TRUE@SHLIB_LINK = $(LIBTOOL) --mode=link $(SHLIB_LD) $(SHLIB_LDFLAGS) $(LDFLAGS)
 TAR = @TAR@
 X_CFLAGS = @X_CFLAGS@
 X_LIBS = @X_LIBS@
@@ -63,12 +74,16 @@ ALL_CFLAGS = $(R_XTRA_CFLAGS) $(MAIN_CFLAGS) $(CFLAGS)
 ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(CPPFLAGS) $(DEFS)
 ALL_FFLAGS = $(R_XTRA_FFLAGS) $(MAIN_FFLAGS) $(FFLAGS)
 
+ALL_CFLAGS_LO = $(R_XTRA_CFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(CFLAGS)
+ALL_FFLAGS_LO = $(R_XTRA_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAGS)
+
 .SUFFIXES:
-.SUFFIXES: .c .f .d .o
+.SUFFIXES: .c .f .d .o .lo
 
 @depend_rules_frag@
 .c.o:
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+@cc_o_lo_rules_frag@
 @f77_rules_frag@
 
 prefix = @prefix@
@@ -79,3 +94,10 @@ libdir = @libdir@
 mandir = @mandir@
 
 rhome = @libdir@/R
+
+Rexecbindir = $(rhome)/bin
+## FIXME: should be `lib' eventually
+Rexeclibdir = $(rhome)/bin
+## Alternatively, we could try to set pkglibdir = $(rhome)/lib when
+## switching to automake.
+## </FIXME>

@@ -390,7 +390,7 @@ SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(rval=allocList(nframe));
 	t=rval;
 	for(i=1 ; i<=nframe; i++, t=CDR(t))
-	    CAR(t)=R_syscall(i,cptr);
+	    SETCAR(t, R_syscall(i,cptr));
 	UNPROTECT(1);
 	return rval;
     case 6: /* sys.frames */
@@ -398,7 +398,7 @@ SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(rval=allocList(nframe));
 	t=rval;
 	for(i=1 ; i<=nframe ; i++, t=CDR(t))
-	    CAR(t)=R_sysframe(i,cptr);
+	    SETCAR(t, R_sysframe(i,cptr));
 	UNPROTECT(1);
 	return rval;
     case 7: /* sys.on.exit */
@@ -419,3 +419,34 @@ SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return R_NilValue;/* just for -Wall */
     }
 }
+
+SEXP do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    int n;
+    SEXP t;
+    RCNTXT *cptr;
+
+ 
+    t = eval(CAR(args), rho);
+    n = asInteger(t);
+
+    if(n == NA_INTEGER || n < 1 )
+	errorcall(call, "invalid number of environment levels");
+
+    cptr = R_GlobalContext;
+    t = cptr->sysparent;
+    while (cptr->nextcontext != NULL){
+	if (cptr->callflag & CTXT_FUNCTION ) {
+	    if (cptr->cloenv == t)
+	    {
+		if (n == 1) 
+		    return cptr->sysparent;
+		n--;
+		t = cptr->sysparent;
+	    }
+	}
+	cptr = cptr->nextcontext;
+    }
+    return R_GlobalEnv;
+}
+

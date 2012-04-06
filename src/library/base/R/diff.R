@@ -1,27 +1,25 @@
 diff <- function(x, ...) UseMethod("diff")
 
+## autoload("diff.ts", "ts")   in ../../profile/Common.R
+
 diff.default <- function(x, lag = 1, differences = 1, ...)
 {
     ismat <- is.matrix(x)
-    if (ismat)
-	xlen <- dim(x)[1]
-    else xlen <- length(x)
-    if (lag < 1 | differences < 1)
-	stop("Bad value for lag or differences")
+    xlen <- if(ismat) dim(x)[1] else length(x)
+    if (length(lag) > 1 || length(differences) > 1 ||
+        lag < 1 || differences < 1)
+	stop("`lag' and `differences' must be integers >= 1")
     if (lag * differences >= xlen)
-	return(x[0])
-    r <- x
-    class(r) <- NULL # don't want class-specific subset methods
-    s <- 1:lag
-    if (is.matrix(r)) {
+	return(x[0]) # empty of proper mode
+    r <- unclass(x)  # don't want class-specific subset methods
+    i1 <- -1:-lag
+    if (ismat)
 	for (i in 1:differences)
-	    r <- r[-s, , drop = FALSE] - r[-(nrow(r) + 1 - s), , drop = FALSE]
-    }
-    else for (i in 1:differences)
-	r <- r[-s] - r[-(length(r) + 1 - s)]
-    xtsp <- attr(x, "tsp")
-    if (!is.null(xtsp))
-        tsp(r) <- c(xtsp[1] + lag*differences*xtsp[3], xtsp[2], xtsp[3])
+	    r <- r[i1, , drop = FALSE] -
+                r[-nrow(r):-(nrow(r)-lag+1), , drop = FALSE]
+    else
+        for (i in 1:differences)
+            r <- r[i1] - r[-length(r):-(length(r)-lag+1)]
     class(r) <- class(x)
     r
 }

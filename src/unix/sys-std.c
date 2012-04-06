@@ -19,38 +19,39 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-         /* See system.txt for a description of functions */
+/* See system.txt for a description of functions */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include "Defn.h"
 #include "Fileio.h"
-#include "Graphics.h"		/* for KillAllDevices */
+#include "Devices.h"		/* for KillAllDevices */
+#include "Runix.h"
+#include "Startup.h"
+
 #include "Runix.h"
 
-extern int SaveAction;
-
-void fpu_setup(int);     /* in sys-unix.c */
-
 #ifdef HAVE_LIBREADLINE
-#include <readline/readline.h>
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
+# ifdef HAVE_READLINE_READLINE_H
+#  include <readline/readline.h>
+# endif
+# ifdef HAVE_READLINE_HISTORY_H
+#  include <readline/history.h>
+# endif
 #endif
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h> /* for unlink */
+# include <unistd.h>		/* for unlink */
 #endif
 
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h> /* for struct timeval */
+# include <sys/time.h>		/* for struct timeval */
 #endif
 
-
-extern int UsingReadline;
+extern SA_TYPE SaveAction;
+extern Rboolean UsingReadline;
 
 /*
  *  1) FATAL MESSAGES AT STARTUP
@@ -89,22 +90,21 @@ void Rstd_Suicide(char *s)
  */
 static InputHandler BasicInputHandler = {StdinActivity, -1, NULL};
 
-/* 
+/*
    This can be reset by the initialization routines which
-   can ignore stdin, etc.. 
+   can ignore stdin, etc..
 */
 InputHandler *R_InputHandlers = &BasicInputHandler;
 
 /*
-  Initialize the input source handlers used to check for input on the 
+  Initialize the input source handlers used to check for input on the
   different file descriptors.
  */
 InputHandler * initStdinHandler(void)
 {
     InputHandler *inputs;
-    extern void R_processEvents(void);
- 
-    inputs = addInputHandler(R_InputHandlers, fileno(stdin), NULL, 
+
+    inputs = addInputHandler(R_InputHandlers, fileno(stdin), NULL,
 			     StdinActivity);
     /* Defer the X11 registration until it is loaded and actually used. */
 
@@ -118,7 +118,7 @@ InputHandler * initStdinHandler(void)
   BasicInputHandler object.
  */
 InputHandler *
-addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler, 
+addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
 		int activity)
 {
     InputHandler *input, *tmp;
@@ -155,7 +155,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
     InputHandler *tmp;
 
     /* If the handler is the first one in the list, move the list to point
-       to the second element. That's why we use the address of the first 
+       to the second element. That's why we use the address of the first
        element as the first argument.
     */
     if(*handlers == it) {
@@ -201,8 +201,8 @@ getInputHandler(InputHandler *handlers, int fd)
 
 
  This replaces the previous version which looked only on stdin and the X11
- device connection.  This allows more than one X11 device to be open on a different 
- connection. Also, it allows connections a la S4 to be developed on top of this 
+ device connection.  This allows more than one X11 device to be open on a different
+ connection. Also, it allows connections a la S4 to be developed on top of this
  mechanism. The return type of this routine has changed.
 */
 
@@ -230,7 +230,7 @@ static InputHandler* waitForActivity()
 	tv.tv_sec = 0;
 	tv.tv_usec = R_wait_usec;
 	maxfd = setSelectMask(R_InputHandlers, &readMask);
-    } while (!select(maxfd+1, &readMask, NULL, NULL, 
+    } while (!select(maxfd+1, &readMask, NULL, NULL,
 		     (R_wait_usec) ? &tv : NULL));
 
     return(getSelectedHandler(R_InputHandlers, &readMask));
@@ -238,7 +238,7 @@ static InputHandler* waitForActivity()
 
 /*
   Create the mask representing the file descriptors select() should
-  monitor and return the maximum of these file descriptors so that 
+  monitor and return the maximum of these file descriptors so that
   it can be passed directly to select().
 
   If the first element of the handlers is the standard input handler
@@ -254,9 +254,9 @@ setSelectMask(InputHandler *handlers, fd_set *readMask)
     FD_ZERO(readMask);
 
     /* If we are dealing with BasicInputHandler always put stdin */
-    if(handlers == &BasicInputHandler) 
+    if(handlers == &BasicInputHandler)
 	handlers->fileDescriptor = fileno(stdin);
-    
+
     while(tmp) {
 	FD_SET(tmp->fileDescriptor, readMask);
 	maxfd = maxfd < tmp->fileDescriptor ? tmp->fileDescriptor : maxfd;
@@ -284,7 +284,7 @@ getSelectedHandler(InputHandler *handlers, fd_set *readMask)
     */
     if(handlers == &BasicInputHandler && handlers->next)
 	tmp = handlers->next;
-   
+
     while(tmp) {
 	if(FD_ISSET(tmp->fileDescriptor, readMask))
 	    return(tmp);
@@ -315,11 +315,11 @@ static void readline_handler(unsigned char *line)
 	return;
     if (line[0]) {
 #ifdef HAVE_READLINE_HISTORY_H
-	if (strlen(line) && readline_addtohistory)
+	if (strlen((char *)line) && readline_addtohistory)
 	    add_history(line);
 #endif
-	l = (((readline_len-2) > strlen(line))?
-	     strlen(line): (readline_len-2));
+	l = (((readline_len-2) > strlen((char *)line))?
+	     strlen((char *)line): (readline_len-2));
 	strncpy(readline_buf, line, l);
 	readline_buf[l] = '\n';
 	readline_buf[l+1] = '\0';
@@ -340,10 +340,10 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
     if(!R_Interactive) {
 	if (!R_Slave)
 	    fputs(prompt, stdout);
-	if (fgets(buf, len, stdin) == NULL)
+	if (fgets((char *)buf, len, stdin) == NULL)
 	    return 0;
 	if (!R_Slave)
-	    fputs(buf, stdout);
+	    fputs((char *)buf, stdout);
 	return 1;
     }
     else {
@@ -382,7 +382,7 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 		else
 #endif
 		{
-		    if(fgets(buf, len, stdin) == NULL)
+		    if(fgets((char *)buf, len, stdin) == NULL)
 			return 0;
 		    else
 			return 1;
@@ -449,9 +449,9 @@ void Rstd_Busy(int which)
 
 void R_dot_Last(void);		/* in main.c */
 
-void Rstd_CleanUp(int saveact, int status, int runLast)
+void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
-    char buf[128];
+    unsigned char buf[128];
 
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
 	saveact = SaveAction;
@@ -461,7 +461,8 @@ void Rstd_CleanUp(int saveact, int status, int runLast)
 	qask:
 	    R_ClearerrConsole();
 	    R_FlushConsole();
-	    R_ReadConsole("Save workspace image? [y/n/c]: ", buf, 128, 0);
+	    R_ReadConsole("Save workspace image? [y/n/c]: ", 
+			  buf, 128, 0);
 	    switch (buf[0]) {
 	    case 'y':
 	    case 'Y':
@@ -503,9 +504,9 @@ void Rstd_CleanUp(int saveact, int status, int runLast)
     }
     CleanEd();
     KillAllDevices();
-    if(saveact != SA_SUICIDE && R_CollectWarnings) 
-	PrintWarnings(); /* from device close and .Last */
-    fpu_setup(0);
+    if(saveact != SA_SUICIDE && R_CollectWarnings)
+	PrintWarnings();	/* from device close and .Last */
+    fpu_setup(FALSE);
 
     exit(status);
 }
@@ -514,25 +515,23 @@ void Rstd_CleanUp(int saveact, int status, int runLast)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-    /*
-       This function can be used to display the named files with the
-       given titles and overall title.  On GUI platforms we could
-       use a read-only window to display the result.  Here we just
-       make up a temporary file and invoke a pager on it.
-    */
+int Rstd_ShowFiles(int nfile, 		/* number of files */
+		   char **file,		/* array of filenames */
+		   char **headers,	/* the `headers' args of file.show. 
+					   Printed before each file. */
+		   char *wtitle,	/* title for window 
+					   = `title' arg of file.show */
+		   Rboolean del,	/* should files be deleted after use? */
+		   char *pager)		/* pager to be used */
 
-    /*
-     *     nfile   = number of files
-     *     file    = array of filenames
-     *     headers = the `headers' args of file.show. Printed before each file.
-     *     wtitle  = title for window: the `title' arg of file.show
-     *     del     = flag for whether files should be deleted after use
-     *     pager   = pager to be used.
-     */
-
-int Rstd_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
-		   int del, char *pager)
 {
+/*
+	This function can be used to display the named files with the
+	given titles and overall title.	 On GUI platforms we could
+	use a read-only window to display the result.  Here we just
+	make up a temporary file and invoke a pager on it.
+*/
+
     int c, i, res;
     char *filename;
     FILE *fp, *tfp;
@@ -540,7 +539,7 @@ int Rstd_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
 
     if (nfile > 0) {
         if (pager == NULL || strlen(pager) == 0) pager = "more";
-	filename = tmpnam(NULL);
+	filename = Runix_tmpnam(NULL);
         if ((tfp = fopen(filename, "w")) != NULL) {
 	    for(i = 0; i < nfile; i++) {
 		if (headers[i] && *headers[i])
@@ -574,11 +573,13 @@ int Rstd_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
        a dialog box so a user can choose files that way.
     */
 
+
+
 int Rstd_ChooseFile(int new, char *buf, int len)
 {
     int namelen;
     char *bufp;
-    R_ReadConsole("Enter file name: ", buf, len, 0);
+    R_ReadConsole("Enter file name: ", (unsigned char *)buf, len, 0);
     namelen = strlen(buf);
     bufp = &buf[namelen - 1];
     while (bufp >= buf && isspace((int)*bufp))
@@ -603,3 +604,112 @@ void Rstd_read_history(char *s)
 #endif
 #endif
 }
+
+void Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP sfile;
+    char file[PATH_MAX];
+
+    checkArity(op, args);
+    sfile = CAR(args);
+    if (!isString(sfile) || LENGTH(sfile) < 1)
+	errorcall(call, "invalid file argument");
+    strcpy(file, R_ExpandFileName(CHAR(STRING_ELT(sfile, 0))));
+#if defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_HISTORY_H)
+    if(R_Interactive && UsingReadline) {
+	clear_history();
+	read_history(file);
+    } else errorcall(call, "no history mechanism available");
+#else
+    errorcall(call, "no history mechanism available");
+#endif
+}
+
+void Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP sfile;
+    char file[PATH_MAX];
+
+    checkArity(op, args);
+    sfile = CAR(args);
+    if (!isString(sfile) || LENGTH(sfile) < 1)
+	errorcall(call, "invalid file argument");
+    strcpy(file, R_ExpandFileName(CHAR(STRING_ELT(sfile, 0))));
+#if defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_HISTORY_H)
+    if(R_Interactive && UsingReadline) {
+	write_history(file);
+	history_truncate_file(file, R_HistorySize);
+    } else errorcall(call, "no history available to save");
+#else
+    errorcall(call, "no history available to save");
+#endif
+}
+
+#include <setjmp.h>
+static jmp_buf sleep_return;
+
+static int OldTimeout;
+static void (* OldHandler)(void);
+
+
+#ifdef HAVE_TIMES
+#include <time.h>
+#include <sys/times.h>
+#ifndef CLK_TCK
+/* this is in ticks/second, generally 60 on BSD style Unix, 100? on SysV */
+#ifdef HZ
+#define CLK_TCK HZ
+#else
+#define CLK_TCK	60
+#endif
+#endif /* CLK_TCK */
+
+static struct tms timeinfo;
+static double timeint, start, elapsed;
+
+static void SleepHandler(void)
+{
+    elapsed = (times(&timeinfo) - start) / (double)CLK_TCK;
+/*    Rprintf("elapsed %f,  R_wait_usec %d\n", elapsed, R_wait_usec); */
+    if(elapsed >= timeint) longjmp(sleep_return, 100);
+    if(timeint - elapsed < 0.5)
+	R_wait_usec = 1e6*(timeint - elapsed) + 10000;
+    OldHandler();
+}
+
+
+SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    timeint = asReal(CAR(args));
+    if (ISNAN(timeint) || timeint < 0)
+	errorcall(call, "invalid time value");
+    OldHandler = R_PolledEvents;
+    R_PolledEvents = SleepHandler;
+    OldTimeout = R_wait_usec;
+    if(OldTimeout == 0 || OldTimeout > 500000) R_wait_usec = 500000;
+
+    start = times(&timeinfo);
+    if(setjmp(sleep_return) != 100)
+	for (;;) {
+	    InputHandler *what = waitForActivity();
+	    if(what != NULL) {
+		if(what->fileDescriptor != fileno(stdin))
+		    what->handler((void*) NULL);
+		else usleep(R_wait_usec/2);
+	    /* we can't handle console read events here,
+	       so just sleep for a while */
+	    }
+	}
+
+    R_PolledEvents = OldHandler;
+    R_wait_usec = OldTimeout;
+    return R_NilValue;
+}
+
+#else
+SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    error("Sys.sleep is not implemented on this system")
+}
+#endif

@@ -5,6 +5,7 @@
 
 ### --> d-p-q-r-tests.R  for distribution things
 
+.proctime00 <- proc.time()
 opt.conformance <- 0
 Meps <- .Machine $ double.eps
 
@@ -75,8 +76,11 @@ all( sin(-x) == - sin(x))
 all( cos(-x) == cos(x))
 
 x <- 1:99/100
-all(abs(1 - x / asin(sin(x))) <= Meps)
-all(abs(1 - x / atan(tan(x))) <= Meps)
+all(abs(1 - x / asin(sin(x))) <= 2*Meps)# "== 2*" for HP-UX
+all(abs(1 - x / atan(tan(x))) <  2*Meps)
+
+## Sun has asin(.) = acos(.) = 0 for these:
+##	is.nan(acos(1.1)) && is.nan(asin(-2)) [!]
 
 ## Complex Trig.:
 abs(Im(cos(acos(1i))) -	 1) < 2*Meps
@@ -98,6 +102,9 @@ Isi <- Im(atan(tan(1i + rnorm(100)))) #-- tan(atan(..)) does NOT work (Math!)
 all(abs(Isi-1) < 100* Meps)
 ##P table(2*abs(Isi-1)	/ Meps)
 
+## polyroot():
+all(abs(1 + polyroot(choose(8, 0:8))) < 1e-10)# maybe smaller..
+
 ## gamma():
 abs(gamma(1/2)^2 - pi) < 4* Meps
 r <- rlnorm(5000)
@@ -107,6 +114,9 @@ n <-   10; all(		 gamma(1:n) == cumprod(c(1,1:(n-1))))
 n <-   20; all(abs(rErr( gamma(1:n), cumprod(c(1,1:(n-1))))) < 100*Meps)
 n <-  120; all(abs(rErr( gamma(1:n), cumprod(c(1,1:(n-1))))) < 1000*Meps)
 n <- 10000;all(abs(rErr(lgamma(1:n),cumsum(log(c(1,1:(n-1)))))) < 100*Meps)
+
+all(is.nan(gamma(0:-4))) # + warn.
+
 
 ## fft():
 ok <- TRUE
@@ -144,3 +154,39 @@ oo <- options(warn = -1)# These four lines each would give 3-4 warnings :
  all( pmax(m2, 1:7) == pmax(1:7, m2) & pmax(1:7, m2) == pmax(1:7, m1))
  all( pmin(m2, 1:7) == pmin(1:7, m2) & pmin(1:7, m2) == c(1:3,2,2,2,2))
 options(oo)
+
+## pretty()
+stopifnot(pretty(1:15)	    == seq(0,16, by=2),
+	  pretty(1:15, h=2) == seq(0,15, by=5),
+	  pretty(1)	    == 0:1,
+	  pretty(pi)	    == c(2,4),
+	  pretty(pi, n=6)   == 2:4,
+	  pretty(pi, n=10)  == 2:5,
+	  pretty(pi, shr=.1)== c(3, 3.5))
+
+## gave infinite loop [R 0.64; Solaris], seealso PR#390 :
+all(pretty((1-1e-5)*c(1,1+3*Meps), 7) == seq(0,1,len=3))
+
+n <- 1000
+x12 <- matrix(NA, 2,n); x12[,1] <- c(2.8,3) # Bug PR#673
+for(j in 1:2) x12[j, -1] <- round(rnorm(n-1), dig = rpois(n-1, lam=3.5) - 2)
+for(i in 1:n) {
+    lp <- length(p <- pretty(x <- sort(x12[,i])))
+    stopifnot(p[1] <= x[1] & x[2] <= p[lp],
+              all(x==0) || all.equal(p, rev(-pretty(-x)), tol = 10*Meps))
+}
+
+## PR#741:
+pi != (pi0 <- pi + 2*.Machine$double.eps)
+is.na(match(c(1,pi,pi0), pi)[3])
+    
+## PR#749:
+all(is.na(c(NA && TRUE, TRUE  && NA, NA && NA,
+            NA || FALSE,FALSE || NA, NA || NA)))
+
+all((c(NA || TRUE,  TRUE || NA,
+    !c(NA && FALSE,FALSE && NA))))
+
+
+## Last Line:
+cat('Time elapsed: ', proc.time() - .proctime00,'\n')

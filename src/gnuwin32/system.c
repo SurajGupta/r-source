@@ -27,7 +27,7 @@
 
 #include "Defn.h"
 #include "Fileio.h"
-#include "Graphics.h"		/* KillAllDevices() [nothing else?] */
+#include "Devices.h"		/* KillAllDevices() [nothing else?] */
 #include "graphapp/ga.h"
 #include "console.h"
 #include "rui.h"
@@ -37,11 +37,13 @@
 #include "run.h"
 #include "Startup.h"
 
-int SaveAction = SA_DEFAULT;
-int RestoreAction = SA_RESTORE;
-int LoadSiteFile = True;
-int LoadInitFile = True;
-int DebugInitFile = False;
+unsigned int R_max_memory = INT_MAX;
+
+SA_TYPE SaveAction = SA_DEFAULT;
+SA_TYPE RestoreAction = SA_RESTORE;
+Rboolean LoadSiteFile = TRUE;
+Rboolean LoadInitFile = TRUE;
+Rboolean DebugInitFile = FALSE;
 
 UImode  CharacterMode;
 int ConsoleAcceptCmd;
@@ -50,7 +52,7 @@ void UnLoad_Unzip_Dll();
 void UnLoad_Rbitmap_Dll();
 
 /* used to avoid some flashing during cleaning up */
-int   AllDevicesKilled = 0;
+Rboolean AllDevicesKilled = FALSE;
 int   setupui(void);
 void  delui(void);
 int (*R_yesnocancel)(char *s);
@@ -58,7 +60,7 @@ int (*R_yesnocancel)(char *s);
 static DWORD mainThreadId;
 
 
-int   UserBreak = 0;
+Rboolean UserBreak = FALSE;
 
 /* callbacks */
 static void (*R_CallBackHook) ();
@@ -76,7 +78,7 @@ void R_ProcessEvents(void)
 {
     while (peekevent()) doevent();
     if (UserBreak) {
-	UserBreak = 0;
+	UserBreak = FALSE;
 	raise(SIGINT);
     }
     R_CallBackHook();
@@ -170,7 +172,7 @@ GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
     char *p;
     char *NormalPrompt =
-	(char *) CHAR(STRING(GetOption(install("prompt"), R_NilValue))[0]);
+	(char *) CHAR(STRING_ELT(GetOption(install("prompt"), R_NilValue), 0));
 
     if(!R_is_running) {
 	R_is_running = 1;
@@ -217,7 +219,7 @@ ThreadedReadConsole(char *prompt, char *buf, int len, int addtohistory)
   tbuf = buf;
   tlen = len;
   thist = addtohistory;
-  PulseEvent(EhiWakeUp);
+  SetEvent(EhiWakeUp);
   while (1) {
     WaitMessage();
     if (lineavailable) break;
@@ -341,7 +343,7 @@ void R_Busy(int which)
 void R_dot_Last(void);		/* in main.c */
 
 
-void R_CleanUp(int saveact, int status, int runLast)
+void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
 	saveact = SaveAction;
@@ -367,6 +369,9 @@ void R_CleanUp(int saveact, int status, int runLast)
     case SA_SAVE:
 	if(runLast) R_dot_Last();
 	if(R_DirtyImage) R_SaveGlobalEnv();
+	if (CharacterMode == RGui ||
+	    (R_Interactive && CharacterMode == RTerm))
+	    gl_savehistory(R_HistoryFile);
 	break;
     case SA_NOSAVE:
 	if(runLast) R_dot_Last();
@@ -378,11 +383,9 @@ void R_CleanUp(int saveact, int status, int runLast)
     CleanEd();
     closeAllHlpFiles();
     KillAllDevices();
-    AllDevicesKilled = 1;
-    if (CharacterMode == RGui)
-	savehistory(RConsole, ".Rhistory");
+    AllDevicesKilled = TRUE;
     if (R_Interactive && CharacterMode == RTerm)
-	gl_savehistory(".Rhistory");
+	SetConsoleTitle("");
     UnLoad_Unzip_Dll();
     UnLoad_Rbitmap_Dll();
     if (R_CollectWarnings && saveact != SA_SUICIDE
@@ -413,7 +416,7 @@ void R_CleanUp(int saveact, int status, int runLast)
      */
 
 int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
-		int del, char *pager)
+		Rboolean del, char *pager)
 {
     int   i;
     char  buf[1024];
@@ -453,7 +456,11 @@ int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
 			warning(buf);
 		    }
 		} else {
-		    sprintf(buf, "%s  \"%s\"", pager, file[i]);
+                    /* Quote path if necessary */
+		    if(pager[0] != '"' && strchr(pager, ' '))
+			sprintf(buf, "\"%s\" \"%s\"", pager, file[i]);
+		    else
+			sprintf(buf, "%s \"%s\"", pager, file[i]);
 		    runcmd(buf, 0, 1, "");
 		}
 	    } else {
@@ -473,7 +480,7 @@ int internal_ShowFile(char *file, char *header)
 
     files[0] = file;
     headers[0] = header;
-    return R_ShowFiles(1, files, headers, "File", 0, CHAR(STRING(pager)[0]));
+    return R_ShowFiles(1, files, headers, "File", 0, CHAR(STRING_ELT(pager, 0)));
 }
 
 
@@ -531,38 +538,6 @@ static char RUser[MAX_PATH];
 char *getRHOME(); /* in rhome.c */
 void R_setStartTime();
 
-/* Process ~/.Renviron, if it exists */
-#include "opt.h"
-
-/* like putenv, but allocate storage */
-static void Putenv(char *str)
-{
-    char *buf;
-    buf = (char *) malloc((strlen(str) + 1) * sizeof(char));
-    strcpy(buf, str);
-    putenv(buf);
-}
-
-static void processRenviron()
-{
-    char *opt[2], optf[MAX_PATH], buf[80], *tmp;
-    int   ok;
-
-
-    if (!optopenfile(".Renviron")) {
-	/* R_USER is not necessarily set yet, so we have to work harder */
-	tmp = getenv("R_USER");
-	if(!tmp) tmp = getenv("HOME");
-	if(!tmp) return;
-	sprintf(optf, "%s/.Renviron", tmp);
-	if (!optopenfile(optf)) return;
-    }
-    while ((ok = optread(opt, '='))) {
-	sprintf(buf, "%s=%s", opt[0], opt[1]);
-	Putenv(buf);
-    }
-    optclosefile();
-}
 
 void R_SetWin32(Rstart Rp)
 {
@@ -590,14 +565,26 @@ void R_SetWin32(Rstart Rp)
     pR_ShowMessage = Rp->message;
     R_yesnocancel = Rp->yesnocancel;
     my_R_Busy = Rp->busy;
-    /* Process ~/.Renviron, if it exists. */
+    /* Process .Renviron or ~/.Renviron, if it exists. 
+       Only used here in embedded versions */
     if(!Rp->NoRenviron)
-	processRenviron();
+	process_users_Renviron();
     _controlfp(_MCW_EM, _MCW_EM);
 }
 
 
 /* Remove and process NAME=VALUE command line arguments */
+
+static void Putenv(char *str)
+{
+    char *buf;
+    buf = (char *) malloc((strlen(str) + 1) * sizeof(char));
+    if(!buf) R_ShowMessage("allocation failure in reading Renviron");
+    strcpy(buf, str);
+    putenv(buf);
+   /* no free here: storage remains in use */
+}
+
 
 static void env_command_line(int *pac, char **argv)
 {
@@ -616,11 +603,13 @@ static void env_command_line(int *pac, char **argv)
 
 int cmdlineoptions(int ac, char **av)
 {
-    int   i;
+    int   i, ierr;
+    long value;
     char *p;
     char  s[1024];
     structRstart rstart;
     Rstart Rp = &rstart;
+    MEMORYSTATUS ms;
 
 #ifdef HAVE_TIMES
     R_setStartTime();
@@ -635,22 +624,27 @@ int cmdlineoptions(int ac, char **av)
     R_set_command_line_arguments(ac, av, Rp);
 
 
+    /* set defaults for R_max_memory. This is set here so that
+       embedded applications get no limit */
+    GlobalMemoryStatus(&ms);
+    R_max_memory = min(256 * Mega, ms.dwTotalPhys);
+    
     R_DefParams(Rp);
     Rp->CharacterMode = CharacterMode;
     for (i = 1; i < ac; i++)
 	if (!strcmp(av[i], "--no-environ") || !strcmp(av[i], "--vanilla"))
-		Rp->NoRenviron = True;
+		Rp->NoRenviron = TRUE;
 
 /* Here so that --ess and similar can change */
     Rp->CallBack = R_DoNothing;
     InThreadReadConsole = NULL;
     if (CharacterMode == RTerm) {
 	if (isatty(0)) {
-	    Rp->R_Interactive = True;
+	    Rp->R_Interactive = TRUE;
 	    Rp->ReadConsole = ThreadedReadConsole;
             InThreadReadConsole = CharReadConsole;
 	} else {
-	    Rp->R_Interactive = False;
+	    Rp->R_Interactive = FALSE;
 	    Rp->ReadConsole = FileReadConsole;
 	}
 	R_Consolefile = stdout; /* used for errors */
@@ -660,7 +654,7 @@ int cmdlineoptions(int ac, char **av)
 	Rp->yesnocancel = char_yesnocancel;
 	Rp->busy = CharBusy;
     } else {
-	Rp->R_Interactive = True;
+	Rp->R_Interactive = TRUE;
 	Rp->ReadConsole = GuiReadConsole;
 	Rp->WriteConsole = GuiWriteConsole;
 	Rp->message = askok;
@@ -676,27 +670,51 @@ int cmdlineoptions(int ac, char **av)
      * precedence:  command-line, .Renviron, inherited
      */
     if(!Rp->NoRenviron) {
-	processRenviron();
-	Rp->NoRenviron = True;
+	process_users_Renviron();
+	Rp->NoRenviron = TRUE;
     }
     env_command_line(&ac, av);
-    R_SizeFromEnv(Rp);
+/*    R_SizeFromEnv(Rp); */
 
     R_common_command_line(&ac, av, Rp);
 
     while (--ac) {
 	if (**++av == '-') {
 	    if (!strcmp(*av, "--no-environ")) {
-		Rp->NoRenviron = True;
+		Rp->NoRenviron = TRUE;
 	    } else if (!strcmp(*av, "--ess")) {
 /* Assert that we are interactive even if input is from a file */
-		Rp->R_Interactive = True;
+		Rp->R_Interactive = TRUE;
 		Rp->ReadConsole = ThreadedReadConsole;
                 InThreadReadConsole = FileReadConsole;
 	    } else if (!strcmp(*av, "--mdi")) {
 		MDIset = 1;
 	    } else if (!strcmp(*av, "--sdi") || !strcmp(*av, "--no-mdi")) {
 		MDIset = -1;
+	    } else if (!strncmp(*av, "--max-mem-size", 14)) {
+		if(strlen(*av) < 16) {
+		    ac--; av++; p = *av;
+		}
+		else
+		    p = &(*av)[15];
+		if (p == NULL) {
+		    R_ShowMessage("WARNING: no max-mem-size given\n");
+		    break;
+		}
+		value = Decode2Long(p, &ierr);
+		if(ierr) {
+		    if(ierr < 0)
+			sprintf(s, "WARNING: --max-mem-size value is invalid: ignored\n");
+		    else
+		    sprintf(s, "WARNING: --max-mem-size=%ld`%c': too large and ignored\n",
+			    value,
+			    (ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
+		    R_ShowMessage(s);
+		} else if (value < 10*1024*1024) {
+		    sprintf(s, "WARNING: max-mem-size =%4.1fM too small and ignored\n", value/(1024.0 * 1024.0));
+		    R_ShowMessage(s);
+		} else
+		    R_max_memory = value;
 	    } else {
 		sprintf(s, "WARNING: unknown option %s\n", *av);
 		R_ShowMessage(s);
@@ -738,6 +756,18 @@ int cmdlineoptions(int ac, char **av)
         (!(EhiWakeUp = CreateEvent(NULL, FALSE, FALSE, NULL)) ||
 	 (_beginthread(ReaderThread, 0, NULL) == -1)))
       R_Suicide("impossible to create 'reader thread'; you must free some system resources");
+
+    if ((R_HistoryFile = getenv("R_HISTFILE")) == NULL)
+	R_HistoryFile = ".Rhistory";
+    R_HistorySize = 512;
+    if ((p = getenv("R_HISTSIZE"))) {
+	int value, ierr;
+	value = Decode2Long(p, &ierr);
+	if (ierr != 0 || value < 0)
+	    REprintf("WARNING: invalid R_HISTSIZE ignored;");
+	else
+	    R_HistorySize = value;
+    }
     return 0;
 }
 

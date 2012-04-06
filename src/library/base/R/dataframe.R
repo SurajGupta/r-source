@@ -1,6 +1,11 @@
-row.names <- function(x) attr(x, "row.names")
-
-"row.names<-" <- function(x, value) {
+row.names <- function(x) UseMethod("row.names")
+row.names.data.frame <- function(x) attr(x, "row.names")
+row.names.default <- function(x)
+{
+    if(!is.null(dim(x))) rownames(x) else NULL
+}
+"row.names<-" <- function(x, value) UseMethod("row.names<-")
+"row.names<-.data.frame" <- function(x, value) {
     if (!is.data.frame(x))
 	x <- as.data.frame(x)
     old <- attr(x, "row.names")
@@ -12,6 +17,7 @@ row.names <- function(x) attr(x, "row.names")
     attr(x, "row.names") <- value
     x
 }
+"row.names<-.default" <- function(x, value) "rownames<-"(x, value)
 
 is.na.data.frame <- function (x) {
     y <- do.call("cbind", lapply(x, "is.na"))
@@ -196,6 +202,8 @@ as.data.frame.model.matrix <- function(x, row.names = NULL, optional = FALSE)
     class(value) <- "data.frame"
     value
 }
+
+"[.AsIs" <- function(x, i, ...) structure(NextMethod("["), class = class(x))
 
 as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE)
 {
@@ -838,7 +846,8 @@ print.data.frame <-
 	    op <- options(digits = digits)
 	    on.exit(options(op))
 	}
-	print.matrix(as.matrix(x), ..., quote = quote, right = right)
+        ## avoiding picking up e.g. format.AsIs
+	print.matrix(format.data.frame(x), ..., quote = quote, right = right)
     }
     invisible(x)
 }
@@ -863,7 +872,9 @@ as.matrix.data.frame <- function (x)
 				  if(length(dnj) > 0) dnj else 1:dj[2],
 				  sep = ".")
 	}
-	if(length(levels(xj)) > 0 || !(is.numeric(xj) || is.complex(xj)))
+	if(length(levels(xj)) > 0 || !(is.numeric(xj) || is.complex(xj))
+           || (!is.null(cl <- class(xj)) && # numeric classed objects to format:
+               any(cl == c("POSIXct", "POSIXlt"))))
 	    non.numeric <- TRUE
 	if(!is.atomic(xj))
 	    non.atomic <- TRUE
@@ -877,13 +888,10 @@ as.matrix.data.frame <- function (x)
 	}
     } else if(non.numeric) {
 	for (j in 1:p) {
-            if (mode(X[[j]]) == "character")
-                next;
+            if (is.character(X[[j]]))
+                next
 	    xj <- X[[j]]
-	    if(length(levels(xj)) > 0) {
-		X[[j]] <- as.vector(xj)
-	    }
-	    else X[[j]] <- format(xj)
+	    X[[j]] <- if(length(levels(xj))) as.vector(xj) else format(xj)
 	}
     }
     X <- unlist(X, recursive = FALSE, use.names = FALSE)
@@ -906,7 +914,7 @@ Math.data.frame <- function(x, ...)
     call[[arg]] <- as.name("xx")
     for(j in names(X)) {
 	xx <- X[[j]]
-	if(!is.numeric(xx) && mode(xx) != "complex")
+	if(!is.numeric(xx) && !is.complex(xx))
 	    stop(paste("Non-numeric variable:", j))
 	X[[j]] <- eval(call)
     }
@@ -924,7 +932,7 @@ Math.data.frame <- function (x, ...)
     call[[1]] <- as.name(.Generic)
     arg <- names(formals(f))[1]
     call[[arg]] <- as.name("xx")
-    encl <- sys.frame(sys.parent())
+    encl <- parent.frame()
     var.f <- function(x) eval(call, list(xx = x), encl)
     mode.ok <- sapply(x, is.numeric) & !sapply(x, is.factor) |
 	sapply(x, is.complex)
@@ -949,7 +957,7 @@ Ops.data.frame <- function(e1, e2 = NULL)
     rclass <- !unary && (nchar(.Method[2]) > 0)
     value <- list()
     ## set up call as op(left, right)
-    FUN <- get(.Generic, envir = sys.frame(sys.parent()),mode="function")
+    FUN <- get(.Generic, envir = parent.frame(),mode="function")
     f <- if (unary)
 	quote(FUN(left))
     else quote(FUN(left, right))
@@ -1004,7 +1012,7 @@ Ops.data.frame <- function(e1, e2 = NULL)
 Summary.data.frame <- function(x, ...)
 {
     x <- as.matrix(x)
-    if(!is.numeric(x) && mode(x) != "complex")
+    if(!is.numeric(x) && !is.complex(x))
 	stop("only defined on a data frame with all numeric or complex variables")
     NextMethod(.Generic)
 }

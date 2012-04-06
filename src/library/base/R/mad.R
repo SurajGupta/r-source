@@ -1,7 +1,15 @@
-mad <- function(y, center, constant = 1.4826, na.rm = FALSE) {
+mad <- function(x, center = median(x), constant = 1.4826,
+                na.rm = FALSE, low = FALSE, high = FALSE) 
+{
     if(na.rm)
-	y <- y[!is.na(y)]
-    if(missing(center))
-	constant * (median(abs(y - median(y))))
-    else constant * (median(abs(y - center)))
+	x <- x[!is.na(x)]
+    n <- length(x)
+    constant *
+        if((low || high) && n%%2 == 0) {
+            if(low && high) stop("`low' and `high' can't be both TRUE")
+            n2 <- n %/% 2 + as.integer(high)
+            sort(abs(x - center), partial = n2)[n2]
+        }
+        else median(abs(x - center))
 }
+

@@ -22,9 +22,10 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Graphics.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Graphics.h>
+#include <Devices.h>
 
 /* Return a non-relocatable copy of a string */
 
@@ -34,8 +35,8 @@ static char *SaveString(SEXP sxp, int offset)
     char *s;
     if(!isString(sxp) || length(sxp) <= offset)
 	errorcall(gcall, "invalid string argument");
-    s = R_alloc(strlen(CHAR(STRING(sxp)[offset]))+1, sizeof(char));
-    strcpy(s, CHAR(STRING(sxp)[offset]));
+    s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
+    strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
 }
 
@@ -60,14 +61,28 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     DevDesc *dd;
     char *vmax;
-    char *file, *paper, *face, *bg, *fg, *cmd;
-    int horizontal, onefile, pagecentre, printit;
+    char *file, *paper, *family=NULL, *bg, *fg, *cmd;
+    char *afms[4];
+    int i, horizontal, onefile, pagecentre, printit;
     double height, width, ps;
+    SEXP fam;
+
     gcall = call;
     vmax = vmaxget();
     file = SaveString(CAR(args), 0);  args = CDR(args);
     paper = SaveString(CAR(args), 0); args = CDR(args);
-    face = SaveString(CAR(args), 0);  args = CDR(args);
+
+    /* `family' can be either one string or a 4-vector of afmpaths. */
+    fam = CAR(args); args = CDR(args);
+    if(length(fam) == 1) 
+	family = SaveString(fam, 0);
+    else if(length(fam) == 4) {
+	if(!isString(fam)) errorcall(call, "invalid `family' parameter");
+	family = "User";
+	for(i = 0; i < 4; i++) afms[i] = SaveString(fam, i);
+    } else 
+	errorcall(call, "invalid `family' parameter");
+    
     bg = SaveString(CAR(args), 0);    args = CDR(args);
     fg = SaveString(CAR(args), 0);    args = CDR(args);
     width = asReal(CAR(args));	      args = CDR(args);
@@ -81,20 +96,23 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
     printit = asLogical(CAR(args));   args = CDR(args);
     cmd = SaveString(CAR(args), 0);
 
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if(!PSDeviceDriver(dd, file, paper, face, bg, fg, width, height,
-		       (double)horizontal, ps, onefile, pagecentre,
-		       printit, cmd)) {
-	free(dd);
-	errorcall(call, "unable to start device PostScript");
-    }
-    gsetVar(install(".Device"), mkString("postscript"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if(!PSDeviceDriver(dd, file, paper, family, afms, bg, fg,
+			   width, height, (double)horizontal, ps, onefile,
+			   pagecentre, printit, cmd)) {
+	    free(dd);
+	    errorcall(call, "unable to start device PostScript");
+	}
+	gsetVar(install(".Device"), mkString("postscript"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }
@@ -106,7 +124,7 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
  *  fg	    = foreground color
  *  width   = width in inches
  *  height  = height in inches
- *  debug   = int; if non-0, write TeX-Comments into output.
+ *  debug   = Rboolean; if TRUE, write TeX-Comments into output.
  */
 
 SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -115,7 +133,8 @@ SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
     char *vmax;
     char *file, *bg, *fg;
     double height, width;
-    int debug;
+    Rboolean debug;
+
     gcall = call;
     vmax = vmaxget();
     file = SaveString(CAR(args), 0); args = CDR(args);
@@ -123,19 +142,24 @@ SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
     fg = SaveString(CAR(args), 0);   args = CDR(args);
     width = asReal(CAR(args));	     args = CDR(args);
     height = asReal(CAR(args));	     args = CDR(args);
-    debug = asInteger(CAR(args));    args = CDR(args);
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if(!PicTeXDeviceDriver(dd, file, bg, fg, width, height, debug)) {
-	free(dd);
-	errorcall(call, "unable to start device PicTeX");
-    }
-    gsetVar(install(".Device"), mkString("pictex"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    debug = asLogical(CAR(args));    args = CDR(args);
+    if(debug == NA_LOGICAL) debug = FALSE;
+
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if(!PicTeXDeviceDriver(dd, file, bg, fg, width, height, debug)) {
+	    free(dd);
+	    errorcall(call, "unable to start device PicTeX");
+	}
+	gsetVar(install(".Device"), mkString("pictex"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }
@@ -180,19 +204,22 @@ SEXP do_XFig(SEXP call, SEXP op, SEXP args, SEXP env)
     onefile = asLogical(CAR(args));   args = CDR(args);
     pagecentre = asLogical(CAR(args));
 
-    if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
-	return 0;
-    /* Do this for early redraw attempts */
-    dd->displayList = R_NilValue;
-    GInit(&dd->dp);
-    if(!XFigDeviceDriver(dd, file, paper, face, bg, fg, width, height,
-		       (double)horizontal, ps, onefile, pagecentre)) {
-	free(dd);
-	errorcall(call, "unable to start device xfig");
-    }
-    gsetVar(install(".Device"), mkString("xfig"), R_NilValue);
-    addDevice(dd);
-    initDisplayList(dd);
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS {
+	if (!(dd = (DevDesc *) malloc(sizeof(DevDesc))))
+	    return 0;
+	/* Do this for early redraw attempts */
+	dd->displayList = R_NilValue;
+	GInit(&dd->dp);
+	if(!XFigDeviceDriver(dd, file, paper, face, bg, fg, width, height,
+			     (double)horizontal, ps, onefile, pagecentre)) {
+	    free(dd);
+	    errorcall(call, "unable to start device xfig");
+	}
+	gsetVar(install(".Device"), mkString("xfig"), R_NilValue);
+	addDevice(dd);
+	initDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
 }

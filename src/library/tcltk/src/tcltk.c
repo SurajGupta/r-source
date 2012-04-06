@@ -10,7 +10,7 @@
 #endif
 */
 
-#include "Rinternals.h"
+#include <Rinternals.h>
 #include "R_ext/PrtUtil.h"
 #ifndef Win32
 #include "R_ext/eventloop.h"
@@ -25,6 +25,8 @@
 
 SEXP R_ParseVector(SEXP, int, int *);
 
+#include "tcltk.h" /* declarations of our `public' interface */
+
 
 static Tcl_Interp *Tcl_interp;      /* Interpreter for this application. */
 
@@ -38,7 +40,7 @@ static int R_eval(ClientData clientData,
 
     text = PROTECT(allocVector(STRSXP, argc - 1));
     for (i = 1 ; i < argc ; i++)
-	STRING(text)[i-1] = mkChar(argv[i]);
+	SET_STRING_ELT(text, i-1, mkChar(argv[i]));
 
     expr = PROTECT(R_ParseVector(text, -1, &status));
     if (status != PARSE_OK) {
@@ -50,10 +52,9 @@ static int R_eval(ClientData clientData,
     /* Note that expr becomes an EXPRSXP and hence we need the loop
        below (a straight eval(expr, R_GlobalEnv) won't work) */
     {
-	int i, n;
-	n = length(expr);
+	int n = length(expr);
 	for(i = 0 ; i < n ; i++)
-	    ans = eval(VECTOR(expr)[i], R_GlobalEnv);
+	    ans = eval(VECTOR_ELT(expr, i), R_GlobalEnv);
     }
     UNPROTECT(2);
     return TCL_OK;
@@ -78,6 +79,7 @@ static int R_call(ClientData clientData,
     fun = (SEXP) strtoul(argv[1], NULL, 16);
 
     expr = LCONS(fun, alist);
+    expr = LCONS(install("try"), LCONS(expr, R_NilValue));
 
     ans = eval(expr, R_GlobalEnv);
 
@@ -110,7 +112,7 @@ SEXP dotTcl(SEXP args)
     char *val;
     if(!isValidString(CADR(args)))
 	error("invalid argument");
-    cmd = CHAR(STRING(CADR(args))[0]);
+    cmd = CHAR(STRING_ELT(CADR(args), 0));
     val = tk_eval(cmd);
     ans = mkString(val);
     return ans;
@@ -133,10 +135,13 @@ SEXP dotTclcallback(SEXP args)
        is protected from later GCs. Otherwise we'll have buttons that
        make R go Boom... We need register_callback(closure) or
        something to that effect + a run through registered callbacks
-       in the MarkPhase of GC */
+       in the MarkPhase of GC. [Currently, this is handled by having
+       .Tcl.args assign an alias to the function in the environment of
+       the window with which the callback is associated] */
 
     while ( formals != R_NilValue )
     {
+	if (TAG(formals) ==  R_DotsSymbol) break;
 	sprintf(tmp, " %%%s", CHAR(PRINTNAME(TAG(formals))));
 	strcat(buf, tmp);
 	formals = CDR(formals);
@@ -170,8 +175,8 @@ void addTcl(void)
     OldHandler = R_PolledEvents;
     OldTimeout = R_wait_usec;
     R_PolledEvents = TclHandler;
-    if ( R_wait_usec > 100000 || R_wait_usec == 0)
-	R_wait_usec = 100000;
+    if ( R_wait_usec > 10000 || R_wait_usec == 0)
+	R_wait_usec = 10000;
 }
 
 void delTcl(void)
@@ -186,7 +191,7 @@ void delTcl(void)
 }
 #endif
 
-void tcltk_init()
+void tcltk_init(void)
 {
     int code;
 
@@ -234,5 +239,3 @@ void tcltk_init()
 #endif
 
 }
-
-

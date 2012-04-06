@@ -39,11 +39,10 @@ choose <- function(n,k).Internal(choose(n,k))
 lchoose <- function(n,k).Internal(lchoose(n,k))
 
 ##-- 2nd part --
-D <- function(expr, namevec).Internal(D(expr, namevec))
+D <- function(expr, name) .Internal(D(expr, name))
 
 Machine <- function().Internal(Machine())
 R.Version <- function().Internal(Version())
-Version <- function() { .Deprecated("R.Version"); R.Version() }
 machine <- function().Internal(machine())
 colors <- function().Internal(colors())
 colours <- .Alias(colors)
@@ -81,17 +80,28 @@ do.call <- function(what,args).Internal(do.call(what,args))
 drop <- function(x).Internal(drop(x))
 duplicated <- function(x, incomparables = FALSE) {
     if(!is.logical(incomparables) || incomparables)
-	stop("duplicated(.. incomparables != FALSE) not yet available in R.")
+	stop("duplicated(incomparables != FALSE) not yet available in R.")
     .Internal(duplicated(x))
 }
 format.info <- function(x).Internal(format.info(x))
 gc <- function(verbose = getOption("verbose"))
-    matrix(.Internal(gc(verbose))/c(1,1,1,1,10,10),2,3,
-           dimnames = list(c("Ncells","Vcells"),c("free","total", "(Mb)")))
+{
+    res <-.Internal(gc(verbose))/c(1, 1, 10, 10, 1, 1, rep(10,4))
+    res <- matrix(res, 2, 5,
+                  dimnames = list(c("Ncells","Vcells"),
+                  c("used", "(Mb)", "gc trigger", "(Mb)", "limit (Mb)")))
+    if(all(is.na(res[, 5]))) res[, -5] else res
+}
 gcinfo <- function(verbose).Internal(gcinfo(verbose))
 gctorture <- function(on=TRUE)invisible(.Internal(gctorture(on)))
 gray <- function(level).Internal(gray(level))
 grey <- .Alias(gray)
+
+mem.limits <- function(nsize=NA, vsize=NA)
+{
+    structure(.Internal(mem.limits(as.integer(nsize), as.integer(vsize))),
+              names=c("nsize", "vsize"))
+}
 
 nchar <- function(x).Internal(nchar(x))
 
@@ -107,7 +117,7 @@ plot.window <- function(xlim, ylim, log = "", asp = NA, ...)
 polyroot <- function(z).Internal(polyroot(z))
 rank <- function(x, na.last = TRUE) {
     if(!is.logical(na.last) || !na.last)
-	stop("rank(.., na.last != TRUE) does not yet work in R.")
+	stop("rank(na.last != TRUE) does not yet work in R.")
     .Internal(rank(x))
 }
 readline <- function(prompt="").Internal(readline(prompt))
@@ -123,7 +133,13 @@ searchpaths <- function()
 }
 
 sink <- function(file=NULL, append = FALSE)
+{
+    if(is.null(file)) file <- 1
+    else if(is.character(file)) file <- file(file, ifelse(append, "a", "w"))
+    else if(!inherits(file, "connection"))
+        stop("`file' must be NULL, a connection or a character string")
     .Internal(sink(file, append))
+}
 
 ##-- DANGER ! ---   substitute(list(...))  inside functions !!!
 ##substitute <- function(expr, env=NULL).Internal(substitute(expr, env))

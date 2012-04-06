@@ -1,5 +1,5 @@
 /*
- *  $Id: nls.c,v 1.4 2000/02/23 08:36:26 hornik Exp $ 
+ *  $Id: nls.c,v 1.8 2000/11/24 16:37:03 hornik Exp $
  *
  *  Routines used in calculating least squares solutions in a
  *  nonlinear model in nls library for R.
@@ -25,17 +25,9 @@
  *
  */
 
-#include "R.h"
-#include "Rinternals.h"
+#include <R.h>
+#include <Rinternals.h>
 #include <stdlib.h>
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
 
 #ifndef MIN
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -52,9 +44,9 @@ getListElement(SEXP list, SEXP names, char *str) {
   int i;
 
   for (i = 0; i < LENGTH(list); i++) {
-    tempChar = CHAR(STRING(names)[i]);
+    tempChar = CHAR(STRING_ELT(names, i));
     if( strcmp(tempChar,str) == 0) {
-      elmt = VECTOR(list)[i];
+      elmt = VECTOR_ELT(list, i);
       break;
     }
   }
@@ -63,7 +55,7 @@ getListElement(SEXP list, SEXP names, char *str) {
 
 /*
  *  call to nls_iter from R -
- *  .External("nls_iter", m, control, doTrace)
+ *  .Call("nls_iter", m, control, doTrace)
  *  where m and control are nlsModel and nlsControl objects.
  *  doTrace is a logical value.  The returned value is m.
  */
@@ -77,7 +69,7 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
     newPars, newIncr, trace;
 
   doTrace = asLogical(doTraceArg);
-  
+
   if(!isNewList(control))
     error("control must be a list\n");
   if(!isNewList(m))
@@ -136,9 +128,9 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 
   PROTECT(pars = eval(getPars, R_GlobalEnv));
   nPars = LENGTH(pars);
-  
+
   dev = asReal(eval(deviance, R_GlobalEnv));
-  if(doTrace) eval(trace,R_GlobalEnv); 
+  if(doTrace) eval(trace,R_GlobalEnv);
 
   fac = 1.0;
   hasConverged = FALSE;
@@ -150,7 +142,7 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
       break;
     }
     PROTECT(newIncr = eval(incr,R_GlobalEnv));
-    
+
     while(fac >= minFac) {
       for(j = 0; j < nPars; j++) REAL(newPars)[j] = REAL(pars)[j] +
 				   fac * REAL(newIncr)[j];
@@ -179,7 +171,7 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
       UNPROTECT(9);
       error("step factor reduced below minimum");
     }
-    if(doTrace) eval(trace,R_GlobalEnv); 
+    if(doTrace) eval(trace,R_GlobalEnv);
   }
 
   if(!hasConverged) {
@@ -219,27 +211,27 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho) {
     PROTECT(ans = temp);
   }
   for(i = 0; i < LENGTH(theta); i++) {
-    VECTOR(pars)[i] = findVar(install(CHAR(STRING(theta)[i])), rho);
-    lengthTheta += LENGTH(VECTOR(pars)[i]);
+    SET_VECTOR_ELT(pars, i, findVar(install(CHAR(STRING_ELT(theta, i))), rho));
+    lengthTheta += LENGTH(VECTOR_ELT(pars, i));
   }
   PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), lengthTheta));
 
   for(i = 0, start = 0; i < LENGTH(theta); i++) {
-    for(j = 0; j < LENGTH(VECTOR(pars)[i]); j++, start += LENGTH(ans)) {
+    for(j = 0; j < LENGTH(VECTOR_ELT(pars, i)); j++, start += LENGTH(ans)) {
       SEXP ans_del;
       double origPar, xx, delta;
 
-      origPar = REAL(VECTOR(pars)[i])[j];
+      origPar = REAL(VECTOR_ELT(pars, i))[j];
       xx = fabs(origPar);
       delta = (xx == 0) ? eps : xx*eps;
-      REAL(VECTOR(pars)[i])[j] += delta;
+      REAL(VECTOR_ELT(pars, i))[j] += delta;
       PROTECT(ans_del = eval(expr, rho));
       if(!isReal(ans_del)) ans_del = coerceVector(ans_del, REALSXP);
       UNPROTECT(1);
       for(k = 0; k < LENGTH(ans); k++)
 	REAL(gradient)[start + k] = (REAL(ans_del)[k] -
 				     REAL(ans)[k])/delta;
-      REAL(VECTOR(pars)[i])[j] = origPar;
+      REAL(VECTOR_ELT(pars, i))[j] = origPar;
     }
   }
   setAttrib(ans, install("gradient"), gradient);

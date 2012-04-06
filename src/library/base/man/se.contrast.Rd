@@ -5,9 +5,10 @@
 \title{Standard Errors for Contrasts in Model Terms}
 \usage{
 se.contrast(object, \dots)
-se.contrast.aov(x, contrast.obj,
-  coef = contr.helmert(ncol(contrast))[, 1], data = NULL) 
-se.contrast.aovlist(\dots)
+se.contrast.aov(object, contrast.obj,
+  coef = contr.helmert(ncol(contrast))[, 1], data = NULL, \dots) 
+se.contrast.aovlist(object, contrast.obj,
+  coef = contr.helmert(ncol(contrast))[, 1], data = NULL, \dots)
 }
 \alias{se.contrast}
 \alias{se.contrast.aov}
@@ -42,8 +43,10 @@ se.contrast.aovlist(\dots)
   A vector giving the standard errors for each contrast.
 }
 \author{B.D. Ripley}
-\seealso{\code{\link{contrasts}}, \code{\link{model.tables}}
-
+\seealso{
+  \code{\link{contrasts}},
+  \code{\link{model.tables}}
+}
 \examples{
 ## From Venables and Ripley (1997) p.210.
 N <- c(0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,1,1,0,0)

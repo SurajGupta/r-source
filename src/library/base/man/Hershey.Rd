@@ -1,40 +1,48 @@
 \name{Hershey}
 \alias{Hershey}
 \title{Hershey Vector Fonts in R}
+\usage{
+Hershey
+}
 \description{
   If the \code{vfont} argument to one of the text-drawing functions
-  (\code{\link{text}} and \code{\link{contour}})
+  (\code{\link{text}}, \code{\link{mtext}}, \code{\link{title}},
+  \code{\link{axis}}, and \code{\link{contour}})
   is a character vector of length 2, hershey vector fonts are used to
   render the text.
 
-  These fonts have two advantages:
-
+  These fonts have two advantages:\cr
   \enumerate{
-  \item vector fonts describe each
-  character in terms of a set of points;  \R renders the character by
-  joining up the points with straight lines.  This intimate knowledge of
-  the outline of each character means that \R can arbitrarily transform
-  the characters, which can mean that the vector fonts look better
-  for rotated and 3d text.
-  \item this implementation was adapted from the GNU libplot library
-  which provides support for non-ASCII and non-English fonts.  This means
-  that it is possible, for example, to produce wierd plotting symbols and
-  Japanese characters.
+    \item vector fonts describe each
+    character in terms of a set of points;  \R renders the character by
+    joining up the points with straight lines.  This intimate knowledge of
+    the outline of each character means that \R can arbitrarily transform
+    the characters, which can mean that the vector fonts look better
+    for rotated and 3d text.
+    \item this implementation was adapted from the GNU libplot library
+    which provides support for non-ASCII and non-English fonts.  This means
+    that it is possible, for example, to produce wierd plotting symbols and
+    Japanese characters.
   }
+
+  Drawback:\cr
+  You cannot use mathematical expressions (\code{\link{plotmath}}) with
+  Hershey fonts.
 }
 \details{
   The Hershey characters are organised into a set of fonts, which are
   specified by a typeface (e.g., \code{serif} or \code{sans serif})
-  and a fontindex
-  (e.g., \code{plain} or \code{italic}).
+  and a fontindex or ``style'' (e.g., \code{plain} or \code{italic}).
   The first element of \code{vfont} specifies the typeface and the second
   element specifies the fontindex.  The first table
   produced by \code{example(Hershey)} shows the character \code{a} produced
   by each of the different fonts.
 
-
-  The available values for \code{(typeface, fontindex)} for Hershey
-  vector fonts are:
+  The available \code{typeface} and \code{fontindex} values are
+  available as list components of the variable \code{Hershey}.
+  The allowed pairs for \code{(typeface, fontindex)} are:
+%% This is checked (via max{#}) in FixupVFont() ../../../main/plot.c
+%% The basic "table" really is in  ../../../main/g_fontdb.c
   \tabular{ll}{
     serif \tab plain \cr
     serif \tab italic \cr
@@ -60,7 +68,7 @@
     sans serif symbol \tab plain \cr
     sans serif symbol \tab italic \cr
   }
-
+  and the indices of these are available as \code{Hershey$allowed}.
   \describe{
     \item{Escape sequences:}{The string to be drawn can include escape
     sequences, which all begin with a \code{\\}.   When \R encounters a
@@ -157,6 +165,8 @@
   \code{\link{Japanese}}
 }
 \examples{
+str(Hershey)
+
 ######
 # create tables of vector font functionality
 ######
@@ -167,15 +177,10 @@ make.table <- function(nr, nc) {
     savepar
 }
 
-get.r <- function(i, nr) {
-    i \%\% nr + 1
-}
+get.r <- function(i, nr)     i \%\% nr + 1
+get.c <- function(i, nr)     i \%/\% nr + 1
 
-get.c <- function(i, nr) {
-    i \%/\% nr + 1
-}
-
-draw.title <- function(title, nr, nc) {
+draw.title <- function(title, i = 0, nr, nc) {
     r <- get.r(i, nr)
     c <- get.c(i, nr)
     text((nc*2 + 1)/2, 0, title, font=2)
@@ -184,9 +189,9 @@ draw.title <- function(title, nr, nc) {
 draw.sample.cell <- function(typeface, fontindex, string, i, nr) {
     r <- get.r(i, nr)
     c <- get.c(i, nr)
-    text((2*(c - 1) + 1), -r, paste(typeface, fontindex))
-    text((2*c), -r, string, vfont=c(typeface, fontindex), cex=1.5)
-    rect((2*(c - 1) + .5), -(r - .5), (2*c + .5), -(r + .5), border="grey")
+    text(2*(c - 1) + 1, -r, paste(typeface, fontindex))
+    text(2*c, -r, string, vfont=c(typeface, fontindex), cex=1.5)
+    rect(2*(c - 1) + .5, -(r - .5), 2*c + .5, -(r + .5), border="grey")
 }
 
 draw.vf.cell <- function(typeface, fontindex, string, i, nr, raw.string=NULL) {
@@ -194,16 +199,16 @@ draw.vf.cell <- function(typeface, fontindex, string, i, nr, raw.string=NULL) {
     c <- get.c(i, nr)
     if (is.null(raw.string))
         raw.string <- paste("\\\\", string, sep="")
-    text((2*(c - 1) + 1), -r, raw.string, col="grey")
-    text((2*c), -r, string, vfont=c(typeface, fontindex))
-    rect((2*(c - 1) + .5), -(r - .5), (2*c + .5), -(r + .5), border="grey")
+    text(2*(c - 1) + 1, -r, raw.string, col="grey")
+    text(2*c, -r, string, vfont=c(typeface, fontindex))
+    rect(2*(c - 1) + .5, -(r - .5), (2*c + .5), -(r + .5), border="grey")
 }
 
 nr <- 23
 nc <- 1
 oldpar <- make.table(nr, nc)
 i <- 0
-draw.title("Sample 'a' for each available font", nr, nc)
+draw.title("Sample 'a' for each available font", i, nr, nc)
 draw.sample.cell("serif", "plain", "a", i, nr); i <- i + 1
 draw.sample.cell("serif", "italic", "a", i, nr); i <- i + 1
 draw.sample.cell("serif", "bold", "a", i, nr); i <- i + 1
@@ -234,7 +239,7 @@ tf <- "serif"
 fi <- "plain"
 make.table(nr, nc)
 i <- 0
-draw.title("Symbol (incl. Greek) Escape Sequences", nr, nc)
+draw.title("Symbol (incl. Greek) Escape Sequences", i, nr, nc)
 %% double each backslash here in *.Rd !
 ## Greek alphabet in order
 draw.vf.cell(tf, fi, "\\\\*A", i, nr); i<-i+1; { "Alpha"}
@@ -386,7 +391,7 @@ nr <- 25
 nc <- 4
 make.table(nr, nc)
 i <- 0
-draw.title("ISO Latin-1 Escape Sequences", nr, nc)
+draw.title("ISO Latin-1 Escape Sequences", i, nr, nc)
 draw.vf.cell(tf, fi, "\\\\r!", i, nr); i<-i+1; { "exclamdown"}
 draw.vf.cell(tf, fi, "\\\\ct", i, nr); i<-i+1; { "cent"}
 draw.vf.cell(tf, fi, "\\\\Po", i, nr); i<-i+1; { "sterling"}
@@ -478,7 +483,7 @@ nr <- 25
 nc <- 2
 make.table(nr, nc)
 i <- 0
-draw.title("Special Escape Sequences", nr, nc)
+draw.title("Special Escape Sequences", i, nr, nc)
 draw.vf.cell(tf, fi, "\\\\AR", i, nr); i<-i+1; { "aries"}
 draw.vf.cell(tf, fi, "\\\\TA", i, nr); i<-i+1; { "taurus"}
 draw.vf.cell(tf, fi, "\\\\GE", i, nr); i<-i+1; { "gemini"}
@@ -523,7 +528,6 @@ draw.vf.cell(tf, fi, "\\\\ul", i, nr); i<-i+1; { "underscore"}
 nr <- 25
 nc <- 3
 make.table(nr, nc)
-i <- 0
 code <- c(300:307,310:317,320:327,330:337,340:347,350:357,360:367,370:377,
           243,263)
 string <- c(
@@ -537,7 +541,7 @@ string <- c(
 "\\356","\\357","\\360","\\361","\\362","\\363",
 "\\364","\\365","\\366","\\367","\\370","\\371",
 "\\372","\\373","\\374","\\375","\\376","\\377","\\243","\\263")
-draw.title("Cyrillic Octal Codes", nr ,nc)
+draw.title("Cyrillic Octal Codes", i = 0, nr ,nc)
 for (i in 1:66)
     draw.vf.cell(tf, "cyrillic", string[i], i-1, nr,
                  raw.string=paste("\\\\", as.character(code[i]), sep=""))
@@ -545,22 +549,20 @@ for (i in 1:66)
 nr <- 25
 nc <- 3
 make.table(nr, nc)
-i <- 0
 code <- c(252,254,256,262:269,275,278:281,284,745,746,750:768,796:802,
           804:807,809,814:828,830:834,840:844)
-draw.title("Raw Hershey Escape Sequences", nr, nc)
+draw.title("Raw Hershey Escape Sequences", i=0, nr, nc)
 for (i in 1:75)
     draw.vf.cell(tf, fi, paste("\\\\#H",formatC(code[i],wid=4,flag=0),sep=""),
                  i-1, nr)
 make.table(nr, nc)
-i <- 0
 code <- c(845:847,850:856,860:874,899:909,2296:2299,2318:2332,2367:2382,
           4014,4109)
-draw.title("More Raw Hershey Escape Sequences", nr, nc)
+draw.title("More Raw Hershey Escape Sequences", i=0, nr, nc)
 for (i in 1:73)
     draw.vf.cell(tf, fi, paste("\\\\#H",formatC(code[i],wid=4,flag=0),sep=""),
                  i-1, nr)
 
 par(oldpar)
 }
-
+\keyword{aplot}

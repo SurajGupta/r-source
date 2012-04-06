@@ -11,69 +11,51 @@ subdir = doc
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = Makefile.in KEYWORDS KEYWORDS.db R.1 R.aux
+INSTFILES = KEYWORDS KEYWORDS.db
+DISTFILES = Makefile.in $(INSTFILES) R.1 R.aux
 SUBDIRS = html manual
 
 HELP2MAN = $(top_builddir)/tools/help2man
 
-all docs: Makefile R
+all: Makefile R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R:
-	@$(MKINSTALLDIRS) $(top_builddir)/doc/html/search
-	@cat $(srcdir)/html/search/SearchEngine-head.html > \
-	  $(top_builddir)/doc/html/search/SearchEngine.html
-	@-$(top_builddir)/tools/keywords2html $(srcdir)/KEYWORDS.db >> \
-	  $(top_builddir)/doc/html/search/SearchEngine.html
-	@cat $(srcdir)/html/search/SearchEngine-foot.html >> \
-	  $(top_builddir)/doc/html/search/SearchEngine.html
-	@if [ "$(srcdir)" != "." ]; then \
-	  $(MAKE) rhome=$(top_builddir) install-html; \
-	  (cd manual && $(MAKE) $@); \
-	fi
+R: Makefile
+	@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@) || exit 1; \
+	done
 
-install: install-message installdirs install-html install-man
-	@for f in KEYWORDS KEYWORDS.db; do \
-	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/doc; \
-	done
+docs:
 	@(cd manual && $(MAKE) $@)
+
+install: install-message installdirs install-man
+	@for f in $(INSTFILES); do \
+	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/$(subdir); \
+	done
+	@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@) || exit 1; \
+	done
 installdirs:
+	@$(MKINSTALLDIRS) $(rhome)/$(subdir)
 	@$(MKINSTALLDIRS) $(mandir)/man1
-	@$(MKINSTALLDIRS) $(rhome)/doc/manual
-	@$(MKINSTALLDIRS) $(rhome)/doc/html/search
-install-html:
-	@for f in $(srcdir)/html/*.html \
-	          $(srcdir)/html/*.jpg \
-	          $(srcdir)/html/*.css; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/doc/html; \
-	done
-	@for f in $(srcdir)/html/search/*.class \
-	          $(srcdir)/html/search/*.html; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/doc/html/search; \
-	done
-	@for f in $(top_builddir)/doc/html/search/index.txt \
-                  $(top_builddir)/doc/html/search/SearchEngine.html; do \
-	  if test -f $${f} -a "$(top_builddir)" != "$(rhome)"; then \
-	    $(INSTALL_DATA) $${f} $(rhome)/doc/html/search; \
-	  fi \
-	done
 install-man:
 	@$(INSTALL_DATA) $(srcdir)/R.1 $(mandir)/man1
 install-message:
-	@echo "installing doc ..."
+	@echo "installing $(subdir) ..."
 install-strip: install
+
 uninstall:
-	@echo "uninstalling doc ..."
-	@if test -d $(rhome)/doc -a \
+	@echo "uninstalling $(subdir) ..."
+	@if test -d $(rhome)/$(subdir) -a \
 	  "`cd $(rhome); pwd`" != "`cd $(top_builddir); pwd`"; then \
-	  (cd $(rhome)/doc && \
-	    rm -rf html manual KEYWORDS*); \
-	  rmdir $(rhome)/doc 2> /dev/null \
-	    || echo "  subdir doc not removed"; \
+	  (cd $(rhome)/$(subdir) && \
+	    rm -rf $(SUBDIRS) KEYWORDS*); \
+	  rmdir $(rhome)/$(subdir) 2>/dev/null \
+	    || echo "  subdir $(subdir) not removed"; \
 	fi
 	@rm -f $(mandir)/man1/R.1
 
@@ -82,16 +64,13 @@ dvi info pdf::
 
 mostlyclean:
 clean:
-	@if [ "$(srcdir)" != "." ]; then \
-	  rm -rf html; \
-	else \
-	  rm -f html/function.html \
-	        html/packages.html \
-	        html/search/index.txt; \
-	fi
-	@(cd manual && $(MAKE) $@)
+	@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@); \
+	done
 distclean: clean
-	@(cd manual && $(MAKE) $@)
+	@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@) || exit 1; \
+	done
 	@rm -f Makefile
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use; it"
@@ -100,10 +79,10 @@ maintainer-clean: distclean
 
 maintainer-build: $(srcdir)/R.1
 $(srcdir)/R.1: $(top_srcdir)/src/scripts/R.sh.in $(srcdir)/R.aux
-	@(cd $(top_builddir)/src/scripts && $(MAKE) R)
+	@(cd $(top_builddir)/src/scripts && $(MAKE) R.fe)
 	@$(HELP2MAN) --include=$(srcdir)/R.aux --no-info --output=$@ \
 	  --name="a language for data analysis and graphics" \
-	  $(top_builddir)/bin/R
+	  $(top_builddir)/src/scripts/R.fe
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \

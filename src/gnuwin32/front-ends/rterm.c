@@ -26,15 +26,18 @@
 #define PSIGNAL
 #include "psignal.h"
 #include "globalvar.h"
+#include "../getline/getline.h"
 
 extern void cmdlineoptions(int, char **);
 extern void readconsolecfg();
-extern void gl_loadhistory(char *);
 extern int initapp(int, char **);
 extern void Rf_mainloop(void);
 extern UImode CharacterMode;
 extern int UserBreak;
 extern int R_Interactive;
+extern int R_HistorySize;
+extern int R_RestoreHistory;
+extern char *R_HistoryFile;
 
 extern char *getDLLVersion();
 
@@ -68,7 +71,11 @@ int AppMain (int argc, char **argv)
     signal(SIGBREAK, my_onintr);
     initapp(0, NULL);
     readconsolecfg();
-    if(R_Interactive) gl_loadhistory(".Rhistory");
+    if(R_Interactive) {
+	gl_hist_init(R_HistorySize, 1);
+	if (R_RestoreHistory) gl_loadhistory(R_HistoryFile);
+	SetConsoleTitle("Rterm");
+    }
     Rf_mainloop();
     /* NOTREACHED */
     return 0;

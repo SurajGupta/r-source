@@ -18,7 +18,7 @@
 }
 \details{
   This data set is useful for illustrating various techniques for the
-  analysis of contingency tables, such as the standard chi-square test
+  analysis of contingency tables, such as the standard chi-squared test
   or, more generally, log-linear modelling, and graphical methods such
   as mosaic plots, sieve diagrams or association plots.
 }
@@ -40,9 +40,10 @@
   \url{http://hotspur.psych.yorku.ca/SCS/Papers/asa92.html}
 }
 \seealso{
-  \code{\link{chisq.test}},
+  \code{\link[ctest]{chisq.test}},
   \code{\link{loglin}},
   \code{\link{mosaicplot}}
+}
 \examples{
 data(HairEyeColor)
 ## Full mosaic

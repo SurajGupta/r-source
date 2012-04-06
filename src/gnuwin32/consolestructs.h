@@ -25,6 +25,7 @@ struct structConsoleData {
     rgb   bg, fg, ufg;		/* colours */
     int   fv, fc;		/* first line and first char visible */
     int   r, c;			/* cursor position */
+    int   overwrite;		/* overwrite mode */
     int   sel, mx0, my0, mx1, my1;	/* selection */
     xbuf  lbuf;			/* lines buffer */
     int   firstkey, numkeys;	/* keys buffer */
@@ -37,8 +38,7 @@ struct structConsoleData {
     int   lazyupdate, needredraw, newfv, newfc;	/* updating and redrawing */
     bitmap bm;
 
-    int   cur_pos, max_pos, prompt_len;	/* editing */
-    xbuf  history;
+    int   input, cur_pos, max_pos, prompt_len;	/* editing */
 
     char  chbrk, modbrk;	/* hook for user's break */
     void  (*fbrk) ();
@@ -73,8 +73,6 @@ typedef struct structConsoleData *ConsoleData;
 #define cur_pos (p->cur_pos)
 #define max_pos (p->max_pos)
 #define prompt_len (p->prompt_len)
-#define HISTORY(i) (p->history->s[p->history->ns - i - 1])
-#define NHISTORY   (p->history->ns)
 
 #define WRITELINE(i, j) writeline(p, i, j)
 
@@ -90,13 +88,10 @@ typedef struct structConsoleData *ConsoleData;
 #define FVOIDRETURN { return; }
 #define FRETURN(result) {return result;}
 
-#define PBEGIN
-
-#define PEND
-
 #define RSHOW(r) {gbitblt(c, p->bm, topleft(r), r);}
 
-ConsoleData newconsoledata(font f, int rows, int cols,
+ConsoleData newconsoledata(font f, int rows, int cols, 
+    int bufbytes, int buflines,
     rgb fg, rgb ufg, rgb bg, int kind);
 
 void freeConsoleData(ConsoleData p);
@@ -119,13 +114,11 @@ rgb consolebg, consolefg, consoleuser, pagerhighlight;
 #define DIMLBUF 64*1024         /* console buffer size in chars */
 #define MLBUF   8*1024          /* console buffer size in lines */
 #define SLBUF   512             /* console buffer shift in lines */
-#define DIMHIST 16*1024         /* history buffer size in chars */
-#define MHIST   512             /* history buffer size in lines */
-#define SHIST   128             /* history buffer shift in lines */
 #define NKEYS   512		/* 8Kb paste buffer */
 #define TABSIZE 8
 
 xbuf newxbuf(xlong dim, xint ms, xint shift);
+void xbufgrow(xbuf p, xlong dim, xint ms);
 void xbufdel(xbuf p);
 void xbufaddc(xbuf p, char c);
     

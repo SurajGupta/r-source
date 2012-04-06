@@ -67,7 +67,7 @@ loglin(table, margin, start = rep(1, length(table)), fit = FALSE,
   table) in the model.
 
   Assuming that there are no structural zeros, both the Likelihood
-  Ratio Test and Pearson test statistics have an asymptotic chisquare
+  Ratio Test and Pearson test statistics have an asymptotic chi-squared
   distribution with \code{df} degrees of freedom.
     
   Package `MASS' contains \code{loglm}, a front-end to \code{loglin}
@@ -88,7 +88,12 @@ loglin(table, margin, start = rep(1, length(table)), fit = FALSE,
 \author{Kurt Hornik}
 \seealso{\code{\link{table}}}
 \examples{
-## Currently no appropriate data sets are available.
+data(HairEyeColor)
+## Model of joint independence of sex from hair and eye color.
+fm <- loglin(HairEyeColor, list(c(1, 2), c(1, 3), c(2, 3)))
+fm
+1 - pchisq(fm$lrt, fm$df)
+## Model with no three-factor interactions fits well.
 }
 \keyword{category}
 \keyword{models}

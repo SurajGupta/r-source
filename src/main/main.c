@@ -1,7 +1,7 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2000	    The R Development Core Team.
+ *  Copyright (C) 1998-2000   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,8 +25,14 @@
 #define __MAIN__
 #include "Defn.h"
 #include "Graphics.h"
+#include "Devices.h"		/* for InitGraphics */
 #include "IOStuff.h"
 #include "Parse.h"
+#include "Startup.h"
+
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 
 
 /* The `real' main() program is in ../<SYSTEM>/system.c */
@@ -53,7 +59,7 @@ static int ParseBrowser(SEXP, SEXP);
 
 static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 {
-    int status;
+    int status, count=0;
 
     for(;;) {
 	Reset_C_alloc();
@@ -65,9 +71,10 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 	case PARSE_OK:
 	    R_Visible = 0;
 	    R_EvalDepth = 0;
+	    count++;
 	    PROTECT(R_CurrentExpr);
 	    R_CurrentExpr = eval(R_CurrentExpr, rho);
-	    SYMVALUE(R_LastvalueSymbol) = R_CurrentExpr;
+	    SET_SYMVALUE(R_LastvalueSymbol, R_CurrentExpr);
 	    UNPROTECT(1);
 	    if (R_Visible)
 		PrintValueEnv(R_CurrentExpr, rho);
@@ -75,7 +82,7 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
-	    error("syntax error");
+	    error("syntax error: evaluating expression %d", count);
 	    break;
 	case PARSE_EOF:
 	    return;
@@ -101,19 +108,19 @@ char *R_PromptString(int browselevel, int type)
 		sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
 		return BrowsePrompt;
 	    }
-	    return (char*)CHAR(STRING(GetOption(install("prompt"),
-						R_NilValue))[0]);
+	    return (char*)CHAR(STRING_ELT(GetOption(install("prompt"),
+						    R_NilValue), 0));
 	}
 	else {
-	    return (char*)CHAR(STRING(GetOption(install("continue"),
-						R_NilValue))[0]);
+	    return (char*)CHAR(STRING_ELT(GetOption(install("continue"),
+						    R_NilValue), 0));
 	}
     }
 }
 
 static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 {
-    int c, status;
+    int c, status, browsevalue;
     char *bufp, buf[1024];
 
     R_IoBufferWriteReset(&R_ConsoleIob);
@@ -164,14 +171,21 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
 	    R_IoBufferReadReset(&R_ConsoleIob);
 	    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status);
-	    if (browselevel && ParseBrowser(R_CurrentExpr, rho))
-		return;
+	    if (browselevel) {
+		browsevalue = ParseBrowser(R_CurrentExpr, rho);
+		if(browsevalue == 1 )
+		    return;
+		if(browsevalue == 2 ) {
+		    R_IoBufferWriteReset(&R_ConsoleIob);
+		    break;
+		}
+	    }
 	    R_Visible = 0;
 	    R_EvalDepth = 0;
 	    PROTECT(R_CurrentExpr);
 	    R_Busy(1);
 	    R_CurrentExpr = eval(R_CurrentExpr, rho);
-	    SYMVALUE(R_LastvalueSymbol) = R_CurrentExpr;
+	    SET_SYMVALUE(R_LastvalueSymbol, R_CurrentExpr);
 	    UNPROTECT(1);
 	    if (R_Visible)
 		PrintValueEnv(R_CurrentExpr, rho);
@@ -247,7 +261,7 @@ int R_ReplDLLdo1()
 	PROTECT(R_CurrentExpr);
 	R_Busy(1);
 	R_CurrentExpr = eval(R_CurrentExpr, rho);
-	SYMVALUE(R_LastvalueSymbol) = R_CurrentExpr;
+	SET_SYMVALUE(R_LastvalueSymbol, R_CurrentExpr);
 	UNPROTECT(1);
 	if (R_Visible)
 	    PrintValueEnv(R_CurrentExpr, rho);
@@ -319,6 +333,8 @@ void setup_Rmainloop(void)
     SEXP cmd;
     FILE *fp;
 
+    InitConnections(); /* needed to get any output at all */
+
     /* Print a platform and version dependent */
     /* greeting and a pointer to the copyleft. */
 
@@ -329,9 +345,24 @@ void setup_Rmainloop(void)
     /* internal structures. */
 
 #ifdef HAVE_LOCALE_H
-    setlocale(LC_CTYPE,"");/*- make ISO-latin1 etc. work LOCALE users */
-    setlocale(LC_COLLATE,"");/*- alphabetically sorting */
+#ifdef Win32
+    {
+	char *p, Rlocale[1000]; /* Windows' locales can be very long */
+	p = getenv("LC_ALL");
+	if(p) strcpy(Rlocale, p); else strcpy(Rlocale, "");
+	if((p = getenv("LC_CTYPE"))) setlocale(LC_CTYPE, p);
+	else setlocale(LC_CTYPE, Rlocale);
+	if((p = getenv("LC_COLLATE"))) setlocale(LC_COLLATE, p);
+	else setlocale(LC_COLLATE, Rlocale);
+	if((p = getenv("LC_TIME"))) setlocale(LC_TIME, p);
+	else setlocale(LC_TIME, Rlocale);
+    }
+#else
+    setlocale(LC_CTYPE, "");/*- make ISO-latin1 etc. work for LOCALE users */
+    setlocale(LC_COLLATE, "");/*- alphabetically sorting */
+    setlocale(LC_TIME, "");/*- names and defaults for date-time formats */
     /* setlocale(LC_MESSAGES,""); */
+#endif
 #endif
     InitMemory();
     InitNames();
@@ -412,7 +443,7 @@ void setup_Rmainloop(void)
        drop through to further processing. */
 
     R_LoadProfile(R_OpenSysInitFile(), R_NilValue);
-    R_LoadProfile(R_OpenSiteFile(), R_NilValue); 
+    R_LoadProfile(R_OpenSiteFile(), R_NilValue);
     R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
 
     /* Initial Loading is done.  At this point */
@@ -469,26 +500,48 @@ void mainloop(void)
     end_Rmainloop();
 }
 
+/*this functionality now appears in 3
+  places-jump_to_toplevel/profile/here */
+
+static void printwhere(void)
+{
+  RCNTXT *cptr;
+  int lct = 1;
+
+  for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
+    if ((cptr->callflag & CTXT_FUNCTION) &&
+	(TYPEOF(cptr->call) == LANGSXP)) {
+	Rprintf("where %d: ",lct++);
+	PrintValue(cptr->call);
+    }
+  }
+  Rprintf("\n");
+}
 
 static int ParseBrowser(SEXP CExpr, SEXP rho)
 {
     int rval=0;
     if (isSymbol(CExpr)) {
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"n")) {
-	    DEBUG(rho)=1;
+	    SET_DEBUG(rho, 1);
 	    rval=1;
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"c")) {
 	    rval=1;
-	    DEBUG(rho)=0;
+	    SET_DEBUG(rho, 0);
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"cont")) {
 	    rval=1;
-	    DEBUG(rho)=0;
+	    SET_DEBUG(rho, 0);
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"Q")) {
 	    R_BrowseLevel = 0;
             LONGJMP(R_Toplevel.cjmpbuf, CTXT_TOPLEVEL);
+	}
+	if (!strcmp(CHAR(PRINTNAME(CExpr)),"where")) {
+	    printwhere();
+	    SET_DEBUG(rho, 1);
+	    rval=2;
 	}
     }
     return rval;
@@ -584,7 +637,7 @@ SEXP do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if( !isString(CAR(args)) )
 	errorcall(call,"one of \"yes\", \"no\", \"ask\" or \"default\" expected.");
-    tmp = CHAR(STRING(CAR(args))[0]);
+    tmp = CHAR(STRING_ELT(CAR(args), 0));
     if( !strcmp(tmp, "ask") ) {
 	ask = SA_SAVEASK;
 	if(!R_Interactive)

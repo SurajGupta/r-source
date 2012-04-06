@@ -2,7 +2,7 @@
 \title{Create a Socket Connection}
 \usage{
 make.socket(host = "localhost", port, fail = TRUE, server = FALSE)
-print.socket(socket)
+print.socket(x, \dots)
 }
 \alias{make.socket}
 \alias{print.socket}
@@ -11,6 +11,7 @@ print.socket(socket)
   \item{port}{port to connect to/listen on}
   \item{fail}{failure to connect is an error?}
   \item{server}{a server socket?}
+  \item{x}{an object of class \code{"socket"}.}
 }
 \description{
   With \code{server = FALSE} attempts to open a client socket to the
@@ -45,7 +46,7 @@ daytime <- function(host = "localhost"){
     on.exit(close.socket(a))
     read.socket(a)
 }
-\dontrun{daytime()}  ## only works if your computer runs this service
-\dontrun{daytime("ntp.demon.co.uk")}
+## Offical time (UTC) from US Naval Observatory
+\dontrun{daytime("tick.usno.navy.mil")}
 }
 \keyword{misc}

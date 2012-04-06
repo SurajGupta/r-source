@@ -11,43 +11,58 @@ subdir = tests
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-test-src-strict-1 = \
+
+test-src-gct = \
+	eval-etc.R \
+	simple-true.R \
 	arith-true.R \
 	arith.R \
-	d-p-q-r-tests.R \
-	eval-etc.R \
 	is-things.R \
 	lm-tests.R \
 	primitive-funs.R \
-	method-dispatch.R \
-	simple-true.R
+	method-dispatch.R
+test-src-strict-1 = \
+	$(test-src-gct) \
+	d-p-q-r-tests.R
 test-src-strict-auto = \
 	isas-tests.R
 test-src-sloppy-1 = \
 	print-tests.R
 test-src-sloppy-auto = \
 	no-segfault.R
+
+test-src-1 = $(test-src-strict-1) $(test-src-sloppy-1)
+test-src-auto = $(test-src-strict-auto) $(test-src-sloppy-auto)
+test-src-sloppy = $(test-src-sloppy-1) $(test-src-sloppy-auto)
+test-src-strict = $(test-src-strict-1) $(test-src-strict-auto)
+test-src = $(test-src-strict) $(test-src-sloppy)
+
+test-src-reg-1 = \
+	reg-tests-1.R
+test-src-reg-auto =
+test-src-reg = $(test-src-reg-1) $(test-src-reg-auto)
+
 DISTFILES = Makefile.in README \
 	$(test-src-strict-1) $(test-src-strict-1:.R=.Rout.save) \
 	$(test-src-sloppy-1) $(test-src-sloppy-1:.R=.Rout.save) \
+	$(test-src-reg) \
 	isas-tests.Rin isas-tests.Rout.save \
+	p-r-random-tests.R  p-r-random-tests.Rout.save \
 	no-segfault.Rin
 SUBDIRS = Examples
 
 R = LC_ALL=C $(top_builddir)/bin/R --vanilla
 RDIFF = $(top_builddir)/bin/Rdiff
 
-test-src-strict = $(test-src-strict-1) $(test-src-strict-auto)
-test-src-sloppy = $(test-src-sloppy-1) $(test-src-sloppy-auto)
-test-src-auto = $(test-src-strict-auto) $(test-src-sloppy-auto)
-test-src = $(test-src-strict) $(test-src-sloppy)
-
 test-out-strict = $(test-src-strict:.R=.Rout)
 test-out-sloppy = $(test-src-sloppy:.R=.Rout)
-test-out = $(test-src:.R=.Rout)
+test-out-gct = $(test-src-gct:.R=.Rout-gct)
+test-out-reg = $(test-src-reg:.R=.Rout)
+
+test-out = $(test-src:.R=.Rout) $(test-out-gct)
 
 .SUFFIXES:
-.SUFFIXES: .R .Rin .Rout
+.SUFFIXES: .R .Rin .Rout .Rout-gct
 
 all: Makefile test-All
 
@@ -86,6 +101,18 @@ FORCE:
 	  echo "@ECHO_T@ OK"; \
 	fi
 
+.R.Rout-gct:
+	@echo "running gctorture() + \`$<'"
+	@(echo '.ptime <- proc.time(); gctorture()' ; cat $< ; \
+	  echo 'cat("Time used {gctorture()}:", proc.time() - .ptime, "\n")') \
+	 | $(R) > $@
+	@mv $@ $@.fail; Ro=`basename $@ .Rout-gct`.Rout; \
+	  if test ! -r $$Ro ; then $(MAKE) $$Ro ; fi; \
+	  echo @ECHO_N@ "comparing \`$@' to \`$$Ro' ...@ECHO_C@"; \
+	  grep -v 'gctorture()' $@.fail | $(RDIFF) - $$Ro  1 || exit 1; \
+	  mv $@.fail $@; \
+	  echo "@ECHO_T@ OK"
+
 test-All: Makefile
 	@$(MAKE) test-Examples
 	@$(MAKE) test-Specific
@@ -100,15 +127,23 @@ test-Specific:
 	@$(MAKE) test-Specific-strict RVAL_IF_DIFF=1
 	@echo "running sloppy specific tests"
 	@$(MAKE) test-Specific-sloppy RVAL_IF_DIFF=0
+test-Gct: $(test-out-gct)
+test-Reg:
+	@echo "running regression tests"
+	@$(MAKE) $(test-out-reg) RVAL_IF_DIFF=0
 
-# Note: we need to increase nsize (in fact, twice the default) in what
-# follows to make sure we can load the base package twice.
 test-undoc:
 	@for p in $(R_PKGS); do \
 	  echo "undocumented objects in package \`$${p}':"; \
-	  nsize=`$(R) --print-nsize`; \
-	  nsize=`expr 2 \* $${nsize}`; \
-	  echo "undoc(\"$${p}\")" | $(R) --nsize=$${nsize} | grep "^ *\\["; \
+	  echo "undoc(\"$${p}\")" | $(R) | grep "^ *\\["; \
+	  echo; \
+	done
+
+test-codoc:
+	@for p in $(R_PKGS); do \
+	  echo "code/documentation mismatches in package \`$${p}':"; \
+	  echo "codoc(\"$(top_srcdir)/src/library/$${p}\")" | \
+	    $(R) -q | egrep -e "^($$|\\$$| *\\[)"; \
 	  echo; \
 	done
 
@@ -120,7 +155,7 @@ stamp-R: $(top_builddir)/bin/R.bin $(top_builddir)/library/base/R/base
 mostlyclean: clean
 clean:
 	@-(cd Examples; $(MAKE) $@)
-	@rm -f stamp-R Makedeps Rplot* *.Rd data
+	@rm -f stamp-R Makedeps Rplot* *.Rd data dumpdata.R
 distclean: clean
 	@-(cd Examples; $(MAKE) $@)
 	@rm -f Makefile $(test-out) $(test-src-auto)

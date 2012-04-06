@@ -23,9 +23,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Print.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Print.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -64,7 +64,7 @@ SEXP ScalarString(SEXP x)
     SEXP ans;
     PROTECT(x);
     ans = allocVector(STRSXP, 1);
-    STRING(ans)[0] = x;
+    SET_STRING_ELT(ans, 0, x);
     UNPROTECT(1);
     return ans;
 }
@@ -85,11 +85,12 @@ static char *falsenames[] = {
     (char *) 0,
 };
 
+/* int, not Rboolean, for NA_LOGICAL : */
 int asLogical(SEXP x)
 {
     if (isVectorAtomic(x)) {
 	if (LENGTH(x) < 1)
-	    return NA_INTEGER;
+	    return NA_LOGICAL;
 	switch (TYPEOF(x)) {
 	case LGLSXP:
 	    return LOGICAL(x)[0];
@@ -207,7 +208,7 @@ SEXP asChar(SEXP x)
 	    formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei);
 	    return mkChar(EncodeComplex(COMPLEX(x)[0], w, d, e, wi, di, ei));
 	case STRSXP:
-	    return STRING(x)[0];
+	    return STRING_ELT(x, 0);
 	default:
 	    return NA_STRING;
 	}
@@ -229,42 +230,42 @@ void internalTypeCheck(SEXP call, SEXP s, SEXPTYPE type)
     }
 }
 
-int isValidString(SEXP x)
+Rboolean isValidString(SEXP x)
 {
-    return isString(x) && LENGTH(x) > 0 && !isNull(STRING(x)[0]);
+    return isString(x) && LENGTH(x) > 0 && !isNull(STRING_ELT(x, 0));
 }
 
 /* non-empty ("") valid string :*/
-int isValidStringF(SEXP x)
+Rboolean isValidStringF(SEXP x)
 {
-    return isValidString(x) && CHAR(STRING(x)[0])[0];
+    return isValidString(x) && CHAR(STRING_ELT(x, 0))[0];
 }
 
-int isSymbol(SEXP s)
+Rboolean isSymbol(SEXP s)
 {
     return TYPEOF(s) == SYMSXP;
 }
 
 
-int isUserBinop(SEXP s)
+Rboolean isUserBinop(SEXP s)
 {
     if (isSymbol(s)) {
 	char *str = CHAR(PRINTNAME(s));
 	if (str[0] == '%' && str[strlen(str)-1] == '%')
-	    return 1;
+	    return TRUE;
     }
-    return 0;
+    return FALSE;
 }
 
 
-int isNull(SEXP s)
+Rboolean isNull(SEXP s)
 {
     return (s == R_NilValue ||
 	    (TYPEOF(s) == EXPRSXP && LENGTH(s) == 0));
 }
 
 
-int isFunction(SEXP s)
+Rboolean isFunction(SEXP s)
 {
     return (TYPEOF(s) == CLOSXP ||
 	    TYPEOF(s) == BUILTINSXP ||
@@ -272,41 +273,41 @@ int isFunction(SEXP s)
 }
 
 
-int isList(SEXP s)
+Rboolean isList(SEXP s)
 {
     return (s == R_NilValue || TYPEOF(s) == LISTSXP);
 }
 
 
-int isNewList(SEXP s)
+Rboolean isNewList(SEXP s)
 {
     return (s == R_NilValue || TYPEOF(s) == VECSXP);
 }
 
-int isPairList(SEXP s)
+Rboolean isPairList(SEXP s)
 {
     switch (TYPEOF(s)) {
     case NILSXP:
     case LISTSXP:
     case LANGSXP:
-	return 1;
+	return TRUE;
     default:
-	return 0;
+	return FALSE;
     }
 }
 
-int isVectorList(SEXP s)
+Rboolean isVectorList(SEXP s)
 {
     switch (TYPEOF(s)) {
     case VECSXP:
     case EXPRSXP:
-	return 1;
+	return TRUE;
     default:
-	return 0;
+	return FALSE;
     }
 }
 
-int isVectorAtomic(SEXP s)
+Rboolean isVectorAtomic(SEXP s)
 {
     switch (TYPEOF(s)) {
     case LGLSXP:
@@ -314,13 +315,13 @@ int isVectorAtomic(SEXP s)
     case REALSXP:
     case CPLXSXP:
     case STRSXP:
-	return 1;
+	return TRUE;
     default:
-	return 0;
+	return FALSE;
     }
 }
 
-int isVector(SEXP s)/* === isVectorList() or isVectorAtomic() */
+Rboolean isVector(SEXP s)/* === isVectorList() or isVectorAtomic() */
 {
     switch(TYPEOF(s)) {
     case LGLSXP:
@@ -331,132 +332,132 @@ int isVector(SEXP s)/* === isVectorList() or isVectorAtomic() */
 
     case VECSXP:
     case EXPRSXP:
-	return 1;
+	return TRUE;
     default:
-	return 0;
+	return FALSE;
     }
 }
 
 
 
-int isFrame(SEXP s)
+Rboolean isFrame(SEXP s)
 {
     SEXP class;
     int i;
     if (isObject(s)) {
 	class = getAttrib(s, R_ClassSymbol);
 	for (i = 0; i < length(class); i++)
-	    if (!strcmp(CHAR(STRING(class)[i]), "data.frame")) return 1;
+	    if (!strcmp(CHAR(STRING_ELT(class, i)), "data.frame")) return TRUE;
     }
-    return 0;
+    return FALSE;
 }
 
 
-int isEnvironment(SEXP s)
+Rboolean isEnvironment(SEXP s)
 {
     return (TYPEOF(s) == NILSXP || TYPEOF(s) == ENVSXP);
 }
 
 
-int isExpression(SEXP s)
+Rboolean isExpression(SEXP s)
 {
     return TYPEOF(s) == EXPRSXP;
 }
 
 
-int isLanguage(SEXP s)
+Rboolean isLanguage(SEXP s)
 {
     return (s == R_NilValue || TYPEOF(s) == LANGSXP);
 }
 
 
-int isMatrix(SEXP s)
+Rboolean isMatrix(SEXP s)
 {
     SEXP t;
     if (isVector(s)) {
 	t = getAttrib(s, R_DimSymbol);
 	if (TYPEOF(t) == INTSXP && LENGTH(t) == 2)
-	    return 1;
+	    return TRUE;
     }
-    return 0;
+    return FALSE;
 }
 
 
-int isArray(SEXP s)
+Rboolean isArray(SEXP s)
 {
     SEXP t;
     if (isVector(s)) {
 	t = getAttrib(s, R_DimSymbol);
 	if (TYPEOF(t) == INTSXP && LENGTH(t) > 0)
-	    return 1;
+	    return TRUE;
     }
-    return 0;
+    return FALSE;
 }
 
 
-int isTs(SEXP s)
+Rboolean isTs(SEXP s)
 {
     return (isVector(s) && getAttrib(s, R_TspSymbol) != R_NilValue);
 }
 
 
-int tsConform(SEXP x, SEXP y)
+Rboolean tsConform(SEXP x, SEXP y)
 {
     if ((x = getAttrib(x, R_TspSymbol)) != R_NilValue &&
 	(y = getAttrib(y, R_TspSymbol)) != R_NilValue)
 	return INTEGER(x)[0] == INTEGER(x)[0] &&
 	    INTEGER(x)[1] == INTEGER(x)[1] &&
 	    INTEGER(x)[2] == INTEGER(x)[2];
-    return 0;
+    return FALSE;
 }
 
 
 /* Check to see if a list can be made into a vector. */
 /* it must have every element being a vector of length 1. */
 
-int isVectorizable(SEXP s)
+Rboolean isVectorizable(SEXP s)
 {
     int mode = 0;
     if (isNull(s)) {
-	return 1;
+	return TRUE;
     }
     else if (isNewList(s)) {
 	int i, n;
 	n = LENGTH(s);
 	for (i = 0 ; i < n; i++) {
-	    if (!isVector(VECTOR(s)[i]) || LENGTH(VECTOR(s)[i]) > 1)
-		return 0;
-	    mode = (mode >= TYPEOF(VECTOR(s)[i])) ?
-		mode : TYPEOF(VECTOR(s)[i]);
+	    if (!isVector(VECTOR_ELT(s, i)) || LENGTH(VECTOR_ELT(s, i)) > 1)
+		return FALSE;
+	    mode = (mode >= TYPEOF(VECTOR_ELT(s, i))) ?
+		mode : TYPEOF(VECTOR_ELT(s, i));
 	}
 	return mode;
     }
     else if (isList(s)) {
 	for ( ; s != R_NilValue; s = CDR(s)) {
 	    if (!isVector(CAR(s)) || LENGTH(CAR(s)) > 1)
-		return 0;
+		return FALSE;
 	    mode = (mode >= (int) TYPEOF(CAR(s))) ? mode : TYPEOF(CAR(s));
 	}
 	return mode;
     }
-    else return 0;
+    else return FALSE;
 }
 
 
 /* Check to see if the arrays "x" and "y" have the identical extents */
 
-int conformable(SEXP x, SEXP y)
+Rboolean conformable(SEXP x, SEXP y)
 {
     int i, n;
     PROTECT(x = getAttrib(x, R_DimSymbol));
     y = getAttrib(y, R_DimSymbol);
     UNPROTECT(1);
     if ((n = length(x)) != length(y))
-	return 0;
+	return FALSE;
     for (i = 0; i < n; i++)
 	if (INTEGER(x)[i] != INTEGER(y)[i])
-	    return 0;
-    return 1;
+	    return FALSE;
+    return TRUE;
 }
 
 
@@ -502,79 +503,79 @@ int nlevels(SEXP f)
 /* Is an object of numeric type. */
 /* FIXME:  the LGLSXP case should be excluded here. */
 
-int isNumeric(SEXP s)
+Rboolean isNumeric(SEXP s)
 {
-    if (inherits(s,"factor")) return 0;
+    if (inherits(s,"factor")) return FALSE;
 
     switch(TYPEOF(s)) {
     case LGLSXP:
     case INTSXP:
     case REALSXP:
-	return 1;
+	return TRUE;
     default:
-	return 0;
+	return FALSE;
     }
 }
 
-int isString(SEXP s)
+Rboolean isString(SEXP s)
 {
     return (TYPEOF(s) == STRSXP);
 }
 
 
-int isLogical(SEXP s)
+Rboolean isLogical(SEXP s)
 {
     return (TYPEOF(s) == LGLSXP);
 }
 
 
-int isInteger(SEXP s)
+Rboolean isInteger(SEXP s)
 {
     return (TYPEOF(s) == INTSXP && !inherits(s, "factor"));
 }
 
 
-int isReal(SEXP s)
+Rboolean isReal(SEXP s)
 {
     return (TYPEOF(s) == REALSXP);
 }
 
 
-int isComplex(SEXP s)
+Rboolean isComplex(SEXP s)
 {
     return (TYPEOF(s) == CPLXSXP);
 }
 
 
-int isUnordered(SEXP s)
+Rboolean isUnordered(SEXP s)
 {
-    return (TYPEOF(s) == INTSXP 
+    return (TYPEOF(s) == INTSXP
 	    && inherits(s, "factor")
 	    && !inherits(s, "ordered"));
 }
 
 
-int isOrdered(SEXP s)
+Rboolean isOrdered(SEXP s)
 {
-    return (TYPEOF(s) == INTSXP 
+    return (TYPEOF(s) == INTSXP
 	    && inherits(s, "factor")
 	    && inherits(s, "ordered"));
 }
 
 
-int isFactor(SEXP s)
+Rboolean isFactor(SEXP s)
 {
     return (TYPEOF(s) == INTSXP  && inherits(s, "factor"));
 }
 
 
-int isObject(SEXP s)
+Rboolean isObject(SEXP s)
 {
-    return OBJECT(s);
+    return OBJECT(s);/* really `1-bit unsigned int' */
 }
 
 
-int inherits(SEXP s, char *name)
+Rboolean inherits(SEXP s, char *name)
 {
     SEXP class;
     int i, nclass;
@@ -582,11 +583,11 @@ int inherits(SEXP s, char *name)
 	class = getAttrib(s, R_ClassSymbol);
 	nclass = length(class);
 	for (i = 0; i < nclass; i++) {
-	    if (!strcmp(CHAR(STRING(class)[i]), name))
-		return 1;
+	    if (!strcmp(CHAR(STRING_ELT(class, i)), name))
+		return TRUE;
 	}
     }
-    return 0;
+    return FALSE;
 }
 
 
@@ -621,6 +622,7 @@ TypeTable[] = {
     { "any",		ANYSXP	   },
     { "expression",	EXPRSXP	   },
     { "list",		VECSXP	   },
+    { "externalptr",	EXTPTRSXP  },
     /* aliases : */
     { "numeric",	REALSXP	   },
     { "name",		SYMSXP	   },
@@ -652,37 +654,37 @@ SEXP type2str(SEXPTYPE t)
     return R_NilValue; /* for -Wall */
 }
 
-int isBlankString(unsigned char *s)
+Rboolean isBlankString(unsigned char *s)
 {
     while (*s)
-	if (!isspace(*s++)) return 0;
-    return 1;
+	if (!isspace(*s++)) return FALSE;
+    return TRUE;
 }
 
-int StringBlank(SEXP x)
+Rboolean StringBlank(SEXP x)
 {
-    if (x == R_NilValue) return 1;
+    if (x == R_NilValue) return TRUE;
     else return CHAR(x)[0] == '\0';
 }
 
 /* Function to test whether a string is a true value */
 
-int StringTrue(char *name)
+Rboolean StringTrue(char *name)
 {
     int i;
     for (i = 0; truenames[i]; i++)
 	if (!strcmp(name, truenames[i]))
-	    return (1);
-    return (0);
+	    return TRUE;
+    return FALSE;
 }
 
-int StringFalse(char *name)
+Rboolean StringFalse(char *name)
 {
     int i;
     for (i = 0; falsenames[i]; i++)
 	if (!strcmp(name, falsenames[i]))
-	    return (1);
-    return (0);
+	    return TRUE;
+    return FALSE;
 }
 
 SEXP EnsureString(SEXP s)
@@ -692,7 +694,7 @@ SEXP EnsureString(SEXP s)
 	s = PRINTNAME(s);
 	break;
     case STRSXP:
-	s = STRING(s)[0];
+	s = STRING_ELT(s, 0);
 	break;
     case CHARSXP:
 	break;
@@ -733,8 +735,16 @@ SEXP nthcdr(SEXP s, int n)
 SEXP do_nargs(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP t;
+    RCNTXT *cptr;
+    int nargs = NA_INTEGER;
+    for (cptr = R_GlobalContext; cptr != NULL; cptr = cptr->nextcontext) {
+	if ((cptr->callflag & CTXT_FUNCTION) && cptr->cloenv == rho) {
+	    nargs = length(cptr->promargs);
+	    break;
+	}
+    }
     t = allocVector(INTSXP, 1);
-    *INTEGER(t) = NARGS(rho);
+    *INTEGER(t) = nargs;
     return (t);
 }
 
@@ -763,13 +773,13 @@ void setSVector(SEXP * vec, int len, SEXP val)
 }
 
 
-int isFree(SEXP val)
+Rboolean isFree(SEXP val)
 {
     SEXP t;
     for (t = R_FreeSEXP; t != R_NilValue; t = CAR(t))
 	if (val == t)
-	    return 1;
-    return (0);
+	    return TRUE;
+    return FALSE;
 }
 
 
@@ -826,7 +836,7 @@ do_setwd(SEXP call, SEXP op, SEXP args, SEXP rho) {
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
-    path = R_ExpandFileName(CHAR(STRING(s)[0]));
+    path = R_ExpandFileName(CHAR(STRING_ELT(s, 0)));
     if(chdir(path) < 0)
 	errorcall(call, "cannot change working directory");
     return(R_NilValue);
@@ -842,7 +852,7 @@ do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
-    strcpy (buf, R_ExpandFileName(CHAR(STRING(s)[0])));
+    strcpy (buf, R_ExpandFileName(CHAR(STRING_ELT(s, 0))));
 #ifdef Win32
     for (p = buf; *p != '\0'; p++)
 	if (*p == '\\') *p = '/';
@@ -868,7 +878,7 @@ do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (!isPairList(args) || !isValidString(s = CAR(args)))
 	errorcall(call, "character argument expected");
-    strcpy(buf, R_ExpandFileName(CHAR(STRING(s)[0])));
+    strcpy(buf, R_ExpandFileName(CHAR(STRING_ELT(s, 0))));
 #ifdef Win32
     for(p = buf; *p != '\0'; p++)
 	if(*p == '\\') *p = '/';

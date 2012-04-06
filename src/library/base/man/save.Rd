@@ -1,8 +1,8 @@
 \name{save}
 \title{Save R Objects}
 \usage{
-save(\dots, list = character(0), file = "", ascii = FALSE, oldstyle = FALSE)
-save.image(file = ".Rdata", oldstyle = FALSE)
+save(\dots, list = character(0), file = "", ascii = FALSE)
+save.image(file = ".Rdata")
 }
 \alias{save}
 \alias{save.image}
@@ -15,8 +15,7 @@ save.image(file = ".Rdata", oldstyle = FALSE)
     written.  This is useful for transporting data between machines of
     different types.  The default value of \code{ascii} is \code{FALSE}
     which leads to a more compact binary file being written.}
-  \item{oldstyle}{logical. Should the old (0.90.1 or earlier) format be
-    used? \bold{Warning}: this will be removed from \R version 1.2.0 on.}
+  }
 }
 \description{
   \code{save} writes a external representation of \R objects to the

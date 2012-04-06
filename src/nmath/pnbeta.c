@@ -26,8 +26,8 @@ double pnbeta(double x, double a, double b, double lambda,
 
 	/* change errmax and itrmax if desired */
 
-    const static double ualpha = 5.0;
-    const static double errmax = 1.0e-6;
+    const static double ualpha = 7.0;
+    const static double errmax = 1.0e-9;
     const static int itrmax = 100;
 
 
@@ -48,7 +48,7 @@ double pnbeta(double x, double a, double b, double lambda,
     x0 = floor(fmax2(c - ualpha * sqrt(c), 0.));
     a0 = a + x0;
     lbeta = lgammafn(a0) + lgammafn(b) - lgammafn(a0 + b);
-    temp = pbeta_raw(x, a0, b, /* lower = */LTRUE);
+    temp = pbeta_raw(x, a0, b, /* lower = */TRUE);
     gx = exp(a0 * log(x) + b * log(1. - x) - lbeta - log(a0));
     if (a0 > a)
 	q = exp(-c + x0 * log(c) - lgammafn(x0 + 1.));
@@ -59,18 +59,18 @@ double pnbeta(double x, double a, double b, double lambda,
     ans = ax = q * temp;
 
 	/* recur over subsequent terms until convergence is achieved */
-    j = 0;
+    j = x0; 
     do {
 	j++;
-	temp += - gx;
+	temp -= gx;
 	gx *= x * (a + b + j - 1.) / (a + j);
 	q *= c / j;
-	sumq += - q;
+	sumq -= q;
 	ax = temp * q;
 	ans += ax;
 	errbd = (temp - gx) * sumq;
     }
-    while (errbd > errmax && j < itrmax);
+    while (errbd > errmax && j < itrmax + x0);
 
     if (errbd > errmax) {
 	ML_ERROR(ME_PRECISION);

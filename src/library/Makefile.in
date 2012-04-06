@@ -36,19 +36,20 @@ R:
 docs:
 	@echo "building all R object docs (help, HTML, LaTeX, examples)"
 	@$(MAKE) DOCS
-	@R_HOME=`cd $(top_builddir); pwd`; export R_HOME; \
-	  $${R_HOME}/bin/build-help --htmllists
+	@$(MAKE) indices
 	@touch stamp-docs
 help:
 	@OPTS="--txt"   $(MAKE) DOCS
 html:
 	@OPTS="--html"    $(MAKE) DOCS
-	@R_HOME=`cd $(top_builddir); pwd`; export R_HOME; \
-	  $${R_HOME}/bin/build-help --htmllists
+	@$(MAKE) indices
 latex:
 	@OPTS="--latex"   $(MAKE) DOCS
 examples:
 	@OPTS="--example" $(MAKE) DOCS
+
+indices:
+	@$(top_builddir)/bin/R CMD build-help --htmllists
 
 $(top_builddir)/library/LibIndex:
 	@if [ ! -f $@ ]; then touch $@; fi
@@ -59,13 +60,13 @@ DOCS:
 	  exit 1; \
 	fi
 	@for pkg in $(R_PKGS); do \
-	  R_HOME=`cd $(top_builddir); pwd`; export R_HOME; \
-	  $${R_HOME}/bin/build-help $${OPTS} $(srcdir)/$${pkg}; \
-	  $${R_HOME}/bin/Rd2contents $(srcdir)/$${pkg} \
-	    > $${R_HOME}/library/$${pkg}/CONTENTS; \
+	  $(top_builddir)/bin/R CMD build-help $${OPTS} \
+	    $(srcdir)/$${pkg}; \
+	  $(top_builddir)/bin/R CMD Rd2contents $(srcdir)/$${pkg} \
+	    > $(top_builddir)/library/$${pkg}/CONTENTS; \
 	done; \
-	cat $${R_HOME}/library/*/CONTENTS \
-	  > $${R_HOME}/doc/html/search/index.txt
+	cat $(top_builddir)/library/*/CONTENTS \
+	  > $(top_builddir)/doc/html/search/index.txt
 
 mostlyclean: clean
 clean:

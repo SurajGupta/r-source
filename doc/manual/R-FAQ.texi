@@ -4,9 +4,9 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2000
-@set FAQ-VERSION 1.1-8, 2000-08-14
-@set REL-VERSION 1.1.1
-@set DEV-VERSION 1.2.0
+@set FAQ-VERSION 1.2-2, 2000-12-13
+@set REL-VERSION 1.2.0
+@set DEV-VERSION 1.3.0
 @c %**end of header
 
 @dircategory Programming
@@ -21,15 +21,15 @@
 @end macro
 
 @macro HTML{}
-@sc{html}
+@acronym{HTML}
 @end macro
 
 @macro FORTRAN{}
-@sc{Fortran}
+FORTRAN
 @end macro
 
 @titlepage
-@title R FAQ
+@title R @acronym{FAQ}
 @subtitle Frequently Asked Questions on R
 @subtitle Version @value{FAQ-VERSION}
 @author Kurt Hornik
@@ -75,7 +75,7 @@ Kurt Hornik                      @*
 * R Web Interfaces::            
 * R Add-On Packages::           
 * R and Emacs::                 
-* R Miscellania::               
+* R Miscellanea::               
 * R Programming::               
 * R Bugs::                      
 * Acknowledgments::             
@@ -99,16 +99,17 @@ questions about R.
 @section Legalese
 
 This document is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+under the terms of the @acronym{GNU} General Public License as published
+by the Free Software Foundation; either version 2, or (at your option)
+any later version.
 
 This document is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+@acronym{GNU} General Public License for more details.
 
-A copy of the GNU General Public License is available via WWW at
+A copy of the @acronym{GNU} General Public License is available via WWW
+at
 
 @display
 @uref{http://www.gnu.org/copyleft/gpl.html}.
@@ -128,24 +129,26 @@ The latest version of this document is always available from
 @end display
 
 From there, you can obtain versions converted to
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.txt,, plain ASCII
-text}, @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.dvi.gz,, DVI},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.info.gz,, GNU info},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html,, @HTML{}},
+@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.txt,, plain
+@acronym{ASCII} text},
+@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.dvi.gz,, DVI},
+@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.info.gz,, @acronym{GNU}
+info}, @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html,, @HTML{}},
 @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.pdf,, PDF},
 @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.ps.gz,, PostScript} as
 well as the @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.texi,,
 Texinfo source} used for creating all these formats using the
-@uref{http://texinfo.org/, GNU Texinfo system}.
+@uref{http://texinfo.org/, @acronym{GNU} Texinfo system}.
 
-You can also obtain the R FAQ from the @file{doc/FAQ} subdirectory of a
-CRAN site (@ref{What is CRAN?}).
+You can also obtain the R @acronym{FAQ} from the @file{doc/FAQ}
+subdirectory of a @acronym{CRAN} site (@ref{What is CRAN?}).
 
 @node Citing this document, Notation, Obtaining this document, Introduction
 @section Citing this document
 
-In publications, please refer to this FAQ as Hornik (@value{FAQ-YEAR}),
-``The R FAQ'' and give the above, @emph{official} URL.
+In publications, please refer to this @acronym{FAQ} as Hornik
+(@value{FAQ-YEAR}), ``The R @acronym{FAQ}'' and give the above,
+@emph{official} @acronym{URL}.
 
 @node Notation, Feedback, Citing this document, Introduction
 @section Notation
@@ -203,7 +206,7 @@ underlying implementation and semantics are derived from Scheme.
 The core of R is an interpreted computer language which allows branching
 and looping as well as modular programming using functions.  Most of the
 user-visible functions in R are written in R.  It is possible for the
-user to interface to procedures written in the C, C++, or Fortran
+user to interface to procedures written in the C, C++, or FORTRAN
 languages for efficiency.  The R distribution contains functionality for
 a large number of statistical procedures.  Among these are: linear and
 generalized linear models, nonlinear regression models, time series
@@ -214,10 +217,10 @@ presentations.  Additional modules (``add-on packages'') are available
 for a variety of specific purposes (@pxref{R Add-On Packages}).
 
 R was initially written by @email{Ross.Ihaka@@r-project.org, Ross Ihaka}
-and @email{Robert.Gentleman@@r-project.org, Robert Gentleman}, who are
-Senior Lecturers at the Department of Statistics of the University of
-Auckland in Auckland, New Zealand.  In addition, a large group of
-individuals has contributed to R by sending code and bug reports.
+and @email{Robert.Gentleman@@r-project.org, Robert Gentleman} at the
+Department of Statistics of the University of Auckland in Auckland, New
+Zealand.  In addition, a large group of individuals has contributed to R
+by sending code and bug reports.
 
 Since mid-1997 there has been a core group (the ``R Core Team'') who can
 modify the R source code CVS archive.  The group currently consists of
@@ -227,8 +230,8 @@ Guido Masarotto, Paul Murrell, Brian Ripley, Duncan Temple Lang, and
 Luke Tierney.
 
 R has a home page at @uref{http://www.r-project.org/}.  It is free
-software distributed under a GNU-style copyleft, and an official part of
-the GNU project (``GNU S'').
+software distributed under a @acronym{GNU}-style copyleft, and an
+official part of the @acronym{GNU} project (``@acronym{GNU} S'').
 
 @node What machines does R run on?, What is the current version of R?, What is R?, R Basics
 @section What machines does R run on?
@@ -237,9 +240,9 @@ R is being developed for the Unix, Windows and Mac families of operating
 systems.
 
 The current version of R will configure and build under a number of
-common Unix platforms including i386-freebsd, i386-linux, ppc-linux,
-mips-sgi-irix, alpha-linux, alpha-dec-osf4, rs6000-ibm-aix,
-hppa-hp-hpux, sparc-linux, and sparc-sun-solaris.
+common Unix platforms including i386-freebsd, i386-linux,
+ix86-sun-solaris, ppc-linux, mips-sgi-irix, alpha-linux, alpha-dec-osf4,
+rs6000-ibm-aix, hppa-hp-hpux, sparc-linux, and sparc-sun-solaris.
 
 @c and according to @email{jlindsey@@luc.ac.be, Jim Lindsey} also on
 @c Mac, Amiga and Atari under m68k-linux.
@@ -257,8 +260,9 @@ for bug fixes mostly.  The version for the Mac is pre-alpha.
 @node How can R be obtained?, How can R be installed?, What is the current version of R?, R Basics
 @section How can R be obtained?
 
-Sources, binaries and documentation for R can be obtained via CRAN, the
-``Comprehensive R Archive Network'' (see @ref{What is CRAN?}).
+Sources, binaries and documentation for R can be obtained via
+@acronym{CRAN}, the ``Comprehensive R Archive Network'' (see @ref{What
+is CRAN?}).
 
 Sources are also available via anonymous rsync.  Use
 
@@ -302,7 +306,8 @@ R distribution contains instructions.
 Note that you need a @FORTRAN{} compiler or @command{f2c} in addition to
 a C compiler to build R.  Also, you need Perl version 5 to build the R
 object documentations.  (If this is not available on your system, you
-can obtain a PDF version of the object reference manual via CRAN.)
+can obtain a PDF version of the object reference manual via
+@acronym{CRAN}.)
 
 In the simplest case, untar the R source code, change to the directory
 thus created, and issue the following commands (at the shell prompt):
@@ -325,10 +330,11 @@ the ``R Extension Writers Guide'', in the @file{doc/manual}
 subdirectory.  These files can be previewed and printed using standard
 programs such as @command{xdvi} and @command{dvips}.  You can also use
 @kbd{make pdf} to build PDF (Portable Document Format) version of the
-manuals, and view these using Acrobat.  Manuals written in the GNU
-Texinfo system can also be converted to info files suitable for reading
-online with Emacs or stand-alone GNU Info; use @kbd{make info} to create
-these versions (note that this requires @command{makeinfo} version 4).
+manuals, and view these using Acrobat.  Manuals written in the
+@acronym{GNU} Texinfo system can also be converted to info files
+suitable for reading online with Emacs or stand-alone @acronym{GNU}
+Info; use @kbd{make info} to create these versions (note that this
+requires @command{makeinfo} version 4).
 
 Finally, use @kbd{make check} to find out whether your R system works
 correctly.
@@ -366,13 +372,13 @@ respectively.
 @node How can R be installed (Windows), How can R be installed (Macintosh), How can R be installed (Unix), How can R be installed?
 @subsection How can R be installed (Windows)
 
-The @file{bin/windows/windows-NT} directory of a CRAN site contains the
-latest binary distributions of R for 32 bit versions of MS Windows
-(i.e., 95, 98 or NT), as well as binary distributions for a large number
-of add-on packages from CRAN.  The Windows version of R was created by
-Robert Gentleman, and is now being developed and maintained by
-@email{Guido.Masarotto@@r-project.org, Guido Masarotto} and
-@email{Brian.Ripley@@r-project.org, Brian D. Ripley}.
+The @file{bin/windows} directory of a @acronym{CRAN} site contains
+binaries for a base distribution and a large number of add-on packages
+from @acronym{CRAN} to run on Windows 95, 98, NT4, 2000 and ME (at
+least) on Intel and clones (but not on other platforms).  The Windows
+version of R was created by Robert Gentleman, and is now being developed
+and maintained by @email{Guido.Masarotto@@r-project.org, Guido
+Masarotto} and @email{Brian.Ripley@@r-project.org, Brian D. Ripley}.
 
 @c Note that when uncompressing the zip files, the pkunzip program needs to
 @c be invoked with the @samp{-D} flag to create subdirectories.  Also, be
@@ -383,45 +389,76 @@ For most installations the installer @command{rwinst.exe} will be the
 easiest tool to use.
 
 See the @uref{http://www.stats.ox.ac.uk/pub/R/rw-FAQ.html, R Windows
-FAQ} for more details.
+@acronym{FAQ}} for more details.
 
 @node How can R be installed (Macintosh),  , How can R be installed (Windows), How can R be installed?
 @subsection How can R be installed (Macintosh)
-
-The Power Macintosh port is temporarily on hold, and currently no binary
-distribution is available.  We hope that this will change soon.
 
 @c The CRAN @file{bin/macos} directory contains @file{R.sea.hqx}, a
 @c binhexed self-extracting archive, and installation instructions in
 @c @file{README.MACINTOSH}.  Note that the version in it is nowhere near
 @c the quality of the current Unix/Windows version.
 
+@c The Power Macintosh port is temporarily on hold, and currently no binary
+@c distribution is available.  We hope that this will change soon.
+
+@c Mac
+@c On 2000-09-11, Stefano Iacus <jago@mclink.it> said on r-devel that he
+@c has finished a port of 1.1.1 and 1.2.0 to the Power Mac under Mac OS.
+@c Prerelease mentioned on 2000-11-08, not announced yet.
+
+A binhexed self-extracting archive containing a pre-alpha port of R
+1.1.1 for MacOS has recently been made available by
+@email{stefano.iacus@@unimi.it, Stefano Iacus} at
+@uref{http://www.eco-dip.unimi.it/R/}.
+
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2000-07-09:
+@c Linux binaries as of 2000-11-17:
 @c
-@c debian   2.2 i386  1.1.0  Doug Bates
-@c          2.3 i386  1.1.0  Doug Bates
-@c linuxppc 5.0 ppc   1.1.0  Alex Buerkle <buerkle@hawaii.edu>
-@c redhat   6.x alpha 1.1.0  Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c              i386  1.1.0  Martyn Plummer <plummer@iarc.fr>
-@c              sparc 1.1.0  Vin Everett <vin.everett@mrc-bsu.cam.ac.uk>
-@c suse     5.3 i386  1.0.1  Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
-@c          6.4 i386  1.1.0  Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c debian   2.2 i386  1.1.1  Doug Bates
+@c          2.3 i386  1.1.1  Doug Bates
+@c linuxppc 5.0 ppc   1.1.1  Alex Buerkle <buerkle@hawaii.edu>
+@c mandrake 7.1 i386  1.1.1  Michele Alzetta <mikalzet@libero.it>
+@c redhat   6.x alpha 1.1.1  Naoki Takebayashi <ntakebay@bio.indiana.edu>
+@c              i386  1.1.1  Martyn Plummer <plummer@iarc.fr>
+@c              sparc 1.1.1  Vin Everett <vin.everett@mrc-bsu.cam.ac.uk>
+@c          7.x i386  1.1.1  Martyn Plummer <plummer@iarc.fr>
+@c suse     5.3 i386  1.0.1  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c          6.4 i386  1.1.1  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c          7.0 i386  1.1.1  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
 
-The @file{bin/linux} directory of a CRAN site contains Debian 2.2/2.3
-packages for the i386 platform (now part of the Debian distribution and
-maintained by Doug Bates), Red Hat 6.x packages for the alpha, i386 and
-sparc platforms (maintained by Naoki Takebayashi, Martyn Plummer, and
-Vin Everett, respectively), SuSE 5.3/6.4 i386 packages by Albrecht
-Gebhardt, and Linuxppc 5.0 RPMs by Alex Buerkle.
+The @file{bin/linux} directory of a @acronym{CRAN} site contains Debian
+2.2/2.3 packages for the i386 platform (now part of the Debian
+distribution and maintained by Doug Bates), Red Hat 6.x packages for the
+alpha and sparc platforms and 6.x/7.x packages for the i386 platform
+(maintained by Naoki Takebayashi, Vin Everett, and Martyn Plummer,
+respectively), SuSE 5.3/6.4/7.0 i386 packages by Albrecht Gebhardt,
+Mandrake 7.1 i386 packages by Michele Alzetta, and Linuxppc 5.0 RPMs by
+Alex Buerkle.
 
-The @file{bin/osf} directory of a CRAN site contains RPMs by Albrecht
-Gebhardt for alpha systems running Digital Unix 4.0.
+The Debian packages can be accessed through APT, the Debian package
+maintenance tool.  Simply add the line
+
+@smallexample
+deb http://cran.r-project.org/bin/linux/debian @var{distribution} main
+@end smallexample
+
+@noindent
+(where @var{distribution} is either @samp{stable} or @samp{unstable};
+feel free to use a @acronym{CRAN} mirror instead of the master) to the
+file @file{/etc/apt/sources.list}.  Once you have added that line the
+programs @code{apt-get}, @code{apt-cache}, and @code{dselect} (using the
+apt access method) will automatically detect and install updates of the
+R packages.
+
+The @file{bin/osf} directory of a @acronym{CRAN} site contains RPMs by
+Albrecht Gebhardt for alpha systems running Digital Unix 4.0.
 
 @c There are also `tar' distributions for NEXTSTEP on the i386 and m68k
-@c platforms in @file{bin/nextstep/i386} and @file{bin/nextstep/m68k}.
+@c platforms in @file{bin/nextstep/i386} and @file{bin/nextstep/m68k},
+@c created by Stephen Shiboski <steve@biostat.ucsf.edu>.
 
 No other binary distributions have thus far been made publically
 available.
@@ -452,20 +489,19 @@ modeling and graphics.  This document is based on the ``Notes on
 @item ``Writing R Extensions'' (@file{R-exts})
 currently describes the process of creating R add-on packages, writing R
 documentation, R's system and foreign language interfaces, and the R
-API.
+@acronym{API}.
+@item ``R Data Import/Export'' (@file{R-data})
+is a guide to importing and exporting data to and from R.
+@item ``The R Language Definition'' (@file{R-lang}),
+a first version of the ``Kernighan & Ritchie of R'', explains
+evaluation, parsing, object oriented programming, computing on the
+language, and so forth.
 @end itemize
 
-@noindent
-Furthermore, the ``R Language Definition'' manual (@file{R-lang}) is
-currently being written, and will be available in R version 1.2.
-@c FIXME 1.2
-This is the ``Kernighan & Ritchie of R'', explaining evaluation,
-parsing, object oriented programming, computing on the language, and so
-forth.
-
 In addition to material written specifically for R, documentation for
-S/@SPLUS{} (see @ref{R and S}) can be used in combination with this FAQ
-(@pxref{What are the differences between R and S?}).  We recommend
+S/@SPLUS{} (see @ref{R and S}) can be used in combination with this
+@acronym{FAQ} (@pxref{What are the differences between R and S?}).  We
+recommend
 
 @quotation
 W. N. Venables and B. D. Ripley (1999), ``Modern Applied Statistics with
@@ -500,6 +536,7 @@ Springer.
 @end quotation
 
 The book
+
 @quotation
 J. C. Pinheiro and D. M. Bates (2000), ``Mixed-Effects Models in S and
 @SPLUS{}'', Springer, ISBN 0-387-98957-0
@@ -510,8 +547,32 @@ provides a comprehensive guide to the use of the @strong{nlme} package
 for linear and nonlinear mixed-effects models.  This has a home page at
 @uref{http://nlme.stat.wisc.edu/MEMSS/}.
 
+As an example of how R can be used in teaching an advanced introductory
+statistics course, see
+
+@quotation
+D. Nolan and T. Speed (2000), ``Stat Labs: Mathematical Statistics
+Through Applications'', Springer Texts in Statistics, ISBN
+0-387-98974-9
+@end quotation
+
+@noindent
+This integrates theory of statistics with the practice of statistics
+through a collection of case studies (``labs''), and uses R to analyze
+the data.  More information can be found at
+@uref{http://www.stat.Berkeley.EDU/users/statlabs/}.
+
 Last, but not least, Ross' and Robert's experience in designing and
-implementing R is described in:
+implementing R is described in Ihaka & Gentleman (1996), ``R: A Language
+for Data Analysis and Graphics'',
+@uref{http://www.amstat.org/publications/jcgs/, , @emph{Journal of
+Computational and Graphical Statistics}}, @strong{5}, 299--314.
+@xref{Citing R}.
+
+@node Citing R, What mailing lists exist for R?, What documentation exists for R?, R Basics
+@section Citing R
+
+To cite R in publications, use
 
 @smallexample
 @group
@@ -526,13 +587,6 @@ implementing R is described in:
 @}
 @end group
 @end smallexample
-
-@node Citing R, What mailing lists exist for R?, What documentation exists for R?, R Basics
-@section Citing R
-
-To cite R in publications, use the above Ihaka & Gentleman (1996), ``R:
-A Language for Data Analysis and Graphics'', @emph{Journal of
-Computational and Graphical Statistics}, @strong{5}, 299--314.
 
 @node What mailing lists exist for R?, What is CRAN?, Citing R, R Basics
 @section What mailing lists exist for R?
@@ -582,21 +636,22 @@ include information on the system and version of R being used.  See
 @ref{R Bugs} for more details.
 
 Archives of the above three mailing lists are made available on the net
-in a monthly schedule via the @file{doc/html/mail.html} file in CRAN.
-Searchable archives of the lists are available via
+in a monthly schedule via the @file{doc/html/mail.html} file in
+@acronym{CRAN}.  Searchable archives of the lists are available via
 @uref{http://www.ens.gu.edu.au/robertk/R/}.
 
 The R Core Team can be reached at @email{r-core@@lists.r-project.org}
 for comments and reports.
 
 @node What is CRAN?,  , What mailing lists exist for R?, R Basics
-@section What is CRAN?
+@section What is @acronym{CRAN}?
 
-The ``Comprehensive R Archive Network'' (CRAN) is a collection of sites
-which carry identical material, consisting of the R distribution(s), the
-contributed extensions, documentation for R, and binaries.
+The ``Comprehensive R Archive Network'' (@acronym{CRAN}) is a collection
+of sites which carry identical material, consisting of the R
+distribution(s), the contributed extensions, documentation for R, and
+binaries.
 
-The CRAN master site can be found at the URL
+The @acronym{CRAN} master site can be found at the @acronym{URL}
 
 @quotation
 @multitable @columnfractions .45 .30
@@ -617,7 +672,9 @@ currently being mirrored daily at
 @item @uref{http://cran.hu.r-project.org/}
 @tab (Hungary)
 @item @uref{http://cran.it.r-project.org/}
-@c @uref{http://www.stat.unipg.it/pub/stat/statlib/R/CRAN/}
+@c @uref{http://erlug.economia.unibo.it/www.r-projects.org/}
+@c Contact: Daniele Medri @email{madrid@linux.it}
+@c   @uref{http://www.linux.it/~madrid/}
 @tab (Italy)
 @item @uref{http://cran.ch.r-project.org/}
 @c @uref{http://stat.ethz.ch/CRAN/}
@@ -642,26 +699,29 @@ currently being mirrored daily at
 @end quotation
 
 @noindent
-Please use the CRAN site closest to you to reduce network load.
+Please use the @acronym{CRAN} site closest to you to reduce network
+load.
 
-From CRAN, you can obtain the latest official release of R, daily
-snapshots of R (copies of the current CVS trees), as gzipped and bzipped
-tar files or as two gzipped tar files (ready for 1.4M floppies), a
-wealth of additional contributed code, as well as prebuilt binaries for
-various operating systems (Linux, Digital Unix, and MS Windows).  CRAN
-also provides access to documentation on R, existing mailing lists and
-the R Bug Tracking system.
+From @acronym{CRAN}, you can obtain the latest official release of R,
+daily snapshots of R (copies of the current CVS trees), as gzipped and
+bzipped tar files or as two gzipped tar files (ready for 1.4M floppies),
+a wealth of additional contributed code, as well as prebuilt binaries
+for various operating systems (Linux, Digital Unix, and MS Windows).
+@acronym{CRAN} also provides access to documentation on R, existing
+mailing lists and the R Bug Tracking system.
 
-To ``submit'' to CRAN, simply upload to
+To ``submit'' to @acronym{CRAN}, simply upload to
 @uref{ftp://cran.r-project.org/incoming/} and send an email to
 @email{wwwadmin@@cran.r-project.org}.
 
 @quotation
 @strong{Note:}  It is very important that you indicate the copyright
-(license) information (GPL, BSD, Artistic, @dots{}) in your submission.
+(license) information (@acronym{GPL}, @acronym{BSD}, Artistic, @dots{})
+in your submission.
 @end quotation
 
-Please always use the URL of the master site when referring to CRAN.
+Please always use the @acronym{URL} of the master site when referring to
+@acronym{CRAN}.
 
 @node R and S, R Web Interfaces, R Basics, Top
 @chapter R and S
@@ -677,9 +737,9 @@ Please always use the URL of the master site when referring to CRAN.
 @section What is S?
 
 S is a very high level language and an environment for data analysis and
-graphics.  In 1998, the Association for Computing Machinery (ACM)
-presented its Software System Award to John M. Chambers, the principal
-designer of S, for
+graphics.  In 1998, the Association for Computing Machinery
+(@acronym{ACM}) presented its Software System Award to John M. Chambers,
+the principal designer of S, for
 
 @quotation
 the S system, which has forever altered the way people analyze,
@@ -730,7 +790,7 @@ See @uref{http://cm.bell-labs.com/cm/ms/departments/sia/S/history.html}
 for further information on ``Stages in the Evolution of S''.
 
 There is a huge amount of user-contributed code for S, available at the
-@uref{http://lib.stat.cmu.edu/S/, S Repository} at CMU.
+@uref{http://lib.stat.cmu.edu/S/, S Repository} at @acronym{CMU}.
 
 @c The @uref{http://lib.stat.cmu.edu/S/faq, ``Frequently Asked Questions
 @c about S''} contains further information about S, but is not
@@ -971,14 +1031,11 @@ Lexical scoping allows using function closures and maintaining local
 state.  A simple example (taken from Abelson and Sussman) is obtained by
 typing @kbd{demo(scoping)} at the R prompt.  Further information is
 provided in the standard R reference ``R: A Language for Data Analysis
-and Graphics'' (@pxref{What documentation exists for R?}) and a paper on
-``Lexical Scope and Statistical Computing'' by Robert Gentleman and Ross
-Ihaka which can be obtained from the @file{doc/misc} directory of a CRAN
-site and will appear in the
-@uref{http://www.amstat.org/publications/jcgs/, , @emph{Journal of
-Computational and Graphical Statistics}} around the beginning of 2000.
-
-@c CHECK JCGS paper ``Lexical Scope and Statistical Computing''
+and Graphics'' (@pxref{What documentation exists for R?}) and in Robert
+Gentleman and Ross Ihaka (2000), ``Lexical Scope and Statistical
+Computing'', @uref{http://www.amstat.org/publications/jcgs/, ,
+@emph{Journal of Computational and Graphical Statistics}}, @strong{9},
+491--508.
 
 Lexical scoping also implies a further major difference.  Whereas S
 stores all objects as separate files in a directory somewhere (usually
@@ -1060,6 +1117,10 @@ In R, if @code{x} is a list, then @code{x[i] <- NULL} and @code{x[[i]]
 these is incompatible with S, where it is a no-op.  (Note that you can
 set elements to @code{NULL} using @code{x[i] <- list(NULL)}.)
 
+@c @item
+@c In R @code{x[-4]} fails if @code{x} is not @code{NULL} but has fewer
+@c than 4 elements.  In S it has no effect.
+
 @item
 In S, the functions named @code{.First} and @code{.Last} in the
 @file{.Data} directory can be used for customizing, as they are executed
@@ -1087,11 +1148,13 @@ you should always use @code{TRUE} and @code{FALSE}.
 
 @item
 In R, @code{dyn.load()} can only load @emph{shared libraries}, as
-created for example by @kbd{R SHLIB}.
+created for example by @kbd{R CMD SHLIB}.
 
 @item
-In R, @code{attach()} currently only works for lists and data frames
-(not for directories).  Also, you cannot attach at position 1.
+In R, @code{attach()} currently only works for lists and data frames,
+but not for directories.  (In fact, @code{attach()} also works for R
+data files created with @code{save()}, which is analogous to attaching
+directories in S.)  Also, you cannot attach at position 1.
 
 @item
 Categories do not exist in R, and never will as they are deprecated now
@@ -1169,8 +1232,9 @@ equivalent to S, until assignment takes place.
 
 @item
 In R, @code{eval(EXPR, sys.parent())} does not work.  Instead, one
-should use @code{eval(EXPR, sys.frame(sys.parent())),} which also works
-in S.
+should use either @code{eval(EXPR, sys.frame(sys.parent())),} which also
+works in S, or @code{eval(EXPR, parent.frame())}, which is more
+efficient but does not work in S.
 
 @item
 In S, the index variable in a @code{for()} loop is local to the inside
@@ -1180,6 +1244,19 @@ statement is executed.
 @item
 In S, @code{tapply(simplify=TRUE)} returns a vector where R returns a
 one-dimensional array (which can have named dimnames).
+
+@item
+In S(-@sc{Plus}) the C locale is used, whereas in R the current
+operating system locale is used for determining which characters are
+alphanumeric and how they are sorted.  This affects the set of valid
+names for R objects (for example accented chars may be allowed in R) and
+ordering in sorts and comparisons (such as whether @code{"aA" < "Bb"} is
+true or false).  From version 1.2.0 the locale can be (re-)set in R by
+the @code{Sys.setlocale()} function.
+
+@item
+In S, @code{missing(@var{arg})} remains @code{TRUE} if @var{arg} is
+subsequently modified; in R it doesn't.
 
 @end itemize
 
@@ -1203,25 +1280,22 @@ handling of line types, more convenient color handling (via palettes),
 gamma correction for color, and, most importantly, mathematical
 annotation in plot texts, via input expressions reminiscent of @TeX{}
 constructs.  See the help page for @code{plotmath}, which features an
-impressive on-line example.  The paper ``An Approach to Providing
-Mathematical Annotation in Plots'' by Paul Murrell and Ross Ihaka, which
-will soon appear in the @uref{http://www.amstat.org/publications/jcgs/,
-, @emph{Journal of Computational and Graphical Statistics}}, has more
-details on this.
-
-@c CHECK JCGS paper ``An Approach to Providing Mathematical Annotations
-@c Plots''
+impressive on-line example.  More details can be found in Paul Murrell
+and Ross Ihaka (2000), ``An Approach to Providing Mathematical
+Annotation in Plots'', @uref{http://www.amstat.org/publications/jcgs/, ,
+@emph{Journal of Computational and Graphical Statistics}}, @strong{9},
+582--599.
 
 @node R Web Interfaces, R Add-On Packages, R and S, Top
 @chapter R Web Interfaces
 
-@strong{Rcgi} is a CGI WWW interface to R by @email{h089@@mth.uea.ac.uk,
-Mark J. Ray}.  Recent versions have the ability to use ``embedded
-code'': you can mix user input and code, allowing the @HTML{} author to
-do anything from load in data sets to enter most of the commands for
-users without writing CGI scripts.  Graphical output is possible in
-PostScript or GIF formats and the executed code is presented to the user
-for revision.
+@strong{Rcgi} is a CGI WWW interface to R by
+@email{mjr@@stats.mth.uea.ac.uk, Mark J. Ray}.  Recent versions have the
+ability to use ``embedded code'': you can mix user input and code,
+allowing the @HTML{} author to do anything from load in data sets to
+enter most of the commands for users without writing CGI scripts.
+Graphical output is possible in PostScript or GIF formats and the
+executed code is presented to the user for revision.
 
 Demo and download are available from
 @uref{http://www.mth.uea.ac.uk/~h089/Rcgi/}.
@@ -1234,7 +1308,7 @@ output and graphs, a more sophisticated Javascript version that provides
 a multiple window environment, and a set of point and click modules that
 are useful for introductory statistics courses and require no knowledge
 of the R language.  All of the Rweb versions can analyze Web accessible
-datasets if a URL is provided.
+datasets if a @acronym{URL} is provided.
 
 The paper ``Rweb: Web-based Statistical Analysis'', providing a detailed
 explanation of the different versions of Rweb and an overview of how
@@ -1272,7 +1346,7 @@ MODern REGression: smoothing and local methods.
 @item mva
 MultiVariate Analysis.  Currently contains code for principal
 components, canonical correlations, metric multidimensional scaling, and
-hierarchical and k-means clustering.
+hierarchical and @math{k}-means clustering.
 @item nls
 Nonlinear regression routines.
 @item splines
@@ -1281,13 +1355,13 @@ Regression spline functions and classes.
 Code for dealing with STEP FUNctions, including empirical cumulative
 distribution functions.
 @item tcltk
-Interface and language bindings to Tcl/Tk GUI elements.
+Interface and language bindings to Tcl/Tk @acronym{GUI} elements.
 @item ts
 Time Series.
 @end table
 
-The following packages are available from the CRAN @file{src/contrib}
-area.
+The following packages are available from the @acronym{CRAN}
+@file{src/contrib} area.
 
 @table @strong
 @item Devore5
@@ -1306,27 +1380,37 @@ bundle.
 @item Matrix
 A Matrix package.
 @item NISTnls
-A set of test nonlinear least squares examples from NIST, the
+A set of test nonlinear least squares examples from @acronym{NIST}, the
 U.S. National Institute for Standards and Technology.
+@item PHYLOGR
+Manipulation and analysis of phylogenetically simulated data sets (as
+obtained from PDSIMUL in package PDAP) and phylogenetically-based
+analyses using GLS.
 @item RODBC
-ODBC support and a back end database.
+An @acronym{ODBC} database interface.
+@item RPgSQL
+Provides methods for accessing data stored in PostgreSQL tables.
 @item RmSQL
 An interface between R and the mSQL database system.
 @c @item Rnotes
 @c The data sets for the exercises in ``An Introduction to R''
 @c (@pxref{What documentation exists for R?}).
+@item Rstreams
+Binary file stream support functions.
 @item SASmixed
 Data sets and sample linear mixed effects analyses corresponding to the
 examples in ``SAS System for Mixed Models'' by R. C. Littell,
 G. A. Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
+@item XML
+Facilities for reading @acronym{XML} documents and DTDs.
 @item acepack
-ace (Alternating Conditional Expectations) and avas (Additivity and
-VAriance Stabilization for regression) for selecting regression
+ACE (Alternating Conditional Expectations) and AVAS (Additivity and
+VAriance Stabilization for regression) methods for selecting regression
 transformations.
 @item akima
 Linear or cubic spline interpolation for irregularly gridded data.
 @item ash
-Programs for 1D and 2D density estimation.
+David Scott's ASH routines for 1D and 2D density estimation.
 @item bindata
 Generation of correlated artificial binary data.
 @item boot
@@ -1354,24 +1438,43 @@ Functions for cluster analysis.
 @item coda
 Output analysis and diagnostics for Markov Chain Monte Carlo (MCMC)
 simulations.
+@item conf.design
+A series of simple tools for constructing and manipulating confounded
+and fractional factorial designs.
 @item date
 Functions for dealing with dates.  The most useful of them accepts a
 vector of input dates in any of the forms @samp{8/30/53},
 @samp{30Aug53}, @samp{30 August 1953}, @dots{}, @samp{August 30 53}, or
 any mixture of these.
+@item dse
+Dynamic System Estimation, a multivariate time series package.  Contains
+@strong{dse1} (DSE kernel plus ARMA and state space models),
+@strong{dse2} (DSE extensions), @strong{syskern} (functions for writing
+code that is operating system and R/S independent), and @strong{tframe}
+(functions for writing code that is independent of the representation of
+time).
 @item e1071
 Miscellaneous functions used at the Department of Statistics at TU Wien
 (E1071), including moments, short-time Fourier transforms, Independent
 Component Analysis, and simulation of a Wiener process.
+@item ellipse
+Package for drawing ellipses and ellipse-like confidence regions.
 @item fdim
 Functions for calculating fractal dimension.
+@item foreign
+Functions for reading and writing data stored by statistical software
+like Minitab, SAS, SPSS, Stata, etc.
 @item fracdiff
 Maximum likelihood estimation of the parameters of a fractionally
 differenced ARIMA(@math{p,d,q}) model (Haslett and Raftery, Applied
 Statistics, 1989).
+@item gafit
+Genetic algorithm for curve fitting.
 @item gee
 An implementation of the Liang/Zeger generalized estimating equation
 approach to GLMs for dependent data.
+@item gld
+Basic functions for the generalised (Tukey) lambda distribution.
 @item gss
 A comprehensive package for structural multivariate function estimation
 using smoothing splines.
@@ -1406,6 +1509,9 @@ Code for mixture discriminant analysis (MDA), flexible discriminant
 analysis (FDA), penalized discriminant analysis (PDA), multivariate
 additive regression splines (MARS), adaptive back-fitting splines
 (BRUTO), and penalized regression.
+@item mgcv
+Routines for GAMs and other genralized ridge regression problems with
+multiple smoothing parameter selection by GCV or UBRE.
 @item mlbench
 A collection of artificial and real-world machine learning benchmark
 problems, including the Boston housing data.
@@ -1415,6 +1521,8 @@ including stabilized test procedures by Laeuter et.@: al.
 @item multiv
 Functions for hierarchical clustering, partitioning, bond energy
 algorithm, Sammon mapping, PCA and correspondence analysis.
+@item mvtnorm
+Multivariate normal and @math{t} distributions.
 @item nlme
 Fit and compare Gaussian linear and nonlinear mixed-effects models.
 @item nnet
@@ -1440,7 +1548,7 @@ Smoothing splines with penalties on order @math{m} derivatives.
 @item quadprog
 For solving quadratic programming problems.
 @item quantreg
-Compute regression quantiles and some related rank statistics.
+Quantile  regression and related methods.
 @c @item ratetables
 @c US national and state mortality data (requires @strong{survival4} and
 @c @strong{date}), for use with @strong{survival4}.
@@ -1448,67 +1556,78 @@ Compute regression quantiles and some related rank statistics.
 Functions for simple fixed and random effects meta-analysis for
 two-sample comparison of binary outcomes.
 @item rpart
-Recursive Partitioning.
+Recursive PARTitioning and regression trees.
+@item scatterplot3d
+Plots a three dimensional (3D) point cloud perspectively.
 @item sgeostat
 An object-oriented framework for geostatistical modeling.
 @item sm
 Software linked to the book ``Applied Smoothing Techniques for Data
 Analysis:  The Kernel Approach with @SPLUS{} Illustrations'' by
 A. W. Bowman and A. Azzalini (1997), Oxford University Press.
+@item sn
+Functions for manipulating skew-normal probability distributions and for
+fitting them to data, in the scalar and the multivariate case.
 @c @item snns
 @c An R interface to the Stuttgart Neural Networks Simulator (SNNS).
 @item spatial
 Functions for kriging and point pattern analysis from ``Modern Applied
 Statistics with @SPLUS{}'' by W. Venables and B. Ripley.  Contained in
 the @file{VR} bundle.
+@item splancs
+Spatial and space-time point pattern analysis functions.
 @c @item stable
 @c Density, distribution, quantile and hazard functions of a stable
 @c variate; generalized linear models for the parameters of a stable
 @c distribution.
-@item stataread
-Read and write Stata v6 @file{.dta} files.
+@c @item stataread
+@c Read and write Stata v5 and v6 @file{.dta} files.
 @c @item survival4
 @c Functions for survival analysis, version 4 (requires @strong{splines}).
 @item survival5
 Functions for survival analysis, version 5 (suggests @strong{date}), the
 main new feature being penalized (partial) likelihood.
+@item tensor
+Tensor product of arrays.
 @item tree
 Classification and regression trees.
 @item tripack
 A constrained two-dimensional Delaunay triangulation package.
 @item tseries
-Additional code for time series analysis.
+Package for time series analysis with emphasis on non-linear modelling.
 @item wavethresh
 Software to perform 1-d and 2-d wavelet statistics and transforms.
 @item wle
 Robust statistical inference via a weighted likelihood approach.
 @item xgobi
 Interface to the XGobi and XGvis programs for graphical data analysis.
+@item xtable
+Export data to La@TeX{} and @HTML{} tables.
 @item zmatrix
 Matrices with numeric indices starting at zero rather than one.
 @end table
 
 @noindent
-See CRAN @file{src/contrib/INDEX} for more information.
+See @acronym{CRAN} @file{src/contrib/PACKAGES} for more information.
 
-There is also a CRAN @file{src/contrib/Devel} directory which contains
-packages still ``under development'' or depending on features only
-present in the current development versions of R.  Volunteers are
-invited to give these a try, of course.  This area of CRAN currently
-contains
+There is also a @acronym{CRAN} @file{src/contrib/Devel} directory which
+contains packages still ``under development'' or depending on features
+only present in the current development versions of R.  Volunteers are
+invited to give these a try, of course.  This area of @acronym{CRAN}
+currently contains
 
 @table @strong
+@item GRASS
+Interface between the GRASS geographical information system and R, based
+on starting R from within the GRASS environment and chosen LOCATION and
+MAPSET.  Wrapper and helper functions are provided for a range of R
+functions to match the interface metadata structures.
 @item HTML
 Functions for exporting R objects as @HTML{} tables.
-@item Java
-An interface from R to Java to create and call Java objects and
-methods.
 @item RMySQL
 An interface between R and the MySQL database system.
-@item RPgSQL
-An interface between R and the PostgreSQL database system.
-@item Rstreams
-Binary file stream support functions.
+@item StatDataML
+Read and write StatDataML.
 @item cmprsk
 Estimation, testing and regression modeling of subdistribution functions
 in competing risks.
@@ -1516,30 +1635,45 @@ in competing risks.
 A small C++ test package.
 @item dopt
 Finding D-optimal experimental designs.
-@item dse
-Multivariate time series.
+@item dseplus
+Extensions to @strong{dse}, the Dynamic Systems Estimation multivariate
+time series package.  Contains PADI, juice and monitoring extensions.
 @item exactDistr
-Exact distributions for rank tests.
-@item foreign
-Functions for reading data stored by statistical software like Minitab,
-SAS, SPSS, etc.
+Exact distributions for rank tests by means of an implementation of the
+Streit@-berg/Roehmel shift algorithm.
 @item funfits
 An integrated set of functions for fitting curves and surfaces including
 thin plate splines, kriging and neural networks.
 @item hdf5
-Interface to the NCSA HDF5 library.
+Interface to the @acronym{NCSA} HDF5 library.
 @item multidim
 Code for correspondence analysis and other multidimensional descriptive
 statistics.
 @item netCDF
 Read data from netCDF files.
-@item syskern
-Functions for writing code that is OS and R/S independent.
-@item tframe
-Functions for writing code that is independent of the representation of
-time.
+@item npConfRatio
+Nonparametric confidence intervals for the ratios of medians.
+@item regexp
+Simple regular expression interface.
 @item timeslab
 Time series routines.
+@end table
+
+Directory @file{src/contrib/Omegahat} contains yet unreleased packages
+from the @uref{http://www.omegahat.org, Omegahat Project for Statistical
+Computing}.  Currently, there are
+
+@table @strong
+@item Java
+An interface from R to Java to create and call Java objects and
+methods.
+@item RSMethods
+An implementation of S version 4 methods and classes for R, consistent
+with the basic material in ``Programming with data'' by John
+M. Chambers, 1998, Springer NY.
+@item RSPerl
+An interface from R to an embedded, persistent Perl interpreter,
+allowing one to call arbitrary Perl subroutines, classes and methods.
 @end table
 
 @email{jlindsey@@luc.ac.be, Jim Lindsey} has written a collection of R
@@ -1567,13 +1701,13 @@ obtained from the mailing list archive.
 @node How can add-on packages be installed?, How can add-on packages be used?, Which add-on packages exist for R?, R Add-On Packages
 @section How can add-on packages be installed?
 
-(Unix only.)  The add-on packages on CRAN come as gzipped tar files
-named @code{@var{pkg}_@var{version}.tar.gz}, which may in fact be
+(Unix only.)  The add-on packages on @acronym{CRAN} come as gzipped tar
+files named @code{@var{pkg}_@var{version}.tar.gz}, which may in fact be
 ``bundles'' containing more than one package.  Provided that
 @command{tar} and @command{gzip} are available on your system, type
 
 @example
-$ R INSTALL /path/to/@var{pkg}_@var{version}.tar.gz
+$ R CMD INSTALL /path/to/@var{pkg}_@var{version}.tar.gz
 @end example
 
 @noindent
@@ -1582,15 +1716,15 @@ at the shell prompt to install to the default R directory tree (the
 tree (e.g., your private one), use
 
 @example
-$ R INSTALL -l @var{lib} /path/to/@var{pkg}_@var{version}.tar.gz
+$ R CMD INSTALL -l @var{lib} /path/to/@var{pkg}_@var{version}.tar.gz
 @end example
 
 @noindent
 where @var{lib} gives the path to the library tree to install to.
 
 Even more conveniently, you can install and automatically update
-packages from within R if you have access to CRAN.  See the help page
-for @code{CRAN.packages()} for more information.
+packages from within R if you have access to @acronym{CRAN}.  See the
+help page for @code{CRAN.packages()} for more information.
 
 You can use several library trees of add-on packages.  The easiest way
 to tell R to use these is via the environment variable @env{R_LIBS}
@@ -1676,14 +1810,14 @@ To remove the packages @var{pkg_1}, @dots{}, @var{pkg_n} from the
 default library or the library @var{lib}, do
 
 @example
-$ R REMOVE @var{pkg_1} @dots{} @var{pkg_n}
+$ R CMD REMOVE @var{pkg_1} @dots{} @var{pkg_n}
 @end example
 
 @noindent
 or
 
 @example
-$ R REMOVE -l @var{lib} @var{pkg_1} @dots{} @var{pkg_n}
+$ R CMD REMOVE -l @var{lib} @var{pkg_1} @dots{} @var{pkg_n}
 @end example
 
 @noindent
@@ -1727,10 +1861,16 @@ as described in ``Statistical Models in S'' (see @ref{What is S?});
 Generalized Additive Models (@strong{gam}) and some of the nonlinear
 modeling code are not there yet.
 
+@c FIXME:
+@c Simon Wood <snw@mcs.st-and.ac.uk> says that for GAMs,
+@c   You might want to try the packages mgcv, which has a version of
+@c   gam(), or gss which will fit a wide range of spline models.
+@c Something about this should be added once it is proven to work.
+
 The @uref{http://developer.r-project.org/, R Developer Page} acts as an
 intermediate repository for more or less finalized ideas and plans for
 the R statistical system.  It contains (pointers to) TODO lists, RFCs,
-various other writeups, ideas lists, and CVS miscellania.
+various other writeups, ideas lists, and CVS miscellanea.
 
 Many (more) of the packages available at the Statlib S Repository might
 be worth porting to R.
@@ -1738,7 +1878,7 @@ be worth porting to R.
 If you are interested in working on any of these projects, please notify
 @email{Kurt.Hornik@@r-project.org, Kurt Hornik}.
 
-@node R and Emacs, R Miscellania, R Add-On Packages, Top
+@node R and Emacs, R Miscellanea, R Add-On Packages, Top
 @chapter R and Emacs
 
 @menu
@@ -1750,47 +1890,49 @@ If you are interested in working on any of these projects, please notify
 @node Is there Emacs support for R?, Should I run R from within Emacs?, R and Emacs, R and Emacs
 @section Is there Emacs support for R?
 
-There is an Emacs package called ESS (``Emacs Speaks Statistics'') which
-provides a standard interface between statistical programs and
-statistical processes.  It is intended to provide assistance for
-interactive statistical programming and data analysis.  Languages
-supported include: S dialects (S 3/4, @SPLUS{} 3.x/4.x/5.x, and R),
-LispStat dialects (XLispStat, ViSta), SAS, Stata, SPSS dialects (SPSS,
-PSPP) and SCA.
+There is an Emacs package called @acronym{ESS} (``Emacs Speaks
+Statistics'') which provides a standard interface between statistical
+programs and statistical processes.  It is intended to provide
+assistance for interactive statistical programming and data analysis.
+Languages supported include: S dialects (S 3/4, @SPLUS{} 3.x/4.x/5.x,
+and R), LispStat dialects (XLispStat, ViSta), SAS, Stata, SPSS dialects
+(SPSS, PSPP) and SCA.
 
-ESS grew out of the need for bug fixes and extensions to S-mode 4.8
-(which was a GNU Emacs interface to S/@SPLUS{} version 3 only).  The
-current set of developers desired support for XEmacs, R, S4, and MS
-Windows.  In addition, with new modes being developed for R, Stata, and
-SAS, it was felt that a unifying interface and framework for the user
-interface would benefit both the user and the developer, by helping both
-groups conform to standard Emacs usage.  The end result is an increase
-in efficiency for statistical programming and data analysis, over the
-usual tools.
+@acronym{ESS} grew out of the need for bug fixes and extensions to
+S-mode 4.8 (which was a @acronym{GNU} Emacs interface to S/@SPLUS{}
+version 3 only).  The current set of developers desired support for
+XEmacs, R, S4, and MS Windows.  In addition, with new modes being
+developed for R, Stata, and SAS, it was felt that a unifying interface
+and framework for the user interface would benefit both the user and the
+developer, by helping both groups conform to standard Emacs usage.  The
+end result is an increase in efficiency for statistical programming and
+data analysis, over the usual tools.
 
 R support contains code for editing R source code (syntactic indentation
 and highlighting of source code, partial evaluations of code, loading
 and error-checking of code, and source code revision maintenance) and
 documentation (syntactic indentation and highlighting of source code,
-sending examples to running ESS process, and previewing), interacting
-with an inferior R process from within Emacs (command-line editing,
-searchable command history, command-line completion of R object and file
-names, quick access to object and search lists, transcript recording,
-and an interface to the help system), and transcript manipulation
-(recording and saving transcript files, manipulating and editing saved
-transcripts, and re-evaluating commands from transcript files).
+sending examples to running @acronym{ESS} process, and previewing),
+interacting with an inferior R process from within Emacs (command-line
+editing, searchable command history, command-line completion of R object
+and file names, quick access to object and search lists, transcript
+recording, and an interface to the help system), and transcript
+manipulation (recording and saving transcript files, manipulating and
+editing saved transcripts, and re-evaluating commands from transcript
+files).
 
-The latest versions of ESS are available from
+The latest versions of @acronym{ESS} are available from
 @uref{http://ess.stat.wisc.edu/pub/ESS/} or
-@uref{ftp://ess.stat.wisc.edu/pub/ESS/}, or via CRAN.  The @HTML{}
-version of the documentation can be found at
+@uref{ftp://ess.stat.wisc.edu/pub/ESS/}, or via @acronym{CRAN}.  The
+@HTML{} version of the documentation can be found at
 @uref{http://stat.ethz.ch/ESS/}.
 
-ESS comes with detailed installation instructions.
+@acronym{ESS} comes with detailed installation instructions.
 
-For help with ESS, send email to @email{ESS-help@@stat.ethz.ch}.
+For help with @acronym{ESS}, send email to
+@email{ESS-help@@stat.ethz.ch}.
 
-Please send bug reports and suggestions on ESS to
+Please send bug reports and suggestions on @acronym{ESS} to
 @email{ESS-bugs@@stat.math.ethz.ch}.  The easiest way to do this from is
 within Emacs by typing @kbd{M-x ess-submit-bug-report} or using the
 [ESS] or [iESS] pulldown menus.
@@ -1815,9 +1957,10 @@ In addition, it allows you to keep a record of your session, which can
 also be used for error recovery through the use of the transcript mode.
 
 To specify command line arguments for the inferior R process, use
-@kbd{C-u M-x R} for starting R.  This prompts you for the arguments; in
-particular, you can increase the memory size this way (@pxref{Why does R
-run out of memory?}).
+@kbd{C-u M-x R} for starting R.
+
+@c This prompts you for the arguments; in particular, you can increase
+@c the memory size this way (@pxref{Why does R run out of memory?}).
 
 @node Debugging R from within Emacs,  , Should I run R from within Emacs?, R and Emacs
 @section Debugging R from within Emacs
@@ -1830,18 +1973,19 @@ other environment variables as needed (using e.g.@: @kbd{set env R_HOME
 /path/to/R/}, but see also below), and start the binary with the desired
 arguments (e.g., @kbd{run --vsize=12M}).
 
-If you have ESS, you can do @kbd{C-u M-x R @key{RET} - d @key{SPC} g d b
-@key{RET}} to start an inferior R process with arguments @option{-d
-gdb}.
+If you have @acronym{ESS}, you can do @kbd{C-u M-x R @key{RET} - d
+@key{SPC} g d b @key{RET}} to start an inferior R process with arguments
+@option{-d gdb}.
 
-A third option is to start an inferior R process via ESS (@kbd{M-x R})
-and then start GUD (@kbd{M-x gdb}) giving the R binary (using its full
-path name) as the program to debug.  Use the program @command{ps} to
-find the process number of the currently running R process then use the
-@code{attach} command in gdb to attach it to that process.  One
-advantage of this method is that you have separate @code{*R*} and
-@code{*gud-gdb*} windows.  Within the @code{*R*} window you have all the
-ESS facilities, such as object-name completion, that we know and love.
+A third option is to start an inferior R process via @acronym{ESS}
+(@kbd{M-x R}) and then start GUD (@kbd{M-x gdb}) giving the R binary
+(using its full path name) as the program to debug.  Use the program
+@command{ps} to find the process number of the currently running R
+process then use the @code{attach} command in gdb to attach it to that
+process.  One advantage of this method is that you have separate
+@code{*R*} and @code{*gud-gdb*} windows.  Within the @code{*R*} window
+you have all the @acronym{ESS} facilities, such as object-name
+completion, that we know and love.
 
 When using GUD mode for debugging from within Emacs, you may find it
 most convenient to use the directory with your code in it as the current
@@ -1860,8 +2004,8 @@ dir /opt/R/src/nmath
 dir /opt/R/src/unix
 @end smallexample
 
-@node R Miscellania, R Programming, R and Emacs, Top
-@chapter R Miscellania
+@node R Miscellanea, R Programming, R and Emacs, Top
+@chapter R Miscellanea
 
 @menu
 * Why does R run out of memory?::  
@@ -1879,66 +2023,82 @@ dir /opt/R/src/unix
 * How do I convert factors to numeric?::  
 * Are Trellis displays implemented in R?::  
 * What are the enclosing and parent environments?::  
+* How can I substitute into a plot label?::  
+* What are valid names?::       
 @end menu
 
-@node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellania, R Miscellania
+@node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellanea, R Miscellanea
 @section Why does R run out of memory?
 
-R (currently) uses a @emph{static} memory model.  This means that when
-it starts up, it asks the operating system to reserve a fixed amount of
-memory for it.  The size of this chunk cannot be changed subsequently.
-Hence, it can happen that not enough memory was allocated, e.g., when
-trying to read large data sets into R.
+@c  R (currently) uses a @emph{static} memory model.  This means that when
+@c  it starts up, it asks the operating system to reserve a fixed amount of
+@c  memory for it.  The size of this chunk cannot be changed subsequently.
+@c  Hence, it can happen that not enough memory was allocated, e.g., when
+@c  trying to read large data sets into R.
 
-In these cases, you should restart R with more memory available, using
-the command line options @option{--nsize} and @option{--vsize}.  To
-understand these options, one needs to know that R maintains separate
-areas for fixed and variable sized objects.  The first of these is
-allocated as an array of ``cons cells'' (Lisp programmers will know what
-they are, others may think of them as the building blocks of the
-language itself, parse trees, etc.), and the second are thrown on a
-``heap''.  The @option{--nsize} option can be used to specify the number
-of cons cells which R is to use (the default is 250000), and the
-@option{--vsize} option to specify the size of the vector heap in bytes
-(the default is @w{6 MB}).  Both options must either be integers or
-integers ending with @samp{M}, @samp{K}, or @samp{k} meaning `Mega'
-(2^20), (computer) `Kilo' (2^10), or regular `kilo' (1000).
+@c  In these cases, you should restart R with more memory available, using
+@c  the command line options @option{--nsize} and @option{--vsize}.  To
+@c  understand these options, one needs to know that R maintains separate
+@c  areas for fixed and variable sized objects.  The first of these is
+@c  allocated as an array of ``cons cells'' (Lisp programmers will know what
+@c  they are, others may think of them as the building blocks of the
+@c  language itself, parse trees, etc.), and the second are thrown on a
+@c  ``heap''.  The @option{--nsize} option can be used to specify the number
+@c  of cons cells which R is to use (the default is 250000), and the
+@c  @option{--vsize} option to specify the size of the vector heap in bytes
+@c  (the default is @w{6 MB}).  Both options must either be integers or
+@c  integers ending with @samp{M}, @samp{K}, or @samp{k} meaning `Mega'
+@c  (2^20), (computer) `Kilo' (2^10), or regular `kilo' (1000).
 
-E.g., to read in a table of 5000 observations on 40 numeric variables,
-@samp{R --vsize=6M} should do (which currently is the default).
+@c  E.g., to read in a table of 5000 observations on 40 numeric variables,
+@c  @samp{R --vsize=6M} should do (which currently is the default).
 
-Note that the information on where to find vectors and strings on the
-heap is stored using cons cells.  Thus, it may also be necessary to
-allocate more space for cons cells in order to perform computations with
-very ``large'' variable-size objects.
+@c  Note that the information on where to find vectors and strings on the
+@c  heap is stored using cons cells.  Thus, it may also be necessary to
+@c  allocate more space for cons cells in order to perform computations with
+@c  very ``large'' variable-size objects.
 
-You can find out the current memory consumption (the proportion of heap
-and cons cells used) by typing @kbd{gc()} at the R prompt.  This may
-help you in finding out whether to increase @option{--vsize} or
-@option{--nsize}.  Note that following @kbd{gcinfo(TRUE)}, automatic
-garbage collection always prints memory use statistics.
+@c  You can find out the current memory consumption (the proportion of heap
+@c  and cons cells used) by typing @kbd{gc()} at the R prompt.  This may
+@c  help you in finding out whether to increase @option{--vsize} or
+@c  @option{--nsize}.  Note that following @kbd{gcinfo(TRUE)}, automatic
+@c  garbage collection always prints memory use statistics.
 
-As of version 0.62.3, R will tell you whether you ran out of cons or
-heap memory.
+@c  As of version 0.62.3, R will tell you whether you ran out of cons or
+@c  heap memory.
 
-The defaults for @option{--nsize} and @option{--vsize} can be changed by
-setting the environment variables @env{R_NSIZE} and @env{R_VSIZE}
-respectively, perhaps most conveniently on Unix in the R environment
-file (@file{~/.Renviron} by default).
+@c  The defaults for @option{--nsize} and @option{--vsize} can be changed by
+@c  setting the environment variables @env{R_NSIZE} and @env{R_VSIZE}
+@c  respectively, perhaps most conveniently on Unix in the R environment
+@c  file (@file{~/.Renviron} by default).
 
-When using @code{read.table()}, the memory requirements are in fact
-higher than anticipated, because the file is first read in as one long
-string which is then split again.  Use @code{scan()} if possible in
-case you run out of memory when reading in a large table.
+@c  When using @code{read.table()}, the memory requirements are in fact
+@c  higher than anticipated, because the file is first read in as one long
+@c  string which is then split again.  Use @code{scan()} if possible in
+@c  case you run out of memory when reading in a large table.
+
+@c  R version 1.2.0 introduces a new ``generational'' garbage collector,
+@c  which will increase the memory available to R as needed.  The interface
+@c  for controlling the generational collector is still experimental and in
+@c  flux.  Currently, the command line arguments and environment variables
+@c  described above can be used to supply minimal values for the sizes of
+@c  the node and vector heaps.
+
+Versions of R prior to 1.2.0 used a @emph{static} memory model.  At
+startup, R asked the operating system to reserve a fixed amount of
+memory for it.  The size of this chunk could not be changed
+subsequently.  Hence, it could happen that not enough memory was
+allocated, e.g., when trying to read large data sets into R.  In such
+cases, it was necessary to restart R with more memory available, as
+controlled by the command line options @option{--nsize} and
+@option{--vsize}.
 
 R version 1.2.0 introduces a new ``generational'' garbage collector,
-which will increase the memory available to R as needed.  The interface
-for controlling the generational collector is still experimental and in
-flux.  Currently, the command line arguments and environment variables
-described above can be used to supply minimal values for the sizes of
-the node and vector heaps.
+which will increase the memory available to R as needed.  Hence, user
+intervention is no longer necessary for ensuring that enough memory is
+available.
 
-@node Why does sourcing a correct file fail?, How can I set components of a list to NULL?, Why does R run out of memory?, R Miscellania
+@node Why does sourcing a correct file fail?, How can I set components of a list to NULL?, Why does R run out of memory?, R Miscellanea
 @section Why does sourcing a correct file fail?
 
 R sometimes has problems parsing a file which does not end in a newline.
@@ -1952,7 +2112,7 @@ locally ensures this setting).
 Earlier R versions had a similar problem when reading in data files, but
 this should have been taken care of now.
 
-@node How can I set components of a list to NULL?, How can I save my workspace?, Why does sourcing a correct file fail?, R Miscellania
+@node How can I set components of a list to NULL?, How can I save my workspace?, Why does sourcing a correct file fail?, R Miscellanea
 @section How can I set components of a list to NULL?
 
 You can use
@@ -1970,7 +2130,7 @@ the list.
 For dropping the row names of a matrix @code{x}, it may be easier to use
 @code{rownames(x) <- NULL}, similarly for column names.
 
-@node How can I save my workspace?, How can I clean up my workspace?, How can I set components of a list to NULL?, R Miscellania
+@node How can I save my workspace?, How can I clean up my workspace?, How can I set components of a list to NULL?, R Miscellanea
 @section How can I save my workspace?
 
 @code{save.image()} saves the objects in the user's @code{.GlobalEnv} to
@@ -1978,7 +2138,7 @@ the file @file{.RData} in the R startup directory.  (This is also what
 happens after @kbd{q("yes")}.)  Using @code{save.image(@var{file})} one
 can save the image under a different name.
 
-@node How can I clean up my workspace?, How can I get eval() and D() to work?, How can I save my workspace?, R Miscellania
+@node How can I clean up my workspace?, How can I get eval() and D() to work?, How can I save my workspace?, R Miscellanea
 @section How can I clean up my workspace?
 
 To remove all objects in the currently active environment (typically
@@ -1992,7 +2152,7 @@ rm(list = ls(all = TRUE))
 (Without @option{all = TRUE}, only the objects with names not starting
 with a @samp{.} are removed.)
 
-@node How can I get eval() and D() to work?, Why do my matrices lose dimensions?, How can I clean up my workspace?, R Miscellania
+@node How can I get eval() and D() to work?, Why do my matrices lose dimensions?, How can I clean up my workspace?, R Miscellanea
 @section How can I get eval() and D() to work?
 
 Strange things will happen if you use @code{eval(print(x), envir = e)}
@@ -2033,7 +2193,7 @@ g(a * b)
 
 See the help page for @code{deriv()} for more examples.
 
-@node Why do my matrices lose dimensions?, How does autoloading work?, How can I get eval() and D() to work?, R Miscellania
+@node Why do my matrices lose dimensions?, How does autoloading work?, How can I get eval() and D() to work?, R Miscellanea
 @section Why do my matrices lose dimensions?
 
 When a matrix with a single row or column is created by a subscripting
@@ -2068,7 +2228,7 @@ rewritten as
 somerows <- mat[index, , drop = FALSE]
 @end example
 
-@node How does autoloading work?, How should I set options?, Why do my matrices lose dimensions?, R Miscellania
+@node How does autoloading work?, How should I set options?, Why do my matrices lose dimensions?, R Miscellanea
 @section How does autoloading work?
 
 R has a special environment called @code{.AutoloadEnv}.  Using
@@ -2084,7 +2244,7 @@ does not occupy memory (yet).
 
 See the help page for @code{autoload()} for a very nice example.
 
-@node How should I set options?, How do file names work in Windows?, How does autoloading work?, R Miscellania
+@node How should I set options?, How do file names work in Windows?, How does autoloading work?, R Miscellanea
 @section How should I set options?
 
 The function @code{options()} allows setting and examining a variety of
@@ -2122,7 +2282,7 @@ using @kbd{options(OPT = VAL)} correctly updates it.  Local copies of
 @code{.Options}, either in @code{.GlobalEnv} or in a function
 environment (frame), are just silently disregarded.
 
-@node How do file names work in Windows?, Why does plotting give a color allocation error?, How should I set options?, R Miscellania
+@node How do file names work in Windows?, Why does plotting give a color allocation error?, How should I set options?, R Miscellanea
 @section How do file names work in Windows?
 
 As R uses C-style string handling, @samp{\} is treated as an escape
@@ -2133,7 +2293,7 @@ When you really need a @samp{\}, you have to escape it with another
 Thus, in filenames use something like @code{"c:\\data\\money.dat"}.  You
 can also replace @samp{\} by @samp{/} (@code{"c:/data/money.dat"}).
 
-@node Why does plotting give a color allocation error?, Is R Y2K-compliant?, How do file names work in Windows?, R Miscellania
+@node Why does plotting give a color allocation error?, Is R Y2K-compliant?, How do file names work in Windows?, R Miscellanea
 @section Why does plotting give a color allocation error?
 
 Sometimes plotting, e.g., when running @code{demo(image)}, results in
@@ -2151,7 +2311,7 @@ You could also set the @code{colortype} of @code{X11()} to
 @code{"pseudo.cube"} rather than the default @code{"pseudo"}.  See the
 help page for @code{X11()} for more information.
 
-@node Is R Y2K-compliant?, How do I convert factors to numeric?, Why does plotting give a color allocation error?, R Miscellania
+@node Is R Y2K-compliant?, How do I convert factors to numeric?, Why does plotting give a color allocation error?, R Miscellanea
 @section Is R Y2K-compliant?
 
 We expect R to be Y2K compliant when compiled and run on a Y2K compliant
@@ -2163,7 +2323,7 @@ whatsoever}.
 R, like any other programming language, can be used to write programs
 and manipulate data in ways that are not Y2K compliant.
 
-@node How do I convert factors to numeric?, Are Trellis displays implemented in R?, Is R Y2K-compliant?, R Miscellania
+@node How do I convert factors to numeric?, Are Trellis displays implemented in R?, Is R Y2K-compliant?, R Miscellanea
 @section How do I convert factors to numeric?
 
 It may happen that when reading numeric data into R (usually, when
@@ -2183,7 +2343,7 @@ as.numeric(levels(f))[as.integer(f)]
 
 In any case, do not call @code{as.numeric()} or their likes directly.
 
-@node Are Trellis displays implemented in R?, What are the enclosing and parent environments?, How do I convert factors to numeric?, R Miscellania
+@node Are Trellis displays implemented in R?, What are the enclosing and parent environments?, How do I convert factors to numeric?, R Miscellanea
 @section Are Trellis displays implemented in R?
 
 Not yet.  Meanwhile, you could look at @code{coplot()} and
@@ -2196,7 +2356,7 @@ device resizing) the aspect ratio of the plot.
 (By the way, ``Trellis'' is a trademark which cannot be used in R;
 instead, the term ``lattice'' has been proposed for the R equivalent.)
 
-@node What are the enclosing and parent environments?,  , Are Trellis displays implemented in R?, R Miscellania
+@node What are the enclosing and parent environments?, How can I substitute into a plot label?, Are Trellis displays implemented in R?, R Miscellanea
 @section What are the enclosing and parent environments?
 
 Inside a function you may want to access variables in two additional
@@ -2244,13 +2404,81 @@ between R and S is to say that in S the enclosing environment is
 @emph{always} the global workspace, but in R the enclosing environment
 is wherever the function was created.
 
-@node R Programming, R Bugs, R Miscellania, Top
+@node How can I substitute into a plot label?, What are valid names?, What are the enclosing and parent environments?, R Miscellanea
+@section How can I substitute into a plot label?
+
+Often, it is desired to use the value of an R object in a plot label,
+e.g., a title.  This is easily accomplished using @code{paste()} if the
+label is a simple character string, but not always obvious in case the
+label is an expression (for refined mathematical annotation).  In such a
+case, either use @code{parse()} on your pasted character string or use
+@code{substitute()} on an expression.  For example, if @code{ahat} is an
+estimator of your parameter @math{a} of interest, use
+
+@smallexample
+title(substitute(hat(a) == ahat, list(ahat = ahat)))
+@end smallexample
+
+@noindent
+(note that it is @samp{==} and not @samp{=}).  There are more worked
+examples in the mailing list achives.
+
+@node What are valid names?,  , How can I substitute into a plot label?, R Miscellanea
+@section What are valid names?
+
+When creating data frames using @code{data.frame} or @code{read.table},
+R by default ensures that the variable names are syntactically valid.
+(The argument @option{check.names} to these functions controls whether
+variable names are checked and adjusted by @code{make.names} if needed.)
+
+To understand what names are ``valid'', one needs to take into account
+that the term ``name'' is used in several different (but related) ways
+in the language:
+
+@enumerate
+@item
+A @emph{syntactic name} is a string the parser interprets as this type
+of expression.  It consists of letters, numbers, and the dot character
+and starts with a letter or the dot.
+
+@item
+An @emph{object name} is a string associated with an object that is
+assigned in an expression either by having the object name on the left
+of an assignment operation or as an argument to the @code{assign}
+function.  It is usually a syntactic name as well, but can be any
+non-empty string if it is quoted (and it is always quoted in the call to
+@code{assign}).
+
+@item
+An @emph{argument name} is what appears to the left of the equals sign
+when supplying an argument in a function call (for example,
+@code{f(trim=.5)}).  Argument names are also usually syntactic names,
+but again can be anything if they are quoted.
+
+@item
+An @emph{element name} is a string that identifies a piece of an object
+(a component of a list, for example.)  When it is used on the right of
+the @samp{$} operator, it must be a syntactic name, or quoted.
+Otherwise, element names can be any strings.  (When an object is used as
+a database, as in a call to @code{eval} or @code{attach}, the element
+names become object names.)
+
+@item
+Finally, a @emph{file name} is a string identifying a file in the
+operating system for reading, writing, etc.  It really has nothing much
+to do with names in the language, but it is traditional to call these
+strings file ``names''.
+@end enumerate
+
+
+@node R Programming, R Bugs, R Miscellanea, Top
 @chapter R Programming
 
 @menu
 * How should I write summary methods?::  
 * How can I debug dynamically loaded code?::  
 * How can I inspect R objects when debugging?::  
+* How can I change compilation flags?::  
 @end menu
 
 @node How should I write summary methods?, How can I debug dynamically loaded code?, R Programming, R Programming
@@ -2283,7 +2511,7 @@ code, R-exts, Writing R Extensions}.
 This manual is included in the R distribution, @pxref{What documentation
 exists for R?}.
 
-@node How can I inspect R objects when debugging?,  , How can I debug dynamically loaded code?, R Programming
+@node How can I inspect R objects when debugging?, How can I change compilation flags?, How can I debug dynamically loaded code?, R Programming
 @section How can I inspect R objects when debugging?
 
 The most convenient way is to call @code{R_PV} from the symbolic
@@ -2297,6 +2525,21 @@ Extensions}.
 @xref{Inspecting R objects, , Inspecting R objects when debugging,
 R-exts, Writing R Extensions}.
 @end ifset
+
+@node How can I change compilation flags?,  , How can I inspect R objects when debugging?, R Programming
+@section How can I change compilation flags?
+
+Suppose you have C code file for dynloading into R, but you want to use
+@code{R CMD SHLIB} with compilation flags other than the default ones
+(which were determined when R was built).  You could change the file
+@file{@env{R_HOME}/etc/Makeconf} to reflect your preferences.  If you
+are a Bourne shell user, you can also pass the desired flags to Make
+(which is used for controlling compilation) via the Make variable
+@code{MAKEFLAGS}, as in
+
+@smallexample
+MAKEFLAGS="CFLAGS=-O3" R CMD SHLIB *.c
+@end smallexample
 
 @node R Bugs, Acknowledgments, R Programming, Top
 @chapter R Bugs
@@ -2404,8 +2647,8 @@ read.
 On Unix systems a bug report can be generated using the function
 @code{bug.report()}.  This automatically includes the version
 information and sends the bug to the correct address.  Alternatively the
-bug report can be emailed to @email{r-bugs@@lists.r-project.org} or
-submitted to the Web page at @uref{http://bugs.r-project.org/}.
+bug report can be emailed to @email{r-bugs@@r-project.org} or submitted
+to the Web page at @uref{http://bugs.r-project.org/}.
 
 Bug reports on contributed packages should perhaps be sent to the
 package maintainer rather than to r-bugs.
@@ -2419,7 +2662,7 @@ the package writers and porters for adding to it.
 Special thanks go to Doug Bates, Peter Dalgaard, Paul Gilbert, Fritz
 Leisch, Jim Lindsey, Thomas Lumley, Martin Maechler, Brian D. Ripley,
 Anthony Rossini, and Andreas Weingessel for their comments which helped
-me improve this FAQ.
+me improve this @acronym{FAQ}.
 
 More to some soon @dots{}
 

@@ -50,13 +50,17 @@
  * a single R-vector element.  This is mainly used in gizmos like deparse.
  */
 
+/* if ESC_BARE_QUOTE is defined, " in an unquoted string is replaced
+   by \".  " in a quoted string is always replaced by \". */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Print.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Print.h>
+#include <Rconnections.h>
 
 #define BUFSIZE 8192  /* used by Rprintf etc */
 static char *Encodebuf=NULL;
@@ -232,7 +236,7 @@ static int hexdigit(unsigned int x)
 #endif
 
 /* strlen() using escaped rather than literal form */
-int Rstrlen(char *s)
+int Rstrlen(char *s, int quote)
 {
     char *p;
     int len;
@@ -245,7 +249,11 @@ int Rstrlen(char *s)
 #ifdef ESCquote
 	    case '\'':
 #endif
+#ifdef ESC_BARE_QUOTE
 	    case '\"': len += 2; break;
+#else
+	    case '\"': len += quote ? 2 : 1; break;
+#endif
 	    default: len += 1; break;
 	    }
 	}
@@ -270,13 +278,14 @@ int Rstrlen(char *s)
     return len;
 }
 
+/* Here w appears to be the minimum field width */
 char *EncodeString(char *s, int w, int quote, int right)
 {
     int b, i ;
     char *p, *q;
 
-    i = Rstrlen(s);
-    AllocBuffer(i + 2); /* allow for quotes */
+    i = Rstrlen(s, quote);
+    AllocBuffer((i+2 >= w)?(i+2):w); /* +2 allows for quotes */
     q = Encodebuf;
     if(right) { /* Right justifying */
 	b = w - i - (quote ? 2 : 0);
@@ -296,7 +305,11 @@ char *EncodeString(char *s, int w, int quote, int right)
 #ifdef ESCquote
 	    case '\'': *q++ = '\\'; *q++ = '\''; break;
 #endif
-	    case '\"': *q++ = '\\'; *q++ = '\"'; break;
+#ifdef ESC_BARE_QUOTE
+	    case '\"': *q++ = '\"'; break;
+#else
+	    case '\"': if(quote) *q++ = '\\'; *q++ = '\"'; break;
+#endif
 	    default: *q++ = *p; break;
 	    }
 	}
@@ -335,31 +348,31 @@ char *EncodeString(char *s, int w, int quote, int right)
     return Encodebuf;
 }
 
-char *EncodeElement(SEXP x, int index, int quote)
+char *EncodeElement(SEXP x, int indx, int quote)
 {
     int w, d, e, wi, di, ei;
 
     switch(TYPEOF(x)) {
     case LGLSXP:
-	formatLogical(&INTEGER(x)[index], 1, &w);
-	EncodeLogical(INTEGER(x)[index], w);
+	formatLogical(&INTEGER(x)[indx], 1, &w);
+	EncodeLogical(INTEGER(x)[indx], w);
 	break;
     case INTSXP:
-	formatInteger(&INTEGER(x)[index], 1, &w);
-	EncodeInteger(INTEGER(x)[index], w);
+	formatInteger(&INTEGER(x)[indx], 1, &w);
+	EncodeInteger(INTEGER(x)[indx], w);
 	break;
     case REALSXP:
-	formatReal(&REAL(x)[index], 1, &w, &d, &e);
-	EncodeReal(REAL(x)[index], w, d, e);
+	formatReal(&REAL(x)[indx], 1, &w, &d, &e);
+	EncodeReal(REAL(x)[indx], w, d, e);
 	break;
     case STRSXP:
-	formatString(&STRING(x)[index], 1, &w, quote);
-	EncodeString(CHAR(STRING(x)[index]), w, quote, Rprt_adj_left);
+	formatString(&STRING_PTR(x)[indx], 1, &w, quote);
+	EncodeString(CHAR(STRING_ELT(x, indx)), w, quote, Rprt_adj_left);
 	break;
     case CPLXSXP:
-	formatComplex(&COMPLEX(x)[index], 1,
+	formatComplex(&COMPLEX(x)[indx], 1,
 		      &w, &d, &e, &wi, &di, &ei);
-	EncodeComplex(COMPLEX(x)[index],
+	EncodeComplex(COMPLEX(x)[indx],
 		      w, d, e, wi, di, ei);
 	break;
     }
@@ -383,16 +396,6 @@ void Rprintf(char *format, ...)
     va_list(ap);
 
     va_start(ap, format);
-/*  if(R_Outputfile) {
-	vfprintf(R_Outputfile, format, ap);
-	fflush(R_Outputfile);
-    }
-    else {
-	char buf[BUFSIZE]; int len;
-	vsprintf(buf, format, ap);
-	len = strlen(buf);
-	R_WriteConsole(buf, len);
-    } */
     Rvprintf(format, ap);
     va_end(ap);
 }
@@ -406,51 +409,43 @@ void REprintf(char *format, ...)
 {
     va_list(ap);
     va_start(ap, format);
-/*  if(R_Consolefile) {
-	vfprintf(R_Consolefile, format, ap);
-    }
-    else {
-	char buf[BUFSIZE]; int len;
-	vsprintf(buf, format, ap);
-	len = strlen(buf);
-	R_WriteConsole(buf, len);
-    } */
     REvprintf(format, ap);
     va_end(ap);
 }
 
-/* Apparently unused except in Rprintf  */
+void Rcons_vprintf(const char *format, va_list arg)
+{
+    char buf[BUFSIZE], *p = buf, *vmax = vmaxget();
+#ifdef HAVE_VSNPRINTF
+    int res;
+
+    res = vsnprintf(p, BUFSIZE, format, arg);
+    if(res >= BUFSIZE) { /* res is the desired output length */
+	p = R_alloc(res+1, sizeof(char));
+	vsprintf(p, format, arg);
+    } else if(res < 0) { /* just a failure indication */
+	p = R_alloc(10*BUFSIZE, sizeof(char));
+	res = vsnprintf(p, 10*BUFSIZE, format, arg);
+	if (res < 0) {
+	    *(p + 10*BUFSIZE) = '\0';
+	    warning("printing of extremely long output is truncated");
+	}
+    }
+#else
+    /* allocate a large buffer and hope */
+    p = R_alloc(10*BUFSIZE, sizeof(char));
+    vsprintf(p, format, arg);
+#endif
+    R_WriteConsole(p, strlen(buf));
+    vmaxset(vmax);
+}
+
 void Rvprintf(const char *format, va_list arg)
 {
-    if(R_Outputfile) {
-	vfprintf(R_Outputfile, format, arg);
-	fflush(R_Outputfile);
-    }
-    else {
-	char buf[BUFSIZE], *p = buf, *vmax = vmaxget();
-#ifdef HAVE_VSNPRINTF
-	int res;
-
-	res = vsnprintf(p, BUFSIZE, format, arg);
-	if(res >= BUFSIZE) { /* res is the desired output length */
-	    p = R_alloc(res+1, sizeof(char));
-	    vsprintf(p, format, arg);
-	} else if(res < 0) { /* just a failure indication */
-	    p = R_alloc(10*BUFSIZE, sizeof(char));
-	    res = vsnprintf(p, 10*BUFSIZE, format, arg);
-	    if (res < 0) {
-		*(p + 10*BUFSIZE) = '\0';
-		warning("printing of extremely long output is truncated");
-	    }
-	}
-#else
-	/* allocate a large buffer and hope */
-	p = R_alloc(10*BUFSIZE, sizeof(char));
-	vsprintf(p, format, arg);
-#endif
-	R_WriteConsole(p, strlen(buf));
-	vmaxset(vmax);
-    }
+    Rconnection con = getConnection(R_OutputCon);
+    
+    con->vfprintf(con, format, arg);
+    con->fflush(con);
 }
 
 /*
@@ -480,6 +475,7 @@ int IndexWidth(int n)
 
 void VectorIndex(int i, int w)
 {
+/* print index label "[`i']" , using total width `w' (left filling blanks) */
     Rprintf("%*s[%ld]", w-IndexWidth(i)-2, "", i);
 }
 
@@ -488,9 +484,9 @@ void MatrixColumnLabel(SEXP cl, int j, int w)
     int l;
 
     if (!isNull(cl)) {
-	l = Rstrlen(CHAR(STRING(cl)[j]));
+	l = Rstrlen(CHAR(STRING_ELT(cl, j)), 0);
 	Rprintf("%*s%s", w-l, "",
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_left));
+		EncodeString(CHAR(STRING_ELT(cl, j)), l, 0, Rprt_adj_left));
     }
     else {
 	Rprintf("%*s[,%ld]", w-IndexWidth(j+1)-3, "", j+1);
@@ -502,9 +498,9 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
     int l;
 
     if (!isNull(cl)) {
-	l = Rstrlen(CHAR(STRING(cl)[j]));
+	l = Rstrlen(CHAR(STRING_ELT(cl, j)), 0);
 	Rprintf("%*s", R_print.gap+w,
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_right));
+		EncodeString(CHAR(STRING_ELT(cl, j)), l, 0, Rprt_adj_right));
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -516,9 +512,9 @@ void LeftMatrixColumnLabel(SEXP cl, int j, int w)
     int l;
 
     if (!isNull(cl)) {
-	l = Rstrlen(CHAR(STRING(cl)[j]));
+	l = Rstrlen(CHAR(STRING_ELT(cl, j)), 0);
 	Rprintf("%*s%s%*s", R_print.gap, "",
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_left), w-l, "");
+		EncodeString(CHAR(STRING_ELT(cl, j)), l, 0, Rprt_adj_left), w-l, "");
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -530,9 +526,9 @@ void MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
     int l;
 
     if (!isNull(rl)) {
-	l = Rstrlen(CHAR(STRING(rl)[i]));
+	l = Rstrlen(CHAR(STRING_ELT(rl, i)), 0);
 	Rprintf("\n%*s%s%*s", lbloff, "",
-		EncodeString(CHAR(STRING(rl)[i]), l, 0, Rprt_adj_left),
+		EncodeString(CHAR(STRING_ELT(rl, i)), l, 0, Rprt_adj_left),
 		rlabw-l-lbloff, "");
     }
     else {

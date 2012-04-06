@@ -20,7 +20,7 @@
  *
  *  SYNOPSIS
  *
- *	#include "Mathlib.h"
+ *	#include "Rmath.h"
  *	double qtukey(p, rr, cc, df, lower_tail, log_p);
  *
  *  DESCRIPTION
@@ -122,7 +122,7 @@ double qtukey(double p, double rr, double cc, double df,
     static const double eps = 0.0001;
     static const int maxiter = 50;
 
-    double ans, valx0, valx1, x0, x1, xabs;
+    double ans = 0.0, valx0, valx1, x0, x1, xabs;
     int iter;
 
 #ifdef IEEE_754
@@ -150,7 +150,7 @@ double qtukey(double p, double rr, double cc, double df,
 
     /* Find prob(value < x0) */
 
-    valx0 = ptukey(x0, rr, cc, df, /*LOWER*/LTRUE, /*LOG_P*/LFALSE) - p;
+    valx0 = ptukey(x0, rr, cc, df, /*LOWER*/TRUE, /*LOG_P*/FALSE) - p;
 
     /* Find the second iterate and prob(value < x1). */
     /* If the first iterate has probability value */
@@ -161,7 +161,7 @@ double qtukey(double p, double rr, double cc, double df,
 	x1 = fmax2(0.0, x0 - 1.0);
     else
 	x1 = x0 + 1.0;
-    valx1 = ptukey(x1, rr, cc, df, /*LOWER*/LTRUE, /*LOG_P*/LFALSE) - p;
+    valx1 = ptukey(x1, rr, cc, df, /*LOWER*/TRUE, /*LOG_P*/FALSE) - p;
 
     /* Find new iterate */
 
@@ -178,7 +178,7 @@ double qtukey(double p, double rr, double cc, double df,
 	}
 	/* Find prob(value < new iterate) */
 
-	valx1 = ptukey(ans, rr, cc, df, /*LOWER*/LTRUE, /*LOG_P*/LFALSE) - p;
+	valx1 = ptukey(ans, rr, cc, df, /*LOWER*/TRUE, /*LOG_P*/FALSE) - p;
 	x1 = ans;
 
 	/* If the difference between two successive */

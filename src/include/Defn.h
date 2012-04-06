@@ -23,23 +23,75 @@
 
 #define COUNTING
 
+/* To test the write barrier used by the generational collector,
+   define TESTING_WRITE_BARRIER.  This makes the internal structure of
+   SEXPRECs visible only inside of files that explicitly define
+   USE_RINTERNALS, and all uses of SEXPREC fields that do not go
+   through the appropriate functions or macros will become compilation
+   errors.  Since this does impose a small but noticable performance
+   penalty, code that includes Defn.h (or code that explicitly defines
+   USE_RINTERNALS) can access a SEXPREC's fields directly. */
+
+#ifndef TESTING_WRITE_BARRIER
+# define USE_RINTERNALS
+#endif
+
 #include "config.h"
-#include "Rinternals.h"		/*-> Arith.h, Complex.h, Error.h, Memory.h
+
+#include <Rinternals.h>		/*-> Arith.h, Complex.h, Error.h, Memory.h
 				  PrtUtil.h, Utils.h */
+#include "Internal.h"		/* do_FOO */
+
 #include "Errormsg.h"
+
+/* SunOS 4 is famous for broken header files. */
+#ifdef SunOS4
+# ifndef NULL
+#  define	NULL		0
+# endif
+#endif /* SunOS4 */
 
 /* PSIGNAL may be defined on Win32 in config.h */
 #ifdef PSIGNAL
-#include <psignal.h>
+# include <psignal.h>
 #else
-#include <signal.h>
-#include <setjmp.h>
-#endif
-#include <time.h>
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
+# include <signal.h>
+# include <setjmp.h>
 #endif
 
+/*
+#include <time.h>
+
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
+*/
+
+#ifdef Unix
+# define OSTYPE      "unix"
+# define FILESEP     "/"
+# define DYNLOADEXT  "." ## SHLIB_EXT
+#endif /* Unix */
+
+#ifdef Macintosh
+# define OSTYPE      "mac"
+# define FILESEP     ":"
+# define DYNLOADEXT  ".dll"
+#endif /* Macintosh */
+
+#ifdef Win32
+# define OSTYPE      "windows"
+# define FILESEP     "/"
+# define DYNLOADEXT  ".dll"
+#endif /* Win32 */
+
+#ifdef HAVE_F77_UNDERSCORE
+# define F77_SYMBOL(x)	x ## _
+# define F77_QSYMBOL(x)	#x ## "_"
+#else
+# define F77_SYMBOL(x)	x
+# define F77_QSYMBOL(x) #x
+#endif
 
 /*  Heap and Pointer Protection Stack Sizes.  */
 
@@ -77,25 +129,25 @@
 
 /* Getting the working directory */
 #if defined(HAVE_GETCWD)
-#define R_GETCWD(x, y) getcwd(x, y)
+# define R_GETCWD(x, y) getcwd(x, y)
 #elif defined(Win32)
-#define R_GETCWD(x, y) GetCurrentDirectory(y, x)
+# define R_GETCWD(x, y) GetCurrentDirectory(y, x)
 #else
-#undef R_GETCWD
+# undef R_GETCWD
 #endif
 
 /* Maximal length of an entire file name */
 #if !defined(PATH_MAX)
-#  if defined(HAVE_SYS_PARAM_H)
-#    include <sys/param.h>
-#  endif
-#  if defined(MAXPATHLEN) && !defined(PATH_MAX)
-#    define PATH_MAX MAXPATHLEN
-#  elif defined(Win32)
-#    define PATH_MAX 260
-#  else
-#    define PATH_MAX 255
-#  endif
+# if defined(HAVE_SYS_PARAM_H)
+#  include <sys/param.h>
+# endif
+# if defined(MAXPATHLEN) && !defined(PATH_MAX)
+#  define PATH_MAX MAXPATHLEN
+# elif defined(Win32)
+#  define PATH_MAX 260
+# else
+#  define PATH_MAX 255
+# endif
 #endif
 
 #ifdef HAVE_POSIX_SETJMP
@@ -120,6 +172,29 @@ DL_FUNC R_FindSymbol(char const *, char const *);
 /* These are the built-in R functions. */
 typedef SEXP (*CCODE)();
 
+/* Information for Deparsing Expressions */
+typedef enum {
+    PP_ASSIGN   =  1,
+    PP_ASSIGN2  =  2,
+    PP_BINARY   =  3,
+    PP_BINARY2  =  4,
+    PP_BREAK    =  5,
+    PP_CURLY    =  6,
+    PP_FOR      =  7,
+    PP_FUNCALL  =  8,
+    PP_FUNCTION =  9,
+    PP_IF 	= 10,
+    PP_NEXT 	= 11,
+    PP_PAREN    = 12,
+    PP_RETURN   = 13,
+    PP_SUBASS   = 14,
+    PP_SUBSET   = 15,
+    PP_WHILE 	= 16,
+    PP_UNARY 	= 17,
+    PP_DOLLAR 	= 18,
+    PP_FOREIGN 	= 19,
+    PP_REPEAT 	= 20
+} PPinfo;
 
 /* The type definitions for the table of built-in functions. */
 /* This table can be found in ../main/names.c */
@@ -129,9 +204,10 @@ typedef struct {
     int	   code;     /* offset within c-code */
     int	   eval;     /* evaluate args? */
     int	   arity;    /* function arity */
-    int	   gram;     /* pretty-print info */
+    PPinfo gram;     /* pretty-print info */
 } FUNTAB;
 
+#ifdef USE_RINTERNALS
 /* General Cons Cell Attributes */
 #define ATTRIB(x)	((x)->attrib)
 #define OBJECT(x)	((x)->sxpinfo.obj)
@@ -153,10 +229,18 @@ typedef struct {
 #define PRENV(x)	((x)->u.promsxp.env)
 #define PRVALUE(x)	((x)->u.promsxp.value)
 #define PRSEEN(x)	((x)->sxpinfo.gp)
+#ifndef USE_WRITE_BARRIER
+# define SET_PREXPR(x,v)  (((x)->u.promsxp.expr)=(v))
+# define SET_PRENV(x,v)	  (((x)->u.promsxp.env)=(v))
+# define SET_PRVALUE(x,v) (((x)->u.promsxp.value)=(v))
+#endif
+#define SET_PRSEEN(x,v)	(((x)->sxpinfo.gp)=(v))
 
 /* Hashing Macros */
 #define HASHASH(x)      ((x)->sxpinfo.gp)
-#define HASHVALUE(x)    ((x)->u.vecsxp.truelength)
+#define HASHVALUE(x)    TRUELENGTH(x)
+#define SET_HASHASH(x,v) (((x)->sxpinfo.gp)=(v))
+#define SET_HASHVALUE(x,v) SET_TRUELENGTH(x, v)
 
 /* Vector Heap Structure */
 typedef struct {
@@ -173,7 +257,15 @@ typedef struct {
 #define FLOAT2VEC(n)	(((n)>0)?(((n)*sizeof(double)-1)/sizeof(VECREC)+1):0)
 #define COMPLEX2VEC(n)	(((n)>0)?(((n)*sizeof(Rcomplex)-1)/sizeof(VECREC)+1):0)
 #define PTR2VEC(n)	(((n)>0)?(((n)*sizeof(SEXP)-1)/sizeof(VECREC)+1):0)
-
+#else
+typedef struct VECREC *VECP;
+#define PRIMFUN(x)	(R_FunTab[PRIMOFFSET(x)].cfun)
+#define PRIMNAME(x)	(R_FunTab[PRIMOFFSET(x)].name)
+#define PRIMVAL(x)	(R_FunTab[PRIMOFFSET(x)].code)
+#define PRIMARITY(x)	(R_FunTab[PRIMOFFSET(x)].arity)
+#define PPINFO(x)	(R_FunTab[PRIMOFFSET(x)].gram)
+#define PRIMPRINT(x)	(((R_FunTab[PRIMOFFSET(x)].eval)/100)%10)
+#endif
 
 /* Evaluation Context Structure */
 typedef struct RCNTXT {
@@ -210,7 +302,8 @@ enum {
     CTXT_RETURN	  = 12,
     CTXT_BROWSER  = 16,
     CTXT_GENERIC  = 20,
-    CTXT_RESTART  = 28
+    CTXT_RESTART  = 28,
+    CTXT_BUILTIN  = 32  /* used in profiling */
 };
 
 /*
@@ -229,20 +322,24 @@ RES   0 0 1 1 1 0  = 28
 #define streql(s, t)	(!strcmp((s), (t)))
 
 /* Arithmetic and Relation Operators */
-#define	PLUSOP	1
-#define	MINUSOP	2
-#define	TIMESOP	3
-#define	DIVOP	4
-#define	POWOP	5
-#define	MODOP	6
-#define IDIVOP	7
+typedef enum {
+    PLUSOP = 1,
+    MINUSOP,
+    TIMESOP,
+    DIVOP,
+    POWOP,
+    MODOP,
+    IDIVOP
+} ARITHOP_TYPE;
 
-#define	EQOP	1
-#define	NEOP	2
-#define	LTOP	3
-#define	LEOP	4
-#define	GEOP	5
-#define	GTOP	6
+typedef enum {
+    EQOP = 1,
+    NEOP,
+    LTOP,
+    LEOP,
+    GEOP,
+    GTOP
+} RELOP_TYPE;
 
 /* File Handling */
 /*
@@ -257,17 +354,6 @@ RES   0 0 1 1 1 0  = 28
 
 #define R_MAGIC_BINARY_VERSION16 1971
 #define R_MAGIC_ASCII_VERSION16	 1972
-
-/* Startup Actions */
-
-#define SA_NORESTORE 0
-#define SA_RESTORE   1
-
-#define SA_DEFAULT   1
-#define SA_NOSAVE    2
-#define SA_SAVE	     3
-#define SA_SAVEASK   4
-#define SA_SUICIDE   5
 
 
 /*--- Global Variables ---------------------------------------------------- */
@@ -305,11 +391,10 @@ extern int	R_NSize		INI_as(R_NSIZE);/* Size of cons cell heap */
 extern int	R_VSize		INI_as(R_VSIZE);/* Size of the vector heap */
 extern SEXP	R_NHeap;	    /* Start of the cons cell heap */
 extern SEXP	R_FreeSEXP;	    /* Cons cell free list */
-extern VECREC*	R_VHeap;	    /* Base of the vector heap */
-extern VECREC*	R_VTop;		    /* Current top of the vector heap */
-extern VECREC*	R_VMax;		    /* bottom of R_alloc'ed heap */
 extern long	R_Collected;	    /* Number of free cons cells (after gc) */
 extern SEXP	R_PreciousList;	    /* List of Persistent Objects */
+void	Init_C_alloc(void);
+void	Reset_C_alloc(void);
 
 /* The Pointer Protection Stack */
 extern int	R_PPStackSize	INI_as(R_PPSSIZE); /* The stack size (elements) */
@@ -330,19 +415,21 @@ extern int	R_EvalCount	INI_as(0);	/* Evaluation count */
 extern int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
 
 extern int	R_Expressions	INI_as(500);	/* options(expressions) */
-extern int	R_KeepSource	INI_as(0);	/* options(keep.source) */
+extern Rboolean	R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
 
 /* File Input/Output */
-extern int	R_Interactive	INI_as(1);	/* Non-zero during interactive use */
-extern int	R_Quiet		INI_as(0);	/* Be as quiet as possible */
-extern int	R_Slave		INI_as(0);	/* Run as a slave process */
-extern int	R_Verbose	INI_as(0);	/* Be verbose */
+extern Rboolean	R_Interactive	INI_as(TRUE);	/* TRUE during interactive use*/
+extern Rboolean	R_Quiet		INI_as(FALSE);	/* Be as quiet as possible */
+extern Rboolean	R_Slave		INI_as(FALSE);	/* Run as a slave process */
+extern Rboolean	R_Verbose	INI_as(FALSE);	/* Be verbose */
 /* extern int	R_Console; */	    /* Console active flag */
 /* IoBuffer R_ConsoleIob; : --> ./IOStuff.h */
 extern FILE*	R_Inputfile	INI_as(NULL);	/* Current input flag */
 extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
 extern FILE*	R_Sinkfile	INI_as(NULL);	/* Sink file */
+extern int	R_OutputCon	INI_as(1);	/* Output connection */
+extern int	R_SinkCon	INI_as(1);	/* Sink connection */
 
 /* Objects Used In Parsing  */
 extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
@@ -360,6 +447,7 @@ extern int	R_Init		INI_as(0);	/* Do we have an image loaded */
 /* History */
 extern char*	R_HistoryFile;	/* Name of the history file */
 extern int	R_HistorySize;	/* Size of the history file */
+extern int	R_RestoreHistory;	/* restore the history file? */
 
 /* Warnings/Errors */
 extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
@@ -382,9 +470,7 @@ extern char*	R_GUIType	INI_as("unknown");
 #define begincontext		Rf_begincontext
 #define checkArity		Rf_checkArity
 #define CheckFormals		Rf_CheckFormals
-#define classgets		Rf_classgets
 #define CleanEd			Rf_CleanEd
-#define compactPhase		Rf_compactPhase
 #define DataFrameClass		Rf_DataFrameClass
 #define ddfindVar		Rf_ddfindVar
 #define deparse1		Rf_deparse1
@@ -395,6 +481,8 @@ extern char*	R_GUIType	INI_as("unknown");
 #define duplicated		Rf_duplicated
 #define dynamicfindVar		Rf_dynamicfindVar
 #define endcontext		Rf_endcontext
+#define errorcall		Rf_errorcall
+#define ErrorMessage		Rf_ErrorMessage
 #define factorsConform		Rf_factorsConform
 #define FetchMethod		Rf_FetchMethod
 #define findcontext		Rf_findcontext
@@ -411,6 +499,7 @@ extern char*	R_GUIType	INI_as("unknown");
 #define InheritsClass		Rf_InheritsClass
 #define InitArithmetic		Rf_InitArithmetic
 #define InitColors		Rf_InitColors
+#define InitConnections		Rf_InitConnections
 #define InitEd			Rf_InitEd
 #define InitFunctionHashing	Rf_InitFunctionHashing
 #define InitGlobalEnv		Rf_InitGlobalEnv
@@ -423,8 +512,6 @@ extern char*	R_GUIType	INI_as("unknown");
 #define jump_to_toplevel	Rf_jump_to_toplevel
 #define levelsgets		Rf_levelsgets
 #define mainloop		Rf_mainloop
-#define markPhase		Rf_markPhase
-#define markSExp		Rf_markSExp
 #define mat2indsub		Rf_mat2indsub
 #define match			Rf_match
 #define mkCLOSXP		Rf_mkCLOSXP
@@ -447,7 +534,6 @@ extern char*	R_GUIType	INI_as("unknown");
 #define PrintWarnings		Rf_PrintWarnings
 #define promiseArgs		Rf_promiseArgs
 #define RemoveClass		Rf_RemoveClass
-#define scanPhase		Rf_scanPhase
 #define setVarInFrame		Rf_setVarInFrame
 #define sortVector		Rf_sortVector
 #define ssort			Rf_ssort
@@ -458,7 +544,6 @@ extern char*	R_GUIType	INI_as("unknown");
 #define tspgets			Rf_tspgets
 #define type2str		Rf_type2str
 #define unbindVar		Rf_unbindVar
-#define unmarkPhase		Rf_unmarkPhase
 #define usemethod		Rf_usemethod
 #define warningcall		Rf_warningcall
 #define WarningMessage		Rf_WarningMessage
@@ -482,29 +567,25 @@ void	R_ResetConsole(void);
 void	R_FlushConsole(void);
 void	R_ClearerrConsole(void);
 void	R_Busy(int);
-void	R_CleanUp(int, int, int);
-void	R_StartUp(void);
 int	R_ShowFile(char*, char*);
-int	R_ShowFiles(int, char **, char **, char *, int, char *);
+int	R_ShowFiles(int, char **, char **, char *, Rboolean, char *);
 int	R_ChooseFile(int, char*, int);
-char*	R_HomeDir(void);
-int	R_HiddenFile(char*);
 char*	R_Date(void);
-int	R_FileExists(char*);
+char*	R_HomeDir(void);
+Rboolean R_FileExists(char*);
+Rboolean R_HiddenFile(char*);
 
 /* Other Internally Used Functions */
 
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP);
 void checkArity(SEXP, SEXP);
 void CheckFormals(SEXP);
-SEXP classgets(SEXP, SEXP);
 void CleanEd(void);
-void compactPhase(void);
 void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
-SEXP deparse1(SEXP,int);
-SEXP deparse1line(SEXP,int);
-int DispatchOrEval(SEXP, SEXP, SEXP, SEXP, SEXP*, int);
+SEXP deparse1(SEXP,Rboolean);
+SEXP deparse1line(SEXP,Rboolean);
+int DispatchOrEval(SEXP, char*, SEXP, SEXP, SEXP*, int);
 int DispatchGroup(char*, SEXP,SEXP,SEXP,SEXP,SEXP*);
 SEXP DropDims(SEXP);
 SEXP duplicated(SEXP);
@@ -519,12 +600,13 @@ SEXP findVarLocInFrame(SEXP, SEXP);
 void FrameClassFix(SEXP);
 int framedepth(RCNTXT*);
 SEXP frameSubscript(int, SEXP, SEXP);
-int get1index(SEXP, SEXP, int, int);
+int get1index(SEXP, SEXP, int, Rboolean);
 SEXP getVar(SEXP, SEXP);
 SEXP getVarInFrame(SEXP, SEXP);
 int hashpjw(char*);
 void InitArithmetic(void);
 void InitColors(void);
+void InitConnections(void);
 void InitEd(void);
 void InitFunctionHashing(void);
 void InitGlobalEnv(void);
@@ -538,8 +620,6 @@ int isValidName(char *);
 void jump_to_toplevel(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
-void markPhase(void);
-void markSExp(SEXP);
 SEXP mat2indsub(SEXP, SEXP);
 SEXP match(SEXP, SEXP, int);
 SEXP mkCLOSXP(SEXP, SEXP, SEXP);
@@ -562,7 +642,10 @@ SEXP parse(FILE*, int);
 void PrintGreeting(void);
 void PrintVersion(char *);
 void PrintWarnings(void);
+void process_global_Renviron();
+void process_users_Renviron();
 SEXP promiseArgs(SEXP, SEXP);
+void Rcons_vprintf(const char *, va_list);
 void RemoveClass(SEXP, char *);
 SEXP R_LoadFromFile(FILE*, int);
 extern int R_Newhashpjw(char*);
@@ -571,11 +654,10 @@ void R_PreserveObject(SEXP);
 void R_ReleaseObject(SEXP);
 void R_RestoreGlobalEnv(void);
 void R_SaveGlobalEnv(void);
-void R_SaveToFile(SEXP, FILE*, int, int);
+void R_SaveToFile(SEXP, FILE*, int);
 int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
 void R_Suicide(char*);
-void scanPhase(void);
 SEXP setVarInFrame(SEXP, SEXP, SEXP);
 void sortVector(SEXP);
 void ssort(SEXP*,int);
@@ -586,14 +668,25 @@ SEXP R_syscall(int,RCNTXT*);
 int R_sysparent(int,RCNTXT*);
 SEXP R_sysframe(int,RCNTXT*);
 SEXP R_sysfunction(int,RCNTXT*);
-int tsConform(SEXP,SEXP);
+Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2str(SEXPTYPE);
 void unbindVar(SEXP, SEXP);
+#ifdef ALLOW_OLD_SAVE
 void unmarkPhase(void);
+#endif
 int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP*);
+/* ../main/errors.c : */
+void errorcall(SEXP, char*, ...);
 void warningcall(SEXP, char*,...);
-void WarningMessage(SEXP, int, ...);
+void ErrorMessage(SEXP, int, ...);
+void WarningMessage(SEXP, R_WARNING, ...);
+
+int R_GetMaxVSize(void);
+void R_SetMaxVSize(int);
+int R_GetMaxNSize(void);
+void R_SetMaxNSize(int);
+
 
 /* gram.y & gram.c : */
 void yyerror(char *);
@@ -617,7 +710,7 @@ int yywrap(void);
 #define END_SUSPEND_INTERRUPTS } while (0)
 #endif
 
-#endif
+#endif /* DEFN_H_ */
 /*
  *- Local Variables:
  *- page-delimiter: "^/\\*---"

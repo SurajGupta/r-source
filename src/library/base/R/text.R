@@ -1,4 +1,5 @@
 text <- function(x, ...) UseMethod("text")
+
 text.default <-
 function(x, y = NULL, labels = seq(along = x),
          adj = NULL, pos = NULL, offset = 0.5,
@@ -6,17 +7,26 @@ function(x, y = NULL, labels = seq(along = x),
     if (!missing(y) && (is.character(y) || is.expression(y))) {
 	labels <- y; y <- NULL
     }
-    if (!is.null(vfont)) {
-        typeface <- pmatch(vfont[1], c("serif", "sans serif", "script",
-		                       "gothic english", "gothic german",
-			      	       "gothic italian", "serif symbol",
-				       "sans serif symbol"))
-        fontindex <- pmatch(vfont[2], c("symbol", "plain", "italic", "bold",
-				        "bold italic", "cyrillic",
-					"oblique cyrillic", "EUC"))
-        vfont <- c(typeface-1, fontindex-1)
-    }
-    .Internal(text(xy.coords(x,y, recycle=TRUE),
+    if (!is.null(vfont))
+        vfont <- c(typeface = pmatch(vfont[1], Hershey$typeface) - 1,
+                   fontindex= pmatch(vfont[2], Hershey$fontindex))
+    .Internal(text(xy.coords(x,y, recycle = TRUE),
 		   labels, adj, pos, offset, vfont,
 		   cex, col, font, xpd, ...))
 }
+
+Hershey <-
+    list(typeface =
+         c("serif", "sans serif", "script",
+           "gothic english", "gothic german", "gothic italian",
+           "serif symbol", "sans serif symbol"),
+         fontindex =
+         c("plain", "italic", "bold", "bold italic",
+           "cyrillic", "oblique cyrillic", "EUC"),
+## List of valid combinations : ../man/Hershey.Rd
+## *checking* of allowed combinations is done in
+## (via max{#}) in    FixupVFont() ../../../main/plot.c
+## The basic "table" really is in  ../../../main/g_fontdb.c
+         allowed = rbind(cbind(1, 1:8), cbind(2, 1:5), cbind(3,1:4),
+                         cbind(4:6, 1), cbind(7, 1:5), cbind(8,1:3))
+         )

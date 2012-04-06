@@ -12,11 +12,11 @@ PKGDIR = $(RHOME)/src/library
 PKGD = $(shell perl pwd.pl $(PKGDIR))# must be absolute path
 
 ifdef DEBUG
- OPTFLAGS = -g -O2 -Wall
- DLLFLAGS =
+ OPTFLAGS=-g -O2 -Wall
+ DLLFLAGS=
 else
- OPTFLAGS = -O2 -Wall -pedantic
- DLLFLAGS = -s
+ OPTFLAGS=-O2 -Wall -pedantic
+ DLLFLAGS=-s
 endif
 
 libR.a:  R.exp
@@ -68,5 +68,4 @@ zipdata-%:
 	(cd $(RLIB)/$*/data; ls -1 > filelist; \
 	  zip -rmq9X Rdata * -x filelist 00Index)
 
-bootstrap-DLLNM=boott
 

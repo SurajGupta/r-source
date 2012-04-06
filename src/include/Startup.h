@@ -17,10 +17,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef True
-#define True 1
-#define False 0
-#endif
+#ifndef STARTUP_H_
+#define STARTUP_H_
+
+#include "R_ext/Boolean.h" /* TRUE/FALSE */
 
 #ifdef Win32
 typedef int (*blah1) (char *, char *, int, int);
@@ -32,25 +32,39 @@ typedef void (*blah6) (int);
 typedef enum {RGui, RTerm, LinkDLL} UImode;
 #endif
 
+/* Startup Actions */
+typedef enum {
+    SA_NORESTORE,/* = 0 */
+    SA_RESTORE,
+    SA_DEFAULT,/* was === SA_RESTORE */
+    SA_NOSAVE,
+    SA_SAVE,
+    SA_SAVEASK,
+    SA_SUICIDE
+} SA_TYPE;
+
 typedef struct
 {
-    int R_Quiet;               /* > 0 to suppress messages */
-    int R_Slave;
-    int R_Interactive;
-    int R_Verbose;
-    int RestoreAction;
-    int SaveAction;
-    int LoadSiteFile;
-    int LoadInitFile;
-    int DebugInitFile;
+    Rboolean R_Quiet		: 1;
+    Rboolean R_Slave		: 1;
+    Rboolean R_Interactive	: 1;
+    Rboolean R_Verbose		: 1;
+    Rboolean LoadSiteFile	: 1;
+    Rboolean LoadInitFile	: 1;
+    Rboolean DebugInitFile	: 1;
+    SA_TYPE	RestoreAction;
+    SA_TYPE 	SaveAction;
     int vsize;
     int nsize;
+    int max_vsize;
+    int max_nsize;
+    int NoRenviron;
 
       /* Permanent copy of the command line arguments and the number
          of them passed to the application.
          These are populated via the routine R_set_command_line_arguments()
          called from R_common_command_line().
-         They are available 
+         They are available
        */
     int    NumCommandLineArgs;
     char **CommandLineArgs;
@@ -64,7 +78,6 @@ typedef struct
     blah4 message;
     blah5 yesnocancel;
     blah6 busy;
-    int NoRenviron;
     UImode CharacterMode;
 #endif
 } structRstart;
@@ -78,3 +91,16 @@ void R_SizeFromEnv(Rstart);
 void R_common_command_line(int *, char **, Rstart);
 
 void R_set_command_line_arguments(int argc, char **argv, Rstart Rp);
+
+void setup_Rmainloop(void);
+
+/* originally from Defn.h : */
+
+void R_CleanUp(SA_TYPE, int, int);
+void R_StartUp(void);
+
+FILE *R_OpenInitFile(void);
+FILE *R_OpenSysInitFile(void);
+FILE *R_OpenSiteFile(void);
+
+#endif

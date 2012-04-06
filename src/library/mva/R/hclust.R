@@ -21,9 +21,9 @@
 ##
 ## Original author: F. Murtagh, May 1992
 ## R Modifications: Ross Ihaka, Dec 1996
-##		    Friedrich Leisch, Apr 1998
+##		    Friedrich Leisch, Apr 1998, Jun 2000
 
-hclust <- function(d, method="complete")
+hclust <- function(d, method="complete", members=NULL)
 {
     METHODS <- c("ward", "single",
                  "complete", "average", "mcquitty",
@@ -40,6 +40,12 @@ hclust <- function(d, method="complete")
     labels <- attr(d, "Labels")
 
     len <- n*(n-1)/2
+
+    if(is.null(members))
+        members <- rep(1, n)
+    if(length(members)!=n)
+        stop("Invalid length of members")
+
     hcl <- .Fortran("hclust",
 		    n = as.integer(n),
 		    len = as.integer(len),
@@ -47,7 +53,7 @@ hclust <- function(d, method="complete")
 		    ia = integer(n),
 		    ib = integer(n),
 		    crit = double(n),
-		    membr = double(n),
+		    members = as.double(members),
 		    nn = integer(n),
 		    disnn = double(n),
 		    flag = logical(n),
@@ -70,17 +76,20 @@ hclust <- function(d, method="complete")
 		 labels=attr(d, "Labels"),
                  method=METHODS[method],
                  call=match.call())
-    
+
     if(!is.null(attr(d, "method"))){
         tree$dist.method <- attr(d, "method")
     }
-    
+
     class(tree) <- "hclust"
     tree
 }
 
 plot.hclust <-
-    function (tree, hang = 0.1, labels=NULL, ...)
+    function (tree, labels = NULL, hang = 0.1,
+              axes = TRUE, frame.plot = FALSE, ann = TRUE,
+              main = "Cluster Dendrogram",
+              sub = NULL, xlab = NULL, ylab = "Height", ...)
 {
     merge <- tree$merge
     if (!is.matrix(merge) || ncol(merge) != 2)
@@ -88,7 +97,7 @@ plot.hclust <-
     n <- nrow(merge)
     height <- as.double(tree$height)
     order <- as.double(order(tree$order))
-
+    
     labels <-
 	if(missing(labels)){
 	    if (is.null(tree$labels))
@@ -101,11 +110,21 @@ plot.hclust <-
 	    else
 		as.character(labels)
 	}
-
+    
     plot.new()
     .Internal(dend.window(n, merge, height, order, hang, labels, ...))
     .Internal(dend(n, merge, height, order, hang, labels, ...))
-    axis(2, at=pretty(range(height)))
+    if(axes)
+        axis(2, at=pretty(range(height)))
+    if (frame.plot) 
+        box(...)
+    if (ann) {
+        if(!is.null(cl <- tree$call) && is.null(sub))
+            sub <- paste(deparse(cl[[1]])," (*, \"", tree$method,"\")",sep="")
+        if(is.null(xlab) && !is.null(cl))
+            xlab <- deparse(cl[[2]])
+        title(main = main, sub = sub, xlab = xlab, ylab = ylab, ...)
+    }
     invisible()
 }
 
@@ -129,11 +148,11 @@ print.hclust <- function(tree)
     if(!is.null(tree$call))
         cat("\nCall:\n",deparse(tree$call),"\n\n",sep="")
     if(!is.null(tree$method))
-        cat("Cluster method   :", tree$method, "\n") 
+        cat("Cluster method   :", tree$method, "\n")
     if(!is.null(tree$dist.method))
         cat("Distance         :", tree$dist.method, "\n")
         cat("Number of objects:", length(tree$height)+1, "\n")
     cat("\n")
 }
-    
+
 

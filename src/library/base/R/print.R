@@ -13,8 +13,8 @@ print.matrix <- function (x, rowlab = dn[[1]], collab = dn[[2]],
 			  na.print=NULL, print.gap=NULL, ...) {
     x <- as.matrix(x)
     dn <- dimnames(x)
-    if(!is.null(print.gap)) warning("'print.gap' is not yet used")
-    ## and 'na.print' could be done in .Internal(.) as well:
+    if(!is.null(print.gap)) .NotYetUsed("print.gap")
+    ## and `na.print' could be done in .Internal(.) as well:
     if(!is.null(na.print) && any(ina <- is.na(x)))
 	x[ina] <- na.print
     .Internal(print.matrix(x, rowlab, collab, quote, right))
@@ -34,14 +34,15 @@ as.matrix.noquote <- function(x) noquote(NextMethod("as.matrix", x))
     attr <- attributes(x)
     r <- unclass(x)[...]
     attributes(r) <- c(attributes(r),
-		       attr[is.na(match(names(attr),c("dim","dimnames")))])
+		       attr[is.na(match(names(attr),
+                                        c("dim","dimnames","names")))])
     r
 }
 
-print.noquote <- function(obj,...) {
-    if(!is.null(cl <- class(obj)))
-	class(obj) <- cl[cl != "noquote"]
-    NextMethod("print", obj, quote = FALSE, ...)
+print.noquote <- function(x, ...) {
+    if(!is.null(cl <- class(x)))
+	class(x) <- cl[cl != "noquote"]
+    print(x, quote = FALSE, ...)
 }
 
 ## for alias:
@@ -146,7 +147,7 @@ print.coefmat <-
 }
 
 print.anova <- function(x, digits = max(getOption("digits") - 2, 3),
-			signif.stars= getOption("show.signif.stars"), ...)
+                        signif.stars= getOption("show.signif.stars"), ...)
 {
     if (!is.null(heading <- attr(x, "heading")))
 	cat(heading, sep = "\n")
@@ -155,16 +156,38 @@ print.anova <- function(x, digits = max(getOption("digits") - 2, 3),
     ncn <- nchar(cn)
     has.P <- substr(cn[nc],1,3) == "Pr(" # P-value as last column
     zap.i <- 1:(if(has.P) nc-1 else nc)
-    if(length(i <- which(substr(cn,2,7) == " value")))
+    i <- which(substr(cn,2,7) == " value")
+    i <- c(i, which(!is.na(match(cn, c("F", "Cp", "Chisq")))))
+    if(length(i))
 	zap.i <- zap.i[!(zap.i %in% i)]
     tst.i <- i
     if(length(i <- which(substr(cn,ncn-1,ncn) == "Df")))
 	zap.i <- zap.i[!(zap.i %in% i)]
 
     print.coefmat(x, digits = digits, signif.stars = signif.stars,
-		  has.Pvalue = has.P, P.values = has.P,
-		  cs.ind = NULL, zap.ind = zap.i, tst.ind= tst.i,
-		  na.print = "", # not yet in print.matrix:  print.gap = 2,
-		  ...)
+                  has.Pvalue = has.P, P.values = has.P,
+                  cs.ind = NULL, zap.ind = zap.i, tst.ind= tst.i,
+                  na.print = "", # not yet in print.matrix:  print.gap = 2,
+                  ...)
+    invisible(x)
+}
+
+print.data.frame <- function (x, ..., digits = NULL,
+                              quote = FALSE, right = TRUE)
+{
+    if (length(x) == 0) {
+        cat("NULL data frame with", length(row.names(x)), "rows\n")
+    }
+    else if (length(row.names(x)) == 0) {
+        print.default(names(x), quote = FALSE)
+        cat("<0 rows> (or 0-length row.names)\n")
+    }
+    else {
+         if (!is.null(digits)) {
+             op <- options(digits = digits)
+             on.exit(options(op))
+         }
+         print.matrix(format(x), ..., quote = quote, right = right)
+     }
     invisible(x)
 }

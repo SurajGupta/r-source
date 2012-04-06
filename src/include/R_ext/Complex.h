@@ -21,14 +21,17 @@
 #ifndef R_COMPLEX_H
 #define R_COMPLEX_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	double r;
 	double i;
 } Rcomplex;
 
-/* This will go away in due course */
-#ifdef R_OLD_COMPLEX
-typedef Rcomplex complex;
+#ifdef  __cplusplus
+}
 #endif
 
-#endif
+#endif /* R_COMPLEX_H */

@@ -18,18 +18,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* These are the R interface routines to the plain FFT code 
+   fft_factor() & fft_work() in ../appl/fft.c. */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include "Defn.h"
-#include "FFDecl.h"
-
-/* These are the  R interface routines to the
- * plain FFT code  in ../appl/fft.c
- * NOTE: That one     ~~~~~~~~~~~~~  (and hence the code here) uses
- * ----	 several GLOBAL (static) variables!
- */
+#include "R_ext/Applic.h"
 
 /* Fourier Transform for Univariate Spatial and Time Series */
 
@@ -178,13 +175,13 @@ SEXP do_mvfft(SEXP call, SEXP op, SEXP args, SEXP env)
     return z;
 }
 
-static int ok_n(int n, int *f, int nf)
+static Rboolean ok_n(int n, int *f, int nf)
 {
     int i;
     for (i = 0; i < nf; i++) {
 	while(n % f[i] == 0) {
 	    if ((n = n / f[i]) == 1)
-		return 1;
+		return TRUE;
 	}
     }
     return n == 1;

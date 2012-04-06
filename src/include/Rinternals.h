@@ -22,6 +22,7 @@
 #define _R_INTERNALS_H_
 
 #include "R_ext/Arith.h"
+#include "R_ext/Boolean.h"
 #include "R_ext/Complex.h"
 #include "R_ext/Error.h"
 #include "R_ext/Memory.h"
@@ -43,16 +44,29 @@
 #endif
 
 
-/*  Fundamental Data Types:  These are largely Lisp  */
-/*  influenced structures, with the exception of LGLSXP,  */
-/*  INTSXP, REALSXP, CPLXSXP and STRSXP which are the  */
-/*  element types for S-like data objects.  */
+/* Fundamental Data Types:  These are largely Lisp
+ * influenced structures, with the exception of LGLSXP,
+ * INTSXP, REALSXP, CPLXSXP and STRSXP which are the
+ * element types for S-like data objects.
 
-/*  Note that the gap of 11 and 12 below is because of	*/
-/*  the withdrawal of native "factor" and "ordered" types.  */
+ * Note that the gap of 11 and 12 below is because of
+ * the withdrawal of native "factor" and "ordered" types.
+ *
+ *			--> TypeTable[] in ../main/util.c for  typeof()
+ */
 
-/*			--> TypeTable[] in ../main/util.c for  typeof() */
-
+/*  These exaxt numeric values are seldom used, but they are, e.g., in
+ *  ../main/subassign.c
+*/
+#ifndef enum_SEXPTYPE
+/* NOT YET using enum:
+ *  1)	The SEXPREC struct below has 'SEXPTYPE type : 5'
+ *	(making FUNSXP and CLOSXP equivalent in there),
+ *	giving (-Wall only ?) warnings all over the place
+ * 2)	Many switch(type) { case ... } statements need a final `default:'
+ *	added in order to avoid warnings like [e.g. l.170 of ../main/util.c]
+ *	  "enumeration value `FUNSXP' not handled in switch"
+ */
 typedef unsigned int SEXPTYPE;
 
 #define NILSXP	     0	  /* nil = NULL */
@@ -74,69 +88,139 @@ typedef unsigned int SEXPTYPE;
 #define ANYSXP	    18	  /* make "any" args work */
 #define VECSXP	    19	  /* generic vectors */
 #define EXPRSXP	    20	  /* expressions vectors */
+#define BCODESXP    21    /* byte code */
+#define EXTPTRSXP   22    /* external pointer */
 
 #define FUNSXP      99    /* Closure or Builtin */
 
+#else /* NOT YET */
+/*------ enum_SEXPTYPE ----- */
+typedef enum {
+    NILSXP	= 0,	/* nil = NULL */
+    SYMSXP	= 1,	/* symbols */
+    LISTSXP	= 2,	/* lists of dotted pairs */
+    CLOSXP	= 3,	/* closures */
+    ENVSXP	= 4,	/* environments */
+    PROMSXP	= 5,	/* promises: [un]evaluated closure arguments */
+    LANGSXP	= 6,	/* language constructs (special lists) */
+    SPECIALSXP	= 7,	/* special forms */
+    BUILTINSXP	= 8,	/* builtin non-special forms */
+    CHARSXP	= 9,	/* "scalar" string type (internal only)*/
+    LGLSXP	= 10,	/* logical vectors */
+    INTSXP	= 13,	/* integer vectors */
+    REALSXP	= 14,	/* real variables */
+    CPLXSXP	= 15,	/* complex variables */
+    STRSXP	= 16,	/* string vectors */
+    DOTSXP	= 17,	/* dot-dot-dot object */
+    ANYSXP	= 18,	/* make "any" args work */
+    VECSXP	= 19,	/* generic vectors */
+    EXPRSXP	= 20,	/* expressions vectors */
+    BCODESXP    = 21,   /* byte code */
+    EXTPTRSXP   = 22,   /* external pointer */
+
+    FUNSXP	= 99	/* Closure or Builtin */
+} SEXPTYPE;
+#endif
+
+#define USE_GENERATIONAL_GC
+
+#ifdef USE_GENERATIONAL_GC
+# define USE_WRITE_BARRIER
+#endif
+
+#ifdef USE_RINTERNALS
+/* Flags */
+struct sxpinfo_struct {
+    SEXPTYPE type      :  5;/* ==> (FUNSXP == 99) %% 2^5 == 3 == CLOSXP
+			     * -> warning: `type' is narrower than values
+			     *              of its type
+			     * when SEXPTYPE was an enum */
+    unsigned int obj   :  1;
+    unsigned int named :  2;
+    unsigned int gp    : 16;
+    unsigned int mark  :  1;
+    unsigned int debug :  1;
+    unsigned int trace :  1;
+    unsigned int fin   :  1;  /* has finalizer installed */
+    unsigned int gcgen :  1;  /* old generation number */
+    unsigned int gccls :  3;  /* node class */
+}; /*		    Tot: 32 */
+
+struct vecsxp_struct {
+    int	length;
+    int	truelength;
+};
+
+struct primsxp_struct {
+    int offset;
+};
+
+struct symsxp_struct {
+    struct SEXPREC *pname;
+    struct SEXPREC *value;
+    struct SEXPREC *internal;
+};
+
+struct listsxp_struct {
+    struct SEXPREC *carval;
+    struct SEXPREC *cdrval;
+    struct SEXPREC *tagval;
+};
+
+struct envsxp_struct {
+    struct SEXPREC *frame;
+    struct SEXPREC *enclos;
+    struct SEXPREC *hashtab;
+};
+
+struct closxp_struct {
+    struct SEXPREC *formals;
+    struct SEXPREC *body;
+    struct SEXPREC *env;
+};
+
+struct promsxp_struct {
+    struct SEXPREC *value;
+    struct SEXPREC *expr;
+    struct SEXPREC *env;
+};
+
+/* Every node must start with a set of sxpinfo flags and an attribute
+   field. Under the generational collector these are followed by the
+   fields used to maintain the collector's linked list structures. */
+#define SEXPREC_HEADER \
+    struct sxpinfo_struct sxpinfo; \
+    struct SEXPREC *attrib; \
+    struct SEXPREC *gengc_next_node, *gengc_prev_node
+
+/* The standard node structure consists of a header followed by the
+   node data. */
 typedef struct SEXPREC {
-
-    /* Flags */
-    struct {
-	SEXPTYPE type	   :  5;
-	unsigned int obj   :  1;
-	unsigned int named :  2;
-	unsigned int gp	   : 16;
-	unsigned int mark  :  1;
-	unsigned int debug :  1;
-	unsigned int trace :  1;
-	unsigned int	   :  5;
-    } sxpinfo;
-
-    /* Attributes */
-    struct SEXPREC *attrib;
-
-    /* Data */
+    SEXPREC_HEADER;
     union {
-	struct {
-	    int	length;
-	    union {
-		char		*c;
-		int		*i;
-		double		*f;
-		Rcomplex		*z;
-		struct SEXPREC	**s;
-	    } type;
-	    int	truelength;
-	} vecsxp;
-	struct {
-	    int		offset;
-	} primsxp;
-	struct {
-	    struct SEXPREC *pname;
-	    struct SEXPREC *value;
-	    struct SEXPREC *internal;
-	} symsxp;
-	struct {
-	    struct SEXPREC *carval;
-	    struct SEXPREC *cdrval;
-	    struct SEXPREC *tagval;
-	} listsxp;
-	struct {
-	    struct SEXPREC *frame;
-	    struct SEXPREC *enclos;
-	    struct SEXPREC *hashtab;
-	} envsxp;
-	struct {
-	    struct SEXPREC *formals;
-	    struct SEXPREC *body;
-	    struct SEXPREC *env;
-	} closxp;
-	struct {
-	    struct SEXPREC *value;
-	    struct SEXPREC *expr;
-	    struct SEXPREC *env;
-	} promsxp;
+	struct primsxp_struct primsxp;
+	struct symsxp_struct symsxp;
+	struct listsxp_struct listsxp;
+	struct envsxp_struct envsxp;
+	struct closxp_struct closxp;
+	struct promsxp_struct promsxp;
     } u;
 } SEXPREC, *SEXP;
+
+/* The generational collector uses a reduced version of SEXPREC as a
+   header in vector nodes.  The layout MUST be kept consistent with
+   the SEXPREC definition.  The standard SEXPREC takes up 7 words on
+   most hardware; this reduced version should take up only 6 words.
+   In addition to slightly reducing memory use, this can lead to more
+   favorable data alignment on 32-bit architectures like the Intel
+   Pentium III where odd word alignment of doubles is allowed but much
+   less efficient than even word alignment. */
+typedef struct VECTOR_SEXPREC {
+    SEXPREC_HEADER;
+    struct vecsxp_struct vecsxp;
+} VECTOR_SEXPREC, *VECSEXP;
+
+typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 
 /* General Cons Cell Attributes */
 #define ATTRIB(x)	((x)->attrib)
@@ -144,19 +228,37 @@ typedef struct SEXPREC {
 #define MARK(x)		((x)->sxpinfo.mark)
 #define TYPEOF(x)	((x)->sxpinfo.type)
 #define NAMED(x)	((x)->sxpinfo.named)
+#define SET_OBJECT(x,v)	(((x)->sxpinfo.obj)=(v))
+#define SET_TYPEOF(x,v)	(((x)->sxpinfo.type)=(v))
+#define SET_NAMED(x,v)	(((x)->sxpinfo.named)=(v))
 
 
 /* Vector Access Macros */
-#define LENGTH(x)	((x)->u.vecsxp.length)
-#define TRUELENGTH(x)	((x)->u.vecsxp.truelength)
-#define CHAR(x)		((x)->u.vecsxp.type.c)
-#define STRING(x)	((x)->u.vecsxp.type.s)
-#define LOGICAL(x)	((x)->u.vecsxp.type.i)
-#define INTEGER(x)	((x)->u.vecsxp.type.i)
-#define REAL(x)		((x)->u.vecsxp.type.f)
-#define COMPLEX(x)	((x)->u.vecsxp.type.z)
+#define LENGTH(x)	(((VECSEXP) (x))->vecsxp.length)
+#define TRUELENGTH(x)	(((VECSEXP) (x))->vecsxp.truelength)
+#define SETLENGTH(x,v)		((((VECSEXP) (x))->vecsxp.length)=(v))
+#define SET_TRUELENGTH(x,v)	((((VECSEXP) (x))->vecsxp.truelength)=(v))
 #define LEVELS(x)	((x)->sxpinfo.gp)
-#define VECTOR(x)	((x)->u.vecsxp.type.s)
+#define SETLEVELS(x,v)	(((x)->sxpinfo.gp)=(v))
+
+/* Under the generational allocator the data for vector nodes comes
+   immediately after the node structure, so the data address is a
+   known ofset from the node SEXP. */
+#define DATAPTR(x)	(((SEXPREC_ALIGN *) (x)) + 1)
+#define CHAR(x)		((char *) DATAPTR(x))
+#define LOGICAL(x)	((int *) DATAPTR(x))
+#define COMPLEX(x)	((Rcomplex *) DATAPTR(x))
+#define INTEGER(x)	((int *) DATAPTR(x))
+#define REAL(x)		((double *) DATAPTR(x))
+#define STRING_ELT(x,i)	((SEXP *) DATAPTR(x))[i]
+#define VECTOR_ELT(x,i)	((SEXP *) DATAPTR(x))[i]
+#define STRING_PTR(x)	((SEXP *) DATAPTR(x))
+#define VECTOR_PTR(x)	((SEXP *) DATAPTR(x))
+
+#ifndef USE_WRITE_BARRIER
+#define SET_STRING_ELT(x,i,v)	(((x)->u.vecsxp.type.s)[i]=(v))
+#define SET_VECTOR_ELT(x,i,v)	(((x)->u.vecsxp.type.s)[i]=(v))
+#endif
 
 /* List Access Macros */
 /* These also work for ... objects */
@@ -174,7 +276,15 @@ typedef struct SEXPREC {
 #define CONS(a, b)	cons((a), (b))		/* data lists */
 #define LCONS(a, b)	lcons((a), (b))		/* language lists */
 #define MISSING(x)	((x)->sxpinfo.gp)	/* for closure calls */
-#define SETCDR(x,y)	{SEXP X=(x), Y=(y); if(X != R_NilValue) CDR(X)=Y; else error("bad value");}
+#ifndef USE_WRITE_BARRIER
+#define SETCAR(x,v)	(CAR(x)=(v))
+#define SETCADR(x,v)	(CADR(x)=(v))
+#define SETCADDR(x,v)	(CADDR(x)=(v))
+#define SETCADDDR(x,v)	(CADDDR(x)=(v))
+#define SETCAD4R(x,v)	(CAD4R(x)=(v))
+#define SETCDR(x,y)	do {SEXP X=(x), Y=(y); if(X != R_NilValue) CDR(X)=Y; else error("bad value");} while (0)
+#endif
+#define SET_MISSING(x,v)	(((x)->sxpinfo.gp)=(v))
 
 /* Closure Access Macros */
 #define FORMALS(x)	((x)->u.closxp.formals)
@@ -182,23 +292,60 @@ typedef struct SEXPREC {
 #define CLOENV(x)	((x)->u.closxp.env)
 #define DEBUG(x)	((x)->sxpinfo.debug)
 #define TRACE(x)	((x)->sxpinfo.trace)
+#define SET_DEBUG(x,v)	(((x)->sxpinfo.debug)=(v))
+#define SET_TRACE(x,v)	(((x)->sxpinfo.trace)=(v))
+
+/* Primitive Access Macros */
+#define PRIMOFFSET(x)	((x)->u.primsxp.offset)
+#define SET_PRIMOFFSET(x,v)	(((x)->u.primsxp.offset)=(v))
 
 /* Symbol Access Macros */
 #define PRINTNAME(x)	((x)->u.symsxp.pname)
 #define SYMVALUE(x)	((x)->u.symsxp.value)
 #define INTERNAL(x)	((x)->u.symsxp.internal)
 #define DDVAL(x)	((x)->sxpinfo.gp) /* for ..1, ..2 etc */
+#ifndef USE_WRITE_BARRIER
+#define SET_PRINTNAME(x,v)	(((x)->u.symsxp.pname)=(v))
+#define SET_SYMVALUE(x,v)	(((x)->u.symsxp.value)=(v))
+#define SET_INTERNAL(x,v)	(((x)->u.symsxp.internal)=(v))
+#endif
+#define SET_DDVAL(x,v)	(((x)->sxpinfo.gp)=(v)) /* for ..1, ..2 etc */
 
 /* Environment Access Macros */
 #define FRAME(x)	((x)->u.envsxp.frame)
 #define ENCLOS(x)	((x)->u.envsxp.enclos)
 #define HASHTAB(x)	((x)->u.envsxp.hashtab)
-#define NARGS(x)	((x)->sxpinfo.gp)	/* for closure calls */
+#ifndef USE_WRITE_BARRIER
+#define SET_FRAME(x,v)		(((x)->u.envsxp.frame)=(v))
+#define SET_ENCLOS(x,v)		(((x)->u.envsxp.enclos)=(v))
+#define SET_HASHTAB(x,v)	(((x)->u.envsxp.hashtab)=(v))
+#endif
+#define ENVFLAGS(x)	((x)->sxpinfo.gp)	/* for environments */
+#define SET_ENVFLAGS(x,v)	(((x)->sxpinfo.gp)=(v))
+#else
+typedef struct SEXPREC *SEXP;
+#define CONS(a, b)	cons((a), (b))		/* data lists */
+#define LCONS(a, b)	lcons((a), (b))		/* language lists */
+#define CHAR(x)		R_CHAR(x)
+#endif /* USE_RINTERNALS */
+
+/* External pointer access macros */
+#define EXTPTR_PTR(x)	CAR(x)
+#define EXTPTR_PROT(x)	CDR(x)
+#define EXTPTR_TAG(x)	TAG(x)
 
 /* Pointer Protection and Unprotection */
 #define PROTECT(s)	protect(s)
 #define UNPROTECT(n)	unprotect(n)
 #define UNPROTECT_PTR(s)	unprotect_ptr(s)
+
+/* We sometimes need to coerce a protected value and place the new
+   coerced value under protection.  For these cases PROTECT_WITH_INDEX
+   saves an index of the protection location that can be used to
+   replace the protected value using REPROTECT. */
+typedef int PROTECT_INDEX;
+#define PROTECT_WITH_INDEX(x,i) R_ProtectWithIndex(x,i)
+#define REPROTECT(x,i) R_Reprotect(x,i)
 
 /* Evaluation Environment */
 extern SEXP	R_GlobalEnv;	    /* The "global" environment */
@@ -230,6 +377,8 @@ extern SEXP	R_LastvalueSymbol;  /* ".Last.value" */
 extern SEXP	R_CommentSymbol;    /* "comment" */
 extern SEXP	R_SourceSymbol;     /* "source" */
 extern SEXP	R_DotEnvSymbol;     /* ".Environment" */
+extern SEXP	R_RecursiveSymbol;  /* "recursive" */
+extern SEXP	R_UseNamesSymbol;  /* "use.names" */
 
 /* Missing Values - others from Arith.h */
 #define NA_STRING	R_NaString
@@ -253,6 +402,7 @@ extern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 #define asInteger		Rf_asInteger
 #define asLogical		Rf_asLogical
 #define asReal			Rf_asReal
+#define classgets		Rf_classgets
 #define coerceList		Rf_coerceList
 #define coerceVector		Rf_coerceVector
 #define CoercionWarning		Rf_CoercionWarning
@@ -275,8 +425,6 @@ extern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 #define elt			Rf_elt
 #define emptyEnv		Rf_emptyEnv
 #define EnsureString		Rf_EnsureString
-#define errorcall		Rf_errorcall
-#define ErrorMessage		Rf_ErrorMessage
 #define eval			Rf_eval
 #define EvalArgs		Rf_EvalArgs
 #define evalList		Rf_evalList
@@ -363,6 +511,7 @@ extern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 #define nthcdr			Rf_nthcdr
 #define PairToVectorList	Rf_PairToVectorList
 #define pmatch			Rf_pmatch
+#define psmatch			Rf_psmatch
 #define PrintDefaults		Rf_PrintDefaults
 #define PrintValue		Rf_PrintValue
 #define PrintValueEnv		Rf_PrintValueEnv
@@ -439,10 +588,11 @@ int asInteger(SEXP);
 int asLogical(SEXP);
 double asReal(SEXP);
 SEXP arraySubscript(int, SEXP, SEXP);
-int conformable(SEXP, SEXP);
+SEXP classgets(SEXP, SEXP);
+Rboolean conformable(SEXP, SEXP);
 SEXP cons(SEXP, SEXP);
-void copyListMatrix(SEXP, SEXP, int);
-void copyMatrix(SEXP, SEXP, int);
+void copyListMatrix(SEXP, SEXP, Rboolean);
+void copyMatrix(SEXP, SEXP, Rboolean);
 void copyMostAttrib(SEXP, SEXP);
 void copyVector(SEXP, SEXP);
 SEXP CreateTag(SEXP);
@@ -453,8 +603,6 @@ SEXP dimnamesgets(SEXP, SEXP);
 SEXP duplicate(SEXP);
 SEXP elt(SEXP, int);
 SEXP emptyEnv(void);
-void errorcall(SEXP, char*, ...);
-void ErrorMessage(SEXP, int, ...);
 SEXP eval(SEXP, SEXP);
 SEXP EvalArgs(SEXP, SEXP, int);
 SEXP evalList(SEXP, SEXP);
@@ -472,40 +620,40 @@ int GetOptionWidth(SEXP);
 SEXP GetPar(char*, SEXP);
 SEXP GetRowNames(SEXP);
 void gsetVar(SEXP, SEXP, SEXP);
-int inherits(SEXP, char*);
+Rboolean inherits(SEXP, char*);
 SEXP install(char*);
-int isArray(SEXP);
-int isComplex(SEXP);
-int isEnvironment(SEXP);
-int isExpression(SEXP);
-int isExpressionObject(SEXP);
-int isFactor(SEXP);
-int isFrame(SEXP);
-int isFree(SEXP);
-int isFunction(SEXP);
-int isInteger(SEXP);
-int isLanguage(SEXP);
-int isList(SEXP);
-int isLogical(SEXP);
-int isMatrix(SEXP);
-int isNewList(SEXP);
-int isNull(SEXP);
-int isNumeric(SEXP);
-int isObject(SEXP);
-int isOrdered(SEXP);
-int isPairList(SEXP);
-int isReal(SEXP);
-int isString(SEXP);
-int isSymbol(SEXP);
-int isTs(SEXP);
-int isUnordered(SEXP);
-int isUserBinop(SEXP);
-int isValidString(SEXP);
-int isValidStringF(SEXP);
-int isVector(SEXP);
-int isVectorizable(SEXP);
-int isVectorAtomic(SEXP);
-int isVectorList(SEXP);
+Rboolean isArray(SEXP);
+Rboolean isComplex(SEXP);
+Rboolean isEnvironment(SEXP);
+Rboolean isExpression(SEXP);
+Rboolean isExpressionObject(SEXP);
+Rboolean isFactor(SEXP);
+Rboolean isFrame(SEXP);
+Rboolean isFree(SEXP);
+Rboolean isFunction(SEXP);
+Rboolean isInteger(SEXP);
+Rboolean isLanguage(SEXP);
+Rboolean isList(SEXP);
+Rboolean isLogical(SEXP);
+Rboolean isMatrix(SEXP);
+Rboolean isNewList(SEXP);
+Rboolean isNull(SEXP);
+Rboolean isNumeric(SEXP);
+Rboolean isObject(SEXP);
+Rboolean isOrdered(SEXP);
+Rboolean isPairList(SEXP);
+Rboolean isReal(SEXP);
+Rboolean isString(SEXP);
+Rboolean isSymbol(SEXP);
+Rboolean isTs(SEXP);
+Rboolean isUnordered(SEXP);
+Rboolean isUserBinop(SEXP);
+Rboolean isValidString(SEXP);
+Rboolean isValidStringF(SEXP);
+Rboolean isVector(SEXP);
+Rboolean isVectorizable(SEXP);
+Rboolean isVectorAtomic(SEXP);
+Rboolean isVectorList(SEXP);
 SEXP ItemName(SEXP, int);
 SEXP lang1(SEXP);
 SEXP lang2(SEXP, SEXP);
@@ -530,9 +678,10 @@ SEXP namesgets(SEXP, SEXP);
 int ncols(SEXP);
 int nrows(SEXP);
 int nlevels(SEXP);
-int NonNullStringMatch(SEXP, SEXP);
+Rboolean NonNullStringMatch(SEXP, SEXP);
 SEXP nthcdr(SEXP, int);
-int pmatch(SEXP, SEXP, int);
+Rboolean psmatch(char *, char *, Rboolean);
+Rboolean pmatch(SEXP, SEXP, Rboolean);
 void PrintDefaults(SEXP);
 void PrintValue(SEXP);
 void PrintValueEnv(SEXP, SEXP);
@@ -547,10 +696,14 @@ SEXP ScalarString(SEXP);
 SEXP setAttrib(SEXP, SEXP, SEXP);
 void setSVector(SEXP*, int, SEXP);
 void setVar(SEXP, SEXP, SEXP);
-int StringBlank(SEXP);
+Rboolean StringBlank(SEXP);
 SEXP substitute(SEXP,SEXP);
 void unprotect(int);
 void unprotect_ptr(SEXP);
+void R_ProtectWithIndex(SEXP, PROTECT_INDEX *);
+void R_Reprotect(SEXP, PROTECT_INDEX);
+SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP R_subset3_dflt(SEXP, SEXP);
 
 				/* return(.) NOT reached : for -Wall */
 #define error_return(msg)	{ error(msg);		return R_NilValue; }
@@ -560,4 +713,125 @@ void unprotect_ptr(SEXP);
 #undef extern
 #endif
 
-#endif
+/* General Cons Cell Attributes */
+SEXP (ATTRIB)(SEXP x);
+int (OBJECT)(SEXP x);
+int (MARK)(SEXP x);
+int (TYPEOF)(SEXP x);
+int (NAMED)(SEXP x);
+void (SET_ATTRIB)(SEXP x, SEXP v);
+void (SET_OBJECT)(SEXP x, int v);
+void (SET_TYPEOF)(SEXP x, int v);
+void (SET_NAMED)(SEXP x, int v);
+
+/* Vector Access Macros */
+int (LENGTH)(SEXP x);
+int (TRUELENGTH)(SEXP x);
+char *(R_CHAR)(SEXP x);
+SEXP (STRING_ELT)(SEXP x, int i);
+void (SETLENGTH)(SEXP x, int v);
+void (SET_TRUELENGTH)(SEXP x, int v);
+void (SET_STRING_ELT)(SEXP x, int i, SEXP v);
+int (LEVELS)(SEXP x);
+int (SETLEVELS)(SEXP x, int v);
+SEXP (VECTOR_ELT)(SEXP x, int i);
+SEXP (SET_VECTOR_ELT)(SEXP x, int i, SEXP v);
+int *(LOGICAL)(SEXP x);
+int *(INTEGER)(SEXP x);
+double *(REAL)(SEXP x);
+Rcomplex *(COMPLEX)(SEXP x);
+SEXP *(STRING_PTR)(SEXP x);
+SEXP *(VECTOR_PTR)(SEXP x);
+
+/* List Access Macros */
+/* These also work for ... objects */
+/*#define LISTVAL(x)	((x)->u.listsxp)*/
+SEXP (TAG)(SEXP e);
+SEXP (CAR)(SEXP e);
+SEXP (CDR)(SEXP e);
+SEXP (CAAR)(SEXP e);
+SEXP (CDAR)(SEXP e);
+SEXP (CADR)(SEXP e);
+SEXP (CDDR)(SEXP e);
+SEXP (CADDR)(SEXP e);
+SEXP (CADDDR)(SEXP e);
+SEXP (CAD4R)(SEXP e);
+int (MISSING)(SEXP x);
+void (SET_TAG)(SEXP x, SEXP y);
+SEXP (SETCAR)(SEXP x, SEXP y);
+SEXP (SETCDR)(SEXP x, SEXP y);
+SEXP (SETCADR)(SEXP x, SEXP y);
+SEXP (SETCADDR)(SEXP x, SEXP y);
+SEXP (SETCADDDR)(SEXP x, SEXP y);
+SEXP (SETCAD4R)(SEXP e, SEXP y);
+void (SET_MISSING)(SEXP x, int v);
+
+/* Closure Access Macros */
+SEXP (FORMALS)(SEXP x);
+SEXP (BODY)(SEXP x);
+SEXP (CLOENV)(SEXP x);
+int (DEBUG)(SEXP x);
+int (TRACE)(SEXP x);
+void (SET_FORMALS)(SEXP x, SEXP v);
+void (SET_BODY)(SEXP x, SEXP v);
+void (SET_CLOENV)(SEXP x, SEXP v);
+void (SET_DEBUG)(SEXP x, int v);
+void (SET_TRACE)(SEXP x, int v);
+
+/* Primitive Access Macros */
+int (PRIMOFFSET)(SEXP x);
+void (SET_PRIMOFFSET)(SEXP x, int v);
+
+
+/* Symbol Access Macros */
+SEXP (PRINTNAME)(SEXP x);
+SEXP (SYMVALUE)(SEXP x);
+SEXP (INTERNAL)(SEXP x);
+int (DDVAL)(SEXP x);
+void (SET_PRINTNAME)(SEXP x, SEXP v);
+void (SET_SYMVALUE)(SEXP x, SEXP v);
+void (SET_INTERNAL)(SEXP x, SEXP v);
+void (SET_DDVAL)(SEXP x, int v);
+
+/* Environment Access Macros */
+SEXP (FRAME)(SEXP x);
+SEXP (ENCLOS)(SEXP x);
+SEXP (HASHTAB)(SEXP x);
+int (ENVFLAGS)(SEXP x);
+void (SET_FRAME)(SEXP x, SEXP v);
+void (SET_ENCLOS)(SEXP x, SEXP v);
+void (SET_HASHTAB)(SEXP x, SEXP v);
+void (SET_ENVFLAGS)(SEXP x, int v);
+
+/* Promise Access Macros */
+SEXP (PREXPR)(SEXP x);
+SEXP (PRENV)(SEXP x);
+SEXP (PRVALUE)(SEXP x);
+int (PRSEEN)(SEXP x);
+void (SET_PREXPR)(SEXP x, SEXP v);
+void (SET_PRENV)(SEXP x, SEXP v);
+void (SET_PRVALUE)(SEXP x, SEXP v);
+void (SET_PRSEEN)(SEXP x, int v);
+
+/* Hashing Macros */
+int (HASHASH)(SEXP x);
+int (HASHVALUE)(SEXP x);
+void (SET_HASHASH)(SEXP x, int v);
+void (SET_HASHVALUE)(SEXP x, int v);
+
+/* External pointer interface */
+SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot);
+void *R_ExternalPtrAddr(SEXP s);
+SEXP R_ExternalPtrTag(SEXP s);
+SEXP R_ExternalPtrProtected(SEXP s);
+void R_ClearExternalPtr(SEXP s);
+void R_SetExternalPtrAddr(SEXP s, void *p);
+void R_SetExternalPtrTag(SEXP s, SEXP tag);
+void R_SetExternalPtrProtected(SEXP s, SEXP p);
+
+/* Finalization interface */
+typedef void (*R_CFinalizer_t)(SEXP);
+void R_RegisterFinalizer(SEXP s, SEXP fun);
+void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun);
+
+#endif /* _R_INTERNALS_H_ */

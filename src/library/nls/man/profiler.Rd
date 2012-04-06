@@ -1,4 +1,4 @@
-% $Id: profiler.Rd,v 1.3.8.1 2000/06/27 21:43:35 bates Exp $
+% $Id: profiler.Rd,v 1.4 2000/06/27 22:26:18 pd Exp $
 \name{profiler}
 \alias{profiler}
 \title{ Constructor for Profiler Objects for Nonlinear Models}

@@ -30,25 +30,26 @@
 
 #include "Defn.h"
 #include "Fileio.h"
+#include "Startup.h"
 
 #include <string.h>
 #ifndef HAVE_STRDUP
 extern char *strdup();
 #endif
 
-extern int SaveAction;
-extern int RestoreAction;
-extern int LoadSiteFile;
-extern int LoadInitFile;
-extern int DebugInitFile;
+extern SA_TYPE	SaveAction;
+extern SA_TYPE	RestoreAction;
+extern Rboolean LoadSiteFile;
+extern Rboolean LoadInitFile;
+extern Rboolean DebugInitFile;
 
-      /* Permanent copy of the command line arguments and the number
-         of them passed to the application.
-         These are populated via the routine R_set_command_line_arguments()
-         called from R_common_command_line().
-       */
-    int    NumCommandLineArgs = 0;
-    char **CommandLineArgs = NULL;
+/* Permanent copy of the command line arguments and the number
+   of them passed to the application.
+   These are populated via the routine R_set_command_line_arguments()
+   called from R_common_command_line().
+*/
+int    NumCommandLineArgs = 0;
+char **CommandLineArgs = NULL;
 
 
 
@@ -126,7 +127,7 @@ void R_RestoreGlobalEnv(void)
 	    break;
 	case VECSXP:
 	    for (i = 0; i < LENGTH(img); i++) {
-		lst = VECTOR(img)[i];
+		lst = VECTOR_ELT(img, i);
 		while (lst != R_NilValue) {
 		    defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
 		    lst = CDR(lst);
@@ -148,9 +149,9 @@ void R_SaveGlobalEnv(void)
     if (!fp)
 	error("can't save data -- unable to open ./.RData");
     if (HASHTAB(R_GlobalEnv) != R_NilValue)
-	R_SaveToFile(HASHTAB(R_GlobalEnv), fp, 0, 0);
+	R_SaveToFile(HASHTAB(R_GlobalEnv), fp, 0);
     else
-	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0, 0);
+	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
     fclose(fp);
 }
 
@@ -162,20 +163,27 @@ void R_SaveGlobalEnv(void)
  * This call provides a simple interface to the "stat" system call.
  */
 
+#ifdef HAVE_STAT
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int R_FileExists(char *path)
+Rboolean R_FileExists(char *path)
 {
     struct stat sb;
     return stat(R_ExpandFileName(path), &sb) == 0;
 }
+#else
+Rboolean R_FileExists(char *path)
+{
+    error("file existence is not available on this system");
+}
+#endif
 
     /*
      *  Unix file names which begin with "." are invisible.
      */
 
-int R_HiddenFile(char *name)
+Rboolean R_HiddenFile(char *name)
 {
     if (name && name[0] != '.') return 0;
     else return 1;
@@ -227,38 +235,61 @@ SEXP do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
 	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1);
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (i = 0, e = envir; strlen(e) > 0; i++, e += strlen(e)+1)
-	    STRING(ans)[i] = mkChar(e);
+	    SET_STRING_ELT(ans, i, mkChar(e));
 	FreeEnvironmentStrings(envir);
 #else
 	char **e;
 	for (i = 0, e = environ; *e != NULL; i++, e++);
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (i = 0, e = environ; *e != NULL; i++, e++)
-	    STRING(ans)[i] = mkChar(*e);
+	    SET_STRING_ELT(ans, i, mkChar(*e));
 #endif
     } else {
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (j = 0; j < i; j++) {
-	    s = getenv(CHAR(STRING(CAR(args))[j]));
+	    s = getenv(CHAR(STRING_ELT(CAR(args), j)));
 	    if (s == NULL)
-		STRING(ans)[j] = mkChar("");
+		SET_STRING_ELT(ans, j, mkChar(""));
 	    else
-		STRING(ans)[j] = mkChar(s);
+		SET_STRING_ELT(ans, j, mkChar(s));
 	}
     }
     UNPROTECT(1);
     return (ans);
 }
 
+SEXP do_putenv(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+#ifdef HAVE_PUTENV
+    int i, n;
+    SEXP ans, vars;
+
+    checkArity(op, args);
+
+    if (!isString(vars =CAR(args)))
+	errorcall(call, "wrong type for argument");
+
+    n = LENGTH(vars);
+    PROTECT(ans = allocVector(LGLSXP, n));
+    for (i = 0; i < n; i++) {
+	LOGICAL(ans)[i] = putenv(CHAR(STRING_ELT(vars, i))) == 0;
+    }
+    UNPROTECT(1);
+    return ans;
+#else
+    error("`putenv' is not available on this system");
+    return R_NilValue; /* -Wall */
+#endif
+}
+
+
+
 SEXP do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP rval;
 
     rval=allocVector(LGLSXP, 1);
-    if( R_Interactive )
-	LOGICAL(rval)[0]=1;
-    else
-	LOGICAL(rval)[0]=0;
+    LOGICAL(rval)[0]= (R_Interactive) ? 1 : 0;
     return rval;
 }
 
@@ -266,29 +297,31 @@ SEXP do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
  *  INITIALIZATION HELPER CODE
  */
 
-#include "Startup.h"
+
 extern void R_ShowMessage(char *);
 
 void R_DefParams(Rstart Rp)
 {
-    Rp->R_Quiet = False;
-    Rp->R_Slave = False;
-    Rp->R_Interactive = True;
-    Rp->R_Verbose = False;
+    Rp->R_Quiet = FALSE;
+    Rp->R_Slave = FALSE;
+    Rp->R_Interactive = TRUE;
+    Rp->R_Verbose = FALSE;
     Rp->RestoreAction = SA_RESTORE;
     Rp->SaveAction = SA_SAVEASK;
-    Rp->LoadSiteFile = True;
-    Rp->LoadInitFile = True;
-    Rp->DebugInitFile = False;
+    Rp->LoadSiteFile = TRUE;
+    Rp->LoadInitFile = TRUE;
+    Rp->DebugInitFile = FALSE;
     Rp->vsize = R_VSIZE;
     Rp->nsize = R_NSIZE;
-#ifdef Win32
-    Rp->NoRenviron = False;
-#endif
+    Rp->max_vsize = INT_MAX;
+    Rp->max_nsize = INT_MAX;
+    Rp->NoRenviron = FALSE;
 }
 
-#define Max_Nsize 20000000	/* must be < LONG_MAX (= 2^32 - 1 =)
+#define Max_Nsize 50000000	/* must be < LONG_MAX (= 2^32 - 1 =)
 				   2147483647 = 2.1e9 */
+                                /* limit was 2e7, changed to 5e7, which gives
+                                   nearly 2Gb of cons cells */
 #define Max_Vsize (2048*Mega)	/* 2048*Mega = 2^(11+20) must be < LONG_MAX */
 
 #define Min_Nsize 160000
@@ -318,7 +351,8 @@ static void SetSize(int vsize, int nsize)
 {
     char msg[1024];
 
-    if (vsize < 1000) {
+    /* vsize >0 to catch long->int overflow */
+    if (vsize < 1000 && vsize > 0) {
 	R_ShowMessage("WARNING: vsize ridiculously low, Megabytes assumed\n");
 	vsize *= Mega;
     }
@@ -350,7 +384,9 @@ void R_SetParams(Rstart Rp)
     LoadSiteFile = Rp->LoadSiteFile;
     LoadInitFile = Rp->LoadInitFile;
     DebugInitFile = Rp->DebugInitFile;
-    SetSize(Rp->vsize, Rp-> nsize);
+    SetSize(Rp->vsize, Rp->nsize);
+    R_SetMaxNSize(Rp->max_nsize);
+    R_SetMaxVSize(Rp->max_vsize);
     CommandLineArgs = Rp->CommandLineArgs;
     NumCommandLineArgs = Rp->NumCommandLineArgs;
 #ifdef Win32
@@ -379,7 +415,7 @@ R_set_command_line_arguments(int argc, char **argv, Rstart Rp)
   Rp->NumCommandLineArgs = argc;
   Rp->CommandLineArgs = (char**) calloc(argc, sizeof(char*));
 
-  for(i=0;i < argc; i++) {
+  for(i = 0; i < argc; i++) {
     Rp->CommandLineArgs[i] = strdup(argv[i]);
   }
 }
@@ -397,7 +433,7 @@ do_commandArgs(SEXP call, SEXP op, SEXP args, SEXP env)
 
   vals = allocVector(STRSXP, NumCommandLineArgs);
   for(i = 0; i < NumCommandLineArgs; i++) {
-    STRING(vals)[i] = mkChar(CommandLineArgs[i]);
+    SET_STRING_ELT(vals, i, mkChar(CommandLineArgs[i]));
   }
 
  return(vals);
@@ -411,6 +447,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
     long value;
     char *p, **av = argv, msg[1024];
 
+    R_RestoreHistory = 1;
     while(--ac) {
 	if(**++av == '-') {
 	    if (!strcmp(*av, "--version")) {
@@ -418,6 +455,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		R_ShowMessage(msg);
 		exit(0);
 	    }
+#if 0
 	    else if(!strcmp(*av, "--print-nsize")) {
 		Rprintf("%d\n", R_NSize);
 		exit(0);
@@ -426,6 +464,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		Rprintf("%d\n", R_VSize);
 		exit(0);
 	    }
+#endif
 	    else if(!strcmp(*av, "--save")) {
 		Rp->SaveAction = SA_SAVE;
 	    }
@@ -437,35 +476,47 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 	    }
 	    else if(!strcmp(*av, "--no-restore")) {
 		Rp->RestoreAction = SA_NORESTORE;
+		R_RestoreHistory = 0;
+	    }
+	    else if(!strcmp(*av, "--no-restore-data")) {
+		Rp->RestoreAction = SA_NORESTORE;
+	    }
+	    else if(!strcmp(*av, "--no-restore-history")) {
+		R_RestoreHistory = 0;
 	    }
 	    else if (!strcmp(*av, "--silent") ||
 		     !strcmp(*av, "--quiet") ||
 		     !strcmp(*av, "-q")) {
-		Rp->R_Quiet = True;
+		Rp->R_Quiet = TRUE;
 	    }
 	    else if (!strcmp(*av, "--vanilla")) {
 		Rp->SaveAction = SA_NOSAVE; /* --no-save */
 		Rp->RestoreAction = SA_NORESTORE; /* --no-restore */
-		Rp->LoadSiteFile = False; /* --no-site-file */
-		Rp->LoadInitFile = False; /* --no-init-file */
+		Rp->LoadSiteFile = FALSE; /* --no-site-file */
+		Rp->LoadInitFile = FALSE; /* --no-init-file */
+		R_RestoreHistory = 0;     /* --no-restore-history */
+		Rp->NoRenviron = TRUE;
+	    }
+	    else if (!strcmp(*av, "--no-environ")) {
+		Rp->NoRenviron = TRUE;
 	    }
 	    else if (!strcmp(*av, "--verbose")) {
-		Rp->R_Verbose = True;
+		Rp->R_Verbose = TRUE;
 	    }
 	    else if (!strcmp(*av, "--slave") ||
 		     !strcmp(*av, "-s")) {
-		Rp->R_Quiet = True;
-		Rp->R_Slave = True;
+		Rp->R_Quiet = TRUE;
+		Rp->R_Slave = TRUE;
 		Rp->SaveAction = SA_NOSAVE;
 	    }
 	    else if (!strcmp(*av, "--no-site-file")) {
-		Rp->LoadSiteFile = False;
+		Rp->LoadSiteFile = FALSE;
 	    }
 	    else if (!strcmp(*av, "--no-init-file")) {
-		Rp->LoadInitFile = False;
+		Rp->LoadInitFile = FALSE;
 	    }
 	    else if (!strcmp(*av, "--debug-init")) {
-	        Rp->DebugInitFile = True;
+	        Rp->DebugInitFile = TRUE;
 	    }
 	    else if (!strcmp(*av, "-save") ||
 		     !strcmp(*av, "-nosave") ||
@@ -473,13 +524,40 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		     !strcmp(*av, "-norestore") ||
 		     !strcmp(*av, "-noreadline") ||
 		     !strcmp(*av, "-quiet") ||
-		     !strcmp(*av, "-V")) {
+		     !strcmp(*av, "-V") ||
+		     !strcmp(*av, "-n") ||
+		     !strcmp(*av, "-v")) {
 		sprintf(msg, "WARNING: option %s no longer supported\n", *av);
 		R_ShowMessage(msg);
 	    }
-	    else if((*av)[1] == 'v') {
-		R_ShowMessage("ERROR: option `-v' is defunct.  Use `--vsize' instead.\n");
-		exit(1);
+            /* mop up --max/min/-n/vsize */
+ 	    else if(strncmp(*av+7, "size", 4) == 0) {
+		if(strlen(*av) < 13) {
+		    ac--; av++; p = *av;
+		}
+		else p = &(*av)[12];
+		if (p == NULL) {
+		    sprintf(msg, "WARNING: no value given for %s\n", *av);
+		    R_ShowMessage(msg);
+		    break;
+		}
+		value = Decode2Long(p, &ierr);
+		if(ierr) {
+		    if(ierr < 0)
+			sprintf(msg, "WARNING: %s value is invalid: ignored\n",
+				*av);
+		    else
+			sprintf(msg, "WARNING: %s=%ld`%c': too large and ignored\n",
+				*av, value,
+				(ierr == 1) ? 'M': ((ierr == 2) ? 'K' : 'k'));
+		    R_ShowMessage(msg);
+
+		} else {
+		    if(!strncmp(*av, "--min-nsize", 11)) Rp->nsize = value;
+		    if(!strncmp(*av, "--max-nsize", 11)) Rp->max_nsize = value;
+		    if(!strncmp(*av, "--min-vsize", 11)) Rp->vsize = value;
+		    if(!strncmp(*av, "--max-vsize", 11)) Rp->max_vsize = value;
+		}
 	    }
 	    else if(strncmp(*av, "--vsize", 7) == 0) {
 		if(strlen(*av) < 9) {
@@ -504,16 +582,12 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		} else
 		    Rp->vsize = value;
 	    }
-	    else if((*av)[1] == 'n') {
-		R_ShowMessage("ERROR: option `-n' is defunct.  Use `--nsize' instead.\n");
-		exit(1);
-	    }
 	    else if(strncmp(*av, "--nsize", 7) == 0) {
 		if(strlen(*av) < 9) {
 		    ac--; av++; p = *av;
 		}
 		else
-		    p = &(*av)[8];		
+		    p = &(*av)[8];
 		if (p == NULL) {
 		    R_ShowMessage("WARNING: no nsize given\n");
 		    break;
@@ -540,4 +614,111 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
     }
     *pac = newac;
     return;
+}
+
+/* ------------------- process .Renviron files in C ----------------- */
+
+/* remove leading and trailing space */
+static char *rmspace(char *s)
+{
+    int   i;
+
+    for (i = strlen(s) - 1; isspace((int)s[i]); i--) s[i] = '\0';
+    for (i = 0; isspace((int)s[i]); i++);
+    return s + i;
+}
+
+/* look for ${FOO:-bar} constructs, recursively */
+static char *findterm(char *s)
+{
+    char *p, *q;
+
+    if(!strlen(s)) return "";
+    if(strncmp(s, "${", 2)) return s;
+    /* found one, so remove leading ${ and final } */
+    if(s[strlen(s) - 1] != '}') return "";
+    s[strlen(s) - 1] = '\0';
+    s += 2;
+    p = strchr(s, '-');
+    if(!p) return "";
+    q = p + 1; /* start of value */
+    if(p - s > 1 && *(p-1) == ':') *(p-1) = '\0'; else *p = '\0';
+    s = rmspace(s);
+    if(!strlen(s)) return "";
+    p = getenv(s);
+    if(p && strlen(p)) return p; /* variable was set and non-empty */
+    return findterm(q);
+}
+
+static void Putenv(char *a, char *b)
+{
+    char *buf;
+
+    buf = (char *) malloc((strlen(a) + strlen(b) + 2) * sizeof(char));
+    if(!buf) R_Suicide("allocation failure in reading Renviron");
+    strcpy(buf, a); strcat(buf, "="); strcat(buf, b);
+    putenv(buf);
+    /* no free here: storage remains in use */
+}
+
+
+#define BUF_SIZE 255
+static int process_Renviron(char *filename)
+{
+    FILE *fp;
+    char *s, *p, sm[BUF_SIZE], *lhs, *rhs;
+
+    if (!filename || !(fp = fopen(filename,"r"))) return 0;
+
+    while(fgets(sm, BUF_SIZE, fp)) {
+	sm[BUF_SIZE] = '\0';
+	s = rmspace(sm);
+	if(strlen(s) == 0 || s[0] == '#') continue;
+	if(!(p = strchr(s, '='))) continue;
+	*p = '\0';
+	lhs = rmspace(s);
+	rhs = findterm(rmspace(p+1));
+	/* set lhs = rhs */
+	if(strlen(lhs) && strlen(rhs)) Putenv(lhs, rhs);
+    }
+    fclose(fp);
+    return 1;
+}
+
+
+/* read R_HOME/etc/Renviron:  Unix only */
+void process_global_Renviron()
+{
+    char buf[1024];
+    
+    strcpy(buf, R_Home);
+    strcat(buf, "/etc/Renviron");
+    if(!process_Renviron(buf)) R_ShowMessage("cannot find system Renviron");
+}
+
+/* try ./.Renviron, then value of R_ENVIRON, then ~/.Renviron */
+void process_users_Renviron()
+{
+    char *s;
+    
+    if(process_Renviron(".Renviron")) return;
+    if((s = getenv("R_ENVIRON"))) {
+	process_Renviron(s);
+	return;
+    } 
+#ifdef Unix
+    s = R_ExpandFileName("~/.Renviron");
+#endif
+#ifdef Win32
+    {
+	char buf[1024];
+	/* R_USER is not necessarily set yet, so we have to work harder */
+	s = getenv("R_USER");
+	if(!s) s = getenv("HOME");
+	if(!s) return;
+	sprintf(buf, "%s/.Renviron", s);
+	s = buf;
+    }
+#endif
+    process_Renviron(s);
 }

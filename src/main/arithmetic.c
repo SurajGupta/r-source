@@ -23,8 +23,10 @@
 #endif
 
 #include "Defn.h"		/*-> Arith.h */
-#include "Mathlib.h"
-#include "Applic.h"		/* machar */
+#define MATHLIB_PRIVATE
+#include <Rmath.h>
+#undef MATHLIB_PRIVATE
+#include "R_ext/Applic.h"		/* machar */
 #include "arithmetic.h"
 
 /* Error Handling for Floating Point Errors */
@@ -237,47 +239,47 @@ SEXP do_Machine(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(ans = allocVector(VECSXP, 14));
     PROTECT(nms = allocVector(STRSXP, 14));
-    STRING(nms)[0] = mkChar("double.eps");
-    VECTOR(ans)[0] = ScalarReal(eps);
+    SET_STRING_ELT(nms, 0, mkChar("double.eps"));
+    SET_VECTOR_ELT(ans, 0, ScalarReal(eps));
 
-    STRING(nms)[1] = mkChar("double.neg.eps");
-    VECTOR(ans)[1] = ScalarReal(epsneg);
+    SET_STRING_ELT(nms, 1, mkChar("double.neg.eps"));
+    SET_VECTOR_ELT(ans, 1, ScalarReal(epsneg));
 
-    STRING(nms)[2] = mkChar("double.xmin");
-    VECTOR(ans)[2] = ScalarReal(xmin);
+    SET_STRING_ELT(nms, 2, mkChar("double.xmin"));
+    SET_VECTOR_ELT(ans, 2, ScalarReal(xmin));
 
-    STRING(nms)[3] = mkChar("double.xmax");
-    VECTOR(ans)[3] = ScalarReal(xmax);
+    SET_STRING_ELT(nms, 3, mkChar("double.xmax"));
+    SET_VECTOR_ELT(ans, 3, ScalarReal(xmax));
 
-    STRING(nms)[4] = mkChar("double.base");
-    VECTOR(ans)[4] = ScalarInteger(ibeta);
+    SET_STRING_ELT(nms, 4, mkChar("double.base"));
+    SET_VECTOR_ELT(ans, 4, ScalarInteger(ibeta));
 
-    STRING(nms)[5] = mkChar("double.digits");
-    VECTOR(ans)[5] = ScalarInteger(it);
+    SET_STRING_ELT(nms, 5, mkChar("double.digits"));
+    SET_VECTOR_ELT(ans, 5, ScalarInteger(it));
 
-    STRING(nms)[6] = mkChar("double.rounding");
-    VECTOR(ans)[6] = ScalarInteger(irnd);
+    SET_STRING_ELT(nms, 6, mkChar("double.rounding"));
+    SET_VECTOR_ELT(ans, 6, ScalarInteger(irnd));
 
-    STRING(nms)[7] = mkChar("double.guard");
-    VECTOR(ans)[7] = ScalarInteger(ngrd);
+    SET_STRING_ELT(nms, 7, mkChar("double.guard"));
+    SET_VECTOR_ELT(ans, 7, ScalarInteger(ngrd));
 
-    STRING(nms)[8] = mkChar("double.ulp.digits");
-    VECTOR(ans)[8] = ScalarInteger(machep);
+    SET_STRING_ELT(nms, 8, mkChar("double.ulp.digits"));
+    SET_VECTOR_ELT(ans, 8, ScalarInteger(machep));
 
-    STRING(nms)[9] = mkChar("double.neg.ulp.digits");
-    VECTOR(ans)[9] = ScalarInteger(negep);
+    SET_STRING_ELT(nms, 9, mkChar("double.neg.ulp.digits"));
+    SET_VECTOR_ELT(ans, 9, ScalarInteger(negep));
 
-    STRING(nms)[10] = mkChar("double.exponent");
-    VECTOR(ans)[10] = ScalarInteger(iexp);
+    SET_STRING_ELT(nms, 10, mkChar("double.exponent"));
+    SET_VECTOR_ELT(ans, 10, ScalarInteger(iexp));
 
-    STRING(nms)[11] = mkChar("double.min.exp");
-    VECTOR(ans)[11] = ScalarInteger(minexp);
+    SET_STRING_ELT(nms, 11, mkChar("double.min.exp"));
+    SET_VECTOR_ELT(ans, 11, ScalarInteger(minexp));
 
-    STRING(nms)[12] = mkChar("double.max.exp");
-    VECTOR(ans)[12] = ScalarInteger(maxexp);
+    SET_STRING_ELT(nms, 12, mkChar("double.max.exp"));
+    SET_VECTOR_ELT(ans, 12, ScalarInteger(maxexp));
 
-    STRING(nms)[13] = mkChar("integer.max");
-    VECTOR(ans)[13] = ScalarInteger(INT_MAX);
+    SET_STRING_ELT(nms, 13, mkChar("integer.max"));
+    SET_VECTOR_ELT(ans, 13, ScalarInteger(INT_MAX));
     setAttrib(ans, R_NamesSymbol, nms);
     UNPROTECT(2);
     return ans;
@@ -341,7 +343,7 @@ double R_pow(double x, double y) /* = x ^ y */
 
 double R_pow_di(double x, int n)
 {
-    double pow = 1.0;
+    double xn = 1.0;
 
     if (ISNAN(x)) return x;
     if (n == NA_INTEGER) return NA_REAL;
@@ -349,11 +351,11 @@ double R_pow_di(double x, int n)
 	if (!R_FINITE(x)) return R_pow(x, (double)n);
 	if (n < 0) { n = -n; x = 1/x; }
 	for(;;) {
-	    if(n & 01) pow *= x;
+	    if(n & 01) xn *= x;
 	    if(n >>= 1) x *= x; else break;
 	}
     }
-    return pow;
+    return xn;
 }
 
 
@@ -364,12 +366,12 @@ static double logbase(double x, double base)
     return R_log(x) / log(base);
 }
 
-static SEXP unary(SEXP, SEXP);
-static SEXP binary(SEXP, SEXP);
-static SEXP integer_unary(int, SEXP);
-static SEXP real_unary(int, SEXP);
-static SEXP real_binary(int, SEXP, SEXP);
-static SEXP integer_binary(int, SEXP, SEXP);
+SEXP R_unary(SEXP, SEXP, SEXP);
+SEXP R_binary(SEXP, SEXP, SEXP, SEXP);
+static SEXP integer_unary(ARITHOP_TYPE, SEXP);
+static SEXP real_unary(ARITHOP_TYPE, SEXP);
+static SEXP real_binary(ARITHOP_TYPE, SEXP, SEXP);
+static SEXP integer_binary(ARITHOP_TYPE, SEXP, SEXP);
 
 static int naflag;
 static SEXP lcall;
@@ -384,12 +386,11 @@ SEXP do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
     if (DispatchGroup("Ops", call, op, args, env, &ans))
 	return ans;
 
-    lcall = call;
     switch (length(args)) {
     case 1:
-	return unary(op, CAR(args));
+	return R_unary(call, op, CAR(args));
     case 2:
-	return binary(op, args);
+	return R_binary(call, op, CAR(args), CADR(args));
     default:
 	error("operator needs one or two arguments");
     }
@@ -397,19 +398,22 @@ SEXP do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-static SEXP binary(SEXP op, SEXP args)
+SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
 {
-    SEXP x, y, class, dims, tsp, xnames, ynames;
+    SEXP class, dims, tsp, xnames, ynames;
     int mismatch, nx, ny, xarray, yarray, xts, yts;
+    PROTECT_INDEX xpi, ypi;
 
-    x = CAR(args);
-    y = CADR(args);
+    lcall = call;
+
+    PROTECT_WITH_INDEX(x, &xpi);
+    PROTECT_WITH_INDEX(y, &ypi);
 
     /* fix up NULL */
     if (isNull(x))
-	x = CAR(args) = allocVector(REALSXP,0);
+	REPROTECT(x = allocVector(REALSXP,0), xpi);
     if (isNull(y))
-	y = CADR(args) = allocVector(REALSXP,0);
+	REPROTECT(y = allocVector(REALSXP,0), ypi);
 
     if (!(isNumeric(x) || isComplex(x)) || !(isNumeric(y) || isComplex(y))) {
 	errorcall(lcall, "non-numeric argument to binary operator");
@@ -431,11 +435,11 @@ static SEXP binary(SEXP op, SEXP args)
      */
     if (xarray != yarray) {
 	if (xarray && length(x)==1 && length(y)!=1) {
-	    x = CAR(args) = duplicate(x);
+	    REPROTECT(x = duplicate(x), xpi);
 	    setAttrib(x, R_DimSymbol, R_NilValue);
 	}
 	if (yarray && length(y)==1 && length(x)!=1) {
-	    y = CADR(args) = duplicate(y);
+	    REPROTECT(y = duplicate(y), ypi);
 	    setAttrib(y, R_DimSymbol, R_NilValue);
 	}
     }
@@ -496,14 +500,14 @@ static SEXP binary(SEXP op, SEXP args)
 	warningcall(lcall, "longer object length\n\tis not a multiple of shorter object length");
 
     if (TYPEOF(x) == CPLXSXP || TYPEOF(y) == CPLXSXP) {
-	x = CAR(args) = coerceVector(x, CPLXSXP);
-	y = CADR(args) = coerceVector(y, CPLXSXP);
+	REPROTECT(x = coerceVector(x, CPLXSXP), xpi);
+	REPROTECT(y = coerceVector(y, CPLXSXP), ypi);
 	x = complex_binary(PRIMVAL(op), x, y);
     }
     else
 	if (TYPEOF(x) == REALSXP || TYPEOF(y) == REALSXP) {
-	    x = CAR(args) = coerceVector(x, REALSXP);
-	    y = CADR(args) = coerceVector(y, REALSXP);
+	    REPROTECT(x = coerceVector(x, REALSXP), xpi);
+	    REPROTECT(y = coerceVector(y, REALSXP), ypi);
 	    x = real_binary(PRIMVAL(op), x, y);
 	}
 	else {
@@ -536,12 +540,13 @@ static SEXP binary(SEXP op, SEXP args)
 	UNPROTECT(2);
     }
 
-    UNPROTECT(4);
+    UNPROTECT(6);
     return x;
 }
 
-static SEXP unary(SEXP op, SEXP s1)
+SEXP R_unary(SEXP call, SEXP op, SEXP s1)
 {
+    lcall = call;
     switch (TYPEOF(s1)) {
     case LGLSXP:
     case INTSXP:
@@ -556,7 +561,7 @@ static SEXP unary(SEXP op, SEXP s1)
     return s1;			/* never used; to keep -Wall happy */
 }
 
-static SEXP integer_unary(int code, SEXP s1)
+static SEXP integer_unary(ARITHOP_TYPE code, SEXP s1)
 {
     int i, n, x;
     SEXP ans;
@@ -579,7 +584,7 @@ static SEXP integer_unary(int code, SEXP s1)
     return s1;			/* never used; to keep -Wall happy */
 }
 
-static SEXP real_unary(int code, SEXP s1)
+static SEXP real_unary(ARITHOP_TYPE code, SEXP s1)
 {
     int i, n;
     SEXP ans;
@@ -615,7 +620,7 @@ static SEXP real_unary(int code, SEXP s1)
 	i2 = (++i2 == n2) ? 0 : i2,\
 	++i)
 
-static SEXP integer_binary(int code, SEXP s1, SEXP s2)
+static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, i1, i2, n, n1, n2;
     int x1, x2;
@@ -733,7 +738,7 @@ static SEXP integer_binary(int code, SEXP s1, SEXP s2)
     return ans;
 }
 
-static SEXP real_binary(int code, SEXP s1, SEXP s2)
+static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, i1, i2, n, n1, n2;
     SEXP ans;
@@ -918,8 +923,8 @@ static SEXP math1(SEXP sa, double(*f)())
     if(naflag)
 	warningcall(lcall, R_MSG_NA);
 
-    ATTRIB(sy) = duplicate(ATTRIB(sa));
-    OBJECT(sy) = OBJECT(sa);
+    SET_ATTRIB(sy, duplicate(ATTRIB(sa)));
+    SET_OBJECT(sy, OBJECT(sa));
     UNPROTECT(2);
     return sy;
 }
@@ -1022,12 +1027,12 @@ static SEXP math2(SEXP sa, SEXP sb, double (*f)())
 	warningcall(lcall, R_MSG_NA);		\
 						\
     if (n == na) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
-	OBJECT(sy) = OBJECT(sa);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sa)));	\
+	SET_OBJECT(sy, OBJECT(sa));		\
     }						\
     else if (n == nb) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
-	OBJECT(sy) = OBJECT(sb);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sb)));	\
+	SET_OBJECT(sy, OBJECT(sb));		\
     }						\
     UNPROTECT(3)
 
@@ -1318,16 +1323,16 @@ static SEXP math3(SEXP sa, SEXP sb, SEXP sc, double (*f)())
 	warningcall(lcall, R_MSG_NA);		\
 						\
     if (n == na) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
-	OBJECT(sy) = OBJECT(sa);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sa)));	\
+	SET_OBJECT(sy, OBJECT(sa));		\
     }						\
     else if (n == nb) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
-	OBJECT(sy) = OBJECT(sb);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sb)));	\
+	SET_OBJECT(sy, OBJECT(sb));		\
     }						\
     else if (n == nc) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
-	OBJECT(sy) = OBJECT(sc);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sc)));	\
+	SET_OBJECT(sy, OBJECT(sc));		\
     }						\
     UNPROTECT(4)
 
@@ -1535,20 +1540,20 @@ static SEXP math4(SEXP sa, SEXP sb, SEXP sc, SEXP sd, double (*f)())
 	warningcall(lcall, R_MSG_NA);		\
 						\
     if (n == na) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
-	OBJECT(sy) = OBJECT(sa);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sa)));	\
+	SET_OBJECT(sy, OBJECT(sa));		\
     }						\
     else if (n == nb) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
-	OBJECT(sy) = OBJECT(sb);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sb)));	\
+	SET_OBJECT(sy, OBJECT(sb));		\
     }						\
     else if (n == nc) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
-	OBJECT(sy) = OBJECT(sc);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sc)));	\
+	SET_OBJECT(sy, OBJECT(sc));		\
     }						\
     else if (n == nd) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sd));	\
-	OBJECT(sy) = OBJECT(sd);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sd)));	\
+	SET_OBJECT(sy, OBJECT(sd));		\
     }						\
     UNPROTECT(5)
 
@@ -1659,7 +1664,7 @@ SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-#ifdef LTRUE/* WHEN_MATH5_IS_THERE */
+#ifdef WHEN_MATH5_IS_THERE/* as in ./arithmetic.h */
 
 /* Mathematical Functions of Five (Real) Arguments */
 
@@ -1736,24 +1741,24 @@ static SEXP math5(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se, double (*f)())
 	warningcall(lcall, R_MSG_NA);		\
 						\
     if (n == na) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sa));	\
-	OBJECT(sy) = OBJECT(sa);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sa)));	\
+	SET_OBJECT(sy, OBJECT(sa));		\
     }						\
     else if (n == nb) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sb));	\
-	OBJECT(sy) = OBJECT(sb);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sb)));	\
+	SET_OBJECT(sy, OBJECT(sb));		\
     }						\
     else if (n == nc) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sc));	\
-	OBJECT(sy) = OBJECT(sc);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sc)));	\
+	SET_OBJECT(sy, OBJECT(sc));		\
     }						\
     else if (n == nd) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(sd));	\
-	OBJECT(sy) = OBJECT(sd);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(sd)));	\
+	SET_OBJECT(sy, OBJECT(sd));		\
     }						\
     else if (n == ne) {				\
-	ATTRIB(sy) = duplicate(ATTRIB(se));	\
-	OBJECT(sy) = OBJECT(se);		\
+	SET_ATTRIB(sy, duplicate(ATTRIB(se)));	\
+	SET_OBJECT(sy, OBJECT(se));		\
     }						\
     UNPROTECT(6)
 

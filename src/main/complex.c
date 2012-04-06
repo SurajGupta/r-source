@@ -22,9 +22,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"	/* -> ../include/R_ext/Complex.h */
-#include "Mathlib.h"
-#include "Applic.h"		/* R_cpoly */
+#include <Defn.h>	/* -> ../include/R_ext/Complex.h */
+#include <Rmath.h>
+#include <R_ext/Applic.h>		/* R_cpoly */
 
 #include "arithmetic.h"		/* complex_*  */
 
@@ -34,7 +34,7 @@
 
 static int naflag;
 
-SEXP complex_unary(int code, SEXP s1)
+SEXP complex_unary(ARITHOP_TYPE code, SEXP s1)
 {
     int i, n;
     Rcomplex x;
@@ -133,7 +133,7 @@ static void complex_pow(Rcomplex *r, Rcomplex *a, Rcomplex *b)
 
 /* FIXME : Use the trick in arithmetic.c to eliminate "modulo" ops */
 
-SEXP complex_binary(int code, SEXP s1, SEXP s2)
+SEXP complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i, n, n1, n2;
     Rcomplex x1, x2;
@@ -365,8 +365,8 @@ SEXP do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
     else errorcall(call, "non-numeric argument to function");
     PROTECT(x);
     PROTECT(y);
-    ATTRIB(y) = duplicate(ATTRIB(x));
-    OBJECT(y) = OBJECT(x);
+    SET_ATTRIB(y, duplicate(ATTRIB(x)));
+    SET_OBJECT(y, OBJECT(x));
     UNPROTECT(2);
     return y;
 }
@@ -453,23 +453,23 @@ static void z_tan(Rcomplex *r, Rcomplex *z)
 
 static void z_asin(Rcomplex *r, Rcomplex *z)
 {
-    double alpha, beta, t1, t2, x, y;
+    double alpha, bet, t1, t2, x, y;
     x = z->r;
     y = z->i;
     t1 = 0.5 * hypot(x + 1, y);
     t2 = 0.5 * hypot(x - 1, y);
     alpha = t1 + t2;
-    beta = t1 - t2;
-    r->r = asin(beta);
+    bet = t1 - t2;
+    r->r = asin(bet);
     r->i = log(alpha + sqrt(alpha*alpha - 1));
 }
 
 static void z_acos(Rcomplex *r, Rcomplex *z)
 {
-    Rcomplex asin;
-    z_asin(&asin, z);
-    r->r = M_PI_2 - asin.r;
-    r->i = - asin.i;
+    Rcomplex Asin;
+    z_asin(&Asin, z);
+    r->r = M_PI_2 - Asin.r;
+    r->i = - Asin.i;
 }
 
 	/* Complex Arctangent Function */
@@ -623,8 +623,8 @@ SEXP complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if (naflag)
 	warning("NAs produced in function \"%s\"", PRIMNAME(op));
-    ATTRIB(y) = duplicate(ATTRIB(x));
-    OBJECT(y) = OBJECT(x);
+    SET_ATTRIB(y, duplicate(ATTRIB(x)));
+    SET_OBJECT(y, OBJECT(x));
     UNPROTECT(2);
     return y;
 }
@@ -671,12 +671,12 @@ static SEXP cmath2(SEXP op, SEXP sa, SEXP sb, void (*f)())
     if (naflag)
 	warning("NAs produced in function \"%s\"", PRIMNAME(op));
     if(n == na) {
-	ATTRIB(sy) = duplicate(ATTRIB(sa));
-	OBJECT(sy) = OBJECT(sa);
+	SET_ATTRIB(sy, duplicate(ATTRIB(sa)));
+	SET_OBJECT(sy, OBJECT(sa));
     }
     else if(n == nb) {
-	ATTRIB(sy) = duplicate(ATTRIB(sb));
-	OBJECT(sy) = OBJECT(sb);
+	SET_ATTRIB(sy, duplicate(ATTRIB(sb)));
+	SET_OBJECT(sy, OBJECT(sb));
     }
     UNPROTECT(3);
     return sy;
@@ -739,7 +739,9 @@ SEXP do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP z, zr, zi, r, rr, ri;
-    int degree, fail, i, n;
+    Rboolean fail;
+    int degree, i, n;
+
     checkArity(op, args);
     z = CAR(args);
     switch(TYPEOF(z)) {
@@ -774,7 +776,7 @@ SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(zr)[degree-i] = COMPLEX(z)[i].r;
 	    REAL(zi)[degree-i] = COMPLEX(z)[i].i;
 	}
-	R_cpoly(REAL(zr), REAL(zi), &degree, REAL(rr), REAL(ri), &fail);
+	R_cpolyroot(REAL(zr), REAL(zi), &degree, REAL(rr), REAL(ri), &fail);
 	if(fail) errorcall(call, "root finding code failed");
 	UNPROTECT(2);
 	r = allocVector(CPLXSXP, degree);

@@ -43,13 +43,14 @@ Real.primitives <-
 	 c("nargs", "missing", # actually args(.) could be as formal(.)
 	   "interactive",
 	   ".Primitive", ".Internal", ".External", ".Call",
+           ".External.graphics", ".Call.graphics",
 	   ".C", ".Fortran", "symbol.C", "symbol.For",
-	   "globalenv", "pos.to.env", "unclass",
+	   "globalenv", "pos.to.env", "unclass", "attr", "as.character",
 
 	   ##maybe ? "gc", "gcinfo",
 	   ##
 	   "debug", "undebug", "trace", "untrace",
-	   "browser",  "proc.time", #"traceback",
+	   "browser",  "proc.time", "gc.time", #"traceback",
 	   ),
 
 	 language2= c(":", "~", "c", "list", #nomore (Sep.9,1998): "unlist",

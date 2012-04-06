@@ -17,14 +17,13 @@ co.intervals <- function (x, number = 6, overlap = 0.5)
     cbind(x1[keep] - eps, xr[keep] + eps)
 }
 
-panel.smooth <- function(x, y, col = par("col"), pch = par("pch"),
-			 col.smooth = "red", span = 2/3, iter = 3, ...)
+panel.smooth <- function(x, y, col = par("col"), bg = NA, pch = par("pch"),
+                         cex = 1, col.smooth = "red", span = 2/3, iter = 3, ...)
 {
-    points(x, y, pch=pch, col=col)
+    points(x, y, pch=pch, col=col, bg=bg, cex=cex)
     ok <- is.finite(x) & is.finite(y)
-    if (any(ok)) {
+    if (any(ok))
         lines(lowess(x[ok], y[ok], f=span, iter=iter), col = col.smooth, ...)
-    }
 }
 
 coplot <-
@@ -33,7 +32,7 @@ coplot <-
              xlab = c(x.name, paste("Given :", a.name)),
              ylab = c(y.name, paste("Given :", b.name)),
              subscripts = FALSE,
-             xlim, ylim, number = 6, overlap = 0.5, ...)
+             number = 6, overlap = 0.5, xlim, ylim, ...)
 {
     deparen <- function(expr) {
 	while (is.language(expr) && !is.name(expr) && deparse(expr[[1]])== "(")
@@ -67,22 +66,22 @@ coplot <-
     ## evaluate the formulae components to get the data values
 
     if (missing(data))
-	data <- sys.frame(sys.parent())
+	data <- parent.frame()
     x.name <- deparse(x)
-    x <- eval(x, data, sys.frame(sys.parent()))
+    x <- eval(x, data, parent.frame())
     nobs <- length(x)
     y.name <- deparse(y)
-    y <- eval(y, data, sys.frame(sys.parent()))
+    y <- eval(y, data, parent.frame())
     if(length(y) != nobs) bad.lengths()
     a.name <- deparse(a)
-    a <- eval(a, data, sys.frame(sys.parent()))
+    a <- eval(a, data, parent.frame())
     if(length(a) != nobs) bad.lengths()
     if(is.character(a)) a <- as.factor(a)
     a.levels <- NULL
     if (have.b) {
         b.levels <- NULL
 	b.name <- deparse(b)
-	b <- eval(b, data, sys.frame(sys.parent()))
+	b <- eval(b, data, parent.frame())
 	if(length(b) != nobs) bad.lengths()
         if(is.character(b)) b <- as.factor(b)
         missingrows <- which(is.na(x) | is.na(y) | is.na(a) | is.na(b))

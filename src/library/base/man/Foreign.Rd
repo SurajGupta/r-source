@@ -3,15 +3,19 @@
 \alias{.Fortran}
 \alias{.External}
 \alias{.Call}
+\alias{.External.graphics}
+\alias{.Call.graphics}
 \title{Foreign Function Interface}
 \description{
   Functions to make calls to compiled code that has been loaded into \R.
 }
 \usage{
-       .C(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
- .Fortran(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
-.External(name, \dots)
-    .Call(name, \dots)
+                .C(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
+          .Fortran(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
+         .External(name, \dots)
+             .Call(name, \dots)
+.External.graphics(name, \dots)
+    .Call.graphics(name, \dots)
 }
 \arguments{
   \item{name}{a character string giving the name of a C function or
@@ -35,22 +39,29 @@
   the \code{\dots} list of arguments passed in, but reflecting any
   changes made by the C or Fortran code.
 
-  \code{.External} and \code{.Call} return an \R object.
+  \code{.External}, \code{.Call}, \code{.External.graphics},
+  and \code{.Call.graphics} return an \R object.
 
   These calls are typically made in conjunction with
   \code{\link{dyn.load}} which links DLLs to \R.
+
+  The \code{.graphics} versions of \code{.Call} and \code{.External}
+  are used when calling code which makes low-level graphics calls.
+  They take additional steps to ensure that the device driver display
+  lists are updated correctly.
 }
 \details{
   The functions \code{.C} and \code{.Fortran} can be used to make calls
   to C and Fortran code.
 
-  \code{.External} can be used to call compiled code that uses \R
-  objects in the same way as internal \R functions.
+  \code{.External} and \code{.External.graphics} can be used to call
+  compiled code that uses \R objects in the same way as internal
+  \R functions.
 
-  \code{.Call} can be used call compiled code which makes use of
-  internal \R objects.  The arguments are passed to the C code as a
-  sequence of \R objects.  It is included to provide compatibility with
-  S version 4.
+  \code{.Call} and \code{.Call.graphics} can be used call compiled code
+  which makes use of internal \R objects.  The arguments are passed to
+  the C code as a sequence of \R objects.  It is included to provide
+  compatibility with S version 4.
 
   For details about how to write code to use with \code{.Call} and
   \code{.External}, see the chapter on ``System and foreign language
@@ -79,7 +90,7 @@
   \code{.Fortran} is used, (ii) \code{DUP} is false and (iii) the
   argument has attribute \code{Csingle} set to \code{TRUE} (use
   \code{\link{as.single}} or \code{\link{single}}).  This mechanism is
-  only intended to be use to facilitate the interfacing of existing C
+  only intended to be used to facilitate the interfacing of existing C
   and Fortran code.
 
   The C type \code{Rcomplex} is defined in \file{Complex.h} as a
@@ -105,39 +116,40 @@
   \R functions can be invoked using \code{call_S} or \code{call_R} and
   can be passed lists or the simple types as arguments.
 }
-%%-- This note by Thomas Lumley, (minimally edited by MM):
+%%-- This note by Thomas Lumley, (minimally edited by MM,
+%%      edited by BDR for 1.2.0's non-moving garbage collector):
 \note{\emph{\code{DUP=FALSE} is dangerous.}
 
-There are three important dangers with \code{DUP=FALSE}. The first is that
-garbage collection may move the object, resulting in the pointers
-pointing nowhere useful and causing hard-to-reproduce bugs.
+  There are two dangers with using \code{DUP=FALSE}.
 
-The second is that if you pass a formal parameter of the calling
-function to \code{.C}/\code{.Fortran} with \code{DUP=FALSE}, it may not
-necessarily be copied.  You may be able to change not only the local
-variable but the variable one level up.  This will also be very hard to
-trace.
+  The first is that if you pass a local variable to
+  \code{.C}/\code{.Fortran} with \code{DUP=FALSE}, your compiled code
+  can alter the local variable and not just the copy in the return list.
+  Worse, if you pss a local variable that is a formal parameter of
+  the calling function, you may be able to change not only the local
+  variable but the variable one level up.  This will be very hard to trace.
 
-The third is that lists are passed as a single \R \code{SEXP} with
-\code{DUP=FALSE}, not as an array of \code{SEXP}. This means the
-accessor macros in \file{Rinternals.h} are needed to get at the list
-elements and the lists cannot be passed to \code{call_S}/\code{call_R}.
+  The second is that lists are passed as a single \R \code{SEXP} with
+  \code{DUP=FALSE}, not as an array of \code{SEXP}. This means the
+  accessor macros in \file{Rinternals.h} are needed to get at the list
+  elements and the lists cannot be passed to
+  \code{call_S}/\code{call_R}.  New code using \R objects should be
+  written using \code{.Call} or \code{.External}, so this is now only a
+  minor issue.
 
-1.  If your C/Fortran routine calls back any \R function including
-\code{S_alloc}/\code{R_alloc} then do not use \code{DUP=FALSE}.  Do not
-even think about it.  Calling almost any \R function could trigger
-garbage collection.
+  (Prior to \R version 1.2.0 there has a third danger, that objects
+  could be moved in memory by the garbage collector. The current garbage
+  collector never moves objects.)
 
-2.  If you don't trigger garbage collection it is safe and useful to set
-\code{DUP=FALSE} if you don't change any of the variables that might be
-affected, e.g.,
+  It is safe and useful to set \code{DUP=FALSE} if you do not change any
+  of the variables that might be affected, e.g.,
 
-\code{.C("Cfunction", input=x, output=numeric(10))}.
+  \code{.C("Cfunction", input=x, output=numeric(10))}.
 
-In this case the output variable didn't exist before the call so it can't
-cause trouble. If the input variable is not changed in \code{Cfunction} you are
-safe.
- }
+  In this case the output variable did not exist before the call so it
+  cannot cause trouble. If the input variable is not changed in the C
+  code of \code{Cfunction} you are safe.
+}
 
 \section{Header files for external code}{
     Writing code for use with \code{.External} and \code{.Call} will

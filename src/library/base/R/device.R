@@ -102,7 +102,7 @@ dev.copy <- function(device, ..., which = dev.next())
     dev.cur()
 }
 
-dev.print <- function(device = postscript,  ...)
+dev.print <- function(device = postscript, ...)
 {
     current.device <- dev.cur()
     nm <- names(current.device)[1]
@@ -115,32 +115,44 @@ dev.print <- function(device = postscript,  ...)
     din <- par("din"); w <- din[1]; h <- din[2]
     if(missing(device)) { ## safe way to recognize postscript
         if(is.null(oc$file)) oc$file <- ""
-        hz <- oc$horizontal
-        wp <- 8; wh <- 10
+        hz0 <- oc$horizontal
+        hz <- if(is.null(hz0)) ps.options()$horizontal else eval.parent(hz0)
         paper <- oc$paper
         if(is.null(paper)) paper <- ps.options()$paper
         if(paper == "default") paper <- getOption("papersize")
         paper <- tolower(paper)
-        if(paper == "a4") {wp <- 8; hp <- 14.0 - 0.5}
-        ## Letter is defaults.
-        if(paper == "legal") {wp <- 8.27 - 0.5; hp <- 11.69 - 0.5}
-        if(paper == "executive") {wp <- 7.25 - 0.5; hp <- 10.5 - 0.5}
-        if(is.null(hz)) hz <- ps.options()$horizontal
-        if(w > wp && w < hp && h < wp) { horizontal <- TRUE }
-        else if (h > wp && h < hp && w < wp) { horizontal <- FALSE }
-        else {
-            h0 <- ifelse(hz, wp, wh)
-            if(h > h0) {w <- w * h0 /h; h<- h0 }
-            w0 <- ifelse(hz, wh, wp)
-            if(w > w0) { h <- h * w0 /w;  w <- w0}
+        switch(paper,
+               a4 = 	 {wp <- 8.27; hp <- 11.69},
+               legal =	 {wp <- 8.5;  hp <- 14.0},
+               executive={wp <- 7.25; hp <- 10.5},
+               { wp <- 8.5; hp <- 11}) ## default is "letter"
+
+        wp <- wp - 0.5; hp <- hp - 0.5  # allow 0.25" margin on each side.
+        if(!hz && is.null(hz0) && h < wp && wp < w && w < hp) {
+            ## fits landscape but not portrait
+            hz <- TRUE
+        } else if (hz && is.null(hz0) && w < wp && wp < h && h < hp) {
+            ## fits portrait but not landscape
+            hz <- FALSE
+        } else {
+            h0 <- ifelse(hz, wp, hp)
+            if(h > h0) { w <- w * h0/h; h <- h0 }
+            w0 <- ifelse(hz, hp, wp)
+            if(w > w0) { h <- h * w0/w; w <- w0 }
         }
         if(is.null(oc$pointsize)) {
             pt <- ps.options()$pointsize
             oc$pointsize <- pt * w/din[1]
         }
+        if(is.null(hz0)) oc$horizontal <- hz
+        if(is.null(oc$width)) oc$width <- w
+        if(is.null(oc$height)) oc$height <- h
+    } else {
+        if(is.null(oc$width))
+            oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
+        if(is.null(oc$height))
+            oc$height <- if(!is.null(oc$width)) h/w * eval.parent(oc$width) else h
     }
-    if(is.null(oc$width)) oc$width <- w
-    if(is.null(oc$height)) oc$height <- h
     dev.off(eval.parent(oc))
     dev.set(current.device)
 }
@@ -159,8 +171,10 @@ dev.copy2eps <- function(...)
     oc$horizontal <- FALSE
     oc$paper <- "special"
     din <- par("din"); w <- din[1]; h <- din[2]
-    if(is.null(oc$width)) oc$width <- w
-    if(is.null(oc$height)) oc$height <- h
+    if(is.null(oc$width))
+        oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
+    if(is.null(oc$height))
+        oc$height <- if(!is.null(oc$width)) h/w * eval.parent(oc$width) else h
     if(is.null(oc$file)) oc$file <- "Rplot.eps"
     dev.off(eval.parent(oc))
     dev.set(current.device)

@@ -68,13 +68,13 @@ Brian Ripley                                @*
 @node Top, Introduction, (dir), (dir)
 
 @menu
-* Introduction::
-* Installation and Usage::
-* Packages::
-* Windows Features::
-* Workspaces::
-* The R Console and Fonts::
-* Building from Source::
+* Introduction::                
+* Installation and Usage::      
+* Packages::                    
+* Windows Features::            
+* Workspaces::                  
+* The R Console and Fonts::     
+* Building from Source::        
 @end menu
 
 @newchap{}
@@ -90,7 +90,7 @@ that version. The main R FAQ can be found at
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@code{rw1000} or later); the current version is often called something like
+(@code{rw1020} or later); the current version is often called something like
 @code{@value{VERSION}} (although not officially).
 
 
@@ -99,21 +99,21 @@ The information here applies only to recent versions of R for Windows,
 @chapter Installation and Usage
 
 @menu
-* Where can I find the latest version?::
-* How do I install R for Windows?::
-* How do I run it?::
-* How can I keep workspaces for different projects in different directories?::
-* How do I print from R?::
-* Can I use R BATCH?::
-* Can I use rwXxxx with ESS and emacs?::
-* What are HOME and working directories?::
+* Where can I find the latest version?::  
+* How do I install R for Windows?::  
+* How do I run it?::            
+* How can I keep workspaces for different projects in different directories?::  
+* How do I print from R?::      
+* Can I use R BATCH?::          
+* Can I use rwXxxx with ESS and emacs?::  
+* What are HOME and working directories?::  
 @end menu
 
 @node Where can I find the latest version?, How do I install R for Windows?, Installation and Usage, Installation and Usage
 @section Where can I find the latest version?
 
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
-for a list), navigate to the @code{bin/windows/windows-NT/base}
+for a list), navigate to the @code{bin/windows/base}
 directory and collect the files you need. You will need at least the
 files
 
@@ -133,26 +133,26 @@ Optionally, you can download the installer, @code{rwinst.exe}.
 @node How do I install R for Windows?, How do I run it?, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
 
-First, you need Windows 95 or 98 or NT4 or 2000: Windows 3.11+win32s
-will not work. Your file system must allow long file names (as is
-likely except perhaps for some network-mounted systems).
+First, you need Windows 95/98/ME/NT4/2000: Windows 3.11+win32s will not
+work.  Your file system must allow long file names (as is likely except
+perhaps for some network-mounted systems).
 
 The simplest way is to run the installer (double-click on the icon for
-@code{rwinst.exe} and navigate its wizard-like pages).  Alternatively, choose
-a location and unzip the zip files (with a tool that preserves long
-file names and the directory structure: we recommend the INFO-ZIP
-project's @code{unzip}). All the files will unpack into a directory called
-@code{rwXxxx}, for some @code{Xxxx}.
+@code{rwinst.exe} and navigate its wizard-like pages).  Alternatively,
+choose a location and unzip the zip files (with a tool that preserves
+long file names and the directory structure: we recommend the INFO-ZIP
+project's @code{unzip}). All the files will unpack into a directory
+called @code{rwXxxx}, for some @code{Xxxx}.
 
 Choose a working directory for R. Make a shortcut to
-@code{rwXxxx\bin\Rgui.exe} on your desktop or somewhere on the Start menu
-file tree. Right-click the shortcut, select Properties... and change
-the `Start in' field to your working directory.
+@code{rwXxxx\bin\Rgui.exe} on your desktop or somewhere on the Start
+menu file tree. Right-click the shortcut, select Properties... and
+change the `Start in' field to your working directory.
 
-You may also want to add command-line arguments at the end of the
-Target field. We use @code{--vsize=10M --nsize=400k}. You can also set
-environment variables at the end of the Target field, for
-example @code{R_LIBS=e:/R/library}.
+You may also want to add command-line arguments at the end of the Target
+field, for example @code{--max-mem-size=40M}. You can also set
+environment variables at the end of the Target field, for example
+@code{R_LIBS=e:/R/library}.
 
 
 @node How do I run it?, How can I keep workspaces for different projects in different directories?, How do I install R for Windows?, Installation and Usage
@@ -181,6 +181,8 @@ It depends what you want to print.
 @item You can print the graphics window from its menu or by using
 @code{dev.print()}.
 @item You can print from the R console or pager by @code{File | Print}.
+(This will print the selection if there is one,
+otherwise the whole console or pager contents.)
 @item You can print help files from the pager or HTML browser.
 @item If you have configured @code{RHOME\bin\helpPRINT.bat} and have
 latex installed you can print help files by @code{help(fn_name, offline=TRUE)}.
@@ -189,17 +191,20 @@ latex installed you can print help files by @code{help(fn_name, offline=TRUE)}.
 @node Can I use R BATCH?, Can I use rwXxxx with ESS and emacs?, How do I print from R?, Installation and Usage
 @section Can I use @code{R BATCH}?
 
-No, but you can set up a batch file using @code{Rterm.exe}. A sample batch file
-might contain (as one line)
+Yes, if you have Perl installed.  The Windows analogue is @code{Rcmd BATCH}:
+use @code{Rcmd BATCH --help} for full details.
+
+Otherwise you can set up a batch file using @code{Rterm.exe}. A sample
+batch file might contain (as one line)
 
 @example
-path_to_R\bin\Rterm.exe --vsize=10M --nsize=500k --no-restore --no-save < %1 > %1.out
+path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out
 @end example
 
 @node Can I use rwXxxx with ESS and emacs?, What are HOME and working directories?, Can I use R BATCH?, Installation and Usage
 @section Can I use rwXxxx with ESS and emacs?
 
-Yes. The latest versions of ESS (e.g. 5.1.13) come with support for this
+Yes. The latest versions of ESS (e.g. 5.1.18) come with support for this
 version of R, and there is support for interrupting the R process from
 ESS (by @code{C-c C-c}).
 
@@ -220,11 +225,11 @@ from R code by the call @code{getwd()}.
 The home directory is set as follows:@*
 If environment variable @code{R_USER} is set, its value is used.@*
 Otherwise if environment variable @code{HOME} is set, its value is used.@*
-Otherwise if environment variables @code{HOMEDRIVE} and @code{HOMEPATH} are set,
-the value is @code{$@{HOMEDRIVE@}$@{HOMEPATH@}}.@*
+Otherwise if environment variables @code{HOMEDRIVE} and @code{HOMEPATH}
+are set, the value is @code{$@{HOMEDRIVE@}$@{HOMEPATH@}}.@*
 If all of these fail, the current working directory is used.
 
-You can find this from R code by @code{getenv("R_USER")}.
+You can find this from R code by @code{Sys.getenv("R_USER")}.
 
 
 @newchap{}
@@ -233,10 +238,12 @@ You can find this from R code by @code{getenv("R_USER")}.
 
 
 @menu
-* Can I install packages (libraries) in this version?::
-* I don't have permission to write to the rwXxxx/library directory::
-* The packages I installed do not appear in the HTML help system::
-* My functions are not found by the HTML help search system.::
+* Can I install packages (libraries) in this version?::  
+* I don't have permission to write to the rwXxxx/library directory::  
+* The packages I installed do not appear in the HTML help system::  
+* My functions are not found by the HTML help search system.::  
+* Loading a package fails.::    
+* Package TclTk does not work.::  
 @end menu
 
 @node Can I install packages (libraries) in this version?, I don't have permission to write to the rwXxxx/library directory, Packages, Packages
@@ -244,7 +251,7 @@ You can find this from R code by @code{getenv("R_USER")}.
 
 Yes, of course. The easy way is to see if a pre-compiled binary version
 of the package is available: look on CRAN at
-@code{bin/windows/windows-NT/contrib}. If there is, download the zip
+@code{bin/windows/contrib}. If there is, download the zip
 file and unpack it in the @code{rwXxxx\library} directory, using
 @code{unzip} or similar, or using the installer @code{rwinst.exe}.
 Perhaps even easier is to use the R function @code{install.packages()}:
@@ -255,8 +262,9 @@ compiling from source, get @code{rwXxxxsp.zip} from the distribution
 (see Q1.1) and unpack it in @code{rwXxxx}. Then @code{cd src\gnuwin32}
 and read @code{README.packages}. You will need to collect and install
 several tools to use this. Once you have done so, installation is easy:
-just run @code{make pkg-pkgname}. To check the package (run all the examples
-on its help pages) use @code{make pkgcheck-pkgname}.
+just run @code{Rcmd INSTALL pkgname}. To check the package (run all the
+examples on its help pages and in its test suite, if any) use @code{Rcmd
+check pkgname}.
 
 @node I don't have permission to write to the rwXxxx/library directory, The packages I installed do not appear in the HTML help system, Can I install packages (libraries) in this version?, Packages
 @section I don't have permission to write to the @file{rwXxxx/library} directory.
@@ -268,7 +276,7 @@ R variable @code{.lib.loc} in your @file{.Rprofile} or when running R.
 Suppose your packages are installed in @code{p:\mylibs}. Then you can EITHER
 
 @example
-set R_LIBS to p:\mylibs
+set the environment variable R_LIBS to p:\mylibs
 @end example
 @noindent
 OR put in the @code{.Rprofile} in the working directory or your home directory
@@ -285,9 +293,11 @@ library(MASS, lib.loc="p:/mylibs")
 
 How you set an environment variable is system specific: in Windows 9x
 you can set them in autoexec.bat or in an MS-DOS window from which you
-launch @code{Rgui} / @code{Rterm}. Under Windows NT/2000 you can use the
-control panel or the properties of `My Computer'. You can also set them
-on the command line, for example in the shortcut you could have
+launch @code{Rgui} / @code{Rterm}.  Under Windows NT/2000 you can use
+the control panel or the properties of `My Computer'.  Under Windows Me
+you need to use the System Configuration Utility (under Programs,
+Accessories, System Tools on the Start menu).  You can also set them on
+the command line, for example in the shortcut you could have
 
 @example
 path_to_R\bin\Rgui.exe --vsize=10M R_LIBS=e:/R/library
@@ -304,9 +314,6 @@ R_NSIZE=400k
 
 The order of precedence is the command line (flags before variables)
 then @file{.Renviron} then the inherited environment.
-
-You can also build packages from anywhere to anywhere, but may be
-simpler to install a private copy of R to do the building.
 
 
 @node The packages I installed do not appear in the HTML help system, My functions are not found by the HTML help search system., I don't have permission to write to the rwXxxx/library directory, Packages
@@ -333,20 +340,48 @@ make indices
 instead.)
 
 
-@node My functions are not found by the HTML help search system.,  , The packages I installed do not appear in the HTML help system, Packages
+@node My functions are not found by the HTML help search system., Loading a package fails., The packages I installed do not appear in the HTML help system, Packages
 @section My functions are not found by the HTML help search system.
 
 The following conditions need to hold for functions in a package you installed.
 
 @itemize @bullet
 @item the package is installed in @file{rwXxxx\library}.
-@item the package contains a @file{CONTENTS} file in top-level directory
-(a few of the binary distributions do not).
+@item the package contains a @file{CONTENTS} file in top-level directory.
 @item you updated the indices as described in the answer to Q3.3 after
 installing the package.
 @end itemize
 @noindent
 If those all hold true, this works for us.
+
+@node Loading a package fails., Package TclTk does not work., My functions are not found by the HTML help search system., Packages
+@section Loading a package fails.
+
+Is the package compiled for this version of R?  Many of the packages
+need to be compiled for a fairly recent version, and in particular a
+substantial minority need to be re-compiled for @code{rw1020}. 
+
+You can tell the version the package was compiled for by looking at the
+@code{Built:} line in its @file{DESCRIPTION} file or at the
+@code{Version} tab of its DLL (if it has one) in the @file{libs}
+directory.  (Right-click on the DLL in Windows Explorer, and select
+@code{Properties} or use the @code{DLL.version} function inside R.)
+If there is no @code{Built:} line or version tab, the package was
+compiled too long ago.
+
+
+@node Package TclTk does not work.,  , Loading a package fails., Packages
+@section Package TclTk does not work.
+
+For package tcltk to work (try @code{demo(tkdensity)} or @code{demo(tkttest)})
+you need to have Tcl installed.  Download @file{tcl832.exe} (or use
+@file{tcl831.exe} if you already have it) from @url{dev.scriptics.com}
+and install it. (That will put the @file{bin} directory containing the
+Tcl and Tk DLLs in your path).  You then need to set the environment variable
+@code{TCL_LIBRARY}, to something like @code{c:/Program
+Files/Tcl/lib/tcl8.3}.  (The startup code for the package will warn you
+if this is unset, and Q3.2 explains how to set them.)
+
 
 
 @newchap{}
@@ -354,8 +389,8 @@ If those all hold true, this works for us.
 @chapter Windows Features
 
 @menu
-* What should I expect to behave differently from the Unix version of R?::
-* I hear about some nifty features. Please tell me about them!::
+* What should I expect to behave differently from the Unix version of R?::  
+* I hear about some nifty features. Please tell me about them!::  
 @end menu
 
 @node  What should I expect to behave differently from the Unix version of R?, I hear about some nifty features. Please tell me about them!, Windows Features, Windows Features
@@ -366,11 +401,9 @@ If those all hold true, this works for us.
 and @key{Ctrl-break} or @key{Ctrl-C} in @code{Rterm.exe}: @key{Ctrl-C}
 is used for copying in the GUI version.
 
-@item Command-line editing is always available, but is much simpler than the
+@item Command-line editing is always available, but is simpler than the
 readline-based editing on Unix. For @code{Rgui.exe}, the menu item `Help |
 Console' will give details.
-
-@item The commands history is always saved between sessions.
 
 @item Using @code{help.start()} does not automatically send help
 requests to the browser: use @code{options(htmlhelp=T)} to turn this on.
@@ -415,8 +448,8 @@ The R console and graphics windows have configuration files stored in
 the @file{RHOME\etc} directory called @file{Rconsole} and @file{Rdevga};
 you can keep personal copies in your @file{HOME} directory. They contain
 comments which should suffice for you to edit them to your
-preferences. For more details see @code{?Rconsole}.  From @code{rw1010}
-there is a Preferences editor invoked from the @code{Edit} menu which
+preferences. For more details see @code{?Rconsole}.
+There is a Preferences editor invoked from the @code{Edit} menu which
 can be used to edit the file @file{Rconsole}.
 
 @newchap{}
@@ -425,9 +458,9 @@ can be used to edit the file @file{Rconsole}.
 
 
 @menu
-* My workspace gets saved in a strange place. how do I stop this?::
-* How do I store my workspace in a different place?::
-* Can I load workspaces saved under Unix/GNU-Linux?::
+* My workspace gets saved in a strange place. how do I stop this?::  
+* How do I store my workspace in a different place?::  
+* Can I load workspaces saved under Unix/GNU-Linux?::  
 @end menu
 
 @node My workspace gets saved in a strange place. how do I stop this?, How do I store my workspace in a different place?, Workspaces, Workspaces
@@ -442,7 +475,7 @@ Have you changed the working directory?: see Q5.2.
 Use the `File | Change Dir' menu item to select a new working
 directory: this defaults to the last directory you loaded a file
 from. The workspace is saved in the working directory. You can also
-save a snapshot of the workspace from the `Save Image' menu item.
+save a snapshot of the workspace from the `Save Workspace' menu item.
 
 
 @node Can I load workspaces saved under Unix/GNU-Linux?,  , How do I store my workspace in a different place?, Workspaces
@@ -457,10 +490,10 @@ Yes. The converse (saving on Windows, loading on Unix) also works.
 
 
 @menu
-* I would like to be able to use Japanese fonts::
-* I don't see characters with accents at the R console::
-* The output to the console seems to be delayed::
-* Long lines seem to be truncated.::
+* I would like to be able to use Japanese fonts::  
+* I don't see characters with accents at the R console::  
+* The output to the console seems to be delayed::  
+* Long lines seem to be truncated.::  
 @end menu
 
 @node I would like to be able to use Japanese fonts, I don't see characters with accents at the R console, The R Console and Fonts, The R Console and Fonts
@@ -513,12 +546,12 @@ scrollbar or the @key{CTRL+arrow} keys to scroll horizontally.
 @chapter Building from Source
 
 @menu
-* How can I compile R from source?::
-* How do I debug code that I have compiled and dyn.load-ed?::
-* How do I include C++ code?::
-* The output from my C code disappears.::
-* The output from my Fortran code disappears.::
-* The console freezes when my compiled code is running::
+* How can I compile R from source?::  
+* How do I debug code that I have compiled and dyn.load-ed?::  
+* How do I include C++ code?::  
+* The output from my C code disappears.::  
+* The output from my Fortran code disappears.::  
+* The console freezes when my compiled code is running::  
 @end menu
 
 @node How can I compile R from source?, How do I debug code that I have compiled and dyn.load-ed?, Building from Source, Building from Source
@@ -555,6 +588,7 @@ make DEBUG=T
 and make a debug version of your package by
 
 @example
+make pkgclean-mypkg
 make DEBUG=T pkg-mypkg
 @end example
 @noindent
@@ -628,19 +662,10 @@ You need to do two things:
 (b) Include the C++ libraries in the link to make the DLL. Suppose
 @file{X.cc} contains your C++ code, and @file{X_main.cc} is the wrapper,
 as in the example in `@emph{Writing R Extensions}'. Then build the DLL by
-(@code{gcc-2.95})
+(@code{gcc})
 
 @example
-g++ -c X.cc X_main.cc
-dlltool --export-all-symbols --output-def X.def X_main.o
-dllwrap -o X.dll --def X.def X.o X_main.o -lstdc++
-@end example
-@noindent
-or if you have @code{--shared} (@code{mingw32 gcc-2.95.1} or
-@code{cygwin 1.1})
-
-@example
-g++ -shared -o X.dll X.cc X_main.cc
+...\bin\Rcmd SHLIB X.cc X_main.cc
 @end example
 @noindent
 or (VC++, which requires extension @code{.cpp})
@@ -701,14 +726,14 @@ If you want output to be updated on the console, call
 @html
 <p><hr WIDTH="100%">
 <address>
-Last edited 2000 June 10 by Brian Ripley
+Last edited 2000 November 30 by Brian Ripley
 <code><a href="mailto:ripley@@stats.ox.ac.uk">ripley@@stats.ox.ac.uk</a></code>
 </address>
 @end html
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2000 June 10 by Brian Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2000 November 30 by Brian Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

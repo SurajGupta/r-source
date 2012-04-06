@@ -122,7 +122,7 @@ for(d in 1:9) {cat(d,":"); print(v4, digits=d) }
 DIG(7)
 
 
-###------------ Very big and very small	 (--> ./signif.R )
+###------------ Very big and very small
 umach <- unlist(.Machine)[paste("double.x", c("min","max"), sep='')]
 xmin <- umach[1]
 xmax <- umach[2]
@@ -131,6 +131,11 @@ tx <- unique(sort(c(outer(umach,1+tx))))# 11 values  (out of 14)
 tx <- tx[is.finite(tx)] #-- all kept
 (txp <- tx[tx >= 1])#-- Positive exponent -- 4 values
 (txn <- tx[tx <	 1])#-- Negative exponent -- 7 values
+
+c(0.099999994, 0.2) # 0.1 0.2 , not 0.10 0.20
+
+(z <- sort(c(outer(range(txn), 8^c(0,2:3)))))
+outer(z, 0:6, signif) # had NaN's till 1.1.1
 
 olddig <- options(digits=14) # RH6.0 fails at 15
 z <- 1.234567891234567e27
@@ -179,3 +184,15 @@ matrix(x + 1i*pi, 3)
 xx + pi
 t(cbind(xx, xx+ 1i*c(1,pi)))
 
+#--- format checks after incorrect changes in Nov 2000
+zz <- data.frame("(row names)" = c("aaaaa", "b"), check.names = FALSE)
+format(zz)
+format(zz, justify = "left")
+zz <- data.frame(a = I("abc"), b = I("def\"gh"))
+format(zz)
+# test format.data.frame on former AsIs's.
+set.seed(321)
+dd <- data.frame(x = 1:5, y = rnorm(5), z = c(1, 2, NA, 4, 5))
+model <- glm(y ~ x, data = dd, subset = 1:4, na.action = na.omit)
+expand.model.frame(model, "z", na.expand = FALSE)
+expand.model.frame(model, "z", na.expand = TRUE)

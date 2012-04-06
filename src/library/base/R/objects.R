@@ -1,7 +1,7 @@
 ## 'objects <- function(....) ...    --->>> ./attach.R
 
-inherits <- function(x, name)
-    any(!is.na(match(name,class(x))))
+inherits <- function(x, what, which = FALSE)
+	.Internal(inherits(x, what, which))
 
 NextMethod <- function(generic=NULL, object=NULL, ...)
     .Internal(NextMethod(generic, object,...))

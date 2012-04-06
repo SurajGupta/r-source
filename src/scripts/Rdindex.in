@@ -5,7 +5,7 @@
 # The titles are nicely formatted between two columns (defaults are 25
 # and 72, respectively).
 
-# Copyright (C) 1997-2000 Kurt Hornik and Fritz Leisch
+# Copyright (C) 1997-2000 The R Core Development Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,24 +23,15 @@
 # Suite 330, Boston, MA  02111-1307  USA.
 
 use Getopt::Long;
+use R::Utils;
 
-my $revision = ' $Revision: 1.6.6.1 $ ';
+my $revision = ' $Revision: 1.10 $ ';
 my $version;
 my $name;
 
 $revision =~ / ([\d\.]*) /;
 $version = $1;
 ($name = $0) =~ s|.*/||;
-
-sub version {
-    print STDERR <<END;
-Rdindex $version
-Copyright (C) 1997-2000 Kurt Hornik and Fritz Leisch
-This is free software; see the GNU General Public Licence version 2
-or later for copying conditions.  There is NO warranty.    
-END
-    exit 0;
-}
 
 sub usage {
     print STDERR <<END;
@@ -59,20 +50,25 @@ Options:
   -r, --right=Y		make Y the right column for title formatting
   -d, --data            include only data documentation files if a
                         directory was specified
+      --os=NAME         use OS subdir \`NAME\' (unix, mac or windows)
+      --OS=NAME         the same as \`--os\'.
 
-Email bug reports to <r-bugs\@lists.r-project.org>.
+Email bug reports to <r-bugs\@r-project.org>.
 END
     exit 0; 
 }
 
-my @options = ("h|help", "v|version", "l|left=s", "r|right=s",
-	       "d|data");
-GetOptions(@options) || &usage();
+my $OSdir = "unix";
 
-&version() if $opt_v;
+my @knownoptions = ("h|help", "v|version", "l|left=s", "r|right=s",
+		    "d|data", "os|OS:s");
+GetOptions(@knownoptions) || &usage();
+&R_version($name, $version) if $opt_v;
 &usage() if $opt_h;
+
 $opt_l = 25 unless $opt_l;
 $opt_r = 72 unless $opt_r;
+$OSdir = $opt_os if $opt_os;
 
 my $l1 = $opt_l - 2;
 my $l2 = $opt_r - $opt_l;
@@ -101,8 +97,7 @@ if ($#ARGV == 0 && -d $ARGV[0]) {
     if (-d "$dir/man") {
  	$dir = "$dir/man";
     }
-    @Rdfiles = `LC_ALL=C find $dir -name "*.[Rr]d" -print | \
-                  sed -e '/windows\\//d' | sort`;
+    @Rdfiles = sort(glob("$dir/*.[Rr]d"), glob("$dir/$OSdir/*.[Rr]d"));
     if ($opt_d) {
 	my @tmp = ();
 	foreach $f (@Rdfiles) {
@@ -110,9 +105,11 @@ if ($#ARGV == 0 && -d $ARGV[0]) {
 	}
 	@Rdfiles = @tmp;
     }
-    chop(@Rdfiles);
 } else {
-    @Rdfiles = @ARGV;
+    @Rdfiles = ();
+    foreach $arg (@ARGV) {
+	@Rdfiles = (@Rdfiles, glob($arg));
+    }
 }
 
 undef $/;

@@ -1,5 +1,5 @@
 #### copyright (C) 1998 B. D. Ripley
-add1 <- function(object, ...) UseMethod("add1")
+add1 <- function(object, scope, ...) UseMethod("add1")
 
 add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
 			 k = 2, trace = FALSE, ...)
@@ -9,6 +9,10 @@ add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
 	scope <- add.scope(object, update.formula(object, scope))
     if(!length(scope))
 	stop("no terms in scope for adding to object")
+#     newform <- update.formula(object,
+#                               paste(". ~ . +", paste(scope, collapse="+")))
+#     data <- model.frame(update(object, newform)) # remove NAs
+#     object <- update(object, data = data)
     ns <- length(scope)
     ans <- matrix(nrow = ns + 1, ncol = 2)
     dimnames(ans) <- list(c("<none>", scope), c("df", "AIC"))
@@ -79,6 +83,12 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 	class(fob) <- class(object)
 	m <- model.frame(fob, xlev = object$xlevels)
 	x <- model.matrix(Terms, m, contrasts = object$contrasts)
+        oldn <- length(y)
+        y <- model.response(m, "numeric")
+        newn <- length(y)
+        if(newn < oldn)
+            warning(paste("using the", newn, "/", oldn ,
+                          "rows from a combined fit"))
     }
     n <- nrow(x)
     Terms <- attr(Terms, "term.labels")
@@ -154,6 +164,7 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     add.rhs <- eval(parse(text = paste("~ . +", add.rhs)))
     new.form <- update.formula(object, add.rhs)
     Terms <- terms(new.form)
+    y <- object$y
     if(is.null(x)) {
 	fc <- object$call
 	fc$formula <- Terms
@@ -161,10 +172,14 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 	class(fob) <- class(object)
 	m <- model.frame(fob, xlev = object$xlevels)
 	x <- model.matrix(Terms, m, contrasts = object$contrasts)
+        oldn <- length(y)
+        y <- model.response(m, "numeric")
+        newn <- length(y)
+        if(newn < oldn)
+            warning(paste("using the", newn, "/", oldn ,
+                          "rows from a combined fit"))
     }
     n <- nrow(x)
-    y <- object$y
-    if(is.null(y)) y <- model.response(model.frame(object), "numeric")
     wt <- object$prior.weights
     if(is.null(wt)) wt <- rep(1, n)
     Terms <- attr(Terms, "term.labels")
@@ -220,7 +235,7 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 add1.mlm <- function(...)
     stop("no add1 method implemented for mlm models")
 
-drop1 <- function(object, ...) UseMethod("drop1")
+drop1 <- function(object, scope, ...) UseMethod("drop1")
 
 drop1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
 			  k = 2, trace = FALSE, ...)
@@ -233,6 +248,8 @@ drop1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
 	if(!all(match(scope, tl, FALSE)))
 	    stop("scope is not a subset of term labels")
     }
+#    data <- model.frame(object) # remove NAs
+#    object <- update(object, data = data)
     ns <- length(scope)
     ans <- matrix(nrow = ns + 1, ncol = 2)
     dimnames(ans) <- list(c("<none>", scope), c("df", "AIC"))
@@ -379,14 +396,14 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     scope <- c("<none>", scope)
     dfs <- c(object$rank, dfs)
     dev <- c(chisq, dev)
-    if (is.null(scale) || scale == 0)
-	dispersion <- summary(object, dispersion = NULL)$dispersion
-    else dispersion <- scale
+    dispersion <- if (is.null(scale) || scale == 0)
+	summary(object, dispersion = NULL)$dispersion
+    else scale
     fam <- object$family$family
-    if(fam == "gaussian") {
-	if(scale > 0) loglik <- dev/scale - n
-	else loglik <- n * log(dev/n)
-    } else loglik <- dev/dispersion
+    loglik <-
+        if(fam == "gaussian") {
+            if(scale > 0) dev/scale - n else n * log(dev/n)
+        } else dev/dispersion
     aic <- loglik + k * dfs
     dfs <- dfs[1] - dfs
     dfs[1] <- NA
@@ -420,7 +437,8 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     }
     head <- c("Single term deletions", "\nModel:",
 	      deparse(as.vector(formula(object))),
-	      if(!is.null(scale) && scale > 0)  paste("\nscale: ", format(scale), "\n"))
+	      if(!is.null(scale) && scale > 0)
+	      paste("\nscale: ", format(scale), "\n"))
     class(aod) <- c("anova", "data.frame")
     attr(aod, "heading") <- head
     aod
@@ -454,11 +472,11 @@ factor.scope <- function(factor, scope)
 	    nmfac <- colnames(factor)
 	    where <- match(nmdrop, nmfac, 0)
 	    if(any(!where)) stop("lower scope is not included in model")
-	    nmdrop <- nmfac[-where]
 	    facs <- factor[, -where, drop = FALSE]
+	    nmdrop <- nmfac[-where]
 	} else nmdrop <- colnames(factor)
 	if(ncol(facs) > 1) {
-					# now check no interactions will be left without margins.
+            ## check no interactions will be left without margins.
 	    keep <- rep(TRUE, ncol(facs))
 	    f <- crossprod(facs > 0)
 	    for(i in seq(keep)) keep[i] <- max(f[i, - i]) != f[i, i]
@@ -476,8 +494,7 @@ factor.scope <- function(factor, scope)
 	    nmadd <- nmadd[-where]
 	    add <- add[, -where, drop = FALSE]
 	}
-	if(ncol(add) > 1) {
-					# now check marginality:
+	if(ncol(add) > 1) {             # check marginality:
 	    keep <- rep(TRUE, ncol(add))
 	    f <- crossprod(add > 0)
 	    for(i in seq(keep)) keep[-i] <- keep[-i] & (f[i, -i] < f[i, i])
@@ -498,12 +515,15 @@ step <- function(object, scope, scale = 0,
 	    tmp <- c(tmp, "0")
 	if (!length(tmp))
 	    tmp <- "1"
-	tmp <- paste(deparse(formula(object)[[2]]), "~",
-		     paste(tmp, collapse = " + "))
+        tmp <- paste("~", paste(tmp, collapse = " + "))
+        form <- formula(object) # some formulae have no lhs
+        tmp <- if(length(form) > 2) paste(deparse(form[[2]]), tmp)
 	if (length(offset <- attr(tt, "offset")))
 	    tmp <- paste(tmp, deparse(attr(tt, "variables")[offset + 1]),
 			 sep = " + ")
-	formula(tmp)
+	form<-formula(tmp)
+        environment(form)<-environment(tt)
+        form
     }
 
     cut.string <- function(string)
@@ -537,7 +557,9 @@ step <- function(object, scope, scale = 0,
                           "Resid. Df" = rdf, "Resid. Dev" = rd, AIC = AIC,
                           check.names = FALSE)
         if(usingCp) {
-            cn <- colnames(aod); cn[cn == "AIC"] <- "Cp"; colnames(aod) <- cn
+            cn <- colnames(aod)
+            cn[cn == "AIC"] <- "Cp"
+            colnames(aod) <- cn
         }
 	attr(aod, "heading") <- heading
         ##stop gap attr(aod, "class") <- c("anova", "data.frame")
@@ -551,21 +573,23 @@ step <- function(object, scope, scale = 0,
     object$call$formula <- object$formula
     attributes(Terms) <- attributes(object$terms)
     object$terms <- Terms
-    if(missing(direction)) direction <- "both"
-    else direction <- match.arg(direction)
+    ## not needed: if(missing(direction)) direction <- "both" else
+    direction <- match.arg(direction)
     backward <- direction == "both" | direction == "backward"
-    forward <- direction == "both" | direction == "forward"
+    forward  <- direction == "both" | direction == "forward"
     if(missing(scope)) {
 	fdrop <- numeric(0)
 	fadd <- NULL
-    } else {
+    }
+    else {
 	if(is.list(scope)) {
 	    fdrop <- if(!is.null(fdrop <- scope$lower))
 		attr(terms(update.formula(object, fdrop)), "factors")
 	    else numeric(0)
 	    fadd <- if(!is.null(fadd <- scope$upper))
 		attr(terms(update.formula(object, fadd)), "factors")
-	} else {
+	}
+        else {
 	    fadd <- if(!is.null(fadd <- scope))
 		attr(terms(update.formula(object, scope)), "factors")
 	    fdrop <- numeric(0)
@@ -627,8 +651,8 @@ step <- function(object, scope, scale = 0,
                     else rbind(aod, aodf[-1, , drop = FALSE])
 	    }
 	    attr(aod, "heading") <- NULL
-					# need to remove any terms with zero df from consideration
-	    nzdf <- if( !is.null(aod$Df) )
+	    ## need to remove any terms with zero df from consideration
+	    nzdf <- if(!is.null(aod$Df))
 		aod$Df != 0 | is.na(aod$Df)
 	    aod <- aod[nzdf, ]
 	    if(is.null(aod) || ncol(aod) == 0) break
@@ -641,6 +665,8 @@ step <- function(object, scope, scale = 0,
 	}
 	usingCp <- match("Cp", names(aod), 0) > 0
 	fit <- update(fit, paste("~ .", change))
+        if(length(fit$residuals) != n)
+            stop("number of rows in use has changed: remove missing values?")
 	fit$formula <- fixFormulaObject(fit)
 	Terms <- fit$formula
 	attributes(Terms) <- attributes(fit$terms)

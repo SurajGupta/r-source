@@ -2,13 +2,9 @@
 \title{Model Formulae}
 \usage{
 y ~ model
-formula(object)
-formula.default(anything)
-formula.formula(formula.obj)
-formula.terms(terms.obj)
-formula.data.frame(df)
-as.formula(object)
-I(name)
+formula(x, \dots)
+as.formula(object, env=parent.frame())
+I(x)
 }
 \alias{~}
 \alias{I}
@@ -24,7 +20,9 @@ I(name)
   way of extracting formulae which have been included in other objects.
 
   \code{as.formula} is almost identical, additionally preserving
-  attributes when \code{object} already inherits from \code{"formula"}.
+  attributes when \code{object} already inherits from
+  \code{"formula"}. The default value of the \code{env} argument is
+  used only when the formula would otherwise lack an environment.
 }
 \details{
   The models fit by, e.g., the \code{\link{lm}} and \code{\link{glm}} functions
@@ -70,6 +68,20 @@ I(name)
   \code{y ~ a + I(b+c)}, the term \code{b+c} is to be
   interpreted as the sum of \code{b} and \code{c}.
 }
+\section{Environments}{
+  As of version 1.1 a formula object has an associated environment, and
+  as of version 1.2 this environment (rather than the parent
+  environment) is used by \code{\link{model.frame}} to evaluate variables
+  that are not found in the supplied \code{data} argument.
+
+  Formulas created with the \code{~} operator use the
+  environment in which they were created. Formulas created with
+  \code{as.formula} will use the \code{env} argument for their
+  environment. Pre-existing formulas extracted with
+  \code{as.formula} will only have their environment changed if
+  \code{env} is explicitly given.
+
+  }
 \value{
   All the functions above produce an object
   of class \code{formula} which contains a symbolic model formula.
@@ -82,6 +94,11 @@ class(fo <- y ~ x1*x2) # "formula"
 fo
 typeof(fo)# R internal : "language"
 terms(fo)
+
+environment(fo)
+environment(as.formula("y~x"))  
+environment(as.formula("y~x",env=new.env())) 
+
 
 ## Create a formula for a model with a large number of variables:
 xnam <- paste("x", 1:25, sep="")

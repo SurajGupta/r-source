@@ -32,16 +32,18 @@
 #include "graphapp/internal.h"
 #include "graphapp/ga.h"
 #ifdef USE_MDI
-#include "graphapp/stdimg.h"
+# include "graphapp/stdimg.h"
 #endif
 #include "console.h"
 #include "rui.h"
 #include "opt.h"
 #include "Rversion.h"
+#include "getline/getline.h"  /* for gl_load/savehistory */
+#include "Startup.h"          /* for SA_DEFAULT */
 
 #define TRACERUI(a)
 
-extern int UserBreak;
+extern Rboolean UserBreak;
 
 console RConsole = NULL;
 #ifdef USE_MDI
@@ -51,11 +53,11 @@ static window RFrame;
 #endif
 extern int ConsoleAcceptCmd;
 static menubar RMenuBar;
-static menuitem msource, mdisplay, mload, msave, msavehistory, mpaste, mcopy, 
-    mcopypaste, mlazy, mconfig,
-    mls, mrm, msearch, mhelp, mmanintro, mmanref, 
-    mmanext, mapropos, mhelpstart, mFAQ, mrwFAQ;
-static int lmanintro, lmanref, lmanext;
+static menuitem msource, mdisplay, mload, msave, mloadhistory,
+    msavehistory, mpaste, mcopy, mcopypaste, mlazy, mconfig,
+    mls, mrm, msearch, mhelp, mmanintro, mmanref, mmandata,
+    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ;
+static int lmanintro, lmanref, lmandata, lmanlang, lmanext;
 static menu m, mman;
 static char cmd[1024];
 
@@ -140,17 +142,31 @@ static void menusaveimage(control m)
     }
 }
 
+static void menuloadhistory(control m)
+{
+    char *fn;
+
+    if (!ConsoleAcceptCmd) return;
+    setuserfilter("All files (*.*)\0*.*\0\0");
+    fn = askfilename("Load history from", R_HistoryFile);
+    show(RConsole);
+    if (fn) {
+	fixslash(fn);
+	gl_loadhistory(fn);
+    }
+}
+
 static void menusavehistory(control m)
 {
     char *fn;
 
     if (!ConsoleAcceptCmd) return;
     setuserfilter("All files (*.*)\0*.*\0\0");
-    fn = askfilesave("Save history in", ".Rhistory");
+    fn = askfilesave("Save history in", R_HistoryFile);
     show(RConsole);
     if (fn) {
 	fixslash(fn);
-	savehistory(RConsole, fn);
+	gl_savehistory(fn);
     }
 }
 
@@ -163,6 +179,12 @@ static void menuchangedir(control m)
 static void menuprint(control m)
 {
     consoleprint(RConsole);
+    show(RConsole);
+}
+
+static void menusavefile(control m)
+{
+    consolesavefile(RConsole);
     show(RConsole);
 }
 
@@ -205,6 +227,12 @@ static void menucopypaste(control m)
     show(RConsole);
 }
 
+static void menuclear(control m)
+{
+    consoleclear(RConsole);
+}
+
+
 static void menuconfig(control m)
 {
     Rgui_configure();
@@ -220,7 +248,7 @@ static void menulazy(control m)
 static void menukill(control m)
 {
     show(RConsole);
-    UserBreak = 1;
+    UserBreak = TRUE;
 }
 
 static void menuls(control m)
@@ -234,7 +262,7 @@ static void menurm(control m)
 {
     if (!ConsoleAcceptCmd) return;
     if (askyesno("Are you sure?") == YES)
-	consolecmd(RConsole, "rm(list=ls())");
+	consolecmd(RConsole, "rm(list=ls(all=TRUE))");
     show(RConsole);
 }
 
@@ -277,9 +305,19 @@ static void menumainref(control m)
     internal_shellexec("doc/manual/refman.pdf");
 }
 
+static void menumaindata(control m)
+{
+    internal_shellexec("doc/manual/R-data.pdf");
+}
+
 static void menumainext(control m)
 {
     internal_shellexec("doc/manual/R-exts.pdf");
+}
+
+static void menumainlang(control m)
+{
+    internal_shellexec("doc/manual/R-lang.pdf");
 }
 
 static void menuapropos(control m)
@@ -374,6 +412,7 @@ static void menuact(control m)
 void readconsolecfg()
 {
     int   consoler, consolec, pagerrow, pagercol, multiplewin, widthonresize;
+    int   bufbytes, buflines;
     rgb   consolebg, consolefg, consoleuser, highlight ;
     int   ok, fnchanged, done, cfgerr;
     char  fn[128] = "FixedFont";
@@ -391,6 +430,8 @@ void readconsolecfg()
     pagerrow = 25;
     pagercol = 80;
     multiplewin = 0;
+    bufbytes = 64*1024;
+    buflines = 8*1024;
     widthonresize = 1;
 #ifdef USE_MDI
     if (MDIset == 1)
@@ -455,6 +496,14 @@ void readconsolecfg()
 		    multiplewin = 0;
 		else
 		    multiplewin = 1;
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "bufbytes")) {
+		bufbytes = atoi(opt[1]);
+		done = 1;
+	    }
+	    if (!strcmp(opt[0], "buflines")) {
+		buflines = atoi(opt[1]);
 		done = 1;
 	    }
 #ifdef USE_MDI
@@ -530,7 +579,8 @@ void readconsolecfg()
     }
     setconsoleoptions(fn, sty, pointsize, consoler, consolec, consolefg,
 		      consoleuser, consolebg, highlight,
-		      pagerrow, pagercol, multiplewin, widthonresize);
+		      pagerrow, pagercol, multiplewin, widthonresize,
+		      bufbytes, buflines);
 }
 
 static void closeconsole(control m)
@@ -542,6 +592,8 @@ static MenuItem ConsolePopup[] = {
     {"Copy", menucopy, 0},
     {"Paste", menupaste, 0},
     {"Copy and paste", menucopypaste, 0},
+    {"-", 0, 0},
+    {"Clear window", menuclear, 0},
     {"-", 0, 0},
     {"Select all", menuselectall, 0},
     {"-", 0, 0},
@@ -648,29 +700,32 @@ int setupui()
     MCHECK(msource = newmenuitem("Source R code", 0, menusource));
     MCHECK(mdisplay = newmenuitem("Display file", 0, menudisplay));
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mload = newmenuitem("Load Image", 0, menuloadimage));
-    MCHECK(msave = newmenuitem("Save Image", 0, menusaveimage));
+    MCHECK(mload = newmenuitem("Load Workspace", 0, menuloadimage));
+    MCHECK(msave = newmenuitem("Save Workspace", 0, menusaveimage));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mloadhistory = newmenuitem("Load History", 0, menuloadhistory));
     MCHECK(msavehistory = newmenuitem("Save History", 0, menusavehistory));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("Change dir", 0, menuchangedir));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("Print", 0, menuprint));
+    MCHECK(newmenuitem("Save to File", 0, menusavefile));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("Exit", 0, menuexit));
 
     MCHECK(newmenu("Edit"));
-    MCHECK(mcopy = newmenuitem("Copy          \tCTRL+C", 0, menucopy));
-    MCHECK(mpaste = newmenuitem("Paste         \tCTRL+V", 0, menupaste));
-    MCHECK(mcopypaste = newmenuitem("Copy And Paste  \tCTRL+X", 
-				    0, menucopypaste));
+    MCHECK(mcopy = newmenuitem("Copy", 'C', menucopy));
+    MCHECK(mpaste = newmenuitem("Paste", 'V', menupaste));
+    MCHECK(mcopypaste = newmenuitem("Copy and Paste", 'X', menucopypaste));
     MCHECK(newmenuitem("Select all", 0, menuselectall));
+    MCHECK(newmenuitem("Clear console", 'L', menuclear));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mconfig = newmenuitem("GUI preferences", 0, menuconfig));
 
     MCHECK(newmenu("Misc"));
     MCHECK(newmenuitem("Stop current computation           \tESC", 0, menukill));
     MCHECK(newmenuitem("-", 0, NULL));
-    MCHECK(mlazy = newmenuitem("Buffered output\tCTRL+W", 0, menulazy));
+    MCHECK(mlazy = newmenuitem("Buffered output", 'W', menulazy));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mls = newmenuitem("List objects", 0, menuls));
     MCHECK(mrm = newmenuitem("Remove all objects", 0, menurm));
@@ -697,11 +752,16 @@ int setupui()
     MCHECK(mmanref = newmenuitem("R &Reference Manual", 0, menumainref));
     lmanref = check_doc_file("doc/manual/refman.pdf");
     if (!lmanref) disable(mmanref);
-    MCHECK(mmanext = newmenuitem("R Extension &Writer's Manual", 
-				 0, menumainext));
+    MCHECK(mmandata = newmenuitem("R Data Import/Export", 0, menumaindata));
+    lmandata = check_doc_file("doc/manual/R-data.pdf");
+    if (!lmandata) disable(mmandata);
+    MCHECK(mmanlang = newmenuitem("R Language Manual", 0, menumainlang));
+    lmanlang = check_doc_file("doc/manual/R-lang.pdf");
+    if (!lmanlang) disable(mmanlang);
+    MCHECK(mmanext = newmenuitem("Writing R Extensions", 0, menumainext));
     lmanext = check_doc_file("doc/manual/R-exts.pdf");
     if (!lmanext) disable(mmanext);
-    if (!lmanintro && !lmanref && !lmanext) disable(mman);
+    if (!lmanintro && !lmanref && !lmanlang && !lmanext) disable(mman);
     addto(m);
 
     MCHECK(newmenuitem("-", 0, NULL));
@@ -709,7 +769,8 @@ int setupui()
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("About", 0, menuabout));
     consolesetbrk(RConsole, menukill, ESC, 0);
-    readhistory(RConsole, ".Rhistory");
+    gl_hist_init(R_HistorySize, 0);
+    if (R_RestoreHistory) gl_loadhistory(R_HistoryFile);
     show(RConsole);
     return 1;
 }

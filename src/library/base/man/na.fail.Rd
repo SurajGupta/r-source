@@ -1,8 +1,8 @@
 \name{na.fail}
 \title{Handle Missing Values in Objects}
 \usage{
-na.fail(object)
-na.omit(object)
+na.fail(object, \dots)
+na.omit(object, \dots)
 }
 \alias{na.fail}
 \alias{na.fail.default}
@@ -11,6 +11,7 @@ na.omit(object)
 \alias{na.omit.default}
 \arguments{
   \item{object}{an \R object, typically a data frame}
+  \item{\dots}{further arguments special methods could require.}
 }
 \description{
   These generic functions are useful for dealing with \code{\link{NA}}s
@@ -36,6 +37,7 @@ DF <- data.frame(x = c(1, 2, 3), y = c(0, 10, NA))
 na.omit(DF)
 m <- as.matrix(DF)
 na.omit(m)
+stopifnot(all(na.omit(1:3) == 1:3))  # does not affect objects with no NA's
 \dontrun{na.fail(DF)#> Error: missing values in ..}
 
 options("na.action")

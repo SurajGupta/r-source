@@ -23,8 +23,8 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
+#include <Defn.h>
+#include <Rmath.h>
 
 #define R_INT_MIN	(1+INT_MIN)
 	/* since INT_MIN is the NA_INTEGER value ! */
@@ -559,13 +559,16 @@ badmode:
 
 SEXP do_range(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
+    SEXP ans, a, b, prargs;
 
     if (DispatchGroup("Summary", call, op, args, env, &ans))
 	return(ans);
     PROTECT(op = findFun(install("range.default"), env));
-    ans = applyClosure(call, op, args, env, R_NilValue);
-    UNPROTECT(1);
+    PROTECT(prargs = promiseArgs(args, R_GlobalEnv));
+    for (a = args, b = prargs; a != R_NilValue; a = CDR(a), b = CDR(b))
+	SET_PRVALUE(CAR(b), CAR(a));
+    ans = applyClosure(call, op, prargs, env, R_NilValue);
+    UNPROTECT(2);
     return(ans);
 }
 
@@ -655,17 +658,17 @@ SEXP do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    t = CAR(s);
 	    nt = length(t);
 	    for (it = 0 ; it < nt ; it++) {
-		if (isMatrix(VECTOR(t)[it])) {
-		    u = getAttrib(VECTOR(t)[it], R_DimSymbol);
+		if (isMatrix(VECTOR_ELT(t, it))) {
+		    u = getAttrib(VECTOR_ELT(t, it), R_DimSymbol);
 		    if (len < 0)
 			len = INTEGER(u)[0];
 		    else if (len != INTEGER(u)[0])
 			goto bad;
 		}
-		else if (isVector(VECTOR(t)[it])) {
+		else if (isVector(VECTOR_ELT(t, it))) {
 		    if (len < 0)
-			len = LENGTH(VECTOR(t)[it]);
-		    else if (len != LENGTH(VECTOR(t)[it]))
+			len = LENGTH(VECTOR_ELT(t, it));
+		    else if (len != LENGTH(VECTOR_ELT(t, it)))
 			goto bad;
 		}
 		else
@@ -718,7 +721,7 @@ SEXP do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
 			    INTEGER(rval)[i % len] = 0;
 			break;
 		    case STRSXP:
-			if (STRING(u)[i] == NA_STRING)
+			if (STRING_ELT(u, i) == NA_STRING)
 			    INTEGER(rval)[i % len] = 0;
 			break;
 		    default:
@@ -733,7 +736,7 @@ SEXP do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    t = CAR(s);
 	    nt = length(t);
 	    for (it = 0 ; it < nt ; it++) {
-		u = VECTOR(t)[it];
+		u = VECTOR_ELT(t, it);
 		for (i = 0; i < LENGTH(u); i++) {
 		    switch (TYPEOF(u)) {
 		    case INTSXP:
@@ -750,7 +753,7 @@ SEXP do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
 			    INTEGER(rval)[i % len] = 0;
 			break;
 		    case STRSXP:
-			if (STRING(u)[i] == NA_STRING)
+			if (STRING_ELT(u, i) == NA_STRING)
 			    INTEGER(rval)[i % len] = 0;
 			break;
 		    default:
@@ -778,7 +781,7 @@ SEXP do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
 			INTEGER(rval)[i % len] = 0;
 		    break;
 		case STRSXP:
-		    if (STRING(u)[i] == NA_STRING)
+		    if (STRING_ELT(u, i) == NA_STRING)
 			INTEGER(rval)[i % len] = 0;
 		    break;
 		default:

@@ -1,9 +1,9 @@
 \name{mcnemar.test}
 \alias{mcnemar.test}
-\title{McNemar's Chi-square Test for Count Data}
+\title{McNemar's Chi-squared Test for Count Data}
 \description{
-  Performs McNemar's chi-square test for symmetry of rows and columns in
-  a two-dimensional contingency table.
+  Performs McNemar's chi-squared test for symmetry of rows and columns
+  in a two-dimensional contingency table.
 }
 \usage{
 mcnemar.test(x, y = NULL, correct = TRUE)
@@ -19,7 +19,7 @@ mcnemar.test(x, y = NULL, correct = TRUE)
   A list with class \code{"htest"} containing the following components:
   \item{statistic}{the value of McNemar's statistic.}
   \item{parameter}{the degrees of freedom of the approximate
-    chi-square distribution of the test statistic.}
+    chi-squared distribution of the test statistic.}
   \item{p.value}{the p-value of the test.}
   \item{method}{a character string indicating the type of test
     performed, and whether continuity correction was used.}

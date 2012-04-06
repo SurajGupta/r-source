@@ -19,7 +19,7 @@
  *
  *  SYNOPSIS
  *
- *    #include "R_ext/Mathlib.h"
+ *    #include "Rmath.h"
  *    double rpois(double lambda)
  *
  *  DESCRIPTION
@@ -65,24 +65,24 @@ double rpois(double mu)
 
     static double big_l;/* integer "w/o overflow" */
     static int l, m;
-    static double muprev = 0.;/*, muold	 = 0.*/
+    static double muprev = 0., muprev2 = 0.;/*, muold	 = 0.*/
 
     /* Local Vars  [initialize some for -Wall]: */
     double del, difmuk= 0., E= 0., fk= 0., fx, fy, g, px, py, t, u= 0., v, x;
     double pois = -1.;
-    int k, kflag, big_mu, new_big_mu = LFALSE;
+    int k, kflag, big_mu, new_big_mu = FALSE;
 
     if (mu <= 0.)
 	return 0.;
 
     big_mu = mu >= 10.;
     if(big_mu)
-	new_big_mu = LFALSE;
+	new_big_mu = FALSE;
 
     if (!(big_mu && mu == muprev)) {/* maybe compute new persistent par.s */
 
 	if (big_mu) {
-	    new_big_mu = LTRUE;
+	    new_big_mu = TRUE;
 	    /* Case A. (recalculation of s,d,l	because mu has changed):
 	     * The poisson probabilities pk exceed the discrete normal
 	     * probabilities fk whenever k >= m(mu).
@@ -160,7 +160,11 @@ double rpois(double mu)
     /* Step P. preparations for steps Q and H.
        (recalculations of parameters if necessary) */
 
-    if (new_big_mu) {
+    if (new_big_mu || mu != muprev2) {
+        /* Careful! muprev2 is not always == muprev
+	   because one might have exited in step I or S
+	   */
+        muprev2 = mu; 
 	omega = M_1_SQRT_2PI / s;
 	/* The quantities b1, b2, c3, c2, c1, c0 are for the Hermite
 	 * approximations to the discrete normal probabilities fk. */

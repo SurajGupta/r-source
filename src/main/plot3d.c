@@ -22,10 +22,11 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Mathlib.h"
-#include "Graphics.h"
-#include "Print.h"
+#include <Defn.h>
+#include <Rmath.h>
+#include <Graphics.h>
+#include <Devices.h>
+#include <Print.h>
 
 #ifndef HAVE_HYPOT
 # define hypot pythag
@@ -192,7 +193,7 @@ int TestLabelIntersection(SEXP label1, SEXP label2) {
     double Ax, Bx, Ay, By, ax, ay, bx, by, q1, q2;
     double dom;
     double result1, result2;
-    
+
     for (i = 0; i < 4; i++) {
 	Ax = REAL(label1)[i];
 	Ay = REAL(label1)[i+4];
@@ -469,8 +470,9 @@ int findGapDown(double *xxx, double *yyy, int ns, double labelDistance,
 
 static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 		    SEXP labels, int cnum,
-		    int drawLabels, int method, int vectorFonts, int typeface,
-		    int fontindex, double atom, DevDesc *dd)
+		    Rboolean drawLabels, int method,
+		    Rboolean vectorFonts, int typeface, int fontindex,
+		    double atom, DevDesc *dd)
 {
     double f, xl, xh, yl, yh, zll, zhl, zlh, zhh, xx[4], yy[4];
     double xend, yend;
@@ -480,7 +482,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 
     double variance, dX, dY, deltaX, deltaY;
     double dXC, dYC, deltaXC, deltaYC;
-    int range=0, index=0, n; /* -Wall */
+    int range=0, indx=0, n; /* -Wall */
     double lowestVariance;
     double squareSum, sum;
     int iii, jjj;
@@ -496,8 +498,8 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
     SEXP label1 = PROTECT(allocVector(REALSXP, 8));
     SEXP label2;
     SEXP lab;
-    int gotLabel = 0;
-    int ddl;  /** Don't draw label */
+    Rboolean gotLabel = FALSE;
+    Rboolean ddl;/* Don't draw label -- currently unused, i.e. always FALSE*/
 
     for (i = 0; i < nx - 1; i++) {
 	xl = REAL(x)[i];
@@ -656,365 +658,364 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
     /* 4. Draw the contour */
 
     for (i = 0; i < nx - 1; i++)
-	for (j = 0; j < ny - 1; j++) {
-	    while ((seglist = ctr_SegDB[i + j * nx])) {
-		ii = i; jj = j;
-		start = end = seglist;
-		ctr_SegDB[i + j * nx] = seglist->next;
-		xend = seglist->x1;
-		yend = seglist->y1;
-		while ((dir = ctr_segdir(xend, yend, REAL(x), REAL(y),
-				       &ii, &jj, nx, ny))) {
-		    ctr_SegDB[ii + jj * nx]
-			= ctr_segupdate(xend, yend, dir, 1,
-					ctr_SegDB[ii + jj * nx], &seg);
-		    if (!seg) break;
-		    end->next = seg;
-		    end = seg;
-		    xend = end->x1;
-		    yend = end->y1;
-		}
-		ii = i; jj = j;
-		xend = seglist->x0;
-		yend = seglist->y0;
-		while ((dir = ctr_segdir(xend, yend, REAL(x), REAL(y),
-				       &ii, &jj, nx, ny))) {
-		    ctr_SegDB[ii + jj * nx]
-			= ctr_segupdate(xend, yend, dir, 0,
-					ctr_SegDB[ii+jj*nx], &seg);
-		    if (!seg) break;
-		    seg->next = start;
-		    start = seg;
-		    xend = start->x0;
-		    yend = start->y0;
-		}
-		s = start;
-		ns = 0;
-		while (s) {
-		    ns++;
-		    s = s->next;
-		}
+      for (j = 0; j < ny - 1; j++) {
+	while ((seglist = ctr_SegDB[i + j * nx])) {
+	    ii = i; jj = j;
+	    start = end = seglist;
+	    ctr_SegDB[i + j * nx] = seglist->next;
+	    xend = seglist->x1;
+	    yend = seglist->y1;
+	    while ((dir = ctr_segdir(xend, yend, REAL(x), REAL(y),
+				     &ii, &jj, nx, ny))) {
+		ctr_SegDB[ii + jj * nx]
+		    = ctr_segupdate(xend, yend, dir, 1,
+				    ctr_SegDB[ii + jj * nx], &seg);
+		if (!seg) break;
+		end->next = seg;
+		end = seg;
+		xend = end->x1;
+		yend = end->y1;
+	    }
+	    ii = i; jj = j;
+	    xend = seglist->x0;
+	    yend = seglist->y0;
+	    while ((dir = ctr_segdir(xend, yend, REAL(x), REAL(y),
+				     &ii, &jj, nx, ny))) {
+		ctr_SegDB[ii + jj * nx]
+		    = ctr_segupdate(xend, yend, dir, 0,
+				    ctr_SegDB[ii+jj*nx], &seg);
+		if (!seg) break;
+		seg->next = start;
+		start = seg;
+		xend = start->x0;
+		yend = start->y0;
+	    }
+	    s = start;
+	    ns = 0;
+	    while (s) {
+		ns++;
+		s = s->next;
+	    }
 
-		/* countour midpoint */
-		/* use for labelling sometime */
+	    /* countour midpoint */
+	    /* use for labelling sometime */
 
-		if (ns > 3) ns2 = ns/2;
-		else ns2 = -1;
+	    if (ns > 3) ns2 = ns/2;
+	    else ns2 = -1;
 
-		s = start;
-		xxx = (double *) C_alloc(ns + 1, sizeof(double));
-		yyy = (double *) C_alloc(ns + 1, sizeof(double));
-		ns = 0;
+	    s = start;
+	    xxx = (double *) C_alloc(ns + 1, sizeof(double));
+	    yyy = (double *) C_alloc(ns + 1, sizeof(double));
+	    ns = 0;
+	    xxx[ns] = s->x0;
+	    yyy[ns++] = s->y0;
+	    while (s->next) {
+		s = s->next;
 		xxx[ns] = s->x0;
 		yyy[ns++] = s->y0;
-		while (s->next) {
-		    s = s->next;
-		    xxx[ns] = s->x0;
-		    yyy[ns++] = s->y0;
-		}
-		xxx[ns] = s->x1;
-		yyy[ns++] = s->y1;
-		GMode(1, dd);
+	    }
+	    xxx[ns] = s->x1;
+	    yyy[ns++] = s->y1;
+	    GMode(1, dd);
 
-		/* If user supplied labels, use i'th one of them
-		   Otherwise stringify the z-value of the contour */
-		buffer[0] = ' ';
-		if (!isNull(labels)) {
-		    int numl = length(labels);
-		    strcpy(&buffer[1], CHAR(STRING(labels)[cnum % numl]));
-		}
-		else {
-		    PROTECT(lab = allocVector(REALSXP, 1));
-		    REAL(lab)[0] = zc;
-		    lab = labelformat(lab);
-		    strcpy(&buffer[1], CHAR(STRING(lab)[0]));
-		    UNPROTECT(1);
-		}
-		buffer[strlen(buffer)+1] = '\0';
-		buffer[strlen(buffer)] = ' ';
+	    /* If user supplied labels, use i'th one of them
+	       Otherwise stringify the z-value of the contour */
+	    buffer[0] = ' ';
+	    if (!isNull(labels)) {
+		int numl = length(labels);
+		strcpy(&buffer[1], CHAR(STRING_ELT(labels, cnum % numl)));
+	    }
+	    else {
+		PROTECT(lab = allocVector(REALSXP, 1));
+		REAL(lab)[0] = zc;
+		lab = labelformat(lab);
+		strcpy(&buffer[1], CHAR(STRING_ELT(lab, 0)));
+		UNPROTECT(1);
+	    }
+	    buffer[strlen(buffer)+1] = '\0';
+	    buffer[strlen(buffer)] = ' ';
 
-		if (vectorFonts) {
-		    /* 1, 1 => sans serif, basic font */
-		    labelDistance = GVStrWidth(buffer, typeface, fontindex,
-					       INCHES, dd);
-		    labelHeight = GVStrHeight(buffer, typeface, fontindex,
-					      INCHES, dd);
-		} else {
-		    labelDistance = GStrWidth(buffer, INCHES, dd);
-		    labelHeight = GStrHeight(buffer, INCHES, dd);
-		}
+	    if (vectorFonts) {
+		/* 1, 1 => sans serif, basic font */
+		labelDistance = GVStrWidth(buffer, typeface, fontindex,
+					   INCHES, dd);
+		labelHeight = GVStrHeight(buffer, typeface, fontindex,
+					  INCHES, dd);
+	    }
+	    else {
+		labelDistance = GStrWidth(buffer, INCHES, dd);
+		labelHeight = GStrHeight(buffer, INCHES, dd);
+	    }
 
-		if ((drawLabels == 1) && (labelDistance > 0)) {
-		    /* Try to find somewhere to draw the label */
-		    switch (method) {
-		    case 0: /* draw label at one end of contour
-			       overwriting contour line
-			    */
-		        if (useStart(xxx, yyy, ns, dd) )
-			    index = 0;
-			else
-			    index = ns - 1;
-			break;
-		    case 1: /* draw label at one end of contour
-			       embedded in contour
-			       no overlapping labels
-			    */
-			index = 0;
-			range = 0;
-			gotLabel = 0;
-			if (useStart(xxx, yyy, ns, dd)) {
-			    iii = 0;
-			    n = findGapUp(xxx, yyy, ns, labelDistance, dd);
+	    if (drawLabels &&  labelDistance > 0) {
+		/* Try to find somewhere to draw the label */
+		switch (method) {
+		case 0: /* draw label at one end of contour
+			   overwriting contour line
+			*/
+		    if (useStart(xxx, yyy, ns, dd) )
+			indx = 0;
+		    else
+			indx = ns - 1;
+		    break;
+		case 1: /* draw label at one end of contour
+			   embedded in contour
+			   no overlapping labels
+			*/
+		    indx = 0;
+		    range = 0;
+		    gotLabel = FALSE;
+		    if (useStart(xxx, yyy, ns, dd)) {
+			iii = 0;
+			n = findGapUp(xxx, yyy, ns, labelDistance, dd);
+		    }
+		    else {
+			n = findGapDown(xxx, yyy, ns, labelDistance, dd);
+			iii = ns - n - 1;
+		    }
+		    if (n > 0) {
+			/** Find 4 corners of label extents **/
+			FindCorners(labelDistance, labelHeight, label1,
+				    xxx[iii], yyy[iii],
+				    xxx[iii+n], yyy[iii+n], dd);
+
+			/** Test corners for intersection with previous labels **/
+			label2 = labelList;
+			result = 0;
+			while ((result == 0) && (label2 != R_NilValue)) {
+			    result = TestLabelIntersection(label1, CAR(label2));
+			    label2 = CDR(label2);
 			}
-			else {
-			    n = findGapDown(xxx, yyy, ns, labelDistance, dd);
-			    iii = ns - n - 1;
-			}
-			if (n > 0) {
-			    /** Find 4 corners of label extents **/
-			    FindCorners(labelDistance, labelHeight, label1,
-					xxx[iii], yyy[iii],
-					xxx[iii+n], yyy[iii+n], dd);
-
-			    /** Test corners for intersection with previous labels **/
-			    label2 = labelList;
-			    result = 0;
-			    while ((result == 0) && (label2 != R_NilValue)) {
-				result = TestLabelIntersection(label1, CAR(label2));
-				label2 = CDR(label2);
-			    }
+			if (result == 0) {
+			    result = LabelInsideWindow(label1, dd);
 			    if (result == 0) {
-				result = LabelInsideWindow(label1, dd);
-				if (result == 0) {
-				    index = iii;
-				    range = n;
-				    gotLabel = 1;
-				}
+				indx = iii;
+				range = n;
+				gotLabel = TRUE;
 			    }
 			}
-			break;
-		    case 2: /* draw label on flattest portion of contour
-			       embedded in contour line
-			       no overlapping labels
-			    */
-			/* Look for flatest sequence of contour gradients */
-			lowestVariance = 9999999;   /* A large number */
-			index = 0;
-			range = 0;
-			gotLabel = 0;
-			for (iii = 0; iii < ns; iii++) {
-			    distanceSum = 0;
-			    avgGradient = 0;
-			    squareSum = 0;
-			    sum = 0;
-			    n = 0;
-			    zeroCount = 0;
-			    jjj = (iii + 1);
-			    while ((jjj < ns-1) &&
-				   (distanceSum < labelDistance)) {
+		    }
+		    break;
+		case 2: /* draw label on flattest portion of contour
+			   embedded in contour line
+			   no overlapping labels
+			*/
+		    /* Look for flatest sequence of contour gradients */
+		    lowestVariance = 9999999;   /* A large number */
+		    indx = 0;
+		    range = 0;
+		    gotLabel = FALSE;
+		    for (iii = 0; iii < ns; iii++) {
+			distanceSum = 0;
+			avgGradient = 0;
+			squareSum = 0;
+			sum = 0;
+			n = 0;
+			zeroCount = 0;
+			jjj = (iii + 1);
+			while ((jjj < ns-1) &&
+			       (distanceSum < labelDistance)) {
 
 				/* Find a gap big enough for the label
 				   use several segments if necessary
 				*/
-				dX = xxx[jjj] - xxx[jjj - n - 1];
-				dY = yyy[jjj] - yyy[jjj - n - 1];
-				dXC = GConvertXUnits(dX, USER, INCHES, dd);
-				dYC = GConvertYUnits(dY, USER, INCHES, dd);
-				distanceSum = hypot(dXC, dYC);
+			    dX = xxx[jjj] - xxx[jjj - n - 1];
+			    dY = yyy[jjj] - yyy[jjj - n - 1];
+			    dXC = GConvertXUnits(dX, USER, INCHES, dd);
+			    dYC = GConvertYUnits(dY, USER, INCHES, dd);
+			    distanceSum = hypot(dXC, dYC);
 
 				/* Calculate the variance of the gradients
 				   of the segments that will make way for the
 				   label
 				*/
-				deltaX = xxx[jjj] - xxx[jjj - 1];
-				deltaY = yyy[jjj] - yyy[jjj - 1];
-				deltaXC = GConvertXUnits(deltaX, USER, INCHES, dd);
-				deltaYC = GConvertYUnits(deltaY, USER, INCHES, dd);
-				if (deltaX == 0) {deltaX = 1;}
-				avgGradient += (deltaY/deltaX);
-				squareSum += avgGradient * avgGradient;
-				jjj = (jjj + 1);
-				n += 1;
-			    }
-			    if (distanceSum < labelDistance)
-				break;
-
-			    /** Find 4 corners of label extents **/
-			    FindCorners(labelDistance, labelHeight, label1,
-					xxx[iii], yyy[iii],
-					xxx[iii+n], yyy[iii+n], dd);
-
-			    /** Test corners for intersection with previous labels **/
-			    label2 = labelList;
-			    result = 0;
-			    while ((result == 0) && (label2 != R_NilValue)) {
-				result = TestLabelIntersection(label1, CAR(label2));
-				label2 = CDR(label2);
-			    }
-			    if (result == 0)
-				result = LabelInsideWindow(label1, dd);
-			    if (result == 0) {
-				variance = (squareSum - (avgGradient * avgGradient) / n) / n;
-				avgGradient /= n;
-				if (variance < lowestVariance) {
-				    lowestVariance = variance;
-				    index = iii;
-				    range = n;
-				    avg = avgGradient;
-				}
-			    }
-			    if (lowestVariance < 9999999)
-				gotLabel = 1;
+			    deltaX = xxx[jjj] - xxx[jjj - 1];
+			    deltaY = yyy[jjj] - yyy[jjj - 1];
+			    deltaXC = GConvertXUnits(deltaX, USER, INCHES, dd);
+			    deltaYC = GConvertYUnits(deltaY, USER, INCHES, dd);
+			    if (deltaX == 0) {deltaX = 1;}
+			    avgGradient += (deltaY/deltaX);
+			    squareSum += avgGradient * avgGradient;
+			    jjj = (jjj + 1);
+			    n += 1;
 			}
-		    } /* switch (method) */
+			if (distanceSum < labelDistance)
+			    break;
 
-		    if (method == 0) {
-			GPolyline(ns, xxx, yyy, USER, dd);
-			if (vectorFonts)
-			    GVText(xxx[index], yyy[index], USER, buffer,
-				   typeface, fontindex,
-				   .5, .5, 0, dd);
-			else
-			    GText(xxx[index], yyy[index], USER, buffer,
-				  .5, .5, 0, dd);
-		    } else {
-			for (iii = 0; iii < index; iii++)
-			    GLine(xxx[iii], yyy[iii],
-				  xxx[iii+1], yyy[iii+1], USER, dd);
-			for (iii = index+range; iii < ns - 1; iii++)
-			    GLine(xxx[iii], yyy[iii],
-				  xxx[iii+1], yyy[iii+1], USER, dd);
+			/** Find 4 corners of label extents **/
+			FindCorners(labelDistance, labelHeight, label1,
+				    xxx[iii], yyy[iii],
+				    xxx[iii+n], yyy[iii+n], dd);
 
-			if (gotLabel) {
-			    /* find which plot edge we are closest to */
-			    int closest; /* 0 = index,  1 = index+range */
-			    double dx1, dx2, dy1, dy2, dmin;
-			    dx1 = fmin2((xxx[index] - dd->gp.usr[0]),
-					(dd->gp.usr[1] - xxx[index]));
-			    dx2 = fmin2((dd->gp.usr[1] - xxx[index+range]),
-					(xxx[index+range] - dd->gp.usr[0]));
-			    if (dx1 < dx2) {
-				closest = 0;
-				dmin = dx1;
-			    } else {
-				closest = 1;
-				dmin = dx2;
+			/** Test corners for intersection with previous labels **/
+			label2 = labelList;
+			result = 0;
+			while ((result == 0) && (label2 != R_NilValue)) {
+			    result = TestLabelIntersection(label1, CAR(label2));
+			    label2 = CDR(label2);
+			}
+			if (result == 0)
+			    result = LabelInsideWindow(label1, dd);
+			if (result == 0) {
+			    variance = (squareSum - (avgGradient * avgGradient) / n) / n;
+			    avgGradient /= n;
+			    if (variance < lowestVariance) {
+				lowestVariance = variance;
+				indx = iii;
+				range = n;
+				avg = avgGradient;
 			    }
-			    dy1 = fmin2((yyy[index] - dd->gp.usr[2]),
-					(dd->gp.usr[3] - yyy[index]));
-			    if (closest && (dy1 < dmin)) {
-				closest = 0;
-				dmin = dy1;
-			    } else if (dy1 < dmin)
-				dmin = dy1;
-			    dy2 = fmin2((dd->gp.usr[3] - yyy[index+range]),
-					(yyy[index+range] - dd->gp.usr[2]));
-			    if (!closest && (dy2 < dmin))
-				closest = 1;
+			}
+			if (lowestVariance < 9999999)
+			    gotLabel = TRUE;
+		    }
+		} /* switch (method) */
 
-			    dx = GConvertXUnits(xxx[index+range] - xxx[index],
-						USER, INCHES, dd);
-			    dy = GConvertYUnits(yyy[index+range] - yyy[index],
-						USER, INCHES, dd);
-			    dxy = hypot(dx, dy);
+		if (method == 0) {
+		    GPolyline(ns, xxx, yyy, USER, dd);
+		    if (vectorFonts)
+			GVText(xxx[indx], yyy[indx], USER, buffer,
+			       typeface, fontindex,
+			       .5, .5, 0, dd);
+		    else
+			GText(xxx[indx], yyy[indx], USER, buffer,
+			      .5, .5, 0, dd);
+		}
+		else {
+		    for (iii = 0; iii < indx; iii++)
+			GLine(xxx[iii], yyy[iii],
+			      xxx[iii+1], yyy[iii+1], USER, dd);
+		    for (iii = indx+range; iii < ns - 1; iii++)
+			GLine(xxx[iii], yyy[iii],
+			      xxx[iii+1], yyy[iii+1], USER, dd);
 
-			    /* save the current label for checking overlap */
-			    label2 = allocVector(REALSXP, 8);
+		    if (gotLabel) {
+			/* find which plot edge we are closest to */
+			int closest; /* 0 = indx,  1 = indx+range */
+			double dx1, dx2, dy1, dy2, dmin;
+			dx1 = fmin2((xxx[indx] - dd->gp.usr[0]),
+				    (dd->gp.usr[1] - xxx[indx]));
+			dx2 = fmin2((dd->gp.usr[1] - xxx[indx+range]),
+				    (xxx[indx+range] - dd->gp.usr[0]));
+			if (dx1 < dx2) {
+			    closest = 0;
+			    dmin = dx1;
+			} else {
+			    closest = 1;
+			    dmin = dx2;
+			}
+			dy1 = fmin2((yyy[indx] - dd->gp.usr[2]),
+				    (dd->gp.usr[3] - yyy[indx]));
+			if (closest && (dy1 < dmin)) {
+			    closest = 0;
+			    dmin = dy1;
+			} else if (dy1 < dmin)
+			    dmin = dy1;
+			dy2 = fmin2((dd->gp.usr[3] - yyy[indx+range]),
+				    (yyy[indx+range] - dd->gp.usr[2]));
+			if (!closest && (dy2 < dmin))
+			    closest = 1;
 
-			    FindCorners(labelDistance, labelHeight, label2,
-					xxx[index], yyy[index],
-					xxx[index+range], yyy[index+range], dd);
-			    UNPROTECT_PTR(labelList);
-			    labelList = PROTECT(CONS(label2, labelList));
+			dx = GConvertXUnits(xxx[indx+range] - xxx[indx],
+					    USER, INCHES, dd);
+			dy = GConvertYUnits(yyy[indx+range] - yyy[indx],
+					    USER, INCHES, dd);
+			dxy = hypot(dx, dy);
 
-			    ddl = 0;
-			    /* draw an extra bit of segment if the label
-			       doesn't fill the gap */
+			/* save the current label for checking overlap */
+			label2 = allocVector(REALSXP, 8);
+
+			FindCorners(labelDistance, labelHeight, label2,
+				    xxx[indx], yyy[indx],
+				    xxx[indx+range], yyy[indx+range], dd);
+			UNPROTECT_PTR(labelList);
+			labelList = PROTECT(CONS(label2, labelList));
+
+			ddl = FALSE;
+			/* draw an extra bit of segment if the label
+			   doesn't fill the gap */
+			if (closest) {
+			    xStart = xxx[indx+range] -
+				(xxx[indx+range] - xxx[indx]) *
+				labelDistance / dxy;
+			    yStart = yyy[indx+range] -
+				(yyy[indx+range] - yyy[indx]) *
+				labelDistance / dxy;
+			    if (labelDistance / dxy < 1)
+				GLine(xxx[indx], yyy[indx],
+				      xStart, yStart,
+				      USER, dd);
+			} else {
+			    xStart = xxx[indx] +
+				(xxx[indx+range] - xxx[indx]) *
+				labelDistance / dxy;
+			    yStart = yyy[indx] +
+				(yyy[indx+range] - yyy[indx]) *
+				labelDistance / dxy;
+			    if (labelDistance / dxy < 1)
+				GLine(xStart, yStart,
+				      xxx[indx+range], yyy[indx+range],
+				      USER, dd);
+			}
+
+			/*** Draw contour labels ***/
+			if (xxx[indx] < xxx[indx+range]) {
 			    if (closest) {
-				xStart = xxx[index+range] -
-				    (xxx[index+range] - xxx[index]) *
-				    labelDistance / dxy;
-				yStart = yyy[index+range] -
-				    (yyy[index+range] - yyy[index]) *
-				    labelDistance / dxy;
-				if (labelDistance / dxy < 1)
-				    GLine(xxx[index], yyy[index],
-					  xStart, yStart,
-					  USER, dd);
+				ux = xStart;
+				uy = yStart;
+				vx = xxx[indx+range];
+				vy = yyy[indx+range];
 			    } else {
-				xStart = xxx[index] +
-				    (xxx[index+range] - xxx[index]) *
-				    labelDistance / dxy;
-				yStart = yyy[index] +
-				    (yyy[index+range] - yyy[index]) *
-				    labelDistance / dxy;
-				if (labelDistance / dxy < 1)
-				    GLine(xStart, yStart,
-					  xxx[index+range], yyy[index+range],
-					  USER, dd);
+				ux = xxx[indx];
+				uy = yyy[indx];
+				vx = xStart;
+				vy = yStart;
 			    }
+			}
+			else {
+			    if (closest) {
+				ux = xxx[indx+range];
+				uy = yyy[indx+range];
+				vx = xStart;
+				vy = yStart;
+			    } else {
+				ux = xStart;
+				uy = yStart;
+				vx = xxx[indx];
+				vy = yyy[indx];
+			    }
+			}
 
-			    /*** Draw contour labels ***/
-			    if (xxx[index] < xxx[index+range]) {
-				if (closest) {
-				    ux = xStart;
-				    uy = yStart;
-				    vx = xxx[index+range];
-				    vy = yyy[index+range];
-				} else {
-				    ux = xxx[index];
-				    uy = yyy[index];
-				    vx = xStart;
-				    vy = yStart;
-				}
-			    }
-			    else {
-				if (closest) {
-				    ux = xxx[index+range];
-				    uy = yyy[index+range];
-				    vx = xStart;
-				    vy = yStart;
-				} else {
-				    ux = xStart;
-				    uy = yStart;
-				    vx = xxx[index];
-				    vy = yyy[index];
-				}
-			    }
-
-			    if (ddl == 0) {
+			if (!ddl) {
 				/* convert to INCHES for calculation of
 				   angle to draw text
 				*/
-				GConvert(&ux, &uy, USER, INCHES, dd);
-				GConvert(&vx, &vy, USER, INCHES, dd);
+			    GConvert(&ux, &uy, USER, INCHES, dd);
+			    GConvert(&vx, &vy, USER, INCHES, dd);
 				/* 1, 1 => sans serif, basic font
 				   0, .5 => left, centre justified */
-				if (vectorFonts)
-				    GVText(ux, uy, INCHES, buffer,
-					   typeface, fontindex,
-					   0, .5,
-					   (180 / 3.14) *
-					   atan2(vy - uy, vx - ux),
-					   dd);
-				else
-				    GText(ux, uy, INCHES, buffer, 0, .5,
-					  (180 / 3.14) *
-					  atan2(vy - uy, vx - ux),
-					  dd);
-			    }
-			} /* if (gotLabel) */
-		    } /* if (method == 0) else ... */
-		} /* if ((drawLabels == 1) && (labelDistance > 0)) */
-		else {
-		    GPolyline(ns, xxx, yyy, USER, dd);
-		}
-
-		GMode(0, dd);
-		C_free((char *) xxx);
-		C_free((char *) yyy);
+			    if (vectorFonts)
+				GVText(ux, uy, INCHES, buffer,
+				       typeface, fontindex, 0, .5,
+				       (180 / 3.14) * atan2(vy - uy, vx - ux),
+				       dd);
+			    else
+				GText (ux, uy, INCHES, buffer, 0, .5,
+				       (180 / 3.14) * atan2(vy - uy, vx - ux),
+				       dd);
+			}
+		    } /* if (gotLabel) */
+		} /* if (method == 0) else ... */
+	    } /* if (drawLabels && labelDistance > 0) */
+	    else {
+		GPolyline(ns, xxx, yyy, USER, dd);
 	    }
-	}
+
+	    GMode(0, dd);
+	    C_free((char *) xxx);
+	    C_free((char *) yyy);
+	} /* while */
+      } /* for(i .. )  for(j ..) */
     UNPROTECT_PTR(label1); /* pwwwargh! This is messy, but last thing
 			      protected is likely labelList, and that needs
 			      to be preserved across calls */
@@ -1030,9 +1031,9 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     double cexsave;
     double atom, zmin, zmax;
     char *vmax, *vmax0;
-    int drawLabels;
     int method;
-    int vectorFonts = 0;
+    Rboolean drawLabels;
+    Rboolean vectorFonts = FALSE;
     int typeface = 0;
     int fontindex = 0;
     double labcex;
@@ -1072,7 +1073,7 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     labcex = asReal(CAR(args));
     args = CDR(args);
 
-    drawLabels = asLogical(CAR(args));
+    drawLabels = (Rboolean)asLogical(CAR(args));
     args = CDR(args);
 
     method = asInteger(CAR(args)); args = CDR(args);
@@ -1081,7 +1082,7 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(vfont = FixupVFont(CAR(args)));
     if (!isNull(vfont)) {
-	vectorFonts = 1;
+	vectorFonts = TRUE;
 	typeface = INTEGER(vfont)[0];
 	fontindex = INTEGER(vfont)[1];
     }
@@ -1195,7 +1196,7 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(5);
     /* NOTE: only record operation if no "error"  */
     /* NOTE: on replay, call == R_NilValue */
-    if (call != R_NilValue)
+    if (GRecording(call))
 	recordGraphicOperation(op, oargs, dd);
     return R_NilValue;
 }
@@ -1409,7 +1410,7 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     dd->gp.xpd = xpdsave;
     R_Visible = 0;
     UNPROTECT(1);
-    if (call != R_NilValue)
+    if (GRecording(call))
 	recordGraphicOperation(op, oargs, dd);
     return R_NilValue;
 
@@ -1494,7 +1495,7 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
     dd->gp.xpd = xpdsave;
     R_Visible = 0;
     UNPROTECT(1);
-    if (call != R_NilValue)
+    if (GRecording(call))
 	recordGraphicOperation(op, oargs, dd);
     return R_NilValue;
 
@@ -1555,7 +1556,7 @@ static double FacetShade(double *u, double *v)
 /* Note that we ignore z values when doing this. */
 
 static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
-		       double *depth, int *index)
+		       double *depth, int *indx)
 {
     int i, ii, j, jj, nx1, ny1;
     Vector3d u, v;
@@ -1563,7 +1564,7 @@ static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
     nx1 = nx - 1;
     ny1 = ny - 1;
     for (i = 0; i < nx1 * ny1; i++)
-	index[i] = i;
+	indx[i] = i;
     for (i = 0; i < nx1; i++)
 	for (j = 0; j < ny1; j++) {
 	    d = -DBL_MAX;
@@ -1587,12 +1588,12 @@ static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
 	}
     /* Determine the depth ordering of the facets to ensure
        that they are drawn in an occlusion compatible order. */
-    rsort_with_index(depth, index, nx1 * ny1);
+    rsort_with_index(depth, indx, nx1 * ny1);
 }
 
 
 static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
-		       int *index, double xs, double ys, double zs,
+		       int *indx, double xs, double ys, double zs,
 	               int *col, int ncol, int border)
 {
     double xx[4], yy[4], shade = 0;
@@ -1606,8 +1607,8 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
     n = nx1 * ny1;
     for (k = 0; k < n; k++) {
 	nv = 0;
-	i = index[k] % nx1;
-	j = index[k] / nx1;
+	i = indx[k] % nx1;
+	j = indx[k] / nx1;
 	icol = (i + j * nx1) % ncol;
 	if (DoLighting) {
             /* Note we must scale here */
@@ -2001,7 +2002,7 @@ static void PerspAxis(double *x, double *y, double *z,
 	       0.1, 10, 2, dd);
 	break;
     case 2: /* "detailed": normal ticks as per 2D plots */
-	PROTECT(at = CreateAtVector(axp, range, 7, 0));
+	PROTECT(at = CreateAtVector(axp, range, 7, FALSE));
 	PROTECT(lab = labelformat(at));
 	for (i=0; i<length(at); i++) {
 	    switch (axisType) {
@@ -2037,7 +2038,7 @@ static void PerspAxis(double *x, double *y, double *z,
 	    GLine(v1[0]/v1[3], v1[1]/v1[3],
 		  v2[0]/v2[3], v2[1]/v2[3], USER, dd);
 	    /* Draw tick label */
-	    GText(v3[0]/v3[3], v3[1]/v3[3], USER, CHAR(STRING(lab)[i]),
+	    GText(v3[0]/v3[3], v3[1]/v3[3], USER, CHAR(STRING_ELT(lab, i)),
 		  .5, .5, 0, dd);
 	}
 	UNPROTECT(2);
@@ -2100,7 +2101,7 @@ static void PerspAxes(double *x, double *y, double *z,
 SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, y, z, xlim, ylim, zlim;
-    SEXP depth, index, originalArgs;
+    SEXP depth, indx, originalArgs;
     SEXP col, border, xlab, ylab, zlab;
     double theta, phi, r, d;
     double ltheta, lphi;
@@ -2194,7 +2195,7 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     if ((tickType == NA_INTEGER) || (tickType < 1) || (tickType > 2))
 	errorcall(call, "invalid ticktype value");
 
-    dd = GNewPlot(call != R_NilValue, NA_LOGICAL);
+    dd = GNewPlot(GRecording(call));
 
     PROTECT(col = FixupCol(col, dd->gp.bg));
     ncol = LENGTH(col);
@@ -2208,8 +2209,7 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     ProcessInlinePars(args, dd);
     if (length(border) > 1)
 	dd->gp.fg = INTEGER(border)[0];
-    dd->gp.xlog = 0;
-    dd->gp.ylog = 0;
+    dd->gp.xlog = dd->gp.ylog = FALSE;
 
     /* Set up the light vector (if any) */
     if (DoLighting)
@@ -2241,9 +2241,9 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     /* Compute facet order. */
 
     PROTECT(depth = allocVector(REALSXP, (nrows(z) - 1)*(ncols(z) - 1)));
-    PROTECT(index = allocVector(INTSXP, (nrows(z) - 1)*(ncols(z) - 1)));
+    PROTECT(indx = allocVector(INTSXP, (nrows(z) - 1)*(ncols(z) - 1)));
     DepthOrder(REAL(z), REAL(x), REAL(y), nrows(z), ncols(z),
-	       REAL(depth), INTEGER(index));
+	       REAL(depth), INTEGER(indx));
 
     /* Now we order the facets by depth */
     /* and then draw them back to front. */
@@ -2255,12 +2255,12 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
         PerspBox(0, REAL(xlim), REAL(ylim), REAL(zlim), dd);
 	if (doaxes)
 	    PerspAxes(REAL(xlim), REAL(ylim), REAL(zlim),
-		      CHAR(STRING(xlab)[0]), CHAR(STRING(ylab)[0]),
-		      CHAR(STRING(zlab)[0]),
+		      CHAR(STRING_ELT(xlab, 0)), CHAR(STRING_ELT(ylab, 0)),
+		      CHAR(STRING_ELT(zlab, 0)),
 		      nTicks, tickType, dd);
     }
 
-    DrawFacets(REAL(z), REAL(x), REAL(y), nrows(z), ncols(z), INTEGER(index),
+    DrawFacets(REAL(z), REAL(x), REAL(y), nrows(z), ncols(z), INTEGER(indx),
 	       1/xs, 1/ys, expand/zs,
 	       INTEGER(col), ncol, INTEGER(border)[0]);
 
@@ -2270,7 +2270,7 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 
     GRestorePars(dd);
     UNPROTECT(10);
-    if (call != R_NilValue)
+    if (GRecording(call))
         recordGraphicOperation(op, originalArgs, dd);
 
     PROTECT(x = allocVector(REALSXP, 16));

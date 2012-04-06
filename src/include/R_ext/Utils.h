@@ -24,6 +24,7 @@
 #ifndef R_EXT_UTILS_H_
 #define R_EXT_UTILS_H_
 
+#include "R_ext/Boolean.h"
 #include "R_ext/Complex.h"
 
 #ifndef R_NO_REMAP
@@ -40,6 +41,10 @@
 #define hsv2rgb       Rf_hsv2rgb
 #endif
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* ../main/sort.c : */
 void	R_isort(int*, int);
 void	R_rsort(double*, int);
@@ -51,15 +56,21 @@ void	rPsort(double*, int, int);
 void	cPsort(Rcomplex*, int, int);
 
 int	IndexWidth(int);
-int	Rstrlen(char*);
+int	Rstrlen(char*, int);
 char*	R_ExpandFileName(char*);
 void	setIVector(int*, int, int);
 void	setRVector(double*, int, double);
-int	StringFalse(char*);
-int	StringTrue(char*);
-int	isBlankString(unsigned char *);
+Rboolean StringFalse(char*);
+Rboolean StringTrue(char*);
+Rboolean isBlankString(unsigned char *);
+
+double 	R_strtod(char *c, char **end);
 
 void	hsv2rgb(double *h, double *s, double *v,/* in */
 		double *r, double *g, double *b);/* out */
 
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* R_EXT_UTILS_H_ */

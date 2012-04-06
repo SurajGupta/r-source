@@ -32,7 +32,8 @@ library <-
 			      "using the one found in `", which.lib.loc,
 			      "'", sep = ""))
 	    }
-	    file <- system.file("R", package, pkg = package, lib = lib.loc)
+	    file <- system.file("R", package, pkg = package,
+                                lib = which.lib.loc)
 	    ## allowed zipped R source files
 	    if (file == "") {
 		tfile <- file.path(which.lib.loc, package, "R", package)
@@ -46,7 +47,7 @@ library <-
 	    env <- attach(NULL, name = pkgname)
             ## detach does not allow character vector args
             on.exit(detach(2))
-            path <- system.file(pkg = package, lib = lib.loc)
+            path <- system.file(pkg = package, lib = which.lib.loc)
             attr(env, "path") <- path
 	    ## "source" file into env
 	    if (file == "")
@@ -155,7 +156,7 @@ library <-
 
 library.dynam <-
   function (chname, package = .packages(), lib.loc = .lib.loc,
-	    verbose = getOption("verbose"), file.ext = .Platform$dynlib.ext)
+	    verbose = getOption("verbose"), file.ext = .Platform$dynlib.ext, ...)
 {
   if (!exists(".Dyn.libs"))
     assign(".Dyn.libs", character(0), envir = .AutoloadEnv)
@@ -166,14 +167,14 @@ library.dynam <-
     chname <- substr(chname, 1, LEN - nc.ext)
   if (is.na(match(chname, .Dyn.libs))) {
     file <- system.file(file.path("libs", paste(chname, file.ext,
-			      sep = "")), pkg = package, lib = lib.loc)
+			      sep = "")), pkg = package, lib = lib.loc)[1]
     if (file == "") {
       stop(paste("dynamic library `", chname, "' not found",
 		 sep = ""))
     }
     if (verbose)
       cat("now dyn.load(", file, ")..\n", sep = "")
-    dyn.load(file)
+    dyn.load(file, ...)
     assign(".Dyn.libs", c(.Dyn.libs, chname), envir = .AutoloadEnv)
   }
   invisible(.Dyn.libs)
@@ -183,14 +184,11 @@ require <- function(package, quietly = FALSE, warn.conflicts = TRUE,
                     keep.source = getOption("keep.source.pkgs"))
 {
     package <- as.character(substitute(package)) # allowing "require(eda)"
-    if (is.na(match(paste("package", package, sep = ":"), search())))
-        if(!exists(".Provided") || is.na(match(package, .Provided))) {
-	if (!quietly)
-	    cat("Loading required package:", package, "\n")
+    if (is.na(match(paste("package", package, sep = ":"), search()))) {
+	if (!quietly) cat("Loading required package:", package, "\n")
 	library(package, char = TRUE, logical = TRUE,
 		warn.conflicts = warn.conflicts, keep.source = keep.source)
     } else TRUE
-    else TRUE
 }
 
 .packages <- function(all.available = FALSE, lib.loc = .lib.loc) {

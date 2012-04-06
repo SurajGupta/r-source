@@ -1,4 +1,5 @@
 \name{nlm}
+\alias{nlm}
 \title{Non-Linear Minimization}
 \usage{
 nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
@@ -6,7 +7,10 @@ nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
     stepmax = max(1000 * sqrt(sum((p/typsize)^2)), 1000),
     steptol = 1e-6, iterlim = 100, check.analyticals = TRUE, \dots)
 }
-\alias{nlm}
+\description{
+  This function carries out a minimization of the function \code{f}
+  using a Newton-type algorithm.  See the references for details.
+}
 \arguments{
 \item{f}{the function to be minimized.  If the function value has
     an attribute called \code{gradient} or both \code{gradient} and
@@ -51,11 +55,11 @@ relative step length.}
     Hessians.}
 \item{\dots}{additional arguments to \code{f}.}
 }
-\description{
-This function carries out a minimization of the function \code{f}
-using a Newton-type algorithm.  See the references for details.
-
-This is a preliminary version of this function and it will probably change.
+\details{
+  If a gradient or hessian is supplied but evaluates to the wrong mode
+  or length, it will be ignored if \code{check.analyticals = TRUE} (the
+  default) with a warning.  The hessian is not even checked unless the
+  gradient is present and passes the sanity checks.
 }
 \value{
 A list containing the following components:
@@ -96,7 +100,7 @@ A list containing the following components:
   \emph{ACM Trans. Math. Software}, \bold{11}, 419--440.
 }
 \seealso{
-  \code{\link{optimize}} for one-dimensional
+  \code{\link{optim}}.  \code{\link{optimize}} for one-dimensional
   minimization and \code{\link{uniroot}} for root finding.
   \code{\link{deriv}} to calculate analytical derivatives.
 }

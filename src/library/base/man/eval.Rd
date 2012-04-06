@@ -8,9 +8,8 @@
   Evaluate an \R expression in a specified environment.
 }
 \usage{
-eval(expr, envir = sys.frame(sys.parent()), 
-     enclos = if(is.list(envir) || is.pairlist(envir)) 
-                  sys.frame(sys.parent()))
+eval(expr, envir = parent.frame(),
+     enclos = if(is.list(envir) || is.pairlist(envir)) parent.frame())
 evalq(expr, envir, enclos)
 eval.parent(expr, n = 1)
 local(expr, envir = new.env())
@@ -19,9 +18,10 @@ local(expr, envir = new.env())
   \item{expr}{object of mode \code{\link{expression}} or\code{call} or
     an ``unevaluated expression''.}
   \item{envir}{the \code{\link{environment}} in which \code{expr} is to
-    be evaluated.  May also be a list or an integer as in
+    be evaluated.  May also be a list, a data frame, or an integer as in
     \code{sys.call}.}
-  \item{enclos}{Only relevant if \code{envir} is a list. Specifies the
+  \item{enclos}{Relevant when \code{envir} is a list or a data frame.
+    Specifies the
     enclosure, i.e., where \R looks for objects not found in
     \code{envir}.}
   \item{n}{parent generations to go back}
@@ -40,7 +40,7 @@ local(expr, envir = new.env())
   and then evaluate them.  \code{evalq} avoids this.
 
   \code{eval.parent(expr, n)} is a shorthand for \code{eval(expr,
-    parent.frame(n))}. 
+    parent.frame(n))}.
 
   \code{local} evaluates an expression in a local environment.  It is
   equivalent to \code{evalq} except the its default argument creates a
@@ -50,17 +50,17 @@ local(expr, envir = new.env())
 }
 \seealso{
   \code{\link{expression}}, \code{quote}, \code{\link{sys.frame}},
-  \code{\link{environment}}. 
+  \code{\link{parent.frame}}, \code{\link{environment}}.
 }
 \note{
   Due to the difference in scoping rules, there are some differences
-  between R and S in this area.  In particular, the default enclosure 
+  between \R and S in this area.  In particular, the default enclosure
   in S is the global environment.
 
   When evaluating expressions in dataframes that has been passed as
   argument to a function, the relevant enclosure is often the caller's
   environment, i.e., one needs
-  \code{eval(x, data, sys.frame(sys.parent()))}.
+  \code{eval(x, data, parent.frame())}.
 }
 \examples{
 eval(2 ^ 2 ^ 3)
@@ -71,7 +71,7 @@ a <- 3 ; aa <- 4 ; evalq(evalq(a+b+aa, list(a=1)), list(b=5)) # == 10
 a <- 3 ; aa <- 4 ; evalq(evalq(a+b+aa, 1), list(b=5))         # == 12
 
 ev <- function() {
-   e1 <- sys.frame(sys.parent())
+   e1 <- parent.frame()
    ## Evaluate a in e1
    aa <- eval(expression(a),e1)
    ## evaluate the expression bound to a in e1
@@ -85,7 +85,7 @@ tst.ev()#-> aa : 7,  eval : 4.14
 ## Uses of local()
 ##
 
-# Mutual recursives. 
+# Mutual recursives.
 # gg gets value of last assignment, an anonymous version of f.
 
 gg <- local({

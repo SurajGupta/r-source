@@ -10,8 +10,6 @@ Rterm.exe can be used in three distinct modes:
 Its purpose is to provide something similar to the main Unix interface
 for R, including a batch capability.
 
-[We have had reports that modes 1 and 3 do not work under Windows 2000.]
-
 In interactive use the interpreter can be interrupted by Ctrl-C or
 Ctrl-Break.  Input is interpreted as-is except for the keys
 interpreted by getline (see below) and that special characters
@@ -59,6 +57,7 @@ ESC-B   : Move cursor backward one word.
 	  loads it into the buffer, terminating the search.
 ^T	: Transpose the characters under and to the left of the cursor.
 ^U      : Deletes the entire line
+^W      : Deletes the previous word
 ^Y	: Yank previously killed text back at current location.  Note that
 	  this will overwrite or insert, depending on the current mode.
 TAB	: Adds spaces to buffer to get to next TAB stop (just after 

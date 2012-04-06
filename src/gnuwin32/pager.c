@@ -26,7 +26,7 @@
 #define USE_MDI 1
 #endif
 
-#include "Error.h"  /* for warning() */
+#include "R_ext/Error.h"  /* for warning() */
 #include <windows.h>
 #include "graphapp/ga.h"
 #ifdef USE_MDI
@@ -35,7 +35,9 @@
 #include "console.h"
 #include "consolestructs.h"
 #include "rui.h"
+#include "Startup.h" /* for UImode */
 
+extern UImode  CharacterMode;
 
 #define PAGERMAXKEPT 12
 #define PAGERMAXTITLE 128
@@ -72,7 +74,7 @@ static xbuf file2xbuf(char *name, int del)
 	return NULL;
     }
     vv = GetFileSize(f, NULL);
-    p = (char *) winmalloc((size_t) vv + 1);
+    p = (char *) malloc((size_t) vv + 1);
     if (!p) {
 	CloseHandle(f);
 	warning("Insufficient memory to display %s in internal pager", name);
@@ -99,7 +101,7 @@ static xbuf file2xbuf(char *name, int del)
 		if (q[1] == '_' && q[2] == '\b') xb->user[ms] = -2;
 	    } else xbufaddc(xb, *q);
 	}
-    winfree(p);
+    free(p);
     return xb;
 }
 
@@ -143,6 +145,11 @@ static void pagerprint(control m)
     consoleprint(getdata(m));
 }
 
+static void pagersavefile(control m)
+{
+    consolesavefile(getdata(m));
+}
+
 static void pagercopy(control m)
 {
     control c = getdata(m);
@@ -155,6 +162,10 @@ static void pagerpaste(control m)
 {
     control c = getdata(m);
 
+    if (CharacterMode != RGui) {
+        R_ShowMessage("No RGui console to paste to");
+        return;
+    }
     if (!consolecancopy(c)) {
         R_ShowMessage("No selection");
         return;
@@ -258,8 +269,10 @@ static void pagermenuact(control m)
     if (consolecancopy(c)) {
         enable(p->mcopy);
         enable(p->mpopcopy);
-        enable(p->mpaste);
-        enable(p->mpoppaste);
+        if (CharacterMode == RGui) {
+	    enable(p->mpaste);
+	    enable(p->mpoppaste);
+	}
     } else {
         disable(p->mcopy);
         disable(p->mpopcopy);
@@ -279,7 +292,7 @@ static pager pagercreate()
     menuitem m;
 
     p = newconsoledata((consolefn) ? consolefn : FixedFont,
-		       pagerrow, pagercol,
+		       pagerrow, pagercol, 0, 0,
 		       consolefg, consoleuser, consolebg,
 		       PAGER);
     if (!p) return NULL;
@@ -376,13 +389,15 @@ static pager pagercreate()
     MCHECK(newmenu("File"));
     MCHECK(m = newmenuitem("Print", 0, pagerprint));
     setdata(m, c);
+    MCHECK(m = newmenuitem("Save to File", 0, pagersavefile));
+    setdata(m, c);
     MCHECK(m = newmenuitem("-", 0, NULL));
     MCHECK(m = newmenuitem("Close", 0, pagerclose));
     setdata(m, c);
     MCHECK(newmenu("Edit"));
-    MCHECK(p->mcopy = newmenuitem("Copy          \tCTRL+C", 0, pagercopy));
+    MCHECK(p->mcopy = newmenuitem("Copy", 'C', pagercopy));
     setdata(p->mcopy, c);
-    MCHECK(p->mpaste = newmenuitem("Paste to console\tCTRL+V", 0, pagerpaste));
+    MCHECK(p->mpaste = newmenuitem("Paste to console", 'V', pagerpaste));
     setdata(p->mpaste, c);
     MCHECK(m = newmenuitem("Select all", 0, pagerselectall));
     setdata(m, c);

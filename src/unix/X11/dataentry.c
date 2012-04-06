@@ -23,21 +23,137 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 #include "Defn.h"
 #include "Print.h"
 
-#include "dataentry.h"
-#include <stdlib.h>
+/* don't use X11 function prototypes (which tend to ...): */
+#define NeedFunctionPrototypes 0
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+#include <X11/cursorfont.h>
+
+#define KeySym int
+#define DEEvent XEvent
+
+typedef enum { UP, DOWN, LEFT, RIGHT } DE_DIRECTION;
+
+typedef enum {UNKNOWNN, NUMERIC, CHARACTER} CellType;
+
+/* EXPORTS : */
+SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
+
+/* Local Function Definitions */
+ 
+static void advancerect(DE_DIRECTION);
+static int  CheckControl(DEEvent*);
+static int  CheckShift(DEEvent*);
+static int  checkquit(int);
+static void clearrect(void);
+static void clearwindow(void);
+static void closerect(void);
+static void closewin(void);
+static void copycell(void);
+static void doControl(DEEvent*);
+static int  doMouseDown(DEEvent*);
+static void eventloop(void);
+static void doSpreadKey(int, DEEvent*);
+static void downlightrect(void);
+static void drawwindow(void);
+static void drawcol(int);
+static void drawrow(int);
+static void find_coords(int, int, int*, int*);
+static int  findcell(void);
+static char GetCharP(DEEvent*);
+static KeySym GetKey(DEEvent*);
+static void handlechar(char*);
+static void highlightrect(void);
+static Rboolean initwin(void);
+static void jumppage(DE_DIRECTION);
+static void jumpwin(int, int);
+static void pastecell(int, int);
+static void popdownmenu(void);
+static void popupmenu(int, int, int, int);
+static void printlabs(void);
+static void printrect(int, int);
+static void printstring(char*, int, int, int, int);
+static void printelt(SEXP, int, int, int);
+static void RefreshKeyboardMapping(DEEvent*);
+ 
+/* Functions to hide Xlib calls */
+static void bell(void);
+static void cleararea(int, int, int, int);
+static void copyH(int, int, int);
+static void copyarea(int, int, int, int);
+static void doConfigure(DEEvent *ioevent);
+#if 0
+static void drawline(int, int, int, int);
+#endif
+static void drawrectangle(int, int, int, int, int, int);
+static void drawtext(int, int, char*, int);
+static int  NextEvent(DEEvent *ioevent);
+static void RefreshKeyboardMapping(DEEvent *ioevent);
+static void Rsync(void);
+static int textwidth(char*, int);
+static int WhichEvent(DEEvent ioevent);
+
+
+/* Global variables needed for the graphics */
+ 
+static int box_w;                       /* width of a box */
+static int boxw[100];
+static int box_h;                       /* height of a box */
+static int windowWidth;                 /* current width of the window */
+static int fullwindowWidth;
+static int windowHeight;                /* current height of the window */
+static int fullwindowHeight;
+static int currentexp;                  /* boolean: whether an cell is active */
+static int crow;                        /* current row */
+static int ccol;                        /* current column */
+static int nwide, nhigh;
+static int colmax, colmin, rowmax, rowmin;
+static int ndecimal;                    /* count decimal points */
+static int ne;                          /* count exponents */
+static int nneg;			/* indicate whether its a negative */
+static int clength;                     /* number of characters currently entered */
+static char buf[30];
+static char *bufp;
+static int bwidth;			/* width of the border */
+static int hwidth;			/* width of header  */
+static int text_offset;
+ 
+static SEXP inputlist;  /* each element is a vector for that row */
+static SEXP ssNewVector(SEXPTYPE, int);
+static SEXP ssNA_STRING;
+static double ssNA_REAL;
+
 static Atom _XA_WM_PROTOCOLS, protocol;
 
-
-static int newcol, nboxchars;
+static Rboolean newcol, CellModified;
+static int nboxchars;
 static int xmaxused, ymaxused;
-static int CellModified;
 static int box_coords[6];
 static char copycontents[30] = "";
 
 
+/* Xwindows Globals */
+ 
+static Display          *iodisplay;
+static Window           iowindow, menuwindow, menupanes[4];
+static GC               iogc;
+static XSizeHints       iohint;
+static Cursor           hand_cursor;
+static char             *font_name="9x15";
+static XFontStruct      *font_info;
+
+#define mouseDown 	ButtonPress
+#define keyDown		KeyPress
+#define activateEvt	MapNotify
+#define updateEvt	Expose
+  
 #ifndef max
 #define max(a, b) (((a)>(b))?(a):(b))
 #endif
@@ -95,8 +211,8 @@ static SEXP ssNewVector(SEXPTYPE type, int vlen)
 	if (type == REALSXP)
 	    REAL(tvec)[j] = ssNA_REAL;
 	else if (type == STRSXP)
-	    STRING(tvec)[j] = STRING(ssNA_STRING)[0];
-    LEVELS(tvec) = 0;
+	    SET_STRING_ELT(tvec, j, STRING_ELT(ssNA_STRING, 0));
+    SETLEVELS(tvec, 0);
     return (tvec);
 }
 
@@ -115,7 +231,7 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isList(indata) || !isList(colmodes))
 	errorcall(call, "invalid argument");
 
-    /* initialize the constants */
+    /* initialize the global constants */
 
     bufp = buf;
     ne = 0;
@@ -144,31 +260,31 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 	     tvec = CDR(tvec), tvec2 = CDR(tvec2)) {
 	    type = TYPEOF(CAR(tvec)); xmaxused++;
 	    if (CAR(tvec2) != R_NilValue)
-		type = str2type(CHAR(STRING(CAR(tvec2))[0]));
+		type = str2type(CHAR(STRING_ELT(CAR(tvec2), 0)));
 	    if (type != STRSXP)
 		type = REALSXP;
 	    if (CAR(tvec) == R_NilValue) {
 		if (type == NILSXP)
 		    type = REALSXP;
-		CAR(tvec) = ssNewVector(type, 100);
-		TAG(tvec) = install("var1");
-		LEVELS(CAR(tvec)) = 0;
+		SETCAR(tvec, ssNewVector(type, 100));
+		SET_TAG(tvec, install("var1"));
+		SETLEVELS(CAR(tvec), 0);
 	    }
 	    else if (!isVector(CAR(tvec)))
 		errorcall(call, "invalid type for value");
 	    else {
 		if (TYPEOF(CAR(tvec)) != type)
-		    CAR(tvec) = coerceVector(CAR(tvec), type);
-		tmp = LEVELS(CAR(tvec)) = LENGTH(CAR(tvec));
+		    SETCAR(tvec, coerceVector(CAR(tvec), type));
+		tmp = SETLEVELS(CAR(tvec), LENGTH(CAR(tvec)));
 		ymaxused = max(tmp, ymaxused);
 	    }
 	}
     }
     else if (colmodes == R_NilValue ) {
 	PROTECT(inputlist = allocList(1)); nprotect++;
-	CAR(inputlist) = ssNewVector(REALSXP, 100);
-	TAG(inputlist) = install("var1");
-	LEVELS(CAR(inputlist)) = 0;
+	SETCAR(inputlist, ssNewVector(REALSXP, 100));
+	SET_TAG(inputlist, install("var1"));
+	SETLEVELS(CAR(inputlist), 0);
     }
     else {
 	errorcall(call, "invalid parameter(s) ");
@@ -216,14 +332,14 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    else
 			REAL(tvec2)[j] = NA_REAL;
 		} else if (TYPEOF(CAR(tvec)) == STRSXP) {
-		    if (!streql(CHAR(STRING(CAR(tvec))[j]),
-				CHAR(STRING(ssNA_STRING)[0])))
-			STRING(tvec2)[j] = STRING(CAR(tvec))[j];
+		    if (!streql(CHAR(STRING_ELT(CAR(tvec), j)),
+				CHAR(STRING_ELT(ssNA_STRING, 0))))
+			SET_STRING_ELT(tvec2, j, STRING_ELT(CAR(tvec), j));
 		    else
-			STRING(tvec2)[j] = NA_STRING;
+			SET_STRING_ELT(tvec2, j, NA_STRING);
 		} else
 		    error("dataentry: internal memory problem");
-	    CAR(tvec) = tvec2;
+	    SETCAR(tvec, tvec2);
 	    UNPROTECT(1);
 	}
     }
@@ -235,7 +351,7 @@ SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* Window Drawing Routines */
 
-static void setcellwidths()
+static void setcellwidths(void)
 {
     int i, w, dw;
 
@@ -251,7 +367,7 @@ static void setcellwidths()
     }
 }
 
-void drawwindow()
+static void drawwindow(void)
 {
     int i, st;
     XWindowAttributes attribs;
@@ -365,7 +481,7 @@ static void jumpwin(int wcol, int wrow)
     } else highlightrect();
 }
 
-static void advancerect(int which)
+static void advancerect(DE_DIRECTION which)
 {
 
     /* if we are in the header, changing a name then only down is
@@ -458,8 +574,6 @@ static int get_col_width(int col)
     return box_w;
 }
 
-typedef enum {UNKNOWNN, NUMERIC, CHARACTER} CellType;
-
 static CellType get_col_type(int col)
 {
     SEXP tmp;
@@ -551,7 +665,8 @@ static void printelt(SEXP invec, int vrow, int ssrow, int sscol)
 	}
     }
     else if (TYPEOF(invec) == STRSXP) {
-	if (!streql(CHAR(STRING(invec)[vrow]), CHAR(STRING(ssNA_STRING)[0]))) {
+	if (!streql(CHAR(STRING_ELT(invec, vrow)),
+		    CHAR(STRING_ELT(ssNA_STRING, 0)))) {
 	    strp = EncodeElement(invec, vrow, 0);
 	    printstring(strp, strlen(strp), ssrow, sscol, 0);
 	}
@@ -583,7 +698,7 @@ static void drawelt(int whichrow, int whichcol)
     Rsync();
 }
 
-static void jumppage(int dir)
+static void jumppage(DE_DIRECTION dir)
 {
     int i, w, oldcol, wcol;
 
@@ -633,18 +748,18 @@ static void printrect(int lwd, int fore)
     Rsync();
 }
 
-static void downlightrect()
+static void downlightrect(void)
 {
     printrect(2, 0);
     printrect(1, 1);
 }
 
-static void highlightrect()
+static void highlightrect(void)
 {
     printrect(2, 1);
 }
 
-static SEXP getccol()
+static SEXP getccol(void)
 {
     SEXP tmp, tmp2;
     int i, len, newlen, wcol, wrow;
@@ -657,15 +772,15 @@ static SEXP getccol()
 	inputlist = listAppend(inputlist,
 			       allocList(wcol - length(inputlist)));
     tmp = nthcdr(inputlist, wcol - 1);
-    newcol = 0;
+    newcol = FALSE;
     if (CAR(tmp) == R_NilValue) {
-	newcol = 1;
+	newcol = TRUE;
 	xmaxused = wcol;
 	len = max(100, wrow);
-	CAR(tmp) = ssNewVector(REALSXP, len);
+	SETCAR(tmp, ssNewVector(REALSXP, len));
 	if (TAG(tmp) == R_NilValue) {
 	    sprintf(cname, "var%d", wcol);
-	    TAG(tmp) = install(cname);
+	    SET_TAG(tmp, install(cname));
 	}
     }
     if (!isVector(CAR(tmp)))
@@ -680,11 +795,11 @@ static SEXP getccol()
 	    if (type == REALSXP)
 		REAL(tmp2)[i] = REAL(CAR(tmp))[i];
 	    else if (type == STRSXP)
-		STRING(tmp2)[i] = STRING(CAR(tmp))[i];
+		SET_STRING_ELT(tmp2, i, STRING_ELT(CAR(tmp), i));
 	    else
 		error("internal type error in dataentry");
-	LEVELS(tmp2) = LEVELS(CAR(tmp));
-	CAR(tmp) = tmp2;
+	SETLEVELS(tmp2, LEVELS(CAR(tmp)));
+	SETCAR(tmp, tmp2);
     }
     return (tmp);
 }
@@ -692,9 +807,7 @@ static SEXP getccol()
 /* close up the entry to a cell, put the value that has been entered
    into the correct place and as the correct type */
 
-extern double R_strtod(char *c, char **end); /* in coerce.c */
-
-static void closerect()
+static void closerect(void)
 {
     SEXP cvec, c0vec, tvec;
     int wcol = ccol + colmin - 1, wrow = rowmin + crow - 1, wrow0;
@@ -711,7 +824,7 @@ static void closerect()
 			listAppend(inputlist,
 				   allocList((wcol - length(inputlist))));
 		tvec = nthcdr(inputlist, wcol - 1);
-		TAG(tvec) = install(buf);
+		SET_TAG(tvec, install(buf));
 		printstring(buf, strlen(buf), 0, wcol, 0);
 	    } else {
 		sprintf(buf, "var%d", ccol);
@@ -721,31 +834,31 @@ static void closerect()
 	c0vec = getccol();
 	cvec = CAR(c0vec);
 	wrow0 = (int)LEVELS(cvec);
-	if (wrow > wrow0) LEVELS(cvec) = wrow;
+	if (wrow > wrow0) SETLEVELS(cvec, wrow);
 	ymaxused = max(ymaxused, wrow);
 	if (clength != 0) {
 	    /* do it this way to ensure NA, Inf, ...  can get set */
 	    char *endp;
 	    double new = R_strtod(buf, &endp);
-	    int warn = !isBlankString(endp);
+	    Rboolean warn = !isBlankString((unsigned char *)endp);
 	    if (TYPEOF(cvec) == STRSXP) {
 		tvec = allocString(strlen(buf));
 		strcpy(CHAR(tvec), buf);
-		STRING(cvec)[wrow - 1] = tvec;
+		SET_STRING_ELT(cvec, wrow - 1, tvec);
 	    } else
 		REAL(cvec)[wrow - 1] = new;
 	    if (newcol & warn) {
 		/* change mode to character */
 		int levs = LEVELS(cvec);
-		cvec = CAR(c0vec) = coerceVector(cvec, STRSXP);
-		LEVELS(cvec) = levs;
+		cvec = SETCAR(c0vec, coerceVector(cvec, STRSXP));
+		SETLEVELS(cvec, levs);
 		tvec = allocString(strlen(buf));
 		strcpy(CHAR(tvec), buf);
-		STRING(cvec)[wrow - 1] = tvec;
+		SET_STRING_ELT(cvec, wrow - 1, tvec);
 	    }
 	} else {
 	    if (TYPEOF(cvec) == STRSXP)
-		STRING(cvec)[wrow - 1] = NA_STRING;
+		SET_STRING_ELT(cvec, wrow - 1, NA_STRING);
 	    else
 		REAL(cvec)[wrow - 1] = NA_REAL;
 	}
@@ -753,7 +866,7 @@ static void closerect()
 	if(wrow > wrow0) drawcol(wcol); /* to fill in NAs */
     }
 }
-    CellModified = 0;
+    CellModified = FALSE;
 
     downlightrect();
 
@@ -774,13 +887,13 @@ static void closerect()
 static void printstring(char *ibuf, int buflen, int row, int col, int left)
 {
     int i, x_pos, y_pos, bw, bufw;
-    char buf[201], *pc = buf;
+    char pbuf[201], *pc = pbuf;
 
     find_coords(row, col, &x_pos, &y_pos);
     if (col == 0) bw = boxw[0]; else bw = BOXW(col+colmin-1);
     cleararea(x_pos + 2, y_pos + 2, bw - 3, box_h - 3);
     bufw = (buflen > 200) ? 200 : buflen;
-    strncpy(buf, ibuf, bufw);
+    strncpy(pbuf, ibuf, bufw);
     if(left) {
 	for (i = bufw; i > 1; i--) {
 	    if (textwidth(pc, i) < (bw - text_offset)) break;
@@ -788,15 +901,15 @@ static void printstring(char *ibuf, int buflen, int row, int col, int left)
 	}
     } else {
 	for (i = bufw; i > 1; i--) {
-	    if (textwidth(buf, i) < (bw - text_offset)) break;
-	    *(buf + i - 2) = '>';
+	    if (textwidth(pbuf, i) < (bw - text_offset)) break;
+	    *(pbuf + i - 2) = '>';
 	}
     }
     drawtext(x_pos + text_offset, y_pos + box_h - text_offset, pc, i);
     Rsync();
 }
 
-static void clearrect()
+static void clearrect(void)
 {
     int x_pos, y_pos;
 
@@ -816,12 +929,12 @@ static void handlechar(char *text)
     int c = text[0];
 
     if ( c == '\033' ) {
-	CellModified = 0;
+	CellModified = FALSE;
 	clength = 0;
 	drawelt(crow, ccol);
 	return;
     } else
-	CellModified = 1;
+	CellModified = TRUE;
 
     if (clength == 0) {
 
@@ -892,7 +1005,7 @@ static void handlechar(char *text)
     bell();
 }
 
-static void printlabs()
+static void printlabs(void)
 {
     char clab[10], *p;
     int i;
@@ -924,7 +1037,7 @@ static int checkquit(int xw)
    findcell return an int which is zero if we should quit and one
    otherwise */
 
-static int findcell()
+static int findcell(void)
 {
 
     int xw, yw, xr, yr, wcol=0, wrow, i, w;
@@ -1003,7 +1116,7 @@ static int findcell()
 
 /* Event Loop Functions */
 
-static void eventloop()
+static void eventloop(void)
 {
     int done;
     DEEvent ioevent;
@@ -1041,7 +1154,7 @@ static void eventloop()
     }
 }
 
-int doMouseDown(DEEvent * event)
+static int doMouseDown(DEEvent * event)
 {
     return findcell();
 }
@@ -1056,8 +1169,8 @@ static void doSpreadKey(int key, DEEvent * event)
 
     if (CheckControl(event))
 	doControl(event);
-    else if ((iokey == XK_Return) || (iokey == XK_KP_Enter)
-	     || (iokey == XK_Linefeed) || (iokey == XK_Down))
+    else if ((iokey == XK_Return)  || (iokey == XK_KP_Enter) || 
+	     (iokey == XK_Linefeed)|| (iokey == XK_Down))
 	advancerect(DOWN);
     else if (iokey == XK_Left)
 	advancerect(LEFT);
@@ -1193,7 +1306,7 @@ static void RefreshKeyboardMapping(DEEvent * event)
 
 /* Initialize/Close Windows */
 
-void closewin()
+void closewin(void)
 {
     XFreeGC(iodisplay, iogc);
     XDestroyWindow(iodisplay, iowindow);
@@ -1216,7 +1329,7 @@ static int R_X11IOErr(Display *dsp)
 
 /* set up the window, print the grid and column/row labels */
 
-int initwin()
+static Rboolean initwin(void) /* TRUE = Error */
 {
     int i, twidth, w, minwidth;
     int ioscreen;
@@ -1228,14 +1341,16 @@ int initwin()
     XSetWindowAttributes winattr;
     XWindowAttributes attribs;
 
-    if ((iodisplay = XOpenDisplay(NULL)) == NULL) return (1);
+    if ((iodisplay = XOpenDisplay(NULL)) == NULL) 
+	return TRUE;
     XSetErrorHandler(R_X11Err);
     XSetIOErrorHandler(R_X11IOErr);
 
     /* Get Font Loaded if we can */
 
     font_info = XLoadQueryFont(iodisplay, font_name);
-    if (font_info == NULL) return 1;		/* ERROR */
+    if (font_info == NULL) 
+	return TRUE; /* ERROR */
 
     /* find out how wide the input boxes should be and set up the
        window size defaults */
@@ -1291,7 +1406,7 @@ int initwin()
 	bwidth,
 	ioblack,
 	iowhite)) == 0)
-	return 1;
+	return TRUE;
 
     XSetStandardProperties(iodisplay, iowindow, ioname, ioname, None,
 			   ioname, 0, &iohint);
@@ -1357,13 +1472,13 @@ int initwin()
     /* set the active rectangle to be the upper left one */
     crow = 1;
     ccol = 1;
-    CellModified = 0;
-    return 0;
+    CellModified = FALSE;
+    return FALSE;/* success */
 }
 
 /* MAC/X11 BASICS */
 
-static void bell()
+static void bell(void)
 {
     XBell(iodisplay, 20);
 }
@@ -1373,7 +1488,7 @@ static void cleararea(int xpos, int ypos, int width, int height)
     XClearArea(iodisplay, iowindow, xpos, ypos, width, height, 0);
 }
 
-static void clearwindow()
+static void clearwindow(void)
 {
     XClearWindow(iodisplay, iowindow);
 }
@@ -1497,17 +1612,17 @@ void popupmenu(int x_pos, int y_pos, int col, int row)
 		    break;
 		case 1:
 		    if (CAR(tvec) == R_NilValue)
-			CAR(tvec) = ssNewVector(REALSXP, 100);
+			SETCAR(tvec, ssNewVector(REALSXP, 100));
 		    levs = LEVELS(CAR(tvec));
-		    CAR(tvec) = coerceVector(CAR(tvec), REALSXP);
-		    LEVELS(CAR(tvec)) = levs;
+		    SETCAR(tvec, coerceVector(CAR(tvec), REALSXP));
+		    SETLEVELS(CAR(tvec), levs);
 		    goto done;
 		case 2:
 		    if (CAR(tvec) == R_NilValue)
-			CAR(tvec) = ssNewVector(STRSXP, 100);
+			SETCAR(tvec, ssNewVector(STRSXP, 100));
 		    levs = LEVELS(CAR(tvec));
-		    CAR(tvec) = coerceVector(CAR(tvec), STRSXP);
-		    LEVELS(CAR(tvec)) = levs;
+		    SETCAR(tvec, coerceVector(CAR(tvec), STRSXP));
+		    SETLEVELS(CAR(tvec), levs);
 		    goto done;
 		case 3:
 		    closerect();
@@ -1535,13 +1650,13 @@ void popupmenu(int x_pos, int y_pos, int col, int row)
     highlightrect();
 }
 
-void popdownmenu()
+void popdownmenu(void)
 {
     XUnmapWindow(iodisplay, menuwindow);
     XUnmapSubwindows(iodisplay, menuwindow);
 }
 
-static void copycell()
+static void copycell(void)
 {
     int i, whichrow = crow + colmin - 1, whichcol = ccol + colmin -1;
     SEXP tmp;
@@ -1559,8 +1674,8 @@ static void copycell()
 		    if (REAL(tmp)[i] != ssNA_REAL)
 			strcpy(copycontents, EncodeElement(tmp, i, 0));
 		} else if (TYPEOF(tmp) == STRSXP) {
-		    if (!streql(CHAR(STRING(tmp)[i]),
-				CHAR(STRING(ssNA_STRING)[0])))
+		    if (!streql(CHAR(STRING_ELT(tmp, i)),
+				CHAR(STRING_ELT(ssNA_STRING, 0))))
 			strcpy(copycontents, EncodeElement(tmp, i, 0));
 		}
 	    }
@@ -1577,7 +1692,7 @@ static void pastecell(int row, int col)
 	strcpy(buf, copycontents);
 	clength = strlen(copycontents);
 	bufp = buf + clength;
-	CellModified = 1;
+	CellModified = TRUE;
     }
     closerect();
     highlightrect();

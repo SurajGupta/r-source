@@ -9,14 +9,15 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ *  USA.
  *
  *  DESCRIPTION
  *
@@ -30,9 +31,8 @@
  *  REFERENCES
  *
  *	Best, D. J. and D. E. Roberts (1975).
- *	Percentage Points of the Chi-Squared Disribution.
- *	Applied Statistics 24, page 385.
- */
+ *	Percentage Points of the Chi-Squared Distribution.
+ *      Applied Statistics 24, page 385.  */
 
 #include "nmath.h"
 #include "dpq.h"
@@ -140,7 +140,7 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
     for( i=1 ; i <= MAXIT ; i++ ) {
 	q = ch;
 	p1 = 0.5*ch;
-	p2 = p_ - pgamma(p1, alpha, 1, /*lower_tail*/LTRUE, /*log_p*/LFALSE);
+	p2 = p_ - pgamma(p1, alpha, 1, /*lower_tail*/TRUE, /*log_p*/FALSE);
 #ifdef IEEE_754
 	if(!R_FINITE(p2))
 #else

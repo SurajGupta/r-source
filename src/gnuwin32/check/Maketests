@@ -4,8 +4,8 @@
 
 srcdir = .
 
-R= $(RHOME)/bin/Rterm  --vanilla
-RDIFF = $(RHOME)/src/scripts/Rdiff
+R= $(RHOME)/bin/Rterm --vanilla LC_ALL=C
+RDIFF = $(R_HOME)/bin/Rcmd Rdiff.sh
 RVAL_IF_DIFF=0
 
 test-src-strict-1 = \

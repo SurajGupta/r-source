@@ -1,17 +1,17 @@
 
 R : Copyright 2000, The R Development Core Team
-Version 1.1.0 Under development (unstable) (June 6, 2000)
+Version 1.2.0 Under development (unstable) (2000-11-15)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-Type	"?license" or "?licence" for distribution details.
+Type `license()' or `licence()' for distribution details.
 
 R is a collaborative project with many contributors.
-Type	"?contributors" for a list.
+Type `contributors()' for more information.
 
-Type	"demo()" for some demos, "help()" for on-line help, or
-    	"help.start()" for a HTML browser interface to help.
-Type	"q()" to quit R.
+Type `demo()' for some demos, `help()' for on-line help, or
+`help.start()' for a HTML browser interface to help.
+Type `q()' to quit R.
 
 > ####	d|ensity
 > ####	p|robability (cumulative)
@@ -120,7 +120,7 @@ n= 50 : ......................
 +     for(sig in round(rlnorm(30),2)) {
 + 	tst <- all.equal((d1 <- dgamma(	 x,   shape = sh, scale = sig)),
 + 			 (d2 <- dgamma(x/sig, shape = sh, scale = 1) / sig),
-+ 			 tol = 1e-15)
++ 			 tol = 1e-14)## __ad interim__ was 1e-15
 + 	if(!(is.logical(tst) && tst))
 + 	    cat("ERROR: dgamma() doesn't scale:",tst,"\n",
 + 		"  x =", formatC(x),"\n	 shape,scale=",formatC(c(sh, sig)),"\n")
@@ -141,32 +141,73 @@ Warning messages:
 > pgamma(Inf,1,xMax) == 1 && pgamma(xMax,1,Inf) == 0
 [1] TRUE
 > 
+> ##--- Beta (need more):
+> 
+> ## big a & b (PR #643)
+> summary(a <- rlnorm(20, 5.5))
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  27.65  122.90  217.40  425.70  405.00 2017.00 
+> summary(b <- rlnorm(20, 6.5))
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  102.5   298.7   543.5   880.6   850.4  3144.0 
+> pab <- expand.grid(seq(0,1,by=.1), a, b)
+> p <- pab[,1]; a <- pab[,2]; b <- pab[,3]
+> all.equal(dbeta(p,a,b), exp(pab <- dbeta(p,a,b, log = TRUE)), tol = 1e-11)
+[1] TRUE
+> sample(pab, 50)
+ [1]          -Inf  -130.5211148 -1156.3350120     2.5609305  -167.6013444
+ [6]          -Inf          -Inf   -22.3322711 -2669.6168481   -12.1267476
+[11]          -Inf          -Inf    -1.2433125 -2056.3157102          -Inf
+[16]   -72.8824245          -Inf   -38.4107147     2.4819954   -89.2725781
+[21]  -133.6280003     1.9256240  -354.6259852    -6.7038414   -71.6237059
+[26]  -383.7528143   -38.5976396          -Inf  -416.7312451 -1295.2560781
+[31]   -20.2485404  -414.3568613   -32.5299950 -1041.8994173   -31.1549695
+[36]  -267.0701042     2.5164276   -30.2187014    -0.6049374 -1275.5518021
+[41]  -909.6115927     1.1920417  -751.4409130 -1487.3397345  -247.6706732
+[46]     2.3257866   -84.9386146          -Inf  -628.0888136  -122.1900394
+> 
+> 
 > ##--- Normal (& Lognormal) :
+> 
+> qnorm(0) == -Inf && qnorm(-Inf, log = TRUE) == -Inf
+[1] TRUE
+> qnorm(1) ==  Inf && qnorm(0, log = TRUE) == Inf
+[1] TRUE
+> 
+> is.nan(qnorm(1.1)) &&
++ is.nan(qnorm(-.1)) # + warn
+[1] TRUE
+Warning messages: 
+1: NaNs produced in: qnorm(p, mean, sd, lower.tail, log.p) 
+2: NaNs produced in: qnorm(p, mean, sd, lower.tail, log.p) 
 > 
 > ## 3 Test data from Wichura (1988) :
 > all.equal(qnorm(c( 0.25,  .001,	 1e-20)),
 + 	  c(-0.6744897501960817, -3.090232306167814, -9.262340089798408),
 + 	  tol = 1e-15)
 [1] TRUE
+> # extreme tail -- available on log scale only:
+> all.equal(qnorm(-1e5, log = TRUE), -447.1974945)
+[1] TRUE
 > 
 > z <- rnorm(1000); all.equal(pnorm(z),  1 - pnorm(-z), tol= 1e-15)
 [1] TRUE
 > z <- c(-Inf,Inf,NA,NaN, rt(1000, df=2))
-> zsml <- z > -37.5 || !is.finite(z)
+> z.ok <- z > -37.5 | !is.finite(z)
 > for(df in 1:10) if(!is.logical(all.equal(pt(z, df), 1 - pt(-z,df), tol= 1e-15)))
 +     cat("ERROR -- df = ", df, "\n")
 > All.eq(pz <- pnorm(z), 1 - pnorm(z, lower=FALSE))
 [1] TRUE
 > All.eq(pz,		 pnorm(-z, lower=FALSE))
 [1] TRUE
-> All.eq(log(pz[zsml]),  pnorm(z[zsml], log=TRUE))
+> All.eq(log(pz[z.ok]),  pnorm(z[z.ok], log=TRUE))
 [1] TRUE
 > y <- seq(-70,0, by = 10)
 > cbind(y, "log(pnorm(y))"= log(pnorm(y)), "pnorm(y, log=T)"= pnorm(y, log=TRUE))
        y log(pnorm(y)) pnorm(y, log=T)
-[1,] -70          -Inf   -2455.1672298
-[2,] -60          -Inf   -1805.0130056
-[3,] -50          -Inf   -1254.8305621
+[1,] -70          -Inf   -2455.1676378
+[2,] -60          -Inf   -1805.0135607
+[3,] -50          -Inf   -1254.8313611
 [4,] -40          -Inf    -804.6084420
 [5,] -30  -454.3212440    -454.3212440
 [6,] -20  -203.9171554    -203.9171554
@@ -653,5 +694,5 @@ Warning messages:
 [1] TRUE
 > 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  10.17 0.15 10.37 0 0 
+Time elapsed:  7.5 0.23 7.73 0 0 
 > 

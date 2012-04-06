@@ -6,7 +6,7 @@
   \file{DESCRIPTION} or \file{CONTENTS} of a package.
 }
 \usage{
-parse.dcf(desc = NULL, file = "", fields = NULL, versionfix = FALSE)
+parse.dcf(text = NULL, file = "", fields = NULL, versionfix = FALSE)
 }
 \arguments{
  \item{text}{A character vector containing one line of the file in each
@@ -30,5 +30,6 @@ parse.dcf(file=file)
 
 ## same in 2 steps
 filecontent <- scan(file=file, what="", sep="\n")
-parse.dcf(text=filecontent) 
+parse.dcf(text=filecontent)
+}
 \keyword{utilities}

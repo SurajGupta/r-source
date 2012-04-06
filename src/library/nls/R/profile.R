@@ -1,4 +1,4 @@
-### $Id: profile.R,v 1.5.6.1 2000/06/21 08:40:30 ripley Exp $
+### $Id: profile.R,v 1.6 2000/06/27 22:26:18 pd Exp $
 ###
 ### Profiling nonlinear least squares for R
 ###

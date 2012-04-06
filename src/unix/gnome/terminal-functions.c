@@ -117,7 +117,7 @@ static void file_open_ok(GtkWidget *widget, gpointer data)
 	    break;
 	case VECSXP:
 	    for (i = 0; i < LENGTH(img); i++) {
-		lst = VECTOR(img)[i];
+		lst = VECTOR_ELT(img, i);
 		while (lst != R_NilValue) {
 		    defineVar(TAG(lst), CAR(lst), R_GlobalEnv);
 		    lst = CDR(lst);
@@ -176,7 +176,7 @@ static void file_saveas_ok(GtkWidget *widget, gpointer data)
     return;
   }
 
-  R_SaveToFile(FRAME(R_GlobalEnv), fp, 0, 0);
+  R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
   Rprintf("Workspace saved\n");
   fclose(fp);
 

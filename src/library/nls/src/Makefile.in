@@ -11,8 +11,12 @@ top_builddir = ../../../..
 subdir = src/library/$(pkg)/src
 R_HOME = $(top_builddir)
 
-SHLIB = $(pkg).@SHLIBEXT@
 OBJS = nls.o
+SHLIB = $(pkg).@SHLIB_EXT@
+## FIXME:
+## Use $(LIBM).
+SHLIB_LIBADD = $(FLIBS)
+## </FIXME>
 
 all: Makefile $(SHLIB)
 	@$(top_srcdir)/tools/mkinstalldirs \
@@ -29,7 +33,8 @@ include $(top_builddir)/etc/Makeconf
 
 mostlyclean: clean
 clean:
-	@rm -f *.o *.$(SHLIBEXT)
+	@-rm -rf .libs _libs
+	@-rm -f *.o *.$(SHLIB_EXT)
 distclean: clean
-	@rm -f Makefile
+	@-rm -f Makefile
 maintainer-clean: distclean

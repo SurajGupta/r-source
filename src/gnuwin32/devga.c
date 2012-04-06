@@ -25,8 +25,9 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Graphics.h"
+#include <Defn.h>
+#include <Graphics.h>
+#include <Devices.h>
 #include <stdio.h>
 #include "opt.h"
 #include "graphapp/ga.h"
@@ -37,7 +38,7 @@
 #include "windows.h"
 
 extern console RConsole;
-extern int AllDevicesKilled;
+extern Rboolean AllDevicesKilled;
 
 
 	/********************************************************/
@@ -85,7 +86,10 @@ typedef struct {
     enum DeviceKinds kind;
     int   windowWidth;		/* Window width (pixels) */
     int   windowHeight;		/* Window height (pixels) */
-    int   resize;		/* Window resized */
+    int   showWidth;		/* device width (pixels) */
+    int   showHeight;		/* device height (pixels) */
+    int   origWidth, origHeight, xshift, yshift;
+    Rboolean resize;		/* Window resized */
     window gawin;		/* Graphics window */
   /*FIXME: we should have union for this stuff and
     maybe change gawin to canvas*/
@@ -97,7 +101,8 @@ typedef struct {
     menuitem mpng, mbmp, mjpeg50, mjpeg75, mjpeg100;
     menuitem mps, mwm, mclpbm, mclpwm, mprint, mclose;
     menuitem mrec, madd, mreplace, mprev, mnext, mclear, msvar, mgvar;
-    int   recording, replaying, needsave;
+    menuitem mR, mfit, mfix;
+    Rboolean recording, replaying, needsave;
     bitmap bm;
   /* PNG and JPEG section */
     FILE *fp;
@@ -107,20 +112,32 @@ typedef struct {
     rgb   fgcolor;		/* Foreground color */
     rgb   bgcolor;		/* Background color */
     rect  clip;			/* The clipping rectangle */
-    int   usefixed;
+    Rboolean usefixed;
     font  fixedfont;
     font  font;
-    int   locator, clicked, px, py;
-    int   lty, lwd;
-}     gadesc;
+    Rboolean locator;
+    int clicked; /* {0,1,2} */
+    int	px, py, lty, lwd;
+    int resizing; /* {1,2,3} */
+    double rescale_factor;
+} gadesc;
 
+rect getregion(gadesc *xd)
+{
+    rect r = getrect(xd->bm);
+    r.x += max(0, xd->xshift);
+    r.y += max(0, xd->yshift);
+    r.width = min(r.width, xd->showWidth);
+    r.height = min(r.height, xd->showHeight);
+    return r;
+}
 
 	/********************************************************/
 	/* There are a number of actions that every device 	*/
 	/* driver is expected to perform (even if, in some	*/
 	/* cases it does nothing - just so long as it doesn't 	*/
 	/* crash !).  this is how the graphics engine interacts */
-	/* with each device. ecah action will be documented 	*/
+	/* with each device. Each action will be documented 	*/
 	/* individually. 					*/
 	/* hooks for these actions must be set up when the 	*/
 	/* device is first created				*/
@@ -135,10 +152,11 @@ static void   GA_Close(DevDesc*);
 static void   GA_Deactivate(DevDesc *);
 static void   GA_Hold(DevDesc*);
 static void   GA_Line(double, double, double, double, int, DevDesc*);
-static int    GA_Locator(double*, double*, DevDesc*);
+static Rboolean GA_Locator(double*, double*, DevDesc*);
 static void   GA_Mode(int);
 static void   GA_NewPage(DevDesc*);
-static int    GA_Open(DevDesc*, gadesc*, char*, double, double);
+static Rboolean GA_Open(DevDesc*, gadesc*, char*, double, double, 
+			Rboolean, int);
 static void   GA_Polygon(int, double*, double*, int, int, int, DevDesc*);
 static void   GA_Polyline(int, double*, double*, int, DevDesc*);
 static void   GA_Rect(double, double, double, double, int, int, int, DevDesc*);
@@ -189,12 +207,18 @@ static void SaveAsWin(DevDesc *dd, char *display)
 	R_ShowMessage("No enough memory to copy graphics window");
 	return;
     }
+    if(!R_CheckDeviceAvailableBool()) {
+	free(ndd);
+	R_ShowMessage("No device available to copy graphics window");
+	return;
+    }
+    
     ndd->displayList = R_NilValue;
     GInit(&ndd->dp);
     if (GADeviceDriver(ndd, display,
 			 GConvertXUnits(1.0, NDC, INCHES, dd),
 			 GConvertYUnits(1.0, NDC, INCHES, dd),
-			 dd->gp.ps))
+			 dd->gp.ps, 0, 1))
         PrivateCopyDevice(dd, ndd, display);
 }
 
@@ -203,12 +227,18 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
 {
     SEXP s = findVar(install(".PostScript.Options"), R_GlobalEnv);
     DevDesc *ndd = (DevDesc *) malloc(sizeof(DevDesc));
-    char family[256], paper[256], bg[256], fg[256];
+    char family[256], paper[256], bg[256], fg[256], **afmpaths = NULL;
 
     if (!ndd) {
 	R_ShowMessage("No enough memory to copy graphics window");
 	return;
     }
+    if(!R_CheckDeviceAvailableBool()) {
+	free(ndd);
+	R_ShowMessage("No device available to copy graphics window");
+	return;
+    }
+
     ndd->displayList = R_NilValue;
     GInit(&ndd->dp);
 
@@ -222,25 +252,25 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
 	SEXP names = getAttrib(s, R_NamesSymbol);
 	int i,done;
 	for (i=0, done=0; (done<4) && (i<length(s)) ; i++) {
-	    if(!strcmp("family", CHAR(STRING(names)[i]))) {
-		strcpy(family, CHAR(STRING(VECTOR(s)[i])[0]));
+	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
+		strcpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
 		done += 1;
 	    }
-	    if(!strcmp("paper", CHAR(STRING(names)[i]))) {
-		strcpy(paper, CHAR(STRING(VECTOR(s)[i])[0]));
+	    if(!strcmp("paper", CHAR(STRING_ELT(names, i)))) {
+		strcpy(paper, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
 		done += 1;
 	    }
-	    if(!strcmp("bg", CHAR(STRING(names)[i]))) {
-		strcpy(bg, CHAR(STRING(VECTOR(s)[i])[0]));
+	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
+		strcpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
 		done += 1;
 	    }
-	    if(!strcmp("fg", CHAR(STRING(names)[i]))) {
-		strcpy(fg, CHAR(STRING(VECTOR(s)[i])[0]));
+	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
+		strcpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
 		done += 1;
 	    }
 	}
     }
-    if (PSDeviceDriver(ndd, fn, paper, family, bg, fg,
+    if (PSDeviceDriver(ndd, fn, paper, family, afmpaths, bg, fg,
 		       GConvertXUnits(1.0, NDC, INCHES, dd),
 		       GConvertYUnits(1.0, NDC, INCHES, dd),
 		       (double)0, dd->gp.ps, 0, 1, 0, ""))
@@ -269,7 +299,7 @@ static double pixelHeight(drawing obj)
 #define NFONT 19
 #define MAXFONT 32
 static int fontnum;
-static int fontinitdone = 0;
+static int fontinitdone = 0;/* in {0,1,2} */
 static char *fontname[MAXFONT];
 static int fontstyle[MAXFONT];
 
@@ -285,7 +315,7 @@ static void RStandardFonts()
     fontstyle[2] = Italic;
     fontstyle[3] = BoldItalic;
     fontnum = 5;
-    fontinitdone = 2;		/* =fontinit done & fonname must not be
+    fontinitdone = 2;		/* =fontinit done & fontname must not be
 				   free-ed */
 }
 
@@ -313,7 +343,7 @@ static void RFontInit()
 	if (notdone == 1)
 	    sprintf(oops, "[%s] Error at line %d.", optfile(), optline());
 	else if (notdone == 2) {
-	    fontname[fontnum] = winstrdup(opt[0]);
+	    fontname[fontnum] = strdup(opt[0]);
 	    if (!fontname[fontnum])
 		strcpy(oops, "Insufficient memory. ");
 	    else {
@@ -353,11 +383,11 @@ static int SetBaseFont(gadesc *xd)
     xd->fontface = 1;
     xd->fontsize = xd->basefontsize;
     xd->fontangle = 0.0;
-    xd->usefixed = 0;
+    xd->usefixed= FALSE;
     xd->font = gnewfont(xd->gawin, fontname[0], fontstyle[0], 
 			MulDiv(xd->fontsize, xd->wanteddpi, xd->truedpi), 0.0);
     if (!xd->font) {
-	xd->usefixed = 1;
+	xd->usefixed= TRUE;
 	xd->font = xd->fixedfont = FixedFont;
 	if (!xd->fixedfont)
 	    return 0;
@@ -373,7 +403,7 @@ static int SetBaseFont(gadesc *xd)
 /* 0 = plain text, 1 = bold */
 /* 2 = oblique, 3 = bold-oblique */
 
-#define SMALLEST 8
+#define SMALLEST 2
 #define LARGEST 64
 
 static void SetFont(int face, int size, double rot, DevDesc *dd)
@@ -382,7 +412,7 @@ static void SetFont(int face, int size, double rot, DevDesc *dd)
 
     if (face < 1 || face > fontnum)
 	face = 1;
-    size = MulDiv(size,xd->wanteddpi,xd->truedpi);
+    size = MulDiv(size, xd->wanteddpi, xd->truedpi);
     if (size < SMALLEST)
 	size = SMALLEST;
     if (size > LARGEST)
@@ -493,7 +523,7 @@ static void HelpResize(window w,rect r)
 		((xd->windowHeight != r.height))) {
 		xd->windowWidth = r.width;
 		xd->windowHeight = r.height;
-		xd->resize = 1;
+		xd->resize= TRUE;
 	    }
 	}
     }
@@ -508,7 +538,7 @@ static void HelpClose(window w)
     }
 }
 
-static void HelpExpose(window w,rect r)
+static void HelpExpose(window w, rect r)
 {
     if (AllDevicesKilled) return;
     {
@@ -517,9 +547,9 @@ static void HelpExpose(window w,rect r)
 
 	if (xd->resize) {
 	    dd->dp.resize(dd);
-	    xd->replaying = 1;
+	    xd->replaying = TRUE;
 	    playDisplayList(dd);
-	    xd->replaying = 0;
+	    xd->replaying = FALSE;
 	    R_ProcessEvents();
 	} else
 	    SHOW;
@@ -659,17 +689,18 @@ extern GPar savedGPar;
 #define GETDL SEXP vDL=findVar(install(".SavedPlots"), R_NilValue)
 #define SETDL gsetVar(install(".SavedPlots"), vDL, R_NilValue)
 #define PLOTHISTORYMAGIC 31415
-#define pMAGIC      (INTEGER(VECTOR(vDL)[0])[0])
-#define pNUMPLOTS   (INTEGER(VECTOR(vDL)[1])[0])
-#define pMAXPLOTS   (INTEGER(VECTOR(vDL)[2])[0])
-#define pCURRENTPOS (INTEGER(VECTOR(vDL)[3])[0])
-#define pHISTORY    (VECTOR(vDL)[4])
-#define pCURRENT    (VECTOR(pHISTORY)[pCURRENTPOS])
-#define pCURRENTdl  (VECTOR(pCURRENT)[0])
-#define pCURRENTgp  (INTEGER(VECTOR(pCURRENT)[1]))
+#define pMAGIC      (INTEGER(VECTOR_ELT(vDL, 0))[0])
+#define pNUMPLOTS   (INTEGER(VECTOR_ELT(vDL, 1))[0])
+#define pMAXPLOTS   (INTEGER(VECTOR_ELT(vDL, 2))[0])
+#define pCURRENTPOS (INTEGER(VECTOR_ELT(vDL, 3))[0])
+#define pHISTORY    (VECTOR_ELT(vDL, 4))
+#define SET_pHISTORY(v)    (SET_VECTOR_ELT(vDL, 4, v))
+#define pCURRENT    (VECTOR_ELT(pHISTORY, pCURRENTPOS))
+#define pCURRENTdl  (VECTOR_ELT(pCURRENT, 0))
+#define pCURRENTgp  (INTEGER(VECTOR_ELT(pCURRENT, 1)))
 #define pCHECK      if ((TYPEOF(vDL)!=VECSXP)||\
-                       (TYPEOF(VECTOR(vDL)[0])!=INTSXP) ||\
-                       (LENGTH(VECTOR(vDL)[0])!=1) ||\
+                       (TYPEOF(VECTOR_ELT(vDL, 0))!=INTSXP) ||\
+                       (LENGTH(VECTOR_ELT(vDL, 0))!=1) ||\
                        (pMAGIC != PLOTHISTORYMAGIC)) {\
                        R_ShowMessage("Plot history seems corrupted");\
                        return;}
@@ -690,14 +721,14 @@ static SEXP NewPlotHistory(int n)
 
     PROTECT(vDL = allocVector(VECSXP, 5));
     for (i = 0; i < 4; i++)
-	PROTECT(VECTOR(vDL)[i] = allocVector(INTSXP, 1));
-    PROTECT(pHISTORY = allocVector(VECSXP, n));
+	PROTECT(SET_VECTOR_ELT(vDL, i, allocVector(INTSXP, 1)));
+    PROTECT(SET_pHISTORY (allocVector(VECSXP, n)));
     pMAGIC = PLOTHISTORYMAGIC;
     pNUMPLOTS = 0;
     pMAXPLOTS = n;
     pCURRENTPOS = -1;
     for (i = 0; i < n; i++)
-	VECTOR(pHISTORY)[i] = R_NilValue;
+	SET_VECTOR_ELT(pHISTORY, i, R_NilValue);
     SETDL;
     UNPROTECT(6);
     return vDL;
@@ -713,7 +744,7 @@ static SEXP GrowthPlotHistory(SEXP vDL)
     oldCurrent = pCURRENTPOS;
     PROTECT(vDL = NewPlotHistory(pMAXPLOTS + GROWTH));
     for (i = 0; i < oldNPlots; i++)
-	VECTOR(pHISTORY)[i] = VECTOR(vOLD)[i];
+	SET_VECTOR_ELT(pHISTORY, i, VECTOR_ELT(vOLD, i));
     pNUMPLOTS = oldNPlots;
     pCURRENTPOS = oldCurrent;
     SETDL;
@@ -745,11 +776,11 @@ static void AddtoPlotHistory(SEXP dl,GPar *gp,int replace)
 	where = pNUMPLOTS;
     PROTECT(dl);
     PROTECT(nDL = allocVector(VECSXP, 2));
-    VECTOR(nDL)[0] = dl;
+    SET_VECTOR_ELT(nDL, 0, dl);
     lGPar = 1 + sizeof(GPar) / sizeof(int);
-    VECTOR(nDL)[1] = allocVector(INTSXP, lGPar);
-    copyGPar(gp, (GPar *) INTEGER(VECTOR(nDL)[1]));
-    VECTOR(pHISTORY)[where] = nDL;
+    SET_VECTOR_ELT(nDL, 1, allocVector(INTSXP, lGPar));
+    copyGPar(gp, (GPar *) INTEGER(VECTOR_ELT(nDL, 1)));
+    SET_VECTOR_ELT(pHISTORY, where, nDL);
     pCURRENTPOS = where;
     if (!replace) pNUMPLOTS += 1;
     SETDL;
@@ -763,12 +794,12 @@ static void Replay(DevDesc *dd,SEXP vDL)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-    xd->replaying = 1;
+    xd->replaying= TRUE;
     dd->displayList = pCURRENTdl;
     gsetcursor(xd->gawin, WatchCursor);
     copyGPar((GPar *) pCURRENTgp, &dd->dpSaved);
     playDisplayList(dd);
-    xd->replaying = 0;
+    xd->replaying= FALSE;
     if (!dd->displayListOn)
 	initDisplayList(dd);
     gsetcursor(xd->gawin, ArrowCursor);
@@ -781,10 +812,10 @@ static void menurec(control m)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     if (xd->recording) {
-	xd->recording = 0;
+	xd->recording= FALSE;
 	uncheck(m);
     } else {
-	xd->recording = 1;
+	xd->recording= TRUE;
 	check(m);
     }
 }
@@ -796,7 +827,7 @@ static void menuadd(control m)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     AddtoPlotHistory(dd->displayList, &dd->dpSaved, 0);
-    xd->needsave = 0;
+    xd->needsave= FALSE;
 }
 
 static void menureplace(control m)
@@ -836,7 +867,7 @@ static void menuprev(control m)
     if (pNUMPLOTS) {
 	if (xd->recording && xd->needsave && (dd->displayList != R_NilValue)) {
 	    AddtoPlotHistory(dd->displayList, &dd->dpSaved, 0);
-	    xd->needsave = 0;
+	    xd->needsave= FALSE;
 	}
 	pMOVE((xd->needsave) ? 0 : -1);
     }
@@ -885,11 +916,44 @@ static void menuconsole(control m)
    show(RConsole);
 }
 
+static void menuR(control m)
+{
+    DevDesc *dd = (DevDesc *) getdata(m);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+    check(xd->mR);
+    uncheck(xd->mfix);
+    uncheck(xd->mfit);
+    xd->resizing = 1;
+}
+
+static void menufit(control m)
+{
+    DevDesc *dd = (DevDesc *) getdata(m);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+
+    uncheck(xd->mR);
+    check(xd->mfit);
+    uncheck(xd->mfix);
+    xd->resizing = 2;
+}
+
+static void menufix(control m)
+{
+    DevDesc *dd = (DevDesc *) getdata(m);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+
+    uncheck(xd->mR);
+    uncheck(xd->mfit);
+    check(xd->mfix);
+    xd->resizing = 3;
+}
+
 static void CHelpKeyIn(control w,int key)
 {
     DevDesc *dd = (DevDesc *) getdata(w);
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
+    if (xd->replaying) return;
     switch (key) {
       case INS:
 	menuadd(xd->madd);
@@ -908,6 +972,7 @@ static void NHelpKeyIn(control w,int key)
     DevDesc *dd = (DevDesc *) getdata(w);
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
+    if (xd->replaying) return;
     if (ggetkeystate() != CtrlKey)
 	return;
     key = 'A' + key - 1;
@@ -927,7 +992,7 @@ static void mbarf(control m)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     GETDL;
-    if (pEXIST) {
+    if (pEXIST && !xd->replaying) {
 	enable(xd->mnext);
 	enable(xd->mprev);
 	if ((pCURRENTPOS >= 0) && (dd->displayList != R_NilValue))
@@ -943,7 +1008,11 @@ static void mbarf(control m)
 	disable(xd->msvar);
 	disable(xd->mclear);
     }
-    if (dd->displayList != R_NilValue) {
+    if (!xd->replaying)
+	enable(xd->mgvar);
+    else
+	disable(xd->mgvar);
+    if ((dd->displayList != R_NilValue) && !xd->replaying) {
 	enable(xd->madd);
 	enable(xd->mprint);
 	enable(xd->mpng);
@@ -991,14 +1060,32 @@ static void mbarf(control m)
 
 #define MCHECK(m) {if(!(m)) {del(xd->gawin); return 0;}}
 
-static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h) 
+static void devga_sbf(control c, int pos)
+{
+    DevDesc *dd = (DevDesc *) getdata(c);
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+    if (pos < 0) {
+	pos = min(-pos-1, xd->origWidth - xd->windowWidth);
+	xd->xshift = -pos;
+    } else {
+	pos = min(pos, xd->origHeight - xd->windowHeight);
+	xd->yshift = -pos;
+    }
+    xd->resize = 1;
+    HelpExpose(c, getrect(xd->gawin));
+}
+
+
+static int 
+setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h, 
+		  Rboolean recording, int resize) 
 {
     menu  m;
     int   iw, ih;
-    double dw, dh, d;
+    double dw, dw0, dh, d;
 
     xd->kind = SCREEN;
-    dw = w / pixelWidth(NULL);
+    dw = dw0 = w / pixelWidth(NULL);
     dh = h / pixelHeight(NULL);
     if ((dw / devicewidth(NULL)) > 0.85) {
 	d = dh / dw;
@@ -1012,11 +1099,15 @@ static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h)
     }
     iw = dw + 0.5;
     ih = dh + 0.5;
+    if (resize == 2) xd->rescale_factor = dw/dw0;
     if (!(xd->gawin = newwindow("R Graphics",
-				rect(devicewidth(NULL) - iw - 5, 0, iw, ih),
-				Document | StandardWindow | Menubar))) {
+				rect(devicewidth(NULL) - iw - 25, 0, iw, ih),
+				Document | StandardWindow | Menubar |
+				VScrollbar | HScrollbar))) {
 	return 0;
     }
+    gchangescrollbar(xd->gawin, VWINSB, 0, ih-1, ih, 0);
+    gchangescrollbar(xd->gawin, HWINSB, 0, iw-1, iw, 0);
 
     addto(xd->gawin);
     gsetcursor(xd->gawin, ArrowCursor);
@@ -1088,6 +1179,7 @@ static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h)
     MCHECK(xd->mclose = newmenuitem("close Device", 0, menuclose));
     MCHECK(newmenu("History"));
     MCHECK(xd->mrec = newmenuitem("Recording", 0, menurec));
+    if(recording) check(xd->mrec);
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(xd->madd = newmenuitem("Add\tINS", 0, menuadd));
     MCHECK(xd->mreplace = newmenuitem("Replace", 0, menureplace));
@@ -1099,6 +1191,13 @@ static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h)
     MCHECK(xd->mgvar = newmenuitem("Get from variable", 0, menugvar));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(xd->mclear = newmenuitem("Clear history", 0, menuclear));
+    MCHECK(newmenu("Resize"));
+    MCHECK(xd->mR = newmenuitem("R mode", 0, menuR));
+    if(resize == 1) check(xd->mR);
+    MCHECK(xd->mfit = newmenuitem("Fit to window", 0, menufit));
+    if(resize == 2) check(xd->mfit);
+    MCHECK(xd->mfix = newmenuitem("Fixed size", 0, menufix));
+    if(resize == 3) check(xd->mfix);
     newmdimenu();
 
     /* Normal popup */
@@ -1119,7 +1218,8 @@ static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h)
 
     MCHECK(xd->bm = newbitmap(getwidth(xd->gawin), getheight(xd->gawin), 
 			      getdepth(xd->gawin)));
-
+    gfillrect(xd->gawin, LightGray, getrect(xd->gawin));
+    gfillrect(xd->bm, LightGray, getrect(xd->bm));
     addto(xd->gawin);
     setdata(xd->mbar, (void *) dd);
     setdata(xd->mpng, (void *) dd);
@@ -1139,23 +1239,28 @@ static int setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h)
     setdata(xd->mgvar, (void *) dd);
     setdata(xd->madd, (void *) dd);
     setdata(xd->mreplace, (void *) dd);
-    show(xd->gawin);
+    setdata(xd->mR, (void *) dd);
+    setdata(xd->mfit, (void *) dd);
+    setdata(xd->mfix, (void *) dd);
+    show(xd->gawin); /* twice, for a Windows bug */
     show(xd->gawin);
     BringToTop(xd->gawin);
+    sethit(xd->gawin, devga_sbf);
     setresize(xd->gawin, HelpResize);
     setredraw(xd->gawin, HelpExpose);
     setmousedown(xd->gawin, HelpMouseClick);
     setkeydown(xd->gawin, NHelpKeyIn);
     setkeyaction(xd->gawin, CHelpKeyIn);
     setclose(xd->gawin, HelpClose);
-    xd->recording = 0;
-    xd->replaying = 0;
+    xd->recording = recording;
+    xd->replaying = FALSE;
+    xd->resizing = resize;
 
     return 1;
 }
 
-static int GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
-                    double w, double h)
+static Rboolean GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
+			double w, double h, Rboolean recording, int resize)
 {
     rect  rr;
 
@@ -1169,19 +1274,21 @@ static int GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
 
     xd->fgcolor = Black;
     xd->bgcolor = White;
-
+    xd->rescale_factor = 1.0;
+    xd->xshift = xd->yshift = 0;
     if (!dsp[0]) {
-      if (!setupScreenDevice(dd, xd, w, h)) return 0;
+      if (!setupScreenDevice(dd, xd, w, h, recording, resize)) 
+	  return FALSE;
     } else if (!strcmp(dsp, "win.print")) {
 	xd->kind = PRINTER;
 	xd->gawin = newprinter(MM_PER_INCH * w, MM_PER_INCH * h);
 	if (!xd->gawin)
-	    return 0;
+	    return FALSE;
     } else if (!strncmp(dsp, "png:", 4) || !strncmp(dsp,"bmp:",4)) {
         xd->kind = (dsp[0]=='p') ? PNG : BMP;
 	if (!Load_Rbitmap_Dll()) {
 	  warning("Impossible to load Rbitmap.dll");
-	  return 0;
+	  return FALSE;
 	}
 	/*
 	  Observe that given actual graphapp implementation 256 is 
@@ -1192,63 +1299,63 @@ static int GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
 	    ((xd->fp=fopen(&dsp[4],"wb")) == NULL )) {
 	  if (xd->gawin != NULL) del(xd->gawin);
 	  if (xd->fp != NULL) fclose(xd->fp);
-	  return 0;
+	  return FALSE;
 	}
     } else if (!strncmp(dsp, "jpeg:", 5)) {
         char *p = strchr(&dsp[5], ':');
         xd->kind = JPEG;
-	if (!p) return 0;
+	if (!p) return FALSE;
 	if (!Load_Rbitmap_Dll()) {
 	  warning("Impossible to load Rbitmap.dll");
-	  return 0;
+	  return FALSE;
 	}
 	*p = '\0';
 	xd->quality = atoi(&dsp[5]);
 	*p = ':' ;
 	if (((xd->gawin = newbitmap(w,h,256)) == NULL) || 
-	    ((xd->fp=fopen(p+1,"wb")) == NULL )) {
+	    ((xd->fp = fopen(p+1, "wb")) == NULL )) {
 	  if (xd->gawin != NULL) del(xd->gawin);
 	  if (xd->fp != NULL) fclose(xd->fp);
-	  return 0;
+	  return FALSE;
 	}
     } else {
 	/*
 	 * win.metafile[:] in memory (for the clipboard)
 	 * win.metafile:filename
-	 * anything else return 0
+	 * anything else return FALSE
 	 */
 	char  *s = "win.metafile";
 	int   ls = strlen(s);
 	int   ld = strlen(dsp);
 
 	if (ls > ld)
-	    return 0;
+	    return FALSE;
 	if (strncmp(dsp, s, ls) || (dsp[ls] && (dsp[ls] != ':')))
-	    return 0;
+	    return FALSE;
 	xd->gawin = newmetafile((ld > ls) ? &dsp[ls + 1] : "",
 				rect(0, 0, MM_PER_INCH * w, MM_PER_INCH * h));
 	xd->kind = METAFILE;
 	if (!xd->gawin)
-	    return 0;
+	    return FALSE;
     }
     xd->truedpi = devicepixelsy(xd->gawin);
     if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) 
       xd->wanteddpi = 72 ;
     else
-      xd->wanteddpi = xd->truedpi;
+      xd->wanteddpi = xd->rescale_factor * xd->truedpi;
     if (!SetBaseFont(xd)) {
 	Rprintf("can't find any fonts\n");
 	del(xd->gawin);
 	if (xd->kind == SCREEN) del(xd->bm);
-	return 0;
+	return FALSE;
     }
     rr = getrect(xd->gawin);
-    xd->windowWidth = rr.width;
-    xd->windowHeight = rr.height;
+    xd->origWidth = xd->showWidth = xd->windowWidth = rr.width;
+    xd->origHeight = xd->showHeight = xd->windowHeight = rr.height;
     xd->clip = rr;
     setdata(xd->gawin, (void *) dd);
-    xd->needsave = 0;
-    return 1;
+    xd->needsave= FALSE;
+    return TRUE;
 }
 
 	/********************************************************/
@@ -1327,21 +1434,70 @@ static void GA_Resize(DevDesc *dd)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     if (xd->resize) {
-	int   iw, ih;
+	int   iw, ih, iw0 = dd->dp.right - dd->dp.left, 
+	    ih0 = dd->dp.bottom - dd->dp.top;
+	double fw, fh, rf, shift;
 
-	dd->dp.left = dd->gp.left = 0.0;
-	dd->dp.right = dd->gp.right = iw = xd->windowWidth;
-	dd->dp.bottom = dd->gp.bottom = ih = xd->windowHeight;
-	dd->dp.top = dd->gp.top = 0.0;
-	xd->resize = 0;
-	if (xd->kind==SCREEN) {
+	iw = xd->windowWidth;
+	ih = xd->windowHeight;
+	if(xd->resizing == 1) {
+	    dd->dp.left = dd->gp.left = 0.0;
+	    dd->dp.top = dd->gp.top = 0.0;
+	    dd->dp.right = dd->gp.right = iw;
+	    dd->dp.bottom = dd->gp.bottom = ih;
+	    xd->showWidth = iw;
+	    xd->showHeight =  ih;
+	} else if (xd->resizing == 2) {
+	    fw = (iw + 0.5)/(iw0 + 0.5);
+	    fh = (ih + 0.5)/(ih0 + 0.5);
+	    rf = min(fw, fh);
+	    xd->rescale_factor *= rf;
+	    xd->wanteddpi = xd->rescale_factor * xd->truedpi;
+	    dd->dp.ps *= rf; dd->dp.cra[0] *= rf; dd->dp.cra[1] *= rf;
+	    if (fw < fh) {
+		dd->dp.left = dd->gp.left = 0.0;
+		xd->showWidth = dd->dp.right = dd->gp.right = iw;
+		xd->showHeight =  ih0*fw;
+		shift = (ih - xd->showHeight)/2.0;
+		dd->dp.top = dd->gp.top = shift;
+		dd->dp.bottom = dd->gp.bottom = ih0*fw + shift;
+		xd->xshift = 0; xd->yshift = shift;
+	    } else {
+		dd->dp.top = dd->gp.top = 0.0;
+		xd->showHeight = dd->dp.bottom = dd->gp.bottom = ih;
+		xd->showWidth = iw0*fh;
+		shift = (iw - xd->showWidth)/2.0;
+		dd->dp.left = dd->gp.left = shift;
+		dd->dp.right = dd->gp.right = iw0*fh + shift;
+		xd->xshift = shift; xd->yshift = 0;
+	    }
+	    xd->clip = getregion(xd);
+	} else if (xd->resizing == 3) {
+	    if(iw0 < iw) shift = (iw - iw0)/2.0; 
+	    else shift = min(0, xd->xshift);
+	    dd->dp.left = dd->gp.left = shift;
+	    dd->dp.right = dd->gp.right = iw0 + shift;
+	    xd->xshift = shift;
+	    gchangescrollbar(xd->gawin, HWINSB, max(-shift,0), 
+			     xd->origWidth - 1, xd->windowWidth, 0);
+	    if(ih0 < ih) shift = (ih - ih0)/2.0; 
+	    else shift = min(0, xd->yshift);
+	    dd->dp.top = dd->gp.top = shift;
+	    dd->dp.bottom = dd->gp.bottom = ih0 + shift;
+	    xd->yshift = shift;
+	    gchangescrollbar(xd->gawin, VWINSB, max(-shift,0), 
+			     xd->origHeight - 1, xd->windowHeight, 0);
+	}
+	xd->resize = FALSE;
+	if (xd->kind == SCREEN) {
 	    del(xd->bm);
 	    xd->bm = newbitmap(iw, ih, getdepth(xd->gawin));
 	    if (!xd->bm) {
 		R_ShowMessage("Insufficient memory for resize. Killing device");
 		KillDevice(dd);
 	    }
-	    setbackground(xd->bm, xd->bgcolor);
+	    gfillrect(xd->gawin, LightGray, getrect(xd->gawin));
+	    gfillrect(xd->bm, LightGray, getrect(xd->bm));
 	}
     }
 }
@@ -1371,21 +1527,22 @@ static void GA_NewPage(DevDesc *dd)
 	if (xd->recording && xd->needsave)
 	    AddtoPlotHistory(savedDisplayList, &savedGPar, 0);
 	if (xd->replaying)
-	    xd->needsave = 0;
+	    xd->needsave = FALSE;
 	else
-	    xd->needsave = 1;
+	    xd->needsave = TRUE;
     }
     xd->bg = dd->dp.bg;
     xd->bgcolor = rgb(R_RED(xd->bg),
 		      R_GREEN(xd->bg),
 		      R_BLUE(xd->bg));
     if (xd->kind!=SCREEN) {
-	xd->needsave = 1;
+	xd->needsave = TRUE;
 	xd->clip = getrect(xd->gawin);
+	DRAW(gfillrect(_d, xd->bgcolor, xd->clip));
     } else {
-	xd->clip = getrect(xd->bm);
+	xd->clip = getregion(xd);
+	DRAW(gfillrect(_d, xd->bgcolor, getregion(xd)));
     }
-    DRAW(gfillrect(_d, xd->bgcolor, getrect(_d)));
 }
 
 	/********************************************************/
@@ -1710,13 +1867,13 @@ static void GA_Text(double x, double y, int coords,
 	/* not all devices will do anything (e.g., postscript)	*/
 	/********************************************************/
 
-static int GA_Locator(double *x, double *y, DevDesc *dd)
+static Rboolean GA_Locator(double *x, double *y, DevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
     if (xd->kind!=SCREEN)
-	return 0;
-    xd->locator = 1;
+	return FALSE;
+    xd->locator = TRUE;
     xd->clicked = 0;
     show(xd->gawin);
     addto(xd->gawin);
@@ -1743,13 +1900,13 @@ static int GA_Locator(double *x, double *y, DevDesc *dd)
     gchangepopup(xd->gawin, xd->grpopup);
     addto(xd->gawin);
     setstatus("R Graphics");
-    xd->locator = 0;
+    xd->locator = FALSE;
     if (xd->clicked == 1) {
 	*x = xd->px;
 	*y = xd->py;
-	return 1;
+	return TRUE;
     } else
-	return 0;
+	return FALSE;
 }
 
 	/********************************************************/
@@ -1796,7 +1953,7 @@ static void GA_Hold(DevDesc *dd)
 	/* should know what you are doing if you do this)	*/
 	/* (5) it must attach the device-specific parameters	*/
         /* structure to the device description structure	*/
-	/* e.g., dd->deviceSpecfic = (void *) xd;		*/
+	/* e.g., dd->deviceSpecific = (void *) xd;		*/
 	/* (6) it must FREE the overall device description if 	*/
 	/* it wants to bail out to the top-level		*/
 	/* the graphics engine is responsible for allocating 	*/
@@ -1807,8 +1964,9 @@ static void GA_Hold(DevDesc *dd)
 
 
 
-int GADeviceDriver(DevDesc *dd, char *display, double width, 
-		   double height, double pointsize)
+Rboolean GADeviceDriver(DevDesc *dd, char *display, double width, 
+			double height, double pointsize, 
+			Rboolean recording, int resize)
 {
     /* if need to bail out with some sort of "error" then */
     /* must free(dd) */
@@ -1820,7 +1978,7 @@ int GADeviceDriver(DevDesc *dd, char *display, double width,
 
     /* allocate new device description */
     if (!(xd = (gadesc *) malloc(sizeof(gadesc))))
-	return 0;
+	return FALSE;
 
     /* from here on, if need to bail out with "error", must also */
     /* free(xd) */
@@ -1839,9 +1997,9 @@ int GADeviceDriver(DevDesc *dd, char *display, double width,
 
     /* Start the Device Driver and Hardcopy.  */
 
-    if (!GA_Open(dd, xd, display, width, height)) {
+    if (!GA_Open(dd, xd, display, width, height, recording, resize)) {
 	free(xd);
-	return 0;
+	return FALSE;
     }
     /* Set up Data Structures  */
 
@@ -1875,8 +2033,9 @@ int GADeviceDriver(DevDesc *dd, char *display, double width,
 
     /* Nominal Character Sizes in Pixels */
     gcharmetric(xd->gawin, xd->font, -1, &a, &d, &w);
-    dd->dp.cra[0] = w;
-    dd->dp.cra[1] = a + d;
+    dd->dp.cra[0] = w * xd->rescale_factor;
+    dd->dp.cra[1] = (a + d) * xd->rescale_factor;
+
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
     /* so that it is exactly over the plotting point */
@@ -1894,22 +2053,22 @@ int GADeviceDriver(DevDesc *dd, char *display, double width,
     /* Clipping is problematic for X11 */
     /* Graphics is clipped, text is not */
 
-    dd->dp.canResizePlot = 1;
-    dd->dp.canChangeFont = 0;
-    dd->dp.canRotateText = 1;
-    dd->dp.canResizeText = 1;
-    dd->dp.canClip = 1;
+    dd->dp.canResizePlot= TRUE;
+    dd->dp.canChangeFont= FALSE;
+    dd->dp.canRotateText= TRUE;
+    dd->dp.canResizeText= TRUE;
+    dd->dp.canClip= TRUE;
     dd->dp.canHAdj = 1; /* 0, 0.5, 1 */
 
     /* initialise device description (most of the work */
     /* has been done in GA_Open) */
 
-    xd->resize = 0;
-    xd->locator = 0;
+    xd->resize= FALSE;
+    xd->locator= FALSE;
     dd->deviceSpecific = (void *) xd;
-    dd->displayListOn = 1;
+    dd->displayListOn = TRUE;
     if (RConsole && (xd->kind!=SCREEN)) show(RConsole);
-    return 1;
+    return TRUE;
 }
 
 SEXP do_saveDevga(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -1928,12 +2087,12 @@ SEXP do_saveDevga(SEXP call, SEXP op, SEXP args, SEXP env)
     filename = CADR(args);
     if (!isString(filename) || LENGTH(filename) != 1)
 	errorcall(call, "invalid filename argument");
-    fn = CHAR(STRING(filename)[0]);
+    fn = CHAR(STRING_ELT(filename, 0));
     fixslash(fn);
     type = CADDR(args);
     if (!isString(type) || LENGTH(type) != 1)
 	errorcall(call, "invalid type argument");
-    tp = CHAR(STRING(type)[0]);
+    tp = CHAR(STRING_ELT(type, 0));
 
     if(!strcmp(tp, "png")) {
 	SaveAsPng(dd, fn);
@@ -2090,4 +2249,22 @@ static void SaveAsBmp(DevDesc *dd,char *fn)
 		privategetpixel, 0, fp) ;
     gsetcliprect(xd->bm, r);
     fclose(fp);
+}
+
+SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    int dev;
+    DevDesc *dd;
+    gadesc *xd;
+
+    checkArity(op, args);
+    dev = asInteger(CAR(args));
+    if(dev < 1 || dev > NumDevices() || dev == NA_INTEGER)
+	errorcall(call, "invalid value of `which'");
+    dd = GetDevice(dev - 1);
+    if(!dd) errorcall(call, "invalid device");
+    xd = (gadesc *) dd->deviceSpecific;
+    if(!xd) errorcall(call, "invalid device");
+    BringToTop(xd->gawin);
+    return R_NilValue;
 }

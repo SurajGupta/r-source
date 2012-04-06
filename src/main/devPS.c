@@ -28,117 +28,103 @@
 
 #include "Defn.h"
 #include "Graphics.h"
-#include "Error.h"
+#include "R_ext/Error.h"
 #include "Fileio.h"
+#include "Devices.h"
 
 #define PS_minus_default 45
 /* wrongly was 177 (plusminus);
    hyphen = 45 or 173;	(n-dash not available as code!)
-   175 = "¯" (= "overline" (= high 'negative' sign))
+   175 = "¯" (macron)
 */
 static char PS_minus = PS_minus_default;/*-> TODO: make this a ps.option() !*/
+
+#define USERAFM 999
 
 /* Part 0.  AFM File Names */
 
 /* This structure gives the set of font names for each type face. */
-/* They also give the official Adobe abbreviated name which is used */
-/* for files such as those which contain the font metrics. */
+/* They also give the afm file names. */
 
 static struct {
     char *family;
-    struct {
-	char *name;
-	char *abbr;
-    } font[5];
+    char *afmfile[4];
 }
 Family[] = {
 
     { "AvantGarde",
-      {{ "AvantGarde-Book",			"agw_____" },
-       { "AvantGarde-Demi",			"agd_____" },
-       { "AvantGarde-BookOblique",		"agwo____" },
-       { "AvantGarde-DemiOblique",		"agdo____" },
-       { "Symbol",				"sy______" }}
+      {"agw_____.lt1", "agd_____.lt1", "agwo____.lt1", "agdo____.lt1" }
     },
 
     { "Bookman",
-      {{ "Bookman-Light",			"bkl_____" },
-       { "Bookman-Demi",			"bkd_____" },
-       { "Bookman-LightItalic",			"bkli____" },
-       { "Bookman-DemiItalic",			"bkdi____" },
-       { "Symbol",				"sy______" }}
+      {"bkl_____.lt1", "bkd_____.lt1", "bkli____.lt1", "bkdi____.lt1"}
     },
 
     { "Courier",
-      {{ "Courier",				"com_____" },
-       { "Courier-Bold",			"cob_____" },
-       { "Courier-Oblique",			"coo_____" },
-       { "Courier-BoldOblique",			"cobo____" },
-       { "Symbol",				"sy______" }}
+      {"com_____.lt1", "cob_____.lt1", "coo_____.lt1", "cobo____.lt1"}
     },
 
     { "Helvetica",
-      {{ "Helvetica",				"hv______" },
-       { "Helvetica-Bold",			"hvb_____" },
-       { "Helvetica-Oblique",			"hvo_____" },
-       { "Helvetica-BoldOblique",		"hvbo____" },
-       { "Symbol",				"sy______" }}
+      {"hv______.lt1", "hvb_____.lt1", "hvo_____.lt1", "hvbo____.lt1"}
     },
-
-#ifdef NOTYET
-    { "Helvetica-Condensed",
-      {{ "Helvetica-Condensed",			"hvc_____" },
-       { "Helvetica-Condensed-Bold",		"hvcb____" },
-       { "Helvetica-Condensed-Oblique",		"hvcdo___" },
-       { "Helvetica-Condensed-BoldObl",		"hvnbo___" },
-       { "Symbol",				"sy______" }}
-    },
-#endif
 
     { "Helvetica-Narrow",
-      {{ "Helvetica-Narrow",			"hvn_____" },
-       { "Helvetica-Narrow-Bold",		"hvnb____" },
-       { "Helvetica-Narrow-Oblique",		"hvno____" },
-       { "Helvetica-Narrow-BoldOblique",	"hvnbo___" },
-       { "Symbol",				"sy______" }}
+      {"hvn_____.lt1", "hvnb____.lt1", "hvno____.lt1", "hvnbo___.lt1"}
     },
 
     { "NewCenturySchoolbook",
-      {{ "NewCenturySchlbk-Roman",		"ncr_____" },
-       { "NewCenturySchlbk-Bold",		"ncb_____" },
-       { "NewCenturySchlbk-Italic",		"nci_____" },
-       { "NewCenturySchlbk-BoldItalic",		"ncbi____" },
-      { "Symbol",				"sy______" }}
+      {"ncr_____.lt1", "ncb_____.lt1", "nci_____.lt1", "ncbi____.lt1"}
     },
 
     { "Palatino",
-      {{ "Palatino-Roman",			"por_____" },
-       { "Palatino-Bold",			"pob_____" },
-       { "Palatino-Italic",			"poi_____" },
-       { "Palatino-BoldItalic",			"pobi____" },
-       { "Symbol",				"sy______" }}
+      {"por_____.lt1", "pob_____.lt1", "poi_____.lt1", "pobi____.lt1"}
     },
 
     { "Times",
-      {{ "Times-Roman",				"tir_____" },
-       { "Times-Bold",				"tib_____" },
-       { "Times-Italic",			"tii_____" },
-       { "Times-BoldItalic",			"tibi____" },
-       { "Symbol",				"sy______" }}
+      {"tir_____.lt1", "tib_____.lt1", "tii_____.lt1", "tibi____.lt1"}
     },
 
     { NULL }
 };
 
-/* These are the file extensions used on metrics files. */
-
-static char *Extension[] = {
-    "afm",			/* AdobeStandardEncoding (Unused) */
-    "lt1",			/* ISOLatin1Encoding */
-    "lt2",			/* ISOLatin2Encoding */
-    0
+static char *ISOLatin1Encoding[] =
+{
+"space", "exclam", "quotedbl", "numbersign", "dollar", "percent",
+"ampersand", "quoteright", "parenleft", "parenright", "asterisk",
+"plus", "comma", "minus", "period", "slash", "zero", "one", "two",
+"three", "four", "five", "six", "seven", "eight", "nine", "colon",
+"semicolon", "less", "equal", "greater", "question", "at",
+"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N",
+"O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+"bracketleft", "backslash", "bracketright", "asciicircum", "underscore",
+"quoteleft",
+"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
+"o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+"braceleft", "bar", "braceright", "asciitilde", ".notdef", ".notdef",
+".notdef", ".notdef", ".notdef", ".notdef", ".notdef", ".notdef",
+".notdef", ".notdef", ".notdef", ".notdef", ".notdef", ".notdef",
+".notdef", ".notdef", ".notdef", "dotlessi", "grave", "acute",
+"circumflex", "tilde", "macron", "breve", "dotaccent", "dieresis",
+".notdef", "ring", "cedilla", ".notdef", "hungarumlaut", "ogonek",
+"caron", "space", "exclamdown", "cent", "sterling", "currency",
+"yen", "brokenbar", "section", "dieresis", "copyright", "ordfeminine",
+"guillemotleft", "logicalnot", "hyphen", "registered", "macron", 
+"degree", "plusminus", "twosuperior", "threesuperior", "acute", "mu",
+"paragraph", "periodcentered", "cedilla", "onesuperior", "ordmasculine",
+"guillemotright", "onequarter", "onehalf", "threequarters", "questiondown",
+"Agrave", "Aacute", "Acircumflex", "Atilde", "Adieresis", "Aring", "AE",
+"Ccedilla", "Egrave", "Eacute", "Ecircumflex", "Edieresis", "Igrave",
+"Iacute", "Icircumflex", "Idieresis", "Eth", "Ntilde", "Ograve", "Oacute",
+"Ocircumflex", "Otilde", "Odieresis", "multiply", "Oslash", "Ugrave",
+"Uacute", "Ucircumflex", "Udieresis", "Yacute", "Thorn", "germandbls",
+"agrave", "aacute", "acircumflex", "atilde", "adieresis", "aring", "ae",
+"ccedilla", "egrave", "eacute", "ecircumflex", "edieresis", "igrave",
+"iacute", "icircumflex", "idieresis", "eth", "ntilde", "ograve", "oacute",
+"ocircumflex", "otilde", "odieresis", "divide", "oslash", "ugrave", "uacute",
+"ucircumflex", "udieresis", "yacute", "thorn", "ydieresis"
 };
 
+static char familyname[5][50];
 
 
 /* Part 1.  AFM File Parsing.  */
@@ -294,10 +280,12 @@ static int GetFontBBox(char *buf, FontMetricInfo *metrics)
 
 static char charnames[256][25];
 
-static int GetCharInfo(char *buf, FontMetricInfo *metrics)
+/* If ISOLatin1 > 0, remap to ISOLatin1 encoding */
+static int GetCharInfo(char *buf, FontMetricInfo *metrics, int ISOLatin1)
 {
-    char *p = buf;
-    int nchar;
+    char *p = buf, charname[25];
+    int nchar, i;
+    short WX;
 
     if (!MatchKey(buf, "C ")) return 0;
     p = SkipToNextItem(p);
@@ -307,12 +295,24 @@ static int GetCharInfo(char *buf, FontMetricInfo *metrics)
 
     if (!MatchKey(p, "WX")) return 0;
     p = SkipToNextItem(p);
-    sscanf(p, "%hd", &(metrics->CharInfo[nchar].WX));
+    sscanf(p, "%hd", &WX);
     p = SkipToNextKey(p);
 
     if (!MatchKey(p, "N ")) return 0;
     p = SkipToNextItem(p);
-    sscanf(p, "%s", charnames[nchar]);
+    if(ISOLatin1) {
+	sscanf(p, "%s", charname);
+	for (i = 32; i < 256; i++)
+	    if(!strcmp(charname, ISOLatin1Encoding[i-32])) {
+		nchar = i;
+		strcpy(charnames[i], charname);
+		break;
+	    }
+	if (i > 255) return 1;
+    } else {
+	sscanf(p, "%s", charnames[nchar]);
+    }
+    metrics->CharInfo[nchar].WX = WX;
     p = SkipToNextKey(p);
 
     if (!MatchKey(p, "B ")) return 0;
@@ -358,18 +358,29 @@ static int GetKPX(char *buf, int nkp, FontMetricInfo *metrics)
 }
 
 
-/* Load Fontmetrics from a File */
+/* Load Fontmetrics from a file: defaults to the R_HOME/afm directory */
 
-int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
+static int
+PostScriptLoadFontMetrics(char *fontpath, FontMetricInfo *metrics,
+			  char *fontname, int ISOLatin1)
 {
     char buf[BUFSIZE], *p;
     int mode, i = 0, ii, nKPX=0;
     FILE *fp;
 
-    if (!(fp = R_fopen(fontname, "r"))) return 0;
+    if(strchr(fontpath, FILESEP[0])) strcpy(buf, fontpath);
+    else sprintf(buf, "%s%safm%s%s", R_Home, FILESEP, FILESEP, fontpath);
+#ifdef DEBUG_PS
+    Rprintf("afmpath is %s\n", buf);
+#endif
+    
+    if (!(fp = R_fopen(buf, "r"))) return 0;
 
     mode = 0;
-    for (ii = 0; ii < 256; ii++) charnames[ii][0] = '\0';
+    for (ii = 0; ii < 256; ii++) {
+	charnames[ii][0] = '\0';
+	metrics->CharInfo[ii].WX = 0;
+    }
     while (fgets(buf, BUFSIZE, fp)) {
 	switch(KeyType(buf)) {
 
@@ -387,7 +398,7 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
 
 	case C:
 	    if (mode != StartFontMetrics) goto error;
-	    if (!GetCharInfo(buf, metrics)) goto error;
+	    if (!GetCharInfo(buf, metrics, ISOLatin1)) goto error;
 	    break;
 
 	case StartKernData:
@@ -396,7 +407,7 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
 
 	case StartKernPairs:
 	    if(mode != StartKernData) goto error;
-	    p = SkipToNextItem(p=buf);
+	    p = SkipToNextItem(buf);
 	    sscanf(p, "%d", &nKPX);
 	    metrics->KernPairs = (KP *) malloc(nKPX * sizeof(KP));
 	    if (!metrics->KernPairs) goto error;
@@ -412,9 +423,14 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
 	    break;
 
 	case Unknown:
-	    printf("Warning: unknown AFM entity encountered");
+	    warning("unknown AFM entity encountered");
 	    break;
 
+	case FontName:
+	    p = SkipToNextItem(buf);
+	    sscanf(p, "%s", fontname);
+	    break;
+	    
 	case Empty:
 	default:
 	    break;
@@ -445,7 +461,8 @@ int PostScriptLoadFontMetrics(char *fontname, FontMetricInfo *metrics)
     return 0;
 }
 
-double PostScriptStringWidth(unsigned char *p, FontMetricInfo *metrics)
+static double
+PostScriptStringWidth(unsigned char *p, FontMetricInfo *metrics)
 {
     int sum = 0, i;
     unsigned char p1, p2;
@@ -467,14 +484,14 @@ double PostScriptStringWidth(unsigned char *p, FontMetricInfo *metrics)
     return 0.001 * sum;
 }
 
-void PostScriptMetricInfo(int c, double *ascent, double *descent,
-			  double *width, FontMetricInfo *metrics)
+static void
+PostScriptMetricInfo(int c, double *ascent, double *descent,
+		     double *width, FontMetricInfo *metrics)
 {
     if (c == 0) {
 	*ascent = 0.001 * metrics->FontBBox[3];
 	*descent = -0.001 * metrics->FontBBox[1];
 	*width = 0.001 * (metrics->FontBBox[2] - metrics->FontBBox[0]);
-
     }
     else {
 	*ascent = 0.001 * metrics->CharInfo[c].BBox[3];
@@ -488,11 +505,11 @@ void PostScriptMetricInfo(int c, double *ascent, double *descent,
 
 static char *TypeFaceDef[] = { "R", "B", "I", "BI", "S" };
 
-static void PSEncodeFont(FILE *fp, int index, int encoding)
+static void PSEncodeFont(FILE *fp, int encoding)
 {
     int i;
     for (i = 0; i < 4 ; i++) {
-	fprintf(fp, "/%s findfont\n", Family[index].font[i].name);
+	fprintf(fp, "/%s findfont\n", familyname[i]);
 	fprintf(fp, "dup length dict begin\n");
 	fprintf(fp, "  {1 index /FID ne {def} {pop pop} ifelse} forall\n");
 	if (encoding) fprintf(fp, "  /Encoding ISOLatin1Encoding def\n");
@@ -512,79 +529,53 @@ static void PSEncodeFont(FILE *fp, int index, int encoding)
 /* of the (unrotated) printer page in points whereas the graphics */
 /* region box is for the rotated page. */
 
-static void PSFileHeader(FILE *fp, int font, int encoding, char *papername,
-			 double paperwidth, double paperheight, int landscape,
+static void PSFileHeader(FILE *fp, int encoding, char *papername,
+			 double paperwidth, double paperheight, Rboolean landscape,
 			 int EPSFheader,
 			 double left, double bottom, double right, double top)
 {
+    int i;
+    SEXP prolog;
+
     if(EPSFheader)
 	fprintf(fp, "%%!PS-Adobe-3.0 EPSF-3.0\n");
     else
 	fprintf(fp, "%%!PS-Adobe-3.0\n");
-    fprintf(fp, "%%%%DocumentFonts: %s %s %s\n%%%%+ %s %s\n",
-	    Family[font].font[0].name, Family[font].font[1].name,
-	    Family[font].font[2].name, Family[font].font[3].name,
-	    Family[font].font[4].name);
+    fprintf(fp, "%%%%DocumentNeededResources: font Symbol\n");
+    for (i = 0; i < 4; i++)
+	fprintf(fp, "%%%%+ font %s\n", familyname[i]);
     if(!EPSFheader)
-	fprintf(fp, "%%%%DocumentMedia: %s %.0f %.0f 0 ()\n",
+	fprintf(fp, "%%%%DocumentMedia: %s %.0f %.0f 0 () ()\n",
 		papername, paperwidth, paperheight);
     fprintf(fp, "%%%%Title: R Graphics Output\n");
     fprintf(fp, "%%%%Creator: R Software\n");
     fprintf(fp, "%%%%Pages: (atend)\n");
     if (landscape) {
 	fprintf(fp, "%%%%Orientation: Landscape\n");
-	fprintf(fp, "%%%%BoundingBox: %.0f %.0f %.0f %.0f\n",
-		left, bottom, right, top);
-/* This appears to be wrong, use *same* BBox as Portrait
-		bottom, left, top, right);
-*/
     }
     else {
 	fprintf(fp, "%%%%Orientation: Portrait\n");
-	fprintf(fp, "%%%%BoundingBox: %.0f %.0f %.0f %.0f\n",
-		left, bottom, right, top);
     }
+    fprintf(fp, "%%%%BoundingBox: %.0f %.0f %.0f %.0f\n",
+	    left, bottom, right, top);
     fprintf(fp, "%%%%EndComments\n");
     fprintf(fp, "%%%%BeginProlog\n");
-    fprintf(fp, "/gs  { gsave } def\n");
-    fprintf(fp, "/gr  { grestore } def\n");
     if (landscape)
-	fprintf(fp, "/bp  { gs %.2f 0 translate 90 rotate} def\n", paperwidth);
+	fprintf(fp, "/bp  { gs %.2f 0 translate 90 rotate gs } def\n", paperwidth);
     else
-	fprintf(fp, "/bp  { gs } def\n");
-    fprintf(fp, "/ep  { showpage gr } def\n");
-    fprintf(fp, "/m   { moveto } def\n");
-    fprintf(fp, "/l   { lineto } def\n");
-    fprintf(fp, "/np  { newpath } def\n");
-    fprintf(fp, "/cp  { closepath } def\n");
-    fprintf(fp, "/f   { fill } def\n");
-    fprintf(fp, "/o   { stroke } def\n");
-    fprintf(fp, "/c   { newpath 0 360 arc } def\n");
-    fprintf(fp, "/r   { 3 index 3 index moveto 1 index 4 -1 roll\n");
-    fprintf(fp, "	lineto exch 1 index lineto lineto closepath } def\n");
-    fprintf(fp, "/p1  { stroke } def\n");
-    fprintf(fp, "/p2  { bg setrgbcolor fill fg setrgbcolor } def\n");
-    fprintf(fp, "/p3  { gsave bg setrgbcolor fill grestore stroke } def\n");
-    fprintf(fp, "/t   { 6 -2 roll moveto gsave rotate\n");
-    fprintf(fp, "       ps mul neg 0 2 1 roll rmoveto\n");
-    fprintf(fp, "       1 index stringwidth pop\n");
-    fprintf(fp, "       mul neg 0 rmoveto show grestore } def\n");
-    fprintf(fp, "/cl  { initclip newpath 3 index 3 index moveto 1 index\n");
-    fprintf(fp, "       4 -1 roll lineto  exch 1 index lineto lineto\n");
-    fprintf(fp, "       closepath clip newpath } def\n");
-    fprintf(fp, "/rgb { setrgbcolor } def\n");
-    fprintf(fp, "/s   { scalefont setfont } def\n");
-    fprintf(fp, "/R   { /Font1 findfont } def\n");
-    fprintf(fp, "/B   { /Font2 findfont } def\n");
-    fprintf(fp, "/I   { /Font3 findfont } def\n");
-    fprintf(fp, "/BI  { /Font4 findfont } def\n");
-    fprintf(fp, "/S   { /Font5 findfont } def\n");
-    PSEncodeFont(fp, font, encoding);
-    fprintf(fp, "1 setlinecap 1 setlinejoin\n");
+	fprintf(fp, "/bp  { gs gs } def\n");
+    prolog = findVar(install(".ps.prolog"), R_GlobalEnv);
+    if(!isString(prolog))
+	error("Object .ps.profile is not a character vector");
+    fprintf(fp, "%% begin .ps.prolog\n");
+    for (i = 0; i < length(prolog); i++)
+	fprintf(fp, "%s\n", CHAR(STRING_ELT(prolog, i)));
+    fprintf(fp, "%% end   .ps.prolog\n");
+    PSEncodeFont(fp, encoding);
     fprintf(fp, "%%%%EndProlog\n");
 }
 
-void PostScriptFileTrailer(FILE *fp, int pageno)
+static void PostScriptFileTrailer(FILE *fp, int pageno)
 {
     fprintf(fp, "ep\n");
     fprintf(fp, "%%%%Trailer\n");
@@ -592,39 +583,34 @@ void PostScriptFileTrailer(FILE *fp, int pageno)
     fprintf(fp, "%%%%EOF\n");
 }
 
-void PostScriptStartPage(FILE *fp, int pageno)
+static void PostScriptStartPage(FILE *fp, int pageno)
 {
     fprintf(fp, "%%%%Page: %d %d\n", pageno, pageno);
     fprintf(fp, "bp\n");
 }
 
-void PostScriptEndPage(FILE *fp)
+static void PostScriptEndPage(FILE *fp)
 {
     fprintf(fp, "ep\n");
 }
 
-void PostScriptSetClipRect(FILE *fp, double x0, double x1,
-			   double y0, double y1)
+static void PostScriptSetClipRect(FILE *fp, double x0, double x1,
+				  double y0, double y1)
 {
-        fprintf(fp, "%.2f %.2f %.2f %.2f cl\n", x0, y0, x1, y1);
+    fprintf(fp, "%.2f %.2f %.2f %.2f cl\n", x0, y0, x1, y1);
 }
 
-void PostScriptSetLineWidth(FILE *fp, double linewidth)
+static void PostScriptSetLineWidth(FILE *fp, double linewidth)
 {
     fprintf(fp, "%.2f setlinewidth\n", linewidth);
 }
 
-void PostScriptSetFont(FILE *fp, int typeface, double size)
+static void PostScriptSetFont(FILE *fp, int typeface, double size)
 {
     fprintf(fp, "/ps %.0f def %s %.0f s\n", size, TypeFaceDef[typeface], size);
 }
 
-void PostScriptSetColor(FILE *fp, double r, double g, double b)
-{
-    fprintf(fp,"%.4f %.4f %.4f rgb\n", r, g, b);
-}
-
-void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
+static void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
 {
     double dash;
     int i;
@@ -638,32 +624,33 @@ void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
 }
 
 
-void PostScriptMoveTo(FILE *fp, double x, double y)
+static void PostScriptMoveTo(FILE *fp, double x, double y)
 {
     fprintf(fp, "%.2f %.2f m\n", x, y);
 }
 
-void PostScriptLineTo(FILE *fp, double x, double y)
+static void PostScriptLineTo(FILE *fp, double x, double y)
 {
     fprintf(fp, "%.2f %.2f l\n", x, y);
 }
 
-void PostScriptStartPath(FILE *fp)
+static void PostScriptStartPath(FILE *fp)
 {
     fprintf(fp, "np\n");
 }
 
-void PostScriptEndPath(FILE *fp)
+static void PostScriptEndPath(FILE *fp)
 {
     fprintf(fp, "o\n");
 }
 
-void PostScriptRectangle(FILE *fp, double x0, double y0, double x1, double y1)
+static void PostScriptRectangle(FILE *fp, double x0, double y0,
+				double x1, double y1)
 {
     fprintf(fp, "%.2f %.2f %.2f %.2f r ", x0, y0, x1, y1);
 }
 
-void PostScriptCircle(FILE *fp, double x, double y, double r)
+static void PostScriptCircle(FILE *fp, double x, double y, double r)
 {
     fprintf(fp, "%.2f %.2f %.2f c ", x, y, r);
 }
@@ -696,8 +683,8 @@ static void PostScriptWriteString(FILE *fp, char *str)
     fputc(')', fp);
 }
 
-void PostScriptText(FILE *fp, double x, double y,
-		    char *str, double xc, double yc, double rot)
+static void PostScriptText(FILE *fp, double x, double y,
+			   char *str, double xc, double yc, double rot)
 {
     fprintf(fp, "%.2f %.2f ", x, y);
     PostScriptWriteString(fp, str);
@@ -711,39 +698,44 @@ typedef struct {
     char filename[PATH_MAX];
     int open_type;
 
-    char papername[64];	 /* paper name */
-    int paperwidth;	 /* paper width in big points (1/72 in) */
-    int paperheight;	 /* paper height in big points */
-    int landscape;	 /* landscape mode */
-    int pageno;		 /* page number */
-
-    int fontfamily;	 /* font family */
-    int encoding;	 /* font encoding */
-    int fontstyle;	 /* font style, R, B, I, BI, S */
-    int fontsize;	 /* font size in points */
+    char papername[64];	/* paper name */
+    int paperwidth;	/* paper width in big points (1/72 in) */
+    int paperheight;	/* paper height in big points */
+    Rboolean landscape;	/* landscape mode */
+    int pageno;		/* page number */
+			
+    int fontfamily;	/* font family */
+    int encoding;	/* font encoding */
+    char **afmpaths;	/* for user-specified family */
     int maxpointsize;
 
-    double width;	 /* plot width in inches */
-    double height;	 /* plot height in inches */
-    double pagewidth;	 /* page width in inches */
-    double pageheight;	 /* page height in inches */
-    int pagecentre;      /* centre image on page? */
-    int printit;         /* print page at close? */
+    double width;	/* plot width in inches */
+    double height;	/* plot height in inches */
+    double pagewidth;	/* page width in inches */
+    double pageheight;	/* page height in inches */
+    Rboolean pagecentre;/* centre image on page? */
+    Rboolean printit;	/* print page at close? */
     char command[PATH_MAX];
 
-    double lwd;		 /* current line width */
-    int lty;		 /* current line type */
-    rcolor col;		 /* current color */
-    rcolor fill;	 /* current fill color */
-    rcolor bg;		 /* background color */
+    FILE *psfp;		/* output file */
 
-    FILE *psfp;		 /* output file */
+    Rboolean onefile;	/* EPSF header etc*/
 
-    int onefile;         /* EPSF header etc*/
+    /* This group of variables track the current device status.
+     * They should only be set by routines that emit PostScript code. */
+    struct {
+	double lwd;		 /* line width */
+	int lty;		 /* line type */
+	int fontstyle;	         /* font style, R, B, I, BI, S */
+	int fontsize;	         /* font size in points */
+	rcolor col;		 /* color */
+	rcolor fill;	         /* fill color */
+	rcolor bg;		 /* color */
+    } current;
+
+    FontMetricInfo metrics[5];	/* font metrics */
 }
 PostScriptDesc;
-
-static FontMetricInfo metrics[5];	/* font metrics */
 
 
 /* Device Driver Actions */
@@ -755,10 +747,10 @@ static void   PS_Close(DevDesc*);
 static void   PS_Deactivate(DevDesc*);
 static void   PS_Hold(DevDesc*);
 static void   PS_Line(double, double, double, double, int, DevDesc*);
-static int    PS_Locator(double*, double*, DevDesc*);
+static Rboolean PS_Locator(double*, double*, DevDesc*);
 static void   PS_Mode(int, DevDesc*);
 static void   PS_NewPage(DevDesc*);
-static int    PS_Open(DevDesc*, PostScriptDesc*);
+static Rboolean PS_Open(DevDesc*, PostScriptDesc*);
 static void   PS_Polygon(int, double*, double*, int, int, int, DevDesc*);
 static void   PS_Polyline(int, double*, double*, int, DevDesc*);
 static void   PS_Rect(double, double, double, double, int, int, int, DevDesc*);
@@ -769,11 +761,11 @@ static void   PS_Text(double, double, int, char*, double, double, DevDesc*);
 
 
 
-/* PostScript Support (formally in PostScript.c) */
+/* PostScript Support (formerly in PostScript.c) */
 
 static void PostScriptSetCol(FILE *fp, double r, double g, double b)
 {
-	fprintf(fp,"/fg { %.4f %.4f %.4f } def fg rgb\n", r, g, b);
+	fprintf(fp,"%.4f %.4f %.4f rgb\n", r, g, b);
 }
 
 static void PostScriptSetFill(FILE *fp, double r, double g, double b)
@@ -789,19 +781,25 @@ static void SetColor(int, DevDesc*);
 static void SetFill(int, DevDesc*);
 static void SetFont(int, int, DevDesc*);
 static void SetLineStyle(int newlty, double newlwd, DevDesc *dd);
+static void Invalidate(DevDesc*);
 static int  MatchFamily(char *name);
 
 
-int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
-		   char *bg, char *fg,
-		   double width, double height,
-		   double horizontal, double ps,
-		   int onefile, int pagecentre, int printit, char*cmd)
+Rboolean
+PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
+	       char **afmpaths,
+	       char *bg, char *fg,
+	       double width, double height,
+	       Rboolean horizontal, double ps,
+	       Rboolean onefile, Rboolean pagecentre, 
+	       Rboolean printit, char*cmd)
 {
-    /* If we need to bail out with some sort of "error" */
-    /* then we must free(dd) */
+    /* If we need to bail out with some sort of "error"
+       then we must free(dd) */
 
     double xoff, yoff, pointsize;
+    rcolor setbg, setfg, setfill;
+
     PostScriptDesc *pd;
 
     /* Check and extract the device parameters */
@@ -813,7 +811,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 
     /* allocate new postscript device description */
     if (!(pd = (PostScriptDesc *) malloc(sizeof(PostScriptDesc))))
-	return 0;
+	return FALSE;
 
     /* from here on, if need to bail out with "error", must also */
     /* free(pd) */
@@ -821,16 +819,19 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     /* initialise postscript device description */
     strcpy(pd->filename, file);
     strcpy(pd->papername, paper);
-    pd->fontfamily = MatchFamily(family);
+    pd->fontfamily = strcmp(family, "User") ? MatchFamily(family) : USERAFM;
     pd->encoding = 1;
-    pd->bg = str2col(bg);
-    pd->col = str2col(fg);
-    pd->fill = NA_INTEGER;
+    pd->afmpaths = afmpaths;
+
+    setbg = str2col(bg);
+    setfg = str2col(fg);
+    setfill = NA_INTEGER;
+
     pd->width = width;
     pd->height = height;
     pd->landscape = horizontal;
     pointsize = floor(ps);
-    if(pd->bg == NA_INTEGER && pd->col == NA_INTEGER) {
+    if(setbg == NA_INTEGER && setfg == NA_INTEGER) {
 	free(dd);
 	free(pd);
 	error("invalid foreground/background color (postscript)");
@@ -846,7 +847,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING(GetOption(install("papersize"), R_NilValue))[0];
+	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "a4");
@@ -912,13 +913,13 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     pd->maxpointsize = 72.0 * ((pd->pageheight > pd->pagewidth) ?
 			       pd->pageheight : pd->pagewidth);
     pd->pageno = 0;
-    pd->lty = 1;
+    dd->dp.lty = 0;
 
     /* Set graphics parameters that must be set by device driver. */
     /* Page dimensions in points. */
 
-    dd->dp.bg = pd->bg;
-    dd->dp.fg = dd->dp.col = pd->col;
+    dd->dp.bg = setbg;
+    dd->dp.fg = dd->dp.col = setfg;
     dd->dp.left = 72 * xoff;			/* left */
     dd->dp.right = 72 * (xoff + pd->width);	/* right */
     dd->dp.bottom = 72 * yoff;			/* bottom */
@@ -932,6 +933,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     if(pointsize < 6.0) pointsize = 6.0;
     if(pointsize > pd->maxpointsize) pointsize = pd->maxpointsize;
     dd->dp.ps = pointsize;
+    dd->dp.font = 1;
     dd->dp.cra[0] = 0.9 * pointsize;
     dd->dp.cra[1] = 1.2 * pointsize;
 
@@ -963,7 +965,7 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     pd->pageno = 0;
     if(!PS_Open(dd, pd)) {
 	free(pd);
-	return 0;
+	return FALSE;
     }
 
     dd->dp.open	      = PS_Open;
@@ -986,8 +988,8 @@ int PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     dd->dp.hold	      = PS_Hold;
 
     dd->deviceSpecific = (void *) pd;
-    dd->displayListOn = 0;
-    return 1;
+    dd->displayListOn = FALSE;
+    return TRUE;
 }
 
 static int MatchFamily(char *name)
@@ -1003,24 +1005,24 @@ static int MatchFamily(char *name)
 static void SetColor(int color, DevDesc *dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
-    if(color != pd->col) {
+    if(color != pd->current.col) {
 	PostScriptSetCol(pd->psfp,
 			 R_RED(color)/255.0,
 			 R_GREEN(color)/255.0,
 			 R_BLUE(color)/255.0);
-	pd->col = color;
+	pd->current.col = color;
     }
 }
 
 static void SetFill(int color, DevDesc *dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
-    if(color != pd->fill) {
+    if(color != pd->current.fill) {
 	PostScriptSetFill(pd->psfp,
 			  R_RED(color)/255.0,
 			  R_GREEN(color)/255.0,
 			  R_BLUE(color)/255.0);
-	pd->fill = color;
+	pd->current.fill = color;
     }
 }
 
@@ -1031,16 +1033,16 @@ static void SetLineStyle(int newlty, double newlwd, DevDesc *dd)
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     int i, ltyarray[8];
 
-    if (pd->lty != newlty || pd->lwd != newlwd) {
-	pd->lwd = newlwd;
-	pd->lty = newlty;
-	PostScriptSetLineWidth(pd->psfp, dd->gp.lwd*0.75);
+    if (pd->current.lty != newlty || pd->current.lwd != newlwd) {
+	pd->current.lwd = newlwd;
+	pd->current.lty = newlty;
+	PostScriptSetLineWidth(pd->psfp, newlwd * 0.75);
 	/* process lty : */
 	for(i = 0; i < 8 && newlty & 15 ; i++) {
 	    ltyarray[i] = newlty & 15;
 	    newlty = newlty >> 4;
 	}
-	PostScriptSetLineTexture(pd->psfp, ltyarray, i, dd->gp.lwd * 0.75);
+	PostScriptSetLineTexture(pd->psfp, ltyarray, i, newlwd * 0.75);
     }
 }
 
@@ -1051,53 +1053,66 @@ static void SetFont(int style, int size, DevDesc *dd)
 	style = 1;
     if(size < 1 || size > pd->maxpointsize)
 	size = 10;
-    if(size != pd->fontsize || style != pd->fontstyle) {
+    if(size != pd->current.fontsize || style != pd->current.fontstyle) {
 	PostScriptSetFont(pd->psfp, style-1, size);
-	pd->fontsize = size;
-	pd->fontstyle = style;
+	pd->current.fontsize = size;
+	pd->current.fontstyle = style;
     }
 }
 
-static int PS_Open(DevDesc *dd, PostScriptDesc *pd)
+static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
 {
-    char buf[512];
+    char buf[512], *p;
     int i;
 
-    for(i = 0; i < 5 ; i++) {
-	sprintf(buf, "%s/afm/%s.%s", R_Home,
-		Family[pd->fontfamily].font[i].abbr,
-		(i == 4) ? "afm" : Extension[pd->encoding]);
-	if(!PostScriptLoadFontMetrics(buf, &(metrics[i])))
-	    return 0;
+    for(i = 0; i < 4 ; i++) {
+	if(pd->fontfamily == USERAFM) p = pd->afmpaths[i];
+	else p = Family[pd->fontfamily].afmfile[i];
+	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]), 
+				      familyname[i], 1)) {
+	    warning("cannot read afm file %s", buf);
+	    return FALSE;
+	}
+    }
+    if(!PostScriptLoadFontMetrics("sy______.afm", &(pd->metrics[4]), 
+				  familyname[4], 0)) {
+	warning("cannot read afm file %s", buf);
+	return FALSE;
     }
 
     if (strlen(pd->filename) == 0) {
 #ifndef HAVE_POPEN
 	error("printing via file = \"\" is not implemented in this version");
-	return 0;
+	return FALSE;
 #else
-	if(strlen(pd->command) == 0) return 0;
+	if(strlen(pd->command) == 0) return FALSE;
 	pd->psfp = popen(pd->command, "w");
 	pd->open_type = 1;
 #endif
     } else if (pd->filename[0] == '|') {
 #ifndef HAVE_POPEN
 	error("file = \"|cmd\" is not implemented in this version");
-	return 0;
+	return FALSE;
 #else
 	pd->psfp = popen(pd->filename + 1, "w");
 	pd->open_type = 1;
+	if (!pd->psfp) {
+	    warning("cannot open `postscript' pipe to `%s'", pd->filename + 1);
+	    return FALSE;
+	}
 #endif
     } else {
 	sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
 	pd->psfp = R_fopen(R_ExpandFileName(buf), "w");
 	pd->open_type = 0;
     }
-    if (!pd->psfp) return 0;
+    if (!pd->psfp) {
+	warning("cannot open `postscript' file argument `%s'", buf);
+	return FALSE;
+    }
 
     if(pd->landscape)
 	PSFileHeader(pd->psfp,
-		     pd->fontfamily,
 		     pd->encoding,
 		     pd->papername,
 		     pd->paperwidth,
@@ -1110,7 +1125,6 @@ static int PS_Open(DevDesc *dd, PostScriptDesc *pd)
 		     dd->dp.right);
     else
 	PSFileHeader(pd->psfp,
-		     pd->fontfamily,
 		     pd->encoding,
 		     pd->papername,
 		     pd->paperwidth,
@@ -1122,17 +1136,36 @@ static int PS_Open(DevDesc *dd, PostScriptDesc *pd)
 		     dd->dp.right,
 		     dd->dp.top);
 
-    pd->fontstyle = 1;
-    pd->fontsize = 10;
-    return 1;
+    return TRUE;
 }
 
+/* The driver keeps track of the current values of colors, fonts and
+   line parameters, to save emitting some PostScript. In some cases,
+   the state becomes unknown, notably after changing the clipping and
+   at the start of a new page, so we have the following routine to
+   invalidate the saved values, which in turn causes the parameters to
+   be set before usage. */
+
+static void Invalidate(DevDesc *dd)
+{
+    PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
+
+    pd->current.fontsize = -1;
+    pd->current.fontstyle = -1;
+    pd->current.lwd = -1;
+    pd->current.lty = -1;
+    pd->current.col = 0xffffffff;
+    pd->current.fill = 0xffffffff;
+    pd->current.bg = 0xffffffff;
+}
 
 static void PS_Clip(double x0, double x1, double y0, double y1, DevDesc *dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
     PostScriptSetClipRect(pd->psfp, x0, x1, y0, y1);
+    /* clipping does grestore so invalidate monitor variables */
+    Invalidate(dd);
 }
 
 static void PS_Resize(DevDesc *dd)
@@ -1152,20 +1185,13 @@ static void PS_NewPage(DevDesc *dd)
 	PostScriptClose(dd);
 	PS_Open(dd, pd);
 	pd->pageno++;
-	pd->fill = NA_INTEGER;
     } else pd->pageno++;
     PostScriptStartPage(pd->psfp, pd->pageno);
-    PostScriptSetFont(pd->psfp, pd->fontstyle-1, pd->fontsize);
-    PostScriptSetLineWidth(pd->psfp, 0.75);
-    PostScriptSetCol(pd->psfp,
-		     R_RED(pd->col)/255.0,
-		     R_GREEN(pd->col)/255.0,
-		     R_BLUE(pd->col)/255.0);
-    if(dd->dp.bg != R_RGB(255,255,255)) {
-	SetFill(dd->dp.bg, dd);
-	PostScriptRectangle(pd->psfp,
-			    0, 0, 72.0 * pd->pagewidth, 72.0 * pd->pageheight);
-	fprintf(pd->psfp, "p2\n");
+    Invalidate(dd);
+
+    if(dd->gp.bg != R_RGB(255,255,255)) {
+	PS_Rect(0, 0, 72.0 * pd->pagewidth, 72.0 * pd->pageheight,
+		DEVICE, dd->gp.bg, NA_INTEGER, dd);
     }
 }
 
@@ -1214,14 +1240,20 @@ static void PS_Deactivate(DevDesc *dd) {}
 
 static double PS_StrWidth(char *str, DevDesc *dd)
 {
+    PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
+
     return floor(dd->gp.cex * dd->gp.ps + 0.5) *
-	PostScriptStringWidth((unsigned char *)str, &(metrics[dd->gp.font-1]));
+	PostScriptStringWidth((unsigned char *)str,
+			      &(pd->metrics[dd->gp.font-1]));
 }
 
 static void PS_MetricInfo(int c, double *ascent, double *descent,
 			  double *width, DevDesc *dd)
 {
-    PostScriptMetricInfo(c, ascent, descent, width, &(metrics[dd->gp.font-1]));
+    PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
+
+    PostScriptMetricInfo(c, ascent, descent, width,
+			 &(pd->metrics[dd->gp.font-1]));
     *ascent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *ascent;
     *descent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *descent;
     *width = floor(dd->gp.cex * dd->gp.ps + 0.5) * *width;
@@ -1395,9 +1427,9 @@ static void PS_Text(double x, double y, int coords,
     PostScriptText(pd->psfp, x, y, str, hadj, 0.0, rot);
 }
 
-static int PS_Locator(double *x, double *y, DevDesc *dd)
+static Rboolean PS_Locator(double *x, double *y, DevDesc *dd)
 {
-    return 0;
+    return FALSE;
 }
 
 static void PS_Mode(int mode, DevDesc* dd)
@@ -1424,7 +1456,7 @@ typedef struct {
     char papername[64];	 /* paper name */
     int paperwidth;	 /* paper width in big points (1/72 in) */
     int paperheight;	 /* paper height in big points */
-    int landscape;	 /* landscape mode */
+    Rboolean landscape;	 /* landscape mode */
     int pageno;		 /* page number */
 
     int fontfamily;	 /* font family */
@@ -1438,7 +1470,7 @@ typedef struct {
     double height;	 /* plot height in inches */
     double pagewidth;	 /* page width in inches */
     double pageheight;	 /* page height in inches */
-    int pagecentre;      /* centre image on page? */
+    Rboolean pagecentre;      /* centre image on page? */
 
     double lwd;		 /* current line width */
     int lty;		 /* current line type */
@@ -1451,8 +1483,11 @@ typedef struct {
     FILE *tmpfp;         /* temp file */
     char tmpname[PATH_MAX];
 
-    int onefile;
+    Rboolean onefile;
     int ymax;            /* used to invert coord system */
+
+    FontMetricInfo metrics[5];	/* font metrics */
+
 } XFigDesc;
 
 /* TODO
@@ -1463,15 +1498,14 @@ typedef struct {
  */
 
 static void
-XF_FileHeader(FILE *fp, char *papername, int landscape, int onefile)
+XF_FileHeader(FILE *fp, char *papername, Rboolean landscape, Rboolean onefile)
 {
     fprintf(fp, "#FIG 3.2\n");
-    if(landscape) fprintf(fp, "Landscape\n"); else fprintf(fp, "Portrait\n");
+    fprintf(fp, landscape ? "Landscape\n" : "Portrait\n");
     fprintf(fp, "Flush Left\nInches\n");
     /* Fix */fprintf(fp, "%s\n", papername);
     fprintf(fp, "100.0\n");
-    if(onefile) fprintf(fp, "Multiple\n");
-    else fprintf(fp, "Single\n");
+    fprintf(fp, onefile ? "Multiple\n" : "Single\n");
     fprintf(fp, "-2\n"); /* no background */
     fprintf(fp, "1200 2\n"); /* coordinate system */
     fprintf(fp, "# End of XFig header\n");
@@ -1564,14 +1598,16 @@ static void   XFig_Close(DevDesc*);
 static void   XFig_Deactivate(DevDesc*);
 static void   XFig_Hold(DevDesc*);
 static void   XFig_Line(double, double, double, double, int, DevDesc*);
-static int    XFig_Locator(double*, double*, DevDesc*);
+static Rboolean XFig_Locator(double*, double*, DevDesc*);
 static void   XFig_Mode(int, DevDesc*);
 static void   XFig_NewPage(DevDesc*);
-static int    XFig_Open(DevDesc*, XFigDesc*);
+static Rboolean XFig_Open(DevDesc*, XFigDesc*);
 static void   XFig_Polygon(int, double*, double*, int, int, int, DevDesc*);
 static void   XFig_Polyline(int, double*, double*, int, DevDesc*);
 static void   XFig_Rect(double, double, double, double, int, int, int, DevDesc*);
 static void   XFig_Resize(DevDesc*);
+static double XFig_StrWidth(char*, DevDesc*);
+static void   XFig_MetricInfo(int, double*, double*, double*, DevDesc*);
 static void   XFig_Text(double, double, int, char*, double, double, DevDesc*);
 
 static int XFig_basenums[] = {4, 8, 12, 16, 20, 24, 28, 0};
@@ -1579,11 +1615,12 @@ static int XFig_basenums[] = {4, 8, 12, 16, 20, 24, 28, 0};
 
 /* Driver Support Routines */
 
-int XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
-		     char *bg, char *fg,
-		     double width, double height,
-		     double horizontal, double ps,
-		     int onefile, int pagecentre)
+Rboolean
+XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
+		 char *bg, char *fg,
+		 double width, double height,
+		 Rboolean horizontal, double ps,
+		 Rboolean onefile, Rboolean pagecentre)
 {
     /* If we need to bail out with some sort of "error" */
     /* then we must free(dd) */
@@ -1629,7 +1666,7 @@ int XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING(GetOption(install("papersize"), R_NilValue))[0];
+	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "A4");
@@ -1751,8 +1788,8 @@ int XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     dd->dp.newPage    = XFig_NewPage;
     dd->dp.clip	      = XFig_Clip;
     dd->dp.text	      = XFig_Text;
-    dd->dp.strWidth   = PS_StrWidth;
-    dd->dp.metricInfo = PS_MetricInfo;
+    dd->dp.strWidth   = XFig_StrWidth;
+    dd->dp.metricInfo = XFig_MetricInfo;
     dd->dp.rect	      = XFig_Rect;
     dd->dp.circle     = XFig_Circle;
     dd->dp.line	      = XFig_Line;
@@ -1763,7 +1800,7 @@ int XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     dd->dp.hold	      = XFig_Hold;
 
     dd->deviceSpecific = (void *) pd;
-    dd->displayListOn = 0;
+    dd->displayListOn = FALSE;
     return 1;
 }
 
@@ -1771,27 +1808,32 @@ int XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 char * Rwin32_tmpnam(char * prefix);
 #endif
 
-static int XFig_Open(DevDesc *dd, XFigDesc *pd)
+static Rboolean XFig_Open(DevDesc *dd, XFigDesc *pd)
 {
-    char buf[512];
+    char buf[512], name[50];
     int i;
 
-    for(i = 0; i < 5 ; i++) {
-	sprintf(buf, "%s/afm/%s.%s", R_Home,
-		Family[pd->fontfamily].font[i].abbr,
-		(i == 4) ? "afm" : Extension[pd->encoding]);
-	if(!PostScriptLoadFontMetrics(buf, &(metrics[i])))
-	    return 0;
+    for(i = 0; i < 4 ; i++) {
+	if(!PostScriptLoadFontMetrics(Family[pd->fontfamily].afmfile[i], 
+				      &(pd->metrics[i]), name, 1)) {
+	    warning("cannot read afm file %s", buf);
+	    return FALSE;
+	}
+    }
+    if(!PostScriptLoadFontMetrics("sy______.afm", 
+				  &(pd->metrics[4]), name, 0)) {
+	warning("cannot read afm file %s", buf);
+	return FALSE;
     }
 
     if (strlen(pd->filename) == 0) {
 	error("empty file name");
-	return 0;
+	return FALSE;
     } else {
 	sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
 	pd->psfp = R_fopen(R_ExpandFileName(buf), "w");
     }
-    if (!pd->psfp) return 0;
+    if (!pd->psfp) return FALSE;
 #ifdef Win32
     strcpy(pd->tmpname, Rwin32_tmpnam("Rxfig"));
 #else
@@ -1800,13 +1842,13 @@ static int XFig_Open(DevDesc *dd, XFigDesc *pd)
     pd->tmpfp = R_fopen(pd->tmpname, "w");
     if (!pd->tmpfp) {
 	fclose(pd->psfp);
-	return 0;
+	return FALSE;
     }
     XF_FileHeader(pd->psfp, pd->papername, pd->landscape, pd->onefile);
     pd->fontstyle = 1;
     pd->fontsize = 10;
     pd->pageno = 0;
-    return 1;
+    return TRUE;
 }
 
 
@@ -2047,9 +2089,9 @@ static void XFig_Text(double x, double y, int coords,
     fprintf(fp, "\\001\n");
 }
 
-static int XFig_Locator(double *x, double *y, DevDesc *dd)
+static Rboolean XFig_Locator(double *x, double *y, DevDesc *dd)
 {
-    return 0;
+    return FALSE;
 }
 
 static void XFig_Mode(int mode, DevDesc* dd)
@@ -2058,4 +2100,25 @@ static void XFig_Mode(int mode, DevDesc* dd)
 
 static void XFig_Hold(DevDesc *dd)
 {
+}
+
+static double XFig_StrWidth(char *str, DevDesc *dd)
+{
+    XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
+
+    return floor(dd->gp.cex * dd->gp.ps + 0.5) *
+	PostScriptStringWidth((unsigned char *)str,
+			      &(pd->metrics[dd->gp.font-1]));
+}
+
+static void XFig_MetricInfo(int c, double *ascent, double *descent,
+			  double *width, DevDesc *dd)
+{
+    XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
+
+    PostScriptMetricInfo(c, ascent, descent, width,
+			 &(pd->metrics[dd->gp.font-1]));
+    *ascent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *ascent;
+    *descent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *descent;
+    *width = floor(dd->gp.cex * dd->gp.ps + 0.5) * *width;
 }

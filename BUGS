@@ -15,8 +15,8 @@ If you happen to know how to fix a problem please send
 patches to the bug repository, too.
 
 New bugs are reported either through the web
-interface at r-bugs.biostat.ku.dk or via email to
-r-bugs@biostat.ku.dk. The bug.report() function can be
+interface at r-bugs.r-project.org or via email to
+r-bugs@r-project.org. The bug.report() function can be
 used to automate parts of the procedure on many systems.
 Followups on older bugs can be done by including the string
 "(PR#999)" in the Subject of an email (change 999 to the
@@ -25,10 +25,11 @@ actual reference number, of course!).
 
 Directory:  Accuracy
 
-* PR# 631 *
-Subject: svd error 
-From: =?iso-8859-1?Q?J=F6rg?= Polzehl <polzehl@wias-berlin.de>
-Date: Thu, 10 Aug 2000 16:54:46 +0200
+* PR# 751 *
+Subject: BUG: polyroot()
+From: "Li Dongfeng" <mavip1@inet.polyu.edu.hk>
+Date: Tue, 28 Nov 2000 13:24:33 +0800
+--Numerical instability. We may want a better algorithm!
 * PR# 630 *
 Subject: lda and svd error
 From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
@@ -37,6 +38,10 @@ Date: Thu, 10 Aug 2000 15:13:38 +0200 (CEST)
 Subject: svd() (Linpack) problems/bug for ill-conditioned matrices
 From: Martin Maechler <maechler@stat.math.ethz.ch>
 Date: Wed, 5 Jul 2000 18:32:01 +0200 (CEST)
+* PR# 631 *
+Subject: svd error 
+From: =?iso-8859-1?Q?J=F6rg?= Polzehl <polzehl@wias-berlin.de>
+Date: Thu, 10 Aug 2000 16:54:46 +0200
 
 Directory:  Add-ons
 
@@ -45,10 +50,6 @@ Subject: ctest not works
 From: George Diniz <george@cpqam.fiocruz.br>
 Date: Sun, 12 Mar 2000 12:03:45 -0200
 --possibly the RH6.2 Fortran bug
-* PR# 503 *
-Subject: dmvnorm() bug in e1071
-From: "Gregory R. Warnes" <warnes@biostat.washington.edu>
-Date: Fri, 24 Mar 2000 03:24:45 +0000 (GMT)
 * PR# 496 *
 From: bonneau@epi.roazhon.inra.fr (en148)
 Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
@@ -57,7 +58,12 @@ Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
 
 Directory:  Analyses
 
-none
+* PR# 653 *
+Subject: bug in spline()?
+From: Ian White <imsw@holyrood.ed.ac.uk>
+Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
+--bug in spline: replace by interSpline in package spline?
+--address problems are fixed
 
 Directory:  Documentation
 
@@ -65,11 +71,11 @@ none
 
 Directory:  Graphics
 
-* PR# 625 *
-Subject: Re: [Rd] Re: [R] problem clipping R postscript plots within latex
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Wed, 2 Aug 2000 21:38:31 +0100 (GMT Daylight Time)
---Believed to be fixed in 1.2. Patch on r-bugs website.
+* PR# 764 *
+Subject: qqline
+From: Setzer.Woodrow@epamail.epa.gov
+Date: Mon, 11 Dec 2000 18:06:27 -0500
+--changed for 1.2.0 already, perhaps not what was desired
 * PR# 202 *
 Subject: persp box occlusion bug
 From: wsi@gcal.ac.uk
@@ -77,13 +83,44 @@ Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
 --The persp algorithm does not apply the occlusion rules to the frame, 
 --which is always plotted first. 
 --A bug, but not very simple to fix.
+* PR# 693 *
+Subject:  Bug report
+From: "Amaratunga, Rohith" <Rohith.Amaratunga@dsto.defence.gov.au>
+Date: Thu, 12 Oct 2000 14:08:31 +1100
+--grid problem: note a report on 0.90.1 and nothing to reproduce this
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+* PR# 750 *
+Subject: abline() does not obey "xpd" (clipping rules)
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
+* PR# 726 *
+Subject: par(las=.)  gives wrong "adj" for mtext()
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Tue, 7 Nov 2000 13:03:58 +0100
 
 Directory:  In-Out
 
-none
+* PR# 746 *
+Subject: printing of lists
+From: David Firth <david.firth@nuffield.oxford.ac.uk>
+Date: Fri, 24 Nov 2000 12:31:33 +0000
+--Still with us Dec 10 2000
+* PR# 649 *
+Subject: Unable to read.table with > 256? columns
+From: r@marksmucker.com
+Date: Thu, 31 Aug 2000 07:28:02 +0200 (MET DST)
+--Unable to reproduce from information supplied 
+--(and there is no 256 col limit)
 
 Directory:  Installation
 
+* PR# 733 *
+Subject: gnome-support problems
+From: olav@melvin.jordforsk.no
+Date: Fri, 10 Nov 2000 10:55:31 +0100 (MET)
 * PR# 597 *
 Subject: multiply defined symbols
 From: plucas@csd.abdn.ac.uk
@@ -92,6 +129,19 @@ Date: Fri, 7 Jul 2000 12:23:44 +0200 (MET DST)
 
 Directory:  Language
 
+* PR# 747 *
+Subject: Bug in args with no defaults
+From: dmurdoch@pair.com (Duncan Murdoch)
+Date: Sun, 26 Nov 2000 20:14:30 GMT
+--Probably not a bug, but a logical consequence of "missing" semantics.
+* PR# 408 *
+Subject: convolution bug
+From: wsimpson@gcal.ac.uk
+Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+* PR# 645 *
+Subject: unlisting a list with names components
+From: Peter Perkins <pperkins@ucsd.edu>
+Date: Fri, 25 Aug 2000 23:07:47 -0700
 * PR# 587 *
 Subject: dim(a <- ...) sets invisible flag erronously
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -101,13 +151,45 @@ Date: Fri, 30 Jun 2000 20:15:59 +0200 (MET DST)
 Subject: anomalies with call objects
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 06 Feb 2000 01:18:50 +0100
-* PR# 408 *
-Subject: convolution bug
-From: wsimpson@gcal.ac.uk
-Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+* PR# 694 *
+Subject:  syntax confusion with function/non-function objects 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 13 Oct 2000 12:07:41 +0100 (BST)
+* PR# 674 *
+Subject: all.equal.list() sometimes fails with unnamed and named components
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+Date: Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
+* PR# 669 *
+Subject: Bug(s) w/ rbind.data.frame(); fix also read.table(*, as.is = TRUE) ?
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 25 Sep 2000 10:17:15 +0200
+--status of AsIs columns
+* PR# 715 *
+Subject: Printing list elements w/attributes
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 31 Oct 2000 12:15:09 +0100
+* PR# 698 *
+Subject:  print problem with data frames 
+From: J.C.Rougier@durham.ac.uk
+Date: Mon, 16 Oct 2000 14:01:43 +0100 (BST)
+* PR# 734 *
+Subject:  Assigning into a dataframe 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 10 Nov 2000 16:00:31 GMT
+--$<- and [<- are not the same for data frames. Not a bug, I think, or at least
+--a compatible one.
+* PR# 731 *
+Subject: substitute(x$y)) corrupts 'y' component
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+Date: Wed, 08 Nov 2000 11:01:48 -0800
 
 Directory:  Low-level
 
+* PR# 762 *
+Subject: nmath bug
+From: spoon <spoon@hilbert.maths.utas.edu.au>
+Date: Fri, 8 Dec 2000 18:29:22 +1100 (EST)
+--Compiler trouble, probably not bug
 * PR# 551 *
 Subject: Bus Error crash
 From: kjetikj@astro.uio.no
@@ -119,11 +201,6 @@ Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
 Subject: Segmentation Fault of unknown cause
 From: kjetikj@astro.uio.no
 Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
-* PR# 536 *
-Subject: Problem with match.arg()
-From: kjetikj@astro.uio.no
-Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
---1.0.0 bug fixed for 1.0.1 ??
 * PR# 505 *
 Subject: interrupted save 
 From: Thomas Lumley <thomas@biostat.washington.edu>
@@ -135,22 +212,18 @@ none
 
 Directory:  Models
 
-* PR# 633 *
-Subject: Possible bug
-From: Agustin Alonso Rodriguez <agusalon@mcr.ucm.es>
-Date: Sun, 13 Aug 2000 20:59:56 +0200
---ordered factors behave different from Splus when used w/o intercept
+* PR# 758 *
+Subject: Inconsistency, possibly a bug?
+From: Brett Presnell <presnell@stat.ufl.edu>
+Date: Mon, 4 Dec 2000 19:26:32 -0500 (EST)
+--Fixed for 1.2.0 in the sense that lm/glm are now consistent, but would one want
+--it the other way around?
 * PR# 628 *
 Subject: Re: [Rd] predict.lm is broken in 1.1.0-patched (2000-August-7)
 From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
 Date: Mon, 7 Aug 2000 22:41:50 +0100 (BST)
 --We've fixed the predict() problem, but need to make coef.lm and coef.aov
 --consistent
-* PR# 621 *
-Subject: anova() on three or more objects behaves inconsistently
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
---BDR will fix as suggested for 1.2.0
 
 Directory:  Startup
 
@@ -163,26 +236,30 @@ Date: Tue, 14 Mar 2000 10:32:43 +0100 (MET)
 
 Directory:  System-specific
 
-* PR# 592 *
-Subject: tseries bug
-From: przemat@itti.com.pl
-Date: Tue, 4 Jul 2000 14:52:17 +0200 (MET DST)
---Still broken?
-* PR# 452 *
-Subject: problem with glm
-From: Brad McNeney <mcneney@cs.sfu.ca>
-Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
---Problems on Alpha's with glm. Status unclear
-* PR# 533 *
-Subject: acepack, akima and tripack will not load 
-From: mallen@tntech.edu
-Date: Thu, 4 May 2000 19:18:59 +0200 (MET DST)
---related to PR#521: probably compiler-specific
+* PR# 732 *
+Subject: R with redhat 7
+From: hyu@stats.uwo.ca
+Date: Wed, 8 Nov 2000 22:32:48 +0100 (MET)
 * PR# 521 *
 Subject: akima core dumps on loading
 From: santini@dsi.unimi.it
 Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
 --Probably compiler-specific
+* PR# 452 *
+Subject: problem with glm
+From: Brad McNeney <mcneney@cs.sfu.ca>
+Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
+--Problems on Alpha's with glm. Status unclear
+* PR# 534 *
+Subject: wsfe bug report just made
+From: mallen@tntech.edu
+Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
+--follow up to PR#533
+* PR# 533 *
+Subject: acepack, akima and tripack will not load 
+From: mallen@tntech.edu
+Date: Thu, 4 May 2000 19:18:59 +0200 (MET DST)
+--related to PR#521: probably compiler-specific
 * PR# 547 *
 Subject: system(.., ignore.stderr = TRUE)  problem on Solaris
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -194,11 +271,16 @@ Subject: eigen broken on AIX with R-devel?
 From: Thomas J Vogels <tov@ece.cmu.edu>
 Date: 08 May 2000 12:01:04 -0400
 --AIX, probably compiler-specific
-* PR# 534 *
-Subject: wsfe bug report just made
-From: mallen@tntech.edu
-Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
---follow up to PR#533
+* PR# 672 *
+Subject: R 1.1.0: scan
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Wed, 27 Sep 2000 11:45:34 +0200 (CEST)
+--HP-UX specific bug
+* PR# 592 *
+Subject: tseries bug
+From: przemat@itti.com.pl
+Date: Tue, 4 Jul 2000 14:52:17 +0200 (MET DST)
+--Still broken?
 
 Directory:  TooMuchAtOnce
 
@@ -210,4 +292,7 @@ none
 
 Directory:  incoming
 
-none
+* PR# 765 *
+Subject: cannot allocate vector of size in merge
+From: viktorm@pdf.com
+Date: Fri, 15 Dec 2000 00:06:56 +0100 (MET)

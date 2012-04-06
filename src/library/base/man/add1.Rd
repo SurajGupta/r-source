@@ -9,15 +9,15 @@ add1.default(object, scope, scale = 0, test = c("none", "Chisq"),
              k = 2, trace = FALSE, \dots)
 add1.lm(object, scope, scale = 0, test = c("none", "Chisq", "F"),
         x = NULL, k = 2, \dots)
-add1.glm(object, scope, dispersion = 0, x = NULL,
-         test = c("none", "Chisq", "F"), k = 2, \dots)
+add1.glm(object, scope, scale = 0, test = c("none", "Chisq", "F"),
+         x = NULL, k = 2, \dots)
 
 drop1(object, scope, \dots)
 drop1.default(object, scope, scale = 0, test = c("none", "Chisq"),
               k = 2, trace = FALSE, \dots)
 drop1.lm(object, scope, scale = 0, all.cols = TRUE,
          test=c("none", "Chisq", "F"),k = 2, \dots)
-drop1.glm(object, scope, dispersion = 0, test = c("none", "Chisq", "F"),
+drop1.glm(object, scope, scale = 0, test = c("none", "Chisq", "F"),
           k = 2, \dots)
 }
 \alias{add1}
@@ -34,7 +34,7 @@ drop1.glm(object, scope, dispersion = 0, test = c("none", "Chisq", "F"),
   \item{object}{a fitted model object.}
   \item{scope}{a formula giving the terms to be considered for adding or
     dropping.}
-  \item{scale, dispersion}{an estimate of the residual mean square to be
+  \item{scale}{an estimate of the residual mean square to be
     used in computing \eqn{C_p}{Cp}. Ignored if \code{0} or \code{NULL}.}
   \item{test}{should the results include a test statistic relative to the
     original model?  The F test is only appropriate for \code{\link{lm}} and
@@ -90,10 +90,10 @@ drop1.glm(object, scope, dispersion = 0, test = c("none", "Chisq", "F"),
   are used, not those of the authors of the models chapter of S.
 }
 \section{Warning}{
-  The model fitting must apply the models to the same dataset. This
-  may be a problem if there are missing values and \R's default of
-  \code{na.action = na.omit} is used, although it is not for the
-  \code{drop1} methods for \code{"lm"} and \code{"glm"}.  Only use
+  The model fitting must apply the models to the same dataset. Most
+  methods will attempt to use a subset of the data with no missing
+  values for any of the variables if \code{na.action=na.omit}, but
+  this may give biased results.  Only use
   these functions with data containing missing values with great care.
 }
 \seealso{\code{\link{step}}, \code{\link{aov}}, \code{\link{lm}},

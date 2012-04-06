@@ -1,45 +1,45 @@
 subset.data.frame <-
-    function (dfr, subset, select)
+    function (x, subset, select, ...)
 {
     if(missing(subset))
 	r <- TRUE
     else {
 	e <- substitute(subset)
-	r <- eval(e, dfr, sys.frame(sys.parent()))
+	r <- eval(e, x, parent.frame())
 	r <- r & !is.na(r)
     }
     if(missing(select))
 	vars <- TRUE
     else {
-	nl <- as.list(1:ncol(dfr))
-	names(nl) <- names(dfr)
-	vars <- eval(substitute(select),nl, sys.frame(sys.parent()))
+	nl <- as.list(1:ncol(x))
+	names(nl) <- names(x)
+	vars <- eval(substitute(select),nl, parent.frame())
     }
-    dfr[r,vars,drop=FALSE]
+    x[r,vars,drop=FALSE]
 }
 
 subset<-
-    function(x,...)
+    function(x, ...)
     UseMethod("subset")
 
 subset.default <-
-    function(x,subset)
+    function(x, subset, ...)
     x[subset & !is.na(subset)]
 
 transform.data.frame <-
-    function (dfr, ...)
+    function (x, ...)
 {
-    e <- eval(substitute(list(...)), dfr, sys.frame(sys.parent()))
+    e <- eval(substitute(list(...)), x, parent.frame())
     tags <- names(e)
-    inx <- match(tags, names(dfr))
+    inx <- match(tags, names(x))
     matched <- !is.na(inx)
     if (any(matched)) {
-	dfr[inx[matched]] <- e[matched]
-	dfr <- data.frame(dfr)
+	x[inx[matched]] <- e[matched]
+	x <- data.frame(x)
     }
     if (!all(matched))
-	data.frame(dfr, e[!matched])
-    else dfr
+	data.frame(x, e[!matched])
+    else x
 }
 
 transform <-
@@ -54,12 +54,12 @@ transform.default <-
     transform.data.frame(data.frame(x),...)
 
 stack.data.frame <-
-    function(x, select)
+    function(x, select, ...)
 {
     if (!missing(select)) {
 	nl <- as.list(1:ncol(x))
 	names(nl) <- names(x)
-	vars <- eval(substitute(select),nl, sys.frame(sys.parent()))
+	vars <- eval(substitute(select),nl, parent.frame())
         x <- x[, vars, drop=FALSE]
     }
     x <- x[, unlist(lapply(x, is.vector)), drop = FALSE]
@@ -81,7 +81,7 @@ stack.default <-
 }
 
 unstack.data.frame <-
-    function(x, form = formula(x))
+    function(x, form = formula(x), ...)
 {
     form <- as.formula(form)
     if (length(form) < 3)
@@ -97,7 +97,7 @@ unstack <-
     UseMethod("unstack")
 
 unstack.default <-
-    function(x, form)
+    function(x, form, ...)
 {
     x <- as.list(x)
     form <- as.formula(form)
@@ -107,4 +107,53 @@ unstack.default <-
     if (length(res) < 2 || any(diff(unlist(lapply(res, length))) != 0))
         return(res)
     data.frame(res)
+}
+reshapeLong <-
+    function(x,
+             jvars,
+             ilev = row.names(x),
+             jlev = names(x)[jvars],
+             iname = "reshape.i",
+             jname = "reshape.j",
+             vname = "reshape.v")
+{
+    nl <- as.list(1:ncol(x))
+    names(nl) <- names(x)
+    jvars <- eval(substitute(jvars), nl, parent.frame())
+    n <- nrow(x)
+    k <- length(jvars)
+    if (k == 0) stop("no j variables")
+    t1 <- x[,-jvars,drop=FALSE]
+    t2 <- as.matrix(x[,jvars])
+    i <- gl(n, k, labels = ilev)
+    j <- gl(k, 1, length = n*k, labels = jlev)
+    t2 <- data.frame(foo=i, bar=j, baz=as.vector(t(t2)))
+    names(t2) <- c(iname, jname, vname)
+    if(ncol(t1)==0) return(t2)
+    t1 <- t1[i,,drop=FALSE]
+    rownames(t1) <- 1:(n*k)
+    cbind(t1, t2)
+}
+
+reshapeWide <-
+    function(x,
+             i = reshape.i,
+             j = reshape.j,
+             val = reshape.v,
+             jnames = levels(j))
+{
+    nl <- as.list(1:ncol(x))
+    names(nl) <- names(x)
+    ijv <- eval(substitute(c(i,j,val)), nl, parent.frame())
+    i <- eval(substitute(as.factor(i)), envir=x)
+    j <- eval(substitute(as.factor(j)), envir=x)
+    val <- eval(substitute(val), envir=x)
+    if (any(table(i,j) != 1)) stop("data frame cannot be reshaped")
+    xr <- x[,-ijv,drop=FALSE]
+    resp <- tapply(val,list(i,j),as.vector)
+    resp <- as.data.frame(resp)
+    names(resp) <- jnames
+    if (ncol(xr) == 0) return(resp)
+    reduced <- xr[as.numeric(j)==1,,drop=FALSE]
+    cbind(reduced,resp)
 }

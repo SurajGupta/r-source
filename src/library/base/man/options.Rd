@@ -8,8 +8,11 @@ options(\dots)
 getOption(x)
 .Options
 }
+%%-- NOTE : Keep the list up-to-date,
+%%-- ====   Consider also the leading comments in ../../../main/options.c
 \arguments{
   \item{\dots}{any options can be defined, using \code{name = value}.
+
     However, only the ones below are used in ``base \R''.
 
     Further, \code{options('name') == options()['name']}, see the example.
@@ -22,13 +25,17 @@ getOption(x)
     over one line.}
 
   \item{width}{controls the number of characters on a line.  You may
-    want to change this if you re-size the window that \R is running in.}
+    want to change this if you re-size the window that \R is running in.
+    Valid values are 10\dots10000 with default normally 80. (The valid
+    values are in file \file{Print.h} and can be changed by re-compiling
+    \R.)}
 
   \item{digits}{controls the number of digits to print when printing
-    numeric values.  It is a suggestion only.}
+    numeric values.  It is a suggestion only.  Valid values are 1\dots22
+    with default 7.}
 
   \item{editor}{sets the default text editor, e.g., for
-    \code{\link{edit}}. Set from the environment variable \code{VISUAL}
+    \code{\link{edit}}.  Set from the environment variable \code{VISUAL}
     on UNIX.}
 
   \item{pager}{the (stand-alone) program used for displaying ASCII files on
@@ -56,7 +63,8 @@ getOption(x)
 
   \item{expressions}{sets a limit on the number of nested expressions that
     will be evaluated.  This is especially important on the Macintosh
-    since stack overflow is likely if this is set too high.}
+    since stack overflow is likely if this is set too high.
+    Valid values are 25\dots100000 with default 500.}
 
   \item{keep.source}{When \code{TRUE}, the source code for functions
     (newly defined or loaded) is stored in their \code{"source"}
@@ -114,11 +122,16 @@ getOption(x)
     one, warnings are printed as they occur.  If \code{warn} is two or
     larger all warnings are turned into errors.}
 
-  \item{echo}{logical. Only used in non-interactive mode, when it
+  \item{check.bounds}{logical, defaulting to \code{FALSE}.  If true, a
+    \link{warning} is produced whenever a ``generalized vector''
+    (atomic or \code{\link{list}}) is extended, by something like
+    \code{x <- 1:3; x[5] <- 6}.}
+
+  \item{echo}{logical.  Only used in non-interactive mode, when it
     controls whether input is echoed. Command-line options
     \code{--quiet} and \code{--slave} set this initially to \code{FALSE}.}
 
-  \item{verbose}{logical. Should \R report extra information on
+  \item{verbose}{logical.  Should \R report extra information on
     progress? Set to \code{TRUE} by the command-line option
     \code{--verbose}.}
 
@@ -193,6 +206,9 @@ pi
 # set the editor, and save previous value
 old.o <- options(editor="nedit")
 old.o
+
+options(check.bounds = TRUE)
+x <- NULL; x[4] <- "yes" # gives a warning
 
 options(op)     # reset (all) initial options
 options('digits')

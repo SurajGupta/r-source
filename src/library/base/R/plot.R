@@ -6,8 +6,8 @@ xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
 	    if (inherits(x, "formula") && length(x) == 3) {
 		ylab <- deparse(x[[2]])
 		xlab <- deparse(x[[3]])
-		y <- eval(x[[2]], sys.frame(sys.parent()))
-		x <- eval(x[[3]], sys.frame(sys.parent()))
+		y <- eval(x[[2]], parent.frame())
+		x <- eval(x[[3]], parent.frame())
 	    }
 	    else stop("invalid first argument")
 	}
@@ -88,16 +88,21 @@ xy.coords <- function(x, y, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE)
 
 plot <- function(x, ...) {
     if(is.null(class(x)) && is.function(x)) {
-        if("ylab" %in% names(list(...)))
-            plot.function(x, ...)
-        else
-            plot.function(x, ylab=paste(deparse(substitute(x)),"(x)"), ...)
+	if("ylab" %in% names(list(...)))
+	    plot.function(x, ...)
+	else
+	    plot.function(x, ylab=paste(deparse(substitute(x)),"(x)"), ...)
     }
     else UseMethod("plot")
 }
 
-plot.function <- function(fn, from=0, to=1, ...) {
-    curve(fn, from, to, ...)
+## xlim = NULL (instead of "missing", since it will be passed to plot.default:
+plot.function <- function(fn, from = 0, to = 1, xlim = NULL, ...) {
+    if(!is.null(xlim)) {
+	if(missing(from)) from <- xlim[1]
+	if(missing(to))	  to   <- xlim[2]
+    }
+    curve(fn, from, to, xlim = xlim, ...)
 }
 
 ### NOTE: cex = 1 is correct, cex = par("cex") gives *square* of intended!
@@ -107,8 +112,8 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
 			 ann=par("ann"), axes=TRUE, frame.plot=axes,
 			 panel.first=NULL, panel.last=NULL,
 			 col=par("col"), bg=NA, pch=par("pch"),
-			 cex=1, lty=par("lty"), lab=par("lab"),
-                         lwd=par("lwd"), asp=NA, ...)
+			 cex = 1, lty=par("lty"), lab=par("lab"),
+			 lwd=par("lwd"), asp=NA, ...)
 {
     xlabel <- if (!missing(x)) deparse(substitute(x))
     ylabel <- if (!missing(y)) deparse(substitute(y))
@@ -136,18 +141,46 @@ plot.default <- function(x, y=NULL, type="p", xlim=NULL, ylim=NULL,
 plot.factor <- function(x, y, legend.text=levels(y), ...)
 {
     if(missing(y) || is.factor(y)) ## <==> will do barplot(.)
-        axisnames <- if(length(dargs <- list(...)) > 0) {
-            nam <- names(dargs)
-            ((any("axes" == nam) && dargs$axes) ||
-             (any("xaxt" == nam) && dargs$xaxt != "n"))
-        } else TRUE
+	axisnames <- if(length(dargs <- list(...)) > 0) {
+	    nam <- names(dargs)
+	    ((any("axes" == nam) && dargs$axes) ||
+	     (any("xaxt" == nam) && dargs$xaxt != "n"))
+	} else TRUE
     if (missing(y)) {
 	barplot(table(x), axisnames=axisnames, ...)
     } else if (is.factor(y)) {
-        barplot(table(y, x), legend.text=legend.text, axisnames=axisnames, ...)
+	barplot(table(y, x), legend.text=legend.text, axisnames=axisnames, ...)
     } else if (is.numeric(y))
 	boxplot(y ~ x, ...)
     else NextMethod("plot")
+}
+
+## FIXME (ideas/wishes):
+## o for 1-D tables:
+##   - alternatively, and/or as default, type = "bar" ??!??
+##   - if "h", make the default lwd depend on number of classes
+plot.table <- function(x, type = "h", ylim = c(0, max(x)), lwd = 2,
+                       xlab = NULL, ylab = deparse(substitute(x)),
+                       frame.plot = is.num,
+                       ...)
+{
+    rnk <- length(d <- dim(x))
+    if(rnk == 0)
+	stop("invalid table `x'")
+    if(rnk == 1) {
+        dn <- dimnames(x)
+        nx <- dn[[1]]
+        if(is.null(xlab)) xlab <- names(dn)
+        if(is.null(xlab)) xlab <- ""
+        ow <- options(warn = -1)
+        is.num <- !any(is.na(xx <- as.numeric(nx))); options(ow)
+        x0 <- if(is.num) xx else seq(x)
+	plot(x0, unclass(x), type = type,
+             ylim = ylim, xlab = xlab, ylab = ylab, frame.plot = frame.plot,
+             lwd = lwd, ..., xaxt = "n")
+        axis(1, at = x0, labels = nx)
+    } else
+	mosaicplot(x, ...)
 }
 
 plot.formula <- function(formula, ..., data = parent.frame(), subset,
@@ -163,30 +196,30 @@ plot.formula <- function(formula, ..., data = parent.frame(), subset,
     m <- as.call(c(as.list(m), list(na.action = NULL)))
     mf <- eval(m, parent.frame())
     if (!missing(subset)) {
-        s <- eval(m$subset, data, parent.frame())
-        l <- nrow(data)
-        dosub <- function(x) if (length(x) == l) x[s] else x
-        dots <- lapply(dots, dosub)
+	s <- eval(m$subset, data, parent.frame())
+	l <- nrow(mf)
+	dosub <- function(x) if (length(x) == l) x[s] else x
+	dots <- lapply(dots, dosub)
     }
     response <- attr(attr(mf, "terms"), "response")
     if (response) {
 	varnames <- names(mf)
 	y <- mf[[response]]
-        funname<-NULL
-        if( is.object(y) ) {
-            found<-FALSE
-            for(j in class(y)) {
-                funname<-paste("plot.",j,sep="")
-                if( exists(funname) ) {
-                    found<-TRUE
-                    break;
-                }
-            }
-            if( !found )
-                funname<-NULL
-        }
-        if( is.null(funname) )
-            funname<-"plot"
+	funname <- NULL
+	if( is.object(y) ) {
+	    found <- FALSE
+	    for(j in class(y)) {
+		funname <- paste("plot.",j,sep = "")
+		if( exists(funname) ) {
+		    found <- TRUE
+		    break;
+		}
+	    }
+	    if( !found )
+		funname <- NULL
+	}
+	if( is.null(funname) )
+	    funname <- "plot"
 	if (length(varnames) > 2) {
 	    opar <- par(ask = ask)
 	    on.exit(par(opar))
@@ -194,38 +227,38 @@ plot.formula <- function(formula, ..., data = parent.frame(), subset,
 	xn <- varnames[-response]
 	if (is.null(dots[["xlab"]])) {
 	    for (i in xn)
-                if( length(dots) > 0 )
-                    do.call(funname,
-                            c(list(mf[[i]], y, ylab = ylab, xlab = i),
-                              dots))
-                else
-                    do.call(funname,
-                            c(list(mf[[i]], y, ylab = ylab, xlab = i)))
+		if( length(dots) > 0 )
+		    do.call(funname,
+			    c(list(mf[[i]], y, ylab = ylab, xlab = i),
+			      dots))
+		else
+		    do.call(funname,
+			    c(list(mf[[i]], y, ylab = ylab, xlab = i)))
 	} else {
 	    for (i in xn)
-                if( length(dots) > 0 )
-                    do.call(funname,
-                            c(list(mf[[i]], y, ylab = ylab), dots))
-                else
-                    do.call(funname,
-                            c(list(mf[[i]], y, ylab = ylab)))
-        }
-        if (length(xn) == 0)
-            if (is.null(dots[["xlab"]])) {
-                if( length(dots) > 0 )
-                    do.call(funname,
-                            c(list(y, ylab = ylab, xlab = i), dots))
-                else
-                    do.call(funname,
-                            c(list(y, ylab = ylab, xlab = i)))
-            } else {
-                if(length(dots) > 0 )
-                    do.call(funname,
-                            c(list(y, ylab = ylab), dots))
-                else
-                   do.call(funname,
-                            c(list(y, ylab = ylab)))
-            }
+		if( length(dots) > 0 )
+		    do.call(funname,
+			    c(list(mf[[i]], y, ylab = ylab), dots))
+		else
+		    do.call(funname,
+			    c(list(mf[[i]], y, ylab = ylab)))
+	}
+	if (length(xn) == 0)
+	    if (is.null(dots[["xlab"]])) {
+		if( length(dots) > 0 )
+		    do.call(funname,
+			    c(list(y, ylab = ylab, xlab = i), dots))
+		else
+		    do.call(funname,
+			    c(list(y, ylab = ylab, xlab = i)))
+	    } else {
+		if(length(dots) > 0 )
+		    do.call(funname,
+			    c(list(y, ylab = ylab), dots))
+		else
+		   do.call(funname,
+			    c(list(y, ylab = ylab)))
+	    }
     }
     else plot.data.frame(mf)
 }
@@ -241,10 +274,10 @@ lines.formula <- function(formula, ..., data = parent.frame(), subset)
     m <- as.call(c(as.list(m), list(na.action = NULL)))
     mf <- eval(m, parent.frame())
     if (!missing(subset)) {
-        s <- eval(m$subset, data, parent.frame())
-        l <- nrow(data)
-        dosub <- function(x) if (length(x) == l) x[s] else x
-        dots <- lapply(dots, dosub)
+	s <- eval(m$subset, data, parent.frame())
+	l <- nrow(data)
+	dosub <- function(x) if (length(x) == l) x[s] else x
+	dots <- lapply(dots, dosub)
     }
     response <- attr(attr(mf, "terms"), "response")
     if (response) {
@@ -253,15 +286,15 @@ lines.formula <- function(formula, ..., data = parent.frame(), subset)
 	if (length(varnames) > 2)
 	    stop("cannot handle more than one x coordinate")
 	xn <- varnames[-response]
-        if (length(xn) == 0)
-            do.call("lines",
-                    c(list(y), dots))
-        else
-            do.call("lines",
-                    c(list(mf[[xn]], y), dots))
+	if (length(xn) == 0)
+	    do.call("lines",
+		    c(list(y), dots))
+	else
+	    do.call("lines",
+		    c(list(mf[[xn]], y), dots))
     }
     else
-        stop("must have a response variable")
+	stop("must have a response variable")
 }
 
 points.formula <- function(formula, ..., data = parent.frame(), subset)
@@ -276,10 +309,10 @@ points.formula <- function(formula, ..., data = parent.frame(), subset)
     m <- as.call(c(as.list(m), list(na.action = NULL)))
     mf <- eval(m, parent.frame())
     if (!missing(subset)) {
-        s <- eval(m$subset, data, parent.frame())
-        l <- nrow(data)
-        dosub <- function(x) if (length(x) == l) x[s] else x
-        dots <- lapply(dots, dosub)
+	s <- eval(m$subset, data, parent.frame())
+	l <- nrow(data)
+	dosub <- function(x) if (length(x) == l) x[s] else x
+	dots <- lapply(dots, dosub)
     }
     response <- attr(attr(mf, "terms"), "response")
     if (response) {
@@ -288,22 +321,22 @@ points.formula <- function(formula, ..., data = parent.frame(), subset)
 	if (length(varnames) > 2)
 	    stop("cannot handle more than one x coordinate")
 	xn <- varnames[-response]
-        if (length(xn) == 0)
-            do.call("points",
-                    c(list(y), dots))
-        else
-            do.call("points",
-                    c(list(mf[[xn]], y), dots))
+	if (length(xn) == 0)
+	    do.call("points",
+		    c(list(y), dots))
+	else
+	    do.call("points",
+		    c(list(mf[[xn]], y), dots))
     }
     else
-        stop("must have a response variable")
+	stop("must have a response variable")
 }
 
 plot.xy <- function(xy, type, pch = 1, lty = "solid", col = par("fg"),
-                    bg = NA, cex = 1, ...) {
+		    bg = NA, cex = 1, ...) {
     .Internal(plot.xy(xy, type, pch, lty, col, bg, cex, ...))
 }
 
-plot.new <- function(ask = NA) .Internal(plot.new(ask))
+plot.new <- function() .Internal(plot.new())
 
 frame <- .Alias(plot.new)

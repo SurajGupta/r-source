@@ -1870,7 +1870,7 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
     SEXP ans, sav_expr = expr;
     if(GenerateCode) {
 	if (isString(expr))
-	    expr = install(CHAR(STRING(expr)[0])); 
+	    expr = install(CHAR(STRING_ELT(expr, 0))); 
 	PROTECT(expr);
 	if (length(CDR(args)) == 1 && CADR(args) == R_MissingArg && TAG(CDR(args)) == R_NilValue )
 	    ans = lang1(expr);
@@ -1933,7 +1933,7 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 			nc++; 
 		    strncpy(SourceLine, p0, nc);
 		    SourceLine[nc] = '\0';
-		    STRING(source)[lines++]  = mkChar(SourceLine);
+		    SET_STRING_ELT(source, lines++, mkChar(SourceLine));
 		    p0 = p + 1;
 		}
 	    /* PrintValue(source); */
@@ -2000,8 +2000,8 @@ static SEXP xxexprlist(SEXP a1, SEXP a2)
     SEXP ans;
     EatLines = 0;
     if (GenerateCode) {
-	TYPEOF(a2) = LANGSXP;
-	CAR(a2) = a1;
+	SET_TYPEOF(a2, LANGSXP);
+	SETCAR(a2, a1);
 	PROTECT(ans = a2);
     }
     else
@@ -2016,7 +2016,7 @@ static SEXP TagArg(SEXP arg, SEXP tag)
 {
     switch (TYPEOF(tag)) {
     case STRSXP:
-    	tag = install(CHAR(STRING(tag)[0]));
+    	tag = install(CHAR(STRING_ELT(tag, 0)));
     case NILSXP:
     case SYMSXP:
 	return lang2(arg, tag);
@@ -2038,7 +2038,7 @@ static SEXP TagArg(SEXP arg, SEXP tag)
 static SEXP NewList(void)
 {
     SEXP s = CONS(R_NilValue, R_NilValue);
-    CAR(s) = s;
+    SETCAR(s, s);
     return s;
 }
 
@@ -2051,7 +2051,7 @@ static SEXP GrowList(SEXP l, SEXP s)
     tmp = CONS(s, R_NilValue);
     UNPROTECT(1);
     SETCDR(CAR(l), tmp);
-    CAR(l) = tmp;
+    SETCAR(l, tmp);
     return l;
 }
 
@@ -2121,7 +2121,7 @@ static SEXP FirstArg(SEXP s, SEXP tag)
     PROTECT(tag);
     PROTECT(tmp = NewList());
     tmp = GrowList(tmp, s);
-    TAG(CAR(tmp)) = tag;
+    SET_TAG(CAR(tmp), tag);
     UNPROTECT(3);
     return tmp;
 }
@@ -2131,7 +2131,7 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
     PROTECT(tag);
     PROTECT(l);
     l = GrowList(l, s);
-    TAG(CAR(l)) = tag;
+    SET_TAG(CAR(l), tag);
     UNPROTECT(2);
     return l;
 }
@@ -2322,7 +2322,7 @@ SEXP R_Parse(int n, int *status)
                 goto try_again;
                 break;
             case PARSE_OK:
-                VECTOR(rval)[i] = t;
+                SET_VECTOR_ELT(rval, i, t);
                 break;
             case PARSE_INCOMPLETE:
             case PARSE_ERROR:
@@ -2354,7 +2354,7 @@ SEXP R_Parse(int n, int *status)
                 t = CDR(t);
                 rval = allocVector(EXPRSXP, length(t));
                 for (n = 0 ; n < LENGTH(rval) ; n++) {
-                    VECTOR(rval)[n] = CAR(t);
+                    SET_VECTOR_ELT(rval, n, CAR(t));
                     t = CDR(t);
                 }
                 UNPROTECT(1);
@@ -2373,6 +2373,29 @@ SEXP R_ParseFile(FILE *fp, int n, int *status)
     fp_parse = fp;
     ptr_getc = file_getc;
     ptr_ungetc = file_ungetc;
+    return R_Parse(n, status);
+}
+
+#include "Rconnections.h"
+static Rconnection con_parse;
+
+static int con_getc(void)
+{
+    return con_parse->fgetc(con_parse);
+}
+
+static int con_ungetc(int c)
+{
+    return con_parse->ungetc(c, con_parse);
+}
+
+SEXP R_ParseConn(Rconnection con, int n, int *status)
+{
+    GenerateCode = 1;
+    R_ParseError = 1;
+    con_parse = con;;
+    ptr_getc = con_getc;
+    ptr_ungetc = con_ungetc;
     return R_Parse(n, status);
 }
 
@@ -2406,15 +2429,15 @@ static char *Prompt(SEXP prompt, int type)
 {
     if(type == 1) {
 	if(length(prompt) <= 0) {
-	    return (char*)CHAR(STRING(GetOption(install("prompt"),
-						R_NilValue))[0]);
+	    return (char*)CHAR(STRING_ELT(GetOption(install("prompt"),
+						    R_NilValue), 0));
 	}
 	else
-	    return CHAR(STRING(prompt)[0]);
+	    return CHAR(STRING_ELT(prompt, 0));
     }
     else {
-	return (char*)CHAR(STRING(GetOption(install("continue"),
-					    R_NilValue))[0]);
+	return (char*)CHAR(STRING_ELT(GetOption(install("continue"),
+						R_NilValue), 0));
     }
 }
 
@@ -2448,7 +2471,7 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, int *status, SEXP prompt)
 		goto try_again;
 		break;
 	    case PARSE_OK:
-		VECTOR(rval)[i] = t;
+		SET_VECTOR_ELT(rval, i, t);
 		break;
 	    case PARSE_INCOMPLETE:
 	    case PARSE_ERROR:
@@ -2493,7 +2516,7 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, int *status, SEXP prompt)
 		t = CDR(t);
 		rval = allocVector(EXPRSXP, length(t));
 		for (n = 0 ; n < LENGTH(rval) ; n++) {
-		    VECTOR(rval)[n] = CAR(t);
+		    SET_VECTOR_ELT(rval, n, CAR(t));
 		    t = CDR(t);
 		}
 		UNPROTECT(1);
@@ -2659,7 +2682,7 @@ SEXP mkString(yyconst char *s)
     SEXP t;
 
     PROTECT(t = allocVector(STRSXP, 1));
-    STRING(t)[0] = mkChar(s);
+    SET_STRING_ELT(t, 0, mkChar(s));
     UNPROTECT(1);
     return t;
 }

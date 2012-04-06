@@ -23,16 +23,11 @@
 
 /*#include "config.h"*/
 #include "R_ext/Complex.h"
+#include "R_ext/Boolean.h" /* TRUE/FALSE */
 
 	/* General F2C Macros */
 
 /* a whole bunch of stuff to keep watcom's C compiler happy */
-#ifdef TRUE
-#undef TRUE
-#endif
-#ifdef FALSE
-#undef FALSE
-#endif
 #ifdef min
 #undef min
 #endif
@@ -42,9 +37,6 @@
 #ifdef huge
 #undef huge
 #endif
-
-#define TRUE    (1)
-#define FALSE   (0)
 
 /* not defined in any R header */
 #ifndef _STDLIB_H
@@ -90,6 +82,7 @@
 
 #endif
 
+extern double DABS(double*);
 extern double DSIGN(double*, double*);
 extern double DLOG10(double*);
 extern double POW_DD(double*, double*);

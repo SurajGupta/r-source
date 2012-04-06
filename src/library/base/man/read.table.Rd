@@ -2,6 +2,8 @@
 \alias{read.table}
 \alias{read.csv}
 \alias{read.csv2}
+\alias{read.delim}
+\alias{read.delim2}
 \title{Data Input}
 \description{
   Reads a file in table format and creates a data frame from it, with
@@ -10,36 +12,50 @@
 \usage{
 read.table(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
            row.names, col.names, as.is = FALSE, na.strings = "NA",
-           skip = 0, check.names = TRUE, strip.white = FALSE)
+           skip = 0, check.names = TRUE, fill = FALSE,
+           strip.white = FALSE, blank.lines.skip = TRUE)
 
-read.csv(file, header = TRUE, sep = ",", quote="\"", dec=".", \dots)
+read.csv(file, header = TRUE, sep = ",", quote="\"", dec=".",
+         fill = TRUE, \dots)
 
-read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",", \dots)
-}
-\details{
-  \code{read.csv} and \code{read.csv2} are identical to
-  \code{read.table} except for the defaults. They are intended for
-  reading "comma separated variable" files (.csv) or the variant used in
-  countries that use comma as decimal point and consequently semicolon
-  as field separator.  Notice that \code{header=TRUE} in these variants.
+read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",",
+         fill = TRUE, \dots)
+
+read.delim(file, header = TRUE, sep = "\t", quote="\"", dec=".",
+         fill = TRUE, \dots)
+
+read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
+         fill = TRUE, \dots)
 }
 \arguments{
   \item{file}{the name of the file which the data are to be read from.
     Each row of the table appears as one line of the file.  If it does
     not contain an \emph{absolute} path, the file name is
     \emph{relative} to the current working directory,
-    \code{\link{getwd}()}.}
+    \code{\link{getwd}()}.
+
+    Alternatively, \code{file} can be a \code{\link{connection}}, which
+    will be opened if necessary, and if so closed at the end of the
+    function call.  However, since the file must be read twice, this
+    will be resource-intensive except on seekable connections.
+  }
 
   \item{header}{a logical value indicating whether the file contains the
-    names of the variables as its first line.}
+    names of the variables as its first line. If missing, the value is
+    determined from the file format: \code{header} is set to \code{TRUE}
+    if and only if the first row contains one fewer field than the
+    second.}
 
   \item{sep}{the field separator character.  Values on each line of the
-    file are separated by this character.}
+    file are separated by this character.  If \code{sep = ""} the
+    separator is ``white space'', that is one or more spaces, tabs or
+    newlines.}
 
   \item{quote}{the set of quoting characters. To disable quoting
-    altogether, use \code{quote=""}.}
+    altogether, use \code{quote=""}.  See \code{\link{scan}} for the
+    behaviour on quotes embedded in quotes.}
 
-  \item{dec}{the character used in the fike for decimal points.}
+  \item{dec}{the character used in the file for decimal points.}
 
   \item{row.names}{a vector of row names.  This can be a vector giving
     the actual row names, or a single number giving the column of the
@@ -61,16 +77,22 @@ read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",", \dots)
   \item{skip}{the number of lines of the data file to skip before
     beginning to read data.}
 
-  \item{check.names}{logical. If \code{TRUE} then the names of the
+  \item{check.names}{logical.  If \code{TRUE} then the names of the
     variables in the data frame are checked to ensure that they are
-    valid variable names.  If necessary they are adjusted (by
-    \code{\link{make.names}}) so that they are.}
+    syntactically valid variable names.  If necessary they are adjusted
+    (by \code{\link{make.names}}) so that they are.}
 
-  \item{skip.white}{logical. Used only when \code{sep} has
+  \item{fill}{logical. If \code{TRUE} then in case the rows have unequal
+    length, blank fields are implicitly added.}
+
+  \item{strip.white}{logical. Used only when \code{sep} has
     been specified, and allows the stripping of leading and trailing
     white space from \code{character} fields (\code{numeric} fields
     are always stripped).  See \code{\link{scan}} for further details,
     remembering that the columns may include the row names.}
+
+  \item{blank.lines.skip}{logical: if \code{TRUE} blank lines in the
+    input are ignored.}
 
   \item{\dots}{Further arguments to \code{read.table}.}
 }
@@ -79,6 +101,16 @@ read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",", \dots)
   the data in the file.
 
   This function is the principal means of reading tabular data into \R.
+}
+\details{
+  \code{read.csv} and \code{read.csv2} are identical to
+  \code{read.table} except for the defaults.  They are intended for
+  reading ``comma separated value'' files (\file{.csv}) or the variant
+  used in countries that use a comma as decimal point and a semicolon
+  as field separator.  Similarly, \code{read.delim} and
+  \code{read.delim2} are for reading delimited files, defaulting to the
+  TAB character for the delimiter.  Notice that \code{header = TRUE} and
+  \code{fill = TRUE} in these variants.
 }
 \note{
   The implementation of \code{read.table} currently reads everything as
@@ -97,3 +129,4 @@ read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",", \dots)
   \code{\link{data.frame}}.
 }
 \keyword{file}
+\keyword{connection}

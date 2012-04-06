@@ -1,8 +1,9 @@
 \name{model.frame}
 \title{Extracting the ``Environment'' of a Model Formula}
 \usage{
-model.frame(formula, data, na.action, \dots)
-model.frame.default(formula, data = sys.frame(sys.parent()), na.action,
+model.frame(formula, \dots)
+model.frame.default(formula, data = parent.frame(),
+                    subset = NULL, na.action,
                     drop.unused.levels = FALSE, xlev = NULL, \dots)
 
 Methods for
@@ -19,7 +20,9 @@ Methods for
   \item{data}{\code{data.frame}, list, \code{environment} or object
     coercible to \code{data.frame} containing the variables in
     \code{formula}.}
-  
+
+  \item{subset}{a specification of the rows to be used. Defaults to all rows.}
+
   \item{na.action}{how \code{NA}s are treated. The default is first,
     any \code{na.action} attribute of \code{data}, second
     a \code{na.action} setting of \code{\link{options}}, and third
@@ -28,10 +31,10 @@ Methods for
 
   \item{drop.unused.levels}{should factors have unused levels dropped?
     Defaults to \code{FALSE}.}
-  
+
   \item{xlev}{a named list of character vectors giving the full set of levels
     to be assumed for each factor.}
-  
+
   \item{\dots}{further arguments such as \code{subset}, \code{offset} and
     \code{weights}. \code{NULL} arguments are treated as missing.}
 }
@@ -43,7 +46,10 @@ Methods for
   A \code{\link{data.frame}} containing the variables used in
   \code{formula}.
 }
-\seealso{\code{\link{model.matrix}} for the ``design matrix''.}
+\seealso{\code{\link{model.matrix}} for the ``design matrix'',
+  \code{\link{formula}} for formulas  and
+  \code{\link{expand.model.frame}} for model.frame manipulation.
+}
 \examples{
 data(cars)
 data.class(model.frame(dist ~ speed, data = cars))

@@ -1,14 +1,23 @@
 \name{unlink}
 \title{Delete Files and Directories}
-\usage{unlink(x)}
+\usage{unlink(x, recursive = FALSE)}
 \alias{unlink}
 \arguments{
   \item{x}{a character vector with the names of the file(s) or
     directories to be deleted.
     Wildcards (normally \file{*} and \file{?}) are allowed.}
+  \item{recursive}{logical. Should directories be deleted
+    recusively?}
 }
 \description{
   \code{unlink} deletes the file(s) or directories specified by \code{x}.
+}
+\details{
+  If \code{recusive = FALSE} directories are not deleted,
+  not even empty ones.
+
+  \code{\link{file.remove}} can only remove files, but gives more
+  detailed error information.
 }
 \value{
 #ifdef unix
@@ -20,6 +29,12 @@
 #endif
   Not deleting a non-existent file is not a failure.
 }
-\seealso{\code{\link{tempfile}} for file creation.}
+\note{
+  Prior to \R version 1.2.0 the default on Unix was \code{recursive =
+    TRUE}, and on Windows empty directories could be deleted.
+}
+\seealso{
+  \code{\link{file.remove}}.
+}
 %Examples: tempfile has an 'unlink' example
 \keyword{file}
