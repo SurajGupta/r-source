@@ -4,11 +4,16 @@
 \alias{matlines}
 \title{Plot Columns of Matrices}
 \usage{
-matplot(x, y, type = "p", lty = 1:5, lwd = 1, pch = NULL, col = 1:6,
-        cex = NULL, xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
+matplot(x, y, type = "p", lty = 1:5, lwd = 1, pch = NULL,
+        col = 1:6, cex = NULL,
+        xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
         \dots, add = FALSE, verbose = getOption("verbose"))
-matpoints(x, y, type = "p", lty = 1:5, lwd = 1, pch = NULL, col = 1:6, \dots)
-matlines (x, y, type = "l", lty = 1:5, lwd = 1, pch = NULL, col = 1:6, \dots)
+
+matpoints(x, y, type = "p", lty = 1:5, lwd = 1, pch = NULL,
+          col = 1:6, \dots)
+
+matlines (x, y, type = "l", lty = 1:5, lwd = 1, pch = NULL,
+          col = 1:6, \dots)
 }
 \arguments{
   \item{x,y}{vectors or matrices of data for plotting.  The number of
@@ -96,8 +101,7 @@ matplot(x, outer(x, 1:8, function(x, k) sin(k*pi * x)),
 matplot(x, outer(x, 1:4, function(x, k) sin(k*pi * x)),
         pch = letters[1:4], type = c("b","p","o"))
 
-data(iris)                  # is data.frame with 'Species' factor
-table(iris$Species)
+table(iris$Species) # is data.frame with 'Species' factor
 iS <- iris$Species == "setosa"
 iV <- iris$Species == "versicolor"
 op <- par(bg = "bisque")

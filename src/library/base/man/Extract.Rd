@@ -8,22 +8,17 @@
 \alias{[<-}
 \alias{[[<-}
 \alias{$<-}
-\alias{.subset}
-\alias{.subset2}
 \concept{delete}
 \description{
-  Operators act on vectors, arrays and lists to extract or
+  Operators acting on vectors, arrays and lists to extract or
   replace subsets.
 }
 \usage{
 x[i]
-x[i, j, \dots , drop=TRUE]
+x[i, j, \dots , drop = TRUE]
 x[[i]]
 x[[i, j, \dots]]
 x$name
-
-.subset(x, \dots)
-.subset2(x, \dots)
 }
 \arguments{
   \item{x}{object from which to extract elements or in which to replace
@@ -35,7 +30,7 @@ x$name
     
     For \code{[}-indexing only: \code{i, j, \dots} can be
     logical vectors, indicating elements/slices to select. Such vectors
-    are recycled if necessary to match the corresponding extent. When
+    are recycled if necessary to match the corresponding extent.  When
     indexing arrays, \code{i} can be a (single) matrix with as many
     columns as there are dimensions of \code{x}; the result is then a
     vector with elements corresponding to the sets of indices in each
@@ -92,23 +87,30 @@ x$name
   \code{y} is of length greater than one: if \code{y} has length 1 or 0,
   \code{x} is coerced to a zero-length vector of the type of \code{value}, 
 
-  The functions \code{.subset} and \code{.subset2} are essentially
-  equivalent to the \code{[} and \code{[[} operators, except that
-  methods dispatch does not take place.  This is to avoid expensive
-  unclassing when applying the default method to an object.  They
-  should not normally be invoked by end users.
-
   As from \R 1.9.0 both \code{$} and \code{[[} can be applied to
-  environments. Only character arguments are allowed and no partial
+  environments.  Only character arguments are allowed and no partial
   matching is done (this is in contrast to the behavior for lists). The
   semantics of these operations is basically that of \code{get(i, env=x,
-    inherits=FALSE)}. If no match is found then \code{NULL} is
-  returned. The assignment versions, \code{$<-} and
-  \code{[[<-}, can also be used. Again, only character arguments are
-  allowed and no partial matching is done. The semantics in this case
-  are those of \code{assign(i, value, env=x, inherits=FALSE)}. Such an
+    inherits=FALSE)}.  If no match is found then \code{NULL} is
+  returned.  The assignment versions, \code{$<-} and
+  \code{[[<-}, can also be used.  Again, only character arguments are
+  allowed and no partial matching is done.  The semantics in this case
+  are those of \code{assign(i, value, env=x, inherits=FALSE)}.  Such an
   assignment will either create a new binding or change the existing
   binding in \code{x}.
+}
+\section{NAs in indexing}{
+  When subscripting, a numerical, logical or character \code{NA} picks
+  an unknown element and so returns \code{NA} in the corresponding
+  element of a logical, integer, numeric, complex or character result,
+  and \code{NULL} for a list.
+
+  When replacing (that is using subscripting on the lhs of an
+  assignment) \code{NA} does not select any element to be replaced.  As
+  there is ambiguity as to whether an element of the rhs should
+  be used or not (and \R handled this inconsistently prior to \R 2.0.0),
+  this is only allowed if the rhs value is of length one (so the two
+  interpretations would have the same outcome).  
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -152,7 +154,7 @@ z[[c(1, 2, 1)]]  # both "hello"
 z[[c("a", "b")]] <- "new"
 unlist(z)
 
-##check $ and [[ for environments
+## check $ and [[ for environments
 e1 <- new.env()
 e1$a <- 10
 e1[["a"]]

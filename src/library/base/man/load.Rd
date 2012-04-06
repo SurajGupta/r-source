@@ -3,7 +3,7 @@
 \alias{loadURL}
 \title{Reload Saved Datasets}
 \description{
-  Reload the datasets written to a file with the function \code{save}.
+  Reload datasets written with the function \code{save}.
 }
 \usage{
 load(file, envir = parent.frame())
@@ -15,7 +15,7 @@ loadURL(url, envir = parent.frame(), quiet = TRUE, \dots)
   \item{envir}{the environment where the data should be loaded.}
   \item{url}{a character string naming a URL.}
   \item{quiet, \dots}{additional arguments to
-    \code{\link[utils]{download.file}}.}
+    \code{\link{download.file}}.}
 }
 \details{
   \code{load} can load \R objects saved in the current or any earlier
@@ -25,21 +25,27 @@ loadURL(url, envir = parent.frame(), quiet = TRUE, \dots)
 
   \code{loadURL} is a convenience wrapper which downloads a file, loads
   it and deletes the downloaded copy.
+
+  Only \R objects saved in the current format (used since \R 1.4.0)
+  can be read from a connection.  If no input is available on a
+  connection a warning will be given, but any input not in the current
+  format will result in a error.
 }
 \value{
   A character vector of the names of objects created, invisibly.
 }
 \section{Warning}{
   Saved \R objects are binary files, even those saved with
-  \code{ascii=TRUE}, so ensure that they are transferred without
-  conversion of end of line markers.
+  \code{ascii = TRUE}, so ensure that they are transferred without
+  conversion of end of line markers.  \code{load} tries to detect this
+  case and give an informative error message.
 }
 \seealso{
-  \code{\link{save}}, \code{\link[utils]{download.file}}.
+  \code{\link{save}}, \code{\link{download.file}}.
 }
 \examples{
 ## save all data
-save(list = ls(), file= "all.Rdata")
+save(list = ls(all=TRUE), file= "all.Rdata")
 
 ## restore the saved values to the current environment
 load("all.Rdata")
@@ -47,7 +53,7 @@ load("all.Rdata")
 ## restore the saved values to the user's workspace
 load("all.Rdata", .GlobalEnv)
 
-\dontrun{## This example is not real
+\dontrun{
 ## print the value to see what objects were created.
 print(loadURL("http://some.where.net/R/data/kprats.rda"))
 # or, avoiding making a local copy,

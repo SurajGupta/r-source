@@ -8,23 +8,23 @@ function(topic, package = NULL, lib.loc = NULL)
     ## Find the directories with a 'doc' subdirectory *possibly*
     ## containing vignettes.
 
-    paths <- paths[tools::fileTest("-d", file.path(paths, "doc"))]
+    paths <- paths[tools::file_test("-d", file.path(paths, "doc"))]
 
     vignettes <-
-        lapply(paths, 
+        lapply(paths,
                function(dir) {
-                   tools::listFilesWithType(file.path(dir, "doc"),
-                                            "vignette")
+                   tools::list_files_with_type(file.path(dir, "doc"),
+                                               "vignette")
                })
 
     if(!missing(topic)) {
         topic <- topic[1]               # Just making sure ...
         vignettes <- as.character(unlist(vignettes))
         idx <-
-            which(tools::filePathSansExt(basename(vignettes)) == topic)
+            which(tools::file_path_sans_ext(basename(vignettes)) == topic)
         if(length(idx)) {
             f <- sub("\\.[[:alpha:]]+$", ".pdf", vignettes[idx])
-            f <- f[tools::fileTest("-f", f)]
+            f <- f[tools::file_test("-f", f)]
             if(length(f) > 1) {
                 ## <FIXME>
                 ## Should really offer a menu to select from.
@@ -67,19 +67,8 @@ function(topic, package = NULL, lib.loc = NULL)
             entries <- NULL
             ## Check for new-style 'Meta/vignette.rds' ...
             if(file.exists(INDEX <-
-                           file.path(dir, "Meta", "vignette.rds"))) {
+                           file.path(dir, "Meta", "vignette.rds")))
                 entries <- .readRDS(INDEX)
-            }
-            else {
-                ## ... if not found, let tools:::.buildVignetteIndex()
-                ## do the job, including worrying about old-style
-                ## 'doc/00Index.dcf' files.
-                ## <FIXME>
-                ## Currently not exported, should it be?
-                entries <-
-                    tools:::.buildVignetteIndex(file.path(dir, "doc"))
-                ## </FIXME>
-            }
             if(NROW(entries) > 0)
                 vDB <-
                     rbind(vDB,
@@ -100,7 +89,7 @@ function(topic, package = NULL, lib.loc = NULL)
         ## ... and rewrite into the form used by packageIQR.
         db <- cbind(Package = basename(vDB[, "Dir"]),
                     LibPath = dirname(vDB[, "Dir"]),
-                    Item = tools::filePathSansExt(basename(vDB[, "File"])),
+                    Item = tools::file_path_sans_ext(basename(vDB[, "File"])),
                     Title = title)
 
         y <- list(type = "vignette", title = "Vignettes", header = NULL,

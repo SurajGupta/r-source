@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999--2003  The R Development Core Team
+ *  Copyright (C) 1999--2004  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -73,7 +73,6 @@ static R_StringBuffer gBuffer = {NULL, 0, BUFSIZE};
 static R_StringBuffer *buffer = &gBuffer; /*XX Add appropriate const here
                                             and in the routines that use it. */
 
-
 R_size_t R_Decode2Long(char *p, int *ierr)
 {
     R_size_t v = strtol(p, &p, 10);
@@ -121,6 +120,13 @@ char *EncodeInteger(int x, int w)
     return buffer->data;
 }
 
+char *EncodeRaw(Rbyte x)
+{
+    R_AllocStringBuffer(0, buffer);
+    sprintf(buffer->data, "%02x", x);
+    return buffer->data;
+}
+
 char *EncodeReal(double x, int w, int d, int e)
 {
     char fmt[20];
@@ -130,9 +136,7 @@ char *EncodeReal(double x, int w, int d, int e)
     if (x == 0.0) x = 0.0;
     if (!R_FINITE(x)) {
 	if(ISNA(x)) sprintf(buffer->data, "%*s", w, CHAR(R_print.na_string));
-#ifdef IEEE_754
 	else if(ISNAN(x)) sprintf(buffer->data, "%*s", w, "NaN");
-#endif
 	else if(x > 0) sprintf(buffer->data, "%*s", w, "Inf");
 	else sprintf(buffer->data, "%*s", w, "-Inf");
     }
@@ -208,14 +212,16 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei)
 }
 
 
-/* strlen() using escaped rather than literal form */
-int Rstrlen(char *s, int quote)
+/* strlen() using escaped rather than literal form, 
+   and allows for embedded nuls */
+int Rstrlen(SEXP s, int quote)
 {
     char *p;
-    int len;
+    int len, i;
+
     len = 0;
-    p = s;
-    while(*p) {
+    p = CHAR(s);
+    for (i = 0; i < LENGTH(s); i++) {
 	if(isprint((int)*p)) {
 	    switch(*p) {
 	    case '\\':
@@ -230,8 +236,7 @@ int Rstrlen(char *s, int quote)
 #endif
 	    default: len += 1; break;
 	    }
-	}
-	else switch(*p) {
+	} else switch(*p) {
 	case '\a':
 	case '\b':
 	case '\f':
@@ -239,9 +244,10 @@ int Rstrlen(char *s, int quote)
 	case '\r':
 	case '\t':
 	case '\v':
+	case '\0':
 	    len += 2; break;
-	default:
-	    len += 1; break;
+	default: /* print in octal */
+	    len += 5; break;
 	}
 	p++;
     }
@@ -249,19 +255,20 @@ int Rstrlen(char *s, int quote)
 }
 
 /* Here w appears to be the minimum field width */
-char *EncodeString(char *s, int w, int quote, int right)
+char *EncodeString(SEXP s, int w, int quote, int right)
 {
-    int b, i ;
-    char *p, *q;
+    int b, i, j, cnt;
+    char *p, *q, buf[5];
 
-    if (s == CHAR(NA_STRING)) {
+    if (s == NA_STRING) {
 	p = quote ? CHAR(R_print.na_string) : CHAR(R_print.na_string_noquote);
-	i = quote ? strlen(CHAR(R_print.na_string)) :
+	cnt = i = quote ? strlen(CHAR(R_print.na_string)) :
 	    strlen(CHAR(R_print.na_string_noquote));
 	quote = 0;
     } else {
-	p = s;
+	p = CHAR(s);
 	i = Rstrlen(s, quote);
+	cnt = LENGTH(s);
     }
 
     R_AllocStringBuffer((i+2 >= w)?(i+2):w, buffer); /* +2 allows for quotes */
@@ -271,7 +278,7 @@ char *EncodeString(char *s, int w, int quote, int right)
 	for(i=0 ; i<b ; i++) *q++ = ' ';
     }
     if(quote) *q++ = quote;
-    while(*p) {
+    for (i = 0; i < cnt; i++) {
 
 	/* ASCII */
 
@@ -300,9 +307,12 @@ char *EncodeString(char *s, int w, int quote, int right)
 	case '\r': *q++ = '\\'; *q++ = 'r'; break;
 	case '\t': *q++ = '\\'; *q++ = 't'; break;
 	case '\v': *q++ = '\\'; *q++ = 'v'; break;
+	case '\0': *q++ = '\\'; *q++ = '0'; break;
 
-	default:
-	    *q++ = *p; break;
+	default: /* print in octal */
+	    snprintf(buf, 5, "\\%03o", (unsigned char) *p);
+	    for(j = 0; j < 4; j++) *q++ = buf[j];
+	    break;
 	}
 	p++;
     }
@@ -335,13 +345,16 @@ char *EncodeElement(SEXP x, int indx, int quote)
 	break;
     case STRSXP:
 	formatString(&STRING_PTR(x)[indx], 1, &w, quote);
-	EncodeString(CHAR(STRING_ELT(x, indx)), w, quote, Rprt_adj_left);
+	EncodeString(STRING_ELT(x, indx), w, quote, Rprt_adj_left);
 	break;
     case CPLXSXP:
 	formatComplex(&COMPLEX(x)[indx], 1,
 		      &w, &d, &e, &wi, &di, &ei, 0);
 	EncodeComplex(COMPLEX(x)[indx],
 		      w, d, e, wi, di, ei);
+	break;
+    case RAWSXP:
+	EncodeRaw(RAW(x)[indx]);
 	break;
     }
     return buffer->data;
@@ -481,9 +494,9 @@ void MatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
         tmp = STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(CHAR(tmp), 0);
+	else l = Rstrlen(tmp, 0);
 	Rprintf("%*s%s", w-l, "",
-		EncodeString(CHAR(tmp), l, 0, Rprt_adj_left));
+		EncodeString(tmp, l, 0, Rprt_adj_left));
     }
     else {
 	Rprintf("%*s[,%ld]", w-IndexWidth(j+1)-3, "", j+1);
@@ -498,9 +511,9 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
         tmp = STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(CHAR(tmp), 0);
+	else l = Rstrlen(tmp, 0);
 	Rprintf("%*s", R_print.gap+w,
-		EncodeString(CHAR(tmp), l, 0, Rprt_adj_right));
+		EncodeString(tmp, l, 0, Rprt_adj_right));
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -515,9 +528,9 @@ void LeftMatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
         tmp= STRING_ELT(cl, j);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(CHAR(tmp), 0);
+	else l = Rstrlen(tmp, 0);
 	Rprintf("%*s%s%*s", R_print.gap, "",
-		EncodeString(CHAR(tmp), l, 0, Rprt_adj_left), w-l, "");
+		EncodeString(tmp, l, 0, Rprt_adj_left), w-l, "");
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -532,9 +545,9 @@ void MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
     if (!isNull(rl)) {
         tmp= STRING_ELT(rl, i);
 	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(CHAR(tmp), 0);
+	else l = Rstrlen(tmp, 0);
 	Rprintf("\n%*s%s%*s", lbloff, "",
-		EncodeString(CHAR(tmp), l, 0, Rprt_adj_left),
+		EncodeString(tmp, l, 0, Rprt_adj_left),
 		rlabw-l-lbloff, "");
     }
     else {

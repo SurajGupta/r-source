@@ -3,7 +3,9 @@
 \alias{sink.number}
 \title{Send R Output to a File}
 \usage{
-sink(file = NULL, append = FALSE, type = c("output", "message"), split=FALSE)
+sink(file = NULL, append = FALSE, type = c("output", "message"),
+     split = FALSE)
+
 sink.number(type = c("output", "message"))
 }
 \arguments{
@@ -71,7 +73,7 @@ sink.number(type = c("output", "message"))
   \emph{Programming with Data. A Guide to the S Language}.
   Springer.
 }
-\seealso{\code{\link[utils]{capture.output}}}
+\seealso{\code{\link{capture.output}}}
 \examples{
 sink("sink-examp.txt")
 i <- 1:10

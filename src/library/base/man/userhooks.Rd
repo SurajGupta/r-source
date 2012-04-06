@@ -5,14 +5,15 @@
 \alias{.userHooksEnv}
 \title{Functions to Get and Set Hooks for Load, Attach, Detach and Unload}
 \description{
-  These function allow users to set actions to be taken before packages
+  These functions allow users to set actions to be taken before packages
   are attached/detached and namespaces are (un)loaded.
 }
 \usage{
 getHook(hookName)
 setHook(hookName, value, action = c("append", "prepend", "replace"))
 
-packageEvent(pkgname, event=c("onLoad", "attach", "detach", "onUnload"))
+packageEvent(pkgname,
+             event = c("onLoad", "attach", "detach", "onUnload"))
 }
 \arguments{
   \item{hookName}{character string: the hook name}
@@ -70,11 +71,11 @@ packageEvent(pkgname, event=c("onLoad", "attach", "detach", "onUnload"))
 \seealso{
   \code{\link{library}}, \code{\link{detach}}, \code{\link{loadNamespace}}.
 
-  Other hooks may be added later: \code{\link[graphics]{plot.new}} and
-  \code{\link[graphics]{persp}} already have them.
+  Other hooks may be added later: \code{\link{plot.new}} and
+  \code{\link{persp}} already have them.
 }
 \examples{
-setHook(packageEvent("graphics", "onLoad"),
-        function(...) graphics::ps.options(horizontal=FALSE)) 
+setHook(packageEvent("grDevices", "onLoad"),
+        function(...) grDevices::ps.options(horizontal=FALSE)) 
 }
 \keyword{utilities}

@@ -1810,8 +1810,18 @@ DevDesc *GNewPlot(Rboolean recording)
 	G_ERR_MSG("Figure margins too large");
     } else if (!validPlotRegion(dd)) {
 	G_ERR_MSG("Plot region too large");
-    } else
+    } else {
 	Rf_dpptr(dd)->valid = Rf_gpptr(dd)->valid = TRUE;
+	/*
+	 * At this point, base output has been successfully 
+	 * produced on the device, so mark the device "dirty"
+	 * with respect to base graphics.
+	 * This is used when checking whether the device is 
+	 * "valid" with respect to base graphics
+	 */
+	Rf_setBaseDevice(TRUE, dd);
+	GEdirtyDevice((GEDevDesc*) dd);
+    } 
 
     return dd;
 }
@@ -2017,21 +2027,23 @@ void GInit(GPar *dp)
     dp->mkh = .001;/* dummy value > 0  --- FIXME : */
     /* GREset has Rf_gpptr(dd)->mkh = Rf_gpptr(dd)->cra[0] * Rf_gpptr(dd)->ipr[0]; */
     dp->cex = 1.0;
+    dp->lheight = 1.0;
     dp->cexbase = 1.0;
     dp->cexmain = 1.2;
     dp->cexlab = 1.0;
     dp->cexsub = 1.0;
     dp->cexaxis = 1.0;
 
-    dp->col = 0;
-    dp->colmain = 0;
-    dp->collab = 0;
-    dp->colsub = 0;
-    dp->colaxis = 0;
+    dp->col = R_RGB(0, 0, 0);
+    dp->colmain = R_RGB(0, 0, 0);
+    dp->collab = R_RGB(0, 0, 0);
+    dp->colsub = R_RGB(0, 0, 0);
+    dp->colaxis = R_RGB(0, 0, 0);
     dp->gamma = 1;
 
     /* dp->ps = 10; */	/* Device Specific */
     dp->metricInfo = 0;
+    strcpy(dp->family, "");
     dp->font = 1;
     dp->fontmain = 2;
     dp->fontlab = 1;
@@ -2040,6 +2052,9 @@ void GInit(GPar *dp)
 
     dp->pch = 1;
     dp->lty = LTY_SOLID;
+    dp->lend = GE_ROUND_CAP;
+    dp->ljoin = GE_ROUND_JOIN;
+    dp->lmitre = 10.0;
     dp->smo = 1;
 
     /* String Adjustment and rotation */
@@ -2156,6 +2171,7 @@ static double	adjsave;	/* adj */
 static int	annsave;	/* ann */
 static int	btysave;	/* bty */
 static double	cexsave;	/* cex */
+static double   lheightsave;
 static double	cexbasesave;	/* cexbase */
 static double	cexmainsave;	/* cex.main */
 static double	cexlabsave;	/* cex.lab */
@@ -2169,6 +2185,7 @@ static int	collabsave;	/* col.lab */
 static int	colsubsave;	/* col.sub */
 static int	colaxissave;	/* col.axis */
 static double	crtsave;	/* character rotation */
+static char     familysave[50]; 
 static int	fontsave;	/* font */
 static int	fontmainsave;	/* font.main */
 static int	fontlabsave;	/* font.lab */
@@ -2179,6 +2196,9 @@ static int	labsave[3];	/* axis labelling parameters */
 static int	lassave;	/* label style */
 static int	ltysave;	/* line type */
 static double	lwdsave;	/* line width */
+static R_GE_lineend lendsave;
+static R_GE_linejoin ljoinsave;
+static double   lmitresave;
 static double	mgpsave[3];	/* margin position for annotation */
 static double	mkhsave;	/* mark height */
 static int	pchsave;	/* plotting character */
@@ -2201,6 +2221,7 @@ void GSavePars(DevDesc *dd)
     annsave = Rf_gpptr(dd)->ann;
     btysave = Rf_gpptr(dd)->bty;
     cexsave = Rf_gpptr(dd)->cex;
+    lheightsave = Rf_gpptr(dd)->lheight;
     cexbasesave = Rf_gpptr(dd)->cexbase;
     cexlabsave = Rf_gpptr(dd)->cexlab;
     cexmainsave = Rf_gpptr(dd)->cexmain;
@@ -2215,6 +2236,7 @@ void GSavePars(DevDesc *dd)
     colaxissave = Rf_gpptr(dd)->colaxis;
     crtsave = Rf_gpptr(dd)->crt;
     errsave = Rf_gpptr(dd)->err;
+    strcpy(familysave, Rf_gpptr(dd)->family);
     fontsave = Rf_gpptr(dd)->font;
     fontmainsave = Rf_gpptr(dd)->fontmain;
     fontlabsave = Rf_gpptr(dd)->fontlab;
@@ -2227,6 +2249,9 @@ void GSavePars(DevDesc *dd)
     lassave = Rf_gpptr(dd)->las;
     ltysave = Rf_gpptr(dd)->lty;
     lwdsave = Rf_gpptr(dd)->lwd;
+    lendsave = Rf_gpptr(dd)->lend;
+    ljoinsave = Rf_gpptr(dd)->ljoin;
+    lmitresave = Rf_gpptr(dd)->lmitre;
     mgpsave[0] = Rf_gpptr(dd)->mgp[0];
     mgpsave[1] = Rf_gpptr(dd)->mgp[1];
     mgpsave[2] = Rf_gpptr(dd)->mgp[2];
@@ -2256,6 +2281,7 @@ void GRestorePars(DevDesc *dd)
     Rf_gpptr(dd)->ann = annsave;
     Rf_gpptr(dd)->bty = btysave;
     Rf_gpptr(dd)->cex = cexsave;
+    Rf_gpptr(dd)->lheight = lheightsave;
     Rf_gpptr(dd)->cexbase = cexbasesave;
     Rf_gpptr(dd)->cexlab = cexlabsave;
     Rf_gpptr(dd)->cexmain = cexmainsave;
@@ -2270,6 +2296,7 @@ void GRestorePars(DevDesc *dd)
     Rf_gpptr(dd)->colaxis = colaxissave;
     Rf_gpptr(dd)->crt = crtsave;
     Rf_gpptr(dd)->err = errsave;
+    strcpy(Rf_gpptr(dd)->family, familysave);
     Rf_gpptr(dd)->font = fontsave;
     Rf_gpptr(dd)->fontmain = fontmainsave;
     Rf_gpptr(dd)->fontlab = fontlabsave;
@@ -2282,6 +2309,9 @@ void GRestorePars(DevDesc *dd)
     Rf_gpptr(dd)->las = lassave;
     Rf_gpptr(dd)->lty = ltysave;
     Rf_gpptr(dd)->lwd = lwdsave;
+    Rf_gpptr(dd)->lend = lendsave;
+    Rf_gpptr(dd)->ljoin = ljoinsave;
+    Rf_gpptr(dd)->lmitre = lmitresave;
     Rf_gpptr(dd)->mgp[0] = mgpsave[0];
     Rf_gpptr(dd)->mgp[1] = mgpsave[1];
     Rf_gpptr(dd)->mgp[2] = mgpsave[2];
@@ -2418,17 +2448,14 @@ void gcontextFromGP(R_GE_gcontext *gc, DevDesc *dd)
     gc->gamma = Rf_gpptr(dd)->gamma;
     gc->lwd = Rf_gpptr(dd)->lwd;
     gc->lty = Rf_gpptr(dd)->lty;
+    gc->lend = Rf_gpptr(dd)->lend;
+    gc->ljoin = Rf_gpptr(dd)->ljoin;
+    gc->lmitre = Rf_gpptr(dd)->lmitre;
     gc->cex = Rf_gpptr(dd)->cex;
     gc->ps = (double) Rf_gpptr(dd)->ps;
-    /*
-     * FIXME:  Need to add a lineheight par so user can control this
-     */
-    gc->lineheight = 1;
+    gc->lineheight = Rf_gpptr(dd)->lheight;
     gc->fontface = Rf_gpptr(dd)->font;
-    /*
-     * FIXME:  Need to add a fontfamily par so user can control this
-     */
-    gc->fontfamily[0] = '\0';
+    strcpy(gc->fontfamily, Rf_gpptr(dd)->family);
 }
 
 /* Draw a line. */
@@ -2722,7 +2749,7 @@ void GPolygon(int n, double *x, double *y, int coords,
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     if (Rf_gpptr(dd)->lty == LTY_BLANK)
-	fg = NA_INTEGER; /* transparent for the border */
+	fg = R_TRANWHITE; /* transparent for the border */
 
     /*
      * Work in device coordinates because that is what the
@@ -2799,7 +2826,7 @@ void GCircle(double x, double y, int coords,
     ir = (ir > 0) ? ir : 1;
 
     if (Rf_gpptr(dd)->lty == LTY_BLANK)
-	fg = NA_INTEGER; /* transparent for the border */
+	fg = R_TRANWHITE; /* transparent for the border */
 
     /*
      * Work in device coordinates because that is what the
@@ -2824,7 +2851,7 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     if (Rf_gpptr(dd)->lty == LTY_BLANK)
-	fg = NA_INTEGER; /* transparent for the border */
+	fg = R_TRANWHITE; /* transparent for the border */
 
     /*
      * Work in device coordinates because that is what the
@@ -2973,7 +3000,8 @@ void GBox(int which, DevDesc *dd)
 	switch(Rf_gpptr(dd)->bty) {
 	case 'o':
 	case 'O':
-	    GPolygon(4, x, y, NFC, NA_INTEGER, Rf_gpptr(dd)->col, dd);
+	    GPolygon(4, x, y, NFC, 
+		     R_TRANWHITE, Rf_gpptr(dd)->col, dd);
 	    break;
 	case 'l':
 	case 'L':
@@ -3003,13 +3031,16 @@ void GBox(int which, DevDesc *dd)
 	}
 	break;
     case 2: /* Figure */
-	GPolygon(4, x, y, NFC, NA_INTEGER, Rf_gpptr(dd)->col, dd);
+	GPolygon(4, x, y, NFC, 
+		 R_TRANWHITE, Rf_gpptr(dd)->col, dd);
 	break;
     case 3: /* Inner Region */
-	GPolygon(4, x, y, NIC, NA_INTEGER, Rf_gpptr(dd)->col, dd);
+	GPolygon(4, x, y, NIC, 
+		 R_TRANWHITE, Rf_gpptr(dd)->col, dd);
 	break;
     case 4: /* "outer": Device border */
-	GPolygon(4, x, y, NDC, NA_INTEGER, Rf_gpptr(dd)->col, dd);
+	GPolygon(4, x, y, NDC, 
+		 R_TRANWHITE, Rf_gpptr(dd)->col, dd);
 	break;
     default:
 	error("invalid GBox argument");
@@ -3093,7 +3124,7 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 
 /* Draw text in plot margins. */
 void GMtext(char *str, int side, double line, int outer, double at, int las,
-	    DevDesc *dd)
+	    double yadj, DevDesc *dd)
 {
 /* "las" gives the style of axis labels:
 	 0 = always parallel to the axis [= default],
@@ -3101,7 +3132,7 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	 2 = always perpendicular to the axis.
 	 3 = always vertical.
 */
-    double angle, xadj, yadj;
+    double angle, xadj; 
     int coords, subcoords;
 
     /* Init to keep -Wall happy: */
@@ -3109,7 +3140,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
     coords = 0;
 
     xadj = Rf_gpptr(dd)->adj;	/* ALL cases */
-    yadj = 0.;		/* Default; currently all cases */
     if(outer) {
 	switch(side) {
 	case 1:	    coords = OMA1;	break;
@@ -3130,11 +3160,14 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
     }
     /* Note: I changed Rf_gpptr(dd)->yLineBias to 0.3 here. */
     /* Purely visual tuning. RI */
+    /* This has been replaced by a new argument padj (=yadj here) to axis() 
+       and mtext() and that can either be set manually or is determined in 
+       a somehow fuzzy manner in repsect to current side and las settings. 
+       Uwe L. 
+    */  
     switch(side) {
     case 1:
 	if(las == 2 || las == 3) {
-	    at = GConvertX(at, subcoords, LINES, dd) + 0.3;
-	    at = GConvertX(at, LINES, subcoords, dd);
 	    angle = 90;
 	}
 	else {
@@ -3144,17 +3177,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	break;
     case 2:
 	if(las == 1 || las == 2) {
-	    /* subcoords could be USER and the user could have set log="y"
-	     * If that's the case then converting a height to USER
-	     * coordinates will not work
-	     * SO to be safe, we convert "at" to a LINES location,
-	     * add the 0.3 and then convert the result back to a USER
-	     * lcoation (ok because converting _locations_ is ok)
-	     * The old, bad way to do it was:
-	     *     at = at - GConvertYUnits(0.3, LINES, subcoords, dd);
-	     */
-	    at = GConvertY(at, subcoords, LINES, dd) - 0.3;
-	    at = GConvertY(at, LINES, subcoords, dd);
 	    angle = 0;
 	}
 	else {
@@ -3164,8 +3186,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	break;
     case 3:
 	if(las == 2 || las == 3) {
-	    at = GConvertX(at, subcoords, LINES, dd) + 0.3;
-	    at = GConvertX(at, LINES, subcoords, dd);
 	    angle = 90;
 	}
 	else {
@@ -3175,8 +3195,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	break;
     case 4:
 	if(las == 1 || las == 2) {
-	    at = GConvertY(at, subcoords, LINES, dd) - 0.3;
-	    at = GConvertY(at, LINES, subcoords, dd);
 	    angle = 0;
 	}
 	else {
@@ -4022,16 +4040,29 @@ int StrMatch(char *s, char *t)
 
 
 /* #RRGGBB String to Internal Color Code */
-
+/*
+ * Paul:  Add ability to handle #RRGGBBAA
+ */
 unsigned int rgb2col(char *rgb)
 {
-    unsigned int r, g, b;
-    if(rgb[0] != '#' || strlen(rgb) != 7)
+    unsigned int r=0, g=0, b=0, a=0; /* -Wall */
+    if(rgb[0] != '#')
 	error("invalid RGB specification");
-    r = 16 * hexdigit(rgb[1]) + hexdigit(rgb[2]);
-    g = 16 * hexdigit(rgb[3]) + hexdigit(rgb[4]);
-    b = 16 * hexdigit(rgb[5]) + hexdigit(rgb[6]);
-    return R_RGB(r, g, b);
+    switch (strlen(rgb)) {
+    case 9:
+	a = 16 * hexdigit(rgb[7]) + hexdigit(rgb[8]);
+    case 7:
+	r = 16 * hexdigit(rgb[1]) + hexdigit(rgb[2]);
+	g = 16 * hexdigit(rgb[3]) + hexdigit(rgb[4]);
+	b = 16 * hexdigit(rgb[5]) + hexdigit(rgb[6]);
+	break;
+    default:
+	error("invalid RGB specification");
+    }
+    if (strlen(rgb) == 7)
+	return R_RGB(r, g, b);
+    else 
+	return R_RGBA(r, g, b, a);
 }
 
 /* External Color Name to Internal Color Code */
@@ -4040,7 +4071,21 @@ unsigned int name2col(char *nm)
 {
     int i;
     if(strcmp(nm, "NA") == 0 || strcmp(nm, "transparent") == 0)
-	return NA_INTEGER;
+	/*
+	 * Paul 01/07/04
+	 *
+	 * Used to be set to NA_INTEGER.
+	 *
+	 * Now set to fully transparent white.
+	 *
+	 * In some cases, fully transparent gets caught by
+	 * the graphics engine and no drawing occurs, but
+	 * in other cases, transparent colours are passed to devices.
+	 *
+	 * All devices should respond to fully transparent by
+	 * not drawing.
+	 */
+	return R_TRANWHITE;
     for(i = 0; ColorDataBase[i].name ; i++) {
 	if(StrMatch(ColorDataBase[i].name, nm))
 	    return ColorDataBase[i].code;
@@ -4062,7 +4107,7 @@ unsigned int number2col(char *nm)
 }
 
 
-static char ColBuf[8];
+static char ColBuf[10];
 
 char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
 {
@@ -4077,6 +4122,22 @@ char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
     return &ColBuf[0];
 }
 
+char *RGBA2rgb(unsigned int r, unsigned int g, unsigned int b,
+	       unsigned int a)
+{
+    ColBuf[0] = '#';
+    ColBuf[1] = HexDigits[(r >> 4) & 15];
+    ColBuf[2] = HexDigits[r & 15];
+    ColBuf[3] = HexDigits[(g >> 4) & 15];
+    ColBuf[4] = HexDigits[g & 15];
+    ColBuf[5] = HexDigits[(b >> 4) & 15];
+    ColBuf[6] = HexDigits[b & 15];
+    ColBuf[7] = HexDigits[(a >> 4) & 15];
+    ColBuf[8] = HexDigits[a & 15];
+    ColBuf[9] = '\0';
+    return &ColBuf[0];
+}
+
 
 /* Internal to External Color Representation */
 /* Search the color name database first */
@@ -4086,20 +4147,35 @@ char *col2name(unsigned int col)
 {
     int i;
 
-    if(R_ALPHA(col) != 0) return "transparent";
-    for(i=0 ; ColorDataBase[i].name ; i++) {
-	if(col == ColorDataBase[i].code)
-	    return ColorDataBase[i].name;
+    if(R_OPAQUE(col)) {
+	for(i=0 ; ColorDataBase[i].name ; i++) {
+	    if(col == ColorDataBase[i].code)
+		return ColorDataBase[i].name;
+	}
+	ColBuf[0] = '#';
+	ColBuf[1] = HexDigits[(col >>  4) & 15];
+	ColBuf[2] = HexDigits[(col	    ) & 15];
+	ColBuf[3] = HexDigits[(col >> 12) & 15];
+	ColBuf[4] = HexDigits[(col >>  8) & 15];
+	ColBuf[5] = HexDigits[(col >> 20) & 15];
+	ColBuf[6] = HexDigits[(col >> 16) & 15];
+	ColBuf[7] = '\0';
+	return &ColBuf[0];
+    } else if (R_TRANSPARENT(col)) {
+	return "transparent";
+    } else {
+	ColBuf[0] = '#';
+	ColBuf[1] = HexDigits[(col >>  4) & 15];
+	ColBuf[2] = HexDigits[(col	) & 15];
+	ColBuf[3] = HexDigits[(col >> 12) & 15];
+	ColBuf[4] = HexDigits[(col >>  8) & 15];
+	ColBuf[5] = HexDigits[(col >> 20) & 15];
+	ColBuf[6] = HexDigits[(col >> 16) & 15];
+	ColBuf[7] = HexDigits[(col >> 28) & 15];
+	ColBuf[8] = HexDigits[(col >> 24) & 15];
+	ColBuf[9] = '\0';
+	return &ColBuf[0];
     }
-    ColBuf[0] = '#';
-    ColBuf[1] = HexDigits[(col >>  4) & 15];
-    ColBuf[2] = HexDigits[(col	    ) & 15];
-    ColBuf[3] = HexDigits[(col >> 12) & 15];
-    ColBuf[4] = HexDigits[(col >>  8) & 15];
-    ColBuf[5] = HexDigits[(col >> 20) & 15];
-    ColBuf[6] = HexDigits[(col >> 16) & 15];
-    ColBuf[7] = '\0';
-    return &ColBuf[0];
 }
 
 /* NOTE that this is called with dd == NULL by */
@@ -4123,13 +4199,23 @@ unsigned int RGBpar(SEXP x, int i)
 	return str2col(CHAR(STRING_ELT(x, i)));
     }
     else if(isInteger(x) || isLogical(x)) {
-	if(INTEGER(x)[i] == NA_INTEGER) return NA_INTEGER;
+	if(INTEGER(x)[i] == NA_INTEGER) 
+	    /*
+	     * Paul 01/07/04
+	     * Used to be set to NA_INTEGER (see comment in name2col).
+	     */
+	    return R_TRANWHITE;
 	indx = INTEGER(x)[i] - 1;
 	if(indx < 0) return Rf_dpptr(CurrentDevice())->bg;
 	else return R_ColorTable[indx % R_ColorTableSize];
     }
     else if(isReal(x)) {
-	if(!R_FINITE(REAL(x)[i])) return NA_INTEGER;
+	if(!R_FINITE(REAL(x)[i])) 
+	    /*
+	     * Paul 01/07/04
+	     * Used to be set to NA_INTEGER (see comment in name2col).
+	     */
+	    return R_TRANWHITE;
 	indx = REAL(x)[i] - 1;
 	if(indx < 0) return Rf_dpptr(CurrentDevice())->bg;
 	else return R_ColorTable[indx % R_ColorTableSize];
@@ -4137,6 +4223,29 @@ unsigned int RGBpar(SEXP x, int i)
     return 0;		/* should not occur */
 }
 
+/*
+ * Is element i of a colour object NA (or NULL)?
+ */
+Rboolean isNAcol(SEXP col, int index, int ncol) 
+{
+    Rboolean result = TRUE; /* -Wall */
+
+    if (isNull(col))
+	result = TRUE;
+    else {
+	if (isLogical(col))
+	    result = LOGICAL(col)[index % ncol] == NA_LOGICAL;
+	else if (isString(col))
+	    result = strcmp(CHAR(STRING_ELT(col, index % ncol)), "NA") == 0;
+	else if (isInteger(col))
+	    result = INTEGER(col)[index % ncol] == NA_INTEGER;
+	else if (isReal(col))
+	    result = !R_FINITE(REAL(col)[index % ncol]);
+	else
+	    error("Invalid colour");
+    }
+    return result;
+}
 
 /* Initialize the Color Databases */
 
@@ -4633,6 +4742,11 @@ void KillAllDevices(void)
     /* don't try to close or remove the null device ! */
     while (R_NumDevices > 1)
 	killDevice(R_CurrentDevice);
+    /*
+     * Free the font and encoding structures used by
+     * PostScript, Xfig, and PDF devices
+     */
+    freeType1Fonts();
     /* FIXME: There should really be a formal graphics finaliser
      * but this is a good proxy for now.
      */
@@ -4685,11 +4799,13 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->bg = Rf_dpSavedptr(dd)->bg;
     Rf_dpptr(dd)->bty = Rf_dpSavedptr(dd)->bty;
     Rf_dpptr(dd)->cex = Rf_dpSavedptr(dd)->cex;
+    Rf_gpptr(dd)->lheight = Rf_dpSavedptr(dd)->lheight;
     Rf_dpptr(dd)->col = Rf_dpSavedptr(dd)->col;
     Rf_dpptr(dd)->crt = Rf_dpSavedptr(dd)->crt;
     Rf_dpptr(dd)->err = Rf_dpSavedptr(dd)->err;
     Rf_dpptr(dd)->fg = Rf_dpSavedptr(dd)->fg;
     Rf_dpptr(dd)->font = Rf_dpSavedptr(dd)->font;
+    strcpy(Rf_dpptr(dd)->family, Rf_dpSavedptr(dd)->family);
     Rf_dpptr(dd)->gamma = Rf_dpSavedptr(dd)->gamma;
     Rf_dpptr(dd)->lab[0] = Rf_dpSavedptr(dd)->lab[0];
     Rf_dpptr(dd)->lab[1] = Rf_dpSavedptr(dd)->lab[1];
@@ -4697,6 +4813,9 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->las = Rf_dpSavedptr(dd)->las;
     Rf_dpptr(dd)->lty = Rf_dpSavedptr(dd)->lty;
     Rf_dpptr(dd)->lwd = Rf_dpSavedptr(dd)->lwd;
+    Rf_dpptr(dd)->lend = Rf_dpSavedptr(dd)->lend;
+    Rf_dpptr(dd)->ljoin = Rf_dpSavedptr(dd)->ljoin;
+    Rf_dpptr(dd)->lmitre = Rf_dpSavedptr(dd)->lmitre;
     Rf_dpptr(dd)->mgp[0] = Rf_dpSavedptr(dd)->mgp[0];
     Rf_dpptr(dd)->mgp[1] = Rf_dpSavedptr(dd)->mgp[1];
     Rf_dpptr(dd)->mgp[2] = Rf_dpSavedptr(dd)->mgp[2];

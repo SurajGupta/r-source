@@ -253,12 +253,20 @@ model.frame.default <-
     function(formula, data = NULL, subset = NULL, na.action = na.fail,
 	     drop.unused.levels = FALSE, xlev = NULL,...)
 {
+    ## first off, establish if we were passed a data frame 'newdata'
+    ## and note the number of rows.
+    possible_newdata <-
+        !missing(data) && is.data.frame(data) &&
+    identical(deparse(substitute(data)), "newdata") &&
+    (nr <- nrow(data)) > 0
+
     ## were we passed just a fitted model object?
+    ## the fit might have a saved model object
+    if(!missing(formula) && nargs() == 1 && is.list(formula)
+       && !is.null(m <- formula$model)) return(m)
+    ## if not use the saved call (if there is one).
     if(!missing(formula) && nargs() == 1 && is.list(formula)
        && all(c("terms", "call") %in% names(formula))) {
-        ## the fit might have a saved model object
-        if(!is.null(m <- formula$model)) return(m)
-        ## if not use the saved call.
         fcall <- formula$call
         m <- match(c("formula", "data", "subset", "weights", "na.action"),
                    names(fcall), 0)
@@ -300,8 +308,16 @@ model.frame.default <-
     vars <- attr(formula, "variables")
     predvars <- attr(formula, "predvars")
     if(is.null(predvars)) predvars <- vars
-    varnames <- as.character(vars[-1])
+    varnames <- sapply(vars,deparse, width.cutoff=500)[-1]
     variables <- eval(predvars, data, env)
+    if(possible_newdata && length(variables)) {
+        ## need to do this before subsetting and na.action
+        nr2 <- max(sapply(variables, NROW))
+        if(nr2 != nr)
+            warning(paste("'newdata' had", nr,
+                          "rows but variable(s) found have",
+                          nr2, "rows"), call.=FALSE)
+    }
     if(is.null(attr(formula, "predvars"))) {
         for (i in seq(along = varnames))
             predvars[[i+1]] <- makepredictcall(variables[[i]], vars[[i+1]])
@@ -366,7 +382,9 @@ model.matrix.default <- function(object, data = environment(object),
     if (is.null(attr(data, "terms")))
 	data <- model.frame(object, data, xlev=xlev)
     else {
-	reorder <- match(as.character(attr(t,"variables"))[-1],names(data))
+	reorder <- match(sapply(attr(t,"variables"),deparse,
+                                width.cutoff=500)[-1],
+                         names(data))
 	if (any(is.na(reorder)))
 	    stop("model frame and formula mismatch in model.matrix()")
 	data <- data[,reorder, drop=FALSE]
@@ -468,7 +486,7 @@ makepredictcall.default  <- function(var, call)
 
 .getXlevels <- function(Terms, m)
 {
-    xvars <- as.character(attr(Terms, "variables"))[-1]
+    xvars <- sapply(attr(Terms, "variables"),deparse,width.cutoff=500)[-1]
     if((yvar <- attr(Terms, "response")) > 0) xvars <- xvars[-yvar]
     if(length(xvars) > 0) {
         xlev <- lapply(m[xvars], levels)

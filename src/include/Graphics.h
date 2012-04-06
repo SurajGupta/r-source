@@ -25,6 +25,9 @@
 
 #include <R_ext/Boolean.h>
 
+#include <R_ext/GraphicsDevice.h>
+#include <R_ext/GraphicsEngine.h>
+
 #define R_MaxDevices 64
 
 #define	DEG2RAD 0.01745329251994329576
@@ -128,11 +131,20 @@ typedef struct {
     rcolor bg;		/* **R ONLY** Background color */
     int	bty;		/* Box type */
     double cex;		/* Character expansion */
+    double lheight;     /* Line height
+			   The height of a line of text is:
+			   ps * cex * lheight */
     rcolor col;		/* Plotting Color */
     double crt;		/* Character/string rotation */
     double din[2];	/* device size in inches */
     int	err;		/* Error repporting level */
     rcolor fg;		/* **R ONLY** Foreground Color */
+    char family[50];    /* **R ONLY** Font family 
+			   Simple name which is mapped by device-specific
+			   font database to device-specific name.
+			   Only used if not "".
+			   Default is "".
+			   Ignored by some devices. */
     int	font;		/* Text font */
     double gamma;	/* Device Gamma Correction */
     int	lab[3];		/* Axis labelling */
@@ -142,6 +154,9 @@ typedef struct {
     int	las;		/* Label style (rotation) */
     int	lty;		/* Line texture */
     double lwd;		/* Line width */
+    R_GE_lineend lend;  /* **R ONLY** Line end style */
+    R_GE_linejoin ljoin;/* **R ONLY** Line join style */
+    double lmitre;      /* **R ONLY** Line mitre limit */
     double mgp[3];	/* Annotation location */
 			/* [0] = location of axis title */
 			/* [1] = location of axis label */
@@ -357,9 +372,11 @@ typedef struct {
 #define NumDevices              Rf_NumDevices
 #define rgb2col			Rf_rgb2col
 #define RGB2rgb			Rf_RGB2rgb
+#define RGBA2rgb		Rf_RGBA2rgb
 #define ScaleColor		Rf_ScaleColor
 #define str2col			Rf_str2col
 #define StrMatch		Rf_StrMatch
+#define isNAcol                 Rf_isNAcol
 
 /* Default the settings for general graphical parameters
  * (i.e., defaults that do not depend on the device type: */
@@ -391,15 +408,15 @@ char* col2name(unsigned int);
 
 unsigned int ScaleColor(double x);
 unsigned int CheckColor(int x);
+Rboolean isNAcol(SEXP col, int index, int ncol);
 
 char* RGB2rgb(unsigned int, unsigned int, unsigned int);
+char* RGBA2rgb(unsigned int, unsigned int, unsigned int, unsigned int);
 
 int StrMatch(char *s, char *t);
 
 double R_Log10(double);
 
-#include <R_ext/GraphicsDevice.h>
-#include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsBase.h>
 
 /* 

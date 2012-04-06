@@ -12,6 +12,10 @@ is.gpar <- function(x) {
   inherits(x, "gpar")
 }
 
+print.gpar <- function(x, ...) {
+  print(unclass(x))
+}
+
 validGP <- function(gpars) {
   # Check a (non-NULL) gpar is not of length 0
   check.length <- function(gparname) {
@@ -44,6 +48,29 @@ validGP <- function(gpars) {
     else
       check.length("lty")
   }
+  if (!is.na(match("lineend", names(gpars)))) {
+    if (is.null(gpars$lineend))
+      gpars$lineend <- NULL
+    else
+      check.length("lineend")
+  }
+  if (!is.na(match("linejoin", names(gpars)))) {
+    if (is.null(gpars$linejoin))
+      gpars$linejoin <- NULL
+    else
+      check.length("linejoin")
+  }
+  # linemitre should be larger than 1
+  numnotnull("linemitre")
+  if (!is.na(match("linemitre", names(gpars)))) {
+    if (any(gpars$linemitre < 1))
+      stop("Invalid linemitre value")
+  }    
+  # alpha should be 0 to 1
+  if (!is.na(match("alpha", names(gpars)))) {
+    if (any(gpars$alpha < 0 || gpars$alpha > 1))
+      stop("Invalid alpha value")
+  }    
   # font should be integer and not NULL
   if (!is.na(match("font", names(gpars)))) {
     if (is.null(gpars$font))
@@ -76,7 +103,7 @@ validGP <- function(gpars) {
         gpars$font <- as.integer(gpars$fontface)
       else {
         temp.char <- as.character(gpars$fontface)
-        temp.num <- 0
+        temp.num <- integer(length(temp.char))
         for (i in 1:length(temp.char))
           temp.num[i] <- switch(temp.char[i],
                                 plain=1,
@@ -88,7 +115,8 @@ validGP <- function(gpars) {
                                 # These are Hershey variants
                                 cyrillic=5,
                                 cyrillic.oblique=6,
-                                EUC=7)
+                                EUC=7,
+                                stop("Invalid font face"))
         gpars$font <- as.integer(temp.num)
       }
     }
@@ -100,7 +128,7 @@ validGP <- function(gpars) {
 # The order must match the GP_* values in grid.h
 .grid.gpar.names <- c("fill", "col", "gamma", "lty", "lwd", "cex",
                       "fontsize", "lineheight", "font", "fontfamily",
-                      "alpha",
+                      "alpha", "lineend", "linejoin", "linemitre",
                       # Keep fontface at the end because it is never
                       # used in C code (it gets mapped to font)
                       "fontface")
@@ -109,7 +137,20 @@ set.gpar <- function(gp) {
   if (!is.gpar(gp))
     stop("Argument must be a 'gpar' object")
   temp <- grid.Call("L_getGPar")
+  # Special case "cex" (make it cumulative)
+  if (match("cex", names(gp), nomatch=0))
+    tempcex <- temp$cex * gp$cex
+  else
+    tempcex <- temp$cex
+  # Special case "alpha" (make it cumulative)
+  if (match("alpha", names(gp), nomatch=0))
+    tempalpha <- temp$alpha * gp$alpha
+  else
+    tempalpha <- temp$alpha
+  # All other gpars
   temp[names(gp)] <- gp
+  temp$cex <- tempcex
+  temp$alpha <- tempalpha
   # Do this as a .Call.graphics to get it onto the base display list
   grid.Call.graphics("L_setGPar", temp)
 }
@@ -127,4 +168,14 @@ get.gpar <- function(names=NULL) {
   result
 }
 
+# When editing a gp slot, only update the specified gpars
+# Assume gp is NULL or a gpar
+# assume newgp is a gpar (and not NULL)
+mod.gpar <- function(gp, newgp) {
+  if (is.null(gp))
+    gp <- newgp
+  else
+    gp[names(newgp)] <- newgp
+  gp
+}
 

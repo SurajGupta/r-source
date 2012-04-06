@@ -79,9 +79,9 @@ as.dist(m, diag = FALSE, upper = FALSE)
   to the number of columns used.  If all pairs are excluded when calculating a
   particular distance, the value is \code{NA}.
 
-  The functions \code{as.matrix.dist()} and \code{as.dist()} can be used
-  for conversion between objects of class \code{"dist"} and conventional
-  distance matrices and vice versa.
+  The \code{"dist"} method of \code{as.matrix()} and \code{as.dist()}
+  can be used for conversion between objects of class \code{"dist"}
+  and conventional distance matrices.
 }
 \value{
   An object of class \code{"dist"}.
@@ -144,7 +144,6 @@ dist(rbind(x,y), method="canberra")
 ## answer 2 * (6/5)
 
 ## Examples involving "Inf" :
-## These will not work on a non-IEEE 754 system.
 ## 1)
 x[6] <- Inf
 (m2 <- rbind(x,y))
@@ -160,8 +159,8 @@ stopifnot(dist(cbind(x ,y), method="canberra") ==
 
 ## 2)
 y[6] <- Inf #-> 6-th pair is excluded
-dist(rbind(x,y), method="binary")# warning; 0.5
-dist(rbind(x,y), method="canberra")#  3
+dist(rbind(x,y), method="binary")   # warning; 0.5
+dist(rbind(x,y), method="canberra") # 3
 dist(rbind(x,y), method="maximum")  # 1
 dist(rbind(x,y), method="manhattan")# 2.4
 }

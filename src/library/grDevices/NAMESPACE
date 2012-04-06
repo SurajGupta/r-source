@@ -1,0 +1,24 @@
+export(Hershey, check.options, col2rgb, colors, colours, cm,
+       cm.colors, dev.control, dev.copy, dev.copy2eps, dev.cur,
+       dev.interactive, dev.list, dev.next, dev.off, dev.prev,
+       dev.print, dev.set, graphics.off, gray, grey, heat.colors, hsv,
+       palette, pdf, pictex, postscript, postscriptFont,
+       postscriptFonts, ps.options, rainbow, recordPlot, replayPlot,
+       rgb, rgb2hsv, terrain.colors, topo.colors, xfig, xinch,
+       xyinch, yinch)
+
+S3method(print, recordedplot)
+
+if(tools:::.OStype() == "unix") {
+export(GNOME, X11, bitmap, dev2bitmap, gnome, jpeg, png, quartz, x11,
+       X11Font, X11Fonts, quartzFont, quartzFonts)
+}
+
+if(tools:::.OStype() == "windows") {
+export(X11, bitmap, bmp, bringToTop, dev2bitmap, jpeg, png, savePlot,
+       win.graph, win.metafile, win.print, windows, x11,
+       windowsFont, windowsFonts)
+
+S3method("[", SavedPlots)
+S3method(print, SavedPlots)
+}

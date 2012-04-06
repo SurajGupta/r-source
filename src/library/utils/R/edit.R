@@ -10,12 +10,15 @@ dataentry <- function (data, modes) {
 edit <- function(name,...)UseMethod("edit")
 
 edit.default <-
-    function (name = NULL, file = "", editor = getOption("editor"), ...)
+    function (name = NULL, file = "", title = NULL, editor = getOption("editor"), ...)
 {
     if(is.matrix(name) &&
        (mode(name) == "numeric" || mode(name) == "character"))
         edit.matrix(name=name, ...)
-    else .Internal(edit(name, file, editor))
+    else {
+	if (is.null(title)) title <- deparse(substitute(name))
+	.Internal(edit(name, file, title, editor))
+    }
 }
 
 edit.data.frame <-
@@ -143,6 +146,13 @@ edit.matrix <-
     if(!is.null(dn[[2]]))  colnames(out) <- dn[[2]]
     if (logicals) mode(out) <- "logical"
     out
+}
+
+file.edit <-
+  function (..., title = file, editor=getOption("editor"))
+{
+    file <- c(...)
+    .Internal(file.edit(file, rep(as.character(title), len=length(file)), editor))
 }
 
 vi <- function(name=NULL, file="")

@@ -8,7 +8,9 @@
 }
 \usage{
 contour(x, \dots)
-\method{contour}{default}(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
+
+\method{contour}{default}(x = seq(0, 1, len = nrow(z)),
+        y = seq(0, 1, len = ncol(z)),
         z,
         nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
         xlim = range(x, finite = TRUE),
@@ -19,8 +21,11 @@ contour(x, \dots)
         axes = TRUE, frame.plot = axes,
         col = par("fg"), lty = par("lty"), lwd = par("lwd"),
 	add = FALSE, \dots)
-contourLines(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-	     z, nlevels = 10, levels = pretty(range(z, na.rm=TRUE), nlevels))
+
+contourLines(x = seq(0, 1, len = nrow(z)),
+             y = seq(0, 1, len = ncol(z)),
+	     z, nlevels = 10,
+             levels = pretty(range(z, na.rm=TRUE), nlevels))
 }
 \arguments{
   \item{x,y}{locations of grid lines at which the values in \code{z} are
@@ -78,6 +83,11 @@ contourLines(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
 
   For information about vector fonts, see the
   help for \code{\link{text}} and \code{\link{Hershey}}.
+
+  Notice that \code{contour} interprets the \code{z} matrix as a table of
+  \code{f(x[i], y[j])} values, so that the x axis corresponds to row
+  number and the y axis to column number, with column 1 at the bottom,
+  i.e. a 90 degree clockwise rotation of the conventional textual layout.
 }
 \value{
   \code{contourLines} returns a list of contours.
@@ -118,7 +128,6 @@ for(f in pi^(0:3))
   contour(cos(r^2)*exp(-r/f),
           drawlabels = FALSE, axes = FALSE, frame = TRUE)
 
-data("volcano")
 rx <- range(x <- 10*1:nrow(volcano))
 ry <- range(y <- 10*1:ncol(volcano))
 ry <- ry + c(-1,1) * (diff(rx) - diff(ry))/2

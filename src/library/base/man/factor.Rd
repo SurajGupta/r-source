@@ -8,10 +8,13 @@
 \alias{as.ordered}
 \alias{is.na<-.factor}
 \concept{categorical variable}
+\concept{enumerated type}
+\concept{category}
 \description{
   The function \code{factor} is used to encode a vector as a factor (the
-  names category and enumerated type are also used for factors).  If
-  \code{ordered} is \code{TRUE}, the factor levels are assumed to be ordered.
+  terms \sQuote{category} and \sQuote{enumerated type} are also used for
+  factors).  If \code{ordered} is \code{TRUE}, the factor levels are
+  assumed to be ordered.
   For compatibility with S there is also a function \code{ordered}.
 
   \code{is.factor}, \code{is.ordered}, \code{as.factor} and \code{as.ordered}
@@ -46,7 +49,7 @@ as.ordered(x)
 }
 \value{
   \code{factor} returns an object of class \code{"factor"} which has a
-  set of numeric codes the length of \code{x} with a \code{"levels"}
+  set of integer codes the length of \code{x} with a \code{"levels"}
   attribute of mode \code{\link{character}}.  If \code{ordered} is true
   (or \code{ordered} is used) the result has class
   \code{c("ordered", "factor")}.
@@ -116,6 +119,16 @@ as.ordered(x)
   may well depend on the locale at the time of creation, and should
   not be assumed to be ASCII.
 }
+\note{
+  Storing character data as a factor is more efficient storage if
+  there is even a small proportion of repeats.  On a 32-bit machine
+  storing a string of \eqn{n} bytes takes
+  \eqn{28 + 8\lceil(n+1)/8\rceil}{28 + 8*ceiling((n+1)/8)}
+  bytes whereas storing a factor code takes 4 bytes.  (On a 64-bit
+  machine 28 is replaced by 56 or more.)  Only if they were computed
+  from the same values (rather than, say, read from a file) will
+  identical strings share storage.
+}
 \references{
   Chambers, J. M. and Hastie, T. J. (1992)
   \emph{Statistical Models in S}.
@@ -125,7 +138,7 @@ as.ordered(x)
   \code{\link{[.factor}} for subsetting of factors.
 
   \code{\link{gl}} for construction of \dQuote{balanced} factors and
-  \code{\link[stats]{C}} for factors with specified contrasts.
+  \code{\link{C}} for factors with specified contrasts.
   \code{\link{levels}} and \code{\link{nlevels}} for accessing the
   levels, and \code{\link{unclass}} to get integer codes.
 }

@@ -1,37 +1,24 @@
 \name{ns-lowlev}
 \title{Low Level Name Space Support Functions}
 
-\alias{attachNamespace}
-\alias{loadNamespace}
-\alias{loadedNamespaces}
-\alias{unloadNamespace}
 \alias{loadingNamespaceInfo}
 \alias{saveNamespaceImage}
 
+\description{
+  Low level name space support functions.
+}
 \usage{
-attachNamespace(ns, pos = 2)
-loadNamespace(package, lib.loc = NULL,
-              keep.source = getOption("keep.source.pkgs"),
-              partial = FALSE, declarativeOnly = FALSE)
-loadedNamespaces()
-unloadNamespace(ns)
 loadingNamespaceInfo()
 saveNamespaceImage(package, rdafile, lib.loc = NULL,
                    keep.source = getOption("keep.source.pkgs"),
                    compress = TRUE)
 }
 \arguments{
-  \item{ns}{string or namespace object.}
-  \item{pos}{integer specifying position to attach.}
   \item{package}{string naming the package/name space to load.}
+  \item{rdafile}{name of file to save to.}
   \item{lib.loc}{character vector specifying library search path.}
   \item{keep.source}{logical specifying whether to retain source.}
-  \item{partial}{logical; if true, stop just after loading code.}
-  \item{declarativeOnly}{logical; disables \code{.Import}, etc, if true.}
   \item{compress}{option passed to \code{\link{save}}.}
-}
-\description{
-  Low level name space support functions.
 }
 \details{
   The functions \code{loadNamespace} and \code{attachNamespace} are

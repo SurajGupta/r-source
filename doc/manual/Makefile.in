@@ -49,7 +49,7 @@ R_RD4PDF = @R_RD4PDF@
 
 texinputs_BASE = $(R_PKGS_BASE:=-pkg.tex)
 texinputs_RECOMMENDED = $(R_PKGS_RECOMMENDED:=-pkg.tex)
-R_PKGS_refman = base graphics grid methods stats tools utils
+R_PKGS_refman = base datasets grDevices graphics grid methods stats tools utils
 refman_TEXINPUTS = $(R_PKGS_refman:=-pkg.tex)
 refman_DEPENDENCIES = version.tex $(top_srcdir)/share/texmf/Rd.sty
 fullrefman_TEXINPUTS = $(texinputs_BASE) @USE_RECOMMENDED_PACKAGES_TRUE@ $(texinputs_RECOMMENDED)
@@ -74,20 +74,34 @@ docs: html
 	  exit 1; \
 	fi
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2DVI) $<
+
 .texi.html:
 	$(TEXI2HTML) -D UseExternalXrefs -I$(srcdir) $< -o $@ || touch $@
+
 .texi.info:
 	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
+	  echo "ERROR: 'makeinfo' v4.5 or later needed but missing on your system."; \
 	  exit 1; \
 	fi
 	$(MAKEINFO) -D UseExternalXrefs -I$(srcdir) $<
+
 .texi.pdf:
 	@if test "$(PDFTEX)" = false; then \
 	  echo "ERROR: 'pdftex' needed but missing on your system."; \
 	  exit 1; \
 	fi
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2PDF) $<
+
+## we have to be careful not to install a local R-admin.html made prior to
+## texinfo 4.7, as doc/html/SearchEngine.html links to it.
+## So use that in the sources if we can -- it is not in the svn archive.
+## There are no cross-references, external or not.
+R-admin.html:
+	if test -f "$(top_srcdir)/doc/html/R-admin.html" ; then \
+	  cp "$(top_srcdir)/doc/html/R-admin.html" R-admin.html ; \
+	else \
+	  $(TEXI2HTML) -I$(srcdir) $(srcdir)/R-admin.texi -o $@ || touch $@ ; \
+	fi
 
 dvi: refman.dvi $(OBJECTS_DVI)
 refman.dvi: $(refman_DEPENDENCIES) stamp-refman-dvi
@@ -100,9 +114,9 @@ refman.dvi: $(refman_DEPENDENCIES) stamp-refman-dvi
 ## <NOTE>
 ## We do not make sure echo does not interpret backslash escapes.
 ## Could be trouble ...
-	@(opt="$${R_PAPERSIZE-$(R_PAPERSIZE)}paper"; \
+	@(opt="$(R_PAPERSIZE)paper"; \
 	  echo "\\documentclass[$${opt}]{book}"; \
-	  opt="$${R_RD4DVI-$(R_RD4DVI)}"; \
+	  opt="$(R_RD4DVI)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
 	  cat $(srcdir)/refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
@@ -116,11 +130,13 @@ refman.dvi: $(refman_DEPENDENCIES) stamp-refman-dvi
 	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  $(LATEX) '\nonstopmode\input{refman.tex}'
 	@touch stamp-refman-dvi
+
 version.tex: Makefile $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
 	@echo "creating $(subdir)/$@"
 	@(v=`cat $(top_srcdir)/VERSION`; \
 	  v="$${v} (`sed 's|/|-|g' $(top_srcdir)/date-stamp`)"; \
 	  echo "$${v}") > $@
+
 stamp-refman-dvi: $(refman_TEXINPUTS)
 	@touch $@
 
@@ -152,9 +168,9 @@ fullrefman.dvi: $(refman_DEPENDENCIES) stamp-fullrefman-dvi
 	fi
 	@echo "DVI/LaTeX documentation: full reference index ..."
 	@rm -f *.aux fullrefman.toc fullrefman.ind stamp-fullrefman-dvi
-	@(opt="$${R_PAPERSIZE-$(R_PAPERSIZE)}paper"; \
+	@(opt="$(R_PAPERSIZE)paper"; \
 	  echo "\\documentclass[$${opt}]{book}"; \
-	  opt="$${R_RD4DVI-$(R_RD4DVI)}"; \
+	  opt="$(R_RD4DVI)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
 	  cat $(srcdir)/refman.top; \
 	  echo "\\part{}"; \
@@ -189,6 +205,10 @@ version.texi: Makefile $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	  echo "@set VERSION $${v}" >> $@; \
 	  rwv=`$(PERL) $(top_srcdir)/src/gnuwin32/fixed/rwver.pl $(top_srcdir)/VERSION`; \
 	  echo "@set RWVERSION $${rwv}" >> $@ )
+	if test "$(R_PAPERSIZE)" = "a4"; then \
+	  echo "@afourpaper" >> $@ ; \
+	fi
+
 R-intro.dvi: stamp-images-eps $(texiincludes)
 stamp-images-eps:
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
@@ -224,9 +244,9 @@ refman.pdf: $(refman_DEPENDENCIES) stamp-refman-pdf
 ## <NOTE>
 ## We do not make sure echo does not interpret backslash escapes.
 ## Could be trouble ...
-	@(opt="$${R_PAPERSIZE-$(R_PAPERSIZE)}paper"; \
+	@(opt="$(R_PAPERSIZE)paper"; \
 	  echo "\\documentclass[$${opt}]{book}"; \
-	  opt="$${R_RD4PDF-$(R_RD4PDF)}"; \
+	  opt="$(R_RD4PDF)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
 	  cat $(srcdir)/refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
@@ -254,9 +274,9 @@ fullrefman.pdf: $(refman_DEPENDENCIES) stamp-fullrefman-pdf
 	fi
 	@echo "PDF/LaTeX documentation: full reference index ..."
 	@rm -f *.aux fullrefman.toc fullrefman.ind stamp-fullrefman-pdf
-	@(opt="$${R_PAPERSIZE-$(R_PAPERSIZE)}paper"; \
+	@(opt="$(R_PAPERSIZE)paper"; \
 	  echo "\\documentclass[$${opt}]{book}"; \
-	  opt="$${R_RD4PDF-$(R_RD4PDF)}"; \
+	  opt="$(R_RD4PDF)"; \
 	  echo "\\usepackage[$${opt}]{Rd}"; \
 	  cat $(srcdir)/refman.top; \
 	  echo "\\part{}"; \
@@ -300,31 +320,32 @@ install: install-message installdirs install-html
 install-message:
 	@echo "installing $(subdir) ..."
 installdirs:
-	@$(MKINSTALLDIRS) $(rhome)/$(subdir)
+	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)"
 install-strip: install
 install-dvi: dvi installdirs install-images-eps
 	@echo "installing R manuals in DVI format ..."
 	@for f in *.dvi; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir); \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"; \
 	done
 install-images-eps:
-	@$(MKINSTALLDIRS) $(rhome)/$(subdir)/images
+	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)"/images
 	@-for f in $(srcdir)/images/*.eps; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir)/images; \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"/images; \
 	done
 install-images-pdf:
-	@$(MKINSTALLDIRS) $(rhome)/$(subdir)/images
+	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)"/images
 	@-for f in $(srcdir)/images/*.pdf; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir)/images; \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"/images; \
 	done
 install-html:
 	@for f in $(OBJECTS_HTML); do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir); \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"; \
 	done
 install-info: info $(infodir)/dir
 	@echo "installing R info pages ..."
 	@for f in $(OBJECTS_INFO:.info=.info*); do \
-	  $(INSTALL_DATA) $${f} $(infodir); \
+	  $(INSTALL_DATA) $${f} "$(infodir)"; \
+	  $(R_GZIPCMD) -f "$(infodir)/$${f}"; \
 	done
 	@echo "updating '$(infodir)/dir' ..."
 	@for f in $(OBJECTS_INFO); do \
@@ -334,24 +355,25 @@ install-info: info $(infodir)/dir
 install-pdf: pdf installdirs
 	@echo "installing R manuals in PDF format ..."
 	@for f in *.pdf; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir); \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"; \
 	done
 
 $(infodir)/dir:
-	@$(MKINSTALLDIRS) $(infodir)
-	$(INSTALL_DATA) $(srcdir)/dir $(infodir)
+	@$(MKINSTALLDIRS) "$(infodir)"
+	$(INSTALL_DATA) "$(srcdir)/dir" "$(infodir)"
 
 uninstall:
-	@if test -f $(infodir)/R-data.info; then \
+	@if test -f "$(infodir)/R-data.info" \
+	     || test -f "$(infodir)/R-data.info.gz"; then \
 	  $(MAKE) uninstall-info; \
 	fi
 	@echo "uninstalling $(subdir) ..."
-	@rm -rf $(rhome)/$(subdir)
+	@rm -rf "$(rhome)/$(subdir)"
 uninstall-dvi:
 	@echo "uninstalling R manuals in DVI format ..."
-	@-rm -f $(rhome)/$(subdir)/images/*.eps
-	@-rmdir $(rhome)/$(subdir)/images
-	@-rm -f $(rhome)/$(subdir)/*.dvi
+	@-rm -f "$(rhome)/$(subdir)"/images/*.eps
+	@-rmdir "$(rhome)/$(subdir)"/images
+	@-rm -f "$(rhome)/$(subdir)"/*.dvi
 uninstall-info:
 	@echo "uninstalling R info pages ..."
 	@for f in $(OBJECTS_INFO); do \
@@ -359,11 +381,11 @@ uninstall-info:
 	    || echo "you need to adjust $(infodir)/dir manually"; \
 	done
 	@for f in $(OBJECTS_INFO:.info=.info*); do \
-	  rm -f $(infodir)/$${f}; \
+	  rm -f "$(infodir)/$${f}" "$(infodir)/$${f}.gz" ; \
 	done
 uninstall-pdf:
 	@echo "uninstalling R manuals in PDF format ..."
-	@-rm -f $(rhome)/$(subdir)/*.pdf
+	@-rm -f "$(rhome)/$(subdir)"/*.pdf
 
 mostlyclean: clean
 clean:
@@ -384,8 +406,7 @@ maintainer-build: \
   $(top_srcdir)/FAQ \
   $(top_srcdir)/RESOURCES \
   $(top_srcdir)/doc/html/faq.html \
-  $(top_srcdir)/doc/html/resources.html \
-  $(top_srcdir)/doc/html/R-admin.html
+  $(top_srcdir)/doc/html/resources.html
 $(top_srcdir)/FAQ: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-FAQ.texi
 	@if test "$(MAKEINFO)" = false; then \
 	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
@@ -410,13 +431,6 @@ $(top_srcdir)/doc/html/resources.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/resource
 	  exit 1; \
 	fi
 	$(TEXI2HTML) --no-headers $(srcdir)/resources.texi -o $@
-$(top_srcdir)/doc/html/R-admin.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-admin.texi $(texiincludes)
-	@if test "$(MAKEINFO)" = false; then \
-	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
-	  exit 1; \
-	fi
-	$(TEXI2HTML) --no-headers --number-sections -I$(srcdir) \
-	  $(srcdir)/R-admin.texi -o $@
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \
@@ -425,7 +439,15 @@ distdir: $(DISTFILES)
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
 	@for d in $(SUBDIRS_WITH_NO_BUILD); do \
-	  ((cd $(srcdir); $(TAR) -c -f - --exclude=CVS $${d}) \
+	  ((cd $(srcdir); $(TAR) -c -f - $(DISTDIR_TAR_EXCLUDE) $${d}) \
 	      | (cd $(distdir); $(TAR) -x -f -)) \
 	    || exit 1; \
 	done
+	@if test "$(MAKEINFO)" = false; then \
+	  echo "ERROR: 'makeinfo' v4 needed but missing on your system."; \
+	  exit 1; \
+	fi
+#	$(distdir)/doc/html has already been created
+	$(TEXI2HTML) --no-headers --number-sections \
+	  $(srcdir)/R-admin.texi -I$(srcdir) \
+	  -o $(distdir)/../html/R-admin.html

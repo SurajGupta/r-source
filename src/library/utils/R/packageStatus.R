@@ -1,6 +1,22 @@
 packageStatus <- function(lib.loc = NULL,
                            repositories = getOption("repositories")())
 {
+    .checkRversion <- function(x) {
+        if(is.na(xx <- x["Depends"])) return(TRUE)
+        xx <- tools:::.split_dependencies(xx)
+        if(length(z <- xx[["R"]]) > 1)
+            eval(parse(text=paste("currentR", z$op, "z$version")))
+        else TRUE
+    }
+
+    newestVersion <- function(x)
+    {
+        vers <- package_version(x)
+	max <- vers[1]
+        for (i in seq(along=vers)) if (max < vers[i]) max <- vers[i]
+	which(vers == max)[1]
+    }
+
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
     if(is.null(repositories))
@@ -8,7 +24,7 @@ packageStatus <- function(lib.loc = NULL,
                                       BIOC = getOption("BIOC")))
 
     FIELDS <- c("Package", "Version","Priority", "Bundle", "Depends",
-                "Built", "Status")
+                "Built", "Status", "Contains")
     FIELDS1 <- c(FIELDS, "LibPath")
     FIELDS2 <- c(FIELDS, "Repository")
 
@@ -41,21 +57,23 @@ packageStatus <- function(lib.loc = NULL,
     y <- char2df(y)
     names(y) <- FIELDS1
 
-    if(length(repositories) > 0){
+    if(length(repositories) > 0) {
+        currentR <- getRversion()
         repositories <- unique(as.character(repositories))
-        z <- matrix("", nrow=0, ncol=length(FIELDS2))
+        z <- matrix("", nrow = 0, ncol = length(FIELDS2))
         colnames(z) <- FIELDS2
         for(rep in repositories){
-            z1 <- try(read.dcf(paste(rep,"PACKAGES",sep="/"),
-                               fields=FIELDS2), silent=TRUE)
+            z1 <- try(read.dcf(paste(rep, "PACKAGES", sep = "/"),
+                               fields = FIELDS2), silent = TRUE)
             if(inherits(z1, "try-error")) {
-                cat("Warning: unable to access index for repository", rep, "\n")
+                cat("Warning: unable to access index for repository",
+                    rep, "\n")
                 repositories <- repositories[repositories != rep]
                 next
             }
 
             ## ignore packages which don't fit our version of R
-            z1 <- z1[package.dependencies(z1, check=TRUE),,drop=FALSE]
+            z1 <- z1[apply(z1, 1, .checkRversion),,drop=FALSE]
             if(length(z1)==0) next
 
             z1[,"Repository"] <- rep
@@ -75,27 +93,29 @@ packageStatus <- function(lib.loc = NULL,
 
     z[,"Status"] <- "not installed"
     z[z[,"Package"] %in% y$Package, "Status"] <- "installed"
-    z[!is.na(z[,"Bundle"]) & (z[,"Bundle"] %in% y$Bundle),
-      "Status"] <- "installed"
+    ## Careful: bundles can be partially installed!
+    ## z[!is.na(z[,"Bundle"]) & (z[,"Bundle"] %in% y$Bundle), "Status"] <- "installed"
+    bundles <- which(!is.na(z[,"Bundle"]))
+    for(bundle in bundles) {
+        contains <- z[bundle, "Contains"]
+        contains <- strsplit(contains, "[[:space:]]+")[[1]]
+        if(all(paste(z[bundle, "Bundle"], contains, sep=":") %in% y$Package))
+           z[bundle, "Status"] <- "installed"
+    }
 
     z <- char2df(z)
     z$Package <- ifelse(is.na(z$Bundle), z$Package, z$Bundle)
     attr(z, "row.names") <- z$Package
 
     for(k in 1:nrow(y)){
-        pkg <- ifelse(is.na(y$Bundle[k]),
-                      y[k,"Package"],
-                      y[k,"Bundle"])
-
-        if(pkg %in% z$Package){
-            if(compareVersion(y[k,"Version"],
-                              z[pkg,"Version"]) < 0){
-                y[k,"Status"] <- "upgrade"
+        pkg <- ifelse(is.na(y$Bundle[k]), y[k, "Package"], y[k, "Bundle"])
+        if(pkg %in% z$Package) {
+            if(package_version(y[k, "Version"]) <
+               package_version(z[pkg, "Version"])) {
+                y[k, "Status"] <- "upgrade"
             }
-        }
-        else{
-            if(!(y[k,"Priority"] %in% "base"))
-                y[k,"Status"] <- "unavailable"
+        } else {
+            if(!(y[k, "Priority"] %in% "base")) y[k, "Status"] <- "unavailable"
         }
     }
 
@@ -105,7 +125,7 @@ packageStatus <- function(lib.loc = NULL,
     z$Status <- as.factor(z$Status)
 
     retval <- list(inst=y, avail=z)
-    class(retval) <- c("packageStatus")
+    class(retval) <- "packageStatus"
     retval
 }
 
@@ -146,19 +166,6 @@ print.packageStatus <- function(x, ...)
     invisible(x)
 }
 
-newestVersion <- function(x)
-{
-    ## only used for length(x) >= 2
-    for(k in 1:length(x)){
-        if(length(x) == 1) return(k)
-        y <- sapply(x[-1], compareVersion, b=x[1])
-        if(all(y <= 0))
-            return(k)
-        else
-            x <- x[-1]
-    }
-}
-
 update.packageStatus <-
     function(object, lib.loc=levels(object$inst$LibPath),
              repositories=levels(object$avail$Repository),
@@ -171,8 +178,8 @@ update.packageStatus <-
 upgrade <- function(object, ...)
     UseMethod("upgrade")
 
-upgrade.packageStatus <- function(object, ask=TRUE, ...){
-
+upgrade.packageStatus <- function(object, ask=TRUE, ...)
+{
     update <- NULL
     old <- which(object$inst$Status=="upgrade")
     if(length(old)==0){

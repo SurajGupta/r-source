@@ -67,11 +67,29 @@ rbind <- function(..., deparse.level=1) {
     .Internal(rbind(...))
 }
 
-deparse <-
-    function(expr, width.cutoff = 60,
-	     backtick = mode(expr) %in% c("call","expression","("))
-	.Internal(deparse(expr, width.cutoff, backtick))
+# convert deparsing options to bitmapped integer
 
+.deparseOpts <- function(control) {
+    opts <- pmatch(as.character(control), c("keepInteger", "quoteExpressions",
+      "showAttributes", "useSource", "warnIncomplete", "all", "delayPromises"))
+    if (any(is.na(opts))) stop(paste("deparse options ",
+                               paste('"',control[is.na(opts)],'"', sep=""),
+     			       collapse=" "), " not recognized", call. = FALSE)
+    if (any(opts == 6)) {
+	if (length(opts) != 1)
+	    stop("all can not be used with other deparse options",
+	       	call. = FALSE)
+	else
+	    return(31)
+    } else return(sum(2^(opts-1)))
+}
+
+deparse <- function(expr, width.cutoff = 60,
+	     backtick = mode(expr) %in% c("call","expression","("),
+	     control = "showAttributes") {
+    opts <- .deparseOpts(control)
+    .Internal(deparse(expr, width.cutoff, backtick, opts))
+}
 
 do.call <- function(what,args).Internal(do.call(what,args))
 drop <- function(x).Internal(drop(x))
@@ -158,6 +176,8 @@ data.class <- function(x) {
     }
 }
 
+is.numeric.factor <- function(x) FALSE
+is.integer.factor <- function(x) FALSE
 
 ## base has no S4 generics
 .noGenerics <- TRUE

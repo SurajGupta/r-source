@@ -9,8 +9,9 @@
 \usage{
 \method{plot}{histogram}(x, freq = equidist, density = NULL, angle = 45,
                col = NULL, border = par("fg"), lty = NULL,
-               main = paste("Histogram of", x$xname), sub = NULL,
-               xlab = x$xname, ylab, xlim = range(x$breaks), ylim = NULL,
+               main = paste("Histogram of", x$xname),
+               sub = NULL, xlab = x$xname, ylab,
+               xlim = range(x$breaks), ylim = NULL,
                axes = TRUE, labels = FALSE, add = FALSE, \dots)
 
 \method{lines}{histogram}(x, \dots)
@@ -48,10 +49,9 @@
 \seealso{
   \code{\link{hist}},
   \code{\link{stem}},
-  \code{\link[stats]{density}}.
+  \code{\link{density}}.
 }
 \examples{
-data(women)
 (wwt <- hist(women$weight, nc= 7, plot = FALSE))
 plot(wwt, labels = TRUE) # default main & xlab using wwt$xname
 plot(wwt, border = "dark blue", col = "light blue",

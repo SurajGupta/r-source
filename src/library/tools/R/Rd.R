@@ -1,16 +1,15 @@
-### * Rdpp
+### * Rd_pp
 
-Rdpp <-
+Rd_pp <-
 function(lines)
 {
     ## Preprocess lines with Rd markup according to .Platform$OS.type.
 
     if(!is.character(lines))
-        stop(paste("argument", sQuote(lines),
-                   "must be a character vector"))
+        stop(.wrong_args("lines", "must be a character vector"))
 
     ## Strip Rd comments first.
-    lines <- .stripRdComments(lines)
+    lines <- .strip_Rd_comments(lines)
 
     ppLineIndices <- grep("^#(endif|ifn?def[[:space:]]+[[:alnum:]]+)",
                           lines)
@@ -18,8 +17,8 @@ function(lines)
     ## This is based on the Perl code in R::Rdtools::Rdpp().
     ## What should we do with #ifn?def lines not matching the above?
     ## </NOTE>
-    nOfPpLines <- length(ppLineIndices)
-    if(nOfPpLines == 0) return(lines)
+    n_of_pp_lines <- length(ppLineIndices)
+    if(n_of_pp_lines == 0) return(lines)
 
     OS <- .Platform$OS.type
     ppLines <- lines[ppLineIndices]
@@ -27,7 +26,7 @@ function(lines)
     ## Record the preprocessor line type: starts of conditionals with
     ## TRUE/FALSE according to whether they increase the skip level or
     ## not, and NA for ends of conditionals.
-    ppTypes <- rep(NA, nOfPpLines)
+    ppTypes <- rep(NA, n_of_pp_lines)
     if(any(i <- grep("^#ifdef", ppLines))) {
         ppTypes[i] <- gsub("^#ifdef[[:space:]]+([[:alnum:]]+).*",
                            "\\1", ppLines[i]) != OS
@@ -68,9 +67,9 @@ function(lines)
     lines[-skipIndices]
 }
 
-### * .stripRdComments
+### * .strip_Rd_comments
 
-.stripRdComments <-
+.strip_Rd_comments <-
 function(lines)
 {
     gsub("(^|[^\\])((\\\\\\\\)*)%.*", "\\1\\2", lines)
@@ -84,7 +83,7 @@ function(file)
     ## <NOTE>
     ## This is based on the Perl code in R::Rd::info().
     ## It seems that matches for aliases and keywords are only single
-    ## line.  Hence, as we get the lines from @code{Rdpp()}, we get
+    ## line.  Hence, as we get the lines from @code{Rd_pp()}, we get
     ## aliases and keywords directly from them before collapsing them to
     ## one string (which also allows us to avoid looping as in the Perl
     ## code).
@@ -95,22 +94,23 @@ function(file)
         on.exit(close(file))
     }
     if(!inherits(file, "connection"))
-        stop(paste("argument", sQuote(file),
-                   "must be a character string or connection"))
+        stop(.wrong_args("file",
+                         "must be a character string or connection"))
 
-    lines <- Rdpp(readLines(file))
+    lines <- Rd_pp(.read_Rd_lines_quietly(file))
 
-    aliases <- .getRdMetaDataFromRdLines(lines, "alias")
-    concepts <- .getRdMetaDataFromRdLines(lines, "concept")
-    keywords <- .getRdMetaDataFromRdLines(lines, "keyword")
+    aliases <- .get_Rd_metadata_from_Rd_lines(lines, "alias")
+    concepts <- .get_Rd_metadata_from_Rd_lines(lines, "concept")
+    keywords <- .get_Rd_metadata_from_Rd_lines(lines, "keyword")
 
     ## Could be none or more than one ... argh.
-    RdType <- c(.getRdMetaDataFromRdLines(lines, "docType"), "")[1]
+    Rd_type <-
+        c(.get_Rd_metadata_from_Rd_lines(lines, "docType"), "")[1]
 
     txt <- paste(lines, collapse = "\n")
 
-    RdName <- .getRdName(txt)
-    if(!length(RdName))
+    Rd_name <- .get_Rd_name(txt)
+    if(!length(Rd_name))
         stop(paste("missing/empty \\name field in ",
                    sQuote(summary(file)$description), "\n",
                    "Rd files must have a non-empty \\name.\n",
@@ -118,8 +118,8 @@ function(file)
                    " in manual ", sQuote("Writing R Extensions"),
                    ".", sep = ""))
 
-    RdTitle <- .getRdTitle(txt)
-    if(!length(RdTitle))
+    Rd_title <- .get_Rd_title(txt)
+    if(!length(Rd_title))
         stop(paste("missing/empty \\title field in ",
                    sQuote(summary(file)$description), "\n",
                    "Rd files must have a non-empty \\title.\n",
@@ -127,7 +127,7 @@ function(file)
                    " in manual ", sQuote("Writing R Extensions"),
                    ".", sep = ""))
 
-    list(name = RdName, type = RdType, title = RdTitle,
+    list(name = Rd_name, type = Rd_type, title = Rd_title,
          aliases = aliases, concepts = concepts, keywords = keywords)
 }
 
@@ -138,7 +138,7 @@ function(RdFiles)
 {
     ## Compute contents db from Rd files.
 
-    RdFiles <- path.expand(RdFiles[fileTest("-f", RdFiles)])
+    RdFiles <- path.expand(RdFiles[file_test("-f", RdFiles)])
 
     if(length(RdFiles) == 0)
         return(data.frame(File = I(character(0)),
@@ -187,9 +187,9 @@ function(RdFiles)
                row.names = NULL)  # avoid trying to compute row names
 }
 
-### * .writeContentsRDS
+### * .write_contents_as_RDS
 
-.writeContentsRDS <-
+.write_contents_as_RDS <-
 function(contents, outFile)
 {
     ## Save Rd contents db to @file{outFile}.
@@ -201,9 +201,9 @@ function(contents, outFile)
     ## </NOTE>
 }
 
-### * .writeContentsDCF
+### * .write_contents_as_DCF
 
-.writeContentsDCF <-
+.write_contents_as_DCF <-
 function(contents, packageName, outFile)
 {
     ## Write a @file{CONTENTS} DCF file from an Rd contents db.
@@ -220,7 +220,7 @@ function(contents, packageName, outFile)
     ## This has 'html' hard-wired.
     ## Note that slashes etc. should be fine for URLs.
     URLs <- paste("../../../library/", packageName, "/html/",
-                  filePathSansExt(contents[ , "File"]),
+                  file_path_sans_ext(contents[ , "File"]),
                   ".html",
                   sep = "")
     ## </FIXME>
@@ -243,9 +243,9 @@ function(contents, packageName, outFile)
         file = outFile)
 }
 
-### * .buildRdIndex
+### * .build_Rd_index
 
-.buildRdIndex <-
+.build_Rd_index <-
 function(contents, type = NULL)
 {
     ## Build an Rd 'index' containing Rd "names" (see below) and titles,
@@ -270,11 +270,13 @@ function(contents, type = NULL)
 
     index <- contents[idx, c("Name", "Title"), drop = FALSE]
     if(nrow(index)) {
-        ## If a \name is not a valid \alias, replace it by the first alias.
+        ## If a \name is not a valid \alias, replace it by the first
+        ## alias.
         aliases <- contents[idx, "Aliases"]
         bad <- which(!mapply("%in%", index[, 1], aliases))
         if(any(bad)) {
-            tmp <- sapply(aliases[bad], "[[", 1)
+            ## was [[, but that applies to lists not char vectors
+            tmp <- sapply(aliases[bad], "[", 1)
             tmp[is.na(tmp)] <- ""
             index[bad, 1] <- tmp
         }
@@ -295,13 +297,13 @@ function(RdFiles, outFile = "", type = NULL,
     ##
     ## R version of defunct @code{R CMD Rdindex} (now removed).
 
-    if((length(RdFiles) == 1) && fileTest("-d", RdFiles)) {
+    if((length(RdFiles) == 1) && file_test("-d", RdFiles)) {
         ## Compatibility code for the former @code{R CMD Rdindex}
         ## interface.
         docsDir <- RdFiles
-        if(fileTest("-d", file.path(docsDir, "man")))
+        if(file_test("-d", file.path(docsDir, "man")))
             docsDir <- file.path(docsDir, "man")
-        RdFiles <- listFilesWithType(docsDir, "docs")
+        RdFiles <- list_files_with_type(docsDir, "docs")
     }
 
     if(outFile == "")
@@ -311,54 +313,18 @@ function(RdFiles, outFile = "", type = NULL,
         on.exit(close(outFile))
     }
     if(!inherits(outFile, "connection"))
-        stop(paste("argument", sQuote("outFile"),
-                   "must be a character string or connection"))
+        stop(.wrong_args("outFile",
+                         "must be a character string or connection"))
 
-    index <- .buildRdIndex(Rdcontents(RdFiles), type = type)
+    index <- .build_Rd_index(Rdcontents(RdFiles), type = type)
 
     writeLines(formatDL(index, width = width, indent = indent),
                outFile)
 }
 
-### * Rd2contents
+### * Rd_db
 
-Rd2contents <-
-function(dir, outFile = "")
-{
-    ## <NOTE>
-    ## Based on the defunct Perl code in R_HOME/share/Rd2contents.pl
-    ## (now removed).
-    ## </NOTE>
-
-    if(!fileTest("-d", dir))
-        stop(paste("directory", sQuote(dir), "does not exist"))
-    else {
-        dir <- filePathAsAbsolute(dir)
-        packageName <- basename(dir)
-    }
-    docsDir <- file.path(dir, "man")
-    if(!fileTest("-d", docsDir))
-        stop(paste("directory", sQuote(dir),
-                   "does not contain Rd sources"))
-
-    if(outFile == "")
-        outFile <- stdout()
-    else if(is.character(outFile)) {
-        outFile <- file(outFile, "w")
-        on.exit(close(outFile))
-    }
-    if(!inherits(outFile, "connection"))
-        stop(paste("argument", sQuote("outFile"),
-                   "must be a character string or connection"))
-
-    contents <- Rdcontents(listFilesWithType(docsDir, "docs"))
-
-    .writeContentsDCF(contents, packageName, outFile)
-}
-
-### * Rddb
-
-Rddb <-
+Rd_db <-
 function(package, dir, lib.loc = NULL)
 {
     ## Build an Rd 'data base' from an installed package or the unpacked
@@ -368,49 +334,157 @@ function(package, dir, lib.loc = NULL)
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1)
-            stop(paste("argument", sQuote("package"),
-                       "must be of length 1"))
+            stop(.wrong_args("package", "must be of length 1"))
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         docsDir <- file.path(dir, "man")
-        if(!fileTest("-d", docsDir))
+        if(!file_test("-d", docsDir))
             stop(paste("directory", sQuote(dir),
                        "does not contain Rd objects"))
-        docsFiles <- listFilesWithType(docsDir, "docs")
+        docsFiles <- list_files_with_type(docsDir, "docs")
         db <- list()
         for(f in docsFiles) {
-            lines <- readLines(f)
+            lines <- .read_Rd_lines_quietly(f)
             eofPos <- grep("\\eof$", lines)
-            db <- c(db, split(lines,
+            db <- c(db, split(lines[-eofPos],
                               rep(seq(along = eofPos),
-                                  times = diff(c(0, eofPos)))))
+                                  times = diff(c(0, eofPos)))[-eofPos]))
         }
+        ## If this was installed using a recent enough version of R CMD
+        ## INSTALL, information on source file names is available, and
+        ## we use it for the names of the Rd db.  Otherwise, remove the
+        ## artificial names attribute.
+        paths <- as.character(sapply(db, "[", 1))
+        names(db) <-
+            if(length(paths)
+               && all(regexpr("^% --- Source file: (.+) ---$", paths)
+                      > -1))
+                sub("^% --- Source file: (.+) ---$", "\\1", paths)
+            else
+                NULL
     }
     else {
         if(missing(dir))
             stop(paste("you must specify", sQuote("package"),
                        "or", sQuote("dir")))
         ## Using sources from directory @code{dir} ...
-        if(!fileTest("-d", dir))
+        if(!file_test("-d", dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            dir <- filePathAsAbsolute(dir)
+            dir <- file_path_as_absolute(dir)
         docsDir <- file.path(dir, "man")
-        if(!fileTest("-d", docsDir))
+        if(!file_test("-d", docsDir))
             stop(paste("directory", sQuote(dir),
                        "does not contain Rd sources"))
-        docsFiles <- listFilesWithType(docsDir, "docs")
-        db <- lapply(docsFiles, readLines)
-
+        docsFiles <- list_files_with_type(docsDir, "docs")
+        db <- lapply(docsFiles, .read_Rd_lines_quietly)
+        names(db) <- docsFiles
     }
 
     db
 
 }
 
-### * getRdSection
+### * Rd_parse
 
-getRdSection <-
+Rd_parse <-
+function(file, text = NULL)
+{
+    ## Arguments similar to the ones in parse(), with 'text' a character
+    ## vector with the text to parse (elements are treated as if they
+    ## were lines of a file).
+    if(!is.null(text))
+        lines <- Rd_pp(text)
+    else {
+        if(is.character(file)) {
+            file <- file(file)
+            on.exit(close(file))
+        }
+        if(!inherits(file, "connection"))
+            stop(.wrong_args("file",
+                             "must be a character string or connection"))
+        lines <- Rd_pp(.read_Rd_lines_quietly(file))
+    }
+
+    ## Get meta data (need to agree on what precisely these are), and
+    ## remove the corresponding lines (assuming that these entries are
+    ## all one-liners).  We mostly do this because \alias (see Paren.Rd)
+    ## has non-standard syntax.
+    meta <-
+        list(aliases = .get_Rd_metadata_from_Rd_lines(lines, "alias"),
+             concepts = .get_Rd_metadata_from_Rd_lines(lines, "concept"),
+             keywords = .get_Rd_metadata_from_Rd_lines(lines, "keyword"),
+             doc_type = .get_Rd_metadata_from_Rd_lines(lines, "docType"))
+    ## (Use the same regexp as in .get_Rd_metadata_from_Rd_lines().)
+    i <- grep(paste("^[[:space:]]*\\\\",
+                    "(alias|concept|keyword|docType)",
+                    "{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*}.*",
+                    sep = ""),
+              lines)
+    if(any(i)) lines <- lines[-i]
+    ## Collapse into one character string.
+    txt <- paste(lines, collapse = "\n")
+    ## Initialize for extraction loop.
+    tag <- ""
+    tags <- list()
+    rest <- vals <- character()
+    ## Note that what we do here is not quite the same as what the code
+    ## in R CMD check for checking Rd files does (which e.g. takes all
+    ## lines starting with a command tag as top-level).  Also, it is not
+    ## clear whether this is what we *really* want (or what Rdconv()
+    ## should do).
+    ## <NOTE>
+    ## We try to catch \non_function{} here, even though it is at least
+    ## deprecated.
+    ## </NOTE>
+    pattern <- "(^|\n)[[:space:]]*\\\\([[:alpha:]]|non_function)+{"
+    while((pos <- regexpr(pattern, txt)) != -1) {
+        otag <- tag
+        start <- substring(txt, 1, pos + attr(pos, "match.length") - 2)
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
+        pos <- regexpr("\\\\([[:alpha:]]|non_function)+$", start)
+        tag <- substring(start, pos + 1)
+        start <- substring(start, 1, pos - 1)
+        pos <- delimMatch(txt)
+        if(pos == -1)
+            stop(paste("unterminated section", sQuote(tag)))
+        if(tag == "section") {
+            tmp <- substring(txt, 2, attr(pos, "match.length") - 1)
+            txt <- substring(txt, pos + attr(pos, "match.length"))
+            ## Should 'txt' now really start with an open brace?
+            if(substring(txt, 1, 1) != "{")
+                stop(paste("incomplete section",
+                           sQuote(paste("section{", tmp, "}",
+                                        sep = ""))))
+            pos <- delimMatch(txt)
+            if(pos == -1)
+                stop(paste("unterminated section",
+                           sQuote(paste("section{", tmp, "}",
+                                        sep = ""))))
+            tag <- c(tag, tmp)
+        }
+        if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", start) == -1) {
+            names(start) <- paste(otag, collapse = " ")
+            rest <- c(rest, start)
+        }
+        tags <- c(tags, list(tag))
+        vals <- c(vals, substring(txt,
+                                  pos + 1,
+                                  pos + attr(pos, "match.length") - 2))
+        txt <- substring(txt, pos + attr(pos, "match.length"))
+    }
+    if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", txt) == -1) {
+        names(txt) <- paste(tag, collapse = " ")
+        rest <- c(rest, txt)
+    }
+    list(meta = meta,
+         data = data.frame(tags = I(tags), vals = I(vals)),
+         rest = rest)
+}
+
+### * get_Rd_section
+
+get_Rd_section <-
 function(txt, type, predefined = TRUE)
 {
     ## Extract Rd section(s) 'type' from (preprocessed) Rd markup in the
@@ -428,7 +502,7 @@ function(txt, type, predefined = TRUE)
 
     out <- character()
     if(length(txt) != 1)
-        stop("'txt' must be a character string")
+        stop(.wrong_args("txt", "must be a character string"))
     pattern <- paste("(^|\n)[[:space:]]*\\\\",
                      ifelse(predefined, type,
                             paste("section{", type, "}",
@@ -463,16 +537,16 @@ function(txt, type, predefined = TRUE)
     out
 }
 
-### * getRdItems
+### * get_Rd_items
 
-getRdItems <-
+get_Rd_items <-
 function(txt)
 {
     ## Extract names of Rd \item{}{} markup in the character string
     ## 'txt'.
     out <- character()
     if(length(txt) != 1)
-        stop("'txt' must be a character string")
+        stop(.wrong_args("txt", "must be a character string"))
     pattern <- "(^|\n)[[:space:]]*\\\\item{"
     while((pos <- regexpr(pattern, txt)) != -1) {
         txt <- substring(txt, pos + attr(pos, "match.length") - 1)
@@ -503,25 +577,26 @@ function(txt)
     out
 }
 
-### * .getRdMetaDataFromRdLines
+### * .get_Rd_metadata_from_Rd_lines
 
-.getRdMetaDataFromRdLines <-
+.get_Rd_metadata_from_Rd_lines <-
 function(lines, kind) {
     pattern <- paste("^[[:space:]]*\\\\", kind,
-                     "{[[:space:]]*(.*)[[:space:]]*}.*", sep = "")
+                     "{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*}.*",
+                     sep = "")
     lines <- grep(pattern, lines, value = TRUE)
     lines <- sub(pattern, "\\1", lines)
     lines <- gsub("\\\\%", "%", lines)
     lines
 }
 
-### * .getRdArgumentNames
+### * .get_Rd_argument_names
 
-.getRdArgumentNames <-
+.get_Rd_argument_names <-
 function(txt)
 {
-    txt <- getRdSection(txt, "arguments")
-    txt <- unlist(sapply(txt, getRdItems))
+    txt <- get_Rd_section(txt, "arguments")
+    txt <- unlist(sapply(txt, get_Rd_items))
     if(!length(txt)) return(character())
     txt <- unlist(strsplit(txt, ", *"))
     txt <- gsub("\\\\l?dots", "...", txt)
@@ -530,40 +605,40 @@ function(txt)
     txt
 }
 
-### * .getRdName
+### * .get_Rd_name
 
-.getRdName <-
+.get_Rd_name <-
 function(txt)
 {
     start <- regexpr("\\\\name{[[:space:]]*([^\}]+)[[:space:]]*}", txt)
     if(start == -1) return(character())
-    RdName <- gsub("[[:space:]]*", " ",
-                   substr(txt,
-                          start + 6,
-                          start + attr(start, "match.length") - 2))
-    RdName
+    Rd_name <- gsub("[[:space:]]*", " ",
+                    substr(txt,
+                           start + 6,
+                           start + attr(start, "match.length") - 2))
+    Rd_name
 }
 
-### * .getRdTitle
+### * .get_Rd_title
 
-.getRdTitle <-
+.get_Rd_title <-
 function(txt)
 {
     start <- regexpr("\\\\title{[[:space:]]*([^\}]+)[[:space:]]*}", txt)
     if(start == -1) return(character())
-    RdTitle <- gsub("[[:space:]]*", " ",
-                    substr(txt,
-                           start + 7,
-                           start + attr(start, "match.length") - 2))
-    RdTitle
+    Rd_title <- gsub("[[:space:]]*", " ",
+                     substr(txt,
+                            start + 7,
+                            start + attr(start, "match.length") - 2))
+    Rd_title
 }
 
-### * .getRdExampleCode
+### * .get_Rd_example_code
 
-.getRdExampleCode <-
+.get_Rd_example_code <-
 function(txt)
 {
-    txt <- getRdSection(txt, "examples")
+    txt <- get_Rd_section(txt, "examples")
     if(length(txt) != 1) return(character())
     txt <- gsub("\\\\l?dots", "...", txt)
     txt <- gsub("\\\\%", "%", txt)
@@ -595,6 +670,58 @@ function(txt)
     }
     paste(c(out, txt), collapse = "")
 }
+
+### .apply_Rd_filter_to_Rd_db
+
+.apply_Rd_filter_to_Rd_db <-
+function(db, FUN, ...)
+{
+    db <- lapply(db, function(t) try(FUN(t, ...), silent = TRUE))
+    idx <- as.logical(sapply(db, inherits, "try-error"))
+    if(any(idx)) {
+        msg <- "Rd syntax errors found"
+        for(i in which(idx))
+            msg <- c(msg,
+                     paste("Syntax error in documentation object ",
+                           sQuote(names(db)[i]), ":", sep = ""),
+                     db[[i]])
+        stop(paste(msg, collapse = "\n"), call. = FALSE)
+    }
+    db
+}
+
+### .get_Rd_names_from_Rd_db
+
+.get_Rd_names_from_Rd_db <-
+function(db)
+{
+    Rd_names <- lapply(db, .get_Rd_name)
+    ## If the Rd db was obtained from an installed package, we know that
+    ## all Rd objects must have a \name entry---otherwise, Rdinfo() and
+    ## hence installing the package Rd contents db would have failed.
+    ## For Rd dbs created from a package source directory, we now add
+    ## the Rd file paths as the names attribute, so that we can point to
+    ## the files with missing \name entries.
+    idx <- as.numeric(sapply(Rd_names, length)) == 0
+    if(any(idx)) {
+        Rd_paths <- names(db)
+        if(is.null(Rd_paths)) {
+            ## This should not happen.
+            ## We cannot refer to the bad Rd objects because we do not
+            ## know their names, and have no idea which file they came
+            ## from ...)
+            stop("cannot deal with Rd objects with missing/empty names")
+        }
+        else {
+            stop(paste("missing/empty \\name field in Rd file(s)",
+                       paste(" ", Rd_paths[idx], collapse = "\n"),
+                       sep = "\n"),
+                 call. = FALSE)
+        }
+    }
+    unlist(Rd_names)
+}
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

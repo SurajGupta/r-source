@@ -10,8 +10,8 @@
 lag.plot(x, lags = 1, layout = NULL, set.lags = 1:lags,
          main = NULL, asp = 1,
          font.main=par("font.main"), cex.main=par("cex.main"),
-         diag = TRUE, diag.col="gray", type="p", oma =NULL, ask =NULL,
-         do.lines = n <= 150, labels = do.lines, \dots)
+         diag = TRUE, diag.col = "gray", type = "p", oma = NULL,
+         ask = NULL, do.lines = (n <= 150), labels = do.lines, \dots)
 }
 \arguments{
   \item{x}{time-series (univariate or multivariate)}
@@ -45,7 +45,6 @@ lag.plot(x, lags = 1, layout = NULL, set.lags = 1:lags,
   \code{\link{plot.ts}} which is the basic work horse.
 }
 \examples{
-data(nhtemp)
 lag.plot(nhtemp, 8, diag.col = "forest green")
 lag.plot(nhtemp, 5, main="Average Temperatures in New Haven")
 ## ask defaults to TRUE when we have more than one page:
@@ -53,10 +52,9 @@ lag.plot(nhtemp, 6, layout = c(2,1), asp = NA,
          main = "New Haven Temperatures", col.main = "blue")
 
 ## Multivariate (but non-stationary! ...)
-data(freeny)
 lag.plot(freeny.x, lag = 3)
 \dontrun{
-data(sunspots) # no lines for long series :
+no lines for long series :
 lag.plot(sqrt(sunspots), set = c(1:4, 9:12), pch = ".", col = "gold")
 }
 }

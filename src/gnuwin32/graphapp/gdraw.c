@@ -23,6 +23,7 @@
  */
 
 #include "internal.h"
+extern unsigned int TopmostDialogs; /* from dialogs.c */
 #include <winbase.h>
 
 static HDC GETHDC(drawing d)
@@ -674,10 +675,16 @@ static void setMessageBoxTopmost(window obj)
 		TopmostDialogs |= MB_TOPMOST;
 }
 
+int getHandle(window c)
+{
+    return (int)c->handle;
+}
+
 void BringToTop(window c, int stay) /* stay=0 for regular, 1 for topmost, 2 for toggle */
 {
     SetForegroundWindow(c->handle); /* needed in Rterm */
-    BringWindowToTop(c->handle);    /* needed in Rgui --mdi */
+    if (ismdi()) BringWindowToTop(hwndFrame);
+    BringWindowToTop(c->handle);
 
     if (stay == 2) stay = !isTopmost(c);
 

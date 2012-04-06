@@ -37,7 +37,6 @@
 #define EncodeInteger      Rf_EncodeInteger
 #define EncodeReal         Rf_EncodeReal
 #define EncodeComplex      Rf_EncodeComplex
-#define EncodeString       Rf_EncodeString
 #define VectorIndex        Rf_VectorIndex
 #define printIntegerVector Rf_printIntegerVector
 #define printRealVector    Rf_printRealVector
@@ -61,7 +60,6 @@ char *EncodeLogical(int, int);
 char *EncodeInteger(int, int);
 char *EncodeReal(double, int, int, int);
 char *EncodeComplex(Rcomplex, int, int, int, int, int, int);
-char *EncodeString(char*, int, int, int);
 
 /* Printing */
 void VectorIndex(int, int);

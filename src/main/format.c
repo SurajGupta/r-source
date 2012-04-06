@@ -44,6 +44,11 @@
 #include <Rmath.h>
 #include <Print.h>
 
+/* this is just for conformity with other types */
+void formatRaw(Rbyte *x, int n, int *fieldwidth)
+{
+    *fieldwidth = 2;
+}
 
 void formatString(SEXP *x, int n, int *fieldwidth, int quote)
 {
@@ -53,7 +58,7 @@ void formatString(SEXP *x, int n, int *fieldwidth, int quote)
     for (i = 0; i < n; i++) {
 	if (x[i] == NA_STRING) {
 	    l = quote ? R_print.na_width : R_print.na_width_noquote;
-	} else l = Rstrlen(CHAR(x[i]), quote) + (quote ? 2 : 0);
+	} else l = Rstrlen(x[i], quote) + (quote ? 2 : 0);
 	if (l > xmax) xmax = l;
     }
     *fieldwidth = xmax;

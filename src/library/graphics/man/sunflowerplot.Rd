@@ -8,10 +8,10 @@
 }
 \usage{
 sunflowerplot(x, y = NULL, number, log = "", digits = 6,
-             xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
-             add = FALSE, rotate = FALSE,
-             pch = 16, cex = 0.8, cex.fact = 1.5,
-             size = 1/8, seg.col = 2, seg.lwd = 1.5, \dots)
+              xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
+              add = FALSE, rotate = FALSE,
+              pch = 16, cex = 0.8, cex.fact = 1.5,
+              size = 1/8, seg.col = 2, seg.lwd = 1.5, \dots)
 }
 \arguments{
   \item{x}{numeric vector of \code{x}-coordinates of length \code{n},
@@ -82,9 +82,8 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   1989--1993.  Port to \R by Martin Maechler
   \email{maechler@stat.math.ethz.ch}.
 }
-\seealso{\code{\link[stats]{density}}}
+\seealso{\code{\link{density}}}
 \examples{
-data(iris)
 ## 'number' is computed automatically:
 sunflowerplot(iris[, 3:4])
 ## Imitating  Chambers et al., p.109, closely:

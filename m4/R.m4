@@ -173,7 +173,7 @@ else
 fi
 : ${R_RD4DVI="ae"}
 AC_SUBST(R_RD4DVI)
-: ${R_RD4PDF="ae,hyper"}
+: ${R_RD4PDF="times,hyper"}
 AC_SUBST(R_RD4PDF)
 ])# R_PROG_TEXMF
 
@@ -202,17 +202,21 @@ fi
 
 ## _R_PROG_MAKEINFO_VERSION
 ## ------------------------
-## Building the R Texinfo manuals requires Makeinfo v4 or better.
+## Building the R Texinfo manuals requires Makeinfo v4.5 or better.
 ## Set shell variable r_cv_prog_makeinfo_v4 to 'yes' if a recent
 ## enough Makeinfo is found, and to 'no' otherwise.
 AC_DEFUN([_R_PROG_MAKEINFO_VERSION],
-[AC_CACHE_CHECK([whether makeinfo version is at least 4],
+[AC_CACHE_CHECK([whether makeinfo version is at least 4.5],
                 [r_cv_prog_makeinfo_v4],
 [makeinfo_version=`${MAKEINFO_CMD} --version | \
-  grep "^makeinfo" | sed 's/[[^)]]*) \(.\).*/\1/'`
-if test -z "${makeinfo_version}"; then
+  grep "^makeinfo" | sed 's/[[^)]]*) \(.*\)/\1/'`
+makeinfo_version_maj=`echo ${makeinfo_version} | cut -f1 -d.`
+makeinfo_version_min=`echo ${makeinfo_version} | cut -f2 -d.`
+if test -z "${makeinfo_version_maj}" \
+     || test -z "${makeinfo_version_min}"; then
   r_cv_prog_makeinfo_v4=no
-elif test ${makeinfo_version} -lt 4; then
+elif test ${makeinfo_version_maj} -lt 4 \
+     || test ${makeinfo_version_min} -lt 5; then
   r_cv_prog_makeinfo_v4=no
 else
   r_cv_prog_makeinfo_v4=yes
@@ -362,7 +366,7 @@ if test -n "${r_cv_prog_cc_m}"; then
 .c.d:
 	@echo "making \$[@] from \$<"
 	@${r_cv_prog_cc_m} \$(ALL_CPPFLAGS) $< | \\
-	  sed -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > \$[@]
+	  \$(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > \$[@]
 EOF
 else
   cat << \EOF >> ${r_cc_rules_frag}
@@ -519,15 +523,15 @@ if test "${r_cv_prog_cxx_m}" = yes; then
 .cc.d:
 	@echo "making $[@] from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  sed -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
 .cpp.d:
 	@echo "making $[@] from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  sed -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
 .C.d:
 	@echo "making $[@] from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  sed -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
 EOF
 else
   cat << \EOF >> ${r_cxx_rules_frag}
@@ -1229,6 +1233,30 @@ if test "x${r_cv_func_finite_works}" = xyes; then
 fi
 ])# R_FUNC_FINITE
 
+## R_FUNC_ISFINITE
+## ---------------
+AC_DEFUN([R_FUNC_ISFINITE],
+[AC_CACHE_CHECK([for working isfinite], [r_cv_func_isfinite_works],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <math.h>
+#include "confdefs.h"
+int main () {
+#ifdef HAVE_DECL_ISFINITE
+  exit(isfinite(1./0.) | isfinite(0./0.) | isfinite(-1./0.));
+#else
+  exit(1);
+#endif
+}
+]])],
+               [r_cv_func_isfinite_works=yes],
+               [r_cv_func_isfinite_works=no],
+               [r_cv_func_isfinite_works=no])])
+if test "x${r_cv_func_isfinite_works}" = xyes; then
+  AC_DEFINE(HAVE_WORKING_ISFINITE, 1,
+            [Define if isfinite() is correct for -Inf/NaN/Inf.])
+fi
+])# R_FUNC_ISFINITE
+
 ## R_FUNC_LOG
 ## ----------
 AC_DEFUN([R_FUNC_LOG],
@@ -1237,11 +1265,8 @@ AC_DEFUN([R_FUNC_LOG],
 #include <math.h>
 #include "confdefs.h"
 int main () {
-#ifdef HAVE_ISNAN
+/* we require isnan as from R 2.0.0 */
   exit(!(log(0.) == -1. / 0. && isnan(log(-1.))));
-#else
-  exit(log(0.) != -1. / 0);
-#endif
 }
 ]])],
                [r_cv_func_log_works=yes],
@@ -1258,6 +1283,7 @@ fi
 ## Suggested by Nelson H. F. Beebe <beebe@math.utah.edu> to deal with
 ## inaccuracies on at least NetBSD 1.6 and OpenBSD 3.2.
 ## However, don't test all the way into denormalized x (he had k > -1074)
+## and at x = 2^-54 (d - x)/x is around 3e-17. 
 AC_DEFUN([R_FUNC_LOG1P],
 [AC_CACHE_CHECK([for working log1p], [r_cv_func_log1p_works],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -1267,10 +1293,11 @@ int main () {
 #ifdef HAVE_LOG1P
   int k;
   double d;
-  double x;
+  double x = 1.0;
+  for(k = 0; k < 53; k++) x /= 2.0;
+
   /* log(1+x) = x - (1/2)x^2 + (1/3)x^3 - (1/4)x^4 ... */
   /*          = x for x sufficiently small */
-  x = pow(2.0, -53.0);
   for(k = -54; k > -1022; --k) {	
     x /= 2.0;
     if(x == 0.0)
@@ -1278,7 +1305,8 @@ int main () {
     d = log1p(x);
     if(d == 0.0)
       exit(1);			/* ERROR: inaccurate log1p() */
-    if(d != x)
+    /* for large k, ((1/2)x^2)/x might appear in the guard digits */
+    if(k < -80 && d != x)
       exit(1);			/* ERROR: inaccurate log1p() */
   }	
   exit(0);
@@ -1490,6 +1518,8 @@ fi])
 if test "${r_cv_ieee_754}" = yes; then
   AC_DEFINE(IEEE_754, 1,
             [Define if you have IEEE 754 floating point arithmetic.])
+else
+  AC_MSG_ERROR([IEEE 754 floating-point arithmetic is required])
 fi
 ])# R_IEEE_754
 
@@ -2438,6 +2468,146 @@ for pkg in ${recommended_pkgs}; do
 done])
 use_recommended_packages=${r_cv_misc_recommended_packages}
 ])# R_RECOMMENDED_PACKAGES
+
+## R_HAVE_KEYSYM
+## -------------
+## check in X11 has KeySym typedef-ed
+AC_DEFUN([R_HAVE_KEYSYM],
+[
+  AC_CACHE_CHECK([for KeySym], r_cv_have_keysym,
+    [AC_TRY_LINK([#include <X11/X.h>],
+      [KeySym iokey;],
+      r_cv_have_keysym=yes,
+      r_cv_have_keysym=no)
+    ])
+  if test $r_cv_have_keysym = yes; then
+    AC_DEFINE(HAVE_KEYSYM, 1,
+      [Define if you have KeySym defined in X11.])
+  fi
+])# R_HAVE_KEYSYM
+
+## R_C_INLINE
+## ----------
+## modified version of AC_C_INLINE to use R_INLINE not inline
+AC_DEFUN([R_C_INLINE],
+[AC_REQUIRE([AC_PROG_CC_STDC])dnl
+AC_CACHE_CHECK([for inline], r_cv_c_inline,
+[r_cv_c_inline=""
+for ac_kw in inline __inline__ __inline; do
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[#ifndef __cplusplus
+static $ac_kw int static_foo () {return 0; }
+$ac_kw int foo () {return 0; }
+#endif
+])],
+                    [r_cv_c_inline=$ac_kw; break])
+done
+])
+case $r_cv_c_inline in
+  no) AC_DEFINE(R_INLINE,,
+                [Define as `inline', or `__inline__' or `__inline' 
+                 if that's what the C compiler calls it,
+                 or to nothing if it is not supported.]) ;;
+  *)  AC_DEFINE_UNQUOTED(R_INLINE, $r_cv_c_inline) ;;
+esac
+])# R_C_INLINE
+
+## R_FUNC_FTELL
+## ------------
+## See if your system time functions do not count leap seconds, as
+## required by POSIX.
+AC_DEFUN([R_FUNC_FTELL],
+[AC_CACHE_CHECK([whether ftell works correctly on files opened for append],
+                [r_cv_working_ftell],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <stdio.h>
+
+main() {
+    FILE *fp;
+    int pos;
+    
+    fp = fopen("testit", "wb");
+    fwrite("0123456789\n", 11, 1, fp);
+    fclose(fp);
+    fp = fopen("testit", "ab");
+    pos = ftell(fp);
+    fclose(fp);
+    unlink("testit");
+    exit(pos != 11);
+}
+]])],
+              [r_cv_working_ftell=yes],
+              [r_cv_working_ftell=no],
+              [r_cv_working_ftell=no])])
+if test "x${r_cv_working_ftell}" = xyes; then
+  AC_DEFINE(HAVE_WORKING_FTELL, 1,
+            [Define if your ftell works correctly on files opened for append.])
+fi
+])# R_FUNC_FTELL
+
+## R_SIZE_MAX
+## ----------
+## Look for a definition of SIZE_MAX (the maximum of size_t).
+## C99 has it declared in <inttypes.h>, glibc in <stdint.h> 
+## and Solaris 8 in <limits.h>!
+## autoconf tests for inttypes.h and stdint.h by default
+AC_DEFUN([R_SIZE_MAX],
+[AC_CACHE_CHECK([whether SIZE_MAX is declared],
+                [r_cv_size_max],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#ifdef HAVE_INTTYPES_H
+#  include <inttypes.h>
+#endif
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#  include <limits.h>
+#endif
+ 
+int
+main() {
+#ifndef SIZE_MAX
+  char *p = (char *) SIZE_MAX;
+#endif
+
+  ;
+  return 0;
+}
+]])],
+              [r_cv_size_max=yes],
+              [r_cv_size_max=no],
+              [r_cv_size_max=no])])
+if test "x${r_cv_size_max}" = xyes; then
+  AC_DEFINE(HAVE_DECL_SIZE_MAX, 1,
+            [Define to 1 if you have the declaration of `SIZE_MAX', and to 0 if you don't.])
+fi
+])# R_SIZE_MAX
+
+## R_LARGE_FILES
+## Enable large file support on linux >= 2.4.0?  Idea from hdf5 configure.
+AC_DEFUN([R_LARGE_FILES],
+[case "$host_os" in
+  linux*)
+    AC_MSG_CHECKING([for large file support mode on Linux])
+    if test ${ac_cv_sizeof_long} -gt 4 ; then
+      AC_MSG_RESULT([always enabled on > 32-bit machine])
+    else
+      LX_MAJOR_VER="`uname -r | cut -d '.' -f1`"
+      LX_MINOR_VER="`uname -r | cut -d '.' -f2`"
+      if test ${LX_MAJOR_VER} -gt 2 -o \
+	${LX_MAJOR_VER} -eq 2 -a ${LX_MINOR_VER} -ge 4; then
+	AC_MSG_RESULT([enabled])
+	CFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE $CFLAGS"
+      else
+	AC_MSG_RESULT([disabled])
+      fi
+    fi
+    ;;
+esac
+])# R_LARGE_FILES
 
 ### Local variables: ***
 ### mode: outline-minor ***

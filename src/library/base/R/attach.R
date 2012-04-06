@@ -1,9 +1,13 @@
 attach <- function(what, pos=2, name=deparse(substitute(what)))
 {
+    if(pos == 1) {
+        warning("*** pos=1 is not possible; setting pos=2 for now.\n",
+                "*** Note that pos=1 will give an error in the future")
+        pos <- 2
+    }
     if (is.character(what) && (length(what)==1)){
-        if (!file.exists(what))
-            stop(paste("File", what, " not found.", sep=""))
-        name<-paste("file:", what, sep="")
+        if (!file.exists(what)) stop("File ", what, " not found.")
+        name <- paste("file:", what, sep="")
         value <- .Internal(attach(NULL, pos, name))
         load(what, envir=as.environment(pos))
     }
@@ -46,8 +50,9 @@ detach <- function(name, pos=2, version)
         if(!is.null(libpath)) try(.Last.lib(libpath))
     }
     .Internal(detach(pos))
-    ## check for detaching a  package required by another package (not by .GlobalEnv
-    ## because detach() can't currently fix up the .required there)
+    ## Check for detaching a  package required by another package (not
+    ## by .GlobalEnv because detach() can't currently fix up the
+    ## .required there)
     for(pkgs in search()[-1]) {
         if(!isNamespace(as.environment(pkgs)) &&
            exists(".required", pkgs, inherits = FALSE) &&
@@ -79,11 +84,14 @@ ls <- objects <-
             ll != length(grep("]", pattern, fixed=TRUE))) {
             if (pattern == "[") {
                 pattern <- "\\["
-                warning("replaced regular expression pattern `[' by `\\\\['")
+                warning(paste("replaced regular expression pattern",
+                              sQuote("["), "by", sQuote("\\\\[")))
             }
             else if (length(grep("[^\\\\]\\[<-", pattern) > 0)) {
                 pattern <- sub("\\[<-", "\\\\\\[<-", pattern)
-                warning("replaced `[<-' by `\\\\[<-' in regular expression pattern")
+                warning(paste("replaced", sQuote("[<-"),
+                              "by", sQuote("\\\\[<-"),
+                              "in regular expression pattern"))
             }
         }
         grep(pattern, all.names, value = TRUE)

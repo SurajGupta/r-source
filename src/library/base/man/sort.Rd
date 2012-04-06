@@ -9,6 +9,7 @@
 \usage{
 sort(x, partial = NULL, na.last = NA, decreasing = FALSE,
      method = c("shell", "quick"), index.return = FALSE)
+
 is.unsorted(x, na.rm = FALSE)
 }
 \arguments{
@@ -79,7 +80,6 @@ is.unsorted(x, na.rm = FALSE)
 }
 \examples{
 require(stats)
-data(swiss)
 x <- swiss$Education[1:25]
 x; sort(x); sort(x, partial = c(10, 15))
 median # shows you another example for 'partial'

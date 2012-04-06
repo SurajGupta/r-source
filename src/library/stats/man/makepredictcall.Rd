@@ -37,12 +37,12 @@ makepredictcall(var, call)
   the terms.
 }
 \seealso{
-  \code{\link{model.frame}}, \code{\link{poly}}, \code{\link{scale}},
-  \code{\link[splines]{bs}}, \code{\link[splines]{ns}}, \code{\link{cars}}
+  \code{\link{model.frame}}, \code{\link{poly}}, \code{\link{scale}};
+  \code{\link[splines]{bs}} and \code{\link[splines]{ns}} in package
+  \pkg{splines}, \code{\link[datasets]{cars}}
 }
 \examples{
 ## using poly: this did not work in R < 1.5.0
-data(women)
 fm <- lm(weight ~ poly(height, 2), data = women)
 plot(women, xlab = "Height (in)", ylab = "Weight (lb)")
 ht <- seq(57, 73, len = 200)

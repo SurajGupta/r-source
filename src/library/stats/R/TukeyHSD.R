@@ -28,15 +28,31 @@ TukeyHSD.aov <-
              conf.level = 0.95, ...)
 {
     mm <- model.tables(x, "means")
+    if(is.null(mm$n))
+        stop("no factors in the fitted model")
     tabs <- mm$tables[-1]
     tabs <- tabs[which]
-    nn <- mm$n[which]
+    ## mm$n need not be complete -- factors only -- so index by names
+    nn <- mm$n[names(tabs)]
+    nn_na <- is.na(nn)
+    if(all(nn_na))
+        stop(sQuote("which"), " specified no factors")
+    if(any(nn_na)) {
+        warning(sQuote("which"),
+                " specified some non-factors which will be dropped")
+        tabs <- tabs[!nn_na]
+        nn <- nn[!nn_na]
+    }
     out <- vector("list", length(tabs))
     names(out) <- names(tabs)
     MSE <- sum(resid(x)^2)/x$df.residual
     for (nm in names(tabs)) {
-        means <- as.vector(tabs[[nm]])
-        nms <- names(tabs[[nm]])
+        tab <- tabs[[nm]]
+        means <- as.vector(tab)
+        nms <- if(length(d <- dim(tab)) > 1) {
+            dn <- dimnames(tab)
+            apply(do.call("expand.grid", dn), 1, paste, collapse=":")
+        } else names(tab)
         n <- nn[[nm]]
         ## expand n to the correct length if necessary
         if (length(n) < length(means)) n <- rep.int(n, length(means))

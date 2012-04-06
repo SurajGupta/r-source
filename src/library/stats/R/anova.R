@@ -1,6 +1,7 @@
 printCoefmat <-
     function(x, digits = max(3, getOption("digits") - 2),
 	     signif.stars = getOption("show.signif.stars"),
+             signif.legend = signif.stars,
 	     dig.tst = max(1, min(5, digits - 1)),
 	     cs.ind = 1:k, tst.ind = k+1, zap.ind = integer(0),
 	     P.values = NULL,
@@ -23,7 +24,8 @@ printCoefmat <-
     if(is.null(P.values)) {
         scp <- getOption("show.coef.Pvalues")
         if(!is.logical(scp) || is.na(scp)) {
-            warning("option `show.coef.Pvalues' is invalid: assuming TRUE")
+            warning(paste("option", sQuote("show.coef.Pvalues"),
+                          "is invalid: assuming TRUE"))
             scp <- TRUE
         }
 	P.values <- has.Pvalue && scp
@@ -59,7 +61,7 @@ printCoefmat <-
     if(any(r.ind <- !((1:nc) %in% c(cs.ind,tst.ind,zap.ind, if(has.Pvalue)nc))))
 	Cf[, r.ind] <- format(xm[, r.ind], digits=digits)
     okP <- if(has.Pvalue) ok[, -nc] else ok
-    x0 <- xm[okP]==0 != (as.numeric(Cf[okP])==0)
+    x0 <- (xm[okP]==0) != (as.numeric(Cf[okP])==0)
     if(length(not.both.0 <- which(x0 & !is.na(x0)))) {
 	## not.both.0==TRUE:  xm !=0, but Cf[] is: --> fix these:
 	Cf[okP][not.both.0] <- format(xm[okP][not.both.0], digits= max(1,digits-1))
@@ -67,7 +69,8 @@ printCoefmat <-
     if(any(ina)) Cf[ina] <- na.print
     if(P.values) {
         if(!is.logical(signif.stars) || is.na(signif.stars)) {
-            warning("option `show.signif.stars' is invalid: assuming TRUE")
+            warning(paste("option", sQuote("show.signif.stars"),
+                          "is invalid: assuming TRUE"))
             signif.stars <- TRUE
         }
 	pv <- xm[, nc]

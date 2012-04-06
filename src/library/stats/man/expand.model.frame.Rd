@@ -8,7 +8,8 @@
   to be recovered for a model using \code{sin(x)} as a predictor.
 }
 \usage{
-expand.model.frame(model, extras, envir=environment(formula(model)),
+expand.model.frame(model, extras,
+                   envir = environment(formula(model)),
                    na.expand = FALSE)
 }
 \arguments{
@@ -33,7 +34,6 @@ expand.model.frame(model, extras, envir=environment(formula(model)),
 \seealso{\code{\link{model.frame}},\code{\link{predict}}}
 
 \examples{
-data(trees)
 model <- lm(log(Volume) ~ log(Girth) + log(Height), data=trees)
 expand.model.frame(model, ~ Girth) # prints data.frame like
 

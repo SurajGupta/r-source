@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-3   The R Development Core Team.
+ *  Copyright (C) 2000-4   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ Rconnection getConnection(int n)
 }
 
 int getActiveSink(int n){
-  if (n>=R_SinkNumber || n<0) 
+  if (n>=R_SinkNumber || n<0)
     return 0;
   if (R_SinkSplit[R_SinkNumber-n])
     return SinkCons[R_SinkNumber-n-1];
@@ -189,10 +189,10 @@ static int null_fgetc(Rconnection con)
     return 0;			/* -Wall */
 }
 
-static long null_seek(Rconnection con, int where, int origin, int rw)
+static double null_seek(Rconnection con, double where, int origin, int rw)
 {
     error("seek not enabled for this connection");
-    return 0;			/* -Wall */
+    return 0.;			/* -Wall */
 }
 
 static void null_truncate(Rconnection con)
@@ -245,6 +245,14 @@ void init_con(Rconnection new, char *description, char *mode)
 
 /* ------------------- file connections --------------------- */
 
+#if defined(HAVE_OFF_T) && defined(__USE_LARGEFILE)
+#define f_seek fseeko
+#define f_tell ftello
+#else
+#define f_seek fseek
+#define f_tell ftell
+#endif
+
 static Rboolean file_open(Rconnection con)
 {
     char *name;
@@ -265,7 +273,10 @@ static Rboolean file_open(Rconnection con)
 	warning("cannot open file `%s'", name);
 	return FALSE;
     }
-    if(temp) unlink(name);
+    if(temp) {
+	unlink(name);
+	free(name);
+    }
     this->fp = fp;
     con->isopen = TRUE;
     con->canwrite = (con->mode[0] == 'w' || con->mode[0] == 'a');
@@ -274,7 +285,7 @@ static Rboolean file_open(Rconnection con)
 	con->canread = con->canwrite = TRUE;
     this->last_was_write = !con->canread;
     this->rpos = 0;
-    if(con->canwrite) this->wpos = ftell(fp);
+    if(con->canwrite) this->wpos = f_tell(fp);
     if(mlen >= 2 && con->mode[mlen-1] == 'b') con->text = FALSE;
     else con->text = TRUE;
     con->save = -1000;
@@ -301,9 +312,9 @@ static int file_vfprintf(Rconnection con, const char *format, va_list ap)
     Rfileconn this = con->private;
 
     if(!this->last_was_write) {
-	this->rpos = ftell(this->fp);
+	this->rpos = f_tell(this->fp);
 	this->last_was_write = TRUE;
-	fseek(this->fp, this->wpos, SEEK_SET);
+	f_seek(this->fp, this->wpos, SEEK_SET);
     }
     return vfprintf(this->fp, format, ap);
 }
@@ -315,19 +326,23 @@ static int file_fgetc(Rconnection con)
     int c;
 
     if(this->last_was_write) {
-	this->wpos = ftell(this->fp);
+	this->wpos = f_tell(this->fp);
 	this->last_was_write = FALSE;
-	fseek(this->fp, this->rpos, SEEK_SET);
+	f_seek(this->fp, this->rpos, SEEK_SET);
     }
     c = fgetc(fp);
     return feof(fp) ? R_EOF : con->encoding[c];
 }
 
-static long file_seek(Rconnection con, int where, int origin, int rw)
+static double file_seek(Rconnection con, double where, int origin, int rw)
 {
     Rfileconn this = con->private;
     FILE *fp = this->fp;
-    long pos = ftell(fp);
+#if defined(HAVE_OFF_T) && defined(__USE_LARGEFILE)
+    off_t pos = f_tell(fp);
+#else
+    long pos = f_tell(fp);
+#endif
     int whence = SEEK_SET;
 
     /* make sure both positions are set */
@@ -342,16 +357,16 @@ static long file_seek(Rconnection con, int where, int origin, int rw)
 	pos = this->wpos;
 	this->last_was_write = TRUE;
     }
-    if(where == NA_INTEGER) return pos;
+    if(ISNA(where)) return pos;
 
     switch(origin) {
     case 2: whence = SEEK_CUR; break;
     case 3: whence = SEEK_END; break;
     default: whence = SEEK_SET;
     }
-    fseek(fp, where, whence);
-    if(this->last_was_write) this->wpos = ftell(this->fp);
-    else this->rpos = ftell(this->fp);
+    f_seek(fp, where, whence);
+    if(this->last_was_write) this->wpos = f_tell(this->fp);
+    else this->rpos = f_tell(this->fp);
     return pos;
 }
 
@@ -365,7 +380,7 @@ static void file_truncate(Rconnection con)
     if(!con->isopen || !con->canwrite)
 	error("can only truncate connections open for writing");
 
-    if(!this->last_was_write) this->rpos = ftell(this->fp);
+    if(!this->last_was_write) this->rpos = f_tell(this->fp);
 #ifdef HAVE_FTRUNCATE
     if(ftruncate(fd, size))
 	error("file truncation failed");
@@ -376,7 +391,7 @@ static void file_truncate(Rconnection con)
     error("Unavailable on this platform");
 #endif
     this->last_was_write = TRUE;
-    this->wpos = ftell(this->fp);
+    this->wpos = f_tell(this->fp);
 }
 
 static int file_fflush(Rconnection con)
@@ -393,9 +408,9 @@ static size_t file_read(void *ptr, size_t size, size_t nitems,
     FILE *fp = this->fp;
 
     if(this->last_was_write) {
-	this->wpos = ftell(this->fp);
+	this->wpos = f_tell(this->fp);
 	this->last_was_write = FALSE;
-	fseek(this->fp, this->rpos, SEEK_SET);
+	f_seek(this->fp, this->rpos, SEEK_SET);
     }
     return fread(ptr, size, nitems, fp);
 }
@@ -407,9 +422,9 @@ static size_t file_write(const void *ptr, size_t size, size_t nitems,
     FILE *fp = this->fp;
 
     if(!this->last_was_write) {
-	this->rpos = ftell(this->fp);
+	this->rpos = f_tell(this->fp);
 	this->last_was_write = TRUE;
-	fseek(this->fp, this->wpos, SEEK_SET);
+	f_seek(this->fp, this->wpos, SEEK_SET);
     }
     return fwrite(ptr, size, nitems, fp);
 }
@@ -816,25 +831,29 @@ static int gzfile_fgetc(Rconnection con)
     /* -- sometimes! gzgetc may still return EOF */
     if(gzeof(fp)) return R_EOF;
     c = gzgetc(fp);
-    if (c == EOF) 
+    if (c == EOF)
 	return R_EOF;
     else
 	return con->encoding[c];
 }
 
-static long gzfile_seek(Rconnection con, int where, int origin, int rw)
+static double gzfile_seek(Rconnection con, double where, int origin, int rw)
 {
     gzFile  fp = ((Rgzfileconn)(con->private))->fp;
-    long pos = gztell(fp);
-    int whence = SEEK_SET;
+    z_off_t pos = gztell(fp);
+    int res, whence = SEEK_SET;
 
     switch(origin) {
     case 2: whence = SEEK_CUR;
-    case 3: whence = SEEK_END;
+    case 3: error("whence = \"end\" is not implemented for gzfile connections");
     default: whence = SEEK_SET;
     }
-    if(where >= 0) gzseek(fp, where, whence);
-    return pos;
+    if(where >= 0) {
+	res = gzseek(fp, (z_off_t) where, whence);
+	if(res == -1)
+	    warning("seek on a gzfile connection returned an internal error");
+    }
+    return (double) pos;
 }
 
 static int gzfile_fflush(Rconnection con)
@@ -1173,17 +1192,18 @@ static Rboolean clp_open(Rconnection con)
 	    return FALSE;
 	}
     } else {
-	int len = 32*1024;
-	this->buff = (char *)malloc(len + 1);
-	this->len = len;
-	this->last = 0;
+	int len = (this->sizeKB)*1024;
+	this->buff = (char *) malloc(len + 1);
 	if(!this->buff) {
 	    warning("memory allocation to open clipboard failed");
 	    return FALSE;
 	}
+	this->len = len;
+	this->last = 0;
     }
     con->text = TRUE;
     con->save = -1000;
+    this->warned = FALSE;
 
     return TRUE;
 }
@@ -1233,23 +1253,23 @@ static int clp_fgetc(Rconnection con)
     return con->encoding[c];
 }
 
-static long clp_seek(Rconnection con, int where, int origin, int rw)
+static double clp_seek(Rconnection con, double where, int origin, int rw)
 {
     Rclpconn this = con->private;
     int newpos, oldpos = this->pos;
 
-    if(where == NA_INTEGER) return oldpos;
+    if(ISNA(where)) return oldpos;
 
     switch(origin) {
-    case 2: newpos = this->pos + where; break;
-    case 3: newpos = this->last + where; break;
+    case 2: newpos = this->pos + (int)where; break;
+    case 3: newpos = this->last + (int)where; break;
     default: newpos = where;
     }
     if(newpos < 0 || newpos >= this->last)
 	error("attempt to seek outside the range of the clipboard");
     else this->pos = newpos;
 
-    return oldpos;
+    return (double) oldpos;
 }
 
 static void clp_truncate(Rconnection con)
@@ -1285,6 +1305,9 @@ static size_t clp_write(const void *ptr, size_t size, size_t nitems,
     int i, len = size * nitems, used = 0;
     char c, *p = (char *)ptr, *q = this->buff + this->pos;
 
+    if(!con->canwrite)
+	error("clipboard connection is open for reading only");
+
     /* clipboard requires CRLF termination */
     for(i = 0; i < len; i++) {
 	if(this->pos >= this->len) break;
@@ -1298,14 +1321,19 @@ static size_t clp_write(const void *ptr, size_t size, size_t nitems,
 	this->pos++;
 	used++;
     }
+    if (used < len && !this->warned) {
+	warning("clipboard buffer is full and output lost");
+	this->warned = TRUE;
+    }
     if(this->last < this->pos) this->last = this->pos;
     return (size_t) used/size;
 }
 
-static Rconnection newclp(char *mode)
+static Rconnection newclp(char *url, char *mode)
 {
     Rconnection new;
     char description[] = "clipboard";
+    int sizeKB = 32;
 
     if(strlen(mode) != 1 ||
        (mode[0] != 'r' && mode[0] != 'w'))
@@ -1339,6 +1367,12 @@ static Rconnection newclp(char *mode)
 	free(new->description); free(new->class); free(new);
 	error("allocation of clipboard connection failed");
     }
+    if (strncmp(url, "clipboard-", 10) == 0) {
+	sizeKB = atoi(url+10);
+	if(sizeKB < 32) sizeKB = 32;
+	/* Rprintf("setting clipboard size to %dKB\n", sizeKB); */
+    }
+    ((Rclpconn)new->private)->sizeKB = sizeKB;
     return new;
 }
 
@@ -1512,7 +1546,8 @@ static void text_destroy(Rconnection con)
     Rtextconn this = (Rtextconn)con->private;
 
     free(this->data);
-    this->cur = this->nchars = 0;
+    /* this->cur = this->nchars = 0; */
+    free(this);
 }
 
 static int text_fgetc(Rconnection con)
@@ -1528,7 +1563,7 @@ static int text_fgetc(Rconnection con)
     else return (int) (this->data[this->cur++]);
 }
 
-static long text_seek(Rconnection con, int where, int origin, int rw)
+static double text_seek(Rconnection con, double where, int origin, int rw)
 {
     if(where >= 0) error("seek is not relevant for text connection");
     return 0; /* if just asking, always at the beginning */
@@ -1586,7 +1621,7 @@ static void outtext_close(Rconnection con)
 static void outtext_destroy(Rconnection con)
 {
     Routtextconn this = (Routtextconn)con->private;
-    free(this->lastline);
+    free(this->lastline); free(this);
 }
 
 #define LAST_LINE_LEN 256
@@ -2036,20 +2071,21 @@ SEXP do_close(SEXP call, SEXP op, SEXP args, SEXP env)
 /* seek(con, where = numeric(), origin = "start", rw = "") */
 SEXP do_seek(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    int where, origin, rw;
+    int origin, rw;
     SEXP ans;
     Rconnection con = NULL;
+    double where;
 
     checkArity(op, args);
     if(!inherits(CAR(args), "connection"))
 	errorcall(call, "`con' is not a connection");
     con = getConnection(asInteger(CAR(args)));
     if(!con->isopen) error("connection is not open");
-    where = asInteger(CADR(args));
+    where = asReal(CADR(args));
     origin = asInteger(CADDR(args));
     rw = asInteger(CADDDR(args));
-    PROTECT(ans = allocVector(INTSXP, 1));
-    INTEGER(ans)[0] = con->seek(con, where, origin, rw);
+    PROTECT(ans = allocVector(REALSXP, 1));
+    REAL(ans)[0] = con->seek(con, where, origin, rw);
     UNPROTECT(1);
     return ans;
 }
@@ -2260,7 +2296,7 @@ static void writecon(Rconnection con, char *format, ...)
     va_end(ap);
 }
 
-/* writelines(text, con = stdout(), sep = "\n") */
+/* writeLines(text, con = stdout(), sep = "\n") */
 SEXP do_writelines(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int i;
@@ -2279,8 +2315,10 @@ SEXP do_writelines(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!con->canwrite)
 	error("cannot write to this connection");
     wasopen = con->isopen;
-    if(!wasopen)
+    if(!wasopen) {
+	strcpy(con->mode, "wt");
 	if(!con->open(con)) error("cannot open the connection");
+    }
     for(i = 0; i < length(text); i++)
 	writecon(con, "%s%s", CHAR(STRING_ELT(text, i)),
 		 CHAR(STRING_ELT(sep, 0)));
@@ -2425,6 +2463,17 @@ SEXP do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	    PROTECT(ans = allocVector(LGLSXP, n));
 	    p = (void *) LOGICAL(ans);
+	} else if (!strcmp(what, "raw")) {
+	    sizedef = 1; mode = 1;
+	    if(size == NA_INTEGER) size = sizedef;
+	    switch (size) {
+	    case 1:
+		break;
+	    default:
+		error("raw is always of size 1");
+	    }
+	    PROTECT(ans = allocVector(RAWSXP, n));
+	    p = (void *) RAW(ans);
 	} else if (!strcmp(what, "numeric") || !strcmp(what, "double")) {
 	    sizedef = sizeof(double); mode = 2;
 	    if(size == NA_INTEGER) size = sizedef;
@@ -2582,6 +2631,11 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if(size != sizeof(Rcomplex))
 		error("size changing is not supported for complex vectors");
 	    break;
+	case RAWSXP:
+	    if(size == NA_INTEGER) size = 1;
+	    if(size != 1)
+		error("size changing is not supported for raw vectors");
+	    break;
 	default:
 	    error("That type is unimplemented");
 	}
@@ -2659,6 +2713,9 @@ SEXP do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 	case CPLXSXP:
 	    memcpy(buf, COMPLEX(object), size * len);
 	    break;
+	case RAWSXP:
+	    memcpy(buf, RAW(object), len); /* size = 1 */
+	    break;
 	}
 
 	if(swap && size > 1)
@@ -2678,6 +2735,7 @@ static SEXP readFixedString(Rconnection con, int len)
 {
     char *buf, *p;
     int  pos, m;
+    SEXP ans;
 
     buf = (char *) R_alloc(len+1, sizeof(char));
     for(pos = 0; pos < len; pos++) {
@@ -2688,7 +2746,10 @@ static SEXP readFixedString(Rconnection con, int len)
 	}
     }
     buf[pos] = '\0';
-    return mkChar(buf);
+    /* String may contain nuls so don't use mkChar */
+    ans = allocString(pos);
+    memcpy(CHAR(ans), buf, pos);
+    return ans;
 }
 
 
@@ -2776,7 +2837,7 @@ SEXP do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
 	tlen = strlen(CHAR(STRING_ELT(object, i)));
 	if (tlen > len) len = tlen;
 	tlen = INTEGER(nchars)[i];
-	if (tlen > len) len = tlen;	
+	if (tlen > len) len = tlen;
     }
     buf = (char *) R_alloc(len + slen, sizeof(char));
 
@@ -2966,7 +3027,7 @@ SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(errcon == NA_LOGICAL) error("invalid value for type");
     tee = asLogical(CADDDR(args));
     if(tee == NA_LOGICAL) error("invalid value for split");
-    
+
     if(!errcon) {
 	/* allow space for cat() to use sink() */
 	if(icon >= 0 && R_SinkNumber >= NSINKS - 2)
@@ -3118,8 +3179,9 @@ SEXP do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(PRIMVAL(op)) { /* call to file() */
 	    if(strlen(url) == 0) open ="w+";
 #ifdef Win32
-	    if(strcmp(url, "clipboard") == 0)
-		con = newclp(strlen(open) ? open : "r");
+	    if(strcmp(url, "clipboard") == 0 ||
+	       strncmp(url, "clipboard-", 10) == 0)
+		con = newclp(url, strlen(open) ? open : "r");
 	    else
 #endif
 		con = newfile(url, strlen(open) ? open : "r");
@@ -3308,7 +3370,7 @@ static void gzcon_close(Rconnection con)
 	err = deflateEnd(&(priv->s));
 	/* NB: these must be little-endian */
 	putLong(icon, priv->crc);
-	putLong(icon, priv->s.total_in);
+	putLong(icon, (uLong)(priv->s.total_in & 0xffffffff));
     } else err = inflateEnd(&(priv->s));
     if(priv->inbuf) {free(priv->inbuf); priv->inbuf = Z_NULL;}
     if(priv->outbuf) {free(priv->outbuf); priv->outbuf = Z_NULL;}
@@ -3316,14 +3378,34 @@ static void gzcon_close(Rconnection con)
     con->isopen = FALSE;
 }
 
+static int gzcon_byte(Rgzconn priv)
+{
+    Rconnection icon = priv->con;
+
+    if (priv->z_eof) return EOF;
+    if (priv->s.avail_in == 0) {
+	priv->s.avail_in = icon->read(priv->inbuf, 1, Z_BUFSIZE, icon);
+        if (priv->s.avail_in == 0) {
+            priv->z_eof = 1;
+            return EOF;
+        }
+        priv->s.next_in = priv->inbuf;
+    }
+    priv->s.avail_in--;
+    return *(priv->s.next_in)++;
+}
+
+
 static size_t gzcon_read(void *ptr, size_t size, size_t nitems,
 			 Rconnection con)
 {
     Rgzconn priv = (Rgzconn)con->private;
     Rconnection icon = priv->con;
-    Bytef *start = (Bytef*)ptr, buf[4];
+    Bytef *start = (Bytef*)ptr;
     uLong crc;
     int n;
+
+    if (priv->z_err == Z_STREAM_END) return 0;  /* EOF */
 
     if (priv->nsaved >= 0) { /* non-compressed mode */
 	size_t len = size*nitems;
@@ -3363,11 +3445,17 @@ static size_t gzcon_read(void *ptr, size_t size, size_t nitems,
 	    priv->crc = crc32(priv->crc, start,
 			      (uInt)(priv->s.next_out - start));
 	    start = priv->s.next_out;
-	    /* CRC is little-endian on file */
-	    icon->read(&buf, 1, sizeof(uLong), icon);
 	    crc = 0;
-	    for (n = 0; n < 4; n++) {crc <<= 8; crc += buf[n];}
-	    if (crc != priv->crc) priv->z_err = Z_DATA_ERROR;
+	    for (n = 0; n < 4; n++) {
+		crc >>= 8;
+		crc += ((uLong)gzcon_byte(priv) << 24);
+	    }
+	    if (crc != priv->crc) {
+		priv->z_err = Z_DATA_ERROR;
+		REprintf("crc error %x %x\n", crc, priv->crc);
+	    }
+	    /* finally, get (and ignore) length */
+	    for (n = 0; n < 4; n++) gzcon_byte(priv);
 	}
 	if (priv->z_err != Z_OK || priv->z_eof) break;
     }
@@ -3428,9 +3516,10 @@ SEXP do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(allow == NA_INTEGER)
 	errorcall(call, "`allowNonCompression' must be TRUE or FALSE");
 
-
-    /* if(incon->text)
-       error("gzcon can only work with binary connections");*/
+    if(incon->isGzcon) {
+	warningcall(call, "this is already a gzcon connection");
+	return CAR(args);
+    }
     m = incon->mode;
     if(strcmp(m, "r") == 0 || strcmp(m, "rb") == 0) mode = "rb";
     else if (strcmp(m, "w") == 0 || strcmp(m, "wb") == 0) mode = "wb";
@@ -3559,7 +3648,7 @@ SEXP do_sockselect(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, "bad write indicators");
 
     timeout = asReal(CADDR(args));
-    
+
     PROTECT(insockfd = allocVector(INTSXP, nsock));
     PROTECT(val = allocVector(LGLSXP, nsock));
 
@@ -3572,7 +3661,7 @@ SEXP do_sockselect(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     Rsockselect(nsock, INTEGER(insockfd), LOGICAL(val), LOGICAL(write),
 		timeout);
-    
+
     UNPROTECT(2);
     return val;
 }

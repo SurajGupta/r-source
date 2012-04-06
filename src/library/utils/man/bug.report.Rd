@@ -2,8 +2,10 @@
 \alias{bug.report}
 \title{Send a Bug Report}
 \usage{
-bug.report(subject = "", ccaddress = Sys.getenv("USER"),
-           method = getOption("mailer"), address = "r-bugs@r-project.org",
+bug.report(subject = "",
+           ccaddress = Sys.getenv("USER"),
+           method = getOption("mailer"),
+           address = "r-bugs@r-project.org",
 #ifdef windows
            file = "R.bug.report", wait = TRUE)
 #endif
@@ -145,7 +147,7 @@ bug.report(subject = "", ccaddress = Sys.getenv("USER"),
   the bug report can be emailed to \email{r-bugs@r-project.org} or
   submitted to the Web page at \url{http://bugs.r-project.org}.
 
-  Bug reports on \strong{contributed packages} should perhaps be sent to the
+  Bug reports on \strong{contributed packages} should be sent to the
   package maintainer rather than to r-bugs.
 }
 \seealso{R FAQ} 

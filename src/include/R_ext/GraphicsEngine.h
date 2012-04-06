@@ -1,3 +1,23 @@
+/*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 2001-4 The R Development Core Team.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2.1 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/* Used by third-party graphics devices */
 
 /* The graphics engine will only accept locations and dimensions 
  * in native device coordinates, but it provides the following functions
@@ -96,12 +116,39 @@ typedef struct {
 
 struct _GEDevDesc {
     int newDevStruct;
+    /* 
+     * Stuff that the devices can see (and modify).
+     * All detailed in GraphicsDevice.h
+     */
     NewDevDesc *dev;
-    /* Information about a device which has nothing to do with
-     * R's concept of a graphics engine.
+    /*
+     * Stuff about the device that only the graphics engine sees
+     * (the devices don't see it).
+     * Display list stuff should come here from NewDevDesc struct.
+     */
+    Rboolean dirty;  /* Has the device received any output? */
+    /* 
+     * Stuff about the device that only graphics systems see.
+     * The graphics engine has no idea what is in here.
+     * Used by graphics systems to store system state per device.
      */
     GESystemDesc *gesd[MAX_GRAPHICS_SYSTEMS];
 };
+
+/*
+ *  Some line end/join constants
+ */
+typedef enum {
+  GE_ROUND_CAP  = 1,
+  GE_BUTT_CAP   = 2,
+  GE_SQUARE_CAP = 3
+} R_GE_lineend;
+
+typedef enum {
+  GE_ROUND_JOIN = 1,
+  GE_MITRE_JOIN = 2,
+  GE_BEVEL_JOIN = 3
+} R_GE_linejoin;
 
 /* 
  * A structure containing graphical parameters 
@@ -127,7 +174,9 @@ typedef struct {
      */
     double lwd;          /* Line width (roughly number of pixels) */
     int lty;             /* Line type (solid, dashed, dotted, ...) */
-                         /* FIXME: need to add line end/joins */
+    R_GE_lineend lend;   /* Line end */
+    R_GE_linejoin ljoin; /* line join */
+    double lmitre;       /* line mitre */
     /*
      * Text characteristics
      */
@@ -197,6 +246,11 @@ double toDeviceHeight(double value, GEUnit from, GEDevDesc *dd);
 #define LTY_DOTDASH	1 + (3<<4) + (4<<8) + (3<<12)
 #define LTY_LONGDASH	7 + (3<<4)
 #define LTY_TWODASH	2 + (2<<4) + (6<<8) + (2<<12)
+
+R_GE_lineend LENDpar(SEXP value, int ind);
+SEXP LENDget(R_GE_lineend lend);
+R_GE_linejoin LJOINpar(SEXP value, int ind);
+SEXP LJOINget(R_GE_linejoin ljoin);
 
 void GESetClip(double x1, double y1, double x2, double y2, GEDevDesc *dd);
 void GENewPage(R_GE_gcontext *gc, GEDevDesc *dd);
@@ -283,6 +337,10 @@ void R_GE_VText(double x, double y, char *s,
 #define	DEG2RAD 0.01745329251994329576
 
 GEDevDesc* GEcurrentDevice();
+Rboolean GEdeviceDirty(GEDevDesc *dd);
+void GEdirtyDevice(GEDevDesc *dd);
+Rboolean GEcheckState(GEDevDesc *dd);
+void GErecordGraphicOperation(SEXP op, SEXP args, GEDevDesc *dd);
 void GEinitDisplayList(GEDevDesc *dd);
 void GEplayDisplayList(GEDevDesc *dd);
 void GEcopyDisplayList(int fromDevice);

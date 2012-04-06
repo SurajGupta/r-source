@@ -13,7 +13,7 @@
 dyn.load(x, local = TRUE, now = TRUE)
 dyn.unload(x)
 
-is.loaded(symbol, PACKAGE="")
+is.loaded(symbol, PACKAGE = "")
 symbol.C(name)
 symbol.For(name)
 }
@@ -32,7 +32,7 @@ symbol.For(name)
   \item{now}{a logical controlling whether all symbols are resolved (and
     relocated) immediately the library is loaded or deferred until they
     are used.  This control is useful for developers testing whether a
-    library is complete and has all the necessary symbols and for users
+    library is complete and has all the necessary symbols, and for users
     to ignore missing symbols. Whether this has any effect is system-dependent.
 #ifdef windows
     It is ignored on Windows.
@@ -54,7 +54,7 @@ symbol.For(name)
 \details{
   See
 #ifdef windows
-  file \file{readme.packages},
+  file \file{README.packages},
 #endif
   \sQuote{See Also} and the \emph{Writing R Extensions} manual for how to
   create a suitable shared library.  Note that unlike some versions of
@@ -69,7 +69,7 @@ symbol.For(name)
   aspects of the mode argument to the dlopen() routine on UNIX
   systems. They are available so that users can exercise greater control
   over the loading process for an individual library.  In general, the
-  defaults values are appropriate and one should override them only if 
+  defaults values are appropriate and you should override them only if
   there is good reason and you understand the implications.
 
 #ifdef unix
@@ -122,16 +122,18 @@ symbol.For(name)
   is set to \code{TRUE} using the \code{\link{options}} function, 
   a warning will be printed.  (If the warning says
   that the control word was changed from some other value than 8001F, 
-  please   report the circumstances to the Windows maintainers:  
+  please report the circumstances to the Windows maintainers:  
   that probably indicates an internal bug.)
 #endif
 }
 \value{
   The function \code{dyn.load} is used for its side effect which links
   the specified shared library to the executing \R image.  Calls to
-  \code{.C}, \code{.Fortran} and \code{.External} can then be used to
-  execute compiled C functions or Fortran subroutines contained in the
-  library. 
+  \code{.C}, \code{.Call}, \code{.Fortran} and \code{.External} can
+  then be used to execute compiled C functions or Fortran subroutines
+  contained in the library. The return value of \code{dyn.load} is
+  an object of class \code{DLLInfo}. See \code{\link{getLoadedDLLs}}
+  for information about this class.
 
   The function \code{dyn.unload} unlinks the shared library.
 
@@ -163,10 +165,10 @@ symbol.For(name)
   \code{\link{.First.lib}} initialization.
 
 #ifdef unix
-  \code{\link[utils]{SHLIB}} for how to create suitable shared objects.
+  \code{\link{SHLIB}} for how to create suitable shared objects.
 #endif
 #ifdef windows
-  \code{\link[utils]{SHLIB}} for how to create suitable DLLs.
+  \code{\link{SHLIB}} for how to create suitable DLLs.
 #endif
   
   \code{\link{.C}},

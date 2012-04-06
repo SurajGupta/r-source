@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  R Development Core Team
+ *  Copyright (C) 1997--2004  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ static SEXP integer_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 static SEXP real_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2, SEXP call);
 static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
+static SEXP raw_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 
 SEXP do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -71,36 +72,34 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     if ((iS = isSymbol(x)) || TYPEOF(x) == LANGSXP) {
 	SEXP tmp = allocVector(STRSXP, 1);
 	PROTECT(tmp);
-	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(x) : 
-		       STRING_ELT(deparse1(x, 0), 0));
+	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(x) :
+		       STRING_ELT(deparse1(x, 0, SIMPLEDEPARSE), 0));
 	REPROTECT(x = tmp, xpi);
 	UNPROTECT(1);
     }
     if ((iS = isSymbol(y)) || TYPEOF(y) == LANGSXP) {
 	SEXP tmp = allocVector(STRSXP, 1);
 	PROTECT(tmp);
-	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(y) : 
-		       STRING_ELT(deparse1(y, 0), 0));
+	SET_STRING_ELT(tmp, 0, (iS) ? PRINTNAME(y) :
+		       STRING_ELT(deparse1(y, 0, SIMPLEDEPARSE), 0));
 	REPROTECT(y = tmp, ypi);
 	UNPROTECT(1);
     }
 
-    /* FIXME (?): S does
-    if (!isVectorAtomic(x) || !isVectorAtomic(y)) { */
     if (!isVector(x) || !isVector(y)) {
 	if (isNull(x) || isNull(y)) {
 	    UNPROTECT(2);
 	    return allocVector(LGLSXP,0);
 	}
 	errorcall(call,
-		  "comparison (%d) is possible only for atomic types",
+		  "comparison (%d) is possible only for atomic and list types",
 		  PRIMVAL(op));
     }
 
     if (TYPEOF(x) == EXPRSXP || TYPEOF(y) == EXPRSXP)
 	errorcall(call, "comparison is not allowed for expressions");
 
-    /* ELSE :  x and y are both atomic, no not currently */
+    /* ELSE :  x and y are both atomic or list */
 
     if (LENGTH(x) <= 0 || LENGTH(y) <= 0) {
 	UNPROTECT(2);
@@ -114,7 +113,7 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     yts = isTs(y);
     if (nx > 0 && ny > 0)
 	mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
- 
+
     if (xarray || yarray) {
 	if (xarray && yarray) {
 	    if (!conformable(x, y))
@@ -174,10 +173,21 @@ SEXP do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	REPROTECT(y = coerceVector(y, REALSXP), ypi);
 	x = real_relop(PRIMVAL(op), x, y);
     }
-    else if((isInteger(x) || isLogical(x)) &&
-	    (isInteger(y) || isLogical(y)))
+    else if (isInteger(x) || isInteger(y)) {
+	REPROTECT(x = coerceVector(x, INTSXP), xpi);
+	REPROTECT(y = coerceVector(y, INTSXP), ypi);
 	x = integer_relop(PRIMVAL(op), x, y);
-    else errorcall(call, "comparison of these types is not implemented");
+    }
+    else if (isLogical(x) || isLogical(y)) {
+	REPROTECT(x = coerceVector(x, LGLSXP), xpi);
+	REPROTECT(y = coerceVector(y, LGLSXP), ypi);
+	x = integer_relop(PRIMVAL(op), x, y);
+    }
+    else if (TYPEOF(x) == RAWSXP || TYPEOF(y) == RAWSXP) {
+	REPROTECT(x = coerceVector(x, RAWSXP), xpi);
+	REPROTECT(y = coerceVector(y, RAWSXP), ypi);
+	x = raw_relop(PRIMVAL(op), x, y);
+    } else errorcall(call, "comparison of these types is not implemented");
 
 
     PROTECT(x);
@@ -513,6 +523,67 @@ static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
 		LOGICAL(ans)[i] = 1;
 	    else
 		LOGICAL(ans)[i] = 0;
+	}
+	break;
+    }
+    UNPROTECT(2);
+    return ans;
+}
+
+static SEXP raw_relop(RELOP_TYPE code, SEXP s1, SEXP s2)
+{
+    int i, i1, i2, n, n1, n2;
+    Rbyte x1, x2;
+    SEXP ans;
+
+    n1 = LENGTH(s1);
+    n2 = LENGTH(s2);
+    n = (n1 > n2) ? n1 : n2;
+    PROTECT(s1);
+    PROTECT(s2);
+    ans = allocVector(LGLSXP, n);
+
+    switch (code) {
+    case EQOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 == x2);
+	}
+	break;
+    case NEOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 != x2);
+	}
+	break;
+    case LTOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 < x2);
+	}
+	break;
+    case GTOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 > x2);
+	}
+	break;
+    case LEOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 <= x2);
+	}
+	break;
+    case GEOP:
+	mod_iterate(n1, n2, i1, i2) {
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
+	    LOGICAL(ans)[i] = (x1 >= x2);
 	}
 	break;
     }

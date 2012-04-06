@@ -32,8 +32,12 @@ get.gpar(names = NULL)
   \tabular{ll}{
     col \tab Colour for lines and borders. \cr
     fill \tab Colour for filling rectangles, polygons, ... \cr
+    alpha \tab Alpha channel for transparency \cr
     lty \tab Line type \cr
     lwd \tab Line width \cr
+    lineend \tab Line end style (round, butt, square) \cr
+    linejoin \tab Line join style (round, mitre, bevel) \cr
+    linemitre \tab Line mitre limit (number greater than 1) \cr
     fontsize \tab The size of text (in points) \cr
     cex \tab Multiplier applied to fontsize \cr
     fontfamily \tab The font family \cr
@@ -43,20 +47,34 @@ get.gpar(names = NULL)
     backward compatibility) \cr
   }
 
+  The \code{alpha} setting is combined with the alpha channel for
+  individual colours by multiplying (with both alpha settings
+  normalised to the range 0 to 1).
+  
   The size of text is \code{fontsize}*\code{cex}.  The size of a line
   is \code{fontsize}*\code{cex}*\code{lineheight}.
+
+  The \code{cex} setting is cumulative;  if a viewport is pushed
+  with a \code{cex} of 0.5 then another viewport is pushed with a
+  \code{cex} of 0.5, the effective \code{cex} is 0.25.
   
-  For most devices, the \code{fontfamily} is specified when the device
-  is first opened and may not be changed thereafter -- i.e., specifying
-  a different font family via \code{fontfamily} will be ignored.  This
-  will hopefully change in future versions of R.  Also, there is an
-  important exception:  \code{fontfamily} may be used to specify one
+  Changes to the \code{fontfamily} may be ignored by some devices,
+  but is supported by PostScript, PDF, X11, Windows, and Quartz.  The
+  \code{fontfamily} may be used to specify one
   of the Hershey Font families (e.g., \code{HersheySerif})
   and this specification will be honoured
   on all devices.
 
-  The specification of \code{fontface} follows the R base graphics
+  The specification of \code{fontface} can be an integer or a string.
+  If an integer, then it
+  follows the R base graphics
   standard:  1 = plain, 2 = bold, 3 = italic, 4 = bold italic.
+  If a string, then valid values are: \code{"plain"},
+  \code{"bold"}, \code{"italic"}, \code{"oblique"}, and
+  \code{"bold.italic"}.
+  For the special case of the HersheySerif font family,
+  \code{"cyrillic"}, \code{"cyrillic.oblique"}, and \code{"EUC"}
+  are also available.
   
   Specifying the value \code{NULL} for a parameter is the same as not
   specifying any value for that parameter, except for \code{col} and

@@ -15,20 +15,26 @@ DISTFILES = DESCRIPTION.in Makefile.in NAMESPACE
 
 pkg = tcltk
 
+R_EXE = $(top_builddir)/bin/R --vanilla
+
+RSRC = `LC_COLLATE=C ls $(srcdir)/R/*.R $(srcdir)/R/$(R_OSTYPE)/*.R`
+
 all: Makefile DESCRIPTION
 	@echo "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/R
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
 	  if test @use_tcltk@ = yes; then \
-	    cat `LC_COLLATE=C ls $(srcdir)/R/*.R` $(srcdir)/R/unix/zzz.R > $${f}; \
+	    cat $(RSRC) > $${f}; \
+	    $(SHELL) $(top_srcdir)/tools/move-if-change $${f} all.R ; \
 	  else \
-	    cp $(srcdir)/R/unix/zzz.Rstub $${f}; \
-	  fi; \
-	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
-	    $(top_builddir)/library/$(pkg)/R/$(pkg))
+	    $(SHELL) $(top_srcdir)/tools/copy-if-change \
+	      $(srcdir)/R/unix/zzz.Rstub \
+	      $(top_builddir)/library/$(pkg)/R/$(pkg) ; \
+	  fi)
 	@if test @use_tcltk@ = yes; then \
 	  $(INSTALL_DATA) $(srcdir)/NAMESPACE \
 	    $(top_builddir)/library/$(pkg); \
+	  rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds; \
 	fi;
 	@for f in COPYRIGHTS INDEX SOURCES; do \
 	  if test -f $(srcdir)/$${f}; then \
@@ -37,24 +43,12 @@ all: Makefile DESCRIPTION
 	  fi; \
 	done
 	@if test -f DESCRIPTION; then \
-	  $(INSTALL_DATA) DESCRIPTION $(top_builddir)/library/$(pkg); \
-	  (tmp="Built: R $(VERSION); "; \
-	    if test -d $(srcdir)/src; then \
-	      tmp="$${tmp}$(R_PLATFORM)"; \
-	    fi; \
-	    tmp="$${tmp}; `date`; $(R_OSTYPE)"; \
-	    echo "$${tmp}") \
-	    >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
-	fi
-	@if test -d $(srcdir)/data; then \
-	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/data; \
-	  for f in `ls -d $(srcdir)/data/* | sed '/CVS/d'`; do \
-	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/data; \
-	  done; \
+	  echo "tools:::.install_package_description('.', '"$(top_builddir)/library/${pkg}"')" | \
+	  R_DEFAULT_PACKAGES=NULL $(R_EXE) --slave > /dev/null ; \
 	fi
 	@if test -d $(srcdir)/demo; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/demo; \
-	  for f in `ls -d $(srcdir)/demo/* | sed '/CVS/d'`; do \
+	  for f in `ls -d $(srcdir)/demo/* | sed -e '/CVS/d' -e '/00Index/d'`; do \
 	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/demo; \
 	  done; \
 	fi
@@ -68,14 +62,23 @@ all: Makefile DESCRIPTION
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/man; \
 	  (f=$${TMPDIR:-/tmp}/R$$$$; \
 	    for rdfile in $(srcdir)/man/*.Rd; do \
+	      echo "% --- Source file: $${rdfile} ---"; \
 	      cat $${rdfile}; echo '\eof'; \
 	    done >> $${f}; \
-	    $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
-	      $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
+            $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
+              $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
+            rm -f $(top_builddir)/library/$(pkg)/man/$(pkg).Rd.gz; \
+            $(R_GZIPCMD) $(top_builddir)/library/$(pkg)/man/$(pkg).Rd; \
 	fi
 	@if test -d src -a @use_tcltk@ = yes; then \
 	  (cd src && $(MAKE)) || exit 1; \
 	fi
+	@if test @use_tcltk@ = yes; then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg) ; \
+	  echo "tools:::makeLazyLoading(\"$(pkg)\")" | \
+	  R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(R_EXE) --slave > /dev/null ; \
+	fi
+
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -85,6 +88,7 @@ DESCRIPTION: $(srcdir)/DESCRIPTION.in $(top_builddir)/config.status
 mostlyclean: clean
 clean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
+	-@rm -f all.R 
 distclean:
 	@if test -d src; then (cd src && $(MAKE) $@); fi
 	-@rm -f Makefile DESCRIPTION

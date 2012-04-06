@@ -9,11 +9,12 @@
 \usage{
 boxplot(x, \dots)
 
-\method{boxplot}{formula}(formula, data = NULL, \dots, subset)
+\method{boxplot}{formula}(formula, data = NULL, \dots, subset, na.action = NULL)
 
 \method{boxplot}{default}(x, \dots, range = 1.5, width = NULL, varwidth = FALSE,
-        notch = FALSE, outline = TRUE, names, boxwex = 0.8, plot = TRUE,
-        border = par("fg"), col = NULL, log = "", pars = NULL,
+        notch = FALSE, outline = TRUE, names, plot = TRUE,
+        border = par("fg"), col = NULL, log = "",
+        pars = list(boxwex = 0.8, staplewex = 0.5, outwex = 0.5),
         horizontal = FALSE, add = FALSE, at = NULL)
 }
 \arguments{
@@ -24,6 +25,9 @@ boxplot(x, \dots)
     \code{formula} should be taken.}
   \item{subset}{an optional vector specifying a subset of observations
     to be used for plotting.}
+  \item{na.action}{a function which indicates what should happen
+    when the data contain \code{NA}s.  The default is to ignore missing
+    values in either the response or the group.}
   \item{x}{for specifying data from which the boxplots are to be
     produced. Either a numeric vector, or a single list containing such
     vectors. Additional unnamed arguments specify further data
@@ -58,6 +62,10 @@ boxplot(x, \dots)
   \item{boxwex}{a scale factor to be applied to all boxes.  When there
     are only a few groups, the appearance of the plot can be improved
     by making the boxes narrower.}
+  \item{staplewex}{staple line width expansion, proportional to box
+    width.}
+  \item{outwex}{outlier line width expansion, proportional to box
+    width.}
   \item{plot}{if \code{TRUE} (the default) then a boxplot is
     produced.  If not, the summaries which the boxplots are based on
     are returned.}
@@ -68,8 +76,9 @@ boxplot(x, \dots)
     to be used to colour the bodies of the box plots.}
   \item{log}{character indicating if x or y or both coordinates should
     be plotted in log scale.}
-  \item{pars}{a list of graphical parameters; these are passed to
-    \code{\link{bxp}} (if \code{plot} is true).}
+  \item{pars}{a list of (potentially many) more graphical parameters,
+    e.g., \code{boxwex} or \code{outpch}; these are passed to
+    \code{\link{bxp}} (if \code{plot} is true); for details, see there.}
   \item{horizontal}{logical indicating if the boxplots should be
     horizontal; default \code{FALSE} means vertical boxes.}
   \item{add}{logical, if true \emph{add} boxplot to current plot.}
@@ -79,8 +88,9 @@ boxplot(x, \dots)
 }
 \details{
   The generic function \code{boxplot} currently has a default method
-  (\code{boxplot.default}) and a formula interface
-  (\code{\link{boxplot.formula}}).
+  (\code{boxplot.default}) and a formula interface (\code{boxplot.formula}).
+
+  Missing values are ignored when forming boxplots.
 }
 \value{
   List with the following components:
@@ -108,19 +118,17 @@ boxplot(x, \dots)
 }
 \seealso{
   \code{\link{boxplot.stats}} which does the computation,
-  \code{\link{bxp}} for the plotting;
+  \code{\link{bxp}} for the plotting and more examples;
   and \code{\link{stripchart}} for an alternative (with small data
   sets).
 }
 \examples{
 ## boxplot on a formula:
-data(InsectSprays)
 boxplot(count ~ spray, data = InsectSprays, col = "lightgray")
 # *add* notches (somewhat funny here):
 boxplot(count ~ spray, data = InsectSprays,
         notch = TRUE, add = TRUE, col = "blue")
 
-data(OrchardSprays)
 boxplot(decrease ~ treatment, data = OrchardSprays,
         log = "y", col="bisque")
 
@@ -144,7 +152,6 @@ boxplot(data.frame(mat), main = "boxplot(*, horizontal = TRUE)",
 
 ## Using 'at = ' and adding boxplots -- example idea by Roger Bivand :
 
-data(ToothGrowth)
 boxplot(len ~ dose, data = ToothGrowth,
         boxwex = 0.25, at = 1:3 - 0.2,
         subset= supp == "VC", col="yellow",
@@ -156,5 +163,7 @@ boxplot(len ~ dose, data = ToothGrowth, add = TRUE,
         subset= supp == "OJ", col="orange")
 legend(2, 9, c("Ascorbic acid", "Orange juice"),
        fill = c("yellow", "orange"))
+
+## more examples in  help(bxp)
 }
 \keyword{hplot}

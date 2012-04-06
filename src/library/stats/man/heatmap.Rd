@@ -10,12 +10,14 @@
 }
 \usage{
 heatmap(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
-	distfun = dist, hclustfun = hclust, add.expr,
-	symm = FALSE, revC = identical(Colv, "Rowv"),
+	distfun = dist, hclustfun = hclust,
+        reorderfun = function(d,w) reorder(d,w),
+        add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
 	scale=c("row", "column", "none"), na.rm = TRUE,
 	margins = c(5, 5), ColSideColors, RowSideColors,
 	cexRow = 0.2 + 1/log10(nr), cexCol = 0.2 + 1/log10(nc),
-	labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
+	labRow = NULL, labCol = NULL, main = NULL,
+        xlab = NULL, ylab = NULL,
         keep.dendro = FALSE, verbose = getOption("verbose"), \dots)
 }
 \arguments{
@@ -34,6 +36,9 @@ heatmap(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
   \item{hclustfun}{function used to compute the hierarchical clustering
     when \code{Rowv} or \code{Colv} are not dendrograms.  Defaults to
     \code{\link{hclust}}.}
+  \item{reorderfun}{function(d,w) of dendrogram and weights for
+    reordering the row and column dendrograms.  The default uses
+    \code{\link{reorder.dendrogram}}.}
   \item{add.expr}{expression that will be evaluated after the call to
     \code{image}.  Can be used to add components to the plot.}
   \item{symm}{logical indicating if \code{x} should be treated
@@ -123,7 +128,6 @@ heatmap(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 
 \examples{
 require(graphics)
-data(mtcars)
 x  <- as.matrix(mtcars)
 rc <- rainbow(nrow(x), start=0, end=.3)
 cc <- rainbow(ncol(x), start=0, end=.3)
@@ -149,14 +153,12 @@ heatmap(x, Rowv = NA, Colv = NA, scale="column",
 	main = "heatmap(*, NA, NA) ~= image(t(x))")
 %% also want example using the `add.exp' argument!
 
-data(attitude)
 round(Ca <- cor(attitude), 2)
 symnum(Ca) # simple graphic
-heatmap(Ca,		 symm = TRUE, margin=c(6,6))# with reorder()
+heatmap(Ca,	        symm = TRUE, margin=c(6,6))# with reorder()
 heatmap(Ca, Rowv=FALSE, symm = TRUE, margin=c(6,6))# _NO_ reorder()
 
 ## For variable clustering, rather use distance based on cor():
-data(USJudgeRatings)
 symnum( cU <- cor(USJudgeRatings) )
 
 hU <- heatmap(cU, Rowv = FALSE, symm = TRUE, col = topo.colors(16),

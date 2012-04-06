@@ -1,22 +1,31 @@
 export(.helpForCall, .tryHelp)
 
 export("?", CRAN.packages, Rprof, apropos, assignInNamespace,
-       browseEnv, browseURL, bug.report, capture.output, close.socket,
-       contrib.url, data.entry, dataentry, de, de.ncols, de.restore,
-       de.setup, debugger, demo, download.file, download.packages,
-       dump.frames, edit, emacs, example, find, fix, fixInNamespace,
+       as.person, as.personList, browseEnv, browseURL,
+       bug.report, capture.output, citation, citEntry, citHeader,
+       citFooter, close.socket, compareVersion, contrib.url, data,
+       data.entry, dataentry, de, de.ncols, de.restore, de.setup,
+       debugger, demo, download.file, download.packages, dump.frames,
+       edit, emacs, example, file.edit, find, fix, fixInNamespace,
        getAnywhere, getFromNamespace, getS3method, head, help,
-       help.search, help.start, history, install.packages,
-       installed.packages, limitedLabels, loadhistory, ls.str,
-       lsf.str, make.packages.html, make.socket, menu, methods,
-       newestVersion, object.size, old.packages, package.contents,
-       package.skeleton, packageStatus, page, pico, prompt,
-       promptData, read.fwf, read.socket, recover, remove.packages,
-       savehistory, shQuote, str, summaryRprof, tail, topicName,
-       update.packageStatus, update.packages, upgrade, url.show, vi,
-       vignette, write.socket, wsbrowser, xedit, xemacs)
+       help.search, help.start, history, index.search,
+       install.packages, installed.packages, limitedLabels,
+       loadhistory, ls.str, lsf.str, make.packages.html, make.socket,
+       menu, methods, object.size, old.packages, package.contents,
+       package.skeleton, packageDescription, packageStatus, page,
+       person, personList, pico, prompt, promptData, readCitationFile,
+       read.fwf, read.fortran, read.socket, recover, remove.packages,
+       savehistory, str, sessionInfo, summaryRprof, tail, topicName,
+       toBibtex, toLatex, update.packageStatus, update.packages,
+       upgrade, url.show, vi, vignette, write.socket, wsbrowser,
+       xedit, xemacs)
 
 S3method("[", getAnywhere)
+S3method(as.character, person)
+S3method(as.character, personList)
+S3method(as.person, default)
+S3method(as.personList, default)
+S3method(as.personList, person)
 S3method(edit, data.frame)
 S3method(edit, default)
 S3method(edit, matrix)
@@ -24,10 +33,19 @@ S3method(head, data.frame)
 S3method(head, default)
 S3method(head, "function")
 S3method(head, matrix)
+S3method(print, citation)
+S3method(print, Bibtex)
+S3method(print, citationList)
 S3method(print, getAnywhere)
 S3method(print, hsearch)
+S3method(print, "help_files_with_topic")
+S3method(print, Latex)
+S3method(print, "ls_str")
 S3method(print, MethodsFunction)
+S3method(print, packageDescription)
+S3method(print, packageIQR)
 S3method(print, packageStatus)
+S3method(print, sessionInfo)
 S3method(print, socket)
 S3method(prompt, data.frame)
 S3method(prompt, default)
@@ -38,6 +56,11 @@ S3method(tail, data.frame)
 S3method(tail, default)
 S3method(tail, "function")
 S3method(tail, matrix)
+S3method(toBibtex, citation)
+S3method(toBibtex, citationList)
+S3method(toBibtex, person)
+S3method(toBibtex, personList)
+S3method(toLatex, sessionInfo)
 S3method(upgrade, packageStatus)
 ## can't register update.packageStatus as update is in stats
 ## and would create a cycle.
@@ -46,3 +69,18 @@ export(Rtangle, RtangleSetup, RweaveLatex, RweaveLatexSetup, Stangle,
        Sweave, SweaveSyntConv, SweaveSyntaxLatex, SweaveSyntaxNoweb,
        RtangleWritedoc, RweaveLatexOptions, RweaveChunkPrefix,
        RweaveEvalWithOpt, RweaveTryStop, SweaveHooks)
+
+if(tools:::.OStype() == "unix") {
+export(nsl)
+}
+
+if(tools:::.OStype() == "windows") {
+export(DLL.version, Filters, choose.files, fixup.libraries.URLs,
+	 fixup.package.URLs, flush.console, getIdentification,
+	 getWindowsHandle, getWindowTitle, link.html.help,
+	 make.search.html, memory.limit, memory.size, readClipboard,
+	 select.list, setWindowTitle, win.version, winDialog,
+	 winDialogString, winMenuAdd, winMenuAddItem, winMenuDel,
+	 winMenuDelItem, winMenuNames, winMenuItems, writeClipboard,
+	 zip.unpack)
+}

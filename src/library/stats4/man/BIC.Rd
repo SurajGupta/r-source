@@ -29,14 +29,13 @@ BIC(object, \dots)
   Returns a numeric value with the corresponding BIC.
 }
 \references{
-  Schwarz, G. (1978) "Estimating the Dimension of a Model", Annals of
-  Statistics, 6, 461-464.
+  Schwarz, G. (1978) "Estimating the Dimension of a Model",
+  \emph{Annals of Statistics}, \bold{6}, 461-464.
 }
 %\author{}
 %\note{}
 \seealso{\code{\link{logLik-methods}}, \code{\link{AIC-methods}}}
 \examples{
-data(swiss)
 lm1 <- lm(Fertility ~ . , data = swiss)
 AIC(lm1)
 BIC(lm1)

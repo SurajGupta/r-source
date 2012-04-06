@@ -70,6 +70,7 @@ GEDevDesc* GEcreateDevDesc(NewDevDesc* dev)
 	dd->gesd[i] = NULL;
     dd->newDevStruct = 1;
     dd->dev = dev;
+    dd->dirty = FALSE;
     return dd;
 }
 
@@ -433,6 +434,141 @@ double toDeviceHeight(double value, GEUnit from, GEDevDesc *dd)
 	break;
     }
     return result;
+}
+
+/****************************************************************
+ * Code for converting line ends and joins from SEXP to internal 
+ * representation
+ ****************************************************************
+ */
+typedef struct {
+    char *name;
+    R_GE_lineend end;
+} LineEND;
+
+static LineEND lineend[] = {
+    { "round",   GE_ROUND_CAP  },
+    { "butt",	 GE_BUTT_CAP   },
+    { "square",	 GE_SQUARE_CAP },
+    { NULL,	 0	     }
+};
+
+static int nlineend = (sizeof(lineend)/sizeof(LineEND)-2);
+
+R_GE_lineend LENDpar(SEXP value, int ind)
+{
+    int i, code;
+    double rcode;
+
+    if(isString(value)) {
+	for(i = 0; lineend[i].name; i++) { /* is it the i-th name ? */
+	    if(!strcmp(CHAR(STRING_ELT(value, ind)), lineend[i].name))
+		return lineend[i].end;
+	}
+	error("invalid line end"); /*NOTREACHED, for -Wall : */ return 0;
+    }
+    else if(isInteger(value)) {
+	code = INTEGER(value)[ind];
+	if(code == NA_INTEGER || code < 0)
+	    error("invalid line end");
+	if (code > 0)
+	    code = (code-1) % nlineend + 1;
+	return lineend[code].end;
+    }
+    else if(isReal(value)) {
+	rcode = REAL(value)[ind];
+	if(!R_FINITE(rcode) || rcode < 0)
+	    error("invalid line end");
+	code = rcode;
+	if (code > 0)
+	    code = (code-1) % nlineend + 1;
+	return lineend[code].end;
+    }
+    else {
+	error("invalid line end"); /*NOTREACHED, for -Wall : */ return 0;
+    }
+}
+
+SEXP LENDget(R_GE_lineend lend)
+{
+    SEXP ans = R_NilValue;
+    int i;
+
+    for (i = 0; lineend[i].name; i++) {
+	if(lineend[i].end == lend)
+	    return mkString(lineend[i].name);
+    }
+
+    error("invalid line end");
+    /*
+     * Should never get here
+     */
+    return ans;
+}
+
+typedef struct {
+    char *name;
+    R_GE_linejoin join;
+} LineJOIN;
+
+static LineJOIN linejoin[] = {
+    { "round",   GE_ROUND_JOIN },
+    { "mitre",	 GE_MITRE_JOIN },
+    { "bevel",	 GE_BEVEL_JOIN},
+    { NULL,	 0	     }
+};
+
+static int nlinejoin = (sizeof(linejoin)/sizeof(LineJOIN)-2);
+
+R_GE_linejoin LJOINpar(SEXP value, int ind)
+{
+    int i, code;
+    double rcode;
+
+    if(isString(value)) {
+	for(i = 0; linejoin[i].name; i++) { /* is it the i-th name ? */
+	    if(!strcmp(CHAR(STRING_ELT(value, ind)), linejoin[i].name))
+		return linejoin[i].join;
+	}
+	error("invalid line join"); /*NOTREACHED, for -Wall : */ return 0;
+    }
+    else if(isInteger(value)) {
+	code = INTEGER(value)[ind];
+	if(code == NA_INTEGER || code < 0)
+	    error("invalid line join");
+	if (code > 0)
+	    code = (code-1) % nlinejoin + 1;
+	return linejoin[code].join;
+    }
+    else if(isReal(value)) {
+	rcode = REAL(value)[ind];
+	if(!R_FINITE(rcode) || rcode < 0)
+	    error("invalid line join");
+	code = rcode;
+	if (code > 0)
+	    code = (code-1) % nlinejoin + 1;
+	return linejoin[code].join;
+    }
+    else {
+	error("invalid line join"); /*NOTREACHED, for -Wall : */ return 0;
+    }
+}
+
+SEXP LJOINget(R_GE_linejoin ljoin)
+{
+    SEXP ans = R_NilValue;
+    int i;
+
+    for (i = 0; linejoin[i].name; i++) {
+	if(linejoin[i].join == ljoin)
+	    return mkString(linejoin[i].name);
+    }
+
+    error("invalid line join");
+    /*
+     * Should never get here
+     */
+    return ans;
 }
 
 /****************************************************************
@@ -922,8 +1058,9 @@ static void clipPolygon(int n, double *x, double *y,
 {
     double *xc = NULL, *yc = NULL;
     /* if bg not specified then draw as polyline rather than polygon
-     * to avoid drawing line along border of clipping region */
-    if (gc->fill == NA_INTEGER) {
+     * to avoid drawing line along border of clipping region 
+     * If bg was NA then it has been converted to fully transparent */
+    if (R_TRANSPARENT(gc->fill)) {
 	int i;
 	xc = (double*) R_alloc(n + 1, sizeof(double));
 	yc = (double*) R_alloc(n + 1, sizeof(double));
@@ -963,7 +1100,7 @@ void GEPolygon(int n, double *x, double *y,
     char *vmaxsave = vmaxget();
     if (gc->lty == LTY_BLANK)
 	/* "transparent" border */
-	gc->col = NA_INTEGER;
+	gc->col = R_TRANWHITE;
     if (dd->dev->canClip) {
 	/* 
 	 * If the device can clip, then we just clip to the device
@@ -1117,7 +1254,7 @@ void GECircle(double x, double y, double radius,
 	    xc = (double*)R_alloc(result+1, sizeof(double));
 	    yc = (double*)R_alloc(result+1, sizeof(double));
 	    convertCircle(x, y, radius, result, xc, yc);
-	    if (gc->fill == NA_INTEGER) {
+	    if (R_TRANSPARENT(gc->fill)) {
 		GEPolyline(result+1, xc, yc, gc, dd);
 	    }
 	    else {
@@ -1175,7 +1312,7 @@ static int clipRectCode(double x0, double y0, double x1, double y1,
  ****************************************************************
  */
 /* Filled with color fill and outlined with color col  */
-/* These may both be NA_INTEGER	 */
+/* These may both be fully transparent */
 void GERect(double x0, double y0, double x1, double y1,
 	    R_GE_gcontext *gc,
 	    GEDevDesc *dd)
@@ -1206,7 +1343,7 @@ void GERect(double x0, double y0, double x1, double y1,
 	    xc[2] = x1; yc[2] = y1;
 	    xc[3] = x1; yc[3] = y0;
 	    xc[4] = x0; yc[4] = y0;
-	    if (gc->fill == NA_INTEGER) {
+	    if (R_TRANSPARENT(gc->fill)) {
 		GEPolyline(5, xc, yc, gc, dd);
 	    }
 	    else { /* filled rectangle */
@@ -1285,23 +1422,11 @@ static void clipText(double x, double y, char *str, double rot, double hadj,
     case 0:  /* text totally clipped; draw nothing */
 	break;
     case 1:  /* text totally inside;  draw all */
-        /*
-	 * FIXME:  Pass on the fontfamily, fontface, and
-	 * lineheight so that the device can use them
-	 * if it wants to.
-	 * NOTE: fontface corresponds to old "font"
-	 */
 	dd->dev->text(x, y, str, rot, hadj, gc, dd->dev);
 	break;
     case 2:  /* text intersects clip region
 		act according to value of clipToDevice */
 	if (toDevice) /* Device will do clipping */
-	    /*
-	     * FIXME:  Pass on the fontfamily, fontface, and
-	     * lineheight so that the device can use them
-	     * if it wants to.
-	     * NOTE: fontface corresponds to old "font"
-	     */
 	    dd->dev->text(x, y, str, rot, hadj, gc, dd->dev);
 	else /* don't draw anything; this could be made less crude :) */
 	    ;
@@ -1368,12 +1493,63 @@ static int VFontFamilyCode(char *fontfamily)
 {
     int i;
     for (i = 0; VFontTable[i].minface; i++)
-	if (!strcmp(fontfamily, VFontTable[i].name))
+	if (!strcmp(fontfamily, VFontTable[i].name)) {
 	    return i;
+	}
     return -1;
 }
 
-
+static int VFontFaceCode(int familycode, int fontface) {
+    int face = fontface;
+    /* 
+     * R's "font" par has historically made 2=bold and 3=italic
+     * These must be switched to correspond to Hershey fontfaces
+     */
+    if (fontface == 2)
+	face = 3;
+    else if (fontface == 3)
+	face = 2;
+    /*
+     * If font face is outside supported set of faces for font
+     * family, either convert or throw and error
+     */
+    if (!(face >= VFontTable[familycode].minface &&
+	  face <= VFontTable[familycode].maxface)) {
+	/* 
+	 * Silently convert standard faces to closest match
+	 */
+	switch (face) {
+	    /*
+	     * italic becomes plain (gothic only)
+	     */
+	case 2:
+	    /* 
+	     * bold becomes plain
+	     */
+	case 3: 
+	    face = 1;
+	    break;
+	    /* 
+	     * bold-italic becomes italic for gothic fonts
+	     * and bold for sans symbol font 
+	     */
+	case 4: 
+	    if (familycode == 7)
+		face = 2;
+	    else
+		face = 1;
+	    break;
+	default:
+	    /* 
+	     * Other font faces just too wacky so throw an error
+	     */
+	    error("Font face %d not supported for font family %s",
+		  fontface, VFontTable[familycode].name);
+	}
+    }
+    return face;
+}
+    
 /****************************************************************
  * GEText
  ****************************************************************
@@ -1391,14 +1567,7 @@ void GEText(double x, double y, char *str,
     int vfontcode = VFontFamilyCode(gc->fontfamily);
     if (vfontcode >= 0) {
 	gc->fontfamily[0] = vfontcode;
-	/* 
-	 * R's "font" par has historically made 2=bold and 3=italic
-	 * These must be switched to correspond to Hershey fontfaces
-	 */
-	if (gc->fontface == 2)
-	    gc->fontface = 3;
-	else if (gc->fontface == 3)
-	    gc->fontface = 2;
+	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
 	R_GE_VText(x, y, str, xc, yc, rot, gc, dd);
 
     } else {
@@ -1590,7 +1759,7 @@ void GESymbol(double x, double y, int pch, double size,
 	     * not using the current fill colour)
 	     */
 	    gc->fill = gc->col;
-	    gc->col = NA_INTEGER;
+	    gc->col = R_TRANWHITE;
 	    GERect(x-.5, y-.5, x+.5, y+.5, gc, dd);
 	} else {
 	    str[0] = pch;
@@ -1606,13 +1775,13 @@ void GESymbol(double x, double y, int pch, double size,
 	case 0: /* S square */
 	    xc = toDeviceWidth(RADIUS * GSTR_0, GE_INCHES, dd);
 	    yc = toDeviceHeight(RADIUS * GSTR_0, GE_INCHES, dd);
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GERect(x-xc, y-yc, x+xc, y+yc, gc, dd);
 	    break;
 
 	case 1: /* S octahedron ( circle) */
 	    xc = RADIUS * size;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GECircle(x, y, xc, gc, dd);
 	    break;
 
@@ -1624,7 +1793,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[0] = x; yy[0] = y+r;
 	    xx[1] = x+xc; yy[1] = y-yc;
 	    xx[2] = x-xc; yy[2] = y-yc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    break;
 
@@ -1649,7 +1818,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[1] = x; yy[1] = y+yc;
 	    xx[2] = x+xc; yy[2] = y;
 	    xx[3] = x; yy[3] = y-yc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(4, xx, yy, gc, dd);
 	    break;
 
@@ -1661,14 +1830,14 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[0] = x; yy[0] = y-r;
 	    xx[1] = x+xc; yy[1] = y+yc;
 	    xx[2] = x-xc; yy[2] = y+yc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    break;
 
 	case 7:	/* S square and times superimposed */
 	    xc = toDeviceWidth(RADIUS * GSTR_0, GE_INCHES, dd);
 	    yc = toDeviceHeight(RADIUS * GSTR_0, GE_INCHES, dd);
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GERect(x-xc, y-yc, x+xc, y+yc, gc, dd);
 	    GELine(x-xc, y-yc, x+xc, y+yc, gc, dd);
 	    GELine(x-xc, y+yc, x+xc, y-yc, gc, dd);
@@ -1694,14 +1863,14 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[1] = x; yy[1] = y+yc;
 	    xx[2] = x+xc; yy[2] = y;
 	    xx[3] = x; yy[3] = y-yc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(4, xx, yy, gc, dd);
 	    break;
 
 	case 10: /* S hexagon (circle) and plus superimposed */
 	    xc = toDeviceWidth(RADIUS * GSTR_0, GE_INCHES, dd);
 	    yc = toDeviceHeight(RADIUS * GSTR_0, GE_INCHES, dd);
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GECircle(x, y, xc, gc, dd);
 	    GELine(x-xc, y, x+xc, y, gc, dd);
 	    GELine(x, y-yc, x, y+yc, gc, dd);
@@ -1716,7 +1885,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[0] = x; yy[0] = y-r;
 	    xx[1] = x+xc; yy[1] = y+yc;
 	    xx[2] = x-xc; yy[2] = y+yc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    xx[0] = x; yy[0] = y+r;
 	    xx[1] = x+xc; yy[1] = y-yc;
@@ -1729,13 +1898,13 @@ void GESymbol(double x, double y, int pch, double size,
 	    yc = toDeviceHeight(RADIUS * GSTR_0, GE_INCHES, dd);
 	    GELine(x-xc, y, x+xc, y, gc, dd);
 	    GELine(x, y-yc, x, y+yc, gc, dd);
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GERect(x-xc, y-yc, x+xc, y+yc, gc, dd);
 	    break;
 
 	case 13: /* S octagon (circle) and times superimposed */
 	    xc = RADIUS * size;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GECircle(x, y, xc, gc, dd);
 	    xc = toDeviceWidth(RADIUS * GSTR_0, GE_INCHES, dd);
 	    yc = toDeviceHeight(RADIUS * GSTR_0, GE_INCHES, dd);
@@ -1748,7 +1917,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[0] = x; yy[0] = y+xc;
 	    xx[1] = x+xc; yy[1] = y-xc;
 	    xx[2] = x-xc; yy[2] = y-xc;
-	    gc->fill = NA_INTEGER;
+	    gc->fill = R_TRANWHITE;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    GERect(x-xc, y-xc, x+xc, y+xc, gc, dd);
 	    break;
@@ -1761,7 +1930,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[2] = x+xc; yy[2] = y+yc;
 	    xx[3] = x-xc; yy[3] = y+yc;
 	    gc->fill = gc->col;
-	    gc->col = NA_INTEGER;
+	    gc->col = R_TRANWHITE;
 	    GEPolygon(4, xx, yy, gc, dd);
 	    break;
 
@@ -1780,7 +1949,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[1] = x+xc; yy[1] = y-yc;
 	    xx[2] = x-xc; yy[2] = y-yc;
 	    gc->fill = gc->col;
-	    gc->col = NA_INTEGER;
+	    gc->col = R_TRANWHITE;
 	    GEPolygon(3, xx, yy, gc, dd);
 	    break;
 
@@ -1792,7 +1961,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    xx[2] = x+xc; yy[2] = y;
 	    xx[3] = x; yy[3] = y-yc;
 	    gc->fill = gc->col;
-	    gc->col = NA_INTEGER;
+	    gc->col = R_TRANWHITE;
 	    GEPolygon(4, xx, yy, gc, dd);
 	    break;
 
@@ -1931,7 +2100,20 @@ void GEMetricInfo(int c,
 		  double *ascent, double *descent, double *width,
 		  GEDevDesc *dd)
 {
-    dd->dev->metricInfo(c & 0xFF, gc, ascent, descent, width, dd->dev);
+    /* 
+     * If the fontfamily is a Hershey font family, call R_GE_VText
+     */
+    int vfontcode = VFontFamilyCode(gc->fontfamily);
+    if (vfontcode >= 0) {
+	/*
+	 * It should be straightforward to figure this out, but
+	 * just haven't got around to it yet
+	 */
+	*ascent= 0;
+	*descent = 0;
+	*width = 0;
+    } else 
+	dd->dev->metricInfo(c & 0xFF, gc, ascent, descent, width, dd->dev);
 }
 
 /****************************************************************
@@ -1948,14 +2130,7 @@ double GEStrWidth(char *str,
     int vfontcode = VFontFamilyCode(gc->fontfamily);
     if (vfontcode >= 0) {
 	gc->fontfamily[0] = vfontcode;
-	/* 
-	 * R's "font" par has historically made 2=bold and 3=italic
-	 * These must be switched to correspond to Hershey fontfaces
-	 */
-	if (gc->fontface == 2)
-	    gc->fontface = 3;
-	else if (gc->fontface == 3)
-	    gc->fontface = 2;
+	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
 	return R_GE_VStrWidth((unsigned char *) str, gc, dd);
     } else {
 	double w;
@@ -2001,14 +2176,7 @@ double GEStrHeight(char *str,
     int vfontcode = VFontFamilyCode(gc->fontfamily);
     if (vfontcode >= 0) {
 	gc->fontfamily[0] = vfontcode;
-	/* 
-	 * R's "font" par has historically made 2=bold and 3=italic
-	 * These must be switched to correspond to Hershey fontfaces
-	 */
-	if (gc->fontface == 2)
-	    gc->fontface = 3;
-	else if (gc->fontface == 3)
-	    gc->fontface = 2;
+	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
 	return R_GE_VStrHeight((unsigned char *) str, gc, dd);
     } else {
 	double h;
@@ -2047,6 +2215,69 @@ double GEStrHeight(char *str,
 void GENewPage(R_GE_gcontext *gc, GEDevDesc *dd)
 {
     dd->dev->newPage(gc, dd->dev);
+}
+
+/****************************************************************
+ * GEdeviceDirty
+ ****************************************************************
+ * 
+ * Has the device received output from any graphics system?
+ */
+
+Rboolean GEdeviceDirty(GEDevDesc *dd)
+{
+    return dd->dirty;
+}
+
+/****************************************************************
+ * GEdirtyDevice
+ ****************************************************************
+ *
+ * Indicate that the device has received output from at least one
+ * graphics system.
+ */
+
+void GEdirtyDevice(GEDevDesc *dd)
+{
+    dd->dirty = TRUE;
+}
+
+/****************************************************************
+ * GEcheckState
+ ****************************************************************
+ *
+ * Check whether all registered graphics systems are in a 
+ * "valid" state.
+ */
+
+Rboolean GEcheckState(GEDevDesc *dd)
+{
+    int i;
+    Rboolean result = TRUE;
+    for (i=0; i<numGraphicsSystems; i++)
+	if (dd->gesd[i] != NULL)
+	    if (!LOGICAL((dd->gesd[i]->callback)(GE_CheckPlot, dd, 
+						 R_NilValue))[0])
+		result = FALSE;
+    return result;
+}
+
+/****************************************************************
+ * GErecordGraphicOperation
+ ****************************************************************
+ */
+
+void GErecordGraphicOperation(SEXP op, SEXP args, GEDevDesc *dd)
+{
+    SEXP lastOperation = lastElt(dd->dev->displayList);
+    if (dd->dev->displayListOn) {
+	SEXP newOperation = CONS(op, args);
+	if (lastOperation == R_NilValue)
+	    dd->dev->displayList = CONS(newOperation,
+						       R_NilValue);
+	else
+	    SETCDR(lastOperation, CONS(newOperation, R_NilValue));
+    }
 }
 
 /****************************************************************
@@ -2099,13 +2330,10 @@ void GEplayDisplayList(GEDevDesc *dd)
 	    PRIMFUN(op) (R_NilValue, op, args, R_NilValue);
 	    /* Check with each graphics system that the plotting went ok
 	     */
-	    for (i=0; i<numGraphicsSystems; i++)
-		if (dd->gesd[i] != NULL)
-		    if (!LOGICAL((dd->gesd[i]->callback)(GE_CheckPlot, dd, 
-							 R_NilValue))[0]) {
-			plotok = 0;
-			warning("Display list redraw incomplete");
-		    }
+	    if (!GEcheckState(dd)) {
+		plotok = 0;
+		warning("Display list redraw incomplete");
+	    }
 	    theList = CDR(theList);
 	}
 	selectDevice(savedDevice);
@@ -2134,10 +2362,14 @@ GEDevDesc* GEcurrentDevice()
  */
 void GEcopyDisplayList(int fromDevice)
 {
+    SEXP tmp;
     GEDevDesc *dd = GEcurrentDevice();
     DevDesc* fromDev = GetDevice(fromDevice);
     int i;
-    dd->dev->displayList = Rf_displayList(fromDev);
+    tmp = Rf_displayList(fromDev);
+    if(!isNull(tmp)) 
+	tmp = duplicate(tmp);
+    dd->dev->displayList = tmp;
     /* Get each registered graphics system to copy system state
      * information from the "from" device to the current device
      */
@@ -2202,6 +2434,20 @@ SEXP GEcreateSnapshot(GEDevDesc *dd)
 
 /* Recreate a saved display using the information in a structure
  * created by GEcreateSnapshot.
+ *
+ * The graphics engine assumes that it is getting a snapshot
+ * that was created in THE CURRENT R SESSION
+ * (Thus, it can assume that registered graphics systems are 
+ *  in the same order as they were when the snapshot was 
+ *  created -- in patricular, state information will be sent
+ *  to the appropriate graphics system)
+ *
+ * It is possible to save a snapshot to an R variable 
+ * (and therefore save and reload it between sessions and
+ *  even possibly into a different R version),
+ * BUT this is strongly discouraged 
+ * (in the documentation for recordPlot() and replayPlot()
+ *  and in the documentation for the Rgui interface on Windows)
  */
 
 void GEplaySnapshot(SEXP snapshot, GEDevDesc* dd)

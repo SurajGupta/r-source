@@ -26,7 +26,6 @@
 extern void R_ProcessEvents(void);
 #endif
 
-
 #include <Defn.h>
 /* -> Errormsg.h */
 #include <Startup.h> /* rather cleanup ..*/
@@ -77,7 +76,7 @@ void R_CheckUserInterrupt(void)
        to run at this point then we end up with concurrent R
        evaluations and that can cause problems until we have proper
        concurrency support. LT */
-#if  ( defined(HAVE_AQUA) || defined(Win32) ) 
+#if  ( defined(HAVE_AQUA) || defined(Win32) )
     R_ProcessEvents();
 #else
     if (R_interrupts_pending)
@@ -92,7 +91,6 @@ void onintr()
 	return;
     }
     else R_interrupts_pending = 0;
-
     signalInterrupt();
 
     REprintf("\n");
@@ -114,7 +112,7 @@ void onsigusr1()
 	REprintf("interrupts suspended; signal ignored");
 	return;
     }
-	
+
     inError = 1;
 
     if( R_CollectWarnings )
@@ -149,7 +147,7 @@ void onsigusr2()
 	REprintf("interrupts suspended; signal ignored");
 	return;
     }
-	
+
     if( R_CollectWarnings )
 	PrintWarnings();
 
@@ -216,7 +214,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 
     if (inWarning)
 	return;
-    
+
     s = GetOption(install("warning.expression"), R_NilValue);
     if( s!= R_NilValue ) {
 	if( !isLanguage(s) &&  ! isExpression(s) )
@@ -251,7 +249,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     }
     else if(w == 1) {	/* print as they happen */
 	if( call != R_NilValue ) {
-	    dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
+	    dcall = CHAR(STRING_ELT(deparse1(call, 0, SIMPLEDEPARSE), 0));
 	    REprintf("Warning in %s : ", dcall);
 	    if (strlen(dcall) > LONGCALL) REprintf("\n	 ");
 	}
@@ -348,7 +346,7 @@ void PrintWarnings(void)
 	   REprintf("%s \n", CHAR(STRING_ELT(names, 0)));
 	else
 	   REprintf("%s in: %s \n", CHAR(STRING_ELT(names, 0)),
-		CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, 0),0), 0)));
+		CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, 0), 0, SIMPLEDEPARSE), 0)));
     }
     else if( R_CollectWarnings <= 10 ) {
 	REprintf("Warning messages: \n");
@@ -358,7 +356,7 @@ void PrintWarnings(void)
 	       REprintf("%d: %s \n",i+1, CHAR(STRING_ELT(names, i)));
 	    else
 	       REprintf("%d: %s in: %s \n", i+1, CHAR(STRING_ELT(names, i)),
-		   CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings,i), 0), 0)));
+		   CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings,i), 0, SIMPLEDEPARSE), 0)));
 	}
     }
     else {
@@ -437,7 +435,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	char *tail = "\n\t";/* <- TAB */
 	int len = strlen(head) + strlen(mid) + strlen(tail);
 
-	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
+	dcall = CHAR(STRING_ELT(deparse1(call, 0, SIMPLEDEPARSE), 0));
 	if (strlen(dcall) + len < BUFSIZE) {
 	    sprintf(errbuf, "%s%s%s", head, dcall, mid);
 	    if (strlen(dcall) > LONGCALL) strcat(errbuf, tail);
@@ -628,7 +626,6 @@ static void jump_to_top_ex(Rboolean traceback,
     /* jump to a browser/try if one is on the stack */
     if (! ignoreRestartContexts)
 	try_jump_to_restart();
-
     /* at this point, i.e. if we have not exited in
        try_jump_to_restart, we are heading for R_ToplevelContext */
 
@@ -667,9 +664,7 @@ static void jump_to_top_ex(Rboolean traceback,
 
     R_GlobalContext = R_ToplevelContext;
     R_restore_globals(R_GlobalContext);
-
     LONGJMP(R_ToplevelContext->cjmpbuf, 0);
-
     /* not reached */
     endcontext(&cntxt);
     inError = oldInError;
@@ -694,7 +689,7 @@ static SEXP findCall(void)
 	    return cptr->call;
     return R_NilValue;
 }
-    
+
 SEXP do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 /* error(.) : really doesn't return anything; but all do_foo() must be SEXP */
@@ -896,7 +891,7 @@ void R_PrintDeferredWarnings(void)
         REprintf("In addition: ");
         PrintWarnings();
     }
-}    
+}
 
 SEXP R_GetTraceback(int skip)
 {
@@ -923,7 +918,7 @@ SEXP R_GetTraceback(int skip)
 	    if (skip > 0)
 		skip--;
 	    else {
-		SETCAR(t, deparse1(c->call, 0));
+		SETCAR(t, deparse1(c->call, 0, SIMPLEDEPARSE));
 		t = CDR(t);
 	    }
 	}
@@ -1090,7 +1085,7 @@ static SEXP findConditionHandler(SEXP cond)
 
     if (TYPEOF(classes) != STRSXP)
 	return R_NilValue;
-    
+
     /**** need some changes here to allow conditions to be S4 classes */
     for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
 	SEXP entry = CAR(list);

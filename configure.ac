@@ -171,7 +171,7 @@ AC_ARG_ENABLE([R-shlib],
 [want_R_shlib="${want_R_framework}"])
 AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
 if test "${want_R_shlib}" = yes; then
-  LIBR="-L\$(R_HOME)/bin -lR"
+  LIBR="-L\$(R_HOME)/lib -lR"
 else
   LIBR=
 fi
@@ -198,6 +198,13 @@ if test x"${use_strict_barrier}" = xyes; then
             [Define to enable provoking compile errors on write barrier
              violation.])
 fi
+
+AC_ARG_ENABLE([linux-lfs],
+[AC_HELP_STRING([--enable-linux-lfs],
+                [Enable support for > 2GB files on Linux @<:@no@:>@])],
+[want_linux_lfs="${enableval}"],
+[want_linux_lfs=no])
+
 
 ### ** Optional packages.
 
@@ -395,6 +402,8 @@ AC_PROG_YACC
 R_PROG_AR
 R_PROG_INSTALL
 AC_PATH_PROG(JAVAC, javac)
+## we would like a POSIX sed, and need one on Solaris
+AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
 ## Make
 : ${MAKE=make}
 AC_SUBST(MAKE)
@@ -407,9 +416,10 @@ R_PROG_PERL
 AC_SUBST(TAR)
 ## TeXMF stuff
 R_PROG_TEXMF
-## Unzip && zip
+## Unzip && zip && gzip
 AC_PATH_PROGS(R_UNZIPCMD, [${UNZIP} unzip], "")
 AC_PATH_PROGS(R_ZIPCMD, [${ZIP} zip], "")
+AC_PATH_PROGS(R_GZIPCMD, [${GZIP} gzip], true)
 ## Browser
 R_PROG_BROWSER
 ## PDF viewer
@@ -514,7 +524,7 @@ AC_HEADER_SYS_WAIT
 ## Some of these are also checked for when Autoconf computes the default
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
-  fpu_control.h grp.h ieee754.h ieeefp.h locale.h \
+  fpu_control.h grp.h ieee754.h ieeefp.h limits.h locale.h \
   netdb.h netinet/in.h \
   pwd.h readline/history.h readline/readline.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
@@ -530,6 +540,7 @@ AC_CHECK_HEADERS(errno.h stdarg.h string.h)
 ## But then we want full gettext support and AM_GNU_GETTEXT.
 ## AC_CHECK_HEADERS(libintl.h)
 ## </NOTE>
+
 case "${host_os}" in
   sunos4*)
     AC_DEFINE(SunOS4, 1,
@@ -545,6 +556,7 @@ R_HEADER_GLIBC2
 AC_TYPE_SIGNAL
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+R_SIZE_MAX
 AC_CHECK_TYPE(blkcnt_t, long)
 AH_TEMPLATE([blkcnt_t],
             [Define to 'long' if <sys/types.h> does not define.
@@ -559,6 +571,7 @@ R_TYPE_SOCKLEN
 
 AC_C_BIGENDIAN
 AC_C_CONST
+R_C_INLINE
 if test "${cross_compiling}" = yes; then
   warn_xcompile_sizeof_int="assuming C ints are 4 byte on ${host}"
   AC_MSG_WARN([${warn_xcompile_sizeof_int}])
@@ -587,6 +600,9 @@ if test -n "${F77}"; then
   R_PROG_F77_CC_COMPAT_COMPLEX
   R_PROG_F77_MAKEFRAG  
 else
+  if test ${ac_cv_sizeof_long} -gt 4 ; then
+    AC_MSG_ERROR([Cannot use f2c on a > 32-bit machine])
+  fi
   R_PROG_F2C_FLIBS
   AC_DEFINE(HAVE_F77_UNDERSCORE, 1)
   AC_DEFINE(HAVE_DOUBLE_COMPLEX, 1)
@@ -1168,19 +1184,33 @@ AC_SUBST(LAPACK_LDFLAGS)
 
 ### * Checks for library functions.
 
+AC_CHECK_TYPES([off_t])
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(access chdir expm1 fcntl finite ftruncate getcwd \
-  getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo \
+AC_CHECK_FUNCS(access chdir expm1 fcntl finite fseeko ftello ftruncate getcwd \
+  getgrgid getpwuid getuid hypot isascii log1p matherr mkfifo \
   popen putenv rint setenv strcoll stat strptime symlink \
   system times unsetenv)
+## isfinite and isnan are in math.h but might be macros
+AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
 ## might report corresponding HAVE_FOO conditionals.
 ## </NOTE>
 
+if test $ac_cv_type_off_t=yes -a $ac_cv_func_fseeko=yes -a $ac_cv_func_ftello=yes; then
+   AC_DEFINE(HAVE_OFF_T, 1,
+            [Define if you have off_t, fseeko and ftello.]) 
+fi
+
+## IEEE 754. We rely on this in e.g. the working log test.
+R_IEEE_754
+
 ## check whether nl_langinfo(CODESET) is in langinfo.h
 ## defines HAVE_LANGINFO_CODESET if it's there
 AM_LANGINFO_CODESET
+
+## check if X11 typedefs KeySym
+R_HAVE_KEYSYM
 
 ## Used to build src/include/Rmath.h.
 ## <NOTE>
@@ -1212,10 +1242,16 @@ AC_SEARCH_LIBS(gethostbyname, [nsl socket])
 AC_SEARCH_LIBS(xdr_string, [nsl])
 R_FUNC___SETFPUCW
 R_FUNC_CALLOC
+if test "${ac_cv_func_finite}" = "yes"; then
 R_FUNC_FINITE
+fi
+if test "${ac_cv_have_decl_isfinite}" = "yes"; then
+R_FUNC_ISFINITE
+fi
 R_FUNC_LOG
 R_FUNC_LOG1P
 R_FUNC_STRPTIME
+R_FUNC_FTELL
 
 ## BLAS.
 ## <NOTE>
@@ -1232,7 +1268,7 @@ if test "${use_lapack}" = "yes"; then
   R_LAPACK_LIBS
 fi
 if test "${acx_lapack_ok}" != "yes"; then
-  LAPACK_LIBS="-L\${R_HOME}/bin -lRlapack"
+  LAPACK_LIBS="-L\${R_HOME}/lib -lRlapack"
 fi
 AC_SUBST(LAPACK_LIBS)
 AM_CONDITIONAL(USE_EXTERNAL_LAPACK, [test "${acx_lapack_ok}" = "yes"])
@@ -1266,9 +1302,6 @@ AC_SUBST(use_aqua)
 ## Tcl/Tk.
 R_TCLTK
 
-## IEEE 754.
-R_IEEE_754
-
 ## BSD networking.
 R_BSD_NETWORKING
 
@@ -1298,6 +1331,12 @@ if test "${want_R_profiling}" = yes; then
                  [want_R_profiling="no"])
 fi
 AC_SUBST(R_PROFILING)
+
+## Large-file-support (Linux-only, at present)
+if test "x${want_linux_lfs}" = xyes; then
+R_LARGE_FILES
+fi
+
 
 ### * Miscellaneous.
 
@@ -1340,12 +1379,39 @@ LIBS="${LIBS1} ${LIBS2}"
 ## <FIXME>
 ## This should not be necessary when using libtool for linking.
 ## In any case, is this really good enough?
+## On Linux, do not add the ld.so system directories '/lib' and
+## '/usr/lib', so that the entries from '/etc/ld.so.conf' are not
+## shadowed (otherwise, e.g. optimized ATLAS libs would not be used).
+case "${host_os}" in
+  linux*)
+    r_ld_library_defaults="/usr/lib:/lib"
+    ;;
+  *)
+    r_ld_library_defaults=
+    ;;
+esac
 for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
            ${TCLTK_LIBS} ${GNOME_LIBS}; do
   case "${arg}" in
     -L*)
       lib=`echo ${arg} | sed "s/^-L//"`
-      R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+      r_want_lib=true
+      ## Do not add non-existent directories.
+      test -d "${lib}" || continue
+      ## Canonicalize (/usr/lib/gcc-lib/i486-linux/3.3.4/../../..).
+      lib=`cd "${lib}" && ${GETWD}`
+      ## Do not add something twice, or default paths.
+      r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
+      for dir in ${R_LD_LIBRARY_PATH}${IFS}${r_ld_library_defaults}; do
+        if test x"${dir}" = x"${lib}"; then
+           r_want_lib=false
+           break
+        fi
+      done
+      IFS="${r_save_IFS}"
+      if test x"${r_want_lib}" = xtrue; then
+        R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+      fi
       ;;
   esac
 done
@@ -1406,36 +1472,24 @@ AC_CONFIG_FILES(
   src/library/Makefile
   src/library/base/DESCRIPTION
   src/library/base/Makefile
-  src/library/ctest/DESCRIPTION
-  src/library/ctest/Makefile
-  src/library/eda/DESCRIPTION
-  src/library/eda/Makefile
+  src/library/datasets/DESCRIPTION
+  src/library/datasets/Makefile
   src/library/graphics/DESCRIPTION
   src/library/graphics/Makefile
+  src/library/grDevices/DESCRIPTION
+  src/library/grDevices/Makefile
   src/library/grid/DESCRIPTION
   src/library/grid/Makefile
   src/library/grid/src/Makefile
-  src/library/lqs/DESCRIPTION
-  src/library/lqs/Makefile
   src/library/methods/DESCRIPTION
   src/library/methods/Makefile
   src/library/methods/src/Makefile
-  src/library/mle/DESCRIPTION
-  src/library/mle/Makefile
-  src/library/modreg/DESCRIPTION
-  src/library/modreg/Makefile
-  src/library/mva/DESCRIPTION
-  src/library/mva/Makefile
-  src/library/nls/DESCRIPTION
-  src/library/nls/Makefile
   src/library/profile/Makefile
   src/library/stats/DESCRIPTION
   src/library/stats/Makefile
   src/library/stats/src/Makefile
   src/library/stats4/DESCRIPTION
   src/library/stats4/Makefile
-  src/library/stepfun/DESCRIPTION
-  src/library/stepfun/Makefile
   src/library/splines/DESCRIPTION
   src/library/splines/Makefile
   src/library/splines/src/Makefile
@@ -1445,8 +1499,6 @@ AC_CONFIG_FILES(
   src/library/tools/DESCRIPTION
   src/library/tools/Makefile
   src/library/tools/src/Makefile
-  src/library/ts/DESCRIPTION
-  src/library/ts/Makefile
   src/library/utils/DESCRIPTION
   src/library/utils/Makefile
   src/main/Makefile
@@ -1553,6 +1605,9 @@ if test "${use_maintainer_mode}" = yes; then
 fi
 if test "${use_strict_barrier}" = yes; then
   R_SH_VAR_ADD(r_options, [strict barrier], [, ])
+fi
+if test "${want_linux_lfs}" = yes; then
+  R_SH_VAR_ADD(r_options, [Linux LFS], [, ])
 fi
 
 AC_MSG_RESULT(

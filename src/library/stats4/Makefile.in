@@ -11,17 +11,20 @@ subdir = src/library/stats4
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = DESCRIPTION.in Makefile.in NAMESPACE install.R
+DISTFILES = DESCRIPTION.in Makefile.in NAMESPACE
 
 pkg = stats4
+
+R_EXE = $(top_builddir)/bin/R --vanilla
 
 all: Makefile DESCRIPTION
 	@echo "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/R
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
 	  echo ".packageName <- \"$(pkg)\"" >  $${f}; \
-	  cat `ls $(srcdir)/R/*.R` >> $${f}; \
+	  cat `LC_COLLATE=C ls $(srcdir)/R/*.R` >> $${f}; \
 	  $(SHELL) $(top_srcdir)/tools/move-if-change $${f} all.R)
+	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
 	@for f in COPYRIGHTS INDEX SOURCES NAMESPACE; do \
 	  if test -f $(srcdir)/$${f}; then \
 	    $(INSTALL_DATA) $(srcdir)/$${f} \
@@ -29,29 +32,20 @@ all: Makefile DESCRIPTION
 	  fi; \
 	done
 	@if test -f DESCRIPTION; then \
-	  $(INSTALL_DATA) DESCRIPTION $(top_builddir)/library/$(pkg); \
-	  (tmp="Built: R $(VERSION); "; \
-	    if test -d $(srcdir)/src; then \
-	      tmp="$${tmp}$(R_PLATFORM)"; \
-	    fi; \
-	    tmp="$${tmp}; `date`; $(R_OSTYPE)"; \
-	    echo "$${tmp}") \
-	    >> $(top_builddir)/library/$(pkg)/DESCRIPTION; \
-	fi
-	@if test -d $(srcdir)/data; then \
-	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/data; \
-	  for f in `ls -d $(srcdir)/data/* | sed '/CVS/d'`; do \
-	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/data; \
-	  done; \
+	  echo "tools:::.install_package_description('.', '"$(top_builddir)/library/${pkg}"')" | \
+	  R_DEFAULT_PACKAGES=NULL $(R_EXE) --slave > /dev/null ; \
 	fi
 	@if test -d $(srcdir)/man; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/man; \
 	  (f=$${TMPDIR:-/tmp}/R$$$$; \
 	    for rdfile in $(srcdir)/man/*.Rd; do \
+	      echo "% --- Source file: $${rdfile} ---"; \
 	      cat $${rdfile}; echo '\eof'; \
 	    done >> $${f}; \
-	    $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
-	      $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
+            $(SHELL) $(top_srcdir)/tools/move-if-change $${f} \
+              $(top_builddir)/library/$(pkg)/man/$(pkg).Rd); \
+            rm -f $(top_builddir)/library/$(pkg)/man/$(pkg).Rd.gz; \
+            $(R_GZIPCMD) $(top_builddir)/library/$(pkg)/man/$(pkg).Rd; \
 	fi
 	@if test -d src; then \
 	  (cd src && $(MAKE)) || exit 1; \
@@ -66,33 +60,19 @@ DESCRIPTION: $(srcdir)/DESCRIPTION.in $(top_builddir)/config.status
 Rfiles: $(top_builddir)/library/$(pkg)/R/$(pkg) \
   $(top_builddir)/library/$(pkg)/R/all.rda
 
-$(top_builddir)/library/$(pkg)/R/$(pkg): $(srcdir)/install.R
-	@$(INSTALL_DATA) $(srcdir)/install.R $@
+$(top_builddir)/library/$(pkg)/R/$(pkg):
+	@touch $@
 
 $(top_builddir)/library/$(pkg)/R/all.rda: all.R
 # remove possibly outdated namespace metainfo.
 	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
 	@echo "dumping R code in package '$(pkg)'"
-	@if test -f $(srcdir)/NAMESPACE; then \
-	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
-	  echo "saveNamespaceImage(\"$(pkg)\", \"$@\")" | \
-	    R_DEFAULT_PACKAGES=NULL \
-	    $(top_builddir)/bin/R --vanilla --slave; \
-	  $(INSTALL_DATA) $(top_srcdir)/share/R/nsrdaload.R \
-	    $(top_builddir)/library/$(pkg)/R/$(pkg); \
-	else \
-	  (echo \
-	    "options(save.image.defaults=list(compress=TRUE, safe=FALSE))"; \
-	    cat all.R) | \
-	    R_DEFAULT_PACKAGES=NULL \
-	    $(top_builddir)/bin/R --vanilla --slave --save; \
-	  $(INSTALL_DATA) .RData $@; \
-	  $(INSTALL_DATA) $(top_srcdir)/share/R/firstlib.R \
-	    $(top_builddir)/library/$(pkg)/R/$(pkg); \
-	  if test -f $(top_builddir)/library/$(pkg)/NAMESPACE; then \
-	    rm -f $(top_builddir)/library/$(pkg)/NAMESPACE; \
-	  fi; \
-	fi
+	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
+	@echo "saveNamespaceImage(\"$(pkg)\", \"$@\")" | \
+	  R_DEFAULT_PACKAGES="graphics,stats,methods" \
+	  $(top_builddir)/bin/R --vanilla --slave
+	@$(INSTALL_DATA) $(top_srcdir)/share/R/nsrdaload.R \
+	  $(top_builddir)/library/$(pkg)/R/$(pkg)
 
 mostlyclean: clean
 clean:

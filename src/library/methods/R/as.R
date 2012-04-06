@@ -6,38 +6,49 @@ as <-
   ## If the `is' relation is FALSE, and `coerceFlag' is `TRUE',
   ## the coerce function will be called (which will throw an error if there is
   ## no valid way to coerce the two objects).  Otherwise, `NULL' is returned.
-  function(object, Class, strict = TRUE)
+  function(object, Class, strict = TRUE, ext = possibleExtends(thisClass, Class))
 {
     thisClass <- .class1(object) ## always one string
-    if(thisClass == Class)
+    if(.identC(thisClass, Class) || .identC(Class, "ANY"))
         return(object)
-    asMethod <- .quickCoerceSelect(thisClass, Class)
+    where <- .classEnv(thisClass)
+    coerceFun <- getGeneric("coerce", where = where)
+    coerceMethods <- getMethodsForDispatch("coerce", coerceFun)
+    asMethod = .quickCoerceSelect(thisClass, Class, coerceMethods)
     if(is.null(asMethod)) {
         sig <-  c(from=thisClass, to = Class)
+        packageSlot(sig) <- where
         canCache <- TRUE
-        asMethod <- selectMethod("coerce", sig, TRUE, c(from = TRUE, to = FALSE)) #optional, no inheritance
+        if(is.null(coerceFun))
+            browser()
+        asMethod <- selectMethod("coerce", sig, TRUE,
+                                 c(from = TRUE, to = FALSE), #optional, no inheritance
+                                 fdef = coerceFun, mlist = coerceMethods)
         if(is.null(asMethod)) {
             if(is(object, Class)) {
-                asMethod <- possibleExtends(thisClass, Class)
-                if(identical(asMethod, FALSE))
+                ClassDef <- getClassDef(Class, where)
+                ## use the ext information, computed or supplied
+                if(identical(ext, FALSE))
                     stop("Internal problem in as():  \"", thisClass, "\" is(object, \"",
                          Class, "\) is TRUE, but the metadata asserts that the is relation is FALSE")
-                else if(identical(asMethod, TRUE)) 
-                    asMethod <- .makeAsMethod(quote(from), TRUE, Class)
+                else if(identical(ext, TRUE)) 
+                    asMethod <- .makeAsMethod(quote(from), TRUE, Class, ClassDef, where)
                 else {
-                    test <- asMethod@test
-                    asMethod <- .makeAsMethod(asMethod@coerce, asMethod@simple, Class)
+                    test <- ext@test
+                    asMethod <- .makeAsMethod(ext@coerce, ext@simple, Class, ClassDef, where)
                     canCache <- (!is(test, "function")) || identical(body(test), TRUE)
                 }
             }
-            if(is.null(asMethod) && extends(Class, thisClass))
-                asMethod <- .asFromReplace(thisClass, Class)
+            if(is.null(asMethod) && extends(Class, thisClass)) {
+                ClassDef <- getClassDef(Class, where)
+                asMethod <- .asFromReplace(thisClass, Class, ClassDef, where)
+            }
             if(is.null(asMethod))
                 asMethod <- selectMethod("coerce", sig, TRUE, c(from = TRUE, to = FALSE))
         }
         ## cache for next call
         if(canCache && !is.null(asMethod))
-            cacheMethod("coerce", sig, asMethod)
+            cacheMethod("coerce", sig, asMethod, fdef = coerceFun)
     }
     if(is.null(asMethod))
         stop(paste("No method or default for coercing \"", thisClass,
@@ -48,36 +59,33 @@ as <-
         asMethod(object, strict = FALSE)
 }
 
-.quickCoerceGetsSelect <- function(from, to) {
-    methods <- getMethods("coerce<-")
+.quickCoerceSelect <- function(from, to, methods) {
+    if(is.null(methods))
+        return(NULL)
     allMethods <- methods@allMethods
-    method <- allMethods[[from]]
-    if(is.null(method))
-        method
-    else
-        method@allMethods[[to]]
+    i <- match(from, names(allMethods))
+    if(is.na(i))
+        NULL
+    else {
+        methodsi <- allMethods[[i]]
+        j <- match(to, names(methodsi))
+        if(is.na(j))
+            NULL
+        else
+            methodsi[[j]]
+    }
 }
 
-.quickCoerceSelect <- function(from, to) {
-    methods <- getMethods("coerce")
-    allMethods <- methods@allMethods
-    method <- allMethods[[from]]
-    if(is.null(method))
-        method
-    else
-        method@allMethods[[to]]
-}
-
-.asFromReplace <- function(fromClass, toClass) {
+.asFromReplace <- function(fromClass, toClass, ClassDef, where) {
     ## toClass extends fromClass, so an asMethod will
     ## be the equivalent of new("toClass", fromObject)
     ## But must check that replacement is defined, in the case
     ## of nonstandard superclass relations
-    replaceMethod <- elNamed(getClass(toClass)@contains, fromClass)
+    replaceMethod <- elNamed(ClassDef@contains, fromClass)
     if(is(replaceMethod, "SClassExtension") &&
        !identical(as(replaceMethod@replace, "function"), .ErrorReplace)) {
         f <- .ErrorReplace
-        body(f, envir = environment(f)) <-
+        body(f, envir = where) <-
             substitute({obj <- new(TOCLASS); as(obj, FROMCLASS) <- value; obj},
                        list(FROMCLASS = fromClass, TOCLASS = toClass))
         f
@@ -98,11 +106,15 @@ as <-
     thisClass <- .class1(object)
     if(!.identC(.class1(value), Class))
       value <- as(value, Class)
-    asMethod <- .quickCoerceGetsSelect(thisClass, Class)
+    where <- .classEnv(class(object))
+    coerceFun <- getGeneric("coerce<-", where = where)
+    coerceMethods <- getMethodsForDispatch("coerce<-", coerceFun)
+    asMethod <- .quickCoerceSelect(thisClass, Class, coerceMethods)
     if(is.null(asMethod)) {
     sig <-  c(from=thisClass, to = Class)
     canCache <- TRUE
-    asMethod <- selectMethod("coerce<-", sig, TRUE, FALSE) #optional, no inheritance
+    asMethod <- selectMethod("coerce<-", sig, TRUE, FALSE, #optional, no inheritance
+                             fdef = coerceFun, mlist = coerceMethods)
     if(is.null(asMethod)) {
         if(is(object, Class)) {
             asMethod <- possibleExtends(thisClass, Class)
@@ -121,7 +133,7 @@ as <-
     }
         ## cache for next call
         if(canCache && !is.null(asMethod))
-            cacheMethod("coerce<-", sig, asMethod)
+            cacheMethod("coerce<-", sig, asMethod, fdef = coerceFun)
     
     }
     if(is.null(asMethod))
@@ -134,52 +146,67 @@ as <-
 
 setAs <- 
   function(from, to, def, replace = NULL, where = topenv(parent.frame()))
-  {
+{
     ## where there is an "is" relation, modify it
-      fromDef <- getClassDef(from, where)
-    if(extends(fromDef, to, TRUE)) {
-      extds <- fromDef@contains
-      if(is.list(extds)) {
-        test <- elNamed(extds, "test")
-        if(missing(replace))
-          replace <- elNamed(extds, "replace")
-      }
-      else
+    fromDef <- getClassDef(from, where)
+    extds <- possibleExtends(from, to, fromDef)
+    if(is(extds, "SClassExtension")) {
+        test <- extds@test
+        if(is.null(replace))
+            replace <- extds@replace
         test <- NULL
-      setIs(from, to, test = test, coerce = def, replace = replace, where = where)
+        setIs(from, to, test = test, coerce = def, replace = replace, where = where)
     }
-    else {
-      args <- formalArgs(def)
-      if(!is.na(match("strict", args))) args <- args[-match("strict", args)]
-      if(length(args) == 1)
-          def <- substituteFunctionArgs(def, "from")
-      else if(length(args) == 2)
-          def <- substituteFunctionArgs(def, c("from", "to"))
-      else stop(paste("as method must have one or two arguments, plus optional `strict'; got (",
-                      paste(formalArgs(def), collapse = ", "), ")", sep=""))
-      method <- as.list(coerce@.Data) # the function def'n, just to get arguments correct
-      method$to <- to
-      method <- as.function(method)
-      body(method, envir = environment(def)) <- body(def)
-      setMethod("coerce", c(from, to), method, where = where)
-      if(!is.null(replace)) {
-        args <- formalArgs(replace)
-        if(length(args) != 2)
-          stop("a replace method definition in setAs must be a function of two arguments")
-        replace <- body(replace)
-        if(!identical(args, c("from", "value"))) {
-          ll <- list(quote(from), quote(value))
-          names(ll) <- args
-          replace <- substituteDirect(replace, ll)
-          warning("Argument names in replace changed to agree with \"coerce<-\" generic:\n",
-                  paste(deparse(bdy), sep="\n    "), "\n")
+    else if(identical(extds, TRUE)) {
+        if(.identC(from, to))
+            stop("Trying to set an as relation from \"", .class1(from),
+                 "\" to itself")
+        ## usually to will be a class union, where setAs() is not
+        ## allowed by the definition of a union
+        toDef <- getClassDef(to, where=where)
+        if(is.null(toDef))
+            stop("Class \"", to, "\" is not defined in this environment")
+        if(isClassUnion(toDef))
+            stop("Class \"",to,"\" is a class union: coerce relations to a class union are not meaningful")
+        ## else go ahead (but are there any cases here where extds is TRUE?)
+        setIs(from, to, coerce = def, replace = replace, where = where)
+    }
+    ## else extds is FALSE -- no is() action
+        args <- formalArgs(def)
+        if(!is.na(match("strict", args))) args <- args[-match("strict", args)]
+        if(length(args) == 1)
+            def <- substituteFunctionArgs(def, "from")
+        else if(length(args) == 2)
+            def <- substituteFunctionArgs(def, c("from", "to"))
+        else stop(paste("as method must have one or two arguments, plus optional `strict'; got (",
+                        paste(formalArgs(def), collapse = ", "), ")", sep=""))
+        method <- as.list(coerce@.Data) # the function def'n, just to get arguments correct
+        method$to <- to
+        method <- as.function(method)
+        body(method, envir = environment(def)) <- body(def)
+        setMethod("coerce", c(from, to), method, where = where)
+        if(!is.null(replace)) {
+            args <- formalArgs(replace)
+            if(identical(args, c("from", "to", "value")))
+                method <- replace
+            else {
+                ## if not from an extends object, process the arguments
+                if(length(args) != 2)
+                    stop("a replace method definition in setAs must be a function of two arguments, got ", length(args))
+                replace <- body(replace)
+                if(!identical(args, c("from", "value"))) {
+                    ll <- list(quote(from), quote(value))
+                    names(ll) <- args
+                    replace <- substituteDirect(replace, ll)
+                    warning("Argument names in replace changed to agree with \"coerce<-\" generic:\n",
+                            paste(deparse(bdy), sep="\n    "), "\n")
+                }
+                method <- eval(function(from, to, value)NULL)
+                functionBody(method, envir = .GlobalEnv) <- replace
+            }
+            setMethod("coerce<-", c(from, to), method, where = where)
         }
-        method <- eval(function(from, to, value)NULL)
-        functionBody(method, envir = .GlobalEnv) <- replace
-        setMethod("coerce<-", c(from, to), method, where = where)
-      }
-    }
-  }
+}
 
 .setCoerceGeneric <- function(where) {
   ## create the initial version of the coerce function, with methods that convert
@@ -243,25 +270,29 @@ setAs <-
 
 .basicCoerceMethod <- function(from, to, strict = TRUE) stop("Undefined coerce method")
 
-.makeAsMethod <- function(expr, simple, Class) {
+.makeAsMethod <- function(expr, simple, Class, ClassDef, where) {
     if(is(expr, "function")) {
+        where <- environment(expr)
         args <- formalArgs(expr)
         if(!identical(args, "from"))
             expr <- .ChangeFormals(expr,
                     if(length(args) > 1) .simpleExtCoerce else .simpleIsCoerce)
         expr <- body(expr)
     }
-    if(isVirtualClass(getClass(Class)))
-        value <- expr
-    else if(identical(expr, quote(from)))
-        value <- substitute({class(from) <- CLASS; from},
-                           list(CLASS = Class))
-    else value <- substitute({from <- EXPR; class(from) <- CLASS; from},
-                           list(EXPR = expr, CLASS = Class) )
+    ## commented code below is needed if we don't assume asMethod sets the class correctly
+#     if(isVirtualClass(ClassDef))
+#         value <- expr
+#     else if(identical(expr, quote(from)))
+#         value <- substitute({class(from) <- CLASS; from},
+#                            list(CLASS = Class))
+#     else value <- substitute({from <- EXPR; class(from) <- CLASS; from},
+#                            list(EXPR = expr, CLASS = Class) )
+    ## else
+    value <- expr
     if(simple && !identical(expr, quote(from)))
         value <- substitute(if(strict) EXPR else from,
                            list(EXPR = expr))
     f <- .simpleExtCoerce
-    body(f, envir = environment(f)) <- value
+    body(f, envir = where) <- value
     f
 }

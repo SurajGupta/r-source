@@ -21,7 +21,7 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: rproxy_impl.c,v 1.21 2004/03/02 21:37:24 murdoch Exp $
+ *  $Id: rproxy_impl.c,v 1.24 2004/06/09 13:35:32 ripley Exp $
  */
 
 #define NONAMELESSUNION
@@ -432,6 +432,8 @@ int R_Proxy_parse_parameters (char const* pParameterString,
   return 0;
 }
 
+#include "../shext.h" /* for ShellGetPersonalDirectory */
+
 /* 00-02-18 | baier | R_Proxy_init() now takes parameter string, parse it */
 /* 03-06-01 | baier | now we add %R_HOME%\bin to %PATH% */
 int R_Proxy_init (char const* pParameterString)
@@ -440,7 +442,7 @@ int R_Proxy_init (char const* pParameterString)
   Rstart Rp = &rp;
   char Rversion[25];
   static char RUser[MAX_PATH], RHome[MAX_PATH];
-  char *p;
+  char *p, *q;
 
   sprintf(Rversion, "%s.%s", R_MAJOR, R_MINOR);
   if(strcmp(getDLLVersion(), Rversion) != 0) {
@@ -469,18 +471,28 @@ int R_Proxy_init (char const* pParameterString)
   }
 
   Rp->rhome = RHome;
-  /*
-   * try R_USER then HOME then working directory
-   */
-  if (getenv("R_USER")) {
-    strcpy(RUser, getenv("R_USER"));
-  } else if (getenv("HOME")) {
-      strcpy(RUser, getenv("HOME"));
-  } else if (getenv("HOMEDRIVE")) {
-      strcpy(RUser, getenv("HOMEDRIVE"));
-      strcat(RUser, getenv("HOMEPATH"));
-  } else
-      GetCurrentDirectory(MAX_PATH, RUser);
+/*
+ * try R_USER then HOME then Windows homes then working directory
+ */
+
+    if ((p = getenv("R_USER"))) {
+	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid R_USER");
+	strcpy(RUser, p);
+    } else if ((p = getenv("HOME"))) {
+	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOME");
+	strcpy(RUser, p);
+    } else if (ShellGetPersonalDirectory(RUser)) {
+	/* nothing to do */;
+    } else if ((p = getenv("HOMEDRIVE")) && (q = getenv("HOMEPATH"))) {
+	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOMEDRIVE");
+	strcpy(RUser, p);
+	if(strlen(RUser) + strlen(q) >= MAX_PATH)
+	    R_Suicide("Invalid HOMEDRIVE+HOMEPATH");
+	strcat(RUser, q);
+    } else {
+	GetCurrentDirectory(MAX_PATH, RUser);
+    }
+
   p = RUser + (strlen(RUser) - 1);
 
   if (*p == '/' || *p == '\\') *p = '\0';
@@ -503,13 +515,12 @@ int R_Proxy_init (char const* pParameterString)
 #endif
   Rp->RestoreAction = 0; /* no restore */
   Rp->SaveAction = 2;    /* no save */
-  Rp->CommandLineArgs = NULL;
-  Rp->NumCommandLineArgs = 0;
 
 /*  Rp->nsize = 300000;
     Rp->vsize = 6e6;*/
   R_SetParams(Rp); /* so R_ShowMessage is set */
   R_SizeFromEnv(Rp);
+  R_set_command_line_arguments(0, NULL);
 
   /* parse parameters */
 #if 0
@@ -542,6 +553,7 @@ int R_Proxy_init (char const* pParameterString)
 }
 
 /* 01-06-05 | baier | SETJMP and fatal error handling around eval() */
+/* 04-08-01 | baier | ref-counting in case of error */
 int R_Proxy_evaluate (char const* pCmd,BDX_Data** pData)
 {
   SEXP rho = R_GlobalEnv;
@@ -587,6 +599,7 @@ int R_Proxy_evaluate (char const* pCmd,BDX_Data** pData)
 	  }
 	else
 	  {
+	    UNPROTECT(1);
 	    return SC_PROXY_ERR_EVALUATE_STOP;
 	  }
       }
@@ -613,6 +626,7 @@ int R_Proxy_evaluate (char const* pCmd,BDX_Data** pData)
 }
 
 /* 01-06-05 | baier | SETJMP and fatal error handling around eval() */
+/* 04-08-01 | baier | ref-counting in case of error */
 int R_Proxy_evaluate_noreturn (char const* pCmd)
 {
   SEXP rho = R_GlobalEnv;
@@ -658,6 +672,7 @@ int R_Proxy_evaluate_noreturn (char const* pCmd)
 	  }
 	else
 	  {
+	    UNPROTECT(1);
 	    return SC_PROXY_ERR_EVALUATE_STOP;
 	  }
       }

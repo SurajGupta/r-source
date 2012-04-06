@@ -13,11 +13,12 @@ hist.default <-
     if (!is.numeric(x))
 	stop("`x' must be numeric")
     xname <- deparse(substitute(x))
-    n <- length(x <- x[!is.na(x)])
+    n <- length(x <- x[is.finite(x)])
     use.br <- !missing(breaks)
     if(use.br) {
 	if(!missing(nclass))
-	    warning("`nclass' not used when `breaks' specified")
+	    warning(paste(sQuote("nclass"), "not used when",
+                          sQuote("breaks"), "specified"))
     }
     else if(!is.null(nclass) && length(nclass) == 1)
 	breaks <- nclass
@@ -27,7 +28,8 @@ hist.default <-
     else {				# construct vector of breaks
 	if(!include.lowest) {
 	    include.lowest <- TRUE
-	    warning("include.lowest ignored as `breaks' is not a vector")
+	    warning(paste(sQuote("include.lowest"), "ignored as",
+                          sQuote("breaks"), "is not a vector"))
 	}
 	if(is.character(breaks)) {
 	    breaks <- match.arg(tolower(breaks),
@@ -67,7 +69,7 @@ hist.default <-
     ## As one break point could be very much larger than the others,
     ## as from 1.9.1 we no longer use the range. (PR#6931)
     ## diddle <- 1e-7 * max(abs(range(breaks)))
-    diddle <- 1e-7 * median(diff(breaks))
+    diddle <- 1e-7 * stats::median(diff(breaks))
     fuzz <- if(right)
 	c(if(include.lowest) - diddle else diddle,
           rep.int(diddle, length(breaks) - 1))
@@ -124,7 +126,8 @@ plot.histogram <-
 	if(is.logical(x$equidist)) x$equidist
 	else { h <- diff(x$breaks) ; diff(range(h)) < 1e-7 * mean(h) }
     if(freq && !equidist)
-	warning("the AREAS in the plot are wrong -- rather use `freq=FALSE'!")
+	warning(paste("the AREAS in the plot are wrong -- rather use ",
+                      sQuote("freq=FALSE"), "!", sep = ""))
 
     y <- if (freq) x$counts else { ## x$density -- would be enough, but
 	## for back compatibility

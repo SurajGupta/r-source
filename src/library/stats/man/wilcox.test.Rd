@@ -11,7 +11,8 @@
 \usage{
 wilcox.test(x, \dots)
 
-\method{wilcox.test}{default}(x, y = NULL, alternative = c("two.sided", "less", "greater"),
+\method{wilcox.test}{default}(x, y = NULL,
+            alternative = c("two.sided", "less", "greater"),
             mu = 0, paired = FALSE, exact = NULL, correct = TRUE,
             conf.int = FALSE, conf.level = 0.95, \dots)
 
@@ -142,7 +143,6 @@ wilcox.test(x, y, alternative = "greater",
 wilcox.test(rnorm(10), rnorm(10, 2), conf.int = TRUE)
 
 ## Formula interface.
-data(airquality)
 boxplot(Ozone ~ Month, data = airquality)
 wilcox.test(Ozone ~ Month, data = airquality,
             subset = Month \%in\% c(5, 8))

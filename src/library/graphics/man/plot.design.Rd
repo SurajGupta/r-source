@@ -3,19 +3,20 @@
 \title{Plot Univariate Effects of a `Design' or Model}
 \description{
   Plot univariate effects of one ore more \code{\link{factor}}s,
-  typically for a designed experiment as analyzed by \code{\link[stats]{aov}()}.
+  typically for a designed experiment as analyzed by \code{\link{aov}()}.
   Further, in S this a method of the \code{\link{plot}} generic function
   for \code{design} objects.
 }
 \usage{
 plot.design(x, y = NULL, fun = mean, data = NULL, \dots,
-            ylim = NULL, xlab = "Factors", ylab = NULL, main = NULL,
-            ask = NULL, xaxt = par("xaxt"), axes = TRUE, xtick = FALSE)
+            ylim = NULL, xlab = "Factors", ylab = NULL,
+            main = NULL, ask = NULL, xaxt = par("xaxt"),
+            axes = TRUE, xtick = FALSE)
 }
 \arguments{
   \item{x}{either a data frame containing the design factors and
-    optionally the response, or a \code{\link[stats]{formula}} or
-    \code{\link[stats]{terms}} object.}
+    optionally the response, or a \code{\link{formula}} or
+    \code{\link{terms}} object.}
   \item{y}{the response, if not given in x.}
   \item{fun}{a function (or name of one) to be applied to each
     subset.  It must return one number for a numeric (vector) input.}
@@ -59,10 +60,9 @@ plot.design(x, y = NULL, fun = mean, data = NULL, \dots,
   version.  However, \code{col} (and \code{fg}) specification has
   different effects.
 }
-\seealso{\code{\link[stats]{interaction.plot}} for a \dQuote{standard graphic}
+\seealso{\code{\link{interaction.plot}} for a \dQuote{standard graphic}
   of designed experiments.}
 \examples{
-data(warpbreaks)
 plot.design(warpbreaks)# automatic for data frame with one numeric var.
 
 Form <- breaks ~ wool + tension
@@ -70,14 +70,14 @@ summary(fm1 <- aov(Form, data = warpbreaks))
 plot.design(       Form, data = warpbreaks, col = 2)# same as above
 
 ## More than one y :
-data(esoph)
 utils::str(esoph)
 plot.design(esoph) ## two plots; if interactive you are "ask"ed
 
 ## or rather, compare mean and median:
 op <- par(mfcol = 1:2)
-plot.design(ncases/ncontrols ~ ., data = esoph, ylim = c(0,0.8))
-plot.design(ncases/ncontrols ~ ., data = esoph, ylim = c(0,0.8), fun = median)
+plot.design(ncases/ncontrols ~ ., data = esoph, ylim = c(0, 0.8))
+plot.design(ncases/ncontrols ~ ., data = esoph, ylim = c(0, 0.8),
+            fun = median)
 par(op)
 }
 \keyword{hplot}

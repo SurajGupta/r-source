@@ -55,31 +55,31 @@ SearchEngine.html: \
 	@-$(PERL) $(top_srcdir)/tools/keywords2html.pl \
 	  $(top_srcdir)/doc/KEYWORDS.db >> $@
 	@cat $(srcdir)/SearchEngine-foot.html >> $@
-## <FIXME>
+## <NOTE>
 ## This is created via
 ##   (cd $(top_builddir)/src/library && make docs)
 index.txt:
 	@touch $@
 ## so we need to remove it ...
-## </FIXME>
+## </NOTE>
 
 install: install-message installdirs install-sources
 	@for f in $(OBJECTS); do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir); \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"; \
 	done
 installdirs:
-	@$(MKINSTALLDIRS) $(rhome)/$(subdir)
+	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)"
 install-message:
 	@echo "installing $(subdir) ..."
 install-sources:
 	@for f in $(INSTFILES); do \
-	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/$(subdir); \
+	  $(INSTALL_DATA) $(srcdir)/$${f} "$(rhome)/$(subdir)"; \
 	done
 install-strip: install
 
 uninstall:
 	@echo "uninstalling $(subdir) ..."
-	@rm -rf $(rhome)/$(subdir)
+	@rm -rf "$(rhome)/$(subdir)"
 
 mostlyclean:
 clean:

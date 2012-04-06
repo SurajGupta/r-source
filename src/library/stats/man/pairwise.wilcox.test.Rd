@@ -6,7 +6,7 @@
   for multiple testing.
 }
 \usage{
-pairwise.wilcox.test(x, g, p.adjust.method=p.adjust.methods, \dots)
+pairwise.wilcox.test(x, g, p.adjust.method = p.adjust.methods, \dots)
 }
 \arguments{
   \item{x}{ Response vector }
@@ -21,7 +21,6 @@ pairwise.wilcox.test(x, g, p.adjust.method=p.adjust.methods, \dots)
 \seealso{ \code{\link{wilcox.test}}, \code{\link{p.adjust}}}
 
 \examples{
-data(airquality)
 attach(airquality)
 Month <- factor(Month, labels = month.abb[5:9])
 ## These give warnings because of ties :

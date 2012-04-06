@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka
  *			      and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,23 +45,17 @@
 
 #define __SYSTEM__
 #include "devUI.h"		/* includes Startup.h */
-#include <R_ext/GetX11Image.h>  /* for *GetX11Image declarations */
 #undef __SYSTEM__
 
 #include "Runix.h"
 
 
-#ifdef HAVE_AQUA 
+#ifdef HAVE_AQUA
 void R_StartConsole(Rboolean OpenConsole) { ptr_R_StartConsole(); }
 #endif
 
-
-SA_TYPE SaveAction = SA_SAVEASK;
-SA_TYPE	RestoreAction = SA_RESTORE;
-Rboolean UsingReadline = TRUE;
-Rboolean LoadSiteFile = TRUE;
-Rboolean LoadInitFile = TRUE;
-Rboolean DebugInitFile = FALSE;
+Rboolean UsingReadline = TRUE;  /* used in sys-std.c & ../main/platform.c */
+extern SA_TYPE SaveAction;
 
 /* call pointers to allow interface switching */
 
@@ -82,30 +76,20 @@ int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
 int R_ChooseFile(int new, char *buf, int len)
 { return ptr_R_ChooseFile(new, buf, len); }
 
+
 void (*ptr_gnome_start)(int ac, char **av, Rstart Rp);
 
 void R_setStartTime(void); /* in sys-unix.c */
 void R_load_gnome_shlib(void); /* in dynload.c */
 
-int Rf_initialize_R(int ac, char **av);
-
-
-int main(int ac, char **av)
-{
-    Rf_initialize_R(ac, av);
-
-
-
-    mainloop();
-    /*++++++  in ../main/main.c */
-    return 0;
-}
 
 #ifdef HAVE_AQUA
-/*  this should be a global variable as it used in unix/devQuartz.c 
-	and in unix/main.c
+/*  this should be a global variable as it used in unix/devQuartz.c
+	and in unix/aqua.c
 */
 Rboolean useaqua = FALSE;
+Rboolean CocoaGUI = FALSE;
+Rboolean useCocoa = FALSE;
 #endif
 
 
@@ -144,12 +128,10 @@ int Rf_initialize_R(int ac, char **av)
     R_setStartTime();
 #endif
     R_DefParams(Rp);
-/*    R_SizeFromEnv(Rp); */
     /* Store the command line arguments before they are processed
-       by the R option handler. These are stored in Rp and then moved
-       to the global variable CommandLineArgs in R_SetParams.
+       by the R option handler. 
      */
-    R_set_command_line_arguments(ac, av, Rp);
+    R_set_command_line_arguments(ac, av);
 
     /* first task is to select the GUI */
     for(i = 0, avv = av; i < ac; i++, avv++) {
@@ -172,6 +154,8 @@ int Rf_initialize_R(int ac, char **av)
 #ifdef HAVE_AQUA
 	    else if(!strcmp(p, "aqua") || !strcmp(p, "AQUA"))
 		useaqua = TRUE;
+	    else if(!strcmp(p, "cocoa") || !strcmp(p, "COCOA"))
+		useCocoa = TRUE;
 #endif
 	    else if(!strcmp(p, "X11") || !strcmp(p, "x11"))
 		useX11 = TRUE;
@@ -196,19 +180,16 @@ int Rf_initialize_R(int ac, char **av)
 	}
     }
 
-    ptr_GnomeDeviceDriver = stub_GnomeDeviceDriver;
-    ptr_GTKDeviceDriver = stub_GTKDeviceDriver;
-    ptr_R_GetX11Image = R_GetX11Image;
 #ifdef HAVE_X11
     if(useX11) {
 	if(!usegnome) {
-	    R_GUIType="X11";
+	    R_GUIType = "X11";
 	} else {
 #ifndef HAVE_GNOME
 	    R_Suicide("GNOME GUI is not available in this version");
 #endif
 	    R_load_gnome_shlib();
-	    R_GUIType="GNOME";
+	    R_GUIType = "GNOME";
 	    ptr_gnome_start(ac, av, Rp);
 	    /* this will never return, but for safety */
 	    return 0;
@@ -217,13 +198,15 @@ int Rf_initialize_R(int ac, char **av)
 #endif /* HAVE_X11 */
 #ifdef HAVE_AQUA
     if(useaqua) {
-	    R_load_aqua_shlib();
-	    R_GUIType="AQUA";
+	R_load_aqua_shlib();
+	R_GUIType = "AQUA";
     }
+	if(useCocoa)
+	R_GUIType = "AQUA";
 #endif
 #ifdef HAVE_TCLTK
     if(useTk) {
-	    R_GUIType="Tk";
+	R_GUIType = "Tk";
     }
 #endif
     R_common_command_line(&ac, av, Rp);
@@ -235,7 +218,9 @@ int Rf_initialize_R(int ac, char **av)
 		break;
 	    } else {
 #ifdef HAVE_AQUA
-           if(!strncmp(*av,"-psn",4)) { break; } else
+		if(!strncmp(*av, "-psn", 4)) 
+		    break; 
+		else
 #endif
 		snprintf(msg, 1024, "WARNING: unknown option %s\n", *av);
 		R_ShowMessage(msg);
@@ -254,30 +239,31 @@ int Rf_initialize_R(int ac, char **av)
     /* On Unix the console is a file; we just use stdio to write on it */
 
 #ifdef HAVE_AQUA
-    if(useaqua) 
-      R_Interactive = useaqua;
+    if(useaqua)
+	R_Interactive = useaqua;
     else
 #endif
     R_Interactive = isatty(0);
 
 #ifdef HAVE_AQUA
     if(useaqua){
-     R_Outputfile = NULL;
-     R_Consolefile = NULL;
-    } else { 
+	R_Outputfile = NULL;
+	R_Consolefile = NULL;
+    } else {
 #endif
     R_Outputfile = stdout;
     R_Consolefile = stderr;
 #ifdef HAVE_AQUA
     }
-#endif 
+#endif
 
-  
+
 /*
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.
  */
-    if (!R_Interactive && SaveAction != SA_SAVE && SaveAction != SA_NOSAVE)
+    if (!R_Interactive && Rp->SaveAction != SA_SAVE && 
+	Rp->SaveAction != SA_NOSAVE)
 	R_Suicide("you must specify `--save', `--no-save' or `--vanilla'");
 
     if ((R_HistoryFile = getenv("R_HISTFILE")) == NULL)
@@ -294,74 +280,58 @@ int Rf_initialize_R(int ac, char **av)
 	Rstd_read_history(R_HistoryFile);
     fpu_setup(1);
 
-#ifdef HAVE_AQUA    
-    if(useaqua)
-	R_StartConsole(TRUE);
+#ifdef HAVE_AQUA
+    if(useaqua & !CocoaGUI)
+		R_StartConsole(TRUE);
 #endif
 
  return(0);
 }
 
+    /*
+       This function can be used to open the named files in text
+       editors.  If the file does not exist then the editor should be
+       opened to create a new file.  On GUI platforms multiple files
+       can be opened in separate editor windows, but this currently
+       only works on Windows, not Aqua.
+    */
 
+    /*
+     *     nfile   = number of files
+     *     file    = array of filenames
+     *     editor  = editor to be used.
+     */
 
-/*
-  It would be better to enclose this routine within a conditional
-    #ifdef R_EMBEDDED
-      Rf_initEmbeddedR() {
-	...
-      }
-    #endif
-
-    However, we would then have to recompile this file, libunix.a
-    and then link libR.so. Until we have this sorted out in the
-    Makefiles, we compile this unconditionally.
-*/
-
-
-/*
- This is the routine that can be called to initialize the R environment
- when it is embedded within another application (by loading libR.so).
-
- The arguments are the command line arguments that would be passed to
- the regular standalone R, including the first value identifying the
- name of the `application' being run.  This can be used to indicate in
- which application R is embedded and used by R code (e.g. in the
- Rprofile) to determine how to initialize itself. These are accessible
- via the R function commandArgs().
-
- We have to sort out how to recompile this file when building libR.so,
- having already compiled for the standalone build. However, since on
- most platforms we will have to recompile all the files with the
- position independent code (PIC) flag, this is a larger issue.
-
-
- The return value indicates whether the initialization was successful
- (Currently there is a possibility to do a long jump within the
- initialization code so that will we never return here.)
-
- Example:
-	 0) name of executable
-	 1) don't load the X11 graphics library
-	 2) don't show the banner at startup.
-
-
-    char *argv[]= {"REmbeddedPostgres", "--gui=none", "--silent"};
-    initEmbedded(sizeof(argv)/sizeof(argv[0]), argv);
-*/
-
-int Rf_initEmbeddedR(int argc, char **argv)
+int R_EditFiles(int nfile, char **file, char **title, char *editor)
 {
-    Rf_initialize_R(argc, argv);
-    setup_Rmainloop();
-    return(1);
+    char  buf[1024];
+#if defined(HAVE_AQUA)
+	if (useCocoa){
+		return(ptr_R_EditFiles(nfile, file, title, editor));		
+	}
+#endif
+
+    if (nfile > 0) {
+	if (nfile > 1)
+	    R_ShowMessage("WARNING: Only editing the first in the list of files");
+
+#if defined(HAVE_AQUA)
+	if (!strcmp(R_GUIType, "AQUA"))
+	    Raqua_Edit(file[0]);
+	else {
+#endif
+	    /* Quote path if necessary */
+	    if (editor[0] != '"' && strchr(editor, ' '))
+		snprintf(buf, 1024, "\"%s\" \"%s\"", editor, file[0]);
+	    else
+		snprintf(buf, 1024, "%s \"%s\"", editor, file[0]);
+	    R_system(buf);
+#if defined(HAVE_AQUA)
+	}
+#endif
+	return 0;
+    }
+    return 1;
 }
-
-
-
-	/* Declarations to keep f77 happy */
-
-int MAIN_(int ac, char **av)  {return 0;}
-int MAIN__(int ac, char **av) {return 0;}
-int __main(int ac, char **av) {return 0;}
 
 

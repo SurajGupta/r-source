@@ -78,18 +78,18 @@ share/texmf/upquote.sty
 	Copyright 2000 Michael A. Covington.
 	Copyright 2003 Michael A. Covington, Frank Mittelbach.
 
-src/library/base/R/mosaicplot.R
+src/library/graphics/R/mosaicplot.R
 
 	Copyright (C) 1998 John W. Emerson
 
 
-src/library/base/R/aov.R
-src/library/base/R/bandwidths.R
-src/library/base/R/contr.poly.R
+src/library/stats/R/aov.R
+src/library/stats/R/bandwidths.R
+src/library/stats/R/contr.poly.R
 src/library/base/R/expand.grid.R
-src/library/base/R/predict.glm.R
-src/library/base/R/update.R
-src/library/base/*/max.col.R*
+src/library/stats/R/predict.glm.R
+src/library/stats/R/update.R
+src/library/stats/*/max.col.R*
 src/library/stats/R/biplot.R
 src/library/stats/R/princomp-add.R
 src/appl/bandwidths.c
@@ -110,15 +110,15 @@ src/library/stats:
 	Copyright (c) 1989, 1992 by AT&T.
 
 
-src/library/ts/R/diffinv.R
-src/library/ts/R/embed.R
-src/library/ts/R/kernel.R
-src/library/ts/src/PPsum.c
+src/library/stats/R/diffinv.R
+src/library/stats/R/embed.R
+src/library/stats/R/kernel.R
+src/library/stats/src/PPsum.c
 
 	Copyright (C) 1997-1999	 Adrian Trapletti
 
 
-src/library/ts/src/carray.c, mburg.c, myw.c, qr.c
+src/library/stats/src/carray.c, mburg.c, myw.c, qr.c
 
 	Copyright (C) 1999 Martyn Plummer
 
@@ -177,7 +177,7 @@ src/main/RNG.c
   and is used unchanged.
 
 
-src/modules/lapack/dlapack?.f, cmplx.f, rgeev.f, rsyev.f
+src/modules/lapack/dlapack[0123].f, cmplx.f, dlamc,f rgeev.f, rsyev.f
 
   Extracted from
   *  -- LAPACK routine (version 3.0) --
@@ -252,7 +252,37 @@ src/extra/pcre/pcre.c
 src/extra/pcre/pcre.h
 src/extra/pcre/study.c
 
-   Copyright (c) 1997-2003 University of Cambridge
+   Copyright (c) 1997-2004 University of Cambridge
+   All rights reserved.
+
+See file src/extra/pcre/LICENCE.  For binary builds of R that requires
+us to include
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+      * Redistributions of source code must retain the above copyright notice,
+	this list of conditions and the following disclaimer.
+
+      * Redistributions in binary form must reproduce the above copyright
+	notice, this list of conditions and the following disclaimer in the
+	documentation and/or other materials provided with the distribution.
+
+      * Neither the name of the University of Cambridge nor the names of its
+	contributors may be used to endorse or promote products derived from
+	this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
 
 
 src/extra/bzip2/LICENSE

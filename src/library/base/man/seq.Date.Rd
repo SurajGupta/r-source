@@ -2,10 +2,10 @@
 \alias{seq.Date}
 \title{Generate Regular Sequences of Dates}
 \description{
-  The methodw for \code{\link{seq}} for date-time classes
+  The method for \code{\link{seq}} for date-time classes.
 }
 \usage{
-\method{seq}{Date}(from, to, by, length.out=NULL, along.with=NULL, \dots)
+\method{seq}{Date}(from, to, by, length.out = NULL, along.with = NULL, \dots)
 }
 \arguments{
   \item{from}{starting date. Required}

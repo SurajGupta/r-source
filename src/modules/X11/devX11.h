@@ -1,3 +1,24 @@
+/*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
+ *			      R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #ifndef _DEV_X11_H
 #define _DEV_X11_H
 
@@ -39,7 +60,7 @@ typedef enum {
 
 
 Rboolean newX11DeviceDriver(DevDesc*, char*, double, double, double, double, 
-			    X_COLORTYPE, int, int, SEXP);
+			    X_COLORTYPE, int, int, int, SEXP, int);
 
 
 	/********************************************************/
@@ -68,6 +89,9 @@ typedef struct {
      */
     int lty;				/* Line type */
     double lwd;
+    R_GE_lineend lend;
+    R_GE_linejoin ljoin;
+    double lmitre;
     int col;				/* Color */
     /* fg and bg removed -- only use col and new param fill
      */
@@ -77,6 +101,7 @@ typedef struct {
     int fontsize;			/* Size in points */
     int basefontface;			/* Typeface */
     int basefontsize;			/* Size in points */
+    char basefontfamily[500];           /* Initial font family */
 
     /* X11 Driver Specific */
     /* Parameters with copy per X11 device. */
@@ -97,7 +122,7 @@ typedef struct {
     int usefixed;
     XFontStruct *fixedfont;
     XFontStruct *font;
-    char fontfamily[500];
+    char fontfamily[500];               /* CURRENT fontfamily */
     char symbolfamily[500];
     X_GTYPE type;			/* Window or pixmap? */
     int npages;				/* counter for a pixmap */
@@ -107,6 +132,7 @@ typedef struct {
 
     Rboolean handleOwnEvents;           /* Flag indicating whether events will be handled externally from R (TRUE),
                                            or whether R is to handle the events (FALSE) */
+    int res_dpi;			/* used for png/jpeg */
 } newX11Desc;
 
 
@@ -117,7 +143,7 @@ int      Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd
 Rboolean newX11_Open(NewDevDesc *dd, newX11Desc *xd, 
 		     char *dsp, double w, double h, 
 		     double gamma_fac, X_COLORTYPE colormodel, 
-		     int maxcube, int canvascolor);
+		     int maxcube, int bgcolor, int canvascolor, int res);
 
 #endif /* R_X11_DEVICE */
 

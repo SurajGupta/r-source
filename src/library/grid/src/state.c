@@ -42,11 +42,12 @@ int gridRegisterIndex;
  * GSS_ENGINERECORDING 13 = are we already inside a .Call.graphics call?
  *   Used by grid.Call.graphics to avoid unnecessary recording on 
  *   engine display list
+ * GSS_ASK 14 = should we prompt the user before starting a new page?
 */
 
 SEXP createGridSystemState()
 {
-    return allocVector(VECSXP, 14);
+    return allocVector(VECSXP, 15);
 }
 
 void initDL(GEDevDesc *dd)
@@ -78,11 +79,11 @@ void initOtherState(GEDevDesc* dd)
     SEXP currloc, prevloc, recording;
     SEXP state = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
     currloc = VECTOR_ELT(state, GSS_CURRLOC);
-    REAL(currloc)[0] = 0;
-    REAL(currloc)[1] = 0;    
+    REAL(currloc)[0] = NA_REAL;
+    REAL(currloc)[1] = NA_REAL;    
     prevloc = VECTOR_ELT(state, GSS_PREVLOC);
-    REAL(prevloc)[0] = 0;
-    REAL(prevloc)[1] = 0;    
+    REAL(prevloc)[0] = NA_REAL;
+    REAL(prevloc)[1] = NA_REAL;    
     SET_VECTOR_ELT(state, GSS_CURRGROB, R_NilValue);
     recording = VECTOR_ELT(state, GSS_ENGINERECORDING);
     LOGICAL(recording)[0] = FALSE;
@@ -92,7 +93,7 @@ void initOtherState(GEDevDesc* dd)
 void fillGridSystemState(SEXP state, GEDevDesc* dd) 
 {
     SEXP devsize, currloc, prevloc, dlon, enginedlon, recording;
-    SEXP griddev;
+    SEXP griddev, gridask;
     PROTECT(devsize = allocVector(REALSXP, 2));
     REAL(devsize)[0] = 0;
     REAL(devsize)[1] = 0;
@@ -102,12 +103,12 @@ void fillGridSystemState(SEXP state, GEDevDesc* dd)
      * are in INCHES;  so (0, 0) is the bottom-left corner of the device.
      */
     PROTECT(currloc = allocVector(REALSXP, 2));
-    REAL(currloc)[0] = 0;
-    REAL(currloc)[1] = 0;    
+    REAL(currloc)[0] = NA_REAL;
+    REAL(currloc)[1] = NA_REAL;    
     SET_VECTOR_ELT(state, GSS_CURRLOC, currloc);
     PROTECT(prevloc = allocVector(REALSXP, 2));
-    REAL(prevloc)[0] = 0;
-    REAL(prevloc)[1] = 0;    
+    REAL(prevloc)[0] = NA_REAL;
+    REAL(prevloc)[1] = NA_REAL;    
     SET_VECTOR_ELT(state, GSS_PREVLOC, prevloc);
     PROTECT(dlon = allocVector(LGLSXP, 1));
     LOGICAL(dlon)[0] = TRUE;
@@ -130,7 +131,10 @@ void fillGridSystemState(SEXP state, GEDevDesc* dd)
     PROTECT(griddev = allocVector(LGLSXP, 1));
     LOGICAL(griddev)[0] = FALSE;
     SET_VECTOR_ELT(state, GSS_GRIDDEVICE, griddev);
-    UNPROTECT(7);
+    PROTECT(gridask = allocVector(LGLSXP, 1));
+    LOGICAL(gridask)[0] = FALSE;
+    SET_VECTOR_ELT(state, GSS_ASK, gridask);
+    UNPROTECT(8);
 }
 
 SEXP gridStateElement(GEDevDesc *dd, int elementIndex)
@@ -255,30 +259,6 @@ SEXP gridCallback(GEevent task, GEDevDesc *dd, SEXP data) {
 		currentgp = gridStateElement(dd, GSS_GPAR);
 		gcontextFromgpar(currentgp, 0, &gc);
 		GENewPage(&gc, dd);
-		/*
-		 * Instead of using the current fill, use ".grid.redraw.fill"
-		 * because if the current fill is transparent then the 
-		 * screen will not be cleared on a redraw
-		 * NOTE that this is a temporary fix awaiting a more complete
-		 * and complex fix (requiring changes to base)
-		 *
-		 
-		 fillsxp = getSymbolValue(".grid.redraw.fill");
-		 
-		*/
-		/*
-		 * Just fill a rect rather than calling GENewPage
-		 
-		 if (isNull(fillsxp))
-		 fill = NA_INTEGER;
-		 else
-		 fill = RGBpar(fillsxp, 0);
-		 GERect(toDeviceX(-.1, GE_NDC, dd), toDeviceY(-.1, GE_NDC, dd),
-		 toDeviceX(1.1, GE_NDC, dd), toDeviceY(1.1, GE_NDC, dd),
-		 NA_INTEGER, fill, gpGamma(currentgp), 
-		 gpLineType(currentgp), gpLineWidth(currentgp), dd);
-		 
-		*/
 		initGPar(dd);
 		initVP(dd);
 		initOtherState(dd);

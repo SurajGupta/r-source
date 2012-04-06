@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -257,6 +257,23 @@ static void OutComplex(R_outpstream_t stream, Rcomplex c)
     OutReal(stream, c.i);
 }
 
+static void OutByte(R_outpstream_t stream, int i)
+{
+    char buf[128];
+    switch (stream->type) {
+    case R_pstream_ascii_format:
+	Rsnprintf(buf, sizeof(buf), "%02x\n", i);
+	stream->OutBytes(stream, buf, strlen(buf));
+	break;
+    case R_pstream_binary_format:
+    case R_pstream_xdr_format:
+	stream->OutBytes(stream, &i, 1);
+	break;
+    default:
+	error("unknown or inappropriate output format");
+    }
+}
+
 static void OutString(R_outpstream_t stream, char *s, int length)
 {
     if (stream->type == R_pstream_ascii_format) {
@@ -381,6 +398,24 @@ static Rcomplex InComplex(R_inpstream_t stream)
     return c;
 }
 
+static int InByte(R_inpstream_t stream)
+{
+    char word[128];
+    Rbyte rb;
+
+    switch (stream->type) {
+    case R_pstream_ascii_format:
+	InWord(stream, word, sizeof(word));
+	return (Rbyte) word[0];
+    case R_pstream_binary_format:
+    case R_pstream_xdr_format:
+	stream->InBytes(stream, &rb, 1);
+	return rb;
+    default:
+	return 0;
+    }
+}
+
 /* These utilities for reading characters with an unget option are
    defined so the code in InString can match the code in
    saveload.c:InStringAscii--that way it is easier to match changes in
@@ -493,6 +528,22 @@ static void InFormat(R_inpstream_t stream)
     case 'A': type = R_pstream_ascii_format; break;
     case 'B': type = R_pstream_binary_format; break;
     case 'X': type = R_pstream_xdr_format; break;
+    case '\n':
+	/* GROSS HACK: ASCII unserialize may leave a trailing newline
+	   in the stream.  If the stream contains a second
+	   serialization, then a second unserialize will fail if such
+	   a newline is present.  The right fix is to make sure
+	   unserialize consumes exactly what serialize produces.  But
+	   this seems hard because of the current use of whitespace
+	   skipping in unserialize.  So a temporary hack to cure the
+	   symptom is to deal with a possible leading newline.  I
+	   don't think more than one is possible, but I'm not sure.
+	   LT */
+	if (buf[1] == 'A') {
+	    type = R_pstream_ascii_format;
+	    stream->InBytes(stream, buf, 1);
+	    break;
+	}
     default:
 	type = R_pstream_any_format;  /* keep compiler happy */
 	error("unknown input format");
@@ -507,7 +558,7 @@ static void InFormat(R_inpstream_t stream)
 /*
  * Hash Table Functions
  *
- * Hashing functions for hashing reference objects diring writing.
+ * Hashing functions for hashing reference objects during writing.
  * Objects are entered, and the order in which they are encountered is
  * recorded.  GashGet returns this number, a positive integer, if the
  * object was seen before, and zero if not.  A fixed hash table size
@@ -738,6 +789,7 @@ static void OutStringVec(R_outpstream_t stream, SEXP s, SEXP ref_table)
 #define INTEGER_ELT(x,__i__)	INTEGER(x)[__i__]
 #define REAL_ELT(x,__i__)	REAL(x)[__i__]
 #define COMPLEX_ELT(x,__i__)	COMPLEX(x)[__i__]
+#define RAW_ELT(x,__i__)	RAW(x)[__i__]
 
 static void WriteItem (SEXP s, SEXP ref_table, R_outpstream_t stream)
 {
@@ -860,6 +912,10 @@ static void WriteItem (SEXP s, SEXP ref_table, R_outpstream_t stream)
 #else
 	    error("this version of R cannot write byte code objects");
 #endif
+	case RAWSXP:
+	    OutInteger(stream, LENGTH(s));
+	    OutVec(stream, s, RAW_ELT, OutByte);
+	    break;
 	default:
 	    error("WriteItem: unknown type %i", TYPEOF(s));
 	}
@@ -1111,6 +1167,7 @@ static SEXP InStringVec(R_inpstream_t stream, SEXP ref_table)
 #define SET_INTEGER_ELT(x,__i__,v)	(INTEGER_ELT(x,__i__)=(v))
 #define SET_REAL_ELT(x,__i__,v)		(REAL_ELT(x,__i__)=(v))
 #define SET_COMPLEX_ELT(x,__i__,v)	(COMPLEX_ELT(x,__i__)=(v))
+#define SET_RAW_ELT(x,__i__,v)		(RAW_ELT(x,__i__)=(v))
 
 static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 {
@@ -1203,7 +1260,7 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	UNPROTECT(1); /* s */
 	return s;
     default:
-	/* These break out of the swith to have their ATTR,
+	/* These break out of the switch to have their ATTR,
 	   LEVELS, and OBJECT fields filled in.  Each leaves the
 	   newly allocated value PROTECTed */
 	switch (type) {
@@ -1272,6 +1329,11 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    error("this version of R cannot read class references");
 	case GENERICREFSXP:
 	    error("this version of R cannot read generic function references");
+	case RAWSXP:
+	    length = InInteger(stream);
+	    PROTECT(s = allocVector(type, length));
+	    InVec(stream, s, SET_RAW_ELT, InByte, length);
+	    break;
 	default:
 	    s = R_NilValue; /* keep compiler happy */
 	    error("ReadItem: unknown type %i", type);
@@ -1928,10 +1990,16 @@ static SEXP appendStringToFile(SEXP file, SEXP string)
 	error("not a proper file name");
     if (! IS_PROPER_STRING(string))
 	error("not a proper string");
-
+#ifdef HAVE_WORKING_FTELL
+    /* Windows' ftell returns position 0 with "ab" */
     if ((fp = fopen(CHAR(STRING_ELT(file, 0)), "ab")) == NULL)
 	error("file open failed");
-    
+#else
+    if ((fp = fopen(CHAR(STRING_ELT(file, 0)), "r+b")) == NULL)
+	 error("file open failed");
+    fseek(fp, 0, SEEK_END);
+#endif
+
     len = LENGTH(STRING_ELT(string, 0));
     pos = ftell(fp);
     out = fwrite(CHAR(STRING_ELT(string, 0)), 1, len, fp);
@@ -1980,7 +2048,7 @@ static SEXP readStringFromFile(SEXP file, SEXP key)
     return val;
 }
 
-/* Gets the vinding values of variables from a frame and returns them
+/* Gets the binding values of variables from a frame and returns them
    as a list.  If the force argument is true, promises are forced;
    otherwise they are not. */
 
@@ -1993,7 +2061,7 @@ SEXP R_getVarsFromFrame(SEXP vars, SEXP env, SEXP forcesxp)
     if (TYPEOF(env) != NILSXP && TYPEOF(env) != ENVSXP)
         error("bad environment");
     if (TYPEOF(vars) != STRSXP)
-        error("bad varaible names");
+        error("bad variable names");
     force = asLogical(forcesxp);
 
     len = LENGTH(vars);
@@ -2016,6 +2084,7 @@ SEXP R_getVarsFromFrame(SEXP vars, SEXP env, SEXP forcesxp)
             SET_NAMED(tmp, 1);
 	SET_VECTOR_ELT(val, i, tmp);
     }
+    setAttrib(val, R_NamesSymbol, vars);    
     UNPROTECT(1);
 
     return val;
@@ -2041,9 +2110,9 @@ SEXP R_lazyLoadDBinsertValue(SEXP value, SEXP file, SEXP ascii,
     return key;
 }
 
-/* Retireves a sequence of bytes as specified by a position/length key
+/* Retrieves a sequence of bytes as specified by a position/length key
    from a file, optionally decompresses, and unserializes the bytes.
-   If the result is a promise, then the promise ir forced. */
+   If the result is a promise, then the promise is forced. */
 
 SEXP R_lazyLoadDBfetch(SEXP key, SEXP file, SEXP compsxp, SEXP hook)
 {

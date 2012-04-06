@@ -87,7 +87,7 @@ getExportedValue <- function(ns, name) {
     get(name, env = asNamespace(pkg), inherits=FALSE)
 }
 
-attachNamespace <- function(ns, pos = 2) {
+attachNamespace <- function(ns, pos = 2, dataPath = NULL) {
     runHook <- function(hookname, env, ...) {
         if (exists(hookname, envir = env, inherits = FALSE)) {
             fun <- get(hookname, envir = env, inherits = FALSE)
@@ -107,6 +107,10 @@ attachNamespace <- function(ns, pos = 2) {
     attr(env, "path") <- nspath
     exports <- getNamespaceExports(ns)
     importIntoEnv(env, exports, ns, exports)
+    if(!is.null(dataPath)) {
+        dbbase <- file.path(dataPath, "Rdata")
+        if(file.exists(paste(dbbase, ".rdb", sep=""))) lazyLoad(dbbase, env)
+    }
     runHook(".onAttach", ns, dirname(nspath), nsname)
     lockEnvironment(env, TRUE)
     on.exit()
@@ -139,11 +143,12 @@ loadNamespace <- function (package, lib.loc = NULL,
     if (! is.null(ns))
         ns
     else {
-        runHook <- function(hookname, env, ...) {
+        runHook <- function(hookname, pkgname, env, ...) {
             if (exists(hookname, envir = env, inherits = FALSE)) {
                 fun <- get(hookname, envir = env, inherits = FALSE)
                 if (! is.null(try({ fun(...); NULL})))
-                    stop(paste(hookname, "failed in loadNamespace"),
+                    stop(paste(hookname, "failed in loadNamespace",
+                               "for", sQuote(pkgname)),
                          call. = FALSE)
             }
         }
@@ -237,23 +242,38 @@ loadNamespace <- function (package, lib.loc = NULL,
         # load the code
         codename <- strsplit(package, "_", fixed=TRUE)[[1]][1]
         codeFile <- file.path(package.lib, package, "R", codename)
-        if (file.exists(codeFile))
-            sys.source(codeFile, env, keep.source = keep.source)
-        else warning(paste("Package ", sQuote(package), "contains no R code"))
+        if (file.exists(codeFile)) {
+            res <- try(sys.source(codeFile, env, keep.source = keep.source))
+            if(inherits(res, "try-error"))
+                stop("Unable to load R code in package ", sQuote(package),
+                     call. = FALSE)
+        } else warning(paste("Package ", sQuote(package), "contains no R code"))
 
-        # partial loading stops at this point
+        ## partial loading stops at this point
+        ## -- used in preparing for lazy-loading
         if (partial) return(ns)
+
+        # lazy-load any sysdata
+        dbbase <- file.path(package.lib, package, "R", "sysdata")
+        if (file.exists(paste(dbbase, ".rdb", sep=""))) lazyLoad(dbbase, env)
 
         # register any S3 methods
         registerS3methods(nsInfo$S3methods, package, env)
 
         # load any dynamic libraries
-        for (lib in nsInfo$dynlibs)
-            library.dynam(lib, package, package.lib)
+        # We provide a way out for cross-building where we can't dynload
+        if(!nchar(Sys.getenv("R_CROSS_BUILD"))) {
+            dlls = list()
+            for (lib in nsInfo$dynlibs) {
+               dlls[[lib]]  = library.dynam(lib, package, package.lib)
+            }
+            setNamespaceInfo(env, "DLLs", dlls)
+        }
         addNamespaceDynLibs(env, nsInfo$dynlibs)
 
+
         # run the load hook
-        runHook(".onLoad", env, package.lib, package)
+        runHook(".onLoad", package, env, package.lib, package)
 
         # process exports, seal, and clear on.exit action
         exports <- nsInfo$exports
@@ -267,7 +287,8 @@ loadNamespace <- function (package, lib.loc = NULL,
             if(length(expClasses) > 0) {
                 missingClasses <- !sapply(expClasses, methods:::isClass, where = ns)
                 if(any(missingClasses))
-                    stop("Classes for export not defined: ",
+                    stop("In", sQuote(package),
+                         "classes for export not defined: ",
                          paste(expClasses[missingClasses], collapse = ", "))
                 expClasses <- paste(methods:::classMetaName(""), expClasses, sep="")
             }
@@ -281,7 +302,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                                        exports[!is.na(match(exports, allMethods))]))
                 missingMethods <- !(expMethods %in% allMethods)
                 if(any(missingMethods))
-                    stop("Methods for export not found: ",
+                    stop("In", sQuote(package),
+                         "methods for export not found: ",
                          paste(expMethods[missingMethods], collapse = ", "))
                 needMethods <- (exports %in% allMethods) & !(exports %in% expMethods)
                 if(any(needMethods))
@@ -295,7 +317,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                 }
             }
             else if(length(expMethods) > 0)
-                stop("Methods specified for export, but none defined: ",
+                stop("In", sQuote(package),
+                     "methods specified for export, but none defined: ",
                      paste(expMethods, collapse=", "))
             exports <- c(exports, expClasses, expMethods)
         }
@@ -353,7 +376,7 @@ unloadNamespace <- function(ns) {
         if (exists(hookname, envir = env, inherits = FALSE)) {
             fun <- get(hookname, envir = env, inherits = FALSE)
             if (! is.null(try({ fun(...); NULL})))
-                stop(paste(hookname, "failed in unloadNamespace"),
+                stop(hookname, " failed in unloadNamespace(", ns, ")",
                      call. = FALSE)
         }
     }
@@ -362,8 +385,10 @@ unloadNamespace <- function(ns) {
     pos <- match(paste("package", nsname, sep=":"), search())
     if (! is.na(pos)) detach(pos = pos)
     users <- getNamespaceUsers(ns)
+    print(ns)
     if (length(users) != 0)
-        stop(paste("name space still used by:", paste(users, collapse = ", ")))
+        stop(paste("name space", sQuote(getNamespaceName(ns)),
+                   "still used by:", paste(sQuote(users), collapse = ", ")))
     nspath <- getNamespaceInfo(ns, "path")
     hook <- getHook(packageEvent(nsname, "onUnload")) # might be list()
     for(fun in rev(hook)) try(fun(nsname, nspath))
@@ -603,7 +628,7 @@ importIntoEnv <- function(impenv, impnames, expenv, expnames) {
         miss <- expnames[! expnames %in% ex]
         stop("object(s) ", paste(sQuote(miss), collapse=", "),
              " are not exported by ",
-             sQuote(paste("namespace", getNamespaceName(expenv), sep=";"))
+             sQuote(paste("namespace", getNamespaceName(expenv), sep=":"))
              )
     }
     expnames <- unlist(lapply(expnames, get, env = exports, inherits = FALSE))
@@ -667,12 +692,11 @@ namespaceExport <- function(ns, vars) {
     }
 }
 
+## NB this needs a decorated name, foo_ver, if appropriate
 packageHasNamespace <- function(package, package.lib) {
     namespaceFilePath <- function(package, package.lib)
         file.path(package.lib, package, "NAMESPACE")
-    file.exists(namespaceFilePath(package, package.lib)) ||
-    ! is.na(read.dcf(file.path(package.lib, package, "DESCRIPTION"),
-                               fields="Namespace"))
+    file.exists(namespaceFilePath(package, package.lib))
 }
 
 parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {

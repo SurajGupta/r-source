@@ -104,7 +104,7 @@ glm.fit <-
 {
     x <- as.matrix(x)
     xnames <- dimnames(x)[[2]]
-    ynames <- names(y)
+    ynames <- if(is.matrix(y)) rownames(y) else names(y)
     conv <- FALSE
     nobs <- NROW(y)
     nvars <- ncol(x)
@@ -512,7 +512,7 @@ stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
 	   },
 	   "F" = {
 	       Fvalue <- abs((table[, dev.col]/table[, "Df"])/scale)
-	       Fvalue[table[, "Df"] == 0] <- NA
+	       Fvalue[table[, "Df"] %in% 0] <- NA
 	       cbind(table, F = Fvalue,
 		     "Pr(>F)" = pf(Fvalue, abs(table[, "Df"]),
 		     abs(df.scale), lower.tail=FALSE))
@@ -735,4 +735,14 @@ weights.glm <- function(object, type = c("prior", "working"), ...)
     res <- if(type == "prior") object$prior.weights else object$weights
     if(is.null(object$na.action)) res
     else naresid(object$na.action, res)
+}
+
+formula.glm <- function(x, ...)
+{
+    form <- x$formula
+    if( !is.null(form) ) {
+        form <- formula(x$terms) # has . expanded
+        environment(form) <- environment(x$formula)
+        form
+    } else formula(x$terms)
 }

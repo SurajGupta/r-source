@@ -4,10 +4,10 @@
 print(x, \dots)
 
 \method{print}{factor}(x, quote = FALSE, max.levels = NULL,
-     width = getOption("width"), \dots)
+      width = getOption("width"), \dots)
 
 \method{print}{table}(x, digits = getOption("digits"), quote = FALSE,
-          na.print = "", zero.print = "0", justify = "none", \dots)
+      na.print = "", zero.print = "0", justify = "none", \dots)
 }
 \alias{print}
 \alias{print.factor}
@@ -43,7 +43,7 @@ print(x, \dots)
 }
 \details{
   The default method, \code{\link{print.default}} has its own help page.
-  Use \code{\link[utils]{methods}("print")} to get all the methods for the
+  Use \code{\link{methods}("print")} to get all the methods for the
   \code{print} generic.
 
   \code{print.factor} allows some customization and is used for printing
@@ -73,10 +73,9 @@ rr <- for(i in 1:3) print(1:i)
 rr
 
 ## Printing of factors
-data(attenu)
 attenu$station ## 117 levels -> `max.levels' depending on width
 
-data(esoph) ## ordered : levels  "l1 < l2 < .."
+## ordered factors: levels  "l1 < l2 < .."
 esoph$agegp[1:12]
 esoph$alcgp[1:12]
 

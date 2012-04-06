@@ -10,7 +10,7 @@
 \usage{
 %% Improvement ideas: see code definition, currently in ../R/plot.R
 \method{plot}{table}(x, type = "h", ylim = c(0, max(x)), lwd = 2,
-      xlab = NULL, ylab = NULL, frame.plot = is.num, \dots)
+     xlab = NULL, ylab = NULL, frame.plot = is.num, \dots)
 }
 \arguments{
   \item{x}{a \code{\link{table}} (like) object.}
@@ -34,11 +34,9 @@
 (Poiss.tab <- table(N = rpois(200, lam= 5)))
 plot(Poiss.tab, main = "plot(table(rpois(200, lam=5)))")
 
-data(state)
 plot(table(state.division))
 
 ## 4-D :
-data(Titanic)
 plot(Titanic, main ="plot(Titanic, main= *)")
 
 }

@@ -463,7 +463,7 @@ FUNTAB R_FunTab[] =
 {"substrgets",	do_substrgets,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"strsplit",	do_strsplit,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"abbreviate",	do_abbrev,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"make.names",	do_makenames,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"make.names",	do_makenames,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"grep",	do_grep,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"sub",		do_gsub,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"gsub",	do_gsub,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -478,7 +478,12 @@ FUNTAB R_FunTab[] =
 {"chartr",	do_chartr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"sprintf",	do_sprintf,	1,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.unique",	do_makeunique,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-
+{"charToRaw",	do_charToRaw,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"rawToChar",	do_rawToChar,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"rawShift",	do_rawShift,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"intToBits",	do_intToBits,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"rawToBits",	do_rawToBits,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"packBits",	do_packBits,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Type Checking (typically implemented in ./coerce.c ) */
 
@@ -551,15 +556,19 @@ FUNTAB R_FunTab[] =
 {"select.list",	do_selectlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"readClipboard",do_readClipboard,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"chooseFiles", do_chooseFiles, 0,  11, 5,  {PP_FUNCALL, PREC_FN,   0}},
+{"chooseFiles", do_chooseFiles, 0,  	11, 	5,  	{PP_FUNCALL, PREC_FN,   0}},
+{"getIdentification", do_getIdentification,0,11,0,	{PP_FUNCALL, PREC_FN, 	0}},
+{"getWindowHandle", do_getWindowHandle,0,11,	1,	{PP_FUNCALL, PREC_FN, 	0}},
+{"getWindowTitle",do_getWindowTitle,0,	11,	0,	{PP_FUNCALL, PREC_FN, 	0}},
+{"setWindowTitle",do_setTitle,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"pkgbrowser",	do_browsepkgs,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"data.manager",	do_datamanger,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"package.manager",	do_packagemanger,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"data.manager",	do_datamanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"package.manager",	do_packagemanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"hsbrowser",	do_hsbrowser,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"hsbrowser",	do_hsbrowser,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 {"parse",	do_parse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"save",	do_save,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -568,9 +577,9 @@ FUNTAB R_FunTab[] =
 {"loadFromConn",do_loadFromConn,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"serializeToConn",	do_serializeToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"unserializeFromConn",	do_unserializeFromConn,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"deparse",	do_deparse,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"dput",	do_dput,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"dump",	do_dump,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"deparse",	do_deparse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"dput",	do_dput,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"dump",	do_dump,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"substitute",	do_substitute,	0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"quote",	do_quote,	0,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"quit",	do_quit,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -619,7 +628,7 @@ FUNTAB R_FunTab[] =
 {"qsort",	do_qsort,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"radixsort",	do_radixsort,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"order",	do_order,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"rank",	do_rank,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"rank",	do_rank,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"missing",	do_missing,	1,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"nargs",	do_nargs,	1,	0,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"scan",	do_scan,	0,	11,	16,	{PP_FUNCALL, PREC_FN,	0}},
@@ -628,7 +637,7 @@ FUNTAB R_FunTab[] =
 {"t.default",	do_transpose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"aperm",	do_aperm,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"builtins",	do_builtins,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"edit",	do_edit,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"edit",	do_edit,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"dataentry",	do_dataentry,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"args",	do_args,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"formals",	do_formals,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -644,6 +653,7 @@ FUNTAB R_FunTab[] =
 {"sink.number",	do_sinknumber,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"eapply",	do_eapply,	0,	10,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"lapply",	do_lapply,	0,	10,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"apply",	do_apply,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"colSums",	do_colsum,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -665,6 +675,7 @@ FUNTAB R_FunTab[] =
 /* Functions To Interact with the Operating System */
 
 {"file.show",	do_fileshow,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"file.edit",	do_fileedit,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.create",	do_filecreate,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.remove",	do_fileremove,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.rename",	do_filerename,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -704,17 +715,16 @@ FUNTAB R_FunTab[] =
 
 /* Device Drivers */
 
-{"PS",		do_PS,		0,	111,   16,	{PP_FUNCALL, PREC_FN,	0}},
+{"PS",		do_PS,		0,	111,   17,	{PP_FUNCALL, PREC_FN,	0}},
 {"PicTeX",	do_PicTeX,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"XFig",	do_XFig,	0,	111,   11,	{PP_FUNCALL, PREC_FN,	0}},
 {"PDF",		do_PDF,		0,	111,   10,	{PP_FUNCALL, PREC_FN,	0}},
+{"Type1FontInUse", do_Type1FontInUse, 0, 111,   1,      {PP_FUNCALL, PREC_FN,	0}},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,   14,	{PP_FUNCALL, PREC_FN,	0}},
+{"devga",	do_devga,	0,	111,   15,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #ifdef Unix
-{"X11",		do_X11,		0,	111,	9,	{PP_FUNCALL, PREC_FN,	0}},
-{"gnome",	do_Gnome,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"GTK",		do_GTK,		0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"X11",		do_X11,		0,	111,	11,	{PP_FUNCALL, PREC_FN,	0}},
 {"Quartz",	do_Quartz,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 
@@ -730,10 +740,10 @@ FUNTAB R_FunTab[] =
 {"dev.off",	do_devoff,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"dev.prev",	do_devprev,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"dev.set",	do_devset,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"rgb",		do_rgb,		0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"rgb256",	do_rgb,		1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"rgb",		do_rgb,		0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"rgb256",	do_rgb,		1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"rgb2hsv",	do_RGB2hsv,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"hsv",		do_hsv,		0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"hsv",		do_hsv,		0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"gray",	do_gray,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"colors",	do_colors,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"col2rgb",	do_col2RGB,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -741,7 +751,7 @@ FUNTAB R_FunTab[] =
 {"plot.new",	do_plot_new,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"plot.window",	do_plot_window,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"axis",	do_axis,	0,	111,   12,	{PP_FUNCALL, PREC_FN,	0}},
-{"plot.xy",	do_plot_xy,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"plot.xy",	do_plot_xy,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 {"text",	do_text,	0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
 {"mtext",	do_mtext,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"title",	do_title,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -762,7 +772,7 @@ FUNTAB R_FunTab[] =
 {"contourLines",do_contourLines,0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"image",	do_image,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"dend",	do_dend,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"dend.window",	do_dendwindow,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"dend.window",	do_dendwindow,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"replay",	do_replay,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"erase",	do_erase,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 /*{"dotplot",	do_dotplot,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}}, */

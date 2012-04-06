@@ -8,14 +8,15 @@
 mosaicplot(x, \dots)
 
 \method{mosaicplot}{default}(x, main = deparse(substitute(x)), 
-                   sub = NULL, xlab = NULL, ylab = NULL,
-                   sort = NULL, off = NULL, dir = NULL,
-                   color = FALSE, shade = FALSE, margin = NULL,
-                   cex.axis = 0.66, las = par("las"),
-                   type = c("pearson", "deviance", "FT"), \dots)
+           sub = NULL, xlab = NULL, ylab = NULL,
+           sort = NULL, off = NULL, dir = NULL,
+           color = FALSE, shade = FALSE, margin = NULL,
+           cex.axis = 0.66, las = par("las"),
+           type = c("pearson", "deviance", "FT"), \dots)
 
 \method{mosaicplot}{formula}(formula, data = NULL, \dots,
-          main = deparse(substitute(data)), subset)
+           main = deparse(substitute(data)), subset,
+           na.action = stats::na.omit)
 }
 \arguments{
   \item{x}{a contingency table in array form, with optional category
@@ -48,7 +49,7 @@ mosaicplot(x, \dots)
     4.}
   \item{margin}{a list of vectors with the marginal totals to be fit in
     the log-linear model.  By default, an independence model is fitted.
-    See \code{\link[stats]{loglin}} for further information.}
+    See \code{\link{loglin}} for further information.}
   \item{cex.axis}{The magnification to be used for axis annotation,
     as a multiple of \code{par("cex")}.}
   \item{las}{numeric; the style of axis labels, see \code{\link{par}}.}
@@ -64,11 +65,17 @@ mosaicplot(x, \dots)
   \item{\dots}{further arguments to be passed to or from methods.}
   \item{subset}{an optional vector specifying a subset of observations
     in the data frame to be used for plotting.}
+  \item{na.action}{a function which indicates what should happen
+    when the data contains variables to be cross-tabulated, and these
+    variables contain \code{NA}s.  The default is to omit cases which
+    have an \code{NA} in any variable.  Since the tabulation will omit
+    all cases containing missing values, this will only be useful if the
+    \code{na.action} function replaces missing values.}
 }
 \details{
   This is a generic function.  It currently has a default method
-  (\code{\link{mosaicplot.default}}) and a formula interface
-  (\code{\link{mosaicplot.formula}}).
+  (\code{mosaicplot.default}) and a formula interface
+  (\code{mosaicplot.formula}).
 
   Extended mosaic displays show the standardized residuals of a
   loglinear model of the counts from by the color and outline of the
@@ -96,8 +103,8 @@ mosaicplot(x, \dots)
   See Emerson (1998) for more information and a case study with
   television viewer data from Nielsen Media Research.
 
-  Missing values are not supported unless \code{data} contains variables
-  to be cross-tabulated, when rows containing missing values are omitted.
+  Missing values are not supported except via an \code{na.action}
+  function when \code{data} contains variables to be cross-tabulated.
 }
 \author{
   S-PLUS original by John Emerson \email{emerson@stat.yale.edu}.
@@ -125,15 +132,13 @@ mosaicplot(x, \dots)
 }
 \seealso{
   \code{\link{assocplot}},
-  \code{\link[stats]{loglin}}.
+  \code{\link{loglin}}.
 }
 \examples{
-data(Titanic)
 mosaicplot(Titanic, main = "Survival on the Titanic", color = TRUE)
 ## Formula interface for tabulated data:
 mosaicplot(~ Sex + Age + Survived, data = Titanic, color = TRUE)
 
-data(HairEyeColor)
 mosaicplot(HairEyeColor, shade = TRUE)
 ## Independence model of hair and eye color and sex.  Indicates that
 ## there are significantly more blue eyed blonde females than expected
@@ -147,8 +152,8 @@ mosaicplot(HairEyeColor, shade = TRUE, margin = list(c(1,2), 3))
 
 ## Formula interface for raw data: visualize crosstabulation of numbers
 ## of gears and carburettors in Motor Trend car data.
-data(mtcars)
 mosaicplot(~ gear + carb, data = mtcars, color = TRUE, las = 1)
-mosaicplot(~ gear + carb, data = mtcars, color = 2:3, las = 1)# color recycling
+# color recycling
+mosaicplot(~ gear + carb, data = mtcars, color = 2:3, las = 1)
 }
 \keyword{hplot}

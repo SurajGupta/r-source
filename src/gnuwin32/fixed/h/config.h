@@ -9,7 +9,7 @@
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 
-/* Define to dummy `main' function (if any) required to link to the Fortran 77
+/* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 /* #undef F77_DUMMY_MAIN */
 
@@ -19,6 +19,9 @@
 
 /* As F77_FUNC, but for C identifiers containing underscores. */
 #define F77_FUNC_(name,NAME) name ## __
+
+/* Define if F77 and FC dummy `main' functions are identical. */
+/* #undef FC_DUMMY_MAIN_EQ_F77 */
 
 /* Define to 1 if you have the `access' function. */
 #define HAVE_ACCESS 1
@@ -71,6 +74,10 @@
 /* Define to 1 if you have the declaration of `isnan', and to 0 if you don't.
    */
 #define HAVE_DECL_ISNAN 1
+
+/* Define to 1 if you have the declaration of `SIZE_MAX', and to 0 if you
+   don't. */
+#define HAVE_DECL_SIZE_MAX 1
 
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
@@ -129,6 +136,12 @@
 /* Define to 1 if you have the <fpu_control.h> header file. */
 /* #undef HAVE_FPU_CONTROL_H */
 
+/* Define to 1 if you have the `fseeko' function. */
+/* #undef HAVE_FSEEKO */
+
+/* Define to 1 if you have the `ftello' function. */
+/* #undef HAVE_FTELLO */
+
 /* Define to 1 if you have the `ftruncate' function. */
 /* #undef HAVE_FTRUNCATE */
 
@@ -179,6 +192,9 @@
 /* Define if you have the JPEG headers and libraries. */
 #define HAVE_JPEG 1
 
+/* Define if you have KeySym defined in X11. */
+/* #undef HAVE_KEYSYM */
+
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 /* #undef HAVE_LANGINFO_CODESET */
 
@@ -209,6 +225,9 @@
 /* Define to 1 if you have the `tk' library (-ltk). */
 /* #undef HAVE_LIBTK */
 
+/* Define to 1 if you have the <limits.h> header file. */
+#define HAVE_LIMITS_H 1
+
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
@@ -236,6 +255,9 @@
 /* Define if module-loading does not need an underscore to be prepended to
    external names. */
 #define HAVE_NO_SYMBOL_UNDERSCORE 1
+
+/* Define if you have off_t, fseeko and ftello. */
+/* #undef HAVE_OFF_T */
 
 /* Define to 1 if you have the <pcre.h> header file. */
 /* #undef HAVE_PCRE_H */
@@ -379,13 +401,19 @@
 /* Define if finite() is correct for -Inf/NaN/Inf. */
 #define HAVE_WORKING_FINITE 1
 
+/* Define if your ftell works correctly on files opened for append. */
+/* #undef HAVE_WORKING_FTELL */
+
+/* Define if isfinite() is correct for -Inf/NaN/Inf. */
+#define HAVE_WORKING_ISFINITE 1
+
 /* Define if log() is correct for 0/-1. */
 #define HAVE_WORKING_LOG 1
 
 /* Define if log1p() exists and is accurate enough. */
 #define HAVE_WORKING_LOG1P 1
 
-/* Define if strptime() exists and does not fail pre-1970. */
+/* Define if strptime() exists, validates and does not fail pre-1970. */
 /* #undef HAVE_WORKING_STRPTIME */
 
 /* Define if you have the X11 headers and libraries, and want the X11 GUI to
@@ -414,19 +442,23 @@
 #define PACKAGE_NAME "R"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "R 1.8.0"
+#define PACKAGE_STRING "R 2.0.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "R"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.8.0"
+#define PACKAGE_VERSION "2.0.0"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
 /* Define this to be the name of the CPU of your system. */
 #define R_CPU "i386"
+
+/* Define as `inline', or `__inline__' or `__inline' if that's what the C
+   compiler calls it, or to nothing if it is not supported. */
+#define R_INLINE inline
 
 /* Define this to be the name of the OS of your system. */
 #define R_OS "mingw32"
@@ -435,7 +467,7 @@
 #define R_PLATFORM "i386-pc-mingw32"
 
 /* Define this to be printing command on your system. */
-#define R_PRINTCMD  "UNKNOWN"
+#define R_PRINTCMD ""
 
 /* Define this to enable R-level profiling. */
 #define R_PROFILING 1
@@ -465,9 +497,9 @@
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-        STACK_DIRECTION > 0 => grows toward higher addresses
-        STACK_DIRECTION < 0 => grows toward lower addresses
-        STACK_DIRECTION = 0 => direction of growth unknown */
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
 /* #undef STACK_DIRECTION */
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -494,7 +526,7 @@
 /* #undef Unix */
 
 /* Version number of package */
-#define VERSION "1.8.0"
+#define VERSION "2.0.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */

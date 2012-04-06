@@ -31,6 +31,7 @@
 #include "graphapp/ga.h"
 #include "console.h"
 #include "rui.h"
+#include "editor.h"
 #include "getline/getline.h"
 #include <windows.h>		/* for CreateEvent,.. */
 #include <process.h>		/* for _beginthread,... */
@@ -38,17 +39,15 @@
 #include "run.h"
 #include "Startup.h"
 #include <stdlib.h>		/* for exit */
+#include "shext.h"		/* for ShellGetPersonalDirectory */
 void CleanTempDir();		/* from extra.c */
+void editorcleanall();                  /* from editor.c */
 
 
 R_size_t R_max_memory = INT_MAX;
 Rboolean UseInternet2 = FALSE;
 
-SA_TYPE SaveAction = SA_DEFAULT;
-SA_TYPE RestoreAction = SA_RESTORE;
-Rboolean LoadSiteFile = TRUE;
-Rboolean LoadInitFile = TRUE;
-Rboolean DebugInitFile = FALSE;
+extern SA_TYPE SaveAction; /* from ../main/startup.c */
 Rboolean DebugMenuitem = FALSE;
 
 __declspec(dllexport) UImode  CharacterMode;
@@ -395,6 +394,7 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 	break;
     }
     R_RunExitFinalizers();
+    editorcleanall();
     CleanEd();
     CleanTempDir();
     closeAllHlpFiles();
@@ -491,6 +491,43 @@ int internal_ShowFile(char *file, char *header)
     return R_ShowFiles(1, files, headers, "File", 0, CHAR(STRING_ELT(pager, 0)));
 }
 
+    /*
+       This function can be used to open the named files in text editors, with the
+       given titles and overall title.
+       If the file does not exist then the editor should be opened to create a new file.
+    */
+
+    /*
+     *     nfile   = number of files
+     *     file    = array of filenames
+     *     editor  = editor to be used.
+     */
+
+int R_EditFiles(int nfile, char **file, char **title, char *editor)
+{
+    int   i;
+    char  buf[1024];
+
+    if (nfile > 0) {
+	if (editor == NULL || strlen(editor) == 0)
+	    editor = "internal";
+	for (i = 0; i < nfile; i++) {
+	    if (!strcmp(editor, "internal")) {
+		Rgui_Edit(file[i], title[i], 0);
+	    } else {
+		/* Quote path if necessary */
+		if (editor[0] != '"' && strchr(editor, ' '))
+		    snprintf(buf, 1024, "\"%s\" \"%s\"", editor, file[i]);
+		else
+		    snprintf(buf, 1024, "%s \"%s\"", editor, file[i]);
+		runcmd(buf, 0, 1, "");
+	    }
+
+	}
+	return 0;
+    }
+    return 1;
+}
 
 /* Prompt the user for a file name.  Return the length of */
 /* the name typed.  On Gui platforms, this should bring up */
@@ -674,7 +711,7 @@ int cmdlineoptions(int ac, char **av)
        have been removed by the time we get to call
        R_common_command_line().
      */
-    R_set_command_line_arguments(ac, av, Rp);
+    R_set_command_line_arguments(ac, av);
 
 
     /* set defaults for R_max_memory. This is set here so that
@@ -781,8 +818,8 @@ int cmdlineoptions(int ac, char **av)
 		    if(ierr < 0)
 			sprintf(s, "WARNING: --max-mem-size value is invalid: ignored\n");
 		    else
-		    sprintf(s, "WARNING: --max-mem-size=%ld`%c': too large and ignored\n",
-			    value,
+		    sprintf(s, "WARNING: --max-mem-size=%lu`%c': too large and ignored\n",
+			    (unsigned long) value,
 			    (ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
 		    R_ShowMessage(s);
 		} else if (value < 10*Mega) {
@@ -831,22 +868,26 @@ int cmdlineoptions(int ac, char **av)
 
     R_tcldo = tcl_do_none;
 /*
- * try R_USER then HOME then working directory
+ * try R_USER then HOME then Windows homes then working directory
  */
+
     if ((p = getenv("R_USER"))) {
 	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid R_USER");
 	strcpy(RUser, p);
     } else if ((p = getenv("HOME"))) {
 	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOME");
 	strcpy(RUser, p);
+    } else if (ShellGetPersonalDirectory(RUser)) {
+	/* nothing to do */;
     } else if ((p = getenv("HOMEDRIVE")) && (q = getenv("HOMEPATH"))) {
 	if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOMEDRIVE");
 	strcpy(RUser, p);
 	if(strlen(RUser) + strlen(q) >= MAX_PATH)
 	    R_Suicide("Invalid HOMEDRIVE+HOMEPATH");
 	strcat(RUser, q);
-    } else
+    } else {
 	GetCurrentDirectory(MAX_PATH, RUser);
+    }
     p = RUser + (strlen(RUser) - 1);
     if (*p == '/' || *p == '\\') *p = '\0';
     Rp->home = RUser;
@@ -856,7 +897,8 @@ int cmdlineoptions(int ac, char **av)
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.
  */
-    if (!R_Interactive && SaveAction != SA_SAVE && SaveAction != SA_NOSAVE)
+    if (!R_Interactive && Rp->SaveAction != SA_SAVE && 
+	Rp->SaveAction != SA_NOSAVE)
 	R_Suicide("you must specify `--save', `--no-save' or `--vanilla'");
 
     if (InThreadReadConsole &&

@@ -22,63 +22,29 @@
 #endif
 #include "nmath.h"
 
-#ifndef IEEE_754
-
-void ml_error(int n)
-{
-    switch(n) {
-
-    case ME_NONE:
-	errno = 0;
-	break;
-
-    case ME_DOMAIN:
-    case ME_NOCONV:
-	errno = EDOM;
-	break;
-
-    case ME_RANGE:
-	errno = ERANGE;
-	break;
-
-    default:
-	break;
-    }
-}
-
-#endif
-
 #ifdef MATHLIB_STANDALONE
 /*
  *  based on code in ../main/arithmetic.c
+ *  used only in standalone Rmath lib.
  */
-
-
-#ifdef IEEE_754
-
-int R_IsNaNorNA(double x)
-{
-/* NOTE: some systems do not return 1 for TRUE. */
-    return (isnan(x) != 0);
-}
 
 /* Include the header file defining finite() */
 #ifdef HAVE_IEEE754_H
 # include <ieee754.h>		/* newer Linuxen */
 #else
 # ifdef HAVE_IEEEFP_H
-#  include <ieeefp.h>		/* others [Solaris 2.5.x], .. */
+#  include <ieeefp.h>		/* others [Solaris], .. */
 # endif
-#endif
-#if defined(Win32) && defined(_MSC_VER)
-# include <float.h>
 #endif
 
 int R_finite(double x)
 {
-#ifdef HAVE_WORKING_FINITE
+#ifdef HAVE_WORKING_ISFINITE
+    return isfinite(x);
+#elif HAVE_WORKING_FINITE
     return finite(x);
-#else
+# else
+/* neither finite nor isfinite work */
 # ifdef _AIX
 #  include <fp.h>
      return FINITE(x);
@@ -87,28 +53,6 @@ int R_finite(double x)
 # endif
 #endif
 }
-
-#else /* not IEEE_754 */
-
-int R_IsNaNorNA(double x)
-{
-# ifndef HAVE_ISNAN
-    return (x == ML_NAN);
-# else
-    return (isnan(x) != 0 || x == ML_NAN);
-# endif
-}
-
-int R_finite(double x)
-{
-# ifndef HAVE_FINITE
-    return (x !=  ML_NAN && x < ML_POSINF && x > ML_NEGINF);
-# else
-    int finite(double);
-    return finite(x);
-# endif
-}
-#endif /* IEEE_754 */
 
 static double myfmod(double x1, double x2)
 {

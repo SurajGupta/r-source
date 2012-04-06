@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -148,7 +148,7 @@ static int	xxvalue(SEXP, int);
 %left		OR
 %left		AND
 %left		UNOT NOT
-%left   	GT GE LT LE EQ NE
+%nonassoc   	GT GE LT LE EQ NE
 %left		'+' '-'
 %left		'*' '/'
 %left		SPECIAL
@@ -728,6 +728,11 @@ static SEXP xxparen(SEXP n1, SEXP n2)
     UNPROTECT_PTR(n2);
     return ans;
 }
+
+
+/* This should probably use CONS rather than LCONS, but
+   it shouldn't matter and we would rather not meddle
+   See PR#7055 */
 
 static SEXP xxsubscript(SEXP a1, SEXP a2, SEXP a3)
 {
@@ -1563,7 +1568,11 @@ static int StringValue(int c)
     while ((c = xxgetc()) != R_EOF && c != quote) {
 	if (c == '\n') {
 	    xxungetc(c);
-	    return ERROR;
+	    /* Fix by Mark Bravington to allow multiline strings
+             * by pretending we've seen a backslash. Was:
+	     * return ERROR;
+             */
+	    c = '\\';
 	}
 	if (c == '\\') {
 	    c = xxgetc();
@@ -1656,11 +1665,7 @@ int isValidName(char *name)
     if (c == '.' && isdigit((int)*p)) 
 	return 0;
 
-    while ( c = *p++, (isalnum(c) || c == '.' 
-#ifdef UNDERSCORE_IN_NAMES
-		       || c == '_'
-#endif
-		) )
+    while ( c = *p++, (isalnum(c) || c == '.' || c == '_') )
 	;
 
     if (c != '\0') return 0;
@@ -1683,11 +1688,7 @@ static int SymbolValue(int c)
     do {
 	YYTEXT_PUSH(c, yyp);
     }
-    while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.' 
-#ifdef UNDERSCORE_IN_NAMES
-				       || c == '_'
-#endif
-	       ));
+    while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.' || c == '_'));
     xxungetc(c);
     YYTEXT_PUSH('\0', yyp);
     if ((kw = KeywordLookup(yytext))) {

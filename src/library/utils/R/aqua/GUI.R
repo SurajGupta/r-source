@@ -1,53 +1,68 @@
-if(.Platform$GUI == "AQUA") {
+browse.pkgs <- function (where = c("CRAN", "BIOC"), type = c("binary", "source"), 
+    contriburl = NULL, global = FALSE) 
+{
+    if (.Platform$GUI != "AQUA") 
+        stop("This function is intended to work with the Aqua GUI")
+    where <- match.arg(where)
+    type <- match.arg(type)
+    x <- installed.packages()
+    i.pkgs <- as.character(x[, 1])
+    i.vers <- as.character(x[, 3])
+        if (is.null(contriburl)) {
+        if (type == "binary") 
+            contriburl <- contrib.url(getOption(where), type = "mac.binary")
+        else contriburl <- contrib.url(getOption(where), type = "source")
+        label <- switch(where, CRAN = paste("CRAN (", type, ") @", 
+            getOption(where)), BIOC = paste("BioC (", type, ") @", 
+            getOption(where)))
+    }
+    else label <- paste("(", type, ") @", contriburl)
+    if (type == "binary") 
+        y <- CRAN.binaries(contriburl = contriburl)
+    else y <- CRAN.packages(contriburl = contriburl)
+    c.pkgs <- as.character(y[, 1])
+    c.vers <- as.character(y[, 2])
 
-    browse.pkgs <- function(where = c("CRAN","BIOC"),
-                            type = c("binary","source"), global = FALSE)
-   {
-       where <- match.arg(where)
-       type <- match.arg(type)
-       installed.packages() -> x
-       x[,1] -> i.pkgs
-       x[,3] -> i.vers
-       if (type == "source")
-           CRAN.packages(getOption(where)) -> y
-       else
-           CRAN.binaries(getOption(where)) -> y
-       y[,1] -> c.pkgs
-       y[,2] -> c.vers
-
-       match(i.pkgs, c.pkgs) -> idx
-       vers2 <- character(length(c.pkgs))
-       vers2[idx] <- i.vers
-       i.vers <- vers2
-       ##inst.idx <- which(.Internal(pkgbrowser(c.pkgs,c.vers,i.vers,where)))
-       want.update <- rep(FALSE, length(i.vers))
-       label <- switch(where, CRAN = paste("CRAN (",type,") @",getOption(where)),
-                       BIOC = paste("BioC (",type,") @",getOption(where)))
-       inst <- .Internal(pkgbrowser(c.pkgs,c.vers,i.vers,label, want.update))
-
-       ui.pkgs <- c.pkgs[inst]
-       idx2 <- which(c.vers[inst] == i.vers[inst])
-       if(length(idx2) > 0) {
-           cat( paste(ui.pkgs[idx2],collapse = ""),
-               " already up to date, not reinstalled\n")
-           ui.pkgs <- ui.pkgs[-idx2]
-       }
-       if (global)
-           locn <- file.path(R.home(),"library")
-       else
-           locn <- .libPaths()[1]
-       if(length(ui.pkgs) > 0)
-           switch(type,
-                  source = install.packages(ui.pkgs, CRAN = getOption(where),
-                  lib = .libPaths()[1]),
-                  binary = install.binaries(ui.pkgs, CRAN = getOption(where),
-                  lib = .libPaths()[1]))
-   }
-
+    idx <- match(i.pkgs, c.pkgs)
+    vers2 <- character(length(c.pkgs))
+    xx <- idx[which(!is.na(idx))]    
+    vers2[xx] <- i.vers[which(!is.na(idx))]
+    i.vers <- vers2
+    
+    want.update <- rep(FALSE, length(i.vers))
+    inst <- .Internal(pkgbrowser(c.pkgs, c.vers, i.vers, label, 
+        want.update))
+    ui.pkgs <- c.pkgs[inst]
+    idx2 <- which(c.vers[inst] == i.vers[inst])
+    if (length(idx2) > 0) {
+        cat(paste(ui.pkgs[idx2], collapse = ""), " already up to date, not reinstalled\n")
+        ui.pkgs <- ui.pkgs[-idx2]
+    }
+    if (global) 
+        locn <- file.path(R.home(), "library")
+    else locn <- .libPaths()[1]
+    if (length(ui.pkgs) > 0) {
+        if (missing(contriburl)) {
+            switch(type, source = install.packages(ui.pkgs, CRAN = getOption(where), 
+                lib = .libPaths()[1]), binary = install.binaries(ui.pkgs, 
+                CRAN = getOption(where), lib = .libPaths()[1]))
+        }
+        else {
+            switch(type, source = install.packages(ui.pkgs, CRAN = getOption(where), 
+                contriburl = contriburl, lib = .libPaths()[1]), 
+                binary = install.binaries(ui.pkgs, CRAN = getOption(where), 
+                  contriburl = contriburl, lib = .libPaths()[1]))
+        }
+    }
+}
+ 
+	
     browse.update.pkgs <- function(where = c("CRAN", "BIOC"),
                                    type = c("binary", "source"),
                                    in.place = TRUE)
    {
+     if (.Platform$GUI!="AQUA")
+       stop("This function is intended to work with the Aqua GUI")
        where <- match.arg(where)
        type <- match.arg(type)
 
@@ -95,23 +110,39 @@ if(.Platform$GUI == "AQUA") {
        }
    }
 
+"data_by_name"<-function(datanames){
+  aliases<-sub("^.+ +\\((.+)\\)$","\\1",datanames)
+  data(list=ifelse(aliases=="",datanames,aliases))
+}
+
     data.manager <- function()
     {
-        data() -> x
+     if (.Platform$GUI!="AQUA")
+       stop("This function is intended to work with the Aqua GUI")
+        data(package = .packages(all.available = TRUE)) -> x
         x$results[,3] -> dt
         x$results[,1] -> pkg
         x$results[,4] -> desc
-
-        load.idx <- which(.Internal(data.manager(dt,pkg,desc)))
+		len <- NROW(dt)
+		url <- character(len)
+		for(i in 1:len){
+			tmp <- as.character(help(dt[i], package = pkg[i], htmlhelp=TRUE))
+			if(length(tmp)>0)
+				url[i] <- tmp
+		}
+		as.character(help("BOD", package="datasets",htmlhelp=T))
+        load.idx <- which(.Internal(data.manager(dt,pkg,desc,url)))
 
         for(i in load.idx) {
             cat("loading dataset:", dt[i],"\n")
-            data(list = dt[i])
+            data_by_name( dt[i])
         }
     }
 
     package.manager <- function()
     {
+     if (.Platform$GUI!="AQUA")
+       stop("This function is intended to work with the Aqua GUI")
         .packages() -> loaded.pkgs
         library() -> x
         x <- x$results[x$results[,1] != "base",]
@@ -122,8 +153,8 @@ if(.Platform$GUI == "AQUA") {
         pkgs.status <- character(length(is.loaded))
         pkgs.status[which(is.loaded)] <- "loaded"
         pkgs.status[which(!is.loaded)] <- " "
-
-        load.idx <- .Internal(package.manager(is.loaded,pkgs,pkgs.desc))
+ 	pkgs.url <- file.path(.find.package(pkgs),"html","00Index.html")
+        load.idx <- .Internal(package.manager(is.loaded,pkgs,pkgs.desc,pkgs.url))
 
         toload <- which(load.idx & !is.loaded)
         tounload <- which(is.loaded & !load.idx)
@@ -139,26 +170,38 @@ if(.Platform$GUI == "AQUA") {
 
     }
 
-    flush.console <- function() .Internal(flush.console())
+flush.console <- function() {if (.Platform$GUI=="AQUA") .Internal(flush.console())}
 
-    print.hsearch <- function(x,...)
-    {
-        db <- x$matches
-        if (NROW(db) == 0) {
+print.hsearch <- function(x,...)
+  {
+        if (.Platform$GUI=="AQUA"){
+          db <- x$matches
+		  rows <- NROW(db)
+          if (rows == 0) {
             writeLines(strwrap(paste("No help files found matching",
                                      sQuote(x$pattern), "using", x$type,
                                      "matching\n\n")))
-        } else {
+          } else {
+			url = character(rows)
+			for(i in 1:rows){
+				tmp <- as.character(help(db[i,"topic"], package = db[i,"Package"], htmlhelp=TRUE))
+				if(length(tmp)>0)
+					url[i] <- tmp
+			}
             wtitle <- paste("Help topics matching", sQuote(x$pattern))
             showhelp <- which(.Internal(hsbrowser(db[,"topic"], db[,"Package"],
-                                                  db[,"title"],  wtitle)))
+							db[,"title"],  wtitle, url )))
             for(i in showhelp)
-                help(db[i,"topic"], package = db[i,"Package"])
-        }
-        invisible(x)
-    }
+              print(help(db[i,"topic"], package = db[i,"Package"]))
+          }
+          invisible(x)
+        } else
+          printhsearchInternal(x,...)
+}
 
 Rapp.updates <- function() {
+  if (.Platform$GUI!="AQUA")
+       stop("This function is intended to work with the Aqua GUI")
  readLines("http://cran.r-project.org/bin/macosx/VERSION") -> cran.ver
 
  strsplit(cran.ver,"\\.") -> ver
@@ -169,7 +212,6 @@ Rapp.updates <- function() {
  strsplit(rapp.ver,"\\.") -> ver
  rapp.ver <- as.numeric(ver[[1]])
 
- rapp.ver <- as.numeric(ver[[1]])
  this.ver <- sum(rapp.ver * c(10000,100,1))
  new.ver <- sum(cran.ver * c(10000,100,1))
  if (new.ver > this.ver) {
@@ -183,40 +225,8 @@ Rapp.updates <- function() {
 
 }
 
-}else{ # NOT AQUA
 
-    browse.pkgs <- function(where = c("CRAN","BIOC"),
-                            type = c("binary","source"), global = FALSE)
-    {
-        warning("This function is intended to work with the Aqua GUI")
-    }
 
-    browse.update.pkgs <- function(where = c("CRAN", "BIOC"),
-                                   type = c("binary", "source"),
-                                   in.place = TRUE)
-    {
-        warning("This function is intended to work with the Aqua GUI")
-    }
-
-    data.manager <- function()
-    {
-        warning("This function is intended to work with the Aqua GUI")
-    }
-
-    package.manager <- function()
-    {
-        warning("This function is intended to work with the Aqua GUI")
-    }
-
-    flush.console <- function(){
-        warning("This function is intended to work with the Aqua GUI")
-    }
-
-    Rapp.updates <- function() {
-        warning("This function is intended to work with the Aqua GUI")
-    }
-
-}
 
 ## edited from windows/install.packages
 ##
@@ -338,7 +348,8 @@ install.binaries <- function(pkgs, lib, CRAN=getOption("CRAN"),
     if(missing(lib) || is.null(lib)) {
       lib <- .libPaths()[1]
       if(length(.libPaths()) > 1)
-        warning(paste("argument `lib' is missing: using", lib))
+        warning(paste("argument", sQuote("lib"),
+                      "is missing: using", lib))
     }
     pkgnames <- basename(pkgs)
     pkgnames <- sub("\\.tgz$", "", pkgnames)
@@ -432,4 +443,12 @@ CRAN.binaries <- function(CRAN=getOption("CRAN"), method,
     read.dcf(file=tmpf, fields=c("Package", "Version"))
   }
 
+main.help.url <- function () {
+    .Script("sh", "help-links.sh", paste(tempdir(), 	paste(.libPaths(), 
+        collapse = " ")))
+    make.packages.html()
+    tmpdir <- paste("file://", tempdir(), "/.R", sep = "")
+    url <- paste(tmpdir,"/doc/html/index.html", sep = "")
+	options(main.help.url=url)
+}
  

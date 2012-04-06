@@ -22,8 +22,6 @@
 #define DEFN_H_
 
 #define COUNTING
-/* allows underscore in syntactic names, as from 1.9.0 */
-#define UNDERSCORE_IN_NAMES 1
 
 #define BYTECODE
 #define NEW_CONDITION_HANDLING
@@ -55,7 +53,6 @@
 #endif /* SunOS4 */
 
 #ifdef Win32
-#define PLOTHISTORY
 void R_ProcessEvents(void);
 #endif /* Win32 */
 
@@ -87,8 +84,27 @@ void R_ProcessEvents(void);
 /*  Heap and Pointer Protection Stack Sizes.  */
 
 /* NB: will need a 64-bit type, ULONG64 or size_t, for Win64 */
-typedef unsigned long R_size_t;
-#define R_SIZE_T_MAX ULONG_MAX
+#if defined HAVE_DECL_SIZE_MAX && HAVE_DECL_SIZE_MAX
+# ifdef HAVE_INTTYPES_H
+#  include <inttypes.h>
+# endif
+# ifdef HAVE_STDINT_H
+#  include <stdint.h>
+# endif
+# ifdef HAVE_LIMITS_H
+#  include <limits.h>
+# endif
+  typedef size_t R_size_t;
+/* final precaution in case we don't have the right headers */
+# ifdef SIZE_MAX
+#  define R_SIZE_T_MAX SIZE_MAX
+# else
+#  define R_SIZE_T_MAX ULONG_MAX
+# endif
+#else
+  typedef unsigned long R_size_t;
+# define R_SIZE_T_MAX ULONG_MAX
+#endif
 
 #define Mega 1048576. /* 1 Mega Byte := 2^20 (= 1048576) Bytes */
 #define Giga 1073741824. /* 1 Giga Byte := 2^30 Bytes */
@@ -446,14 +462,6 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 # define INI_as(v)
 #endif
 
-/* Formerly in Arith.h */
-#ifdef IEEE_754
-# define MATH_CHECK(call)	(call)
-#else
-  extern double R_tmp;
-# define MATH_CHECK(call)	(errno=0,R_tmp=call,(errno==0)?R_tmp:R_NaN)
-#endif
-
 /* extern int	errno; already have errno.h ! */
 extern int	gc_inhibit_torture INI_as(1);
 
@@ -530,6 +538,8 @@ extern SEXP	R_RestartStack;	/* Stack of available restarts */
 
 extern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 
+/* Initialization of the R environment when it is embedded */
+extern int Rf_initEmbeddedR(int argc, char **argv);
 
 /* GUI type */
 
@@ -583,6 +593,8 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define DispatchOrEval		Rf_DispatchOrEval
 # define duplicated		Rf_duplicated
 # define dynamicfindVar		Rf_dynamicfindVar
+# define EncodeRaw              Rf_EncodeRaw
+# define EncodeString           Rf_EncodeString
 # define endcontext		Rf_endcontext
 # define errorcall		Rf_errorcall
 # define ErrorMessage		Rf_ErrorMessage
@@ -614,6 +626,7 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define levelsgets		Rf_levelsgets
 # define mainloop		Rf_mainloop
+# define ParseBrowser	Rf_ParseBrowser
 # define mat2indsub		Rf_mat2indsub
 # define match			Rf_match
 # define mkCLOSXP		Rf_mkCLOSXP
@@ -671,6 +684,7 @@ void	R_ClearerrConsole(void);
 void	R_Busy(int);
 int	R_ShowFile(char*, char*);
 int	R_ShowFiles(int, char **, char **, char *, Rboolean, char *);
+int     R_EditFiles(int, char **, char **, char *);
 int	R_ChooseFile(int, char*, int);
 char*	R_Date(void);
 char*	R_HomeDir(void);
@@ -686,6 +700,18 @@ SEXP R_GetVarLocSymbol(R_varloc_t);
 Rboolean R_GetVarLocMISSING(R_varloc_t);
 void R_SetVarLocValue(R_varloc_t, SEXP);
 
+/* deparse option bits */
+
+#define KEEPINTEGER 		1
+#define QUOTEEXPRESSIONS 	2
+#define SHOWATTRIBUTES 		4
+#define USESOURCE 		8
+#define WARNINCOMPLETE 		16
+#define DELAYPROMISES 		32
+/* common combinations of the above */
+#define SIMPLEDEPARSE		0
+#define FORSOURCING		31
+
 /* Other Internally Used Functions */
 
 SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
@@ -695,13 +721,14 @@ void CheckFormals(SEXP);
 void CleanEd(void);
 void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
-SEXP deparse1(SEXP,Rboolean);
+SEXP deparse1(SEXP,Rboolean,int);
 SEXP deparse1line(SEXP,Rboolean);
 int DispatchOrEval(SEXP, SEXP, char*, SEXP, SEXP, SEXP*, int, int);
 int DispatchGroup(char*, SEXP,SEXP,SEXP,SEXP,SEXP*);
 SEXP duplicated(SEXP);
 SEXP dynamicfindVar(SEXP, RCNTXT*);
 void endcontext(RCNTXT*);
+int envlength(SEXP);
 int factorsConform(SEXP, SEXP);
 SEXP FetchMethod(char *, char *, SEXP);
 void findcontext(int, SEXP, SEXP);
@@ -830,6 +857,11 @@ int yylex();
 int yyparse(void);
 void yyprompt(char *format, ...);
 int yywrap(void);
+
+/* ../../main/printutils.c : */
+int	Rstrlen(SEXP, int);
+char *EncodeRaw(Rbyte);
+char *EncodeString(SEXP, int, int, int);
 
 /* Macros for suspending interrupts */
 #define BEGIN_SUSPEND_INTERRUPTS do { \

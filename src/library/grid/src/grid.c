@@ -75,10 +75,6 @@ SEXP L_initGrid(SEXP GridEvalEnv)
 SEXP L_killGrid() 
 {
     GEunregisterSystem(gridRegisterIndex);
-    /* This variable lives in an environment that goes away with the
-       namespace, and this is only called on .onUnload.
-     */
-    /* setSymbolValue(".GRID.STATE", R_NilValue); */
     return R_NilValue;
 }
 
@@ -91,12 +87,10 @@ GEDevDesc* getDevice()
 
 /* If this is the first time that a grid operation has occurred for 
  * this device, do some initialisation.
- * NOTE that this does some things that make base R graphics risky
- * on the device hereafter.
  */
 void dirtyGridDevice(GEDevDesc *dd) {
-    SEXP gsd, griddev;
     if (!LOGICAL(gridStateElement(dd, GSS_GRIDDEVICE))[0]) {
+	SEXP gsd, griddev;
 	/* Record the fact that this device has now received grid output
 	 */
 	gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
@@ -104,36 +98,22 @@ void dirtyGridDevice(GEDevDesc *dd) {
 	LOGICAL(griddev)[0] = TRUE;
 	SET_VECTOR_ELT(gsd, GSS_GRIDDEVICE, griddev);
 	UNPROTECT(1);
-	/* FIXME: Gross hack to stop the base graphics moaning at me.
-	 * This should be removed when base graphics have been 
-	 * properly split from the graphics engine.
+	/*
+	 * Start the first page on the device
+	 * (But only if no other graphics system has not already done so)
 	 */
-	/* This is dangerous if base graphics are used in same device
-	 * because could then do base graphics operations that 
-	 * base graphics would normally not allow because 
-	 * plot.new() has not been called
-	 */
-	/* There is further danger that base graphics could switch it
-	 * off again, thereby incapacitating grid graphics.
-	 * For example, this might happen if a device is made too
-	 * small.
-	 */
-	GSetState(1, (DevDesc*) dd);
-	/* Even grosser hack to stop base graphics moaning
-	 */
-	/* This is currently the only way to set gpptr(dd)->valid
-	 * Needs fixing (in base graphics)!
-	 */
-	/* NOTE that this needs to go before the createGridSystemState
-	 * so that the silly clipping region it sets will get
-	 * overridden by the top-level viewport
-	 */
-	GNewPlot(FALSE);
-	/* Create a top-level viewport for this device
+	if (!GEdeviceDirty(dd)) {
+	    R_GE_gcontext gc;
+	    SEXP currentgp = gridStateElement(dd, GSS_GPAR);
+	    gcontextFromgpar(currentgp, 0, &gc);
+	    GENewPage(&gc, dd);
+	    GEdirtyDevice(dd);
+	}
+	/*
+	 * Only initialise viewport once new page has started
+	 * (required for postscript output [at least])
 	 */
 	initVP(dd);
-	/* The top-level viewport goes at the start of the display list
-	 */
 	initDL(dd);
     }
 }
@@ -395,8 +375,8 @@ find.in.children <- function(name, children) {
   return(result)
 }
 */
-static SEXP findViewport(SEXP name, SEXP strict, SEXP vp);
-static SEXP findInChildren(SEXP name, SEXP strict, SEXP children) 
+static SEXP findViewport(SEXP name, SEXP strict, SEXP vp, int depth);
+static SEXP findInChildren(SEXP name, SEXP strict, SEXP children, int depth) 
 {
     SEXP childnames = childList(children);
     int n = LENGTH(childnames);
@@ -407,17 +387,17 @@ static SEXP findInChildren(SEXP name, SEXP strict, SEXP children)
     while (count < n && !found) {
 	result = findViewport(name, strict,
 			      findVar(install(CHAR(STRING_ELT(childnames, count))),
-				      children));
-	found = LOGICAL(VECTOR_ELT(result, 0))[0];
+				      children),
+			      depth);
+	found = INTEGER(VECTOR_ELT(result, 0))[0] > 0;
 	count = count + 1;
     }
     if (!found) {
-	SEXP temp, false;
+	SEXP temp, zeroDepth;
 	PROTECT(temp = allocVector(VECSXP, 2));
-	PROTECT(false = allocVector(LGLSXP, 1));
-	LOGICAL(false)[0] = FALSE;
-	temp = allocVector(VECSXP, 2);
-	SET_VECTOR_ELT(temp, 0, false);
+	PROTECT(zeroDepth = allocVector(INTSXP, 1));
+	INTEGER(zeroDepth)[0] = 0;
+	SET_VECTOR_ELT(temp, 0, zeroDepth);
 	SET_VECTOR_ELT(temp, 1, R_NilValue);
 	UNPROTECT(2);
 	result = temp;
@@ -439,22 +419,22 @@ find.viewport <- function(name, pvp) {
       find.in.children(name, pvp$children)
 }
 */
-static SEXP findViewport(SEXP name, SEXP strict, SEXP vp) 
+static SEXP findViewport(SEXP name, SEXP strict, SEXP vp, int depth) 
 {
-    SEXP result, false, true;
+    SEXP result, zeroDepth, curDepth;
     PROTECT(result = allocVector(VECSXP, 2));
-    PROTECT(false = allocVector(LGLSXP, 1));
-    LOGICAL(false)[0] = FALSE;
-    PROTECT(true = allocVector(LGLSXP, 1));
-    LOGICAL(true)[0] = TRUE;
+    PROTECT(zeroDepth = allocVector(INTSXP, 1));
+    INTEGER(zeroDepth)[0] = 0;
+    PROTECT(curDepth = allocVector(INTSXP, 1));
+    INTEGER(curDepth)[0] = depth;
     /* 
      * If there are no children, we fail
      */
     if (noChildren(viewportChildren(vp))) {
-	SET_VECTOR_ELT(result, 0, false);
+	SET_VECTOR_ELT(result, 0, zeroDepth);
 	SET_VECTOR_ELT(result, 1, R_NilValue);
     } else if (childExists(name, viewportChildren(vp))) {
-	SET_VECTOR_ELT(result, 0, true);
+	SET_VECTOR_ELT(result, 0, curDepth);
 	SET_VECTOR_ELT(result, 1, 
 		       /*
 			* Does this do inherits=FALSE?
@@ -467,10 +447,11 @@ static SEXP findViewport(SEXP name, SEXP strict, SEXP vp)
 	 * Otherwise recurse into children
 	 */
 	if (LOGICAL(strict)[0]) {
-	    SET_VECTOR_ELT(result, 0, false);
+	    SET_VECTOR_ELT(result, 0, zeroDepth);
 	    SET_VECTOR_ELT(result, 1, R_NilValue);
 	} else {
-	    result = findInChildren(name, strict, viewportChildren(vp));
+	    result = findInChildren(name, strict, viewportChildren(vp),
+				    depth + 1);
 	}
     }
     UNPROTECT(3);
@@ -491,8 +472,9 @@ SEXP L_downviewport(SEXP name, SEXP strict)
      * Try to find the named viewport
      */
     SEXP found, vp;
-    PROTECT(found = findViewport(name, strict, gvp));
-    if (LOGICAL(VECTOR_ELT(found, 0))[0]) {
+    int depth = 1;
+    PROTECT(found = findViewport(name, strict, gvp, depth));
+    if (INTEGER(VECTOR_ELT(found, 0))[0]) {
 	vp = doSetViewport(VECTOR_ELT(found, 1), FALSE, FALSE, dd);
 	/* Set the value of the current viewport for the current device
 	 * Need to do this in here so that redrawing via R BASE display
@@ -535,10 +517,10 @@ static SEXP growPath(SEXP pathsofar, SEXP name)
 }
 
 static SEXP findvppath(SEXP path, SEXP name, SEXP strict, 
-		       SEXP pathsofar, SEXP vp);
+		       SEXP pathsofar, SEXP vp, int depth);
 static SEXP findvppathInChildren(SEXP path, SEXP name, 
 				 SEXP strict, SEXP pathsofar,
-				 SEXP children) 
+				 SEXP children, int depth) 
 {
     SEXP childnames = childList(children);
     int n = LENGTH(childnames);
@@ -552,18 +534,17 @@ static SEXP findvppathInChildren(SEXP path, SEXP name,
 			     children));
 	PROTECT(newpathsofar = growPath(pathsofar,
 					VECTOR_ELT(vp, VP_NAME)));
-	result = findvppath(path, name, strict, newpathsofar, vp);
-	found = LOGICAL(VECTOR_ELT(result, 0))[0];
+	result = findvppath(path, name, strict, newpathsofar, vp, depth);
+	found = INTEGER(VECTOR_ELT(result, 0))[0] > 0;
 	count = count + 1;
 	UNPROTECT(2);
     }
     if (!found) {
-	SEXP temp, false;
+	SEXP temp, zeroDepth;
 	PROTECT(temp = allocVector(VECSXP, 2));
-	PROTECT(false = allocVector(LGLSXP, 1));
-	LOGICAL(false)[0] = FALSE;
-	temp = allocVector(VECSXP, 2);
-	SET_VECTOR_ELT(temp, 0, false);
+	PROTECT(zeroDepth = allocVector(INTSXP, 1));
+	INTEGER(zeroDepth)[0] = 0;
+	SET_VECTOR_ELT(temp, 0, zeroDepth);
 	SET_VECTOR_ELT(temp, 1, R_NilValue);
 	UNPROTECT(2);
 	result = temp;
@@ -573,19 +554,19 @@ static SEXP findvppathInChildren(SEXP path, SEXP name,
 }
 			   
 static SEXP findvppath(SEXP path, SEXP name, SEXP strict, 
-		       SEXP pathsofar, SEXP vp) 
+		       SEXP pathsofar, SEXP vp, int depth) 
 {
-    SEXP result, false, true;
+    SEXP result, zeroDepth, curDepth;
     PROTECT(result = allocVector(VECSXP, 2));
-    PROTECT(false = allocVector(LGLSXP, 1));
-    LOGICAL(false)[0] = FALSE;
-    PROTECT(true = allocVector(LGLSXP, 1));
-    LOGICAL(true)[0] = TRUE;
+    PROTECT(zeroDepth = allocVector(INTSXP, 1));
+    INTEGER(zeroDepth)[0] = 0;
+    PROTECT(curDepth = allocVector(INTSXP, 1));
+    INTEGER(curDepth)[0] = depth;
     /* 
      * If there are no children, we fail
      */
     if (noChildren(viewportChildren(vp))) {
-	SET_VECTOR_ELT(result, 0, false);
+	SET_VECTOR_ELT(result, 0, zeroDepth);
 	SET_VECTOR_ELT(result, 1, R_NilValue);
 	
     } 
@@ -595,7 +576,7 @@ static SEXP findvppath(SEXP path, SEXP name, SEXP strict,
      */
     else if (childExists(name, viewportChildren(vp)) &&
 	     pathMatch(path, pathsofar, strict)) {
-	SET_VECTOR_ELT(result, 0, true);
+	SET_VECTOR_ELT(result, 0, curDepth);
 	SET_VECTOR_ELT(result, 1, 
 		       /*
 			* Does this do inherits=FALSE?
@@ -604,7 +585,7 @@ static SEXP findvppath(SEXP path, SEXP name, SEXP strict,
 			       viewportChildren(vp)));
     } else {
 	result = findvppathInChildren(path, name, strict, pathsofar,
-				      viewportChildren(vp));
+				      viewportChildren(vp), depth + 1);
     }
     UNPROTECT(3);
     return result;
@@ -624,8 +605,9 @@ SEXP L_downvppath(SEXP path, SEXP name, SEXP strict)
      * Try to find the named viewport
      */
     SEXP found, vp;
-    PROTECT(found = findvppath(path, name, strict, R_NilValue, gvp));
-    if (LOGICAL(VECTOR_ELT(found, 0))[0]) {
+    int depth = 1;
+    PROTECT(found = findvppath(path, name, strict, R_NilValue, gvp, depth));
+    if (INTEGER(VECTOR_ELT(found, 0))[0]) {
 	vp = doSetViewport(VECTOR_ELT(found, 1), FALSE, FALSE, dd);
 	/* Set the value of the current viewport for the current device
 	 * Need to do this in here so that redrawing via R BASE display
@@ -655,8 +637,15 @@ SEXP L_unsetviewport(SEXP last)
     SEXP gvp = gridStateElement(dd, GSS_VP);
     /* NOTE that the R code has already checked that .grid.viewport$parent
      * is non-NULL
+     * 
+     * BUT this may not be called from R code !!
+     * (e.g., when the graphics engine display list is replayed;
+     *  problems can occur when grid output is mixed with base output;
+     *  for example, plot.new() is called between a viewport push and pop)
      */
     PROTECT(newvp = VECTOR_ELT(gvp, PVP_PARENT));
+    if (isNull(newvp))
+      error("Cannot pop the top-level viewport (grid and graphics output mixed?)");
     /* 
      * Remove the parent from the child
      * This is not strictly necessary, but it is conceptually
@@ -748,6 +737,8 @@ SEXP L_upviewport(SEXP last)
      * is non-NULL
      */
     PROTECT(newvp = VECTOR_ELT(gvp, PVP_PARENT));
+    if (isNull(newvp))
+      error("Cannot up the top-level viewport (grid and graphics output mixed?)");
     if (LOGICAL(last)[0]) {
 	double devWidthCM, devHeightCM;
 	/* Get the current device size 
@@ -905,6 +896,19 @@ SEXP L_setEngineRecording(SEXP value)
     return R_NilValue;
 }
 
+SEXP L_getAsk() 
+{
+    GEDevDesc *dd = getDevice();
+    return gridStateElement(dd, GSS_ASK);
+}
+
+SEXP L_setAsk(SEXP value)
+{
+    GEDevDesc *dd = getDevice();
+    setGridStateElement(dd, GSS_ASK, value);
+    return R_NilValue;
+}
+
 SEXP L_currentGPar()
 {
     /* Get the current device 
@@ -913,10 +917,10 @@ SEXP L_currentGPar()
     return gridStateElement(dd, GSS_GPAR);
 }
 
-SEXP L_newpagerecording(SEXP ask)
+SEXP L_newpagerecording()
 {
     GEDevDesc *dd = getDevice();
-    if (LOGICAL(ask)[0]) {
+    if (LOGICAL(gridStateElement(dd, GSS_ASK))[0]) {
 	NewFrameConfirm();
     }
     GEinitDisplayList(dd);
@@ -1237,6 +1241,11 @@ SEXP L_moveTo(SEXP x, SEXP y)
 		  dd,
 		  transform,
 		  &xx, &yy);
+    /*
+     * Non-finite values are ok here
+     * L_lineTo figures out what to draw 
+     * when values are non-finite
+     */
     REAL(prevloc)[0] = REAL(devloc)[0];
     REAL(prevloc)[1] = REAL(devloc)[1];
     REAL(devloc)[0] = xx;
@@ -1247,6 +1256,7 @@ SEXP L_moveTo(SEXP x, SEXP y)
 
 SEXP L_lineTo(SEXP x, SEXP y)
 {
+    double xx0, yy0, xx1, yy1;
     double xx, yy;
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
@@ -1279,13 +1289,16 @@ SEXP L_lineTo(SEXP x, SEXP y)
     REAL(devloc)[1] = yy;
     /* The graphics engine only takes device coordinates
      */
-    xx = toDeviceX(xx, GE_INCHES, dd);
-    yy = toDeviceY(yy, GE_INCHES, dd);
-    GEMode(1, dd);
-    GELine(toDeviceX(REAL(prevloc)[0], GE_INCHES, dd), 
-	   toDeviceY(REAL(prevloc)[1], GE_INCHES, dd), 
-	   xx, yy, &gc, dd);
-    GEMode(0, dd);
+    xx0 = toDeviceX(REAL(prevloc)[0], GE_INCHES, dd);
+    yy0 = toDeviceY(REAL(prevloc)[1], GE_INCHES, dd), 
+    xx1 = toDeviceX(xx, GE_INCHES, dd);
+    yy1 = toDeviceY(yy, GE_INCHES, dd);
+    if (R_FINITE(xx0) && R_FINITE(yy0) &&
+	R_FINITE(xx1) && R_FINITE(yy1)) {
+	GEMode(1, dd);
+	GELine(xx0, yy0, xx1, yy1, &gc, dd);
+	GEMode(0, dd);
+    }
     UNPROTECT(2);
     return R_NilValue;
 }
@@ -1295,8 +1308,9 @@ SEXP L_lineTo(SEXP x, SEXP y)
  */
 SEXP L_lines(SEXP x, SEXP y) 
 {
-    int i, nx, ny;
+    int i, nx, ny, start=0;
     double *xx, *yy;
+    double xold, yold;
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
     char *vmax;
@@ -1320,8 +1334,11 @@ SEXP L_lines(SEXP x, SEXP y)
 	nx = ny;
     /* Convert the x and y values to CM locations */
     vmax = vmaxget();
+    GEMode(1, dd);
     xx = (double *) R_alloc(nx, sizeof(double));
     yy = (double *) R_alloc(nx, sizeof(double));
+    xold = NA_REAL;
+    yold = NA_REAL;
     for (i=0; i<nx; i++) {
 	transformLocn(x, y, i, vpc, &gc,
 		      vpWidthCM, vpHeightCM,
@@ -1332,11 +1349,20 @@ SEXP L_lines(SEXP x, SEXP y)
 	 */
 	xx[i] = toDeviceX(xx[i], GE_INCHES, dd);
 	yy[i] = toDeviceY(yy[i], GE_INCHES, dd);
+	if ((R_FINITE(xx[i]) && R_FINITE(yy[i])) &&
+	    !(R_FINITE(xold) && R_FINITE(yold)))
+	    start = i;
+	else if ((R_FINITE(xold) && R_FINITE(yold)) &&
+		 !(R_FINITE(xx[i]) && R_FINITE(yy[i]))) {
+	    if (i-start > 1)
+		GEPolyline(i-start, xx+start, yy+start, &gc, dd);
+	}
+	else if ((R_FINITE(xold) && R_FINITE(yold)) &&
+		 (i == nx-1))
+	    GEPolyline(nx-start, xx+start, yy+start, &gc, dd);
+	xold = xx[i];
+	yold = yy[i];
     }
-    /* FIXME:  Need to check for NaN's and NA's
-     */
-    GEMode(1, dd);
-    GEPolyline(nx, xx, yy, &gc, dd);
     GEMode(0, dd);
     vmaxset(vmax);
     return R_NilValue;
@@ -1389,7 +1415,10 @@ SEXP L_segments(SEXP x0, SEXP y0, SEXP x1, SEXP y1)
 	yy0 = toDeviceY(yy0, GE_INCHES, dd);
 	xx1 = toDeviceX(xx1, GE_INCHES, dd);
 	yy1 = toDeviceY(yy1, GE_INCHES, dd);
-	GELine(xx0, yy0, xx1, yy1, &gc, dd);
+	if (R_FINITE(xx0) && R_FINITE(yy0) &&
+	    R_FINITE(xx1) && R_FINITE(yy1)) {
+	    GELine(xx0, yy0, xx1, yy1, &gc, dd);
+	}
     }
     GEMode(0, dd);
     return R_NilValue;
@@ -1545,10 +1574,17 @@ SEXP L_arrows(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn,
 				 GE_INCHES, dd);
 	    verty[2] = toDeviceY(yy1 + l * sin(rot-a),
 				 GE_INCHES, dd);
-	    drawArrow(vertx, verty, t, &gc, i, dd);
+	    /* 
+	     * Only draw arrow if both ends of first segment 
+	     * are not non-finite
+	     */
+	    if (R_FINITE(toDeviceX(xx2, GE_INCHES, dd)) &&
+		R_FINITE(toDeviceY(yy2, GE_INCHES, dd)) &&
+		R_FINITE(vertx[1]) && R_FINITE(verty[1]))
+		drawArrow(vertx, verty, t, &gc, i, dd);
 	}
 	if (last) {
-	    if (isNull(x1)) {
+	    if (isNull(xnm1)) {
 		xxnm1 = REAL(devloc)[0];
 		yynm1 = REAL(devloc)[1];
 	    } else 
@@ -1573,7 +1609,14 @@ SEXP L_arrows(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn,
 				 GE_INCHES, dd);
 	    verty[2] = toDeviceY(yyn + l * sin(rot-a),
 				 GE_INCHES, dd);
-	    drawArrow(vertx, verty, t, &gc, i, dd);
+	    /* 
+	     * Only draw arrow if both ends of laste segment are
+	     * not non-finite
+	     */
+	    if (R_FINITE(toDeviceX(xxnm1, GE_INCHES, dd)) &&
+		R_FINITE(toDeviceY(yynm1, GE_INCHES, dd)) &&
+		R_FINITE(vertx[1]) && R_FINITE(verty[1]))
+		drawArrow(vertx, verty, t, &gc, i, dd);
 	}
 	if (isNull(x1))
 	    UNPROTECT(1);
@@ -1584,8 +1627,9 @@ SEXP L_arrows(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn,
 
 SEXP L_polygon(SEXP x, SEXP y, SEXP index)
 {
-    int i, j, nx, np;
+    int i, j, nx, np, start=0;
     double *xx, *yy;
+    double xold, yold;
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
     LViewportContext vpc;
@@ -1620,6 +1664,8 @@ SEXP L_polygon(SEXP x, SEXP y, SEXP index)
 	vmax = vmaxget();
 	xx = (double *) R_alloc(nx + 1, sizeof(double));
 	yy = (double *) R_alloc(nx + 1, sizeof(double));
+	xold = NA_REAL;
+	yold = NA_REAL;
 	for (j=0; j<nx; j++) {
 	    transformLocn(x, y, INTEGER(indices)[j] - 1, vpc, &gc,
 			  vpWidthCM, vpHeightCM,
@@ -1630,10 +1676,22 @@ SEXP L_polygon(SEXP x, SEXP y, SEXP index)
 	     */
 	    xx[j] = toDeviceX(xx[j], GE_INCHES, dd);
 	    yy[j] = toDeviceY(yy[j], GE_INCHES, dd);
+	    if ((R_FINITE(xx[j]) && R_FINITE(yy[j])) &&
+		!(R_FINITE(xold) && R_FINITE(yold)))
+		start = j; /* first point of current segment */
+	    else if ((R_FINITE(xold) && R_FINITE(yold)) &&
+		     !(R_FINITE(xx[j]) && R_FINITE(yy[j]))) {
+		if (j-start > 1) {
+		    GEPolygon(j-start, xx+start, yy+start, &gc, dd);
+		}
+	    }
+	    else if ((R_FINITE(xold) && R_FINITE(yold)) && (j == nx-1)) { 
+		/* last */
+		GEPolygon(nx-start, xx+start, yy+start, &gc, dd);
+	    }
+	    xold = xx[j];
+	    yold = yy[j];
 	}
-	/* FIXME:  Need to check for NaN's and NA's
-	 */
-	GEPolygon(nx, xx, yy, &gc, dd);
 	vmaxset(vmax);
     }
     GEMode(0, dd);
@@ -1642,7 +1700,7 @@ SEXP L_polygon(SEXP x, SEXP y, SEXP index)
 
 SEXP L_circle(SEXP x, SEXP y, SEXP r)
 {
-    int i, nx, nr;
+    int i, nx, ny, nr;
     double xx, yy, rr1, rr2, rr;
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
@@ -1660,7 +1718,12 @@ SEXP L_circle(SEXP x, SEXP y, SEXP r)
 			 transform, &rotationAngle);
     getViewportContext(currentvp, &vpc);
     nx = unitLength(x); 
+    ny = unitLength(y);
     nr = unitLength(r);
+    if (ny > nx) 
+	nx = ny;
+    if (nr > nx)
+	nx = nr;
     /* FIXME:  Need to check for NaN's and NA's
      */
     GEMode(1, dd);
@@ -1683,11 +1746,17 @@ SEXP L_circle(SEXP x, SEXP y, SEXP r)
 				      dd);
 	rr = fmin2(rr1, rr2);
 	rr = toDeviceWidth(rr, GE_INCHES, dd);
+	/*
+	 * A negative radius is invalid
+	 */
+	if (rr < 0)
+	    error("Invalid circle radius (must be non-negative)");
 	/* The graphics engine only takes device coordinates
 	 */
 	xx = toDeviceX(xx, GE_INCHES, dd);
 	yy = toDeviceY(yy, GE_INCHES, dd);
-	GECircle(xx, yy, rr, &gc, dd);
+	if (R_FINITE(xx) && R_FINITE(yy) && R_FINITE(rr))
+	    GECircle(xx, yy, rr, &gc, dd);
     }
     GEMode(0, dd);
     return R_NilValue;
@@ -1701,7 +1770,7 @@ SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP just)
     double xx, yy, ww, hh;
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
-    int i, nx;
+    int i, ny, nw, nh, maxn;
     LViewportContext vpc;
     R_GE_gcontext gc;
     LTransform transform;
@@ -1717,9 +1786,18 @@ SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP just)
     getViewportContext(currentvp, &vpc);
     /* FIXME:  Need to check for x, y, w, h all same length
      */
-    nx = unitLength(x); 
+    maxn = unitLength(x); 
+    ny = unitLength(y); 
+    nw = unitLength(w); 
+    nh = unitLength(h); 
+    if (ny > maxn)
+	maxn = ny;
+    if (nw > maxn)
+	maxn = nw;
+    if (nh > maxn)
+	maxn = nh;
     GEMode(1, dd);
-    for (i=0; i<nx; i++) {
+    for (i=0; i<maxn; i++) {
 	gcontextFromgpar(currentgp, i, &gc);
 	transformLocn(x, y, i, vpc, &gc,
 		      vpWidthCM, vpHeightCM,
@@ -1747,7 +1825,8 @@ SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP just)
 	    yy = toDeviceY(yy, GE_INCHES, dd);
 	    ww = toDeviceWidth(ww, GE_INCHES, dd);
 	    hh = toDeviceHeight(hh, GE_INCHES, dd);
-	    GERect(xx, yy, xx + ww, yy + hh, &gc, dd);
+	    if (R_FINITE(xx) && R_FINITE(yy) && R_FINITE(ww) && R_FINITE(hh))
+		GERect(xx, yy, xx + ww, yy + hh, &gc, dd);
 	} else {
 	    /* We have to do a little bit of work to figure out where the 
 	     * corners of the rectangle are.
@@ -1795,28 +1874,33 @@ SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP just)
 			  &dw, &dh);
 	    xxx[3] = xxx[0] + dw;
 	    yyy[3] = yyy[0] + dh;
-	    /* The graphics engine only takes device coordinates
-	     */
-	    xxx[0] = toDeviceX(xxx[0], GE_INCHES, dd);
-	    yyy[0] = toDeviceY(yyy[0], GE_INCHES, dd);
-	    xxx[1] = toDeviceX(xxx[1], GE_INCHES, dd);
-	    yyy[1] = toDeviceY(yyy[1], GE_INCHES, dd);
-	    xxx[2] = toDeviceX(xxx[2], GE_INCHES, dd);
-	    yyy[2] = toDeviceY(yyy[2], GE_INCHES, dd);
-	    xxx[3] = toDeviceX(xxx[3], GE_INCHES, dd);
-	    yyy[3] = toDeviceY(yyy[3], GE_INCHES, dd);
-	    /* Close the polygon */
-	    xxx[4] = xxx[0];
-	    yyy[4] = yyy[0];
-	    /* Do separate fill and border to avoid border being 
-	     * drawn on clipping boundary when there is a fill
-	     */
-	    tmpcol = gc.col;
-	    gc.col = NA_INTEGER;
-	    GEPolygon(5, xxx, yyy, &gc, dd);
-	    gc.col = tmpcol;
-	    gc.fill = NA_INTEGER;
-	    GEPolygon(5, xxx, yyy, &gc, dd);
+	    if (R_FINITE(xxx[0]) && R_FINITE(yyy[0]) &&
+		R_FINITE(xxx[1]) && R_FINITE(yyy[1]) &&
+		R_FINITE(xxx[2]) && R_FINITE(yyy[2]) &&
+		R_FINITE(xxx[3]) && R_FINITE(yyy[3])) {
+		/* The graphics engine only takes device coordinates
+		 */
+		xxx[0] = toDeviceX(xxx[0], GE_INCHES, dd);
+		yyy[0] = toDeviceY(yyy[0], GE_INCHES, dd);
+		xxx[1] = toDeviceX(xxx[1], GE_INCHES, dd);
+		yyy[1] = toDeviceY(yyy[1], GE_INCHES, dd);
+		xxx[2] = toDeviceX(xxx[2], GE_INCHES, dd);
+		yyy[2] = toDeviceY(yyy[2], GE_INCHES, dd);
+		xxx[3] = toDeviceX(xxx[3], GE_INCHES, dd);
+		yyy[3] = toDeviceY(yyy[3], GE_INCHES, dd);
+		/* Close the polygon */
+		xxx[4] = xxx[0];
+		yyy[4] = yyy[0];
+		/* Do separate fill and border to avoid border being 
+		 * drawn on clipping boundary when there is a fill
+		 */
+		tmpcol = gc.col;
+		gc.col = NA_INTEGER;
+		GEPolygon(5, xxx, yyy, &gc, dd);
+		gc.col = tmpcol;
+		gc.fill = NA_INTEGER;
+		GEPolygon(5, xxx, yyy, &gc, dd);
+	    }
 	}
     }
     GEMode(0, dd);
@@ -1910,19 +1994,22 @@ SEXP L_text(SEXP label, SEXP x, SEXP y, SEXP just,
 		 */
 		xx[i] = toDeviceX(xx[i], GE_INCHES, dd);
 		yy[i] = toDeviceY(yy[i], GE_INCHES, dd);
-		gcontextFromgpar(currentgp, i, &gc);
-		if (isExpression(txt))
-		    GEMathText(xx[i], yy[i],
-			       VECTOR_ELT(txt, i % LENGTH(txt)),
+		if (R_FINITE(xx[i]) && R_FINITE(yy[i])) {
+		    gcontextFromgpar(currentgp, i, &gc);
+		    if (isExpression(txt))
+			GEMathText(xx[i], yy[i],
+				   VECTOR_ELT(txt, i % LENGTH(txt)),
+				   hjust, vjust, 
+				   numeric(rot, i % LENGTH(rot)) + 
+				   rotationAngle, 
+				   &gc, dd);
+		    else
+			GEText(xx[i], yy[i], 
+			       CHAR(STRING_ELT(txt, i % LENGTH(txt))), 
 			       hjust, vjust, 
 			       numeric(rot, i % LENGTH(rot)) + rotationAngle, 
 			       &gc, dd);
-		else
-		    GEText(xx[i], yy[i], 
-			   CHAR(STRING_ELT(txt, i % LENGTH(txt))), 
-			   hjust, vjust, 
-			   numeric(rot, i % LENGTH(rot)) + rotationAngle, 
-			   &gc, dd);
+		}
 	    }
 	}
 	GEMode(0, dd);
@@ -1985,11 +2072,13 @@ SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size)
 	    /* The graphics engine only takes device coordinates
 	     */
 	    symbolSize = toDeviceWidth(symbolSize, GE_INCHES, dd);
-	    if (isString(pch))
-		ipch = CHAR(STRING_ELT(pch, i % npch))[0];
-	    else
-		ipch = INTEGER(pch)[i % npch];
-	    GESymbol(xx[i], yy[i], ipch, symbolSize, &gc, dd);
+	    if (R_FINITE(symbolSize)) {
+		if (isString(pch))
+		    ipch = CHAR(STRING_ELT(pch, i % npch))[0];
+		else
+		    ipch = INTEGER(pch)[i % npch];
+		GESymbol(xx[i], yy[i], ipch, symbolSize, &gc, dd);
+	    }
 	}
     GEMode(0, dd);
     vmaxset(vmax);
@@ -2053,10 +2142,15 @@ SEXP L_locator() {
     PROTECT(answer = allocVector(REALSXP, 2));
     /*
      * Get a mouse click
+     * Fails if user did not click mouse button 1
      */
-    dd->dev->locator(&x, &y, dd->dev);
-    REAL(answer)[0] = fromDeviceX(x, GE_INCHES, dd);
-    REAL(answer)[1] = fromDeviceY(y, GE_INCHES, dd);
+    if (dd->dev->locator(&x, &y, dd->dev)) {
+	REAL(answer)[0] = fromDeviceX(x, GE_INCHES, dd);
+	REAL(answer)[1] = fromDeviceY(y, GE_INCHES, dd);
+    } else {
+	REAL(answer)[0] = NA_REAL;
+	REAL(answer)[1] = NA_REAL;	
+    }
     UNPROTECT(1);
     return answer;
 }

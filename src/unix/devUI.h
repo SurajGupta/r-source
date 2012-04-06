@@ -6,11 +6,9 @@
 
 #include "Startup.h"		/* for SA_TYPE */
 
-extern Rboolean (*ptr_GnomeDeviceDriver)(DevDesc*, char*, double, double, double);
-
-extern Rboolean (*ptr_GTKDeviceDriver)(DevDesc*, char*, double, double, double);
 #ifdef HAVE_AQUA
 extern void (*ptr_R_StartConsole)();
+extern int  (*ptr_R_EditFiles)(int, char **, char **, char *);
 #endif
 
 extern void (*ptr_R_Suicide)(char *);
@@ -33,6 +31,3 @@ extern long R_timeout_val;
 #ifdef __SYSTEM__
 # undef extern
 #endif
-
-Rboolean stub_GnomeDeviceDriver(DevDesc*, char*, double, double, double);
-Rboolean stub_GTKDeviceDriver(DevDesc*, char*, double, double, double);

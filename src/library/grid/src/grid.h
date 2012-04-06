@@ -19,6 +19,7 @@
  *  Suite 330, Boston, MA  02111-1307  USA.
  */
 
+#include <Rconfig.h>
 #include <Rinternals.h>
 #include <Rgraphics.h>  
 #include <Rmath.h>
@@ -49,6 +50,7 @@
 #define GSS_ENGINEDLON 11
 #define GSS_CURRGROB 12
 #define GSS_ENGINERECORDING 13
+#define GSS_ASK 14
 
 /*
  * Structure of a viewport
@@ -111,23 +113,26 @@
 #define GP_FONT 8
 #define GP_FONTFAMILY 9
 #define GP_ALPHA 10
+#define GP_LINEEND 11
+#define GP_LINEJOIN 12
+#define GP_LINEMITRE 13
 /* 
  * Keep fontface at the end because it is never used in C code
  */
-#define GP_FONTFACE 11
+#define GP_FONTFACE 14
 
 typedef double LTransform[3][3];
 
 typedef double LLocation[3];
 
 typedef enum {
-    L_adding = 0,
-    L_subtracting = 1,
-    L_summing = 2,
-    L_plain = 3,
-    L_maximising = 4,
-    L_minimising = 5,
-    L_multiplying = 6
+    L_adding = 1,
+    L_subtracting = 2,
+    L_summing = 3,
+    L_plain = 4,
+    L_maximising = 5,
+    L_minimising = 6,
+    L_multiplying = 7
 } LNullArithmeticMode;
 
 /* NOTE: The order of the enums here must match the order of the
@@ -244,8 +249,10 @@ SEXP L_getCurrentGrob();
 SEXP L_setCurrentGrob(SEXP value);
 SEXP L_getEngineRecording();
 SEXP L_setEngineRecording(SEXP value);
+SEXP L_getAsk();
+SEXP L_setAsk(SEXP value);
 SEXP L_currentGPar();
-SEXP L_newpagerecording(SEXP ask);
+SEXP L_newpagerecording();
 SEXP L_newpage();
 SEXP L_initGPar();
 SEXP L_initViewportStack();
@@ -311,21 +318,25 @@ int pureNullUnit(SEXP unit, int index, GEDevDesc *dd);
 double transformX(SEXP x, int index, LViewportContext vpc, 
 		  R_GE_gcontext *gc,
 		  double widthCM, double heightCM,
+		  int nullLMode, int nullAMode,
 		  GEDevDesc *dd);
 
 double transformY(SEXP y, int index, LViewportContext vpc,
 		  R_GE_gcontext *gc,
 		  double widthCM, double heightCM,
+		  int nullLMode, int nullAMode,
 		  GEDevDesc *dd);
 
 double transformWidth(SEXP width, int index, LViewportContext vpc,
 		      R_GE_gcontext *gc,
 		      double widthCM, double heightCM,
+		      int nullLMode, int nullAMode,
 		      GEDevDesc *dd);
 
 double transformHeight(SEXP height, int index, LViewportContext vpc,
 		       R_GE_gcontext *gc,
 		       double widthCM, double heightCM,
+		       int nullLMode, int nullAMode,
 		       GEDevDesc *dd);
 
 double transformXtoINCHES(SEXP x, int index, LViewportContext vpc,

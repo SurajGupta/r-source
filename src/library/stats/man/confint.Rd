@@ -39,10 +39,9 @@ limits for each parameter. These will be labelled as (1-level)/2 and
   objects.
 }
 \seealso{
-  \code{\link[MASS]{confint.nls}}
+  \code{\link[MASS]{confint.nls}} in package \pkg{MASS}.
 }
 \examples{
-data(mtcars)
 fit <- lm(100/mpg ~ disp + hp + wt + am, data=mtcars)
 confint(fit)
 confint(fit, "wt")

@@ -15,16 +15,20 @@
 \usage{
 environment(fun = NULL)
 environment(fun) <- value
+
 is.environment(obj)
+
 .GlobalEnv
 globalenv()
 .BaseNamespaceEnv
-new.env(hash=FALSE, parent=parent.frame())
+
+new.env(hash = FALSE, parent = parent.frame())
+
 parent.env(env)
 parent.env(env) <- value
 }
 \arguments{
-  \item{fun}{a \code{\link{function}}, a \code{\link[stats]{formula}}, or
+  \item{fun}{a \code{\link{function}}, a \code{\link{formula}}, or
     \code{NULL}, which is the default.}
   \item{value}{an environment to associate with the function}
   \item{obj}{an arbitrary \R object.}

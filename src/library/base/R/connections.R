@@ -98,7 +98,7 @@ seek.connection <- function(con, where = NA, origin = "start", rw = "", ...)
     rw <- pmatch(rw, c("read", "write"), 0)
     if(is.na(origin))
         stop("`origin' must be one of `start', `current` or `end'")
-    .Internal(seek(con, as.integer(where), origin, rw))
+    .Internal(seek(con, as.double(where), origin, rw))
 }
 
 truncate <- function(con, ...)
@@ -172,9 +172,10 @@ readBin <- function(con, what, n = 1, size = NA, signed = TRUE,
         on.exit(close(con))
     }
     swap <- endian != .Platform$endian
-    if(!is.character(what) || length(what) != 1 
-    	|| !(what %in% c("numeric", "double", "integer",
-    		"int", "logical", "complex", "character"))) what <- typeof(what)
+    if(!is.character(what) || length(what) != 1
+    	|| !(what %in% c("numeric", "double", "integer", "int", "logical",
+                         "complex", "character", "raw")))
+        what <- typeof(what)
     .Internal(readBin(con, what, n, size, signed, swap))
 }
 

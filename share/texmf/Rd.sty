@@ -4,6 +4,7 @@
 %%% Modified 1998/07/07 by Martin Maechler
 %%% Modified 1999/11/20 by Brian Ripley
 %%% Modified 1999/12/26 by Kurt Hornik
+%%% and so on.
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{Rd}{}
@@ -12,8 +13,16 @@
 \newboolean{Rd@has@ae}
 \newboolean{Rd@use@ae}
 \newboolean{Rd@use@hyper}
+\newboolean{Rd@has@times}
+\newboolean{Rd@use@times}
+\newboolean{Rd@use@cm-super}
+\newboolean{Rd@has@lm}
+\newboolean{Rd@use@lm}
 \DeclareOption{ae}{\setboolean{Rd@use@ae}{true}}
 \DeclareOption{hyper}{\setboolean{Rd@use@hyper}{true}}
+\DeclareOption{times}{\setboolean{Rd@use@times}{true}}
+\DeclareOption{lm}{\setboolean{Rd@use@lm}{true}}
+\DeclareOption{cm-super}{\setboolean{Rd@use@cm-super}{true}}
 \ProcessOptions
 \RequirePackage{longtable}
 \setcounter{LTchunksize}{250}
@@ -41,11 +50,6 @@
 \addtolength{\textwidth}{24mm}   % still fits on US paper
 \setlength{\oddsidemargin}{10mm}
 \setlength{\evensidemargin}{\oddsidemargin}
-
-\newlength{\middle}
-\setlength{\middle}{\textwidth}
-\addtolength{\middle}{-2.25in}
-\addtolength{\middle}{-4pt}
 
 \newenvironment{display}[0]%
   {\begin{list}{}{\setlength{\leftmargin}{30pt}}\item}%
@@ -221,6 +225,18 @@
   \input{t1aett.fd}
   \DeclareFontShape{T1}{aett}{bx}{n}{<->ssub*aett/m/n}{}}
   {\message{NOT loading ae}}
+\IfFileExists{times.sty}{\setboolean{Rd@has@times}{true}}{}
+\ifthenelse{\boolean{Rd@use@times}\and\boolean{Rd@has@times}}{%
+  \usepackage[T1]{fontenc}
+  \usepackage{times}}
+  {\message{NOT loading times}}
+\IfFileExists{lmodern.sty}{\setboolean{Rd@has@lm}{true}}{}
+\ifthenelse{\boolean{Rd@use@lm}\and\boolean{Rd@has@lm}}{%
+  \usepackage[T1]{fontenc}
+  \usepackage{lmodern}}
+  {\message{NOT loading lmodern}}
+\ifthenelse{\boolean{Rd@use@cm-super}}{%
+  \usepackage[T1]{fontenc}}{}
 
 \ifthenelse{\boolean{Rd@use@hyper}}{%
   \RequirePackage{color}    
@@ -297,6 +313,39 @@
   {\if@restonecol\onecolumn\else\clearpage\fi}
   }
 
+% new definitions for R >= 2.0.0
+\ifthenelse{\boolean{Rd@use@hyper}}
+{\newcommand{\LinkA}[2]{\hyperlink{Rfn.#2}{#1}\index{#1@\texttt{#1}|textit}}}
+{\newcommand{\LinkA}[2]{#1\index{#1@\texttt{#1}|textit}}}
+%
+% \alias{<alias>}{<header>}
+\ifthenelse{\boolean{Rd@use@hyper}}
+{\newcommand{\aliasA}[3]{\hypertarget{Rfn.#3}{\index{#1@\texttt{#1} \textit{(\texttt{#2})}}}}}
+{\newcommand{\aliasA}[3]{\index{#1@\texttt{#1} \textit{(\texttt{#2})}}}}
+\ifthenelse{\boolean{Rd@use@hyper}}
+{\newcommand{\methaliasA}[3]{\hypertarget{Rfn.#3}{\relax}}}
+{\newcommand{\methaliasA}[3]{}}
+\newcommand{\HeaderA}[3]{%
+  \vneed{1ex}
+  \markboth{#1}{#1}
+  \noindent
+  \nopagebreak
+  \begin{center}
+  \ifthenelse{\boolean{Rd@use@hyper}}%
+    {\def\@currentHref{page.\thepage}
+    \hypertarget{Rfn.#3}{\index{#1@\texttt{#1}}}%
+    \myaddcontentsline{toc}{subsection}{#1}%
+    \pdfbookmark[1]{#1}{Rfn.#1}}
+    {\addcontentsline{toc}{subsection}{#1}
+      \index{#1@\texttt{#1}|textbf}}
+    \hrule
+    \parbox{0.95\textwidth}{%
+      \begin{ldescription}[1.5in]
+       \item[\texttt{#1}] \emph{#2}
+      \end{ldescription}}
+    \hrule
+  \end{center}
+  \nopagebreak}
 
 \InputIfFileExists{Rd.cfg}{%
   \typeout{Reading personal defaults ...}}{}

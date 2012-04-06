@@ -89,7 +89,7 @@ midcache.dendrogram <- function (x, type = "hclust")
     if( !inherits(x, "dendrogram") )
 	stop("we require a dendrogram")
     setmid <- function(d, type) {
-	if(isLeaf(d))# no "midpoint"
+	if(is.leaf(d))# no "midpoint"
 	    return(d)
 	k <- length(d)
 	if(k < 1)
@@ -115,8 +115,8 @@ midcache.dendrogram <- function (x, type = "hclust")
 print.dendrogram <- function(x, digits = getOption("digits"), ...)
 {
     cat("`dendrogram' ")
-    if(isLeaf(x))
-	cat("leaf", format(attr(x, "label"), digits = digits))
+    if(is.leaf(x))
+	cat("leaf '", format(attr(x, "label"), digits = digits),"'", sep='')
     else
 	cat("with", length(x), "branches and",
 	    attr(x,"members"), "members total")
@@ -127,8 +127,13 @@ print.dendrogram <- function(x, digits = getOption("digits"), ...)
 
 str.dendrogram <-
 function (object, max.level = 0, digits.d = 3, give.attr = FALSE,
-	  wid = getOption("width"), nest.lev = 0, indent.str = "", ...)
+          wid = getOption("width"), nest.lev = 0, indent.str = "",
+          stem = "--", ...)
 {
+## MM: Maybe improve this :
+## -- e.g. when 'object' is part of a larger structure which *is* str()ed
+## with default max.level= 0,  the dendrogram shouldn't be str()ed to all levels
+
     ## FIXME: `wid' argument is currently disregarded
     pasteLis <- function(lis, dropNam, sep = " = ") {
 	## drop uninteresting "attributes" here
@@ -140,19 +145,20 @@ function (object, max.level = 0, digits.d = 3, give.attr = FALSE,
     nind <- nchar(istr <- indent.str)
     if(substr(istr, nind,nind) == " ")
        substr(istr, nind,nind) <- "`"
-    cat(istr, "--", sep="")
+    cat(istr, stem, sep="")
 
-    nAt <- names(at <- attributes(object))
+    at <- attributes(object)
     memb <- at[["members"]]
     hgt	 <- at[["height"]]
-    if(!isLeaf(object)) {
+    if(!is.leaf(object)) {
 	le <- length(object)
 	if(give.attr) {
 	    if(nchar(at <- pasteLis(at, c("class", "height", "members"))))
 		at <- paste(",", at)
 	}
 	cat("[dendrogram w/ ", le, " branches and ", memb, " members at h = ",
-	    format(hgt, digits=digits.d), if(give.attr) at, "]\n", sep="")
+            format(hgt, digits=digits.d), if(give.attr) at,
+            "]", if(max.level > 0 && nest.lev == max.level)" ..", "\n", sep="")
 	if (max.level==0 || nest.lev < max.level) {
 	    for(i in 1:le) {
 		##cat(indent.str, nam.ob[i], ":", sep="")
@@ -193,16 +199,17 @@ function (object, max.level = 0, digits.d = 3, give.attr = FALSE,
 ## {probably don't change, just print a warning ..}
 plot.dendrogram <-
     function (x, type = c("rectangle", "triangle"), center = FALSE,
-	      edge.root = isLeaf(x) || !is.null(attr(x, "edgetext")),
-	      nodePar = NULL, xaxt="n", yaxt="s",
-	      edgePar = list(), leaflab= c("perpendicular", "textlike", "none"),
-	      xlab = "", ylab = "", horiz = FALSE, frame.plot = FALSE, ...)
+	      edge.root = is.leaf(x) || !is.null(attr(x, "edgetext")),
+	      nodePar = NULL, edgePar = list(),
+	      leaflab = c("perpendicular", "textlike", "none"), dLeaf = NULL,
+	      xlab = "", ylab = "", xaxt="n", yaxt="s",
+	      horiz = FALSE, frame.plot = FALSE, ...)
 {
     type <- match.arg(type)
     leaflab <- match.arg(leaflab)
     hgt <- attr(x, "height")
     if (edge.root && is.logical(edge.root))
-	edge.root <- 0.0625 * if(isLeaf(x)) 1 else hgt
+	edge.root <- 0.0625 * if(is.leaf(x)) 1 else hgt
     mem.x <- .memberDend(x)
     yTop <- hgt + edge.root
     if(center) { x1 <- 0.5 ; x2 <- mem.x + 0.5 }
@@ -215,7 +222,12 @@ plot.dendrogram <-
     }
     plot(0, xlim = xlim, ylim = ylim, type = "n", xlab = xlab, ylab = ylab,
 	 xaxt = xaxt, yaxt = yaxt, frame.plot = frame.plot, ...)
+    if(is.null(dLeaf))
+        dLeaf <- .75*(if(horiz) strwidth("w") else strheight("x"))
+
     if (edge.root) {
+### FIXME: the first edge + edgetext is drawn here, all others in plotNode()
+### -----  maybe use trick with adding a single parent node to the top ?
 	x0 <- plotNodeLimit(x1, x2, x, center)$x
 	if (horiz)
 	    segments(hgt, x0, yTop, x0)
@@ -228,15 +240,15 @@ plot.dendrogram <-
 	}
     }
     plotNode(x1, x2, x, type = type, center = center, leaflab = leaflab,
-	     nodePar = nodePar, edgePar = edgePar, horiz = horiz)
+             dLeaf = dLeaf, nodePar = nodePar, edgePar = edgePar, horiz = horiz)
 }
 
 ### the work horse: plot node (if pch) and lines to all children
 plotNode <-
-    function(x1, x2, subtree, type, center, leaflab,
+    function(x1, x2, subtree, type, center, leaflab, dLeaf,
 	     nodePar, edgePar, horiz = FALSE)
 {
-    inner <- !isLeaf(subtree) && x1 != x2
+    inner <- !is.leaf(subtree) && x1 != x2
     yTop <- attr(subtree, "height")
     bx <- plotNodeLimit(x1, x2, subtree, center)
     xTop <- bx$x
@@ -254,12 +266,14 @@ plotNode <-
     }
 
     Xtract <- function(nam, L, default, indx)
-	rep(if(any(nam == names(L))) L[[nam]] else default, length.out = indx)[indx]
+	rep(if(nam %in% names(L)) L[[nam]] else default,
+	    length.out = indx)[indx]
     asTxt <- function(x) # to allow 'plotmath' labels:
-	if(is.character(x) || is.expression(x)) x else as.character(x)
+	if(is.character(x) || is.expression(x) || is.null(x)) x else as.character(x)
+
+    i <- if(inner || hasP) 1 else 2 # only 1 node specific par
 
     if(!is.null(nPar)) { ## draw this node
-	i <- if(inner || hasP) 1 else 2 # only 1 node specific par
 	pch <- Xtract("pch", nPar, default = 1:2,	 i)
 	cex <- Xtract("cex", nPar, default = c(1,1),	 i)
 	col <- Xtract("col", nPar, default = par("col"), i)
@@ -267,16 +281,26 @@ plotNode <-
 	points(if (horiz) cbind(yTop, xTop) else cbind(xTop, yTop),
 	       pch = pch, bg = bg, col = col, cex = cex)
     }
-    if (isLeaf(subtree)) {
+
+    if(leaflab == "textlike")
+        p.col <- Xtract("p.col", nPar, default = "white", i)
+    lab.col <- Xtract("lab.col", nPar, default = par("col"), i)
+    lab.cex <- Xtract("lab.cex", nPar, default = c(1,1), i)
+    lab.font <- Xtract("lab.font", nPar, default = par("font"), i)
+    if (is.leaf(subtree)) {
 	## label leaf
 	if (leaflab == "perpendicular") { # somewhat like plot.hclust
 	    if(horiz) {
-	       X <- yTop; Y <- xTop; srt <- 0; adj <- c(0, 0.5)
+                X <- yTop + dLeaf * lab.cex
+                Y <- xTop; srt <- 0; adj <- c(0, 0.5)
 	    }
-	    else{
-	       X <- xTop; Y <- yTop; srt <- 90; adj <- 1
+	    else {
+                Y <- yTop - dLeaf * lab.cex
+                X <- xTop; srt <- 90; adj <- 1
 	    }
-	    text(X, Y, attr(subtree,"label"), xpd = TRUE, srt = srt, adj = adj)
+            nodeText <- asTxt(attr(subtree,"label"))
+	    text(X, Y, nodeText, xpd = TRUE, srt = srt, adj = adj,
+                 cex = lab.cex, col = lab.col, font = lab.font)
 	}
     }
     else if (inner) {
@@ -299,7 +323,7 @@ plotNode <-
 	    hasE <- !is.null(ePar <- attr(child, "edgePar"))
 	    if (!hasE)
 		ePar <- edgePar
-	    i <- if (!isLeaf(child) || hasE) 1 else 2
+	    i <- if (!is.leaf(child) || hasE) 1 else 2
 	    ## define line attributes for segmentsHV():
 	    col <- Xtract("col", ePar, default = par("col"), i)
 	    lty <- Xtract("lty", ePar, default = par("lty"), i)
@@ -312,22 +336,21 @@ plotNode <-
 		segmentsHV(xBot,yTop, xBot,yBot)# v
 	    }
 	    vln <- NULL
-	    if (isLeaf(child) && leaflab == "textlike") {
+	    if (is.leaf(child) && leaflab == "textlike") {
 		nodeText <- asTxt(attr(child,"label"))
 		if(getOption("verbose"))
 		    cat('-- with "label"',format(nodeText))
-		hln <- 0.6 * strwidth(nodeText)/2
-		vln <- 1.5 * strheight(nodeText)/2
+		hln <- 0.6 * strwidth(nodeText, cex = lab.cex)/2
+		vln <- 1.5 * strheight(nodeText, cex = lab.cex)/2
 		rect(xBot - hln, yBot,
-		     xBot + hln, yBot + 2 * vln, col = "white")
-		text(xBot, yBot + vln, nodeText)
+		     xBot + hln, yBot + 2 * vln, col = p.col)
+		text(xBot, yBot + vln, nodeText, xpd = TRUE,
+                     cex = lab.cex, col = lab.col, font = lab.font)
 	    }
 	    if (!is.null(attr(child, "edgetext"))) {
 		edgeText <- asTxt(attr(child, "edgetext"))
 		if(getOption("verbose"))
 		    cat('-- with "edgetext"',format(edgeText))
-		vlm <- 1.5 * strheight(edgeText)/2
-		hlm <- strwidth(edgeText)/2
 		if (!is.null(vln)) {
 		    mx <-
 			if(type == "triangle")
@@ -340,14 +363,25 @@ plotNode <-
 		    my <- (yTop + yBot)/2
 		}
 		## Both for "triangle" and "rectangle" : Diamond + Text
-		hlm <- hlm+ 0.6*vlm+ c(0,2*vlm,0)# + vlm => constant shape ">"
-		polygon(c(mx - hlm, mx + hlm),
-			c(my - vlm, my, my + vlm, my + vlm, my, my - vlm),
-			col = "white")
-		text(mx, my, edgeText)
+
+                p.col <- Xtract("p.col", ePar, default = "white", i)
+                p.border <- Xtract("p.border", ePar, default = par("fg"), i)
+                ## edge label pars: defaults from the segments pars
+                p.lwd <- Xtract("p.lwd", ePar, default = lwd, i)
+                p.lty <- Xtract("p.lty", ePar, default = lty, i)
+                t.col <- Xtract("t.col", ePar, default = col, i)
+                t.cex <- Xtract("t.cex", ePar, default =  1,  i)
+                t.font<- Xtract("t.font",ePar, default= par("font"), i)
+
+		vlm <- strheight(c(edgeText,"h"), cex = t.cex)/2
+		hlm <- strwidth (c(edgeText,"m"), cex = t.cex)/2
+		hl3 <- c(hlm[1], hlm[1] + hlm[2], hlm[1])
+                polygon(mx+ c(-hl3, hl3), my + sum(vlm)*c(-1:1,1:-1),
+                        col = p.col, border= p.border, lty = p.lty, lwd = p.lwd)
+		text(mx, my, edgeText, cex = t.cex, col = t.col, font = t.font)
 	    }
 	    plotNode(bx$limit[k], bx$limit[k + 1], subtree = child,
-		     type, center, leaflab, nodePar, edgePar, horiz)
+		     type, center, leaflab, dLeaf, nodePar, edgePar, horiz)
 	}
     }
 }
@@ -356,7 +390,7 @@ plotNodeLimit <- function(x1, x2, subtree, center)
 {
     ## get the left borders limit[k] of all children k=1..K, and
     ## the handle point `x' for the edge connecting to the parent.
-    inner <- !isLeaf(subtree) && x1 != x2
+    inner <- !is.leaf(subtree) && x1 != x2
     if(inner) {
 	K <- length(subtree)
 	mTop <- .memberDend(subtree)
@@ -384,27 +418,28 @@ cut.dendrogram <- function(x, h, ...)
     X <- 1
 
     assignNodes <- function(subtree, h) {
-	if(!isLeaf(subtree)) {
+	if(!is.leaf(subtree)) {
 	    if(!(K <- length(subtree)))
-		warning("`subtree' of length 0 !!")
-	    new.mem <- 0
+		stop("non leaf ", sQuote("subtree"), " of length 0 !!")
+	    new.mem <- 0:0
 	    for(k in 1:K) {
-		if(attr(subtree[[k]], "height") <= h) {
+                sub <- subtree[[k]]
+		if(attr(sub, "height") <= h) {
 		    ## cut it, i.e. save to LOWER[] and make a leaf
-		    sub <- subtree[[k]]
 		    at <- attributes(sub)
 		    at$leaf <- TRUE
+                    at$class <- NULL# drop it from leaf
 		    at$x.member <- at$members
-		    new.mem <- new.mem + (at$members <- 1)
+		    new.mem <- new.mem + (at$members <- 1:1)
 		    at$label <- paste("Branch", X)
-		    subtree[[k]] <- paste("Branch", X)
+		    subtree[[k]] <- X #paste("Branch", X)
 		    attributes(subtree[[k]]) <- at
 		    class(sub) <- "dendrogram"
 		    LOWER[[X]] <<- sub
 		    X <<- X+1
 		}
 		else { ## don't cut up here, possibly its children:
-		    subtree[[k]] <- assignNodes(subtree[[k]], h)
+		    subtree[[k]] <- assignNodes(sub, h)
 		    new.mem <- new.mem + attr(subtree[[k]], "members")
 		}
 	    }
@@ -418,8 +453,7 @@ cut.dendrogram <- function(x, h, ...)
     list(upper = assignNodes(x, h), lower = LOWER)
 }## cut.dendrogram()
 
-isLeaf <- function(object) (is.logical(L <- attr(object, "leaf"))) && L
-
+is.leaf <- function(object) (is.logical(L <- attr(object, "leaf"))) && L
 
 ## *Not* a method (yet):
 order.dendrogram <- function(x) {
@@ -433,7 +467,7 @@ order.dendrogram <- function(x) {
 #    if( !inherits(x, "dendrogram") )
 #	stop("order.dendrogram requires a dendrogram")
 #    ord <- function(x) {
-#      if( isLeaf(x) ) return(x[1])
+#      if( is.leaf(x) ) return(x[1])
 #      return(c(ord(x[[1]]), ord(x[[2]])))
 #    }
 #   return(ord(x))
@@ -441,38 +475,35 @@ order.dendrogram <- function(x) {
 
 reorder <- function(x, ...) UseMethod("reorder")
 
-reorder.dendrogram <- function(x, wts, ...)
+reorder.dendrogram <- function(x, wts, agglo.FUN = sum, ...)
 {
     if( !inherits(x, "dendrogram") )
 	stop("we require a dendrogram")
+    agglo.FUN <- match.fun(agglo.FUN)
     oV <- function(x, wts) {
-	if( isLeaf(x) ) {
+	if(is.leaf(x)) {
 	    attr(x, "value") <- wts[x[1]]
 	    return(x)
 	}
-###--- FIXME: This works only for binary dendrograms !
-	if(length(x) != 2)
-	    stop("reorder()ing of non-binary dendrograms not yet implemented")
-	## insert/compute 'wts' recursively down the branches:
-	left  <- oV(x[[1]], wts)
-	right <- oV(x[[2]], wts)
-	lV <- attr(left, "value")
-	rV <- attr(right, "value")
-	attr(x, "value") <- lV+rV
-	if( lV > rV ) {
-	    x[[1]] <- right
-	    x[[2]] <- left
-	} else {
-	    x[[1]] <- left
-	    x[[2]] <- right
-	}
-	x
+        k <- length(x)
+        if(k == 0) stop("invalid (length 0) node in dendrogram")
+        vals <- numeric(k)
+        for(j in 1:k) {
+            ## insert/compute 'wts' recursively down the branches:
+            b <- oV(x[[j]], wts)
+            x[[j]] <- b
+            vals[j] <- attr(b, "value")
+        }
+        iOrd <- sort.list(vals)
+	attr(x, "value") <- agglo.FUN(vals[iOrd])
+        x[] <- x[iOrd]
+        x
     }
     midcache.dendrogram( oV(x, wts) )
 }
 
 rev.dendrogram <- function(x) {
-    if(isLeaf(x))
+    if(is.leaf(x))
 	return(x)
 
     k <- length(x)
@@ -484,11 +515,39 @@ rev.dendrogram <- function(x) {
     midcache.dendrogram( r )
 }
 
+## This is a cheap
+labels.dendrogram <- function(object, ...)
+    unlist(dendrapply(object, function(n) attr(n,"label")))
+
+
+dendrapply <- function(X, FUN, ...)
+{
+    ## Purpose: "dendrogram" apply {to each node}
+    ## ----------------------------------------------------------------------
+    ## Author: Martin Maechler, Date: 26 Jun 2004, 22:43
+    FUN <- match.fun(FUN)
+    if( !inherits(X, "dendrogram") ) stop("'X' is not a dendrogram")
+
+    ## Node apply recursively:
+    Napply <- function(d) {
+	r <- FUN(d, ...)
+	if(!is.leaf(d)) {
+            if(!is.list(r)) r <- as.list(r) # fixing unsafe FUN()s
+            for(j in seq(length = length(d)))
+                r[[j]] <- Napply(d[[j]])
+        }
+	r
+    }
+    Napply(X)
+}
+
+
 ## original Andy Liaw; modified RG, MM :
 heatmap <-
 function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
-	  distfun = dist, hclustfun = hclust, add.expr,
-	  symm = FALSE, revC = identical(Colv, "Rowv"),
+	  distfun = dist, hclustfun = hclust,
+          reorderfun = function(d,w) reorder(d,w),
+          add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
 	  scale = c("row", "column", "none"), na.rm=TRUE,
 	  margins = c(5, 5), ColSideColors, RowSideColors,
 	  cexRow = 0.2 + 1/log10(nr), cexCol = 0.2 + 1/log10(nc),
@@ -521,7 +580,7 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 	    hcr <- hclustfun(distfun(x))
 	    ddr <- as.dendrogram(hcr)
 	    if(!is.logical(Rowv) || Rowv)
-		ddr <- reorder(ddr, Rowv)
+		ddr <- reorderfun(ddr, Rowv)
 	}
 	if(nr != length(rowInd <- order.dendrogram(ddr)))
 	    stop("row dendrogram ordering gave index of wrong length")
@@ -540,7 +599,7 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 	    hcc <- hclustfun(distfun(if(symm)x else t(x)))
 	    ddc <- as.dendrogram(hcc)
 	    if(!is.logical(Colv) || Colv)
-		ddc <- reorder(ddc, Colv)
+		ddc <- reorderfun(ddc, Colv)
 	}
 	if(nc != length(colInd <- order.dendrogram(ddc)))
 	    stop("column dendrogram ordering gave index of wrong length")

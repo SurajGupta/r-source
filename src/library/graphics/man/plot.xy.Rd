@@ -8,7 +8,8 @@
   arguments.
 }
 \usage{
-plot.xy(xy, type, pch=1, lty="solid", col=par("fg"), bg=NA, cex=1, \dots)
+plot.xy(xy, type, pch = 1, lty = "solid", col = par("fg"), bg = NA,
+        cex = 1, lwd = par("lwd"), \dots)
 }
 \arguments{
   \item{xy}{A four-element list as results from
@@ -21,7 +22,14 @@ plot.xy(xy, type, pch=1, lty="solid", col=par("fg"), bg=NA, cex=1, \dots)
     \code{\link{palette}}.}
   \item{bg}{background (\dQuote{fill}) color for open plot symbols.}
   \item{cex}{character expansion.}
+  \item{lwd}{line width, also used for (non-filled) plot symbols, see
+    \code{\link{lines}} and \code{\link{points}}.}
   \item{\dots}{further graphical parameters.}
+}
+\details{
+  The arguments \code{pch, col, bg, cex, lwd} are may be vectors and
+  recycled, depending on \code{type}, see \code{\link{points}} and
+  \code{\link{lines}} for specifics.
 }
 \seealso{
   \code{\link{plot}},

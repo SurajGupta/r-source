@@ -282,9 +282,28 @@ unsigned char Mac2Lat[] = {
 #if HAVE_AQUA
 extern  DL_FUNC ptr_GetQuartzParameters;
 extern  DL_FUNC ptr_FocusOnConsole;
-extern	Rboolean useaqua;
+extern	Rboolean useaqua, useCocoa;
 
-void GetQuartzParameters(double *width, double *height, double *ps, char *family, Rboolean *antialias, Rboolean *autorefresh, int *quartzpos) {ptr_GetQuartzParameters(width, height, ps, family, antialias, autorefresh, quartzpos);}
+extern Rboolean CocoaInnerQuartzDevice(NewDevDesc*dd,char*display,
+					  double width,double height,
+					  double pointsize,char*family,
+					  Rboolean antialias,
+					  Rboolean autorefresh,int quartzpos,
+					  int bg);
+					  
+
+extern void CocoaGetQuartzParameters(double *width, double *height, double *ps, 
+		char *family, Rboolean *antialias, Rboolean *autorefresh, int *quartzpos);
+		
+		
+
+void GetQuartzParameters(double *width, double *height, double *ps, char *family, 
+	Rboolean *antialias, Rboolean *autorefresh, int *quartzpos) {
+	if(useCocoa)
+		CocoaGetQuartzParameters(width, height, ps, family, antialias, autorefresh, quartzpos);
+	else
+		ptr_GetQuartzParameters(width, height, ps, family, antialias, autorefresh, quartzpos);
+}
 void FocusOnConsole(void) {ptr_FocusOnConsole();}
 #endif
 
@@ -324,6 +343,7 @@ typedef struct {
     int fontsize;           /* Size in points */
     int usefixed;
     int color;		        /* color */
+	int bg;					/* bg color */
     int fill;	        	/* fill color */
     WindowPtr window;
     int	lineType;
@@ -350,18 +370,20 @@ static const EventTypeSpec	QuartzEvents[] =
 
 Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos);
+			 char *family, Rboolean antialias, Rboolean autorefresh, 
+			 int quartzpos, int bg);
 
 Rboolean QuartzDeviceDriver(DevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos);
+			 char *family, Rboolean antialias, Rboolean autorefresh, 
+			 int quartzpos, int bg);
 
 OSStatus SetCGContext(QuartzDesc *xd);
 
 
 /* Device primitives */
 
-static Rboolean	Quartz_Open(NewDevDesc *, QuartzDesc *, char *,double, double);
+static Rboolean	Quartz_Open(NewDevDesc *, QuartzDesc *, char *,double, double, int);
 static void 	Quartz_Close(NewDevDesc *dd);
 static void 	Quartz_Activate(NewDevDesc *dd);
 static void 	Quartz_Deactivate(NewDevDesc *dd);
@@ -404,9 +426,14 @@ static void 	Quartz_MetricInfo(int c,
 
 static void Quartz_SetFill(int fill, double gamma,  NewDevDesc *dd);
 static void Quartz_SetStroke(int color, double gamma,  NewDevDesc *dd);
+static void Quartz_SetLineProperties(R_GE_gcontext *gc, NewDevDesc *dd);
 static void Quartz_SetLineDash(int lty, double lwd, NewDevDesc *dd);
 static void Quartz_SetLineWidth(double lwd,  NewDevDesc *dd);
-static void Quartz_SetFont(int style,  double cex, double ps,  NewDevDesc *dd);
+static void Quartz_SetLineEnd(R_GE_lineend lend,  NewDevDesc *dd);
+static void Quartz_SetLineJoin(R_GE_linejoin ljoin,  NewDevDesc *dd);
+static void Quartz_SetLineMitre(double lmitre,  NewDevDesc *dd);
+static void Quartz_SetFont(char *family, 
+			   int style,  double cex, double ps,  NewDevDesc *dd);
 static CGContextRef	GetContext(QuartzDesc *xd);
 
 
@@ -485,7 +512,7 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 
     if (!QuartzDeviceDriver((DevDesc *)dev, display, width, height, ps,
-       fontfamily, antialias, autorefresh, quartzpos)) {
+       fontfamily, antialias, autorefresh, quartzpos, 0xffffffff)) {
 	 free(dev);
 	 errorcall(call, "unable to start device Quartz\n");
     }
@@ -504,16 +531,24 @@ SEXP do_Quartz(SEXP call, SEXP op, SEXP args, SEXP env)
 
 Rboolean QuartzDeviceDriver(DevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos)
+			 char *family, Rboolean antialias, Rboolean autorefresh, 
+			 int quartzpos, int bg)
 {
-return innerQuartzDeviceDriver((NewDevDesc *)dd, display,
-			 width,  height,  pointsize, family, antialias, autorefresh, quartzpos);
+  if(useCocoa)
+    return CocoaInnerQuartzDevice((NewDevDesc*)dd,display,width,height,
+				  pointsize,family,antialias,
+				  autorefresh,quartzpos,bg);
+  else
+	return innerQuartzDeviceDriver((NewDevDesc *)dd, display,
+			 width,  height,  pointsize, family, antialias, autorefresh, 
+			 quartzpos, bg);
 }
 
 
 Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 			 double width, double height, double pointsize,
-			 char *family, Rboolean antialias, Rboolean autorefresh, int quartzpos)
+			 char *family, Rboolean antialias, Rboolean autorefresh, 
+			 int quartzpos, int bg)
 {
     QuartzDesc *xd;
     int ps;
@@ -526,7 +561,7 @@ Rboolean innerQuartzDeviceDriver(NewDevDesc *dd, char *display,
 
     xd->QuartzPos = quartzpos; /* by default it is Top-Right */
 
-    if(!Quartz_Open(dd, xd, display, width, height))
+    if(!Quartz_Open(dd, xd, display, width, height, bg))
      return(FALSE);
 
     ps = pointsize;
@@ -663,7 +698,7 @@ OSStatus SetCGContext(QuartzDesc *xd)
 }
 
 static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
-		    double wid, double hgt)
+		    double wid, double hgt, int bg)
 {
 
 	OSStatus	err;
@@ -673,12 +708,14 @@ static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
 	char		buffer[250];
 	int 		devnum = devNumber((DevDesc *)dd);
 
+
     xd->windowWidth = wid*72;
     xd->windowHeight = hgt*72;
     xd->window = NULL;
     xd->context = NULL;
     xd->auxcontext = NULL;
-    dd->startfill = R_RGB(255, 255, 255);
+	
+	xd->bg = dd->startfill = bg; /* 0xffffffff; transparent */
     dd->startcol = R_RGB(0, 0, 0);
     /* Create a new window with the specified size */
 
@@ -741,7 +778,7 @@ static Rboolean	Quartz_Open(NewDevDesc *dd, QuartzDesc *xd, char *dsp,
      return(0);
 
     xd->window = devWindow;
-    xd->color = xd->fill = NA_INTEGER;
+    xd->color = xd->fill = R_TRANWHITE;
     xd->resize = false;
     xd->lineType = 0;
     xd->lineWidth = 1;
@@ -860,10 +897,29 @@ static void 	Quartz_NewPage(R_GE_gcontext *gc,
     area.origin = origin;
     area.size = size;
 
-	Quartz_Clip(0,size.width, 0, size.height, dd);
-	
-    if(gc->fill == NA_INTEGER)
-      gc->fill = R_RGB(255, 255, 255);
+    Quartz_Clip(0,size.width, 0, size.height, dd);
+    
+    /*
+     * Paul to Stefano:
+     * Not sure what is intended here:  looks like you are
+     * making sure that on a "new page" operation you clear 
+     * the window -- filling the window with a "missing"
+     * colour wouldn't do the job so you use "white".
+     * We no longer deal with NA as a colour internally so
+     * I have changed this as follows:
+     * (i)  if gc->fill is not opaque, then fill with white 
+     *      (to clear the window)
+     * (ii) fill with gc->fill
+     *      (to produce the specified "background" which may or
+     *       may not be transparent)
+     */
+    if (!R_OPAQUE(gc->fill)) {
+	unsigned int tempcol = gc->fill;
+	gc->fill = R_RGB(255, 255, 255);
+	Quartz_SetFill(gc->fill, gc->gamma, dd);
+	CGContextFillRect( GetContext(xd), area);
+	gc->fill = tempcol;
+    }
       
     Quartz_SetFill(gc->fill, gc->gamma, dd);
 
@@ -934,7 +990,7 @@ static double 	Quartz_StrWidth(char *str,
 
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextInvisible );
 
-    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
+    Quartz_SetFont(gc->fontfamily, gc->fontface, gc->cex,  gc->ps, dd);
 
     CGContextShowTextAtPoint( GetContext(xd), 0, 0, str, strlen(str) );
 
@@ -944,13 +1000,74 @@ static double 	Quartz_StrWidth(char *str,
     return(position.x);
 }
 
+/* Return a non-relocatable copy of a string */
+
+static char *SaveFontSpec(SEXP sxp, int offset)
+{
+    char *s;
+    if(!isString(sxp) || length(sxp) <= offset)
+	error("Invalid font specification");
+    s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
+    strcpy(s, CHAR(STRING_ELT(sxp, offset)));
+    return s;
+}
+ 
+/*
+ * Take the fontfamily from a gcontext (which is device-independent)
+ * and convert it into a Quartz-specific font description using
+ * the Quartz font database (see src/library/graphics/R/unix/quartz.R)
+ *
+ * IF gcontext fontfamily is empty ("") 
+ * OR IF can't find gcontext fontfamily in font database 
+ * THEN return xd->family (the family set up when the
+ *   device was created)
+ * This function is used on embedding Cocoa GUIs, must be declared
+ * as char * and not static char *. The third argument is different from
+ * devices as well.
+ */
+
+
+char* Quartz_TranslateFontFamily(char* family, int face, char *devfamily) {
+    SEXP graphicsNS, quartzenv, fontdb, fontnames;
+    int i, nfonts;
+    char* result = devfamily;
+    PROTECT_INDEX xpi;
+
+    PROTECT(graphicsNS = R_FindNamespace(ScalarString(mkChar("grDevices"))));
+    PROTECT_WITH_INDEX(quartzenv = findVar(install(".Quartzenv"), 
+					   graphicsNS), &xpi);
+    if(TYPEOF(quartzenv) == PROMSXP)
+	REPROTECT(quartzenv = eval(quartzenv, graphicsNS), xpi);
+    PROTECT(fontdb = findVar(install(".Quartz.Fonts"), quartzenv));
+    PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
+    nfonts = LENGTH(fontdb);
+    if (strlen(family) > 0) {
+	int found = 0;
+	for (i=0; i<nfonts && !found; i++) {
+	    char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	    if (strcmp(family, fontFamily) == 0) {
+		found = 1;
+		result = SaveFontSpec(VECTOR_ELT(fontdb, i), face-1);
+	    }
+	}
+	if (!found)
+	    warning("Font family not found in Quartz font database");
+    }
+    UNPROTECT(4);
+    return result;
+}
+
+
+
+
 
 
 /* This new version of Quartz_SetFont handles correctly the unicode encoding of
    the Symbol font under Panther
  */
 
-static void Quartz_SetFont(int style,  double cex, double ps, NewDevDesc *dd)
+static void Quartz_SetFont(char *family,
+			   int style,  double cex, double ps, NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
     int size = cex * ps + 0.5;
@@ -958,27 +1075,36 @@ static void Quartz_SetFont(int style,  double cex, double ps, NewDevDesc *dd)
     GrafPtr 	savePort;
     Str255	CurrFontName;
     char	CurrFont[256];
-    
+	char *fontFamily;
+	
+	 
     GetPort(&savePort);
     SetPortWindowPort(xd->window);
     
-    switch(style){
-     case 5:
-      strcpy(CurrFont,"Symbol");
-	  if(WeAreOnPanther)
- 	   CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingFontSpecific);
-	  else 
- 	   CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingMacRoman);
-     break;
 
-     default:
-        if(xd->family)
-            strcpy(CurrFont,xd->family);
-        else
-            strcpy(CurrFont,"Helvetica");
-		    CGContextSelectFont( GetContext(xd), CurrFont, size, kCGEncodingMacRoman);	
-     break;
-    }
+	fontFamily = Quartz_TranslateFontFamily(family, style, xd->family);
+	 if (fontFamily)
+	     strcpy(CurrFont,fontFamily);
+	 else
+	     strcpy(CurrFont,"Helvetica");
+
+	if(style==5)
+		strcpy(CurrFont, "Symbol");
+
+	
+
+	if(strcmp(CurrFont,"Symbol")==0){
+		if(WeAreOnPanther)
+	     CGContextSelectFont( GetContext(xd), CurrFont, size, 
+				  kCGEncodingFontSpecific);
+		else 
+	     CGContextSelectFont( GetContext(xd), CurrFont, size, 
+				  kCGEncodingMacRoman);
+	}
+	else CGContextSelectFont( GetContext(xd), CurrFont, size, 
+			      kCGEncodingMacRoman);	
+
+
 
 /* This is needed for test only purposes 
     if(strcmp(CurrFont,"Symbol")==0)
@@ -1014,6 +1140,7 @@ static void 	Quartz_Text(double x, double y, char *str,
 {
     int len,i;
     char *buf=NULL;
+	char *ff;
 	char symbuf;
     unsigned char tmp;
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
@@ -1029,17 +1156,19 @@ static void 	Quartz_Text(double x, double y, char *str,
 
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextFill );
     Quartz_SetFill(gc->col, gc->gamma, dd);
-    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
-    len = strlen(str);
 
-    if( (gc->fontface == 5) && (len==1) ){
+	Quartz_SetFont(gc->fontfamily, gc->fontface, gc->cex,  gc->ps, dd);
+    len = strlen(str);
+	ff = Quartz_TranslateFontFamily(gc->fontfamily, gc->fontface, xd->family);
+
+    if( ((gc->fontface == 5) || (strcmp(ff,"Symbol")==0)) && (len==1) ){
 	   tmp = (unsigned char)str[0];
        if(tmp>31)
         symbuf = (char)Lat2Uni[tmp-31-1];
 	   else
 	    symbuf = str[0];
        if( !IsThisASymbol(tmp) ){
-		 Quartz_SetFont(-1, gc->cex,  gc->ps, dd);
+		 Quartz_SetFont(gc->fontfamily, -1, gc->cex,  gc->ps, dd);
 		 symbuf = str[0];
        }
 	 if(WeAreOnPanther) 
@@ -1048,14 +1177,25 @@ static void 	Quartz_Text(double x, double y, char *str,
 	  CGContextShowTextAtPoint( GetContext(xd), 0, 0, str, len );
      } else {
      if( (buf = malloc(len)) != NULL){
-      for(i=0;i <len;i++){
-        tmp = (unsigned char)str[i];
-      if(tmp>127)
-       buf[i] = (char)Lat2Mac[tmp-127-1];
-      else
-       buf[i] = str[i]; 
-      }
-     CGContextShowTextAtPoint( GetContext(xd), 0, 0, buf, len );
+
+      if( strcmp(ff,"Symbol")==0){
+		for(i=0;i <len;i++){
+			tmp = (unsigned char)str[i];
+			if(tmp>31)
+				buf[i] = (char)Lat2Uni[tmp-31-1];
+			else
+				buf[i] = str[i];
+		}
+	  } else {
+		for(i=0;i <len;i++){
+			tmp = (unsigned char)str[i];
+			if(tmp>127)
+				buf[i] = (char)Lat2Mac[tmp-127-1];
+			else
+				buf[i] = str[i]; 
+		}
+	 }
+	 CGContextShowTextAtPoint( GetContext(xd), 0, 0, buf, len );
      free(buf);
      }  
     }
@@ -1084,8 +1224,7 @@ static void 	Quartz_Rect(double x0, double y0, double x1, double y1,
 
     CGContextSaveGState( GetContext(xd) );
 
-    Quartz_SetLineWidth(gc->lwd, dd);
-    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
+    Quartz_SetLineProperties(gc, dd);
 
     Quartz_SetFill( gc->fill, gc->gamma, dd);
     CGContextFillRect( GetContext(xd), rect);
@@ -1109,8 +1248,7 @@ static void 	Quartz_Circle(double x, double y, double r,
 
     CGContextBeginPath( GetContext(xd) );
 
-    Quartz_SetLineWidth(gc->lwd, dd);
-    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
+    Quartz_SetLineProperties(gc, dd);
 
     CGContextAddArc( GetContext(xd), (float)x , (float)y, (float)r, 3.141592654 * 2.0, 0.0, 0);
     Quartz_SetFill( gc->fill, gc->gamma, dd);
@@ -1144,9 +1282,7 @@ static void 	Quartz_Line(double x1, double y1, double x2, double y2,
     lines[1].x = (float)x2;
     lines[1].y = (float)y2;
 
-
-    Quartz_SetLineWidth(gc->lwd,  dd);
-    Quartz_SetLineDash(gc->lty, gc->lwd, dd);
+    Quartz_SetLineProperties(gc, dd);
 
     CGContextAddLines( GetContext(xd), &lines[0], 2 );
 
@@ -1181,10 +1317,10 @@ static void 	Quartz_Polyline(int n, double *x, double *y,
 
     CGContextSaveGState( GetContext(xd) );
 
-    Quartz_SetLineWidth(gc->lwd,  dd);
-    Quartz_SetLineDash(gc->lty, gc->lwd,  dd);
-
     CGContextBeginPath( GetContext(xd) );
+
+    Quartz_SetLineProperties(gc, dd);
+
     CGContextAddLines( GetContext(xd), &lines[0], n );
     Quartz_SetStroke( gc->col, gc->gamma, dd);
     CGContextStrokePath( GetContext(xd) );
@@ -1193,7 +1329,14 @@ static void 	Quartz_Polyline(int n, double *x, double *y,
 
 }
 
-
+static void Quartz_SetLineProperties(R_GE_gcontext *gc, NewDevDesc *dd)
+{
+    Quartz_SetLineWidth(gc->lwd,  dd);
+    Quartz_SetLineDash(gc->lty, gc->lwd,  dd);
+    Quartz_SetLineEnd(gc->lend, dd);
+    Quartz_SetLineJoin(gc->ljoin, dd);
+    Quartz_SetLineMitre(gc->lmitre, dd);
+}
 
 static void Quartz_SetLineDash(int newlty, double lwd, NewDevDesc *dd)
 {
@@ -1226,33 +1369,75 @@ static void Quartz_SetLineWidth(double lwd, NewDevDesc *dd)
 }
 
 
+static void Quartz_SetLineEnd(R_GE_lineend lend, NewDevDesc *dd)
+{
+    QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
+    CGLineCap linecap;
+    switch (lend) {
+    case GE_ROUND_CAP:
+      linecap = kCGLineCapRound;
+      break;
+    case GE_BUTT_CAP:
+      linecap = kCGLineCapButt;
+      break;
+    case GE_SQUARE_CAP:
+      linecap = kCGLineCapSquare;
+      break;
+    default:
+      error("Invalid line end");
+    }
+    CGContextSetLineCap( GetContext(xd), linecap);
+}
+
+static void Quartz_SetLineJoin(R_GE_linejoin ljoin, NewDevDesc *dd)
+{
+    QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
+    CGLineJoin linejoin;
+    switch (ljoin) {
+    case GE_ROUND_JOIN:
+      linejoin = kCGLineJoinRound;
+      break;
+    case GE_MITRE_JOIN:
+      linejoin = kCGLineJoinMiter;
+      break;
+    case GE_BEVEL_JOIN:
+      linejoin = kCGLineJoinBevel;
+      break;
+    default:
+      error("Invalid line join");
+    }
+
+    CGContextSetLineJoin( GetContext(xd), linejoin);
+}
+
+static void Quartz_SetLineMitre(double lmitre, NewDevDesc *dd)
+{
+    QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
+    if (lmitre < 1)
+        error("Invalid line mitre");
+    CGContextSetMiterLimit( GetContext(xd), lmitre);
+}
 
 static void Quartz_SetStroke(int color, double gamma, NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
-    float alpha = 1.0;
-
- 	xd->color = color;
-
-	if(color == NA_INTEGER)
-	 alpha = 0.0;
-
-    CGContextSetRGBStrokeColor( GetContext(xd), (float)R_RED(color)/255.0, (float)R_GREEN(color)/255.0, (float)R_BLUE(color)/255.0, alpha);
-
+    xd->color = color;
+    CGContextSetRGBStrokeColor( GetContext(xd), 
+				(float)R_RED(color)/255.0, 
+				(float)R_GREEN(color)/255.0, 
+				(float)R_BLUE(color)/255.0, 
+				(float)R_ALPHA(color)/255.0);
 }
 
 static void Quartz_SetFill(int fill, double gamma, NewDevDesc *dd)
 {
     QuartzDesc *xd = (QuartzDesc*)dd->deviceSpecific;
-    float alpha = 1.0;
-
     xd->fill = fill;
-
- 	if(fill == NA_INTEGER)
- 	 alpha = 0.0;
-
-    CGContextSetRGBFillColor( GetContext(xd), (float)R_RED(fill)/255.0, (float)R_GREEN(fill)/255.0, (float)R_BLUE(fill)/255.0, alpha);
-
+    CGContextSetRGBFillColor( GetContext(xd), 
+			      (float)R_RED(fill)/255.0, 
+			      (float)R_GREEN(fill)/255.0, 
+			      (float)R_BLUE(fill)/255.0, 
+			      (float)R_ALPHA(fill)/255.0);
 }
 
 static void 	Quartz_Polygon(int n, double *x, double *y, 
@@ -1268,8 +1453,7 @@ static void 	Quartz_Polygon(int n, double *x, double *y,
 
 
    CGContextBeginPath( GetContext(xd) );
-   Quartz_SetLineWidth(gc->lwd, dd);
-   Quartz_SetLineDash(gc->lty,  gc->lwd, dd);
+/*  Quartz_SetLineProperties(gc, dd); */
 
 
     lines = (CGPoint *)malloc(sizeof(CGPoint)*(n+1));
@@ -1285,7 +1469,9 @@ static void 	Quartz_Polygon(int n, double *x, double *y,
     lines[n].y = (float)y[0];
 
     CGContextAddLines( GetContext(xd), &lines[0], n+1 );
-    Quartz_SetFill( gc->fill, gc->gamma, dd);
+     Quartz_SetLineProperties(gc, dd);
+
+	Quartz_SetFill( gc->fill, gc->gamma, dd);
     CGContextFillPath( GetContext(xd) );
 
     CGContextAddLines( GetContext(xd), &lines[0], n+1 );
@@ -1378,6 +1564,7 @@ static void 	Quartz_MetricInfo(int c,
     FMetricRec myFMetric;
     QuartzDesc *xd = (QuartzDesc *) dd-> deviceSpecific;
     char testo[2];
+	char *ff;
     CGrafPtr savedPort;
     Rect bounds;
     CGPoint position;
@@ -1390,7 +1577,7 @@ static void 	Quartz_MetricInfo(int c,
 
     SetPort(GetWindowPort(xd->window));
 
-    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
+    Quartz_SetFont(gc->fontfamily, gc->fontface, gc->cex,  gc->ps, dd);
 
     if(c==0){
         FontMetrics(&myFMetric);
@@ -1403,14 +1590,16 @@ static void 	Quartz_MetricInfo(int c,
     CGContextScaleCTM( GetContext(xd), -1, 1);
     CGContextRotateCTM( GetContext(xd), -1.0 * 3.1416);
     CGContextSetTextDrawingMode( GetContext(xd), kCGTextInvisible );
-    Quartz_SetFont(gc->fontface, gc->cex,  gc->ps, dd);
-	
+
+	Quartz_SetFont(gc->fontfamily, gc->fontface, gc->cex,  gc->ps, dd);
+
+	ff = Quartz_TranslateFontFamily(gc->fontfamily, gc->fontface, xd->family);
 	tmp = (unsigned char)c;
-    if( (gc->fontface == 5) ){
+    if( (gc->fontface == 5) || (strcmp(ff,"Symbol")==0)){
        if( (tmp>31) && IsThisASymbol(tmp))
         testo[0] = (char)Lat2Uni[tmp-31-1];
        else	
-		Quartz_SetFont(-1, gc->cex,  gc->ps, dd);
+		Quartz_SetFont(gc->fontfamily, -1, gc->cex,  gc->ps, dd);
 	 } else {
         if(tmp>127)
          testo[0] = (char)Lat2Mac[tmp-127-1];

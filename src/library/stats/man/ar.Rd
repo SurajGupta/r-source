@@ -17,18 +17,20 @@ ar(x, aic = TRUE, order.max = NULL,
 
 ar.burg(x, \dots)
 \method{ar.burg}{default}(x, aic = TRUE, order.max = NULL,
-        na.action = na.fail, demean = TRUE, series, var.method = 1, \dots)
+        na.action = na.fail, demean = TRUE, series,
+        var.method = 1, \dots)
 \method{ar.burg}{mts}(x, aic = TRUE, order.max = NULL,
-        na.action = na.fail, demean = TRUE, series, var.method = 1, \dots)
+        na.action = na.fail, demean = TRUE, series,
+        var.method = 1, \dots)
 
 ar.yw(x, \dots)
 \method{ar.yw}{default}(x, aic = TRUE, order.max = NULL,
       na.action = na.fail, demean = TRUE, series, \dots)
 \method{ar.yw}{mts}(x, aic = TRUE, order.max = NULL,
-      na.action = na.fail, demean = TRUE, series, \dots)
+      na.action = na.fail, demean = TRUE, series, var.method = 1, \dots)
 
-ar.mle(x, aic = TRUE, order.max = NULL, na.action = na.fail, demean = TRUE,
-       series, \dots)
+ar.mle(x, aic = TRUE, order.max = NULL, na.action = na.fail,
+       demean = TRUE, series, \dots)
 
 \method{predict}{ar}(object, newdata, n.ahead = 1, se.fit = TRUE, \dots)
 }
@@ -168,18 +170,15 @@ ar.mle(x, aic = TRUE, order.max = NULL, na.action = na.fail, demean = TRUE,
 }
 
 \examples{
-data(lh)
 ar(lh)
 ar(lh, method="burg")
 ar(lh, method="ols")
 ar(lh, FALSE, 4) # fit ar(4)
 
-data(sunspot)
 (sunspot.ar <- ar(sunspot.year))
 predict(sunspot.ar, n.ahead=25)
 ## try the other methods too
 
-data(BJsales)
 ar(ts.union(BJsales, BJsales.lead))
 ## Burg is quite different here, as is OLS (see ar.ols)
 ar(ts.union(BJsales, BJsales.lead), method="burg")

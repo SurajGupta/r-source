@@ -44,6 +44,8 @@
 #ifdef HAVE_AQUA
 extern void InitAquaIO(void);			/* from src/modules/aqua/aquaconsole.c */
 extern void RSetConsoleWidth(void);		/* from src/modules/aqua/aquaconsole.c */
+extern Rboolean CocoaGUI;				/* from src/unix/system.c              */
+extern Rboolean useCocoa;				/* from src/unix/system.c              */
 #endif
 
 /* The `real' main() program is in ../<SYSTEM>/system.c */
@@ -63,7 +65,8 @@ extern void RSetConsoleWidth(void);		/* from src/modules/aqua/aquaconsole.c */
 
 void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded, Rboolean visible);
 
-static int ParseBrowser(SEXP, SEXP);
+int Rf_ParseBrowser(SEXP, SEXP);
+
 
 static void onpipe(int);
 
@@ -408,8 +411,6 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
    Don't use R-specific type, e.g. Rboolean */
 /* int R_Is_Running = 0; now in Defn.h */
 
-void R_ShowMessage(char *s); /* in OS/system.c */
-
 void setup_Rmainloop(void)
 {
     volatile int doneit;
@@ -455,7 +456,7 @@ void setup_Rmainloop(void)
     InitGraphics();
     R_Is_Running = 1;
 #ifdef HAVE_AQUA 
-    if (strcmp(R_GUIType, "AQUA") == 0){ 
+    if( (strcmp(R_GUIType, "AQUA") == 0) && !CocoaGUI && !useCocoa){ 
 		InitAquaIO(); /* must be after InitTempDir() */
 		RSetConsoleWidth();
 	}
@@ -558,7 +559,6 @@ void setup_Rmainloop(void)
        we look in any documents which might have been double clicked on
        or dropped on the application.
     */
-
     doneit = 0;
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -641,7 +641,6 @@ void run_Rmainloop(void)
 {
     /* Here is the real R read-eval-loop. */
     /* We handle the console until end-of-file. */
-
     R_IoBufferInit(&R_ConsoleIob);
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -685,7 +684,8 @@ static void printwhere(void)
   Rprintf("\n");
 }
 
-static int ParseBrowser(SEXP CExpr, SEXP rho)
+
+int Rf_ParseBrowser(SEXP CExpr, SEXP rho)
 {
     int rval=0;
     if (isSymbol(CExpr)) {

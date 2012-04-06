@@ -83,9 +83,9 @@ print.Date <- function(x, ...)
     invisible(x)
 }
 
-summary.Date <- function(object, ...)
+summary.Date <- function(object, digits = 12, ...)
 {
-    x <- summary.default(unclass(object), ...)[1:6]# not NA's
+    x <- summary.default(unclass(object), digits = digits, ...)[1:6]# not NA's
     class(x) <- oldClass(object)
     x
 }
@@ -189,7 +189,7 @@ mean.Date <- function (x, ...)
 
 seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
 {
-    if (missing(from)) stop("`from` must be specified")
+    if (missing(from)) stop("`from' must be specified")
     if (!inherits(from, "Date")) stop("`from' must be a Date object")
         if(length(as.Date(from)) != 1) stop("`from' must be of length 1")
     if (!missing(to)) {
@@ -335,7 +335,9 @@ round.Date <- function(x, ...)
     class(val) <- cl
     val
 }
-trunc.Date <- function(x) round.Date(x)
+
+## must avoid truncating dates prior to 1970-01-01 forwards.
+trunc.Date <- function(x) round(x - 0.4999999)
 
 rep.Date <- function(x, times, ...)
 {

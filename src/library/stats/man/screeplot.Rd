@@ -3,7 +3,8 @@
 \title{Screeplot of PCA Results}
 \usage{
 screeplot(x, npcs = min(10, length(x$sdev)),
-          type = c("barplot", "lines"), main = deparse(substitute(x)), \dots)
+          type = c("barplot", "lines"),
+          main = deparse(substitute(x)), \dots)
 }
 \arguments{
   \item{x}{an object of class \code{"princomp"}, as
@@ -30,11 +31,9 @@ screeplot(x, npcs = min(10, length(x$sdev)),
 \examples{
 ## The variances of the variables in the
 ## USArrests data vary by orders of magnitude, so scaling is appropriate
-data(USArrests)
 (pc.cr <- princomp(USArrests, cor = TRUE))  # inappropriate
 screeplot(pc.cr)
 
-data(Harman74.cor)
 fit <- princomp(covmat=Harman74.cor)
 screeplot(fit)
 screeplot(fit, npcs=24, type="lines")

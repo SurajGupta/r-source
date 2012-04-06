@@ -29,7 +29,7 @@ duplicated(x, incomparables = FALSE, \dots)
   arrays (including matrices).
 
   The data frame method works by pasting together a character
-  representation of the rows separated by \code{\r}, so may be imperfect
+  representation of the rows separated by \code{\\r}, so may be imperfect
   if the data frame has characters with embedded carriage returns or
   columns which do not reliably map to characters.
 
@@ -51,10 +51,8 @@ x <- c(9:20, 1:5, 3:7, 0:8)
 (xu <- x[!duplicated(x)])
 ## xu == unique(x) but unique(x) is more efficient
 
-data(iris)
 duplicated(iris)[140:143]
 
-data(iris3)
 duplicated(iris3, MARGIN = c(1, 3))
 }
 \keyword{logic}

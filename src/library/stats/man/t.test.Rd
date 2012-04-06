@@ -9,7 +9,8 @@
 \usage{
 t.test(x, \dots)
 
-\method{t.test}{default}(x, y = NULL, alternative = c("two.sided", "less", "greater"),
+\method{t.test}{default}(x, y = NULL,
+       alternative = c("two.sided", "less", "greater"),
        mu = 0, paired = FALSE, var.equal = FALSE,
        conf.level = 0.95, \dots)
 
@@ -53,6 +54,9 @@ t.test(x, \dots)
   variance is used.  By default, if \code{var.equal} is \code{FALSE}
   then the variance is estimated separately for both groups and the
   Welch modification to the degrees of freedom is used.
+
+  If the input data are effectively constant (compared to the larger of the
+  two means) an error is generated.
 }
 \value{
   A list with class \code{"htest"} containing the following components:
@@ -80,7 +84,6 @@ t.test(1:10,y=c(7:20))      # P = .00001855
 t.test(1:10,y=c(7:20, 200)) # P = .1245    -- NOT significant anymore
 
 ## Classical example: Student's sleep data
-data(sleep)
 plot(extra ~ group, data = sleep)
 ## Traditional interface
 with(sleep, t.test(extra[group == 1], extra[group == 2]))

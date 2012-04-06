@@ -2,10 +2,10 @@ R @RVER@ for Windows
 ===================
 
 This distribution contains a binary distribution of R-@RVER@ to run on
-Windows 95, 98, ME, NT4, 2000 and XP on Intel/clone chips.  It is designed
-to be as close as possible to the implementation on Unix, but see the
-list of differences below.  The port was by Guido Masarotto, Brian
-Ripley and Duncan Murdoch.
+Windows 95, 98, ME, NT4, 2000, XP and 2003 Server on Intel/clone
+chips.  It is designed to be as close as possible to the
+implementation on Unix, but see the list of differences below.  The
+port was by Guido Masarotto, Brian Ripley and Duncan Murdoch.
 
 See the file `CHANGES' for the new features of this version.
 
@@ -23,18 +23,18 @@ Installation
 
 The distribution can be obtained in two versions:
 
-1) A 21Mb file @RWVER@.exe.  Just run this for a Windows-XP style
+1) A 23Mb file @RWVER@.exe.  Just run this for a Windows-XP style
 installer.  It contains all the R components, and you can select what
 want installed.
 
 
-2) Files miniR.exe and miniR-1.bin to miniR-8.bin.  If you need to,
+2) Files miniR.exe and miniR-1.bin to miniR-7.bin.  If you need to,
 put miniR.exe and miniR-1.bin on one floppy, and miniR-2.bin to
-miniR-8.bin on separate floppies.
+miniR-7.bin on separate floppies.
 
-This is a small installation, containing text and compiled HTML help
-and the Introduction to R and Data Import/Export manuals in PDF.
-There is no package tcltk.
+This is a small installation, containing text help and the
+Introduction to R and Data Import/Export manuals in PDF.  There is no
+package tcltk, and no documentation for packages grid or survival.
 
 
 For more details, including command-line options for the installers 
@@ -105,7 +105,7 @@ jobs. You can also use it via R CMD BATCH: see ?BATCH or R CMD BATCH
 --help.
 
 Use with ESS: You can use Rterm.exe to provide inferior R-mode in ESS
-under NTEmacs, for example with ess-5.1.20.  The pager is
+under NTEmacs, for example with ess-5.2.1.  The pager is
 automatically set to "console" so text help will be displayed in emacs
 buffers.
 
@@ -125,8 +125,12 @@ The History menu allows the recording of plots.  When plots have been
 recorded they can be reviewed by PgUp and PgDn, saved and replaced.
 Recording can be turned on automatically (the Recording item on the
 list) or individual plots can be added (Add or the INS key).
+
 The whole plot history can be saved to or retrieved from an R variable
 in the global environment.
+  The format of recorded plots may change between R versions.
+  Recorded plots should NOT be used as a permanent
+  storage format for R plots.
 
 There is only one graphics history shared by all the windows devices.
 

@@ -10,7 +10,7 @@
 %\alias{extractAIC.negbin}
 %\alias{extractAIC.survreg}
 \usage{
-extractAIC(fit, scale,     k = 2, \dots)  
+extractAIC(fit, scale, k = 2, \dots)  
 }
 \arguments{
   \item{fit}{fitted model, usually the result of a fitter like
@@ -19,7 +19,7 @@ extractAIC(fit, scale,     k = 2, \dots)
    model, see \code{scale} in \code{\link{step}}.
  }
  \item{k}{numeric specifying the \dQuote{weight} of the
-   \emph{equivalent degrees of freedom} (\eqn{\equiv}{=:}\code{edf})
+   \emph{equivalent degrees of freedom} (\eqn{\equiv}{=:} \code{edf})
    part in the AIC formula.}
  \item{\dots}{further arguments (currently unused in base \R).}
 }

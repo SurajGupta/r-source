@@ -42,17 +42,15 @@ typedef struct {
   Uitem *mItems;
 } menuItems;
 
-void Rconsolecmd(char *);
-
-void R_ShowMessage(char *s);
-
+#include <R_ext/Error.h> /* for R_ShowMessage */
 int check_doc_file(char *);
 void internal_shellexec(char *);
 int internal_ShowFile(char *, char *);
 
 int winaddmenu(char * name, char *errmsg);
 int winaddmenuitem(char * item, char * menu, char * action, char *errmsg);
-int windelmenu(char * menu, char *errmsg);
+int windelmenu(char * menu, char *errmsg); /* delete one menu and its items and submenus */
+void windelmenus(char * prefix); /* delete all menus which start with a certain prefix */
 int windelmenuitem(char * item, char * menu, char *errmsg);
 
 int numwinmenus(void);
@@ -73,3 +71,8 @@ int RgetMDIwidth();
 int RgetMDIheight();
 #endif
 
+void menuconfig();
+void menuclear(control m);
+int RguiPackageMenu();
+int RguiCommonHelp();
+void closeconsole(control m);

@@ -2,7 +2,6 @@
 
 void fpu_setup(Rboolean);/* ./sys-unix.c */
 
-void R_ShowMessage(char *s);
 void Rstd_read_history(char *s);
 
 void Rstd_Suicide(char *s);
@@ -44,8 +43,7 @@ void Raqua_FlushConsole(void);
 void Raqua_ClearerrConsole(void);
 
 
+
 void R_load_X11_shlib(void);
 void R_load_gnome_shlib(void);
 void R_load_aqua_shlib(void);
-
-int Rf_initEmbeddedR(int argc, char **argv);

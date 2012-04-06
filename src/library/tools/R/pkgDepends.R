@@ -218,9 +218,9 @@ foundDepends <- function(depMtrx, contriburl=getOption("repositories")()) {
 compareDependsPkgVersion <- function(curVersion, versOper, versionReq) {
     ## Returns -1 if FALSE, 0 or 1 if TRUE
     if(versOper == ">=")
-        return(compareVersion(curVersion, versionReq))
+        return(utils::compareVersion(curVersion, versionReq))
     if(versOper == "<=")
-        return(compareVersion(versionReq, curVersion))
+        return(utils::compareVersion(versionReq, curVersion))
     else
         stop("bad operand")
 }
@@ -244,7 +244,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
                maxGts <- gts[1,3]
                outRow <- 1
                for (i in 1:nrow(gts)) {
-                   if (compareVersion(gts[i,3], maxGts) > 0) {
+                   if (utils::compareVersion(gts[i,3], maxGts) > 0) {
                        maxGts <- gts[i,3]
                        outRow <- i
                    }
@@ -257,7 +257,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
                 minLts <- lts[1,3]
                 minRow <- 1
                 for (i in 1:nrow(lts)) {
-                    if (compareVersion(lts[i,3], minLts) < 0) {
+                    if (utils::compareVersion(lts[i,3], minLts) < 0) {
                         minLts <- lts[i,3]
                         minRow <- i
                     }
@@ -271,7 +271,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
                     outRow <- minRow
             }
             if (quietly == FALSE)
-                warning("Package ",pkg," had its dependencies ",
+                warning("Package ", pkg, " had its dependencies ",
                         "reduced to a minimal set.")
         }
 	pkgMtrx[outRow,]
@@ -281,7 +281,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
 }
 
 depMtrxToStrings <- function(depMtrx) {
-    if ((!is.null(depMtrx))&&(nrow(depMtrx) > 0)) {
+    if (length(depMtrx) > 0) {
         apply(depMtrx, 1, function(x){
             if (is.na(x[2]))
                 x[1]

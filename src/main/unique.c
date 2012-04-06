@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -80,11 +80,9 @@ static int rhash(SEXP x, int indx, HashData *d)
     /* There is a problem with signed 0s under IEEE */
     double tmp = (REAL(x)[indx] == 0.0) ? 0.0 : REAL(x)[indx];
     /* need to use both 32-byte chunks or endianness is an issue */
-#ifdef IEEE_754 /* otherwise always false */
     /* we want all NaNs except NA equal, and all NAs equal */
     if (R_IsNA(tmp)) tmp = NA_REAL;
     else if (R_IsNaN(tmp)) tmp = R_NaN;
-#endif
     if (sizeof(double) >= sizeof(unsigned int)*2) {
 	union foo tmpu;
 	tmpu.d = tmp;
@@ -99,13 +97,11 @@ static int chash(SEXP x, int indx, HashData *d)
     unsigned int u;
     tmp.r = (COMPLEX(x)[indx].r == 0.0) ? 0.0 : COMPLEX(x)[indx].r;
     tmp.i = (COMPLEX(x)[indx].i == 0.0) ? 0.0 : COMPLEX(x)[indx].i;
-#ifdef IEEE_754 /* otherwise always false */
     /* we want all NaNs except NA equal, and all NAs equal */
-    if (R_IsNA(tmp.r)) tmp.r = NA_REAL; 
+    if (R_IsNA(tmp.r)) tmp.r = NA_REAL;
     else if (R_IsNaN(tmp.r)) tmp.r = R_NaN;
-    if (R_IsNA(tmp.i)) tmp.i = NA_REAL; 
+    if (R_IsNA(tmp.i)) tmp.i = NA_REAL;
     else if (R_IsNaN(tmp.i)) tmp.i = R_NaN;
-#endif
     if (sizeof(double) >= sizeof(unsigned int)*2) {
 	union foo tmpu;
 	tmpu.d = tmp.r;
@@ -139,9 +135,7 @@ static int requal(SEXP x, int i, SEXP y, int j)
     if (!ISNAN(REAL(x)[i]) && !ISNAN(REAL(y)[j]))
 	return (REAL(x)[i] == REAL(y)[j]);
     else if (R_IsNA(REAL(x)[i]) && R_IsNA(REAL(y)[j])) return 1;
-#ifdef IEEE_754 /* otherwise always false */
     else if (R_IsNaN(REAL(x)[i]) && R_IsNaN(REAL(y)[j])) return 1;
-#endif
     else return 0;
 }
 
@@ -154,12 +148,10 @@ static int cequal(SEXP x, int i, SEXP y, int j)
     else if ((R_IsNA(COMPLEX(x)[i].r) || R_IsNA(COMPLEX(x)[i].i))
 	    && (R_IsNA(COMPLEX(y)[j].r) || R_IsNA(COMPLEX(y)[j].i)))
 	return 1;
-#ifdef IEEE_754 /* otherwise always false */
     else if ((R_IsNaN(COMPLEX(x)[i].r) || R_IsNaN(COMPLEX(x)[i].i))
 	    && (R_IsNaN(COMPLEX(y)[j].r) || R_IsNaN(COMPLEX(y)[j].i)))
 	return 1;
-#endif
-    else 
+    else
 	return 0;
 }
 
@@ -167,8 +159,18 @@ static int sequal(SEXP x, int i, SEXP y, int j)
 {
     if (STRING_ELT(x, i) != NA_STRING && STRING_ELT(y, j) != NA_STRING)
 	return !strcmp(CHAR(STRING_ELT(x, i)), CHAR(STRING_ELT(y, j)));
-    else 
+    else
 	return STRING_ELT(x, i) == STRING_ELT(y, j);
+}
+
+static int rawhash(SEXP x, int indx, HashData *d)
+{
+    return scatter((unsigned int) (RAW(x)[indx]), d);
+}
+
+static int rawequal(SEXP x, int i, SEXP y, int j)
+{
+    return (RAW(x)[i] == RAW(y)[j]);
 }
 
 /* Choose M to be the smallest power of 2 */
@@ -211,6 +213,11 @@ static void HashTableSetup(SEXP x, HashData *d)
 	d->hash = shash;
 	d->equal = sequal;
 	MKsetup(LENGTH(x), d);
+	break;
+    case RAWSXP:
+	d->hash = rawhash;
+	d->equal = rawequal;
+	MKsetup(256, d);
 	break;
     }
     d->HashTable = allocVector(INTSXP, d->M);
@@ -319,6 +326,11 @@ SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 	for (i = 0; i < n; i++)
 	    if (LOGICAL(dup)[i] == 0)
 		SET_STRING_ELT(ans, k++, STRING_ELT(x, i));
+	break;
+    case RAWSXP:
+	for (i = 0; i < n; i++)
+	    if (LOGICAL(dup)[i] == 0)
+		RAW(ans)[k++] = RAW(x)[i];
 	break;
     }
     return ans;
@@ -637,7 +649,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 	funcall = VECTOR_ELT(funcall, 0);
 
     if (TYPEOF(funcall) != LANGSXP) {
-	b = deparse1(funcall, 1);
+	b = deparse1(funcall, 1, SIMPLEDEPARSE);
 	errorcall(call, "%s is not a valid call", CHAR(STRING_ELT(b, 0)));
     }
 
@@ -694,7 +706,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
     /* It must be a closure! */
 
     if (TYPEOF(b) != CLOSXP) {
-	b = deparse1(b, 1);
+	b = deparse1(b, 1, SIMPLEDEPARSE);
 	errorcall(call, "%s is not a function", CHAR(STRING_ELT(b, 0)));
     }
 
@@ -702,7 +714,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 
     expdots = asLogical(CAR(CDDR(args)));
     if (expdots == NA_LOGICAL) {
-	b = deparse1(CADDR(args), 1);
+	b = deparse1(CADDR(args), 1, SIMPLEDEPARSE);
 	errorcall(call, "%s is not a logical", CHAR(STRING_ELT(b, 0)));
     }
 
@@ -781,7 +793,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-#if defined(IEEE_754) & defined(HAVE_STRING_H)
+#if defined(HAVE_STRING_H)
 #  include <string.h>
 #  ifdef _AIX  /*some people just have to be different */
 #    include <memory.h>
@@ -809,13 +821,13 @@ SEXP Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
     PROTECT(data.HashTable);
     DoHashing(uniqueg, &data);
     PROTECT(matches = HashLookup(uniqueg ,g, &data));
-    
-    PROTECT(ans=allocMatrix(TYPEOF(x),ng,p)); 
-    
+
+    PROTECT(ans=allocMatrix(TYPEOF(x),ng,p));
+
     offset=0; offsetg=0;
 
     switch(TYPEOF(x)){
-    case REALSXP:    
+    case REALSXP:
 	ZERODBL(ans,ng*p,i);
 	for(i=0;i<p;i++){
 	    for(j=0;j<n;j++){
@@ -825,7 +837,7 @@ SEXP Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	    offsetg+=ng;
 	}
 	break;
-    case INTSXP: 
+    case INTSXP:
 	ZEROINT(ans,ng*p,i);
 	for(i=0;i<p;i++){
 	    for(j=0;j<n;j++){
@@ -862,9 +874,9 @@ SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
     PROTECT(data.HashTable);
     DoHashing(uniqueg, &data);
     PROTECT(matches = HashLookup(uniqueg ,g, &data));
-    
-    PROTECT(ans=allocVector(VECSXP,p)); 
-    
+
+    PROTECT(ans=allocVector(VECSXP,p));
+
     offset=0; offsetg=0;
 
     for(i=0; i<p;i++){
@@ -872,7 +884,7 @@ SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	if (!isNumeric(xcol))
 	    error("non-numeric dataframe in rowsum");
 	switch(TYPEOF(xcol)){
-	case REALSXP:    
+	case REALSXP:
 	    PROTECT(col=allocVector(REALSXP,ng));
 	    ZERODBL(col,ng,i);
 	    for(j=0;j<n;j++){
@@ -881,7 +893,7 @@ SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	    SET_VECTOR_ELT(ans,i,col);
 	    UNPROTECT(1);
 	    break;
-	case INTSXP: 
+	case INTSXP:
 	    PROTECT(col=allocVector(INTSXP,ng));
 	    ZEROINT(col,ng,i);
 	    for(j=0;j<n;j++){
@@ -947,7 +959,7 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     int i, n, cnt, len, maxlen = 0, *cnts, dp;
     HashData data;
     char *csep, *buf;
-    
+
     checkArity(op, args);
     names = CAR(args);
     if(!isString(names)) errorcall(call, "names must be a character vector");
@@ -964,7 +976,7 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if(n > 1) {
 	/* +2 for terminator and rounding error */
-	buf = Calloc(maxlen + strlen(csep) + log((double)n)/log(10.0) + 2, 
+	buf = Calloc(maxlen + strlen(csep) + log((double)n)/log(10.0) + 2,
 		     char);
 	cnts = Calloc(n, int);
 	for(i = 0; i < n; i++) cnts[i] = 1;
@@ -990,5 +1002,47 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(3);
     }
     UNPROTECT(1);
+    return ans;
+}
+
+/* use hashing to improve object.size. Here we want equal CHARSXPs, 
+   not equal contents. */
+
+static int csequal(SEXP x, int i, SEXP y, int j)
+{
+    return STRING_ELT(x, i) == STRING_ELT(y, j);
+}
+
+static void HashTableSetup1(SEXP x, HashData *d)
+{
+    d->hash = shash;
+    d->equal = csequal;
+    MKsetup(LENGTH(x), d);
+    d->HashTable = allocVector(INTSXP, d->M);
+}
+
+SEXP csduplicated(SEXP x)
+{
+    SEXP ans;
+    int *h, *v;
+    int i, n;
+    HashData data;
+
+    if(TYPEOF(x) != STRSXP)
+	error("csduplicated not called on a STRSXP");
+    n = LENGTH(x);
+    HashTableSetup1(x, &data);
+    PROTECT(data.HashTable);
+    ans = allocVector(LGLSXP, n);
+    UNPROTECT(1);
+    h = INTEGER(data.HashTable);
+    v = LOGICAL(ans);
+
+    for (i = 0; i < data.M; i++)
+	h[i] = NIL;
+
+    for (i = 0; i < n; i++)
+	v[i] = isDuplicated(x, i, &data);
+
     return ans;
 }

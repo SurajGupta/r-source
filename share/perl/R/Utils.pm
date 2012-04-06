@@ -13,7 +13,8 @@ use Text::Tabs;
 	     list_files list_files_with_exts list_files_with_type
 	     make_file_exts
 	     read_lines
-	     shell_quote_file_path);
+	     shell_quote_file_path
+	     sQuote dQuote);
 
 ### ********************************************************************
 
@@ -108,7 +109,9 @@ sub R_runR
     open RIN, "> $Rin" or die "Error: cannot write to '$Rin'\n";
     print RIN "$cmd\n";
     close RIN;
-    R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1",
+    R_system(join(" ",
+		  (&shell_quote_file_path(${R::Vars::R_EXE}),
+		   "${Ropts} < ${Rin} > ${Rout} 2>&1")),
 	     $Renv);
     my @out;
     open ROUT, "< $Rout";
@@ -138,7 +141,9 @@ sub R_run_R {
     print RIN "$cmd\n";
     close(RIN);
     $status =
-	R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout} 2>&1",
+	R_system(join(" ",
+		      (&shell_quote_file_path(${R::Vars::R_EXE}),
+		       "${Ropts} < ${Rin} > ${Rout} 2>&1")),
 		 $Renv);
     @out = &read_lines($Rout);
     unlink($Rin);
@@ -192,7 +197,7 @@ sub list_files_with_exts {
     @files = grep { /\.$exts$/ && -f "$dir/$_" } readdir(DIR);
     closedir(DIR);
     ## We typically want the paths to the files, see also the R variant
-    ## .listFilesWithExts() used in some of the QC tools.
+    ## list_files_with_exts() used in some of the QC tools.
     my @paths;
     foreach my $file (@files) {
 	push(@paths, &file_path($dir, $file));
@@ -253,6 +258,22 @@ sub shell_quote_file_path {
     return("'" . $_[0] . "'");
 }
 
+### * sQuote
+
+sub sQuote {
+    ## Single quote text.
+    ## Currently does not work for lists.
+    return("'" . $_[0] . "'");
+}
+
+### * dQuote
+
+sub dQuote {
+    ## Double quote text.
+    ## Currently does not work for lists.
+    return('"' . $_[0] . '"');
+}
+
 ### * Non-exported functions
 
 sub get_exclude_patterns {
@@ -265,7 +286,9 @@ sub get_exclude_patterns {
 			    "\~\$", "\\.bak\$", "\\.swp\$",
 			    "(^|/)\\.#[^/]*\$", "(^|/)#[^/]*#\$",
 			    "^TITLE\$", "^data/00Index\$",
-			    "^inst/doc/00Index.dcf\$"
+			    "^inst/doc/00Index.dcf\$",
+			    "^config\\.(cache|log|status)\$",
+			    "^autom4te.cache\$"
 			    );
     ## </NOTE>
     @exclude_patterns;

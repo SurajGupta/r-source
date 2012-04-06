@@ -25,10 +25,11 @@ str.data.frame <- function(object, ...)
 }
 
 str.default <-
-    function(object, max.level = 0, vec.len = 4, digits.d = 3,
+    function(object, max.level = NA, vec.len = 4, digits.d = 3,
 	     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
 	     wid = getOption("width"), nest.lev = 0,
-	     indent.str = paste(rep.int(" ", max(0, nest.lev + 1)), collapse = ".."),
+	     indent.str= paste(rep.int(" ", max(0,nest.lev+1)), collapse= ".."),
+	     comp.str="$ ", no.list = FALSE, envir = NULL,
 	     ...)
 {
     ## Purpose: Display STRucture of any R - object (in a compact form).
@@ -54,7 +55,11 @@ str.default <-
     ## NON interesting attributes:
     std.attr <- "names"
 
-    has.class <- !is.null(cl <- attr(object, "class"))
+    #NOT yet:if(has.class <- !is.null(cl <- class(object)))
+    if(has.class <- !is.null(cl <- attr(object, "class")))# S3 or S4 class
+	S4 <- !is.null(attr(cl, "package"))## <<<'kludge' FIXME!
+	##or length(methods::getSlots(cl)) > 0
+
     mod <- ""; char.like <- FALSE
     if(give.attr) a <- attributes(object)#-- save for later...
 
@@ -63,35 +68,55 @@ str.default <-
 	else { dp <- deparse(ao); paste(dp[-length(dp)], collapse="\n") },"\n")
     } else if (is.null(object))
 	cat(" NULL\n")
+    else if(has.class && S4) {
+	if(!give.attr) a <- attributes(object) # otherwise, have them
+	a <- a[names(a) != "class"]
+	cat("Formal class",
+	    " '", paste(cl, collapse = "', '"),
+	    "' [package \"", attr(cl,"package"), "\"] with ",
+	    length(a)," slots\n", sep="")
+	str(a, no.list = TRUE, comp.str = "@ ", # instead of "$ "
+	    max.level = max.level, vec.len = vec.len, digits.d = digits.d,
+	    indent.str = paste(indent.str,".."), nest.lev = nest.lev + 1,
+	    nchar.max = nchar.max, give.attr = give.attr, wid=wid)
+	return(invisible())
+    }
     else if(is.list(object)) {
 	i.pl <- is.pairlist(object)
 	is.d.f <- is.data.frame(object)
-	if(is.d.f) std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
+	##?if(is.d.f) std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
 	if(le == 0) {
-	    if(!is.d.f) cat(" ", if(i.pl)"pair", "list()\n",sep="")
+	    if(is.d.f) std.attr <- c(std.attr, "class", "row.names")
+	    else cat(" ", if(i.pl)"pair", "list()\n",sep="")
 	} else {
-	    if(has.class && any(sapply(paste("str", cl, sep="."),
+	    if(no.list || (has.class &&
+			   any(sapply(paste("str", cl, sep="."),
 					#use sys.function(.) ..
-					function(ob)exists(ob, mode= "function",
-							   inherits= TRUE)))) {
+				      function(ob)exists(ob, mode= "function",
+							 inherits= TRUE))))) {
 		## str.default is a 'NextMethod' : omit the 'List of ..'
 		std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
 	    } else {
 		cat(if(i.pl) "Dotted pair list" else "List",
 		    " of ", le, "\n", sep="")
 	    }
-	    if (max.level==0 || nest.lev < max.level) {
+	    if (is.na(max.level) || nest.lev < max.level) {
 		nam.ob <-
 		    if(is.null(nam.ob <- names(object))) rep.int("", le)
 		    else { max.ncnam <- max(nchar(nam.ob))
 			   format.char(nam.ob, width = max.ncnam, flag = '-')
 		       }
 		for(i in 1:le) {
-		    cat(indent.str,"$ ", nam.ob[i], ":", sep="")
+		    cat(indent.str, comp.str, nam.ob[i], ":", sep="")
+		    envir <- # pass envir for 'promise' components:
+			if(typeof(object[[i]]) == "promise") {
+			    structure(object, nam= as.name(nam.ob[i]))
+			} # else NULL
 		    str(object[[i]], nest.lev = nest.lev + 1,
 			indent.str= paste(indent.str,".."), nchar.max=nchar.max,
 			max.level=max.level, vec.len=vec.len, digits.d=digits.d,
-			give.attr= give.attr, give.length= give.length, wid=wid)
+			give.attr= give.attr, give.length= give.length, wid=wid,
+			envir = envir)
 		}
 	    }
 	}
@@ -110,9 +135,9 @@ str.default <-
 		else if(mod == "char") { mod <- "chr"; char.like <- TRUE }
 		else if(mod == "comp") mod <- "cplx" #- else: keep 'logi'
 		if(is.array(object)) {
-		    di <- dim(object)
-		    di <- P0(ifelse(di>1, "1:",""), di,
-			     ifelse(di>0, "" ," "))
+		    di. <- dim(object)
+		    di <- P0(ifelse(di. > 1, "1:",""), di.,
+			     ifelse(di. > 0, "" ," "))
 		    le.str <- paste(c("[", P0(di[-length(di)], ", "),
 				      di[length(di)], "]"), collapse = "")
 		    std.attr <- "dim" #- "names"
@@ -139,22 +164,22 @@ str.default <-
 			       )
 	    }
 #  These are S-PLUS classes not found in R.
-# 	} else if (inherits(object,"rts") || inherits(object,"cts")
-# 		   || inherits(object,"its")) {
-# 	    tsp.a <- tspar(object)
-# 	    t.cl <- cl[b.ts <- substring(cl,2,3) == "ts"] # "rts" "cts" or "its"
-# 	    ts.kind <- switch(t.cl,
-# 			      rts="Regular", cts="Calendar", its="Irregular")
-# 	    ## from  print.summary.ts(.) :
-# 	    pars <- unlist(sapply(summary(object)$ pars, format,
-# 				  nsmall=0, digits=digits.d, justify = "none"))
-# 	    if(length(pars)>=4) pars <- pars[-3]
-# 	    pars <- paste(abbreviate(names(pars),min=2), pars,
-# 			  sep= "=", collapse=", ")
-# 	    str1 <- P0(ts.kind, " Time-Series ", le.str, " ", pars, ":")
-# 	    v.len <- switch(t.cl,rts=.8, cts=.6, its=.9) * v.len
-# 	    class(object) <- if(any(!b.ts)) cl[!b.ts]
-# 	    std.attr <- c(std.attr, "tspar")
+#	} else if (inherits(object,"rts") || inherits(object,"cts")
+#		   || inherits(object,"its")) {
+#	    tsp.a <- tspar(object)
+#	    t.cl <- cl[b.ts <- substring(cl,2,3) == "ts"] # "rts" "cts" or "its"
+#	    ts.kind <- switch(t.cl,
+#			      rts="Regular", cts="Calendar", its="Irregular")
+#	    ## from  print.summary.ts(.) :
+#	    pars <- unlist(sapply(summary(object)$ pars, format,
+#				  nsmall=0, digits=digits.d, justify = "none"))
+#	    if(length(pars)>=4) pars <- pars[-3]
+#	    pars <- paste(abbreviate(names(pars),min=2), pars,
+#			  sep= "=", collapse=", ")
+#	    str1 <- P0(ts.kind, " Time-Series ", le.str, " ", pars, ":")
+#	    v.len <- switch(t.cl,rts=.8, cts=.6, its=.9) * v.len
+#	    class(object) <- if(any(!b.ts)) cl[!b.ts]
+#	    std.attr <- c(std.attr, "tspar")
 	} else if(stats::is.ts(object)) {
 	    tsp.a <- stats::tsp(object)
 	    str1 <- P0(" Time-Series ", le.str, " from ", format(tsp.a[1]),
@@ -163,7 +188,8 @@ str.default <-
 	} else if (is.factor(object)) {
 	    nl <- length(lev.att <- levels(object))
 	    if(!is.character(lev.att)) {# should not happen..
-		warning("`object' doesn't have legal levels()!")
+		warning(paste(sQuote("object"),
+			      "does not have valid levels()!"))
 		nl <- 0
 	    }
 	    ord <- is.ordered(object)
@@ -203,6 +229,17 @@ str.default <-
 		##-- atomic / not-vector  "unclassified object" ---
 		str1 <- paste(" atomic", le.str)
 	    }
+	} else if(typeof(object) == "promise") {
+	    cat(" promise ")
+	    if (!is.null(envir)) {
+		objExp <- eval(bquote(substitute(.(attr(envir, "nam")), envir)))
+		cat("to ")
+		str(objExp,
+		    max.level= max.level, vec.len= vec.len, digits.d= digits.d,
+		    indent.str = indent.str, nest.lev = nest.lev,
+		    nchar.max = nchar.max, give.attr = give.attr, wid=wid)
+	    } else cat(" <...>\n")
+	    return(invisible())
 	} else {
 	    ##-- NOT-atomic / not-vector  "unclassified object" ---
 	    ##str1 <- paste(" ??? of length", le, ":")
@@ -216,13 +253,25 @@ str.default <-
 	    mod <- mode(object)
 	    give.mode <- FALSE
 	    if (any(mod == c("call", "language", "(", "symbol",
-                    "externalptr", "weakref")) || is.environment(object)) {
-		##give.mode <- !is.vector(object)#--then it has not yet been done
+		    "externalptr", "weakref")) || is.environment(object)) {
+		##give.mode <- !is.vector(object)# then it has not yet been done
+		if(mod == "(") give.mode <- TRUE
+		typ <- typeof(object)
 		object <- deparse(object)
-                if(mod == "(") give.mode <- TRUE
-		le <- length(object) #== 1, always / depending on char.length ?
+
+		le <- length(object) # is > 1 e.g. for {A;B} language
 		format.fun <- function(x)x
 		v.len <- round(.5 * v.len)
+		if(le > 1 && typ=="language" && object[1] == "{" && object[le]=="}") {
+		    v.len <- v.len + 2
+		    if(le >= 3) {
+			object <- c(object[1],
+				    paste(sub("^ +", " ", object[2:(le-1)]),
+					  collapse = ";"),
+				    object[le])
+			le <- length(object)
+		    }
+		}
 	    } else if (mod == "expression") {
 		format.fun <- function(x) deparse(as.expression(x))
 		v.len <- round(.75 * v.len)
@@ -247,9 +296,13 @@ str.default <-
 		ob <- if(le > iv.len) object[seq(len=iv.len)] else object
 		ao <- abs(ob <- ob[!is.na(ob)])
 	    }
+	    else if(iSurv)
+		le <- length(object <- as.character(object))
 	    if(int.surv || (all(ao > 1e-10 | ao==0) && all(ao < 1e10| ao==0) &&
 			    all(ob == signif(ob, digits.d)))) {
-		v.len <- iv.len
+		if(!iSurv || di.[2] == 2)
+		    ## use integer-like length
+		    v.len <- iv.len
 		format.fun <- function(x)x
 	    } else {
 		v.len <- round(1.25 * v.len)
@@ -310,21 +363,29 @@ str.default <-
     invisible()	 ## invisible(object)#-- is SLOOOOW on large objects
 }# end of `str.default()'
 
-## An extended `ls()' using str() :
-ls.str <- function(pos = 1, pattern, ..., envir = as.environment(pos),
-		   mode = "any", max.level = 1, give.attr = FALSE)
+## An extended `ls()' whose print method will use str() :
+ls.str <-
+    function(pos = 1, pattern, ..., envir = as.environment(pos), mode = "any")
 {
-    n <- length(nms <- ls(..., envir = envir, pattern = pattern))
-    r <- character(n)
-    for(i in seq(length = n))
-	if(exists(nam <- nms[i], envir = envir, mode = mode)) {
-	    cat(nam, ": ")
-	    r[i] <- nam
-	    str(get(nam, envir = envir, mode = mode),
-		max.level = max.level, give.attr = give.attr)
-	}
-    invisible(r)
+    nms <- ls(..., envir = envir, pattern = pattern)
+    r <- sapply(nms, function(n)
+		if(exists(n, envir= envir, mode= mode)) n else as.character(NA))
+    names(r) <- NULL
+    structure(r[!is.na(r)], envir = envir, mode = mode, class = "ls_str")
 }
 
 lsf.str <- function(pos = 1, ..., envir = as.environment(pos))
     ls.str(pos = pos, envir = envir, mode = "function", ...)
+
+print.ls_str <- function(x, max.level = 1, give.attr = FALSE, ...)
+{
+    E <- attr(x, "envir") # can be NULL for "package:base"
+    if(!is.null(E)) stopifnot(is.environment(E))
+    M <- attr(x, "mode")
+    for(nam in x) {
+	cat(nam, ": ")
+	str(get(nam, envir = E, mode = M),
+	    max.level = max.level, give.attr = give.attr, ...)
+    }
+    invisible(x)
+}

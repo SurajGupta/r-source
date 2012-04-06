@@ -13,7 +13,8 @@
 all.equal(target, current, \dots)
 
 \method{all.equal}{numeric}(target, current,
-          tolerance= .Machine$double.eps ^ 0.5, scale=NULL, \dots)
+          tolerance = .Machine$double.eps ^ 0.5,
+          scale = NULL, \dots)
 
 attr.all.equal(target, current, \dots)
 }
@@ -36,7 +37,7 @@ attr.all.equal(target, current, \dots)
 }
 \details{
     There are several methods available, most of which are dispatched by
-    the default method, see \code{\link[utils]{methods}("all.equal")}.
+    the default method, see \code{\link{methods}("all.equal")}.
     \code{all.equal.list} and \code{all.equal.language} provide
     comparison of recursive objects.
 
@@ -68,7 +69,8 @@ attr.all.equal(target, current, \dots)
   \emph{Programming with Data. A Guide to the S Language}.
   Springer (for \code{=}).
 }
-\seealso{\code{\link{==}}, and \code{\link{all}} for exact equality testing.}
+\seealso{\code{\link{identical}}, \code{\link{==}}, and \code{\link{all}} 
+for exact equality testing.}
 \examples{
 all.equal(pi, 355/113) # not precise enough (default tol) > relative error
 

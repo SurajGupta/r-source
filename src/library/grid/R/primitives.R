@@ -23,7 +23,7 @@ moveToGrob <- function(x=0, y=0,
     x <- unit(x, default.units)
   if (!is.unit(y))
     y <- unit(y, default.units)
-  grob(x=x, y=y, 
+  grob(x=x, y=y,
        name=name, vp=vp, cl="move.to")
 }
 
@@ -58,7 +58,7 @@ lineToGrob <- function(x=1, y=1,
     x <- unit(x, default.units)
   if (!is.unit(y))
     y <- unit(y, default.units)
-  grob(x=x, y=y, 
+  grob(x=x, y=y,
        name=name, gp=gp, vp=vp, cl="line.to")
 }
 
@@ -161,23 +161,9 @@ grid.segments <- function(x0=unit(0, "npc"), y0=unit(0, "npc"),
 ######################################
 
 validDetails.arrows <- function(x) {
-  # If grob is specified, that overrides any x and y values
-  grobName <- childNames(x)
-  if (length(grobName) == 0) {
-    if (!is.unit(x$x) ||
-        !is.unit(x$y))
-      stop("x and y must be units")
-  } else {
-    lineThing <- getGrob(x, grobName)
-    cl <- class(lineThing)
-    # The grob can only be a "lines" or "segments"
-    # (splines would be another candidate if they existed)
-    if (!(inherits(lineThing, "lines") ||
-          inherits(lineThing, "segments") ||
-          inherits(lineThing, "line.to")))
-      stop("The grob argument must be a line.to, lines, or segments grob")
-    x$x <- x$y <- NULL
-  }
+  if ((!is.null(x$x) && !is.unit(x$x)) ||
+      (!is.null(x$y) && !is.unit(x$y)))
+    stop("x and y must be units or NULL")
   if (!is.unit(x$length))
     stop("Length must be a unit object")
   x$ends <- as.integer(match(x$ends, c("first", "last", "both")))
@@ -266,6 +252,21 @@ arrowsGrob <- function(x=c(0.25, 0.75), y=0.5,
     if (!is.unit(y))
       y <- unit(y, default.units)
   }
+  # Check the grob here
+  # Not in validDetails.arrows because that is for checking
+  # slots of an arrows object (the grob is a child of the arrows object)
+  # A possible alternative design would have a copy of the grob
+  # stored in a slot of the arrows object;  then it could be checked
+  # in the validDetails AND it could be edited
+  if (!is.null(grob)) {
+    # The grob can only be a "lines" or "segments"
+    # (splines would be another candidate if they existed)
+    if (!(inherits(grob, "lines") ||
+          inherits(grob, "segments") ||
+          inherits(grob, "line.to")))
+      stop("The grob argument must be a line.to, lines, or segments grob")
+    x <- y <- NULL
+  }
   gTree(x=x, y=y, children=if (is.null(grob)) NULL else gList(grob),
        angle=as.numeric(angle), length=length,
        ends=ends, type=type,
@@ -278,7 +279,7 @@ grid.arrows <- function(x=c(0.25, 0.75), y=0.5,
                         angle=30, length=unit(0.25, "inches"),
                         ends="last", type="open",
                         name=NULL, gp=gpar(), draw=TRUE, vp=NULL) {
-  ag <- arrowsGrob(x=x, y=y, 
+  ag <- arrowsGrob(x=x, y=y,
                    default.units=default.units,
                    grob=grob, angle=angle, length=length,
                    ends=ends, type=type,
@@ -328,7 +329,7 @@ drawDetails.polygon <- function(x, recording=TRUE) {
     for (i in unique(id)) {
       index[[count]] <- as.integer((1:length(x$x))[id == i])
       count <- count + 1
-    } 
+    }
     grid.Call.graphics("L_polygon", x$x, x$y, index)
   }
 }
@@ -385,7 +386,7 @@ circleGrob <- function(x=0.5, y=0.5, r=0.5,
     r <- unit(r, default.units)
   grob(x=x, y=y, r=r, name=name, gp=gp, vp=vp, cl="circle")
 }
-              
+
 grid.circle <- function(x=0.5, y=0.5, r=0.5,
                         default.units="npc",
                         name=NULL, gp=gpar(), draw=TRUE, vp=NULL) {
@@ -438,7 +439,7 @@ rectGrob <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
   grob(x=x, y=y, width=width, height=height, just=just,
        name=name, gp=gp, vp=vp, cl="rect")
 }
-            
+
 grid.rect <- function(x=unit(0.5, "npc"), y=unit(0.5, "npc"),
                       width=unit(1, "npc"), height=unit(1, "npc"),
                       just="centre", default.units="npc",
@@ -489,7 +490,7 @@ textGrob <- function(label, x=unit(0.5, "npc"), y=unit(0.5, "npc"),
     x <- unit(x, default.units)
   if (!is.unit(y))
     y <- unit(y, default.units)
-  grob(label=label, x=x, y=y, 
+  grob(label=label, x=x, y=y,
        just=just, rot=rot, check.overlap=check.overlap,
        name=name, gp=gp, vp=vp, cl="text")
 }
@@ -554,7 +555,7 @@ grid.points <- function(x=runif(10),
                         default.units="native",
                         name=NULL, gp=gpar(),
                         draw=TRUE, vp=NULL) {
-  pg <- pointsGrob(x=x, y=y, pch=pch, size=size, 
+  pg <- pointsGrob(x=x, y=y, pch=pch, size=size,
                    default.units=default.units,
                    name=name, gp=gp, vp=vp)
   if (draw)

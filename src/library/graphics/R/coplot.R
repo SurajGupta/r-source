@@ -198,9 +198,8 @@ coplot <-
     if(a.is.fac && show.given[1]) oma[3] <- oma[3] - 1
 
     ## Start Plotting only now
-
     opar <- par(mfrow = c(total.rows, total.columns),
-		oma = oma, mar = mar, xaxs = "r", yaxs = "r", new = FALSE)
+		oma = oma, mar = mar, xaxs = "r", yaxs = "r")
     on.exit(par(opar))
     plot.new()
     ## as.numeric() allowing factors for x & y:
@@ -263,8 +262,10 @@ coplot <-
 	    do.panel(i, subscripts, id)
 	}
     }
-    mtext(xlab[1], side=1, at=0.5*f.col, outer=TRUE, line=3.5, xpd=NA)
-    mtext(ylab[1], side=2, at=0.5*f.row, outer=TRUE, line=3.5, xpd=NA)
+    mtext(xlab[1], side = 1, at = 0.5*f.col, outer = TRUE, line = 3.5,
+          xpd = NA, font = par("font.lab"), cex = par("cex.lab"))
+    mtext(ylab[1], side = 2, at = 0.5*f.row, outer = TRUE, line = 3.5,
+          xpd = NA, font = par("font.lab"), cex = par("cex.lab"))
 
     if(length(xlab) == 1)
         xlab <- c(xlab, paste("Given :", a.name))
@@ -288,10 +289,12 @@ coplot <-
             axis(1, labels=FALSE)
         }
 	box()
-	mtext(xlab[2], 3, line = 3 - a.is.fac, at=mean(par("usr")[1:2]), xpd=NA)
+	mtext(xlab[2], 3, line = 3 - a.is.fac, at=mean(par("usr")[1:2]),
+              xpd=NA, font = par("font.lab"), cex = par("cex.lab"))
     }
     else { ## i. e. !show.given
-	mtext(xlab[2], 3, line = 3.25, outer= TRUE, at= 0.5*f.col, xpd=NA)
+	mtext(xlab[2], 3, line = 3.25, outer= TRUE, at= 0.5*f.col, xpd=NA,
+              font = par("font.lab"), cex = par("cex.lab"))
     }
     if(have.b) {
 	if(length(ylab) == 1)
@@ -316,14 +319,16 @@ coplot <-
             }
 	    box()
 	    mtext(ylab[2], 4, line = 3 - b.is.fac,
-                  at=mean(par("usr")[3:4]), xpd=NA)
+                  at = mean(par("usr")[3:4]), xpd = NA,
+                  font = par("font.lab"), cex = par("cex.lab"))
 	}
 	else {
-	    mtext(ylab[2], 4, line = 3.25, at=0.5*f.row, outer=TRUE, xpd=NA)
+	    mtext(ylab[2], 4, line = 3.25, at=0.5*f.row, outer = TRUE,
+                  xpd = NA, font = par("font.lab"), cex = par("cex.lab"))
 	}
     }
     if (length(missingrows) > 0) {
-	cat("\nMissing rows:",missingrows,"\n")
+	cat("\nMissing rows:", missingrows,"\n")
 	invisible(missingrows)
     }
 }

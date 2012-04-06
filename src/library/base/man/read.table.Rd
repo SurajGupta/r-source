@@ -57,7 +57,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     that is one or more spaces, tabs or newlines.}
 
   \item{quote}{the set of quoting characters. To disable quoting
-    altogether, use \code{quote=""}.  See \code{\link{scan}} for the
+    altogether, use \code{quote = ""}.  See \code{\link{scan}} for the
     behaviour on quotes embedded in quotes.}
 
   \item{dec}{the character used in the file for decimal points.}
@@ -80,14 +80,18 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \item{as.is}{the default behavior of \code{read.table} is to convert
     character variables (which are not converted to logical, numeric or
-    complex) to factors.  The variable \code{as.is}
-    controls this conversion.  Its value is either a vector of logicals
-    (values are recycled if necessary), or a vector of numeric or
-    character indices which specify which columns should not be
-    converted to factors.
+    complex) to factors.  The variable \code{as.is} controls the
+    conversion of columns not otherwise specified by \code{colClasses}.
+    Its value is either a vector of logicals (values are recycled if
+    necessary), or a vector of numeric or character indices which
+    specify which columns should not be converted to factors.
 
     Note: to suppress all conversions including those of numeric
     columns, set \code{colClasses = "character"}.
+
+    Note that \code{as.is} is specified per column (not per
+    variable) and so includes the column of row names (if any) and any
+    columns to be skipped.
   }
 
   \item{na.strings}{a vector of strings which are to be interpreted as
@@ -95,12 +99,20 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     missing values.}
 
   \item{colClasses}{character.  A vector of classes to be assumed for
-    the columns.  Recycled as necessary.  If this is not one of the
-    atomic vector classes (logical, integer, numeric, complex and
-    character), there needs to be an \code{as} method for
-    conversion from \code{"character"} to the specified class, or
-    \code{NA} when \code{\link{type.convert}} is used.  NB: \code{as} is
-    in package \pkg{methods}.}
+    the columns.  Recycled as necessary, or if the character vector is
+    named, unspecified values are taken to be \code{NA}.
+
+    Possible values are \code{NA} (when \code{\link{type.convert}} is
+    used), \code{NULL} (when the column is skipped), one of the atomic
+    vector classes (logical, integer, numeric, complex, character, raw),
+    or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}.  Otherwise
+    there needs to be an \code{as} method (from package \pkg{methods})
+    for conversion from \code{"character"} to the specified formal
+    class.
+    
+    Note that \code{colClasses} is specified per column (not per
+    variable) and so includes the column of row names (if any).
+  }
 
   \item{nrows}{the maximum number of rows to read in.  Negative values
     are ignored.}
@@ -176,7 +188,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   the column of row names (if any).
   
   Less memory will be used if \code{colClasses} is specified as one of
-  the five atomic vector classes.
+  the six atomic vector classes.
 
   Using \code{nrows}, even as a mild over-estimate, will help memory
   usage.
@@ -200,7 +212,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   The \emph{R Data Import/Export} manual.
   
   \code{\link{scan}}, \code{\link{type.convert}},
-  \code{\link[utils]{read.fwf}} for reading \emph{f}ixed \emph{w}idth
+  \code{\link{read.fwf}} for reading \emph{f}ixed \emph{w}idth
   \emph{f}ormatted input;
   \code{\link{write.table}};
   \code{\link{data.frame}}.

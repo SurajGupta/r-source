@@ -70,7 +70,7 @@ my $ECMD = "escaped-command";	# maybe something better?
 my @special_commands = ("command", "env", "file", "kbd", "option",
 			"samp", "url", "var");
 
-sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
+sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
 
     $Rdname = $_[0];
     open(rdfile, "<$Rdname") or die "Rdconv(): Couldn't open '$Rdfile': $!\n";
@@ -78,6 +78,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
     $type = $_[1];
     $debug = $_[2];
     $pkgname = $_[4];
+    $version = $_[5];
 
     if($type !~ /,/) {
 	## Trivial (R 0.62 case): Only 1 $type at a time ==> one
@@ -643,7 +644,7 @@ sub rdoc2html { # (filename) ; 0 for STDOUT
     html_print_block("seealso", "See Also");
     html_print_codeblock("examples", "Examples");
 
-    print $htmlout (html_functionfoot());
+    print $htmlout (html_functionfoot($pkgname, $version));
 }
 
 sub html_striptitle {
@@ -1193,11 +1194,14 @@ sub html_functionhead
 
 sub html_functionfoot
 {
+    my ($pkgname, $version) = @_;
     my $retval;
 
     if($HTML){
-	$retval .= "\n\n<hr><div align=\"center\">" .
-	    "<a href=\"00Index$HTML\">[Package Contents]</a></div>\n\n";
+	$retval .= "\n\n<hr><div align=\"center\">[Package";
+ 	$retval .= " <em>$pkgname</em>" if $pkgname ne "unknown";
+	$retval .= " version $version" if $version ne "";
+	$retval .= " <a href=\"00Index$HTML\">Index]</a></div>\n\n";
     }
 
     $retval .= "</body></html>\n";
@@ -2323,10 +2327,12 @@ sub rdoc2latex {# (filename)
     } else {
 	$latexout = "STDOUT";
     }
-    print $latexout "\\Header\{";
+    print $latexout "\\HeaderA\{";
     print $latexout $blocks{"name"};
     print $latexout "\}\{";
     print $latexout &ltxstriptitle($blocks{"title"});
+    print $latexout "\}\{";
+    print $latexout &latex_link_trans0($blocks{"name"});
     print $latexout "\}\n";
 
     my $current = $blocks{"name"}, $generic, $cmd;
@@ -2338,14 +2344,15 @@ sub rdoc2latex {# (filename)
 	$generic =~ s/\.model\.matrix$/.modelmatrix/o;
 	$generic =~ s/\.[^.]+$//o;
 	if ($generic ne "" && $generic eq $current && $generic ne "ar") {
-	    $cmd = "methalias"
-	} else { $cmd = "alias"; $current = $a; }
+	    $cmd = "methaliasA"
+	} else { $cmd = "aliasA"; $current = $a; }
 
 	$c = code2latex($_,0);
 	$a = latex_code_alias($c);
 	print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
 	    if $debug;
-	printf $latexout "\\%s\{%s\}\{%s\}\n", $cmd, $a, $blocks{"name"}
+	printf $latexout "\\%s\{%s\}\{%s\}\{%s\}\n", $cmd, $a, 
+	       $blocks{"name"}, latex_link_trans0($a)
 	unless /^\Q$blocks{"name"}\E$/; # Q..E : Quote (escape) Metacharacters
     }
     foreach (@keywords) {
@@ -2426,6 +2433,15 @@ sub text2latex {
     $text =~ s/\\cr\n\[/\\\\\{\}\n\[/go;
     $text =~ s/\\cr/\\\\/go;
     $text =~ s/\\tab(\s+)/&$1/go;
+
+    ## we need to convert \links's
+    while(checkloop($loopcount++, $text, "\\link")
+	  &&  $text =~ /\\link/){
+	my ($id, $arg, $opt) = get_link($text);
+	my $mapped_name = &latex_link_trans0($arg);
+	$text =~ s/\\link(\[.*\])?$id.*$id/\\LinkA{$arg}{$mapped_name}/s;
+    }
+
 
     ##-- We should escape $LATEX_SPEC  unless within 'eqn' above ...
     ##-- this would escape them EVERYWHERE:
@@ -2620,8 +2636,10 @@ sub latex_code_trans {
     $c =~ s/<</<\{\}</;
     $c =~ s/>>/>\{\}>/;
     $c =~ /HYPERLINK\(([^)]*)\)/;
-    my $link = latex_link_trans($1);
-    $c =~ s/HYPERLINK\([^)]*\)/\\Link{$link}/go;
+    my $c0 = $1;
+    my $link = latex_link_trans($c0);
+    $c0 = latex_link_trans0($c0);
+    $c =~ s/HYPERLINK\([^)]*\)/\\LinkA{$link}{$c0}/go;
     $c =~ s/,,/,{},/g; # ,, is a ligature in the ae font.
     $c;
 }
@@ -2641,6 +2659,18 @@ sub latex_code_cmd {
     $code = "\\code\{" . $code . "\}";
     $code;
 }
+
+sub latex_link_trans0 {
+    my $c = $_[0];
+    $c =~ s/\\Rdash/.Rdash./go;
+    $c =~ s/-/.Rdash./go;
+    $c =~ s/\\_/.Rul./go;
+    $c =~ s/\\\$/.Rdol./go;
+    $c =~ s/_/.Rul./go;
+    $c =~ s/\$/.Rdol./go;
+    $c;
+}
+
 
 ## Tough examples are
 ##	Logic.Rd  Arithmetic.Rd	 Extract.Rd  formula.Rd
@@ -2688,7 +2718,7 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
     html_print_codeblock("examples", "Examples");
 
     JScript() if $using_chm && $nlink > 0;
-    print $htmlout (html_functionfoot());
+    print $htmlout (html_functionfoot($pkgname, $version));
     if($_[0]) { close $htmlout; }
     $using_chm = 0;
 }

@@ -2,7 +2,8 @@
 \title{Read R Code from a File or a Connection}
 \usage{
 source(file, local = FALSE, echo = verbose, print.eval = echo,
-       verbose = getOption("verbose"),  prompt.echo = getOption("prompt"),
+       verbose = getOption("verbose"),
+       prompt.echo = getOption("prompt"),
        max.deparse.length = 150, chdir = FALSE)
 }
 \alias{source}
@@ -53,7 +54,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link[utils]{demo}} which uses \code{source};
+  \code{\link{demo}} which uses \code{source};
   \code{\link{eval}}, \code{\link{parse}} and \code{\link{scan}};
   \code{\link{options}("keep.source")}.
 }

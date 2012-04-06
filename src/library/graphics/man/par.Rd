@@ -2,6 +2,80 @@
 \alias{par}
 \alias{.Pars}
 \alias{.Pars.readonly}
+\concept{adj}
+\concept{ann}
+\concept{ask}
+\concept{bg}
+\concept{bty}
+\concept{cex.axis}
+\concept{cex.lab}
+\concept{cex.main}
+\concept{cex.sub}
+\concept{cex}
+\concept{cin}
+\concept{col.axis}
+\concept{col.lab}
+\concept{col.main}
+\concept{col.sub}
+\concept{col}
+\concept{cra}
+\concept{crt}
+\concept{csi}
+\concept{cxy}
+\concept{din}
+\concept{err}
+\concept{family}
+\concept{fg}
+\concept{fig}
+\concept{fin}
+\concept{font.axis}
+\concept{font.lab}
+\concept{font.main}
+\concept{font.sub}
+\concept{font}
+\concept{gamma}
+\concept{lab}
+\concept{las}
+\concept{lend}
+\concept{lheight}
+\concept{ljoin}
+\concept{lmitre}
+\concept{lty}
+\concept{lwd}
+\concept{mai}
+\concept{mar}
+\concept{mex}
+\concept{mfcol}
+\concept{mfg}
+\concept{mfrow}
+\concept{mgp}
+\concept{mkh}
+\concept{new}
+\concept{oma}
+\concept{omd}
+\concept{omi}
+\concept{pch}
+\concept{pin}
+\concept{plt}
+\concept{ps}
+\concept{pty}
+\concept{smo}
+\concept{srt}
+\concept{tck}
+\concept{tcl}
+\concept{tmag}
+\concept{type}
+\concept{usr}
+\concept{xaxp}
+\concept{xaxs}
+\concept{xaxt}
+\concept{xlog}
+\concept{xpd}
+\concept{yaxp}
+\concept{yaxs}
+\concept{yaxt}
+\concept{ylog}
+
 \title{Set or Query Graphical Parameters}
 
 %% The 'real documentation' is the code	in ../../../main/par.c
@@ -49,7 +123,8 @@ par(\dots, no.readonly = FALSE)
   \code{\link{title}}, \code{\link{text}}, \code{\link{mtext}}:
   \itemize{
     \item \code{"ask"}
-    \item \code{"fig"}, \code{"fin"}
+    \item \code{"family"}, \code{"fig"}, \code{"fin"}
+    \item \code{"lend"}, \code{"lheight"}, \code{"ljoin"}, \code{"lmitre"}
     \item \code{"mai"}, \code{"mar"}, \code{"mex"}
     \item \code{"mfrow"}, \code{"mfcol"}, \code{"mfg"}
     \item \code{"new"}
@@ -135,6 +210,15 @@ par(\dots, no.readonly = FALSE)
     \item{\code{err}}{(\emph{Unimplemented}; \R is silent when points
       outside the plot region are \emph{not} plotted.)
       The degree of error reporting desired.}
+    \item{\code{family}}{The name of a font family for drawing text.
+      This name is device-independent and gets mapped by each
+      graphics device to a device-specific font description.
+      The default value is \code{""} which means that the
+      default device font will be used.
+      Standard values are \code{"serif"}, \code{"sans"},
+      \code{"mono"}, and \code{"symbol"}.  Different devices
+      may define others.  Some devices will ignore this setting
+      completely.}
     \item{\code{fg}}{The color to be used for the foreground of plots.
       This is the default color used for things like axes and boxes
       around plots.  A description of how colors are specified is given
@@ -172,6 +256,28 @@ par(\dots, no.readonly = FALSE)
       Note that other string/character rotation (via argument \code{srt}
       to \code{par}) does \emph{not} affect the axis labels.
     }
+    \item{\code{lend}}{The line end style.
+      This can be specified as an integer or string:
+      0 and \code{"round"} mean rounded line caps;
+      1 and \code{"butt"} mean butt line caps;
+      2 and \code{"square"} mean square line caps.
+    }
+    \item{\code{lheight}}{The line height multiplier.
+      The height of a line of text (used to vertically space
+      multi-line text) is found by multiplying the current
+      font size both by the current character expansion and by the
+      line height multiplier.  Default value is 1.}
+    \item{\code{ljoin}}{The line join style.
+      This can be specified as an integer or string:
+      0 and \code{"round"} mean rounded line joins;
+      1 and \code{"mitre"} mean mitred line joins;
+      2 and \code{"bevel"} mean bevelled line joins.}  
+    \item{\code{lmitre}}{The line mitre limit.
+      This controls when mitred line joins are automatically
+      converted into bevelled line joins.  The 
+      value must be larger than 1 and the default is 10.  Not all
+      devices will honour this setting.
+    }
     \item{\code{lty}}{The line type.
       Line types can either be specified as an integer (0=blank,
       1=solid, 2=dashed, 3=dotted, 4=dotdash, 5=longdash, 6=twodash) or
@@ -190,11 +296,16 @@ par(\dots, no.readonly = FALSE)
 	left, top, right)} which gives the margin size specified in
       inches.}
     \item{\code{mar}}{A numerical vector of the form \code{c(bottom,
-	left, top, right)} which gives the lines of margin to be
+	left, top, right)} which gives the number of lines of margin to be
       specified on the four sides of the plot.
       The default is \code{c(5, 4, 4, 2) + 0.1}.}
-    \item{\code{mex}}{\code{mex} is a character size expansion factor
-      which is used to describe coordinates in the margins of plots.}
+    \item{\code{mex}}{
+      \code{mex} is a character size expansion factor
+      which is used to describe coordinates in the margins of plots.
+      Note that this does not change the font size, rather specifies the
+      size of font used to convert between \code{mar} and \code{mai},
+      and between \code{oma} and \code{omi}.
+    }
     \item{\code{mfcol, mfrow}}{A vector of the form \code{c(nr, nc)}.
       Subsequent figures will be drawn in an \code{nr}-by-\code{nc}
       array on the device by \emph{columns} (\code{mfcol}), or

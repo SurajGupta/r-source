@@ -12,8 +12,8 @@ include $(top_builddir)/Makeconf
 
 ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(X_CFLAGS) $(CPPFLAGS) $(DEFS)
 
-SOURCES_C_BASE = devices.c dynload.c edit.c gnome.c stubs.c system.c \
-  sys-unix.c sys-common.c sys-std.c \
+SOURCES_C_BASE = dynload.c edit.c gnome.c stubs.c system.c \
+  sys-unix.c sys-std.c \
   X11.c devQuartz.c aqua.c
 SOURCES_C_DARWIN = dlfcn-darwin.c
 SOURCES = $(SOURCES_C_BASE) @BUILD_DLFCN_DARWIN_TRUE@ $(SOURCES_C_DARWIN)
@@ -37,7 +37,7 @@ libunix_a_OBJECTS = $(OBJECTS)
 noinst_LTLIBRARIES = libunix.la
 libunix_la_SOURCES = $(SOURCES)
 libunix_la_OBJECTS = $(OBJECTS:.o=.lo)
-@USE_LIBTOOL_TRUE@libunix_la_LDFLAGS = -avoid-version -rpath $(Rexeclibdir)
+@USE_LIBTOOL_TRUE@libunix_la_LDFLAGS = -avoid-version -rpath "$(Rexeclibdir)"
 
 all: Makefile Makedeps R
 
@@ -53,13 +53,14 @@ Makedeps: Makefile $(DEPENDS)
 
 R: Makefile
 	@$(MAKE) Makedeps
-	@$(MAKE) $(noinst_LIBRARIES)
+@WANT_R_SHLIB_FALSE@	@$(MAKE) $(noinst_LIBRARIES)
 @WANT_R_SHLIB_TRUE@	@$(MAKE) stamp-lo
 
 ../include/Rversion.h:
 	(cd ../include; $(MAKE) $(@F))
 
 libunix.a: $(libunix_a_OBJECTS)
+	rm -rf $@
 	$(AR) cr $@ $(libunix_a_OBJECTS)
 	$(RANLIB) $@
 

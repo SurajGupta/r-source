@@ -1,8 +1,8 @@
 ### * File utilities.
 
-### ** filePathAsAbsolute
+### ** file_path_as_absolute
 
-filePathAsAbsolute <-
+file_path_as_absolute <-
 function(x)
 {
     ## Turn a possibly relative file path absolute, performing tilde
@@ -13,7 +13,7 @@ function(x)
         stop(paste("file", sQuote(x), "does not exist"))
     cwd <- getwd()
     on.exit(setwd(cwd))
-    if(fileTest("-d", epath)) {
+    if(file_test("-d", epath)) {
         ## Combining dirname and basename does not work for e.g. '.' or
         ## '..' on Unix ...
         setwd(epath)
@@ -25,9 +25,9 @@ function(x)
     }
 }
 
-### ** filePathSansExt
+### ** file_path_sans_ext
 
-filePathSansExt <-
+file_path_sans_ext <-
 function(x)
 {
     ## Return the file paths without extensions.
@@ -35,9 +35,9 @@ function(x)
     sub("\\.[[:alpha:]]+$", "", x)
 }
 
-### ** fileTest
+### ** file_test
 
-fileTest <-
+file_test <-
 function(op, x, y)
 {
     ## Provide shell-style '-f', '-d', '-nt' and '-ot' tests.
@@ -57,15 +57,27 @@ function(op, x, y)
            stop(paste("test", sQuote(op), "is not available")))
 }
 
-### ** listFilesWithExts
+### ** list_files_with_exts
 
-listFilesWithExts <-
+list_files_with_exts <-
 function(dir, exts, all.files = FALSE, full.names = TRUE)
 {
     ## Return the paths or names of the files in @code{dir} with
     ## extension in @code{exts}.
-    files <- list.files(dir, all.files = all.files)
-    files <- files[sub(".*\\.", "", files) %in% exts]
+    ## Might be in a zipped dir on Windows
+    if(file.exists(file.path(dir, "filelist")) &&
+       any(file.exists(file.path(dir, c("Rdata.zip", "Rex.zip", "Rhelp.zip")))))
+    {
+        files <- readLines(file.path(dir, "filelist"))
+        if(!all.files)
+            files <- grep("^[^.]", files, value = TRUE)
+    } else {
+        files <- list.files(dir, all.files = all.files)
+    }
+    ## does not cope with exts with '.' in.
+    ## files <- files[sub(".*\\.", "", files) %in% exts]
+    patt <- paste("\\.(", paste(exts, collapse="|"), ")$", sep = "")
+    files <- grep(patt, files, value = TRUE)
     if(full.names)
         files <- if(length(files) > 0)
             file.path(dir, files)
@@ -74,26 +86,26 @@ function(dir, exts, all.files = FALSE, full.names = TRUE)
     files
 }
 
-### ** listFilesWithType
+### ** list_files_with_type
 
-listFilesWithType <-
+list_files_with_type <-
 function(dir, type, all.files = FALSE, full.names = TRUE)
 {
     ## Return a character vector with the paths of the files in
-    ## @code{dir} of type @code{type} (as in .makeFileExts()).
+    ## @code{dir} of type @code{type} (as in .make_file_exts()).
     ## When listing R code and documentation files, files in OS-specific
     ## subdirectories are included if present.
-    exts <- .makeFileExts(type)
+    exts <- .make_file_exts(type)
     files <-
-        listFilesWithExts(dir, exts, all.files = all.files,
-                          full.names = full.names)
+        list_files_with_exts(dir, exts, all.files = all.files,
+                             full.names = full.names)
 
     if(type %in% c("code", "docs")) {
         OSdir <- file.path(dir, .OStype())
-        if(fileTest("-d", OSdir)) {
+        if(file_test("-d", OSdir)) {
             OSfiles <-
-                listFilesWithExts(OSdir, exts, all.files = all.files,
-                                  full.names = FALSE)
+                list_files_with_exts(OSdir, exts, all.files = all.files,
+                                     full.names = FALSE)
             OSfiles <-
                 file.path(if(full.names) OSdir else .OStype(),
                           OSfiles)
@@ -101,6 +113,25 @@ function(dir, type, all.files = FALSE, full.names = TRUE)
         }
     }
     files
+}
+
+### **  extract_Rd_file
+extract_Rd_file <-
+function(file, topic)
+{
+    ## extract an Rd file from the man dir.
+    if(is.character(file)) {
+        file <- if(length(grep("\\.gz$", file))) gzfile(file, "r")
+        else file(file, "r")
+        on.exit(close(file))
+    }
+    lines <- readLines(file)
+    patt <- paste("^% --- Source file:.*/", topic, ".Rd ---$", sep="")
+    if(length(top <- grep(patt, lines)) != 1)
+        stop("no or more than one match")
+    eofs <- grep("^\\\\eof$", lines)
+    end <- min(eofs[eofs > top]) - 1
+    lines[top:end]
 }
 
 ### * Text utilities.
@@ -111,9 +142,9 @@ delimMatch <-
 function(x, delim = c("\{", "\}"), syntax = "Rd")
 {
     if(!is.character(x))
-        stop("argument x must be a character vector")
+        stop(.wrong_args("x", "must be a character vector"))
     if((length(delim) != 2) || any(nchar(delim) != 1))
-        stop("incorrect value for delim")
+        stop(.wrong_args("delim", "must specify two single characters"))
     if(syntax != "Rd")
         stop("only Rd syntax is currently supported")
 
@@ -141,12 +172,23 @@ function(file, pdf = FALSE, clean = FALSE,
             texi2dvi <- "texi2dvi"
     }
 
-    yy <- system(paste(texi2dvi, quiet, pdf, clean, file))
+    yy <- system(paste(shQuote(texi2dvi),
+                       quiet, pdf, clean,
+                       shQuote(file)))
     if(yy > 0) stop(paste("running texi2dvi on", file, "failed"))
 }
 
 
 ### * Internal utility functions.
+
+### ** %w/o%
+
+"%w/o%" <-
+function(x, y)
+{
+    ## x without y, as in the examples of ?match.
+    x[!x %in% y]
+}
 
 ### ** .OStype
 
@@ -157,9 +199,23 @@ function()
     if(nchar(OS)) OS else .Platform$OS.type
 }
 
-### ** .getInternalS3generics
+### ** .capture_output_from_print
 
-.getInternalS3generics <-
+.capture_output_from_print <-
+function(x, ...)
+{
+    ## Better to provide a simple variant of utils::capture.output()
+    ## ourselves (so that bootstrapping R only needs base and tools).
+    file <- textConnection("out", "w", local = TRUE)
+    sink(file)
+    on.exit({ sink(); close(file) })
+    print(x, ...)
+    out
+}
+
+### ** .get_internal_S3_generics
+
+.get_internal_S3_generics <-
 function()
 {
     ## Get the list of R internal S3 generics (via DispatchOrEval(),
@@ -184,9 +240,11 @@ function()
       )
 }
 
-### ** .getNamespacePackageDepends
+### ** .get_namespace_package_depends
 
-.getNamespacePackageDepends <- function(dir) {
+.get_namespace_package_depends <-
+function(dir)
+{
     nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
     depends <- c(sapply(nsInfo$imports, "[[", 1),
                  sapply(nsInfo$importClasses, "[[", 1),
@@ -194,31 +252,58 @@ function()
     unique(sort(as.character(depends)))
 }
 
-### ** .getNamespaceS3methodsList
+### ** .get_namespace_S3_methods_db
 
-.getNamespaceS3methodsList <-
+.get_namespace_S3_methods_db <-
 function(nsInfo)
 {
-    ## Get the list of the registered S3 methods for an 'nsInfo' object
-    ## returned by parseNamespaceFile().  Each element of the list is a
-    ## character vector of length 3 with the names of the generic, class
-    ## and method (as a function).
-    lapply(nsInfo$S3methods,
-           function(spec) {
-               if(length(spec) == 2)
-                   spec <-
-                       c(spec, paste(spec, collapse = "."))
-               spec
-           })
+    ## Get the registered S3 methods for an 'nsInfo' object returned by
+    ## parseNamespaceFile(), as a 3-column character matrix with the
+    ## names of the generic, class and method (as a function).
+    S3_methods_list <- nsInfo$S3methods
+    if(!length(S3_methods_list)) return(matrix(character(), nc = 3))
+    idx <- is.na(S3_methods_list[, 3])
+    S3_methods_list[idx, 3] <-
+        paste(S3_methods_list[idx, 1],
+              S3_methods_list[idx, 2],
+              sep = ".")
+    S3_methods_list
 }
 
-### ** .getS3groupGenerics
+### ** .get_S3_group_generics
 
-.getS3groupGenerics <- function() c("Ops", "Math", "Summary", "Complex")
+.get_S3_group_generics <-
+function()
+    c("Ops", "Math", "Summary", "Complex")
 
-### ** .isPrimitive
+### ** .get_standard_Rd_keywords
 
-.isPrimitive <-
+.get_standard_Rd_keywords <-
+function()
+{
+    lines <- readLines(file.path(R.home(), "doc", "KEYWORDS.db"))
+    lines <- grep("^.*\\\|([^:]*):.*", lines, value = TRUE)
+    lines <- sub("^.*\\\|([^:]*):.*", "\\1", lines)
+    lines
+}
+
+### ** .get_standard_package_names
+
+## we cannot assume that file.path(R.home(), "share", "make", "vars.mk")
+## is installed, as it is not on Windows
+.get_standard_package_names <-
+local({
+    lines <- readLines(file.path(R.home(), "share", "make", "vars.mk"))
+    lines <- grep("^R_PKGS_[[:upper:]]+ *=", lines, value = TRUE)
+    out <- strsplit(sub("^R_PKGS_[[:upper:]]+ *= *", "", lines), " +")
+    names(out) <-
+        tolower(sub("^R_PKGS_([[:upper:]]+) *=.*", "\\1", lines))
+    eval(substitute(function() {out}, list(out=out)), envir=NULL)
+})
+
+### ** .is_primitive
+
+.is_primitive <-
 function(fname, envir)
 {
     ## Determine whether object named 'fname' found in environment
@@ -227,9 +312,9 @@ function(fname, envir)
     is.function(f) && any(grep("^\\.Primitive", deparse(f)))
 }
 
-### ** .isS3Generic
+### ** .is_S3_generic
 
-.isS3Generic <-
+.is_S3_generic <-
 function(fname, envir, mustMatch = TRUE)
 {
     ## Determine whether object named 'fname' found in environment
@@ -284,16 +369,16 @@ function(fname, envir, mustMatch = TRUE)
     if(mustMatch) res == fname else nchar(res) > 0
 }
 
-### ** .loadPackageQuietly
+### ** .load_package_quietly
 
-.loadPackageQuietly <-
+.load_package_quietly <-
 function(package, lib.loc)
 {
     ## Load (reload if already loaded) @code{package} from
     ## @code{lib.loc}, capturing all output and messages.  All QC
     ## functions use this for loading packages because R CMD check
     ## interprets all output as indicating a problem.
-    .tryQuietly({
+    .try_quietly({
         pos <- match(paste("package", package, sep = ":"), search())
         if(!is.na(pos))
             detach(pos = pos)
@@ -302,9 +387,9 @@ function(package, lib.loc)
     })
 }
 
-### ** .makeFileExts
+### ** .make_file_exts
 
-.makeFileExts <-
+.make_file_exts <-
 function(type = c("code", "data", "demo", "docs", "vignette"))
 {
     ## Return a character vector with the possible/recognized file
@@ -316,14 +401,14 @@ function(type = c("code", "data", "demo", "docs", "vignette"))
                     "RData", "rdata", "rda",
                     "tab", "txt", "TXT", "csv", "CSV"),
            demo = c("R", "r"),
-           docs = c("Rd", "rd"),
+           docs = c("Rd", "rd", "Rd.gz", "rd.gz"),
            vignette = c(outer(c("R", "r", "S", "s"), c("nw", "tex"),
                               paste, sep = "")))
 }
 
-### ** .makeS3MethodsStopList
+### ** .make_S3_methods_stop_list
 
-.makeS3MethodsStopList <-
+.make_S3_methods_stop_list <-
 function(package)
 {
     ## Return a character vector with the names of the functions in
@@ -356,16 +441,16 @@ function(package)
              stats = c("anova.lmlist", "fitted.values", "lag.plot",
              "influence.measures", "t.test"),
              utils = c("close.socket", "flush.console",
-             "update.packages") 
+             "update.packages")
              )
     if(is.null(package)) return(unlist(stopList))
     thisPkg <- stopList[[package]]
     if(!length(thisPkg)) character(0) else thisPkg
 }
 
-### ** .packageApply
+### ** .package_apply
 
-.packageApply <-
+.package_apply <-
 function(packages = NULL, FUN, ...)
 {
     ## Apply FUN and extra '...' args to all given packages.
@@ -378,9 +463,43 @@ function(packages = NULL, FUN, ...)
     out
 }
 
-### ** .sourceAssignments
+### ** .read_Rd_lines_quietly
 
-.sourceAssignments <-
+.read_Rd_lines_quietly <-
+function(con)
+{
+    ## Read lines from a connection to an Rd file, trying to suppress
+    ## "incomplete final line found by readLines" warnings.
+    if(is.character(con)) {
+        con <- if(length(grep("\\.gz$", con))) gzfile(con, "r") else file(con, "r")
+        on.exit(close(con))
+    }
+    .try_quietly(readLines(con))
+}
+
+### ** .read_description
+
+.read_description <-
+function(dfile)
+{
+    ## Try reading in package metadata from a DESCRIPTION file.
+    ## (Never clear whether this should work on the path of the file
+    ## itself, or on that of the directory containing it.)
+    ## <NOTE>
+    ## As we do not have character "frames", we return a named character
+    ## vector.
+    ## </NOTE>
+    if(!file_test("-f", dfile))
+        stop(paste("file", sQuote(dfile), "does not exist"))
+    db <- try(read.dcf(dfile)[1, ], silent = TRUE)
+    if(inherits(db, "try-error"))
+        stop(paste("file", sQuote(dfile), "is not in valid DCF format"))
+    db
+}
+
+### ** .source_assignments
+
+.source_assignments <-
 function(file, envir)
 {
     ## Read and parse expressions from @code{file}, and then
@@ -401,9 +520,66 @@ function(file, envir)
     invisible()
 }
 
-### ** .tryQuietly
+### .source_assignments_in_code_dir
 
-.tryQuietly <-
+.source_assignments_in_code_dir <-
+function(dir, env)
+{
+    ## Combine all code files in @code{dir}, read and parse expressions,
+    ## and successively evaluated the top-level assignments in
+    ## @code{env}.
+    con <- tempfile("Rcode")
+    on.exit(unlink(con))
+    if(!file.create(con))
+        stop(paste("unable to create", con))
+    if(!all(file.append(con, list_files_with_type(dir, "code"))))
+        stop("unable to write code files")
+    .source_assignments(con, env)
+}
+
+### * .split_dependencies
+
+.split_dependencies <- function(x)
+{
+    ## given one or more Depends: or Suggests: fields from DESCRIPTION
+    ## return a named list of list (name, [op, version])
+    if(!length(x)) return(list())
+    x <- unlist(strsplit(x, ","))
+    x <- unique(sub("^[[:space:]]*(.*)[[:space:]]*$", "\\1" , x))
+    names(x) <- sub("^([[:alnum:].]+).*$", "\\1" , x)
+    lapply(x, .split_op_version)
+}
+
+### * .split_op_version
+
+.split_op_version <- function(x)
+{
+    ## given a single piece of dependency
+    ## return a list of components (name, [op, version])
+    pat <- "^([^\\([:space:]]+)[[:space:]]*\\(([^\\)]+)\\).*"
+    x1 <- sub(pat, "\\1", x)
+    x2 <- sub(pat, "\\2", x)
+    if(x2 != x1) {
+        pat <- "[[:space:]]*([[<>=]+)[[:space:]]+(.*)"
+        list(name = x1, op = sub(pat, "\\1", x2),
+             version = package_version(sub(pat, "\\2", x2)))
+    } else list(name=x1)
+}
+
+### ** .strip_whitespace
+
+.strip_whitespace <-
+function(x)
+{
+    ## Strip leading and trailing whitespace.
+    x <- sub("^[[:space:]]*", "", x)
+    x <- sub("[[:space:]]*$", "", x)
+    x
+}
+
+### ** .try_quietly
+
+.try_quietly <-
 function(expr)
 {
     ## Try to run an expression, suppressing all 'output'.  In case of
@@ -421,6 +597,26 @@ function(expr)
         stop(yy)
     yy
 }
+
+### ** .wrong_args
+
+.wrong_args <-
+function(args, msg)
+{
+    len <- length(args)
+    if(len == 0)
+        character()
+    else if(len == 1)
+        paste("argument", sQuote(args), msg)
+    else
+        paste("arguments",
+              paste(c(rep.int("", len - 1), "and "),
+                    sQuote(args),
+                    c(rep.int(", ", len - 1), ""),
+                    sep = "", collapse = ""),
+              msg)
+}
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

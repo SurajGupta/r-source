@@ -6,16 +6,18 @@ testVirtual <-
   ## Can be forced to be virtual by extending "VIRTUAL".  Otherwise, a class is
   ## virtual only if it has no slots, extends no non-virtual classes, and has a
   ## NULL Prototype
-  function(properties, extends, prototype)
+  function(properties, extends, prototype, where)
 {
     if(length(extends)) {
         en <- names(extends)
         if(!is.na(match("VIRTUAL", en)))
             return(TRUE)
         ## does the class extend a known non-virtual class?
-        for(what in en)
-            if(isClass(what) && identical(getClass(what)@virtual, FALSE))
+        for(what in en) {
+            enDef <- getClassDef(what, where)
+            if(!is.null(enDef) && identical(enDef@virtual, FALSE))
                 return(FALSE)
+        }
     }
     (length(properties)==0 && is.null(prototype))
 }
@@ -37,7 +39,7 @@ makePrototypeFromClassDef <-
   ## then its prototype is used.
   ##
   ## If all three of the above fail, the prototype is `NULL'.
-  function(slots, ClassDef, extends)
+  function(slots, ClassDef, extends, where)
 {
     className <- ClassDef@className
     snames <- names(slots)
@@ -65,8 +67,8 @@ makePrototypeFromClassDef <-
         if(identical(what, "VIRTUAL"))
             ## the class is virtual, and the prototype usually NULL
             virtual <- TRUE
-        else if(isClass(what)) {
-            cli <- getClass(what)
+        else if(isClass(what, where = where)) {
+            cli <- getClass(what, where = where)
             slotsi <- names(cli@slots)
             pri <- cli@prototype
             ## once in a while
@@ -91,7 +93,7 @@ makePrototypeFromClassDef <-
                     }
                 }
             }
-            else if(!dataPartDone && is(pri, dataPartClass))
+            else if(!dataPartDone && extends(cli, dataPartClass))
                 prototype <- setDataPart(prototype, pri)
         }
     }
@@ -112,12 +114,21 @@ makePrototypeFromClassDef <-
     ## in the prototype--the inherited slots were done in the loop over extends
     if(!is.na(match(".Data", snames))) {
         dataPartClass <- elNamed(slots, ".Data")
+        
         ## check the data part
-        if(!(isVirtualClass(dataPartClass) || is(prototype, dataPartClass)))
-            stop("In constructing the prototype for class \"", className, "\": ",
+        if(!(isVirtualClass(dataPartClass))) {
+            if(isClass(class(prototype), where = where)) {
+                prototypeClass <- getClass(class(prototype), where = where)
+                OK <- extends(prototypeClass, dataPartClass)
+            }
+            else
+                OK <- FALSE
+            if(identical(OK, FALSE))
+                stop("In constructing the prototype for class \"", className, "\": ",
                  "Prototype has class \"",
                        .class1(prototype), "\", but the data part specifies class \"",
                        dataPartClass,"\"")
+        }
         iData <- -match(".Data", snames)
         snames <- snames[iData]
         slots <- slots[iData]
@@ -127,11 +138,8 @@ makePrototypeFromClassDef <-
         i <- match(name, pnames)
         if(is.na(i)) {
             ## if the class of the j-th element of slots is defined and non-virtual,
-            ## generate an object from it
-            ## to use as the corresponding prototype element.  Else, leave NULL
-            newi <- tryNew(el(slots, j))
-            if(!is.null(newi))
-                slot(prototype, name, check = FALSE) <- newi
+            ## generate an object from it; else insert NULL
+            slot(prototype, name, check = FALSE) <- tryNew(el(slots, j), where)
         }
     }
     extra <- pnames[is.na(match(pnames, snames)) & !is.na(match(pnames, pslots))]
@@ -188,7 +196,7 @@ completeClassDefinition <-
     ClassDef <- .completeClassSlots(ClassDef, where)
     immediate <- ClassDef@contains
     properties <- ClassDef@slots
-    prototype <- makePrototypeFromClassDef(properties, ClassDef, immediate)
+    prototype <- makePrototypeFromClassDef(properties, ClassDef, immediate, where)
     virtual <- ClassDef@virtual
     validity <- ClassDef@validity
     access <- ClassDef@access
@@ -197,7 +205,7 @@ completeClassDefinition <-
     subclasses <- if(doExtends) completeSubclasses(ClassDef, where = where) else ClassDef@subclasses
     if(is.na(virtual))
         ## compute it from the immediate extensions, but all the properties
-        virtual <- testVirtual(properties, immediate, prototype)
+        virtual <- testVirtual(properties, immediate, prototype, where)
     ## modify the initial class definition object, rather than creating
     ## a new one, to allow extensions of "classRepresentation"
     ## Done by a separate function to allow a bootstrap version.
@@ -223,7 +231,7 @@ completeClassDefinition <-
         simpleContains <- ClassDef@contains
         Class <- ClassDef@className
         package <- ClassDef@package
-        ext <- getAllSuperClasses(ClassDef)
+        ext <- getAllSuperClasses(ClassDef, TRUE)
         ## ext has the names of all the direct and indirect superClasses but NOT those that do
         ## an explicit coerce (we can't conclude anything about slots, etc. from them)
         if(length(ext) > 0) {
@@ -264,6 +272,29 @@ completeClassDefinition <-
 #                }
             }
         }
+        ## ensure that each element of the slots is a valid class reference
+        undefClasses <- rep(FALSE, length(properties))
+        for(i in seq(along = properties)) {
+            cli <- properties[[i]]
+            if(is.null(packageSlot(cli))) {
+                cliDef <- getClassDef(cli, where)
+                if(is.null(cliDef))
+                    undefClasses[[i]] <- TRUE
+                else
+                    packageSlot(properties[[i]]) <- cliDef@package
+            }
+            else {
+                cliDef <- getClassDef(cli)
+                if(is.null(cliDef))
+                    undefClasses[[i]] <- TRUE
+            }
+        }
+        if(any(undefClasses))
+            warning("Undefined slot classes in definition of \"",
+                    ClassDef@className, "\": ",
+                    paste(names(properties)[undefClasses], "(class \"",
+                          unlist(properties, recursive = FALSE)[undefClasses],
+                          "\")", collapse = ", "))
         ClassDef@slots <- properties
         ClassDef
 }
@@ -327,8 +358,8 @@ superClassDepth <-
     }
     ext <- ext[ok]
     immediate <- names(ext)
-    immediate <- immediate[is.na(match(immediate, soFar))]
-    soFar <- c(soFar, immediate)
+    notSoFar <- is.na(match(immediate, soFar))
+    immediate <- immediate[notSoFar]
     super <- list(label=immediate, depth = rep(1, length(immediate)), ext = ext)
     for(i  in seq(along = immediate)) {
         what <- immediate[[i]]
@@ -336,12 +367,12 @@ superClassDepth <-
            ## watch out for loops (e.g., matrix/array have mutual is relationship)
            next
         exti <- ext[[i]]
+        soFar <- c(soFar, what)
         if(!is(exti, "SClassExtension"))
             stop("In definition of class \"", ClassDef@className,
                  "\"  information for superclass \"", what,
                  "\" is of class \"", class(exti), "\" (expected \"SClassExtension\"")
         superClass <-  getClassDef(exti@superClass, package = exti@package)
-        if(isClass(what)) {
             if(is.null(superClass)) {
                 warning("class \"", ClassDef@className, "\" extends an undefined class,\"",
                         what, "\"")
@@ -364,10 +395,6 @@ superClassDepth <-
                 super$label <- c(super$label, more$label)
                 super$ext <- c(super$ext, more$ext)
             }
-        }
-        else
-            warning("Class information incomplete: class \"",
-                    what, "\" not defined")
     }
     super
 }
@@ -515,6 +542,7 @@ reconcilePropertiesAndPrototype <-
           stop("In defining class \"", name, "\", the supplied data part class, \"",
                dataPartClass,
                "\" is not valid (must be a basic class or a virtual class combining basic classes)")
+      prototypeClass <- getClass(class(prototype), where = where)
       if((!is.null(dataPartClass) || length(superClasses) > 0)
          && is.na(match("VIRTUAL", superClasses))) {
           ## Look for a data part in the super classes, either an inherited
@@ -552,9 +580,10 @@ reconcilePropertiesAndPrototype <-
                       prototype <- newBasic("logical")
                   else
                       prototype <- new(dataPartClass)
+                  prototypeClass <- getClass(class(prototype), where = where)
               }
               else {
-                  if(is(prototype, "classPrototypeDef")) {
+                  if(extends(prototypeClass, "classPrototypeDef")) {
                       hasDataPart <- identical(prototype@dataPart, TRUE)
                       if(!hasDataPart) {
                           newObject <- new(dataPartClass)
@@ -565,13 +594,14 @@ reconcilePropertiesAndPrototype <-
                           attributes(newObject)[anames] <- attributes(pobject)
                           prototype@object <- newObject
                       }
-                      else if(!is(prototype@object, dataPartClass))
+                      else if(!extends(getClass(class(prototype@object), where = where)
+                                       , dataPartClass))
                           stop("A prototype object was supplied with object slot of class \"",
                            class(prototype@object),
                            "\", but the class definition requires an object that is class \"",
                            dataPartClass, "\"")
                   }
-                  else if(!is(prototype, dataPartClass))
+                  else if(!extends(prototypeClass, dataPartClass))
                       stop("A prototype was supplied of class \"",
                            class(prototype),
                            "\", but the class definition requires an object that is class \"",
@@ -607,7 +637,7 @@ reconcilePropertiesAndPrototype <-
                          cl, "\"", sep=""))
       }
       if(is.null(dataPartClass)) {
-          if(is(prototype, "classPrototypeDef"))
+          if(extends(prototypeClass, "classPrototypeDef"))
           {}
           else {
               if(is.list(prototype))
@@ -622,17 +652,17 @@ reconcilePropertiesAndPrototype <-
              !isVirtualClass(dataPartDef)) ||
              length(dataPartDef@slots) > 0)
               stop(paste("\"", dataPartClass, "\" is not eligible to be the data part of another class (must be a basic class or a virtual class with no slots", sep=""))
-          if(is(prototype, "classPrototypeDef"))
+          if(extends(prototypeClass, "classPrototypeDef"))
           {}
-          else if(is(prototype, dataPartClass)) {
-              if(is(prototype, "list") && length(names(prototype)) > 0)
+          else if(extends(prototypeClass, dataPartClass)) {
+              if(extends(prototypeClass, "list") && length(names(prototype)) > 0)
                   warning("prototype is a list with named elements (could be ambiguous):  better to use function prototype() to avoid trouble.")
           }
           else if(is.list(prototype))
               prototype <- do.call("prototype", prototype)
       }
       ## pnames will be the names explicitly defined in the prototype
-      if(is(prototype, "classPrototypeDef")) {
+      if(extends(prototypeClass, "classPrototypeDef")) {
           pnames <- prototype@slots
           prototype <- prototype@object
       }
@@ -649,7 +679,7 @@ reconcilePropertiesAndPrototype <-
           propName <- el(what, i)
           if(!identical(propName, ".Data") &&
              is.null(attr(prototype, propName)))
-              slot(prototype, propName, FALSE) <- tryNew(el(props, i))
+              slot(prototype, propName, FALSE) <- tryNew(el(props, i), where)
       }
       list(properties = properties, prototype = prototype)
   }
@@ -660,10 +690,11 @@ tryNew <-
   ##
   ## This is inefficient and also not a good idea when actually generating objects,
   ## but is useful in the initial definition of classes.
-  function(Class) {
-    if(!isClass(Class) || isVirtualClass(Class))
+  function(Class, where) {
+      ClassDef <- getClassDef(Class, where)
+    if(is.null(ClassDef) || isVirtualClass(ClassDef))
       return(NULL)
-    value <- trySilent(new(Class))
+    value <- trySilent(new(ClassDef))
     if(is(value, "try-error"))
       NULL
     else
@@ -761,7 +792,7 @@ print.classRepresentation <-
   showClass(x, propertiesAreCalled="Slots")
 
 ## bootstrap definition to be used before getClass() works
-possibleExtends <- function(class1, class2)
+possibleExtends <- function(class1, class2, ClassDef1, ClassDef2)
     .identC(class1, class2) || .identC(class2, "ANY")
 
 
@@ -770,30 +801,35 @@ possibleExtends <- function(class1, class2)
   ## directly or indirectly.  This can be either a logical value or
   ## an object containing various functions to test and/or coerce the relationship.
     ## TODO:  convert into a generic function w. methods WHEN dispatch is really fast!
-  function(class1, class2)
+  function(class1, class2, ClassDef1 = getClassDef(class1),
+           ClassDef2 = getClassDef(class2, where = .classEnv(ClassDef1)))
 {
-    if(.identC(class1, class2) || .identC(class2, "ANY"))
+    if(.identC(class1[[1]], class2) || .identC(class2, "ANY"))
         return(TRUE)
-    i <- NA
-    if(isClass(class1)) {
-        ClassDef <- getClass(class1)
-        ext <- ClassDef@contains
+    ext <- TRUE # may become a list of extends definitions
+    if(is.null(ClassDef1))  # class1 not defined
+        return(FALSE)
+    else {
+        ext <- ClassDef1@contains
         i <- match(class2, names(ext))
-    }
-    else
-        i <- NA
+     }
     if(is.na(i)) {
-        if(isClass(class2)) {
-            classDef2 <- getClass(class2)
-            ext <- classDef2@subclasses
-            if(!.identC(class(classDef2), "classRepresentation") &&
-               isClassUnion(classDef2))
-                return(any(duplicated(c(class1, names(ClassDef@contains), names(ext)))))
-            i <- match(class1, names(ext))
-       }
+        ## look for class1 in the known subclasses of class2
+        if(!is.null(ClassDef2)) {
+            ext <- ClassDef2@subclasses
+            if(!.identC(class(ClassDef2), "classRepresentation") &&
+               isClassUnion(ClassDef2))
+                ## a simple TRUE iff class1 or one of its superclasses belongs to the union
+                i <- any(duplicated(c(class1, names(ClassDef1@contains), names(ext))))
+            else {
+                i <- match(class1, names(ext))
+            }
+        }
     }
     if(is.na(i))
         FALSE
+    else if(is.logical(i))
+        i
     else
         el(ext, i)
 }
@@ -817,8 +853,10 @@ completeExtends <-    function(ClassDef, class2, extensionDef, where) {
     exts <- .walkClassGraph(ClassDef, "contains", where)
     if(length(exts)>0) {
         ## sort the extends information by depth (required for method dispatch)
-        superClassNames <- getAllSuperClasses(ClassDef)
-        exts <- exts[superClassNames]
+        superClassNames <- getAllSuperClasses(ClassDef, FALSE)
+        ## FIXME:  getAllSuperClassses sometimes misses.  Why?
+        if(length(superClassNames) == length(exts))
+            exts <- exts[superClassNames]
     }
     if(!missing(class2) && length(ClassDef@subclasses) > 0) {
         subclasses <-
@@ -838,27 +876,29 @@ completeExtends <-    function(ClassDef, class2, extensionDef, where) {
 }
 
 completeSubclasses <-
-    function(ClassDef, class2, extensionDef, where) {
+    function(classDef, class2, extensionDef, where, classDef2 = getClassDef(class2, where)) {
     ## check for indirect extensions => already completed
-    ext <- ClassDef@subclasses
+    ext <- classDef@subclasses
     for(i in seq(along = ext)) {
         if(.isIndirectExtension(ext[[i]])) {
-            ClassDef <- .uncompleteClassDefinition(ClassDef, "subclasses")
+            classDef <- .uncompleteClassDefinition(classDef, "subclasses")
             break
         }
     }
-    subclasses <- .walkClassGraph(ClassDef, "subclasses", where)
-    if(!missing(class2) && length(ClassDef@contains) > 0) {
+    subclasses <- .walkClassGraph(classDef, "subclasses", where)
+    if(!missing(class2) && length(classDef@contains) > 0) {
         contains <-
-            .transitiveExtends(class2, ClassDef@className, extensionDef, ClassDef@contains)
+            .transitiveExtends(class2, classDef@className, extensionDef, classDef@contains)
         ## insert the new is relationship, but without any recursive completion
         ## (asserted not to be needed if the subclass slot is complete)
         for(i in seq(along = contains)) {
             obji <- contains[[i]]
+            cli <- contains[[i]]@superClass
+            cliDef <- getClassDef(cli, where)
             ## don't override existing relations
             ## TODO:  have a metric that picks the "closest" relationship
-            if(!extends(class2, obji@superClass))
-                setIs(class2, obji@superClass, extensionObject = obji,
+            if(!extends(classDef2, cliDef))
+                setIs(class2, cli, extensionObject = obji,
                       doComplete = FALSE, where = where)
         }
     }
@@ -1010,20 +1050,42 @@ validSlotNames <- function(names) {
 
 ### utility function called from primitive code for "@"
 getDataPart <- function(object) {
-    classDef <- getClass(class(object))
-    temp <- getSlots(classDef)
-    slots <- c("class", names(temp))
-    attrVals <- attributes(object)
-    attrs <- names(attrVals)
-    if(identical(slots, attrs)) # basic vector as .Data
-        attributes(object) <- NULL
-    else {
-        attrs <- attrs[is.na(match(attrs, slots))]
-        attributes(object) <- attrVals[attrs]
-        ## matrix, array, or ts are currently (R 1.7) the only other possible .Data's
-        if(!is.na(match("tsp", attrs))) # set the class (S3-style) to "ts"
-            class(object) <- "ts"
-    }
+    temp <- getClass(class(object))@slots
+    if(length(temp) == 0)
+        return(object)
+    if(is.na(match(".Data", names(temp))))
+       stop("No .Data slot defined for class \"", class(object), "\"")
+    dataPart <- temp[[".Data"]]
+    switch(dataPart,
+           ## the common cases, for efficiency
+           numeric = , vector = , integer = , character = , logical = ,
+           complex = , list =
+              attributes(object) <- NULL,
+           matrix = , array = {
+               value <- object
+               attributes(value) <- NULL
+               attr(value, "dim") <- attr(object, "dim")
+               attr(value, "dimnames") <- attr(object, "dimnames")
+               object <- value
+           },
+           ts = {
+               value <- object
+               attributes(value) <- NULL
+               attr(value, "ts") <- attr(object, "ts")
+               object <- value
+           },
+           ## default:  
+           if(is.na(match(dataPart, .BasicClasses))) {
+               ## keep attributes not corresponding to slots
+               attrVals <- attributes(object)
+               attrs <- names(attrVals)
+               attrs <- attrs[is.na(match(attrs, c("class", names(temp))))]
+               attributes(object) <- attrVals[attrs]
+           }
+           else
+           ## other basic classes have no attributes
+               attributes(object) <- NULL
+           )
     object
 }
 
@@ -1087,6 +1149,11 @@ setDataPart <- function(object, value) {
     if(length(explicit)>0)
         supplied[names(explicit)] <- explicit
     valueAttrs <- attributes(value)
+    ## names are special.
+    if(length(supplied$names)>0 && length(valueAttrs$names) == 0) {
+        if(length(value) != length(object))
+            length(supplied$names) <- length(value)
+    }
     if(length(valueAttrs) == 0) # nothing to protect
         attributes(value) <- supplied
     else {
@@ -1192,13 +1259,13 @@ setDataPart <- function(object, value) {
     sameSlots <- (length(fromSlots) == length(toSlots) &&
                       !any(is.na(match(fromSlots, toSlots))))
     if(sameSlots)
-        expr <- substitute({class(from) <- CLASS; from},
+        expr <- substitute({class(from)[[1]] <- CLASS; from},
                    list(CLASS = toClass))
     else {
         if(length(toSlots)==0) {
             ## either a basic class or something with the same representation
             if(is.na(match(toClass, .BasicClasses)))
-                expr <- substitute({ attributes(from) <- NULL; class(from) <- CLASS; from},
+                expr <- substitute({ attributes(from) <- NULL; class(from)[[1]] <- CLASS; from},
                                    list(CLASS=toClass))
             else if(isVirtualClass(toDef))
                 expr <- quote(from)
@@ -1227,6 +1294,15 @@ setDataPart <- function(object, value) {
         }
     }
     expr
+}
+
+.simpleReplaceExpr <- function(toDef) {
+    toSlots <- names(toDef@slots)
+    substitute({
+        for(what in TOSLOTS)
+            slot(from, what) <- slot(value, what)
+        from
+    }, list(TOSLOTS = toSlots))
 }
 
 ## the boot version of newClassRepresentation (does no checking on slots to avoid
@@ -1267,8 +1343,13 @@ newClassRepresentation <- function(...) {
 ## utility guaranteed to return only the first string of the class.
 ## Would not be needed if we dis-allowed S3 classes with multiple strings (or
 ## if the methods package version of class dropped the extra strings).
-.class1 <- function(x)
-    class(x)[[1]]
+.class1 <- function(x) {
+    cl <- class(x)
+    if(length(cl)>1)
+        cl[[1]]
+    else
+        cl
+}
 
 substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent = FALSE) {
     if(!identical(args, newArgs)) {
@@ -1337,8 +1418,8 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
 
 ## a utility for makePrototypeFromClassDef that causes inf. recursion if used too early
 ..isPrototype <- function(p)is(p, "classPrototypeDef")
-## the dummy version
-.isPrototype <- function(p) FALSE
+## the simple version
+.isPrototype <- function(p) .identC(class(p), "classPrototypeDef")
 
 .className <- function(cl) if(is(cl, "classRepresentation")) cl@className else as(cl, "character")
 
@@ -1393,3 +1474,73 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
         as.environment(pkg)
     }
 }
+
+## bootstrap version, mustn't fail
+.classEnv <- function(Class, default = .requirePackage("methods"), mustFind = TRUE) {
+         package <- packageSlot(Class)
+        if(is.null(package)) {
+            ## unconditionally use the methods package
+            default
+        }
+        else
+            .requirePackage(package)
+     }
+
+            
+..classEnv <- function(Class, default = .requirePackage("methods"), mustFind = TRUE) {
+    if(is.character(Class))
+        package <- packageSlot(Class)
+    else ## must then be a class definition
+        package <- Class@package
+    if(is.null(package)) {
+            ## use the default, but check that the class is there, and if not
+            ## try a couple of other heuristics
+            value <- default
+            def <- getClassDef(Class, value, NULL)
+            if(is.null(def)) {
+                value <- .GlobalEnv
+                def <- getClassDef(Class, value, NULL)
+                if(is.null(def)) {
+                    value <- .requirePackage("methods")
+                    if(!identical(default, value)) # user supplied default
+                        def <- getClassDef(Class, value, NULL)
+                }
+            }
+            if(is.null(def) && mustFind)
+                stop("Unable to find an environment containing class \"", Class, "\"")
+            value
+        }
+        else
+            .requirePackage(package)
+    }
+    
+## find a generic function reference, using the package slot if present
+## FIXME:  this and .classEnv should be combined and implemented in C for speed
+## They differ in that  .classEnv uses the class metaname when it searches; i.e.,
+## they use getClassDef and .getGeneric resp.  Also, .getEnv returns NULL rather
+## than generating an error if no generic found (so getGeneric can return gen'c for prim'ves)
+
+.genEnv <-  function(f, default = .requirePackage("methods")) {
+        package <- packageSlot(f)
+        if(is.null(package)) {
+            ## use the default, but check that the object is there, and if not
+            ## try a couple of other heuristics
+            value <- default
+            def <- .getGeneric(f, value)
+            if(is.null(def)) {
+                value <- .GlobalEnv
+                def <- .getGeneric(f, value)
+                if(is.null(def)) {
+                    value <- .requirePackage("methods")
+                    if(!identical(default, value)) # user supplied default
+                        def <- .getGeneric(f, value)
+                }
+            }
+            if(is.null(def))
+                NULL
+            else
+                value
+        }
+        else
+            .requirePackage(package)
+    }

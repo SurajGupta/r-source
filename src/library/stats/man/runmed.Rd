@@ -8,7 +8,7 @@
   results.
 }
 \usage{
-runmed(x, k, endrule = c("median","keep","constant"),
+runmed(x, k, endrule = c("median", "keep", "constant"),
        algorithm = NULL, print.level = 0)
 }
 \arguments{
@@ -85,18 +85,17 @@ runmed(x, k, endrule = c("median","keep","constant"),
 \seealso{
   \code{\link{smoothEnds}} which implements Tukey's end point rule and
   is called by default from \code{runmed(*, endrule = "median")}.
-  \code{\link[eda]{smooth}} (from \pkg{eda} package) uses running
+  \code{\link{smooth}} uses running
   medians of 3 for its compound smoothers.
 }
 \examples{
-example(nhtemp)#> data(nhtemp)
+example(nhtemp)
 myNHT <- as.vector(nhtemp)
 myNHT[20] <- 2 * nhtemp[20]
 plot(myNHT, type="b", ylim = c(48,60), main = "Running Medians Example")
 lines(runmed(myNHT, 7), col = "red")
 
 ## special: multiple y values for one x
-data(cars)
 plot(cars, main = "'cars' data and runmed(dist, 3)")
 lines(cars, col = "light gray", type = "c")
 with(cars, lines(speed, runmed(dist, k = 3), col = 2))

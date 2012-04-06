@@ -6,7 +6,6 @@ RNGversion("1.6.2")
 
 ### moved from various .Rd files
 ## abbreviate
-data(state)
 for(m in 1:5) {
   cat("\n",m,":\n")
   print(as.vector(abbreviate(state.name, minl=m)))
@@ -210,6 +209,10 @@ is.na (ll)
 is.nan(ll)
 ## end of moved from NA.Rd
 
+## is.na was returning unset values on nested lists
+ll <- list(list(1))
+for (i in 1:5) print(as.integer(is.na(ll)))
+
 ## scale
 ## test out NA handling
 tm <- matrix(c(2,1,0,1,0,NA,NA,NA,0), nrow=3)
@@ -292,7 +295,6 @@ test.list
 # [1] TRUE
 
 ## Marc Feldesman 2001-Feb-01.  Precision in summary.data.frame & *.matrix
-data(attenu)
 summary(attenu)
 summary(attenu, digits = 5)
 summary(data.matrix(attenu), digits = 5)# the same for matrix
@@ -373,7 +375,6 @@ try(summary(gofX.manova))
 
 ## Prior to 1.3.0 dist did not handle missing values, and the
 ## internal C code was incorrectly scaling for missing values.
-data(trees)
 z <- as.matrix(t(trees))
 z[1,1] <- z[2,2] <- z[3,3] <- z[2,4] <- NA
 dist(z, method="euclidean")
@@ -547,7 +548,6 @@ predict(fit, newdata=data[1:2, ])
 
 
 ## Chong Gu 2002-Feb-8: `.' not expanded in drop1
-data(HairEyeColor)
 lab <- dimnames(HairEyeColor)
 HairEye <- cbind(expand.grid(Hair=lab$Hair, Eye=lab$Eye, Sex=lab$Sex),
                  Fr=as.vector(HairEyeColor))
@@ -660,6 +660,7 @@ tt1 <- ts(x,start=c(1960,2), freq=12)
 tt2 <- ts(10+x,start=c(1960,2), freq=12)
 cbind(tt1, tt2)
 ## 1.4.1 had `Jan 1961' as `NA 1961'
+## ...and 1.9.1 had it as `Jan 1960'!!
 
 ## glm boundary bugs (related to PR#1331)
 x <- c(0.35, 0.64, 0.12, 1.66, 1.52, 0.23, -1.99, 0.42, 1.86, -0.02,
@@ -767,7 +768,6 @@ stopifnot(identical(tt, tt2))
 terms(delete.response(tt))
 ## both tt and tt2 re-ordered the formula < 1.7.0
 ## now try with a dot
-data(warpbreaks)
 terms(breaks ~ ., data = warpbreaks)
 terms(breaks ~ . - tension, data = warpbreaks)
 terms(breaks ~ . - tension, data = warpbreaks, simplify = TRUE)
@@ -925,7 +925,6 @@ summary(fit, cor = TRUE)
 
 
 ## list-like indexing of data frames with drop specified
-data(women)
 women["height"]
 women["height", drop = FALSE]  # same with a warning
 women["height", drop = TRUE]   # ditto
@@ -1274,7 +1273,107 @@ x <- 1:3
 try(x[-c(1, NA)])
 ## worked on some platforms, segfaulted on others in 1.8.1
 
+
 ## vector 'border' (and no 'pch', 'cex' nor 'bg'):
-data(InsectSprays)
 boxplot(count ~ spray, data = InsectSprays, border=2:7)
 ## gave warnings in 1.9.0
+
+summary(as.Date(paste("2002-12", 26:31, sep="-")))
+## printed all "2002.-12-29" in 1.9.1 {because digits was too small}
+as.matrix(data.frame(d = as.POSIXct("2004-07-20")))
+## gave a warning in 1.9.1
+
+
+## Dump should quote when necessary (PR#6857)
+x <- quote(b)
+dump("x", "")
+## doesn't quote b in 1.9.0
+
+
+## some checks of indexing by character, used to test hashing code
+x <- 1:26
+names(x) <- letters
+x[c("a", "aa", "aa")] <- 100:102
+x
+
+x <- 1:26
+names(x) <- rep("", 26)
+x[c("a", "aa", "aa")] <- 100:102
+x
+##
+
+
+## tests of raw type
+# tests of logic operators
+x <- "A test string"
+(y <- charToRaw(x))
+(xx <- c(y, as.raw(0), charToRaw("more")))
+
+!y
+y & as.raw(15)
+y | as.raw(128)
+
+# tests of binary read/write
+zz <- file("testbin", "wb")
+writeBin(xx, zz)
+close(zz)
+zz <- file("testbin", "rb")
+(yy <- readBin(zz, "raw", 100))
+seek(zz, 0, "start")
+readBin(zz, "integer", n=100, size = 1) # read as small integers
+seek(zz, 0, "start")
+readBin(zz, "character", 100)  # is confused by embedded nul.
+seek(zz, 0, "start")
+readChar(zz, length(xx)) # correct
+seek(zz) # make sure current position is reported properly
+close(zz)
+unlink("testbin")
+
+# tests of ASCII read/write.
+cat(xx, file="testascii")
+scan("testascii", what=raw(0))
+unlink("testascii")
+##
+
+
+## Example of prediction not from newdata as intended.
+set.seed(1)
+y <- rnorm(10)
+x  <- cbind(1:10, sample(1:10)) # matrix
+xt <- cbind(1:2,  3:4)
+(lm1 <- lm(y ~ x))
+predict(lm1, newdata = data.frame(x= xt))
+## warns as from 2.0.0
+
+
+## eval could alter a data.frame/list second argument
+data(trees)
+a <- trees
+eval(quote({Girth[1]<-NA;Girth}),a)
+a[1, ]
+trees[1, ]
+## both a and trees got altered in 1.9.1
+
+
+## write.table did not apply qmethod to col.names (PR#7171)
+x <- data.frame("test string with \"" = c("a \" and a '"), check.names=FALSE)
+write.table(x)
+write.table(x, qmethod = "double")
+## Quote in col name was unescaped in 1.9.1.
+
+
+## extensions to read.table
+Mat <- matrix(c(1:3, letters[1:3], 1:3, LETTERS[1:3],
+                c("2004-01-01", "2004-02-01", "2004-03-01"),
+                c("2004-01-01 12:00", "2004-02-01 12:00", "2004-03-01 12:00")),
+              3, 6)
+foo <- tempfile()
+write.table(Mat, foo, col.names = FALSE, row.names = FALSE)
+read.table(foo, colClasses = c(NA, NA, "NULL", "character", "Date", "POSIXct"))
+unlist(sapply(.Last.value, class))
+read.table(foo, colClasses = c("factor",NA,"NULL","factor","Date","POSIXct"))
+unlist(sapply(.Last.value, class))
+read.table(foo, colClasses = c(V4="character"))
+unlist(sapply(.Last.value, class))
+unlink(foo)
+## added in 2.0.0

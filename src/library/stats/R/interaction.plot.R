@@ -1,6 +1,6 @@
 interaction.plot <-
     function(x.factor, trace.factor, response, fun=mean,
-             type = c("l", "p"), legend = TRUE,
+             type = c("l", "p", "b"), legend = TRUE,
              trace.label=deparse(substitute(trace.factor)), fixed=FALSE,
              xlab = deparse(substitute(x.factor)), ylab = ylabel,
              ylim = range(cells, na.rm=TRUE),
@@ -30,14 +30,16 @@ interaction.plot <-
     xlim <- range(xvals)
     xleg <- xlim[2] + 0.05 * diff(xlim)
     xlim <- xlim + c(-0.2/nr, if(legend) 0.2 + 0.02*nch else 0.2/nr) * diff(xlim)
-    matplot(xvals, cells, ..., type = type,  xlim = xlim, ylim = ylim,
+    matplot(xvals, cells, ..., type = type, xlim = xlim, ylim = ylim,
             xlab = xlab, ylab = ylab, axes = axes, xaxt = "n",
             col = col, lty = lty, pch = pch)
-    ## old (<= 1.6.x)  mtext(xlabs, 1, at = xvals)
-    ## new:
     if(axes && xaxt != "n") {
-        mgp. <- par("mgp") ; if(!xtick) mgp.[2] <- 0
-        axis(1, at = xvals, labels = xlabs, tick = xtick, mgp = mgp., xaxt = xaxt, ...)
+	## swallow ... arguments intended for matplot():
+	axisInt <- function(x, main, sub, lwd, bg, log, asp, ...)
+	    axis(1, x, ...)
+	mgp. <- par("mgp") ; if(!xtick) mgp.[2] <- 0
+	axisInt(1, at = xvals, labels = xlabs, tick = xtick, mgp = mgp.,
+		xaxt = xaxt, ...)
     }
     if(legend) {
         yrng <- diff(ylim)
@@ -56,12 +58,11 @@ interaction.plot <-
             col <- col[1 + (ord - 1) %% length(col)]
             pch <- pch[ord]
         }
-        if(type == "l")
-            legend(xleg, yleg, legend = ylabs, col = col, lty = lty,
-                   bty = leg.bty, bg = leg.bg)
-        else
-            legend(xleg, yleg, legend = ylabs, col = col, pch = pch,
-                   bty = leg.bty, bg = leg.bg)
+
+        legend(xleg, yleg, legend = ylabs, col = col,
+               pch = if(type %in% c("p","b")) pch,# NULL works
+               lty = if(type %in% c("l","b")) lty,# NULL works
+               bty = leg.bty, bg = leg.bg)
     }
     invisible()
 }

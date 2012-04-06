@@ -52,14 +52,17 @@ write.table(x, file = "", append = FALSE, quote = TRUE, sep = " ",
   Function \code{\link[MASS]{write.matrix}} in package \pkg{MASS}
   may be much more efficient if \code{x} is a matrix or can be
   represented in a numeric matrix.
+
+  If the table has no columns the rownames will be written if
+  \code{row.names=TRUE}, and vice versa.
 }
 
 \seealso{
   The \dQuote{R Data Import/Export} manual.
-  
+
   \code{\link{read.table}}, \code{\link{write}}.
 
-  \code{\link[MASS]{write.matrix}}.
+  \code{\link[MASS]{write.matrix}} in package \pkg{MASS}.
 }
 
 \examples{
@@ -67,7 +70,8 @@ write.table(x, file = "", append = FALSE, quote = TRUE, sep = " ",
 ## To write a CSV file for input to Excel one might use
 write.table(x, file = "foo.csv", sep = ",", col.names = NA)
 ## and to read this file back into R one needs
-read.table("file.csv", header = TRUE, sep = ",", row.names=1)
-}}
+read.table("foo.csv", header = TRUE, sep = ",", row.names=1)
+}
+}
 \keyword{print}
 \keyword{file}

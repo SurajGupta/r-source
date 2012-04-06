@@ -3,6 +3,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file ga.h
  *  Copyright (C) 1998--1999  Guido Masarotto
+ *  Copyright (C) 2004	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@ rect 	screen_coords(control c);
 typedef struct {
     char *nm;
     menufn fn;
+    int key;
     menuitem m;
 } MenuItem;
 
@@ -166,6 +168,7 @@ int   devicepixelsy(drawing dev);
 
 int  	isTopmost(window w);
 void 	BringToTop(window w, int stay); /* stay=0 for regular, 1 for topmost, 2 for toggle */
+int	getHandle(window w);
 
 /* gbuttons.c */
 /* horizontal, vertical and control scrollbar */
@@ -179,6 +182,24 @@ control newtoolbar(int height);
 button  newtoolbutton(image img, rect r, actionfn fn);
 void 	scrolltext(textbox c, int lines);
 int 	ggetkeystate();
+
+void 	scrollcaret(textbox c, int lines);
+void    gsetmodified(textbox c, int modified);
+int     ggetmodified(textbox c);
+int getlinelength(textbox c);
+void getcurrentline(textbox c, char *line, int length);
+void getseltext(textbox c, char *text);
+void setlimittext(textbox t, long limit);
+long getlimittext(textbox t);
+void checklimittext(textbox t, long n);
+long getpastelength();
+void textselectionex(control obj, long *start, long *end);
+void selecttextex(control obj, long start, long end);
+
+void finddialog(textbox t);
+void replacedialog(textbox t);
+int modeless_active();
+
 
 /* cursor.c */
 extern cursor CrossCursor;

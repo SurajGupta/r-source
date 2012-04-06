@@ -258,7 +258,6 @@ x <- c(9:20, 1:5, 3:7, 0:8)
 stopifnot(xu == unique(x), # but unique(x) is more efficient
 	  0:20 == sort(x[!duplicated(x)]))
 
-data(iris)
 stopifnot(duplicated(iris)[143] == TRUE)
 ## end of moved from duplicated.Rd
 
@@ -299,7 +298,6 @@ stopifnot(abs(c(1 - abs(sV / V)))	<     1000*Meps)
 
 
 ## euro
-data(euro)
 stopifnot(euro == signif(euro,6), euro.cross == outer(1/euro, euro))
 ## end of moved from euro.Rd
 
@@ -618,7 +616,6 @@ for(p in list(c(1,2,5), 1:3, 3:1, 2:0, 0:2, c(1,2,1), c(0,0,1))) {
 ## plot.lm
 # which=4 failed in R 1.0.1
 par(mfrow=c(1,1), oma= rep(0,4))
-data(longley)
 summary(lm.fm2 <- lm(Employed ~ . - Population - GNP.deflator, data = longley))
 for(wh in 1:4) plot(lm.fm2, which = wh)
 ## end of moved from plot.lm.Rd
@@ -645,7 +642,6 @@ stopifnot(all.equal(qr.X(qr(X)), X))
 
 
 ## qraux
-data(LifeCycleSavings)
 p <- ncol(x <- LifeCycleSavings[,-1]) # not the `sr'
 qrstr <- qr(x)	 # dim(x) == c(n,p)
 Q <- qr.Q(qrstr) # dim(Q) == dim(x)
@@ -712,7 +708,6 @@ stopifnot(
 
 
 ## sort
-data(swiss)
 x <- swiss$Education[1:25]
 stopifnot(!is.unsorted(sort(x)),
 	  !is.unsorted(LETTERS),
@@ -842,7 +837,6 @@ my.unique <- function(x) x[!duplicated(x)]
 for(i in 1:4)
  { x <- rpois(100, pi); stopifnot(unique(x) == my.unique(x)) }
 
-data(iris)
 unique(iris)
 stopifnot(dim(unique(iris)) == c(149, 5))
 ## end of moved from unique.Rd
@@ -931,7 +925,6 @@ step(x0.lm, ~ b + c)
 
 ## PR 796 (aic in binomial models is often wrong)
 ##
-data(esoph)
 a1 <- glm(cbind(ncases, ncontrols) ~ agegp + tobgp * alcgp,
 	  data = esoph, family = binomial())$aic
 a1
@@ -1183,7 +1176,6 @@ stopifnot(4 == nrow(merge(x, y, all = TRUE)))
 
 
 ## PR 1149.  promax was returning the wrong rotation matrix.
-data(ability.cov)
 ability.FA <- factanal(factors = 2, covmat = ability.cov, rotation = "none")
 pm <- promax(ability.FA$loadings)
 tmp1 <- as.vector(ability.FA$loadings %*% pm$rotmat)
@@ -1325,8 +1317,9 @@ stopifnot(typeof(res) == "double")
 
 
 ## La.eigen() segfault
-e1 <- La.eigen(m <- matrix(1:9,3))
-stopifnot(e1$values == La.eigen(m, only.values = TRUE)$values)
+#e1 <- La.eigen(m <- matrix(1:9,3))
+#stopifnot(e1$values == La.eigen(m, only.values = TRUE)$values)
+## 2.0.0: La.eigen is defunct
 
 
 ## Patrick Connelly 2001-01-22, prediction with offsets failed
@@ -1430,7 +1423,7 @@ m <- matrix(1:4, 2)
 stopifnot(all.equal(s1$d, s2$d), all.equal(s1$u, s2$u),
 	  all.equal(s1$v, t(s2$vt)))
 (e1 <- eigen(m))
-(e2 <- La.eigen(m))
+# (e2 <- La.eigen(m)) # 2.0.0: La.eigen is defunct
 stopifnot(all.equal(e1$d, e1$d))
 
 
@@ -1581,7 +1574,6 @@ stopifnot(prettyNum(123456, big.mark=",") == "123,456")
 
 
 ## PR 1552: cut.dendrogram
-data(USArrests)
 hc <- hclust(dist(USArrests), "ave")
 cc <- cut(as.dendrogram(hc), h = 20)## error in 1.5.0
 
@@ -1757,7 +1749,6 @@ stopifnot(identical(as.double(NA), NaN) == FALSE)
 
 
 ## safe prediction (PR#1840)
-data(cars)
 cars.1 <- lm(dist ~ poly(speed, degree = 1), data = cars)
 cars1  <- lm(dist ~	 speed,		     data = cars)
 DF <- data.frame(speed=4)
@@ -1911,7 +1902,6 @@ stopifnot(length(grep("missing value", res)) == 0)
 
 
 ## stripchart with NAs (PR#2018)
-data(iris)
 Sepal <- iris$Sepal.Length
 Sepal[27] <- NA
 stripchart(Sepal ~ iris$Species, method="stack")
@@ -2203,7 +2193,8 @@ stopifnot(identical(hc, hhc <- as.hclust(hc)),
           identical(hc[iC1], hcn[iC1]),
           identical(hcn$labels, rownames(xn))
           )
-if(require(cluster)) {# is a required package
+
+if(require(cluster)) { # required package
   ag <- agnes(x, method="complete")
   hcag <- as.hclust(ag)
   agn <- agnes(xn, method="complete")
@@ -2214,6 +2205,7 @@ if(require(cluster)) {# is a required package
             all.equal(hc$height, hcag$height, tol = 1e-12),
             all(hc$merge == hcag$merge | hc$merge == hcag$merge[ ,2:1])
             )
+  detach("package:cluster")
 }
 ## as.hclust.twins() lost labels and more till (incl) 1.6.2
 
@@ -2265,7 +2257,7 @@ power.t.test(n=10, delta=NULL, power=.9, alternative="two.sided")
 A <- matrix(1)
 stopifnot(is.matrix(eigen(A)$vectors))
 stopifnot(is.matrix(eigen(A, EISPACK = TRUE)$vectors))
-stopifnot(is.matrix(La.eigen(A)$vectors))
+# stopifnot(is.matrix(La.eigen(A)$vectors)) defunct in 2.0.0
 ## gave vector in 1.7.0
 
 
@@ -2480,7 +2472,6 @@ stopifnot(det(m <- cbind(1, c(1, 1))) == 0,
 
 
 ## tests of model fitting in the presence of non-syntactic names
-data(swiss)
 names(swiss)[6] <- "Infant Mortality"
 (lm1 <- lm(Fertility ~ ., data = swiss))
 formula(lm1) # is expanded out
@@ -2574,7 +2565,6 @@ options(op)# reset to previous
 library(stats)
 ## cmdscale
 ## failed in versions <= 1.4.0 :
-data(eurodist)
 cm1 <- cmdscale(eurodist, k=1, add=TRUE, x.ret = TRUE)
 cmdsE <- cmdscale(eurodist, k=20, add = TRUE, eig = TRUE, x.ret = TRUE)
 # FAILED on Debian testing just prior to 1.9.0!
@@ -2586,7 +2576,6 @@ stopifnot(all.equal(cm1$x,  cmdsE$x),
 
 
 ## cutree
-data(USArrests)
 hc <- hclust(dist(USArrests))
 ct <- cutree(hc, h = c(0, hc$height[c(1,49)], 1000))
 stopifnot(ct[,"0"]== 1:50,
@@ -2597,7 +2586,6 @@ stopifnot(ct[,"0"]== 1:50,
 
 
 ## princomp
-data(USArrests)
 USArrests[1, 2] <- NA
 pc.cr <- princomp(~ Murder + Assault + UrbanPop,
                   data = USArrests, na.action=na.exclude, cor = TRUE)
@@ -2623,7 +2611,6 @@ try(smooth.spline(y18, spar = 50)) #>> error : spar 'way too large'
 
 library(ts)
 ## arima{0}
-data(lh)
 (fit <- arima(lh, c(1,0,0)))
 tsdiag(fit)
 (fit <- arima0(lh, c(1,0,0)))
@@ -2632,7 +2619,6 @@ tsdiag(fit)
 
 
 ## predict.arima
-data(lh)
 predict(arima(lh, order=c(1,0,1)), n.ahead=5)
 predict(arima(lh, order=c(1,1,0)), n.ahead=5)
 predict(arima(lh, order=c(0,2,1)), n.ahead=5)
@@ -2651,7 +2637,6 @@ stopifnot(identical(ns(x), ns(x, df = 1)),
 
 ## predict.bs
 ## Consistency:
-data(women)
 basis <- ns(women$height, df = 5)
 newX <- seq(58, 72, len = 51)
 wh <- women$height
@@ -2743,7 +2728,6 @@ stopifnot(crossprod(a+0i) == 0+0i)
 
 
 ## DF[[i, j]] should be row i, col j
-data(women)
 stopifnot(women[[2, 1]] == women[2, 1])
 women[[2, 1]] <- 77
 stopifnot(women[2, 1] == 77)
@@ -2759,7 +2743,7 @@ stopifnot(identical(names(z), c("x", "y", "z")))
 
 
 ## cor(mat, use = "pair") was plainly wrong
-data(longley) # has no NA's -- hence all "use = " should give the same!
+# longley has no NA's -- hence all "use = " should give the same!
 X <- longley
 ep <- 32 * .Machine$double.eps
 for(meth in eval(formals(cor)$method)) {
@@ -3033,7 +3017,7 @@ stopifnot(inherits(try(e == e), "try-error"))
 
 
 ## "nowhere" interpolation (PR#6809)
-approx(list(x=rep(NaN, 9), y=1:9), xout=NaN)
+try(approx(list(x=rep(NaN, 9), y=1:9), xout=NaN))
 ## gave a seg.fault in 1.9.0
 
 
@@ -3043,18 +3027,20 @@ dat <- data.frame(a=rep(2,10),b=rep("a",10))
 aggregate(dat$a, by=list(a1=dat$a, b1=dat$b), NROW)
 ## failed due to missing drop = FALSE
 
+
 ## [<-.data.frame with a data-frame value
 x <- data.frame(a=1:3, b=4:6, c=7:9)
 info <- x[1:2]
 x[, names(info)] <-  info[1,]
 ##
 
+
 ## invalid 'lib.loc'
 stopifnot(length(installed.packages("mgcv")) == 0)
 ## gave a low-level error message
 
+
 ## as.dendrogram.hclust()
-data(eurodist)
 d <- as.dendrogram(hEU <- hclust(eurodist, "ave"))
 stopifnot(order.dendrogram(d) == hEU$order)# not new
 ##N require(gclus); hE1 <- reorder.hclust(hEU, dis)
@@ -3068,5 +3054,249 @@ stopifnot(order.dendrogram(d1) == hE2$order,
 ## not true in 1.9.0
 
 
+## trunc on a Date
+trunc(xx <- Sys.Date()) # failed in 1.9.1
+x <- xx + 0.9
+stopifnot(identical(trunc(x), xx)) # gave next day in 1.9.1
+xx <- as.Date("1960-02-02")
+x <- xx + 0.2
+stopifnot(identical(trunc(x), xx)) # must not truncate towards 0.
+##
 
 ### end of tests added in 1.9.1 ###
+
+## 1.9.1 patched
+
+## options(list('..', '..'))
+try(options(list('digits', 'width')))# give an error
+## gave a segfault in 1.9.1
+
+
+## PR#7100 seg faulted or path too long error on ././././././. ...
+list.files('.', all.files = TRUE, recursive = TRUE)
+
+
+## PR#7116 seg faulted :
+cor(as.array(c(a=1,b=2)), cbind(1:2))
+
+
+## regression test for PR#7108
+ans <- gsub(" ", "", "b c + d | a * b", perl=TRUE) # NULL in 1.9.1
+stopifnot(identical(ans, gsub(" ", "", "b c + d | a * b")))
+gsub(" ", "", "a: 12345 :a", perl=TRUE) # segfaulted in 1.9.1
+## wrong answers, segfaults in 1.9.1.
+
+
+## regression test for PR#7132
+tmp <- data.frame(y=rnorm(8),
+                  aa=factor(c(1,1,1,1,2,2,2,2)),
+                  bb=factor(c(1,1,2,2,1,1,2,2)),
+                  cc=factor(c(1,2,3,4,1,2,3,4)))
+tmp.aov <- aov(y ~ cc + bb/aa, data=tmp)
+anova(tmp.aov)
+model.tables(tmp.aov, type="means")
+## failed in 1.9.1.
+
+if(require(survival)) { # required package
+  a <- Surv(1:4, 2:5, c(0,1,1,0))
+  str(a)
+  str(a[rep(1:4,3)], vec.len = 7)
+  detach("package:survival")
+}
+
+### end of tests added in 1.9.1 patched ###
+
+
+## names in columns of data frames
+x <- 1:10
+names(x) <- letters[x]
+DF <- data.frame(x=x)
+(nm <- names(DF$x))
+stopifnot(is.null(nm))
+DF$y1 <- x
+DF["y2"] <- x
+DF[, "y3"] <- x
+DF[["y4"]] <- x
+stopifnot(is.null(names(DF$y1)), is.null(names(DF$y2)),
+          is.null(names(DF$y3)), is.null(names(DF$y4)))
+# names were preserved in 1.9.x
+# check factors
+xx <- as.factor(x)
+DF <- data.frame(x=xx)
+(nm <- names(DF$xx))
+stopifnot(is.null(nm))
+DF$y1 <- xx
+DF["y2"] <- xx
+DF[, "y3"] <- xx
+DF[["y4"]] <- xx
+stopifnot(is.null(names(DF$y1)), is.null(names(DF$y2)),
+          is.null(names(DF$y3)), is.null(names(DF$y4)))
+# how about AsIs?  This should preserve names
+DF <- data.frame(x=I(x))
+(nm <- names(DF$x))
+stopifnot(identical(nm, names(x)))
+DF2 <- rbind(DF, DF[7:8,, drop=FALSE])
+(nm <- names(DF2$x))
+stopifnot(identical(nm, c(names(x), names(x)[7:8])))
+# and matrices?  Ordinary matrices will be split into columns
+x <- 1:10
+dim(x) <- c(5,2)
+dimnames(x) <- list(letters[1:5], c("i", "ii"))
+DF <- data.frame(x=I(x))
+DF2 <- rbind(DF, DF)
+(rn <- rownames(DF2$x))
+stopifnot(identical(rn, c(rownames(x), rownames(x))))
+class(x) <- "model.matrix"
+DF <- data.frame(x=x)
+DF2 <- rbind(DF, DF)
+(rn <- rownames(DF2$x))
+stopifnot(identical(rn, c(rownames(x), rownames(x))))
+## names were always preserved in 1.9.x, but rbind dropped names and dimnames.
+
+
+## cumsum etc dropped names
+x <- rnorm(10)
+names(x) <- nm <- letters[1:10]
+stopifnot(identical(names(cumsum(x)), nm),
+          identical(names(cumprod(x)), nm),
+          identical(names(cummax(x)), nm),
+          identical(names(cummin(x)), nm))
+x <- x+1i
+stopifnot(identical(names(cumsum(x)), nm),
+          identical(names(cumprod(x)), nm))
+## 1.9.x dropped names
+
+
+## complex superassignments
+e <- c(a=1, b=2)
+f <- c(a=1, b=2)
+g <- e
+h <- list(a=1, list(b=2, list(c=3, d=4), list(e=5)))
+j <- matrix(1, 2, 2)
+a <- "A"
+local({
+  eold <- e <- c(A=10, B=11)
+  hold <- h <- 2
+  jold <- j <- 7
+  gold <- g <- e
+  a <- "B"
+
+  e[2] <<- e[2]+1
+  names(f)[2] <<- a
+  g <<- 1
+  h[[2]][[h]][[ f[e==10] ]] <<- h
+  names(h[[2]][[h]])[f[e==10] ] <<- a
+  j[h, h] <<- h
+  colnames(j)[2] <<- a
+
+  stopifnot(identical(e, eold))
+  stopifnot(identical(h, hold))
+  stopifnot(identical(g, gold))
+  stopifnot(identical(j, jold))
+})
+
+stopifnot(identical(e, c(a=1, b=12)))
+stopifnot(identical(f, c(a=1, B=2)))
+stopifnot(identical(g, 1))
+stopifnot(identical(h, list(a=1, list(b=2, list(B=2, d=4), list(e=5)))))
+stopifnot(identical(as.vector(j), c(1, 1, 1, 2)))
+stopifnot(identical(colnames(j), c(NA,"B")))
+## gave error 'subscript out of bounds' in 1.9.1
+
+## make sure we don't get cycles out of changes to subassign3.
+x <- list(a=1, y=2)
+x$a <- x
+print(x)
+x$d <- x
+print(x)
+y <- x
+x$b <- y
+print(x)
+x$f <- y
+print(x)
+##
+
+
+## model.frame incorrectly preserved ts attributes
+x1 <- ts(c(1:10, NA))
+y1 <- ts(rnorm(11))
+lm(y1 ~ x1)
+lm(y1 ~ x1 + I(x1^2)) # second term has two classes
+## failed in 1.9.1
+
+
+## range checks missing in recursive assignments (PR#7196)
+l <- list()
+try(l[[2:3]] <- 1)
+l <- list(x=2)
+try(l[[2:3]] <- 1)
+l <- list(x=2, y=3)
+l[[2:3]] <- 1
+## first two segfaulted in 1.9.x
+
+
+## apply() on an array of dimension >=3 AND when for each iteration
+## the function returns a named vector of length >=2 (PR#7205)
+a <- array(1:24, dim=2:4)
+func1 <- function(x) c(a=mean(x), b=max(x))
+apply(a, 1:2, func1)
+## failed in 1.9.1
+
+
+# col2rgb must return a matrix for a single colour
+stopifnot(is.matrix(col2rgb("red")))
+## was vector at one point in pre-2.0.0
+
+
+## Subscripting matrices with NA's
+AAA <- array(1:6, c(6,1,1))
+idx <- c(1,2,NA,NA,5,6)
+B <- 10
+AAA[idx,1,1] <- B
+stopifnot(all.equal(as.vector(AAA), c(10,10,3,4,10,10)))
+## assigned only the first two elements in 1.9.1.
+## Tests for >= 2.0.0
+A <- c(1,2,3,4,5,6)
+A[idx] <- 27 # OK, one value
+stopifnot(identical(A, c(27,27,3,4,27,27)))
+try(A[idx] <- 6:1) # was 6 5 3 4 2 1 in 1.9.1
+stopifnot(inherits(.Last.value, "try-error"))
+
+AA <- matrix(c(1,2,3,4,5,6), 6, 1)
+AA[idx,] <- 27 # OK, one value
+stopifnot(identical(AA, matrix(c(27,27,3,4,27,27), 6, 1)))
+try(AA[idx,] <- 6:1) # was 6 5 3 4 4 3 in 1.9.1
+stopifnot(inherits(.Last.value, "try-error"))
+
+AAA <- array(c(1,2,3,4,5,6), c(6,1,1))
+AAA[idx,,] <- 27 # OK, one value
+stopifnot(identical(AAA, array(c(27,27,3,4,27,27), c(6,1,1))))
+try(AAA[idx,,] <- 6:1) # was 6 5 3 4 5 6 in 1.9.1
+stopifnot(inherits(.Last.value, "try-error"))
+## only length-1 values are allowed in >= 2.0.0.
+
+
+## hist with infinite values (PR#7220)
+hist(log(-5:100), plot = FALSE)
+## failed in 1.9.1: will warn, correctly.
+
+
+## merge problem with names/not in rbind.data.frame
+x <- structure(c("a", "b", "2", "0.2-26", "O", "O"), .Dim = c(2, 3),
+               .Dimnames = list(c("1", "2"), c("P", "V", "2")))
+y <- structure(c("a", "b", "2", "0.2-25", "O", "O"), .Dim = c(2, 3),
+               .Dimnames = list(c("1", "2"), c("P", "V", "1")))
+merge(x, y, all.y = TRUE)
+## failed for a while in pre-2.0.0
+
+
+## matrix responses in binomial glm lost names prior to 2.0.0
+y <- rbinom(10, 10, 0.5)
+x <- 1:10
+names(y) <- letters[1:10]
+ym <- cbind(y, 10-y)
+fit2 <- glm(ym ~ x, binomial)
+stopifnot(identical(names(resid(fit2)), names(y)))
+## Note: fit <- glm(y/10 ~ x, binomial, weights=rep(10, 10))
+## Does not preserve names in R, but does in S.
+## The problem was glm.fit assumed a vector response.
