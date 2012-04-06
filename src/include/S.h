@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  Much of this is from Doug Bates.
  */
@@ -34,7 +34,7 @@ extern "C" {
 
 #include "Error.h"
 #include "Memory.h"
-#include "Platform.h"
+#include "Rconfig.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -58,23 +58,12 @@ extern void *R_chk_calloc(size_t, size_t);
 extern void *R_chk_realloc(void *, size_t);
 extern void R_chk_free(void *);
 
-#define R_PROBLEM_BUFSIZE 4096
-char R_problem_buf[R_PROBLEM_BUFSIZE];
+/* Macros for S/R Compatibility */
 
-#define NULL_ENTRY
-#define PROBLEM		sprintf(R_problem_buf,
-#define RECOVER(x)	), error(R_problem_buf)
-#define WARNING(x)	), warning(R_problem_buf)
-
-#define Calloc(n, t)   (t *) R_chk_calloc( (size_t) (n), sizeof(t) )
-#define Realloc(p,n,t) (t *) R_chk_realloc( (void *)(p), (size_t)((n) * sizeof(t)) )
-#define Free(p)        R_chk_free( (void *)(p) )
-#define Memcpy(p,q,n)  memcpy( p, q, (size_t)( (n) * sizeof(*p) ) )
-
-#define F77_CALL(x)    F77_SYMBOL(x)
-#define F77_NAME(x)    F77_SYMBOL(x)
+#include "Rdefines.h"
 
 /* Can't be sure Mathlib.h or math.h is included */
+
 #ifndef M_PI
 #define M_PI 3.141592653589793238462643383279502884197169399375
 #endif

@@ -15,8 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Arith.h"
 #include "Error.h"
@@ -82,7 +86,7 @@ void approx(double *x, double *y, int *nxy, double *xout, int *nout,
     case 1:
 	break;
     case 2:
-	if(!FINITE(*f) || *f < 0 || *f > 1)
+	if(!R_FINITE(*f) || *f < 0 || *f > 1)
 	    error("approx(): invalid f value\n");
 	f2 = *f;
 	f1 = 1 - *f;
@@ -93,13 +97,13 @@ void approx(double *x, double *y, int *nxy, double *xout, int *nout,
     }
 
     for(i=0 ; i<*nxy ; i++)
-	if(R_IsNA(x[i]) || R_IsNA(y[i]))
+	if(ISNA(x[i]) || ISNA(y[i]))
 	    error("approx(): attempted to interpolate NA values\n");
 
     ylow = *yleft;
     yhigh = *yright;
 
     for(i=0 ; i<*nout ; i++)
-	if(!R_IsNA(xout[i]))
+	if(!ISNA(xout[i]))
 	    xout[i] = approx1(xout[i], x, y, *nxy, *method);
 }

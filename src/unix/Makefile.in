@@ -1,5 +1,5 @@
 #
-# ${RHOME}/src/unix/Makefile
+# ${R_HOME}/src/unix/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -10,57 +10,52 @@ subdir = src/unix
 
 include $(top_builddir)/Makeconf
 
-distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = $(shell cd $(srcdir) && ls PSPAPER Makefile.in *.[cfh])
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(X_CFLAGS) $(CPPFLAGS) $(DEFS)
 
-OBJS = \
-	dataentry.o \
-	devPS.o \
-	devPicTeX.o \
-	devX11.o \
-	dynload.o \
-	edit.o \
-	rotated.o \
-	system.o \
-	Rsock.o \
-	sock.o
+SOURCES = dataentry.c devX11.c dynload.c edit.c rotated.c \
+	  system.c sys-unix.c sys-common.c
+DEPENDS = $(SOURCES:.c=.d)
+OBJECTS = $(SOURCES:.c=.o)
+HEADERS = dataentry.h devX11.h rotated.h
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+DISTFILES = Makefile.in PSPAPER $(SOURCES) $(HEADERS)
 
 LIB = libunix.a
 
-all: Makefile R
+all: Makefile Makedeps R
 
-Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	cd $(top_builddir) && \
+Makefile: $(srcdir)/Makefile.in \
+  $(top_builddir)/config.status \
+  ../include/Rversion.h \
+  ../include/FFDecl.h \
+  ../include/FFTab.h \
+  $(SOURCES)
+	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R: Makefile $(LIB)
+Makedeps: Makefile $(DEPENDS)
+	@cat $(DEPENDS) >> Makefile
+	@touch $@
 
-$(LIB): $(OBJS)
-	$(AR) cr $(LIB) $(OBJS)
-	$(RANLIB) $(LIB)
+R: Makefile
+	@$(MAKE) Makedeps
+	@$(MAKE) $(LIB)
 
-dataentry.o: $(srcdir)/dataentry.c $(srcdir)/dataentry.h $(top_srcdir)/src/include/Defn.h
-	$(CC) $(CFLAGS) $(X_CFLAGS) $(CPPFLAGS) -c $<
-rotated.o: $(srcdir)/rotated.c $(srcdir)/rotated.h
-	$(CC) $(CFLAGS) $(X_CFLAGS) $(CPPFLAGS) -c $<
-devX11.o: $(srcdir)/devX11.c $(top_srcdir)/src/include/Graphics.h $(top_srcdir)/src/include/Defn.h
-	$(CC) $(CFLAGS) $(X_CFLAGS) $(CPPFLAGS) -c $<
-devPS.o: $(srcdir)/devPS.c $(top_srcdir)/src/include/Graphics.h $(top_srcdir)/src/include/Defn.h
-devPicTeX.o: $(srcdir)/devPicTeX.c $(top_srcdir)/src/include/Graphics.h $(top_srcdir)/src/include/Defn.h
-
-dynload.o: $(srcdir)/dynload.c ../include/FFTab.h ../include/FFDecl.h
-system.o: $(srcdir)/system.c $(top_srcdir)/src/include/Defn.h $(top_srcdir)/src/include/Fileio.h ../include/Platform.h
-Rsock.o: $(srcdir)/Rsock.c sock.h
-sock.o: $(srcdir)/sock.c sock.h
-
-../include/FFTab.h ../include/FFDecl.h:
+../include/Rversion.h:
 	(cd ../include; $(MAKE) $(@F))
+../include/FFDecl.h ../include/FFTab.h: $(top_srcdir)/src/appl/ROUTINES
+	(cd ../include; $(top_srcdir)/tools/GETSYMBOLS)
+
+$(LIB): $(OBJECTS)
+	$(AR) cr $(LIB) $(OBJECTS)
+	$(RANLIB) $(LIB)
 
 mostlyclean: clean
 clean:
-	@echo Cleaning in src/unix
-	@-rm -f *.o *.a
+	@echo "Cleaning in $(subdir)"
+	@-rm -f Makedeps *.d *.o *.a
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean
@@ -71,3 +66,6 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
+
+## Automagically generated dependencies:
+

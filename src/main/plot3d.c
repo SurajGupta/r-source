@@ -15,8 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
@@ -194,10 +198,10 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 	    /* Check for intersections with sides */
 
 	    nacode = 0;
-	    if (FINITE(zll)) nacode += 1;
-	    if (FINITE(zhl)) nacode += 2;
-	    if (FINITE(zlh)) nacode += 4;
-	    if (FINITE(zhh)) nacode += 8;
+	    if (R_FINITE(zll)) nacode += 1;
+	    if (R_FINITE(zhl)) nacode += 2;
+	    if (R_FINITE(zlh)) nacode += 4;
+	    if (R_FINITE(zhh)) nacode += 8;
 
 	    switch (nacode) {
 	    case 15:
@@ -429,10 +433,10 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     nc = LENGTH(c);
     args = CDR(args);
 
-    PROTECT(col = FixupCol(GetPar("col", args), dd));
+    PROTECT(col = FixupCol(GetPar("col", args), NA_INTEGER));
     ncol = length(col);
 
-    PROTECT(lty = FixupLty(GetPar("lty", args), dd));
+    PROTECT(lty = FixupLty(GetPar("lty", args), dd->gp.lty));
     nlty = length(lty);
 
     /* col, lwd and lty vectors here --- FIXME: "lwd" ???? */
@@ -447,14 +451,14 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "no contour values\n");
 
     for (i = 0; i < nx; i++) {
-	if (!FINITE(REAL(x)[i]))
+	if (!R_FINITE(REAL(x)[i]))
 	    errorcall(call, "missing x values\n");
 	if (i > 0 && REAL(x)[i] < REAL(x)[i - 1])
 	    errorcall(call, "increasing x values expected\n");
     }
 
     for (i = 0; i < ny; i++) {
-	if (!FINITE(REAL(y)[i]))
+	if (!R_FINITE(REAL(y)[i]))
 	    errorcall(call, "missing y values\n");
 	if (i > 0 && REAL(y)[i] < REAL(y)[i - 1])
 	    errorcall(call, "increasing y values expected\n");
@@ -464,13 +468,13 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     ctr_ytol = 1e-3 * fabs(REAL(y)[ny-1]-REAL(y)[0]);
 
     for (i = 0; i < nc; i++)
-	if (!FINITE(REAL(c)[i]))
+	if (!R_FINITE(REAL(c)[i]))
 	    errorcall(call, "illegal NA contour values\n");
 
     zmin = DBL_MAX;
     zmax = DBL_MIN;
     for (i = 0; i < nx * ny; i++)
-	if (FINITE(REAL(z)[i])) {
+	if (R_FINITE(REAL(z)[i])) {
 	    if (zmax < REAL(z)[i]) zmax =  REAL(z)[i];
 	    if (zmin > REAL(z)[i]) zmin =  REAL(z)[i];
 	}
@@ -605,7 +609,7 @@ FindCutPoints(double low, double high,
 	    z[*npt] = z2 - c * (z2 - z1);
 	    ++*npt;
 	}
-    }	
+    }
     else {
 	if(low <= z1 && z1 <= high) {
 	    x[*npt] = x1;
@@ -619,7 +623,7 @@ FindCutPoints(double low, double high,
 	    z[*npt] = z2;
 	    ++*npt;
 #endif
-	}	    
+	}
     }
 }
 
@@ -675,7 +679,7 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     nc = length(sc);
     args = CDR(args);
 
-    PROTECT(scol = FixupCol(CAR(args), dd));
+    PROTECT(scol = FixupCol(CAR(args), NA_INTEGER));
     ncol = length(scol);
 
     /* Shorthand Pointers */
@@ -691,18 +695,18 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     /* and in strictly ascending order */
 
     if (nx < 2 || ny < 2) goto badxy;
-    if (!FINITE(x[0])) goto badxy;
-    if (!FINITE(y[0])) goto badxy;
+    if (!R_FINITE(x[0])) goto badxy;
+    if (!R_FINITE(y[0])) goto badxy;
     for (i = 1; i < nx; i++)
-	if (!FINITE(x[i]) || x[i] <= x[i - 1]) goto badxy;
+	if (!R_FINITE(x[i]) || x[i] <= x[i - 1]) goto badxy;
     for (j = 1; j < ny; j++)
-	if (!FINITE(y[j]) || y[j] <= y[j - 1]) goto badxy;
+	if (!R_FINITE(y[j]) || y[j] <= y[j - 1]) goto badxy;
 
     /* Check of the contour levels */
 
-    if (!FINITE(c[0])) goto badlev;
+    if (!R_FINITE(c[0])) goto badlev;
     for (k = 1; k < nc; k++)
-	if (!FINITE(c[k]) || c[k] <= c[k - 1]) goto badlev;
+	if (!R_FINITE(c[k]) || c[k] <= c[k - 1]) goto badlev;
 
     colsave = dd->gp.col;
     xpdsave = dd->gp.xpd;
@@ -741,7 +745,7 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     errorcall(call, "invalid x / y limits\n");
  badlev:
     errorcall(call, "invalid contour levels\n");
-    return R_NilValue;  /* never used; to keep -Wall happy */ 
+    return R_NilValue;  /* never used; to keep -Wall happy */
 }
 
 
@@ -780,15 +784,15 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
     szlim = CAR(args);
     internalTypeCheck(call, szlim, REALSXP);
     if (length(szlim) != 2 ||
-       !FINITE(REAL(szlim)[0]) ||
-       !FINITE(REAL(szlim)[1]) ||
+       !R_FINITE(REAL(szlim)[0]) ||
+       !R_FINITE(REAL(szlim)[1]) ||
        REAL(szlim)[0] >= REAL(szlim)[1])
 	errorcall(call, "invalid z limits\n");
     zmin = REAL(szlim)[0];
     zmax = REAL(szlim)[1];
     args = CDR(args);
 
-    PROTECT(sc = FixupCol(CAR(args), dd));
+    PROTECT(sc = FixupCol(CAR(args), NA_INTEGER));
     nc = length(sc);
 
     /* Shorthand Pointers */
@@ -802,12 +806,12 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
     /* We want them to all be finite and in strictly ascending order */
 
     if (nx < 2 || ny < 2) goto badxy;
-    if (!FINITE(x[0])) goto badxy;
-    if (!FINITE(y[0])) goto badxy;
+    if (!R_FINITE(x[0])) goto badxy;
+    if (!R_FINITE(y[0])) goto badxy;
     for (i = 1; i < nx; i++)
-	if (!FINITE(x[i]) || x[i] <= x[i - 1]) goto badxy;
+	if (!R_FINITE(x[i]) || x[i] <= x[i - 1]) goto badxy;
     for (j = 1; j < ny; j++)
-	if (!FINITE(y[j]) || y[j] <= y[j - 1]) goto badxy;
+	if (!R_FINITE(y[j]) || y[j] <= y[j - 1]) goto badxy;
 
     colsave = dd->gp.col;
     xpdsave = dd->gp.xpd;
@@ -827,7 +831,7 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
 	    xhigh = 0.5 * (x[i] + x[i+1]);
 
 	for (j = 0; j < ny; j++) {
-	    if (FINITE(z[i + j * nx])) {
+	    if (R_FINITE(z[i + j * nx])) {
 		ic = floor((nc - 1) * (z[i + j * nx]-zmin)/(zmax - zmin) + 0.5);
 		if (ic >= 0 && ic < nc) {
 		    if (j == 0)
@@ -1020,7 +1024,7 @@ static void SetUpLight(double theta, double phi)
 }
 
 static double FacetShade(double *u, double *v)
-{ 
+{
     double nx, ny, nz, sum;
     nx = u[1] * v[2] - u[2] * v[1];
     ny = u[2] * v[0] - u[0] * v[2];
@@ -1029,7 +1033,7 @@ static double FacetShade(double *u, double *v)
     if (sum == 0) sum = 1;
     nx /= sum;
     ny /= sum;
-    nz /= sum;      
+    nz /= sum;
     sum = 0.5 * (nx * Light[0] + ny * Light[1] + nz * Light[2] + 1);
     return pow(sum, Shade);
 }
@@ -1094,7 +1098,7 @@ static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
 		    /* It has been replaced by the following line: */
 		    u[2] = 0;
 		    u[3] = 1;
-		    if (FINITE(u[0]) &&  FINITE(u[1]) && FINITE(u[2])) {
+		    if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
 			TransVector(u, VT, v);
 			if (v[3] > d) d = v[3];
 		    }
@@ -1136,7 +1140,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	}
 	u[0] = x[i]; u[1] = y[j];
 	u[2] = z[i + j * nx]; u[3] = 1;
-	if (FINITE(u[0]) &&  FINITE(u[1]) && FINITE(u[2])) {
+	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
 	    TransVector(u, VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
@@ -1145,7 +1149,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 
 	u[0] = x[i + 1]; u[1] = y[j];
 	u[2] = z[i + 1 + j * nx]; u[3] = 1;
-	if (FINITE(u[0]) &&  FINITE(u[1]) && FINITE(u[2])) {
+	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
 	    TransVector(u, VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
@@ -1154,7 +1158,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 
 	u[0] = x[i + 1]; u[1] = y[j + 1];
 	u[2] = z[i + 1 + (j + 1) * nx]; u[3] = 1;
-	if (FINITE(u[0]) &&  FINITE(u[1]) && FINITE(u[2])) {
+	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
 	    TransVector(u, VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
@@ -1163,7 +1167,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 
 	u[0] = x[i]; u[1] = y[j + 1];
 	u[2] = z[i + (j + 1) * nx]; u[3] = 1;
-	if (FINITE(u[0]) &&  FINITE(u[1]) && FINITE(u[2])) {
+	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
 	    TransVector(u, VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
@@ -1192,7 +1196,7 @@ static void CheckRange(double *x, int n, double min, double max)
     xmin =  DBL_MAX;
     xmax = -DBL_MAX;
     for (i = 0; i < n; i++)
-	if (FINITE(x[i])) {
+	if (R_FINITE(x[i])) {
 	    if (x[i] < xmin) xmin = x[i];
 	    if (x[i] > xmax) xmax = x[i];
 	}
@@ -1242,7 +1246,7 @@ static void PerspWindow(double *xlim, double *ylim, double *zlim, DevDesc *dd)
 
 static int LimitCheck(double *lim, double *c, double *s)
 {
-    if (!FINITE(lim[0]) || !FINITE(lim[1]) || lim[0] >= lim[1])
+    if (!R_FINITE(lim[0]) || !R_FINITE(lim[1]) || lim[0] >= lim[1])
 	return 0;
     *s = 0.5 * fabs(lim[1] - lim[0]);
     *c = 0.5 * (lim[1] + lim[0]);
@@ -1258,8 +1262,8 @@ static int LimitCheck(double *lim, double *c, double *s)
 /* obscured before the surface, and those which will not be */
 /* obscured after the surface. */
 
-/* The verices of the box */
-static char Vertex[8][3] = {
+/* The vertices of the box */
+static short int Vertex[8][3] = {
     {0, 0, 0},
     {0, 0, 1},
     {0, 1, 0},
@@ -1271,7 +1275,7 @@ static char Vertex[8][3] = {
 };
 
 /* The vertices visited when tracing a face */
-static char Face[6][4] = {
+static short int Face[6][4] = {
     {0, 1, 5, 4},
     {2, 6, 7, 3},
     {0, 2, 3, 1},
@@ -1281,7 +1285,7 @@ static char Face[6][4] = {
 };
 
 /* The edges drawn when tracing a face */
-static int Edge[6][4] = {
+static short int Edge[6][4] = {
     { 0, 1, 2, 3},
     { 4, 5, 6, 7},
     { 8, 7, 9, 0},
@@ -1370,8 +1374,6 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     int i, j, scale, ncol, dobox;
     DevDesc *dd;
 
-    /* dd = CurrentDevice(); GCheckState(dd); */
-
     if (length(args) < 18)
 	errorcall(call, "too few parameters\n");
     gcall = call;
@@ -1429,15 +1431,10 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     expand = asReal(CAR(args));
     args = CDR(args);
 
-    PROTECT(col = FixupCol(CAR(args), dd));
-    ncol = LENGTH(col);
-    if (ncol < 1)
-	errorcall(call, "invalid col specification\n");
+    col = CAR(args);
     args = CDR(args);
 
-    PROTECT(border = FixupCol(CAR(args), dd));
-    if (length(border) < 1)
-	errorcall(call, "invalid border specification\n");
+    border = CAR(args);
     args = CDR(args);
 
     ltheta = asReal(CAR(args));
@@ -1447,13 +1444,13 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     args = CDR(args);
 
     Shade = asReal(CAR(args));
-    if (FINITE(Shade) && Shade <= 0) Shade = 1;
+    if (R_FINITE(Shade) && Shade <= 0) Shade = 1;
     args = CDR(args);
 
     dobox = asLogical(CAR(args));
     args = CDR(args);
 
-    if (FINITE(ltheta) && FINITE(lphi) && FINITE(Shade))
+    if (R_FINITE(ltheta) && R_FINITE(lphi) && R_FINITE(Shade))
 	DoLighting = 1;
     else
 	DoLighting = 0;
@@ -1468,15 +1465,22 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 
     /* Parameter Checks */
 
-    if (!FINITE(theta) || !FINITE(phi) || !FINITE(r) || !FINITE(d) ||
+    if (!R_FINITE(theta) || !R_FINITE(phi) || !R_FINITE(r) || !R_FINITE(d) ||
 	d < 0 || r < 0)
 	errorcall(call, "invalid viewing parameters\n");
-    if (!FINITE(expand) || expand < 0)
+    if (!R_FINITE(expand) || expand < 0)
 	errorcall(call, "invalid expand value\n");
     if (scale == NA_LOGICAL)
 	scale = 0;
 
     dd = GNewPlot(call != R_NilValue, NA_LOGICAL);
+
+    PROTECT(col = FixupCol(col, dd->gp.bg));
+    ncol = LENGTH(col);
+    if (ncol < 1) errorcall(call, "invalid col specification\n");
+    PROTECT(border = FixupCol(border, dd->gp.fg));
+    if (length(border) < 1) errorcall(call, "invalid border specification\n");
+
     GSetState(1, dd);
     GSavePars(dd);
     ProcessInlinePars(args, dd);

@@ -1,3 +1,23 @@
+/*
+ *  R : A Computer Langage for Statistical Data Analysis
+ *  Copyright (C) 1998-1999   Lyndon Drake
+ *                            and the R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <limits.h>
 #include <stdio.h>
 
@@ -7,16 +27,16 @@
 #include "Fileio.h"
 #include "IOStuff.h"
 #include "Parse.h"
+#include "Rversion.h"
 
-#include "gnome-find-dialog.h"
 #include "terminal.h"
-#include "terminal-menu.h"
+#include "terminal-find.h"
 #include "terminal-functions.h"
+#include "terminal-menu.h"
 #include "terminal-prefs.h"
 
 /* Some menu callbacks are here, others are in terminal-functions.c */
-
-
+/* Find callbacks are in terminal-find.c */
 
 
 static void file_exit_cb(GtkWidget *widget,
@@ -40,32 +60,23 @@ static void edit_copy_cb(GtkWidget *widget, gpointer data)
 static void edit_paste_cb(GtkWidget *widget, gpointer data)
 {
   gtk_editable_paste_clipboard(GTK_EDITABLE(R_gtk_terminal_text));
+  gtk_editable_select_region(GTK_EDITABLE(R_gtk_terminal_text),
+			     gtk_editable_get_position(GTK_EDITABLE(R_gtk_terminal_text)),
+			     gtk_editable_get_position(GTK_EDITABLE(R_gtk_terminal_text)));
 }
 
 static void edit_copy_paste_cb(GtkWidget *widget, gpointer data)
 {
   gtk_editable_copy_clipboard(GTK_EDITABLE(R_gtk_terminal_text));
   gtk_editable_paste_clipboard(GTK_EDITABLE(R_gtk_terminal_text));
+  gtk_editable_select_region(GTK_EDITABLE(R_gtk_terminal_text),
+			     gtk_editable_get_position(GTK_EDITABLE(R_gtk_terminal_text)),
+			     gtk_editable_get_position(GTK_EDITABLE(R_gtk_terminal_text)));
 }
 
 static void edit_clear_cb(GtkWidget *widget, gpointer data)
 {
   gtk_editable_delete_selection(GTK_EDITABLE(R_gtk_terminal_text));
-}
-
-static void edit_find_cb(GtkWidget *widget, gpointer data)
-{
-  GtkWidget *find_dialog;
-
-  find_dialog = gnome_find_dialog_new("Find text", TRUE, TRUE, TRUE);
-
-  gnome_dialog_set_parent(GNOME_DIALOG(find_dialog), GTK_WINDOW(R_gtk_main_window));
-
-  gtk_widget_show(find_dialog);
-}
-
-static void edit_find_again_cb(GtkWidget *widget, gpointer data)
-{
 }
 
 
@@ -151,94 +162,6 @@ static void graphics_closeall_cb(GtkWidget *widget, gpointer data)
 
 
 
-static void prefs_apply_cb(GtkWidget *widget, int page, gpointer data)
-{
-  GtkStyle *textstyle;
-
-  /* page = -1 means apply all pages */
-  /*  if(page != -1)
-      return;*/
-
-  /* font */
-  if(g_strcasecmp(R_gnome_userprefs.font, R_gnome_newprefs.font) != 0) {
-    textstyle = gtk_style_copy(gtk_widget_get_style(R_gtk_terminal_text));
-    textstyle->font = gdk_font_load(R_gnome_newprefs.font);
-    gtk_widget_set_style(R_gtk_terminal_text, textstyle);
-  }
-
-  /* update prefs */
-  R_gnome_userprefs = R_gnome_newprefs;
-
-  R_gnome_save_prefs();
-}
-
-static void settings_prefs_cb(GtkWidget *widget, gpointer data)
-{
-  /* notebook pages */
-  GtkWidget *page0, *page1, *page2, *page3, *page4, *page5;
-  GtkWidget *label0, *label1, *label2, *label3, *label4, *label5;
-
-  /* copy current prefs */
-  R_gnome_newprefs = R_gnome_userprefs;
-
-  /* Page 0: text font and colour options */
-  page0 = prefs_text_page();
-  label0 = gtk_label_new("Console");
-
-  /* Page 1: environment options */
-  page1 = prefs_startup_page();
-  label1 = gtk_label_new("Startup");
-
-  /* Page 2: actions on exit */
-  page2 = prefs_exit_page();
-  label2 = gtk_label_new("Exit");
-
-  /* Page 3: pager text settings */
-  page3 = prefs_pager_page();
-  label3 = gtk_label_new("Pager");
-
-  /* Page 4: external applications */
-  page4 = prefs_apps_page();
-  label4 = gtk_label_new("Applications");
-
-  /* Page 5: graphics options */
-  page5 = prefs_graphics_page();
-  label5 = gtk_label_new("Graphics");
-
-  /* Create the dialog box */
-  prefs_dialog = gnome_property_box_new();
-  gtk_window_set_title(GTK_WINDOW(prefs_dialog), "R Preferences");
-
-  /* Append the pages to the notebook */
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page0, label0);
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page1, label1);
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page2, label2);
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page3, label3);
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page4, label4);
-  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
-				 page5, label5);
-
-  /* Connect to property box signal */
-  gtk_signal_connect(GTK_OBJECT(prefs_dialog), "apply",
-		     GTK_SIGNAL_FUNC(prefs_apply_cb),
-		     NULL);
-
-  /* Setup dialog features */
-  gnome_dialog_set_parent(GNOME_DIALOG(prefs_dialog),
-			  GTK_WINDOW(R_gtk_main_window));
-  gtk_window_set_modal(GTK_WINDOW(prefs_dialog), TRUE);
-  
-  /* Display the dialog */
-  gtk_widget_show_all(prefs_dialog);
-}
-
-
-
 static void help_html_index_cb(GtkWidget *widget, gpointer data)
 {
   R_gtk_terminal_run("help.start()\n");
@@ -281,15 +204,26 @@ static void help_demos_run_cb(GtkWidget *widget,
 static void help_about_cb(GtkWidget *widget,
 			  gpointer data)
 {
-  GtkWidget *about_box;
+  GtkWidget *about_box, *hbox, *home_href, *FAQ_href;
   gchar *version;
   gchar *copyright;
 
-  gchar *authors[] = {
-    "Ross Ihaka <ihaka@stat.auckland.ac.nz>",
+  const gchar *authors[] = {
+    "Douglas Bates",
+    "Peter Dalgaard",
     "Robert Gentleman",
-    "The R Development Core Team (see ?contributors)",
-    "Lyndon Drake <lyndon@stat.auckland.ac.nz>",
+    "Kurt Hornik", 
+    "Ross Ihaka",
+    "Friedrich Leisch",
+    "Thomas Lumley",
+    "Martin Maechler",
+    "Guido Masarotto",
+    "Paul Murrell", 
+    "Brian Ripley",
+    "Heiner Schwarte",
+    "Duncan Temple Lang", 
+    "Luke Tierney",
+    "Lyndon Drake, GNOME interface",
     NULL
   };
 
@@ -300,8 +234,17 @@ static void help_about_cb(GtkWidget *widget,
   g_assert(copyright != NULL);
 
   about_box = gnome_about_new("R", version, copyright, authors,
-			      "R is a system for statistical computation and graphics.  It is a dialect of the S programming language from Bell Labs.  R is free software and comes with ABSOLUTELY NO WARRANTY.",
+			      "R is a system for statistical computation and graphics.  It is a dialect of the S programming language from Bell Labs.  R is free software and comes with ABSOLUTELY NO WARRANTY.  You are welcome to redistribute it under certain conditions.  Type	?license or ?licence for distribution details.  R is a collaborative project with many contributors.  Type ?contributors for a list.",
 			      "R-logo-sm.xpm");
+
+  hbox = gtk_hbox_new(TRUE, 0);
+  home_href = gnome_href_new("http://lib.stat.cmu.edu/R/CRAN/", "R home page");
+  FAQ_href = gnome_href_new("http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html", "R FAQ");
+  gtk_box_pack_start(GTK_BOX(hbox), home_href, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), FAQ_href, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(GNOME_DIALOG(about_box)->vbox),
+		     hbox, TRUE, FALSE, 0);
+  gtk_widget_show_all(hbox);
 
   gnome_dialog_set_parent(GNOME_DIALOG(about_box), GTK_WINDOW(R_gtk_main_window));
 
@@ -313,25 +256,22 @@ static void help_about_cb(GtkWidget *widget,
 
 
 
+
 static void generic_cb(GtkWidget *widget, gpointer data)
 {
-  g_message("Menu item selected");
+    GtkWidget *dialog;
+
+    dialog = gnome_message_box_new("This menu item is currently unimplemented",
+				   GNOME_MESSAGE_BOX_INFO,
+				   GNOME_STOCK_BUTTON_CLOSE,
+				   NULL);
+
+    gnome_dialog_set_parent(GNOME_DIALOG(dialog), GTK_WINDOW(R_gtk_main_window));
+    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gnome_dialog_set_default(GNOME_DIALOG(dialog), 0);
+
+    gnome_dialog_run_and_close(GNOME_DIALOG(dialog));
 }
-
-static GnomeUIInfo file_ws_menu[] =
-{
-  { GNOME_APP_UI_ITEM, "_Open...", "Open a saved workspace image", R_gtk_terminal_file_open, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_OPEN, GNOME_KEY_NAME_OPEN, GNOME_KEY_MOD_NEW, NULL },
-  { GNOME_APP_UI_ITEM, "Save _As...", "Save the workspace image to a file", R_gtk_terminal_file_saveas, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_SAVE_AS, GNOME_KEY_NAME_SAVE, GNOME_KEY_MOD_SAVE, NULL },
-  GNOMEUIINFO_END
-};
-
-static GnomeUIInfo file_data_menu[] =
-{
-  GNOMEUIINFO_ITEM_NONE("Edit Object...", "Use an editor to edit an R object", generic_cb),
-  GNOMEUIINFO_ITEM_NONE("Edit Vector...", "Use a spreadsheet to edit an R object", generic_cb),
-  GNOMEUIINFO_ITEM_NONE("Reload Files", "Reload objects being edited", generic_cb),
-  GNOMEUIINFO_END
-};
 
 static GnomeUIInfo file_menu[] =
 {
@@ -339,11 +279,7 @@ static GnomeUIInfo file_menu[] =
   { GNOME_APP_UI_ITEM, "Save", "Save the workspace image", R_gtk_terminal_file_save, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_SAVE, GNOME_KEY_NAME_SAVE, GNOME_KEY_MOD_SAVE, NULL },
   { GNOME_APP_UI_ITEM, "Save _As...", "Save the workspace image to a file", R_gtk_terminal_file_saveas, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_SAVE_AS, GNOME_KEY_NAME_SAVE_AS, GNOME_KEY_MOD_SAVE_AS, NULL },
   GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_ITEM_NONE("Edit Object...", "Use an editor to edit an R object", generic_cb),
-  GNOMEUIINFO_ITEM_NONE("Edit Vector...", "Use a spreadsheet to edit an R object", generic_cb),
-  GNOMEUIINFO_ITEM_NONE("Reload Files", "Reload objects being edited", generic_cb),
-  GNOMEUIINFO_SEPARATOR,
-  { GNOME_APP_UI_ITEM, "_Print...", "Print the console output", generic_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_PRINT, NULL, (GdkModifierType)0, NULL },
+  { GNOME_APP_UI_ITEM, "_Print...", "Print the console output", generic_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_PRINT, 0, (GdkModifierType)0, NULL },
   GNOMEUIINFO_MENU_PRINT_SETUP_ITEM(generic_cb, NULL),
   GNOMEUIINFO_SEPARATOR,
   GNOMEUIINFO_MENU_EXIT_ITEM(file_exit_cb, NULL),
@@ -363,11 +299,11 @@ static GnomeUIInfo edit_menu[] =
   GNOMEUIINFO_END
 };
 
-static GnomeUIInfo commands_menu[] =
+static GnomeUIInfo data_menu[] =
 {
-  { GNOME_APP_UI_ITEM, "_Interrupt", "Interrupt R processing (SIGTERM)", commands_interrupt_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_STOP, GDK_Escape, (GdkModifierType)0, NULL },
-  GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_ITEM_NONE("Source...", "Load a file containing R source", commands_source_cb),
+  GNOMEUIINFO_ITEM_NONE("Edit Object...", "Use an editor to edit an R object", generic_cb),
+  GNOMEUIINFO_ITEM_NONE("Edit Vector...", "Use a spreadsheet to edit an R object", generic_cb),
+  GNOMEUIINFO_ITEM_NONE("Reload Files", "Reload objects being edited", generic_cb),
   GNOMEUIINFO_END
 };
 
@@ -376,14 +312,31 @@ static GnomeUIInfo graphics_menu[] =
   GNOMEUIINFO_ITEM_STOCK("_New Window", "Create a new graphics window", graphics_new_cb, GNOME_STOCK_MENU_NEW),
   GNOMEUIINFO_ITEM_STOCK("_Close Active Device", "Close the active graphics device", graphics_close_cb, GNOME_STOCK_MENU_CLOSE),
   GNOMEUIINFO_ITEM_NONE("Close _All Devices", "Close all graphics devices", graphics_closeall_cb),
+  GNOMEUIINFO_END
+};
+
+static GnomeUIInfo commands_menu[] =
+{
+  { GNOME_APP_UI_ITEM, "_Interrupt", "Interrupt R processing (SIGTERM)", commands_interrupt_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_STOP, GDK_Escape, (GdkModifierType)0, NULL },
   GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_ITEM_NONE("List of graphics windows", NULL, NULL),
+  GNOMEUIINFO_SUBTREE("_Data", data_menu),
+  GNOMEUIINFO_SUBTREE("_Graphics", graphics_menu),
+  GNOMEUIINFO_SEPARATOR,
+  GNOMEUIINFO_ITEM_NONE("grep...", "Search for matches to a regular expression within a vector of character strings", generic_cb),
+  GNOMEUIINFO_ITEM_NONE("setwd...", "Set the working directory", generic_cb),
+  GNOMEUIINFO_ITEM_NONE("source...", "Load a file containing R source", commands_source_cb),
   GNOMEUIINFO_END
 };
 
 static GnomeUIInfo settings_menu[] =
 {
   GNOMEUIINFO_MENU_PREFERENCES_ITEM(settings_prefs_cb, NULL),
+  GNOMEUIINFO_END
+};
+
+/* FIXME: this should display a list of the other R windows owned by this process */
+static GnomeUIInfo windows_menu[] =
+{
   GNOMEUIINFO_END
 };
 
@@ -420,8 +373,8 @@ static GnomeUIInfo main_menu[] =
   GNOMEUIINFO_MENU_FILE_TREE(file_menu),
   GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
   GNOMEUIINFO_SUBTREE("_Commands", commands_menu),
-  GNOMEUIINFO_SUBTREE("_Graphics", graphics_menu),
   GNOMEUIINFO_MENU_SETTINGS_TREE(settings_menu),
+  GNOMEUIINFO_MENU_WINDOWS_TREE(windows_menu),
   GNOMEUIINFO_MENU_HELP_TREE(help_menu),
   GNOMEUIINFO_END
 };

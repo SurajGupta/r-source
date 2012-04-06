@@ -15,10 +15,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
 #include "Defn.h"
+#include "Rversion.h"
 
 void PrintGreeting(void)
 {
@@ -73,3 +78,17 @@ SEXP do_version(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(2);
     return value;
 }
+
+void PrintVersion(char *s)
+{
+    char tmp[50];
+    sprintf(s, "Version %s.%s %s (%s %s, %s)\n",
+	    R_MAJOR, R_MINOR, R_STATUS, R_MONTH, R_DAY, R_YEAR);
+    sprintf(tmp, "Copyright (C) %s R Development Core Team\n\n", R_YEAR);
+    strcat(s, tmp);
+    strcat(s, "R is free software and comes with ABSOLUTELY NO WARRANTY.\n");
+    strcat(s, "You are welcome to redistribute it under the terms of the\n");
+    strcat(s, "GNU General Public License.  For more information about\n");
+    strcat(s, "these matters, see http://www.gnu.org/copyleft/gpl.html.\n");
+}
+

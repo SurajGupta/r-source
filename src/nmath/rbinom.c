@@ -14,13 +14,13 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
  *    #include "Mathlib.h"
  *    double rbinom(double nin, double pp)
- *    
+ *
  *  DESCRIPTION
  *
  *    Random variates from the binomial distribution.
@@ -52,7 +52,7 @@ double rbinom(double nin, double pp)
     /* n=0, p=0, p=1 are not errors <TSL>*/
     if (
 #ifdef IEEE_754
-	!finite(n) || !finite(pp) ||
+	!R_FINITE(n) || !R_FINITE(pp) ||
 #endif
 	n < 0.0 || pp < 0.0 || pp > 1.0) {
 	ML_ERROR(ME_DOMAIN);

@@ -16,12 +16,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
 #include "Print.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 SEXP ScalarLogical(int x)
 {
@@ -89,10 +97,10 @@ int asLogical(SEXP x)
 	    return (INTEGER(x)[0] == NA_INTEGER) ?
 		NA_LOGICAL : (INTEGER(x)[0]) != 0;
 	case REALSXP:
-	    return FINITE(REAL(x)[0]) ?
+	    return R_FINITE(REAL(x)[0]) ?
 		(REAL(x)[0] != 0.0) : NA_LOGICAL;
 	case CPLXSXP:
-	    return FINITE(COMPLEX(x)[0].r) ?
+	    return R_FINITE(COMPLEX(x)[0].r) ?
 		(COMPLEX(x)[0].r != 0.0) : NA_LOGICAL;
 	default:
 	    return NA_LOGICAL;
@@ -111,10 +119,10 @@ int asInteger(SEXP x)
 	case INTSXP:
 	    return (INTEGER(x)[0]);
 	case REALSXP:
-	    return FINITE(REAL(x)[0]) ?
+	    return R_FINITE(REAL(x)[0]) ?
 		((int)(REAL(x)[0])) : NA_INTEGER;
 	case CPLXSXP:
-	    return FINITE(COMPLEX(x)[0].r) ?
+	    return R_FINITE(COMPLEX(x)[0].r) ?
 		((int)(COMPLEX(x)[0].r)) : NA_INTEGER;
 	}
     }
@@ -222,6 +230,10 @@ void internalTypeCheck(SEXP call, SEXP s, SEXPTYPE type)
     }
 }
 
+int isValidString(SEXP x)
+{
+    return isString(x) && length(x) > 0 && !isNull(STRING(x)[0]);
+}
 
 int isSymbol(SEXP s)
 {
@@ -708,95 +720,6 @@ SEXP nthcdr(SEXP s, int n)
 }
 
 
-/* mfindVarInFrame - look up symbol in a single environment frame. */
-static SEXP mfindVarInFrame(SEXP frame, SEXP symbol)
-{
-    while (frame != R_NilValue) {
-	if (TAG(frame) == symbol)
-	    return frame;
-	frame = CDR(frame);
-    }
-    return R_NilValue;
-}
-
-
-static int isMissing(SEXP symbol, SEXP rho)
-{
-    SEXP vl, s;
-
-    if ( DDVAL(symbol) )
-	s = R_DotsSymbol;
-    else
-	s = symbol;
-
-    vl = mfindVarInFrame(FRAME(rho), s);
-    if (vl != R_NilValue) {
-	if ( DDVAL(symbol) ) {
-		if (length(CAR(vl)) < DDVAL(symbol) || CAR(vl) == R_MissingArg )
-			return 1;
-		else
-			vl = nthcdr(CAR(vl), DDVAL(symbol)-1);
-	}
-	if (MISSING(vl) == 1 || CAR(vl) == R_MissingArg)
-	   return 1;
-	if (TYPEOF(CAR(vl)) == PROMSXP &&
-	      TYPEOF(PREXPR(CAR(vl))) == SYMSXP)
-	      return isMissing(PREXPR(CAR(vl)), PRENV(CAR(vl)));
-	else
-	   return 0;
-    }
-    return 0;
-}
-
-/* in do_missing rho is the environment that missing was called from */
-
-SEXP do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP rval, t, sym, s;
-
-    checkArity(op, args);
-    s = sym = CAR(args);
-    if (!isSymbol(sym))
-	error("\"missing\" illegal use of missing\n");
-
-    if ( DDVAL(sym) ) {
-	sym = R_DotsSymbol;
-    }
-    rval=allocVector(LGLSXP,1);
-
-    t = mfindVarInFrame(FRAME(rho), sym);
-    if (t != R_NilValue) {
-	if (DDVAL(s)) {
-		if (length(CAR(t)) < DDVAL(s)  || CAR(t) == R_MissingArg ) {
-			LOGICAL(rval)[0] = 1;
-			return rval;
-		}
-		else
-			t = nthcdr(CAR(t), DDVAL(s)-1);
-	}
-	if (MISSING(t) || CAR(t) == R_MissingArg ) {
-	    LOGICAL(rval)[0] = 1;
-	    return rval;
-	}
-	else goto havebinding;
-    }
-    else  /* it wasn't an argument to the function */
-	error("\"missing\" illegal use of missing\n");
-
-  havebinding:
-
-    t = CAR(t);
-    if (TYPEOF(t) != PROMSXP) {
-	LOGICAL(rval)[0] = 0;
-	return rval;
-    }
-
-    if (!isSymbol(PREXPR(t))) LOGICAL(rval)[0] = 0;
-    else LOGICAL(rval)[0] = isMissing(PREXPR(t), PRENV(t));
-    return rval;
-}
-
-
 SEXP do_nargs(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP t;
@@ -860,4 +783,92 @@ SEXP dcar(SEXP l)
 SEXP dcdr(SEXP l)
 {
     return(CDR(l));
+}
+
+/* Functions for getting and setting the working directory. */
+#ifdef Win32
+#include <windows.h>
+#endif
+
+SEXP
+do_getwd(SEXP call, SEXP op, SEXP args, SEXP rho) {
+    SEXP rval = R_NilValue;
+    char buf[2 * PATH_MAX];
+
+    checkArity(op, args);
+
+#ifdef R_GETCWD
+    R_GETCWD(buf, PATH_MAX);
+    rval = mkString(buf);
+#endif
+    return(rval);
+}
+
+SEXP
+do_setwd(SEXP call, SEXP op, SEXP args, SEXP rho) {
+    SEXP s;
+    const char *path;
+
+    checkArity(op, args);
+
+    s = CAR(args);
+    if (!isString(s))
+	errorcall(call, "character argument expected\n");
+    path = R_ExpandFileName(CHAR(STRING(s)[0]));
+    if(chdir(path) < 0)
+	errorcall(call, "cannot change working directory\n");
+    return(R_NilValue);
+}
+
+/* remove portion of path before file separator if one exists */
+SEXP
+do_basename(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP s;
+    char  buf[PATH_MAX], *p, fsp = FILESEP[0];
+
+    checkArity(op, args);
+    s = CAR(args);
+    if (!isString(s))
+	errorcall(call, "character argument expected\n");
+    strcpy (buf, R_ExpandFileName(CHAR(STRING(s)[0])));
+#ifdef Win32
+    for (p = buf; *p != '\0'; p++)
+	if (*p == '\\') *p = '/';
+#endif
+    /* remove trailing file separator(s) */
+    while ( *(p = buf + strlen(buf) - 1) == fsp ) *p = '\0';
+    if ((p = strrchr(buf, fsp)))
+	p++;
+    else
+	p = buf;
+    return(mkString(p));
+}
+
+/* remove portion of path after last file separator if one exists, else
+   return "." */
+SEXP
+do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP s;
+    char  buf[PATH_MAX], *p, fsp = FILESEP[0];
+
+    checkArity(op, args);
+    s = CAR(args);
+    if(!isString(s))
+	errorcall(call, "character argument expected\n");
+    strcpy(buf, R_ExpandFileName(CHAR(STRING(s)[0])));
+#ifdef Win32
+    for(p = buf; *p != '\0'; p++)
+	if(*p == '\\') *p = '/';
+#endif
+    /* remove trailing file separator(s) */
+    while ( *(p = buf + strlen(buf) - 1) == fsp ) *p = '\0';
+    if((p = strrchr(buf, fsp))) {
+	*p = '\0';
+	/* remove excess trailing file separator(s), as in /a///b  */
+	while ( *(--p) == fsp ) *p = '\0';
+    } else
+	strcpy(buf, ".");
+    return(mkString(buf));
 }

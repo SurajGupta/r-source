@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -28,15 +28,15 @@
  *  NOTES
  *
  *    x = the number of failures before the n-th success
- * 
+ *
  *  REFERENCE
- * 
+ *
  *    Devroye, L. (1980).
  *    Non-Uniform Random Variate Generation.
  *    New York:Springer-Verlag. Page 480.
- * 
+ *
  *  METHOD
- * 
+ *
  *    Generate lambda as gamma with shape parameter n and scale
  *    parameter p/(1-p).  Return a Poisson deviate with mean lambda.
  */
@@ -47,7 +47,7 @@ double rnbinom(double n, double p)
 {
     if(
 #ifdef IEEE_754
-	!finite(n) || !finite(p) ||
+	!R_FINITE(n) || !R_FINITE(p) ||
 #endif
 	n <= 0 || p <= 0 || p >= 1) {
 	ML_ERROR(ME_DOMAIN);

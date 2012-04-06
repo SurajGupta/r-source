@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  IMPLEMENTATION NOTES:
@@ -56,8 +56,7 @@
  *		 a line.
  *
  *  buff:	 contains the current string, we attempt to break
- *		 lines at cutoff, but can handle up to BUFSIZE
- *		 characters.
+ *		 lines at cutoff, but can unlimited length.
  *
  *  lbreak:	 often used to indicate whether a line has been
  *		 broken, this makes sure that that indenting behaves
@@ -74,6 +73,9 @@
 /* I wonder why I didn't just do this? -- it would have been quicker than */
 /* writing this note.  I guess it needs a bit more thought ... */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Print.h"
@@ -90,7 +92,7 @@
 static int cutoff = DEFAULT_Cutoff;
 extern int isValidName(char*);
 
-static char buff[BUFSIZE];
+/*static char buff[BUFSIZE];*/
 static int linenumber;
 static int len;
 static int incurly = 0;
@@ -111,6 +113,25 @@ static void linebreak();
 static void deparse2(SEXP, SEXP);
 
 
+static char *buff=NULL;
+
+static void AllocBuffer(int len)
+{
+    static int bufsize = 0;
+    if(len*sizeof(char) < bufsize) return;
+    len = (len+1)*sizeof(char);
+    if(len < BUFSIZE) len = BUFSIZE;
+    if(buff == NULL){
+	buff = (char *) malloc(len);
+	buff[0] = '\0';
+    } else
+	buff = (char *) realloc(buff, len);
+    bufsize = len;
+    if(!buff) {
+	bufsize = 0;
+	error("Could not allocate memory for Encodebuf");
+    }
+}
 
 
 SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -126,7 +147,7 @@ SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isNull(CAR(args))) {
 	cut0 = asInteger(CAR(args));
 	if(cut0 == NA_INTEGER|| cut0 < MIN_Cutoff || cut0 > MAX_Cutoff)
-	    warning("invalid 'cutoff' for deparse, used default\n");
+	    warning("invalid 'cutoff' for deparse, used default");
 	else
 	    cutoff = cut0;
     }
@@ -146,8 +167,8 @@ SEXP deparse1(SEXP call, int abbrev)
     int savedigits;
 
     PrintDefaults(R_NilValue);/* from global options() */
-    savedigits = print_digits; 
-    print_digits = DBL_DIG;/* MAX precision */
+    savedigits = R_print.digits; 
+    R_print.digits = DBL_DIG;/* MAX precision */
 
     svec = R_NilValue;
     deparse2(call, svec);/* just to determine linenumber..*/
@@ -155,13 +176,14 @@ SEXP deparse1(SEXP call, int abbrev)
     deparse2(call, svec);
     UNPROTECT(1);
     if (abbrev == 1) {
+	AllocBuffer(0);
 	buff[0] = '\0';
 	strncat(buff, CHAR(STRING(svec)[0]), 10);
 	if (strlen(CHAR(STRING(svec)[0])) > 10)
 	    strcat(buff, "...");
 	svec = mkString(buff);
     }
-    print_digits = savedigits;
+    R_print.digits = savedigits;
     return svec;
 }
 
@@ -682,7 +704,7 @@ static void deparse2buff(SEXP s)
 	    args2buff(CDR(s), 0, 0);
 	    print2buff(")");
 	}
-	else {
+	else { /* we have a lambda expression */
 	    deparse2buff(CAR(s));
 	    print2buff("(");
 	    args2buff(CDR(s), 0, 0);
@@ -727,11 +749,13 @@ static void print2buff(char *strng)
 	printtab2buff(indent);	/*if at the start of a line tab over */
     }
     tlen = strlen(strng);
+    AllocBuffer(0);
     bufflen = strlen(buff);
-    if (bufflen + tlen > BUFSIZE) {
+    /*if (bufflen + tlen > BUFSIZE) {
 	buff[0] = '\0';
 	error("string too long in deparse\n");
-    }
+	}*/
+    AllocBuffer(bufflen + tlen);
     strcat(buff, strng);
     len += tlen;
 }

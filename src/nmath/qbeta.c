@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
 
  * Reference:
@@ -143,7 +143,7 @@ double qbeta(double alpha, double p, double q)
 		y = pbeta_raw(xinbta, pp, qq);
 		/* y = pbeta_raw2(xinbta, pp, qq, logbeta) -- to SAVE CPU; */
 #ifdef IEEE_754
-		if(!FINITE(y))
+		if(!R_FINITE(y))
 #else
 		if (errno)
 #endif

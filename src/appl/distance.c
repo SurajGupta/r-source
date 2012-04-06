@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include <float.h>
 #include "Arith.h"
@@ -32,7 +36,7 @@ double euclidean(double *x, int nr, int nc, int i1, int i2)
     count= 0;
     dist = 0;
     for(j=0 ; j<nc ; j++) {
-	if(FINITE(x[i1]) && FINITE(x[i2])) {
+	if(R_FINITE(x[i1]) && R_FINITE(x[i2])) {
 	    dev = (x[i1] - x[i2]);
 	    dist += dev * dev;
 	    count++;
@@ -53,7 +57,7 @@ double maximum(double *x, int nr, int nc, int i1, int i2)
     count = 0;
     dist = -DBL_MAX;
     for(j=0 ; j<nc ; j++) {
-	if(FINITE(x[i1]) && FINITE(x[i2])) {
+	if(R_FINITE(x[i1]) && R_FINITE(x[i2])) {
 	    dev = fabs(x[i1] - x[i2]);
 	    if(dev > dist)
 		dist = dev;
@@ -74,7 +78,7 @@ double manhattan(double *x, int nr, int nc, int i1, int i2)
     count = 0;
     dist = 0;
     for(j=0 ; j<nc ; j++) {
-	if(FINITE(x[i1]) && FINITE(x[i2])) {
+	if(R_FINITE(x[i1]) && R_FINITE(x[i2])) {
 	    dist += fabs(x[i1] - x[i2]);
 	    count++;
 	}
@@ -94,7 +98,7 @@ double canberra(double *x, int nr, int nc, int i1, int i2)
     count = 0;
     dist = 0;
     for(j=0 ; j<nc ; j++) {
-	if(FINITE(x[i1]) && FINITE(x[i2])) {
+	if(R_FINITE(x[i1]) && R_FINITE(x[i2])) {
 	    dist += fabs(x[i1] - x[i2])/fabs(x[i1] + x[i2]);
 	    count++;
 	}
@@ -116,7 +120,7 @@ double dist_binary(double *x, int nr, int nc, int i1, int i2)
     dist = 0;
 
     for(j=0 ; j<nc ; j++) {
-	if(FINITE(x[i1]) && FINITE(x[i2])) {
+	if(R_FINITE(x[i1]) && R_FINITE(x[i2])) {
 	    if(x[i1] || x[i2]){
 		count++;
 		if( ! (x[i1] && x[i2]) ){

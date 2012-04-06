@@ -14,13 +14,13 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  */
 
 #include "Mathlib.h"
 
 #ifdef IEEE_754
-/* These are used in IEEE exception handling */
+/* These are used in IEEE exception handling (in Mathlib.h only) */
 double m_zero = 0;
 double m_one = 1;
 /* double m_tiny = DBL_MIN; */

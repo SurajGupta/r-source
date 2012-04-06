@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /*
@@ -28,6 +28,9 @@
 
 #include "internal.h"
 static HWND hwndToolTip = 0;
+#ifndef TOOLTIPS_CLASS
+#include "commctrl.h"
+#endif
 
 int addtooltip(control c,char *tp) {
     TOOLINFO ti;

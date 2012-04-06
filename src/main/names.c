@@ -16,9 +16,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
+#define __R_Names__
 #include "Defn.h"
 #include "Print.h"
 #include "names.h"
@@ -65,6 +70,8 @@ SEXP do_indexsearch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_surface(SEXP, SEXP, SEXP, SEXP);
 SEXP do_flatContour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filledcontour(SEXP, SEXP, SEXP, SEXP);
+SEXP do_restart(SEXP, SEXP, SEXP, SEXP);
+SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
 
 FUNTAB R_FunTab[] =
 {
@@ -82,6 +89,7 @@ FUNTAB R_FunTab[] =
 {"return",	do_return,	0,	0,	-1,	PP_RETURN},
 {"stop",	do_stop,	0,	11,	1,	PP_FUNCALL},
 {"warning",	do_warning,	0,	111,	1,	PP_FUNCALL},
+{"restart",	do_restart,	0,	11,	1,	PP_FUNCALL},
 {"function",	do_function,	0,	0,	-1,	PP_FUNCTION},
 {"as.function.default",do_asfunction,0,	11,	2,	PP_FUNCTION},
 {"<-",		do_set,		1,	100,	-1,	PP_ASSIGN},
@@ -105,6 +113,7 @@ FUNTAB R_FunTab[] =
 {"Recall",	do_recall,	0,	10,	-1,	PP_FUNCALL},
 {"delay",	do_delay,	0,	11,	2,	PP_FUNCALL},
 {".Alias",	do_alias,	0,	1,	1,	PP_FUNCALL},
+{".Primitive",	do_primitive,	0,	1,	1,	PP_FUNCALL},
 
 
 /* Binary Operators */
@@ -153,8 +162,8 @@ FUNTAB R_FunTab[] =
 {"col",		do_rowscols,	2,	11,	1,	PP_FUNCALL},
 {"c",/* bind.c:*/do_c,		0,	0,	-1,	PP_FUNCALL},
 {"unlist",	do_unlist,	0,	10,	3,	PP_FUNCALL},
-{"cbind",	do_bind,	1,	11,	-1,	PP_FUNCALL},
-{"rbind",	do_bind,	2,	11,	-1,	PP_FUNCALL},
+{"cbind",	do_bind,	1,	10,	-1,	PP_FUNCALL},
+{"rbind",	do_bind,	2,	10,	-1,	PP_FUNCALL},
 {"drop",	do_drop,	0,	11,	1,	PP_FUNCALL},
 {"class",	do_class,	0,	1,	1,	PP_FUNCALL},
 {"class<-",	do_classgets,	0,	1,	2,	PP_FUNCALL},
@@ -520,6 +529,7 @@ FUNTAB R_FunTab[] =
 {".C",		do_dotCode,	0,	1,	-1,	PP_FOREIGN},
 {".Fortran",	do_dotCode,	1,	1,	-1,	PP_FOREIGN},
 {".External",   do_External,    0,      1,      -1,     PP_FOREIGN},
+{".Call",       do_dotcall,     0,      1,      -1,     PP_FOREIGN},
 {"dyn.load",	do_dynload,	0,	111,	1,	PP_FUNCALL},
 {"dyn.unload",	do_dynunload,	0,	111,	1,	PP_FUNCALL},
 {"ls",		do_ls,		1,	11,	2,	PP_FUNCALL},
@@ -573,6 +583,10 @@ FUNTAB R_FunTab[] =
 {"date",	do_date,	0,	11,	0,	PP_FUNCALL},
 {"Platform",	do_Platform,	0,	11,	0,	PP_FUNCALL},
 {"index.search",do_indexsearch, 0,      11,     5,      PP_FUNCALL},
+{"getwd",	do_getwd,	0,	11,	0,	PP_FUNCALL},
+{"setwd",	do_setwd,	0,	11,	1,	PP_FUNCALL},
+{"basename",	do_basename,	0,	11,	1,	PP_FUNCALL},
+{"dirname",	do_dirname,	0,	11,	1,	PP_FUNCALL},
 
 /* Complex Valued Functions */
 {"fft",		do_fft,		0,	11,	2,	PP_FUNCALL},
@@ -624,7 +638,7 @@ FUNTAB R_FunTab[] =
 {"segments",	do_segments,	0,	111,	6,	PP_FUNCALL},
 {"arrows",	do_arrows,	0,	111,	9,	PP_FUNCALL},
 {"layout",	do_layout,	0,	111,	10,	PP_FUNCALL},
-{"locator",	do_locator,	0,	11,	1,	PP_FUNCALL},
+{"locator",	do_locator,	0,	11,	2,	PP_FUNCALL},
 {"identify",	do_identify,	0,	11,	6,	PP_FUNCALL},
 {"strheight",	do_strheight,	0,	11,	3,	PP_FUNCALL},
 {"strwidth",	do_strwidth,	0,	11,	3,	PP_FUNCALL},
@@ -664,12 +678,31 @@ FUNTAB R_FunTab[] =
 };
 
 
+SEXP do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP name;
+    int i;
+    checkArity(op, args);
+    name = CAR(args);
+    if (!isString(name) || length(name) < 1 || STRING(name)[0] == R_NilValue)
+	errorcall(call, "string argument required\n");
+    for (i = 0; R_FunTab[i].name; i++)
+	if (strcmp(CHAR(STRING(name)[0]), R_FunTab[i].name) == 0) {
+	    if ((R_FunTab[i].eval % 100 )/10)
+		return mkPRIMSXP(i, R_FunTab[i].eval % 10);
+	    else
+		return mkPRIMSXP(i, R_FunTab[i].eval % 10);
+	}
+    errorcall(call, "no such primitive function\n");
+    return(R_NilValue);		/* -Wall */
+}
+
 int StrToInternal(char *s)
 {
-	int i;
-	for (i = 0; R_FunTab[i].name; i++)
-		if (strcmp(s, R_FunTab[i].name) == 0) return i;
-	return 0;
+    int i;
+    for (i = 0; R_FunTab[i].name; i++)
+	if (strcmp(s, R_FunTab[i].name) == 0) return i;
+    return 0;
 }
 
 /* string hashing */
@@ -689,8 +722,7 @@ int hashpjw(char *s)
 
 extern void installFunTab(int i)
 {
-
-    if ( (R_FunTab[i].eval % 100 )/10 )
+    if ((R_FunTab[i].eval % 100 )/10)
 	INTERNAL(install(R_FunTab[i].name))
 	    = mkPRIMSXP(i, R_FunTab[i].eval % 10);
     else
@@ -717,64 +749,63 @@ void SymbolShortcuts()
     R_LastvalueSymbol = install(".Last.value");
     R_TspSymbol = install("tsp");
     R_CommentSymbol = install("comment");
+    R_SourceSymbol = install("source");
 }
 
 /* initialize the symbol table */
 void InitNames()
 {
     int i;
-
-
+    /* R_NilValue */
     /* THIS MUST BE THE FIRST CONS CELL ALLOCATED */
     /* OR ARMAGEDON HAPPENS. */
-
     R_NilValue = allocSExp(NILSXP);
     CAR(R_NilValue) = R_NilValue;
     CDR(R_NilValue) = R_NilValue;
     TAG(R_NilValue) = R_NilValue;
     ATTRIB(R_NilValue) = R_NilValue;
-
+    /* R_UnboundValue */
     R_UnboundValue = allocSExp(SYMSXP);
     SYMVALUE(R_UnboundValue) = R_UnboundValue;
     PRINTNAME(R_UnboundValue) = R_NilValue;
     ATTRIB(R_UnboundValue) = R_NilValue;
-
+    /* R_MissingArg */
     R_MissingArg = allocSExp(SYMSXP);
     SYMVALUE(R_MissingArg) = R_MissingArg;
     PRINTNAME(R_MissingArg) = mkChar("");
     ATTRIB(R_MissingArg) = R_NilValue;
-
+    /* Parser Structures */
     R_CommentSxp = R_NilValue;
     R_ParseText = R_NilValue;
-
-    /* changed from mkChar so mkChar can see if it is getting "NA" */
-    /* and then retrun NA_STRING rather than alloc a new CHAR */
-
+    /* String constants (CHARSXP values */
+    /* Note: changed from mkChar so mkChar can see if it is getting
+       "NA" and then retrun NA_STRING rather than alloc a new CHAR */
+    /* NA_STRING */
     NA_STRING = allocString(strlen("NA"));
     strcpy(CHAR(NA_STRING), "NA");
-    print_na_string = NA_STRING;
-
+    R_print.na_string = NA_STRING;
+    /* R_BlankString */
     R_BlankString = mkChar("");
-
+    /* Initialize the symbol Table */
     if (!(R_SymbolTable = (SEXP *) malloc(HSIZE * sizeof(SEXP))))
 	R_Suicide("couldn't allocate memory for symbol table");
-
     for (i = 0; i < HSIZE; i++)
 	R_SymbolTable[i] = R_NilValue;
-
-    /* Sets up a set of globals so that a symbol table */
-    /* search can be avoided when matching something like */
-    /* dim or dimnames */
-
+    /* Set up a set of globals so that a symbol table search can be
+       avoided when matching something like dim or dimnames. */
     SymbolShortcuts();
-
+    /*  Builtin Functions */
     for (i = 0; R_FunTab[i].name; i++)
 	installFunTab(i);
+    /*  Unbound values which are to be preserved through GCs */
+    R_PreciousList = R_NilValue;
 }
 
-/* install - probe the symbol table */
-/* If name is not found, install it. */
-/* Returns the symbol corresponding to the string "name". */
+
+/*  install - probe the symbol table */
+/*  If "name" is not found, it is installed in the symbol table.
+    The symbol corresponding to the string "name" is returned. */
+
 SEXP install(char *name)
 {
     char buf[MAXIDSIZE+1];
@@ -786,33 +817,30 @@ SEXP install(char *name)
     if (strlen(name) > MAXIDSIZE)
 	error("symbol print-name too long\n");
     strcpy(buf, name);
-
     i = hashpjw(buf);
-
-    /* check to see if the symbol is already there */
+    /* Check to see if the symbol is already present. */
+    /* If it is return it. */
     for (sym = R_SymbolTable[i]; sym != R_NilValue; sym = CDR(sym))
 	if (strcmp(buf, CHAR(PRINTNAME(CAR(sym)))) == 0)
 	    return (CAR(sym));
-
-    /* make a new symbol node and link it into the list */
+    /* Create a new symbol node and link it into the table. */
     sym = mkSYMSXP(mkChar(buf), R_UnboundValue);
     R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);
     return (sym);
 }
 
+
+/*  do_internal - This is the code for .Internal(). */
+
 SEXP do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, fun;
-
     int save = R_PPStackTop;
-
     checkArity(op, args);
-
     s = CAR(args);
     fun = CAR(s);
     if (!isSymbol(fun))
 	errorcall(call, "invalid internal function\n");
-
     if (INTERNAL(fun) == R_NilValue)
 	errorcall(call, "no internal function \"%s\"\n", CHAR(PRINTNAME(fun)));
     args = CDR(s);
@@ -828,3 +856,4 @@ SEXP do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     return (args);
 }
+#undef __R_Names__

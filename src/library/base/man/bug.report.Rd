@@ -10,6 +10,8 @@ bug.report(subject="", ccaddress=getenv("USER"),
     \item{subject}{Subject of the email}
     \item{ccaddress}{Optional email address for copies (default is
 	current user). Use \code{ccaddress=FALSE} for no copies.} 
+    \item{method}{Submission method.}
+    \item{address}{Recipient's email address.}
     \item{method}{Submission method, one of "mailx", "gnuclient", "none"
 	or "ess".}
     \item{address}{Recipient's email address.}

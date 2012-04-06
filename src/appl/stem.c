@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998        Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998, 1999  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Mathlib.h"
 #include "PrtUtil.h"
@@ -123,5 +127,3 @@ int stemleaf(double *x, int *n, double *scale, int *width, double *atom)
 {
     return stem_leaf(x, *n, *scale, *width, *atom);
 }
-
-

@@ -14,23 +14,23 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
- *    #include "Mathlib.h"
- *    double sunif(void);
+ *	#include "Mathlib.h"
+ *	double sunif(void);
  *
  *  DESCRIPTION
  *
- *     Random variates from the standard uniform distribution, U(0,1).
+ *	Random variates from the standard uniform distribution, U(0,1).
  *
  *  REFERENCE
  *
- *    Wichmann, B. A. and I. D. Hill (1982).
- *    Algorithm AS 183: An efficient and portable
- *    pseudo-random number generator,
- *    Applied Statistics, 31, 188.
+ *	Wichmann, B. A. and I. D. Hill (1982).
+ *	Algorithm AS 183: An efficient and portable
+ *	pseudo-random number generator,
+ *	Applied Statistics, 31, 188.
  */
 
 #include "Mathlib.h"/* >> "Random.h" */
@@ -41,7 +41,6 @@
  *
  * For R, the setup here must be compatible with
  * GetSeeds(), SetSeeds(), SetRNG()  from  ../main/random.c
- *
  */
 
 Int32 dummy[3];
@@ -49,17 +48,17 @@ Int32 dummy[3];
 RNGTAB RNG_Table[] =
 {
 /* kind Nkind	  name	  is_seeded seed-length	i1_s, *seed-vec */
-    { 0, 0, "Wichmann-Hill",	0,	3,	123, 	dummy},
-    { 1, 0, "Marsaglia-MultiCarry",0,	2,	123, 	dummy},
-    { 2, 0, "Super-Duper",	0,	2,	123, 	dummy},
-    { 3, 0, "Mersenne-Twister",	0,  1+624,	123, 	dummy},
-    { 4, 0, "Rand",		0,	2,	-1,  	dummy},
+    { 0, 0, "Wichmann-Hill",	0,	3,	123,	dummy},
+    { 1, 0, "Marsaglia-MultiCarry",0,	2,	123,	dummy},
+    { 2, 0, "Super-Duper",	0,	2,	123,	dummy},
+    { 3, 0, "Mersenne-Twister",	0,  1+624,	123,	dummy},
+    { 4, 0, "Rand",		0,	2,	-1,	dummy},
 };
 
 RNGtype RNG_kind = WICHMANN_HILL;
 
-/* SEED vector:  Assume 32 __or more__ bits 
-
+/* SEED vector:	 Assume 32 __or more__ bits 
+   
  * The first few are `unrolled' for speed
  * Here, use maximal seed length from above;
  *
@@ -76,7 +75,8 @@ RNGtype RNG_kind = WICHMANN_HILL;
  * & 037.. really does nothing when long=32bits, 
  * however does every compiler optimize this?  -- optimize ourselves!
  */
-#ifdef LONG_32_BITS
+
+#if (SIZEOF_LONG == 4)
 # define do32bits(N) (N)
 #else
 # define do32bits(N) ((N) & 037777777777)
@@ -90,32 +90,32 @@ RNGtype RNG_kind = WICHMANN_HILL;
 double sunif(void)
 {
     double value;
-
+    
     switch(RNG_kind) {
-
+	
     case WICHMANN_HILL:
 	I1 = I1 * 171 % 30269;
 	I2 = I2 * 172 % 30307;
 	I3 = I3 * 170 % 30323;
 	value =
-	  I1 / 30269.0 +
-	  I2 / 30307.0 +
-	  I3 / 30323.0;
+	    I1 / 30269.0 +
+	    I2 / 30307.0 +
+	    I3 / 30323.0;
 	return value - (int) value;/* in [0,1) */
-
+	
     case MARSAGLIA_MULTICARRY:/* 0177777(octal) == 65535(decimal)*/
 	/* The following also works when 'usigned long' is > 32 bits : */
 	I1= 36969*(I1 & 0177777) + (I1>>16);
 	I2= 18000*(I2 & 0177777) + (I2>>16);
 	return (do32bits(I1 << 16)^(I2 & 0177777))
 	    * i2_32m1;/* in [0,1) */
-
+	
     case SUPER_DUPER:
-
+	
 	/* This is Reeds et al (1984) implementation; 
-	 * modified using __unsigned__  seeds instead of signed ones
+	 * modified using __unsigned__	seeds instead of signed ones
 	 */
-	I1 ^= ((I1 >> 15) & 0377777);/*  Tausworthe */
+	I1 ^= ((I1 >> 15) & 0377777);/*	 Tausworthe */
 	I1 ^= do32bits(I1 << 17);
 #ifdef LONG_32_BITS
 	I2 *= 69069;		/* Congruential */
@@ -123,19 +123,19 @@ double sunif(void)
 	I2 = do32bits(69069 * I2);
 #endif
 	return (I1^I2) * i2_32m1;/* in [0,1) */
-
+	
     case RAND:
-	/* Use ANSI C_INTERNAL  (with which you can only SET a seed,
+	/* Use ANSI C_INTERNAL	(with which you can only SET a seed,
 	   but not get the current)*/
-
+	
 	return rand()/(.1 + RAND_MAX);/* in [0,1) */
-
+	
     case MERSENNE_TWISTER:
-
+	
 	return 0.5;/*PLACE HOLDER*/
-
+	
     default:/* can never happen (enum type)*/ return -1.;
-  }
+    }
 }
 
 /*--- This are called from ../main/random.c : ---------*/
@@ -143,17 +143,17 @@ double sunif(void)
 void FixupSeeds(RNGtype kind)
 {
 /* Depending on RNG, set 0 values to non-0, etc. */
-
+    
     int j; 
 #ifdef OLD
     RNGtype tkind;
-#endif
+#endif	  
 
     /* Set 0 to 1 : */
     if(!RNG_Table[kind].i1_seed) RNG_Table[kind].i1_seed++;
     for(j = 0; j <= RNG_Table[kind].n_seed - 2; j++)
 	if(!RNG_Table[kind].i_seed[j]) RNG_Table[kind].i_seed[j]++;
-
+    
     switch(kind) {
     case WICHMANN_HILL:
 	I1 = I1 % 30269; I2 = I2 % 30307; I3 = I3 % 30323;
@@ -166,7 +166,7 @@ void FixupSeeds(RNGtype kind)
 	if(RNG_Table[kind].i1_seed >= 30269 ||
 	   RNG_Table[kind].i2_seed >= 30307 ||
 	   RNG_Table[kind].i3_seed >= 30323 ) {
-            /*.Random.seed was screwed up */
+	    /*.Random.seed was screwed up */
 	    /* do 1 iteration */
 	    tkind = RNG_kind; RNG_kind = WICHMANN_HILL;
 	    sunif();
@@ -180,11 +180,11 @@ void FixupSeeds(RNGtype kind)
 	/* I2 = Congruential: must be ODD */
 	RNG_Table[kind].i2_seed |= 1;
 	break;
-
+	
     case RAND:/* no read-access to seed */
-
+	
     case MERSENNE_TWISTER:
-
+	
 	break;
     }
 }
@@ -206,7 +206,7 @@ void MaybeAllocSeeds(RNGtype kind)
 void RNG_Init(RNGtype kind, long seed)
 {
     int j;
-
+    
     RNG_Table[kind].i1_seed = seed;
     for(j=0; j < RNG_Table[RNG_kind].n_seed - 1; j++) {
 	seed = (69069 * seed) & 0xffffffff;
@@ -218,11 +218,10 @@ void RNG_Init(RNGtype kind, long seed)
 void Randomize(RNGtype kind)
 {
 /* Only called by  GetRNGstate(), when there's no .Random.seed */
-
+    
     MaybeAllocSeeds(kind);
-
+    
     srand((int)time(NULL));
     
     RNG_Init(kind, (long) rand() | 01/* odd */);
 }
-

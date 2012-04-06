@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *      MEMORY MANAGEMENT
@@ -43,14 +43,17 @@
  *
  *	If a piece of code R-allocs some blocks, it is required to
  *	reset the R_VMax pointer back to its original value before it
- *	exits.  This can be done with the functions getvmax and
- *	setvmax.
+ *	exits.  This can be done with the functions vmaxget and
+ *	vmaxset.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Memory.h"
 #include "Defn.h"
 #include "Graphics.h"
-
 
 static int gc_reporting = 0;
 static int gc_count = 0;
@@ -163,47 +166,17 @@ void InitMemory()
     int i;
 
     gc_reporting = R_Verbose;
-#ifdef OLD_Macintosh
-    OSErr   result;
-
-    gStackH = TempNewHandle( R_PPStackSize * sizeof(SEXP), &result );
-    if( (gStackH == NULL) || (result != noErr) )
-	R_Suicide( "couldn't allocate system memory for pointer stack" );
-    TempHLock( gStackH, &result );
-    R_PPStack = (SEXP*)*gStackH;
-#else
     if (!(R_PPStack = (SEXP *) malloc(R_PPStackSize * sizeof(SEXP))))
 	R_Suicide("couldn't allocate memory for pointer stack");
-#endif
-
     R_PPStackTop = 0;
 
-#ifdef OLD_Macintosh
-    gNHeapH = TempNewHandle( R_NSize * sizeof(SEXPREC), &result );
-    if( (gNHeapH == NULL) || (result != noErr) )
-	R_Suicide( "couldn't allocate system memory for node heap" );
-    TempHLock( gNHeapH, &result );
-    R_NHeap = (SEXPREC *)*gNHeapH;
-#else
     if (!(R_NHeap = (SEXPREC *) malloc(R_NSize * sizeof(SEXPREC))))
 	R_Suicide("couldn't allocate memory for node heap");
-#endif
 
     R_VSize = (((R_VSize + 1)/ sizeof(VECREC)));
 
-#ifdef OLD_Macintosh
-    gVHeapH = TempNewHandle( R_VSize * sizeof(VECREC), &result );
-    if( (gVHeapH == NULL) || (result != noErr) )
-	R_Suicide( "couldn't allocate system memory for vector heap" );
-    TempHLock( gVHeapH, &result );
-    R_VHeap = (VECREC *)*gVHeapH;
-#else
-#ifdef DEBUGGING
-    printf("R_VSize = %d malloc-ed\n", R_VSize * sizeof(VECREC));
-#endif
     if (!(R_VHeap = (VECREC *) malloc(R_VSize * sizeof(VECREC))))
 	R_Suicide("couldn't allocate memory for vector heap");
-#endif
 
     R_VTop = &R_VHeap[0];
     R_VMax = &R_VHeap[R_VSize - 1];
@@ -218,6 +191,11 @@ void InitMemory()
        garbage collection... -pd */
 
     framenames = R_NilValue;
+
+    /* This will ensure that state variables needed by R CorbaServers
+       will persist across garbage collects... -ihaka */
+
+    R_PreciousList =  R_NilValue;
 }
 
 
@@ -235,15 +213,16 @@ void vmaxset(char *ovmax)
 char *R_alloc(long nelem, int eltsize)
 {
     unsigned int size = BYTE2VEC(nelem * eltsize);
-    if (size != 0) {
+    if (size > 0) {
 	if (FORCE_GC || R_VMax - R_VTop < size) {
 	    gc();
 	    if (R_VMax - R_VTop < size)
 		mem_err_heap(size);
 	}
 	R_VMax -= size;
+        return (char*) R_VMax;
     }
-    return (char*) R_VMax;
+    else return NULL;
 }
 
 /* S COMPATIBILITY */
@@ -311,9 +290,7 @@ SEXP allocString(int length)
 	if (R_VMax - R_VTop < size)
 	    mem_err_heap(size);
     }
-
     GC_PROT(s = allocSExp(CHARSXP));
-
     CHAR(s) = (char *) (R_VTop + 1);
     LENGTH(s) = length;
     BACKPOINTER(*R_VTop) = s;
@@ -398,9 +375,13 @@ SEXP allocVector(SEXPTYPE type, int length)
 	CHAR(s) = (char*)0;
     /* The following prevents disaster in the case */
     /* that an uninitialised string vector is marked */
-    if (type == STRSXP || type == EXPRSXP || type == VECSXP) {
+    if (type == EXPRSXP || type == VECSXP) {
 	for (i = 0; i < length; i++)
 	    STRING(s)[i] = R_NilValue;
+    }
+    else if(type == STRSXP) {
+	for (i = 0; i < length; i++)
+	    STRING(s)[i] = R_BlankString;
     }
     return s;
 }
@@ -420,7 +401,7 @@ SEXP allocList(int n)
 
 void gc(void)
 {
-#ifndef Macintosh
+#ifdef HAVE_SIGLONGJMP
     sigset_t mask, omask;
 #endif
     int vcells, vfrac;
@@ -428,7 +409,7 @@ void gc(void)
     gc_count++;
     if (gc_reporting)
 	REprintf("Garbage collection [nr. %d]...", gc_count);
-#if !defined(Macintosh) && !defined(Win32)
+#ifdef HAVE_SIGLONGJMP
     sigemptyset(&mask);
     sigaddset(&mask,SIGINT);
     sigprocmask(SIG_BLOCK, &mask, &omask);
@@ -437,7 +418,7 @@ void gc(void)
     markPhase();
     compactPhase();
     scanPhase();
-#if !defined(Macintosh) && !defined(Win32)
+#ifdef HAVE_SIGLONGJMP
     sigprocmask(SIG_SETMASK, &omask, &mask);
 #endif
     if (gc_reporting) {
@@ -495,7 +476,6 @@ SEXP do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
 void unmarkPhase(void)
 {
     int i;
-
     for (i = 0; i < R_NSize; i++)
 	MARK(&R_NHeap[i]) = 0;
 }
@@ -516,6 +496,7 @@ void markPhase(void)
     markSExp(R_CommentSxp);
 
     markSExp(R_GlobalEnv);	           /* Global environent */
+    markSExp(R_Warnings);	           /* Warnings, if any */
 
     for (i = 0; i < HSIZE; i++)	           /* Symbol table */
 	markSExp(R_SymbolTable[i]);
@@ -532,6 +513,8 @@ void markPhase(void)
     markSExp(framenames); 		   /* used for interprocedure
 					    communication in model.c */
 
+    markSExp(R_PreciousList);
+
     for (i = 0; i < R_PPStackTop; i++)	   /* Protected pointers */
 	markSExp(R_PPStack[i]);
 }
@@ -542,7 +525,6 @@ void markPhase(void)
 void markSExp(SEXP s)
 {
     int i;
-
     if (s && !MARK(s)) {
 	MARK(s) = 1;
 	if (ATTRIB(s) != R_NilValue)
@@ -566,6 +548,7 @@ void markSExp(SEXP s)
 	case ENVSXP:
 	    markSExp(FRAME(s));
 	    markSExp(ENCLOS(s));
+	    markSExp(HASHTAB(s));
 	    break;
 	case CLOSXP:
 	case PROMSXP:
@@ -591,9 +574,7 @@ void compactPhase(void)
     VECREC *vto, *vfrom;
     SEXP s;
     int i, size;
-
     vto = vfrom = R_VHeap;
-
     while (vfrom < R_VTop) {
 	s = BACKPOINTER(*vfrom);
 	switch (TYPEOF(s)) {	/* get size in bytes */
@@ -646,6 +627,7 @@ void scanPhase(void)
     R_Collected = 0;
     for (i = 0; i < R_NSize; i++) {
 	if (!MARK(&R_NHeap[i])) {
+	    /* Call Destructors Here */
 	    CDR(&R_NHeap[i]) = R_FreeSEXP;
 	    R_FreeSEXP = &R_NHeap[i];
 	    R_Collected++;
@@ -765,19 +747,50 @@ void C_free(char *p)
 void *R_chk_calloc(size_t nelem, size_t elsize)
 {
     void *p;
+#ifdef CALLOC_BROKEN
+    if(nelem == 0)
+	return(NULL);
+#endif
     p = calloc(nelem, elsize);
-    if(!p) error("Calloc could not allocate memory");
+    if(!p) error("Calloc could not allocate memory\n");
     return(p);
 }
 void *R_chk_realloc(void *ptr, size_t size)
 {
     void *p;
     p = realloc(ptr, size);
-    if(!p) error("Realloc could not re-allocate memory");
+    if(!p) error("Realloc could not re-allocate memory\n");
     return(p);
 }
 void R_chk_free(void *ptr)
 {
     if(!ptr) warning("attempt to free NULL pointer by Free");
     free(ptr);
+}
+
+/* This code keeps a list of objects which are not assigned to variables
+   but which are required to persist across garbage collections.  The
+   objects are registered with R_PreserveObject and deregistered with
+   R_UnpreserveObject.  This is experimental code, it would not be wise
+   to rely on it at this point - ihaka */
+
+void R_PreserveObject(SEXP object)
+{
+    R_PreciousList = CONS(object, R_PreciousList);
+}
+
+static SEXP RecursiveRelease(SEXP object, SEXP list)
+{
+    if (!isNull(list)) {
+        if (object == CAR(list))
+            return CDR(list);
+        else
+            CDR(list) = RecursiveRelease(object, CDR(list));
+    }
+    return list;
+}
+
+void R_ReleaseObject(SEXP object)
+{
+    R_PreciousList =  RecursiveRelease(object, R_PreciousList);
 }

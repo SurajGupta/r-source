@@ -14,12 +14,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
-
 
 /* "GetRowNames" and "GetColNames" are utility routines which */
 /* locate and return the row names and column names from the */

@@ -13,7 +13,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  I want you to preserve the copyright of the original author(s),
  *  and encourage you to send me any improvements by e-mail. (MM).
@@ -57,6 +57,10 @@
  *		the other possible flags are  "+", " ", and "#".
  *	  New (Feb.98): if flag has more than one character, all are passed..
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>

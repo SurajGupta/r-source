@@ -1,11 +1,11 @@
 ##-*- R -*- (emacs font-lock)
-##--- Here are subroutines/functions that we want to be linked into R.binary
-##--- but are only called
+## Here are subroutines/functions that we want to be linked into the R
+## binary but are only called
 ##	either as .C() or .Fortran() in R
 ##	or     by e.g. mva.so or modreg.so when that one is loaded.
 ##
-## This is the basis of the ../include/FFTab.h and  ../include/FFDecl.h  files
-## which are included by  ../unix/dynload.c
+## This is the basis of the `FFTab.h' and `FFDecl.h' files in
+## `../include' which are included by  `../unix/dynload.c'.
 ##
 C_FUNCTION(approx)
 F77_SUBROUTINE(ch2inv)
@@ -17,6 +17,7 @@ C_FUNCTION(bincode2)
 C_FUNCTION(bincount)
 F77_SUBROUTINE(cg)
 F77_SUBROUTINE(ch)
+C_FUNCTION(chisqsim)
 C_FUNCTION(chull)
 F77_SUBROUTINE(rg)
 F77_SUBROUTINE(rs)
@@ -55,7 +56,7 @@ C_FUNCTION(massdist)
 F77_SUBROUTINE(optif9)
 C_FUNCTION(pretty)
 C_FUNCTION(rowsum)
-F77_SUBROUTINE(zeroin)
+C_FUNCTION(zeroin)
 C_FUNCTION(spline_coef)
 C_FUNCTION(spline_eval)
 C_FUNCTION(stemleaf)
@@ -69,4 +70,3 @@ C_FUNCTION(Rsockclose)
 C_FUNCTION(Rsockread)
 C_FUNCTION(Rsockwrite)
 C_FUNCTION(Rsockfork)
-

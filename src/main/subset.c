@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  Vector and List Subsetting
@@ -34,8 +34,11 @@
  *  separately, but then we would have more to keep in step.
  */
 
-#include "Defn.h"
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
+#include "Defn.h"
 
 /* ExtractSubset does the transfer of elements from "x" to "result" */
 /* according to the integer subscripts given in "index". */

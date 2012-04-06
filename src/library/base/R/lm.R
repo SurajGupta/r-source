@@ -352,9 +352,11 @@ print.summary.lm <-
 residuals.lm <- function(object, ...) object$residuals
 fitted.lm <- function(object, ...) object$fitted.values
 coef.lm <- function(object, ...) object$coefficients
-weights.lm <- function(object, ...) object$weights
+## need this for results of lm.fit() in drop1():
+weights.default <- function(object, ...) object$weights
+weights.lm <- .Alias(weights.default)
 df.residual.lm <- function(object, ...) object$df.residual
-deviance.lm <- function(object, ...) sum((object$residuals)^2)
+deviance.lm <- function(object, ...) sum(weighted.residuals(object)^2)
 formula.lm <- function(object, ...) formula(object$terms)
 family.lm <- function(object, ...) { gaussian() }
 
@@ -537,36 +539,7 @@ effects.lm <- function(object, set.sign = FALSE)
     structure(eff, assign = object$assign, class = "coef")
 }
 
-## Old version below, did it ever work?
-
-## effects.lm <- function(z, term) {
-##  term <- deparse(substitute(term))
-##  k <- match(term,attr(z$terms,"term.labels"))
-##  if(is.na(k)) stop("effect not found")
-##  pattern <- attr(z$terms,"factors")[,k]
-##  factors <- as.logical(lapply(z$model.frame,is.factor))
-##  y <- model.response(z$model.frame,"numeric")
-##  k <- range(seq(length(z$assign))[z$assign==k])
-##  yhat0 <- if(k[1] > 1) qr.fitted(z$qr,y,k[1]-1) else 0
-##  yhat1 <- qr.fitted(z$qr,y,k[2])
-##  effects <- yhat1-yhat0
-##  tapply(effects,z$model.frame[factors & pattern!=0],mean,na.rm=TRUE)
-##}
-
-plot.lm <- function(x,...) {
-    if(!any(class(x) == "lm")) stop("Use only with 'lm' objects")
-    r <- residuals(x)
-    yh<- fitted(x)
-    hii <- lm.influence(x)$hat
-    if(prod(par("mfcol")) < 2 && interactive()) {
-	op <- par(ask = TRUE); on.exit(par(op))
-    }
-    plot(yh,r, xlab="Fitted values", ylab="Residuals",
-	 main = paste("Tukey-Anscombe plot of", deparse(x$call)))
-    abline(h=0, lty=3, col = "gray")
-
-    qqnorm(r/sqrt(1-hii), ylab = "Standardized Residuals")
-}
+## plot.lm --> now in ./plot.lm.R
 
 model.matrix.lm <- function(object, ...)
 {

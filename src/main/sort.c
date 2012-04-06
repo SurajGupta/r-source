@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"/* => Utils.h with the protos from here */
 #include "Mathlib.h"
@@ -115,6 +119,22 @@ void ssort(SEXP *x, int n)
 #undef TYPE_CMP
 }
 
+void rsort_with_index(double *x, int *index, int n)
+{
+    double v;
+    int i, j, h, iv;
+
+    for (h = 1; h <= n / 9; h = 3 * h + 1);
+    for (; h > 0; h /= 3)
+	for (i = h; i < n; i++) {
+	    v = x[i]; iv = index[i];
+	    j = i;
+	    while (j >= h && rcmp(x[j - h], v) > 0)
+		 { x[j] = x[j - h]; index[j] = index[j-h]; j -= h; }
+	    x[j] = v; index[j] = iv;
+	}
+}
+
 void revsort(double *a, int *ib, int n)
 {
 /* Sort a[] into descending order by "heapsort";
@@ -125,6 +145,8 @@ void revsort(double *a, int *ib, int n)
     int l, j, ir, i;
     double ra;
     int ii;
+
+    if (n <= 1) return;
 
     a--; ib--;
 

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -35,7 +35,7 @@ double qhyper(double x, double NR, double NB, double n)
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(NR) || ISNAN(NB) || ISNAN(n))
 	return x + NR + NB + n;
-    if(!finite(x) || !finite(NR) || !finite(NB) || !finite(n)) {
+    if(!R_FINITE(x) || !R_FINITE(NR) || !R_FINITE(NB) || !R_FINITE(n)) {
 	ML_ERROR(ME_DOMAIN);
 	return ML_NAN;
     }

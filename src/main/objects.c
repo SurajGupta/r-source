@@ -14,11 +14,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /*  This module contains support for S-style generic */
 /*  functions and "class" support.  Gag, barf ...  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 
@@ -366,7 +370,15 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	for (m = actuals; m != R_NilValue; m = CDR(m))
 	    if (CAR(m) == CAR(t))  {
 		if (CAR(m) == R_MissingArg) {
-		    tmp = findVarInFrame(FRAME(cptr->cloenv), TAG(m));
+		  
+		  /*#ifdef USE_HASHTABLE */
+		    tmp = findVarInFrame(cptr->cloenv, TAG(m));
+
+		    /* Old */
+		    /* tmp = findVarInFrame(FRAME(cptr->cloenv), TAG(m)); */
+		    
+		    /*#endif  USE_HASHTABLE */
+
 		    if (tmp == R_MissingArg)
 			break;
 		}
@@ -383,7 +395,7 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 
     s = CADDR(args); /* this is ... and we need to see if it's bound */
     if (s == R_DotsSymbol) {
-	t = findVarInFrame(FRAME(env), s);
+	t = findVarInFrame(env, s);
 	if (t != R_NilValue && t != R_MissingArg) {
 	    TYPEOF(t) = LISTSXP; /* a safe mutation */
 	    s = matchmethargs(matchedarg,t);

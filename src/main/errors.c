@@ -14,16 +14,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Defn.h"
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
+#include "Defn.h"
 
 void jump_to_toplevel();
 static void jump_now();
 
 static int inError = 0;
+static int inWarning = 0;
 
 void onintr()
 {
@@ -31,41 +35,172 @@ void onintr()
     jump_to_toplevel();
 }
 
+static void setupwarnings(void)
+{
+    R_Warnings = allocVector(VECSXP, 50);
+    setAttrib(R_Warnings, R_NamesSymbol, allocVector(STRSXP, 50));
+}
+
+#define BUFSIZE 8192
+void warning(const char *format, ...)
+{
+    char buf[BUFSIZE], *p;
+
+    va_list(ap);
+    va_start(ap, format);
+    vsprintf(buf, format, ap);
+    va_end(ap);
+    p = buf + strlen(buf) - 1;
+    if(strlen(buf) > 0 && *p == '\n') *p = '\0';
+    warningcall(R_NilValue, buf);
+}
+
 void warningcall(SEXP call, char *format, ...)
 {
-    va_list(ap);
-    char *dcall;
-    dcall = CHAR(STRING(deparse1(call, 0))[0]);
-    REprintf("Warning in %s : ", dcall);
-    va_start(ap, format);
-    REvprintf(format, ap);
-    va_end(ap);
+    int w, slen;
+    SEXP names, s;
+    char *dcall, buf[BUFSIZE];
+    RCNTXT *cptr;
+
+    s = GetOption(install("warning.expression"), R_NilValue);
+    if( s!= R_NilValue ) {
+        if( !isLanguage(s) &&  ! isExpression(s) )
+            error("invalid option \"warning.expression\"\n"); 
+        cptr = R_GlobalContext;
+        while (cptr->callflag != CTXT_RETURN && cptr->callflag )
+            cptr = cptr->nextcontext;
+        eval(s, cptr->cloenv);
+        return;
+    }
+
+    w = asInteger(GetOption(install("warn"), R_NilValue));
+
+    if( w == NA_INTEGER ) /* set to a sensible value */
+	w = 0;
+
+    if(w<0 || inWarning || inError)  {/* ignore if w<0 or already in here*/
+        return;
+    }
+    inWarning = 1;
+
+    if(w>=2) { /* make it an error */
+        va_list(ap);
+        va_start(ap, format);
+        slen = vsprintf(buf, format, ap);
+        va_end(ap); 
+        errorcall(call, "(converted from warning) %s", buf);
+    }
+
+    if(w==1) { /* print as they happen */
+        va_list(ap);
+        if( call != R_NilValue ) {
+            dcall = CHAR(STRING(deparse1(call, 0))[0]);
+            REprintf("Warning in %s : ", dcall);
+        }
+        else
+            REprintf("Warning: ");
+        va_start(ap, format);
+        REvprintf(format, ap);
+        va_end(ap);
+        REprintf("\n");
+    }
+    if(w==0) {  /* collect them */
+	va_list(ap);
+        va_start(ap, format);
+	if(!R_CollectWarnings) 
+            setupwarnings();
+	if( R_CollectWarnings > 49 ) 
+	    return;
+        VECTOR(R_Warnings)[R_CollectWarnings] = call;
+        slen = vsprintf(buf, format, ap);
+        va_end(ap); 
+	names = CAR(ATTRIB(R_Warnings));
+	STRING(names)[R_CollectWarnings++] = mkChar(buf);
+    } 
+    inWarning = 0;
 }
-void warning(const char *format,...)
+
+void PrintWarnings(void) 
 {
-    va_list(ap);
-    REprintf("Warning: ");
-    va_start(ap, format);
-    REvprintf(format, ap);
-    va_end(ap);
+    int i;
+    SEXP names, s, t;
+
+    inWarning = 1;
+    if( R_CollectWarnings == 1 ) {
+	REprintf("Warning message: \n");
+	names = CAR(ATTRIB(R_Warnings));
+	if( VECTOR(R_Warnings)[0] == R_NilValue )
+           REprintf("%s \n", CHAR(STRING(names)[0]));
+        else
+	   REprintf("%s in: %s \n", CHAR(STRING(names)[0]),
+                CHAR(STRING(deparse1(VECTOR(R_Warnings)[0],0))[0]));
+    }
+    else if( R_CollectWarnings <= 10 ) {
+        REprintf("Warning messages: \n");
+	names = CAR(ATTRIB(R_Warnings));
+	for(i=0; i<R_CollectWarnings; i++) {
+            if( STRING(R_Warnings)[i] == R_NilValue )
+               REprintf("%d: %s \n",i+1, CHAR(STRING(names)[i]));
+            else
+	       REprintf("%d: %s in: %s \n",i+1, CHAR(STRING(names)[i]),
+		   CHAR(STRING(deparse1(VECTOR(R_Warnings)[i], 0))[0]));
+	}
+    }
+    else {
+	REprintf("There were %d warnings (use warnings() to see them)\n", R_CollectWarnings);
+    }
+    /* now truncate and install last.warning */
+    PROTECT(s = allocVector(VECSXP, R_CollectWarnings));
+    PROTECT(t = allocVector(STRSXP, R_CollectWarnings));
+    names = CAR(ATTRIB(R_Warnings));
+    for(i=0; i<R_CollectWarnings; i++) {
+	VECTOR(s)[i] = VECTOR(R_Warnings)[i];
+	VECTOR(t)[i] = VECTOR(names)[i];
+    }
+    setAttrib(s, R_NamesSymbol, t);
+    defineVar(install("last.warning"), s, R_GlobalEnv);
+    UNPROTECT(2);
+    inWarning = 0;
+    R_CollectWarnings=0;
+    R_Warnings=R_NilValue;
+    return;
 }
+
 
 void errorcall(SEXP call, char *format,...)
 {
+    char buf[BUFSIZE], *p;
     va_list(ap);
     char *dcall;
     if (inError )
 	jump_now();
-    dcall = CHAR(STRING(deparse1(call, 0))[0]);
-    REprintf("Error in %s : ", dcall);
+#ifdef FOO
+    RCNTXT *cptr;
+    cptr = R_GlobalContext;
+    while (cptr->callflag != CTXT_RETURN && cptr->nextcontext != NULL)
+        cptr = cptr->nextcontext;
+    if( cptr->callflag == CTXT_RETURN )
+        do_browser(cptr->call, R_NilValue, R_NilValue, cptr->cloenv);
+#endif
+    if(call != R_NilValue ) {
+        dcall = CHAR(STRING(deparse1(call, 0))[0]);
+        sprintf(buf, "Error in %s : ", dcall);
+    }
+    else
+	sprintf(buf, "Error: ");
+    p = buf + strlen(buf);
     va_start(ap, format);
-    REvprintf(format, ap);
+    vsprintf(p, format, ap);
     va_end(ap);
+    p = buf + strlen(buf) - 1;
+    if(*p != '\n') strcat(buf, "\n");
+    REprintf("%s", buf);
     jump_to_toplevel();
 }
 
 void error(const char *format, ...)
 {
+    char buf[BUFSIZE], *p;
 #ifdef NEWERROR
     char *dcall;
 #endif
@@ -77,13 +212,17 @@ void error(const char *format, ...)
 	dcall = CHAR(STRING(deparse1(R_CurrentExpr, 0))[0]);
     else
 	dcall = CHAR(STRING(deparse1(R_GlobalContext->call, 0))[0]);
-    REprintf("Error in %s : ", dcall);
+    sprintf(buf, "Error in %s : ", dcall);
 #else
-    REprintf("Error: ");
+    sprintf(buf, "Error: ");
 #endif
+    p = buf + strlen(buf);
     va_start(ap, format);
-    REvprintf(format, ap);
+    vsprintf(p, format, ap);
     va_end(ap);
+    p = buf + strlen(buf) - 1;
+    if(*p != '\n') strcat(buf, "\n");
+    REprintf("%s", buf);
     jump_to_toplevel();
 }
 
@@ -111,6 +250,10 @@ void jump_to_toplevel()
 	    eval(c->conexit, c->cloenv);
 	if (c->callflag == CTXT_RETURN)
 	    nback++;
+	if (c->callflag == CTXT_RESTART) {
+		inError=0;
+		findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	}
     }
     if (R_Sinkfile) R_Outputfile = R_Sinkfile;
     else R_Outputfile = R_Consolefile;
@@ -129,7 +272,12 @@ void jump_to_toplevel()
 static void jump_now()
 {
     inError=0;
+    inWarning=0;
     R_PPStackTop = 0;
+    /* I think the following is needed somewhere near here: BDR
+       if (R_CollectWarnings) PrintWarnings();*/
+    R_Warnings = R_NilValue;
+    R_CollectWarnings = 0;
     if (R_Interactive) LONGJMP(R_ToplevelContext->cjmpbuf, 0);
     else REprintf("Execution halted\n");
     exit(1);
@@ -167,12 +315,17 @@ void do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    RCNTXT *cptr;
+
+    cptr = R_GlobalContext->nextcontext;
+    while (cptr->callflag != CTXT_RETURN && cptr->nextcontext != NULL)
+	cptr = cptr->nextcontext;
     if (CAR(args) != R_NilValue) {
 	CAR(args) = coerceVector(CAR(args), STRSXP);
-	warning("%s\n", CHAR(STRING(CAR(args))[0]));
+	warningcall(cptr->call,"%s", CHAR(STRING(CAR(args))[0]));
     }
     else
-	warning("%s\n", "");
+	warningcall(cptr->call,"%s", "");
     return CAR(args);
 }
 

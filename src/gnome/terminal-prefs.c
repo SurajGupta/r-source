@@ -1,5 +1,27 @@
+/*
+ *  R : A Computer Langage for Statistical Data Analysis
+ *  Copyright (C) 1998-1999   Lyndon Drake
+ *                            and the R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include "terminal-prefs.h"
 #include "terminal.h"
+
+/* FIXME: needs to be updated to work with the new preferences stuff */
 
 static void prefs_font_entry_changed(GtkWidget *widget, gpointer data)
 {
@@ -184,7 +206,7 @@ GtkWidget *prefs_workspace_frame(void)
   GtkWidget *frame, *table;
   GtkWidget *ask;
   GtkWidget *save;
-  GtkWidget *savetofile, *dummy, *nameentry, *namebutton;
+  GtkWidget *savetofile, *dummy, *nameentry;
   GtkWidget *dontsave;
 
   frame = gtk_frame_new("Workspace");
@@ -509,4 +531,91 @@ GtkWidget *prefs_pager_page(void)
 
   return vbox;
 }
+
+static void prefs_apply_cb(GtkWidget *widget, int page, gpointer data)
+{
+  GtkStyle *textstyle;
+
+  /* page = -1 means apply all pages */
+  /*  if(page != -1)
+      return;*/
+
+  /* font */
+  if(g_strcasecmp(R_gnome_userprefs.font, R_gnome_newprefs.font) != 0) {
+    textstyle = gtk_style_copy(gtk_widget_get_style(R_gtk_terminal_text));
+    textstyle->font = gdk_font_load(R_gnome_newprefs.font);
+    gtk_widget_set_style(R_gtk_terminal_text, textstyle);
+  }
+
+  /* update prefs */
+  R_gnome_userprefs = R_gnome_newprefs;
+
+  R_gnome_save_prefs();
+}
+
+void settings_prefs_cb(GtkWidget *widget, gpointer data)
+{
+  /* notebook pages */
+  GtkWidget *page0, *page1, *page2, *page3, *page4, *page5;
+  GtkWidget *label0, *label1, *label2, *label3, *label4, *label5;
+
+  /* copy current prefs */
+  R_gnome_newprefs = R_gnome_userprefs;
+
+  /* Page 0: text font and colour options */
+  page0 = prefs_text_page();
+  label0 = gtk_label_new("Console");
+
+  /* Page 1: environment options */
+  page1 = prefs_startup_page();
+  label1 = gtk_label_new("Startup");
+
+  /* Page 2: actions on exit */
+  page2 = prefs_exit_page();
+  label2 = gtk_label_new("Exit");
+
+  /* Page 3: pager text settings */
+  page3 = prefs_pager_page();
+  label3 = gtk_label_new("Pager");
+
+  /* Page 4: external applications */
+  page4 = prefs_apps_page();
+  label4 = gtk_label_new("Applications");
+
+  /* Page 5: graphics options */
+  page5 = prefs_graphics_page();
+  label5 = gtk_label_new("Graphics");
+
+  /* Create the dialog box */
+  prefs_dialog = gnome_property_box_new();
+  gtk_window_set_title(GTK_WINDOW(prefs_dialog), "R Preferences");
+
+  /* Append the pages to the notebook */
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page0, label0);
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page1, label1);
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page2, label2);
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page3, label3);
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page4, label4);
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(prefs_dialog),
+				 page5, label5);
+
+  /* Connect to property box signal */
+  gtk_signal_connect(GTK_OBJECT(prefs_dialog), "apply",
+		     GTK_SIGNAL_FUNC(prefs_apply_cb),
+		     NULL);
+
+  /* Setup dialog features */
+  gnome_dialog_set_parent(GNOME_DIALOG(prefs_dialog),
+			  GTK_WINDOW(R_gtk_main_window));
+  gtk_window_set_modal(GTK_WINDOW(prefs_dialog), TRUE);
+  
+  /* Display the dialog */
+  gtk_widget_show_all(prefs_dialog);
+}
+
 

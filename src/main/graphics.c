@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  This is an extensive reworking by Paul Murrell of an original
@@ -24,6 +24,10 @@
  *  functionality in the AT&T Bell Laboratories GRZ library.
  *
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Graphics.h"
 #include "Defn.h"
@@ -97,7 +101,7 @@ static char HexDigits[] = "0123456789ABCDEF";
 
 double Log10(double x)
 {
-    return (FINITE(x) && x > 0.0) ? log10(x) : NA_REAL;
+    return (R_FINITE(x) && x > 0.0) ? log10(x) : NA_REAL;
 }
 
 
@@ -677,12 +681,12 @@ double xDevtoMAR1(double x, DevDesc *dd)
 
 double yDevtoMAR1(double y, DevDesc *dd)
 {
-    return dd->gp.mar[0] - yDevtoLine(y, dd);
+    return dd->gp.oma[0] + dd->gp.mar[0] - yDevtoLine(y, dd);
 }
 
 double xDevtoyMAR2(double x, DevDesc *dd)
 {
-    return dd->gp.mar[1] - xDevtoLine(x, dd);
+    return dd->gp.oma[1] + dd->gp.mar[1] - xDevtoLine(x, dd);
 }
 
 double yDevtoxMAR2(double y, DevDesc *dd)
@@ -1771,15 +1775,15 @@ DevDesc *GNewPlot(int recording, int ask)
 	    {
 		PROTECT(savedDisplayList=dd->displayList);
 		copyGPar(&(dd->dpSaved), &(savedGPar));
-#endif	       
+#endif
 		initDisplayList(dd);
-#ifdef PLOTHISTORY	       
+#ifdef PLOTHISTORY
 	    }
-#endif	   
+#endif
 	    dd->dp.newPage(dd);
-#ifdef PLOTHISTORY	   
+#ifdef PLOTHISTORY
 	    if (recording) UNPROTECT(1);
-#endif	   
+#endif
 	    dd->dp.currentFigure = dd->gp.currentFigure = 1;
 	}
 
@@ -1849,11 +1853,11 @@ void GScale(double min, double max, int axis, DevDesc *dd)
 	max = log10(max);
     }
 
-    if(!FINITE(min) || !FINITE(max)) {
-	warning("Nonfinite axis limits [GScale(%g,%g,%d, .); log=%d]\n",
+    if(!R_FINITE(min) || !R_FINITE(max)) {
+	warning("Nonfinite axis limits [GScale(%g,%g,%d, .); log=%d]",
 		min, max, axis, log);
-	if(!FINITE(min)) min = - .45 * DBL_MAX;
-	if(!FINITE(max)) max = + .45 * DBL_MAX;
+	if(!R_FINITE(min)) min = - .45 * DBL_MAX;
+	if(!R_FINITE(max)) max = + .45 * DBL_MAX;
 	/* max - min is now finite */
     }
     if(min == max) {
@@ -2327,12 +2331,12 @@ void GCircle(double x, double y, int coords,
 static void setClipRect(double *x1, double *y1, double *x2, double *y2,
                         int coords, DevDesc *dd)
 {
-    /* 
+    /*
      * xpd = 0 means clip to current plot region
      * xpd = 1 means clip to current figure region
      * xpd = 2 means clip to device region
      */
-    *x1 = 0.0; 
+    *x1 = 0.0;
     *y1 = 0.0;
     *x2 = 1.0;
     *y2 = 1.0;
@@ -2684,7 +2688,7 @@ void clipPoint (Edge b, double x, double y,
 		GClipRect *clip, GClipState *cs)
 {
     double ix, iy;
-  
+
     if (!cs[b].first) {
 	/* No previous point exists for this edge. */
 	/* Save this point. */
@@ -2735,7 +2739,7 @@ void closeClip (double *xout, double *yout, int *cnt, int store,
 {
     double ix, iy;
     Edge b;
-  
+
     for (b = Left; b <= Top; b++) {
 	if (cross (b, cs[b].sx, cs[b].sy, cs[b].fx, cs[b].fy, clip)) {
 	    intersect (b, cs[b].sx, cs[b].sy,
@@ -2774,13 +2778,13 @@ int GClipPolygon(double *x, double *y, int n, int coords, int store,
 	clip.ymax = clip.ymin;
 	clip.ymin = swap;
     }
-    for (i = 0; i < n; i++) 
+    for (i = 0; i < n; i++)
 	clipPoint (Left, x[i], y[i], xout, yout, &cnt, store, &clip, cs);
     closeClip (xout, yout, &cnt, store, &clip, cs);
     return (cnt);
 }
 
-/* if bg not specified then draw as polyline rather than polygon 
+/* if bg not specified then draw as polyline rather than polygon
  * to avoid drawing line along border of clipping region
  */
 static void clipPolygon(int n, double *x, double *y, int coords,
@@ -2805,6 +2809,7 @@ static void clipPolygon(int n, double *x, double *y, int coords,
     }
     else {
 	int npts;
+	xc = yc = 0;		/* -Wall */
 	npts = GClipPolygon(x, y, n, coords, 0, xc, yc, dd);
 	if (npts > 1) {
 	    vmax = vmaxget();
@@ -2824,7 +2829,7 @@ void GPolygon(int n, double *x, double *y, int coords,
 	GClip(dd);
 	dd->dp.polygon(n, x, y, coords, bg, fg, dd);
     }
-    else 
+    else
 	clipPolygon(n, x, y, coords, bg, fg, dd);
 }
 
@@ -2864,7 +2869,7 @@ static void clipCircle(double x, double y, int coords,
     /* if circle is all within clipping rect draw all of it */
     if (x-r > xmin && x+r < xmax && y-r > ymin && y+r < ymax) {
 	dd->dp.circle(x, y, DEVICE, r, bg, fg, dd);
-    } 
+    }
     /* if circle is all outside clipping rect, draw nothing */
     else {
 	double distance = r*r;
@@ -2890,7 +2895,7 @@ static void clipCircle(double x, double y, int coords,
 	    xc = (double*)R_alloc(numvert+1, sizeof(double));
 	    yc = (double*)R_alloc(numvert+1, sizeof(double));
 	    for (i=0; i<numvert; i++) {
-		xc[i] = x + r*sin(theta*i); 
+		xc[i] = x + r*sin(theta*i);
 		yc[i] = y + r*cos(theta*i);
 	    }
 	    xc[numvert] = x;
@@ -2902,11 +2907,12 @@ static void clipCircle(double x, double y, int coords,
 	    else {
 		int npts;
 		double *xcc, *ycc;
+		xcc = ycc = 0;	/* -Wall */
 		npts = GClipPolygon(xc, yc, numvert, coords, 0, xcc, ycc, dd);
 		if (npts > 1) {
 		    xcc = (double*)R_alloc(npts, sizeof(double));
 		    ycc = (double*)R_alloc(npts, sizeof(double));
-		    npts = GClipPolygon(xc, yc, numvert, coords, 1, 
+		    npts = GClipPolygon(xc, yc, numvert, coords, 1,
                                         xcc, ycc, dd);
 		    dd->dp.polygon(npts, xcc, ycc, DEVICE, bg, fg, dd);
 		}
@@ -2929,7 +2935,7 @@ void GCircle(double x, double y, int coords,
 	GClip(dd);
 	dd->dp.circle(x, y, coords, ir, col, border, dd);
     }
-    else 
+    else
 	clipCircle(x, y, coords, ir, col, border, dd);
 }
 
@@ -2942,7 +2948,6 @@ static void clipRect(double x0, double y0, double x1, double y1, int coords,
 {
     char *vmax;
     double *xc, *yc;
-    int i;
     vmax = vmaxget();
     xc = (double*)R_alloc(5, sizeof(double));
     yc = (double*)R_alloc(5, sizeof(double));
@@ -2950,7 +2955,7 @@ static void clipRect(double x0, double y0, double x1, double y1, int coords,
     xc[1] = x0; yc[1] = y1;
     xc[2] = x1; yc[2] = y1;
     xc[3] = x1; yc[3] = y0;
-    xc[4] = x0; yc[4] = y0;    
+    xc[4] = x0; yc[4] = y0;
     if (bg == NA_INTEGER) {
 	dd->gp.col = fg;
 	GPolyline(5, xc, yc, coords, dd);
@@ -2958,6 +2963,7 @@ static void clipRect(double x0, double y0, double x1, double y1, int coords,
     else {
 	int npts;
 	double *xcc, *ycc;
+	xcc = ycc = 0;		/* -Wall */	
 	npts = GClipPolygon(xc, yc, 4, coords, 0, xcc, ycc, dd);
 	if (npts > 1) {
 	    xcc = (double*)R_alloc(npts, sizeof(double));
@@ -2976,7 +2982,7 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
 	GClip(dd);
 	dd->dp.rect(x0, y0, x1, y1, coords, bg, fg, dd);
     }
-    else 
+    else
 	clipRect(x0, y0, x1, y1, coords, bg, fg, dd);
 }
 
@@ -2995,7 +3001,7 @@ double GStrWidth(char *str, int units, DevDesc *dd)
     if (sbuf) {
 	free(sbuf);
 	sbuf = NULL;
-        warning("freeing previous text buffer in GStrWidth\n");
+        warning("freeing previous text buffer in GStrWidth");
     }
     w = 0;
     if(str && *str) {
@@ -3061,7 +3067,7 @@ void GText(double x, double y, int coords, char *str,
     if (sbuf) {
 	free(sbuf);
 	sbuf = NULL;
-        warning("freeing previous text buffer in GText\n");
+        warning("freeing previous text buffer in GText");
     }
     if(str && *str) {
         char *s, *sbuf, *sb;
@@ -3070,12 +3076,12 @@ void GText(double x, double y, int coords, char *str,
 	/* Fixup for string centering. */
 	/* Higher functions send in NA_REAL */
 	/* when true text centering is desired */
-	if (!FINITE(yc)) {
+	if (!R_FINITE(yc)) {
 	    yadj = (dd->gp.yCharOffset - 0.5);
 	    yc = 0.5;
 	}
 	else yadj = 0;
-	if (!FINITE(xc)) xc = 0.5;
+	if (!R_FINITE(xc)) xc = 0.5;
 	/* We work in NDC coordinates */
 	GConvert(&x, &y, coords, NDC, dd);
 	/* Count the lines of text */
@@ -3305,7 +3311,7 @@ void GPretty(double *lo, double *up, int *ndiv)
 	error("invalid axis extents [GPretty(.,.,n=%d)\n", *ndiv);
     if(*lo == R_PosInf || *up == R_PosInf ||
        *lo == R_NegInf || *up == R_NegInf ||
-       !FINITE(dx = *up - *lo)) {
+       !R_FINITE(dx = *up - *lo)) {
 	error("Infinite axis extents [GPretty(%g,%g,%d)]\n", *lo, *up, *ndiv);
 	return;/*-Wall*/
     }
@@ -3352,7 +3358,7 @@ void GPretty(double *lo, double *up, int *ndiv)
     else {
 	warning("Imprecision in axis setup.\t GPretty(%g,%g,%d):\n"
 		"cell=%g, ndiv= %d <=0; (ns,nu)=(%d,%d); "
-		"dx=%g, unit=%g, ismall=%d.\n",
+		"dx=%g, unit=%g, ismall=%d.",
 		*lo,*up, *ndiv, cell, nd0, ns, nu, dx, unit, (int)i_small);
 	if(nd0 == 0)
 	    nu = ns + 1;
@@ -3372,7 +3378,7 @@ void GPretty(double *lo, double *up, int *ndiv)
 	error("invalid axis extents [GPretty(.,.,n=%d)\n", *ndiv);
     if(*lo == R_PosInf || *up == R_PosInf ||
        *lo == R_NegInf || *up == R_NegInf ||
-       !FINITE(*up - *lo)) {
+       !R_FINITE(*up - *lo)) {
 	error("Infinite axis extents [GPretty(%g,%g,%d)]\n", *lo, *up, *ndiv);
 	return;/*-Wall*/
     }
@@ -3398,9 +3404,9 @@ void GPretty(double *lo, double *up, int *ndiv)
 
 #ifdef DEBUG_PLOT
     if(*lo < x1)
-	warning(" .. GPretty(.): new *lo = %g < %g = x1\n", *lo, x1);
+	warning(" .. GPretty(.): new *lo = %g < %g = x1", *lo, x1);
     if(*up > x2)
-	warning(" .. GPretty(.): new *up = %g > %g = x2\n", *up, x2);
+	warning(" .. GPretty(.): new *up = %g > %g = x2", *up, x2);
 #endif
 }
 
@@ -3700,14 +3706,13 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
     double angle, xadj, yadj;
     int coords;
 
-    angle = xadj = yadj = 0.;/* to keep -Wall happy */
-    coords = 0;/* -Wall */
+    angle = xadj = yadj = 0.;  /* to keep -Wall happy */
+    coords = 0;                /* -Wall */
 
-    xadj = dd->gp.adj;/* ALL cases */
+    xadj = dd->gp.adj;         /* ALL cases */
     if(outer) {
 	switch(side) {
 	case 1:
-	    /* line = line+1; */
 	    angle = 0;
 	    yadj = 0;
 	    coords = OMA1;
@@ -3723,7 +3728,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	    coords = OMA3;
 	    break;
 	case 4:
-	    /* line = line+1; */
 	    angle = 90;
 	    yadj = 0;
 	    coords = OMA4;
@@ -3735,8 +3739,7 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	switch(side) {
 	case 1:
 	    if(las == 2 || las == 3) {
-		at = at + GConvertXUnits(dd->gp.yLineBias, LINES, USER, dd);
-		line = line - dd->gp.yLineBias;
+		at = at - GConvertXUnits(dd->gp.yLineBias, LINES, USER, dd);
 		angle = 90;
 		yadj = 0.5;
 	    }
@@ -3749,17 +3752,10 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	    break;
 	case 2:
 	    if(las == 1 || las == 2) {
-		at = at/* + GConvertYUnits(dd->gp.yLineBias, LINES, USER, dd)*/;
-		line = line + dd->gp.yLineBias;
+		at = at + GConvertYUnits(dd->gp.yLineBias, LINES, USER, dd);
 		angle = 0;
-#ifdef OLD
 		xadj = dd->gp.adj;
 		yadj = 0.5;
-#else
-		/* xadj = 1.0; */
-		xadj = dd->gp.adj;
-		yadj = 0.3333;
-#endif
 	    }
 	    else {
 		line = line + dd->gp.yLineBias;
@@ -3771,7 +3767,6 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	case 3:
 	    if(las == 2 || las == 3) {
 		at = at - GConvertXUnits(dd->gp.yLineBias, LINES, USER, dd);
-		line = line + dd->gp.yLineBias;
 		angle = 90;
 		yadj = 0.5;
 	    }
@@ -3784,15 +3779,10 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	    break;
 	case 4:
 	    if(las == 1 || las == 2) {
-		at = at/* + GConvertYUnits(dd->gp.yLineBias, LINES, USER, dd)*/;
-		line = line + dd->gp.yLineBias;
+		at = at + GConvertYUnits(dd->gp.yLineBias, LINES, USER, dd);
 		angle = 0;
-#ifdef OLD
-		yadj = 0.5;
-#else
 		xadj = 0;
-		yadj = 0.3333;
-#endif
+		yadj = 0.5;
 	    }
 	    else {
 		line = line + 1 - dd->gp.yLineBias;
@@ -4635,13 +4625,13 @@ unsigned int name2col(char *nm)
 
 /* Index (as string) to Internal Color Code */
 
-unsigned int number2col(char *nm, DevDesc *dd)
+unsigned int number2col(char *nm)
 {
     int index;
     char *ptr;
     index = strtod(nm, &ptr);
     if(*ptr) error("invalid color specification\n");
-    if(index == 0) return dd->dp.bg;
+    if(index == 0) return CurrentDevice()->dp.bg;
     else return R_ColorTable[(index-1) % R_ColorTableSize];
 }
 
@@ -4688,36 +4678,32 @@ char *col2name(unsigned int col)
 /* the initialisation code in which case, str2col */
 /* assumes that `s' is a name */
 
-unsigned int str2col(char *s, DevDesc *dd)
+unsigned int str2col(char *s)
 {
-    if (dd) {
-	if(s[0] == '#') return rgb2col(s);
-	else if(isdigit(s[0])) return number2col(s, dd);
-	else return name2col(s);
-    }
-    else
-	return name2col(s);
+    if(s[0] == '#') return rgb2col(s);
+    else if(isdigit(s[0])) return number2col(s);
+    else return name2col(s);
 }
 
 /* Convert a sexp element to an R  color desc */
 /* We Assume that Checks Have Been Done */
 
-unsigned int RGBpar(SEXP x, int i, DevDesc *dd)
+unsigned int RGBpar(SEXP x, int i)
 {
     int index;
     if(isString(x)) {
-	return str2col(CHAR(STRING(x)[i]), dd);
+	return str2col(CHAR(STRING(x)[i]));
     }
     else if(isInteger(x) || isLogical(x)) {
 	if(INTEGER(x)[i] == NA_INTEGER) return NA_INTEGER;
 	index = INTEGER(x)[i] - 1;
-	if(index < 0) return dd->dp.bg;
+	if(index < 0) return CurrentDevice()->dp.bg;
 	else return R_ColorTable[abs(index) % R_ColorTableSize];
     }
     else if(isReal(x)) {
-	if(!FINITE(REAL(x)[i])) return NA_INTEGER;
+	if(!R_FINITE(REAL(x)[i])) return NA_INTEGER;
 	index = REAL(x)[i] - 1;
-	if(index < 0) return dd->dp.bg;
+	if(index < 0) return CurrentDevice()->dp.bg;
 	else return R_ColorTable[abs(index) % R_ColorTableSize];
     }
     return 0;		/* should not occur */
@@ -4737,7 +4723,7 @@ void InitColors()
 
     /* Install Default Palette */
     for(i=0 ; DefaultPalette[i] ; i++)
-	R_ColorTable[i] = str2col(DefaultPalette[i], NULL);
+	R_ColorTable[i] = str2col(DefaultPalette[i]);
     R_ColorTableSize = i;
 }
 
@@ -4797,7 +4783,7 @@ unsigned int LTYpar(SEXP value, int index)
     }
     else if(isReal(value)) {
 	code = REAL(value)[index];
-	if(!FINITE(code) || code <= 0)
+	if(!R_FINITE(code) || code <= 0)
 	    return NA_INTEGER;
 	code = (code-1) % nlinetype;
 	return linetype[code].pattern;

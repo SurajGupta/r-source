@@ -15,11 +15,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 
 /* extra commands for R */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
 #include <stdio.h>
 #include "Defn.h"
 #include "Fileio.h"
@@ -27,6 +32,24 @@
 #include <time.h>
 #include <windows.h>
 #include "graphapp/ga.h"
+
+static char DefaultFileName[MAX_PATH];
+
+/* 
+ * replacement for Windows function that uses root directory
+ */
+char * tmpnam(char * str)
+{
+    char *tmp, *tmp2;
+
+    if(str) tmp2 = str; else tmp2 = DefaultFileName;
+    tmp = getenv("TMP");
+    if (!tmp) tmp = getenv("TEMP");
+    if (!tmp) tmp = getenv("R_USER");
+    sprintf(tmp2, "%s/RtmpXXXXXX", tmp);
+    mktemp(tmp2); /* Windows function to replace X's */
+    return(tmp2);
+}
 
 
 SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -44,7 +67,7 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     /* try to get a new file name */
     tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
-    if (!tmp) tmp = getenv("R_HOME");
+    if (!tmp) tmp = getenv("R_USER");
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
         sprintf(tm, "%s\\%s%d", tmp, tn, rand());
@@ -110,9 +133,9 @@ SEXP do_helpstart(SEXP call, SEXP op, SEXP args, SEXP env)
     FILE *ff;
 
     checkArity(op, args);
-    home = getenv("RHOME");
+    home = getenv("R_HOME");
     if (home == NULL)
-	error("RHOME not set\n");
+	error("R_HOME not set\n");
     sprintf(buf, "%s\\doc\\html\\index.html", home);
     ff = fopen(buf, "r");
     if (!ff) {
@@ -160,9 +183,9 @@ SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
 	    error(buf);
 	}
 	fclose(ff);
-	home = getenv("RHOME");
+	home = getenv("R_HOME");
 	if (home == NULL)
-	    error("RHOME not set\n");
+	    error("R_HOME not set\n");
 	ShellExecute(NULL, "open", item, NULL, home, SW_SHOW);
     } else if (type == 2) {
 	if (!isString(CADDR(args)))
@@ -233,12 +256,12 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 	strcpy(isNT, "win32s");
 	break;	
     default:
-	sprintf(isNT, "ID=%d", verinfo.dwPlatformId);
+	sprintf(isNT, "ID=%d", (int)verinfo.dwPlatformId);
 	break;
     }
     
     sprintf(ver, "Windows %s %d.%d (build %d) %s", isNT,
-	    verinfo.dwMajorVersion, verinfo.dwMinorVersion,
+	    (int)verinfo.dwMajorVersion, (int)verinfo.dwMinorVersion,
 	    LOWORD(verinfo.dwBuildNumber), verinfo.szCSDVersion);
     
     PROTECT(ans = allocVector(STRSXP, 1));

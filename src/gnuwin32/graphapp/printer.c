@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* Support for printer
@@ -25,6 +25,7 @@
  */
 
 #include "internal.h"
+#include "rui.h"
 
 
 /*
@@ -98,7 +99,7 @@ printer newprinter(double width, double height)
     if ( !hDC) return NULL;
     obj = new_object(PrinterObject,(HANDLE) hDC,get_printer_base());
     if ( !obj ) {
-	askok("Insufficient memory for new printer");
+	R_ShowMessage("Insufficient memory for new printer");
 	DeleteDC(hDC);
 	return NULL;
     }
@@ -132,7 +133,7 @@ printer newprinter(double width, double height)
     docinfo.fwType = 0;
 
     if (StartDoc(hDC, &docinfo) <= 0) {
-	askok("Unable to start the print job");
+	R_ShowMessage("Unable to start the print job");
 	del(obj);
 	return NULL;
     }

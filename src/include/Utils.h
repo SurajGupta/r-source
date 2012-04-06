@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  * Generally useful  UTILITIES  *NOT* relying on R internals (from Defn.h)
@@ -30,6 +30,7 @@
 void	isort(int*,     int);
 void	rsort(double*, int);
 void	csort(complex*, int);
+void    rsort_with_index(double *, int *, int);
 void	revsort(double*, int*, int);/* reverse; sort i[] alongside */
 void	iPsort(int*,    int, int);
 void	rPsort(double*, int, int);

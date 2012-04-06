@@ -4,10 +4,12 @@
       .C(name, \dots, NAOK=FALSE, DUP=TRUE)
 .Fortran(name, \dots, NAOK=FALSE, DUP=TRUE)
 .External(name, \dots)
+.Call(name, \dots)
 }
 \alias{.C}
 \alias{.Fortran}
 \alias{.External}
+\alias{.Call}
 \arguments{
 \item{name}{a character string giving the name of a C function or
   Fortran subroutine.}
@@ -26,6 +28,10 @@ make calls to C and Fortran code.
 \code{.External} can be used to call
 compiled code that uses \R objects in the same way as internal \R
 functions. There is no documentation to help you write this sort of code.
+
+\code{.Call} can be used call compiled code which makes use of internal
+\R objects.  The arguments are passed to the C code as a sequence of
+\R objects.  It is included to provide compatibility with S version 4.
 }
 \value{
 The functions \code{.C} and \code{.Fortran} return a list similar to the \code{\dots}
@@ -46,14 +52,17 @@ These calls are typically made in conjunction with
 \    R \tab     C \tab     Fortran\cr
 integer \tab int * \tab integer\cr
 real \tab double * \tab double precision\cr
-complex \tab complex * \tab double precision\cr
+complex \tab complex * \tab double complex\cr
 logical \tab int * \tab integer \cr
 character \tab char ** \tab [compiler dependent]\cr
 list \tab void * (SEXP *)\tab \cr
 other \tab void * (SEXP)\tab \cr
 }
     The C type \code{complex} is defined in \file{Complex.h} as a
-    \code{typedef struct {double r; double i;}}.
+    \code{typedef struct {double r; double i;}}. Fortran type
+    \code{double complex} is an extension to the Fortran standard, and
+    the availibility of a mapping of \code{complex} to Fortran may be
+    compiler dependent.
 
     \emph{Note:} The C types corresponding to \code{integer} and
     \code{logical} are \code{int}, not \code{long} as in S.
@@ -94,6 +103,10 @@ affected, e.g.,
 In this case the output variable didn't exist before the call so it can't
 cause trouble. If the input variable is not changed in \code{Cfunction} you are
 safe.
+
+Also note that with \code{DUP=FALSE}, lists are passed in the internal
+R format \code{(SEXP)} like any other non-atomic object. The accessor
+macros in \code{Rinternals.h} are needed to get at the list elements.
 }
 
 \section{Header files for external code}{

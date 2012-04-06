@@ -2,8 +2,8 @@ include MkRules
 
 HELP=YES
 
-PACKAGES=base eda lqs modreg mva stepfun
-RPREFIX=rw0642
+PACKAGES=base eda lqs modreg mva stepfun ts
+RPREFIX=rw0650
 
 ifdef DEBUG
  OPTFLAGS=-g -O2
@@ -13,32 +13,22 @@ else
  DLLFLAGS=-s 
 endif
 
-DIRS=  . ../nmath ../appl ../main
 R-DLLFLAGS= $(STRIPFLAG) -mwindows
 R-DLLLIBS=-L. $(FLIBS) -lwsock32 -lcomctl32
-SOURCES=$(foreach i, $(DIRS), $(wildcard $i/*.c $i/*.f))
-UFILES= ../unix/devPS.c ../unix/devPicTeX.c ../unix/sock.c ../unix/Rsock.c
-LIBFILES=$(foreach i, $(PACKAGES), ../../library/$i)
-
-OBJSO=$(foreach i, $(SOURCES) $(UFILES) $(EXTRAFILES), $(basename $i).o)
-OBJS-NO=
-OBJS=$(filter-out $(OBJS-NO),$(OBJSO))
-PKGS=$(foreach i, $(PACKAGES), pkg-$i)
-DIRSOBJ=$(foreach i, $(DIRS) ../unix , $i/*.o)
+SOURCES=$(wildcard *.c *.f)
+OBJS=$(foreach i, $(SOURCES), $(basename $i).o)
+MAINLIBS=libmain.a libappl.a libmath.a
 EXTRALIBS=rx.a ga.a gl.a xdr.a em.a
+
+LIBFILES=$(foreach i, $(PACKAGES), ../../library/$i)
+PKGS=$(foreach i, $(PACKAGES), pkg-$i)
 
 .PHONY:  clean veryclean  rlibs fixfiles front-ends
 
 all: rbuild rdemo rpackage
 
-CFLAGS=$(OPTFLAGS) -I../include
+CFLAGS=$(OPTFLAGS) -I../include -I.
 FFLAGS=$(OPTFLAGS)
-
-../main/saveload-CFLAGS=-Ixdr
-../main/character-CFLAGS=-Iregex
-../main/platform-CFLAGS=-Iregex
-../unix/sock-CFLAGS=-DWin32
-../unix/Rsock-CFLAGS=-DWin32
 
 rbuild: fixfiles makeMakedeps rlibs ../../bin/R.dll libR.a \
 	../include/globalvar.h front-ends COPYRIGHTS
@@ -51,7 +41,10 @@ rinstaller:
 rdemo:  libR.a
 	make -C ../../demos/dynload -f ../../src/gnuwin32/MkDyndemo
 
-rlibs $(EXTRALIBS):
+rlibs: 
+	$(MAKE) -C ../appl OPTFLAGS="$(OPTFLAGS)"
+	$(MAKE) -C ../main OPTFLAGS="$(OPTFLAGS)"
+	$(MAKE) -C ../nmath OPTFLAGS="$(OPTFLAGS)"
 	$(MAKE) -C ./regex
 	$(MAKE) -C ./graphapp
 	$(MAKE) -C ./getline
@@ -67,7 +60,7 @@ fixfiles:
 	$(CP) -pr unzip ../..
 	$(RM) ../../unzip/*.h
 
-R.dll: R.a $(EXTRALIBS)
+R.dll: R.a $(MAINLIBS) $(EXTRALIBS)
 
 ../../bin/R.dll: fixfiles rlibs R.dll
 	$(MKDIR) -p ../../bin
@@ -78,7 +71,7 @@ front-ends: libR.a
 
 R.a: $(OBJS)
 	@$(ECHO) -------- Building $@ --------
-	$(AR) cr R.a $(DIRSOBJ)
+	$(AR) cr R.a $^
 	$(RANLIB) R.a
 
 
@@ -92,17 +85,12 @@ libR.a:  R.exp
 R.exp: R.exp1
 	(diff R.exp R.exp1 > /dev/null) || $(CP) R.exp1 R.exp
 
-R.exp1: R.a $(EXTRALIBS) exported-vars
+R.exp1: R.a $(MAINLIBS) $(EXTRALIBS) exported-vars
 	$(ECHO) EXPORTS > $@
-	$(NM) R.a $(EXTRALIBS) > RDefs
+	$(NM) R.a $(MAINLIBS) $(EXTRALIBS) > RDefs
 	$(SED) -n "/^........ [T] _/s/^........ [T] _/ /p" RDefs >> $@
 	$(CAT) exported-vars >> $@
 	$(RM) RDefs
-
-../main/gram.c: ;
-
-../nmath/fround.o: ../nmath/fround.c
-	$(CC) -I../include  -o $@ -c $^
 
 # avoid building globalvar.h with errors
 ../include/globalvar.h: exported-vars
@@ -134,7 +122,7 @@ ziponly-%:
 bootstrap-DLLNM=boott
 
 clean: cleanwin
-	$(RM) -f $(OBJS) $(WINOBJS) *.a ../*/*.d
+	$(RM) -f ../*/*.o $(WINOBJS) *.a ../*/*.d ../*/Makedeps
 
 distclean veryclean: clean
 	$(RM) -rf R.exp ../../bin ../../library
@@ -175,8 +163,9 @@ bindist:
 	$(CP) -p ../../etc/Rconsole $(RPREFIX)/etc/Rconsole
 	$(CP) -p ../../etc/Rdevga $(RPREFIX)/etc/Rdevga
 	$(CP) -p ../../etc/rgb.txt $(RPREFIX)/etc/rgb.txt
-	$(MKDIR) $(RPREFIX)/doc
+	$(MKDIR) $(RPREFIX)/doc $(RPREFIX)/doc/manual
 	$(CP) -pr ../../doc/html $(RPREFIX)/doc
+	$(CP) -p ../doc/manual/Rd.sty $(RPREFIX)/doc/manual
 	$(CP) -p ../../COPYING COPYRIGHTS ../../FAQ ../../NEWS \
 		../../Y2K $(RPREFIX)
 	$(CP) -p readme $(RPREFIX)/README
@@ -194,7 +183,7 @@ bindist:
 	unzip anindex.zip
 	$(RM) anindex.zip
 	zip -rmX $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
-	zip -rmX $(RPREFIX)l.zip $(RPREFIX)/library/*/latex
+	zip -rmX $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
 	zip -rX $(RPREFIX)b.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
 
@@ -207,6 +196,7 @@ srcdist:
 	$(CP)  -pr ./* ../src/gnuwin32
 	$(RM) -r ../src/gnuwin32/old ../src/gnuwin32/*.zip
 	$(RM) -r ../src/gnuwin32/installer/unzip
+	$(RM) -f ../src/gnuwin32/unzip/*.dll
 	$(MAKE) -C ../src/gnuwin32 cleanwin
 	mv ../src .
 	$(RM) $(RPREFIX)s.zip
@@ -214,23 +204,24 @@ srcdist:
 	$(RM) -r src
 
 
-#taken from ../include/makefile.in
-SRC_HEADERS = S.h S_compat.h f2c.h Arith.h Complex.h Error.h Errormsg.h \
-	 Fortran.h Applic.h Blas.h Linpack.h Mathlib.h Memory.h PrtUtil.h \
-	 Random.h Rinternals.h Utils.h Platform.h FFDecl.h FFTab.h globalvar.h
+#taken from ../include/Makefile.in
+SRC_HEADERS = Applic.h Arith.h Blas.h Complex.h Error.h Errormsg.h \
+	Fortran.h Linpack.h Mathlib.h Memory.h PrtUtil.h Random.h \
+	Rdefines.h Rinternals.h S.h S_compat.h Utils.h f2c.h
+OBJ_HEADERS = Rconfig.h Rversion.h
+GW32_HEADERS = globalvar.h
 
 packagedist:
 	$(RM) -r $(RPREFIX)sp.zip $(RPREFIX)
 	$(MKDIR) $(RPREFIX) $(RPREFIX)/src $(RPREFIX)/src/include 
 	$(MKDIR) $(RPREFIX)/src/library $(RPREFIX)/src/gnuwin32 
-	$(MKDIR) $(RPREFIX)/src/gnuwin32/help
 	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll $(RPREFIX)/src/gnuwin32
 	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
-	$(CP) -p help/* $(RPREFIX)/src/gnuwin32/help
+	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
 	$(MAKE) -C $(RPREFIX)/src/gnuwin32/help clean
-	$(CP) -p $(foreach i,$(SRC_HEADERS),../include/$i) $(RPREFIX)/src/include
+	$(CP) -p $(foreach i,$(SRC_HEADERS) $(OBJ_HEADERS),../include/$i) $(RPREFIX)/src/include
 	$(CP) readme.packages $(RPREFIX)
-	zip -r $(RPREFIX)sp.zip $(RPREFIX)
+	zip -rX $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
 
 
@@ -242,7 +233,7 @@ test: stricttests pkgtests
 
 stricttests:
 	-@$(MAKE) -C ../../tests -f ../src/gnuwin32/check/Maketests clean
-	-@$(MAKE) -C ../../tests -f ../src/gnuwin32/check/Maketests
+	-@$(MAKE) -k -C ../../tests -f ../src/gnuwin32/check/Maketests
 
 PKGS-CHK=$(foreach i, $(PACKAGES), pkgcheck-$i)
 pkgtests: $(PKGS-CHK)
@@ -255,8 +246,8 @@ pkgcheck-base:
 	@(cd ../../library/base/R-ex; rm -f *.R)
 
 # Dependencies
-CSOURCES=$(foreach i, $(DIRS), $(wildcard $i/*.c))
-DEPS=$(foreach i, $(CSOURCES) $(UFILES), $(basename $i).d)
+CSOURCES=$(wildcard *.c)
+DEPS=$(foreach i, $(CSOURCES), $(basename $i).d)
 
 .c.d:
 	@echo "making $@ from $<"

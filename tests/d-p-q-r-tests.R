@@ -5,8 +5,6 @@
 ####
 ####	Functions for  ``d/p/q/r''
 
-source(paste(getenv("SRCDIR"),"all.equal.R", sep="/"))
-
 if(!interactive()) .Random.seed <- c(0,rep(7654, 3))
 
 ###--- Discrete Distributions: Simple Consistency Checks  pZZ = cumsum(dZZ)
@@ -23,7 +21,7 @@ for(n in rpois(5, lam=6))
         eq <- all.equal(Fx, cumsum(fx), tol= 1e-14)
         if(!is.logical(eq) || !eq) print(eq)
     }
-is.sym        
+is.sym
 
 ##--- Cumulative Poisson '==' Cumulative Chi^2 :
 ##--- Abramowitz & Stegun, p.941 :  26.4.21 (26.4.2)
@@ -53,4 +51,23 @@ for(n in rbinom(n1, size = 2*n0, p = .4)) {
 	}
     }
     cat("\n")
+}
+
+##---  Gamma (incl. chi^2) Density :
+x <- round(rgamma(100, shape = 2),2)
+for(sh in round(rlnorm(30),2)) {
+    Ga <- gamma(sh)
+    for(sig in round(rlnorm(30),2)) {
+        tst <- all.equal((d1 <- dgamma(  x,   shape = sh, scale = sig)),
+                         (d2 <- dgamma(x/sig, shape = sh, scale = 1) / sig),
+                         tol = 1e-15)
+        if(!(is.logical(tst) && tst))
+            cat("ERROR: dgamma() doesn't scale:",tst,"\n",
+                "  x =", formatC(x),"\n  shape,scale=",formatC(c(sh, sig)),"\n")
+        tst <- all.equal(d1, (d3 <- 1/(Ga * sig^sh) * x^(sh-1) * exp(-x/sig)),
+                         tol= 1e-14)
+        if(!(is.logical(tst) && tst))
+            cat("NOT Equal:",tst,"\n x =", formatC(x),
+                "\n  shape,scale=",formatC(c(sh, sig)),"\n")
+    }
 }

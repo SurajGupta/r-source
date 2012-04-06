@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Print.h"
@@ -56,29 +60,6 @@ static SEXP Options(void)
     return install(".Options");
 }
 
-static SEXP optLogical(int k) {
-    SEXP v = allocVector(LGLSXP, 1);
-    LOGICAL(v)[0] = k;
-    return v;
-}
-
-static SEXP optInteger(int k)
-{
-    SEXP v = allocVector(INTSXP, 1);
-    INTEGER(v)[0] = k;
-    return v;
-}
-
-static SEXP optString(SEXP c)
-{
-    SEXP v;
-    PROTECT(c);
-    v = allocVector(STRSXP, 1);
-    STRING(v)[0] = c;
-    UNPROTECT(1);
-    return v;
-}
-
 static SEXP FindTaggedItem(SEXP lst, SEXP tag)
 {
     for ( ; lst!=R_NilValue ; lst=CDR(lst)) {
@@ -90,11 +71,7 @@ static SEXP FindTaggedItem(SEXP lst, SEXP tag)
 
 SEXP GetOption(SEXP tag, SEXP rho)
 {
-#ifdef OLD
-    SEXP opt = findVar(Options(), rho);
-#else
     SEXP opt = findVar(Options(), R_NilValue);
-#endif
     if (!isList(opt))
 	error("corrupted options list\n");
     opt = FindTaggedItem(opt, tag);
@@ -106,7 +83,7 @@ int GetOptionWidth(SEXP rho)
     int w;
     w = asInteger(GetOption(install("width"), rho));
     if (w < MIN_WIDTH || w > MAX_WIDTH) {
-	warning("invalid printing width, used 80\n");
+	warning("invalid printing width, used 80");
 	return 80;
     }
     return w;
@@ -117,7 +94,7 @@ int GetOptionDigits(SEXP rho)
     int d;
     d = asInteger(GetOption(install("digits"), rho));
     if (d < MIN_DIGITS || d > MAX_DIGITS) {
-	warning("invalid printing digits, used 7\n");
+	warning("invalid printing digits, used 7");
 	return 7;
     }
     return d;
@@ -176,13 +153,24 @@ int R_SetOptionWidth(int w)
     return INTEGER(v)[0];
 }
 
+int R_SetOptionWarn(int w)
+{
+    SEXP t, v;
+ 
+    t = install("warn");
+    PROTECT(v = ScalarInteger(w));
+    v = SetOption(t, v);
+    UNPROTECT(1);
+    return INTEGER(v)[0];
+}
+
 /* Note that options are stored as a dotted pair list */
 /* This is barely historical, but is also useful. */
 
 void InitOptions(void)
 {
     SEXP t, val, v;
-    PROTECT(v = val = allocList(10));
+    PROTECT(v = val = allocList(11));
 
     TAG(v) = install("prompt");
     CAR(v) = mkString("> ");
@@ -197,15 +185,15 @@ void InitOptions(void)
     v = CDR(v);
 
     TAG(v) = install("expressions");
-    CAR(v) = optInteger(100);
+    CAR(v) = ScalarInteger(100);
     v = CDR(v);
 
     TAG(v) = install("width");
-    CAR(v) = optInteger(80);
+    CAR(v) = ScalarInteger(80);
     v = CDR(v);
 
     TAG(v) = install("digits");
-    CAR(v) = optInteger(7);
+    CAR(v) = ScalarInteger(7);
     v = CDR(v);
 
     TAG(v) = install("contrasts");
@@ -231,7 +219,13 @@ void InitOptions(void)
     TAG(v) = install("check.bounds");
     CAR(v) = allocVector(LGLSXP, 1);
     LOGICAL(CAR(v))[0] = 0;	/* no checking */
+    v = CDR(v);
     
+    TAG(v) = install("keep.source");
+    CAR(v) = allocVector(LGLSXP, 1);
+    LOGICAL(CAR(v))[0] = 0;	/* no storage of function source */
+                                /* turned on after load of base  */
+
     SYMVALUE(install(".Options")) = val;
     UNPROTECT(2);
 }
@@ -300,7 +294,8 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
        */
 
     n = length(args);
-    if (n == 1 && (isPairList(CAR(args)) || isVectorList(CAR(args)))) {
+    if (n == 1 && (isPairList(CAR(args)) || isVectorList(CAR(args)))
+        && TAG(args) == R_NilValue ) {
 	args = CAR(args);
 	n = length(args);
     }
@@ -338,42 +333,47 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		k = asInteger(argi);
 		if (k < MIN_WIDTH || k > MAX_WIDTH)
 		    errorcall(call, "invalid width parameter\n");
-		VECTOR(value)[i] = SetOption(tag, optInteger(k));
+		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "digits")) {
 		k = asInteger(argi);
 		if (k < MIN_DIGITS || k > MAX_DIGITS)
 		    errorcall(call, "invalid digits parameter\n");
-		VECTOR(value)[i] = SetOption(tag, optInteger(k));
+		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "expressions")) {
 		k = asInteger(argi);
 		if (k < 25 || k > MAX_EXPRESSIONS)
 		    errorcall(call, "expressions parameter invalid\n");
-		VECTOR(value)[i] = SetOption(tag, optInteger(k));
+		VECTOR(value)[i] = SetOption(tag, ScalarInteger(k));
 	    }
 	    else if (streql(CHAR(namei), "editor")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "invalid editor parameter\n");
-		VECTOR(value)[i] = SetOption(tag, optString(s));
+		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "continue")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "invalid continue parameter\n");
-		VECTOR(value)[i] = SetOption(tag, optString(s));
+		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "prompt")) {
 		s = asChar(argi);
 		if (s == NA_STRING || length(s) == 0)
 		    errorcall(call, "prompt parameter invalid\n");
-		VECTOR(value)[i] = SetOption(tag, optString(s));
+		VECTOR(value)[i] = SetOption(tag, ScalarString(s));
 	    }
 	    else if (streql(CHAR(namei), "contrasts")) {
 		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 2)
 		    errorcall(call, "contrasts parameter invalid\n");
 		VECTOR(value)[i] = SetOption(tag, argi);
+	    }
+	    else if (streql(CHAR(namei), "warn")) {
+		if (!isNumeric(argi) || length(argi) != 1)
+		    errorcall(call, "warn parameter invalid\n");
+                VECTOR(value)[i] = SetOption(tag, argi);
 	    }
 	    else if (streql(CHAR(namei), "echo")) {
 		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
@@ -383,7 +383,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		   time R prompts for input.
 		   */
 		R_Slave = !k;
-		VECTOR(value)[i] = SetOption(tag, optLogical(k));
+		VECTOR(value)[i] = SetOption(tag, ScalarLogical(k));
 	    }
 	    else {
 		VECTOR(value)[i] = SetOption(tag, duplicate(argi));

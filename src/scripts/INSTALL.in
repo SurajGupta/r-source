@@ -1,16 +1,17 @@
 #! /bin/sh
 
-# ${RHOME}/bin/INSTALL for installing add-on packages
+# ${R_HOME}/bin/INSTALL for installing add-on packages
 # Usage:
 #	R INSTALL [options] [-l lib] pkg_1 ... pkg_n
 
 # @configure_input@
 
-VERSION="0.1-4"
+VERSION="0.1-6"
 USAGE_MSG="Usage:  R INSTALL [options] [-l lib] pkg_1 ... pkg_n"
 
 CLEAN=false
 DEBUG=false
+ERROR=false
 BUILD_TEXT=true
 BUILD_HTML=true
 BUILD_LATEX=true
@@ -34,7 +35,7 @@ NO_PERL5_MSG="\
 ***    ftp://ftp.ci.tuwien.ac.at/pub/R"
 
 PKGS=
-lib=${RHOME}/library
+lib=${R_HOME}/library
 
 MAKE=${MAKE-@MAKE@}
 
@@ -68,10 +69,10 @@ while test -n "${1}"; do
     -l|--library)
       lib=${2}; shift ;;
     *)
-      if test -d ${1}; then
-	PKGS="${PKGS} `cd ${1}; pwd`"
+      if test -d "${1}"; then
+	PKGS="${PKGS} \"`cd "${1}"; pwd`\""
       else
-	echo "WARNING: package \`${1}' does not exist"
+	echo "WARNING: package \`"${1}"' does not exist"
       fi
       ;;
   esac
@@ -108,9 +109,9 @@ elif ${DEBUG}; then
   BUILD_HELP_OPTS="--debug ${BUILD_HELP_OPTS}"
 fi
 
-for pkg in ${PKGS}; do
-  cd ${pkg}
-  pkg=`basename ${pkg}`
+do_install () {
+  cd "${1}"
+  pkg=`basename "${1}"`
 
   mkdir -p ${lib}/${pkg} || exit 3
   echo "Installing package \`${pkg}' ..."
@@ -125,18 +126,21 @@ for pkg in ${PKGS}; do
     mkdir -p ${lib}/${pkg}/libs
     if test -f src/Makefile; then
       (cd src;
-	${MAKE} -f ${RHOME}/etc/Makeconf -f Makefile \
-	  && cp *.@SHLIBEXT@ ${lib}/${pkg}/libs; \
+	${MAKE} -f ${R_HOME}/etc/Makeconf -f Makefile \
+	  && cp *.@SHLIBEXT@ ${lib}/${pkg}/libs \
+	  || ERROR=true; \
 	if ${CLEAN}; then ${MAKE} clean; fi)
     else
       (cd src;
-	sh ${RHOME}/bin/SHLIB ${SHLIB_OPTS} \
-	   -o ${lib}/${pkg}/libs/${pkg}.@SHLIBEXT@ *.[cf]; \
+	sh ${R_HOME}/bin/SHLIB ${SHLIB_OPTS} \
+	   -o ${lib}/${pkg}/libs/${pkg}.@SHLIBEXT@ *.[cf] \
+	  || ERROR=true; \
 	if ${CLEAN}; then rm -f *.o; fi)
-    fi || {
+    fi
+    if ${ERROR}; then
       echo "ERROR: Compilation failed for package \`${pkg}'"
       exit 4
-    }
+    fi
     if ${DEBUG}; then set +x; fi
   fi
 
@@ -185,14 +189,14 @@ for pkg in ${PKGS}; do
 	echo "${NO_PERL5_MSG}"
       else
 	if ${DEBUG}; then
-	  echo "  ${RHOME}/bin/build-help ${BUILD_HELP_OPTS} ../${pkg} ${lib}"
+	  echo "  ${R_HOME}/bin/build-help ${BUILD_HELP_OPTS} ../${pkg} ${lib}"
 	fi
-	${RHOME}/bin/build-help ${BUILD_HELP_OPTS} ../${pkg} ${lib}
-	${RHOME}/bin/Rd2contents ../${pkg} > ${lib}/${pkg}/CONTENTS
-	if test ${lib} = ${RHOME}/library; then 
-	  ${RHOME}/bin/build-help --htmllists
-	  cat ${RHOME}/library/*/CONTENTS \
-	    > ${RHOME}/doc/html/search/index.txt
+	${R_HOME}/bin/build-help ${BUILD_HELP_OPTS} ../${pkg} ${lib}
+	${R_HOME}/bin/Rd2contents ../${pkg} > ${lib}/${pkg}/CONTENTS
+	if test ${lib} = ${R_HOME}/library; then 
+	  ${R_HOME}/bin/build-help --htmllists
+	  cat ${R_HOME}/library/*/CONTENTS \
+	    > ${R_HOME}/doc/html/search/index.txt
 	fi	
       fi
       if test -n "${USE_ZIP}" -a -n "${R_UNZIPCMD}" -a -n "${R_ZIPCMD}"; then
@@ -219,9 +223,13 @@ for pkg in ${PKGS}; do
     fi
   fi
 
+  chmod -R a+r ${lib}/${pkg}
+
   echo " DONE (${pkg})"
   echo
-done
+}
+
+eval "for pkg in ${PKGS}; do do_install \"\${pkg}\"; done"
 
 echo "DONE (INSTALL)"
 

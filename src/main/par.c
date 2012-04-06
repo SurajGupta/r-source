@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *
@@ -37,9 +37,13 @@
  *	Query(.)	[ par(what) ]
  */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
 #include "Defn.h"
 #include "Mathlib.h"
-#include "Graphics.h" /* "GPar" structure + COMMENTS */
+#include "Graphics.h"		/* "GPar" structure + COMMENTS */
 
 
 /* par(.)'s call */
@@ -80,19 +84,19 @@ static void naIntCheck(int x, char *s)
 
 static void posRealCheck(double x, char *s)
 {
-    if (!FINITE(x) || x <= 0)
+    if (!R_FINITE(x) || x <= 0)
 	par_error(s);
 }
 
 static void nonnegRealCheck(double x, char *s)
 {
-    if (!FINITE(x) || x < 0)
+    if (!R_FINITE(x) || x < 0)
 	par_error(s);
 }
 
 static void naRealCheck(double x, char *s)
 {
-    if (!FINITE(x))
+    if (!R_FINITE(x))
 	par_error(s);
 }
 
@@ -100,7 +104,7 @@ static void naRealCheck(double x, char *s)
 static void BoundsCheck(double x, double a, double b, char *s)
 {
 /* Check if   a <= x <= b */
-    if (!FINITE(x) || (FINITE(a) && x < a) || (FINITE(b) && x > b))
+    if (!R_FINITE(x) || (R_FINITE(a) && x < a) || (R_FINITE(b) && x > b))
 	par_error(s);
 }
 
@@ -146,7 +150,7 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	dd->dp.ask = dd->gp.ask = (ix != 0);
     }
     else if (streql(what, "bg")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.bg = dd->gp.bg = ix;
 	dd->dp.new = dd->gp.new = 0;
@@ -197,31 +201,31 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
     }
     else if (streql(what, "col")) {
 	lengthCheck(what, value, 1);
-	ix = RGBpar(value, 0, dd);
+	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.col = dd->gp.col = ix;
     }
     else if (streql(what, "col.main")) {
 	lengthCheck(what, value, 1);
-	ix = RGBpar(value, 0, dd);
+	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.colmain = dd->gp.colmain = ix;
     }
     else if (streql(what, "col.lab")) {
 	lengthCheck(what, value, 1);
-	ix = RGBpar(value, 0, dd);
+	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.collab = dd->gp.collab = ix;
     }
     else if (streql(what, "col.sub")) {
 	lengthCheck(what, value, 1);
-	ix = RGBpar(value, 0, dd);
+	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.colsub = dd->gp.colsub = ix;
     }
     else if (streql(what, "col.axis")) {
 	lengthCheck(what, value, 1);
-	naIntCheck(ix = RGBpar(value, 0, dd), what);
+	naIntCheck(ix = RGBpar(value, 0), what);
 	dd->dp.colaxis = dd->gp.colaxis = ix;
     }
     else if (streql(what, "crt")) {
@@ -239,7 +243,7 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
     }
     else if (streql(what, "fg")) {
 	lengthCheck(what, value, 1);
-	ix = RGBpar(value, 0, dd);
+	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->dp.col = dd->gp.col = dd->dp.fg = dd->gp.fg = ix;
     }
@@ -619,17 +623,17 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
     else if (streql(what, "tck")) {
 	lengthCheck(what, value, 1);	x = asReal(value);
 	dd->dp.tck = dd->gp.tck = x;
-	if (FINITE(x))
+	if (R_FINITE(x))
 	    dd->dp.tcl = dd->gp.tcl = NA_REAL;
-	else if(!FINITE(dd->dp.tcl))
+	else if(!R_FINITE(dd->dp.tcl))
 	    dd->dp.tcl = dd->gp.tcl = -0.5;
     }
     else if (streql(what, "tcl")) {
 	lengthCheck(what, value, 1);	x = asReal(value);
 	dd->dp.tcl = dd->gp.tcl = x;
-	if (FINITE(x))
+	if (R_FINITE(x))
 	    dd->dp.tck = dd->gp.tck = NA_REAL;
-	else if (!FINITE(dd->dp.tck))
+	else if (!R_FINITE(dd->dp.tck))
 	    dd->dp.tck = dd->gp.tck = 0.02;	/* S Default */
     }
     else if (streql(what, "tmag")) {
@@ -733,11 +737,11 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	dd->dp.xlog = dd->gp.xlog = (ix != 0);
     }
     else if (streql(what, "xpd")) {
-	lengthCheck(what, value, 1);	
+	lengthCheck(what, value, 1);
 	ix = asInteger(value);
-	if (ix==NA_INTEGER)
+	if (ix == NA_INTEGER)
 	    dd->dp.xpd = dd->gp.xpd = 2;
-	else 
+	else
 	    dd->dp.xpd = dd->gp.xpd = (ix != 0);
     }
     else if (streql(what, "yaxp")) {
@@ -772,7 +776,7 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	    par_error(what);
 	dd->dp.ylog = dd->gp.ylog = (ix != 0);
     }
-    else warningcall(gcall, "parameter \"%s\" can't be set\n", what);
+    else warningcall(gcall, "parameter \"%s\" can't be set", what);
     return 0;/* never used; to keep -Wall happy */
 }
 
@@ -797,7 +801,7 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	dd->gp.ann = (ix != 0);
     }
     else if (streql(what, "bg")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.bg = ix;
     }
@@ -846,27 +850,27 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	dd->gp.cexaxis = x;
     }
     else if (streql(what, "col")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.col = ix;
     }
     else if (streql(what, "col.main")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.colmain = ix;
     }
     else if (streql(what, "col.lab")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.collab = ix;
     }
     else if (streql(what, "col.sub")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.colsub = ix;
     }
     else if (streql(what, "col.axis")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.colaxis = ix;
     }
@@ -882,7 +886,7 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	else par_error(what);
     }
     else if (streql(what, "fg")) {
-	lengthCheck(what, value, 1);	ix = RGBpar(value, 0, dd);
+	lengthCheck(what, value, 1);	ix = RGBpar(value, 0);
 	naIntCheck(ix, what);
 	dd->gp.fg = ix;
     }
@@ -1041,11 +1045,11 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	else par_error(what);
     }
     else if (streql(what, "xpd")) {
-	lengthCheck(what, value, 1);	
+	lengthCheck(what, value, 1);
 	ix = asInteger(value);
 	if (ix==NA_INTEGER)
 	    dd->gp.xpd = 2;
-	else 
+	else
 	    dd->gp.xpd = (ix != 0);
     }
     else if (streql(what, "yaxp")) {
@@ -1074,7 +1078,7 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	    dd->gp.yaxt = ix;
 	else par_error(what);
     }
-    else warning("parameter \"%s\" couldn't be set in high-level plot() function\n", what);
+    else warning("parameter \"%s\" couldn't be set in high-level plot() function", what);
 }
 
 

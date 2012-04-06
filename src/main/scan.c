@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Fileio.h"
@@ -80,6 +84,9 @@ static void unscanchar(int c)
 
 static int fillBuffer(char *buffer, SEXPTYPE type, int strip)
 {
+/* The basic reader function, called from scanVector() and scanFrame().
+   Reads into _buffer_	which later will be read out by extractItem().
+*/
     char *bufp = buffer;
     int c, quote, filled;
 
@@ -173,7 +180,7 @@ static void expected(char *what, char *got)
     }
     else
 	fclose(fp);
-    error("\"scan\" expected %s got \"%s\"\n", what, got);
+    error("\"scan\" expected %s, got \"%s\"\n", what, got);
 }
 
 static void extractItem(char *buffer, SEXP ans, int i)
@@ -415,10 +422,10 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 
  done:
     if (badline)
-	warning("line %d did not have %d elements\n", badline, nc);
+	warning("line %d did not have %d elements", badline, nc);
 
     if (colsread != 0) {
-	warning("number of items read is not a multiple of the number of columns\n");
+	warning("number of items read is not a multiple of the number of columns");
 	buffer[0] = '\0';   /* this is an NA */
 	for (ii = colsread; ii < nc; ii++) {
 	    extractItem(buffer, VECTOR(ans)[ii], n);

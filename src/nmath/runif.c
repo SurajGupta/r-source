@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -32,14 +32,14 @@ double runif(double a, double b)
 {
     if (
 #ifdef IEEE_754
-	!finite(a) || !finite(b) ||
+	!R_FINITE(a) || !R_FINITE(b) ||
 #endif
 	b < a) {
 	ML_ERROR(ME_DOMAIN);
 	return ML_NAN;
     }
-    if (a == b) 
+    if (a == b)
 	return a;
-    else 
+    else
 	return a + (b - a) * sunif();
 }

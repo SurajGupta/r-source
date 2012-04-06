@@ -14,16 +14,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  SYNOPSIS
  *
- *    #include "Mathlib.h"
- *    double dgamma(double x, double shape, double scale);
+ *	#include "Mathlib.h"
+ *	double dgamma(double x, double shape, double scale);
  *
  *  DESCRIPTION
  *
- *    Computes the density of the gamma distribution.
+ *     Computes the density of the gamma distribution.
  */
 
 #include "Mathlib.h"
@@ -50,6 +50,7 @@ double dgamma(double x, double shape, double scale)
 	}
 	return 1 / scale;
     }
-    x = x / scale;
+    x /= scale;
     return exp((shape - 1) * log(x) - lgammafn(shape) - x) / scale;
 }
+

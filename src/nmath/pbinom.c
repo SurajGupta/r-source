@@ -14,13 +14,13 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
  *    #include "Mathlib.h"
  *    double pbinom(double x, double n, double p)
- *  
+ *
  *  DESCRIPTION
  *
  *    The distribution function of the binomial distribution.
@@ -33,7 +33,7 @@ double pbinom(double x, double n, double p)
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(n) || ISNAN(p))
 	return x + n + p;
-    if (!FINITE(n) || !FINITE(p)) {
+    if (!R_FINITE(n) || !R_FINITE(p)) {
 	ML_ERROR(ME_DOMAIN);
 	return ML_NAN;
     }

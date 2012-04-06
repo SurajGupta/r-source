@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Random.h"
@@ -49,10 +53,10 @@ static void GetRNGstate()
 	if(LENGTH(seeds) > 1 && LENGTH(seeds) < len_seed + 1) {
 	    if(LENGTH(seeds) == RNG_Table[WICHMANN_HILL].n_seed) {
 		/* BACKWARDS COMPATIBILITY: */
-		warning("Wrong length .Random.seed; forgot initial RNGkind? set to Wichmann-Hill\n");
+		seed_off = 1;
+		warning("Wrong length .Random.seed; forgot initial RNGkind? set to Wichmann-Hill");
 		/* compatibility mode */
 		RNG_kind = WICHMANN_HILL;
-		seed_off = 1;
 	    } else {
 		error(".Random.seed has wrong length.\n");
 	    }
@@ -160,9 +164,9 @@ static void random1(double (*f) (), double *a, int na, double *x, int n)
     errno = 0;
     for (i = 0; i < n; i++) {
 	ai = a[i % na];
-	if (FINITE(ai)) {
+	if (R_FINITE(ai)) {
 	    x[i] = MATH_CHECK(f(ai));
-	    if (!FINITE(x[i])) naflag = 1;
+	    if (!R_FINITE(x[i])) naflag = 1;
 	}
 	else x[i] = NA_REAL;
     }
@@ -215,7 +219,7 @@ SEXP do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error("internal error in do_random1\n");
 	}
 	if (naflag)
-	    warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
+	    warningcall(call, "NAs produced");
 
 	PutRNGstate();
 	UNPROTECT(1);
@@ -232,9 +236,9 @@ static void random2(double (*f) (), double *a, int na, double *b, int nb,
     for (i = 0; i < n; i++) {
 	ai = a[i % na];
 	bi = b[i % nb];
-	if (FINITE(ai) && FINITE(bi)) {
+	if (R_FINITE(ai) && R_FINITE(bi)) {
 	    x[i] = MATH_CHECK(f(ai, bi));
-	    if (!FINITE(x[i])) naflag = 1;
+	    if (!R_FINITE(x[i])) naflag = 1;
 	}
 	else x[i] = NA_REAL;
     }
@@ -296,7 +300,7 @@ SEXP do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error("internal error in do_random2\n");
 	}
 	if (naflag)
-	    warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
+	    warningcall(call,"NAs produced");
 
 	PutRNGstate();
 	UNPROTECT(2);
@@ -315,9 +319,9 @@ static void random3(double (*f) (), double *a, int na, double *b, int nb,
 	ai = a[i % na];
 	bi = b[i % nb];
 	ci = c[i % nc];
-	if (FINITE(ai) && FINITE(bi) && FINITE(ci)) {
+	if (R_FINITE(ai) && R_FINITE(bi) && R_FINITE(ci)) {
 	    x[i] = MATH_CHECK(f(ai, bi, ci));
-	    if (!FINITE(x[i])) naflag = 1;
+	    if (!R_FINITE(x[i])) naflag = 1;
 	}
 	else x[i] = NA_REAL;
     }
@@ -374,7 +378,7 @@ SEXP do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error("internal error in do_random2\n");
 	}
 	if (naflag)
-	    warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
+	    warningcall(call,"NAs produced");
 
 	PutRNGstate();
 	UNPROTECT(3);
@@ -493,7 +497,7 @@ static void FixupProb(SEXP call, double *p, int n, int k, int replace)
     npos = 0;
     sum = 0.;
     for (i = 0; i < n; i++) {
-	if (!FINITE(p[i]))
+	if (!R_FINITE(p[i]))
 	    errorcall(call, "NA in probability vector\n");
 	if (p[i] < 0)
 	    errorcall(call, "non-positive probability\n");

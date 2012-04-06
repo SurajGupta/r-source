@@ -14,15 +14,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  */
 
 #include "Mathlib.h"
 
 double pt(double x, double n)
 {
-/* return  P[ T <= x ]	where  
- * T ~ t_{n}  (t distrib. with n degrees of freedom).	
+/* return  P[ T <= x ]	where
+ * T ~ t_{n}  (t distrib. with n degrees of freedom).
 
  *	--> ./pnt.c for NON-central
  */
@@ -36,9 +36,9 @@ double pt(double x, double n)
 	return ML_NAN;
     }
 #ifdef IEEE_754
-    if(!finite(x))
+    if(!R_FINITE(x))
 	return (x < 0) ? 0 : 1;
-    if(!finite(n))
+    if(!R_FINITE(n))
 	return pnorm(x, 0.0, 1.0);
 #endif
     if (n > 4e5) { /*-- Fixme(?): test should depend on `n' AND `x' ! */

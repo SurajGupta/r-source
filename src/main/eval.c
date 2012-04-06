@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998-1999	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +15,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#undef HASHING
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #define ARGUSED(x) LEVELS(x)
 
@@ -38,14 +45,8 @@ void isintrpt(){}
 extern void ProcessEvents();
 #endif
 
-/* NEEDED: A fixup is needed in browser, because it */
-/* can trap errors, and currently does not reset the */
-/* limit to the right value. */
-
-
-/* These are not ifdef'ed to keep main etc happy. */
-extern int R_EvalDepth;
-extern int R_EvalCount;
+/* NEEDED: A fixup is needed in browser, because it can trap errors,
+ *	and currently does not reset the limit to the right value. */
 
 
 /* Return value of "e" evaluated in "rho". */
@@ -69,15 +70,15 @@ SEXP eval(SEXP e, SEXP rho)
 	isintrpt();
     }
 #endif
-#ifdef Win32  
+#ifdef Win32
     if ((R_EvalCount++ % 100) == 0) {
 	ProcessEvents();
-/* Is this safe? R_EvalCount is not used in other part and 
+/* Is this safe? R_EvalCount is not used in other part and
  * don't want to overflow it
 */
-        R_EvalCount = 0 ;
+	R_EvalCount = 0 ;
     }
-#endif   
+#endif
 
     tmp = R_NilValue;		/* -Wall */
 
@@ -95,6 +96,9 @@ SEXP eval(SEXP e, SEXP rho)
     case ENVSXP:
     case CLOSXP:
     case VECSXP:
+#ifndef OLD
+    case EXPRSXP:
+#endif
 	tmp = e;
 	break;
     case SYMSXP:
@@ -145,6 +149,7 @@ SEXP eval(SEXP e, SEXP rho)
 	}
 	tmp = PRVALUE(e);
 	break;
+#ifdef OLD
     case EXPRSXP:
 	{
 	    int i, n;
@@ -153,6 +158,7 @@ SEXP eval(SEXP e, SEXP rho)
 		tmp = eval(VECTOR(e)[i], rho);
 	}
 	break;
+#endif
     case LANGSXP:
 	if (TYPEOF(CAR(e)) == SYMSXP)
 	    PROTECT(op = findFun(CAR(e), rho));
@@ -208,7 +214,7 @@ SEXP eval(SEXP e, SEXP rho)
 
 SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 {
-    int nargs;
+    int i, nargs;
     SEXP body, formals, actuals, savedrho;
     volatile  SEXP newrho;
     SEXP f, a, tmp;
@@ -223,13 +229,22 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
     savedrho = CLOENV(op);
     nargs = length(arglist);
 
-    /*set up a context with the call in it so error has access to it */
+    /*  Set up a context with the call in it so error has access to it */
+
     begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist);
 
-    PROTECT(actuals = matchArgs(formals, arglist));
-    PROTECT(newrho = extendEnv(savedrho, formals, actuals));
+    /*  Build a list which matches the actual (unevaluated) arguments
+	to the formal paramters.  Build a new environment which
+	contains the matched pairs.  Ideally this environment sould be
+	hashed.  */
 
-    /* Use default code for unbound formals */
+    PROTECT(actuals = matchArgs(formals, arglist));
+    PROTECT(newrho = NewEnvironment(formals, actuals, savedrho));
+
+    /*  Use the default code for unbound formals.  FIXME: It looks like
+	this code should preceed the building of the environment so that
+        this will also go into the hash table.  */
+
     f = formals;
     a = actuals;
     while (f != R_NilValue) {
@@ -241,13 +256,14 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 	a = CDR(a);
     }
 
-    /* Fix up any extras that were supplied by usemethod. */
-    if( suppliedenv != R_NilValue ) {
-	for( tmp=FRAME(suppliedenv); tmp!=R_NilValue ; tmp=CDR(tmp) ){
-	    for( a=actuals; a!=R_NilValue; a=CDR(a) )
-		if( TAG(a) == TAG(tmp) )
+    /*  Fix up any extras that were supplied by usemethod. */
+
+    if (suppliedenv != R_NilValue) {
+	for (tmp = FRAME(suppliedenv); tmp != R_NilValue; tmp = CDR(tmp)) {
+	    for (a = actuals; a != R_NilValue; a = CDR(a))
+		if (TAG(a) == TAG(tmp))
 		    break;
-	    if(a == R_NilValue) {
+	    if (a == R_NilValue) {
 		FRAME(newrho) = CONS(CAR(tmp), FRAME(newrho));
 		TAG(FRAME(newrho)) = TAG(tmp);
 	    }
@@ -255,15 +271,14 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
     }
     NARGS(newrho) = nargs;
 
-    /* Terminate the previous context and start */
-    /* a new one with the correct environment. */
+    /*  Terminate the previous context and start a new one with the
+        correct environment. */
 
     endcontext(&cntxt);
 
-    /* If we have a generic function we need to use the */
-    /* sysparent of the generic as the sysparent of the */
-    /* method because the method is a straight substitution */
-    /* of the generic. */
+    /*  If we have a generic function we need to use the sysparent of
+	the generic as the sysparent of the method because the method
+	is a straight substitution of the generic.  */
 
     if( R_GlobalContext->callflag == CTXT_GENERIC )
 	begincontext(&cntxt, CTXT_RETURN, call,
@@ -271,23 +286,62 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
     else
 	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist);
 
-    /* The default return value */
+    /* The default return value is NULL.  FIXME: Is this really needed
+       or do we always get a sensible value returned?  */
 
     tmp = R_NilValue;
 
     /* Debugging */
 
     DEBUG(newrho) = DEBUG(op);
-    if( DEBUG(op) ) {
+    if (DEBUG(op)) {
 	Rprintf("debugging in: ");
 	PrintValueRec(call,rho);
+	/* Find out if the body is function with only one statement. */
+	if (isSymbol(CAR(body)))
+	    tmp = findFun(CAR(body), rho);
+	else
+	    tmp = eval(CAR(body), rho);
+	if((TYPEOF(tmp) == BUILTINSXP || TYPEOF(tmp) == SPECIALSXP)
+	   && !strcmp( PRIMNAME(tmp), "for")
+	   && !strcmp( PRIMNAME(tmp), "{")
+	   && !strcmp( PRIMNAME(tmp), "repeat")
+	   && !strcmp( PRIMNAME(tmp), "while")
+	   )
+	    goto regdb;
+	Rprintf("debug: ");
+	PrintValue(body);
+	do_browser(call,op,arglist,newrho);
     }
 
-    /* Set a longjmp target which will catch any */
-    /* explicit returns from the function body. */
+ regdb:
 
-    if (SETJMP(cntxt.cjmpbuf)) {
-	PROTECT(tmp = R_ReturnedValue);
+    /*  It isn't completely clear that this is the right place to do
+	this, but maybe (if the matchArgs above reverses the
+	arguments) it might just be perfect.  */
+
+#ifdef  HASHING
+#define HASHTABLEGROWTHRATE  1.2
+    {
+	SEXP R_NewHashTable(int, double);
+	SEXP R_HashFrame(SEXP);
+	HASHTAB(newrho) = R_NewHashTable(nargs, HASHTABLEGROWTHRATE);
+	newrho = R_HashFrame(newrho);
+    }
+#endif
+#undef  HASHING
+
+    /*  Set a longjmp target which will catch any explicit returns
+	from the function body.  */
+
+    if ((i = SETJMP(cntxt.cjmpbuf))) {
+	if (R_ReturnedValue == R_DollarSymbol) {
+	    cntxt.callflag = CTXT_RETURN;  /* turn restart off */
+	    R_GlobalContext = &cntxt;      /* put the context back */
+	    PROTECT(tmp = eval(body, newrho));
+	}
+	else
+	    PROTECT(tmp = R_ReturnedValue);
     }
     else {
 	PROTECT(tmp = eval(body, newrho));
@@ -295,9 +349,9 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
 
     endcontext(&cntxt);
 
-    if( DEBUG(op) ) {
+    if (DEBUG(op)) {
 	Rprintf("exiting from: ");
-	PrintValueRec(call,rho);
+	PrintValueRec(call, rho);
     }
     UNPROTECT(3);
     return (tmp);
@@ -308,7 +362,7 @@ static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 {
     SEXP vl;
 
-    if ((vl = findVarInFrame(FRAME(rho), symbol)) != R_UnboundValue) {
+    if ((vl = findVarInFrame(rho, symbol)) != R_UnboundValue) {
 	vl = eval(symbol, rho);	/* for promises */
 	if(NAMED(vl) == 2) {
 	    PROTECT(vl = duplicate(vl));
@@ -497,7 +551,7 @@ SEXP do_while(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, "missing value where logical needed\n");
 	else if (!cond)
 	    break;
-	if( bgn && DEBUG(rho) ) {
+	if (bgn && DEBUG(rho)) {
 	    Rprintf("debug: ");
 	    PrintValue(CAR(args));
 	    do_browser(call,op,args,rho);
@@ -597,9 +651,10 @@ SEXP do_return(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, v, vals;
     int nv = 0;
-    /* We do the evaluation here so that we */
-    /* can tag any untagged return values if */
-    /* they are specified by symbols */
+
+    /* We do the evaluation here so that we can tag any untagged
+       return values if they are specified by symbols. */
+
     PROTECT(vals = evalList(args, rho));
     a = args;
     v = vals;
@@ -634,10 +689,14 @@ SEXP do_return(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_function(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    if (length(args) < 2)
+    SEXP rval;
+
+    if (length(args) < 3)
 	WrongArgCount("lambda");
     CheckFormals(CAR(args));
-    return mkCLOSXP(CAR(args), CADR(args), rho);
+    rval = mkCLOSXP(CAR(args), CADR(args), rho);
+    setAttrib(rval, R_SourceSymbol, CADDR(args));
+    return rval;
 }
 
 
@@ -697,22 +756,41 @@ SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     expr = CAR(args);
 
-    /* it's important that the rhs get evaluated first */
-    /* because assignment is right associative i.e. */
-    /* a <- b <- c is parsed as a <- (b <- c) */
+    /*  It's important that the rhs get evaluated first because
+	assignment is right associative i.e.  a <- b <- c is parsed as
+	a <- (b <- c).  */
 
     PROTECT(saverhs = rhs = eval(CADR(args), rho));
+
+    /*  FIXME: We need to ensure that this works for hashed
+        environments.  This code only works for unhashed ones.  the
+        syntax error here is a delibrate marker so I don't forget that
+        this needs to be done.  The code used in "missing" will help
+        here.  */
+
+    /*  FIXME: This strategy will not work when we are working in the
+	data frame defined by the system hash table.  The structure there
+	is different.  Should we special case here?  */
+
+#ifdef HASHING
+@@@@@@
+#endif
+
+    /*  We need a temporary variable to hold the intermediate values
+	in the computation.  For efficiency reasons we record the
+	location where this variable is stored.  */
+
     tmpsym = install("*tmp*");
     defineVar(tmpsym, R_NilValue, rho);
     tmploc = FRAME(rho);
     while(tmploc != R_NilValue && TAG(tmploc) != tmpsym)
 	tmploc = CDR(tmploc);
 
-    /* do a partial evaluation down through the lhs */
+    /*  Do a partial evaluation down through the LHS. */
     lhs = evalseq(CADR(expr), rho, PRIMVAL(op)==1, tmploc);
 
     PROTECT(lhs);
-    PROTECT(rhs); /*just to get the loop right */
+    PROTECT(rhs); /* To get the loop right ... */
 
     while (isLanguage(CADR(expr))) {
 	sprintf(buf, "%s<-", CHAR(PRINTNAME(CAR(expr))));
@@ -785,7 +863,7 @@ SEXP do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
 		s = duplicate(s);
 	    PROTECT(s);
 	    R_Visible = 0;
-	    setVar(CAR(args), s, rho);
+	    setVar(CAR(args), s, ENCLOS(rho));
 	    UNPROTECT(1);
 	    NAMED(s) = 1;
 	    return s;
@@ -815,14 +893,14 @@ SEXP evalList(SEXP el, SEXP rho)
 
     while (el != R_NilValue) {
 
-	/* If we have a ... symbol, we look to see what it is */
-	/* bound to.  If its binding is Null (i.e. zero length) */
-	/* we just ignore it and return the cdr with all its */
-	/* expressions evaluated; if it is bound to a ... list */
-	/* of promises, we force all the promises and then splice */
-	/* the list of resulting values into the return value.	*/
-	/* Anything else bound to a ... symbol is an error */
-
+	/* If we have a ... symbol, we look to see what it is bound to.
+	 * If its binding is Null (i.e. zero length)
+	 *	we just ignore it and return the cdr with all its expressions evaluated;
+	 * if it is bound to a ... list of promises,
+	 *	we force all the promises and then splice
+	 *	the list of resulting values into the return value.
+	 * Anything else bound to a ... symbol is an error
+	*/
 	if (CAR(el) == R_DotsSymbol) {
 	    h = findVar(CAR(el), rho);
 	    if (TYPEOF(h) == DOTSXP || h == R_NilValue) {
@@ -845,7 +923,7 @@ SEXP evalList(SEXP el, SEXP rho)
     }
     UNPROTECT(1);
     return CDR(ans);
-}
+}/* evalList() */
 
 
 /* A slight variation of evaluating each expression in "el" in "rho". */
@@ -861,14 +939,14 @@ SEXP evalListKeepMissing(SEXP el, SEXP rho)
 
     while (el != R_NilValue) {
 
-	/* If we have a ... symbol, we look to see what it is */
-	/* bound to.  If its binding is Null (i.e. zero length) */
-	/* we just ignore it and return the cdr with all its */
-	/* expressions evaluated; if it is bound to a ... list */
-	/* of promises, we force all the promises and then splice */
-	/* the list of resulting values into the return value.	*/
-	/* Anything else bound to a ... symbol is an error */
-
+	/* If we have a ... symbol, we look to see what it is bound to.
+	 * If its binding is Null (i.e. zero length)
+	 *	we just ignore it and return the cdr with all its expressions evaluated;
+	 * if it is bound to a ... list of promises,
+	 *	we force all the promises and then splice
+	 *	the list of resulting values into the return value.
+	 * Anything else bound to a ... symbol is an error
+	*/
 	if (CAR(el) == R_DotsSymbol) {
 	    h = findVar(CAR(el), rho);
 	    if (TYPEOF(h) == DOTSXP || h == R_NilValue) {
@@ -915,13 +993,14 @@ SEXP promiseArgs(SEXP el, SEXP rho)
 
     while(el != R_NilValue) {
 
-	/* If we have a ... symbol, we look to see what it */
-	/* is bound to.	 If its binding is Null (i.e. zero length) */
-	/* we just ignore it and return the cdr with all its */
-	/* expressions promised; if it is bound to a ... list */
-	/* of promises, we repromise all the promises and then splice */
-	/* the list of resulting values into the return value. */
-	/* Anything else bound to a ... symbol is an error */
+	/* If we have a ... symbol, we look to see what it is bound to.
+	 * If its binding is Null (i.e. zero length)
+	 * we just ignore it and return the cdr with all its
+	 * expressions promised; if it is bound to a ... list
+	 * of promises, we repromise all the promises and then splice
+	 * the list of resulting values into the return value.
+	 * Anything else bound to a ... symbol is an error
+	 */
 
 	/* Is this double promise mechanism really needed? */
 
@@ -972,7 +1051,9 @@ void CheckFormals(SEXP ls)
 
 SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP expr, env, encl;
+    SEXP encl;    
+    volatile SEXP expr, env, tmp;
+    
     int nback;
     RCNTXT cntxt;
 
@@ -1010,7 +1091,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     default:
 	errorcall(call, "invalid second argument\n");
     }
-    if(isLanguage(expr) || isExpression(expr) || isSymbol(expr)) {
+    if(isLanguage(expr) || isSymbol(expr)) {
 	PROTECT(expr);
 	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args);
 	if (!SETJMP(cntxt.cjmpbuf))
@@ -1018,17 +1099,30 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	endcontext(&cntxt);
 	UNPROTECT(1);
     }
+    else if (isExpression(expr)) {
+	int i, n;
+	PROTECT(expr);
+	n = LENGTH(expr);
+	tmp = R_NilValue;
+	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args);
+	if (!SETJMP(cntxt.cjmpbuf))
+	    for(i=0 ; i<n ; i++)
+		tmp = eval(VECTOR(expr)[i], env);
+	endcontext(&cntxt);
+	UNPROTECT(1);
+	expr = tmp;
+    }
     if (PRIMVAL(op)) {
 	PROTECT(expr);
-        PROTECT(env = allocVector(VECSXP, 2));
-        PROTECT(encl = allocVector(STRSXP, 2));
+	PROTECT(env = allocVector(VECSXP, 2));
+	PROTECT(encl = allocVector(STRSXP, 2));
 	STRING(encl)[0] = mkChar("value");
 	STRING(encl)[1] = mkChar("visible");
-        VECTOR(env)[0] = expr;
-        VECTOR(env)[1] = ScalarLogical(R_Visible);
-        setAttrib(env, R_NamesSymbol, encl);
-        expr = env;
-        UNPROTECT(3);
+	VECTOR(env)[0] = expr;
+	VECTOR(env)[1] = ScalarLogical(R_Visible);
+	setAttrib(env, R_NamesSymbol, encl);
+	expr = env;
+	UNPROTECT(3);
     }
     UNPROTECT(1);
     return expr;
@@ -1038,7 +1132,7 @@ SEXP do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *cptr;
-    SEXP t, s, ans ;
+    SEXP s, ans ;
     cptr = R_GlobalContext;
     /* get the args supplied */
     while (cptr != NULL) {
@@ -1046,7 +1140,7 @@ SEXP do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    break;
 	cptr = cptr->nextcontext;
     }
-    args=cptr->promargs;
+    args = cptr->promargs;
     /* get the env recall was called from */
     s = R_GlobalContext->sysparent;
     while (cptr != NULL) {
@@ -1056,10 +1150,11 @@ SEXP do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if (cptr == NULL)
 	error("Recall called from outside a closure\n");
-    t = CAR(cptr->call);
-    s = findFun(t, cptr->sysparent);
-    PROTECT(t = LCONS(t,args));
-    ans = applyClosure(t, s, args, rho, R_NilValue);
+    if( TYPEOF(CAR(cptr->call)) == SYMSXP)
+	PROTECT(s = findFun(CAR(cptr->call), cptr->sysparent));
+    else
+	PROTECT(s = eval(CAR(cptr->call), cptr->sysparent));
+    ans = applyClosure(cptr->call, s, args, cptr->sysparent, R_NilValue);
     UNPROTECT(1);
     return ans;
 }
@@ -1072,14 +1167,14 @@ SEXP EvalArgs(SEXP el, SEXP rho, int dropmissing)
 }
 
 
-/* DispatchOrEval is used in internal functions which dispatch to 
- * object methods (e.g. "[" or "[[").  The code either builds promises 
- * and dispatches to the appropriate method, or it evaluates the 
- * (unevaluated) arguments it comes in with and returns them so that 
- * the generic built-in C code can continue. 
+/* DispatchOrEval is used in internal functions which dispatch to
+ * object methods (e.g. "[" or "[[").  The code either builds promises
+ * and dispatches to the appropriate method, or it evaluates the
+ * (unevaluated) arguments it comes in with and returns them so that
+ * the generic built-in C code can continue.
 
  * To call this an ugly hack would be to insult all existing ugly hacks
- * at large in the world. 
+ * at large in the world.
  */
 int DispatchOrEval(SEXP call, SEXP op, SEXP args, SEXP rho,
 		   SEXP *ans, int dropmissing)

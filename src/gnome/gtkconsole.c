@@ -126,7 +126,7 @@ gtk_console_class_init (GtkConsoleClass *klass)
 		    gtk_marshal_NONE__NONE,
 		    GTK_TYPE_NONE, 0);
 
-		    gtk_object_class_add_signals(object_class, console_signals, LAST_SIGNAL); 
+  gtk_object_class_add_signals(object_class, console_signals, LAST_SIGNAL); 
 
   /* setup signals */
   object_class->destroy = gtk_console_destroy;
@@ -386,7 +386,7 @@ gboolean gtk_console_save_history(GtkConsole *object, gchar *filename, guint max
 
   cur_item = g_list_last(object->history);
 
-  for(n = 0; n < maxitems, cur_item != NULL; n++, cur_item = cur_item->prev) {
+  for(n = 0; (n < maxitems) && (cur_item != NULL); n++, cur_item = cur_item->prev) {
     fputs(cur_item->data, hist_file);
     fputs("\n", hist_file);
   }
@@ -410,7 +410,7 @@ gboolean gtk_console_restore_history(GtkConsole *object, gchar *filename, guint 
   if(hist_file == NULL)
     return FALSE;
 
-  for(n = 0; n < maxitems, !ferror(hist_file), !feof(hist_file); n++) {
+  for(n = 0; (n < maxitems) && (!ferror(hist_file)) && (!feof(hist_file)); n++) {
     /* read line */
     line_buf[0] = '\0';
     if(fgets(line_buf, CONSOLE_MAX_BUF - 1, hist_file) != NULL) {
@@ -473,7 +473,6 @@ static void key_gdk_up(GtkConsole *console)
 {
   gint insert_pos;
   gchar *history_buf;
-  guint history_idx;
   GList *next = NULL;
 
   if(console->history_cur == NULL) {
@@ -503,7 +502,6 @@ static void key_gdk_down(GtkConsole *console)
 {
   gint insert_pos;
   gchar *history_buf;
-  guint history_idx;
 
   if(console->history_cur != NULL) {
     console->history_cur = console->history_cur->prev;

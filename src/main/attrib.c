@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1998  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
@@ -49,15 +53,10 @@ SEXP getAttrib(SEXP vec, SEXP name)
 	    s = getAttrib(vec, R_DimSymbol);
 	    if(TYPEOF(s) == INTSXP && length(s) == 1) {
 		s = getAttrib(vec, R_DimNamesSymbol);
-#ifdef OLD
-		if(!isNull(s))
-		    return VECTOR(s)[0];
-#else
                 if(!isNull(s)) {
                     NAMED(VECTOR(s)[0]) = 2;
                     return VECTOR(s)[0];
                 }
-#endif
 	    }
 	}
 	if (isList(vec) || isLanguage(vec)) {
@@ -76,14 +75,10 @@ SEXP getAttrib(SEXP vec, SEXP name)
 		    error("getAttrib: invalid type for TAG\n");
 	    }
 	    UNPROTECT(1);
-#ifdef OLD
-	    if (any) return (s);
-#else
 	    if (any) {
 		if (!isNull(s)) NAMED(s) = 2;
 		return (s);
 	    }
-#endif
 	    return R_NilValue;
 	}
     }
@@ -100,18 +95,10 @@ SEXP getAttrib(SEXP vec, SEXP name)
 		    VECTOR(new)[i++] = CAR(old);
 		    old = CDR(old);
 		}
-#ifdef OLD
-		NAMED(new) = NAMED(vec);
-#else
 		NAMED(new) = 2;
-#endif
 		return new;
 	    }
-#ifdef OLD
-	    NAMED(CAR(s)) = NAMED(vec);
-#else
 	    NAMED(CAR(s)) = 2;
-#endif
 	    return CAR(s);
 	}
     return R_NilValue;
@@ -255,6 +242,7 @@ SEXP tspgets(SEXP vec, SEXP val)
     }
     if (frequency <= 0) badtsp();
     n = nrows(vec);
+    if (n == 0) error("cannot assign `tsp' to zero-length vector");
     if (fabs(end - start - (n - 1)/frequency) > 1.e-5)
 	badtsp();
 
@@ -338,7 +326,16 @@ SEXP do_class(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
-    if (NAMED(CAR(args)) == 2) CAR(args) = duplicate(CAR(args));
+    if (NAMED(CAR(args)) == 2)
+        CAR(args) = duplicate(CAR(args));
+    if (CADR(args) != R_NilValue) {
+        PROTECT(call = allocList(2));
+        TYPEOF(call) = LANGSXP;
+        CAR(call)  = install("as.character");
+        CADR(call) = CADR(args);
+        CADR(args) = eval(call, env);
+        UNPROTECT(1);
+    }
     setAttrib(CAR(args), R_NamesSymbol, CADR(args));
     return CAR(args);
 }
@@ -699,16 +696,29 @@ SEXP do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 /* These provide useful shortcuts which give access to */
 /* the dimnames for matrices and arrays in a standard form. */
 
-void GetMatrixDimnames(SEXP x, SEXP *rl, SEXP *cl)
+void GetMatrixDimnames(SEXP x, SEXP *rl, SEXP *cl, char **rn, char **cn)
 {
     SEXP dimnames = getAttrib(x, R_DimNamesSymbol);
+    SEXP nn;
+
     if (isNull(dimnames)) {
 	*rl = R_NilValue;
 	*cl = R_NilValue;
+	*rn = NULL;
+	*cn = NULL;
     }
     else {
 	*rl = VECTOR(dimnames)[0];
 	*cl = VECTOR(dimnames)[1];
+	nn = getAttrib(dimnames, R_NamesSymbol);
+        if (isNull(nn)) {
+	    *rn = NULL;
+	    *cn = NULL;
+        }
+	else {
+	    *rn = CHAR(STRING(nn)[0]);
+	    *cn = CHAR(STRING(nn)[1]);
+        }
     }
 }
 
@@ -717,3 +727,4 @@ SEXP GetArrayDimnames(SEXP x)
 {
     return getAttrib(x, R_DimNamesSymbol);
 }
+

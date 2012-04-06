@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
@@ -57,7 +61,7 @@ static void isum(int *x, int n, int *value)
 	}
     }
     if(s > INT_MAX || s < R_INT_MIN){
-	warning("Integer overflow in sum(.); use sum(as.numeric(.))\n");
+	warning("Integer overflow in sum(.); use sum(as.numeric(.))");
 	*value = NA_INTEGER;
     }
     else *value = s;
@@ -527,7 +531,7 @@ SEXP do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 
     /*-------------------------------------------------------*/
     if(empty && (iop == 2 || iop == 3))
-	warningcall(call,"no finite arguments to min/max; returning extreme.\n");
+	warningcall(call,"no finite arguments to min/max; returning extreme.");
 
     ans = allocVector(ans_type, 1);
     switch(ans_type) {

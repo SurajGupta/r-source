@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
@@ -610,7 +614,7 @@ SEXP complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     default:
 	errorcall(call, "unimplemented complex function\n");
     }
-    if (naflag) warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
+    if (naflag) warning("NAs produced in function \"%s\"", PRIMNAME(op));
     return y;
 }
 
@@ -659,7 +663,7 @@ static SEXP cmath2(SEXP op, SEXP sa, SEXP sb, void (*f)())
 	    }
 	}
     }
-    if (naflag) warning("NAs produced in function \"%s\"\n", PRIMNAME(op));
+    if (naflag) warning("NAs produced in function \"%s\"", PRIMNAME(op));
     if(n == na) {
 	ATTRIB(sy) = duplicate(ATTRIB(sa));
 	OBJECT(sy) = OBJECT(sa);
@@ -760,7 +764,7 @@ SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(zi = allocVector(REALSXP, n));
 
 	for(i=0 ; i<n ; i++) {
-	    if(!FINITE(COMPLEX(z)[i].r) || !FINITE(COMPLEX(z)[i].i))
+	    if(!R_FINITE(COMPLEX(z)[i].r) || !R_FINITE(COMPLEX(z)[i].i))
 		errorcall(call, "invalid polynomial coefficient\n");
 	    REAL(zr)[degree-i] = COMPLEX(z)[i].r;
 	    REAL(zi)[degree-i] = COMPLEX(z)[i].i;

@@ -1,6 +1,6 @@
 # Optional parameters for the console and the pager
 # The system-wide copy is in rwxxxx/etc.
-# A user copy can be installed in `R_HOME'.
+# A user copy can be installed in `R_USER'.
 
 ## Style
 # This can be `yes' (for MDI) or `no' (for SDI).
@@ -12,7 +12,7 @@ statusbar = yes
 ## Font.
 # Please use only fixed width font.
 # If font=FixedFont the system fixed font is used; in this case
-# points and style are ignored. If font begins with TT, only 
+# points and style are ignored. If font begins with "TT ", only 
 # True Type fonts are searched for.
 font = TT Courier New
 points = 10

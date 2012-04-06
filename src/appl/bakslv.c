@@ -15,16 +15,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* ../appl/bakslv.f -- translated by f2c (version of 1 June 1993  23:00:00).
+/* ../appl/bakslv.f
+   -- translated by f2c (version of 1 June 1993 23:00:00).
+   -- and hand edited by Martin Maechler.
+   */
 
-  --- and hand edited by Martin Maechler.
-*/
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
-#include "Fortran.h"/*-> incl "Platform.h"*/
-#include "Linpack.h"/*-> incl.  Blas.h  */
+#include "Fortran.h"		/* incl Rconfig.h */
+#include "Linpack.h"		/* incl Blas.h    */
 #include "Applic.h"
 
 void bakslv(double *t, int *ldt, int *n,

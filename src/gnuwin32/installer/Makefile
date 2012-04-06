@@ -1,6 +1,6 @@
 # Makefile for R for Windows Installer
 
-PREFIX=rw0642
+PREFIX=rw0650
 include ../MkRules
 UNZIPDIR=unzip
 
@@ -23,7 +23,7 @@ R.ico: ../front-ends/R.ico
 
 rwico.o: rwico.rc
 
-rwinst.o: ../../include/Platform.h ../graphapp/ga.h ../graphapp/graphapp.h
+rwinst.o: ../../include/Rversion.h ../graphapp/ga.h ../graphapp/graphapp.h
 
 rwinst.exe: rwinst.o rwico.o dounzip.o ../ga.a $(UNZIPDIR)/unzip32.a
 	$(CC) -s -mwindows -o $@ $^ -lcomctl32

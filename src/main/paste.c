@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  See ./printutils.c	 for general remarks on Printing
@@ -22,6 +22,10 @@
  *
  *  See ./format.c	 for the  format_Foo_  functions.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Print.h"
@@ -238,6 +242,8 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
  *			d = #{digits} to RIGHT of "."
  *			e = {0:2}.   0: Fixpoint;
  *				   1,2: exponential with 2/3 digit expon.
+ *
+ * for complex : 2 x 3 integers for (Re, Im)
  */
 
 SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)

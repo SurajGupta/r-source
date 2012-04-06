@@ -14,6 +14,10 @@ afm/*
 
 	Copyright (c) 1984 to 1992 Adobe Systems Incorporated.
 
+doc/html/search/*.java
+
+	Copyright (C), 1998, Thomas Baier
+
 
 src/gnome/gtkconsole.c
 src/gnome/gtkconsole.h
@@ -48,6 +52,13 @@ src/library/mva/R/biplot.R
 src/library/mva/R/princomp-add.R
 
 	Copyright (C) 1998 W. N. Venables and B. D. Ripley
+
+src/library/ts/R/kernel.R
+src/library/ts/man/kernel.Rd
+src/library/ts/src/PPsum.c
+
+	Copyright (C) 1997-1999  Adrian Trapletti
+
 
 src/regex/* [Only used on Macintosh]
 

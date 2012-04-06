@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 
@@ -515,7 +519,7 @@ static SEXP subDots(SEXP rho)
     int len,i;
     char tbuf[10];
 
-    dots = findVarInFrame(FRAME(rho), R_DotsSymbol);
+    dots = findVarInFrame(rho, R_DotsSymbol);
 
     if (dots == R_MissingArg) 
 	return dots;
@@ -611,7 +615,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 		t2 = subDots(sysp);
 		break;
 #ifdef NEWDOTS
-		t2 = findVarInFrame(FRAME(sysp), R_DotsSymbol);
+		t2 = findVarInFrame( sysp, R_DotsSymbol);
 		b = allocList(length(t2));
 		for(f=b; f!=R_NilValue; f=CDR(f)) {
 			CAR(b)=PREXPR(CAR(t2));

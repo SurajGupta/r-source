@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -33,7 +33,7 @@ double qcauchy(double x, double location, double scale)
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(location) || ISNAN(scale))
         return x + location + scale;
-    if(!FINITE(x) || !FINITE(location) || !FINITE(scale)) {
+    if(!R_FINITE(x) || !R_FINITE(location) || !R_FINITE(scale)) {
         ML_ERROR(ME_DOMAIN);
         return ML_NAN;
     }

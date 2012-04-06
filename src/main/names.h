@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* Information for Deparsing Expressions */
@@ -91,6 +91,7 @@ SEXP do_attrgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_attributes(SEXP, SEXP, SEXP, SEXP);
 SEXP do_attributesgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_axis(SEXP, SEXP, SEXP, SEXP);
+SEXP do_basename(SEXP, SEXP, SEXP, SEXP);
 SEXP do_begin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bind(SEXP, SEXP, SEXP, SEXP);
 SEXP do_body(SEXP, SEXP, SEXP, SEXP);
@@ -136,7 +137,9 @@ SEXP do_dim(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimnames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dimnamesgets(SEXP, SEXP, SEXP, SEXP);
+SEXP do_dirname(SEXP, SEXP, SEXP, SEXP);
 SEXP do_docall(SEXP, SEXP, SEXP, SEXP);
+SEXP do_dotcall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotCode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotplot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dput(SEXP, SEXP, SEXP, SEXP);
@@ -170,6 +173,7 @@ SEXP do_gc(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gcinfo(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gctorture(SEXP, SEXP, SEXP, SEXP);
 SEXP do_get(SEXP, SEXP, SEXP, SEXP);
+SEXP do_getwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_globalenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gray(SEXP, SEXP, SEXP, SEXP);
 SEXP do_grep(SEXP, SEXP, SEXP, SEXP);
@@ -280,6 +284,7 @@ SEXP do_search(SEXP, SEXP, SEXP, SEXP);
 SEXP do_segments(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq(SEXP, SEXP, SEXP, SEXP);
 SEXP do_set(SEXP, SEXP, SEXP, SEXP);
+SEXP do_setwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shade(SEXP, SEXP, SEXP, SEXP);
 SEXP do_signif(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strheight(SEXP, SEXP, SEXP, SEXP);

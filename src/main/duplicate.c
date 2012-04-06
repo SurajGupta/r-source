@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 
@@ -94,6 +98,7 @@ SEXP duplicate(SEXP s)
 	for(i = 0 ; i < n ; i++)
 	    VECTOR(t)[i] = duplicate(VECTOR(s)[i]);
 	ATTRIB(t) = duplicate(ATTRIB(s));
+	TRUELENGTH(t) = TRUELENGTH(s);
 	UNPROTECT(2);
 	break;
     case STRSXP:
@@ -107,6 +112,7 @@ SEXP duplicate(SEXP s)
 	PROTECT(t);
 	ATTRIB(t) = duplicate(ATTRIB(s));
 	UNPROTECT(2);
+	TRUELENGTH(t) = TRUELENGTH(s);
 	break;
     case PROMSXP: /* duplication requires that we evaluate the promise */
 #ifdef OLD

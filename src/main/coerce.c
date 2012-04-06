@@ -15,8 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"/*-- Maybe modularize into own Coerce.h ..*/
 #include "Mathlib.h"
@@ -58,11 +62,32 @@ static int isblankstr(unsigned char *s)
 void CoercionWarning(int warn)
 {
     if (warn & WARN_NA)
-	warning("NAs introduced by coercion\n");
+	warning("NAs introduced by coercion");
     if (warn & WARN_INACC)
-	warning("inaccurate integer conversion in coercion\n");
+	warning("inaccurate integer conversion in coercion");
     if (warn & WARN_IMAG)
-	warning("imaginary parts discarded in coercion\n");
+	warning("imaginary parts discarded in coercion");
+}
+
+double R_strtod(char *c, char **end)
+{
+    double x;
+
+    if (strncmp(c, "NA", 2) == 0){
+	x = NA_REAL; *end = c + 2;
+    }
+    else if (strncmp(c, "NaN", 3) == 0) {
+	x = R_NaN; *end = c + 3;
+    }
+    else if (strncmp(c, "Inf", 3) == 0) {
+	x = R_PosInf; *end = c + 3;
+    }
+    else if (strncmp(c, "-Inf", 4) == 0) {
+	x = R_NegInf; *end = c + 4;
+    }
+    else
+        x = strtod(c, end);
+    return x;
 }
 
 int LogicalFromInteger(int x, int *warn)
@@ -505,18 +530,18 @@ static SEXP coerceToString(SEXP v)
 	break;
     case REALSXP:
 	PrintDefaults(R_NilValue);
-	savedigits = print_digits; print_digits = DBL_DIG;/* MAX precision */
+	savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
 	for (i = 0; i < n; i++)
 	    STRING(ans)[i] = StringFromReal(REAL(v)[i], &warn);
 	break;
-	print_digits = savedigits;
+	R_print.digits = savedigits;
     case CPLXSXP:
 	PrintDefaults(R_NilValue);
-	savedigits = print_digits; print_digits = DBL_DIG;/* MAX precision */
+	savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
 	for (i = 0; i < n; i++)
 	    STRING(ans)[i] = StringFromComplex(COMPLEX(v)[i], &warn);
 	break;
-	print_digits = savedigits;
+	R_print.digits = savedigits;
     }
     UNPROTECT(1);
     return (ans);
@@ -1168,6 +1193,7 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case 201:		/* is.recursive */
 	switch(TYPEOF(CAR(args))) {
+	case VECSXP:
 	case LISTSXP:
 	case CLOSXP:
 	case ENVSXP:
@@ -1328,7 +1354,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	warningcall(call, "is.na() applied to non-(list or vector)\n");
+	warningcall(call, "is.na() applied to non-(list or vector)");
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
     }
@@ -1348,7 +1374,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* Convenience for using LIST_VEC_NAN macro later */
 #ifndef IEEE_754
-# define R_isNaN(x) (0)
+# define R_IsNaN(x) (0)
 #endif
 SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1363,7 +1389,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #ifdef stringent_is
     if (!isList(CAR(args)) && !isVector(CAR(args)))
-	errorcall(call, "is.nan applies only to lists and vectors\n");
+	errorcall(call, "is.nan applies only to lists and vectors");
 #endif
     x = CAR(args);
     n = length(x);
@@ -1432,7 +1458,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	warningcall(call, "is.nan() applied to non-(list or vector)\n");
+	warningcall(call, "is.nan() applied to non-(list or vector)");
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
     }
@@ -1481,11 +1507,11 @@ SEXP do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case REALSXP:
 	for (i = 0; i < n; i++)
-	    LOGICAL(ans)[i] = FINITE(REAL(x)[i]);
+	    LOGICAL(ans)[i] = R_FINITE(REAL(x)[i]);
 	break;
     case CPLXSXP:
 	for (i = 0; i < n; i++)
-	    LOGICAL(ans)[i] = (FINITE(COMPLEX(x)[i].r) && FINITE(COMPLEX(x)[i].i));
+	    LOGICAL(ans)[i] = (R_FINITE(COMPLEX(x)[i].r) && R_FINITE(COMPLEX(x)[i].i));
 	break;
     default:
 	for (i = 0; i < n; i++)
@@ -1528,7 +1554,7 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     case REALSXP:
 	for (i = 0; i < n; i++) {
 	    xr = REAL(x)[i];
-	    if (xr != xr /*NaN*/|| FINITE(xr))
+	    if (xr != xr /*NaN*/|| R_FINITE(xr))
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -1538,7 +1564,7 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < n; i++) {
 	    xr = COMPLEX(x)[i].r;
 	    xi = COMPLEX(x)[i].i;
-	    if ((xr != xr || FINITE(xr)) && (xi != xi || FINITE(xi)))
+	    if ((xr != xr || R_FINITE(xr)) && (xi != xi || R_FINITE(xi)))
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = 1;
@@ -1603,7 +1629,12 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     CAR(c) = install(CHAR(STRING(fun)[0]));
     c = CDR(c);
     for (i = 0; i < n; i++) {
+#ifndef NEW
 	CAR(c) = VECTOR(args)[i];
+#else
+	CAR(c) = mkPROMISE(VECTOR(args)[i], rho);
+	PRVALUE(CAR(c)) = VECTOR(args)[i];
+#endif
 	if (ItemName(names, i) != R_NilValue)
 	    TAG(c) = install(CHAR(ItemName(names, i)));
 	c = CDR(c);
@@ -1629,7 +1660,7 @@ SEXP substitute(SEXP lang, SEXP rho)
     case PROMSXP:
 	return substitute(PREXPR(lang), rho);
     case SYMSXP:
-	t = findVarInFrame(FRAME(rho), lang);
+	t = findVarInFrame( rho, lang);
 	if (t != R_UnboundValue) {
 	    if (TYPEOF(t) == PROMSXP) {
 		do {

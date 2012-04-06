@@ -14,11 +14,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Defn.h"
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
+#include "Defn.h"
 
 /*  append - append second to the tail of first    */
 /*           This operation is non-destructive     */
@@ -74,7 +77,7 @@ SEXP mkCLOSXP(SEXP formals, SEXP body, SEXP rho)
 
 /* mkChar - make a character (CHARSXP) variable */
 
-SEXP mkChar(char *name)
+SEXP mkChar(const char *name)
 {
     SEXP c;
 
@@ -138,30 +141,6 @@ SEXP mkPROMISE(SEXP expr, SEXP rho)
     PRSEEN(p) = 0;
     UNPROTECT(2);
     return p;
-}
-
-
-/*  mkEnv - return an ENV with vars namelist  */
-/*          and values valuelist              */
-
-SEXP mkEnv(SEXP namelist, SEXP valuelist, SEXP rho)
-{
-    SEXP v, n, newrho;
-    PROTECT(namelist);
-    PROTECT(valuelist);
-    PROTECT(rho);
-    newrho = allocSExp(ENVSXP);
-    FRAME(newrho) = valuelist;
-    v = valuelist;
-    n = namelist;
-    while (v != R_NilValue) {
-	TAG(v) = TAG(n);
-	v = CDR(v);
-	n = CDR(n);
-    }
-    ENCLOS(newrho) = rho;
-    UNPROTECT(3);
-    return (newrho);
 }
 
 

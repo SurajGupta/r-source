@@ -1,4 +1,4 @@
-##-- Keep  'library' and 'library.dynam'  PLATFORM-Indepedent !
+##-- Keep  'library' and 'library.dynam'  PLATFORM-Independent !
 ##-- Use  .Platform  in	 ./system.unix.R [./system.win.R , ...] to configure!
 ##	  ~~~~~~~~~
 
@@ -10,6 +10,8 @@ library <-
         if (!character.only)
             name <- as.character(substitute(name))
         lib.source <- function(file, env) {
+	    oop <- options(keep.source = FALSE)
+            on.exit(options(oop))
             exprs <- parse(n = -1, file = file)
             if (length(exprs) == 0)
                 return(invisible())
@@ -48,7 +50,8 @@ library <-
                 firstlib <- get(".First.lib", envir = env, inherits = FALSE)
                 firstlib(which.lib.loc, name)
             }
-            if (warn.conflicts) {
+            if (warn.conflicts &&
+                !exists(".conflicts.OK",  envir = env, inherits = FALSE)) {
                 ##-- Check for conflicts
                 dont.mind <- c("last.dump", "last.warning", ".Last.value",
                                ".Random.seed")

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -89,13 +89,12 @@ double lgammafn(double x)
 	return ML_NAN;
     }
 
-    ans = M_LN_SQRT_PId2 + (x - 0.5) * log(y) - x
-	- log(sinpiy) - lgammacor(y);
+    ans = M_LN_SQRT_PId2 + (x - 0.5) * log(y) - x - log(sinpiy) - lgammacor(y);
 
     if(fabs((x - (int)(x - 0.5)) * ans / x) < dxrel) {
 
-	/* The answer is less than half precision because */
-	/* the argument is too near a negative integer. */
+	/* The answer is less than half precision because
+	 * the argument is too near a negative integer. */
 
 	ML_ERROR(ME_PRECISION);
     }

@@ -15,11 +15,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* S compatibility library - mapping some internal functions in S to R
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "S_compat.h"
 
@@ -38,6 +42,8 @@ F77_NAME(dqrdca) (double *x, longint *ldx, longint *n, longint *p,
     F77_NAME(dqrdc2) (x, ldx, n, p, tol, rank, qraux, jpvt, work);
 }
 
+/* Changed 99/08/17 by BDR: rhs is rhs(ldx, nrhs) in S */
+
 void
 F77_NAME(dbksl) (double *x, longint *ldx, longint *n,
 		 double *rhs, longint *nrhs, longint *info)
@@ -49,6 +55,6 @@ F77_NAME(dbksl) (double *x, longint *ldx, longint *n,
     while (nn-- > 0) {
 	F77_NAME(dtrsl) (x, ldx, n, rhs, &job, info);
 	if (*info) return;
-	rhs += *n;
+	rhs += *ldx;
     }
 }

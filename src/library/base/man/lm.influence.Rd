@@ -31,10 +31,12 @@ of \code{lm.influence} differ from those computed by S.
 Rather than returning the coefficients which result
 from dropping each case, we return the changes in the coefficients.
 This is more directly useful in many diagnostic measures.
+
+Note that cases with \code{weights == 0} are \emph{dropped}.
 }
 \references{
 Belsley, D. A., E. Kuh and R. E. Welsch (1980).
-\emph{Regression Diagnostics.}
+\emph{Regression Diagnostics}.
 New York: Wiley.
 }
 \seealso{
@@ -48,10 +50,12 @@ New York: Wiley.
 \code{\link{lm}}.
 }
 \examples{
-# Analysis of the life-cycle savings data
-# given in Belsley, Kuh and Welsch.
-data(savings)
-summary(lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data=savings),corr= TRUE)
+## Analysis of the life-cycle savings data given in Belsley, Kuh
+## and Welsch.
+data(LifeCycleSavings)
+summary(lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi,
+                    data = LifeCycleSavings),
+        corr = TRUE)
 rstudent(lm.SR)
 dfbetas(lm.SR)
 dffits(lm.SR)

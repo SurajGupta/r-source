@@ -44,6 +44,8 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
+ *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,13 +59,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "IOStuff.h"/*-> Defn.h */
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+    
+#include "IOStuff.h"		/*-> Defn.h */
 #include "Fileio.h"
 #include "Parse.h"
-
 
     /* Useful defines so editors don't get confused ... */
 
@@ -72,18 +81,13 @@
 
     /* Functions used in the parsing process */
 
-static void	AddComment(SEXP);
 static void	CheckFormalArgs(SEXP, SEXP);
 static SEXP	FirstArg(SEXP, SEXP);
 static SEXP	GrowList(SEXP, SEXP);
 static void	IfPush(void);
-/* NOT_used static int	IsComment(SEXP);*/
 static int	KeywordLookup(char*);
 static SEXP	NewList(void);
 static SEXP	NextArg(SEXP, SEXP, SEXP);
-static void	PopComment(void);
-static void	PushComment(void);
-static void	ResetComment(void);
 static SEXP	TagArg(SEXP, SEXP);
 
 
@@ -94,7 +98,7 @@ SEXP		mkFalse(void);
 SEXP		mkFloat(char *);
 SEXP		mkInteger(char *);
 SEXP		mkNA(void);
-SEXP		mkString(char *);
+SEXP		mkString(const char *);
 SEXP		mkTrue(void);
 
 /* Internal lexer / parser state variables */
@@ -104,7 +108,22 @@ static int	GenerateCode = 0;
 static int	EndOfFile = 0;
 static int	xxgetc();
 static int	xxungetc();
+static int 	xxcharcount, xxcharsave;
 
+/* Handle function source */
+
+/* FIXME: These arrays really ought to be dynamically extendable */
+
+#define MAXFUNSIZE 65536
+#define MAXLINESIZE 1024
+#define MAXNEST      265
+
+static unsigned char FunctionSource[MAXFUNSIZE];
+static unsigned char SourceLine[MAXLINESIZE];
+static unsigned char *FunctionStart[MAXNEST], *SourcePtr;
+static int FunctionLevel = 0;
+static int KeepSource;
+ 
 /* Soon to be defunct entry points */
 
 void		R_SetInput(int);
@@ -244,14 +263,14 @@ static const short yyrhs[] = {     3,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-   139,   140,   141,   142,   143,   146,   147,   148,   149,   151,
-   152,   154,   155,   156,   157,   158,   160,   161,   162,   163,
-   164,   165,   166,   167,   168,   169,   170,   171,   172,   173,
-   174,   175,   176,   178,   179,   180,   182,   183,   184,   185,
-   186,   187,   188,   189,   190,   191,   192,   193,   197,   200,
-   203,   207,   208,   209,   210,   211,   212,   215,   216,   219,
-   220,   221,   222,   223,   224,   225,   226,   229,   230,   231,
-   232,   233,   236
+   158,   159,   160,   161,   162,   165,   166,   167,   168,   170,
+   171,   173,   174,   175,   176,   177,   179,   180,   181,   182,
+   183,   184,   185,   186,   187,   188,   189,   190,   191,   192,
+   193,   194,   195,   197,   198,   199,   201,   202,   203,   204,
+   205,   206,   207,   208,   209,   210,   211,   212,   216,   219,
+   222,   226,   227,   228,   229,   230,   231,   234,   235,   238,
+   239,   240,   241,   242,   243,   244,   245,   248,   249,   250,
+   251,   252,   255
 };
 #endif
 
@@ -968,295 +987,295 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 139 "../../../R/src/main/gram.y"
+#line 158 "../../../R/src/main/gram.y"
 { return 0; ;
     break;}
 case 2:
-#line 140 "../../../R/src/main/gram.y"
+#line 159 "../../../R/src/main/gram.y"
 { return xxvalue(NULL,2); ;
     break;}
 case 3:
-#line 141 "../../../R/src/main/gram.y"
+#line 160 "../../../R/src/main/gram.y"
 { return xxvalue(yyvsp[-1],3); ;
     break;}
 case 4:
-#line 142 "../../../R/src/main/gram.y"
+#line 161 "../../../R/src/main/gram.y"
 { return xxvalue(yyvsp[-1],4); ;
     break;}
 case 5:
-#line 143 "../../../R/src/main/gram.y"
+#line 162 "../../../R/src/main/gram.y"
 { YYABORT; ;
     break;}
 case 6:
-#line 146 "../../../R/src/main/gram.y"
+#line 165 "../../../R/src/main/gram.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 7:
-#line 147 "../../../R/src/main/gram.y"
+#line 166 "../../../R/src/main/gram.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 8:
-#line 148 "../../../R/src/main/gram.y"
+#line 167 "../../../R/src/main/gram.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 9:
-#line 149 "../../../R/src/main/gram.y"
+#line 168 "../../../R/src/main/gram.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 10:
-#line 151 "../../../R/src/main/gram.y"
+#line 170 "../../../R/src/main/gram.y"
 { yyval = xxexprlist(yyvsp[-2],yyvsp[-1]); ;
     break;}
 case 11:
-#line 152 "../../../R/src/main/gram.y"
+#line 171 "../../../R/src/main/gram.y"
 { yyval = xxparen(yyvsp[-2],yyvsp[-1]); ;
     break;}
 case 12:
-#line 154 "../../../R/src/main/gram.y"
+#line 173 "../../../R/src/main/gram.y"
 { yyval = xxunary(yyvsp[-1],yyvsp[0]); ;
     break;}
 case 13:
-#line 155 "../../../R/src/main/gram.y"
+#line 174 "../../../R/src/main/gram.y"
 { yyval = xxunary(yyvsp[-1],yyvsp[0]); ;
     break;}
 case 14:
-#line 156 "../../../R/src/main/gram.y"
+#line 175 "../../../R/src/main/gram.y"
 { yyval = xxunary(yyvsp[-1],yyvsp[0]); ;
     break;}
 case 15:
-#line 157 "../../../R/src/main/gram.y"
+#line 176 "../../../R/src/main/gram.y"
 { yyval = xxunary(yyvsp[-1],yyvsp[0]); ;
     break;}
 case 16:
-#line 158 "../../../R/src/main/gram.y"
+#line 177 "../../../R/src/main/gram.y"
 { yyval = xxunary(yyvsp[-1],yyvsp[0]); ;
     break;}
 case 17:
-#line 160 "../../../R/src/main/gram.y"
+#line 179 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 18:
-#line 161 "../../../R/src/main/gram.y"
+#line 180 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 19:
-#line 162 "../../../R/src/main/gram.y"
+#line 181 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 20:
-#line 163 "../../../R/src/main/gram.y"
+#line 182 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 21:
-#line 164 "../../../R/src/main/gram.y"
+#line 183 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 22:
-#line 165 "../../../R/src/main/gram.y"
+#line 184 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 23:
-#line 166 "../../../R/src/main/gram.y"
+#line 185 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 24:
-#line 167 "../../../R/src/main/gram.y"
+#line 186 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 25:
-#line 168 "../../../R/src/main/gram.y"
+#line 187 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 26:
-#line 169 "../../../R/src/main/gram.y"
+#line 188 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 27:
-#line 170 "../../../R/src/main/gram.y"
+#line 189 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 28:
-#line 171 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 29:
-#line 172 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 30:
-#line 173 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 31:
-#line 174 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 32:
-#line 175 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 33:
-#line 176 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 34:
-#line 178 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 35:
-#line 179 "../../../R/src/main/gram.y"
-{ yyval = xxbinary(yyvsp[-1],yyvsp[0],yyvsp[-2]); ;
-    break;}
-case 36:
-#line 181 "../../../R/src/main/gram.y"
-{ yyval = xxdefun(yyvsp[-5],yyvsp[-3],yyvsp[0]); ;
-    break;}
-case 37:
-#line 182 "../../../R/src/main/gram.y"
-{ yyval = xxfuncall(yyvsp[-3],yyvsp[-1]); ;
-    break;}
-case 38:
-#line 183 "../../../R/src/main/gram.y"
-{ yyval = xxif(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
-    break;}
-case 39:
-#line 184 "../../../R/src/main/gram.y"
-{ yyval = xxifelse(yyvsp[-4],yyvsp[-3],yyvsp[-2],yyvsp[0]); ;
-    break;}
-case 40:
-#line 185 "../../../R/src/main/gram.y"
-{ yyval = xxfor(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
-    break;}
-case 41:
-#line 186 "../../../R/src/main/gram.y"
-{ yyval = xxwhile(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
-    break;}
-case 42:
-#line 187 "../../../R/src/main/gram.y"
-{ yyval = xxrepeat(yyvsp[-1],yyvsp[0]); ;
-    break;}
-case 43:
-#line 188 "../../../R/src/main/gram.y"
-{ yyval = xxsubscript(yyvsp[-4],yyvsp[-3],yyvsp[-2]); ;
-    break;}
-case 44:
-#line 189 "../../../R/src/main/gram.y"
-{ yyval = xxsubscript(yyvsp[-3],yyvsp[-2],yyvsp[-1]); ;
-    break;}
-case 45:
 #line 190 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
-case 46:
+case 29:
 #line 191 "../../../R/src/main/gram.y"
 { yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
     break;}
-case 47:
+case 30:
 #line 192 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 31:
+#line 193 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 32:
+#line 194 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 33:
+#line 195 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 34:
+#line 197 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 35:
+#line 198 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[0],yyvsp[-2]); ;
+    break;}
+case 36:
+#line 200 "../../../R/src/main/gram.y"
+{ yyval = xxdefun(yyvsp[-5],yyvsp[-3],yyvsp[0]); ;
+    break;}
+case 37:
+#line 201 "../../../R/src/main/gram.y"
+{ yyval = xxfuncall(yyvsp[-3],yyvsp[-1]); ;
+    break;}
+case 38:
+#line 202 "../../../R/src/main/gram.y"
+{ yyval = xxif(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
+    break;}
+case 39:
+#line 203 "../../../R/src/main/gram.y"
+{ yyval = xxifelse(yyvsp[-4],yyvsp[-3],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 40:
+#line 204 "../../../R/src/main/gram.y"
+{ yyval = xxfor(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
+    break;}
+case 41:
+#line 205 "../../../R/src/main/gram.y"
+{ yyval = xxwhile(yyvsp[-2],yyvsp[-1],yyvsp[0]); ;
+    break;}
+case 42:
+#line 206 "../../../R/src/main/gram.y"
+{ yyval = xxrepeat(yyvsp[-1],yyvsp[0]); ;
+    break;}
+case 43:
+#line 207 "../../../R/src/main/gram.y"
+{ yyval = xxsubscript(yyvsp[-4],yyvsp[-3],yyvsp[-2]); ;
+    break;}
+case 44:
+#line 208 "../../../R/src/main/gram.y"
+{ yyval = xxsubscript(yyvsp[-3],yyvsp[-2],yyvsp[-1]); ;
+    break;}
+case 45:
+#line 209 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 46:
+#line 210 "../../../R/src/main/gram.y"
+{ yyval = xxbinary(yyvsp[-1],yyvsp[-2],yyvsp[0]); ;
+    break;}
+case 47:
+#line 211 "../../../R/src/main/gram.y"
 { yyval = xxnxtbrk(yyvsp[0]); ;
     break;}
 case 48:
-#line 193 "../../../R/src/main/gram.y"
+#line 212 "../../../R/src/main/gram.y"
 { yyval = xxnxtbrk(yyvsp[0]); ;
     break;}
 case 49:
-#line 197 "../../../R/src/main/gram.y"
+#line 216 "../../../R/src/main/gram.y"
 { yyval = xxcond(yyvsp[-1]); ;
     break;}
 case 50:
-#line 200 "../../../R/src/main/gram.y"
+#line 219 "../../../R/src/main/gram.y"
 { yyval = xxifcond(yyvsp[-1]); ;
     break;}
 case 51:
-#line 203 "../../../R/src/main/gram.y"
+#line 222 "../../../R/src/main/gram.y"
 { yyval = xxforcond(yyvsp[-3],yyvsp[-1]); ;
     break;}
 case 52:
-#line 207 "../../../R/src/main/gram.y"
+#line 226 "../../../R/src/main/gram.y"
 { yyval = xxexprlist0(); ;
     break;}
 case 53:
-#line 208 "../../../R/src/main/gram.y"
+#line 227 "../../../R/src/main/gram.y"
 { yyval = xxexprlist1(yyvsp[0]); ;
     break;}
 case 54:
-#line 209 "../../../R/src/main/gram.y"
+#line 228 "../../../R/src/main/gram.y"
 { yyval = xxexprlist2(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 55:
-#line 210 "../../../R/src/main/gram.y"
-{ yyval = yyvsp[-1]; AddComment(CAR(yyval));;
+#line 229 "../../../R/src/main/gram.y"
+{ yyval = yyvsp[-1]; ;
     break;}
 case 56:
-#line 211 "../../../R/src/main/gram.y"
+#line 230 "../../../R/src/main/gram.y"
 { yyval = xxexprlist2(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 57:
-#line 212 "../../../R/src/main/gram.y"
+#line 231 "../../../R/src/main/gram.y"
 { yyval = yyvsp[-1];;
     break;}
 case 58:
-#line 215 "../../../R/src/main/gram.y"
+#line 234 "../../../R/src/main/gram.y"
 { yyval = xxsublist1(yyvsp[0]); ;
     break;}
 case 59:
-#line 216 "../../../R/src/main/gram.y"
+#line 235 "../../../R/src/main/gram.y"
 { yyval = xxsublist2(yyvsp[-3],yyvsp[0]); ;
     break;}
 case 60:
-#line 219 "../../../R/src/main/gram.y"
+#line 238 "../../../R/src/main/gram.y"
 { yyval = xxsub0(); ;
     break;}
 case 61:
-#line 220 "../../../R/src/main/gram.y"
+#line 239 "../../../R/src/main/gram.y"
 { yyval = xxsub1(yyvsp[0]); ;
     break;}
 case 62:
-#line 221 "../../../R/src/main/gram.y"
+#line 240 "../../../R/src/main/gram.y"
 { yyval = xxsymsub0(yyvsp[-1]); ;
     break;}
 case 63:
-#line 222 "../../../R/src/main/gram.y"
+#line 241 "../../../R/src/main/gram.y"
 { yyval = xxsymsub1(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 64:
-#line 223 "../../../R/src/main/gram.y"
+#line 242 "../../../R/src/main/gram.y"
 { yyval = xxsymsub0(yyvsp[-1]); ;
     break;}
 case 65:
-#line 224 "../../../R/src/main/gram.y"
+#line 243 "../../../R/src/main/gram.y"
 { yyval = xxsymsub1(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 66:
-#line 225 "../../../R/src/main/gram.y"
+#line 244 "../../../R/src/main/gram.y"
 { yyval = xxnullsub0(); ;
     break;}
 case 67:
-#line 226 "../../../R/src/main/gram.y"
+#line 245 "../../../R/src/main/gram.y"
 { yyval = xxnullsub1(yyvsp[0]); ;
     break;}
 case 68:
-#line 229 "../../../R/src/main/gram.y"
+#line 248 "../../../R/src/main/gram.y"
 { yyval = xxnullformal(); ;
     break;}
 case 69:
-#line 230 "../../../R/src/main/gram.y"
+#line 249 "../../../R/src/main/gram.y"
 { yyval = xxfirstformal0(yyvsp[0]); ;
     break;}
 case 70:
-#line 231 "../../../R/src/main/gram.y"
+#line 250 "../../../R/src/main/gram.y"
 { yyval = xxfirstformal1(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 71:
-#line 232 "../../../R/src/main/gram.y"
+#line 251 "../../../R/src/main/gram.y"
 { yyval = xxaddformal0(yyvsp[-2],yyvsp[0]); ;
     break;}
 case 72:
-#line 233 "../../../R/src/main/gram.y"
+#line 252 "../../../R/src/main/gram.y"
 { yyval = xxaddformal1(yyvsp[-4],yyvsp[-2],yyvsp[0]); ;
     break;}
 case 73:
-#line 236 "../../../R/src/main/gram.y"
+#line 255 "../../../R/src/main/gram.y"
 { EatLines = 1; ;
     break;}
 }
@@ -1457,7 +1476,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 238 "../../../R/src/main/gram.y"
+#line 257 "../../../R/src/main/gram.y"
 
 
 
@@ -1472,14 +1491,21 @@ static int xxgetc(void)
     if (c == EOF) {
         EndOfFile = 1;
         return R_EOF;
-    }  
+    }
     if (c == '\n') R_ParseError += 1;
+    /* FIXME: check for overrun in SourcePtr */
+    if ( GenerateCode && FunctionLevel > 0 )
+	*SourcePtr++ = c;
+    xxcharcount++;
     return c;
 }
        
 static int xxungetc(int c)
-{      
+{
     if (c == '\n') R_ParseError -= 1;
+    if ( GenerateCode && FunctionLevel > 0 )
+	SourcePtr--;
+    xxcharcount--;
     return ptr_ungetc(c);
 }      
 
@@ -1562,7 +1588,6 @@ static SEXP xxexprlist0()
 static SEXP xxexprlist1(SEXP expr)
 {
     SEXP ans,tmp;
-    AddComment(expr);
     if (GenerateCode) {
 	PROTECT(tmp = NewList());
 	PROTECT(ans = GrowList(tmp, expr));
@@ -1577,7 +1602,6 @@ static SEXP xxexprlist1(SEXP expr)
 static SEXP xxexprlist2(SEXP exprlist, SEXP expr)
 {
     SEXP ans;
-    AddComment(expr);
     if (GenerateCode)
 	PROTECT(ans = GrowList(exprlist, expr));
     else
@@ -1796,15 +1820,63 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
 
 static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 {
+
     SEXP ans;
-    AddComment(body);
-    if (GenerateCode)
-	PROTECT(ans = lang3(fname, CDR(formals), body));
+    SEXP source;
+
+    if (GenerateCode) {
+	if (!KeepSource) 
+	    PROTECT(source = R_NilValue);
+	else {
+	    unsigned char *p, *p0, *end;
+	    int lines = 0, nc;
+	    
+	    /*  If the function ends with an endline comment,  e.g.
+
+		function()
+	            print("Hey") # This comment 
+
+		we need some special handling to keep it from getting
+		chopped off. Normally, we will have read one token too
+		far, which is what xxcharcount and xxcharsave keeps
+		track of.
+
+	    */
+	    end = SourcePtr - (xxcharcount - xxcharsave);
+	    for (p = end ; p < SourcePtr && (*p == ' ' || *p == '\t') ; p++)
+		;
+	    if (*p == '#') {
+		while (p < SourcePtr && *p != '\n') 
+		    p++;
+		end = p;
+	    }
+
+	    for (p = FunctionStart[FunctionLevel]; p < end ; p++)
+		if (*p == '\n') lines++;
+	    if ( *(end - 1) != '\n' ) lines++;
+	    PROTECT(source = allocVector(STRSXP, lines));
+	    p0 = FunctionStart[FunctionLevel];
+	    lines = 0;
+	    for (p = FunctionStart[FunctionLevel]; p < end ; p++)
+		if (*p == '\n' || p == end - 1) {
+		    nc = p - p0;
+		    if (*p != '\n') 
+			nc++; 
+		    strncpy(SourceLine, p0, nc);
+		    SourceLine[nc] = '\0';
+		    STRING(source)[lines++]  = mkChar(SourceLine);
+		    p0 = p + 1;
+		}
+	    /* PrintValue(source); */
+	}
+	PROTECT(ans = lang4(fname, CDR(formals), body, source));
+	UNPROTECT_PTR(source);
+    }
     else
 	PROTECT(ans = R_NilValue);
-    PopComment();
     UNPROTECT_PTR(body);
     UNPROTECT_PTR(formals);
+    FunctionLevel--;
     return ans;
 }
 
@@ -1914,6 +1986,7 @@ static SEXP GrowList(SEXP l, SEXP s)
     return l;
 }
 
+#if 0 
 /* Comment Handling :R_CommentSxp is of the same form as an expression */
 /* list, each time a new { is encountered a new element is placed in the */
 /* R_CommentSxp and when a } is encountered it is removed. */
@@ -1970,6 +2043,7 @@ static void AddComment(SEXP l)
 	CAR(R_CommentSxp) = R_NilValue;
     }
 }
+#endif
 
 static SEXP FirstArg(SEXP s, SEXP tag)
 {
@@ -2052,7 +2126,10 @@ static void ParseInit()
     SavedLval = R_NilValue;
     EatLines = 0;
     EndOfFile = 0;
-    ResetComment();
+    FunctionLevel=0;
+    SourcePtr = FunctionSource;
+    xxcharcount = 0;
+    KeepSource = *LOGICAL(GetOption(install("keep.source"), R_NilValue));
 }
 
 static SEXP R_Parse1(int *status)
@@ -2508,7 +2585,7 @@ static int KeywordLookup(char *s)
 }
 
 
-SEXP mkString(char *s)
+SEXP mkString(const char *s)
 {
     SEXP t;
 
@@ -2587,18 +2664,12 @@ static int SkipSpace(void)
 static int SkipComment(void)
 {
     char *p;
-    SEXP f;
     int c;
     p = yytext;
     *p++ = '#';
     while ((c = xxgetc()) != '\n' && c != R_EOF)
 	*p++ = c;
     *p = '\0';
-    if (GenerateCode && R_CommentSxp != R_NilValue) {
-	f = mkChar(yytext);
-	f = CONS(f, R_NilValue);
-	CAR(R_CommentSxp) = listAppend(CAR(R_CommentSxp), f);
-    }
     if (c == R_EOF) EndOfFile = 2;
     return c;
 }
@@ -2767,8 +2838,18 @@ static int SymbolValue(int c)
     while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.'));
     xxungetc(c);
     *p = '\0';
+    /* FIXME: check overrun conditions */
     if ((kw = KeywordLookup(yytext))) {
-	if(kw == FUNCTION) PushComment();
+	if ( kw == FUNCTION ) {
+	    if ( FunctionLevel++ == 0 && GenerateCode) {
+		strcpy(FunctionSource, "function");
+		SourcePtr = FunctionSource + 8;
+	    }
+	    FunctionStart[FunctionLevel] = SourcePtr - 8;
+	    #if 0
+	    printf("%d,%d\n",SourcePtr - FunctionSource, FunctionLevel);
+	    #endif
+	}
 	return kw;
     }
     PROTECT(yylval = install(yytext));
@@ -2788,6 +2869,8 @@ static int token()
 	SavedToken = 0;
 	return c;
     }
+    xxcharsave = xxcharcount; /* want to be able to go back one token */
+
     c = SkipSpace();
     if (c == '#') c = SkipComment();
     if (c == R_EOF) return END_OF_INPUT;
@@ -3115,7 +3198,6 @@ int yylex(void)
     case LBRACE:
 	*++contextp = tok;
 	EatLines = 1;
-	PushComment();
 	break;
 
     case '(':
@@ -3132,8 +3214,6 @@ int yylex(void)
     case RBRACE:
 	while (*contextp == 'i')
 	    ifpop();
-	if(*contextp == LBRACE)
-	    PopComment();
 	*contextp-- = 0;
 	break;
 

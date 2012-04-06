@@ -78,7 +78,8 @@
               almost 30 different notions, e.g.,
               \code{function}, \code{vector},
               \code{numeric}, \ldots} \\
-        .Internal & .External & symbol.C & symbol.For \\
+        .Primitive & .Internal & .External \\
+        symbol.C & symbol.For \\
         globalenv & pos.to.env & unclass
         %% substitute(expr, env)   has 2 args..
       \end{tabular}
@@ -122,7 +123,7 @@
       :    & \~ & c & list & unlist \\
       call & as.call & expression & substitute \\
       UseMethod & invisible \\
-      .C & .Fortran
+      .C & .Fortran & .Call
     \end{tabular}
   \end{center}
 

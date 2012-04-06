@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Error.h"
 #include "Arith.h"
@@ -39,7 +43,7 @@ void bincode(double *x, int *pn, double *breaks, int *pnb, int *code,
     lft = !(*right);
 
     for(i=0 ; i<n ; i++)
-	if(FINITE(x[i])) {
+	if(R_FINITE(x[i])) {
 	    lo = 0;
 	    hi = nb1;
 	    if(x[i] <  breaks[lo] || breaks[hi] < x[i] ||
@@ -78,7 +82,7 @@ void bincount(double *x, int *pn, double *breaks, int *pnb, int *count,
 	count[i] = 0;
 
     for(i=0 ; i<n ; i++)
-	if(FINITE(x[i])) {
+	if(R_FINITE(x[i])) {
 	    lo = 0;
 	    hi = nb1;
 	    if(breaks[lo] <= x[i] &&
@@ -109,7 +113,7 @@ void bincode2(double *x, int *pn, double *breaks, int *pnb, int *code,
     nb1 = *pnb - 1;
 
     for(i=0 ; i<n ; i++)
-	if(FINITE(x[i])) {
+	if(R_FINITE(x[i])) {
 	    lo = 0;
 	    hi = nb1;
 	    if(x[i] <  breaks[lo] || breaks[hi] < x[i] ||

@@ -1,6 +1,6 @@
 
 R : Copyright 1999, The R Development Core Team
-Version 0.64.0 Patched (unreleased snapshot) (May 3, 1999)
+Version 0.65.0 Under development (unstable) (August 20, 1999)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -25,8 +25,8 @@ Type	"q()" to quit R.
 + {
 +     if(is.null(eps)) { eps <- 1e-30; options(rErr.eps = eps) }
 +     ifelse(Mod(true) >= eps,
-+            1 - approx / true, # relative error
-+            true - approx)     # absolute error (e.g. when true=0)
++ 	   1 - approx / true, # relative error
++ 	   true - approx)     # absolute error (e.g. when true=0)
 + }
 > 
 > is.infinite(.Machine$double.base ^ .Machine$double.max.exp)# overflow
@@ -38,6 +38,36 @@ Type	"q()" to quit R.
 [1] TRUE
 > log10(.Machine$double.xmin) / log10(2) == .Machine$double.min.exp
 [1] TRUE
+> 
+> ##  log() and "pow()" -- POSIX is not specific enough..
+> log(0) == -Inf
+[1] TRUE
+> is.nan(log(-1))# TRUE and warning
+[1] TRUE
+Warning message: 
+NaNs produced in: log(x) 
+> 
+> rp <- c(1:2,Inf); rn <- rev(- rp)
+> r <- c(rn, 0, rp)
+> all(r^0 == 1)
+[1] TRUE
+> all((rn ^ -3) == -((-rn) ^ -3))
+[1] TRUE
+> #
+> all(c(1.1,2,Inf) ^ Inf == Inf)
+[1] TRUE
+> all(c(1.1,2,Inf) ^ -Inf == 0)
+[1] TRUE
+> .9 ^ Inf == 0
+[1] TRUE
+> .9 ^ -Inf == Inf
+[1] TRUE
+> ## Wasn't ok in 0.64:
+> all(1^c(-Inf,Inf) == 1)
+[1] TRUE
+> all(is.nan(rn ^ .5))# in some C's : (-Inf) ^ .5 gives Inf, instead of NaN
+[1] TRUE
+> 
 > 
 > ## Real Trig.:
 > cos(0) == 1
@@ -91,7 +121,7 @@ Type	"q()" to quit R.
 > all(abs(rErr(gamma(r+1), r*gamma(r))) < 500 * Meps)
 [1] TRUE
 > 
-> n <-   10; all(          gamma(1:n) == cumprod(c(1,1:(n-1))))
+> n <-   10; all(		 gamma(1:n) == cumprod(c(1,1:(n-1))))
 [1] TRUE
 > n <-   20; all(abs(rErr( gamma(1:n), cumprod(c(1,1:(n-1))))) < 100*Meps)
 [1] TRUE
@@ -105,12 +135,12 @@ Type	"q()" to quit R.
 > ##test EXTENSIVELY:	for(N in 1:100) {
 >     cat(".")
 .>     for(n in c(1:30, 1000:1050)) {
-+         x <- rnorm(n)
-+         er <- Mod(rErr(fft(fft(x), inverse = TRUE)/n, x*(1+0i)))
-+         n.ok <- all(er < 1e-8) & quantile(er, 0.95, names=FALSE) < 10000*Meps
-+         if(!n.ok) cat("\nn=",n,": quantile(rErr, c(.95,1)) =",
-+                       formatC(quantile(er, prob= c(.95,1))),"\n")
-+         ok <- ok & n.ok
++ 	x <- rnorm(n)
++ 	er <- Mod(rErr(fft(fft(x), inverse = TRUE)/n, x*(1+0i)))
++ 	n.ok <- all(er < 1e-8) & quantile(er, 0.95, names=FALSE) < 10000*Meps
++ 	if(!n.ok) cat("\nn=",n,": quantile(rErr, c(.95,1)) =",
++ 		      formatC(quantile(er, prob= c(.95,1))),"\n")
++ 	ok <- ok & n.ok
 +     }
 >     cat("\n")
 
@@ -118,4 +148,18 @@ Type	"q()" to quit R.
 > ok
 [1] TRUE
 > 
+> ## var():
+> for(n in 2:10)
++     print(all.equal(n*(n-1)*var(diag(n)),
++ 		    matrix(c(rep(c(n-1,rep(-1,n)),n-1), n-1), nr=n, nc=n),
++ 		    tol = 20*Meps))# use tol=0	to see rel.error
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
 > 

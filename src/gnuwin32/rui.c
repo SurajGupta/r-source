@@ -14,8 +14,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 /* R user interface based on GraphApp */
 #include "Defn.h"
@@ -25,7 +29,7 @@
 #include "console.h"
 #include "rui.h"
 #include "opt.h"
-
+#include "Rversion.h"
 
 #define TRACERUI(a)
 
@@ -336,9 +340,9 @@ static void readconsolecfg()
     if (MDIset == -1)
 	RguiMDI = RguiMDI &= ~RW_MDI;
 
-    sprintf(optf, "%s/RConsole", getenv("R_HOME"));
+    sprintf(optf, "%s/RConsole", getenv("R_USER"));
     if (!optopenfile(optf)) {
-	sprintf(optf, "%s/etc/RConsole", getenv("RHOME"));
+	sprintf(optf, "%s/etc/RConsole", getenv("R_HOME"));
 	if (!optopenfile(optf))
 	    return;
     }

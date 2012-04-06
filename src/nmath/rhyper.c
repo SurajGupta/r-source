@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -108,7 +108,7 @@ double rhyper(double nn1in, double nn2in, double kkin)
     /* check parameter validity */
 
 #ifdef IEEE_754
-    if(!finite(nn1in) || !finite(nn2in) || !finite(kkin)) {
+    if(!R_FINITE(nn1in) || !R_FINITE(nn2in) || !R_FINITE(kkin)) {
 	ML_ERROR(ME_DOMAIN);
 	return ML_NAN;
     }

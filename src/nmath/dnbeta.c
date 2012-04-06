@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -70,7 +70,7 @@ double dnbeta(double x, double a, double b, double lambda)
 	}
 
 #ifdef IEEE_754
-	if (!FINITE(a) || !FINITE(b) || !FINITE(lambda)) {
+	if (!R_FINITE(a) || !R_FINITE(b) || !R_FINITE(lambda)) {
 		ML_ERROR(ME_DOMAIN);
 		return ML_NAN;
 	}

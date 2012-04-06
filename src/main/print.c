@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  print.default()  ->	 do_printdefault & its sub-functions.
@@ -45,23 +45,19 @@
  *  Also ./printvector.c,  ./printarray.c
  */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
 #include "Defn.h"
 #include "Print.h"
 #include "Fileio.h"
-#include "Platform.h"
 #include "S.h"
 
+/* Global print parameter struct: */
+R_print_par_t R_print;
 
-extern int isValidName(char*);
 static void printAttributes(SEXP, SEXP);
-
-int R_print_width;
-SEXP print_na_string;
-int print_na_width;
-int print_quote;
-int print_right;
-int print_digits;
-int print_gap;
 
 #define TAGBUFLEN 256
 static char tagbuf[TAGBUFLEN + 5];
@@ -69,13 +65,13 @@ static char tagbuf[TAGBUFLEN + 5];
 
 void PrintDefaults(SEXP rho)
 {
-    print_na_string = NA_STRING;
-    print_na_width = strlen(CHAR(print_na_string));
-    print_quote = 1;
-    print_right = 0;
-    print_digits = GetOptionDigits(rho);
-    print_gap = 1;
-    R_print_width = GetOptionWidth(rho);
+    R_print.na_string = NA_STRING;
+    R_print.na_width = strlen(CHAR(R_print.na_string));
+    R_print.quote = 1;
+    R_print.right = 0;
+    R_print.digits = GetOptionDigits(rho);
+    R_print.gap = 1;
+    R_print.width = GetOptionWidth(rho);
 }
 
 SEXP do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -130,6 +126,7 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int quote;
     SEXP a, x, rowlab, collab;
+    char *rowname = NULL, *colname = NULL;
 #ifdef OLD
     SEXP oldnames;
 #endif
@@ -140,7 +137,7 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     rowlab = CAR(a); a = CDR(a);
     collab = CAR(a); a = CDR(a);
     quote = asInteger(CAR(a)); a = CDR(a);
-    print_right = asInteger(CAR(a));
+    R_print.right = asInteger(CAR(a));
 #ifdef OLD
     PROTECT(oldnames = getAttrib(x, R_DimNamesSymbol));
     /* fix up the dimnames */
@@ -161,7 +158,7 @@ SEXP do_printmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (length(rowlab) == 0) rowlab = R_NilValue;
     if (length(collab) == 0) collab = R_NilValue;
 #endif
-    printMatrix(x, 0, getAttrib(x, R_DimSymbol), quote, print_right, rowlab, collab);
+    printMatrix(x, 0, getAttrib(x, R_DimSymbol), quote, R_print.right, rowlab, collab, rowname, colname);
 #ifdef OLD
     setAttrib(x, R_DimNamesSymbol, oldnames);
     UNPROTECT(1);
@@ -186,16 +183,16 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho){
     x = CAR(args); args = CDR(args);
 
     if(!isNull(CAR(args))) {
-	print_digits = asInteger(CAR(args));
-	if (print_digits == NA_INTEGER ||
-	    print_digits < 1 ||
-	    print_digits > 22)
+	R_print.digits = asInteger(CAR(args));
+	if (R_print.digits == NA_INTEGER ||
+	    R_print.digits < 1 ||
+	    R_print.digits > 22)
 		errorcall(call, "invalid digits parameter\n");
     }
     args = CDR(args);
 
-    print_quote = asLogical(CAR(args));
-    if(print_quote == NA_LOGICAL)
+    R_print.quote = asLogical(CAR(args));
+    if(R_print.quote == NA_LOGICAL)
 	errorcall(call, "invalid quote parameter\n");
     args = CDR(args);
 
@@ -203,20 +200,20 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho){
     if(!isNull(naprint))  {
 	if(!isString(naprint) || LENGTH(naprint) < 1)
 	    errorcall(call, "invalid na.print specification\n");
-	print_na_string = STRING(naprint)[0];
-	print_na_width = strlen(CHAR(print_na_string));
+	R_print.na_string = STRING(naprint)[0];
+	R_print.na_width = strlen(CHAR(R_print.na_string));
     }
     args = CDR(args);
 
     if(!isNull(CAR(args))) {
-	print_gap = asInteger(CAR(args));
-	if (print_gap == NA_INTEGER || print_gap < 1 || print_gap > 10)
+	R_print.gap = asInteger(CAR(args));
+	if (R_print.gap == NA_INTEGER || R_print.gap < 1 || R_print.gap > 10)
 	    errorcall(call, "invalid gap parameter\n");
     }
     args = CDR(args);
 
-    print_right = asLogical(CAR(args));
-    if(print_right == NA_LOGICAL)
+    R_print.right = asLogical(CAR(args));
+    if(R_print.right == NA_LOGICAL)
 	errorcall(call, "invalid right parameter\n");
     args = CDR(args);
 
@@ -233,7 +230,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 {
     int i, taglen, ns;
     SEXP dims, t, names, newcall, tmp;
-    char *pbuf, *ptag;
+    char *pbuf, *ptag, *rn, *cn;
 
     ns = length(s);
     if((dims = getAttrib(s, R_DimSymbol)) != R_NilValue && length(dims) > 1) {
@@ -273,8 +270,9 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	}
 	if (LENGTH(dims) == 2) {
 	    SEXP rl, cl;
-	    GetMatrixDimnames(s, &rl, &cl);
-	    printMatrix(t, 0, dims, print_quote, print_right, rl, cl);
+	    GetMatrixDimnames(s, &rl, &cl, &rn, &cn);
+	    printMatrix(t, 0, dims, R_print.quote, R_print.right, rl, cl, 
+			rn, cn);
 	}
 	else {
 	    names = GetArrayDimnames(s);
@@ -331,7 +329,7 @@ static void printList(SEXP s, SEXP env)
 {
     int i, taglen;
     SEXP dims, dimnames, t, newcall;
-    char *pbuf, *ptag;
+    char *pbuf, *ptag, *rn, *cn;
 
     if ((dims = getAttrib(s, R_DimSymbol)) != R_NilValue && length(dims) > 1) {
 	PROTECT(dims);
@@ -378,8 +376,9 @@ static void printList(SEXP s, SEXP env)
 	}
 	if (LENGTH(dims) == 2) {
 	    SEXP rl, cl;
-	    GetMatrixDimnames(s, &rl, &cl);
-	    printMatrix(t, 0, dims, print_quote, print_right, rl, cl);
+	    GetMatrixDimnames(s, &rl, &cl, &rn, &cn);
+	    printMatrix(t, 0, dims, R_print.quote, R_print.right, rl, cl,
+			rn, cn);
 	}
 	else {
 	    dimnames = getAttrib(s, R_DimNamesSymbol);
@@ -472,7 +471,9 @@ void PrintValueRec(SEXP s,SEXP env)
 	break;
     case CLOSXP:
     case LANGSXP:
-	t = deparse1(s, 0);
+	t = getAttrib(s, R_SourceSymbol);
+	if (isNull(t))
+	    t = deparse1(s, 0);
 	for (i = 0; i < LENGTH(t); i++)
 	    Rprintf("%s\n", CHAR(STRING(t)[i]));
 	if (TYPEOF(s) == CLOSXP) t = CLOENV(s);
@@ -505,30 +506,39 @@ void PrintValueRec(SEXP s,SEXP env)
 	if (TYPEOF(t) == INTSXP) {
 	    if (LENGTH(t) == 1) {
 		PROTECT(t = getAttrib(s, R_DimNamesSymbol));
-		if (t != R_NilValue && VECTOR(t)[0] != R_NilValue)
-		    printNamedVector(s, VECTOR(t)[0], print_quote);
+		if (t != R_NilValue && VECTOR(t)[0] != R_NilValue) {
+		    SEXP nn = getAttrib(t, R_NamesSymbol);
+		    char *title = NULL;
+		    
+		    if (!isNull(nn))
+		        title = CHAR(STRING(nn)[0]);
+
+		    printNamedVector(s, VECTOR(t)[0], R_print.quote, title);
+		}
 		else
-		    printVector(s, 1, print_quote);
+		    printVector(s, 1, R_print.quote);
 		UNPROTECT(1);
 	    }
 	    else if (LENGTH(t) == 2) {
 		SEXP rl, cl;
-		GetMatrixDimnames(s, &rl, &cl);
-		printMatrix(s, 0, t, print_quote, print_right, rl, cl);
+		char *rn, *cn;
+		GetMatrixDimnames(s, &rl, &cl, &rn, &cn);
+		printMatrix(s, 0, t, R_print.quote, R_print.right, rl, cl, 
+			    rn, cn);
 	    }
 	    else {
 		SEXP dimnames;
 		dimnames = GetArrayDimnames(s);
-		printArray(s, t, print_quote, dimnames);
+		printArray(s, t, R_print.quote, dimnames);
 	    }
 	}
 	else {
 	    UNPROTECT(1);
 	    PROTECT(t = getAttrib(s, R_NamesSymbol));
 	    if (t != R_NilValue)
-		printNamedVector(s, t, print_quote);
+		printNamedVector(s, t, R_print.quote, NULL);
 	    else
-		printVector(s, 1, print_quote);
+		printVector(s, 1, R_print.quote);
 	}
 	UNPROTECT(1);
 	break;
@@ -570,7 +580,7 @@ static void printAttributes(SEXP s,SEXP env)
 		if (TAG(a) == R_NamesSymbol)
 		    goto nextattr;
 	    }
-	    if(TAG(a) == R_CommentSymbol)
+	    if(TAG(a) == R_CommentSymbol || TAG(a) == R_SourceSymbol)
 		goto nextattr;
 	    if (i > 1)
 		Rprintf("\n");

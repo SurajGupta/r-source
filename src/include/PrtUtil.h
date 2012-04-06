@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998, 1999   Robert Gentleman, Ross Ihaka 
+ *  Copyright (C) 1998, 1999   Robert Gentleman, Ross Ihaka
  *                             and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,30 +15,22 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *
- * Generally useful print utilities *NOT* relying on R internals (from Defn.h)
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+ * Generally useful print utilities *NOT* relying on R internals (from Defn.h)
+ *
+ * (not useful anymore; use  R_print struct with SEXP) --> Print.h
+ */
 #ifndef PRTUTIL_H_
 #define PRTUTIL_H_
 
 #include "Complex.h"
 #include <stdarg.h>
 
-#define PRINT_GAP	print_gap
-#define PRINT_WIDTH	R_print_width
-
 #define adj_right 1
 #define adj_left  0
-
-/* These should all be in a struct ! */
-extern int  R_print_width;
-extern int  print_na_width;
-extern int  print_quote;
-extern int  print_digits;
-extern int  print_gap;
 
 /* Computation of printing formats */
 void formatLogical(int*,int,int*);

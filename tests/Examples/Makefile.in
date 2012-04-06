@@ -1,5 +1,5 @@
 #
-# ${RHOME}/tests/Examples/Makefile
+# ${R_HOME}/tests/Examples/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -15,7 +15,7 @@ DISTFILES = Makefile.in
 
 R = $(top_builddir)/bin/R --vanilla
 
-PKGS = base eda lqs modreg mva stepfun
+PKGS = base eda lqs modreg mva stepfun ts
 EX_IN = $(PKGS:=-Ex.R)
 EX_OUT = $(EX_IN:.R=.Rout)
 .SUFFIXES:
@@ -40,15 +40,16 @@ R:
 	@echo "Running all help() examples ..."
 	$(R) < $< > $@
 
-%-Ex.R: FORCE
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ]; then mv $@ $@.bak ; fi
-	@echo "Collecting components of $@ ..."
-	@cd $(top_builddir)/src/library && \
-	  OPTS="--nroff --example" $(MAKE) PKGS="$*" DOCS
-	@echo "Massaging examples into $@ ..."
-	@$(top_builddir)/bin/massage-Examples $* \
-	  $(top_builddir)/library/$*/R-ex/*.R > $@
+$(EX_IN): FORCE
+	@(pkg=`echo $@ | sed -e 's/-Ex.R$$//g'`; \
+	  if test -f $@.bak ; then mv $@.bak $@.bakk ; fi; \
+	  if test -f $@     ; then mv $@     $@.bak  ; fi; \
+	  echo "Collecting components of $@ ..."; \
+	  (cd $(top_builddir)/src/library && \
+	    OPTS="--nroff --example" $(MAKE) PKGS="$${pkg}" DOCS); \
+	  echo "Massaging examples into $@ ..."; \
+	  $(top_builddir)/bin/massage-Examples $${pkg} \
+	    $(top_builddir)/library/$${pkg}/R-ex/*.R > $@)
 FORCE:
 
 mostlyclean: clean

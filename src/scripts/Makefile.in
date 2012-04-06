@@ -1,5 +1,5 @@
 #
-# ${RHOME}/src/scripts/Makefile
+# ${R_HOME}/src/scripts/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -10,32 +10,46 @@ subdir = src/scripts
 
 include $(top_builddir)/Makeconf
 
+SCRIPTS_S = BATCH Rd2dvi check filename help help.links \
+	massage-Examples pager
+SCRIPTS_B_IN = COMPILE.in INSTALL.in REMOVE.in Rd2contents.in Rd2txt.in \
+	Rdconv.in Rdindex.in Rman2Rd.in SHLIB.in Sd2Rd.in build-help.in \
+	fwf2table.in help.pretty.in html2dos.in
+SCRIPTS_B = $(SCRIPTS_B_IN:.in=)
+
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = $(shell cd $(srcdir) && ls | sed '/CVS/d')
+DISTFILES = Makefile.in $(SCRIPTS_S) $(SCRIPTS_B_IN) R.sh.in
 
-SRC_SCRIPTS = BATCH Rd2txt Rd2dvi filename help help.links pager \
-	massage-Examples check
-OBJ_SCRIPTS = COMPILE INSTALL REMOVE Rdconv Rdindex Rman2Rd SHLIB \
-	Sd2Rd build-help fwf2table help.pretty html2dos Rd2contents
+.SUFFIXES:
+.SUFFIXES: .in
 
-all: R
+.in:
+	@cd $(top_builddir) && \
+	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
+	  $(SHELL) ./config.status
 
-R:
+all: Makefile R
+
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+
+R: $(SCRIPTS_B) R.sh
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
 	@cat R.sh | \
-	  (cd $(top_builddir); sed "s@RHOME=.*@RHOME=`pwd`@" > bin/R)
+	  (cd $(top_builddir); sed "s@R_HOME_DIR*@`pwd`@" > bin/R)
 	@chmod +x $(top_builddir)/bin/R
-	@for f in $(SRC_SCRIPTS); do \
+	@for f in $(SCRIPTS_S); do \
 	  $(INSTALL) $(srcdir)/$$f $(top_builddir)/bin; \
 	done
-	@for f in $(OBJ_SCRIPTS); do \
+	@for f in $(SCRIPTS_B); do \
 	  $(INSTALL) $$f $(top_builddir)/bin; \
 	done
+
+$(SCRIPTS_B): $(top_builddir)/config.status
 
 mostlyclean: clean
 clean:
 distclean:
-	@rm -f Makefile R.sh $(OBJ_SCRIPTS)
+	@rm -f Makefile R.sh $(SCRIPTS_B)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)

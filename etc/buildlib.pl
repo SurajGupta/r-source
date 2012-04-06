@@ -14,8 +14,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-# writing to the Free Software Foundation, Inc., 675 Mass Ave,
-# Cambridge, MA 02139, USA.
+# writing to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA  02111-1307  USA.
 
 # Send any bug reports to Friedrich.Leisch@ci.tuwien.ac.at
 
@@ -23,7 +23,7 @@
 use Cwd;
 use File::Basename;
 
-require "$RHOME/etc/html-layout.pl";
+require "$R_HOME/etc/html-layout.pl";
 
 
 if($opt_dosnames){
@@ -49,7 +49,7 @@ sub buildinit {
 	die("Package $pkg does not exist\n") unless (-d $pkg);
     }
     else{
-	$pkg="$RHOME/src/library/base";
+	$pkg="$R_HOME/src/library/base";
     }
 
     chdir $currentdir;
@@ -61,7 +61,7 @@ sub buildinit {
 	chdir $currentdir;
     }
     else{
-	$lib="$RHOME/library";
+	$lib="$R_HOME/library";
     }
 
     chdir $currentdir;
@@ -208,7 +208,7 @@ sub read_anindex {
 
 
 
-### Build $RHOME/doc/html/packages.html from the $pkg/TITLE files
+### Build $R_HOME/doc/html/packages.html from the $pkg/TITLE files
 
 sub build_htmlpkglist {
 
@@ -217,7 +217,7 @@ sub build_htmlpkglist {
     my %htmltitles = read_titles($lib);
     my $key;
 
-    open(htmlfile, ">$RHOME/doc/html/packages.$HTML");
+    open(htmlfile, ">$R_HOME/doc/html/packages.$HTML");
 
     print htmlfile html_pagehead("Package Index", ".",
 				 "index.$HTML", "Top",
@@ -359,9 +359,9 @@ sub build_htmlfctlist {
     my %htmltitles = read_functiontitles($lib);
     my $key;
 
-    open(htmlfile, ">$RHOME/doc/html/function.$HTML");
+    open(htmlfile, ">$R_HOME/doc/html/function.$HTML");
 
-    print htmlfile html_pagehead("Functions installed in RHOME", ".",
+    print htmlfile html_pagehead("Functions installed in R_HOME", ".",
 				 "index.$HTML", "Top",
 				 "packages.$HTML", "Packages");
 

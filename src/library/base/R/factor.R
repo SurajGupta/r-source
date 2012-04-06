@@ -20,6 +20,9 @@ factor <- function (x, levels = sort(unique(x), na.last = TRUE),
 is.factor <- function(x) inherits(x, "factor")
 as.factor <- function (x) if (is.factor(x)) x else factor(x)
 
+## Help old S users:
+category <- function(...) .Defunct()
+
 levels <- function(x) attr(x, "levels")
 nlevels <- function(x) length(levels(x))
 
@@ -189,21 +192,42 @@ print.ordered <- function (x, quote=FALSE)
     invisible(x)
 }
 
-Ops.ordered <- function(e1, e2)
+Ops.ordered <-
+function (e1, e2)
 {
+    ok <- switch(.Generic,
+                 "<" = , ">" = , "<=" = , ">=" = ,"=="=, "!=" =TRUE,
+                 FALSE)
+    if(!ok) {
+	warning(paste('"',.Generic,'"', " not meaningful for ordered factors", sep=""))
+        return(rep(NA, max(length(e1),if(!missing(e2))length(e2))))
+    }
     nas <- is.na(e1) | is.na(e2)
+    ord1 <- FALSE
+    ord2 <- FALSE
     if (nchar(.Method[1])) {
-	l1 <- levels(e1)
-	e1 <- l1[e1]
+        l1 <- levels(e1)
+        ord1 <- TRUE
     }
     if (nchar(.Method[2])) {
-	l2 <- levels(e2)
-	e2 <- l2[e2]
+        l2 <- levels(e2)
+        ord2 <- TRUE
     }
-    if (all(nchar(.Method)) && (length(l1) != length(l2) ||
-				!all(sort(l2) == sort(l1))))
-	stop("Level sets of factors are different")
-    value <- get(.Generic, mode="function")(e1,e2)
+    if (all(nchar(.Method)) && (length(l1) != length(l2) || !all(l2 == l1)))
+        stop("Level sets of factors are different")
+    if (ord1 && ord2) {
+        e1 <- codes(e1)
+        e2 <- codes(e2)
+    }
+    else if (!ord1) {
+        e1 <- match(e1, l2)
+        e2 <- codes(e2)
+    }
+    else if (!ord2) {
+        e2 <- match(e2, l1)
+        e1 <- codes(e1)
+    }
+    value <- get(.Generic, mode = "function")(e1, e2)
     value[nas] <- NA
     value
 }

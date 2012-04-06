@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef GRAPHICS_H_
@@ -507,11 +507,12 @@ void GRestorePars(DevDesc*);
 void ProcessInlinePars(SEXP, DevDesc*);
 void Specify2(char*, SEXP, DevDesc*);
 
-SEXP FixupPch(SEXP, DevDesc*);
-SEXP FixupLty(SEXP, DevDesc*);
-SEXP FixupFont(SEXP);		/* FIXME: need 2nd arg? */
-SEXP FixupCol(SEXP, DevDesc*);
-SEXP FixupCex(SEXP);
+SEXP FixupPch(SEXP, int);
+SEXP FixupLty(SEXP, int);
+SEXP FixupFont(SEXP, int);
+SEXP FixupCol(SEXP, unsigned int);
+SEXP FixupCex(SEXP, double);
+SEXP FixupLwd(SEXP, double);
 
 
 
@@ -621,7 +622,7 @@ double GExpressionWidth(SEXP, int, DevDesc*);
 
 /* Convert an R colour specification (which might be a number or */
 /* a string) into an internal colour specification. */
-unsigned int RGBpar(SEXP, int, DevDesc*);
+unsigned int RGBpar(SEXP, int);
 
 
 /*-------------------------------------------------------------------
@@ -684,7 +685,7 @@ unsigned int rgb2col(char *);
 unsigned int name2col(char *);
 unsigned int char2col(char *s);/* rgb2col() or name2col() */
 char* col2name(unsigned int);
-unsigned int str2col(char *s, DevDesc *dd);
+unsigned int str2col(char *s);
 
 unsigned int ScaleColor(double x);
 

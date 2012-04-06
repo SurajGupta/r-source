@@ -1,5 +1,5 @@
 #
-# ${RHOME}/Makefile
+# ${R_HOME}/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -25,7 +25,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-R:
+R: 
 	@for d in afm demos doc etc src; do \
 	  (cd $${d} && $(MAKE) R) || exit 1; \
 	done
@@ -33,8 +33,9 @@ R:
 	  echo "You should \`make docs' now ..."; \
 	fi
 
-src/include/Platform.h: $(srcdir)/date-stamp
-	$(top_srcdir)/configure --srcdir $(top_srcdir)
+src/include/Rconfig.h: $(srcdir)/configure \
+  $(srcdir)/src/include/Rconfig.h.in
+	$(top_srcdir)/configure --srcdir $(top_srcdir) @config_opts@
 
 docs help html latex examples:: FORCE
 	-@(cd src/library && $(MAKE) $@)
@@ -49,12 +50,16 @@ install: all installdirs
 	    $(INSTALL_DATA) $${f} $(rhome); \
 	  done)
 	@echo "Installing executables ..."
-	@$(INSTALL_PROGRAM) bin/R.binary $(rhome)/bin
-	@cat bin/R | sed "s@RHOME=.*@RHOME=$(rhome)@" > $(rhome)/bin/R
-	@cat bin/R | sed "s@RHOME=.*@RHOME=$(rhome)@" > $(bindir)/R
+	@$(INSTALL_PROGRAM) bin/R.X11 $(rhome)/bin
+	@if test -x bin/R.gnome; then \
+	  $(INSTALL_PROGRAM) bin/R.gnome $(rhome)/bin; \
+	fi
+	@cat bin/R | sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" > $(rhome)/bin/R
+	@cat bin/R | sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" > $(bindir)/R
 	@chmod 755 $(bindir)/R $(rhome)/bin/R
 	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
-                            | grep -v '^bin/R.binary\**$$'`; do \
+                            | grep -v '^bin/R.X11\**$$' \
+                            | grep -v '^bin/R.gnome\**$$'`; do \
 	  $(INSTALL) $${f} $(rhome)/bin; \
 	done
 	@for f in Rd2txt Rdconv Rdindex Sd2Rd; do \
@@ -65,7 +70,9 @@ install: all installdirs
 	  $(INSTALL_DATA) $${f} $(rhome)/include; \
 	done
 	@echo "Installing library ..."
-	@cd library; $(TAR) cf - [a-z]* | (cd $(rhome)/library; tar xf -)
+	@cp -r library $(rhome) || \
+	  (cd library; \
+	    $(TAR) cf - [a-z]* | (cd $(rhome)/library; $(TAR) xof -))
 	@echo "  Building help index ..."
 	@(cd $(rhome)/library; cat */TITLE > LibIndex 2> /dev/null)
 	@echo "  Building HTML index ..."
@@ -80,11 +87,14 @@ install-strip:
 uninstall:
 	@echo "Uninstalling library ..."
 	@(cd $(rhome)/library; \
-	  for p in base eda modreg mva stepfun; do rm -rf $${p}; done)
+	  for p in base eda lqs modreg mva stepfun ts; do rm -rf $${p}; done)
 	@echo "  Rebuilding help index ..."
-	@(cd $(rhome)/library; cat */TITLE > LibIndex 2> /dev/null)
+	@(cd $(rhome)/library; \
+	  cat */TITLE > LibIndex 2> /dev/null || echo "" > LibIndex)
 	@echo "  Rebuilding HTML index ..."
-	@$(rhome)/bin/build-help --rhome $(rhome) --htmllists
+	@if test -x $(rhome)/bin/build-help; then \
+	  $(rhome)/bin/build-help --rhome $(rhome) --htmllists; \
+	fi
 	@echo "Uninstalling headers ..."
 	@rm -rf $(rhome)/include
 	@echo "Uninstalling executables ..."
@@ -150,5 +160,5 @@ info:
 TAGS:
 
 check test:: test-All
-test-All test-Examples strict-tests::
+test-All test-Examples test-Specific::
 	@(cd tests && $(MAKE) $@)

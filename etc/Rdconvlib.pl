@@ -15,8 +15,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 675 Mass Ave,
-# Cambridge, MA 02139, USA.
+# writing to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA  02111-1307  USA.
 
 # Send any bug reports to Friedrich.Leisch@ci.tuwien.ac.at
 
@@ -33,7 +33,7 @@
 ## ==> Consequence: Allow \verbatim{ ...}  only *within* other
 ##     top-level blocks ...
 
-require "$RHOME/etc/html-layout.pl";
+require "$R_HOME/etc/html-layout.pl";
 
 
 # names of unique text blocks, these may NOT appear MORE THAN ONCE!
@@ -1520,9 +1520,9 @@ sub latex_code_cmd {
     my $code = $_[0];
 
     if($code =~ /[$LATEX_SPECIAL]/){
-	die("\nERROR: found `\@' in \\code{...\}\n")
+	warn("\nERROR: found `\@' in \\code{...\}\n")
 	  if $code =~ /@/;
-	die("\nERROR: found `HYPERLINK(' in \$code: '" . $code ."'\n")
+	warn("\nERROR: found `HYPERLINK(' in \$code: '" . $code ."'\n")
 	  if $code =~ /HYPERLINK\(/;
 	## till 0.63.1 
 	## $code = "\\verb@" . $code . "@";

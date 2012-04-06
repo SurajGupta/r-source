@@ -1,5 +1,5 @@
 #
-# ${RHOME}/src/main/Makefile
+# ${R_HOME}/src/main/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -10,42 +10,123 @@ subdir = src/main
 
 include $(top_builddir)/Makeconf
 
-distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = $(shell cd $(srcdir) && ls Makefile.in *.[cfhy])
+SOURCES = \
+	arithmetic.c \
+	array.c \
+	attrib.c \
+	bind.c \
+	builtin.c \
+	character.c \
+	coerce.c \
+	colors.c \
+	complex.c \
+	context.c \
+	cov.c \
+	cum.c \
+	debug.c \
+	devPS.c \
+	devPicTeX.c \
+	deparse.c \
+	deriv.c \
+	devices.c \
+	dotcode.c \
+	dstruct.c \
+	duplicate.c \
+	envir.c \
+	errors.c \
+	eval.c \
+	format.c \
+	fourier.c \
+	gram.c \
+	gram-ex.c \
+	graphics.c \
+	iosupport.c \
+	list.c \
+	logic.c \
+	main.c \
+	match.c \
+	memory.c \
+	model.c \
+	names.c \
+	objects.c \
+	optimize.c \
+	options.c \
+	par.c \
+	paste.c \
+	platform.c \
+	plot.c \
+	plot3d.c \
+	plotmath.c \
+	print.c \
+	printarray.c \
+	printvector.c \
+	printutils.c \
+	random.c \
+	relop.c \
+	saveload.c \
+	scan.c \
+	seq.c \
+	sort.c \
+	source.c \
+	split.c \
+	subassign.c \
+	subscript.c \
+	subset.c \
+	summary.c \
+	unique.c \
+	util.c \
+	version.c
+DEPENDS = $(SOURCES:.c=.d)
+OBJECTS = $(SOURCES:.c=.o)
 
-OBJS = arithmetic.o array.o attrib.o bind.o builtin.o character.o       \
-	coerce.o colors.o complex.o context.o cov.o cum.o debug.o       \
-	deparse.o deriv.o devices.o dotcode.o dstruct.o duplicate.o     \
-	envir.o errors.o eval.o format.o fourier.o gram.o gram-ex.o graphics.o    \
-	iosupport.o list.o logic.o main.o match.o memory.o model.o      \
-	names.o objects.o optimize.o options.o par.o paste.o platform.o \
-	plot.o plot3d.o plotmath.o print.o printarray.o printvector.o   \
-	printutils.o random.o relop.o saveload.o scan.o seq.o sort.o    \
-	source.o split.o subassign.o subscript.o subset.o summary.o     \
-	unique.o util.o version.o
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+DISTFILES = $(SOURCES) arithmetic.h names.h gram.y
 
 RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libmath.a
 RGNOMELIBS = ../gnome/libRgnome.a ../appl/libappl.a ../nmath/libmath.a
 
-ALL_LIBS = $(RLIBS) $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS)
-ALL_GNOME_LIBS = $(RGNOMELIBS) $(LIBS) $(GNOMEUI_LIBS)
+ALL_X_LIBS = $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
+ALL_LIBS = $(RLIBS) $(ALL_X_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(LIBS)
+ALL_GNOME_LIBS = $(RGNOMELIBS) $(FLIBS) $(R_XTRA_LIBS) $(LIBS) $(GNOME_LIBDIR) $(GNOMEUI_LIBS) $(LIBGLADE_LIBS)
 
-all: Makefile R
+all: Makefile Makedeps R
 
-Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	cd $(top_builddir) && \
+Makefile: $(srcdir)/Makefile.in \
+  $(top_builddir)/config.status \
+  ../include/Rconfig.h \
+  ../include/Rversion.h \
+  ../include/FFDecl.h \
+  $(SOURCES)
+	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R: Makefile $(top_builddir)/bin/R.binary @RGNOMEBIN@
+Makedeps: Makefile $(DEPENDS)
+	@cat $(DEPENDS) >> Makefile
+	@touch $@
 
-$(top_builddir)/bin/R.binary: $(OBJS) $(RLIBS)
-	@$(MKINSTALLDIRS) $(top_builddir)/bin
-	$(LDCMD) $(DLLFLAGS) -o $@ $(OBJS) $(ALL_LIBS)
+R: Makefile
+	@for t in Makedeps $(top_builddir)/bin/R.X11 @RGNOMEBIN@; do \
+	  $(MAKE) $${t}; \
+	done
 
-$(top_builddir)/bin/R.gnome: $(OBJS) $(RGNOMELIBS)
+../include/Rconfig.h:
+	(cd ../include; $(MAKE) $(@F))
+../include/Rversion.h:
+	(cd ../include; $(MAKE) $(@F))
+../include/FFDecl.h: $(top_srcdir)/src/appl/ROUTINES
+	(cd ../include; $(top_srcdir)/tools/GETSYMBOLS)
+
+$(top_builddir)/bin/R.X11: $(OBJECTS) $(RLIBS) @EXPORTFILE@
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
-	$(LDCMD) $(DLLFLAGS) $(GNOME_LIBDIR) -o $@ $(OBJS) $(ALL_GNOME_LIBS)
+	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(ALL_LIBS)
+
+$(top_builddir)/bin/R.gnome: $(OBJECTS) $(RGNOMELIBS)
+	@$(MKINSTALLDIRS) $(top_builddir)/bin
+	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) $(GNOME_LIBDIR) -o $@ $(OBJECTS) $(ALL_GNOME_LIBS)
+
+$(top_builddir)/etc/R.exp: $(OBJECTS) $(RLIBS)
+	@$(top_srcdir)/tools/ldAIX4 -o $@ $(OBJECTS) $(RLIBS)
 
 ../unix/libunix.a:
 	(cd ../unix;  $(MAKE) $(@F))
@@ -54,19 +135,14 @@ $(top_builddir)/bin/R.gnome: $(OBJS) $(RGNOMELIBS)
 ../nmath/libmath.a:
 	(cd ../nmath; $(MAKE) $(@F))
 
-$(OBJS): $(top_srcdir)/src/include/Defn.h
-
-#$(srcdir)/gram.c: $(srcdir)/gram.y
-#	$(YACC) $<
-#	mv y.tab.c $@
-
 gram.c: $(srcdir)/gram.y
-	$(YACC) $(srcdir)/gram.y
-	mv y.tab.c $@
+	$(YACC) $(YFLAGS) $(srcdir)/gram.y
+	$(top_srcdir)/tools/move-if-change y.tab.c $(@F)
 
 mostlyclean: clean
 clean:
-	@-rm -f R.binary R-Image *core *.o gram.c
+	@echo "Cleaning in $(subdir)"
+	@-rm -f R.binary R.X11 R.gnome R-Image *core Makedeps *.d *.o
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean
@@ -76,30 +152,6 @@ tags: *.h *.c
 	ctags *.h *.c
 TAGS: *.h *.c
 	etags *.h *.c
-
-# Dependencies
-
-colors.o:	$(top_srcdir)/src/include/Graphics.h
-graphics.o:	$(top_srcdir)/src/include/Graphics.h
-par.o:		$(top_srcdir)/src/include/Graphics.h
-plot.o:		$(top_srcdir)/src/include/Graphics.h
-
-arithmetic.o:	$(top_srcdir)/src/include/Mathlib.h
-format.o:	$(top_srcdir)/src/include/Mathlib.h
-random.o:	$(top_srcdir)/src/include/Mathlib.h \
-			$(top_srcdir)/src/include/Random.h
-
-deparse.o:	names.h
-names.o:	names.h
-
-print.o:	$(top_srcdir)/src/include/Print.h
-printarray.o:	$(top_srcdir)/src/include/Print.h
-printutils.o:	$(top_srcdir)/src/include/Print.h
-printvector.o:	$(top_srcdir)/src/include/Print.h
-
-version.o:	../include/Platform.h
-../include/Platform.h:
-	(cd ../include; $(MAKE) Platform.h)
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \
@@ -111,3 +163,6 @@ distdir: $(DISTFILES)
 # Unused targets
 
 install install-strip uninstall info dvi check::
+
+## Automagically generated dependencies:
+

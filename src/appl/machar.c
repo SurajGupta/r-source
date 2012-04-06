@@ -1,3 +1,7 @@
+/* void machar()  -- computes ALL `machine constants' at once.
+ * -------------  -- compare with ../nmath/i1mach.c & ../nmath/d1mach.c
+ *		     which use the C  <float.h> constants !
+ */
 /*
  *      algorithm 665, collected algorithms from acm.
  *      this work published in transactions on mathematical software,
@@ -81,6 +85,10 @@
  *              argonne national laboratory
  *
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include <math.h>
 #include "Applic.h"

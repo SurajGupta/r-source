@@ -1,5 +1,5 @@
 /*
- *  R : A Computer Langage for Statistical Data Analysis
+ *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,20 +14,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  */
 
 #include "Mathlib.h"
 
 double rlogis(double location, double scale)
 {
-	double u;
+    double u;
 /* #ifndef IEEE_754 */
-	if (!finite(location) || !finite(scale)) {
-		ML_ERROR(ME_DOMAIN);
-		return ML_NAN;
-	}
+    if (!R_FINITE(location) || !R_FINITE(scale)) {
+	ML_ERROR(ME_DOMAIN);
+	return ML_NAN;
+    }
 /* #endif */
-	u = sunif();
-	return location + scale * log(u / (1.0 - u));
+    u = sunif();
+    return location + scale * log(u / (1.0 - u));
 }

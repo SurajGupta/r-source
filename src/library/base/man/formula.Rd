@@ -8,8 +8,10 @@ formula.formula(formula.obj)
 formula.terms(terms.obj)
 formula.data.frame(df)
 as.formula(object)
+I(name)
 }
 \alias{~}
+\alias{I}
 \alias{formula}
 \alias{formula.default}
 \alias{formula.formula}
@@ -38,20 +40,20 @@ names separated by \code{:} operators.
 Such a term is interpreted as the interaction of
 all the variables and factors appearing in the term.
 
-In addition to \code{+} and \code{:}, a number of other
-operators are useful in model formulae.
-The \code{*} operator denotes factor crossing:
-\code{a*b} interpreted as \code{a+b+a:b}.
-The \code{^} operator indicates crossing to the
-specified degree.  For example \code{(a+b+c)^2}
-is identical to \code{(a+b+c)*(a+b+c)} which in turn
-expands to a formula containing the main effects
-for \code{a}, \code{b} and \code{c} together
-with their second-order interactions.
-The \code{\%in\%} operator indicates that the terms
-on its left are nested within those on the right.
-For example \code{a+b\%in\%a} expands to the
-formula \code{a+a:b}.
+In addition to \code{+} and \code{:}, a number of other operators are
+useful in model formulae.  The \code{*} operator denotes factor
+crossing: \code{a*b} interpreted as \code{a+b+a:b}.  The \code{^}
+operator indicates crossing to the specified degree.  For example
+\code{(a+b+c)^2} is identical to \code{(a+b+c)*(a+b+c)} which in turn
+expands to a formula containing the main effects for \code{a},
+\code{b} and \code{c} together with their second-order interactions.
+The \code{\%in\%} operator indicates that the terms on its left are
+nested within those on the right.  For example \code{a+b\%in\%a}
+expands to the formula \code{a+a:b}.  The \code{-} operator removes
+the specified terms, so that \code{(a+b+c)^2-a:b} is identical to
+\code{a+b+c+b:c+a:c}. It can also used to remove the intercept
+term: \code{y~x-1} is a line through the origin. A model with no
+intercept can be also specified like \code{y~x+0}.
 
 While formulae usually involve just variable and factor
 names, they can also involve arithmetic expressions.
@@ -60,6 +62,7 @@ When such arithmetic expressions involve
 operators which are also used symbolically
 in model formulae, there can be confusion between
 arithmetic and symbolic operator use.
+
 To avoid this confusion, the function \code{I()}
 can be used to bracket those portions of a model
 formula where the operators are used in their

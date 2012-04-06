@@ -30,17 +30,26 @@ options(\dots)
 \item{na.action}{the name of a function for treating missing values
   (\code{\link{NA}}'s) for certain situations.}
 \item{pager}{the (standalone) program used for displaying ASCII files on
-  \R's console.  Defaults to \file{\$RHOME/bin/pager}.}
+  \R's console.  Defaults to \file{\$R\_HOME/bin/pager}.}
 \item{papersize}{the paper format used for graphics printing; currently
-  \bold{read-only}, set by environment variable R\_PAPERSIZE, or in
+  \bold{read-only}, set by environment variable \code{R_PAPERSIZE}, or in
   \file{config.site}.}
 \item{printcmd}{the command used for graphics printing; currently
-  \bold{read-only}, set by environment variable R\_PRINTCMD, or in
+  \bold{read-only}, set by environment variable \code{R_PRINTCMD}, or in
   \file{config.site}.}
 \item{show.signif.stars, show.coef.Pvalues}{logical, affecting P value
     printing, see \code{\link{print.coefmat}}.}
 \item{ts.eps}{the relative tolerance for certain time series
   (\code{\link{ts}}) computations.}
+\item{warn}{sets the handling of warning messages. If \code{warn}
+is negative all warnings are ignored. If \code{warn} is zero (the default)
+warnings are stored until the  top--level function returns. If fewer than 10
+warnings were signalled they will be printed otherwise a message
+saying how many (max 50) were signalled. A top--level variable called
+\code{last.warning} is created and can be viewed through the function
+\code{\link{warnings}}. If \code{warn} is one, warnings are printed
+as they occur. If \code{warn} is two or larger all warnings are turned
+into errors.}
 }
 \description{
   \code{options} allows the user to set and examine a variety of global

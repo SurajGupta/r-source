@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1998, 1999  The R Core Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Print.h"
@@ -23,35 +28,48 @@
 #include "IOStuff.h"
 #include "Parse.h"
 #include <stdio.h>
+#ifdef Win32
+#  include "run.h"
+#endif
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>  /* for unlink() */
+#endif
 
 /*
  * ed, vi etc have 3 parameters. the data, a file and an editor
  * 
- * if file is specified then the given file is used (and not removed on exit) if
- * file is not specified then a temporary file is used; since only one
- * temporary file is used for an entire session previous editing is lost
+ * If `file' is specified then the given file is used (and not removed on
+ * exit). If `file' is not specified then a temporary file is used; since
+ * only one temporary file is used for an entire session previous
+ * editing is lost. That file is removed at the end of the R session.
  * 
- * if data is specified then it is passed out to be edited; if data is not
- * specified then either file (if specified) or the temporary file is used
- * (thus errors can be re-editied by calling edit a second time with no
+ * If `data' is specified then it is passed out to be edited; if `data' is not
+ * specified then either `file' (if specified) or the temporary file is used
+ * (thus errors can be re-edited by calling edit a second time with no
  * arguments).
  * 
- * if the editor is specified then the specified editor is invoked if possible
- * and an error message reported otherwise
+ * If the editor is specified then the specified editor is invoked if
+ * possible and an error message reported otherwise
  */
 
 static char *DefaultFileName;
+static int  EdFileUsed = 0;
 
 void InitEd()
 {
-	DefaultFileName = tmpnam(NULL);
+    DefaultFileName = tmpnam(NULL);
 }
 
+void CleanEd()
+{
+    if(EdFileUsed) unlink(DefaultFileName);
+}
 
 SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int i, status;
-    SEXP x, fn, envir, ed;
+    int   i, rc, status;
+    SEXP  x, fn, envir, ed, t;
     char *filename, *editcmd, *vmaxsave;
     FILE *fp;
 
@@ -75,11 +93,14 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     else filename = DefaultFileName;
 
     if (x != R_NilValue) {
+	
 	if((fp=R_fopen(R_ExpandFileName(filename), "w")) == NULL)
 	    errorcall(call, "unable to open file\n");
-	x = deparse1(x, 0);
-	for (i=0; i<LENGTH(x); i++)
-	    fprintf(fp, "%s\n", CHAR(STRING(x)[i]));
+	if (LENGTH(STRING(fn)[0]) == 0) EdFileUsed++;
+	if (TYPEOF(x) != CLOSXP || isNull(t = getAttrib(x, R_SourceSymbol)))
+	    t = deparse1(x, 0);
+	for (i = 0; i < LENGTH(t); i++)
+	    fprintf(fp, "%s\n", CHAR(STRING(t)[i]));
 	fclose(fp);
     }
 
@@ -89,22 +110,38 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     editcmd = R_alloc(strlen(CHAR(STRING(ed)[0]))+strlen(filename)+2,
 		      sizeof(char));
     sprintf(editcmd, "%s %s", CHAR(STRING(ed)[0]), filename);
-    system(editcmd);
+#ifdef Win32
+    rc = runcmd(editcmd, 1, 1, "");
+    if (rc == NOLAUNCH)
+	errorcall(call, "unable to run editor\n");
+    if (rc != 0)
+	warningcall(call, "editor ran but returned error status\n");
+#else
+    rc = system(editcmd);
+#endif
 
     if((fp=R_fopen(R_ExpandFileName(filename), "r")) == NULL)
 	errorcall(call, "unable to open file to read\n");
     R_ParseCnt = 0;
-    x = R_ParseFile(fp, -1, &status);
+    x = PROTECT(R_ParseFile(fp, -1, &status));
     if (status != PARSE_OK)
 	errorcall(call,
 		  "An error occurred on line %d\n use a command like\n x <- vi()\n to recover\n", R_ParseError);
     else
 	fclose(fp);
     R_ResetConsole();
-    x = eval(x, R_GlobalEnv);
+    {   /* can't just eval(x) here */
+	int i, n;
+	SEXP tmp = R_NilValue;
+
+	n = LENGTH(x);
+	for (i = 0 ; i < n ; i++)
+	    tmp = eval(VECTOR(x)[i], R_GlobalEnv);
+	x = tmp;
+    }
     if (TYPEOF(x) == CLOSXP && envir != R_NilValue)
 	CLOENV(x) = envir;
-    UNPROTECT(1);
+    UNPROTECT(2);
     vmaxset(vmaxsave);
     return (x);
 }

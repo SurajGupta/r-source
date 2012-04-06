@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--1998  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--1999  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include <stdio.h>
 #include <X11/X.h>
@@ -398,7 +402,6 @@ static unsigned int GetPseudoColor1Pixel(int r, int g, int b)
 
 static unsigned int GetPseudoColor2Pixel(int r, int g, int b)
 {
-    XColor newxcolor;
     int i;
     /* Search for previously allocated color */
     for (i = 0; i < PaletteSize ; i++) {
@@ -543,6 +546,7 @@ static int SetupX11Color()
 }
 
         /* Pixel Dimensions (Inches) */
+
 
 static double pixelWidth(void)
 {
@@ -1711,21 +1715,10 @@ int X11ConnectionNumber()
 	return 0;
 }
 
-	/* X11 Color Allocation code */
-
-/* return the position of the highest set bit in ul */
-/* as an integer (0-31), or -1 if none */
-static int highbit(unsigned long ul)
+int
+GnomeDeviceDriver(DevDesc *dd, char *display, double width, double
+		  height, double pointsize)
 {
-    int i;  unsigned long hb;
-    hb = 0x8000;  hb = (hb<<16);  /* hb = 0x80000000UL */
-    for (i=31; ((ul & hb) == 0) && i>=0;  i--, ul<<=1);
-    return i;
-}
-
-int GnomeDeviceDriver(DevDesc *dd, char *display,
-		    double width, double height, double pointsize)
-{
-  return 0;
+    return 0;
 }
 

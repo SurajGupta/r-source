@@ -15,10 +15,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
 #include "Defn.h"
+#include "Fileio.h"
 
 #include <time.h>
 
@@ -28,8 +33,6 @@
  *  "Machine", but for strings rather than numerical values.  These
  *  two functions should probably be amalgamated.
  */
-
-
 static char *R_OSType = OSTYPE;
 static char *R_FileSep = FILESEP;
 static char *R_DynLoadExt = DYNLOADEXT;
@@ -50,20 +53,23 @@ SEXP do_Platform(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(2);
     return value;
 }
-      
+
 /*  date
  *
  *  Return the current date in a standard format.  This uses standard
  *  POSIX calls which should be available on each platform.  We should
  *  perhaps check this in the configure script.
  */
-
 char *R_Date()
-{     
+{
     time_t t;
+    static char s[26];/* own space */
+
     time(&t);
-    return ctime(&t);
-}     
+    strcpy(s, ctime(&t));
+    s[24] = '\0'; /* overwriting the final \n */
+    return s;
+}
 
 SEXP do_date(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -112,6 +118,7 @@ SEXP do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
     tl = CAR(args); args = CDR(args);
     dl = asLogical(CAR(args)); args = CDR(args);
     pg = CAR(args);
+    n = 0;			/* -Wall */
     if (!isString(fn) || (n = length(fn)) < 1)
 	errorcall(call, "invalid filename specification\n");
     if (!isString(hd) || length(hd) != n)
@@ -160,10 +167,10 @@ static int R_AppendFile(char *file1, char *file2)
     FILE *fp1, *fp2;
     char buf[APPENDBUFSIZE];
     int nchar, status = 0;
-    if((fp1 = fopen(file1, "a")) == NULL) {
+    if((fp1 = R_fopen(R_ExpandFileName(file1), "a")) == NULL) {
         return 0;
     }
-    if((fp2 = fopen(file2, "r")) == NULL) {
+    if((fp2 = R_fopen(R_ExpandFileName(file2), "r")) == NULL) {
         fclose(fp1);
         return 0;
     }
@@ -203,10 +210,10 @@ SEXP do_fileappend(SEXP call, SEXP op, SEXP args, SEXP rho)
     for(i = 0; i < n; i++) {
         if (STRING(f1)[i%n1] == R_NilValue || STRING(f2)[i%n2] == R_NilValue)
             LOGICAL(ans)[i] = 0;
-        else 
+        else
             LOGICAL(ans)[i] =
-		R_AppendFile(R_ExpandFileName(CHAR(STRING(f1)[i%n1])),
-			     R_ExpandFileName(CHAR(STRING(f2)[i%n2])));
+		R_AppendFile(CHAR(STRING(f1)[i%n1]),
+			     CHAR(STRING(f2)[i%n2]));
     }
     UNPROTECT(1);
     return ans;
@@ -219,14 +226,15 @@ SEXP do_filecreate(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, n;
     checkArity(op, args);
     fn = CAR(args);
-    if (!isString(fn)) 
+    if (!isString(fn))
         errorcall(call, "invalid filename argument\n");
     n = length(fn);
     PROTECT(ans = allocVector(LGLSXP, n));
     for (i = 0; i < n; i++) {
 	LOGICAL(ans)[i] = 0;
 	if (STRING(fn)[i] != R_NilValue &&
-	    (fp = fopen(CHAR(STRING(fn)[i]), "w")) != NULL) {
+	    (fp = R_fopen(R_ExpandFileName(CHAR(STRING(fn)[i])), "w"))
+	    != NULL) {
 	    LOGICAL(ans)[i] = 1;
 	    fclose(fp);
 	}
@@ -240,7 +248,7 @@ SEXP do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP f, ans;
     int i, n;
     checkArity(op, args);
-    f = CAR(args);     
+    f = CAR(args);
     if (!isString(f))
         errorcall(call, "invalid first filename\n");
     n = length(f);
@@ -257,7 +265,15 @@ SEXP do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifndef Macintosh
 #include <sys/types.h>
 #endif
-#include "dirent.h"
+#if HAVE_DIRENT_H
+# include <dirent.h>
+#elif HAVE_SYS_NDIR_H
+# include <sys/ndir.h>
+#elif HAVE_SYS_DIR_H
+# include <sys/dir.h>
+#elif HAVE_NDIR_H
+# include <ndir.h>
+#endif
 #ifdef HAVE_REGCOMP
 #include "regex.h"
 #endif
@@ -407,6 +423,7 @@ static int filbuf(char *buf, FILE *fp)
 
 SEXP do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+/* index.search(topic, path, file, .Platform$file.sep, type) */
     SEXP topic, path, indexname, sep, type;
     char linebuf[256], topicbuf[256], *p, ctype[256];
     int i, npath, ltopicbuf;
@@ -447,25 +464,25 @@ SEXP do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    if (!strcmp(ctype, "html"))
 			sprintf(topicbuf, "%s%s%s%s%s%s",
 				CHAR(STRING(path)[i]),
-				CHAR(STRING(sep)[0]), 
+				CHAR(STRING(sep)[0]),
 				"html", CHAR(STRING(sep)[0]),
 				p, ".html");
 		    else if (!strcmp(ctype, "R-ex"))
 			sprintf(topicbuf, "%s%s%s%s%s%s",
 				CHAR(STRING(path)[i]),
-				CHAR(STRING(sep)[0]), 
+				CHAR(STRING(sep)[0]),
 				"R-ex", CHAR(STRING(sep)[0]),
 				p, ".R");
 		    else if (!strcmp(ctype, "latex"))
 			sprintf(topicbuf, "%s%s%s%s%s%s",
 				CHAR(STRING(path)[i]),
-				CHAR(STRING(sep)[0]), 
+				CHAR(STRING(sep)[0]),
 				"latex", CHAR(STRING(sep)[0]),
 				p, ".tex");
-		    else
+		    else /* type = "help" */
 			sprintf(topicbuf, "%s%s%s%s%s",
 				CHAR(STRING(path)[i]),
-				CHAR(STRING(sep)[0]), 
+				CHAR(STRING(sep)[0]),
 				ctype, CHAR(STRING(sep)[0]), p);
 		    return mkString(topicbuf);
 		}
@@ -487,6 +504,6 @@ SEXP do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
     if ((len = R_ChooseFile(new, buf, CHOOSEBUFSIZE)) == 0)
 	error("file choice cancelled\n");
     if (len >= CHOOSEBUFSIZE - 1)
-	errorcall(call, "file name too long\n");   
+	errorcall(call, "file name too long\n");
     return mkString(R_ExpandFileName(buf));
 }

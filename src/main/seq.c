@@ -14,12 +14,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* The `` x:y ''  primitive calls do_seq(); do_seq() calls cross() if
    both arguments are factors and seq() otherwise.
    */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
@@ -75,11 +79,11 @@ seq(SEXP call, SEXP s1, SEXP s2)
     SEXP ans;
 
     n1 = length(s1);
-    n2 = length(s1);
-    if(n1 > 1 || n2 > 1) {
-	n = (n1 > n2) ? n1 : n2;
-	warningcall(call, "Numerical expression has %d elements: only the first used\n", n);
-    }
+    if( n1 > 1 )
+	warningcall(call, "Numerical expression has %d elements: only the first used", (int) n1);
+    n2 = length(s2);
+    if( n2 > 1 )
+	warningcall(call, "Numerical expression has %d elements: only the first used", (int) n2);
     n1 = asReal(s1);
     n2 = asReal(s2);
     if (ISNAN(n1) || ISNAN(n2))

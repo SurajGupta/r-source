@@ -1,5 +1,5 @@
 #
-# ${RHOME}/etc/Makefile
+# ${R_HOME}/etc/Makefile
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -13,17 +13,18 @@ include $(top_builddir)/Makeconf
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Rdconvlib.pl buildlib.pl html-layout.pl \
 	Makeconf.in Makefile.in \
-	colors.big colors.small Rd.files tasks test-things.Rd
+	colors.big colors.small Rd.files tasks test-things.Rd \
+	gnome-interface.glade
 SUBDIRS = Rdoc undoc
 
 all: Makefile Makeconf R
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	cd $(top_builddir) && \
+	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
-	cd $(top_builddir) && \
+	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
@@ -34,7 +35,8 @@ R:
 
 install: installdirs install-perl
 	@echo "Installing etc ..."
-	@$(INSTALL_DATA) Makeconf $(rhome)/etc
+	@$(INSTALL_DATA) Makeconf @EXPORTFILE@ @GNOME_IF_FILES@ \
+	  $(rhome)/etc
 installdirs:
 	@$(MKINSTALLDIRS) $(rhome)/etc
 install-perl:
@@ -44,16 +46,20 @@ install-perl:
 install-strip: install
 uninstall:
 	@echo "Uninstalling etc ..."
-	@(cd $(rhome)/etc; \
-	  rm -f *.pl Makeconf)
-	@rmdir $(rhome)/etc 2> /dev/null \
-	  || echo "  subdir etc not removed"
+	@if test -d $(rhome)/etc -a \
+	  "`cd $(rhome); pwd`" != "`cd $(top_builddir); pwd`"; then \
+	  (cd $(rhome)/etc && \
+	    rm -f *.pl Makeconf @EXPORTFILE@ @GNOME_IF_FILES@); \
+	  rmdir $(rhome)/etc 2> /dev/null \
+	    || echo "  subdir etc not removed"; \
+	fi
 
 mostlyclean: clean
 clean:
 	@if [ "$(srcdir)" != "." ]; then \
-	  rm -f *.pl; \
+	  rm -f *.pl @GNOME_IF_FILES@; \
 	fi
+	@rm -f @EXPORTFILE@
 distclean: clean
 	@rm -f Makeconf Makefile
 maintainer-clean: distclean

@@ -18,13 +18,19 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
+
+#include <ctype.h>
 
 #include "Mathlib.h"
 #include "Graphics.h"
 #include "Defn.h"
-#include "ctype.h"
+
 
 /* The R graphics device */
 
@@ -2883,11 +2889,11 @@ void GMathText(double x, double y, int coords, SEXP expr,
     ReferenceX = x;
     ReferenceY = y;
     GConvert(&ReferenceX, &ReferenceY, coords, INCHES, dd);
-    if (FINITE(xc))
+    if (R_FINITE(xc))
 	CurrentX = ReferenceX - xc * bboxWidth(bbox);
     else
 	CurrentX = ReferenceX;
-    if (FINITE(yc))
+    if (R_FINITE(yc))
 	CurrentY = ReferenceY + bboxDepth(bbox)
 	    - yc * (bboxHeight(bbox) + bboxDepth(bbox));
     else

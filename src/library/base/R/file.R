@@ -52,3 +52,12 @@ system.file <- function (..., pkg = .packages(), lib = .lib.loc)
     if (any(present)) FILES[present]
     else ""
 }
+
+getwd <- function()
+    .Internal(getwd())
+setwd <- function(dir)
+    .Internal(setwd(dir))
+basename <- function(path)
+    .Internal(basename(path))
+dirname <- function(path)
+    .Internal(dirname(path))

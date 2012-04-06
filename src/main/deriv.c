@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
  *  Symbolic Differentiation
@@ -23,8 +23,11 @@
  *  Maybe it is time for us to introduce mode "expression".
  */
 
-#include "Defn.h"
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
+#include "Defn.h"
 
 static SEXP ParenSymbol;
 static SEXP PlusSymbol;

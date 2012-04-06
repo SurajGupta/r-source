@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <stdio.h>
-#include "Platform.h"
+#include "Rversion.h"
+#include "Startup.h"
+#define PSIGNAL
+#include "psignal.h"
 
 #define CharacterMode (*__imp_CharacterMode)
 #define UserBreak     (*__imp_UserBreak)
@@ -20,17 +23,18 @@ char *getRVersion()
     return(Rversion);
 }
 
-static BOOL hCtrlc(DWORD type)
+DWORD mainThreadId;
+
+static void my_onintr()
 {
-    if (type == CTRL_BREAK_EVENT) 
-	UserBreak = 1;
-    return TRUE;
+    UserBreak = 1;
+    PostThreadMessage(mainThreadId, 0, 0, 0);
 }
 
 
 int AppMain (int argc, char **argv)
 {
-    CharacterMode = 1;
+    CharacterMode = RTerm;
     if(strcmp(getDLLVersion(), getRVersion()) != 0) {
 	fprintf(stderr, "Error: R.DLL version does not match\n");
 	exit(1);
@@ -38,7 +42,8 @@ int AppMain (int argc, char **argv)
     if (isatty(0)) 
 	FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
     cmdlineoptions(argc, argv);
-    SetConsoleCtrlHandler(hCtrlc, TRUE);
+    signal(SIGBREAK, my_onintr);
     setup_term_ui();
+    mainThreadId = GetCurrentThreadId();
     mainloop();
 }

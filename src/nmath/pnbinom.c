@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
  *  SYNOPSIS
  *
@@ -37,7 +37,7 @@ double pnbinom(double x, double n, double p)
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(n) || ISNAN(p))
 	return x + n + p;
-    if(!finite(n) || !finite(p)) {
+    if(!R_FINITE(n) || !R_FINITE(p)) {
 	ML_ERROR(ME_DOMAIN);
 	return ML_NAN;
     }
@@ -49,7 +49,7 @@ double pnbinom(double x, double n, double p)
     x = floor(x + 1e-7);
     if (x < 0) return 0;
 #ifdef IEEE_754
-    if (!finite(x))
+    if (!R_FINITE(x))
 	return 1;
 #endif
     return pbeta(p, n, x + 1);

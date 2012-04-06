@@ -14,11 +14,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Defn.h"
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
+#include "Defn.h"
 
 SEXP do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -37,7 +40,7 @@ SEXP do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case 1:
 	if( DEBUG(CAR(args)) != 1 )
-		warningcall(call, "argument is not being debugged\n");
+	    warningcall(call, "argument is not being debugged");
 	DEBUG(CAR(args)) = 0;
 	break;
     }

@@ -14,13 +14,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include <Rconfig.h>
+#endif
 
 #include "Defn.h"
 #include "Mathlib.h"
 #include "Graphics.h"
-
 
 static SEXP gcall;
 
@@ -142,6 +145,7 @@ SEXP do_PS(SEXP call, SEXP op, SEXP args, SEXP env)
 #else
     gcall = call;
     DeviceUnavailable("postscript");
+    return R_NilValue;		/* -Wall */
 #endif
 }
 
@@ -188,6 +192,7 @@ SEXP do_PicTeX(SEXP call, SEXP op, SEXP args, SEXP env)
 #else
     gcall = call;
     DeviceUnavailable("pictex");
+    return R_NilValue;		/* -Wall */
 #endif
 }
 
@@ -236,7 +241,7 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     else if (strcmp(cname, "true") == 0)
 	colormodel = 4;
     else {
-	warning("unknown X11 color/colour model -- using monochrome\n");
+	warningcall(call, "unknown X11 color/colour model -- using monochrome");
 	colormodel = 0;
     }
     args = CDR(args);
@@ -296,11 +301,13 @@ SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     gcall = call;
     DeviceUnavailable("X11");
+    return R_NilValue;		/* -Wall */
 }
 SEXP do_Gnome(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     gcall = call;
     DeviceUnavailable("Gnome");
+    return R_NilValue;		/* -Wall */
 }
 #endif
 
