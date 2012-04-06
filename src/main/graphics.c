@@ -17,8 +17,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
 
 
  *  This is an extensive reworking by Paul Murrell of an original
@@ -108,7 +108,7 @@ static char HexDigits[] = "0123456789ABCDEF";
  *
  */
 
-double R_Log10(double x)
+double attribute_hidden R_Log10(double x)
 {
     return (R_FINITE(x) && x > 0.0) ? log10(x) : NA_REAL;
 }
@@ -1750,7 +1750,7 @@ static void invalidError(char* message, DevDesc *dd)
     error(message);
 }
 
-Rboolean GRecording(SEXP call, DevDesc *dd)
+Rboolean attribute_hidden GRecording(SEXP call, DevDesc *dd)
 {
     return GErecording(call, (GEDevDesc *) dd);
 }
@@ -1772,6 +1772,10 @@ DevDesc *GNewPlot(Rboolean recording)
      * If Rf_gpptr(dd)->new is TRUE, any subsequent drawing will dirty the plot
      * and reset Rf_gpptr(dd)->new to FALSE
      */
+
+    /* we can call par(mfg) before any plotting.
+       That sets new = TRUE and also sets currentFigure <= lastFigure
+       so treat separately. */
     if (!Rf_gpptr(dd)->new) {
 	R_GE_gcontext gc;
 	gcontextFromGP(&gc, dd);
@@ -1792,6 +1796,23 @@ DevDesc *GNewPlot(Rboolean recording)
 	    Rf_dpptr(dd)->currentFigure = Rf_gpptr(dd)->currentFigure = 1;
 	}
 
+	GReset(dd);
+	GForceClip(dd);
+    } else if(!Rf_gpptr(dd)->state) { /* device is unused */
+	R_GE_gcontext gc;
+	gcontextFromGP(&gc, dd);
+	if (recording) {
+	    if (Rf_gpptr(dd)->ask) {
+		NewFrameConfirm();
+		if (NoDevices())
+		    error(_("attempt to plot on null device"));
+		else
+		    dd = CurrentDevice();
+	    }
+	    GEinitDisplayList((GEDevDesc*) dd);
+	}
+	GENewPage(&gc, (GEDevDesc*) dd);
+	Rf_dpptr(dd)->currentFigure = Rf_gpptr(dd)->currentFigure = 1;
 	GReset(dd);
 	GForceClip(dd);
     }
@@ -2050,7 +2071,7 @@ void GSetupAxis(int axis, DevDesc *dd)
 
  * Typically called from  do_<dev>(.)  as  GInit(&dd->dp)
  */
-void GInit(GPar *dp)
+void attribute_hidden GInit(GPar *dp)
 {
     dp->state = 0;
     dp->valid = FALSE;
@@ -2112,7 +2133,6 @@ void GInit(GPar *dp)
     dp->tck = NA_REAL;
     dp->tcl = -0.5;
     dp->tmag = 1.2;
-    dp->type = 'p';
     dp->xaxp[0] = 0.0;
     dp->xaxp[1] = 1.0;
     dp->xaxp[2] = 5.0;
@@ -2222,7 +2242,7 @@ static int	collabsave;	/* col.lab */
 static int	colsubsave;	/* col.sub */
 static int	colaxissave;	/* col.axis */
 static double	crtsave;	/* character rotation */
-static char     familysave[50];
+static char     familysave[201];
 static int	fontsave;	/* font */
 static int	fontmainsave;	/* font.main */
 static int	fontlabsave;	/* font.lab */
@@ -2273,7 +2293,7 @@ void GSavePars(DevDesc *dd)
     colaxissave = Rf_gpptr(dd)->colaxis;
     crtsave = Rf_gpptr(dd)->crt;
     errsave = Rf_gpptr(dd)->err;
-    strncpy(familysave, Rf_gpptr(dd)->family, 50);
+    strncpy(familysave, Rf_gpptr(dd)->family, 201);
     fontsave = Rf_gpptr(dd)->font;
     fontmainsave = Rf_gpptr(dd)->fontmain;
     fontlabsave = Rf_gpptr(dd)->fontlab;
@@ -2333,7 +2353,7 @@ void GRestorePars(DevDesc *dd)
     Rf_gpptr(dd)->colaxis = colaxissave;
     Rf_gpptr(dd)->crt = crtsave;
     Rf_gpptr(dd)->err = errsave;
-    strncpy(Rf_gpptr(dd)->family, familysave, 50);
+    strncpy(Rf_gpptr(dd)->family, familysave, 201);
     Rf_gpptr(dd)->font = fontsave;
     Rf_gpptr(dd)->fontmain = fontmainsave;
     Rf_gpptr(dd)->fontlab = fontlabsave;
@@ -2478,6 +2498,7 @@ void GForceClip(DevDesc *dd)
  * In some cases, the settings made here will need to be overridden
  * (eps. the fill setting)
  */
+attribute_hidden
 void gcontextFromGP(R_GE_gcontext *gc, DevDesc *dd)
 {
     gc->col = Rf_gpptr(dd)->col;
@@ -2498,7 +2519,7 @@ void gcontextFromGP(R_GE_gcontext *gc, DevDesc *dd)
     gc->ps = (double) Rf_gpptr(dd)->ps * Rf_gpptr(dd)->scale;
     gc->lineheight = Rf_gpptr(dd)->lheight;
     gc->fontface = Rf_gpptr(dd)->font;
-    strncpy(gc->fontfamily, Rf_gpptr(dd)->family, 50);
+    strncpy(gc->fontfamily, Rf_gpptr(dd)->family, 201);
 }
 
 /* Draw a line. */
@@ -3102,10 +3123,15 @@ void GLPretty(double *ul, double *uh, int *n)
  * This only does a very simple setup.
  * The real work happens when the axis is drawn. */
     int p1, p2;
-    p1 = ceil(log10(*ul));
-    p2 = floor(log10(*uh));
+    double dl = *ul, dh = *uh;
+    p1 = ceil(log10(dl));
+    p2 = floor(log10(dh));	
+    if(p2 <= p1 &&  dh/dl > 10.0) {
+	p1 = ceil(log10(dl) - 0.5);
+	p2 = floor(log10(dh) + 0.5);
+    }
 
-    if (p2 - p1 <= 0) { /* floor(log10(uh)) <= ceil(log10(ul))
+    if (p2 <= p1) { /* floor(log10(uh)) <= ceil(log10(ul))
 			 * <==>	 log10(uh) - log10(ul) < 2
 			 * <==>		uh / ul	       < 100 */
 	/* Very small range : Use tickmarks from a LINEAR scale
@@ -3362,6 +3388,7 @@ void rgb2hsv(double r, double g, double b,
  * in response to user suggestion
  */
 
+attribute_hidden
 char *DefaultPalette[] = {
     "black",
     "red",
@@ -3382,6 +3409,7 @@ char *DefaultPalette[] = {
 
 static int ColorDataBaseSize;
 
+attribute_hidden
 ColorDataBaseEntry ColorDataBase[] = {
     /* name		rgb         code -- filled in by InitColors() */
     {"white",		"#FFFFFF",	0},
@@ -4116,7 +4144,7 @@ unsigned int rgb2col(char *rgb)
 
 /* External Color Name to Internal Color Code */
 
-unsigned int name2col(char *nm)
+unsigned int attribute_hidden name2col(char *nm)
 {
     int i;
     if(strcmp(nm, "NA") == 0 || strcmp(nm, "transparent") == 0)
@@ -4145,7 +4173,7 @@ unsigned int name2col(char *nm)
 
 /* Index (as string) to Internal Color Code */
 
-unsigned int number2col(char *nm)
+unsigned int attribute_hidden number2col(char *nm)
 {
     int indx;
     char *ptr;
@@ -4158,7 +4186,7 @@ unsigned int number2col(char *nm)
 
 static char ColBuf[10];
 
-char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
+attribute_hidden char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
 {
     ColBuf[0] = '#';
     ColBuf[1] = HexDigits[(r >> 4) & 15];
@@ -4171,7 +4199,7 @@ char *RGB2rgb(unsigned int r, unsigned int g, unsigned int b)
     return &ColBuf[0];
 }
 
-char *RGBA2rgb(unsigned int r, unsigned int g, unsigned int b,
+attribute_hidden char *RGBA2rgb(unsigned int r, unsigned int g, unsigned int b,
 	       unsigned int a)
 {
     ColBuf[0] = '#';
@@ -4192,6 +4220,7 @@ char *RGBA2rgb(unsigned int r, unsigned int g, unsigned int b,
 /* Search the color name database first */
 /* If this fails, create an #RRGGBB string */
 
+/* used in grid */
 char *col2name(unsigned int col)
 {
     int i;
@@ -4231,6 +4260,7 @@ char *col2name(unsigned int col)
 /* the initialisation code in which case, str2col */
 /* assumes that `s' is a name */
 
+/* used in grDevices */
 unsigned int str2col(char *s)
 {
     if(s[0] == '#') return rgb2col(s);
@@ -4269,14 +4299,14 @@ unsigned int RGBpar(SEXP x, int i)
 	if(indx < 0) return Rf_dpptr(CurrentDevice())->bg;
 	else return R_ColorTable[indx % R_ColorTableSize];
     }
-    warning("supplied color is not numeric nor character");
+    warning(_("supplied color is not numeric nor character"));
     return 0;
 }
 
 /*
  * Is element i of a colour object NA (or NULL)?
  */
-Rboolean isNAcol(SEXP col, int index, int ncol)
+Rboolean attribute_hidden isNAcol(SEXP col, int index, int ncol)
 {
     Rboolean result = TRUE; /* -Wall */
 
@@ -4299,7 +4329,7 @@ Rboolean isNAcol(SEXP col, int index, int ncol)
 
 /* Initialize the Color Databases */
 
-void InitColors(void)
+void attribute_hidden InitColors(void)
 {
     int i;
 
@@ -4460,8 +4490,8 @@ SEXP LTYget(unsigned int lty)
 void DevNull(void) {}
 
 static int R_CurrentDevice = 0;
-int R_NumDevices = 1;
-DevDesc* R_Devices[R_MaxDevices];
+static int R_NumDevices = 1;
+static DevDesc* R_Devices[R_MaxDevices];
 static int R_LastDeviceEntry = R_MaxDevices - 1;  /* used to catch creation
 						     of too many devices */
 static int R_MaxRegularDevices =  R_MaxDevices - 1; /* not coulting the
@@ -4469,7 +4499,7 @@ static int R_MaxRegularDevices =  R_MaxDevices - 1; /* not coulting the
 
 /* a dummy description to point to when there are no active devices */
 
-DevDesc nullDevice;
+static DevDesc nullDevice;
 
 /* unused
 void devError(void)
@@ -4527,12 +4557,11 @@ Rboolean R_CheckDeviceAvailableBool(void)
     else return TRUE;
 }
 
-void InitGraphics(void)
+void attribute_hidden InitGraphics(void)
 {
     int i;
     SEXP s, t;
 
-    /* init R_Devices */
     R_Devices[0] = &nullDevice;
     for (i = 1; i < R_MaxDevices; i++)
 	R_Devices[i] = NULL;
@@ -4826,6 +4855,7 @@ void recordGraphicOperation(SEXP op, SEXP args, DevDesc *dd)
  * Once graphics.c gets hacked to pieces and split into engine.c and base.c
  * then this can be made static again.
  */
+attribute_hidden
 void restoredpSaved(DevDesc *dd)
 {
     /* NOTE that not all params should be restored before playing */
@@ -4849,7 +4879,7 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->err = Rf_dpSavedptr(dd)->err;
     Rf_dpptr(dd)->fg = Rf_dpSavedptr(dd)->fg;
     Rf_dpptr(dd)->font = Rf_dpSavedptr(dd)->font;
-    strncpy(Rf_dpptr(dd)->family, Rf_dpSavedptr(dd)->family, 50);
+    strncpy(Rf_dpptr(dd)->family, Rf_dpSavedptr(dd)->family, 201);
     Rf_dpptr(dd)->gamma = Rf_dpSavedptr(dd)->gamma;
     Rf_dpptr(dd)->lab[0] = Rf_dpSavedptr(dd)->lab[0];
     Rf_dpptr(dd)->lab[1] = Rf_dpSavedptr(dd)->lab[1];
@@ -4871,7 +4901,6 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->tck = Rf_dpSavedptr(dd)->tck;
     Rf_dpptr(dd)->tcl = Rf_dpSavedptr(dd)->tcl;
     Rf_dpptr(dd)->tmag = Rf_dpSavedptr(dd)->tmag;
-    Rf_dpptr(dd)->type = Rf_dpSavedptr(dd)->type;
     Rf_dpptr(dd)->xaxp[0] = Rf_dpSavedptr(dd)->xaxp[0];
     Rf_dpptr(dd)->xaxp[1] = Rf_dpSavedptr(dd)->xaxp[1];
     Rf_dpptr(dd)->xaxp[2] = Rf_dpSavedptr(dd)->xaxp[2];

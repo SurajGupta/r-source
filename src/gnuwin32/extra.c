@@ -3,6 +3,7 @@
  *  file extra.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004	      The R Foundation
+ *  Copyright (C) 2005--2006  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 
@@ -33,39 +34,10 @@
 #include "Fileio.h"
 #include <direct.h>
 #include <time.h>
-#define _WIN32_WINNT 0x0500 /* for GetLongPathName */
 #include <windows.h>
 #include "graphapp/ga.h"
 #include "rui.h"
 
-
-/* RAND_MAX is 0x7FFF on Windows */
-char * R_tmpnam(const char * prefix, const char * tempdir)
-{
-    char tm[MAX_PATH], tmp1[MAX_PATH], *res;
-    unsigned int n, done = 0;
-    WIN32_FIND_DATA fd;
-    HANDLE h;
-
-    if(!prefix) prefix = "";	/* NULL */
-    if(strlen(tempdir) >= MAX_PATH) error(_("invalid 'tempdir' in R_tmpnam"));
-    strcpy(tmp1, tempdir);
-    for (n = 0; n < 100; n++) {
-	/* try a random number at the end */
-        sprintf(tm, "%s\\%s%x%x", tmp1, prefix, rand(), rand());
-        if ((h = FindFirstFile(tm, &fd)) == INVALID_HANDLE_VALUE) {
-	    done = 1;
-	    break;
-	}
-        FindClose(h);
-        tm[0] = '\0';
-    }
-    if(!done)
-	error(_("cannot find unused tempfile name"));
-    res = (char *) malloc((strlen(tm)+1) * sizeof(char));
-    strcpy(res, tm);
-    return res;
-}
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -109,7 +81,9 @@ static int R_unlink(char *names, int recursive)
 			failures += R_unlink_one(dir, find_data.cFileName, 1);
 		    FindClose(fh);
 		}
-		if(rmdir(dir)) failures++;
+		/* Use short path as e.g. ' test' fails */
+		GetShortPathName(dir, tmp, MAX_PATH);
+		if(rmdir(tmp)) failures++;
 	    } else failures++; /* don't try to delete dirs */
 	} else {/* Regular file (or several) */
 	    strcpy(dir, tmp);
@@ -154,95 +128,6 @@ SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     return (ans);
 }
 
-SEXP do_helpstart(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    char *home, buf[MAX_PATH];
-    FILE *ff;
-
-    checkArity(op, args);
-    home = getenv("R_HOME");
-    if (home == NULL)
-	error(_("R_HOME not set"));
-    sprintf(buf, "%s\\doc\\html\\rwin.html", home);
-    ff = fopen(buf, "r");
-    if (!ff) {
-	sprintf(buf, "%s\\doc\\html\\rwin.htm", home);
-	ff = fopen(buf, "r");
-	if (!ff) {
-	    sprintf(buf, _("%s\\doc\\html\\rwin.htm[l] not found"), home);
-	    error(buf);
-	}
-    }
-    fclose(ff);
-    ShellExecute(NULL, "open", buf, NULL, home, SW_SHOW);
-    return R_NilValue;
-}
-
-static int nhfiles = 0;
-static char *hfiles[50];
-
-
-SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-/*
- * type = 1: launch html file.
- *        2: "topic", 2, Windows help file.
- *        3: notify are finished with the help file.
- */
-
-    char *item, *hfile;
-    char *home, buf[MAX_PATH];
-    FILE *ff;
-    int   type;
-
-    checkArity(op, args);
-    if (!isString(CAR(args)))
-	errorcall(call, _("invalid '%s' argument"), "topic");
-    item = CHAR(STRING_ELT(CAR(args), 0));
-    type = asInteger(CADR(args));
-    if (type == 1) {
-	ff = fopen(item, "r");
-	if (!ff) {
-	    sprintf(buf, _("%s not found"), item);
-	    error(buf);
-	}
-	fclose(ff);
-	home = getenv("R_HOME");
-	if (home == NULL)
-	    error(_("R_HOME not set"));
-	ShellExecute(NULL, "open", item, NULL, home, SW_SHOW);
-    } else if (type == 2) {
-	if (!isString(CADDR(args)))
-	    errorcall(call, _("invalid '%s' argument"), "hlpfile");
-	hfile = CHAR(STRING_ELT(CADDR(args), 0));
-	if (!WinHelp((HWND) 0, hfile, HELP_KEY, (DWORD) item))
-	    warning(_("WinHelp call failed"));
-	else {
-	    if (nhfiles >= 50)
-		error(_("too many .hlp files opened"));
-	    hfiles[nhfiles] = malloc(strlen(hfile) * sizeof(char));
-	    strcpy(hfiles[nhfiles++], hfile);
-	}
-    } else if (type == 3) {
-	if (!isString(CADDR(args)))
-	    warningcall(call, _("invalid '%s' argument"), "hlpfile");
-	hfile = CHAR(STRING_ELT(CADDR(args), 0));
-	if (!WinHelp((HWND) 0, hfile, HELP_QUIT, (DWORD) 0))
-	    error(_("WinHelp call failed"));
-    } else
-	warning(_("type not yet implemented"));
-    return R_NilValue;
-}
-
-void closeAllHlpFiles()
-{
-    int   i;
-
-    for (i = nhfiles - 1; i >= 0; i--)
-	WinHelp((HWND) 0, hfiles[i], HELP_QUIT, (DWORD) 0);
-}
-
-
 SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     R_FlushConsole();
@@ -258,45 +143,6 @@ SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
     DWORD dwPlatformId;
     TCHAR szCSDVersion[ 128 ];
     } OSVERSIONINFO; */
-
-
-/* defined in w32api 1.2, but not in 1.1 or earlier */
-#ifndef VER_NT_WORKSTATION
-#define VER_NT_WORKSTATION              0x0000001
-#define VER_NT_DOMAIN_CONTROLLER        0x0000002
-#define VER_NT_SERVER                   0x0000003
-
-#define VER_SERVER_NT                       0x80000000
-#define VER_WORKSTATION_NT                  0x40000000
-#define VER_SUITE_SMALLBUSINESS             0x00000001
-#define VER_SUITE_ENTERPRISE                0x00000002
-#define VER_SUITE_BACKOFFICE                0x00000004
-#define VER_SUITE_COMMUNICATIONS            0x00000008
-#define VER_SUITE_TERMINAL                  0x00000010
-#define VER_SUITE_SMALLBUSINESS_RESTRICTED  0x00000020
-#define VER_SUITE_EMBEDDEDNT                0x00000040
-#define VER_SUITE_DATACENTER                0x00000080
-#define VER_SUITE_SINGLEUSERTS              0x00000100
-#define VER_SUITE_PERSONAL                  0x00000200
-
-typedef struct _OSVERSIONINFOEX {
-  DWORD dwOSVersionInfoSize;
-  DWORD dwMajorVersion;
-  DWORD dwMinorVersion;
-  DWORD dwBuildNumber;
-  DWORD dwPlatformId;
-  TCHAR szCSDVersion[ 128 ];
-  WORD wServicePackMajor;
-  WORD wServicePackMinor;
-  WORD wSuiteMask;
-  BYTE wProductType;
-  BYTE wReserved;
-} OSVERSIONINFOEX;
-#endif
-/* next is from Nov 2001 Platform SDK */
-#ifndef VER_SUITE_BLADE
-#define VER_SUITE_BLADE                     0x00000400
-#endif
 
 SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -608,9 +454,12 @@ SEXP do_winmenudel(SEXP call, SEXP op, SEXP args, SEXP env)
 
 void Rwin_fpset()
 {
-    _fpreset();
-    _controlfp(_MCW_EM, _MCW_EM);
-    _controlfp(_PC_64, _MCW_PC);
+    /* Under recent MinGW this is what fpreset does.  It sets the
+       control word to 0x37f which corresponds to 0x8001F as used by
+       _controlfp.  That is all errors are masked, 64-bit mantissa and
+       rounding are selected. */
+
+    __asm__ ( "fninit" ) ;
 }
 
 #include "getline/getline.h"  /* for gl_load/savehistory */
@@ -626,7 +475,7 @@ SEXP do_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 	R_setupHistory(); /* re-read the history size */
 	gl_savehistory(CHAR(STRING_ELT(sfile, 0)), R_HistorySize);
     } else
-	errorcall(call, _("savehistory can only be used in Rgui and Rterm"));
+	errorcall(call, _("'savehistory' can only be used in Rgui and Rterm"));
     return R_NilValue;
 }
 
@@ -641,10 +490,44 @@ SEXP do_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
     if (CharacterMode == RGui || (R_Interactive && CharacterMode == RTerm))
 	gl_loadhistory(CHAR(STRING_ELT(sfile, 0)));
     else
-	errorcall(call, _("loadhistory can only be used in Rgui and Rterm"));
+	errorcall(call, _("'loadhistory' can only be used in Rgui and Rterm"));
     return R_NilValue;
 }
 
+SEXP do_addhistory(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP stamp;
+    int i;
+    
+    checkArity(op, args);
+    stamp = CAR(args);
+    if (!isString(stamp))
+    	errorcall(call, _("invalid timestamp"));
+    if (CharacterMode == RGui || (R_Interactive && CharacterMode == RTerm))  	
+	for (i = 0; i < LENGTH(stamp); i++) 
+	    gl_histadd(CHAR(STRING_ELT(stamp, i)));
+    return R_NilValue;
+}
+
+#include <preferences.h>
+
+SEXP do_loadRconsole(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP sfile;
+    struct structGUI gui;
+
+    checkArity(op, args);
+    sfile = CAR(args);
+    if (!isString(sfile) || LENGTH(sfile) < 1)
+	errorcall(call, _("invalid '%s' argument"), "file");
+    if (CharacterMode == RGui) {
+    	getActive(&gui);
+	if (loadRconsole(&gui, (CHAR(STRING_ELT(sfile, 0))))) applyGUI(&gui);
+    } else
+	errorcall(call, _("'loadRconsole' can only be used in Rgui"));
+    return R_NilValue;
+}
+    
 #include <lmcons.h>
 
 SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -967,59 +850,59 @@ int Rwin_rename(char *from, char *to)
     return res;
 }
 
-extern char * mkdtemp (char *template);
-
-void InitTempDir()
-{
-    char *tmp, *tm, tmp1[MAX_PATH], tmp2[MAX_PATH+11], *p;
-    int hasspace = 0, len;
-
-    tmp = getenv("TMP");
-    if(access(tmp, W_OK) != 0) tmp = NULL;
-    if (!tmp) tmp = getenv("TEMP");
-    if(access(tmp, W_OK) != 0) tmp = NULL;
-    if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
-    /* make sure no spaces in path */
-    for (p = tmp; *p; p++)
-	if (isspace(*p)) { hasspace = 1; break; }
-    if (hasspace)
-	GetShortPathName(tmp, tmp1, MAX_PATH);
-    else
-	strcpy(tmp1, tmp); /* length must be valid as access has been checked */
-    sprintf(tmp2, "%s/RtmpXXXXXX", tmp1);
-    tm = mkdtemp(tmp2);
-    if(!tm) R_Suicide(_("cannot mkdir R_TempDir"));
-
-    len = strlen(tm);
-    p = (char *) malloc(len+1);
-    if(!p) R_Suicide("Can't allocate R_TempDir");
-    else {
-	R_TempDir = p;
-	strcpy(R_TempDir, tm);
-    }
-}
 
 void CleanTempDir()
 {
     if(R_TempDir) R_unlink(R_TempDir, 1);
 }
 
+SEXP do_getClipboardFormats(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans = R_NilValue;
+    int size, format = 0;
+    
+    checkArity(op, args);
+    
+    if(OpenClipboard(NULL)) {
+    	size = CountClipboardFormats();
+    	PROTECT(ans = allocVector(INTSXP, size));
+    	for (int j=0; j<size; j++) {
+    	    format = EnumClipboardFormats(format);
+    	    INTEGER(ans)[j] = format;
+    	}
+    	UNPROTECT(1);
+    	CloseClipboard();
+    }
+    return ans;
+}
+
 SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans = allocVector(STRSXP, 0);
+    SEXP ans = R_NilValue;
     HGLOBAL hglb;
     char *pc;
+    int format, raw, size;
 
     checkArity(op, args);
-    if(clipboardhastext() &&
-       OpenClipboard(NULL) &&
-       (hglb = GetClipboardData(CF_TEXT)) &&
-       (pc = (char *)GlobalLock(hglb))) {
-	    PROTECT(ans = allocVector(STRSXP, 1));
-	    SET_STRING_ELT(ans, 0, mkChar(pc));
+    format = asInteger(CAR(args));
+    raw = asLogical(CADR(args));
+
+    if(OpenClipboard(NULL)) {
+    	if(IsClipboardFormatAvailable(format) &&
+    	   	(hglb = GetClipboardData(format)) &&
+    	   	(pc = (char *)GlobalLock(hglb))) {
+	    if(!raw) {
+		PROTECT(ans = allocVector(STRSXP, 1));
+		SET_STRING_ELT(ans, 0, mkChar(pc));
+	    } else {
+		size = GlobalSize(hglb);
+		PROTECT(ans = allocVector(RAWSXP, size));
+		for (int j=0; j<size; j++) RAW(ans)[j] = *pc++;
+	    }
 	    GlobalUnlock(hglb);
-	    CloseClipboard();
-	    UNPROTECT(1);
+	    UNPROTECT(1);	
+	}    
+	CloseClipboard();
     }
     return ans;
 }
@@ -1027,27 +910,37 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, text;
-    int i, n;
+    int i, n, format;
     HGLOBAL hglb;
     char *s, *p;
-    Rboolean success = FALSE;
+    Rboolean success = FALSE, raw = FALSE;
 
     checkArity(op, args);
     text = CAR(args);
-    if(!isString(text))
-	errorcall(call, _("argument must be a character vector"));
-    n = length(text);
+    format = asInteger(CADR(args));
+
+    if (TYPEOF(text) == RAWSXP) raw = TRUE;
+    else if(!isString(text)) 
+    	errorcall(call, _("argument must be a character vector or a raw vector"));
+    
+    n = length(text);  
     if(n > 0) {
-	int len = 1;
-	for(i = 0; i < n; i++) len += strlen(CHAR(STRING_ELT(text, i))) + 2;
+    	int len = 1;
+    	if(!raw) 
+    	    for(i = 0; i < n; i++) len += strlen(CHAR(STRING_ELT(text, i))) + 2;
+    	else len = n;
 	if ( (hglb = GlobalAlloc(GHND, len)) &&
 	     (s = (char *)GlobalLock(hglb)) ) {
-	    for(i = 0; i < n; i++) {
-		p = CHAR(STRING_ELT(text, i));
-		while(*p) *s++ = *p++;
-		*s++ = '\r'; *s++ = '\n';
-	    }
-	    *s = '\0';
+	    if(!raw) {
+		for(i = 0; i < n; i++) {
+		    p = CHAR(STRING_ELT(text, i));
+		    while(*p) *s++ = *p++;
+		    *s++ = '\r'; *s++ = '\n';
+		}
+		*s = '\0';
+	    } else 
+	    	for(i = 0; i < n; i++) *s++ = RAW(text)[i];
+				
 	    GlobalUnlock(hglb);
 	    if (!OpenClipboard(NULL) || !EmptyClipboard()) {
 		warningcall(call, _("Unable to open the clipboard"));
@@ -1155,12 +1048,32 @@ SEXP do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     checkArity(op, args);
     if(!isString(paths))
-       errorcall(call, "'path' must be a character vector");
+       errorcall(call, _("'path' must be a character vector"));
 
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
 	GetFullPathName(CHAR(STRING_ELT(paths, i)), MAX_PATH, tmp, &tmp2);
 	longpathname(tmp);
+	SET_STRING_ELT(ans, i, mkChar(tmp));
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP do_shortpath(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, paths = CAR(args);
+    int i, n = LENGTH(paths);
+    char tmp[MAX_PATH];
+    
+    checkArity(op, args);
+    if(!isString(paths))
+       errorcall(call, _("'path' must be a character vector"));
+
+    PROTECT(ans = allocVector(STRSXP, n));
+    for (i = 0; i < n; i++) {
+	GetShortPathName(CHAR(STRING_ELT(paths, i)), tmp, MAX_PATH);
+	R_fixbackslash(tmp);
 	SET_STRING_ELT(ans, i, mkChar(tmp));
     }
     UNPROTECT(1);
@@ -1213,8 +1126,7 @@ SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     *list = '\0'; /* no initialization */
     askfilenames(CHAR(STRING_ELT(caption, 0)), path,
 		 multi, cfilters, filterindex,
-                 list, 65500);  /* list declared larger to protect against overwrites */
-    Rwin_fpset();
+                 list, 65500, NULL);  /* list declared larger to protect against overwrites */
 
     if(!multi) {
 	/* only one filename possible */
@@ -1247,6 +1159,30 @@ SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	}
     }
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP do_chooseDir(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, def, caption;
+    char *p, path[MAX_PATH];
+
+    checkArity(op, args);
+    def = CAR(args);
+    caption = CADR(args);
+    if(!isString(def) || length(def) != 1 )
+	errorcall(call, _("'default' must be a character string"));
+    p = CHAR(STRING_ELT(def, 0));
+    if(strlen(p) >= MAX_PATH) errorcall(call, _("'default' is overlong"));
+    strcpy(path, R_ExpandFileName(p));
+    R_fixbackslash(path);
+    if(!isString(caption) || length(caption) != 1 )
+	errorcall(call, _("'caption' must be a character string"));
+    p = askcdstring(CHAR(STRING_ELT(caption, 0)), path);
+    
+    PROTECT(ans = allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, p ? mkChar(p) : NA_STRING);
     UNPROTECT(1);
     return ans;
 }
@@ -1454,138 +1390,6 @@ Rboolean winNewFrameConfirm(void)
     return xd->newFrameConfirm();
 }
 
-/* wc[s]width -------------------------------------------------- */
-
-/* From http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c */
-
-struct interval {
-    int first;
-    int last;
-};
-
-static int bisearch(wchar_t ucs, const struct interval *table, int max) 
-{
-    int min = 0;
-    int mid;
-
-    if (ucs < table[0].first || ucs > table[max].last) return 0;
-    while (max >= min) {
-	mid = (min + max) / 2;
-	if (ucs > table[mid].last) min = mid + 1;
-	else if (ucs < table[mid].first) max = mid - 1;
-	else return 1;
-    }
-    return 0;
-}
-
-
-/* The following two functions define the column width of an ISO 10646
- * character as follows:
- *
- *    - The null character (U+0000) has a column width of 0.
- *
- *    - Other C0/C1 control characters and DEL will lead to a return
- *      value of -1.
- *
- *    - Non-spacing and enclosing combining characters (general
- *      category code Mn or Me in the Unicode database) have a
- *      column width of 0.
- *
- *    - SOFT HYPHEN (U+00AD) has a column width of 1.
- *
- *    - Other format characters (general category code Cf in the Unicode
- *      database) and ZERO WIDTH SPACE (U+200B) have a column width of 0.
- *
- *    - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF)
- *      have a column width of 0.
- *
- *    - Spacing characters in the East Asian Wide (W) or East Asian
- *      Full-width (F) category as defined in Unicode Technical
- *      Report #11 have a column width of 2.
- *
- *    - All remaining characters (including all printable
- *      ISO 8859-1 and WGL4 characters, Unicode control characters,
- *      etc.) have a column width of 1.
- *
- * This implementation assumes that wchar_t characters are encoded
- * in ISO 10646.
- */
-
-int wcwidth(wchar_t ucs)
-{
-    /* sorted list of non-overlapping intervals of non-spacing characters */
-    /* generated by "uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B c" 
-     */
-    static const struct interval combining[] = {
-	{ 0x0300, 0x0357 }, { 0x035D, 0x036F }, { 0x0483, 0x0486 },
-	{ 0x0488, 0x0489 }, { 0x0591, 0x05A1 }, { 0x05A3, 0x05B9 },
-	{ 0x05BB, 0x05BD }, { 0x05BF, 0x05BF }, { 0x05C1, 0x05C2 },
-	{ 0x05C4, 0x05C4 }, { 0x0600, 0x0603 }, { 0x0610, 0x0615 },
-	{ 0x064B, 0x0658 }, { 0x0670, 0x0670 }, { 0x06D6, 0x06E4 },
-	{ 0x06E7, 0x06E8 }, { 0x06EA, 0x06ED }, { 0x070F, 0x070F },
-	{ 0x0711, 0x0711 }, { 0x0730, 0x074A }, { 0x07A6, 0x07B0 },
-	{ 0x0901, 0x0902 }, { 0x093C, 0x093C }, { 0x0941, 0x0948 },
-	{ 0x094D, 0x094D }, { 0x0951, 0x0954 }, { 0x0962, 0x0963 },
-	{ 0x0981, 0x0981 }, { 0x09BC, 0x09BC }, { 0x09C1, 0x09C4 },
-	{ 0x09CD, 0x09CD }, { 0x09E2, 0x09E3 }, { 0x0A01, 0x0A02 },
-	{ 0x0A3C, 0x0A3C }, { 0x0A41, 0x0A42 }, { 0x0A47, 0x0A48 },
-	{ 0x0A4B, 0x0A4D }, { 0x0A70, 0x0A71 }, { 0x0A81, 0x0A82 },
-	{ 0x0ABC, 0x0ABC }, { 0x0AC1, 0x0AC5 }, { 0x0AC7, 0x0AC8 },
-	{ 0x0ACD, 0x0ACD }, { 0x0AE2, 0x0AE3 }, { 0x0B01, 0x0B01 },
-	{ 0x0B3C, 0x0B3C }, { 0x0B3F, 0x0B3F }, { 0x0B41, 0x0B43 },
-	{ 0x0B4D, 0x0B4D }, { 0x0B56, 0x0B56 }, { 0x0B82, 0x0B82 },
-	{ 0x0BC0, 0x0BC0 }, { 0x0BCD, 0x0BCD }, { 0x0C3E, 0x0C40 },
-	{ 0x0C46, 0x0C48 }, { 0x0C4A, 0x0C4D }, { 0x0C55, 0x0C56 },
-	{ 0x0CBC, 0x0CBC }, { 0x0CBF, 0x0CBF }, { 0x0CC6, 0x0CC6 },
-	{ 0x0CCC, 0x0CCD }, { 0x0D41, 0x0D43 }, { 0x0D4D, 0x0D4D },
-	{ 0x0DCA, 0x0DCA }, { 0x0DD2, 0x0DD4 }, { 0x0DD6, 0x0DD6 },
-	{ 0x0E31, 0x0E31 }, { 0x0E34, 0x0E3A }, { 0x0E47, 0x0E4E },
-	{ 0x0EB1, 0x0EB1 }, { 0x0EB4, 0x0EB9 }, { 0x0EBB, 0x0EBC },
-	{ 0x0EC8, 0x0ECD }, { 0x0F18, 0x0F19 }, { 0x0F35, 0x0F35 },
-	{ 0x0F37, 0x0F37 }, { 0x0F39, 0x0F39 }, { 0x0F71, 0x0F7E },
-	{ 0x0F80, 0x0F84 }, { 0x0F86, 0x0F87 }, { 0x0F90, 0x0F97 },
-	{ 0x0F99, 0x0FBC }, { 0x0FC6, 0x0FC6 }, { 0x102D, 0x1030 },
-	{ 0x1032, 0x1032 }, { 0x1036, 0x1037 }, { 0x1039, 0x1039 },
-	{ 0x1058, 0x1059 }, { 0x1160, 0x11FF }, { 0x1712, 0x1714 },
-	{ 0x1732, 0x1734 }, { 0x1752, 0x1753 }, { 0x1772, 0x1773 },
-	{ 0x17B4, 0x17B5 }, { 0x17B7, 0x17BD }, { 0x17C6, 0x17C6 },
-	{ 0x17C9, 0x17D3 }, { 0x17DD, 0x17DD }, { 0x180B, 0x180D },
-	{ 0x18A9, 0x18A9 }, { 0x1920, 0x1922 }, { 0x1927, 0x1928 },
-	{ 0x1932, 0x1932 }, { 0x1939, 0x193B }, { 0x200B, 0x200F },
-	{ 0x202A, 0x202E }, { 0x2060, 0x2063 }, { 0x206A, 0x206F },
-	{ 0x20D0, 0x20EA }, { 0x302A, 0x302F }, { 0x3099, 0x309A },
-	{ 0xFB1E, 0xFB1E }, { 0xFE00, 0xFE0F }, { 0xFE20, 0xFE23 },
-	{ 0xFEFF, 0xFEFF }, { 0xFFF9, 0xFFFB }, { 0x1D167, 0x1D169 },
-	{ 0x1D173, 0x1D182 }, { 0x1D185, 0x1D18B }, { 0x1D1AA, 0x1D1AD },
-	{ 0xE0001, 0xE0001 }, { 0xE0020, 0xE007F }, { 0xE0100, 0xE01EF }
-    };
-
-    /* test for 8-bit control characters */
-    if (ucs == 0) return 0;
-    if (ucs < 32 || (ucs >= 0x7f && ucs < 0xa0)) return -1;
-
-    /* binary search in table of non-spacing characters */
-    if (bisearch(ucs, combining, sizeof(combining)/sizeof(struct interval) - 1))
-	return 0;
-
-    return 1 +
-	(ucs >= 0x1100 &&
-	 (ucs <= 0x115f || ucs == 0x2329 || ucs == 0x232a ||
-	  (ucs >= 0x2e80 && ucs <= 0xa4cf && ucs != 0x303f) || 
-	  (ucs >= 0xac00 && ucs <= 0xd7a3) ||
-	  (ucs >= 0xf900 && ucs <= 0xfaff) ||
-	  (ucs >= 0xfe30 && ucs <= 0xfe6f) ||
-	  (ucs >= 0xff00 && ucs <= 0xff60) ||
-	  (ucs >= 0xffe0 && ucs <= 0xffe6)));
-}
-
-int wcswidth(wchar_t *s)
-{
-    int i, w0 = 0, len = wcslen(s);
-    for(i = 0; i < len; i++) w0 += wcwidth(s[i]);
-    return w0;
-}
-
 
 /* UTF-8 support ----------------------------------------------- */
 
@@ -1597,8 +1401,9 @@ int Rstrcoll(const char *s1, const char *s2)
 {
     wchar_t *w1, *w2;
     w1 = (wchar_t *) alloca((strlen(s1)+1)*sizeof(wchar_t));
-    Rmbstowcs(w1, s1, strlen(s1));
     w2 = (wchar_t *) alloca((strlen(s2)+1)*sizeof(wchar_t));
+    R_CheckStack();
+    Rmbstowcs(w1, s1, strlen(s1));
     Rmbstowcs(w2, s2, strlen(s2));
     return wcscoll(w1, w2);
 }

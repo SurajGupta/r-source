@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-4 The R Development Core Team
+ *  Copyright (C) 2001-6 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -82,11 +82,11 @@ SEXP La_svd_cmplx(SEXP jobu, SEXP jobv, SEXP x, SEXP s, SEXP u, SEXP v)
     }
 }
 
-SEXP La_rs(SEXP x, SEXP only_values, SEXP method)
+SEXP La_rs(SEXP x, SEXP only_values)
 {
     if(!initialized) La_Init();
     if(initialized > 0)
-	return (*ptr->rs)(x, only_values, method);
+	return (*ptr->rs)(x, only_values);
     else {
 	error(_("lapack routines cannot be loaded"));
 	return R_NilValue;

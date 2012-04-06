@@ -22,7 +22,15 @@ Sys.timezone()
 }
 \value{
   \code{Sys.time} returns an object of class \code{"POSIXct"} (see
-  \link{DateTimeClasses}).
+  \link{DateTimeClasses}).  On some systems it will have sub-second
+  accuracy, but on others it will increment in seconds.
+#ifdef unix
+  On systems conforming to POSIX 1003.1-2001 the time will be reported
+  in microsecond increments.
+#endif
+#ifdef windows
+  On Windows, it increments in clock ticks, 1/60 of a second.
+#endif
 
   \code{Sys.Date} returns an object of class \code{"Date"} (see \link{Date}).
 
@@ -32,10 +40,15 @@ Sys.timezone()
 \seealso{
   \code{\link{date}} for the system time in a fixed-format character
   string; the elapsed time component of \code{\link{proc.time}} 
-  for finer resolution in changes in time.
+  for possibly finer resolution in changes in time.
 }
 \examples{
 Sys.time()
+## print with possibly greater accuracy:
+op <- options(digits.secs=6)
+Sys.time()
+options(op)
+
 ## locale-specific version of date()
 format(Sys.time(), "\%a \%b \%d \%X \%Y")
 

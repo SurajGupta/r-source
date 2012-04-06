@@ -98,9 +98,10 @@ barplot(height, \dots)
   \item{add}{logical specifying if bars should be added to an already
     existing plot; defaults to \code{FALSE}.}
   \item{\dots}{arguments to be passed to/from other methods.  For the
-    default methods these can include
-    further graphical parameters (see \code{\link{par}}) which are
-    passed to \code{\link{plot.window}()}, \code{\link{title}()} and
+    default method these can include further arguments (such as
+    \code{axes}, \code{asp} and \code{main}) and graphical
+    parameters (see \code{\link{par}}) which are passed to
+    \code{\link{plot.window}()}, \code{\link{title}()} and
     \code{\link{axis}}.}
 }
 \details{
@@ -123,6 +124,8 @@ barplot(height, \dots)
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \seealso{
   \code{\link{plot}(\dots, type="h")}, \code{\link{dotchart}},

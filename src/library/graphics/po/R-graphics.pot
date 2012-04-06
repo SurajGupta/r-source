@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,6 +60,9 @@ msgid "invalid first argument"
 msgstr ""
 
 msgid "'formula' missing or incorrect"
+msgstr ""
+
+msgid "argument 'col' is deprecated in favour of 'boxfill'"
 msgstr ""
 
 msgid "'at' must have same length as 'z$n', i.e."
@@ -177,6 +180,9 @@ msgid "'x' is wrongly structured"
 msgstr ""
 
 msgid "argument must be matrix-like"
+msgstr ""
+
+msgid "'x' and 'y' values must be finite and non-missing"
 msgstr ""
 
 msgid "'z' must be a matrix"

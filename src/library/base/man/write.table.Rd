@@ -66,13 +66,22 @@ write.csv2(\dots)
   Any columns in a data frame which are lists or have a class
   (e.g. dates) will be converted by the appropriate \code{as.character}
   method: such columns are unquoted by default.  On the other hand,
-  any class information for a matrix is discarded.
+  any class information for a matrix is discarded and non-atomic
+  (e.g. list) matrices are coerced to character.
 
   The \code{dec} argument only applies to columns that are not subject
   to conversion to character because they have a class or are part of a
-  matrix-like column, in particular to columns protected by
+  matrix-like column (or matrix), in particular to columns protected by
   \code{\link{I}()}.  Use \code{\link{options}("OutDec")} to control
   such conversions.
+
+  In almost all cases the conversion of numeric quantities is governed
+  by the options in force, in particular by \code{"digits"} and
+  \code{"scipen"} (see \code{\link{options}}).  For finer control, use
+  \code{\link{format}} to make a character matrix/data frame, and call
+  \code{write.table} on that.
+
+  These functions check for a user interrupt every 1000 lines of output.
 }
 \section{CSV files}{
   By default there is no column name for a column of row names.  If

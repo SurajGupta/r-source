@@ -4,8 +4,201 @@
 See the file NEWS for changes that affect all versions of R.
 
 
-R 2.2.0 patched
+R 2.3.0
+=======
+
+There is an error handler for access violations and illegal
+instructions, which issues a traceback and error message, then returns
+to the top level.  This is switched off after 10 uses in a session.
+Note that such errors can be the result of damage to the code or
+objects in memory, so it is advisable to save your work and restart R
+unless you know exactly what happened.
+
+There is a new function choose.dir() to choose a folder (as used for
+'Change dir...' on the File menu in RGui.)
+
+New function shortPathNames() to convert names to DOS-style paths (8+3
+names and no spaces).
+
+Added workaround to Windows graphics devices (windows(),
+win.metafile(), etc.) to allow callers to choose not to restore the
+focus to the console.  The interface to this will likely change in a
+future release.
+
+For compatibility with Unix, the following environment variables are
+checked for a writable directory for the R session temporary directory:
+
+	TMPDIR TMP TEMP R_USER
+
+(the last will always succeed).  The changes are that TMPDIR is checked
+first and that the values are checked to be a directory.
+
+sprintf() now tries to ensure the output is C99-compliant, with e.g.
+1.23e+08 not 1.23e+008 as given by MSVCRT.dll.
+
+Rterm now responds to Ctrl-C during input (Ctrl-Break always worked).
+This means ^C is no longer echoed.
+
+The minimum value for --max-mem-size is now 32M (rather than 16M).
+
+file.info() now supports files bigger than 2Gb (the size was reported
+incorrectly before, since Windows' stat call only supports smaller files).
+
+The installer executable now has the file version information set
+appropriately.
+
+The DLL version number is now 2.xy.svn_revision.
+
+There is now aggressive protection of the setting of the FPU control word: it
+is reset to 64-bit mantissa and rounding mode before evaluating every
+expression.  This should prevent the implicit loading of DLLs changing
+to 53-bit mantissa, but has a small performance penalty.
+
+The file open dialogs now list *.ssc and *.S files in addition to *.q
+files as "S files".
+
+readClipboard() and writeClipboard() now support formats other than text.
+A new function getClipboardFormats() reports on available formats.
+
+The Rgui console now supports '\r' in output as a non-destructive
+return to the left margin in the same way as Rterm (it was previously
+ignored).  Note that copy/cut of overtyped output will not necessarily
+pick up the visible layer of text.
+
+The "Edit|GUI preferences..." dialog now allows Rconsole files to be 
+loaded as well as saved.  A new function loadRconsole() has also been
+added.
+
+
+Internationalization
+--------------------
+
+There is no longer a separate 'East Asian' version of R.dll.
+(Also, msvcp60.dll is no longer used as libmingwex now supplies suitable
+functions.)
+
+There is now MBCS support for the line editor in Rterm.exe.
+(Contributed by Haruki Koyanagi.)
+
+On NT-based versions of Windows, Unicode characters are used to draw
+on the console, pager, editor and windows() family of devices in
+multi-byte locales.  (This allows the user to select a locale other
+than the one Windows is running in, and with suitable fonts see the
+intended characters.  Menus and dialogs should also work in the
+selected locale.  A Windows quirk means that window titles (which
+includes the legends for the buttons used in the Preferences dialog
+box) use a font in the system locale.
+
+Added a few mappings from Windows locale names (e.g. "chinese", "chs",
+"cht", "ptb", "spanish", "esp", "esm", "esn") to language names.
+There is still scope for confusion: LC_ALL=es is Estonian, and
+LANGUAGE=es is Spanish.
+
+Spanish (as used in Spain) has been added to the list of installation
+languages.
+
+
+
+Installing packages
+-------------------
+
+R CMD INSTALL will now clean up after interruption (by ctrl-C, at
+least where supported by the shell).
+
+R CMD INSTALL --docs now has more options.
+
+Links to package 'methods' are now fixed up, and R CMD INSTALL no
+longer reports as missing links to 'datasets' and 'grDevices' which
+would be fixed up.
+
+There is now support for compiling Fortran 90/95 code in packages: see
+'Writing R Extensions'.
+
+Packages can now supply export files pkgname/src/pkgname-win.def:
+package 'stats' does so.
+
+The restriction on the numnber of dots in a package name (which
+stemmed from an undocumented restriction in ld.exe) has been worked
+around.
+
+
+C-level changes
+---------------
+
+This version of R expects a complete double-complex BLAS to be
+available, and so customized (e.g. ATLAS and ACML) versions of
+Rblas.dll need to be rebuilt.  (The pre-compiled ones available on
+CRAN have been updated.)
+
+The ACML optimized BLAS can be used for LAPACK: see the 'R
+Installation and Administration Manual'.
+
+Since the Goto BLAS is no longer available for Windows, support for it
+has been withdrawn.
+
+The assembler exponentiation code has been updated to that from glibc 2.3.6.
+
+The import libraries libR.a, libRblas.a, libRlapack.a and libproxy.a
+are no longer used, as we now link directly to the corresponding DLL
+(except that a local version of libRblas.a is needed to build R.dll,
+since R.dll and Rblas.dll are mutually dependent).
+
+Import libraries are now made by default without -k (--kill-at).  This
+might be relevant for contributed software using R's macros.
+
+The default optimization level for code in R (but not packages) has
+been changed from -O2 to -O3, since space taken by compiled code is no
+longer much of an issue.  This will result is a small performance
+increase.
+
+When making DLLs, the objects are no longer wrapped in an archive en
+route (this was needed to avoid line-length limits on an earlier shell).
+
+When making standalone Rmath, the static library is now libRmath.a and the
+import library is called libRmath.dll.a.
+
+
+Bug fixes
+---------
+
+iconv() was not always getting the current charset ("") right,
+especially if the locale was set in a running R session.
+
+gzfile() now always ensures that the underlying file is opened in
+binary mode (this is only an issue on Windows).  This solves some
+problems with reading compressed data files via gzfile().
+
+winMenuAdd() now has no limits on the number of menus or items, and
+names are now limited to 500 (not 50) bytes.
+
+Several fixes to Rproxy have been submitted by Thomas Baier, so it 
+handles more types of objects.
+
+Outputting \b in Rgui deleted the last byte and not the last character.
+
+
+
+R 2.2.1 patched
 ===============
+
+Opening any window (pager/editor/windows() device) was resetting the
+LC_CTYPE in the locale to the system default.
+
+formatC() sometimes gave spurious leading spaces on Windows (PR#8337).
+
+Workaround in unlink() for a Windows-run-time problem with deleting
+directories with leading spaces in the name.
+
+tempdir() and tempfile() use all backslashes again (2.2.1 did not).
+
+When a graphics window was double-buffered, it would update too
+frequently while waiting for input, overloading some remote display 
+utilities.
+
+
+
+R 2.2.1
+=======
 
 Using the latest binutils allows us to distribute RGui.exe and Rterm.exe
 as large-address-aware (see the rw-FAQ Q2.9).
@@ -37,8 +230,8 @@ Closing the script editor could leave Rgui in an unstable state. (PR#8288)
 Support has been added for the ACML optimized BLAS: see the 'R
 Installation and Administration Manual'.
 
-winMenuAdd had a limit of 16 additional menus but only allocated 10: it
-now has the limit of 16 as intended.
+winMenuAdd() had a limit of 16 additional menus but only allocated 10:
+it now has the limit of 16 as intended.
 
 Clicking on the left part of the MDI radiobutton in the preferences
 dialog failed.
@@ -65,6 +258,9 @@ expected form is
 	file:///d:/path/to/file
 
 with *three* slashes.
+
+library.dynam() temporarily adds the <package>/libs dir to the path so
+that dependent DLLs can be put there and found with no further action.
 
 The (D)COM support has been updated, and header files and an import 
 library (src/gnuwin32/librproxy.a) are now installed.  See the rcom

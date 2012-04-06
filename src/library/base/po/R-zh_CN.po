@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-08-26 09:41\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -36,30 +36,6 @@ msgstr "见help(\"Deprecated\")和help(\"%s-deprecated\")。"
 
 msgid "See help(\"Deprecated\")"
 msgstr "见help(\"Deprecated\")"
-
-msgid "invalid numbers in 'quote'"
-msgstr "'quote'里的数不对"
-
-msgid "invalid 'quote' specification"
-msgstr "'quote'的设定不对"
-
-msgid "invalid 'row.names' specification"
-msgstr "'row.names'的设定不对"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr "当row.names = FALSE时col.names = NA是没有意义的"
-
-msgid "invalid 'col.names' specification"
-msgstr "'col.names'的设定不对"
-
-msgid "'file' must be a character string or connection"
-msgstr "'file'要么是字符串，要么是连接"
-
-msgid "appending column names to file"
-msgstr "把列名附加到文件上"
-
-msgid "format.char: coercing 'x' to 'character'"
-msgstr "format.char：'x'被强迫转成'character'"
 
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "'La.svd'的变元必需是数值或是复数"
@@ -492,6 +468,9 @@ msgstr "'from'一定得是POSIXt对象"
 msgid "'to' must be a POSIXt object"
 msgstr "'to'一定得是POSIXt对象"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file'要么是字符串，要么是连接"
+
 msgid "'x' must be a square matrix"
 msgstr "'x'必需是正方形矩阵"
 
@@ -589,9 +568,6 @@ msgstr "鏈結时没有可以读的文件"
 msgid "no files/directory to link to"
 msgstr "鏈結时没有可以写的文件/目錄"
 
-msgid "calling wrong method"
-msgstr "调用的方法不对"
-
 msgid "'package' must be of length 1"
 msgstr "'package'的长度必需为1"
 
@@ -616,6 +592,12 @@ msgstr "'flag'只能含'0+- #'"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "破损的数据框：縮短列的长度或用NA来填充空白"
+
+msgid "'zero.print' has length > 1"
+msgstr "'zero.print'的长度一定得为> 1"
+
+msgid "'zero.print' must be character, logical or NULL"
+msgstr ""
 
 msgid "'subset' must evaluate to logical"
 msgstr "'subset'必需可以被评估成为逻辑值"
@@ -659,6 +641,10 @@ msgstr "程辑包'%s'是用R版本%s 来建造的"
 msgid "package '%s' was built for %s"
 msgstr "程辑包'%s'是为%s建造的"
 
+#, fuzzy
+msgid "package '%s' is not installed for 'arch=%s'"
+msgstr "程辑包'%s'没有正确地被建造"
+
 msgid "package '%s' has not been installed properly"
 msgstr "程辑包'%s'没有正确地被建造"
 
@@ -687,7 +673,7 @@ msgid "there is no package called '%s'"
 msgstr "不存在叫'%s'这个名称的程辑包"
 
 msgid "no library trees found in 'lib.loc'"
-msgstr "在'lib.loc'里找不到常式庫	树"
+msgstr "在'lib.loc'里找不到常式庫\t树"
 
 msgid "'%s' is not a valid package -- installed < 2.0.0?"
 msgstr "'%s'不是正当的程辑包--是不是在R版本2.0.0之前装的？"
@@ -753,9 +739,6 @@ msgstr ""
 "找到多个叫'%s'的程辑包，\n"
 "用在'%s'里找到的那一个"
 
-msgid "none of the packages were found"
-msgstr "所有的程辑包都没有找到"
-
 msgid ""
 "Further information is available in the following vignettes in directory '%"
 "s':"
@@ -788,25 +771,20 @@ msgstr "无法载入程辑包'%s'"
 msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
 msgstr "载入了程辑包'%1$s' %2$s，但'%5$s'需要%3$s %4$s "
 
-msgid "bad file argument"
-msgstr "文件变元值不对"
-
-msgid "no input is available"
-msgstr "无输入"
-
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "输入有破损，LF被CR取代"
 
-msgid ""
-"the input does not start with a magic number compatible with loading from a "
-"connection"
-msgstr "用链结输入文件必须包含正确的幻数"
+msgid "bad 'file' argument"
+msgstr "'file'变元不对"
 
 msgid "'file' must be specified"
 msgstr "必需设定'file'的值"
 
 msgid "'file' must be non-empty string"
 msgstr "'file'的值必需是长度大于0的字符串"
+
+msgid "bad file argument"
+msgstr "文件变元值不对"
 
 msgid "can only save to a binary connection"
 msgstr "只能保存到二进列链结"
@@ -819,6 +797,9 @@ msgstr "[原来保存的工作空间已还原]"
 
 msgid "invalid 'category' argument"
 msgstr "'category'变元有错"
+
+msgid "must specify formal argument names to vectorize"
+msgstr ""
 
 msgid "'arg' should be one of"
 msgstr "'arg'应当是这些其中的一个"
@@ -897,6 +878,24 @@ msgstr "'%2$s'的'loadNamespace'出了错：%1$s "
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "名字空间'%s'已经在loadNamespace封條了"
 
+msgid "failed to assign RegisteredNativeSymbol for"
+msgstr ""
+
+msgid "to"
+msgstr ""
+
+msgid "since"
+msgstr ""
+
+msgid "is already defined in the"
+msgstr ""
+
+msgid "namespace"
+msgstr "名字空间"
+
+msgid "failed to assign NativeSymbolInfo for"
+msgstr ""
+
 msgid "package '%s' does not have a name space"
 msgstr "程辑包'%s'没有名字空间"
 
@@ -959,6 +958,20 @@ msgstr "出口不存在："
 
 msgid "package '%s' has no NAMESPACE file"
 msgstr "程辑包'%s' 没有NAMESPACE这一文件"
+
+#, fuzzy
+msgid "empty name in directive '%s' in NAMESPACE file"
+msgstr "程辑包'%s' 没有NAMESPACE这一文件"
+
+#, fuzzy
+msgid "duplicated symbol names"
+msgstr "重复进口名字"
+
+msgid "in useDynLib("
+msgstr ""
+
+msgid ")"
+msgstr ""
 
 msgid "bad 'S3method' directive: %s"
 msgstr "不是'S3method'指令：%s"
@@ -1068,6 +1081,9 @@ msgstr "as.is里有些列名不存在"
 msgid "'as.is' has the wrong length %d  != cols = %d"
 msgstr "'as.is'的长度不对%d  != cols = %d "
 
+msgid "invalid 'row.names' specification"
+msgstr "'row.names'的设定不对"
+
 msgid "'x' must be a vector"
 msgstr "'x'必需为向量"
 
@@ -1107,9 +1123,6 @@ msgstr "length必需为非负数"
 msgid "too many arguments"
 msgstr "太多变元"
 
-msgid "bad 'file' argument"
-msgstr "'file'变元不对"
-
 msgid "'connection' must be a connection"
 msgstr "'connection'必需是个链结"
 
@@ -1130,6 +1143,10 @@ msgstr "'solve'里的'a'是奇异矩阵"
 
 msgid "only square matrices can be inverted"
 msgstr "只有正方形的矩阵才能求逆"
+
+#, fuzzy
+msgid "'b' must be compatible with 'a'"
+msgstr "‘to’必需晚于‘from’"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
 msgstr "调用solve.default于\"qr\"对象：用'qr.solve'"
@@ -1179,8 +1196,15 @@ msgstr "'chdir = TRUE'对联结来说没有任何意义"
 msgid "'%s' is not an existing file"
 msgstr "'%s'不是已经存在的文件"
 
-msgid "is not TRUE"
+#, fuzzy
+msgid "is not"
 msgstr "不是TRUE"
+
+msgid "all"
+msgstr ""
+
+msgid "TRUE"
+msgstr ""
 
 msgid "incorrect value for 'x'"
 msgstr "'x'的值不对"
@@ -1257,6 +1281,21 @@ msgstr "无traceback"
 msgid "argument to 'which' is not logical"
 msgstr "'which'的变元不是逻辑值"
 
+msgid "invalid numbers in 'quote'"
+msgstr "'quote'里的数不对"
+
+msgid "invalid 'quote' specification"
+msgstr "'quote'的设定不对"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr "当row.names = FALSE时col.names = NA是没有意义的"
+
+msgid "invalid 'col.names' specification"
+msgstr "'col.names'的设定不对"
+
+msgid "appending column names to file"
+msgstr "把列名附加到文件上"
+
 msgid "attempt to change '%s' ignored"
 msgstr "改变'%s'没有起作用"
 
@@ -1292,6 +1331,11 @@ msgid "package %s is not loaded"
 msgid_plural "packages %s are not loaded"
 msgstr[0] "程辑包%s没有载入"
 msgstr[1] "程辑包%s没有载入"
+
+#, fuzzy
+msgid "there is no package called"
+msgid_plural "there are no packages called"
+msgstr[0] "不存在叫这个名称的程辑包"
 
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"

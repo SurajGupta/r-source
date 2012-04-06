@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -50,7 +50,7 @@ SEXP Rf_append(SEXP first, SEXP second)
 /*  mkPRIMSXP - return a builtin function      */
 /*              either "builtin" or "special"  */
 
-SEXP mkPRIMSXP(int offset, int eval)
+SEXP attribute_hidden mkPRIMSXP(int offset, int eval)
 {
     SEXP result = allocSExp(eval ? BUILTINSXP : SPECIALSXP);
     SET_PRIMOFFSET(result, offset);
@@ -65,7 +65,7 @@ SEXP mkPRIMSXP(int offset, int eval)
 /*  mkCLOSXP - return a closure with formals f,  */
 /*             body b, and environment rho       */
 
-SEXP mkCLOSXP(SEXP formals, SEXP body, SEXP rho)
+SEXP attribute_hidden mkCLOSXP(SEXP formals, SEXP body, SEXP rho)
 {
     SEXP c;
     PROTECT(formals);
@@ -100,21 +100,7 @@ Should NEVER happen; please bug.report() [mkCLOSXP]"));
     return c;
 }
 
-/* mkChar - make a character (CHARSXP) variable */
-
-SEXP mkChar(const char *name)
-{
-    SEXP c;
-
-#if 0
-    if (streql(name, "NA"))
-	return (NA_STRING);
-#endif
-    c = allocString(strlen(name));
-    strcpy(CHAR(c), name);
-    return c;
-}
-
+/* mkChar - make a character (CHARSXP) variable -- see Rinlinedfuns.h */
 
 /*  mkSYMSXP - return a symsxp with the string  */
 /*             name inserted in the name field  */
@@ -135,7 +121,7 @@ static int isDDName(SEXP name)
     return 0;
 }
 
-SEXP mkSYMSXP(SEXP name, SEXP value)
+SEXP attribute_hidden mkSYMSXP(SEXP name, SEXP value)
 
 {
     SEXP c;
@@ -149,39 +135,4 @@ SEXP mkSYMSXP(SEXP name, SEXP value)
     SET_DDVAL(c, i);
     UNPROTECT(2);
     return c;
-}
-
-
-/*  length - length of objects  */
-
-R_len_t length(SEXP s)
-{
-    int i;
-    switch (TYPEOF(s)) {
-    case NILSXP:
-	return 0;
-    case LGLSXP:
-    case INTSXP:
-    case REALSXP:
-    case CPLXSXP:
-    case STRSXP:
-    case CHARSXP:
-    case VECSXP:
-    case EXPRSXP:
-    case RAWSXP:
-	return LENGTH(s);
-    case LISTSXP:
-    case LANGSXP:
-    case DOTSXP:
-	i = 0;
-	while (s != NULL && s != R_NilValue) {
-	    i++;
-	    s = CDR(s);
-	}
-	return i;
-    case ENVSXP:
-	return envlength(s);
-    default:
-	return 1;
-    }
 }

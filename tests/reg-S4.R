@@ -1,6 +1,6 @@
 ##--- S4 Methods (and Classes)
 library(methods)
-showMethods(where = "package:methods")
+##too fragile: showMethods(where = "package:methods")
 
 ##-- S4 classes with S3 slots [moved from ./reg-tests-1.R]
 setClass("test1", representation(date="POSIXct"))
@@ -84,14 +84,20 @@ str(nc)# gave ^ANULL^A in 2.0.0
 
 
 library(stats4)
-showMethods(where = "package:stats4")
-showMethods("show")
-showMethods("show")
-showMethods("plot") # (ANY,ANY) and (profile.mle, missing)
-showMethods(classes="mle")
-showMethods(classes="matrix")
-showMethods(classes=c("matrix", "numeric"))
-showMethods(where = "package:methods")
+## the following showMethods() output tends to generate errors in the tests
+## whenever the contents of the packages change. Searching in the
+## diff's can easily mask real problems.  If there is a point
+## to the printout, e.g., to verify that certain methods exist,
+## hasMethod() would be a useful replacement
+
+## showMethods(where = "package:stats4")
+## showMethods("show")
+## showMethods("show")
+## showMethods("plot") # (ANY,ANY) and (profile.mle, missing)
+## showMethods(classes="mle")
+## showMethods(classes="matrix")
+## showMethods(classes=c("matrix", "numeric"))
+## showMethods(where = "package:methods")
 
 ## stopifnot(require(Matrix),
 ##           require(lme4)) # -> S4  plot
@@ -116,3 +122,39 @@ removeMethod("[", signature(x = "Mat",
 d2[1:2,] ## used to fail badly; now okay
 stopifnot(identical(d2[-1,], d2[2:3,]))
 ## failed in R <= 2.1.x
+
+
+## Fritz' S4 "odditiy"
+setClass("X", representation(bar="numeric"))
+setClass("Y", contains="X")
+## Now we define a generic foo() and two different methods for "X" and
+## "Y" objects for arg missing:
+setGeneric("foo", function(object, arg) standardGeneric("foo"))
+setMethod("foo", signature(object= "X", arg="missing"),
+          function(object, arg) cat("an X object with bar =", object@bar, "\n"))
+setMethod("foo", signature(object= "Y", arg="missing"),
+          function(object, arg) cat("a Y object with bar =", object@bar, "\n"))
+## Finally we create a method where arg is "logical" only for class
+## "X", hence class "Y" should inherit that:
+setMethod("foo", signature(object= "X", arg= "logical"),
+          function(object, arg) cat("Hello World!\n") )
+## now create objects and call methods:
+y <- new("Y", bar=2)
+showMethods("foo")
+foo(y)
+foo(y, arg=TRUE)## Hello World!
+## OK, inheritance worked, and we have
+showMethods("foo")
+foo(y)
+## still 'Y' -- was 'X object' in R < 2.3
+
+
+## Multiple inheritance
+setClass("A", representation(x = "numeric"))
+setClass("B", representation(y = "character"))
+setClass("C", contains = c("A", "B"), representation(z = "logical"))
+new("C")
+setClass("C", contains = c("A", "B"), representation(z = "logical"),
+         prototype = prototype(x = 1.5, y = "test", z = TRUE))
+(cc <- new("C"))
+## failed reconcilePropertiesAndPrototype(..) after svn r37018

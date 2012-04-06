@@ -14,7 +14,7 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
    USA.  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,7 +59,9 @@ _nl_find_domain (const char *dirname, char *locale,
   const char *special;
   const char *sponsor;
   const char *revision;
+#ifdef NOT_USED
   const char *alias_value = NULL;
+#endif
   int mask;
 
   /* LOCALE can consist of up to four recognized parts for the XPG syntax:
@@ -111,7 +113,7 @@ _nl_find_domain (const char *dirname, char *locale,
       /* NOTREACHED */
     }
 
-#ifndef WIN32 /* not used on Windows */
+#ifdef NOT_USED /* R change */
   /* See whether the locale value is an alias.  If yes its value
      *overwrites* the alias name.  No test for the original value is
      done.  */
@@ -165,7 +167,7 @@ _nl_find_domain (const char *dirname, char *locale,
     }
 
   /* The room for an alias was dynamically allocated.  Free it now.  */
-#ifndef WIN32 /* not used on Windows */
+#ifdef NOT_USED
   if (alias_value != NULL)
       free (locale);
 #endif

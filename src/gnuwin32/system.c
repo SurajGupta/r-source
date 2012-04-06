@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* See ../unix/system.txt for a description of functions */
@@ -34,6 +34,7 @@
 #include "rui.h"
 #include "editor.h"
 #include "getline/getline.h"
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>		/* for CreateEvent,.. */
 #include <process.h>		/* for _beginthread,... */
 #include <io.h>			/* for isatty, chdir */
@@ -72,8 +73,7 @@ static void UnLoad_Rbitmap_Dll()
 
 __declspec(dllexport) UImode  CharacterMode;
 int ConsoleAcceptCmd;
-void closeAllHlpFiles();
-void set_workspace_name(char *fn); /* ../unix/sys-common.c */
+void set_workspace_name(char *fn); /* ../main/startup.c */
 
 /* used to avoid some flashing during cleaning up */
 Rboolean AllDevicesKilled = FALSE;
@@ -432,7 +432,6 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     editorcleanall();
     CleanEd();
     CleanTempDir();
-    closeAllHlpFiles();
     KillAllDevices();
     AllDevicesKilled = TRUE;
     if (R_Interactive && CharacterMode == RTerm)
@@ -624,6 +623,26 @@ void R_setStartTime();
 
 void R_SetWin32(Rstart Rp)
 {
+    int dummy;
+
+    {
+	/* Idea here is to ask about the memory block an automatic
+	   variable is in.  VirtualQuery rounds down to the beginning
+	   of the page, and tells us where the allocation started and
+	   how many bytes the pages go up */
+
+	MEMORY_BASIC_INFORMATION buf;
+	uintptr_t bottom, top;
+
+	VirtualQuery(&dummy, &buf, sizeof(buf));
+	bottom = (uintptr_t) buf.AllocationBase;
+	top = (uintptr_t) buf.BaseAddress + buf.RegionSize;
+	/* printf("stackbase %lx, size %lx\n", top, top-bottom); */
+	R_CStackStart = top;
+	R_CStackLimit = top - bottom;
+    }
+    
+    R_CStackDir = 1;
     R_Home = Rp->rhome;
     if(strlen(R_Home) >= MAX_PATH) R_Suicide("Invalid R_HOME");
     sprintf(RHome, "R_HOME=%s", R_Home);
@@ -632,8 +651,7 @@ void R_SetWin32(Rstart Rp)
     strcat(UserRHome, Rp->home);
     putenv(UserRHome);
 
-    CharacterMode = Rp->CharacterMode;
-    switch(CharacterMode){
+    switch(CharacterMode) {
     case RGui:
 	R_GUIType = "Rgui";
 	break;
@@ -656,8 +674,7 @@ void R_SetWin32(Rstart Rp)
 	process_site_Renviron();
 	process_user_Renviron();
     }
-    _controlfp(_MCW_EM, _MCW_EM);
-    _controlfp(_PC_64, _MCW_PC);
+    Rwin_fpset();  /* in extra.c */
 }
 
 
@@ -777,7 +794,7 @@ int cmdlineoptions(int ac, char **av)
     GlobalMemoryStatus(&ms);
     R_max_memory = min(1024 * Mega, ms.dwTotalPhys);
     /* need enough to start R: fails on a 8Mb system */
-    R_max_memory = max(16 * Mega, R_max_memory);
+    R_max_memory = max(32 * Mega, R_max_memory);
 
     R_DefParams(Rp);
     Rp->CharacterMode = CharacterMode;
@@ -879,10 +896,10 @@ int cmdlineoptions(int ac, char **av)
 				(unsigned long) value,
 				(ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
 		    R_ShowMessage(s);
-		} else if (value < 16*Mega) {
+		} else if (value < 32 * Mega) {
 		    sprintf(s, _("WARNING: max-mem-size =%4.1fM too small and ignored\n"), value/(1024.0 * 1024.0));
 		    R_ShowMessage(s);
-		} else if (value >= 3072*Mega) {
+		} else if (value >= 3072 * Mega) {
 		    sprintf(s, _("WARNING: max-mem-size =%4.1fM is too large and taken as 3Gb\n"), value/(1024.0 * 1024.0));
 		    R_ShowMessage(s);
 		} else

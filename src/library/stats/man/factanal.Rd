@@ -1,6 +1,6 @@
 \name{factanal}
 \alias{factanal}
-\alias{factanal.fit.mle}
+%\alias{factanal.fit.mle}
 \encoding{latin1}
 \title{Factor Analysis}
 \description{
@@ -17,7 +17,9 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   \item{x}{A formula or a numeric matrix or an object that can be
     coerced to a numeric matrix.}
   \item{factors}{The number of factors to be fitted.}
-  \item{data}{A data frame, used only if \code{x} is a formula.}
+  \item{data}{An optional data frame (or similar: see
+    \code{\link{model.frame}}), used only if \code{x} is a formula.  By
+    default the variables are taken from \code{environment(formula)}.}
   \item{covmat}{A covariance matrix, or a covariance list as returned by
     \code{\link{cov.wt}}.  Of course, correlation matrices are covariance
     matrices.}
@@ -84,10 +86,10 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   uniquenesses can be found analytically: Lawley & Maxwell (1971,
   p. 27).)  All the starting values supplied in \code{start} are tried
   in turn and the best fit obtained is used.  If \code{start = NULL}
-  then the first fit is started at the value suggested by Jöreskog
-  (1963) and given by Lawley & Maxwell (1971, p. 31), and then
-  \code{control$nstart - 1} other values are tried, randomly selected
-  as equal values of the uniquenesses.
+  then the first fit is started at the value suggested by
+  \enc{Jöreskog}{Joreskog} (1963) and given by Lawley & Maxwell
+  (1971, p. 31), and then \code{control$nstart - 1} other values are
+  tried, randomly selected as equal values of the uniquenesses.
 
   The uniquenesses are technically constrained to lie in \eqn{[0, 1]},
   but near-zero values are problematical, and the optimization is

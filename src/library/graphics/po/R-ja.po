@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-06 08:08\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
 "PO-Revision-Date: 2005-06-02 15:33+0900\n"
 "Last-Translator: Shigeru Mase\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -22,7 +22,7 @@ msgid "at least one entry of 'x' must be positive"
 msgstr "'x' の少なくとも一つの項目は正値でなければなりません"
 
 msgid "incorrect 'col': must be length 2"
-msgstr "誤った'col'：長さ2はでなければならない"
+msgstr "誤った 'col'：長さは2でなければなりません"
 
 msgid "'side' must be in {1:4}"
 msgstr "'side' は範囲 {1,2,3,4} になければなりません"
@@ -53,7 +53,6 @@ msgstr "対数スケールのエラー: 'xlim' <= 0"
 
 msgid "log scale error: 'ylim' <= 0"
 msgstr "対数スケールのエラー: 'ylim' <= 0"
-""
 
 msgid "incorrect number of names"
 msgstr "名前の数が誤りです"
@@ -62,7 +61,10 @@ msgid "invalid first argument"
 msgstr "最初の引数が無効です"
 
 msgid "'formula' missing or incorrect"
-msgstr "'formula'が無いか不正確です"
+msgstr "'formula' が無いか不正確です"
+
+msgid "argument 'col' is deprecated in favour of 'boxfill'"
+msgstr "引数 'col' は廃止され 'boxfill' に取ってかわりました"
 
 msgid "'at' must have same length as 'z$n', i.e."
 msgstr "'at' は 'z$n' と同じ長さを持たなければなりません。すなわち "
@@ -80,13 +82,15 @@ msgid "explanatory variable should be numeric"
 msgstr "説明変数は数値でなければなりません"
 
 msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
-msgstr "y 軸のメモリは累積確率のスケールです、 'ylim' は区間 [0,1] 中になければなりません"
+msgstr ""
+"y 軸のメモリは累積確率のスケールです、 'ylim' は区間 [0,1] 中になければなりま"
+"せん"
 
 msgid "no 'z' matrix specified"
 msgstr "'z' 行列が指定されていません"
 
 msgid "increasing 'x' and 'y' values expected"
-msgstr "'x' と 'y' の値は昇順でなければなりません"
+msgstr "'x' と 'y' の値は昇順であることが期待されています"
 
 msgid "no proper 'z' matrix specified"
 msgstr "適切な 'z' 行列が指定されていません"
@@ -101,7 +105,7 @@ msgid "'number' must be integer >= 1"
 msgstr "'number' は 1 以上の整数でなければなりません"
 
 msgid "'overlap' must be < 1 (and typically >= 0)."
-msgstr "'overlap' は 1 未満(そして、典型的には非負)でなければなりません"
+msgstr "'overlap' は 1 未満(そして典型的には非負)でなければなりません"
 
 msgid "invalid 'given.values'"
 msgstr "'given.values' が無効です"
@@ -116,7 +120,7 @@ msgid "'expr' must be a function or an expression containing 'x'"
 msgstr "'expr' は 'x' を含む関数か表現式でなければなりません"
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
-msgstr "'from'と 'to' は正値でなければなりません。そして log=\"x\" です"
+msgstr "log=\"x\" ならば 'from' と 'to' は正値でなければなりません"
 
 msgid "wrong method"
 msgstr "間違ったメソッドです"
@@ -137,7 +141,7 @@ msgid "'conf.level' must be a single number between 0 and 1"
 msgstr "'conf.level' は 0 と 1 の間の単一の数値でなければなりません"
 
 msgid "incorrect 'margin' specification"
-msgstr "不正確な'margin'の指定です"
+msgstr "不正確な 'margin' の指定です"
 
 msgid "incorrect geometry specification"
 msgstr "不正確な寸法(geometry)の指定です"
@@ -152,27 +156,27 @@ msgid "'include.lowest' ignored as 'breaks' is not a vector"
 msgstr "'breaks' がベクトルではないので 'include.lowest' は無視されます"
 
 msgid "unknown 'breaks' algorithm"
-msgstr "未知の'breaks'アルゴリズムです"
+msgstr "未知の 'breaks' アルゴリズムです"
 
 msgid "invalid number of 'breaks'"
-msgstr "'breaks'の数が無効です"
+msgstr "'breaks' の数が無効です"
 
 msgid "hist.default: pretty() error, breaks="
 msgstr "hist.default: pretty() の間違いです。分割点 ="
 
 msgid "'breaks' are not strictly increasing"
-msgstr "'breaks' が狭義に増加ではありません"
+msgstr "'breaks' が狭義増加ではありません"
 
 msgid "'probability' is an alias for '!freq', however they differ."
 msgstr "'probability' は '!freq' の別名ですが、それらは異なっています"
 
 msgid "negative 'counts'. Internal Error in C-code for \"bincount\""
-msgstr "負の 'counts'です。\"bincount\" のための C コードの内部エラーです"
+msgstr "負の 'counts' です。\"bincount\" のための C コードの内部エラーです"
 
 msgid "some 'x' not counted; maybe 'breaks' do not span range of 'x'"
 msgstr ""
-"'x' の一部分が数えられていません。多分 'breaks' が 'x' の範囲全体に及んでいま"
-"せん"
+"'x' の一部分が数えられていません。多分 'breaks' が 'x' の範囲全体をカバーして"
+"いません"
 
 msgid "the AREAS in the plot are wrong -- rather use freq=FALSE"
 msgstr "プロットの領域が誤まりです。むしろ freq=FALSE を使用して下さい"
@@ -182,6 +186,9 @@ msgstr "'x' は不正な構造を持ちます"
 
 msgid "argument must be matrix-like"
 msgstr "引数は行列の形でなければなりません"
+
+msgid "'x' and 'y' values must be finite and non-missing"
+msgstr "'x' と 'y' の値は有限値であり欠損は許されません"
 
 msgid "'z' must be a matrix"
 msgstr "'z' は行列でなければなりません"
@@ -212,7 +219,7 @@ msgid "invalid title"
 msgstr "無効なタイトルです"
 
 msgid "'legend' is of length 0"
-msgstr "'legend' が長さゼロです"
+msgstr "'legend' が長さがゼロです"
 
 msgid "invalid coordinate lengths"
 msgstr "無効な座標長です"
@@ -224,7 +231,7 @@ msgid "horizontal specification overrides: Number of columns :="
 msgstr "水平方向の指定は無効とされました: 列の数 :="
 
 msgid "not using pch[2..] since pch[1] has multiple chars"
-msgstr "pch[1] が多くの文字を含むため、pch[2..] を使用しません"
+msgstr "pch[1] が複数の文字を含むため、pch[2..] を使用しません"
 
 msgid "must specify at least one of 'x' and 'y'"
 msgstr "'x' と 'y' の少なくとも一つを指定しなければなりません"
@@ -242,22 +249,22 @@ msgid "'x' must not have 0 dimensionality"
 msgstr "'x' の次元はゼロであってはなりません"
 
 msgid "extra argument(s) %s will be disregarded"
-msgstr "余分な引数(複数)は無視されます"
+msgstr "余分な引数(複数) %s は無視されます"
 
 msgid "invalid 'shade' specification"
 msgstr "無効な陰影('shade')の指定です"
 
 msgid "length of 'sort' does not conform to 'dim(x)'"
-msgstr "'sort'の長さは dim(x) に合致しません"
+msgstr "'sort' の長さは 'dim(x)' に合致しません"
 
 msgid "non-numeric argument to 'pairs'"
-msgstr "'pairs' へ非数値の引数が与えられました"
+msgstr "'pairs' へ数値でない引数が与えられました"
 
 msgid "only one column in the argument to 'pairs'"
 msgstr "'pairs' の引数はただ一つの列しか持ちません"
 
 msgid "the 'panel' function made a new plot"
-msgstr "'panel'関数は新規のプロットを行いました"
+msgstr "'panel' 関数は新規のプロットを行いました"
 
 msgid "'x' values must be positive."
 msgstr "'x' の値は正でなければなりません"
@@ -332,25 +339,25 @@ msgid "labels do not make sense for a single location"
 msgstr "ラベルは位置が一つだけのときは無意味です"
 
 msgid "'locations' must be a 2-column matrix."
-msgstr "'locations'は 2 列の行列でなければなりません"
+msgstr "'locations' は 2 列の行列でなければなりません"
 
 msgid "number of rows of 'locations' and 'x' must be equal."
-msgstr "'locations'の行数と 'x' は等しくなければなりません"
+msgstr "'locations' の行数と 'x' は等しくなければなりません"
 
 msgid "length of 'angles' must equal 'ncol(x)'"
-msgstr "'angles'の長さは 'ncol(x)' と同じでなければなりません"
+msgstr "'angles' の長さは 'ncol(x)' と同じでなければなりません"
 
 msgid "no non-missing values"
 msgstr "全て欠損値です"
 
 msgid "'scale' must be positive"
-msgstr "'scale'は正の値でなければなりません"
+msgstr "'scale' は正の値でなければなりません"
 
 msgid "invalid plotting method"
 msgstr "無効な plot メソッドです"
 
 msgid "'at' must have length equal to the number %d of groups"
-msgstr "'at' は number %d of groups と同じ長さを持たなければなりません。つまり"
+msgstr "'at' はグループ数 %d of と同じ長さを持たなければなりません"
 
 msgid "'number' must have same length as 'x' and 'y'"
 msgstr "'number' は 'x' および 'y' と同じ長さでなければなりません"
@@ -369,5 +376,4 @@ msgstr "対数スケール: xyinch() はナンセンスです"
 
 msgid "Outlier (%s) in boxplot %d is not drawn"
 msgid_plural "Outliers (%s) in boxplot %d are not drawn"
-msgstr[0] "一つの外れ値 (%s) が boxplot %d から除かれました"
-msgstr[1] "(複数の)外れ値 (%s) が boxplot %d から除かれました"
+msgstr[0] "箱型図 %d 中の外れ値 (%s) は描かれません"

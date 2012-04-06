@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -402,7 +402,7 @@ static void Norm_kind(N01type kind)
 
 /*------ .Internal interface ------------------------*/
 
-SEXP do_RNGkind (SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_RNGkind (SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, rng, norm;
 
@@ -423,7 +423,7 @@ SEXP do_RNGkind (SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-SEXP do_setseed (SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_setseed (SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP skind;
     int seed;
@@ -653,12 +653,12 @@ void ran_start(seed)    /* do this before using ran_array */
 /* after calling ran_start, get new randoms by, e.g., "x=ran_arr_next()" */
 
 #define QUALITY 1009 /* recommended quality level for high-res use */
-long ran_arr_buf[QUALITY];
-long ran_arr_sentinel=-1;
-long *ran_arr_ptr=&ran_arr_sentinel; /* the next random number, or -1 */
+static long ran_arr_buf[QUALITY];
+static long ran_arr_sentinel=(long)-1;
+static long *ran_arr_ptr=&ran_arr_sentinel; /* the next random number, or -1 */
 
 #define ran_arr_next() (*ran_arr_ptr>=0? *ran_arr_ptr++: ran_arr_cycle())
-long ran_arr_cycle()
+static long ran_arr_cycle()
 {
   ran_array(ran_arr_buf,QUALITY);
   ran_arr_buf[100]=-1;

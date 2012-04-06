@@ -19,7 +19,7 @@ SRC_HEADERS = R.h S.h Rdefines.h Rdevices.h Rgraphics.h Rinternals.h \
 OBJ_HEADERS = Rconfig.h Rmath.h Rversion.h
 ## Non-API internal ones:
 INT_HEADERS = Defn.h Errormsg.h Fileio.h Graphics.h IOStuff.h \
-  Internal.h Parse.h Print.h Rconnections.h Rdynpriv.h Startup.h
+  Internal.h Parse.h Print.h Rconnections.h Rdynpriv.h Rinlinedfuns.h Startup.h
 
 DISTFILES = Makefile.in Makefile.win README $(INT_HEADERS) $(SRC_HEADERS) \
   config.h.in stamp-h.in Rmath.h0.in memcheck.h valgrind.h
@@ -27,17 +27,21 @@ DISTFILES = Makefile.in Makefile.win README $(INT_HEADERS) $(SRC_HEADERS) \
 SUBDIRS = R_ext
 SUBDIRS_WITH_NO_BUILD = Rmodules
 
-TIMESTAMPS = $(SRC_HEADERS:.h=.ts) $(OBJ_HEADERS:.h=.ts)
+TIMESTAMPS = $(SRC_HEADERS:.h=.ts) $(OBJ_HEADERS:.h=.tsa)
 
 CLEANFILES = $(OBJ_HEADERS) stamp-R $(TIMESTAMPS) libintl.h
 DISTCLEANFILES = Makefile Rmath.h0 config.h stamp-h
 
 .SUFFIXES:
-.SUFFIXES: .h .ts
+.SUFFIXES: .h .ts .tsa
 
 .h.ts:
 	@$(INSTALL_DATA) $< $(top_builddir)/include/`basename $<`
 	@touch $@
+.h.tsa:
+	@$(INSTALL_DATA) $< $(top_builddir)/include@R_ARCH@/`basename $<`
+	@touch $@
+
 
 all: Makefile R
 
@@ -49,7 +53,7 @@ R: Makefile stamp-R $(TIMESTAMPS)
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
 stamp-R:
-	@$(MKINSTALLDIRS) $(top_builddir)/include
+	@$(MKINSTALLDIRS) $(top_builddir)/include@R_ARCH@
 	@touch $@
 $(TIMESTAMPS): stamp-R
 
@@ -85,12 +89,12 @@ install: installdirs install-intl-@USE_INCLUDED_LIBINTL@
 	  $(INSTALL_DATA) $(srcdir)/$${f} "$(rincludedir)"; \
 	done
 	@for f in $(OBJ_HEADERS); do \
-	  $(INSTALL_DATA) $${f} "$(rincludedir)"; \
+	  $(INSTALL_DATA) $${f} "$(rincludedir)@R_ARCH@"; \
 	done
 installdirs:
-	@$(MKINSTALLDIRS) "$(rincludedir)"
+	@$(MKINSTALLDIRS) "$(rincludedir)@R_ARCH@"
 install-intl-yes:
-	@$(INSTALL_DATA) libintl.h "$(rincludedir)"
+	@$(INSTALL_DATA) libintl.h "$(rincludedir)@R_ARCH@"
 install-intl-no:
 
 install-strip:

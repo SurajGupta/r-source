@@ -19,8 +19,7 @@ mean.default <- function(x, trim = 0, na.rm = FALSE, ...)
 	x <- sort(x, partial=unique(c(lo, hi)))[lo:hi]
 	n <- hi-lo+1
     }
-    ## sum(int) can overflow, so convert here.
-    if(is.integer(x)) sum(as.numeric(x))/n else sum(x)/n
+    .Internal(mean(x))
 }
 
 mean.data.frame <- function(x, ...) sapply(x, mean, ...)

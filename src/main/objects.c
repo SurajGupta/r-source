@@ -15,8 +15,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 /*  This module contains support for S-style generic */
@@ -173,9 +173,17 @@ SEXP R_LookupMethod(SEXP method, SEXP rho, SEXP callrho, SEXP defrho)
     SEXP val;
 
     if (R_UseNamespaceDispatch) {
-	if (TYPEOF(callrho) != ENVSXP && callrho != R_BaseEnv)
+	if (TYPEOF(callrho) == NILSXP) {
+	    warning(_("use of NULL environment is deprecated"));
+	    callrho = R_BaseEnv;
+	} else
+	if (TYPEOF(callrho) != ENVSXP)
 	    error(_("bad generic call environment"));
-	if (TYPEOF(defrho) != ENVSXP && defrho != R_BaseEnv)
+	if (TYPEOF(defrho) == NILSXP) {
+	    warning(_("use of NULL environment is deprecated"));
+	    defrho = R_BaseEnv;
+	} else
+	if (TYPEOF(defrho) != ENVSXP)
 	    error(_("bad generic definition environment"));
 	if (defrho == R_BaseEnv)
 	    defrho = R_BaseNamespace;
@@ -339,7 +347,7 @@ int usemethod(char *generic, SEXP obj, SEXP call, SEXP args,
 /* "usemethod". Things like [ and [[ call usemethod directly, */
 /* hence do_usemethod should just be an interface to usemethod. */
 
-SEXP do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, generic = R_NilValue /* -Wall */, obj;
     SEXP callenv, defenv;
@@ -358,7 +366,7 @@ SEXP do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
     if ( !(cptr->callflag & CTXT_FUNCTION) || cptr->cloenv != env)
 	error(_("'UseMethod' used in an inappropriate fashion"));
     callenv = cptr->sysparent;
-    defenv = TYPEOF(env) == ENVSXP ? ENCLOS(env) : R_BaseEnv;
+    defenv = ENCLOS(env);
 
     if (nargs)
 	PROTECT(generic = eval(CAR(args), env));
@@ -434,7 +442,7 @@ static SEXP fixcall(SEXP call, SEXP args)
 
 #define ARGUSED(x) LEVELS(x)
 
-SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char buf[512], b[512], bb[512], tbuf[10];
     SEXP ans, s, t, class, method, matchedarg, generic, nextfun;
@@ -750,7 +758,7 @@ SEXP do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
     return(ans);
 }
 
-SEXP do_unclass(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_unclass(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     switch(TYPEOF(CAR(args))) {
@@ -815,7 +823,7 @@ void RemoveClass(SEXP x, char *name)
     }
 }
 
-SEXP do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, class, what, which, rval = R_NilValue /* -Wall */;
     int i, j, nwhat, isvec, nclass;
@@ -914,6 +922,7 @@ SEXP R_isMethodsDispatchOn(SEXP onOff) {
 
 /* simpler version for internal use */
 
+attribute_hidden
 Rboolean isMethodsDispatchOn(void)
 {
     return !NOT_METHODS_DISPATCH_PTR(R_standardGeneric_ptr);
@@ -929,7 +938,7 @@ static SEXP dispatchNonGeneric(SEXP name, SEXP env, SEXP fdef)
     /* find a non-generic function */
     symbol = install(CHAR(asChar(name)));
     dot_Generic = install(".Generic");
-    for(rho = ENCLOS(env); rho != R_BaseEnv && isEnvironment(rho);
+    for(rho = ENCLOS(env); rho != R_EmptyEnv;
 	rho = ENCLOS(rho)) {
 	fun = findVarInFrame3(rho, symbol, TRUE);
 	if(fun == R_UnboundValue) continue;
@@ -982,7 +991,7 @@ static void load_methods_package()
 
 static SEXP get_this_generic(SEXP args);
 
-SEXP do_standardGeneric(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_standardGeneric(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP arg, value, fdef; R_stdGen_ptr_t ptr = R_get_standardGeneric_ptr();
     if(!ptr) {
@@ -1036,6 +1045,7 @@ SEXP R_primitive_methods(SEXP op)
     }
 }
 
+/* This is used in the methods package */
 SEXP do_set_prim_method(SEXP op, char *code_string, SEXP fundef, SEXP mlist)
 {
     int offset = 0;
@@ -1114,7 +1124,7 @@ SEXP do_set_prim_method(SEXP op, char *code_string, SEXP fundef, SEXP mlist)
     else if(fundef && !isNull(fundef) && !prim_generics[offset]) {
 	if(TYPEOF(fundef) != CLOSXP)
 	    error(_("the formal definition of a primitive generic must be a function object (got type '%s')"),
-		  type2str(TYPEOF(fundef)));
+		  CHAR(type2str(TYPEOF(fundef))));
 	R_PreserveObject(fundef);
 	prim_generics[offset] = fundef;
     }
@@ -1305,4 +1315,15 @@ SEXP R_do_new_object(SEXP class_def)
     value = duplicate(R_do_slot(class_def, s_prototype));
     setAttrib(value, R_ClassSymbol, e);
     return value;
+}
+
+Rboolean R_seemsS4Object(SEXP object)  {
+  static SEXP R_packageSymbol = NULL;
+  SEXP class;
+  if(!R_packageSymbol)
+    R_packageSymbol = install("package");
+  class = getAttrib(object, R_ClassSymbol);
+  return (class != R_NilValue &&
+	  getAttrib(class, R_packageSymbol) != R_NilValue) ?
+    TRUE: FALSE;
 }

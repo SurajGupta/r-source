@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> 
@@ -32,14 +32,22 @@
 # include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Fileio.h"
+#include <Defn.h>
+#include <Fileio.h>
+#include <Rmath.h> /* for rround */
 #include "Runix.h"
-#include <sys/stat.h> /* for mkdir */
 
-/* HP-UX headers need this before CLK_TCK */
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#endif
+
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>		/* for struct timeval */
+#endif
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRUSAGE)
+/* on MacOS X it seems sys/resource.h needs sys/time.h first */
+# include <sys/resource.h>
 #endif
 
 extern Rboolean LoadInitFile;
@@ -141,7 +149,7 @@ char *R_ExpandFileName(char *s)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     return mkString("Unix");
 }
@@ -151,6 +159,23 @@ SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 # ifdef HAVE_SYS_TIMES_H
 #  include <sys/times.h>
 # endif
+
+static clock_t StartTime;
+static struct tms timeinfo;
+#ifdef HAVE_GETTIMEOFDAY
+static double StartTime2;
+#endif
+static double clk_tck;
+
+void R_setStartTime(void)
+{
+#ifdef HAVE_GETTIMEOFDAY
+    struct timeval tv;
+#endif
+
+#ifdef HAVE_SYSCONF
+    clk_tck = (double) sysconf(_SC_CLK_TCK);
+#else
 # ifndef CLK_TCK
 /* this is in ticks/second, generally 60 on BSD style Unix, 100? on SysV
  */
@@ -160,32 +185,63 @@ SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 #   define CLK_TCK 60
 #  endif
 # endif /* not CLK_TCK */
-
-static clock_t StartTime;
-static struct tms timeinfo;
-
-void R_setStartTime(void)
-{
+    clk_tck = (double) CLK_TCK;
+#endif
+    /* printf("CLK_TCK = %d\n", CLK_TCK); */
     StartTime = times(&timeinfo);
+#ifdef HAVE_GETTIMEOFDAY
+    gettimeofday(&tv, NULL);
+    StartTime2 = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
+#endif
 }
 
+attribute_hidden
 void R_getProcTime(double *data)
 {
-    double elapsed;
-    elapsed = (times(&timeinfo) - StartTime) / (double)CLK_TCK;
-    data[0] = timeinfo.tms_utime / (double)CLK_TCK;
-    data[1] = timeinfo.tms_stime / (double)CLK_TCK;
-    data[2] = elapsed;
-    data[3] = timeinfo.tms_cutime / (double)CLK_TCK;
-    data[4] = timeinfo.tms_cstime / (double)CLK_TCK;
+#ifdef HAVE_GETTIMEOFDAY
+    struct timeval tv;
+    double now;
+#endif
+#ifdef HAVE_GETRUSAGE
+    struct rusage self, children;
+#endif
+
+#if !defined(HAVE_GETTIMEOFDAY) || !defined(HAVE_GETRUSAGE)
+    data[2] = (times(&timeinfo) - StartTime) / clk_tck;
+#endif
+
+#ifdef HAVE_GETRUSAGE
+    getrusage(RUSAGE_SELF, &self);
+    getrusage(RUSAGE_CHILDREN, &children);
+    data[0] = (double) self.ru_utime.tv_sec + 
+	1e-3 * (self.ru_utime.tv_usec/1000);
+    data[1] = (double) self.ru_stime.tv_sec + 
+	1e-3 * (self.ru_stime.tv_usec/1000);
+    data[3] = (double) children.ru_utime.tv_sec + 
+	1e-3 * (children.ru_utime.tv_usec/1000);
+    data[4] = (double) children.ru_utime.tv_sec + 
+	1e-3 * (children.ru_utime.tv_usec/1000);
+#else
+    data[0] = rround(timeinfo.tms_utime / clk_tck, 3);
+    data[1] = rround(timeinfo.tms_stime / clk_tck, 3);
+    data[3] = rround(timeinfo.tms_cutime / clk_tck, 3);
+    data[4] = rround(timeinfo.tms_cstime / clk_tck, 3);
+#endif
+#ifdef HAVE_GETTIMEOFDAY
+    gettimeofday(&tv, NULL);
+    now = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
+    data[2] = now - StartTime2;
+#endif
+    data[2] = rround(data[2], 3);
 }
 
+attribute_hidden
 double R_getClockIncrement(void)
 {
-  return 1.0 / (double) CLK_TCK;
+    return 1.0 / clk_tck;
 }
 
-SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans = allocVector(REALSXP, 5);
     R_getProcTime(REAL(ans));
@@ -194,7 +250,7 @@ SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 #else /* not _R_HAVE_TIMING_ */
 void R_setStartTime(void) {}
 
-SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     error(_("proc.time() is not implemented on this system"));
     return R_NilValue;		/* -Wall */
@@ -203,20 +259,25 @@ SEXP do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 #define INTERN_BUFSIZE 8096
-SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    FILE *fp;
-    char *x = "r", buf[INTERN_BUFSIZE];
-    int read=0, i, j;
-    SEXP tlist = R_NilValue, tchar, rval;
+    SEXP tlist = R_NilValue;
+    int read=0;
 
     checkArity(op, args);
     if (!isValidStringF(CAR(args)))
 	errorcall(call, _("non-empty character argument expected"));
-    if (isLogical(CADR(args)))
-	read = INTEGER(CADR(args))[0];
+    if (isLogical(CADR(args)) && (read = LOGICAL(CADR(args))[0]) != NA_INTEGER)
+	;
+    else
+        errorcall(call, _("'intern' must be logical and not NA"));
     if (read) {
 #ifdef HAVE_POPEN
+	FILE *fp;
+	char *x = "r", buf[INTERN_BUFSIZE];
+	int i, j;
+	SEXP tchar, rval;
+
 	PROTECT(tlist);
 	fp = R_popen(CHAR(STRING_ELT(CAR(args), 0)), x);
 	for (i = 0; fgets(buf, INTERN_BUFSIZE, fp); i++) {
@@ -236,7 +297,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(1);
 	return (rval);
 #else /* not HAVE_POPEN */
-	errorcall(call, _("intern=TRUE is not implemented on this platform"));
+	errorcall(call, _("'intern=TRUE' is not implemented on this platform"));
 	return R_NilValue;
 #endif /* not HAVE_POPEN */
     }
@@ -255,85 +316,6 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-void InitTempDir()
-{
-    char *tmp, *tm, tmp1[PATH_MAX+10], *p;
-    int len;
-#ifndef HAVE_MKDTEMP
-    int res;
-#endif
-
-    tmp = getenv("R_SESSION_TMPDIR");
-    if (!tmp) {
-        /* This looks like it will only be called in the embedded case
-           since this is done in the script. Also should test if directory
-           exists rather than just attempting to remove it. 
-	*/
-	char *buf;
-	tm = getenv("TMPDIR");
-	if (!tm) tm = getenv("TMP");
-	if (!tm) tm = getenv("TEMP");
-	if (!tm) tm = "/tmp";
-#ifdef HAVE_MKDTEMP
-	sprintf(tmp1, "%s/RtmpXXXXXX", tm);
-	tmp = mkdtemp(tmp1);
-	if(!tmp) R_Suicide(_("cannot mkdir R_TempDir"));
-#else
-	sprintf(tmp1, "rm -rf %s/Rtmp%u", tm, (unsigned int)getpid());
-	R_system(tmp1);
-	sprintf(tmp1, "%s/Rtmp%u", tm, (unsigned int)getpid());
-	res = mkdir(tmp1, 0755);
-	if(res) {
-	    /* Try one more time, in case a dir left around from that
-	       process number from another user */
-	    sprintf(tmp1, "rm -rf %s/Rtmp%u-%d", tm, (unsigned int)getpid(), 
-		    rand() % 1000);
-	    R_system(tmp1);
-	    sprintf(tmp1, "%s/Rtmp%u-%d", tm, (unsigned int)getpid(), 
-		    rand() % 1000);
-	    res = mkdir(tmp1, 0755);
-	}
-	if(res) R_Suicide(_("cannot mkdir R_TempDir"));
-#endif
-	tmp = tmp1;
-	buf = (char *) malloc((strlen(tmp) + 20) * sizeof(char));
-	if(buf) {
-	    sprintf(buf, "R_SESSION_TMPDIR=%s", tmp);
-	    putenv(buf);
-	    /* no free here: storage remains in use */
-	}
-    }
-
-    len = strlen(tmp) + 1;
-    p = (char *) malloc(len);
-    if(!p) R_Suicide(_("cannot allocate R_TempDir"));
-    else {
-	R_TempDir = p;
-	strcpy(R_TempDir, tmp);
-    }
-}
-
-char * R_tmpnam(const char * prefix, const char * tempdir)
-{
-    char tm[PATH_MAX], tmp1[PATH_MAX], *res;
-    unsigned int n, done = 0;
-
-    if(!prefix) prefix = "";	/* NULL */
-    strcpy(tmp1, tempdir);
-    for (n = 0; n < 100; n++) {
-	/* try a random number at the end */
-	sprintf(tm, "%s/%s%x", tmp1, prefix, rand());
-        if(!R_FileExists(tm)) { done = 1; break; }
-    }
-    if(!done)
-	error(_("cannot find unused tempfile name"));
-    res = (char *) malloc((strlen(tm)+1) * sizeof(char));
-    strcpy(res, tm);
-    return res;
-}
-
-
-
 #ifdef HAVE_SYS_UTSNAME_H
 # include <sys/utsname.h>
 
@@ -345,7 +327,7 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
 #  include <pwd.h>
 # endif
 
-SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, ansnames;
     struct utsname name;
@@ -418,6 +400,7 @@ SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 #include <pmmintrin.h>
 #endif
 
+/* used in package gnomeGUI */
 void fpu_setup(Rboolean start)
 {
     if (start) {

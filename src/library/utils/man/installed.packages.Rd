@@ -6,7 +6,8 @@
   libraries.
 }
 \usage{
-installed.packages(lib.loc = NULL, priority = NULL, noCache = FALSE)
+installed.packages(lib.loc = NULL, priority = NULL,
+                   noCache = FALSE)
 }
 \arguments{
   \item{lib.loc}{
@@ -26,7 +27,9 @@ installed.packages(lib.loc = NULL, priority = NULL, noCache = FALSE)
   package found along \code{lib.loc} and returns a matrix of package
   names, library paths and version numbers.
 
-  \strong{Note:} this works with package names, not bundle names.
+  \strong{Note:} this works with package names, not bundle names, and
+  for versioned installs with the name under which the package is
+  installed, in the style \code{mypkg_1.3-7}.
 
   The information found is cached (by library) for the \R session,
   and updated only if the top-level library directory has been altered,

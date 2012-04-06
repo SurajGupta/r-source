@@ -7,7 +7,7 @@
 \synopsis{
 abline(a = NULL, b = NULL, h = NULL, v = NULL, reg = NULL,
        coef = NULL, untf = FALSE, col = par("col"),
-       lty = par("lty"), lwd = NULL, ...)
+       lty = par("lty"), lwd = par("lwd"), ...)
 }
 \usage{
 abline(a, b, untf = FALSE, \dots)
@@ -24,7 +24,8 @@ abline(reg=, untf = FALSE, \dots)
   \item{coef}{a vector of length two giving the intercept and slope.}
   \item{reg}{an object with a \code{coef} component.  See Details.}
   \item{\dots}{graphical parameters such as \code{col}, \code{lty} and
-    \code{lwd} (possibly as vectors: see Details).}
+    \code{lwd} (possibly as vectors: see Details) and the line
+    characteristics \code{lend}, \code{ljoin} and \code{lmitre}.}
 }
 \details{
   The first form specifies the line in intercept/slope form
@@ -56,6 +57,8 @@ abline(reg=, untf = FALSE, \dots)
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \seealso{
   \code{\link{lines}} and \code{\link{segments}} for connected and

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *  SYNOPSIS
  *
@@ -39,7 +39,7 @@
 #ifdef USE_BUILTIN_RINT
 #define R_rint private_rint
 
-static double private_rint(double x)
+double attribute_hidden private_rint(double x)
 {
     double tmp, sgn = 1.0;
     long ltmp;

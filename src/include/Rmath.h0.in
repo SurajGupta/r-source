@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  *
 
  * Rmath.h  should contain ALL headers from R's C code in `src/nmath'
@@ -390,7 +390,6 @@ double	dbeta(double, double, double, int);
 double	pbeta(double, double, double, int, int);
 double	qbeta(double, double, double, int, int);
 double	rbeta(double, double);
-double	pbeta_raw(double, double, double, int);
 
 	/* Lognormal Distribution */
 
@@ -405,7 +404,6 @@ double	dchisq(double, double, int);
 double	pchisq(double, double, int, int);
 double	qchisq(double, double, int, int);
 double	rchisq(double);
-double  qchisq_appr(double, double, double, int, int, double tol);
 
 	/* Non-central Chi-squared Distribution */
 
@@ -601,12 +599,15 @@ double  logspace_sub(double logx, double logy);
 
 #ifdef MATHLIB_PRIVATE
 #define d1mach		Rf_d1mach
+#define i1mach          Rf_i1mach
 #define gamma_cody	Rf_gamma_cody
 
-double	d1mach(int);
-double	gamma_cody(double);
+double	gamma_cody(double); /* used in arithmetic.c */
 
 #endif /* MATHLIB_PRIVATE */
+
+double  Rf_d1mach(int); /* used in port.c in package stats */
+int     Rf_i1mach(int); /* used in port.c in package stats */
 
 #ifdef MATHLIB_STANDALONE
 #ifndef MATHLIB_PRIVATE_H

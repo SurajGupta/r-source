@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
-"PO-Revision-Date: 2005-11-09 11:08\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
+"PO-Revision-Date: 2006-03-27 15:42\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -41,6 +41,21 @@ msgstr "Invalid to specify axis labels when ‘at’ is NULL"
 
 msgid "'labels' and 'at' locations must have same length"
 msgstr "‘labels’ and ‘at’ locations must have same length"
+
+msgid "End points must not be identical"
+msgstr "End points must not be identical"
+
+msgid "'x1', 'y1' ,'x2', and 'y2' must be units"
+msgstr "'x1', ‘y1’ ,'x2', and ‘y2’ must be units"
+
+msgid "'shape' must be between -1 and 1"
+msgstr "‘shape’ must be between -1 and 1"
+
+msgid "'squareShape' must be between -1 and 1"
+msgstr "‘squareShape’ must be between -1 and 1"
+
+msgid "'arrow' must be an arrow object or NULL"
+msgstr "‘arrow’ must be an arrow object or NULL"
 
 msgid "Invalid 'edit' information"
 msgstr "Invalid ‘edit’ information"
@@ -163,6 +178,9 @@ msgstr "A ‘grob’ path must contain at least one ‘grob’ name"
 msgid "Invalid 'grob' name(s)"
 msgstr "Invalid ‘grob’ name(s)"
 
+msgid "Unable to coerce to gList"
+msgstr "Unable to coerce to gList"
+
 msgid "Only 'grobs' allowed in 'gList'"
 msgstr "Only ‘grobs’ allowed in ‘gList’"
 
@@ -271,29 +289,20 @@ msgstr "‘respect’ must be logical or an ‘nrow’ by ‘ncol’ matrix"
 msgid "Invalid 'origin'"
 msgstr "Invalid ‘origin’"
 
-msgid "'x' and 'y' must be units"
-msgstr "‘x’ and ‘y’ must be units"
-
-msgid "'x' and 'y' must have length 1"
-msgstr "‘x’ and ‘y’ must have length 1"
-
-msgid "'x0', 'y0', 'x1', and 'y1' must be units"
-msgstr "'x0', 'y0', 'x1', and ‘y1’ must be units"
-
-msgid "'x' and 'y' must be units or NULL"
-msgstr "‘x’ and ‘y’ must be units or NULL"
-
 msgid "'length' must be a unit object"
 msgstr "‘length’ must be a unit object"
 
 msgid "Invalid 'ends' or 'type' argument"
 msgstr "Invalid ‘ends’ or ‘type’ argument"
 
-msgid "Corrupt 'arrows' object"
-msgstr "Corrupt ‘arrows’ object"
+msgid "'x' and 'y' must be units"
+msgstr "‘x’ and ‘y’ must be units"
 
-msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
-msgstr "The ‘grob’ argument must be a 'line.to', 'lines', or ‘segments’ grob"
+msgid "'x' and 'y' must have length 1"
+msgstr "‘x’ and ‘y’ must have length 1"
+
+msgid "invalid 'arrow' argument"
+msgstr "invalid ‘arrow’ argument"
 
 msgid "It is invalid to specify both 'id' and 'id.lengths"
 msgstr "It is invalid to specify both ‘id’ and 'id.lengths"
@@ -306,6 +315,31 @@ msgstr "‘x’ and ‘y’ and ‘id’ must all be same length"
 
 msgid "'x' and 'y' and 'id.lengths' must specify same overall length"
 msgstr "‘x’ and ‘y’ and ‘id.lengths’ must specify same overall length"
+
+msgid "'x0', 'y0', 'x1', and 'y1' must be units"
+msgstr "'x0', 'y0', 'x1', and ‘y1’ must be units"
+
+msgid "'x' and 'y' must be units or NULL"
+msgstr "‘x’ and ‘y’ must be units or NULL"
+
+msgid "Corrupt 'arrows' object"
+msgstr "Corrupt ‘arrows’ object"
+
+msgid ""
+"grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing "
+"functions."
+msgstr ""
+"grid.arrows() has been deprecated;  use ‘arrow’ arguments to line drawing "
+"functions."
+
+msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgstr "The ‘grob’ argument must be a 'line.to', 'lines', or ‘segments’ grob"
+
+msgid "x and y must be units"
+msgstr "x and y must be units"
+
+msgid "shape must be between -1 and 1"
+msgstr "shape must be between -1 and 1"
 
 msgid "'x', 'y', and 'r' must be units"
 msgstr "'x', 'y', and ‘r’ must be units"
@@ -325,6 +359,9 @@ msgstr "'x', ‘y’ and ‘size’ must be units"
 msgid "'x' and 'y' must be unit objects and have the same length"
 msgstr "‘x’ and ‘y’ must be unit objects and have the same length"
 
+msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
+msgstr "'x', 'y', 'width', and ‘height’ must all be units of length 1"
+
 msgid "'x' must be numeric"
 msgstr "‘x’ must be numeric"
 
@@ -337,20 +374,14 @@ msgstr "‘x’ argument must be a unit object"
 msgid "Invalid 'axis' or 'type'"
 msgstr "Invalid ‘axis’ or ‘type’"
 
-msgid "No string supplied for 'strwidth' unit"
-msgstr "No string supplied for ‘strwidth’ unit"
+msgid "No string supplied for 'strwidth/height' unit"
+msgstr "No string supplied for ‘strwidth/height’ unit"
 
-msgid "No string supplied for 'strheight' unit"
-msgstr "No string supplied for ‘strheight’ unit"
-
-msgid "No 'grob' supplied for 'grobwidth' unit"
-msgstr "No ‘grob’ supplied for ‘grobwidth’ unit"
+msgid "No 'grob' supplied for 'grobwidth/height' unit"
+msgstr "No ‘grob’ supplied for ‘grobwidth/height’ unit"
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
 msgstr "‘gPath’ must have depth 1 in ‘grobwidth/height’ units"
-
-msgid "No 'grob' supplied for 'grobheight' unit"
-msgstr "No ‘grob’ supplied for ‘grobheight’ unit"
 
 msgid "Operator '%s' not meaningful for units"
 msgstr "Operator ‘%s’ not meaningful for units"
@@ -382,11 +413,25 @@ msgstr "Index out of bounds (unit list subsetting)"
 msgid "It is invalid to combine unit objects with other types"
 msgstr "It is invalid to combine unit objects with other types"
 
+msgid ""
+"unit.rep has been deprecated in favour of a unit method for the generic rep "
+"function"
+msgstr ""
+"unit.rep has been deprecated in favour of a unit method for the generic rep "
+"function"
+
+msgid ""
+"unit.length has been deprecated in favour of a unit method for the generic "
+"length function"
+msgstr ""
+"unit.length has been deprecated in favour of a unit method for the generic "
+"length function"
+
+msgid "Invalid theta"
+msgstr "Invalid theta"
+
 msgid "'range' must be numeric"
 msgstr "‘range’ must be numeric"
-
-msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
-msgstr "'x', 'y', 'width', and ‘height’ must all be units of length 1"
 
 msgid "Invalid graphics parameters"
 msgstr "Invalid graphics parameters"

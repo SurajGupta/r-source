@@ -1,11 +1,11 @@
 /*
- *  $Id: nls.c,v 1.2 2004/05/17 08:12:39 ripley Exp $
- *
  *  Routines used in calculating least squares solutions in a
  *  nonlinear model in nls library for R.
  *
  *  Copyright 1999-2001 Douglas M. Bates <bates@stat.wisc.edu>,
  *                      Saikat DebRoy <saikat@stat.wisc.edu>
+ *
+ *  Copyright 2005 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
  *
  *  You should have received a copy of the GNU General Public
  *  License along with this program; if not, write to the Free
- *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- *  MA 02111-1307, USA
+ *  Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
  *
  */
 
@@ -44,7 +44,7 @@ getListElement(SEXP list, SEXP names, char *str) {
     char *tempChar;
     int i;
 
-    for (i = 0; i < LENGTH(list); i++) {
+    for (i = 0; i < length(list); i++) {
 	tempChar = CHAR(STRING_ELT(names, i));
 	if( strcmp(tempChar,str) == 0) {
 	    elmt = VECTOR_ELT(list, i);
@@ -72,25 +72,25 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
     doTrace = asLogical(doTraceArg);
 
     if(!isNewList(control))
-	error(_("control must be a list"));
+	error(_("'control' must be a list"));
     if(!isNewList(m))
-	error(_("m must be a list"));
+	error(_("'m' must be a list"));
 
     PROTECT(tmp = getAttrib(control, R_NamesSymbol));
 
     conv = getListElement(control, tmp, "maxiter");
     if(conv == NULL || !isNumeric(conv))
-	error(_("control$maxiter absent"));
+	error(_("'%s' absent"), "control$maxiter");
     maxIter = asInteger(conv);
 
     conv = getListElement(control, tmp, "tol");
     if(conv == NULL || !isNumeric(conv))
-	error(_("control$tol absent"));
+	error(_("'%s' absent"), "control$tol");
     tolerance = asReal(conv);
 
     conv = getListElement(control, tmp, "minFactor");
     if(conv == NULL || !isNumeric(conv))
-	error(_("control$minFactor absent"));
+	error(_("'%s' absent"), "control$minFactor");
     minFac = asReal(conv);
 
     UNPROTECT(1);
@@ -99,32 +99,32 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 
     conv = getListElement(m, tmp, "conv");
     if(conv == NULL || !isFunction(conv))
-	error(_("m$conv() absent"));
+	error(_("'%s' absent"), "m$conv()");
     PROTECT(conv = lang1(conv));
 
     incr = getListElement(m, tmp, "incr");
     if(incr == NULL || !isFunction(incr))
-	error(_("m$incr() absent"));
+	error(_("'%s' absent"), "m$incr()");
     PROTECT(incr = lang1(incr));
 
     deviance = getListElement(m, tmp, "deviance");
     if(deviance == NULL || !isFunction(deviance))
-	error(_("m$deviance() absent"));
+	error(_("'%s' absent"), "m$deviance()");
     PROTECT(deviance = lang1(deviance));
 
     trace = getListElement(m, tmp, "trace");
     if(trace == NULL || !isFunction(trace))
-	error(_("m$trace() absent"));
+	error(_("'%s' absent"), "m$trace()");
     PROTECT(trace = lang1(trace));
 
     setPars = getListElement(m, tmp, "setPars");
     if(setPars == NULL || !isFunction(setPars))
-	error(_("m$setPars() absent"));
+	error(_("'%s' absent"), "m$setPars()");
     PROTECT(setPars);
 
     getPars = getListElement(m, tmp, "getPars");
     if(getPars == NULL || !isFunction(getPars))
-	error(_("m$getPars() absent"));
+	error(_("'%s' absent"), "m$getPars()");
     PROTECT(getPars = lang1(getPars));
 
     PROTECT(pars = eval(getPars, R_GlobalEnv));
@@ -138,11 +138,11 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 
     PROTECT(newPars = allocVector(REALSXP, nPars));
     for (i = 0; i < maxIter; i++) {
-	if((convNew = asReal(eval(conv,R_GlobalEnv))) < tolerance) {
+	if((convNew = asReal(eval(conv, R_GlobalEnv))) < tolerance) {
 	    hasConverged = TRUE;
 	    break;
 	}
-	PROTECT(newIncr = eval(incr,R_GlobalEnv));
+	PROTECT(newIncr = eval(incr, R_GlobalEnv));
 
 	while(fac >= minFac) {
 	    for(j = 0; j < nPars; j++)
@@ -173,7 +173,7 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 	    error(_("step factor %g reduced below 'minFactor' of %g"),
 		  fac, minFac);
 	}
-	if(doTrace) eval(trace,R_GlobalEnv);
+	if(doTrace) eval(trace, R_GlobalEnv);
     }
 
     if(!hasConverged) {
@@ -192,16 +192,23 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
  */
 
 SEXP
-numeric_deriv(SEXP expr, SEXP theta, SEXP rho)
+numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir)
 {
     SEXP ans, gradient, pars;
-    double eps = sqrt(DOUBLE_EPS);
+    double eps = sqrt(DOUBLE_EPS), *rDir;
     int start, i, j, k, lengthTheta = 0;
 
     if(!isString(theta))
-	error(_("theta should be of type character"));
+	error(_("'theta' should be of type character"));
+    if (isNull(rho)) {
+	warning(_("use of NULL environment is deprecated"));
+	rho = R_BaseEnv;
+    } else	
 	if(!isEnvironment(rho))
-	    error(_("rho should be an environment"));
+	    error(_("'rho' should be an environment"));
+    if(TYPEOF(dir) != REALSXP || LENGTH(dir) != LENGTH(theta))
+	error(_("'dir' is not a numeric vector of the correct length"));
+    rDir = REAL(dir);
 
     PROTECT(pars = allocVector(VECSXP, LENGTH(theta)));
 
@@ -239,15 +246,15 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho)
 	    origPar = REAL(VECTOR_ELT(pars, i))[j];
 	    xx = fabs(origPar);
 	    delta = (xx == 0) ? eps : xx*eps;
-	    REAL(VECTOR_ELT(pars, i))[j] += delta;
+	    REAL(VECTOR_ELT(pars, i))[j] += rDir[i] * delta;
 	    PROTECT(ans_del = eval(expr, rho));
 	    if(!isReal(ans_del)) ans_del = coerceVector(ans_del, REALSXP);
 	    UNPROTECT(1);
 	    for(k = 0; k < LENGTH(ans); k++) {
 		if (!R_FINITE(REAL(ans_del)[k]))
 		    error(_("Missing value or an infinity produced when evaluating the model"));
-    		REAL(gradient)[start + k] = (REAL(ans_del)[k] -
-					     REAL(ans)[k])/delta;
+    		REAL(gradient)[start + k] = 
+		    rDir[i] * (REAL(ans_del)[k] - REAL(ans)[k])/delta;
 	    }
 	    REAL(VECTOR_ELT(pars, i))[j] = origPar;
 	}

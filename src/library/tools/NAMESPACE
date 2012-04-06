@@ -1,4 +1,4 @@
-useDynLib(tools)
+useDynLib(tools, .registration = TRUE)
 
 export("Rdindex",
        "checkDocFiles", "checkDocStyle", "checkFF", "checkMD5sums",
@@ -9,7 +9,7 @@ export("Rdindex",
        "texi2dvi", "buildVignettes", "pkgVignettes", "pkgDepends",
        "getDepList", "installFoundDepends", "vignetteDepends",
        "write_PACKAGES", "xgettext", "xgettext2pot", "xngettext",
-       "encoded_text_to_latex")
+       "encoded_text_to_latex", "charset_to_Unicode", "Adobe_glyphs")
 
 export("Rd_db", "Rd_parse", "package.dependencies", "read.00Index")
 
@@ -23,6 +23,7 @@ S3method("print", "checkVignettes")
 S3method("print", "codoc")
 S3method("print", "codocClasses")
 S3method("print", "codocData")
+S3method("print", "subdir_tests")
 S3method("print", "undoc")
 S3method("print", "xgettext")
 S3method("print", "xngettext")
@@ -34,3 +35,4 @@ S3method("print", "check_vignette_index")
 S3method("print", "check_Rd_files_in_Rd_db")
 S3method("print", "check_make_vars")
 S3method("print", "check_code_usage_in_package")
+S3method("print", "check_Rd_xrefs")

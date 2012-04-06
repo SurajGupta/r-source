@@ -1,7 +1,7 @@
 ## Subroutines for converting R documentation into text, HTML, LaTeX and
 ## R (Examples) format
 
-## Copyright (C) 1997-2005 R Development Core Team
+## Copyright (C) 1997-2006 R Development Core Team
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 ##
 ## A copy of the GNU General Public License is available via WWW at
 ## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-## writing to the Free Software Foundation, Inc., 59 Temple Place, Suite
-## 330, Boston, MA 02111-1307 USA.
+## writing to the Free Software Foundation, Inc., 51 Franklin Street,
+## Fifth Floor, Boston, MA 02110-1301  USA.
 
 ## Send any bug reports to r-bugs@r-project.org.
 
@@ -74,7 +74,7 @@ my @special_commands = ("command", "env", "file", "kbd", "option",
 sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
 
     $Rdname = $_[0];
-    open(rdfile, "<$Rdname") or die "Rdconv(): Couldn't open '$Rdfile': $!\n";
+    open(rdfile, "<$Rdname") or die "Rdconv(): Couldn't open '$Rdname': $!\n";
 
     $type = $_[1];
     $debug = $_[2];
@@ -154,6 +154,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
     }
     printf STDERR "-- read file '%s';\n",$_[0] if $debug;
 
+    macro_subs();
     mark_brackets();
     ##HARD Debug:print "$complete_text\n"; exit;
     escape_preformats();
@@ -224,6 +225,12 @@ sub checkloop {
 
     1;
 }
+
+sub macro_subs { # does macro substitution on $complete_text
+    print STDERR "\n-- macro_subs:" if $debug;
+    $complete_text =~ s/\\linkS4class\{(.*)\}/\\link[=$1-class]{$1}/g;
+}
+
 
 ## Mark each matching opening and closing bracket with a unique id.
 ## Idea and original code from latex2html
@@ -418,18 +425,28 @@ sub get_arguments {
 }
 
 ## Get the argument(s) of a link.
+## The return value is ($id, $arg, $dest, $opt)
+## Here $arg is the argument in {}
+## $dest=$arg unless it is of the form \link[=dest]{arg}.  It is the
+## topic to link to.
+## $opt is empty unless the form is \link[opt]{arg}, so it has to be last.
 sub get_link {
     my ($text) = @_;
     my @retval, $id;
-    if($text =~ /\\link\[([^\]]+)\]($ID)/){
+    if($text =~ /\\link\[=([^\]]+)\]($ID)/){
 	$retval[2] = $1;
 	$id = $2;
 	$text =~ /$id(.*)$id/s;
 	$retval[1] = $1;
+    } elsif($text =~ /\\link\[([^\]]+)\]($ID)/){
+	$retval[3] = $1;
+	$id = $2;
+	$text =~ /$id(.*)$id/s;
+	$retval[1] = $retval[2] = $1;
     } elsif($text =~ /\\link($ID)/){
 	$id = $1;
 	$text =~ /$id(.*)$id/s;
-	$retval[1] = $1;
+	$retval[1] = $retval[2] = $1;
     }
     $retval[0] = $id;
     @retval;
@@ -676,10 +693,10 @@ sub rdoc2html { # (filename) ; 0 for STDOUT
 	$htmlout = "STDOUT";
     }
     $using_chm = 0;
-    $encoding = mime_canonical_encoding($blocks{"encoding"}) 
+    $encoding = mime_canonical_encoding($blocks{"encoding"})
 	if defined $blocks{"encoding"};
     print $htmlout (html_functionhead(html_striptitle($blocks{"title"}),
-				      $pkgname, 
+				      $pkgname,
 				      &html_escape_name($blocks{"name"}),
 				      $encoding,
 				      ));
@@ -704,12 +721,17 @@ sub rdoc2html { # (filename) ; 0 for STDOUT
 }
 
 sub html_striptitle {
-    ## Call striptitle(), and handle LaTeX single and double quotes.
+    ## Call striptitle(), and handle LaTeX single and double quotes, < and >.
     my ($text) = @_;
-    $text = striptitle($text);
+    # $text = striptitle($text);
+    $text =~ s/\\//go;
+    $text =~ s/---/&mdash;/go;
+    $text =~ s/--/&ndash;/go;
     $text =~ s/\`\`/&ldquo;/g;
     $text =~ s/\'\'/&rdquo;/g;
     $text =~ s/\`/\'/g;		# @samp{'} could be an apostroph ...
+    $text =~ s/</&lt;/g;
+    $text =~ s/>/&gt;/g;
     $text;
 }
 
@@ -808,12 +830,12 @@ sub text2html {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
+	my ($id, $arg, $dest, $opt) = get_link($text);
 	## fix conversions in key of htmlindex:
-	my $argkey = $arg;
+	my $argkey = $dest;
 	$argkey =~ s/&lt;/</go;
 	$argkey =~ s/&gt;/>/go;
-	die "\nERROR: command (e.g. \\url) inside \\link\n" 
+	die "\nERROR: command (e.g. \\url) inside \\link\n"
 	    if $arg =~ normal-bracket;
 	$htmlfile = $main::htmlindex{$argkey};
 	if($htmlfile && !length($opt)){
@@ -959,14 +981,15 @@ sub code2html {
     $text =~ s/\\dots/.../go;
 
     $text = undefine_command($text, "special");
+    $text = replace_command($text, "var", "<VAR>", "</VAR>");
 
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
+	my ($id, $arg, $dest, $opt) = get_link($text);
 
 	## fix conversions in key of htmlindex:
-	my $argkey = $arg;
+	my $argkey = $dest;
 	$argkey =~ s/&lt;/</go;
 	$argkey =~ s/&gt;/>/go;
 	$argkey =~ s/&amp;/&/go;
@@ -1254,7 +1277,9 @@ sub html_functionhead
 {
     my ($title, $pkgname, $name, $enc) = @_;
 
-    my $retval = "<html><head><title>R: $title</title>\n" .
+    my $retval =
+	"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" .
+	"<html><head><title>R: $title</title>\n" .
 	"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$enc\">\n" .
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"../../R.css\">\n" .
 	"</head><body>\n\n";
@@ -1440,7 +1465,7 @@ sub text2txt {
     $text =~ s/$ECB/\}/go;
 
     $text = undefine_command($text, "special");
-    
+
     $text = undefine_command($text, "link");
     $text = undefine_command($text, "textbf");
     $text = undefine_command($text, "mathbf");
@@ -1549,7 +1574,8 @@ sub code2txt {
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
 
-    $text = undefine_command($text, "special");    
+    $text = undefine_command($text, "special");
+    $text = undefine_command($text, "var");
 
     $text = undefine_command($text, "link");
     $text = replace_addnl_command($text, "dontrun",
@@ -2254,7 +2280,8 @@ sub code2nroff {
     $text =~ s/\\dots/.../go;
     $text =~ s/\\n/\\\\n/g;
 
-    $text = undefine_command($text, "special");    
+    $text = undefine_command($text, "special");
+    $text = undefine_command($text, "var");
 
     $text = undefine_command($text, "link");
     $text = replace_addnl_command($text, "dontrun",
@@ -2351,7 +2378,7 @@ sub rdoc2ex { # (filename)
 	}
 
 	$tit =~ s/\s+/ /g;
-	
+
 	if (defined $blocks{"encoding"}) {
 	    $Exout->print("### Encoding: ", $blocks{"encoding"}, "\n\n");
 	}
@@ -2391,7 +2418,7 @@ sub code2examp {
     $text =~ s/\\dots/.../go;
 
     $text = undefine_command($text, "special");
-    
+    $text = undefine_command($text, "var");
     $text = undefine_command($text, "link");
 
     $text = replace_prepend_command($text, "dontshow",
@@ -2463,7 +2490,7 @@ sub rdoc2latex {# (filename)
 	$a = latex_code_alias($c);
 	print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
 	    if $debug;
-	printf $latexout "\\%s\{%s\}\{%s\}\{%s\}\n", $cmd, $a, 
+	printf $latexout "\\%s\{%s\}\{%s\}\{%s\}\n", $cmd, $a,
 	       $blname, latex_link_trans0($a)
 	unless /^\Q$blocks{"name"}\E$/; # Q..E : Quote (escape) Metacharacters
     }
@@ -2497,7 +2524,7 @@ sub text2latex {
     $text =~ s/$EOB/\\\{/go;
     $text =~ s/$ECB/\\\}/go;
 
-    $text = undefine_command($text, "special");   
+    $text = undefine_command($text, "special");
 
     $text =~ s/\\cite/\\Cite/go;
 
@@ -2561,8 +2588,8 @@ sub text2latex {
     ## we need to convert \links's
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
-	my $mapped_name = &latex_link_trans0($arg);
+	my ($id, $arg, $dest, $opt) = get_link($text);
+	my $mapped_name = &latex_link_trans0($dest);
 	$text =~ s/\\link(\[.*\])?$id.*$id/\\LinkA{$arg}{$mapped_name}/s;
     }
 
@@ -2582,15 +2609,16 @@ sub code2latex {
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
 
-    $text = undefine_command($text, "special");    
+    $text = undefine_command($text, "special");
+    $text = undefine_command($text, "var");
 
     ##    $text =~ s/\\\\/\\bsl{}/go;
     if($hyper) {
 	my $loopcount = 0;
 	while(checkloop($loopcount++, $text, "\\link")
 	      && $text =~ /\\link/) {
-	    my ($id, $arg, $opt) = get_link($text);
-	    $text =~ s/\\link(\[.*\])?$id.*$id/HYPERLINK($arg)/s;
+	    my ($id, $arg, $dest, $opt) = get_link($text);
+	    $text =~ s/\\link(\[.*\])?$id.*$id/HYPERLINK($arg)($dest)/s;
 	}
     } else {
 	$text = undefine_command($text, "link");
@@ -2690,13 +2718,13 @@ sub latex_print_argblock {
 	    print $latexout "\\end\{ldescription\}\n";
 	    my $thisblock = &text2latex($text);
 	    print $latexout $thisblock;
-	    print $latexout "\n" unless 
+	    print $latexout "\n" unless
 		$thisblock =~ /\n$/ || length($thisblock) == 0;
 	}
 	else{
 	    my $thisblock = &text2latex($text);
 	    print $latexout $thisblock;
-	    print $latexout "\n" unless 
+	    print $latexout "\n" unless
 		$thisblock =~ /\n$/ || length($thisblock) == 0;
 	}
 	print $latexout "\\end\{$env\}\n";
@@ -2779,11 +2807,11 @@ sub latex_code_trans {
     ## avoid conversion to guillemets
     $c =~ s/<</<\{\}</go;
     $c =~ s/>>/>\{\}>/go;
-    $c =~ /HYPERLINK\(([^)]*)\)/;
-    my $c0 = $1;
-    my $link = latex_link_trans($c0);
+    $c =~ /HYPERLINK\(([^)]*)\)\(([^)]*)\)/;
+    my $c0 = $2; # destination
+    my $link = latex_link_trans($1);
     $c0 = latex_link_trans0($c0);
-    $c =~ s/HYPERLINK\([^)]*\)/\\LinkA{$link}{$c0}/go;
+    $c =~ s/HYPERLINK\([^)]*\)\([^)]*\)/\\LinkA{$link}{$c0}/go;
     $c =~ s/,,/,{},/g; # ,, is a ligature in the ae font.
     $c;
 }
@@ -2857,7 +2885,8 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
     }
     $using_chm = 1;
     $nlink = 0;
-    print $htmlout (chm_functionhead(striptitle($blocks{"title"}), $pkgname,
+    print $htmlout (chm_functionhead(html_striptitle($blocks{"title"}), 
+				     $pkgname,
 				     &html_escape_name($blocks{"name"})));
 
     html_print_block("description", "Description");
@@ -2959,8 +2988,9 @@ sub text2Ssgm {
         $text =~ s/&([^#])/&amp;\1/go; # might have explicit &# in source
 	$text =~ s/>/&gt;/go;
 	$text =~ s/</&lt;/go;
-	$text =~ s/\]/&rsqb;/go;
-	$text =~ s/\[/&lsqb;/go;
+# have to do these after \link[]{}
+#	$text =~ s/\]/&rsqb;/go;
+#	$text =~ s/\[/&lsqb;/go;
 	$text =~ s/\\%/%/go;
 
 	$text =~ s/\n\s*\n/\n<p>\n/sgo;
@@ -3027,9 +3057,9 @@ sub text2Ssgm {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
+	my ($id, $arg, $dest, $opt) = get_link($text);
 	$text =~
-	    s/\\link(\[.*\])?$id.*$id/<s-function name="$arg">$arg<\/s-function>/s;
+	    s/\\link(\[.*\])?$id.*$id/<s-function name="$dest">$arg<\/s-function>/s;
     }
 
     $loopcount = 0;
@@ -3087,6 +3117,8 @@ sub text2Ssgm {
 	$text =~ s/\\itemnormal.*$id/$descitem/s;
     }
     if($outerpass) {
+	$text =~ s/\]/&rsqb;/go;
+	$text =~ s/\[/&lsqb;/go;
 	$text =~ s/\\([^\\])/$1/go;#-drop single "\" (as in '\R')
 	$text =~ s/\\\\/\\/go;
 	$text = Ssgm_unescape_codes($text);
@@ -3107,14 +3139,15 @@ sub code2Ssgm {
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
 
-    $text = undefine_command($text, "special");    
+    $text = undefine_command($text, "special");
+    $text = undefine_command($text, "var");
 
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
+	my ($id, $arg, $dest, $opt) = get_link($text);
 	$text =~
-	    s/\\link(\[.*\])?$id.*$id/<s-function name="$arg">$arg<\/s-function>/s;
+	    s/\\link(\[.*\])?$id.*$id/<s-function name="$dest">$arg<\/s-function>/s;
     }
 
     $text = replace_addnl_command($text, "dontrun",
@@ -3138,9 +3171,9 @@ sub see2Ssgm {
     $text = Ssgm_unescape_codes($text);
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg, $opt) = get_link($text);
+	my ($id, $arg, $dest, $opt) = get_link($text);
 	$text =~
-	    s/\\link(\[.*\])?$id.*$id/<s-function name="$arg">$arg<\/s-function>/s;
+	    s/\\link(\[.*\])?$id.*$id/<s-function name="$dest">$arg<\/s-function>/s;
     }
 
     $text = unmark_brackets($text);
@@ -3323,7 +3356,7 @@ sub Ssgm_unescape_codes {
 	    # <s-expression cannot contain <s-function>
 	    $text =~ s/$ECODE$id/$ec/;
 	} else {
-	    $text =~ s/$ECODE$id/<s-expression>$ec<\/s-expression>/;
+	    $text =~ s/$ECODE$id/<code>$ec<\/code>/;
 	}
     }
 

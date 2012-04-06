@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -26,16 +26,23 @@
 #include <Rinterface.h>
 
 
-SEXP do_loadhistory(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_loadhistory(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     ptr_R_loadhistory(call, op, args, rho);
     return R_NilValue;
 }
 
-SEXP do_savehistory(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_savehistory(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     ptr_R_savehistory(call, op, args, rho);
+    return R_NilValue;
+}
+
+SEXP attribute_hidden do_addhistory(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    if(ptr_R_addhistory) ptr_R_addhistory(call, op, args, rho);
     return R_NilValue;
 }

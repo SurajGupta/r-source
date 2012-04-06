@@ -1,7 +1,7 @@
 \name{base-deprecated}
 \alias{base-deprecated}
-\alias{write.table0}
-\alias{format.char}
+\alias{La.chol}
+\alias{La.chol2inv}
 %------ NOTE:  ../R/Deprecated.R   must be synchronized with this!
 \title{Deprecated Functions in Base package}
 %------ PLEASE: put \alias{.} here for EACH !
@@ -11,23 +11,23 @@
 }
 \usage{
 %% put usage here.
-format.char(x, width = NULL, flag = "-")
+La.chol(x)
+La.chol2inv(x, size = ncol(x))
 }
 \arguments{
-  \item{x}{a character vector.}
-  \item{width, flag}{see \code{\link{formatC}}.}
+  \item{x}{a suitable matrix}
+  \item{size}{the number of columns of \code{x} containing the
+    Choleski decomposition.}
 }
-\details{
-  \code{write.table0} is an \R-level version of \code{write.table}
-  provided for temporary back-compatibility.
-
-  \code{format.char} was an auxiliary function for \code{\link{formatC}}
-  whose functionality (and more) is provided by \code{\link{format.default}}.
-  
+\details{  
   The original help page for these functions is often
   available at \code{help("oldName-deprecated")} (note the quotes).
   Functions in packages other than the base package are listed in
   \code{help("pkg-deprecated")}.
+
+  \code{La.chol} and \code{La.chol2inv} are pre-1.7.0 interfaces to the
+  same code as the default options of \code{\link{chol}} and
+  \code{\link{chol2inv}} respectively.
 }
 \seealso{
   \code{\link{Deprecated}}

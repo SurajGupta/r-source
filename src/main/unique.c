@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole or as 
@@ -28,7 +28,12 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
+#if defined(HAVE_GLIBC2)
+/* for isnan in Rinlinedfuns.h */
+# define _SVID_SOURCE 1
+#endif
+
+#include <Defn.h>
 
 #define NIL -1
 #define ARGUSED(x) LEVELS(x)
@@ -369,7 +374,7 @@ SEXP duplicated(SEXP x)
 /* .Internal(duplicated(x))       [op=0]
    .Internal(unique(x))	          [op=1]
 */
-SEXP do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, dup, ans;
     int i, k, n;
@@ -487,7 +492,7 @@ static SEXP HashLookup(SEXP table, SEXP x, HashData *d)
     return ans;
 }
 
-SEXP do_match(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 #ifdef NOTMOVED
     SEXP x, table;
@@ -570,7 +575,7 @@ SEXP match(SEXP itable, SEXP ix, int nmatch)
  * Empty strings are unmatched                        BDR 2000/2/16
  */
 
-SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, input, target;
     int i, j, k, mtch, n_input, n_target, mtch_count, temp, dups_ok;
@@ -640,7 +645,7 @@ SEXP do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 /* Partial Matching of Strings */
 /* Based on Therneau's charmatch. */
 
-SEXP do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, input, target;
     Rboolean perfect;
@@ -765,7 +770,7 @@ static SEXP subDots(SEXP rho)
 }
 
 
-SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP formals, actuals, rlist;
     SEXP funcall, f, b, rval, sysp, t1, t2, tail;
@@ -937,7 +942,7 @@ SEXP do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 #  define ZERODBL(X,N,I) for(I=0;I<N;I++) REAL(X)[I]=0
 #endif
 
-SEXP Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
+SEXP attribute_hidden Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 {
     SEXP matches,ans;
     int i, j, n, p,ng=0,offset,offsetg;
@@ -990,7 +995,7 @@ SEXP Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
     return ans;
 }
 
-SEXP Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
+SEXP attribute_hidden Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 {
     SEXP matches,ans,col,xcol;
     int i, j, n, p,ng=0,offset,offsetg;
@@ -1082,7 +1087,7 @@ static SEXP duplicated2(SEXP x, HashData *d)
     return ans;
 }
 
-SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP names, sep, ans, dup, newx;
     int i, n, cnt, len, maxlen = 0, *cnts, dp;
@@ -1116,6 +1121,7 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 	       that will be recovered if interrupted. */
 	    cnts = (int *) R_alloc(n,  sizeof(int));
 	}
+	R_CheckStack();
 	for(i = 0; i < n; i++) cnts[i] = 1;
 	data.nomatch = 0;
 	PROTECT(newx = allocVector(STRSXP, 1));
@@ -1147,7 +1153,12 @@ SEXP do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static int cshash(SEXP x, int indx, HashData *d)
 {
-    return scatter((unsigned int) STRING_ELT(x, indx), d);
+    intptr_t z = (intptr_t) STRING_ELT(x, indx);
+    unsigned int z1 = z & 0xffffffff, z2 = 0;
+#if SIZEOF_LONG == 8
+    z2 = z/0x100000000L;
+#endif
+    return scatter(z1 ^ z2, d);
 }
 
 static int csequal(SEXP x, int i, SEXP y, int j)
@@ -1163,7 +1174,7 @@ static void HashTableSetup1(SEXP x, HashData *d)
     d->HashTable = allocVector(INTSXP, d->M);
 }
 
-SEXP csduplicated(SEXP x)
+SEXP attribute_hidden csduplicated(SEXP x)
 {
     SEXP ans;
     int *h, *v;

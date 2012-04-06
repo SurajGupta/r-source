@@ -22,8 +22,10 @@ prcomp(x, \dots)
 \method{predict}{prcomp}(object, newdata, \dots)
 }
 \arguments{
-  \item{formula}{a formula with no response variable.}
-  \item{data}{an optional data frame containing the variables in the
+  \item{formula}{a formula with no response variable, referring only to
+    numeric variables.}
+  \item{data}{an optional data frame (or similar: see
+    \code{\link{model.frame}}) containing the variables in the
     formula \code{formula}.  By default the variables are taken from
     \code{environment(formula)}.}
   \item{subset}{an optional vector used to select rows (observations) of the

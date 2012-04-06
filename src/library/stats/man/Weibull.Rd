@@ -31,6 +31,8 @@ rweibull(n, shape, scale = 1)
   \code{pweibull} gives the distribution function,
   \code{qweibull} gives the quantile function, and
   \code{rweibull} generates random deviates.
+
+  Invalid arguments will result in return value \code{NaN}, with a warning.
 }
 \details{
   The Weibull distribution with \code{shape} parameter \eqn{a} and
@@ -49,16 +51,25 @@ rweibull(n, shape, scale = 1)
   is \code{-pweibull(t, a, b, lower = FALSE, log = TRUE)} which is just
   \eqn{H(t) = {(t/b)}^a}.
 }
+\source{
+  \code{[dpq]weibull} are calculated directly from the definitions.
+  \code{rweibull} uses inversion.
+}
+\references{
+  Johnson, N. L., Kotz, S. and Balakrishnan, N. (1995)
+  \emph{Continuous Univariate Distributions}, volume 1, chapter 21.
+  Wiley, New York.
+}
 \seealso{
-  \code{\link{dexp}} for the Exponential which is a special case of a
-  Weibull distribution.
+  The \link{Exponential} is a special case of the Weibull distribution.
 }
 \examples{
 x <- c(0,rlnorm(50))
 all.equal(dweibull(x, shape = 1), dexp(x))
 all.equal(pweibull(x, shape = 1, scale = pi), pexp(x, rate = 1/pi))
 ## Cumulative hazard H():
-all.equal(pweibull(x, 2.5, pi, lower=FALSE, log=TRUE), -(x/pi)^2.5, tol=1e-15)
+all.equal(pweibull(x, 2.5, pi, lower=FALSE, log=TRUE), -(x/pi)^2.5,
+          tol = 1e-15)
 all.equal(qweibull(x/11, shape = 1, scale = pi), qexp(x/11, rate = 1/pi))
 }
 \keyword{distribution}

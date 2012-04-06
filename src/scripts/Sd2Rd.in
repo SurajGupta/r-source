@@ -16,13 +16,13 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+## writing to the Free Software Foundation, Inc., 51 Franklin Street,
+## Fifth Floor, Boston, MA 02110-1301  USA.
 
 use Getopt::Long;
 use R::Utils;
 
-my $revision = ' $Revision: 1.21 $ ';
+my $revision = ' $Rev: 37351 $ ';
 my $version;
 my $name;
 
@@ -614,6 +614,7 @@ sub sub4 {
     $text =~ s+<bf>(.*?)</bf>+\\bold{$1}+go;
     $text =~ s+<tt>(.*?)</tt>+\\code{$1}+go;
     $text =~ s+<url>(.*?)</url>+\\url{$1}+go;
+    $text =~ s+<code>(.*?)</code>+\\code{$1}+go;
     $text =~ s/\n*<p>\n*/\n\n/go;
     $text =~ s/(<br>\n*)+/\n/go;
     $text =~ s/\$/\\\$/go;

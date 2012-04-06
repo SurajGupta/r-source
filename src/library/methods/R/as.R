@@ -244,7 +244,7 @@ setAs <-
 		 value <- as.ts(from)
 		 if(strict) {
 		     attributes(value) <- NULL
-		     class(value) <- "ts"
+		     class(value) <- class(new("ts"))
 		     tsp(value) <- tsp(from)
 		 }
 		 value
@@ -330,4 +330,11 @@ setAs <-
     else
         FALSE
 
+}
+
+canCoerce <- function(object, Class) {
+    is(object, Class) ||
+    !is.null(selectMethod("coerce", c(class(object), Class),
+			  optional = TRUE,
+			  useInherited = c(from=TRUE, to=FALSE)))
 }

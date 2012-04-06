@@ -7,6 +7,7 @@
 BUILD=MINGW
 
 HELP = YES
+HELPTYPES = -txt -html -latex -example
 ifeq ($(strip $(BUILD)),CROSS)
 WINHELP = NO
 else
@@ -20,16 +21,16 @@ LEA_MALLOC=YES
 
 # Set to YES and specify the path if you want to use the ATLAS BLAS.
 USE_ATLAS=NO
-ATLAS_PATH=/R/ATLAS/lib/WinNT_PIIISSE1
+ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 
 # Set to YES and specify the path to libacml.a 
 # if you want to use the AMD's ACML BLAS.
 USE_ACML=NO
-ACML_PATH=c:/packages/AMD/acml2.7.0/gnu32/lib
+ACML_PATH=c:/Program Files/AMD/acml3.0.0/gnu32/lib
+## Set this to YES if you want to use ACML's LAPACK not R's.
+USE_ACML_LAPACK=NO
 
-# Set to YES and specify the DLL name if you want to use K. Goto's BLAS.
-USE_GOTO=NO
-GOTO_DLL=libgoto_p4_512-r0.9.dll
+# Support for the Goto BLAS has been withdrawn: see R-admin.html
 
 # Where does 'HTML Help Workshop' live? (unused if compiled HTML help is
 # not requested. Spaces allowed.)
@@ -47,18 +48,26 @@ TCL_VERSION = 84
 # USE_SVNVERSION = YES
 
 
-## ====== configuration macros for building installers ===========
+## ====== configuration macros for building installer ===========
 
 # location where Inno Setup 5.1.x was installed. Spaces allowed.
 ISDIR=C:/packages/Inno51
 
+## ====== configuration macros for building packages ================
+
+## For a package using F90/95 set the name or path of gfortran.exe 
+## or g95.exe.  No spaces.
+F95=c:/packages/gfortran/bin/gfortran
+F95FLAGS=-O3 $(PKG_FCFLAGS)
+
 ## =================== cross-compilation settings  =================
 
 ifeq ($(strip $(BUILD)),CROSS)
-# Next might be i386-mingw32msvc- or i586- depending on the cross-compiler.
-BINPREF=mingw32-
+# Next might be mingw32- or i386-mingw32msvc- or i586- 
+# depending on the cross-compiler.
+BINPREF=i586-mingw32-
 # Set this to where the mingw32 include files are. It must be accurate.
-HEADER=/users/ripley/R/cross-tools4/i586-mingw32/include
+HEADER=/users/ripley/R/cross-tools5/i586-mingw32/include
 endif
 # path (possibly full path) to same version of R on the host system
 # R_EXE=R
@@ -91,16 +100,18 @@ MINGW32CFLAG=-isystem $(HEADER)
 MINGW32LDFLAG=
 FLIBS=-lg2c
 AWK=awk
-## BDR's build of cross-compiler was 2.95.3
-DEPARG=-M
+DEPARG=-MM
 endif
 
-ifdef SUPPORT_GUI_MBCS
-CFLAGS+=-DSUPPORT_GUI_MBCS
+BLAS_LIBS= -L$(RHOME)/bin -lRblas
+ifeq ($(strip $(USE_ACML_LAPACK)),YES)
+LAPACK_LIBS=-L"$(ACML_PATH)" -lacml -lg2c
+else
+LAPACK_LIBS= -L$(RHOME)/bin -lRlapack
 endif
 
 ifdef USE_UNICOWS
-LIBEXTRAS += -lunicows
+LIBEXTRAS+=-lunicows
 endif
 
 PERL=perl
@@ -116,7 +127,7 @@ F77=$(BINPREF)g77
 AS=$(BINPREF)as
 DLL_LDMAIN=gcc
 DLL=$(BINPREF)$(DLL_LDMAIN) $(MINGW32LDFLAG)
-## use version without -k for front-ends/libproxy.a
+## formerly used version without -k for front-ends/libproxy.a
 DLLTOOL_WIN32=$(BINPREF)dlltool --as $(AS)
 DLLTOOL=$(DLLTOOL_WIN32) -k
 LINKER=$(BINPREF)gcc $(MINGW32LDFLAG)
@@ -126,7 +137,7 @@ NM=$(BINPREF)nm
 CPP=$(CC) -E
 RESCOMP=$(BINPREF)windres
 
-.SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d
+.SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d .f90 .f95
 
 .c.d:
 	@echo "making $@ from $<"
@@ -163,24 +174,26 @@ RESCOMP=$(BINPREF)windres
 	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
 
 %.dll:
-#	@$(ECHO) ------- Building $@ from $^ --------
-	@$(ECHO) LIBRARY $* > $*.def
-	@$(ECHO) EXPORTS >> $*.def
-	@$(NM) $^ > Defs
-	@$(SED) -n '/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p' Defs >> $*.def
-	@$(RM) Defs
-	$(DLL) --shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
+	@$(ECHO) EXPORTS > $*.def
+	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' >> $*.def
+	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
 	@$(RM) $*.def
 
-lib%.a: %.def
-	@$(ECHO) -------- Building $@ from $^ --------
-	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.dll --def $*.def --output-lib lib$*.a
+#lib%.a: %.def
+#	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.dll --def $*.def --output-lib $@
+
+lib%.dll.a: %.def
+	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.dll --def $*.def --output-lib $@
 
 %.a:
 #	@$(ECHO) -------- Building $@ from $^ --------
 	@$(RM) $@
-	$(AR) cr $@ $^
-	$(RANLIB) $@
+	$(AR) crs $@ $^
 
 %.o: %.rc
 	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -i $< -o $@
+
+.f90.o:
+	"$(F95)" $(F95FLAGS) -c $< -o $@
+.f95.o:
+	"$(F95)" $(F95FLAGS) -c $< -o $@

@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2005-10-27 r36070)
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 alpha (2006-04-08 r37675)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > ## Regression tests for which the printed output is the issue
@@ -4220,35 +4220,35 @@ Warning message:
 > 
 > ## split was not handling lists and raws
 > split(as.list(1:3), c(1,1,2))
-$"1"
-$"1"[[1]]
+$`1`
+$`1`[[1]]
 [1] 1
 
-$"1"[[2]]
+$`1`[[2]]
 [1] 2
 
 
-$"2"
-$"2"[[1]]
+$`2`
+$`2`[[1]]
 [1] 3
 
 
 > (y <- charToRaw("A test string"))
  [1] 41 20 74 65 73 74 20 73 74 72 69 6e 67
 > (z <- split(y, rep(1:5, times=c(1,1,4,1,6))))
-$"1"
+$`1`
 [1] 41
 
-$"2"
+$`2`
 [1] 20
 
-$"3"
+$`3`
 [1] 74 65 73 74
 
-$"4"
+$`4`
 [1] 20
 
-$"5"
+$`5`
 [1] 73 74 72 69 6e 67
 
 > sapply(z, rawToChar)
@@ -4821,13 +4821,30 @@ Error in "[<-.data.frame"(`*tmp*`, 2, 1:3, value = NULL) :
 > A <- list(1, 2)
 > names(A) <- c("NA", NA)
 > A
-$"NA"
+$`NA`
 [1] 1
 
 $<NA>
 [1] 2
 
 > ## both printed as "NA" in 2.2.0
+> 
+> 
+> ## subscripting with both NA and "NA" names
+> x <- 1:4
+> names(x) <- c(NA, "NA", "a", "")
+> x[names(x)]
+<NA>   NA    a <NA> 
+  NA    2    3   NA 
+> ## 2.2.0 had the second matching the first.
+> lx <- as.list(x)
+> lx[[as.character(NA)]]
+NULL
+> lx[as.character(NA)]
+$<NA>
+NULL
+
+> ## 2.2.0 had both matching element 1
 > 
 > 
 > ## data frame replacement subscripting
@@ -4871,4 +4888,268 @@ $<NA>
 > 
 > 
 > ### end of tests added in 2.2.0 patched ###
+> 
+> 
+> ## test of fix of trivial warning PR#8252
+> pairs(iris[1:4], oma=rep(3,4))
+> ## warned in 2.2.0 only
+> 
+> 
+> ## str(<dendrogram>)
+> dend <- as.dendrogram(hclust(dist(USArrests), "ave")) # "print()" method
+> dend2 <- cut(dend, h=70)
+> str(dend2$upper)
+--[dendrogram w/ 2 branches and 4 members at h = 152]
+  |--[dendrogram w/ 2 branches and 2 members at h = 77.6]
+  |  |--leaf "Branch 1" (h= 38.5 midpoint = 0.5, x.member = 2 )
+  |  `--leaf "Branch 2" (h= 44.3 midpoint = 5.03, x.member = 14 )
+  `--[dendrogram w/ 2 branches and 2 members at h = 89.2]
+     |--leaf "Branch 3" (h= 44.8 midpoint = 6.8, x.member = 14 )
+     `--leaf "Branch 4" (h= 54.7 midpoint = 7.65, x.member = 20 )
+> ## gave much too many spaces in 2.2.[01]
+> 
+> 
+> ## formatC on Windows (PR#8337)
+> xx  <- pi * 10^(-5:4)
+> cbind(formatC(xx, wid = 9))
+      [,1]       
+ [1,] "3.142e-05"
+ [2,] "0.0003142"
+ [3,] " 0.003142"
+ [4,] "  0.03142"
+ [5,] "   0.3142"
+ [6,] "    3.142"
+ [7,] "    31.42"
+ [8,] "    314.2"
+ [9,] "     3142"
+[10,] "3.142e+04"
+> cbind(formatC(xx, wid = 9, flag = "-"))
+      [,1]       
+ [1,] "3.142e-05"
+ [2,] "0.0003142"
+ [3,] "0.003142 "
+ [4,] "0.03142  "
+ [5,] "0.3142   "
+ [6,] "3.142    "
+ [7,] "31.42    "
+ [8,] "314.2    "
+ [9,] "3142     "
+[10,] "3.142e+04"
+> cbind(formatC(xx, wid = 9, flag = "0"))
+      [,1]       
+ [1,] "3.142e-05"
+ [2,] "0.0003142"
+ [3,] "00.003142"
+ [4,] "000.03142"
+ [5,] "0000.3142"
+ [6,] "00003.142"
+ [7,] "000031.42"
+ [8,] "0000314.2"
+ [9,] "000003142"
+[10,] "3.142e+04"
+> ## extra space on 2.2.1
+> 
+> 
+> ## an impossible glm fit
+> success <- c(13,12,11,14,14,11,13,11,12)
+> failure <- c(0,0,0,0,0,0,0,2,2)
+> predictor <- c(0, 5^(0:7))
+> try(glm(cbind(success,failure) ~ 0+predictor, family = binomial(link="log")))
+Error: no valid set of coefficients has been found: please supply starting values
+> # no coefficient is possible as the first case will have mu = 1
+> ## 2.2.1 gave a subscript out of range warning instead.
+> 
+> 
+> ## error message from solve (PR#8494)
+> temp <- diag(1, 5)[, 1:4]
+> rownames(temp) <- as.character(1:5)
+> colnames(temp) <- as.character(1:4)
+> try(solve(temp))
+Error in solve.default(temp) : only square matrices can be inverted
+> # also complex
+> try(solve(temp+0i))
+Error in solve.default(temp + (0+0i)) : only square matrices can be inverted
+> # and non-comformant systems
+> try(solve(temp, diag(3)))
+Error in solve.default(temp, diag(3)) : 'b' must be compatible with 'a'
+> ## gave errors from rownames<- in 2.2.1
+> 
+> 
+> ## PR#8462 terms.formula(simplify = TRUE) needs parentheses.
+> update.formula (Reaction ~ Days + (Days | Subject), . ~ . + I(Days^2))
+Reaction ~ Days + (Days | Subject) + I(Days^2)
+> ## < 2.3.0 dropped parens on second term.
+> 
+> 
+> ## PR#8528: errors in the post-2.1.0 pgamma
+> pgamma(seq(0.75, 1.25, by=0.05)*1e100, shape = 1e100, log=TRUE)
+ [1] -3.768207e+98 -2.314355e+98 -1.251893e+98 -5.360516e+97 -1.293294e+97
+ [6] -6.931472e-01  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+[11]  0.000000e+00
+> pgamma(seq(0.75, 1.25, by=0.05)*1e100, shape = 1e100, log=TRUE, lower=FALSE)
+ [1]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+ [6] -6.931472e-01 -1.209836e+97 -4.689820e+97 -1.023806e+98 -1.767844e+98
+[11] -2.685645e+98
+> pgamma(c(1-1e-10, 1+1e-10)*1e100, shape = 1e100)
+[1] 0 1
+> pgamma(0.9*1e25, 1e25, log=TRUE)
+[1] -5.360516e+22
+> ## were NaN, -Inf etc in 2.2.1.
+> 
+> 
+> ## + for POSIXt objects was non-commutative
+> # SPSS-style dates
+> c(10485849600,10477641600,10561104000,10562745600)+ISOdate(1582,10,14)
+[1] "1915-01-26 12:00:00 GMT" "1914-10-23 12:00:00 GMT"
+[3] "1917-06-15 12:00:00 GMT" "1917-07-04 12:00:00 GMT"
+> ## was in the local time zone in 2.2.1.
+> 
+> 
+> ## Limiting lines on deparse (wishlist PR#8638)
+> op <- options(deparse.max.lines = 3)
+> f <- function(...) browser()
+> do.call(f, mtcars)
+Called from: function (...) 
+browser()(mpg = c(21, 21, 22.8, 21.4, 18.7, 18.1, 14.3, 24.4, 
+22.8, 19.2, 17.8, 16.4, 17.3, 15.2, 10.4, 10.4, 14.7, 32.4, 30.4, 
+  ...
+Browse[1]> c
+> 
+> options(error = expression(NULL))
+> f <- function(...) stop()
+> do.call(f, mtcars)
+Error in function (...)  : 
+> traceback()
+3: stop()
+2: function (...) 
+   stop()(mpg = c(21, 21, 22.8, 21.4, 18.7, 18.1, 14.3, 24.4, 22.8, 
+   19.2, 17.8, 16.4, 17.3, 15.2, 10.4, 10.4, 14.7, 32.4, 30.4, 33.9, 
+     ...
+1: do.call(f, mtcars)
+> 
+> options(op)
+> ## unlimited < 2.3.0
+> 
+> 
+> ## row names in as.table (PR#8652)
+> as.table(matrix(1:60, ncol=2))
+    A  B
+A   1 31
+B   2 32
+C   3 33
+D   4 34
+E   5 35
+F   6 36
+G   7 37
+H   8 38
+I   9 39
+J  10 40
+K  11 41
+L  12 42
+M  13 43
+N  14 44
+O  15 45
+P  16 46
+Q  17 47
+R  18 48
+S  19 49
+T  20 50
+U  21 51
+V  22 52
+W  23 53
+X  24 54
+Y  25 55
+Z  26 56
+A1 27 57
+B1 28 58
+C1 29 59
+D1 30 60
+> ## rows past 26 had NA row names
+> 
+> 
+> ## summary on a glm with zero weights and estimated dispersion (PR#8720)
+> y <- rnorm(10)
+> x <- 1:10
+> w <- c(rep(1,9), 0)
+> summary(glm(y ~ x, weights = w))
+
+Call:
+glm(formula = y ~ x, weights = w)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.7806  -0.1416   0.1863   0.5690   1.2057  
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)  -0.7532     0.7862  -0.958    0.370
+x             0.1311     0.1397   0.938    0.379
+
+(Dispersion parameter for gaussian family taken to be 1.17125)
+
+    Null deviance: 9.2298  on 8  degrees of freedom
+Residual deviance: 8.1988  on 7  degrees of freedom
+AIC: Inf
+
+Number of Fisher Scoring iterations: 2
+
+Warning message:
+observations with zero weight not used for calculating dispersion in: summary.glm(glm(y ~ x, weights = w)) 
+> summary(glm(y ~ x, subset = w > 0))
+
+Call:
+glm(formula = y ~ x, subset = w > 0)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.7806  -0.1582   0.3726   0.5896   1.2057  
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)  -0.7532     0.7862  -0.958    0.370
+x             0.1311     0.1397   0.938    0.379
+
+(Dispersion parameter for gaussian family taken to be 1.17125)
+
+    Null deviance: 9.2298  on 8  degrees of freedom
+Residual deviance: 8.1988  on 7  degrees of freedom
+AIC: 30.702
+
+Number of Fisher Scoring iterations: 2
+
+> ## has NA dispersion in 2.2.1
+> 
+> 
+> ## substitute was losing "..." after r37269
+> yaa <- function(...) substitute(list(...))
+> yaa(foo(...))
+list(foo(...))
+> ## and wasn't substituting after "..."
+> substitute(list(..., x), list(x=1))
+list(..., 1)
+> ## fixed for 2.3.0
+> 
+> 
+> ## uniroot never warned (PR#8750)
+> ff <- function(x) (x-pi)^3
+> uniroot(ff, c(-10,10), maxiter=10)
+$root
+[1] 3.291126
+
+$f.root
+[1] 0.003343587
+
+$iter
+[1] 10
+
+$estim.prec
+[1] 0.8295023
+
+Warning message:
+_NOT_ converged in 10 iterations in: uniroot(ff, c(-10, 10), maxiter = 10) 
+> ## should warn, did not < 2.3.0
+> 
+> 
+> ### end of tests added in 2.3.0 ###
+> 
 > 

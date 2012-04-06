@@ -11,14 +11,14 @@
 serialize(object, connection, ascii = FALSE, refhook = NULL)
 unserialize(connection, refhook = NULL)
 .saveRDS(object, file = "", ascii = FALSE, version = NULL,
-         compress = FALSE, refhook = baseenv())
+         compress = FALSE, refhook = NULL)
 .readRDS(file, refhook = NULL)
 }
 \arguments{
   \item{object}{\R object to serialize.}
   \item{file}{a connection or the name of the file where the R object
-    is saved to or read from, or \code{NULL} for \code{serialize}
-    (see details).}
+    is saved to or read from, or \code{NULL} for \code{serialize} or for
+    \code{unserialize} an object returned by \code{serialize} (see Details).}
   \item{ascii}{a logical.  If \code{TRUE}, an ASCII representation is
     written; otherwise (default), a more compact binary one is used.}
   \item{version}{the workspace format version to use.  \code{NULL}
@@ -40,8 +40,8 @@ unserialize(connection, refhook = NULL)
   For a text mode connection, the default value of \code{ascii} is set
   to \code{TRUE}.
 
-  \code{unserialize} reads an object from \code{connection}.
-  \code{connection} may also be a scalar string.
+  \code{unserialize} reads an object (as written by \code{serialize})
+  from \code{connection}.
 
   The \code{refhook} functions can be used to customize handling of
   non-system reference objects (all external pointers and weak
@@ -54,8 +54,9 @@ unserialize(connection, refhook = NULL)
 }
 \section{Warning}{
   These functions are still experimental.  Both names, interfaces and
-  values might change in future versions.  \code{.saveRDS} and
-  \code{.readRDS} are intended for internal use.
+  values might change in future versions
+  (and are expected to for \R 2.4.0).
+  \code{.saveRDS} and \code{.readRDS} are intended for internal use.
 }
 \value{
   For \code{serialize}, \code{NULL} unless \code{connection=NULL}, when
@@ -70,6 +71,8 @@ unserialize(connection, refhook = NULL)
 \examples{
 x <- serialize(list(1,2,3), NULL)
 unserialize(x)
+(y <- charToRaw(x))
+unserialize(y)
 }
 \keyword{internal}
 \keyword{file}

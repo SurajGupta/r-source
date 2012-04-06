@@ -15,11 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* This header file is to provide hooks for external GUIs such as
-   GNOME and Cocoa.  It is only used on Unix-alikes */
+   GNOME and Cocoa.  It is only used on Unix-alikes.  All entries
+   here should be documented in doc/manual/R-exts.texi            */
 
 #ifndef RINTERFACE_H_
 #define RINTERFACE_H_
@@ -101,6 +102,7 @@ extern int  (*ptr_R_ChooseFile)(int, char *, int);
 extern int  (*ptr_R_EditFile)(char *);
 extern void (*ptr_R_loadhistory)(SEXP, SEXP, SEXP, SEXP);
 extern void (*ptr_R_savehistory)(SEXP, SEXP, SEXP, SEXP);
+extern void (*ptr_R_addhistory)(SEXP, SEXP, SEXP, SEXP);
 
 /* These two are not used by R itself, but are used by the GNOME front end
    and the tcltk package */

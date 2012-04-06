@@ -141,7 +141,7 @@ makePrototypeFromClassDef <-
         }
     }
     extra <- pnames[is.na(match(pnames, snames)) & !is.na(match(pnames, pslots))]
-    if(length(extra)>0)
+    if(length(extra)>0 && is.na(match("oldClass", supers)))
         warning(gettextf("in constructing the prototype for class \"%s\", slots in prototype and not in class: %s",
                          className, paste(extra, collapse=", ")), domain = NA)
     ## now check the elements of the prototype against the class definition
@@ -441,11 +441,12 @@ assignClassDef <-
     pnames <- names(protoSlots)
     for(i in seq(along=protoSlots))
         slot(proto, pnames[[i]], FALSE) <- protoSlots[[i]]
-    class(proto) <- "classRepresentation"
+    classRepClass <- .classNameFromMethods("classRepresentation")
+    class(proto) <- classRepClass
     object <- list()
-    class(object) <- "classRepresentation"
+    class(object) <- classRepClass
     slot(object, "slots", FALSE) <- defSlots
-    slot(object, "className", FALSE) <- "classRepresentation"
+    slot(object, "className", FALSE) <- classRepClass
     slot(object, "virtual", FALSE) <- FALSE
     slot(object, "prototype", FALSE) <- proto
     for(what in c("contains", "validity", "access", "hasValidity", "subclasses",
@@ -456,6 +457,11 @@ assignClassDef <-
 ##    assignClassDef("classRepresentation", object, where)
     assign(classMetaName("classRepresentation"), object, where)
 }
+
+.classNameFromMethods <- function(what) {
+    packageSlot(what) <- "methods"
+    what
+  }
 
 .initClassSupport <- function(where) {
     setClass("classPrototypeDef", representation(object = "ANY", slots = "character", dataPart = "logical"),
@@ -658,10 +664,14 @@ reconcilePropertiesAndPrototype <-
       if(extends(prototypeClass, "classPrototypeDef")) {
           pnames <- prototype@slots
           prototype <- prototype@object
+          if(length(superClasses) == 0 && any(is.na(match(pnames, slots))))
+            stop(gettextf("named elements of prototype do not correspond to slot names: %s",
+                      paste(dQuote(pnames[is.na(match(pnames, slots))]),
+                            collapse =", ")))
       }
       else
           pnames <- allNames(attributes(prototype))
-      ## now set the slots not yet in the prototype object.
+       ## now set the slots not yet in the prototype object.
       ## An important detail is that these are
       ## set using slot<- with check=FALSE (because the slot will not be there already)
       ## what <- is.na(match(slots, pnames))
@@ -787,24 +797,24 @@ print.classRepresentation <-
 possibleExtends <- function(class1, class2, ClassDef1, ClassDef2)
     .identC(class1, class2) || .identC(class2, "ANY")
 
-
+## "Real" definition (assigned in ./zzz.R )
 .possibleExtends <-
-  ## Find the information that says whether class1 extends class2,
-  ## directly or indirectly.  This can be either a logical value or
-  ## an object containing various functions to test and/or coerce the relationship.
+    ## Find the information that says whether class1 extends class2,
+    ## directly or indirectly.  This can be either a logical value or
+    ## an object containing various functions to test and/or coerce the relationship.
     ## TODO:  convert into a generic function w. methods WHEN dispatch is really fast!
-  function(class1, class2, ClassDef1 = getClassDef(class1),
-           ClassDef2 = getClassDef(class2, where = .classEnv(ClassDef1)))
+    function(class1, class2, ClassDef1 = getClassDef(class1),
+             ClassDef2 = getClassDef(class2, where = .classEnv(ClassDef1)))
 {
     if(.identC(class1[[1]], class2) || .identC(class2, "ANY"))
         return(TRUE)
     ext <- TRUE # may become a list of extends definitions
-    if(is.null(ClassDef1))  # class1 not defined
+    if(is.null(ClassDef1)) # class1 not defined
         return(FALSE)
-    else {
-        ext <- ClassDef1@contains
-        i <- match(class2, names(ext))
-     }
+    ## else
+    ext <- ClassDef1@contains
+    nm1 <- names(ext)
+    i <- match(class2, nm1)
     if(is.na(i)) {
         ## look for class1 in the known subclasses of class2
         if(!is.null(ClassDef2)) {
@@ -812,7 +822,7 @@ possibleExtends <- function(class1, class2, ClassDef1, ClassDef2)
             if(!.identC(class(ClassDef2), "classRepresentation") &&
                isClassUnion(ClassDef2))
                 ## a simple TRUE iff class1 or one of its superclasses belongs to the union
-                i <- any(duplicated(c(class1, names(ClassDef1@contains), names(ext))))
+                i <- any(duplicated(c(class1, unique(nm1), names(ext))))
             else {
                 i <- match(class1, names(ext))
             }
@@ -1110,9 +1120,12 @@ setDataPart <- function(object, value) {
         else if(extends(cl, "oldClass") && isVirtualClass(cl)) {
             if(.identC(cl, "ts"))
                 value <- cl
-            else
-                warning(gettextf("old-style ('S3') class \"%s\" supplied as a superclass of \"%s\", but no automatic conversion will be peformed for S3 classes",
-                                 cl, .className(inClass)), domain = NA)
+            ## The following warning is obsolete if S3 classes can be
+            ## non-virtual--the subclass can have a prototype
+
+##             else
+##                 warning(gettextf("old-style ('S3') class \"%s\" supplied as a superclass of \"%s\", but no automatic conversion will be peformed for S3 classes",
+##                                  cl, .className(inClass)), domain = NA)
         }
         else if(identical(ClassDef@virtual, TRUE) &&
                length(ClassDef@slots) == 0 &&
@@ -1465,7 +1478,11 @@ substituteFunctionArgs <- function(def, newArgs, args = formalArgs(def), silent 
     else {
         ##FIXME:  the paste should not be needed
         pkg <- paste("package", package, sep=":")
-        as.environment(pkg)
+        ## need to allow for versioned installs: prefer exact match.
+        m <- charmatch(pkg, search())
+        if(is.na(m))
+            stop(gettextf("Package '%s' is not loaded", package), domain = NA)
+        as.environment(search()[m])
     }
 }
 

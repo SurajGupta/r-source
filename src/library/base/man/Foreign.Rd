@@ -20,7 +20,9 @@
 }
 \arguments{
   \item{name}{a character string giving the name of a C function or
-    Fortran subroutine.}
+    Fortran subroutine, or an object of class
+    \code{"\link{NativeSymbolInfo}"} or \code{"\link{NativeSymbol}"}
+    referring to such a name.}
   \item{\dots}{arguments to be passed to the foreign function.}
   \item{NAOK}{if \code{TRUE} then any \code{\link{NA}} or
     \code{\link{NaN}} or \code{\link{Inf}} values in the arguments are
@@ -178,6 +180,12 @@
   Neither \code{.Call} nor \code{.External} copy their arguments.  You
   should treat arguments you receive through these interfaces as
   read-only.
+
+  Symbol names containing underscores are not valid Fortran 77 (although
+  they are valid in Fortran 9x).  Many Fortran 77 compilers (including
+  \code{g77}) will allow them but translate them in a different way to
+  \code{.Fortran}.  Portable code should not use Fortran names
+  containing underscores for entry points to be called from \R.
 }
 
 \section{Header files for external code}{

@@ -14,10 +14,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #define NONAMELESSUNION
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -115,7 +116,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 
     if (cmdarg > 0 && argc > cmdarg && strcmp(argv[cmdarg], "BATCH") == 0) {
 	/* handle Rcmd BATCH internally */
-	char infile[MAX_PATH], outfile[MAX_PATH];
+	char infile[MAX_PATH], outfile[MAX_PATH], *p;
 	DWORD ret;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
@@ -125,6 +126,10 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 
 	/* process the command line */
 	sprintf(cmd, "%s/bin/Rterm.exe --restore --save", getRHOME());
+	if((p = getenv("R_BATCH_OPTIONS")) && strlen(p)) {
+	    strcat(cmd, " ");
+	    strcat(cmd, p);
+	}
 
 	for(i = cmdarg + 1, iused = cmdarg; i < argc; i++) {
 	    if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {

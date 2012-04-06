@@ -16,8 +16,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-  U.S.A.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+  USA.
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -39,14 +39,14 @@
 SA_TYPE SaveAction = SA_SAVEASK;
 SA_TYPE	RestoreAction = SA_RESTORE;
 static Rboolean LoadSiteFile = TRUE;
-Rboolean LoadInitFile = TRUE;  /* Used in R_OpenInitFile */
+attribute_hidden Rboolean LoadInitFile = TRUE;  /* Used in R_OpenInitFile */
 static Rboolean DebugInitFile = FALSE;
 
 /*
  *  INITIALIZATION AND TERMINATION ACTIONS
  */
 
-void R_InitialData(void)
+void attribute_hidden R_InitialData(void)
 {
     R_RestoreGlobalEnv();
 }

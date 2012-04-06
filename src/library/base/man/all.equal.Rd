@@ -17,9 +17,10 @@ all.equal(target, current, \dots)
 
 \method{all.equal}{numeric}(target, current,
           tolerance = .Machine$double.eps ^ 0.5,
-          scale = NULL, \dots)
+          scale = NULL, check.attributes = TRUE, \dots)
 
-attr.all.equal(target, current, \dots)
+attr.all.equal(target, current,
+               check.attributes = TRUE, check.names = TRUE, \dots)
 }
 \arguments{
   \item{target}{\R object.}
@@ -29,6 +30,12 @@ attr.all.equal(target, current, \dots)
   \item{tolerance}{numeric \eqn{\ge}{>=} 0.  Differences smaller than
     \code{tolerance} are not considered.}
   \item{scale}{numeric scalar > 0 (or \code{NULL}). See Details.}
+  \item{check.attributes}{logical indicating if the
+    \code{\link{attributes}(.)} of \code{target} and \code{current}
+    should be compared as well.}
+  \item{check.names}{logical indicating if the \code{\link{names}(.)}
+    of \code{target} and \code{current} should be compared as well (and
+    separately from the \code{attributes}).}
 }
 \description{
     \code{all.equal(x,y)} is a utility to compare \R objects \code{x}
@@ -46,15 +53,15 @@ attr.all.equal(target, current, \dots)
 
     Numerical comparisons for \code{scale = NULL} (the default) are done
     by first computing the mean absolute difference of the two numerical
-    vectors. If this is smaller than \code{tolerance} or not finite,
+    vectors.  If this is smaller than \code{tolerance} or not finite,
     absolute differences are used, otherwise relative differences scaled
     by the mean absolute difference.
 
-    If \code{scale} is positive, absolute comparisons are after scaling
-    (dividing) by \code{scale}.
+    If \code{scale} is positive, absolute comparisons are made after
+    scaling (dividing) by \code{scale}.
 
     For complex arguments, the modulus \code{\link{Mod}} of the difference
-    is used: \code{all.numeric.numeric} is called so arguments
+    is used: \code{all.equal.numeric} is called so arguments
     \code{tolerance} and \code{scale} are available.
 
     \code{attr.all.equal} is used for comparing
@@ -64,8 +71,6 @@ attr.all.equal(target, current, \dots)
   Either \code{TRUE} or a vector of \code{\link{mode}}
   \code{"character"} describing the differences between \code{target}
   and \code{current}.
-
-  Numerical differences are reported by \emph{relative} error.
 }
 \references{
   Chambers, J. M. (1998)

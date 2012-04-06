@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> byte-level access is only to compare with chars <= 0x7F */
@@ -1810,7 +1810,7 @@ static int R_DefaultSaveFormatVersion = 2;
 
 /* ----- E x t e r n a l -- I n t e r f a c e s ----- */
 
-void R_SaveToFileV(SEXP obj, FILE *fp, int ascii, int version)
+void attribute_hidden R_SaveToFileV(SEXP obj, FILE *fp, int ascii, int version)
 {
     SaveLoadData data = {{NULL, 0, MAXELTSIZE}};
 
@@ -1841,7 +1841,7 @@ void R_SaveToFileV(SEXP obj, FILE *fp, int ascii, int version)
     }
 }
 
-void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
+void attribute_hidden R_SaveToFile(SEXP obj, FILE *fp, int ascii)
 {
     R_SaveToFileV(obj, fp, ascii, R_DefaultSaveFormatVersion);
 }
@@ -1849,7 +1849,7 @@ void R_SaveToFile(SEXP obj, FILE *fp, int ascii)
     /* different handling of errors */
 
 #define return_and_free(X) {r = X; R_FreeStringBuffer(&data.buffer); return r;}
-SEXP R_LoadFromFile(FILE *fp, int startup)
+SEXP attribute_hidden R_LoadFromFile(FILE *fp, int startup)
 {
     struct R_inpstream_st in;
     int magic;
@@ -1903,7 +1903,7 @@ static void saveload_cleanup(void *data)
     fclose(fp);
 }
 
-SEXP do_save(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* save(list, file, ascii, version, environment) */
 
@@ -2009,7 +2009,7 @@ static SEXP R_LoadSavedData(FILE *fp, SEXP aenv)
 }
 
 /* This is only used for version 1 or earlier formats */
-SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP fname, aenv, val;
     FILE *fp;
@@ -2024,7 +2024,11 @@ SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
     /* the loaded objects can be placed where desired  */
 
     aenv = CADR(args);
-    if (TYPEOF(aenv) != ENVSXP && aenv != R_BaseEnv)
+    if (TYPEOF(aenv) == NILSXP) {
+    	warning(_("use of NULL environment is deprecated"));
+    	aenv = R_BaseEnv;
+    } else
+    if (TYPEOF(aenv) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");
 
     /* Process the saved file to obtain a list of saved objects. */
@@ -2053,7 +2057,7 @@ SEXP do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 #define R_XDR_INTEGER_SIZE 4
 */
 
-void R_XDREncodeDouble(double d, void *buf)
+void attribute_hidden R_XDREncodeDouble(double d, void *buf)
 {
     XDR xdrs;
     int success;
@@ -2065,7 +2069,7 @@ void R_XDREncodeDouble(double d, void *buf)
         error(_("XDR write failed"));
 }
  
-double R_XDRDecodeDouble(void *buf)
+double attribute_hidden R_XDRDecodeDouble(void *buf)
 {
     XDR xdrs;
     double d;
@@ -2079,7 +2083,7 @@ double R_XDRDecodeDouble(void *buf)
     return d;
 }
  
-void R_XDREncodeInteger(int i, void *buf)
+void attribute_hidden R_XDREncodeInteger(int i, void *buf)
 {
     XDR xdrs;
     int success;
@@ -2091,7 +2095,7 @@ void R_XDREncodeInteger(int i, void *buf)
         error(_("XDR write failed"));
 }
 
-int R_XDRDecodeInteger(void *buf)
+int attribute_hidden R_XDRDecodeInteger(void *buf)
 {
     XDR xdrs;
     int i, success;
@@ -2104,6 +2108,7 @@ int R_XDRDecodeInteger(void *buf)
     return i;
 }
 
+/* Next two used in gnomeGUI package */
 void R_SaveGlobalEnvToFile(const char *name)
 {
     SEXP sym = install("sys.save.image");
@@ -2161,7 +2166,7 @@ void R_RestoreGlobalEnvFromFile(const char *name, Rboolean quiet)
    Unfortunately, this will result in too much duplication in the lapply
    (and any other way of doing this).  Hence we need an internal version. */
 
-SEXP do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* saveToConn(list, conn, ascii, version, environment) */
 
@@ -2240,12 +2245,76 @@ SEXP do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
+
+/* This version reads and checks the magic number, 
+   opens the connection if needed */
+
+static void saveloadcon_cleanup(void *data)
+{
+    FILE *fp = data;
+    fclose(fp);
+}
+
+SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    /* loadFromConn2(conn, environment) */
+
+    struct R_inpstream_st in;
+    Rconnection con;
+    SEXP aenv, res = R_NilValue;
+    unsigned char buf[6];
+    int count;
+    Rboolean wasopen;
+    RCNTXT cntxt;
+
+    checkArity(op, args);
+
+    con = getConnection(asInteger(CAR(args)));
+    if(!con->canread) error(_("cannot read from this connection"));
+    if(con->text) error(_("can only read from a binary connection"));
+    wasopen = con->isopen;
+    if(!wasopen)
+	if(!con->open(con)) error(_("cannot open the connection"));
+
+    aenv = CADR(args);
+    if (TYPEOF(aenv) == NILSXP) {
+    	warning(_("use of NULL environment is deprecated"));
+    	aenv = R_BaseEnv;
+    } else if (TYPEOF(aenv) != ENVSXP)
+	error(_("invalid '%s' argument"), "envir");
+
+    /* check magic */
+    memset(buf, 0, 6);
+    count = con->read(buf, sizeof(char), 5, con);
+    if (count == 0) error(_("no input is available"));
+    if (strncmp((char*)buf, "RDA2\n", 5) == 0 ||
+	strncmp((char*)buf, "RDB2\n", 5) == 0 ||
+	strncmp((char*)buf, "RDX2\n", 5) == 0) {
+	/* set up a context which will clean up if there is an error */
+	if (wasopen) {
+	    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
+			 R_NilValue, R_NilValue);
+	    cntxt.cend = &saveloadcon_cleanup;
+	    cntxt.cenddata = con;
+	}
+	R_InitConnInPStream(&in, con, R_pstream_any_format, NULL, NULL);
+	PROTECT(res = RestoreToEnv(R_Unserialize(&in), aenv));
+	if (wasopen) {
+	    endcontext(&cntxt);
+	    con->close(con);
+	}
+	UNPROTECT(1);
+    } else 
+	error(_("the input does not start with a magic number compatible with loading from a connection"));
+    return res;
+}
+
 /* This assumes the magic number has already been read, and its format
    specification (A or X) is ignored.  For saved images with many
    variables and the values saved in a pair list this internal version
    will be faster than a version in R */
 
-SEXP do_loadFromConn(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_loadFromConn(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* loadFromConn(conn, environment) */
 
@@ -2257,7 +2326,10 @@ SEXP do_loadFromConn(SEXP call, SEXP op, SEXP args, SEXP env)
 
     con = getConnection(asInteger(CAR(args)));
     aenv = CADR(args);
-    if (TYPEOF(aenv) != ENVSXP && aenv != R_BaseEnv)
+    if (TYPEOF(aenv) == NILSXP) {
+    	warning(_("use of NULL environment is deprecated"));
+    	aenv = R_BaseEnv;
+    } else if (TYPEOF(aenv) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");
 
     R_InitConnInPStream(&in, con, R_pstream_any_format, NULL, NULL);

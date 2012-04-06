@@ -18,6 +18,8 @@
         where <- as.environment(where)
     }
     initMethodDispatch(where)
+    ## temporary empty reference to the package's own namespace
+    assign(".methodsNamespace", new.env(), envir = where)
     saved <- (if(exists(".saveImage", envir = where, inherits = FALSE))
               get(".saveImage", envir = where)
               else
@@ -44,6 +46,7 @@
         .InitShowMethods(where)
         assign(".isPrototype", ..isPrototype, envir = where)
         .InitClassUnion(where)
+        .InitS3Classes(where)
         ## now seal the classes defined in the package
         for(cl in get(".SealedClasses", where))
             sealClass(cl, where)
@@ -71,17 +74,17 @@
         ## found.
 
         sch <- rev(search())[-(1:2)]  # skip base and autoloads
-        sch <- sch[! sch %in% paste("package", c("utils", "graphics", "stats"),
+        sch <- sch[! sch %in% paste("package",
+                                    c("datasets", "grDevices", "graphics",
+                                      "stats", "utils"),
                                     sep=":")]
         for(i in sch) {
             nev <- ev <- as.environment(i)
-##            try(nev <- asNamespace(getPackageName(ev)), silent = TRUE)
             ns <- .Internal(getRegisteredNamespace(as.name(getPackageName(ev))))
             if(!is.null(ns)) nev <- asNamespace(ns)
             if(!exists(".noGenerics", where = nev, inherits = FALSE) &&
                !identical(getPackageName(ev), "methods"))
                 cacheMetaData(ev, TRUE, searchWhere = .GlobalEnv)
-
         }
     }
 }

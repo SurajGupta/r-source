@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  *
  *  I want you to preserve the copyright of the original author(s),
  *  and encourage you to send me any improvements by e-mail. (MM).
@@ -194,8 +194,8 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
 		} /* if(do_fg) for(i..) */
 	    else
 		for (i=0; i < nn; i++) {
-		    sprintf(result[i], form, wid, dig, ((double *)x)[i]);
 #ifdef Win32
+		    sprintf(result[i], form, wid + 1, dig, ((double *)x)[i]);
 		    {
 			/* change e+/-00n to e+/-0n etc */
 			char *p = result[i];
@@ -204,10 +204,12 @@ void str_signif(char *x, int *n, char **type, int *width, int *digits,
 			    (p[len-4] == '+' || p[len-4] == '-') &&
 			    p[len-3] == '0' &&
 			    isdigit(p[len-2]) && isdigit(p[len-1])) {
-			    for(ii = len-3; ii > 0; ii--) p[ii] = p[ii-1];
-			    p[0] = ' ';
-			}
+			    for(ii = len-3; ii <= len; ii++) p[ii] = p[ii+1];
+			} else
+			    sprintf(result[i], form, wid, dig, ((double *)x)[i]);
 		    }
+#else
+		    sprintf(result[i], form, wid, dig, ((double *)x)[i]);
 #endif
 		}
 	} else

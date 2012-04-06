@@ -23,7 +23,7 @@
    See the file COPYLIB.TXT for details.
 */
 
-/* Copyright (C) 2004 	The R Foundation
+/* Copyright (C) 2004--2006 	The R Foundation
 
    Additions for R, Chris Jackson
    Find and replace dialog boxes and dialog handlers */
@@ -56,6 +56,17 @@ void setuserfilter(char *uf) {
 
 static HWND hModelessDlg = NULL;
 
+int myMessageBox(HWND h, char *text, char *caption, UINT type)
+{
+    if(is_NT && (localeCP != GetACP())) {
+	wchar_t wc[1000], wcaption[100];
+	mbstowcs(wcaption, caption, 100);
+	mbstowcs(wc, text, 1000);
+	return MessageBoxW(h, wc, wcaption, type);
+    } else
+	return MessageBoxA(h, text, caption, type);
+}
+
 /*
  *  Error reporting dialog.
  */
@@ -63,7 +74,7 @@ void apperror(char *errstr)
 {
 	if (! errstr)
 		errstr = "Unspecified error";
-	MessageBox(0, errstr, "Graphics Library Error",
+	myMessageBox(0, errstr, "Graphics Library Error",
 		MB_TASKMODAL | MB_ICONSTOP | MB_OK | TopmostDialogs);
 	exitapp();
 }
@@ -72,7 +83,7 @@ void askok(char *info)
 {
 	if (! info)
 		info = "";
-	MessageBox(0, info, "Information",
+	myMessageBox(0, info, "Information",
 		MB_TASKMODAL | MB_ICONINFORMATION | MB_OK | TopmostDialogs);
 }
 
@@ -82,7 +93,7 @@ int askokcancel(char *question)
 
 	if (! question)
 		question = "";
-	result = MessageBox(0, question, "Question",
+	result = myMessageBox(0, question, G_("Question"),
 		MB_TASKMODAL | MB_ICONQUESTION | MB_OKCANCEL | TopmostDialogs);
 
 	switch (result) {
@@ -99,7 +110,7 @@ int askyesno(char *question)
 
 	if (! question)
 		question = "";
-	result = MessageBox(0, question, G_("Question"),
+	result = myMessageBox(0, question, G_("Question"),
 		MB_TASKMODAL | MB_ICONQUESTION | MB_YESNO | TopmostDialogs);
 
 	switch (result) {
@@ -116,7 +127,7 @@ int askyesnocancel(char *question)
 
 	if (! question)
 		question = "";
-	result = MessageBox(0, question, G_("Question"),
+	result = myMessageBox(0, question, G_("Question"),
 		MB_TASKMODAL | MB_ICONQUESTION | MB_YESNOCANCEL | MB_SETFOREGROUND | TopmostDialogs);
 
 	switch (result) {
@@ -150,12 +161,20 @@ void askchangedir()
 char *askfilename(char *title, char *default_name)
 {
 	if (*askfilenames(title, default_name, 0, userfilter?userfilter:filter[0], 0,
-				          strbuf, BUFSIZE)) return strbuf;
+				          strbuf, BUFSIZE, NULL)) return strbuf;
+	else return NULL;
+}
+
+char *askfilenamewithdir(char *title, char *default_name, char *dir)
+{
+	if (*askfilenames(title, default_name, 0, userfilter?userfilter:filter[0], 0,
+				          strbuf, BUFSIZE, dir)) return strbuf;
 	else return NULL;
 }
 
 char *askfilenames(char *title, char *default_name, int multi,
-			       char *filters, int filterindex, char *strbuf, int bufsize)
+			       char *filters, int filterindex, char *strbuf, int bufsize,
+			       char *dir)
 {
 	int i;
 	OPENFILENAME ofn;
@@ -164,13 +183,16 @@ char *askfilenames(char *title, char *default_name, int multi,
 		default_name = "";
 	strcpy(strbuf, default_name);
         GetCurrentDirectory(MAX_PATH,cwd);
-        if (!strcmp(cod,"")) strcpy(cod,cwd);
+        if (!strcmp(cod,"")) {
+            if (!dir) strcpy(cod,cwd);
+            else strcpy(cod,dir);
+        }
 
 	ofn.lStructSize     = sizeof(OPENFILENAME);
 	ofn.hwndOwner       = current_window ?
 				current_window->handle : 0;
 	ofn.hInstance       = 0;
-    ofn.lpstrFilter     = filters;
+	ofn.lpstrFilter     = filters;
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nMaxCustFilter  = 0;
 	ofn.nFilterIndex    = filterindex;
@@ -295,7 +317,7 @@ char *askfilesavewithdir(char *title, char *default_name, char *dir)
 
 	static char * QUESTION_TITLE	= "Question";
 	static char * PASSWORD_TITLE	= "Password Entry";
-	static char * FINDDIR_TITLE	= "Change directory";
+	static char * FINDDIR_TITLE	= "Choose directory";
 
 static void add_data(window w)
 {
@@ -468,9 +490,9 @@ static window init_askstr_dialog(char *title, char *question,
 	d->question = newlabel(question, rect(10,h,tw+4,h*2+2),
 			AlignLeft);
 	if (title == FINDDIR_TITLE) {
-	    bw = strwidth(SystemFont, BROWSE_STRING) * 3/2;
+	    bw = strwidth(SystemFont, G_(BROWSE_STRING)) * 3/2;
 	    d->text = newfield(default_str, rect(10,h*4,tw+4-bw,h*3/2));
-	    newbutton(BROWSE_STRING, rect(20+tw-bw, h*4-2, bw, h+10),
+	    newbutton(G_(BROWSE_STRING), rect(20+tw-bw, h*4-2, bw, h+10),
 		      browse_button);
 	}
 	else if (title == PASSWORD_TITLE)

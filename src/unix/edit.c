@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string, but note that
@@ -70,7 +70,7 @@ int Rgui_Edit(char *filename, char *title, int modal);
 static char *DefaultFileName;
 static int  EdFileUsed = 0;
 
-void InitEd()
+void attribute_hidden InitEd()
 {
 #ifdef Win32
     DefaultFileName = R_tmpnam("Redit", R_TempDir);
@@ -84,7 +84,7 @@ void CleanEd()
     if(EdFileUsed) unlink(DefaultFileName);
 }
 
-SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int   i, rc;
     ParseStatus status;

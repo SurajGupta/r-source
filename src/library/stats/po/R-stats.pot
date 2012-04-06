@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-12-12 09:04\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,10 +104,13 @@ msgstr ""
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr ""
 
-msgid "lower scope is not included in model"
+msgid "F test assumes 'quasi%s' family"
 msgstr ""
 
-msgid "upper scope does not include model"
+msgid "lower scope has term(s) %s not included in model"
+msgstr ""
+
+msgid "upper scope does not include model term(s) %s"
 msgstr ""
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
@@ -710,7 +713,7 @@ msgstr ""
 msgid "link not recognised"
 msgstr ""
 
-msgid "link \"%s\" not available for poisson family; available links are \"identity\", \"log\" and \"sqrt\""
+msgid "link \"%s\" not available for Poisson family; available links are \"identity\", \"log\" and \"sqrt\""
 msgstr ""
 
 msgid "negative values not allowed for the Poisson family"
@@ -723,6 +726,9 @@ msgid "negative values not allowed for the quasiPoisson family"
 msgstr ""
 
 msgid "link \"%s\" not available for gaussian family, available links are \"inverse\", \"log\" and \"identity\""
+msgstr ""
+
+msgid "cannot find valid starting values: please specify some"
 msgstr ""
 
 msgid "link \"%s\" not available for binomial family, available links are \"logit\", \"\"probit\", \"cloglog\", \"cauchit\" and \"log\""
@@ -803,7 +809,10 @@ msgstr ""
 msgid "'or' must be a single number between 0 and Inf"
 msgstr ""
 
-msgid "p-values may be incorrect"
+msgid "need 2 or more non-zero row marginals"
+msgstr ""
+
+msgid "need 2 or more non-zero column marginals"
 msgstr ""
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
@@ -902,9 +911,6 @@ msgstr ""
 msgid "length of 'start' should equal %d and correspond to initial coefs for %s"
 msgstr ""
 
-msgid "cannot find valid starting values: please specify some"
-msgstr ""
-
 msgid "NAs in V(mu)"
 msgstr ""
 
@@ -956,6 +962,12 @@ msgstr ""
 msgid ","
 msgstr ""
 
+msgid "using F test with a %s family is inappropriate"
+msgstr ""
+
+msgid "using F test with a fixed dispersion is inappropriate"
+msgstr ""
+
 msgid "models with response"
 msgstr ""
 
@@ -963,6 +975,9 @@ msgid "removed because response differs from model 1"
 msgstr ""
 
 msgid "models were not all fitted to the same size of dataset"
+msgstr ""
+
+msgid "using F test with a '%s' family is inappropriate"
 msgstr ""
 
 msgid "observations with zero weight not used for calculating dispersion"
@@ -1412,22 +1427,16 @@ msgstr ""
 msgid "levels truncated to positive values only"
 msgstr ""
 
-msgid "setVarying : vary length must match length of parameters"
+msgid "setVarying : 'vary' length must match length of parameters"
 msgstr ""
 
 msgid "singular gradient matrix at initial parameter estimates"
-msgstr ""
-
-msgid "argument 'weights' is currently ignored"
 msgstr ""
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
 msgid "Convergence failure:"
-msgstr ""
-
-msgid "rows with zero weights not counted"
 msgstr ""
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
@@ -1730,6 +1739,9 @@ msgstr ""
 msgid "splinefun: invalid interpolation method"
 msgstr ""
 
+msgid "'deriv' must be between 0 and 3"
+msgstr ""
+
 msgid "stepfun: 'x' must be ordered increasingly"
 msgstr ""
 
@@ -1890,6 +1902,9 @@ msgid "inconsistent specification of 'ma' order"
 msgstr ""
 
 msgid "number of differences must be a positive integer"
+msgstr ""
+
+msgid "'start.innov' is too short: need %d points"
 msgstr ""
 
 msgid "insufficient observations"

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,7 @@
 extern IoBuffer R_ConsoleIob;
 /* extern int errno; No longer used */
 
-SEXP getParseContext()
+SEXP attribute_hidden getParseContext()
 {
     int i, last = PARSE_CONTEXT_SIZE;
     char context[PARSE_CONTEXT_SIZE+1];
@@ -82,7 +82,7 @@ SEXP getParseContext()
     return ans2;
 }    
 
-void parseError(SEXP call, int linenum)
+void attribute_hidden parseError(SEXP call, int linenum)
 {
     SEXP context = getParseContext();
     int len = length(context);
@@ -114,7 +114,7 @@ void parseError(SEXP call, int linenum)
  .Internal( parse(file, n, text, prompt) )
  If there is text then that is read and the other arguments are ignored.
 */
-SEXP do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP text, prompt, s;
     Rconnection con;

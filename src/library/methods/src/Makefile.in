@@ -19,6 +19,10 @@ SOURCES_F =
 DEPENDS = $(SOURCES_C:.c=.d)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o)
 
+# need  config.h
+PKG_CPPFLAGS =-I../../../include -I$(top_srcdir)/src/include -DHAVE_CONFIG_H
+PKG_CFLAGS=$(C_VISIBILITY)
+
 SHLIB = $(pkg)@SHLIB_EXT@
 
 all: Makefile Makedeps
@@ -34,9 +38,9 @@ Makedeps: Makefile $(DEPENDS)
 
 shlib: $(SHLIB)
 	@$(SHELL) $(top_srcdir)/src/scripts/mkinstalldirs \
-	  $(top_builddir)/library/$(pkg)/libs
+	  $(top_builddir)/library/$(pkg)/libs@R_ARCH@
 	@$(SHELL) $(top_srcdir)/tools/copy-if-change $(SHLIB) \
-	  $(top_builddir)/library/$(pkg)/libs/$(SHLIB)
+	  $(top_builddir)/library/$(pkg)/libs@R_ARCH@/$(SHLIB)
 
 include $(top_srcdir)/share/make/shlib.mk
 

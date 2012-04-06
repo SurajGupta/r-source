@@ -248,6 +248,10 @@ setAs(from, to, def, replace, where = topenv(parent.frame()))
   \code{showMethods("coerce")}.
 }
 
+\seealso{
+  If you think of using \code{try(as(x, cl))}, consider
+  \code{\link{canCoerce}(x, cl)} instead.
+}
 \references{
   The R package \pkg{methods} implements, with a few exceptions, the
   programming interface for classes
@@ -265,7 +269,7 @@ setAs(from, to, def, replace, where = topenv(parent.frame()))
   pointers from that page.
 }
 \examples{
-## using the definition of class "track" from \link{setClass}
+## using the definition of class "track" from \link{Classes}
 
 \dontshow{
 setClass("track",

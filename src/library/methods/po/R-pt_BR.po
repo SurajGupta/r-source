@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-06 09:27\n"
-"PO-Revision-Date: 2005-12-17 11:31-0200\n"
+"POT-Creation-Date: 2006-03-09 16:42\n"
+"PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
 "MIME-Version: 1.0\n"
@@ -18,6 +18,12 @@ msgstr ""
 
 msgid "replacement value is not a matrix"
 msgstr "valor de substituição não é uma matriz"
+
+msgid "OOPS: something wrong with line"
+msgstr "OOPS: algo errado com a linha"
+
+msgid "in .OldClassesPrototypes"
+msgstr "em .OldClassesPrototypes"
 
 msgid ""
 "methods may not be defined for primitive function '%s' in this version of R"
@@ -320,6 +326,9 @@ msgstr ""
 "assinatura legítma (um vetor de nomes de classes simples): houve %d nomes de "
 "classes, mas %d elementos na assinatura do objeto"
 
+msgid "more elements in the method signature (%s) than in the generic  %s(%s)"
+msgstr "mais elementos na assinatura do método (%s) do que no genérico %s(%s)"
+
 msgid ""
 "in the method signature for function '%s' invalid argument names in the "
 "signature: %s"
@@ -349,6 +358,12 @@ msgid ""
 msgstr ""
 "inicialização do método retornou um objeto de classe \"%s\" ao invés da "
 "classe necessária \"%s\""
+
+msgid "An object of class \""
+msgstr "Um objeto de classe \""
+
+msgid "\""
+msgstr "\""
 
 msgid ""
 "the names in signature for method (%s) do not match function's arguments (%s)"
@@ -452,7 +467,7 @@ msgstr ""
 "não definição da classe \"%s\", a parte de dados da classe especificada, \"%s"
 "\" não é válida (deve ser uma classe básica ou uma classe virtual combinando "
 "classes básicas)"
-\
+
 msgid "class \"%s\" cannot be used as the data part of another class"
 msgstr "classe \"%s\" não pode ser usada como parte de dados de outra classe"
 
@@ -508,6 +523,9 @@ msgstr ""
 "protótipo é uma lista com elementos nomeados (pode ser ambíguo): melhor usar "
 "a função prototype() para evitar problemas"
 
+msgid "named elements of prototype do not correspond to slot names: %s"
+msgstr "elementos nomeados do protótipo não correspondem aos nomes do slot: %s"
+
 msgid "the '%s' list for class \"%s\", includes an undefined class \"%s\""
 msgstr ""
 "a lista '%s' para a classe \"%s\", incluí uma classe não definida \"%s\""
@@ -520,13 +538,6 @@ msgstr "nenhum slot '.Data' definido para a classe \"%s\""
 
 msgid "class \"%s\" does not have a data part (a .Data slot) defined"
 msgstr "classe \"%s\" não tem uma parte de dados (um slot .Data) definida"
-
-msgid ""
-"old-style ('S3') class \"%s\" supplied as a superclass of \"%s\", but no "
-"automatic conversion will be peformed for S3 classes"
-msgstr ""
-"classe antiga ('S3') \"%s\" fornecida como superclasse de \"%s\", mas "
-"conversões automáticas não serão feitas para classes S3"
 
 msgid ""
 "trying to change the argument list of a function with %d arguments to have "
@@ -551,13 +562,16 @@ msgstr ","
 msgid ""
 "a validity method must be a function of one argument, got an object of class "
 "\"%s\""
-msgstr ""
+msgstr "um método de validade deve ser uma função de um argumento, mas foi obtido um objeto de classe \"%s\""
 
 msgid "unable to find required package '%s'"
-msgstr ""
+msgstr "impossível encontrar o pacote necessário '%s'"
+
+msgid "Package '%s' is not loaded"
+msgstr "Pacote '%s' não está carregado"
 
 msgid "unable to find an environment containing class \"%s\""
-msgstr ""
+msgstr "não foi possível encontrar um ambiente contendo a classe \"%s\""
 
 msgid ""
 "the function being used as %s in making a generic function for '%s' is "
@@ -950,10 +964,19 @@ msgstr ""
 msgid "argument 'what' should be the name of a function"
 msgstr ""
 
+msgid ".TraceWithMethods: after computing what, whereF"
+msgstr ""
+
 msgid "no function definition for '%s' found"
 msgstr ""
 
+msgid ".TraceWithMethods: untrace case"
+msgstr ""
+
 msgid "the method for \"%s\" for this signature was not being traced"
+msgstr ""
+
+msgid ".TraceWithMethods: about to assign or setMethod"
 msgstr ""
 
 msgid ""

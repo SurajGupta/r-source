@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.2.0 Under development (unstable) (2005-08-20 r35340)
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-03-12 r37520)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > .proctime00 <- proc.time()
@@ -343,9 +343,10 @@ non-square matrix in: as.dist.default(x)
 > if(!inherits(res, 'try-error')) report(is.double(res))
 [1] TRUE
 > res <- try(as.environment( x ), silent = TRUE)
+Warning message:
+using 'as.environment(NULL)' is deprecated 
 > if(!inherits(res, 'try-error')) report(is.environment(res))
-[1] FALSE
-Error: x is not TRUE
+[1] TRUE
 > res <- try(as.expression( x ), silent = TRUE)
 > if(!inherits(res, 'try-error')) report(is.expression(res))
 [1] TRUE
@@ -427,11 +428,12 @@ Error: x is not TRUE
 +    } else   !isall.equal(x, res)})
 [1] TRUE
 > res <- try(as.environment( x ), silent = TRUE)
+Warning message:
+using 'as.environment(NULL)' is deprecated 
 > if(!inherits(res, 'try-error'))
 +    report({if(is.environment(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
-[1] FALSE
-Error: x is not TRUE
+[1] TRUE
 > res <- try(as.expression( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.expression(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -549,6 +551,8 @@ Error: x is not TRUE
 >   if(!inherits(f, 'try-error')) report(identical(f, as.double( f )))
 [1] TRUE
 > f <- try(as.environment( x ), silent = TRUE)
+Warning message:
+using 'as.environment(NULL)' is deprecated 
 >   if(!inherits(f, 'try-error')) report(identical(f, as.environment( f )))
 [1] TRUE
 > f <- try(as.expression( x ), silent = TRUE)
@@ -2275,10 +2279,9 @@ IS: [1] TRUE
 > if(!inherits(res, 'try-error'))
 +    report({if(is.list(x)) { cat('IS: ');all.equal(x, res, tol=0)
 +    } else   !isall.equal(x, res)})
-IS: [1] "Attributes: < Lengths: 2, 0 >"                                    
-[2] "Attributes: < names for target but not for current >"             
-[3] "Attributes: < Length mismatch: comparison on first 0 components >"
-Error: x is not TRUE
+IS: [1] "Attributes: < names for target but not for current >"             
+[2] "Attributes: < Length mismatch: comparison on first 0 components >"
+Error: x is not all TRUE
 > res <- try(as.logical( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.logical(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -2447,6 +2450,6 @@ non-square matrix in: as.dist.default(x)
 > f <- try(as.ts( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.ts( f )))
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.35 0.02 0.38 0 0 
+Time elapsed:  0.73 0.02 0.88 0 0 
 > 
 > 

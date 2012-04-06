@@ -6,7 +6,7 @@ text(x, \dots)
 
 \method{text}{default} (x, y = NULL, labels = seq(along = x), adj = NULL,
      pos = NULL, offset = 0.5, vfont = NULL,
-     cex = 1, col = NULL, font = NULL, xpd = NULL, \dots)
+     cex = 1, col = NULL, font = NULL, \dots)
 }
 \alias{text}
 \alias{text.default}
@@ -36,12 +36,11 @@ text(x, \dots)
   \item{cex}{numeric \bold{c}haracter \bold{ex}pansion factor; multiplied
     by \code{\link{par}("cex")} yields the final character size.
     \code{NULL} and \code{NA} are equivalent to \code{1.0}.}
-  \item{col, font}{the color and font to be used; these default to the
-    values of the global graphical parameters in \code{\link{par}()}.}
-  \item{xpd}{(where) should clipping take place?  Defaults to
-    \code{\link{par}("xpd")}.}
-  \item{\dots}{further graphical parameters (from \code{\link{par}}).}
-%% such as ???, etc.
+  \item{col, font}{the color and font to be used, possibly vectors.
+    These default to the values of the global graphical parameters in
+    \code{\link{par}()}.}
+  \item{\dots}{further graphical parameters (from \code{\link{par}}),
+    such as \code{family} and \code{xpd}.}
 }
 \description{
   \code{text} draws the strings given in the vector \code{labels} at the
@@ -103,6 +102,8 @@ text(x, \dots)
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \seealso{
   \code{\link{mtext}}, \code{\link{title}},

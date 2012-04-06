@@ -84,7 +84,7 @@
     \code{alpha} -- \code{omega} \tab Greek symbols \cr
     \code{Alpha} -- \code{Omega} \tab uppercase Greek symbols \cr
     \code{theta1, phi1, sigma1, omega1} \tab cursive Greek symbols\cr
-    \code{Upsilon1} \tab cursive capital upsilon\cr
+    \code{Upsilon1} \tab capital upsilon with hook\cr
     \code{infinity}   \tab infinity symbol \cr
     \code{partialdiff} \tab partial differential symbol \cr
     \code{32*degree}   \tab 32 degrees \cr
@@ -121,7 +121,10 @@
   Note to TeX users: TeX's \code{\Upsilon} is \code{Upsilon1}, TeX's
   \code{\varepsilon} is close to \code{epsilon}, and there is no
   equivalent of TeX's \code{\epsilon}.  TeX's \code{\varpi} is close to
-  \code{omega1}.
+  \code{omega1}.  \code{vartheta}, \code{varphi} and \code{varsigma} are
+  allowed as synonyms for \code{theta1}, \code{phi1} and \code{sigma1}.
+
+  \code{sigma1} is also known as \code{stigma}, its Unicode name.
 }
 \references{
   Murrell, P. and Ihaka, R. (2000) An approach to providing

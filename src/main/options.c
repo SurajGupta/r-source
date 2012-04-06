@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2005   The R Development Core Team.
+ *  Copyright (C) 1998-2006   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -202,7 +202,7 @@ int R_SetOptionWarn(int w)
 /* Note that options are stored as a dotted pair list */
 /* This is barely historical, but is also useful. */
 
-void InitOptions(void)
+void attribute_hidden InitOptions(void)
 {
     SEXP val, v;
     char *p;
@@ -271,7 +271,7 @@ void InitOptions(void)
 }
 
 
-SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP argi= R_NilValue, argnames= R_NilValue, namei= R_NilValue,
 	names, options, s, tag, value; /* = R_Nil..: -Wall */
@@ -382,7 +382,7 @@ SEXP do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    errorcall(call,
 			      _("expressions parameter invalid, allowed %d...%d"),
 			      R_MIN_EXPRESSIONS_OPT, R_MAX_EXPRESSIONS_OPT);
-		R_Expressions = k;
+		R_Expressions = R_Expressions_keep = k;
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "keep.source")) {

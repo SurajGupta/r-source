@@ -28,15 +28,23 @@
 \usage{
 file(description = "", open = "", blocking = TRUE,
      encoding = getOption("encoding"))
+
 pipe(description, open = "", encoding = getOption("encoding"))
+
 fifo(description = "", open = "", blocking = FALSE,
      encoding = getOption("encoding"))
+
 gzfile(description, open = "", encoding = getOption("encoding"),
        compression = 6)
-unz(description, filename, open = "", encoding = getOption("encoding"))
+
+unz(description, filename, open = "",
+    encoding = getOption("encoding"))
+
 bzfile(description, open = "", encoding = getOption("encoding"))
+
 url(description, open = "", blocking = TRUE,
     encoding = getOption("encoding"))
+
 socketConnection(host = "localhost", port, server = FALSE,
                  blocking = FALSE, open = "a+",
                  encoding = getOption("encoding"))
@@ -65,7 +73,7 @@ isIncomplete(con)
   \item{port}{integer.  The TCP port number.}
   \item{server}{logical.  Should the socket be a client or a server?}
   \item{open}{character.  A description of how to open the connection
-    (if at all). See Details for possible values.}
+    (if at all).  See Details for possible values.}
   \item{blocking}{logical.  See the \sQuote{Blocking} section below.}
   \item{encoding}{The name of the encoding to be used.  See the
     \sQuote{Encoding} section below.}
@@ -83,9 +91,11 @@ isIncomplete(con)
   be opened by setting a non-empty value of argument \code{open}.
 
   \code{gzfile} applies to files compressed by \file{gzip}, and
-  \code{bzfile} to those compressed by \file{bzip2}: such connections can
-  only be binary.
-
+  \code{bzfile} to those compressed by \file{bzip2}.  \code{gzfile} can
+  also open uncompressed files.  In each case the actual file is opened
+  in binary mode and so no translations are done if the original file
+  was a text file.
+  
   \code{unz} reads (only) single files within zip files, in binary mode.
   The description is the full path, with \file{.zip} extension if required.
 

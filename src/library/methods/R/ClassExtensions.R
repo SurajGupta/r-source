@@ -194,7 +194,7 @@ makeExtends <- function(Class, to,
             if(exists(what, where, inherits = FALSE))
                 value <- c(value, list(where))
             ## two forms of test for the end of the parent env. chain
-            if(isBaseNamespace(where) || identical(where, baseenv()))
+            if(isBaseNamespace(where) || identical(where, emptyenv()))
                 break
             where <- parent.env(where)
         }
@@ -203,6 +203,13 @@ makeExtends <- function(Class, to,
             if(exists(what, i, inherits = FALSE))
                 value <- c(value, list(i))
         }
+    ## FIXME:  namespaces don't seem to include methods package
+    ## objects in their parent env., but they must be importing
+    ## methods to get to this code
+    if(length(value)== 0 &&
+       isNamespace(where) && exists(what, .methodsNamespace, inherits
+                                    = FALSE))
+      value <- list(.methodsNamespace)
     value
 }
 

@@ -1,6 +1,6 @@
 #-*- mode: perl; perl-indent-level: 4; cperl-indent-level: 4 -*-
 
-# Copyright (C) 1997-2005 R Development Core Team
+# Copyright (C) 1997-2006 R Development Core Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+# writing to the Free Software Foundation, Inc., 51 Franklin Street,
+# Fifth Floor, Boston, MA 02110-1301  USA.
 
 use File::Basename;
 use Cwd;
@@ -113,13 +113,15 @@ print "\n";
 # as from 1.7.0 we can resolve links to base from other libraries
 # by fixing the link in fixup.package.URLs().
 # as from 1.9.0 we fix up utils, graphics, stats as well.
+# by 2.3.0 grDevices, datasets and methods.
 
 %anindex = read_anindex($lib);
 if($opt_html || $opt_chm){
     %htmlindex = read_htmlindex($lib);
     if ($lib ne $mainlib) {
 	%basehtmlindex = read_htmlpkgindex($mainlib, "base");
-	foreach $pkg ("utils", "graphics", "stats") {
+	foreach $pkg ("utils", "graphics", "grDevices", "stats", 
+		      "datasets", "methods") {
 	    my %pkghtmlindex = read_htmlpkgindex($mainlib, $pkg);
 	    foreach $topic (keys %pkghtmlindex) {
 		$basehtmlindex{$topic} = $pkghtmlindex{$topic};
@@ -144,8 +146,11 @@ format STDOUT =
 .
 
 foreach $manfile (@mandir) {
-    if($manfile =~ /\.[Rr]d$/ && !($manfile =~ /^\.#/)) {
+    ## Should only process files starting with [A-Za-z0-9] and with
+    ## suffix .Rd or .rd, according to `Writing R Extensions'.
+    if($manfile =~ /\.[Rr]d$/) {
 	$manfilebase = basename($manfile, (".Rd", ".rd"));
+	if(! ($manfilebase =~ /^[A-Za-z0-9]/) ) {next;}
 	$manage = (-M $manfile);
 	$manfiles{$manfilebase} = $manfile;
 

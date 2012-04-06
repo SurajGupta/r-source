@@ -53,6 +53,12 @@ all: Makefile DESCRIPTION
 	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/afm; \
 	  done; \
 	fi
+	@if test -d $(srcdir)/inst/enc; then \
+	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/enc; \
+	  for f in `ls -d $(srcdir)/inst/enc/*`; do \
+	    $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/enc; \
+	  done; \
+	fi
 	@if test -d $(srcdir)/man; then \
 	  $(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/man; \
 	  (f=$${TMPDIR:-/tmp}/R$$$$; \
@@ -94,7 +100,7 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for d in R data demo exec inst man src po; do \
+	@for d in R data demo exec inst man src po tests; do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); \
 	          $(TAR) -c -f - $(DISTDIR_TAR_EXCLUDE) $${d}) \

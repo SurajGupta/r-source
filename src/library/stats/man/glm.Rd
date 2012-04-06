@@ -36,10 +36,11 @@ glm.fit(x, y, weights = rep(1, nobs),
     to a family function.  (See \code{\link{family}} for details of
     family functions.)}
 
-  \item{data}{an optional data frame containing the variables
-    in the model.  If not found in \code{data}, the variables are taken
-    from \code{environment(formula)}, typically the environment from
-    which \code{glm} is called.}
+  \item{data}{an optional data frame, list or environment (or object
+    coercible by \code{\link{as.data.frame}} to a data frame) containing
+    the variables in the model.  If not found in \code{data}, the
+    variables are taken from \code{environment(formula)},
+    typically the environment from which \code{glm} is called.}
 
   \item{weights}{an optional vector of weights to be used
     in the fitting process.}
@@ -118,11 +119,12 @@ glm.fit(x, y, weights = rep(1, nobs),
   of \code{first} and \code{second}.
   This is the same as \code{first + second + first:second}.
 
-  \code{glm.fit} and \code{glm.fit.null} are the workhorse functions:
-  the former calls the latter for a null model (with no intercept).
+  \code{glm.fit} is the workhorse function.
 
   If more than one of \code{etastart}, \code{start} and \code{mustart}
-  is specified, the first in the list will be used.
+  is specified, the first in the list will be used.  It is often
+  advisable to supply starting values for a \code{\link{quasi}} family,
+  and also for families with unusual links such as \code{gaussian("log")}.
 
   All of \code{weights}, \code{subset}, \code{offset}, \code{etastart}
   and \code{mustart} are evaluated in the same way as variables in
@@ -150,7 +152,8 @@ glm.fit(x, y, weights = rep(1, nobs),
 
   \item{coefficients}{a named vector of coefficients}
   \item{residuals}{the \emph{working} residuals, that is the residuals
-    in the final iteration of the IWLS fit.}
+    in the final iteration of the IWLS fit.  Since cases with zero
+    weights are omitted, their working residuals are \code{NA}.}
   \item{fitted.values}{the fitted mean values, obtained by transforming
     the linear predictors by the inverse of the link function.}
   \item{rank}{the numeric rank of the fitted linear model.}
@@ -182,7 +185,7 @@ glm.fit(x, y, weights = rep(1, nobs),
   \item{data}{the \code{data argument}.}
   \item{offset}{the offset vector used.}
   \item{control}{the value of the \code{control} argument used.}
-  \item{method}{the name of the fitter function used, in \R always
+  \item{method}{the name of the fitter function used, currently always
     \code{"glm.fit"}.}
   \item{contrasts}{(where relevant) the contrasts used.}
   \item{xlevels}{(where relevant) a record of the levels of the factors
@@ -253,41 +256,10 @@ anova(glm.D93)
 summary(glm.D93)
 
 ## an example with offsets from Venables & Ripley (2002, p.189)
-\dontshow{"anorexia" <-
-structure(list(Treat = structure(c(2, 2, 2, 2, 2, 2, 2, 2, 2,
-2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-), .Label = c("CBT", "Cont", "FT"), class = "factor"), Prewt = c(80.7,
-89.4, 91.8, 74, 78.1, 88.3, 87.3, 75.1, 80.6, 78.4, 77.6, 88.7,
-81.3, 78.1, 70.5, 77.3, 85.2, 86, 84.1, 79.7, 85.5, 84.4, 79.6,
-77.5, 72.3, 89, 80.5, 84.9, 81.5, 82.6, 79.9, 88.7, 94.9, 76.3,
-81, 80.5, 85, 89.2, 81.3, 76.5, 70, 80.4, 83.3, 83, 87.7, 84.2,
-86.4, 76.5, 80.2, 87.8, 83.3, 79.7, 84.5, 80.8, 87.4, 83.8, 83.3,
-86, 82.5, 86.7, 79.6, 76.9, 94.2, 73.4, 80.5, 81.6, 82.1, 77.6,
-83.5, 89.9, 86, 87.3), Postwt = c(80.2, 80.1, 86.4, 86.3, 76.1,
-78.1, 75.1, 86.7, 73.5, 84.6, 77.4, 79.5, 89.6, 81.4, 81.8, 77.3,
-84.2, 75.4, 79.5, 73, 88.3, 84.7, 81.4, 81.2, 88.2, 78.8, 82.2,
-85.6, 81.4, 81.9, 76.4, 103.6, 98.4, 93.4, 73.4, 82.1, 96.7,
-95.3, 82.4, 72.5, 90.9, 71.3, 85.4, 81.6, 89.1, 83.9, 82.7, 75.7,
-82.6, 100.4, 85.2, 83.6, 84.6, 96.2, 86.7, 95.2, 94.3, 91.5,
-91.9, 100.3, 76.7, 76.8, 101.6, 94.9, 75.2, 77.8, 95.5, 90.7,
-92.5, 93.8, 91.7, 98)), .Names = c("Treat", "Prewt", "Postwt"
-), class = "data.frame", row.names = c("1", "2", "3", "4", "5",
-"6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-"17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27",
-"28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38",
-"39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",
-"50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60",
-"61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71",
-"72"))}
-%% "else" (not dontshow)
-\dontrun{
-## Need the anorexia data from a recent version of the package 'MASS':
-library(MASS)
-}
+data(anorexia, package="MASS")
+
 anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),
-            family = gaussian, data = anorexia)
+                family = gaussian, data = anorexia)
 summary(anorex.1)
 
 # A Gamma example, from McCullagh & Nelder (1989, pp. 300-2)

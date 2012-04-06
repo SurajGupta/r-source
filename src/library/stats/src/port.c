@@ -355,16 +355,19 @@ SEXP port_nlminb(SEXP fn, SEXP gr, SEXP hs, SEXP rho,
     SEXP xpt; 
     double *b = (double *) NULL, *g = (double *) NULL,
 	*h = (double *) NULL, fx = R_PosInf;
-
+    if (isNull(rho)) {
+	warning(_("use of NULL environment is deprecated"));
+	rho = R_BaseEnv;
+    } else
     if (!isEnvironment(rho))
-	error(_("`rho' must be an environment"));
+	error(_("'rho' must be an environment"));
     if (!isReal(d) || n < 1)
-	error(_("`d' must be a nonempty numeric vector"));
+	error(_("'d' must be a nonempty numeric vector"));
     if (hs != R_NilValue && gr == R_NilValue)
 	error(_("When Hessian defined must also have gradient defined"));
     if (R_NilValue == PROTECT(xpt = findVarInFrame(rho, install(".par"))) ||
 	!isReal(xpt) || LENGTH(xpt) != n)
-	error(_("environment `rho' must contain a numeric vector `.par' of length %d"),
+	error(_("environment 'rho' must contain a numeric vector '.par' of length %d"),
 	      n);
 
     if ((LENGTH(lowerb) == n) && (LENGTH(upperb) == n)) {
@@ -374,7 +377,7 @@ SEXP port_nlminb(SEXP fn, SEXP gr, SEXP hs, SEXP rho,
 		b[2*i] = REAL(lowerb)[i];
 		b[2*i + 1] = REAL(upperb)[i];
 	    }
-	} else error(_("lowerb and upperb must be numeric vectors"));
+	} else error(_("'lower' and 'upper' must be numeric vectors"));
     }
     if (gr != R_NilValue) {
 	g = Calloc(n, double);
@@ -420,7 +423,7 @@ static R_INLINE SEXP getElement(SEXP list, char *nm)
     int i; SEXP names = getAttrib(list, R_NamesSymbol);
 
     if (!isNewList(list) || LENGTH(names) != LENGTH(list))
-	error(_("getElement applies only to named lists"));
+	error(_("'getElement' applies only to named lists"));
     for (i = 0; i < LENGTH(list); i++)
 	if (!strcmp(CHAR(STRING_ELT(names, i)), nm))
 	    return(VECTOR_ELT(list, i));
@@ -454,7 +457,7 @@ static void neggrad(SEXP gf, SEXP rho, SEXP gg)
 
     if (TYPEOF(val) != TYPEOF(gg) || !isMatrix(val) || dims[0] != gdims[0] ||
 	dims[1] != gdims[1])
-	error(_("gradient must be a numeric matrix of dimension (%d,%d)"),
+	error(_("'gradient' must be a numeric matrix of dimension (%d,%d)"),
 	      gdims[0], gdims[1]);
     for (i = 0; i < ntot; i++) REAL(gg)[i] = - REAL(val)[i];
     UNPROTECT(1);
@@ -506,7 +509,7 @@ SEXP port_nlsb(SEXP m, SEXP d, SEXP gg, SEXP iv, SEXP v,
 	*rd = Calloc(nd, double);
 
     if (!isReal(d) || n < 1)
-	error(_("`d' must be a nonempty numeric vector"));
+	error(_("'d' must be a nonempty numeric vector"));
     if(!isNewList(m)) error(_("m must be a list"));
 				/* Initialize parameter vector */
     getPars = PROTECT(lang1(getFunc(m, "getPars", "m")));
@@ -526,7 +529,7 @@ SEXP port_nlsb(SEXP m, SEXP d, SEXP gg, SEXP iv, SEXP v,
 		b[2*i] = REAL(lowerb)[i];
 		b[2*i + 1] = REAL(upperb)[i];
 	    }
-	} else error(_("lowerb and upperb must be numeric vectors"));
+	} else error(_("'lowerb' and 'upperb' must be numeric vectors"));
     }
 
     do {

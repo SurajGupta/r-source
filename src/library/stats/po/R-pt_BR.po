@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-12-12 09:04\n"
-"PO-Revision-Date: 2005-11-05 18:35-0200\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
+"PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
 "MIME-Version: 1.0\n"
@@ -114,11 +114,14 @@ msgstr "escopo não é um subconjunto dos rótulos dos termos"
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "nenhum método 'drop1' para modelos \"mlm\""
 
-msgid "lower scope is not included in model"
-msgstr "escopo inferior não incluído no modelo"
+msgid "F test assumes 'quasi%s' family"
+msgstr "teste F supõe família 'quasi%s'"
 
-msgid "upper scope does not include model"
-msgstr "escopo superior não inclui modelo"
+msgid "lower scope has term(s) %s not included in model"
+msgstr "escopo inferior tem termo(s) %s não incluído(s) no modelo"
+
+msgid "upper scope does not include model term(s) %s"
+msgstr "escopo superior não inclui termos do modelo %s"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr "AIC não definido para esse modelo, então 'step' não pode continuar"
@@ -743,7 +746,7 @@ msgid "link not recognised"
 msgstr "link não reconhecido"
 
 msgid ""
-"link \"%s\" not available for poisson family; available links are \"identity"
+"link \"%s\" not available for Poisson family; available links are \"identity"
 "\", \"log\" and \"sqrt\""
 msgstr ""
 "ligação \"%s\" não disponível para a família Poisson; ligações disponíveis "
@@ -768,6 +771,9 @@ msgid ""
 msgstr ""
 "ligação \"%s\" não disponível para família gaussiana, ligações disponíveis "
 "são \"inverse\", \"log\" e \"identity\""
+
+msgid "cannot find valid starting values: please specify some"
+msgstr "não foi possível encontrar valores iniciais válidos: especifique algum"
 
 msgid ""
 "link \"%s\" not available for binomial family, available links are \"logit"
@@ -870,8 +876,11 @@ msgstr "alternative deve ser \"two.sided\", \"less\" ou \"greater\""
 msgid "'or' must be a single number between 0 and Inf"
 msgstr "'or' deve ser um único número entre 0 e Inf"
 
-msgid "p-values may be incorrect"
-msgstr "níveis descritivos podem estar incorretos"
+msgid "need 2 or more non-zero row marginals"
+msgstr "2 ou mais marginais das linhas precisam ser diferentes de 0"
+
+msgid "need 2 or more non-zero column marginals"
+msgstr "2 ou mais marginais das colunas precisam ser diferentes de 0"
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
 msgstr "'hybrid' é ignorado para uma tabela 2 x 2"
@@ -973,9 +982,6 @@ msgstr ""
 "comprimento de 'start' deve ser igual a %d e corresponder aos coeficientes "
 "iniciais para %s"
 
-msgid "cannot find valid starting values: please specify some"
-msgstr "não foi possível encontrar valores iniciais válidos: especifique algum"
-
 msgid "NAs in V(mu)"
 msgstr "NAs em V(mu)"
 
@@ -1031,6 +1037,12 @@ msgstr ""
 msgid ","
 msgstr ","
 
+msgid "using F test with a %s family is inappropriate"
+msgstr "uso do teste F com a família %s é inapropriado"
+
+msgid "using F test with a fixed dispersion is inappropriate"
+msgstr "uso do teste F com dispersão fixa é inapropriado"
+
 msgid "models with response"
 msgstr "modelos sem resposta"
 
@@ -1040,6 +1052,9 @@ msgstr "removido porque resposta difere do modelo 1"
 msgid "models were not all fitted to the same size of dataset"
 msgstr ""
 "modelos não foram todos ajustados a conjuntos de dados de mesmo tamanho"
+
+msgid "using F test with a '%s' family is inappropriate"
+msgstr "uso do teste F com a família '%s' é inapropriado"
 
 msgid "observations with zero weight not used for calculating dispersion"
 msgstr "observações com peso zero não foram usadas para calcular a dispersão"
@@ -1390,7 +1405,7 @@ msgid "type '%s' is not implemented yet"
 msgstr "tipo '%s' ainda não implementado"
 
 msgid "this fit does not inherit from \"lm\""
-msgstr ""
+msgstr "esse ajuste não herda de \"lm\""
 
 msgid "'cterms' argument must match terms in model object"
 msgstr "argumento 'cterms' deve corresponder aos termos do objeto do modelo"
@@ -1511,16 +1526,13 @@ msgstr "não é possível reconhecer o nome do parâmetro"
 msgid "levels truncated to positive values only"
 msgstr "níveis truncados para valores positivos"
 
-msgid "setVarying : vary length must match length of parameters"
+msgid "setVarying : 'vary' length must match length of parameters"
 msgstr ""
-"setVarying : comprimento variável deve corresponder ao comprimento dos "
+"setVarying : comprimento de 'vary' deve corresponder ao comprimento dos "
 "parâmetros"
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "matriz gradiente singular nas estimativas iniciais dos parâmetros"
-
-msgid "argument 'weights' is currently ignored"
-msgstr ""
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
@@ -1529,9 +1541,6 @@ msgstr ""
 
 msgid "Convergence failure:"
 msgstr "Falha na convergência: "
-
-msgid "rows with zero weights not counted"
-msgstr "linhas com peso zero não contadas"
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "não é possível calcular verossimilhança REML para objetos \"nls\""
@@ -1847,6 +1856,9 @@ msgstr "spline: primeiro e último valor de y diferem - usando y[1] para ambos"
 msgid "splinefun: invalid interpolation method"
 msgstr "splinefun: método de interpolação inválido"
 
+msgid "'deriv' must be between 0 and 3"
+msgstr "'deriv' deve estar entre 0 e 3"
+
 msgid "stepfun: 'x' must be ordered increasingly"
 msgstr "stepfun: 'x' deve estar ordenado crescentemente"
 
@@ -2016,6 +2028,9 @@ msgstr "especificação de ordem 'ma' inconsistente"
 msgid "number of differences must be a positive integer"
 msgstr "número de diferenças deve ser um inteiro positivo"
 
+msgid "'start.innov' is too short: need %d points"
+msgstr "'start.innov' é muito curto: são necessários %d pontos"
+
 msgid "insufficient observations"
 msgstr "observações insuficientes"
 
@@ -2119,3 +2134,4 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "parâmetro %s não ocorre na fórmula do modelo"
 msgstr[1] "parâmetros %s não ocorrem na fórmula do modelo"
+

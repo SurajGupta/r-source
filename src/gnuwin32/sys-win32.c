@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
          /* See ../unix/system.txt for a description of functions */
@@ -101,6 +101,7 @@ SEXP do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
     return mkString("Win32");
 }
 
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 
 #ifdef _R_HAVE_TIMING_
@@ -126,12 +127,16 @@ void R_getProcTime(double *data)
     long  elapsed;
     double kernel, user;
     OSVERSIONINFO verinfo;
+    /* This is in msec, but to clock-tick accuracy,
+       said to be 10ms on NT and 55ms on Win95 */
     elapsed = (GetTickCount() - StartTime) / 10;
 
     verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&verinfo);
     switch(verinfo.dwPlatformId) {
     case VER_PLATFORM_WIN32_NT:
+	/* These are in units of 100ns, but with an accuracy only
+	   in clock ticks.  So we round to 0.01s */
 	GetProcessTimes(GetCurrentProcess(), &Create, &Exit, &Kernel, &User);
 	user = 1e-5 * ((double) User.dwLowDateTime + 
 		       (double) User.dwHighDateTime * 4294967296.0);

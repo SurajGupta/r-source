@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -57,7 +57,7 @@ static Rboolean random1(double (*f) (), double *a, int na, double *x, int n)
 /* "do_random1" - random sampling from 1 parameter families. */
 /* See switch below for distributions. */
 
-SEXP do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a;
     int i, n, na;
@@ -128,7 +128,7 @@ static Rboolean random2(double (*f) (), double *a, int na, double *b, int nb,
 /* "do_random2" - random sampling from 2 parameter families. */
 /* See switch below for distributions. */
 
-SEXP do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a, b;
     int i, n, na, nb;
@@ -213,7 +213,7 @@ static Rboolean random3(double (*f) (), double *a, int na, double *b, int nb,
 /* "do_random3" - random sampling from 3 parameter families. */
 /* See switch below for distributions. */
 
-SEXP do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a, b, c;
     int i, n, na, nb, nc;
@@ -328,10 +328,11 @@ walker_ProbSampleReplace(int n, double *p, int *a, int nans, int *ans)
        and L ... H[n-1] label those >= 1.
        By rounding error we could have q[i] < 1. or > 1. for all entries.
      */
-    if(n <= 100000) {
+    if(n <= 10000) {
 	/* might do this repeatedly, so speed matters */
 	HL = (int *)alloca(n * sizeof(int));
 	q = (double *) alloca(n * sizeof(double));
+	R_CheckStack();
     } else {
 	/* Slow enough anyway not to risk overflow */
 	HL = Calloc(n, int);
@@ -450,16 +451,19 @@ static void FixupProb(SEXP call, double *p, int n, int k, int replace)
 /* do_sample - equal probability sampling with/without replacement. */
 /* Implements sample(n, k, r) - choose k elements from 1 to n */
 /* with/without replacement according to r. */
-SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP x, y, prob;
+    SEXP x, y, prob, sreplace;
     int k, n, replace;
     double *p;
 
     checkArity(op, args);
     n = asInteger(CAR(args)); args = CDR(args);
     k = asInteger(CAR(args)); args = CDR(args);
-    replace = asLogical(CAR(args)); args = CDR(args);
+    sreplace = CAR(args); args = CDR(args);
+    if( length(sreplace) != 1 )
+         errorcall(call, _("invalid '%s' argument"), "replace");
+    replace = asLogical(sreplace);
     prob = CAR(args);
     if (replace == NA_LOGICAL)
 	errorcall(call, _("invalid '%s' argument"), "replace");
@@ -503,7 +507,7 @@ SEXP do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
     return y;
 }
 
-SEXP do_rmultinom(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_rmultinom(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP prob, ans, nms;
     int n, size, k, i, ik;

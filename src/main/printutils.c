@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999--2005  The R Development Core Team
+ *  Copyright (C) 1999--2006  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8>
@@ -23,7 +23,7 @@
    char here is either ASCII or handled as a whole, apart from Rstrlen
    and EncodeString.
 
-   Octal representation of strings replaced by \u+6hex (can that be
+   Octal representation of strings replaced by \u+4/8hex (can that be
    improved?).
 */
 
@@ -220,12 +220,24 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
     return buff;
 }
 
+/* <FIXME> encodeString and Rstrwid make several assumptions which
+   may not be true.
+
+   1) That the ASCII charset is embedded as single bytes 0-127.
+   2) All multi-byte chars start with a byte 128-255.
+   3) The wchar_t representation used to hold multibyte chars.
+      is UCS-2 or -4 (and not say UTF-16 with surrogates).
+   4) The encoding is stateless.
+   
+   These are all true for UTF-8 and the Windows DBCSes, so perhaps
+   it does not matter much.  But it would be better to convert the
+   whole string to UCS-4 and then handle a char at a time.
+*/
+
 #ifdef SUPPORT_MBCS
+# include <R_ext/rlocale.h>
 #include <wchar.h>
 #include <wctype.h>
-#if !HAVE_DECL_WCWIDTH
-extern int wcwidth(wchar_t c);
-#endif
 #endif
 /* strlen() using escaped rather than literal form,
    and allows for embedded nuls.
@@ -271,13 +283,7 @@ int Rstrwid(char *str, int slen, int quote)
 	    int res; wchar_t wc;
 	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
 	    if(res > 0) {
-		len += iswprint((wint_t)wc) ?
-#ifdef HAVE_WCWIDTH
-		    wcwidth(wc)
-#else
-		    1
-#endif
-		    : 
+		len += iswprint((wint_t)wc) ? Ri18n_wcwidth(wc) : 
 #ifdef Win32
 		    6;
 #else
@@ -334,8 +340,8 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 
     /* We need enough space for the encoded string, including escapes.
        Octal encoding turns one byte into four.
-       Unicode encoding can turn a multibyte into six or perhaps ten.
-       Let's be wasteful here.
+       Unicode encoding can turn a multibyte into six.
+       Let's be wasteful here (but why 5 not MB_CUR_MAX?)
      */
     R_AllocStringBuffer(imax2(5*cnt+2, w), buffer); /* +2 allows for quotes */
     q = buffer->data;
@@ -494,31 +500,71 @@ void REprintf(char *format, ...)
     va_end(ap);
 }
 
+#if defined(HAVE_VASPRINTF) && !HAVE_DECL_VASPRINTF
+int vasprintf(char **strp, const char *fmt, va_list ap);
+#endif
+
+#if !HAVE_VA_COPY && HAVE___VA_COPY
+# define va_copy __va_copy
+# undef HAVE_VA_COPY
+# define HAVE_VA_COPY 1
+#endif
+
+#ifdef HAVE_VA_COPY
+# define R_BUFSIZE BUFSIZE
+#else
+# define R_BUFSIZE 100000
+#endif
 void Rcons_vprintf(const char *format, va_list arg)
 {
-    char buf[BUFSIZE], *p = buf, *vmax = vmaxget();
+    char buf[R_BUFSIZE], *p = buf;
     int res;
+#ifdef HAVE_VA_COPY
+    char *vmax = vmaxget();
+    int usedRalloc = FALSE, usedVasprintf = FALSE;
+    va_list aq;
 
-    res = vsnprintf(p, BUFSIZE, format, arg);
-    if(res >= BUFSIZE) { /* res is the desired output length */
+    va_copy(aq, arg);
+    res = vsnprintf(buf, R_BUFSIZE, format, aq);
+    va_end(aq);
+#ifdef HAVE_VASPRINTF
+    if(res >= R_BUFSIZE || res < 0)
+	vasprintf(&p, format, arg);
+#else
+    if(res >= R_BUFSIZE) { /* res is the desired output length */
+	usedRalloc = TRUE;
 	p = R_alloc(res+1, sizeof(char));
 	vsprintf(p, format, arg);
     } else if(res < 0) { /* just a failure indication */
-	p = R_alloc(10*BUFSIZE, sizeof(char));
-	res = vsnprintf(p, 10*BUFSIZE, format, arg);
+	p = R_alloc(10*R_BUFSIZE, sizeof(char));
+	res = vsnprintf(p, 10*R_BUFSIZE, format, arg);
 	if (res < 0) {
-	    *(p + 10*BUFSIZE) = '\0';
+	    *(p + 10*R_BUFSIZE) = '\0';
 	    warning("printing of extremely long output is truncated");
 	}
     }
+#endif /* HAVE_VASPRINTF */
+#else
+    res = vsnprintf(p, R_BUFSIZE, format, arg);
+    if(res >= R_BUFSIZE || res < 0) { 
+	/* res is the desired output length or just a failure indication */
+	    buf[R_BUFSIZE - 1] = '\0';
+	    warning(_("printing of extremely long output is truncated"));
+	    res = R_BUFSIZE;
+    }
+#endif /* HAVE_VA_COPY */
     R_WriteConsole(p, strlen(buf));
-    vmaxset(vmax);
+#ifdef HAVE_VA_COPY
+    if(usedRalloc) vmaxset(vmax);
+    if(usedVasprintf) free(p);
+#endif
 }
 
 void Rvprintf(const char *format, va_list arg)
 {
     int i=0, con_num=R_OutputCon;
     Rconnection con;
+    va_list argcopy;
     static int printcount = 0;
     if (++printcount > 100) {
 	R_CheckUserInterrupt();
@@ -528,9 +574,20 @@ void Rvprintf(const char *format, va_list arg)
     do{
       con = getConnection(con_num);
       /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
+#ifdef HAVE_VA_COPY
+      va_copy(argcopy, arg);
+      (con->vfprintf)(con, format, argcopy);
+      va_end(argcopy);
+#else /* don't support sink(,split=TRUE) */
+      va_start(arg, format);
       (con->vfprintf)(con, format, arg);
+      va_end(arg);
+#endif
       con->fflush(con);
       con_num = getActiveSink(i++);
+#ifndef HAVE_VA_COPY
+      if (con_num>0) error("Internal error: this platform does not support split output")
+#endif
     } while(con_num>0);
 
 
@@ -577,18 +634,18 @@ void REvprintf(const char *format, va_list arg)
     }
 }
 
-int IndexWidth(int n)
+int attribute_hidden IndexWidth(int n)
 {
     return (int) (log10(n + 0.5) + 1);
 }
 
-void VectorIndex(int i, int w)
+void attribute_hidden VectorIndex(int i, int w)
 {
 /* print index label "[`i']" , using total width `w' (left filling blanks) */
     Rprintf("%*s[%ld]", w-IndexWidth(i)-2, "", i);
 }
 
-void MatrixColumnLabel(SEXP cl, int j, int w)
+void attribute_hidden MatrixColumnLabel(SEXP cl, int j, int w)
 {
     int l;
     SEXP tmp;
@@ -605,7 +662,7 @@ void MatrixColumnLabel(SEXP cl, int j, int w)
     }
 }
 
-void RightMatrixColumnLabel(SEXP cl, int j, int w)
+void attribute_hidden RightMatrixColumnLabel(SEXP cl, int j, int w)
 {
     int l;
     SEXP tmp;
@@ -625,7 +682,7 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
     }
 }
 
-void LeftMatrixColumnLabel(SEXP cl, int j, int w)
+void attribute_hidden LeftMatrixColumnLabel(SEXP cl, int j, int w)
 {
     int l;
     SEXP tmp;
@@ -642,7 +699,7 @@ void LeftMatrixColumnLabel(SEXP cl, int j, int w)
     }
 }
 
-void MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
+void attribute_hidden MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
 {
     int l;
     SEXP tmp;

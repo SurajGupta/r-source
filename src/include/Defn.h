@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2005  The R Development Core Team.
+ *  Copyright (C) 1998--2006  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef DEFN_H_
@@ -39,8 +39,21 @@
 # define USE_RINTERNALS
 #endif
 
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_visible __attribute__ ((visibility ("default")))
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_visible
+# define attribute_hidden
+#endif
+
+#define MAXELTSIZE 8192 /* The largest string size */
+
+#define CALLED_FROM_DEFN_H 1
 #include <Rinternals.h>		/*-> Arith.h, Complex.h, Error.h, Memory.h
 				  PrtUtil.h, Utils.h */
+#undef CALLED_FROM_DEFN_H
+
 #include "Internal.h"		/* do_FOO */
 
 #include "Errormsg.h"
@@ -52,9 +65,9 @@
 # endif
 #endif /* SunOS4 */
 
-#ifdef Win32
-void R_ProcessEvents(void);
-#endif /* Win32 */
+#if defined(Win32) || defined(HAVE_AQUA)
+extern void R_ProcessEvents(void);
+#endif
 
 #ifdef Win32
 # include <psignal.h>
@@ -92,6 +105,8 @@ typedef long R_long_t;
 # ifdef HAVE_INTTYPES_H
 #  include <inttypes.h>
 # endif
+/* According to POSIX inttypes.h should include stdint.h, but let's be
+   sure. */
 # ifdef HAVE_STDINT_H
 #  include <stdint.h>
 # endif
@@ -109,6 +124,15 @@ typedef long R_long_t;
   typedef unsigned long R_size_t;
 # define R_SIZE_T_MAX ULONG_MAX
 #endif
+
+/* These are optional C99 types */
+#if !defined(HAVE_INTPTR_T) && !defined(intptr_t)
+ typedef long intptr_t;
+#endif
+#if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
+ typedef unsigned long uintptr_t;
+#endif
+
 
 #define Mega 1048576. /* 1 Mega Byte := 2^20 (= 1048576) Bytes */
 #define Giga 1073741824. /* 1 Giga Byte := 2^30 Bytes */
@@ -132,27 +156,33 @@ typedef long R_long_t;
 #include <math.h>
 
 /* declare substitutions */
-#if defined(HAVE_DECL_ACOSH) && !HAVE_DECL_ACOSH
+#if !defined(acosh) && defined(HAVE_DECL_ACOSH) && !HAVE_DECL_ACOSH
 extern double acosh(double x);
 #endif
-#if defined(HAVE_DECL_ASINH) && !HAVE_DECL_ASINH
+#if !defined(asinh) && defined(HAVE_DECL_ASINH) && !HAVE_DECL_ASINH
 extern double asinh(double x);
 #endif
-#if defined(HAVE_DECL_ATANH) && !HAVE_DECL_ATANH
+#if !defined(atanh) && defined(HAVE_DECL_ATANH) && !HAVE_DECL_ATANH
 extern double atanh(double x);
 #endif
-#if defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
+#if !defined(snprintf) && defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
 extern int snprintf (char *s, size_t n, const char *format, ...);
 #endif
-#if defined(HAVE_DECL_STRDUP) && !HAVE_DECL_STRDUP
+#if !defined(strdup) && defined(HAVE_DECL_STRDUP) && !HAVE_DECL_STRDUP
 extern char *strdup(const char *s1);
 #endif
-#if defined(HAVE_DECL_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
+#if !defined(strncascmp) && defined(HAVE_DECL_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
 extern int strncasecmp(const char *s1, const char *s2, size_t n);
 #endif
-#if defined(HAVE_DECL_VSNPRINTF) && !HAVE_DECL_VSNPRINTF
+#if !defined(vsnprintf) && defined(HAVE_DECL_VSNPRINTF) && !HAVE_DECL_VSNPRINTF
 extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #endif
+
+/* Glibc manages to not define this in -pedantic -ansi */
+#if defined(HAVE_PUTENV) && !defined(putenv) && defined(HAVE_DECL_PUTENV) && !HAVE_DECL_PUTENV
+extern int putenv(char *string);
+#endif
+
 
 /* Getting the working directory */
 #if defined(HAVE_GETCWD)
@@ -206,7 +236,6 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #include <R_ext/Rdynload.h>
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
-#define MAXELTSIZE 8192 /* The largest string size */
 #define MAXIDSIZE   256	/* Largest symbol size possible */
 
 /* The type of the do_xxxx functions. */
@@ -276,15 +305,13 @@ typedef struct {
 } FUNTAB;
 
 #ifdef USE_RINTERNALS
-/* General Cons Cell Attributes */
-#define ATTRIB(x)	((x)->attrib)
-#define OBJECT(x)	((x)->sxpinfo.obj)
-#define MARK(x)		((x)->sxpinfo.mark)
-#define TYPEOF(x)	((x)->sxpinfo.type)
-#define NAMED(x)	((x)->sxpinfo.named)
+/* There is much more in Rinternals.h, including function versions
+ * of the Promise and Hasking groups.
+ */
 
 /* Primitive Access Macros */
 #define PRIMOFFSET(x)	((x)->u.primsxp.offset)
+#define SET_PRIMOFFSET(x,v)	(((x)->u.primsxp.offset)=(v))
 #define PRIMFUN(x)	(R_FunTab[(x)->u.primsxp.offset].cfun)
 #define PRIMNAME(x)	(R_FunTab[(x)->u.primsxp.offset].name)
 #define PRIMVAL(x)	(R_FunTab[(x)->u.primsxp.offset].code)
@@ -297,10 +324,6 @@ typedef struct {
 #define PRENV(x)	((x)->u.promsxp.env)
 #define PRVALUE(x)	((x)->u.promsxp.value)
 #define PRSEEN(x)	((x)->sxpinfo.gp)
-#ifndef USE_WRITE_BARRIER
-# define SET_PRENV(x,v)	  (((x)->u.promsxp.env)=(v))
-# define SET_PRVALUE(x,v) (((x)->u.promsxp.value)=(v))
-#endif
 #define SET_PRSEEN(x,v)	(((x)->sxpinfo.gp)=(v))
 
 /* Hashing Macros */
@@ -324,15 +347,21 @@ typedef struct {
 #define FLOAT2VEC(n)	(((n)>0)?(((n)*sizeof(double)-1)/sizeof(VECREC)+1):0)
 #define COMPLEX2VEC(n)	(((n)>0)?(((n)*sizeof(Rcomplex)-1)/sizeof(VECREC)+1):0)
 #define PTR2VEC(n)	(((n)>0)?(((n)*sizeof(SEXP)-1)/sizeof(VECREC)+1):0)
-#else
+
+#else /* USE_RINTERNALS */
+
 typedef struct VECREC *VECP;
+int (PRIMOFFSET)(SEXP x);
+void (SET_PRIMOFFSET)(SEXP x, int v);
+
 #define PRIMFUN(x)	(R_FunTab[PRIMOFFSET(x)].cfun)
 #define PRIMNAME(x)	(R_FunTab[PRIMOFFSET(x)].name)
 #define PRIMVAL(x)	(R_FunTab[PRIMOFFSET(x)].code)
 #define PRIMARITY(x)	(R_FunTab[PRIMOFFSET(x)].arity)
 #define PPINFO(x)	(R_FunTab[PRIMOFFSET(x)].gram)
 #define PRIMPRINT(x)	(((R_FunTab[PRIMOFFSET(x)].eval)/100)%10)
-#endif
+
+#endif /* USE_RINTERNALS */
 
 #ifdef BYTECODE
 # ifdef BC_INT_STACK
@@ -462,8 +491,10 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 
 #ifdef __MAIN__
 # define INI_as(v) = v
+#define extern0 attribute_hidden
 #else
 # define INI_as(v)
+#define extern0 extern
 #endif
 
 /* extern int	errno; already have errno.h ! */
@@ -476,56 +507,62 @@ LibExtern int R_interrupts_pending INI_as(0);
 LibExtern char*	R_Home;		    /* Root of the R tree */
 
 /* Memory Management */
-extern R_size_t	R_NSize		INI_as(R_NSIZE);/* Size of cons cell heap */
-extern R_size_t	R_VSize		INI_as(R_VSIZE);/* Size of the vector heap */
-extern SEXP	R_NHeap;	    /* Start of the cons cell heap */
-extern SEXP	R_FreeSEXP;	    /* Cons cell free list */
-extern R_size_t	R_Collected;	    /* Number of free cons cells (after gc) */
+extern0 R_size_t R_NSize  INI_as(R_NSIZE);/* Size of cons cell heap */
+extern0 R_size_t R_VSize  INI_as(R_VSIZE);/* Size of the vector heap */
+extern0 SEXP	R_NHeap;	    /* Start of the cons cell heap */
+extern0 SEXP	R_FreeSEXP;	    /* Cons cell free list */
+extern0 R_size_t R_Collected;	    /* Number of free cons cells (after gc) */
 LibExtern SEXP	R_PreciousList;	    /* List of Persistent Objects */
 LibExtern int	R_Is_Running;	    /* for Windows memory manager */
 
 /* The Pointer Protection Stack */
-extern int	R_PPStackSize	INI_as(R_PPSSIZE); /* The stack size (elements) */
-extern int	R_PPStackTop;	    /* The top of the stack */
-extern SEXP*	R_PPStack;	    /* The pointer protection stack */
+extern0 int	R_PPStackSize	INI_as(R_PPSSIZE); /* The stack size (elements) */
+extern0 int	R_PPStackTop;	    /* The top of the stack */
+extern0 SEXP*	R_PPStack;	    /* The pointer protection stack */
 
 /* Evaluation Environment */
 LibExtern SEXP	R_CurrentExpr;	    /* Currently evaluating expression */
-extern SEXP	R_ReturnedValue;    /* Slot for return-ing values */
-extern SEXP*	R_SymbolTable;	    /* The symbol table */
+extern0 SEXP	R_ReturnedValue;    /* Slot for return-ing values */
+extern0 SEXP*	R_SymbolTable;	    /* The symbol table */
 LibExtern RCNTXT R_Toplevel;	    /* Storage for the toplevel environment */
 LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel environment */
 LibExtern RCNTXT* R_GlobalContext;    /* The global environment */
 LibExtern int	R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
-extern int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
+extern0 int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
+extern0 int	R_BrowseLines	INI_as(0);	/* lines/per call in browser */
 
-extern int	R_Expressions	INI_as(1000);	/* options(expressions) */
-extern Rboolean	R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
-extern int	R_UseNamespaceDispatch INI_as(TRUE);
-extern int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
+extern0 int	R_Expressions	INI_as(5000);	/* options(expressions) */
+extern0 int	R_Expressions_keep INI_as(5000);	/* options(expressions) */
+extern0 Rboolean R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
+extern0 int	R_UseNamespaceDispatch INI_as(TRUE);
+extern0 int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
+extern uintptr_t R_CStackLimit	INI_as((uintptr_t)-1);	/* C stack limit */
+extern uintptr_t R_CStackStart	INI_as((uintptr_t)-1);	/* Initial stack address */
+extern0 int	R_CStackDir	INI_as(1);	/* C stack direction */
 
 /* File Input/Output */
-LibExtern Rboolean R_Interactive	INI_as(TRUE);	/* TRUE during interactive use*/
-extern Rboolean	R_Quiet		INI_as(FALSE);	/* Be as quiet as possible */
-extern Rboolean	R_Slave		INI_as(FALSE);	/* Run as a slave process */
-extern Rboolean	R_Verbose	INI_as(FALSE);	/* Be verbose */
+LibExtern Rboolean R_Interactive INI_as(TRUE);	/* TRUE during interactive use*/
+extern0 Rboolean R_Quiet	INI_as(FALSE);	/* Be as quiet as possible */
+extern Rboolean  R_Slave	INI_as(FALSE);	/* Run as a slave process */
+extern0 Rboolean R_Verbose	INI_as(FALSE);	/* Be verbose */
 /* extern int	R_Console; */	    /* Console active flag */
 /* IoBuffer R_ConsoleIob; : --> ./IOStuff.h */
+/* R_Consolefile is used in the internet module */
 extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
-extern int	R_ErrorCon	INI_as(2);	/* Error connection */
+extern0 int	R_ErrorCon	INI_as(2);	/* Error connection */
 LibExtern char*	R_TempDir	INI_as(NULL);	/* Name of per-session dir */
-extern char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
+extern0 char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
 
 /* Objects Used In Parsing  */
-extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
-extern SEXP	R_ParseText;	    /* Text to be parsed */
-extern int	R_ParseCnt;	    /* Count of lines of text to be parsed */
-extern int	R_ParseError	INI_as(0); /* Line where parse error occured */
+extern0 SEXP	R_CommentSxp;	    /* Comments accumulate here */
+extern0 SEXP	R_ParseText;	    /* Text to be parsed */
+extern0 int	R_ParseCnt;	    /* Count of lines of text to be parsed */
+extern0 int	R_ParseError	INI_as(0); /* Line where parse error occured */
 #define PARSE_CONTEXT_SIZE 256	    /* Recent parse context kept in a circular buffer */
-extern char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
-extern int	R_ParseContextLast INI_as(0); /* last character in context buffer */
+extern0 char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
+extern0 int	R_ParseContextLast INI_as(0); /* last character in context buffer */
 
 /* Image Dump/Restore */
 extern int	R_DirtyImage	INI_as(0);	/* Current image dirty */
@@ -537,18 +574,21 @@ LibExtern int	R_RestoreHistory;	/* restore the history file? */
 extern void 	R_setupHistory();
 
 /* Warnings/Errors */
-extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
-extern SEXP	R_Warnings;	    /* the warnings and their calls */
-extern int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
+extern0 int	R_CollectWarnings INI_as(0);	/* the number of warnings */
+extern0 SEXP	R_Warnings;	    /* the warnings and their calls */
+extern0 int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
 #ifdef NEW_CONDITION_HANDLING
-extern SEXP	R_HandlerStack;	/* Condition handler stack */
-extern SEXP	R_RestartStack;	/* Stack of available restarts */
+extern0 SEXP	R_HandlerStack;	/* Condition handler stack */
+extern0 SEXP	R_RestartStack;	/* Stack of available restarts */
 #endif
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
+#ifdef Win32
+LibExtern unsigned int localeCP  INI_as(1252); /* the locale's codepage */
+#endif
 
-extern char OutDec	INI_as('.');  /* decimal point used for output */
+extern0 char OutDec	INI_as('.');  /* decimal point used for output */
 
 /* Initialization of the R environment when it is embedded */
 extern int Rf_initEmbeddedR(int argc, char **argv);
@@ -559,10 +599,10 @@ extern char*	R_GUIType	INI_as("unknown");
 
 #ifdef BYTECODE
 #define R_BCNODESTACKSIZE 10000
-extern SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
+extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
 # ifdef BC_INT_STACK
 #define R_BCINTSTACKSIZE 10000
-extern IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
+extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
 # endif
 #endif
 
@@ -582,10 +622,20 @@ SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 
 /* smallest decimal exponent, needed in format.c, set in Init_R_Machine */
-extern int R_dec_min_exponent		INI_as(-308);
+extern0 int R_dec_min_exponent		INI_as(-308);
+
+/* structure for caching machine accuracy values */
+typedef struct {
+    int ibeta, it, irnd, ngrd, machep, negep, iexp, minexp, maxexp;
+    double eps, epsneg, xmin, xmax;
+} AccuracyInfo;
+
+LibExtern AccuracyInfo R_AccuracyInfo;
+
 
 #ifdef __MAIN__
 # undef extern
+# undef extern0
 # undef LibExtern
 #endif
 #undef INI_as
@@ -607,7 +657,6 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define EncodeRaw              Rf_EncodeRaw
 # define EncodeString           Rf_EncodeString
 # define endcontext		Rf_endcontext
-# define errorcall		Rf_errorcall
 # define ErrorMessage		Rf_ErrorMessage
 # define factorsConform		Rf_factorsConform
 # define FetchMethod		Rf_FetchMethod
@@ -638,7 +687,6 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define levelsgets		Rf_levelsgets
 # define mainloop		Rf_mainloop
-# define ParseBrowser	Rf_ParseBrowser
 # define mat2indsub		Rf_mat2indsub
 # define Mbrtowc		Rf_mbrtowc
 # define mkCLOSXP		Rf_mkCLOSXP
@@ -658,6 +706,7 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define parse			Rf_parse
 # define PrintGreeting		Rf_PrintGreeting
 # define PrintVersion		Rf_PrintVersion
+# define PrintVersionString    	Rf_PrintVersionString
 # define PrintWarnings		Rf_PrintWarnings
 # define promiseArgs		Rf_promiseArgs
 # define RemoveClass		Rf_RemoveClass
@@ -669,18 +718,14 @@ extern int R_dec_min_exponent		INI_as(-308);
 # define substituteList		Rf_substituteList
 # define tsConform		Rf_tsConform
 # define tspgets		Rf_tspgets
+# define type2char		Rf_type2char
 # define type2str		Rf_type2str
 # define type2symbol		Rf_type2symbol
 # define unbindVar		Rf_unbindVar
 # define usemethod		Rf_usemethod
 # define warningcall		Rf_warningcall
 # define WarningMessage		Rf_WarningMessage
-# define yyerror		Rf_yyerror
-# define yyinit			Rf_yyinit
-# define yylex			Rf_yylex
 # define yyparse		Rf_yyparse
-# define yyprompt		Rf_yyprompt
-# define yywrap			Rf_yywrap
 
 /* Platform Dependent Gui Hooks */
 
@@ -697,7 +742,6 @@ void	R_Busy(int);
 int	R_ShowFiles(int, char **, char **, char *, Rboolean, char *);
 int     R_EditFiles(int, char **, char **, char *);
 int	R_ChooseFile(int, char*, int);
-char*	R_Date(void);
 char*	R_HomeDir(void);
 Rboolean R_FileExists(char*);
 Rboolean R_HiddenFile(char*);
@@ -782,11 +826,11 @@ void mainloop(void);
 SEXP mat2indsub(SEXP, SEXP);
 SEXP match(SEXP, SEXP, int);
 SEXP mkCLOSXP(SEXP, SEXP, SEXP);
-SEXP mkComplex(char *s);
+/* SEXP mkComplex(char *s); */
 /* SEXP mkEnv(SEXP, SEXP, SEXP); */
 SEXP mkFalse(void);
-SEXP mkFloat(char *s);
-SEXP mkNA(void);
+/* SEXP mkFloat(char *s);
+   SEXP mkNA(void); */
 SEXP mkPRIMSXP (int, int);
 SEXP mkPROMISE(SEXP, SEXP);
 SEXP mkQUOTE(SEXP);
@@ -794,12 +838,13 @@ SEXP mkSYMSXP(SEXP, SEXP);
 SEXP mkTrue(void);
 SEXP NewEnvironment(SEXP, SEXP, SEXP);
 void onintr();
-void onsigusr1();
-void onsigusr2();
+RETSIGTYPE onsigusr1(int);
+RETSIGTYPE onsigusr2(int);
 int OneIndex(SEXP, SEXP, int, int, SEXP*, int);
 SEXP parse(FILE*, int);
 void PrintGreeting(void);
 void PrintVersion(char *);
+void PrintVersionString(char *);
 void PrintWarnings(void);
 void process_site_Renviron();
 void process_system_Renviron();
@@ -836,6 +881,7 @@ SEXP R_sysframe(int,RCNTXT*);
 SEXP R_sysfunction(int,RCNTXT*);
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
+char *type2char(SEXPTYPE);
 SEXP type2str(SEXPTYPE);
 SEXP type2symbol(SEXPTYPE);
 void unbindVar(SEXP, SEXP);
@@ -846,8 +892,6 @@ SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
 
 /* ../main/errors.c : */
-void errorcall(SEXP, const char*, ...);
-void warningcall(SEXP, const char*,...);
 void ErrorMessage(SEXP, int, ...);
 void WarningMessage(SEXP, R_WARNING, ...);
 SEXP R_GetTraceback(int);
@@ -862,14 +906,6 @@ void R_SetPPSize(R_size_t);
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);
 
-
-/* gram.y & gram.c : */
-void yyerror(char *);
-void yyinit(void);
-int yylex();
-int yyparse(void);
-void yyprompt(char *format, ...);
-int yywrap(void);
 
 /* ../../main/printutils.c : */
 typedef enum {
@@ -897,6 +933,11 @@ void UNIMPLEMENTED_TYPE(char *s, SEXP x);
 void UNIMPLEMENTED_TYPEt(char *s, SEXPTYPE t);
 Rboolean utf8strIsASCII(char *str);
 #ifdef SUPPORT_MBCS
+typedef unsigned short ucs2_t;
+size_t mbcsToUcs2(char *in, ucs2_t *out, int nout);
+/* size_t mbcsMblen(char *in);
+size_t ucs2ToMbcs(ucs2_t *in, char *out);
+size_t ucs2Mblen(ucs2_t *in); */
 int utf8clen(char c);
 #define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
 size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps);
@@ -922,6 +963,9 @@ size_t Rwcrtomb(char *s, const wchar_t wc);
 size_t Rmbstowcs(wchar_t *wc, const char *s, size_t n);
 size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
 #endif
+
+/* From localecharset.c */
+extern char * locale2charset(const char *);
 
 /* used in relop.c and sort.c */
 #if defined(Win32) && defined(SUPPORT_UTF8)
@@ -965,13 +1009,6 @@ size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
         onintr(); \
 } while(0)
 
-/* structure for caching machine accuracy values */
-typedef struct {
-    int ibeta, it, irnd, ngrd, machep, negep, iexp, minexp, maxexp;
-    double eps, epsneg, xmin, xmax;
-} AccuracyInfo;
-
-extern AccuracyInfo R_AccuracyInfo;
 
 /* FreeBSD defines alloca in stdlib.h, _and_ does not allow a definition
    as here.  (Since it uses GCC, it should use the first clause.) */
@@ -985,6 +1022,13 @@ extern AccuracyInfo R_AccuracyInfo;
 # if !HAVE_DECL_ALLOCA  && !defined(__FreeBSD__)
 extern char *alloca(size_t);
 # endif
+#endif
+
+/* Or use typedef? */
+#ifdef HAVE_LONG_DOUBLE
+# define LDOUBLE long double
+#else
+# define LDOUBLE double
 #endif
 
 #endif /* DEFN_H_ */

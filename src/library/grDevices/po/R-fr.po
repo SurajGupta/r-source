@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
-"PO-Revision-Date: 2005-12-06 14:27+0100\n"
+"POT-Creation-Date: 2006-03-09 16:42\n"
+"PO-Revision-Date: 2006-04-18 08:44+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -73,11 +73,11 @@ msgstr "les espaces de couleurs utilisent différents blancs de référence."
 msgid "cannot shut down device 1 (the null device)"
 msgstr "impossible de fermer le périphérique 1 (périphérique null)"
 
-msgid "cannot supply which and device at the same time"
+msgid "cannot supply 'which' and 'device' at the same time"
 msgstr "fixer 'which' et 'device' en même temps n'est pas autorisé"
 
-msgid "cannot copy the null device"
-msgstr "impossible de copier le périphérique null"
+msgid "cannot copy from the null device"
+msgstr "impossible de copier du périphérique null"
 
 msgid "cannot copy to the null device"
 msgstr "impossible de copier vers le périphérique null"
@@ -94,14 +94,17 @@ msgstr "aucun périphérique d'où imprimer"
 msgid "can only print from screen device"
 msgstr "seul un périphérique écran peut être imprimé"
 
+msgid "need to specify one of 'width' and 'height'"
+msgstr "il faut spécifier 'width' ou 'height'"
+
 msgid "dev.control() called without an open graphics device"
 msgstr "dev.control() appelé sans périphérique graphique ouvert"
 
 msgid "argument is missing with no default"
 msgstr "argument manquant sans valeur par défaut"
 
-msgid "invalid arguments in '%s'  (need named args)"
-msgstr "arguments incorrects dans '%s'  (les arguments doivent être nommés)"
+msgid "invalid arguments in '%s' (need named args)"
+msgstr "arguments incorrects dans '%s' (les arguments doivent être nommés)"
 
 msgid "'name.opt' must be character, name of an existing list"
 msgstr "'name.opt' doit être une chaîne de caractère ou le nom d'une liste existante"
@@ -109,8 +112,8 @@ msgstr "'name.opt' doit être une chaîne de caractère ou le nom d'une liste exist
 msgid "cannot reset non-existent '%s'"
 msgstr "impossible de réinitialiser '%s' car il n'existe pas"
 
-msgid "invalid options in"
-msgstr "options incorrectes dans"
+msgid "invalid options in '%s'"
+msgstr "options incorrectes dans '%s'"
 
 msgid "NOT changing"
 msgstr "NE change(nt) PAS"
@@ -121,23 +124,53 @@ msgstr "argument 'family' incorrect"
 msgid "invalid PDF version"
 msgstr "version de PDF incorrecte"
 
-msgid "invalid"
-msgstr "incorrect"
+msgid "Invalid font type"
+msgstr "Type de police incorrect"
 
-msgid "in PostScript font specification"
-msgstr "dans les spécification de police PostScript"
+msgid "invalid family name in font specification"
+msgstr "nom de famille incorrect dans la spécification de la police"
 
-msgid "font"
-msgstr "police"
+msgid "invalid metric information in font specification"
+msgstr "information de métrique incorrecte dans la spécification de police"
 
-msgid "already in use"
-msgstr "déjà utilisée"
+msgid "invalid encoding in font specification"
+msgstr "encodage incorrect dans la spécification de police"
 
-msgid "invalid arguments in postscriptFonts (must be font names)"
-msgstr "arguments incorrects dans postscriptFonts (il faut des noms de police)"
+msgid "Not a CID font"
+msgstr "Ce n'est pas une police CID"
 
-msgid "invalid arguments in postscriptFonts (need named args)"
-msgstr "arguments incorrects dans postscriptFonts (les arguments doivent être nommés)"
+msgid "invalid CMap name in font specification"
+msgstr "nom CMap incorrect dans la spécification de police"
+
+msgid "invalid 'cmapEncoding' in font specification"
+msgstr "'cmapEncoding' incorrect dans la spécification de police"
+
+msgid "invalid PDF resource in font specification"
+msgstr "ressource PDF incorrecte dans la spécification de police"
+
+msgid "Invalid font database name"
+msgstr "Nom de base de données de polices incorrect"
+
+msgid "font %s already in use"
+msgstr "police %s déjà utilisée"
+
+msgid "invalid arguments in '%s' (must be font names)"
+msgstr "arguments incorrects dans '%s' (il faut des noms de police)"
+
+msgid "unknown font"
+msgstr "fonte inconnue"
+
+msgid "font encoding mismatch '%s'/'%s'"
+msgstr "incohérence d'encodage pour la police '%s/%s'"
+
+msgid "'file' must be a non-empty character string"
+msgstr "'file' doit être une chaîne de caractère non vide"
+
+msgid "Invalid output format"
+msgstr "Format de sortie incorrect"
+
+msgid "status %d in running command '%s'"
+msgstr "statut %d dans la commande en cours d'exécution '%s'"
 
 msgid "no current device to record from"
 msgstr "aucun périphérique à partir duquel enregistrer"
@@ -172,9 +205,6 @@ msgstr "les longueurs de 'x', 'y' et 'z' diffèrent"
 msgid "'file' is missing with no default"
 msgstr "'file' est manquant sans valeur par défaut"
 
-msgid "'file' must be a non-empty character string"
-msgstr "'file' doit être une chaîne de caractère non vide"
-
 msgid "sorry, 'gs' cannot be found"
 msgstr "désolé, 'gs' est introuvable"
 
@@ -198,12 +228,6 @@ msgstr "arguments incorrects dans quartzFonts (les arguments doivent être nommés
 
 msgid "invalid X11 font specification:"
 msgstr "spécification de police X11 incorrecte :"
-
-msgid "invalid arguments in X11Fonts (must be font names)"
-msgstr "arguments incorrects dans X11Fonts (il faut des noms de police)"
-
-msgid "invalid arguments in X11Fonts (need named args)"
-msgstr "arguments incorrects dans X11Fonts (les arguments doivent être nommés)"
 
 msgid "can only bring windows devices to the front"
 msgstr "seules les fenêtres des périphériques graphiques peuvent être amenées au premier plan"
@@ -250,3 +274,4 @@ msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "%d valeur z <= 0 est ignorée pour le graphe logarithmique"
 msgstr[1] "%d valeurs z <= 0 sont ignorées pour le graphe logarithmique"
+

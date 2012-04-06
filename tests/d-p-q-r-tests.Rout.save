@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.2.0 Under development (unstable) (2005-07-13 r34959)
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 alpha (2006-04-03 r37628)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > ####	d|ensity
@@ -101,7 +101,7 @@ n= 51 : ......................
 n= 48 : ......................
 > 
 > ##__ 2. Geometric __
-> for(pr in seq(0,1,len=15)) {
+> for(pr in seq(1e-10,1,len=15)) { # p=0 is not a distribution
 +     print(All.eq((dg <- dgeom(0:10, pr)),
 + 		 pr * (1-pr)^(0:10)))
 +     print(All.eq(cumsum(dg), pgeom(0:10, pr)))
@@ -294,16 +294,18 @@ df =  50[1] TRUE
 df = 100[1] TRUE
 > 
 > ## p ~= 1 (<==> 1-p ~= 0) -- gave infinite loop in R <= 1.8.1 -- PR#6421
+> options(warn=-1) # ignore warnings from R's version of log1p
 > psml <- 2^-(10:54)
 > q0 <- qchisq(psml,    df=1.2, ncp=10, lower.tail=FALSE)
-> q1 <- qchisq(1 -psml, df=1.2, ncp=10)
+> q1 <- qchisq(1-psml, df=1.2, ncp=10) # inaccurate in the tail
 > p0 <- pchisq(q0, df=1.2, ncp=10, lower.tail=FALSE)
 > p1 <- pchisq(q1, df=1.2, ncp=10, lower.tail=FALSE)
-> iO <- 1:10
-> all.equal(q0[iO], q1[iO])
+> iO <- 1:30
+> all.equal(q0[iO], q1[iO], 1e-5)
 [1] TRUE
-> all.equal(p0[iO], psml[iO], tol = 0.08)# bad tol (0.0744 on 386-Linux).
+> all.equal(p0[iO], psml[iO])
 [1] TRUE
+> options(warn=0)
 > 
 > ##--- Beta (need more):
 > 
@@ -944,7 +946,7 @@ p.sI    0  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5     1
 > All.eq(ex,  pcauchy(qcauchy(ex, log=TRUE), log=TRUE))
 [1] TRUE
 > II <- c(-Inf,Inf)
-> stopifnot(pcauchy(II) == 0:1, ## qcauchy(0:1) == II,
+> stopifnot(pcauchy(II) == 0:1, qcauchy(0:1) == II,
 +           pcauchy(II, log=TRUE) == c(-Inf,0),
 +           qcauchy(c(-Inf,0), log=TRUE) == II)
 > 
@@ -1053,6 +1055,20 @@ p.sI    0  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5     1
 > stopifnot(0   == qgamma(0, sh))
 > ## the first gave Inf, NaN, and 99.425 in R 2.1.1 and earlier
 > 
+> f2 <- c(0.5, 1:4)
+> stopifnot(df(0, 1, f2) == Inf,
++           df(0, 2, f2) == 1,
++           df(0, 3, f2) == 0)
+> ## only the last one was ok in R 2.2.1 and earlier
+> 
+> x0 <- -2 * 10^-c(22,10,7,5)
+> stopifnot(pbinom(x0, size = 3, prob = 0.1) == 0,
++           dbinom(x0, 3, 0.1) == 0) # d*() warns about non-integer
+Warning messages:
+1: non-integer x = -0.000000 
+2: non-integer x = -0.000020 
+> ## very small negatives were rounded to 0 in R 2.2.1 and earlier
+> 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  1.78 0.02 2.25 0 0 
+Time elapsed:  2.53 0.03 2.55 0 0 
 > 

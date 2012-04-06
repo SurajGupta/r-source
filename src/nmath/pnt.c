@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka and the R Development Core Team
- *  Copyright (C) 2000-2001 The R Development Core Team
+ *  Copyright (C) 2000-2006 The R Development Core Team
  *  based on AS243 (C) 1989 Royal Statistical Society
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*  Algorithm AS 243  Lenth,R.V. (1989). Appl. Statist., Vol.38, 185-189.
@@ -99,8 +99,8 @@ double pnt(double t, double df, double delta, int lower_tail, int log_p)
 	if(p == 0.) { /* underflow! */
 
 	    /*========== really use an other algorithm for this case !!! */
-	    ML_ERROR(ME_UNDERFLOW);
-	    ML_ERROR(ME_RANGE); /* |delta| too large */
+	    ML_ERROR(ME_UNDERFLOW, "pnt");
+	    ML_ERROR(ME_RANGE, "pnt"); /* |delta| too large */
 	    return R_DT_0;
 	}
 #ifdef DEBUG_pnt
@@ -133,7 +133,7 @@ double pnt(double t, double df, double delta, int lower_tail, int log_p)
 	    tnc += p * xodd + q * xeven;
 	    s -= p;
 	    if(s <= 0.) { /* happens e.g. for (t,df,delta)=(40,10,38.5), after 799 it.*/
-		ML_ERROR(ME_PRECISION);
+		ML_ERROR(ME_PRECISION, "pnt");
 #ifdef DEBUG_pnt
 		REprintf("s = %#14.7g < 0 !!! ---> non-convergence!!\n", s);
 #endif
@@ -147,7 +147,7 @@ double pnt(double t, double df, double delta, int lower_tail, int log_p)
 	    if(errbd < errmax) goto finis;/*convergence*/
 	}
 	/* non-convergence:*/
-	ML_ERROR(ME_PRECISION);
+	ML_ERROR(ME_NOCONV, "pnt");
     }
     else { /* x = t = 0 */
 	tnc = 0.;
@@ -156,5 +156,12 @@ double pnt(double t, double df, double delta, int lower_tail, int log_p)
     tnc += pnorm(- del, 0., 1., /*lower*/TRUE, /*log_p*/FALSE);
 
     lower_tail = lower_tail != negdel; /* xor */
-    return R_DT_val(tnc);
+    /* return R_DT_val(tnc);
+       We want to warn about cancellation here */
+    if(lower_tail) return log_p	? log(tnc) : tnc;
+    else {
+	if(tnc > 1 - 1e-10) ML_ERROR(ME_PRECISION, "pnt");
+	tnc = fmin2(tnc, 1.0);  /* Precaution */
+	return log_p ? log1p(-tnc) : (0.5 - tnc + 0.5);
+    }
 }

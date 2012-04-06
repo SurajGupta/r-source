@@ -7,11 +7,11 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Revision: 1.161 $'
+revision='$Rev: 37510 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
-Copyright (C) 2000-2005 The R Core Development Team.
+Copyright (C) 2000-2006 The R Core Development Team.
 This is free software; see the GNU General Public Licence version 2
 or later for copying conditions.  There is NO warranty."
 
@@ -34,15 +34,6 @@ Options:
       --configure-vars=VARS
                         set variables for the configure script (if any)
   -c, --clean		remove all files created during installation
-  -s, --save[=ARGS]     save the package source as an image file, and
-                        arrange for this file to be loaded when the
-                        package is attached; if given, ARGS are passed
-                        to R when creating the save image
-      --no-save         do not save the package source as an image file
-      --lazy            use lazy loading
-      --no-lazy         do not use lazy loading
-      --lazy-data       use lazy loading for data
-      --no-lazy-data    do not use lazy loading for data (current default)
   -d, --debug		turn on shell and build-help debugging
   -l, --library=LIB	install packages to library tree LIB
       --no-configure    do not use the package's configure script
@@ -55,7 +46,19 @@ Options:
       --fake		do minimal install for testing purposes
       --no-lock		install on top of any existing installation
                         without using a lock directory
+      --libs-only      	only install the libs directory
       --build           build binary tarball(s) of the installed package(s)
+
+Deprecated options:
+  -s, --save[=ARGS]     save the package source as an image file, and
+                        arrange for this file to be loaded when the
+                        package is attached; if given, ARGS are passed
+                        to R when creating the save image
+      --no-save         do not save the package source as an image file
+      --lazy            use lazy loading
+      --no-lazy         do not use lazy loading
+      --lazy-data       use lazy loading for data
+      --no-lazy-data    do not use lazy loading for data (current default)
 
 Report bugs to <r-bugs@r-project.org>."
 
@@ -83,6 +86,8 @@ NO_PERL5_MSG="\
 *** get the PDF reference manual from the nearest CRAN server.
 *** The CRAN master site can be found at
 ***    http://cran.r-project.org/"
+
+: ${R_ARCH=@R_ARCH@}
 
 if mkdir -p . 2>/dev/null; then
   MKDIR_P="mkdir -p"
@@ -205,6 +210,7 @@ fake=false
 lazy="auto"
 lazy_data=false
 lock=true
+libs_only=false
 tar_up=false
 
 while test -n "${1}"; do
@@ -217,18 +223,25 @@ while test -n "${1}"; do
     -c|--clean)
       clean=true ;;
     -s|--save)
+      message "Option --save (-s) is deprecated"
       save=true;;
     --save=*)
+      message "Option --save is deprecated"
       save_args=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     --lazy)
+      message "Option --lazy is deprecated"
       lazy=true ;;
     --no-lazy)
+      message "Option --no-lazy is deprecated"
       lazy=false ;;
     --lazy-data)
+      message "Option --lazy-data is deprecated"
       lazy_data=true ;;
     --no-lazy-data)
+      message "Option --no-lazy-data is deprecated"
       lazy_data=false ;;
     --no-save)
+      message "Option --no-save is deprecated"
       save=false ;;
     -d|--debug)
       debug=true ;;
@@ -268,6 +281,8 @@ while test -n "${1}"; do
       fake=true ;;
     --no-lock)
       lock=false ;;
+    --libs-only)
+      libs_only=true ;;
     --build)
       tar_up=true ;;
     *)
@@ -317,6 +332,14 @@ if (${tar_up} && ${fake}); then
   error "building a fake installation is disallowed"
   do_cleanup_tmpdir;
   exit 1
+fi
+
+if ${libs_only} ; then
+  lock=false
+  tar_up=false
+  more_than_libs=false
+else
+  more_than_libs=true
 fi
 
 if ${debug} ; then
@@ -485,8 +508,10 @@ do_install_source () {
     if ${lock} ; then
       mv "${R_PACKAGE_DIR}" "${lockdir}/${R_PACKAGE_NAME}"
     else
-      ## this is only used for recommended packages installed from .tgz
-      rm -rf "${R_PACKAGE_DIR}"
+      if ${more_than_libs}; then
+        ## this is only used for recommended packages installed from .tgz
+        rm -rf "${R_PACKAGE_DIR}"
+      fi
     fi
     ${MKDIR_P} "${R_PACKAGE_DIR}"
     ## Preserve man pages to speed up installation?  Only makes sense
@@ -518,27 +543,31 @@ do_install_source () {
   fi
 
 
-  for f in COPYING NAMESPACE; do
-    if test -f "${f}"; then
-      cp "${f}" "${R_PACKAGE_DIR}"
-      chmod 644 "${R_PACKAGE_DIR}/${f}"
-    fi
-  done
+  if ${more_than_libs}; then
+    for f in COPYING NAMESPACE; do
+      if test -f "${f}"; then
+	cp "${f}" "${R_PACKAGE_DIR}"
+	chmod 644 "${R_PACKAGE_DIR}/${f}"
+      fi
+    done
 
-  ## Install DESCRIPTION file with build information.
-  echo "tools:::.install_package_description(\".\", \"${R_PACKAGE_DIR}\")" | \
-    R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla >/dev/null
-  if test ${?} -ne 0; then
-    error "installing package DESCRIPTION failed"
-    do_exit_on_error
+    ## Install DESCRIPTION file with build information.
+    echo "tools:::.install_package_description(\".\", \"${R_PACKAGE_DIR}\")" | \
+      R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla >/dev/null
+    if test ${?} -ne 0; then
+      error "installing package DESCRIPTION failed"
+      do_exit_on_error
+    fi
   fi
 
   if test -d src && test "${fake}" != "true"; then
     message "libs"
     has_error=false
     if ${debug}; then set -x; fi
-    ${MKDIR_P} "${R_PACKAGE_DIR}/libs"
+    ${MKDIR_P} "${R_PACKAGE_DIR}/libs${R_ARCH}"
     if test -f src/Makefile; then
+      arch=`echo ${R_ARCH} | sed s+^/++`
+      message "arch - ${arch}"
       cd src;
       makefiles="-f \"${R_SHARE_DIR}\"/make/shlib.mk -f Makefile"
       if test -r "${HOME}/.R/Makevars-${R_PLATFORM}"; then
@@ -550,16 +579,50 @@ do_install_source () {
 	makefiles="-f Makevars ${makefiles}"
       fi
       eval ${MAKE} ${makefiles} \
-	&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs" \
+	&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
         || has_error=true; \
       cd ..
     else
       cd src;
-      srcs=`ls *.[cfC] *.cc *.cpp 2>/dev/null`
+      srcs=`ls *.[cfC] *.cc *.cpp *.f90 *.f95 2>/dev/null`
+      archs=`(cd ${R_HOME}/bin/exec; ls)`
+      R_ARCH_keep=${R_ARCH}
       if test -n "${srcs}"; then
-	sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
-          && cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs" \
-	  || has_error=true; \
+	## if there is a configure script we install only the main
+	## sub-architecture
+	if test -x ../configure; then
+	  if test -n "${R_ARCH}"; then
+	    arch=`echo ${R_ARCH} | sed s+^/++`
+	    message "arch - ${arch}"
+	  fi
+	  sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+	    && cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
+	    || has_error=true;
+	  chmod 755 "${R_PACKAGE_DIR}/libs${R_ARCH}/"*
+        else
+	  for arch in ${archs}; do
+	    rm -f *.o *.so *.sl *.dylib
+	    if test "${arch}" = "R"; then
+	      R_ARCH=${R_ARCH_keep}
+	      export R_ARCH
+	      sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+		&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs" \
+		|| has_error=true;
+	    elif test "${arch}" = "Rgnome"; then
+		R_ARCH=${R_ARCH_keep}
+	    else
+	      message "arch - ${arch}"
+	      R_ARCH="/${arch}"
+	      export R_ARCH
+	      ${MKDIR_P} "${R_PACKAGE_DIR}/libs${R_ARCH}"
+	      sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+		&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
+		|| has_error=true;
+	      chmod 755 "${R_PACKAGE_DIR}/libs${R_ARCH}/"*
+	    fi
+	  done
+	  R_ARCH=${R_ARCH_keep}
+        fi
       else
 	warning "no source files found"
       fi
@@ -569,10 +632,11 @@ do_install_source () {
       error "compilation failed for package '${pkg_name}'"
       do_exit_on_error
     fi
-    chmod 755 "${R_PACKAGE_DIR}/libs/"*
+    chmod 755 "${R_PACKAGE_DIR}/libs${R_ARCH}/"*
     if ${debug}; then set +x; fi
   fi
 
+  if ${more_than_libs}; then
   if test -d R; then
     message "R"
       ${MKDIR_P} "${R_PACKAGE_DIR}/R"
@@ -649,9 +713,13 @@ do_install_source () {
     message "demo"
     ${MKDIR_P} "${R_PACKAGE_DIR}/demo"
     rm -f "${R_PACKAGE_DIR}/demo/"*
-    cp demo/* "${R_PACKAGE_DIR}/demo" 2>/dev/null
+    echo "tools:::.install_package_demos('.', '${R_PACKAGE_DIR}')" | \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla --slave > /dev/null
+    if test ${?} -ne 0; then
+      error "installing demos failed"
+      do_exit_on_error
+    fi
     chmod 644 "${R_PACKAGE_DIR}/demo/"*
-    rm -f "${R_PACKAGE_DIR}/demo/00Index"
   fi
 
   if test -d exec && test "${fake}" != "true"; then
@@ -757,7 +825,7 @@ do_install_source () {
   if ${thislazy}; then
     message "preparing package for lazy loading"
     (if test -s R_PROFILE.R; then cat R_PROFILE.R; fi; \
-    echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); tools:::makeLazyLoading(\"${R_PACKAGE_NAME}\", \"${lib}\")") | \
+    echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages(); tools:::makeLazyLoading(\"${R_PACKAGE_NAME}\", \"${lib}\")") | \
       R_DEFAULT_PACKAGES= LC_ALL=C "${R_EXE}" --vanilla --slave
     if test ${?} -ne 0; then
       error "lazy loading failed for package '${pkg_name}'"
@@ -769,22 +837,16 @@ do_install_source () {
     fi
   fi
 
-
   if test -d man; then
     message "help"
     ## Install man sources ...
-    Rdfiles=`ls man/*.[Rr]d man/${R_OSTYPE}/*.[Rr]d 2>/dev/null`
-    if test -n "${Rdfiles}"; then
-      ${MKDIR_P} "${R_PACKAGE_DIR}/man"
-      rm -f "${R_PACKAGE_DIR}/man/"*
-      for f in ${Rdfiles}; do
-	echo "% --- Source file: ${f} ---";
-	cat "${f}"; echo; echo '\eof';
-      done \
-        > "${R_PACKAGE_DIR}/man/${pkg_name}.Rd"
-      chmod 644 "${R_PACKAGE_DIR}/man/${pkg_name}.Rd"
-      ${R_GZIPCMD} -9 "${R_PACKAGE_DIR}/man/${pkg_name}.Rd"
+    echo "tools:::.install_package_man_sources('.', '${R_PACKAGE_DIR}')" | \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla --slave > /dev/null
+    if test ${?} -ne 0; then
+      error "installing man sources failed"
+      do_exit_on_error
     fi
+    chmod 644 "${R_PACKAGE_DIR}/man/${pkg_name}.Rd.gz"
     ## Maybe build preformatted help pages ...
     if ${build_help}; then
       if ${NO_PERL5}; then
@@ -837,6 +899,8 @@ do_install_source () {
       do_exit_on_error
     fi
   fi
+
+  fi ## ${more_than_libs}
 
   ## <NOTE>
   ## Remove stuff we should not have installed in the first place.
@@ -976,27 +1040,31 @@ do_install () {
 
 do_exit_on_error () {
   remove_R_package_dir=${1-yes}
-  ## bundlepkg is set if this is a bundle or if the package/bundle 
-  ## is already installed, but not for a new non-bundle.
-  if test -z "${bundlepkg}"; then
-    bundlepkg=${pkg_name}
+  ## If we are not yet processing a package, we will not have
+  ## set pkg_dir.  It's the first thing in do_install.
+  if test -n "${pkg_dir}"; then
+    ## Find out if this is a bundle.  If we are installing multiple
+    ## 'packages' the existing bundlepkg is unreliable.
+    bundlepkg=`get_dcf_field Contains "${pkg_dir}/DESCRIPTION"`
+    if test -z "${bundlepkg}"; then
+      bundlepkg=${pkg_name}
+    fi
+    for p in ${bundlepkg}; do
+      if ${with_package_versions}; then
+	p=${p}_${version}
+      fi
+      pkgdir="${lib}/$p"
+      if test "${remove_R_package_dir}" = yes && test -n "${pkgdir}"; then
+	message "Removing '${pkgdir}'"
+	rm -rf "${pkgdir}"
+      fi
+      if test -n "$p" \
+	  && test -d "${lockdir}/$p"; then
+	message "Restoring previous '${pkgdir}'"
+	mv "${lockdir}/$p" "${pkgdir}"
+      fi
+    done
   fi
-  for p in ${bundlepkg}; do
-    if ${with_package_versions}; then
-      p=${p}_${version}
-    fi
-    pkgdir="${lib}/$p"
-    if test "${remove_R_package_dir}" = yes \
-	&& test -n "${pkgdir}"; then
-      message "Removing '${pkgdir}'"
-      rm -rf "${pkgdir}"
-    fi
-    if test -n "$p" \
-	&& test -d "${lockdir}/$p"; then
-      message "Restoring previous '${pkgdir}'"
-      mv "${lockdir}/$p" "${pkgdir}"
-    fi
-  done
   do_cleanup
   exit 1
 }

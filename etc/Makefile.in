@@ -12,7 +12,7 @@ include $(top_builddir)/Makeconf
 
 ## <NOTE>
 ## Need target rules for all elements of SOURCES/OBJECTS.
-SOURCES = Makeconf.in Renviron.in
+SOURCES = Makeconf.in Renviron.in ldpaths.in
 OBJECTS = $(SOURCES:.in=)
 ## </NOTE>
 INSTFILES = repositories
@@ -37,6 +37,8 @@ Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 Renviron: $(srcdir)/Renviron.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+ldpaths: $(srcdir)/ldpaths.in $(top_builddir)/config.status
+	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 ## </NOTE>
 
 R: $(OBJECTS)
@@ -45,15 +47,24 @@ R: $(OBJECTS)
 	    $(INSTALL_DATA) $(srcdir)/$${f} .; \
 	  done \
 	fi
+	@if test -n "$(R_ARCH)" ; then \
+	  $(MKINSTALLDIRS) .$(R_ARCH); \
+	  for f in $(OBJECTS); do \
+	    $(INSTALL_DATA) $${f} .$(R_ARCH); \
+	  done \
+	fi
 
 install: installdirs
 	@echo "installing $(subdir) ..."
 	@$(INSTALL_DATA) $(srcdir)/repositories "$(rhome)/$(subdir)"
-	@for f in $(OBJECTS) $(EXPORTFILES); do \
+	@for f in $(EXPORTFILES); do \
 	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)"; \
 	done
+	@for f in $(OBJECTS); do \
+	  $(INSTALL_DATA) $${f} "$(rhome)/$(subdir)$(R_ARCH)"; \
+	done
 installdirs:
-	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)"
+	@$(MKINSTALLDIRS) "$(rhome)/$(subdir)$(R_ARCH)"
 install-strip: install
 
 uninstall:

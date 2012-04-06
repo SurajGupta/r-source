@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,11 @@
 
 #ifdef HAVE_C99_COMPLEX
 # include <complex.h>
-# define C99_COMPLEX(x)	((double complex *) DATAPTR(x))
+# ifdef USE_RINTERNALS
+#  define C99_COMPLEX(x) ((double complex *) DATAPTR(x))
+# else
+#  define C99_COMPLEX(x) ((double complex *) COMPLEX(x))
+# endif
 #endif
 
 #ifndef HAVE_HYPOT
@@ -276,7 +280,7 @@ SEXP complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     return ans;
 }
 
-SEXP do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, y = R_NilValue;	/* -Wall*/
     int i, n;
@@ -383,7 +387,7 @@ SEXP do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static void z_rround(Rcomplex *r, Rcomplex *x, Rcomplex *p)
 {
-    r->r = rround(x->r, p->r);
+    r->r = rround(x->r, p->r); /* #defined to fround in Rmath.h */
     r->i = rround(x->i, p->r);
 }
 
@@ -881,7 +885,7 @@ SEXP complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 }
 
-SEXP do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     /* complex(length, real, imaginary) */
     SEXP ans, re, im;
@@ -915,7 +919,7 @@ SEXP do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP z, zr, zi, r, rr, ri;
     Rboolean fail;

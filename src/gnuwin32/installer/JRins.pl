@@ -13,8 +13,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+# writing to the Free Software Foundation, Inc., 51 Franklin Street,
+# Fifth Floor, Boston, MA 02110-1301  USA.
 
 # Send any bug reports to r-bugs@r-project.org
 
@@ -23,7 +23,7 @@ use File::Find;
 
 my $fn, $component, $path;
 my $startdir=cwd();
-my $RVER;
+my $RVER, $RVER0;
 my $RW=$ARGV[0];
 my $SRCDIR=$ARGV[1];
 $SRCDIR =~ s+/+\\+g; # need DOS-style paths
@@ -36,6 +36,8 @@ $RVER = <ver>;
 close ver;
 $RVER =~ s/\n.*$//;
 $RVER =~ s/Under .*$/Pre-release/;
+$RVER0 = $RVER;
+$RVER0 =~ s/ .*$//;
 
 open insfile, "> R.iss" || die "Cannot open R.iss\n";
 print insfile <<END;
@@ -51,6 +53,7 @@ AppPublisherURL=http://www.r-project.org
 AppSupportURL=http://www.r-project.org
 AppUpdatesURL=http://www.r-project.org
 AppVersion=${RVER}
+VersionInfoVersion=$RVER0
 DefaultDirName={code:UserPF}\\R\\${RW}
 DefaultGroupName=R
 AllowNoIcons=yes
@@ -87,6 +90,7 @@ Name: chs; MessagesFile: "ChineseSimp.isl"
 Name: cht; MessagesFile: "ChineseTrad.isl"
 Name: ja; MessagesFile: "Japanese.isl"
 Name: ko; MessagesFile: "Korean.isl"
+Name: es; MessagesFile: "SpanishStd.isl"
 
 #include "CustomMsg.txt"
 
@@ -139,19 +143,17 @@ Name: "{group}\\R $RVER Help"; Filename: "{app}\\doc\\html\\Rwin.html"; Componen
 Name: "user"; Description: {cm:user}
 Name: "compact"; Description: {cm:compact}
 Name: "full"; Description: {cm:full}
-Name: "CJK"; Description: {cm:CJK}
 Name: "custom"; Description: {cm:custom}; Flags: iscustom
 
 [Components]
-Name: "main"; Description: "Main Files"; Types: user compact full CJK custom; Flags: fixed
-Name: "chtml"; Description: "Compiled HTML Help Files"; Types: user full CJK custom
-Name: "html"; Description: "HTML Help Files"; Types: user full CJK custom
-Name: "manuals"; Description: "On-line (PDF) Manuals"; Types: user full CJK custom
-Name: "devel"; Description: "Source Package Installation Files"; Types: user full CJK custom
-Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full CJK custom
-Name: "libdocs"; Description: "Docs for Packages grid and survival"; Types: user full CJK custom
-Name: "trans"; Description: "Message Translations"; Types: user full CJK custom
-Name: "mbcs"; Description: "Version for East Asian languages"; Types: CJK custom
+Name: "main"; Description: "Main Files"; Types: user compact full custom; Flags: fixed
+Name: "chtml"; Description: "Compiled HTML Help Files"; Types: user full custom
+Name: "html"; Description: "HTML Help Files"; Types: user full custom
+Name: "manuals"; Description: "On-line (PDF) Manuals"; Types: user full custom
+Name: "devel"; Description: "Source Package Installation Files"; Types: user full custom
+Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full custom
+Name: "libdocs"; Description: "Docs for Packages grid and survival"; Types: user full custom
+Name: "trans"; Description: "Message Translations"; Types: user full custom
 Name: "latex"; Description: "Latex Help Files"; Types: full custom
 Name: "refman"; Description: "PDF Reference Manual"; Types: full custom
 Name: "Rd"; Description: "Source Files for Help Pages"; Types: full custom
@@ -287,9 +289,6 @@ sub listFiles {
 	} elsif (m/^share\\locale/ 
 		 || m/^library\\[^\\]*\\po/) { # needs iconv
 	    $component = "trans";
-	} elsif ($_ eq "bin\\Rmbcs.dll") {
-	    $component = "mbcs";
-	    $newname = "R.dll";
 	} else {
 	    $component = "main";
 	}

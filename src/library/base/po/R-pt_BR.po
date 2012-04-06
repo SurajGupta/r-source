@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-08-26 09:41\n"
-"PO-Revision-Date: 2005-09-27 23:03-0300\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
+"PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
 "MIME-Version: 1.0\n"
@@ -36,30 +36,6 @@ msgstr "Veja help(\"Deprecated\") e help(\"%s-deprecated\")."
 
 msgid "See help(\"Deprecated\")"
 msgstr "Veja help(\"Deprecated\")"
-
-msgid "invalid numbers in 'quote'"
-msgstr "números inválidos em 'quote'"
-
-msgid "invalid 'quote' specification"
-msgstr "especificação de 'quote' inválida"
-
-msgid "invalid 'row.names' specification"
-msgstr "especificação de 'row.names' inválida"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr "col.names = NA não faz sentido com quando row.names = FALSE"
-
-msgid "invalid 'col.names' specification"
-msgstr "especificação de 'col.names' inválida"
-
-msgid "'file' must be a character string or connection"
-msgstr "'file' deve ser uma string de caracteres ou uma conexão"
-
-msgid "appending column names to file"
-msgstr "acrescentando nomes de coluna no arquivo"
-
-msgid "format.char: coercing 'x' to 'character'"
-msgstr "format.char: fazendo coerção de 'x' para 'character' "
 
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "argumento de 'La.svd' deve ser numérico ou complexo"
@@ -506,6 +482,9 @@ msgstr "'from' deve ser um objeto POSIXt"
 msgid "'to' must be a POSIXt object"
 msgstr "'to' deve ser um objeto POSIXt"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file' deve ser uma string de caracteres ou uma conexão"
+
 msgid "'x' must be a square matrix"
 msgstr "'x' deve ser uma matriz quadrada"
 
@@ -608,9 +587,6 @@ msgstr "nenhum arquivo para onde fazer a vinculação"
 msgid "no files/directory to link to"
 msgstr "nenhum arquivo/diretório para onde fazer a vinculação"
 
-msgid "calling wrong method"
-msgstr "chamada do método errado"
-
 msgid "'package' must be of length 1"
 msgstr "'package' deve ter comprimento 1"
 
@@ -635,6 +611,12 @@ msgstr "'flag' pode conter somente '0+- #'"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "data frame corrompido: colunas serão truncadas ou completadas com NAs"
+
+msgid "'zero.print' has length > 1"
+msgstr "'zero.print' tem comprimento > 1"
+
+msgid "'zero.print' must be character, logical or NULL"
+msgstr "'zero.print' deve ser do tipo caracter, lógico ou NULL"
 
 msgid "'subset' must evaluate to logical"
 msgstr "'subset' deve poder ser avaliado logicamente"
@@ -678,6 +660,9 @@ msgstr "pacote '%s' foi compilado na versão do R %s"
 
 msgid "package '%s' was built for %s"
 msgstr "pacote '%s' foi compilado para %s"
+
+msgid "package '%s' is not installed for 'arch=%s'"
+msgstr "pacote '%s' não está instalado para 'arch=%s'"
 
 msgid "package '%s' has not been installed properly"
 msgstr "pacote '%s' não foi instalado corretamente"
@@ -773,9 +758,6 @@ msgstr ""
 "pacote '%s' encontrado mais de uma vez,\n"
 "usando o encontrado em '%s'"
 
-msgid "none of the packages were found"
-msgstr "nenhum dos pacotes foi encontrado"
-
 msgid ""
 "Further information is available in the following vignettes in directory '%"
 "s':"
@@ -809,27 +791,20 @@ msgstr "pacote '%s' não pôde ser carregado"
 msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
 msgstr "pacote '%s' %s está carregado, mas %s %s é exigido por '%s'"
 
-msgid "bad file argument"
-msgstr "argumento de arquivo inválido"
-
-msgid "no input is available"
-msgstr "nenhuma entrada disponível"
-
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "entrada foi corrompida, com LF substituido por CR"
 
-msgid ""
-"the input does not start with a magic number compatible with loading from a "
-"connection"
-msgstr ""
-"a entrada não começa com um número mágico compatível com carregamento a "
-"partir de uma conexão"
+msgid "bad 'file' argument"
+msgstr "argumento 'file' inválido"
 
 msgid "'file' must be specified"
 msgstr "'file' deve ser especificado"
 
 msgid "'file' must be non-empty string"
 msgstr "'file' deve ser uma string não vazia"
+
+msgid "bad file argument"
+msgstr "argumento de arquivo inválido"
 
 msgid "can only save to a binary connection"
 msgstr "só é possível salvar em uma conexão binária"
@@ -842,6 +817,9 @@ msgstr "[Área de trabalho anterior carregada]"
 
 msgid "invalid 'category' argument"
 msgstr "argumento 'category' inválido"
+
+msgid "must specify formal argument names to vectorize"
+msgstr "nomes de argumentos formais devem ser especificados para vetorizar"
 
 msgid "'arg' should be one of"
 msgstr "'arg' deve ser um dentre"
@@ -924,6 +902,24 @@ msgstr "%s falhou em 'loadNamespace' para '%s'"
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "espaço de nomes '%s' já está selado em loadNamespace"
 
+msgid "failed to assign RegisteredNativeSymbol for"
+msgstr "falha na atribuição de RegisteredNativeSymbol para"
+
+msgid "to"
+msgstr "para"
+
+msgid "since"
+msgstr "desde"
+
+msgid "is already defined in the"
+msgstr "já está definido no"
+
+msgid "namespace"
+msgstr "espaço de nomes"
+
+msgid "failed to assign NativeSymbolInfo for"
+msgstr "falha na atribuição de NativeSymbolInfo para"
+
 msgid "package '%s' does not have a name space"
 msgstr "pacote '%s' não tem um espaõ de nomes"
 
@@ -987,6 +983,18 @@ msgstr "exportações não definidas:"
 
 msgid "package '%s' has no NAMESPACE file"
 msgstr "pacote '%s' não tem arquivo NAMESPACE"
+
+msgid "empty name in directive '%s' in NAMESPACE file"
+msgstr "nome vazio na diretiva '%s' do arquivo NAMESPACE"
+
+msgid "duplicated symbol names"
+msgstr "símbolos de importação duplicados"
+
+msgid "in useDynLib("
+msgstr "em useDynLib("
+
+msgid ")"
+msgstr ")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "diretiva 'S3method' inválida: %s"
@@ -1098,6 +1106,9 @@ msgstr "nem todas as colunas nomeadas em 'as.is' existem"
 msgid "'as.is' has the wrong length %d  != cols = %d"
 msgstr "'as.is' tem o comprimento errado %d != cols = %d"
 
+msgid "invalid 'row.names' specification"
+msgstr "especificação de 'row.names' inválida"
+
 msgid "'x' must be a vector"
 msgstr "'x' deve ser um vetor"
 
@@ -1137,9 +1148,6 @@ msgstr "'length' deve ser um número não negativo"
 msgid "too many arguments"
 msgstr "muitos argumentos"
 
-msgid "bad 'file' argument"
-msgstr "argumento 'file' inválido"
-
 msgid "'connection' must be a connection"
 msgstr "'connection' deve ser uma conexão"
 
@@ -1160,6 +1168,9 @@ msgstr "matriz singular 'a' em 'solve'"
 
 msgid "only square matrices can be inverted"
 msgstr "somente matrizes quadradas podem ser invertidas"
+
+msgid "'b' must be compatible with 'a'"
+msgstr "'b' deve ser compatível com 'a'"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
 msgstr "solve.default chamado com um objeto \"qr\": use 'qr.solve'"
@@ -1209,8 +1220,14 @@ msgstr "'chdir = TRUE' não faz sentido para uma conexão"
 msgid "'%s' is not an existing file"
 msgstr "'%s' não é um arquivo existente"
 
-msgid "is not TRUE"
-msgstr "não é TRUE"
+msgid "is not"
+msgstr "não é"
+
+msgid "all"
+msgstr "todo"
+
+msgid "TRUE"
+msgstr "TRUE"
 
 msgid "incorrect value for 'x'"
 msgstr "valor incorreto para 'x'"
@@ -1287,6 +1304,21 @@ msgstr "Nenhum rastreamento disponível"
 msgid "argument to 'which' is not logical"
 msgstr "argumento para 'which' não é lógico"
 
+msgid "invalid numbers in 'quote'"
+msgstr "números inválidos em 'quote'"
+
+msgid "invalid 'quote' specification"
+msgstr "especificação de 'quote' inválida"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr "col.names = NA não faz sentido com quando row.names = FALSE"
+
+msgid "invalid 'col.names' specification"
+msgstr "especificação de 'col.names' inválida"
+
+msgid "appending column names to file"
+msgstr "acrescentando nomes de coluna no arquivo"
+
 msgid "attempt to change '%s' ignored"
 msgstr "tentativa de mudar '%s' ignorada"
 
@@ -1322,6 +1354,11 @@ msgid "package %s is not loaded"
 msgid_plural "packages %s are not loaded"
 msgstr[0] "pacote %s não está carregado"
 msgstr[1] "pacotes %s não estão carregados"
+
+msgid "there is no package called"
+msgid_plural "there are no packages called"
+msgstr[0] "não há nenhum pacote chamado '%s'"
+msgstr[1] "não há pacotes chamados '%s'"
 
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"

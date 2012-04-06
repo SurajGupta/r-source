@@ -175,7 +175,7 @@ void clear(control obj)
 void draw(control obj)
 {
 	drawing prev;
-	drawstate old;
+	drawstate old = NULL;
 
 	if (! obj)
 		return;
@@ -692,13 +692,23 @@ void settext(control obj, char *text)
 	if (text) {
 		if (obj->kind & ControlObject) {
 			text = to_dos_string(text);
-			SetWindowText(obj->handle, text);
+			if(is_NT && (localeCP != GetACP())) {
+			    wchar_t wc[1000];
+			    mbstowcs(wc, text, 1000);
+			    SetWindowTextW(obj->handle, wc);
+			} else SetWindowText(obj->handle, text);
 			discard(text);
 		}
-                if (obj->kind==MenuitemObject) {
+                if (obj->kind == MenuitemObject) {
+		    if(is_NT && (localeCP != GetACP())) {
+			wchar_t wc[1000];
+			mbstowcs(wc, text, 1000);
+                        ModifyMenuW(obj->parent->handle, obj->id,
+				    MF_BYCOMMAND|MF_STRING, obj->id, wc);
+			
+		    } else
                         ModifyMenu(obj->parent->handle, obj->id,
-                                   MF_BYCOMMAND|MF_STRING,obj->id,
-                                   text);
+                                   MF_BYCOMMAND|MF_STRING, obj->id, text);
                 }
 
 	}

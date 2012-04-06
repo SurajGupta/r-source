@@ -67,7 +67,10 @@ png(filename ="Rplot\%03d.png", width = 480, height = 480,
 \value{
   A plot device is opened: nothing is returned to the \R interpreter.
 }
-\section{Warning}{
+\section{Warnings}{
+  Note that the \code{width} and \code{height} are in pixels not inches.
+  A warning will be issued if both are less than 20.
+  
   If you plot more than one page on one of these devices and do not
   include something like \code{\%d} for the sequence number in
   \code{file}, the file will contain the last page plotted.
@@ -87,7 +90,9 @@ png(filename ="Rplot\%03d.png", width = 480, height = 480,
 
   \code{\link{bitmap}} provides an alternative way to generate PNG and
   JPEG plots that does not depend on accessing the X11 display but does
-  depend on having GhostScript installed.
+  depend on having GhostScript installed.  (Device \code{GDD} in
+  \pkg{GDD} is another alternative using several other additional pieces
+  of software.)
 }
 \examples{
 ## these examples will work only if the devices are available

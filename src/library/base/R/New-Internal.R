@@ -59,11 +59,9 @@ args <- function(name).Internal(args(name))
 ##- "attr<-" <- function(x, which, value).Internal("attr<-"(x, which, value))
 
 cbind <- function(..., deparse.level = 1) {
-    ## if(deparse.level > 1) .NotYetUsed("deparse.level > 1")
     .Internal(cbind(deparse.level, ...))
 }
 rbind <- function(..., deparse.level = 1) {
-    ## if(deparse.level > 1) .NotYetUsed("deparse.level > 1")
     .Internal(rbind(deparse.level, ...))
 }
 
@@ -87,19 +85,24 @@ rbind <- function(..., deparse.level = 1) {
     } else return(sum(2^(opts-1)))
 }
 
-deparse <- function(expr, width.cutoff = 60,
-	     backtick = mode(expr) %in% c("call","expression","("),
-	     control = "showAttributes") {
+deparse <-
+    function(expr, width.cutoff = 60,
+	     backtick = mode(expr) %in% c("call", "expression", "("),
+	     control = "showAttributes")
+{
     opts <- .deparseOpts(control)
     .Internal(deparse(expr, width.cutoff, backtick, opts))
 }
 
-do.call <- function(what,args,quote=FALSE) {
+do.call <- function(what, args, quote = FALSE, envir = parent.frame())
+{
+    if (!is.list(args))
+	stop("second argument must be a list")
+    if (quote) {
 	enquote <- function(x) as.call(list(as.name("quote"), x))
-	if( !is.list(args) )
-	   stop("second argument must be a list")
-	if( quote ) args = lapply(args, enquote)
-	.Internal(do.call(what,args))
+	args <- lapply(args, enquote)
+    }
+    .Internal(do.call(what, args, envir))
 }
 
 drop <- function(x).Internal(drop(x))
@@ -107,12 +110,14 @@ drop <- function(x).Internal(drop(x))
 format.info <- function(x, digits=NULL, nsmall=0)
     .Internal(format.info(x, digits, nsmall))
 
-gc <- function(verbose = getOption("verbose"),  reset=FALSE)
+gc <- function(verbose = getOption("verbose"),	reset=FALSE)
 {
-    res <-.Internal(gc(verbose,reset))/c(1, 1, 10, 10, 1, 1, rep(10,4),rep(1,2),rep(10,2))
+    res <- .Internal(gc(verbose,reset))/
+	c(1, 1, 10, 10, 1, 1, rep(10,4), rep(1,2), rep(10,2))
     res <- matrix(res, 2, 7,
-                  dimnames = list(c("Ncells","Vcells"),
-                  c("used", "(Mb)", "gc trigger", "(Mb)", "limit (Mb)","max used", "(Mb)")))
+		  dimnames = list(c("Ncells","Vcells"),
+		  c("used", "(Mb)", "gc trigger", "(Mb)",
+		    "limit (Mb)", "max used", "(Mb)")))
     if(all(is.na(res[, 5]))) res[, -5] else res
 }
 gcinfo <- function(verbose).Internal(gcinfo(verbose))
@@ -135,8 +140,8 @@ mem.limits <- function(nsize=NA, vsize=NA)
               names=c("nsize", "vsize"))
 }
 
-nchar <- function(x, type = c( "bytes", "chars", "width"))
-    .Internal(nchar(x, match.arg(type)))
+nchar <- function(x, type = "bytes")
+    .Internal(nchar(x, type))
 
 polyroot <- function(z).Internal(polyroot(z))
 
@@ -228,6 +233,7 @@ iconvlist <- function()
     sort(unlist(strsplit(ext, "[[:space:]]")))
 }
 
+Cstack_info <- function() .Internal(Cstack_info())
 
 ## base has no S4 generics
 .noGenerics <- TRUE

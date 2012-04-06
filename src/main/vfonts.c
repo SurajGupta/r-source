@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole.
@@ -87,6 +87,7 @@ double GVStrWidth (const unsigned char *s, int typeface, int fontindex,
 #ifdef SUPPORT_MBCS
     if(mbcslocale && !utf8strIsASCII(str)) {
 	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
+        R_CheckStack();
 	if(!buff) error(_("allocation failure in GVStrWidth"));
 	mbcsToLatin1((char*) s, buff);
 	str = buff;
@@ -124,6 +125,7 @@ double GVStrHeight (const unsigned char *s, int typeface, int fontindex,
 #ifdef SUPPORT_MBCS
     if(mbcslocale && !utf8strIsASCII(str)) {
 	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
+        R_CheckStack();
 	if(!buff) error(_("allocation failure in GVStrHeight"));
 	mbcsToLatin1((char *) s, buff);
 	str = buff;
@@ -168,6 +170,7 @@ void GVText (double x, double y, int unit, char *s,
 #ifdef SUPPORT_MBCS
     if(mbcslocale && !utf8strIsASCII(str)) {
 	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
+	R_CheckStack();
 	if(!buff) error(_("allocation failure in GVText"));
 	mbcsToLatin1(s, buff);
 	str = buff;

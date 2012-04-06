@@ -2,23 +2,10 @@
 Windows version
 ===============
 
-src/gnuwin32/R.exp
-
-is distributed under the Lesser GNU Public Licence (file COPYING.LIB)
-and the import library src/gnuwin32/libR.a made from R.exp falls under the
-same licence.
-
-
 src/gnuwin32/e_pow.S
 
 is distributed under the Lesser GNU Public Licence (file COPYING.LIB),
 being based closely on code in the GNU C Library.
-
-
-src/gnuwin32/extra.c
-
-contains code based on http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
-by Markus Kuhn
 
 
 src/gnuwin32/getline/*
@@ -58,7 +45,7 @@ Based on files which are
 	http://www.ede.com/free/u2nt
 
 
-src/gnuwin32/front-ends/SC_*.h, bdx*.[ch], com_util.[ch], rp*.[ch]
+src/gnuwin32/front-ends/SC_*.h, bdx*.[ch], com_util.[ch], rproxy*.[ch]
 
 	Copyright (C) 1999-2005 Thomas Baier
 

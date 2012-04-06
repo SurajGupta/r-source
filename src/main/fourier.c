@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* These are the R interface routines to the plain FFT code 
@@ -30,7 +30,7 @@
 
 /* Fourier Transform for Univariate Spatial and Time Series */
 
-SEXP do_fft(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_fft(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP z, d;
     int i, inv, maxf, maxmaxf, maxmaxp, maxp, n, ndims, nseg, nspn;
@@ -118,7 +118,7 @@ SEXP do_fft(SEXP call, SEXP op, SEXP args, SEXP env)
 /* Fourier Transform for Vector-Valued ("multivariate") Series */
 /* Not to be confused with the spatial case (in do_fft). */
 
-SEXP do_mvfft(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_mvfft(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP z, d;
     int i, inv, maxf, maxp, n, p;
@@ -194,7 +194,7 @@ static int nextn(int n, int *f, int nf)
     return n;
 }
 
-SEXP do_nextn(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_nextn(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP n, f, ans;
     int i, nn, nf;

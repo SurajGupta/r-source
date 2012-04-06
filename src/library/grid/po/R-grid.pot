@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,6 +18,21 @@ msgid "Invalid to specify axis labels when 'at' is NULL"
 msgstr ""
 
 msgid "'labels' and 'at' locations must have same length"
+msgstr ""
+
+msgid "End points must not be identical"
+msgstr ""
+
+msgid "'x1', 'y1' ,'x2', and 'y2' must be units"
+msgstr ""
+
+msgid "'shape' must be between -1 and 1"
+msgstr ""
+
+msgid "'squareShape' must be between -1 and 1"
+msgstr ""
+
+msgid "'arrow' must be an arrow object or NULL"
 msgstr ""
 
 msgid "Invalid 'edit' information"
@@ -131,6 +146,9 @@ msgstr ""
 msgid "Invalid 'grob' name(s)"
 msgstr ""
 
+msgid "Unable to coerce to gList"
+msgstr ""
+
 msgid "Only 'grobs' allowed in 'gList'"
 msgstr ""
 
@@ -239,28 +257,19 @@ msgstr ""
 msgid "Invalid 'origin'"
 msgstr ""
 
-msgid "'x' and 'y' must be units"
-msgstr ""
-
-msgid "'x' and 'y' must have length 1"
-msgstr ""
-
-msgid "'x0', 'y0', 'x1', and 'y1' must be units"
-msgstr ""
-
-msgid "'x' and 'y' must be units or NULL"
-msgstr ""
-
 msgid "'length' must be a unit object"
 msgstr ""
 
 msgid "Invalid 'ends' or 'type' argument"
 msgstr ""
 
-msgid "Corrupt 'arrows' object"
+msgid "'x' and 'y' must be units"
 msgstr ""
 
-msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgid "'x' and 'y' must have length 1"
+msgstr ""
+
+msgid "invalid 'arrow' argument"
 msgstr ""
 
 msgid "It is invalid to specify both 'id' and 'id.lengths"
@@ -273,6 +282,27 @@ msgid "'x' and 'y' and 'id' must all be same length"
 msgstr ""
 
 msgid "'x' and 'y' and 'id.lengths' must specify same overall length"
+msgstr ""
+
+msgid "'x0', 'y0', 'x1', and 'y1' must be units"
+msgstr ""
+
+msgid "'x' and 'y' must be units or NULL"
+msgstr ""
+
+msgid "Corrupt 'arrows' object"
+msgstr ""
+
+msgid "grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing functions."
+msgstr ""
+
+msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgstr ""
+
+msgid "x and y must be units"
+msgstr ""
+
+msgid "shape must be between -1 and 1"
 msgstr ""
 
 msgid "'x', 'y', and 'r' must be units"
@@ -293,6 +323,9 @@ msgstr ""
 msgid "'x' and 'y' must be unit objects and have the same length"
 msgstr ""
 
+msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
+msgstr ""
+
 msgid "'x' must be numeric"
 msgstr ""
 
@@ -305,19 +338,13 @@ msgstr ""
 msgid "Invalid 'axis' or 'type'"
 msgstr ""
 
-msgid "No string supplied for 'strwidth' unit"
+msgid "No string supplied for 'strwidth/height' unit"
 msgstr ""
 
-msgid "No string supplied for 'strheight' unit"
-msgstr ""
-
-msgid "No 'grob' supplied for 'grobwidth' unit"
+msgid "No 'grob' supplied for 'grobwidth/height' unit"
 msgstr ""
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
-msgstr ""
-
-msgid "No 'grob' supplied for 'grobheight' unit"
 msgstr ""
 
 msgid "Operator '%s' not meaningful for units"
@@ -350,10 +377,16 @@ msgstr ""
 msgid "It is invalid to combine unit objects with other types"
 msgstr ""
 
-msgid "'range' must be numeric"
+msgid "unit.rep has been deprecated in favour of a unit method for the generic rep function"
 msgstr ""
 
-msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
+msgid "unit.length has been deprecated in favour of a unit method for the generic length function"
+msgstr ""
+
+msgid "Invalid theta"
+msgstr ""
+
+msgid "'range' must be numeric"
 msgstr ""
 
 msgid "Invalid graphics parameters"

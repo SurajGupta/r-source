@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> chars are only handled as a whole */
@@ -25,15 +25,13 @@
 
 #ifdef HAVE_SOCKETS
 
-#include <R_ext/R-ftp-http.h>
-
-
 
 /* ------------------- socket connections  --------------------- */
 
 #include <Defn.h>
 #include <Rconnections.h>
 #include <R_ext/R-ftp-http.h>
+#include "sock.h"
 
 static void listencleanup(void *data)
 {

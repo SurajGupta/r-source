@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *  See ./printutils.c	 for general remarks on Printing
@@ -40,7 +40,7 @@
  * The first pass calculates the width of the paste buffer,
  * then it is alloc-ed and the second pass stuffs the information in.
  */
-SEXP do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, collapse, sep, x, tmpchar;
     int i, j, k, maxlen, nx, pwidth, sepw;
@@ -143,7 +143,7 @@ SEXP do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* format.default(x, trim, digits, nsmall, width, justify, na.encode, 
                   scientific) */
-SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_format(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP l, x, y, swd;
     int i, il, n, digits, trim = 0, nsmall = 0, wd = 0, adj = -1, na, sci = 0;
@@ -273,6 +273,7 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
 		    cnt = imax2(cnt, LENGTH(STRING_ELT(x, i)) + imax2(0, w-il));
 		} else if (na) cnt  = imax2(cnt, R_print.na_width);
 	    buff = alloca(cnt+1);
+	    R_CheckStack();
 	    PROTECT(y = allocVector(STRSXP, n));
 	    for (i = 0; i < n; i++) {
 		if(!na && STRING_ELT(x, i) == NA_STRING) {
@@ -322,7 +323,7 @@ SEXP do_format(SEXP call, SEXP op, SEXP args, SEXP env)
  * for complex : 2 x 3 integers for (Re, Im)
  */
 
-SEXP do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x;
     int n, digits, nsmall, no = 1, w, d, e, wi, di, ei;

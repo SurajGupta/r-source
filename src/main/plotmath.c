@@ -1,10 +1,11 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2000	The R Development Core Team
+ *  Copyright (C) 1998-2006	The R Development Core Team
  *
  *  This source code module:
  *  Copyright (C) 1997, 1998 Paul Murrell and Ross Ihaka
+ *  Copyright (C) 1998-2006	The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8-FIXME>
@@ -30,15 +31,16 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <Defn.h>
 
 #include <ctype.h>
 #ifdef SUPPORT_MBCS
+# include <R_ext/rlocale.h>
 # include <wchar.h>
 # include <wctype.h>
 #endif
 
 
-#include <Defn.h>
 #include <Rmath.h>
 #include <Graphics.h>
 
@@ -589,7 +591,17 @@ static BBOX DrawBBox(BBOX bbox, double xoffset, double yoffset,
     y[3] = ConvertedY(mc, dd);
     gc->col = mc->BoxColor;
     gc->lty = LTY_SOLID;
-    gc->lwd = 1;
+    /*
+     * We used to just force lwd = 1, which is a reasonable sanity check
+     * because if the user had set lwd = 10 for something, your
+     * mathematical annotation would look REALLY bad.
+     * Unfortunately, this meant that the user could not set a nice
+     * small lwd to get a finer line;  we always bumped it back up to 1.
+     * NOW we just reduce lwd to 1 (as a sanity check) ONLY if 
+     * lwd is greater than 1.
+     */
+    if (gc->lwd > 1)
+	gc->lwd = 1;
     GEPolyline(5, x, y, gc, dd);
     PMoveTo(xsaved, ysaved, mc);
     gc->col = savedcol;
@@ -699,6 +711,7 @@ SymbolTable[] = {
     { "Eta",		 72 },
     { "Iota",		 73 },
     { "theta1",		 74 },
+    { "vartheta",	 74 },
     { "Kappa",		 75 },
     { "Lambda",		 76 },
     { "Mu",		 77 },
@@ -711,6 +724,8 @@ SymbolTable[] = {
     { "Tau",		 84 },
     { "Upsilon",	 85 },
     { "sigma1",		 86 },
+    { "varsigma",	 86 },
+    { "stigma",		 86 },
     { "Omega",		 87 },
     { "Xi",		 88 },
     { "Psi",		 89 },
@@ -733,6 +748,7 @@ SymbolTable[] = {
     { "eta",		104 },
     { "iota",		105 },
     { "phi1",		106 },
+    { "varphi",		106 },
     { "kappa",		107 },
     { "lambda",		108 },
     { "mu",		109 },
@@ -860,6 +876,7 @@ static int SymbolCode(SEXP expr)
     return 0;
 }
 
+/* this is the one really used: */
 static int TranslatedSymbol(SEXP expr)
 {
     int code = SymbolCode(expr);
@@ -1030,7 +1047,7 @@ static BBOX RenderSymbolStr(char *str, int draw, mathContext *mc,
 	    wchar_t wc;
 	    mbstate_t mb_st;
 	    size_t res;
-	    
+
 	    memset(&mb_st, 0, sizeof(mb_st));
 	    while (*s) {
 		wc = 0;
@@ -1376,7 +1393,8 @@ static BBOX RenderSlash(int draw, mathContext *mc, R_GE_gcontext *gc,
 	y[1] = ConvertedY(mc, dd);
 	PMoveUp(-height, mc);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(2, x, y, gc, dd);
 	PMoveAcross(0.5 * width, mc);
 	gc->lty = savedlty;
@@ -1635,7 +1653,8 @@ static BBOX RenderWideTilde(SEXP expr, int draw, mathContext *mc,
 	x[NTILDE + 2] = ConvertedX(mc, dd);
 	y[NTILDE + 2] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(NTILDE + 3, x, y, gc, dd);
 	PMoveTo(savedX + totalwidth, savedY, mc);
 	gc->lty = savedlty;
@@ -1678,7 +1697,8 @@ static BBOX RenderWideHat(SEXP expr, int draw, mathContext *mc,
 	x[2] = ConvertedX(mc, dd);
 	y[2] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(3, x, y, gc, dd);
 	PMoveTo(savedX + width, savedY, mc);
 	gc->lty = savedlty;
@@ -1715,7 +1735,8 @@ static BBOX RenderBar(SEXP expr, int draw, mathContext *mc,
 	x[1] = ConvertedX(mc, dd);
 	y[1] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(2, x, y, gc, dd);
 	PMoveTo(savedX + width, savedY, mc);
 	gc->lty = savedlty;
@@ -1831,11 +1852,16 @@ static void NumDenomVShift(BBOX numBBox, BBOX denomBBox,
 	phi = theta;
     }
     delta = (*u - bboxDepth(numBBox)) - (a + 0.5 * theta);
+    /*
+     * Numerators and denominators on fractions appear too far from
+     * horizontal bar. 
+     * Reread of Knuth suggests removing "+ theta" components below.
+     */ 
     if (delta < phi)
-	*u += (phi - delta) + theta;
+	*u += (phi - delta); /* + theta; */
     delta = (a + 0.5 * theta) - (bboxHeight(denomBBox) - *v);
     if (delta < phi)
-	*v += (phi - delta) + theta;
+	*v += (phi - delta); /* + theta; */
 }
 
 static void NumDenomHShift(BBOX numBBox, BBOX denomBBox,
@@ -1906,7 +1932,8 @@ static BBOX RenderFraction(SEXP expr, int rule, int draw,
 	    x[1] = ConvertedX(mc, dd);
 	    y[1] = ConvertedY(mc, dd);
 	    gc->lty = LTY_SOLID;
-	    gc->lwd = 1;
+	    if (gc->lwd > 1)
+		gc->lwd = 1;
 	    GEPolyline(2, x, y, gc, dd);
 	    PMoveUp(-AxisHeight(gc, dd), mc);
 	    gc->lty = savedlty;
@@ -1947,7 +1974,8 @@ static BBOX RenderUnderline(SEXP expr, int draw, mathContext *mc,
         x[1] = ConvertedX(mc, dd);
         y[1] = ConvertedY(mc, dd);
         gc->lty = LTY_SOLID;
-        gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
         GEPolyline(2, x, y, gc, dd);
         PMoveUp(depth, mc);
         gc->lty = savedlty;
@@ -2569,7 +2597,8 @@ static BBOX RenderRadical(SEXP expr, int draw, mathContext *mc,
 	x[4] = ConvertedX(mc, dd);
 	y[4] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(5, x, y, gc, dd);
 	PMoveTo(savedX, savedY, mc);
 	gc->lty = savedlty;
@@ -2618,7 +2647,8 @@ static BBOX RenderAbs(SEXP expr, int draw, mathContext *mc,
 	x[1] = ConvertedX(mc, dd);
 	y[1] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(2, x, y, gc, dd);
 	PMoveUp(-height, mc);
 	gc->lty = savedlty;
@@ -2638,7 +2668,8 @@ static BBOX RenderAbs(SEXP expr, int draw, mathContext *mc,
 	x[1] = ConvertedX(mc, dd);
 	y[1] = ConvertedY(mc, dd);
 	gc->lty = LTY_SOLID;
-	gc->lwd = 1;
+	if (gc->lwd > 1)
+	    gc->lwd = 1;
 	GEPolyline(2, x, y, gc, dd);
 	PMoveUp(-height, mc);
 	gc->lty = savedlty;

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *  print.default()  ->	 do_printdefault (with call tree below)
@@ -70,7 +70,7 @@
 #include <S.h>
 
 /* Global print parameter struct: */
-R_print_par_t R_print;
+attribute_hidden R_print_par_t R_print;
 
 static void printAttributes(SEXP, SEXP, Rboolean);
 
@@ -93,7 +93,7 @@ void PrintDefaults(SEXP rho)
     R_print.width = GetOptionWidth(rho);
 }
 
-SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     switch (length(args)) {
     case 0:
@@ -107,13 +107,13 @@ SEXP do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 #if 0
-SEXP do_visibleflag(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_visibleflag(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     return ScalarLogical(R_Visible);
 }
 #endif
 
-SEXP do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int quote;
     SEXP a, x, rowlab, collab, naprint;
@@ -153,7 +153,7 @@ SEXP do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* .Internal(print.default(x, digits, quote, na.print, print.gap,
                            right, useS4)) */
-SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, naprint;
     int tryS4;
@@ -204,16 +204,8 @@ SEXP do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(tryS4 == NA_LOGICAL)
 	errorcall(call, _("invalid 'tryS4' internal argument"));
 
-    if(tryS4 && isObject(x) && isMethodsDispatchOn()) {
-	SEXP class = getAttrib(x, R_ClassSymbol);
-	if(length(class) == 1) {
-	    /* internal version of isClass() */
-	    char str[201];
-	    snprintf(str, 200, ".__C__%s", CHAR(STRING_ELT(class, 0)));
-	    if(findVar(install(str), rho) != R_UnboundValue)
-		callShow = TRUE;
-	}
-    }
+    if(tryS4 && isObject(x) && isMethodsDispatchOn())
+      callShow = R_seemsS4Object(x);
 
     if(callShow) {
 	SEXP call;
@@ -360,7 +352,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 		    else if( isValidName(CHAR(STRING_ELT(names, i))) )
 			sprintf(ptag, "$%s", CHAR(STRING_ELT(names, i)));
 		    else
-			sprintf(ptag, "$\"%s\"", CHAR(STRING_ELT(names, i)));
+			sprintf(ptag, "$`%s`", CHAR(STRING_ELT(names, i)));
 		}
 	    }
 	    else {
@@ -496,7 +488,7 @@ static void printList(SEXP s, SEXP env)
 		    else if( isValidName(CHAR(PRINTNAME(TAG(s)))) )
 			sprintf(ptag, "$%s", CHAR(PRINTNAME(TAG(s))));
 		    else
-			sprintf(ptag, "$\"%s\"", CHAR(PRINTNAME(TAG(s))));
+			sprintf(ptag, "$`%s`", CHAR(PRINTNAME(TAG(s))));
 		}
 	    }
 	    else {
@@ -548,6 +540,8 @@ static void PrintEnvir(SEXP rho)
 	Rprintf("<environment: R_GlobalEnv>\n");
     else if (rho == R_BaseEnv)
     	Rprintf("<environment: base>\n");	
+    else if (rho == R_EmptyEnv)
+    	Rprintf("<environment: R_EmptyEnv>\n");
     else if (R_IsPackageEnv(rho))
 	Rprintf("<environment: %s>\n",
 		CHAR(STRING_ELT(R_PackageEnvName(rho), 0)));
@@ -703,7 +697,7 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 		   TAG(a) == R_DimNamesSymbol)
 		    goto nextattr;
 	    }
-	    if(isFactor(s)) {
+	    if(inherits(s, "factor")) {
 		if(TAG(a) == R_LevelsSymbol)
 		    goto nextattr;
 		if(TAG(a) == R_ClassSymbol)
@@ -837,8 +831,11 @@ void CustomPrintValue(SEXP s, SEXP env)
 }
 
 
-/* xxxpr are mostly for S compatibility (as mentioned in V&R) */
+/* xxxpr are mostly for S compatibility (as mentioned in V&R).
+   The actual interfaces are now in xxxpr.f
+ */
 
+attribute_hidden
 int F77_NAME(dblep0) (char *label, int *nchar, double *data, int *ndata)
 {
     int k, nc = *nchar;
@@ -856,6 +853,7 @@ int F77_NAME(dblep0) (char *label, int *nchar, double *data, int *ndata)
     return(0);
 }
 
+attribute_hidden
 int F77_NAME(intpr0) (char *label, int *nchar, int *data, int *ndata)
 {
     int k, nc = *nchar;
@@ -873,6 +871,7 @@ int F77_NAME(intpr0) (char *label, int *nchar, int *data, int *ndata)
     return(0);
 }
 
+attribute_hidden
 int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 {
     int k, nc = *nchar, nd=*ndata;

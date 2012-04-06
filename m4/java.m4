@@ -17,22 +17,22 @@
 ### You should have received a copy of the GNU General Public License
 ### along with R; if not, you can obtain it via the World Wide Web at
 ### `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
-### 02111-3307, USA.
+### Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+### Boston, MA 02110-1301, USA
 
 
 ## R_RUN_JAVA(variable for the result, parameters)
 ## ----------
-## runs the java interpreter ${JAVA_PROG} with specified parameters and
+## runs the java interpreter ${JAVA} with specified parameters and
 ## saves the output to the supplied variable. The exit value is ignored.
 AC_DEFUN([R_RUN_JAVA],
 [
   acx_java_result=
-  if test -z "${JAVA_PROG}"; then
-    echo "$as_me:$LINENO: JAVA_PROG is not set, cannot run java $2" >&AS_MESSAGE_LOG_FD
+  if test -z "${JAVA}"; then
+    echo "$as_me:$LINENO: JAVA is not set, cannot run java $2" >&AS_MESSAGE_LOG_FD
   else
-    echo "$as_me:$LINENO: running ${JAVA_PROG} $2" >&AS_MESSAGE_LOG_FD
-    acx_java_result=`${JAVA_PROG} $2 2>&AS_MESSAGE_LOG_FD`
+    echo "$as_me:$LINENO: running ${JAVA} $2" >&AS_MESSAGE_LOG_FD
+    acx_java_result=`${JAVA} $2 2>&AS_MESSAGE_LOG_FD`
     echo "$as_me:$LINENO: output: '$acx_java_result'" >&AS_MESSAGE_LOG_FD
   fi
   $1=$acx_java_result
@@ -43,9 +43,9 @@ AC_DEFUN([R_RUN_JAVA],
 ## -----------
 ## Looks for Java JRE/JDK and sets:
 ## have_java to yes/no; if it is yes then also sets:
-## JAVA_PROG to Java interpreter path
+## JAVA to Java interpreter path
 ## JAVA_HOME to the home directory of the Java runtime/jdk
-## JAVA_LD_PATH to the path necessary for Java runtime
+## JAVA_LD_LIBRARY_PATH to the path necessary for Java runtime
 ## JAVA_LIBS to flags necessary to link JNI programs (*)
 ##
 ## JAVA_HOME env var is honored during the search and the search
@@ -58,12 +58,13 @@ have_java=no
 if test -z "${JAVA_HOME}" ; then
   JAVA_PATH=${PATH}
 else
-  JAVA_PATH=${JAVA_HOME}:${JAVA_HOME}/bin:${PATH}
+  ## try jre/bin first just in case we don't have full JDK
+  JAVA_PATH=${JAVA_HOME}:${JAVA_HOME}/jre/bin:${JAVA_HOME}/bin:${PATH}
 fi
 ## if 'java' is not on the PATH or JAVA_HOME, add some guesses as of
 ## where java could live
 JAVA_PATH=${JAVA_PATH}:/usr/java/bin:/usr/jdk/bin:/usr/lib/java/bin:/usr/lib/jdk/bin:/usr/local/java/bin:/usr/local/jdk/bin:/usr/local/lib/java/bin:/usr/local/lib/jdk/bin
-AC_PATH_PROGS(JAVA_PROG,java,,${JAVA_PATH})
+AC_PATH_PROGS(JAVA,java,,${JAVA_PATH})
 ## FIXME: we may want to check for jikes, kaffe and others...
 AC_PATH_PROGS(JAVAC,javac,,${JAVA_PATH})
 
@@ -72,7 +73,7 @@ getsp_cp=${ac_aux_dir}
 
 AC_MSG_CHECKING([whether Java interpreter works])
 acx_java_works=no
-if test -n "${JAVA_PROG}" ; then
+if test -n "${JAVA}" ; then
   R_RUN_JAVA(acx_jc_result,[-classpath ${getsp_cp} getsp -test])
   if test "${acx_jc_result}" = "Test1234OK"; then
     acx_java_works=yes
@@ -102,12 +103,16 @@ if test ${acx_java_works} = yes; then
     case "${host_os}" in
       darwin*)
         JAVA_LIBS="-framework JavaVM"
-        JAVA_LD_PATH=
+        JAVA_LD_LIBRARY_PATH=
         ;;
       *)
         R_RUN_JAVA(JAVA_LIBS, [-classpath ${getsp_cp} getsp -libs])
         JAVA_LIBS="${JAVA_LIBS} -ljvm"
-        R_RUN_JAVA(JAVA_LD_PATH, [-classpath ${getsp_cp} getsp java.library.path])
+        R_RUN_JAVA(JAVA_LD_LIBRARY_PATH, [-classpath ${getsp_cp} getsp java.library.path])
+	## FIXME: we may want to figure out whether JAVA_HOME is a symlink
+	## to any paths in JAVA_LD_LIBARARY_PATH in which case we should use
+	## the symlink instead. This would solve versioning problems across
+	## Sun's JDKs.
         ;;
     esac
   
@@ -118,13 +123,13 @@ if test ${acx_java_works} = yes; then
   fi
 else
   AC_MSG_RESULT([no])
-  JAVA_PROG=
+  JAVA=
   JAVAC=
   JAVA_HOME=
 fi
 
 AC_SUBST(JAVA_HOME)
-AC_SUBST(JAVA_PROG)
-AC_SUBST(JAVA_LD_PATH)
+AC_SUBST(JAVA)
+AC_SUBST(JAVA_LD_LIBRARY_PATH)
 AC_SUBST(JAVA_LIBS)
 ])

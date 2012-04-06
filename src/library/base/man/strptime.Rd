@@ -32,18 +32,20 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \item{format}{A character string.  The default is
     \code{"\%Y-\%m-\%d \%H:\%M:\%S"} if any component has a time
     component which is not midnight, and \code{"\%Y-\%m-\%d"}
-    otherwise.}
+    otherwise.  If \code{\link{options}("digits.secs")} is set, up to
+    the specified number of digits will be printed for seconds.}
   \item{\dots}{Further arguments to be passed from or to other methods.}
   \item{usetz}{logical.  Should the timezone be appended to the output?
-    This is used in printing time, and as a workaround for problems with
+    This is used in printing times, and as a workaround for problems with
     using \code{"\%Z"} on most Linux systems.}
   \item{year, month, day}{numerical values to specify a day.}
-  \item{hour, min, sec}{numerical values for a time within a day.}
+  \item{hour, min, sec}{numerical values for a time within a day.
+    Fractional seconds are allowed.}
 }
 \details{
   \code{strftime} is an alias for \code{format.POSIXlt}, and
   \code{format.POSIXct} first converts to class \code{"POSIXlt"} by
-  calling \code{\link{as.POSIXlt}}. Note that only that conversion
+  calling \code{\link{as.POSIXlt}}.  Note that only that conversion
   depends on the time zone.
 
   The usual vector re-cycling rules are applied to \code{x} and
@@ -75,7 +77,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
     \item{\code{\%p}}{AM/PM indicator in the locale.  Used in
       conjuction with \code{\%I} and \bold{not} with \code{\%H}.}
     \item{\code{\%S}}{Second as decimal number (00--61), allowing for
-      up to two leap-seconds.}
+      up to two leap-seconds (but POSIX-compliant OSes will ignore leap
+      seconds).}
     \item{\code{\%U}}{Week of the year as decimal number (00--53) using
       the first Sunday as day 1 of week 1.}
     \item{\code{\%w}}{Weekday as decimal number (0--6, Sunday is 0).}
@@ -124,11 +127,16 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
     \item{\code{\%t}}{Newline on output, arbitrary whitespace on input.}
     \item{\code{\%T}}{Equivalent to \code{\%H:\%M:\%S}.}
   }
-  There are also \code{\%O[dHImMSUVwWy]} which may emit numbers in an
-  alternative local-dependent format (e.g. roman numerals), and
+  For output there are also \code{\%O[dHImMUVwWy]} which may emit numbers in an
+  alternative locale-dependent format (e.g. roman numerals), and
   \code{\%E[cCyYxX]} which can use an alternative \sQuote{era}
   (e.g. a different religious calendar).  Which of these are supported is
-  OS-dependent.
+  OS-dependent.  Specific to \R is \code{\%OSn}, which for output gives the
+  seconds to \code{0 <= n <= 6} decimal places (and if \code{\%OS} is
+  not followed by a digit, it uses the setting of
+  \code{\link{getOption}("digits.secs")}, or if that is unset, \code{n = 3}).
+  Further, for \code{strptime} \code{\%OS} will input seconds including
+  fractional seconds.
 
   \code{ISOdatetime} and \code{ISOdate} are convenience wrappers for
   \code{strptime}, that differ only in their defaults and that
@@ -167,14 +175,18 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   correctly.
 
   Remember that in most timezones some times do not occur and some occur
-  twice because of transitions to/from summer time.
+  twice because of transitions to/from summer time.  What happens in
+  those cases is OS-specific.
 }
 \references{
-  International Organization for Standardization (1988, 1997, \dots)
+  International Organization for Standardization (2004, 1988, 1997,
+  \dots)
   \emph{ISO 8601. Data elements and interchange formats --
     Information interchange -- Representation of dates and times.}
-  The 1997 version is available on-line at
-  \url{ftp://ftp.qsl.net/pub/g1smd/8601v03.pdf}
+  For links to versions available on-line see (at the time of writing)
+  \url{http://www.qsl.net/g1smd/isopdf.htm}; for information on the
+  current official version, see
+  \url{http://www.iso.org/iso/en/prods-services/popstds/datesandtime.html}.
 }
 \seealso{
   \link{DateTimeClasses} for details of the date-time classes;
@@ -193,6 +205,9 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 ## locale-specific version of date()
 format(Sys.time(), "\%a \%b \%d \%X \%Y \%Z")
 
+## time to sub-second accuracy (if supported by the OS)
+format(Sys.time(), "\%H:\%M:\%OS3")
+
 ## read in date info in format 'ddmmmyyyy'
 ## This will give NA(s) in some locales; setting the C locale
 ## as in the commented lines will overcome this on most systems.
@@ -206,8 +221,14 @@ z
 dates <- c("02/27/92", "02/27/92", "01/14/92", "02/28/92", "02/01/92")
 times <- c("23:03:20", "22:29:56", "01:03:30", "18:21:03", "16:56:26")
 x <- paste(dates, times)
-z <- strptime(x, "\%m/\%d/\%y \%H:\%M:\%S")
+strptime(x, "\%m/\%d/\%y \%H:\%M:\%S")
+
+## time with fractional seconds
+z <- strptime("20/2/06 11:16:16.683", "\%d/\%m/\%y \%H:\%M:\%OS")
+z # prints without fractional seconds
+op <- options(digits.secs=3)
 z
+options(op)
 }
 \keyword{utilities}
 \keyword{chron}

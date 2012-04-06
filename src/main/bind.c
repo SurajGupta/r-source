@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
@@ -17,8 +17,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -588,7 +588,7 @@ static SEXP ExtractOptionals(SEXP ans, int *recurse, int *usenames)
    argument.
 */
 
-SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
 
@@ -603,7 +603,7 @@ SEXP do_c(SEXP call, SEXP op, SEXP args, SEXP env)
     return do_c_dflt(call, op, ans, env);
 }
 
-SEXP do_c_dflt(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_c_dflt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, t;
     int mode, recurse, usenames;
@@ -715,7 +715,7 @@ SEXP do_c_dflt(SEXP call, SEXP op, SEXP args, SEXP env)
 } /* do_c */
 
 
-SEXP do_unlist(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_unlist(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, t;
     int mode, recurse, usenames;
@@ -882,7 +882,7 @@ SEXP FetchMethod(char *generic, char *classname, SEXP env)
 }
 
 /* cbind(deparse.level, ...) and rbind(deparse.level, ...) : */
-SEXP do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP a, t, obj, class, classlist, classname, method, classmethod, rho;
     char *generic;
@@ -997,7 +997,8 @@ SEXP do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     case CPLXSXP:
     case STRSXP:
     case VECSXP:
-	break;
+    case RAWSXP:
+ 	break;
 	/* we don't handle expressions: we could, but coercion of a matrix
 	   to an expression is not ideal */
     default:
@@ -1161,6 +1162,18 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 		idx = (!isMatrix(u)) ? rows : k;
 		for (i = 0; i < idx; i++)
 		    COMPLEX(result)[n++] = COMPLEX(u)[i % k];
+	    }
+	}
+    }
+    else if (mode == RAWSXP) {
+	for (t = args; t != R_NilValue; t = CDR(t)) {
+	    u = PRVALUE(CAR(t));
+	    if (isMatrix(u) || length(u) >= lenmin) {
+		u = coerceVector(u, RAWSXP);
+		k = LENGTH(u);
+		idx = (!isMatrix(u)) ? rows : k;
+		for (i = 0; i < idx; i++)
+		    RAW(result)[n++] = RAW(u)[i % k];
 	    }
 	}
     }
@@ -1366,6 +1379,21 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 		    for (j = 0; j < cols; j++)
 		      SET_VECTOR_ELT(result, i + n + (j * rows),
 				     duplicate(VECTOR_ELT(u, (i + j * idx) % k)));
+		n += idx;
+	    }
+	}
+    }
+    else if (mode == RAWSXP) {
+	for (t = args; t != R_NilValue; t = CDR(t)) {
+	    u = PRVALUE(CAR(t));
+	    if (isMatrix(u) || length(u) >= lenmin) {
+		u = coerceVector(u, RAWSXP);
+		k = LENGTH(u);
+		idx = (isMatrix(u)) ? nrows(u) : (k > 0);
+		for (i = 0; i < idx; i++)
+		    for (j = 0; j < cols; j++)
+			RAW(result)[i + n + (j * rows)]
+			    = RAW(u)[(i + j * idx) % k];
 		n += idx;
 	    }
 	}

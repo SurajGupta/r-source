@@ -632,10 +632,15 @@ window.default <- function(x, start = NULL, end = NULL,
         yend <- xtsp[2] + enoff/xfreq
         nold <- round(xfreq*(xtsp[2] - xtsp[1])) + 1
         ## both start and end could be outside time base
-        i0 <- 1+max(0, stoff); i1 <- nold + min(0, enoff)
-        i <- c(rep.int(nold+1, max(0, -stoff)),
-                   if(i0 <= i1) i0:i1,
-                   rep.int(nold+1, max(0, enoff)))
+        ## and indeed the new ad old ranges might not intersect.
+        i <- if(start > xtsp[2]+ts.eps/xfreq || end < xtsp[1] - ts.eps/xfreq)
+            rep(nold+1, floor(1+(end-start)*xfreq + ts.eps))
+        else {
+            i0 <- 1+max(0, stoff); i1 <- nold + min(0, enoff)
+            c(rep.int(nold+1, max(0, -stoff)),
+              if(i0 <= i1) i0:i1,
+              rep.int(nold+1, max(0, enoff)))
+        }
         y <- if(is.matrix(x)) rbind(x, NA)[i, , drop = FALSE] else c(x, NA)[i]
         attr(y, "tsp") <- c(ystart, yend, xfreq)
         if(yfreq != xfreq) y <- Recall(y, frequency = yfreq)
@@ -732,7 +737,8 @@ ts.plot <- function(..., gpars = list())
 }
 
 arima.sim <- function(model, n, rand.gen = rnorm,
-                      innov = rand.gen(n, ...), n.start = NA, ...)
+                      innov = rand.gen(n, ...), n.start = NA,
+                      start.innov = rand.gen(n.start, ...), ...)
 {
     if(!is.list(model)) stop("'model' must be list")
     p <- length(model$ar)
@@ -753,7 +759,10 @@ arima.sim <- function(model, n, rand.gen = rnorm,
         if(d != round(d) || d < 0)
             stop("number of differences must be a positive integer")
     }
-    x <- ts(c(rand.gen(n.start, ...), innov[1:n]), start = 1 - n.start)
+    if(!missing(start.innov) && length(start.innov) < n.start)
+        stop(gettextf("'start.innov' is too short: need %d points", n.start),
+             domain = NA)
+    x <- ts(c(start.innov[1:n.start], innov[1:n]), start = 1 - n.start)
     if(length(model$ma)) x <- filter(x, c(1, model$ma), sides = 1)
     if(length(model$ar)) x <- filter(x, model$ar, method = "recursive")
     if(n.start > 0) x <- x[-(1:n.start)]

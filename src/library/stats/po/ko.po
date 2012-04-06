@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-11-16 22:59+0000\n"
+"POT-Creation-Date: 2006-04-18 12:45+0100\n"
 "PO-Revision-Date: 2005-05-26 15:32+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -25,23 +25,23 @@ msgstr "이동 중앙값의 bandwidth/span가 n보다 큽니다"
 msgid "probabilities outside [0,1] in qansari()"
 msgstr "qunsari()에서 확률이 [0,1]의 범위외입니다"
 
-#: arima.c:60 arima.c:167 arima.c:343
+#: arima.c:71 arima.c:178 arima.c:354
 msgid "invalid argument type"
 msgstr "부적절한 인수의 유형입니다"
 
-#: arima.c:402 arima.c:490 pacf.c:302 pacf.c:342
+#: arima.c:413 arima.c:497 pacf.c:311 pacf.c:351
 msgid "can only transform 100 pars in arima0"
 msgstr "arima0에서 100개의 파라미터까지만 변환 할수 없습니다"
 
-#: distance.c:145
+#: distance.c:151
 msgid "dist(.,\"binary\"): treating non-finite values as NA"
 msgstr "dist(.,\"binary\"):유한하지 않은 값을 NA로서 취급합니다"
 
-#: distance.c:214
+#: distance.c:220
 msgid "distance(): invalid p"
 msgstr "distance(): 부적절한 p"
 
-#: distance.c:217
+#: distance.c:223
 msgid "distance(): invalid distance"
 msgstr "distance() : 부적절한 distance"
 
@@ -68,57 +68,35 @@ msgstr "sm.method=\"spline\"에서는 2500행까지만 취급할수 없습니다
 msgid "span is too small"
 msgstr "범위(span)가 너무 작습니다"
 
-#: mburg.c:197
+#: mAR.c:467
+msgid "Singular matrix in qr_solve"
+msgstr "qr_solve 에서의 특이 행렬입니다"
+
+#: mAR.c:510
+msgid "Singular matrix in ldet"
+msgstr "ldet에서의 특이 행렬입니다"
+
+#: mAR.c:697
 msgid "Invalid vmethod"
 msgstr "부적절한 vmethod입니다"
 
-#: mburg.c:333
+#: mAR.c:833
 msgid "Burg's algorithm failed to find partial correlation"
 msgstr "Burg의 알고니즘의 편상관을 검색되어서 결손시켰습니다"
 
 #: nls.c:75
-msgid "control must be a list"
-msgstr "control는 리스트가 아니면 되지 않습니다"
+msgid "'control' must be a list"
+msgstr "'control'는 리스트가 아니면 되지 않습니다"
 
-#: nls.c:77 port.c:510
-msgid "m must be a list"
-msgstr "m는 리스트가 아니면 되지 않습니다"
+#: nls.c:77
+msgid "'m' must be a list"
+msgstr "'m'는 리스트가 아니면 되지 않습니다"
 
-#: nls.c:83
-msgid "control$maxiter absent"
-msgstr "control$maxiter가 결여 되었습니다"
-
-#: nls.c:88
-msgid "control$tol absent"
-msgstr "control$tol가 결여 되었습니다"
-
-#: nls.c:93
-msgid "control$minFactor absent"
-msgstr "contril$minFactor가 결여 되었습니다"
-
-#: nls.c:102
-msgid "m$conv() absent"
-msgstr "m$conv()가  걸여 되었습니다"
-
-#: nls.c:107
-msgid "m$incr() absent"
-msgstr "m$incr()가 걸여 되었습니다"
-
-#: nls.c:112
-msgid "m$deviance() absent"
-msgstr "m$deviance()가 걸여 되었습니다"
-
-#: nls.c:117
-msgid "m$trace() absent"
-msgstr "m$trace()가 걸여 되었습니다"
-
-#: nls.c:122
-msgid "m$setPars() absent"
-msgstr "m$setPars()가 없습니다"
-
-#: nls.c:127
-msgid "m$getPars() absent"
-msgstr "m$getPars()가 없습니다"
+#: nls.c:83 nls.c:88 nls.c:93 nls.c:102 nls.c:107 nls.c:112 nls.c:117
+#: nls.c:122 nls.c:127
+#, c-format
+msgid "'%s' absent"
+msgstr "'%s'가 없습니다"
 
 #: nls.c:154
 msgid "singular gradient"
@@ -135,42 +113,50 @@ msgid "number of iterations exceeded maximum of %d"
 msgstr "반복수가 최대치 %d를 넘었습니다"
 
 #: nls.c:202
-msgid "theta should be of type character"
-msgstr "theta는 문자 유형이 아니면 되지 않습니다"
+msgid "'theta' should be of type character"
+msgstr "'theta'는 문자 유형이 아니면 되지 않습니다"
 
-#: nls.c:204
-msgid "rho should be an environment"
-msgstr "rho는 환경이 나오지 않으면 되지 않습니다"
+#: nls.c:204 port.c:359
+msgid "use of NULL environment is deprecated"
+msgstr ""
 
-#: nls.c:220 nls.c:248
+#: nls.c:208
+msgid "'rho' should be an environment"
+msgstr "'rho'는 환경이 나오지 않으면 되지 않습니다"
+
+#: nls.c:210
+msgid "'dir' is not a numeric vector of the correct length"
+msgstr ""
+
+#: nls.c:227 nls.c:255
 msgid "Missing value or an infinity produced when evaluating the model"
 msgstr "model를 평가할때 결손값 또는 무한대가 생성되었습니다"
 
-#: nls.c:226
+#: nls.c:233
 #, c-format
 msgid "variable '%s' is integer, not numeric"
 msgstr ""
 
-#: nls.c:228
+#: nls.c:235
 #, c-format
 msgid "variable '%s' is not numeric"
 msgstr ""
 
-#: pacf.c:72
+#: pacf.c:81
 msgid "bad Starma struct"
 msgstr "부적절한 Starma struct입니다"
 
-#: pacf.c:218
+#: pacf.c:227
 #, c-format
 msgid "starma error code %d"
 msgstr "starma 에러 코드는 %d입니다"
 
-#: pacf.c:281
+#: pacf.c:290
 #, c-format
 msgid "forkal error code %d"
 msgstr "forkal 에러 code는 %d입니다"
 
-#: pacf.c:445
+#: pacf.c:454
 msgid "invalid value of lag.max"
 msgstr "부적절한 lag.max 값입니다"
 
@@ -189,61 +175,57 @@ msgstr ""
 msgid "Hessian function must return a square numeric matrix of order %d"
 msgstr ""
 
-#: port.c:360
-msgid "`rho' must be an environment"
+#: port.c:363
+msgid "'rho' must be an environment"
 msgstr "'rho'는 환경이 나오지 않으면 되지 않습니다"
 
-#: port.c:362 port.c:509
-msgid "`d' must be a nonempty numeric vector"
-msgstr ""
-
-#: port.c:364
-msgid "When Hessian defined must also have gradient defined"
+#: port.c:365 port.c:512
+msgid "'d' must be a nonempty numeric vector"
 msgstr ""
 
 #: port.c:367
+msgid "When Hessian defined must also have gradient defined"
+msgstr ""
+
+#: port.c:370
 #, c-format
-msgid "environment `rho' must contain a numeric vector `.par' of length %d"
+msgid "environment 'rho' must contain a numeric vector '.par' of length %d"
 msgstr ""
 
-#: port.c:377 port.c:529
-msgid "lowerb and upperb must be numeric vectors"
+#: port.c:380
+msgid "'lower' and 'upper' must be numeric vectors"
 msgstr ""
 
-#: port.c:423
-msgid "getElement applies only to named lists"
+#: port.c:426
+msgid "'getElement' applies only to named lists"
 msgstr ""
 
-#: port.c:444
+#: port.c:447
 #, c-format
 msgid "%s$%s() not found"
 msgstr ""
 
-#: port.c:457
+#: port.c:460
 #, c-format
-msgid "gradient must be a numeric matrix of dimension (%d,%d)"
+msgid "'gradient' must be a numeric matrix of dimension (%d,%d)"
 msgstr ""
 
-#: port.c:478
+#: port.c:481
 #, c-format
 msgid "fcn produced mode %d, length %d - wanted mode %d, length %d"
 msgstr ""
 
-#: port.c:491
+#: port.c:494
 msgid "invalid type for eval_check_store"
 msgstr ""
 
-#: qr.c:30
-msgid "assert failed in src/library/ts/src/carray.c"
-msgstr "scr/library/ts/src/carray.c에 대한 인수 정합성 검사에 실패했습니다"
+#: port.c:513
+msgid "m must be a list"
+msgstr "m는 리스트가 아니면 되지 않습니다"
 
-#: qr.c:68
-msgid "Singular matrix in qr_solve"
-msgstr "qr_solve 에서의 특이 행렬입니다"
-
-#: qr.c:111
-msgid "Singular matrix in ldet"
-msgstr "ldet에서의 특이 행렬입니다"
+#: port.c:532
+msgid "'lowerb' and 'upperb' must be numeric vectors"
+msgstr ""
 
 #: smooth.c:79
 #, c-format
@@ -262,7 +244,7 @@ msgstr "smooth(*,'3RSS')에서의 할당 에러입니다"
 msgid "allocation error in smooth(*, '3R')."
 msgstr "smooth(*,'3R')에서의 할당 에러입니다"
 
-#: starma.c:361
+#: starma.c:366
 #, c-format
 msgid "missing value in last %d observations"
 msgstr "직전의 %d개의 관측치에서 결손값이 있습니다"

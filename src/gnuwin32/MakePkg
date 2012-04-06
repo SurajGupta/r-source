@@ -33,7 +33,7 @@ SRCMAKE=$(wildcard $(SSPKG)/Makefile.win)
 SDYNLIB=$(SSPKG)/$(DLLNAME).dll
 
 LSOURCES=$(wildcard $(SSPKG)/*.c $(SSPKG)/*.f $(SSPKG)/*.cc \
-	$(SSPKG)/*.cpp $(SSPKG)/*.C)
+	$(SSPKG)/*.cpp $(SSPKG)/*.C $(SSPKG)/*.f90  $(SSPKG)/*.f95)
 ifeq ($(strip $(LSOURCES)),)
   LOBJS=
 else
@@ -83,8 +83,10 @@ ifeq ($(strip $(LAZYDATA)),true)
 endif
 	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s mansrcs indices
 
-fake: zzzfirst frontmatter nmspacefake R Rfake $(DPKG)/demo \
-  $(DPKG)/exec $(DPKG)/inst $(DATA) mansrcs indices
+## this does not make any DLL, and modifies the NAMESPACE and R code
+## to try to ensure no attempt is made to load the DLL.
+## Otherwise, follow what Unix INSTALL does (no demo, exec or inst)
+fake: zzzfirst frontmatter nmspacefake R Rfake $(DATA) mansrcs indices
 
 include $(RHOME)/src/gnuwin32/MkRules
 
@@ -92,7 +94,7 @@ clean:
 ifeq ($(strip $(SRCMAKE)),)
 	$(RM) $(SDYNLIB) $(LOBJS) $(SSPKG)/$(DLLNAME).a \
 	  $(SSPKG)/$(DLLNAME).def $(SSPKG)/$(DLLNAME)_res.* \
-	  $(SSPKG)/*.d $(SSPKG)/Makedeps
+	  $(SSPKG)/*.d $(SSPKG)/Makedeps tests/*.Rout
 else
 	$(MAKE) -C $(SSPKG) RHOME=$(RHOME) -f Makefile.win clean
 endif
@@ -138,8 +140,8 @@ $(DPKG)/demo: $(PKGDEMOS)
 ifneq ($(strip $(PKGDEMOS)),)
 	@$(ECHO) "  installing demos"
 	@$(RM) -rf $@
-	@$(MKDIR) -p $@
-	@$(CP) $(PKGDEMOS)   $@
+	@$(ECHO) "tools:::.install_package_demos('.', '"$(DPKG)"')" | \
+	  R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(REXE) > /dev/null
 endif
 
 $(DPKG)/exec: $(EXECFILES)
@@ -258,12 +260,14 @@ else
  include R/Makefile.win
 endif
 
-Rfake:
+Rfake: $(PKGRFILES)
+ifneq ($(strip $(PKGRFILES)),)
 	@if test -f $(SPKG)/NAMESPACE; then \
 	  echo ".onLoad <- .onAttach <- function(lib, pkg) NULL" >> $(DPKG)/R/$(PKG) ; \
 	else \
 	  echo ".First.lib <- function(lib, pkg) NULL" >> $(DPKG)/R/$(PKG) ;\
 	fi
+endif
 
 
 MANMAIN=$(wildcard $(SPKG)/man/*.[Rr]d)
@@ -276,9 +280,8 @@ $(DPKG)/man/$(PKG).Rd.gz: $(MANMAIN) $(MANWIN32)
 ifneq ($(strip $(PKGMANFILES)),)
 	@$(ECHO) "  installing man source files"
 	@$(RM) -rf $(DPKG)/man
-	@$(MKDIR) -p $(DPKG)/man
-	sh $(RHOME)/src/gnuwin32/man-install.sh $(DPKG)/man/$(PKG).Rd '$^'
-	@gzip -9 $(DPKG)/man/$(PKG).Rd
+	@$(ECHO) "tools:::.install_package_man_sources('.', '"$(DPKG)"')" | \
+	  R_DEFAULT_PACKAGES=NULL LC_COLLATE=C R_OSTYPE=windows $(REXE) > /dev/null
 else
 	@$(ECHO) "  no man files in this package"
 endif
@@ -287,9 +290,13 @@ indices:
 	@$(ECHO) "  installing indices"
 	@$(ECHO) "invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); tools:::.install_package_indices('.', '"$(DPKG)"')" | \
 	  R_DEFAULT_PACKAGES=NULL LC_COLLATE=C R_OSTYPE=windows $(REXE) > /dev/null
-# need not have HTML installed when building packages
-	@$(MKDIR) -p $(RHOME)/doc/html/search
-	@$(CAT) $(RHOME)/library/*/CONTENTS > $(RHOME)/doc/html/search/index.txt
+# need not have HTML installed when building packages.
+# Do this only if installing into main library, but tricky to figure out.
+# (so we don't bother with being careful).
+ifeq ($(RLIB),$(RHOME)/library)
+	-@$(MKDIR) -p $(RHOME)/doc/html/search
+	-@$(CAT) $(RHOME)/library/*/CONTENTS > $(RHOME)/doc/html/search/index.txt
+endif
 ifneq ($(strip $(BUILD)),CROSS)
 	@$(ECHO) "tools:::win.packages.html(.Library)" | \
 	  R_DEFAULT_PACKAGES=NULL LC_COLLATE=C R_OSTYPE=windows $(REXE) > /dev/null

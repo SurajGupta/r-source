@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2005 R Core Team
+### Copyright (C) 1998-2006 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -17,8 +17,8 @@
 ### You should have received a copy of the GNU General Public License
 ### along with R; if not, you can obtain it via the World Wide Web at
 ### `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
-### 02111-3307, USA.
+### Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 
+### 02110-1301, USA.
 
 ### * General support macros
 
@@ -392,12 +392,9 @@ rm -rf conftest* TMP])
 ## ------------------
 ## Generate a Make fragment with suffix rules for the C compiler.
 ## Used for both building R (Makeconf) and add-ons (etc/Makeconf).
-## NB test -d .libs || mkdir .libs can be run more than once
-##    and hence race when a parallel make is used
 AC_DEFUN([R_PROG_CC_MAKEFRAG],
 [r_cc_rules_frag=Makefrag.cc
 AC_REQUIRE([R_PROG_CC_M])
-AC_REQUIRE([R_PROG_CC_C_O_LO])
 cat << \EOF > ${r_cc_rules_frag}
 .c.o:
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $[@]
@@ -406,8 +403,7 @@ if test -n "${r_cv_prog_cc_m}"; then
   cat << EOF >> ${r_cc_rules_frag}
 .c.d:
 	@echo "making \$[@] from \$<"
-	@${r_cv_prog_cc_m} \$(ALL_CPPFLAGS) $< | \\
-	  \$(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > \$[@]
+	@${r_cv_prog_cc_m} \$(ALL_CPPFLAGS) $< > \$[@]
 EOF
 else
   cat << \EOF >> ${r_cc_rules_frag}
@@ -415,21 +411,35 @@ else
 	@echo > $[@]
 EOF
 fi
+AC_SUBST_FILE(r_cc_rules_frag)
+])# R_PROG_CC_MAKEFRAG
+
+## R_PROG_CC_LO_MAKEFRAG
+## ---------------------
+## Generate a Make fragment with suffix rules for the C compiler.
+## Used for both building R (Makeconf) and add-ons (etc/Makeconf).
+## Need to make .lo files in src/nmath/standalone only
+## NB test -d .libs || mkdir .libs can be run more than once
+##    and hence race when a parallel make is used
+AC_DEFUN([R_PROG_CC_LO_MAKEFRAG],
+[r_cc_lo_rules_frag=Makefrag.cc_lo
+AC_REQUIRE([R_PROG_CC_C_O_LO])
 if test "${r_cv_prog_cc_c_o_lo}" = yes; then
-  cat << \EOF >> ${r_cc_rules_frag}
+  cat << \EOF > ${r_cc_lo_rules_frag}
 .c.lo:
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS_LO) -c $< -o $[@]
 EOF
 else
-  cat << \EOF >> ${r_cc_rules_frag}
+  cat << \EOF > ${r_cc_lo_rules_frag}
 .c.lo:
 	@-test -d .libs || mkdir .libs
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS_LO) -c $< -o .libs/$[*].o
 	mv .libs/$[*].o $[*].lo
 EOF
 fi
-AC_SUBST_FILE(r_cc_rules_frag)
-])# R_PROG_CC_MAKEFRAG
+AC_SUBST_FILE(r_cc_lo_rules_frag)
+])# R_PROG_CC_LO_MAKEFRAG
+
 
 ## R_PROG_CC_FLAG(FLAG, [ACTION-IF-TRUE])
 ## ---------------------------------------
@@ -562,29 +572,6 @@ else
 fi])
 ])# R_PROG_CXX_M
 
-## R_PROG_CXX_C_O_LO
-## -----------------
-## Check whether the C++ compiler supports '-c -o FILE.lo'.
-AC_DEFUN([R_PROG_CXX_C_O_LO],
-[cxx_o_lo_rules_frag=Makefrag.cxx
-AC_CACHE_CHECK([whether ${CXX} supports -c -o FILE.lo],
-               [r_cv_prog_cxx_c_o_lo],
-[test -d TMP || mkdir TMP
-echo "int some_variable = 0;" > conftest.cc
-## No real point in using AC_LANG_* and ${ac_ext}, as we need to create
-## hard-wired suffix rules.  We could be a bit more careful as we
-## actually only test suffix '.cc'.
-ac_try='${CXX} ${CXXFLAGS} -c conftest.cc -o TMP/conftest.lo 1>&AS_MESSAGE_LOG_FD'
-if AC_TRY_EVAL(ac_try) \
-    && test -f TMP/conftest.lo \
-    && AC_TRY_EVAL(ac_try); then
-  r_cv_prog_cxx_c_o_lo=yes
-else
-  r_cv_prog_cxx_c_o_lo=no
-fi
-rm -rf conftest* TMP])
-])# R_PROG_CXX_C_O_LO
-
 ## R_PROG_CXX_MAKEFRAG
 ## -------------------
 ## Generate a Make fragment with suffix rules for the C++ compiler.
@@ -592,7 +579,6 @@ rm -rf conftest* TMP])
 AC_DEFUN([R_PROG_CXX_MAKEFRAG],
 [r_cxx_rules_frag=Makefrag.cxx
 AC_REQUIRE([R_PROG_CXX_M])
-AC_REQUIRE([R_PROG_CXX_C_O_LO])
 cat << \EOF > ${r_cxx_rules_frag}
 .cc.o:
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $[@]
@@ -605,16 +591,13 @@ if test "${r_cv_prog_cxx_m}" = yes; then
   cat << \EOF >> ${r_cxx_rules_frag}
 .cc.d:
 	@echo "making $[@] from $<"
-	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	@$(CXX) -M $(ALL_CPPFLAGS) $< > $[@]
 .cpp.d:
 	@echo "making $[@] from $<"
-	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	@$(CXX) -M $(ALL_CPPFLAGS) $< > $[@]
 .C.d:
 	@echo "making $[@] from $<"
-	@$(CXX) -M $(ALL_CPPFLAGS) $< | \
-	  $(SED) -e 's/^\([[^:]]*\)\.o\([[ 	]]\)*:/\1.o \1.lo\2:/' > $[@]
+	@$(CXX) -M $(ALL_CPPFLAGS) $< > $[@]
 EOF
 else
   cat << \EOF >> ${r_cxx_rules_frag}
@@ -624,31 +607,6 @@ else
 	@echo > $[@]
 .C.d:
 	@echo > $[@]
-EOF
-fi
-if test "${r_cv_prog_cxx_c_o_lo}" = yes; then
-  cat << \EOF >> ${r_cxx_rules_frag}
-.cc.lo:
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o $[@]
-.cpp.lo:
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o $[@]
-.C.lo:
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o $[@]
-EOF
-else
-  cat << \EOF >> ${r_cxx_rules_frag}
-.cc.lo:
-	@test -d .libs || mkdir .libs
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o .libs/$[*].o
-	mv .libs/$[*].o $[*].lo
-.cpp.lo:
-	@test -d .libs || mkdir .libs
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o .libs/$[*].o
-	mv .libs/$[*].o $[*].lo
-.C.lo:
-	@test -d .libs || mkdir .libs
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS_LO) -c $< -o .libs/$[*].o
-	mv .libs/$[*].o $[*].lo
 EOF
 fi
 AC_SUBST_FILE(r_cxx_rules_frag)
@@ -683,9 +641,9 @@ fi
 
 ### * Fortran 77 compiler/converter and its characteristics.
 
-## R_PROG_F77_OR_F2C
-## -----------------
-## Find a Fortran 77 compiler, or f2c.
+## R_PROG_F77
+## ----------
+## Find a Fortran 77 compiler
 ##
 ## If we have not been forced to use a particular Fortran compiler, try
 ## to find one using one of the several common names.  The list is based
@@ -736,18 +694,12 @@ fi
 ##   reported by Bill Northcott <w.northcott@unsw.edu.au> for OSX with
 ##   4.0 as default and g77 around and the "old" search order F77 F95
 ##   F90 in use).
-AC_DEFUN([R_PROG_F77_OR_F2C],
+AC_DEFUN([R_PROG_F77],
 [AC_BEFORE([$0], [AC_PROG_LIBTOOL])
 AC_REQUIRE([R_PROG_CC_VERSION])
-if test -n "${F77}" && test -n "${F2C}"; then
-  warn_F77_and_F2C="both 'F77' and 'F2C' given.
-Using the given Fortran 77 compiler ..."
-  AC_MSG_WARN([${warn_F77_and_F2C}])
-  F2C=
-fi
 if test -n "${F77}"; then
   AC_MSG_RESULT([defining F77 to be ${F77}])
-elif test -z "${F2C}"; then
+else
   F77=
   F95_compilers="f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn g95"
   F90_compilers="f90 xlf90 pgf90 pghpf epcf90"
@@ -766,31 +718,23 @@ elif test -z "${F2C}"; then
   fi
   AC_CHECK_PROGS(F77, [ ${GCC_Fortran_compiler} ${F95_compilers} \
                         ${F90_compilers} ${F77_compilers} fc ])
-  if test -z "${F77}"; then
-    AC_CHECK_PROG(F2C, f2c, f2c, [])
-  fi
-else
-  AC_MSG_RESULT([defining F2C to be ${F2C}])
 fi
 if test -n "${F77}"; then
   ## If the above 'found' a Fortran 77 compiler, we run AC_PROG_F77 as
   ## this does additional testing (GNU, '-g', ...).
   AC_PROG_F77
-elif test -z "${F2C}"; then
+else
   AC_MSG_ERROR([Neither an F77 compiler nor f2c found])
-elif test "${GCC}" = yes; then
-  using_f2c=yes
 fi
-## record if we are using g77 or f2c/gcc, so we can use -ffloat-store
-AM_CONDITIONAL(USING_G77, [test "x${ac_cv_f77_compiler_gnu}" = xyes])
-AM_CONDITIONAL(USING_F2C, [test "x${using_f2c}" = xyes])
-])# R_PROG_F77_OR_F2C
+])# R_PROG_F77
 
 ## R_PROG_F77_FLIBS
 ## ----------------
 ## Run AC_F77_LIBRARY_LDFLAGS, and fix some known problems with FLIBS.
+## Only do this if the user has not already set FLIBS.
 AC_DEFUN([R_PROG_F77_FLIBS],
 [AC_BEFORE([$0], [AC_F77_LIBRARY_LDFLAGS])
+if test -z "${FLIBS}"; then
 ##
 ## Currently (Autoconf 2.50 or better, it seems) FLIBS also contains all
 ## elements of LIBS when AC_F77_LIBRARY_LDFLAGS is run.  This is because
@@ -911,6 +855,7 @@ for arg in ${FLIBS}; do
   esac
 done
 FLIBS="${flibs}"
+fi
 ])# R_PROG_F77_FLIBS
 
 ## R_PROG_F77_APPEND_UNDERSCORE
@@ -1014,7 +959,7 @@ rm -rf conftest conftest.* conftestf.* core
 if test -n "${r_cv_prog_f77_can_run}"; then
   AC_MSG_RESULT([yes])
 else
-  AC_MSG_WARN([cannot run mixed C/Fortan code])
+  AC_MSG_WARN([cannot run mixed C/Fortran code])
   AC_MSG_ERROR([Maybe check LDFLAGS for paths to Fortran libraries?])
 fi
 ])# R_PROG_F77_CAN_RUN
@@ -1187,57 +1132,6 @@ fi
 AC_SUBST(HAVE_FORTRAN_DOUBLE_COMPLEX)
 ])# R_PROG_F77_CC_COMPAT_COMPLEX
 
-## R_PROG_F77_C_O_LO
-## -----------------
-## Check whether the Fortran compiler supports '-c -o FILE.lo'.
-AC_DEFUN([R_PROG_F77_C_O_LO],
-[AC_CACHE_CHECK([whether ${F77} supports -c -o FILE.lo],
-                [r_cv_prog_f77_c_o_lo],
-[test -d TMP || mkdir TMP
-cat > conftest.f <<EOF
-      program conftest
-      end
-EOF
-ac_try='${F77} ${FFLAGS} -c conftest.f -o TMP/conftest.lo 1>&AS_MESSAGE_LOG_FD'
-if AC_TRY_EVAL(ac_try) \
-    && test -f TMP/conftest.lo \
-    && AC_TRY_EVAL(ac_try); then
-  r_cv_prog_f77_c_o_lo=yes
-else
-  r_cv_prog_f77_c_o_lo=no
-fi
-rm -rf conftest* TMP])
-])# R_PROG_F77_C_O_LO
-
-## R_PROG_F77_MAKEFRAG
-## -------------------
-## Generate a Make fragment with suffix rules for Fortran 77 source
-## files when using a Fortran 77 compiler.
-## Used for both building R (Makeconf) and add-ons (etc/Makeconf).
-AC_DEFUN([R_PROG_F77_MAKEFRAG],
-[AC_REQUIRE([R_PROG_F77_C_O_LO])
-r_f77_rules_frag=Makefrag.f77
-cat << \EOF > ${r_f77_rules_frag}
-.f.c:
-.f.o:
-	$(F77) $(ALL_FFLAGS) -c $< -o $[@]
-EOF
-if test "${r_cv_prog_f77_c_o_lo}" = yes; then
-  cat << \EOF >> ${r_f77_rules_frag}
-.f.lo:
-	$(F77) $(ALL_FFLAGS_LO) -c $< -o $[@]
-EOF
-else
-  cat << \EOF >> ${r_f77_rules_frag}
-.f.lo:
-	@test -d .libs || mkdir .libs
-	$(F77) $(ALL_FFLAGS_LO) -c $< -o .libs/$[*].o
-	mv .libs/$[*].o $[*].lo
-EOF
-fi
-AC_SUBST_FILE(r_f77_rules_frag)
-])# R_PROG_F77_MAKEFRAG
-
 ## R_PROG_F77_FLAG(FLAG, [ACTION-IF-TRUE])
 ## ---------------------------------------
 ## Check whether the Fortran 77 compiler handles command line option
@@ -1264,81 +1158,6 @@ else
   AC_MSG_RESULT([no])
 fi
 ])# R_PROG_F77_FLAG
-
-## R_PROG_F2C_FLIBS
-## ----------------
-AC_DEFUN([R_PROG_F2C_FLIBS],
-[AC_REQUIRE([AC_PROG_RANLIB])
-AC_REQUIRE([AC_CHECK_LIBM])
-AC_CACHE_VAL([r_cv_f2c_flibs],
-[
-## <FIXME>
-## Why do we need this?  What about AC_F77_DUMMY_MAIN?
-## This seems to be necessary on some Linux system. -- you bet! -pd
-AC_LANG_PUSH(C)
-cat > conftest.${ac_ext} << EOF
-int MAIN_ () { exit(0); }
-int MAIN__ () { exit(0); }
-EOF
-if AC_TRY_EVAL(ac_compile); then
-  ${AR} ${ARFLAGS} libconftest.a conftest.${ac_objext} 1>&AS_MESSAGE_LOG_FD
-  ${RANLIB} libconftest.a 1>&AS_MESSAGE_LOG_FD
-fi
-AC_LANG_POP(C)
-## </FIXME>
-AC_CHECK_LIB(f2c, f_open, 
-             [flibs=-lf2c],
-             [flibs=],
-             [-L. -lconftest ${LIBM}])
-rm -f libconftest*
-if test -z "${flibs}"; then
-  AC_CHECK_LIB(F77, d_sin, [flibs=-lF77], [flibs=], [${LIBM}])
-  if test -n "${flibs}"; then
-    AC_CHECK_LIB(I77, f_rew, [flibs="${flibs} -lI77"], [flibs=], [-lF77])
-  fi
-fi
-r_cv_f2c_flibs="${flibs}"])
-FLIBS="${r_cv_f2c_flibs}"
-if test -z "${FLIBS}"; then
-  warn_f2c_flibs="I found f2c but not libf2c, or libF77 and libI77"
-  AC_MSG_WARN([${warn_f2c_flibs}])
-else
-  FLIBS="${FLIBS} ${LIBM}"
-fi
-])# R_PROG_F2C_FLIBS
-
-## R_PROG_F2C_MAKEFRAG
-## -------------------
-## Generate a Make fragment with suffix rules for Fortran 77 source
-## files when using f2c, the Fortran-to-C converter.
-## Used for both building R (Makeconf) and add-ons (etc/Makeconf).
-AC_DEFUN([R_PROG_F2C_MAKEFRAG],
-[AC_REQUIRE([R_PROG_CC_C_O_LO])
-r_f77_rules_frag=Makefrag.f77
-cat << \EOF > ${r_f77_rules_frag}
-.f.o:
-	$(F2C) $(F2CFLAGS) < $< > $[*].c
-	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $[*].c -o $[@]
-	@rm -f $[*].c
-.f.lo:
-	$(F2C) $(F2CFLAGS) < $< > $[*].c
-EOF
-if test "${r_cv_prog_cc_c_o_lo}" = yes; then
-  cat << \EOF >> ${r_f77_rules_frag}
-	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS_LO) -c $[*].c -o $[@]
-EOF
-else
-  cat << \EOF >> ${r_f77_rules_frag}
-	@test -d .libs || mkdir .libs
-	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS_LO) -c $[*].c -o .libs/$[*].o
-	mv .libs/$[*].o $[*].lo
-EOF
-fi
-cat << \EOF >> ${r_f77_rules_frag}
-	@rm -f $[*].c
-EOF
-AC_SUBST_FILE(r_f77_rules_frag)
-])# R_PROG_F2C_MAKEFRAG
 
 ### * Library functions
 
@@ -1514,38 +1333,6 @@ fi
 AC_SUBST(RMATH_HAVE_WORKING_LOG1P)
 ])# R_FUNC_LOG1P
 
-## R_FUNC_STRPTIME
-## ---------------
-AC_DEFUN([R_FUNC_STRPTIME],
-[AC_CACHE_CHECK([for working strptime], [r_cv_func_strptime_works],
-[AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <stdlib.h>
-#if defined(HAVE_GLIBC2) && !defined(__USE_XOPEN)
-#define __USE_XOPEN
-#endif
-#include <time.h>
-int main () {
-#ifdef HAVE_STRPTIME
-  struct tm tm;
-  char *p, *q, *p2;
-
-  p = strptime("1960-01-01", "%Y-%m-%d", &tm); /* works on MacOS X */
-  p2 =strptime("1899-01-01", "%Y-%m-%d", &tm); /* but this one does not */
-  q = strptime("2003-02-40", "%Y-%m-%d", &tm);
-  exit(p == 0 || p2 == 0 || q);
-#else
-  exit(1);
-#endif
-}
-]])],
-               [r_cv_func_strptime_works=yes],
-               [r_cv_func_strptime_works=no],
-               [r_cv_func_strptime_works=no])])
-if test "x${r_cv_func_strptime_works}" = xyes; then
-  AC_DEFINE(HAVE_WORKING_STRPTIME, 1,
-            [Define if strptime() exists, validates and does not fail pre-1970.])
-fi
-])# R_FUNC_STRPTIME
 
 ## R_FUNC_FTELL
 ## ------------
@@ -1593,6 +1380,13 @@ sigsetjmp(b, 0);
 siglongjmp(b, 1);]])],
                    [r_cv_header_setjmp_posix=yes],
                    [r_cv_header_setjmp_posix=no])])
+AC_CHECK_DECLS([sigsetjmp, siglongjmp], , , [#include <setjmp.h>])
+if test "$ac_cv_have_decl_sigsetjmp" = no; then
+  r_cv_header_setjmp_posix=no
+fi
+if test "$ac_cv_have_decl_siglongjmp" = no; then
+  r_cv_header_setjmp_posix=no
+fi
 if test "${r_cv_header_setjmp_posix}" = yes; then
   AC_DEFINE(HAVE_POSIX_SETJMP, 1,
             [Define if you have POSIX.1 compatible sigsetjmp/siglongjmp.])
@@ -1656,7 +1450,7 @@ if test "x${r_cv_type_socklen}" = x; then
 else
   AC_MSG_RESULT([${r_cv_type_socklen} *])
 fi
-AC_DEFINE_UNQUOTED(SOCKLEN_T, ${r_cv_type_socklen},
+AC_DEFINE_UNQUOTED(R_SOCKLEN_T, ${r_cv_type_socklen},
                    [Type for socket lengths: socklen_t, sock_t, int?])
 ])# R_TYPE_SOCKLEN
 
@@ -1687,7 +1481,7 @@ AC_DEFUN([R_X11],
 [AC_PATH_XTRA			# standard X11 search macro
 if test -z "${no_x}"; then
   ## We force the use of -lX11 (perhaps this is not necessary?).
-  X_LIBS="${X_LIBS} -lX11"
+  X_LIBS="${X_LIBS} -lX11 -lXt"
   use_X11="yes"
   AC_DEFINE(HAVE_X11, 1,
             [Define if you have the X11 headers and libraries, and want
@@ -1698,7 +1492,7 @@ if test -z "${no_x}"; then
     AC_CHECK_FUNCS(Xutf8DrawString Xutf8DrawImageString Xutf8LookupString \
                    Xutf8TextEscapement Xutf8TextExtents \
                    XmbDrawString XmbDrawImageString XmbLookupString \
-                   XmbTextEscapement XmbTextExtents)
+                   XmbTextEscapement XmbTextExtents, , , [#include <X11.h>])
     LIBS=${r_save_LIBS}
   fi
 else
@@ -1720,18 +1514,18 @@ fi
 # HAVE_..._FW if present
 
 AC_DEFUN([R_CHECK_FRAMEWORK],
-[r_check_fw_save_LIBS=$LIBS
-  AC_MSG_CHECKING([for $1 in $2 framework])
+[ AC_CACHE_CHECK([for $1 in $2 framework], [r_check_fw_$2],
+  r_check_fw_save_LIBS=$LIBS
   r_check_fw_$2=no
   LIBS="-framework $2 $5 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([],[$1])],
-                 [r_check_fw_$2="-framework $2"
-                 AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+                 [r_check_fw_$2="-framework $2"],[])
   LIBS=$r_check_fw_save_LIBS
   AS_IF([test "$r_check_fw_$2" != no],
         [m4_default([$3], [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_$2_FW), 1, [Defined if framework $2 is present])
 	AS_TR_SH(have_$2_fw)=yes])],
 	[m4_default([$4], AS_TR_SH(have_$2_fw)=no)])
+)
 ])# R_CHECK_FRAMEWORK
 
 ## R_AQUA
@@ -1758,6 +1552,9 @@ fi
 
 ## R_IEEE_754
 ## ----------
+## According to C99, isnan and isfinite are macros in math.h, 
+## but some older systems have isnan as a function (possibly as well).
+## On the other hand, finite is a BSD function.
 AC_DEFUN([R_IEEE_754],
 [AC_CHECK_FUNCS([finite isnan])
 AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
@@ -2278,7 +2075,6 @@ AC_SUBST(use_tcltk)
 AC_DEFUN([R_BLAS_LIBS],
 [AC_REQUIRE([R_PROG_F77_FLIBS])
 AC_REQUIRE([R_PROG_F77_APPEND_UNDERSCORE])
-AC_REQUIRE([R_PROG_F2C_FLIBS])
 
 acx_blas_ok=no
 case "${with_blas}" in
@@ -2290,8 +2086,7 @@ case "${with_blas}" in
   *) BLAS_LIBS="-l${with_blas}" ;;
 esac
 
-if test "${r_cv_prog_f77_append_underscore}" = yes \
-  || test -n "${F2C}"; then
+if test "${r_cv_prog_f77_append_underscore}" = yes; then
   dgemm=dgemm_
   sgemm=sgemm_
   xerbla=xerbla_
@@ -2493,6 +2288,134 @@ fi
     fi
   fi
 fi
+if test "${acx_blas_ok}" = yes; then
+  AC_MSG_CHECKING([whether the BLAS is complete])
+  AC_CACHE_VAL([r_cv_complete_blas],
+[[cat > conftest.c <<EOF
+#include <stdlib.h>
+#include "confdefs.h"
+#ifdef HAVE_F77_UNDERSCORE
+# define F77_SYMBOL(x)   x ## _
+#else
+# define F77_SYMBOL(x)   x
+#endif
+void F77_SYMBOL(xerbla)(char *srname, int *info)
+{}
+void blas_set () {
+  F77_SYMBOL(dasum)();
+  F77_SYMBOL(daxpy)();
+  F77_SYMBOL(dcopy)();
+  F77_SYMBOL(ddot)();
+  F77_SYMBOL(dgbmv)();
+  F77_SYMBOL(dgemm)();
+  F77_SYMBOL(dgemv)();
+  F77_SYMBOL(dger)();
+  F77_SYMBOL(dnrm2)();
+  F77_SYMBOL(drot)();
+  F77_SYMBOL(drotg)();
+  F77_SYMBOL(drotm)();
+  F77_SYMBOL(drotmg)();
+  F77_SYMBOL(dsbmv)();
+  F77_SYMBOL(dscal)();
+  F77_SYMBOL(dspmv)();
+  F77_SYMBOL(dspr)();
+  F77_SYMBOL(dspr2)();
+  F77_SYMBOL(dspmv)();
+  F77_SYMBOL(dsymm)();
+  F77_SYMBOL(dsymv)();
+  F77_SYMBOL(dsyr)();
+  F77_SYMBOL(dsyr2)();
+  F77_SYMBOL(dsyr2k)();
+  F77_SYMBOL(dsyrk)();
+  F77_SYMBOL(dtbmv)();
+  F77_SYMBOL(dtrsm)();
+  F77_SYMBOL(idamax)();
+  /* F77_SYMBOL(lsame)(); */
+  F77_SYMBOL(dcabs1)();
+  F77_SYMBOL(dgemv)();
+  F77_SYMBOL(dger)();
+  F77_SYMBOL(dsymv)();
+  F77_SYMBOL(dsyr2)();
+  F77_SYMBOL(dsyr2k)();
+  F77_SYMBOL(dsyrk)();
+  F77_SYMBOL(dtbmv)();
+  F77_SYMBOL(dtbsv)();
+  F77_SYMBOL(dtpmv)();
+  F77_SYMBOL(dtpsv)();
+  F77_SYMBOL(dtrmm)();
+  F77_SYMBOL(dtrmv)();
+  F77_SYMBOL(dtrsv)();
+  F77_SYMBOL(dtrsm)();
+  F77_SYMBOL(dtrsv)();
+/* cmplblas */
+  F77_SYMBOL(dzasum)();
+  F77_SYMBOL(dznrm2)();
+  F77_SYMBOL(izamax)();
+  F77_SYMBOL(zaxpy)();
+  F77_SYMBOL(zcopy)();
+  F77_SYMBOL(zdotc)();
+  F77_SYMBOL(zdotu)();
+  F77_SYMBOL(zdrot)();
+  F77_SYMBOL(zdscal)();
+  F77_SYMBOL(zgbmv)();
+  F77_SYMBOL(zgemm)();
+  F77_SYMBOL(zgemv)();
+  F77_SYMBOL(zgerc)();
+  F77_SYMBOL(zgeru)();
+  F77_SYMBOL(zhbmv)();
+  F77_SYMBOL(zhemm)();
+  F77_SYMBOL(zhemv)();
+  F77_SYMBOL(zher)();
+  F77_SYMBOL(zherk)();
+  F77_SYMBOL(zher2)();
+  F77_SYMBOL(zher2k)();
+  F77_SYMBOL(zhpmv)();
+  F77_SYMBOL(zhpr)();
+  F77_SYMBOL(zhpr2)();
+  F77_SYMBOL(zrotg)();
+  F77_SYMBOL(zscal)();
+  F77_SYMBOL(zswap)();
+  F77_SYMBOL(zsymm)();
+  F77_SYMBOL(zsyr2k)();
+  F77_SYMBOL(zsyrk)();
+  F77_SYMBOL(ztbmv)();
+  F77_SYMBOL(ztbsv)();
+  F77_SYMBOL(ztpmv)();
+  F77_SYMBOL(ztpsv)();
+  F77_SYMBOL(ztrmm)();
+  F77_SYMBOL(ztrmv)();
+  F77_SYMBOL(ztrsm)();
+  F77_SYMBOL(ztrsv)();
+}
+int main ()
+{
+  exit(0);
+}
+EOF]
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  ## <NOTE>
+  ## This should really use MAIN_LD, and hence come after this is
+  ## determined (and necessary additions to MAIN_LDFLAGS were made).
+  ## But it seems that we currently can always use the C compiler.
+  ## Also, to be defensive there should be a similar test with SHLIB_LD
+  ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
+  ## use ld for SHLIB_LD) ...
+  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+       conftest.${ac_objext} ${FLIBS} \
+       ${LIBM} ${BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
+  ## </NOTE>
+  then
+    r_cv_complete_blas=yes
+  fi
+fi
+])
+  if test x"${r_cv_complete_blas}" != xyes; then
+    acx_blas_ok="no"
+    r_cv_complete_blas=no
+    BLAS_LIBS=""
+  fi
+  AC_MSG_RESULT([${r_cv_complete_blas}])
+fi
 
 LIBS="${acx_blas_save_LIBS}"
 
@@ -2529,7 +2452,6 @@ AC_SUBST(BLAS_LIBS)
 AC_DEFUN([R_LAPACK_LIBS],
 [AC_REQUIRE([R_PROG_F77_FLIBS])
 AC_REQUIRE([R_PROG_F77_APPEND_UNDERSCORE])
-AC_REQUIRE([R_PROG_F2C_FLIBS])
 AC_REQUIRE([R_BLAS_LIBS])
 
 acx_lapack_ok=no
@@ -2542,8 +2464,7 @@ case "${with_lapack}" in
   *) LAPACK_LIBS="-l${with_lapack}" ;;
 esac
 
-if test "${r_cv_prog_f77_append_underscore}" = yes \
-  || test -n "${F2C}"; then
+if test "${r_cv_prog_f77_append_underscore}" = yes; then
   zgeev=zgeev_
 else
   zgeev=zgeev
@@ -2583,11 +2504,6 @@ if test "${acx_lapack_ok}" = no; then
 fi
 
 LIBS="${acx_lapack_save_LIBS}"
-
-if test "${acx_lapack_ok}" = yes; then
-  AC_DEFINE(HAVE_LAPACK, 1,
-            [Define if external LAPACK is available.])
-fi
 
 AC_SUBST(LAPACK_LIBS)
 ])# R_LAPACK_LIBS
@@ -2857,30 +2773,6 @@ if test "x${r_cv_size_max}" = xyes; then
 fi
 ])# R_SIZE_MAX
 
-## R_LARGE_FILES
-## -------------
-## Enable large file support on linux >= 2.4.0?  Idea from hdf5 configure.
-AC_DEFUN([R_LARGE_FILES],
-[case "$host_os" in
-  linux*)
-    AC_MSG_CHECKING([for large file support mode on Linux])
-    if test ${ac_cv_sizeof_long} -gt 4 ; then
-      AC_MSG_RESULT([always enabled on > 32-bit machine])
-    else
-      LX_MAJOR_VER="`uname -r | cut -d '.' -f1`"
-      LX_MINOR_VER="`uname -r | cut -d '.' -f2`"
-      if test ${LX_MAJOR_VER} -gt 2 -o \
-	${LX_MAJOR_VER} -eq 2 -a ${LX_MINOR_VER} -ge 4; then
-	AC_MSG_RESULT([enabled])
-	CFLAGS_KEEP="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE $CFLAGS_KEEP"
-      else
-	AC_MSG_RESULT([disabled])
-      fi
-    fi
-    ;;
-esac
-])# R_LARGE_FILES
-
 
 ## R_ICONV
 ## -------
@@ -2920,7 +2812,7 @@ AC_CACHE_CHECK(for iconv, ac_cv_func_iconv, [
 if test "$ac_cv_func_iconv" != no; then
   AC_DEFINE(HAVE_ICONV, 1, [Define if you have the `iconv' function.])
 
-  AC_CACHE_CHECK([whether iconv() accepts "UTF-8" and "latin1"],
+  AC_CACHE_CHECK([whether iconv() accepts "UTF-8", "latin1" and "UCS-*"],
   [r_cv_iconv_latin1],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include "confdefs.h"
@@ -2949,6 +2841,30 @@ int main () {
   cd = iconv_open("UTF-8","");
   if(cd == (iconv_t)(-1)) exit(1);
   iconv_close(cd);
+  cd = iconv_open("UCS-2LE","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("", "UCS-2LE");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("UCS-2BE","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("", "UCS-2BE");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("UCS-4LE","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("", "UCS-4LE");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("UCS-4BE","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("", "UCS-4BE");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
   exit(0);
 }
   ]])], [r_cv_iconv_latin1=yes], [r_cv_iconv_latin1=no], 
@@ -2956,7 +2872,7 @@ int main () {
 
   if test "$r_cv_iconv_latin1" = yes; then
     AC_DEFINE(ICONV_LATIN1, 1,
-	      [Define if `iconv' accepts "UTF-8" and "latin1".])
+	      [Define if `iconv' accepts "UTF-8", "latin1" and "UCS-*".])
   fi
 fi
 ## if the iconv we are using was in libiconv we have already included -liconv
@@ -2982,6 +2898,12 @@ fi
 ## locales - support for MBCS and specifically UTF-8
 AC_DEFUN([R_MBCS],
 [
+## require functional iconv
+if test "$want_mbcs_support" = yes ; then
+  if test "$r_cv_iconv_latin1" != yes ; then
+    want_mbcs_support=no
+  fi
+fi
 ## Wide character support -- first test for headers (which are assumed in code)
 if test "$want_mbcs_support" = yes ; then
   AC_CHECK_HEADERS(wchar.h wctype.h)
@@ -2994,11 +2916,12 @@ if test "$want_mbcs_support" = yes ; then
   done
 fi
 if test "$want_mbcs_support" = yes ; then
-  AC_CHECK_FUNCS(mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
-		 wcswidth wctrans wcwidth)
-  AC_CHECK_DECLS([wcwidth, wcswidth], , , [#include <wchar.h>])
-  ## can manage without wc[s]width
-  for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs wctrans
+## Solaris 8 is missing iswblank, but we can make it from iswctype.
+  R_CHECK_FUNCS([mbrtowc wcrtomb wcscoll wcsftime], [#include <wchar.h>])
+  R_CHECK_FUNCS([mbstowcs wcstombs], [#include <stdlib.h>])
+  R_CHECK_FUNCS([wctrans iswblank wctype iswctype], [#include <wctype.h>])
+  for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
+                 wctrans wctype iswctype
   do
     as_ac_var=`echo "ac_cv_func_$ac_func"`
     this=`eval echo '${'$as_ac_var'}'`
@@ -3033,23 +2956,16 @@ AC_DEFUN([R_C99_COMPLEX],
   AC_CACHE_CHECK([whether C99 double complex is supported],
   [r_cv_c99_complex],
 [ AC_MSG_RESULT([])
-  AC_CHECK_HEADERS(complex.h)
-  r_cv_c99_complex=${ac_cv_header_complex_h}
+  AC_CHECK_HEADER(complex.h, [r_cv_c99_complex="yes"], [r_cv_c99_complex="no"])
   if test "${r_cv_c99_complex}" = "yes"; then
     AC_CHECK_TYPE([double complex], , r_cv_c99_complex=no, 
                   [#include <complex.h>])
   fi
   if test "${r_cv_c99_complex}" = "yes"; then
-    AC_CHECK_FUNCS(cexp clog csqrt cpow ccos csin ctan cacos casin catan \
-		   ccosh csinh ctanh cacosh casinh catanh)
     for ac_func in cexp clog csqrt cpow ccos csin ctan cacos casin catan \
-		   ccosh csinh ctanh cacosh casinh catanh
+	 	   ccosh csinh ctanh cacosh casinh catanh
     do
-      as_ac_var=`echo "ac_cv_func_$ac_func"`
-      this=`eval echo '${'$as_ac_var'}'`
-      if test "x$this" = xno; then
-	r_cv_c99_complex=no
-      fi
+      R_CHECK_DECL($ac_func, , [r_cv_c99_complex=no], [#include<complex.h>])dnl
     done
   fi
   dnl Now check if the representation is the same as Rcomplex
@@ -3090,6 +3006,140 @@ AC_DEFINE(HAVE_C99_COMPLEX, 1, [Define this if you have support for C99 complex 
 AC_SUBST(HAVE_C99_COMPLEX)
 fi
 ])# R_COMPLEX
+
+## R_CHECK_DECL(SYMBOL,
+##              [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND],
+##              [INCLUDES = DEFAULT-INCLUDES])
+## -------------------------------------------------------
+## Check if SYMBOL (a variable or a function) is declared.
+AC_DEFUN([R_CHECK_DECL],
+[AS_VAR_PUSHDEF([ac_Symbol], [ac_cv_have_decl_$1])dnl
+AC_CACHE_CHECK([whether $1 exists and is declared], ac_Symbol,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$4])],
+[#ifndef $1
+  char *p = (char *) $1;
+#endif
+])],
+                   [AS_VAR_SET(ac_Symbol, yes)],
+                   [AS_VAR_SET(ac_Symbol, no)])])
+AS_IF([test AS_VAR_GET(ac_Symbol) = yes], [$2], [$3])[]dnl
+AS_VAR_POPDEF([ac_Symbol])dnl
+])# R_CHECK_DECL
+
+## R_CHECK_FUNCS(SYMBOLS,
+##              [INCLUDES = DEFAULT-INCLUDES])
+## --------------------------------------------------------
+## Defines HAVE_SYMBOL if declared.  SYMBOLS is an m4 list.
+AC_DEFUN([R_CHECK_FUNCS],
+[AC_FOREACH([AC_Func], [$1],
+  [AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Func),
+               [Define to 1 if you have the `]AC_Func[' function.])])dnl
+for ac_func in $1
+do
+R_CHECK_DECL($ac_func,
+             [AC_DEFINE_UNQUOTED([AS_TR_CPP([HAVE_$ac_func])], 1)], , [$2])dnl
+done
+])# R_CHECK_FUNCS
+
+## R_GCC4_VISIBILITY
+## Sets up suitable macros for visibility attributes in gcc4/gfortran
+AC_DEFUN([R_GCC4_VISIBILITY],
+[AC_CACHE_CHECK([whether __attribute__((visibility())) is supported],
+                [r_cv_visibility_attribute],
+[cat > conftest.c <<EOF
+int foo __attribute__ ((visibility ("hidden"))) = 1;
+int bar __attribute__ ((visibility ("default"))) = 1;
+EOF
+r_cv_visibility_attribute=no
+if AC_TRY_COMMAND(${CC-cc} -Werror -S conftest.c -o conftest.s 1>&AS_MESSAGE_LOG_FD); then
+ if grep '\.hidden.*foo' conftest.s >/dev/null; then
+    r_cv_visibility_attribute=yes
+ fi
+fi
+rm -f conftest.[cs]
+])
+if test $r_cv_visibility_attribute = yes; then
+  AC_DEFINE(HAVE_VISIBILITY_ATTRIBUTE, 1, 
+           [Define to 1 if __attribute__((visibility())) is supported])
+fi
+## test if visibility flag is accepted: NB Solaris compilers do and ignore,
+## so only make use of this if HAVE_VISIBILITY_ATTRIBUTE is true.
+r_save_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -fvisibility=hidden"
+AC_CACHE_CHECK(whether $CC accepts -fvisibility, r_cv_prog_cc_vis,
+               [_AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+	       [r_cv_prog_cc_vis=yes], [r_cv_prog_cc_vis=no])])
+CFLAGS=$r_save_CFLAGS
+if test "${r_cv_prog_cc_vis}" = yes; then
+  if test "${r_cv_visibility_attribute}" = yes; then
+    C_VISIBILITY="-fvisibility=hidden"
+  fi
+fi
+## Need to exclude Intel compilers, where this does not work.
+## The flag is documented, and is effective but also hides
+## unsatisfied references. We cannot test for GCC, as icc passes that test.
+case  "${CC}" in
+  ## Intel compiler
+  *icc)
+    C_VISIBILITY=
+    ;;
+esac
+AC_SUBST(C_VISIBILITY)
+AC_LANG_PUSH(Fortran 77)
+r_save_FFLAGS=$FFLAGS
+FFLAGS="$FFLAGS -fvisibility=hidden"
+AC_CACHE_CHECK(whether $F77 accepts -fvisibility, r_cv_prog_f77_vis,
+               [_AC_COMPILE_IFELSE([AC_LANG_PROGRAM()], 
+               [r_cv_prog_f77_vis=yes], [r_cv_prog_f77_vis=no])])
+FFLAGS=$r_save_FFLAGS
+AC_LANG_POP(Fortran 77)
+if test "${r_cv_prog_f77_vis}" = yes; then
+  if test "${r_cv_visibility_attribute}" = yes; then
+    F77_VISIBILITY="-fvisibility=hidden"
+  fi
+fi
+## need to exclude Intel compilers.
+case  "${F77}" in
+  ## Intel compiler
+  *ifc|*ifort)
+    F77_VISIBILITY=
+    ;;
+esac
+AC_SUBST(F77_VISIBILITY)
+])# R_GCC4_VISIBILITY
+
+
+## R_KERN_USRSTACK
+## -------------
+## Checks whether we can use KERN_USRSTACK sysctl to
+## get the bottom of the stack (*BSD, Darwin, ...)
+AC_DEFUN([R_KERN_USRSTACK],
+[
+  AC_CACHE_CHECK([whether KERN_USRSTACK sysctl is supported],
+  [r_cv_kern_usrstack],
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+int main () {
+  int nm[2] = {CTL_KERN, KERN_USRSTACK};
+  void * base;
+  size_t len = sizeof(void *);
+  int r = sysctl(nm, 2, &base, &len, NULL, 0);
+
+  exit((r==0)?0:1);
+}
+  ]])], [r_cv_kern_usrstack=yes], [r_cv_kern_usrstack=no], 
+    [r_cv_kern_usrstack=no])])
+
+  if test $r_cv_kern_usrstack = yes; then
+    AC_DEFINE(HAVE_KERN_USRSTACK, 1, [Define if KERN_USRSTACK sysctl is supported.])
+  fi
+])
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

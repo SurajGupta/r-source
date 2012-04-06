@@ -32,7 +32,7 @@
 \section{Extended Regular Expressions}{
   This section covers the regular expressions allowed if \code{extended
   = TRUE} in \code{grep}, \code{regexpr}, \code{gregexpr}, \code{sub},
-  \code{gsub} and \code{strsplit}.  They use the \code{glibc 2.3.5}
+  \code{gsub} and \code{strsplit}.  They use the \code{glibc 2.3.6}
   implementation of the POSIX 1003.2 standard.
 
   Regular expressions are constructed analogously to arithmetic
@@ -188,8 +188,8 @@
   \code{man pcrepattern} and \code{man pcreapi}) on your system or from
   the sources at
   \url{ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/}. If PCRE
-  support was compiled from the sources within \R, the PCRE version is 6.2
-  as described here (version \eqn{\ge}{>=} 4.0 is required even if \R is
+  support was compiled from the sources within \R, the PCRE version is 6.4
+  as described here (version \eqn{\ge}{>=} 4.0 is required if \R is
   configured to use the system's PCRE library).
 
   All the regular expressions described for extended regular expressions
@@ -279,7 +279,7 @@
 }
 \note{
   Prior to \R 2.1.0 the implementation used was that of GNU \code{grep 2.4.2}:
-  as from \R 2.1.0 it is that of \code{glibc 2.3.x}.  The latter is more
+  as from \R 2.1.0 it is that of \code{glibc 2.3.3}.  The latter is more
   strictly compliant and rejects some extensions that used to be
   allowed.
 

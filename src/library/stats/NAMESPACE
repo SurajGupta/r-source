@@ -1,4 +1,5 @@
-useDynLib(stats)
+ # Refer to all C/Fortran routines by their name prefixed by R_
+useDynLib(stats, .registration = TRUE, .fixes = "R_")
 
 # exportPattern("^[^\\.]")
 export(.checkMFClasses, .getXlevels, .MFclass)
@@ -97,7 +98,6 @@ S3method(case.names, lm)
 S3method(coef, aov)
 S3method(coef, default)
 S3method(coef, listof)
-S3method(coef, summary.nls)
 S3method(confint, default)
 S3method(confint, glm)
 S3method(confint, lm)
@@ -387,11 +387,10 @@ export(NLSstAsymptotic, NLSstClosestX, NLSstLfAsymptote,
        NLSstRtAsymptote, SSasymp, SSasympOff, SSasympOrig, SSbiexp,
        SSfol, SSfpl, SSgompertz, SSlogis, SSmicmen, SSweibull,
        asOneSidedFormula, clearNames, getInitial, nls, nls.control,
-       nlsModel, numericDeriv, profiler, selfStart, setNames,
-       sortedXyData)
+       numericDeriv, selfStart, setNames, sortedXyData)
 
 # documented but not exported
-# export(formula.nls, plot.profile.nls, predict.nls, profile.nls, profiler.nls)
+# export(formula.nls, plot.profile.nls, predict.nls, profile.nls)
 
 S3method(NLSstAsymptotic, sortedXyData)
 S3method(NLSstClosestX, sortedXyData)
@@ -407,7 +406,6 @@ S3method(getInitial, default)
 S3method(getInitial, formula)
 S3method(getInitial, selfStart)
 S3method(logLik, nls)
-S3method(nlsModel, plinear)
 S3method(plot, profile.nls)
 S3method(predict, nls)
 S3method(print, nls)

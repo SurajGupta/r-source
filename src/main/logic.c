@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -32,7 +32,7 @@ static SEXP binaryLogic2(int code, SEXP s1, SEXP s2);
 
 
 /* & | ! */
-SEXP do_logic(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_logic(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
 
@@ -197,7 +197,7 @@ static SEXP lunary(SEXP call, SEXP op, SEXP arg)
 }
 
 /* && || */
-SEXP do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 /*  &&	and  ||	 */
     SEXP s1, s2;
@@ -347,7 +347,7 @@ static void checkValues(int * x, int n, Rboolean *haveFalse,
 }
 
 /* all, any */
-SEXP do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, s, t;
     int narm;

@@ -33,12 +33,11 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
 
     if(exact && !TIES) {
         pansari <- function(q, m, n) {
-            .C("pansari",
+            .C(R_pansari,
                as.integer(length(q)),
                p = as.double(q),
                as.integer(m),
-               as.integer(n),
-               PACKAGE = "stats")$p
+               as.integer(n))$p
         }
         PVAL <-
             switch(alternative,
@@ -54,12 +53,11 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                    greater = pansari(STATISTIC, m, n))
         if (conf.int) {
             qansari <- function(p, m, n) {
-                .C("qansari",
+                .C(R_qansari,
                    as.integer(length(p)),
                    q = as.double(p),
                    as.integer(m),
-                   as.integer(n),
-                   PACKAGE = "stats")$q
+                   as.integer(n))$q
             }
             alpha <- 1 - conf.level
             x <- sort(x)
@@ -251,8 +249,7 @@ function(formula, data, subset, na.action, ...)
 {
     if(missing(formula)
        || (length(formula) != 3)
-       || (length(attr(terms(formula[-2]), "term.labels")) != 1)
-       || (length(attr(terms(formula[-3]), "term.labels")) != 1))
+       || (length(attr(terms(formula[-2]), "term.labels")) != 1))
         stop("'formula' missing or incorrect")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))

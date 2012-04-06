@@ -11,12 +11,12 @@
 \usage{
 format(x, \dots)
 
-\method{format}{default}(x, trim = FALSE, digits = NULL,
-       nsmall = 0, justify = c("left", "right", "centre", "none"),
+\method{format}{default}(x, trim = FALSE, digits = NULL, nsmall = 0,
+       justify = c("left", "right", "centre", "none"),
        width = NULL, na.encode = TRUE, scientific = NA,
        big.mark = "",   big.interval = 3,
      small.mark = "", small.interval = 5,
-   decimal.mark = ".", \dots)
+   decimal.mark = ".", zero.print = NULL, \dots)
 
 \method{format}{data.frame}(x, \dots, justify = "none")
 
@@ -35,9 +35,9 @@ format(x, \dots)
     places will be used so that the smallest (in magnitude) number has
     this many significant digits, and also to satisfy \code{nsmall}.
     (For the intepretation for complex numbers see \code{\link{signif}}.)}
-  \item{nsmall}{number of digits which will always appear to the right of
-    the decimal point in formatting real/complex numbers in
-    non-scientific formats.  Allowed values are \code{0 <= nsmall <= 20}.}
+  \item{nsmall}{the minimum number of digits to the right of the decimal
+    point in formatting real/complex numbers in non-scientific formats.
+    Allowed values are \code{0 <= nsmall <= 20}.}
   \item{justify}{should a \emph{character} vector be left-justified (the
     default), right-justified, centred or left alone.}
   \item{width}{\code{default} method: the \emph{minimum} field width or
@@ -47,15 +47,15 @@ format(x, \dots)
     objects.  \code{NULL} corresponds to the default 12.
   }
   \item{na.encode}{logical: should \code{NA} strings be encoded?}
-  \item{scientific}{Either a logical specifiying whether 
+  \item{scientific}{Either a logical specifiying whether
     elements of a real or complex vector should be encoded in scientific
     format, or an integer penalty (see \code{\link{options}("scipen")}.
     Missing values correspond to the current default penalty.}
   \item{\dots}{further arguments passed to or from other methods.}
 
-  \item{big.mark, big.interval,
-    small.mark, small.interval,
-    decimal.mark}{used for prettying longer decimal sequences, passed to
+  \item{big.mark, big.interval, small.mark,
+    small.interval, decimal.mark, zero.print}{%
+    used for prettying longer decimal sequences, passed to
     \code{\link{prettyNum}}: that help page explains the details.}
 }
 \details{
@@ -73,7 +73,7 @@ format(x, \dots)
 
   \code{format.factor} converts the factor to a character vector and
   then calls the default method (and so \code{justify} applies).
-  
+
   \code{format.AsIs} deals with columns of complicated objects that
   have been extracted from a data frame.  Character objects are passed
   to the default method (and so \code{width} does not apply).

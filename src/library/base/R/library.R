@@ -4,6 +4,10 @@ testPlatformEquivalence <- function(built, run)
     ## remove vendor field
     built <- gsub("([^-]*)-([^-]*)-(.*)", "\\1-\\3", built)
     run <- gsub("([^-]*)-([^-]*)-(.*)", "\\1-\\3", run)
+    ## Mac OS X supports multiple CPUs by using 'universal' binaries
+    if (length(grep("^universal-darwin", built)) > 0 &&
+        nchar(.Platform$r_arch) > 0)
+        built <- sub("^universal", R.version$arch, built)
     ## allow for small mismatches, e.g. OS version number and i686 vs i586.
     length(agrep(built, run)) > 0
 }
@@ -14,7 +18,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
          keep.source = getOption("keep.source.pkgs"),
          verbose = getOption("verbose"), version)
 {
-    testRversion <- function(pkgInfo, pkgname)
+    testRversion <- function(pkgInfo, pkgname, pkgpath)
     {
         current <- getRversion()
         ## depends on R version?
@@ -44,6 +48,14 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                     stop(gettextf("package '%s' was built for %s",
                                   pkgname, platform),
                          call. = FALSE, domain = NA)
+                ## if using r_arch subdirs, check for presence
+                if(nchar(r_arch <- .Platform$r_arch)
+                   && file.exists(file.path(pkgpath, "libs"))
+                   && !file.exists(file.path(pkgpath, "libs", r_arch)))
+                    stop(gettextf("package '%s' is not installed for 'arch=%s'",
+                                  pkgname, r_arch),
+                         call. = FALSE, domain = NA)
+
             }
         }
         else
@@ -86,7 +98,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ob <- ob[!(ob %in% gen)]
         }
         fst <- TRUE
-        ipos <- seq(along = sp)[-c(lib.pos, match("Autoloads", sp))]
+        ipos <- seq(along = sp)[-c(lib.pos, match(c("Autoloads", "CheckExEnv"), sp, 0))]
         for (i in ipos) {
             obj.same <- match(objects(i, all = TRUE), ob, nomatch = 0)
             if (any(obj.same > 0)) {
@@ -94,6 +106,15 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 same <- same[!(same %in% dont.mind)]
                 Classobjs <- grep("^\\.__", same)
                 if(length(Classobjs)) same <- same[-Classobjs]
+                ## report only objects which are both functions or
+                ## both non-functions.
+                is_fn1 <- sapply(same, function(x)
+                                 exists(x, where = i, mode = "function",
+                                        inherits = FALSE))
+                is_fn2 <- sapply(same, function(x)
+                                 exists(x, where = lib.pos, mode = "function",
+                                        inherits = FALSE))
+                same <- same[is_fn1 == is_fn2]
                 if(length(same)) {
                     if (fst) {
                         fst <- FALSE
@@ -241,7 +262,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             	stop(gettextf("'%s' is not a valid package -- installed < 2.0.0?",
                      libraryPkgName(package)), domain = NA)
             pkgInfo <- .readRDS(pfile)
-            testRversion(pkgInfo, package)
+            testRversion(pkgInfo, package, pkgpath)
 
             ## The check for inconsistent naming is now in .find.package
 
@@ -524,13 +545,16 @@ function(chname, package = NULL, lib.loc = NULL,
         chname <- substr(chname, 1, nc_chname - nc_file_ext)
 
     for(pkg in .find.package(package, lib.loc, verbose = verbose)) {
-        file <- file.path(pkg, "libs",
+        file <- if(nchar(.Platform$r_arch))
+                file.path(pkg, "libs", .Platform$r_arch,
+                          paste(chname, file.ext, sep = ""))
+	else    file.path(pkg, "libs",
                           paste(chname, file.ext, sep = ""))
         if(file.exists(file)) break else file <- ""
     }
     if(file == "")
         stop(gettextf("shared library '%s' not found", chname), domain = NA)
-    ind <- sapply(dll_list, function(x) x$path == file)
+    ind <- sapply(dll_list, function(x) x[["path"]] == file)
     if(any(ind)) {
         if(verbose)
             message(gettextf("shared library '%s' already loaded", chname),
@@ -573,9 +597,13 @@ function(chname, libpath, verbose = getOption("verbose"),
        == file.ext)
         chname <- substr(chname, 1, nc_chname - nc_file_ext)
 
-    file <- file.path(libpath, "libs",
-                      paste(chname, file.ext, sep = ""))
-    pos <- which(sapply(dll_list, function(x) x$path == file))
+     file <- if(nchar(.Platform$r_arch))
+             file.path(libpath, "libs", .Platform$r_arch,
+                       paste(chname, file.ext, sep = ""))
+     else    file.path(libpath, "libs",
+                       paste(chname, file.ext, sep = ""))
+
+    pos <- which(sapply(dll_list, function(x) x[["path"]] == file))
     if(!length(pos))
         stop(gettextf("shared library '%s' was not loaded", chname),
              domain = NA)
@@ -590,7 +618,7 @@ function(chname, libpath, verbose = getOption("verbose"),
 }
 
 require <-
-function(package, quietly = FALSE, warn.conflicts = TRUE,
+function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
          keep.source = getOption("keep.source.pkgs"),
          character.only = FALSE, version, save = TRUE)
 {
@@ -609,9 +637,9 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
     if (!loaded) {
 	if (!quietly)
             cat(gettextf("Loading required package: %s\n", package))
-	value <- library(package, character.only = TRUE, logical = TRUE,
-		warn.conflicts = warn.conflicts, keep.source = keep.source,
-                version = version)
+	value <- library(package, lib.loc = lib.loc, character.only = TRUE,
+                         logical = TRUE, warn.conflicts = warn.conflicts,
+                         keep.source = keep.source, version = version)
     } else value <- TRUE
 
     if(identical(save, FALSE)) {}
@@ -681,7 +709,7 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
                 ## package.  And that's the only check we have ...")
                 ## <FIXME PRE-R-NG>
                 ## All packages usable in R-ng must have 'package.rds'.
-                ## (And we do not need to validate these meta data.)
+                ## (And we do not need to validate these metadata.)
                 ## Should be simply ignore the others?
                 ## (See also above ...)
                 pfile <- file.path(lib, nam, "Meta", "package.rds")
@@ -694,7 +722,7 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
                 ## In principle, info from 'package.rds' should be
                 ## validated, but we already had counterexamples ...
                 ## <FIXME>
-                ## Shouldn't we warn about packages with bad meta data?
+                ## Shouldn't we warn about packages with bad metadata?
                 if(inherits(info, "try-error")
                    || (length(info) != 2)
                    || any(is.na(info)))
@@ -816,7 +844,7 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
             db <- lapply(paths, function(p) {
                 ## <FIXME PRE-R-NG>
                 ## All packages usable in R-ng must have 'package.rds'.
-                ## (And we do not need to validate these meta data.)
+                ## (And we do not need to validate these metadata.)
                 ## Should be simply ignore the others?
                 ## (See also above ...)
                 pfile <- file.path(p, "Meta", "package.rds")
@@ -876,8 +904,18 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
     }
 
     if(!quiet && (length(bad) > 0)) {
-        if(length(out) == 0)
-            stop("none of the packages were found")
+        if(length(out) == 0) {
+            if(length(bad) == 1) {
+                stop(gettextf("there is no package called '%s'", pkg),
+                     domain = NA)
+            } else {
+                stop(ngettext(length(bad),
+                              "there is no package called",
+                              "there are no packages called"), " ",
+                     paste(shQuote(bad), collapse = ", "), domain = NA)
+
+            }
+        }
         for(pkg in bad)
             warning(gettextf("there is no package called '%s'", pkg),
                     domain = NA)

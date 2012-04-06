@@ -1,6 +1,6 @@
 #! @PERL@
 #-*- perl -*-
-# Copyright (C) 2000-2004 R Development Core Team
+# Copyright (C) 2000-2006 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+## writing to the Free Software Foundation, Inc., 51 Franklin Street,
+## Fifth Floor, Boston, MA 02110-1301  USA.
 
 # Send any bug reports to r-bugs@r-project.org
 
@@ -38,7 +38,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Revision: 1.81 $ ';
+my $revision = ' $Rev: 37907 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -57,7 +57,7 @@ my @known_options = ("help|h", "version|v", "binary", "no-docs",
 
 if($WINDOWS) {
     die "Please set TMPDIR to a valid temporary directory\n"
-	unless (-e ${R::Vars::TMPDIR});
+	unless (-d ${R::Vars::TMPDIR});
     @known_options = ("help|h", "version|v", "binary", "docs:s",
 		      "auto-zip",
 		      "use-zip", "use-zip-help", "use-zip-data",
@@ -76,7 +76,7 @@ my $startdir = R_cwd();
 my $R_platform = R_getenv("R_PLATFORM", "unknown-binary");
 my $gzip = R_getenv("R_GZIPCMD", "gzip");
 my $tar = R_getenv("TAR", "tar");
-my $libdir = &file_path(${R::Vars::TMPDIR}, "Rinst.$$");
+my $libdir = R_tempfile("Rinst");
 
 my $INSTALL_opts = "";
 $INSTALL_opts .= " --use-zip" if $opt_use_zip;
@@ -156,7 +156,7 @@ foreach my $pkg (@ARGV) {
     $log->message("removing junk files");
     find(\&unlink_junk_files, $pkg);
 
-    my $exclude = &file_path(${R::Vars::TMPDIR}, "Rbuild-exclude.$$");
+    my $exclude = R_tempfile("Rbuild-exclude");
     open(EXCLUDE, "> $exclude")
 	or die "Error: cannot open file '$exclude' for writing\n";
     binmode EXCLUDE if $WINDOWS;
@@ -181,14 +181,8 @@ foreach my $pkg (@ARGV) {
 	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^CVS$/);
 	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^\.svn$/);
 	print EXCLUDE "$File::Find::name\n" if(-d $_ && /^\.arch-ids$/);
-	if($WINDOWS) {
-	    ## exclude stray dependency files
-	    print EXCLUDE "$File::Find::name\n" if /\.d$/;
-	    print EXCLUDE "$File::Find::name\n" if /^Makedeps$/;
-	    ## and the DLL resource file
-	    my $resname = $pkgname . "_res.rc";
-	    print EXCLUDE "$File::Find::name\n" if /^$resname$/;
-	}
+	## Windows DLL resource file
+	push(@exclude_patterns, "^src/" . $pkgname . "_res\\.rc");
 	my $filename = $File::Find::name;
 	$filename =~ s/^[^\/]*\///;
 	foreach my $p (@exclude_patterns) {
@@ -196,7 +190,7 @@ foreach my $pkg (@ARGV) {
 		## Argh: Windows is case-honoring but not
 		## case-insensitive ...
 		print EXCLUDE "$File::Find::name\n"
-		    if($filename =~	/$p/i);
+		    if($filename =~ /$p/i);
 	    }
 	    else {
 		if($filename =~ /$p/) {
@@ -226,13 +220,13 @@ foreach my $pkg (@ARGV) {
     my $origfilepath = $filepath;
     if($WINDOWS) {
 	## workaround for paths in Cygwin tar
-	$filepath =~ s+^([A-Za-x]):+/cygdrive/\1+;
+	$filepath =~ s+^([A-Za-z]):+/cygdrive/\1+;
     }
     R_system(join(" ",
 		  ("$tar chf",
 		   &shell_quote_file_path($filepath),
 		   "$pkgname")));
-    my $tmpdir = &file_path(${R::Vars::TMPDIR}, "Rbuild.$$");
+    my $tmpdir = R_tempfile("Rbuild");
     rmtree($tmpdir) if(-d $tmpdir);
     mkdir("$tmpdir", 0755)
 	or die "Error: cannot create directory '$tmpdir'\n";
@@ -250,6 +244,27 @@ foreach my $pkg (@ARGV) {
     close(EXCLUDE);
     unlink($exclude);
     unlink($origfilepath);
+    ## Fix up man, R and demo directories (in each package for a bundle)
+    sub find_invalid_files {
+	my ($dpath) = @_;
+	my $Rcmd = "tools:::.check_package_subdirs(\"$dpath\", TRUE)\n";
+	my @out = R_runR($Rcmd, "--vanilla --slave",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->message("excluding invalid files from '$dpath'");
+	    $log->print(join("\n", @out) . "\n");
+	}
+    }
+    if($is_bundle) {
+	foreach $ppkg (@bundlepkgs) {
+	    &find_invalid_files("$pkgname/$ppkg");
+	    chdir($tmpdir);
+	}
+    } else {
+	&find_invalid_files($pkgname);
+	chdir($tmpdir);
+    }
     ## Fix permissions.
     sub fix_permissions {
 	## Note that when called via File::Find::find, $_ holds the
@@ -272,10 +287,10 @@ foreach my $pkg (@ARGV) {
     $log->message("checking for LF line-endings in source files");
     if($is_bundle) {
 	foreach my $ppkg (@bundlepkgs) {
-	    &fix_CRLF_in_source_files(&file_path($pkgname, $ppkg));
+	    &fix_CRLF_in_source_files(&file_path($pkgname, $ppkg), $log);
 	}
     } else {
-	&fix_CRLF_in_source_files($pkgname);
+	&fix_CRLF_in_source_files($pkgname, $log);
     }
 
     sub empty_dir_check {
@@ -284,17 +299,39 @@ foreach my $pkg (@ARGV) {
 	    my @files = readdir(DIR);
 	    closedir(DIR);
 	    if (@files <= 2) {
-		print "WARNING: directory $File::Find::name is empty\n";
-		if($File::Find::name =~ m+^$pkgname(/|\\)(help|html|latex|libs)$+) {
-		    print "  A directory named '$_' should only occur in an installed package\n";
-		}
+		$log->print("WARNING: directory '$File::Find::name' is empty\n");
 	    }
 	}
     }
 
-    $log->message("checking for empty directories");
+    $log->message("checking for empty or unneeded directories");
     find(\&empty_dir_check, "${pkgname}");
 
+    sub fix_unneeded_dirs {
+	my ($path) = @_;
+	my $dir;
+	foreach my $system_dir ("Meta", "R-ex", "chtml",
+		       "help", "html", "latex") {
+	    $dir = &file_path($path, $system_dir);
+	    if(-d "$dir") {
+		$log->print(wrap("", "  ",
+				 ("WARNING: Removing directory '$dir'",
+				  "which should only occur",
+				  "in an installed package\n")
+				 ));
+		rmtree("$dir");
+	    }
+	}
+    }
+
+    if($is_bundle) {
+	foreach my $ppkg (@bundlepkgs) {
+	    &fix_unneeded_dirs(&file_path($pkgname, $ppkg));
+	}
+    } else {
+	&fix_unneeded_dirs($pkgname);
+    }
+    
     ## Finalize.
     if($opt_binary) {
 	$log->message("building binary distribution");
@@ -440,6 +477,8 @@ sub prepare_pkg {
 	    if($doit && R_system($cmd)) {
 		$log->error();
 		$log->print("Installation failed.\n");
+		$log->print("Removing '$libdir'\n");
+		rmtree($libdir);
 		exit(1);
 	    }
 	    my $R_LIBS = $ENV{'R_LIBS'};
@@ -508,7 +547,7 @@ sub cleanup_pkg {
 	    }
 	}
     }
-    
+
     chdir($pkgdir);
     if(!$WINDOWS && -x "./cleanup") {
 	$log->message("running cleanup");
@@ -585,7 +624,7 @@ sub update_Rd_index {
 }
 
 sub fix_CRLF_in_source_files {
-    my ($pkgname) = @_;
+    my ($pkgname, $log) = @_;
 
     if(-d "$pkgname/src") {
 	my @src_files = &list_files_with_exts("$pkgname/src", "(c|h|f|cc|cpp)");
@@ -604,7 +643,7 @@ sub fix_CRLF_in_source_files {
 	    }
 	    close(TFILE); close(FILE);
 	    if ($has_CRLF) {
-		print("    file '$file' had CRLF line endings\n");
+		$log->print("    file '$file' had CRLF line endings\n");
 		unlink($file); # should not be necessary, but is on Windows
 		rename("$file.tmp", $file)
 		    or die "Error: cannot rename '$file.tmp'\n";
@@ -634,7 +673,9 @@ Options:
 END
     if($WINDOWS) {
 	print STDERR "  --docs=TYPE           " .
-	    "type(s) of documentation to build and install\n";
+	    "type(s) of documentation to build and INSTALL\n";
+	print STDERR "                        " .
+	    "See Rcmd INSTALL --help for possible values of TYPE\n";
 	print STDERR "  --auto-zip            " .
 	    "select zipping of data and help based on size\n";
     } else {

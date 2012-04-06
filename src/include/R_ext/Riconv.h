@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef R_ICONV_H
@@ -25,6 +25,9 @@ extern "C" {
 #endif
 
 /* from sysutils.c */
+#undef Riconv_open
+#undef Riconv
+#undef Riconv_close
 void * Riconv_open (char* tocode, char* fromcode);
 size_t Riconv (void * cd, char **inbuf, size_t *inbytesleft,
 	       char  **outbuf, size_t *outbytesleft);

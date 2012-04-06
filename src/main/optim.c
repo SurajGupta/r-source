@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -56,6 +56,7 @@ typedef struct opt_struct
     double* parscale;/* scaling for parameters */
     int usebounds;
     double* lower, *upper;
+    SEXP names;	     /* names for par */
 } opt_struct, *OptStruct;
 
 
@@ -69,6 +70,7 @@ static double fminfn(int n, double *p, void *ex)
     PROTECT_INDEX ipx;
 
     PROTECT(x = allocVector(REALSXP, n));
+    if(!isNull(OS->names)) setAttrib(x, R_NamesSymbol, OS->names);
     for (i = 0; i < n; i++) {
 	if (!R_FINITE(p[i])) error(_("non-finite value supplied by optim"));
 	REAL(x)[i] = p[i] * (OS->parscale[i]);
@@ -76,9 +78,9 @@ static double fminfn(int n, double *p, void *ex)
     SETCADR(OS->R_fcall, x);
     PROTECT_WITH_INDEX(s = eval(OS->R_fcall, OS->R_env), &ipx);
     REPROTECT(s = coerceVector(s, REALSXP), ipx);
-    if (LENGTH(s) != 1)  
-	error(_("objective function in optim evaluates to length %d not 1"), 
-	      LENGTH(s)); 
+    if (LENGTH(s) != 1)
+	error(_("objective function in optim evaluates to length %d not 1"),
+	      LENGTH(s));
     val = REAL(s)[0]/(OS->fnscale);
     UNPROTECT(2);
     return val;
@@ -94,6 +96,7 @@ static void fmingr(int n, double *p, double *df, void *ex)
 
     if (!isNull(OS->R_gcall)) { /* analytical derivatives */
 	PROTECT(x = allocVector(REALSXP, n));
+	if(!isNull(OS->names)) setAttrib(x, R_NamesSymbol, OS->names);
 	for (i = 0; i < n; i++) {
 	    if (!R_FINITE(p[i]))
 		error(_("non-finite value supplied by optim"));
@@ -110,6 +113,7 @@ static void fmingr(int n, double *p, double *df, void *ex)
 	UNPROTECT(2);
     } else { /* numerical derivatives */
 	PROTECT(x = allocVector(REALSXP, n));
+	setAttrib(x, R_NamesSymbol, OS->names);
 	for (i = 0; i < n; i++) REAL(x)[i] = p[i] * (OS->parscale[i]);
 	SETCADR(OS->R_fcall, x);
 	if(OS->usebounds == 0) {
@@ -168,13 +172,13 @@ static void fmingr(int n, double *p, double *df, void *ex)
 }
 
 static void genptry(int n, double *p, double *ptry, double scale, void *ex)
-{    
+{
     SEXP s, x;
     int i;
     OptStruct OS = (OptStruct) ex;
     PROTECT_INDEX ipx;
 
-    if (!isNull(OS->R_gcall)) {  
+    if (!isNull(OS->R_gcall)) {
 	/* user defined generation of candidate point */
       	PROTECT(x = allocVector(REALSXP, n));
 	for (i = 0; i < n; i++) {
@@ -191,7 +195,7 @@ static void genptry(int n, double *p, double *ptry, double scale, void *ex)
 	for (i = 0; i < n; i++)
 	    ptry[i] = REAL(s)[i] / (OS->parscale[i]);
 	UNPROTECT(2);
-    } 
+    }
     else {  /* default Gaussian Markov kernel */
         for (i = 0; i < n; i++)
             ptry[i] = p[i] + scale * norm_rand();  /* new candidate point */
@@ -199,7 +203,7 @@ static void genptry(int n, double *p, double *ptry, double scale, void *ex)
 }
 
 /* par fn gr method options */
-SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP par, fn, gr, method, options, tmp, slower, supper;
     SEXP res, value, counts, conv;
@@ -216,6 +220,7 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
     OS->usebounds = 0;
     OS->R_env = rho;
     par = CAR(args);
+    OS->names = getAttrib(par, R_NamesSymbol);
     args = CDR(args); fn = CAR(args);
     if (!isFunction(fn)) errorcall(call, _("'fn' is not a function"));
     args = CDR(args); gr = CAR(args);
@@ -262,7 +267,7 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	grcount = NA_INTEGER;
 
     }
-    else if (strcmp(tn, "SANN") == 0) {	
+    else if (strcmp(tn, "SANN") == 0) {
         tmax = asInteger(getListElement(options, "tmax"));
         temp = asReal(getListElement(options, "temp"));
         if (tmax == NA_INTEGER) error(_("'tmax' is not an integer"));
@@ -390,7 +395,7 @@ SEXP do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* par fn gr options */
-SEXP do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP par, fn, gr, options, tmp, ndeps, ans;
     OptStruct OS;
@@ -405,6 +410,7 @@ SEXP do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
     OS->R_env = rho;
     par = CAR(args);
     npar = LENGTH(par);
+    OS->names = getAttrib(par, R_NamesSymbol);
     args = CDR(args); fn = CAR(args);
     if (!isFunction(fn)) errorcall(call, _("'fn' is not a function"));
     args = CDR(args); gr = CAR(args);
@@ -647,7 +653,7 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
 {
     char action[50];
     int C;
-    Rboolean calcvert, shrinkfail = FALSE;
+    Rboolean calcvert;
     double convtol, f;
     int funcount=0, H, i, j, L=0;
     int n1=0;
@@ -706,7 +712,6 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
 	}
 	oldsize = size;
 	calcvert = TRUE;
-	shrinkfail = FALSE;
 	do {
 	    if (calcvert) {
 		for (j = 0; j < n1; j++) {
@@ -740,91 +745,90 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
 		}
 	    }
 
-	    if (VH > VL + convtol && VL > abstol) {
-		sprintf(tstr, "%5d", funcount);
-		if (trace) Rprintf("%s%s %f %f\n", action, tstr, VH, VL);
+	    if (VH <= VL + convtol || VL <= abstol) break;
 
+	    sprintf(tstr, "%5d", funcount);
+	    if (trace) Rprintf("%s%s %f %f\n", action, tstr, VH, VL);
+
+	    for (i = 0; i < n; i++) {
+		temp = -P[i][H - 1];
+		for (j = 0; j < n1; j++)
+		    temp += P[i][j];
+		P[i][C - 1] = temp / n;
+	    }
+	    for (i = 0; i < n; i++)
+		Bvec[i] = (1.0 + alpha) * P[i][C - 1] - alpha * P[i][H - 1];
+	    f = fminfn(n, Bvec, ex);
+	    if (!R_FINITE(f)) f = big;
+	    funcount++;
+	    strcpy(action, "REFLECTION     ");
+	    VR = f;
+	    if (VR < VL) {
+		P[n1 - 1][C - 1] = f;
 		for (i = 0; i < n; i++) {
-		    temp = -P[i][H - 1];
-		    for (j = 0; j < n1; j++)
-			temp += P[i][j];
-		    P[i][C - 1] = temp / n;
+		    f = gamm * Bvec[i] + (1 - gamm) * P[i][C - 1];
+		    P[i][C - 1] = Bvec[i];
+		    Bvec[i] = f;
 		}
-		for (i = 0; i < n; i++)
-		    Bvec[i] = (1.0 + alpha) * P[i][C - 1] - alpha * P[i][H - 1];
 		f = fminfn(n, Bvec, ex);
 		if (!R_FINITE(f)) f = big;
 		funcount++;
-		strcpy(action, "REFLECTION     ");
-		VR = f;
-		if (VR < VL) {
-		    P[n1 - 1][C - 1] = f;
-		    for (i = 0; i < n; i++) {
-			f = gamm * Bvec[i] + (1 - gamm) * P[i][C - 1];
-			P[i][C - 1] = Bvec[i];
-			Bvec[i] = f;
-		    }
-		    f = fminfn(n, Bvec, ex);
-		    if (!R_FINITE(f)) f = big;
-		    funcount++;
-		    if (f < VR) {
-			for (i = 0; i < n; i++)
-			    P[i][H - 1] = Bvec[i];
-			P[n1 - 1][H - 1] = f;
-			strcpy(action, "EXTENSION      ");
-		    } else {
-			for (i = 0; i < n; i++)
-			    P[i][H - 1] = P[i][C - 1];
-			P[n1 - 1][H - 1] = VR;
-		    }
-		} else {
-		    strcpy(action, "HI-REDUCTION   ");
-		    if (VR < VH) {
-			for (i = 0; i < n; i++)
-			    P[i][H - 1] = Bvec[i];
-			P[n1 - 1][H - 1] = VR;
-			strcpy(action, "LO-REDUCTION   ");
-		    }
-
+		if (f < VR) {
 		    for (i = 0; i < n; i++)
-			Bvec[i] = (1 - bet) * P[i][H - 1] + bet * P[i][C - 1];
-		    f = fminfn(n, Bvec, ex);
-		    if (!R_FINITE(f)) f = big;
-		    funcount++;
+			P[i][H - 1] = Bvec[i];
+		    P[n1 - 1][H - 1] = f;
+		    strcpy(action, "EXTENSION      ");
+		} else {
+		    for (i = 0; i < n; i++)
+			P[i][H - 1] = P[i][C - 1];
+		    P[n1 - 1][H - 1] = VR;
+		}
+	    } else {
+		strcpy(action, "HI-REDUCTION   ");
+		if (VR < VH) {
+		    for (i = 0; i < n; i++)
+			P[i][H - 1] = Bvec[i];
+		    P[n1 - 1][H - 1] = VR;
+		    strcpy(action, "LO-REDUCTION   ");
+		}
 
-		    if (f < P[n1 - 1][H - 1]) {
-			for (i = 0; i < n; i++)
-			    P[i][H - 1] = Bvec[i];
-			P[n1 - 1][H - 1] = f;
-		    } else {
-			if (VR >= VH) {
-			    strcpy(action, "SHRINK         ");
-			    calcvert = TRUE;
-			    size = 0.0;
-			    for (j = 0; j < n1; j++) {
-				if (j + 1 != L) {
-				    for (i = 0; i < n; i++) {
-					P[i][j] = bet * (P[i][j] - P[i][L - 1])
-					    + P[i][L - 1];
-					size += fabs(P[i][j] - P[i][L - 1]);
-				    }
+		for (i = 0; i < n; i++)
+		    Bvec[i] = (1 - bet) * P[i][H - 1] + bet * P[i][C - 1];
+		f = fminfn(n, Bvec, ex);
+		if (!R_FINITE(f)) f = big;
+		funcount++;
+
+		if (f < P[n1 - 1][H - 1]) {
+		    for (i = 0; i < n; i++)
+			P[i][H - 1] = Bvec[i];
+		    P[n1 - 1][H - 1] = f;
+		} else {
+		    if (VR >= VH) {
+			strcpy(action, "SHRINK         ");
+			calcvert = TRUE;
+			size = 0.0;
+			for (j = 0; j < n1; j++) {
+			    if (j + 1 != L) {
+				for (i = 0; i < n; i++) {
+				    P[i][j] = bet * (P[i][j] - P[i][L - 1])
+					+ P[i][L - 1];
+				    size += fabs(P[i][j] - P[i][L - 1]);
 				}
 			    }
-			    if (size < oldsize) {
-				shrinkfail = FALSE;
-				oldsize = size;
-			    } else {
-				if (trace)
-				    Rprintf("Polytope size measure not decreased in shrink\n");
-				shrinkfail = TRUE;
-			    }
+			}
+			if (size < oldsize) {
+			    oldsize = size;
+			} else {
+			    if (trace)
+				Rprintf("Polytope size measure not decreased in shrink\n");
+			    *fail = 10;
+			    break;
 			}
 		    }
 		}
 	    }
 
-	} while (!(VH <= VL + convtol || VL <= abstol ||
-		   shrinkfail || funcount > maxit));
+	} while (funcount <= maxit);
 
     }
 
@@ -834,7 +838,6 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
     }
     *Fmin = P[n1 - 1][L - 1];
     for (i = 0; i < n; i++) X[i] = P[i][L - 1];
-    if (shrinkfail) *fail = 10;
     if (funcount > maxit) *fail = 1;
     *fncount = funcount;
 }

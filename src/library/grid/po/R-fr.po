@@ -7,15 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
-"PO-Revision-Date: 2005-12-06 23:24+0100\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
+"PO-Revision-Date: 2006-04-18 08:50+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-
 
 msgid "Invalid 'at' location in 'axis'"
 msgstr "Position 'at' incorrecte dans 'axis'"
@@ -25,6 +24,21 @@ msgstr "Il n'est pas possible de spécifier les étiquettes des axes quand 'at' es
 
 msgid "'labels' and 'at' locations must have same length"
 msgstr "'labels' et 'at' doivent être de même longueur"
+
+msgid "End points must not be identical"
+msgstr "Les points extrêmes ne peuvent être identiques"
+
+msgid "'x1', 'y1' ,'x2', and 'y2' must be units"
+msgstr "'x1', 'y1', 'x2' et 'y2' doivent être des unités"
+
+msgid "'shape' must be between -1 and 1"
+msgstr "'shape' doit être compris entre -1 et 1"
+
+msgid "'squareShape' must be between -1 and 1"
+msgstr "'squareShape' doit être compris entre -1 et 1"
+
+msgid "'arrow' must be an arrow object or NULL"
+msgstr "'arrow' doit être un objet 'arrow' ou NULL"
 
 msgid "Invalid 'edit' information"
 msgstr "Information 'edit' incorrecte"
@@ -137,6 +151,9 @@ msgstr "Un chemin 'grob' doit contenir au moins un nom de 'grob'"
 msgid "Invalid 'grob' name(s)"
 msgstr "Nom(s) de 'grob' incorrect(s)"
 
+msgid "Unable to coerce to gList"
+msgstr "Impossible de convertir automatiquement vers une gList"
+
 msgid "Only 'grobs' allowed in 'gList'"
 msgstr "Seuls des 'grob's sont permis dans 'gList'"
 
@@ -245,29 +262,20 @@ msgstr "'respect' doit être une valeur logique ou une matrice 'nrow' par 'ncol'"
 msgid "Invalid 'origin'"
 msgstr "'origin' incorrecte"
 
-msgid "'x' and 'y' must be units"
-msgstr "'x' et 'y' doivent être des unités"
-
-msgid "'x' and 'y' must have length 1"
-msgstr "'x' et 'y' doivent être de longueur unitaire"
-
-msgid "'x0', 'y0', 'x1', and 'y1' must be units"
-msgstr "'x0', 'y0', 'x1' et 'y1' doivent être des unités"
-
-msgid "'x' and 'y' must be units or NULL"
-msgstr "'x' et 'y' doivent être des unités ou NULL"
-
 msgid "'length' must be a unit object"
 msgstr "'length' doit être un objet unitaire"
 
 msgid "Invalid 'ends' or 'type' argument"
 msgstr "Argument 'ends' ou 'type' incorrect"
 
-msgid "Corrupt 'arrows' object"
-msgstr "Objet 'arrows' corrompu"
+msgid "'x' and 'y' must be units"
+msgstr "'x' et 'y' doivent être des unités"
 
-msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
-msgstr "L'argument 'grob' doit être un grob de type 'line.to', 'lines' ou 'segments'"
+msgid "'x' and 'y' must have length 1"
+msgstr "'x' et 'y' doivent être de longueur unitaire"
+
+msgid "invalid 'arrow' argument"
+msgstr "argument 'arrow' incorrect"
 
 msgid "It is invalid to specify both 'id' and 'id.lengths"
 msgstr "Il n'est pas permi de spécifier simultanément 'id' et 'id.lengths'"
@@ -280,6 +288,27 @@ msgstr "'x', 'y' et 'id' doivent être de même longueur"
 
 msgid "'x' and 'y' and 'id.lengths' must specify same overall length"
 msgstr "'x', 'y' et 'id.lengths' doivent spécifier les mêmes longueurs globales"
+
+msgid "'x0', 'y0', 'x1', and 'y1' must be units"
+msgstr "'x0', 'y0', 'x1' et 'y1' doivent être des unités"
+
+msgid "'x' and 'y' must be units or NULL"
+msgstr "'x' et 'y' doivent être des unités ou NULL"
+
+msgid "Corrupt 'arrows' object"
+msgstr "Objet 'arrows' corrompu"
+
+msgid "grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing functions."
+msgstr "grid.arrows() est obsolète ; utilisez les arguments 'arrow' des fonctions de traçage de lignes."
+
+msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgstr "L'argument 'grob' doit être un grob de type 'line.to', 'lines' ou 'segments'"
+
+msgid "x and y must be units"
+msgstr "'x' et 'y' doivent être des unités"
+
+msgid "shape must be between -1 and 1"
+msgstr "'shape' doit être compris entre -1 et 1"
 
 msgid "'x', 'y', and 'r' must be units"
 msgstr "'x', 'y' et 'r' doivent être des unités"
@@ -299,6 +328,9 @@ msgstr "'x', y' et 'size' doivent être des unités"
 msgid "'x' and 'y' must be unit objects and have the same length"
 msgstr "'x' et 'y' doivent être des objets unités et doivent avoir la même longueur"
 
+msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
+msgstr "'x', 'y', 'width' et 'height' doivent tous être des unités de longueur 1"
+
 msgid "'x' must be numeric"
 msgstr "'x' doit être numérique"
 
@@ -311,20 +343,14 @@ msgstr "l'argument 'x' doit être un objet unité"
 msgid "Invalid 'axis' or 'type'"
 msgstr "'axis' ou 'type' incorrect"
 
-msgid "No string supplied for 'strwidth' unit"
-msgstr "Pas de chaîne de caractères fournie pour l'unité 'strwidth'"
+msgid "No string supplied for 'strwidth/height' unit"
+msgstr "Pas de chaîne de caractères fournie pour l'unité 'strwidth/height'"
 
-msgid "No string supplied for 'strheight' unit"
-msgstr "Pas de chaîne de caractères fournie pour l'unité 'strheight'"
-
-msgid "No 'grob' supplied for 'grobwidth' unit"
-msgstr "Pas de 'grob' fourni pour l'unité 'grobwidth'"
+msgid "No 'grob' supplied for 'grobwidth/height' unit"
+msgstr "Pas de 'grob' fourni pour l'unité 'grobwidth.height'"
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
 msgstr "'gPath' doit avoir une profondeur de 1 dans les unités 'grobwidth/height'"
-
-msgid "No 'grob' supplied for 'grobheight' unit"
-msgstr "Pas de 'grob' fourni pour l'unité 'grobheight'"
 
 msgid "Operator '%s' not meaningful for units"
 msgstr "L'opérateur '%s' est inapplicable aux unités"
@@ -356,11 +382,17 @@ msgstr "Indice hors plage (indiçage de liste d'unités)"
 msgid "It is invalid to combine unit objects with other types"
 msgstr "Il n'est pas permi de combiner des objets unités avec d'autres types"
 
+msgid "unit.rep has been deprecated in favour of a unit method for the generic rep function"
+msgstr "'unit.rep' est obsolète et est remplacé par une méthode 'unit' pour la fonction générique 'rep'"
+
+msgid "unit.length has been deprecated in favour of a unit method for the generic length function"
+msgstr "'unit.length' est obsolète et est remplacé par une méthode 'unit' pour la fonction générique 'length'"
+
+msgid "Invalid theta"
+msgstr "'theta' incorrect"
+
 msgid "'range' must be numeric"
 msgstr "'range' doit être numérique"
-
-msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
-msgstr "'x', 'y', 'width' et 'height' doivent tous être des unités de longueur 1"
 
 msgid "Invalid graphics parameters"
 msgstr "Paramètres graphiques incorrects"
@@ -406,3 +438,4 @@ msgstr "Il faut spécifier au moins 'x' ou 'xscale'"
 
 msgid "Must specify at least one of 'y' or 'yscale'"
 msgstr "Il faut spécifier au moins 'y' ou 'yscale'"
+

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #include <Rinternals.h>
@@ -37,11 +37,12 @@ SEXP PicTeX(SEXP);
 SEXP PostScript(SEXP);
 SEXP XFig(SEXP);
 SEXP PDF(SEXP);
-SEXP Type1FontInUse(SEXP);
+SEXP Type1FontInUse(SEXP, SEXP);
+SEXP CIDFontInUse(SEXP, SEXP);
 
 SEXP Quartz(SEXP);
 
-SEXP L_nullDevice();
+SEXP R_GD_nullDevice();
 
 Rboolean 
 PSDeviceDriver(NewDevDesc*, char*, char*, char*, char**,
@@ -49,7 +50,7 @@ PSDeviceDriver(NewDevDesc*, char*, char*, char*, char**,
 	       Rboolean, Rboolean, Rboolean, char*, char*, SEXP);
 
 Rboolean
-PDFDeviceDriver(NewDevDesc*, char *, char *, char *, char *, 
+PDFDeviceDriver(NewDevDesc*, char *, char *, char *, char**, char *, 
 		char *, char *, double, double, double,
 		int, int, char*, SEXP, int, int);
 

@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* TODO
@@ -31,6 +31,7 @@
 #include "win-nls.h"
 
 #include <wchar.h>
+#include <R_ext/rlocale.h>
 
 #include "Defn.h"
 #include "Print.h"
@@ -131,6 +132,7 @@ static int labdigs=4;
 static char labform[6];
 static int xScrollbarScale=1, yScrollbarScale=1;
 
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h> /* for Sleep */
 
 int mb_char_len(char *buf, int clength, wchar_t *wc); /* from console.c */

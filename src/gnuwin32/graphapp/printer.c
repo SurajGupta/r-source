@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* Support for printer
@@ -40,7 +40,6 @@ static void private_delprinter(printer obj)
     EndPage(h);
     EndDoc(h);
     DeleteDC(h);
-    Rwin_fpset();
     return;
 }
 
@@ -156,7 +155,6 @@ printer newprinter(double width, double height, char *name)
     }
 
     StartPage(hDC);
-    Rwin_fpset();
     return obj;
 }
 
@@ -166,5 +164,4 @@ void nextpage(printer p)
     if (!p || (p->kind != PrinterObject)) return;
     EndPage((HDC) p->handle);
     StartPage((HDC) p->handle);
-    Rwin_fpset();
 }

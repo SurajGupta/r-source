@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *  Contexts:
@@ -32,14 +32,16 @@
  *  recursively.  The memory is reclaimed naturally on return through
  *  the recursions (the R_GlobalContext pointer needs adjustment).
  *
- *  A context contains the following information:
+ *  A context contains the following information (and more):
  *
  *	nextcontext	the next level context
  *	cjmpbuf		longjump information for non-local return
  *	cstacktop	the current level of the pointer protection stack
  *	callflag	the context "type"
- *	call		the call (name of function) that effected this
- *			context
+ *	call		the call (name of function, or expression to 
+ *			get the function) that effected this
+ *			context if a closure, otherwise often NULL.
+ *	callfun		the function, if this was a closure.
  *	cloenv		for closures, the environment of the closure.
  *	sysparent	the environment the closure was called from
  *	conexit		code for on.exit calls, to be executed in cloenv
@@ -113,7 +115,7 @@
    determines the argument is responsible for making sure
    CTXT_TOPLEVEL's are not crossed unless appropriate. */
 
-void R_run_onexits(RCNTXT *cptr)
+void attribute_hidden R_run_onexits(RCNTXT *cptr)
 {
     RCNTXT *c;
 
@@ -152,7 +154,7 @@ please bug.report() [R_run_onexits]"));
    three should be unified so there is only one place where a LONGJMP
    occurs. */
 
-void R_restore_globals(RCNTXT *cptr)
+void attribute_hidden R_restore_globals(RCNTXT *cptr)
 {
     R_PPStackTop = cptr->cstacktop;
     R_EvalDepth = cptr->evaldepth;
@@ -255,7 +257,7 @@ void endcontext(RCNTXT * cptr)
 
 /* findcontext - find the correct context */
 
-void findcontext(int mask, SEXP env, SEXP val)
+void attribute_hidden findcontext(int mask, SEXP env, SEXP val)
 {
     RCNTXT *cptr;
     cptr = R_GlobalContext;
@@ -277,7 +279,7 @@ void findcontext(int mask, SEXP env, SEXP val)
     }
 }
 
-void R_JumpToContext(RCNTXT *target, int mask, SEXP val)
+void attribute_hidden R_JumpToContext(RCNTXT *target, int mask, SEXP val)
 {
     RCNTXT *cptr;
     for (cptr = R_GlobalContext;
@@ -295,7 +297,7 @@ void R_JumpToContext(RCNTXT *target, int mask, SEXP val)
 /* negative n counts back from the current frame */
 /* positive n counts up from the globalEnv */
 
-SEXP R_sysframe(int n, RCNTXT *cptr)
+SEXP attribute_hidden R_sysframe(int n, RCNTXT *cptr)
 {
     if (n == 0)
 	return(R_GlobalEnv);
@@ -334,7 +336,7 @@ SEXP R_sysframe(int n, RCNTXT *cptr)
 /* It would be much simpler if sysparent just returned cptr->sysparent */
 /* but then we wouldn't be compatible with S. */
 
-int R_sysparent(int n, RCNTXT *cptr)
+int attribute_hidden R_sysparent(int n, RCNTXT *cptr)
 {
     int j;
     SEXP s;
@@ -367,7 +369,7 @@ int R_sysparent(int n, RCNTXT *cptr)
     return n;
 }
 
-int framedepth(RCNTXT *cptr)
+int attribute_hidden framedepth(RCNTXT *cptr)
 {
     int nframe = 0;
     while (cptr->nextcontext != NULL) {
@@ -378,7 +380,7 @@ int framedepth(RCNTXT *cptr)
     return nframe;
 }
 
-SEXP R_syscall(int n, RCNTXT *cptr)
+SEXP attribute_hidden R_syscall(int n, RCNTXT *cptr)
 {
     /* negative n counts back from the current frame */
     /* positive n counts up from the globalEnv */
@@ -404,7 +406,7 @@ SEXP R_syscall(int n, RCNTXT *cptr)
     return R_NilValue;	/* just for -Wall */
 }
 
-SEXP R_sysfunction(int n, RCNTXT *cptr)
+SEXP attribute_hidden R_sysfunction(int n, RCNTXT *cptr)
 {
     if (n > 0)
 	n = framedepth(cptr) - n;
@@ -434,7 +436,7 @@ SEXP R_sysfunction(int n, RCNTXT *cptr)
    then get the context of the call that owns the environment.  As it
    is, it will restart the wrong function if used in a promise.
    L.T. */
-SEXP do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *cptr;
 
@@ -460,7 +462,7 @@ SEXP do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* We don't want to count the closure that do_sys is contained in so the */
 /* indexing is adjusted to handle this. */
 
-SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int i, n, nframe;
     SEXP rval,t;
@@ -544,7 +546,7 @@ SEXP do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-SEXP do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int n;
     SEXP t;
@@ -580,7 +582,7 @@ SEXP do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
    value is TRUE if fun returns normally, FALSE if it results in a
    jump to top level. */
 
-Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
+Rboolean attribute_hidden R_ToplevelExec(void (*fun)(void *), void *data)
 {
     RCNTXT thiscontext;
     RCNTXT * volatile saveToplevelContext;
@@ -592,7 +594,7 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
     saveToplevelContext = R_ToplevelContext;
 
     begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, R_GlobalEnv,
-		 R_BaseEnv, R_NilValue, R_GlobalEnv);
+		 R_BaseEnv, R_NilValue, R_NilValue);
     if (SETJMP(thiscontext.cjmpbuf))
 	result = FALSE;
     else {

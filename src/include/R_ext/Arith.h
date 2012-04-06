@@ -15,12 +15,16 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef R_ARITH_H_
 #define R_ARITH_H_
 
+#if defined(HAVE_GLIBC2) && !defined(_BSD_SOURCE)
+/* ensure that finite and isnan are declared */
+# define _BSD_SOURCE 1
+#endif
 #include <math.h>
 
 #include <R_ext/libextern.h>

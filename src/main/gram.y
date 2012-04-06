@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
+ *  USA.
  */
 
 /* <UTF8>
@@ -31,14 +32,17 @@
 #include <config.h>
 #endif
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "IOStuff.h"		/*-> Defn.h */
 #include "Fileio.h"
 #include "Parse.h"
 
+static void yyerror(char *);
+static int yylex();
+int yyparse(void);
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define yyconst const
 
@@ -60,12 +64,10 @@ static SEXP	TagArg(SEXP, SEXP);
 
 /* These routines allocate constants */
 
-SEXP		mkComplex(char *);
+static SEXP	mkComplex(char *);
 SEXP		mkFalse(void);
-SEXP		mkFloat(char *);
-SEXP		mkInteger(char *);
-SEXP		mkNA(void);
-SEXP		mkString(yyconst char *);
+static SEXP     mkFloat(char *);
+static SEXP	mkNA(void);
 SEXP		mkTrue(void);
 
 /* Internal lexer / parser state variables */
@@ -77,9 +79,81 @@ static int	xxgetc();
 static int	xxungetc();
 static int 	xxcharcount, xxcharsave;
 
-#ifdef SUPPORT_MBCS
+#if defined(SUPPORT_MBCS)
+# include <R_ext/Riconv.h>
+# include <R_ext/rlocale.h>
 # include <wchar.h>
 # include <wctype.h>
+# include <sys/param.h>
+#ifdef HAVE_LANGINFO_CODESET
+# include <langinfo.h>
+#endif
+
+/* Previous versions (< 2.3.0) assumed wchar_t was in Unicode (and it
+   commonly is).  This version does not. */
+# ifdef Win32
+static const char UNICODE[] = "UCS-2LE";
+# else
+#  ifdef WORDS_BIGENDIAN
+static const char UNICODE[] = "UCS-4BE";
+#  else
+static const char UNICODE[] = "UCS-4LE";
+# endif
+#endif
+#include <errno.h>
+
+static size_t ucstomb(char *s, wchar_t wc, mbstate_t *ps)
+{
+    char     tocode[128];
+    char     buf[16];
+    void    *cd = NULL ;
+    wchar_t  wcs[2];
+    char    *inbuf = (char *) wcs;
+    size_t   inbytesleft = sizeof(wchar_t);
+    char    *outbuf = buf;
+    size_t   outbytesleft = sizeof(buf);
+    size_t   status;
+    
+    if(wc == L'\0') {
+	*s = '\0';
+        return 1;
+    }
+    
+    strcpy(tocode, "");
+    memset(buf, 0, sizeof(buf));
+    memset(wcs, 0, sizeof(wcs));
+    wcs[0] = wc;
+
+    if((void *)(-1) == (cd = Riconv_open("", (char *)UNICODE))) {
+#ifndef  Win32
+        /* locale set fuzzy case */
+    	strncpy(tocode, locale2charset(NULL), sizeof(tocode));
+	if((void *)(-1) == (cd = Riconv_open(tocode, (char *)UNICODE)))
+            return (size_t)(-1); 
+#else
+        return (size_t)(-1);
+#endif
+    }
+    
+    status = Riconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+    Riconv_close(cd);
+
+    if (status == (size_t) -1) {
+        switch(errno){
+        case EINVAL:
+            return (size_t) -2;
+        case EILSEQ:
+            return (size_t) -1;
+        case E2BIG:
+            break;
+        default:
+            errno = EILSEQ;
+            return (size_t) -1;
+        }
+    }
+    strncpy(s, buf, sizeof(buf) - 1); /* ensure 0-terminated */
+    return strlen(buf);
+}
 
 static int mbcs_get_next(int c, wchar_t *wc)
 {
@@ -1040,6 +1114,7 @@ static int file_getc(void)
     return R_fgetc(fp_parse);
 }
 
+attribute_hidden
 SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
 {
     ParseInit();
@@ -1058,6 +1133,7 @@ static int buffer_getc()
     return R_IoBufferGetc(iob);
 }
 
+attribute_hidden
 SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 {
     ParseInit();
@@ -1076,6 +1152,7 @@ static int text_getc()
     return R_TextBufferGetc(txtb);
 }
 
+attribute_hidden
 SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
 {
     ParseInit();
@@ -1087,9 +1164,7 @@ SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
     return R_CurrentExpr;
 }
 
-#define GENERAL
-#ifdef GENERAL
-
+attribute_hidden
 SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
 		     int gencode, ParseStatus *status)
 {
@@ -1100,8 +1175,8 @@ SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
     R_Parse1(status);
     return R_CurrentExpr;
 }
-#endif
 
+attribute_hidden
 SEXP R_Parse(int n, ParseStatus *status)
 {
     int i;
@@ -1162,6 +1237,7 @@ SEXP R_Parse(int n, ParseStatus *status)
     }
 }
 
+attribute_hidden
 SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
 {
     GenerateCode = 1;
@@ -1185,6 +1261,7 @@ static int con_getc(void)
     return (last = c);
 }
 
+attribute_hidden
 SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
 {
     GenerateCode = 1;
@@ -1194,6 +1271,7 @@ SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
     return R_Parse(n, status);
 }
 
+/* This one is public */
 SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
 {
     SEXP rval;
@@ -1208,7 +1286,7 @@ SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
     return rval;
 }
 
-#ifdef GENERAL
+attribute_hidden
 SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
 		    ParseStatus *status)
 {
@@ -1217,7 +1295,6 @@ SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
     ptr_getc = ggetc;
     return R_Parse(n, status);
 }
-#endif
 
 static char *Prompt(SEXP prompt, int type)
 {
@@ -1235,6 +1312,7 @@ static char *Prompt(SEXP prompt, int type)
     }
 }
 
+attribute_hidden
 SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt)
 {
     SEXP rval, t;
@@ -1395,7 +1473,7 @@ struct {
     char *name;
     int token;
 }
-keywords[] = {
+static keywords[] = {
     { "NULL",	    NULL_CONST },
     { "NA",	    NUM_CONST  },
     { "TRUE",	    NUM_CONST  },
@@ -1474,17 +1552,7 @@ static int KeywordLookup(char *s)
 }
 
 
-SEXP mkString(yyconst char *s)
-{
-    SEXP t;
-
-    PROTECT(t = allocVector(STRSXP, 1));
-    SET_STRING_ELT(t, 0, mkChar(s));
-    UNPROTECT(1);
-    return t;
-}
-
-SEXP mkFloat(char *s)
+static SEXP mkFloat(char *s)
 {
     SEXP t = allocVector(REALSXP, 1);
     if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
@@ -1500,7 +1568,7 @@ SEXP mkFloat(char *s)
     return t;
 }
 
-SEXP mkComplex(char *s)
+static SEXP mkComplex(char *s)
 {
     SEXP t = allocVector(CPLXSXP, 1);
     COMPLEX(t)[0].r = 0;
@@ -1508,7 +1576,7 @@ SEXP mkComplex(char *s)
     return t;
 }
 
-SEXP mkNA(void)
+static SEXP mkNA(void)
 {
     SEXP t = allocVector(LGLSXP, 1);
     LOGICAL(t)[0] = NA_LOGICAL;
@@ -1529,7 +1597,7 @@ SEXP mkFalse(void)
     return s;
 }
 
-void yyerror(char *s)
+static void yyerror(char *s)
 {
 }
 
@@ -1678,51 +1746,73 @@ static int StringValue(int c)
 		}
 		c = val;
 	    }
+	    else if(c == 'u') {
+		if(!mbcslocale) 
+		     error(_("\\uxxxx sequences are only valid in multibyte locales"));
+#if defined(SUPPORT_MBCS)
+		else {	
+		    wint_t val = 0; int i, ext; size_t res;
+		    char buff[5]; Rboolean delim = FALSE;
+		    if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
+		    for(i = 0; i < 4; i++) {
+			c = xxgetc();
+			if(c >= '0' && c <= '9') ext = c - '0';
+			else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+			else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+			else {xxungetc(c); break;}
+			val = 16*val + ext;
+		    }
+		    if(delim)
+			if((c = xxgetc()) != '}')
+			    error(_("invalid \\u{xxxx} sequence"));
+		
+		    res = ucstomb(buff, val, NULL);
+		    if((int)res <= 0) {
+			if(delim)
+			    error(_("invalid \\u{xxxx} sequence"));
+			else
+			    error(_("invalid \\uxxxx sequence"));
+		    }
+		    for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
+		    c = buff[res - 1]; /* pushed below */
+		}
+#endif
+	    }
+	    else if(c == 'U') {
+#ifdef Win32
+		error(_("\\Uxxxxxxxx sequences are not supported on Windows"));
+#else
+		if(!mbcslocale) 
+		     error(_("\\Uxxxxxxxx sequences are only valid in multibyte locales"));
 #ifdef SUPPORT_MBCS
-	    /* Only realy valid in UTF-8, but useful shorthand elsewhere */
-	    else if(mbcslocale && c == 'u') {
-		wint_t val = 0; int i, ext; size_t res;
-		char buff[5]; Rboolean delim = FALSE;
-		if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
-		for(i = 0; i < 4; i++) {
-		    c = xxgetc();
-		    if(c >= '0' && c <= '9') ext = c - '0';
-		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
-		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); break;}
-		    val = 16*val + ext;
+		else {
+		    wint_t val = 0; int i, ext; size_t res;
+		    char buff[9]; Rboolean delim = FALSE;
+		    if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
+		    for(i = 0; i < 8; i++) {
+			c = xxgetc();
+			if(c >= '0' && c <= '9') ext = c - '0';
+			else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+			else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+			else {xxungetc(c); break;}
+			val = 16*val + ext;
+		    }
+		    if(delim)
+			if((c = xxgetc()) != '}')
+			    error(_("invalid \\U{xxxxxxxx} sequence"));
+		    res = ucstomb(buff, val, NULL);
+		    if((int)res <= 0) {
+			if(delim)
+			    error(_("invalid \\U{xxxxxxxx} sequence"));
+			else
+			    error(("invalid \\Uxxxxxxxx sequence"));
+		    }
+		    for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
+		    c = buff[res - 1]; /* pushed below */
 		}
-		if(delim)
-		    if((c = xxgetc()) != '}')
-			error(_("invalid \\u{xxxx} sequence"));
-		res = wcrtomb(buff, val, NULL); /* should always be valid */
-		if((int)res <= 0) error(_("invalid \\uxxxx sequence"));
-		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
-		c = buff[res - 1]; /* pushed below */
-	    }
-#ifndef Win32
-	    else if(mbcslocale && c == 'U') {
-		wint_t val = 0; int i, ext; size_t res;
-		char buff[9]; Rboolean delim = FALSE;
-		if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
-		for(i = 0; i < 8; i++) {
-		    c = xxgetc();
-		    if(c >= '0' && c <= '9') ext = c - '0';
-		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
-		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); break;}
-		    val = 16*val + ext;
-		}
-		if(delim)
-		    if((c = xxgetc()) != '}')
-			error(_("invalid \\U{xxxxxxxx} sequence"));
-		res = wcrtomb(buff, val, NULL); /* should always be valid */
-		if((int)res <= 0) error(("invalid \\Uxxxxxxxx sequence"));
-		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
-		c = buff[res - 1]; /* pushed below */
-	    }
 #endif
-#endif
+#endif /* Win32 */
+	    }
 	    else {
 		switch (c) {
 		case 'a':
@@ -1752,7 +1842,7 @@ static int StringValue(int c)
 		}
 	    }
 	}
-#ifdef SUPPORT_MBCS
+#if defined(SUPPORT_MBCS)
        else if(mbcslocale) {
            int i, clen;
            wchar_t wc = L'\0';
@@ -1850,7 +1940,7 @@ static int SymbolValue(int c)
 {
     int kw;
     DECLARE_YYTEXT_BUFP(yyp);
-#ifdef SUPPORT_MBCS
+#if defined(SUPPORT_MBCS)
     if(mbcslocale) {
 	wchar_t wc; int i, clen;
 	clen = utf8locale ? utf8clen(c) : mbcs_get_next(c, &wc);
@@ -1899,7 +1989,7 @@ static int SymbolValue(int c)
 static int token()
 {
     int c;
-#ifdef SUPPORT_MBCS
+#if defined(SUPPORT_MBCS)
     wchar_t wc;
 #endif
 
@@ -1945,7 +2035,7 @@ static int token()
  symbol:
 
     if (c == '.') return SymbolValue(c);
-#ifdef SUPPORT_MBCS
+#if defined(SUPPORT_MBCS)
     if(mbcslocale) {
 	mbcs_get_next(c, &wc);
 	if (iswalpha(wc)) return SymbolValue(c);
@@ -2085,7 +2175,7 @@ static int token()
     }
 }
 
-int yylex(void)
+static int yylex(void)
 {
     int tok;
 

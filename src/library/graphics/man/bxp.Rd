@@ -7,10 +7,11 @@
   invoked directly.
 }
 \usage{
-bxp(z, notch = FALSE, width = NULL, varwidth = FALSE, outline = TRUE,
-    notch.frac = 0.5, log = "", border = par("fg"), col = par("bg"),
-    pars = NULL, frame.plot = axes, horizontal = FALSE,
-    add = FALSE, at = NULL, show.names = NULL, \dots)
+bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
+    outline = TRUE, notch.frac = 0.5, log = "", border = par("fg"),
+    col = par("bg"), pars = NULL, frame.plot = axes,
+    horizontal = FALSE, add = FALSE, at = NULL, show.names = NULL,
+    \dots)
 }
 \arguments{
   \item{z}{a list containing data summaries to be used in constructing
@@ -34,8 +35,8 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE, outline = TRUE,
     and \code{outcol} options (see below).
   }
   \item{col}{character or numeric; the color within the box; recycled for
-    multiple boxes.  Is only used as default for \code{boxfill} and will
-    be deprecated.}
+    multiple boxes.  Is only used as a default for \code{boxfill} and has
+    been deprecated.}
   \item{log}{character, indicating if any axis should be drawn in
     logarithmic scale, as in \code{\link{plot.default}}.}
   \item{frame.plot}{logical, indicating if a \dQuote{frame}
@@ -49,18 +50,21 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE, outline = TRUE,
     \code{1:n} where \code{n} is the number of boxes.}
   \item{show.names}{Set to \code{TRUE} or \code{FALSE} to override the
     defaults on whether an x-axis label is printed for each group.}
-  \item{pars,\dots}{graphical parameters can be passed as arguments to
-    this function, either as a list (\code{pars}) or
+  \item{pars,\dots}{graphical parameters (etc) can be passed as
+    arguments to this function, either as a list (\code{pars}) or
     normally(\code{\dots}), see the following.
 
     Currently, \code{yaxs} and \code{ylim} are used \sQuote{along the
       boxplot}, i.e., vertically, when \code{horizontal} is
-    false. \code{xaxt}, \code{yaxt}, \code{las}, \code{cex.axis}, and
+    false.  \code{xaxt}, \code{yaxt}, \code{las}, \code{cex.axis}, and
     \code{col.axis} are passed to \code{\link{axis}}, and \code{main},
     \code{cex.main}, \code{col.main}, \code{sub}, \code{cex.sub},
     \code{col.sub}, \code{xlab}, \code{ylab}, \code{cex.lab}, and
     \code{col.lab} are passed to \code{\link{title}}.
 
+    In addition, \code{axes} is accepted (see
+    \code{\link{plot.window}}), with default \code{TRUE}.
+    
     The following arguments (or \code{pars} components) allow further
     customization of the boxplot graphics.  Their defaults are typically
     determined from the non-prefixed version (e.g., \code{boxlty} from
@@ -73,7 +77,8 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE, outline = TRUE,
       \item{staplewex, outwex:}{staple and outlier line width expansion,
 	proportional to box width.}
       \item{boxlty, boxlwd, boxcol, boxfill:}{box outline type, width,
-	color, and fill color.}
+	color, and fill color (which currently defaults to \code{col} and will
+	in future default to \code{par("bg")}).}
       \item{medlty, medlwd, medpch, medcex, medcol, medbg:}{median line type,
 	line width, point character, point size expansion, color, and
 	background color.  The default \code{medpch= NA} suppresses the

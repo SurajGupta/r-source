@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef R_DYNPRIV_H
@@ -202,6 +202,8 @@ DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path);
 
 DL_FUNC R_getDLLRegisteredSymbol(DllInfo *info, const char *name, 
 				  R_RegisteredNativeSymbol *symbol);
+
+DL_FUNC R_dlsym(DllInfo *info, char const *name, R_RegisteredNativeSymbol *symbol);
 
 #ifdef __cplusplus
 }

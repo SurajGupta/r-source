@@ -14,8 +14,8 @@
  *
  *  You should have received a copy of the GNU Library General Public
  *  License along with this library; if not, write to the Free
- *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- *  MA 02111-1307, USA
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  *
  ******************************************************************************/
 
@@ -23,10 +23,7 @@
 #define DEV_X 500
 #define DEV_Y 500
 
-#ifdef HAVE_CONFIG_H
-#include <Rconfig.h>
-#endif
-
+#include <config.h>
 #include <Defn.h>
 #include <Graphics.h>
 #include <Rdevices.h>

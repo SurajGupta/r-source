@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995-2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1995-2006  Robert Gentleman, Ross Ihaka and the
  *			     R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -123,6 +123,7 @@ done:
     return sign*ret;
 }
 
+/* used in X11 module */
 double R_strtod(const char *c, char **end)
 {
     double x;
@@ -1217,11 +1218,16 @@ SEXP ascommon(SEXP call, SEXP u, SEXPTYPE type)
     }
     else if (isSymbol(u) && type == SYMSXP)
 	return u;
+    else if (isSymbol(u) && type == VECSXP) {
+	v = allocVector(VECSXP, 1);
+	SET_VECTOR_ELT(v, 0, u);
+	return v;
+    }
     else errorcall(call, _("cannot coerce to vector"));
     return u;/* -Wall */
 }
 
-SEXP do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
 
@@ -1241,7 +1247,7 @@ SEXP do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     int type;
@@ -1297,7 +1303,7 @@ SEXP do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 	SEXP arglist, envir, names, pargs, body;
     int i, n;
@@ -1311,7 +1317,11 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("list argument expected"));
 
     envir = CADR(args);
-    if (!isNull(envir) && !isEnvironment(envir))
+    if (isNull(envir)) {
+	warning(_("use of NULL environment is deprecated"));
+	envir = R_BaseEnv;
+    } else    
+    if (!isEnvironment(envir))
 	errorcall(call, _("invalid environment"));
 
     n = length(arglist);
@@ -1347,7 +1357,7 @@ SEXP do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ap, ans, names;
     int i, n;
@@ -1384,7 +1394,7 @@ SEXP do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* return the type (= "detailed mode") of the SEXP */
-SEXP do_typeof(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_typeof(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     checkArity(op, args);
@@ -1397,7 +1407,7 @@ SEXP do_typeof(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* Define many of the <primitive> "is.xxx" functions :
    Note that  isNull, isNumeric, etc are defined in ./util.c
 */
-SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     checkArity(op, args);
@@ -1532,7 +1542,7 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
  * It seems to make more sense to check for a dim attribute.
  */
 
-SEXP do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, a;
     checkArity(op, args);
@@ -1569,7 +1579,7 @@ SEXP do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (ans);
 }
 
-SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, dims, names, x;
     int i, n;
@@ -1676,7 +1686,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, dims, names, x;
     int i, n;
@@ -1774,7 +1784,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-SEXP do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, x, names, dims;
     int i, n;
@@ -1823,7 +1833,7 @@ SEXP do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, x, names, dims;
     double xr, xi;
@@ -1879,7 +1889,7 @@ SEXP do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-SEXP do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP rest, evargs, rfun;
 
@@ -1896,15 +1906,16 @@ SEXP do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (rfun);
 }
 
-SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP c, fun, names;
+    SEXP c, fun, names, envir;
     int i, n;
-    RCNTXT *cptr;
+    /* RCNTXT *cptr; */
 
     checkArity(op, args);
 
     fun = CAR(args);
+    envir = CADDR(args);
     args = CADR(args);
 
     /* must be a string or a function */
@@ -1916,6 +1927,9 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (!isNull(args) && !isNewList(args))
 	errorcall_return(call, R_MSG_A2_list);
+
+    if (!isEnvironment(envir))
+	errorcall_return(call, _("'envir' must be an environment"));
 
     n = length(args);
     names = getAttrib(args, R_NamesSymbol);
@@ -1938,7 +1952,9 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
             SET_TAG(c, install(CHAR(ItemName(names, i))));
         c = CDR(c);
     }
+    call = eval(call, envir);
 
+    /*
     cptr = R_GlobalContext;
     while (cptr->nextcontext != NULL) {
         if (cptr->callflag & CTXT_FUNCTION ) {
@@ -1950,6 +1966,8 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     	call = eval(call, cptr->sysparent);
     else
         error(_("do.call: could not find parent environment"));
+    */
+    
     UNPROTECT(1);
     return call;
 }
@@ -1960,7 +1978,10 @@ SEXP do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* values as found in the environment.	There is no inheritance so only */
 /* the supplied environment is searched. If no environment is specified */
 /* the environment in which substitute was called is used.  If the */
-/* specified environment is R_NilValue then R_GlobalEnv is used. */
+/* specified environment is R_GlobalEnv it is converted to R_NilValue, for */
+/* historical reasons. */
+/* In substitute(), R_NilValue signals that no substitution should be done, only */
+/* extraction of promise expressions. */
 /* Arguments to do_substitute should not be evaluated. */
 
 SEXP substitute(SEXP lang, SEXP rho)
@@ -1970,20 +1991,22 @@ SEXP substitute(SEXP lang, SEXP rho)
     case PROMSXP:
 	return substitute(PREXPR(lang), rho);
     case SYMSXP:
-	t = findVarInFrame3( rho, lang, TRUE);
-	if (t != R_UnboundValue) {
-	    if (TYPEOF(t) == PROMSXP) {
-		do {
-		    t = PREXPR(t);
-		}
-		while(TYPEOF(t) == PROMSXP);
-		return t;
-	    }
-	    else if (TYPEOF(t) == DOTSXP) {
-		error(_("... used in an incorrect context"));
-	    }
-	    if (rho != R_GlobalEnv)
-		return t;
+    	if (rho != R_NilValue) {
+	    t = findVarInFrame3( rho, lang, TRUE);
+	    if (t != R_UnboundValue) {
+		if (TYPEOF(t) == PROMSXP) {
+		    do {
+			t = PREXPR(t);
+		    }
+		    while(TYPEOF(t) == PROMSXP);
+		    return t;
+	    	}
+	    	else if (TYPEOF(t) == DOTSXP) {
+		    error(_("... used in an incorrect context"));
+	    	}
+	    	if (rho != R_GlobalEnv)
+		    return t;
+	    }		    
 	}
 	return (lang);
     case LANGSXP:
@@ -1997,27 +2020,30 @@ SEXP substitute(SEXP lang, SEXP rho)
 /* Work through a list doing substitute on the */
 /* elements taking particular care to handle ... */
 
-SEXP substituteList(SEXP el, SEXP rho)
+
+SEXP attribute_hidden substituteList(SEXP el, SEXP rho)
 {
     SEXP h, t;
     if (isNull(el))
 	return el;
     if (CAR(el) == R_DotsSymbol) {
-	h = findVarInFrame3(rho, CAR(el), TRUE);
-	if (h == R_NilValue)
+    	if (rho == R_NilValue)
+    	    h = R_UnboundValue;	/* so there is no substitution below */
+    	else
+	    h = findVarInFrame3(rho, CAR(el), TRUE);
+	if (h == R_UnboundValue) 
+	    return LCONS(R_DotsSymbol, substituteList(CDR(el), rho));
+	if (h == R_NilValue  || h == R_MissingArg)
 	    return substituteList(CDR(el), rho);
-	if (TYPEOF(h) != DOTSXP) {
-	    if (h == R_UnboundValue)
-		return el;
-	    if (h == R_MissingArg)
-		return substituteList(CDR(el), rho);
-	    error(_("... used in an incorrect context"));
+	if (TYPEOF(h) == DOTSXP) {
+	    PROTECT(h = substituteList(h, R_NilValue));
+	    PROTECT(t = substituteList(CDR(el), rho));
+	    t = listAppend(h, t);
+	    UNPROTECT(2);
+	    return t;
 	}
-	PROTECT(h = substituteList(h, R_NilValue));
-	PROTECT(t = substituteList(CDR(el), rho));
-	t = listAppend(h, t);
-	UNPROTECT(2);
-	return t;
+	error(_("... used in an incorrect context"));
+	return R_NilValue; /* to suppress warning */
     }
     else {
 	/* This could involve deep recursion on long lists, so do tail
@@ -2034,7 +2060,7 @@ SEXP substituteList(SEXP el, SEXP rho)
     }
 }
 
-SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP env, s, t;
     /* set up the environment for substitution */
@@ -2042,13 +2068,13 @@ SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
 	env = rho;
     else
 	env = eval(CADR(args), rho);
-    if (env == R_NilValue)
-	env = R_GlobalEnv;
+    if (env == R_GlobalEnv)	/* For historical reasons, don't substitute in R_GlobalEnv */
+	env = R_NilValue;
     else if (TYPEOF(env) == VECSXP)
 	env = NewEnvironment(R_NilValue, VectorToPairList(env), R_BaseEnv);
     else if (TYPEOF(env) == LISTSXP)
 	env = NewEnvironment(R_NilValue, duplicate(env), R_BaseEnv);
-    if (TYPEOF(env) != ENVSXP)
+    if (env != R_NilValue && TYPEOF(env) != ENVSXP)
 	errorcall(call, _("invalid environment specified"));
 
     PROTECT(env);
@@ -2059,7 +2085,7 @@ SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
     return CAR(s);
 }
 
-SEXP do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
 

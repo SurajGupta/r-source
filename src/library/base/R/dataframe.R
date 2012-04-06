@@ -1,6 +1,7 @@
 
 row.names <- function(x) UseMethod("row.names")
-row.names.data.frame <- function(x) attr(x, "row.names")
+## expand.grid was setting integer row.names
+row.names.data.frame <- function(x) as.character(attr(x, "row.names"))
 row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
 
 "row.names<-" <- function(x, value) UseMethod("row.names<-")
@@ -8,9 +9,10 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
     if (!is.data.frame(x))
 	x <- as.data.frame(x)
     old <- attr(x, "row.names")
+    ## do this here, as e.g. POSIXlt changes length when coerced.
+    value <- as.character(value)
     if (!is.null(old) && length(value) != length(old))
 	stop("invalid 'row.names' length")
-    value <- as.character(value)
     if (any(duplicated(value)))
 	stop("duplicate 'row.names' are not allowed")
     if (any(is.na(value)))
@@ -50,14 +52,18 @@ dim.data.frame <- function(x) c(length(attr(x,"row.names")), length(x))
 
 dimnames.data.frame <- function(x) list(attr(x,"row.names"), names(x))
 
-"dimnames<-.data.frame" <- function(x, value) {
+"dimnames<-.data.frame" <- function(x, value)
+{
     d <- dim(x)
-    if(!is.list(value) || length(value) != 2
-       || d[[1]] != length(value[[1]])
-       || d[[2]] != length(value[[2]]))
+    if(!is.list(value) || length(value) != 2)
 	stop("invalid 'dimnames' given for data frame")
-    row.names(x) <- as.character(value[[1]]) # checks validity
-    names(x) <- as.character(value[[2]])
+    ## do the coercion first, as might change length
+    value[[1]] <- as.character(value[[1]])
+    value[[2]] <- as.character(value[[2]])
+    if(d[[1]] != length(value[[1]]) || d[[2]] != length(value[[2]]))
+	stop("invalid 'dimnames' given for data frame")
+    row.names(x) <- value[[1]] # checks validity
+    names(x) <- value[[2]]
     x
 }
 
@@ -886,7 +892,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
 	if(nchar(nmi) > 0) {
 	    if(ni > 1)
 		paste(nmi, ri, sep = ".")
-	    else nmi
+	    else nmi[ri]
 	}
 	else if(nrow > 0 && identical(ri, 1:ni))
 	    seq(from = nrow + 1, length = ni)

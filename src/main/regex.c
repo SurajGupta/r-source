@@ -15,20 +15,25 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+   02111-1301 USA.  */
 
-/* constructed from glibc 2.3.5 via
-   cat regec.c regex_internal.h regex_internal.c regcomp.c regexec.c > Rregex.c
-   and hand-editing */
+/* constructed from glibc 2.3.6/posix via
+   cat regex.c regex_internal.h regex_internal.c regcomp.c regexec.c > Rregex.c
+   pasng through protoize and hand-editing */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 /* for declaration of mempcpy */
 #define _GNU_SOURCE 1
 
-#ifndef USE_SYSTEM_REGEX
 #include <R_ext/Error.h>
 
 #include <ctype.h>
@@ -85,6 +90,9 @@
 #if defined HAVE_WCTYPE_H || defined _LIBC
 # include <wctype.h>
 #endif /* HAVE_WCTYPE_H || _LIBC */
+#ifdef SUPPORT_MBCS
+# include <R_ext/rlocale.h>
+#endif
 
 /* In case that the system doesn't have isblank().  */
 #if !defined _LIBC && !defined HAVE_ISBLANK && !defined isblank
@@ -157,7 +165,7 @@
 # define __mempcpy mempcpy
 # define __wcrtomb wcrtomb
 # define __regfree regfree
-# define attribute_hidden
+/* # define attribute_hidden */
 #endif /* not _LIBC */
 
 #ifdef __GNUC__
@@ -2574,7 +2582,7 @@ static void mark_opt_subexp_iter (const bin_tree_t *src, re_dfa_t *dfa, int idx)
    POSIX doesn't require that we do anything for REG_NOERROR,
    but why not be nice?  */
 
-static const char __re_error_msgid[] attribute_hidden =
+static const char __re_error_msgid[] =
   {
 #define REG_NOERROR_IDX	0
     gettext_noop ("Success")	/* REG_NOERROR */
@@ -2628,7 +2636,7 @@ static const char __re_error_msgid[] attribute_hidden =
     gettext_noop ("Unmatched ) or \\)") /* REG_ERPAREN */
   };
 
-static const size_t __re_error_msgid_idx[] attribute_hidden =
+static const size_t __re_error_msgid_idx[]  =
   {
     REG_NOERROR_IDX,
     REG_NOMATCH_IDX,
@@ -2889,7 +2897,7 @@ re_compile_fastmap_iter (regex_t *bufp, const re_dfastate_t *init_state,
    It returns 0 if it succeeds, nonzero if it doesn't.  (See regex.h for
    the return codes and their meanings.)  */
 
-int
+int attribute_hidden
 regcomp (preg, pattern, cflags)
     regex_t *__restrict preg;
     const char *__restrict pattern;
@@ -2951,7 +2959,7 @@ weak_alias (__regcomp, regcomp)
 /* Returns a message corresponding to an error code, ERRCODE, returned
    from either regcomp or regexec.   We don't use PREG here.  */
 
-size_t
+size_t attribute_hidden
 regerror (errcode, preg, errbuf, errbuf_size)
     int errcode;
     const regex_t *preg;
@@ -5863,7 +5871,7 @@ build_charclass (unsigned char *trans, re_bitset_ptr_t sbcset,
 		 re_charset_t *mbcset, int *char_class_alloc, 
 		 const unsigned char *class_name, reg_syntax_t syntax)
 #else /* not RE_ENABLE_I18N */
-build_charclass (unsigned char *trans, re_bitset_ptr_t sbcset, 
+build_charclass (unsigned RE_TRANSLATE_TYPE trans, re_bitset_ptr_t sbcset, 
 		 const unsigned char *class_name, reg_syntax_t syntax)
 #endif /* not RE_ENABLE_I18N */
 {
@@ -5935,7 +5943,7 @@ build_charclass (unsigned char *trans, re_bitset_ptr_t sbcset,
 }
 
 static bin_tree_t *
-build_charclass_op (re_dfa_t *dfa, unsigned char *trans, 
+build_charclass_op (re_dfa_t *dfa, unsigned RE_TRANSLATE_TYPE trans, 
 		    const unsigned char *class_name, 
 		    const unsigned char *extra, int non_match, 
 		    reg_errcode_t *err)
@@ -6411,7 +6419,7 @@ static reg_errcode_t extend_buffers (re_match_context_t *mctx) internal_function
 
    We return 0 if we find a match and REG_NOMATCH if not.  */
 
-int
+int attribute_hidden
 regexec (preg, string, nmatch, pmatch, eflags)
     const regex_t *__restrict preg;
     const char *__restrict string;
@@ -10419,7 +10427,7 @@ sift_ctx_init (re_sift_context_t *sctx, re_dfastate_t **sifted_sts,
   re_node_set_init_empty (&sctx->limits);
 }
 
-int
+int attribute_hidden
 Rregexec (const regex_t *__restrict preg, const char *__restrict string, 
 	  size_t nmatch, regmatch_t pmatch[], int eflags, int offset)
 {
@@ -10433,7 +10441,3 @@ Rregexec (const regex_t *__restrict preg, const char *__restrict string,
 			      length, nmatch, pmatch, eflags);
   return err != REG_NOERROR;
 }
-#else /* not USE_SYSTEM_REGEX */
-/* for 2.1.0, this option is not functional */
-#error USE_SYSTEM_REGEX is no longer supported
-#endif

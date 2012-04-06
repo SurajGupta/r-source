@@ -16,19 +16,21 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-/* The version for R 2.1.0 is partly based on patches by 
-   Ei-ji Nakama <nakama@ki.rim.or.jp> for use in Japanese. 
+/* The version for R 2.1.0 is partly based on patches by
+   Ei-ji Nakama <nakama@ki.rim.or.jp> for use in Japanese.
 
-   <MBCS> all the strings manipulated here like display and fonts specs 
+   <MBCS> all the strings manipulated here like display and fonts specs
    are probably ASCII, or at least start with ASCII in the part searched.
 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+
+#include <Defn.h>
 
 #ifdef HAVE_RINT
 #define R_rint(x) rint(x)
@@ -45,7 +47,6 @@
 #include <X11/Intrinsic.h>	/*->	Xlib.h	Xutil.h Xresource.h .. */
 
 
-#include "Defn.h"
 #include "Graphics.h"
 #include "Fileio.h"		/* R_fopen */
 #include "rotated.h"		/* 'Public' routines from here */
@@ -629,7 +630,7 @@ static void handleEvent(XEvent event)
     }
 }
 
-static void R_ProcessEvents(void *data)
+static void R_ProcessX11Events(void *data)
 {
     XEvent event;
 
@@ -673,8 +674,8 @@ static R_XFont *R_XLoadQueryFont(Display *display, char *name)
     tmp = (R_XFont *) malloc(sizeof(R_XFont));
     tmp->type = One_Font;
     tmp->font = XLoadQueryFont(display, name);
-    if(tmp->font) 
-	return tmp; 
+    if(tmp->font)
+	return tmp;
     else {
 	free(tmp);
 	return NULL;
@@ -700,7 +701,7 @@ static R_XFont *R_XLoadQueryFontSet(Display *display,
     XFontSet fontset;
     int  /*i,*/ missing_charset_count;
     char **missing_charset_list, *def_string;
-  
+
 #ifdef DEBUG_X11
     printf("loading fontset %s\n", fontset_name);
 #endif
@@ -708,7 +709,7 @@ static R_XFont *R_XLoadQueryFontSet(Display *display,
 			     &missing_charset_count, &def_string);
     if(!fontset) {
 	free(tmp);
-	return NULL;	
+	return NULL;
     }
     if (missing_charset_count) {
 #ifdef DEBUG_X11
@@ -1082,11 +1083,45 @@ static int R_X11IOErr(Display *dsp)
     return 0; /* but should never get here */
 }
 
+#define USE_Xt 1
+
+#ifdef USE_Xt
+#include <X11/StringDefs.h>
+#include <X11/Shell.h>
+typedef struct gx_device_X_s {
+    Pixel background, foreground, borderColor;
+    Dimension borderWidth;
+    String geometry;
+} gx_device_X;
+
+/* (String) casts are here to suppress warnings about discarding `const' */
+#define RINIT(a,b,t,s,o,it,n)\
+  {(String)(a), (String)(b), (String)t, sizeof(s),\
+   XtOffsetOf(gx_device_X, o), (String)it, (n)}
+#define rpix(a,b,o,n)\
+  RINIT(a,b,XtRPixel,Pixel,o,XtRString,(XtPointer)(n))
+#define rdim(a,b,o,n)\
+  RINIT(a,b,XtRDimension,Dimension,o,XtRImmediate,(XtPointer)(n))
+#define rstr(a,b,o,n)\
+  RINIT(a,b,XtRString,String,o,XtRString,(char*)(n))
+
+static XtResource x_resources[] = {
+    rpix(XtNbackground, XtCBackground, background, "XtDefaultBackground"),
+    rstr(XtNgeometry, XtCGeometry, geometry, NULL),
+};
+
+static const int x_resource_count = XtNumber(x_resources);
+
+static String x_fallback_resources[] = {
+    (String) "R_x11*Background: white",
+    NULL
+};
+#endif
 
 Rboolean
 newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	 double gamma_fac, X_COLORTYPE colormodel, int maxcube,
-	 int bgcolor, int canvascolor, int res)
+	 int bgcolor, int canvascolor, int res, int xpos, int ypos)
 {
     /* if we have to bail out with "error", then must free(dd) and free(xd) */
     /* That means the *caller*: the X11DeviceDriver code frees xd, for example */
@@ -1099,7 +1134,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     /* Indicates whether the display is created within this particular call: */
     Rboolean DisplayOpened = FALSE;
     static const char *title = "R Graphics";
-    XSizeHints *hint; 
+    XSizeHints *hint;
 
 #ifdef USE_FONTSET
     if (!XSupportsLocale ())
@@ -1171,7 +1206,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	displayOpen = TRUE;
 	if(xd->handleOwnEvents == FALSE)
 	    addInputHandler(R_InputHandlers, ConnectionNumber(display),
-			    R_ProcessEvents, XActivity);
+			    R_ProcessX11Events, XActivity);
     }
     /* whitepixel = GetX11Pixel(255, 255, 255); */
     whitepixel = GetX11Pixel(R_RED(canvascolor), R_GREEN(canvascolor),
@@ -1204,10 +1239,10 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
      * I try it.
      * A button such as, maximization disappears
      * unless I give Hint for clear statement in
-     * gnome window magager.
+     * gnome window manager.
      */
 
-    memset(&attributes,0,sizeof(attributes));
+    memset(&attributes, 0, sizeof(attributes));
     attributes.background_pixel = whitepixel;
     attributes.border_pixel = blackpixel;
     attributes.backing_store = Always;
@@ -1218,21 +1253,85 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     if (type == WINDOW) {
 	int alreadyCreated = (xd->window != (Window)NULL);
 	if(alreadyCreated == 0) {
-	    xd->windowWidth = iw = w/pixelWidth();
-	    xd->windowHeight = ih = h/pixelHeight();
+	    xd->windowWidth = iw = (ISNA(w)?7:w)/pixelWidth();
+	    xd->windowHeight = ih = (ISNA(h)?7:h)/pixelHeight();
 
-	    hint=XAllocSizeHints();
-	    hint->x      = numX11Devices*20 %
-	      ( DisplayWidth(display, screen) - iw - 10 );
-	    hint->y      = numX11Devices*20 %
-	      ( DisplayHeight(display, screen) - ih - 10 );
+	    hint = XAllocSizeHints();
+	    if(xpos == NA_INTEGER)
+		hint->x = numX11Devices*20 %
+		    ( DisplayWidth(display, screen) - iw - 10 );
+	    else hint->x = (xpos >= 0) ? xpos :
+		DisplayWidth(display, screen) - iw + xpos;
+
+	    if(ypos == NA_INTEGER)
+		hint->y = numX11Devices*20 %
+		    ( DisplayHeight(display, screen) + ih - 10 );
+	    else hint->y = (ypos >= 0)? ypos :
+		DisplayHeight(display, screen) - iw - ypos;
 	    hint->width  = iw;
 	    hint->height = ih;
 	    hint->flags  = PPosition | PSize;
+#ifdef USE_Xt
+	    {
+		XtAppContext app_con;
+		Widget toplevel;
+		Display *xtdpy;
+                int zero = 0;
+                gx_device_X xdev;
+
+		XtToolkitInitialize();
+
+		app_con = XtCreateApplicationContext();
+		XtAppSetFallbackResources(app_con, x_fallback_resources);
+		xtdpy = XtOpenDisplay(app_con, NULL, "r_x11", "R_x11",
+				      NULL, 0, &zero, NULL);
+		toplevel = XtAppCreateShell(NULL, "R_x11",
+					    applicationShellWidgetClass,
+					    xtdpy, NULL, 0);
+		XtGetApplicationResources(toplevel, (XtPointer) &xdev,
+					  x_resources,
+					  x_resource_count,
+					  NULL, 0);
+		XtDestroyWidget(toplevel);
+		XtCloseDisplay(xtdpy);
+		XtDestroyApplicationContext(app_con);
+		if (xdev.geometry != NULL) {
+		    char gstr[40];
+		    int bitmask;
+
+		    sprintf(gstr, "%dx%d+%d+%d", hint->width,
+			    hint->height, hint->x, hint->y);
+		    bitmask = XWMGeometry(display, DefaultScreen(display),
+					  xdev.geometry, gstr,
+					  1,
+					  hint,
+					  &hint->x, &hint->y,
+					  &hint->width, &hint->height,
+					  &hint->win_gravity);
+
+		    if (bitmask & (XValue | YValue))
+			hint->flags |= USPosition;
+		    if (bitmask & (WidthValue | HeightValue))
+			hint->flags |= USSize;
+		    /* Restore user-specified settings */
+		    if(xpos != NA_INTEGER)
+			hint->x = (xpos >= 0) ? xpos :
+			    DisplayWidth(display, screen) - iw + xpos;
+		    if(ypos != NA_INTEGER)
+			hint->y = (ypos >= 0)? ypos :
+			    DisplayHeight(display, screen) - iw - ypos;
+		    if(!ISNA(w)) hint->width = iw;
+		    if(!ISNA(h)) hint->height = ih;
+		}
+	    }
+#endif
+	    xd->windowWidth = hint->width;
+	    xd->windowHeight = hint->height;
+	    /*printf("x = %d, y = %d\n", hint->x, hint->y);*/
 	    xd->window = XCreateSimpleWindow(display,
 					     rootwin,
 					     hint->x,hint->y,
-					     hint->width,hint->height,
+					     hint->width, hint->height,
 					     1,
 					     blackpixel,
 					     whitepixel);
@@ -1241,7 +1340,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	      warning(_("unable to create X11 window"));
 	      return FALSE;
 	    }
-	    XSetWMNormalHints( display, xd->window, hint);
+	    XSetWMNormalHints(display, xd->window, hint);
 	    XFree(hint);
       	    XChangeWindowAttributes(display, xd->window,
 				    CWEventMask | CWBackPixel |
@@ -1285,6 +1384,9 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     } else { /* PIXMAP */
 	xd->windowWidth = iw = w;
 	xd->windowHeight = ih = h;
+	if (iw < 20 && ih < 20)
+	    warning(_("'width=%d, height=%d' are unlikely values in pixels"),
+		    iw, ih);
 	if ((xd->window = XCreatePixmap(
 	    display, rootwin,
 	    iw, ih, DefaultDepth(display, screen))) == 0) {
@@ -1424,7 +1526,7 @@ static void newX11_MetricInfo(int c,
 #else
 	    XFontsOfFontSet(xd->font->fontset, &fs_list, &ml);
 #endif
-	    
+
 	    f = fs_list[0];
 	} else f = xd->font->font;
 	first = f->min_char_or_byte2;
@@ -1444,7 +1546,7 @@ static void newX11_MetricInfo(int c,
 	wchar_t *wcs=wc;
 
 	wc[0] = (unsigned int) c;
-	
+
 	wcsrtombs(buf, (const wchar_t **)&wcs, sizeof(wc), NULL);
 #ifdef HAVE_XUTF8TEXTEXTENTS
 	if(utf8locale)
@@ -1486,7 +1588,7 @@ static void newX11_MetricInfo(int c,
 	*width = f->max_bounds.width;
     } else if (first <= c && c <= last) {
     /* It seems that per_char could be NULL
-       http://www.ac3.edu.au/SGI_Developer/books/XLib_PG/sgi_html/ch06.html 
+       http://www.ac3.edu.au/SGI_Developer/books/XLib_PG/sgi_html/ch06.html
     */
 	if(f->per_char) {
 	    *ascent = f->per_char[c-first].ascent;
@@ -1683,7 +1785,7 @@ static void newX11_Close(NewDevDesc *dd)
 	/* process pending events */
 	/* set block on destroy events */
 	inclose = TRUE;
-	R_ProcessEvents((void*) NULL);
+	R_ProcessX11Events((void*) NULL);
 
 	XFreeCursor(display, xd->gcursor);
 	XDestroyWindow(display, xd->window);
@@ -1936,7 +2038,7 @@ static Rboolean newX11_Locator(double *x, double *y, NewDevDesc *dd)
     int done = 0;
 
     if (xd->type > WINDOW) return 0;
-    R_ProcessEvents((void*)NULL);	/* discard pending events */
+    R_ProcessX11Events((void*)NULL);	/* discard pending events */
     XSync(display, 1);
     /* handle X events as normal until get a button */
     /* click in the desired device */
@@ -2008,7 +2110,8 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
 			    int bgcolor,
 			    int canvascolor,
 			    SEXP sfonts,
-			    int res)
+			    int res,
+			    int xpos, int ypos)
 {
     newX11Desc *xd;
     char *fn;
@@ -2036,7 +2139,7 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
 
     if (!newX11_Open((NewDevDesc*)(dd), xd, disp_name, width, height,
 		     gamma_fac, colormodel, maxcube, bgcolor,
-		     canvascolor, res)) {
+		     canvascolor, res, xpos, ypos)) {
 	free(xd);
 	return FALSE;
     }
@@ -2047,7 +2150,7 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
 			      if par("bg") is not transparent */
 
 #if BUG
-    R_ProcessEvents((void*) NULL);
+    R_ProcessX11Events((void*) NULL);
 #endif
 
     return TRUE;
@@ -2100,14 +2203,14 @@ Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd)
     {
 	XFontStruct *f;
 #ifdef USE_FONTSET
-	/* Use fudge size of M, not the max of the first font or the 
+	/* Use fudge size of M, not the max of the first font or the
 	   whole fontset which may have very wide characters if it contains
 	   a comprehensive ISO 10646 font.
 	 */
 	if(xd->font->type == Font_Set) {
 	    char buf[10];
 	    XRectangle ink, log;
-	    
+
 	    wcstombs(buf, L"M", 10);
 #ifdef HAVE_XUTF8TEXTEXTENTS
 	    if(utf8locale)
@@ -2302,7 +2405,7 @@ static DevDesc*
 Rf_addX11Device(char *display, double width, double height, double ps,
 		double gamma, int colormodel, int maxcubesize,
 		int bgcolor, int canvascolor, char *devname, SEXP sfonts,
-		int res)
+		int res, int xpos, int ypos)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
@@ -2324,7 +2427,8 @@ Rf_addX11Device(char *display, double width, double height, double ps,
 	 */
 	if (!newX11DeviceDriver((DevDesc*)(dev), display, width, height,
 				ps, gamma, colormodel, maxcubesize,
-				bgcolor, canvascolor, sfonts, res)) {
+				bgcolor, canvascolor, sfonts, res,
+				xpos, ypos)) {
 	    free(dev);
 	    errorcall(gcall, _("unable to start device %s"), devname);
        	}
@@ -2341,7 +2445,7 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char *display, *vmax, *cname, *devname;
     double height, width, ps, gamma;
-    int colormodel, maxcubesize, bgcolor, canvascolor, res;
+    int colormodel, maxcubesize, bgcolor, canvascolor, res, xpos, ypos;
     SEXP sc, sfonts;
 
     checkArity(op, args);
@@ -2397,6 +2501,10 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, _("invalid '%s' value"), "fonts");
     args = CDR(args);
     res = asInteger(CAR(args));
+    args = CDR(args);
+    xpos = asInteger(CAR(args));
+    args = CDR(args);
+    ypos = asInteger(CAR(args));
 
     devname = "X11";
     if (!strncmp(display, "png::", 5)) devname = "PNG";
@@ -2404,7 +2512,8 @@ SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
     else if (!strcmp(display, "XImage")) devname = "XImage";
 
     Rf_addX11Device(display, width, height, ps, gamma, colormodel,
-		    maxcubesize, bgcolor, canvascolor, devname, sfonts, res);
+		    maxcubesize, bgcolor, canvascolor, devname, sfonts,
+		    res, xpos, ypos);
     vmaxset(vmax);
     return R_NilValue;
 }
@@ -2434,7 +2543,7 @@ static Rboolean in_R_X11readclp(Rclpconn this, char *type)
     unsigned long pty_size, pty_items;
     int pty_format, ret;
     Rboolean res = TRUE;
-  
+
     if (!displayOpen) {
 	if ((display = XOpenDisplay(NULL)) == NULL) {
 	    warning(_("unable to contact X11 display"));
@@ -2445,19 +2554,19 @@ static Rboolean in_R_X11readclp(Rclpconn this, char *type)
 
     pty = XInternAtom(display, "RCLIP_READ", False);
 
-    clpwin = XCreateSimpleWindow(display, DefaultRootWindow(display), 
+    clpwin = XCreateSimpleWindow(display, DefaultRootWindow(display),
 				 0, 0, 1, 1, 0, 0, 0);
     /* send a selection request */
     ret = XConvertSelection(display, sel, XA_STRING, pty, clpwin, CurrentTime);
 
     /* wait for the response */
     while(1) {
-	XNextEvent(display, &evt);	
+	XNextEvent(display, &evt);
 	if (evt.type == SelectionNotify) break;
     }
-    
+
     /* find the size and format of the data in the selection */
-    XGetWindowProperty(display, clpwin, pty, 0, 0, False, AnyPropertyType, 
+    XGetWindowProperty(display, clpwin, pty, 0, 0, False, AnyPropertyType,
 		       &pty_type, &pty_format, &pty_items, &pty_size, &buffer);
     XFree(buffer);
     if (pty_format != 8) { /* bytes */
@@ -2465,7 +2574,7 @@ static Rboolean in_R_X11readclp(Rclpconn this, char *type)
 	res = FALSE;
     } else { /* read the property */
 	XGetWindowProperty(display, clpwin, pty, 0, (long)pty_size, False,
-			   AnyPropertyType, &pty_type, &pty_format, 
+			   AnyPropertyType, &pty_type, &pty_format,
 			   &pty_items, &pty_size, &buffer);
 	this->buff = (char *)malloc(pty_items + 1);
 	this->last = this->len = pty_items;

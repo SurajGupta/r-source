@@ -29,7 +29,6 @@ void blas_dummy()
     dtrsm_();
     idamax_();
     lsame_();
-    dcabs1_();
     dgemv_();
     dger_();
     dsymv_();
@@ -45,7 +44,8 @@ void blas_dummy()
     dtrsv_();
     dtrsm_();
     dtrsv_();
-/* cmplblas.o */
+/* cmplxblas.o */
+    dcabs1_();
     dzasum_();
     dznrm2_();
     izamax_();
@@ -53,18 +53,37 @@ void blas_dummy()
     zcopy_();
     zdotc_();
     zdotu_();
+    zdrot_();
     zdscal_();
+    zgbmv_();
     zgemm_();
     zgemv_();
     zgerc_();
+    zgeru_();
+    zhbmv_();
+    zhemm_();
     zhemv_();
+    zher_();
+    zherk_();
     zher2_();
     zher2k_();
+    zhpmv_();
+    zhpr_();
+    zhpr2_();
+    zrotg_();
     zscal_();
     zswap_();
+    zsymm_();
+    zsyr2k_();
+    zsyrk_();
+    ztbmv_();
+    ztbsv_();
+    ztpmv_();
+    ztpsv_();
     ztrmm_();
     ztrmv_();
     ztrsm_();
     ztrsv_();
+/* other */
     xerbla_();
 }

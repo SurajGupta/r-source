@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *
  *  DESCRIPTION
@@ -44,7 +44,8 @@ double df(double x, double m, double n, int give_log)
 	return x + m + n;
 #endif
     if (m <= 0 || n <= 0) ML_ERR_return_NAN;
-    if (x <= 0.) return(R_D__0);
+    if (x < 0.)  return(R_D__0);
+    if (x == 0.) return(m > 2 ? R_D__0 : (m == 2 ? R_D__1 : ML_POSINF));
     if (!R_FINITE(m) && !R_FINITE(n)) { /* both +Inf */
 	if(x == 1.) return ML_POSINF;
 	/* else */  return R_D__0;

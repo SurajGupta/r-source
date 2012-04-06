@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
+ *  Copuright (C) 2006 The R Core Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -23,7 +24,7 @@
 
 #include "Defn.h"
 
-SEXP do_split(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_split(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, f, counts, vec, nm, nmj;
     int i, j, k, nobs, nlevs, nfac;
@@ -49,13 +50,10 @@ SEXP do_split(SEXP call, SEXP op, SEXP args, SEXP env)
     nm = getAttrib(x, R_NamesSymbol);
     have_names = nm != R_NilValue;
     PROTECT(counts = allocVector(INTSXP, nlevs));
-    for (i = 0; i < nlevs; i++)
-	INTEGER(counts)[i] = 0;
+    for (i = 0; i < nlevs; i++) INTEGER(counts)[i] = 0;
     for (i = 0; i < nobs; i++) {
 	j = INTEGER(f)[i % nfac];
-	if (j != NA_INTEGER) {
-	    INTEGER(counts)[j - 1] += 1;
-	}
+	if (j != NA_INTEGER) INTEGER(counts)[j - 1]++;
     }
     /* Allocate a generic vector to hold the results. */
     /* The i-th element will hold the split-out data */

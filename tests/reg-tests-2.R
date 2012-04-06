@@ -1659,6 +1659,17 @@ A
 ## both printed as "NA" in 2.2.0
 
 
+## subscripting with both NA and "NA" names
+x <- 1:4
+names(x) <- c(NA, "NA", "a", "")
+x[names(x)]
+## 2.2.0 had the second matching the first.
+lx <- as.list(x)
+lx[[as.character(NA)]]
+lx[as.character(NA)]
+## 2.2.0 had both matching element 1
+
+
 ## data frame replacement subscripting
 # Charles C. Berry, R-devel, 2005-10-26
 a.frame <- data.frame( x=letters[1:5] )
@@ -1676,3 +1687,110 @@ a.frame
 
 
 ### end of tests added in 2.2.0 patched ###
+
+
+## test of fix of trivial warning PR#8252
+pairs(iris[1:4], oma=rep(3,4))
+## warned in 2.2.0 only
+
+
+## str(<dendrogram>)
+dend <- as.dendrogram(hclust(dist(USArrests), "ave")) # "print()" method
+dend2 <- cut(dend, h=70)
+str(dend2$upper)
+## gave much too many spaces in 2.2.[01]
+
+
+## formatC on Windows (PR#8337)
+xx  <- pi * 10^(-5:4)
+cbind(formatC(xx, wid = 9))
+cbind(formatC(xx, wid = 9, flag = "-"))
+cbind(formatC(xx, wid = 9, flag = "0"))
+## extra space on 2.2.1
+
+
+## an impossible glm fit
+success <- c(13,12,11,14,14,11,13,11,12)
+failure <- c(0,0,0,0,0,0,0,2,2)
+predictor <- c(0, 5^(0:7))
+try(glm(cbind(success,failure) ~ 0+predictor, family = binomial(link="log")))
+# no coefficient is possible as the first case will have mu = 1
+## 2.2.1 gave a subscript out of range warning instead.
+
+
+## error message from solve (PR#8494)
+temp <- diag(1, 5)[, 1:4]
+rownames(temp) <- as.character(1:5)
+colnames(temp) <- as.character(1:4)
+try(solve(temp))
+# also complex
+try(solve(temp+0i))
+# and non-comformant systems
+try(solve(temp, diag(3)))
+## gave errors from rownames<- in 2.2.1
+
+
+## PR#8462 terms.formula(simplify = TRUE) needs parentheses.
+update.formula (Reaction ~ Days + (Days | Subject), . ~ . + I(Days^2))
+## < 2.3.0 dropped parens on second term.
+
+
+## PR#8528: errors in the post-2.1.0 pgamma
+pgamma(seq(0.75, 1.25, by=0.05)*1e100, shape = 1e100, log=TRUE)
+pgamma(seq(0.75, 1.25, by=0.05)*1e100, shape = 1e100, log=TRUE, lower=FALSE)
+pgamma(c(1-1e-10, 1+1e-10)*1e100, shape = 1e100)
+pgamma(0.9*1e25, 1e25, log=TRUE)
+## were NaN, -Inf etc in 2.2.1.
+
+
+## + for POSIXt objects was non-commutative
+# SPSS-style dates
+c(10485849600,10477641600,10561104000,10562745600)+ISOdate(1582,10,14)
+## was in the local time zone in 2.2.1.
+
+
+## Limiting lines on deparse (wishlist PR#8638)
+op <- options(deparse.max.lines = 3)
+f <- function(...) browser()
+do.call(f, mtcars)
+c
+
+options(error = expression(NULL))
+f <- function(...) stop()
+do.call(f, mtcars)
+traceback()
+
+options(op)
+## unlimited < 2.3.0
+
+
+## row names in as.table (PR#8652)
+as.table(matrix(1:60, ncol=2))
+## rows past 26 had NA row names
+
+
+## summary on a glm with zero weights and estimated dispersion (PR#8720)
+y <- rnorm(10)
+x <- 1:10
+w <- c(rep(1,9), 0)
+summary(glm(y ~ x, weights = w))
+summary(glm(y ~ x, subset = w > 0))
+## has NA dispersion in 2.2.1
+
+
+## substitute was losing "..." after r37269
+yaa <- function(...) substitute(list(...))
+yaa(foo(...))
+## and wasn't substituting after "..."
+substitute(list(..., x), list(x=1))
+## fixed for 2.3.0
+
+
+## uniroot never warned (PR#8750)
+ff <- function(x) (x-pi)^3
+uniroot(ff, c(-10,10), maxiter=10)
+## should warn, did not < 2.3.0
+
+
+### end of tests added in 2.3.0 ###
+

@@ -1,6 +1,6 @@
 /*
   R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1997-2005   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
   U.S.A.
  */
 
@@ -28,6 +28,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#if defined(HAVE_GLIBC2)
+/* for isnan in Rinlinedfuns.h */
+# define _SVID_SOURCE 1
+#endif
+
+#include <stdlib.h> /* for putenv */
 #include <Defn.h> /* for PATH_MAX */
 
 
@@ -146,7 +153,11 @@ static void Putenv(char *a, char *b)
 	*q++ = *p;
     }
     *q = '\0';
+#ifdef HAVE_PUTENV
     putenv(buf);
+#else
+    /* pretty pointless, and was not tested prior to 2.3.0 */
+#endif
     /* no free here: storage remains in use */
 }
 
@@ -194,12 +205,23 @@ void process_system_Renviron()
 {
     char buf[PATH_MAX];
 
+#ifdef R_ARCH
+    if(strlen(R_Home) + strlen("/etc/Renviron") + strlen(R_ARCH) + 1 > PATH_MAX - 1) {
+        R_ShowMessage("path to system Renviron is too long: skipping");
+        return;
+    }
+    strcpy(buf, R_Home);
+    strcat(buf, "/etc/");
+    strcat(buf, R_ARCH);
+    strcat(buf, "/Renviron");
+#else
     if(strlen(R_Home) + strlen("/etc/Renviron") > PATH_MAX - 1) {
 	R_ShowMessage("path to system Renviron is too long: skipping");
 	return;
     }
     strcpy(buf, R_Home);
     strcat(buf, "/etc/Renviron");
+#endif
     if(!process_Renviron(buf))
 	R_ShowMessage("cannot find system Renviron");
 }

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string, 
@@ -31,18 +31,22 @@
 #include <Fileio.h>
 #include <Rconnections.h>
 
-SEXP do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP expr, env;
     checkArity(op, args);
     expr = CAR(args);
     env = eval(CADR(args), rho);
+    if (isNull(env)) {
+	warning(_("use of NULL environment is deprecated"));
+	env = R_BaseEnv;
+    } else    
     if (!isEnvironment(env))
 	errorcall(call, R_MSG_IA);
     return mkPROMISE(expr, env);
 }
 
-SEXP do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP name = R_NilValue /* -Wall */, expr, eenv, aenv;
     checkArity(op, args);
@@ -56,11 +60,19 @@ SEXP do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     args = CDR(args);
     eenv = CAR(args);
+    if (isNull(eenv)) {
+	warning(_("use of NULL environment is deprecated"));
+	eenv = R_BaseEnv;
+    } else
     if (!isEnvironment(eenv))
 	errorcall(call, R_MSG_IA);
 	
     args = CDR(args);
     aenv = CAR(args);
+    if (isNull(aenv)) {
+	warning(_("use of NULL environment is deprecated"));
+	aenv = R_BaseEnv;
+    } else
     if (!isEnvironment(aenv))
     	errorcall(call, R_MSG_IA);
     	
@@ -68,7 +80,7 @@ SEXP do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *ctxt;
     SEXP code, add, oldcode, tmp;
@@ -121,7 +133,7 @@ SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-SEXP do_args(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_args(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP s;
     checkArity(op,args);
@@ -140,7 +152,7 @@ SEXP do_args(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-SEXP do_formals(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_formals(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP)
@@ -149,7 +161,7 @@ SEXP do_formals(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return R_NilValue;
 }
 
-SEXP do_body(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_body(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP)
@@ -157,7 +169,7 @@ SEXP do_body(SEXP call, SEXP op, SEXP args, SEXP rho)
     else return R_NilValue;
 }
 
-SEXP do_bodyCode(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_bodyCode(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP)
@@ -165,7 +177,7 @@ SEXP do_bodyCode(SEXP call, SEXP op, SEXP args, SEXP rho)
     else return R_NilValue;
 }
 
-SEXP do_envir(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_envir(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP)
@@ -175,20 +187,29 @@ SEXP do_envir(SEXP call, SEXP op, SEXP args, SEXP rho)
     else return getAttrib(CAR(args), R_DotEnvSymbol);
 }
 
-SEXP do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    SEXP env;
     checkArity(op, args);
-    if (TYPEOF(CAR(args)) == CLOSXP && isEnvironment(CADR(args)))
-	SET_CLOENV(CAR(args), CADR(args));
-    else if (isEnvironment(CADR(args)))
-	setAttrib(CAR(args), R_DotEnvSymbol, CADR(args));
+    env = CADR(args);
+
+    if (TYPEOF(CAR(args)) == CLOSXP 
+        && (isEnvironment(env) || isNull(env))) {
+	if (isNull(env)) {
+	    warning(_("use of NULL environment is deprecated"));
+	    env = R_BaseEnv;
+	}     
+	SET_CLOENV(CAR(args), env);
+    }
+    else if (isNull(env) || isEnvironment(env))
+	setAttrib(CAR(args), R_DotEnvSymbol, env);
     else
 	errorcall(call, _("replacement object is not an environment"));
     return CAR(args);
 }
 
 
-SEXP do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP enclos;
     int hash;
@@ -197,6 +218,10 @@ SEXP do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     hash = asInteger(CAR(args));
     enclos = CADR(args);
+    if (isNull(enclos)) {
+	warning(_("use of NULL environment is deprecated"));
+	enclos = R_BaseEnv;
+    } else    
     if( !isEnvironment(enclos) )
 	errorcall(call, _("'enclos' must be an environment"));
 
@@ -206,28 +231,42 @@ SEXP do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return NewEnvironment(R_NilValue, R_NilValue, enclos);
 }
 
-SEXP do_parentenv(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_parentenv(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
 
     if( !isEnvironment(CAR(args)) )
 	errorcall(call, _("argument is not an environment"));
-
+    if( CAR(args) == R_EmptyEnv )
+    	errorcall(call, _("the empty environment has no parent"));
     return( ENCLOS(CAR(args)) );
 }
 
-SEXP do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    SEXP env, parent;
     checkArity(op, args);
 
-    if( !isEnvironment(CAR(args)) )
+    env = CAR(args);
+    if (isNull(env)) {
+	warning(_("use of NULL environment is deprecated"));
+	env = R_BaseEnv;
+    } else
+    if( !isEnvironment(env) )
 	errorcall(call, _("argument is not an environment"));
-    if( !isEnvironment(CADR(args)) )
+    if( env == R_EmptyEnv )
+    	errorcall(call, _("can not set parent of the empty environment"));
+    parent = CADR(args);
+    if (isNull(parent)) {
+	warning(_("use of NULL environment is deprecated"));
+	parent = R_BaseEnv;
+    } else    
+    if( !isEnvironment(parent) )
 	errorcall(call, _("'parent' is not an environment"));
 
-    SET_ENCLOS(CAR(args), CADR(args));
+    SET_ENCLOS(env, parent);
 
-    return( CAR(args) );
+    return( env );
 }
 
 static void cat_newline(SEXP labels, int *width, int lablen, int ntot)
@@ -278,7 +317,7 @@ static void cat_cleanup(void *data)
     if(changedcon) switch_stdout(-1, 0);
 }
 
-SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     cat_info ci;
     RCNTXT cntxt;
@@ -320,6 +359,10 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    pwidth = INT_MAX;
     }
     else pwidth = asInteger(fill);
+    if(pwidth <= 0) {
+	warningcall(call, _("non-positive 'fill' argument will be ignored"));
+	pwidth = INT_MAX;
+    }
     args = CDR(args);
 
     labs = CAR(args);
@@ -339,7 +382,7 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     ci.con = con;
 
-    /* set up a context which will close the window if there is an error */
+    /* set up a context which will close the connection if there is an error */
     begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		 R_NilValue, R_NilValue);
     cntxt.cend = &cat_cleanup;
@@ -386,8 +429,9 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 #endif
 	    else
-		errorcall(call, _("argument %d not yet handled by cat"),
-			  1+iobj);
+		errorcall(call, 
+			  _("argument %d (type '%s') cannot be handled by 'cat'"),
+			  1+iobj, type2char(TYPEOF(s)));
 	    /* FIXME : cat(...) should handle ANYTHING */
 	    w = strlen(p);
 	    cat_sepwidth(sepr, &sepw, ntot);
@@ -409,6 +453,8 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    }
 		    w = strlen(p);
 		    cat_sepwidth(sepr, &sepw, ntot);
+		    /* This is inconsistent with the version above.
+		       As from R 2.3.0, fill <= 0 is ignored. */
 		    if ((width + w + sepw > pwidth) && pwidth) {
 			cat_newline(labs, &width, lablen, nlines);
 			nlines++;
@@ -429,7 +475,7 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-SEXP do_makelist(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_makelist(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP list, names;
     int i, n, havenames;
@@ -458,7 +504,7 @@ SEXP do_makelist(SEXP call, SEXP op, SEXP args, SEXP rho)
     return list;
 }
 
-SEXP do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, ans, nms;
     int i, n, named;
@@ -489,7 +535,7 @@ SEXP do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* vector(mode="logical", length=0) */
-SEXP do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     R_len_t len, i;
     SEXP s;
@@ -633,7 +679,7 @@ SEXP lengthgets(SEXP x, R_len_t len)
 }
 
 
-SEXP do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     R_len_t len;
     SEXP x, ans;
@@ -685,7 +731,7 @@ static SEXP switchList(SEXP el, SEXP rho)
     }
 }
 
-SEXP do_switch(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_switch(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int argval;
     SEXP x, y, w;

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +27,7 @@
 
 /* .Internal(lapply(X, FUN)) */
 
-SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP R_fcall, ans, X, FUN, ind, tmp;
     int i, n;
@@ -67,7 +67,7 @@ SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* X is a matrix, and the last dimension is the one we want to 
    loop over */
 
-SEXP do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP R_fcall, X, Xd, X1, ans, FUN;
     int i, j, nr, nc, inr;

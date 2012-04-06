@@ -1,4 +1,5 @@
 \name{Special}
+\title{Special Functions of Mathematics}
 \alias{Special}
 \alias{beta}
 \alias{lbeta}
@@ -11,7 +12,10 @@
 \alias{lchoose}
 \alias{factorial}
 \alias{lfactorial}
-\title{Special Functions of Mathematics}
+\concept{tetragamma}% existed till 1.9.0
+\concept{pentagamma}
+\concept{binomial coefficient}
+\concept{psi function}
 \description{
   Special mathematical functions related to the beta and gamma
   functions.
@@ -94,10 +98,14 @@ factorial(100)
 lfactorial(10000)
 
 ## gamma has 1st order poles at 0, -1, -2, ...
+## this will generate loss of precision warnings, so turn off
+op <- options("warn")
+options(warn = -1)
 x <- sort(c(seq(-3,4, length=201), outer(0:-3, (-1:1)*1e-6, "+")))
 plot(x, gamma(x), ylim=c(-20,20), col="red", type="l", lwd=2,
      main=expression(Gamma(x)))
 abline(h=0, v=-3:0, lty=3, col="midnightblue")
+options(op)
 
 x <- seq(.1, 4, length = 201); dx <- diff(x)[1]
 par(mfrow = c(2, 3))
@@ -117,6 +125,7 @@ for (ch in c("", "l","di","tri","tetra","penta")) {
   abline(h = 0, col = "lightgray")
   if (is.deriv) lines(x[-1], dy, col = "blue", lty = 2)
 }
+par(mfrow = c(1, 1))
 
 ## "Extended" Pascal triangle:
 fN <- function(n) formatC(n, wid=2)

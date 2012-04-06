@@ -6,7 +6,7 @@ ifdef DEBUG
   LINKFLAGS=
   DLLFLAGS=
 else
-  OPTFLAGS=-O2 -Wall -pedantic
+  OPTFLAGS=-O3 -Wall -pedantic
   LINKFLAGS=-s
   DLLFLAGS=-s
 endif
@@ -15,8 +15,7 @@ CFLAGS=$(OPTFLAGS) -I../../include
 all: $(R_HOME)/bin/Rgui.exe $(R_HOME)/bin/Rterm.exe \
      $(R_HOME)/bin/Rcmd.exe  $(R_HOME)/bin/RSetReg.exe  \
      $(R_HOME)/bin/Rproxy.dll $(R_HOME)/bin/R.exe \
-     $(R_HOME)/bin/md5check.exe \
-     ../librproxy.a
+     $(R_HOME)/bin/md5check.exe
 
 $(R_HOME)/bin/Rgui.exe: Rgui.exe
 	$(MKDIR) -p $(R_HOME)/bin
@@ -49,15 +48,12 @@ rgui-CFLAGS=-DWin32
 rterm-CFLAGS=-DWin32
 Rgui-LINKFLAGS=-mwindows
 
-Rterm-LIBS=$(LIBUNICOWS) -luser32 -L.. -lR
-Rgui-LIBS=-L.. $(LIBUNICOWS) -lR
-Rpwd-LIBS=$(LIBUNICOWS) -lkernel32
+Rterm-LIBS=-luser32 -L../../../bin -lR
+Rgui-LIBS=-L../../../bin -lR
+Rpwd-LIBS=-lkernel32
 
-## needs binutils > 2.15.90 which is what the cross-compiler toolkit has.
-ifneq ($(strip $(BUILD)),CROSS)
 Rgui-LINKFLAGS+=-Wl,--large-address-aware
 Rterm-LINKFLAGS+=-Wl,--large-address-aware
-endif
 ## Increase stack size to 10Mb
 Rgui-LINKFLAGS+=-Wl,--stack=0xA00000
 Rterm-LINKFLAGS+=-Wl,--stack=0xA00000
@@ -89,18 +85,17 @@ clean:
 bdx_util-CFLAGS=-D_IN_RPROXY_
 bdx_com-CFLAGS=-D_IN_RPROXY_
 bdx_SEXP-CFLAGS=-D_IN_RPROXY_
-rproxy-DLLFLAGS=-mwindows
-rproxy-DLLLIBS=-L.. $(LIBUNICOWS) -lR -lole32 -luuid -loleaut32
-rproxy.dll: rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
+Rproxy-DLLFLAGS=-mwindows
+Rproxy-DLLLIBS=-L../../../bin -lR -lole32 -luuid -loleaut32
+## this one needs Rproxy.dll as the LIBRARY line
+Rproxy.dll: rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
 	bdx_util.o bdx_SEXP.o bdx_com.o rtico.o
+	@$(ECHO) LIBRARY $*.dll > $*.def
+	@$(ECHO) EXPORTS >> $*.def
+	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' >> $*.def
+	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
+	@$(RM) $*.def
 
-librproxy.a: rproxy.dll rproxy.df
-	$(DLLTOOL_WIN32) $(DLLTOOLFLAGS) $(RPROXY-DLLTOOLFLAGS) --dllname rproxy.dll --def rproxy.df --output-lib $@
-
-
-../librproxy.a: librproxy.a
-	@$(CP) $< $@
-
-$(R_HOME)/bin/Rproxy.dll: rproxy.dll librproxy.a
+$(R_HOME)/bin/Rproxy.dll: Rproxy.dll
 	$(MKDIR) -p $(R_HOME)/bin
-	$(CP) rproxy.dll $@	
+	$(CP) Rproxy.dll $@	

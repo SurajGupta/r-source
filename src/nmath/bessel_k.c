@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*  DESCRIPTION --> see below */
@@ -47,7 +47,7 @@ double bessel_k(double x, double alpha, double expo)
     if (ISNAN(x) || ISNAN(alpha)) return x + alpha;
 #endif
     if (x < 0) {
-	ML_ERROR(ME_RANGE);
+	ML_ERROR(ME_RANGE, "bessel_k");
 	return ML_NAN;
     }
     ize = (long)expo;
@@ -217,7 +217,7 @@ static void K_bessel(double *x, double *alpha, long *nb,
     if (*nb > 0 && (0. <= nu && nu < 1.) && (1 <= *ize && *ize <= 2)) {
 	if(ex <= 0 || (*ize == 1 && ex > xmax_BESS_K)) {
 	    if(ex <= 0) {
-		ML_ERROR(ME_RANGE);
+		ML_ERROR(ME_RANGE, "K_bessel");
 		for(i=0; i < *nb; i++)
 		    bk[i] = ML_POSINF;
 	    } else /* would only have underflow */

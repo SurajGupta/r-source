@@ -19,8 +19,8 @@
 ### You should have received a copy of the GNU General Public License
 ### along with R; if not, you can obtain it via the World Wide Web at
 ### 'http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
-### 02111-3307, USA.
+### Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+### Boston, MA 02110-1301, USA
 
 AC_PREREQ(2.59)
 
@@ -150,17 +150,17 @@ R installation directories:
     rincludedir=DIR   R include files to DIR  @<:@R_HOME/include@:>@
     rsharedir=DIR     R share files to DIR    @<:@R_HOME/share@:>@])dnl
 
-if test -z ${rdocdir}; then
+if test -z "${rdocdir}"; then
   rdocdir='${rhome}/doc'
 fi
 AC_SUBST([rdocdir])
 
-if test -z ${rincludedir}; then
+if test -z "${rincludedir}"; then
   rincludedir='${rhome}/include'
 fi
 AC_SUBST([rincludedir])
 
-if test -z ${rsharedir}; then
+if test -z "${rsharedir}"; then
   rsharedir='${rhome}/share'
 fi
 AC_SUBST([rsharedir])
@@ -255,12 +255,6 @@ if test x"${use_strict_barrier}" = xyes; then
             [Define to enable provoking compile errors on write barrier
              violation.])
 fi
-
-AC_ARG_ENABLE([linux-lfs],
-[AC_HELP_STRING([--enable-linux-lfs],
-                [enable support for > 2GB files on Linux @<:@no@:>@])],
-[want_linux_lfs="${enableval}"],
-[want_linux_lfs=no])
 
 AC_ARG_ENABLE([mbcs],
 [AC_HELP_STRING([--enable-mbcs],
@@ -367,7 +361,7 @@ AC_ARG_WITH([valgrind-instrumentation],
 ## needs to come after GNOME
 AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
 if test "${want_R_shlib}" = yes; then
-  LIBR="-L\$(R_HOME)/lib -lR"
+  LIBR="-L\$(R_HOME)/lib\$(R_ARCH) -lR"
 else
   LIBR=
 fi
@@ -419,6 +413,9 @@ AC_ARG_VAR([CPICFLAGS],
 AC_ARG_VAR([FPICFLAGS],
            [special flags for compiling Fortran code to be turned into a
             shared library.])
+AC_ARG_VAR([FCPICFLAGS],
+           [special flags for compiling Fortran 95 code to be turned into a
+            shared library.])
 AC_ARG_VAR([SHLIB_LD],
            [command for linking shared libraries which contain object
             files from a C or Fortran compiler only])
@@ -437,18 +434,36 @@ AC_ARG_VAR([SHLIB_CXXLD],
             files from a C++ compiler])
 AC_ARG_VAR([SHLIB_CXXLDFLAGS],
            [special flags used by SHLIB_CXXLD])
+AC_ARG_VAR([SHLIB_FCD],
+           [command for linking shared libraries which contain object
+            files from the Fortran 95 compiler])
+AC_ARG_VAR([SHLIB_FCLDFLAGS],
+           [special flags used by SHLIB_FCLD])
 AC_ARG_VAR([TCLTK_LIBS],
            [flags needed for linking against the Tcl and Tk libraries])
 AC_ARG_VAR([TCLTK_CPPFLAGS],
            [flags needed for finding the tcl.h and tk.h headers])
 AC_ARG_VAR([MAKE], [Make command])
-AC_ARG_VAR([F2C], [Fortran-to-C converter command])
 AC_ARG_VAR([R_BROWSER], [default browser])
 AC_ARG_VAR([BLAS_LIBS],
            [flags needed for linking against external BLAS libraries])
 AC_ARG_VAR([LAPACK_LIBS],
            [flags needed for linking against external LAPACK libraries])
 AC_ARG_VAR([LIBnn], ['lib' or 'lib64' for dynamic libraries])
+AC_ARG_VAR([SAFE_FFLAGS],
+	   [Safe Fortran 77 compiler flags for e.g. dlamc.f])
+AC_ARG_VAR([r_arch],
+           [Use architecture-dependent subdirs with this name])
+
+if test -z "${r_arch}"; then
+  R_ARCH=
+else
+  R_ARCH="/${r_arch}"
+fi
+AC_DEFINE_UNQUOTED(R_ARCH, "${r_arch}",
+[Define this to use architecture-dependent subdirectories of this name.])
+AC_SUBST([R_ARCH])
+
 
 ### ** Check whether we build in srcdir.
 
@@ -505,12 +520,13 @@ AC_PROG_CC
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_CPP
 R_PROG_CPP_CPPFLAGS
-R_PROG_F77_OR_F2C
+R_PROG_F77
 AC_PROG_CXX
 AC_PROG_CXXCPP
+R_GCC4_VISIBILITY
 
 ## Libtool.
-## (Run this after R_PROG_F77_OR_F2C, as AC_PROG_LIBTOOL checks for a
+## (Run this after R_PROG_F77, as AC_PROG_LIBTOOL checks for a
 ## Fortran 77 compiler and sets F77 accordingly.)
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
@@ -580,27 +596,22 @@ AC_SUBST(LIBM)
 ## the following as well.
 AC_CHECK_LIB(m, sin)
 case "${host_os}" in
-  darwin[[123456]].*)
-    ## MacOS <= 10.2 doesn't have dlcompat
-    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, true)
-    AC_CHECK_LIB(cc_dynamic, main)
-    ;;
   darwin*)
-    ## MacOS 10.3 and 10.4 do
-    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
+    ## MacOS <= 10.2 doesn't have dlcompat, >= 10.3 include it in libSystem
+    ## since R 2.3 we don't provide a work-around for missing dl anymore
+    AC_SEARCH_LIBS(dlopen, dl,,[AC_MSG_ERROR([Please install dlcompat or update to a more recent OS X.])])
     ## SI says we want '-lcc_dynamic' on Darwin, although currently
     ## http://developer.apple.com/documentation/MacOSX/ has nothing
     ## official.  Bill Northcott <w.northcott@unsw.edu.au> points out
-    ## that it is only needed to GCC 3.x ...
+    ## that it is only needed to GCC 3.x (and earlier) ...
     if test "${GCC}" = yes; then
       case "${CC_VERSION}" in
-        3.*)
+        2.*|3.*)
           AC_CHECK_LIB(cc_dynamic, main) ;;
       esac
     fi
     ;;
   *)
-    AM_CONDITIONAL(BUILD_DLFCN_DARWIN, false)
     AC_CHECK_LIB(dl, dlopen)
     ;;
 esac
@@ -645,13 +656,13 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
   fpu_control.h grp.h ieee754.h ieeefp.h limits.h locale.h \
   netdb.h netinet/in.h pwd.h strings.h \
-  sys/param.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
-  sys/times.h sys/utsname.h unistd.h)
+  sys/param.h sys/select.h sys/socket.h sys/stat.h sys/resource.h \
+  sys/time.h sys/times.h sys/utsname.h time.h unistd.h)
 ## </NOTE>
 ## <NOTE>
 ## These are ANSI C headers but some C code (written to work also
 ## without assuming ANSI C) may need the corresponding conditionals.
-AC_CHECK_HEADERS(errno.h stdarg.h string.h)
+AC_CHECK_HEADERS(errno.h inttypes.h stdarg.h stdint.h string.h)
 ## </NOTE>
 ## <NOTE>
 ## src/main/regex.c uses HAVE_LIBINTL_H.
@@ -680,6 +691,18 @@ AH_TEMPLATE([blkcnt_t],
             [Define to 'long' if <sys/types.h> does not define.
              Apparently necessary to fix a GCC bug on AIX?])
 R_TYPE_SOCKLEN
+AC_CHECK_TYPES([stack_t], , , [#include <signal.h>])
+## These are optional C99 types, which we typedef in Defn.h if absent.
+## There seems some confusion as to where they should be defined:
+## the standard says stdint.h but drafts and Solaris 8 have inttypes.h.
+## It seems all systems having stdint.h include it in inttypes.h, and
+## POSIX requires that.  But we will make sure.
+AC_CHECK_TYPES([intptr_t, uintptr_t], , , [#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif])
 
 ### * Checks for compiler characteristics.
 
@@ -706,29 +729,23 @@ AC_CHECK_SIZEOF(long, 4)
 AC_CHECK_SIZEOF(long long, 0)
 AC_CHECK_SIZEOF(long double, 0)
 
+if test "$ac_test_CFLAGS" != set; then
+  if test "$GCC" = yes; then
+    R_PROG_CC_FLAG([-std=gnu99], R_SH_VAR_ADD(CFLAGS, [-std=gnu99]))
+  fi
+fi
+
 R_PROG_CC_MAKEFRAG
+R_PROG_CC_LO_MAKEFRAG
 
 ### *** Fortran 77 compiler.
 
-if test -n "${F77}"; then
-  R_PROG_F77_FLIBS
-  R_PROG_F77_APPEND_UNDERSCORE
-  R_PROG_F77_CAN_RUN
-  R_PROG_F77_CC_COMPAT
-  R_PROG_F77_CC_COMPAT_COMPLEX
-  R_PROG_F77_MAKEFRAG  
-else
-  if test ${ac_cv_sizeof_long} -gt 4 ; then
-    AC_MSG_ERROR([Cannot use f2c on a > 32-bit machine])
-  fi
-  R_PROG_F2C_FLIBS
-  AC_DEFINE(HAVE_F77_UNDERSCORE, 1)
-  AC_DEFINE(HAVE_FORTRAN_DOUBLE_COMPLEX, 1)
-  R_PROG_F2C_MAKEFRAG
-  F77="\$(SHELL) \$(R_HOME)/bin/f77"
-fi
+R_PROG_F77_FLIBS
+R_PROG_F77_APPEND_UNDERSCORE
+R_PROG_F77_CAN_RUN
+R_PROG_F77_CC_COMPAT
+R_PROG_F77_CC_COMPAT_COMPLEX
 
-AC_SUBST(F2C)
 AM_CONDITIONAL(COMPILE_FORTRAN_DOUBLE_COMPLEX,
                [test "x${HAVE_FORTRAN_DOUBLE_COMPLEX}" != x])
 
@@ -807,7 +824,13 @@ case "${host_os}" in
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ## Need '-no-cpp-precomp' say J de Leeuw <deleeuw@stat.ucla.edu> and
     ## http://fink.sourceforge.net/doc/porting/basics.php.
-    R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-no-cpp-precomp])
+    if test "${GCC}" = yes; then
+      ## only Apple build of gcc supports (and needs?) -no-cpp-precomp
+      ${CC} --version|grep Apple >/dev/null 2>/dev/null
+      if test $? == 0; then
+        R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-no-cpp-precomp])
+      fi
+    fi
     ;;
   hpux*)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
@@ -841,6 +864,96 @@ case "${host_os}" in
     fi
     ## </NOTE>
     ;;
+  linux*)
+    case  "${CC}" in
+      ## Intel compiler
+      *icc)
+	## icc declares __GNUC__, so it picks up CFLAGS intended for gcc.
+	if test "$ac_test_CFLAGS" != set; then
+          if test $ac_cv_prog_cc_g = yes; then
+	    case "${host_cpu}" in
+	      x86_64)
+	        CFLAGS="-g -O2 -std=c99"
+		;;
+	      *)
+	        ## on ix86 optimization fails
+                CFLAGS="-g -std=c99"
+		;;
+	    esac
+          else
+	    case "${host_cpu}" in
+	      x86_64)
+	        CFLAGS="-O2 -std=c99"
+		;;
+	      *)
+                CFLAGS="-std=c99"
+		;;
+	    esac
+          fi
+        fi
+	## -mp is the preferred form of -mieee-fp
+        R_PROG_CC_FLAG([-mp],
+                       R_SH_VAR_ADD(R_XTRA_CFLAGS, [-mp]))
+        ;;
+    esac
+    case  "${F77}" in
+      ## Intel compilers
+      *ifc|*ifort)
+	if test "$ac_test_FFLAGS" != set; then
+          if test $ac_cv_prog_f77_g = yes; then
+	    case "${host_cpu}" in
+	      x86_64)
+	        FFLAGS="-g -O2"
+		;;
+	      *)
+                FFLAGS="-g"
+		;;
+	    esac
+          else
+	    case "${host_cpu}" in
+	      x86_64)
+	        FFLAGS="-O2"
+		;;
+	      *)
+	        ## on ix86 optimization of dlamc.f fails
+                FFLAGS=
+		;;
+	    esac
+          fi
+        fi
+        R_PROG_CC_FLAG([-mp],
+                       R_SH_VAR_ADD(R_XTRA_FFLAGS, [-mp]))
+        ;;
+    esac
+    case  "${CXX}" in
+      ## Intel compilers
+      *icpc|*icc)
+	if test "$ac_test_CXXFLAGS" != set; then
+          if test $ac_cv_prog_cxx_g = yes; then
+	    case "${host_cpu}" in
+	      x86_64)
+	        CXXFLAGS="-g -O2"
+		;;
+	      *)
+                CXXFLAGS="-g"
+		;;
+	    esac
+          else
+	    case "${host_cpu}" in
+	      x86_64)
+	        CXXFLAGS="-O2"
+		;;
+	      *)
+                CXXFLAGS=
+		;;
+	    esac
+          fi
+        fi
+        R_PROG_CC_FLAG([-mp],
+                       R_SH_VAR_ADD(R_XTRA_CXXFLAGS, [-mp]))
+        ;;
+    esac
+    ;;
   openbsd*)
     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`"; then
       AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
@@ -851,15 +964,24 @@ case "${host_os}" in
     ;;  
 esac
 
+if test "${SAFE_FFLAGS+set}" != set; then
+  if test "x${ac_cv_f77_compiler_gnu}" = xyes; then
+    SAFE_FFLAGS="${FFLAGS} -ffloat-store"
+  else
+    SAFE_FFLAGS=${FFLAGS}
+  fi
+fi
+
+
 AC_SUBST(CFLAGS)
 AC_SUBST(MAIN_CFLAGS)
 AC_SUBST(SHLIB_CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(SHLIB_CXXFLAGS)
 AC_SUBST(FFLAGS)
+AC_SUBST(SAFE_FFLAGS)
 AC_SUBST(MAIN_FFLAGS)
 AC_SUBST(SHLIB_FFLAGS)
-AC_SUBST(F2CFLAGS)
 AC_SUBST(R_XTRA_CFLAGS)
 AC_SUBST(R_XTRA_CPPFLAGS)
 AC_SUBST(R_XTRA_CXXFLAGS)
@@ -873,7 +995,7 @@ AC_SUBST(R_XTRA_LIBS)
 ## MAIN_LD, MAINLD_FLAGS
 ##   command and flags for loading the main binary so that it will load
 ##   shared libraries (DLLs) at runtime, also for profiling.
-## CPICFLAGS, CXXPICFLAGS, FPICFLAGS
+## CPICFLAGS, CXXPICFLAGS, FPICFLAGS, FCPICFLAGS
 ##   flags for compiling C, C++, and Fortran library code.
 ## SHLIB_LD, SHLIB_LDFLAGS
 ##   command and flags for creating DLLs (which contain object files
@@ -930,28 +1052,60 @@ if test -n "${XMKMF}"; then
   ${XMKMF} > /dev/null 2>&1 || echo > Makefile
   cc=`${srcdir}/tools/GETMAKEVAL CC`
   cc=`echo ${cc} | sed "s/ .*//"`
-  if test "`which ${cc}`" = "`which ${CC}`"; then
-    shlib_ldflags=`${srcdir}/tools/GETMAKEVAL SHLIBLDFLAGS`
-    cpicflags=`${srcdir}/tools/GETMAKEVAL PICFLAGS`
+  ## Paul Gilbert reported on R-devel 2006-04-13 a system with cc=""
+  if test -n "${cc}" ; then
+    if test "`which ${cc}`" = "`which ${CC}`"; then
+      shlib_ldflags=`${srcdir}/tools/GETMAKEVAL SHLIBLDFLAGS`
+      cpicflags=`${srcdir}/tools/GETMAKEVAL PICFLAGS`
+    fi
   fi
   cxx=`${srcdir}/tools/GETMAKEVAL CXX`
   cxx=`echo ${cxx} | sed "s/ .*//"`
-  if test "`which ${cxx}`" = "`which ${CXX}`"; then
-    cxxpicflags=`${srcdir}/tools/GETMAKEVAL CXXPICFLAGS`
+  if test -n "${cxx}" ; then
+    if test "`which ${cxx}`" = "`which ${CXX}`"; then
+      cxxpicflags=`${srcdir}/tools/GETMAKEVAL CXXPICFLAGS`
+    fi
   fi
   rm -f Imakefile Makefile
 fi
 
 ## Step 2.  GNU compilers.
 if test "${GCC}" = yes; then
-  cpicflags="-fPIC"
+  case "${host_cpu}" in
+## Sparc has only an 8k global object table, 1024 entries on 64-bit.
+## PowerPC has 32k, not enough on ppc64 for the ca6200 entries in libR.so
+## The only other platform where this is said to matter is m68k, which
+## has 32k and so can use -fpic.
+## However, although the gcc docs do not mention it, it seems s390/s390x
+## also supports and needs -fPIC
+    sparc*|ppc64|s390*)
+      cpicflags="-fPIC"
+      ;;
+    *)
+      cpicflags="-fpic"
+      ;;
+  esac
   shlib_ldflags="-shared"
 fi
 if test "${G77}" = yes; then
-  fpicflags="-fPIC"
+  case "${host_cpu}" in
+    sparc*|ppc64|s390*)
+      fpicflags="-fPIC"
+      ;;
+    *)
+      fpicflags="-fpic"
+      ;;
+  esac
 fi
 if test "${GXX}" = yes; then
-  cxxpicflags="-fPIC"
+  case "${host_cpu}" in
+    sparc*|ppc64|s390*)
+      cxxpicflags="-fPIC"
+      ;;
+    *)
+      cxxpicflags="-fpic"
+      ;;
+  esac
   shlib_cxxldflags="-shared"
 fi
 
@@ -969,11 +1123,10 @@ case "${host_os}" in
     SHLIB_LIBADD="\$(LIBM)"
     ;;
   darwin*)
-    cpicflags="-fno-common"
-    cxxpicflags="-fno-common"
-    if test "${G77}" = yes; then
-      fpicflags="-fno-common"
-    fi
+    cpicflags="-fPIC -fno-common"
+    cxxpicflags="-fPIC -fno-common"
+    fpicflags="-fPIC -fno-common"
+
     ## Used to need this for GUI and quartz device, but neither are in
     ## R or libR.dylib any longer (2.1.0).
     ## main_ldflags="-framework Carbon"
@@ -995,7 +1148,7 @@ case "${host_os}" in
       darwin1.[[012]]*)
         shlib_ldflags="-bundle -undefined suppress" ;;
       *)
-	shlib_ldflags="-bundle -flat_namespace -undefined suppress" ;;
+	shlib_ldflags="-flat_namespace -bundle -undefined suppress" ;;
     esac
     shlib_cxxldflags="${shlib_ldflags}"
     if test "${ac_cv_lib_cc_dynamic_main}" = yes; then
@@ -1053,96 +1206,27 @@ case "${host_os}" in
     case  "${CC}" in
       ## Intel compiler
       *icc)
-        cpicflags="-fPIC"
-	## icc declares __GNUC__, so it picks up CFLAGS intended for gcc.
-	if test "$ac_test_CFLAGS" != set; then
-          if test $ac_cv_prog_cc_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        ## need -mp for IEC60559 compliance
-	        CFLAGS="-mp -g -O2"
-		;;
-	      *)
-	        ## on ix86 optimization fails
-                CFLAGS="-g"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        CFLAGS="-mp -O2"
-		;;
-	      *)
-                CFLAGS=
-		;;
-	    esac
-          fi
-        fi
+        cpicflags="-fpic"
         ;;
-      ## Portland Group (information from Jennifer Lai)
+      ## Portland Group
       *pgcc)
         cpicflags="-fpic"
-        R_PROG_CC_FLAG([-mieee-fp],
-                       R_SH_VAR_ADD(R_XTRA_CFLAGS, [-mieee-fp]))
 	;;
     esac
     case  "${F77}" in
       ## Intel compilers
       *ifc|*ifort)
-        fpicflags="-fPIC"
-	if test "$ac_test_FFLAGS" != set; then
-          if test $ac_cv_prog_f77_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-mp -g -O2"
-		;;
-	      *)
-                FFLAGS="-g"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-mp -O2"
-		;;
-	      *)
-	        ## on ix86 optimization of dlamc.f fails
-                FFLAGS=
-		;;
-	    esac
-          fi
-        fi
+        fpicflags="-fpic"
         ;;
       ## Portland Group
-      *pgf77)
+      *pgf77|*pgf90|*pgf95)
         fpicflags="-fpic"
         ;;
     esac
     case  "${CXX}" in
       ## Intel compilers
       *icpc|*icc)
-        cxxpicflags="-fPIC"
-	if test "$ac_test_CXXFLAGS" != set; then
-          if test $ac_cv_prog_cxx_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        CXXFLAGS="-mp -g -O2"
-		;;
-	      *)
-                CXXFLAGS="-g"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        CXXFLAGS="-mp -O2"
-		;;
-	      *)
-                CXXFLAGS=
-		;;
-	    esac
-          fi
-        fi
+        cxxpicflags="-fpic"
         ;;
       ## Portland Group
       *pgCC)
@@ -1180,6 +1264,8 @@ case "${host_os}" in
     shlib_ldflags="-shared"
     ;;
   solaris*)
+## SPARC has only an 8k global object table, 1024 entries on 64-bit,
+## so need PIC not pic.  They are the same on other Solaris platforms.
     shlib_ldflags="-G"
     shlib_cxxldflags="-G"
     if test "${GCC}" = yes; then
@@ -1239,20 +1325,19 @@ if test -z "${CPICFLAGS}"; then
       ;;
     *)
       AC_MSG_WARN([I could not determine CPICFLAGS.])
-      AC_MSG_ERROR([See the file INSTALL for more information.])
+      AC_MSG_ERROR([See the file doc/html/R-admin.html for more information.])
       ;;
   esac
 fi
 
 : ${FPICFLAGS="${fpicflags}"}
-if test -z "${FPICFLAGS}" \
-    && test -z "${F2C}"; then
+if test -z "${FPICFLAGS}"; then
   case "${host_os}" in
     aix*|irix*|mingw*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine FPICFLAGS.])
-      AC_MSG_ERROR([See the file INSTALL for more information.])
+      AC_MSG_ERROR([See the file doc/html/R-admin.html for more information.])
       ;;
   esac
 fi
@@ -1275,7 +1360,7 @@ if test -z "${SHLIB_LD}"; then
 fi
 if test -z "${SHLIB_LDFLAGS}"; then
   AC_MSG_WARN([I could not determine SHLIB_LDFLAGS.])
-  AC_MSG_ERROR([See the file INSTALL for more information.])
+  AC_MSG_ERROR([See the file doc/html/R-admin.html for more information.])
 fi
 
 if test -z "${SHLIB_CXXLD}"; then
@@ -1344,6 +1429,7 @@ AC_SUBST(CPICFLAGS)
 AC_SUBST(CXXPICFLAGS)
 AC_SUBST(DYLIB_LD)
 AC_SUBST(DYLIB_LDFLAGS)
+AC_SUBST(FCPICFLAGS)
 AC_SUBST(FPICFLAGS)
 AC_SUBST(SHLIB_CXXLD)
 AC_SUBST(SHLIB_CXXLDFLAGS)
@@ -1365,9 +1451,11 @@ AC_SUBST(FW_VERSION)
 ### We don't currently have any C++ tests, but future-proof.
 ### In principle we should do this before testing for C-Fortran compatibility.
 
+CPPFLAGS_KEEP=${CPPFLAGS}
 CFLAGS_KEEP=${CFLAGS}
 FFLAGS_KEEP=${FFLAGS}
 CXXFLAGS_KEEP=${CXXFLAGS}
+CPPFLAGS="${CPPFLAGS} ${R_XTRA_CPPFLAGS}"
 if test "${want_R_shlib}" = yes; then
   CFLAGS="${CFLAGS} ${CPICFLAGS} ${R_XTRA_CFLAGS}"
   FFLAGS="${FFLAGS} ${FPICFLAGS} ${R_XTRA_FFLAGS}"
@@ -1386,12 +1474,33 @@ AC_CHECK_DECLS([alloca], , ,
 [#ifdef HAVE_ALLOCA_H
 # include <alloca.h>
 #endif])
-AC_CHECK_FUNCS(access chdir expm1 fcntl finite fseeko ftello ftruncate \
-  getcwd getgrgid getpwuid getuid hypot isascii log1p \
-  matherr mkdtemp mkfifo popen putenv realpath rint \
-  setenv strcoll stat strerror strptime symlink system times unsetenv)
-## isfinite and isnan are in math.h but might be macros
-AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
+## fseeko/ftello may be macros, matherr is redefined
+AC_CHECK_FUNCS(fseeko ftello isblank matherr)
+R_CHECK_FUNCS([fcntl], [#include <fcntl.h>])
+R_CHECK_FUNCS([getgrgid], [#include <grp.h>])
+R_CHECK_FUNCS([expm1 hypot log1p log2 log10 rint], [#include <math.h>])
+R_CHECK_FUNCS([getpwuid], [#include <pwd.h>])
+R_CHECK_FUNCS([sigaction sigaltstack sigemptyset], [#include <signal.h>])
+R_CHECK_FUNCS([va_copy __va_copy], [#include <stdarg.h>])
+R_CHECK_FUNCS([fdopen popen], [#include <stdio.h>])
+R_CHECK_FUNCS([realpath setenv system unsetenv], [#include <stdlib.h>])
+R_CHECK_FUNCS([strcoll strerror], [#include <string.h>])
+R_CHECK_FUNCS([getrlimit getrusage], [#include <sys/resource.h>])
+R_CHECK_FUNCS([mkfifo stat], [#include <sys/stat.h>])
+R_CHECK_FUNCS([gettimeofday], [#include <sys/time.h>])
+R_CHECK_FUNCS([times], [#include <sys/times.h>])
+R_CHECK_FUNCS([access chdir ftruncate getcwd getuid symlink sysconf],
+[#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif])
+## We really need putenv, and make check fails without it so it seems
+## everyone has it, possibly not declared.
+AC_CHECK_FUNCS(putenv)
+AC_CHECK_DECLS([putenv], , , [#include <stdlib.h>])
+## this is a GNU extension so usually hidden
+AC_CHECK_FUNCS(vasprintf)
+AC_CHECK_DECLS([vasprintf], , , [#include <stdio.h>])
+
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
 ## might report corresponding HAVE_FOO conditionals.
@@ -1430,10 +1539,10 @@ fi
 AC_SUBST(RMATH_HAVE_LOG1P)
 
 ## Do we need substitutes?
-AC_REPLACE_FUNCS(acosh asinh atanh snprintf strdup strncasecmp vsnprintf)
+AC_REPLACE_FUNCS(acosh asinh atanh mkdtemp snprintf strdup strncasecmp vsnprintf)
 ## Enable declarations in Defn.h?
 AC_CHECK_DECLS([acosh, asinh, atanh], , , [#include <math.h>])
-AC_CHECK_DECLS([snprintf, strdup, strncasecmp, vsnprintf])
+AC_CHECK_DECLS([mkdtemp, snprintf, strdup, strncasecmp, vsnprintf])
 
 AC_SEARCH_LIBS(connect, [socket])
 AC_SEARCH_LIBS(gethostbyname, [nsl socket])
@@ -1448,7 +1557,6 @@ R_FUNC_ISFINITE
 fi
 R_FUNC_LOG
 R_FUNC_LOG1P
-R_FUNC_STRPTIME
 R_FUNC_FTELL
 
 R_C99_COMPLEX
@@ -1494,7 +1602,7 @@ if test "${use_lapack}" = "yes"; then
   R_LAPACK_LIBS
 fi
 if test "${acx_lapack_ok}" != "yes"; then
-  LAPACK_LIBS="-L\$(R_HOME)/lib -lRlapack"
+  LAPACK_LIBS="-L\$(R_HOME)/lib\$(R_ARCH) -lRlapack"
 fi
 AC_SUBST(LAPACK_LIBS)
 AM_CONDITIONAL(USE_EXTERNAL_LAPACK, [test "${acx_lapack_ok}" = "yes"])
@@ -1503,11 +1611,16 @@ AM_CONDITIONAL(USE_EXTERNAL_LAPACK, [test "${acx_lapack_ok}" = "yes"])
 
 AC_SUBST(R_MODULES)
 
-## UTF-8 locales - support for MBCS and specifically UTF-8
-R_MBCS
-
 ## iconv headers and function.
 R_ICONV
+
+## support for MBCS
+case "${host_os}" in
+  mingw*)
+    r_cv_iconv_latin1=yes
+    ;;
+esac
+R_MBCS
 
 ## X11.
 R_X11
@@ -1561,10 +1674,9 @@ if test "${want_R_profiling}" = yes; then
 fi
 AC_SUBST(R_PROFILING)
 
-## Large-file-support (Linux-only, at present)
-if test "x${want_linux_lfs}" = xyes; then
-R_LARGE_FILES
-fi
+## Large-file-support
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
 
 ## Valgrind instrumentation
 if test ${valgrind_level} -eq 0; then
@@ -1572,6 +1684,8 @@ if test ${valgrind_level} -eq 0; then
 fi
 AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1 or 2 to specify levels of Valgrind instrumentation])
 
+## KERN_USRSTACK support (BSD, Darwin, ...)
+R_KERN_USRSTACK
 
 ### * Miscellaneous.
 
@@ -1597,6 +1711,73 @@ AC_SUBST(R_BATCHSAVE)
 
 ## Java support
 R_JAVA
+
+## F90/F95 support
+AC_PROG_FC()
+AC_LANG_PUSH(Fortran)
+AC_FC_SRCEXT(f90, [dummy=1], [dummy=0])
+AC_FC_SRCEXT(f95, [dummy=1], [dummy=0])
+AC_LANG_POP()
+: ${SHLIB_FCLD="${FC}"}
+: ${SHLIB_FCLDFLAGS="${SHLIB_LDFLAGS}"}
+AC_SUBST(SHLIB_FCLD)
+AC_SUBST(SHLIB_FCLDFLAGS)
+
+## Look for FCPICFLAGS
+## Debian in their wisdom have f95 as a link to gfortran, so
+## use this to pick out gfortran (even though it is unreliable).
+if test "${ac_cv_fc_compiler_gnu}" = yes; then
+  case "${host_cpu}" in
+    sparc*|ppc64|s390*)
+      fcpicflags="-fPIC"
+      ;;
+    *)
+      fcpicflags="-fpic"
+      ;;
+  esac
+fi
+case "${host_os}" in
+  darwin*)
+    fcpicflags="-fno-common"
+    ;;
+  hpux*)
+    case "${FC}" in
+      f90)
+        fcpicflags="+Z"
+        ;;
+    esac
+    ;;
+  linux*)
+    case  "${FC}" in
+      ## Intel compilers: probably get identified as GNU, but make sure.
+      *ifc|*ifort)
+        fcpicflags="-fpic"
+        ;;
+      ## Portland Group
+      *pgf95|*pgf90)
+        fcpicflags="-fpic"
+        ;;
+    esac
+    ;;
+  solaris*)
+    if test "${ac_cv_fc_compiler_gnu}" = yes; then
+      fcpicflags="-fPIC"
+    else
+      fcpicflags="-PIC"
+    fi
+    ;;
+esac
+: ${FCPICFLAGS="${fcpicflags}"}
+if test -z "${FCPICFLAGS}"; then
+  case "${host_os}" in
+    aix*|irix*|mingw*|osf*)
+      ;;
+    *)
+      AC_MSG_WARN([I could not determine FCPICFLAGS.])
+      ;;
+  esac
+fi
+
 
 ## Make sure -L terms come first in LIBS.
 LIBS1=""
@@ -1637,7 +1818,7 @@ case "${host_os}" in
     ;;
 esac
 for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
-           ${TCLTK_LIBS} ${GNOME_LIBS} ${JAVA_LIBS}; do
+           ${TCLTK_LIBS} ${GNOME_LIBS}; do
   case "${arg}" in
     -L*)
       lib=`echo ${arg} | sed "s/^-L//"`
@@ -1645,20 +1826,53 @@ for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
       ## don't add anything for Darwin
       case "${host_os}" in darwin*) r_want_lib=false ;; esac
       ## Do not add non-existent directories.
-      test -d "${lib}" || continue
-      ## Canonicalize (/usr/lib/gcc-lib/i486-linux/3.3.4/../../..).
-      lib=`cd "${lib}" && ${GETWD}`
-      ## Do not add something twice, or default paths.
-      r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
-      for dir in ${R_LD_LIBRARY_PATH}${IFS}${r_ld_library_defaults}; do
-        if test x"${dir}" = x"${lib}"; then
-           r_want_lib=false
-           break
-        fi
-      done
-      IFS="${r_save_IFS}"
+      test -d "${lib}" || r_want_lib=false
       if test x"${r_want_lib}" = xtrue; then
-        R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+        ## Canonicalize (/usr/lib/gcc-lib/i486-linux/3.3.4/../../..).
+        lib=`cd "${lib}" && ${GETWD}`
+        ## Do not add something twice, or default paths.
+        r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
+        for dir in ${R_LD_LIBRARY_PATH}${IFS}${r_ld_library_defaults}; do
+          if test x"${dir}" = x"${lib}"; then
+            r_want_lib=false
+            break
+          fi
+        done
+        IFS="${r_save_IFS}"
+        if test x"${r_want_lib}" = xtrue; then
+          R_SH_VAR_ADD(R_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+        fi
+      fi
+      ;;
+  esac
+done
+## Handle JAVA_LIBS specially so that users can conveniently set just
+## R_JAVA_LD_LIBRARY_PATH in their environment.
+for arg in ${JAVA_LIBS}; do
+  case "${arg}" in
+    -L*)
+      lib=`echo ${arg} | sed "s/^-L//"`
+      r_want_lib=true
+      ## don't add anything for Darwin
+      case "${host_os}" in darwin*) r_want_lib=false ;; esac
+      ## Do not add non-existent directories.
+      test -d "${lib}" || r_want_lib=false
+      if test x"${r_want_lib}" = xtrue; then
+        ## Canonicalize (/usr/lib/j2sdk1.5-sun/jre/../lib/i386).
+        lib=`cd "${lib}" && ${GETWD}`
+        ## Do not add something twice, or something already in
+        ## R_LD_LIBRARY_PATH or the defaults.
+        r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
+        for dir in ${R_JAVA_LD_LIBRARY_PATH}${IFS}${R_LD_LIBRARY_PATH}${IFS}${r_ld_library_defaults}; do
+          if test x"${dir}" = x"${lib}"; then
+             r_want_lib=false
+             break
+          fi
+        done
+        IFS="${r_save_IFS}"
+        if test x"${r_want_lib}" = xtrue; then
+          R_SH_VAR_ADD(R_JAVA_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
+        fi
       fi
       ;;
   esac
@@ -1666,6 +1880,7 @@ done
 ## </FIXME>
 
 AC_SUBST(R_LD_LIBRARY_PATH)
+AC_SUBST(R_JAVA_LD_LIBRARY_PATH)
 
 ## Recommended packages.
 if test "${use_recommended_packages}" = yes; then
@@ -1674,28 +1889,37 @@ fi
 AM_CONDITIONAL(USE_RECOMMENDED_PACKAGES,
                [test "x${use_recommended_packages}" = xyes])
 
-# i18n support.  To update to a new version of gettext, run:
+# i18n support.  To update to a new version of gettext, run (untested):
 # gettextize -f -c --intl
 AM_NLS
 if test "${USE_NLS}" = "yes"; then
-  AM_GNU_GETTEXT_VERSION(0.14.1)
+  AM_GNU_GETTEXT_VERSION(0.14.5)
   AM_GNU_GETTEXT(, [need-ngettext], [../extra/intl])
+  if test -n "$INTL_MACOSX_LIBS"; then
+    XTRA_INTL_CPPFLAGS=-I/System/Library/Frameworks/CoreFoundation.framework/Headers
+  fi
 else
   USE_INCLUDED_LIBINTL=no
 fi
+AC_SUBST(XTRA_INTL_CPPFLAGS)
+
 AM_CONDITIONAL(USE_NLS, [test "x${USE_NLS}" = xyes])
+AM_CONDITIONAL(BUILD_LIBINTL, [test "x${USE_INCLUDED_LIBINTL}" = xyes])
 
 ### * Win32 overrides
 case "${host_os}" in
   mingw*)
+    AC_DEFINE(HAVE_ICONV, 1)
+    AC_DEFINE(HAVE_ICONVLIST, 1)
+    AC_DEFINE(HAVE_ICONV_H, 1)
     AC_DEFINE(HAVE_INTERNET, 1)
     AC_DEFINE(HAVE_JPEG, 1)
-    AC_DEFINE(SUPPORT_LIBXML, 1)
     AC_DEFINE(HAVE_PNG, 1)
     AC_DEFINE(HAVE_POSIX_SETJMP, 1)
     AC_DEFINE(HAVE_SOCKETS, 1)
     AC_DEFINE(HAVE_TCLTK, 1)
     AC_DEFINE(HAVE_TIMES, 1)
+    AC_DEFINE(ICONV_LATIN1, 1)
     want_R_profiling=yes
     AC_DEFINE(R_PROFILING, 1)
     AC_DEFINE(SUPPORT_LIBXML, 1)
@@ -1715,6 +1939,7 @@ AC_CONFIG_FILES(
   etc/Makefile
   etc/Makeconf
   etc/Renviron
+  etc/ldpaths
   m4/Makefile
   po/Makefile.in 
   share/Makefile
@@ -1782,7 +2007,6 @@ AC_CONFIG_FILES(
   src/scripts/Sd2Rd
   src/scripts/build
   src/scripts/check
-  src/scripts/f77
   src/unix/Makefile
   tests/Makefile
   tests/Embedding/Makefile
@@ -1795,6 +2019,7 @@ AC_CONFIG_COMMANDS([stamp-h],
 [test -f src/include/stamp-h || echo timestamp > src/include/stamp-h])
 
 ### now reset flags
+CPPFLAGS=${CPPFLAGS_KEEP}
 CFLAGS=${CFLAGS_KEEP}
 FFLAGS=${FFLAGS_KEEP}
 CXXFLAGS=${CXXFLAGS_KEEP}
@@ -1808,11 +2033,8 @@ AC_OUTPUT
 ## </NOTE>
 r_c_compiler="${CC} ${R_XTRA_CFLAGS} ${CFLAGS}"
 r_cxx_compiler="${CXX} ${R_XTRA_CXXFLAGS} ${CXXFLAGS}"
-if test -z "${F2C}"; then
-  r_f77_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
-else
-  r_f77_compiler="${F2C} ${F2CFLAGS}"
-fi
+r_f77_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
+r_f95_compiler="${FC} ${FCFLAGS}"
 r_interfaces=
 for item in X11 aqua tcltk; do
   if eval "test \${use_${item}} = yes"; then
@@ -1887,8 +2109,10 @@ R is now configured for ${host}
   Installation directory:    ${prefix}
 
   C compiler:                ${r_c_compiler}
+  Fortran 77 compiler:       ${r_f77_compiler}
+
   C++ compiler:              ${r_cxx_compiler}
-  Fortran compiler:          ${r_f77_compiler}
+  Fortran 90/95 compiler:    ${r_f95_compiler}
 
   Interfaces supported:      ${r_interfaces}
   External libraries:        ${r_external_libs}
@@ -1897,14 +2121,8 @@ R is now configured for ${host}
 
   Recommended packages:      ${use_recommended_packages} 
 ])
-if test -n "${warn_F77_and_F2C}"; then
-  AC_MSG_WARN([${warn_F77_and_F2C}])
-fi
 if test -n "${warn_f77_cc_double_complex}"; then
   AC_MSG_WARN([${warn_f77_cc_double_complex}])
-fi
-if test -n "${warn_f2c_flibs}"; then
-  AC_MSG_WARN([${warn_f2c_flibs}])
 fi
 if test -n "${warn_xcompile_sizeof_int}"; then
   AC_MSG_WARN([${warn_xcompile_sizeof_int}])
@@ -1920,6 +2138,12 @@ if test -n "${warn_cxxpicflags}"; then
 fi
 if test -n "${warn_shlib_cxxldflags}"; then
   AC_MSG_WARN([${warn_shlib_cxxldflags}])
+fi
+if test -n "${warn_cxxpicflags}"; then
+  AC_MSG_WARN([${warn_cxxpicflags}])
+fi
+if test -n "${warn_fcpicflags}"; then
+  AC_MSG_WARN([${warn_fcpicflags}])
 fi
 if test -n "${warn_libglade_version}"; then
   AC_MSG_WARN([${warn_libglade_version}])

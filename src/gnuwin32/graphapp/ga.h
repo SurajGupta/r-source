@@ -3,7 +3,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file ga.h
  *  Copyright (C) 1998--1999  Guido Masarotto
- *  Copyright (C) 2004-5      The R Foundation
+ *  Copyright (C) 2004--2006   The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*
@@ -85,7 +85,8 @@ void    askchangedir();
 char *	askcdstring(char *question, char *default_string);
 char *	askfilesavewithdir(char *title, char *default_name, char *dir);
 char *  askfilenames(char *title, char *default_name, int multi,
-			       char *filters, int filterindex, char *strbuf, int bufsize);
+			       char *filters, int filterindex, char *strbuf, int bufsize,
+			       char *dir);
 int	    countFilenames(char *strbuf); /* Note that first name is path when there are multiple names */
 
 /*  rgb.c */
@@ -166,6 +167,7 @@ int gwstrwidth(drawing d, font f, char *s);
 #endif
 void gwcharmetric(drawing d, font f, int c, int *ascent, int *descent,
 		  int *width);
+void gwdrawstr1(drawing d, font f, rgb c, point p, char *s, double hadj);
 
 
 /* pixels */

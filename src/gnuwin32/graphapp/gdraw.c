@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1998--2004  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 2005-6      The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*
@@ -27,23 +28,23 @@
 #include "internal.h"
 extern unsigned int TopmostDialogs; /* from dialogs.c */
 #include <winbase.h>
+#include <wchar.h>
+#define alloca(x) __builtin_alloca((x)) /* always GNUC */
 
 static HDC GETHDC(drawing d)
 {
-  if (!d)
-  {
-      DebugBreak();
-      return (HDC) 0; /* We should never get here, but we do? */
-  }
-  if ( (d->kind == PrinterObject)|| (d->kind == MetafileObject))
-  {
-     HDC dc = (HDC) d->handle ;
-     SelectObject(dc, GetStockObject(NULL_PEN));
-     SelectObject(dc, GetStockObject(NULL_BRUSH));
-     return dc ;
-  }
-  else
-     return get_context(d);
+    if (!d) {
+	DebugBreak();
+	return (HDC) 0; /* We should never get here, but we do? */
+    }
+    if ( (d->kind == PrinterObject) || (d->kind == MetafileObject)) {
+	HDC dc = (HDC) d->handle ;
+	SelectObject(dc, GetStockObject(NULL_PEN));
+	SelectObject(dc, GetStockObject(NULL_BRUSH));
+	return dc ;
+    }
+    else
+	return get_context(d);
 }
 
 
@@ -186,14 +187,14 @@ static void CALLBACK  gLineHelper(int x, int y, LPARAM aa)
 void gdrawline(drawing d, int width, int style, rgb c, point p1, point p2,
 	       int fast, int lend, int ljoin, float lmitre)
 {
-   point p[2];
-   p[0] = p1;
-   p[1] = p2;
-   gdrawpolyline( d, width, style, c, p, 2, 0, fast, lend, ljoin, lmitre);
+    point p[2];
+    p[0] = p1;
+    p[1] = p2;
+    gdrawpolyline( d, width, style, c, p, 2, 0, fast, lend, ljoin, lmitre);
 }
 
 void gdrawpolyline(drawing d, int width, int style, rgb c,
-                   point p[], int n, int closepath, int fast, 
+                   point p[], int n, int closepath, int fast,
 		   int lend, int ljoin, float lmitre)
 {
     int tmpx, tmpy, tmp;
@@ -223,7 +224,7 @@ void gdrawpolyline(drawing d, int width, int style, rgb c,
         for (i = 1; i < n ; i++) {
 	    LineTo(dc, p[i].x, p[i].y);
 	    npieces++;
-	    if(npieces > 1000) {
+	    if (npieces > 1000) {
 		EndPath(dc);
 		StrokePath(dc);
 		npieces = 0;
@@ -236,7 +237,7 @@ void gdrawpolyline(drawing d, int width, int style, rgb c,
 	SelectObject(dc, GetStockObject(NULL_PEN));
 	DeleteObject(gpen);
     }
-     else {
+    else {
 	DashStruct a;
 	gpen = ExtCreatePen(PS_GEOMETRIC|PS_SOLID|lend|ljoin,
 			    width, &lb, 0, NULL);
@@ -255,30 +256,30 @@ void gdrawpolyline(drawing d, int width, int style, rgb c,
 	npieces = 0;
 	BeginPath(dc);
         for (i = 1; i < n; i++) {
- 	  LineDDA(p[i-1].x, p[i-1].y, p[i].x, p[i].y, gLineHelper,
-		  (LPARAM) &a);
-	  if ((p[i].x != a.curx) || (p[i].y != a.cury)) {
-	      if (a.on) LineTo(dc, p[i].x, p[i].y);
-	      else MoveToEx(dc, p[i].x, p[i].y, NULL);
-	      tmpx = (a.curx-p[i].x);
-	      tmpy = (a.cury-p[i].y);
-	      tmp = tmpx*tmpx + tmpy*tmpy;
-	      a.len2 = a.len2 + tmp - 2*sqrt((double)(tmp*a.len2));
-	      a.curx = p[i].x;
-	      a.cury = p[i].y;
-	  }
-	  npieces++;
-	  if(npieces > 1000) {
-	      EndPath(dc);
-	      StrokePath(dc);
-	      npieces = 0;
-	      BeginPath(dc);
-	  }
+	    LineDDA(p[i-1].x, p[i-1].y, p[i].x, p[i].y, gLineHelper,
+		    (LPARAM) &a);
+	    if ((p[i].x != a.curx) || (p[i].y != a.cury)) {
+		if (a.on) LineTo(dc, p[i].x, p[i].y);
+		else MoveToEx(dc, p[i].x, p[i].y, NULL);
+		tmpx = (a.curx-p[i].x);
+		tmpy = (a.cury-p[i].y);
+		tmp = tmpx*tmpx + tmpy*tmpy;
+		a.len2 = a.len2 + tmp - 2*sqrt((double)(tmp*a.len2));
+		a.curx = p[i].x;
+		a.cury = p[i].y;
+	    }
+	    npieces++;
+	    if (npieces > 1000) {
+		EndPath(dc);
+		StrokePath(dc);
+		npieces = 0;
+		BeginPath(dc);
+	    }
         }
         if (closepath) {
-          LineDDA(p[n-1].x, p[n-1].y, p[0].x, p[0].y, gLineHelper,
-		  (LPARAM) &a);
-	  if (a.on) LineTo(dc,p[0].x,p[0].y);
+	    LineDDA(p[n-1].x, p[n-1].y, p[0].x, p[0].y, gLineHelper,
+		    (LPARAM) &a);
+	    if (a.on) LineTo(dc,p[0].x,p[0].y);
         }
 	EndPath(dc);
 	StrokePath(dc);
@@ -453,13 +454,13 @@ void gfillellipse(drawing d, rgb fill, rect r)
 
 void gfillpolygon(drawing d, rgb fill, point *p, int n)
 {
-   HDC dc = GETHDC(d);
-   HBRUSH br = CreateSolidBrush(getwinrgb(d,fill));
-   fix_brush(dc, d, br);
-   SelectObject(dc, br);
-   Polygon(dc, (POINT FAR *) p, n);
-   SelectObject(dc, GetStockObject(NULL_BRUSH));
-   DeleteObject(br);
+    HDC dc = GETHDC(d);
+    HBRUSH br = CreateSolidBrush(getwinrgb(d,fill));
+    fix_brush(dc, d, br);
+    SelectObject(dc, br);
+    Polygon(dc, (POINT FAR *) p, n);
+    SelectObject(dc, GetStockObject(NULL_BRUSH));
+    DeleteObject(br);
 }
 
 /* For ordinary text, e.g. in console */
@@ -476,7 +477,14 @@ int gdrawstr(drawing d, font f, rgb c, point p, char *s)
     SetBkMode(dc, TRANSPARENT);
     SetTextAlign(dc, TA_TOP | TA_LEFT | TA_UPDATECP);
 
-    TextOut(dc, p.x, p.y, s, strlen(s));
+    if (is_NT && (localeCP != GetACP())) {
+	/* This allows us to change locales and output in the new locale */
+	wchar_t *wc; int n = strlen(s), cnt;
+	wc = alloca((n+1) * sizeof(wchar_t));
+	cnt = mbstowcs(wc, s, n);
+	TextOutW(dc, p.x, p.y, wc, cnt);
+    } else
+	TextOut(dc, p.x, p.y, s, strlen(s));
 
     GetCurrentPositionEx(dc, &curr_pos);
     width = curr_pos.x - p.x;
@@ -501,6 +509,28 @@ void gdrawstr1(drawing d, font f, rgb c, point p, char *s, double hadj)
     else flags |= TA_RIGHT;
     SetTextAlign(dc, flags);
     TextOut(dc, p.x, p.y, s, strlen(s));
+    SelectObject(dc, old);
+}
+
+/* This version interprets 's' as MBCS in the current locale */
+void gwdrawstr1(drawing d, font f, rgb c, point p, char *s, double hadj)
+{
+    HFONT old;
+    HDC dc = GETHDC(d);
+    UINT flags = TA_BASELINE | TA_UPDATECP;
+    wchar_t *wc; int n = strlen(s), cnt;
+    wc = alloca((n+1) * sizeof(wchar_t));
+
+    SetTextColor(dc, getwinrgb(d,c));
+    old = SelectObject(dc, f->handle);
+    MoveToEx(dc, p.x, p.y, NULL);
+    SetBkMode(dc, TRANSPARENT);
+    if (hadj < 0.25) flags |= TA_LEFT;
+    else if (hadj < 0.75) flags |= TA_CENTER;
+    else flags |= TA_RIGHT;
+    SetTextAlign(dc, flags);
+    cnt = mbstowcs(wc, s, n); /* This is OK if we get an error */
+    TextOutW(dc, p.x, p.y, wc, cnt);
     SelectObject(dc, old);
 }
 
@@ -555,7 +585,7 @@ point gstrsize(drawing d, font f, char *s)
 
 int gstrwidth(drawing d, font f, char *s)
 {
-    rect r = gstrrect(d,f,s);
+    rect r = gstrrect(d, f ,s);
     return r.width;
 }
 
@@ -600,6 +630,7 @@ int ghasfixedwidth(font f)
     return !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH);
 }
 
+
 void gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
 		 int *width)
 {
@@ -612,42 +643,43 @@ void gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
     first = tm.tmFirstChar;
     last = tm.tmLastChar;
     extra = tm.tmExternalLeading + tm.tmInternalLeading - 1;
-    if(c < 0) { /* used for setting cra */
-      SIZE size;
-      char* cc="M";
-      GetTextExtentPoint32(dc,(LPSTR) cc, 1, &size);
-      *descent = tm.tmDescent ;
-      *ascent = size.cy - *descent;
-      *width = size.cx;
-      if(*width > size.cy) *width = size.cy;
-    } else if(c == 0) {
+    if (c < 0) { /* used for setting cra */
+	SIZE size;
+	char *cc = "M";
+	GetTextExtentPoint32(dc,(LPSTR) cc, 1, &size);
+	*descent = tm.tmDescent ;
+	*ascent = size.cy - *descent;
+	*width = size.cx;
+	if (*width > size.cy) *width = size.cy;
+    } else if (c == 0) {
 	*descent = tm.tmDescent ;
         *ascent = tm.tmHeight - *descent - extra ;
 	*width = tm.tmMaxCharWidth ;
-    } else if((first <= c) && (c <= last)) {
-      SIZE size;
-      GetTextExtentPoint32(dc,(LPSTR) &c, 1, &size);
-      *descent = tm.tmDescent ;
-      *ascent = size.cy - *descent - extra ;
-      *width = size.cx;
-      /*
-	 Under NT, ' ' gives 0 ascent and descent, which seems
-	 correct but this : (i) makes R engine to center in random way;
-	 (ii) doesn't correspond to what 98 and X do (' ' is there
-	 high as the full font)
-      */
-      if ((c!=' ') && (tm.tmPitchAndFamily & TMPF_TRUETYPE)) {
-        GLYPHMETRICS gm;
-        MAT2 m2;
-	m2.eM11.value = m2.eM22.value = (WORD) 1 ;
-	m2.eM21.value = m2.eM12.value = (WORD) 0 ;
-	m2.eM11.fract = m2.eM12.fract =
-	  m2.eM21.fract = m2.eM22.fract =  (short) 0 ;
-        if (GetGlyphOutline(dc,c,GGO_METRICS,&gm,0,NULL,&m2) != GDI_ERROR) {
-	  *descent = gm.gmBlackBoxY - gm.gmptGlyphOrigin.y ;
-	  *ascent  = gm.gmptGlyphOrigin.y + 1;
-        }
-      }
+    } else if ((first <= c) && (c <= last)) {
+	SIZE size;
+	GetTextExtentPoint32(dc, (LPSTR) &c, 1, &size);
+	*descent = tm.tmDescent ;
+	*ascent = size.cy - *descent - extra ;
+	*width = size.cx;
+	/*
+	  Under NT, ' ' gives 0 ascent and descent, which seems
+	  correct but this : (i) makes R engine to center in random way;
+	  (ii) doesn't correspond to what 98 and X do (' ' is there
+	  high as the full font)
+	*/
+	if ((c != ' ') && (tm.tmPitchAndFamily & TMPF_TRUETYPE)) {
+	    GLYPHMETRICS gm;
+	    MAT2 m2;
+	    m2.eM11.value = m2.eM22.value = (WORD) 1 ;
+	    m2.eM21.value = m2.eM12.value = (WORD) 0 ;
+	    m2.eM11.fract = m2.eM12.fract = m2.eM21.fract = m2.eM22.fract =
+		(short) 0 ;
+	    if (GetGlyphOutline(dc, c, GGO_METRICS, &gm, 0, NULL, &m2)
+		!= GDI_ERROR) {
+		*descent = gm.gmBlackBoxY - gm.gmptGlyphOrigin.y ;
+		*ascent  = gm.gmptGlyphOrigin.y + 1;
+	    }
+	}
     } else {
 	*ascent = 0;
 	*descent = 0;
@@ -656,66 +688,89 @@ void gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
     SelectObject(dc, old);
 }
 
-/* need this defined even if not used for non-MBCS since grDevices
-   is compiled with SUPPORT_MBCS true */
+/* This needs to work even when not on NT */
 void gwcharmetric(drawing d, font f, int c, int *ascent, int *descent,
 		  int *width)
 {
-    int first, last, extra;
-    TEXTMETRICW tm;
-    HFONT old;
-    HDC dc = GETHDC(d);
-    old = SelectObject(dc, (HFONT)f->handle);
-    GetTextMetricsW(dc, &tm);
-    first = tm.tmFirstChar;
-    last = tm.tmLastChar;
-    extra = tm.tmExternalLeading + tm.tmInternalLeading - 1;
-    if(c < 0) { /* used for setting cra */
-      SIZE size;
-      char* cc="M";
-      GetTextExtentPoint32(dc,(LPSTR) cc, 1, &size);
-      *descent = tm.tmDescent ;
-      *ascent = size.cy - *descent;
-      *width = size.cx;
-      if(*width > size.cy) *width = size.cy;
-    } else if(c == 0) {
-	*descent = tm.tmDescent ;
-        *ascent = tm.tmHeight - *descent - extra ;
-	*width = tm.tmMaxCharWidth ;
-    } else if((first <= c) && (c <= last)) {
-      SIZE size;
-      wchar_t wc = c;
-      GetTextExtentPoint32W(dc, &wc, 1, &size);
-      *descent = tm.tmDescent ;
-      *ascent = size.cy - *descent - extra ;
-      *width = size.cx;
-      /*
-	 Under NT, ' ' gives 0 ascent and descent, which seems
-	 correct but this : (i) makes R engine to center in random way;
-	 (ii) doesn't correspond to what 98 and X do (' ' is there
-	 high as the full font)
-      */
-      if ((c!=' ') && (tm.tmPitchAndFamily & TMPF_TRUETYPE)) {
-	  GLYPHMETRICS gm;
-	  MAT2 m2;
-	  m2.eM11.value = m2.eM22.value = (WORD) 1 ;
-	  m2.eM21.value = m2.eM12.value = (WORD) 0 ;
-	  m2.eM11.fract = m2.eM12.fract =
-	      m2.eM21.fract = m2.eM22.fract =  (short) 0 ;
-	  if (GetGlyphOutlineW(dc, c, GGO_METRICS, &gm, 0, NULL, &m2) 
-	      != GDI_ERROR) {
-	      *descent = gm.gmBlackBoxY - gm.gmptGlyphOrigin.y ;
-	      *ascent  = gm.gmptGlyphOrigin.y + 1;
-	  }
-      }
+    if (is_NT) {
+	int first, last, extra;
+	TEXTMETRICW tm;
+	HFONT old;
+	HDC dc = GETHDC(d);
+	old = SelectObject(dc, (HFONT)f->handle);
+	GetTextMetricsW(dc, &tm);
+	first = tm.tmFirstChar;
+	last = tm.tmLastChar;
+	extra = tm.tmExternalLeading + tm.tmInternalLeading - 1;
+	if (c < 0) { /* used for setting cra */
+	    SIZE size;
+	    char *cc = "M";
+	    GetTextExtentPoint32(dc,(LPSTR) cc, 1, &size);
+	    *descent = tm.tmDescent ;
+	    *ascent = size.cy - *descent;
+	    *width = size.cx;
+	    if (*width > size.cy) *width = size.cy;
+	} else if (c == 0) {
+	    *descent = tm.tmDescent ;
+	    *ascent = tm.tmHeight - *descent - extra ;
+	    *width = tm.tmMaxCharWidth ;
+	} else if ((first <= c) && (c <= last)) {
+	    SIZE size;
+	    wchar_t wc = c;
+	    GetTextExtentPoint32W(dc, &wc, 1, &size);
+	    *descent = tm.tmDescent ;
+	    *ascent = size.cy - *descent - extra ;
+	    *width = size.cx;
+	    /*
+	      Under NT, ' ' gives 0 ascent and descent, which seems
+	      correct but this : (i) makes R engine to center in random way;
+	      (ii) doesn't correspond to what 98 and X do (' ' is there
+	      high as the full font)
+	    */
+	    if ((c!=' ') && (tm.tmPitchAndFamily & TMPF_TRUETYPE)) {
+		GLYPHMETRICS gm;
+		MAT2 m2;
+		m2.eM11.value = m2.eM22.value = (WORD) 1 ;
+		m2.eM21.value = m2.eM12.value = (WORD) 0 ;
+		m2.eM11.fract = m2.eM12.fract =
+		    m2.eM21.fract = m2.eM22.fract =  (short) 0 ;
+		if (GetGlyphOutlineW(dc, c, GGO_METRICS, &gm, 0, NULL, &m2)
+		    != GDI_ERROR) {
+		    *descent = gm.gmBlackBoxY - gm.gmptGlyphOrigin.y ;
+		    *ascent  = gm.gmptGlyphOrigin.y + 1;
+		}
+	    }
+	} else { /* Unicode char out of range */
+	    *ascent = 0;
+	    *descent = 0;
+	    *width = 0;
+	}
+	SelectObject(dc, old);
     } else {
-	*ascent = 0;
-	*descent = 0;
-	*width = 0;
+	if (c > 127) {
+	    int extra;
+	    TEXTMETRIC tm;
+	    HFONT old;
+	    HDC dc = GETHDC(d);
+	    SIZE size;
+	    char s[3];
+	    old = SelectObject(dc, (HFONT)f->handle);
+	    GetTextMetrics(dc, &tm);
+	    extra = tm.tmExternalLeading + tm.tmInternalLeading - 1;
+	    /* choose some reasonable fallback values */
+	    *ascent = tm.tmAscent; *descent = tm.tmDescent; 
+	    *width = tm.tmAveCharWidth;
+	    if (wctomb(s, (wchar_t) c) >= 1 &&
+	       GetTextExtentPoint32(dc, (LPSTR) s, 1, &size))
+	    {
+		*ascent = size.cy - *descent - extra;
+		*width = size.cx;
+	    }
+	    SelectObject(dc, old);
+	} else
+	    gcharmetric(d, f, c, ascent, descent, width);
     }
-    SelectObject(dc, old);
 }
-
 
 font gnewfont(drawing d, char *face, int style, int size, double rot)
 {
@@ -809,8 +864,8 @@ int isTopmost(window c)
 
 static void setMessageBoxTopmost(window obj)
 {
-	if ((obj->kind == WindowObject) && (isTopmost(obj)))
-		TopmostDialogs |= MB_TOPMOST;
+    if ((obj->kind == WindowObject) && (isTopmost(obj)))
+	TopmostDialogs |= MB_TOPMOST;
 }
 
 int getHandle(window c)
@@ -827,9 +882,9 @@ void BringToTop(window c, int stay) /* stay=0 for regular, 1 for topmost, 2 for 
     if (stay == 2) stay = !isTopmost(c);
 
     if (stay) SetWindowPos(c->handle, HWND_TOPMOST, 0, 0, 0, 0,
-    				SWP_NOMOVE | SWP_NOSIZE);
+			   SWP_NOMOVE | SWP_NOSIZE);
     else SetWindowPos(c->handle, HWND_NOTOPMOST, 0, 0, 0, 0,
-    				SWP_NOMOVE | SWP_NOSIZE);
+		      SWP_NOMOVE | SWP_NOSIZE);
     TopmostDialogs &= !MB_TOPMOST;
     apply_to_list(c->parent->child, setMessageBoxTopmost);
 }
@@ -857,18 +912,18 @@ static cp2charset_table cp2charset [] = {
     {1361,JOHAB_CHARSET},
 };
 
+/* Used to set the charset for the font in the console/pager/editor.
+   As from 2.3.0 these use wchar on NT, but the charset still 
+   seems to affect the font chosen. */
 int getcharset(void)
 {
-    int i, acp = GetACP();
-    /* From Nakama's patch.  I don't know the reason for this
-       as Win9x should support these CHARSET names. */
-    DWORD dwVersion = GetVersion();
-    /* High-order bit is 0 for NT, 1 for Win9x (and before) */
-    if (!(dwVersion & 0x80000000)) return (DEFAULT_CHARSET);
+    int i, cp = localeCP;
+    if (!is_NT) 
+	/* From Nakama's patch.  I don't know the reason for this
+	   as Win9x should support these CHARSET names. */
+	return (DEFAULT_CHARSET);
     else
 	for (i = 0; i < sizeof(cp2charset)/sizeof(cp2charset_table); i++)
-	    if(acp == cp2charset[i].codepage) return(cp2charset[i].charset);
+	    if (cp == cp2charset[i].codepage) return(cp2charset[i].charset);
     return(ANSI_CHARSET);
 }
-
-

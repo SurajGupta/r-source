@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -664,6 +664,7 @@ static SEXP growList(SEXP oldlist) {
  * Store the list of segments for a single level in the SEXP
  * list that will be returned to the user
  */
+static
 int addContourLines(double *x, int nx, double *y, int ny,
 		     double *z, double zc, double atom,
 		     SEGP* segmentDB, int nlines, SEXP container)
@@ -871,7 +872,7 @@ SEXP GEcontourLines(double *x, int nx, double *y, int ny,
 
 SEXP GEdrawContourLines();
 
-SEXP do_contourLines(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_contourLines(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP oargs, c, x, y, z;
     int nx, ny, nc;
@@ -1358,7 +1359,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 /* contour(x, y, z, levels, labels, labcex, drawlabels,
  *         method, vfont, col = col, lty = lty, lwd = lwd)
  */
-SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP oargs, c, x, y, z, vfont, col, rawcol, lty, lwd, labels;
     int i, j, nx, ny, nc, ncol, nlty, nlwd;
@@ -1656,7 +1657,7 @@ FindPolygonVertices(double low, double high,
 */
 
 /* filledcontour(x, y, z, levels, col) */
-SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP oargs, sx, sy, sz, sc, scol;
     double *x, *y, *z, *c;
@@ -1773,7 +1774,7 @@ SEXP do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 /* image(x, y, z, col, breaks) */
-SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_image(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP oargs, sx, sy, sz, sc;
     double *x, *y;
@@ -1811,16 +1812,7 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
     z = INTEGER(sz);
     c = (unsigned*)INTEGER(sc);
 
-    /* Check of grid coordinates */
-    /* We want them to all be finite and in strictly ascending order */
-
-    if (nx < 1 || ny < 1) goto badxy;
-    if (!R_FINITE(x[0])) goto badxy;
-    if (!R_FINITE(y[0])) goto badxy;
-    for (i = 1; i < nx; i++)
-	if (!R_FINITE(x[i]) || x[i] <= x[i - 1]) goto badxy;
-    for (j = 1; j < ny; j++)
-	if (!R_FINITE(y[j]) || y[j] <= y[j - 1]) goto badxy;
+    /* Check of grid coordinates now done in C code */
 
     colsave = Rf_gpptr(dd)->col;
     xpdsave = Rf_gpptr(dd)->xpd;
@@ -1845,10 +1837,6 @@ SEXP do_image(SEXP call, SEXP op, SEXP args, SEXP env)
     if (GRecording(call, dd))
 	recordGraphicOperation(op, oargs, dd);
     return R_NilValue;
-
-  badxy:
-    errorcall(call, _("invalid x / y values or limits"));
-    return R_NilValue;/* never used; to keep -Wall happy */
 }
 
 	/*  P e r s p e c t i v e   S u r f a c e   P l o t s  */
@@ -2455,7 +2443,7 @@ static void PerspAxes(double *x, double *y, double *z,
     Rf_gpptr(dd)->xpd = xpdsave;
 }
 
-SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, y, z, xlim, ylim, zlim;
     SEXP depth, indx, originalArgs;

@@ -1,6 +1,6 @@
 /* Determine a canonical name for the current locale's character encoding.
 
-   Copyright (C) 2000-2003 Free Software Foundation, Inc.
+   Copyright (C) 2000-2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -14,7 +14,7 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
    USA.  */
 
 /* Written by Bruno Haible <bruno@clisp.org>.  */
@@ -73,8 +73,8 @@
 # define relocate(pathname) (pathname)
 #endif
 
-#if defined _WIN32 || defined __WIN32__ || defined __EMX__ || defined __DJGPP__
-  /* Win32, OS/2, DOS */
+#if defined _WIN32 || defined __WIN32__ || defined __CYGWIN__ || defined __EMX__ || defined __DJGPP__
+  /* Win32, Cygwin, OS/2, DOS */
 # define ISSLASH(C) ((C) == '/' || (C) == '\\')
 #endif
 
@@ -172,6 +172,10 @@ get_charset_aliases ()
   return cp;
 }
 
+#ifdef WIN32
+# include <locale.h>
+#endif
+
 /* Determine the current locale's character encoding, and canonicalize it
    into one of the canonical names listed in config.charset.
    The result must not be freed; it is statically allocated.
@@ -228,9 +232,19 @@ locale_charset ()
 
   static char buf[2 + 10 + 1];
 
-  /* Woe32 has a function returning the locale's codepage as a number.  */
+  /* Woe32 has a function returning the locale's codepage as a number.
   sprintf (buf, "CP%u", GetACP ());
   codeset = buf;
+  */
+  /* But that is the system codepage, not that for the current locale */
+  {
+      char *ctype = setlocale(LC_CTYPE, NULL), *p;
+      p = strrchr(ctype, '.');
+      if(p && isdigit(p[1])) {
+	  sprintf (buf, "CP%s", p + 1);
+      } else sprintf (buf, "CP%u", GetACP ());
+      codeset = buf;
+  }
 
 #elif defined OS2
 

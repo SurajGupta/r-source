@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-08-26 09:41\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -31,30 +31,6 @@ msgstr "help(\\\"Deprecated\\\")와 help(\\\"%s-deprecate\\\")를 보아 주십�
 
 msgid "See help(\"Deprecated\")"
 msgstr "help(\\\"Deprecated\\\")를 보아 주십시오"
-
-msgid "invalid numbers in 'quote'"
-msgstr "'quote'에서 무효인 수치가 있습니다"
-
-msgid "invalid 'quote' specification"
-msgstr "무효인 'quote' 지정입니다"
-
-msgid "invalid 'row.names' specification"
-msgstr "무효인 'row.names'의 지정입니다"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr ""
-
-msgid "invalid 'col.names' specification"
-msgstr "무효인 'col.names' 지정입니다"
-
-msgid "'file' must be a character string or connection"
-msgstr "'file'는 문자열 또는 connection가 아니면 되지 않습니다"
-
-msgid "appending column names to file"
-msgstr "파일에서 열명을 추가합니다"
-
-msgid "format.char: coercing 'x' to 'character'"
-msgstr "format.char: 'x'를 'character' 로 강제 변환합니다"
 
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "'La.svd'의 인수는 수치나 복소수가 아니면 안됩니다"
@@ -493,6 +469,9 @@ msgstr "'from'는 POSIXt 오브젝트가 아니면 되지 않습니다"
 msgid "'to' must be a POSIXt object"
 msgstr "'to'는  POSIXt 오브젝트가 아니면 되지 않습니다"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file'는 문자열 또는 connection가 아니면 되지 않습니다"
+
 msgid "'x' must be a square matrix"
 msgstr "'x' 정방 행렬이 아니면 되지 않습니다"
 
@@ -595,9 +574,6 @@ msgstr "link 해야할 파일이 없습니다"
 msgid "no files/directory to link to"
 msgstr "link 해야할 파일 또는 디렉토리가 없습니다"
 
-msgid "calling wrong method"
-msgstr "잘못된 메소드의 호출입니다"
-
 msgid "'package' must be of length 1"
 msgstr "'package'는 길이 1이 나오지 않으면 되지 않습니다"
 
@@ -626,6 +602,13 @@ msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr ""
 "파손되어진 데이터 프레임입니다.열은 잘릴수 있습니다, 또는 NA값으로 가득채워질"
 "수가 있습니다"
+
+#, fuzzy
+msgid "'zero.print' has length > 1"
+msgstr "'input'는 길이 1 이 나오지 않으면 되지 않습니다"
+
+msgid "'zero.print' must be character, logical or NULL"
+msgstr ""
 
 msgid "'subset' must evaluate to logical"
 msgstr "'subset'는 논리값으로서 평가되지 않으면 안됩니다"
@@ -668,6 +651,10 @@ msgstr "패키지 '%s'는 버전 %s의 R미만에서 작성되어졌습니다"
 
 msgid "package '%s' was built for %s"
 msgstr "패키지 '%s'는 %s에 대해서 작성되었습니다"
+
+#, fuzzy
+msgid "package '%s' is not installed for 'arch=%s'"
+msgstr "패키지 '%s'는 올바르고 인스톨 되지 않았습니다"
 
 msgid "package '%s' has not been installed properly"
 msgstr "패키지 '%s'는 올바르고 인스톨 되지 않았습니다"
@@ -767,9 +754,6 @@ msgstr ""
 "패키지 '%s'가 복수(여러개) 검색되었습니다.\n"
 "'%s'에 검색된 것을 사용합니다"
 
-msgid "none of the packages were found"
-msgstr "어느 패키지도 검색되지 않았습니다"
-
 msgid ""
 "Further information is available in the following vignettes in directory '%"
 "s':"
@@ -803,27 +787,20 @@ msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
 msgstr ""
 "패키지 '%s' %s는 적재 되었습니다만, %s %s 가 '%s'에 의해 요구되어 있습니다"
 
-msgid "bad file argument"
-msgstr "잘못된 파일 인수입니다"
-
-msgid "no input is available"
-msgstr "어떠한 입력도 이용할 수 없습니다"
-
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "입력 오류가 발생되어지고 있습니다. LF가 CR로 옮겨 놓을 수가 있습니다"
 
-msgid ""
-"the input does not start with a magic number compatible with loading from a "
-"connection"
-msgstr ""
-"입력은 connection로부터 로드와 호환성이 있는 magic number로 시작되어\n"
-"있지 않습니다"
+msgid "bad 'file' argument"
+msgstr "잘못한 'file' 인수입니다"
 
 msgid "'file' must be specified"
 msgstr "'file'가 지정되지 않으면 안됩니다"
 
 msgid "'file' must be non-empty string"
 msgstr "'file'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
+
+msgid "bad file argument"
+msgstr "잘못된 파일 인수입니다"
 
 msgid "can only save to a binary connection"
 msgstr "binary connection만 저장할수가 없습니다"
@@ -836,6 +813,9 @@ msgstr "[이전에 저장된 workspace를 복귀합니다]"
 
 msgid "invalid 'category' argument"
 msgstr "무효인 'category' 인수입니다"
+
+msgid "must specify formal argument names to vectorize"
+msgstr ""
 
 msgid "'arg' should be one of"
 msgstr "'arg'는 이하의 하나가 아니면 되지 않습니다"
@@ -917,6 +897,25 @@ msgstr "%s는 '%s'때문에 'loadNamespace'에 실패했습니다"
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "%s는 '%s'때문에 'loadNamespace'에 이미 밀폐되었습니다"
 
+msgid "failed to assign RegisteredNativeSymbol for"
+msgstr ""
+
+msgid "to"
+msgstr ""
+
+msgid "since"
+msgstr ""
+
+msgid "is already defined in the"
+msgstr ""
+
+#, fuzzy
+msgid "namespace"
+msgstr "이름 공간이 아닙니다"
+
+msgid "failed to assign NativeSymbolInfo for"
+msgstr ""
+
 msgid "package '%s' does not have a name space"
 msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
 
@@ -981,6 +980,20 @@ msgstr "정의하지 않는 export입니다 :"
 
 msgid "package '%s' has no NAMESPACE file"
 msgstr "패키지 '%s'는 NAMESPACE 파일을 가지고 있지 않습니다"
+
+#, fuzzy
+msgid "empty name in directive '%s' in NAMESPACE file"
+msgstr "패키지 '%s'는 NAMESPACE 파일을 가지고 있지 않습니다"
+
+#, fuzzy
+msgid "duplicated symbol names"
+msgstr "중복한 import명입니다"
+
+msgid "in useDynLib("
+msgstr ""
+
+msgid ")"
+msgstr ""
 
 msgid "bad 'S3method' directive: %s"
 msgstr "잘못한 'S3method' 지령입니다: %s"
@@ -1092,6 +1105,9 @@ msgstr "'as.is'에 이름을 들 수 있던 열에 존재하지 않는 것이 �
 msgid "'as.is' has the wrong length %d  != cols = %d"
 msgstr "'as.is'는 잘못된 길이 %d !=cols = %d를 가집니다"
 
+msgid "invalid 'row.names' specification"
+msgstr "무효인 'row.names'의 지정입니다"
+
 msgid "'x' must be a vector"
 msgstr "'x'는 벡터가 아니면 되지 않습니다"
 
@@ -1131,9 +1147,6 @@ msgstr "길이의 non-negative 수치가 아니면 되지 않습니다"
 msgid "too many arguments"
 msgstr "인수의 수가 너무 많습니다"
 
-msgid "bad 'file' argument"
-msgstr "잘못한 'file' 인수입니다"
-
 msgid "'connection' must be a connection"
 msgstr "'connection'는 connection가 아니면 되지 않습니다"
 
@@ -1154,6 +1167,10 @@ msgstr "'slove'안에 특이 행렬 'a'가 있습니다"
 
 msgid "only square matrices can be inverted"
 msgstr "역행렬은 정방 행렬만 정의 할수가 없습니다"
+
+#, fuzzy
+msgid "'b' must be compatible with 'a'"
+msgstr "'by'는 길이 1이 나오지 않으면 되지 않습니다"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
 msgstr ""
@@ -1206,8 +1223,15 @@ msgstr ""
 msgid "'%s' is not an existing file"
 msgstr "'%s'는 기존의 파일이 아닙니다"
 
-msgid "is not TRUE"
+#, fuzzy
+msgid "is not"
 msgstr "(은)는 TRUE가 아닙니다"
+
+msgid "all"
+msgstr ""
+
+msgid "TRUE"
+msgstr ""
 
 msgid "incorrect value for 'x'"
 msgstr "'x'에 대한 정확하지 않는 값입니다"
@@ -1284,6 +1308,21 @@ msgstr "이용 할수 있는 traceback가 없습니다"
 msgid "argument to 'which' is not logical"
 msgstr "'which'에서 인수는 논리값이 아닙니다"
 
+msgid "invalid numbers in 'quote'"
+msgstr "'quote'에서 무효인 수치가 있습니다"
+
+msgid "invalid 'quote' specification"
+msgstr "무효인 'quote' 지정입니다"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr ""
+
+msgid "invalid 'col.names' specification"
+msgstr "무효인 'col.names' 지정입니다"
+
+msgid "appending column names to file"
+msgstr "파일에서 열명을 추가합니다"
+
 msgid "attempt to change '%s' ignored"
 msgstr ""
 
@@ -1324,6 +1363,11 @@ msgid_plural "packages %s are not loaded"
 msgstr[0] ""
 "패키지 %s는 적재되지 않습니다\n"
 "패키지(복수)%s는 적재되지 않습니다"
+
+#, fuzzy
+msgid "there is no package called"
+msgid_plural "there are no packages called"
+msgstr[0] "'%s'라는 이름의 패키지는 없습니다"
 
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"

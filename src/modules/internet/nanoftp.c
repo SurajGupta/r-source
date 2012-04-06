@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> the only interpretation of char is ASCII 
@@ -87,6 +87,14 @@ extern void R_ProcessEvents(void);
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+
+
+#if !defined(strdup) && defined(HAVE_DECL_STRDUP) && !HAVE_DECL_STRDUP
+extern char *strdup(const char *s1);
+#endif
+#if !defined(snprintf) && defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
+extern int snprintf (char *s, size_t n, const char *format, ...);
 #endif
 
 
@@ -1130,7 +1138,7 @@ RxmlNanoFTPGetConnection(void *ctx) {
     unsigned char ad[6], *adp, *portp;
     unsigned int temp[6];
     struct sockaddr_in dataAddr;
-    SOCKLEN_T dataAddrLen;
+    R_SOCKLEN_T dataAddrLen;
 
     ctxt->dataFd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (ctxt->dataFd < 0) {

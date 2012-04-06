@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
 
 
  *  Matching and Partial Matching for Strings
@@ -52,6 +52,8 @@
 
 Rboolean NonNullStringMatch(SEXP s, SEXP t)
 {
+    /* "" or NA string matches nothing */
+    if (s == NA_STRING || t == NA_STRING) return FALSE;
     if (CHAR(s)[0] && CHAR(t)[0] && strcmp(CHAR(s), CHAR(t)) == 0)
 	return TRUE;
     else

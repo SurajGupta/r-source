@@ -23,7 +23,8 @@ title(main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
     e.g., \code{col.main} or \code{cex.sub} instead of just \code{col}
     or \code{cex}.  \code{xpd} can be used to set the clipping region:
     this defaults to the figure region unless \code{outer = TRUE},
-    otherwise the device region and can only be increased.
+    otherwise the device region and can only be increased.  \code{mgp}
+    controls the default placing of the axis titles.
   }
 }
 \description{
@@ -38,7 +39,7 @@ title(main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
   The labels passed to title can be simple strings or expressions,
   or they can be a list containing the string to be plotted, and
   a selection of the optional modifying graphical parameters
-  \code{cex=}, \code{col=}, \code{font=}.
+  \code{cex=}, \code{col=} and \code{font=}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

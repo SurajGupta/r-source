@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-08-26 09:41\n"
+"POT-Creation-Date: 2006-04-18 12:45\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -36,30 +36,6 @@ msgstr "Si veda help(\"Deprecated\") e help(\"%s-deprecated\")."
 
 msgid "See help(\"Deprecated\")"
 msgstr "Si veda help(\"Deprecated\")"
-
-msgid "invalid numbers in 'quote'"
-msgstr "numeri non validi in 'quote'"
-
-msgid "invalid 'quote' specification"
-msgstr "specificazione di 'quote' non valida"
-
-msgid "invalid 'row.names' specification"
-msgstr "specificazione di 'row.names' non valida"
-
-msgid "col.names = NA makes no sense when row.names = FALSE"
-msgstr ""
-
-msgid "invalid 'col.names' specification"
-msgstr "specificazione di 'col.names' non valida"
-
-msgid "'file' must be a character string or connection"
-msgstr "'file' deve essere una string di caratteri o una connessione"
-
-msgid "appending column names to file"
-msgstr "accodo nomi colonna al file"
-
-msgid "format.char: coercing 'x' to 'character'"
-msgstr "fomrat.char: trasformo 'x' in 'character'"
 
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "l'argomento di 'La.svd' deve essere numeric o complex"
@@ -506,6 +482,9 @@ msgstr "'from' deve essere un oggetto POSIXt"
 msgid "'to' must be a POSIXt object"
 msgstr "'to' deve essere un oggetto POSIXt"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file' deve essere una string di caratteri o una connessione"
+
 msgid "'x' must be a square matrix"
 msgstr "'x' deve essere una matrice quadrata"
 
@@ -611,9 +590,6 @@ msgstr "nessun file cui collegarsi"
 msgid "no files/directory to link to"
 msgstr "nessun file/directory da collegare"
 
-msgid "calling wrong method"
-msgstr "chimata ad un metodo sbagliato"
-
 msgid "'package' must be of length 1"
 msgstr "'package' deve avere lunghezza 1"
 
@@ -638,6 +614,12 @@ msgstr "'flag' può contenre solo '0+- #'"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "data frame corrotto: le colonne verranno accorciate o riempite con NA"
+
+msgid "'zero.print' has length > 1"
+msgstr "'zero.print' deve avere lunghezza > 1"
+
+msgid "'zero.print' must be character, logical or NULL"
+msgstr ""
 
 msgid "'subset' must evaluate to logical"
 msgstr "'subset' deve lavorare su espressioni logiche"
@@ -681,6 +663,10 @@ msgstr "il pacchetto '%s' è stato creato con R versione %s"
 
 msgid "package '%s' was built for %s"
 msgstr "il pacchetto '%s' è stato creato per %s"
+
+#, fuzzy
+msgid "package '%s' is not installed for 'arch=%s'"
+msgstr "il pacchetto '%s' non è stato installato correttamente"
 
 msgid "package '%s' has not been installed properly"
 msgstr "il pacchetto '%s' non è stato installato correttamente"
@@ -776,9 +762,6 @@ msgstr ""
 "il pacchetto '%s' è stato trovato più volte,\n"
 "uso quello trovato in '%s'"
 
-msgid "none of the packages were found"
-msgstr "nessuno dei pacchetti è stato trovato"
-
 msgid ""
 "Further information is available in the following vignettes in directory '%"
 "s':"
@@ -813,27 +796,20 @@ msgstr "pacchetto '%s' non caricato"
 msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
 msgstr "pacchetto '%s' %s caricato, ma %s %s richiesto da '%s'"
 
-msgid "bad file argument"
-msgstr "argomento file non corretto"
-
-msgid "no input is available"
-msgstr "nessun input disponibile"
-
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "l'input è stato danneggiato, LF sostituiti da CR"
 
-msgid ""
-"the input does not start with a magic number compatible with loading from a "
-"connection"
-msgstr ""
-"l'input non inizia con un identificativo compatibile con il caricamento "
-"dauna connessione"
+msgid "bad 'file' argument"
+msgstr "argomento 'file' sbagliato"
 
 msgid "'file' must be specified"
 msgstr "'file' deve essere specificato"
 
 msgid "'file' must be non-empty string"
 msgstr "'file' deve essere una stringa non vuota"
+
+msgid "bad file argument"
+msgstr "argomento file non corretto"
 
 msgid "can only save to a binary connection"
 msgstr "posso salvare solo su connessioni di tipo binario"
@@ -846,6 +822,9 @@ msgstr "[Caricato workspace precedentemente salvato]"
 
 msgid "invalid 'category' argument"
 msgstr "argomento 'category' non valido"
+
+msgid "must specify formal argument names to vectorize"
+msgstr ""
 
 msgid "'arg' should be one of"
 msgstr "'arg' deve essere uno tra"
@@ -927,6 +906,25 @@ msgstr "%s non riuscito in 'loadNamespace' per %s"
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "namespace '%s' già sigillato in loadNamespace"
 
+msgid "failed to assign RegisteredNativeSymbol for"
+msgstr ""
+
+msgid "to"
+msgstr ""
+
+msgid "since"
+msgstr ""
+
+msgid "is already defined in the"
+msgstr ""
+
+#, fuzzy
+msgid "namespace"
+msgstr "non è un namespace"
+
+msgid "failed to assign NativeSymbolInfo for"
+msgstr ""
+
 msgid "package '%s' does not have a name space"
 msgstr "il pacchetto '%s' non ha un namespace"
 
@@ -990,6 +988,20 @@ msgstr "esportazioni indefinite :"
 
 msgid "package '%s' has no NAMESPACE file"
 msgstr "il pacchetto '%s' non ha il file NAMESPACE"
+
+#, fuzzy
+msgid "empty name in directive '%s' in NAMESPACE file"
+msgstr "il pacchetto '%s' non ha il file NAMESPACE"
+
+#, fuzzy
+msgid "duplicated symbol names"
+msgstr "nomi importati doppi"
+
+msgid "in useDynLib("
+msgstr ""
+
+msgid ")"
+msgstr ""
 
 msgid "bad 'S3method' directive: %s"
 msgstr "direttiva S3method sbagliata: %s"
@@ -1102,6 +1114,9 @@ msgstr "non tutte le colonne nominati in 'as.is' esistono"
 msgid "'as.is' has the wrong length %d  != cols = %d"
 msgstr "'as.is' ha la lunghezza sbagliata %d  != cols = %d"
 
+msgid "invalid 'row.names' specification"
+msgstr "specificazione di 'row.names' non valida"
+
 msgid "'x' must be a vector"
 msgstr "'x' deve essere un vettore"
 
@@ -1142,9 +1157,6 @@ msgstr "la lunghezza deve essere un numero non negativo"
 msgid "too many arguments"
 msgstr "troppi argomenti"
 
-msgid "bad 'file' argument"
-msgstr "argomento 'file' sbagliato"
-
 msgid "'connection' must be a connection"
 msgstr "'connection' deve essere una connessione"
 
@@ -1165,6 +1177,10 @@ msgstr "matrice singolare 'a' in solve"
 
 msgid "only square matrices can be inverted"
 msgstr "solo le matrici quadrate si possono invertire"
+
+#, fuzzy
+msgid "'b' must be compatible with 'a'"
+msgstr "'by' deve essere di lunghezza 1"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
 msgstr "solve.default è stato usato con un oggetto \"qr\": usare 'qr.solve'"
@@ -1214,8 +1230,15 @@ msgstr ""
 msgid "'%s' is not an existing file"
 msgstr "'%s' non è un file esistente"
 
-msgid "is not TRUE"
-msgstr "non è TRUE"
+#, fuzzy
+msgid "is not"
+msgstr "non è"
+
+msgid "all"
+msgstr ""
+
+msgid "TRUE"
+msgstr ""
 
 msgid "incorrect value for 'x'"
 msgstr "valore non corretto per 'x'"
@@ -1292,6 +1315,21 @@ msgstr "Nessun traceback disponibile"
 msgid "argument to 'which' is not logical"
 msgstr "l'argomento di 'which' non è di tipo logico"
 
+msgid "invalid numbers in 'quote'"
+msgstr "numeri non validi in 'quote'"
+
+msgid "invalid 'quote' specification"
+msgstr "specificazione di 'quote' non valida"
+
+msgid "col.names = NA makes no sense when row.names = FALSE"
+msgstr ""
+
+msgid "invalid 'col.names' specification"
+msgstr "specificazione di 'col.names' non valida"
+
+msgid "appending column names to file"
+msgstr "accodo nomi colonna al file"
+
 msgid "attempt to change '%s' ignored"
 msgstr ""
 
@@ -1327,6 +1365,12 @@ msgid "package %s is not loaded"
 msgid_plural "packages %s are not loaded"
 msgstr[0] "pacchetto %s non caricato"
 msgstr[1] "pacchetti %s non caricati"
+
+#, fuzzy
+msgid "there is no package called"
+msgid_plural "there are no packages called"
+msgstr[0] "non c'è alcun pacchetto chiamato '%s'"
+msgstr[1] "non c'è alcun pacchetto chiamato '%s'"
 
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"

@@ -26,11 +26,13 @@ x$name
   }
   \item{i, j, \dots, name}{
     indices specifying elements to extract or replace.  \code{i, j} are
-    \code{numeric} or \code{character} or empty whereas \code{name} must be
-    character or an (unquoted) name.  Numeric values are coerced to
+    \code{numeric} or \code{character} vectors or empty (missing) or
+    \code{NULL} whereas \code{name} must be a character string or an
+    (unquoted or backtick quoted) name.  Numeric values are coerced to
     integer as by \code{\link{as.integer}}.  For extraction with
-    \code{[[} and \code{$} character strings are normally partially
-    matched to the names of the object if exact matching does not succeed.
+    \code{[[} and \code{$} character strings are normally (see under
+    Environments) partially matched to the \code{\link{names}} of the
+    object if exact matching does not succeed.
 
     For \code{[}-indexing only: \code{i, j, \dots} can be logical
     vectors, indicating elements/slices to select.  Such vectors are
@@ -42,6 +44,8 @@ x$name
     matrix with as many columns as there are dimensions of \code{x}; the
     result is then a vector with elements corresponding to the sets of
     indices in each row of \code{i}.
+
+    An index value of \code{NULL} is treated as if it were \code{integer(0)}.
   }
   \item{drop}{For matrices and arrays.  If \code{TRUE} the result is
     coerced to the lowest possible dimension (see the examples).  This
@@ -70,7 +74,8 @@ x$name
   extraction, or on the left-hand-side for replacement.
   When an index expression appears on the left side of an assignment
   then that part of \code{x} is set to the value of the right hand side
-  of the assignment.  In this case no partial matching of indices is done.
+  of the assignment.  In this case no partial matching of indices is
+  done.  The left-hand-side is coerced as needed to accept the values.
 }
 \section{Atomic vectors}{
   The usual form of indexing is \code{"["}.  \code{"[["} can be used to
@@ -161,7 +166,7 @@ x$name
 \section{Argument matching}{
   Note that these operations do not match their index arguments in the
   standard way: argument names are ignored and positional matching only is
-  used. So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and
+  used.  So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and
   \strong{not} to \code{m[1,2]}.
 
   This may not be true for methods defined for them; for example it is
@@ -177,7 +182,7 @@ x$name
 
   The documented behaviour of S is that an \code{NA} replacement index
   \sQuote{goes nowhere} but uses up an element of \code{value}
-  ((Becker \emph{et al} p. 359).  However, that is not the current
+  (Becker \emph{et al} p. 359).  However, that is not the current
   behaviour of S-PLUS.
 }
 \references{

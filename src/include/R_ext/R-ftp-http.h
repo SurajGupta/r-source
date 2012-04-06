@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-5 The R Development Core Team.
+ *  Copyright (C) 2001-6 The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* Advertized entry points, for that part of libxml included in
@@ -57,15 +57,6 @@ void    RxmlMessage(int level, const char *format, ...);
 
 void RxmlNanoFTPCleanup(void);
 void RxmlNanoHTTPCleanup(void);
-
-/* sockets */
-void R_SockTimeout(int delay);
-int R_SockOpen(int port);
-int R_SockListen(int sockp, char *buf, int len);
-int R_SockConnect(int port, char *host);
-int R_SockClose(int sockp);
-int R_SockRead(int sockp, void *buf, int maxlen, int blocking);
-int R_SockWrite(int sockp, const void *buf, int len);
 
 #ifdef __cplusplus
 }

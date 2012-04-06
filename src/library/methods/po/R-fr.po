@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-11-09 11:08\n"
-"PO-Revision-Date: 2005-12-07 01:40+0100\n"
+"POT-Creation-Date: 2006-03-09 16:42\n"
+"PO-Revision-Date: 2006-04-18 08:55+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,9 +16,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-
 msgid "replacement value is not a matrix"
 msgstr "la valeur de remplacement n'est pas une matrice"
+
+msgid "OOPS: something wrong with line"
+msgstr "OOPS : il y a un problème avec la ligne"
+
+msgid "in .OldClassesPrototypes"
+msgstr "dans .OldClassesPrototypes"
 
 msgid "methods may not be defined for primitive function '%s' in this version of R"
 msgstr "les méthodes ne sont peut-être pas définies pour la fonction primitive '%s' dans cette version de R"
@@ -194,6 +199,9 @@ msgstr "tentative d'application d'une signature de classe \"%s\" ; Une liste ou 
 msgid "object to use as a method signature for function '%s' does not look like a legitimate signature (a vector of single class names): there were %d class names, but %d elements in the signature object"
 msgstr "l'objet à utiliser comme signature de méthode pour la fonction '%s' ne semble pas être une signature correcte (un vecteur de noms de classes uniques) : il y a %d noms de classes, mais seulement %d éléments dans l'objet signature"
 
+msgid "more elements in the method signature (%s) than in the generic  %s(%s)"
+msgstr "plus d'éléments dans la signature de méthode (%s) que dans le générique %s(%s)"
+
 msgid "in the method signature for function '%s' invalid argument names in the signature: %s"
 msgstr "dans la signature de méthode pour la fonction '%s', il y a des noms d'arguments incorrects dans cette signature : %s"
 
@@ -211,6 +219,12 @@ msgstr "slot (%s) package manquant dans l'objet de classe \"%s\" (info 'package'
 
 msgid "initialize method returned an object of class \"%s\" instead of the required class \"%s\""
 msgstr "la méthode d'initialisation a renvoyé un objet de classe \"%s\" au lieu de la classe requise \"%s\""
+
+msgid "An object of class \""
+msgstr "Un objet de classe \""
+
+msgid "\""
+msgstr "\""
 
 msgid "the names in signature for method (%s) do not match function's arguments (%s)"
 msgstr "les noms dans la signature pour la méthode (%s) ne correspondent pas aux arguments de la fonction (%s)"
@@ -293,6 +307,9 @@ msgstr "\"%s\" ne peut être utilisé comme partie de données d'une autre classe (
 msgid "prototype is a list with named elements (could be ambiguous):  better to use function prototype() to avoid trouble."
 msgstr "le prototype est une liste d'éléments nommés (ce peut être ambigu) : il vaut mieux utiliser la fonction prototype() pour éviter les problèmes."
 
+msgid "named elements of prototype do not correspond to slot names: %s"
+msgstr "les éléments nommés du prototype ne correspondent pas aux noms des slots : %s"
+
 msgid "the '%s' list for class \"%s\", includes an undefined class \"%s\""
 msgstr "la liste '%' pour la classe \"%s\" inclut une classe non définie \"%s\""
 
@@ -304,9 +321,6 @@ msgstr "pas de slot '.Data' defini pour la classe \"%s\""
 
 msgid "class \"%s\" does not have a data part (a .Data slot) defined"
 msgstr "la classe \"%s\" n'a pas de partie de données définie (un slot .Data)"
-
-msgid "old-style ('S3') class \"%s\" supplied as a superclass of \"%s\", but no automatic conversion will be peformed for S3 classes"
-msgstr "classe de style S3 \"%s\" fournie comme superclasse S4 de \"%s\", mais aucune conversion automatique n'est effectuée pour les classes S3"
 
 msgid "trying to change the argument list of a function with %d arguments to have arguments (%s)"
 msgstr "tentative de modification de la liste d'arguments d'une fonction ayant %d arguments vers %d arguments"
@@ -325,6 +339,9 @@ msgstr "une méthode de validation doit être une fonction a un seul argument, un 
 
 msgid "unable to find required package '%s'"
 msgstr "impossible de trouver le package '%s' nécessaire"
+
+msgid "Package '%s' is not loaded"
+msgstr "Le package '%s' n'est pas chargé"
 
 msgid "unable to find an environment containing class \"%s\""
 msgstr "impossible de trouver un environnement contenant la classe \"%s\""
@@ -551,8 +568,12 @@ msgstr "la méthode 'as doit avoir un ou deux arguments, plus l'argument 'strict'
 msgid "a 'replace' method definition in 'setAs' must be a function of two arguments, got %d"
 msgstr "une définition de méthode 'replace' dans 'setAs' doit être une fonction à deux arguments, or elle en a %d"
 
-msgid "argument names in replace changed to agree with 'coerce<-' generic:\n%s"
-msgstr "les noms des arguments dans 'replace' sont modifiés pour être en accord avec la fonction générique 'coerce<-' :\n%s "
+msgid ""
+"argument names in replace changed to agree with 'coerce<-' generic:\n"
+"%s"
+msgstr ""
+"les noms des arguments dans 'replace' sont modifiés pour être en accord avec la fonction générique 'coerce<-' :\n"
+"%s "
 
 msgid "ambiguous object (length!=1) to coerce to \"name\""
 msgstr "objet ambigu (longueur supérieure à un) à convertir automatiquement en \"name\""
@@ -632,11 +653,20 @@ msgstr "appel incorrect à 'classLabel' : un nom ou une classe de définition est 
 msgid "argument 'what' should be the name of a function"
 msgstr "l'argument 'what' devrait être le nom d'une fonction"
 
+msgid ".TraceWithMethods: after computing what, whereF"
+msgstr ".TraceWithMethods : après calcul de 'what', 'whereF'"
+
 msgid "no function definition for '%s' found"
 msgstr "aucune définition de fonction n'est trouvée pour '%s'"
 
+msgid ".TraceWithMethods: untrace case"
+msgstr ".TraceWithMethods : les cas sont détracés"
+
 msgid "the method for \"%s\" for this signature was not being traced"
 msgstr "la méthode pour \"%s\" pour cette signature ne sera pas déboguée"
+
+msgid ".TraceWithMethods: about to assign or setMethod"
+msgstr ".TraceWithMethods : prêt à effectuer l'assignation ou setMethod"
 
 msgid "making a traced version of a primitive; arguments will be treated as '...'"
 msgstr "création d'une version de déboguage d'une primitive ; Les arguments seront traités comme '...'"
@@ -666,3 +696,4 @@ msgid "in the method signature for function '%s' no definition for class: %s"
 msgid_plural "in the method signature for function '%s' no definition for classes: %s"
 msgstr[0] "dans la signature de méthode pour la fonction '%s', il n'y a aucune définition pour la classe : %s"
 msgstr[1] "dans la signature de méthode pour la fonction '%s', il n'y a aucune définition pour les classes : %s"
+

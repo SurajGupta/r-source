@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka
  *			      and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -29,13 +29,15 @@
 # include <config.h>
 #endif
 
+#include <Defn.h>
+
 /* On most systems libintl.h includes this, but not Fedora Core 1 */
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
 
 /* necessary for some (older, i.e., ~ <= 1997) Linuxen, and apparently
-   also some AIX systems.
+   also some AIX systems.  NB, included unconditionally later on.
    */
 #ifndef FD_SET
 # ifdef HAVE_SYS_TIME_H
@@ -47,7 +49,6 @@
 # include <unistd.h>		/* isatty() */
 #endif
 
-#include "Defn.h"
 #include "Fileio.h"
 #include <Rdevices.h>		/* KillAllDevices() [nothing else?] */
 
@@ -59,6 +60,7 @@
 #include "Runix.h"
 
 
+attribute_hidden
 Rboolean UsingReadline = TRUE;  /* used in sys-std.c & ../main/platform.c */
 
 /* call pointers to allow interface switching */
@@ -109,16 +111,76 @@ void R_setupHistory()
     }
 }
 
+#if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRLIMIT)
+/* on MacOS X it seems sys/resource.h needs sys/time.h first */
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# endif
+# include <sys/resource.h>
+# ifdef linux
+extern void * __libc_stack_end;
+# endif
+# ifdef HAVE_KERN_USRSTACK
+#  include <unistd.h>
+#  include <sys/types.h>
+#  include <sys/sysctl.h>
+# endif
+#endif
+
+int R_running_as_main_program = 0;
+
 int Rf_initialize_R(int ac, char **av)
 {
     int i, ioff = 1, j;
     Rboolean useX11 = TRUE, useTk = FALSE;
     char *p, msg[1024], **avv;
     structRstart rstart;
+    Rstart Rp = &rstart;
+
 #ifdef ENABLE_NLS
     char localedir[PATH_MAX+20];
 #endif
-    Rstart Rp = &rstart;
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRLIMIT)
+{
+    struct rlimit rlim;
+
+    {
+        int ii;
+	/* 1 is downwards */
+        R_CStackDir = ((uintptr_t)&i > (uintptr_t)&ii) ? 1 : -1;
+    }
+
+    if(getrlimit(RLIMIT_STACK, &rlim) == 0) {
+	unsigned long lim1, lim2;
+	lim1 = (unsigned long) rlim.rlim_cur;
+	lim2 = (unsigned long) rlim.rlim_max; /* Usually unlimited */
+        R_CStackLimit = lim1 < lim2 ? lim1 : lim2;
+    }
+#if defined(linux)
+    R_CStackStart = (uintptr_t) __libc_stack_end;
+#elif defined(HAVE_KERN_USRSTACK)
+    {
+	/* Borrowed from mzscheme/gc/os_dep.c */
+	int nm[2] = {CTL_KERN, KERN_USRSTACK};
+	void * base;
+	size_t len = sizeof(void *);
+	int r = sysctl(nm, 2, &base, &len, NULL, 0);
+	R_CStackStart = (uintptr_t) base;
+    }
+#else
+    if(R_running_as_main_program) {
+	/* This is not the main program, but unless embedded it is 
+	   near the top, 5540 bytes away when checked. */
+	R_CStackStart = (uintptr_t) &i + (6000 * R_CStackDir);
+    }
+#endif
+    if(R_CStackStart == -1) R_CStackLimit = -1; /* never set */
+    
+    /* printf("stack limit %ld, start %lx dir %d \n", R_CStackLimit, 
+              R_CStackStart, R_CStackDir); */
+}
+#endif
 
     ptr_R_Suicide = Rstd_Suicide;
     ptr_R_ShowMessage = Rstd_ShowMessage;
@@ -133,6 +195,7 @@ int Rf_initialize_R(int ac, char **av)
     ptr_R_ChooseFile = Rstd_ChooseFile;
     ptr_R_loadhistory = Rstd_loadhistory;
     ptr_R_savehistory = Rstd_savehistory;
+    ptr_R_addhistory = Rstd_addhistory;
     ptr_R_EditFile = NULL; /* for future expansion */
     R_timeout_handler = NULL;
     R_timeout_val = 0;

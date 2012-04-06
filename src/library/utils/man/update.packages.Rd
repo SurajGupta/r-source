@@ -15,20 +15,21 @@
 \usage{
 update.packages(lib.loc = NULL, repos = getOption("repos"),
                 contriburl = contrib.url(repos, type),
-                method, instlib = NULL,
-                ask = TRUE, available = NULL, destdir = NULL,
-		installWithVers = FALSE, checkBuilt = FALSE,
+                method, instlib = NULL, ask = TRUE, available = NULL,
+                \dots, checkBuilt = FALSE,
                 type = getOption("pkgType"))
 
-available.packages(contriburl = contrib.url(getOption("repos")), method)
+available.packages(contriburl = contrib.url(getOption("repos")),
+                   method)
 
 old.packages(lib.loc = NULL, repos = getOption("repos"),
              contriburl = contrib.url(repos),
              method, available = NULL, checkBuilt = FALSE)
 
 new.packages(lib.loc = NULL, repos = getOption("repos"),
-             contriburl = contrib.url(repos),
-             method, available = NULL, ask = FALSE)
+             contriburl = contrib.url(repos, type),
+             method, available = NULL, ask = FALSE, \dots,
+             type = getOption("pkgType"))
 
 download.packages(pkgs, destdir, available = NULL,
                   repos = getOption("repos"),
@@ -39,7 +40,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
                  contriburl = contrib.url(repos, type),
                  method, available = NULL, destdir = NULL,
 		 installWithVers = FALSE, dependencies = FALSE,
-                 type = getOption("pkgType"))
+                 type = getOption("pkgType"),
+                 configure.args = character(0),
+                 clean = FALSE)
 
 contrib.url(repos, type = getOption("pkgType"))
 }
@@ -78,6 +81,7 @@ contrib.url(repos, type = getOption("pkgType"))
 #ifdef unix
     \file{.tar.gz} files.  These can be source archives or binary
     package/bundle archive files (as created by \code{R CMD build --binary}).
+    Tilde-expansion will be done on the file paths.
 #endif
     If this is a zero-length character vector, a listbox of available
     packages (including those contained in bundles) is presented where
@@ -87,7 +91,8 @@ contrib.url(repos, type = getOption("pkgType"))
   \item{available}{an object listing packages available at the repositories
     as returned by \code{available.packages}.}
   \item{lib}{character vector giving the library directories where to
-    install the packages.  Recycled as needed.}
+    install the packages.  Recycled as needed.  If missing, defaults to
+    \code{\link{.libPaths}()[1]} with a warning.}
   \item{ask}{logical indicating whether to ask user before packages
     are actually downloaded and installed, or the character string
     \code{"graphics"}, which brings up a widget to allow the user to
@@ -107,7 +112,32 @@ contrib.url(repos, type = getOption("pkgType"))
     (and so on recursively).  Not used if \code{repos = NULL}.
     Can also be a character vector, a subset of
     \code{c("Depends", "Imports", "Suggests")}.
+
+    Only supported if \code{lib} is of length one (or missing)
+    so it is unambiguous where to install the dependent packages.
   }
+  \item{configure.args}{a character vector or a named list.
+      If a character vector with no names is supplied, the elements are
+      concatenated into a single string (separated by a space) and used
+      as the value for the \code{--configure-args}
+      flag in the call to \code{R CMD INSTALL}.
+      If the character vector has names, these are assumed to identify
+      values for \code{--configure-args} for individual packages.
+      This allows one to specify settings for an entire collection of packages
+      which will be used if any of those packages are installed.
+      These settings can therefore be reused and act as default settings.
+      A named list can be used also to the same effect, and that
+      allows multi-element character strings for each package
+      which are concatenated to a single string to be used as the
+      value for \code{--configure-args}.
+  }
+  \item{\dots}{
+    (for \code{update.packages}).  Arguments such as \code{destdir},
+    \code{installWithVers} and \code{dependencies} to be passed to
+    \code{install.packages}.
+
+    (for \code{new.packages}).  Arguments such as \code{destdir}
+    and \code{dependencies} to be passed to \code{install.packages}.}
   \item{type}{character, indicating the type of package to download and
     install.
 #ifdef unix
@@ -121,6 +151,11 @@ contrib.url(repos, type = getOption("pkgType"))
     the \sQuote{rw-FAQ}).  Value \code{"mac.binary"} can be used to
     explore and download Mac OS X binaries.
 #endif
+  }
+  \item{clean}{a logical value indicating whether to specify
+    to add the \code{--clean} flag to the call to \code{R CMD INSTALL}.
+    This is sometimes used to perform additional operations at the end
+    of the package installation in addition to removing intermediate files.
   }
 }
 \details{
@@ -152,7 +187,8 @@ contrib.url(repos, type = getOption("pkgType"))
   give warnings about incompletely installed bundles (provided the
   information is available) and bundles whose contents has changed.
   If \code{ask != FALSE} it asks which packages should be installed
-  in the first element of \code{lib.loc}.
+  in the first element of \code{lib.loc}.  NB: versioned installs are
+  not installs of a named package.
 
   \code{download.packages} takes a list of package/bundle names and a
   destination directory, downloads the newest versions and saves them in
@@ -201,15 +237,15 @@ contrib.url(repos, type = getOption("pkgType"))
   \code{contrib.url} adds the appropriate type-specific path within a
   repository to each URL in \code{repos}.
 
-  For \code{install.packages} and \code{update.packages}, \code{destdir}
+  For \code{install.packages}, \code{destdir}
   is the directory to which packages will be downloaded.  If it is
   \code{NULL} (the default) a directory \code{downloaded_packages} of
   the session temporary directory will be used (and the files will be
   deleted at the end of the session).
   
   If \code{repos} or \code{contriburl} is a vector of length greater than
-  one, the newest version of the package is fetched from the first
-  repository on the list within which it is found.
+  one, the newest version of the package compatible with this version of \R
+  is fetched from the first repository on the list within which it is found.
 }
 \value{
   For \code{available.packages}, a matrix
@@ -235,9 +271,14 @@ contrib.url(repos, type = getOption("pkgType"))
   \code{install.packages} and \code{update.packages} have no return value.
 }
 \section{Warning}{
-  Not enough information is recorded to know if a bundle is completely
-  installed, so a bundle is regarded as installed if any of its
-  component packages is.
+  Take care when using \code{dependencies} with \code{update.packages},
+  for it is unclear where new dependencies should be installed.  The
+  current implementation will only allow it if all the packages to be
+  updated are in a single library, when that library will be used.
+% This comment is no longer true since the Contains: field was installed.
+%   Not enough information is recorded to know if a bundle is completely
+%   installed, so a bundle is regarded as installed if any of its
+%   component packages is.
 }
 \note{
   Some binary distributions of \R have \code{INSTALL} in a separate
@@ -252,5 +293,15 @@ contrib.url(repos, type = getOption("pkgType"))
 
   \code{\link{INSTALL}}, \code{\link{REMOVE}},
   \code{\link{library}}, \code{\link{.packages}}, \code{\link{read.dcf}}
+}
+
+\examples{
+
+\dontrun{
+  install.packages(c("XML_0.99-5.tar.gz", "../../Interfaces/Perl/RSPerl_0.8-0.tar.gz"),
+                   repos = NULL,
+                   configure.args = c(XML = '--with-xml-config=xml-config',
+                                      RSPerl = "--with-modules='IO Fcntl'"))
+}
 }
 \keyword{utilities}

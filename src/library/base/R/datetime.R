@@ -90,14 +90,26 @@ as.POSIXct.default <- function(x, tz = "")
                   deparse(substitute(x))))
 }
 
+as.numeric.POSIXlt <- function(x) as.POSIXct(x)
+
 format.POSIXlt <- function(x, format = "", usetz = FALSE, ...)
 {
     if(!inherits(x, "POSIXlt")) stop("wrong class")
     if(format == "") {
         ## need list [ method here.
         times <- unlist(unclass(x)[1:3])
+        secs <- x$sec; secs <- secs[!is.na(secs)]
+        np <- getOption("digits.secs")
+        if(is.null(np)) np <- 0 else np <- min(6, np)
+        if(np >= 1) {
+            for (i in (1:np)- 1) if(all( abs(secs - round(secs, i)) < 1e-6 )) {
+                np <- i
+                break;
+            }
+        }
         format <- if(all(times[!is.na(times)] == 0)) "%Y-%m-%d"
-        else "%Y-%m-%d %H:%M:%S"
+        else if(np == 0) "%Y-%m-%d %H:%M:%S"
+        else paste("%Y-%m-%d %H:%M:%OS", np, sep="")
     }
     .Internal(format.POSIXlt(x, format, usetz))
 }
@@ -158,7 +170,7 @@ summary.POSIXlt <- function(object, digits = 15, ...)
     if (inherits(e1, "difftime")) e1 <- coerceTimeUnit(e1)
     if (inherits(e2, "difftime")) e2 <- coerceTimeUnit(e2)
     structure(unclass(e1) + unclass(e2), class = c("POSIXt", "POSIXct"),
-              tzone = attr(e1, "tzone"))
+              tzone = check_tzones(e1, e2))
 }
 
 "-.POSIXt" <- function(e1, e2)
@@ -209,7 +221,7 @@ check_tzones <- function(...)
     if(length(tzs)) tzs[1] else NULL
 }
 
-Summary.POSIXct <- function (x, ...)
+Summary.POSIXct <- function (x, ..., na.rm)
 {
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
     if (!ok) stop(.Generic, " not defined for \"POSIXct\" objects")
@@ -222,7 +234,7 @@ Summary.POSIXct <- function (x, ...)
     val
 }
 
-Summary.POSIXlt <- function (x, ...)
+Summary.POSIXlt <- function (x, ..., na.rm)
 {
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
     if (!ok) stop(.Generic, " not defined for \"POSIXlt\" objects")
@@ -285,7 +297,7 @@ is.na.POSIXlt <- function(x) is.na(as.POSIXct(x))
 ## This is documented to remove the timezone
 c.POSIXct <- function(..., recursive=FALSE)
     structure(c(unlist(lapply(list(...), unclass))),
-              class=c("POSIXt","POSIXct"))
+              class = c("POSIXt", "POSIXct"))
 
 ## we need conversion to POSIXct as POSIXlt objects can be in different tz.
 c.POSIXlt <- function(..., recursive=FALSE)
@@ -302,7 +314,7 @@ all.equal.POSIXct <- function(target, current, ..., scale=1)
 ISOdatetime <- function(year, month, day, hour, min, sec, tz="")
 {
     x <- paste(year, month, day, hour, min, sec, sep="-")
-    as.POSIXct(strptime(x, "%Y-%m-%d-%H-%M-%S", tz=tz), tz=tz)
+    as.POSIXct(strptime(x, "%Y-%m-%d-%H-%M-%OS", tz=tz), tz=tz)
 }
 
 ISOdate <- function(year, month, day, hour=12, min=0, sec=0, tz="GMT")
@@ -471,7 +483,7 @@ mean.difftime <- function (x, ..., na.rm = FALSE)
     }
 }
 
-Summary.difftime <- function (x, ..., na.rm = FALSE)
+Summary.difftime <- function (x, ..., na.rm)
 {
     coerceTimeUnit <- function(x)
     {

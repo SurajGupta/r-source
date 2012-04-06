@@ -7,7 +7,8 @@
   produces a measure of consistency.
 }
 \usage{
-xy.coords(x, y, xlab = NULL, ylab = NULL, log = NULL, recycle = FALSE)
+xy.coords(x, y = NULL, xlab = NULL, ylab = NULL, log = NULL,
+          recycle = FALSE)
 }
 \alias{xy.coords}
 \arguments{
@@ -17,14 +18,14 @@ xy.coords(x, y, xlab = NULL, ylab = NULL, log = NULL, recycle = FALSE)
   \item{log}{character, \code{"x"}, \code{"y"} or both, as for
     \code{\link{plot}}.  Sets negative values to \code{\link{NA}} and
     gives a warning.}
-\item{recycle}{logical; if \code{TRUE}, recycle (\code{\link{rep}}) the shorter
-    of \code{x} or \code{y} if their lengths differ.}
+  \item{recycle}{logical; if \code{TRUE}, recycle (\code{\link{rep}})
+    the shorter of \code{x} or \code{y} if their lengths differ.}
 }
 \details{
   An attempt is made to interpret the arguments \code{x} and \code{y} in
   a way suitable for plotting.
 
-  If \code{y} is missing and \code{x} is a
+  If \code{y} is \code{NULL} and \code{x} is a
   \describe{
     \item{formula:}{of the form \code{yvar ~ xvar}. \code{xvar} and
       \code{yvar} are used as x and y variables.}

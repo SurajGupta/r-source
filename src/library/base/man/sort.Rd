@@ -34,9 +34,11 @@ is.unsorted(x, na.rm = FALSE)
   \code{partial} are in their correct position in the sorted array.  Any
   values smaller than these values are guaranteed to have a smaller
   index in the sorted array and any values which are greater are
-  guaranteed to have a bigger index in the sorted array.  This is included
+  guaranteed to have a bigger index in the sorted array.  (This is included
   for efficiency, and many of the options are not available for partial
-  sorting.
+  sorting.  It is only substantially more efficient if \code{partial} has a
+  handful of elements, and as from \R 2.3.0 a full sort is done if there
+  are more than 10.)  Names are discarded for partial sorting.
 
   The sort order for character vectors will depend on the collating
   sequence of the locale in use: see \code{\link{Comparison}}.
@@ -65,6 +67,10 @@ is.unsorted(x, na.rm = FALSE)
   sorted numbers and the ordering index vector.  In the latter case,
   if \code{method == "quick"} ties may be reversed in the ordering,
   unlike \code{sort.list}, as quicksort is not stable.
+
+  As from \R 2.3.0, all attributes are removed from the return value
+  except names, which are sorted.  (If \code{partial} is specified even
+  the names are removed.)
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

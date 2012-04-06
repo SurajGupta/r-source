@@ -16,19 +16,24 @@ windows(width = 7, height = 7, pointsize = 12,
         rescale = c("R", "fit", "fixed"), xpinch, ypinch,
         bg = "transparent", canvas = "white",
         gamma = getOption("gamma"), xpos = NA, ypos = NA,
-        buffered = getOption("windowsBuffered"))
+        buffered = getOption("windowsBuffered"),
+        restoreConsole = FALSE)
 
-win.graph(width = 7, height = 7, pointsize = 12)
-x11(width = 7, height = 7, pointsize = 12)
-X11(width = 7, height = 7, pointsize = 12)
+win.graph(width = 7, height = 7, pointsize = 12,
+          restoreConsole = FALSE)
+x11(width = 7, height = 7, pointsize = 12, restoreConsole = FALSE)
+X11(width = 7, height = 7, pointsize = 12, restoreConsole = FALSE)
 
-win.metafile(filename = "", width = 7, height = 7, pointsize = 12)
-win.print(width = 7, height = 7, pointsize = 12, printer = "")
+win.metafile(filename = "", width = 7, height = 7, pointsize = 12,
+             restoreConsole = TRUE)
+
+win.print(width = 7, height = 7, pointsize = 12, printer = "",
+          restoreConsole = TRUE)
 }
 
 \arguments{
-  \item{width}{the (nominal) width of the plotting window in inches.}
-  \item{height}{the (nominal) height of the plotting window in inches.}
+  \item{width, height}{the (nominal) width and height of the canvas of
+    the plotting window in inches.}
   \item{pointsize}{the default pointsize of plotted text. The allowed
     range is \code{[6, 48]}: values outside that range are reset to 12.}
   \item{record}{logical: sets the initial state of the flag for
@@ -40,10 +45,10 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   \item{canvas}{color.  The color of the canvas which is visible
     when the background color is transparent.}
   \item{gamma}{the gamma correction factor.  This value is used
-    to ensure that the colors displayed are linearly related to
-    RGB values. By default this is taken from
+    to ensure that the colors perceived are linearly related to
+    RGB values (see \code{\link{hsv}}).  By default this is taken from
     \code{\link{options}("gamma")}, or is 1 (no correction) if that is
-    unset.  It sets \code{par("gamma")} for the device.}
+    unset (the usual case).}
   \item{xpos, ypos}{integer.  Position of the top left of the window, in
     pixels.  Negative values are taken from the opposite edge of the
     monitor.  Missing values meant take the default from the
@@ -60,6 +65,7 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   }
   \item{printer}{The name of a printer as known to Windows. The default
     causes a dialog box to come for the user to choose a printer.}
+  \item{restoreConsole}{logical:  see the Details below.}
 }
 
 \description{
@@ -127,7 +133,7 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   \code{print} method, and a subset method.  As the individual plots are
   of class \code{"recordedplot"} they can be replayed by printing them:
   see \code{\link{recordPlot}}.  The active plot history is stored in
-  variable \code{.SavedPlots} in package \pkg{base}.
+  variable \code{.SavedPlots} in the workspace.
 
   When a screen device is double-buffered (the default) the
   screen is updated 100ms after last plotting call or every 500ms during
@@ -137,11 +143,10 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
 
   The font used for text drawn in a Windows device may be controlled in
   two ways.  The file \code{RHOME\\etc\\Rdevga} can be used to specify
-  mappings for \code{par(font=)} (in the graphics
-  package). Alternatively, a device-independent R graphics font family
-  can be specified (e.g., via \code{par(family=)} in the graphics
-  package) and this will be mapped via the Windows font database (see
-  \code{windowsFonts}).
+  mappings for \code{par(font=)} (in the graphics package).  Alternatively,
+  a device-independent \R graphics font family can be specified (e.g.,
+  via \code{par(family=)} in the graphics package) and this will be
+  mapped via the Windows font database (see \code{\link{windowsFonts}}).
 
   Line widths as controlled by \code{par(lwd=)} are in multiples of
   1/96inch.  Multiples less than 1 are allowed, down to one pixel width.
@@ -152,6 +157,12 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "")
   For \code{win.metafile} only one plot is allowed per file, and Windows
   seems to disallow reusing the file.  So the \emph{only} way to allow
   multiple plots is to use a parametrized \code{filename} as in the example.
+  
+  The \code{restoreConsole} argument is a temporary fix for a problem
+  in the current implementation of several Windows graphics devices,
+  and is likely to be removed in an upcoming release.  If set to
+  \code{FALSE}, the console will not receive the focus after the new
+  device is opened.  
 }
 
 \value{

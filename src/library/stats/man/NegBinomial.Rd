@@ -23,18 +23,13 @@ rnbinom(n, size, prob, mu)
   \item{n}{number of observations. If \code{length(n) > 1}, the length
     is taken to be the number required.}
   \item{size}{target for number of successful trials, or dispersion
-    parameter (the shape parameter of the gamma mixing distribution).}
-  \item{prob}{probability of success in each trial.}
+    parameter (the shape parameter of the gamma mixing distribution).
+    Must be strictly positive.}
+  \item{prob}{probability of success in each trial. \code{0 < prob <= 1}.}
   \item{mu}{alternative parametrization via mean: see Details}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
     \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
-}
-\value{
-  \code{dnbinom} gives the density,
-  \code{pnbinom} gives the distribution function,
-  \code{qnbinom} gives the quantile function, and
-  \code{rnbinom} generates random deviates.
 }
 \details{
   The negative binomial distribution with \code{size} \eqn{= n} and
@@ -42,7 +37,7 @@ rnbinom(n, size, prob, mu)
   \deqn{
     p(x) = \frac{\Gamma(x+n)}{\Gamma(n) x!} p^n (1-p)^x}{%
     p(x) = Gamma(x+n)/(Gamma(n) x!) p^n (1-p)^x}
-  for \eqn{x = 0, 1, 2, \ldots}
+  for \eqn{x = 0, 1, 2, \ldots}, \eqn{n > 0} and \eqn{0 < p \le 1}.
 
   This represents the number of failures which occur in a sequence of
   Bernoulli trials before a target number of successes is reached.
@@ -66,6 +61,29 @@ rnbinom(n, size, prob, mu)
 
   The quantile is defined as the smallest value \eqn{x} such that
   \eqn{F(x) \ge p}, where \eqn{F} is the distribution function.
+}
+\value{
+  \code{dnbinom} gives the density,
+  \code{pnbinom} gives the distribution function,
+  \code{qnbinom} gives the quantile function, and
+  \code{rnbinom} generates random deviates.
+
+  Invalid \code{size} or \code{prob} will result in return value
+  \code{NaN}, with a warning.
+}
+\source{
+  \code{dnbinom} computes via binomial probabilities, using code
+  contributed by Catherine Loader (see \code{\link{dbinom}}).
+
+  \code{pnbinom} uses \code{\link{pbeta}}.
+
+  \code{qnbinom} uses the Cornish--Fisher Expansion to include a skewness
+  correction to a normal approximation, followed by a search.
+
+  \code{rnbinom} uses the derivation as a gamma mixture of Poissons, see
+
+  Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation.}
+  Springer-Verlag, New York. Page 480.
 }
 \seealso{
   \code{\link{dbinom}} for the binomial, \code{\link{dpois}} for the

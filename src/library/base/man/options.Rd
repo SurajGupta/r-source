@@ -71,9 +71,18 @@ getOption(x)
       that the change takes effect before the base package is
       initialized (see \code{\link{Startup}}).}
 
+    \item{\code{deparse.max.lines}:}{controls the number of lines used
+      when deparsing in \code{\link{traceback}} and
+      \code{\link{browser}}.  Initially unset, and only used if set to
+      a positive integer.}
+
     \item{\code{digits}:}{controls the number of digits to print when
       printing numeric values.  It is a suggestion only.  Valid values
       are 1\dots22 with default 7.  See \code{\link{print.default}}.}
+
+    \item{\code{digits.secs}:}{controls the maximum number of digits to
+      print when formatting time values in seconds.  Valid values
+      are 0\dots6 with default 0.  See \code{\link{strftime}}.}
 
     \item{\code{download.file.method}:}{Method to be used for
       \code{download.file}.  Currently download methods
@@ -101,7 +110,7 @@ getOption(x)
 
     \item{\code{expressions}:}{sets a limit on the number of nested
       expressions that will be evaluated.  Valid values are
-      25\dots500000 with default 1000.  If you increase it, you may
+      25\dots500000 with default 5000.  If you increase it, you may
       also want to start \R with a larger protection stack;
       see \code{--max-ppsize} in \code{\link{Memory}}.  Note too that
       you may cause a segfault from overflow of the C stack, and on OSes
@@ -270,6 +279,10 @@ getOption(x)
 
     \item{\code{X11fonts}:}{character vector of length 2.
       See \code{\link{X11}}.}
+
+    \item{\code{gamma}:}{double.  The default value of
+      \code{gamma} for \code{\link{X11}} devices, defaulting to 1
+      if unset (the default).}
 #endif
 #ifdef windows
     \item{\code{gamma}:}{double. The default value of

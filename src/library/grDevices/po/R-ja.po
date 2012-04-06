@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-07-13 11:08\n"
+"POT-Creation-Date: 2006-03-09 16:42\n"
 "PO-Revision-Date: 2005-03-31 08:00+0009\n"
 "Last-Translator: Nobuo Funao\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -69,11 +69,11 @@ msgstr "カラースペース(color spaces)は異なった基準白色が使わ�
 msgid "cannot shut down device 1 (the null device)"
 msgstr "デバイス 1 をシャットダウンすることが出来ません（NULL デバイスです）"
 
-msgid "cannot supply which and device at the same time"
-msgstr "同時に which と device を与えることは出来ません"
+msgid "cannot supply 'which' and 'device' at the same time"
+msgstr "同時に 'which' と 'device' を与えることは出来ません"
 
-msgid "cannot copy the null device"
-msgstr "NULL デバイスをコピーすることは出来ません"
+msgid "cannot copy from the null device"
+msgstr "nullデバイスからコピーすることは出来ません"
 
 msgid "cannot copy to the null device"
 msgstr "NULL デバイスにコピーすることは出来ません"
@@ -90,6 +90,9 @@ msgstr "以下からプリントするためのデバイスがありません: "
 msgid "can only print from screen device"
 msgstr "スクリーンデバイスからしかプリントすることが出来ません"
 
+msgid "need to specify one of 'width' and 'height'"
+msgstr "'width' と 'height' のどちらか一つを指定する必要があります"
+
 msgid "dev.control() called without an open graphics device"
 msgstr ""
 "dev.control() は，グラフィックスデバイスが何も開いていないのに呼び出されまし"
@@ -98,8 +101,8 @@ msgstr ""
 msgid "argument is missing with no default"
 msgstr "引数はデフォルトなしで欠損となっています"
 
-msgid "invalid arguments in '%s'  (need named args)"
-msgstr "'%s' 中の不正な引数です（名前がついた引数が必要です）"
+msgid "invalid arguments in '%s' (need named args)"
+msgstr "'%s' 中に不正な引数があります（名前付き引数が必要です）"
 
 msgid "'name.opt' must be character, name of an existing list"
 msgstr "'name.opt' は既存のリストの名前である文字列でなければなりません"
@@ -107,8 +110,8 @@ msgstr "'name.opt' は既存のリストの名前である文字列でなけれ�
 msgid "cannot reset non-existent '%s'"
 msgstr "存在しない '%s' をリセットすることは出来ません"
 
-msgid "invalid options in"
-msgstr "以下は不正なオプションです: "
+msgid "invalid options in '%s'"
+msgstr "'%s' 中に不正なオプションがあります "
 
 msgid "NOT changing"
 msgstr "変更しません"
@@ -119,23 +122,53 @@ msgstr "不正な 'family' 引数です"
 msgid "invalid PDF version"
 msgstr "不正な PDF のバージョンです"
 
-msgid "invalid"
-msgstr "不正な"
+msgid "Invalid font type"
+msgstr "不正なフォント型です"
 
-msgid "in PostScript font specification"
-msgstr "が PostScript フォントの指定中にありました"
+msgid "invalid family name in font specification"
+msgstr "フォント指定中に不正なファミリ名があります"
 
-msgid "font"
-msgstr "フォント"
+msgid "invalid metric information in font specification"
+msgstr "フォント指定中に不正なメトリック指定があります"
 
-msgid "already in use"
-msgstr "は既に使われています"
+msgid "invalid encoding in font specification"
+msgstr "フォント指定中に不正なエンコーディングがあります"
 
-msgid "invalid arguments in postscriptFonts (must be font names)"
-msgstr "postscriptFonts 中の不正な引数です（フォント名が必要です）"
+msgid "Not a CID font"
+msgstr " CID フォントではありません"
 
-msgid "invalid arguments in postscriptFonts (need named args)"
-msgstr "postscriptFonts 中の不正な引数です（名前がついた引数が必要です）"
+msgid "invalid CMap name in font specification"
+msgstr "フォント指定中に不正な CMap 名があります"
+
+msgid "invalid 'cmapEncoding' in font specification"
+msgstr "フォント指定中に不正な 'cmapEncoding' があります"
+
+msgid "invalid PDF resource in font specification"
+msgstr "フォント指定中に不正な PDF resource があります"
+
+msgid "Invalid font database name"
+msgstr "不正なフォントデータベース名です"
+
+msgid "font %s already in use"
+msgstr "フォント %s は既に使われています"
+
+msgid "invalid arguments in '%s' (must be font names)"
+msgstr "'%s' 中の不正な引数です（フォント名が必要です）"
+
+msgid "unknown font"
+msgstr "未知のフォントです"
+
+msgid "font encoding mismatch '%s'/'%s'"
+msgstr "フォントエンコーディングがミスマッチです '%s'/'%s'"
+
+msgid "'file' must be a non-empty character string"
+msgstr "'file' は空でない文字列でなければなりません"
+
+msgid "Invalid output format"
+msgstr "不正な出力書式です"
+
+msgid "status %d in running command '%s'"
+msgstr "状態 %d が命令 '%s' 実行中に起きました"
 
 msgid "no current device to record from"
 msgstr "現在，以下のものから記録することが出来るデバイスはありません: "
@@ -170,9 +203,6 @@ msgstr "'x','y' そして 'z' の長さが異なります"
 msgid "'file' is missing with no default"
 msgstr "'file' はデフォルトなしで欠損となっています"
 
-msgid "'file' must be a non-empty character string"
-msgstr "'file' は空でない文字列でなければなりません"
-
 msgid "sorry, 'gs' cannot be found"
 msgstr "すみません，'gs' が見つかりません"
 
@@ -196,12 +226,6 @@ msgstr "quartzFonts 中の不正な引数です（名前がついた引数が必
 
 msgid "invalid X11 font specification:"
 msgstr "不正な X11 フォントの指定方法です"
-
-msgid "invalid arguments in X11Fonts (must be font names)"
-msgstr "X11Fonts 中の不正な引数です（フォント名が必要です）"
-
-msgid "invalid arguments in X11Fonts (need named args)"
-msgstr "X11Fonts 中の不正な引数です（名前がついた引数が必要です）"
 
 msgid "can only bring windows devices to the front"
 msgstr "windows デバイスしか正面にもってくることが出来ません"

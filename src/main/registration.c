@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  */
 /*
@@ -176,7 +176,7 @@ static R_CMethodDef cMethods [] = {
 static R_CallMethodDef callMethods [] = {
     /* lapack */
     CALLDEF(La_svd, 7),
-    CALLDEF(La_rs, 3),
+    CALLDEF(La_rs, 2),
     CALLDEF(La_rg, 2),
     CALLDEF(La_zgesv, 2),
     CALLDEF(La_zgeqp3, 1),
@@ -203,7 +203,7 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(R_addTaskCallback, 4),
 
     /* Reflectance for the dynamically loaded native symbols. */
-    CALLDEF(R_getSymbolInfo, 2),
+    CALLDEF(R_getSymbolInfo, 3),
     CALLDEF(R_getDllTable, 0),
     CALLDEF(R_getRegisteredRoutines, 1),
 
@@ -285,7 +285,7 @@ static R_FortranMethodDef fortranMethods[] = {
 };
 
 
-void
+void attribute_hidden
 R_init_base(DllInfo *dll)
 {
     R_registerRoutines(dll, cMethods, callMethods,

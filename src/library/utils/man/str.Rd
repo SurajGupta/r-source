@@ -7,10 +7,11 @@ str(object, \dots)
 
 \method{str}{default}(object, max.level = NA, vec.len = 4, digits.d = 3,
     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
-    wid = getOption("width"), nest.lev = 0,
-    indent.str = paste(rep.int(" ", max(0, nest.lev + 1)), collapse = ".."),
+    width = getOption("width"), nest.lev = 0,
+    indent.str = paste(rep.int(" ", max(0, nest.lev + 1)),
+                       collapse = ".."),
     comp.str="$ ", no.list = FALSE, envir = baseenv(),
-    \dots)
+    strict.width = getOption("str")$strict.width, \dots)
 }
 \alias{str}
 \alias{str.default}
@@ -42,8 +43,9 @@ str(object, \dots)
     as sub structures.}
   \item{give.length}{logical; if \code{TRUE} (default), indicate
     length (as \code{[1:\dots]}).}
-  \item{wid}{the page width to be used.  The default is the currently
-    active \code{\link{options}("width")}.}
+  \item{width}{the page width to be used.  The default is the currently
+    active \code{\link{options}("width")}; note that this has only a
+    weak effect, unless \code{strict.width} is not \code{"no"}.}
   \item{nest.lev}{current nesting level in the recursive calls to
     \code{str}.}
   \item{indent.str}{the indentation string to use.}
@@ -52,7 +54,17 @@ str(object, \dots)
     class is printed.}
   \item{envir}{the environment to be used for \emph{promise} (see
     \code{\link{delayedAssign}}) objects only.}
-  \item{\dots}{potential further arguments (required for Method/Generic reasons).}
+  \item{strict.width}{string indicating if the \code{width} argument's
+    specification should be followed strictly, one of the values
+    \code{c("no", "cut", "wrap")}.
+    Defaults to option \code{"str.strict.width"} (see
+    \code{\link{options}}) which defaults to \code{"no"} for back
+    compatibility reasons; \code{"wrap"} uses
+    \code{\link{strwrap}(*, width=width)} whereas \code{"cut"} cuts
+    directly to \code{width}.  Note that a small \code{vec.length}
+    may be better than setting \code{strict.width = "wrap"}.}
+  \item{\dots}{potential further arguments (required for Method/Generic
+    reasons).}
 }
 \value{
   \code{str} does not return anything, for efficiency reasons.
@@ -74,8 +86,11 @@ str(freeny)
 str(str)
 str(.Machine, digits = 20)
 str( lsfit(1:9,1:9))
-str( lsfit(1:9,1:9),  max = 1)
-op <- options(); str(op) #- save first; otherwise internal options() is used.
+str( lsfit(1:9,1:9), max = 1)
+str( lsfit(1:9,1:9), width = 60, strict.width = "cut")
+str( lsfit(1:9,1:9), width = 60, strict.width = "wrap")
+op <- options(); str(op) # save first;
+                         # otherwise internal options() is used.
 need.dev <- !exists(".Device") || is.null(.Device)
 if(need.dev) postscript()
 str(par()); if(need.dev) graphics.off()
@@ -86,6 +101,16 @@ str(ch) # character NA's
 nchar(longch <- paste(rep(letters,100), collapse=""))
 str(longch)
 str(longch, nchar.max = 52)
+
+str(longch, strict.width = "wrap")
+
+## Settings for narrow transcript :
+op <- options(width = 60, str = list(strict.width = "wrap"))
+str(lsfit(1:9,1:9))
+str(options())
+## reset to previous:
+options(op)
+
 
 \dontshow{
  ##-- Some "crazy" objects
@@ -99,12 +124,13 @@ str(quote( { A+B; list(C,D) } ))
 \dontshow{
 had.stats4 <- "package:stats4" \%in\% search()
 if(!had.stats4)
-   rs <-
+   rs <- % the result of require() below
 }
 ## S4 classes :
 require(stats4)
 x <- 0:10; y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
-ll <- function(ymax=15, xh=6) -sum(dpois(y, lambda=ymax/(1+x/xh), log=TRUE))
+ll <- function(ymax=15, xh=6)
+      -sum(dpois(y, lambda=ymax/(1+x/xh), log=TRUE))
 fit <- mle(ll)
 str(fit)
 \dontshow{if(!had.stats4 && rs) detach("package:stats4")}

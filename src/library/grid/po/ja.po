@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.1\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-09-27 08:38+0100\n"
+"POT-Creation-Date: 2006-04-10 14:49+0100\n"
 "PO-Revision-Date: 2005-06-02 16:09+0900\n"
 "Last-Translator: Nobuo Funao\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -19,23 +19,43 @@ msgstr ""
 msgid "Cannot clip to rotated viewport"
 msgstr "rotated viewport は省略することが出来ません"
 
-#: grid.c:641 grid.c:646 grid.c:743 grid.c:748
+#: grid.c:641 grid.c:646 grid.c:735 grid.c:740
 msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
 msgstr ""
 "トップレベルの viewport は pop することが出来ません（grid と グラフィックス出"
 "力を混同していませんか？）"
 
-#: grid.c:939
+#: grid.c:931
 msgid "attempt to plot on null device"
 msgstr "ヌルデバイスに作図を試みる"
 
-#: grid.c:1219
+#: grid.c:1211
 msgid "There is no layout defined"
 msgstr "layout が定義されていません"
 
-#: grid.c:1796
+#: grid.c:1431
+msgid "Polygon edge not found (zero-width or zero-height?)"
+msgstr "多角形頂点が見付かりません(幅もしくは高さがゼロ？)"
+
+#: grid.c:1440
+msgid "Polygon edge not found"
+msgstr "多角形の頂点が見付かりません"
+
+#: grid.c:1580
+msgid "Require at least two points to draw arrow"
+msgstr "矢印を書くためには少なくとも二つの点が必要です"
+
+#: grid.c:1894
+msgid "Non-finite control point in Xspline"
+msgstr "Xspline 中に有限でない制御点"
+
+#: grid.c:2373
 msgid "Invalid circle radius (must be non-negative)"
 msgstr "不正な円の半径です（非負でなければなりません）"
+
+#: grid.c:3067
+msgid "Unable to clip to rotated rectangle"
+msgstr "回転矩形へクリップ出来ません"
 
 #: layout.c:520
 msgid "invalid layout.pos.row"
@@ -45,29 +65,33 @@ msgstr "不正な layout.pos.row です"
 msgid "invalid layout.pos.col"
 msgstr "不正な layout.pos.col です"
 
+#: matrix.c:50
+msgid "singular transformation matrix"
+msgstr "特異な変換行列です"
+
 #: state.c:178
 msgid "Unable to store grid state.  Too many devices open?"
 msgstr ""
 "現在の grid の状態を保持することが出来ません．デバイスを開きすぎていません"
 "か？"
 
-#: unit.c:258 unit.c:408 unit.c:1075 unit.c:1155 unit.c:1235 unit.c:1315
+#: unit.c:258 unit.c:408 unit.c:1138 unit.c:1218 unit.c:1298 unit.c:1378
 msgid "Unimplemented unit function"
 msgstr "単位(unit)関数は推奨されていません"
 
-#: unit.c:768 unit.c:1508
+#: unit.c:827 unit.c:1573
 msgid "Illegal unit or unit not yet implemented"
 msgstr "不正な単位(unit)か，まだ推奨されていない単位(unit)です"
 
-#: unit.c:1638
+#: unit.c:1706
 msgid "Invalid unit"
 msgstr "不正な単位(unit) です"
 
-#: unit.c:1654
+#: unit.c:1722
 msgid "Units must be character"
 msgstr "単位(Units)は文字型である必要があります"
 
-#: unit.c:1657
+#: unit.c:1725
 msgid "Units must be of length > 0"
 msgstr "単位(Units)の長さは 0 より大きい必要があります"
 

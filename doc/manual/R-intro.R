@@ -305,7 +305,7 @@ str(accountants)
 ## 2-tailed p-value for t distribution
 2*pt(-2.43, df = 13)
 ## upper 1% point for an F(2, 7)  distribution
-qf(0.99, 2, 7)
+qf(0.01, 2, 7, lower.tail = FALSE)
 
 attach(faithful)
 summary(eruptions)
@@ -388,6 +388,7 @@ plot(ecdf(B), do.points=FALSE, verticals=TRUE, add=TRUE)
 
 ## "Simulate starting a new R session, by
 rm(list=ls(all=TRUE))
+set.seed(123) # for repeatability
 
 if(interactive())
     help.start()
@@ -423,7 +424,7 @@ rm(fm, fm1, lrf, x, dummy)
 
 
 filepath <- system.file("data", "morley.tab" , package="datasets")
-file.show(filepath)
+if(interactive()) file.show(filepath)
 mm <- read.table(filepath)
 mm
 mm$Expt <- factor(mm$Expt)

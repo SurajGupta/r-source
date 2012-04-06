@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef GRAPHICS_H_
@@ -137,7 +137,7 @@ typedef struct {
     double din[2];	/* device size in inches */
     int	err;		/* Error repporting level */
     rcolor fg;		/* **R ONLY** Foreground Color */
-    char family[50];  /* **R ONLY** Font family 
+    char family[201];  /* **R ONLY** Font family 
 			   Simple name which is mapped by device-specific
 			   font database to device-specific name.
 			   Only used if not "".
@@ -167,7 +167,7 @@ typedef struct {
     double tck;		/* Tick size as in S */
     double tcl;		/* Tick size in "lines" */
     double tmag;	/* **R ONLY** Title Magnification */
-    int	type;		/* type of plot desired */
+    /* int	type;	    type of plot desired -- removed in 2.3.0 */
     double xaxp[3];	/* X Axis annotation */
 			/* [0] = coordinate of lower tick */
 			/* [1] = coordinate of upper tick */
@@ -362,19 +362,29 @@ typedef struct {
 /* always remap private functions */
 #include <Rgraphics.h>
 #define char2col		Rf_char2col
+#define CheckColor		Rf_CheckColor
 #define col2name		Rf_col2name
 #define copyGPar		Rf_copyGPar
 #define curDevice               Rf_curDevice
+#define FixupCex		Rf_FixupCex
+#define FixupCol		Rf_FixupCol
+#define FixupFont		Rf_FixupFont
+#define FixupLty		Rf_FixupLty
+#define FixupLwd		Rf_FixupLwd
+#define FixupPch		Rf_FixupPch
+#define FixupVFont		Rf_FixupVFont
 #define GetDevice               Rf_GetDevice
 #define GInit			Rf_GInit
 #define name2col		Rf_name2col
 #define nextDevice              Rf_nextDevice
 #define number2col		Rf_number2col
 #define NumDevices              Rf_NumDevices
+#define ProcessInlinePars	Rf_ProcessInlinePars
 #define rgb2col			Rf_rgb2col
 #define RGB2rgb			Rf_RGB2rgb
 #define RGBA2rgb		Rf_RGBA2rgb
 #define ScaleColor		Rf_ScaleColor
+#define Specify2		Rf_Specify2
 #define str2col			Rf_str2col
 #define StrMatch		Rf_StrMatch
 #define isNAcol                 Rf_isNAcol
@@ -421,6 +431,18 @@ char* RGBA2rgb(unsigned int, unsigned int, unsigned int, unsigned int);
 int StrMatch(char *s, char *t);
 
 double R_Log10(double);
+
+void ProcessInlinePars(SEXP, DevDesc*, SEXP call);
+void Specify2(char*, SEXP, DevDesc*, SEXP call);
+void RecordGraphicsCall(SEXP);
+
+SEXP FixupPch(SEXP, int);
+SEXP FixupLty(SEXP, int);
+SEXP FixupFont(SEXP, int);
+SEXP FixupCol(SEXP, unsigned int);
+SEXP FixupCex(SEXP, double);
+SEXP FixupLwd(SEXP, double);
+SEXP FixupVFont(SEXP);
 
 #include <R_ext/GraphicsBase.h>
 

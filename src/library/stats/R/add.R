@@ -84,7 +84,8 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     if(is.null(x)) {
 	fc <- object$call
 	fc$formula <- Terms
-	fob <- list(call = fc)
+	## model.frame.lm looks at the terms part for the environment
+	fob <- list(call = fc, terms = Terms)
 	class(fob) <- oldClass(object)
 	m <- model.frame(fob, xlev = object$xlevels)
 	x <- model.matrix(Terms, m, contrasts = object$contrasts)
@@ -187,7 +188,8 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     if(is.null(x)) {
 	fc <- object$call
 	fc$formula <- Terms
-	fob <- list(call = fc)
+	## model.frame.glm looks at the terms part for the environment
+	fob <- list(call = fc, terms = Terms)
 	class(fob) <- oldClass(object)
 	m <- model.frame(fob, xlev = object$xlevels)
         offset <- model.offset(m)
@@ -360,7 +362,8 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
 	z <- if(iswt) lm.wfit(x[, jj, drop = FALSE], y, wt, offset=offset)
 	else lm.fit(x[, jj, drop = FALSE], y, offset=offset)
 	dfs[i] <- z$rank
-	RSS[i] <- deviance.lm(z)
+        oldClass(z) <- "lm" # needed as deviance.lm calls residuals.lm
+	RSS[i] <- deviance(z)
     }
     scope <- c("<none>", scope)
     dfs <- c(object$rank, dfs)
@@ -471,7 +474,7 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
         aod[, "Pr(Chi)"] <- dev
     } else if(test == "F") {
         if(fam == "binomial" || fam == "poisson")
-            warning(gettextf("F test assumes quasi%s family", fam),
+            warning(gettextf("F test assumes 'quasi%s' family", fam),
                     domain = NA)
 	dev <- aod$Deviance
 	rms <- dev[1]/rdf
@@ -520,8 +523,17 @@ factor.scope <- function(factor, scope)
 	facs <- factor
 	if(length(drop)) {
 	    nmfac <- colnames(factor)
-	    where <- match(nmdrop, nmfac, 0)
-	    if(any(!where)) stop("lower scope is not included in model")
+            ## workaround as in PR#7842.
+            ## terms.formula may have flipped interactions
+            nmfac0 <- sapply(strsplit(nmfac, ":", fixed=TRUE),
+                             function(x) paste(sort(x), collapse=":"))
+            nmdrop0 <- sapply(strsplit(nmdrop, ":", fixed=TRUE),
+                             function(x) paste(sort(x), collapse=":"))
+	    where <- match(nmdrop0, nmfac0, 0)
+	    if(any(!where))
+                stop(gettextf("lower scope has term(s) %s not included in model",
+                              paste(sQuote(nmdrop[where==0]), collapse=", ")),
+                     domain = NA)
 	    facs <- factor[, -where, drop = FALSE]
 	    nmdrop <- nmfac[-where]
 	} else nmdrop <- colnames(factor)
@@ -539,8 +551,17 @@ factor.scope <- function(factor, scope)
 	nmfac <- colnames(factor)
 	nmadd <- colnames(add)
 	if(!is.null(nmfac)) {
-	    where <- match(nmfac, nmadd, 0)
-	    if(any(!where)) stop("upper scope does not include model")
+            ## workaround as in PR#7842.
+            ## terms.formula may have flipped interactions
+            nmfac0 <- sapply(strsplit(nmfac, ":", fixed=TRUE),
+                             function(x) paste(sort(x), collapse=":"))
+            nmadd0 <- sapply(strsplit(nmadd, ":", fixed=TRUE),
+                             function(x) paste(sort(x), collapse=":"))
+	    where <- match(nmfac0, nmadd0, 0)
+	    if(any(!where))
+                stop(gettextf("upper scope does not include model term(s) %s",
+                              paste(sQuote(nmfac[where==0]), collapse=", ")),
+                     domain = NA)
 	    nmadd <- nmadd[-where]
 	    add <- add[, -where, drop = FALSE]
 	}

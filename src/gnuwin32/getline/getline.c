@@ -2,6 +2,10 @@
 static char    *copyright = "Copyright (C) 1991, 1992, 1993, Chris Thewalt";
 #endif
 
+/* #include <config.h> */
+#include <R_ext/Boolean.h>
+#include <R_ext/Error.h>
+
 /*
  * Copyright (C) 1991, 1992, 1993 by Chris Thewalt (thewalt@ce.berkeley.edu)
  *
@@ -32,6 +36,10 @@ int 		(*gl_in_hook)() = 0;
 int 		(*gl_out_hook)() = 0;
 int 		(*gl_tab_hook)() = gl_tab;
 
+#include <R_ext/rlocale.h>
+#include <wchar.h>
+extern Rboolean mbcslocale;
+#define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
 
 /******************** imported interface *********************************/
 
@@ -135,6 +143,7 @@ static void     gl_beep(void);          /* try to play a system beep sound */
 
 #ifdef Win32
 /* guido masarotto (3/12/98)*/
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 static HANDLE Win32OutputStream, Win32InputStream = NULL;
 static DWORD OldWin32Mode, AltIsDown;
@@ -244,7 +253,7 @@ gl_char_init()			/* turn off input echo */
        Win32OutputStream = GetStdHandle(STD_OUTPUT_HANDLE);	
    }
    GetConsoleMode(Win32InputStream,&OldWin32Mode);
-   SetConsoleMode(Win32InputStream, 0);
+   SetConsoleMode(Win32InputStream, ENABLE_PROCESSED_INPUT); /* So ^C works */
    AltIsDown = 0;
 #endif      
    
@@ -510,7 +519,10 @@ int
 getline(char *prompt, char *buf, int buflen)
 {
     int             c, loc, tmp;
-
+    int mb_len;
+    mbstate_t mb_st;
+    int i;
+    wchar_t wc;
 #ifdef __unix__
     int	            sig;
 #endif
@@ -556,13 +568,24 @@ getline(char *prompt, char *buf, int buflen)
 		break; 
 	      case '\001': gl_fixup(gl_prompt, -1, 0);		/* ^A */
 		break;
-	      case '\002': gl_fixup(gl_prompt, -1, gl_pos-1);	/* ^B */
+	      case '\002': 	/* ^B */
+		if(mbcslocale) {
+		    mb_len = 0;
+		    mbs_init(&mb_st);
+		    for(i = 0; i< gl_pos ;) {
+			mbrtowc(&wc, gl_buf+i, MB_CUR_MAX, &mb_st);
+			mb_len = Ri18n_wcwidth(wc);
+			i += (wc==0) ? 0 : mb_len;
+		    }
+		    gl_fixup(gl_prompt, -1, gl_pos - mb_len);
+		} else
+		    gl_fixup(gl_prompt, -1, gl_pos-1);
 		break;
 	      case '\003':                                      /* ^C */
-                gl_fixup(gl_prompt,-1,gl_cnt);
-		gl_puts("^C\n");
-                gl_kill(0);
-                gl_fixup(gl_prompt,-2,BUF_SIZE);
+		  gl_fixup(gl_prompt, -1, gl_cnt);
+		  gl_puts("^C\n");
+		  gl_kill(0);
+		  gl_fixup(gl_prompt, -2, BUF_SIZE);
 		break;
 	      case '\004':					/* ^D */
 		if (gl_cnt == 0) {
@@ -576,7 +599,20 @@ getline(char *prompt, char *buf, int buflen)
 		break;
 	      case '\005': gl_fixup(gl_prompt, -1, gl_cnt);	/* ^E */
 		break;
-	      case '\006': gl_fixup(gl_prompt, -1, gl_pos+1);	/* ^F */
+		case '\006': /* ^F */
+		  if(mbcslocale) { 
+		      if(gl_pos >= gl_cnt)break;
+		      mb_len = 0;
+		      mbs_init(&mb_st);
+		      for(i = 0; i<= gl_pos ;){
+			  mbrtowc(&wc, gl_buf+i, MB_CUR_MAX, &mb_st);
+			  mb_len = Ri18n_wcwidth(wc);
+			  i += (wc==0) ? 0 : mb_len;
+		      }
+		      gl_fixup(gl_prompt, -1, gl_pos + mb_len);
+		  }
+		else
+		  gl_fixup(gl_prompt, -1, gl_pos+1);
 		break;
 	      case '\010': case '\177': gl_del(-1);	/* ^H and DEL */
 		break;
@@ -644,10 +680,32 @@ getline(char *prompt, char *buf, int buflen)
 	                    gl_in_hook(gl_buf);
 		        gl_fixup(gl_prompt, 0, BUF_SIZE);
 		        break;
-		      case 'C': gl_fixup(gl_prompt, -1, gl_pos+1); /* right */
+		    case 'C': /* right */
+			if(mbcslocale) { 
+			    mb_len = 0;
+			    mbs_init(&mb_st);
+			    for(i = 0; i<= gl_pos ;){
+				mbrtowc(&wc, gl_buf+i, MB_CUR_MAX, &mb_st);
+				mb_len = Ri18n_wcwidth(wc);
+				i += (wc==0) ? 0 : mb_len;
+			    }
+			    gl_fixup(gl_prompt, -1, gl_pos + mb_len);
+			} else
+			    gl_fixup(gl_prompt, -1, gl_pos+1);
 		        break;
-		      case 'D': gl_fixup(gl_prompt, -1, gl_pos-1); /* left */
-		        break;
+		    case 'D': /* left */
+		       if(mbcslocale) {
+			   mb_len = 0;
+			   mbs_init(&mb_st);
+			   for(i = 0; i <= gl_pos ;){
+			       mbrtowc(&wc, gl_buf+i, MB_CUR_MAX, &mb_st);
+			       mb_len = Ri18n_wcwidth(wc);
+			       i += (wc==0) ? 0 :mb_len;
+			   }
+			   gl_fixup(gl_prompt, -1, gl_pos - mb_len);
+		       } else
+			 gl_fixup(gl_prompt, -1, gl_pos-1);
+			break;
 		      default: gl_putc('\007');         /* who knows */
 		        break;
 		    }
@@ -705,16 +763,53 @@ gl_addchar(int c)
             gl_putc('\a');
             return; 
     }
-    if (gl_overwrite == 0 || gl_pos == gl_cnt) {
-        for (i=gl_cnt; i >= gl_pos; i--)
-            gl_buf[i+1] = gl_buf[i];
-        gl_buf[gl_pos] = (char) c;
-        gl_fixup(gl_prompt, gl_pos, gl_pos+1);
-    } else {
-	gl_buf[gl_pos] = (char) c;
-	gl_extent = 1;
-        gl_fixup(gl_prompt, gl_pos, gl_pos+1);
-    }
+    if(mbcslocale) {
+	int mb_len;
+	int dst_len;
+	mbstate_t mb_st;
+	wchar_t wc;
+	char s[9];
+	int res;
+	int clen ;
+      
+	s[0] = c;
+	clen = 1;
+	res = 0;
+	if((unsigned int)c >= (unsigned int)0x80) {
+            while(clen <= MB_CUR_MAX) {
+	        mbs_init(&mb_st);
+	        res = mbrtowc(&wc, s, clen, &mb_st);
+	        if(res >= 0) break;
+	        if(res == -1) 
+		    gl_error("invalid multibyte character in mbcs_get_next");
+  	        /* so res == -2 */
+	        c = gl_getc();
+	        if(c == EOF) 
+		    gl_error("EOF whilst reading MBCS char");
+	        s[clen++] = c;
+	    } /* we've tried enough, so must be complete or invalid by now */
+	}
+	if( res >= 0 ) {
+	    if (!(gl_overwrite == 0 || gl_pos == gl_cnt))  
+		gl_del(0); 
+	    for (i=gl_cnt; i >= gl_pos; i--)
+                gl_buf[i+clen] = gl_buf[i];
+	    for (i=0; i<clen; i++)
+                gl_buf[gl_pos + i] = s[i];
+	    gl_fixup(gl_prompt, gl_pos, gl_pos+clen);
+	}
+       
+    } else
+	if (gl_overwrite == 0 || gl_pos == gl_cnt) {
+	    for (i = gl_cnt; i >= gl_pos; i--)
+		gl_buf[i+1] = gl_buf[i];
+	    gl_buf[gl_pos] = (char) c;
+	    gl_fixup(gl_prompt, gl_pos, gl_pos+1);
+	} else {
+	    gl_buf[gl_pos] = (char) c;
+	    gl_extent = 1;
+	    gl_fixup(gl_prompt, gl_pos, gl_pos+1);
+	}
 }
 
 static void
@@ -755,11 +850,36 @@ gl_transpose(void)
     int    c;
 
     if (gl_pos > 0 && gl_cnt > gl_pos) {
-	c = gl_buf[gl_pos-1];
-	gl_buf[gl_pos-1] = gl_buf[gl_pos];
-	gl_buf[gl_pos] = (char) c;
-	gl_extent = 2;
-	gl_fixup(gl_prompt, gl_pos-1, gl_pos);
+	if(mbcslocale) {
+	    int l_len = 0;
+	    int r_len = 0;
+	    int i = 0;
+	    int j = 0;
+	    mbstate_t mb_st;
+
+	    mbs_init(&mb_st);
+	    for (i = 0; i < gl_pos;) {
+		l_len = mbrlen(gl_buf+i, MB_CUR_MAX, &mb_st);
+		i += l_len;
+	    }
+	    mbs_init(&mb_st);
+	    r_len = mbrlen(gl_buf+gl_pos, MB_CUR_MAX, &mb_st);
+	    for (i = 0; i < r_len; i++) {
+		for(j = 0; j < l_len; j++) {
+		    c = gl_buf[gl_pos+i-j];
+		    gl_buf[gl_pos+i-j] = gl_buf[gl_pos+i-j-1];
+		    gl_buf[gl_pos+i-j-1] = (char)c;
+		}
+	    }
+	    gl_extent = l_len + r_len;
+	    gl_fixup(gl_prompt, gl_pos - l_len, gl_pos + (r_len - l_len)); 
+	} else {
+	    c = gl_buf[gl_pos-1];
+	    gl_buf[gl_pos-1] = gl_buf[gl_pos];
+	    gl_buf[gl_pos] = (char) c;
+	    gl_extent = 2;
+	    gl_fixup(gl_prompt, gl_pos-1, gl_pos);
+	}
     } else
 	gl_beep();
 }
@@ -797,14 +917,34 @@ gl_del(int loc)
  *     0 : delete character under cursor
  */
 {
-    int i;
+   int i;
 
-    if ((loc == -1 && gl_pos > 0) || (loc == 0 && gl_pos < gl_cnt)) {
-        for (i=gl_pos+loc; i < gl_cnt; i++)
-	    gl_buf[i] = gl_buf[i+1];
-	gl_fixup(gl_prompt, gl_pos+loc, gl_pos+loc);
-    } else
-	gl_beep();
+   if(mbcslocale) {
+       int mb_len;
+       mbstate_t mb_st;
+       wchar_t wc;
+
+       mb_len=0;
+       mbs_init(&mb_st);
+   
+       if ((loc == -1 && gl_pos > 0) || (loc == 0 && gl_pos < gl_cnt)) {
+	   for(i = 0; i<= gl_pos + loc;) {
+	       mbrtowc(&wc,gl_buf+i, MB_CUR_MAX, &mb_st);
+	       mb_len = Ri18n_wcwidth(wc);
+	       i += (wc==0) ? 0 : mb_len;
+	   }
+	   for (i = gl_pos+(loc*mb_len); i <= gl_cnt - mb_len; i++)
+	       gl_buf[i] = gl_buf[i + mb_len];
+	   gl_fixup(gl_prompt,gl_pos+(loc * mb_len) , gl_pos+(loc * mb_len));
+       } else
+	   gl_beep();
+   } else   
+       if ((loc == -1 && gl_pos > 0) || (loc == 0 && gl_pos < gl_cnt)) {
+	   for (i = gl_pos+loc; i < gl_cnt; i++)
+	       gl_buf[i] = gl_buf[i+1];
+	   gl_fixup(gl_prompt, gl_pos+loc, gl_pos+loc);
+       } else
+	   gl_beep();
 }
 
 static void

@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *  IMPLEMENTATION NOTES:
@@ -174,7 +174,7 @@ void R_FreeStringBuffer(DeparseBuffer *buf)
     }
 }
 
-SEXP do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ca1;
     int  cut0, backtick, opts;
@@ -245,6 +245,12 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
 	strncpy(data, CHAR(STRING_ELT(svec, 0)), 10);
 	if (strlen(CHAR(STRING_ELT(svec, 0))) > 10) strcat(data, "...");
 	svec = mkString(data);
+    } else if(R_BrowseLines > 0 && 
+	      localData.linenumber > R_BrowseLines) {
+	/* we need to truncate to fewer lines in the browser call */
+	PROTECT(svec = lengthgets(svec, R_BrowseLines+1));
+	SET_STRING_ELT(svec, R_BrowseLines, mkChar("  ..."));
+	UNPROTECT(1);
     }
     R_print.digits = savedigits;
     if ((opts & WARNINCOMPLETE) && !localData.sourceable)
@@ -270,7 +276,7 @@ SEXP deparse1line(SEXP call, Rboolean abbrev)
 
 #include "Rconnections.h"
 
-SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP saveenv, tval;
     int i, ifile, res;
@@ -316,7 +322,7 @@ SEXP do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (CAR(args));
 }
 
-SEXP do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, names, o, objs, tval, source, outnames;
     int i, j, nobjs, nout, res;

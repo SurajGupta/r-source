@@ -16,8 +16,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 /* <UTF8-FIXME>
@@ -29,16 +29,19 @@
 # include <config.h>
 #endif
 
+#include <Defn.h>
+
 #include <string.h>
 #include <stdlib.h>
 
-#include <Defn.h>
 #include <Rmath.h>
 
 #include <Graphics.h>
 
 #include <R_ext/RConverters.h>
+#ifdef HAVE_ICONV
 #include <R_ext/Riconv.h>
+#endif
 
 #ifndef max
 #define max(a, b) ((a > b)?(a):(b))
@@ -86,19 +89,65 @@ static SEXP enctrim(SEXP args, char *name, int len);
    NB: in the last two cases it sets fun as well!
  */
 static void
-checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun)
+checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *symbol, char *buf)
 {
     if (isValidString(op)) return;
 
-    else if((TYPEOF(op) == EXTPTRSXP && 
-	     R_ExternalPtrTag(op) == Rf_install("native symbol"))) {
+    *fun = NULL;
+    if(TYPEOF(op) == EXTPTRSXP) {
+	char *q, *p = NULL;
+	if(R_ExternalPtrTag(op) == Rf_install("native symbol")) 
+   	   *fun = (DL_FUNC) R_ExternalPtrAddr(op);
+	else if(R_ExternalPtrTag(op) == Rf_install("registered native symbol")) {
+   	   R_RegisteredNativeSymbol *tmp;
+	   tmp = (R_RegisteredNativeSymbol *) R_ExternalPtrAddr(op);
+	   if(tmp) {
+  	      if(symbol->type != R_ANY_SYM && symbol->type != tmp->type)
+ 	         errorcall(call, _("NULL value passed as symbol address"));
+   	        /* Check the type of the symbol. */
+   	      switch(symbol->type) {
+	      case R_C_SYM:
+  	          *fun = tmp->symbol.c->fun;
+  	          p = tmp->symbol.c->name;
+		  break;
+	      case R_CALL_SYM:
+  	          *fun = tmp->symbol.call->fun;
+  	          p = tmp->symbol.call->name;
+		  break;
+	      case R_FORTRAN_SYM:
+  	          *fun = tmp->symbol.fortran->fun;
+  	          p = tmp->symbol.fortran->name;
+		  break;
+	      case R_EXTERNAL_SYM:
+  	          *fun = tmp->symbol.external->fun;
+  	          p = tmp->symbol.external->name;
+		  break;
+	      default:
+  	         /* Something unintended has happened if we get here. */
+	          error(_("Unimplemented type %d in createRSymbolObject"), 
+		         symbol->type);
+  	          break;
+	      }
+	      *symbol = *tmp;
+	   }
+	}
 	/* This is illegal C */
-	if((*fun = R_ExternalPtrAddr(op)) == NULL)
+	if(*fun == NULL)
 	    errorcall(call, _("NULL value passed as symbol address"));
+
+        /* copy the symbol name. */
+	if (p) {
+	    q = buf;
+	    while ((*q = *p) != '\0') {
+	        p++;
+	        q++;
+	    }
+	}
+
 	return;
     } 
     else if(inherits(op, "NativeSymbolInfo")) {
-	checkValidSymbolId(VECTOR_ELT(op, 1), call, fun);
+	checkValidSymbolId(VECTOR_ELT(op, 1), call, fun, symbol, buf);
 	return;
     }
     
@@ -127,8 +176,8 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
     DllReference dll = {"", NULL, NULL, NOT_DEFINED};
 
     op = CAR(args);
-    checkValidSymbolId(op, call, fun); /* NB, might set fun, 
-					  not just a check! */
+    /* NB, this sets fun, symbol and buf and is not just a check! */
+    checkValidSymbolId(op, call, fun, symbol, buf); 
 
     /* The following code modifies the argument list */
     /* We know this is ok because do_dotCode is entered */
@@ -217,8 +266,6 @@ checkNativeType(int targetType, int actualType)
 
     return(TRUE);
 }
-
-#include <R_ext/Riconv.h>
 
 static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 			const char *name, R_toCConverter **converter,
@@ -679,7 +726,7 @@ static SEXP enctrim(SEXP args, char *name, int len)
 }
 
 
-SEXP do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char buf[128], *p, *q;
     checkArity(op, args);
@@ -700,28 +747,39 @@ SEXP do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
     return mkString(buf);
 }
 
-SEXP do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
-    char *sym, *pkg= "";
+    char *sym, *pkg= "", *type="";
     int val = 1, nargs = length(args);
     R_RegisteredNativeSymbol symbol = {R_FORTRAN_SYM, {NULL}, NULL};
 
     if (nargs < 1) errorcall(call, _("no arguments supplied"));
-    if (nargs > 2) errorcall(call, _("too many arguments"));
+    if (nargs > 3) errorcall(call, _("too many arguments"));
 
     if(!isValidString(CAR(args)))
 	errorcall(call, R_MSG_IA);
     sym = CHAR(STRING_ELT(CAR(args), 0));
-    if(nargs == 2) {
+    if(nargs >= 2) {
 	if(!isValidString(CADR(args)))
 	    errorcall(call, R_MSG_IA);
 	pkg = CHAR(STRING_ELT(CADR(args), 0));
     }
-    /* We don't know if this is for .C, .Fortran, .Call or .External.
-       So look up all, which needs Fortran done separately. */
-    if (!(R_FindSymbol(sym, pkg, NULL)) && 
-	!(R_FindSymbol(sym, pkg, &symbol))) val = 0;
+    if(nargs >= 3) {
+	if(!isValidString(CADDR(args)))
+	    errorcall(call, R_MSG_IA);
+	type = CHAR(STRING_ELT(CADDR(args), 0));
+	if(strcmp(type, "C") == 0) symbol.type = R_C_SYM;
+	else if(strcmp(type, "Fortran") == 0) symbol.type = R_FORTRAN_SYM;
+	else if(strcmp(type, "Call") == 0) symbol.type = R_CALL_SYM;
+	else if(strcmp(type, "External") == 0) symbol.type = R_EXTERNAL_SYM;
+    }
+    if(strlen(type)) {
+	if(!(R_FindSymbol(sym, pkg, &symbol))) val = 0;
+    } else {
+	if (!(R_FindSymbol(sym, pkg, NULL)) && 
+	    !(R_FindSymbol(sym, pkg, &symbol))) val = 0;
+    }
     ans = allocVector(LGLSXP, 1);
     LOGICAL(ans)[0] = val;
     return ans;
@@ -730,7 +788,7 @@ SEXP do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
 /*   Call dynamically loaded "internal" functions */
 /*   code by Jean Meloche <jean@stat.ubc.ca> */
 
-SEXP do_External(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_External(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     DL_FUNC fun = NULL;
     SEXP retval;
@@ -764,7 +822,7 @@ SEXP do_External(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 /* .Call(name, <args>) */
-SEXP do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     DL_FUNC fun = NULL;
     SEXP retval, nm, cargs[MAX_ARGS], pargs;
@@ -1452,7 +1510,7 @@ SEXP do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
 /*  Call dynamically loaded "internal" graphics functions */
 /*  .External.gr  and  .Call.gr */
 
-SEXP do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP retval;
     GEDevDesc *dd = GEcurrentDevice();
@@ -1474,7 +1532,7 @@ SEXP do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
     return retval;
 }
 
-SEXP do_dotcallgr(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dotcallgr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP retval;
     GEDevDesc *dd = GEcurrentDevice();
@@ -1559,9 +1617,6 @@ R_FindNativeSymbolFromDLL(char *name, DllReference *dll,
 
     if(inherits(dll->obj, "DLLInfo")) {
 	SEXP tmp;
-/*XXX*/
-	DL_FUNC R_dlsym(DllInfo *info, char const *name,
-			R_RegisteredNativeSymbol *symbol);
 	tmp = VECTOR_ELT(dll->obj, 4);
 	info = (DllInfo *) R_ExternalPtrAddr(tmp);
 	if(!info)
@@ -1578,7 +1633,7 @@ R_FindNativeSymbolFromDLL(char *name, DllReference *dll,
 
 
 /* .C() {op=0}  or  .Fortran() {op=1} */
-SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     void **cargs;
     int dup, havenames, naok, nargs, which;
@@ -1607,6 +1662,7 @@ SEXP do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
     args = enctrim(args, encname, 100);
     args = resolveNativeRoutine(args, &fun, &symbol, symName, &nargs,
 				&naok, &dup, call);
+
 
     if(symbol.symbol.c && symbol.symbol.c->numArgs > -1) {
 	if(symbol.symbol.c->numArgs != nargs)

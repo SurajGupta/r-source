@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -331,7 +331,7 @@ static SEXP commentgets(SEXP vec, SEXP comment)
     return R_NilValue;/*- just for -Wall */
 }
 
-SEXP do_commentgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_commentgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     if (NAMED(CAR(args)) == 2) SETCAR(args, duplicate(CAR(args)));
@@ -340,7 +340,7 @@ SEXP do_commentgets(SEXP call, SEXP op, SEXP args, SEXP env)
     return CAR(args);
 }
 
-SEXP do_comment(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_comment(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     return getAttrib(CAR(args), R_CommentSymbol);
@@ -368,7 +368,7 @@ SEXP classgets(SEXP vec, SEXP class)
 }
 
 /* oldClass() : */
-SEXP do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     if (NAMED(CAR(args)) == 2) SETCAR(args, duplicate(CAR(args)));
@@ -377,7 +377,7 @@ SEXP do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
     return CAR(args);
 }
 
-SEXP do_class(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_class(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     return getAttrib(CAR(args), R_ClassSymbol);
@@ -535,7 +535,7 @@ SEXP R_do_set_class(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* names(object) <- name */
-SEXP do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     if (NAMED(CAR(args)) == 2)
@@ -622,7 +622,7 @@ SEXP namesgets(SEXP vec, SEXP val)
     return vec;
 }
 
-SEXP do_names(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_names(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s;
     checkArity(op, args);
@@ -632,7 +632,7 @@ SEXP do_names(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-SEXP do_dimnamesgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dimnamesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     if (DispatchOrEval(call, op, "dimnames<-", args, env, &ans, 0, 0))
@@ -652,7 +652,7 @@ static SEXP dimnamesgets1(SEXP val1)
     if (LENGTH(val1) == 0) return R_NilValue;
     /* if (isObject(val1)) dispatch on as.character.foo, but we don't
        have the context at this point to do so */
-    if (isFactor(val1)) { /* mimic as.character.factor */
+    if (inherits(val1, "factor")) { /* mimic as.character.factor */
 	int i, n = LENGTH(val1);
 	SEXP labels = getAttrib(val1, install("levels"));
 	PROTECT(this2 = allocVector(STRSXP, n));
@@ -725,7 +725,7 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
     return (vec);
 }
 
-SEXP do_dimnames(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dimnames(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     if (DispatchOrEval(call, op, "dimnames", args, env, &ans, 0, 0))
@@ -737,7 +737,7 @@ SEXP do_dimnames(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
-SEXP do_dim(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dim(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     if (DispatchOrEval(call, op, "dim", args, env, &ans, 0, 0))
@@ -749,7 +749,7 @@ SEXP do_dim(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
-SEXP do_dimgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_dimgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     if (DispatchOrEval(call, op, "dim<-", args, env, &ans, 0, 0))
@@ -768,7 +768,7 @@ SEXP dimgets(SEXP vec, SEXP val)
     int len, ndim, i, total;
     PROTECT(vec);
     PROTECT(val);
-    if (!isVector(vec) && !isList(vec))
+    if ((!isVector(vec) && !isList(vec)) || inherits(vec, "factor") )
 	error(_("dim<- : invalid first argument"));
 
     if (!isVector(val) && !isList(val))
@@ -792,7 +792,7 @@ SEXP dimgets(SEXP vec, SEXP val)
     return vec;
 }
 
-SEXP do_attributes(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_attributes(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP attrs, names, namesattr, value;
     int nvalues;
@@ -833,7 +833,7 @@ SEXP do_attributes(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* attributes(object) <- attrs */
-SEXP do_attributesgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_attributesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 /* NOTE: The following code ensures that when an attribute list */
 /* is attached to an object, that the "dim" attibute is always */
@@ -922,7 +922,7 @@ benchmarks.  There is still some inefficiency since using getAttrib
 means the attributes list will be searched twice, but this seems
 fairly minor.  LT */
 
-SEXP do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, t, tag = R_NilValue, alist;
     char *str;
@@ -990,7 +990,7 @@ SEXP do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
 	return getAttrib(s, tag);
 }
 
-SEXP do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /*  attr(obj, "<name>")  <-  value  */
     SEXP obj, name, value;
@@ -1177,7 +1177,7 @@ SEXP R_pseudo_null() {
    (see do_subset3) but without S3-style methods.
 */
 #ifdef noSlotCheck
-SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  nlist, object, ans;
 
@@ -1209,6 +1209,7 @@ static int make_class_meta_data_env()
 }
 */
 
+#if UNUSED
 /* check for a class definition from the internal table -- will not get
  * classes whose definition has not been completed for this session,
  * so any code relying on this routine should call the S language
@@ -1222,8 +1223,11 @@ static Rboolean has_class_definition(SEXP class_name)
 	else */
 	return FALSE;
 }
+#endif
 
-SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
+static Rboolean can_test_S4Object = FALSE; /* turning this to TRUE will throw
+   error or warning on all packages that have not been reinstalled for current R 2.3 */
+SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  nlist, object, ans, class;
 
@@ -1236,32 +1240,22 @@ SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid type or length for slot name"));
     if(isString(nlist)) nlist = install(CHAR(STRING_ELT(nlist, 0)));
     PROTECT(object = eval(CAR(args), env));
-    /* do some testing here where we can give a better error message */
-    class = getAttrib(object, R_ClassSymbol);
-    if(length(class) == 1)
-    {
-	/* internal version of isClass().
-	*  should eventually be able to grab class definition pointer
-	from the object itself.  At least the code below usually only
-	does the has_class_definition step (a single lookup); the
-	findVar part is only in the case that the check will fail OR
-	that the class definition has not yet been completed.*/
-	char str[201]; SEXP class_name; Rboolean quick;
-	snprintf(str, 200, ".__C__%s", CHAR(STRING_ELT(class, 0)));
-	class_name = install(str);
-	quick = has_class_definition(class_name);
-	if(!quick &&
-	   (findVar(class_name, env) == R_UnboundValue))
-	    error(_("trying to get slot \"%s\" from an object whose class (\"%s\") is not defined "),
-		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(class, 0)));
-    }
-    else if(length(class) == 0)
+    if(can_test_S4Object && !R_seemsS4Object(object)) {
+      class = getAttrib(object, R_ClassSymbol);
+      if(length(class) == 0)
 	    error(_("trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots"),
 		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(R_data_class(object, FALSE), 0)));
-    else
-	    error(_("trying to get slot \"%s\" from an object with S3 class c(\"%s\", \"%s\", ...) (not a formally defined class)"),
-		  CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(class, 0)),
-		  CHAR(STRING_ELT(class, 1)));
+      else {
+	if(isString(class) &&
+	   install(CHAR(STRING_ELT(class, 0))) == install("classRepresentation")) {
+	  warning("Class representations out of date--package(s) need to be reinstalled");
+	  can_test_S4Object = FALSE; /* turn tests off to avoid repeated warnings */
+	}
+	else
+	  error(_("trying to get slot \"%s\" from an object (class \"%s\") that is not an S4 object "),
+	      CHAR(PRINTNAME(nlist)), CHAR(STRING_ELT(class, 0)));
+      }
+    }
     ans = R_do_slot(object, nlist);
     UNPROTECT(1);
     return ans;
@@ -1271,7 +1265,7 @@ SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 
 #if 0
 /* Was a .Primitive implementation for @<-; no longer needed? */
-SEXP do_AT_assign(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_AT_assign(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP nlist, object, ans, value;
     PROTECT(object = eval(CAR(args), env));

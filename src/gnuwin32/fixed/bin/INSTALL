@@ -1,5 +1,5 @@
 #-*- perl -*-
-# Copyright (C) 2000-5  R Development Core Team
+# Copyright (C) 2000-6  R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+# writing to the Free Software Foundation, Inc., 51 Franklin Street,
+# Fifth Floor, Boston, MA 02110-1301  USA.
 
 # Send any bug reports to r-bugs@r-project.org
 
@@ -26,13 +26,53 @@ use R::Dcf;
 use R::Utils;
 
 
-my $revision = ' $Revision: 1.44.8.2 $ ';
+my $revision = ' $Rev: 37472 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
 $version = $1;
 ($name = $0) =~ s|.*/||;
 
+my $startdir = cwd();
+my $lockdir;
+my @bundlepkgs;
+my $library;
+
+$SIG{'INT'} = 'Cleanup';
+
+sub Cleanup {
+    print "*** user interrupt ***\n";
+    if(defined @bundlepkgs) {
+	if($is_bundle) { # back out the whole bundle
+	    for $pkgname (@bundlepkgs) {
+		$pkgname .= "_" . $description->{"Version"}
+		if $opt_with_package_versions;
+		rmtree($library . "/" . $pkgname);
+		$dppkg = $lockdir . "/" . $pkgname;
+		system("mv $dppkg $library") if ($safe && -d $dppkg);
+	    }
+	} else {
+	    print "Removing '$dpkg'\n";
+	    rmtree($dpkg);
+	    # move back any previously installed package
+	    $dppkg = $lockdir . "/" . $decpkgname;
+	    if ($safe && -d $dppkg) {
+		print "Restoring previous '$dpkg'\n";
+		system("mv $dppkg $library");
+	    }
+	}
+    }
+    if (defined $lockdir) {
+	print "Removing lock directory\n";
+	rmtree($lockdir);
+    }
+    chdir($startdir);
+    if (defined $tardir) {
+	print "Removing untar-ed package sources\n";
+	rmtree($tardir);
+    }
+    die "*** exiting after cleanup ***\n";
+}
 
 my @knownoptions = ("help|h", "version|v", "debug|d", "library|l:s",
 		    "clean|c", "docs:s", "save|s", "no-save",
@@ -75,13 +115,18 @@ if($BUILD eq "CROSS") {
 }
 ## ===== end =====
 
+print "\n*** Option --save is deprecated\n" if $opt_save;
+print "\n*** Option --no-save is deprecated\n" if $opt_no_save;
+print "\n*** Option --lazy is deprecated\n" if $opt_lazy;
+print "\n*** Option --no-lazy is deprecated\n" if $opt_no_lazy;
+print "\n*** Option --lazy-data is deprecated\n" if $opt_lazy_data;
+print "\n*** Option --no-lazy-data is deprecated\n" if $opt_no_lazy_data;
+
 if($opt_debug) {
     print "\nOption -d or --debug is accepted for compatibility with Unix.\n";
     print "However, it does less.\n\n";
 }
 
-my $startdir = cwd();
-my $library;
 if($opt_library){
     # remove quotes around the library path
     $opt_library =~ s/^['"]//; $opt_library =~ s/['"]$//; #'"
@@ -96,18 +141,30 @@ if($opt_library){
 
 my $helpflags = "HELP=YES WINHELP=CHM";
 if($opt_docs) {
+    my $tmp, $chm, @l;
     if ($opt_docs eq "none") {
 	$helpflags = "HELP=NO";
     } elsif ($opt_docs eq "normal") {
 	$helpflags = "HELP=YES WINHELP=NO";
     } elsif ($opt_docs eq "chm"|| ($opt_docs eq "all")) {
 	$helpflags = "HELP=YES WINHELP=CHM";
+    } elsif ($opt_docs =~ /,/) {
+	@l = split /, */, $opt_docs;
+	$tmp = ""; $chm = "NO";
+	foreach $f (@l) {
+	    if ($f eq "chm") {
+		$chm = "CHM";
+		next;
+	    }
+	    $tmp .= " -$f";
+	}
+	$helpflags = "HELP=YES WINHELP=$chm HELPTYPES='$tmp'";
     } else {
 	die "ERROR: invalid --docs value `$opt_docs'\n";
     }
 }
 
-my $safe = 1;
+$safe = 1;
 $safe = 0 if $opt_unsafe;
     print " *** safe is $safe ***\n" if $opt_debug;
 
@@ -124,7 +181,7 @@ foreach $pkg (@ARGV){
     # remove misguided trailing separator (/ or \)
     $pkg =~ s/\/$//; $pkg =~ s/\\$//;
     my $pkgname = basename($pkg);
-    my $is_bundle = 0;
+    $is_bundle = 0;
 
     if (!(-e $pkg)) {
 	warn "`$pkg' does not exist: skipping\n";
@@ -140,6 +197,7 @@ foreach $pkg (@ARGV){
 	if(! -d $dir) {
 	    mkdir($dir, 0755) or die "Error: cannot create $dir\n";
 	}
+	$tardir = $dir;
 	## workaround for paths in Cygwin tar
 	$pkg =~ s+^([A-Za-x]):+/cygdrive/\1+;
 	if(system("tar -zxf '$pkg' -C $dir")) {
@@ -187,7 +245,7 @@ foreach $pkg (@ARGV){
 
     ## do we have a package bundle?
     my $zippkgs = $pkgname;
-    my @bundlepkgs = ($pkgname);
+    @bundlepkgs = ($pkgname);
     if($description->{"Contains"}) {
 	print "\nLooks like \`${pkg}' is a package bundle\n";
 	$is_bundle = 1;
@@ -198,7 +256,9 @@ foreach $pkg (@ARGV){
 	    open pkgdesc, "> $pkg/$ppkg/DESCRIPTION"
 		|| die "cannot write $ppkg/DESCRIPTION";
 	    if (open pkgdescin, "< $pkg/$ppkg/DESCRIPTION.in") {
-		while(<pkgdescin>) { print pkgdesc $_; }
+		## the Unix version of INSTALL does discard blank lines,
+		## although ?read.dcf does not allow them. 
+		while(<pkgdescin>) { print pkgdesc $_ if $_ =~ /\S/; }
 		close pkgdescin;
 	    } else {
 		print "no DESCRIPTION.in found for package $ppkg\n";
@@ -235,7 +295,6 @@ foreach $pkg (@ARGV){
         }
     }
     ## Now we are ready to install
-    my $lockdir;
     if($safe) {
 	$lockdir = $library . "/" . "00LOCK";
 	if(-d $lockdir || -f $lockdir) {
@@ -259,7 +318,7 @@ foreach $pkg (@ARGV){
 	} else {
 	    $decpkgname = $pkgname;
 	}
-	my $dpkg = $library. "/" . $decpkgname;
+	$dpkg = $library. "/" . $decpkgname;
 	# if exists, move existing installation to $lockdir
 	system("mv $dpkg $lockdir") if ($safe && -d $dpkg);
 
@@ -442,14 +501,6 @@ Options:
   -h, --help		print short help message and exit
   -v, --version		print version info and exit
   -c, --clean		remove all files created during installation
-  -s, --save            save the package source as an image file, and arrange for
-                        this file to be loaded when the library is attached.
-  --no-save             do not save the package source as an image file.
-
-  --lazy                use lazy loading
-  --no-lazy             do not use lazy loading
-  --lazy-data           use lazy loading for data
-  --no-lazy-data        do not use lazy loading for data (current default)
 
   --fake		do minimal install for testing purposes
   --unsafe		install on top of any existing installation
@@ -464,7 +515,20 @@ Options:
   --auto-zip	        select whether to zip automatically
   --build		zip-up the installation.  Implies --auto-zip
 
-TYPE can be "none" or "normal" or "chm" (the default) or "all"
+
+TYPE can be "none" or "normal" or "chm" (the default) or "all", or
+  a comma-separated list of one or more of 
+  'txt', 'html', 'latex', "example' and 'chm'.
+
+Deprecated options:
+  -s, --save            save the package source as an image file, and arrange for
+                        this file to be loaded when the library is attached.
+  --no-save             do not save the package source as an image file.
+
+  --lazy                use lazy loading
+  --no-lazy             do not use lazy loading
+  --lazy-data           use lazy loading for data
+  --no-lazy-data        do not use lazy loading for data (current default)
 
 Report bugs to <r-bugs\@r-project.org>.
 END

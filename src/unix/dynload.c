@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -30,19 +30,13 @@
 #include <config.h>
 #endif
 
+#include <Defn.h>
+#include <Rdynpriv.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include <Defn.h>
-#include <Rdynpriv.h>
-
-#ifdef __APPLE_CC__
-/* # ifdef HAVE_DL_H */
-#  include "dlfcn-darwin.h"
-#  define HAVE_DYNAMIC_LOADING
-/* # endif */
-#else
 /* HP-UX 11.0 has dlfcn.h, but according to libtool as of Dec 2001
    this support is broken. So we force use of shlib even when dlfcn.h
    is available */
@@ -58,23 +52,21 @@
 #  endif
 # endif
 
-#endif /* __APPLE_CC__ */
-
 #ifdef HAVE_DYNAMIC_LOADING
 
 static void *loadLibrary(const char *path, int asLocal, int now);
 static void closeLibrary(void *handle);
 static void deleteCachedSymbols(DllInfo *);
-static DL_FUNC R_dlsym(DllInfo *info, char const *name);
+static DL_FUNC R_local_dlsym(DllInfo *info, char const *name);
 static void getFullDLLPath(SEXP call, char *buf, char *path);
 static void getSystemError(char *buf, int len);
 
 static int computeDLOpenFlag(int asLocal, int now);
 
-void InitFunctionHashing()
+void attribute_hidden InitFunctionHashing()
 {
     R_osDynSymbol->loadLibrary = loadLibrary;
-    R_osDynSymbol->dlsym = R_dlsym;
+    R_osDynSymbol->dlsym = R_local_dlsym;
     R_osDynSymbol->closeLibrary = closeLibrary;
     R_osDynSymbol->getError = getSystemError;
 
@@ -207,7 +199,7 @@ static int computeDLOpenFlag(int asLocal, int now)
   This is the system/OS-specific version for resolving a
   symbol in a shared library.
  */
-static DL_FUNC R_dlsym(DllInfo *info, char const *name)
+static DL_FUNC R_local_dlsym(DllInfo *info, char const *name)
 {
     return (DL_FUNC) dlsym(info->handle, name);
 }

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *  SYNOPSIS
  *
@@ -98,16 +98,17 @@ double log1p(double x)
 	-.33410026677731010351377066666666e-30,
 	+.63533936180236187354180266666666e-31,
     };
-    const static double xmin = -1 + sqrt(DBL_EPSILON);/*was sqrt(d1mach(4)); */
 
 #ifdef NOMORE_FOR_THREADS
     static int nlnrel = 0;
+    static double xmin = 0.0;
 
-    if (nlnrel == 0) {/* initialize chebychev coefficients */
+    if (xmin == 0.0) xmin = -1 + sqrt(DBL_EPSILON);/*was sqrt(d1mach(4)); */
+    if (nlnrel == 0) /* initialize chebychev coefficients */
 	nlnrel = chebyshev_init(alnrcs, 43, DBL_EPSILON/20);/*was .1*d1mach(3)*/
-    }
 #else
 # define nlnrel 22
+    const static double xmin = -0.999999985;
 /* 22: for IEEE double precision where DBL_EPSILON =  2.22044604925031e-16 */
 #endif
 
@@ -129,7 +130,7 @@ double log1p(double x)
     /* else */
     if (x < xmin) {
 	/* answer less than half precision because x too near -1 */
-	ML_ERROR(ME_PRECISION);  /* which currently does nothing */
+	ML_ERROR(ME_PRECISION, "log1p");
     }
     return log(1 + x);
 }

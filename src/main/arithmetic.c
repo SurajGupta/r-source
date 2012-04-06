@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2003	    The R Development Core Team.
+ *  Copyright (C) 1998--2006	    The R Development Core Team.
  *  Copyright (C) 2003-4       	    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,17 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#if defined(HAVE_GLIBC2)
+/* for matherr etc */
+# define _SVID_SOURCE 1
 #endif
 
 #ifdef __OpenBSD__
@@ -40,7 +45,9 @@
 
 #ifdef HAVE_MATHERR
 
-/* Override the SVID matherr function */
+/* Override the SVID matherr function:
+   the main difference here is not to print warnings.
+ */
 
 int matherr(struct exception *exc)
 {
@@ -55,6 +62,11 @@ int matherr(struct exception *exc)
     case UNDERFLOW:
 	exc->retval = 0.0;
 	break;
+	/* 
+	   There are cases TLOSS and PLOSS which are ignored here.
+	   According to the Solaris man page, there are for
+	   trigonometric algorithms and not needed for good ones.
+	 */
     }
     return 1;
 }
@@ -163,7 +175,7 @@ int R_finite(double x)
 
 /* Arithmetic Initialization */
 
-void InitArithmetic()
+void attribute_hidden InitArithmetic()
 {
     R_NaInt = INT_MIN;
     R_NaN = 0.0/R_Zero_Hack;
@@ -267,6 +279,12 @@ double R_pow_di(double x, int n)
 
 static double logbase(double x, double base)
 {
+#if defined(HAVE_WORKING_LOG)  && defined(HAVE_LOG10)
+    if(base == 10) return log10(x);
+#endif
+#if defined(HAVE_WORKING_LOG)  && defined(HAVE_LOG2)
+    if(base == 2) return log2(x);
+#endif
     return R_log(x) / log(base);
 }
 
@@ -285,7 +303,7 @@ static SEXP lcall;
 
 /* Unary and Binary Operators */
 
-SEXP do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
 
@@ -760,7 +778,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     if (n1 == 0 || n2 == 0) return(allocVector(REALSXP, 0));
 
     n = (n1 > n2) ? n1 : n2;
-    ans = allocVector(REALSXP, n);
+    PROTECT(ans = allocVector(REALSXP, n));
 
 /*    if (n1 < 1 || n2 < 1) {
       for (i = 0; i < n; i++)
@@ -807,9 +825,11 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     }
 
     /* quick return if there are no attributes */
-    if (ATTRIB(s1) == R_NilValue && ATTRIB(s2) == R_NilValue)
+    if (ATTRIB(s1) == R_NilValue && ATTRIB(s2) == R_NilValue) {
+	UNPROTECT(1);
 	return ans;
-
+    }
+    
     /* Copy attributes from longer argument. */
 
     if (n1 > n2)
@@ -821,6 +841,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     else
 	copyMostAttrib(s2, ans);
 
+    UNPROTECT(1);
     return ans;
 }
 
@@ -862,7 +883,7 @@ static SEXP math1(SEXP sa, double(*f)(), SEXP lcall)
 }
 
 
-SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s;
 
@@ -916,7 +937,7 @@ SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     return s;			/* never used; to keep -Wall happy */
 }
 
-SEXP do_abs(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_abs(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s;
     if (DispatchGroup("Math", call, op, args, env, &s))
@@ -1052,19 +1073,20 @@ static SEXP math2_2(SEXP sa, SEXP sb, SEXP sI1, SEXP sI2, double (*f)(), SEXP lc
 #define Math2_1(A, FUN)	math2_1(CAR(A), CADR(A), CADDR(A), FUN, call);
 #define Math2_2(A, FUN) math2_2(CAR(A), CADR(A), CADDR(A), CADDDR(A), FUN, call)
 
-SEXP do_math2(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
 
-    if (isComplex(CAR(args)))
+    if (isComplex(CAR(args)) ||
+	(PRIMVAL(op) == 0 && isComplex(CADR(args))))
 	return complex_math2(call, op, args, env);
 
 
     switch (PRIMVAL(op)) {
 
     case  0: return Math2(args, atan2);
-    case 10001: return Math2(args, rround);
-    case 10004: return Math2(args, prec);
+    case 10001: return Math2(args, rround); /* #defined to fround in Rmath.h */
+    case 10004: return Math2(args, prec);   /* #defined to fprec in Rmath.h */
 
     case  2: return Math2(args, lbeta);
     case  3: return Math2(args, beta);
@@ -1107,7 +1129,7 @@ SEXP do_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-SEXP do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s;
     int n;
@@ -1120,21 +1142,17 @@ SEXP do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
 	    return complex_math1(call, op, args, env);
 	else
 	    return math1(CAR(args), atan, call);
-    case 2:
-	warning("use of atan() with 2 arguments is deprecated: use atan2()");
-	if (isComplex(CAR(args)) || isComplex(CDR(args)))
-	    return complex_math2(call, op, args, env);
-	else
-	    return math2(CAR(args), CADR(args), atan2, call);
+    /* prior to 2.3.0, 2 args were allowed, 
+       but this was never documented */ 
     default:
-	error(_("%d arguments passed to 'atan' which requires 1 or 2"), n);
+	error(_("%d arguments passed to 'atan' which requires 1"), n);
     }
     return s;			/* never used; to keep -Wall happy */
 }
 
 
 /* The S4 Math2 group, round and signif */
-SEXP do_Math2(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_Math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP a;
     if (DispatchGroup("Math", call, op, args, env, &a))
@@ -1146,7 +1164,7 @@ SEXP do_Math2(SEXP call, SEXP op, SEXP args, SEXP env)
     return do_math2(call, op, args, env);
 }
 
-SEXP do_log(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_log(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s;
     int n;
@@ -1310,7 +1328,7 @@ static SEXP math3_2(SEXP sa, SEXP sb, SEXP sc, SEXP sI, SEXP sJ, double (*f)(), 
 #define Math3_1(A, FUN)	math3_1(CAR(A), CADR(A), CADDR(A), CADDDR(A), FUN, call);
 #define Math3_2(A, FUN) math3_2(CAR(A), CADR(A), CADDR(A), CADDDR(A), CAD4R(A), FUN, call)
 
-SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
 
@@ -1366,9 +1384,7 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     case 37:  return Math3_1(args, dnt);
     case 38:  return Math3_2(args, pnt);
-#ifdef UNIMP
     case 39:  return Math3_2(args, qnt);
-#endif
 
     case 40:  return Math3_1(args, dwilcox);
     case 41:  return Math3_2(args, pwilcox);
@@ -1541,7 +1557,7 @@ static SEXP math4_2(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP sI, SEXP sJ,
 				CAD5R(A), FUN, call)
 
 
-SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
 
@@ -1557,16 +1573,12 @@ SEXP do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
 
     case  4: return Math4_1(args, dnbeta);
     case  5: return Math4_2(args, pnbeta);
-#ifdef UNIMP
     case  6: return Math4_2(args, qnbeta);
-#endif
 #ifdef UNIMP
     case  7: return Math4_1(args, dnf);
 #endif
     case  8: return Math4_2(args, pnf);
-#ifdef UNIMP
     case  9: return Math4_2(args, qnf);
-#endif
 #ifdef UNIMP
     case 10: return Math4_1(args, dtukey);
 #endif
@@ -1688,7 +1700,7 @@ static SEXP math5(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se, double (*f)())
 #define Math5(A, FUN) \
 	math5(CAR(A), CADR(A), CADDR(A), CAD3R(A), CAD4R(A), FUN);
 
-SEXP do_math5(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_math5(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     lcall = call;

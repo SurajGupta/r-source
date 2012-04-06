@@ -15,26 +15,8 @@ function(package, dir, lib.loc = NULL)
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         is_base <- package == "base"
-        helpIndex <- file.path(dir, "help", "AnIndex")
-        all_doc_topics <- if(!file_test("-f", helpIndex))
-            character()
-        else {
-            ## Find all documented topics from the help index.
-            ## May contain quotes!
-            sort(scan(file = helpIndex, what = list("", ""), sep = "\t",
-                      quote="", quiet = TRUE, na.strings = character())[[1]])
-            ## <NOTE>
-            ## This gets all topics the same way as index.search() would
-            ## find individual ones.  We could also use
-            ##   unlist(.readRDS(file.path(dir, "Meta", "Rd.rds"))$Aliases)
-            ## which is marginally slower.
-            ## A real gain in efficiency would come from reading in
-            ## Rd.rds *once* (e.g., the first time help() is called),
-            ## and storing it in some known place, e.g. an attribute of
-            ## the package env, or a dynamic variable with the help
-            ## entries indexed for fast lookup by topic.
-            ## </NOTE>
-        }
+
+        all_doc_topics <- Rd_aliases(package, lib.loc = dirname(dir))
 
         ## Load package into code_env.
         if(!is_base)
@@ -53,24 +35,8 @@ function(package, dir, lib.loc = NULL)
         else
             dir <- file_path_as_absolute(dir)
         is_base <- basename(dir) == "base"
-        docs_dir <- file.path(dir, "man")
-        if(!file_test("-d", docs_dir))
-            all_doc_topics <- character()
-        else {
-            ## Find all documented topics from the Rd sources.
-            aliases <- character(0)
-            for(f in list_files_with_type(docs_dir, "docs")) {
-                aliases <- c(aliases,
-                             grep("^\\\\alias",
-                                  .read_Rd_lines_quietly(f),
-                                  value = TRUE))
-            }
-            all_doc_topics <-
-                gsub("\\\\alias\\{(.*)\\}.*", "\\1", aliases)
-            all_doc_topics <- gsub("\\\\%", "%", all_doc_topics)
-            all_doc_topics <- gsub(" ", "", all_doc_topics)
-            all_doc_topics <- sort(unique(all_doc_topics))
-        }
+
+        all_doc_topics <- Rd_aliases(dir = dir)
 
         code_env <- new.env()
         code_dir <- file.path(dir, "R")
@@ -80,7 +46,8 @@ function(package, dir, lib.loc = NULL)
                 stop("cannot source package code")
             }
             sys_data_file <- file.path(code_dir, "sysdata.rda")
-            if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
+            if(file_test("-f", sys_data_file))
+                load(sys_data_file, code_env)
         }
 
         code_objs <- ls(envir = code_env, all.names = TRUE)
@@ -146,8 +113,12 @@ function(package, dir, lib.loc = NULL)
     }
 
     ## Undocumented objects?
-    if((length(code_objs) == 0) && (length(data_objs) == 0))
+    if(!missing(package)
+       && (length(code_objs) == 0)
+       && (length(data_objs) == 0))
         warning("neither code nor data objects found")
+    ## When working on the sources, we will not get any code objects in
+    ## case a package provides "just" S4 classes and methods.
 
     if(!is_base) {
         ## Code objects in add-on packages with names starting with a
@@ -258,22 +229,24 @@ function(package, dir, lib.loc = NULL)
             }
             ## Exclude methods inherited from the 'appropriate' parent
             ## environment.
-            makeSigs <- function(cls)
-                unlist(lapply(cls, paste, collapse = "#"))
+            ## <NOTE>
+            ## Keep this in sync with similar code in checkFF().
             penv <- .Internal(getRegisteredNamespace(as.name(package)))
             if(is.environment(penv))
                 penv <- parent.env(penv)
             else
                 penv <- parent.env(code_env)
-            mlistFromPenv <- methods::getMethodsMetaData(f, penv)
-            if(!is.null(mlistFromPenv)) {
-                classesFromPenv <-
-                    methods::slot(methods::linearizeMlist(mlistFromPenv),
+            if((f %in% methods::getGenerics(penv))
+               && !is.null(mlist_from_penv <-
+                           methods::getMethodsMetaData(f, penv))) {
+                classes_from_penv <-
+                    methods::slot(methods::linearizeMlist(mlist_from_penv),
                                   "classes")
-                ind <- is.na(match(makeSigs(classes),
-                                   makeSigs(classesFromPenv)))
+                ind <- is.na(match(.make_signatures(classes),
+                                   .make_signatures(classes_from_penv)))
                 classes <- classes[ind]
             }
+            ## </NOTE>
             sigs <- sapply(classes, paste, collapse = ",")
             if(length(sigs))
                 paste(f, ",", sigs, sep = "")
@@ -1673,9 +1646,24 @@ function(package, dir, file, lib.loc = NULL,
     ## </FIXME>
 
     bad_exprs <- list()
-    FF_funs <- c(".C", ".Fortran", ".Call", ".External",
-                 ".Call.graphics", ".External.graphics")
-    find_bad_exprs <- function(e, level) {
+    FF_funs <- FF_fun_names <- c(".C", ".Fortran", ".Call", ".External",
+                                 ".Call.graphics", ".External.graphics")
+    ## As pointed out by DTL, packages could use non-base FF calls for
+    ## which missing 'PACKAGE' arguments are not necessarily a problem.
+    if(!missing(package)) {
+        is_FF_fun_from_base <-
+            sapply(FF_funs,
+                   function(f) {
+                       e <- .find_owner_env(f, code_env)
+                       (identical(e, baseenv())
+                        || identical(e, .BaseNamespaceEnv))
+                   })
+        FF_funs <- FF_funs[is_FF_fun_from_base]
+    }
+    ## Also, need to handle base::.Call() etc ...
+    FF_funs <- c(FF_funs, sprintf("base::%s", FF_fun_names))
+
+    find_bad_exprs <- function(e) {
         if(is.call(e) || is.expression(e)) {
             ## <NOTE>
             ## This picks up all calls, e.g. a$b, and they may convert
@@ -1683,19 +1671,21 @@ function(package, dir, file, lib.loc = NULL,
             ## the calls we are interested in.
             ## BDR 2002-11-28
             ## </NOTE>
-            if(as.character(e[[1]])[1] %in% FF_funs) {
-                parg <- if(!is.null(e[["PACKAGE"]])) "OK"
-                ## level 0 will be setMethod calls etc
-                else if(!hasNamespace) {
-                    bad_exprs <<- c(bad_exprs, e)
-                    "MISSING"
-                } else "MISSING but in a function in a namespace"
-                if(verbose) {
-                    cat(e[[1]], "(", deparse(e[[2]]), ", ...): ", parg,
-                        "\n", sep = "")
+            if(deparse(e[[1]])[1] %in% FF_funs) {
+                if(!is.character(e[[2]])) parg <- "Called with symbol"
+                else {
+                    parg <- e[["PACKAGE"]]
+                    parg <- if(!is.null(parg) && (parg != "")) "OK"
+                    else if(!hasNamespace) {
+                        bad_exprs <<- c(bad_exprs, e)
+                        "MISSING"
+                    } else "MISSING but in a function in a namespace"
                 }
+                if(verbose)
+                    cat(deparse(e[[1]]), "(", deparse(e[[2]]),
+                        ", ...): ", parg, "\n", sep = "")
             }
-            for(i in seq(along = e)) Recall(e[[i]], level+1)
+            for(i in seq(along = e)) Recall(e[[i]])
         }
     }
 
@@ -1718,45 +1708,40 @@ function(package, dir, file, lib.loc = NULL,
                 bodies <- lapply(methods::slot(meths, "methods"), body)
                 ## Exclude methods inherited from the 'appropriate'
                 ## parent environment.
-                ## <FIXME>
-                ## Basically the same as in undoc(), unify the exclusion
-                ## into a helper function.
+                ## <NOTE>
+                ## Keep this in sync with similar code in undoc().
                 ## Note that direct comparison of
-                ##   lapply(methods::slot(meths, "methods"),
-                ##          environment)
+                ##   lapply(methods::slot(meths, "methods"), environment)
                 ## to code_env is not quite right ...
-                make_sigs <- function(cls)
-                    unlist(lapply(cls, paste, collapse = "#"))
                 penv <- .Internal(getRegisteredNamespace(as.name(package)))
                 if(is.environment(penv))
                     penv <- parent.env(penv)
                 else
                     penv <- parent.env(code_env)
                 if((f %in% methods::getGenerics(penv))
-                    && !is.null(mlistFromPenv <-
+                    && !is.null(mlist_from_penv <-
                                 methods::getMethodsMetaData(f, penv))) {
                     classes_from_cenv <-
                         methods::slot(meths, "classes")
                     classes_from_penv <-
-                        methods::slot(methods::linearizeMlist(mlistFromPenv),
+                        methods::slot(methods::linearizeMlist(mlist_from_penv),
                                       "classes")
-                    ind <- is.na(match(make_sigs(classes_from_cenv),
-                                       make_sigs(classes_from_penv)))
+                    ind <- is.na(match(.make_signatures(classes_from_cenv),
+                                       .make_signatures(classes_from_penv)))
                     bodies <- bodies[ind]
                 }
+                ## </NOTE>
                 exprs <- c(exprs, bodies)
             }
         }
-        base_level <- 0
     }
     else {
         exprs <- try(parse(file = file, n = -1))
         if(inherits(exprs, "try-error"))
             stop(gettextf("parse error in file '%s'", file),
                  domain = NA)
-        base_level <- -2
     }
-    for(i in seq(along = exprs)) find_bad_exprs(exprs[[i]], base_level)
+    for(i in seq(along = exprs)) find_bad_exprs(exprs[[i]])
     class(bad_exprs) <- "checkFF"
     if(verbose)
         invisible(bad_exprs)
@@ -1897,7 +1882,7 @@ function(package, dir, lib.loc = NULL)
                 else .BaseNamespaceEnv
             if(!exists(".__S3MethodsTable__.", envir = defenv,
                        inherits = FALSE)) {
-                ## Happens e.g. if for some reason, we get "plot" as 
+                ## Happens e.g. if for some reason, we get "plot" as
                 ## standardGeneric for "plot" defined from package
                 ## "graphics" with its own environment which does not
                 ## contain an S3 methods table ...
@@ -2043,7 +2028,7 @@ function(package, dir, lib.loc = NULL)
             ## Find registered methods for generic g.
             methods <- c(methods, ns_S3_methods[ns_S3_generics == g])
         }
-        
+
         for(m in methods)
             ## both all() and all.equal() are generic.
             bad_methods <- if(g == "all") {
@@ -2347,12 +2332,13 @@ function(x, ...)
 
 ### * .check_package_depends
 
+## changed in 2.3.0 to refer to a source dir.
+
 .check_package_depends <-
-function(package)
+function(dir)
 {
-    if(length(package) != 1)
+    if(length(dir) != 1)
         stop("argument 'package' must be of length 1")
-    dir <- .find.package(package)
 
     ## We definitely need a valid DESCRIPTION file.
     db <- .read_description(file.path(dir, "DESCRIPTION"))
@@ -2537,14 +2523,23 @@ function(db)
           "format", "details", "value", "references", "source",
           "seealso", "examples", "note", "author", "synopsis",
           "docType", "encoding")
+    known_tags <- c(unique_tags,
+                    "section",
+                    ## Allow for empty keywords (these do not make it
+                    ## into the metadata).
+                    "keyword",
+                    ## Keep this for back-compatibility ...
+                    "non_function")
+    ## Note that we treat \alias and \keyword entries as metadata.
 
     files_with_surely_bad_Rd <- list()
     files_with_likely_bad_Rd <- list()
     files_with_unknown_encoding <- NULL
-    files_with_non_ASCII_meta_data <- NULL
+    files_with_non_ASCII_metadata <- NULL
     files_with_non_ASCII_section_titles <- NULL
     files_with_missing_mandatory_tags <- NULL
     files_with_duplicated_unique_tags <- NULL
+    files_with_unknown_tags <- NULL
     files_with_bad_name <- files_with_bad_title <- NULL
     files_with_bad_keywords <- NULL
 
@@ -2553,22 +2548,27 @@ function(db)
 
     for(f in names(db)) {
         x <- tryCatch(Rd_parse(text = db[[f]]), error = function(e) e)
+
         if(inherits(x, "error")) {
             files_with_surely_bad_Rd[[f]] <- conditionMessage(x)
             next
         }
+
         db_aliases[[f]] <- unique(x$meta$aliases)
         if(length(x$rest))
             files_with_likely_bad_Rd[[f]] <- x$rest
+
         if(length(x$meta$encoding) && is.na(x$meta$encoding))
             files_with_unknown_encoding <-
                 c(files_with_unknown_encoding, f)
+
         for(tag in c("aliases", "doc_type", "encoding")) {
             if(any(ind <- !.is_ASCII(x$meta[[tag]])))
-                files_with_non_ASCII_meta_data <-
-                    rbind(files_with_non_ASCII_meta_data,
+                files_with_non_ASCII_metadata <-
+                    rbind(files_with_non_ASCII_metadata,
                           cbind(f, tag, x$meta[[tag]][ind]))
         }
+
         ## Non-ASCII user-defined section titles.
         ## <NOTE>
         ## Rd_parse() re-encodes these if necessary (and possible), but
@@ -2580,6 +2580,7 @@ function(db)
                 rbind(files_with_non_ASCII_section_titles,
                       cbind(f, user_defined_section_titles[ind]))
         ## </NOTE>
+
         tags <- sapply(x$data$tags, "[[", 1)
         ## Let's not worry about named sections for the time being ...
         bad_tags <- c(mandatory_tags %w/o% tags,
@@ -2594,18 +2595,28 @@ function(db)
             files_with_missing_mandatory_tags <-
                 rbind(files_with_missing_mandatory_tags,
                       cbind(f, bad_tags))
+
         ind <- which(tags == "name")[1]
         if(is.na(ind))
             files_with_bad_name <- c(files_with_bad_name, f)
+
         ind <- which(tags == "title")[1]
         if(is.na(ind) ||
            (regexpr("^[[:space:]]*$", x$data$vals[[ind]]) != -1))
             files_with_bad_title <- c(files_with_bad_title, f)
+
         bad_tags <- intersect(tags[duplicated(tags)], unique_tags)
         if(length(bad_tags))
             files_with_duplicated_unique_tags <-
                 rbind(files_with_duplicated_unique_tags,
                       cbind(f, bad_tags))
+
+        bad_tags <- unique(tags) %w/o% known_tags
+        if(length(bad_tags))
+            files_with_unknown_tags <-
+                rbind(files_with_unknown_tags,
+                      cbind(f, bad_tags))
+
         bad_keywords <- x$meta$keywords %w/o% standard_keywords
         if(length(bad_keywords))
             files_with_bad_keywords <-
@@ -2623,10 +2634,11 @@ function(db)
     val <- list(files_with_surely_bad_Rd,
                 files_with_likely_bad_Rd,
                 files_with_unknown_encoding,
-                files_with_non_ASCII_meta_data,
+                files_with_non_ASCII_metadata,
                 files_with_non_ASCII_section_titles,
                 files_with_missing_mandatory_tags,
                 files_with_duplicated_unique_tags,
+                files_with_unknown_tags,
                 files_with_bad_name,
                 files_with_bad_title,
                 files_with_bad_keywords,
@@ -2635,10 +2647,11 @@ function(db)
         c("files_with_surely_bad_Rd",
           "files_with_likely_bad_Rd",
           "files_with_unknown_encoding",
-          "files_with_non_ASCII_meta_data",
+          "files_with_non_ASCII_metadata",
           "files_with_non_ASCII_section_titles",
           "files_with_missing_mandatory_tags",
           "files_with_duplicated_unique_tags",
+          "files_with_unknown_tags",
           "files_with_bad_name",
           "files_with_bad_title",
           "files_with_bad_keywords",
@@ -2694,9 +2707,9 @@ function(x, ...)
                      ""))
     }
 
-    if(length(x$files_with_non_ASCII_meta_data)) {
-        writeLines(gettext("Rd files with invalid non-ASCII meta data:"))
-        bad <- x$files_with_non_ASCII_meta_data
+    if(length(x$files_with_non_ASCII_metadata)) {
+        writeLines(gettext("Rd files with invalid non-ASCII metadata:"))
+        bad <- x$files_with_non_ASCII_metadata
         ## Reinstate the Rd markup tags for better intelligibility.
         bad[ , 2] <- sub("aliases", "\\\\alias", bad[ , 2])
         bad[ , 2] <- sub("doc_type", "\\\\docType", bad[ , 2])
@@ -2754,6 +2767,19 @@ function(x, ...)
                          paste(" ", bad[[i]])))
         }
         writeLines(gettext("These entries must be unique in an Rd file.\n"))
+    }
+
+    if(length(x$files_with_unknown_tags)) {
+        writeLines(gettextf("Rd files with unknown sections:"))
+        bad <- x$files_with_unknown_tags
+        bad <- split(bad[, 2], bad[, 1])
+        for(i in seq(along = bad)) {
+            writeLines(strwrap(paste(names(bad)[i], ": ",
+                                     paste(bad[[i]], collapse = " "),
+                                     "\n", sep = ""),
+                               indent = 2, exdent = 4))
+        }
+        writeLines("")
     }
 
     if(length(x$files_with_bad_keywords)) {
@@ -2824,7 +2850,7 @@ function(dfile)
             db <- iconv(db, encoding, "")
     }
     else if(!all(.is_ISO_8859(db))) {
-        ## No valid Encoding meta-data.
+        ## No valid Encoding metadata.
         ## Determine whether we can assume Latin1.
         out$missing_encoding <- TRUE
     }
@@ -3115,7 +3141,63 @@ function(x, ...)
         writeLines(strwrap(x, indent = 0, exdent = 2))
     invisible(x)
 }
-    
+
+### * .check_Rd_xrefs
+
+.check_Rd_xrefs <-
+function(package, dir, lib.loc = NULL)
+{
+    ## Build a db with all possible link targets (aliases) in the base
+    ## and recommended packages.
+    aliases <-
+        lapply(unlist(.get_standard_package_names()[c("base",
+                                                      "recommended")],
+                      use.names = FALSE),
+               Rd_aliases, lib.loc = .Library)
+
+    ## Add the aliases from the package itself, and build a db with all
+    ## \link xrefs in the package Rd objects.
+    if(!missing(package)) {
+        aliases <-
+            c(aliases, list(Rd_aliases(package, lib.loc = lib.loc)))
+        db <- .build_Rd_xref_db(package, lib.loc = lib.loc)
+    }
+    else {
+        aliases <-
+            c(aliases, list(Rd_aliases(dir = dir)))
+        db <- .build_Rd_xref_db(dir = dir)
+    }
+
+    ## Flatten the xref db into one big matrix.
+    db <- cbind(do.call("rbind", db), rep(names(db), sapply(db, NROW)))
+
+    ## Take the targets from the non-anchored xrefs.
+    db <- db[db[, 2] == "", -2, drop = FALSE]
+
+    ## The bad ones:
+    db <- db[! db[, 1] %in% unlist(aliases), , drop = FALSE]
+    structure(split(db[, 1], db[, 2]), class = "check_Rd_xrefs")
+}
+
+print.check_Rd_xrefs <-
+function(x, ...)
+{
+    if(length(x) > 0) {
+        for(i in seq(along = x)) {
+            writeLines(gettextf("Missing link(s) in documentation object '%s':",
+                                names(x)[i]))
+            .pretty_print(x[[i]])
+            writeLines("")
+        }
+        ## <FIXME>
+        ## Add some explanatory message and a pointer to R-exts
+        ## eventually ...
+        ## </FIXME>
+    }
+    x
+}
+
+
 ### * as.alist.call
 
 as.alist.call <-
@@ -3127,7 +3209,7 @@ function(x)
     else
         which(names(y) == "")
     if(any(ind)) {
-        names(y)[ind] <- as.character(y[ind])
+        names(y)[ind] <- sapply(y[ind],as.character)
         y[ind] <- rep.int(list(alist(irrelevant = )[[1]]), length(ind))
     }
     y
@@ -3209,6 +3291,17 @@ function(x)
      && (identical(x[[1]], as.symbol("<-")))
      && (length(x[[2]]) > 1)
      && is.symbol(x[[3]]))
+}
+
+### * .make_signatures
+
+.make_signatures <-
+function(cls)
+{
+    ## Note that (thanks JMC), when comparing signatures, the signature
+    ## has to be stripped of trailing "ANY" elements (which are always
+    ## implicit) or padded to a fixed length.
+    sub("(#ANY)*$", "", unlist(lapply(cls, paste, collapse = "#")))
 }
 
 ### * .package_env
@@ -3319,6 +3412,111 @@ function(x)
     sprintf("(\\\\S4method\\{(%s)\\}\\{(%s)\\})",
             "[._[:alnum:]]*",
             "[._[:alnum:],]*")
+
+
+### * .check_package_subdirs
+
+.check_package_subdirs <- function(dir, doDelete = FALSE)
+{
+    OS_subdirs <- c("unix", "windows")
+
+    mydir <- function(dir)
+    {
+        d <- list.files(dir, all.files = TRUE, full.names = FALSE)
+        if(!length(d)) return(d)
+        if(basename(dir) %in% c("R", "man"))
+            for(os in OS_subdirs) {
+                os_dir <- file.path(dir, os)
+                if(file_test("-d", os_dir))
+                    d <- c(d,
+                           file.path(os,
+                                     list.files(os_dir,
+                                                all.files = TRUE,
+                                                full.names = FALSE)))
+            }
+        d[sapply(file.path(dir, d), function(x) file_test("-f", x))]
+    }
+
+    if(!file_test("-d", dir))
+        stop(gettextf("directory '%s' does not exist", dir), domain = NA)
+    else
+        dir <- file_path_as_absolute(dir)
+
+    wrong_things <- list(R = character(0), man = character(0),
+                         demo = character(0), `inst/doc` = character(0))
+
+    code_dir <- file.path(dir, "R")
+    if(file_test("-d", code_dir)) {
+        all_files <- mydir(code_dir)
+        R_files <- c("sysdata.rda",
+                     list_files_with_type(code_dir, "code",
+                                          full.names = FALSE,
+                                          OS_subdirs = OS_subdirs))
+        wrong <- all_files %w/o% R_files
+        ## now configure might generate files in this directory
+        generated <- grep("\\.in$", wrong)
+        if(length(generated)) wrong <- wrong[-generated]
+        if(length(wrong)) {
+            wrong_things$R <- wrong
+            if(doDelete) unlink(file.path(dir, "R", wrong))
+        }
+    }
+
+    man_dir <- file.path(dir, "man")
+    if(file_test("-d", man_dir)) {
+        all_files <- mydir(man_dir)
+        man_files <- list_files_with_type(man_dir, "docs",
+                                          full.names = FALSE,
+                                          OS_subdirs = OS_subdirs)
+        wrong <- all_files %w/o% man_files
+        if(length(wrong)) {
+            wrong_things$man <- wrong
+            if(doDelete) unlink(file.path(dir, "man", wrong))
+        }
+    }
+
+    demo_dir <- file.path(dir, "demo")
+    if(file_test("-d", demo_dir)) {
+        all_files <- mydir(demo_dir)
+        demo_files <- list_files_with_type(demo_dir, "demo",
+                                           full.names = FALSE)
+        wrong <- all_files %w/o% c("00Index", demo_files)
+        if(length(wrong)) {
+            wrong_things$demo <- wrong
+            if(doDelete) unlink(file.path(dir, "demo", wrong))
+        }
+    }
+
+    vign_dir <- file.path(dir, "inst", "doc")
+    if(file_test("-d", vign_dir)) {
+        vignettes <- list_files_with_type(vign_dir, "vignette",
+                                          full.names = FALSE)
+        vignettes <- c(vignettes,
+                       list_files_with_exts(vign_dir, "pdf",
+                                            full.names = FALSE))
+        ## Assume here this is run in the C locale, as it is by R CMD
+        ## check.
+        OK <- grep("^[[:alpha:]][[:alnum:]._-]+$", vignettes)
+        wrong <- vignettes
+        if(length(OK)) wrong <- wrong[-OK]
+        if(length(wrong)) wrong_things$`inst/doc` <- wrong
+    }
+
+    class(wrong_things) <- "subdir_tests"
+    wrong_things
+}
+
+print.subdir_tests <-
+function(x, ...)
+{
+    for(i in which(sapply(x, length) > 0)) {
+        tag <- names(x)[i]
+        writeLines(sprintf("Subdirectory '%s' contains invalid file names:",
+                           names(x)[i]))
+        .pretty_print(x[[i]])
+    }
+    invisible(x)
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole.
@@ -36,6 +36,7 @@
 
 #ifdef SUPPORT_MBCS
 # include <wchar.h>
+# include <R_ext/rlocale.h>
 #endif
 
 int R_GE_getVersion()
@@ -1222,6 +1223,9 @@ void GECircle(double x, double y, double radius,
     double *xc, *yc;
     int result;
 
+    if (gc->lty == LTY_BLANK)
+	/* "transparent" border */
+	gc->col = R_TRANWHITE;
     /*
      * If the device can clip, then we just clip to the device
      * boundary and let the device do clipping within that.
@@ -1341,6 +1345,9 @@ void GERect(double x0, double y0, double x1, double y1,
     double *xc, *yc;
     int result;
 
+    if (gc->lty == LTY_BLANK)
+	/* "transparent" border */
+	gc->col = R_TRANWHITE;
     /*
      * For clipping logic, see comments in GECircle
      */
@@ -1752,6 +1759,60 @@ void GEText(double x, double y, char *str,
     }
     }
 }
+
+/****************************************************************
+ * GEXspline
+ ****************************************************************
+ */
+
+#include "xspline.c"
+
+/*
+ * Draws a "curve" through the specified control points.
+ * Return the vertices of the line that gets drawn.
+ */
+SEXP GEXspline(int n, double *x, double *y, double *s, Rboolean open,
+	       Rboolean repEnds, 
+	       Rboolean draw, /* May be called just to get points */
+	       R_GE_gcontext *gc, GEDevDesc *dd)
+{
+    /*
+     * Use xspline.c code to generate points to draw
+     * Draw polygon or polyline from points
+     */
+    SEXP result = R_NilValue;
+    /* 
+     * Save (and reset below) the heap pointer to clean up
+     * after any R_alloc's done by functions I call.
+     */
+    char *vmaxsave = vmaxget();
+    if (open) {
+      compute_open_spline(n, x, y, s, repEnds, LOW_PRECISION, dd);
+      if (draw)
+	  GEPolyline(npoints, xpoints, ypoints, gc, dd);
+    } else {
+      compute_closed_spline(n, x, y, s, LOW_PRECISION, dd);
+      if (draw)
+	  GEPolygon(npoints, xpoints, ypoints, gc, dd);
+    }
+    if (npoints > 1) {
+	SEXP xpts, ypts;
+	int i;
+	PROTECT(xpts = allocVector(REALSXP, npoints));
+	PROTECT(ypts = allocVector(REALSXP, npoints));
+	for (i=0; i<npoints; i++) {
+	    REAL(xpts)[i] = xpoints[i];
+	    REAL(ypts)[i] = ypoints[i];
+	}
+	PROTECT(result = allocVector(VECSXP, 2));
+	SET_VECTOR_ELT(result, 0, xpts);
+	SET_VECTOR_ELT(result, 1, ypts);
+	UNPROTECT(3);
+    } 
+    vmaxset(vmaxsave);
+    return result;
+}
+
 
 /****************************************************************
  * GEMode
@@ -2581,7 +2642,7 @@ void GEplaySnapshot(SEXP snapshot, GEDevDesc* dd)
  ****************************************************************
  */
 
-SEXP do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, xptr, evalenv, retval;
     GEDevDesc *dd = GEcurrentDevice();
@@ -2614,6 +2675,10 @@ SEXP do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
       errorcall(call, _("'expr' argument must be an expression"));
     if (TYPEOF(list) != VECSXP)
       errorcall(call, _("'list' argument must be a list"));
+    if (isNull(parentenv)) {
+	warning(_("use of NULL environment is deprecated"));
+	parentenv = R_BaseEnv;
+    } else        
     if (!isEnvironment(parentenv))
       errorcall(call, _("'env' argument must be an environment"));
     /*

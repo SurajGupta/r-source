@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8>
@@ -29,9 +29,8 @@
 # include <config.h>
 #endif
 
-#include <sys/types.h>
-
-#include "Defn.h"
+#include <Defn.h>
+#include <sys/types.h>		/* probably not needed */
 #include <Rmath.h>		/* imax2 */
 
 #ifdef HAVE_PCRE_PCRE_H
@@ -41,11 +40,12 @@
 #endif
 
 #ifdef SUPPORT_UTF8
+# include <R_ext/rlocale.h>
 # include <wchar.h>
 # include <wctype.h>
 #endif
 
-SEXP do_pgrep(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_pgrep(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP pat, vec, ind, ans;
     int i, j, n, nmatches;
@@ -192,11 +192,13 @@ static int length_adj(char *orig, char *repl, int *ovec, int nsubexpr,
 		    char *xi, *p;
 		    wchar_t *wc;
 		    p = xi = (char *) alloca((nb+1)*sizeof(char));
+		    R_CheckStack();
 		    for(j = 0; j < nb; j++) *p++ = orig[ovec[2*k]+j];
 		    *p = '\0';
 		    nc = mbstowcs(NULL, xi, 0);
 		    if(nc >= 0) {
 			wc = (wchar_t *) alloca((nc+1)*sizeof(wchar_t));
+			R_CheckStack();
 			mbstowcs(wc, xi, nc + 1);
 			for(j = 0; j < nc; j++) wc[j] = towctrans(wc[j], tr);
 			nb = wcstombs(NULL, wc, 0);
@@ -244,11 +246,13 @@ static char *string_adj(char *target, char *orig, char *repl, int *ovec,
 		    char *xi, *p;
 		    wchar_t *wc;
 		    p = xi = (char *) alloca((nb+1)*sizeof(char));
+		    R_CheckStack();
 		    for(j = 0; j < nb; j++) *p++ = orig[ovec[2*k]+j];
 		    *p = '\0';
 		    nc = mbstowcs(NULL, xi, 0);
 		    if(nc >= 0) {
 			wc = (wchar_t *) alloca((nc+1)*sizeof(wchar_t));
+			R_CheckStack();
 			mbstowcs(wc, xi, nc + 1);
 			for(j = 0; j < nc; j++) wc[j] = towctrans(wc[j], tr);
 			nb = wcstombs(NULL, wc, 0);
@@ -280,7 +284,7 @@ static char *string_adj(char *target, char *orig, char *repl, int *ovec,
 }
 
 
-SEXP do_pgsub(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_pgsub(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP pat, rep, vec, ans;
     int i, j, n, ns, nns, nmatch, offset, re_nsub;
@@ -454,7 +458,7 @@ SEXP do_pgsub(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 #include "RBufferUtils.h"
-SEXP do_pregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_pregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP pat, text, ans, matchlen;
     int i, n, st, erroffset;
@@ -551,7 +555,7 @@ SEXP do_pregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
-SEXP do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP pat, text, ansList, ans, matchlen;
     SEXP matchbuf, matchlenbuf;
@@ -653,7 +657,7 @@ SEXP do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
                 st = ovector[0];
                 INTEGER(matchbuf)[matchIndex] = st + 1; /* index from one */
                 INTEGER(matchlenbuf)[matchIndex] = ovector[1] - st;
-                start = ovector[1];
+                start = ovector[0] + 1;
 #ifdef SUPPORT_UTF8
                 if(!useBytes && mbcslocale) {
                     int mlen = ovector[1] - st;

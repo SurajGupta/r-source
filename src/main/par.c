@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2002 Robert Gentleman, Ross Ihaka and the R core team.
+ *  Copyright (C) 1997-2005 Robert Gentleman, Ross Ihaka and the R core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *
@@ -49,6 +49,110 @@
 #include <Graphics.h>		/* "GPar" structure + COMMENTS */
 #include <Rdevices.h>
 
+typedef struct {
+    char *name;
+    int code; /* 0 normal, 1 not inline, 2 read-only
+		 -1 unknown, -2 obselete, -3 graphical args
+	       */
+} ParTab;
+
+static ParTab
+ParTable[] = {
+    { "adj",		 0 },
+    { "ann",		 0 },
+    { "ask",		 1 },
+    { "bg",		 0 },
+    { "bty",		 0 },
+    { "cex",		 0 },
+    { "cex.axis",	 0 },
+    { "cex.lab",	 0 },
+    { "cex.main",	 0 },
+    { "cex.sub",	 0 },
+    { "cin",		 2 },
+    { "col",		 0 },
+    { "col.axis",	 0 },
+    { "col.lab",	 0 },
+    { "col.main",	 0 },
+    { "col.sub",	 0 },
+    { "cra",		 2 },
+    { "crt",		 0 },
+    { "csi",		 2 },
+    { "csy",		 0 },
+    { "cxy",		 2 },
+    { "din",		 2 },
+    { "err",		 0 },
+    { "family",		 0 },
+    { "fg",		 0 },
+    { "fig",		 1 },
+    { "fin",		 1 },
+    { "font",		 0 },
+    { "font.axis",	 0 },
+    { "font.lab",	 0 },
+    { "font.main",	 0 },
+    { "font.sub",	 0 },
+    { "gamma",		 0 },
+    { "lab",		 0 },
+    { "las",		 0 },
+    { "lend",		 0 },
+    { "lheight",	 1 },
+    { "ljoin",		 0 },
+    { "lmitre",		 0 },
+    { "lty",		 0 },
+    { "lwd",		 0 },
+    { "mai",		 1 },
+    { "mar",		 1 },
+    { "mex",		 1 },
+    { "mfcol",		 1 },
+    { "mfg",		 1 },
+    { "mfrow",		 1 },
+    { "mgp",		 0 },
+    { "mkh",		 0 },
+    { "new",		 1 },
+    { "oma",		 1 },
+    { "omd",		 1 },
+    { "omi",		 1 },
+    { "pch",		 0 },
+    { "pin",		 1 },
+    { "plt",		 1 },
+    { "ps",		 1 },
+    { "pty",		 1 },
+    { "smo",		 0 },
+    { "srt",		 0 },
+    { "tck",		 0 },
+    { "tcl",		 0 },
+    { "tmag",		 0 },
+    { "usr",		 1 },
+    { "xaxp",		 0 },
+    { "xaxs",		 0 },
+    { "xaxt",		 0 },
+    { "xlog",		 1 },
+    { "xpd",		 0 },
+    { "yaxp",		 0 },
+    { "yaxs",		 0 },
+    { "yaxt",		 0 },
+    { "ylog",		 1 },
+    /* Obsolete pars */
+    { "type",		-2},
+    /* Non-pars that might get passed to Specify2 */
+    { "asp",		-3},
+    { "main",		-3},
+    { "sub",		-3},
+    { "xlab",		-3},
+    { "ylab",		-3},
+    { "xlim",		-3},
+    { "ylim",		-3},
+    { NULL,		-1}
+};
+
+
+static int ParCode(char *what)
+{
+    int i;
+    for (i = 0; ParTable[i].name; i++)
+	if (!strcmp(what, ParTable[i].name)) return ParTable[i].code;
+    return -1;
+}
+
 
 /* par(.)'s call */
 
@@ -62,14 +166,15 @@ void RecordGraphicsCall(SEXP call)
 
 static void par_error(char *what)
 {
-    error(_("invalid value specified for graphics parameter \"%s\""),  what);
+    error(_("invalid value specified for graphical parameter \"%s\""),  what);
 }
 
 
 static void lengthCheck(char *what, SEXP v, int n, SEXP call)
 {
     if (length(v) != n)
-	errorcall(call, _("parameter \"%s\" has the wrong length"), what);
+	errorcall(call, _("graphical parameter \"%s\" has the wrong length"),
+		  what);
 }
 
 
@@ -131,6 +236,7 @@ static void BoundsCheck(double x, double a, double b, char *s)
 /* the transformations between coordinate systems */
 
 /* These will be defined differently for Specify() and Specify2() : */
+/* <FIXME>  do not need separate macros for a = b = c and b = a = c */
 #define R_DEV__(_P_) Rf_dpptr(dd)->_P_ = Rf_gpptr(dd)->_P_
 #define R_DEV_2(_P_) Rf_gpptr(dd)->_P_ = Rf_dpptr(dd)->_P_
 /* In Emacs : -- only inside Specify() :
@@ -154,7 +260,8 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
  *	this list is in \details{.} of ../library/base/man/par.Rd
  *	------------------------
  *	"ask",
- *	"fig", "fin",
+ *	"family", "fig", "fin",
+ *      "lend", lheight", "ljoin", "lmitre",
  *	"mai", "mar", "mex",
  *	"mfrow", "mfcol", "mfg",
  *	"new",
@@ -166,6 +273,12 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
     double x;
     int ix = 0;
 
+    /* If we get here, Query has already checked that 'what' is valid */
+
+    if (ParCode(what) == 2) {
+	warning(_("graphical parameter \"%s\" cannot be set"), what);
+	return;
+    }
 #include "par-common.c"
 /*	  ------------
  *--- now, these are *different* from  "Specify2() use" : */
@@ -226,10 +339,10 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
     else if (streql(what, "family")) {
 	value = coerceVector(value, STRSXP);
 	lengthCheck(what, value, 1, call);
-	if(strlen(CHAR(STRING_ELT(value, 0))) > 49)
-	    error(_("graphical parameter 'family' has a maximum length of 49 bytes"));
-	strncpy(Rf_dpptr(dd)->family, CHAR(STRING_ELT(value, 0)), 50);
-	strncpy(Rf_gpptr(dd)->family, CHAR(STRING_ELT(value, 0)), 50);
+	if(strlen(CHAR(STRING_ELT(value, 0))) > 200)
+	    error(_("graphical parameter 'family' has a maximum length of 200 bytes"));
+	strncpy(Rf_dpptr(dd)->family, CHAR(STRING_ELT(value, 0)), 201);
+	strncpy(Rf_gpptr(dd)->family, CHAR(STRING_ELT(value, 0)), 201);
     }
     else if (streql(what, "fin")) {
 	value = coerceVector(value, REALSXP);
@@ -251,27 +364,11 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 	GReset(dd);
     }
     /* -- */
-    else if (streql(what, "lend")) {
-	lengthCheck(what, value, 1, call);
-	R_DEV__(lend) = LENDpar(value, 0);
-    }
     else if (streql(what, "lheight")) {
 	lengthCheck(what, value, 1, call);
 	x = asReal(value);
 	posRealCheck(x, what);
 	R_DEV__(lheight) = x;
-    }
-    else if (streql(what, "ljoin")) {
-	lengthCheck(what, value, 1, call);
-	R_DEV__(ljoin) = LJOINpar(value, 0);
-    }
-    else if (streql(what, "lmitre")) {
-	lengthCheck(what, value, 1, call);
-	x = asReal(value);
-	posRealCheck(x, what);
-	if (x < 1)
-	    par_error(what);
-	R_DEV__(lmitre) = x;
     }
     else if (streql(what, "mai")) {
 	value = coerceVector(value, REALSXP);
@@ -387,9 +484,9 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 	    posIntCheck(INTEGER(value)[2], what);
 	    posIntCheck(INTEGER(value)[3], what);
 	    if(nrow != INTEGER(value)[2])
-		warningcall(call, _("value of nr in \"mfg\" is wrong and will be ignored"));
+		warning(_("value of nr in \"mfg\" is wrong and will be ignored"));
 	    if(ncol != INTEGER(value)[3])
-		warningcall(call, _("value of nc in \"mfg\" is wrong and will be ignored"));
+		warning(_("value of nc in \"mfg\" is wrong and will be ignored"));
 	}
 	R_DEV_2(lastFigure) = nrow*ncol;
 	/*R_DEV__(mfind) = 1;*/
@@ -404,21 +501,7 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 	R_DEV_2(currentFigure);
 	/* R_DEV_2(defaultFigure) = TRUE;
 	   R_DEV_2(layout) = FALSE; */
-	R_DEV_2(new) = 1;
-	/*
-	if (nrow > 2 || ncol > 2) {
-	    R_DEV__(cexbase) = 0.66;
-	    R_DEV__(mex) = 1.0;
-	}
-	else if (nrow == 2 && ncol == 2) {
-	    R_DEV__(cexbase) = 0.83;
-	    R_DEV__(mex) = 1.0;
-	}
-	else {
-	    R_DEV__(cexbase) = 1.0;
-	    R_DEV__(mex) = 1.0;
-	}
-	*/
+	R_DEV_2(new) = TRUE;
 	GReset(dd);
 	/* Force a device clip */
 	if (Rf_dpptr(dd)->canClip)
@@ -576,8 +659,12 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 	    par_error(what);
 	R_DEV__(ylog) = (ix != 0);
     }
-
-    else warningcall(call, _("parameter \"%s\" cannot be set"), what);
+    /* We do not need these as Query will already have warned.
+    else if (streql(what, "type")) {
+	warning(_("graphical parameter \"%s\" is obsolete"), what);
+    }
+    else warning(_("unknown graphical parameter \"%s\""), what);
+    */
 
     return;
 } /* Specify */
@@ -596,7 +683,26 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 void Specify2(char *what, SEXP value, DevDesc *dd, SEXP call)
 {
     double x;
-    int ix = 0;
+    int ix = 0, ptype = ParCode(what);
+
+    if (ptype == 1 || ptype == -3) {
+	/* 1: these are valid, but not settable inline
+	   3: arguments, not pars
+	*/
+	return;
+    }
+    if (ptype == -2) {
+	warningcall(call, _("graphical parameter \"%s\" is obsolete"), what);
+	return;
+    }
+    if (ptype < 0) {
+	warningcall(call, _("\"%s\" is not a graphical parameter"), what);
+	return;
+    }
+    if (ptype == 2) {
+	warningcall(call, _("graphical parameter \"%s\" cannot be set"), what);
+	return;
+    }
 
 #include "par-common.c"
 /*	  ------------
@@ -612,20 +718,28 @@ void Specify2(char *what, SEXP value, DevDesc *dd, SEXP call)
 	R_DEV__(cex) = x;
 	/* not setting cexbase here (but in Specify()) */
     }
-
+    else if (streql(what, "family")) {
+	value = coerceVector(value, STRSXP);
+	lengthCheck(what, value, 1, call);
+	if(strlen(CHAR(STRING_ELT(value, 0))) > 200)
+	    error(_("graphical parameter 'family' has a maximum length of 200 bytes"));
+	strncpy(Rf_gpptr(dd)->family, CHAR(STRING_ELT(value, 0)), 201);
+    }
     else if (streql(what, "fg")) {
 	/* highlevel arg `fg = ' does *not* set `col' (as par(fg=.) does!*/
 	lengthCheck(what, value, 1, call);	ix = RGBpar(value, 0);
 	/*	naIntCheck(ix, what); */
 	R_DEV__(fg) = ix;
     }
+#if 0 /* done better in 2.3.0 */
     else if (streql(what, "asp")) {
 	/* this is not a parameter, but let it through as if it were */
     }
 
     else warning(
-	_("parameter \"%s\" could not be set in high-level plot() function"),
+	_("graphical parameter \"%s\" can not be set in high-level plot() function"),
 	what);
+#endif
 } /* Specify2 */
 
 
@@ -810,7 +924,7 @@ static SEXP Query(char *what, DevDesc *dd)
     else if (streql(what, "lmitre")) {
 	value = allocVector(REALSXP, 1);
 	REAL(value)[0] = Rf_dpptr(dd)->lmitre;
-    }    
+    }
     else if (streql(what, "lty")) {
 	value = LTYget(Rf_dpptr(dd)->lty);
     }
@@ -945,14 +1059,6 @@ static SEXP Query(char *what, DevDesc *dd)
 	value = allocVector(REALSXP, 1);
 	REAL(value)[0] = Rf_dpptr(dd)->tmag;
     }
-    else if (streql(what, "type")) {
-	char buf[2];
-	PROTECT(value = allocVector(STRSXP, 1));
-	buf[0] = Rf_dpptr(dd)->type;
-	buf[1] = '\0';
-	SET_STRING_ELT(value, 0, mkChar(buf));
-	UNPROTECT(1);
-    }
     else if (streql(what, "usr")) {
 	value = allocVector(REALSXP, 4);
 	if (Rf_gpptr(dd)->xlog) {
@@ -1031,12 +1137,18 @@ static SEXP Query(char *what, DevDesc *dd)
 	value = allocVector(LGLSXP, 1);
 	INTEGER(value)[0] = Rf_dpptr(dd)->ylog;
     }
-    else
+    else if (streql(what, "type")) {
+	warning(_("graphical parameter \"%s\" is obsolete"), what);
 	value = R_NilValue;
+    }
+    else {
+	warning(_("\"%s\" is not a graphical parameter"), what);
+	value = R_NilValue;
+    }
     return value;
 }
 
-SEXP do_par(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_par(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP value;
     SEXP originalArgs = args;
@@ -1083,7 +1195,7 @@ SEXP do_par(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(2);
     }
     else {
-	errorcall(call, _("invalid parameter passed to par()"));
+	error(_("invalid argument passed to par()"));
 	return R_NilValue/* -Wall */;
     }
     /* should really only do this if specifying new pars ?  yes! [MM] */
@@ -1092,7 +1204,7 @@ SEXP do_par(SEXP call, SEXP op, SEXP args, SEXP env)
     return value;
 }
 
-SEXP do_readonlypars(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_readonlypars(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP result;
     GEDevDesc *dd;
@@ -1139,7 +1251,7 @@ SEXP do_readonlypars(SEXP call, SEXP op, SEXP args, SEXP env)
  *  )
  */
 
-SEXP do_layout(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_layout(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int i, j, nrow, ncol, ncmrow, ncmcol;
     SEXP originalArgs = args;
@@ -1150,7 +1262,7 @@ SEXP do_layout(SEXP call, SEXP op, SEXP args, SEXP env)
     dd = CurrentDevice();
 
     /* num.rows: */
-    nrow = Rf_dpptr(dd)->numrows = Rf_gpptr(dd)->numrows = 
+    nrow = Rf_dpptr(dd)->numrows = Rf_gpptr(dd)->numrows =
 	INTEGER(CAR(args))[0];
     if (nrow > MAX_LAYOUT_ROWS)
 	error(_("too many rows in layout, limit %d"), MAX_LAYOUT_ROWS);
@@ -1171,17 +1283,17 @@ SEXP do_layout(SEXP call, SEXP op, SEXP args, SEXP env)
 
     /* num.figures: */
     Rf_dpptr(dd)->currentFigure = Rf_gpptr(dd)->currentFigure =
-	Rf_dpptr(dd)->lastFigure = Rf_gpptr(dd)->lastFigure = 
+	Rf_dpptr(dd)->lastFigure = Rf_gpptr(dd)->lastFigure =
 	INTEGER(CAR(args))[0];
     args = CDR(args);
     /* col.widths: */
     for (j = 0; j < ncol; j++)
-	Rf_dpptr(dd)->widths[j] = Rf_gpptr(dd)->widths[j] = 
+	Rf_dpptr(dd)->widths[j] = Rf_gpptr(dd)->widths[j] =
 	    REAL(CAR(args))[j];
     args = CDR(args);
     /* row.heights: */
     for (i = 0; i < nrow; i++)
-	Rf_dpptr(dd)->heights[i] = Rf_gpptr(dd)->heights[i] = 
+	Rf_dpptr(dd)->heights[i] = Rf_gpptr(dd)->heights[i] =
 	    REAL(CAR(args))[i];
     args = CDR(args);
     /* cm.widths: */

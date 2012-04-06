@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2005  The R Development Core Team
  *  Copyright (C) 2003, 2004  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -78,7 +77,7 @@
  * rightassoc: Right (1) or left (0) associative operator
  *
  */
-FUNTAB R_FunTab[] =
+attribute_hidden FUNTAB R_FunTab[] =
 {
 
 /* Language Related Constructs */
@@ -153,6 +152,7 @@ FUNTAB R_FunTab[] =
 {"%/%",		do_arith,	IDIVOP,	1,	2,	{PP_BINARY2, PREC_PERCENT,0}},
 {"%*%",		do_matprod,	0,	1,	2,	{PP_BINARY,  PREC_PERCENT,0}},
 {"crossprod",	do_matprod,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"tcrossprod",	do_matprod,	2,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 {"==",		do_relop,	EQOP,	1,	2,	{PP_BINARY,  PREC_COMPARE,0}},
 {"!=",		do_relop,	NEOP,	1,	2,	{PP_BINARY,  PREC_COMPARE,0}},
 {"<",		do_relop,	LTOP,	1,	2,	{PP_BINARY,  PREC_COMPARE,0}},
@@ -434,7 +434,7 @@ FUNTAB R_FunTab[] =
 /* Data Summaries */
 
 {"sum",		do_summary,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-  /*MM{"mean",	do_summary,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},*/
+{"mean",	do_summary,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"min",		do_summary,	2,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"max",		do_summary,	3,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"prod",	do_summary,	4,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -456,7 +456,7 @@ FUNTAB R_FunTab[] =
 {"format.info",	do_formatinfo,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"cat",		do_cat,		0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"call",	do_call,	0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"do.call",	do_docall,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"do.call",	do_docall,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.call",	do_ascall,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"type.convert",do_typecvt,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.environment",do_as_environment,0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -551,8 +551,6 @@ FUNTAB R_FunTab[] =
 #endif
 #ifdef Win32
 {"unlink",	do_unlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"help.start",	do_helpstart,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"show.help.item",do_helpitem,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"win.version", do_winver,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"shell.exec",	do_shellexec,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -566,13 +564,17 @@ FUNTAB R_FunTab[] =
 {"DLL.version",	do_dllversion,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"bringToTop",	do_bringtotop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"readClipboard",do_readClipboard,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"writeClipboard",do_writeClipboard,0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"getClipboardFormats",do_getClipboardFormats,0,11,0,	{PP_FUNCALL, PREC_FN,	0}},
+{"readClipboard",do_readClipboard,0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"writeClipboard",do_writeClipboard,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"chooseFiles", do_chooseFiles, 0,  	11, 	5,  	{PP_FUNCALL, PREC_FN,   0}},
+{"chooseDir", 	do_chooseDir, 	0,  	11, 	2,  	{PP_FUNCALL, PREC_FN,   0}},
 {"getIdentification", do_getIdentification,0,11,0,	{PP_FUNCALL, PREC_FN, 	0}},
 {"getWindowHandle", do_getWindowHandle,0,11,	1,	{PP_FUNCALL, PREC_FN, 	0}},
 {"getWindowTitle",do_getWindowTitle,0,	11,	0,	{PP_FUNCALL, PREC_FN, 	0}},
 {"setWindowTitle",do_setTitle,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"shortPathName",do_shortpath, 	0,  	11, 	1,  	{PP_FUNCALL, PREC_FN,   0}},
+{"loadRconsole", do_loadRconsole,0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
@@ -589,6 +591,7 @@ FUNTAB R_FunTab[] =
 {"saveToConn",	do_saveToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"load",	do_load,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"loadFromConn",do_loadFromConn,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"loadFromConn2",do_loadFromConn2,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"serializeToConn",	do_serializeToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"unserializeFromConn",	do_unserializeFromConn,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"deparse",	do_deparse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -612,7 +615,7 @@ FUNTAB R_FunTab[] =
 {"split",	do_split,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"symbol.C",	do_symbol,	0,	1,	1,	{PP_FOREIGN, PREC_FN,	0}},
 {"symbol.For",	do_symbol,	1,	1,	1,	{PP_FOREIGN, PREC_FN,	0}},
-{"is.loaded",	do_isloaded,	0,	1,	-1,	{PP_FOREIGN, PREC_FN,	0}},
+{"is.loaded",	do_isloaded,	0,	11,	-1,	{PP_FOREIGN, PREC_FN,	0}},
 {".C",		do_dotCode,	0,	1,	-1,	{PP_FOREIGN, PREC_FN,	0}},
 {".Fortran",	do_dotCode,	1,	1,	-1,	{PP_FOREIGN, PREC_FN,	0}},
 {".External",   do_External,    0,      1,      -1,     {PP_FOREIGN, PREC_FN,	0}},
@@ -658,6 +661,7 @@ FUNTAB R_FunTab[] =
 {"formals",	do_formals,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"body",	do_body,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"bodyCode",	do_bodyCode,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"emptyenv", 	do_emptyenv, 	0,	1,	0,	{PP_FUNCALL, PREC_FN, 	0}},
 {"baseenv", 	do_baseenv, 	0,	1,	0,	{PP_FUNCALL, PREC_FN, 	0}},
 {"globalenv",	do_globalenv,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment",	do_envir,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -688,6 +692,7 @@ FUNTAB R_FunTab[] =
 {"visibleflag", do_visibleflag,	0,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 {"l10n_info", 	do_l10n_info,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"Cstack_info", do_Cstack_info,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Functions To Interact with the Operating System */
 
@@ -735,7 +740,7 @@ FUNTAB R_FunTab[] =
 /* Device Drivers */
 
 #ifdef Unix
-{"X11",		do_X11,		0,	111,	11,	{PP_FUNCALL, PREC_FN,	0}},
+{"X11",		do_X11,		0,	111,	13,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 
 /* Graphics */
@@ -772,8 +777,8 @@ FUNTAB R_FunTab[] =
 {"polygon",	do_polygon,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"par",		do_par,		0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"readonly.pars",do_readonlypars,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"segments",	do_segments,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
-{"arrows",	do_arrows,	0,	111,	9,	{PP_FUNCALL, PREC_FN,	0}},
+{"segments",	do_segments,	0,	111,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"arrows",	do_arrows,	0,	111,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"layout",	do_layout,	0,	111,	10,	{PP_FUNCALL, PREC_FN,	0}},
 {"locator",	do_locator,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"identify",	do_identify,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
@@ -822,6 +827,7 @@ FUNTAB R_FunTab[] =
 /* History manipulation */
 {"loadhistory", do_loadhistory,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"savehistory", do_savehistory,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"addhistory",  do_addhistory,  0,	11,	1,	{PP_FUNCALL, PREC_FN, 	0}},
 
 /* date-time manipulations */
 {"Sys.time",	do_systime,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -910,7 +916,7 @@ FUNTAB R_FunTab[] =
 };
 
 
-SEXP do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP name;
     int i;
@@ -1060,7 +1066,7 @@ SEXP install(char const *name)
 
 /*  do_internal - This is the code for .Internal(). */
 
-SEXP do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s, fun;
     int save = R_PPStackTop, flag;

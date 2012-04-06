@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  *  Model Formula Manipulation
@@ -55,6 +55,7 @@ static int nvar;		/* Number of variables in the formula */
 static int nwords;		/* # of words (ints) to code a term */
 static int nterm;		/* # of model terms */
 static SEXP varlist;		/* variables in the model */
+attribute_hidden
 SEXP framenames;		/* variables names for specified frame */
 /* NOTE: framenames can't be static because it must be protected from
    garbage collection. */
@@ -366,6 +367,8 @@ static SEXP StripTerm(SEXP term, SEXP list)
 	intercept = 0;
     if (list == R_NilValue)
 	return list;
+    /* This can be highly recursive */
+    R_CheckStack();
     tail = StripTerm(term, CDR(list));
     if (TermEqual(term, CAR(list)))
 	return tail;
@@ -380,6 +383,7 @@ static SEXP StripTerm(SEXP term, SEXP list)
 
 static SEXP TrimRepeats(SEXP list)
 {
+    /* Highly recursive, but StripTerm does the checking */
     if (list == R_NilValue)
 	return R_NilValue;
     if (TermZero(CAR(list)))
@@ -702,7 +706,7 @@ static int TermCode(SEXP termlist, SEXP thisterm, int whichbit, SEXP term)
 
 static SEXP ExpandDots(SEXP object, SEXP value);
 
-SEXP do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, ans, v, pattern, formula, varnames, term, termlabs;
     SEXP specials, t, data, rhs;
@@ -1164,7 +1168,7 @@ static SEXP ExpandDots(SEXP object, SEXP value)
     return R_NilValue; /*NOTREACHED*/
 }
 
-SEXP do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP new, old, lhs, rhs;
 
@@ -1232,6 +1236,8 @@ SEXP do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* value, but it can't hurt. */
 
     SET_ATTRIB(new, R_NilValue);
+    setAttrib(new, R_DotEnvSymbol, getAttrib(old, R_DotEnvSymbol)); 
+    
     return new;
 }
 
@@ -1265,7 +1271,7 @@ SEXP do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* .Internal(model.frame(terms, rownames, variables, varnames, */
 /*           dots, dotnames, subset, na.action)) */
 
-SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP terms, data, names, variables, varnames, dots, dotnames, na_action;
     SEXP ans, row_names, subset, tmp;
@@ -1340,9 +1346,11 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ans = VECTOR_ELT(data, i);
 	    if (TYPEOF(ans) < LGLSXP ||
 		TYPEOF(ans) > REALSXP)
-		errorcall(call, _("invalid variable type"));
+		errorcall(call, _("invalid variable type for '%s'"),
+			  CHAR(STRING_ELT(names, i)));
 	    if (nrows(ans) != nr)
-		errorcall(call, _("variable lengths differ"));
+		errorcall(call, _("variable lengths differ (found for '%s')"),
+			  CHAR(STRING_ELT(names, i)));
 	}
     } else nr = length(row_names);
 
@@ -1418,7 +1426,7 @@ SEXP do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* Just returns the unevaluated call */
 	/* No longer needed??? */
 
-SEXP do_tilde(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_tilde(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     if (isObject(call))
         return duplicate(call);
@@ -1526,7 +1534,7 @@ static SEXP ColumnNames(SEXP x)
 	return VECTOR_ELT(dn, 1);
 }
 
-SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP expr, factors, terms, vars, vnames, assign;
     SEXP xnames, tnames, rnames;
@@ -1606,13 +1614,7 @@ SEXP do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < nVar; i++) {
 	var_i = SET_VECTOR_ELT(variable, i, VECTOR_ELT(vars, i));
 	if (nrows(var_i) != n)
-	    errorcall(call, _("variable lengths differ"));
-	/*if (i == risponse - 1) {
-	    LOGICAL(ordered)[0] = 0;
-	    INTEGER(nlevs)[0] = 0;
-	    INTEGER(columns)[0] = 0;
-	}
-	else */
+	    errorcall(call, _("variable lengths differ (found for variable %d)"), i);
 	if (isOrdered(var_i)) {
 	    LOGICAL(ordered)[i] = 1;
 	    if((INTEGER(nlevs)[i] = nlevels(var_i)) < 1)

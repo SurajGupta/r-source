@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef _DEV_X11_H
@@ -59,7 +59,7 @@ typedef enum {
 
 
 Rboolean newX11DeviceDriver(DevDesc*, char*, double, double, double, double, 
-			    X_COLORTYPE, int, int, int, SEXP, int);
+			    X_COLORTYPE, int, int, int, SEXP, int, int, int);
 
 
 	/********************************************************/
@@ -142,7 +142,8 @@ int      Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd
 Rboolean newX11_Open(NewDevDesc *dd, newX11Desc *xd, 
 		     char *dsp, double w, double h, 
 		     double gamma_fac, X_COLORTYPE colormodel, 
-		     int maxcube, int bgcolor, int canvascolor, int res);
+		     int maxcube, int bgcolor, int canvascolor, 
+		     int res, int xpos, int ypos);
 
 #endif /* R_X11_DEVICE */
 

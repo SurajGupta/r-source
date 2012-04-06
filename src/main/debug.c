@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -24,7 +24,7 @@
 
 #include "Defn.h"
 
-SEXP do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op,args);
 #define find_char_fun \
@@ -51,7 +51,7 @@ SEXP do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-SEXP do_trace(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_trace(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
 

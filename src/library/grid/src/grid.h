@@ -15,8 +15,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 #include <Rconfig.h>
@@ -132,6 +132,14 @@
  */
 #define GP_FONTFACE 15
 
+/*
+ * Structure of an arrow description
+ */
+#define GRID_ARROWANGLE 0
+#define GRID_ARROWLENGTH 1
+#define GRID_ARROWENDS 2
+#define GRID_ARROWTYPE 3
+
 typedef double LTransform[3][3];
 
 typedef double LLocation[3];
@@ -147,7 +155,7 @@ typedef enum {
 } LNullArithmeticMode;
 
 /* NOTE: The order of the enums here must match the order of the
- * strings in viewport.R
+ * strings in unit.R
  */
 typedef enum {
     L_NPC = 0,
@@ -174,12 +182,17 @@ typedef enum {
      * This is multiples of the font size.
      */
     L_CHAR = 18,
-    L_GROBWIDTH = 19,
-    L_GROBHEIGHT = 20,
-    L_MYLINES = 21,
-    L_MYCHAR = 22,
-    L_MYSTRINGWIDTH = 23,
-    L_MYSTRINGHEIGHT = 24
+    L_GROBX = 19,
+    L_GROBY = 20,
+    L_GROBWIDTH = 21,
+    L_GROBHEIGHT = 22,
+    /*
+     * No longer used
+     */
+    L_MYLINES = 23,
+    L_MYCHAR = 24,
+    L_MYSTRINGWIDTH = 25,
+    L_MYSTRINGHEIGHT = 26
 } LUnit;
 
 typedef enum {
@@ -270,18 +283,20 @@ SEXP L_initViewportStack();
 SEXP L_initDisplayList();
 SEXP L_convertToNative(SEXP x, SEXP what); 
 SEXP L_moveTo(SEXP x, SEXP y);
-SEXP L_lineTo(SEXP x, SEXP y);
-SEXP L_lines(SEXP x, SEXP y); 
-SEXP L_segments(SEXP x0, SEXP y0, SEXP x1, SEXP y1); 
+SEXP L_lineTo(SEXP x, SEXP y, SEXP arrow);
+SEXP L_lines(SEXP x, SEXP y, SEXP index, SEXP arrow); 
+SEXP L_segments(SEXP x0, SEXP y0, SEXP x1, SEXP y1, SEXP arrow); 
 SEXP L_arrows(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn, 
 	      SEXP y1, SEXP y2, SEXP ynm1, SEXP yn, 
 	      SEXP angle, SEXP length, SEXP ends, SEXP type);
 SEXP L_polygon(SEXP x, SEXP y, SEXP index);
+SEXP L_xspline(SEXP x, SEXP y, SEXP s, SEXP o, SEXP a, SEXP rep, SEXP index);
 SEXP L_circle(SEXP x, SEXP y, SEXP r);
 SEXP L_rect(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust); 
 SEXP L_text(SEXP label, SEXP x, SEXP y, SEXP hjust, SEXP vjust, 
 	    SEXP rot, SEXP checkOverlap);
 SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size);
+SEXP L_clip(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust); 
 SEXP L_pretty(SEXP scale);
 SEXP L_locator();
 SEXP L_convert(SEXP x, SEXP whatfrom,
@@ -294,6 +309,8 @@ double locationX(LLocation l);
 double locationY(LLocation l);
 
 void copyTransform(LTransform t1, LTransform t2);
+
+void invTransform(LTransform t, LTransform invt);
 
 void identity(LTransform m);
 
@@ -578,11 +595,14 @@ void getViewportTransform(SEXP currentvp,
 			  double *vpWidthCM, double *vpHeightCM,
 			  LTransform transform, double *rotationAngle);
 
-SEXP L_circleBounds(SEXP x, SEXP y, SEXP r);
-SEXP L_locnBounds(SEXP x, SEXP y);
-SEXP L_rectBounds(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust);
+SEXP L_circleBounds(SEXP x, SEXP y, SEXP r, SEXP theta);
+SEXP L_locnBounds(SEXP x, SEXP y, SEXP theta);
+SEXP L_rectBounds(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust,
+		  SEXP theta);
 SEXP L_textBounds(SEXP label, SEXP x, SEXP y, 
-		  SEXP hjust, SEXP vjust, SEXP rot);
+		  SEXP hjust, SEXP vjust, SEXP rot, SEXP theta);
+SEXP L_xsplineBounds(SEXP x, SEXP y, SEXP s, SEXP o, SEXP a, SEXP rep,
+		     SEXP index, SEXP theta);
 
 /* From unit.c */
 SEXP validUnits(SEXP units);

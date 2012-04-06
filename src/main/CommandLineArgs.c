@@ -15,7 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+  Foundation, Inc., 51 Franklin Street Suite 330, Boston, MA 02111-1307,
   U.S.A.
  */
 
@@ -71,7 +71,7 @@ R_set_command_line_arguments(int argc, char **argv)
   The .Internal which returns the command line arguments that are stored
   in global variables.
  */
-SEXP
+SEXP attribute_hidden
 do_commandArgs(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int i;

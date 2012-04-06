@@ -7,7 +7,9 @@ dump.frames <- function(dumpto = "last.dump", to.file = FALSE)
     attr(last.dump, "error.message") <- geterrmessage()
     class(last.dump) <- "dump.frames"
     if(dumpto != "last.dump") assign(dumpto, last.dump)
-    if (to.file) save(list=dumpto, file = paste(dumpto, "rda", sep="."))
+    if (to.file)
+        save(list=dumpto, file = paste(dumpto, "rda", sep="."),
+             compress = TRUE)
     else assign(dumpto, last.dump, envir=.GlobalEnv)
     invisible()
 }
@@ -46,7 +48,8 @@ debugger <- function(dump = last.dump)
     }
 }
 
-limitedLabels <- function(value, maxwidth = options()$width)
+## allow for the numbering by menu here
+limitedLabels <- function(value, maxwidth = getOption("width") - 5)
 {
     value <- as.character(value)
     if(is.null(maxwidth) || maxwidth < 40)
@@ -62,14 +65,29 @@ recover <-
         tState <- tracingState(FALSE)
         on.exit(tracingState(tState))
     }
-    ## find an interesting environment to dump from
+    ## find an interesting environment to start from
     calls <- sys.calls()
     from <- 0
     n <- length(calls)
     if(identical(sys.function(n), recover))
         ## options(error=recover) produces a call to this function as an object
         n <- n - 1
+    ## look for a call inserted by trace() (and don't show frames below)
+    ## this level.
     for(i in rev(seq(length=n))) {
+        calli <- calls[[i]]
+        fname <- calli[[1]]
+        ## deparse can use more than one line
+        if(!is.na(match(deparse(fname)[1],
+                        c("methods::.doTrace", ".doTrace")))) {
+            from <- i-1
+            break
+        }
+    }
+  ## if no trace, look for the first frame from the bottom that is not
+    ## stop or recover
+    if(from == 0)
+      for(i in rev(seq(length=n))) {
         calli <- calls[[i]]
         fname <- calli[[1]]
         if(!is.name(fname) ||

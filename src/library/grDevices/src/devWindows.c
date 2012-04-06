@@ -3,6 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004        The R Foundation
+ *  Copyright (C) 2004-5      The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,10 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/* <MBCS> Use of strchr on display type is fine.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*--- Device Driver for Windows; this file started from
@@ -39,7 +37,8 @@
 #include "graphapp/stdimg.h"
 #include "console.h"
 #include "rui.h"
-#include "windows.h"
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
 #include "devWindows.h"
 #include "grDevices.h"
 #ifdef ENABLE_NLS
@@ -55,7 +54,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 			double height, double pointsize,
 			Rboolean recording, int resize, int bg, int canvas,
 			double gamma, int xpos, int ypos, Rboolean buffered,
-			SEXP psenv);
+			SEXP psenv, Rboolean restoreConsole);
 
 
 /* a colour used to represent the background on png if transparent
@@ -256,7 +255,7 @@ static void PrivateCopyDevice(NewDevDesc *dd, NewDevDesc *ndd, char *name)
     show(xd->gawin);
 }
 
-static void SaveAsWin(NewDevDesc *dd, char *display)
+static void SaveAsWin(NewDevDesc *dd, char *display, Rboolean restoreConsole)
 {
     NewDevDesc *ndd = (NewDevDesc *) calloc(1, sizeof(NewDevDesc));
     GEDevDesc* gdd = (GEDevDesc*) GetDevice(devNumber((DevDesc*) dd));
@@ -278,7 +277,7 @@ static void SaveAsWin(NewDevDesc *dd, char *display)
 					GE_INCHES, gdd),
 		       ((gadesc*) dd->deviceSpecific)->basefontsize,
 		       0, 1, White, White, 1, NA_INTEGER, NA_INTEGER, FALSE,
-		       R_GlobalEnv))
+		       R_GlobalEnv, restoreConsole))
         PrivateCopyDevice(dd, ndd, display);
 }
 
@@ -335,7 +334,8 @@ static void SaveAsPostscript(NewDevDesc *dd, char *fn)
 	    }
 	}
     }
-    if (PSDeviceDriver(ndd, fn, paper, family, afmpaths, encoding, bg, fg,
+    if (PSDeviceDriver(ndd, fn, paper, family, afmpaths, encoding,
+                       bg, fg,
 		       fromDeviceWidth(toDeviceWidth(1.0, GE_NDC, gdd),
 				       GE_INCHES, gdd),
 		       fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
@@ -353,7 +353,7 @@ static void SaveAsPDF(NewDevDesc *dd, char *fn)
     NewDevDesc *ndd = (NewDevDesc *) calloc(1, sizeof(NewDevDesc));
     GEDevDesc* gdd = (GEDevDesc*) GetDevice(devNumber((DevDesc*) dd));
     gadesc *xd = (gadesc *) dd->deviceSpecific;
-    char family[256], encoding[256], bg[256], fg[256];
+    char family[256], encoding[256], bg[256], fg[256], **afmpaths = NULL;
 
     if (!ndd) {
 	R_ShowMessage(_("Not enough memory to copy graphics window"));
@@ -392,7 +392,8 @@ static void SaveAsPDF(NewDevDesc *dd, char *fn)
 	    }
 	}
     }
-    if (PDFDeviceDriver(ndd, fn, "special", family, encoding, bg, fg,
+    if (PDFDeviceDriver(ndd, fn, "special", family, afmpaths, encoding,
+                        bg, fg,
 			fromDeviceWidth(toDeviceWidth(1.0, GE_NDC, gdd),
 					GE_INCHES, gdd),
 			fromDeviceHeight(toDeviceHeight(-1.0, GE_NDC, gdd),
@@ -535,7 +536,7 @@ static char *SaveFontSpec(SEXP sxp, int offset)
 /*
  * Take the fontfamily from a gcontext (which is device-independent)
  * and convert it into a Windows-specific font description using
- * the Windows font database (see src/library/graphics/R/unix/windows.R)
+ * the Windows font database (see src/library/grDevices/R/windows/windows.R)
  *
  * IF gcontext fontfamily is empty ("")
  * OR IF can't find gcontext fontfamily in font database
@@ -549,7 +550,7 @@ static char* translateFontFamily(char* family) {
 
     PROTECT(graphicsNS = R_FindNamespace(ScalarString(mkChar("grDevices"))));
     PROTECT_WITH_INDEX(windowsenv = findVar(install(".Windowsenv"),
-					   graphicsNS), &xpi);
+					    graphicsNS), &xpi);
     if(TYPEOF(windowsenv) == PROMSXP)
 	REPROTECT(windowsenv = eval(windowsenv, graphicsNS), xpi);
     PROTECT(fontdb = findVar(install(".Windows.Fonts"), windowsenv));
@@ -557,7 +558,7 @@ static char* translateFontFamily(char* family) {
     nfonts = LENGTH(fontdb);
     if (strlen(family) > 0) {
 	int found = 0;
-	for (i=0; i<nfonts && !found; i++) {
+	for (i = 0; i < nfonts && !found; i++) {
 	    char* fontFamily = CHAR(STRING_ELT(fontnames, i));
 	    if (strcmp(family, fontFamily) == 0) {
 		found = 1;
@@ -781,9 +782,11 @@ static void HelpMouseClick(window w, int button, point pt)
 	    xd->py = pt.y;
 	} else
 	    xd->clicked = 2;
-	if (dd->gettingEvent)  
+	if (dd->gettingEvent) { 
 	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseDown, 
 	    			button, pt.x, pt.y);
+            if (xd->buffered) SHOW;	
+        }
     }
 }
 
@@ -794,9 +797,11 @@ static void HelpMouseMove(window w, int button, point pt)
 	NewDevDesc *dd = (NewDevDesc *) getdata(w);
 	gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-	if (dd->gettingEvent)  
+	if (dd->gettingEvent) {
 	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseMove, 
 	    			button, pt.x, pt.y);
+	    if (xd->buffered) SHOW;	    			
+	}
     }
 }
 
@@ -807,9 +812,11 @@ static void HelpMouseUp(window w, int button, point pt)
 	NewDevDesc *dd = (NewDevDesc *) getdata(w);
 	gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-	if (dd->gettingEvent)  
+	if (dd->gettingEvent) { 
 	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseUp,
 	    			button, pt.x, pt.y);
+	    if (xd->buffered) SHOW;	
+	}
     }
 }
 
@@ -900,14 +907,14 @@ static void menuwm(control m)
 	return;
     }
     sprintf(display, "win.metafile:%s", fn);
-    SaveAsWin(dd, display);
+    SaveAsWin(dd, display, TRUE);
 }
 
 
 static void menuclpwm(control m)
 {
     NewDevDesc *dd = (NewDevDesc *) getdata(m);
-    SaveAsWin(dd, "win.metafile");
+    SaveAsWin(dd, "win.metafile", TRUE);
 }
 
 static void menuclpbm(control m)
@@ -932,7 +939,7 @@ static void menustayontop(control m)
 static void menuprint(control m)
 {
     NewDevDesc *dd = (NewDevDesc *) getdata(m);
-    SaveAsWin(dd, "win.print:");
+    SaveAsWin(dd, "win.print:", TRUE);
 }
 
 static void menuclose(control m)
@@ -1258,8 +1265,10 @@ static void CHelpKeyIn(control w, int key)
     
     if (dd->gettingEvent) {
     	keyname = getKeyName(key);
-    	if (keyname > knUNKNOWN) 
+    	if (keyname > knUNKNOWN) {
     	    xd->eventResult = doKeybd(xd->eventRho, dd, keyname, NULL);
+	    if (xd->buffered) SHOW;	
+	}
     } else {
 	if (xd->replaying) return;
 	switch (key) {
@@ -1297,6 +1306,7 @@ static void NHelpKeyIn(control w, int key)
 	    keyname[1] = '\0';
 	}
 	xd->eventResult = doKeybd(xd->eventRho, dd, knUNKNOWN, keyname);
+	if (xd->buffered) SHOW;	
     } else {
 	if (xd->replaying) return;
 	switch (key) {
@@ -1694,9 +1704,13 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	    warning(_("Unable to load Rbitmap.dll"));
 	    return FALSE;
 	}
+
+	if (w < 20 && h < 20)
+	    warning(_("'width=%d, height=%d' are unlikely values in pixels"),
+		    (int)w, (int) h);
 	/*
 	  Observe that given actual graphapp implementation 256 is
-	  irrelevant,i.e., depth of the bitmap is the one of graphic card
+	  irrelevant,i.e., depth of the bitmap is that of graphic card
 	  if required depth > 1
 	*/
 	if ((xd->gawin = newbitmap(w, h, 256)) == NULL) {
@@ -1724,6 +1738,9 @@ static Rboolean GA_Open(NewDevDesc *dd, gadesc *xd, char *dsp,
 	*p = ':' ;
 	if(strlen(p+1) >= 512) error(_("filename too long in jpeg() call"));
 	strcpy(xd->filename, p+1);
+	if (w < 20 && h < 20)
+	    warning(_("'width=%d, height=%d' are unlikely values in pixels"),
+		    (int)w, (int) h);
 	if((xd->gawin = newbitmap(w, h, 256)) == NULL) {
 	    warning(_("Unable to allocate bitmap"));
 	    return FALSE;
@@ -1848,12 +1865,11 @@ static void GA_MetricInfo(int c,
     if(c == 32) {
 	*ascent  = 0.0;
 	*descent = 0.0;
-	*width   = (double) w;
     } else {
 	*ascent  = (double) a;
 	*descent = (double) d;
-	*width   = (double) w;
     }
+    *width   = (double) w;
 }
 
 	/********************************************************/
@@ -2382,13 +2398,10 @@ static void GA_Text(double x, double y, char *str,
     SetFont(gc->fontfamily, gc->fontface, size, rot, dd);
     SetColor(gc->col, gc->gamma, dd);
     if (R_OPAQUE(gc->col)) {
-#ifdef SUPPORT_UTF8
-	if(gc->fontface != 5) {
+	if(mbcslocale && gc->fontface != 5) {
 	    /* These macros need to be wrapped in braces */
-	    DRAW(gwdrawstr(_d, xd->font, xd->fgcolor, pt(x, y), str, hadj));
-	} else 
-#endif
-	{
+	    DRAW(gwdrawstr1(_d, xd->font, xd->fgcolor, pt(x, y), str, hadj));
+	} else {
 	    DRAW(gdrawstr1(_d, xd->font, xd->fgcolor, pt(x, y), str, hadj));
 	}
     }
@@ -2452,7 +2465,7 @@ static Rboolean GA_Locator(double *x, double *y, NewDevDesc *dd)
     dd->onExit = GA_onExit;
     
     while (!xd->clicked) {
-	if(xd->buffered) SHOW;
+	SH;
         WaitMessage();
 	R_ProcessEvents();
     }
@@ -2530,7 +2543,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
 			double height, double pointsize,
 			Rboolean recording, int resize, int bg, int canvas,
 			double gamma, int xpos, int ypos, Rboolean buffered,
-			SEXP psenv)
+			SEXP psenv, Rboolean restoreConsole)
 {
     /* if need to bail out with some sort of "error" then */
     /* must free(dd) */
@@ -2667,7 +2680,7 @@ Rboolean GADeviceDriver(NewDevDesc *dd, char *display, double width,
     }
     xd->newFrameConfirm = GA_NewFrameConfirm;
     dd->displayListOn = (xd->kind == SCREEN);
-    if (RConsole && (xd->kind!=SCREEN)) show(RConsole);
+    if (RConsole && restoreConsole) show(RConsole);
     return TRUE;
 }
 
@@ -2677,6 +2690,7 @@ SEXP savePlot(SEXP args)
     char *fn, *tp, display[550];
     int device;
     NewDevDesc* dd;
+    Rboolean restoreConsole;
 
     args = CDR(args); /* skip entry point name */
     device = asInteger(CAR(args));
@@ -2693,7 +2707,8 @@ SEXP savePlot(SEXP args)
     if (!isString(type) || LENGTH(type) != 1)
 	error(_("invalid type argument in savePlot"));
     tp = CHAR(STRING_ELT(type, 0));
-
+    restoreConsole = asLogical(CADDDR(args));
+    
     if(!strcmp(tp, "png")) {
 	SaveAsPng(dd, fn);
     } else if (!strcmp(tp,"bmp")) {
@@ -2707,7 +2722,7 @@ SEXP savePlot(SEXP args)
 	    return R_NilValue;
 	}
 	sprintf(display, "win.metafile:%s", fn);
-	SaveAsWin(dd, display);
+	SaveAsWin(dd, display, restoreConsole);
     } else if (!strcmp(tp, "ps") || !strcmp(tp, "eps")) {
 	SaveAsPostscript(dd, fn);
     } else if (!strcmp(tp, "pdf")) {
@@ -2719,7 +2734,7 @@ SEXP savePlot(SEXP args)
 
 
 /* Rbitmap  */
-#define BITMAP_DLL_NAME "\\BIN\\RBITMAP.DLL\0"
+#define BITMAP_DLL_NAME "\\modules\\Rbitmap.dll\0"
 typedef int (*R_SaveAsBitmap)();
 static R_SaveAsBitmap R_SaveAsPng, R_SaveAsJpeg, R_SaveAsBmp;
 
@@ -2905,6 +2920,7 @@ SEXP devga(SEXP args)
     char *display, *vmax;
     double height, width, ps, xpinch, ypinch, gamma;
     int recording = 0, resize = 1, bg, canvas, xpos, ypos, buffered;
+    Rboolean restoreConsole;
     SEXP sc, psenv;
 
     vmax = vmaxget();
@@ -2952,6 +2968,8 @@ SEXP devga(SEXP args)
     if (!isString(sc) && !isInteger(sc) && !isLogical(sc) && !isReal(sc))
 	error(_("invalid value of 'bg' in devWindows"));
     bg = RGBpar(sc, 0);
+    args = CDR(args);
+    restoreConsole = asLogical(CAR(args));
     
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
@@ -2967,7 +2985,8 @@ SEXP devga(SEXP args)
 	GAsetunits(xpinch, ypinch);
 	if (!GADeviceDriver(dev, display, width, height, ps, 
 			    (Rboolean)recording, resize, bg, canvas, gamma,
-			    xpos, ypos, (Rboolean)buffered, psenv)) {
+			    xpos, ypos, (Rboolean)buffered, psenv, 
+			    restoreConsole)) {
 	    free(dev);
 	    error(_("unable to start device devWindows"));
 	}
@@ -3025,7 +3044,7 @@ static Rboolean GA_NewFrameConfirm()
     settext(xd->gawin, G_("Click or hit ENTER for next page"));
     dd->dev->onExit = GA_onExit;  /* install callback for cleanup */
     while (!xd->clicked && !xd->enterkey) {
-	if(xd->buffered) SHOW;
+	SH;
         WaitMessage();
 	R_ProcessEvents(); /* May not return if user interrupts */
     }
@@ -3058,7 +3077,7 @@ static SEXP GA_getEvent(SEXP eventRho, char* prompt)
     xd->eventResult = NULL;
     dd->dev->onExit = GA_onExit;  /* install callback for cleanup */
     while (!xd->eventResult || xd->eventResult == R_NilValue) {
-	if(xd->buffered) SHOW;
+	SH;
         WaitMessage();
 	R_ProcessEvents(); /* May not return if user interrupts */
     }

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -30,7 +30,7 @@
 Rboolean compute_identical(SEXP x, SEXP y);
 static Rboolean neWithNaN(double x,  double y);
 
-SEXP do_identical(SEXP x, SEXP y)
+SEXP attribute_hidden do_identical(SEXP x, SEXP y)
 {
     SEXP ans;
 
@@ -42,7 +42,7 @@ SEXP do_identical(SEXP x, SEXP y)
 
 /* primitive interface */
 
-SEXP do_ident(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_ident(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
     return do_identical(CAR(args), CADR(args));
@@ -95,15 +95,18 @@ Rboolean compute_identical(SEXP x, SEXP y)
     }
     case STRSXP:
     {
-	int i, n = length(x);
+	int i, n = length(x), n1, n2;
 	if(n != length(y)) return FALSE;
 	for(i = 0; i < n; i++) {
 	    Rboolean na1 = (STRING_ELT(x, i) == NA_STRING),
 		na2 = (STRING_ELT(y, i) == NA_STRING);
 	    if(na1 ^ na2) return FALSE;
 	    if(na1 && na2) continue;
-	    if(strcmp(CHAR(STRING_ELT(x, i)),
-		      CHAR(STRING_ELT(y, i))) != 0)
+	    /* NB: R strings can have embedded nuls */
+	    n1 = LENGTH(STRING_ELT(x, i));
+	    n2 = LENGTH(STRING_ELT(y, i));
+	    if (n1 != n2) return FALSE;
+	    if(memcmp(CHAR(STRING_ELT(x, i)), CHAR(STRING_ELT(y, i)), n1) != 0)
 		return FALSE;
 	}
 	return TRUE;

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-12-12 09:04\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -106,10 +106,16 @@ msgstr "scope는 label항의 부분 집합이 아닙니다"
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "메소드 'drop1'는 mlm 모델에서 실제 적용되어 있지 않습니다"
 
-msgid "lower scope is not included in model"
+#, fuzzy
+msgid "F test assumes 'quasi%s' family"
+msgstr "F test는 동일한 %s패밀리입니다"
+
+#, fuzzy
+msgid "lower scope has term(s) %s not included in model"
 msgstr "하위의 scpoe는 모델에서 포함하고 되지 않습니다"
 
-msgid "upper scope does not include model"
+#, fuzzy
+msgid "upper scope does not include model term(s) %s"
 msgstr "상위의 scope는 모델을 포함하고 있지 않습니다"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
@@ -735,8 +741,9 @@ msgstr "이러한 초기값으로부터 최적화를 할수가 없습니다"
 msgid "link not recognised"
 msgstr "인정 받지 않는 link입니다"
 
+#, fuzzy
 msgid ""
-"link \"%s\" not available for poisson family; available links are \"identity"
+"link \"%s\" not available for Poisson family; available links are \"identity"
 "\", \"log\" and \"sqrt\""
 msgstr ""
 "link\"%s\"는 포아송 패밀리에서 이용할수가 없습니다: 이용 할수 있는 link는\n"
@@ -763,6 +770,9 @@ msgstr ""
 "링크\"%s\"는 정규 패밀리에서 이용 할수 있는 link가 아닙니다. 이용 할수 있는 "
 "link는 \n"
 "\"inverse\", \"log\" 그리고 \"identity\"입니다"
+
+msgid "cannot find valid starting values: please specify some"
+msgstr "유효한 초기값을 검색해낼 수가 없습니다: 무엇인가를 지정해주십시오"
 
 msgid ""
 "link \"%s\" not available for binomial family, available links are \"logit"
@@ -869,8 +879,11 @@ msgstr ""
 msgid "'or' must be a single number between 0 and Inf"
 msgstr "'or'는 단일의 수치 또는 0 과 inf 간의 단일의 수가 아니면 되지 않습니다"
 
-msgid "p-values may be incorrect"
-msgstr "p 값은 올바르지 않을지도 모릅니다"
+msgid "need 2 or more non-zero row marginals"
+msgstr ""
+
+msgid "need 2 or more non-zero column marginals"
+msgstr ""
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
 msgstr ""
@@ -973,9 +986,6 @@ msgstr ""
 "대응해야\n"
 "만 합니다:"
 
-msgid "cannot find valid starting values: please specify some"
-msgstr "유효한 초기값을 검색해낼 수가 없습니다: 무엇인가를 지정해주십시오"
-
 msgid "NAs in V(mu)"
 msgstr "V(mu)에서 NA가 있습니다"
 
@@ -1028,6 +1038,12 @@ msgstr "'anova.glm'에의 다음의 인수는 무효이고, 제거 되었습니�
 msgid ","
 msgstr ","
 
+msgid "using F test with a %s family is inappropriate"
+msgstr ""
+
+msgid "using F test with a fixed dispersion is inappropriate"
+msgstr ""
+
 msgid "models with response"
 msgstr "응답"
 
@@ -1036,6 +1052,9 @@ msgstr "응답이 모델 1과 다르므로 제거해졌습니다"
 
 msgid "models were not all fitted to the same size of dataset"
 msgstr "model는 모두 동일 사이즈의 데이터 세트에 적용시킬수 없습니다"
+
+msgid "using F test with a '%s' family is inappropriate"
+msgstr ""
 
 msgid "observations with zero weight not used for calculating dispersion"
 msgstr "중량감이 0의 관측값이 표준편차의 계산으로 사용되지 않습니다"
@@ -1513,24 +1532,19 @@ msgstr "파라미터의 이름을 확인 할수 없습니다"
 msgid "levels truncated to positive values only"
 msgstr "레벨 poitive 값인만큼 축소되었습니다"
 
-msgid "setVarying : vary length must match length of parameters"
+#, fuzzy
+msgid "setVarying : 'vary' length must match length of parameters"
 msgstr ""
 "setVarying: vary 길이는 파라미터의 길이에 일치하지 않으면 되지 않습니다"
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "파라미터의 초기 추정값으로 구매 행렬이 특이합니다"
 
-msgid "argument 'weights' is currently ignored"
-msgstr ""
-
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
 msgid "Convergence failure:"
 msgstr ""
-
-msgid "rows with zero weights not counted"
-msgstr "중량감 zero의 행은 카운트 되지 않습니다"
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "\"nls\" 오브젝트를 위한 REML 대수우도를 계산할 수 없습니다"
@@ -1580,7 +1594,7 @@ msgid "use only with \"lm\" objects"
 msgstr "\"lm\" 오브젝트에 대해서만 사용해주십시오"
 
 msgid "'which' must be in 1:6"
-msgstr "'which'는 1:6에서 없으면 되지 않습니다"
+msgstr "'which'는 1:4에서 없으면 되지 않습니다"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
@@ -1855,6 +1869,10 @@ msgstr "spline: 최초와 마지막 y값이 다른 y[1]을 양쪽 모두를 위�
 msgid "splinefun: invalid interpolation method"
 msgstr "splinefun: 무효인 보간법입니다"
 
+#, fuzzy
+msgid "'deriv' must be between 0 and 3"
+msgstr "'p'는 0과 0.5의 사이에 없으면 되지 않습니다"
+
 msgid "stepfun: 'x' must be ordered increasingly"
 msgstr "stepfun: 'x'는 승순에 줄지어 있을 필요가 있습니다"
 
@@ -2023,6 +2041,9 @@ msgstr "'ma' 차수가 모순된 지정입니다"
 
 msgid "number of differences must be a positive integer"
 msgstr "계차의 수는 positive 정수가 아니면 되지 않습니다"
+
+msgid "'start.innov' is too short: need %d points"
+msgstr ""
 
 msgid "insufficient observations"
 msgstr "관측값의 수가 불충분합니다 "

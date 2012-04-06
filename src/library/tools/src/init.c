@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #include <R.h>
@@ -39,7 +39,11 @@ static const R_CMethodDef CEntries[]  = {
 };
 
 
-void R_init_tools(DllInfo *dll)
+void
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+__attribute__ ((visibility ("default")))
+#endif
+R_init_tools(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, callMethods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);

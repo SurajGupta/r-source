@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> the only interpretation of char is ASCII */
@@ -572,6 +572,7 @@ static void in_R_FTPClose(void *ctx)
 
 #ifdef USE_WININET
 
+#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #include <wininet.h>
 typedef struct wictxt {
@@ -917,19 +918,23 @@ void RxmlMessage(int level, const char *format, ...)
 }
 
 #include "sock.h"
+#ifdef Win32
+# define STRICT_R_HEADERS
+#endif
+#include <R_ext/RS.h> /* for Calloc */
 
+void
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+__attribute__ ((visibility ("default")))
+#endif
 #ifdef USE_WININET
-void R_init_internet2(DllInfo *info)
+R_init_internet2(DllInfo *info)
 #else
-void R_init_internet(DllInfo *info)
+R_init_internet(DllInfo *info)
 #endif
 {
     R_InternetRoutines *tmp;
-    tmp = (R_InternetRoutines*) malloc(sizeof(R_InternetRoutines));
-    if(!tmp) {
-	error(_("cannot allocate memory for InternetRoutines structure"));
-	return;
-    }
+    tmp = Calloc(1, R_InternetRoutines);
 
     tmp->download = in_do_download;
     tmp->newurl =  in_R_newurl;

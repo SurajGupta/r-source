@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *  SYNOPSIS
  *
@@ -92,7 +92,7 @@ double dnbeta(double x, double a, double b, double lambda, int give_log)
 	if(1 - psum < eps) break;
     }
     if(1 - psum >= eps) { /* not converged */
-	ML_ERROR(ME_PRECISION);
+	ML_ERROR(ME_PRECISION, "dnbeta");
     }
     return R_D_val(sum);
 }

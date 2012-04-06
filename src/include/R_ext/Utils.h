@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2004    Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1998-2005    Robert Gentleman, Ross Ihaka
  *                             and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  *
  *
  * Generally useful  UTILITIES  *NOT* relying on R internals (from Defn.h)
@@ -83,6 +83,8 @@ void	rgb2hsv(double r, double g, double b,
 		double *h, double *s, double *v);
 
 void R_CheckUserInterrupt(void);
+void R_CheckStack(void);
+    
 
 /* ../../appl/interv.c: also in Applic.h */
 int findInterval(double *xt, int n, double x,

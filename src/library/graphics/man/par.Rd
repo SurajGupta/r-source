@@ -116,15 +116,15 @@ par(\dots, no.readonly = FALSE)
 
   There are several parameters can only be set by a call to \code{par()}:
   \itemize{
-    \item \code{"ask"}
-    \item \code{"family"}, \code{"fig"}, \code{"fin"}
-    \item \code{"lend"}, \code{"lheight"}, \code{"ljoin"}, \code{"lmitre"}
+    \item \code{"ask"},
+    \item \code{"fig"}, \code{"fin"},
+    \item \code{"lheight"},
     \item \code{"mai"}, \code{"mar"}, \code{"mex"},
-    \code{"mfcol"}, \code{"mfrow"}, \code{"mfg"}
-    \item \code{"new"}
-    \item \code{"oma"}, \code{"omd"}, \code{"omi"}
-    \item \code{"pin"}, \code{"plt"}, \code{"ps"}, \code{"pty"}
-    \item \code{"usr"}
+    \code{"mfcol"}, \code{"mfrow"}, \code{"mfg"},
+    \item \code{"new"},
+    \item \code{"oma"}, \code{"omd"}, \code{"omi"},
+    \item \code{"pin"}, \code{"plt"}, \code{"ps"}, \code{"pty"},
+    \item \code{"usr"},
     \item \code{"xlog"}, \code{"ylog"}
   }
   The remaining parameters can also be set as arguments (often via
@@ -139,6 +139,12 @@ par(\dots, no.readonly = FALSE)
   execution of the function, only.  However, see the comments on
   \code{bg} and \code{cex}, which may be taken as arguments to certain
   plot functions rather than as graphical parameters.
+
+  The meaning of \sQuote{character size} is not well-defined: this is
+  set up for the device taking \code{pointsize} into account but often
+  not the actual font family in use.  It can be considered to be an
+  estimate of the size of character \code{M} in a proportionally-spaced
+  font.
 }
 
 \value{
@@ -174,6 +180,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{ask}}{logical.  If \code{TRUE}, the user is asked for
       input, before a new figure is drawn.}
     \item{\code{bg}}{The color to be used for the background of plots.
+      When called from \code{par()} it also sets \code{new=FALSE}.
       A description of how colors are specified is given below.
       Note that some graphics functions such as
       \code{\link{plot.default}} and \code{\link{points}} have an
@@ -197,7 +204,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{cex.sub}}{The magnification to be used for sub-titles
       relative to the current setting of \code{cex}.}
     \item{\code{cin}}{\emph{\bold{R.O.}}; character size
-      \code{(width,height)} in inches.}
+      \code{(width, height)} in inches.}
     \item{\code{col}}{A specification for the default plotting color.  A
       description of how colors are specified is given below.}
     \item{\code{col.axis}}{The color to be used for axis annotation.}
@@ -205,7 +212,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{col.main}}{The color to be used for plot main titles.}
     \item{\code{col.sub}}{The color to be used for plot sub-titles.}
     \item{\code{cra}}{\emph{\bold{R.O.}}; size of default character
-      \code{(width,height)} in \dQuote{rasters} (pixels).}
+      \code{(width, height)} in \dQuote{rasters} (pixels).}
     \item{\code{crt}}{A numerical value specifying (in degrees) how
       single characters should be rotated.  It is unwise to expect
       values other than multiples of 90 to work.  Compare with
@@ -213,7 +220,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{csi}}{\emph{\bold{R.O.}}; height of (default sized)
       characters in inches.}
     \item{\code{cxy}}{\emph{\bold{R.O.}}; size of default character
-      \code{(width,height)} in user coordinate units.
+      \code{(width, height)} in user coordinate units.
       \code{par("cxy")} is \code{par("cin")/par("pin")} scaled to user
       coordinates.
       Note that \code{c(\link{strwidth}(ch), \link{strheight}(ch))} for
@@ -224,7 +231,7 @@ par(\dots, no.readonly = FALSE)
       outside the plot region are \emph{not} plotted.)
       The degree of error reporting desired.}
     \item{\code{family}}{The name of a font family for drawing text.
-      The maximum allowed length is 49 bytes.
+      The maximum allowed length is 200 bytes.
       This name gets mapped by each graphics device to device-specific
       font descriptions.
       The default value is \code{""} which means that the
@@ -233,7 +240,8 @@ par(\dots, no.readonly = FALSE)
       \code{"mono"}, and \code{"symbol"} and the \link{Hershey}
       font families are also available.  Different devices
       may define others.  Some devices will ignore this setting
-      completely.}
+      completely.  As from \R 2.3.0 this can be specified inline for
+      \code{\link{text}}.}
     \item{\code{fg}}{The color to be used for the foreground of plots.
       This is the default color used for things like axes and boxes
       around plots.  When called from \code{par()} this also sets
@@ -282,11 +290,15 @@ par(\dots, no.readonly = FALSE)
       Note that other string/character rotation (via argument \code{srt}
       to \code{par}) does \emph{not} affect the axis labels.
     }
-    \item{\code{lend}}{The line end style.
-      This can be specified as an integer or string:
-      0 and \code{"round"} mean rounded line caps;
-      1 and \code{"butt"} mean butt line caps;
-      2 and \code{"square"} mean square line caps.
+    \item{\code{lend}}{The line end style.  This can be specified as an
+      integer or string:
+      \describe{
+	\item{\code{0}}{and \code{"round"} mean rounded line caps
+	  [\emph{default}];}
+	\item{\code{1}}{and \code{"butt"} mean butt line caps;}
+	\item{\code{2}}{and \code{"square"} mean square line caps.}
+      }
+      As from \R 2.3.0 this can be specified inline.
     }
     \item{\code{lheight}}{The line height multiplier.
       The height of a line of text (used to vertically space
@@ -295,14 +307,22 @@ par(\dots, no.readonly = FALSE)
       line height multiplier.  Default value is 1.}
     \item{\code{ljoin}}{The line join style.
       This can be specified as an integer or string:
-      0 and \code{"round"} mean rounded line joins;
-      1 and \code{"mitre"} mean mitred line joins;
-      2 and \code{"bevel"} mean bevelled line joins.}
+      \describe{
+	\item{\code{0}}{and \code{"round"} mean rounded line joins
+	  [\emph{default}];}
+	\item{\code{1}}{and \code{"mitre"} mean mitred line joins;}
+	\item{\code{2}}{and \code{"bevel"} mean bevelled line joins.}
+      }
+
+      As from \R 2.3.0 this can be specified inline.
+    }
     \item{\code{lmitre}}{The line mitre limit.
       This controls when mitred line joins are automatically
       converted into bevelled line joins.  The
       value must be larger than 1 and the default is 10.  Not all
       devices will honour this setting.
+
+      As from \R 2.3.0 this can be specified inline.
     }
     \item{\code{lty}}{The line type.
       Line types can either be specified as an integer (0=blank,
@@ -413,14 +433,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{tcl}}{The length of tick marks as a fraction of the
       height of a line of text.  The default value is \code{-0.5};
       setting \code{tcl = NA} sets \code{tck = -0.01} which is S' default.}
-    \item{\code{tmag}}{A number specifying the enlargement of text of
-      the main title relative to the other annotating text of the plot.
-      Defaults to \code{1.2}.}
-    \item{\code{type}}{\strong{Deprecated:} will be removed in \R 2.3.0.
-      character;  the default plot type desired, see
-      \code{\link{plot.default}(type=\dots)}, defaulting to \code{"p"}.
-      \strong{NB:} This is currently used -- the default for
-      \code{\link{plot.default}} does not depend on this par.}
+    \item{\code{tmag}}{Currently unused: defaults to \code{1.2}.}
     \item{\code{usr}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the extremes of the user coordinates of the plotting
       region.  When a logarithmic scale is in use (i.e.,
@@ -548,6 +561,8 @@ par(\dots, no.readonly = FALSE)
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \seealso{
   \code{\link{plot.default}} for some high-level plotting parameters;

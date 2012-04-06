@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -34,23 +34,26 @@
 static SEXP
 cross(SEXP s, SEXP t)
 {
-    SEXP a, la, ls, lt;
+    SEXP a, la, ls, lt, rs, rt;
     int i, j, k, n, nls, nlt, vs, vt;
 
     n = length(s);
-    nls = nlevels(s);
-    nlt = nlevels(t);
+    ls = getAttrib(s, R_LevelsSymbol);
+    lt = getAttrib(t, R_LevelsSymbol);
+    nls = LENGTH(ls);
+    nlt = LENGTH(lt);
     PROTECT(a = allocVector(INTSXP, n));
+    PROTECT(rs = coerceVector(s, INTSXP));
+    PROTECT(rt = coerceVector(t, INTSXP));
     for (i = 0; i < n; i++) {
-	vs = INTEGER(s)[i];
-	vt = INTEGER(t)[i];
+	vs = INTEGER(rs)[i];
+	vt = INTEGER(rt)[i];
 	if ((vs == NA_INTEGER) || (vt == NA_INTEGER))
 	    INTEGER(a)[i] = NA_INTEGER;
 	else
 	    INTEGER(a)[i] = vt + (vs - 1) * nlt;
     }
-    ls = getAttrib(s, R_LevelsSymbol);
-    lt = getAttrib(t, R_LevelsSymbol);
+    UNPROTECT(2);
     if (!isNull(ls) && !isNull(lt)) {
 	PROTECT(la = allocVector(STRSXP, nls * nlt));
 	k = 0;
@@ -118,10 +121,10 @@ seq(SEXP call, SEXP s1, SEXP s2)
     return ans;
 }
 
-SEXP do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-    if (isFactor(CAR(args)) && isFactor(CADR(args))) {
+    if (inherits(CAR(args), "factor") && inherits(CADR(args), "factor")) {
 	if (length(CAR(args)) != length(CADR(args)))
 	    errorcall(call, _("unequal factor lengths"));
 	return(cross(CAR(args), CADR(args)));
@@ -304,7 +307,7 @@ static SEXP rep(SEXP s, SEXP ncopy)
     return a;
 }
 
-SEXP do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     return rep(CAR(args), CADR(args));

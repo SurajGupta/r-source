@@ -112,13 +112,14 @@
   \code{c(x)}).
 
   Unfortunately, the conversion is complicated by the operation of time
-  zones and leap seconds (22 days have been 86401 seconds long so far:
+  zones and leap seconds (23 days have been 86401 seconds long so far:
   the times of the extra seconds are in the object \code{.leap.seconds}).
   The details of this are entrusted to the OS services where possible.
   This will usually cover the period 1970--2037, and on Unix machines
   back to 1902 (when time zones were in their infancy).  Outside those
   ranges we use our own C code.  This uses the offset from GMT in use
-  in the timezone in 2000, and uses the alternate (daylight-saving)
+  in the timezone in one of 1970 to 1978 (chosen so that the likely DST
+  transition days are Sundays), and uses the alternate (daylight-saving)
   timezone only if \code{isdst} is positive.
 
   It seems that some systems use leap seconds but most do not. This is
@@ -129,6 +130,15 @@
 
   Using \code{\link{c}} on \code{"POSIXlt"} objects converts them to the
   current time zone.
+}
+\section{Sub-section Accuracy}{
+  Class \code{"POSIXct"} has always been able to express fractions of a
+  second, and as from \R 2.3.0, class \code{"POSIXlt"} can also.
+  (Conversion of fractions between the two forms may not be exact, but
+  will have better than microsecond accuracy.)
+
+  Fractional seconds are printed only if
+  \code{\link{options}("digits.secs")} is set: see \code{\link{strftime}}.
 }
 \seealso{
   \link{Dates} for dates without times.
@@ -161,7 +171,7 @@
 Sys.time() - 3600             # an hour ago
 
 as.POSIXlt(Sys.time(), "GMT") # the current time in GMT
-format(.leap.seconds)         # all 22 leapseconds in your timezone
+format(.leap.seconds)         # all 23 leapseconds in your timezone
 print(.leap.seconds, tz="PST8PDT")  # and in Seattle's
 }
 \keyword{utilities}

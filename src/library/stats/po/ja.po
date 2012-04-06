@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.1\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-11-16 22:59+0000\n"
+"POT-Creation-Date: 2006-04-18 12:45+0100\n"
 "PO-Revision-Date: 2005-06-02 16:10+0900\n"
 "Last-Translator: Nobuo Funao\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
@@ -23,23 +23,23 @@ msgstr "移動中央値のバンド幅・バンド範囲(span)が n より大き
 msgid "probabilities outside [0,1] in qansari()"
 msgstr "qansari() 中で確率が [0,1] の範囲外です"
 
-#: arima.c:60 arima.c:167 arima.c:343
+#: arima.c:71 arima.c:178 arima.c:354
 msgid "invalid argument type"
 msgstr "不正な引数の型です"
 
-#: arima.c:402 arima.c:490 pacf.c:302 pacf.c:342
+#: arima.c:413 arima.c:497 pacf.c:311 pacf.c:351
 msgid "can only transform 100 pars in arima0"
 msgstr "arima0 では 100 個のパラメータまでしか変換出来ません"
 
-#: distance.c:145
+#: distance.c:151
 msgid "dist(.,\"binary\"): treating non-finite values as NA"
 msgstr "dist(.,\"binary\"): 有限でない値をNAとして取り扱います"
 
-#: distance.c:214
+#: distance.c:220
 msgid "distance(): invalid p"
 msgstr "distance(): 不正な p"
 
-#: distance.c:217
+#: distance.c:223
 msgid "distance(): invalid distance"
 msgstr "distance(): 不正な距離"
 
@@ -66,57 +66,35 @@ msgstr "sm.method=\"spline\" では 2500 行までしか扱えません"
 msgid "span is too small"
 msgstr "範囲(span)が小さすぎます"
 
-#: mburg.c:197
+#: mAR.c:467
+msgid "Singular matrix in qr_solve"
+msgstr "qr_solve 中の特異行列です"
+
+#: mAR.c:510
+msgid "Singular matrix in ldet"
+msgstr "ldet 中の特異行列です"
+
+#: mAR.c:697
 msgid "Invalid vmethod"
 msgstr "不正な vmethod です"
 
-#: mburg.c:333
+#: mAR.c:833
 msgid "Burg's algorithm failed to find partial correlation"
 msgstr "Burg のアルゴリズムが偏相関を見つけ損ないました"
 
 #: nls.c:75
-msgid "control must be a list"
-msgstr "control はリストでなければなりません"
+msgid "'control' must be a list"
+msgstr "'control' はリストでなければなりません"
 
-#: nls.c:77 port.c:510
-msgid "m must be a list"
-msgstr "m はリストでなければなりません"
+#: nls.c:77
+msgid "'m' must be a list"
+msgstr "'m' はリストでなければなりません"
 
-#: nls.c:83
-msgid "control$maxiter absent"
-msgstr "control$maxiter がありません"
-
-#: nls.c:88
-msgid "control$tol absent"
-msgstr "control$tol がありません"
-
-#: nls.c:93
-msgid "control$minFactor absent"
-msgstr "control$minFactor がありません"
-
-#: nls.c:102
-msgid "m$conv() absent"
-msgstr "m$conv() がありません"
-
-#: nls.c:107
-msgid "m$incr() absent"
-msgstr "m$incr() がありません"
-
-#: nls.c:112
-msgid "m$deviance() absent"
-msgstr "m$deviance() がありません"
-
-#: nls.c:117
-msgid "m$trace() absent"
-msgstr "m$trace() がありません"
-
-#: nls.c:122
-msgid "m$setPars() absent"
-msgstr "m$setPars() がありません"
-
-#: nls.c:127
-msgid "m$getPars() absent"
-msgstr "m$getPars() がありません"
+#: nls.c:83 nls.c:88 nls.c:93 nls.c:102 nls.c:107 nls.c:112 nls.c:117
+#: nls.c:122 nls.c:127
+#, c-format
+msgid "'%s' absent"
+msgstr "'%s' がありません"
 
 #: nls.c:154
 msgid "singular gradient"
@@ -133,42 +111,50 @@ msgid "number of iterations exceeded maximum of %d"
 msgstr "繰り返し数が最大値 %d を超えました"
 
 #: nls.c:202
-msgid "theta should be of type character"
-msgstr "theta は文字型でなければなりません"
+msgid "'theta' should be of type character"
+msgstr "'theta' は文字型でなければなりません"
 
-#: nls.c:204
-msgid "rho should be an environment"
-msgstr "rho は環境(environment)でなければなりません"
+#: nls.c:204 port.c:359
+msgid "use of NULL environment is deprecated"
+msgstr "NULL 環境の使用は廃止されました"
 
-#: nls.c:220 nls.c:248
+#: nls.c:208
+msgid "'rho' should be an environment"
+msgstr "'rho' は環境(environment)でなければなりません"
+
+#: nls.c:210
+msgid "'dir' is not a numeric vector of the correct length"
+msgstr "'dir' は正しい長さの数値ベクトルではありません"
+
+#: nls.c:227 nls.c:255
 msgid "Missing value or an infinity produced when evaluating the model"
 msgstr "モデルを評価する際，欠損値または無限大が生成されました"
 
-#: nls.c:226
+#: nls.c:233
 #, c-format
 msgid "variable '%s' is integer, not numeric"
 msgstr "変数 '%s' は整数です、数値ではありません"
 
-#: nls.c:228
+#: nls.c:235
 #, c-format
 msgid "variable '%s' is not numeric"
 msgstr "変数 '%s' は数値ではありません"
 
-#: pacf.c:72
+#: pacf.c:81
 msgid "bad Starma struct"
 msgstr "不適な Starma struct です"
 
-#: pacf.c:218
+#: pacf.c:227
 #, c-format
 msgid "starma error code %d"
 msgstr "starma エラーコード %d です"
 
-#: pacf.c:281
+#: pacf.c:290
 #, c-format
 msgid "forkal error code %d"
 msgstr "forkal エラーコード %d です"
 
-#: pacf.c:445
+#: pacf.c:454
 msgid "invalid value of lag.max"
 msgstr "不正な lag.max 値です"
 
@@ -187,62 +173,58 @@ msgstr "グラディエント関数は長さ %d の数値ベクトルを返さ�
 msgid "Hessian function must return a square numeric matrix of order %d"
 msgstr "ヘッシアン関数は次数 %d の正方数値行列を返さなければなりません"
 
-#: port.c:360
-msgid "`rho' must be an environment"
+#: port.c:363
+msgid "'rho' must be an environment"
 msgstr "'rho' は環境(environment)でなければなりません"
 
-#: port.c:362 port.c:509
-msgid "`d' must be a nonempty numeric vector"
+#: port.c:365 port.c:512
+msgid "'d' must be a nonempty numeric vector"
 msgstr "`d' は空でない数値ベクトルでなければなりません"
 
-#: port.c:364
+#: port.c:367
 msgid "When Hessian defined must also have gradient defined"
 msgstr "ヘッシアンを定義した際は、グラディエントも定義しなければなりません"
 
-#: port.c:367
+#: port.c:370
 #, c-format
-msgid "environment `rho' must contain a numeric vector `.par' of length %d"
+msgid "environment 'rho' must contain a numeric vector '.par' of length %d"
 msgstr "環境 `rho' は長さが %d の数値ベクトル `.par' を含まねばなりません"
 
-#: port.c:377 port.c:529
-msgid "lowerb and upperb must be numeric vectors"
-msgstr "lowerb と upperb は数値ベクトルでなければなりません"
+#: port.c:380
+msgid "'lower' and 'upper' must be numeric vectors"
+msgstr "lower' と 'upper' は数値ベクトルでなければなりません"
 
-#: port.c:423
-msgid "getElement applies only to named lists"
-msgstr "getElement は名前つきリストにだけ適用されます"
+#: port.c:426
+msgid "'getElement' applies only to named lists"
+msgstr "'getElement' は名前つきリストにだけ適用されます"
 
-#: port.c:444
+#: port.c:447
 #, c-format
 msgid "%s$%s() not found"
 msgstr "%s$%s() が見つかりません"
 
-#: port.c:457
+#: port.c:460
 #, c-format
-msgid "gradient must be a numeric matrix of dimension (%d,%d)"
-msgstr "グラディエントは次元 (%d,%d) の数値行列でなければなりません"
+msgid "'gradient' must be a numeric matrix of dimension (%d,%d)"
+msgstr "'gradient' は次元 (%d,%d) の数値行列でなければなりません"
 
-#: port.c:478
+#: port.c:481
 #, c-format
 msgid "fcn produced mode %d, length %d - wanted mode %d, length %d"
-msgstr "モード %d, 長さ %d の fcn が作られました - モード %d, 長さ %d が必要でした"
+msgstr ""
+"モード %d, 長さ %d の fcn が作られました - モード %d, 長さ %d が必要でした"
 
-#: port.c:491
+#: port.c:494
 msgid "invalid type for eval_check_store"
 msgstr "eval_check_store に対する不正なタイプです"
 
-#: qr.c:30
-msgid "assert failed in src/library/ts/src/carray.c"
-msgstr ""
-"src/library/ts/src/carray.c に対する引数整合性検査(assert)に失敗しました"
+#: port.c:513
+msgid "m must be a list"
+msgstr "m はリストでなければなりません"
 
-#: qr.c:68
-msgid "Singular matrix in qr_solve"
-msgstr "qr_solve 中の特異行列です"
-
-#: qr.c:111
-msgid "Singular matrix in ldet"
-msgstr "ldet 中の特異行列です"
+#: port.c:532
+msgid "'lowerb' and 'upperb' must be numeric vectors"
+msgstr "lowerb と upperb は数値ベクトルでなければなりません"
 
 #: smooth.c:79
 #, c-format
@@ -261,8 +243,7 @@ msgstr "smooth(*, '3RSS') 中の割り当てエラーです．"
 msgid "allocation error in smooth(*, '3R')."
 msgstr "smooth(*, '3R') 中の割り当てエラーです．"
 
-#: starma.c:361
+#: starma.c:366
 #, c-format
 msgid "missing value in last %d observations"
 msgstr "直前の %d 個の観測値中に欠損値があります"
-

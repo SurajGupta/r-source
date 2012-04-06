@@ -36,12 +36,11 @@ glm <- function(formula, family = gaussian, data, weights,
     switch(method,
 	   "model.frame" = return(mf),
 	   "glm.fit" = 1,
-	   "glm.fit.null" = 1,
 	   ## else
 	   stop("invalid 'method': ", method))
     mt <- attr(mf, "terms") # allow model.frame to update it
 
-    Y <- model.response(mf, "numeric")
+    Y <- model.response(mf, "any") # e.g. factors are allowed
     ## avoid problems with 1D arrays, but keep names
     if(length(dim(Y)) == 1) {
         nm <- rownames(Y)
@@ -248,6 +247,8 @@ glm.fit <-
             }
             ## check for fitted values outside domain.
             if (!(valideta(eta) && validmu(mu))) {
+                if(is.null(coefold))
+                    stop("no valid set of coefficients has been found: please supply starting values", call. = FALSE)
                 warning("step size truncated: out of bounds", call. = FALSE)
                 ii <- 1
                 while (!(valideta(eta) && validmu(mu))) {
@@ -439,9 +440,19 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
 	dispersion <- summary(object, dispersion=dispersion)$dispersion
 	df.dispersion <- if (dispersion == 1) Inf else object$df.residual
     }
-    if(!is.null(test))
+    if(!is.null(test)) {
+        if(test == "F" && df.dispersion == Inf) {
+            fam <- object$family$family
+            if(fam == "binomial" || fam == "poisson")
+                warning(gettextf("using F test with a %s family is inappropriate",
+                                 fam),
+                        domain = NA)
+            else
+                warning("using F test with a fixed dispersion is inappropriate")
+        }
 	table <- stat.anova(table=table, test=test, scale=dispersion,
 			    df.scale=df.dispersion, n=NROW(x))
+    }
     structure(table, heading = title, class= c("anova", "data.frame"))
 }
 
@@ -494,6 +505,15 @@ anova.glmlist <- function(object, ..., dispersion=NULL, test=NULL)
 	bigmodel <- object[[order(resdf)[1]]]
 	dispersion <- summary(bigmodel, dispersion=dispersion)$dispersion
 	df.dispersion <- if (dispersion == 1) Inf else min(resdf)
+        if(test == "F" && df.dispersion == Inf) {
+            fam <- bigmodel$family$family
+            if(fam == "binomial" || fam == "poisson")
+                warning(gettextf("using F test with a '%s' family is inappropriate",
+                                 fam),
+                        domain = NA, call. = FALSE)
+            else
+                warning("using F test with a fixed dispersion is inappropriate")
+        }
 	table <- stat.anova(table = table, test = test,
 			    scale = dispersion, df.scale = df.dispersion,
 			    n = length(bigmodel$residuals))
@@ -503,30 +523,6 @@ anova.glmlist <- function(object, ..., dispersion=NULL, test=NULL)
 }
 
 
-## utility for anova.FOO(), FOO in "lmlist", "glm", "glmlist":
-stat.anova <- function(table, test=c("Chisq", "F", "Cp"), scale, df.scale, n)
-{
-    test <- match.arg(test)
-    dev.col <- match("Deviance", colnames(table))
-    if(is.na(dev.col)) dev.col <- match("Sum of Sq", colnames(table))
-    switch(test,
-	   "Chisq" = {
-	       cbind(table,"P(>|Chi|)"= pchisq(abs(table[, dev.col]/scale),
-			     abs(table[, "Df"]), lower.tail=FALSE))
-	   },
-	   "F" = {
-	       Fvalue <- abs((table[, dev.col]/table[, "Df"])/scale)
-	       Fvalue[table[, "Df"] %in% 0] <- NA
-	       cbind(table, F = Fvalue,
-		     "Pr(>F)" = pf(Fvalue, abs(table[, "Df"]),
-		     abs(df.scale), lower.tail=FALSE))
-	   },
-	   "Cp" = {
-	       cbind(table, Cp = table[,"Resid. Dev"] +
-		     2*scale*(n - table[,"Resid. Df"]))
-	   })
-}
-
 summary.glm <- function(object, dispersion = NULL,
 			correlation = FALSE, symbolic.cor = FALSE, ...)
 {
@@ -534,21 +530,24 @@ summary.glm <- function(object, dispersion = NULL,
     df.r <- object$df.residual
     if(is.null(dispersion))	# calculate dispersion if needed
 	dispersion <-
-	    if(any(object$family$family == c("poisson", "binomial")))  1
+	    if(object$family$family %in% c("poisson", "binomial"))  1
 	    else if(df.r > 0) {
-		est.disp <- TRUE
+                est.disp <- TRUE
 		if(any(object$weights==0))
 		    warning("observations with zero weight not used for calculating dispersion")
-		sum(object$weights*object$residuals^2)/ df.r
-	    } else Inf
+		sum((object$weights*object$residuals^2)[object$weights > 0])/ df.r
+	    } else {
+                est.disp <- TRUE
+                NaN
+            }
 
     ## calculate scaled and unscaled covariance matrix
 
+    aliased <- is.na(coef(object))  # used in print method
     p <- object$rank
     if (p > 0) {
         p1 <- 1:p
         Qr <- object$qr
-        aliased <- is.na(coef(object))  # used in print method
         ## WATCHIT! doesn't this rely on pivoting not permuting 1:p? -- that's quaranteed
         coef.p <- object$coefficients[Qr$pivot[p1]]
         covmat.unscaled <- chol2inv(Qr$qr[p1,p1,drop=FALSE])
@@ -562,7 +561,7 @@ summary.glm <- function(object, dispersion = NULL,
         tvalue <- coef.p/s.err
 
         dn <- c("Estimate", "Std. Error")
-        if(!est.disp) {
+        if(!est.disp) { # known dispersion
             pvalue <- 2*pnorm(-abs(tvalue))
             coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
             dimnames(coef.table) <- list(names(coef.p),
@@ -572,9 +571,10 @@ summary.glm <- function(object, dispersion = NULL,
             coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
             dimnames(coef.table) <- list(names(coef.p),
                                          c(dn, "t value","Pr(>|t|)"))
-        } else { ## df.r == 0
-            coef.table <- cbind(coef.p, Inf)
-            dimnames(coef.table) <- list(names(coef.p), dn)
+        } else { # df.r == 0
+            coef.table <- cbind(coef.p, NaN, NaN, NaN)
+            dimnames(coef.table) <- list(names(coef.p),
+                                         c(dn, "t value","Pr(>|t|)"))
         }
         df.f <- NCOL(Qr$qr)
     } else {
@@ -582,7 +582,6 @@ summary.glm <- function(object, dispersion = NULL,
         dimnames(coef.table) <-
             list(NULL, c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
         covmat.unscaled <- covmat <- matrix(, 0, 0)
-        aliased <- is.na(coef(object))
         df.f <- length(aliased)
     }
     ## return answer

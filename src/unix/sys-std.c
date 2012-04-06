@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is mainly handled as a whole string.
@@ -33,12 +33,18 @@
 # include <config.h>
 #endif
 
+#if defined(HAVE_GLIBC2)
+/* for fileno */
+# define _POSIX_SOURCE 1
+#endif
+
+#include <Defn.h>
+
 #ifdef HAVE_STRINGS_H
    /* may be needed to define bzero in FD_ZERO (eg AIX) */
   #include <strings.h>
 #endif
 
-#include "Defn.h"
 #include "Fileio.h"
 #include <Rdevices.h>		/* for KillAllDevices */
 #include "Runix.h"
@@ -60,7 +66,7 @@ extern Rboolean UsingReadline;
  *  1) FATAL MESSAGES AT STARTUP
  */
 
-void Rstd_Suicide(char *s)
+void attribute_hidden Rstd_Suicide(char *s)
 {
     REprintf("Fatal error: %s\n", s); 
     /* Might be called before translation is running */
@@ -294,13 +300,17 @@ fd_set *R_checkActivityEx(int usec, int ignore_stdin, void (*intr)(void))
 	else onintr();
     }
 
-    tv.tv_sec = 0;
-    tv.tv_usec = usec;
+    /* Solaris (but not POSIX) requires these times to be normalized.
+       POSIX requires up to 31 days to be supported, and we only
+       use up to 2147 secs here.
+     */
+    tv.tv_sec = usec/1000000;
+    tv.tv_usec = usec % 1000000;
     maxfd = setSelectMask(R_InputHandlers, &readMask);
     if (ignore_stdin)
 	FD_CLR(fileno(stdin), &readMask);
     if (R_SelectEx(maxfd+1, &readMask, NULL, NULL,
-		   (usec >= 0) ? &tv : NULL, intr))
+		   (usec >= 0) ? &tv : NULL, intr) > 0)
 	return(&readMask);
     else
 	return(NULL);
@@ -401,7 +411,7 @@ extern void rl_callback_read_char(void);
 extern char *tilde_expand (const char *);
 # endif
 
-char *R_ExpandFileName_readline(char *s, char *buff)
+char attribute_hidden *R_ExpandFileName_readline(char *s, char *buff)
 {
     char *s2 = tilde_expand(s);
 
@@ -461,7 +471,7 @@ struct _R_ReadlineData {
 
 };
 
-R_ReadlineData *rl_top = NULL;
+static R_ReadlineData *rl_top = NULL;
 
 #define MAX_READLINE_NESTING 10
 
@@ -476,7 +486,7 @@ static struct {
   Registers the specified routine and prompt with readline
   and keeps a record of it on the top of the R readline stack.
  */
-void
+void attribute_hidden
 pushReadline(char *prompt, rl_vcpfunc_t f)
 {
    if(ReadlineStack.current >= ReadlineStack.max) {
@@ -494,8 +504,7 @@ pushReadline(char *prompt, rl_vcpfunc_t f)
   Unregister the current readline handler and pop it from R's readline
   stack, followed by re-registering the previous one.
 */
-void
-popReadline()
+void attribute_hidden popReadline()
 {
   if(ReadlineStack.current > -1) {
      rl_callback_handler_remove();
@@ -565,8 +574,9 @@ handleInterrupt(void)
 /* Fill a text buffer from stdin or with user typed console input. */
 static void *cd = NULL;
 
-int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
-		     int addtohistory)
+int attribute_hidden
+Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
+		 int addtohistory)
 {
     if(!R_Interactive) {
 	int ll, err = 0;
@@ -582,7 +592,7 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	}
 	/* translate if necessary */
 	if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
-#if HAVE_DECL_ICONV
+#if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
 	    size_t res, inb = strlen((char *)buf), onb = len;
 	    char obuf[1001];
 	    char *ib = (char *)buf, *ob = obuf;
@@ -676,7 +686,7 @@ int Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	/* Write a text buffer to the console. */
 	/* All system output is filtered through this routine. */
 
-void Rstd_WriteConsole(char *buf, int len)
+void attribute_hidden Rstd_WriteConsole(char *buf, int len)
 {
     printf("%s", buf);
 }
@@ -684,21 +694,21 @@ void Rstd_WriteConsole(char *buf, int len)
 
 	/* Indicate that input is coming from the console */
 
-void Rstd_ResetConsole()
+void attribute_hidden Rstd_ResetConsole()
 {
 }
 
 
 	/* Stdio support to ensure the console file buffer is flushed */
 
-void Rstd_FlushConsole()
+void attribute_hidden Rstd_FlushConsole()
 {
     /* fflush(stdin);  really work on Solaris on pipes */
 }
 
 	/* Reset stdin if the user types EOF on the console. */
 
-void Rstd_ClearerrConsole()
+void attribute_hidden Rstd_ClearerrConsole()
 {
     clearerr(stdin);
 }
@@ -707,7 +717,7 @@ void Rstd_ClearerrConsole()
  *  3) ACTIONS DURING (LONG) COMPUTATIONS
  */
 
-void Rstd_Busy(int which)
+void attribute_hidden Rstd_Busy(int which)
 {
 }
 
@@ -727,7 +737,7 @@ void Rstd_Busy(int which)
  */
 
 
-void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
+void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
     unsigned char buf[1024];
     char * tmpdir;
@@ -785,7 +795,7 @@ void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     R_RunExitFinalizers();
     CleanEd();
     if(saveact != SA_SUICIDE) KillAllDevices();
-    if((tmpdir = getenv("R_SESSION_TMPDIR"))) {
+    if((tmpdir = R_TempDir)) {
 	snprintf((char *)buf, 1024, "rm -rf %s", tmpdir);
 	R_system((char *)buf);
     }
@@ -800,7 +810,11 @@ void Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-int Rstd_ShowFiles(int nfile, 		/* number of files */
+#ifdef HAVE_ERRNO_H
+# include <errno.h>
+#endif
+int attribute_hidden
+Rstd_ShowFiles(int nfile, 		/* number of files */
 		   char **file,		/* array of filenames */
 		   char **headers,	/* the `headers' args of file.show.
 					   Printed before each file. */
@@ -829,6 +843,7 @@ int Rstd_ShowFiles(int nfile, 		/* number of files */
 	    for(i = 0; i < nfile; i++) {
 		if (headers[i] && *headers[i])
 		    fprintf(tfp, "%s\n\n", headers[i]);
+		errno = 0; /* some systems require this */
 		if ((fp = R_fopen(R_ExpandFileName(file[i]), "r"))
 		    != NULL) {
 		    while ((c = fgetc(fp)) != EOF)
@@ -839,7 +854,12 @@ int Rstd_ShowFiles(int nfile, 		/* number of files */
 			unlink(R_ExpandFileName(file[i]));
 		}
 		else
-		    fprintf(tfp, "NO FILE %s\n\n", file[i]);
+#ifdef HAVE_STRERROR
+		    fprintf(tfp, _("Cannot open file '%s', reason '%s'\n\n"), 
+			    file[i], strerror(errno));
+#else
+		    fprintf(tfp, _("Cannot open file '%s'\n\n"), file[i]);
+#endif
 	    }
 	    fclose(tfp);
 	}
@@ -861,7 +881,7 @@ int Rstd_ShowFiles(int nfile, 		/* number of files */
 
 
 
-int Rstd_ChooseFile(int new, char *buf, int len)
+int attribute_hidden Rstd_ChooseFile(int new, char *buf, int len)
 {
     int namelen;
     char *bufp;
@@ -874,13 +894,13 @@ int Rstd_ChooseFile(int new, char *buf, int len)
 }
 
 
-void Rstd_ShowMessage(char *s)
+void attribute_hidden Rstd_ShowMessage(char *s)
 {
     REprintf("%s\n", s);
 }
 
 
-void Rstd_read_history(char *s)
+void attribute_hidden Rstd_read_history(char *s)
 {
 #ifdef HAVE_LIBREADLINE
 # ifdef HAVE_READLINE_HISTORY_H
@@ -891,7 +911,7 @@ void Rstd_read_history(char *s)
 #endif /* HAVE_LIBREADLINE */
 }
 
-void Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
+void attribute_hidden Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP sfile;
     char file[PATH_MAX], *p;
@@ -913,7 +933,7 @@ void Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 }
 
-void Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
+void attribute_hidden Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP sfile;
     char file[PATH_MAX], *p;
@@ -938,6 +958,21 @@ void Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 }
 
+void attribute_hidden Rstd_addhistory(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP stamp;
+    int i;
+    
+    checkArity(op, args);
+    stamp = CAR(args);
+    if (!isString(stamp))
+    	errorcall(call, _("invalid timestamp"));
+#if defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_HISTORY_H)
+    if(R_Interactive && UsingReadline) 
+	for (i = 0; i < LENGTH(stamp); i++) 
+	    add_history(CHAR(STRING_ELT(stamp, i)));
+# endif      
+}
 
 
 
@@ -958,13 +993,21 @@ void Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define R_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+/* This could in principle overflow times.  It is of type clock_t,
+   typically long int.  So use gettimeofday if you have it, which
+   is also more accurate.
+ */
+SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int Timeout;
     double tm;
+#ifdef HAVE_GETTIMEOFDAY
+    struct timeval tv;
+#else
     struct tms timeinfo;
+#endif
     double timeint, start, elapsed;
 
     checkArity(op, args);
@@ -973,21 +1016,37 @@ SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid '%s' value"), "time");
     tm = timeint * 1e6;
 
+#ifdef HAVE_GETTIMEOFDAY
+    gettimeofday(&tv, NULL);
+    start = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
+#else
     start = times(&timeinfo);
+#endif
     for (;;) {
 	fd_set *what;
-        Timeout = R_wait_usec ? MIN(tm, R_wait_usec) : tm;
+	tm = R_MIN(tm, 2e9); /* avoid integer overflow */
+        Timeout = R_wait_usec ? R_MIN(tm, R_wait_usec) : tm;
 	what = R_checkActivity(Timeout, 1);
 
 	/* Time up? */
+#ifdef HAVE_GETTIMEOFDAY
+	gettimeofday(&tv, NULL);
+	elapsed = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec - start;
+#else
 	elapsed = (times(&timeinfo) - start) / (double)CLK_TCK;
+#endif
 	if(elapsed >= timeint) break;
 
 	/* Nope, service pending events */
 	R_runHandlers(R_InputHandlers, what);
 
 	/* Servicing events might take some time, so recheck: */
+#ifdef HAVE_GETTIMEOFDAY
+	gettimeofday(&tv, NULL);
+	elapsed = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec - start;
+#else
 	elapsed = (times(&timeinfo) - start) / (double)CLK_TCK;
+#endif
 	if(elapsed >= timeint) break;
 
 	tm = 1e6*(timeint - elapsed); /* old code had "+ 10000;" */
@@ -997,7 +1056,7 @@ SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 #else /* not _R_HAVE_TIMING_ */
-SEXP do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     error(_("Sys.sleep is not implemented on this system"));
     return R_NilValue;		/* -Wall */

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-12-12 09:04\n"
+"POT-Creation-Date: 2006-03-27 15:42\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -108,10 +108,15 @@ msgstr "scope non è un sottoinsieme delle etichette dei termini"
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "nessun metodo 'drop1' per modelli \"mlm\""
 
-msgid "lower scope is not included in model"
+msgid "F test assumes 'quasi%s' family"
+msgstr "il test F assume una famiglia 'quasi%s'"
+
+#, fuzzy
+msgid "lower scope has term(s) %s not included in model"
 msgstr "scope inferiore non incluso nel modello"
 
-msgid "upper scope does not include model"
+#, fuzzy
+msgid "upper scope does not include model term(s) %s"
 msgstr "scope superiore non include il modello"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
@@ -519,7 +524,6 @@ msgstr "non ci sono abbastanza osservazioni finite"
 msgid "Cannot compute exact p-value with ties"
 msgstr "Impossibile calcolare p-value esatti in presenza di ties"
 
-#, fuzzy
 msgid "Cannot compute exact p-values with ties"
 msgstr "Impossibile calcolare p-value esatti in presenza di ties"
 
@@ -747,7 +751,7 @@ msgid "link not recognised"
 msgstr "link non riconosciuta"
 
 msgid ""
-"link \"%s\" not available for poisson family; available links are \"identity"
+"link \"%s\" not available for Poisson family; available links are \"identity"
 "\", \"log\" and \"sqrt\""
 msgstr ""
 "link \"%s\" non disponibile per la famiglia poisson; i link disponibili sono "
@@ -772,6 +776,10 @@ msgid ""
 msgstr ""
 "link \"%s\" non disponibile per la famiglia gaussian, i link disponibili "
 "sono \"inverse\", \"log\" e \"identity\""
+
+msgid "cannot find valid starting values: please specify some"
+msgstr ""
+"non riesco a trovare valori iniziali validi: si prega di specificarne alcuni"
 
 msgid ""
 "link \"%s\" not available for binomial family, available links are \"logit"
@@ -874,8 +882,11 @@ msgstr "l'alternativa deve essere \"two.sided\", \"less\" o \"greater\""
 msgid "'or' must be a single number between 0 and Inf"
 msgstr "'or' deve essere un solo numero tra 0 e Inf"
 
-msgid "p-values may be incorrect"
-msgstr "i p-value potrebbero essere non corretti"
+msgid "need 2 or more non-zero row marginals"
+msgstr ""
+
+msgid "need 2 or more non-zero column marginals"
+msgstr ""
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
 msgstr ""
@@ -977,10 +988,6 @@ msgstr ""
 "la lunghezza di 'start' dovrebbe essere %d e corrispondere ai coefficienti "
 "iniziali di %s"
 
-msgid "cannot find valid starting values: please specify some"
-msgstr ""
-"non riesco a trovare valori iniziali validi: si prega di specificarne alcuni"
-
 msgid "NAs in V(mu)"
 msgstr "NA in V(mu)"
 
@@ -1035,6 +1042,12 @@ msgstr "gli argomenti seguenti di 'anova.glm' sono sbagliati o ignorati:"
 msgid ","
 msgstr ""
 
+msgid "using F test with a %s family is inappropriate"
+msgstr ""
+
+msgid "using F test with a fixed dispersion is inappropriate"
+msgstr ""
+
 msgid "models with response"
 msgstr "modelli con risposta"
 
@@ -1043,6 +1056,9 @@ msgstr "eliminato perché la risposta è diversa da quella del modello 1"
 
 msgid "models were not all fitted to the same size of dataset"
 msgstr "i modelli sono stati stimati per differenti ampiezze campaionarie"
+
+msgid "using F test with a '%s' family is inappropriate"
+msgstr ""
 
 msgid "observations with zero weight not used for calculating dispersion"
 msgstr ""
@@ -1515,24 +1531,19 @@ msgstr "impossibile riconoscere nome parametro"
 msgid "levels truncated to positive values only"
 msgstr "livelli limitati ai solo valori positivi"
 
-msgid "setVarying : vary length must match length of parameters"
+#, fuzzy
+msgid "setVarying : 'vary' length must match length of parameters"
 msgstr ""
 "setVarying: la lunghezza di vary deve coincidere con quella dei parametri"
 
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "matrice gradiente singolare per le stime iniziali dei parametri"
 
-msgid "argument 'weights' is currently ignored"
-msgstr ""
-
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
 msgid "Convergence failure:"
 msgstr ""
-
-msgid "rows with zero weights not counted"
-msgstr "le righe con pesi zero non considerate"
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "impossibile calcolare REML log-verosimiglianza per oggetti \"nls\""
@@ -1558,10 +1569,11 @@ msgstr "bounds si può usare solo con il metodo L-BFGS-B"
 msgid "read the documentation for 'trace' more carefully"
 msgstr "leggere la documentazione di 'trace' più attentamente"
 
+#, fuzzy
 msgid ""
 "method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr ""
-"il metodo L-BFGS-B usea 'factr' (e 'pgtol') al posto di 'reltol' e 'abstol'"
+"il metodo L-BFGS-B usea 'fact' (e 'pgtol') al posto di 'reltol' e 'abstol'"
 
 msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
 msgstr ""
@@ -1852,6 +1864,10 @@ msgstr ""
 msgid "splinefun: invalid interpolation method"
 msgstr "splinefun: metodo interpolazione non valido"
 
+#, fuzzy
+msgid "'deriv' must be between 0 and 3"
+msgstr "'p' deve essere tra 0 e 0.5"
+
 msgid "stepfun: 'x' must be ordered increasingly"
 msgstr "stepfun: 'x' deve essere ordinato in ordine crescente"
 
@@ -2018,6 +2034,9 @@ msgstr "specificazione dell'ordine 'ma' inconsistente"
 
 msgid "number of differences must be a positive integer"
 msgstr "il numero di 'differences' deve essere un intero positivo"
+
+msgid "'start.innov' is too short: need %d points"
+msgstr ""
 
 msgid "insufficient observations"
 msgstr "osservazioni insufficienti"

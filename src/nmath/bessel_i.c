@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*  DESCRIPTION --> see below */
@@ -46,7 +46,7 @@ double bessel_i(double x, double alpha, double expo)
     if (ISNAN(x) || ISNAN(alpha)) return x + alpha;
 #endif
     if (x < 0) {
-	ML_ERROR(ME_RANGE);
+	ML_ERROR(ME_RANGE, "bessel_i");
 	return ML_NAN;
     }
     ize = (long)expo;
@@ -201,7 +201,7 @@ static void I_bessel(double *x, double *alpha, long *nb,
 	*ncalc = *nb;
 	if((*ize == 1 && *x > exparg_BESS) ||
 	   (*ize == 2 && *x > xlrg_BESS_IJ)) {
-	    ML_ERROR(ME_RANGE);
+	    ML_ERROR(ME_RANGE, "I_bessel");
 	    for(k=1; k <= *nb; k++)
 		bi[k]=ML_POSINF;
 	    return;

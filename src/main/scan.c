@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8>
@@ -39,6 +39,7 @@
 
 #ifdef SUPPORT_MBCS
 #include <wchar.h> /* for btowc */
+#include <R_ext/rlocale.h> /* for btowc */
 #endif
 
 /* The size of vector initially allocated by scan */
@@ -381,6 +382,14 @@ static int scanchar(Rboolean inQuote, LocalData *d)
     return next;
 }
 
+/* utility to close connections after interrupts */
+static void scan_cleanup(void *data)
+{
+    LocalData *ld = data;
+    if(!ld->ttyflag && !ld->wasopen) ld->con->close(ld->con);
+    if (ld->quotesave) free(ld->quotesave);
+}
+
 #include "RBufferUtils.h"
 
 /*XX  Can we pass this routine an R_StringBuffer? appears so.
@@ -549,8 +558,6 @@ static R_INLINE void expected(char *what, char *got, LocalData *d)
 	while ((c = scanchar(FALSE, d)) != R_EOF && c != '\n')
 	    ;
     }
-    else
-	if(!d->wasopen) d->con->close(d->con);
     error(_("scan() expected '%s', got '%s'"), what, got);
 }
 
@@ -646,6 +653,7 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
     }
 
     for (;;) {
+	if(n % 10000 == 9999) R_CheckUserInterrupt();
 	if (bch == R_EOF) {
 	    if (d->ttyflag) R_ClearerrConsole();
 	    break;
@@ -745,7 +753,6 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 
     nc = length(what);
     if (!nc) {
-	    if (!d->ttyflag & !d->wasopen) d->con->close(d->con);
 	    error(_("empty 'what' specified"));
     }
 
@@ -759,7 +766,6 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	w = VECTOR_ELT(what, i);
 	if (!isNull(w)) {
 	    if (!isVector(w)) {
-		if (!d->ttyflag & !d->wasopen) d->con->close(d->con);
 		error(_("invalid 'what' specified"));
 	    }
 	    if(TYPEOF(w) == STRSXP) nstring++;
@@ -786,6 +792,7 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     strip = asLogical(stripwhite);
 
     for (;;) {
+	if(linesread % 1000 == 999) R_CheckUserInterrupt();
 
 	if (bch == R_EOF) {
 	    if (d->ttyflag) R_ClearerrConsole();
@@ -904,11 +911,12 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
     return ans;
 }
 
-SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep, what, stripwhite, dec, quotes, comstr;
     int i, c, nlines, nmax, nskip, flush, fill, blskip, multiline, escapes;
     char *p, *vmax;
+    RCNTXT cntxt;
     LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
 		      FALSE, 0};
     data.NAstrings = R_NilValue;
@@ -1020,6 +1028,13 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     ans = R_NilValue;		/* -Wall */
     data.save = 0;
 
+    /* set up a context which will close the connection if there is 
+       an error or user interrupt */
+    begincontext(&cntxt, CTXT_CCODE, call, R_BaseEnv, R_BaseEnv,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &scan_cleanup;
+    cntxt.cenddata = &data;
+
     switch (TYPEOF(what)) {
     case LGLSXP:
     case INTSXP:
@@ -1036,10 +1051,10 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 			blskip, multiline, &data);
 	break;
     default:
-	if (!data.ttyflag && !data.wasopen)
-	    data.con->close(data.con);
 	errorcall(call, _("invalid 'what' specified"));
     }
+    endcontext(&cntxt);
+
     /* we might have a character that was unscanchar-ed.
        So pushback if possible */
     if (data.save && !data.ttyflag && data.wasopen) {
@@ -1054,7 +1069,7 @@ SEXP do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep,  bns, quotes, comstr;
     int nfields, nskip, i, c, inquote, quote = 0;
@@ -1234,7 +1249,7 @@ SEXP do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
    or a factor if as.is == FALSE. */
 
 
-SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP cvec, a, dup, levs, dims, names, dec;
     SEXP rval = R_NilValue; /* -Wall */
@@ -1424,7 +1439,7 @@ SEXP do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     return rval;
 }
 
-SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int c;
     char buffer[MAXELTSIZE], *bufp = buffer;
@@ -1464,7 +1479,7 @@ SEXP do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* Works with digits, but OK in UTF-8 */
-SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int c, j;
     double first;
@@ -1510,7 +1525,7 @@ SEXP do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* simplified version of readLines, with skip of blank lines and
    comment-only lines */
 #define BUF_SIZE 1000
-SEXP do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, comstr, ans = R_NilValue, ans2, quotes, sep;
     int nlines, i, c, quote=0, nread, nbuf, buf_size = BUF_SIZE, blskip;
@@ -1742,16 +1757,33 @@ static char *EncodeElement2(SEXP x, int indx, Rboolean quote,
     return EncodeElement(x, indx, quote ? '"' : 0, cdec);
 }
 
+typedef struct wt_info {
+    Rboolean wasopen;
+    Rconnection con;
+    R_StringBuffer *buf;
+    int savedigits;
+} wt_info;
 
-SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
+/* utility to cleanup e.g. after interrpts */
+static void wt_cleanup(void *data)
+{
+    wt_info *ld = data;
+    if(!ld->wasopen) ld->con->close(ld->con);
+    R_FreeStringBuffer(ld->buf);    
+    R_print.digits = ld->savedigits;
+}
+
+SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, sep, rnames, eol, na, dec, quote, xj;
-    int nr, nc, i, j, qmethod, savedigits;
+    int nr, nc, i, j, qmethod;
     Rboolean wasopen, quote_rn = FALSE, *quote_col;
     Rconnection con;
-    char *csep, *ceol, *cna, cdec, *tmp;
+    char *csep, *ceol, *cna, cdec, *tmp=NULL /* -Wall */;
     SEXP *levels;
     R_StringBuffer strBuf = {NULL, 0, MAXELTSIZE};
+    wt_info wi;
+    RCNTXT cntxt;
 
     checkArity(op, args);
 
@@ -1802,7 +1834,14 @@ SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     R_AllocStringBuffer(0, &strBuf);
     PrintDefaults(R_NilValue);
-    savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
+    wi.savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
+    wi.con = con;
+    wi.wasopen = wasopen;
+    wi.buf = &strBuf;
+    begincontext(&cntxt, CTXT_CCODE, call, R_BaseEnv, R_BaseEnv,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &wt_cleanup;
+    cntxt.cenddata = &wi;
 
     if(isVectorList(x)) { /* A data frame */
 
@@ -1818,6 +1857,7 @@ SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 
 	for(i = 0; i < nr; i++) {
+	    if(i % 1000 == 999) R_CheckUserInterrupt();
 	    if(!isNull(rnames))
 		writecon(con, "%s%s",
 			 EncodeElement2(rnames, i, quote_rn, qmethod,
@@ -1828,9 +1868,17 @@ SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if(isna(xj, i)) tmp = cna;
 		else {
 		    if(!isNull(levels[j])) {
-			tmp = EncodeElement2(levels[j], INTEGER(xj)[i] - 1,
-					     quote_col[j], qmethod,
-					     &strBuf, cdec);
+			/* We cannot assume factors have integer levels */
+			if(TYPEOF(xj) == INTSXP)
+			    tmp = EncodeElement2(levels[j], INTEGER(xj)[i] - 1,
+						 quote_col[j], qmethod,
+						 &strBuf, cdec);
+			else if(TYPEOF(xj) == REALSXP)
+			    tmp = EncodeElement2(levels[j], REAL(xj)[i] - 1,
+						 quote_col[j], qmethod,
+						 &strBuf, cdec);
+			else
+			    error("column %s claims to be a factor but does not have numeric codes", j+1);
 		    } else {
 			tmp = EncodeElement2(xj, i, quote_col[j], qmethod,
 					     &strBuf, cdec);
@@ -1851,6 +1899,7 @@ SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, _("corrupt matrix -- dims not not match length"));
 
 	for(i = 0; i < nr; i++) {
+	    if(i % 1000 == 999) R_CheckUserInterrupt();
 	    if(!isNull(rnames))
 		writecon(con, "%s%s",
 			 EncodeElement2(rnames, i, quote_rn, qmethod,
@@ -1869,8 +1918,7 @@ SEXP do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 
     }
-    if(!wasopen) con->close(con);
-    R_FreeStringBuffer(&strBuf);
-    R_print.digits = savedigits;
+    endcontext(&cntxt);
+    wt_cleanup(&wi);
     return R_NilValue;
 }

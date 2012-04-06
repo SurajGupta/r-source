@@ -2,7 +2,7 @@
 \alias{legend}
 \title{Add Legends to Plots}
 \usage{
-legend(x, y = NULL, legend, fill = NULL, col = "black",
+legend(x, y = NULL, legend, fill = NULL, col = par("col"),
        lty, lwd, pch,
        angle = 45, density = NULL, bty = "o", bg = par("bg"),
        pt.bg = NA, cex = 1, pt.cex = cex, pt.lwd = lwd,
@@ -132,6 +132,8 @@ legend(x, y = NULL, legend, fill = NULL, col = "black",
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \seealso{
   \code{\link{plot}}, \code{\link{barplot}} which uses \code{legend()}, and
@@ -157,8 +159,9 @@ points(x, cos(x), pch = 3, col = 4)
 lines(x, tan(x), type = "b", lty = 1, pch = 4, col = 6)
 title("legend(..., lty = c(2, -1, 1), pch = c(-1,3,4), merge = TRUE)",
       cex.main = 1.1)
-legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3,4,6), text.col= "green4",
-       lty = c(2, -1, 1), pch = c(-1, 3, 4), merge = TRUE, bg='gray90')
+legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3,4,6),
+       text.col = "green4", lty = c(2, -1, 1), pch = c(-1, 3, 4),
+       merge = TRUE, bg = 'gray90')
 
 ## right-justifying a set of labels: thanks to Uwe Ligges
 x <- 1:5; y1 <- 1/x; y2 <- 2/x
@@ -241,9 +244,9 @@ legend("bottomright", "(x,y)", pch=1, title="bottomright")
 legend("bottom", "(x,y)", pch=1, title="bottom")
 legend("bottomleft", "(x,y)", pch=1, title="bottomleft")
 legend("left", "(x,y)", pch=1, title="left")
-legend("topleft", "(x,y)", pch=1, title="topleft")
+legend("topleft", "(x,y)", pch=1, title="topleft, inset = .05", inset = .05)
 legend("top", "(x,y)", pch=1, title="top")
-legend("topright", "(x,y)", pch=1, title="topright")
+legend("topright", "(x,y)", pch=1, title="topright, inset = .02", inset = .02)
 legend("right", "(x,y)", pch=1, title="right")
 legend("center", "(x,y)", pch=1, title="center")
 }

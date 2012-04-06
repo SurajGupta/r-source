@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -41,7 +41,8 @@ static int integerOneIndex(int i, int len) {
     return(indx);
 }
 
-int OneIndex(SEXP x, SEXP s, int len, int partial, SEXP *newname, int pos)
+int attribute_hidden
+OneIndex(SEXP x, SEXP s, int len, int partial, SEXP *newname, int pos)
 {
     SEXP names;
     int i, indx, nx;
@@ -112,7 +113,8 @@ int OneIndex(SEXP x, SEXP s, int len, int partial, SEXP *newname, int pos)
     return indx;
 }
 
-int get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
+int attribute_hidden
+get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
 {
 /* Get a single index for the [[ operator.
    Check that only one index is being selected.
@@ -145,29 +147,40 @@ int get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
 	break;
     case STRSXP:
 	/* Try for exact match */
-	for (i = 0; i < length(names); i++)
-	    if (streql(CHAR(STRING_ELT(names, i)),
-		       CHAR(STRING_ELT(s, pos)))) {
-		indx = i;
-		break;
+	for (i = 0; i < length(names); i++) 
+	    if (STRING_ELT(names, i) == NA_STRING || 
+		STRING_ELT(s, pos) == NA_STRING) {
+		/* NA matches nothing */
+	    } else {
+		if (streql(CHAR(STRING_ELT(names, i)),
+			   CHAR(STRING_ELT(s, pos)))) {
+		    indx = i;
+		    break;
+		}
 	    }
 	/* Try for partial match */
 	if (pok && indx < 0) {
 	    len = strlen(CHAR(STRING_ELT(s, pos)));
 	    for(i = 0; i < length(names); i++) {
-		if(!strncmp(CHAR(STRING_ELT(names, i)),
-			    CHAR(STRING_ELT(s, pos)), len)) {
-		    if(indx == -1)/* first one */
-			indx = i;
-		    else
-			indx = -2;/* more than one partial match */
+		if (STRING_ELT(names, i) == NA_STRING || 
+		    STRING_ELT(s, pos) == NA_STRING) {
+		    /* NA matches nothing */
+		} else {
+		    if(!strncmp(CHAR(STRING_ELT(names, i)),
+				CHAR(STRING_ELT(s, pos)), len)) {
+			if(indx == -1)/* first one */
+			    indx = i;
+			else
+			    indx = -2;/* more than one partial match */
+		    }
 		}
 	    }
 	}
 	break;
     case SYMSXP:
 	for (i = 0; i < length(names); i++)
-	    if (streql(CHAR(STRING_ELT(names, i)), CHAR(PRINTNAME(s)))) {
+	    if (STRING_ELT(names, i) != NA_STRING &&
+		streql(CHAR(STRING_ELT(names, i)), CHAR(PRINTNAME(s)))) {
 		indx = i;
 		break;
 	    }
@@ -185,7 +198,7 @@ int get1index(SEXP s, SEXP names, int len, Rboolean pok, int pos)
 /* A zero anywhere in a row will cause a zero in the same */
 /* position in the result. */
 
-SEXP mat2indsub(SEXP dims, SEXP s)
+SEXP attribute_hidden mat2indsub(SEXP dims, SEXP s)
 {
     int tdim, j, i, k, nrs = nrows(s);
     SEXP rvec;
@@ -377,7 +390,13 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names,
 #ifdef USE_HASHING
     if(usehashing) {
 	/* must be internal, so names contains a character vector */
+	/* NB: this does not behave in the same way with respect to ""
+	   and NA names: they will match */
 	PROTECT(indx = match(names, s, 0));
+	/* second pass to correct this */
+	for (i = 0; i < ns; i++)
+	    if(STRING_ELT(s, i) == NA_STRING || !CHAR(STRING_ELT(s, i))[0])
+		INTEGER(indx)[i] = 0;
 	for (i = 0; i < ns; i++) SET_STRING_ELT(indexnames, i, R_NilValue);
     } else {
 #endif
@@ -477,8 +496,9 @@ int_arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
     return R_NilValue;
 }
 
-SEXP arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
-		    StringEltGetter strg, SEXP x)
+SEXP
+arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
+	       StringEltGetter strg, SEXP x)
 {
     return int_arraySubscript(dim, s, dims, dng, strg, x, TRUE);
 }
@@ -569,8 +589,9 @@ int_vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 }
 
 
-SEXP vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
-		     StringEltGetter strg, SEXP x)
+SEXP
+vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
+		StringEltGetter strg, SEXP x)
 {
     return int_vectorSubscript(nx, s, stretch, dng, strg, x, TRUE);
 }

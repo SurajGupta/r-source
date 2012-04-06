@@ -46,7 +46,21 @@ validGP <- function(gpars) {
   numnotnull("gamma")
   numnotnull("alpha")
   # col and fill are converted in C code
-  # so is lty, BUT still want to check for NULL
+  # BUT still want to check length > 0
+  if (!is.na(match("col", names(gpars)))) {
+      if (is.null(gpars$col))
+          gpars$col <- NULL
+      else
+          check.length("col")
+  }
+  if (!is.na(match("fill", names(gpars)))) {
+      if (is.null(gpars$fill))
+          gpars$fill <- NULL
+      else
+          check.length("fill")
+  }
+  # lty converted in C code
+  # BUT still want to check for NULL and check length > 0
   if (!is.na(match("lty", names(gpars)))) {
     if (is.null(gpars$lty))
       gpars$lty <- NULL
@@ -129,6 +143,17 @@ validGP <- function(gpars) {
   gpars
 }
 
+# Method for subsetting "gpar" objects
+"[.gpar" <- function(x, index, ...) {
+    if (length(x) == 0)
+        return(gpar())
+    maxn <- do.call("max", lapply(x, length))
+    newgp <- lapply(x, rep, length.out=maxn)
+    newgp <- lapply(newgp, "[", index, ...)
+    class(newgp) <- "gpar"
+    newgp
+}
+
 # possible gpar names
 # The order must match the GP_* values in grid.h
 .grid.gpar.names <- c("fill", "col", "gamma", "lty", "lwd", "cex",
@@ -171,17 +196,18 @@ set.gpar <- function(gp) {
 }
 
 get.gpar <- function(names=NULL) {
-  if (is.null(names))
+  if (is.null(names)) {
+    result <- grid.Call("L_getGPar")
     # drop gamma
-    result <- grid.Call("L_getGPar")[-3]
-  else {
+    result$gamma <- NULL
+  } else {
     if (!is.character(names) ||
         !all(names %in% .grid.gpar.names))
       stop("Must specify only valid 'gpar' names")
     # gamma deprecated
     if ("gamma" %in% names)
       warning("'gamma' gpar is deprecated")
-    result <- grid.Call("L_getGPar")[names]
+    result <- unclass(grid.Call("L_getGPar"))[names]
   }
   class(result) <- "gpar"
   result

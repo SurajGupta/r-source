@@ -30,8 +30,11 @@ The files are as follows.
         is available in langinfo.h.
 
   gettext.m4
-	a concatenation of all the required files from gettext 0.14.1
+	a concatenation of all the required files from gettext 0.14.5
 	except codeset.m4.
+
+  gettext-lib.m4
+	a concatenation of the m4 files from gettext-0.14.5/autoconf-lib-link.
 
   java.m4
 	macros for detecting Java runtime environment or JDK.

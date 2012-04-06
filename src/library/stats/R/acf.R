@@ -25,11 +25,11 @@ acf <-
     if(demean) x <- sweep(x, 2, colMeans(x, na.rm = TRUE))
     lag <- matrix(1, nser, nser)
     lag[lower.tri(lag)] <- -1
-    acf <- array(.C("acf",
+    acf <- array(.C(R_acf,
                     as.double(x), as.integer(sampleT), as.integer(nser),
                     as.integer(lag.max), as.integer(type=="correlation"),
-                    acf=double((lag.max+1) * nser * nser), NAOK = TRUE,
-                    PACKAGE = "stats")$acf, c(lag.max + 1, nser, nser))
+                    acf=double((lag.max+1) * nser * nser), NAOK = TRUE
+                    )$acf, c(lag.max + 1, nser, nser))
     lag <- outer(0:lag.max, lag/x.freq)
     acf.out <- structure(.Data = list(acf = acf, type = type,
         n.used = sampleT, lag = lag, series = series, snames = colnames(x)),
@@ -69,10 +69,10 @@ pacf.default <- function(x, lag.max = NULL, plot = TRUE,
         x <- scale(x, TRUE, FALSE)
         acf <- drop(acf(x, lag.max = lag.max, plot = FALSE,
                         na.action = na.action)$acf)
-        pacf <- array(.C("uni_pacf",
+        pacf <- array(.C(R_uni_pacf,
                          as.double(acf),
                          pacf = double(lag.max),
-                         as.integer(lag.max), PACKAGE="stats")$pacf,
+                         as.integer(lag.max))$pacf,
                       dim=c(lag.max,1,1))
         lag <- array((1:lag.max)/x.freq, dim=c(lag.max,1,1))
         snames <- NULL
@@ -140,6 +140,18 @@ plot.acf <-
             str(par("mfrow","cex", "cex.main","cex.axis","cex.lab","cex.sub"))
         }
     }
+    
+    if (is.null(ylim)) {
+        ## Calculate a common scale
+        ylim <- range(x$acf[, 1:nser, 1:nser], na.rm = TRUE)
+        if (with.ci) ylim <- range(c(-clim0, clim0, ylim))
+        if (with.ci.ma) {
+	    for (i in 1:nser) {
+                clim <- clim0 * sqrt(cumsum(c(1, 2*x$acf[-1, i, i]^2)))
+                ylim <- range(c(-clim, clim, ylim))
+            }
+        }
+    }
 
     for (I in 1:Npgs) for (J in 1:Npgs) {
         ## Page [ I , J ] : Now do   nr x nr  'panels' on this page
@@ -158,11 +170,6 @@ plot.acf <-
             else {
                 clim <- if (with.ci.ma && i == j)
                     clim0 * sqrt(cumsum(c(1, 2*x$acf[-1, i, j]^2))) else clim0
-                if (is.null(ylim)) {
-                    ymin <- min(c(x$acf[, i, j], -clim), na.rm = TRUE)
-                    ymax <- max(c(x$acf[, i, j], clim), na.rm = TRUE)
-                    ylim <- c(ymin, ymax)
-                }
                 plot(x$lag[, i, j], x$acf[, i, j], type = type, xlab = xlab,
                      ylab = if(j==1) ylab else "", ylim = ylim, ...)
                 abline(h = 0)

@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* <UTF8> char here is handled as a whole string.
@@ -122,7 +122,7 @@ Rboolean isUnsorted(SEXP x)
     return FALSE;/* sorted */
 }
 
-SEXP do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
 
@@ -254,7 +254,7 @@ void revsort(double *a, int *ib, int n)
 }
 
 
-SEXP do_sort(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_sort(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     Rboolean decreasing;
@@ -269,12 +269,12 @@ SEXP do_sort(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("only atomic vectors can be sorted"));
     if(TYPEOF(CAR(args)) == RAWSXP)
 	errorcall(call, _("raw vectors cannot be sorted"));
-    if (decreasing || isUnsorted(CAR(args))) { /* do not duplicate if sorted */
-	ans = duplicate(CAR(args));
-	sortVector(ans, decreasing);
-	return(ans);
-    }
-    else return(CAR(args));
+    /* we need consistent behaviour here, including dropping attibutes,
+       so as from 2.3.0 we always duplicate. */
+    ans = duplicate(CAR(args));
+    SET_ATTRIB(ans, R_NilValue);  /* this is never called with names */
+    sortVector(ans, decreasing);
+    return(ans);
 }
 
 /* faster versions of shellsort, following Sedgewick (1986) */
@@ -404,7 +404,7 @@ void sortVector(SEXP s, Rboolean decreasing)
     Rboolean nalast=TRUE;					\
     int L, R, i, j;						\
 								\
-    for (L = 0, R = n - 1; L < R; ) {				\
+    for (L = lo, R = hi; L < R; ) {				\
 	v = x[k];						\
 	for(i = L, j = R; i <= j;) {				\
 	    while (TYPE_CMP(x[i], v, nalast) < 0) i++;			\
@@ -416,7 +416,7 @@ void sortVector(SEXP s, Rboolean decreasing)
     }
 
 
-void iPsort(int *x, int n, int k)
+static void iPsort2(int *x, int lo, int hi, int k)
 {
     int v, w;
 #define TYPE_CMP icmp
@@ -424,7 +424,7 @@ void iPsort(int *x, int n, int k)
 #undef TYPE_CMP
 }
 
-void rPsort(double *x, int n, int k)
+static void rPsort2(double *x, int lo, int hi, int k)
 {
     double v, w;
 #define TYPE_CMP rcmp
@@ -432,7 +432,7 @@ void rPsort(double *x, int n, int k)
 #undef TYPE_CMP
 }
 
-void cPsort(Rcomplex *x, int n, int k)
+static void cPsort2(Rcomplex *x, int lo, int hi, int k)
 {
     Rcomplex v, w;
 #define TYPE_CMP ccmp
@@ -441,7 +441,7 @@ void cPsort(Rcomplex *x, int n, int k)
 }
 
 
-static void sPsort(SEXP *x, int n, int k)
+static void sPsort2(SEXP *x, int lo, int hi, int k)
 {
     SEXP v, w;
 #define TYPE_CMP scmp
@@ -449,29 +449,67 @@ static void sPsort(SEXP *x, int n, int k)
 #undef TYPE_CMP
 }
 
-static void Psort(SEXP x, int k)
+/* elements of ind are 1-based, lo and hi are 0-based */
+
+static void Psort(SEXP x, int lo, int hi, int k)
 {
+    /* Rprintf("looking for index %d in (%d, %d)\n", k, lo, hi);*/
     switch (TYPEOF(x)) {
     case LGLSXP:
     case INTSXP:
-	iPsort(INTEGER(x), LENGTH(x), k);
+	iPsort2(INTEGER(x), lo, hi, k);
 	break;
     case REALSXP:
-	rPsort(REAL(x), LENGTH(x), k);
+	rPsort2(REAL(x), lo, hi, k);
 	break;
     case CPLXSXP:
-	cPsort(COMPLEX(x), LENGTH(x), k);
+	cPsort2(COMPLEX(x), lo, hi, k);
 	break;
     case STRSXP:
-	sPsort(STRING_PTR(x), LENGTH(x), k);
+	sPsort2(STRING_PTR(x), lo, hi, k);
 	break;
     default:
 	UNIMPLEMENTED_TYPE("Psort", x);
     }
 }
 
+static void Psort0(SEXP x, int lo, int hi, int *ind, int k)
+{
+    if(k < 1 || hi-lo < 1) return;
+    if(k <= 1) 
+	Psort(x, lo, hi, ind[0]-1);
+    else {
+    /* Look for index nearest the centre of the range */
+	int i, this = 0, mid = (lo+hi)/2, z;
+	for(i = 0; i < k; i++)
+	    if(ind[i]-1 <= mid) this = i;
+	z = ind[this]-1;
+	Psort(x, lo, hi, z);
+	Psort0(x, lo, z-1, ind, this);
+	Psort0(x, z+1, hi, ind+this+1, k-this-1);
+    }
+}
+
+/* Needed for mistaken decision to put these in the API */
+void iPsort(int *x, int n, int k)
+{
+    iPsort2(x, 0, n-1, k);
+}
+
+void rPsort(double *x, int n, int k)
+{
+    rPsort2(x, 0, n-1, k);
+}
+
+void cPsort(Rcomplex *x, int n, int k)
+{
+    cPsort2(x, 0, n-1, k);
+}
+
+
+
 /* FUNCTION psort(x, indices) */
-SEXP do_psort(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_psort(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int i, k, n;
     int *l;
@@ -492,8 +530,8 @@ SEXP do_psort(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, _("index %d outside bounds"), l[i]);
     }
     SETCAR(args, duplicate(CAR(args)));
-    for (i = 0; i < k; i++)
-	Psort(CAR(args), l[i] - 1);
+    SET_ATTRIB(CAR(args), R_NilValue);  /* remove all attributes */
+    Psort0(CAR(args), 0, n - 1, l, k);
     return CAR(args);
 }
 
@@ -711,7 +749,7 @@ void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 }
 
 /* FUNCTION order(...) */
-SEXP do_order(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_order(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ap, ans;
     int i, n = -1, narg = 0;
@@ -749,7 +787,7 @@ SEXP do_order(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* FUNCTION: rank(x) */
-SEXP do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP rank, indx, x;
     int *in;
@@ -807,7 +845,7 @@ SEXP do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #include <R_ext/RS.h>
 
-SEXP do_radixsort(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_radixsort(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, ans;
     Rboolean nalast, decreasing;
@@ -845,6 +883,7 @@ SEXP do_radixsort(SEXP call, SEXP op, SEXP args, SEXP rho)
     off -= xmin;
     /* alloca is fine here: we know this is small */
     cnts = (unsigned int *) alloca((xmax+1)*sizeof(unsigned int));
+    R_CheckStack();
 
     for(i = 0; i <= xmax+1; i++) cnts[i] = 0;
     for(i = 0; i < n; i++) {

@@ -15,7 +15,7 @@
  *
  * The text of the GNU General Public License, version 2, is available
  * as http://www.gnu.org/copyleft or by writing to the Free Software
- * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301   USA.
  *
  * The routines are loosely based on the pseudo-code in Schumacher (Wiley,
  * 1981) and the CMLIB library DBSPLINES.
@@ -227,23 +227,7 @@ spline_basis(SEXP knots, SEXP order, SEXP xvals, SEXP derivs)
     return val;
 }
 
-void spline_init(char **path)
-{
-#ifdef ENABLE_NLS
-    char localedir[PATH_MAX];
-
-    strcpy(localedir, path[0]);
-    strcat(localedir, "/po");
-    bindtextdomain("splines", localedir);
-#endif   
-}
-
 #include <R_ext/Rdynload.h>
-
-static const R_CMethodDef CEntries[]  = {
-    {"spline_init", (DL_FUNC) &spline_init, 1},
-    {NULL, NULL, 0}
-};
 
 const static R_CallMethodDef R_CallDef[] = {
    {"spline_basis", (DL_FUNC)&spline_basis, 4},
@@ -255,6 +239,6 @@ const static R_CallMethodDef R_CallDef[] = {
 void
 R_init_splines(DllInfo *dll)
 {
-    R_registerRoutines(dll, CEntries, R_CallDef, NULL, NULL);
+    R_registerRoutines(dll, NULL, R_CallDef, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

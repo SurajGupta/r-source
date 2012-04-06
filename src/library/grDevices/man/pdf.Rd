@@ -17,7 +17,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     width = 6, height = 6, onefile = TRUE, family = "Helvetica",
     title = "R Graphics Output", fonts = NULL, version = "1.1",
-    paper, encoding, bg, fg, pointsize)
+    paper = "special", encoding, bg, fg, pointsize)
 }
 \arguments{
   \item{file}{a character string giving the name of the file.
@@ -30,11 +30,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \item{onefile}{logical: if true (the default) allow multiple figures
     in one file.  If false, generate a file name containing the page
     number.}
-  \item{family}{the font family to be used, one of \code{"AvantGarde"},
-    \code{"Bookman"}, \code{"Courier"}, \code{"Helvetica"},
-    \code{"Helvetica-Narrow"}, \code{"NewCenturySchoolbook"},
-    \code{"Palatino"} or \code{"Times"}.  \bold{Note} some of the other
-    specifications allowed for \code{\link{postscript}} may work.}
+  \item{family}{the font family to be used, see \code{\link{postscript}}.}
   \item{title}{title string to embed in the file.}
   \item{paper}{the size of paper in the printer.  The choices are
     \code{"a4"}, \code{"letter"}, \code{"legal"} and
@@ -44,27 +40,15 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     \code{"default"}; if this is selected, the
     papersize is taken from the option \code{"papersize"}
     if that is set and to \code{"a4"} if it is unset or empty.}
-  \item{encoding}{the name of an encoding file.  Defaults to
-#ifdef unix
-\code{"ISOLatin1.enc"}
-#endif
-#ifdef windows
-\code{"WinAnsi.enc"}
-#endif
-    in the \file{afm} directory of the \pkg{grDevices} package,
-    which is used if the path does
-    not contain a path separator.  An extension \code{".enc"} can be
-    omitted.
-#ifdef unix
-    In a UTF-8 locale only \code{"ISOLatin1.enc"} is allowed.
-#endif
+  \item{encoding}{the name of an encoding file.  See
+    \code{\link{postscript}} for details.
   }
-  \item{pointsize}{the default point size to be used.}
+  \item{pointsize}{the default point size to be used.  Strictly
+    speaking, in bp, that is 1/72 of an inch, but approximately in points.}
   \item{bg}{the default background color to be used.}
   \item{fg}{the default foreground color to be used.}
-  \item{fonts}{a character vector specifying device-independent
-    R graphics font family names for fonts
-    which will be included in the PDF file.}
+  \item{fonts}{a character vector specifying \R graphics font family
+    names for fonts which will be included in the PDF file.}
   \item{version}{a string describing the PDF version that will be
     used to produce output.}
 }
@@ -84,7 +68,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \code{par(family=)} in the graphics package), the PDF device makes use
   of the PostScript font mappings to convert the \R graphics font family
   to a PDF-specific font family description.  (See the
-  documentation for \code{\link{postscriptFonts}}.)
+  documentation for \code{\link{pdfFonts}}.)
 
   \R does \emph{not} embed fonts in the PDF file though, so it is only
   possible straightforward to use mappings to the font families that are
@@ -115,9 +99,9 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   The \code{version} argument modifies the sort of PDF code that
   gets produced.  At the moment this only concerns the production of
   transparent output.  The version must be greater than 1.4 for
-  transparent output to be produced.  Specifying a lower version
-  number may be useful if you want to produce PDF output that can be
-  viewed on older PDF viewers.
+  transparent output to be produced, and at least 1.3 if CID fonts are
+  to be used.  Specifying a lower version number may be useful if you
+  want to produce PDF output that can be viewed on older PDF viewers.
 
   Line widths as controlled by \code{par(lwd=)} are in multiples of
   1/96inch.  Multiples less than 1 are allowed.  \code{pch="."} with
@@ -129,13 +113,13 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   centering of characters, for example the multiply and divide signs in
   Helvetica.
 
-  Acrobat Reader 7.x can be extended by support for Central European
-  fonts (but not on UNIX), and this will be needed for full use of
-  encodings other than Latin-1. See
-  \url{http://www.adobe.com/products/acrobat/acrrasianfontpack.html}.
+  Acrobat Reader 5.x and later can be extended by support for Asian and Central
+  European fonts (the latter only for 7.x and not on UNIX), and this
+  will be needed for full use of encodings other than Latin-1.
+  See \url{http://www.adobe.com/products/acrobat/acrrasianfontpack.html}.
 }
 \seealso{
-  \code{\link{postscriptFonts}},
+  \code{\link{pdfFonts}},
   \code{\link{Devices}},
   \code{\link{postscript}}
 }
@@ -159,7 +143,6 @@ TestChars <- function(encoding="ISOLatin1", ...)
 ## there will be many warnings.
 TestChars("ISOLatin2")
 ## this does not view properly in older viewers.
-## Lots of characters are not centred, as the Adobe afms do not contain them.
 TestChars("ISOLatin2", family="URWHelvetica")
 ## works well for viewing in gs-based viewers, and often in xpdf.
 }}

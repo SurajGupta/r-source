@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2005-06-30 15:58\n"
-"PO-Revision-Date: 2005-12-16 16:06+0300\n"
+"POT-Creation-Date: 2006-01-24 11:58\n"
+"PO-Revision-Date: 2006-04-15 23:41-0800\n"
 "Last-Translator: Alexey Shipunov <iit512@yandex.ru>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -174,7 +174,7 @@ msgstr "Следующий раздел '%s'"
 msgid "Rd files with unknown encoding:"
 msgstr "Rd-файлы неизвестной кодировки:"
 
-msgid "Rd files with invalid non-ASCII meta data:"
+msgid "Rd files with invalid non-ASCII metadata:"
 msgstr "Rd-файлы с неправильными не-ASCII метаданными:"
 
 msgid "Rd files with non-ASCII section titles:"
@@ -199,6 +199,9 @@ msgstr "Rd-файлы с двойными '%s':"
 
 msgid "These entries must be unique in an Rd file."
 msgstr "Эти пункты в Rd-файле должны быть уникальными."
+
+msgid "Rd files with unknown sections:"
+msgstr "Rd-файлы с неизвестными разделами:"
 
 msgid "Rd files with non-standard keywords:"
 msgstr "Rd-файлы с нестандартными ключевыми словами:"
@@ -290,6 +293,9 @@ msgstr "См. информацию о файлах DESCRIPTION в секции  'Creating R пакетs' руково
 msgid "Non-portable flags in variable '%s':"
 msgstr "Непереносимые флаги в переменной '%s':"
 
+msgid "Missing link(s) in documentation object '%s':"
+msgstr "Пропущенные связ(и) с объектом документации '%s':"
+
 msgid "argument 'lines' must be a character vector"
 msgstr "аргумент 'lines' должен быть текстовым вектором"
 
@@ -341,6 +347,9 @@ msgstr "нет \\item описания для файла '%s'"
 
 msgid "unmatched \\item description for item '%s'"
 msgstr "несоответствующее определение \\item для пункта '%s'"
+
+msgid "unclosed \\link"
+msgstr "незакрытая \\link"
 
 msgid "unclosed \\%s"
 msgstr "незакрытое \\%s"

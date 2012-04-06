@@ -20,7 +20,10 @@ sort <- function(x, partial = NULL, na.last = NA, decreasing = FALSE,
         if(index.return || decreasing || isfact || !missing(method))
 	    stop("unsupported options for partial sorting")
         if(!all(is.finite(partial))) stop("non-finite 'partial'")
-	y <- .Internal(psort(x, partial))
+        y <- if(length(partial) <= 10) {
+            partial <- .Internal(qsort(partial, FALSE))
+            .Internal(psort(x, partial))
+        } else .Internal(qsort(x, FALSE))
     }
     else {
         nms <- names(x)

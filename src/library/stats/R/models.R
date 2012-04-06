@@ -17,7 +17,10 @@ formula.formula <- function(x, ...) x
 formula.terms <- function(x, ...) {
     env<- environment(x)
     attributes(x) <- list(class="formula")
-    environment(x) <- env
+    if (!is.null(env))
+    	environment(x) <- env
+    else
+    	environment(x) <- globalenv()
     x
 }
 
@@ -58,7 +61,7 @@ as.formula <- function(object,env=parent.frame()){
            object
     else{
         rval<-formula(object,env=baseenv())
-        if (is.null(environment(rval)) || !missing(env))
+        if (identical(environment(rval), baseenv()) || !missing(env))
             environment(rval)<-env
         rval
     }
@@ -150,6 +153,9 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
     fixFormulaObject <- function(object) {
         Terms <- terms(object)
 	tmp <- attr(Terms, "term.labels")
+        ## fix up terms involving | : PR#8462
+        ind <- grep("|", tmp, fixed = TRUE)
+        if(length(ind)) tmp[ind] <- paste("(", tmp[ind], ")")
         ## need to add back any offsets
         if(length(ind <- attr(Terms, "offset"))) {
             ## can't look at rownames of factors, as not there y ~ offset(x)

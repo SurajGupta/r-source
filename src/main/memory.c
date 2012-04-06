@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /*
@@ -209,19 +209,19 @@ static R_size_t R_MaxVSize = R_SIZE_T_MAX;
 static R_size_t R_MaxNSize = R_SIZE_T_MAX;
 static int vsfac = 1; /* current units for vsize: changes at initialization */
 
-R_size_t R_GetMaxVSize(void) 
+R_size_t attribute_hidden R_GetMaxVSize(void) 
 {
     if (R_MaxVSize == R_SIZE_T_MAX) return R_SIZE_T_MAX;
     return R_MaxVSize*vsfac;
 }
 
-void R_SetMaxVSize(R_size_t size)
+void attribute_hidden R_SetMaxVSize(R_size_t size)
 {
     if (size == R_SIZE_T_MAX) return;
     if (size / vsfac >= R_VSize) R_MaxVSize = (size+1)/sizeof(VECREC);
 }
 
-R_size_t R_GetMaxNSize(void) 
+R_size_t attribute_hidden R_GetMaxNSize(void) 
 { 
     return R_MaxNSize;
 }
@@ -1124,7 +1124,7 @@ void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun)
 
 /* R interface function */
 
-SEXP do_regFinaliz(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_regFinaliz(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
 
@@ -1232,6 +1232,8 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_CommentSxp);
 
     FORWARD_NODE(R_GlobalEnv);	           /* Global environment */
+    FORWARD_NODE(R_BaseEnv);
+    FORWARD_NODE(R_EmptyEnv);
     FORWARD_NODE(R_Warnings);	           /* Warnings, if any */
 
 #ifdef NEW_CONDITION_HANDLING
@@ -1397,7 +1399,7 @@ static void RunGenCollect(R_size_t size_needed)
 }
 
 
-SEXP do_gctorture(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_gctorture(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int i;
     SEXP old = allocVector(LGLSXP, 1);
@@ -1410,7 +1412,7 @@ SEXP do_gctorture(SEXP call, SEXP op, SEXP args, SEXP rho)
     return old;
 }
 
-SEXP do_gcinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_gcinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int i;
     SEXP old = allocVector(LGLSXP, 1);
@@ -1424,7 +1426,7 @@ SEXP do_gcinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_gc(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP value;
     int ogc, reset_max;
@@ -1483,7 +1485,7 @@ static void mem_err_cons()
 #define PP_REDZONE_SIZE 1000L
 static R_size_t R_StandardPPStackSize, R_RealPPStackSize;
 
-void InitMemory()
+void attribute_hidden InitMemory()
 {
     int i;
     int gen;
@@ -1765,7 +1767,7 @@ SEXP NewEnvironment(SEXP namelist, SEXP valuelist, SEXP rho)
 
 /* mkPROMISE is defined directly do avoid the need to protect its arguments
    unless a GC will actually occur. */
-SEXP mkPROMISE(SEXP expr, SEXP rho)
+SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
 {
     SEXP s;
     if (FORCE_GC || NO_FREE_NODES()) {
@@ -1790,15 +1792,10 @@ SEXP mkPROMISE(SEXP expr, SEXP rho)
     return s;
 }
 
-/* "allocString" allocate a string on the (vector) heap. */
 /* All vector objects  must be a multiple of sizeof(ALIGN) */
 /* bytes so that alignment is preserved for all objects */
 
-SEXP allocString(int length)
-{
-    return allocVector(CHARSXP, length);
-}
-
+/* allocString is now in Rinlinedfuns.h */
 
 /* Allocate a vector object on the heap */
 
@@ -2027,7 +2024,7 @@ void R_getProcTime(double *data);
 static double gctimes[5], gcstarttimes[5];
 static Rboolean gctime_enabled = FALSE;
 
-SEXP do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     if (args == R_NilValue)
@@ -2043,7 +2040,7 @@ SEXP do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 #else /* not _R_HAVE_TIMING_ */
-SEXP do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     error(_("gc.time() is not implemented on this system"));
     return R_NilValue;		/* -Wall */
@@ -2076,7 +2073,7 @@ static void gc_end_timing(void)
 #endif /* _R_HAVE_TIMING_ */
 }
 
-#define MAX(a,b) (a) < (b) ? (b) : (a)
+#define R_MAX(a,b) (a) < (b) ? (b) : (a)
 
 static void R_gc_internal(R_size_t size_needed)
 {
@@ -2088,8 +2085,8 @@ static void R_gc_internal(R_size_t size_needed)
 
     gc_count++;
 
-    R_N_maxused = MAX(R_N_maxused, R_NodesInUse);
-    R_V_maxused = MAX(R_V_maxused, R_VSize - VHEAP_FREE());
+    R_N_maxused = R_MAX(R_N_maxused, R_NodesInUse);
+    R_V_maxused = R_MAX(R_V_maxused, R_VSize - VHEAP_FREE());
 
     BEGIN_SUSPEND_INTERRUPTS {
       gc_start_timing();
@@ -2123,7 +2120,7 @@ static void R_gc_internal(R_size_t size_needed)
     }
 }
 
-SEXP do_memlimits(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_memlimits(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     int nsize, vsize;
@@ -2143,7 +2140,7 @@ SEXP do_memlimits(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
-SEXP do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, nms;
     int i, tmp;
@@ -2227,6 +2224,7 @@ void unprotect(int l)
     else
 	error(_("unprotect(): stack imbalance"));
 }
+
 
 /* "unprotect_ptr" remove pointer from somewhere in R_PPStack */
 

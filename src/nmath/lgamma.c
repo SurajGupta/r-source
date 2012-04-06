@@ -15,18 +15,18 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *  SYNOPSIS
  *
  *    #include <Rmath.h>
- *    extern int signgam;
+ *    extern int R_signgam;
  *    double lgammafn(double x);
  *
  *  DESCRIPTION
  *
  *    This function computes log|gamma(x)|.  At the same time
- *    the variable "signgam" is set to the sign of the gamma
+ *    the variable "R_signgam" is set to the sign of the gamma
  *    function.
  *
  *  NOTES
@@ -41,7 +41,7 @@
 
 #include "nmath.h"
 
-int signgam;
+int attribute_hidden R_signgam;
 
 double lgammafn(double x)
 {
@@ -64,17 +64,17 @@ double lgammafn(double x)
 #define dxrel 1.490116119384765696e-8
 #endif
 
-    signgam = 1;
+    R_signgam = 1;
 
 #ifdef IEEE_754
     if(ISNAN(x)) return x;
 #endif
 
     if (x < 0 && fmod(floor(-x), 2.) == 0)
-	signgam = -1;
+	R_signgam = -1;
 
     if (x <= 0 && x == trunc(x)) { /* Negative integer argument */
-	ML_ERROR(ME_RANGE);
+	ML_ERROR(ME_RANGE, "lgamma");
 	return ML_POSINF;/* +Inf, since lgamma(x) = log|gamma(x)| */
     }
 
@@ -86,7 +86,7 @@ double lgammafn(double x)
       ELSE  y = |x| > 10 ---------------------- */
 
     if (y > xmax) {
-	ML_ERROR(ME_RANGE);
+	ML_ERROR(ME_RANGE, "lgamma");
 	return ML_POSINF;
     }
 
@@ -116,7 +116,7 @@ double lgammafn(double x)
 	/* The answer is less than half precision because
 	 * the argument is too near a negative integer. */
 
-	ML_ERROR(ME_PRECISION);
+	ML_ERROR(ME_PRECISION, "lgamma");
     }
 
     return ans;

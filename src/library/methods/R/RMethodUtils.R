@@ -89,7 +89,7 @@ makeGeneric <-
 ###--------
       value <- fdef
       if(is.null(genericFunction))
-          class(value) <- "standardGeneric"
+          class(value) <- .classNameFromMethods("standardGeneric")
       else
           class(value) <- class(genericFunction)
       slot(value, "generic", FALSE) <- f
@@ -743,7 +743,7 @@ sigToEnv <- function(signature, generic) {
     value
 }
 
-.methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
+methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
     if(length(sigSlots)>0) {
         allSlots <- lapply(sigSlots, slot, object = object)
         mm <- unlist(allSlots)
@@ -960,7 +960,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
         ## the static environments for this namespace, ending with the base namespace
         value <- list(env)
         repeat {
-            if(identical(env, baseenv()))
+            if(identical(env, emptyenv()))
                 stop("botched namespace: failed to find 'base' namespace in its parents")
             env <- parent.env(env)
             value <- c(value, list(env))
@@ -1027,6 +1027,8 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
     while(!isNamespace(ev)) {
         if(identical(ev, baseenv())) {
             value[[length(value)]] <- .BaseNamespaceEnv
+            break
+        } else if(identical(ev, emptyenv())) {
             break
         }
         ev <- parent.env(ev)

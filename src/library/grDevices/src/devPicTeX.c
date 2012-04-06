@@ -2,7 +2,7 @@
  *  A PicTeX device, (C) 1996 Valerio Aimale, for
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2001-4  The R Development Core Team
+ *  Copyright (C) 2001-5  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,14 +16,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "Defn.h"
+#include <Defn.h>
+
+#ifdef SUPPORT_MBCS
+# include <R_ext/rlocale.h>
+# include <wchar.h>
+#endif /* SUPPORT_MBCS */
+
 #include "Graphics.h"
 #include "Fileio.h"
 #include <Rdevices.h>
@@ -475,11 +481,30 @@ static double PicTeX_StrWidth(char *str,
     char *p;
     int size;
     double sum;
+
     size = gc->cex * gc->ps + 0.5;
     SetFont(gc->fontface, size, ptd);
     sum = 0;
-    for(p=str ; *p ; p++)
-	sum += charwidth[ptd->fontface-1][(int)*p];
+#if defined(SUPPORT_MBCS)
+    if(mbcslocale && ptd->fontface != 5) {
+	/* This version at least uses the state of the MBCS */
+	int i, status, ucslen = mbcsToUcs2(str, NULL, 0);
+	if (ucslen != (size_t)-1) {
+	    ucs2_t *ucs;
+	    ucs = (ucs2_t *) alloca(ucslen*sizeof(ucs2_t));
+	    status = (int) mbcsToUcs2(str, ucs, ucslen);
+	    if (status >= 0) 
+		for (i = 0; i < ucslen; i++)
+		    if(ucs[i] < 128) sum += charwidth[ptd->fontface-1][ucs[i]];
+		    else sum += (double) Ri18n_wcwidth(ucs[i]) * 0.5; /* A guess */
+	    else
+		warning(_("invalid string in '%s'"), "PicTeX_StrWidth");
+	} else
+	    warning(_("invalid string in '%s'"), "PicTeX_StrWidth");
+    } else
+#endif
+	for(p = str; *p; p++)
+	    sum += charwidth[ptd->fontface-1][(int)*p];
     return sum * ptd->fontsize;
 }
 
@@ -589,11 +614,23 @@ static void PicTeX_Text(double x, double y, char *str,
 		"%% Writing string of length %.2f, at %.2f %.2f, xc = %.2f yc = %.2f\n",
 		(double)PicTeX_StrWidth(str, gc, dd), 
 		x, y, 0.0, 0.0);
+#if 0 /* Original */
     fprintf(ptd->texfp,"\\put ");
     textext(str, ptd);
     if (rot == 90 )
 	fprintf(ptd->texfp," [rB] <%.2fpt,%.2fpt>", xoff, yoff);
     else fprintf(ptd->texfp," [lB] <%.2fpt,%.2fpt>", xoff, yoff);
+#else /* use rotatebox */
+    if (rot == 90 ){
+	fprintf(ptd->texfp,"\\put {\\rotatebox{%d}",(int)rot);
+	textext(str, ptd);
+	fprintf(ptd->texfp,"} [rB] <%.2fpt,%.2fpt>", xoff, yoff);
+    } else {
+	fprintf(ptd->texfp,"\\put ");
+	textext(str, ptd);
+	fprintf(ptd->texfp," [lB] <%.2fpt,%.2fpt>", xoff, yoff);
+    }
+#endif
     fprintf(ptd->texfp," at %.2f %.2f\n", x, y);
 }
 

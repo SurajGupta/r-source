@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* Names of  .Internal(.) and .Primitive(.)  R functions
@@ -50,18 +50,20 @@ SEXP do_aqua_custom_print(SEXP, SEXP, SEXP, SEXP);
 #if Win32
 SEXP do_bringtotop(SEXP, SEXP, SEXP, SEXP);
 SEXP do_chooseFiles(SEXP, SEXP, SEXP, SEXP);
+SEXP do_chooseDir(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dllversion(SEXP, SEXP, SEXP, SEXP);
 SEXP do_flushconsole(SEXP, SEXP, SEXP, SEXP);
+SEXP do_getClipboardFormats(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getIdentification(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getWindowHandle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getWindowTitle(SEXP, SEXP, SEXP, SEXP);
-SEXP do_helpstart(SEXP, SEXP, SEXP, SEXP);
-SEXP do_helpitem(SEXP, SEXP, SEXP, SEXP);
+SEXP do_loadRconsole(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memsize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readClipboard(SEXP, SEXP, SEXP, SEXP);
 SEXP do_selectlist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setTitle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shellexec(SEXP, SEXP, SEXP, SEXP);
+SEXP do_shortpath(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialog(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialogstring(SEXP, SEXP, SEXP, SEXP);
@@ -76,6 +78,7 @@ SEXP do_writeClipboard(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abs(SEXP, SEXP, SEXP, SEXP);
+SEXP do_addhistory(SEXP, SEXP, SEXP, SEXP);
 #ifdef NEW_CONDITION_HANDLING
 SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
@@ -139,6 +142,7 @@ SEXP do_complex(SEXP, SEXP, SEXP, SEXP);
 SEXP do_contour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_contourLines(SEXP, SEXP, SEXP, SEXP);
 SEXP do_countfields(SEXP, SEXP, SEXP, SEXP);
+SEXP do_Cstack_info(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cum(SEXP, SEXP, SEXP, SEXP);
 SEXP do_compcases(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cov(SEXP, SEXP, SEXP, SEXP);
@@ -235,6 +239,7 @@ SEXP do_getRestart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gettext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getwd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_globalenv(SEXP, SEXP, SEXP, SEXP);
+SEXP do_emptyenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_baseenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gpregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gray(SEXP, SEXP, SEXP, SEXP);
@@ -278,6 +283,7 @@ SEXP do_libfixup(SEXP, SEXP, SEXP, SEXP);
 SEXP do_listfiles(SEXP, SEXP, SEXP, SEXP);
 SEXP do_load(SEXP, SEXP, SEXP, SEXP);
 SEXP do_loadFromConn(SEXP, SEXP, SEXP, SEXP);
+SEXP do_loadFromConn2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_loadhistory(SEXP, SEXP, SEXP, SEXP);
 SEXP do_localeconv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_locator(SEXP, SEXP, SEXP, SEXP);

@@ -2,12 +2,21 @@
    Does byte-level handling in primitive_case, but only of ASCII chars
 */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <R.h>
 #include <Rdefines.h>
 #include <Rinternals.h>
 
 #include "RSMethods.h"
 #include "methods.h"
+
+#if !defined(snprintf) && defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
+extern int snprintf (char *s, size_t n, const char *format, ...);
+#endif
+
 
 /* from Defn.h */
 #define type2str		Rf_type2str
@@ -649,6 +658,10 @@ SEXP R_missingArg(SEXP symbol, SEXP ev) {
     if(!isSymbol(symbol))
 	error(_("invalid symbol in checking for missing argument in method dispatch: expected a name, got an object of class \"%s\""),
 	     class_string(symbol));
+    if (isNull(ev)) {
+	warning(_("use of NULL environment is deprecated"));
+	ev = R_BaseEnv;
+    } else	     
     if(!isEnvironment(ev))
 	error(_("invalid environment in checking for missing argument, '%s', in methods dispatch: got an object of class \"%s\""),
 	     CHAR(PRINTNAME(symbol)), class_string(ev));
@@ -859,7 +872,7 @@ static char *check_single_string(SEXP obj, Rboolean nonEmpty, char *what) {
     char *string = "<unset>"; /* -Wall */
     if(isString(obj)) {
 	if(length(obj) != 1)
-	    error(_("'%s' must be a single string (got a character vector of length %d))"),
+	    error(_("'%s' must be a single string (got a character vector of length %d)"),
 		  what, length(obj));
 	string = CHAR(asChar(obj));
 	if(nonEmpty && (! string || !string[0]))

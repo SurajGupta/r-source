@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef R_CONNECTIONS_H_
@@ -61,7 +61,7 @@ struct Rconn {
 
 typedef struct fileconn {
     FILE *fp;
-#if defined(HAVE_OFF_T) && defined(_LARGEFILE_SOURCE)
+#if defined(HAVE_OFF_T) && defined(HAVE_SEEKO)
     off_t rpos, wpos;
 #else
 #ifdef Win32
@@ -153,7 +153,6 @@ Rconnection getConnection(int n);
 Rconnection getConnection_no_err(int n);
 Rboolean switch_stdout(int icon, int closeOnExit);
 void con_close(int i);
-void Rconn_setEncoding(Rconnection con, SEXP enc);
 void init_con(Rconnection new, char *description, char *mode);
 Rconnection R_newurl(char *description, char *mode);
 Rconnection R_newsock(char *host, int port, int server, char *mode);

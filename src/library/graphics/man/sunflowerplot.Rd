@@ -10,8 +10,9 @@
 sunflowerplot(x, y = NULL, number, log = "", digits = 6,
               xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
               add = FALSE, rotate = FALSE,
-              pch = 16, cex = 0.8, cex.fact = 1.5, col = par("col"), bg = NA,
-              size = 1/8, seg.col = 2, seg.lwd = 1.5, \dots)
+              pch = 16, cex = 0.8, cex.fact = 1.5,
+              col = par("col"), bg = NA, size = 1/8, seg.col = 2,
+              seg.lwd = 1.5, \dots)
 }
 \arguments{
   \item{x}{numeric vector of \code{x}-coordinates of length \code{n},
@@ -78,6 +79,8 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   Schilling, M. F. and Watkins, A. E. (1994)
   A suggestion for sunflower plots.
   \emph{The American Statistician}, \bold{48}, 303--305.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 }
 \author{
   Andreas Ruckstuhl, Werner Stahel, Martin Maechler, Tim Hesterberg,

@@ -14,13 +14,26 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
+ *  USA
  *
  */
 
 /* Private header file for use during compilation of Mathlib */
 #ifndef MATHLIB_PRIVATE_H
 #define MATHLIB_PRIVATE_H
+
+
+#ifndef MATHLIB_STANDALONE
+/* Mathlib in R */
+# ifdef HAVE_CONFIG_H
+#  include <config.h>
+# endif
+# if defined(HAVE_GLIBC2) && !defined(_BSD_SOURCE)
+/* ensure that finite and isnan are declared */
+#  define _BSD_SOURCE 1
+# endif
+#endif
 
 #include <Rconfig.h>
 #define MATHLIB_PRIVATE
@@ -29,10 +42,6 @@
 #include <R_ext/RS.h>
 
 #ifndef MATHLIB_STANDALONE
-/* Mathlib in R */
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
 
 #include <R_ext/Error.h>
 # define MATHLIB_ERROR(fmt,x)		error(fmt,x);
@@ -86,7 +95,6 @@ int R_finite(double);
 #define _(String) String
 #endif /* standalone */
 
-#define ML_ERROR(x)	/* nothing */
 #define ML_UNDERFLOW	(DBL_MIN * DBL_MIN)
 #define ML_VALID(x)	(!ISNAN(x))
 
@@ -103,7 +111,35 @@ int R_finite(double);
 #define ME_UNDERFLOW	16
 /*	and underflow occured (important for IEEE)*/
 
-#define ML_ERR_return_NAN { ML_ERROR(ME_DOMAIN); return ML_NAN; }
+#define ML_ERR_return_NAN { ML_ERROR(ME_DOMAIN, ""); return ML_NAN; }
+
+/* For a long time prior to R 2.3.0 ML_ERROR did nothing.
+   We don't report ME_DOMAIN errors as the callers collect ML_NANs into
+   a single warning.
+ */
+#define ML_ERROR(x, s) { \
+   if(x > ME_DOMAIN) { \
+       char *msg = ""; \
+       switch(x) { \
+       case ME_DOMAIN: \
+	   msg = "argument out of domain in '%s'\n"; \
+	   break; \
+       case ME_RANGE: \
+	   msg = "value out of range in '%s'\n"; \
+	   break; \
+       case ME_NOCONV: \
+	   msg = "convergence failed in '%s'\n"; \
+	   break; \
+       case ME_PRECISION: \
+	   msg = "full precision was not achieved in '%s'\n"; \
+	   break; \
+       case ME_UNDERFLOW: \
+	   msg = "underflow occurred in '%s'\n"; \
+	   break; \
+       } \
+       MATHLIB_WARNING(msg, s); \
+   } \
+}
 
 /* Wilcoxon Rank Sum Distribution */
 
@@ -113,44 +149,52 @@ int R_finite(double);
 
 #define SIGNRANK_MAX 50
 
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 /* Formerly private part of Mathlib.h */
 
 /* always remap internal functions */
 #define bd0       	Rf_bd0
 #define chebyshev_eval	Rf_chebyshev_eval
 #define chebyshev_init	Rf_chebyshev_init
-#define i1mach		Rf_i1mach
 #define gammalims	Rf_gammalims
 #define lfastchoose	Rf_lfastchoose
 #define lgammacor	Rf_lgammacor
 #define stirlerr       	Rf_stirlerr
+#define gamma_cody      Rf_gamma_cody
+
 
 	/* Chebyshev Series */
 
-int	chebyshev_init(double*, int, double);
-double	chebyshev_eval(double, const double *, const int);
+int	attribute_hidden chebyshev_init(double*, int, double);
+double	attribute_hidden chebyshev_eval(double, const double *, const int);
 
 	/* Gamma and Related Functions */
 
-void	gammalims(double*, double*);
-double	lgammacor(double); /* log(gamma) correction */
-double  stirlerr(double);  /* Stirling expansion "error" */
+void	attribute_hidden gammalims(double*, double*);
+double	attribute_hidden lgammacor(double); /* log(gamma) correction */
+double  attribute_hidden stirlerr(double);  /* Stirling expansion "error" */
 
-double	lfastchoose(double, double);
+double	attribute_hidden lfastchoose(double, double);
 
-double  bd0(double, double);
+double  attribute_hidden bd0(double, double);
 
-/* Consider adding these two to the API (Rmath.h): */
-double	dbinom_raw(double, double, double, double, int);
-double	dpois_raw (double, double, int);
-double  pnchisq_raw(double, double, double, double, double, int);
-double  pgamma_raw(double, double, int, int);
+double	attribute_hidden dbinom_raw(double, double, double, double, int);
+double	attribute_hidden dpois_raw (double, double, int);
+double  attribute_hidden pnchisq_raw(double, double, double, double, double, int, Rboolean);
+double  attribute_hidden pgamma_raw(double, double, int, int);
+double	attribute_hidden pbeta_raw(double, double, double, int, int);
+double  attribute_hidden qchisq_appr(double, double, double, int, int, double tol);
 
 int	i1mach(int);
 
 /* From toms708.c */
-void bratio(double a, double b, double x, double y,
-	    double *w, double *w1, int *ierr);
+void attribute_hidden bratio(double a, double b, double x, double y,
+	    		     double *w, double *w1, int *ierr, int log_p);
 
 
 #endif /* MATHLIB_PRIVATE_H */

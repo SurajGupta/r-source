@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 /* Used by third-party graphics devices */
@@ -218,7 +218,7 @@ typedef struct {
     double ps;           /* Font size in points */
     double lineheight;   /* Line height (multiply by font size) */
     int fontface;        /* Font face (plain, italic, bold, ...) */
-    char fontfamily[50]; /* Font family */
+    char fontfamily[201]; /* Font family */
 } R_GE_gcontext;
 
 GEDevDesc* GEcreateDevDesc(NewDevDesc* dev);
@@ -293,6 +293,9 @@ void GELine(double x1, double y1, double x2, double y2,
 void GEPolyline(int n, double *x, double *y, 
 		R_GE_gcontext *gc, GEDevDesc *dd);
 void GEPolygon(int n, double *x, double *y, 
+	       R_GE_gcontext *gc, GEDevDesc *dd);
+SEXP GEXspline(int n, double *x, double *y, double *s, Rboolean open, 
+	       Rboolean repEnds, Rboolean draw,
 	       R_GE_gcontext *gc, GEDevDesc *dd);
 void GECircle(double x, double y, double radius,
 	      R_GE_gcontext *gc, GEDevDesc *dd);

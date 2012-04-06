@@ -38,6 +38,9 @@ function(dir, outDir)
         "i386-pc-mingw32"
     else
         R.version$platform
+    if (length(grep("-apple-darwin",R.version$platform)) > 0 &&
+        nchar(Sys.getenv("R_ARCH")) > 0)
+        OStype <- sub(".*-apple-darwin", "universal-apple-darwin", OStype)
     Built <-
         paste("R ",
               paste(R.version[c("major", "minor")],
@@ -125,7 +128,8 @@ function(dir, packages)
                      package_info_rds_file,
                      package_info_dcf_file))
             next
-        .saveRDS(.split_description(.read_description(package_info_dcf_file)), package_info_rds_file)
+        .saveRDS(.split_description(.read_description(package_info_dcf_file)),
+                 package_info_rds_file)
     }
     invisible()
 }
@@ -193,10 +197,11 @@ function(dir, outDir)
         ## newlines in DCF entries but do not allow them in file names,
         ## hence we gsub() them out.
         collationField <- collationField[i][1]
-        codeFilesInCspec <-
-            scan(textConnection(gsub("\n", " ", db[collationField])),
-                 what = character(), strip.white = TRUE, quiet = TRUE)
-        ## Duplicated entries in the collaction spec?
+        con <- textConnection(gsub("\n", " ", db[collationField]))
+        on.exit(close(con))
+        codeFilesInCspec <- scan(con, what = character(),
+                                 strip.white = TRUE, quiet = TRUE)
+        ## Duplicated entries in the collation spec?
         badFiles <-
             unique(codeFilesInCspec[duplicated(codeFilesInCspec)])
         if(length(badFiles)) {
@@ -255,7 +260,7 @@ function(dir, outDir)
              domain = NA)
     writeLines(paste(".packageName <- \"", db["Package"], "\"", sep=""),
                outFile)
-    # use fast version of file.append that ensure LF between files
+    # use fast version of file.append that ensures LF between files
     if(!all(.Internal(codeFiles.append(outFile, codeFiles))))
         stop("unable to write code files")
     ## </NOTE>
@@ -311,7 +316,7 @@ function(dir, outDir)
     if(!file_test("-d", docsDir)) {
         if(file_test("-d", dataDir))
             .saveRDS(.build_data_index(dataDir, NULL),
-                     file.path(outDir, "Meta", "data.rds"))
+                     file.path(outDir, "Meta", "data.rds"), compress = TRUE)
         return(invisible())
     }
 
@@ -344,8 +349,8 @@ function(dir, outDir)
     .write_contents_as_RDS(contents,
                            file.path(outDir, "Meta", "Rd.rds"))
 
-    .saveRDS(.build_hsearch_index(contents, packageName, outDir),
-             file.path(outDir, "Meta", "hsearch.rds"))
+    .saveRDS(.build_hsearch_index(contents, packageName),
+             file.path(outDir, "Meta", "hsearch.rds"), compress = TRUE)
 
     .write_contents_as_DCF(contents, packageName,
                            file.path(outDir, "CONTENTS"))
@@ -361,10 +366,9 @@ function(dir, outDir)
                    file.path(outDir, "INDEX"))
     ## </NOTE>
 
-    if(file_test("-d", dataDir)) {
+    if(file_test("-d", dataDir))
         .saveRDS(.build_data_index(dataDir, contents),
-                 file.path(outDir, "Meta", "data.rds"))
-    }
+                 file.path(outDir, "Meta", "data.rds"), compress = TRUE)
     invisible()
 }
 
@@ -516,7 +520,7 @@ function(dir, outDir)
         base <- basename(file_path_sans_ext(srcfile))
         texfile <- paste(base, ".tex", sep = "")
         yy <- try(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
-                                quiet = TRUE)) 
+                                quiet = TRUE))
         if(inherits(yy, "try-error"))
             stop(yy)
         ## In case of an error, do not clean up: should we point to
@@ -583,7 +587,7 @@ function(dir, outDir)
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
         stop(gettextf("cannot open directory '%s'", outMetaDir),
              domain = NA)
-    .saveRDS(nsInfo, nsInfoFilePath)
+    .saveRDS(nsInfo, nsInfoFilePath, compress = TRUE)
     invisible()
 }
 
@@ -603,6 +607,57 @@ function(dir, packages)
     invisible()
 }
 
+### * .convert_examples
+
+.convert_examples <- function(infile, outfile, encoding)
+{
+    ## convert infile from encoding to current, if possible
+    if(capabilities("iconv") && l10n_info()[["MBCS"]]) {
+        text <- iconv(readLines(infile), encoding, "")
+        if(any(is.na(text)))
+            stop("invalid input", domain = NA)
+        writeLines(text, outfile)
+    } else file.copy(infile, outfile, TRUE)
+}
+
+
+### * .install_package_man_sources
+
+.install_package_man_sources <- function(dir, outDir)
+{
+    mandir <- file.path(dir, "man")
+    if(!file_test("-d", mandir)) return()
+    manfiles <- list_files_with_type(mandir, "docs")
+    if(!length(manfiles)) return()
+    manOutDir <- file.path(outDir, "man")
+    if(!file_test("-d", manOutDir)) dir.create(manOutDir)
+    pkgname <- sub("_.*$", "", basename(outDir)) # allow for versioned installs
+    filepath <- file.path(manOutDir, paste(pkgname, ".Rd.gz", sep = ""))
+    con <- gzfile(filepath, "wb")
+    for(file in manfiles) {
+        fn <- sub(".*/man/", "", file)
+        cat(file=con, "% --- Source file: ", fn, " ---\n", sep="")
+        writeLines(readLines(file), con) # will ensure final \n
+        ## previous format had (sometimes) blank line before \eof, but
+        ## this is not needed.
+        cat(file=con, "\\eof\n")
+    }
+    close(con)
+}
+
+### * .install_package_demos
+
+.install_package_demos <- function(dir, outDir)
+{
+    ## NB: we no longer install 00Index
+    demodir <- file.path(dir, "demo")
+    if(!file_test("-d", demodir)) return()
+    demofiles <- list_files_with_type(demodir, "demo", full.names = FALSE)
+    if(!length(demofiles)) return()
+    demoOutDir <- file.path(outDir, "demo")
+    if(!file_test("-d", demoOutDir)) dir.create(demoOutDir)
+    file.copy(file.path(demodir, demofiles), demoOutDir)
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

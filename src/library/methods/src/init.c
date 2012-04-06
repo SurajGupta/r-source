@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #include <R.h>
@@ -25,7 +25,7 @@
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
-static R_CallMethodDef CallEntries[] = {
+static const R_CallMethodDef CallEntries[] = {
     CALLDEF(R_M_setPrimitiveMethods, 5),
     CALLDEF(R_clear_method_selection, 0),
     CALLDEF(R_dummy_extern_place, 0),
@@ -49,7 +49,11 @@ static R_CallMethodDef CallEntries[] = {
     {NULL, NULL, 0}
 };
 
-void R_init_methods(DllInfo *dll)
+void
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+__attribute__ ((visibility ("default")))
+#endif
+R_init_methods(DllInfo *dll)
 {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);

@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998-2001   The R Development Core Team
- *  Copyright (C) 2002--2005  The R Foundation
+ *  Copyright (C) 2002--2006  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 /* <UTF8> Only ASCII values */
@@ -57,7 +57,7 @@ SEXP GetColNames(SEXP dimnames)
 	return R_NilValue;
 }
 
-SEXP do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP vals, snr, snc;
     int nr, nc, byrow, lendat;
@@ -312,7 +312,7 @@ SEXP DropDims(SEXP x)
     return x;
 }
 
-SEXP do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, xdims;
     int i, n, shorten;
@@ -334,7 +334,7 @@ SEXP do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* Length of Primitive Objects */
 
-SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     R_len_t len;
@@ -353,7 +353,7 @@ SEXP do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP do_rowscols(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_rowscols(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     int i, j, nr, nc;
@@ -388,7 +388,8 @@ static void matprod(double *x, int nrx, int ncx,
 {
     char *transa = "N", *transb = "N";
     int i,  j, k;
-    double one = 1.0, zero = 0.0, sum;
+    double one = 1.0, zero = 0.0;
+    LDOUBLE sum;
     Rboolean have_na = FALSE;
 
     if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
@@ -415,17 +416,6 @@ static void matprod(double *x, int nrx, int ncx,
 	for(i = 0; i < nrx*ncy; i++) z[i] = 0;
 }
 
-#ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
-/* ZGEMM - perform one of the matrix-matrix operations    */
-/* C := alpha*op( A )*op( B ) + beta*C */
-extern void
-F77_NAME(zgemm)(const char *transa, const char *transb, const int *m,
-		const int *n, const int *k, const Rcomplex *alpha,
-		const Rcomplex *a, const int *lda,
-		const Rcomplex *b, const int *ldb,
-		const Rcomplex *beta, Rcomplex *c, const int *ldc);
-#endif
-
 static void cmatprod(Rcomplex *x, int nrx, int ncx,
 		     Rcomplex *y, int nry, int ncy, Rcomplex *z)
 {
@@ -443,7 +433,8 @@ static void cmatprod(Rcomplex *x, int nrx, int ncx,
     }
 #else
     int i, j, k;
-    double xij_r, xij_i, yjk_r, yjk_i, sum_i, sum_r;
+    double xij_r, xij_i, yjk_r, yjk_i;
+    LDOUBLE sum_i, sum_r;
 
     for (i = 0; i < nrx; i++)
 	for (k = 0; k < ncy; k++) {
@@ -493,8 +484,7 @@ static void crossprod(double *x, int nrx, int ncx,
     if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
         F77_CALL(dgemm)(transa, transb, &ncx, &ncy, &nrx, &one,
 			x, &nrx, y, &nry, &zero, z, &ncx);
-    }
-    else { /* zero-extent operations should return zeroes */
+    } else { /* zero-extent operations should return zeroes */
 	int i;
 	for(i = 0; i < ncx*ncy; i++) z[i] = 0;
     }
@@ -510,14 +500,60 @@ static void ccrossprod(Rcomplex *x, int nrx, int ncx,
     if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
         F77_CALL(zgemm)(transa, transb, &ncx, &ncy, &nrx, &one,
 			x, &nrx, y, &nry, &zero, z, &ncx);
-    }
-    else { /* zero-extent operations should return zeroes */
+    } else { /* zero-extent operations should return zeroes */
 	int i;
 	for(i = 0; i < ncx*ncy; i++) z[i].r = z[i].i = 0;
     }
 }
-/* "%*%" (op = 0)  or  crossprod (op = 1) : */
-SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
+
+static void symtcrossprod(double *x, int nr, int nc, double *z)
+{
+    char *trans = "N", *uplo = "U";
+    double one = 1.0, zero = 0.0;
+    int i, j;
+    if (nr > 0 && nc > 0) {
+        F77_CALL(dsyrk)(uplo, trans, &nr, &nc, &one, x, &nr, &zero, z, &nr);
+	for (i = 1; i < nr; i++)
+	    for (j = 0; j < i; j++) z[i + nr *j] = z[j + nr * i];
+    } else { /* zero-extent operations should return zeroes */
+	for(i = 0; i < nr*nr; i++) z[i] = 0;
+    }
+
+}
+
+static void tcrossprod(double *x, int nrx, int ncx,
+		      double *y, int nry, int ncy, double *z)
+{
+    char *transa = "N", *transb = "T";
+    double one = 1.0, zero = 0.0;
+    if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
+        F77_CALL(dgemm)(transa, transb, &nrx, &nry, &ncx, &one,
+			x, &nrx, y, &nry, &zero, z, &nrx);
+    } else { /* zero-extent operations should return zeroes */
+	int i;
+	for(i = 0; i < nrx*nry; i++) z[i] = 0;
+    }
+}
+
+static void tccrossprod(Rcomplex *x, int nrx, int ncx,
+			Rcomplex *y, int nry, int ncy, Rcomplex *z)
+{
+    char *transa = "N", *transb = "T";
+    Rcomplex one, zero;
+
+    one.r = 1.0; one.i = zero.r = zero.i = 0.0;
+    if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
+        F77_CALL(zgemm)(transa, transb, &nrx, &nry, &ncx, &one,
+			x, &nrx, y, &nry, &zero, z, &nrx);
+    } else { /* zero-extent operations should return zeroes */
+	int i;
+	for(i = 0; i < nrx*nry; i++) z[i].r = z[i].i = 0;
+    }
+}
+
+
+/* "%*%" (op = 0), crossprod (op = 1) or tcrossprod (op = 2) */
+SEXP attribute_hidden do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int ldx, ldy, nrx, ncx, nry, ncy, mode;
     SEXP x = CAR(args), y = CADR(args), xdims, ydims, ans;
@@ -530,7 +566,7 @@ SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     sym = isNull(y);
-    if (sym && (PRIMVAL(op) == 1)) y = x;
+    if (sym && (PRIMVAL(op) > 0)) y = x;
     if ( !(isNumeric(x) || isComplex(x)) || !(isNumeric(y) || isComplex(y)) )
 	errorcall(call, _("requires numeric matrix/vector arguments"));
 
@@ -607,8 +643,12 @@ SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (ncx != nry)
 	    errorcall(call, _("non-conformable arguments"));
     }
-    else {
+    else if (PRIMVAL(op) == 1) {
 	if (nrx != nry)
+	    errorcall(call, _("non-conformable arguments"));
+    }
+    else {
+	if (ncx != ncy)
 	    errorcall(call, _("non-conformable arguments"));
     }
 
@@ -679,7 +719,7 @@ SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
     }
 
-    else {					/* op == 1: crossprod() */
+    else if (PRIMVAL(op) == 1) {	/* op == 1: crossprod() */
 
 	PROTECT(ans = allocMatrix(mode, ncx, ncy));
 	if (mode == CPLXSXP)
@@ -722,13 +762,72 @@ SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	    YDIMS_ET_CETERA;
 	}
+
+    }
+    else {					/* op == 2: tcrossprod() */
+
+	PROTECT(ans = allocMatrix(mode, nrx, nry));
+	if (mode == CPLXSXP)
+	    if(sym)
+		tccrossprod(COMPLEX(CAR(args)), nrx, ncx,
+			    COMPLEX(CAR(args)), nry, ncy, COMPLEX(ans));
+	    else
+		tccrossprod(COMPLEX(CAR(args)), nrx, ncx,
+			    COMPLEX(CADR(args)), nry, ncy, COMPLEX(ans));
+	else {
+	    if(sym)
+		symtcrossprod(REAL(CAR(args)), nrx, ncx, REAL(ans));
+	    else
+		tcrossprod(REAL(CAR(args)), nrx, ncx,
+			   REAL(CADR(args)), nry, ncy, REAL(ans));
+	}
+
+	PROTECT(xdims = getAttrib(CAR(args), R_DimNamesSymbol));
+	if (sym)
+	    PROTECT(ydims = xdims);
+	else
+	    PROTECT(ydims = getAttrib(CADR(args), R_DimNamesSymbol));
+
+	if (xdims != R_NilValue || ydims != R_NilValue) {
+	    SEXP dimnames, dimnamesnames, dnx=R_NilValue, dny=R_NilValue;
+
+	    /* allocate dimnames and dimnamesnames */
+
+	    PROTECT(dimnames = allocVector(VECSXP, 2));
+	    PROTECT(dimnamesnames = allocVector(STRSXP, 2));
+
+	    if (xdims != R_NilValue) {
+		if (ldx == 2) {
+		    SET_VECTOR_ELT(dimnames, 0, VECTOR_ELT(xdims, 0));
+		    dnx = getAttrib(xdims, R_NamesSymbol);
+		    if(!isNull(dnx))
+			SET_STRING_ELT(dimnamesnames, 0, STRING_ELT(dnx, 0));
+		}
+	    }
+	    if (ydims != R_NilValue) {
+		if (ldy == 2) {
+		    SET_VECTOR_ELT(dimnames, 1, VECTOR_ELT(ydims, 0));
+		    dny = getAttrib(ydims, R_NamesSymbol);
+		    if(!isNull(dny))
+			SET_STRING_ELT(dimnamesnames, 1, STRING_ELT(dny, 0));
+		}
+	    }
+	    if (VECTOR_ELT(dimnames,0) != R_NilValue ||
+		VECTOR_ELT(dimnames,1) != R_NilValue) {
+		if (dnx != R_NilValue || dny != R_NilValue)
+		    setAttrib(dimnames, R_NamesSymbol, dimnamesnames);
+		setAttrib(ans, R_DimNamesSymbol, dimnames);
+	    }
+
+	    UNPROTECT(2);
+	}
     }
     UNPROTECT(3);
     return ans;
 }
 #undef YDIMS_ET_CETERA
 
-SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, r, dims, dimnames, dimnamesnames=R_NilValue,
 	ndimnamesnames, rnames, cnames;
@@ -861,7 +960,7 @@ SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	j += iip[itmp] * stride[itmp];
 
 /* aperm (a, perm, resize = TRUE) */
-SEXP do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP a, perm, resize, r, dimsa, dimsr, dna;
     int i, j, n, len, itmp;
@@ -1014,13 +1113,14 @@ SEXP do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* colSums(x, n, p, na.rm) and friends */
-SEXP do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, ans = R_NilValue;
     int OP, n, p, cnt = 0, i, j, type;
     Rboolean NaRm, keepNA;
     int *ix;
-    double *rx, sum = 0.0;
+    double *rx;
+    LDOUBLE sum = 0.0;
 
     checkArity(op, args);
     x = CAR(args); args = CDR(args);
@@ -1085,13 +1185,17 @@ SEXP do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cnt = p;
 	PROTECT(ans = allocVector(REALSXP, n));
 
-	/* reverse summation order to improve cache hits */
+	/* interchange summation order to improve cache hits */
 	if (type == REALSXP) {
-	    double *rans = REAL(ans), *ra = rans;
 	    int *Cnt = NULL, *c;
+	    LDOUBLE *rans, *ra;
+	    if(n <= 10000) {
+		rans = (LDOUBLE *) alloca(n * sizeof(LDOUBLE));
+		R_CheckStack();
+		memset(rans, 0, n*sizeof(LDOUBLE));
+	    } else rans = Calloc(n, LDOUBLE);
 	    rx = REAL(x);
 	    if (!keepNA && OP == 3) Cnt = Calloc(n, int);
-	    memset(rans, 0, n*sizeof(double));
 	    for (j = 0; j < p; j++) {
 		ra = rans;
 		if (keepNA)
@@ -1112,22 +1216,14 @@ SEXP do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    Free(Cnt);
 		}
 	    }
+	    for (i = 0; i < n; i++) REAL(ans)[i] = rans[i];
+	    if(n > 10000) Free(rans);
 	    UNPROTECT(1);
-	    return ans;
+	    return ans;	    
 	}
 
 	for (i = 0; i < n; i++) {
 	    switch (type) {
-	    case REALSXP: /* this cannot be reached */
-		rx = REAL(x) + i;
-		if (keepNA)
-		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
-		else {
-		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
-			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
-			else if (keepNA) {sum = NA_REAL; break;}
-		}
-		break;
 	    case INTSXP:
 		ix = INTEGER(x) + i;
 		for (cnt = 0, sum = 0., j = 0; j < p; j++, ix += n)

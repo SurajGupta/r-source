@@ -31,7 +31,7 @@
 ##
 ## The text of the GNU General Public License, version 2, is available
 ## as http://www.gnu.org/copyleft or by writing to the Free Software
-## Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+## Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
 
 splineDesign <-
     ## Creates the "design matrix" for a collection of B-splines.
@@ -64,7 +64,7 @@ splineDesign <-
                 nnx <- length(x)
             }
 	} else
-        stop(gettextf("the 'x' data must be in the range %f to %f unless you set 'outer.ok = TRUE'", knots[ord], knots[nk- o1]), domain = NA)
+        stop(gettextf("the 'x' data must be in the range %g to %g unless you set 'outer.ok = TRUE'", knots[ord], knots[nk- o1]), domain = NA)
     }
     temp <- .Call("spline_basis", knots, ord, x, derivs, PACKAGE = "splines")
     ncoef <- nk - ord

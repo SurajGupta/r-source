@@ -7,12 +7,23 @@
 
 /* @(#) $Id$ */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
+
+#if !defined(fdopen) && !defined(HAVE_FDOPEN)
+/* not used in R */
+static FILE *fdopen(int fildes, const char *mode)
+{
+}
+#endif
 
 #include "zutil.h"
 
 /* R ADDITION */
-#if defined(HAVE_OFF_T) && defined(_LARGEFILE_SOURCE)
+#if defined(HAVE_OFF_T) && defined(HAVE_SEEKO)
 #define f_seek fseeko
 #define f_tell ftello
 #else
@@ -606,6 +617,7 @@ int ZEXPORT gzwrite (file, buf, len)
 }
 
 
+#ifdef UNUSED
 /* ===========================================================================
      Converts, formats, and writes the args to the compressed file under
    control of the format string, as in fprintf. gzprintf returns the number of
@@ -684,6 +696,7 @@ int ZEXPORTVA gzprintf (file, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
     return gzwrite(file, buf, len);
 }
 #endif
+#endif /* UNUSED */
 
 /* ===========================================================================
       Writes c, converted to an unsigned char, into the compressed file.

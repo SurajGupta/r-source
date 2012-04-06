@@ -16,13 +16,14 @@ any(\dots, na.rm = FALSE)
 \details{
   This is a generic function: methods can be defined for it
   directly or via the \code{\link{Summary}} group generic.
+  For this to work properly, the arguments \code{\dots} should be unnamed.
 }
 \value{
   Given a sequence of logical arguments, a logical value indicating
   whether or not any of the elements of \code{x} are \code{TRUE}.
 
-  The value returned is \code{TRUE} if any the values in \code{x}
-  are \code{TRUE}, and \code{FALSE} if all the values in \code{x}
+  The value returned is \code{TRUE} if any of the values in \code{x}
+  are \code{TRUE}, and \code{FALSE} if all of the values in \code{x}
   are \code{FALSE}.
 
   If \code{na.rm = FALSE} and \code{x} consists of a mix of \code{FALSE}

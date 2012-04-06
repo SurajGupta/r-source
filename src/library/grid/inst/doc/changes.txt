@@ -1,3 +1,81 @@
+Changes from grid_2.2.0 to grid_2.3.0:
+------------------------------------
+
+1.  Bug fix for stringWidth() and stringHeight() with mathematical 
+    annotation.
+
+    These used to always convert the argument to "character".
+    Now they let language objects (e.g., expressions) pass through.
+
+2.  New grid.xspline() function to draw X-splines (a general curve
+    approximated or interpolated relative to control points).
+
+3.  New 'arrow' argument to grid.line.to(), grid.lines(), and
+    grid.segments().  This provides a new way to specify arrow
+    heads on either end of a line.
+
+    grid.arrows() has been deprecated.
+
+    NOTE: that the new 'arrow' arguments have been added BEFORE
+    the name, gp and vp arguments so existing code that specifies
+    any of these arguments *by position* (not by name) will fail.
+
+4.  Added "[" (subset) methods for "gpar" objects.
+
+5.  New grobX() and grobY() functions for producing units 
+    describing a location on the boundary of a grob.
+
+6.  Units produced by grobX() and grobY() make use of new 
+    xDetails() and yDetails() generic functions to calculate the 
+    boundary of a grob.  Methods for these functions are provided
+    for all grid graphical primitives.
+
+7.  Bug fix for grid.polygon() when 'x' is not just a simple unit
+    (e.g., it is unit arithmetic);  'index' was being calculated
+    incorrectly so not all of polygon would be drawn or, if 
+    'id' or 'id.length' were used, only a single polygon would
+    be drawn (with unexpected shape).
+
+8.  New grid.curve() primitive for drawing a curve between two
+    locations.  
+
+    Together with new grobX() and grobY() provides support for
+    drawing simple node-and-edge graphs and flow diagrams.
+
+9.  New grid.clip() primitive for setting the clipping region
+    (more accurately, the clipping rectangle).  Has effect until
+    the next grid.clip() or when the current viewport is popped.
+
+10. New dim.layout() method for layout objects.  Allows easy
+    access to dimensions of layout via nrow() and ncol().
+
+11. unit.rep() deprecated in favour of unit method(s) for rep() function.
+
+12. unit.length() deprecated in favour of unit method(s) for length() function.
+
+13. New grid.polyline() primitive.  Just like grid.lines() except has
+    'id' and 'id.lengths' arguments.
+
+    These work like the corresponding arguments in grid.polygon() and
+    grid.xspline(), allowing multiple polylines to be drawn from a
+    single grid.polyline() call.
+
+14. Fixed drawing of top-level gList objects so that they 
+    (actually the grobs in the gList) are recorded on the 
+    grid display list.
+
+    Allowed a gList to be component of a gList 
+    (the gList constructor merges sub-gList into resulting gList).
+
+    Added subset method for gList objects 
+    (so that result is still a gList).
+
+15. Bug fix for grid.rect() and grid.circle() with gpar(lty="blank").
+    (problem was actually in the graphics engine).
+    
+    Reported by John Braun (private correspondence).
+
+
 Changes from grid_2.1.0 to grid_2.2.0:
 ------------------------------------
 

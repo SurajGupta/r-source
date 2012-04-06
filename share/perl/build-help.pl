@@ -1,6 +1,6 @@
 #-*- mode: perl; perl-indent-level: 4; cperl-indent-level: 4 -*-
 
-# Copyright (C) 1997-2004 R Development Core Team
+# Copyright (C) 1997-2006 R Development Core Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
 #
 # A copy of the GNU General Public License is available via WWW at
 # http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-# writing to the Free Software Foundation, Inc., 59 Temple Place,
-# Suite 330, Boston, MA  02111-1307  USA.
+# writing to the Free Software Foundation, Inc., 51 Franklin Street,
+# Fifth Floor, Boston, MA 02110-1301  USA.
 
 use File::Basename;
 use Cwd;
@@ -24,7 +24,7 @@ use R::Rdconv;
 use R::Rdlists;
 use R::Utils;
 
-my $revision = ' $Revision: 1.14 $ ';
+my $revision = ' $Rev: 37352 $ ';
 my $version;
 my $name;
 
@@ -141,8 +141,11 @@ format STDOUT =
 .
 
 foreach $manfile (@mandir) {
-    if($manfile =~ /\.[Rr]d$/ && !($manfile =~ /^\.#/)) {
+    ## Should only process files starting with [A-Za-z0-9] and with
+    ## suffix .Rd or .rd, according to `Writing R Extensions'.
+    if($manfile =~ /\.[Rr]d$/) {
 	$manfilebase = basename($manfile, (".Rd", ".rd"));
+	if(! ($manfilebase =~ /^[A-Za-z0-9]/) ) {next;}
 	$manage = (-M $manfile);
 	$manfiles{$manfilebase} = $manfile;
 

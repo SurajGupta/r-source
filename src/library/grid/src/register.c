@@ -15,8 +15,8 @@
  *
  *  A copy of the GNU General Public License is available via WWW at
  *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 59 Temple Place,
- *  Suite 330, Boston, MA  02111-1307  USA.
+ *  writing to the Free Software Foundation, Inc., 51 Franklin Street
+ *  Fifth Floor, Boston, MA 02110-1301  USA.
  */
 
 /* Code to register grid functions with R
@@ -57,15 +57,17 @@ static const R_CallMethodDef callMethods[] = {
     {"L_initViewportStack", (DL_FUNC) &L_initViewportStack, 0},
     {"L_initDisplayList", (DL_FUNC) &L_initDisplayList, 0},
     {"L_moveTo", (DL_FUNC) &L_moveTo, 2},
-    {"L_lineTo", (DL_FUNC) &L_lineTo, 2}, 
-    {"L_lines", (DL_FUNC) &L_lines, 2}, 
-    {"L_segments", (DL_FUNC) &L_segments, 4}, 
+    {"L_lineTo", (DL_FUNC) &L_lineTo, 3}, 
+    {"L_lines", (DL_FUNC) &L_lines, 4}, 
+    {"L_segments", (DL_FUNC) &L_segments, 5}, 
     {"L_arrows", (DL_FUNC) &L_arrows, 12}, 
     {"L_polygon", (DL_FUNC) &L_polygon, 3},
+    {"L_xspline", (DL_FUNC) &L_xspline, 7},
     {"L_circle", (DL_FUNC) &L_circle, 3},
     {"L_rect", (DL_FUNC) &L_rect, 6},
     {"L_text", (DL_FUNC) &L_text, 7},
     {"L_points", (DL_FUNC) &L_points, 4},
+    {"L_clip", (DL_FUNC) &L_clip, 6},
     {"L_pretty", (DL_FUNC) &L_pretty, 1},
     {"L_locator", (DL_FUNC) &L_locator, 0},
     {"L_convert", (DL_FUNC) &L_convert, 4},
@@ -73,15 +75,20 @@ static const R_CallMethodDef callMethods[] = {
     {"validUnits", (DL_FUNC) &validUnits, 1},
     {"L_getGPar", (DL_FUNC) &L_getGPar, 0},
     {"L_setGPar", (DL_FUNC) &L_setGPar, 1},
-    {"L_circleBounds", (DL_FUNC) &L_circleBounds, 3},
-    {"L_locnBounds", (DL_FUNC) &L_locnBounds, 2},
-    {"L_rectBounds", (DL_FUNC) &L_rectBounds, 6},
-    {"L_textBounds", (DL_FUNC) &L_textBounds, 6},
+    {"L_circleBounds", (DL_FUNC) &L_circleBounds, 4},
+    {"L_locnBounds", (DL_FUNC) &L_locnBounds, 3},
+    {"L_rectBounds", (DL_FUNC) &L_rectBounds, 7},
+    {"L_textBounds", (DL_FUNC) &L_textBounds, 7},
+    {"L_xsplineBounds", (DL_FUNC) &L_xsplineBounds, 8},
     { NULL, NULL, 0 }
 };
 
 
-void R_init_grid(DllInfo *dll) 
+void
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+__attribute__ ((visibility ("default")))
+#endif
+R_init_grid(DllInfo *dll) 
 {
     /* No .C, .Fortran, or .External routines => NULL
      */

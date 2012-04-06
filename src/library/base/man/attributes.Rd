@@ -19,9 +19,14 @@ mostattributes(obj) <- value
   \item{value}{an appropriate attribute list, or \code{NULL}.}
 }
 \details{
+  Note that some attributes (namely \code{class}, \code{comment},
+  \code{dim}, \code{dimnames}, \code{names}
+  and \code{tsp}) are treated specially and have restrictions on the
+  values which can be set.
+
   The \code{mostattributes} assignment takes special care for the
   \code{\link{dim}}, \code{\link{names}} and \code{\link{dimnames}}
-  attributes, and assigns them only when that is valid whereas as
+  attributes, and assigns them only when that is valid whereas an
   \code{attributes} assignment would give an error in that case.
 }
 \references{

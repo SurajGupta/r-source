@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #include <R.h>
@@ -36,15 +36,16 @@ static R_CMethodDef CEntries [] = {
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
-static R_CallMethodDef CallEntries[] = {
-    CALLDEF(Type1FontInUse, 1),
-    {"L_nullDevice", (DL_FUNC) &L_nullDevice, 0},
+static const R_CallMethodDef CallEntries[] = {
+    CALLDEF(Type1FontInUse, 2),
+    CALLDEF(CIDFontInUse, 2),
+    {"R_GD_nullDevice", (DL_FUNC) &R_GD_nullDevice, 0},
     {NULL, NULL, 0}
 };
 
 #define EXTDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
-static R_ExternalMethodDef ExtEntries[] = {
+static const R_ExternalMethodDef ExtEntries[] = {
     EXTDEF(PicTeX, 6),
     EXTDEF(PostScript, 16),
     EXTDEF(XFig, 11),

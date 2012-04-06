@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001   The R Development Core Team.
+ *  Copyright (C) 2001-5   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #ifndef R_CTEST_H
@@ -25,6 +25,9 @@
 void chisqsim(int *nrow, int *ncol, int *nrowt, int *ncolt, int *n,
 	      int *b, double *expected, int *observed, double *fact,
 	      int *jwork, double *results);
+void fisher_sim(int *nrow, int *ncol, int *nrowt, int *ncolt, int *n,
+		int *b, int *observed, double *fact,
+		int *jwork, double *results);
 void d2x2xk(Sint *k, double *m, double *n, double *t, double *d);
 void fexact(int *nrow, int *ncol, int *table, int *ldtabl,
 	    double *expect, double *percnt, double *emin, double *prt,

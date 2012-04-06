@@ -18,17 +18,18 @@ axis.Date(side, x, at, format, labels = TRUE, \dots)
 \method{plot}{Date}(x, y, xlab = "", \dots)
 }
 \arguments{
-  \item{x, at}{A date-time object.}
+  \item{x, at}{A date-time or date object.}
   \item{y}{numeric values to be plotted against \code{x}.}
   \item{xlab}{a character string giving the label for the x axis.}
   \item{side}{See \code{\link{axis}}.}
   \item{format}{See \code{\link{strptime}}.}
   \item{labels}{Either a logical value specifying whether
-  annotations are to be made at the tickmarks, or a vector of character
-  strings to be placed at the tickpoints.}
+    annotations are to be made at the tickmarks, or a vector of character
+    strings to be placed at the tickpoints.}
   \item{\dots}{Further arguments to be passed from or to other methods,
     typically graphical parameters or arguments of
-    \code{\link{plot.default}}.}
+    \code{\link{plot.default}}.  For the \code{plot} methods, also
+    \code{format}.}
 }
 \details{
   The functions plot against an x-axis of date-times.
@@ -60,12 +61,12 @@ axis.POSIXct(1, at=seq(r[1], r[2], by="hour"), format="\%H")
 rm(time)
 detach(beaver1)
 
-plot(.leap.seconds, 1:22, type="n", yaxt="n",
+plot(.leap.seconds, 1:23, type="n", yaxt="n",
      xlab="leap seconds", ylab="", bty="n")
 rug(.leap.seconds)
 ## or as dates
 lps <- as.Date(.leap.seconds)
-plot(lps, 1:22, type="n", yaxt="n", xlab="leap seconds", ylab="", bty="n")
+plot(lps, 1:23, type="n", yaxt="n", xlab="leap seconds", ylab="", bty="n")
 rug(lps)
 
 ## 100 random dates in a 10-week period

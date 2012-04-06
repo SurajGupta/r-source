@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  *  USA.
  *
  *  DESCRIPTION
@@ -47,6 +47,7 @@
 # define DEBUG_q
 #endif
 
+attribute_hidden
 double qchisq_appr(double p, double nu, double g/* = log Gamma(nu/2) */,
 		   int lower_tail, int log_p, double tol /* EPS1 */)
 {
@@ -140,7 +141,7 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
 #endif
     R_Q_P01_boundaries(p, 0., ML_POSINF);
 
-    if (alpha <= 0) ML_ERR_return_NAN;
+    if (alpha <= 0 || scale <= 0) ML_ERR_return_NAN;
 
     p_ = R_DT_qIv(p);/* lower_tail prob (in any case) */
 
@@ -215,7 +216,7 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
 		     p, MAXIT, ch/fabs(q - ch));
 #endif
 /* was
- *    ML_ERROR(ME_PRECISION);
+ *    ML_ERROR(ME_PRECISION, "qgamma");
  * does nothing in R !*/
 
 END:

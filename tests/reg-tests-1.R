@@ -128,8 +128,6 @@ stopifnot(all.equal(dcauchy(-1:4), 1 / (pi*(1 + (-1:4)^2))))
 ( m <- matrix(c(5,1,1,3),2,2) )
 ( cm <- chol(m) )
 stopifnot(abs(m	 -  t(cm) %*% cm) < 100* .Machine$double.eps)
-( Lcm <- La.chol(m) )
-stopifnot(abs(m - crossprod(Lcm))  < 100* .Machine$double.eps)
 
 ## check with pivoting
 ( m <- matrix(c(5,1,1,3),2,2) )
@@ -163,7 +161,6 @@ stopifnot(all.equal(t(Q) %*% Q, m[pivot, pivot]))
 ## chol2inv
 cma <- chol(ma	<- cbind(1, 1:3, c(1,3,7)))
 stopifnot(all.equal(diag(3), ma %*% chol2inv(cma)))
-stopifnot(all.equal(diag(3), ma %*% La.chol2inv(cma)))
 ## end of moved from chol2inv.Rd
 
 
@@ -608,7 +605,7 @@ for(p in list(c(1,2,5), 1:3, 3:1, 2:0, 0:2, c(1,2,1), c(0,0,1))) {
 # which=4 failed in R 1.0.1
 par(mfrow=c(1,1), oma= rep(0,4))
 summary(lm.fm2 <- lm(Employed ~ . - Population - GNP.deflator, data = longley))
-for(wh in 1:4) plot(lm.fm2, which = wh)
+for(wh in 1:6) plot(lm.fm2, which = wh)
 ## end of moved from plot.lm.Rd
 
 
@@ -1116,7 +1113,6 @@ pm <- promax(ability.FA$loadings)
 tmp1 <- as.vector(ability.FA$loadings %*% pm$rotmat)
 tmp2 <- as.vector(pm$loadings)
 stopifnot(all.equal(tmp1, tmp2))
-rm(ability.cov)
 
 
 ## PR 1155. On some systems strptime was not setting the month or mday
@@ -1384,7 +1380,7 @@ stopifnot(inherits(z, "try-error"))
 ## 1.4.1 gave +-Inf + random imaginary part
 
 
-## PR#1238  min/max(NULL) or (integer(0))
+## PR#1283  min/max(NULL) or (integer(0))
 z <- min(NULL)
 stopifnot(!is.na(z), mode(z) == "numeric", z == Inf)
 z <- min(integer(0))
@@ -1519,25 +1515,6 @@ stopifnot(length(x) == length(predict(ss,deriv=1)$x))# not yet in 1.5.0
 
 ## pweibull(large, log=T):
 stopifnot(pweibull(seq(1,50,len=1001), 2,3, log = TRUE) < 0)
-
-## selfStart.default() w/ no parameters:
-## --> make this into example(selfStart) {with data and nls()!}
-logist <- deriv( ~Asym/(1+exp(-(x-xmid)/scal)), c("Asym", "xmid", "scal"),
-		function(x, Asym, xmid, scal){} )
-logistInit <- function(mCall, LHS, data) {
-    xy <- sortedXyData(mCall[["x"]], LHS, data)
-    if(nrow(xy) < 3) stop("Too few distinct input values to fit a logistic")
-    Asym <- max(abs(xy[,"y"]))
-    if (Asym != max(xy[,"y"])) Asym <- -Asym  # negative asymptote
-    xmid <- NLSstClosestX(xy, 0.5 * Asym)
-    scal <- NLSstClosestX(xy, 0.75 * Asym) - xmid
-    value <- c(Asym, xmid, scal)
-    names(value) <- mCall[c("Asym", "xmid", "scal")]
-    value
-}
-logist <- selfStart( logist, initial = logistInit ) ##-> Error in R 1.5.0
-str(logist)
-
 
 ## part of PR 1662: fisher.test with total one
 fisher.test(cbind(0, c(0,0,0,1)))
@@ -1870,8 +1847,10 @@ stopifnot(length(res) == 1 && res == 1)
 tmp <- tempfile()
 long <- paste(rep("0123456789", 20), collapse="")
 cat(long, "\n", sep="", file=tmp)
-junk <- system(paste("cat", tmp), intern = TRUE)
-stopifnot(length(junk) == 1, nchar(junk[1]) == 200)
+# system(intern=TRUE) depends on popen.
+junk <- try(system(paste("cat", tmp), intern = TRUE))
+if(!inherits(junk, "try-error"))
+    stopifnot(length(junk) == 1, nchar(junk[1]) == 200)
 ## and split truncated on 1.6.1
 
 
@@ -3534,6 +3513,8 @@ summary(data.frame(mat = I(matrix(1:8, 2))))
 summary(data.frame(x = gl(2,2), I(matrix(1:8, 4))))
 ##
 
+
+
 ### fixes for 2.1.1 ###
 
 ## PR#7792: predict.glm dropped names
@@ -3592,6 +3573,7 @@ plot(x, exp(x), log = "y", ylim = c(30,1))
 ## gave error (and warning) in  log - axis(), 'at' creation
 
 ### end of tests added in 2.1.0 patched ###
+
 
 
 ## Multibyte character set regular expressions had buffer overrun
@@ -3925,19 +3907,253 @@ stopifnot(is.nan(covratio(Uniform)[Ind]))
 stopifnot(is.nan(cooks.distance(Uniform)[Ind]))
 # had infinities in 2.2.0 on some platforms
 plot(Uniform)
+plot(Uniform, 6) # added 2006-01-10
 ##
-
-## alg="port" in nls and bounds (PR#8401)
-x <- runif(200)
-a <- b <- 1
-c <- -0.1
-y <- a+b*x+c*x^2+rnorm(200, sd=0.05)
-plot(x,y)
-curve(a+b*x+c*x^2, add=TRUE)
-nls(y~a+b*x+c*I(x^2), start=c(a=1,b=1,c=0.1), algorithm="port")
-nls(y~a+b*x+c*I(x^2), start=c(a=1,b=1,c=0.1), algorithm="port",
-    lower = c(0,0,0))
-## failed in 2.2.0
 
 
 ### end of tests added in 2.2.1 ###
+
+## sub(fixed=TRUE), reported by Roger Peng 2005-12-21
+x <- 0:10
+v <- paste(x, "asdf", sep=".")
+(xx <- sub(".asdf", "", v, fixed = TRUE))
+stopifnot(nchar(xx) == nchar(x), xx == x)
+## had random trailing bytes from second element on in 2.2.1.
+## identical reported true, fixed in 2.3.0.
+
+## eigen(EISPACK=TRUE) problem reported to R-devel by Ole Christensen
+## 2006-01-03
+Gm <- rbind(c(-0.3194373786, 0.2444066686, 0.0428108831,  3.221983e-02),
+            c(0.0002071301, -0.0003282719,  0.0001211418, 5.128830e-12),
+            c(0.0621332005,  0.0545850010, -0.2098487035, 9.313050e-02),
+            c(0.0280936142,  0.0586642184,  0.1658310277, -2.525889e-01))
+temp <- eigen(Gm)
+temp
+temp2 <- eigen(Gm, EISPACK = TRUE)
+temp2$vectors <- apply(temp2$vectors, 2, function(x) x/sqrt(sum(Mod(x)^2)))
+temp2
+## segfaulted in 2.2.1
+
+## rbind on data frames with 0 rows (PR#8506)
+foo <- data.frame(x = 1:10, y = rnorm(10))
+bar1 <- rbind.data.frame(foo[1:5,], foo[numeric(0),])
+stopifnot(dim(bar1) == c(5,2))
+bar2 <- rbind.data.frame(a = foo[1:5,], b = foo[numeric(0),])
+stopifnot(dim(bar2) == c(5,2))
+## Last had 6 rows in 2.2.1, and was a corrupt data frame
+
+## environments are recursive but cannot be indexed - all.equal.default()
+d <- data.frame(k=1:7, n=2:8, x=0:6)
+r <- glm(cbind(k, n-k) ~ x, family=binomial, data=d)
+stopifnot(all.equal(r,r))
+## failed in 2.2.1
+
+### end of tests added in 2.2.1 patched ###
+
+
+## sort used to preserve inappropriate attributes and not always sort names.
+x <- runif(10)
+tsp(x) <- c(1,10,1)
+(z <- sort(x))                 # kept tsp attribute
+stopifnot(is.null(attributes(z)))
+(z <- sort(x, method="quick")) # same
+stopifnot(is.null(attributes(z)))
+(z <- sort(x, partial = 1:10)) # same
+stopifnot(is.null(attributes(z)))
+
+names(x) <- letters[1:10]
+o <- sort.list(x)
+z2 <- structure(c(x)[o], names=names(x)[o])
+(z <- sort(x))                 # sorted names, dropped the tsp attribute
+stopifnot(identical(z, z2))
+(z <- sort(x, method="quick")) # sorted names, kept the tsp attribute.
+stopifnot(identical(z, z2))
+(z <- sort(x, partial = 1:10)) # did not sort names, kept tsp attribute
+stopifnot(is.null(attributes(z)))
+## fixed for 2.3.0 to sort names (except partial), drop all other attributes.
+
+
+## formatC on as.single (PR#8211)
+# not documented to work but someone tried it.
+(z <- formatC(as.single(1)))
+stopifnot(identical(z, "1"))
+## was wrong < 2.3.0
+
+
+## outer on factors was broken in pre-2.3.0
+x <- factor(1:3)
+outer(x, x, "!=")
+## failed 2005-10-17
+
+
+## add tests for < 0 shape in [dpqr]gamma
+dgamma(1, -2)
+pgamma(1, -2)
+qgamma(0.95, -2)
+rgamma(3, -20)
+## all errors < 2.1.1, now NaNs
+
+
+## Make sure reference to local environment is serialized
+f <- function() { function(){} }
+serialize(f(), NULL)
+##
+
+
+## dummy_vfprintf with overlong format
+xx <- paste(rep("a", 10000), collapse="+")
+con <- gzfile("test.gz", "w")
+writeLines(xx, con)
+close(con)
+unlink("test.gz")
+## segfaulted in 2.2.0 on some x86_64 systems.
+
+
+## format() with *.marks:
+x <- 1.2345 + 10^(0:5)
+ff <- format(x, width = 11, big.mark = "'")
+stopifnot(nchar(ff) == 12)
+## small marks test
+f2 <- format(x, big.mark = "'", small.mark="_", small.interval = 2)
+nc <- nchar(f2)
+stopifnot(substring(f2, nc,nc) != "_", # no traling small mark
+          nc == nc[1])# all the same
+fc <- formatC(1.234 + 10^(0:8), format="fg", width=11, big.mark = "'")
+stopifnot(nchar(fc) == 11)
+## had non-adjusted strings before 2.3.0
+
+
+## data.matrix on zero-length columns
+DF <- data.frame(x=c("a", "b"), y=2:3)[FALSE,]
+stopifnot(is.numeric(data.matrix(DF)))
+# was logical in 2.2.1.
+DF <- data.frame(I(character(0)))
+X <- try(data.matrix(DF))
+stopifnot(inherits(X, "try-error"))
+## gave logical matrix in 2.2.1.
+
+stopifnot(pbirthday(950, coincident=250) == 0,
+          pbirthday(950, coincident=200) > 0)
+## gave error before 2.3.0
+
+
+## raw matrices (PR#8529/30)
+v <- as.raw(c(1:6))
+dim(v) <- c(2,3)
+dimnames(v) <- list(c("x","y"), c("P", "Q", "R"))
+v
+s <- as.raw(c(11:16))
+dim(s) <- c(2,3)
+s
+rbind(s,v,v)
+(m <- cbind(s,v,v,s))
+m[2,4] <- as.raw(254)
+m
+m[1:2,2:4] <- s
+m
+## unimplemented before 2.3.0
+
+
+## window with non-overlapping ranges (PR#8545)
+test <- ts(1:144, start=c(1,1), frequency=12)
+window(test, start=c(15,1), end=c(17,1), extend=TRUE)
+## failed < 2.3.0
+
+
+## pbinom(size=0) gave NaN (PR#8560)
+x <- c(-1,0,1,2)
+stopifnot(identical(pbinom(x, size = 0, p = 0.5), c(0,1,1,1)))
+## 2.2.1 gave NaN in all cases (forced explicitly in C code).
+
+
+## Limits on [dpqr]nbinom and [dqpr]geom
+stopifnot(is.nan(dnbinom(0, 1, 0)), dnbinom(0, 1, 1) == 1,
+          pnbinom(c(-1, 0, 1), 1, 1) == c(0, 1, 1),
+          is.nan(pnbinom(0, 1, 0)),
+          qnbinom(0.5, 1, 1) == 0,
+          is.nan(qnbinom(0.5, 1, 0)),
+          is.finite(rnbinom(1, 1, 1)),
+          !is.finite(rnbinom(1, 1, 0)))
+## d allowed p=0, [pq] disallowed p=1 for R < 2.3.0, r gave NaN for p=1.
+stopifnot(is.nan(dgeom(0, 0)), dgeom(0, 1) == 1,
+          pgeom(c(-1, 0, 1), 1) == c(0, 1, 1), is.nan(pgeom(0, 0)),
+          qgeom(0.5, 1) == 0, is.nan(qgeom(0.5, 0)),
+          is.finite(rgeom(1, 1)),
+          !is.finite(rgeom(1, 0)))
+
+
+## A response to PR#8528  incorrectly claimed these to be wrong.
+stopifnot(all.equal(df(0, 2, 2), 1))
+stopifnot(is.infinite(df(0, 1.3, 2)))
+x <- 1e-170
+stopifnot(all.equal(pbeta(x,x,x), 0.5))
+## just a regression check.
+## This underflowed
+stopifnot(all.equal(dbeta(x,x,x), 0.5))
+## this was slow
+stopifnot(system.time(qnbinom(1e-10, 1e3, 1e-7))[3] < 0.1)
+## but this failed
+qnbinom(0.5, 10000000000, 0.000000002)
+## infinite-looped in 2.2.1 (answer is approx 4e18)
+qpois(0.9, 1e50)
+## infinite-looped in 2.2.1
+z <- 10^seq(10, 300, 10)
+stopifnot(all.equal(pt(-z, 1, log=TRUE), pcauchy(-z, 1, log=TRUE)))
+## failed at about 1e150 in 2.2.1
+stopifnot(pt(-1e200, 0.001) > 0)
+## was 0 in 2.2.1, should be about 31%
+
+
+## is.factor differed from internal isFactor on hand-constructed factors
+## and this hit split. (The difference is still there.)
+fac2 <- rep(c(1,2,3), each=5)
+attr(fac2, "levels") <- as.character(1:3)
+oldClass(fac2) <- "factor"
+stopifnot(is.factor(fac2))
+split(rnorm(15), fac2)
+## failed in 2.2.1
+
+
+## all.equal.numeric overflowed for large integers
+set.seed(1); r1 <- .Random.seed
+set.seed(2); r2 <- .Random.seed
+stopifnot(is.character(all.equal(r1, r2)))
+## all.equal() gave NA in 2.2.1
+
+
+## support for raw indices in for() was added in 2.3.0
+xx <- as.raw(40:48)
+for(i in xx) print(i)
+## was error < 2.3.0
+
+
+## atan2 with one complex argument
+atan2(1, 1i)
+## was error in 2.2.1
+
+
+## as.list on a symbol, for S-compatibility
+as.list(as.name("data.frame"))
+## was error in 2.2.1
+
+
+## min ignored INT_MAX, (PR#8731)
+stopifnot(min(.Machine$integer.max) == .Machine$integer.max)
+stopifnot(max(-.Machine$integer.max) == -.Machine$integer.max)
+op <- options(warn=2)
+min(Inf)
+max(-Inf)
+options(op)
+## were +/-Inf with warning in 2.2.1.
+
+
+## PR#8718
+a<-matrix(2,2,2)
+apply(a,1,"$","a")
+apply(a,1,sum)
+## first apply was corrupting apply() code in 2.2.1
+
+
+## NULL results in apply()
+apply(as.matrix(1), 1, function(x) NULL)
+## was error in 2.2.1.

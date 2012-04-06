@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-4   The R Development Core Team.
+ *  Copyright (C) 2001-5   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 #include <R.h>
@@ -33,6 +33,8 @@
 
 static R_NativePrimitiveArgType chisqsim_t[11] = {INTSXP, INTSXP, INTSXP, INTSXP, INTSXP,
 					   INTSXP, REALSXP, INTSXP, REALSXP, INTSXP, REALSXP};
+static R_NativePrimitiveArgType fishersim_t[10] = {INTSXP, INTSXP, INTSXP, INTSXP, INTSXP,
+					   INTSXP, INTSXP, REALSXP, INTSXP, REALSXP};
 static R_NativePrimitiveArgType d2_t[5] = {INTSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType dansari_t[4] = {INTSXP, REALSXP, INTSXP, INTSXP};
 static R_NativePrimitiveArgType pansari_t[4] = {INTSXP, REALSXP, INTSXP, INTSXP};
@@ -68,6 +70,7 @@ static R_NativePrimitiveArgType band_den_bin_t[] = {INTSXP, INTSXP, REALSXP, REA
 
 static const R_CMethodDef CEntries[]  = {
     {"chisqsim", (DL_FUNC) &chisqsim, 11, chisqsim_t},
+    {"fisher_sim", (DL_FUNC) &fisher_sim, 10, fishersim_t},
     {"d2x2xk", (DL_FUNC) &d2x2xk, 5, d2_t},
     {"dansari", (DL_FUNC) &dansari, 4, dansari_t},
     {"fexact",   (DL_FUNC) &fexact, 11, fexact_t},
@@ -117,10 +120,10 @@ static const R_CMethodDef CEntries[]  = {
     {NULL, NULL, 0}
 };
 
-static R_CallMethodDef CallEntries[] = {
+static const R_CallMethodDef CallEntries[] = {
     {"R_cutree", (DL_FUNC) &R_cutree, 2},
     {"R_isoreg", (DL_FUNC) &R_isoreg, 1},
-    {"numeric_deriv", (DL_FUNC)&numeric_deriv, 3},
+    {"numeric_deriv", (DL_FUNC)&numeric_deriv, 4},
     {"nls_iter", (DL_FUNC)&nls_iter, 3},
     {"setup_starma", (DL_FUNC) &setup_starma, 8},
     {"free_starma", (DL_FUNC) &free_starma, 1},
@@ -155,7 +158,7 @@ static R_CallMethodDef CallEntries[] = {
     {NULL, NULL, 0}
 };
 
-static R_FortranMethodDef FortEntries[] = {
+static const R_FortranMethodDef FortEntries[] = {
     {"lowesw", (DL_FUNC) &F77_SUB(lowesw), 4},
     {"lowesp", (DL_FUNC) &F77_SUB(lowesp), 7},
     {"setppr", (DL_FUNC) &F77_SUB(setppr), 6},
@@ -173,7 +176,11 @@ static R_FortranMethodDef FortEntries[] = {
     {NULL, NULL, 0}
 };
 
-void R_init_stats(DllInfo *dll)
+void
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+__attribute__ ((visibility ("default")))
+#endif
+R_init_stats(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, CallEntries, FortEntries, NULL);
     R_useDynamicSymbols(dll, FALSE);

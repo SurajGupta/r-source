@@ -1,7 +1,7 @@
 # English translations for R package.
-# Copyright (C) 2005 The R Foundation
+# Copyright (C) 2006 The R Foundation
 # This file is distributed under the same license as the R package.
-# Automatically generated, 2005.
+# Automatically generated, 2006.
 #
 # All this catalog "translates" are quotation characters.
 # The msgids must be ASCII and therefore cannot contain real quotation
@@ -27,10 +27,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.2.1\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-11-16 22:59+0000\n"
-"PO-Revision-Date: 2005-11-16 22:59+0000\n"
+"POT-Creation-Date: 2006-04-18 12:45+0100\n"
+"PO-Revision-Date: 2006-04-18 12:45+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -46,23 +46,23 @@ msgstr "bandwidth/span of running medians is larger than n"
 msgid "probabilities outside [0,1] in qansari()"
 msgstr "probabilities outside [0,1] in qansari()"
 
-#: arima.c:60 arima.c:167 arima.c:343
+#: arima.c:71 arima.c:178 arima.c:354
 msgid "invalid argument type"
 msgstr "invalid argument type"
 
-#: arima.c:402 arima.c:490 pacf.c:302 pacf.c:342
+#: arima.c:413 arima.c:497 pacf.c:311 pacf.c:351
 msgid "can only transform 100 pars in arima0"
 msgstr "can only transform 100 pars in arima0"
 
-#: distance.c:145
+#: distance.c:151
 msgid "dist(.,\"binary\"): treating non-finite values as NA"
 msgstr "dist(.,“binary”): treating non-finite values as NA"
 
-#: distance.c:214
+#: distance.c:220
 msgid "distance(): invalid p"
 msgstr "distance(): invalid p"
 
-#: distance.c:217
+#: distance.c:223
 msgid "distance(): invalid distance"
 msgstr "distance(): invalid distance"
 
@@ -89,57 +89,35 @@ msgstr "only 2500 rows are allowed for sm.method=“spline”"
 msgid "span is too small"
 msgstr "span is too small"
 
-#: mburg.c:197
+#: mAR.c:467
+msgid "Singular matrix in qr_solve"
+msgstr "Singular matrix in qr_solve"
+
+#: mAR.c:510
+msgid "Singular matrix in ldet"
+msgstr "Singular matrix in ldet"
+
+#: mAR.c:697
 msgid "Invalid vmethod"
 msgstr "Invalid vmethod"
 
-#: mburg.c:333
+#: mAR.c:833
 msgid "Burg's algorithm failed to find partial correlation"
 msgstr "Burg's algorithm failed to find partial correlation"
 
 #: nls.c:75
-msgid "control must be a list"
-msgstr "control must be a list"
+msgid "'control' must be a list"
+msgstr "‘control’ must be a list"
 
-#: nls.c:77 port.c:510
-msgid "m must be a list"
-msgstr "m must be a list"
+#: nls.c:77
+msgid "'m' must be a list"
+msgstr "‘m’ must be a list"
 
-#: nls.c:83
-msgid "control$maxiter absent"
-msgstr "control$maxiter absent"
-
-#: nls.c:88
-msgid "control$tol absent"
-msgstr "control$tol absent"
-
-#: nls.c:93
-msgid "control$minFactor absent"
-msgstr "control$minFactor absent"
-
-#: nls.c:102
-msgid "m$conv() absent"
-msgstr "m$conv() absent"
-
-#: nls.c:107
-msgid "m$incr() absent"
-msgstr "m$incr() absent"
-
-#: nls.c:112
-msgid "m$deviance() absent"
-msgstr "m$deviance() absent"
-
-#: nls.c:117
-msgid "m$trace() absent"
-msgstr "m$trace() absent"
-
-#: nls.c:122
-msgid "m$setPars() absent"
-msgstr "m$setPars() absent"
-
-#: nls.c:127
-msgid "m$getPars() absent"
-msgstr "m$getPars() absent"
+#: nls.c:83 nls.c:88 nls.c:93 nls.c:102 nls.c:107 nls.c:112 nls.c:117
+#: nls.c:122 nls.c:127
+#, c-format
+msgid "'%s' absent"
+msgstr "‘%s’ absent"
 
 #: nls.c:154
 msgid "singular gradient"
@@ -156,42 +134,50 @@ msgid "number of iterations exceeded maximum of %d"
 msgstr "number of iterations exceeded maximum of %d"
 
 #: nls.c:202
-msgid "theta should be of type character"
-msgstr "theta should be of type character"
+msgid "'theta' should be of type character"
+msgstr "‘theta’ should be of type character"
 
-#: nls.c:204
-msgid "rho should be an environment"
-msgstr "rho should be an environment"
+#: nls.c:204 port.c:359
+msgid "use of NULL environment is deprecated"
+msgstr "use of NULL environment is deprecated"
 
-#: nls.c:220 nls.c:248
+#: nls.c:208
+msgid "'rho' should be an environment"
+msgstr "‘rho’ should be an environment"
+
+#: nls.c:210
+msgid "'dir' is not a numeric vector of the correct length"
+msgstr "‘dir’ is not a numeric vector of the correct length"
+
+#: nls.c:227 nls.c:255
 msgid "Missing value or an infinity produced when evaluating the model"
 msgstr "Missing value or an infinity produced when evaluating the model"
 
-#: nls.c:226
+#: nls.c:233
 #, c-format
 msgid "variable '%s' is integer, not numeric"
 msgstr "variable ‘%s’ is integer, not numeric"
 
-#: nls.c:228
+#: nls.c:235
 #, c-format
 msgid "variable '%s' is not numeric"
 msgstr "variable ‘%s’ is not numeric"
 
-#: pacf.c:72
+#: pacf.c:81
 msgid "bad Starma struct"
 msgstr "bad Starma struct"
 
-#: pacf.c:218
+#: pacf.c:227
 #, c-format
 msgid "starma error code %d"
 msgstr "starma error code %d"
 
-#: pacf.c:281
+#: pacf.c:290
 #, c-format
 msgid "forkal error code %d"
 msgstr "forkal error code %d"
 
-#: pacf.c:445
+#: pacf.c:454
 msgid "invalid value of lag.max"
 msgstr "invalid value of lag.max"
 
@@ -210,61 +196,57 @@ msgstr "gradient function must return a numeric vector of length %d"
 msgid "Hessian function must return a square numeric matrix of order %d"
 msgstr "Hessian function must return a square numeric matrix of order %d"
 
-#: port.c:360
-msgid "`rho' must be an environment"
+#: port.c:363
+msgid "'rho' must be an environment"
 msgstr "‘rho’ must be an environment"
 
-#: port.c:362 port.c:509
-msgid "`d' must be a nonempty numeric vector"
+#: port.c:365 port.c:512
+msgid "'d' must be a nonempty numeric vector"
 msgstr "‘d’ must be a nonempty numeric vector"
 
-#: port.c:364
+#: port.c:367
 msgid "When Hessian defined must also have gradient defined"
 msgstr "When Hessian defined must also have gradient defined"
 
-#: port.c:367
+#: port.c:370
 #, c-format
-msgid "environment `rho' must contain a numeric vector `.par' of length %d"
+msgid "environment 'rho' must contain a numeric vector '.par' of length %d"
 msgstr "environment ‘rho’ must contain a numeric vector ‘.par’ of length %d"
 
-#: port.c:377 port.c:529
-msgid "lowerb and upperb must be numeric vectors"
-msgstr "lowerb and upperb must be numeric vectors"
+#: port.c:380
+msgid "'lower' and 'upper' must be numeric vectors"
+msgstr "‘lower’ and ‘upper’ must be numeric vectors"
 
-#: port.c:423
-msgid "getElement applies only to named lists"
-msgstr "getElement applies only to named lists"
+#: port.c:426
+msgid "'getElement' applies only to named lists"
+msgstr "‘getElement’ applies only to named lists"
 
-#: port.c:444
+#: port.c:447
 #, c-format
 msgid "%s$%s() not found"
 msgstr "%s$%s() not found"
 
-#: port.c:457
+#: port.c:460
 #, c-format
-msgid "gradient must be a numeric matrix of dimension (%d,%d)"
-msgstr "gradient must be a numeric matrix of dimension (%d,%d)"
+msgid "'gradient' must be a numeric matrix of dimension (%d,%d)"
+msgstr "‘gradient’ must be a numeric matrix of dimension (%d,%d)"
 
-#: port.c:478
+#: port.c:481
 #, c-format
 msgid "fcn produced mode %d, length %d - wanted mode %d, length %d"
 msgstr "fcn produced mode %d, length %d - wanted mode %d, length %d"
 
-#: port.c:491
+#: port.c:494
 msgid "invalid type for eval_check_store"
 msgstr "invalid type for eval_check_store"
 
-#: qr.c:30
-msgid "assert failed in src/library/ts/src/carray.c"
-msgstr "assert failed in src/library/ts/src/carray.c"
+#: port.c:513
+msgid "m must be a list"
+msgstr "m must be a list"
 
-#: qr.c:68
-msgid "Singular matrix in qr_solve"
-msgstr "Singular matrix in qr_solve"
-
-#: qr.c:111
-msgid "Singular matrix in ldet"
-msgstr "Singular matrix in ldet"
+#: port.c:532
+msgid "'lowerb' and 'upperb' must be numeric vectors"
+msgstr "‘lowerb’ and ‘upperb’ must be numeric vectors"
 
 #: smooth.c:79
 #, c-format
@@ -283,7 +265,7 @@ msgstr "allocation error in smooth(*, '3RSS')."
 msgid "allocation error in smooth(*, '3R')."
 msgstr "allocation error in smooth(*, '3R')."
 
-#: starma.c:361
+#: starma.c:366
 #, c-format
 msgid "missing value in last %d observations"
 msgstr "missing value in last %d observations"

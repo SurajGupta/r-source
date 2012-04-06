@@ -68,7 +68,7 @@ for(n in rbinom(n1, size = 2*n0, p = .4)) {
 }
 
 ##__ 2. Geometric __
-for(pr in seq(0,1,len=15)) {
+for(pr in seq(1e-10,1,len=15)) { # p=0 is not a distribution
     print(All.eq((dg <- dgeom(0:10, pr)),
 		 pr * (1-pr)^(0:10)))
     print(All.eq(cumsum(dg), pgeom(0:10, pr)))
@@ -190,14 +190,16 @@ for(df in c(0.1, 0.5, 1.5, 4.7, 10, 20,50,100)) {
 }
 
 ## p ~= 1 (<==> 1-p ~= 0) -- gave infinite loop in R <= 1.8.1 -- PR#6421
+options(warn=-1) # ignore warnings from R's version of log1p
 psml <- 2^-(10:54)
 q0 <- qchisq(psml,    df=1.2, ncp=10, lower.tail=FALSE)
-q1 <- qchisq(1 -psml, df=1.2, ncp=10)
+q1 <- qchisq(1-psml, df=1.2, ncp=10) # inaccurate in the tail
 p0 <- pchisq(q0, df=1.2, ncp=10, lower.tail=FALSE)
 p1 <- pchisq(q1, df=1.2, ncp=10, lower.tail=FALSE)
-iO <- 1:10
-all.equal(q0[iO], q1[iO])
-all.equal(p0[iO], psml[iO], tol = 0.08)# bad tol (0.0744 on 386-Linux).
+iO <- 1:30
+all.equal(q0[iO], q1[iO], 1e-5)
+all.equal(p0[iO], psml[iO])
+options(warn=0)
 
 ##--- Beta (need more):
 
@@ -453,7 +455,7 @@ All.eq(+x, qcauchy(pcauchy(+x, log=TRUE), log=TRUE))
 All.eq(1/x, pcauchy(qcauchy(1/x)))
 All.eq(ex,  pcauchy(qcauchy(ex, log=TRUE), log=TRUE))
 II <- c(-Inf,Inf)
-stopifnot(pcauchy(II) == 0:1, ## qcauchy(0:1) == II,
+stopifnot(pcauchy(II) == 0:1, qcauchy(0:1) == II,
           pcauchy(II, log=TRUE) == c(-Inf,0),
           qcauchy(c(-Inf,0), log=TRUE) == II)
 
@@ -533,5 +535,16 @@ sh <- c(1.1, 0.5, 0.2, 0.15, 1e-2, 1e-10)
 stopifnot(Inf == qgamma(1, sh))
 stopifnot(0   == qgamma(0, sh))
 ## the first gave Inf, NaN, and 99.425 in R 2.1.1 and earlier
+
+f2 <- c(0.5, 1:4)
+stopifnot(df(0, 1, f2) == Inf,
+          df(0, 2, f2) == 1,
+          df(0, 3, f2) == 0)
+## only the last one was ok in R 2.2.1 and earlier
+
+x0 <- -2 * 10^-c(22,10,7,5)
+stopifnot(pbinom(x0, size = 3, prob = 0.1) == 0,
+          dbinom(x0, 3, 0.1) == 0) # d*() warns about non-integer
+## very small negatives were rounded to 0 in R 2.2.1 and earlier
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

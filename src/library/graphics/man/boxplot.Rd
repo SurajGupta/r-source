@@ -33,12 +33,13 @@ boxplot(x, \dots)
     vectors. Additional unnamed arguments specify further data
     as separate vectors (each corresponding to a component boxplot).
     \code{\link{NA}}s are allowed in the data.}
-  \item{\dots}{For the \code{formula} method, arguments to the
-    default method and graphical parameters.
+  \item{\dots}{For the \code{formula} method, named arguments to be passed to
+    the default method.
 
     For the default method, unnamed arguments are additional data
     vectors (unless \code{x} is a list when they are ignored),
-    and named arguments are graphical parameters in addition to the ones
+    and named arguments are arguments and graphical parameters to be
+    passed to \code{\link{bxp}} in addition to the ones
     given by argument \code{pars}.
   }
   \item{range}{this determines how far the plot whiskers extend out
@@ -110,8 +111,8 @@ boxplot(x, \dots)
   \item{out}{the values of any data points which lie beyond the
     extremes of the whiskers.}
   \item{group}{a vector of the same length as \code{out} whose elements
-    indicate which group the outlier belongs to}
-  \item{names}{a vector of names for the groups}
+    indicate to which group the outlier belongs.}
+  \item{names}{a vector of names for the groups.}
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -120,6 +121,8 @@ boxplot(x, \dots)
 
   Chambers, J. M., Cleveland, W. S., Kleiner, B. and Tukey, P. A. (1983)
   \emph{Graphical Methods for Data Analysis.}  Wadsworth \& Brooks/Cole.
+
+  Murrell, P. (2005) \emph{R Graphics}. Chapman & Hall/CRC Press.
 
   See also \code{\link{boxplot.stats}}.
 }
