@@ -1,0 +1,20 @@
+TITLE(substitute @@ Actual Arguments)
+USAGE(
+substitute(arg, env=NULL)
+)
+ALIAS(substitute)
+DESCRIPTION(
+LANG(substitute) returns the expression which was typed
+as the value of a formal argument.
+The typical use of this is to create informative
+labels for data sets and plots.
+The following example shows a simple use of this facility.
+It uses the functions LANG(deparse) and LANG(substitute)
+to create labels for a plot which are character string versions
+of the actual arguments to the function LANG(myplot).
+)
+EXAMPLES(
+myplot <- function(x, y)
+        plot(x, y, xlab=deparse(substitute(x)),
+                ylab=deparse(substitute(y)))
+)

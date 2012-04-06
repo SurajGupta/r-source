@@ -1,0 +1,23 @@
+TITLE(c @@ Combine Values into a Vector or List)
+USAGE(
+c(DOTS, recursive=FALSE)
+)
+ALIAS(c)
+DESCRIPTION(
+This is a generic function which combines its arguments.
+PARA
+The default method combines its arguments to form a vector.
+All arguments are coerced to a common type which is the type
+of the returned value.
+If LANG(recursive=TRUE), the function recursively
+descends through lists combining all their elements into
+a vector.
+)
+SEEALSO(
+LANG(LINK(unlist)).
+)
+EXAMPLES(
+c(1,7:9)
+c(1:5, 10.5, "next")
+c(options(), recursive=T)
+)

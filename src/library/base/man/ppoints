@@ -1,0 +1,17 @@
+TITLE(ppoints @@ Ordinates for Probability Plotting)
+USAGE(
+ppoints(n)
+)
+ALIAS(ppoints)
+ARGUMENTS(
+ARG(n @@ either the number of points generate or a vector of observations.)
+)
+DESCRIPTION(
+This generates the sequence of points LANG((1:m - 0.5)/m) where LANG(m) is
+either LANG(n), if LANG(length(n)==1), or LANG(length(n)).
+It is used in LANG(qqplot), LANG(qqnorm) to generate the set of
+probabilities at which to evaluate the inverse distribution.
+)
+SEEALSO(
+LANG(LINK(qqplot)), LANG(LINK(qqnorm)).
+)

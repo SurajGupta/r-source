@@ -1,0 +1,41 @@
+COMMENT(The basic layout of a raw documentation file is as follows.)
+COMMENT(-----------------------------------------------------------)
+TITLE(unix.time @@ CPU time used)
+USAGE(
+unix.time(expr)
+)
+ALIAS(unix.time)
+ARGUMENTS(
+ARG(expr @@ Valid R expression to be ``timed'')
+)
+DESCRIPTION(
+LANG(unix.time) calls the builtin LANG(LINK(proc.time)), evaluates
+LANG(expr), and the calls LANG(proc.time) once more, returning the
+difference to between the LANG(proc.time) calls.
+PARA
+The values returned by the LANG(proc.time) are (currently)
+those returned by the C library function times(3v).
+)
+VALUE(
+A numeric vector of length 5 containing the cpu, user, total,
+subproc1, subproc2 times.
+)
+SEEALSO(
+LANG(LINK(proc.time)), LANG(LINK(date)), LANG(LINK(time)) which is for
+time-series.
+)
+COMMENT(------- Examples: TAKE time to do this well !!! ------------
+	------- ========
+        They should be executable ``immediately'' by cut & paste;
+        i.e, you must construct data, use standard data sets, or random numbers.)
+EXAMPLES(
+unix.time(for(i in 1:50) mad(runif(500)))
+exT <- function(n = 100)
+{
+  ## Purpose: Test if unix.time works ok;   n: loop size
+  unix.time(for(i in 1:n) x <- mean(rt(1000, df=4)))
+}
+##-- Try to interrupt one of the following (using Ctrl-C):
+exT() #- '1.4' on -O-optimized Ultra1
+unix.time(exT()) #~ +/- same
+)

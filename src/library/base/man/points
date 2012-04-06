@@ -1,0 +1,11 @@
+TITLE(points @@ Add Points to a Plot)
+USAGE(
+points(x, y, pch="o", DOTS)
+)
+ALIAS(points)
+DESCRIPTION(
+LANG(points) draws a sequence of points at the specified coordinates.
+The specified character(s) are plotted, centred at the coordinates.
+PARA
+Graphical parameters are permitted as arguments to this function.
+)

@@ -1,0 +1,13 @@
+TITLE(Internal @@ Call an Internal Function)
+USAGE(
+.Internal(call)
+)
+ALIAS(.Internal)
+DESCRIPTION(
+LANG(.Internal) performs a call to an internal code
+which is built in to the R interpreter.
+Only true R wizards should even consider using this function.
+)
+SEEALSO(
+LANG(LINK(.C)), LANG(LINK(.Fortran)).
+)

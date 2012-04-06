@@ -1,0 +1,26 @@
+TITLE(contrasts @@ Get and Set Contrast Matrices)
+USAGE(
+contrasts(x)
+contrasts(x) <- ctr
+)
+ALIAS(contrasts)
+ARGUMENTS(
+ARG(x @@ a factor.)
+ARG(ctr @@ either a matrix whose columns give coefficients
+for contrasts in the levels of LANG(x), or the (quoted)
+name of a function which computes such matrices.)
+)
+VALUE(
+These functions are used to set and view the
+contrasts associated with a factor.
+If contrasts are not set for a factor the default
+functions named the system options are used.
+)
+SEEALSO(
+LANG(LINK(contr.helmert)),
+LANG(LINK(contr.poly)),
+LANG(LINK(contr.sum)),
+LANG(LINK(contr.treatment)),
+LANG(LINK(glm)),
+LANG(LINK(lm)).
+)

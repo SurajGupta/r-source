@@ -1,0 +1,26 @@
+TITLE(NChisquare @@ The Non-Central Chi-Square Distribution)
+USAGE(
+dnchisq(x, df)
+pnchisq(x, df)
+qnchisq(x, df)
+rnchisq(x, df)
+)
+ALIAS(dnchisq)
+ALIAS(pnchisq)
+ALIAS(qnchisq)
+ALIAS(rnchisq)
+DESCRIPTION(
+These functions provide information about the non-central
+chi-square distribution with LANG(df) degrees of freedom.
+LANG(dnchisq) gives the density, LANG(pnchisq) gives the
+distribution function LANG(qnchisq) gives the quantile
+function and LANG(rnchisq) generates random deviates.
+PARA
+The non-central chi-square distribution with EQN(n)
+degrees-of-freedom has density
+DEQN(f(x) =
+OVER(1 @@ SUP(2@@n/2) greekGamma (n/2))
+SUP(x@@n/2-1) SUP(e@@-x/2)
+@@f(x) = 1 / (2^(n/2) Gamma(n/2))  x^(n/2-1) e^-x/2)
+for EQN(x GE 0).
+)

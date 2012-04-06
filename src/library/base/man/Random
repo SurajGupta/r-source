@@ -1,0 +1,50 @@
+TITLE(Random @@ Random Number Generation)
+USAGE(
+.Random.seed <- c(n1,n2,n3)
+)
+ALIAS(.Random.seed)
+DESCRIPTION(
+LANG(.Random.seed) is an integer vector of length 3, containing
+the ``seed'' for all random number generation in R.
+The Wichmann-Hill generator is used which has a cycle length of 6.9536e12
+(= LANG(prod(p-1)/4) where LANG(p) is the length 3 vector of primes, below),
+see p.123 of Applied Statistics (1984) vol.33 which corrects the original
+article.
+)
+VALUE(
+.Random.seed == r[1:3], where  r[i] is in 1:p[i],
+and p = (30269, 30307, 30323).
+)
+REFERENCES(
+B.A. Wichmann and I. D. Hill (1982).
+ITALIC(Algorithm AS 183: An Efficient and Portable Pseudo-random Number
+Generator), Applied Statistics, BOLD(31), 188-190; Remarks: BOLD(34),p.198
+and BOLD(35), p.89.
+PARA
+A. De Matteis and S. Pagnutti (1993). ITALIC(Long-range Correlation
+Analysis of the Wichmann-Hill Random Number Generator), Statist. Comput.,
+BOLD(3), 67-70.
+)
+NOTE(
+Initially, there is no seed;  a new one is created, using "Randomize".
+Hence, student exercises will each have different simulation results, by
+default.
+)
+SEEALSO(
+LANG(LINK(runif)), LANG(LINK(rnorm)), LDOTS.
+)
+EXAMPLES(
+runif(1); .Random.seed; runif(1); .Random.seed
+# If there is no seed,  a ``random'' new one is created:
+rm(.Random.seed); runif(1); .Random.seed
+
+p.WH <- c(30269, 30307, 30323)
+a.WH <- c(  171,   172,   170)
+R.seed <- function(i.seed = .Random.seed) (a.WH * i.seed) %% p.WH
+my.runif1 <- function(i.seed = .Random.seed)
+  { ns <- R.seed(i.seed); sum(ns / p.WH) %% 1 }
+BLANK
+##- This shows how 'runif(.)' works, just using  R - functions :
+rs <- .Random.seed
+R.seed(rs); u <- runif(1); .Random.seed; c(u, my.runif1(rs))
+)

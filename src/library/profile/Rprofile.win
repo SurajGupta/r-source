@@ -1,0 +1,17 @@
+.GlobalEnv <- globalenv()
+.SystemEnv <- NULL
+T <- TRUE
+F <- FALSE
+edit<-function(name) {
+                f <- eval(parse(text=winedit(deparse(name)))[[1]])
+                environment(f) <- environment(name)
+                f
+        }
+help<-function(...)
+                cat("Sorry, no help is available (yet).\n")
+.First <- function() windows()
+
+version <- Version()
+.Machine <- Machine()
+.Libraries <- character(0)
+options(na.action="na.omit")

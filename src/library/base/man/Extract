@@ -1,0 +1,39 @@
+TITLE(Extract @@ Extract or Replace parts of an Object)
+USAGE(
+x[i]
+x[i,j, ...]
+x[i,j, ..., drop=T]
+x[[i]]
+x[[i,j, ...]]
+x$name
+)
+ALIAS(Extract)
+ALIAS([)
+ALIAS([[)
+ALIAS($)
+DESCRIPTION(
+These operators act on vectors, matrices, dataframes and lists.
+If one of these expressions is on the left hand side of an assignment
+then that part of LANG(x) is set to the value of the right hand side
+of the assignment.
+PARA
+These operators are generic. You can write methods to handle subsetting
+of specific classes of data.
+PARA
+The LANG([[) operator requires all relavent subscripts be supplied.
+With  the LANG([) operator a comma separated blank indicates that all
+entries in that dimension are selected.
+PARA
+When operating on a list the  LANG([[) operator gives the specified
+element of the list while the LANG([) operator returns a list with
+the specified element(s) in it.
+)
+EXAMPLES(
+x <- 1:12; m <- matrix(1:6,nr=2); li <- list(pi=pi, e = exp(1))
+x[10]   # the tenth element of x
+m[1,]   # the first row of m (which must be a matrix)
+li[[1]] # the first element of list li
+y<-list(1,2,a=4,5)
+y[c(3,4)] # a list containing the third and fourth elements of y
+y$a      #the element of y named a
+)

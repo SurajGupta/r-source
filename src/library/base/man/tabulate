@@ -1,0 +1,13 @@
+TITLE(tabulate @@ Tabulation for Vectors)
+USAGE(
+tabulate(bin, nbin=max(bin))
+)
+ALIAS(tabulate)
+DESCRIPTION(
+LANG(tabulate) takes the integer valued vector LANG(bin) and counts
+the number of times each integer occurs in it.  LANG(tabulate) is
+used as the basis of the LANG(table) function.
+)
+SEEALSO(
+LANG(LINK(factor)), LANG(LINK(table)).
+)

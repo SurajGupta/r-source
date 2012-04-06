@@ -1,0 +1,19 @@
+TITLE(unlist @@ Flatten Lists)
+USAGE(
+unlist(x, recursive=TRUE, use.names=TRUE)
+)
+ALIAS(unlist)
+DESCRIPTION(
+Given a list structure LANG(x), LANG(unlist)
+produces a vector which contains all the atomic components
+which occur in LANG(x).
+If LANG(recursive=FALSE), the function will not
+recurse beyond the first level items in LANG(x).
+PARA
+By default, LANG(unlist) tries to retain the naming
+information present in LANG(x).
+If LANG(use.names=FALSE) all naming information is dropped.
+)
+SEEALSO(
+LANG(LINK(c)).
+)

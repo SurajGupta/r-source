@@ -1,0 +1,31 @@
+TITLE(double @@ Double Precision Vectors)
+USAGE(
+double(n=0)
+BLANK
+as.double(x)
+is.double(x)
+)
+ALIAS(double)
+ALIAS(as.double)
+ALIAS(is.double)
+VALUE(
+This function creates a double precision vector of the specified length.
+The elements of the vector are all equal to LANG(0).
+PARA
+LANG(as.double) attempts to coerce its argument to be of
+double type.
+PARA
+LANG(is.double) returns LANG(TRUE) or LANG(FALSE)
+depending on whether its argument is of double type or not.
+)
+NOTE(
+ITALIC(R has no single precision data type.
+All real numbers are stored in double precision format').
+)
+SEEALSO(
+LANG(LINK(integer)).
+)
+EXAMPLES(
+is.double(1)
+all(double(3) == 0)
+)

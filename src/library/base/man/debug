@@ -1,0 +1,31 @@
+TITLE(debug @@ Debug a function )
+USAGE(
+debug(fun)
+undebug(fun)
+)
+ALIAS(debug)
+ALIAS(undebug)
+ARGUMENTS(
+ARG(fun @@ any interpreted R function.)
+)
+DESCRIPTION(
+These functions set and unset the debugging flag on a function.
+When a function flagged for debugging is entered, normal execution
+is suspended and the body of function is executed on statement at a time.
+A new browser context is initiated for each step (and the previous one
+destroyed).
+Currently you can only debug functions that have bodies enclosed in braces.
+This is a bug and will be fixed soon.
+You take the next step by typing carriage return, LANG(n) or LANG(next).
+You can see the values of variables by typing their names.
+Typing LANG(c) or LANG(cont) causes the debugger to continue to the
+end of the function.
+You can LANG(debug) new functions before you step in to them from inside
+the debugger.
+If you have variables with names that are identical to the controls
+(eg. LANG(c) or LANG(n) ) then you need to use LANG(print(c)) and
+LANG(print(n)) to evaluate them.
+)
+SEEALSO(
+LANG(LINK(browser)).
+)

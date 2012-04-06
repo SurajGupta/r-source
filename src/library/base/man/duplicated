@@ -1,0 +1,14 @@
+TITLE(duplicated @@ Determine Duplicate Elements)
+USAGE(
+duplicated(x)
+)
+ALIAS(duplicated)
+VALUE(
+This function determines which elements of a vector are duplicates
+of elements with smaller subscripts, and returns a
+logical vector indicating which elements are duplicates.
+)
+EXAMPLES(
+# extract unique elements
+x[!duplicated(x)]
+)

@@ -1,0 +1,15 @@
+eigen <- function(x) {
+	if(!is.matrix(x) | nrow(x) != ncol(x))
+		stop("non-square matrix in eigen")
+	n <- nrow(x)
+	z <- .C("eigen",
+		n,
+		as.double(x),
+		vectors=matrix(0,n,n),
+		values=double(n),
+		double(n),
+		ierr=integer(1))
+	if(z$ierr)
+		stop(paste("error code ",z$ierr," in eigen"))
+	z[c("values", "vectors")]
+}

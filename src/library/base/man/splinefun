@@ -1,0 +1,37 @@
+TITLE(splinefun @@ Interpolating Splines)
+USAGE(
+splinefun(x, y, method="fmm")
+)
+ALIAS(splinefun)
+ARGUMENTS(
+ARG(x,y @@ vectors giving the coordinates of the points to be interpolated.
+Alternatively a single plotting structure can be specified.)
+ARG(method @@ this specifies the type of spline to be used.
+Possible values are LANG("fmm"), LANG("natural") and LANG("periodic").)
+)
+DESCRIPTION(
+LANG(splinefun) returns a function which will perform
+cubic spline interpolation of the given data points.
+This is often more useful than LANG(spline).
+PARA
+If LANG(method="fmm"), the spline used is that of
+Forsythe, Malcolm and Moler (an exact cubic is fitted through
+the four points at each end of the data, and this is used
+to determine the end conditions).
+Natural splines are used when
+LANG(method="natural") and periodic splines when 
+LANG(method="periodic").
+)
+REFERENCES(
+Forsythe, G. E., M. A. Malcolm and C. B. Moler (1977).
+ITALIC(Computer Methods for Mathematical Computations).
+)
+SEEALSO(
+LANG(LINK(approx)), LANG(LINK(approxfun)), LANG(LINK(spline)).
+)
+EXAMPLES(
+x <- 1:10
+y <- rnorm(10)
+f <- splinefun(x, y)
+curve(f(x), 1, 10)
+)

@@ -1,0 +1,24 @@
+TITLE(Hyperbolic @@ Hyperbolic Functions)
+USAGE(
+cosh(x)
+sinh(x)
+tanh(x)
+acosh(x)
+asinh(x)
+atanh(x)
+)
+ALIAS(cosh)
+ALIAS(sinh)
+ALIAS(tanh)
+ALIAS(acosh)
+ALIAS(asinh)
+ALIAS(atanh)
+DESCRIPTION(
+These functions give the obvious hyperbolic functions.
+They respectively compute the hyperbolic cosine, sine, tangent,
+arc-cosine, arc-sine, arc-tangent.
+)
+SEEALSO(
+LANG(LINK(cos)), LANG(LINK(sin)), LANG(LINK(tan)),
+LANG(LINK(acos)), LANG(LINK(asin)), LANG(LINK(atan)).
+)

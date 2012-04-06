@@ -1,0 +1,27 @@
+TITLE(update.model @@ Model Updating)
+USAGE(
+update.model(old, new)
+)
+ALIAS(update.model)
+ARGUMENTS(
+ARG(old @@ a model formula to be updated.)
+ARG(new @@ a formula giving a template which specifies how to update.)
+)
+DESCRIPTION(
+LANG(update.model) is used to update model formulae.
+This typically involves adding or dropping terms,
+but updates can be more general.
+PARA
+The function works by first identifying the ITALIC(left-hand side)
+and ITALIC(right-hand side) of the LANG(old) formula.
+It then examines the LANG(new) formula and substitutes
+the ITALIC(lhs) of the LANG(old) formula for any occurence
+of "LANG(.)" on the left of LANG(new), and substitutes 
+the ITALIC(rhs) of the LANG(old) formula for any occurence
+of "LANG(.)" on the right of LANG(new).
+PARA
+The updated formula is returned.
+)
+SEEALSO(
+LANG(LINK(terms)), LANG(LINK(model.matrix)).
+)

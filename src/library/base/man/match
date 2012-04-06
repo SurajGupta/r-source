@@ -1,0 +1,15 @@
+TITLE(match @@ Value Matching)
+USAGE(
+match(x, table, nomatch=NA)
+)
+ALIAS(match)
+ARGUMENTS(
+ARG(x @@ the values to be matched.)
+ARG(table @@ the values to be matched against.)
+ARG(nomatch @@ the value to be returned in the case when no match is found.))
+DESCRIPTION(
+If LANG(x[i]) is found to equal LANG(table[j])
+then the value returned in the LANG(i)-th position of the return value is
+LANG(j).
+If no match is found, the value is LANG(nomatch).
+)

@@ -1,0 +1,35 @@
+TITLE(abline @@ Add a Straight Line to a Plot)
+USAGE(
+abline(a, b, DOTS)
+abline(h=, DOTS)
+abline(v=, DOTS)
+abline(coef=, DOTS)
+abline(reg=, DOTS)
+)
+ALIAS(abline)
+VALUE(
+This function is invoked for its side effects, which
+is to add one or more straight lines through the
+current plot.
+The first form above specifies the line in intercept/slope
+form (alternatively LANG(a) can be specified on its own and is taken
+to contain the slope and intercept in vector form).
+The LANG(h=) and LANG(v=) forms draw horizontal and vertical lines
+at the specified coordinates.
+The LANG(coef) form specifies the line by a vector containing
+the slope and intercept.
+LANG(reg) is a regression object which contains LANG(reg$coef).
+If it is of length 1 then the value is taken to be the slope of a
+line through the origin, otherwise, the first 2 values are
+taken to be the slope and intercept.
+PARA
+The graphical parameters LANG(col) and LANG(lty)
+can be specified as arguments to LANG(abline);
+see LANG(par) for details.
+)
+EXAMPLES(
+data(cars)
+z <- lm(dist ~ speed, data=cars)
+plot(cars)
+abline(z)
+)

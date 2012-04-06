@@ -1,0 +1,47 @@
+require <-
+function (name, quietly = FALSE) 
+{
+	if (missing(name)) 
+		return(TRUE)	
+	if (!exists(".Libraries", inherits = TRUE))
+		assign(".Libraries", character(0), NULL)
+	if (!exists(".Provided", inherits=TRUE))
+		assign(".Provided", character(0), NULL)
+	name <- substitute(name)
+	if (!is.character(name)) 
+		name <- deparse(name)
+	if (is.na(match(name, .Libraries))&& is.na(match(name, .Provided))) {
+		file <- system.file("library", name)
+		if (file == "") {
+			if (!quietly) 
+	warning(paste("Required library ", name, " not found.\n"))
+			return(FALSE)
+		}
+		if (!quietly) 
+			cat("Autoloading required library:", name, "\n")
+		sys.source(file)
+		assign(".Libraries", c(name, .Libraries), NULL)
+	}
+	return(TRUE)
+}
+
+
+provide <-
+function(name)
+{
+	if (!exists(".Libraries", inherits = TRUE)) 
+		assign(".Libraries", character(0), NULL)
+	if (!exists(".Provided",inherits=TRUE))
+		assign(".Provided", character(0), NULL)
+	if (missing(name))
+		return(list(provide=.Provided, library=.Libraries))
+	name<-substitute(name)
+	if (!is.character(name))
+		name<-deparse(name)
+	if (is.na(match(name, .Libraries)) && is.na(match(name, .Provided))){
+		assign(".Provided",c(name,.Provided),NULL)
+		return(TRUE)
+	} 
+	else 
+		return(FALSE)
+}

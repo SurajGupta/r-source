@@ -1,0 +1,22 @@
+TITLE(deviance @@ Model Deviance)
+USAGE(
+deviance(x, ...)
+)
+ALIAS(deviance)
+ARGUMENTS(
+ARG(x @@ an object for which the deviance is desired.)
+ARG(... @@ additional optional argument.)
+)
+VALUE(
+The value of the deviance extracted from the object LANG(x).
+PARA
+This is a generic function which can be used to extract
+deviances for fitted models.
+Consult the individual modeling functions for details
+details on how to use this function
+PARA
+There is no default method for this function.
+)
+SEEALSO(
+LANG(LINK(df.residual)), LANG(LINK(glm)), LANG(LINK(lm)).
+)

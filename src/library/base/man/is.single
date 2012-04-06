@@ -1,0 +1,7 @@
+TITLE(is.single @@ Is an Object of Single Precision Type?)
+USAGE(is.single(x))
+ALIAS(is.single)
+DESCRIPTION(
+LANG(is.single) reports an error. There are no single precision
+values in R.
+)

@@ -1,0 +1,38 @@
+TITLE(dist @@ Distance Matrix Computation)
+USAGE(
+dist(x, method="euclidian", diag=FALSE)
+BLANK
+print.dist(dist.obj)
+)
+ARGUMENTS(
+ARG(x @@ a matrix or (data frame).  Distances between
+the rows of LANG(x) will be computed.)
+ARG(method @@ the distance measure to be used.
+This must be one of LANG("euclidian"), LANG("maximum"),
+LANG("manhattan") or LANG("canberra").
+Any unambiguous substring can be given.)
+ARG(diag @@ a logical value indicating whether the diagonal
+of the distance matrix should be included in the result.)
+)
+DESCRIPTION(
+This function computes and returns the distance matrix
+computed by using the specified distance measure to
+compute the distances between the rows of LANG(x).
+)
+VALUE(
+The lower triangle of the distance matrix (with or without
+its diagonal as specified by LANG(diag)) and
+stored by columns in a single vector.
+The vector has the attributes LANG("size"),
+LANG("diag"), LANG("labels") and LANG(class) equal to "dist".
+)
+REFERENCES(
+Mardia, K. V., J. T. Kent and J. M. Bibby (1979).
+ITALIC(Multivariate Analysis), London: Academic Press.
+)
+SEEALSO(
+LANG(hclust).
+)
+EXAMPLES(
+# There are no examples yet.
+)

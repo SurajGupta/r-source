@@ -1,0 +1,30 @@
+TITLE(rep @@ Replicate Elements)
+USAGE(
+rep(x, times, length.out)
+)
+ALIAS(rep)
+DESCRIPTION(
+LANG(rep) replicates the values in LANG(x)
+according to the values given in LANG(times)
+and LANG(length.out).
+PARA
+If LANG(times) consists of a single integer,
+the result consists of the values in
+LANG(x) repeated this many times.
+If LANG(times) is a vector of the same length as
+LANG(x), the result consists of LANG(x[1])
+repeated LANG(times[1]) times,
+LANG(x[2]) repeated LANG(times[2]) times and so on.
+PARA
+LANG(length.out) may be given in place of LANG(times),
+in which case LANG(x)
+is repeated as many times as is necessary
+to create a vector of this length.
+)
+SEEALSO(
+LANG(LINK(seq)), LANG(LINK(sequence)).
+)
+EXAMPLES(
+rep(1:4,2)
+rep(1:4,c(2,2,2,2))
+)

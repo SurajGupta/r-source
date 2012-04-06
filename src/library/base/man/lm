@@ -1,0 +1,90 @@
+TITLE(lm @@ Fitting Linear Models)
+USAGE(
+lm(formula, data, subset, weights, na.action=na.omit)
+BLANK
+anova(lm.obj)
+summary(lm.obj)
+BLANK
+coefficients(lm.obj)
+deviance(lm.obj)
+df.residual(lm.obj)
+effects(lm.obj)
+fitted.values(lm.obj)
+residuals(lm.obj)
+weights(lm.obj)
+BLANK
+lm.fit(x, y)
+lm.w.fit(x, y, w)
+)
+ALIAS(lm)
+ALIAS(anova.lm)
+ALIAS(summary.lm)
+ALIAS(coefficients.lm)
+ALIAS(deviance.lm)
+ALIAS(df.residual.lm)
+ALIAS(effects.lm)
+ALIAS(fitted.values.lm)
+ALIAS(residuals.lm)
+ALIAS(weights.lm)
+ALIAS(lm.fit)
+ALIAS(lm.w.fit)
+ALIAS(print.lm)
+ALIAS(print.summary.lm)
+ALIAS(print.anova.lm)
+ARGUMENTS(
+ARG(formula @@ a symbolic description of the model to be fit.
+The details of model specification are given below.)
+ARG(data @@ an optional data frame containing the variables
+in the model.  By default the variables are taken from
+the environment which LANG(lm) is called from.)
+ARG(subset @@ an optional vector specifying a subset of observations
+to be used in the fitting process.)
+ARG(weights @@ an optional vector of weights to be used
+in the fitting process.)
+ARG(na.action @@ a function which indicates what should happen
+when the data contain LANG(NA)s.  The default action (LANG(na.omit))
+is to omit any incomplete observations.
+The alternative action LANG(na.fail) causes LANG(lm) to
+print an error message and terminate if there are any incomplete
+observations.)
+ARG(lm.obj @@
+an object of class LANG(lm).)
+)
+DESCRIPTION(
+LANG(lm) is used to fit linear models.
+It can be used to carry out regression,
+single stratum analysis of variance and
+analysis of covariance.
+PARA
+Models for LANG(lm) are specified symbolically.
+A typical model has the form
+LANG(reponse ~ terms) where LANG(response) is the (numeric)
+response vector and LANG(terms) is a series of terms which
+specifies a linear predictor for LANG(response).
+A terms specification of the form LANG(first+second)
+indicates all the terms in LANG(first) together
+with all the terms in LANG(second) with duplicates
+removed.
+A specification of the form LANG(first:second) indicates the
+the set of terms obtained by taking the interactions of
+all terms in LANG(first) with all terms in LANG(second).
+The specification LANG(first*second) indicates the ITALIC(cross)
+of LANG(first) and LANG(second).
+This is the same as LANG(first+second+first:second).
+)
+VALUE(
+LANG(lm) returns an object of class LANG(lm).
+The function LANG(summary) can be used to obtain or print
+a summary of the results and the function LANG(anova)
+and be used to produce and analysis of variance table.
+The generic accessor functions LANG(coefficients),
+LANG(effects), LANG(fitted.values) and LANG(residuals)
+can be used to extract various useful features of the
+value returned by LANG(lm).
+)
+SEEALSO(
+LANG(LINK(anova)), LANG(LINK(coefficients)), LANG(LINK(effects)),
+LANG(LINK(fitted.values)),
+LANG(LINK(glm)),
+LANG(LINK(residuals)), LANG(LINK(summary)).
+)

@@ -1,0 +1,46 @@
+TITLE(eigen @@ Spectral Decomposition of a Matrix)
+USAGE(
+eigen(x, symmetric=all(x==t(x)), only.values=FALSE)
+eigen.rs(x, only.values=FALSE)
+eigen.rg(x, only.values=FALSE)
+)
+ALIAS(eigen)
+ALIAS(eigen.rs)
+ALIAS(eigen.rg)
+ARGUMENTS(
+ARG(x @@ a matrix whose spectral decomposition is to be computed.)
+ARG(symmetric @@ if LANG(TRUE), the matrix is assumed to be symmetric and
+only its lower triangle is used.)
+ARG(only.values @@ if LANG(TRUE), only the eigenvalues are computed
+and returned, otherwise both eigenvalues and eigenvectors are
+returned.)
+)
+DESCRIPTION(
+These functions provide an interface to the EISPACK routines
+LANG(RS) and LANG(RG).
+The functions LANG(eigen.rs) and LANG(eigen.rg) provide
+versions of the decomposition for the symmetric and
+general cases.
+They provide a slight performance advantage by skipping
+the symmetry test of LANG(eigen).
+)
+VALUE(
+The spectral decomposition of LANG(x) is returned
+as components of a list.
+If the eigenvalues are all real the list contains components;
+LANG(values), a vector containing the eigenvalues of LANG(x) and
+LANG(vectors), a matrix whose columns contain the eigenvectors of LANG(x).
+PARA
+If some of the eigenvalues are complex, the list contains additional components;
+LANG(values.im) and LANG(vectors.im), which respectively contain
+the imaginary parts of the eigenvalues and eigenvectors of LANG(x).
+)
+REFERENCES(
+Smith, B. T, J. M. Boyle, J. J. Dongarra, B. S. Garbow, Y. Ikebe,
+V. Klema, C. B. Moler (1976).
+ITALIC(Matrix Eigensystems Routines - EISPACK Guide).
+Springer-Verlag Lecture Notes in Computer Science.
+)
+SEEALSO(
+LANG(LINK(svd)), LANG(LINK(qr)).
+)

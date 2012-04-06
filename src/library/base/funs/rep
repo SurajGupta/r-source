@@ -1,0 +1,11 @@
+rep <- function(x, times, length.out)
+{
+	if (length(x) == 0)
+		return(x)
+	if (missing(times))
+		times <- ceiling(length.out/length(x))
+	r<-.Internal(rep(x,times))
+	if (!missing(length.out))
+		return(r[1:length.out])
+	return(r)
+}

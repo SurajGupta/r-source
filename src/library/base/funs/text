@@ -1,0 +1,2 @@
+text <- function(x, y=NULL, text, ...)
+	.Internal(text(xy.coords(x,y), as.character(text), ...))

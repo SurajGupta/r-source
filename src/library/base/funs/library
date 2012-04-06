@@ -1,0 +1,32 @@
+library <- function(name)
+{
+	if (!exists(".Libraries", inherits=TRUE))
+		assign(".Libraries", character(0), NULL)
+	if(missing(name)) {
+		cat("NAME\tDESCRIPTION\n")
+		system(paste("cat", system.file("help","LibIndex")))
+	}
+	else {
+		name <- substitute(name)
+		if (!is.character(name)) 
+			name <- deparse(name)
+		if(is.na(match(name, .Libraries))) {
+			file <- system.file("library", name)
+			if(file == "") stop(paste("there is no library called", name))
+			sys.source(file)
+			assign(".Libraries", c(name, .Libraries), NULL)
+		}
+		invisible(.Libraries)
+	}
+}
+
+library.dynam <- function(name)
+{
+	if (!exists(".Dyn.libs"))
+		assign(".Dyn.libs", character(0), NULL)
+	if(is.na(match(name, .Dyn.libs))) {
+		.Internal(dyn.load(system.file("lib", name)))
+		assign(".Dyn.libs", c(.Dyn.libs, name), NULL)
+	}
+	invisible(.Dyn.libs)
+}

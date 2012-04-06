@@ -1,0 +1,10 @@
+TITLE(text @@ Add Text to a Plot)
+USAGE(
+text(x, y, strings, DOTS)
+)
+ALIAS(text)
+DESCRIPTION(
+LANG(text) draws the strings given in the
+vector LANG(strings) at the coordinates
+given by LANG(x) and LANG(y).
+)

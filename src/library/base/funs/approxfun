@@ -1,0 +1,23 @@
+approxfun <- function(x, y, method="lines", rule=1) {
+	if(length(x) != length(y)) stop("x and y must have equal lengths")
+	if( !is.numeric(x) || !is.numeric(y) )
+		error("approxfun: x and y must be numeric")
+	ok <- !(is.na(x) | is.na(y))
+	x <- x[ok]
+	y <- y[ok]
+	if(length(x) < 2) stop("approx requires at least two values to interpolate")
+	o <- order(x)
+	x <- x[o]
+	y <- y[o]
+	if(rule == 1) {
+		low <- y[1]
+		high <- y[length(x)]
+	}
+	else if(rule == 2){
+		low <- as.double(NA)
+		high <- low
+	}
+	rm(method, rule)
+	function(v)
+		.C("approx", as.double(x), as.double(y), length(x), xout=as.double(v), length(v), low, high)$xout
+}

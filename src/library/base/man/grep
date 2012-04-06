@@ -1,0 +1,51 @@
+TITLE(grep @@ Pattern Matching and Replacement)
+USAGE(
+grep(pattern, x, ignore.case=FALSE, extended=TRUE, value=FALSE)
+sub(pattern, replacement, x,
+        ignore.case=FALSE, extended=TRUE) 
+gsub(pattern, replacement, x,
+        ignore.case=FALSE, extended=TRUE) 
+)
+ALIAS(grep)
+ALIAS(sub)
+ALIAS(gsub)
+ARGUMENTS(
+ARG(pattern @@ character string containing a regular expression
+to be matched in the vector of character string LANG(vec).)
+ARG(x @@ a vector of character strings where matches is sought.)
+ARG(ignore.case @@ if LANG(FALSE), the pattern matching is
+ITALIC(case sensitive) and if LANG(TRUE), case is ignored during matching.)
+ARG(extended @@ if LANG(TRUE), extended regular expression matching
+is used, and if LANG(FALSE) basic regular expressions are used.)
+ARG(value @@ if LANG(FALSE), a vector containing the indices
+of the matches determined by LANG(grep) is returned,
+and if LANG(TRUE), a vector containing the matching
+elements themselves is returned.)
+ARG(replacement @@ a replacement for matched pattern in
+LANG(sub) and LANG(gsub).)
+)
+DESCRIPTION(
+LANG(grep) searches for matches to pattern given as its first
+argument within the the vector of character strings given as
+its second argument.
+PARA
+LANG(sub) and LANG(gsub) perform replacement of matches
+determined by regular expression matching.
+The functions differ only in that LANG(sub) replaces only
+the first occurence of a pattern whereas LANG(gsub) replaces
+all occurences.
+PARA
+The regular expressions used are those specified by POSIX 1003.2,
+either extended or basic, depending on the value of the
+LANG(extended) argument.
+)
+NOTE(
+This function is based on the ITALIC(regex) regular expression library
+written by Henry Spencer of the University of Toronto.
+)
+SEEALSO(
+LANG(LINK(match)), LANG(LINK(pmatch)).
+)
+EXAMPLES(
+grep("[a-z]", letters)
+)

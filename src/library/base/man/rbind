@@ -1,0 +1,27 @@
+TITLE(rbind @@ Combine Rows into a Matrix)
+USAGE(rbind(DOTS))
+ALIAS(rbind)
+VALUE(
+LANG(rbind) takes a sequence of vector and/or matrix arguments
+and combines them as the rows of a matrix.
+PARA
+If there are several matrix arguments,
+they must all have the same number of columns
+and this will be the number of columns of the result.
+If all the arguments are vectors, the number of columns in the
+result is equal to the length of the longest vector.
+Values in shorter arguments are recycled
+to achieve this length.
+PARA
+When the arguments consist of a mix of matrices and vectors
+the number of columns of the result is determined by the number
+of columns of the matrix arguments.  Any vectors have their
+values recycled or subsetted to achieve this length.
+)
+SEEALSO(
+LANG(LINK(c)),
+LANG(LINK(cbind)).
+)
+EXAMPLES(
+rbind(1,1:n)
+)

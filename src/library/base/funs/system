@@ -1,0 +1,3 @@
+system <- function(call, intern=FALSE) 
+	.Internal(system(call,intern))
+

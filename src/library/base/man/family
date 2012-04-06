@@ -1,0 +1,65 @@
+TITLE(family @@ Family Objects for Models)
+USAGE(
+family(object)
+BLANK
+binomial(link=logit)
+gaussian()
+Gamma(link=inverse)
+inverse.gaussian()
+poisson(link=log)
+quasi(link=identity, variance=constant)
+)
+ALIAS(family)
+ALIAS(binomial)
+ALIAS(gaussian)
+ALIAS(Gamma)
+ALIAS(inverse.gaussian)
+ALIAS(poisson)
+ALIAS(quasi)
+ARGUMENTS(
+ARG(link @@ a specification for the model link function.
+The LANG(binomial) family admits the links; LANG(logit),
+LANG(probit) and LANG(cloglog) (complementary log-log),
+the LANG(Gamma) family the links; LANG(identity),
+LANG(inverse) and LANG(log),
+the LANG(poisson) family the links; LANG(identity)
+LANG(log) and LANG(sqrt), and
+the LANG(quasi) family the links; LANG(logit),
+LANG(probit), LANG(cloglog),  LANG(identity), LANG(inverse),
+LANG(log), LANG(1/mu^2) and LANG(sqrt).
+The other families have only a single permissible
+link function.  These are the LANG(identity) for the LANG(gaussian)
+family and LANG(1/mu^2) for the LANG(inverse.gaussian) family.
+The function LANG(power) can also be used to create a
+power link function for the LANG(quasi) family.)
+ARG(variance @@ for all families, other than LANG(quasi),
+the variance function is determined by the family.
+The LANG(quasi) family will accept the specifications
+LANG(constant), LANG(mu(1-mu)), LANG(mu), LANG(mu^2) and
+LANG(mu^3) as variance function.)
+ARG(object @@ the function LANG(family) accesses the
+LANG(family) objects which are stored within objects
+created by modelling functions (e.g. LANG(glm)).)
+)
+DESCRIPTION(
+Family objects provide a convenient way to specify
+the details of the models used by functions such as LANG(glm).
+See the documentation for LANG(glm) for the details on
+how such model fitting takes place.
+)
+REFERENCES(
+McCullagh P. and J. A. Nelder (1989).
+ITALIC(Generalized Linear Models).
+London: Chapman and Hall.
+PARA
+Dobson, A. J. (1983).
+ITALIC(An Introduction to Statistical Modelling).
+London: Chapman and Hall.
+PARA
+Cox, D. R. and E. J. Snell (1981).
+ITALIC(Applied Statistics; Principles and Examples).
+London: Chapman and Hall.
+)
+SEEALSO(
+LANG(LINK(glm)), LANG(LINK(power)).
+)

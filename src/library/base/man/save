@@ -1,0 +1,31 @@
+TITLE(save @@ Save R Datasets and Functions)
+USAGE(
+save(..., list = character(0), file = "", ascii = FALSE)
+)
+ALIAS(save)
+ARGUMENTS(
+ARG(DOTS @@
+the names of the objects to be saved.)
+ARG(list @@
+A character vector containing the names of the data sets
+to be saved.)
+ARG(file @@
+the name of the file where the data will be saved.)
+ARG(ascii @@
+if LANG(TRUE), an ASCII representation of the data is written.
+This is useful for transporting data between machines of
+different types.
+The default value of LANG(ascii) is false which
+leads to a more compact binary file being written.)
+)
+DESCRIPTION(
+LANG(save) writes a external representation of R
+objects to the specified file.
+The objects can be read back from the file at a later date
+by using the function LANG(load).
+)
+SEEALSO(
+LANG(LINK(dput)),
+LANG(LINK(dump)),
+LANG(LINK(load)).
+)

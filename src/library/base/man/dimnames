@@ -1,0 +1,20 @@
+TITLE(dimnames @@ Array Labels)
+USAGE(
+dimnames(x)
+dimnames(x) <- nlist
+)
+ALIAS(dimnames)
+VALUE(
+This function obtains the list of extent labels of
+the array given as its argument.
+The second form above can be used to set these labels.
+)
+SEEALSO(
+LANG(LINK(rownames)), LANG(LINK(colnames)).
+)
+EXAMPLES(
+# simple versions of rownames and colnames
+# could be defined as follows
+rownames <- function(x) dimnames(x)[1]
+colnames <- function(x) dimnames(x)[2]
+)

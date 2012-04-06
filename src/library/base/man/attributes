@@ -1,0 +1,19 @@
+TITLE(attributes @@ Object Attribute Lists)
+USAGE(
+attributes(obj)
+attributes(obj) <- list
+)
+ALIAS(attributes)
+DESCRIPTION(
+This function provides access to an object's attribute list.
+The simple form above returns the an object's attribute list.
+The assignment form makes the list on the right-hand
+side of the assignment, the object's attribute list.
+)
+SEEALSO(
+LANG(LINK(attr)).
+)
+EXAMPLES(
+# strip an objects attributes
+attributes(x) <- NULL
+)

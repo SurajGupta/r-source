@@ -1,0 +1,23 @@
+TITLE(range @@ Range of Values)
+USAGE(
+range(DOTS, na.rm=FALSE)
+)
+ALIAS(range)
+DESCRIPTION(
+LANG(range) returns a vector containing the minimum and maximum
+of all the values present in its arguments.
+If LANG(na.rm) is LANG(FALSE), an LANG(NA)
+value in any of the arguments will cause
+values of LANG(NA) to be returned, otherwise
+LANG(NA) values are ignored.
+PARA
+This definition of
+range should not be confused with the sample range.
+)
+SEEALSO(
+LANG(LINK(min)), LANG(LINK(max)).
+)
+EXAMPLES(
+print(r.x <- range(rnorm(100)))
+diff(r.x) #-- THE sample range
+)

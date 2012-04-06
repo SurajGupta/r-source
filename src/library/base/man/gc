@@ -1,0 +1,18 @@
+TITLE(gc @@ Garbage Collection)
+USAGE(
+gc()
+gcinfo(verbose)
+)
+ALIAS(gc)
+ALIAS(gcinfo)
+ARGUMENTS(
+ARG(verbose @@ a logical value.)
+)
+VALUE(
+A call of LANG(gc) causes a garbage collection to take place.
+This usually takes place automagically without user intervention.
+PARA
+The associated function LANG(gcinfo) sets a flag so that
+automatic collection is either silent (LANG(verbose=FALSE)) or
+prints memory use statistics (LANG(verbose=TRUE)).
+)

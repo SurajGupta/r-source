@@ -1,0 +1,32 @@
+TITLE(options @@ Options Settings)
+USAGE(
+options(digits=, expressions=, width=, prompt=,
+        continuation=, editor=)
+)
+ALIAS(options)
+DESCRIPTION(
+This function allows user to set and examine a variety of global
+``options'' which affect the way in which R computes and displays
+its results.
+LANG(digits) controls the number of digits to print when printing
+numeric values. It is a suggestion only.  LANG(expressions) sets
+a limit on the number of nested expressions that will be evaluated.
+This is especially important on the Macintosh since stack overflow
+is likely if this is set too high.
+PARA
+LANG(width) controls the number of characters on a line. You may
+want to change this if you resize the window that R is running in.
+LANG(prompt) must be a quoted string. The expression inside the
+quotes will be used for the prompt.  LANG(continuation) must be a
+quoted string. It sets the prompt used for lines which continue
+over one line.  LANG(editor) sets the default text editor.  Invoking
+options returns a list with the current values of the options stored
+in it.
+)
+EXAMPLES(
+# print the current options
+options()
+BLANK
+# set the editor
+options(editor="nedit")
+)

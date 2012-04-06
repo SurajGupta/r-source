@@ -1,0 +1,23 @@
+TITLE(split @@ Divide into Groups)
+USAGE(
+split(x, groups)
+)
+ALIAS(split)
+ARGUMENTS(
+ARG(x @@ vector containing the values to be divided into groups.)
+ARG(group @@ a factor which defines the grouping.)
+)
+DESCRIPTION(
+LANG(split) divides the data in the vector LANG(x)
+into the groups defined by the factor LANG(groups).
+PARA
+The value returned is a list of vectors containing the values
+for the groups.
+The components of the list are named by the factor levels of LANG(group).
+)
+EXAMPLES(
+xa <- split(x, age)
+lapply(xa, mean)
+#split a matrix into a list by columns
+split(x,col(x))
+)

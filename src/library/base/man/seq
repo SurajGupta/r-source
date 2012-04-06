@@ -1,0 +1,23 @@
+TITLE(seq @@ Sequence Generation)
+USAGE(
+seq(from, to)
+seq(from, to, by=)
+seq(from, to, length=)
+seq(along)
+)
+ALIAS(seq)
+DESCRIPTION(
+The first form above generates the sequence
+LANG(from, from+1,DOTS, to).
+The second,
+LANG(from, from+by,DOTS, to).
+The third generates a sequence of
+LANG(length)
+equally spaced values from
+LANG(from) to LANG(to).
+The last generates the sequence
+LANG(1, 2,DOTS, length(along)).
+)
+SEEALSO(
+LANG(LINK(rep)), LANG(LINK(sequence)), LANG(LINK(row)), LANG(LINK(col)).
+)

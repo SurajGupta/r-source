@@ -1,0 +1,24 @@
+TITLE(vector @@ Vector Types)
+USAGE(
+vector(type="logical", length=0)
+as.vector(x,mode="any")
+is.vector(x)
+)
+ALIAS(vector)
+ALIAS(as.vector)
+ALIAS(is.vector)
+DESCRIPTION(
+LANG(vector) produces a vector of the given length and type.
+Logical vector elements are initialized to
+LANG(FALSE), numeric vector elements to LANG(0)
+and character vector elements to LANG("").
+PARA
+LANG(as.vector) attempts to coerce its argument
+into a vector of mode LANG(mode)
+(the default is to coerce to whichever mode is most convenient).
+The attributes of LANG(x) are removed.
+PARA
+LANG(is.vector) returns LANG(TRUE) if LANG(x)
+is a vector (of mode logical, factor, integer, real or character) and
+LANG(FALSE) otherwise.
+)

@@ -1,0 +1,29 @@
+TITLE(mean @@ Arithmetic Mean)
+USAGE(
+mean(x, trim=0, na.rm=FALSE)
+)
+ALIAS(mean)
+ARGUMENTS(
+ARG(x @@ a numeric vector containing the values
+whose mean is to be computed.)
+ARG(trim @@ the fraction (0 to 0.5) of observations to be
+trimmed from each end of LANG(x) before the mean is computed.)
+ARG(na.rm @@ a logical value indicating whether LANG(NA)
+values should be stripped before the computation proceeds.)
+)
+DESCRIPTION(
+If LANG(trim) is zero (the default),
+the arithmetic mean of the values in LANG(x) is computed.
+If LANG(trim) is non-zero, a symmetrically trimmed mean is computed
+with a fraction of LANG(trim) observations deleted from each end
+before the mean is computed.
+PARA
+Missing values are ignored.
+)
+SEEALSO(
+LANG(LINK(weighted.mean))
+)
+EXAMPLES(
+xm <- mean(x)
+)
+

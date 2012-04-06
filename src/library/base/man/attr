@@ -1,0 +1,24 @@
+TITLE(attr @@ Object Attributes)
+USAGE(
+attr(obj, which)
+attr(obj, which) <- value
+)
+ALIAS(attr)
+ARGUMENTS(
+ARG(obj @@ an object whose attributes are to be accessed.)
+ARG(which @@ a character string specifying which attribute is to be accessed.)
+)
+VALUE(
+This function provides access to a single object attribute.  The simple
+form above returns the value of the named attribute.  The assignment
+form causes the named attribute to take the value on the right of
+the assignment symbol.
+)
+SEEALSO(
+LANG(LINK(attributes))
+)
+EXAMPLES(
+# create a 2 by 5 matrix
+x <- 1:10
+attr(x,"dim") <- c(2,5)
+)

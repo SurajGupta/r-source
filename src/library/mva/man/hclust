@@ -1,0 +1,128 @@
+TITLE(hclust @@ Hierarchical Clustering)
+DESCRIPTION(
+This function performs a hierarchical cluster analysis
+using a set of dissimilarities for the EQN(n) objects being
+clustered.  Initially, each object is assigned to its own
+cluster and then the algorithm proceeds iteratively,
+at each stage joining the two most similar clusters,
+continuing until there is just a single cluster.
+At each stage distances between clusters are recomputed
+by the Lance-Williams dissimilarity update formula
+according to the particular clustering method being used.
+PARA
+An number of different clustering methods are provided.
+Ward's minimum variance method aims at finding compact,
+spherical clusters.  The complete linkage method finds
+similar clusters. The single linkage method
+(which is closely related to the minimal spanning tree)
+adopts a `friends of friends' clustering strategy.
+The other methods can be regarded as aiming
+for clusters with characteristics somewhere between
+the single and complete link methods.
+PARA
+In hierarchical cluster displays, a decision is needed at each merge to
+specify which subtree should go on the left and which on the right.
+Since, for EQN(n) observations there are EQN(n-1) merges,
+there are EQN(2^(n-1)) possible orderings for the leaves
+in a cluster tree, or dendrogram.
+The algorithm in LANG(hclust) is to order the subtree so that
+the tighter cluster is on the left (the last, i.e. most recent,
+merge of the left subtree is at a lower value than the last
+merge of the right subtree).
+Observations are the tightest clusters possible,
+and merges involving two observations place them in order by their
+observation sequence number.
+)
+USAGE(
+hclust(d, method="complete")
+BLANK
+plot.hclust(hclust.obj, hang=0.1, DOTS)
+)
+ARGUMENTS(
+ARG(d @@ a dissimilarity structure as produced by LANG(dist).)
+ARG(method @@ the agglomeration method to be used. This should
+be (an unambiguous abbreviation of) one of
+LANG("ward"), LANG("single"), LANG("complete"),
+LANG("average"), LANG("mcquitty"), LANG("median") or
+LANG("centroid").)
+ARG(hclust.obj @@
+an object of the type produced by LANG(hclust).)
+ARG(hang @@
+The fraction of the plot height which labels should hang
+below the rest of the plot.
+A negative value will cause the labels to hang down from 0.)
+)
+VALUES(
+An object of class BOLD(hclust) which describes the
+tree produced by the clustering processs.
+The object is a list with components:
+@@
+ARG(merge @@
+an EQN(n-1) by 2 matrix.
+Row EQN(i) of LANG(merge) describes the merging of clusters
+at step EQN(i) of the clustering.
+If an element EQN(j) in the row is negative,
+then observation EQN(-j) was merged at this stage.
+If EQN(j) is positive then the merge
+was with the cluster formed at the (earlier) stage EQN(j)
+of the algorithm.
+Thus negative entries in LANG(merge) indicate agglomerations
+of singletons, and positive entries indicate agglomerations
+of non-singletons.)
+ARG(height @@
+a set of EQN(n-1) non-decreasing real values.
+The clustering ITALIC(height): that is, the value of
+the criterion associated with the clustering
+LANG(method) for the particular agglomeration.)
+ARG(order @@
+a vector giving the permutation of the original observations suitable for
+plotting, in the sense that a cluster plot using this ordering
+and matrix LANG(merge) will not have crossings of the branches.)
+ARG(labels @@
+labels for each of the objects being clustered.)
+)
+REFERENCES(
+Everitt, B. (1974).
+ITALIC(Cluster Analysis).
+London: Heinemann Educ. Books.
+PARA
+Hartigan, J. A. (1975).
+ITALIC(Clustering  Algorithms).
+New York: Wiley.
+PARA
+Sneath, P. H. A. and R. R. Sokal (1973).
+ITALIC(Numerical Taxonomy).
+San Francisco: Freeman.
+PARA
+Anderberg, M. R. (1973).
+ITALIC(Cluster Analysis for Applications).
+Academic Press: New York.
+PARA
+Gordon, A. D. (1981).
+ITALIC(Classification).
+London: Chapman and Hall.
+PARA
+Murtagh, F. (1985).
+``Multidimensional Clustering Algorithms'', in
+ITALIC(COMPSTAT Lectures 4).
+Wuerzburg: Physica-Verlag
+(for algorithmic details of algorithms used).
+)
+SECTION(Author @@
+The LANG(hclust) function is based on Fortran code
+contributed to STATLIB by F. Murtagh.
+)
+SEEALSO(
+LANG(LINK(kmeans)).
+)
+EXAMPLES(
+library(mva)
+data(crimes)
+hc <- hclust(dist(crimes), "ave")
+# create space for labels
+mar <- mar.save <- par("mar")
+mar[1] <- mar[1] + 4
+par(mar=mar)
+plot(hc, hang=-1)
+par(mar=mar.save)
+)

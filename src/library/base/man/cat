@@ -1,0 +1,16 @@
+TITLE(cat @@ Concatenate and Print)
+USAGE(
+cat(DOTS , sep="")
+)
+ALIAS(cat)
+VALUE(
+LANG(cat) converts its arguments to character strings, concatenates
+them, separating them by the given LANG(sep=) string, and then
+prints them.
+PARA
+LANG(cat) is useful for producing output in user defined functions.
+)
+EXAMPLES(
+# print an informative message
+cat("iteration = ",iter,"\n")
+)

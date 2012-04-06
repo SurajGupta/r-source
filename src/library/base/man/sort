@@ -1,0 +1,32 @@
+TITLE(sort @@ Sort a Vector)
+USAGE(
+sort(x, partial=NULL, na.last=NA)
+)
+ALIAS(sort)
+DESCRIPTION(
+If LANG(partial) is NULL, LANG(sort) returns the values in
+LANG(x) sorted into ascending order.
+PARA
+If LANG(partial) is non NULL, it is taken to
+contain indexes of elements of LANG(x)
+which are to be placed
+in their correct positions by partial sorting.
+After the sort, the values specified in LANG(partial)
+are in their correct position in the sorted array.
+Any values smaller than these values are guaranteed
+to have a smaller index in the sorted array
+and any values which are greater are guaranteed
+to have a bigger index in the sorted array.
+PARA
+If LANG(na.last) is NA, LANG(sort) removes missing
+values. If LANG(na.last) is LANG(TRUE), missing values are
+put last, if LANG(FALSE), missing values are put first.
+)
+SEEALSO(
+LANG(LINK(order)), LANG(LINK(rank)).
+)
+EXAMPLES(
+data(swiss); x <- 100 * swiss $ Education[1:25]
+x; sort(x); sort(x, partial = c(10,15))
+median # shows you another example for 'partial'
+)

@@ -1,0 +1,20 @@
+TITLE(convolve @@ Fast Convolution)
+USAGE(
+convolve(a, b)
+)
+ALIAS(convolve)
+ARGUMENTS(
+ARG(a,b @@ the sequences to be convolved.)
+)
+VALUE(
+This function uses the Fast Fourier Transform to compute the
+(circular) convolution of the sequences given as its arguments.
+)
+REFERENCES(
+Brillinger, D. R. (1981).
+ITALIC(Time Series: Data Analysis and Theory), Second Edition.
+San Francisco: Holden-Day.
+)
+SEEALSO(
+LANG(LINK(fft)), LANG(LINK(nextn)).
+)

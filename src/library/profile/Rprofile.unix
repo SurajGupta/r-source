@@ -1,0 +1,12 @@
+.GlobalEnv <- globalenv()
+.SystemEnv <- NULL
+getenv <- function (item) system(paste("echo $", item, sep = ""), intern = TRUE)
+T <- TRUE
+F <- FALSE
+version <- Version()
+.Machine <- Machine()
+.Libraries <- character(0)
+options(na.action="na.omit")
+options(printcmd=getenv("R_PRINTCMD"))
+options(papersize=getenv("R_PAPERSIZE"))
+if(interactive()) x11()

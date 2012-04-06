@@ -1,0 +1,275 @@
+start <-
+function(x, ...)
+UseMethod("start")
+
+end <-
+function(x, ...)
+UseMethod("end")
+
+frequency <-
+function(x, ...)
+UseMethod("frequency")
+
+time <-
+function(x, ...)
+UseMethod("time")
+
+window <-
+function(x, ...)
+UseMethod("window")
+
+ts <-
+function(data=NA, start=1, end=numeric(0), frequency=1, deltat=1)
+{
+	ts.eps <- .Options$ts.eps
+	if(is.null(ts.eps)) ts.eps <- 1.e-6
+
+	if(is.matrix(data)) {
+		nseries <- ncol(data)
+		ndata <- nrow(data)
+	}
+	else {
+		nseries <- 1
+		ndata <- length(data)
+	}
+
+	if(missing(frequency)) frequency <- 1/deltat
+	if(missing(deltat)) deltat <- 1/deltat
+
+	if(frequency > 1 && abs(frequency - round(frequency)) < ts.eps)
+		frequency <- round(frequency)
+
+	if(length(start) > 1) {
+		if(start[2] > frequency) stop("invalid start")
+		start <- start[1] + (start[2] - 1)/frequency
+	}
+	if(length(end) > 1) {
+		if(end[2] > frequency) stop("invalid end")
+		end <- end[1] + (end[2] - 1)/frequency
+	}
+	if(missing(end))
+		end <- start + (ndata - 1)/frequency
+	else if(missing(start))
+		start <- end - (ndata - 1)/frequency
+
+	nobs <- floor((end - start) * frequency + 1.01)
+
+	if(nseries == 1) {
+		if(ndata < nobs)
+			data <- rep(data, length=nobs)
+		else if(nobs > ndata)
+			data <- data[1:nobs]
+	}
+	else {
+		if(ndata < nobs)
+			data <- data[rep(1:ndata, length=nobs)]
+		else if(nobs > ndata)
+			data <- data[1:nobs,]
+	}
+	attr(data, "tsp") <- c(start, end, frequency)
+	attr(data, "class") <- "ts"
+	data
+}
+
+tsp <-
+function(x)
+	attr(x, "tsp")
+
+"tsp<-" <-
+function(x, tsp)
+{
+	attr(x,"tsp") <- tsp
+	class(x) <- "ts"
+	x
+}
+
+is.ts <-
+function (x) 
+inherits(x, "ts")
+
+as.ts <-
+function (x) 
+if (is.ts(x)) x else ts(x)
+
+start.ts <-
+function(x)
+{
+	ts.eps <- .Options$ts.eps
+	if(is.null(ts.eps)) ts.eps <- 1.e-6
+	tsp <- attr(as.ts(x), "tsp")
+	is <- tsp[1]*tsp[3]
+	if(abs(is-round(is)) < ts.eps) {
+		is <- floor(tsp[1])
+		fs <- floor(tsp[3]*(tsp[1] - is)+0.001)
+		c(is,fs+1)
+	}
+	else ts[1]
+}
+
+end.ts <-
+function(x)
+{
+	ts.eps <- .Options$ts.eps
+	if(is.null(ts.eps)) ts.eps <- 1.e-6
+	tsp <- attr(as.ts(x), "tsp")
+	is <- tsp[2]*tsp[3]
+	if(abs(is-round(is)) < ts.eps) {
+		is <- floor(tsp[2])
+		fs <- floor(tsp[3]*(tsp[2] - is)+0.001)
+		c(is, fs+1)
+	}
+	else ts[2]
+}
+
+frequency.ts <-
+function(x)
+{
+	tsp <- attr(as.ts(x), "tsp")
+	tsp[3]
+}
+
+time.ts <-
+function (x) 
+{
+	x <- as.ts(x)
+	if(is.matrix(x)) n <- nrow(x)
+	else n <- length(x)
+	xtsp <- attr(x, "tsp")
+	ts(seq(xtsp[1], xtsp[2], length=n),
+		start=start(x), end=end(x), frequency=frequency(x))
+}
+
+print.ts <- function(x, calender, ...)
+{
+	if(missing(calender))
+		calender <- any(frequency(x)==c(4,12))
+	if(all(frequency(x) != c(1,4,12)))
+		calender <- FALSE
+	if(!is.matrix(x) && calender) {
+		if(frequency(x) == 12) {
+			start.pad <- start(x)[2] - 1
+			end.pad <- 12 - end(x)[2]
+			data <- matrix(c(rep(NA, start.pad), x,
+				rep(NA, end.pad)), nc=12, byrow=T)
+			dimnames(data) <- list(
+				as.character(start(x)[1]:end(x)[1]),
+				month.abb)
+		}
+		else if(frequency(x) == 4) {
+			start.pad <- start(x)[2] - 1
+			end.pad <- 4 - end(x)[2]
+			data <- matrix(c(rep(NA, start.pad), x,
+				rep(NA, end.pad)), nc=4, byrow=T)
+			dimnames(data) <- list(
+					paste(start(x)[1]:end(x)[1], ":" , sep=""),
+					c("Qtr1", "Qtr2", "Qtr3", "Qtr4"))
+		}
+		else if(frequency(x) == 1) {
+			data <- x
+			attributes(data) <- NULL
+			names(data) <- time(x)
+		}
+	}
+	else  {
+		cat("Time-Series:\nStart =", deparse(start(x)),
+			"\nEnd =", deparse(end(x)),
+			"\nFrequency =", deparse(frequency(x)), "\n")
+		data <- x
+		attr(data, "tsp") <- NULL
+		attr(data, "class") <- NULL
+		# something like this is needed here
+		# if(is.matrix(x)) rownames(data) <- time(x)
+	}
+	print(data, ...)
+	invisible(x)
+}
+
+plot.ts <-
+function (x, type="l", xlim, ylim, xlab, ylab, log="",
+	col=par("col"), bg=NA, pch=par("pch"), lty=par("lty"), ...)
+{
+	time.x <- time(x)
+	if(missing(xlim)) xlim <- range(time.x)
+	if(missing(ylim)) ylim <- range(x, na.rm=TRUE)
+	if(missing(xlab)) xlab <- "Time"
+	if(missing(ylab)) ylab <- deparse(substitute(x))
+	plot.new()
+	plot.window(xlim, ylim, log)
+	if(is.matrix(x)) {
+		for(i in 1:ncol(x))
+			lines.default(time.x, x[,i],
+				col=col[(i-1)%%length(col) + 1],
+				lty=lty[(i-1)%%length(lty) + 1],
+				bg=bg[(i-1)%%length(bg) + 1],
+				pch=pch[(i-1)%%length(pch) + 1],
+				type=type)
+	}
+	else {
+		lines.default(time.x, x, col=col[1], bg=bg, lty=lty[1],
+			pch=pch[1], type=type)
+	}
+	title(xlab=xlab, ylab=ylab, ...)
+	axis(1, ...)
+	axis(2, ...)
+	box(...)
+}
+
+window.ts <-
+function(x, start, end)
+{
+	x <- as.ts(x)
+	xtsp <- tsp(x)
+	freq <- xtsp[3]
+	xtime <- time(x)
+	ts.eps <- .Options$ts.eps
+        if (is.null(ts.eps)) 
+                ts.eps <- 1e-06
+
+	if(missing(start))
+		start <- xtsp[1]
+	else start <- switch(length(start),
+			start,
+			start[1] + (start[2] - 1)/freq,
+			stop("Bad value for start"))
+	if(start < xtsp[1]) {
+		start <- xtsp[1]
+		warning("start value not changed")
+	}
+
+	if(missing(end))
+		end <- xtsp[2]
+	else end <- switch(length(end),
+			end,
+			end[1] + (end[2] - 1)/freq,
+			stop("Bad value for end"))
+	if(end > xtsp[2]) {
+		end <- xtsp[2]
+		warning("end value not changed")
+	}
+
+	if(start > end)
+		stop("start cannot be after end")
+
+	if(all(abs(start - xtime) > abs(start) * ts.eps)) {
+		start <- xtime[(xtime > start) & ((start + 1/freq) > xtime)]
+	}
+	if(all(abs(end - xtime) > abs(end) * ts.eps)) {
+		end <- xtime[(xtime < end) & ((end - 1/freq) < xtime)]
+	}
+	if(is.matrix(x))
+		x <- x[(trunc((start - xtsp[1]) * freq + 1.5):trunc((end - 
+			xtsp[1]) * freq + 1.5)), , drop = F]
+	else x <- x[trunc((start - xtsp[1]) * freq + 1.5):trunc((end - xtsp[1])
+			* freq + 1.5)]
+	tsp(x) <- c(start, end, freq)
+	x
+}
+
+"[.ts" <-
+function(x, i, j)
+{
+	y <- NextMethod("[")
+	if(is.matrix(x) & missing(i))
+		ts(y, start=start(x), freq=frequency(x))
+	else y
+}

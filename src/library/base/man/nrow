@@ -1,0 +1,22 @@
+TITLE(nrow @@ The Number of Rows of a Matrix)
+ALIAS(NROW)
+USAGE(
+nrow(x)
+NROW(x)
+)
+ALIAS(nrow)
+ALIAS(NROW)
+ARGUMENTS(
+ARG(x @@ array)
+)
+DESCRIPTION(
+LANG(nrow) returns the number of rows present in its argument.
+LANG(NROW) does the same, but dealing a vector as 1-column matrix.
+)
+SEEALSO(
+LANG(LINK(ncol)) and LANG(NCOL).
+)
+EXAMPLES(
+nrow(matrix(1:12, 3, 4)) # 3
+NROW(1:12) # 12
+)

@@ -1,0 +1,16 @@
+#! /bin/sh
+#---- Create the 'dvi' file of the function help ---- needs LATEX ! --
+DVIDIR=../../../../dvi
+   D2L=../../../../etc/doc2latex
+
+# Should work WHEREVER this is called from :
+cd `dirname $0`/..
+cp mansrc/latex/Man.tex dvi
+cd src/library/base/man
+
+$D2L `ls -A | sort -f| sed '/CVS/d; /~/d'` > ${DVIDIR}/doc.tex
+(cd $DVIDIR;
+ latex Man
+ if [ -x `which xdvi` ];then xdvi Man & 
+ fi
+)

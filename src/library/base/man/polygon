@@ -1,0 +1,20 @@
+TITLE(polygon @@ Polygon Drawing)
+USAGE(
+polygon(x, y, col=NULL, border=NULL, DOTS) {
+)
+ALIAS(polygon)
+ARGUMENTS(
+ARG(x,y @@ vectors containing the coordinates of the vertices
+of the polygon.)
+ARG(col @@ an integer specifying the color to be used in
+filling the polygon.  The default is to leave polygons unfilled.)
+ARG(border @@ the color to draw the border.  The default is to
+leave the border undrawn.)
+ARG(DOTS @@ graphical parameters can be given as arguments to LANG(polygon).)
+)
+DESCRIPTION(
+LANG(polygon) draws the polygons whose vertices are
+given in LANG(x) and LANG(y).
+Note that if neither of LANG(col) or LANG(border) is specified
+then nothing is drawn.
+)

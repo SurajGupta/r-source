@@ -1,0 +1,58 @@
+      SUBROUTINE DQRQTY(X, N, K, QRAUX, Y, NY, QTY)
+      DOUBLE PRECISION X(N,K), QRAUX(K), Y(N,NY), QTY(N,NY)
+      INTEGER N, K, NY
+      INTEGER INFO, J
+      DOUBLE PRECISION DUMMY
+      DO 10 J = 1,NY
+          CALL DQRSL(X, N, N, K, QRAUX, Y(1,J), DUMMY, QTY(1,J),
+     .               DUMMY, DUMMY, DUMMY, 1000, INFO)
+   10 CONTINUE
+      RETURN
+      END
+C
+      SUBROUTINE DQRQY(X, N, K, QRAUX, Y, NY, QY)
+      DOUBLE PRECISION X(N,K), QRAUX(K), Y(N,NY), QY(N,NY)
+      INTEGER N, K, NY
+      INTEGER INFO, J
+      DOUBLE PRECISION DUMMY
+      DO 10 J = 1,NY
+          CALL DQRSL(X, N, N, K, QRAUX, Y(1,J), QY(1,J),
+     .               DUMMY,  DUMMY, DUMMY, DUMMY, 10000, INFO)
+   10 CONTINUE
+      RETURN
+      END
+C
+      SUBROUTINE DQRCF(X, N, K, QRAUX, Y, NY, B, INFO)
+      DOUBLE PRECISION X(N,K), QRAUX(K), Y(N,NY), B(K,NY)
+      INTEGER N, K, NY, INFO
+      INTEGER J
+      DOUBLE PRECISION DUMMY
+      DO 10 J = 1,NY
+          CALL DQRSL(X, N, N, K, QRAUX, Y(1,J), DUMMY,
+     .               Y(1,J), B(1,J), DUMMY, DUMMY, 100, INFO)
+   10 CONTINUE
+      RETURN
+      END
+C
+      SUBROUTINE DQRRSD(X, N, K, QRAUX, Y, NY, RSD)
+      DOUBLE PRECISION X(N,K), QRAUX(K), Y(N,NY), RSD(N,NY)
+      INTEGER N, K, NY
+      INTEGER INFO, J
+      DOUBLE PRECISION DUMMY
+      DO 10 J = 1,NY
+          CALL DQRSL(X, N, N, K, QRAUX, Y(1,J), DUMMY,
+     .               Y(1,J), DUMMY, RSD(1,J), DUMMY, 10, INFO)
+   10 CONTINUE
+      RETURN
+      END
+C
+      SUBROUTINE DQRXB(X, N, K, QRAUX, Y, NY, XB)
+      DOUBLE PRECISION X(N,K), QRAUX(K), Y(N,K), XB(N,NY)
+      INTEGER INFO, J
+      DOUBLE PRECISION DUMMY
+      DO 10 J = 1,NY
+          CALL DQRSL(X, N, N, K, QRAUX, Y(1,J), DUMMY,
+     .               Y(1,J), DUMMY, DUMMY, XB(1,J), 1, INFO)
+   10 CONTINUE
+      RETURN
+      END

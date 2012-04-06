@@ -1,0 +1,11 @@
+TITLE(sd @@ Standard Deviation)
+USAGE(
+sd(x,  na.rm=FALSE)
+)
+ALIAS(sd)
+DESCRIPTION(
+This function computes the standard deviation of the values in
+LANG(x).
+If LANG(na.rm) is LANG(TRUE) then missing values are removed
+before computation proceeds.
+)

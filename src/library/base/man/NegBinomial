@@ -1,0 +1,26 @@
+TITLE(NegBinomial @@ The Negative Binomial Distribution)
+USAGE(
+dnbinom(x, n, p)
+pnbinom(x, n, p)
+qnbinom(px, n, p)
+rnbinom(nobs, n, p)
+)
+ALIAS(dnbinom)
+ALIAS(pnbinom)
+ALIAS(qnbinom)
+ALIAS(rnbinom)
+DESCRIPTION(
+These functions provide information about the negative binomial
+distribution with parameters LANG(n) and LANG(p).  LANG(dnbinom)
+gives the density, LANG(pnbinom) gives the distribution function
+LANG(qnbinom) gives the quantile function and LANG(rnbinom) generates
+random deviates.
+PARA
+The negative binomial distribution has density
+DEQN(
+p(x) = CHOOSE(x+n-1@@x) SUP(p@@n) SUP((1-p)@@x)
+@@
+p(x) = Choose(x+n-1,x) p^n (1-p)^x
+)
+for EQN(x = 0, 1, 2, DOTS)
+)

@@ -1,0 +1,24 @@
+TITLE(window @@ Time Windows)
+USAGE(
+window(x, start, end)
+)
+ALIAS(window)
+ARGUMENTS(
+ARG(x @@ a time-series or other object.)
+ARG(start @@ the start time of the period of interest.)
+ARG(end @@ the end time of the period of interest.)
+)
+DESCRIPTION(
+LANG(window) is a generic function which
+extracts the subset of the object LANG(x)
+observed between the times LANG(start) and LANG(end).
+Methods are available for time series and point-processes.
+)
+SEEALSO(
+LANG(LINK(time)),
+LANG(LINK(ts)).
+)
+EXAMPLES(
+data(presidents)
+sixties <- window(presidents, 1960, c(1969,4))
+)

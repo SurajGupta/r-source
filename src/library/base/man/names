@@ -1,0 +1,20 @@
+TITLE(names @@ The Names Attribute of an Object)
+USAGE(
+names(x)
+names(x) <- value
+)
+ALIAS(names)
+DESCRIPTION(
+LANG(names) provides access to the names attribute of a vector.
+The first form prints the names of the observations
+and the second sets the names.
+In this case, LANG(value) must be a vector of character strings of the
+same length as LANG(x).
+)
+EXAMPLES(
+# print the names attribute of the islands data set
+names(islands)
+BLANK
+# remove the names attribute
+names(islands) <- NULL
+)

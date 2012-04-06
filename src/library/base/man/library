@@ -1,0 +1,95 @@
+TITLE(library @@ Load Application Libraries)
+USAGE(
+library(name)
+library.dynam("name.so")
+require(name, quietly=FALSE)
+provide(name)
+.Libraries
+.Provided
+)
+ALIAS(library)
+ALIAS(library.dynam)
+ALIAS(require)
+ALIAS(provide)
+ALIAS(.Libraries)
+ALIAS(.Provided)
+ALIAS(provide)
+ARGUMENTS(
+ARG(name@@ The name of a library.
+With no argument LANG(library) will print out a list
+of available libraries.)
+ARG(quietly @@ With LANG(quietly=TRUE) a warning will not be printed
+if the library cannot be found.)
+)
+DESCRIPTION(
+LANG(library) and LANG(require) both load a library.
+LANG(require) is designed for use inside other functions;
+it returns LANG(FALSE) and optionally gives a warning,
+rather than giving an error, if the library does not exist.
+Both functions check and update the list of currently
+loaded libraries stored in LANG(.Libraries) and do not
+reload code that is already loaded, LANG(require) also checks
+the list LANG(.Provided). LANG(provide) allows code to register services
+that it provides. The argument is stored in the list LANG(.Provided).
+LANG(provide) returns LANG(FALSE) if the name was already present in 
+LANG(.Provided) or LANG(library).
+PARA
+The main use for LANG(provide) is when multiple libraries share code.
+This is most likely when the code implements features present in S(-PLUS)
+but not in R. For example, the spline functions LANG(ns),
+LANG(bs) and so on are not included in the R distribution.
+A library that contains these functions can use LANG(provide(splines))
+to register this fact. Another library that needs the functions
+can execute LANG(require(splines)) rather than LANG(library(splines))
+to load the spline library only if their functionality is not already
+available.
+PARA
+LANG(library()) with no argument gives a list of available libraries;
+LANG(provide()) with no argument returns LANG(list(.Provided, .Libraries)).
+PARA
+LANG(library.dynam()) loads the specified object file from RHOME/lib
+if it has not been loaded already. It is designed to be used inside
+a library rather than at the command line.
+PARA
+LANG(help(library(name))) prints a list of functions in library "name".
+PARA BOLD(CREATING LIBRARIES)
+Libraries provide a mechanism for loading optional code and its documentation
+as needed. Libraries are compiled and installed from subdirectories
+of RHOME/src/library; LANG(eda) and LANG(mva) are provided as examples. 
+PARA
+A library consists of a subdirectory containing a LANG(TITLe)
+and LANG(INDEX) file, and subdirectories LANG(funs), LANG(man), LANG(src)
+and LANG(src-c).  The LANG(TiTLE) file contains a line giving the name
+of the library and a brief description. LANG(INDEX) contains a line
+for each sufficiently interesting function in the library,
+giving its name and a description (functions such as print methods
+not usually called explicitly might not be included). 
+PARA
+The LANG(funs) subdirectory contains R code files with names beginning
+with lowercase letters. One of these files should use LANG(library.dynam())
+to load any necessary compiled code. 
+PARA
+Source and a Makefile for the compiled code is in LANG(src), and a pure
+LANG(C) version of the source should be in LANG(src-c). In the common
+case when all the source is in LANG(C) it may be convenient to make one
+of these directories a symbolic link to the other. The Makefile will be
+passed various machine-dependent compile and link flags, examples of
+which can be seen in the LANG(eda) library.
+PARA
+The LANG(man) subdirectory should contain R help files for the
+functions in the library.
+PARA
+To install a library run LANG(make libs) in LANG(RHOME/src/library) and
+then run LANG(etc/lib-installhelp) in LANG(RHOME). This will reinstall
+all the libraries.
+)
+VALUE(
+LANG(library) returns the list of loaded libraries;
+LANG(require) returns a boolean value indicating
+whether the required library is available.
+)
+EXAMPLES(
+library(eda)
+require(eda)
+require(nonexistent)
+)

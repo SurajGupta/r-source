@@ -1,0 +1,44 @@
+attach <- function(x, pos=2) 
+	.Internal(attach(x, pos, deparse(substitute(x))))
+
+detach <- function(name, pos=2)
+{
+	if(!missing(name)) {
+		name <- substitute(name)
+		if(!is.character(name))
+			name <- deparse(name)
+		pos <- match(name, search())
+		if(is.na(pos))
+			stop("invalid name")
+	}
+	.Internal(detach(pos))
+}
+
+"objects" <-
+function (name, pos = -1, envir = NULL, all.files = FALSE, pattern) 
+{
+        if (!missing(name)) {
+                name <- substitute(name)
+                if (!is.character(name)) 
+                        name <- deparse(name)
+                pos <- match(name, search())
+                if (is.na(pos)) 
+                        stop("invalid name")
+        }
+        else if (!missing(pos)) {
+                if (pos < 1 || pos > length(search())) 
+                        stop("invalid pos value")
+        }
+        else if (!missing(envir)) {
+                pos <- 0
+        }
+        else {
+                pos <- -1
+        }
+        all.files <- .Internal(ls(pos, envir, all.files))
+	if(!missing(pattern))
+		grep(pattern, all.files, value = TRUE)
+	else all.files
+}
+
+ls <- objects

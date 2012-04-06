@@ -1,0 +1,47 @@
+TITLE(edit @@ Invoke a Text Editor )
+USAGE(
+edit(name=NULL, file="", editor = "vi")
+vi(name=NULL, file="")
+emacs(name=NULL, file="")
+xemacs(name=NULL, file="")
+xedit(name=NULL, file="")
+)
+ALIAS(edit)
+ALIAS(vi)
+ALIAS(emacs)
+ALIAS(xemacs)
+ALIAS(xedit)
+ARGUMENTS(
+ARG(name @@ a named object that you want to edit. If name is missing then the
+file specified by LANG(file) is opened for editing.)
+ARG(file @@ a string naming the file to write the edited version to.)
+ARG(editor @@ a string naming the text editor you want to use.)
+)
+DESCRIPTION(
+LANG(edit) invokes the text editor specified by LANG(editor) with the object
+LANG(name) to be edited. 
+LANG(data.entry) can be used to edit data.
+It is important to realize that LANG(edit) does not change
+the object called LANG(name).
+Instead, a copy of name is made and it is that copy which is changed.
+Should you want the changes to apply to the object LANG(name)
+you must assign the result of LANG(edit) to LANG(name).
+PARA
+In the form LANG(edit(name)),
+LANG(edit) deparses LANG(name) into a temporary file and invokes the
+editor LANG(editor) on this file. Quiting from the editor causes
+LANG(file) to be parsed and that value returned.
+Should an error occur in parsing, possibly due to incorrect syntax, no 
+value is returned. Calling LANG(edit()), with no arguments, will 
+result in the temporary file being reopened for further editing.
+)
+SEEALSO(
+LANG(LINK(data.entry)), LANG(fix).
+)
+EXAMPLES(
+# use xedit on the function mean and assign the changes
+mean <- edit(mean, editor="xedit")
+BLANK
+# use vi on mean and write the result to file mean.out
+vi(mean, file="mean.out")
+)

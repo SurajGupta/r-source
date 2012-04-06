@@ -1,0 +1,39 @@
+TITLE(read.table @@ data input)
+USAGE(
+read.table(file=, header=FALSE, sep="", row.names,
+        col.names, as.is=FALSE, na.strings="NA", skip=0)
+)
+ALIAS(read.table)
+ARGUMENTS(
+ARG(file @@ the name of the file which the data are to be read from.
+Each row of the table appears as one line of the file.)
+ARG(header @@ a logical value indicating whether the file contains
+the names of the variables as its first line.)
+ARG(sep @@ the field separator character.  Values on
+each line of the file are separated by this character.)
+ARG(row.names @@ a vector of row names. This can be a vector
+giving the actual row names, or a single number giving the
+column of the table which contains the row names,
+or character string giving the name of the table column
+containing the row names.)
+ARG(col.names @@ a vector of optional names for the variables.
+The default is to use LANG("V") followed by the column number)
+ARG(as.is @@ the default behavior of LANG(read.table) is to convert
+non-numeric variables to factors.  The variable LANG(as.is)
+controls this conversion.  Its value is either a vector of logicals
+(values are recycled if necessary), or a vector of numeric indices
+which specify which columns should be left as character
+strings.)
+ARG(na.strings @@ a vector strings which are to be interpreted as LANG(NA)
+values.)
+ARG(skip @@ the number of lines of the data file to skip before beginning
+to read data.)
+)
+VALUE(
+A data frame containing a representation of the data in the file.
+This function is the principal means of reading tabular data
+into R.
+)
+SEEALSO(
+LANG(LINK(scan)), LANG(LINK(data.frame)).
+)

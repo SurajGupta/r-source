@@ -1,0 +1,29 @@
+TITLE(assign @@ Assign a Value to a Name)
+USAGE(
+assign(x, value, envir=sys.frame(sys.parent()),
+        inherits=FALSE, immediate=TRUE)
+)
+ALIAS(assign)
+ARGUMENTS(
+ARG(x @@ a variable name (given as a quoted string).)
+ARG(value @@ a value to be assigned to LANG(x).)
+ARG(envir @@ the environent in which to assign. The default is the
+environment where the call to LANG(assign) takes place.)
+ARG(inherits @@ should the enclosing frames of the environment be inspected.)
+ARG(immediate @@ an ignored compatibility feature.)
+)
+VALUE(
+This function is invoked for its side effect, which is
+assign LANG(value) to the variable LANG(x).  If no LANG(envir)
+is specified, then the assignment takes place in the
+currently active environment.
+PARA
+If LANG(inherits) is LANG(TRUE) then parents of the supplied
+environment are searched until the variable LANG(x) is encountered.
+The value is then assigned in the environment in which the variable
+is encountered.  If the symbol is not encountered then assignment
+takes place in the global environment.
+PARA
+If LANG(inherits) is LANG(FALSE) then assigment takes place in 
+the initial frame of LANG(envir).
+)

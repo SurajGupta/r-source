@@ -1,0 +1,13 @@
+TITLE(sum @@ Sum of Vector Elements)
+USAGE(
+sum(DOTS, na.rm=FALSE)
+)
+ALIAS(sum)
+DESCRIPTION(
+LANG(sum) returns the sum of all the values
+present in its arguments.
+If LANG(na.rm) is LANG(FALSE) an LANG(NA)
+value in any of the arguments will cause
+a value of LANG(NA) to be returned, otherwise
+LANG(NA) values are ignored.
+)

@@ -1,0 +1,25 @@
+TITLE(terms @@ Model Terms)
+USAGE(
+terms(object, DOTS)
+terms.formula(formula.obj, keep.order=FALSE)
+terms.terms(terms.obj)
+terms.default(anything)
+)
+ALIAS(terms)
+ALIAS(terms.formula)
+ALIAS(terms.terms)
+ALIAS(terms.default)
+ALIAS(print.terms)
+DESCRIPTION(
+The function LANG(terms) is a generic function
+which can be used to extract ITALIC(terms) objects
+from various kinds of R data objects.
+)
+VALUE(
+All the functions above produce an object
+of class LANG(terms) which contains the
+ITALIC(terms) representation of a symbolic model.
+)
+SEEALSO(
+LANG(LINK(lm)), LANG(LINK(glm)), LANG(LINK(formula)).
+)

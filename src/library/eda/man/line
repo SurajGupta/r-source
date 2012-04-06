@@ -1,0 +1,41 @@
+TITLE(line @@ Robust Line Fitting)
+USAGE(
+line(x, y)
+BLANK
+coefficients(tukeyline.obj)
+residuals(tukeyline.obj)
+fitted.values(tukeyline.obj)
+print(tukeyline.obj)
+)
+ALIAS(coefficients.tukeyline)
+ALIAS(residuals.tukeyline)
+ALIAS(fitted.values.tukeyline)
+ALIAS(print.tukeyline)
+ARGUMENTS(
+ARG(x,y @@ the arguments can be any way of specifying x-y pairs.)
+)
+DESCRIPTION(
+This function fits a line robustly as recommended in John Tukey's
+book ITALIC(Exploratory Data Analysis).
+)
+VALUE(
+An object of class LANG(tukeyline).  Methods are available
+for the generic functions LANG(coefficients), LANG(residuals),
+LANG(fitted.values) and LANG(print).
+)
+)
+REFERENCES(
+Tukey, J. W. (1977).
+ITALIC(Exploratory Data Analysis),
+Reading Massachusetts: Addison-Wesley.
+)
+SEEALSO(
+LANG(LINK(lm)).
+)
+EXAMPLES(
+library(eda)
+data(cars)
+plot(cars)
+z <- line(cars)
+abline(coef(z))
+)

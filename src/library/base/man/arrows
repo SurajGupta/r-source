@@ -1,0 +1,20 @@
+TITLE(arrows @@ Add Arrows to a Plot)
+USAGE(
+arrows(x0, y0, x1, y1, length=0.25, angle=30,
+        code=2, col, lty)
+)
+ALIAS(arrows)
+VALUE(
+This function is invoked for its side effect.
+It draws an arrow between the point LANG((x0[i], y0[i]))
+and the point LANG((x1[i],y1[i])).  LANG(length) gives the length of the
+edges of the arrow head (in inches) and angle specifies the angle
+from the shaft of the arrow to the edge of the arrow head.  If
+LANG(code=2) an arrowhead is drawn at LANG((x0[i],y0[i])) and if
+LANG(code=1) an arrowhead is drawn at LANG((x1[i],y1[i])).  If
+LANG(code=3) a head is drawn at both ends of the arrow.
+PARA
+The graphical parameters LANG(col) and LANG(lty) can be used
+to specify a color an line texture for the line segments which
+make up the arrows (LANG(col) may be a vector).
+)

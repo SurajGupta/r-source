@@ -1,0 +1,1011 @@
+----------------------------------------------------------------------
+TASK:	No "round" or "signif" for complex arguments.
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	[ These are both implemented now ]
+
+----------------------------------------------------------------------
+TASK:	"atan" and "atan2" not available for complex arguments.
+STATUS:	Closed.
+FROM:	Kurt.Hornik@ci.tuwien.ac.at maechler@stat.math.ethz.ch
+	[ Implemented (including optional 2nd argument to atan) ]
+
+----------------------------------------------------------------------
+TASK:	Check complex "atan" values.
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	E.g.  atan(tan(1i)), tan(atan(1i)).
+	S-PLUS : Copyright (c) 1988, 1996 MathSoft, Inc.
+	S : Copyright AT&T.
+	Version 3.4 Release 1 for Sun SPARC, SunOS 4.1.3_U1 : 1996 
+	Working data will be in .Data 
+	> atan(tan(1i))
+	[1] 0-1i
+	[ Surely this is an error!!!! ]
+
+----------------------------------------------------------------------
+TASK:	Hyperbolic and inverse hyperbolic functions not implemented
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	[ We need to check results for complex functions.    ]
+	[ We may need to check for hyperbolics in configure. ]
+
+----------------------------------------------------------------------
+TASK:	complex "sum" and "mean" not implemented
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	[ Implemented these and complex "prod".                ]
+	[ Minor bugs in do_summary also fixed.                 ]
+	[ Added check in partial sorting for complex argument. ]
+
+----------------------------------------------------------------------
+TASK:	logarithm functions
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch Kurt.Hornik@ci.tuwien.ac.at
+	Requests for a version of log which is compatible with the S
+	"log(x, base=e)".  It has been noted that "log2" and "log10"
+	do not work for complex numbers.
+	[ Reimplemented so that everything feeds through "log".       ]
+	[ "log10" and "log2" are now interpreted.                     ]
+	[ logarithms with a base are currently slower than they       ]
+	[ could be because the logarithm of the base is not memoized. ]
+
+----------------------------------------------------------------------
+TASK:	"round" results
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at maechler@stat.math.ethz.ch
+	R> round(.5 + -3:7)
+	 [1] -3 -2 -1  1  2  3  4  5  6  7  8
+	S> round(.5 + -3:7)
+	 [1] -2 -2  0  0  2  2  4  4  6  6  8
+	[ Change round to use rint(3).  This provides the desired ]
+	[ behavior.  Is this is feature or bug?                   ]
+
+----------------------------------------------------------------------
+TASK:	check availability of rint(3)
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	[ Check that rint(3) is available with configure. ]
+	[ There should be an #ifdef-ed alternative.       ]
+	[ Nah!  Let's just assume its available ...       ]
+	[ On second thoughts, it must be conditional for  ]
+	[ Windows and the Mac.  There is now a portable   ]
+	[ version of this which is #ifdef'd.              ]
+
+----------------------------------------------------------------------
+TASK:	assignment of NULL into a list in "lm"
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	lm(y ~ 1) now works again (was broken in 0.16, thanks!), but:
+		R> colnames(y) <- c("V1", "V2")
+		R> lm(y ~ 1)
+		Error: dimnames: number of dimensions must equal number of names
+	The problem is with
+		dimnames(z$effects)[[1]] <- NULL
+	in lm.fit().
+	Replacing it by
+		rownames(z$effects) <- NULL
+	solves the problem, because "rownames<-" works around the
+	problem that l[[i]] <- NULL removes i from the list l.
+	[ Note: An (RI) approved idiom for doing this is: ]
+	[ dimnames(z)[1] <- list(NULL)                    ]
+
+----------------------------------------------------------------------
+TASK:	polyroot/cpoly confusion in CHANGES
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	The `CHANGES' file mentions the new function `cpoly', which
+	is not provided however.  I think it should be `polyroot'.
+	[ Updated ]
+
+----------------------------------------------------------------------
+TASK:	polyroot problem
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	"polyroot(1)" currently gives a segfault.
+	It should return complex(0).
+	[ Arguments of length 0 or one special-cased. ]
+
+----------------------------------------------------------------------
+TASK:	formatC configuration
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+ 	formatC() fails with
+		Error in .C("str_signif",  : C/Fortran function not ..."
+	And indeed, it is not ...
+	As an aside:  strsignif.o is missing from src/applc/Makefile.in
+	now (it was the other way round in 0.16.1, I think).
+	[ Configuration updated. ]
+
+----------------------------------------------------------------------
+TASK:	"read.table" problem with "as.is"
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	The as.is argument to read.table() does not work as described in the
+	help text, values are NOT recycled if necessary.
+	A solution is to replace
+		if (is.logical(as.is)) {
+			if (length(as.is) == 1) 
+				as.is <- rep(as.is, cols)
+		}
+	in read.table() by
+		if (is.logical(as.is)) {
+			as.is <- rep(as.is, length = cols)
+		}
+	[ Change made as suggested. ]
+
+----------------------------------------------------------------------
+TASK:	"paste" segfault
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	paste(list(character(0),""), 1:2) gives a segfault
+	[ S turns as.character(list(character(0),"")) into ]
+	[ c("character(0)", "\"\"")  i.e. it deparses each ]
+	[ element of the list).  We have changed what R so ]
+	[ that it does that too.   What has this broken??? ]
+
+----------------------------------------------------------------------
+TASK:	binary operations do not handle dimnames correctly
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	R is not careful enough about dimnames:
+		R> x <- structure(1:3, names=LETTERS[1:3])
+		R> x
+		A B C 
+		1 2 3
+		R> x + 1
+		A B C 
+		2 3 4
+		R> 1 + x
+		[1] 2 3 4
+	(and similarly for other ops).
+	[ Changes made for arithmetic operators (arithmetic.c) ]
+	[ logical operators (logic.c) and relational operators ]
+	[ (relop.c).  Also added facilities for arrays and     ]
+	[ time series.                                         ]
+
+----------------------------------------------------------------------
+TASK:	Errors in "parse" and "source"
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	#1) The expression in a "for" loop gets turned into a list
+	when you read the expression in with source(). eg if the
+	file Rexample1 contains the following code
+		do <- function()
+		{
+			n <- 1
+			for(i in 1:10) {
+				n <- n*i
+			}
+		}
+	Then this happens when you use source() to read it in
+		R> source("Rexample1")
+		R> do
+		function () 
+		{
+			n <- 1
+			for (i in 1:10) list({
+				n <- n * i
+			})
+		}
+	[ "expression" type is now implemented as a list with ]
+	[ "class" equal to expression.                        ]
+
+----------------------------------------------------------------------
+TASK:	Errors in "parse" and "source"
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	Here is a small collection of parse problems which range
+	from the slightly irritating to the bizarre. Some of them
+	may not be bugs but they're all annoying.  Sorry this is
+	so long but I need to illustrate most of them.
+	#2) If you forget the closing brackets around an "if"
+	statement when editing a function, the editor (vi) returns
+	to the R command prompt but any further statements you type
+	are added to the function until you supply the closing
+	bracket: eg if the function do2 looks like this when you
+	edit it
+		function (x)
+		{
+			if(x > 0 ) {
+				foo <- 10/x
+		}
+	then this is what happens
+		R> do2_vi(do2)
+		/tmp/00193aaa: 5 lines, 46 characters.
+		R> ls()
+		+ help()
+		+ }
+		R> do2
+		function (x) 
+		{
+			if (x > 0) {
+				foo <- 10/x
+			}
+			ls()
+			help()
+		}
+	[ EOF was being discarded in the code which deals with ]
+	[ context sensitive processing for "if" statements.    ]
+
+----------------------------------------------------------------------
+TASK:	Errors in "parse" and "source"
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	#3) If you put too many closing brackets in a function then
+	it is truncated: eg if it looks like this when you edit it
+		function (x)
+		{
+			if (x > 0) {
+				foo <- 10/x
+			}}
+			bar <- foo
+		}
+	then you get
+	R> do2_vi(do2)
+	/tmp/00193aaa: 7 lines, 62 characters.
+	R> do2
+	function (x) 
+	{
+		if (x > 0) {
+			foo <- 10/x
+		}
+	}
+	[ This was caused by the fact that the "edit" function was ]
+	[ only reading a single form from the file created by the  ]
+	[ editor.  The fix is to read an arbitrary number of forms ]
+	[ and to just evaluate and return the first of these. This ]
+	[ forces a syntax check of the entire file.                ]
+
+----------------------------------------------------------------------
+TASK:	Errors in "parse" and "source"
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	#5) When the editor returns the error message "An error
+	occured on line ..." then the line number is way out -
+	usually by a factor of 10.
+	[ Fixed.  Line number was not being initialized. ]
+
+----------------------------------------------------------------------
+TASK:	warning messages when doing vector recycling
+STATUS:	Closed
+FROM:	jlindsey@luc.ac.be (and others)
+	When vectors are combined and the length of the longer one
+	is not a multiple of the length of the shorter one, a
+	warning message should be issued.
+	[ Where should this happen in general?  We have added it to  ]
+	[ arithmetic and subset assignment.  Is there anywhere else? ]
+
+----------------------------------------------------------------------
+TASK:	"any" and "all" problem with numeric data
+STATUS:	Closed
+FROM:	la-jassine@aix.pacwan.net
+	I think the following should return error messages:
+	any(0.1)
+	[1] TRUE
+	all(0.1)
+	[1] TRUE
+	[ This behavior agrees with S ]
+	
+----------------------------------------------------------------------
+TASK:	"attach" order is wrong
+STATUS:	Closed
+FROM:	p.dalgaard@kubism.ku.dk
+	R has:
+	> attach(data)
+	> attach(data[-1])
+	> search()
+	[1] ".GlobalEnv" "data"       "data[-1]"   ".SystemEnv"
+	This is opposite of Splus:
+	> attach(data)
+	> attach(data[-1])
+	> search()
+	 [1] "/home/sfe/pd/.Data"
+	 [2] "data[-1]"
+	 [3] "data"
+	[ It was not order, but rather index misinterpretation. ]
+
+----------------------------------------------------------------------
+TASK:	is.vector - what about attributes
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	YAI (and a bug: mode='any'  should INCLUDE   mode='language') :
+		is.vector(call(ls()))			#[1] FALSE
+		is.vector(call(ls()), mode='language')	#[1] TRUE
+		is.vector(call(ls()), mode='call')	#[1] FALSE
+	And now even more about  S <-> R :
+	Looking at  is.vector, I realized that you've duplicated/emulated
+	S's bug of
+		is.vector( ...named vector... )   #--> FALSE
+	This is a bug even mentioned as bug in the ?is.vector
+	help page of  S-plus.  ((and I found out:  the bug is
+	fixed in S version 4)).
+	[ If x has any attribute other than "names" it returns ]
+	[ false, otherwise it returns true.                    ]
+
+----------------------------------------------------------------------
+TASK:	New "methods" function
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	This is a more useful / extensive 'methods' function,
+	modeled after the S one:
+	[ Code folded into the base library. ]
+
+----------------------------------------------------------------------
+TASK:	"par" values
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	Since I'm wishing already:
+	Currently, par() returns a 49-element which is really outdated.
+	My current  $RHOME/src/library/funs/par  starts as follows:
+	.Pars <- c(
+	"1em", "adj", "ask", "bty", "cex", "cin", "col", "cra", "crt", "csi",
+	"cxy", "din", "err", "exp", "fig", "fin", "font", "frm", "fty", "lab",
+	"las", "lty", "lwd", "mai", "mar", "mex", "mfg", "mgp", "new", "oma",
+	"omd", "omi", "pch", "pin", "plt", "pty", "rsz", "smo", "srt", "tck",
+	"uin", "usr", "xaxp", "xaxs", "xaxt", "xpd", "yaxp", "yaxs", "yaxt")
+	##>> R-alpha  0.16.1
+	##>>  pp_ par(); names(pp[sapply(pp,is.null)])
+	##>>  [1] "1em" "cxy" "din" "exp" "frm" "fty" "rsz" "uin"
+	##>>       ---   ---   ---   ---   ---   ---   ---   ---  
+	##-- These are the ones used in 0.16.1 -- $RHOME/src/main/par.c  Query(..) :
+	.Pars <- c(
+	"adj", "ann", "ask", "bg", "bty",
+	"cex", "cex.axis", "cex.lab", "cex.main", "cex.sub", "cin",
+	"col", "col.axis", "col.lab", "col.main", "col.sub", "cra", "crt", "csi",
+	"err", "fg", "fig", "fin",
+	"font", "font.axis", "font.lab", "font.main", "font.sub", "lab", "las",
+	"lty", "lwd", "mai", "mar", "mex", "mfcol", "mfg", "mfrow", "mgp", "mkh",
+	"new", "oma", "omd", "omi", "pch", "pin", "plt", "ps", "pty",
+	"smo", "srt", "tck", "tmag", "type", "usr",
+	"xaxp", "xaxs", "xaxt", "xlog", "xpd",
+	"yaxp", "yaxs", "yaxt", "ylog")
+	After starting R (which starts X11),
+	this now gives (using my  'str' function):
+	> str(par())
+	[ pars omitted ]
+
+----------------------------------------------------------------------
+TASK:	"is.na" for data frames (generic function needed)
+STATUS:	Closed
+FROM:	p.dalgaard@kubism.ku.dk plummer@iarc.fr
+	> 3) is.na() treats data frames as lists. It always returns
+	> a vector of FALSE values with the same length as the
+	> names attribute.
+	My initial reaction to this was: "but they *are* lists".
+	One tends to think of them as "data matrices", but much of
+	the useful syntax really is list-like, and in fact
+		> is.list(dfr)
+		[1] TRUE
+	but
+		> is.matrix(dfr)
+		[1] FALSE
+	However, that NA is not an element of the list of vectors
+	in a data frame is hardly informative, so it is reasonable
+	to expect different behaviour.
+	Splus has 
+		is.na(dfr)
+		  x y 
+		1 F F
+		2 F F
+		3 F F
+		> class(dfr)<-""
+		> is.na(dfr)
+		[1] F F
+		attr(, "row.names"):
+		[1] "1" "2" "3"
+		attr(, "class"):
+		[1] ""
+	So the logic seems to be to special-case data frames by having is.na
+	look for the "data.frame" class and if so, recurse into the component
+	vectors. 
+	[ is.na is now a generic function.  Method dispatch occurs  ]
+	[ internally.  There is also a method for class data.frame. ]
+
+----------------------------------------------------------------------
+TASK:	"scan" problem
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	1) Trying to restrict the number of items read by scan()
+	using the "nmax" or "nlines" parameters doesn't work when
+	"what" is a list.  The problem, which lies in the C function
+	scanFrame, can be fixed by this patch to scan.c
+	333c333,335
+	<                       if(maxlines > 0 && (linesread == maxlines || nc*line
+	sread >= maxitems))
+	---
+	>                       if(maxitems > 0 && nc*linesread >= maxitems)
+	>                               goto done;
+	>                       if(maxlines > 0 && linesread == maxlines)
+	[ Change made. ]
+
+----------------------------------------------------------------------
+TASK:	"apply" problem
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	2) In the interpreted code for apply(), "dlen" should be
+	renamed to "dl".  This bug stops you from using apply on
+	a data frame.
+	[ This seems to work now. ]
+
+----------------------------------------------------------------------
+TASK:	is.numeric incompatibility
+STATUS:	Closed
+FROM:	thomas@biostat.washington.edu
+	is.numeric() returns TRUE for logical variables (in S it
+	returns FALSE).  This means that S code which needs to
+	distinguish these will work if it uses is.logical() and
+	fail if it uses is.numeric().  It also means that for a
+	logical vector x the formula y~x is equivalent to y~factor(x)
+	in S and y~as.numeric(x) in R. These are different unless
+	you use treatment contrasts.
+	[ is.numeric changed to refect this.  Again, the ]
+	[ question arises.  What has this broken?        ]
+
+----------------------------------------------------------------------
+TASK:	PostScript Glitch
+STATUS:	Closed
+FROM:	p.dalgaard@biostat.ku.dk
+	Do a plot in landscape mode, view with ghostscript, select
+	"reopen".  Whooplah, plot turns 90 degrees. Only way to
+	get it back to horizontal seems to be to modify the Media
+	setting or the magnification.
+	Someone else mentioned problems with landscape plots
+	recently. Could be same thing. I suspect the problem has
+	something to do with this:
+	%!PS-Adobe-1.0
+	[...]
+	%%EndComments
+	595.28 0 translate 90 rotate
+	/Helvetica findfont 10 scalefont setfont
+	0.5 setlinewidth
+	gsave
+	% float float --
+	[...]
+	Apparently, this stuff executes only once. If you put it
+	at the beginning of each page, the problem goes away. (I
+	don't quite understand this: At least a complete reopen of
+	the file should reexecute the Prologue. shouldn't it? Also
+	puzzling me is the fact that there's an unequal supply of
+	gsave's (3) and grestore's (2) in the file)
+	[ Rewrote the code.  It's much cleaner now. ]
+
+----------------------------------------------------------------------
+TASK:	Another PostScript Glitch
+STATUS:	Closed
+FROM:	p.dalgaard@biostat.ku.dk
+	I suspect that there should be a %% comment setting
+	the papersize. TeX output from dvips has
+	%%DocumentPaperSizes: a4
+	but that's with %!PS-Adobe-2.0. Anybody have the relevant
+	details on PS structure? (And is there really any reason
+	to stick to PS v. 1.0?)
+	[ We have switched to Adobe 3.0 structuring. ]
+
+----------------------------------------------------------------------
+TASK:	help.start()
+STATUS:	Closed
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	I am not sure how useful others find that, but we like the
+	idea of using a browser which is already open rather than
+	starting a new one.  This can be accomplished by replacing
+	help.start() by
+		help.start <-
+		function(gui = "irrelevant", browser="netscape")
+		{
+			file <- "$RHOME/html/index.html"
+			system(paste(browser, " -remote \"openURL(",
+				file, ")\" 2>/dev/null || ",
+			       browser, " ", file, " &", sep = ""))
+		}
+	Of course, if we decide that the on-line help system will
+	eventually be based on HTML, I can extend the above to
+	other browsers as well ...
+	[ Wow.  This is pretty cool.  We will have to connect this ]
+	[ with "help" and "?" to do the searching ...              ]
+
+----------------------------------------------------------------------
+TASK:	"axis" limits problem
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	## R 0.16.1,  Solaris 2.5.x:
+		plot(1, 1.79e308)
+	gives an infinite loop 
+
+----------------------------------------------------------------------
+TASK:	"cbind" segfault
+STATUS:	Closed
+FROM:	venkat@biosta.mskcc.org
+	I am using R 0.16.1
+	If I use "cbind(as.vector(1:2),as.array(3:4),as.vector(1:2))"
+	I get
+	      [,1] [,2]
+         [1,]    1    3
+         [2,]    2    4
+	And if I use "cbind(as.array(1:2),as.vector(3:4),as.array(1:2))"
+	It crashes the application
+
+----------------------------------------------------------------------
+TASK:	array subsetting segfault
+STATUS:	Closed
+FROM:	ammann@utdallas.edu
+	Here's an interesting bug in R.15 and R.16.1:
+	x <- array(1:12,c(2,2,3))
+	dimnames(x) <- list(c("A","B"),c("C","D"),1:3)
+	x
+	x[,2,]
+	Segmentation fault (core dumped)
+
+----------------------------------------------------------------------
+TASK:	argument corruption
+STATUS:	Closed
+FROM:	schwarte@feat.mathematik.uni-essen.de
+	Defining
+		qsum<-function(data=data){
+		  for(i in 2:length(data))
+		    data[i]<-data[i]+data[i-1]
+		  data
+		}
+	And then
+		data<-1:10
+		tmp<-qsum(data=data)
+		print(data)
+		print(tmp)
+	Demonstrates that data is corrupted.
+
+----------------------------------------------------------------------
+TASK:	"sweep" and "crossprod"
+STATUS:	Closed
+FROM:	jlindsey@luc.ac.be
+	Two minor things that it would be useful to have in standard R,
+	from S, are sweep and crossprod. Most of the other common
+	functions are now in. Jim
+
+----------------------------------------------------------------------
+TASK:	"exits" bug
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	The following program will cause a core dump. It should generate
+	an error message.
+		do <- function() {
+			x <- character(0)
+			exists(x)
+		}
+
+----------------------------------------------------------------------
+TASK:	"nchar" incompatibility
+STATUS:	Closed
+FROM:	plummer@iarc.fr
+	The S-PLUS version of nchar will return a matrix when given a
+	matrix, whereas the R version returns a vector.
+
+----------------------------------------------------------------------
+TASK:	passing graphical parameters
+STATUS:	Closed???
+FROM:	plummer@iarc.fr
+	It would be nice to be able to pass graphical parameters to
+	plotting functions. For example I'm having trouble with calls
+	to "legend" in CODA which use the "cex" parameter.
+
+----------------------------------------------------------------------
+TASK:	par and hex color specifications
+STATUS:	Closed
+FROM:	R@stat.auckland.ac.nz
+	> par(col=rgb(0,0,0.5020))
+	Error: attempt to set invalid value for graphics parameter "col".
+	plot(1:10,col=rgb(0,0,0.5))	# ok
+	plot(1:10,col=rgb(0,0,0.502))	# not ok
+	plot(1:10,col=rgb(0,0,0.506))	# ok
+	[ rgb(0,0,0.502) => "#000080".  The bit pattern           ]
+	[ corresponding to this was integer NA.                   ]
+	[ Fixed by setting the low-order byte of the word to 255. ]
+
+----------------------------------------------------------------------
+TASK:	different behavior of Splus and R "factor"
+STATUS:	Closed
+FROM:	Friedrich.Leisch@ci.tuwien.ac.at
+	R> factor(double(0))
+	Error in factor(match(x, levels), length(levels), ordered) : invalid number of factor levels
+	S> factor(double(0))
+	character(0)
+	[ Wow.  This is bizzare!  It returns "character" ??? ]
+	[ We now do this too, BUT "character" ???!!!          ]
+
+----------------------------------------------------------------------
+TASK:	"barplot" problem
+STATUS:	Closed
+FROM:	Friedrich.Leisch@ci.tuwien.ac.at
+	barplot contains several times combinations like
+	   plot.new(...)
+	   plot.window(xlim, ylim, log = "", ...)
+	which IMHO should be 
+	   plot.new()
+	   plot.window(xlim, ylim, log = "", ...)
+	[ These changes made and also the window setup has been ]
+	[ redone using yaxs="i" and using standard axis.        ]
+
+----------------------------------------------------------------------
+TASK:	random number seeds
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	I'am writing a help page about .Random.seed.
+	I've been looking a bit at the source,
+	i.e,	src/math/sunif.c
+		~~~~~~~~~~~~~~~~~
+	and	src/main/random.c
+		~~~~~~~~~~~~~~~~~
+	Then I tried
+		.Random.seed <- rep(0,3); runif(10)
+		## [1] 0 0 0 0 0 0 0 0 0 0
+		rnorm(5)
+		## [1] -2.216036 -2.216036 -2.216036 -2.216036 -2.216036
+	and you see that the seed is never changed.
+	My proposal (is working, I've tested) :
+		Replace lines 51..53 of  main/random.c (in function GetSeeds(..)) with
+			ix_seed = INTEGER(seeds)[0]; if(!ix_seed) ix_seed++;
+			iy_seed = INTEGER(seeds)[1]; if(!iy_seed) iy_seed++;
+			iz_seed = INTEGER(seeds)[2]; if(!iz_seed) iz_seed++;
+
+	which also deals with the very rare case
+		(not impossible from my documentation of  rand() !!)
+	that Randomize(.)  sets one of the i[x|y|z] to 0 accidentally.
+	Here is a patch you can apply directly.
+--- random.c~	Tue Nov 26 19:13:57 1996
++++ random.c	Wed Mar 19 12:30:44 1997
+@@ -48,9 +48,9 @@
+ 		if (!isVector(seeds) || LENGTH(seeds) < 3)
+ 			error("missing or invalid random number seeds\n");
+ 		seeds = coerceVector(seeds, INTSXP);
+-		ix_seed = INTEGER(seeds)[0];
+-		iy_seed = INTEGER(seeds)[1];
+-		iz_seed = INTEGER(seeds)[2];
++		ix_seed = INTEGER(seeds)[0]; if(!ix_seed) ix_seed++;
++		iy_seed = INTEGER(seeds)[1]; if(!iy_seed) iy_seed++;
++		iz_seed = INTEGER(seeds)[2]; if(!iz_seed) iz_seed++;
+ 	}
+ }
+	[ patch applyied for 0.50 ]
+
+----------------------------------------------------------------------
+TASK:	"axis" problem
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch p.dalgaard@biostat.ku.dk
+	[MM] I am still working on the Examples part of the help files,...
+	Looking at axis(.),
+	I tried
+		 plot(1:7, rnorm(7), xaxt='n')
+		 axis(1, 1:7, LETTERS[1:7])
+	and was quite disappointed;
+	also
+		axis(3)
+	just does nothing (visible) in the above example;
+	whereas
+		axis(4)
+	does what it should.
+	I found out that  axis(..) does NOT seem to work together with
+	"[xy]axt = 'n'".
+
+	[PD] Yes, plot "forgets to forget" the axis type settings.
+	Things work OK if you tack on ,xaxt='l' to the axis calls, but
+	surely this can get fixed before the actual release?
+
+	I can't spot the bug offhand, but it would seem to be somewhere
+	in src/main/plot.c. Everything seems to be surrounded by
+	SavePars();/RestorePars(); pairs, but I'm suspecting a
+	save-change-save-restore-restore problem: with saves going to
+	static data, you could end up 'restoring' a changed parameters
+	twice.
+	[ Duh! if xaxt="n" then we returned from axis without ]
+	[ resetting any of the stored graphics parameters.    ]
+	[ This looks like a more general problem.  Shouldn't  ]
+	[ we also restore the parameters before error returns ]
+	[ too?                                                ]
+
+
+----------------------------------------------------------------------
+TASK:	"dotplot"
+STATUS:	Closed
+FROM:	thomas@biostat.washington.edu
+	The labels argument of dotplot() doesn't have any effect when
+	the data are in a matrix.
+	[ The default of using the row names is now overriden. ]
+
+----------------------------------------------------------------------
+TASK:	"dotplot" labels
+STATUS:	Closed
+FROM:	<hornik@ci.tuwien.ac.at>
+	It seems that the current (0.16.1 as well as 0.50 beta 5)
+	version of dotplot() ignores the labels and groups arguments in
+	the matrix case.  I haven't looked into this very carefully,
+	but it seems that one can take care of the `labels' part by
+	replacing
+		labels <- rownames(x)
+	by
+		if(is.null(labels))
+			labels <- rownames(x)
+	and the groups part by e.g. replacing
+		groups <- col(x, as.factor=TRUE)
+	by
+		if(is.null(groups))
+			groups <- col(x, as.factor=TRUE)
+		else 
+			groups <- factor(col(x), labels = groups)
+	but the latter is not really fool-proof.
+
+	Also, the documentation does not explain the groups argument.
+	[ See above. ]
+
+----------------------------------------------------------------------
+TASK:	naming in "c", "cbind" and "rbind"
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	This is an old problem / bug which I think  had been solved once
+	(partially at least), and still works partially in 0.16.1,
+	but it seems it broke (even more) in 0.50-x :
+	##---- 1)  c(..) names  -----
+	c(a=pi, b=1)
+	# should give        -- and it does give it in 0.16.1 (!)
+	#        a        b 
+	# 3.141593 1.000000 
+	## but in  0.50-5, the first name is "lost" somewhere
+	c(a=pi, b=1)
+	#                 b 
+	# 3.141593 1.000000 
+	#-- the same in this example :
+	c(a=1,b=2, d=4:7)
+	#     b d1 d2 d3 d4 
+	#  1  2  4  5  6  7 
+	##---- 2)  cbind(..) /  rbind(..)   dimnames  -----
+	##-- Here, no  dimnames are produced -- BUT they should! (same for 0.15,0.16):
+	cbind(a=1,b=1:3)
+	rbind(x=2:4,y=1:3)
+	[ We now follow S semantics exactly.                          ]
+	[ Well almost.  There appears to be a new arg "deparse.level" ]
+	[ to cbind/rbind which provides a different behavior.  It is  ]
+	[ really just syntactic sugar though ...                      ]
+
+----------------------------------------------------------------------
+TASK:	bug in distance computations
+STATUS:	Closed
+FROM:	rwehrens@igc.phys.chem.ethz.ch
+	In dist.c, function maximum (line 66), the statement      
+		if(dist > dev)
+	should be replaced by
+		if(dev > dist)
+	[ MM has also pointed out that there are two distance ]
+	[ functions which need to be merged. ]
+
+----------------------------------------------------------------------
+TASK:	dotplot
+STATUS:	Closed
+FROM:	When dotplot is called immediately after device driver startup
+	it dies.  It looks like there should be a call to plot.new()
+	sooner (as well as where it is a present).
+	[ Removed the check at the start of strwidth.            ]
+
+----------------------------------------------------------------------
+TASK:	Arguments being mutated
+STATUS:	Closed
+FROM:	<Andreas.Weingessel@ci.tuwien.ac.at>
+	Suppose I have defined the following function
+		R> sin.myclass
+		function (x) 
+		{
+			class(x) <- NULL
+			plot(sin(x), t = "l")
+		}
+	If I do
+		R> x<-1:10
+		R> class(x)<-"myclass"
+		R> sin(x)
+	I get the expected results (the sinus of x is plotted), but the class
+	of x has changed:
+	[ The bug from hell bites back. ]
+
+----------------------------------------------------------------------
+TASK:	Saving in batch mode
+STATUS:	Closed
+FROM:	<maechler@stat.math.ethz.ch>
+	Go to a directory where you don't have write permission and type
+		echo 'x _ 1' | R
+	For me (R 0.50-3, but also 0.16.1, on Solaris),
+	this gives an infinite loop producing lines of the form
+	  > 
+	  Error: can't save data -- unable to open ./.Rdata
+	  > 
+	  Error: can't save data -- unable to open ./.Rdata
+	  > 
+	  Error: can't save data -- unable to open ./.Rdata
+	[ When R is invoked in non-interactive mode, errors are     ]
+	[ now considered fatal and no error recovery is attempted.  ]
+  
+----------------------------------------------------------------------
+TASK:	Segfault in dimnames mutation
+STATUS:	Closed
+FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
+	Btw, here's another way to produce a segfault with admittedly
+	nonsense code:
+		R> x <- 1:5
+		R> dimnames(x)[1,2] <- NULL
+		Segmentation fault
+	[ Hmmm.  This seems to have gone away.  I get the error     ]
+	[ message "Error: incorrect number of subscripts on array". ]
+
+----------------------------------------------------------------------
+TASK:	"system" return value
+STATUS:	Closed
+FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
+	If it does not sound too unreasonable, do you think you could
+	have system() return the return value of the command if intern
+	is FALSE rather than NULL?  (The change shouldn't take more
+	than a minute, and would really be helpful ...) Thanks,
+	[ Changes made. ]
+
+----------------------------------------------------------------------
+TASK:	Postscript (etc fonts)
+STATUS:	Closed
+FROM:	(venkat@biosta.mskcc.org
+	Is there any way of changing fonts (not just the shape which
+	font={1,2,3,4} seem to do)?  The PSmetrics seem to be available
+	for a lot of fonts but none seem to be accessible except the
+	default.
+	[ There is a new "family" argument to postscript which     ]
+	[ can be any of "AvantGarde", "Bookman", "Courier",        ]
+	[ "Helvetica", "Helvetica-Narrow", "NewCenturySchoolbook", ]
+	[ "Palatino" or "Times".  In addition, setting font=5 will ]
+	[ cause the "Symbol" family to be used.  This is still     ]
+	[ experimental and it is hard to see it being used without ]
+	[ some sort of math capability.  (That's coming too.)      ]
+
+
+----------------------------------------------------------------------
+TASK:	"autoload", "require", "provide"
+STATUS:	Closed
+FROM:	<Kurt.Hornik@ci.tuwien.ac.at>
+	I know it's Easter and not Christmas, but here is something
+	that may be nice in future releases of R:
+	* A way of autoloading symbols from library packages, similar
+	to the way Emacs does this.  E.g., if I think that I need
+	Surv() before I can do anything else with the survival library,
+	I could put something like
+		autoload("Surv", "survival", TRUE)
+	in my .Rprofile, and survival would be loaded only after I
+	first call Surv().
+	* It would also be nice if Thomas' require() and a perhaps something
+	like provide() would be available.
+	[ Thomas' "require" and "provide" added. "autoload" is on the ]
+	[ medium term list.                                           ]
+
+----------------------------------------------------------------------
+TASK:	Boxplot fails with NAs
+STATUS:	Closed
+FROM:	<hornik@ci.tuwien.ac.at>
+	Boxplotting objects containing NA's fails with the error message
+	  Error in plot.window(xlim = c(0.5, n + 0.5), ylim = limits, log = log):
+	  NAs not allowed in ylim
+	The reason seems to be that the extremes of the whiskers computed by
+	boxplot.stats(x) are NA if x contains NA's, because
+	  out <- x < (stats[2] - coef * iqr) | x > (stats[4] + coef * iqr)
+	still contains NA's and hence the subsequent
+	  if (coef > 0) 
+	    stats[c(1, 5)] <- range(x[!out])
+	will set the extremes to NA.
+	An obvious idea would be to start by removing NA's in x ... I am not
+	sure if this breaks anything.  If this is o.k., the new code for
+	boxplot.stats could e.g. be
+		boxplot.stats <- function(x, coef)
+		{
+		  x <- x[!is.na(x)]
+		  n <- length(x)
+		  stats <- fivenum(x)
+		  iqr <- diff(stats[c(2, 4)])
+		  out <- x < (stats[2]-coef*iqr) | x > (stats[4]+coef*iqr)
+		  if(coef > 0) stats[c(1, 5)] <- range(x[!out])
+		  conf <- stats[3]+c(-1.58, 1.58)*diff(stats[c(2, 4)])/sqrt(n)
+		  list(stats=stats, n=n, conf=conf, out=x[out])
+		}
+	[ Changes similar in  sprirt made. ]
+
+----------------------------------------------------------------------
+TASK:	Argument tags botched in c()
+STATUS:	Closed
+FROM:	<hornik@ci.tuwien.ac.at>
+	Please try to get this fixed in the release:
+	0.16:
+	R> c(a = 1, b = 2)
+	a b 
+	1 2 
+	R> c(a = 1, "b" = 2)
+	a b 
+	1 2 
+	0.50 beta 5:
+	R> c(a = 1, b = 2)
+	  b 
+	1 2 
+	R> c(a = 1, "b" = 2)
+	Segmentation fault
+	[ Fixed now ]
+
+----------------------------------------------------------------------
+TASK:	rhyper bugs
+STATUS:	Closed
+FROM:	<VENKAT@biosta.mskcc.org>
+	I get strange results when I use rhyper. See below
+	> rhyper(1,20,30,10)
+	[1] 15
+	> rhyper(1,20,30,10)
+	[1] 11                      How can you get a value larger than 10
+	> rhyper(1,20,30,10)        when you sample only 10
+	[1] 9
+	> rhyper(2,20,30,10)
+	[1] 11 13
+	> rhyper(1,50,60,40)
+	The final call was running for over 10 minutes when I killed it.
+	[ Egads!  Clearly this had never been used before.    ]
+	[ There were a series of typos in the interface code. ]
+
+----------------------------------------------------------------------
+TASK:	"crossprod" is broken
+STATUS:	Closed
+FROM:	A.Kovac@Bristol.ac.uk
+	> A<-matrix(rep(0, 23*51), ncol=23)
+	> B<-matrix(rep(0, 23*51), ncol=23)
+	> crossprod(A,B)
+	Error in NULL : negative length vectors are not allowed
+	The replacement t(A)%*%B works of course. 
+	[ The matrix z in the C code was being accessed using the ]
+	[ wrong number of rows which was trashing the attributes  ]
+	[ (and god knows what else).                              ]
+
+----------------------------------------------------------------------
+TASK:	NULL args to "any" and "all" fail.
+STATUS:	Closed.
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	We need "all(NULL) -> TRUE" and "any(NULL) -> FALSE".
+	[ Oversight. ]
+
+----------------------------------------------------------------------
+TASK:	rbind() does something strange to dimnames
+STATUS:	Closed.
+FROM:	thomas@biostat.washington.edu
+	If rbind is used to combine matrices without row names
+	there is a seg violation.
+	[ Oversight. Aways assumed that row names existed. ]
+
+----------------------------------------------------------------------
+TASK:	Some functions not "complex aware"
+STATUS:	Closed
+FROM:	maechler@stat.math.ethz.ch
+	1) Several functions still (0.50 - pre6)
+	give seg.faults when called with complex:
+		unique( 1i)  --> segfault
+	In 'factor', levels are defaulted to  'sort(unique(x))'
+	which seg.faults  factor( 1i).
+	Because of 'factor', table(..complex..)  seg.faults,.....
+	2)  sort ( complex )   [[Of course this is minor ..]]
+	You may not believe this can be useful, but...
+	I've been digging in old S-code  which makes use of this
+	(and also of unique(.))
+	Let z = x + 1i*y;  x,y real vectors, then,  
+	order(z) : <-->  order(x,y)
+	[ Ok, but sorting complex numbers seems like a heresy. ]
+
+----------------------------------------------------------------------
+TASK:	"crossprod" problems.
+STATUS:	Closed
+FROM:	A.Kovac@Bristol.ac.uk
+	The function was incorrectly saying "non-conformable args"
+	when they were.  Also there was a clear problems with
+	dimname attibutes.
+	[ The first of these was a logic problem in the shared code ]
+	[ with matrix products, the second a typo CAR != CADR.      ]
+	[ Threw in complex cross products for good measure.         ]
+
+----------------------------------------------------------------------
+TASK:   Differentation broken
+STATUS: Closed
+FROM:   <thomas@biostat.washington.edu>
+        > D(expression(z * (log(z) /z)),"z")
+        Error: invalid form in unary minus check
+
+----------------------------------------------------------------------

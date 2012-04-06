@@ -1,0 +1,38 @@
+TITLE(medpolish @@ Median Polish of a Matrix)
+USAGE(
+medpolish(x, eps=0.01, maxiter=10)
+BLANK
+plot(medpolish.obj)
+print(medpolish.obj)
+)
+ALIAS(plot.medpolish)
+ALIAS(print.medpolish)
+DESCRIPTION(
+LANG(medpolish) fits an additive
+constant-plus-rows-plus-columns
+model to the values given in LANG(x) using
+Tukey's ITALIC(median polish) procedure.
+PARA
+Sweeping out for row and column effects continues
+until the proportional reduction in the sum
+of absolute residuals is less than LANG(eps)
+or until the have been LANG(maxiter) iterations.
+The sum of absolute residuals is printed at
+each iteration of the fitting process.
+PARA
+The value returned by LANG(medpolish) is an
+object of class LANG(medpolish).
+Printing and plotting methods are defined for this
+class, and can be invoked via the generic functions
+LANG(print) and LANG(plot).
+)
+VALUES(
+An object of class LANG(medpolish)
+with the following named components:
+@@
+ARG(overall @@ the fitted constant term.)
+ARG(row @@ the fitted row effects.)
+ARG(col @@ the fitted column effects.)
+ARG(residuals @@ the residuals.)
+ARG(name @@ the name of the dataset.)
+)

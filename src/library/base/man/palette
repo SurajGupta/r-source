@@ -1,0 +1,17 @@
+TITLE(Palette @@ Color Palettes)
+USAGE(
+heat.colors(n)
+topo.colors(n)
+)
+ALIAS(heat.colors)
+ALIAS(topo.colors)
+ARGUMENTS(
+ARG(n@@the number colors in the palette.)
+)
+DESCRIPTION(
+These functions create a palette of colors which can be used as input
+to functions such as LANG(image) and LANG(contour).
+)
+SEEALSO(
+LANG(LINK(rainbow)), LANG(LINK(rgb)), LANG(LINK(hsv)), LANG(LINK(gray)).
+)

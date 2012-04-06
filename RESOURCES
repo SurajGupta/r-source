@@ -1,0 +1,36 @@
+
+			    AVAILABLE R RESOURCES
+
+1. FAQ
+
+A collection of Frequently Asked Questions and their answers is
+maintained by Kurt Hornik (kurt.hornik@...).
+
+
+2. MAILING LISTS
+
+Thanks to Martin Maechler there are number of mailing lists which
+are used by R users and developers.  The list
+
+	r-announce@stat.math.ethz.ch 	announcements of new R releases
+					or applications,
+
+	r-help@stat.math.ethz.ch	general inquiries and discussion
+					about R.
+
+	r-devel@stat.math.ethz.ch	a "hackers" list for discussions
+					of R internals and testing.
+
+To subscribe (or unsubscribe) to these mailing list send
+
+	subscribe  (or unsubscribe)
+
+(in the "body", not the subject !) to:
+
+	r-announce-request@stat.math.ethz.ch
+	r-help-request@stat.math.ethz.ch
+	r-devel-request@stat.math.ethz.ch
+
+
+3. ARCHIVES
+

@@ -1,0 +1,4 @@
+system.file <- function(dir, name)
+{
+	system(paste("$RHOME/cmd/filename", dir, name), intern=TRUE)
+}

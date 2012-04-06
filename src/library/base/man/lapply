@@ -1,0 +1,35 @@
+TITLE(lapply @@ Apply a Function Over a List)
+USAGE(
+lapply(x, fun, DOTS)
+sapply(x, fun, DOTS, simplify = TRUE)
+)
+ALIAS(sapply)
+ARGUMENTS(
+ARG(x @@ list (or vector for LANG(sapply)) to be used.)
+ARG(fun @@ the function to be applied.
+In the case of functions like LANG(+),
+LANG(%*%), etc., the function name must be quoted.)
+ARG(DOTS @@ optional arguments to LANG(fun).)
+ARG(simplify @@ logical; should the result be simplified to a vector if
+possible?)
+)
+DESCRIPTION(
+LANG(lapply) returns a list of the same length as LANG(x).
+Each element of which is the result of applying LANG(fun) to
+the corresponding element of LANG(x).
+PARA
+LANG(sapply) is a ``user-friendly'' version of LANG(lapply) also accepting
+vectors as LANG(x), and returning a vector.
+)
+SEEALSO(
+LANG(LINK(apply)), LANG(LINK(tapply)).
+)
+EXAMPLES(
+x <- list(a = 1:10, beta = exp(-3:3),
+        logic = c(T,F,F,T))
+# compute the list mean for each list element
+lapply(x,mean)
+# median and quartiles for each list element
+lapply(x, quantile, probs = 1:3/4)
+sapply(sapply(3:9, seq), fivenum)
+)

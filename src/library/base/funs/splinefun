@@ -1,0 +1,38 @@
+splinefun <- function(x, y, method="fmm") {
+	method <- match(method, c("periodic", "natural", "fmm"))
+	if(is.na(method))
+		stop("invalid interpolation method")
+	if(length(x) != length(y))
+		stop("x and y lengths differ in spline")
+	if( !is.numeric(x) || !is.numeric(y) )
+		stop("splinefun: both x and y must be numeric")
+	if(any(diff(x) <= 0))
+		stop("invalid x array in spline")
+	if(method == 1 && y[1] != y[length(y)]) {
+		warning("first and last y values differ in spline - using y[1] for both")
+		y[length(y)] <- y[1]
+	}
+	z <- .C("spline_coef",
+		method=as.integer(method),
+		n=length(x),
+		x=as.double(x),
+		y=as.double(y),
+		b=double(length(x)),
+		c=double(length(x)),
+		d=double(length(x)),
+		e=if(method == 1) double(length(x)) else double(0))
+	rm(x,y,method)
+	function(x) {
+		.C("spline_eval",
+			z$method,
+			length(x),
+			x=as.double(x),
+			y=double(length(x)),
+			z$n,
+			z$x,
+			z$y,
+			z$b,
+			z$c,
+			z$d)$y
+	}
+}

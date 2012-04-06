@@ -1,0 +1,56 @@
+TITLE( pictex @@ A PicTeX Graphics Driver)
+USAGE(
+pictex(file="Rplots.tex", width=5, height=4, debug=FALSE,
+        bg="white", fg="black")
+)
+ALIAS(pictex)
+ARGUMENTS(
+ARG(file @@ the file where output will appear.)
+ARG(width @@ The width of the plot in inches.)
+ARG(height @@ the height of the plot in inches.)
+ARG(debug @@ should debugging information be printed.)
+ARG(bg @@ the background color for the plot.)
+ARG(fg @@ the foreground color for the plot.)
+)
+DESCRIPTION(
+This function produces graphics suitable for inclusion in
+TeX and LaTeX documents.
+)
+REFERENCES(
+Knuth, D. E. (1984).
+ITALIC(The TeXbook). Reading Mass.: Addison-Wesley.
+PARA
+Lamport, L. (1994).
+ITALIC(LATEX: A Document Preparation System).
+Reading Mass.: Addison-Wesley.
+PARA
+Goossens, M., F. Mittelbach and A. Samarin (1994).
+ITALIC(The LATEX Companion).
+Reading Mass.: Addison-Wesley.
+)
+NOTE(
+This driver was provided by Valerio Aimalea of the
+Department of Internal Medicine,
+University of Genoa, Italy.
+(valerio@svpop.com.dist.unige.it).
+)
+SEEALSO(
+LANG(LINK(x11)), LANG(LINK(postscript)).
+)
+EXAMPLES(
+% LaTeX Example
+\documentclass{article}
+\usepackage{pictex}
+\begin{document}
+%...
+\begin{figure}[h]
+\centerline{\input Rplots.tex}%
+\caption{}
+\end{figure}
+%...
+\end{document}
+BLANK
+% TeX Example
+\input pictex
+$$ \input Rplots.tex $$
+)

@@ -1,0 +1,23 @@
+TITLE(numeric @@ Numeric Vectors)
+USAGE(
+numeric(n=0)
+as.numeric(x)
+is.numeric(x)
+)
+ALIAS(numeric)
+ALIAS(as.numeric)
+ALIAS(is.numeric)
+DESCRIPTION(
+LANG(numeric) creates a real vector of length LANG(n).
+The vector is filled with zeros.
+PARA
+LANG(as.numeric) attempts to coerce
+its argument to numeric type (either integer or real).
+PARA
+LANG(is.numeric) returns LANG(TRUE) if its argument is of
+type real or type integer and LANG(FALSE) otherwise.
+)
+NOTE(
+ITALIC(R has no single precision data type.
+All real numbers are stored in double precision format).
+)

@@ -1,0 +1,30 @@
+TITLE(parse @@ Parse Expressions )
+USAGE(
+parse(file="", n=NULL, text=NULL, prompt=NULL,
+        white=FALSE)
+)
+ALIAS(parse)
+ARGUMENTS(
+ARG(file @@ the name of a file to read the expressions from.
+If the LANG(file) is LANG("") and LANG(text) is missing or LANG(NULL)
+then input is taken from the keyboard.)
+ARG(n @@ the number of statements to parse.
+If LANG(n) is negative the file is parsed in its entirety.
+When parsing takes place from the keyboard, LANG(n) is always 1.)
+ARG(text @@ text to parse, quoted.)
+ARG(prompt @@ the prompt to print when parseing from the keyboard)
+ARG(white @@ if LANG(TRUE) then any white space separates expressions otherwise
+only newlines or semicolons do.)
+)
+DESCRIPTION(
+LANG(parse) returns the parsed but unevaluated expressions
+in a list. Each element of the
+list is of mode expression.
+)
+SEEALSO(
+LANG(LINK(scan)), LANG(LINK(source)), LANG(LINK(eval)).
+)
+EXAMPLES(
+# parse 5 statements from the file "foo"
+parse(file="foo",n=5)
+)

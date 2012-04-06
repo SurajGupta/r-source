@@ -1,0 +1,37 @@
+TITLE(Extremes @@ Maxima and Minima)
+USAGE(
+max(DOTS, na.rm=TRUE)
+min(DOTS, na.rm=TRUE)
+BLANK
+pmax(DOTS, na.rm=FALSE)
+pmin(DOTS, na.rm=FALSE)
+)
+ALIAS(max)
+ALIAS(min)
+ALIAS(pmax)
+ALIAS(pmin)
+VALUE(
+LANG(max) and LANG(min) return the maximum or minimum of all the values
+present in their arguments.
+If LANG(na.rm) is LANG(FALSE) an LANG(NA) value in any
+of the arguments will cause a value of LANG(NA) to be returned,
+otherwise LANG(NA) values are ignored.
+PARA
+LANG(pmax) and LANG(pmin) take several vectors as arguments and return a
+single vector giving the parallel maxima (or minima) of the vectors.
+The first element of the result is the maximum (minimum) of the first
+elements of all the arguments, the second element of the result is the
+maximum (minimum) of the second elements of all the arguments and so on.
+Shorter vectors are recycled if necessary.  If LANG(na.rm) is LANG(FALSE),
+LANG(NA) values in the input vectors will produce LANG(NA) values in the
+output.  If LANG(na.rm) is LANG(TRUE), LANG(NA) values are ignored.
+)
+SEEALSO(
+LANG(LINK(range)).
+)
+EXAMPLES(
+min(5:1,pi)
+pmin(5:1, pi)
+x <- sort(rnorm(100));  cH <- 1.35
+plot(x, pmin(cH, pmax(-cH, x)), type='b', main= "Huber's function")
+)

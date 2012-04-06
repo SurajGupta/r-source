@@ -1,0 +1,36 @@
+chisquare.test <- function (x, y=NULL, correct=TRUE,
+	p = rep(1/length(x), length(x)))
+{
+	if (is.matrix(x)) 
+		if ((nrow(x) == 1) || (ncol(x) == 1)) 
+			x <- as.vector(x)
+	if (!is.null(y) && !is.matrix(x))  {
+		x <- factor(x)
+		y <- factor(y)
+		x <- table(x,y)
+	}
+	if (is.matrix(x)) {
+		row.totals <- apply(x, 1, sum)
+		col.totals <- apply(x, 2, sum)
+		E <- outer(row.totals, col.totals, "*")/sum(x)
+		df <- (nrow(x) - 1) * (ncol(x) - 1)
+		if (correct && nrow(x) == 2 && ncol(x) == 2) 
+			yates <- .5 
+		else yates <- 0
+		chi <- (abs(x - E) - yates)^2/E
+		dimnames(E) <- dimnames(x)
+		dimnames(chi) <- dimnames(x)
+	}
+	else {
+		if (length(x) != length(p)) 
+			stop("Arguments must be same length")
+		E <- sum(x) * p
+		df <- length(x) - 1
+		chi <- (x - E)^2/E
+		names(chi) <- names(x)
+		names(E) <- names(x)
+	}
+	cat("X =", round(sum(chi), 4), " df =", df, "  p-value =",
+		round(1 - pchisq(sum(chi), df), 4), "\n")
+	invisible(list(E = E, chi = chi))
+}

@@ -1,0 +1,24 @@
+TITLE(cumsum @@ Cumulative Sums, Products, etc.)
+USAGE(
+cumsum(x)
+cumprod(x)
+cummax(x)
+cummin(x)
+)
+ALIAS(cumsum)
+ALIAS(cumprod)
+ALIAS(cummin)
+ALIAS(cummax)
+VALUE(
+A vector with the same length of LANG(x),
+but whose elements are the cumulative sums,
+products, minima or maxima of those in LANG(x).
+An LANG(NA) value in LANG(x) will the corresponding
+and following elements of the value to be LANG(NA).
+)
+EXAMPLES(
+cumsum(1:10)
+cumprod(1:10)
+cummin(c(3:1,2:0,4:2))
+cummax(c(3:1,2:0,4:2))
+)

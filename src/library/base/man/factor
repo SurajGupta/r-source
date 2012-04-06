@@ -1,0 +1,55 @@
+TITLE(factor @@ Factor Variables)
+USAGE(
+factor(x, levels=sort(unique(x)), labels,
+        ordered=FALSE, exclude=NA)
+ordered(x, levels=sort(unique(x)), labels, exclude=NA)
+BLANK
+is.factor(x)
+is.ordered(x)
+is.unordered(x)
+BLANK
+as.factor(x, ordered=FALSE)
+)
+ALIAS(factor)
+ALIAS(ordered)
+ALIAS(is.factor)
+ALIAS(is.ordered)
+ALIAS(is.unordered)
+ALIAS(as.factor)
+VALUE(
+The function LANG(factor) is used to encode a vector as a factor
+(the names category and enumerated type are also used for factors).
+If LANG(ordered) is LANG(TRUE), the factor levels are assumed ordered.
+By default the levels are unordered.
+For compatibility purposes, there is also a function called
+LANG(ordered) which provides an alternative way of creating
+ordered factors.
+PARA
+The encoding of the vector happens as follows: if LANG(x[i]==levels[j])
+then the LANG(i)-th element of the result is LANG(j).
+If no match is found for LANG(x[i]) in LANG(levels), then the
+LANG(i)-th element of the result is set to LANG(NA).
+Any values listed in LANG(exclude) result in LANG(NA)s
+appearinging in the returned factor.
+If LANG(exclude) is set to a zero length vector, then any
+LANG(NA) values in LANG(x) are used for form a new level
+for the factor.
+ITALIC(This means that there will be no) LANG(NA)
+ITALIC(values in the result).
+PARA
+LANG(labels) is a vector of character strings used to label
+the levels of the factor.
+The default is to use the encoded factor levels.
+PARA
+LANG(is.factor) returns LANG(TRUE) or LANG(FALSE)
+depending on whether its argument is of type factor or not.
+Correspondingly, LANG(is.ordered) (LANG(is.unordered))
+returns LANG(TRUE) when its argument is ordered (unordered)
+and LANG(FALSE) otherwise.
+PARA
+LANG(as.factor) coerces its argument to a factor.
+It is an abbreviated form of LANG(factor).
+)
+SEEALSO(
+LANG(LINK(gl)), LANG(LINK(levels)), LANG(LINK(nlevels)).
+)

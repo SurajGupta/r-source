@@ -1,0 +1,10 @@
+TITLE(replace @@ Replace Values in a Vector)
+USAGE(
+replace(x, list, values)
+)
+ALIAS(replace)
+DESCRIPTION(
+LANG(replace) replaces the values in LANG(x)
+with indexes given in LANG(list) by those given in LANG(values).
+If necessary, the values in LANG(values) are recycled.
+)

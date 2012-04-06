@@ -1,0 +1,33 @@
+TITLE(list @@ Lists)
+USAGE(
+list(DOTS)
+as.list(x)
+is.list(x)
+)
+ALIAS(list)
+ALIAS(as.list)
+ALIAS(is.list)
+DESCRIPTION(
+The arguments to LANG(list) are of the form LANG(value)
+or LANG(tag=value).
+The function returns a list composed of its arguments
+with each value either tagged or untagged,
+depending on how the argument was specified.
+PARA
+LANG(as.list) attempts to coerce its argument to list type.
+PARA
+LANG(is.list) returns LANG(TRUE) if its argument
+is a list and LANG(FALSE) otherwise.
+PARA
+To create an empty list it is necessary to use the
+function LANG(vector) with a LANG(mode) of LANG("list").
+)
+SEEALSO(
+LANG(LINK(vector)).
+)
+EXAMPLES(
+data(cars)
+# create a plotting structure
+pts <- list(x=cars[,1], y=cars[,2])
+plot(pts)
+)

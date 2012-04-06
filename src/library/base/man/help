@@ -1,0 +1,38 @@
+TITLE(help @@ Online Documentation)
+USAGE(
+help(name)
+?name
+BLANK
+help(data=name)
+?data(name)
+BLANK
+help(library=name)
+?library(name)
+)
+ALIAS(help)
+ALIAS(?)
+ARGUMENTS(
+ARG(name @@ the topic for which documentation is desired.)
+)
+DESCRIPTION(
+These functions provide online access to documentation. 
+Documentation on a function with name LANG(name) can be
+printed on-screen with either LANG(help(name)) or LANG(?name).
+In the case of unary and binary operators
+and control-flow special forms, the name may need to be be quoted.
+PARA
+Help on data sets and libraries can be obained with
+the other forms.
+)
+SEEALSO(
+LANG(LINK(data)), LANG(LINK(library)), LANG(LINK(methods)).
+)
+EXAMPLES(
+help(help)
+help("for") # or	?"for"
+?"+"
+PARA
+?data(index) #-- a list of all the available datasets
+?data(women) #-- information about "women" dataset
+?library(mva)#-- what is available in library(mva)
+)

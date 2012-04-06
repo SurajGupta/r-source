@@ -1,0 +1,172 @@
+\documentclass[a4paper]{article}
+\usepackage{alltt}
+
+\newenvironment{display}[0]%
+ {\begin{list}{}{\setlength{\leftmargin}{30pt}}\item}%
+ {\end{list}}
+\newcommand{\bold}[1]{\mbox{\boldmath $#1$}}
+\newcommand{\HTML}{\textsc{html}}
+\newcommand{\R}{\textsc{R}}
+
+
+\title{\textbf{Writing \R\ Documentation}}
+\author{\textit{Ross Ihaka \& Martin Maechler}}
+
+\begin{document}
+\maketitle
+
+\section{The Documentation Source Tree}
+
+This directory contains detailed documentation for \R\ functions and code
+for translating them into \LaTeX\ and \emph{\HTML} help files.
+
+The help files are contained in the directories ``man'' and ``man281''.
+The ``man'' entries are for Ross-n-Robert functions and the ``man281''
+ones for Alan Lee functions.
+
+\section{Documentation Format}\label{sec:doc-format}
+
+The help files are written in a form which can be processed
+into a variety of formats.  The translation is carried out
+by a combination of \texttt{sed} and \texttt{m4} scripts.
+
+The basic layout of a raw documentation file is as follows.
+For a given function \texttt{do.this}, use the \R\ command
+\underline{\texttt{prompt(do.this)}} to produce the file \texttt{do.this.man}.
+\begin{display}
+\begin{alltt}
+TITLE(\textit{name} @@ \textit{Description})
+USAGE(
+\textit{One or more lines showing the synopsis of the function.
+These are set verbatim in typewriter font.}
+)
+ALIAS(\textit{alias 1})
+ALIAS(\textit{alias 2})
+\textit{etc.}
+ARGUMENTS(
+ARG(\textit{arg1} @@ \textit{Description of arg1.})
+ARG(\textit{arg2} @@ \textit{Description of arg2.})
+\textit{etc.}
+)
+DESCRIPTION(
+\textit{A precise description of what the function does.}
+)
+VALUE(
+\textit{A description of the value returned by the function (if any).
+If multiple values are returned in a list use the \texttt{VALUES}
+macro described below instead.}
+)
+VALUES(
+{\textit{A description of the \textbf{list} of values returned by the function.
+For the list, use the same syntax as in ARGUMENTS}:
+@@\samepage}\pagebreak[3]
+ARG(\textit{comp1} @@ \textit{Description of list component `comp1'})
+ARG(\textit{comp2} @@ \textit{Description of list component `comp2'})
+\textit{etc.}
+)
+REFERENCES(
+\textit{Optional references section.}
+)
+SEEALSO(
+\textit{Pointers to related \R\ functions.}
+)
+EXAMPLES(
+\textit{Examples of how to use the function.
+These are set verbatim in typewriter font.}
+)
+\end{alltt}
+\end{display}
+
+\section{Emphasis}
+Within the text of the document it is possible to set
+words in phrases in different styles as follows.
+\begin{center}
+\begin{tabular}{ll}
+{\tt BOLD(\textit{word})}   & set \emph{word} in \textbf{bold} font. \\
+{\tt ITALIC(\textit{word})} & set \emph{word} in \textit{italic} font. \\
+{\tt LANG(\textit{word})}   & set \emph{word} in \texttt{typewriter} font. \\
+\end{tabular}
+\end{center}
+You should use \texttt{BOLD} and \texttt{ITALIC} in plain text for emphasis
+and \texttt{CODE} to make sure that language fragments stand out from the
+text.
+
+\section{Sectioning}
+To begin a new paragraph insert \texttt{PARA} on a line by itself
+and to leave a blank line in an example place \texttt{BLANK}
+on a line by itself.
+
+\section{Hyperlinks}
+Currently, this only affects the creation of the \HTML\ pages (used, e.g.,
+by \texttt{help.start()}): \ \
+\texttt{LINK(foo)} (usually in the combination \texttt{LANG(LINK(foo))})
+produces a hyperlink to the help page for function
+\texttt{`foo'}.
+One main usage of  `\texttt{LINK}' is in the \texttt{SEEALSO} section of
+the help page, see~\ref{sec:doc-format}, above.
+
+
+\pagebreak[3]
+
+\section{Mathematics}
+
+These are constructs that you can use for writing formulae:\\
+\samepage
+\begin{tabular}{l@{\ \ $\to$\ \ }l@{\ \ $\longrightarrow$\ \ }l}
+\hline
+Help-File & \LaTeX-code & \LaTeX ``result'' \\
+\hline\hline
+
+  %%--- the following lines are original straight from  latex/doc2latex 
+  %%- 1)  (query-replace-regexp "define(\\([A-z_]+\\),\\(.*\\))"
+  %%                      "\\1  & \\\\verb#\\2#         & $ \\2 $ \\\\\\\\" nil)
+  %%- 2)  (query-replace "$1" "a1" nil)
+  %%-     (query-replace "$2" "a2" nil)
+  %%- 3)  (query-replace-regexp "\\$ `\\(.*\\)' \\$" "$ \\1 $" nil)
+EQUALS          & \verb#`='#    & $ = $ \\
+LT              & \verb#`<'#    & $ < $ \\
+LE              & \verb#`\le'#  & $ \le $ \\
+GE              & \verb#`\ge'#  & $ \ge $ \\
+GT              & \verb#`>'#    & $ > $ \\
+LOG             & \verb#`\log'#         & $ \log $ \\
+EXP             & \verb#`\exp'#         & $ \exp $ \\
+SQRT            & \verb#`\sqrt{a1}'#    & $ \sqrt{a1} $ \\
+DISPLAYSTYLE    & \verb#`{\displaystyle a1}'#   & $ {\displaystyle a1} $ \\
+OVER            & \verb#{{a1} \over {a2}}#      & $ {{a1} \over {a2}} $ \\
+SUP             & \verb#`{{a1}^{a2}}'#  & $ {{a1}^{a2}} $ \\
+SUB             & \verb#`{{a1}_{a2}}'#  & $ {{a1}_{a2}} $ \\
+CHOOSE          & \footnotesize
+                    \verb#`{\left(\begin{array}{c}a1 \\ a2\end{array}\right)}'# 
+                 & $ {\left(\begin{array}{c} a1 \\ a2 \end{array} \right)} $ \\
+PAREN           & \verb#`{\left( a1 \right)}'#  & $ {\left( a1 \right)} $ \\
+SP              & \verb#`'#     & $  $ \\
+\hline
+greekGamma      & \verb#`\Gamma'#       & $ \Gamma $ \\
+greekalpha      & \verb#`\alpha'#       & $ \alpha $ \\
+greekpi         & \verb#`\pi'#  & $ \pi $ \\
+greekmu         & \verb#`\mu'#  & $ \mu $ \\
+greeksigma      & \verb#`\sigma'#       & $ \sigma $ \\
+greeklambda     & \verb#`\lambda'#      & $ \lambda $ \\
+boldgreekbeta   & \verb#`\bold{\beta}'#         & $ \bold{\beta} $ \\
+boldgreekepsilon& \verb#`\bold{\varepsilon}'#   & $ \bold{\varepsilon} $ \\
+\hline\hline
+EQBOLD          & \verb#`\bold{a1}'#    & $ \bold{a1} $ \\
+EQN             & \verb#`$ a1 $'#       & $  a1  $ \\
+DEQN            & \verb#`\[ a1 \]'#     &  $\displaystyle a1 $  \\
+DEQTEX          & \verb#\[ a1 \]#       &  $\displaystyle a1 $  \\
+DEQHTML         & \verb#`'#     & $  $ \\
+\end{tabular}
+
+\bigskip
+--- Examples to be written --
+\bigskip
+
+\section{Miscellaneous}
+Use \texttt{DOTS} for the dots in function argument list ``\texttt{...}'',
+and \texttt{LDOTS} for $\ldots$ (ellipsis dots)
+
+With \texttt{COMMENT}(\dots)\ you can put your own comments regarding the
+help text. This will be completely disregarded, normally. Therefore, you
+can also use it to make part of the `help' invisible.
+
+\end{document}

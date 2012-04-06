@@ -1,0 +1,2 @@
+get <- function(x, envir=NULL, mode="any", inherits=TRUE)
+.Internal(get(x,envir,mode,inherits))

@@ -1,0 +1,24 @@
+TITLE(print.default @@ Default Printing)
+USAGE(
+print.default(x, digits=NULL, quote=TRUE, na.print="NA",
+        print.gap=1)
+)
+ALIAS(print.default)
+DESCRIPTION(
+LANG(print) prints its argument.
+A non-null value for LANG(digits)
+specifies the number of significant digits to be printed
+in values.
+If LANG(digits) is LANG(NULL), the value of
+LANG(digits) set by LANG(options) is used.
+The value of LANG(quote)
+indicates whether or not strings should be
+printed with surrounding quotes.
+LANG(na.print) is a string which is used to indicate
+LANG(NA) values in printed output.
+LANG(print.gap) gives the spacing between adjacent columns in
+printed matrices and arrays.
+)
+SEEALSO(
+LANG(LINK(options)).
+)

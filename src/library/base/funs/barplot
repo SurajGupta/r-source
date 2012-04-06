@@ -1,0 +1,72 @@
+"barplot" <-
+function (height, names.arg, col=NULL, border=par("fg"),
+	beside=FALSE, space=0.2, legend.text,
+	main=NULL, xlab=NULL, ylab=NULL, xlim, ylim, ...)
+{
+	opar <- par(yaxs="i", xpd=TRUE)
+	on.exit(par(opar))
+	if (is.matrix(height)) {
+		if (beside) {
+			delta <- 0.5 * (1 - space)
+			if (missing(xlim))
+				xlim <- c(0, ncol(height)) + 0.5
+			if (missing(ylim))
+				ylim <- range(-0.01, height)
+			plot.new()
+                        plot.window(xlim, ylim, log = "")
+			for (i in 1:ncol(height)) {
+				xx <- seq(i-delta, i+delta, length=nrow(height)+1)
+				xl <- xx[1:nrow(height)]
+				xr <- xx[1:nrow(height)+1]
+				rect(xl, 0, xr, height[,i], col=col, xpd=TRUE)
+			}
+		}
+		else {
+			delta <- 0.5 * (1 - space)
+			nheight <- rbind(0, apply(height, 2, cumsum))
+			if (missing(xlim)) 
+				xlim <- c(0, ncol(height)) + 0.5
+			if (missing(ylim)) 
+				ylim <- range(-0.01, nheight)
+			plot.new()
+			plot.window(xlim, ylim, log = "")
+			for (i in 1:ncol(height))
+				rect(i - delta, nheight[-1, i],
+				     i + delta, nheight[1:nrow(height), i],
+				     col = col, xpd=TRUE)
+		}
+		if(missing(names.arg))
+			names.arg <- dimnames(height)[[2]]
+		if(!is.null(names.arg)) {
+			if(length(names.arg) != ncol(height))
+				stop("incorrect number of names")
+			for(i in 1:length(names.arg))
+			axis(1, at=1:length(names.arg),
+				labels=names.arg, lty=0)
+		}
+	}
+	else {
+		delta <- 0.5 * (1 - space)
+		if (missing(xlim)) 
+			xlim <- c(0, length(height)) + 0.5
+		if (missing(ylim)) 
+			ylim <- range(-0.01, height)
+		plot.new()
+		plot.window(xlim, ylim, log = "")
+		rect(1:length(height) - delta, 0,
+		     1:length(height) + delta, height, col, xpd=TRUE)
+		if(missing(names.arg))
+			names.arg <- names(height)
+		if(!is.null(names.arg))
+			for(i in 1:length(names.arg))
+			axis(1,1:length(height), labels=names.arg, lty=0)
+	}
+	if(!missing(legend.text) && !missing(col)) {
+		xy <- par("usr")
+		legend(xy[2]-xinch(0.1),xy[4]-yinch(0.1),
+			legend=rev(legend.text), fill=rev(col),
+			xjust=1, yjust=1)
+	}
+	title(main=main, xlab=xlab, ylab=ylab, ...)
+	axis(2)
+}

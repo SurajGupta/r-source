@@ -1,0 +1,26 @@
+TITLE(sweep @@ Sweep out Array Summaries)
+USAGE(
+sweep(x, MARGIN, STATS, FUN="-", DOTS)
+)
+ALIAS(sweep)
+ARGUMENTS(
+ARG(x @@ an array.)
+ARG(MARGIN @@ a giving the extents of LANG(x) which correspond to LANG(STATS).)
+ARG(STATS @@ the summary statistic which is to be swept out.)
+ARG(FUN @@ the function to be used to carry out the sweep.
+In the case of binary operators such as LANG("/") etc.,
+the function name must be quoted.)
+ARG(DOTS @@ optional arguments to LANG(FUN).)
+)
+VALUE(
+An array with the same shape as LANG(x), but with the summary
+statistics swept out.
+)
+SEEALSO(
+LANG(LINK(apply)).
+)
+EXAMPLES(
+data(attitude)
+med.att <- apply(attitude, 2, median)
+sweep(data.matrix(attitude), 2, med.att)# subtract the column medians
+)

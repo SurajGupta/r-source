@@ -1,0 +1,44 @@
+dexp <- function(x, rate=1) .Internal(dexp(x, 1/rate))
+pexp <- function(q, rate=1) .Internal(pexp(q, 1/rate))
+qexp <- function(p, rate=1) .Internal(qexp(p, 1/rate))
+rexp <- function(n, rate=1) .Internal(rexp(n, 1/rate))
+
+dunif <- function(x, min=0, max=1) .Internal(dunif(x, min, max))
+punif <- function(q, min=0, max=1) .Internal(punif(q, min, max))
+qunif <- function(p, min=0, max=1) .Internal(qunif(p, min, max))
+runif <- function(n, min=0, max=1) .Internal(runif(n, min, max))
+
+dnorm <- function(x, mean=0, sd=1) .Internal(dnorm(x, mean, sd))
+pnorm <- function(q, mean=0, sd=1) .Internal(pnorm(q, mean, sd))
+qnorm <- function(p, mean=0, sd=1) .Internal(qnorm(p, mean, sd))
+rnorm <- function(n, mean=0, sd=1) .Internal(rnorm(n, mean, sd))
+
+dcauchy <- function(x, location=0, scale=1) .Internal(dcauchy(x, location, scale
+))
+pcauchy <- function(q, location=0, scale=1) .Internal(pcauchy(q, location, scale
+))
+qcauchy <- function(p, location=0, scale=1) .Internal(qcauchy(p, location, scale
+))
+rcauchy <- function(n, location=0, scale=1) .Internal(rcauchy(n, location, scale
+))
+
+dgamma <- function(x, shape, scale=1) .Internal(dgamma(x, shape, scale))
+pgamma <- function(q, shape, scale=1) .Internal(pgamma(q, shape, scale))
+qgamma <- function(p, shape, scale=1) .Internal(qgamma(p, shape, scale))
+rgamma <- function(n, shape, scale=1) .Internal(rgamma(n, shape, scale))
+
+dlnorm <- function(x, meanlog=0, sdlog=1) .Internal(dlnorm(x, meanlog, sdlog))
+plnorm <- function(q, meanlog=0, sdlog=1) .Internal(plnorm(q, meanlog, sdlog))
+qlnorm <- function(p, meanlog=0, sdlog=1) .Internal(qlnorm(p, meanlog, sdlog))
+rlnorm <- function(n, meanlog=0, sdlog=1) .Internal(rlnorm(n, meanlog, sdlog))
+
+dlogis <- function(x, location=0, scale=1) .Internal(dlogis(x, location, scale))
+plogis <- function(q, location=0, scale=1) .Internal(plogis(q, location, scale))
+qlogis <- function(p, location=0, scale=1) .Internal(qlogis(p, location, scale))
+rlogis <- function(n, location=0, scale=1) .Internal(rlogis(n, location, scale))
+
+dweibull <- function(x, shape, scale=1) .Internal(dweibull(x, shape, scale))
+pweibull <- function(q, shape, scale=1) .Internal(pweibull(q, shape, scale))
+qweibull <- function(p, shape, scale=1) .Internal(qweibull(p, shape, scale))
+rweibull <- function(n, shape, scale=1) .Internal(rweibull(n, shape, scale))
+

@@ -1,0 +1,28 @@
+TITLE(Weibull @@ The Weibull Distribution)
+USAGE(
+dweibull(x, shape, scale=1)
+pweibull(q, shape, scale=1)
+qweibull(p, shape, scale=1)
+rweibull(n, shape, scale=1)
+)
+ALIAS(dweibull)
+ALIAS(pweibull)
+ALIAS(qweibull)
+ALIAS(rweibull)
+DESCRIPTION(
+These functions provide information about the Weibull distribution
+with parameters LANG(shape) and LANG(scale).  LANG(dweibull) gives the
+density, LANG(pweibull) gives the distribution function LANG(qweibull)
+gives the quantile function and LANG(rweibull) generates random
+deviates.
+PARA
+The Weibull distribution has density given by
+DEQN(
+f(x) = (a/b) SUP((x/b)@@a-1) EXP (-SUP((x/b)@@a))
+@@
+f(x) = (a/b) (x/b)^(a-1) exp(- (x/b)^a)
+)
+for EQN(x GT 0).
+Here EQN(a) is the shape parameter of the distribution
+and EQN(b) the scale parameter of the distribution.
+)

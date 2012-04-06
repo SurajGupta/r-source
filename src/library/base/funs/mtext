@@ -1,0 +1,3 @@
+mtext <- function(text, side=3, line=0, outer=FALSE, at=NULL, ...)
+  .Internal(mtext(text, side, line, outer, at, ...))
+

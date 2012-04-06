@@ -1,0 +1,46 @@
+TITLE(GammaDist @@ The Gamma Distribution)
+USAGE(
+dgamma(x, shape, scale=1)
+pgamma(q, shape, scale=1)
+qgamma(p, shape, scale=1)
+rgamma(n, shape, scale=1)
+)
+ALIAS(dgamma)
+ALIAS(pgamma)
+ALIAS(qgamma)
+ALIAS(rgamma)
+ARGUMENTS(
+ARG(x,q @@ vector of quantiles.)
+ARG(p @@ vector of probabilites.)
+ARG(n @@ number of observations.)
+ARG(shape, scale @@ shape and scale parameters.)
+)
+VALUE(
+These functions provide information about the gamma
+distribution with parameters LANG(shape) and LANG(scale).
+LANG(dgamma) gives the density,
+LANG(pgamma) gives the distribution function
+LANG(qgamma) gives the quantile function
+and
+LANG(rgamma) generates random deviates.
+PARA
+The gamma distribution with parameters LANG(shape) EQN(EQUALS a @@ = a) and
+LANG(scale) EQN(EQUALS b @@ = b) has density
+DEQN(f(x) =
+OVER(1 @@ SUP(b@@a) greekGamma (a)) SUP(x@@a-1) SUP(e@@-x/b)
+@@
+f(x) = 1/(b^a Gamma(a)) x^(a-1) e^-(x/b))
+for EQN(x GT 0 @@ x > 0),
+EQN(a GT 0 @@ a > 0)
+and
+EQN(b GT 0 @@ b > 0).
+)
+SEEALSO(
+LANG(LINK(gamma)).
+)
+EXAMPLES(
+-log(dgamma(1:4, shape=1))
+p <- (1:9)/10
+pgamma(qgamma(p,shape=2), shape=2)
+1 - 1/exp(qgamma(p, shape=1))
+)

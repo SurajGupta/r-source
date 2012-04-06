@@ -1,0 +1,18 @@
+TITLE(rgb @@ RGB Color Specification)
+USAGE(
+rgb(red, green, blue, names=NULL)
+)
+ALIAS(rgb)
+DESCRIPTION(
+This function creates ``colors'' corresponding to
+the given intensities of the red, green and blue primaries
+(the intensities must lie between zero and one).
+The names argument may be used to provide names for the
+colors.
+PARA
+The values returned by LANG(rgb) can be used with a
+LANG(col=) specification in graphics functions or in LANG(par).
+)
+SEEALSO(
+LANG(LINK(rainbow)), LANG(LINK(hsv)), LANG(LINK(gray)).
+)

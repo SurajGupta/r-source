@@ -1,0 +1,2 @@
+box <- function(lty="solid", ...)
+	.Internal(box(lty=lty, ...))

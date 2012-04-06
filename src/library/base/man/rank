@@ -1,0 +1,10 @@
+TITLE(rank @@ Sample Ranks)
+USAGE(
+rank(x)
+)
+ALIAS(rank)
+DESCRIPTION(
+LANG(rank) returns the sample ranks of the values in LANG(x).
+Ties result in ranks being averaged.
+LANG(NA) values are not allowed in this function.
+)

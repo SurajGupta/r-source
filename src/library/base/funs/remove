@@ -1,0 +1,5 @@
+rm <- function(...,list=character(0), envir=NULL,inherits=FALSE) {
+	names<- as.character(substitute(list(...)))[-1]
+	list<-c(list,names)
+	.Internal(remove(list,envir,inherits))
+}

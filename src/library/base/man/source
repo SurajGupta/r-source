@@ -1,0 +1,20 @@
+TITLE(source @@ Redirect Input)
+USAGE(
+source(file, local=FALSE)
+)
+ALIAS(source)
+ARGUMENTS(
+ARG(file @@ the name of the file to read from (quoted).)
+ARG(local @@ if LANG(local) is LANG(FALSE),
+the statements scanned are evaluated
+in the global environment, otherwise in the local calling
+source.)
+)
+DESCRIPTION(
+LANG(source) causes R to accept its input from the named
+file (the name must be quoted).
+Input is read from that file until the
+end of the file is reached.
+LANG(parse) is used to scan the files in, they are then evaluated
+sequentially in the chosen environment.
+)

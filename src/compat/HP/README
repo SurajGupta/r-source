@@ -1,0 +1,18 @@
+All good things come from Luke.  This code, from Luke Tierney.  One
+minor modification for R by Mike Meyer.
+
+
+This is a minimal implementation of the ELF-style shared library
+access routines dlopen, dlclose, dlsym and dlerror. Also included is a
+simple version of gettxt, which is not in HP-UX A.09.05 at least.
+These seem adequate to get S up and running. You need to make the
+library and install it and the include file someplace appropriate and
+modify the S setup script for hp accordingly. Currently the SETUP.hp
+script assumes the library and include file live in the directory
+$SHOME/hpdl.
+
+Also included is vsystem(), a vfork-based replacement for system().
+
+Luke Tierney
+School of Statistics
+University of Minnesota

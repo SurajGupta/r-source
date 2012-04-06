@@ -1,0 +1,28 @@
+TITLE(plot @@ X-Y Plotting)
+USAGE(
+plot(x, y, xlim=range(x), ylim=range(y), type="p",
+        main, xlab, ylab, DOTS)
+)
+ALIAS(plot)
+ARGUMENTS(
+ARG(x,y @@ the coordinates of points in the plot.
+Alternatively, a single plotting structure can
+be provided.)
+ARG(xlim,ylim @@ the ranges to be encompased by the x and y axes.)
+ARG(type @@ what type of plot should be drawn.
+Possible types are LANG("p") for points,
+LANG("l") for lines,
+LANG("b") for both, and
+LANG("n") for no plotting.)
+ARG(main @@ an overall title for the plot.)
+ARG(xlab @@ a title for the x axis.)
+ARG(ylab @@ a title for the y axis.)
+ARG(DOTS @@ graphical parameters can be given as arguments to LANG(plot).)
+)
+DESCRIPTION(
+A longer description will go here eventually.
+)
+EXAMPLES(
+plot(cars)
+lines(lowess(cars))
+)

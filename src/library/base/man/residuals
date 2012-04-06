@@ -1,0 +1,26 @@
+TITLE(residuals @@ Extract Model Residuals)
+USAGE(
+residuals(x, DOTS)
+resid(x, DOTS)
+)
+ALIAS(residuals)
+ALIAS(resid)
+ARGUMENTS(
+ARG(x @@ an object for which the extraction of model
+residuals is meaningful.)
+ARG(DOTS @@ other arguments.)
+)
+DESCRIPTION(
+LANG(residuals) is a generic function which extracts
+model residuals from objects returned by modeling functions.
+The abbreviated form LANG(resid) is intended to encourage users
+to access object components through an accessor function
+rather than by directly referencing an object slot.
+PARA
+All object classes which are returned by model fitting
+functions should provide a LANG(residuals) method.
+)
+SEEALSO(
+LANG(LINK(coefficients)), LANG(LINK(fitted.values)),
+LANG(LINK(glm)), LANG(LINK(lm)).
+)

@@ -1,0 +1,15 @@
+TITLE(codes @@ Factor Codes)
+USAGE(
+codes(x)
+codes(x) <- y
+)
+ALIAS(codes)
+VALUE(
+THis function retrieves the underlying
+integer codes used for the levels of a factor
+and also be used to reset (a subset of) these codes.
+)
+EXAMPLES(
+x <- gl(3,5,15)
+codes(x)[3] <- 2
+)

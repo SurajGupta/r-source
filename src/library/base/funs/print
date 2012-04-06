@@ -1,0 +1,24 @@
+print <- function(x, ...)
+UseMethod("print")
+
+print.default <- function(x,digits=NULL,quote=TRUE,na.print=NULL,print.gap=NULL)
+{
+	.Internal(print.default(x,digits,quote,na.print,print.gap))
+}
+print.atomic <- function(x,quote=TRUE,...) print.default(x,quote=quote)
+
+prmatrix <- function(x, rowlab=character(0), collab=character(0), 
+	quote=TRUE, right=FALSE)
+	.Internal(prmatrix(x,rowlab,collab,quote,right))
+
+print.tabular <- function(table, digits = max(3, .Options$digits - 3),
+        na.print = "", ...)
+{
+	if(!is.null(table$title)) cat("\n", table$title, "\n\n", sep="")
+	if(!is.null(table$topnote))
+		cat(paste(table$topnote, collapse="\n"), "\n\n", sep="")
+        print.default(table$table, digits=digits, na = "", print.gap = 2)
+	if(!is.null(table$botnote)) cat("\n",
+		paste(table$botnote, collapse="\n"), sep="")
+        cat("\n")
+}

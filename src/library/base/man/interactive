@@ -1,0 +1,15 @@
+TITLE( interactive @@ Is R running interactively ? )
+USAGE(
+interactive()
+)
+ALIAS(interactive)
+VALUE(
+This function returns LANG(TRUE) when R is being used interactively
+and LANG(FALSE) when not. 
+)
+SEEALSO(
+LANG(LINK(source))
+)
+EXAMPLES(
+.First <- function() if(interactive()) x11()
+)

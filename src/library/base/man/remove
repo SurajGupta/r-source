@@ -1,0 +1,22 @@
+TITLE(remove @@ Remove Objects from a Specified Environment)
+USAGE(
+remove(names, envir=NULL, inherits=FALSE)
+rm(names, envir=NULL, inherits=FALSE)
+)
+ALIAS(rm)
+ALIAS(remove)
+DESCRIPTION(
+LANG(remove) and LANG(rm) can be used to remove objects.
+LANG(names) must be character vector.
+All elements in it will be removed.
+If LANG(envir) is NULL then the the currently active
+environment is searched first.
+If LANG(inherits) is LANG(TRUE)
+then parents of the supplied directory are searched until a
+variable with the given name is encountered. 
+A warning is printed for each variable that is not found.
+)
+SEEALSO(
+LANG(LINK(ls)),
+LANG(LINK(objects)),
+)

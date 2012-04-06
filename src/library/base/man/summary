@@ -1,0 +1,31 @@
+TITLE(summary @@ Object Summaries)
+USAGE(
+summary(object, DOTS)
+)
+ALIAS(summary)
+ARGUMENTS(
+ARG(object @@ an object for which a summary is desired.)
+ARG(DOTS @@ additional arguments affecting the summary
+produced.)
+)
+DESCRIPTION(
+LANG(summary) is a generic function used
+to produce result summaries of the results of
+various model fitting functions.
+The function invokes particular ITALIC(methods)
+which depend on the ITALIC(class) of the first argument.
+PARA
+The functions LANG(summary.lm) and LANG(summary.glm)
+are examples of particular methods which summarise
+the results produced by LANG(lm) and LANG(glm).
+)
+VALUE(
+The form of the value returned by LANG(summary) depends on the
+class of its argument.  See the documentation of the
+particular methods for details of what is produced by that method.
+)
+SEEALSO(
+LANG(LINK(anova)), 
+LANG(LINK(summary.glm)),
+LANG(LINK(summary.lm)).
+)

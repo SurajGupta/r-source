@@ -1,0 +1,28 @@
+TITLE(bxp @@ Box Plots from Summaries)
+USAGE(
+bxp(z, width, varwidth=FALSE, notch=FALSE, DOTS)
+)
+ALIAS(bxp)
+ARGUMENTS(
+ARG(z @@ a list containing data summaries to
+be used in constructing the plots.
+These are usually the result of a call to LANG(boxplot),
+but can be generated in any fashion.)
+ARG(width @@ a vector giving the relative widths of the boxes
+making up the plot.)
+ARG(varwidth @@ if LANG(varwidth) is LANG(TRUE), the boxes
+are drawn with widths proportional to the square-roots
+of the number of observations in the groups.)
+ARG(notch @@ if LANG(notch) is LANG(TRUE), a notch is drawn in each
+side of the boxes.  If the notches of two plots do not
+overlap then the medians are significantly different at the
+5 percent level.)
+ARG(DOTS @@ Graphical parameters can be passed as arguments to this
+function.)
+)
+VALUE(
+This function is invoked for its side effect which is to
+draw box plots based on the given summaries.
+It is usually called from LANG(boxplot), abut can be invoked
+directly.
+)

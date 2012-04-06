@@ -1,0 +1,31 @@
+TITLE(Hypergeometric @@ The Hypergeometric Distribution)
+USAGE(
+dhyper(x, N1, N2, n)
+phyper(x, N1, N2, n)
+qhyper(p, N1, N2, n)
+rhyper(nobs, N1, N2, n)
+)
+ALIAS(dhyper)
+ALIAS(phyper)
+ALIAS(qhyper)
+ALIAS(rhyper)
+ARGUMENTS(
+ARG(N1 @@ the number of white balls in the population.)
+ARG(N2 @@ the number of black balls in the population.)
+ARG(n @@ the number of balls drawn from the urn.)
+ARG(p @@ probability, it must be between 0 and 1.)
+ARG(nobs @@ the number of observations to be generated.)
+)
+VALUE(
+These functions provide information about the hypergeometric
+distribution with parameters LANG(N1), LANG(N2) and LANG(n).
+LANG(dhyper) gives the density, LANG(phyper) gives the distribution
+function LANG(qhyper) gives the quantile function and LANG(rhyper)
+generates random deviates.
+PARA
+The hypergeometric distribution has density
+DEQN(p(x) = OVER(CHOOSE(N1 @@ x) CHOOSE(N2 @@ n-x) @@ CHOOSE(N1+N2 @@ n))
+@@
+p(x) = Choose(N1,x) Choose(N2,n-x) / Choose(N1+N2,n))
+for EQN(x = 0, DOTS, n).
+)

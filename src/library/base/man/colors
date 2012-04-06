@@ -1,0 +1,16 @@
+TITLE(colors @@ Color Names)
+USAGE(
+colors()
+)
+ALIAS(colors)
+VALUE(
+This function returns the built-in color names which R knows about.
+These names can be used with a LANG(col=) specification in graphics
+functions.
+PARA
+An even wider variety of colors can be created with LANG(rainbow),
+LANG(rgb) and LANG(hsv).
+)
+SEEALSO(
+LANG(LINK(rainbow)), LANG(LINK(rgb)), LANG(LINK(hsv)).
+)

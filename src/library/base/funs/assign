@@ -1,0 +1,4 @@
+assign <- 
+function(x, value, envir=sys.frame(sys.parent()), inherits=FALSE, 
+immediate=TRUE)
+.Internal(assign(x,value,envir,inherits))

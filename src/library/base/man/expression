@@ -1,0 +1,27 @@
+TITLE(expression @@ Unevaluated Expressions)
+USAGE(
+expression(DOTS)
+BLANK
+is.expression(expr)
+as.expression(expr)
+)
+ALIAS(expression)
+ALIAS(is.expression)
+ALIAS(as.expression)
+VALUE(
+An object with class ``expression'' containing its
+unevaluated arguments.  Expression objects are
+lists of ``calls'' and so the subsetting operations which apply
+to lists also apply to them.  For compatibility with S,
+the LANG(mode) function will return LANG("expression")
+for expression objects.
+PARA
+LANG(is.expression) returns LANG(TRUE) if expr is
+an expression object and LANG(FALSE) otherwise.
+PARA
+LANG(as.expression) attempts to coerce its argument
+into an expression object.
+)
+SEEALSO(
+LANG(LINK(call)), LANG(LINK(call)).
+)

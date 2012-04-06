@@ -1,0 +1,21 @@
+TITLE(deparse @@ Expression Deparsing)
+USAGE(deparse(expr))
+ALIAS(deparse)
+VALUE(
+This function turns unevaluated expressions into
+character strings (a kind of inverse LANG(LINK) parse).
+A typical use of this is to create informative
+labels for data sets and plots.  The following example shows a
+simple use of this facility.  It uses the functions LANG(deparse)
+and LANG(substitute) to create labels for a plot which are character
+string versions of the actual arguments to the function LANG(myplot).
+)
+SEEALSO(
+LANG(LINK(substitute)), LANG(LINK(parse)).
+)
+EXAMPLES(
+myplot <-
+function(x, y)
+    plot(x, y, xlab=deparse(substitute(x)),
+        ylab=deparse(substitute(y)))
+)

@@ -1,0 +1,61 @@
+legend <-
+function(x, y, legend, fill, col="black", lty, pch, bty="o", bg=par("bg"),
+	xjust=0, yjust=1, ...)
+{
+	xchar <- xinch(par("cin")[1])
+	ychar <- yinch(par("cin")[2]) * 1.2
+	xbox <- xinch(par("cin")[2] * 0.8)
+	ybox <- yinch(par("cin")[2] * 0.8)
+	yline <- 2*xchar
+	w <- 2 * xchar + max(strwidth(legend))
+	h <- (length(legend)+1)*ychar
+	if(missing(y)) {
+		if(is.list(x)) {
+			y <- x$y
+			x <- x$x
+		}
+	}
+	if(!is.numeric(x) || !is.numeric(y))
+		stop("non-numeric coordinates")
+	if(length(x) <= 0 || length(x) != length(y))
+		stop("differing coordinate lengths")
+	if(length(x) != 1) {
+		x <- mean(x)
+		y <- mean(y)
+		xjust <- 0.5
+		yjust <- 0.5
+	}
+	if(!missing(fill)) {
+		w <- w + xchar + xbox
+	}
+	if(!missing(pch)) {
+		if(is.character(pch) && nchar(pch) > 1) {
+			np <- nchar(pch)
+			pch <- substr(rep(pch[1], np), 1:np, 1:np)
+		}
+		w <- w + 1.5 * xchar
+	}
+	if(!missing(lty))
+		w <- w + 3 * xchar
+	x <- x - xjust * w
+	y <- y + (1 - yjust) * h
+	xt <- rep(x, length(legend)) + xchar
+	yt <- y - (1:length(legend)) * ychar
+	if(bty != "n")
+		rect(x, y, x+w, y-h, col=bg)
+	x <- x + xchar
+	if(!missing(fill)) {
+		rect(xt, yt - 0.5 * ybox,
+			xt + xbox, yt + 0.5 * ybox, col=fill)
+		xt <- xt + xbox + xchar
+	}
+	if(!missing(pch)) {
+		points(xt + 0.25 * xchar, yt, pch, col=col)
+		xt <- xt + 1.5 * xchar
+	}
+	if(!missing(lty)) {
+		segments(xt, yt, xt + 2 * xchar, yt, lty=lty, col=col)
+		xt <- xt + 3 * xchar
+	}
+	text(xt, yt, text=legend, adj=c(0, 0.35))
+}

@@ -1,0 +1,54 @@
+TITLE(lm.influence @@ Regression Diagnostics)
+USAGE(
+lm.influence(z)
+BLANK
+rstudent(z)
+dfbetas(z)
+dffits(z)
+covratio(z)
+)
+ALIAS(lm.influence)
+ALIAS(rstudent)
+ALIAS(dfbetas)
+ALIAS(dffits)
+ALIAS(covratio)
+ARGUMENTS(
+ARG(z @@ the results returned by LANG(lm).)
+)
+DESCRIPTION(
+This suite of functions can be used to compute some of the
+regression diagnostics discussed in Belsley, Kuh and Welsch (1980).
+PARA
+The primary function is LANG(lm.influence) which is used by
+the other functions to compute the basic statistics of interest.
+The other functions produce particular diagnostic quantities
+from the fundamental quantities produced by LANG(lm.influence).
+)
+VALUES(
+A list containing the following components: @@
+ARG(hat @@ a vector containing the diagonal of the ``hat'' matrix.)
+ARG(coef @@ the change in the estimated coefficients which results
+when the i-th case is dropped from the regression is contained in
+the i-th row of this matrix.)
+ARG(sigma @@ a vector whose i-th element contains the estimate
+of the residual standard deviation obtained when the i-th
+case is dropped from the regression.)
+)
+REFERENCES(
+Belsley, D. A., E. Kuh and R. E. Welsch (1980).
+ITALIC(Regression Diagnostics.)
+New York: Wiley.
+)
+SEEALSO(
+LANG(LINK(lm)).
+)
+EXAMPLES(
+# Analysis of the life-cycle savings data
+# given in Belsley, Kuh and Welsch.
+data(savings)
+z <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data=savings)
+rstudent(z)
+dfbetas(z)
+dffits(z)
+covratio(z)
+)

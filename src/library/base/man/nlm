@@ -1,0 +1,83 @@
+TITLE(nlm @@ non-linear minimization)
+USAGE(
+nlm(f, p, hessian=FALSE, typsiz=rep(1, length(p)), fscale=1,
+        print.level=0, ndigit=12, gradtl=1e-06,
+        stepmx=max(1000 * sqrt(sum((p/typsiz)^2)), 1000),
+        steptl=1e-06, iterlim=100)
+)
+ALIAS(nlm)
+ARGUMENTS(
+ARG(f @@ the function to be minimized.)
+ARG(p @@ starting parameter values for the minimization.)
+ARG(hessian @@ if LANG(TRUE), the hessian of LANG(f)
+at the minimum is returned.)
+ARG(typsiz @@ an estimate of the size of each parameter
+at the minimum.)
+ARG(fscale @@ an estimate of the size of LANG(f) at the minimum.)
+ARG(print.level @@ this argument determines the level of printing
+which is done during the minimization process.  The default
+value of LANG(0) means that no printing occurs, a value of LANG(1)
+means that initial and final details are printed and a value
+of 2 means that full tracing information is printed.)
+ARG(ndigit @@ the number of significant digits in the function LANG(f).)
+ARG(gradtl @@ a positive scalar giving the tolerance at which the
+scaled gradient is considered close enough to zero to
+terminate the algorithm.  The scaled gradient is a
+measure of the relative change in LANG(f) in each direction
+LANG(p[i]) divided by the relative change in LANG(p[i]).)
+ARG(stepmx @@ a positive scalar which gives the maximum allowable
+scaled step length.  LANG(stepmx) is used to prevent steps
+which would cause the optimization function to
+overflow, to prevent the algorithm from leaving the
+area of interest in parameter space, or to detect
+divergence in the algorithm. LANG(stepmx) would be chosen
+small enough to prevent the first two of these
+occurrences, but should be larger than any anticipated
+reasonable step.)
+ARG(steptl @@ A positive scalar providing the minimum allowable
+relative step length.)
+ARG(iterlim @@ a positive integer specifying the maximum number of
+iterations to be performed before the program in
+terminated.)
+)
+DESCRIPTION(
+This function carries out a minimization of the function LANG(f)
+using a Newton-type algorithm.  See the references for details.
+PARA
+This is a preliminary version of this function and it will probably change.
+)
+VALUES(
+A list containing the following components:
+@@
+ARG(minimum @@ the value of the estimated minimum of LANG(f).)
+ARG(estimate @@ the point at which the mininum value of
+LANG(f) is obtained.)
+ARG(gradient @@ the gradient at the estimated minimum of LANG(f).)
+ARG(hessian @@ the hessian at the estimated minimum of LANG(f) (if requested).)
+ARG(code @@ an integer indicating why the optimization process terminated.
+1 = relative gradient is close to zero, current iterate is
+probably solution.
+2 = successive iterates within tolerance, current iterate
+is probably solution.
+3 = last global step failed to locate a point lower than
+LANG(estimate).  Either LANG(estimate) is an approximate local minimum of
+the function or LANG(steptl) is too small.
+4 = iteration limit exceeded.
+5 = maximum step size LANG(stepmx) exceeded five consecutive
+times.  Either the function is unbounded below,
+becomes asymptotic to a finite value from above in
+some direction, of LANG(stepmx) is too small.)
+)
+REFERENCES(
+Dennis, J. E. and Schnabel, R. B. (1983) ITALIC(Numerical Methods for
+Unconstrained Optimization and Nonlinear Equations), Prentice-Hall,
+Englewood Cliffs, NJ.
+PARA
+Schnabel, R. B., Koontz, J. E. and Weiss, B. E. (1985) A modular
+system of algorithms for unconstrained minimization,
+ITALIC(ACM Trans. Math. Software), BOLD(11), 419-440.
+)
+EXAMPLES(
+f <- function(x) sum((x-1:length(x))^2)
+nlm(f, c(10,10))
+)

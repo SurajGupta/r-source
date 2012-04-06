@@ -1,0 +1,7 @@
+TITLE(is.recursive @@ Is an Object Recursive?)
+USAGE(is.recursive(x))
+ALIAS(is.recursive)
+DESCRIPTION(
+LANG(is.recursive) returns LANG(TRUE) if LANG(x) has a recursive
+(list-like) structure and LANG(FALSE) otherwise.
+)

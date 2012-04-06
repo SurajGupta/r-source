@@ -1,0 +1,97 @@
+### -*- R -*-
+
+prompt <- function(object, ...) UseMethod("prompt")
+
+## Later, we may want  a data.frame method (as S).
+
+prompt.default <- function(object, filename = paste0(name, ".man"),
+			   force.function = FALSE)
+{
+  paste0 <- function(...) paste(..., sep = "")
+  name <- substitute(object)
+  if(is.language(name) && !is.name(name)) name <- eval(name)
+  name <- as.character(name)
+  fn <- get(name)
+  ##-- 'file' will contain the "lines" to be put in the  manual file
+  if(is.function(fn) || force.function) {
+    argls <- formals(fn)
+    n <- length(argls)
+    if(n > 0) { s <- 1:n; arg.names <- names(argls)
+    }      else s <- integer(0)
+    file <- paste0("TITLE(", name, " @@ ~~function to do ... ~~)")
+
+    ##-- Construct the 'call':
+    call <- paste0(name, "(")
+    for(i in s) {
+      n.i <- arg.names[i]
+      call <- paste0(call, n.i, if(n.i == "...") "" else "=",
+		     if(mode(argls[[i]]) == "missing") ""
+		       else deparse(argls[[i]]))
+      if(i != n) call <- paste0(call, ", ")
+    }
+    file <- c(file, "USAGE(", paste0(call, ")"),
+	      ")", paste0("ALIAS(", name, ")"))
+
+    if(length(s))
+      file <- c(file, "ARGUMENTS(",
+		paste0("ARG(", arg.names, " @@",
+		       " ~~Describe ", arg.names, " here~~  )"),
+		")")
+    fn.def <- deparse(fn)
+    if(any(br <- substr(fn.def,1,1) == ")"))
+      fn.def[br] <- paste(" ", fn.def[br])
+    file <- c(file,
+	      "DESCRIPTION(",
+	      "~~ a precise description of what the function does. ~~",
+	      ")",
+	      "VALUE(",
+	      "~Describe the value returned",
+	      ")",
+	      "~~~~~~~ For  multiple values (list), use 'VALUES' INSTEAD !",
+	      "             ---------------              ------",
+	      "VALUES(",
+	      "A description of the LIST of values returned.  Use",
+	      "@@",
+	      "ARG(comp1 @@ Description of `comp1')",
+	      "ARG(comp2 @@ Description of `comp2')",
+	      "...",
+	      ")",
+
+	      "REFERENCES(",
+	      "~put references to the literature / web site here,...",
+	      ")",
+	      "NOTE(",
+	      "~further notes~",
+	      ")",
+	      "~make other sections like WARNING with SECTION(...)~",
+
+	      "SEEALSO(", "~ functions to SEE ALSO as  LANG(LINK(~~fun~~))",
+	      ")",
+
+	      "EXAMPLES(",
+	      "##---- Should be DIRECTLY executable !! ----",
+	      "##-- ==>  Define data, use random,",
+	      "##--      or do  help(data=index)  for the standard data sets.",
+	      "BLANK", "## The function is currently defined as",
+	      fn.def,
+	      ")"
+	      ##-- not yet: , "KEYWORD( ~keyword )"
+	      )
+  } else { #-- not function --
+    file <- c("NON_FUNCTION()",
+	      paste("TITLE(", name, "@@ ~~data-name / kind ...  )"),
+	      "DESCRIPTION(",
+	      "~~ a precise description of what the function does. ~~",
+	      ")")
+  }
+  cat(file, file = filename, sep = "\n")
+  RHOME <- system("printenv RHOME", intern = TRUE)
+  if(substr(RHOME,1,8) == "/tmp_mnt") RHOME <- substr(RHOME,9,1000)
+  cat("created file named ", filename, " in the current directory.\n",
+      " Edit the file and move it to the appropriate directory,\n",
+      paste(RHOME,"src/manual/man/",sep="/") , "dropping the ending '.man'\n"
+      )
+  on.exit()  # DEBUG off
+  invisible(file)
+}
+

@@ -1,0 +1,53 @@
+TITLE(Special @@ Special Functions of Mathematics)
+USAGE(
+beta(a, b)
+lbeta(a, b)
+gamma(a)
+lgamma(a)
+digamma(a)
+trigamma(a)
+tetragamma(a)
+pentagamma(a)
+choose(n,k)
+lchoose(n,k)
+)
+ALIAS(beta)
+ALIAS(lbeta)
+ALIAS(gamma)
+ALIAS(lgamma)
+ALIAS(digamma)
+ALIAS(trigamma)
+ALIAS(tetragamma)
+ALIAS(pentagamma)
+ALIAS(choose)
+ALIAS(lchoose)
+DESCRIPTION(
+The functions LANG(beta) and LANG(lbeta) return the beta function
+and the natural logarithm of the beta function.
+PARA
+The functions LANG(gamma) and LANG(lgamma) return the gamma function
+and the natural logarithm of the gamma function.
+PARA
+The functions LANG(digamma), LANG(trigamma), LANG(tetragamma) and
+LANG(pentagamma)
+return the first, second, third and fourth derivatives of the logarithm
+of the gamma function.
+PARA
+The functions LANG(choose) and LANG(lchoose)
+return binomial coefficients and
+their logarithms.
+)
+EXAMPLES(
+choose(5,2)
+for(n in 0:10) print(choose(n,k = 0:n))
+PARA
+x <- seq(.1, 4, length=201); dx <- diff(x)[1]
+par(mfrow=c(2,3))
+for(ch in c("", "l","di","tri","tetra","penta")) {
+	deriv <- nchar(ch)>=2;  if(deriv) dy <- diff(y) / dx
+	nm <- paste(ch,"gamma",sep=''); y <- get(nm)(x)
+	plot(x, y, type='l', main=nm, col=1)
+	abline(h=0,col="lightgray")
+	if(deriv) lines(x[-1], dy, col=2, lty=2)
+}
+)

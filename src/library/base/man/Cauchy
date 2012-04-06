@@ -1,0 +1,26 @@
+TITLE(Cauchy @@ The Cauchy Distribution)
+USAGE(
+dcauchy(x, location=0, scale=1)
+pcauchy(q, location=0, scale=1)
+qcauchy(p, location=0, scale=1)
+rcauchy(n, location=0, scale=1)
+)
+ALIAS(dcauchy)
+ALIAS(pcauchy)
+ALIAS(qcauchy)
+ALIAS(rcauchy)
+VALUE(
+These functions provide information about the Cauchy distribution
+with location parameter LANG(location) and scale parameter LANG(scale).
+PARA
+LANG(dcauchy), LANG(pcauchy), and LANG(qcauchy) are respectively the density,
+distribution function and quantile function of the Cauchy distribution.
+LANG(rcauchy) generates random deviates from the Cauchy.
+PARA
+The Cauchy distribution with location EQN(l) and scale EQN(s)
+has density
+DEQN(f (x) = OVER(1 @@ greekpi s )
+SUP(PAREN( 1 + SUP(PAREN(OVER(x-l @@ s ))@@2) ) @@ -1)
+@@f(x) = 1 / (pi s (1 + ((x-l)/s)^2)))
+for all EQN(x).
+)

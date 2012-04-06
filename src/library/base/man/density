@@ -1,0 +1,106 @@
+TITLE(density @@ Kernel Density Estimation)
+USAGE(
+density(x, n=512, kernel="gaussian", bw, adjust=1, width,
+        from, to, cut=3)
+BLANK
+bw.ucv(x, samples=100)
+bw.bcv(x, samples=100)
+bw.sj(x, samples=100)
+BLANK
+print(dobj)
+plot(dobj, DOTS)
+)
+ALIAS(density)
+ALIAS(bw.ucv)
+ALIAS(bw.bcv)
+ALIAS(bw.sj)
+ALIAS(print.density)
+ALIAS(plot.density)
+ARGUMENTS(
+ARG(x @@ the values for which the estimate is to be computed.)
+ARG(n @@ the number of equally spaced points at which the density
+is to be estimated.  This is rounded up to the next power of 2,
+with a minimum value of 512.)
+ARG(kernel @@ a character string giving the smoothing kernel to be used.
+This must be one of LANG("gaussian"), LANG("rectangular"), LANG("triangular"),
+or LANG("cosine"), and may be abbrevited to a single letter.)
+ARG(bw @@ the smoothing bandwith to be used.  This is the standard
+deviation of the smoothing kernel.  It defaults to 1.06 times the
+minimum of the standard deviation and the interquartile range divided by
+1.34 times the sample size to the negative one fifth power.
+The specified value of LANG(bw) is multiplied by LANG(adjust).)
+ARG(adjust @@ the bandwith used is actually LANG(adjust*bw).
+This makes it easy to specify values like ``half the default'' bandwidth.)
+ARG(width @@ this exists for compatibility with S.)
+ARG(from,to @@ the left and right-most points of the grid at which the
+density is to be estimated.)
+ARG(cut @@ by default, the values of LANG(left) and LANG(right) are
+LANG(cut) bandwiths beyond the extremes of the data.)
+ARG(samples @@ the sample size to take in the bandwidth
+selection functions. If LANG(samples) is non-positive, the entire
+data set is used.)
+ARG(dobj @@ a ``density'' object.)
+ARG(DOTS @@ plotting parameters.)
+)
+DESCRIPTION(
+The function LANG(density) computes kernel density estimates
+with the given kernel and bandwidth
+(which is the standard deviation of the kernel).
+PARA
+The functions LANG(bw.ucv), LANG(bw.bcv) and LANG(bw.sj)
+provide automated ways of selecting a bandwith for density
+estimates (assuming a Gaussian kernel).
+The techniques used are as follows; LANG(bw.ucv) uses unbiased
+cross-validation, LANG(bw.bcv) uses biased cross-validation and
+LANG(bw.sj) uses the technique of Sheather and Jones.
+These cross-validation techniques are based on code from the
+Venables and Ripley MASS library.
+PARA
+The generic functions LANG(plot) and LANG(print) have
+methods density objects.
+PARA
+The algorithm used in LANG(density) disperses the mass of the
+empirical distribution function over a regular grid and then
+uses the fast Fourier transform to convolve this approximation
+with a discretized version of the kernel.
+)
+VALUES(
+An object with class ``density''.
+The underlying structure is a list containing the following components.
+@@
+ARG(x @@ the coordinates of the points where the density is estimated.)
+ARG(y @@ the estimated density values.)
+ARG(bw @@ the bandwidth used.)
+ARG(call @@ the call which produced the result.)
+ARG(name @@ the deparsed name of the LANG(x) argument.)
+)
+REFERENCES(
+Silverman, B. W. (1986).
+ITALIC(Density Estimation).
+London: Chapman and Hall.
+PARA
+Venables, W. N. and B. D. Ripley (1994).
+ITALIC(Modern Applied Statistics with S-Plus).
+New York: Springer.
+PARA
+Scott, D. W. (1992).
+ITALIC(Multivariate Density Estimation.  Theory, Practice and Visualization).
+New York: Wiley.
+PARA
+Sheather, S. J. and M. C. Jones (1991).
+``A reliable data-based bandwidth selection method for kernel density
+estimation.
+ITALIC(J. Roy. Statist. Soc.) BOLD(B), 683-690.
+)
+SEEALSO(
+LANG(LINK(convolve)), LANG(LINK(hist)).
+)
+EXAMPLES(
+# The Old Faithful geyser data
+data(faithful)
+d <- density(faithful$eruptions, bw=0.15)
+plot(d)
+BLANK
+plot(d, type="n")
+polygon(d, col="wheat")
+)

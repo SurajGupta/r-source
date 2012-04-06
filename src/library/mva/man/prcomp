@@ -1,0 +1,50 @@
+TITLE(prcomp @@ Principal Components Analysis)
+USAGE(
+prcomp(x=, scale=FALSE, use="all.obs")
+BLANK
+print.prcomp(prcomp.obj)
+plot.prcomp(prcomp.obj)
+)
+ALIAS(print.prcomp)
+ALIAS(plot.prcomp)
+ARGUMENTS(
+ARG(x @@ a matrix (or data frame) which provides the data
+for the principal components analysis.)
+ARG(scale @@ a logical value indicating whether the variables should
+be scaled to have unit variance before the analysis takes place.)
+ARG(use @@ the strategy to use for dealing with missing observations.
+The possible values are LANG("all.obs"), LANG("complete.obs"),
+or LANG("pairwise.complete.obs").
+An unambiguous substring can be used.)
+)
+DESCRIPTION(
+This function performs a principal components analysis on
+the given data matrix and returns the results as a
+LANG(prcomp) object.  The print method for the these
+objects prints the results in a nice format and the
+plot method produces a scree plot.
+)
+VALUES(
+LANG(prcomp) returns an list with class LANG("prcomp")
+containing the following components:
+@@
+ARG(var @@ the variances of the principal components
+(i.e. the eigenvalues))
+ARG(load @@ the matrix of variable loadings (i.e. a matrix
+whose columns contain the eigenvectors).)
+ARG(scale @@ the value of the LANG(scale) argument.)
+)
+REFERENCES(
+Mardia, K. V., J. T. Kent and J. M. Bibby (1979).
+ITALIC(Multivariate Analysis), London: Academic Press.
+)
+SEEALSO(
+LANG(LINK(cor)), LANG(LINK(cov)), LANG(LINK(eigen)).
+)
+EXAMPLES(
+# the variances of the variables in the
+# crimes data vary by orders of magnitude
+data(crimes)
+prcomp(crimes)
+prcomp(crimes,scale=TRUE)
+)

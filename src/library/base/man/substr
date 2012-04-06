@@ -1,0 +1,27 @@
+TITLE(substr @@ Extract Substrings from a Character Vector)
+USAGE(
+substr(x, start, stop)
+substring(text, first, last = 1000000)
+)
+ALIAS(substr)
+ALIAS(substring)
+DESCRIPTION(
+LANG(substr) takes a character vector as an argument and
+returns a vector whose elements contain the substring starting
+with the character at position LANG(start) up to the character
+at position LANG(stop). If LANG(start) is larger than the string
+length then NA is returned. If LANG(stop) is longer than LANG(start)
+and error is signalled.
+PARA
+LANG(substring) is compatible with S. For vector arguments, it expands the
+arguments cyclically.
+)
+SEEALSO(
+LANG(LINK(paste)), LANG(LINK(nchar)), LANG(LINK(strsplit))
+)
+EXAMPLES(
+x <- c("asfef","qwerty","yuiop[","b","stuff.blah.yech")
+substr(x,3,5)
+substring(x,3,5)
+substring(x,3,3:5)
+)

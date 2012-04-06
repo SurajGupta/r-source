@@ -1,0 +1,11 @@
+TITLE(median @@ Median Value)
+USAGE(
+median(x, na.rm=FALSE)
+)
+ALIAS(median)
+DESCRIPTION(
+LANG(median)
+computes the sample median of the vector of values given as its argument.
+If LANG(na.rm) is LANG(TRUE) then LANG(NA) values are deleted
+before computation proceeds.
+)

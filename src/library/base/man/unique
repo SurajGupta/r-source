@@ -1,0 +1,11 @@
+TITLE(unique @@ Extract Unique Elements)
+USAGE(
+unique(x)
+)
+ALIAS(unique)
+DESCRIPTION(
+LANG(unique) returns a vector like LANG(x)
+but with duplicate elements removed.
+If an element is equal to one with a smaller
+index, it is removed.
+)

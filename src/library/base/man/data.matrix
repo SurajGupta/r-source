@@ -1,0 +1,21 @@
+TITLE( data.matrix @@ Data Frame to Numeric Matrix)
+USAGE(
+data.matrix(frame)
+)
+ALIAS(data.matrix)
+ARGUMENTS(
+ARG(frame @@ a data frame whose components are either
+logical vectors, factors or numeric vectors.)
+)
+VALUE(
+The matrix obtained by converting all the variables in a
+data frame to numeric mode and then binding them together
+as the columns of a matrix.
+Factors and ordered factors are replaced by their codes.
+)
+SEEALSO(
+LANG(LINK(as.matrix)),
+LANG(LINK(codes)),
+LANG(LINK(data.frame)),
+LANG(LINK(matrix)).
+)

@@ -1,0 +1,7 @@
+var <- function(x, y=x, na.rm = FALSE) {
+	if(is.matrix(x) || !missing(y)) cov(x,y)
+	else {
+		if (na.rm) x <- x[!is.na(x)]
+		sum((x - mean(x))^2)/(length(x) - 1)
+        }
+}

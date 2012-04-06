@@ -1,0 +1,40 @@
+TITLE(Arithmetic @@ Arithmetic Operators)
+USAGE(
+x + y
+x - y
+x * y
+x / y
+x ^ y
+x %% y
+x %/% y
+)
+ALIAS(+)
+ALIAS(-)
+ALIAS(*)
+ALIAS(/)
+ALIAS(^)
+ALIAS(%%)
+ALIAS(%/%)
+VALUE(
+These binary operators perform arithmetic on vector objects.
+They return numeric vectors containing the result of the element
+by element operations.  The elements of shorter vectors are recycled
+as necessary.  The operators are LANG(+) for addition, LANG(-) for
+subtraction LANG(*) for multiplication, LANG(/) for division and
+LANG(^) for exponentiation.
+LANG(%%) indicates LANG(x mod y) and LANG(%/%) indicates integer
+division.
+PARA
+Objects such as arrays or time-series can be operated on this
+way provided they are conformable.
+)
+SEEALSO(
+LANG(LINK(Math)).
+)
+EXAMPLES(
+x <- -1:12
+x + 1
+2 * x + 3
+x %% 2
+x %/% 5
+)

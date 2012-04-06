@@ -1,0 +1,50 @@
+TITLE(sys.parent @@ Functions to access the function call stack.)
+USAGE(
+sys.call(which=<<see below>>)
+sys.frame(which=<<see below>>)
+sys.nframe()
+sys.function(n=<<see below>>)
+sys.parent(n=1)
+BLANK
+sys.calls()
+sys.frames()
+sys.parents()
+sys.on.exit()
+)
+ALIAS(sys.parent)
+ALIAS(sys.call)
+ALIAS(sys.calls)
+ALIAS(sys.frame)
+ALIAS(sys.frames)
+ALIAS(sys.nframe)
+ALIAS(sys.function)
+ALIAS(sys.parents)
+ALIAS(sys.on.exit)
+ARGUMENTS(
+ARG(which @@ the frame number.)
+ARG(n @@ the number of frame generations to go back.)
+)
+DESCRIPTION(
+These functions provide access to environments (frames in S-speak)
+associated with functions further up the calling stack.
+You need access to two different types of environments.
+You need access to the environment where the arguments to a function
+are defined. This is what LANG(sys.parent) does.
+You also need access to the environment where a function is being evaluated
+this is what LANG(sys.frame) does.
+PARA
+Often LANG(sys.parent) is the LANG(globalEnv) or the top-level environment.
+This is given number 1 in the list of frames. Each subsequent function
+evaluation increases the frame stack by 1 and the environment for evaluation
+of that function is returned by LANG(sys.frame) with the appropriate index.
+PARA
+LANG(sys.call) and LANG(sys.frame) both accept either positive or negative
+values for the argument LANG(which). Positive values of LANG(which) count up
+from frame 1 and negative values are count back from frame n.
+PARA
+Notice that even though the LANG(sys.xxx) functions are interpreted their
+contexts are not counted nor are they reported. There is no access to
+them. 
+PARA
+LANG(sys.status) has not been implemented yet.
+)

@@ -1,0 +1,20 @@
+TITLE(macintosh @@ Macintosh Quickdraw Graphics)
+USAGE(
+macintosh()
+)
+ALIAS(macintosh)
+DESCRIPTION(
+This command starts the graphics device driver for the Macintosh.
+This is usually done automagically at start up time
+and can only be done on a Macintosh.
+PARA
+Selecting LANG(Print) from the file menu when the graphics
+window is active will spool the graph to the printer,
+however,
+it is usually more effective to use LANG(Copy) to copy
+the graph to the scrap for pasting directly into
+a Macintosh application such as ITALIC(WriteNow) or ITALIC(Word).
+)
+SEEALSO(
+LANG(LINK(postscript)), LANG(LINK(x11)), LANG(LINK(device)).
+)

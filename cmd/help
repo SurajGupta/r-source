@@ -1,0 +1,16 @@
+#!/bin/sh
+
+pager=${PAGER-"more -s"}
+subject=$1
+shift
+for i in $*
+do
+	file=`grep "^$subject	" $RHOME/help/$i/AnIndex`
+
+	if [ ! "x$file" = x ]
+	then
+		file=$i/`echo $file | awk '{printf("%s", $2)}'`
+		exec $pager $RHOME/help/$file
+	fi
+done
+echo "sorry, no help for \"$subject\"."

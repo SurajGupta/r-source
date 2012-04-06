@@ -1,0 +1,51 @@
+TITLE(lsfit @@ Find the Least Squares Fit)
+USAGE(
+lsfit(x, y, wt, intercept=TRUE, tolerance=1e-07,
+        yname=NULL)
+)
+ALIAS(lsfit)
+ARGUMENTS(
+ARG(x @@ a matrix whose rows correspond to cases and whose columns
+correspond to variables.)
+ARG(y @@ the responses, possibly matrix valued if you want to fit multiple
+left hand sides.)
+ARG(wt @@ an optional vector of weights for performing weighted least squares.)
+ARG(intercept @@ whether or not an intercept term should be used.)
+ARG(tolerance @@ the tolerance to be used in the matrix decomposition.)
+ARG(yname @@ an unused parameter for compatibility.)
+)
+DESCRIPTION(
+The least squares estimate of EQN(boldgreekbeta) in the model
+DEQN(
+EQBOLD(Y) EQUALS EQBOLD(X) boldgreekbeta + boldgreekepsilon
+@@
+y = X beta + epsilon
+)
+is found.
+If weights are specified then a weighted least squares is performed
+with the weight given to the ITALIC(j)th case specified by the ITALIC(j)th
+entry in LANG(wt).
+PARA
+If any observation has a missing value in any field, that observation
+is removed before the analysis is carried out.
+This can be quite inefficient if there is a lot of missing
+data.
+PARA
+The implementation is via a modification of the LINPACK subroutines
+which allow for multiple left-hand sides.
+)
+VALUES(
+A list with the following named components: @@
+ARG(coef @@ the least squares estimates of the coefficients in
+the model (stated below).)
+ARG(residuals @@ residuals from the fit.)
+ARG(intercept @@ indicates whether an intercept was fitted.)
+ARG(qr @@ the QR decomposition of the design matrix.)
+)
+SEEALSO(
+LANG(LINK(ls.diag)), LANG(LINK(rreg)).
+)
+EXAMPLES(
+lsf <- lsfit(x,y)
+lsf <- lsfit(x,y,wt=wts)
+)

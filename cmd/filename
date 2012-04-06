@@ -1,0 +1,10 @@
+#!/bin/sh
+
+file=$RHOME/$1/$2
+
+if [ -r $file ]
+then
+	echo $file
+else
+	echo
+fi

@@ -1,0 +1,29 @@
+TITLE(Control @@ Control Flow)
+USAGE(
+if(cond) expr
+if(cond) cons.expr  else  alt.expr
+for(var in seq) expr
+while(cond) expr
+repeat expr
+break
+next
+)
+ALIAS(if)
+ALIAS(else)
+ALIAS(for)
+ALIAS(while)
+ALIAS(repeat)
+ALIAS(break)
+ALIAS(next)
+DESCRIPTION(
+These are the basic control-flow constructs of the R language.
+They function in much the same way as control statements
+in any algol-like language.
+)
+SEEALSO(
+LANG(LINK(ifelse)),
+LANG(LINK(switch)).
+)
+EXAMPLES(
+for(i in 1:5) print(1:i)
+)

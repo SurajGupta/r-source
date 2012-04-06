@@ -1,0 +1,23 @@
+TITLE(df.residual @@ Residual Degrees-of-Freedom)
+USAGE(
+df.residual(x, ...)
+)
+ALIAS(df.residual)
+ARGUMENTS(
+ARG(x @@ an object for which the degrees-of-freedom are desired.)
+ARG(... @@ additional optional arguments.)
+)
+VALUE(
+The value of the residual degrees-of-freedom
+extracted from the object LANG(x).
+PARA
+This is a generic function which can be used to extract
+residual degrees-of-freedom for fitted models.
+Consult the individual modeling functions for details
+details on how to use this function
+PARA
+There is no default method for this function.
+)
+SEEALSO(
+LANG(LINK(deviance)), LANG(LINK(glm)), LANG(LINK(lm)).
+)

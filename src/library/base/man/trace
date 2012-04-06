@@ -1,0 +1,16 @@
+TITLE(trace @@ Trace all calls to a function.)
+USAGE(
+trace(fun)
+untrace(fun)
+)
+ALIAS(trace)
+ALIAS(untrace)
+ARGUMENTS(
+ARG(fun @@ any interpreted R function (not quoted).)
+)
+DESCRIPTION(
+These are both in very primitive form. 
+If LANG(trace) is called the function named is marked and each time it
+is entered the call is printed on the console.
+To stop tracing a function use LANG(untrace).
+)

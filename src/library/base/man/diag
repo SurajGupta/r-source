@@ -1,0 +1,24 @@
+TITLE(diag @@ Matrix Diagonals)
+USAGE(
+diag(x, nrow, ncol)
+diag(x) <- value
+)
+ALIAS(diag)
+VALUE(
+If LANG(x) is a matrix then LANG(diag(x)) returns the diagonal of
+LANG(x).  If LANG(x) is a vector then LANG(x) returns a diagonal
+matrix whose diagonal is LANG(x).  If LANG(x) is an integer then
+LANG(diag(x)) returns an identity matrix of order LANG(x).
+The dimension of the returned matrix can be specified by
+LANG(nrow) and LANG(ncol) (the default is square).
+PARA
+The assignment form sets the diagonal of the matrix LANG(x) to the
+given value(s).
+)
+SEEALSO(
+LANG(LINK(matrix)).
+)
+EXAMPLES(
+dim(diag(3))
+diag(10,3,4) # guess what?
+)

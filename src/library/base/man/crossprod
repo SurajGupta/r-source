@@ -1,0 +1,12 @@
+TITLE(crossprod @@ Matrix Crossproduct)
+USAGE(
+crossprod(x, y=x)
+)
+ALIAS(crossprod)
+DESCRIPTION(
+Given matrices LANG(x) and LANG(y) as arguments,
+LANG(t) returns their matrix cross-product.
+This is formally equivalent to, but faster than, the
+call LANG(t(x) %*% y).
+)
+

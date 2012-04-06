@@ -1,0 +1,33 @@
+TITLE(get @@ Return a Variable's Value)
+USAGE(
+get(x, envir=NULL, mode="any", inherits=FALSE)
+)
+ALIAS(get)
+ARGUMENTS(
+ARG(x @@ a variable name (given as a quoted string).)
+ARG(envir @@ the environent to be used.)
+ARG(mode @@ the type of object sought.)
+ARG(inherits @@ should the enclosing frames of
+the environment be inspected?)
+)
+VALUE(
+This function searches the specified environment for a
+bound variable whose name is given by the string LANG(x).
+If the variable's value is not of the correct
+LANG(mode), it is ignored.
+PARA
+If LANG(inherits) is LANG(FALSE), only the first frame
+of the specified environment is inspected.
+If LANG(inherits) is LANG(TRUE), the search is continued
+up through the parent frames until a bound value of the right
+mode is found.
+PARA
+Using a LANG(NULL) environment is equivalent to using
+the current environment.
+)
+SEEALSO(
+LANG(LINK(exists)).
+)
+EXAMPLES(
+get("%o%")
+)

@@ -1,0 +1,45 @@
+TITLE(optimize @@ One Dimensional Optimization)
+USAGE(
+optimize(f=, interval=, lower=min(interval),
+        upper=max(interval), maximum=FALSE,
+        tol=.Machine$double.eps^0.25, ...)
+)
+ALIAS(optimize)
+ARGUMENTS(
+ARG(f @@ the function to be optimized. The function is
+either minimized or maximized over its first argument
+depending on the value of LANG(maximum).)
+ARG(interval @@ a vector containing the end-points of the interval
+to be searched for the minimum.)
+ARG(lower @@ the lower end point of the interval
+to be searched.)
+ARG(upper @@ the upper end point of the interval            
+to be searched.)
+ARG(tol @@ the desired accuracy.)
+ARG(... @@ additional arguments to LANG(f).)
+)
+DESCRIPTION(
+The function LANG(optimize) searches the interval from
+LANG(lower) to LANG(upper) for a minimum or maximum of
+the function LANG(f) with respect to its first argument.
+PARA
+The function uses Fortran code (from Netlib)
+based on algorithms given in the reference.
+)
+VALUE(
+A list with components LANG(minimum) (or LANG(maximum))
+and LANG(objective) which give the location of the minimum (or maximum)
+and the value of the function at that point.
+)
+REFERENCES(
+Brent, R. (1973).
+ITALIC(Algorithms for Minimization without Derivatives).
+Englewood Cliffs N.J.: Prentice-Hall.
+)
+SEEALSO(
+LANG(LINK(nlm)), LANG(LINK(uniroot)).
+)
+EXAMPLES(
+f <- function (x,a) (x-a)^2
+xmin <- optimize(f, c(0, 1), tol=0.0001, a=1/3)
+)

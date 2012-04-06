@@ -1,0 +1,20 @@
+TITLE(lines @@ Add Connected Line Segments to a Plot)
+USAGE(
+lines(x, y, DOTS)
+)
+ALIAS(lines)
+DESCRIPTION(
+LANG(lines) takes the coordinates given in the LANG(x)
+and LANG(y) vectors and joins those points with line
+segments.
+The coordinates can alternatively be passed to LANG(lines)
+in a plotting structure (a list with x and y components),
+a time series, etc.
+PARA
+Graphical parameters can also be specified as arguments.
+)
+EXAMPLES(
+# draw a smooth line through a scatter plot
+plot(cars, main="Stopping Distance versus Speed")
+lines(lowess(cars))
+)

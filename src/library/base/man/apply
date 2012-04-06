@@ -1,0 +1,36 @@
+TITLE(apply @@ Apply Functions Over Array Margins)
+USAGE(
+apply(x, MARGIN, FUN, DOTS)
+)
+ALIAS(apply)
+ARGUMENTS(
+ARG(x @@ the array to be used.)
+ARG(MARGIN @@ a vector giving the subscripts which the
+function will be applied over.
+LANG(1) indicates rows, LANG(2) indicates columns,
+LANG(c(1,2)) indicates rows and columns.)
+ARG(FUN @@ the function to be applied.
+In the case of functions like LANG(+),
+LANG(%*%), etc., the function name must be quoted.)
+ARG(DOTS @@ optional arguments to LANG(FUN).)
+)
+VALUE(
+If each call to LANG(FUN) returns a vector of length LANG(n), then
+LANG(apply) returns an array of dimension LANG(c(n,dim(x)[MARGIN])) if
+LANG(n GT 1).  If LANG(n EQUALS 1), LANG(apply) returns a vector if
+LANG(MARGIN) has length 1 and an array of dimension LANG(dim(x)[MARGIN])
+otherwise.
+)
+SEEALSO(
+LANG(LINK(lapply)), LANG(LINK(tapply)), LANG(LINK(sweep)).
+)
+EXAMPLES(
+# Compute row and column sums for a matrix:
+x <- cbind(3, c(4:1,2:5))
+col.sums <- apply(x, 2, sum)
+row.sums <- apply(x, 1, sum)
+rbind(cbind(x, row.sums), c(col.sums, sum(col.sums)))
+BLANK
+# Sort the columns of a matrix
+apply(x, 2, sort)
+)

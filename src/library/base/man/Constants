@@ -1,0 +1,33 @@
+TITLE(Constants @@ Built-in Constants)
+USAGE(
+LETTERS
+letters
+month.abb
+month.name
+pi
+)
+ALIAS(LETTERS)
+ALIAS(letters)
+ALIAS(month.abb)
+ALIAS(month.name)
+ALIAS(pi)
+VALUE(
+R has a limited number of built-in constants.
+(there is also a rather larger library of data sets
+which can be loaded with the function LANG(data)).
+PARA
+The following constants are available:
+LANG(LETTERS),
+the 26 upper-case letters of the Roman alphabet;
+LANG(letters),
+the 26 lower-case letters of the Roman alphabet;
+LANG(month.abb),
+the three-letter abbreviations for the English month-names;
+LANG(month.name),
+The English names for the months of the year;
+LANG(pi),
+the ratio of the circumference of a circle to its diameter.
+)
+SEEALSO(
+LANG(LINK(data)).
+)

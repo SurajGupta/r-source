@@ -1,0 +1,39 @@
+TITLE(postscript @@ PostScript Graphics)
+USAGE(
+postscript(file="Rplots.ps", paper="a4", landscape=TRUE,
+        width, height, family="Helvetica", pointsize=12,
+        bg="white", fg="black")
+)
+ALIAS(postscript)
+ARGUMENTS(
+ARG(file @@ the name of a file to print to, it must be a quoted string.)
+ARG(paper @@ the size of paper in the printer.  The choices are
+LANG("a4"), LANG("letter"), LANG("legal") and LANG("executive").)
+ARG(landscape @@ the orientation of the printed image, a logical.)
+ARG(width,height @@ the width, and height of the graphics region in inches.
+The default is to use the entire page.)
+ARG(family @@ the font family to be used.
+This must be one of LANG("AvantGarde"),
+LANG("Bookman"), LANG("Courier"), LANG("Helvetica"),
+LANG("Helvetica-Narrow"), LANG("NewCenturySchoolbook"),
+LANG("Palatino") or LANG("Times").)
+ARG(pointsize @@ the default point size to be used.)
+ARG(bg @@ the default background color to be used.)
+ARG(bg @@ the default foreground color to be used.)
+)
+DESCRIPTION(
+The file LANG(file) is opened and the PostScript commands needed to 
+plot any graphics requested are stored in that file.
+This file can then be printed on a suitable device to obtain hard
+copy.
+)
+SEEALSO(
+LANG(LINK(x11)), LANG(LINK(macintosh)), LANG(LINK(device)).
+)
+EXAMPLES(
+# open the file "foo" for graphics output
+postscript("foo")
+BLANK
+# produce the desired graph(s)
+plot(x,y)
+)

@@ -1,0 +1,17 @@
+TITLE(structure @@ Attribute Specification)
+USAGE(
+structure(data, DOTS)
+)
+ALIAS(structure)
+ARGUMENTS(
+ARG(data @@ an object which will have
+various attributes attached to it.)
+ARG(DOTS @@ attributes, specified in LANG(tag=value)
+form, which will be attached to data.)
+)
+DESCRIPTION(
+LANG(structure) returns the given object with its attributes set.
+)
+EXAMPLES(
+structure(1:6, dim = 2:3)
+)

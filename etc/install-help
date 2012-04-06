@@ -1,0 +1,37 @@
+#!/bin/sh
+# Should work WHEREVER this is called from :
+cd `dirname $0`/..
+RHOME=`pwd`; export RHOME
+
+echo "Manual entries for base library"
+if [ ! -d help/base ]
+then
+	mkdir help/base
+fi
+
+cp /dev/null help/base/AnIndex
+
+FILES="`ls -A src/library/base/man | sed '/CVS/d; /~$/d; /.bak$/d'`"
+
+(
+for file in $FILES
+do
+	NAMES=`grep 'ALIAS([A-Za-z.]' src/library/base/man/$file | sed '
+	s/ALIAS(\(.*\))$/\1/'`
+	for name in $NAMES
+	do
+		echo "$name	$file"
+	done
+done
+#for file in $FILES
+#do
+#	echo "$file	$file"
+#done
+) | sort -d -f >> help/base/AnIndex
+
+for file in $FILES
+do
+ ./etc/doc2ms src/library/base/man/$file | nroff -ms 2> /dev/null \
+ | ./etc/help.pretty | sed 's/^/	/' >  help/base/$file
+ echo $file
+done

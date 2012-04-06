@@ -1,0 +1,14 @@
+TITLE(table @@ Cross Tabulation)
+USAGE(
+table(DOTS)
+)
+ALIAS(table)
+DESCRIPTION(
+LANG(table) uses the cross-classifying factors provided as arguments
+to build a contingency table of the counts at each combination
+of factor levels.
+)
+EXAMPLES(
+# simple two-way contingency table
+tab <- table(sex,age)
+)

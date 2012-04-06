@@ -1,0 +1,41 @@
+TITLE(uniroot @@ One Dimensional Root Finding)
+USAGE(
+uniroot(f, interval, lower=min(interval),
+        upper=max(interval),
+            tol=.Machine$double.eps^0.25, ...)
+)
+ALIAS(uniroot)
+ARGUMENTS(
+ARG(f @@ the function for which the root is sought.)
+ARG(interval @@ a vector containing the end-points of the interval
+to be searched for the root.)
+ARG(lower @@ the lower end point of the interval to be searched.)
+ARG(upper @@ the upper end point of the interval to be searched.)
+ARG(tol @@ the desired accuracy.)
+ARG(... @@ additional arguments to LANG(f).)
+)
+DESCRIPTION(
+The function LANG(optimize) searches the interval from
+LANG(lower) to LANG(upper) for a zero of
+the function LANG(f) with respect to its first argument.
+PARA
+The function uses Fortran code (from Netlib)
+based on algorithms given in the reference.
+)
+VALUE(
+A list with components LANG(root)
+and LANG(f.root) which give the location of the root
+and the value of the function evaluated at that point.
+)
+REFERENCES(
+Brent, R. (1973).
+ITALIC(Algorithms for Minimization without Derivatives).
+Englewood Cliffs N.J.: Prentice-Hall.
+)
+SEEALSO(
+LANG(LINK(optimize)), LANG(LINK(nlm)).
+)
+EXAMPLES(
+f <- function (x,a) x-a
+xmin <- uniroot(f, c(0, 1), tol=0.0001, a=1/3)
+)

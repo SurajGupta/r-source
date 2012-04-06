@@ -1,0 +1,32 @@
+TITLE(dyn.load @@ Link to a DLL)
+USAGE(
+dyn.load(libname)
+)
+ALIAS(dyn.load)
+ARGUMENTS(
+ARG(libname @@
+a character string giving the pathname to a DLL.)
+)
+VALUE(
+This function is used for its side effect which
+links the specified shared library to the executing R image.
+Calls to LANG(.C) and LANG(.Fortran) can then be used to execute
+C functions or Fortran subroutines contained in the library.
+PARA
+The creation of shared libraries the runtime linking
+of them into executing programs is very platform
+dependent.  In recent years there has been some
+simplification in the process because the C subroutine
+call LANG(dlopen) has become the standard for doing this
+under Unix.
+LANG(dyn.load) uses the LANG(dlopen) mechanism and
+should work on all platforms which support it.
+)
+NOTE(
+The original code for loading DLLs in UNIX
+was provided by Heiner Schwarte.
+The compatibility code for HP-UX was provided by Luke Tierney.
+)
+SEEALSO(
+LANG(LINK(.C)), LANG(LINK(.Fortran)).
+)

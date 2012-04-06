@@ -1,0 +1,238 @@
+formula <- function(x, ...) UseMethod("formula")
+formula.default <- function(x) {
+	if (!is.null(x$formula))
+		eval(x$formula)
+	switch(typeof(x),
+		NULL = structure(NULL, class="formula"),
+		character = formula(eval(parse(text=x)[[1]])),
+		call = eval(x),
+		stop("invalid formula"))
+}
+formula.formula <- function(x) x
+formula.terms <- function(x) {
+	attributes(x) <- list(class="formula")
+	x
+}
+print.formula <- function(x) print.default(unclass(x))
+
+terms <- function(x, ...) UseMethod("terms")
+print.terms <- function(x) print.default(unclass(x))
+terms.default <- function(x) x$terms
+terms.terms <- function(x) x
+
+delete.response <-
+function (termobj) 
+	terms(reformulate(attr(termobj, "term.labels"), NULL),
+		specials=names(attr(termobj, "specials")))
+
+reformulate <- 
+function (termlabels, response=NULL) 
+{
+	if (is.null(response)){
+		termtext <- paste("~", paste(termlabels, collapse="+"),collapse="")
+		termobj <- eval(parse(text=termtext)[[1]])
+	}
+	else {
+		termtext <- paste("response", "~", paste(termlabels, collapse="+"), 
+			collapse="")
+		termobj <- eval(parse(text=termtext)[[1]])
+		termobj[[2]] <- response
+	}
+	termobj
+}
+
+drop.terms <-
+function(termobj, dropx=NULL, keep.response=FALSE) 
+{
+	if (is.null(dropx)) 
+		termobj
+	else {
+		newformula <- reformulate(attr(termobj, "term.labels")[-dropx], if (keep.response) termobj[[2]] else NULL)
+		terms(newformula, specials=names(attr(termobj, "specials")))
+	}
+}
+
+terms.formula <-
+function (x, specials = NULL, abb = NULL, data = NULL, keep.order = FALSE) 
+{
+	new.specials <- unique(c(specials, "offset"))
+	terms <- .Internal(terms.formula(x, new.specials, abb, data, keep.order))
+	offsets <- attr(terms,"specials")$offset
+	if(!is.null(offsets)) {
+		names <- dimnames(attr(terms,"factors"))[[1]][offsets]
+		offsets <- match(names, dimnames(attr(terms,"factors"))[[2]])
+		offsets <- offsets[!is.na(offsets)]
+		if(length(offsets) > 0) {
+			attr(terms, "factors") <- attr(terms,"factors")[,-offsets, drop=FALSE]
+			attr(terms, "term.labels") <- attr(terms, "term.labels")[-offsets]
+			attr(terms, "order") <- attr(terms, "order")[-offsets]
+			attr(terms, "offset") <- attr(terms,"specials")$offset
+		}
+	}
+	attr(terms, "specials")$offset <- NULL
+	terms
+}
+
+coefficients <- function(x, ...)
+UseMethod("coefficients")
+coef <- coefficients
+
+residuals <- function(x, ...) 
+UseMethod("residuals")
+resid <- residuals
+
+deviance <- function(x, ...)
+UseMethod("deviance")
+
+fitted.values <- function(x, ...) 
+UseMethod("fitted.values")
+fitted <- fitted.values
+
+anova <- function(x, ...)
+UseMethod("anova")
+
+effects <- function(x, ...)
+UseMethod("effects")
+
+weights <- function(x, ...)
+UseMethod("weights")
+
+df.residual <- function(x, ...)
+UseMethod("df.residual")
+
+offset <- function(x) x
+
+na.action <- function(x, ...)
+UseMethod("na.action")
+
+na.action.default <- function(x) attr(x, "na.action")
+
+na.fail <- function(frame)
+{
+	ok <- complete.cases(frame)
+	if(all(ok)) frame else stop("missing values in data frame");
+}
+
+na.omit <- function(frame)
+{
+	ok <- complete.cases(frame)
+	if (all(ok))
+		return(frame)
+	else return(frame[ok, ])
+}
+
+model.data.frame <- function(...) {
+	cn <- as.character(substitute(list(...))[-1])
+	data.frame(..., col.names=cn, as.is=TRUE)
+}
+
+"model.frame" <-
+function (formula, data = sys.frame(sys.parent()), subset = NULL,
+	na.action = eval(as.name(options("na.action")$na.action)), 
+	use.data = TRUE, process.offsets = TRUE, ...) 
+{ 
+        if (!is.null(formula$model) && missing(data)) 
+	  return(formula$model)
+
+	if (!missing(data) || is.null(formula$model.frame)) {
+		dotsdata <- if (use.data) 
+			data
+		else sys.frame(sys.parent())
+		newframe <- substitute(list(...))
+		dots <- eval(newframe, dotsdata)
+		if (!is.null(dots)) {
+			real.dots <- !unlist(lapply(dots, is.null))
+			newframe <- as.call(newframe[c(T, real.dots)])
+			dots <- dots[real.dots]
+		}
+		Terms <- terms(formula)
+		frame <- attr(Terms, "variables")
+		name.process <- function(x) paste("(", x, ")", sep = "")
+		if (missing(data) && !is.null(formula$call)) {
+			if (is.null(formula$call$data))
+				data<-environment(NULL)
+			else
+				data <- eval(formula$call$data)
+		}
+		if (!(missing(subset) || exists(as.character(match.call()$subset), inherits = FALSE))) 
+			subset <- eval(match.call()$subset, data)
+		if (is.null(dots)) 
+			rval <- na.action(eval(frame, data)[subset, , drop = FALSE])
+		else {
+			dotnames <- sapply(names(eval(dots, data)), name.process)
+			val <- eval(frame, data)
+			newframe[[1]] <- as.name("model.data.frame")
+			for (i in 1:length(dots)) newframe[[i + 1]] <- dots[[i]]
+			dotsval <- eval(newframe, dotsdata)
+			names(dotsval) <- dotnames
+			if (dim(val)[1] == dim(dotsval)[1]) 
+				newval <- c(val, dotsval)
+			else stop("Mismatched dimensions in model.frame")
+			class(newval) <- "data.frame"
+			rval <- na.action(newval[subset, , drop = FALSE])
+		}
+		attr(rval, "terms") <- Terms
+		offset.pos <- attr(Terms, "offset")
+		if (process.offsets && (length(offset.pos) > 0)) {
+			offset.total <- as.vector(as.matrix(rval[, offset.pos]) %*% rep(1, length(offset.pos
+			)))
+			rval[[offset.pos[1]]] <- offset.total
+			names(rval)[offset.pos[1]] <- "(offset)"
+		}
+		rval
+	}
+	else formula$model.frame
+}
+
+model.weights <- function(x) x$"(weights)"
+
+model.offset <- function(x) x$"(offset)"
+
+model.matrix <- function (formula, data) 
+{
+	t <- terms(formula)
+	if (missing(data)) 
+		data <- eval(attr(t, "variables"), sys.frame(sys.parent()))
+	.Internal(model.matrix(t, data))
+}
+
+model.response <- function(data, type="numeric")
+{
+	if(attr(attr(data,"terms"), "response")) {
+		if(is.list(data) | is.data.frame(data)) {
+			v <- data[[1]]
+			if(type == "numeric" | type == "double") {
+				storage.mode(v) <- "double"
+			}
+			else stop("invalid response type")
+			if(is.matrix(v) && ncol(v) == 1)
+				dim(v) <- NULL
+			return(v)
+		}
+		else stop("invalid data argument")
+	}
+	else
+		return (NULL)
+}
+
+model.extract <- function(frame, component)
+{
+	component<-as.character(substitute(component))
+	rval<-switch(component,
+		response= model.response(frame),
+		offset = model.offset(frame),
+		weights = frame$"(weights)",
+		start = frame$"(start)"
+		)
+	if(length(rval) == nrow(frame))
+		names(rval)<-attr(frame, "row.names")
+	else if(is.matrix(rval) && nrow(rval)==nrow(frame)) {
+		t1<-dimnames(rval)
+		dimnames(rval)<-list(attr(frame, "row.names"),t1[[2]])
+	}
+	return(rval)
+}
+
+update <-
+function(x, ...)
+	UseMethod("update")

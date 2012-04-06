@@ -1,0 +1,35 @@
+TITLE(Poisson @@ The Poisson Distribution)
+USAGE(
+dpois(x, lambda)
+ppois(q, lambda)
+qpois(p, lambda)
+rpois(n, lambda)
+)
+ALIAS(dpois)
+ALIAS(ppois)
+ALIAS(qpois)
+ALIAS(rpois)
+ARGUMENTS(
+ARG(x @@ vector of (positive) quantiles.)
+ARG(p @@ vector of probabilities.)
+ARG(n @@ number of random values to return.)
+ARG(lambda @@ vector of positive means.)
+)
+DESCRIPTION(
+These functions provide information about the Poisson distribution
+with parameter LANG(lambda).  LANG(dpois) gives the density,
+LANG(ppois) gives the distribution function LANG(qpois) gives the
+quantile function and LANG(rpois) generates random deviates.
+PARA
+The Poisson distribution has density
+DEQN(
+p(x) = OVER(SUP(greeklambda@@x) SUP(e@@-greeklambda) @@ x!)
+@@
+p(x) = lambda^x exp(-lambda)/x!
+)
+for EQN(x = 0, 1, 2, DOTS).
+)
+EXAMPLES(
+-log(dpois(0:7, lambda=1) * gamma(1+ 0:7))
+Ni <- rpois(50, lam= 4); table(factor(Ni, 0:max(Ni)))
+)

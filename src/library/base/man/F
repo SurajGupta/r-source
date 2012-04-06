@@ -1,0 +1,34 @@
+TITLE(F @@ The F Distribution)
+USAGE(
+df(x, n1, n2)
+pf(q, n1, n2)
+qf(p, n1, n2)
+rf(n, n1, n2)
+)
+ALIAS(df)
+ALIAS(pf)
+ALIAS(qf)
+ALIAS(rf)
+VALUE(
+These functions provide information about the F
+distribution with LANG(n1) and LANG(n2) degrees of freedom.
+LANG(df) gives the density,
+LANG(pf) gives the distribution function
+LANG(qf) gives the quantile function
+and
+LANG(rf) generates random deviates.
+PARA
+The F distribution with EQN(n_1 @@ n1) and EQN(n_2 @@ n2)
+degrees of freedom has density
+DEQN(f(x) =
+OVER(greekGamma (SUB(n@@1)/2 + SUB(n@@2)/2) @@
+greekGamma (SUB(n@@1)/2) greekGamma (SUB(n@@2)/2))
+SUP(PAREN( OVER(SUB(n@@1) @@ SUB(n@@2)))@@SUB(n@@1)/2)
+SUP(x@@SUB(n@@1)/2 - 1)  
+SUP(PAREN(1 + OVER(SUB(n@@1) x @@ SUB(n@@2)))@@- (SUB(n@@1) + SUB(n@@2))/2)
+@@
+f(x) = Gamma((n1 + n2)/2) / (Gamma(n1/2) Gamma(n2/2))
+         (n1/n2)^(n1/2) x^(n1/2 - 1)
+           (1 + (n1/n2) x)^-(n1 + n2)/2)
+for EQN(x GT 0).
+)

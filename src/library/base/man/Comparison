@@ -1,0 +1,30 @@
+TITLE(Comparison @@ Relational Operators)
+USAGE(
+x < y
+x > y
+x <= y
+x >= y
+x == y
+x != y
+)
+ALIAS(<)
+ALIAS(<=)
+ALIAS(==)
+ALIAS(!=)
+ALIAS(>=)
+ALIAS(>)
+ALIAS(Comparison)
+VALUE(
+These binary operators allow the comparison of values in vectors.
+They return a vector of logicals indicating the result of the
+element by element comparison.  The elements of shorter vectors
+are recycled as necessary.
+PARA
+Objects such as arrays or time-series can be compared this
+way provided they are conformable.
+)
+EXAMPLES(
+x <- rnorm(20)
+x < 1
+x[x > 0]
+)

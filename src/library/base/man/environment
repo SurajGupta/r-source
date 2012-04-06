@@ -1,0 +1,17 @@
+TITLE(environment @@ Environment Access)
+USAGE(
+environment(x=NULL)
+environment(x) <- value
+)
+ALIAS(environment)
+VALUE(
+If LANG(x) is a function then LANG(environment(x))
+returns the environment associated with that function.
+If LANG(x) is LANG(NULL) then the global environment is returned.
+PARA
+The assignment form sets the environment of the function LANG(x)
+to the value given.
+PARA
+It is an error for LANG(x)
+to be anything other than a function or LANG(NULL).
+)

@@ -1,0 +1,51 @@
+lm.influence <-
+function(z)
+{
+	n <- as.integer(nrow(z$qr$qr))
+	k <- as.integer(z$qr$rank)
+	.Fortran("lminfl",
+		z$qr$qr, n, n, k,
+		z$qr$qraux,
+		z$coefficients,
+		z$residuals,
+		hat=double(n),
+		coef=matrix(0,nr=n,nc=k),
+		sigma=double(n),
+		DUP=FALSE)[c("hat", "coef", "sigma")]
+}
+
+rstudent <-
+function(z)
+{
+	infl <- lm.influence(z)
+	residuals(z)/(infl$sigma*sqrt(1-infl$hat))
+}
+
+dfbetas <-
+function(z)
+{
+	infl <- lm.influence(z)
+	xxi <- chol2inv(z$qr$qr,z$qr$rank)
+	d <- infl$coef/(outer(infl$sigma, sqrt(diag(xxi))))
+	dn <- dimnames(z$qr$qr)
+	dn[[2]] <- dn[[2]][1:z$qr$rank]
+	dimnames(d) <- dn
+	d
+}
+
+dffits <-
+function(z)
+{
+	infl <- lm.influence(z)
+	sqrt(infl$hat)*residuals(z)/(infl$sigma*(1-infl$hat))
+}
+
+covratio <-
+function(z)
+{
+	infl <- lm.influence(z)
+	n <- nrow(z$qr$qr)
+	p <- z$rank
+	e.star <- residuals(z)/(infl$sigma*sqrt(1-infl$hat))
+	1/((((n - p - 1)+e.star^2)/(n - p))^p*(1-infl$hat))
+}

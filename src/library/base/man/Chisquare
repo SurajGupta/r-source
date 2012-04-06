@@ -1,0 +1,24 @@
+TITLE(Chisquare @@ The Chi-Square Distribution)
+USAGE(
+dchisq(x, df)
+pchisq(q, df)
+qchisq(p, df)
+rchisq(n, df)
+)
+ALIAS(dchisq)
+ALIAS(pchisq)
+ALIAS(qchisq)
+ALIAS(rchisq)
+VALUE(
+These functions provide information about the chi-square distribution
+with LANG(df) degrees of freedom.  LANG(dchisq) gives the density,
+LANG(pchisq) gives the distribution function LANG(qchisq) gives
+the quantile function and LANG(rchisq) generates random deviates.
+PARA
+The chi-square distribution with LANG(df) EQN(= n) degrees of freedom has density
+DEQN(f(x) =
+OVER(1 @@ SUP(2@@n/2) greekGamma (n/2))
+SUP(x@@n/2-1) SUP(e@@-x/2)
+@@f(x) = 1 / (2^(n/2) Gamma(n/2))  x^(n/2-1) e^(-x/2))
+for EQN(x GT 0).
+)

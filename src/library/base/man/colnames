@@ -1,0 +1,13 @@
+TITLE(colnames @@ Column Labels)
+USAGE(
+colnames(x)
+colnames(x) <- namevector
+)
+ALIAS(colnames)
+VALUE(
+This function can be used to retrieve or set the
+column labels of a matrix.
+)
+SEEALSO(
+LANG(LINK(dimnames)), LANG(LINK(rownames)).
+)

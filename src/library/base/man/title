@@ -1,0 +1,12 @@
+TITLE(title @@ Plot Annotation)
+USAGE(
+title(main="", xlab="", ylab="")
+)
+ALIAS(title)
+DESCRIPTION(
+This function can be used to add labels to a plot.
+)
+EXAMPLES(
+plot(cars, main="")
+title(main="Stopping Distance versus Speed")
+)

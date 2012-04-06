@@ -1,0 +1,19 @@
+postscript <- function(
+	file="Rplots.ps",
+	paper=options("papersize")$papersize,
+	landscape=TRUE,
+	width=0,
+	height=0,
+	family="Helvetica",
+	pointsize=12,
+	bg="white",
+	fg="black",
+	onefile,
+	print.it,
+	append)
+{
+	.Internal(device(
+		"postscript",
+		as.character(c(file, paper, family, bg, fg)),
+		c(width, height, landscape, pointsize)))
+}

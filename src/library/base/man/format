@@ -1,0 +1,21 @@
+TITLE(format @@ Encode in a Common Format)
+USAGE(
+format(x, trim=FALSE)
+)
+ALIAS(format)
+VALUE(
+This function converts its first argument to a vector of character strings,
+which have a common format (as is done by print).
+If LANG(trim) is LANG(TRUE), leading blanks are trimmed off the
+strings.
+This is useful when the strings are to be used for plot axis annotation.
+PARA
+The function LANG(formatC) provides a rather more flexible
+formatting facility.
+)
+SEEALSO(
+LANG(LINK(formatC)).
+)
+EXAMPLES(
+format(1:10)
+)

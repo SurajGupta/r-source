@@ -1,0 +1,15 @@
+TITLE(rev @@ Reverse a Vector's Elements)
+USAGE(
+rev(x)
+)
+ALIAS(rev)
+DESCRIPTION(
+LANG(rev)
+provides a reversed version of its argument.
+It can be used in combination with
+LANG(sort) to obtain vectors sorted into descending order.
+)
+EXAMPLES(
+# sort into descending order
+rev(sort(x))
+)

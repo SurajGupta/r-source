@@ -1,0 +1,36 @@
+TITLE(legend @@ Add Legends to Plots)
+USAGE(
+legend(x, y, legend, fill=, col="black",
+        lty=, pch=, bty="o", bg=par("bg"),
+        xjust=0, yjust=1)
+)
+ALIAS(legend)
+ARGUMENTS(
+ARG(x @@ the x location of the legend.)
+ARG(y @@ the y location of the legend.)
+ARG(legend @@ a vector of text values to appear in the legend.)
+ARG(fill @@ if specied, this argument will cause boxes filled
+with the specified colors to appear beside the legend text.)
+ARG(col @@ the color of points or lines appearing in the legend.)
+ARG(lty @@ the line types for lines appearing in the legend.)
+ARG(pch @@ the plotting symbols appearing in the legend.)
+ARG(bty @@ the type of box to be drawn around the legend.)
+ARG(bg @@ the background color for the legend box.)
+ARG(xjust @@ how the legend is to be justified relative to
+the legend x location.  A value of 0 means left justified, 0.5 means
+centered and 1 means right justified.)
+ARG(yjust @@ how the legend is to be justified relative to
+the legend y location.  A value of 0 means top justified, 0.5 means
+centered and 1 means bottom justified.)
+)
+DESCRIPTION(
+This function can be used to add legends to plots.
+Note that a call to the function LANG(locator) can be used
+in place of the LANG(x) and LANG(y) arguments.
+)
+SEEALSO(
+LANG(LINK(plot)), LANG(LINK(barplot)).
+)
+EXAMPLES(
+# There are no examples yet.
+)

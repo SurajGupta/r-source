@@ -1,0 +1,52 @@
+"help" <-
+function (topic, data, library)
+{
+	if(!missing(topic)) {
+		topic <- substitute(topic)
+		if (is.character(topic) || is.name(topic)) {
+			if (!is.character(topic)) 
+				topic <- deparse(topic)
+			if (!is.na(match(topic, c("+", "-", "*", "/", "^", "%%")))) 
+				topic <- "Arithmetic"
+			else if (!is.na(match(topic, c("<", ">", "<=", ">=", "==", "!=")))) 
+				topic <- "Comparison"
+			else if (!is.na(match(topic, c("&", "&&", "|", "||", "!")))) 
+				topic <- "Logic"
+			else if (!is.na(match(topic, c("[", "[[", "$"))))
+				topic <- "Extract"
+			system(paste("$RHOME/cmd/help", topic,
+				paste(.Libraries, collapse = " "), "base"))
+		}
+		else {
+			topic <- as.character(topic)
+			if (topic[1] == "data") {
+				file <- system.file("data", paste(topic[2], ".doc", sep = ""))
+				if (file == "") 
+					stop(paste("no documentation for dataset", topic[2]))
+				else system(paste("$RHOME/cmd/pager", file))
+			}
+			else if (topic[1] == "library") {
+				file <- system.file("help", paste(topic[2], "/INDEX", sep = ""))
+				if (file == "") 
+					stop(paste("no documentation for dataset", topic[2]))
+				else system(paste("$RHOME/cmd/pager", file))
+			}
+			else stop("unimplemented help feature")
+		}
+	}
+	else if(!missing(data)) {
+		topic <- as.character(substitute(data))
+		file <- system.file("data", paste(topic, ".doc", sep = ""))
+		if (file == "") 
+			stop(paste("no documentation for dataset", topic))
+		else system(paste("$RHOME/cmd/pager", file))
+	}
+	else if(!missing(library)) {
+		topic <- as.character(substitute(library))
+		file <- system.file("help", paste(topic, "/INDEX", sep = ""))
+		if (file == "") 
+			stop(paste("no documentation for library", topic))
+		else system(paste("$RHOME/cmd/pager", file))
+	}
+	else system("$RHOME/cmd/help help base")
+}

@@ -1,0 +1,30 @@
+#!/bin/sh
+##--- write (to  stdout)  all the Examples from the online help-files
+## M.Maechler
+
+# Should work WHEREVER this is called from :
+cd `dirname $0`/..
+RHOME=`pwd`; export RHOME
+MAN=src/library/base/man
+
+FILES="`ls -A $MAN | sed '/CVS/d; /~$/d; /.bak$/d'`"
+##Dbg:FILES="`ls -A $MAN | grep '^[d-f]' |sed '/CVS/d; /~$/d; /.bak$/d'`"
+
+echo "postscript('All-Examples.ps')"
+for file in $FILES
+do
+ echo $file >&2
+ sed=''
+ if   [ $file = 'pictex' ]   ; then sed=1; SED='4,$s/^/##LaTex /'
+ elif [ $file = 'dataentry' ]; then sed=1;
+    SED='/^d[A-z.]*(/s/^/##INTERACTIVE> /'
+ elif [ $file = 'edit' ]; then sed=1; 
+    SED='/edit(/s/^/##INTERACTIVE> /; /^vi(/s/^/##INTERACTIVE> /'
+ fi
+ if [ -z "$sed" ]; then
+      ./etc/doc2EX $MAN/$file
+ else ./etc/doc2EX $MAN/$file | sed -e "$SED"
+    #Dbg    echo "SED= «$SED»" >&2
+ fi
+done
+echo "dev.off(); quit('no')" 

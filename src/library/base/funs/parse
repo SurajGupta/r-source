@@ -1,0 +1,30 @@
+#we don't use white; it's for compatibility
+parse <- function(file="", n=NULL, text=NULL, prompt=NULL, white=FALSE)
+as.expression(.Internal(parse(file, n, text, prompt)))
+
+"[.expression"<-function(x,subs)
+	structure(unclass(x)[subs],class="expression")
+
+"[[.expression"<-function(x,subs)
+	unclass(x)[[subs]]
+
+is.expression<-function(x)
+	inherits(x,"expression")
+
+as.expression<-function(x)
+{
+	if(is.null(x) || is.expression(x)) 
+		x
+	else 
+		structure(as.list(x),class="expression")
+}
+
+expression <- function(...){
+	y<-substitute(list(...))[-1]
+	structure(y,class="expression")
+}
+
+print.expression<-function(x)
+{
+	print(as.call(c(as.name("expression"),x)))
+}

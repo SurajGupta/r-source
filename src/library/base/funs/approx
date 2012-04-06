@@ -1,0 +1,27 @@
+approx <- function(x, y, xout, method="lines", n=50, rule=1) {
+	if( !is.numeric(x) || !is.numeric(y) )
+		stop("approx: x and y must be numeric")
+	if(length(x) != length(y)) stop("x and y must have equal lengths")
+	ok <- !(is.na(x) | is.na(y))
+	x <- x[ok]
+	y <- y[ok]
+	if(length(x) < 2) stop("approx requires at least two values to interpolate")
+	o <- order(x)
+	x <- x[o]
+	y <- y[o]
+	if(missing(xout)) {
+		if(n <= 0) stop("approx requires n >= 1")
+		xout <- seq(x[1], x[length(x)], length=n)
+	}
+	if(rule == 1) {
+		low <- y[1]
+		high <- y[length(x)]
+	}
+	else if(rule == 2){
+		low <- NA
+		high <- low
+	}
+	else stop("invalid extrapolation rule in approx")
+	y<-.C("approx", as.double(x), as.double(y), length(x), xout=as.double(xout), length(xout), as.double(low), as.double(high))$xout
+	return(list(x=xout,y=y))
+}

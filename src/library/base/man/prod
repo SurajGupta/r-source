@@ -1,0 +1,13 @@
+TITLE(prod @@ Product of Vector Elements)
+USAGE(
+prod(DOTS, na.rm=TRUE)
+)
+ALIAS(prod)
+DESCRIPTION(
+LANG(prod) returns the product of all the values
+present in its arguments.
+If LANG(na.rm) is LANG(FALSE) an LANG(NA)
+value in any of the arguments will cause
+a value of LANG(NA) to be returned, otherwise
+LANG(NA) values are ignored.
+)

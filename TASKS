@@ -1,0 +1,370 @@
+                           THE R TASK LIST
+
+             ``Somebody, somebody has to, you see ...''
+                  The Cat in the Hat Comes Back.
+
+
+----------------------------------------------------------------------
+TASK:	Multiple Graphics Device Drivers
+STATUS:	Open
+FROM:	Everyone
+	R needs to have mutiple active device drivers and a means for
+	copying pictures from one device to another. Etc. Etc.
+	[ This is a medium-sized task.  It would be most useful to     ]
+	[ do this in conjunction with moving to an event driven model. ]
+	[ Greg Warnes has written some code which maintains, a device  ]
+	[ "display list".  How much memory this might devour in the    ]
+	[ multiple device case is an open question.  There is also     ]
+	[ the question of what to do about the graphics parameters.    ]
+	[ Should each device maintain a complete "par" state, or       ]
+	[ should some parameters (like col, lty, font ...) be global.  ]
+	[ Could a user have any memory of the last values in effect    ]
+	[ for a driver which had been idle for a while.                ]
+
+----------------------------------------------------------------------
+TASK:	Mathlib checks
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	The numerical libraries and random number generators could
+	do with a real had check.  Grunt work, but necessary.
+
+----------------------------------------------------------------------
+TASK:	List printing
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	If an attribute is list valued, its components should print
+	as follows.
+		attr(,fred)$x
+	rather than as
+		attr(,fred)
+		$x
+
+----------------------------------------------------------------------
+TASK:	complex gamma and log gamma function not implemented
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	[ This is quite low priority.  Complain if you need it.  ]
+	[ The Fullerton library has complex gamma function code. ]
+
+----------------------------------------------------------------------
+TASK:	solution of complex linear systems
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	[ Really just a matter of grabbing the correct linpack code. ]
+
+----------------------------------------------------------------------
+TASK:	eigenvalues and eigenvectors for general systems
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	[ Really just a matter of grabbing the correct eispack code. ]
+
+----------------------------------------------------------------------
+TASK:	"update" for lm and glm models
+STATUS:	Open
+FROM:	jlindsey@luc.ac.be
+	First something from 0.12 that I forgot to report:
+	update() for a formula works with lm() but not glm()
+	for which it (still in 0.13) gives
+	"Error in update.formula(call$formula,formula) ..."
+
+----------------------------------------------------------------------
+TASK:	"nlm" documentation inaccuracies
+STATUS:	Open
+FROM:	jlindsey@luc.ac.be
+	The help for nlm is still called minimize although the
+	contents have been updated. As well, when an illegal
+	value is fed to nlm, the error message contains msg
+	instead of print.level.
+	[ The documentation looks ok.  The function needs to be ]
+	[ rewritten so that it uses derivative information.     ]
+
+----------------------------------------------------------------------
+TASK:	"data.entry" problems
+STATUS:	Open
+FROM:	p.dalgaard@kubism.ku.dk
+	the as.character problem in de() - probably better to fix even
+	though it does make lists out of frames.
+	there's no way to change a data value to NA in data.entry, etc.
+	... earlier message ...
+	(Peter Dalgaard) data.entry et al do not seem to have been
+	adjusted for the new data frame structure.  This is actually
+	a problem where a list is passed where a vector of character
+	strings is expected.  To fix it change
+		snames <- substitute(list(...))[-1]
+	to
+		snames <- as.character(substitute(list(...))[-1])
+	However, there needs to be a look at the de... code.  When
+	a data frame is edited it is returned as a list.  This can
+	be cured with judicious use of "data.frame".
+	[ The indicated change has been made, but other changes ]
+	[ are needed.                                           ]
+
+----------------------------------------------------------------------
+TASK:	"x11" printcommand
+STATUS: Open
+FROM:	maechler@stat.math.ethz.ch
+	There is in theory a "printcommand" argument to x11, which
+	is ignored.  Make it do something.
+
+----------------------------------------------------------------------
+TASK:	"source" requires a terminating newline on EOF
+STATUS:	Open
+FROM:	Kurt.Hornik@ci.tuwien.ac.at
+	source() fails in many cases where a file has no final
+	newline.  (R&R, sorry for being ridiculouly nasty about
+	things that don't work for files without a final newline.
+	I have Emacs' next-line-add-newlines set to nil ...)
+	This seems to be a problem with parse() in src/main/source.c
+	in combo with the code in gram.y ...
+	I know this is NOT something to quickly fix over the weekend.
+	Please simply put it into your PROJECTS file.
+
+----------------------------------------------------------------------
+TASK:	problem with "glm" with binomial errors
+STATUS:	Open
+FROM:	p.dalgaard@kubism.ku.dk
+	in glm(,binomial) it's possible that loss of significant
+	digits make expected values 0 or 1 even though there's no
+	divergence of the fit.  (Happened to me with menarche data,
+	infants and grown-ups included)
+	[ Need the example data.  Glm needs a complete overhaul. ]
+
+----------------------------------------------------------------------
+TASK:	Errors in "parse" and "source"
+STATUS:	Open
+FROM:	plummer@iarc.fr
+	#4) If you put a few lines of comments at the start of a
+	function, then the comments always appear *after* the first
+	line of code.
+	[ This needs a bit of a look.  Comments are a pain. ]
+
+----------------------------------------------------------------------
+TASK:	help file ALIAS() and LINK() constructions
+STATUS:	Open
+FROM:	R@stat.auckland.ac.nz
+	How do we know which file to LINK to?  There needs to a step
+	which fills in the file name on the basis of all ALIAS
+	declarations.
+	[ A proprocessing step is needed.  First we build a table  ]
+	[ of aliases and corresponding file names.  Then we pass   ]
+	[ throught the files building the correct LINK references. ]
+
+----------------------------------------------------------------------
+TASK:	"paste" problem
+STATUS:	Open
+FROM:	maechler@stat.math.ethz.ch
+	in S,
+		paste(....., collapse = string)
+	always returns ONE string  (a character vector of length 1),
+	according to documentation and several examples.
+	in R, this is not true:
+		R> paste(rep(" ",0), collapse="...") #anything for collapse
+		character(0)
+		S> paste(rep(" ",0), collapse="...") #anything for collapse
+		[1] ""
+	Again, I think  R  is more logical than S here, but it was decided
+	that in minor cases, compatibility comes first...
+	[ Low priority.  Complain if you really need it. ]
+
+----------------------------------------------------------------------
+TASK:	missing functionality - modelling
+STATUS:	Open
+FROM:	maechler@stat.math.ethz.ch
+	aov,  print.aov, summary.aov,...  (!)
+	which I really missed for teaching  a few months ago.
+	[ We'll get to this - it actually should be fun. ]
+
+----------------------------------------------------------------------
+TASK:	warnings option
+STATUS:	Open
+FROM:	maechler@stat.math.ethz.ch
+	which reminds me that we/I also would like something similar as S's
+	options(warn = k)
+	k=  0 : [default]  print warnings
+	k= -1 :	do nothing (maybe append warnings to some temp-file)
+	k=  1 : produce an error ('warning' becomes 'stop'). 
+
+----------------------------------------------------------------------
+TASK:	R has no stderr
+STATUS:	Open
+FROM:	Friedrich.Leisch@ci.tuwien.ac.at
+	When I invoke R like
+		R 2>errlog
+	I would error messages expect to go to the file errlog
+	instead of the screen.
+	[ We don't have standard error.  This is problematic on ]
+	[ platforms other than Unix.                            
+
+
+----------------------------------------------------------------------
+TASK:	deprecated
+STATUS:	Open
+FROM:	maechler@stat.math.ethz.ch
+	As I mentioned in a recent mail,
+	I just saw that  0.16.1 does not contain  'deprecated' anymore,
+	even though the function still exists.
+	[ I don't think we need deprecated anymore. ]
+
+----------------------------------------------------------------------
+TASK:	"print.default" fix
+STATUS:	Open
+FROM:	la-jassine@aix.pacwan.net
+	When you fix print.default, please also add prefix=
+
+----------------------------------------------------------------------
+TASK:	"postscript" fix
+STATUS:	Open
+FROM:	la-jassine@aix.pacwan.net
+	postscript() also needs the options onefile, print.it, and
+	append (even if they are not supported yet it would be nice if
+	the arguments could be accepted and ignored).
+	[ I added these as arguments, but they have no effect. ]
+
+----------------------------------------------------------------------
+TASK:	"print.default" fix
+STATUS:	Open
+FROM:	jlindsey@luc.ac.be
+	print.default in S has an option, right=T, but R does not
+
+----------------------------------------------------------------------
+TASK:	task scheduling
+STATUS:	Open
+FROM:	gwhite@cabot.bio.dfo.ca
+	More generally, the range of things that can be done in R would
+	be greater if there was a simple scheduling mechanism.  Is
+	there a way to have a specific function invoked just before the
+	command prompt returns after a function?  Such a function could
+	be used to run save(...) or check for various external cues
+	(update of a file's timestamp) to control an analysis.
+	I doubt it would make sense to have full context switching in
+	R,  but perhaps save() could be done in a way that would allow
+	it to be used even in a long calculation under some timer
+	control.  I expect the user would need to provide a list of the
+	data objects that need to be saved.
+
+----------------------------------------------------------------------
+TASK:	Inf numerics
+STATUS:	Open
+FROM:	plummer@iarc.fr
+	Could we have an Inf object in R? I would find it useful.
+	[ Sigh.  I wish we had designed this in. ]
+	[ It will be a pain to ADD.              ]
+
+----------------------------------------------------------------------
+TASK:	Verbose debugging mode
+STATUS:	Open
+FROM:	plummer@iarc.fr
+	It would be really nice to have a verbose mode for the debug
+	function, which steps through each line automatically while
+	printing each line to the screen. Currently I have to step
+	through each line with the return key just to see where CODA
+	crashes.  This can get very tedious as its a huge program.
+
+----------------------------------------------------------------------
+TASK:	Auto-save
+STATUS:	Open
+FROM:	<p.dalgaard@kubism.ku.dk> <hornik@ci.tuwien.ac.at>
+	> BTW: How about putting auto-save-workspace on the task list?
+	> Or just a manual save.work() currently, you can lose quite a
+	> bit of work to an unexpected segfault. (And q()+restart is
+	> cumbersome, esp. if you need to reattach subsetted dataframes, etc.)
+	Perhaps call it save.image() instead and use
+		save(list = ls(), file = ".RData")
+	as was suggested some time ago?
+	(Whatever the result is, it needs to go in the FAQ, which goes into
+	great length about that under R data can get lost when a crash occurs,
+	but does not say how to save them ...)
+
+----------------------------------------------------------------------
+TASK:	"chisquare.test" problem
+STATUS:	Open
+FROM:	<venkat@biosta.mskcc.org>
+	Can you change the explicit "cat" statement in the
+	"chisquare.test" function which insists on writing to the
+	screen even when the output is redirected to a variable? (Using
+	"htest" class as in "t.test" function.)
+	[ Should we switch to the library one. ]
+
+----------------------------------------------------------------------
+TASK:	Graphics inconsistencies
+STATUS: Openish
+FROM:	Bill.Venables@adelaide.edu.au
+	While transferring some old S-code I came across some minor
+	inconsistencies between R and S that are probably more nuisance
+	value than they would take to fix.  I report them here for
+	reference, (but not in any campaigning mood, of course...)
+	1. No frame() command in R and so no graceful way to clear a
+	   plotting screen.  (Or is there?)
+	   [ Added ]
+	2. There is a dev.off() function, but no other dev.xxx functions.
+	   (The dev.xxx group are S-PLUS and not vanilla S, by the way.)
+	   There is no graphics.off() function.
+	   [ Long-term project ]
+	3. If dfr is a data frame with components "x", "y" and some
+	   others then points(dfr) uses dfr as an xy-list in S but not in
+	   R.  If there is some non-numeric component it actually fails
+	   in R.  This may be S being a bit inconsistent, but the
+	   behaviour is different.
+	   [ Fixed? ]
+	4. The plotting marks are a bit gappy in R and even the ones
+	   that are there do not correspond to their S counterparts.
+	   Here is a little function to make a wall chart showing the
+	   gaps:
+	   [ We now have all the S symbols and a new set of R ones. ]
+		show.marks <- function()
+		{
+		  if(!exists(".Device") || is.null(.Device)) x11()
+		  plot(1, type="n", axes=F, xlab="", ylab="")
+		  oldpar <- par()
+		  par(usr = c(-0.01, 5.01, -0.01, 5.01), pty = "s")
+		  for(i in 0:18) {
+		    x <- 1/2 + (i %% 5)
+		    y <- 4.5 - (1/2 + (i %/% 5))
+		    points(x + 1/5, y - 1/5, pch = i, cex = 3)
+		    text(x - 1/5, y + 1/5, i, adj = 0.5, cex = 1.5)
+		  }
+		  abline(h = 1:5 - 0.5, lty = 1)
+		  segments(0:5, rep(0.5, 5), 0:5, rep(4.5, 5))
+		  par(oldpar)
+		  invisible()
+		}
+	5. In S you may extend a list by assigning to a new component.
+	   For example if lis has components "x" and "y", only, you can
+	   extend it by assigning to lis$z, lis["z"] or lis[, "z] (the
+	   last if it is also a data frame).  In R only the first of
+	   these works; the others give a "subscript out of bounds"
+	   error.  (This may have been discussed while I was not paying
+	   attention, in which case I apologize.)
+	   [ Fixed in 0.50. ]
+
+----------------------------------------------------------------------
+TASK:	Function pointer access
+STATUS:	Open
+FROM:	<schwarte@feat.mathematik.uni-essen.de>
+	I want to report two problems with the Fortran code of R.
+	1) Configure does not adapt GETSYMBOLS.in if the Fortran Compiler
+	   does not add underscores to the symbol names.
+	2) There is a name conflict if the Fortran Compiler does not add
+	   underscores because there exist a Fortran function FMIN and a 
+	   C function fmin(). Thus the name of the Fortran FMIN should be 
+	   changed.
+	   [ This is fixed I think. ]
+	Currently I am rewriting my robust location-scale code in C. I
+	intend to make this new code available as a library once a
+	standard for such libraries has been agreed upon. As I would
+	like to allow prospective users to experiment with private
+	psi/chi functions I need access to the hash table of available
+	function pointers. Is it possible that you insert a function
+	into dotcode.c that contains the code fragment form lines 482
+	to 495 and returns a function pointer?
+
+----------------------------------------------------------------------
+TASK:	Partial string matching
+STATUS:	Open
+FROM:	<R@stat.auckland.ac.nz>
+	Is there an existing partial string match function which could
+	be used in place of pstrmatch in subset.c???
+	If not can pstrmatch take on the functions of all partial match
+	functions?
+
+----------------------------------------------------------------------

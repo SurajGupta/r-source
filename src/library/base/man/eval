@@ -1,0 +1,18 @@
+TITLE(eval @@ Evaluate an (Unevaluated) Expression)
+USAGE(eval(expr, envir=sys.frame(sys.parent())))
+ALIAS(eval)
+VALUE(
+This function evaluates the expression LANG(expr) 
+argument in the environment specified by LANG(envir)
+and returns the compted value.
+If LANG(envir) is not specified, then the environment
+where the call to LANG(eval) is made is used.
+)
+SEEALSO(
+LANG(LINK(expression)), LANG(LINK(environment)).
+)
+EXAMPLES(
+eval(2 ^ 2 ^ 3)
+mEx <- expression(2^2^3); mEx; 1 + eval(mEx)
+eval({ xx <- pi; xx^2}) ; xx
+)

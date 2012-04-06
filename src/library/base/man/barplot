@@ -1,0 +1,66 @@
+TITLE(barplot @@ Barplots)
+USAGE(
+barplot(height, names.arg, col, border=par("fg"),
+        beside=FALSE, space=0.2, legend.text,
+        main=NULL, xlab=NULL, ylab=NULL,
+        xlim, ylim)
+)
+ALIAS(barplot)
+ARGUMENTS(
+ARG(height @@ either a vector or matrix of values descibing the
+the bars which make up the plot.  If LANG(height) is a vector,
+the plot consists of a sequence of rectangular bars with heights
+given by the values in the vector.
+If LANG(height) is a matrix and LANG(beside) is LANG(FALSE)
+then each bar of the plot corresponds to a column of
+LANG(height), with the values in the column giving the
+heights of stacked ``sub-bars'' making up the bar.
+If LANG(height) is a matrix and LANG(beside) is LANG(TRUE),
+then the values in each column are juxtaposed rather than
+stacked.)
+ARG(names.arg @@ a vector of names to be plotted below each
+bar or group of bars.  If this argument is omitted, then
+the names are taken from the LANG(names) attribute of LANG(height)
+if LANG(height) is a vector, or the column names of LANG(height) if
+LANG(height) is a matrix.)
+ARG(col @@ a vector of colors for the bars or bar components.)
+ARG(border @@ The color to be used for the border of the bars.)
+ARG(beside @@ a logical value.  If LANG(FALSE), the columns of
+LANG(height) are portrayed as stacked bars, and if LANG(TRUE)
+the columns are portrayed as juxtaposed bars.)
+ARG(space @@ the relative amount of space between the bars or
+groups of bars. The width of a bar (or group of bars) plus the
+value of LANG(space) is one.)
+ARG(legend.text @@ a vector of text used to construct a legend
+for the plot.  This is only useful when LANG(height) is a matrix.
+In that case the legend labels should correspond to the rows
+of LANG(height).)
+ARG(main @@ an overall title for the plot.)
+ARG(xlab @@ a label for the x axis.)
+ARG(ylab @@ a label for the y axis.)
+ARG(xlim @@ limits for the x axis.)
+ARG(ylim @@ limits for the y axis.)
+)
+VALUE(
+This function is invoked for its side effect of producing
+a barplot in the graphics window.
+It returns no useful value.
+)
+SEEALSO(
+LANG(LINK(dotplot)),
+LANG(LINK(hist)).
+)
+EXAMPLES(
+data(deaths)
+barplot(deaths, beside=TRUE,
+        col=c("lightblue", "mistyrose", "lightcyan",
+              "lavender", "cornsilk"),
+        legend=rownames(deaths), ylim=c(0,100))
+title(main="Death Rates in Virginia", font.main=4)
+BLANK
+barplot(t(deaths)[,5:1], beside=TRUE,
+        col=c("lightblue", "mistyrose",
+              "lightcyan", "lavender"),
+        legend=colnames(deaths), ylim=c(0,80))
+title(main="Death Rates in Virginia", font.main=4)
+)

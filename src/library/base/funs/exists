@@ -1,0 +1,7 @@
+exists <- function(x, where=NULL, envir=NULL, frame=NULL, mode="any", inherits=TRUE) {
+	if(missing(envir) && !missing(frame)) 
+		envir<-frame
+	if(missing(envir) && !missing(where))
+		envir<-where
+	.Internal(exists(x,envir,mode,inherits))
+}

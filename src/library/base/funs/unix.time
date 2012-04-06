@@ -1,0 +1,25 @@
+unix.time <- function(expr)
+{
+  ## Purpose: Return CPU (and other) times that 'expr' used ..
+  ##	Modelled after S`s  "unix.time"; to be used with R (rel. 0.4 & later)
+  ## -------------------------------------------------------------------------
+  ## Arguments: expr: 'any' valid R expression
+  ## -------------------------------------------------------------------------
+  if(!exists("proc.time", mode = "function", inherits=TRUE))
+    stop(paste("proc.time  must be enabled at configuration / compile time\n",
+	       "	[add '-DProctime' to SYSTEM in src/Systems/<YOURSYS>]"))
+
+  loc.frame <- sys.parent(1)
+
+##-S   if(loc.frame == 1)
+##-S    loc.frame <- F
+  on.exit(cat("Timing stopped at:", proc.time() - time, "\n"))
+  expr <- substitute(expr)
+  time <- proc.time()
+  eval(expr, envir = loc.frame) #<-- 'R'
+  new.time <- proc.time()
+  on.exit()
+  if(length(new.time) == 3)    new.time <- c(new.time, 0, 0)
+  if(length(time) == 3)        time     <- c(time, 0, 0)
+  new.time - time
+}

@@ -1,0 +1,12 @@
+TITLE(fivenum @@ Tukey Five-Number Summaries)
+USAGE(
+fivenum(x)
+)
+ALIAS(fivenum)
+VALUE(
+A five number summary (minimum, lower-hinge, median,
+upper-hinge, maximum) for the numbers in LANG(x)
+)
+SEEALSO(
+LANG(LINK(IQR)), LANG(LINK(median)), LANG(LINK(quantile)).
+)

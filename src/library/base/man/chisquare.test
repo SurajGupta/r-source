@@ -1,0 +1,31 @@
+TITLE(chisquare.test @@ Chi-Square Test)
+USAGE(
+chisquare.test(x, y=NULL, correct=T,
+        p=rep(1/length(x),length(x)))
+)
+ALIAS(chisquare.test)
+DESCRIPTION(
+This function performs a chisquare test on the
+contingency table in the object LANG(x) and
+returns the results of the test.
+If LANG(x) is a vector or a matrix with one row or column
+and LANG(y) has no argument then the table is assumed to be
+one-dimensional, and the chisquare test for a specific set of
+population probabilities is performed.
+These are in the vector LANG(p), or, if LANG(p) is missing,
+are assumed to be equal.
+If LANG(x) is a matrix with two or more rows and
+two or more columns or LANG(x) and LANG(y) are vectors or 
+factors specifying a two-way contingency table with two or
+more rows and two or more columns then a chisquare test
+for independence or equal group probabilities is
+performed.
+If LANG(correct=TRUE) then Yates' continuity correction is
+applied to 2 by 2 tables.
+)
+VALUES(
+The function prints out the result of the test and returns a
+list containing the following elements: @@
+ARG(chi @@ the matrix containing the components of chi-square.)
+ARG(E @@ the matrix containing the expected values.)
+)

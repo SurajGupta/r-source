@@ -1,0 +1,23 @@
+TITLE(IQR @@ The Interquartile Range)
+USAGE(
+IQR(x)
+)
+ALIAS(IQR)
+DESCRIPTION(
+This function computes interquartile range of the data
+values in its arguments.
+Note that this function compute the quartiles using the function
+LANG(quantile) rather than following Tukey's recommendations.
+)
+REFERENCES(
+Tukey, J. W. (1977).
+ITALIC(Exploratory Data Analysis).
+Reading: Addison-Wesley.
+)
+SEEALSO(
+LANG(LINK(fivenum)), LANG(LINK(quantile)).
+)
+EXAMPLES(
+data(rivers)
+IQR(rivers)
+)
