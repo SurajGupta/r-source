@@ -63,7 +63,8 @@ install.packages <- function(pkgs, lib, CRAN = getOption("CRAN"),
         update <- cbind(pkgs, lib)
         colnames(update) <- c("Package", "LibPath")
         found <- pkgs %in% foundpkgs[, 1]
-        update <- cbind(update[found, , drop=FALSE], file = foundpkgs[, 2])
+        files <- foundpkgs[match(pkgs[found], foundpkgs[, 1]), 2]
+        update <- cbind(update[found, , drop=FALSE], file = files)
         if(nrow(update) > 1) {
             upkgs <- unique(pkgs <- update[, 1])
             DL <- .make_dependency_list(upkgs, available)
@@ -116,7 +117,7 @@ download.packages <- function(pkgs, destdir, available=NULL,
         if(!any(ok))
             warning(paste("No package \"", p, "\" on CRAN.", sep=""))
         else{
-            fn <- paste(p, "_", available[ok, "Version"], ".tar.gz", sep="")
+            fn <- paste(p, "_", available[ok, "Version"], ".tar.gz", sep="")[1]
             if(localcran){
                 fn <- paste(substring(contriburl, 6), fn, sep="/")
                 retval <- rbind(retval, c(p, fn))
@@ -136,10 +137,12 @@ download.packages <- function(pkgs, destdir, available=NULL,
     retval
 }
 
-contrib.url <- function(CRAN, type=c("source","mac.binary")){
-  type<-match.arg(type)
+contrib.url <- function(CRAN, type=c("source","mac.binary"))
+{
+  type <- match.arg(type)
   switch(type,
-         source=paste(CRAN,"/src/contrib",sep=""),
-         mac.binary=paste(CRAN,"/bin/macosx/",version$major, ".", substr(version$minor,1,1),sep="")
+         source = paste(gsub("/$", "", CRAN), "/src/contrib", sep=""),
+         mac.binary = paste(gsub("/$", "", CRAN), "/bin/macosx/",
+         version$major, ".", substr(version$minor,1,1), sep="")
          )
 }

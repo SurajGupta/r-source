@@ -7,8 +7,9 @@ include $(R_HOME)/share/make/vars.mk
 RPREFIX = $(shell perl ../fixed/rwver.pl $(R_HOME)/VERSION)
 LIBFILES = $(foreach i, $(R_PKGS_BASE) $(R_PKGS_RECOMMENDED), $(R_HOME)/library/$i) $(R_HOME)/library/R.css
 
-INFO_FILES = AUTHORS COPYING COPYING.LIB FAQ NEWS README RESOURCES THANKS Y2K
-GW_INFO_FILES = CHANGES COPYRIGHTS README.Rterm rw-FAQ
+INFO_FILES = AUTHORS COPYING COPYING.LIB FAQ NEWS ONEWS README RESOURCES \
+	THANKS Y2K
+GW_INFO_FILES = CHANGES CHANGES1 COPYRIGHTS README.Rterm rw-FAQ
 
 ETC_FILES = Rprofile Rconsole Rdevga rgb.txt
 
@@ -34,6 +35,8 @@ imagedir:
 	$(MKDIR) -p $(RPREFIX)/etc
 	$(CP) -p $(foreach i,$(ETC_FILES),$(R_HOME)/etc/$i) $(RPREFIX)/etc
 # copy info and documentation files
+	$(MKDIR) -p $(RPREFIX)/doc
+	$(CP) -p $(R_HOME)/doc/CRAN_mirrors.csv $(RPREFIX)/doc
 	$(MKDIR) -p $(RPREFIX)/doc/manual
 	$(CP) -pr $(R_HOME)/doc/html $(RPREFIX)/doc
 	$(CP) -p $(R_HOME)/doc/manual/*.html $(R_HOME)/doc/manual/*.pdf \

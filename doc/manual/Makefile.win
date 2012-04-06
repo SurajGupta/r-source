@@ -37,6 +37,9 @@ else
 RHOME=$(shell perl ../../src/gnuwin32/pwd.pl ../..)
 endif
 
+MAKEINFO_HTML_OPTS = --html --no-split
+TEXI2HTML = $(MAKEINFO) $(MAKEINFO_HTML_OPTS)
+
 R_PAPERSIZE = a4
 R_RD4DVI = ae
 # omit 'hyper' to omit the hyperlinks
@@ -66,7 +69,8 @@ all: pdf
 	$(TEX) $<
 
 .texi.html:
-	$(MAKEINFO) -D UseExternalXrefs --no-split --html $< -o $@ || touch $@
+	@echo "creating doc/manual/$@"
+	@$(TEXI2HTML) -D UseExternalXrefs $< -o $@ || touch $@
 
 .texi.info:
 	$(MAKEINFO) -D UseExternalXrefs $<
@@ -79,11 +83,12 @@ all: pdf
 ## texinfo 4.7, as doc/html/SearchEngine.html links to it.
 ## So use that in the sources if we can -- it is not in the svn archive.
 ## There are no cross-references, external or not.
-R-admin.html:
-	if test -f "$(top_srcdir)/doc/html/R-admin.html" ; then \
+R-admin.html: R-admin.texi
+	@if test -f "$(top_srcdir)/doc/html/R-admin.html" ; then \
 	  cp "$(top_srcdir)/doc/html/R-admin.html" R-admin.html ; \
 	else \
-	  $(MAKEINFO) -I$(srcdir) $(srcdir)/R-admin.texi -o $@ || touch $@ ; \
+	  echo "creating doc/manual/$@" ; \
+	  $(TEXI2HTML) -I$(srcdir) $(srcdir)/R-admin.texi -o $@ || touch $@ ; \
 	fi
 
 dvi: refman.dvi $(OBJECTS_DVI)
@@ -324,7 +329,7 @@ version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	  echo "@set VERSION $${v}" >> $@; \
 	  rwv=$(shell perl $(top_srcdir)/src/gnuwin32/fixed/rwver.pl $(top_srcdir)/VERSION); \
 	  echo "@set RWVERSION $${rwv}" >> $@ )
-	if test "$(R_PAPERSIZE)" = "a4"; then \
+	@if test "$(R_PAPERSIZE)" = "a4"; then \
 	  echo "@afourpaper" >> $@ ; \
 	fi
 

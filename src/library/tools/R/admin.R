@@ -26,7 +26,7 @@ function(dir, outDir)
         "i386-pc-mingw32"
     else
         R.version$platform
-    db["Built"] <-
+    Built <-
         paste("R ",
               paste(R.version[c("major", "minor")],
                     collapse = "."),
@@ -42,8 +42,11 @@ function(dir, outDir)
               .OStype(),
               sep = "")
 
-    writeLines(formatDL(names(db), db, style = "list"),
+    ## we must not split the Built: field across lines
+    writeLines(c(formatDL(names(db), db, style = "list"),
+                 paste("Built", Built, sep=": ")),
                file.path(outDir, "DESCRIPTION"))
+    db["Built"] <- Built
 
     outMetaDir <- file.path(outDir, "Meta")
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
@@ -274,7 +277,7 @@ function(dir, outDir)
     docsDir <- file.path(dir, "man")
     if(!file_test("-d", docsDir)) return(invisible())
 
-    dataDir <- file.path(dir, "data")
+    dataDir <- file.path(outDir, "data")
     outDir <- file_path_as_absolute(outDir)
     ## <FIXME>
     ## Not clear whether we should use the basename of the directory we

@@ -857,6 +857,12 @@ foo
 print(foo)
 show(foo)
 print(foo, digits = 4)
+
+setClassUnion("integer or NULL", members = c("integer","NULL"))
+setClass("c1", representation(x = "integer", code = "integer or NULL"))
+nc <- new("c1", x = 1:2)
+str(nc)# gave ^ANULL^A in 2.0.0
+
 if(!hasMethods) detach("package:methods")
 ##
 
@@ -1377,3 +1383,26 @@ read.table(foo, colClasses = c(V4="character"))
 unlist(sapply(.Last.value, class))
 unlink(foo)
 ## added in 2.0.0
+
+
+## write.table with complex columns (PR#7260, in part)
+write.table(data.frame(x = 0.5+1:4, y = 1:4 + 1.5i), file = "")
+# printed all as complex in 2.0.0.
+write.table(data.frame(x = 0.5+1:4, y = 1:4 + 1.5i), file = "", dec=",")
+## used '.' not ',' in 2.0.0
+
+## splinefun() value test
+(x <- seq(0,6, length=25))
+mx <- sapply(c("fmm", "nat", "per"),
+             function(m) splinefun(1:5, c(1,2,4,3,1), method = m)(x))
+cbind(x,mx)
+
+
+## infinite loop in read.fwf (PR#7350)
+cat(file="test.txt", sep = "\n", "# comment 1", "1234567   # comment 2",
+    "1 234567  # comment 3", "12345  67 # comment 4", "# comment 5")
+read.fwf("test.txt", width=c(2,2,3), skip=1, n=4) # looped
+read.fwf("test.txt", width=c(2,2,3), skip=1)      # 1 line short
+read.fwf("test.txt", width=c(2,2,3), skip=0)
+unlink("test.txt")
+##

@@ -154,7 +154,8 @@ makePrototypeFromClassDef <-
     check <- rep(FALSE, length(pnames))
     for(what in pnames) {
         pwhat <- slot(prototype, what)
-        if(!is(pwhat, slotDefs[[what]])) {
+        slotClass <- getClassDef(slotDefs[[what]], where)
+        if(is.null(slotClass) || !extends(class(pwhat), slotClass)) {
             if(is.null(pwhat)) {
 #                 warning("In class \"", className,
 #                         "\", the prototype for slot \"", what, "\" (slot class \"",
@@ -294,7 +295,7 @@ completeClassDefinition <-
                     ClassDef@className, "\": ",
                     paste(names(properties)[undefClasses], "(class \"",
                           unlist(properties, recursive = FALSE)[undefClasses],
-                          "\")", collapse = ", "))
+                          "\")", collapse = ", ", sep=""))
         ClassDef@slots <- properties
         ClassDef
 }
@@ -481,6 +482,7 @@ newBasic <-
                "complex" =,
                "integer" =,
                "double" =,
+               "raw" =,
                "list" =  as.vector(c(...), Class),
                "expression" = eval(substitute(expression(...))),
                "externalptr" = {

@@ -4,8 +4,8 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2004
-@set FAQ-VERSION 2.0.@value{FAQ-YEAR}-10-04
-@set REL-VERSION 2.0.0
+@set FAQ-VERSION 2.0.@value{FAQ-YEAR}-11-14
+@set REL-VERSION 2.0.1
 @set REL-YEAR 2004
 @c <COMMENT>
 @c ISBNs for R 1.x.
@@ -146,18 +146,18 @@ You can also obtain it by writing to the Free Software Foundation, Inc.,
 The latest version of this document is always available from
 
 @display
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/}
+@uref{http://CRAN.R-project.org/doc/FAQ/}
 @end display
 
 From there, you can obtain versions converted to
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.txt,, plain
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.txt,, plain
 @acronym{ASCII} text},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.dvi.gz,, DVI},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.info.gz,, @acronym{GNU}
-info}, @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html,, @HTML{}},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.pdf,, PDF},
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.ps.gz,, PostScript} as
-well as the @uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.texi,,
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.dvi.gz,, DVI},
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.info.gz,, @acronym{GNU}
+info}, @uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.html,, @HTML{}},
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.pdf,, PDF},
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.ps.gz,, PostScript} as
+well as the @uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.texi,,
 Texinfo source} used for creating all these formats using the
 @uref{http://texinfo.org/, @acronym{GNU} Texinfo system}.
 
@@ -302,6 +302,10 @@ the ``Comprehensive R Archive Network'' (see @ref{What is CRAN?}).
 Sources are also available via @uref{https://svn.r-project.org/R/}, the
 R Subversion repository, but currently not via anonymous rsync (nor
 CVS).
+
+Tarballs with daily snapshots of the r-devel and r-patched development
+versions of R can be found at
+@url{ftp://ftp.stat.math.ethz.ch/Software/R}.
 
 @c Sources are also available via anonymous rsync.  Use
 
@@ -470,55 +474,54 @@ to Mac OS 9.2.2.  This port of R for Macintosh is no longer supported.
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2004-06-25:
+@c Linux binaries as of 2004-10-17:
 @c
 @c debian
 @c   woody   i386   1.8.0  Dirk Eddelbuettel <edd@debian.org>
 @c   sarge   i386   1.8.1  Dirk Eddelbuettel <edd@debian.org>
 @c   sid     i386   1.8.1  Dirk Eddelbuettel <edd@debian.org>
 @c mandrake
-@c   9.1     i386   1.9.0  Michele Alzetta <mikalzet@libero.it>
-@c   9.2     i386   1.9.0  Michele Alzetta <mikalzet@libero.it>
-@c   10.0    i386   1.9.1  Michele Alzetta <mikalzet@libero.it>
+@c   10.0    i386   2.0.0  Michele Alzetta <mikalzet@libero.it>
 @c redhat
-@c   8.x     i386   1.9.1  Martyn Plummer <plummer@iarc.fr>
-@c   9       i386   1.9.1  Martyn Plummer <plummer@iarc.fr>
-@c   Fedora1 i386   1.9.1  Martyn Plummer <plummer@iarc.fr>
+@c   8.x     i386   2.0.0  Martyn Plummer <plummer@iarc.fr>
+@c   9       i386   2.0.0  Martyn Plummer <plummer@iarc.fr>
+@c   Fedora1 i386   2.0.0  Martyn Plummer <plummer@iarc.fr>
 @c           x86_64 1.8.1  James Henstridge <james@daa.com.au>
-@c   Fedora2 i386   1.9.1  Martyn Plummer <plummer@iarc.fr>
+@c   Fedora2 i386   2.0.0  Martyn Plummer <plummer@iarc.fr>
 @c suse
 @c   7.3     i386   1.8.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c   8.0     i386   1.8.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c   8.1     i386   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c   8.2     i386   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c   9.0     i586   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
-@c   9.1     i586   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c   8.2     i386   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c   9.0     i586   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
+@c   9.1     i586   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de>
 @c vinelinux
-@c   2.6     i386   1.9.0  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
+@c   3.0     i386   2.0.0  Susunu Tanimura <stanimura-ngs@umin.ac.jp>
 
-The @file{bin/linux} directory of a @CRAN{} site contains Debian
-stable/testing/unstable packages for the i386 platform (now part of the
-Debian distribution and maintained by Dirk Eddelbuettel), Mandrake
-9.1/9.2/10.0 i386 packages by Michele Alzetta, Red Hat
+The @file{bin/linux} directory of a @CRAN{} site contains
+@c Debian stable/testing/unstable packages for the i386 platform (now part
+@c of the Debian distribution and maintained by Dirk Eddelbuettel),
+Mandrake 9.1/9.2/10.0 i386 packages by Michele Alzetta, Red Hat
 8.x/9/Fedora1/Fedora2 i386 and Fedora1 x86_64 packages by Martyn Plummer
 and James Henstridge, respectively, SuSE 7.3/8.0/8.1/8.2 i386 and
 9.0/9.1 i586 packages by Detlef Steuer, and VineLinux 2.6 i386 packages
-by Susunu Tanimura.
+by Susunu Tanimura.  Debian packages, maintained by Dirk Eddelbuettel,
+have long been part of the Debian distribution, and can be accessed
+through APT, the Debian package maintenance tool.
 
-The Debian packages can be accessed through APT, the Debian package
-maintenance tool.  Simply add the line
+@c Simply add the line
 
-@example
-deb http://cran.R-project.org/bin/linux/debian @var{distribution} main
-@end example
+@c @example
+@c deb http://cran.R-project.org/bin/linux/debian @var{distribution} main
+@c @end example
 
-@noindent
-(where @var{distribution} is either @samp{stable} or @samp{testing};
-feel free to use a @CRAN{} mirror instead of the master) to the file
-@file{/etc/apt/sources.list}.  Once you have added that line the
-programs @command{apt-get}, @command{apt-cache}, and @command{dselect}
-(using the apt access method) will automatically detect and install
-updates of the R packages.
+@c @noindent
+@c (where @var{distribution} is either @samp{stable} or @samp{testing};
+@c feel free to use a @CRAN{} mirror instead of the master) to the file
+@c @file{/etc/apt/sources.list}.  Once you have added that line the
+@c programs @command{apt-get}, @command{apt-cache}, and @command{dselect}
+@c (using the apt access method) will automatically detect and install
+@c updates of the R packages.
 
 @c The @file{bin/osf} directory of a @CRAN{} site contains RPMs
 @c by Albrecht Gebhardt for alpha systems running Alpha Unix
@@ -689,7 +692,7 @@ To cite R in publications, use
 @end group
 @end example
 
-Citation strings (or Bib@TeX{} entroes) for R and R packages can also be
+Citation strings (or Bib@TeX{} entries) for R and R packages can also be
 obtained by @code{citation()}.
 
 @node What mailing lists exist for R?, What is CRAN?, Citing R, R Basics
@@ -892,7 +895,7 @@ Bell Labs language `S' (@pxref{What is S?}).
 The R Foundation is a not for profit organization working in the public
 interest.  It was founded by the members of the R Core Team in order to
 provide support for the R project and other innovations in statistical
-computing, provide a reference point for individuals, instititutions or
+computing, provide a reference point for individuals, institutions or
 commercial enterprises that want to support or interact with the R
 development community, and to hold and administer the copyright of R
 software and documentation.  See
@@ -1007,17 +1010,17 @@ the S language.
 @node Lexical scoping, Models, What are the differences between R and S?, What are the differences between R and S?
 @subsection Lexical scoping
 
-Contrary to other implementations of the S language, R has adopted the
-evaluation model of Scheme.
+Contrary to other implementations of the S language, R has adopted an
+evaluation model in which nested function definitions are lexically
+scoped.  This is analogous to the evalutation model in Scheme.
 
 This difference becomes manifest when @emph{free} variables occur in a
 function.  Free variables are those which are neither formal parameters
 (occurring in the argument list of the function) nor local variables
-(created by assigning to them in the body of the function).  Whereas S
-(like C) by default uses @emph{static} scoping, R (like Scheme) has
-adopted @emph{lexical} scoping.  This means the values of free variables
-are determined by a set of global variables in S, but in R by the
-bindings that were in effect at the time the function was created.
+(created by assigning to them in the body of the function).  In S, the
+values of free variables are determined by a set of global variables
+(similar to C, there is only local and global scope).  In R, they are
+determined by the environment in which the function was created.
 
 Consider the following function:
 
@@ -1218,26 +1221,26 @@ it.  With S, one solution is to add an extra parameter to the function
 and to the optimizer to pass in these extras, which however can only
 work if the optimizer supports this.
 
-Lexical scoping allows using function closures and maintaining local
-state.  A simple example (taken from Abelson and Sussman) is obtained by
-typing @kbd{demo("scoping")} at the R prompt.  Further information is
-provided in the standard R reference ``R: A Language for Data Analysis
-and Graphics'' (@pxref{What documentation exists for R?}) and in Robert
-Gentleman and Ross Ihaka (2000), ``Lexical Scope and Statistical
-Computing'', @uref{http://www.amstat.org/publications/jcgs/, ,
-@emph{Journal of Computational and Graphical Statistics}}, @strong{9},
-491--508.
+Nested lexically scoped functions allow using function closures and
+maintaining local state.  A simple example (taken from Abelson and
+Sussman) is obtained by typing @kbd{demo("scoping")} at the R prompt.
+Further information is provided in the standard R reference ``R: A
+Language for Data Analysis and Graphics'' (@pxref{What documentation
+exists for R?}) and in Robert Gentleman and Ross Ihaka (2000), ``Lexical
+Scope and Statistical Computing'',
+@uref{http://www.amstat.org/publications/jcgs/, , @emph{Journal of
+Computational and Graphical Statistics}}, @strong{9}, 491--508.
 
-Lexical scoping also implies a further major difference.  Whereas S
-stores all objects as separate files in a directory somewhere (usually
-@file{.Data} under the current directory), R does not.  All objects in R
-are stored internally.  When R is started up it grabs a piece of memory
-and uses it to store the objects.  R performs its own memory management
-of this piece of memory, growing and shrinking its size as needed.
-Having everything in memory is necessary because it is not really
-possible to externally maintain all relevant ``environments'' of
-symbol/value pairs.  This difference also seems to make R @emph{faster}
-than S.
+Nested lexically scoped functions also imply a further major difference.
+Whereas S stores all objects as separate files in a directory somewhere
+(usually @file{.Data} under the current directory), R does not.  All
+objects in R are stored internally.  When R is started up it grabs a
+piece of memory and uses it to store the objects.  R performs its own
+memory management of this piece of memory, growing and shrinking its
+size as needed.  Having everything in memory is necessary because it is
+not really possible to externally maintain all relevant ``environments''
+of symbol/value pairs.  This difference also seems to make R
+@emph{faster} than S.
 
 The down side is that if R crashes you will lose all the work for the
 current session.  Saving and restoring the memory ``images'' (the
@@ -1739,6 +1742,8 @@ Sons.
 @item Malmig
 An implementation of Malecot migration model together with a number of
 related functions.
+@item Matching
+Multivariate and propensity score matching with formal tests of balance.
 @item Matrix
 A Matrix package.
 @item NADA
@@ -1860,6 +1865,9 @@ Johnson distributions, normal scores and generalized hypergeometric
 distributions).
 @item UNF
 Tools for creating universal numeric fingerprints for data.
+@item UsingR
+Data sets to accompany the textbook ``Using R for Introductory
+Statistics'' by J. Verzani, 2005, Chapman & Hall/CRC.
 @item VLMC
 Functions, classes & methods for estimation, prediction, and simulation
 (bootstrap) of VLMC (Variable Length Markov Chain) models.
@@ -1867,6 +1875,10 @@ Functions, classes & methods for estimation, prediction, and simulation
 Methods for calculation of Value at Risk (VaR).
 @item XML
 Facilities for reading @XML{} documents and DTDs.
+@item Zelig
+Everyone's statistical software: an easy-to-use program that can
+estimate, and help interpret the results of, an enormous range of
+statistical models.
 @item abind
 Combine multi-dimensional arrays.
 @item accuracy
@@ -1967,6 +1979,9 @@ A package for working with chronological objects (times and dates).
 @item circular
 Circular statistics, from ``Topics in Circular Statistics'' by Rao
 Jammalamadaka and A. SenGupta, 2001, World Scientific.
+@item clac
+Clust Along Chromosomes, a method to call gains/losses in CGH array
+data.
 @item class
 Functions for classification (@math{k}-nearest neighbor and LVQ).
 Contained in the @file{VR} bundle.  @emph{Recommended}.
@@ -2002,6 +2017,8 @@ Routine for the multivariate nonparametric Cramer test.
 Functions for the construction and randomization of balanced carryover
 balanced designs, to check given designs for balance, and for simulation
 studies on the validity of two randomization procedures.
+@item cyclones
+Cyclone identification.
 @item date
 Functions for dealing with dates.  The most useful of them accepts a
 vector of input dates in any of the forms @samp{8/30/53},
@@ -2082,6 +2099,8 @@ right censored data.
 E-statistics (energy) tests for comparing distributions: multivariate
 normality, Poisson test, multivariate @math{k}-sample test for equal
 distributions, hierarchical clustering by e-distances.
+@item epitools
+Basic tools for applied epidemiology.
 @item epsi
 Edge Preserving Smoothing for Images.
 @item evd
@@ -2137,7 +2156,7 @@ Flexible Mixture Modeling: a general framework for finite mixtures of
 regression models using the EM algorithm.
 @item foreign
 Functions for reading and writing data stored by statistical software
-like Minitab, SAS, SPSS, Stata, etc.  @emph{Recommended}.
+like Minitab, S, SAS, SPSS, Stata, Systat, etc.  @emph{Recommended}.
 @item fork
 Functions for handling multiple processes: simple wrappers around the
 Unix process management API calls.
@@ -2213,9 +2232,13 @@ Precision library.
 @item gpclib
 General polygon clipping routines for R based on Alan Murta's C
 library.
-@item gpls
-Classification using generalized partial least squares for two-group and
-multi-group (more than 2 group) classification.
+@c <COMMENT>
+@c Moved to the Archive on 2004-10-08 as fails R CMD check.
+@c (In addition, email to the maintainer address bounces.)
+@c @item gpls
+@c Classification using generalized partial least squares for two-group and
+@c multi-group (more than 2 group) classification.
+@c </COMMENT>
 @item grasper
 Generalized Regression Analysis and Spatial Predictions for R.
 @item gregmisc
@@ -2257,6 +2280,8 @@ data with any numbers of levels in the hierarchy, and tests for the
 significance of each F and variance components.
 @item homals
 Homogeneity Analysis (HOMALS) package with optional Tcl/Tk interface.
+@item hopach
+Hierarchical Ordered Partitioning and Collapsing Hybrid (HOPACH).
 @item httpRequest
 Implements HTTP Request protocols (GET, POST, and multipart POST
 requests).
@@ -2270,6 +2295,9 @@ Imputation for microarray data (currently KNN only).
 @item ineq
 Inequality, concentration and poverty measures, and Lorenz curves
 (empirical and theoretic).
+@item intcox
+Implementation of the Iterated Convex Minorant Algorithm for the Cox
+proportional hazard model for interval censored event data.
 @c  @item integrate
 @c  Adaptive quadrature in up to 20 dimensions.
 @item ipred
@@ -2434,9 +2462,12 @@ problems, including the Boston housing data.
 Mixed-mode latent class regression (also known as mixed-mode mixture
 model regression or mixed-mode mixture regression models) which can
 handle both longitudinal and one-time responses.
-@item moc
-Fits a variety of mixtures models for multivariate observations with
-user-difined distributions and curves.
+@c <COMMENT>
+@c Moved to the Archive on 2004-10-08 as fails R CMD check.
+@c @item moc
+@c Fits a variety of mixtures models for multivariate observations with
+@c user-difined distributions and curves.
+@c </COMMENT>
 @item mscalib
 Calibration and filtering of MALDI-TOF Peptide Mass Fingerprint data.
 @item msm
@@ -2448,9 +2479,12 @@ misclassification rates.
 Hazard function estimation in survival analysis.
 @item multcomp
 Multiple comparison procedures for the one-way layout.
-@item multidim
-Multidimensional descriptive statistics: factorial methods and
-classification.
+@c <COMMENT>
+@c Removed from CRAN on 2004-10-20 due to possible legal problems.
+@c @item multidim
+@c Multidimensional descriptive statistics: factorial methods and
+@c classification.
+@c </COMMENT>
 @item multinomRob
 Overdispersed multinomial regression using robust (LQD and tanh)
 estimation.
@@ -2468,6 +2502,9 @@ preparation, macro functions, and more.
 ML estimation for multivariate normal data with missing values.
 @item mvnormtest
 Generalization of the Shapiro-Wilk test for multivariate variables.
+@item mvoutlier
+Multivariate outlier detection based on robust estimates of location and
+covariance structure.
 @item mvpart
 Multivariate partitioning.
 @item mvtnorm
@@ -2529,6 +2566,8 @@ An interface for the Ordinary Differential Equation (ODE) solver lsoda.
 ODEs are expressed as R functions.
 @item orientlib
 Representations, conversions and display of orientation SO(3) data.
+@item ouch
+Ornstein-Uhlenbeck models for phylogenetic comparative hypotheses.
 @item oz
 Functions for plotting Australia's coastline and state boundaries.
 @item pamr
@@ -2565,6 +2604,9 @@ Functions for import, export, plotting and other manipulations of
 bitmapped images.
 @item plotrix
 Various useful functions for enhancing plots.
+@item plugdensity
+Kernel density estimation with global bandwidth selection via
+``plug-in''.
 @item pls.pcr
 Multivariate regression by PLS and PCR.
 @c <COMMENT>
@@ -2615,6 +2657,8 @@ Analysis of experimental crosses to identify QTLs.
 For solving quadratic programming problems.
 @item quantreg
 Quantile regression and related methods.
+@item qvalue
+Q-value estimation for false discovery rate control.
 @item qvcalc
 Functions to compute quasi-variances and associated measures of
 approximation error.
@@ -2705,6 +2749,9 @@ regression models (GLMs).
 Functions for fitting general linear Structural Equation Models (with
 observed and unobserved variables) by the method of maximum likelihood
 using the RAM approach.
+@item seqinr
+Exploratory data analysis and data visualization for biological sequence
+(DNA and protein) data.
 @item seqmon
 Sequential monitoring of clinical trials.
 @c <COMMENT>

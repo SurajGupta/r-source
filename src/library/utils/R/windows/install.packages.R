@@ -208,7 +208,7 @@ download.packages <- function(pkgs, destdir, available=NULL,
         if(!any(ok))
             warning(paste("No package \"", p, "\" on CRAN.", sep=""))
         else{
-            fn <- paste(p, "_", available[ok, "Version"], ".zip", sep="")
+            fn <- paste(p, "_", available[ok, "Version"], ".zip", sep="")[1]
             if(localcran){
                 fn <- paste(substring(contriburl, 6), fn, sep="/")
                 retval <- rbind(retval, c(p, fn))
@@ -228,9 +228,10 @@ download.packages <- function(pkgs, destdir, available=NULL,
     retval
 }
 
-contrib.url <- function(CRAN) {
+contrib.url <- function(CRAN)
+{
     ver <- paste(R.version$major, substring(R.version$minor,1,1), sep=".")
-    file.path(CRAN, "bin", "windows", "contrib", ver)
+    file.path(gsub("/$", "", CRAN), "bin", "windows", "contrib", ver)
 }
 
 

@@ -31,7 +31,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <h2 class="unnumbered">R FAQ</h2>
 
 <p><h2>Frequently Asked Questions on R</h2>
-<h2>Version 2.0.2004-10-04</h2>
+<h2>Version 2.0.2004-11-14</h2>
 <h2>ISBN 3-900051-08-9</h2>
 <address>Kurt Hornik</address>
 <p><p><hr><p>
@@ -113,15 +113,15 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
 
 <p>The latest version of this document is always available from
 
-<pre class="display">     <a href="http://www.ci.tuwien.ac.at/~hornik/R/">http://www.ci.tuwien.ac.at/~hornik/R/</a>
+<pre class="display">     <a href="http://CRAN.R-project.org/doc/FAQ/">http://CRAN.R-project.org/doc/FAQ/</a>
 </pre>
    <p>From there, you can obtain versions converted to
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.txt">plain <acronym>ASCII</acronym> text</a>,
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.dvi.gz">DVI</a>,
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.info.gz"><acronym>GNU</acronym> info</a>, <a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html"><acronym>HTML</acronym></a>,
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.pdf">PDF</a>,
-<a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.ps.gz">PostScript</a> as
-well as the <a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.texi">Texinfo source</a> used for creating all these formats using the
+<a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.txt">plain <acronym>ASCII</acronym> text</a>,
+<a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.dvi.gz">DVI</a>,
+<a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.info.gz"><acronym>GNU</acronym> info</a>, <a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.html"><acronym>HTML</acronym></a>,
+<a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.pdf">PDF</a>,
+<a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.ps.gz">PostScript</a> as
+well as the <a href="http://CRAN.R-project.org/doc/FAQ/R-FAQ.texi">Texinfo source</a> used for creating all these formats using the
 <a href="http://texinfo.org/"><acronym>GNU</acronym> Texinfo system</a>.
 
    <p>You can also obtain the R <acronym>FAQ</acronym> from the <span class="file">doc/FAQ</span>
@@ -293,7 +293,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#R-Basics">R Basics</a>
 
 <h3 class="section">2.3 What is the current version of R?</h3>
 
-<p>The current released version is 2.0.0.  Based on this
+<p>The current released version is 2.0.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched')
 and one working towards the next minor or eventually major (`r-devel')
@@ -316,6 +316,10 @@ the &ldquo;Comprehensive R Archive Network&rdquo; (see <a href="#What-is-CRAN_00
    <p>Sources are also available via <a href="https://svn.r-project.org/R/">https://svn.r-project.org/R/</a>, the
 R Subversion repository, but currently not via anonymous rsync (nor
 CVS).
+
+   <p>Tarballs with daily snapshots of the r-devel and r-patched development
+versions of R can be found at
+<a href="ftp://ftp.stat.math.ethz.ch/Software/R">ftp://ftp.stat.math.ethz.ch/Software/R</a>.
 
 <!-- Sources are also available via anonymous rsync.  Use -->
 <!-- @example -->
@@ -498,51 +502,50 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#R-Basics">R Basics</a>
 
 <h3 class="section">2.6 Are there Unix binaries for R?</h3>
 
-<!-- Linux binaries as of 2004-06-25: -->
+<!-- Linux binaries as of 2004-10-17: -->
 <!-- debian -->
 <!-- woody   i386   1.8.0  Dirk Eddelbuettel <edd@debian.org> -->
 <!-- sarge   i386   1.8.1  Dirk Eddelbuettel <edd@debian.org> -->
 <!-- sid     i386   1.8.1  Dirk Eddelbuettel <edd@debian.org> -->
 <!-- mandrake -->
-<!-- 9.1     i386   1.9.0  Michele Alzetta <mikalzet@libero.it> -->
-<!-- 9.2     i386   1.9.0  Michele Alzetta <mikalzet@libero.it> -->
-<!-- 10.0    i386   1.9.1  Michele Alzetta <mikalzet@libero.it> -->
+<!-- 10.0    i386   2.0.0  Michele Alzetta <mikalzet@libero.it> -->
 <!-- redhat -->
-<!-- 8.x     i386   1.9.1  Martyn Plummer <plummer@iarc.fr> -->
-<!-- 9       i386   1.9.1  Martyn Plummer <plummer@iarc.fr> -->
-<!-- Fedora1 i386   1.9.1  Martyn Plummer <plummer@iarc.fr> -->
+<!-- 8.x     i386   2.0.0  Martyn Plummer <plummer@iarc.fr> -->
+<!-- 9       i386   2.0.0  Martyn Plummer <plummer@iarc.fr> -->
+<!-- Fedora1 i386   2.0.0  Martyn Plummer <plummer@iarc.fr> -->
 <!-- x86_64 1.8.1  James Henstridge <james@daa.com.au> -->
-<!-- Fedora2 i386   1.9.1  Martyn Plummer <plummer@iarc.fr> -->
+<!-- Fedora2 i386   2.0.0  Martyn Plummer <plummer@iarc.fr> -->
 <!-- suse -->
 <!-- 7.3     i386   1.8.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
 <!-- 8.0     i386   1.8.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
 <!-- 8.1     i386   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
-<!-- 8.2     i386   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
-<!-- 9.0     i586   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
-<!-- 9.1     i586   1.9.1  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
+<!-- 8.2     i386   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
+<!-- 9.0     i586   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
+<!-- 9.1     i586   2.0.0  Detlef Steuer <Detlef.Steuer@unibw-hamburg.de> -->
 <!-- vinelinux -->
-<!-- 2.6     i386   1.9.0  Susunu Tanimura <stanimura-ngs@umin.ac.jp> -->
-<p>The <span class="file">bin/linux</span> directory of a <acronym>CRAN</acronym> site contains Debian
-stable/testing/unstable packages for the i386 platform (now part of the
-Debian distribution and maintained by Dirk Eddelbuettel), Mandrake
-9.1/9.2/10.0 i386 packages by Michele Alzetta, Red Hat
+<!-- 3.0     i386   2.0.0  Susunu Tanimura <stanimura-ngs@umin.ac.jp> -->
+<p>The <span class="file">bin/linux</span> directory of a <acronym>CRAN</acronym> site contains
+<!-- Debian stable/testing/unstable packages for the i386 platform (now part -->
+<!-- of the Debian distribution and maintained by Dirk Eddelbuettel), -->
+Mandrake 9.1/9.2/10.0 i386 packages by Michele Alzetta, Red Hat
 8.x/9/Fedora1/Fedora2 i386 and Fedora1 x86_64 packages by Martyn Plummer
 and James Henstridge, respectively, SuSE 7.3/8.0/8.1/8.2 i386 and
 9.0/9.1 i586 packages by Detlef Steuer, and VineLinux 2.6 i386 packages
-by Susunu Tanimura.
+by Susunu Tanimura.  Debian packages, maintained by Dirk Eddelbuettel,
+have long been part of the Debian distribution, and can be accessed
+through APT, the Debian package maintenance tool.
 
-   <p>The Debian packages can be accessed through APT, the Debian package
-maintenance tool.  Simply add the line
-
-<pre class="example">     deb http://cran.R-project.org/bin/linux/debian <var>distribution</var> main
-</pre>
-   <p class="noindent">(where <var>distribution</var> is either <span class="samp">stable</span> or <span class="samp">testing</span>;
-feel free to use a <acronym>CRAN</acronym> mirror instead of the master) to the file
-<span class="file">/etc/apt/sources.list</span>.  Once you have added that line the
-programs <span class="command">apt-get</span>, <span class="command">apt-cache</span>, and <span class="command">dselect</span>
-(using the apt access method) will automatically detect and install
-updates of the R packages.
-
+<!-- Simply add the line -->
+<!-- @example -->
+<!-- deb http://cran.R-project.org/bin/linux/debian @var{distribution} main -->
+<!-- @end example -->
+<!-- @noindent -->
+<!-- (where @var{distribution} is either @samp{stable} or @samp{testing}; -->
+<!-- feel free to use a @CRAN{} mirror instead of the master) to the file -->
+<!-- @file{/etc/apt/sources.list}.  Once you have added that line the -->
+<!-- programs @command{apt-get}, @command{apt-cache}, and @command{dselect} -->
+<!-- (using the apt access method) will automatically detect and install -->
+<!-- updates of the R packages. -->
 <!-- The @file{bin/osf} directory of a @CRAN{} site contains RPMs -->
 <!-- by Albrecht Gebhardt for alpha systems running Alpha Unix -->
 <!-- (OSF/Tru64). -->
@@ -710,7 +713,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#R-Basics">R Basics</a>
        url          = {http://www.R-project.org}
      }
 </pre>
-   <p>Citation strings (or BibTeX entroes) for R and R packages can also be
+   <p>Citation strings (or BibTeX entries) for R and R packages can also be
 obtained by <code>citation()</code>.
 
 <div class="node">
@@ -934,7 +937,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#R-Basics">R Basics</a>
 <p>The R Foundation is a not for profit organization working in the public
 interest.  It was founded by the members of the R Core Team in order to
 provide support for the R project and other innovations in statistical
-computing, provide a reference point for individuals, instititutions or
+computing, provide a reference point for individuals, institutions or
 commercial enterprises that want to support or interact with the R
 development community, and to hold and administer the copyright of R
 software and documentation.  See
@@ -1078,17 +1081,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#What-are-the-differences-between-R-and
 
 <h4 class="subsection">3.3.1 Lexical scoping</h4>
 
-<p>Contrary to other implementations of the S language, R has adopted the
-evaluation model of Scheme.
+<p>Contrary to other implementations of the S language, R has adopted an
+evaluation model in which nested function definitions are lexically
+scoped.  This is analogous to the evalutation model in Scheme.
 
    <p>This difference becomes manifest when <em>free</em> variables occur in a
 function.  Free variables are those which are neither formal parameters
 (occurring in the argument list of the function) nor local variables
-(created by assigning to them in the body of the function).  Whereas S
-(like C) by default uses <em>static</em> scoping, R (like Scheme) has
-adopted <em>lexical</em> scoping.  This means the values of free variables
-are determined by a set of global variables in S, but in R by the
-bindings that were in effect at the time the function was created.
+(created by assigning to them in the body of the function).  In S, the
+values of free variables are determined by a set of global variables
+(similar to C, there is only local and global scope).  In R, they are
+determined by the environment in which the function was created.
 
    <p>Consider the following function:
 
@@ -1247,25 +1250,24 @@ it.  With S, one solution is to add an extra parameter to the function
 and to the optimizer to pass in these extras, which however can only
 work if the optimizer supports this.
 
-   <p>Lexical scoping allows using function closures and maintaining local
-state.  A simple example (taken from Abelson and Sussman) is obtained by
-typing <kbd>demo("scoping")</kbd> at the R prompt.  Further information is
-provided in the standard R reference &ldquo;R: A Language for Data Analysis
-and Graphics&rdquo; (see <a href="#What-documentation-exists-for-R_003f">What documentation exists for R?</a>) and in Robert
-Gentleman and Ross Ihaka (2000), &ldquo;Lexical Scope and Statistical
-Computing&rdquo;, <a href="http://www.amstat.org/publications/jcgs/"><em>Journal of Computational and Graphical Statistics</em></a>, <strong>9</strong>,
-491&ndash;508.
+   <p>Nested lexically scoped functions allow using function closures and
+maintaining local state.  A simple example (taken from Abelson and
+Sussman) is obtained by typing <kbd>demo("scoping")</kbd> at the R prompt. 
+Further information is provided in the standard R reference &ldquo;R: A
+Language for Data Analysis and Graphics&rdquo; (see <a href="#What-documentation-exists-for-R_003f">What documentation exists for R?</a>) and in Robert Gentleman and Ross Ihaka (2000), &ldquo;Lexical
+Scope and Statistical Computing&rdquo;,
+<a href="http://www.amstat.org/publications/jcgs/"><em>Journal of Computational and Graphical Statistics</em></a>, <strong>9</strong>, 491&ndash;508.
 
-   <p>Lexical scoping also implies a further major difference.  Whereas S
-stores all objects as separate files in a directory somewhere (usually
-<span class="file">.Data</span> under the current directory), R does not.  All objects in R
-are stored internally.  When R is started up it grabs a piece of memory
-and uses it to store the objects.  R performs its own memory management
-of this piece of memory, growing and shrinking its size as needed. 
-Having everything in memory is necessary because it is not really
-possible to externally maintain all relevant &ldquo;environments&rdquo; of
-symbol/value pairs.  This difference also seems to make R <em>faster</em>
-than S.
+   <p>Nested lexically scoped functions also imply a further major difference. 
+Whereas S stores all objects as separate files in a directory somewhere
+(usually <span class="file">.Data</span> under the current directory), R does not.  All
+objects in R are stored internally.  When R is started up it grabs a
+piece of memory and uses it to store the objects.  R performs its own
+memory management of this piece of memory, growing and shrinking its
+size as needed.  Having everything in memory is necessary because it is
+not really possible to externally maintain all relevant &ldquo;environments&rdquo;
+of symbol/value pairs.  This difference also seems to make R
+<em>faster</em> than S.
 
    <p>The down side is that if R crashes you will lose all the work for the
 current session.  Saving and restoring the memory &ldquo;images&rdquo; (the
@@ -1744,6 +1746,7 @@ by D. C. Montgomery, E. A. Peck, and C. G. Vining, 2001, John Wiley and
 Sons. 
 <br><dt><strong>Malmig</strong><dd>An implementation of Malecot migration model together with a number of
 related functions. 
+<br><dt><strong>Matching</strong><dd>Multivariate and propensity score matching with formal tests of balance. 
 <br><dt><strong>Matrix</strong><dd>A Matrix package. 
 <br><dt><strong>NADA</strong><dd>Methods described in &ldquo;Nondetects And Data Analysis: Statistics for
 Censored Environmental Data&rdquo; by Dennis R. Helsel, 2004, John Wiley and
@@ -1829,10 +1832,15 @@ maximum F ratio, the Pearson product moment correlation coefficiant,
 Johnson distributions, normal scores and generalized hypergeometric
 distributions). 
 <br><dt><strong>UNF</strong><dd>Tools for creating universal numeric fingerprints for data. 
+<br><dt><strong>UsingR</strong><dd>Data sets to accompany the textbook &ldquo;Using R for Introductory
+Statistics&rdquo; by J. Verzani, 2005, Chapman &amp; Hall/CRC. 
 <br><dt><strong>VLMC</strong><dd>Functions, classes &amp; methods for estimation, prediction, and simulation
 (bootstrap) of VLMC (Variable Length Markov Chain) models. 
 <br><dt><strong>VaR</strong><dd>Methods for calculation of Value at Risk (VaR). 
 <br><dt><strong>XML</strong><dd>Facilities for reading <acronym>XML</acronym> documents and DTDs. 
+<br><dt><strong>Zelig</strong><dd>Everyone's statistical software: an easy-to-use program that can
+estimate, and help interpret the results of, an enormous range of
+statistical models. 
 <br><dt><strong>abind</strong><dd>Combine multi-dimensional arrays. 
 <br><dt><strong>accuracy</strong><dd>A suite of tools designed to test and improve the accuracy of
 statistical computation. 
@@ -1899,6 +1907,8 @@ bivariate data.
 <br><dt><strong>chron</strong><dd>A package for working with chronological objects (times and dates). 
 <br><dt><strong>circular</strong><dd>Circular statistics, from &ldquo;Topics in Circular Statistics&rdquo; by Rao
 Jammalamadaka and A. SenGupta, 2001, World Scientific. 
+<br><dt><strong>clac</strong><dd>Clust Along Chromosomes, a method to call gains/losses in CGH array
+data. 
 <br><dt><strong>class</strong><dd>Functions for classification (k-nearest neighbor and LVQ). 
 Contained in the <span class="file">VR</span> bundle.  <em>Recommended</em>. 
 <br><dt><strong>classPP</strong><dd>Projection Pursuit for supervised classification. 
@@ -1920,6 +1930,7 @@ and fractional factorial designs.
 <br><dt><strong>crossdes</strong><dd>Functions for the construction and randomization of balanced carryover
 balanced designs, to check given designs for balance, and for simulation
 studies on the validity of two randomization procedures. 
+<br><dt><strong>cyclones</strong><dd>Cyclone identification. 
 <br><dt><strong>date</strong><dd>Functions for dealing with dates.  The most useful of them accepts a
 vector of input dates in any of the forms <span class="samp">8/30/53</span>,
 <span class="samp">30Aug53</span>, <span class="samp">30 August 1953</span>, <small class="dots">...</small>, <span class="samp">August 30 53</span>, or
@@ -1975,6 +1986,7 @@ right censored data.
 <br><dt><strong>energy</strong><dd>E-statistics (energy) tests for comparing distributions: multivariate
 normality, Poisson test, multivariate k-sample test for equal
 distributions, hierarchical clustering by e-distances. 
+<br><dt><strong>epitools</strong><dd>Basic tools for applied epidemiology. 
 <br><dt><strong>epsi</strong><dd>Edge Preserving Smoothing for Images. 
 <br><dt><strong>evd</strong><dd>Functions for extreme value distributions.  Extends simulation,
 distribution, quantile and density functions to univariate, bivariate
@@ -2013,7 +2025,7 @@ used for spatial prediction.
 <br><dt><strong>flexmix</strong><dd>Flexible Mixture Modeling: a general framework for finite mixtures of
 regression models using the EM algorithm. 
 <br><dt><strong>foreign</strong><dd>Functions for reading and writing data stored by statistical software
-like Minitab, SAS, SPSS, Stata, etc.  <em>Recommended</em>. 
+like Minitab, S, SAS, SPSS, Stata, Systat, etc.  <em>Recommended</em>. 
 <br><dt><strong>fork</strong><dd>Functions for handling multiple processes: simple wrappers around the
 Unix process management API calls. 
 <br><dt><strong>fortunes</strong><dd>R fortunes. 
@@ -2065,8 +2077,13 @@ intercept.
 Precision library. 
 <br><dt><strong>gpclib</strong><dd>General polygon clipping routines for R based on Alan Murta's C
 library. 
-<br><dt><strong>gpls</strong><dd>Classification using generalized partial least squares for two-group and
-multi-group (more than 2 group) classification. 
+<!-- <COMMENT> -->
+<!-- Moved to the Archive on 2004-10-08 as fails R CMD check. -->
+<!-- (In addition, email to the maintainer address bounces.) -->
+<!-- @item gpls -->
+<!-- Classification using generalized partial least squares for two-group and -->
+<!-- multi-group (more than 2 group) classification. -->
+<!-- </COMMENT> -->
 <br><dt><strong>grasper</strong><dd>Generalized Regression Analysis and Spatial Predictions for R. 
 <br><dt><strong>gregmisc</strong><dd>Miscellaneous functions written/maintained by Gregory R. Warnes. 
 <br><dt><strong>gridBase</strong><dd>Integration of base and grid graphics. 
@@ -2094,6 +2111,7 @@ set.
 data with any numbers of levels in the hierarchy, and tests for the
 significance of each F and variance components. 
 <br><dt><strong>homals</strong><dd>Homogeneity Analysis (HOMALS) package with optional Tcl/Tk interface. 
+<br><dt><strong>hopach</strong><dd>Hierarchical Ordered Partitioning and Collapsing Hybrid (HOPACH). 
 <br><dt><strong>httpRequest</strong><dd>Implements HTTP Request protocols (GET, POST, and multipart POST
 requests). 
 <br><dt><strong>hwde</strong><dd>Models and tests for departure from Hardy-Weinberg equilibrium and
@@ -2102,6 +2120,8 @@ independence between loci.
 <br><dt><strong>impute</strong><dd>Imputation for microarray data (currently KNN only). 
 <br><dt><strong>ineq</strong><dd>Inequality, concentration and poverty measures, and Lorenz curves
 (empirical and theoretic). 
+<br><dt><strong>intcox</strong><dd>Implementation of the Iterated Convex Minorant Algorithm for the Cox
+proportional hazard model for interval censored event data. 
 <!-- @item integrate -->
 <!-- Adaptive quadrature in up to 20 dimensions. -->
 <br><dt><strong>ipred</strong><dd>Improved predictive models by direct and indirect bootstrap aggregation
@@ -2213,8 +2233,12 @@ problems, including the Boston housing data.
 <br><dt><strong>mmlcr</strong><dd>Mixed-mode latent class regression (also known as mixed-mode mixture
 model regression or mixed-mode mixture regression models) which can
 handle both longitudinal and one-time responses. 
-<br><dt><strong>moc</strong><dd>Fits a variety of mixtures models for multivariate observations with
-user-difined distributions and curves. 
+<!-- <COMMENT> -->
+<!-- Moved to the Archive on 2004-10-08 as fails R CMD check. -->
+<!-- @item moc -->
+<!-- Fits a variety of mixtures models for multivariate observations with -->
+<!-- user-difined distributions and curves. -->
+<!-- </COMMENT> -->
 <br><dt><strong>mscalib</strong><dd>Calibration and filtering of MALDI-TOF Peptide Mass Fingerprint data. 
 <br><dt><strong>msm</strong><dd>Functions for fitting continuous-time Markov multi-state models to
 categorical processes observed at arbitrary times, optionally with
@@ -2222,8 +2246,12 @@ misclassified responses, and covariates on transition or
 misclassification rates. 
 <br><dt><strong>muhaz</strong><dd>Hazard function estimation in survival analysis. 
 <br><dt><strong>multcomp</strong><dd>Multiple comparison procedures for the one-way layout. 
-<br><dt><strong>multidim</strong><dd>Multidimensional descriptive statistics: factorial methods and
-classification. 
+<!-- <COMMENT> -->
+<!-- Removed from CRAN on 2004-10-20 due to possible legal problems. -->
+<!-- @item multidim -->
+<!-- Multidimensional descriptive statistics: factorial methods and -->
+<!-- classification. -->
+<!-- </COMMENT> -->
 <br><dt><strong>multinomRob</strong><dd>Overdispersed multinomial regression using robust (LQD and tanh)
 estimation. 
 <!-- <COMMENT> -->
@@ -2237,6 +2265,8 @@ backup, sourcing, documentation (formal and informal), package
 preparation, macro functions, and more. 
 <br><dt><strong>mvnmle</strong><dd>ML estimation for multivariate normal data with missing values. 
 <br><dt><strong>mvnormtest</strong><dd>Generalization of the Shapiro-Wilk test for multivariate variables. 
+<br><dt><strong>mvoutlier</strong><dd>Multivariate outlier detection based on robust estimates of location and
+covariance structure. 
 <br><dt><strong>mvpart</strong><dd>Multivariate partitioning. 
 <br><dt><strong>mvtnorm</strong><dd>Multivariate normal and t distributions. 
 <br><dt><strong>ncdf</strong><dd>Interface to Unidata netCDF data files. 
@@ -2279,6 +2309,7 @@ distribution.
 <br><dt><strong>odesolve</strong><dd>An interface for the Ordinary Differential Equation (ODE) solver lsoda. 
 ODEs are expressed as R functions. 
 <br><dt><strong>orientlib</strong><dd>Representations, conversions and display of orientation SO(3) data. 
+<br><dt><strong>ouch</strong><dd>Ornstein-Uhlenbeck models for phylogenetic comparative hypotheses. 
 <br><dt><strong>oz</strong><dd>Functions for plotting Australia's coastline and state boundaries. 
 <br><dt><strong>pamr</strong><dd>Pam: Prediction Analysis for Microarrays. 
 <br><dt><strong>pan</strong><dd>Multiple imputation for multivariate panel or clustered data. 
@@ -2301,6 +2332,8 @@ microarrays.
 <br><dt><strong>pixmap</strong><dd>Functions for import, export, plotting and other manipulations of
 bitmapped images. 
 <br><dt><strong>plotrix</strong><dd>Various useful functions for enhancing plots. 
+<br><dt><strong>plugdensity</strong><dd>Kernel density estimation with global bandwidth selection via
+&ldquo;plug-in&rdquo;. 
 <br><dt><strong>pls.pcr</strong><dd>Multivariate regression by PLS and PCR. 
 <!-- <COMMENT> -->
 <!-- Outdated on CRAN along with 1.5.0 release as we do not have an active -->
@@ -2337,6 +2370,7 @@ cause-and-effect chart.
 <br><dt><strong>qtl</strong><dd>Analysis of experimental crosses to identify QTLs. 
 <br><dt><strong>quadprog</strong><dd>For solving quadratic programming problems. 
 <br><dt><strong>quantreg</strong><dd>Quantile regression and related methods. 
+<br><dt><strong>qvalue</strong><dd>Q-value estimation for false discovery rate control. 
 <br><dt><strong>qvcalc</strong><dd>Functions to compute quasi-variances and associated measures of
 approximation error. 
 <br><dt><strong>race</strong><dd>Implementation of some racing methods for the empirical selection of the
@@ -2397,6 +2431,8 @@ regression models (GLMs).
 <br><dt><strong>sem</strong><dd>Functions for fitting general linear Structural Equation Models (with
 observed and unobserved variables) by the method of maximum likelihood
 using the RAM approach. 
+<br><dt><strong>seqinr</strong><dd>Exploratory data analysis and data visualization for biological sequence
+(DNA and protein) data. 
 <br><dt><strong>seqmon</strong><dd>Sequential monitoring of clinical trials. 
 <!-- <COMMENT> -->
 <!-- Moved to the Archive as requested by the maintainer: serialize() et -->

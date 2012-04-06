@@ -21,6 +21,8 @@ REXE = $(R_EXE) --vanilla --slave
 
 RPREFIX = $(shell perl fixed/rwver.pl ../../VERSION)
 
+FULLVERSION=`cat ../../VERSION`
+
 DATE = $(shell date +%F)
 
 RLIB = $(RHOME)/library
@@ -516,6 +518,15 @@ unpack-recommended:
 clean-recommended:
 	@for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do $(RM) -r ../library/$${i} ; done
 
+ifeq ($(strip $(HELP)),YES)
+ifeq ($(strip $(WINHELP)),CHM)
+DOCSTYPE=chm
+else
+DOCSTYPE=normal
+endif
+else
+DOCSTYPE=none
+endif
 
 recommended: unpack-recommended
 	@$(ECHO) "--- Making recommended packages"
@@ -525,7 +536,7 @@ ifeq ($(strip $(BUILD)),CROSS)
         done
 else
 	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-	  $(RHOME)/bin/rcmd.exe INSTALL --unsafe ../library/$${p} || exit 1; \
+	  $(RHOME)/bin/rcmd.exe INSTALL --unsafe ../library/$${p} --docs=$(DOCSTYPE) || exit 1; \
 	done
 endif
 
@@ -542,23 +553,33 @@ crandir:
 	 $(ECHO) 'cat(md5sum("$(RPREFIX).exe"),"*$(RPREFIX).exe")' \
          | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(CP) installer/mini*.* cran/mini
+	$(CP) ../../doc/html/rw-FAQ.html cran
 	(cd cran/mini;\
 	 $(ECHO) 'fn <- dir(pattern="mini*"); cat(paste(md5sum(fn)," *",fn,sep=""),sep="\n")' \
 	 | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g README > cran/README.$(RPREFIX)
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g cran/ReadMe.in > cran/ReadMe	  
+	  -e s/@RVER@/$(RVER)/g \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" README > cran/README.$(RPREFIX)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
-	  -e 's/@DATE@/$(DATE)/g' cran/index.in > cran/index.html
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/ReadMe.in > cran/ReadMe	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
-	  -e 's/@DATE@/$(DATE)/g' cran/rdevel.in > cran/rdevel.html
+	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/index.in > cran/index.html
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
-	  -e 's/@DATE@/$(DATE)/g' cran/rpatched.in > cran/rpatched.html	  
+	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rdevel.in > cran/rdevel.html
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g \
+	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g \
+	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/mini.in > cran/mini/index.html
 
 distribution:
 	$(MAKE) all

@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.0.2004-10-04
+Version 2.0.2004-11-14
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -134,7 +134,7 @@ Temple Place -- Suite 330, Boston, MA 02111-1307, USA.
 
 The latest version of this document is always available from
 
-     `http://www.ci.tuwien.ac.at/~hornik/R/'
+     `http://CRAN.R-project.org/doc/FAQ/'
 
    From there, you can obtain versions converted to plain ASCII text, DVI,
 GNU info, HTML, PDF, PostScript as well as the Texinfo source used for
@@ -235,7 +235,7 @@ rs6000-ibm-aix, hppa-hp-hpux, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.0.0.  Based on this
+The current released version is 2.0.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -250,6 +250,9 @@ Sources, binaries and documentation for R can be obtained via CRAN, the
 
    Sources are also available via `https://svn.r-project.org/R/', the R
 Subversion repository, but currently not via anonymous rsync (nor CVS).
+
+   Tarballs with daily snapshots of the r-devel and r-patched development
+versions of R can be found at `ftp://ftp.stat.math.ethz.ch/Software/R'.
 
 2.5 How can R be installed?
 ===========================
@@ -365,25 +368,14 @@ port of R for Macintosh is no longer supported.
 2.6 Are there Unix binaries for R?
 ==================================
 
-The `bin/linux' directory of a CRAN site contains Debian
-stable/testing/unstable packages for the i386 platform (now part of the
-Debian distribution and maintained by Dirk Eddelbuettel), Mandrake
-9.1/9.2/10.0 i386 packages by Michele Alzetta, Red Hat
-8.x/9/Fedora1/Fedora2 i386 and Fedora1 x86_64 packages by Martyn Plummer
-and James Henstridge, respectively, SuSE 7.3/8.0/8.1/8.2 i386 and 9.0/9.1
-i586 packages by Detlef Steuer, and VineLinux 2.6 i386 packages by Susunu
-Tanimura.
-
-   The Debian packages can be accessed through APT, the Debian package
-maintenance tool.  Simply add the line
-
-     deb http://cran.R-project.org/bin/linux/debian DISTRIBUTION main
-
-(where DISTRIBUTION is either `stable' or `testing'; feel free to use a
-CRAN mirror instead of the master) to the file `/etc/apt/sources.list'.
-Once you have added that line the programs `apt-get', `apt-cache', and
-`dselect' (using the apt access method) will automatically detect and
-install updates of the R packages.
+The `bin/linux' directory of a CRAN site contains Mandrake 9.1/9.2/10.0
+i386 packages by Michele Alzetta, Red Hat 8.x/9/Fedora1/Fedora2 i386 and
+Fedora1 x86_64 packages by Martyn Plummer and James Henstridge,
+respectively, SuSE 7.3/8.0/8.1/8.2 i386 and 9.0/9.1 i586 packages by Detlef
+Steuer, and VineLinux 2.6 i386 packages by Susunu Tanimura.  Debian
+packages, maintained by Dirk Eddelbuettel, have long been part of the
+Debian distribution, and can be accessed through APT, the Debian package
+maintenance tool.
 
    No other binary distributions are currently publically available.
 
@@ -518,7 +510,7 @@ To cite R in publications, use
        url          = {http://www.R-project.org}
      }
 
-   Citation strings (or BibTeX entroes) for R and R packages can also be
+   Citation strings (or BibTeX entries) for R and R packages can also be
 obtained by `citation()'.
 
 2.9 What mailing lists exist for R?
@@ -682,7 +674,7 @@ Bell Labs language `S' (*note What is S?::).
 The R Foundation is a not for profit organization working in the public
 interest.  It was founded by the members of the R Core Team in order to
 provide support for the R project and other innovations in statistical
-computing, provide a reference point for individuals, instititutions or
+computing, provide a reference point for individuals, institutions or
 commercial enterprises that want to support or interact with the R
 development community, and to hold and administer the copyright of R
 software and documentation.  See `http://www.R-project.org/foundation/' for
@@ -771,17 +763,17 @@ the S language.
 3.3.1 Lexical scoping
 ---------------------
 
-Contrary to other implementations of the S language, R has adopted the
-evaluation model of Scheme.
+Contrary to other implementations of the S language, R has adopted an
+evaluation model in which nested function definitions are lexically scoped.
+This is analogous to the evalutation model in Scheme.
 
    This difference becomes manifest when _free_ variables occur in a
 function.  Free variables are those which are neither formal parameters
 (occurring in the argument list of the function) nor local variables
-(created by assigning to them in the body of the function).  Whereas S
-(like C) by default uses _static_ scoping, R (like Scheme) has adopted
-_lexical_ scoping.  This means the values of free variables are determined
-by a set of global variables in S, but in R by the bindings that were in
-effect at the time the function was created.
+(created by assigning to them in the body of the function).  In S, the
+values of free variables are determined by a set of global variables
+(similar to C, there is only local and global scope).  In R, they are
+determined by the environment in which the function was created.
 
    Consider the following function:
 
@@ -907,20 +899,21 @@ one solution is to add an extra parameter to the function and to the
 optimizer to pass in these extras, which however can only work if the
 optimizer supports this.
 
-   Lexical scoping allows using function closures and maintaining local
-state.  A simple example (taken from Abelson and Sussman) is obtained by
-typing `demo("scoping")' at the R prompt.  Further information is provided
-in the standard R reference "R: A Language for Data Analysis and Graphics"
-(*note What documentation exists for R?::) and in Robert Gentleman and Ross
-Ihaka (2000), "Lexical Scope and Statistical Computing", _Journal of
-Computational and Graphical Statistics_, *9*, 491-508.
+   Nested lexically scoped functions allow using function closures and
+maintaining local state.  A simple example (taken from Abelson and Sussman)
+is obtained by typing `demo("scoping")' at the R prompt.  Further
+information is provided in the standard R reference "R: A Language for Data
+Analysis and Graphics" (*note What documentation exists for R?::) and in
+Robert Gentleman and Ross Ihaka (2000), "Lexical Scope and Statistical
+Computing", _Journal of Computational and Graphical Statistics_, *9*,
+491-508.
 
-   Lexical scoping also implies a further major difference.  Whereas S
-stores all objects as separate files in a directory somewhere (usually
-`.Data' under the current directory), R does not.  All objects in R are
-stored internally.  When R is started up it grabs a piece of memory and
-uses it to store the objects.  R performs its own memory management of this
-piece of memory, growing and shrinking its size as needed.  Having
+   Nested lexically scoped functions also imply a further major difference.
+Whereas S stores all objects as separate files in a directory somewhere
+(usually `.Data' under the current directory), R does not.  All objects in
+R are stored internally.  When R is started up it grabs a piece of memory
+and uses it to store the objects.  R performs its own memory management of
+this piece of memory, growing and shrinking its size as needed.  Having
 everything in memory is necessary because it is not really possible to
 externally maintain all relevant "environments" of symbol/value pairs.
 This difference also seems to make R _faster_ than S.
@@ -1393,6 +1386,10 @@ distributions of R.)
      An implementation of Malecot migration model together with a number of
      related functions.
 
+*Matching*
+     Multivariate and propensity score matching with formal tests of
+     balance.
+
 *Matrix*
      A Matrix package.
 
@@ -1540,6 +1537,10 @@ distributions of R.)
 *UNF*
      Tools for creating universal numeric fingerprints for data.
 
+*UsingR*
+     Data sets to accompany the textbook "Using R for Introductory
+     Statistics" by J. Verzani, 2005, Chapman & Hall/CRC.
+
 *VLMC*
      Functions, classes & methods for estimation, prediction, and simulation
      (bootstrap) of VLMC (Variable Length Markov Chain) models.
@@ -1549,6 +1550,11 @@ distributions of R.)
 
 *XML*
      Facilities for reading XML documents and DTDs.
+
+*Zelig*
+     Everyone's statistical software: an easy-to-use program that can
+     estimate, and help interpret the results of, an enormous range of
+     statistical models.
 
 *abind*
      Combine multi-dimensional arrays.
@@ -1678,6 +1684,10 @@ distributions of R.)
      Circular statistics, from "Topics in Circular Statistics" by Rao
      Jammalamadaka and A. SenGupta, 2001, World Scientific.
 
+*clac*
+     Clust Along Chromosomes, a method to call gains/losses in CGH array
+     data.
+
 *class*
      Functions for classification (k-nearest neighbor and LVQ).  Contained
      in the `VR' bundle.  _Recommended_.
@@ -1726,6 +1736,9 @@ distributions of R.)
      Functions for the construction and randomization of balanced carryover
      balanced designs, to check given designs for balance, and for
      simulation studies on the validity of two randomization procedures.
+
+*cyclones*
+     Cyclone identification.
 
 *date*
      Functions for dealing with dates.  The most useful of them accepts a
@@ -1831,6 +1844,9 @@ distributions of R.)
      normality, Poisson test, multivariate k-sample test for equal
      distributions, hierarchical clustering by e-distances.
 
+*epitools*
+     Basic tools for applied epidemiology.
+
 *epsi*
      Edge Preserving Smoothing for Images.
 
@@ -1902,7 +1918,7 @@ distributions of R.)
 
 *foreign*
      Functions for reading and writing data stored by statistical software
-     like Minitab, SAS, SPSS, Stata, etc.  _Recommended_.
+     like Minitab, S, SAS, SPSS, Stata, Systat, etc.  _Recommended_.
 
 *fork*
      Functions for handling multiple processes: simple wrappers around the
@@ -2004,10 +2020,6 @@ distributions of R.)
      General polygon clipping routines for R based on Alan Murta's C
      library.
 
-*gpls*
-     Classification using generalized partial least squares for two-group
-     and multi-group (more than 2 group) classification.
-
 *grasper*
      Generalized Regression Analysis and Spatial Predictions for R.
 
@@ -2063,6 +2075,9 @@ distributions of R.)
 *homals*
      Homogeneity Analysis (HOMALS) package with optional Tcl/Tk interface.
 
+*hopach*
+     Hierarchical Ordered Partitioning and Collapsing Hybrid (HOPACH).
+
 *httpRequest*
      Implements HTTP Request protocols (GET, POST, and multipart POST
      requests).
@@ -2080,6 +2095,10 @@ distributions of R.)
 *ineq*
      Inequality, concentration and poverty measures, and Lorenz curves
      (empirical and theoretic).
+
+*intcox*
+     Implementation of the Iterated Convex Minorant Algorithm for the Cox
+     proportional hazard model for interval censored event data.
 
 *ipred*
      Improved predictive models by direct and indirect bootstrap aggregation
@@ -2293,10 +2312,6 @@ distributions of R.)
      model regression or mixed-mode mixture regression models) which can
      handle both longitudinal and one-time responses.
 
-*moc*
-     Fits a variety of mixtures models for multivariate observations with
-     user-difined distributions and curves.
-
 *mscalib*
      Calibration and filtering of MALDI-TOF Peptide Mass Fingerprint data.
 
@@ -2312,10 +2327,6 @@ distributions of R.)
 *multcomp*
      Multiple comparison procedures for the one-way layout.
 
-*multidim*
-     Multidimensional descriptive statistics: factorial methods and
-     classification.
-
 *multinomRob*
      Overdispersed multinomial regression using robust (LQD and tanh)
      estimation.
@@ -2330,6 +2341,10 @@ distributions of R.)
 
 *mvnormtest*
      Generalization of the Shapiro-Wilk test for multivariate variables.
+
+*mvoutlier*
+     Multivariate outlier detection based on robust estimates of location
+     and covariance structure.
 
 *mvpart*
      Multivariate partitioning.
@@ -2405,6 +2420,9 @@ distributions of R.)
 *orientlib*
      Representations, conversions and display of orientation SO(3) data.
 
+*ouch*
+     Ornstein-Uhlenbeck models for phylogenetic comparative hypotheses.
+
 *oz*
      Functions for plotting Australia's coastline and state boundaries.
 
@@ -2454,6 +2472,10 @@ distributions of R.)
 
 *plotrix*
      Various useful functions for enhancing plots.
+
+*plugdensity*
+     Kernel density estimation with global bandwidth selection via
+     "plug-in".
 
 *pls.pcr*
      Multivariate regression by PLS and PCR.
@@ -2511,6 +2533,9 @@ distributions of R.)
 
 *quantreg*
      Quantile regression and related methods.
+
+*qvalue*
+     Q-value estimation for false discovery rate control.
 
 *qvcalc*
      Functions to compute quasi-variances and associated measures of
@@ -2629,6 +2654,10 @@ distributions of R.)
      Functions for fitting general linear Structural Equation Models (with
      observed and unobserved variables) by the method of maximum likelihood
      using the RAM approach.
+
+*seqinr*
+     Exploratory data analysis and data visualization for biological
+     sequence (DNA and protein) data.
 
 *seqmon*
      Sequential monitoring of clinical trials.

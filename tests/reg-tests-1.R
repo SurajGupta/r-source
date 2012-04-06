@@ -1043,14 +1043,12 @@ try(eigen(m))
 
 
 ## 1.3.0 had poor compression on gzfile() with lots of small pieces.
-if (capabilities("libz")) {
-    zz <- gzfile("t1.gz", "w")
-    write(1:1000, zz)
-    close(zz)
-    (sz <- file.info("t1.gz")$size)
-    unlink("t1.gz")
-    stopifnot(sz < 2000)
-}
+zz <- gzfile("t1.gz", "w")
+write(1:1000, zz)
+close(zz)
+(sz <- file.info("t1.gz")$size)
+unlink("t1.gz")
+stopifnot(sz < 2000)
 
 
 ## PR 1010: plot.mts (type="p") was broken in 1.3.0 and this call failed.
@@ -3298,5 +3296,67 @@ ym <- cbind(y, 10-y)
 fit2 <- glm(ym ~ x, binomial)
 stopifnot(identical(names(resid(fit2)), names(y)))
 ## Note: fit <- glm(y/10 ~ x, binomial, weights=rep(10, 10))
-## Does not preserve names in R, but does in S.
+## Does not preserve names in R < 2.0.1, but does in S.
+fit <- glm(y/10 ~ x, binomial, weights=rep(10, 10))
+stopifnot(identical(names(resid(fit)), names(y)))
 ## The problem was glm.fit assumed a vector response.
+
+
+## dlogis(-2000) was NaN in <= 2.0.0.
+stopifnot(identical(dlogis(-2000), 0.0))
+##
+
+
+## short vectors in spline[fun]  (PR#7290)
+try(splinefun(1[0], 1[0])(1)) # segfault in <= 2.0.0
+for(meth in c("fmm", "nat", "per"))
+    stopifnot(all(splinefun(1, pi, method = meth)(0:2) == rep(pi, 3)))
+## exactly constant for n=1; was NA for "periodic" in <= 2.0.0
+
+
+## ecdf with NAs (part of PR#7292).
+x <- c(1,2,2,4,7, NA, 10,12, 15,20)
+ecdf(x)
+## failed in <= 2.0.0.
+
+
+## Incorrect use of as.Date segfaulted on some x86_64 systems.
+as.Date("2001", "%Y")
+## answer is usually current mon & day, but 2001-01-01 on Solaris.
+
+
+## rank and order accepted invalid inputs (and gave nonsense)
+x1 <- as.list(10:1)
+x2 <-  charToRaw("A test string")
+stopifnot(inherits(try(order(x1)), "try-error"),
+          inherits(try(order(x2)), "try-error"),
+          inherits(try(rank(x1)), "try-error"),
+          inherits(try(rank(x2)), "try-error"))
+## worked but gave 1:n in 2.0.0.
+stopifnot(inherits(try(sort(x1)), "try-error"),
+          inherits(try(sort(x2)), "try-error"),
+          inherits(try(sort(x1, partial=5)), "try-error"),
+          inherits(try(sort(x2, partial=5)), "try-error"))
+##
+
+
+## pmax failed with NA inputs
+pmax(c(1,2,NA), c(3,4,NA), na.rm=TRUE)
+## failed after for 2.0.0 change to subassignment
+
+
+## subassigning expression could segfault (PR#7326)
+foo <- expression(alpha, beta, gamma)
+foo[2]
+foo[2] <- NA
+foo
+## segfaulted in 2.0.0
+
+## closing a graphics window could segfault in Windows
+if(.Platform$OS.type == "windows") {
+    windows(record = TRUE)
+    plot(1)
+    dev.off()
+    gc()
+}
+## segfaulted in 2.0.0

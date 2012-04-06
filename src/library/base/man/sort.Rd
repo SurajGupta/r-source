@@ -3,7 +3,7 @@
 \alias{is.unsorted}
 \title{Sorting or Ordering Vectors}
 \description{
-  Sort (or \emph{order}) a numeric or complex vector (partially) into
+  Sort (or \emph{order}) a vector or factor (partially) into
   ascending (or descending) order.
 }
 \usage{
@@ -13,16 +13,17 @@ sort(x, partial = NULL, na.last = NA, decreasing = FALSE,
 is.unsorted(x, na.rm = FALSE)
 }
 \arguments{
-  \item{x}{a numeric or complex vector.}
+  \item{x}{a numeric, complex, character or logical vector, or a factor.}
   \item{partial}{a vector of indices for partial sorting.}
   \item{na.last}{for controlling the treatment of \code{NA}s.
     If \code{TRUE}, missing values in the data are put last; if
     \code{FALSE}, they are put first; if \code{NA}, they are removed.}
-  \item{decreasing}{logical.  Should the sort be increasing or decreasing?}
+  \item{decreasing}{logical.  Should the sort be increasing or decreasing?
+     Not available for partial sorting.} 
   \item{method}{character specifying the algorithm used.}
   \item{index.return}{logical indicating if the ordering index vector should
-    be returned as well; this is only available for the default
-  \code{na.last = NA}.}
+    be returned as well; this is only available for a few cases, the default
+    \code{na.last = NA} and full sorting of non-factors.}
   \item{na.rm}{logical.  Should missing values be removed?}
 }
 \details{
@@ -32,7 +33,9 @@ is.unsorted(x, na.rm = FALSE)
   \code{partial} are in their correct position in the sorted array.  Any
   values smaller than these values are guaranteed to have a smaller
   index in the sorted array and any values which are greater are
-  guaranteed to have a bigger index in the sorted array.
+  guaranteed to have a bigger index in the sorted array.  This is included
+  for efficiency, and many of the options are not available for partial
+  sorting.
 
   The sort order for character vectors will depend on the collating
   sequence of the locale in use: see \code{\link{Comparison}}.
@@ -41,7 +44,7 @@ is.unsorted(x, na.rm = FALSE)
   increasingly, i.e., \code{is.unsorted(x)} is true if \code{any(x !=
     sort(x))} (and there are no \code{NA}s).
 
-  \code{method = "shell"} uses Shellsort (an \eqn{O(n^{4/3})} variant
+  Method \code{"shell"} uses Shellsort (an \eqn{O(n^{4/3})} variant
   from Sedgewick (1996)).  If \code{x} has names a stable sort is used,
   so ties are not reordered.  (This only matters if names are present.)
 

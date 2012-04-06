@@ -64,7 +64,7 @@ The current version of this document is @value{VERSION}.
 
 @menu
 * Obtaining R::                 
-* Installing R under Unix::     
+* Installing R under Unix-alikes::  
 * Installing R under Windows::  
 * Installing R under Mac OS X::  
 * Add-on packages::             
@@ -76,7 +76,7 @@ The current version of this document is @value{VERSION}.
 * Concept index::               
 @end menu
 
-@node Obtaining R, Installing R under Unix, Top, Top
+@node Obtaining R, Installing R under Unix-alikes, Top, Top
 @chapter Obtaining R
 @cindex Obtaining R
 
@@ -128,22 +128,6 @@ users, set @code{umask} before unpacking so that the files will be
 readable by the target group (e.g., @code{umask 022} to be usable by all
 users).
 
-@c @cindex Patch files
-@c Finally, for patch releases (@samp{@var{x}.@var{y}.@var{z}} with @var{z}
-@c != 0), a patch against the preceding release is made available in
-@c @file{R-@var{x}.@var{y}.@var{@{z-1@}}-@var{x}.@var{y}.@var{z}.diff.gz}
-@c (e.g., @file{R-1.2.2-1.2.3.diff.gz}), which is generally a much smaller
-@c file that the @file{.tgz} files.  Such a file can be applied to the
-@c sources of the previous version by changing to the top directory of it
-@c and
-
-@c @smallexample
-@c gzip -dc /path/to/it/R-@var{x}.@var{y}.@var{@{z-1@}}-@var{x}.@var{y}.@var{z}.diff.gz | patch -E -p1
-@c @end smallexample
-
-@c @noindent
-@c Beware that this does not necessarily work if the older sources have
-@c been modified (e.g., by building in their directories).
 
 @node Getting patched and development versions,  , Getting and unpacking the sources, Obtaining R
 @section Getting patched and development versions
@@ -151,62 +135,20 @@ users).
 A patched version of the current release, @samp{r-patched} and the
 current development version, @samp{r-devel}, are available as daily
 tarballs and via access to the R Subversion repository.
-@c rsync.  The development version is also available by
-@c anonymous CVS from @uref{http://anoncvs.r-project.org/}.
 
 The tarballs are available from
 @uref{ftp://ftp.stat.math.ethz.ch/pub/Software/R/}.  Download either
 @samp{R-patched.tar.gz} or @samp{R-devel.tar.gz} (or the
 @samp{.tar.bz2} versions) and unpack as described in the previous
-section.  
+section.  They are built in exactly the same way as distributions of R
+releases.
 
-These versions do not contain the current sources for the recommended
-packages, which can be obtained by @code{rsync} or downloaded from CRAN.
-To use @code{rsync} to install the appropriate sources for the
-recommended packages, run @command{./tools/rsync-recommended} from the
-top-level of the @R{} sources.
+@menu
+* Using Subversion and rsync::  
+@end menu
 
-If downloading manually from CRAN, do ensure that you have the correct
-versions of the recommended packages: if the number in the file
-@file{VERSION} is @samp{@var{x}.@var{y}.@var{z}} you need to download
-the contents of @samp{http://cran.r-project.org/src/contrib/@var{dir}},
-where @var{dir} is @samp{@var{x}.@var{y}.@var{z}/Recommended} for
-r-devel or @file{@var{x}.@var{y}.@var{z}-patched/Recommended} for
-r-patched, respectively, to directory @file{src/library/Recommended} in
-the sources you have unpacked.  Normally @samp{R-patched.tar.gz} will
-have the number of the last released version, and @samp{R-devel.tar.gz}
-that of the next minor (@samp{@var{x}.@var{y}.0}) or major release.
-After downloading manually you need to execute
-@command{tools/link-recommended} from the top level of the sources to
-make the requisite links in @file{src/library/Recommended}.  A suitable
-incantation from the top level of the R sources using @command{wget}
-might be
-
-@smallexample
-wget -r -l1 --no-parent -A\*.gz -nd -P src/library/Recommended \
-  http://cran.r-project.org/src/contrib/@var{dir}
-./tools/link-recommended
-@end smallexample
-
-@c @node Using rsync,  , Getting patched and development versions, Obtaining R
-@c @section Using rsync
-@c @findex rsync
-
-@c Sources are also available via anonymous rsync.  Use
-
-@c @smallexample
-@c rsync -rC --delete rsync.r-project.org::@var{module} R
-@c @end smallexample
-
-@c @noindent
-@c to create a copy of the source tree specified by @var{module} in the
-@c subdirectory @file{R} of the current directory, where @var{module} can
-@c be one of @samp{r-release} (current released version), @samp{r-patched}
-@c (patched released version), and @samp{r-devel} (development version).
-@c The rsync trees are created directly from the master CVS archive and are
-@c updated hourly.  The @option{-C} option in the @command{rsync} command
-@c is to cause it to skip the CVS directories.  Further information on
-@c @command{rsync} is available at @uref{http://rsync.samba.org/rsync/}.
+@node Using Subversion and rsync,  , Getting patched and development versions, Getting patched and development versions
+@subsection Using Subversion and rsync
 
 Sources are also available via @uref{https://svn.R-project.org/R/}, the
 R Subversion repository.  If you have a Subversion client (see
@@ -224,7 +166,7 @@ svn checkout https://svn.r-project.org/R/trunk/ @var{path}
 @noindent
 to check out r-devel into directory @var{path}.
 
-Note that @code{https} is required, and that the SSL certificate for the
+Note that @code{https:} is required, and that the SSL certificate for the
 Subversion server of the R project is
 
 @smallexample
@@ -239,21 +181,45 @@ Certificate information:
 (currently, there is no ``trusted certificate'').  You can accept this
 certificate permanently and will not be asked about it anymore.
 
-The sources for the recommended packages need to be downloaded
-separately, as described earlier in this section.
+The Subversion repository does not contain the current sources for the
+recommended packages, which can be obtained by @code{rsync} or
+downloaded from CRAN.  To use @code{rsync} to install the appropriate
+sources for the recommended packages, run
+@command{./tools/rsync-recommended} from the top-level of the @R{}
+sources.
+
+If downloading manually from CRAN, do ensure that you have the correct
+versions of the recommended packages: if the number in the file
+@file{VERSION} is @samp{@var{x}.@var{y}.@var{z}} you need to download
+the contents of @samp{http://CRAN.R-project.org/src/contrib/@var{dir}},
+where @var{dir} is @samp{@var{x}.@var{y}.@var{z}/Recommended} for
+r-devel or @file{@var{x}.@var{y}.@var{z}-patched/Recommended} for
+r-patched, respectively, to directory @file{src/library/Recommended} in
+the sources you have unpacked.  After downloading manually you need to
+execute @command{tools/link-recommended} from the top level of the
+sources to make the requisite links in @file{src/library/Recommended}.
+A suitable incantation from the top level of the R sources using
+@command{wget} might be
+
+@smallexample
+wget -r -l1 --no-parent -A\*.gz -nd -P src/library/Recommended \
+  http://CRAN.R-project.org/src/contrib/@var{dir}
+./tools/link-recommended
+@end smallexample
 
 
-@node Installing R under Unix, Installing R under Windows, Obtaining R, Top
-@chapter Installing R under Unix
-@cindex Installing under Unix
 
-@R{} will configure and build under a number of common Unix platforms
-including i386-freebsd, @var{cpu}-linux-gnu for the i386, alpha, amd64,
-arm, hppa, ia64, m68k, powerpc, and sparc CPUs (see e.g.@:
-@uref{http://buildd.debian.org/build.php?&pkg=r-base}),
+@node Installing R under Unix-alikes, Installing R under Windows, Obtaining R, Top
+@chapter Installing R under Unix-alikes
+@cindex Installing under Unix-alikes
+
+@R{} will configure and build under a number of common Unix and
+Unix-alike platforms including i386-*-freebsd, @var{cpu}-*-linux-gnu for
+the i386, alpha, amd64, arm, hppa, ia64, m68k, powerpc, and sparc CPUs
+(see e.g.@: @uref{http://buildd.debian.org/build.php?&pkg=r-base}),
 powerpc-apple-darwin and sparc-sun-solaris, as well as probably (it is
-tested less frequently on these) i386-netbsd, i386-openbsd,
-i386-sun-solaris, mips-sgi-irix, alpha-dec-osf4, rs6000-ibm-aix and
+tested less frequently on these) i386-*-netbsd, i386-*-openbsd,
+i386-sun-solaris, mips-sgi-irix, alpha-dec-osf*, rs6000-ibm-aix and
 hppa-hp-hpux.
 
 @cindex Linux
@@ -270,13 +236,14 @@ building from the sources.
 * Installation::                
 @end menu
 
-@node Simple compilation, Making the manuals, Installing R under Unix, Installing R under Unix
+@node Simple compilation, Making the manuals, Installing R under Unix-alikes, Installing R under Unix-alikes
 @section Simple compilation
 
 First review the essential and useful tools and libraries in
 @ref{Essential and useful other programs}, and install those you want or
-need.  Ensure that the environment variable @samp{TMPDIR} is either
-unset or points to a valid temporary directory.
+need.  Ensure that the environment variable @env{TMPDIR} is either
+unset (and @file{/tmp} exists and can be written in) or points to a
+valid temporary directory.
 
 @findex R_HOME
 Choose a place to install the @R{} tree (@R{} is not just a binary, but
@@ -366,6 +333,7 @@ documentation files via @acronym{CRAN}.
 
 For those obtaining @R{} @emph{via} Subversion, one additional step is
 necessary:
+@cindex vignettes
 
 @smallexample
 make vignettes
@@ -378,10 +346,10 @@ it takes several minutes.
 Now @code{rehash} if necessary, type @kbd{R}, and read the @R{} manuals
 and the @R{} @acronym{FAQ} (files @file{FAQ} or
 @file{doc/html/faq.html}, or
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html} which always has
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.html} which always has
 the latest version).
 
-@node Making the manuals, Installation, Simple compilation, Installing R under Unix
+@node Making the manuals, Installation, Simple compilation, Installing R under Unix-alikes
 @section Making the manuals
 @cindex Manuals
 
@@ -472,7 +440,7 @@ can be overridden by setting the environment variable @code{R_RD4PDF}.
 e.g. for printing.
 
 
-@node Installation,  , Making the manuals, Installing R under Unix
+@node Installation,  , Making the manuals, Installing R under Unix-alikes
 @section Installation
 @cindex Installation
 
@@ -544,7 +512,7 @@ To ensure that the installed tree is usable by the right group of users,
 set @code{umask} appropriately (perhaps to @samp{022}) before unpacking
 the sources and throughout the build process.
 
-@node Installing R under Windows, Installing R under Mac OS X, Installing R under Unix, Top
+@node Installing R under Windows, Installing R under Mac OS X, Installing R under Unix-alikes, Top
 @chapter Installing R under Windows
 @cindex Installing under Windows
 
@@ -563,8 +531,8 @@ Installation is @emph{via} the installers @file{@value{RWVERSION}.exe}
 or @file{miniR.exe}.  Just double-click on the icon and follow the
 instructions.  You can uninstall @R{} from the Control Panel.
 
-See the @uref{http://cran.r-project.org/bin/windows/rw-FAQ.html, R Windows
-@acronym{FAQ}} for more details.
+See the @uref{http://CRAN.R-project.org/bin/windows/base/rw-FAQ.html, R Windows
+@acronym{FAQ}}, for more details.
 
 @menu
 * Building from source::        
@@ -608,7 +576,7 @@ The simplest way is to use @file{R.dmg.sit}.  Just double-click on the
 icon and the archive will be expanded as an image di file. Read the
 @file{ReadMe.txt} inside the disk image and follow the instructions.
 
-See the @uref{http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac OS X
+See the @uref{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac OS X
 @acronym{FAQ}} for more details.
 
 @menu
@@ -619,7 +587,7 @@ See the @uref{http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac O
 @section Building from source on Mac OS X
 
 If you want to build this port from the sources, you can read the above
-mentioned @uref{http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html, R
+mentioned @uref{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R
 for Mac OS X @acronym{FAQ}} for full details. You will need to collect
 and install some tools as explained in the document. Than you have to
 expand the @R{} sources and configure @R{} appropriately, for example
@@ -823,8 +791,12 @@ documentation.
 You will not be able to build the info files unless you have
 @command{makeinfo} version 4.5 or later installed.
 
-The typeset documentation needs @command{tex} and @command{latex}, or
-@command{pdftex} and @command{pdflatex}.
+@cindex vignettes
+The typeset documentation and building vignettes needs @command{tex} and
+@command{latex}, or @command{pdftex} and @command{pdflatex}.
+
+If you want to build from the R Subversion repository you need
+@command{pdflatex}.
 
 
 @node Useful libraries and programs,  , Essential programs, Essential and useful other programs
@@ -995,7 +967,7 @@ is needed so @code{libsunperf} can be used.
 
 An ATLAS `tuned' BLAS can also be used on Windows: see
 @file{src/gnuwin32/INSTALL} for how to enable this when building from
-source, and @uref{http://cran.r-project.org/bin/windows/rw-FAQ.html, R Windows
+source, and @uref{http://CRAN.R-project.org/bin/windows/rw-FAQ.html, R Windows
 @acronym{FAQ}} for adding pre-compiled support to binary versions.
 Goto's BLAS can also be used when building from source.
 
@@ -1057,7 +1029,9 @@ Flag @option{--enable-R-shlib} causes the make process to build @R{} as
 a dynamic (shared) library, typically called @file{libR.so}, and link
 the main @R{} executable @file{R.bin} against that library.  This can
 only be done if all the code (including system libraries) can be
-compiled into a dynamic library, and there may be a small performance
+compiled into a dynamic library, and there may be a
+performance@footnote{We have measured 15--20% on i686 Linux and around
+10% on x86_64 Linux.}
 penalty.  So you probably only want this if you will be using an
 application which embeds @R{}.  Note that C code in packages installed
 on a @R{} system linked with @option{--enable-R-shlib} are linked
@@ -1278,7 +1252,9 @@ structures are passed.
 This interface is experimental and incomplete.  The console offers a
 basic command line editing and history mechanism, along with tool and
 button bars that give a point-and-click interface to some @R{} commands.
-Many of the features of the console are currently stubs.
+Many of the features of the console are currently stubs.  Its present
+form is deprecated, and it will be replaced by an unbundled
+@acronym{GNOME} console as from @R 2.1.0.
 
 Two graphics devices have been available but are currently
 unbundled. The @code{gtk()} graphics device is a port of the
@@ -1296,7 +1272,7 @@ run
 @end smallexample
 
 @noindent
-but please check you have all the requirements first. You need at least
+but please check you have all the requirements first.  You need at least
 the following libraries (or later) installed
 
 @smallexample
@@ -1400,6 +1376,11 @@ A discussion of which Linux systems support large files can be found at
 @uref{http://www.suse.de/~aj/linux_lfs.html}: it has been available
 since about 2001.
 
+R used to include the compiler flag @option{-mieee-fp}, but it seems this
+was really an alias for the linker flag @option{-lieee}.  Neither are
+needed for a modern Linux (e.g. using @code{glibc} 2.2 or 2.3) but could
+conceivably be needed on an older version.
+
 
 @node Mac OS X, Solaris, Linux, Platform notes
 @subsection Mac OS X
@@ -1412,13 +1393,13 @@ need to install an X sub-system or configure with
 OS X distribution since Mac OS X version 10.3 (Panther).
 
 For more information on how to find these tools please read the
-@uref{http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac
+@uref{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac
 OS X @acronym{FAQ}}.
 
 If you use the X window manager and prefer @code{Terminal.app} to
 @code{xterm}, you should be aware that @R{}, like many Unix tools,
 uses the existence of a @code{DISPLAY} environment variable to
-determine whether an X system is running. This affects the default
+determine whether an X system is running.  This affects the default
 graphics device for the commmand line version of R and the behaviour
 of the @code{png()} and @code{jpeg} devices.
 
@@ -1447,9 +1428,9 @@ failure with @command{gcc 3.3}.)
 @R{} has been built successfully on Solaris 8 aka Solaris 2.8 aka SunOS
 5.8 using @command{gcc}/@command{g77} and the SunPro @w{WorkShop 6} (aka
 Forte 6) compilers and the `Sun ONE Studio 7 Compiler Suite' (aka Forte
-7), and less regularly on Solaris 2.5.1, 2.6, 2.7 and 9.  GNU
-@command{make} is needed prior to Solaris 2.7 for building other than in
-the source tree, and perhaps even then.
+7), and less regularly on Solaris 2.6, 2.7 and 9.  GNU @command{make} was
+needed prior to Solaris 2.7 for building other than in the source tree,
+and perhaps even then.
 
 The Solaris versions of several of the tools needed to build @R{}
 (e.g. @command{make}, @command{ar} and @command{ld}) are in
@@ -1458,18 +1439,20 @@ path.
 
 @command{gcc} 3.2.1 and 3.2.2 generate incorrect code on 32-bit Solaris
 builds with optimization, but versions 3.1, 3.2, 3.2.3 and later work
-correctly.  At least files @file{src/main/engine.c},
-@file{src/main/graphics.c} and @file{src/modules/devX11.c} are affected.
+correctly.  (@code{make check} fails at the first attempt to plot.)
 
 If using @command{gcc}, do ensure that the compiler was compiled for the
 version of Solaris in use.  (This can be ascertained from @command{gcc
 -v}.)  @command{gcc} makes modified versions of some header files, and
 so (for example) @command{gcc} compiled under Solaris 2.6 will not
 compile @R{} under Solaris 2.7.  Also, do ensure that it was compiled
-for the assembler/loader in use.  If you download @command{gcc} from
+for the assembler/loader in use: if you download @command{gcc} from
 @uref{http://www.sunfreeware.com} then you need to download
 @code{binutils} too.  To avoid all these pitfalls we strongly
 recommended you compile @command{gcc} from the sources yourself.
+
+It was reported by Mike Pacey that Sun Forte 9 requires
+@code{-xopenmp=stubs} added to @code{LDFLAGS}.
 
 When using the SunPro compilers do @emph{not} specify @option{-fast}, as
 this disables @acronym{IEEE} arithmetic and @command{make check} will
@@ -1490,7 +1473,7 @@ A 32-bit version of R is built without large file support and so can
 only handle files up to 2Gb (unlike 64-bit versions).  According to
 @samp{man lfcompile} this restriction can be removed if
 @option{-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1} is added to
-@samp{CFLAGS}.  (This has not been tested.)
+@samp{CFLAGS}.
 
 
 To compile for a 64-bit target on Solaris (which needs an UltraSparc
@@ -1684,14 +1667,21 @@ example, in environment variable @env{LIBS}).
 @node Alpha/OSF1, Alpha/FreeBSD, IRIX, Platform notes
 @subsection Alpha/OSF1
 
-@R{} has been built successfully on an Alpha running OSF1 V4.0 using
-@command{gcc}/@command{g77} and @command{cc}/@command{f77}.  Mixing
-@command{cc} and @command{g77} fails to configure.  The
+@R{} has been built successfully on an Alpha running OSF1 V4.0 / V5.1
+using @command{gcc}/@command{g77} and @command{cc}/@command{f77}.
+Mixing @command{cc} and @command{g77} fails to configure.  The
 @command{configure} option @option{--without-blas} was used since the
 native blas seems not to have been built with the flags needed to
-suppress @code{SIGFPE}'s.  Currently @R{} does not set a signal handler for
-@code{SIGFPE} on platforms that support @acronym{IEEE} arithmetic, so
-these are fatal.
+suppress @code{SIGFPE}'s.  Currently @R{} does not set a signal handler
+for @code{SIGFPE} on platforms that support @acronym{IEEE} arithmetic,
+so these are fatal.
+
+At some point in the past using @command{cc} required @option{-std1} to
+be set so @samp{__STDC__} was defined.  As far as we know this is no
+longer needed, and @command{configure} no longer sets it, but it does
+set @option{-ieee_with_inexact} for the C compiler and @option{-fpe3}
+for the Fortran compiler (and @option{-mieee-with-inexact} and
+@option{-mieee} for @command{gcc}/@command{g77}).
 
 
 @node Alpha/FreeBSD, AIX, Alpha/OSF1, Platform notes
@@ -1703,6 +1693,7 @@ partly successful.  Configuring with @option{-mieee} added to both
 @code{SIGFPE}'s.  It would appear that @option{-mieee} only defers these
 rather than suppressing them entirely.  Advice on how to complete this
 port would be greatly appreciated.
+
 
 @node AIX,  , Alpha/FreeBSD, Platform notes
 @subsection AIX
@@ -1795,8 +1786,8 @@ enabling the Java search engine.
 @menu
 * Java Virtual Machines on Linux ::  
 * Java Virtual Machines on Unix::  
-* Java Virtual Machines on Windows ::  
-* Java Virtual Machines on Mac OS X ::  
+* Java Virtual Machines on Windows::  
+* Java Virtual Machines on Mac OS X::  
 @end menu
 
 @node Java Virtual Machines on Linux , Java Virtual Machines on Unix, Enabling search in HTML help, Enabling search in HTML help
@@ -1804,14 +1795,9 @@ enabling the Java search engine.
 
 We are aware of problems with certain Java installations.  In
 particular, Sun's Java Run-time Environment @code{j2re 1.4.2_02} to
-@code{_05} do not work under Linux.  Current browsers of the Mozilla
-family (including Mozilla >= 1.4, Netscape 7.1 and FireFox) are compiled
-under @code{gcc 3.x} and @emph{require} the @code{ns610-gcc32} version
-of the Java plugin that was introduced with @code{j2re 1.4.2}, so the
-only Java version that we know to work is @code{j2re 1.4.2_01}.  Marc
-Schwartz has kindly made Linux @code{i586} distributions available: see
-@uref{http://www.MedAnalytics.com/INSTALL}.  They can also be found at
-Sun's archive at @uref{http://java.sun.com/products/archive/}.
+@code{_05} do not work under Linux.  Both @code{jre 1.5.0} and
+@code{j2re 1.4.2_01} do work: the latter can be found in Sun's archive
+at @uref{http://java.sun.com/products/archive/}.
 
 @noindent
 Other Java installations, for example those from Blackdown and IBM, have
@@ -1826,20 +1812,20 @@ for Debian GNU/Linux
 @uref{http://www.debian.org/doc/manuals/debian-java-faq/}.
 
 
-@node Java Virtual Machines on Unix, Java Virtual Machines on Windows , Java Virtual Machines on Linux , Enabling search in HTML help
+@node Java Virtual Machines on Unix, Java Virtual Machines on Windows, Java Virtual Machines on Linux , Enabling search in HTML help
 @section Java Virtual Machines on Unix
 
 We have much less experience, but we do know that Sun's Run-time
 Environment @code{j2re 1.4.2_03} does not work under Solaris, whereas
-@code{j2re 1.4.2_01} and earlier do.  Marc Schwartz kindly made Solaris
-distributions of @code{j2re 1.4.2_01} available: see
+@code{jre 1.5.0} and @code{j2re 1.4.2_01} (available from
+@uref{http://java.sun.com/products/archive/}) do.
 
 @smallexample
 http://www.MedAnalytics.com/INSTALL
 @end smallexample
 
 
-@node Java Virtual Machines on Windows , Java Virtual Machines on Mac OS X , Java Virtual Machines on Unix, Enabling search in HTML help
+@node Java Virtual Machines on Windows, Java Virtual Machines on Mac OS X, Java Virtual Machines on Unix, Enabling search in HTML help
 @section Java Virtual Machines on Windows
 
 We have not seen any problems on Windows provided a Java Virtual Machine
@@ -1853,11 +1839,12 @@ Defaults' in Windows XP (SP1 or later), and which JVM is used by browser
 plugins may also be controlled by the Sun Java applet in the Control
 Panel.
 
-@node Java Virtual Machines on Mac OS X ,  , Java Virtual Machines on Windows , Enabling search in HTML help
+@node Java Virtual Machines on Mac OS X,  , Java Virtual Machines on Windows, Enabling search in HTML help
 @section Java Virtual Machines on Mac OS X
 
-The HTML search engine does not work with Safari under Mac OS X, and
-Sun's @code{j2re 1.4.x} is said not to work with Mozilla 1.6.
+The HTML search engine does not work with Safari under Mac OS X, but
+@code{j2re 1.4.x} may work with Mozilla, Firefox and Camino if the
+Java Embedding Plugin @uref{http://javaplugin.sourceforge.net/} is used.
 
 The Aqua GUI provides an interface to @code{help.search} that may
 substitute for the Java search.

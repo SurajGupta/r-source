@@ -1,3 +1,13 @@
+testPlatformEquivalence <- function(built, run)
+{
+    ## args are "cpu-vendor-os", but os might be 'linux-gnu'!
+    ## remove vendor field
+    built <- gsub("([^-]*)-([^-]*)-(.*)", "\\1-\\3", built)
+    run <- gsub("([^-]*)-([^-]*)-(.*)", "\\1-\\3", run)
+    ## allow for small mismatches, e.g. OS version number and i686 vs i586.
+    length(agrep(built, run)) > 0
+}
+
 library <-
 function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
          logical.return = FALSE, warn.conflicts = TRUE,
@@ -30,14 +40,11 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                         call. = FALSE)
             if(.Platform$OS.type == "unix") {
                 platform <- built$Platform
-                if(length(grep("\\w", platform))) {
-                    ## allow for small mismatches, e.g. OS version number.
-                    m <- agrep(platform, R.version$platform)
-                    if(!length(m))
-                        stop(paste("package", sQuote(pkgname),
-                                   "was built for", platform),
-                             call. = FALSE)
-		}
+		if(length(grep("\\w", platform)) &&
+                   !testPlatformEquivalence(platform, R.version$platform))
+                    stop(paste("package", sQuote(pkgname),
+                               "was built for", platform),
+                         call. = FALSE)
             }
         }
         else
@@ -64,7 +71,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     {
         dont.mind <- c("last.dump", "last.warning", ".Last.value",
                        ".Random.seed", ".First.lib", ".Last.lib",
-                       ".packageName", ".noGenerics", ".required")
+                       ".packageName", ".noGenerics", ".required",
+                       ".no_S3_generics")
         sp <- search()
         lib.pos <- match(pkgname, sp)
         ## ignore generics not defined for the package
@@ -531,13 +539,17 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
 {
     if( !character.only )
         package <- as.character(substitute(package)) # allowing "require(eda)"
-    if (missing(version))
+    if (missing(version)) {
         pkgName <- package
-    else
+        ## dont' care about versions, so accept any
+        s <- sub("_[0-9.-]*", "", search())
+        loaded <- paste("package", pkgName, sep = ":") %in% s
+    } else {
         pkgName <- manglePackageName(package, version)
+        loaded <- paste("package", pkgName, sep = ":") %in% search()
+    }
 
-
-    if (is.na(match(paste("package", pkgName, sep = ":"), search()))) {
+    if (!loaded) {
 	if (!quietly) cat("Loading required package:", package, "\n")
 	value <- library(package, character.only = TRUE, logical = TRUE,
 		warn.conflicts = warn.conflicts, keep.source = keep.source,
@@ -602,8 +614,15 @@ function(package, quietly = FALSE, warn.conflicts = TRUE,
         for(lib in lib.loc) {
             a <- list.files(lib, all.files = FALSE, full.names = FALSE)
             for(nam in a) {
-                if(file.exists(file.path(lib, nam, "DESCRIPTION")))
-                    ans <- c(ans, nam)
+                ## match .find.packages as to what is a package
+                if(!file.exists(file.path(lib, nam, "DESCRIPTION"))) next
+                info <- try(read.dcf(file.path(lib, nam, "DESCRIPTION"),
+                                     c("Package", "Version"))[1, ],
+                            silent = TRUE)
+                if(inherits(info, "try-error") || any(is.na(info))) next
+                if(regexpr("([[:digit:]]+[.-]){1,}[[:digit:]]+",
+                           info["Version"]) == -1) next
+                ans <- c(ans, nam)
             }
         }
         return(unique(ans))

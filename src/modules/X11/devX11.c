@@ -836,7 +836,7 @@ static void SetColor(int color, NewDevDesc *dd)
 }
 
 static int gcToX11lend(R_GE_lineend lend) {
-    int newend;
+    int newend = CapRound; /* -Wall */
     switch (lend) {
     case GE_ROUND_CAP:
         newend = CapRound;
@@ -854,7 +854,7 @@ static int gcToX11lend(R_GE_lineend lend) {
 }
 
 static int gcToX11ljoin(R_GE_lineend ljoin) {
-    int newjoin;
+    int newjoin = JoinRound; /* -Wall */
     switch (ljoin) {
     case GE_ROUND_JOIN:
         newjoin = JoinRound;
@@ -1326,6 +1326,9 @@ static void newX11_NewPage(R_GE_gcontext *gc,
 /*	xd->fill = R_OPAQUE(dd->bg) ? dd->bg : xd->canvas; */
 	xd->fill = R_OPAQUE(gc->fill) ? gc->fill: PNG_TRANS;
 	SetColor(xd->fill, dd);
+	xd->clip.x = 0; xd->clip.width = xd->windowWidth;
+	xd->clip.y = 0; xd->clip.height = xd->windowHeight;
+	XSetClipRectangles(display, xd->wgc, 0, 0, &(xd->clip), 1, Unsorted);
 	XFillRectangle(display, xd->window, xd->wgc, 0, 0,
 		       xd->windowWidth, xd->windowHeight);
 	return;

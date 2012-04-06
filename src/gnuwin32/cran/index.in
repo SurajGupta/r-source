@@ -2,7 +2,7 @@
 
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<link rel="stylesheet" type="text/css" href="../../../R.css">
+<link rel="stylesheet" type="text/css" href="http://cran.r-project.org/R.css">
 <title>R-@RVER@ for Windows</title>
 </head>
 
@@ -37,7 +37,7 @@ is available in the <a href="rdevel.html">r-devel release</a>.</p>
   </tr>
   <tr>
     <td width="19%" valign="top"><a href="@RWVER@.exe">@RWVER@.exe</a></td>
-    <td width="81%">Setup program (about 20 megabytes). Please download this 
+    <td width="81%">Setup program (about 23 megabytes). Please download this 
     from a <a href="http://cran.r-project.org/mirrors.html">mirror near you</a>. <br>
     This corresponds to the file named <b>SetupR.exe</b> in pre-1.6.0 releases.</td>
   </tr>
@@ -58,8 +58,8 @@ is available in the <a href="rdevel.html">r-devel release</a>.</p>
   </tr>
 </TBODY>
 </table>
-<p> Please see the <a href="../../../doc/FAQ/R-FAQ.html">R FAQ</a> for general
-information about R and the <a href="../rw-FAQ.html">R Windows FAQ</a> for Windows-specific information,
+<p> Please see the <a href="http://cran.r-project.org/doc/FAQ/R-FAQ.html">R FAQ</a> for general
+information about R and the <a href="rw-FAQ.html">R Windows FAQ</a> for Windows-specific information,
 including upgrade advice.</p>
 
 <p> Note to webmasters:  A stable link which will redirect to the current Windows binary release

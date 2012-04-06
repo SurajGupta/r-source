@@ -623,19 +623,11 @@ R_PROG_CXX_MAKEFRAG
 case "${host_cpu}" in
   i*86)
     R_PROG_CC_FLAG_D__NO_MATH_INLINES
-    R_PROG_CC_FLAG([-mieee-fp],
-                   R_SH_VAR_ADD(R_XTRA_CFLAGS, [-mieee-fp]))
-    R_PROG_F77_FLAG([-mieee-fp],
-                    R_SH_VAR_ADD(R_XTRA_FFLAGS, [-mieee-fp]))
-    R_PROG_CXX_FLAG([-mieee-fp],
-                    R_SH_VAR_ADD(R_XTRA_CXXFLAGS, [-mieee-fp]))
+    ## We used to add -mieee-fp here, but it seems it is really a
+    ## gcc linker flag for old Linuxen adding -lieee to a non-shared link.
     ;;
   alpha*)
     ## <NOTE>
-    ## * ANSI C
-    ## The native C compiler needs @option{-std1}: AC_PROG_CC() passes
-    ## all ANSI C tests with no extra flags but then __STDC__ is
-    ## undefined which breaks compilation of the connections code.
     ## * IEEE math
     ## We really need to use @option{-ieee_with_inexact} (called
     ## @option{-mieee-with-inexact} for GCC) for the C compiler:
@@ -649,8 +641,6 @@ case "${host_cpu}" in
       R_PROG_CC_FLAG([-mieee-with-inexact],
                      R_SH_VAR_ADD(R_XTRA_CFLAGS, [-mieee-with-inexact]))
     else
-      R_PROG_CC_FLAG([-std1],
-                     R_SH_VAR_ADD(R_XTRA_CFLAGS, [-std1]))
       R_PROG_CC_FLAG([-ieee_with_inexact],
                      R_SH_VAR_ADD(R_XTRA_CFLAGS, [-ieee_with_inexact]))
     fi

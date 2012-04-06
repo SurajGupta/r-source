@@ -10,11 +10,11 @@ top_builddir = .
 include $(top_builddir)/Makeconf
 
 distdir = $(PACKAGE)-$(VERSION)
-INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS FAQ NEWS RESOURCES THANKS
+INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS FAQ NEWS ONEWS \
+	RESOURCES THANKS
 DISTFILES = $(INSTFILES) \
-	ChangeLog INSTALL ONEWS README VERSION Y2K \
+	ChangeLog INSTALL OONEWS README VERSION Y2K \
 	Makeconf.in Makefile.in \
-	acinclude.m4 aclocal.m4 \
 	config.site configure configure.ac \
 	date-stamp
 SUBDIRS = m4 tools afm doc etc share src tests
@@ -136,8 +136,11 @@ dist: dist-unix
 dist-unix: distdir
 	-chmod -R a+r $(distdir)
 	-chmod -R go-w $(distdir)
-	GZIP=$(GZIP) $(TAR) czf $(distdir).tar.gz $(distdir)
-	rm -rf $(distdir)
+	distname=`$(srcdir)/tools/GETDISTNAME`; \
+	  dirname=`echo $${distname} | sed -e s/_.*//`; \
+	  mv $(distdir) $${dirname}; \
+	  GZIP=$(GZIP) $(TAR) czf $${distname}.tar.gz $${dirname}; \
+	  rm -rf $${dirname}
 dist-win:
 distdir: $(DISTFILES) vignettes
 	@rm -rf $(distdir)
@@ -163,6 +166,7 @@ distdir: $(DISTFILES) vignettes
 	done
 	@cp library/grid/doc/*.pdf library/grid/doc/index.html \
 	  $(distdir)/src/library/grid/inst/doc
+	@(cd $(distdir); tools/link-recommended)
 
 dvi info pdf:
 	-@(cd doc && $(MAKE) $@)

@@ -24,7 +24,7 @@ default R library tree (${R_HOME}/library) otherwise.
 
 Options:
   -h, --help		print short help message and exit
-  -v, --version		print version info and exit
+  -v, --version		print INSTALL version info and exit
       --configure-args=ARGS
                         set arguments for the package's configure script
 			(if any)
@@ -50,7 +50,8 @@ Options:
       --use-zip-help	collect help and examples into zip archives
       --use-zip		combine '--use-zip-data' and '--use-zip-help'
       --fake		do minimal install for testing purposes
-      --unsafe		install on top of any existing installation
+      --no-lock		install on top of any existing installation
+                        without using a lock directory
 
 Report bugs to <r-bugs@r-project.org>."
 
@@ -421,7 +422,7 @@ do_install_source () {
     if grep "^Bundle:" DESCRIPTION >/dev/null; then
       bundlepkg=`get_dcf_field Contains ../DESCRIPTION`
     else
-      bundlepkg=${R_PACKAGE_NAME}
+      bundlepkg=${pkg_name}
     fi
   fi
 
@@ -527,7 +528,10 @@ do_install_source () {
     fi
     if ${thislazy}; then
       message " moving datasets to lazyload DB"
-      echo "tools:::data2LazyLoadDB(\"${pkg_name}\", \"${lib}\")" | \
+      ## it is possible that data in a package will make use of the
+      ## code in the package, so ensure the package we have just
+      ## installed is on the library path.
+      echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); tools:::data2LazyLoadDB(\"${R_PACKAGE_NAME}\", \"${lib}\")" | \
         R_DEFAULT_PACKAGES=NULL LANG=C "${R_EXE}" --vanilla > /dev/null
     if test ${?} -ne 0; then
       error "lazydata failed for package '${pkg_name}'"
@@ -601,10 +605,10 @@ do_install_source () {
     ## is no namespace).  Argh.
     ## </NOTE>
     save_image_defaults="list(compress=TRUE, safe=FALSE)"
-    code_file="${R_PACKAGE_DIR}/R/${R_PACKAGE_NAME}"
+    code_file="${R_PACKAGE_DIR}/R/${pkg_name}"
     rda_file="${R_PACKAGE_DIR}/R/all.rda"
     if test -f NAMESPACE; then
-      code_cmd="echo invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages(); saveNamespaceImage(\"${pkg_name}\", \"${rda_file}\", \"${lib}\")"
+      code_cmd="echo invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages(); saveNamespaceImage(\"${R_PACKAGE_NAME}\", \"${rda_file}\", \"${lib}\")"
       loader_file=nsrdaload.R
       R_save_args="--vanilla --slave"
     else
@@ -719,7 +723,7 @@ do_install_source () {
     echo "No man pages found in package '${pkg_name}'"
   fi
 
-  echo "tools:::.install_package_indices(\".\", \"${R_PACKAGE_DIR}\")" | \
+  echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); tools:::.install_package_indices(\".\", \"${R_PACKAGE_DIR}\")" | \
     R_DEFAULT_PACKAGES=NULL LANG=C "${R_EXE}" --vanilla >/dev/null
   if test ${?} -ne 0; then
     error "installing package indices failed"
