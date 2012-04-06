@@ -1,10 +1,150 @@
 	**************************************************
-	*                                                *
-	*              0.63 SERIES NEWS                  *
-	*    (This label is really only here to keep     *
-	*     CVS from getting confused...)              *
-	*                                                *
+	*						 *
+	*	       0.63 SERIES NEWS			 *
+	*    (This label is really only here to keep	 *
+	*     CVS from getting confused...)		 *
+	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 0.63.3
+
+NEW FEATURES
+
+    o	get() and assign() allow position in search list to be a
+	character string. (e.g. get("delete.response","package:base") 
+
+    o	HTML search now works for all packages (after new installation).
+
+    o	R INSTALL now also copies DESCRIPTION file to target dir.
+
+    o	offsets should work with lm as well as with glm now
+
+    o	range() is now in the Summary group, trunc() back in the Math
+	group.
+
+    o	Under Unix, R-specific environment variables can now be kept/set
+	in `~/.Renviron'.
+
+    o	New options `latexcmd' and `dvipscmd' for specifying the locations
+	of LaTeX and dvips; corresponding environment variables renamed to
+	`R_LATEXCMD' and `R_DVIPSCMD'.
+
+    o	--vsize & --nsize now both give size in "single units" 
+	(bytes/cons cells) with possible 
+	suffixes "M" (Mega), "K"ilo (1024) and "k"ilo(1000).
+
+    o	[pdqr]negbin() now also work with non-integer 'size' [by Ben Bolker].
+
+    o	New standard package `lqs' for resistant regression and
+	covariance estimation, contributed by B. D. Ripley.
+
+    o	new functions match.fun() and kronecker() [by Jonathan Rougier]
+
+    o	par(las = 3) is a new option.
+
+    o	new function jitter()  [slightly more useful than S's].
+
+BUG FIXES
+
+    o   system(command, intern=FALSE, ignore.errors=FALSE) 
+	changed 1st & 3rd argument names and is better documented.
+
+    o   "/Font5 /Symbol findfont definefont" confused some printers
+
+    o   Bounding box rotated 90 deg for landscape (shouldn't be)
+
+    o   Legend skipped symbol for pch=0
+
+    o   compilation on non-Intel Linux systems no longer looks for __setfpucw
+
+    o   a %% b -- is now periodic instead of symmetric; more S compatible.
+
+    o	locator(n=512) -- default: MANY points, not just one.
+
+    o	qqnorm() uses ppoints() and returns list with x sorted along y.
+
+    o	plot.formula now allows ylab to be set
+
+    o	plotmath had trouble with paste()'ing expressions
+
+    o	plotting math expressions now also works for objects of mode
+	"call" (in particular on the result of substitute())
+
+    o	locator() on log axes: value antilogged twice
+
+    o	(a real oldie - and trival too) is.recursive now TRUE for
+	expressions 
+
+    o	sanitised delete.response
+
+    o	x[["a",]] could crash R
+
+    o	strwidth() crashed R if no device open
+
+    o	predict inconsistencies with offsets straightened out
+
+    o	tapply goofed when FUN returned named scalar
+
+    o	[.factor now retains contrasts attrib.
+
+    o	hist() had trouble with plotting math
+
+    o	HTML indices get only built when installing a package to RHOME
+
+    o	subscripting with a length zero logical no longer bombs.
+
+    o	as.ordered(NULL) now returns an "ordered" object.
+
+    o	--debugger .. now gives a warning if other command line args are used
+
+    o	pt(t, df, ncp) now also works for bigger ncp's
+    
+    o	apply(a,d, fun) now passes vectors (rank 1 arrays) to fun.
+
+    o	model.frame() with subset and only one column fixed
+
+    o	boxplot(<data.frame>) now works again.
+
+    o	dyn.load(..) failing gives more informative error message.
+
+    o	Ops.factor:  not error, but a warning + NAs
+
+    o	bug.report() keeps report file if can't be e-mailed
+
+    o	Ops.data.frame :  things like  d.fr < a	  now return a matrix
+
+    o	data.frame():  duplicated row.names now give a warning when dropped.
+
+    o	boxplot(.., ylim=..) or (.., axes=..)  gave erronous warning
+
+    o	glm had wrong init code for models with offsets. Also fixed
+	so that linear predictor includes offset, also when predicting. 
+
+    o	predict.glm didn't work with se=T
+
+    o	backsolve(), qr.solve... now return a vector when x (or y) is a vector.
+
+    o	string tags now converted to symbols and strange symbolic
+	tags print as strings, cf. e<-quote(c(F=2, "tail area" = .5)), etc. 
+
+    o	row.names(.) <- val  doesn't allow duplicated values anymore.
+
+    o	library(mva)'s dist() now works with both "euclidean" & "euclidian"
+
+    o	revised curve function to avoid using grep patterns that caused
+	problems under Solaris 2.6
+ 
+    o	coplot() now has 'number' and 'overlap' arguments, and should work
+	in more situations. [by John Maindonald and MM].
+
+    o	save(..ascii=TRUE) now uses "full precision" for numerics.
+
+    o	as.array() preserves names()
+
+    o	outer() works for general array args and preserves (dim)names.
+
+    o	print.factor and print.ordered now return their args invisibly.
 
 
 		CHANGES IN R VERSION 0.63.2
@@ -24,13 +164,10 @@ NEW FEATURES
 	Internal GPretty() [implicitly used by	axis(.., at = NULL,..)
 	now uses pretty.
 
-    o   new generic function aggregate() with methods for data frames
+    o	new generic function aggregate() with methods for data frames
 	and time series.
 
-    o   data set `euro' with Euro conversion rates.
-
-    o   new function jitter()  [slightly wmore useful than S's].
-
+    o	data set `euro' with Euro conversion rates.
 
 BUG FIXES
 
@@ -54,27 +191,27 @@ BUG FIXES
 
     o	Added documentation for group methods ("Math", "Ops","Summary").
 
-    o	R_PAPERSIZE is used for Rd2dvi and at configure time for the 
+    o	R_PAPERSIZE is used for Rd2dvi and at configure time for the
 	`make dvi' parts.
 
     o	hist(i) now also works for e.g., i = -1, 0, or 1.
 
-    o   range() now works on dataframes (uses c(..., recursive=T))
+    o	range() now works on dataframes (uses c(..., recursive=T))
 
     o	pretty(.) does not loop infinitely anymore in very extreme cases.
 
-    o   math functions should work better on dataframes now
+    o	math functions should work better on dataframes now
 
     o	plot(.., type = 'h', log = 'y')	 now works ...
 
-    o   plot.factor(x, y, ...) of two factors now makes
-        barplot(table(y,x), ...)
+    o	plot.factor(x, y, ...) of two factors now makes
+	barplot(table(y,x), ...)
 
-    o   use object$prior.weights in add1.glm, drop1.glm (Brian Ripley)
+    o	use object$prior.weights in add1.glm, drop1.glm (Brian Ripley)
 
-    o   rnorm(1,mean=m,sd=0) returns m, not NaN (Ben Bolker)
+    o	rnorm(1,mean=m,sd=0) returns m, not NaN (Ben Bolker)
 
-    o   runif(n, a,a) now returns  rep(a,n) instead of NaNs.
+    o	runif(n, a,a) now returns  rep(a,n) instead of NaNs.
 
 
 		CHANGES IN R VERSION 0.63.1
